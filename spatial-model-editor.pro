@@ -38,3 +38,15 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+# assume libsbml (with spatial extension), libxml, libzip and libbz2 already installed:
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libsbml/release/ -lsbml-static
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libsbml/debug/ -lsbml-static
+else:unix: LIBS += -L/usr/local/lib -lsbml-static -lxml2 -lz -lbz2
+
+#INCLUDEPATH += /usr/local/include/sbml
+#DEPENDPATH += /usr/local/include/sbml
+
+#unix: CONFIG += link_pkgconfig
+#unix: PKGCONFIG += libxml-2.0
+#unix: PKGCONFIG += libsbml
