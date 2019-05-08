@@ -1,0 +1,16 @@
+install:
+  - set QTDIR=C:\Qt\5.12.2\mingw73_32
+  - set PATH=%PATH%;%QTDIR%\bin;C:\MinGW\bin
+
+# download libsbml static library
+before_build:
+  - appveyor DownloadFile https://sourceforge.net/projects/sbml/files/libsbml/5.18.0/experimental/binaries/Windows/libSBML-5.18.0-win32.zip
+  - 7z x libSBML-5.18.0-win32.zip
+  - move libSBML-5.18.0-win32\lib\libsbml-static.lib libsbml\win32\sbml-static.lib
+  - dir libsbml
+  - dir libsbml\win32
+  - dir libsbml\win64
+
+build_script:
+  - qmake spatial-model-editor.pro
+  - mingw32-make
