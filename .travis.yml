@@ -15,17 +15,17 @@ before_install:
   - sudo apt-get update -qq
 install: 
   # Qt5
-  - sudo apt-get install -qq libqt5webkit5-dev qtdeclarative5-dev
+  - sudo apt-get install -y libqt5webkit5-dev qtdeclarative5-dev
   - export QMAKE=/usr/lib/x86_64-linux-gnu/qt5/bin/qmake
-  # install libsbml deps
+  # install libSBML deps
   - sudo apt-get install -y libxml2-dev zlib1g-dev libbz2-dev
-  # install libsbml experimental branch
+  # install libSBML experimental branch that includes the spatial extension
   - wget 'https://sourceforge.net/projects/sbml/files/libsbml/5.18.0/experimental/binaries/Linux/libSBML-5.18.0-packages-Linux-x64.deb'
-  - dpkg -i libSBML-5.18.0-packages-Linux-x64.deb
-script: 
+  - sudo dpkg -i libSBML-5.18.0-packages-Linux-x64.deb
+script:
   # Start virtual X server, from https://docs.travis-ci.com/user/gui-and-headless-browsers/
   - xvfb-run --server-args="-screen 0 1024x768x24" make test
-  # Build test
+  # Build test (TODO)
   #- qmake -qt=qt5 travis_qmake_gcc_cpp14_qt5_qtest_test.pro
   #- make
   # Build normal
@@ -33,5 +33,5 @@ script:
   - cd build
   - qmake -qt=qt5 ../spatial-model-editor.pro
   - make
-  # Run test
+  # Run test (TODO)
   #- ./travis_qmake_gcc_cpp14_qt5_qtest_test
