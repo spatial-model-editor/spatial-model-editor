@@ -1,6 +1,8 @@
 # based on https://github.com/richelbilderbeek/travis_qmake_gcc_cpp14_qt5_qtest/blob/master/.travis.yml
 dist: xenial
 sudo: required
+services:
+  - xvfb
 notifications:
   email: false
 language:
@@ -15,14 +17,14 @@ install:
   # Qt5
   - sudo apt-get install -qq libqt5webkit5-dev qtdeclarative5-dev
   - export QMAKE=/usr/lib/x86_64-linux-gnu/qt5/bin/qmake
-
-# Start virtual X server, from https://docs.travis-ci.com/user/gui-and-headless-browsers/
-before_script:
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
-  - sleep 3 # give xvfb some time to start
-
+  # install libsbml deps
+  - sudo apt-get install -y libxml2-dev zlib1g-dev libbz2-dev
+  # install libsbml experimental branch
+  - wget 'https://sourceforge.net/projects/sbml/files/libsbml/5.18.0/experimental/binaries/Linux/libSBML-5.18.0-packages-Linux-x64.deb'
+  - dpkg -i libSBML-5.18.0-packages-Linux-x64.deb
 script: 
+  # Start virtual X server, from https://docs.travis-ci.com/user/gui-and-headless-browsers/
+  - xvfb-run --server-args="-screen 0 1024x768x24" make test
   # Build test
   #- qmake -qt=qt5 travis_qmake_gcc_cpp14_qt5_qtest_test.pro
   #- make
