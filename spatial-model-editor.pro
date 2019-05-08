@@ -43,4 +43,4 @@ win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libsbml/release/ -lsbml-st
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libsbml/debug/ -lsbml-static
 else:unix: LIBS += -L$$PWD/libsbml -lsbml-static -lxml2 -lz -lbz2
 
-INCLUDEPATH += L$$PWD/libsbml/inc
+INCLUDEPATH += $$PWD/libsbml/inc
