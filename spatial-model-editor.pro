@@ -39,8 +39,8 @@ qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/libsbml -lsbml-static
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/libsbml -lsbml-static
+win32: LIBS += -L$$PWD/libsbml/win32 -lsbml-static
+else:win64: LIBS += -L$$PWD/libsbml/win64 -lsbml-static
 else:unix: LIBS += -L$$PWD/libsbml -lsbml-static -lxml2 -lz -lbz2
 
 INCLUDEPATH += $$PWD/libsbml
