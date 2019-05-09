@@ -1,11 +1,11 @@
-version: '{build}'
+#version: '{build}'
 
-image:
-  - Visual Studio 2017
+#image:
+#  - Visual Studio 2017
 
 # x86, x64
-platform:
-  - x64
+#platform:
+#  - x64
 
 install:
   - set QTDIR=C:\Qt\5.12.2\mingw73_64
@@ -20,4 +20,4 @@ before_build:
 
 build_script:
   - qmake spatial-model-editor.pro
-  - mingw32-make
+  - mingw64-make
