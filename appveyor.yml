@@ -6,7 +6,7 @@ install:
 before_build:
   - appveyor DownloadFile https://sourceforge.net/projects/sbml/files/libsbml/5.18.0/experimental/binaries/Windows/libSBML-5.18.0-win32.zip
   - 7z x libSBML-5.18.0-win32.zip
-  - move libSBML-5.18.0-win32\lib\libsbml-static.lib libsbml\win32\libsbml-static.lib
+  - move libSBML-5.18.0-win32\lib\libsbml-static.lib libsbml\win32\libsbml-static.a
   - dir libsbml
   - dir libsbml\win32
   - dir libsbml\win64
