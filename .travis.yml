@@ -14,7 +14,7 @@ compiler:
 
 env:
   # Tip: curl -s 'https://api.launchpad.net/1.0/~beineri/ppas?ws.size=200' | jq -r '"beineri/" + .entries[].name' | sed -nEe 's/.*opt-qt(([0-9]{2})[0-9]?|-([0-9])+\.([0-9]+)\.([0-9]+))-xenial/  - QT=\2\3\4 PPA=&/p'
-  - QT=512 PPA=beineri/opt-qt-5.12.1-xenial
+  - QT=5
 
 before_install:
   - '[[ "$TRAVIS_OS_NAME" != linux || -z "$PPA" ]] || sudo add-apt-repository -y ppa:$PPA'
@@ -22,10 +22,12 @@ before_install:
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew update'
 
 install:
-  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install libqt5webkit5-dev qtdeclarative5-dev libxml2-dev zlib1g-dev libbz2-dev'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install cppcheck'
+  - '[[ "$TRAVIS_OS_NAME" != linux || "$PPA" != */opt-* ]] || sudo apt-get -qy install qt${QT}base qt${QT}xmlpatterns libgl1-mesa-dev'
   - '[[ "$TRAVIS_OS_NAME" != linux || "$PPA" == */opt-* ]] || sudo apt-get -qy install qt5-qmake qtbase5-dev libqt5xmlpatterns5-dev'
   # Pin OSX to Qt 5.12.1 for now, since the Qt 5.12.2 Brew formula (#9980171) has an odd build issue.
-  - '[ "$TRAVIS_OS_NAME" != osx ] || brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/bc03ca8ad8f74be348801c99b78905926d91abc1/Formula/qt.rb'
+  #- '[ "$TRAVIS_OS_NAME" != osx ] || brew install cppcheck qt'
+  - '[ "$TRAVIS_OS_NAME" != osx ] || brew install cppcheck https://raw.githubusercontent.com/Homebrew/homebrew-core/bc03ca8ad8f74be348801c99b78905926d91abc1/Formula/qt.rb'
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt'
 
 before_script:
