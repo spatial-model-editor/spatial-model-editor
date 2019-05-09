@@ -3,9 +3,9 @@ version: '{build}'
 image:
   - Visual Studio 2017
 
-environment:
 # x86, x64
-  platform: amd_64
+platform:
+  - x64
 
 install:
   - set QTDIR=C:\Qt\5.12.2\mingw73_64
