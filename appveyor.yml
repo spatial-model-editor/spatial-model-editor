@@ -1,12 +1,3 @@
-#version: '{build}'
-
-#image:
-#  - Visual Studio 2017
-
-# x86, x64
-#platform:
-#  - x64
-
 install:
   - set QTDIR=C:\Qt\5.12.2\mingw73_32
   - set PATH=%PATH%;%QTDIR%\bin;C:\MinGW\bin
