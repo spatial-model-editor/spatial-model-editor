@@ -4,15 +4,15 @@ language: cpp
 
 os:
   - linux
+    dist: xenial
   - osx
+    osx_image: xcode9.4
 
 matrix:
   allow_failures:
     # QT on mac apparently doesn't support gcc
     - os: osx
       compiler: gcc
-
-dist: xenial
 
 compiler:
   - clang
@@ -58,7 +58,12 @@ before_script:
 
 script:
   - make
+  - ls
   - '[ "$TRAVIS_OS_NAME" != osx ] || make -C "pkg/osx" dmg'
+
+  - '[ "$TRAVIS_OS_NAME" != osx ] || otool -L spatial-model-editor'
+  - '[ "$TRAVIS_OS_NAME " != linux ] || ldd spatial-model-editor'
+
   # Run test (TODO)
   # Start virtual X server, from https://docs.travis-ci.com/user/gui-and-headless-browsers/
   # - xvfb-run --server-args="-screen 0 1024x768x24" make test
