@@ -31,9 +31,9 @@ install:
 #  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install cppcheck'
 #  - '[[ "$TRAVIS_OS_NAME" != linux || "$PPA" != */opt-* ]] || sudo apt-get -qy install qt${QT}base qt${QT}xmlpatterns libgl1-mesa-dev'
   - '[[ "$TRAVIS_OS_NAME" != linux || "$PPA" == */opt-* ]] || sudo apt-get -qy install qt5-qmake qtbase5-dev libqt5xmlpatterns5-dev'
+  - '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt'
   # Pin OSX to Qt 5.12.1 for now, since the Qt 5.12.2 Brew formula (#9980171) has an odd build issue.
-  #- '[ "$TRAVIS_OS_NAME" != osx ] || brew install wget qt'
-  - '[ "$TRAVIS_OS_NAME" != osx ] || brew install wget https://raw.githubusercontent.com/Homebrew/homebrew-core/bc03ca8ad8f74be348801c99b78905926d91abc1/Formula/qt.rb'
+  #- '[ "$TRAVIS_OS_NAME" != osx ] || brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/bc03ca8ad8f74be348801c99b78905926d91abc1/Formula/qt.rb'
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt'
 
 before_script:
