@@ -41,6 +41,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 win32: LIBS += -L$$PWD/libsbml/win32 -lsbml-static
 else:win64: LIBS += -L$$PWD/libsbml/win64 -lsbml-static
-else:unix: LIBS += -L$$PWD/libsbml -lsbml-static -lxml2 -lz -lbz2
+else:unix: LIBS += -L$$PWD/libsbml/lib -lsbml-static -lxml2 -lz -lbz2
 
-INCLUDEPATH += $$PWD/libsbml
+INCLUDEPATH += $$PWD/libsbml/include
