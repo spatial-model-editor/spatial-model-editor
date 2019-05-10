@@ -32,14 +32,17 @@ install:
 #  - '[[ "$TRAVIS_OS_NAME" != linux || "$PPA" != */opt-* ]] || sudo apt-get -qy install qt${QT}base qt${QT}xmlpatterns libgl1-mesa-dev'
   - '[[ "$TRAVIS_OS_NAME" != linux || "$PPA" == */opt-* ]] || sudo apt-get -qy install qt5-qmake qtbase5-dev libqt5xmlpatterns5-dev'
   # Pin OSX to Qt 5.12.1 for now, since the Qt 5.12.2 Brew formula (#9980171) has an odd build issue.
-  #- '[ "$TRAVIS_OS_NAME" != osx ] || brew install cppcheck qt'
-  - '[ "$TRAVIS_OS_NAME" != osx ] || brew install cppcheck https://raw.githubusercontent.com/Homebrew/homebrew-core/bc03ca8ad8f74be348801c99b78905926d91abc1/Formula/qt.rb'
+  #- '[ "$TRAVIS_OS_NAME" != osx ] || brew install wget qt'
+  - '[ "$TRAVIS_OS_NAME" != osx ] || brew install wget https://raw.githubusercontent.com/Homebrew/homebrew-core/bc03ca8ad8f74be348801c99b78905926d91abc1/Formula/qt.rb'
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt'
 
 before_script:
   # download statically linked libSBML library
-  - '[ "$TRAVIS_OS_NAME" != linux ] || wget https://github.com/lkeegan/libsbml-static-linux/releases/download/26045-tgz/libsbml-static.tgz'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || tar xzvf libsbml-static.tgz -C libsbml'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || wget https://github.com/lkeegan/libsbml-static-linux/releases/latest/download/libsbml-static-linux.tgz'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || tar xzvf libsbml-static-linux.tgz -C libsbml'
+  - '[ "$TRAVIS_OS_NAME" != osx ] || wget https://github.com/lkeegan/libsbml-static-osx/releases/latest/download/libsbml-static-osx.tgz'
+  - '[ "$TRAVIS_OS_NAME" != osx ] || tar xzvf libsbml-static-osx.tgz -C libsbml'
+  - ls libsbml
   - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != clang++ ]] || export QMAKESPEC=linux-clang'
   - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
   - '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
@@ -49,7 +52,7 @@ before_script:
   - qmake -v
   - mkdir build
   - cd build
-  - qmake ../spatial-model-editor.pro
+  - qmake -Wall ../spatial-model-editor.pro
 
   #- qmake -o "$TRAVIS_BUILD_DIR-build" -r -Wall -Wlogic -Wparser CONFIG+=debug_and_release "$TRAVIS_BUILD_DIR"
 
