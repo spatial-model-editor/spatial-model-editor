@@ -18,9 +18,15 @@ The end goal is to have a GUI that can setup and then simulate a spatial model, 
 
 ## CI
 
-When the code is changed, it is automatically compiled and tested:
+When the code is changed, it is automatically compiled and tested on each supported OS:
 
-  - linux & macos(todo): [![Build Status](https://travis-ci.org/lkeegan/spatial-model-editor.svg?branch=master)](https://travis-ci.org/lkeegan/spatial-model-editor)
-  - windows: [![Build status](https://ci.appveyor.com/api/projects/status/0m87yyaalrrj5ndn?svg=true)](https://ci.appveyor.com/project/lkeegan/spatial-model-editor)
+  - linux & osx: https://travis-ci.org/lkeegan/spatial-model-editor
+  - windows: https://ci.appveyor.com/project/lkeegan/spatial-model-editor
 
-Ideally the compiled releases will also be generated in a similar way.
+Ideally the compiled binary releases will also be generated in a similar way.
+
+## Dependencies
+
+  - Qt5
+  - libSBML (including spatial extension)
+  - ...
