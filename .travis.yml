@@ -10,7 +10,7 @@ matrix:
   allow_failures:
     # QT on mac apparently doesn't support gcc
     - os: osx
-    compiler: gcc
+      compiler: gcc
 
 dist: xenial
 
