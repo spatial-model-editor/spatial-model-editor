@@ -39,7 +39,7 @@ install:
 before_script:
   # download statically linked libSBML library
   - '[ "$TRAVIS_OS_NAME" != linux ] || wget https://github.com/lkeegan/libsbml-static-linux/releases/download/26045-tgz/libsbml-static.tgz'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || tar xzvf libsbml-static.tgz libsbml/.'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || tar xzvf libsbml-static.tgz -C libsbml'
   - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != clang++ ]] || export QMAKESPEC=linux-clang'
   - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
   - '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
