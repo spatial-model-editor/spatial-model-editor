@@ -23,11 +23,13 @@ void MainWindow::on_action_About_triggered()
     msgBox.setWindowTitle("About");
     QString versions("Spatial Model Editor\n\nIncluded libraries:\n\nlibSBML:\t");
     versions.append(libsbml::getLibSBMLDottedVersion());
-    for(const auto& dep : {"libxml", "bzip2", "zip"}){
-        versions.append("\n");
-        versions.append(dep);
-        versions.append(":\t");
-        versions.append(libsbml::getLibSBMLDependencyVersionOf(dep));
+    for(const auto& dep : {"expat", "libxml", "xerces-c", "bzip2", "zip"}){
+        if(libsbml::isLibSBMLCompiledWith(dep) != 0){
+            versions.append("\n");
+            versions.append(dep);
+            versions.append(":\t");
+            versions.append(libsbml::getLibSBMLDependencyVersionOf(dep));
+        }
     }
     msgBox.setText(versions);
     msgBox.exec();
