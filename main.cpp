@@ -16,9 +16,8 @@ int main(int argc, char *argv[])
     MainWindow w;
     w.show();
 
+    // some code that requires the libSBML spatial extension to compile:
     SpatialPkgNamespaces sbmlns(3,1,1);
-
-    // create the L3V1 document with spatial package
     SBMLDocument document(&sbmlns);
 
     return a.exec();

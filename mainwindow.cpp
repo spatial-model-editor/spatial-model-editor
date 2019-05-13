@@ -1,3 +1,4 @@
+#include <QErrorMessage>
 #include <QMessageBox>
 #include <QString>
 #include <QFileDialog>
@@ -45,4 +46,17 @@ void MainWindow::on_actionE_xit_triggered()
 void MainWindow::on_actionOpen_SBML_file_triggered()
 {
     QString filename = QFileDialog::getOpenFileName();
+    libsbml::SBMLDocument *doc = libsbml::readSBMLFromFile(qPrintable(filename));
+    if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) > 0)
+    {
+        QMessageBox msgBox;
+        msgBox.setText("Error: Invalid SBML file");
+        msgBox.exec();
+        // doc->printErrors(stream)
+    }
+    else
+    {
+        ui->textBrowser->setText(libsbml::writeSBMLToString(doc));
+    }
+
 }
