@@ -54,7 +54,7 @@ script:
   - make
   - ls
   - '[ "$TRAVIS_OS_NAME" != osx ] || otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor'
-  - '[ "$TRAVIS_OS_NAME " != linux ] || ldd spatial-model-editor'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || ldd spatial-model-editor'
 
   # Run test (TODO)
   # Start virtual X server, from https://docs.travis-ci.com/user/gui-and-headless-browsers/
