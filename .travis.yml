@@ -35,7 +35,7 @@ before_script:
 #  - '[ "$TRAVIS_OS_NAME" != linux ] || tar xzvf libsbml-static-linux.tgz -C libsbml'
 #  - '[ "$TRAVIS_OS_NAME" != osx ] || wget https://github.com/lkeegan/libsbml-static-osx/releases/latest/download/libsbml-static-osx.tgz'
 #  - '[ "$TRAVIS_OS_NAME" != osx ] || tar xzvf libsbml-static-osx.tgz -C libsbml'
-  - wget https://github.com/lkeegan/libsbml-static-$TRAVIS_OS_NAME/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz'
+  - wget "https://github.com/lkeegan/libsbml-static-$TRAVIS_OS_NAME/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
   - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz -C libsbml
   - ls libsbml
   - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != clang++ ]] || export QMAKESPEC=linux-clang'
