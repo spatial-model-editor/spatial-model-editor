@@ -53,9 +53,7 @@ before_script:
 script:
   - make
   - ls
-  - '[ "$TRAVIS_OS_NAME" != osx ] || make -C "pkg/osx" dmg'
-
-  - '[ "$TRAVIS_OS_NAME" != osx ] || otool -L spatial-model-editor'
+  - '[ "$TRAVIS_OS_NAME" != osx ] || otool -L spatial-model-editor.app'
   - '[ "$TRAVIS_OS_NAME " != linux ] || ldd spatial-model-editor'
 
   # Run test (TODO)
