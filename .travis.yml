@@ -2,20 +2,18 @@
 
 language: cpp
 
-env:
-  # Tip: curl -s 'https://api.launchpad.net/1.0/~beineri/ppas?ws.size=200' | jq -r '"beineri/" + .entries[].name' | sed -nEe 's/.*opt-qt(([0-9]{2})[0-9]?|-([0-9])+\.([0-9]+)\.([0-9]+))-xenial/  - QT=\2\3\4 PPA=&/p'
-  - QT=5
-
 matrix:
   include:
     # QT on mac apparently doesn't support gcc
-    - os : linux
+    - os: linux
       dist: xenial
       compiler: clang
-    - os : linux
+      services: xvfb
+    - os: linux
       dist: xenial
       compiler: gcc
-    - os : osx
+      services: xvfb
+    - os: osx
       osx_image: xcode9.4
       compiler: clang
 
@@ -25,27 +23,26 @@ before_install:
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew update'
 
 install:
-#  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install cppcheck'
 #  - '[[ "$TRAVIS_OS_NAME" != linux || "$PPA" != */opt-* ]] || sudo apt-get -qy install qt${QT}base qt${QT}xmlpatterns libgl1-mesa-dev'
-  - '[[ "$TRAVIS_OS_NAME" != linux || "$PPA" == */opt-* ]] || sudo apt-get -qy install qt5-qmake qtbase5-dev libqt5xmlpatterns5-dev'
+#  - '[[ "$TRAVIS_OS_NAME" != linux || "$PPA" == */opt-* ]] || sudo apt-get -qy install qt5-qmake qtbase5-dev libqt5xmlpatterns5-dev'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install qt5-qmake qtbase5-dev'
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt'
-  # Pin OSX to Qt 5.12.1 for now, since the Qt 5.12.2 Brew formula (#9980171) has an odd build issue.
-  #- '[ "$TRAVIS_OS_NAME" != osx ] || brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/bc03ca8ad8f74be348801c99b78905926d91abc1/Formula/qt.rb'
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt'
 
 before_script:
   # download statically linked libSBML library
-  - '[ "$TRAVIS_OS_NAME" != linux ] || wget https://github.com/lkeegan/libsbml-static-linux/releases/latest/download/libsbml-static-linux.tgz'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || tar xzvf libsbml-static-linux.tgz -C libsbml'
-  - '[ "$TRAVIS_OS_NAME" != osx ] || wget https://github.com/lkeegan/libsbml-static-osx/releases/latest/download/libsbml-static-osx.tgz'
-  - '[ "$TRAVIS_OS_NAME" != osx ] || tar xzvf libsbml-static-osx.tgz -C libsbml'
+#  - '[ "$TRAVIS_OS_NAME" != linux ] || wget https://github.com/lkeegan/libsbml-static-linux/releases/latest/download/libsbml-static-linux.tgz'
+#  - '[ "$TRAVIS_OS_NAME" != linux ] || tar xzvf libsbml-static-linux.tgz -C libsbml'
+#  - '[ "$TRAVIS_OS_NAME" != osx ] || wget https://github.com/lkeegan/libsbml-static-osx/releases/latest/download/libsbml-static-osx.tgz'
+#  - '[ "$TRAVIS_OS_NAME" != osx ] || tar xzvf libsbml-static-osx.tgz -C libsbml'
+  - wget https://github.com/lkeegan/libsbml-static-$TRAVIS_OS_NAME/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz'
+  - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz -C libsbml
   - ls libsbml
   - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != clang++ ]] || export QMAKESPEC=linux-clang'
   - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
   - '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
   - '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != g++     ]] || export QMAKESPEC=macx-g++'
-#  - '[[ "$TRAVIS_OS_NAME" != linux || "$PPA" != */opt-* ]] || . /opt/qt$QT/bin/qt$QT-env.sh'
-  - '[[ "$TRAVIS_OS_NAME" != linux || "$PPA" == */opt-* ]] || export QT_SELECT=qt5'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || export QT_SELECT=qt5'
   - qmake -v
   - mkdir build
   - cd build
@@ -64,9 +61,6 @@ script:
   # Run test (TODO)
   # Start virtual X server, from https://docs.travis-ci.com/user/gui-and-headless-browsers/
   # - xvfb-run --server-args="-screen 0 1024x768x24" make test
-
-services:
-  - xvfb
 
 notifications:
   email: false
