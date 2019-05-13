@@ -14,17 +14,17 @@ env:
   # Tip: curl -s 'https://api.launchpad.net/1.0/~beineri/ppas?ws.size=200' | jq -r '"beineri/" + .entries[].name' | sed -nEe 's/.*opt-qt(([0-9]{2})[0-9]?|-([0-9])+\.([0-9]+)\.([0-9]+))-xenial/  - QT=\2\3\4 PPA=&/p'
   - QT=5
 
-dist: xenial
-osx_image: xcode9.4
+#dist: xenial
+#osx_image: xcode9.4
 
 matrix:
   include:
     # QT on mac apparently doesn't support gcc
-    - ENV os=linux dist=xenial
+    - env: os=linux dist=xenial
       compiler: clang
-    - ENV os=linux dist=xenial
+    - env: os=linux dist=xenial
       compiler: gcc
-    - ENV os=osx osx_image=xcode9.4
+    - env: os=osx osx_image=xcode9.4
       compiler: clang
 
 before_install:
