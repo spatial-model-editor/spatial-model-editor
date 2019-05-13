@@ -1,10 +1,12 @@
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
 #include <QMessageBox>
 #include <QString>
+#include <QFileDialog>
+
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+
 #include <sbml/SBMLTypes.h>
-#include<vector>
-#include<string>
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -33,4 +35,14 @@ void MainWindow::on_action_About_triggered()
     }
     msgBox.setText(versions);
     msgBox.exec();
+}
+
+void MainWindow::on_actionE_xit_triggered()
+{
+    QApplication::quit();
+}
+
+void MainWindow::on_actionOpen_SBML_file_triggered()
+{
+    QString filename = QFileDialog::getOpenFileName();
 }
