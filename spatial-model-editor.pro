@@ -35,3 +35,6 @@ else:win64: LIBS += -L$$PWD/libsbml/win64 -lsbml-static
 else:unix: LIBS += $$PWD/libsbml/lib/libsbml-static.a $$PWD/libsbml/lib/libexpat.a
 
 INCLUDEPATH += $$PWD/libsbml/include
+
+# to avoid linker errors with libexpat.a (which is not compiled with -fPIC)
+QMAKE_LFLAGS = -no-pie

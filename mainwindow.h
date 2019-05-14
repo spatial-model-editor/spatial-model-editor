@@ -20,7 +20,9 @@ private slots:
 
     void on_actionE_xit_triggered();
 
-    void on_actionOpen_SBML_file_triggered();
+    void on_action_Open_SBML_file_triggered();
+
+    void on_action_Save_SBML_file_triggered();
 
 private:
     Ui::MainWindow *ui;

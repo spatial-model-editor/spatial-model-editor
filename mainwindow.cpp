@@ -43,7 +43,7 @@ void MainWindow::on_actionE_xit_triggered()
     QApplication::quit();
 }
 
-void MainWindow::on_actionOpen_SBML_file_triggered()
+void MainWindow::on_action_Open_SBML_file_triggered()
 {
     QString filename = QFileDialog::getOpenFileName();
     libsbml::SBMLDocument *doc = libsbml::readSBMLFromFile(qPrintable(filename));
@@ -59,4 +59,11 @@ void MainWindow::on_actionOpen_SBML_file_triggered()
         ui->textBrowser->setText(libsbml::writeSBMLToString(doc));
     }
 
+}
+
+void MainWindow::on_action_Save_SBML_file_triggered()
+{
+    QMessageBox msgBox;
+    msgBox.setText("todo");
+    msgBox.exec();
 }
