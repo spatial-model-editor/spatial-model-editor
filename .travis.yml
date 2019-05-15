@@ -1,69 +1,54 @@
-# based on https://github.com/pcolby/bipolar/blob/master/.travis.yml
-
 language: cpp
-
 matrix:
   include:
-    - os: linux
-      dist: xenial
-      compiler: clang
-      services: xvfb
-    - os: linux
-      dist: xenial
-      compiler: gcc
-      services: xvfb
-    - os: osx
-      osx_image: xcode10.2
-      compiler: clang
-
+  - os: linux
+    dist: xenial
+    compiler: gcc
+    services: xvfb
+    env: DEPLOY_FILE=spatial-model-editor
+  - os: osx
+    osx_image: xcode10.2
+    compiler: clang
+    env: DEPLOY_FILE=spatial-model-editor.dmg
 before_install:
-  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy update'
-  - '[ "$TRAVIS_OS_NAME" != osx ] || brew update'
-
+- '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy update'
+- '[ "$TRAVIS_OS_NAME" != osx ] || brew update'
 install:
-#  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install qt5-qmake qtbase5-dev'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install libxkbcommon-dev' # maybe remove this dep? see -qt-xkbcommon-x11
-  - '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt'
-  - '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt'
-
+- '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install libxkbcommon-dev'
+- '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt'
+- '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt'
 before_script:
-  # download statically linked Qt5 library for linux
-  - '[ "$TRAVIS_OS_NAME" != linux ] || wget "https://github.com/lkeegan/qt5-static-linux/releases/latest/download/qt5-static-linux.tgz"'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo tar xzvf qt5-static-linux.tgz -C /'
-
-  # download statically linked libSBML library
-  - wget "https://github.com/lkeegan/libsbml-static-$TRAVIS_OS_NAME/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
-  - mkdir -p libsbml
-  - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz -C libsbml
-  - ls libsbml  
-
-  - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != clang++ ]] || export QMAKESPEC=linux-clang'
-  - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
-  - '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
-#  - '[ "$TRAVIS_OS_NAME" != linux ] || export QT_SELECT=qt5'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || export PATH=/opt/qt5/bin:$PATH'
-  - qmake -v
-  - '[ "$TRAVIS_OS_NAME" != osx ] || xcrun -sdk macosx --show-sdk-path'
-  - mkdir build
-  - cd build
-  - qmake -Wall -config release ../spatial-model-editor.pro
-
-  #- qmake -o "$TRAVIS_BUILD_DIR-build" -r -Wall -Wlogic -Wparser CONFIG+=debug_and_release "$TRAVIS_BUILD_DIR"
-
+- '[ "$TRAVIS_OS_NAME" != linux ] || wget "https://github.com/lkeegan/qt5-static-linux/releases/latest/download/qt5-static-linux.tgz"'
+- '[ "$TRAVIS_OS_NAME" != linux ] || sudo tar xzvf qt5-static-linux.tgz -C /'
+- wget "https://github.com/lkeegan/libsbml-static-$TRAVIS_OS_NAME/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
+- mkdir -p libsbml
+- tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz -C libsbml
+- ls libsbml
+- '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != clang++ ]] || export QMAKESPEC=linux-clang'
+- '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
+- '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
+- '[ "$TRAVIS_OS_NAME" != linux ] || export PATH=/opt/qt5/bin:$PATH'
+- qmake -v
+- '[ "$TRAVIS_OS_NAME" != osx ] || xcrun -sdk macosx --show-sdk-path'
+- mkdir build
+- cd build
+- qmake -Wall -config release ../spatial-model-editor.pro
 script:
-  - make
-  - ls
-  - '[ "$TRAVIS_OS_NAME" != osx ] || otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor'
-  - '[ "$TRAVIS_OS_NAME" != osx ] || macdeployqt spatial-model-editor.app -dmg'
-  - ls
-
-  - '[ "$TRAVIS_OS_NAME" != linux ] || ldd spatial-model-editor'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || du -sh spatial-model-editor'
-
-  # Run test (TODO)
-  # Start virtual X server, from https://docs.travis-ci.com/user/gui-and-headless-browsers/
-  # - xvfb-run --server-args="-screen 0 1024x768x24" make test
-
+- make
+- '[ "$TRAVIS_OS_NAME" != osx ] || macdeployqt spatial-model-editor.app -dmg'
+- ls
+- '[ "$TRAVIS_OS_NAME" != osx ] || otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor'
+- '[ "$TRAVIS_OS_NAME" != linux ] || ldd spatial-model-editor'
+- '[ "$TRAVIS_OS_NAME" != linux ] || du -sh spatial-model-editor'
 notifications:
   email: false
-
+deploy:
+  provider: releases
+  api_key:
+    secure: E0WtptZea2n40eN+FBYZ2XYv/pjKUjVFZavl8BTVYhidzXYuT/DvhoehPVauJRy/t5QLMtmyd5ww9dhYkIcNcpAc1INrUlYG274D8xgXwbgsftmFbMqdrKR9f/qkynP0r6LCd1p0Tuhxxf37OcTYVEOjbvV+KsTzpWHtS9AqZGvMfv/rpI4r/Zu/LfGBs2T7Rr8Mlfy5YBI2L7lGka3ziTIic01pKDfjHJQ2xD2N366mEqcpB0vjF8c9b+qIUbQ8g8ybLoMfKM6ZSvcpz2NmLQK8l8gzzTN/k1PI2DJxmzi+9G031RXLAXvbR8I8NEQlZfsicepHk0m13EI7x5/TIGaa2ngSgX1W7oAL0IAkJFpcWcN5RQOgowCBAB/UnHCX8EgnBAiD8eTlc4DUC2WY84Dr3EcdhLg0bEX/Ky4mDAxt0QgABG0hEU3kE6USsUvp7IZmnCEdu8e+F/HRmvSUqECI9FvjmpHdBHwIv6anVA2pndN/ZGn4+4BWbo6IwycAh0FPAnvvs6guxnOqQW/eMRgBI3y4grzEYP/bPzlL1W6q42r6fwvh45LtcgC+joAoJCL3I51QcZ1joMY/OShSaKi3MnokImmb/GPRvebe3hDGGSsEAarrmIRb0zCMYDMdHzA+pqeojGZf6SCfIculmeE1MO2t/DqumxQRxTGx+8k=
+  file: $DEPLOY_FILE
+  skip_cleanup: true
+  on:
+    repo: lkeegan/spatial-model-editor
+    tag: true
+    all_branches: true
