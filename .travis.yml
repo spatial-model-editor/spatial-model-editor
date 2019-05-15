@@ -40,7 +40,7 @@ before_script:
   - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
   - '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
 #  - '[ "$TRAVIS_OS_NAME" != linux ] || export QT_SELECT=qt5'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || export PATH=opt/qt-5.12.3/bin:$PATH'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || export PATH=/opt/qt-5.12.3/bin:$PATH'
   - qmake -v
   - '[ "$TRAVIS_OS_NAME" != osx ] || xcrun -sdk macosx --show-sdk-path'
   - mkdir build
