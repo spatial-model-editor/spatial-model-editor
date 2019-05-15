@@ -17,11 +17,12 @@ matrix:
       compiler: clang
 
 before_install:
-#  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy update'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy update'
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew update'
 
 install:
 #  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install qt5-qmake qtbase5-dev'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || libxkbcommon-dev' # maybe remove this dep? see https://doc.qt.io/qt-5.11/qtgui-attribution-xkbcommon.html
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt'
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt'
 
