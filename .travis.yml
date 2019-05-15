@@ -17,24 +17,30 @@ matrix:
       compiler: clang
 
 before_install:
-  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy update'
+#  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy update'
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew update'
 
 install:
-  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install qt5-qmake qtbase5-dev'
+#  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install qt5-qmake qtbase5-dev'
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt'
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt'
 
 before_script:
+  # download statically linked Qt5 library
+  - '[ "$TRAVIS_OS_NAME" != linux ] || wget "https://github.com/lkeegan/qt5-static-linux/releases/latest/download/qt5-static-linux.tgz"'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo tar xzvf qt5-static-linux.tgz -C /'
+
   # download statically linked libSBML library
   - wget "https://github.com/lkeegan/libsbml-static-$TRAVIS_OS_NAME/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
   - mkdir -p libsbml
   - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz -C libsbml
-  - ls libsbml
+  - ls libsbml  
+
   - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != clang++ ]] || export QMAKESPEC=linux-clang'
   - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
   - '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || export QT_SELECT=qt5'
+#  - '[ "$TRAVIS_OS_NAME" != linux ] || export QT_SELECT=qt5'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || export PATH=opt/qt-5.12.3/bin:$PATH'
   - qmake -v
   - '[ "$TRAVIS_OS_NAME" != osx ] || xcrun -sdk macosx --show-sdk-path'
   - mkdir build
