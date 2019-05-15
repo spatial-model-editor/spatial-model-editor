@@ -2,7 +2,7 @@ language: cpp
 matrix:
   include:
   - os: linux
-    dist: xenial
+    dist: trusty
     compiler: gcc
     services: xvfb
     env: DEPLOY_FILE=spatial-model-editor
@@ -24,9 +24,6 @@ before_script:
 - mkdir -p libsbml
 - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz -C libsbml
 - ls libsbml
-- '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != clang++ ]] || export QMAKESPEC=linux-clang'
-- '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
-- '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
 - '[ "$TRAVIS_OS_NAME" != linux ] || export PATH=/opt/qt5/bin:$PATH'
 - qmake -v
 - '[ "$TRAVIS_OS_NAME" != osx ] || xcrun -sdk macosx --show-sdk-path'
@@ -38,6 +35,7 @@ script:
 - '[ "$TRAVIS_OS_NAME" != osx ] || macdeployqt spatial-model-editor.app -dmg'
 - ls
 - '[ "$TRAVIS_OS_NAME" != osx ] || otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor'
+- '[ "$TRAVIS_OS_NAME" != linux ] || chmod +x spatial-model-editor'
 - '[ "$TRAVIS_OS_NAME" != linux ] || ldd spatial-model-editor'
 - '[ "$TRAVIS_OS_NAME" != linux ] || du -sh spatial-model-editor'
 notifications:
@@ -50,5 +48,6 @@ deploy:
   skip_cleanup: true
   on:
     repo: lkeegan/spatial-model-editor
-    tag: true
+    overwrite: true
+    tags: true
     all_branches: true
