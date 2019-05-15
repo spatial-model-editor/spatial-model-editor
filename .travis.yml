@@ -17,16 +17,17 @@ matrix:
       compiler: clang
 
 before_install:
-#  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy update'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy update'
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew update'
 
 install:
 #  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install qt5-qmake qtbase5-dev'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install libxkbcommon-dev' # maybe remove this dep? see -qt-xkbcommon-x11
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt'
   - '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt'
 
 before_script:
-  # download statically linked Qt5 library
+  # download statically linked Qt5 library for linux
   - '[ "$TRAVIS_OS_NAME" != linux ] || wget "https://github.com/lkeegan/qt5-static-linux/releases/latest/download/qt5-static-linux.tgz"'
   - '[ "$TRAVIS_OS_NAME" != linux ] || sudo tar xzvf qt5-static-linux.tgz -C /'
 
@@ -40,7 +41,7 @@ before_script:
   - '[[ "$TRAVIS_OS_NAME" != linux || "$CXX" != g++     ]] || export QMAKESPEC=linux-g++'
   - '[[ "$TRAVIS_OS_NAME" != osx   || "$CXX" != clang++ ]] || export QMAKESPEC=macx-clang'
 #  - '[ "$TRAVIS_OS_NAME" != linux ] || export QT_SELECT=qt5'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || export PATH=opt/qt-5.12.3/bin:$PATH'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || export PATH=/opt/qt5/bin:$PATH'
   - qmake -v
   - '[ "$TRAVIS_OS_NAME" != osx ] || xcrun -sdk macosx --show-sdk-path'
   - mkdir build
@@ -57,6 +58,7 @@ script:
   - ls
 
   - '[ "$TRAVIS_OS_NAME" != linux ] || ldd spatial-model-editor'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || du -sh spatial-model-editor'
 
   # Run test (TODO)
   # Start virtual X server, from https://docs.travis-ci.com/user/gui-and-headless-browsers/
