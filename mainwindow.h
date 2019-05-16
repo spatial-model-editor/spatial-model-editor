@@ -24,6 +24,8 @@ private slots:
 
     void on_action_Save_SBML_file_triggered();
 
+    void on_actionAbout_Qt_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

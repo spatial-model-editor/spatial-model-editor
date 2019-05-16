@@ -11,33 +11,36 @@ matrix:
     compiler: clang
     env: DEPLOY_FILE=spatial-model-editor.dmg
 before_install:
-- '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy update'
-- '[ "$TRAVIS_OS_NAME" != osx ] || brew update'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy update'
+  #- '[ "$TRAVIS_OS_NAME" != osx ] || brew update'
 install:
-- '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install libxkbcommon-dev'
-- '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt'
-- '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install libxkbcommon-dev'
+  #- '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt'
+  #- '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt'
 before_script:
-- '[ "$TRAVIS_OS_NAME" != linux ] || wget "https://github.com/lkeegan/qt5-static-linux/releases/latest/download/qt5-static-linux.tgz"'
-- '[ "$TRAVIS_OS_NAME" != linux ] || sudo tar xzvf qt5-static-linux.tgz -C /'
-- wget "https://github.com/lkeegan/libsbml-static-$TRAVIS_OS_NAME/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
-- mkdir -p libsbml
-- tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz -C libsbml
-- ls libsbml
-- '[ "$TRAVIS_OS_NAME" != linux ] || export PATH=/opt/qt5/bin:$PATH'
-- qmake -v
-- '[ "$TRAVIS_OS_NAME" != osx ] || xcrun -sdk macosx --show-sdk-path'
-- mkdir build
-- cd build
-- qmake -Wall -config release ../spatial-model-editor.pro
+  # install static Qt5 libraries
+  - wget "https://github.com/lkeegan/qt5-static-$TRAVIS_OS_NAME/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"'
+  - sudo tar xzvf qt5-static-$TRAVIS_OS_NAME.tgz -C /'
+  - wget "https://github.com/lkeegan/libsbml-static-$TRAVIS_OS_NAME/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
+  - mkdir -p libsbml
+  - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz -C libsbml
+  - ls libsbml
+  - export PATH=/opt/qt5/bin:$PATH'
+  - qmake -v
+  #- '[ "$TRAVIS_OS_NAME" != osx ] || xcrun -sdk macosx --show-sdk-path'
+  # run qmake to generate make file
+  - mkdir build
+  - cd build
+  - qmake -Wall -config release LIBS+= -dead_strip ../spatial-model-editor.pro
 script:
-- make
-- '[ "$TRAVIS_OS_NAME" != osx ] || macdeployqt spatial-model-editor.app -dmg'
-- ls
-- '[ "$TRAVIS_OS_NAME" != osx ] || otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor'
-- '[ "$TRAVIS_OS_NAME" != linux ] || chmod +x spatial-model-editor'
-- '[ "$TRAVIS_OS_NAME" != linux ] || ldd spatial-model-editor'
-- '[ "$TRAVIS_OS_NAME" != linux ] || du -sh spatial-model-editor'
+  # compile executable
+  - make
+  - '[ "$TRAVIS_OS_NAME" != osx ] || macdeployqt spatial-model-editor.app -dmg'
+  - ls
+  - '[ "$TRAVIS_OS_NAME" != osx ] || otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || chmod +x spatial-model-editor'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || ldd spatial-model-editor'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || du -sh spatial-model-editor'
 notifications:
   email: false
 deploy:

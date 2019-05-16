@@ -29,7 +29,7 @@ Implementation details:
     - [ ] windows
   - generate standalone GUI executable
     - [x] linux: https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor
-    - [ ] osx
+    - [x] osx: https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg
     - [ ] windows
 
 ## WP1b

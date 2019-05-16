@@ -67,3 +67,8 @@ void MainWindow::on_action_Save_SBML_file_triggered()
     msgBox.setText("todo");
     msgBox.exec();
 }
+
+void MainWindow::on_actionAbout_Qt_triggered()
+{
+    QMessageBox::aboutQt(this);
+}
