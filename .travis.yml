@@ -31,7 +31,7 @@ before_script:
   # run qmake to generate make file
   - mkdir build
   - cd build
-  - qmake -Wall -config release LIBS+= -dead_strip ../spatial-model-editor.pro
+  - qmake -Wall -config release ../spatial-model-editor.pro
 script:
   # compile executable
   - make
