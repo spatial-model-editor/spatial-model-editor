@@ -25,7 +25,7 @@ before_script:
   - mkdir -p libsbml
   - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz -C libsbml
   - ls libsbml
-  - export PATH=/opt/qt5/bin:$PATH'
+  - export PATH=/opt/qt5/bin:$PATH
   - qmake -v
   #- '[ "$TRAVIS_OS_NAME" != osx ] || xcrun -sdk macosx --show-sdk-path'
   # run qmake to generate make file
