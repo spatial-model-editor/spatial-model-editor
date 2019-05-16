@@ -35,6 +35,7 @@ script:
 - '[ "$TRAVIS_OS_NAME" != osx ] || macdeployqt spatial-model-editor.app -dmg'
 - ls
 - '[ "$TRAVIS_OS_NAME" != osx ] || otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor'
+- '[ "$TRAVIS_OS_NAME" != linux ] || chmod +x spatial-model-editor'
 - '[ "$TRAVIS_OS_NAME" != linux ] || ldd spatial-model-editor'
 - '[ "$TRAVIS_OS_NAME" != linux ] || du -sh spatial-model-editor'
 notifications:
