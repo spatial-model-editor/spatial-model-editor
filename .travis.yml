@@ -19,8 +19,8 @@ install:
   #- '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt'
 before_script:
   # install static Qt5 libraries
-  - wget "https://github.com/lkeegan/qt5-static-$TRAVIS_OS_NAME/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"'
-  - sudo tar xzvf qt5-static-$TRAVIS_OS_NAME.tgz -C /'
+  - wget "https://github.com/lkeegan/qt5-static-$TRAVIS_OS_NAME/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"
+  - sudo tar xzvf qt5-static-$TRAVIS_OS_NAME.tgz -C /
   - wget "https://github.com/lkeegan/libsbml-static-$TRAVIS_OS_NAME/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
   - mkdir -p libsbml
   - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz -C libsbml
