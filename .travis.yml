@@ -2,7 +2,7 @@ language: cpp
 matrix:
   include:
   - os: linux
-    dist: xenial
+    dist: trusty
     compiler: gcc
     services: xvfb
     env: DEPLOY_FILE=spatial-model-editor
