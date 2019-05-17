@@ -1,6 +1,5 @@
 language: cpp
-env:
-  - QT5_INSTALL_PREFIX="/opt/qt5-static"
+env: QT5_INSTALL_PREFIX="/opt/qt5-static"
 matrix:
   include:
     # compile linux version on ubuntu 14.04
