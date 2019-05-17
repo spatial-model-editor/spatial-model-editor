@@ -67,4 +67,4 @@ deploy:
     overwrite: true
     tags: true
     all_branches: true
-    condition: env(DEPLOY_FILE) != ""
+    condition: $DEPLOY_FILE != ""
