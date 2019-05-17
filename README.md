@@ -1,4 +1,4 @@
-# spatial-model-editor [![Build Status](https://travis-ci.org/lkeegan/spatial-model-editor.svg?branch=master)](https://travis-ci.org/lkeegan/spatial-model-editor) [![Build status](https://ci.appveyor.com/api/projects/status/0m87yyaalrrj5ndn?svg=true)](https://ci.appveyor.com/project/lkeegan/spatial-model-editor)
+# spatial-model-editor [![Build Status](https://travis-ci.org/lkeegan/spatial-model-editor.svg?branch=master)](https://travis-ci.org/lkeegan/spatial-model-editor) [![Build status](https://ci.appveyor.com/api/projects/status/0m87yyaalrrj5ndn?svg=true)](https://ci.appveyor.com/project/lkeegan/spatial-model-editor) [![Build Status](https://dev.azure.com/liam0322/spatial-model-editor/_apis/build/status/lkeegan.spatial-model-editor?branchName=master)](https://dev.azure.com/liam0322/spatial-model-editor/_build/latest?definitionId=1&branchName=master)
 
 GUI spatial model editor prototype.
 
@@ -33,8 +33,6 @@ Implementation details:
     - [x] linux: [spatial-model-editor](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor)
     - [x] osx: [spatial-model-editor.dmg](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg)
     - [ ] windows
-
-Development workflow:
 
 ## WP1b
 Translate the spatial model to a system of PDEs:
