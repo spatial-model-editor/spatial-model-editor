@@ -13,10 +13,10 @@ matrix:
       compiler: clang
       env: DEPLOY_FILE=spatial-model-editor.dmg
 before_script:
-  # install pre-compiled static Qt5 libraries to /opt/qt5
+  # install pre-compiled Qt5 binaries & static libraries to /opt/qt5
   - wget "https://github.com/lkeegan/qt5-static-linux/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"
   - sudo tar xzvf qt5-static-$TRAVIS_OS_NAME.tgz -C /
-  # export path for qmake
+  # export path for Qt5 binaries
   - export PATH=/opt/qt5/bin:$PATH
   - qmake -v
   # download pre-compiled static libSBML library
@@ -34,8 +34,8 @@ script:
   # check dependencies of resulting executable
   - '[ "$TRAVIS_OS_NAME" != osx ] || otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor'
   - '[ "$TRAVIS_OS_NAME" != linux ] || ldd spatial-model-editor'
-  # for osx use macdeployqt to package as a .dmg
-  - '[ "$TRAVIS_OS_NAME" != osx ] || macdeployqt spatial-model-editor.app -dmg'
+  # for osx package app dir as a .dmg
+  - '[ "$TRAVIS_OS_NAME" != osx ] || hdiutil create spatial-model-editor -fs HFS+ -srcfolder spatial-model-editor.app'
 notifications:
   email: false
 deploy:
