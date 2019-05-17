@@ -4,10 +4,14 @@ env:
     - QT5_INSTALL_PREFIX="/opt/qt5-static"
 matrix:
   include:
-    # linux release build: gcc 4.8.4 on ubuntu 14.04
+    # linux release build: gcc 5.4.0 on ubuntu 16.04
     - os: linux
-      dist: trusty
+      dist: xenial
       compiler: gcc
+      addons:
+        apt:
+          packages:
+            #- libxkbcommon-dev
       env: DEPLOY_FILE="spatial-model-editor"
     # osx release build: xcode 9.4.1 [9F2000], macOS 10.13
     - os: osx
@@ -16,8 +20,12 @@ matrix:
       env: DEPLOY_FILE="spatial-model-editor.dmg"
     # other test builds
     - os: linux
-      dist: trusty
+      dist: xenial
       compiler: clang
+      addons:
+        apt:
+          packages:
+            #- libxkbcommon-dev
       services: xvfb
 
 before_script:
@@ -59,4 +67,4 @@ deploy:
     overwrite: true
     tags: true
     all_branches: true
-    condition: DEPLOY_FILE != ""
+    condition: env(DEPLOY_FILE) != ""
