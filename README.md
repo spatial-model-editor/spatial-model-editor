@@ -2,7 +2,7 @@
 
 GUI spatial model editor prototype.
 
-  - Download the latest Linux 64-bit executable here: [spatial-model-editor](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor)
+  - Download the latest executable here: [linux (64-bit)](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor), [mac](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg)
 
 The initial goal is a partial re-implementation of the spatial model editing part of https://github.com/fbergmann/edit-spatial using C++/Qt5, with all dependencies statically linked so that it can be supplied as a stand-alone compiled executable for linux, windows and osx.
 
@@ -23,9 +23,9 @@ Implementation details:
     - [x] linux: https://github.com/lkeegan/libsbml-static-linux
     - [x] osx: https://github.com/lkeegan/libsbml-static-osx
     - [ ] windows
-  - include statically linked QT libraries (or bundled Framework for osx)
+  - include statically linked QT libraries
     - [x] linux: https://github.com/lkeegan/qt5-static-linux
-    - [ ] osx
+    - [x] osx: https://github.com/lkeegan/qt5-static-linux
     - [ ] windows
   - generate standalone GUI executable
     - [x] linux: https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor
