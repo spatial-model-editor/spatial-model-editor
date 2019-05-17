@@ -11,7 +11,7 @@ matrix:
       addons:
         apt:
           packages:
-            #- libxkbcommon-dev
+            - libxkbcommon-dev
       env: DEPLOY_FILE="spatial-model-editor"
     # osx release build: xcode 9.4.1 [9F2000], macOS 10.13
     - os: osx
@@ -25,7 +25,7 @@ matrix:
       addons:
         apt:
           packages:
-            #- libxkbcommon-dev
+            - libxkbcommon-dev
       services: xvfb
 
 before_script:
