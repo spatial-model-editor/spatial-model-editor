@@ -1,26 +1,43 @@
 language: cpp
+env:
+  global:
+    - QT5_INSTALL_PREFIX="/opt/qt5-static"
 matrix:
   include:
-    # compile linux version on ubuntu 14.04
+    # linux release build: gcc 5.4.0 on ubuntu 16.04
     - os: linux
-      dist: trusty
-      compiler: clang
-      services: xvfb
-      env: DEPLOY_FILE=spatial-model-editor
-    # compile osx version on macOS 10.14, Xcode 10.2.1
+      dist: xenial
+      compiler: gcc
+      addons:
+        apt:
+          packages:
+            - libxkbcommon-dev
+      env: DEPLOY_FILE="spatial-model-editor"
+    # osx release build: xcode 9.4.1 [9F2000], macOS 10.13
     - os: osx
-      osx_image: xcode10.2
+      osx_image: xcode9.4
       compiler: clang
-      env: DEPLOY_FILE=spatial-model-editor.dmg
+      env: DEPLOY_FILE="spatial-model-editor.dmg"
+    # other test builds
+    - os: linux
+      dist: xenial
+      compiler: clang
+      addons:
+        apt:
+          packages:
+            - libxkbcommon-dev
+      services: xvfb
+
 before_script:
-  # install pre-compiled Qt5 binaries & static libraries to /opt/qt5
-  - wget "https://github.com/lkeegan/qt5-static-linux/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"
+  # install pre-compiled Qt5 binaries & static libraries to $QT5_INSTALL_PREFIX
+  # (note this has to match the install prefix hard coded in the pre-compiled library)
+  - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"
   - sudo tar xzvf qt5-static-$TRAVIS_OS_NAME.tgz -C /
   # export path for Qt5 binaries
-  - export PATH=/opt/qt5/bin:$PATH
+  - export PATH=$QT5_INSTALL_PREFIX/bin:$PATH
   - qmake -v
   # download pre-compiled static libSBML library
-  - wget "https://github.com/lkeegan/libsbml-static-$TRAVIS_OS_NAME/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
+  - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
   - mkdir -p libsbml
   - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz -C libsbml
   - ls libsbml
@@ -50,3 +67,4 @@ deploy:
     overwrite: true
     tags: true
     all_branches: true
+    condition: $DEPLOY_FILE != ""
