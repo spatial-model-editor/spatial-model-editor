@@ -4,17 +4,22 @@ env:
     - QT5_INSTALL_PREFIX="/opt/qt5-static"
 matrix:
   include:
-    # compile linux version on ubuntu 14.04
+    # linux release build: gcc 4.8.4 on ubuntu 14.04
     - os: linux
       dist: trusty
-      compiler: clang
-      services: xvfb
+      compiler: gcc
       env: DEPLOY_FILE="spatial-model-editor"
-    # compile osx version on macOS 10.14, Xcode 10.2.1
+    # osx release build: xcode 9.4.1 [9F2000], macOS 10.13
     - os: osx
       osx_image: xcode10.2
       compiler: clang
       env: DEPLOY_FILE="spatial-model-editor.dmg"
+    # other test builds
+    - os: linux
+      dist: xenial
+      compiler: clang
+      services: xvfb
+
 before_script:
   # install pre-compiled Qt5 binaries & static libraries to $QT5_INSTALL_PREFIX
   # (note this has to match the install prefix hard coded in the pre-compiled library)
@@ -54,3 +59,4 @@ deploy:
     overwrite: true
     tags: true
     all_branches: true
+    condition: DEPLOY_FILE != ""
