@@ -17,7 +17,7 @@ matrix:
     # other test builds
     - os: linux
       dist: xenial
-      compiler: clang
+      compiler: gcc
       services: xvfb
 
 before_script:
