@@ -30,8 +30,8 @@ Implementation details:
     - [ ] windows
     - see https://github.com/lkeegan/qt5-static
   - generate standalone GUI executable
-    - [x] linux: https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor
-    - [x] osx: https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg
+    - [x] linux: [spatial-model-editor](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor)
+    - [x] osx: [spatial-model-editor.dmg](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg)
     - [ ] windows
 
 Development workflow:
