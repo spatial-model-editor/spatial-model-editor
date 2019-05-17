@@ -11,13 +11,13 @@ matrix:
       env: DEPLOY_FILE="spatial-model-editor"
     # osx release build: xcode 9.4.1 [9F2000], macOS 10.13
     - os: osx
-      osx_image: xcode10.2
+      osx_image: xcode9.4
       compiler: clang
       env: DEPLOY_FILE="spatial-model-editor.dmg"
     # other test builds
     - os: linux
-      dist: xenial
-      compiler: gcc
+      dist: trusty
+      compiler: clang
       services: xvfb
 
 before_script:
