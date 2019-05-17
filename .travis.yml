@@ -1,4 +1,6 @@
 language: cpp
+env:
+  - QT5_INSTALL_PREFIX="/opt/qt5-static"
 matrix:
   include:
     # compile linux version on ubuntu 14.04
@@ -13,11 +15,12 @@ matrix:
       compiler: clang
       env: DEPLOY_FILE=spatial-model-editor.dmg
 before_script:
-  # install pre-compiled Qt5 binaries & static libraries to /opt/qt5
-  - wget "https://github.com/lkeegan/qt5-static-linux/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"
+  # install pre-compiled Qt5 binaries & static libraries to $QT5_INSTALL_PREFIX
+  # (note this has to match the install prefix hard coded in the pre-compiled library)
+  - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"
   - sudo tar xzvf qt5-static-$TRAVIS_OS_NAME.tgz -C /
   # export path for Qt5 binaries
-  - export PATH=/opt/qt5/bin:$PATH
+  - export PATH=$QT5_INSTALL_PREFIX/bin:$PATH
   - qmake -v
   # download pre-compiled static libSBML library
   - wget "https://github.com/lkeegan/libsbml-static-$TRAVIS_OS_NAME/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
