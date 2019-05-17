@@ -11,10 +11,10 @@ matrix:
     compiler: clang
     env: DEPLOY_FILE=spatial-model-editor.dmg
 before_install:
-  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy update'
+#  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy update'
   #- '[ "$TRAVIS_OS_NAME" != osx ] || brew update'
 install:
-  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install libxkbcommon-dev'
+#  - '[ "$TRAVIS_OS_NAME" != linux ] || sudo apt-get -qy install libxkbcommon-dev'
   #- '[ "$TRAVIS_OS_NAME" != osx ] || brew install qt'
   #- '[ "$TRAVIS_OS_NAME" != osx ] || brew link --force qt'
 before_script:
