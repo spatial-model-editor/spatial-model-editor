@@ -21,6 +21,7 @@ project = 'spatial-model-editor'
 copyright = '2019, Liam Keegan'
 author = 'Liam Keegan'
 
+master_doc = 'index'
 
 # -- General configuration ---------------------------------------------------
 
