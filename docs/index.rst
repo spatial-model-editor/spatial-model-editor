@@ -1,16 +1,18 @@
-.. spatial-model-editor documentation master file, created by
-   sphinx-quickstart on Sat May 18 14:23:58 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to spatial-model-editor's documentation!
-================================================
+spatial-model-editor documentation
+==================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
+Installation
+------------
 
+No installation required, just download and run the executable for your operating system:
+
+* linux: `spatial-model-editor <https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor>`_
+* osx: `spatial-model-editor <https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg>`_
+* windows: todo
 
 Indices and tables
 ==================
