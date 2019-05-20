@@ -19,7 +19,7 @@ before_build:
   - mkdir libsbml
   - cd libsbml
   - appveyor DownloadFile "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-win32.zip"
-  - 7x x libsbml-static-win32.zip
+  - 7z x libsbml-static-win32.zip
   - dir
   - cd ..
 
