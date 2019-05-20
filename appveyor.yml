@@ -1,16 +1,56 @@
+# windows release build: MinGW-w64 6.3.0 i686 on Windows Server 2012 R2
+image:
+  - Visual Studio 2015
 install:
-  - set QTDIR=C:\Qt\5.12.2\mingw73_32
-  - set PATH=%PATH%;%QTDIR%\bin;C:\MinGW\bin
+  - set PATH=%PATH%;C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin
 
-# download libsbml static library
 before_build:
-  - appveyor DownloadFile https://sourceforge.net/projects/sbml/files/libsbml/5.18.0/experimental/binaries/Windows/libSBML-5.18.0-win32.zip
-  - 7z x libSBML-5.18.0-win32.zip
-  - move libSBML-5.18.0-win32\lib\libsbml-static.lib libsbml\win32\sbml-static.lib
-  - dir libsbml
-  - dir libsbml\win32
-  - dir libsbml\win64
+  # note absolute paths currently hard coded in QT binaries
+  # TODO: add a qt.conf file to override this, see: https://doc.qt.io/qt-5/qt-conf.html#overriding-paths
+  # install pre-compiled Qt5 binaries & static libraries
+  - cd ..
+  - mkdir qt5-static
+  - cd qt5-static
+  - appveyor DownloadFile "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-win32.zip"
+  - 7z x qt5-static-win32.zip
+  - dir install
+  - cd ..\spatial-model-editor
+  - dir
+  # export path for Qt5 binaries
+  - set PATH=C:\projects\qt5-static\install\bin;%PATH%
+  - qmake -v
+  # download pre-compiled static libSBML library
+  - mkdir libsbml
+  - cd libsbml
+  - appveyor DownloadFile "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-win32.zip"
+  - 7z x libsbml-static-win32.zip
+  - dir
+  - cd ..
 
 build_script:
-  - qmake spatial-model-editor.pro
-  - mingw32-make
+  # run qmake to generate make file
+  - mkdir build
+  - cd build
+  - qmake -Wall -config release ../spatial-model-editor.pro
+  # compile executable
+  - mingw32-make -j2
+  # check dependencies of resulting executable
+  # todo
+  - dir release
+
+artifacts:
+  - path: build/release/spatial-model-editor.exe
+    name: spatial-model-editor
+
+deploy:
+  provider: GitHub
+  description: 'win32 release'
+  artifact: spatial-model-editor
+  auth_token:
+    secure: AzIgTar/Vk7S6hA8HAZAImacEIrbwmfrR6PJ+qHuAQHuLyPSAAcpI5rl/w6BumKp
+  draft: false
+  prerelease: false
+  force_update: true
+  on:
+    branch: master
+    APPVEYOR_REPO_TAG: true
