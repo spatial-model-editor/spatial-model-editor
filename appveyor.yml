@@ -35,14 +35,11 @@ build_script:
   # compile executable
   - mingw32-make -j2
   # check dependencies of resulting executable
-  #
-  - dir
-
-after_build:
-  - 7z a %APPVEYOR_BUILD_FOLDER%\qt5-static-win32.zip %QT5_INSTALL_PREFIX%
+  # todo
+  - dir release
 
 artifacts:
-  - path: build/spatial-model-editor.exe
+  - path: build/release/spatial-model-editor.exe
     name: spatial-model-editor
 
 deploy:
