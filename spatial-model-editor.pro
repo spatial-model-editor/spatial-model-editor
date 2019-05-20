@@ -32,6 +32,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 LIBS += $$PWD/libsbml/lib/libsbml-static.a $$PWD/libsbml/lib/libexpat.a
 
+win32: QMAKE_LFLAGS += -static-libgcc -static-libstdc++
+
 INCLUDEPATH += $$PWD/libsbml/include
 
 # to avoid linker errors with libexpat.a (which is not compiled with -fPIC)
