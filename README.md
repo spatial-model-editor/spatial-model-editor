@@ -19,7 +19,7 @@ Translate the spatial model to a system of PDEs: [WP1b status](https://github.co
   - each commit is automatically compiled and tested on each supported OS:
     - linux & osx: https://travis-ci.org/lkeegan/spatial-model-editor
     - windows: https://ci.appveyor.com/project/lkeegan/spatial-model-editor
-  - tagged commits result in a binary executable for each OS which are added to the release
-  - GUI is a standalone executable that includes these statically linked libraries:
+  - tagged commits also result in a binary executable for each OS which are added to the release
+  - the result is a standalone GUI executable that includes these statically linked libraries:
     - libSBML: https://github.com/lkeegan/libsbml-static
     - Qt5: https://github.com/lkeegan/qt5-static

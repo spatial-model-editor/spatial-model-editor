@@ -26,8 +26,3 @@ INCLUDEPATH += $$PWD/libsbml/include
 
 # on windows statically link to avoid missing dll errors:
 win32: QMAKE_LFLAGS += -static-libgcc -static-libstdc++
-
-# If you try to compile a PIE (as done by e.g. g++ on recent versions of ubuntu)
-# it will cause a linker error as libexpat.a is not compiled with -fPIC
-# uncomment the following to disable PIE compilation of the executable:
-#QMAKE_LFLAGS += -no-pie

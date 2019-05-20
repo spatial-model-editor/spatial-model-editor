@@ -1,5 +1,5 @@
 #include <QApplication>
-#include <QMessageBox>
+#include <QtGui>
 
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
