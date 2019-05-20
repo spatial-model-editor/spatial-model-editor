@@ -1,9 +1,3 @@
-#-------------------------------------------------
-#
-# Project created by QtCreator 2019-05-06T13:40:04
-#
-#-------------------------------------------------
-
 QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -25,17 +19,15 @@ HEADERS += \
 FORMS += \
         mainwindow.ui
 
-# Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
-!isEmpty(target.path): INSTALLS += target
-
+# these static libraries are available pre-compiled
+# from https://github.com/lkeegan/libsbml-static
 LIBS += $$PWD/libsbml/lib/libsbml-static.a $$PWD/libsbml/lib/libexpat.a
-
-win32: QMAKE_LFLAGS += -static-libgcc -static-libstdc++
-
 INCLUDEPATH += $$PWD/libsbml/include
 
-# to avoid linker errors with libexpat.a (which is not compiled with -fPIC)
-# on recent versions of g++ on ubuntu, which default to PIE
+# on windows statically link to avoid missing dll errors:
+win32: QMAKE_LFLAGS += -static-libgcc -static-libstdc++
+
+# If you try to compile a PIE (as done by e.g. g++ on recent versions of ubuntu)
+# it will cause a linker error as libexpat.a is not compiled with -fPIC
+# uncomment the following to disable PIE compilation of the executable:
 #QMAKE_LFLAGS += -no-pie
