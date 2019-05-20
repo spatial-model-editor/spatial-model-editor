@@ -16,7 +16,6 @@ before_build:
   # export path for Qt5 binaries
   - set PATH=%APPVEYOR_BUILD_FOLDER%/qt5/install/bin;%PATH%
   - qmake -v
-  - qmake -query QMAKE_MKSPECS
   - dir qt5/install/mkspecs
   - dir qt5/install/mkspecs/default
   # download pre-compiled static libSBML library
