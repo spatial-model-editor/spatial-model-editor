@@ -5,6 +5,7 @@ install:
   - set PATH=%PATH%;C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin
 
 before_build:
+  - dir C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin
   # install pre-compiled Qt5 binaries & static libraries
   - mkdir qt5
   - cd qt5
@@ -15,6 +16,9 @@ before_build:
   # export path for Qt5 binaries
   - set PATH=%APPVEYOR_BUILD_FOLDER%/qt5/install/bin;%PATH%
   - qmake -v
+  - qmake -query QMAKE_MKSPECS
+  - dir qt5/install/mkspecs
+  - dir qt5/install/mkspecs/default
   # download pre-compiled static libSBML library
   - mkdir libsbml
   - cd libsbml
