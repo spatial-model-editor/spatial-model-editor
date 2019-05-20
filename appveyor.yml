@@ -5,19 +5,20 @@ install:
   - set PATH=%PATH%;C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin
 
 before_build:
-  - dir C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin
+  # note absolute paths currently hard coded in QT binaries
+  # TODO: add a qt.conf file to override this, see: https://doc.qt.io/qt-5/qt-conf.html#overriding-paths
   # install pre-compiled Qt5 binaries & static libraries
-  - mkdir qt5
-  - cd qt5
+  - cd ..
+  - mkdir qt5-static
+  - cd qt5-static
   - appveyor DownloadFile "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-win32.zip"
   - 7z x qt5-static-win32.zip
   - dir install
-  - cd ..
+  - cd ..\spatial-model-editor
+  - dir
   # export path for Qt5 binaries
-  - set PATH=%APPVEYOR_BUILD_FOLDER%/qt5/install/bin;%PATH%
+  - set PATH=C:\projects\qt5-static\install\bin;%PATH%
   - qmake -v
-  - dir qt5\install\mkspecs
-  - dir qt5\install\mkspecs\win32-g++
   # download pre-compiled static libSBML library
   - mkdir libsbml
   - cd libsbml
