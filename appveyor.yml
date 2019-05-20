@@ -8,7 +8,7 @@ before_build:
   # install pre-compiled Qt5 binaries & static libraries
   - mkdir qt5
   - cd qt5
-  - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-win32.zip"
+  - appveyor DownloadFile "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-win32.zip"
   - 7z x qt5-static-win32.zip
   - dir
   - cd ..
@@ -16,7 +16,7 @@ before_build:
   - set PATH=%APPVEYOR_BUILD_FOLDER%/qt5/bin;$PATH
   - qmake -v
   # download pre-compiled static libSBML library
-  - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-win32.tgz"
+  - appveyor DownloadFile "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-win32.tgz"
   - mkdir libsbml
   - cd libsbml
   - 7x x libsbml-static-win32.zip
