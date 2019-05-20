@@ -24,8 +24,8 @@ void MainWindow::on_action_About_triggered()
 {
     QMessageBox msgBox;
     msgBox.setWindowTitle("About");
-    QString info("Spatial Model Editor\n\n");
-    info.append("github.com/lkeegan/spatial-model-editor\n");
+    QString info("Spatial Model Editor\n");
+    info.append("github.com/lkeegan/spatial-model-editor\n\n");
     info.append("Included libraries:\n");
     info.append("\nQt5:\t");
     info.append(QT_VERSION_STR);

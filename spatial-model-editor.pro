@@ -38,4 +38,4 @@ INCLUDEPATH += $$PWD/libsbml/include
 
 # to avoid linker errors with libexpat.a (which is not compiled with -fPIC)
 # on recent versions of g++ on ubuntu, which default to PIE
-#QMAKE_LFLAGS = -no-pie
+#QMAKE_LFLAGS += -no-pie

@@ -1,8 +1,10 @@
 # spatial-model-editor [![Build Status](https://travis-ci.org/lkeegan/spatial-model-editor.svg?branch=master)](https://travis-ci.org/lkeegan/spatial-model-editor) [![Build status](https://ci.appveyor.com/api/projects/status/0m87yyaalrrj5ndn?svg=true)](https://ci.appveyor.com/project/lkeegan/spatial-model-editor) [![Build Status](https://dev.azure.com/liam0322/spatial-model-editor/_apis/build/status/lkeegan.spatial-model-editor?branchName=master)](https://dev.azure.com/liam0322/spatial-model-editor/_build/latest?definitionId=1&branchName=master) [![Documentation Status](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/en/latest/)
 
-GUI spatial model editor prototype.
+GUI spatial model editor prototype, download the latest executables here:
 
-  - Download the latest executables here: [linux](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor), [mac](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg)
+  - [linux](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor)
+  - [mac](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg)
+  - [windows](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.exe)
 
 The initial goal is a partial re-implementation of the spatial model editing part of https://github.com/fbergmann/edit-spatial using C++/Qt5, with all dependencies statically linked so that it can be supplied as a stand-alone compiled executable for linux, windows and osx.
 
@@ -22,7 +24,7 @@ Implementation details:
   - include statically linked libSBML library including spatial extension
     - [x] linux
     - [x] osx
-    - [ ] windows
+    - [x] windows
     - see https://github.com/lkeegan/libsbml-static
   - include statically linked QT libraries
     - [x] linux
