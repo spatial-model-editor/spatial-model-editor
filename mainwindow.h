@@ -26,6 +26,8 @@ private slots:
 
     void on_actionAbout_Qt_triggered();
 
+    void on_actionGeometry_from_image_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

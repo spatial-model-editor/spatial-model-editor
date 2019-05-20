@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1092</width>
-    <height>769</height>
+    <width>1324</width>
+    <height>643</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,46 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="QTextBrowser" name="textBrowser"/>
+     <widget class="QTabWidget" name="tabMain">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="tabSpecies">
+       <attribute name="title">
+        <string>Tab 1</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="tabGeometry">
+       <attribute name="title">
+        <string>Geometry</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QLabel" name="lblGeometry">
+          <property name="text">
+           <string>no image</string>
+          </property>
+          <property name="scaledContents">
+           <bool>true</bool>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabSBML">
+       <attribute name="title">
+        <string>SBML</string>
+       </attribute>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QTextBrowser" name="txtSBML"/>
+        </item>
+       </layout>
+      </widget>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -25,7 +64,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1092</width>
+     <width>1324</width>
      <height>29</height>
     </rect>
    </property>
@@ -44,7 +83,14 @@
     <addaction name="action_About"/>
     <addaction name="actionAbout_Qt"/>
    </widget>
+   <widget class="QMenu" name="menuImport">
+    <property name="title">
+     <string>Import</string>
+    </property>
+    <addaction name="actionGeometry_from_image"/>
+   </widget>
    <addaction name="menuHello"/>
+   <addaction name="menuImport"/>
    <addaction name="menu_Help"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -94,6 +140,11 @@
   <action name="actionAbout_Qt">
    <property name="text">
     <string>About Qt</string>
+   </property>
+  </action>
+  <action name="actionGeometry_from_image">
+   <property name="text">
+    <string>Geometry from image</string>
    </property>
   </action>
  </widget>

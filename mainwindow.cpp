@@ -61,7 +61,7 @@ void MainWindow::on_action_Open_SBML_file_triggered()
     }
     else
     {
-        ui->textBrowser->setText(libsbml::writeSBMLToString(doc));
+        ui->txtSBML->setText(libsbml::writeSBMLToString(doc));
     }
 
 }
@@ -76,4 +76,12 @@ void MainWindow::on_action_Save_SBML_file_triggered()
 void MainWindow::on_actionAbout_Qt_triggered()
 {
     QMessageBox::aboutQt(this);
+}
+
+void MainWindow::on_actionGeometry_from_image_triggered()
+{
+    QString filename = QFileDialog::getOpenFileName();
+    QPixmap pixmap(filename);
+    ui->lblGeometry->setPixmap(pixmap);
+
 }
