@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "sbml.h"
 #include <QMainWindow>
 
 namespace Ui {
@@ -30,6 +31,7 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    sbmlDocWrapper sbml_doc;
 };
 
 #endif // MAINWINDOW_H

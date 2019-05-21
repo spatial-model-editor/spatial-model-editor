@@ -22,8 +22,33 @@
       </property>
       <widget class="QWidget" name="tabSpecies">
        <attribute name="title">
-        <string>Tab 1</string>
+        <string>Species</string>
        </attribute>
+       <widget class="QListView" name="listSpecies">
+        <property name="geometry">
+         <rect>
+          <x>40</x>
+          <y>30</y>
+          <width>291</width>
+          <height>471</height>
+         </rect>
+        </property>
+       </widget>
+      </widget>
+      <widget class="QWidget" name="tabReactions">
+       <attribute name="title">
+        <string>Reactions</string>
+       </attribute>
+       <widget class="QListView" name="listReactions">
+        <property name="geometry">
+         <rect>
+          <x>40</x>
+          <y>10</y>
+          <width>291</width>
+          <height>471</height>
+         </rect>
+        </property>
+       </widget>
       </widget>
       <widget class="QWidget" name="tabGeometry">
        <attribute name="title">

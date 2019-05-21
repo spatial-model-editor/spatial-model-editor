@@ -11,10 +11,12 @@ CONFIG += c++11
 
 SOURCES += \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+    sbml.cpp
 
 HEADERS += \
-        mainwindow.h
+        mainwindow.h \
+    sbml.h
 
 FORMS += \
         mainwindow.ui
