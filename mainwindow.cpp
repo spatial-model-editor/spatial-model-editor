@@ -2,11 +2,11 @@
 #include <QMessageBox>
 #include <QString>
 #include <QFileDialog>
+#include <QStringListModel>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-
-#include <sbml/SBMLTypes.h>
+#include "sbml.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -51,18 +51,13 @@ void MainWindow::on_actionE_xit_triggered()
 void MainWindow::on_action_Open_SBML_file_triggered()
 {
     QString filename = QFileDialog::getOpenFileName();
-    libsbml::SBMLDocument *doc = libsbml::readSBMLFromFile(qPrintable(filename));
-    if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) > 0)
-    {
-        QMessageBox msgBox;
-        msgBox.setText("Error: Invalid SBML file");
-        msgBox.exec();
-        // doc->printErrors(stream)
+    if(!filename.isEmpty()){
+        sbml_doc.loadFile(qPrintable(filename));
     }
-    else
-    {
-        ui->txtSBML->setText(libsbml::writeSBMLToString(doc));
-    }
+
+    ui->txtSBML->setText(sbml_doc.xml);
+    ui->listReactions->setModel(&sbml_doc.reac_model);
+    ui->listSpecies->setModel(&sbml_doc.spec_model);
 
 }
 
