@@ -12,11 +12,13 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    sbml.cpp
+    sbml.cpp \
+    qlabelmousetracker.cpp
 
 HEADERS += \
         mainwindow.h \
-    sbml.h
+    sbml.h \
+    qlabelmousetracker.h
 
 FORMS += \
         mainwindow.ui
