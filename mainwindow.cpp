@@ -76,7 +76,5 @@ void MainWindow::on_actionAbout_Qt_triggered()
 void MainWindow::on_actionGeometry_from_image_triggered()
 {
     QString filename = QFileDialog::getOpenFileName();
-    QPixmap pixmap(filename);
-    ui->lblGeometry->setPixmap(pixmap);
-
+    ui->lblGeometry->importGeometry(filename);
 }

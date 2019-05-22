@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1324</width>
-    <height>643</height>
+    <width>1454</width>
+    <height>706</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,57 +16,75 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
+     <widget class="QLabelMousetracker" name="lblGeometry">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>89</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::StyledPanel</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Sunken</enum>
+      </property>
+      <property name="lineWidth">
+       <number>2</number>
+      </property>
+      <property name="text">
+       <string>no geometry</string>
+      </property>
+      <property name="textFormat">
+       <enum>Qt::PlainText</enum>
+      </property>
+      <property name="scaledContents">
+       <bool>true</bool>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
+      </property>
+      <property name="textInteractionFlags">
+       <set>Qt::NoTextInteraction</set>
+      </property>
+     </widget>
+    </item>
+    <item>
      <widget class="QTabWidget" name="tabMain">
       <property name="currentIndex">
        <number>0</number>
       </property>
+      <widget class="QWidget" name="tabGeometry">
+       <attribute name="title">
+        <string>Geometry</string>
+       </attribute>
+      </widget>
       <widget class="QWidget" name="tabSpecies">
        <attribute name="title">
         <string>Species</string>
        </attribute>
-       <widget class="QListView" name="listSpecies">
-        <property name="geometry">
-         <rect>
-          <x>40</x>
-          <y>30</y>
-          <width>291</width>
-          <height>471</height>
-         </rect>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QListView" name="listSpecies"/>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="tabReactions">
        <attribute name="title">
         <string>Reactions</string>
        </attribute>
-       <widget class="QListView" name="listReactions">
-        <property name="geometry">
-         <rect>
-          <x>40</x>
-          <y>10</y>
-          <width>291</width>
-          <height>471</height>
-         </rect>
-        </property>
-       </widget>
-      </widget>
-      <widget class="QWidget" name="tabGeometry">
-       <attribute name="title">
-        <string>Geometry</string>
-       </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
-         <widget class="QLabel" name="lblGeometry">
-          <property name="text">
-           <string>no image</string>
-          </property>
-          <property name="scaledContents">
-           <bool>true</bool>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
+         <widget class="QListView" name="listReactions"/>
         </item>
        </layout>
       </widget>
@@ -89,7 +107,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1324</width>
+     <width>1454</width>
      <height>29</height>
     </rect>
    </property>
@@ -174,6 +192,16 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QLabelMousetracker</class>
+   <extends>QLabel</extends>
+   <header>qlabelmousetracker.h</header>
+   <slots>
+    <signal>signal1()</signal>
+   </slots>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>
