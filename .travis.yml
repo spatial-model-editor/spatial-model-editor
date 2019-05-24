@@ -1,7 +1,9 @@
 language: cpp
+
 env:
   global:
     - QT5_INSTALL_PREFIX="/opt/qt5-static"
+
 matrix:
   include:
     # linux release build: gcc 5.4.0 on ubuntu 16.04
@@ -41,6 +43,7 @@ before_script:
   - mkdir -p libsbml
   - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz -C libsbml
   - ls libsbml
+
 script:
   # run qmake to generate make file
   - mkdir build
@@ -53,6 +56,14 @@ script:
   - '[ "$TRAVIS_OS_NAME" != linux ] || ldd spatial-model-editor'
   # for osx package app dir as a .dmg
   - '[ "$TRAVIS_OS_NAME" != osx ] || hdiutil create spatial-model-editor -fs HFS+ -srcfolder spatial-model-editor.app'
+  # compile and run unit tests
+  - cd ../
+  - mkdir build-tests
+  - cd build-tests
+  - qmake -Wall -config debug ../test.pro
+  - make -j2
+  - ./test -s -d=yes
+
 notifications:
   email: false
 deploy:
