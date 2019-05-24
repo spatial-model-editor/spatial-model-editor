@@ -23,3 +23,6 @@ Translate the spatial model to a system of PDEs: [WP1b status](https://github.co
   - the result is a standalone GUI executable that includes these statically linked libraries:
     - libSBML: https://github.com/lkeegan/libsbml-static
     - Qt5: https://github.com/lkeegan/qt5-static
+  - it also includes these header-only libraries:
+    - catch2 testing framework: https://github.com/catchorg/Catch2/
+    - exprtk math parsing/evaluation library: https://github.com/ArashPartow/exprtk
