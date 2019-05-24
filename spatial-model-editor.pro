@@ -14,20 +14,21 @@ SOURCES += \
     src/mainwindow.cpp \
     src/sbml.cpp \
     src/qlabelmousetracker.cpp \
-    src/numerics.cpp \
+    src/numerics.cpp
 
 HEADERS += \
     inc/mainwindow.h \
     inc/sbml.h \
     inc/qlabelmousetracker.h \
     inc/numerics.h \
-    ext/catch/catch.hpp \
-    ext/exprtk/exprtk.hpp \
+    ext/exprtk/exprtk.hpp
 
 FORMS += \
     ui/mainwindow.ui
 
-# these static libraries are available pre-compiled
+INCLUDEPATH += inc ext/exprtk
+
+# these static libraries are available from
 # from https://github.com/lkeegan/libsbml-static
 LIBS += $$PWD/libsbml/lib/libsbml-static.a $$PWD/libsbml/lib/libexpat.a
 INCLUDEPATH += $$PWD/libsbml/include
