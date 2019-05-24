@@ -27,6 +27,9 @@ public:
     // colour of compartment of given index in image
     std::map<QString, QRgb> compartment_colour;
 
+    // reactions contribution to PDE for given species, as infix string
+    std::map<QString, QString> pde;
+
     void loadFile(const std::string& filename);
 };
 

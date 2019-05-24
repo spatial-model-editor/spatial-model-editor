@@ -10,15 +10,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
-        main.cpp \
-        mainwindow.cpp \
+    main.cpp \
+    mainwindow.cpp \
     sbml.cpp \
     qlabelmousetracker.cpp
 
 HEADERS += \
-        mainwindow.h \
+    mainwindow.h \
     sbml.h \
-    qlabelmousetracker.h
+    qlabelmousetracker.h \
+    exprtk.hpp
 
 FORMS += \
         mainwindow.ui
