@@ -62,6 +62,8 @@ void MainWindow::on_action_Open_SBML_file_triggered()
     }
 
     ui->txtSBML->setText(sbml_doc.xml);
+
+    ui->listReactions->clear();
     ui->listReactions->insertItems(0, sbml_doc.reactions);
 
     // update possible compartments in compartmentMenu
@@ -116,11 +118,11 @@ void MainWindow::on_chkShowSpatialAdvanced_stateChanged(int arg1)
     ui->grpSpatialAdavanced->setEnabled(arg1);
 }
 
-void MainWindow::on_listSpecies_itemSelectionChanged()
+void MainWindow::on_listSpecies_currentTextChanged(const QString &currentText)
 {
-    if(!ui->listSpecies->selectedItems().empty()){
-        qDebug() << ui->listSpecies->selectedItems().first()->text();
-        auto* spec = sbml_doc.doc->getModel()->getSpecies(qPrintable(ui->listSpecies->selectedItems().first()->text()));
+    if(currentText.size()>0){
+        qDebug() << currentText;
+        auto* spec = sbml_doc.doc->getModel()->getSpecies(qPrintable(currentText));
         ui->txtInitialConcentration->setText(QString::number(spec->getInitialConcentration()));
     }
 }
@@ -131,4 +133,22 @@ void MainWindow::on_btnChangeCompartment_triggered(QAction *arg1)
     ui->lblGeometry->colour_to_comp[ui->lblGeometry->colour] = compID;
     ui->lblGeometry->compartmentID = compID;
     on_lblGeometry_mouseClicked();
+}
+
+void MainWindow::on_listReactions_currentTextChanged(const QString &currentText)
+{
+    ui->listProducts->clear();
+    ui->listReactants->clear();
+    ui->lblReactionRate->clear();
+    if(currentText.size()>0){
+        qDebug() << currentText;
+        const auto* reac = sbml_doc.doc->getModel()->getReaction(qPrintable(currentText));
+        for(unsigned i=0; i<reac->getNumProducts(); ++i){
+            ui->listProducts->addItem(reac->getProduct(i)->getSpecies().c_str());
+        }
+        for(unsigned i=0; i<reac->getNumReactants(); ++i){
+            ui->listReactants->addItem(reac->getReactant(i)->getSpecies().c_str());
+        }
+        ui->lblReactionRate->setText(reac->getKineticLaw()->getFormula().c_str());
+    }
 }

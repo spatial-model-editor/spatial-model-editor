@@ -34,8 +34,20 @@ void sbmlDocWrapper::loadFile(const std::string& filename){
     for(unsigned int i=0; i<model->getNumReactions(); ++i){
         const auto* reac = model->getReaction(i);
         reactions << QString(reac->getId().c_str());
+        // construct contribution to PDE for each species
+        QString pde_term = reac->getKineticLaw()->getFormula().c_str();
+        for(unsigned i=0; i<reac->getNumProducts(); ++i){
+            pde[reac->getProduct(i)->getSpecies().c_str()].append("+" + pde_term + " ");
+        }
+        for(unsigned i=0; i<reac->getNumReactants(); ++i){
+            pde[reac->getReactant(i)->getSpecies().c_str()].append("-" + pde_term + " ");
+        }
     }
 
+    for(unsigned int i=0; i<model->getNumSpecies(); ++i){
+        const auto* spec = model->getSpecies(i);
+        qDebug("%s' += %s", spec->getId().c_str(), qPrintable(pde[spec->getId().c_str()]));
+    }
     // some code that requires the libSBML spatial extension to compile:
     libsbml::SpatialPkgNamespaces sbmlns(3,1,1);
     libsbml::SBMLDocument document(&sbmlns);
