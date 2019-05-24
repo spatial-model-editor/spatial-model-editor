@@ -10,6 +10,7 @@ CONFIG += c++11
 SOURCES += \
     test/main.cpp \
     test/test_numerics.cpp \
+    test/test_sbml.cpp \
     src/sbml.cpp \
     src/numerics.cpp
 

@@ -22,14 +22,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     compartmentMenu = std::unique_ptr<QMenu>(new QMenu());
 
-    std::vector<double> s { 0.0, 1.0 };
-    std::vector<double> c { 0.5, 0.5 };
-    numerics::reaction_eval r("x*c0 + y*cd", {"x", "y"}, s, {"c0", "cd"}, c);
-    qDebug() << r();
-    s[0] = 1.0;
-    qDebug() << r();
-    s[1] = -1.0;
-    qDebug() << r();
 }
 
 MainWindow::~MainWindow()
