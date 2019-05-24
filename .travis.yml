@@ -60,7 +60,9 @@ script:
   - cd ../
   - mkdir build-tests
   - cd build-tests
-  - qmake -Wall -config debug ../test.pro
+  - '[ "$TRAVIS_OS_NAME" != linux ] || qmake -Wall -config debug ../test.pro'
+  # -config debug fails on osx because it looks for non-existent "debug" qt5 static libraries
+  - '[ "$TRAVIS_OS_NAME" != osx ] || qmake -Wall -config release ../test.pro'
   - make -j2
   - ./test -s -d=yes
 
