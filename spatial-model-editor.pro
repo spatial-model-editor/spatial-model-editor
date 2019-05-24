@@ -13,13 +13,15 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     sbml.cpp \
-    qlabelmousetracker.cpp
+    qlabelmousetracker.cpp \
+    numerics.cpp
 
 HEADERS += \
     mainwindow.h \
     sbml.h \
     qlabelmousetracker.h \
-    exprtk.hpp
+    exprtk.hpp \
+    numerics.h
 
 FORMS += \
         mainwindow.ui
