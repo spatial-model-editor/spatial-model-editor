@@ -10,21 +10,22 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
-    main.cpp \
-    mainwindow.cpp \
-    sbml.cpp \
-    qlabelmousetracker.cpp \
-    numerics.cpp
+    src/main.cpp \
+    src/mainwindow.cpp \
+    src/sbml.cpp \
+    src/qlabelmousetracker.cpp \
+    src/numerics.cpp \
 
 HEADERS += \
-    mainwindow.h \
-    sbml.h \
-    qlabelmousetracker.h \
-    exprtk.hpp \
-    numerics.h
+    inc/mainwindow.h \
+    inc/sbml.h \
+    inc/qlabelmousetracker.h \
+    inc/numerics.h \
+    ext/catch/catch.hpp \
+    ext/exprtk/exprtk.hpp \
 
 FORMS += \
-        mainwindow.ui
+    ui/mainwindow.ui
 
 # these static libraries are available pre-compiled
 # from https://github.com/lkeegan/libsbml-static
