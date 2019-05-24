@@ -64,7 +64,7 @@ script:
   # -config debug fails on osx because it looks for non-existent "debug" qt5 static libraries
   - '[ "$TRAVIS_OS_NAME" != osx ] || qmake -Wall -config release ../test.pro'
   - make -j2
-  - ./test.app -s -d=yes
+  - ./test.app/Contents/MacOS/test -s -d=yes
 
 notifications:
   email: false
