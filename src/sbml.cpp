@@ -48,7 +48,4 @@ void sbmlDocWrapper::loadFile(const std::string& filename){
         const auto* spec = model->getSpecies(i);
         qDebug("%s' += %s", spec->getId().c_str(), qPrintable(pde[spec->getId().c_str()]));
     }
-    // some code that requires the libSBML spatial extension to compile:
-    libsbml::SpatialPkgNamespaces sbmlns(3,1,1);
-    libsbml::SBMLDocument document(&sbmlns);
 }
