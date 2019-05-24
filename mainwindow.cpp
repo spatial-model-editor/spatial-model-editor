@@ -3,6 +3,7 @@
 #include <QString>
 #include <QFileDialog>
 #include <QStringListModel>
+#include <QInputDialog>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -13,6 +14,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    // for debugging: import an image on startup
+    ui->lblGeometry->importGeometry("../spatial-model-editor/two-blobs-100x100.bmp");
+
+    compartmentMenu = std::unique_ptr<QMenu>(new QMenu());
 }
 
 MainWindow::~MainWindow()
@@ -56,9 +62,15 @@ void MainWindow::on_action_Open_SBML_file_triggered()
     }
 
     ui->txtSBML->setText(sbml_doc.xml);
-    ui->listReactions->setModel(&sbml_doc.reac_model);
-    ui->listSpecies->setModel(&sbml_doc.spec_model);
+    ui->listReactions->insertItems(0, sbml_doc.reactions);
 
+    // update possible compartments in compartmentMenu
+    compartmentMenu->clear();
+    compartmentMenu->addAction("none");
+    for (auto c : sbml_doc.compartments){
+        compartmentMenu->addAction(c);
+    }
+    ui->btnChangeCompartment->setMenu(compartmentMenu.get());
 }
 
 void MainWindow::on_action_Save_SBML_file_triggered()
@@ -77,4 +89,46 @@ void MainWindow::on_actionGeometry_from_image_triggered()
 {
     QString filename = QFileDialog::getOpenFileName();
     ui->lblGeometry->importGeometry(filename);
+}
+
+void MainWindow::on_lblGeometry_mouseClicked()
+{
+    QPalette sample_palette;
+    sample_palette.setColor(QPalette::Window, QColor::fromRgb(ui->lblGeometry->colour));
+    ui->lblCompartmentColour->setPalette(sample_palette);
+    QString compID = ui->lblGeometry->compartmentID;
+    ui->listSpecies->clear();
+    ui->btnChangeCompartment->setText(compID);
+    // update species info to this compartment
+    ui->listSpecies->insertItems(0, sbml_doc.species[compID]);
+    // show species tab
+    ui->tabMain->setCurrentIndex(1);
+}
+
+void MainWindow::on_chkEnableSpatial_stateChanged(int arg1)
+{
+    ui->grpSpatial->setEnabled(arg1);
+}
+
+
+void MainWindow::on_chkShowSpatialAdvanced_stateChanged(int arg1)
+{
+    ui->grpSpatialAdavanced->setEnabled(arg1);
+}
+
+void MainWindow::on_listSpecies_itemSelectionChanged()
+{
+    if(!ui->listSpecies->selectedItems().empty()){
+        qDebug() << ui->listSpecies->selectedItems().first()->text();
+        auto* spec = sbml_doc.doc->getModel()->getSpecies(qPrintable(ui->listSpecies->selectedItems().first()->text()));
+        ui->txtInitialConcentration->setText(QString::number(spec->getInitialConcentration()));
+    }
+}
+
+void MainWindow::on_btnChangeCompartment_triggered(QAction *arg1)
+{
+    QString compID = arg1->text();
+    ui->lblGeometry->colour_to_comp[ui->lblGeometry->colour] = compID;
+    ui->lblGeometry->compartmentID = compID;
+    on_lblGeometry_mouseClicked();
 }
