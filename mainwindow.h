@@ -29,9 +29,20 @@ private slots:
 
     void on_actionGeometry_from_image_triggered();
 
+    void on_lblGeometry_mouseClicked();
+
+    void on_chkEnableSpatial_stateChanged(int arg1);
+
+    void on_chkShowSpatialAdvanced_stateChanged(int arg1);
+
+    void on_listSpecies_itemSelectionChanged();
+
+    void on_btnChangeCompartment_triggered(QAction *arg1);
+
 private:
     Ui::MainWindow *ui;
     sbmlDocWrapper sbml_doc;
+    std::unique_ptr<QMenu> compartmentMenu;
 };
 
 #endif // MAINWINDOW_H
