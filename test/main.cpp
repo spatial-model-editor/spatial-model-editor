@@ -2,7 +2,6 @@
 #include "catch.hpp"
 
 #include <QCoreApplication>
-//#include <QtTest>
 
 int main(int argc, char* argv[])
 {
