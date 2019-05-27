@@ -38,7 +38,7 @@ build_script:
   - cd ..
   - mkdir build-tests
   - cd build-tests
-  - qmake -Wall -config debug ../test.pro
+  - qmake -Wall -config release ../test.pro
   - mingw32-make -j2
   - ./test -s -d=yes
 
