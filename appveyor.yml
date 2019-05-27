@@ -35,9 +35,11 @@ build_script:
   # compile executable
   - mingw32-make -j2
   # compile and run unit tests
-  - cd ../
+  - cd ..
+  - dir
   - mkdir build-tests
   - cd build-tests
+  - dir
   - qmake -Wall -config debug ../test.pro'
   - mingw32-make -j2
   - ./test -s -d=yes'
