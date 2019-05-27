@@ -39,10 +39,11 @@ INCLUDEPATH += $$PWD/libsbml/include
 
 # on windows add flags to support large object files
 # https://stackoverflow.com/questions/16596876/object-file-has-too-many-sections
-win32: QMAKE_CXXFLAGS += -Wa,-mbig-obj
+# win32: QMAKE_CXXFLAGS += -Wa,-mbig-obj
 
 # on windows statically link to avoid missing dll errors:
 win32: QMAKE_LFLAGS += -static-libgcc -static-libstdc++
 
 # on osx: set visibility to match setting used for compiling static libs
+# todo: repeat this for static qt build and libsbml etc
 mac: QMAKE_CXXFLAGS += -fvisibility=default
