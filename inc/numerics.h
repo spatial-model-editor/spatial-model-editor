@@ -3,7 +3,6 @@
 
 #include <string>
 
-#define exprtk_disable_comments
 #define exprtk_disable_break_continue
 #define exprtk_disable_sc_andor
 #define exprtk_disable_return_statement
