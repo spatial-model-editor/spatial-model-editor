@@ -41,35 +41,41 @@ TEST_CASE("evaluate expression: no vars, constants", "[numerics]"){
 }
 
 TEST_CASE("evaluate expression: vars and constants", "[numerics]"){
-    std::string expr = "x*c0 + y*cd";
-	std::vector<std::string> var_names = {"x", "y"};
-    std::vector<double> vars { 0.0, 1.0 };
-	std::vector<std::string> constant_names = {"c0", "cd"};
-    std::vector<double> constants { 0.5, 0.5 };
-    numerics::reaction_eval r(expr, var_names, vars, constant_names, constants);
-    CAPTURE(expr);
-    CAPTURE(var_names);
-    CAPTURE(vars);
-    CAPTURE(constant_names);
-    CAPTURE(constants);
-	REQUIRE(r() == Approx(0.5));
-    SECTION("change value of variables after compiling expression: changes evaluated expression") {
-	    vars[0] = 1.0;
+	GIVEN("expression with vars and constants"){
+	    std::string expr = "x*c0 + y*cd";
+		std::vector<std::string> var_names = {"x", "y"};
+	    std::vector<double> vars { 0.0, 1.0 };
+		std::vector<std::string> constant_names = {"c0", "cd"};
+	    std::vector<double> constants { 0.5, 0.5 };
+	    numerics::reaction_eval r(expr, var_names, vars, constant_names, constants);
 	    CAPTURE(expr);
 	    CAPTURE(var_names);
 	    CAPTURE(vars);
 	    CAPTURE(constant_names);
 	    CAPTURE(constants);
-    	REQUIRE(r() == Approx(1.0));
-    }
-    SECTION("change value of constants after compiling expression: does not change evaluated expression") {
-	    constants[0] = 99.0;
-	    constants[1] = 199.0;
-	    CAPTURE(expr);
-	    CAPTURE(var_names);
-	    CAPTURE(vars);
-	    CAPTURE(constant_names);
-	    CAPTURE(constants);
-    	REQUIRE(r() == Approx(0.5));
-    }
+		REQUIRE(r() == Approx(0.5));
+		WHEN("value of vars change after compiling expression"){
+		    vars[0] = 1.0;
+		    THEN("evaluated expression uses updated vars"){
+			    CAPTURE(expr);
+			    CAPTURE(var_names);
+			    CAPTURE(vars);
+			    CAPTURE(constant_names);
+			    CAPTURE(constants);
+		    	REQUIRE(r() == Approx(1.0));	    	
+		    }
+		}
+		WHEN("value of constants change after compiling expression"){
+		    constants[0] = 99.0;
+		    constants[1] = 199.0;
+		    THEN("evaluated expression does not change"){
+			    CAPTURE(expr);
+			    CAPTURE(var_names);
+			    CAPTURE(vars);
+			    CAPTURE(constant_names);
+			    CAPTURE(constants);
+		    	REQUIRE(r() == Approx(0.5));
+		    }
+		}
+	}
 }
