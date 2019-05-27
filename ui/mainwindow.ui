@@ -412,15 +412,46 @@
        <layout class="QHBoxLayout" name="horizontalLayout_7">
         <item>
          <layout class="QGridLayout" name="gridSimulate">
-          <item row="1" column="0">
-           <widget class="QCustomPlot" name="pltPlot" native="true"/>
-          </item>
           <item row="0" column="0">
+           <widget class="QLabel" name="lblSimLength">
+            <property name="text">
+             <string>simulation length:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="4">
            <widget class="QPushButton" name="btnSimulate">
             <property name="text">
              <string>Simulate</string>
             </property>
            </widget>
+          </item>
+          <item row="0" column="2">
+           <widget class="QLabel" name="lblSimDt">
+            <property name="text">
+             <string>dt:</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLineEdit" name="txtSimLength">
+            <property name="inputMask">
+             <string/>
+            </property>
+            <property name="text">
+             <string>500</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QLineEdit" name="txtSimDt">
+            <property name="text">
+             <string>0.1</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="5">
+           <widget class="QCustomPlot" name="pltPlot" native="true"/>
           </item>
          </layout>
         </item>
