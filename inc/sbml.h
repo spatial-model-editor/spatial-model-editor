@@ -13,11 +13,17 @@
 
 class sbmlDocWrapper {
 private:
-
-public:
     std::unique_ptr<libsbml::SBMLDocument> doc;
 
+public:
+    libsbml::Model *model = nullptr;
+
     QString xml;
+
+    // loop up given specied ID, return index
+    std::map<std::string, std::size_t> speciesIndex;
+    // vector of speciesID with above indexing
+    std::vector<std::string> speciesID;
 
     QStringList reactions;
     // list of species for given compartment ID

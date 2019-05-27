@@ -405,13 +405,24 @@
         </item>
        </layout>
       </widget>
-      <widget class="QWidget" name="tabPDEs">
+      <widget class="QWidget" name="tabSimulate">
        <attribute name="title">
-        <string>PDEs</string>
+        <string>Simulate</string>
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_7">
         <item>
-         <widget class="QTextBrowser" name="txtPDEs"/>
+         <layout class="QGridLayout" name="gridSimulate">
+          <item row="1" column="0">
+           <widget class="QCustomPlot" name="pltPlot" native="true"/>
+          </item>
+          <item row="0" column="0">
+           <widget class="QPushButton" name="btnSimulate">
+            <property name="text">
+             <string>Simulate</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
@@ -527,6 +538,12 @@
    <slots>
     <signal>mouseClicked()</signal>
    </slots>
+  </customwidget>
+  <customwidget>
+   <class>QCustomPlot</class>
+   <extends>QWidget</extends>
+   <header>qcustomplot.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
