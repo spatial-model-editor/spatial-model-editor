@@ -11,7 +11,7 @@ void sbmlDocWrapper::loadFile(const std::string& filename){
     // write raw xml to SBML panel
     xml = libsbml::writeSBMLToString(doc.get());
 
-    const auto* model = doc->getModel();
+    model = doc->getModel();
 
     // get list of compartments
     species.clear();
@@ -24,8 +24,12 @@ void sbmlDocWrapper::loadFile(const std::string& filename){
     }
 
     // get all species, make a list for each compartment
+    speciesIndex.clear();
+    speciesID.clear();
     for(unsigned int i=0; i<model->getNumSpecies(); ++i){
         const auto* spec = model->getSpecies(i);
+        speciesIndex[spec->getId().c_str()] = i;
+        speciesID.push_back(spec->getId().c_str());
         species[spec->getCompartment().c_str()] << QString(spec->getId().c_str());
     }
 

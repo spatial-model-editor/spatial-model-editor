@@ -34,14 +34,12 @@ build_script:
   - qmake -Wall -config release ..\spatial-model-editor.pro
   # compile executable
   - mingw32-make -j2
-  # compile and run unit tests
+  # compile unit tests
   - cd ..
   - mkdir build-tests
   - cd build-tests
   - qmake -Wall -config release ..\test.pro
   - mingw32-make -j2
-  - dir
-  - release\test.exe -s -d=yes
 
 artifacts:
   - path: build/release/spatial-model-editor.exe

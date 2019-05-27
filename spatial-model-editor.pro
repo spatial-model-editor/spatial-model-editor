@@ -1,6 +1,6 @@
 QT       += core gui
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 
 TARGET = spatial-model-editor
 TEMPLATE = app
@@ -12,21 +12,25 @@ CONFIG += c++11
 SOURCES += \
     src/main.cpp \
     src/mainwindow.cpp \
-    src/sbml.cpp \
+    src/numerics.cpp \
     src/qlabelmousetracker.cpp \
-    src/numerics.cpp
+    src/sbml.cpp \
+    src/simulate.cpp \
+    ext/qcustomplot/qcustomplot.cpp
 
 HEADERS += \
     inc/mainwindow.h \
-    inc/sbml.h \
-    inc/qlabelmousetracker.h \
     inc/numerics.h \
-    ext/exprtk/exprtk.hpp
+    inc/qlabelmousetracker.h \
+    inc/sbml.h \
+    inc/simulate.h \
+    ext/exprtk/exprtk.hpp \
+    ext/qcustomplot/qcustomplot.h
 
 FORMS += \
     ui/mainwindow.ui
 
-INCLUDEPATH += inc ext/exprtk
+INCLUDEPATH += inc ext/exprtk ext/qcustomplot
 
 # these static libraries are available from
 # from https://github.com/lkeegan/libsbml-static

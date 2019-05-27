@@ -7,9 +7,8 @@
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "simulate.h"
 #include "sbml.h"
-
-#include "numerics.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -59,13 +58,16 @@ void MainWindow::on_actionE_xit_triggered()
 
 void MainWindow::on_action_Open_SBML_file_triggered()
 {
+    // load SBML file
     QString filename = QFileDialog::getOpenFileName();
     if(!filename.isEmpty()){
         sbml_doc.loadFile(qPrintable(filename));
     }
 
+    // update raw XML display
     ui->txtSBML->setText(sbml_doc.xml);
 
+    // update list of reactions
     ui->listReactions->clear();
     ui->listReactions->insertItems(0, sbml_doc.reactions);
 
@@ -125,7 +127,7 @@ void MainWindow::on_listSpecies_currentTextChanged(const QString &currentText)
 {
     if(currentText.size()>0){
         qDebug() << currentText;
-        auto* spec = sbml_doc.doc->getModel()->getSpecies(qPrintable(currentText));
+        auto* spec = sbml_doc.model->getSpecies(qPrintable(currentText));
         ui->txtInitialConcentration->setText(QString::number(spec->getInitialConcentration()));
     }
 }
@@ -145,7 +147,7 @@ void MainWindow::on_listReactions_currentTextChanged(const QString &currentText)
     ui->lblReactionRate->clear();
     if(currentText.size()>0){
         qDebug() << currentText;
-        const auto* reac = sbml_doc.doc->getModel()->getReaction(qPrintable(currentText));
+        const auto* reac = sbml_doc.model->getReaction(qPrintable(currentText));
         for(unsigned i=0; i<reac->getNumProducts(); ++i){
             ui->listProducts->addItem(reac->getProduct(i)->getSpecies().c_str());
         }
@@ -154,4 +156,46 @@ void MainWindow::on_listReactions_currentTextChanged(const QString &currentText)
         }
         ui->lblReactionRate->setText(reac->getKineticLaw()->getFormula().c_str());
     }
+}
+
+void MainWindow::on_btnSimulate_clicked()
+{
+    // do simple simulation of model
+    simulate sim(sbml_doc);
+    sim.compile_reactions();
+    for (unsigned int i=0; i<sbml_doc.model->getNumSpecies(); ++i){
+        sim.species_values[i] = sbml_doc.model->getSpecies(i)->getInitialConcentration();
+    }
+    sim.euler_timestep(0.0);
+    QVector<double> time;
+    double t=0;
+    double dt=0.1;
+    std::vector<QVector<double>> conc(sim.species_values.size());
+    time.push_back(t);
+    for (std::size_t i=0; i<sim.species_values.size(); ++i){
+        conc[i].push_back(sim.species_values[i]);
+    }
+    for(int i=0; i<500; ++i){
+        sim.euler_timestep(dt);
+        t += dt;
+        time.push_back(t);
+        for (std::size_t i=0; i<sim.species_values.size(); ++i){
+            conc[i].push_back(sim.species_values[i]);
+        }
+    }
+
+    // plot results
+    std::vector<QColor> col {{0, 0, 0}, {230, 25, 75}, {60, 180, 75}, {255, 225, 25}, {0, 130, 200}, {245, 130, 48}, {145, 30, 180}, {70, 240, 240}, {240, 50, 230}, {210, 245, 60}, {250, 190, 190}, {0, 128, 128}, {230, 190, 255}, {170, 110, 40}, {255, 250, 200}, {128, 0, 0}, {170, 255, 195}, {128, 128, 0}, {255, 215, 180}, {0, 0, 128}, {128, 128, 128}};
+    ui->pltPlot->legend->setVisible(true);
+    for (std::size_t i=0; i<sim.species_values.size(); ++i){
+        ui->pltPlot->addGraph();
+        ui->pltPlot->graph(static_cast<int>(i))->setData(time, conc[i]);
+        ui->pltPlot->graph(static_cast<int>(i))->setPen(col[i]);
+        ui->pltPlot->graph(static_cast<int>(i))->setName(sbml_doc.speciesID[i].c_str());
+    }
+    ui->pltPlot->xAxis->setLabel("time");
+    ui->pltPlot->xAxis->setRange(time.front(), time.back());
+    ui->pltPlot->yAxis->setLabel("concentration");
+    ui->pltPlot->yAxis->setRange(0, 2);
+    ui->pltPlot->replot();
 }

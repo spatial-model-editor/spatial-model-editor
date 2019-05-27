@@ -41,6 +41,8 @@ private slots:
 
     void on_listReactions_currentTextChanged(const QString &currentText);
 
+    void on_btnSimulate_clicked();
+
 private:
     Ui::MainWindow *ui;
     sbmlDocWrapper sbml_doc;
