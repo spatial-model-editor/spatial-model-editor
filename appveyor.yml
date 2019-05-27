@@ -31,17 +31,17 @@ build_script:
   # run qmake to generate make file
   - mkdir build
   - cd build
-  - qmake -Wall -config release ../spatial-model-editor.pro
+  - qmake -Wall -config release ..\spatial-model-editor.pro
   # compile executable
   - mingw32-make -j2
   # compile and run unit tests
   - cd ..
   - mkdir build-tests
   - cd build-tests
-  - qmake -Wall -config release ../test.pro
+  - qmake -Wall -config release ..\test.pro
   - mingw32-make -j2
   - dir
-  - test.exe -s -d=yes
+  - release\test.exe -s -d=yes
 
 artifacts:
   - path: build/release/spatial-model-editor.exe
