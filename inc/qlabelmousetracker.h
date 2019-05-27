@@ -29,11 +29,11 @@ private:
     // pixmap used for display to the user
     QPixmap pixmap;
     // original pixmap
-    QPixmap pixmap_original;
+    //QPixmap pixmap_original;
     // image used for direct pixel manipulation
     QImage image;
     // masks for highlighting each colour
-    std::map<QRgb, QImage> mask;
+    //std::map<QRgb, QImage> mask;
 
 };
 
