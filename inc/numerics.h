@@ -2,6 +2,7 @@
 #define NUMERICS_H
 
 #include <string>
+
 #define exprtk_disable_comments
 #define exprtk_disable_break_continue
 #define exprtk_disable_sc_andor
@@ -22,7 +23,12 @@ private:
     exprtk::expression<double> expression;
     exprtk::parser<double> parser;
 public:
-    reaction_eval(const std::string& expression_string, const std::vector<std::string>& species_name, std::vector<double>& species_value, const std::vector<std::string>& constant_name, const std::vector<double>& constant_value);
+    reaction_eval(const std::string& expression_string,
+    			  const std::vector<std::string>& species_name,
+    			  std::vector<double>& species_value,
+    			  const std::vector<std::string>& constant_name,
+    			  const std::vector<double>& constant_value
+    			  );
     double operator()();
 };
 
