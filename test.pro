@@ -43,3 +43,7 @@ QMAKE_LFLAGS += --coverage
 # from https://github.com/lkeegan/libsbml-static
 LIBS += $$PWD/libsbml/lib/libsbml-static.a $$PWD/libsbml/lib/libexpat.a
 INCLUDEPATH += libsbml/include
+
+# on windows add flags to support large object files
+# https://stackoverflow.com/questions/16596876/object-file-has-too-many-sections
+win32: QMAKE_CXXFLAGS += -Wa,-mbig-obj
