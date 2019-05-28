@@ -38,7 +38,20 @@ void sbmlDocWrapper::loadFile(const std::string &filename) {
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
     const auto *reac = model->getReaction(i);
     reactions << QString(reac->getId().c_str());
-    // construct contribution to PDE for each species
+  }
+
+  // get list of functions
+  functions.clear();
+  for (unsigned int i = 0; i < model->getNumFunctionDefinitions(); ++i) {
+    const auto *func = model->getFunctionDefinition(i);
+    functions << QString(func->getId().c_str());
+  }
+
+  // debugging output:
+  std::map<QString, QString> pde;
+  // construct contribution to PDE for each species
+  for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
+    const auto *reac = model->getReaction(i);
     QString pde_term = reac->getKineticLaw()->getFormula().c_str();
     for (unsigned i = 0; i < reac->getNumProducts(); ++i) {
       pde[reac->getProduct(i)->getSpecies().c_str()].append("+" + pde_term +
@@ -49,7 +62,6 @@ void sbmlDocWrapper::loadFile(const std::string &filename) {
                                                              " ");
     }
   }
-
   for (unsigned int i = 0; i < model->getNumSpecies(); ++i) {
     const auto *spec = model->getSpecies(i);
     qDebug("%s' += %s", spec->getId().c_str(),

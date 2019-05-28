@@ -14,7 +14,10 @@ matrix:
         apt:
           packages:
             - libxkbcommon-dev
-      env: DEPLOY_FILE="spatial-model-editor"
+            - lcov
+      env: 
+        - DEPLOY_FILE="spatial-model-editor"
+        - COVERAGE="upload"
     # osx release build: xcode 9.4.1 [9F2000], macOS 10.13
     - os: osx
       osx_image: xcode9.4
@@ -66,6 +69,11 @@ script:
   - make -j2
   - '[ "$TRAVIS_OS_NAME" != linux ] || ./test -d=yes'
   - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes'
+  # upload coverage report
+  - '[ "$COVERAGE" != "upload" ] || lcov --directory . --capture --output-file coverage.info'
+  - '[ "$COVERAGE" != "upload" ] || lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/exprtk/*" --output-file coverage.info'
+  - '[ "$COVERAGE" != "upload" ] || lcov --list coverage.info'
+  - '[ "$COVERAGE" != "upload" ] || bash <(curl -s https://codecov.io/bash) -X gcov -f "coverage.info"'
   - cd ../build
 
 notifications:

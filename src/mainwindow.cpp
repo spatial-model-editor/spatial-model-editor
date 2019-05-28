@@ -61,6 +61,10 @@ void MainWindow::on_action_Open_SBML_file_triggered() {
   ui->listReactions->clear();
   ui->listReactions->insertItems(0, sbml_doc.reactions);
 
+  // update list of functions
+  ui->listFunctions->clear();
+  ui->listFunctions->insertItems(0, sbml_doc.functions);
+
   // update possible compartments in compartmentMenu
   compartmentMenu->clear();
   compartmentMenu->addAction("none");
@@ -125,6 +129,7 @@ void MainWindow::on_listReactions_currentTextChanged(
     const QString &currentText) {
   ui->listProducts->clear();
   ui->listReactants->clear();
+  ui->listReactionParams->clear();
   ui->lblReactionRate->clear();
   if (currentText.size() > 0) {
     qDebug() << currentText;
@@ -134,6 +139,10 @@ void MainWindow::on_listReactions_currentTextChanged(
     }
     for (unsigned i = 0; i < reac->getNumReactants(); ++i) {
       ui->listReactants->addItem(reac->getReactant(i)->getSpecies().c_str());
+    }
+    for (unsigned i = 0; i < reac->getKineticLaw()->getNumParameters(); ++i) {
+      ui->listReactionParams->addItem(
+          reac->getKineticLaw()->getParameter(i)->getId().c_str());
     }
     ui->lblReactionRate->setText(reac->getKineticLaw()->getFormula().c_str());
   }
@@ -191,4 +200,21 @@ void MainWindow::on_btnSimulate_clicked() {
   ui->pltPlot->yAxis->setLabel("concentration");
   ui->pltPlot->yAxis->setRange(0, 2);
   ui->pltPlot->replot();
+}
+
+void MainWindow::on_listFunctions_currentTextChanged(
+    const QString &currentText) {
+  ui->listFunctionParams->clear();
+  ui->lblFunctionDef->clear();
+  if (currentText.size() > 0) {
+    qDebug() << currentText;
+    const auto *func =
+        sbml_doc.model->getFunctionDefinition(qPrintable(currentText));
+    for (unsigned i = 0; i < func->getNumArguments(); ++i) {
+      ui->listFunctionParams->addItem(
+          libsbml::SBML_formulaToL3String(func->getArgument(i)));
+    }
+    ui->lblFunctionDef->setText(
+        libsbml::SBML_formulaToL3String(func->getBody()));
+  }
 }

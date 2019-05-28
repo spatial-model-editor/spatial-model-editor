@@ -12,10 +12,10 @@
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 class sbmlDocWrapper {
-private:
+ private:
   std::unique_ptr<libsbml::SBMLDocument> doc;
 
-public:
+ public:
   libsbml::Model *model = nullptr;
 
   QString xml;
@@ -29,17 +29,15 @@ public:
   // list of species for given compartment ID
   std::map<QString, QStringList> species;
   QStringList compartments;
+  QStringList functions;
 
   // colour of compartment of given index in image
   std::map<QString, QRgb> compartment_colour;
 
-  // reactions contribution to PDE for given species, as infix string
-  std::map<QString, QString> pde;
-
   void loadFile(const std::string &filename);
 };
 
-#endif // SBML_H
+#endif  // SBML_H
 
 // NOTE:
 // SBML uses internal AST to represent maths
