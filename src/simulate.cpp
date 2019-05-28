@@ -30,6 +30,10 @@ void simulate::compile_reactions() {
       constant_names.push_back(kin->getLocalParameter(k)->getId());
       constant_values.push_back(kin->getLocalParameter(k)->getValue());
     }
+    for (unsigned k = 0; k < kin->getNumParameters(); ++k) {
+      constant_names.push_back(kin->getParameter(k)->getId());
+      constant_values.push_back(kin->getParameter(k)->getValue());
+    }
     // get global parameters and their values:
     for (unsigned k = 0; k < doc.model->getNumParameters(); ++k) {
       constant_names.push_back(doc.model->getParameter(k)->getId());
@@ -37,10 +41,14 @@ void simulate::compile_reactions() {
     }
     // get compartment volumes (referred to by the compartment ID in the
     // reaction expression)
-    for (unsigned int i = 0; i < doc.model->getNumCompartments(); ++i) {
-      const auto *comp = doc.model->getCompartment(i);
+    for (unsigned int k = 0; k < doc.model->getNumCompartments(); ++k) {
+      const auto *comp = doc.model->getCompartment(k);
       constant_names.push_back(comp->getId());
       constant_values.push_back(comp->getVolume());
+    }
+
+    for (std::size_t k = 0; k < constant_names.size(); ++k) {
+      qDebug("const: %s %f", constant_names[k].c_str(), constant_values[k]);
     }
 
     // compile expression and add to reac_eval vector
