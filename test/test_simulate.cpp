@@ -1,7 +1,7 @@
 #include "catch.hpp"
 
-#include "mainwindow.h"
+#include "simulate.h"
 
-TEST_CASE("todo") {
+TEST_CASE("simulate: todo") {
   REQUIRE(1 == 1);
 }

@@ -1,7 +1,8 @@
 #include "catch.hpp"
+//#include <QSignalSpy>
 
-#include "mainwindow.h"
+//#include "qlabelmousetracker.h"
 
-TEST_CASE("todo") {
+TEST_CASE("qlabelmousetracker: todo") {
   REQUIRE(1 == 1);
 }

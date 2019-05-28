@@ -1,4 +1,6 @@
-QT       += core testlib
+QT       += core gui #testlib
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 
 TARGET = test
 TEMPLATE = app
@@ -14,20 +16,22 @@ SOURCES += \
     test/test_qlabeltracker.cpp \
     test/test_sbml.cpp \
     test/test_simulate.cpp \
-    src/mainwindow.cpp \
     src/numerics.cpp \
-    src/qlabelmousetracker.cpp \
     src/sbml.cpp \
     src/simulate.cpp
 
+    # src/mainwindow.cpp \
+    # src/qlabelmousetracker.cpp \
+
 HEADERS += \
-    inc/mainwindow.h \
     inc/numerics.h \
-    inc/qlabelmousetracker.h \
     inc/sbml.h \
     inc/simulate.h \
     test/catch/catch.hpp \
     ext/exprtk/exprtk.hpp
+
+    # inc/mainwindow.h \
+    # inc/qlabelmousetracker.h \
 
 INCLUDEPATH += inc ext/exprtk test/catch
 
