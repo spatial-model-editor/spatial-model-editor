@@ -1,4 +1,4 @@
-QT       += core
+QT       += core testlib
 
 TARGET = test
 TEMPLATE = app
@@ -9,14 +9,23 @@ CONFIG += c++11
 
 SOURCES += \
     test/main.cpp \
+    test/test_mainwindow.cpp \
     test/test_numerics.cpp \
+    test/test_qlabeltracker.cpp \
     test/test_sbml.cpp \
+    test/test_simulate.cpp \
+    src/mainwindow.cpp \
+    src/numerics.cpp \
+    src/qlabelmousetracker.cpp \
     src/sbml.cpp \
-    src/numerics.cpp
+    src/simulate.cpp
 
 HEADERS += \
-    inc/sbml.h \
+    inc/mainwindow.h \
     inc/numerics.h \
+    inc/qlabelmousetracker.h \
+    inc/sbml.h \
+    inc/simulate.h \
     test/catch/catch.hpp \
     ext/exprtk/exprtk.hpp
 

@@ -2,12 +2,12 @@
 #include "catch.hpp"
 
 #include <QCoreApplication>
+#include <QSignalSpy>
 
-int main(int argc, char* argv[])
-{
-    QCoreApplication a(argc, argv);
+int main(int argc, char *argv[]) {
+  QCoreApplication a(argc, argv);
 
-    int result = Catch::Session().run(argc, argv);
+  int result = Catch::Session().run(argc, argv);
 
-    return result;
+  return result;
 }
