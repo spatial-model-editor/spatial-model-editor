@@ -22,6 +22,10 @@ HEADERS += \
 
 INCLUDEPATH += inc ext/exprtk test/catch
 
+QMAKE_CXXFLAGS_RELEASE -= -O2
+QMAKE_CXXFLAGS += --coverage
+QMAKE_LFLAGS += --coverage
+
 # these static libraries are available from
 # from https://github.com/lkeegan/libsbml-static
 LIBS += $$PWD/libsbml/lib/libsbml-static.a $$PWD/libsbml/lib/libexpat.a

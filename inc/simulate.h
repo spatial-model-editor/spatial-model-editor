@@ -7,10 +7,15 @@
 #include "sbml.h"
 
 class simulate {
-private:
+ private:
   const sbmlDocWrapper &doc;
+  // return expr with function calls inlined
+  // e.g. given expr = "z*f(x,y)"
+  // and a function f(a,b) = a*b-2
+  // it returns "z*(x*y-2)"
+  std::string inline_functions(const std::string &expr);
 
-public:
+ public:
   // vector of species that expressions will use
   std::vector<double> species_values;
   // vector of reaction expressions
@@ -19,6 +24,8 @@ public:
   // i is the species index
   // j is the reaction index
   std::vector<std::vector<double>> M;
+  // vector of functions
+  std::vector<std::string> functions;
 
   simulate(const sbmlDocWrapper &doc) : doc(doc) {}
   // compile reaction expressions
@@ -29,4 +36,4 @@ public:
   void euler_timestep(double dt);
 };
 
-#endif // SIMULATE_H
+#endif  // SIMULATE_H

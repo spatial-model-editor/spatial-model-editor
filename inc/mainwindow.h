@@ -1,8 +1,8 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "sbml.h"
 #include <QMainWindow>
+#include "sbml.h"
 
 namespace Ui {
 class MainWindow;
@@ -11,11 +11,11 @@ class MainWindow;
 class MainWindow : public QMainWindow {
   Q_OBJECT
 
-public:
+ public:
   explicit MainWindow(QWidget *parent = nullptr);
   ~MainWindow();
 
-private slots:
+ private slots:
   void on_action_About_triggered();
 
   void on_actionE_xit_triggered();
@@ -42,10 +42,12 @@ private slots:
 
   void on_btnSimulate_clicked();
 
-private:
+  void on_listFunctions_currentTextChanged(const QString &currentText);
+
+ private:
   Ui::MainWindow *ui;
   sbmlDocWrapper sbml_doc;
   std::unique_ptr<QMenu> compartmentMenu;
 };
 
-#endif // MAINWINDOW_H
+#endif  // MAINWINDOW_H
