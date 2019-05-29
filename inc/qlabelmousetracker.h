@@ -27,7 +27,7 @@ class QLabelMousetracker : public QLabel {
   // (x,y) location of current pixel
   QPoint current_pixel;
   // pixmap used for display to the user
-  QPixmap pixmap;
+  QPixmap pixmap = QPixmap(1, 1);
   // original pixmap
   // QPixmap pixmap_original;
   // image used for direct pixel manipulation
