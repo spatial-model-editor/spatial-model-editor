@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTreeWidgetItem>
 #include "sbml.h"
 
 namespace Ui {
@@ -34,8 +35,6 @@ class MainWindow : public QMainWindow {
 
   void on_chkShowSpatialAdvanced_stateChanged(int arg1);
 
-  void on_listSpecies_currentTextChanged(const QString &currentText);
-
   void on_btnChangeCompartment_triggered(QAction *arg1);
 
   void on_listReactions_currentTextChanged(const QString &currentText);
@@ -44,10 +43,14 @@ class MainWindow : public QMainWindow {
 
   void on_listFunctions_currentTextChanged(const QString &currentText);
 
+  void on_listSpecies_itemActivated(QTreeWidgetItem *item, int column);
+
+  void on_listSpecies_itemClicked(QTreeWidgetItem *item, int column);
+
  private:
   Ui::MainWindow *ui;
   sbmlDocWrapper sbml_doc;
-  std::unique_ptr<QMenu> compartmentMenu;
+  QMenu *compartmentMenu;
 };
 
 #endif  // MAINWINDOW_H

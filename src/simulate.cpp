@@ -39,12 +39,13 @@ void simulate::compile_reactions() {
       constant_names.push_back(doc.model->getParameter(k)->getId());
       constant_values.push_back(doc.model->getParameter(k)->getValue());
     }
-    // get compartment volumes (referred to by the compartment ID in the
-    // reaction expression)
+    // get compartment volumes (the compartmentID may be used in the reaction
+    // equation, and it should be replaced with the value of the "Size"
+    // parameter for this compartment )
     for (unsigned int k = 0; k < doc.model->getNumCompartments(); ++k) {
       const auto *comp = doc.model->getCompartment(k);
       constant_names.push_back(comp->getId());
-      constant_values.push_back(comp->getVolume());
+      constant_values.push_back(comp->getSize());
     }
 
     for (std::size_t k = 0; k < constant_names.size(); ++k) {
@@ -55,23 +56,24 @@ void simulate::compile_reactions() {
     reac_eval.emplace_back(numerics::reaction_eval(
         expr, doc.speciesID, species_values, constant_names, constant_values));
 
-    // add a +1 to matrix M for each species produced by this reaction
+    // add difference of stochiometric coefficients to matrix M for each species
+    // produced by this reaction
     for (unsigned k = 0; k < reac->getNumProducts(); ++k) {
-      // get product species (ID?)
-      std::string spec = reac->getProduct(k)->getSpecies().c_str();
+      // get product species reference
+      const auto *spec_ref = reac->getProduct(k);
       // convert species ID to species index i
-      std::size_t i = doc.speciesIndex.at(spec);
-      // insert a +1 at (i,j) in matrix M
-      M[i][j] = +1.0;
+      std::size_t i = doc.speciesIndex.at(spec_ref->getSpecies().c_str());
+      // add stoichiometric coefficient at (i,j) in matrix M
+      M[i][j] += spec_ref->getStoichiometry();
     }
     // add a -1 to matrix M for each species consumed by this reaction
     for (unsigned k = 0; k < reac->getNumReactants(); ++k) {
-      // get product species (ID?)
-      std::string spec = reac->getReactant(k)->getSpecies().c_str();
+      // get product species reference
+      const auto *spec_ref = reac->getReactant(k);
       // convert species ID to species index i
-      std::size_t i = doc.speciesIndex.at(spec);
-      // insert a -1 at (i,j) in matrix M
-      M[i][j] = -1.0;
+      std::size_t i = doc.speciesIndex.at(spec_ref->getSpecies().c_str());
+      // subtract stoichiometric coefficient at (i,j) in matrix M
+      M[i][j] -= spec_ref->getStoichiometry();
     }
   }
 }
@@ -93,6 +95,7 @@ std::string simulate::inline_functions(const std::string &expr) {
         // compare each argument used in the function call in expr to the
         // variable in the function definition
         while (expr_inlined[arg_loc] == ' ') {
+          // trim any leading spaces
           ++arg_loc;
         }
         arg_end = expr_inlined.find_first_of(",)", arg_loc + 1);
@@ -135,7 +138,9 @@ std::vector<double> simulate::evaluate_reactions() {
 void simulate::euler_timestep(double dt) {
   std::vector<double> dcdt = evaluate_reactions();
   for (std::size_t i = 0; i < species_values.size(); ++i) {
-    species_values[i] += dcdt[i] * dt;
+    if (!doc.model->getSpecies(static_cast<unsigned int>(i))->getConstant()) {
+      species_values[i] += dcdt[i] * dt;
+    }
   }
   qDebug() << species_values;
 }

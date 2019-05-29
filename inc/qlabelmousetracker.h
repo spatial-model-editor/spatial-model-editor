@@ -7,7 +7,7 @@
 class QLabelMousetracker : public QLabel {
   Q_OBJECT
 
-public:
+ public:
   QLabelMousetracker(QWidget *parent);
   void importGeometry(const QString &filename);
 
@@ -16,13 +16,14 @@ public:
   // map from colour to compartment ID
   std::map<QRgb, QString> colour_to_comp;
 
-signals:
+ signals:
   void mouseClicked();
 
-protected:
+ protected:
   void mouseMoveEvent(QMouseEvent *event) override;
+  void resizeEvent(QResizeEvent *event) override;
 
-private:
+ private:
   // (x,y) location of current pixel
   QPoint current_pixel;
   // pixmap used for display to the user
@@ -35,4 +36,4 @@ private:
   // std::map<QRgb, QImage> mask;
 };
 
-#endif // MOUSEOVER_QLABEL_H
+#endif  // MOUSEOVER_QLABEL_H
