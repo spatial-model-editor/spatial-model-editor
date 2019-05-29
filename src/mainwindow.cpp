@@ -18,7 +18,7 @@ MainWindow::MainWindow(QWidget *parent)
   ui->lblGeometry->importGeometry(
       "../spatial-model-editor/two-blobs-100x100.bmp");
 
-  compartmentMenu = std::unique_ptr<QMenu>(new QMenu());
+  compartmentMenu = new QMenu(ui->btnChangeCompartment);
 }
 
 MainWindow::~MainWindow() { delete ui; }
@@ -65,13 +65,28 @@ void MainWindow::on_action_Open_SBML_file_triggered() {
   ui->listFunctions->clear();
   ui->listFunctions->insertItems(0, sbml_doc.functions);
 
+  // update tree list of species
+  ui->listSpecies->clear();
+  QList<QTreeWidgetItem *> items;
+  for (auto c : sbml_doc.compartments) {
+    // add compartments as top level items
+    QTreeWidgetItem *comp =
+        new QTreeWidgetItem(ui->listSpecies, QStringList({c}));
+    ui->listSpecies->addTopLevelItem(comp);
+    for (auto s : sbml_doc.species[c]) {
+      // add each species as child of compartment
+      comp->addChild(new QTreeWidgetItem(comp, QStringList({s})));
+    }
+  }
+  ui->listSpecies->expandAll();
+
   // update possible compartments in compartmentMenu
   compartmentMenu->clear();
   compartmentMenu->addAction("none");
   for (auto c : sbml_doc.compartments) {
     compartmentMenu->addAction(c);
   }
-  ui->btnChangeCompartment->setMenu(compartmentMenu.get());
+  ui->btnChangeCompartment->setMenu(compartmentMenu);
 }
 
 void MainWindow::on_action_Save_SBML_file_triggered() {
@@ -83,7 +98,9 @@ void MainWindow::on_action_Save_SBML_file_triggered() {
 void MainWindow::on_actionAbout_Qt_triggered() { QMessageBox::aboutQt(this); }
 
 void MainWindow::on_actionGeometry_from_image_triggered() {
-  QString filename = QFileDialog::getOpenFileName();
+  QString filename =
+      QFileDialog::getOpenFileName(this, "Import geometry from image", "",
+                                   "Image Files (*.png *.jpg *.bmp)");
   ui->lblGeometry->importGeometry(filename);
 }
 
@@ -96,7 +113,7 @@ void MainWindow::on_lblGeometry_mouseClicked() {
   ui->listSpecies->clear();
   ui->btnChangeCompartment->setText(compID);
   // update species info to this compartment
-  ui->listSpecies->insertItems(0, sbml_doc.species[compID]);
+  // ui->listSpecies->insertItems(0, sbml_doc.species[compID]);
   // show species tab
   ui->tabMain->setCurrentIndex(1);
 }
@@ -107,15 +124,6 @@ void MainWindow::on_chkEnableSpatial_stateChanged(int arg1) {
 
 void MainWindow::on_chkShowSpatialAdvanced_stateChanged(int arg1) {
   ui->grpSpatialAdavanced->setEnabled(arg1);
-}
-
-void MainWindow::on_listSpecies_currentTextChanged(const QString &currentText) {
-  if (currentText.size() > 0) {
-    qDebug() << currentText;
-    auto *spec = sbml_doc.model->getSpecies(qPrintable(currentText));
-    ui->txtInitialConcentration->setText(
-        QString::number(spec->getInitialConcentration()));
-  }
 }
 
 void MainWindow::on_btnChangeCompartment_triggered(QAction *arg1) {
@@ -180,6 +188,10 @@ void MainWindow::on_btnSimulate_clicked() {
   }
   // plot results
   ui->pltPlot->clearGraphs();
+  ui->pltPlot->setInteraction(QCP::iRangeDrag, true);
+  ui->pltPlot->setInteraction(QCP::iRangeZoom, true);
+  ui->pltPlot->setInteraction(QCP::iSelectPlottables, true);
+
   std::vector<QColor> col{{0, 0, 0},       {230, 25, 75},   {60, 180, 75},
                           {255, 225, 25},  {0, 130, 200},   {245, 130, 48},
                           {145, 30, 180},  {70, 240, 240},  {240, 50, 230},
@@ -198,7 +210,6 @@ void MainWindow::on_btnSimulate_clicked() {
   ui->pltPlot->xAxis->setLabel("time");
   ui->pltPlot->xAxis->setRange(time.front(), time.back());
   ui->pltPlot->yAxis->setLabel("concentration");
-  ui->pltPlot->yAxis->setRange(0, 2);
   ui->pltPlot->replot();
 }
 
@@ -217,4 +228,20 @@ void MainWindow::on_listFunctions_currentTextChanged(
     ui->lblFunctionDef->setText(
         libsbml::SBML_formulaToL3String(func->getBody()));
   }
+}
+
+void MainWindow::on_listSpecies_itemActivated(QTreeWidgetItem *item,
+                                              int column) {
+  // if user selects a species (i.e. an item with a parent)
+  if ((item != nullptr) && (item->parent() != nullptr)) {
+    qDebug() << item->text(column);
+    // display species information
+    auto *spec = sbml_doc.model->getSpecies(qPrintable(item->text(column)));
+    ui->txtInitialConcentration->setText(
+        QString::number(spec->getInitialConcentration()));
+  }
+}
+
+void MainWindow::on_listSpecies_itemClicked(QTreeWidgetItem *item, int column) {
+  on_listSpecies_itemActivated(item, column);
 }
