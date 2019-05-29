@@ -23,9 +23,11 @@ void QLabelMousetracker::mouseMoveEvent(QMouseEvent *event) {
 
   if (event->buttons() != Qt::NoButton) {
     // on mouse click: update current colour and compartment ID
-    colour = image.pixelColor(current_pixel).rgb();
-    compartmentID = colour_to_comp[colour];
-    emit mouseClicked();
+    if (!pixmap.isNull()) {
+      colour = image.pixelColor(current_pixel).rgb();
+      compartmentID = colour_to_comp[colour];
+      emit mouseClicked();
+    }
   }
 }
 
@@ -51,8 +53,7 @@ void QLabelMousetracker::importGeometry(const QString &filename) {
   }
   pixmap = QPixmap::fromImage(image);
   // pixmap_original = pixmap;
-  this->setPixmap(pixmap.scaled(this->width(), this->height(),
-                                Qt::KeepAspectRatio, Qt::FastTransformation));
+  this->setPixmap(pixmap.scaledToWidth(this->width(), Qt::FastTransformation));
 
   // set first mouse click to top left corner of image
   current_pixel.setX(0);
@@ -63,6 +64,8 @@ void QLabelMousetracker::importGeometry(const QString &filename) {
 }
 
 void QLabelMousetracker::resizeEvent(QResizeEvent *event) {
-  this->setPixmap(pixmap.scaled(event->size().width(), event->size().height(),
-                                Qt::KeepAspectRatio, Qt::FastTransformation));
+  if (!pixmap.isNull()) {
+    this->setPixmap(
+        pixmap.scaledToWidth(event->size().width(), Qt::FastTransformation));
+  }
 }

@@ -44,6 +44,5 @@ win32: QMAKE_CXXFLAGS += -Wa,-mbig-obj
 # on windows statically link to avoid missing dll errors:
 win32: QMAKE_LFLAGS += -static-libgcc -static-libstdc++
 
-# on osx: set visibility to match setting used for compiling static libs
-# todo: repeat this for static qt build and libsbml etc
-mac: QMAKE_CXXFLAGS += -fvisibility=default
+# on osx: set visibility to match setting used for compiling static Qt5 libs
+mac: QMAKE_CXXFLAGS += -fvisibility=hidden
