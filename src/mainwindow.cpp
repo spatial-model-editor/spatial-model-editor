@@ -52,8 +52,13 @@ void MainWindow::on_action_Open_SBML_file_triggered() {
   QString filename = QFileDialog::getOpenFileName();
   if (!filename.isEmpty()) {
     sbml_doc.loadFile(qPrintable(filename));
+    if (sbml_doc.isValid) {
+      update_ui();
+    }
   }
+}
 
+void MainWindow::update_ui() {
   // update raw XML display
   ui->txtSBML->setText(sbml_doc.xml);
 
@@ -105,20 +110,16 @@ void MainWindow::on_actionGeometry_from_image_triggered() {
 }
 
 void MainWindow::on_lblGeometry_mouseClicked() {
-  QPalette sample_palette;
-  sample_palette.setColor(QPalette::Window,
-                          QColor::fromRgb(ui->lblGeometry->colour));
-  ui->lblCompartmentColour->setPalette(sample_palette);
+  // update colour box
+  QPalette palette;
+  palette.setColor(QPalette::Window, QColor::fromRgb(ui->lblGeometry->colour));
+  ui->lblCompartmentColour->setPalette(palette);
+  // update drop-down compartement selector
   QString compID = ui->lblGeometry->compartmentID;
-  ui->listSpecies->clear();
   ui->btnChangeCompartment->setText(compID);
-  // update species info to this compartment
-  // ui->listSpecies->insertItems(0, sbml_doc.species[compID]);
-  // show species tab
-  ui->tabMain->setCurrentIndex(1);
 }
 
-void MainWindow::on_chkEnableSpatial_stateChanged(int arg1) {
+void MainWindow::on_chkSpeciesIsSpatial_stateChanged(int arg1) {
   ui->grpSpatial->setEnabled(arg1);
 }
 
@@ -127,6 +128,7 @@ void MainWindow::on_chkShowSpatialAdvanced_stateChanged(int arg1) {
 }
 
 void MainWindow::on_btnChangeCompartment_triggered(QAction *arg1) {
+  // todo: make sure each comp only has one colour
   QString compID = arg1->text();
   ui->lblGeometry->colour_to_comp[ui->lblGeometry->colour] = compID;
   ui->lblGeometry->compartmentID = compID;
@@ -158,14 +160,23 @@ void MainWindow::on_listReactions_currentTextChanged(
 
 void MainWindow::on_btnSimulate_clicked() {
   // do simple simulation of model
+
   // compile reaction expressions
   simulate sim(sbml_doc);
   sim.compile_reactions();
   // set initial concentrations
   for (unsigned int i = 0; i < sbml_doc.model->getNumSpecies(); ++i) {
-    sim.species_values[i] =
-        sbml_doc.model->getSpecies(i)->getInitialConcentration();
+    const auto *spec = sbml_doc.model->getSpecies(i);
+    if (spec->isSetInitialAmount()) {
+      // SBML file specifies amount: convert to concentration
+      double vol =
+          sbml_doc.model->getCompartment(spec->getCompartment())->getSize();
+      sim.species_values[i] = spec->getInitialAmount() / vol;
+    } else {
+      sim.species_values[i] = spec->getInitialConcentration();
+    }
   }
+
   // generate vector of resulting concentrations at each timestep
   sim.euler_timestep(0.0);
   QVector<double> time;

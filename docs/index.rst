@@ -5,6 +5,10 @@ Spatial Model Editor Documentation
    :maxdepth: 2
    :caption: Contents:
 
-   getting-started
+   get-started
+   import-model
+   import-geometry
+   import-concentration
+   run-simulation
    units
    maths

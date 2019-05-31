@@ -16,6 +16,8 @@ class sbmlDocWrapper {
   std::unique_ptr<libsbml::SBMLDocument> doc;
 
  public:
+  bool isValid = false;
+
   libsbml::Model *model = nullptr;
 
   QString xml;
