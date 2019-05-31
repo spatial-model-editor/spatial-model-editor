@@ -13,7 +13,7 @@ SOURCES += \
     test/main.cpp \
     test/test_mainwindow.cpp \
     test/test_numerics.cpp \
-    test/test_qlabeltracker.cpp \
+    test/test_qlabelmousetracker.cpp \
     test/test_sbml.cpp \
     test/test_simulate.cpp \
     src/numerics.cpp \
@@ -28,7 +28,8 @@ HEADERS += \
     inc/sbml.h \
     inc/simulate.h \
     test/catch/catch.hpp \
-    ext/exprtk/exprtk.hpp
+    ext/exprtk/exprtk.hpp \
+    test/catch/catch_qt_ostream.h
 
     # inc/mainwindow.h \
     # inc/qlabelmousetracker.h \
