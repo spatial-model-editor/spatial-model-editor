@@ -13,4 +13,4 @@ No installation required, just download and run the executable for your operatin
 Source code
 -----------
 
-The source code is available from `github <https://github.com/lkeegan>`_
+The source code is available from `github <https://github.com/lkeegan/spatial-model-editor>`_
