@@ -4,8 +4,10 @@ void sbmlDocWrapper::loadFile(const std::string &filename) {
   doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
   if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
       0) {
-    // todo: Error: Invalid SBML file
-    // doc->printErrors(stream)
+    isValid = false;
+    // todo: doc->printErrors(stream)
+  } else {
+    isValid = true;
   }
 
   // write raw xml to SBML panel

@@ -31,7 +31,7 @@ class MainWindow : public QMainWindow {
 
   void on_lblGeometry_mouseClicked();
 
-  void on_chkEnableSpatial_stateChanged(int arg1);
+  void on_chkSpeciesIsSpatial_stateChanged(int arg1);
 
   void on_chkShowSpatialAdvanced_stateChanged(int arg1);
 
@@ -46,6 +46,9 @@ class MainWindow : public QMainWindow {
   void on_listSpecies_itemActivated(QTreeWidgetItem *item, int column);
 
   void on_listSpecies_itemClicked(QTreeWidgetItem *item, int column);
+
+  // update all UI elements with new model
+  void update_ui();
 
  private:
   Ui::MainWindow *ui;

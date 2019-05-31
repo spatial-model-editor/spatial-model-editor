@@ -20,7 +20,7 @@
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
-      <widget class="QWidget" name="">
+      <widget class="QWidget" name="layoutWidget">
        <layout class="QGridLayout" name="gridCompartments">
         <item row="0" column="2">
          <widget class="QLabel" name="lblCompartment">
@@ -163,7 +163,7 @@
         </sizepolicy>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="tabGeometry">
         <attribute name="title">
@@ -211,6 +211,16 @@
                 <item row="0" column="1">
                  <widget class="QLineEdit" name="txtInitialConcentration"/>
                 </item>
+                <item row="1" column="0">
+                 <widget class="QCheckBox" name="chkSpeciesIsConstant">
+                  <property name="toolTip">
+                   <string>if &quot;Constant&quot; is checked: the species has a fixed concentration during the simulation</string>
+                  </property>
+                  <property name="text">
+                   <string>Constant</string>
+                  </property>
+                 </widget>
+                </item>
                 <item row="0" column="0">
                  <widget class="QLabel" name="lblInitConc">
                   <property name="text">
@@ -221,14 +231,17 @@
                   </property>
                  </widget>
                 </item>
+                <item row="2" column="0">
+                 <widget class="QCheckBox" name="chkSpeciesIsSpatial">
+                  <property name="toolTip">
+                   <string>If &quot;Spatial&quot; is checked: the concentration varies over the compartment, i.e. it is a function of space</string>
+                  </property>
+                  <property name="text">
+                   <string>Spatial</string>
+                  </property>
+                 </widget>
+                </item>
                </layout>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="chkEnableSpatial">
-                <property name="text">
-                 <string>enable spatial simulation</string>
-                </property>
-               </widget>
               </item>
               <item>
                <widget class="QGroupBox" name="grpSpatial">
