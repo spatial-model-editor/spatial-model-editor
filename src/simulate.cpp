@@ -62,23 +62,34 @@ void simulate::compile_reactions() {
         expr, doc.speciesID, species_values, constant_names, constant_values));
 
     // add difference of stochiometric coefficients to matrix M for each species
-    // produced by this reaction
+    // produced and consumed by this reaction (unless the species concentration
+    // is fixed, i.e. constant or boundaryCondition)
     for (unsigned k = 0; k < reac->getNumProducts(); ++k) {
       // get product species reference
       const auto *spec_ref = reac->getProduct(k);
       // convert species ID to species index i
       std::size_t i = doc.speciesIndex.at(spec_ref->getSpecies().c_str());
-      // add stoichiometric coefficient at (i,j) in matrix M
-      M[i][j] += spec_ref->getStoichiometry();
-    }
-    // add a -1 to matrix M for each species consumed by this reaction
-    for (unsigned k = 0; k < reac->getNumReactants(); ++k) {
-      // get product species reference
-      const auto *spec_ref = reac->getReactant(k);
-      // convert species ID to species index i
-      std::size_t i = doc.speciesIndex.at(spec_ref->getSpecies().c_str());
-      // subtract stoichiometric coefficient at (i,j) in matrix M
-      M[i][j] -= spec_ref->getStoichiometry();
+      // if species is not constant, or a boundaryCondition, then add
+      // stoichiometric coefficient at (i,j) in matrix M
+      const auto *spec = doc.model->getSpecies(static_cast<unsigned int>(i));
+      if (!((spec->isSetConstant() && spec->getConstant()) ||
+            (spec->isSetBoundaryCondition() && spec->getBoundaryCondition()))) {
+        M[i][j] += spec_ref->getStoichiometry();
+      }
+      // add a -1 to matrix M for each species consumed by this reaction
+      for (unsigned k = 0; k < reac->getNumReactants(); ++k) {
+        // get product species reference
+        const auto *spec_ref = reac->getReactant(k);
+        // convert species ID to species index i
+        std::size_t i = doc.speciesIndex.at(spec_ref->getSpecies().c_str());
+        const auto *spec = doc.model->getSpecies(static_cast<unsigned int>(i));
+        // subtract stoichiometric coefficient at (i,j) in matrix M
+        if (!((spec->isSetConstant() && spec->getConstant()) ||
+              (spec->isSetBoundaryCondition() &&
+               spec->getBoundaryCondition()))) {
+          M[i][j] -= spec_ref->getStoichiometry();
+        }
+      }
     }
   }
 }
@@ -108,8 +119,8 @@ std::string simulate::inline_functions(const std::string &expr) {
         qDebug() << func->getArgument(j)->getName();
         qDebug() << arg.c_str();
         if (func->getArgument(j)->getName() != arg) {
-          // if they differ, replace the variable in the function def with the
-          // argument used in expr
+          // if they differ, replace the variable in the function def with
+          // the argument used in expr
           arg_as_ast.reset(libsbml::SBML_parseL3Formula(arg.c_str()));
           func_with_args->replaceArgument(func->getArgument(j)->getName(),
                                           arg_as_ast.get());
