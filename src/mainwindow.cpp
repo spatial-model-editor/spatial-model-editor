@@ -250,6 +250,12 @@ void MainWindow::on_listSpecies_itemActivated(QTreeWidgetItem *item,
     auto *spec = sbml_doc.model->getSpecies(qPrintable(item->text(column)));
     ui->txtInitialConcentration->setText(
         QString::number(spec->getInitialConcentration()));
+    if ((spec->isSetConstant() && spec->getConstant()) ||
+        (spec->isSetBoundaryCondition() && spec->getBoundaryCondition())) {
+      ui->chkSpeciesIsConstant->setCheckState(Qt::CheckState::Checked);
+    } else {
+      ui->chkSpeciesIsConstant->setCheckState(Qt::CheckState::Unchecked);
+    }
   }
 }
 
