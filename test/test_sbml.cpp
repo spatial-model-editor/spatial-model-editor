@@ -40,7 +40,7 @@ TEST_CASE("load SBML level 2 document") {
       THEN("find compartments") {
         REQUIRE(s.compartments.size() == 2);
         REQUIRE(s.compartments[0] == "compartment0");
-        REQUIRE(s.compartments[0] == "compartment1");
+        REQUIRE(s.compartments[1] == "compartment1");
       }
       THEN("find species") {
         REQUIRE(s.species.size() == 2);
