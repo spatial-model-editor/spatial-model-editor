@@ -1,5 +1,5 @@
-spatial-model-editor
-====================
+Spatial Model Editor Documentation
+==================================
 
 .. toctree::
    :maxdepth: 2
