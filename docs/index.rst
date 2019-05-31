@@ -12,3 +12,4 @@ Spatial Model Editor Documentation
    run-simulation
    units
    maths
+   source-code

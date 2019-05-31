@@ -12,10 +12,3 @@ No installation required, just download and run the executable for your operatin
 
 .. tip::
    You may have to give permission before your operating system will run the executable. (e.g. ``chmod +x spatial-model-editor`` on linux, right-click open on mac)
-
-
-
-Source code
------------
-
-The source code is available from `github <https://github.com/lkeegan>`_

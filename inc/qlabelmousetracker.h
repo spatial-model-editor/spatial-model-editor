@@ -4,6 +4,8 @@
 #include <QMouseEvent>
 #include <QPainter>
 
+// A QLabel which tracks the mouse location
+// and the colour of the last pixel clicked on
 class QLabelMousetracker : public QLabel {
   Q_OBJECT
 

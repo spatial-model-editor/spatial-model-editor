@@ -16,14 +16,10 @@ void simulate::compile_reactions() {
     const auto *kin = reac->getKineticLaw();
     std::string expr = kin->getFormula();
 
-    // TODO: deal with amount vs concentration issues
-    // if (spec->isSetHasOnlySubstanceUnits() &&
-    //        spec->getHasOnlySubstanceUnits()) {
-    // equations expect amount, not concentration for this species
-    // note: need to also do this for the inlining step (or after?)
-
-    //  } else {
-    // }
+    // TODO: deal with amount vs concentration issues correctly
+    // if getHasOnlySubstanceUnits is true for some (all?) species
+    // note: would also need to also do this in the inlining step, and in the
+    // stoich matrix factors
 
     // inline function calls
     qDebug() << expr.c_str();

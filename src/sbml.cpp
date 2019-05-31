@@ -30,6 +30,13 @@ void sbmlDocWrapper::loadFile(const std::string &filename) {
   speciesID.clear();
   for (unsigned int i = 0; i < model->getNumSpecies(); ++i) {
     const auto *spec = model->getSpecies(i);
+    if (spec->isSetHasOnlySubstanceUnits() &&
+        spec->getHasOnlySubstanceUnits()) {
+      // equations expect amount, not concentration for this species
+      // for now this is not supported:
+      qDebug() << "Error: HasOnlySubstanceUnits=true not yet supported.";
+      exit(1);
+    }
     const auto id = spec->getId().c_str();
     speciesIndex[id] = i;
     speciesID.push_back(id);
