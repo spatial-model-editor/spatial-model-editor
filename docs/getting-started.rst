@@ -1,13 +1,5 @@
-spatial-model-editor
+getting started
 ====================
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-   index
-   getting-started
-   maths
 
 Installation
 ------------
