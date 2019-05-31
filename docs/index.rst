@@ -5,6 +5,8 @@ spatial-model-editor
    :maxdepth: 2
    :caption: Contents:
 
+   maths
+
 Installation
 ------------
 
