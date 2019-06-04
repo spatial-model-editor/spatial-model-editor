@@ -17,24 +17,24 @@
 
 namespace numerics {
 
-class reaction_eval {
-private:
-  exprtk::symbol_table<double> symbol_table;
-  exprtk::expression<double> expression;
+class ReactionEvaluate {
+ private:
+  exprtk::symbol_table<double> exprtkSymbolTable;
+  exprtk::expression<double> exprtkExpression;
 
-public:
+ public:
   // compile the given string containing a mathematical expression using exprtk
   // the species are stored as references, so their values can be changed
   // and the expression can then be re-evaluated without re-compiling
-  reaction_eval(const std::string &expression_string,
-                const std::vector<std::string> &species_name,
-                std::vector<double> &species_value,
-                const std::vector<std::string> &constant_name,
-                const std::vector<double> &constant_value);
+  ReactionEvaluate(const std::string &expression,
+                   const std::vector<std::string> &speciesName,
+                   std::vector<double> &speciesValue,
+                   const std::vector<std::string> &constantName,
+                   const std::vector<double> &constantValue);
   // evaluate compiled expression
   double operator()();
 };
 
-} // namespace numerics
+}  // namespace numerics
 
-#endif // NUMERICS_H
+#endif  // NUMERICS_H

@@ -54,6 +54,8 @@ class MainWindow : public QMainWindow {
 
   void on_hslideTime_valueChanged(int value);
 
+  void on_tabMain_currentChanged(int index);
+
  private:
   Ui::MainWindow *ui;
   sbmlDocWrapper sbml_doc;

@@ -18,7 +18,6 @@ class QLabelMousetracker : public QLabel {
   const QRgb &getColour() const;
   void setMaskColour(QRgb colour);
   const QImage &getMask() const;
-  // get colour of pixel at last mouse click position
 
  signals:
   void mouseClicked();

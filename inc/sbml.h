@@ -23,7 +23,7 @@ class sbmlDocWrapper {
 
   QString xml;
 
-  // loop up given specied ID, return index
+  // loop up given specified species ID, return index
   std::map<std::string, std::size_t> speciesIndex;
   // vector of speciesID with above indexing
   std::vector<std::string> speciesID;

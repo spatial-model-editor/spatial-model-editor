@@ -41,6 +41,10 @@ class field {
   // return a QImage of the compartment geometry
   QImage img_comp;
   const QImage &compartment_image();
+  void setConstantConcentration(std::size_t species_index,
+                                double concentration);
+  void importConcentration(std::size_t species_index, QImage img,
+                           double scale_factor = 1.0);
   // return a QImage of the concentration of of a species
   std::vector<QImage> img_conc;
   const QImage &concentration_image(std::size_t species_index);
@@ -53,7 +57,7 @@ class simulate {
  private:
   const sbmlDocWrapper &doc;
   // vector of reaction expressions
-  std::vector<numerics::reaction_eval> reac_eval;
+  std::vector<numerics::ReactionEvaluate> reac_eval;
   // matrix M_ij of stoichiometric coefficients
   // i is the species index
   // j is the reaction index
@@ -65,7 +69,7 @@ class simulate {
 
   simulate(const sbmlDocWrapper &doc) : doc(doc) {}
   // compile reaction expressions
-  void compile_reactions();
+  void compile_reactions(const QString &compartmentID);
 
   // 1d simulation
   // vector of result of applying reaction expressions

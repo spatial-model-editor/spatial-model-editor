@@ -14,7 +14,7 @@ TEST_CASE("evaluate expression: no vars, no constants", "[numerics]") {
   // values of constants (passed by copy)
   std::vector<double> constants = {};
   // compile expression
-  numerics::reaction_eval r(expr, var_names, vars, constant_names, constants);
+  numerics::ReactionEvaluate r(expr, var_names, vars, constant_names, constants);
   // ouput these variables as part of the test
   CAPTURE(expr);
   CAPTURE(var_names);
@@ -37,7 +37,7 @@ TEST_CASE("evaluate expression: pow function", "[numerics]") {
   // values of constants (passed by copy)
   std::vector<double> constants = {};
   // compile expression
-  numerics::reaction_eval r(expr, var_names, vars, constant_names, constants);
+  numerics::ReactionEvaluate r(expr, var_names, vars, constant_names, constants);
   // ouput these variables as part of the test
   CAPTURE(expr);
   CAPTURE(var_names);
@@ -60,7 +60,7 @@ TEST_CASE("evaluate expression: cos, sin functions", "[numerics]") {
   // values of constants (passed by copy)
   std::vector<double> constants = {};
   // compile expression
-  numerics::reaction_eval r(expr, var_names, vars, constant_names, constants);
+  numerics::ReactionEvaluate r(expr, var_names, vars, constant_names, constants);
   // ouput these variables as part of the test
   CAPTURE(expr);
   CAPTURE(var_names);
@@ -77,7 +77,7 @@ TEST_CASE("evaluate expression: no vars, constants", "[numerics]") {
   std::vector<double> vars = {};
   std::vector<std::string> constant_names = {"a", "b", "c"};
   std::vector<double> constants{1, 4, -0.2};
-  numerics::reaction_eval r(expr, var_names, vars, constant_names, constants);
+  numerics::ReactionEvaluate r(expr, var_names, vars, constant_names, constants);
   CAPTURE(expr);
   CAPTURE(var_names);
   CAPTURE(vars);
@@ -93,7 +93,7 @@ TEST_CASE("evaluate expression: vars and constants", "[numerics]") {
     std::vector<double> vars{0.0, 1.0};
     std::vector<std::string> constant_names = {"c0", "cd"};
     std::vector<double> constants{0.5, 0.5};
-    numerics::reaction_eval r(expr, var_names, vars, constant_names, constants);
+    numerics::ReactionEvaluate r(expr, var_names, vars, constant_names, constants);
     CAPTURE(expr);
     CAPTURE(var_names);
     CAPTURE(vars);
