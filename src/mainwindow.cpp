@@ -129,8 +129,6 @@ void MainWindow::on_lblGeometry_mouseClicked() {
       sbml_doc.colour_to_compartment[old_col] = "";
     }
     auto old_comp = sbml_doc.colour_to_compartment[col];
-    qDebug("old comp: %s, new comp: %s", qPrintable(old_comp),
-           qPrintable(new_comp));
     if (old_comp != "") {
       // if the new colour was already assigned to another compartment, set the
       // colour of that compartment to null
@@ -187,7 +185,7 @@ void MainWindow::sim1d() {
 
   // compile reaction expressions
   simulate sim(sbml_doc);
-  sim.compile_reactions();
+  sim.compile_reactions(sbml_doc.compartments[0]);
   // set initial concentrations
   for (unsigned int i = 0; i < sbml_doc.model->getNumSpecies(); ++i) {
     const auto *spec = sbml_doc.model->getSpecies(i);
@@ -250,26 +248,23 @@ void MainWindow::sim1d() {
 
 void MainWindow::on_btnSimulate_clicked() {
   // simple 2d simulation
+  images.clear();
 
-  // initialise concentration field from current compartment
-  field species_field(1, ui->lblGeometry->getImage(),
-                      ui->lblGeometry->getColour());
+  // for now only simulate first compartment
+  auto comp = sbml_doc.compartments[0];
+  // initialise concentration fields from current compartment
+  field species_field(sbml_doc.species[comp].size(), sbml_doc.compartment_image,
+                      sbml_doc.compartment_to_colour[comp]);
   ui->lblGeometry->setImage(species_field.compartment_image());
   // set initial concentration
-  species_field.conc[17] = 50;
-  species_field.conc[18] = 40;
-  species_field.conc[19] = 39;
-  species_field.conc[20] = 50;
-  species_field.conc[21] = 40;
-  species_field.conc[22] = 39;
-  species_field.conc[23] = 50;
-  species_field.conc[24] = 40;
-  species_field.conc[25] = 39;
-  // display initial concentration
-  ui->lblGeometry->setImage(species_field.concentration_image(0));
+  for (int i = 0; i < sbml_doc.species[comp].size(); ++i) {
+    species_field.setConstantConcentration(
+        i, sbml_doc.model->getSpecies(qPrintable(sbml_doc.species[comp][i]))
+               ->getInitialConcentration());
+  }
   // compile reaction expressions
   simulate sim(sbml_doc);
-  sim.compile_reactions();
+  sim.compile_reactions(comp);
   // do euler integration
   QVector<double> time;
   QVector<double> conc;
@@ -280,8 +275,8 @@ void MainWindow::on_btnSimulate_clicked() {
     t += dt;
     species_field.diffusion_op();
     sim.timestep_2d_euler(species_field, dt);
-    images.push_back(species_field.concentration_image(0).copy());
-    conc.push_back(species_field.get_mean_concentration(0));
+    images.push_back(species_field.concentration_image(1).copy());
+    conc.push_back(species_field.get_mean_concentration(1));
     time.push_back(t);
   }
   // plot results
@@ -389,5 +384,19 @@ void MainWindow::on_hslideTime_valueChanged(int value) {
   qDebug() << value;
   if (images.size() > value) {
     ui->lblGeometry->setImage(images[value]);
+  }
+}
+
+void MainWindow::on_tabMain_currentChanged(int index) {
+  qDebug() << index;
+  if (index == 0) {
+    // geometry tab
+    ui->lblGeometry->setImage(sbml_doc.compartment_image);
+    ui->hslideTime->setEnabled(false);
+  } else if (index == 4) {
+    // simulate tab
+    ui->hslideTime->setEnabled(true);
+    ui->hslideTime->setValue(0);
+    on_hslideTime_valueChanged(0);
   }
 }

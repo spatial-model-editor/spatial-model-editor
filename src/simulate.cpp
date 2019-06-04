@@ -2,97 +2,118 @@
 
 #include "simulate.h"
 
-void simulate::compile_reactions() {
+void simulate::compile_reactions(const QString &compartmentID) {
   // init vector of species with zeros
-  species_values = std::vector<double>(doc.model->getNumSpecies(), 0.0);
+  const auto &species_list = doc.species.at(compartmentID);
+  species_values = std::vector<double>(species_list.size(), 0.0);
   // init matrix M with zeros, matrix size: n_species x n_reactions
   M.clear();
-  for (unsigned int i = 0; i < doc.model->getNumSpecies(); ++i) {
+  for (unsigned int i = 0; i < species_values.size(); ++i) {
     M.emplace_back(std::vector<double>(doc.model->getNumReactions(), 0));
   }
   reac_eval.reserve(doc.model->getNumReactions());
   qDebug() << M;
   // process each reaction
-  for (unsigned int j = 0; j < doc.model->getNumReactions(); ++j) {
-    const auto *reac = doc.model->getReaction(j);
-    // get mathematical formula
-    const auto *kin = reac->getKineticLaw();
-    std::string expr = kin->getFormula();
+  int reaction_index = 0;
+  for (unsigned int ri = 0; ri < doc.model->getNumReactions(); ++ri) {
+    const auto *reac = doc.model->getReaction(ri);
+    qDebug() << reac->getCompartment().c_str();
+    if (reac->getCompartment().c_str() == compartmentID ||
+        reac->getCompartment().size() == 0) {
+      // get mathematical formula
+      const auto *kin = reac->getKineticLaw();
+      std::string expr = kin->getFormula();
 
-    // TODO: deal with amount vs concentration issues correctly
-    // if getHasOnlySubstanceUnits is true for some (all?) species
-    // note: would also need to also do this in the inlining step, and in the
-    // stoich matrix factors
+      // TODO: deal with amount vs concentration issues correctly
+      // if getHasOnlySubstanceUnits is true for some (all?) species
+      // note: would also need to also do this in the inlining step, and in the
+      // stoich matrix factors
 
-    // inline function calls
-    qDebug() << expr.c_str();
-    expr = doc.inlineFunctions(expr);
-    qDebug() << "after inlining:";
-    qDebug() << expr.c_str();
+      // inline function calls
+      qDebug() << expr.c_str();
+      expr = doc.inlineFunctions(expr);
+      qDebug() << "after inlining:";
+      qDebug() << expr.c_str();
 
-    // get all parameters and constants used in reaction
-    std::vector<std::string> constant_names;
-    std::vector<double> constant_values;
-    // get local parameters and their values
-    for (unsigned k = 0; k < kin->getNumLocalParameters(); ++k) {
-      constant_names.push_back(kin->getLocalParameter(k)->getId());
-      constant_values.push_back(kin->getLocalParameter(k)->getValue());
-    }
-    for (unsigned k = 0; k < kin->getNumParameters(); ++k) {
-      constant_names.push_back(kin->getParameter(k)->getId());
-      constant_values.push_back(kin->getParameter(k)->getValue());
-    }
-    // get global parameters and their values:
-    for (unsigned k = 0; k < doc.model->getNumParameters(); ++k) {
-      constant_names.push_back(doc.model->getParameter(k)->getId());
-      constant_values.push_back(doc.model->getParameter(k)->getValue());
-    }
-    // get compartment volumes (the compartmentID may be used in the reaction
-    // equation, and it should be replaced with the value of the "Size"
-    // parameter for this compartment )
-    for (unsigned int k = 0; k < doc.model->getNumCompartments(); ++k) {
-      const auto *comp = doc.model->getCompartment(k);
-      constant_names.push_back(comp->getId());
-      constant_values.push_back(comp->getSize());
-    }
-
-    for (std::size_t k = 0; k < constant_names.size(); ++k) {
-      qDebug("const: %s %f", constant_names[k].c_str(), constant_values[k]);
-    }
-
-    // compile expression and add to reac_eval vector
-    reac_eval.emplace_back(numerics::reaction_eval(
-        expr, doc.speciesID, species_values, constant_names, constant_values));
-
-    // add difference of stoichiometric coefficients to matrix M for each
-    // species produced and consumed by this reaction (unless the species
-    // concentration is fixed, i.e. constant or boundaryCondition)
-    for (unsigned k = 0; k < reac->getNumProducts(); ++k) {
-      // get product species reference
-      const auto *spec_ref = reac->getProduct(k);
-      // convert species ID to species index i
-      std::size_t i = doc.speciesIndex.at(spec_ref->getSpecies().c_str());
-      // if species is not constant, or a boundaryCondition, then add
-      // stoichiometric coefficient at (i,j) in matrix M
-      const auto *spec = doc.model->getSpecies(static_cast<unsigned int>(i));
-      if (!((spec->isSetConstant() && spec->getConstant()) ||
-            (spec->isSetBoundaryCondition() && spec->getBoundaryCondition()))) {
-        M[i][j] += spec_ref->getStoichiometry();
-        qDebug("M[%d][%d] += %f", i, j, spec_ref->getStoichiometry());
+      // get all parameters and constants used in reaction
+      std::vector<std::string> constant_names;
+      std::vector<double> constant_values;
+      // get local parameters and their values
+      for (unsigned k = 0; k < kin->getNumLocalParameters(); ++k) {
+        constant_names.push_back(kin->getLocalParameter(k)->getId());
+        constant_values.push_back(kin->getLocalParameter(k)->getValue());
       }
-    }
-    for (unsigned k = 0; k < reac->getNumReactants(); ++k) {
-      // get product species reference
-      const auto *spec_ref = reac->getReactant(k);
-      // convert species ID to species index i
-      std::size_t i = doc.speciesIndex.at(spec_ref->getSpecies().c_str());
-      const auto *spec = doc.model->getSpecies(static_cast<unsigned int>(i));
-      // subtract stoichiometric coefficient at (i,j) in matrix M
-      if (!((spec->isSetConstant() && spec->getConstant()) ||
-            (spec->isSetBoundaryCondition() && spec->getBoundaryCondition()))) {
-        M[i][j] -= spec_ref->getStoichiometry();
-        qDebug("M[%d][%d] -= %f", i, j, spec_ref->getStoichiometry());
+      for (unsigned k = 0; k < kin->getNumParameters(); ++k) {
+        constant_names.push_back(kin->getParameter(k)->getId());
+        constant_values.push_back(kin->getParameter(k)->getValue());
       }
+      // get global parameters and their values:
+      for (unsigned k = 0; k < doc.model->getNumParameters(); ++k) {
+        constant_names.push_back(doc.model->getParameter(k)->getId());
+        constant_values.push_back(doc.model->getParameter(k)->getValue());
+      }
+      // get compartment volumes (the compartmentID may be used in the reaction
+      // equation, and it should be replaced with the value of the "Size"
+      // parameter for this compartment)
+      for (unsigned int k = 0; k < doc.model->getNumCompartments(); ++k) {
+        const auto *comp = doc.model->getCompartment(k);
+        constant_names.push_back(comp->getId());
+        constant_values.push_back(comp->getSize());
+      }
+
+      for (std::size_t k = 0; k < constant_names.size(); ++k) {
+        qDebug("const: %s %f", constant_names[k].c_str(), constant_values[k]);
+      }
+
+      // compile expression and add to reac_eval vector
+      reac_eval.emplace_back(
+          numerics::ReactionEvaluate(expr, doc.speciesID, species_values,
+                                     constant_names, constant_values));
+
+      // add difference of stoichiometric coefficients to matrix M for each
+      // species produced and consumed by this reaction (unless the species
+      // concentration is fixed, i.e. constant or boundaryCondition)
+      for (unsigned k = 0; k < reac->getNumProducts(); ++k) {
+        // get product species reference
+        const auto *spec_ref = reac->getProduct(k);
+        // get index in species_list
+        int species_index = 0;
+        while (species_list[species_index] !=
+               QString(spec_ref->getSpecies().c_str())) {
+          ++species_index;
+        }
+        qDebug() << species_index;
+        // if species is not constant, or a boundaryCondition, then *add*
+        // stoichiometric coefficient to M(species_index,reaction_index)
+        const auto *spec = doc.model->getSpecies(spec_ref->getSpecies());
+        if (!((spec->isSetConstant() && spec->getConstant()) ||
+              (spec->isSetBoundaryCondition() &&
+               spec->getBoundaryCondition()))) {
+          M[species_index][reaction_index] += spec_ref->getStoichiometry();
+          qDebug("M[%d][%d] += %f", species_index, reaction_index,
+                 spec_ref->getStoichiometry());
+        }
+      }
+      for (unsigned k = 0; k < reac->getNumReactants(); ++k) {
+        // get product species reference
+        const auto *spec_ref = reac->getReactant(k);
+        // get index in species_list
+        int species_index = 0;
+        while (species_list[species_index] != spec_ref->getSpecies().c_str()) {
+          ++species_index;
+        }
+        // if species is not constant, or a boundaryCondition, then *add*
+        // stoichiometric coefficient to M(species_index,reaction_index)
+        const auto *spec = doc.model->getSpecies(spec_ref->getSpecies());
+        if (!((spec->isSetConstant() && spec->getConstant()) ||
+              (spec->isSetBoundaryCondition() &&
+               spec->getBoundaryCondition()))) {
+          M[species_index][reaction_index] -= spec_ref->getStoichiometry();
+          qDebug("M[%d][%d] -= %f", species_index, reaction_index,
+                 spec_ref->getStoichiometry());
+        }
+      }
+      ++reaction_index;
     }
   }
   qDebug() << M;
@@ -139,6 +160,7 @@ void simulate::evaluate_reactions(field &field) {
 
 void simulate::timestep_2d_euler(field &field, double dt) {
   field.diffusion_op();
+  evaluate_reactions(field);
   for (std::size_t i = 0; i < field.conc.size(); ++i) {
     field.conc[i] += dt * field.dcdt[i];
   }
@@ -147,13 +169,14 @@ void simulate::timestep_2d_euler(field &field, double dt) {
 field::field(std::size_t n_species_, QImage img, QRgb col,
              BOUNDARY_CONDITION bc) {
   n_species = n_species_;
+  qDebug("field: n_species: %d", n_species);
   img_size = img.size();
   img_comp = QImage(img_size, QImage::Format_Mono);
   img_conc =
       std::vector<QImage>(n_species, QImage(img_size, QImage::Format_ARGB32));
 
   // set diffusion constants to 1 for now:
-  diffusion_constant = std::vector<double>(n_species, 1.0);
+  diffusion_constant = std::vector<double>(n_species, 0.0);
   std::unordered_map<int, std::size_t> index;
   ix.clear();
   // find pixels in compartment: store image QPoint for each
@@ -204,6 +227,20 @@ field::field(std::size_t n_species_, QImage img, QRgb col,
   dcdt = conc;
 }
 
+void field::importConcentration(std::size_t species_index, QImage img,
+                                double scale_factor) {
+  for (std::size_t i = 0; i < ix.size(); ++i) {
+    conc[n_species * i + species_index] = img.pixel(ix[i]) * scale_factor;
+  }
+}
+
+void field::setConstantConcentration(std::size_t species_index,
+                                     double concentration) {
+  for (std::size_t i = 0; i < ix.size(); ++i) {
+    conc[n_species * i + species_index] = concentration;
+  }
+}
+
 const QImage &field::compartment_image() {
   img_comp.fill(0);
   for (const auto &p : ix) {
@@ -214,7 +251,7 @@ const QImage &field::compartment_image() {
 
 const QImage &field::concentration_image(std::size_t species_index) {
   img_conc[species_index].fill(qRgba(0, 0, 0, 0));
-  double max_conc = 0;
+  double max_conc = 1e-5;
   for (std::size_t i = 0; i < ix.size(); ++i) {
     max_conc = std::max(max_conc, conc[i * n_species + species_index]);
   }
