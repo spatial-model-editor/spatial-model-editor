@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QTreeWidgetItem>
+#include "ext/qcustomplot/qcustomplot.h"
 #include "sbml.h"
 
 namespace Ui {
@@ -35,8 +36,6 @@ class MainWindow : public QMainWindow {
 
   void on_chkShowSpatialAdvanced_stateChanged(int arg1);
 
-  void on_btnChangeCompartment_triggered(QAction *arg1);
-
   void on_listReactions_currentTextChanged(const QString &currentText);
 
   void on_btnSimulate_clicked();
@@ -47,13 +46,24 @@ class MainWindow : public QMainWindow {
 
   void on_listSpecies_itemClicked(QTreeWidgetItem *item, int column);
 
-  // update all UI elements with new model
-  void update_ui();
+  void on_graphClicked(QCPAbstractPlottable *plottable, int dataIndex);
+
+  void on_btnChangeCompartment_clicked();
+
+  void on_listCompartments_currentTextChanged(const QString &currentText);
 
  private:
   Ui::MainWindow *ui;
   sbmlDocWrapper sbml_doc;
-  QMenu *compartmentMenu;
+  bool waiting_for_compartment_choice = false;
+
+  // temp: vector of images to display
+  std::vector<QImage> images;
+
+  // update all UI elements with new model
+  void update_ui();
+  // do simple 1d simulation
+  void sim1d();
 };
 
 #endif  // MAINWINDOW_H

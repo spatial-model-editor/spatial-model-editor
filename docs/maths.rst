@@ -16,7 +16,7 @@ where
 
 * :math:`c_s` is the concentration of species :math:`s` at position :math:`(x, y)` and time :math:`t`
 * :math:`D` is the diffusion constant for species :math:`s`
-* :math:`R_i` are the reaction terms for species :math:`s`
+* :math:`R_s` is the reaction term for species :math:`s`
 
 Assumptions:
 

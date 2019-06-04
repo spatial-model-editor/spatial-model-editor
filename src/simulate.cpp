@@ -1,3 +1,5 @@
+#include <unordered_map>
+
 #include "simulate.h"
 
 void simulate::compile_reactions() {
@@ -9,6 +11,7 @@ void simulate::compile_reactions() {
     M.emplace_back(std::vector<double>(doc.model->getNumReactions(), 0));
   }
   reac_eval.reserve(doc.model->getNumReactions());
+  qDebug() << M;
   // process each reaction
   for (unsigned int j = 0; j < doc.model->getNumReactions(); ++j) {
     const auto *reac = doc.model->getReaction(j);
@@ -23,7 +26,7 @@ void simulate::compile_reactions() {
 
     // inline function calls
     qDebug() << expr.c_str();
-    expr = inline_functions(expr);
+    expr = doc.inlineFunctions(expr);
     qDebug() << "after inlining:";
     qDebug() << expr.c_str();
 
@@ -61,9 +64,9 @@ void simulate::compile_reactions() {
     reac_eval.emplace_back(numerics::reaction_eval(
         expr, doc.speciesID, species_values, constant_names, constant_values));
 
-    // add difference of stochiometric coefficients to matrix M for each species
-    // produced and consumed by this reaction (unless the species concentration
-    // is fixed, i.e. constant or boundaryCondition)
+    // add difference of stoichiometric coefficients to matrix M for each
+    // species produced and consumed by this reaction (unless the species
+    // concentration is fixed, i.e. constant or boundaryCondition)
     for (unsigned k = 0; k < reac->getNumProducts(); ++k) {
       // get product species reference
       const auto *spec_ref = reac->getProduct(k);
@@ -75,88 +78,173 @@ void simulate::compile_reactions() {
       if (!((spec->isSetConstant() && spec->getConstant()) ||
             (spec->isSetBoundaryCondition() && spec->getBoundaryCondition()))) {
         M[i][j] += spec_ref->getStoichiometry();
+        qDebug("M[%d][%d] += %f", i, j, spec_ref->getStoichiometry());
       }
-      // add a -1 to matrix M for each species consumed by this reaction
-      for (unsigned k = 0; k < reac->getNumReactants(); ++k) {
-        // get product species reference
-        const auto *spec_ref = reac->getReactant(k);
-        // convert species ID to species index i
-        std::size_t i = doc.speciesIndex.at(spec_ref->getSpecies().c_str());
-        const auto *spec = doc.model->getSpecies(static_cast<unsigned int>(i));
-        // subtract stoichiometric coefficient at (i,j) in matrix M
-        if (!((spec->isSetConstant() && spec->getConstant()) ||
-              (spec->isSetBoundaryCondition() &&
-               spec->getBoundaryCondition()))) {
-          M[i][j] -= spec_ref->getStoichiometry();
-        }
+    }
+    for (unsigned k = 0; k < reac->getNumReactants(); ++k) {
+      // get product species reference
+      const auto *spec_ref = reac->getReactant(k);
+      // convert species ID to species index i
+      std::size_t i = doc.speciesIndex.at(spec_ref->getSpecies().c_str());
+      const auto *spec = doc.model->getSpecies(static_cast<unsigned int>(i));
+      // subtract stoichiometric coefficient at (i,j) in matrix M
+      if (!((spec->isSetConstant() && spec->getConstant()) ||
+            (spec->isSetBoundaryCondition() && spec->getBoundaryCondition()))) {
+        M[i][j] -= spec_ref->getStoichiometry();
+        qDebug("M[%d][%d] -= %f", i, j, spec_ref->getStoichiometry());
       }
     }
   }
-}
-
-std::string simulate::inline_functions(const std::string &expr) {
-  std::string expr_inlined = expr;
-  for (unsigned int i = 0; i < doc.model->getNumFunctionDefinitions(); ++i) {
-    const auto *func = doc.model->getFunctionDefinition(i);
-    std::unique_ptr<libsbml::ASTNode> func_with_args(
-        func->getBody()->deepCopy());
-    std::unique_ptr<libsbml::ASTNode> arg_as_ast;
-    // search for function call in expression
-    auto loc = expr_inlined.find(func->getId() + "(");
-    if (loc != std::string::npos) {
-      // function call found
-      auto arg_loc = loc + func->getId().size() + 1;
-      std::size_t arg_end;
-      for (unsigned int j = 0; j < func->getNumArguments(); ++j) {
-        // compare each argument used in the function call in expr to the
-        // variable in the function definition
-        while (expr_inlined[arg_loc] == ' ') {
-          // trim any leading spaces
-          ++arg_loc;
-        }
-        arg_end = expr_inlined.find_first_of(",)", arg_loc + 1);
-        std::string arg = expr_inlined.substr(arg_loc, arg_end - arg_loc);
-        qDebug() << func->getArgument(j)->getName();
-        qDebug() << arg.c_str();
-        if (func->getArgument(j)->getName() != arg) {
-          // if they differ, replace the variable in the function def with
-          // the argument used in expr
-          arg_as_ast.reset(libsbml::SBML_parseL3Formula(arg.c_str()));
-          func_with_args->replaceArgument(func->getArgument(j)->getName(),
-                                          arg_as_ast.get());
-          qDebug("replacing %s with %s in function",
-                 func->getArgument(j)->getName(), arg.c_str());
-        }
-        arg_loc = arg_end + 1;
-      }
-      // inline body of function, wrapped in parentheses, in expression
-      auto end = expr_inlined.find(")", loc);
-      expr_inlined = expr_inlined.substr(0, loc) + "(" +
-                     libsbml::SBML_formulaToL3String(func_with_args.get()) +
-                     ")" + expr_inlined.substr(end + 1);
-      // todo: allow for multiple calls to the same function
-      // todo: check for case that ")" not found: invalid expression
-    }
-  }
-  return expr_inlined;
+  qDebug() << M;
 }
 
 std::vector<double> simulate::evaluate_reactions() {
   std::vector<double> result(species_values.size(), 0.0);
-  for (std::size_t i = 0; i < M.size(); ++i) {
-    for (std::size_t j = 0; j < reac_eval.size(); ++j) {
-      result[i] += M[i][j] * reac_eval[j]();
+  for (std::size_t j = 0; j < reac_eval.size(); ++j) {
+    double r_j = reac_eval[j]();
+    for (std::size_t i = 0; i < M.size(); ++i) {
+      result[i] += M[i][j] * r_j;
     }
   }
   return result;
 }
 
-void simulate::euler_timestep(double dt) {
+void simulate::timestep_1d_euler(double dt) {
   std::vector<double> dcdt = evaluate_reactions();
   for (std::size_t i = 0; i < species_values.size(); ++i) {
-    if (!doc.model->getSpecies(static_cast<unsigned int>(i))->getConstant()) {
-      species_values[i] += dcdt[i] * dt;
-    }
+    //    if (!doc.model->getSpecies(static_cast<unsigned
+    //    int>(i))->getConstant()) {
+    species_values[i] += dcdt[i] * dt;
+    //    }
   }
   qDebug() << species_values;
+}
+
+void simulate::evaluate_reactions(field &field) {
+  for (std::size_t ix = 0; ix < field.n_pixels; ++ix) {
+    // populate species concentrations
+    for (std::size_t s = 0; s < field.n_species; ++s) {
+      species_values[s] = field.conc[ix * field.n_species + s];
+    }
+    for (std::size_t j = 0; j < reac_eval.size(); ++j) {
+      // evaluate reaction terms
+      double r_j = reac_eval[j]();
+      for (std::size_t s = 0; s < M.size(); ++s) {
+        // add results to dcdt
+        field.dcdt[ix * field.n_species + s] += M[s][j] * r_j;
+      }
+    }
+  }
+}
+
+void simulate::timestep_2d_euler(field &field, double dt) {
+  field.diffusion_op();
+  for (std::size_t i = 0; i < field.conc.size(); ++i) {
+    field.conc[i] += dt * field.dcdt[i];
+  }
+}
+
+field::field(std::size_t n_species_, QImage img, QRgb col,
+             BOUNDARY_CONDITION bc) {
+  n_species = n_species_;
+  img_size = img.size();
+  img_comp = QImage(img_size, QImage::Format_Mono);
+  img_conc =
+      std::vector<QImage>(n_species, QImage(img_size, QImage::Format_ARGB32));
+
+  // set diffusion constants to 1 for now:
+  diffusion_constant = std::vector<double>(n_species, 1.0);
+  std::unordered_map<int, std::size_t> index;
+  ix.clear();
+  // find pixels in compartment: store image QPoint for each
+  for (int x = 0; x < img.width(); ++x) {
+    for (int y = 0; y < img.height(); ++y) {
+      if (img.pixel(x, y) == col) {
+        // if colour matches, add pixel to field
+        qDebug("%d, %d", x, y);
+        ix.push_back(QPoint(x, y));
+        // also add to temporary map for neighbour lookup
+        index[x * img.height() + y] = ix.size() - 1;
+      }
+    }
+  }
+  nn.clear();
+  nn.reserve(4 * ix.size());
+  // find neighbours of each pixel in compartment
+  std::size_t outside = ix.size();
+  for (const auto &p : ix) {
+    for (const auto &pp :
+         {QPoint(p.x() + 1, p.y()), QPoint(p.x() - 1, p.y()),
+          QPoint(p.x(), p.y() + 1), QPoint(p.x(), p.y() - 1)}) {
+      if (img.valid(pp) && (img.pixel(pp) == col)) {
+        qDebug() << pp;
+        nn.push_back(index.at(pp.x() * img.height() + pp.y()));
+      } else {
+        if (bc == DIRICHLET) {
+          // Dirichlet bcs: specify value of conc. at boundary.
+          // Here all points on boundary point to the same pixel with
+          // index, "outside", which will typically have zero concentration
+          nn.push_back(outside);
+        } else if (bc == NEUMANN) {
+          // Neumann bcs: specify derivative of conc. in direction normal to
+          // boundary. Here we define a zero flux condition by setting the value
+          // of the boundary conc. to be equal to that of the neighbour.
+          // This is done here very naively by making the neighbour of the pixel
+          // point to the pixel itself.
+          nn.push_back(index.at(p.x() * img.height() + p.y()));
+        } else {
+          qDebug() << "Error: boundary condition not supported";
+          exit(1);
+        }
+      }
+    }
+  }
+  // add n_species per pixel in comp, plus one for each boundary value
+  conc.resize(n_species * (ix.size() + n_bcs), 0.0);
+  dcdt = conc;
+}
+
+const QImage &field::compartment_image() {
+  img_comp.fill(0);
+  for (const auto &p : ix) {
+    img_comp.setPixel(p, 1);
+  }
+  return img_comp;
+}
+
+const QImage &field::concentration_image(std::size_t species_index) {
+  img_conc[species_index].fill(qRgba(0, 0, 0, 0));
+  double max_conc = 0;
+  for (std::size_t i = 0; i < ix.size(); ++i) {
+    max_conc = std::max(max_conc, conc[i * n_species + species_index]);
+  }
+  for (std::size_t i = 0; i < ix.size(); ++i) {
+    int r =
+        static_cast<int>(255 * conc[i * n_species + species_index] / max_conc);
+    img_conc[species_index].setPixel(ix[i], QColor(r, 0, 0, 255).rgba());
+  }
+  return img_conc[species_index];
+}
+
+void field::diffusion_op() {
+  for (std::size_t i = 0; i < ix.size(); ++i) {
+    std::size_t index = n_species * i;
+    std::size_t xup = n_species * nn[4 * i];
+    std::size_t xdn = n_species * nn[4 * i + 1];
+    std::size_t yup = n_species * nn[4 * i + 2];
+    std::size_t ydn = n_species * nn[4 * i + 3];
+    for (std::size_t s = 0; s < n_species; ++s) {
+      dcdt[index + s] = diffusion_constant[s] *
+                        (conc[xup + s] + conc[xdn + s] + conc[yup + s] +
+                         conc[ydn + s] - 4 * conc[index + s]);
+    }
+  }
+}
+
+double field::get_mean_concentration(std::size_t species_index) {
+  double sum = 0;
+  for (std::size_t i = 0; i < ix.size(); ++i) {
+    sum += conc[n_species * i + species_index];
+  }
+  return sum / static_cast<double>(ix.size());
 }

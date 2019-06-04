@@ -25,6 +25,52 @@ TEST_CASE("evaluate expression: no vars, no constants", "[numerics]") {
   REQUIRE(r() == 10);
 }
 
+TEST_CASE("evaluate expression: pow function", "[numerics]") {
+  // mathematical expression as string
+  std::string expr = "pow(2, 10)";
+  // names of variables in expression
+  std::vector<std::string> var_names = {};
+  // values of variables (passed by reference)
+  std::vector<double> vars = {};
+  // names of constants in expression
+  std::vector<std::string> constant_names = {};
+  // values of constants (passed by copy)
+  std::vector<double> constants = {};
+  // compile expression
+  numerics::reaction_eval r(expr, var_names, vars, constant_names, constants);
+  // ouput these variables as part of the test
+  CAPTURE(expr);
+  CAPTURE(var_names);
+  CAPTURE(vars);
+  CAPTURE(constant_names);
+  CAPTURE(constants);
+  // evaluate expression
+  REQUIRE(r() == Approx(pow(2,10)));
+}
+
+TEST_CASE("evaluate expression: cos, sin functions", "[numerics]") {
+  // mathematical expression as string
+  std::string expr = "cos(1.234)*cos(1.234) + sin(1.234)*sin(1.234)";
+  // names of variables in expression
+  std::vector<std::string> var_names = {};
+  // values of variables (passed by reference)
+  std::vector<double> vars = {};
+  // names of constants in expression
+  std::vector<std::string> constant_names = {};
+  // values of constants (passed by copy)
+  std::vector<double> constants = {};
+  // compile expression
+  numerics::reaction_eval r(expr, var_names, vars, constant_names, constants);
+  // ouput these variables as part of the test
+  CAPTURE(expr);
+  CAPTURE(var_names);
+  CAPTURE(vars);
+  CAPTURE(constant_names);
+  CAPTURE(constants);
+  // evaluate expression
+  REQUIRE(r() == Approx(1.0));
+}
+
 TEST_CASE("evaluate expression: no vars, constants", "[numerics]") {
   std::string expr = "a+b+c";
   std::vector<std::string> var_names = {};
