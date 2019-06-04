@@ -26,7 +26,15 @@ Assumptions:
 Boundary Conditions
 -------------------
 
-todo
+Currently all boundaries are treated in the same way, whether they are boundaries between two compartments or boundaries between the outside and a compartment.
+
+Neumann
+^^^^^^^
+The default choice is the "zero-flux" boundary condition, which is a Neumann boundary condition where the flux out of the boundary is set to the fixed value of zero. This is implemented upon discretization by setting the concentration in the neighbouring pixel that lies outside the compartment boundary to be equal to the concentration in the boundary pixel value.
+
+Dirichlet
+^^^^^^^^^
+Alternatively, the value of the concentration at the boundaries can be set to zero, which is a Dirichlet boundary condition. This is implemented upon discretization by setting the concentration in the neighbouring pixel that lies outside the compartment boundary to be equal to zero.
 
 Spatial Discretization
 ----------------------
@@ -40,6 +48,17 @@ An approximation to the Laplacian on this grid is given by
    \left( \frac{\partial^2}{\partial x^2} + \frac{\partial^2}{\partial y^2} \right) c(i,j) \simeq \left[ c(i+1,j) + c(i,j+1) - 4 c(i,j) + c(i-1,j) + c(i,j-1) \right] / \Delta^2
 
 and inserting this approximation converts the PDE into a system of coupled ODEs.
+
+Compartments
+^^^^^^^^^^^^
+
+Each compartment is discretized, with boundary conditions applied.
+
+Membranes
+^^^^^^^^^
+
+todo
+
 
 Time Integration
 ----------------
