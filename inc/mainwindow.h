@@ -52,6 +52,8 @@ class MainWindow : public QMainWindow {
 
   void on_listCompartments_currentTextChanged(const QString &currentText);
 
+  void on_hslideTime_valueChanged(int value);
+
  private:
   Ui::MainWindow *ui;
   sbmlDocWrapper sbml_doc;

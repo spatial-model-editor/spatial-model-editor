@@ -35,18 +35,20 @@ void MainWindow::on_action_About_triggered() {
   QString info("Spatial Model Editor\n");
   info.append("github.com/lkeegan/spatial-model-editor\n\n");
   info.append("Included libraries:\n");
-  info.append("\nQt5:\t");
+  info.append("\nQt5:\t\t");
   info.append(QT_VERSION_STR);
-  info.append("\nlibSBML:\t");
+  info.append("\nlibSBML:\t\t");
   info.append(libsbml::getLibSBMLDottedVersion());
+  info.append("\nQCustomPlot:\t2.0.1");
   for (const auto &dep : {"expat", "libxml", "xerces-c", "bzip2", "zip"}) {
     if (libsbml::isLibSBMLCompiledWith(dep) != 0) {
       info.append("\n");
       info.append(dep);
-      info.append(":\t");
+      info.append(":\t\t");
       info.append(libsbml::getLibSBMLDependencyVersionOf(dep));
     }
   }
+  info.append("\nC++ Mathematical Expression  Toolkit Library (ExprTk)");
   msgBox.setText(info);
   msgBox.exec();
 }
@@ -55,7 +57,9 @@ void MainWindow::on_actionE_xit_triggered() { QApplication::quit(); }
 
 void MainWindow::on_action_Open_SBML_file_triggered() {
   // load SBML file
-  QString filename = QFileDialog::getOpenFileName();
+  QString filename = QFileDialog::getOpenFileName(this, "Open SBML file", "",
+                                                  "SBML file (*.xml)");
+
   if (!filename.isEmpty()) {
     sbml_doc.loadFile(qPrintable(filename));
     if (sbml_doc.isValid) {
@@ -279,7 +283,6 @@ void MainWindow::on_btnSimulate_clicked() {
     images.push_back(species_field.concentration_image(0).copy());
     conc.push_back(species_field.get_mean_concentration(0));
     time.push_back(t);
-    ui->lblGeometry->setImage(images.back());
   }
   // plot results
   ui->pltPlot->clearGraphs();
@@ -289,6 +292,11 @@ void MainWindow::on_btnSimulate_clicked() {
   ui->pltPlot->addGraph();
   ui->pltPlot->graph(0)->setData(time, conc);
   ui->pltPlot->replot();
+  // enable slider to choose time to display
+  ui->hslideTime->setEnabled(true);
+  ui->hslideTime->setMinimum(0);
+  ui->hslideTime->setMaximum(time.size() - 1);
+  ui->hslideTime->setValue(time.size() - 1);
 }
 
 void MainWindow::on_listFunctions_currentTextChanged(
@@ -374,5 +382,12 @@ void MainWindow::on_listCompartments_currentTextChanged(
       ui->lblCompShape->setPixmap(pixmap);
       ui->lblCompShape->setText("");
     }
+  }
+}
+
+void MainWindow::on_hslideTime_valueChanged(int value) {
+  qDebug() << value;
+  if (images.size() > value) {
+    ui->lblGeometry->setImage(images[value]);
   }
 }
