@@ -14,11 +14,17 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
   ui->setupUi(this);
 
-  // for debugging: import an image on startup
-  ui->lblGeometry->importGeometry(
-      "../spatial-model-editor/two-blobs-100x100.bmp");
+  connect(ui->pltPlot,
+          SIGNAL(plottableClick(QCPAbstractPlottable *, int, QMouseEvent *)),
+          this, SLOT(on_graphClicked(QCPAbstractPlottable *, int)));
 
-  compartmentMenu = new QMenu(ui->btnChangeCompartment);
+  // for debugging convenience: import a model and an image on startup
+  // <debug>
+  sbml_doc.loadFile("test.xml");
+  sbml_doc.importGeometry("two-blobs-100x100.bmp");
+  ui->lblGeometry->setImage(sbml_doc.compartment_image);
+  update_ui();
+  // </debug>
 }
 
 MainWindow::~MainWindow() { delete ui; }
@@ -62,6 +68,10 @@ void MainWindow::update_ui() {
   // update raw XML display
   ui->txtSBML->setText(sbml_doc.xml);
 
+  // update list of compartments
+  ui->listCompartments->clear();
+  ui->listCompartments->insertItems(0, sbml_doc.compartments);
+
   // update list of reactions
   ui->listReactions->clear();
   ui->listReactions->insertItems(0, sbml_doc.reactions);
@@ -84,14 +94,6 @@ void MainWindow::update_ui() {
     }
   }
   ui->listSpecies->expandAll();
-
-  // update possible compartments in compartmentMenu
-  compartmentMenu->clear();
-  compartmentMenu->addAction("none");
-  for (auto c : sbml_doc.compartments) {
-    compartmentMenu->addAction(c);
-  }
-  ui->btnChangeCompartment->setMenu(compartmentMenu);
 }
 
 void MainWindow::on_action_Save_SBML_file_triggered() {
@@ -106,17 +108,43 @@ void MainWindow::on_actionGeometry_from_image_triggered() {
   QString filename =
       QFileDialog::getOpenFileName(this, "Import geometry from image", "",
                                    "Image Files (*.png *.jpg *.bmp)");
-  ui->lblGeometry->importGeometry(filename);
+  sbml_doc.importGeometry(filename);
+  ui->lblGeometry->setImage(sbml_doc.compartment_image);
 }
 
 void MainWindow::on_lblGeometry_mouseClicked() {
-  // update colour box
-  QPalette palette;
-  palette.setColor(QPalette::Window, QColor::fromRgb(ui->lblGeometry->colour));
-  ui->lblCompartmentColour->setPalette(palette);
-  // update drop-down compartement selector
-  QString compID = ui->lblGeometry->compartmentID;
-  ui->btnChangeCompartment->setText(compID);
+  QRgb col = ui->lblGeometry->getColour();
+  if (waiting_for_compartment_choice) {
+    // update compartment geometry (i.e. colour) of selected compartment to the
+    // one the user just clicked on
+    auto new_comp = ui->listCompartments->selectedItems()[0]->text();
+    QRgb old_col = sbml_doc.compartment_to_colour[new_comp];
+    if (old_col != 0) {
+      // if there was already a colour assigned to this compartment, assign the
+      // colour to a null compartment
+      sbml_doc.colour_to_compartment[old_col] = "";
+    }
+    auto old_comp = sbml_doc.colour_to_compartment[col];
+    qDebug("old comp: %s, new comp: %s", qPrintable(old_comp),
+           qPrintable(new_comp));
+    if (old_comp != "") {
+      // if the new colour was already assigned to another compartment, set the
+      // colour of that compartment to null
+      sbml_doc.compartment_to_colour[old_comp] = 0;
+    }
+    sbml_doc.colour_to_compartment[col] = new_comp;
+    sbml_doc.compartment_to_colour[new_comp] = col;
+    // update display by simulating user click on listCompartments
+    on_listCompartments_currentTextChanged(new_comp);
+    waiting_for_compartment_choice = false;
+  } else {
+    // display compartment the user just clicked on
+    auto items = ui->listCompartments->findItems(
+        sbml_doc.colour_to_compartment[col], Qt::MatchExactly);
+    if (!items.empty()) {
+      ui->listCompartments->setCurrentRow(ui->listCompartments->row(items[0]));
+    }
+  }
 }
 
 void MainWindow::on_chkSpeciesIsSpatial_stateChanged(int arg1) {
@@ -125,14 +153,6 @@ void MainWindow::on_chkSpeciesIsSpatial_stateChanged(int arg1) {
 
 void MainWindow::on_chkShowSpatialAdvanced_stateChanged(int arg1) {
   ui->grpSpatialAdavanced->setEnabled(arg1);
-}
-
-void MainWindow::on_btnChangeCompartment_triggered(QAction *arg1) {
-  // todo: make sure each comp only has one colour
-  QString compID = arg1->text();
-  ui->lblGeometry->colour_to_comp[ui->lblGeometry->colour] = compID;
-  ui->lblGeometry->compartmentID = compID;
-  on_lblGeometry_mouseClicked();
 }
 
 void MainWindow::on_listReactions_currentTextChanged(
@@ -158,7 +178,7 @@ void MainWindow::on_listReactions_currentTextChanged(
   }
 }
 
-void MainWindow::on_btnSimulate_clicked() {
+void MainWindow::sim1d() {
   // do simple simulation of model
 
   // compile reaction expressions
@@ -167,8 +187,8 @@ void MainWindow::on_btnSimulate_clicked() {
   // set initial concentrations
   for (unsigned int i = 0; i < sbml_doc.model->getNumSpecies(); ++i) {
     const auto *spec = sbml_doc.model->getSpecies(i);
+    // if SBML file specifies amount: convert to concentration
     if (spec->isSetInitialAmount()) {
-      // SBML file specifies amount: convert to concentration
       double vol =
           sbml_doc.model->getCompartment(spec->getCompartment())->getSize();
       sim.species_values[i] = spec->getInitialAmount() / vol;
@@ -178,7 +198,7 @@ void MainWindow::on_btnSimulate_clicked() {
   }
 
   // generate vector of resulting concentrations at each timestep
-  sim.euler_timestep(0.0);
+  sim.timestep_1d_euler(0.0);
   QVector<double> time;
   double t = 0;
   double dt = ui->txtSimDt->text().toDouble();
@@ -190,7 +210,7 @@ void MainWindow::on_btnSimulate_clicked() {
   for (int i = 0;
        i < static_cast<int>(ui->txtSimLength->text().toDouble() / dt); ++i) {
     // do an euler integration timestep
-    sim.euler_timestep(dt);
+    sim.timestep_1d_euler(dt);
     t += dt;
     time.push_back(t);
     for (std::size_t i = 0; i < sim.species_values.size(); ++i) {
@@ -221,6 +241,53 @@ void MainWindow::on_btnSimulate_clicked() {
   ui->pltPlot->xAxis->setLabel("time");
   ui->pltPlot->xAxis->setRange(time.front(), time.back());
   ui->pltPlot->yAxis->setLabel("concentration");
+  ui->pltPlot->replot();
+}
+
+void MainWindow::on_btnSimulate_clicked() {
+  // simple 2d simulation
+
+  // initialise concentration field from current compartment
+  field species_field(1, ui->lblGeometry->getImage(),
+                      ui->lblGeometry->getColour());
+  ui->lblGeometry->setImage(species_field.compartment_image());
+  // set initial concentration
+  species_field.conc[17] = 50;
+  species_field.conc[18] = 40;
+  species_field.conc[19] = 39;
+  species_field.conc[20] = 50;
+  species_field.conc[21] = 40;
+  species_field.conc[22] = 39;
+  species_field.conc[23] = 50;
+  species_field.conc[24] = 40;
+  species_field.conc[25] = 39;
+  // display initial concentration
+  ui->lblGeometry->setImage(species_field.concentration_image(0));
+  // compile reaction expressions
+  simulate sim(sbml_doc);
+  sim.compile_reactions();
+  // do euler integration
+  QVector<double> time;
+  QVector<double> conc;
+  double t = 0;
+  double dt = ui->txtSimDt->text().toDouble();
+  for (int i = 0;
+       i < static_cast<int>(ui->txtSimLength->text().toDouble() / dt); ++i) {
+    t += dt;
+    species_field.diffusion_op();
+    sim.timestep_2d_euler(species_field, dt);
+    images.push_back(species_field.concentration_image(0).copy());
+    conc.push_back(species_field.get_mean_concentration(0));
+    time.push_back(t);
+    ui->lblGeometry->setImage(images.back());
+  }
+  // plot results
+  ui->pltPlot->clearGraphs();
+  ui->pltPlot->setInteraction(QCP::iRangeDrag, true);
+  ui->pltPlot->setInteraction(QCP::iRangeZoom, true);
+  ui->pltPlot->setInteraction(QCP::iSelectPlottables, true);
+  ui->pltPlot->addGraph();
+  ui->pltPlot->graph(0)->setData(time, conc);
   ui->pltPlot->replot();
 }
 
@@ -261,4 +328,51 @@ void MainWindow::on_listSpecies_itemActivated(QTreeWidgetItem *item,
 
 void MainWindow::on_listSpecies_itemClicked(QTreeWidgetItem *item, int column) {
   on_listSpecies_itemActivated(item, column);
+}
+
+void MainWindow::on_graphClicked(QCPAbstractPlottable *plottable,
+                                 int dataIndex) {
+  double dataValue = plottable->interface1D()->dataMainValue(dataIndex);
+  QString message =
+      QString("Clicked on graph '%1' at data point #%2 with value %3.")
+          .arg(plottable->name())
+          .arg(dataIndex)
+          .arg(dataValue);
+  qDebug() << message;
+  ui->lblGeometry->setImage(images[dataIndex]);
+}
+
+void MainWindow::on_btnChangeCompartment_clicked() {
+  waiting_for_compartment_choice = true;
+}
+
+void MainWindow::on_listCompartments_currentTextChanged(
+    const QString &currentText) {
+  ui->txtCompartmentSize->clear();
+  if (currentText.size() > 0) {
+    qDebug() << currentText;
+    const auto *comp = sbml_doc.model->getCompartment(qPrintable(currentText));
+    ui->txtCompartmentSize->setText(QString::number(comp->getSize()));
+    QRgb col = sbml_doc.compartment_to_colour[currentText];
+    qDebug() << qAlpha(col);
+    if (col == 0) {
+      // null (transparent white) RGB colour: compartment does not have
+      // an assigned colour in the image
+      ui->lblCompartmentColour->setPalette(QPalette());
+      ui->lblCompartmentColour->setText("none");
+      ui->lblCompShape->setPixmap(QPixmap());
+      ui->lblCompShape->setText("none");
+    } else {
+      // update colour box
+      QPalette palette;
+      palette.setColor(QPalette::Window, QColor::fromRgb(col));
+      ui->lblCompartmentColour->setPalette(palette);
+      ui->lblCompartmentColour->setText("");
+      // update image mask
+      ui->lblGeometry->setMaskColour(col);
+      QPixmap pixmap = QPixmap::fromImage(ui->lblGeometry->getMask());
+      ui->lblCompShape->setPixmap(pixmap);
+      ui->lblCompShape->setText("");
+    }
+  }
 }

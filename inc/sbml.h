@@ -3,6 +3,7 @@
 
 #include <QColor>
 #include <QDebug>
+#include <QImage>
 #include <QStringList>
 #include <QStringListModel>
 
@@ -33,18 +34,21 @@ class sbmlDocWrapper {
   QStringList compartments;
   QStringList functions;
 
-  // colour of compartment of given index in image
-  std::map<QString, QRgb> compartment_colour;
+  // map between compartment IDs and colours in compartment image
+  std::map<QString, QRgb> compartment_to_colour;
+  std::map<QRgb, QString> colour_to_compartment;
+
+  // image of compartment geometry
+  QImage compartment_image;
 
   void loadFile(const std::string &filename);
+  void importGeometry(const QString &filename);
+
+  // return supplied expr as string with function calls inlined
+  // e.g. given expr = "z*f(x,y)"
+  // where the SBML model contains a function "f(a,b) = a*b-2"
+  // it returns "z*(x*y-2)"
+  std::string inlineFunctions(const std::string &expr) const;
 };
 
 #endif  // SBML_H
-
-// NOTE:
-// SBML uses internal AST to represent maths
-// but mathML in the SBML file
-// to convert mathML to AST:
-// ASTNode* ast    = readMathMLFromString(s);
-// to convert AST to infix:
-// char*    result = SBML_formulaToL3String(ast);
