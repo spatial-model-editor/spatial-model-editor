@@ -18,8 +18,8 @@ MainWindow::MainWindow(QWidget *parent)
           SIGNAL(plottableClick(QCPAbstractPlottable *, int, QMouseEvent *)),
           this, SLOT(on_graphClicked(QCPAbstractPlottable *, int)));
 
-  // for debugging convenience: import a model and an image on startup
   // <debug>
+  // for debugging convenience: import a model and an image on startup
   sbml_doc.importSBMLFile("test.xml");
   sbml_doc.importGeometryFromImage("two-blobs-100x100.bmp");
   ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
@@ -59,7 +59,6 @@ void MainWindow::on_action_Open_SBML_file_triggered() {
   // load SBML file
   QString filename = QFileDialog::getOpenFileName(this, "Open SBML file", "",
                                                   "SBML file (*.xml)");
-
   if (!filename.isEmpty()) {
     sbml_doc.importSBMLFile(qPrintable(filename));
     if (sbml_doc.isValid) {

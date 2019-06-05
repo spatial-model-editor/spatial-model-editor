@@ -46,6 +46,7 @@ SCENARIO("import SBML level 2 document", "[sbml]") {
 
   sbmlDocWrapper s;
   s.importSBMLFile("tmp.xml");
+  REQUIRE(s.isValid == true);
 
   GIVEN("SBML document") {
     WHEN("importSBMLFile called") {
@@ -78,12 +79,23 @@ SCENARIO("import SBML level 2 document", "[sbml]") {
     QRgb col1 = 34573423;
     QRgb col2 = 1334573423;
     QRgb col3 = 17423;
+    WHEN("compartment colours have not been assigned") {
+      THEN("unassigned colours map to null CompartmentIDs") {
+        REQUIRE(s.getCompartmentID(col1) == "");
+        REQUIRE(s.getCompartmentID(123) == "");
+      }
+      THEN("invalid/unassigned CompartmentIDs map to null colour") {
+        REQUIRE(s.getCompartmentColour("compartment0") == 0);
+        REQUIRE(s.getCompartmentColour("invalid_comp") == 0);
+      }
+    }
     WHEN("compartment colours have been assigned") {
       s.setCompartmentColour("compartment0", col1);
       s.setCompartmentColour("compartment1", col2);
       THEN("can get CompartmentID from colour") {
         REQUIRE(s.getCompartmentID(col1) == "compartment0");
         REQUIRE(s.getCompartmentID(col2) == "compartment1");
+        REQUIRE(s.getCompartmentID(col3) == "");
       }
       THEN("can get colour from CompartmentID") {
         REQUIRE(s.getCompartmentColour("compartment0") == col1);
@@ -109,6 +121,7 @@ SCENARIO("import SBML level 2 document", "[sbml]") {
       THEN("unassign old colour mapping") {
         REQUIRE(s.getCompartmentID(col1) == "");
         REQUIRE(s.getCompartmentID(col2) == "compartment0");
+        REQUIRE(s.getCompartmentID(col3) == "");
         REQUIRE(s.getCompartmentColour("compartment0") == col2);
         REQUIRE(s.getCompartmentColour("compartment1") == 0);
       }
