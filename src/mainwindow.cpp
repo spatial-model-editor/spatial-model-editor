@@ -20,9 +20,9 @@ MainWindow::MainWindow(QWidget *parent)
 
   // for debugging convenience: import a model and an image on startup
   // <debug>
-  sbml_doc.loadFile("test.xml");
-  sbml_doc.importGeometry("two-blobs-100x100.bmp");
-  ui->lblGeometry->setImage(sbml_doc.compartment_image);
+  sbml_doc.importSBMLFile("test.xml");
+  sbml_doc.importGeometryFromImage("two-blobs-100x100.bmp");
+  ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
   update_ui();
   // </debug>
 }
@@ -61,7 +61,7 @@ void MainWindow::on_action_Open_SBML_file_triggered() {
                                                   "SBML file (*.xml)");
 
   if (!filename.isEmpty()) {
-    sbml_doc.loadFile(qPrintable(filename));
+    sbml_doc.importSBMLFile(qPrintable(filename));
     if (sbml_doc.isValid) {
       update_ui();
     }
@@ -112,8 +112,8 @@ void MainWindow::on_actionGeometry_from_image_triggered() {
   QString filename =
       QFileDialog::getOpenFileName(this, "Import geometry from image", "",
                                    "Image Files (*.png *.jpg *.bmp)");
-  sbml_doc.importGeometry(filename);
-  ui->lblGeometry->setImage(sbml_doc.compartment_image);
+  sbml_doc.importGeometryFromImage(filename);
+  ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
 }
 
 void MainWindow::on_lblGeometry_mouseClicked() {
@@ -121,28 +121,15 @@ void MainWindow::on_lblGeometry_mouseClicked() {
   if (waiting_for_compartment_choice) {
     // update compartment geometry (i.e. colour) of selected compartment to the
     // one the user just clicked on
-    auto new_comp = ui->listCompartments->selectedItems()[0]->text();
-    QRgb old_col = sbml_doc.compartment_to_colour[new_comp];
-    if (old_col != 0) {
-      // if there was already a colour assigned to this compartment, assign the
-      // colour to a null compartment
-      sbml_doc.colour_to_compartment[old_col] = "";
-    }
-    auto old_comp = sbml_doc.colour_to_compartment[col];
-    if (old_comp != "") {
-      // if the new colour was already assigned to another compartment, set the
-      // colour of that compartment to null
-      sbml_doc.compartment_to_colour[old_comp] = 0;
-    }
-    sbml_doc.colour_to_compartment[col] = new_comp;
-    sbml_doc.compartment_to_colour[new_comp] = col;
+    auto comp = ui->listCompartments->selectedItems()[0]->text();
+    sbml_doc.setCompartmentColour(comp, col);
     // update display by simulating user click on listCompartments
-    on_listCompartments_currentTextChanged(new_comp);
+    on_listCompartments_currentTextChanged(comp);
     waiting_for_compartment_choice = false;
   } else {
     // display compartment the user just clicked on
-    auto items = ui->listCompartments->findItems(
-        sbml_doc.colour_to_compartment[col], Qt::MatchExactly);
+    auto items = ui->listCompartments->findItems(sbml_doc.getCompartmentID(col),
+                                                 Qt::MatchExactly);
     if (!items.empty()) {
       ui->listCompartments->setCurrentRow(ui->listCompartments->row(items[0]));
     }
@@ -253,8 +240,9 @@ void MainWindow::on_btnSimulate_clicked() {
   // for now only simulate first compartment
   auto comp = sbml_doc.compartments[0];
   // initialise concentration fields from current compartment
-  field species_field(sbml_doc.species[comp].size(), sbml_doc.compartment_image,
-                      sbml_doc.compartment_to_colour[comp]);
+  field species_field(sbml_doc.species[comp].size(),
+                      sbml_doc.getCompartmentImage(),
+                      sbml_doc.getCompartmentColour(comp));
   ui->lblGeometry->setImage(species_field.compartment_image());
   // set initial concentration
   for (int i = 0; i < sbml_doc.species[comp].size(); ++i) {
@@ -356,7 +344,7 @@ void MainWindow::on_listCompartments_currentTextChanged(
     qDebug() << currentText;
     const auto *comp = sbml_doc.model->getCompartment(qPrintable(currentText));
     ui->txtCompartmentSize->setText(QString::number(comp->getSize()));
-    QRgb col = sbml_doc.compartment_to_colour[currentText];
+    QRgb col = sbml_doc.getCompartmentColour(currentText);
     qDebug() << qAlpha(col);
     if (col == 0) {
       // null (transparent white) RGB colour: compartment does not have
@@ -391,7 +379,7 @@ void MainWindow::on_tabMain_currentChanged(int index) {
   qDebug() << index;
   if (index == 0) {
     // geometry tab
-    ui->lblGeometry->setImage(sbml_doc.compartment_image);
+    ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
     ui->hslideTime->setEnabled(false);
   } else if (index == 4) {
     // simulate tab

@@ -13,42 +13,42 @@
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 class sbmlDocWrapper {
- private:
-  std::unique_ptr<libsbml::SBMLDocument> doc;
-
  public:
   bool isValid = false;
-
   libsbml::Model *model = nullptr;
-
+  // Qt data structures containing model data to pass to UI widgets
   QString xml;
-
-  // loop up given specified species ID, return index
+  QStringList compartments;
+  // list of species for given compartment ID
+  std::map<QString, QStringList> species;
+  QStringList reactions;
+  QStringList functions;
+  // map from speciesID to index
   std::map<std::string, std::size_t> speciesIndex;
   // vector of speciesID with above indexing
   std::vector<std::string> speciesID;
 
-  QStringList reactions;
-  // list of species for given compartment ID
-  std::map<QString, QStringList> species;
-  QStringList compartments;
-  QStringList functions;
+  void importSBMLFile(const std::string &filename);
 
-  // map between compartment IDs and colours in compartment image
-  std::map<QString, QRgb> compartment_to_colour;
-  std::map<QRgb, QString> colour_to_compartment;
+  // compartment geometry
+  void importGeometryFromImage(const QString &filename);
+  const QImage &getCompartmentImage();
+  QString getCompartmentID(QRgb colour) const;
+  QRgb getCompartmentColour(const QString &compartmentID) const;
+  void setCompartmentColour(const QString &compartmentID, QRgb colour);
 
-  // image of compartment geometry
-  QImage compartment_image;
-
-  void loadFile(const std::string &filename);
-  void importGeometry(const QString &filename);
-
-  // return supplied expr as string with function calls inlined
-  // e.g. given expr = "z*f(x,y)"
+  // return supplied expression as string with any function calls inlined
+  // e.g. given mathExpression = "z*f(x,y)"
   // where the SBML model contains a function "f(a,b) = a*b-2"
   // it returns "z*(x*y-2)"
-  std::string inlineFunctions(const std::string &expr) const;
+  std::string inlineFunctions(const std::string &mathExpression) const;
+
+ private:
+  std::unique_ptr<libsbml::SBMLDocument> doc;
+  // map between compartment IDs and colours in compartment image
+  std::map<QString, QRgb> mapCompartmentToColour;
+  std::map<QRgb, QString> mapColourToCompartment;
+  QImage compartmentImage;
 };
 
 #endif  // SBML_H

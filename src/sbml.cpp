@@ -1,6 +1,40 @@
 #include "sbml.h"
 
-void sbmlDocWrapper::loadFile(const std::string &filename) {
+QString sbmlDocWrapper::getCompartmentID(QRgb colour) const {
+  auto iter = mapColourToCompartment.find(colour);
+  if (iter == mapColourToCompartment.cend()) {
+    return "";
+  }
+  return iter->second;
+}
+
+QRgb sbmlDocWrapper::getCompartmentColour(const QString &compartmentID) const {
+  auto iter = mapCompartmentToColour.find(compartmentID);
+  if (iter == mapCompartmentToColour.cend()) {
+    return 0;
+  }
+  return iter->second;
+}
+
+void sbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
+                                          QRgb colour) {
+  QRgb oldColour = getCompartmentColour(compartmentID);
+  if (oldColour != 0) {
+    // if there was already a colour mapped to this compartment, map it to a
+    // null compartment
+    mapColourToCompartment[oldColour] = "";
+  }
+  auto oldCompartmentID = getCompartmentID(colour);
+  if (oldCompartmentID != "") {
+    // if the new colour was already mapped to another compartment, set the
+    // colour of that compartment to null
+    mapCompartmentToColour[oldCompartmentID] = 0;
+  }
+  mapColourToCompartment[colour] = compartmentID;
+  mapCompartmentToColour[compartmentID] = colour;
+}
+
+void sbmlDocWrapper::importSBMLFile(const std::string &filename) {
   doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
   if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
       0) {
@@ -10,9 +44,7 @@ void sbmlDocWrapper::loadFile(const std::string &filename) {
     isValid = true;
   }
 
-  // write raw xml to SBML panel
   xml = libsbml::writeSBMLToString(doc.get());
-
   model = doc->getModel();
 
   // get list of compartments
@@ -58,58 +90,63 @@ void sbmlDocWrapper::loadFile(const std::string &filename) {
   }
 }
 
-void sbmlDocWrapper::importGeometry(const QString &filename) {
-  compartment_image.load(filename);
-  // convert geometry image to 8-bit indexed format
+void sbmlDocWrapper::importGeometryFromImage(const QString &filename) {
+  compartmentImage.load(filename);
+  // convert geometry image to 8-bit indexed format:
   // each pixel points to an index in the colorTable
   // which contains an RGB value for each color in the image
-  compartment_image =
-      compartment_image.convertToFormat(QImage::Format_Indexed8);
+  compartmentImage = compartmentImage.convertToFormat(QImage::Format_Indexed8);
 }
 
-std::string sbmlDocWrapper::inlineFunctions(const std::string &expr) const {
-  std::string expr_inlined = expr;
+const QImage &sbmlDocWrapper::getCompartmentImage() { return compartmentImage; }
+
+std::string sbmlDocWrapper::inlineFunctions(
+    const std::string &mathExpression) const {
+  std::string expr = mathExpression;
   for (unsigned int i = 0; i < model->getNumFunctionDefinitions(); ++i) {
     const auto *func = model->getFunctionDefinition(i);
-    std::unique_ptr<libsbml::ASTNode> func_with_args(
-        func->getBody()->deepCopy());
-    std::unique_ptr<libsbml::ASTNode> arg_as_ast;
+    // get copy of function body as AST node
+    std::unique_ptr<libsbml::ASTNode> funcBody(func->getBody()->deepCopy());
     // search for function call in expression
-    auto loc = expr_inlined.find(func->getId() + "(");
-    if (loc != std::string::npos) {
+    std::string funcCallString = func->getId() + "(";
+    auto loc = expr.find(funcCallString);
+    while (loc != std::string::npos) {
       // function call found
-      auto arg_loc = loc + func->getId().size() + 1;
-      std::size_t arg_end;
+      loc += func->getId().size() + 1;
       for (unsigned int j = 0; j < func->getNumArguments(); ++j) {
         // compare each argument used in the function call in expr to the
         // variable in the function definition
-        while (expr_inlined[arg_loc] == ' ') {
+        while (expr[loc] == ' ') {
           // trim any leading spaces
-          ++arg_loc;
+          ++loc;
         }
-        arg_end = expr_inlined.find_first_of(",)", arg_loc + 1);
-        std::string arg = expr_inlined.substr(arg_loc, arg_end - arg_loc);
+        auto arg_len = expr.find_first_of(",)", loc + 1) - loc;
+        std::string arg = expr.substr(loc, arg_len);
         qDebug() << func->getArgument(j)->getName();
         qDebug() << arg.c_str();
         if (func->getArgument(j)->getName() != arg) {
-          // if they differ, replace the variable in the function def with
-          // the argument used in expr
-          arg_as_ast.reset(libsbml::SBML_parseL3Formula(arg.c_str()));
-          func_with_args->replaceArgument(func->getArgument(j)->getName(),
-                                          arg_as_ast.get());
+          // create desired new argument as AST node
+          std::unique_ptr<libsbml::ASTNode> argAST(
+              libsbml::SBML_parseL3Formula(arg.c_str()));
+          // replace existing argument with new argument
+          funcBody->replaceArgument(func->getArgument(j)->getName(),
+                                    argAST.get());
           qDebug("replacing %s with %s in function",
                  func->getArgument(j)->getName(), arg.c_str());
         }
-        arg_loc = arg_end + 1;
+        loc += arg_len + 1;
       }
-      // inline body of function, wrapped in parentheses, in expression
-      auto end = expr_inlined.find(")", loc);
-      expr_inlined = expr_inlined.substr(0, loc) + "(" +
-                     libsbml::SBML_formulaToL3String(func_with_args.get()) +
-                     ")" + expr_inlined.substr(end + 1);
-      // todo: allow for multiple calls to the same function
-      // todo: check for case that ")" not found: invalid expression
+      // replace function call with inlined body of function
+      std::string funcBodyString =
+          libsbml::SBML_formulaToL3String(funcBody.get());
+      auto end = expr.find(")", loc);
+      // wrap function body in parentheses
+      expr = expr.substr(0, loc) + "(" + funcBodyString + ")" +
+             expr.substr(end + 1);
+      // search for next call to same function in expr
+      loc += funcBodyString.size() + 2;
+      loc = expr.find(funcCallString);
     }
   }
-  return expr_inlined;
+  return expr;
 }

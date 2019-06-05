@@ -3,12 +3,12 @@
 namespace numerics {
 
 ReactionEvaluate::ReactionEvaluate(const std::string &expression,
-                                   const std::vector<std::string> &speciesName,
-                                   std::vector<double> &speciesValue,
+                                   const std::vector<std::string> &variableName,
+                                   std::vector<double> &variableValue,
                                    const std::vector<std::string> &constantName,
                                    const std::vector<double> &constantValue) {
-  for (std::size_t i = 0; i < speciesName.size(); ++i) {
-    exprtkSymbolTable.add_variable(speciesName[i], speciesValue[i]);
+  for (std::size_t i = 0; i < variableName.size(); ++i) {
+    exprtkSymbolTable.add_variable(variableName[i], variableValue[i]);
   }
   for (std::size_t i = 0; i < constantName.size(); ++i) {
     exprtkSymbolTable.add_constant(constantName[i], constantValue[i]);

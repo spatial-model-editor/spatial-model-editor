@@ -18,21 +18,21 @@
 namespace numerics {
 
 class ReactionEvaluate {
- private:
-  exprtk::symbol_table<double> exprtkSymbolTable;
-  exprtk::expression<double> exprtkExpression;
-
  public:
   // compile the given string containing a mathematical expression using exprtk
-  // the species are stored as references, so their values can be changed
+  // the variables are stored as references, so their values can be changed
   // and the expression can then be re-evaluated without re-compiling
   ReactionEvaluate(const std::string &expression,
-                   const std::vector<std::string> &speciesName,
-                   std::vector<double> &speciesValue,
+                   const std::vector<std::string> &variableName,
+                   std::vector<double> &variableValue,
                    const std::vector<std::string> &constantName,
                    const std::vector<double> &constantValue);
   // evaluate compiled expression
   double operator()();
+
+ private:
+  exprtk::symbol_table<double> exprtkSymbolTable;
+  exprtk::expression<double> exprtkExpression;
 };
 
 }  // namespace numerics
