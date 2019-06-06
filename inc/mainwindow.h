@@ -68,8 +68,6 @@ class MainWindow : public QMainWindow {
 
   // update all UI elements with new model
   void update_ui();
-  // do simple 1d simulation
-  void sim1d();
 };
 
 #endif  // MAINWINDOW_H
