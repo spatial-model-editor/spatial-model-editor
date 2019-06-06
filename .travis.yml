@@ -43,9 +43,11 @@ before_script:
   - qmake -v
   # download pre-compiled static libSBML library
   - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
+  - cd ext
   - mkdir -p libsbml
   - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz -C libsbml
   - ls libsbml
+  - cd ..
 
 script:
   # run qmake to generate make file

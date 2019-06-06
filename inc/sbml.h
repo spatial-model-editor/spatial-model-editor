@@ -12,20 +12,30 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
+#include "model.h"
+
 class sbmlDocWrapper {
  public:
   bool isValid = false;
   libsbml::Model *model = nullptr;
   // Qt data structures containing model data to pass to UI widgets
+  // todo: when model structure more concretely defined, replace this with MVC
+  // setup
   QString xml;
   QStringList compartments;
-  // list of species for given compartment ID
+  // <compartment ID, list of species ID in this compartment>
   std::map<QString, QStringList> species;
   QStringList reactions;
   QStringList functions;
-  // map from speciesID to index
+
+  // compartment geometry and field of concentrations
+  // Will eventually do this for each compartment
+  // for now implicitly assuming first compartment for all of these:
+  Geometry geom;
+  Field field;
+  // for above: map from speciesID to index
   std::map<std::string, std::size_t> speciesIndex;
-  // vector of speciesID with above indexing
+  // for above: vector of speciesID with above indexing
   std::vector<std::string> speciesID;
 
   void importSBMLFile(const std::string &filename);
@@ -36,6 +46,11 @@ class sbmlDocWrapper {
   QString getCompartmentID(QRgb colour) const;
   QRgb getCompartmentColour(const QString &compartmentID) const;
   void setCompartmentColour(const QString &compartmentID, QRgb colour);
+
+  // species concentrations
+  void importConcentrationFromImage(const QString &speciesID,
+                                    const QString &filename);
+  const QImage &getConcentrationImage(const QString &speciesID);
 
   // return supplied expression as string with any function calls inlined
   // e.g. given mathExpression = "z*f(x,y)"

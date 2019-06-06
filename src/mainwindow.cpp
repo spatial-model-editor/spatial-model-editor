@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent)
 
   // <debug>
   // for debugging convenience: import a model and an image on startup
-  sbml_doc.importSBMLFile("test.xml");
+  sbml_doc.importSBMLFile("ABtoC.xml");
   sbml_doc.importGeometryFromImage("two-blobs-100x100.bmp");
   ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
   update_ui();
@@ -137,6 +137,7 @@ void MainWindow::on_lblGeometry_mouseClicked() {
 
 void MainWindow::on_chkSpeciesIsSpatial_stateChanged(int arg1) {
   ui->grpSpatial->setEnabled(arg1);
+  ui->btnImportConcentration->setEnabled(arg1);
 }
 
 void MainWindow::on_chkShowSpatialAdvanced_stateChanged(int arg1) {
@@ -164,121 +165,6 @@ void MainWindow::on_listReactions_currentTextChanged(
     }
     ui->lblReactionRate->setText(reac->getKineticLaw()->getFormula().c_str());
   }
-}
-
-void MainWindow::sim1d() {
-  // do simple simulation of model
-
-  // compile reaction expressions
-  simulate sim(sbml_doc);
-  sim.compile_reactions(sbml_doc.compartments[0]);
-  // set initial concentrations
-  for (unsigned int i = 0; i < sbml_doc.model->getNumSpecies(); ++i) {
-    const auto *spec = sbml_doc.model->getSpecies(i);
-    // if SBML file specifies amount: convert to concentration
-    if (spec->isSetInitialAmount()) {
-      double vol =
-          sbml_doc.model->getCompartment(spec->getCompartment())->getSize();
-      sim.species_values[i] = spec->getInitialAmount() / vol;
-    } else {
-      sim.species_values[i] = spec->getInitialConcentration();
-    }
-  }
-
-  // generate vector of resulting concentrations at each timestep
-  sim.timestep_1d_euler(0.0);
-  QVector<double> time;
-  double t = 0;
-  double dt = ui->txtSimDt->text().toDouble();
-  std::vector<QVector<double>> conc(sim.species_values.size());
-  time.push_back(t);
-  for (std::size_t i = 0; i < sim.species_values.size(); ++i) {
-    conc[i].push_back(sim.species_values[i]);
-  }
-  for (int i = 0;
-       i < static_cast<int>(ui->txtSimLength->text().toDouble() / dt); ++i) {
-    // do an euler integration timestep
-    sim.timestep_1d_euler(dt);
-    t += dt;
-    time.push_back(t);
-    for (std::size_t i = 0; i < sim.species_values.size(); ++i) {
-      conc[i].push_back(sim.species_values[i]);
-    }
-  }
-  // plot results
-  ui->pltPlot->clearGraphs();
-  ui->pltPlot->setInteraction(QCP::iRangeDrag, true);
-  ui->pltPlot->setInteraction(QCP::iRangeZoom, true);
-  ui->pltPlot->setInteraction(QCP::iSelectPlottables, true);
-
-  std::vector<QColor> col{{0, 0, 0},       {230, 25, 75},   {60, 180, 75},
-                          {255, 225, 25},  {0, 130, 200},   {245, 130, 48},
-                          {145, 30, 180},  {70, 240, 240},  {240, 50, 230},
-                          {210, 245, 60},  {250, 190, 190}, {0, 128, 128},
-                          {230, 190, 255}, {170, 110, 40},  {255, 250, 200},
-                          {128, 0, 0},     {170, 255, 195}, {128, 128, 0},
-                          {255, 215, 180}, {0, 0, 128},     {128, 128, 128}};
-  ui->pltPlot->legend->setVisible(true);
-  for (std::size_t i = 0; i < sim.species_values.size(); ++i) {
-    ui->pltPlot->addGraph();
-    ui->pltPlot->graph(static_cast<int>(i))->setData(time, conc[i]);
-    ui->pltPlot->graph(static_cast<int>(i))->setPen(col[i]);
-    ui->pltPlot->graph(static_cast<int>(i))
-        ->setName(sbml_doc.speciesID[i].c_str());
-  }
-  ui->pltPlot->xAxis->setLabel("time");
-  ui->pltPlot->xAxis->setRange(time.front(), time.back());
-  ui->pltPlot->yAxis->setLabel("concentration");
-  ui->pltPlot->replot();
-}
-
-void MainWindow::on_btnSimulate_clicked() {
-  // simple 2d simulation
-  images.clear();
-
-  // for now only simulate first compartment
-  auto comp = sbml_doc.compartments[0];
-  // initialise concentration fields from current compartment
-  field species_field(sbml_doc.species[comp].size(),
-                      sbml_doc.getCompartmentImage(),
-                      sbml_doc.getCompartmentColour(comp));
-  ui->lblGeometry->setImage(species_field.compartment_image());
-  // set initial concentration
-  for (int i = 0; i < sbml_doc.species[comp].size(); ++i) {
-    species_field.setConstantConcentration(
-        i, sbml_doc.model->getSpecies(qPrintable(sbml_doc.species[comp][i]))
-               ->getInitialConcentration());
-  }
-  // compile reaction expressions
-  simulate sim(sbml_doc);
-  sim.compile_reactions(comp);
-  // do euler integration
-  QVector<double> time;
-  QVector<double> conc;
-  double t = 0;
-  double dt = ui->txtSimDt->text().toDouble();
-  for (int i = 0;
-       i < static_cast<int>(ui->txtSimLength->text().toDouble() / dt); ++i) {
-    t += dt;
-    species_field.diffusion_op();
-    sim.timestep_2d_euler(species_field, dt);
-    images.push_back(species_field.concentration_image(1).copy());
-    conc.push_back(species_field.get_mean_concentration(1));
-    time.push_back(t);
-  }
-  // plot results
-  ui->pltPlot->clearGraphs();
-  ui->pltPlot->setInteraction(QCP::iRangeDrag, true);
-  ui->pltPlot->setInteraction(QCP::iRangeZoom, true);
-  ui->pltPlot->setInteraction(QCP::iSelectPlottables, true);
-  ui->pltPlot->addGraph();
-  ui->pltPlot->graph(0)->setData(time, conc);
-  ui->pltPlot->replot();
-  // enable slider to choose time to display
-  ui->hslideTime->setEnabled(true);
-  ui->hslideTime->setMinimum(0);
-  ui->hslideTime->setMaximum(time.size() - 1);
-  ui->hslideTime->setValue(time.size() - 1);
 }
 
 void MainWindow::on_listFunctions_currentTextChanged(
@@ -313,6 +199,8 @@ void MainWindow::on_listSpecies_itemActivated(QTreeWidgetItem *item,
     } else {
       ui->chkSpeciesIsConstant->setCheckState(Qt::CheckState::Unchecked);
     }
+    ui->lblGeometry->setImage(
+        sbml_doc.getConcentrationImage(item->text(column)));
   }
 }
 
@@ -386,4 +274,136 @@ void MainWindow::on_tabMain_currentChanged(int index) {
     ui->hslideTime->setValue(0);
     on_hslideTime_valueChanged(0);
   }
+}
+
+void MainWindow::on_btnImportConcentration_clicked() {
+  auto spec = ui->listSpecies->selectedItems()[0]->text(0);
+  qDebug() << spec;
+  QString filename = QFileDialog::getOpenFileName(
+      this, "Import species concentration from image", "",
+      "Image Files (*.png *.jpg *.bmp)");
+  sbml_doc.importConcentrationFromImage(spec, filename);
+  ui->lblGeometry->setImage(sbml_doc.getConcentrationImage(spec));
+}
+
+void MainWindow::sim1d() {
+  // do simple simulation of non-spatial model
+
+  // compile reaction expressions
+  Simulate sim(sbml_doc);
+  sim.compile_reactions(sbml_doc.speciesID);
+  // set initial concentrations
+  for (unsigned int i = 0; i < sbml_doc.model->getNumSpecies(); ++i) {
+    const auto *spec = sbml_doc.model->getSpecies(i);
+    // if SBML file specifies amount: convert to concentration
+    if (spec->isSetInitialAmount()) {
+      double vol =
+          sbml_doc.model->getCompartment(spec->getCompartment())->getSize();
+      sim.species_values[i] = spec->getInitialAmount() / vol;
+    } else {
+      sim.species_values[i] = spec->getInitialConcentration();
+    }
+  }
+
+  // generate vector of resulting concentrations at each timestep
+  sim.timestep_1d_euler(0.0);
+  QVector<double> time;
+  double t = 0;
+  double dt = ui->txtSimDt->text().toDouble();
+  std::vector<QVector<double>> conc(sim.species_values.size());
+  time.push_back(t);
+  for (std::size_t i = 0; i < sim.species_values.size(); ++i) {
+    conc[i].push_back(sim.species_values[i]);
+  }
+  for (int i = 0;
+       i < static_cast<int>(ui->txtSimLength->text().toDouble() / dt); ++i) {
+    // do an euler integration timestep
+    sim.timestep_1d_euler(dt);
+    t += dt;
+    time.push_back(t);
+    for (std::size_t i = 0; i < sim.species_values.size(); ++i) {
+      conc[i].push_back(sim.species_values[i]);
+    }
+  }
+  // plot results
+  ui->pltPlot->clearGraphs();
+  ui->pltPlot->setInteraction(QCP::iRangeDrag, true);
+  ui->pltPlot->setInteraction(QCP::iRangeZoom, true);
+  ui->pltPlot->setInteraction(QCP::iSelectPlottables, true);
+
+  std::vector<QColor> col{{0, 0, 0},       {230, 25, 75},   {60, 180, 75},
+                          {255, 225, 25},  {0, 130, 200},   {245, 130, 48},
+                          {145, 30, 180},  {70, 240, 240},  {240, 50, 230},
+                          {210, 245, 60},  {250, 190, 190}, {0, 128, 128},
+                          {230, 190, 255}, {170, 110, 40},  {255, 250, 200},
+                          {128, 0, 0},     {170, 255, 195}, {128, 128, 0},
+                          {255, 215, 180}, {0, 0, 128},     {128, 128, 128}};
+  ui->pltPlot->legend->setVisible(true);
+  for (std::size_t i = 0; i < sim.species_values.size(); ++i) {
+    ui->pltPlot->addGraph();
+    ui->pltPlot->graph(static_cast<int>(i))->setData(time, conc[i]);
+    ui->pltPlot->graph(static_cast<int>(i))->setPen(col[i]);
+    ui->pltPlot->graph(static_cast<int>(i))
+        ->setName(sbml_doc.speciesID[i].c_str());
+  }
+  ui->pltPlot->xAxis->setLabel("time");
+  ui->pltPlot->xAxis->setRange(time.front(), time.back());
+  ui->pltPlot->yAxis->setLabel("concentration");
+  ui->pltPlot->replot();
+}
+
+void MainWindow::on_btnSimulate_clicked() {
+  // simple 2d spatial simulation
+  images.clear();
+
+  // for now only simulate first compartment
+  auto comp = sbml_doc.compartments[0];
+
+  Field &species_field = sbml_doc.field;
+  // compile reaction expressions
+  Simulate sim(sbml_doc);
+  sim.compile_reactions(sbml_doc.speciesID);
+  // do euler integration
+  QVector<double> time;
+  std::vector<QVector<double>> conc(sim.species_values.size());
+  for (std::size_t i = 0; i < sim.species_values.size(); ++i) {
+    conc[i].push_back(species_field.get_mean_concentration(i));
+  }
+  double t = 0;
+  double dt = ui->txtSimDt->text().toDouble();
+  for (int i = 0;
+       i < static_cast<int>(ui->txtSimLength->text().toDouble() / dt); ++i) {
+    t += dt;
+    sim.timestep_2d_euler(species_field, dt);
+    images.push_back(species_field.getConcentrationImage().copy());
+    for (std::size_t k = 0; k < sim.species_values.size(); ++k) {
+      conc[k].push_back(species_field.get_mean_concentration(k));
+    }
+    time.push_back(t);
+  }
+  // plot results
+  ui->pltPlot->clearGraphs();
+  ui->pltPlot->setInteraction(QCP::iRangeDrag, true);
+  ui->pltPlot->setInteraction(QCP::iRangeZoom, true);
+  ui->pltPlot->setInteraction(QCP::iSelectPlottables, true);
+  ui->pltPlot->legend->setVisible(true);
+  for (std::size_t i = 0; i < sim.species_values.size(); ++i) {
+    ui->pltPlot->addGraph();
+    ui->pltPlot->graph(static_cast<int>(i))->setData(time, conc[i]);
+    ui->pltPlot->graph(static_cast<int>(i))
+        ->setPen(species_field.speciesColour[i]);
+    ui->pltPlot->graph(static_cast<int>(i))
+        ->setName(sbml_doc.speciesID[i].c_str());
+  }
+  ui->pltPlot->xAxis->setLabel("time");
+  ui->pltPlot->xAxis->setRange(time.front(), time.back());
+  ui->pltPlot->yAxis->setLabel("concentration");
+  ui->pltPlot->yAxis->setRange(
+      0, 1.5 * (*std::max_element(conc[0].cbegin(), conc[0].cend())));
+  ui->pltPlot->replot();
+  // enable slider to choose time to display
+  ui->hslideTime->setEnabled(true);
+  ui->hslideTime->setMinimum(0);
+  ui->hslideTime->setMaximum(time.size() - 1);
+  ui->hslideTime->setValue(time.size() - 1);
 }

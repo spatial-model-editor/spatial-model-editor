@@ -20,11 +20,13 @@ before_build:
   - set PATH=C:\projects\qt5-static\install\bin;%PATH%
   - qmake -v
   # download pre-compiled static libSBML library
+  - cd ext
   - mkdir libsbml
   - cd libsbml
   - appveyor DownloadFile "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-win32.zip"
   - 7z x libsbml-static-win32.zip
   - dir
+  - cd ..
   - cd ..
 
 build_script:

@@ -56,6 +56,8 @@ class MainWindow : public QMainWindow {
 
   void on_tabMain_currentChanged(int index);
 
+  void on_btnImportConcentration_clicked();
+
  private:
   Ui::MainWindow *ui;
   sbmlDocWrapper sbml_doc;

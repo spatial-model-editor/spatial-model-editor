@@ -32,8 +32,7 @@ void QLabelMousetracker::mouseMoveEvent(QMouseEvent *event) {
   currentPixel.setY((pixmap.height() * event->pos().y()) /
                     this->size().height());
 
-  // todo: highlight/darken currently selected colour region on mouseover?
-  // see
+  // todo: highlight/colour currently selected colour region on mouseover?
 
   if (event->buttons() != Qt::NoButton) {
     // on mouse click: update current colour and compartment ID
