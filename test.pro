@@ -16,6 +16,7 @@ SOURCES += \
     test/test_qlabelmousetracker.cpp \
     test/test_sbml.cpp \
     test/test_simulate.cpp \
+    src/model.cpp \
     src/numerics.cpp \
     src/sbml.cpp \
     src/simulate.cpp
@@ -24,6 +25,7 @@ SOURCES += \
     # src/qlabelmousetracker.cpp \
 
 HEADERS += \
+    inc/model.h \
     inc/numerics.h \
     inc/sbml.h \
     inc/simulate.h \

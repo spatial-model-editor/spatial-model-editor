@@ -267,6 +267,7 @@ void MainWindow::on_tabMain_currentChanged(int index) {
   if (index == 0) {
     // geometry tab
     ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
+    ui->lblGeometryStatus->setText("Compartment Geometry:");
     ui->hslideTime->setEnabled(false);
   } else if (index == 4) {
     // simulate tab
