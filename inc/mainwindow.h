@@ -58,6 +58,8 @@ class MainWindow : public QMainWindow {
 
   void on_btnImportConcentration_clicked();
 
+  void on_listMembranes_currentTextChanged(const QString &currentText);
+
  private:
   Ui::MainWindow *ui;
   sbmlDocWrapper sbml_doc;

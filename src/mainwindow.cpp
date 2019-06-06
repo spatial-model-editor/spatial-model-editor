@@ -75,6 +75,10 @@ void MainWindow::update_ui() {
   ui->listCompartments->clear();
   ui->listCompartments->insertItems(0, sbml_doc.compartments);
 
+  // update list of membranes
+  ui->listMembranes->clear();
+  ui->listMembranes->insertItems(0, sbml_doc.membranes);
+
   // update list of reactions
   ui->listReactions->clear();
   ui->listReactions->insertItems(0, sbml_doc.reactions);
@@ -269,7 +273,7 @@ void MainWindow::on_tabMain_currentChanged(int index) {
     ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
     ui->lblGeometryStatus->setText("Compartment Geometry:");
     ui->hslideTime->setEnabled(false);
-  } else if (index == 4) {
+  } else if (index == 5) {
     // simulate tab
     ui->hslideTime->setEnabled(true);
     ui->hslideTime->setValue(0);
@@ -341,4 +345,14 @@ void MainWindow::on_btnSimulate_clicked() {
   ui->hslideTime->setMinimum(0);
   ui->hslideTime->setMaximum(time.size() - 1);
   ui->hslideTime->setValue(time.size() - 1);
+}
+
+void MainWindow::on_listMembranes_currentTextChanged(
+    const QString &currentText) {
+  if (currentText.size() > 0) {
+    qDebug() << currentText;
+    // update image
+    QPixmap pixmap = QPixmap::fromImage(sbml_doc.getMembraneImage(currentText));
+    ui->lblMembraneShape->setPixmap(pixmap);
+  }
 }
