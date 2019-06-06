@@ -42,10 +42,12 @@ before_script:
   - export PATH=$QT5_INSTALL_PREFIX/bin:$PATH
   - qmake -v
   # download pre-compiled static libSBML library
+  - cd ext
   - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
   - mkdir -p libsbml
   - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz -C libsbml
   - ls libsbml
+  - cd ..
 
 script:
   # run qmake to generate make file

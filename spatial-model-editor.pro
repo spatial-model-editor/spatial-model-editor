@@ -12,6 +12,7 @@ CONFIG += c++11
 SOURCES += \
     src/main.cpp \
     src/mainwindow.cpp \
+    src/model.cpp \
     src/numerics.cpp \
     src/qlabelmousetracker.cpp \
     src/sbml.cpp \
@@ -20,6 +21,7 @@ SOURCES += \
 
 HEADERS += \
     inc/mainwindow.h \
+    inc/model.h \
     inc/numerics.h \
     inc/qlabelmousetracker.h \
     inc/sbml.h \
@@ -34,8 +36,8 @@ INCLUDEPATH += inc ext/exprtk ext/qcustomplot
 
 # these static libraries are available from
 # from https://github.com/lkeegan/libsbml-static
-LIBS += $$PWD/libsbml/lib/libsbml-static.a $$PWD/libsbml/lib/libexpat.a
-INCLUDEPATH += $$PWD/libsbml/include
+LIBS += $$PWD/ext/libsbml/lib/libsbml-static.a $$PWD/ext/libsbml/lib/libexpat.a
+INCLUDEPATH += $$PWD/ext/libsbml/include
 
 # on windows add flags to support large object files
 # https://stackoverflow.com/questions/16596876/object-file-has-too-many-sections

@@ -56,6 +56,8 @@ class MainWindow : public QMainWindow {
 
   void on_tabMain_currentChanged(int index);
 
+  void on_btnImportConcentration_clicked();
+
  private:
   Ui::MainWindow *ui;
   sbmlDocWrapper sbml_doc;
@@ -66,8 +68,6 @@ class MainWindow : public QMainWindow {
 
   // update all UI elements with new model
   void update_ui();
-  // do simple 1d simulation
-  void sim1d();
 };
 
 #endif  // MAINWINDOW_H
