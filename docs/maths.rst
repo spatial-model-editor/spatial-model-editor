@@ -1,8 +1,6 @@
 Maths
 =====
 
-Some information on the mathematical formulation of the spatial models.
-
 Reaction-Diffusion
 ------------------
 
@@ -65,7 +63,4 @@ Time Integration
 
 To numerically integrate a system of coupled ODEs, a numerical integration scheme can be used to convert the equations into a set of algebraic relations involving :math:`c(t+\delta t)` and :math:`c(t)`, which can then be solved to find :math:`c(t+\delta t)` in terms of the current value :math:`c(t)`.
 
-In general stable numerical integration schemes are implicit, and result in a very large sparse non-linear system to be solved at each timestep.
-
-.. warning::
-   Currently only forwards Euler integration is implemented, which is both numerically unstable and only accurate to first order in :math:`\delta t`.
+In general stable numerical integration schemes are implicit, and result in a very large sparse non-linear system to be solved at each timestep. Here we use the explicit forwards Euler scheme which is easy to implement, but numerically unstable and only accurate to first order in :math:`\delta t`.
