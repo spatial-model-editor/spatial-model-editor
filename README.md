@@ -10,6 +10,7 @@ GUI spatial model editor prototype, download the latest executables here:
 
 ## WP1a
 Allow the user to describe a spatial model: [WP1a status](https://github.com/lkeegan/spatial-model-editor/projects/1)
+
 (a partial re-implementation of the spatial model editing part of https://github.com/fbergmann/edit-spatial using C++/Qt5, with all dependencies statically linked so that it can be supplied as a stand-alone compiled executable for linux, windows and osx.)
 
 ## WP1b
