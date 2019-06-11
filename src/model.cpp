@@ -11,7 +11,7 @@ void Geometry::init(QImage img, QRgb col) {
     for (int y = 0; y < img.height(); ++y) {
       if (img.pixel(x, y) == col) {
         // if colour matches, add pixel to field
-        qDebug("%d, %d", x, y);
+        // qDebug("%d, %d", x, y);
         ix.push_back(QPoint(x, y));
       }
     }
@@ -53,7 +53,7 @@ void Field::init(Geometry *geom, std::size_t n_species_,
           QPoint(p.x(), p.y() + 1), QPoint(p.x(), p.y() - 1)}) {
       auto it = index.find(pp.x() * geometry->img_size.height() + pp.y());
       if (it != index.cend()) {
-        qDebug() << pp;
+        // qDebug() << pp;
         nn.push_back(it->second);
       } else {
         if (bc == DIRICHLET) {

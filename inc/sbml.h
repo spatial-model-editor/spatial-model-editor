@@ -17,11 +17,11 @@
 class sbmlDocWrapper {
  public:
   bool isValid = false;
+  bool hasGeometry = false;
   libsbml::Model *model = nullptr;
   // Qt data structures containing model data to pass to UI widgets
   // todo: when model structure more concretely defined, replace this with MVC
   // setup
-  QString xml;
   QStringList compartments;
   QStringList membranes;
   // <compartment ID, list of species ID in this compartment>
@@ -64,6 +64,9 @@ class sbmlDocWrapper {
   void importConcentrationFromImage(const QString &speciesID,
                                     const QString &filename);
   const QImage &getConcentrationImage(const QString &speciesID);
+
+  // return raw XML as QString
+  QString getXml() const;
 
   // return supplied expression as string with any function calls inlined
   // e.g. given mathExpression = "z*f(x,y)"

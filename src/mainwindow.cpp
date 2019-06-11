@@ -17,14 +17,8 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->pltPlot,
           SIGNAL(plottableClick(QCPAbstractPlottable *, int, QMouseEvent *)),
           this, SLOT(on_graphClicked(QCPAbstractPlottable *, int)));
-
-  // <debug>
-  // for debugging convenience: import a model and an image on startup
-  sbml_doc.importSBMLFile("ABtoC.xml");
-  sbml_doc.importGeometryFromImage("two-blobs-100x100.bmp");
-  ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
-  update_ui();
-  // </debug>
+  ui->tabMain->setCurrentIndex(0);
+  on_tabMain_currentChanged(0);
 }
 
 MainWindow::~MainWindow() { delete ui; }
@@ -68,9 +62,6 @@ void MainWindow::on_action_Open_SBML_file_triggered() {
 }
 
 void MainWindow::update_ui() {
-  // update raw XML display
-  ui->txtSBML->setText(sbml_doc.xml);
-
   // update list of compartments
   ui->listCompartments->clear();
   ui->listCompartments->insertItems(0, sbml_doc.compartments);
@@ -117,6 +108,7 @@ void MainWindow::on_actionGeometry_from_image_triggered() {
                                    "Image Files (*.png *.jpg *.bmp)");
   sbml_doc.importGeometryFromImage(filename);
   ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
+  ui->tabMain->setCurrentIndex(0);
 }
 
 void MainWindow::on_lblGeometry_mouseClicked() {
@@ -203,6 +195,7 @@ void MainWindow::on_listSpecies_itemActivated(QTreeWidgetItem *item,
     } else {
       ui->chkSpeciesIsConstant->setCheckState(Qt::CheckState::Unchecked);
     }
+    ui->lblGeometryStatus->setText("Species concentration:");
     ui->lblGeometry->setImage(
         sbml_doc.getConcentrationImage(item->text(column)));
   }
@@ -267,17 +260,43 @@ void MainWindow::on_hslideTime_valueChanged(int value) {
 }
 
 void MainWindow::on_tabMain_currentChanged(int index) {
-  qDebug() << index;
-  if (index == 0) {
-    // geometry tab
-    ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
-    ui->lblGeometryStatus->setText("Compartment Geometry:");
-    ui->hslideTime->setEnabled(false);
-  } else if (index == 5) {
-    // simulate tab
-    ui->hslideTime->setEnabled(true);
-    ui->hslideTime->setValue(0);
-    on_hslideTime_valueChanged(0);
+  qDebug("Tab changed to %d", index);
+  ui->hslideTime->setEnabled(false);
+  ui->hslideTime->setVisible(false);
+  switch (index) {
+    case 0:
+      // geometry tab
+      ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
+      ui->lblGeometryStatus->setText("Compartment Geometry:");
+      break;
+    case 1:
+      // membranes tab
+      ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
+      ui->lblGeometryStatus->setText("Compartment Geometry:");
+      if (ui->listMembranes->count() > 0) {
+        ui->listMembranes->setCurrentRow(0);
+      }
+      break;
+    case 2:
+      // species tab
+      on_listSpecies_itemActivated(ui->listSpecies->currentItem(),
+                                   ui->listSpecies->currentColumn());
+      break;
+    case 3:
+      // reactions tab
+    case 4:
+      // functions tab
+    case 5:
+      // simulate tab
+      ui->lblGeometryStatus->setText("Simulation concentration:");
+      ui->hslideTime->setVisible(true);
+      ui->hslideTime->setEnabled(true);
+      ui->hslideTime->setValue(0);
+      on_hslideTime_valueChanged(0);
+      break;
+    case 6:
+      // SBML tab
+      ui->txtSBML->setText(sbml_doc.getXml());
   }
 }
 
@@ -289,6 +308,16 @@ void MainWindow::on_btnImportConcentration_clicked() {
       "Image Files (*.png *.jpg *.bmp)");
   sbml_doc.importConcentrationFromImage(spec, filename);
   ui->lblGeometry->setImage(sbml_doc.getConcentrationImage(spec));
+}
+
+void MainWindow::on_listMembranes_currentTextChanged(
+    const QString &currentText) {
+  if (currentText.size() > 0) {
+    qDebug() << currentText;
+    // update image
+    QPixmap pixmap = QPixmap::fromImage(sbml_doc.getMembraneImage(currentText));
+    ui->lblMembraneShape->setPixmap(pixmap);
+  }
 }
 
 void MainWindow::on_btnSimulate_clicked() {
@@ -345,14 +374,4 @@ void MainWindow::on_btnSimulate_clicked() {
   ui->hslideTime->setMinimum(0);
   ui->hslideTime->setMaximum(time.size() - 1);
   ui->hslideTime->setValue(time.size() - 1);
-}
-
-void MainWindow::on_listMembranes_currentTextChanged(
-    const QString &currentText) {
-  if (currentText.size() > 0) {
-    qDebug() << currentText;
-    // update image
-    QPixmap pixmap = QPixmap::fromImage(sbml_doc.getMembraneImage(currentText));
-    ui->lblMembraneShape->setPixmap(pixmap);
-  }
 }
