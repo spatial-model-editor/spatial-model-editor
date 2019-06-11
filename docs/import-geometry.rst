@@ -5,5 +5,9 @@ To import an image of the compartments in the model, go to `Import->Geometry fro
 
 The image should be colour coded such that each compartment has a unique colour.
 
-Assuming you have already imported a SBML model, you can now click somewhere on the image.
-The colour and compartment status boxes above the image will update to show the colour where you clicked, and the compartment assigned to this colour ("`none`" by default). To assign a compartment to this colour, click on the down arrow next to the current compartment and select the new compartment.
+To assign a compartment, click on "Select compartment geometry", then click on the desired part of the image.
+
+.. figure:: img/geometry.png
+   :alt: screenshot showing geometry settings
+
+   An example of assigning the geometry of a compartment from an image. The image used in this example can be downloaded `here <https://raw.githubusercontent.com/lkeegan/spatial-model-editor/master/examples/geometry/filled-donut-100x100.bmp>`_.

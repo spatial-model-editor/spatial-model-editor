@@ -1,6 +1,15 @@
 Running a Simulation
 ====================
 
-Currently the simulation options are very limited: only non-spatial models can be simulated, using forwards Euler numerical integration.
+To simulate the spatial model, click on the "Simulate" tab, specify the simulation time and the integration time step, then click "Simulate"
 
-You can specify the integrator time-step and simulation length, then press `Simulate`, and a plot of the resulting time series of concentrations will be displayed.
+The resulting average species concentrations are plotted as a function of time. A snapshot of the spatial distribution is shown on the left, and the slider below the image can be used to change the time that is being displayed.
+
+.. figure:: img/simulation.png
+   :alt: screenshot showing simulation
+
+   An example of a simple spatial simulation.
+
+
+.. warning::
+	Simulation only works for a single compartment and is both numerically unstable and innacurate (forwards Euler).
