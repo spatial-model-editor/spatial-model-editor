@@ -4,6 +4,7 @@
 
 void sbmlDocWrapper::importSBMLFile(const std::string &filename) {
   doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
+  hasGeometry = false;
   if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
       0) {
     isValid = false;
@@ -12,7 +13,6 @@ void sbmlDocWrapper::importSBMLFile(const std::string &filename) {
     isValid = true;
   }
 
-  xml = libsbml::writeSBMLToString(doc.get());
   model = doc->getModel();
 
   // get list of compartments
@@ -26,6 +26,8 @@ void sbmlDocWrapper::importSBMLFile(const std::string &filename) {
   }
 
   // construct list of membranes between compartments
+  membranePairs.clear();
+  mapColPairToIndex.clear();
   membranes.clear();
   for (int i = 1; i < compartments.size(); ++i) {
     for (int j = 0; j < i; ++j) {
@@ -79,6 +81,8 @@ void sbmlDocWrapper::importGeometryFromImage(const QString &filename) {
 
   // for each pair of different colours: map to a continuous index
   // NOTE: colours ordered by ascending numerical value
+  membranePairs.clear();
+  mapColPairToIndex.clear();
   std::size_t i = 0;
   for (int iB = 1; iB < compartmentImage.colorCount(); ++iB) {
     for (int iA = 0; iA < iB; ++iA) {
@@ -86,7 +90,7 @@ void sbmlDocWrapper::importGeometryFromImage(const QString &filename) {
       QRgb colB = compartmentImage.colorTable()[iB];
       membranePairs.push_back(std::vector<std::pair<QPoint, QPoint>>());
       mapColPairToIndex[{std::min(colA, colB), std::max(colA, colB)}] = i++;
-      qDebug("iA,iB: %d,%d: %u,%u", iA, iB, std::min(colA, colB),
+      qDebug("ColourPair iA,iB: %d,%d: %u,%u", iA, iB, std::min(colA, colB),
              std::max(colA, colB));
     }
   }
@@ -128,12 +132,17 @@ void sbmlDocWrapper::importGeometryFromImage(const QString &filename) {
       prevPix = currPix;
     }
   }
+  hasGeometry = true;
 }
 
 const QImage &sbmlDocWrapper::getMembraneImage(const QString &membraneID) {
+  if (!hasGeometry) {
+    return compartmentImage;
+  }
   auto comps = membraneID.split("-");
   QRgb colA = mapCompartmentToColour[comps[0]];
   QRgb colB = mapCompartmentToColour[comps[1]];
+  qDebug("getMembraneImage: %u, %u", colA, colB);
   QImage img = compartmentImage.convertToFormat(QImage::Format_ARGB32);
   for (const auto &pair : membranePairs[mapColPairToIndex.at(
            {std::min(colA, colB), std::max(colA, colB)})]) {
@@ -201,9 +210,16 @@ void sbmlDocWrapper::importConcentrationFromImage(const QString &speciesID,
 }
 
 const QImage &sbmlDocWrapper::getConcentrationImage(const QString &speciesID) {
+  if (!hasGeometry) {
+    return compartmentImage;
+  }
   QString comp =
       model->getSpecies(qPrintable(speciesID))->getCompartment().c_str();
   return field.getConcentrationImage(speciesIndex[qPrintable(speciesID)]);
+}
+
+QString sbmlDocWrapper::getXml() const {
+  return libsbml::writeSBMLToString(doc.get());
 }
 
 std::string sbmlDocWrapper::inlineFunctions(

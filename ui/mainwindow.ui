@@ -95,7 +95,7 @@
         </sizepolicy>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="tabGeometry">
         <attribute name="title">
@@ -351,6 +351,9 @@
                   <property name="text">
                    <string>Impermeable (zero flux across membrane)</string>
                   </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
                   <property name="checked">
                    <bool>true</bool>
                   </property>
@@ -411,26 +414,16 @@
              <layout class="QVBoxLayout" name="verticalLayout">
               <item>
                <layout class="QGridLayout" name="gridNonSpatial">
-                <item row="1" column="0">
-                 <widget class="QCheckBox" name="chkSpeciesIsConstant">
-                  <property name="toolTip">
-                   <string>if &quot;Constant&quot; is checked: the species has a fixed concentration during the simulation</string>
-                  </property>
-                  <property name="text">
-                   <string>Constant</string>
-                  </property>
-                 </widget>
-                </item>
                 <item row="0" column="1">
                  <widget class="QLineEdit" name="txtInitialConcentration"/>
                 </item>
-                <item row="2" column="0">
-                 <widget class="QCheckBox" name="chkSpeciesIsSpatial">
-                  <property name="toolTip">
-                   <string>If &quot;Spatial&quot; is checked: the concentration varies over the compartment, i.e. it is a function of space</string>
+                <item row="0" column="2">
+                 <widget class="QPushButton" name="btnImportConcentration">
+                  <property name="enabled">
+                   <bool>false</bool>
                   </property>
                   <property name="text">
-                   <string>Spatial</string>
+                   <string>import from image...</string>
                   </property>
                  </widget>
                 </item>
@@ -444,13 +437,49 @@
                   </property>
                  </widget>
                 </item>
-                <item row="0" column="2">
-                 <widget class="QPushButton" name="btnImportConcentration">
-                  <property name="enabled">
-                   <bool>false</bool>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="lblSpeciesColourLabel">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
                   </property>
                   <property name="text">
-                   <string>import from image...</string>
+                   <string>Colour:</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1" colspan="2">
+                 <widget class="QLabel" name="lblSpeciesColour">
+                  <property name="text">
+                   <string>none</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1" colspan="2">
+                 <widget class="QCheckBox" name="chkSpeciesIsConstant">
+                  <property name="toolTip">
+                   <string>if &quot;Constant&quot; is checked: the species has a fixed concentration during the simulation</string>
+                  </property>
+                  <property name="text">
+                   <string>Constant</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1" colspan="2">
+                 <widget class="QCheckBox" name="chkSpeciesIsSpatial">
+                  <property name="toolTip">
+                   <string>If &quot;Spatial&quot; is checked: the concentration varies over the compartment, i.e. it is a function of space</string>
+                  </property>
+                  <property name="text">
+                   <string>Spatial</string>
                   </property>
                  </widget>
                 </item>
@@ -876,7 +905,7 @@
     <enum>TopToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
-    <bool>false</bool>
+    <bool>true</bool>
    </attribute>
   </widget>
   <action name="actionE_xit">

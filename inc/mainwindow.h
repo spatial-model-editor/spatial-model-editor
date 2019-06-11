@@ -65,8 +65,8 @@ class MainWindow : public QMainWindow {
   sbmlDocWrapper sbml_doc;
   bool waiting_for_compartment_choice = false;
 
-  // temp: vector of images to display
-  std::vector<QImage> images;
+  // temp: vector of simulation images to display
+  QVector<QImage> images;
 
   // update all UI elements with new model
   void update_ui();
