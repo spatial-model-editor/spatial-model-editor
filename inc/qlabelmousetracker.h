@@ -1,18 +1,20 @@
-#ifndef MOUSEOVER_QLABEL_H
-#define MOUSEOVER_QLABEL_H
+// QLabelMouseTracker
+//  - a modified QLabel
+//  - displays (and rescales without interpolation) an image,
+//  - tracks the mouse location in terms of the pixels of the original image
+//  - provides the colour of the last pixel that was clicked on
+//  - provides a mask of the image with this colour
+//  - emits a signal when the user clicks the mouse
+
+#ifndef QLABEL_MOUSE_TRACKER_H
+#define QLABEL_MOUSE_TRACKER_H
 #include <QLabel>
 #include <QMouseEvent>
 
-// A modified QLabel which:
-// - displays (and rescales) an image,
-// - tracks the mouse location in terms of the pixels of the original image
-// - provides the colour of the last pixel that was clicked on
-// - provides a mask of the image with this colour
-// - emits a signal when the user clicks the mouse
-class QLabelMousetracker : public QLabel {
+class QLabelMouseTracker : public QLabel {
   Q_OBJECT
  public:
-  QLabelMousetracker(QWidget *parent);
+  QLabelMouseTracker(QWidget *parent);
   void setImage(const QImage &img);
   const QImage &getImage() const;
   const QRgb &getColour() const;
@@ -41,4 +43,4 @@ class QLabelMousetracker : public QLabel {
   QPixmap pixmap = QPixmap(1, 1);
 };
 
-#endif  // MOUSEOVER_QLABEL_H
+#endif  // QLABEL_MOUSE_TRACKER_H

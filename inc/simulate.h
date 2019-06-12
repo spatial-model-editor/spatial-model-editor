@@ -1,3 +1,7 @@
+// Simple simulation routine
+//  - compiles reaction equations
+//  - 2d reaction-diffusion with forwards Euler
+
 #ifndef SIMULATE_H
 #define SIMULATE_H
 
@@ -26,14 +30,8 @@ class Simulate {
   explicit Simulate(const sbmlDocWrapper &doc) : doc(doc) {}
   // compile reaction expressions
   void compile_reactions(const std::vector<std::string> &species);
-
-  // 1d simulation
   // vector of result of applying reaction expressions
   std::vector<double> evaluate_reactions();
-  // integration timestep: 1d, forwards euler
-  void timestep_1d_euler(double dt);
-
-  // 2d spatial simulation
   // field.dcdt += result of applying reaction expressions to field.conc
   void evaluate_reactions(Field &field);
   // integration timestep: forwards euler: conc += dcdt * dt

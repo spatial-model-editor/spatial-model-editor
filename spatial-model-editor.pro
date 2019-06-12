@@ -7,6 +7,9 @@ TEMPLATE = app
 
 DEFINES += QT_DEPRECATED_WARNINGS
 
+# disable qtDebug() output in release build
+CONFIG(release, debug|release):DEFINES += QT_NO_DEBUG_OUTPUT
+
 CONFIG += c++11
 
 SOURCES += \

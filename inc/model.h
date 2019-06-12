@@ -1,3 +1,7 @@
+// Spatial Geometry
+//  - Geometry class: defines set of points that make up compartment
+//  - Field class: species concentrations within compartment
+
 #ifndef MODEL_H
 #define MODEL_H
 

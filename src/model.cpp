@@ -82,6 +82,7 @@ void Field::init(Geometry *geom, std::size_t n_species_,
 
 void Field::importConcentration(std::size_t species_index, QImage img,
                                 double scale_factor) {
+  // rescaling [min, max] pixel values to the range [0, scale_factor] for now
   QRgb min = std::numeric_limits<QRgb>::max();
   QRgb max = 0;
   for (int x = 0; x < img.width(); ++x) {
@@ -92,7 +93,7 @@ void Field::importConcentration(std::size_t species_index, QImage img,
   }
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     conc[n_species * i + species_index] =
-        static_cast<double>(img.pixel(geometry->ix[i]) - min) /
+        scale_factor * static_cast<double>(img.pixel(geometry->ix[i]) - min) /
         static_cast<double>(max - min);
   }
 }

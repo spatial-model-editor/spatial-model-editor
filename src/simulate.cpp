@@ -41,8 +41,8 @@ void Simulate::compile_reactions(const std::vector<std::string> &species) {
   }
 
   // process each reaction
-  for (int k = 0; k < doc.model->getNumReactions(); ++k) {
-    const auto *reac = doc.model->getReaction(k);
+  for (unsigned i_reac = 0; i_reac < doc.model->getNumReactions(); ++i_reac) {
+    const auto *reac = doc.model->getReaction(i_reac);
 
     // construct row of stoichiometric coefficients for each
     // species produced and consumed by this reaction
@@ -129,13 +129,6 @@ std::vector<double> Simulate::evaluate_reactions() {
     }
   }
   return result;
-}
-
-void Simulate::timestep_1d_euler(double dt) {
-  std::vector<double> dcdt = evaluate_reactions();
-  for (std::size_t i = 0; i < species_values.size(); ++i) {
-    species_values[i] += dcdt[i] * dt;
-  }
 }
 
 void Simulate::evaluate_reactions(Field &field) {
