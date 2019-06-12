@@ -1,3 +1,9 @@
+// SBML document wrapper
+// - uses libSBML to read an SBML document
+// - provides the contents in Qt containers for display
+// - augments the model with spatial information
+// - keeps track of geometry, membranes, colours, etc
+
 #ifndef SBML_H
 #define SBML_H
 

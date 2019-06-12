@@ -1,9 +1,9 @@
 #include "qlabelmousetracker.h"
 #include <QDebug>
 
-QLabelMousetracker::QLabelMousetracker(QWidget *parent) : QLabel(parent) {}
+QLabelMouseTracker::QLabelMouseTracker(QWidget *parent) : QLabel(parent) {}
 
-void QLabelMousetracker::setImage(const QImage &img) {
+void QLabelMouseTracker::setImage(const QImage &img) {
   image = img;
   pixmap = QPixmap::fromImage(img);
   this->setPixmap(pixmap.scaledToWidth(this->width(), Qt::FastTransformation));
@@ -15,35 +15,37 @@ void QLabelMousetracker::setImage(const QImage &img) {
   emit mouseClicked();
 }
 
-const QImage &QLabelMousetracker::getImage() const { return image; }
+const QImage &QLabelMouseTracker::getImage() const { return image; }
 
-const QRgb &QLabelMousetracker::getColour() const { return colour; }
+const QRgb &QLabelMouseTracker::getColour() const { return colour; }
 
-void QLabelMousetracker::setMaskColour(QRgb colour) {
+void QLabelMouseTracker::setMaskColour(QRgb colour) {
   maskColour = colour;
   maskImage = image.createMaskFromColor(maskColour, Qt::MaskOutColor);
 }
 
-const QImage &QLabelMousetracker::getMask() const { return maskImage; }
+const QImage &QLabelMouseTracker::getMask() const { return maskImage; }
 
-void QLabelMousetracker::mouseMoveEvent(QMouseEvent *event) {
+void QLabelMouseTracker::mouseMoveEvent(QMouseEvent *event) {
   // on mouse move: update current pixel
   currentPixel.setX((pixmap.width() * event->pos().x()) / this->size().width());
   currentPixel.setY((pixmap.height() * event->pos().y()) /
                     this->size().height());
-
+  qDebug("QLabelMouseTracker :: currentPixel %d,%d", currentPixel.x(),
+         currentPixel.y());
   // todo: highlight/colour currently selected colour region on mouseover?
 
   if (event->buttons() != Qt::NoButton) {
     // on mouse click: update current colour and compartment ID
     if (!pixmap.isNull()) {
       colour = image.pixelColor(currentPixel).rgb();
+      qDebug("QLabelMouseTracker :: mouseclick at colour %u", colour);
       emit mouseClicked();
     }
   }
 }
 
-void QLabelMousetracker::resizeEvent(QResizeEvent *event) {
+void QLabelMouseTracker::resizeEvent(QResizeEvent *event) {
   if (!pixmap.isNull()) {
     this->setPixmap(
         pixmap.scaledToWidth(event->size().width(), Qt::FastTransformation));
