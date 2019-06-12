@@ -22,7 +22,8 @@ Translate the spatial model to a system of PDEs: [WP1b status](https://github.co
     - windows: https://ci.appveyor.com/project/lkeegan/spatial-model-editor
   - Deployment: tagged commits also result in a binary executable for each OS which are added to the release
   - Dependencies: the result is a standalone GUI executable that includes these statically linked libraries:
-    - libSBML: https://github.com/lkeegan/libsbml-static [license: LGPL]
+    - libSBML: https://github.com/lkeegan/libsbml-static [license: [LGPL](http://sbml.org/Software/libSBML/LibSBML_License)]
+      - expat: https://github.com/libexpat/libexpat [license: [MIT](https://github.com/libexpat/libexpat/blob/master/expat/COPYING)]
     - Qt5: https://github.com/lkeegan/qt5-static [license: LGPL]
     - QCustomPlot 2.0.1 https://www.qcustomplot.com [license: GPL]
     - exprtk math parsing/evaluation library: https://github.com/ArashPartow/exprtk [license: MIT]
