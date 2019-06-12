@@ -25,16 +25,6 @@ void sbmlDocWrapper::importSBMLFile(const std::string &filename) {
     species[id] = QStringList();
   }
 
-  // construct list of membranes between compartments
-  membranePairs.clear();
-  mapColPairToIndex.clear();
-  membranes.clear();
-  for (int i = 1; i < compartments.size(); ++i) {
-    for (int j = 0; j < i; ++j) {
-      membranes.push_back(compartments[j] + "-" + compartments[i]);
-    }
-  }
-
   // get all species, make a list for each compartment
   speciesIndex.clear();
   speciesID.clear();
@@ -139,18 +129,43 @@ const QImage &sbmlDocWrapper::getMembraneImage(const QString &membraneID) {
   if (!hasGeometry) {
     return compartmentImage;
   }
-  auto comps = membraneID.split("-");
-  QRgb colA = mapCompartmentToColour[comps[0]];
-  QRgb colB = mapCompartmentToColour[comps[1]];
-  qDebug("getMembraneImage: %u, %u", colA, colB);
-  QImage img = compartmentImage.convertToFormat(QImage::Format_ARGB32);
-  for (const auto &pair : membranePairs[mapColPairToIndex.at(
-           {std::min(colA, colB), std::max(colA, colB)})]) {
-    img.setPixel(pair.first, QColor(0, 155, 40, 255).rgba());
-    img.setPixel(pair.second, QColor(0, 199, 40, 255).rgba());
+  return mapMembraneToImage.at(membraneID);
+}
+
+void sbmlDocWrapper::updateMembraneList() {
+  // construct membrane list & images
+  membranes.clear();
+  mapMembraneToIndex.clear();
+  mapMembraneToImage.clear();
+  // iterate over pairs of compartments
+  for (int i = 1; i < compartments.size(); ++i) {
+    for (int j = 0; j < i; ++j) {
+      QRgb colA = mapCompartmentToColour[compartments[i]];
+      QRgb colB = mapCompartmentToColour[compartments[j]];
+      auto iter =
+          mapColPairToIndex.find({std::min(colA, colB), std::max(colA, colB)});
+      // if membrane for pair of colours exists, generate name and image, and
+      // add to list
+      if (iter != mapColPairToIndex.cend()) {
+        std::size_t index = iter->second;
+        if (!membranePairs[index].empty()) {
+          // generate membrane name
+          QString name = compartments[i] + "-" + compartments[j];
+          membranes.push_back(name);
+          // map name to index of membrane location pairs
+          mapMembraneToIndex[name] = index;
+          // generate image
+          QImage img = compartmentImage.convertToFormat(QImage::Format_ARGB32);
+          for (const auto &pair : membranePairs[mapColPairToIndex.at(
+                   {std::min(colA, colB), std::max(colA, colB)})]) {
+            img.setPixel(pair.first, QColor(0, 155, 40, 255).rgba());
+            img.setPixel(pair.second, QColor(0, 199, 40, 255).rgba());
+          }
+          mapMembraneToImage[name] = img;
+        }
+      }
+    }
   }
-  mapMembraneToImage[membraneID] = img;
-  return mapMembraneToImage[membraneID];
 }
 
 const QImage &sbmlDocWrapper::getCompartmentImage() { return compartmentImage; }
@@ -198,6 +213,8 @@ void sbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
         model->getSpecies(qPrintable(species[compartmentID][i]))
             ->getInitialConcentration());
   }
+  // update list of possible inter-compartment membranes
+  updateMembraneList();
 }
 
 void sbmlDocWrapper::importConcentrationFromImage(const QString &speciesID,
