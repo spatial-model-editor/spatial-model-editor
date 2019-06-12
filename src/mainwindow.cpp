@@ -214,7 +214,7 @@ void MainWindow::on_graphClicked(QCPAbstractPlottable *plottable,
           .arg(dataIndex)
           .arg(dataValue);
   qDebug() << message;
-  ui->lblGeometry->setImage(images[dataIndex]);
+  ui->hslideTime->setValue(dataIndex);
 }
 
 void MainWindow::on_btnChangeCompartment_clicked() {
@@ -271,6 +271,9 @@ void MainWindow::on_tabMain_currentChanged(int index) {
       break;
     case 1:
       // membranes tab
+      ui->lblMembraneShape->clear();
+      ui->listMembranes->clear();
+      ui->listMembranes->addItems(sbml_doc.membranes);
       ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
       ui->lblGeometryStatus->setText("Compartment Geometry:");
       if (ui->listMembranes->count() > 0) {
@@ -322,17 +325,18 @@ void MainWindow::on_listMembranes_currentTextChanged(
 
 void MainWindow::on_btnSimulate_clicked() {
   // simple 2d spatial simulation
-  images.clear();
 
   // for now only simulate first compartment
   auto comp = sbml_doc.compartments[0];
-
   Field &species_field = sbml_doc.field;
+
   // compile reaction expressions
   Simulate sim(sbml_doc);
   sim.compile_reactions(sbml_doc.speciesID);
+
   // do euler integration
-  QVector<double> time;
+  images.clear();
+  QVector<double> time{0};
   std::vector<QVector<double>> conc(sim.species_values.size());
   for (std::size_t i = 0; i < sim.species_values.size(); ++i) {
     conc[i].push_back(species_field.get_mean_concentration(i));
@@ -348,7 +352,10 @@ void MainWindow::on_btnSimulate_clicked() {
       conc[k].push_back(species_field.get_mean_concentration(k));
     }
     time.push_back(t);
+    ui->lblGeometry->setImage(images.back());
+    ui->lblGeometry->repaint();
   }
+
   // plot results
   ui->pltPlot->clearGraphs();
   ui->pltPlot->setInteraction(QCP::iRangeDrag, true);
@@ -356,19 +363,18 @@ void MainWindow::on_btnSimulate_clicked() {
   ui->pltPlot->setInteraction(QCP::iSelectPlottables, true);
   ui->pltPlot->legend->setVisible(true);
   for (std::size_t i = 0; i < sim.species_values.size(); ++i) {
-    ui->pltPlot->addGraph();
-    ui->pltPlot->graph(static_cast<int>(i))->setData(time, conc[i]);
-    ui->pltPlot->graph(static_cast<int>(i))
-        ->setPen(species_field.speciesColour[i]);
-    ui->pltPlot->graph(static_cast<int>(i))
-        ->setName(sbml_doc.speciesID[i].c_str());
+    auto *graph = ui->pltPlot->addGraph();
+    graph->setData(time, conc[i]);
+    graph->setPen(species_field.speciesColour[i]);
+    graph->setName(sbml_doc.speciesID[i].c_str());
   }
   ui->pltPlot->xAxis->setLabel("time");
-  ui->pltPlot->xAxis->setRange(time.front(), time.back());
   ui->pltPlot->yAxis->setLabel("concentration");
+  ui->pltPlot->xAxis->setRange(time.front(), time.back());
   ui->pltPlot->yAxis->setRange(
       0, 1.5 * (*std::max_element(conc[0].cbegin(), conc[0].cend())));
   ui->pltPlot->replot();
+
   // enable slider to choose time to display
   ui->hslideTime->setEnabled(true);
   ui->hslideTime->setMinimum(0);

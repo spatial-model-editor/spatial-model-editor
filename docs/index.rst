@@ -8,6 +8,7 @@ Spatial Model Editor Documentation
    get-started
    import-model
    import-geometry
+   setup-membranes
    import-concentration
    run-simulation
    units

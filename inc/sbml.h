@@ -65,6 +65,7 @@ class sbmlDocWrapper {
   // x-neighbours
   std::vector<std::vector<std::pair<QPoint, QPoint>>> membranePairs;
   const QImage &getMembraneImage(const QString &membraneID);
+  void updateMembraneList();
   std::map<QString, QImage> mapMembraneToImage;
   // species concentrations
   void importConcentrationFromImage(const QString &speciesID,
@@ -86,6 +87,7 @@ class sbmlDocWrapper {
   std::map<QString, QRgb> mapCompartmentToColour;
   std::map<QRgb, QString> mapColourToCompartment;
   QImage compartmentImage;
+  std::map<QString, std::size_t> mapMembraneToIndex;
 };
 
 #endif  // SBML_H

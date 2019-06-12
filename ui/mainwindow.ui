@@ -26,7 +26,7 @@
       <widget class="QWidget" name="gridLayoutWidget">
        <layout class="QGridLayout" name="gridLayout">
         <item row="1" column="0">
-         <widget class="QLabelMouseTracker" name="lblGeometry">
+         <widget class="QLabelMouseTracker" name="lblGeometry" native="true">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
@@ -42,29 +42,14 @@
           <property name="mouseTracking">
            <bool>true</bool>
           </property>
-          <property name="frameShape">
-           <enum>QFrame::StyledPanel</enum>
-          </property>
-          <property name="frameShadow">
-           <enum>QFrame::Sunken</enum>
-          </property>
-          <property name="lineWidth">
+          <property name="lineWidth" stdset="0">
            <number>2</number>
           </property>
-          <property name="text">
+          <property name="text" stdset="0">
            <string/>
           </property>
-          <property name="textFormat">
-           <enum>Qt::PlainText</enum>
-          </property>
-          <property name="scaledContents">
+          <property name="scaledContents" stdset="0">
            <bool>true</bool>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-          <property name="textInteractionFlags">
-           <set>Qt::NoTextInteraction</set>
           </property>
          </widget>
         </item>
@@ -327,7 +312,46 @@
              <layout class="QVBoxLayout" name="verticalLayout_5">
               <item>
                <layout class="QGridLayout" name="gridMembranesSettings">
+                <item row="2" column="0">
+                 <widget class="QLabel" name="lblCompShapeLabel_2">
+                  <property name="text">
+                   <string>Shape:</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
                 <item row="1" column="1">
+                 <widget class="QLabel" name="lblMembraneDiffusionCoeff">
+                  <property name="text">
+                   <string>Diffusion Coefficient:</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QLineEdit" name="txtMembraneDiffusionCoeff"/>
+                </item>
+                <item row="0" column="1" colspan="2">
+                 <widget class="QCheckBox" name="chkMembraneImpermeable">
+                  <property name="toolTip">
+                   <string>if &quot;Constant&quot; is checked: the species has a fixed concentration during the simulation</string>
+                  </property>
+                  <property name="text">
+                   <string>Impermeable (zero flux across membrane)</string>
+                  </property>
+                  <property name="checkable">
+                   <bool>true</bool>
+                  </property>
+                  <property name="checked">
+                   <bool>true</bool>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="1" colspan="2">
                  <widget class="QLabel" name="lblMembraneShape">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -343,32 +367,6 @@
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QCheckBox" name="chkSpeciesIsConstant_2">
-                  <property name="toolTip">
-                   <string>if &quot;Constant&quot; is checked: the species has a fixed concentration during the simulation</string>
-                  </property>
-                  <property name="text">
-                   <string>Impermeable (zero flux across membrane)</string>
-                  </property>
-                  <property name="checkable">
-                   <bool>true</bool>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="lblCompShapeLabel_2">
-                  <property name="text">
-                   <string>Shape:</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                   </property>
                  </widget>
                 </item>
@@ -908,7 +906,7 @@
     <enum>TopToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
-    <bool>true</bool>
+    <bool>false</bool>
    </attribute>
   </widget>
   <action name="actionE_xit">
@@ -960,18 +958,15 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>QLabelMousetracker</class>
-   <extends>QLabel</extends>
-   <header>qlabelmousetracker.h</header>
-   <slots>
-    <signal>mouseClicked()</signal>
-   </slots>
-  </customwidget>
-  <customwidget>
    <class>QCustomPlot</class>
    <extends>QWidget</extends>
    <header>qcustomplot.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QLabelMouseTracker</class>
+   <extends>QWidget</extends>
+   <header>qlabelmousetracker.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
