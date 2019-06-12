@@ -42,6 +42,8 @@ build_script:
   - cd build-tests
   - qmake -Wall -config release ..\test.pro
   - mingw32-make -j2
+  - dir
+  - release\test.exe
 
 artifacts:
   - path: build/release/spatial-model-editor.exe
