@@ -24,10 +24,13 @@ Translate the spatial model to a system of PDEs: [WP1b status](https://github.co
   - Dependencies: the result is a standalone GUI executable that includes these statically linked libraries:
     - libSBML [license: [LGPL](http://sbml.org/Software/libSBML/LibSBML_License)]
       - using pre-compiled binaries from https://github.com/lkeegan/libsbml-static
-      - also includes expat: https://github.com/libexpat/libexpat [license: [MIT](https://github.com/libexpat/libexpat/blob/master/expat/COPYING)]
+      - also includes the Expat XML library: https://github.com/libexpat/libexpat [license: [MIT](https://github.com/libexpat/libexpat/blob/master/expat/COPYING)]
     - Qt5 [license: [LGPL](https://doc.qt.io/qt-5/lgpl.html)]
       - using pre-compiled binaries from https://github.com/lkeegan/qt5-static
     - QCustomPlot 2.0.1 https://www.qcustomplot.com [license: GPL]
+      - included in source code
     - exprtk math parsing/evaluation library: https://github.com/ArashPartow/exprtk [license: MIT]
+      - included in source code
   - Testing: the tests also depend on:
     - catch2 testing framework: https://github.com/catchorg/Catch2/ [license: BSL-1.0]
+      - included in source code
