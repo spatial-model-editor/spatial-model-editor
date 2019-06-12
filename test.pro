@@ -38,9 +38,10 @@ HEADERS += \
 
 INCLUDEPATH += inc ext/exprtk test/catch
 
-QMAKE_CXXFLAGS_RELEASE -= -O2
-QMAKE_CXXFLAGS += --coverage
-QMAKE_LFLAGS += --coverage
+# for linux build, remove optimizations & add coverage info
+unix: QMAKE_CXXFLAGS_RELEASE -= -O2
+unix: QMAKE_CXXFLAGS += --coverage
+unix: QMAKE_LFLAGS += --coverage
 
 # these static libraries are available from
 # from https://github.com/lkeegan/libsbml-static
