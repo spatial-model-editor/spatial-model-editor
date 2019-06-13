@@ -327,11 +327,18 @@ void MainWindow::on_btnSimulate_clicked() {
   // simple 2d spatial simulation
 
   // for now only simulate first compartment
-  Field &species_field = sbml_doc.field;
+  QString compartmentID = sbml_doc.compartments[0];
+  Field &species_field = sbml_doc.mapCompIdToField[compartmentID];
 
   // compile reaction expressions
-  Simulate sim(sbml_doc);
-  sim.compile_reactions(sbml_doc.field.speciesID);
+  std::vector<std::string> tmpSpeciesID;
+  tmpSpeciesID.reserve(
+      static_cast<std::size_t>(sbml_doc.species[compartmentID].size()));
+  for (const auto &s : sbml_doc.species[compartmentID]) {
+    tmpSpeciesID.push_back(s.toStdString());
+  }
+  Simulate sim(&sbml_doc, &species_field);
+  sim.compile_reactions();
 
   // do euler integration
   images.clear();
@@ -345,7 +352,7 @@ void MainWindow::on_btnSimulate_clicked() {
   for (int i = 0;
        i < static_cast<int>(ui->txtSimLength->text().toDouble() / dt); ++i) {
     t += dt;
-    sim.timestep_2d_euler(species_field, dt);
+    sim.timestep_2d_euler(dt);
     images.push_back(species_field.getConcentrationImage().copy());
     for (std::size_t k = 0; k < sim.species_values.size(); ++k) {
       conc[k].push_back(species_field.getMeanConcentration(k));

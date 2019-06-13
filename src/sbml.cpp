@@ -195,17 +195,20 @@ void sbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   mapColourToCompartment[colour] = compartmentID;
   mapCompartmentToColour[compartmentID] = colour;
   // create compartment geometry for this colour
-  geom.init(getCompartmentImage(), colour);
+  mapCompIdToGeometry[compartmentID] = Geometry();
+  mapCompIdToGeometry[compartmentID].init(getCompartmentImage(), colour);
   std::vector<std::string> tmpSpeciesID;
   tmpSpeciesID.reserve(static_cast<std::size_t>(species[compartmentID].size()));
   for (const auto &s : species[compartmentID]) {
     tmpSpeciesID.push_back(s.toStdString());
   }
-  field.init(&geom, tmpSpeciesID);
+  mapCompIdToField[compartmentID] = Field();
+  mapCompIdToField[compartmentID].init(&mapCompIdToGeometry[compartmentID],
+                                       tmpSpeciesID);
   // set all species concentrations to their initial value at all
   // points
   for (int i = 0; i < species[compartmentID].size(); ++i) {
-    field.setConstantConcentration(
+    mapCompIdToField[compartmentID].setConstantConcentration(
         static_cast<std::size_t>(i),
         model->getSpecies(species[compartmentID][i].toStdString())
             ->getInitialConcentration());
@@ -220,7 +223,7 @@ void sbmlDocWrapper::importConcentrationFromImage(const QString &speciesID,
       model->getSpecies(speciesID.toStdString())->getCompartment().c_str();
   QImage img;
   img.load(filename);
-  field.importConcentration(speciesID.toStdString(), img);
+  mapCompIdToField[comp].importConcentration(speciesID.toStdString(), img);
 }
 
 const QImage &sbmlDocWrapper::getConcentrationImage(const QString &speciesID) {
@@ -229,7 +232,7 @@ const QImage &sbmlDocWrapper::getConcentrationImage(const QString &speciesID) {
   }
   QString comp =
       model->getSpecies(speciesID.toStdString())->getCompartment().c_str();
-  return field.getConcentrationImage(speciesID.toStdString());
+  return mapCompIdToField[comp].getConcentrationImage(speciesID.toStdString());
 }
 
 QString sbmlDocWrapper::getXml() const {

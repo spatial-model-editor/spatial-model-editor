@@ -38,8 +38,8 @@ class sbmlDocWrapper {
   // compartment geometry and field of concentrations
   // Will eventually do this for each compartment
   // for now implicitly assuming first compartment for all of these:
-  Geometry geom;
-  Field field;
+  std::map<QString, Geometry> mapCompIdToGeometry;
+  std::map<QString, Field> mapCompIdToField;
 
   void importSBMLFile(const std::string &filename);
 
