@@ -326,36 +326,41 @@ void MainWindow::on_listMembranes_currentTextChanged(
 void MainWindow::on_btnSimulate_clicked() {
   // simple 2d spatial simulation
 
-  // for now only simulate first compartment
-  QString compartmentID = sbml_doc.compartments[0];
-  Field &species_field = sbml_doc.mapCompIdToField[compartmentID];
-
-  // compile reaction expressions
-  std::vector<std::string> tmpSpeciesID;
-  tmpSpeciesID.reserve(
-      static_cast<std::size_t>(sbml_doc.species[compartmentID].size()));
-  for (const auto &s : sbml_doc.species[compartmentID]) {
-    tmpSpeciesID.push_back(s.toStdString());
+  //
+  std::vector<Simulate> sim;
+  // create a Simulate object for each compartment
+  for (const auto &compartmentID : sbml_doc.compartments) {
+    Field &species_field = sbml_doc.mapCompIdToField[compartmentID];
+    // compile reaction expressions
+    std::vector<std::string> tmpSpeciesID;
+    tmpSpeciesID.reserve(
+        static_cast<std::size_t>(sbml_doc.species[compartmentID].size()));
+    for (const auto &s : sbml_doc.species[compartmentID]) {
+      tmpSpeciesID.push_back(s.toStdString());
+    }
+    sim.emplace_back(&sbml_doc, &species_field);
+    sim.back().compile_reactions();
   }
-  Simulate sim(&sbml_doc, &species_field);
-  sim.compile_reactions();
 
   // do euler integration
+  // only plot/display first compartment for now...
   images.clear();
   QVector<double> time{0};
-  std::vector<QVector<double>> conc(sim.species_values.size());
-  for (std::size_t i = 0; i < sim.species_values.size(); ++i) {
-    conc[i].push_back(species_field.getMeanConcentration(i));
+  std::vector<QVector<double>> conc(sim[0].species_values.size());
+  for (std::size_t i = 0; i < sim[0].species_values.size(); ++i) {
+    conc[i].push_back(sim[0].field->getMeanConcentration(i));
   }
   double t = 0;
   double dt = ui->txtSimDt->text().toDouble();
   for (int i = 0;
        i < static_cast<int>(ui->txtSimLength->text().toDouble() / dt); ++i) {
     t += dt;
-    sim.timestep_2d_euler(dt);
-    images.push_back(species_field.getConcentrationImage().copy());
-    for (std::size_t k = 0; k < sim.species_values.size(); ++k) {
-      conc[k].push_back(species_field.getMeanConcentration(k));
+    for (auto &s : sim) {
+      s.timestep_2d_euler(dt);
+    }
+    images.push_back(sim[0].field->getConcentrationImage().copy());
+    for (std::size_t k = 0; k < sim[0].species_values.size(); ++k) {
+      conc[k].push_back(sim[0].field->getMeanConcentration(k));
     }
     time.push_back(t);
     ui->lblGeometry->setImage(images.back());
@@ -368,11 +373,11 @@ void MainWindow::on_btnSimulate_clicked() {
   ui->pltPlot->setInteraction(QCP::iRangeZoom, true);
   ui->pltPlot->setInteraction(QCP::iSelectPlottables, true);
   ui->pltPlot->legend->setVisible(true);
-  for (std::size_t i = 0; i < sim.species_values.size(); ++i) {
+  for (std::size_t i = 0; i < sim[0].species_values.size(); ++i) {
     auto *graph = ui->pltPlot->addGraph();
     graph->setData(time, conc[i]);
-    graph->setPen(species_field.speciesColour[i]);
-    graph->setName(species_field.speciesID[i].c_str());
+    graph->setPen(sim[0].field->speciesColour[i]);
+    graph->setName(sim[0].field->speciesID[i].c_str());
   }
   ui->pltPlot->xAxis->setLabel("time");
   ui->pltPlot->yAxis->setLabel("concentration");
