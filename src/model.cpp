@@ -5,6 +5,9 @@
 void Geometry::init(QImage img, QRgb col) {
   img_size = img.size();
   img_comp = QImage(img_size, QImage::Format_Mono);
+  img_comp.setColor(0, qRgba(0, 0, 0, 0));
+  img_comp.setColor(1, qRgba(0, 0, 0, 255));
+  img_comp.fill(0);
   ix.clear();
   // find pixels in compartment: store image QPoint for each
   for (int x = 0; x < img.width(); ++x) {
@@ -12,24 +15,25 @@ void Geometry::init(QImage img, QRgb col) {
       if (img.pixel(x, y) == col) {
         // if colour matches, add pixel to field
         // qDebug("%d, %d", x, y);
-        ix.push_back(QPoint(x, y));
+        QPoint p = QPoint(x, y);
+        ix.push_back(p);
+        img_comp.setPixel(p, 1);
       }
     }
   }
 }
 
-const QImage &Geometry::compartment_image() {
-  img_comp.fill(0);
-  for (const auto &p : ix) {
-    img_comp.setPixel(p, 1);
-  }
-  return img_comp;
-}
+const QImage &Geometry::getCompartmentImage() { return img_comp; }
 
-void Field::init(Geometry *geom, std::size_t n_species_,
+void Field::init(Geometry *geom, const std::vector<std::string> &speciesIDvec,
                  BOUNDARY_CONDITION bc) {
   geometry = geom;
-  n_species = n_species_;
+  speciesID = speciesIDvec;
+  n_species = speciesID.size();
+  mapSpeciesIdToIndex.clear();
+  for (std::size_t i = 0; i < speciesID.size(); ++i) {
+    mapSpeciesIdToIndex[speciesID[i]] = i;
+  }
   n_pixels = geom->ix.size();
   qDebug("field: n_species: %lu", n_species);
   img_conc = QImage(geom->img_size, QImage::Format_ARGB32);
@@ -98,6 +102,11 @@ void Field::importConcentration(std::size_t species_index, QImage img,
   }
 }
 
+void Field::importConcentration(const std::string &species_ID, QImage img,
+                                double scale_factor) {
+  importConcentration(mapSpeciesIdToIndex.at(species_ID), img, scale_factor);
+}
+
 void Field::setConstantConcentration(std::size_t species_index,
                                      double concentration) {
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
@@ -136,6 +145,11 @@ const QImage &Field::getConcentrationImage(
   return img_conc;
 }
 
+const QImage &Field::getConcentrationImage(std::string species_ID) {
+  return getConcentrationImage(
+      std::vector<std::size_t>{mapSpeciesIdToIndex.at(species_ID)});
+}
+
 const QImage &Field::getConcentrationImage(std::size_t species_index) {
   return getConcentrationImage(std::vector<std::size_t>{species_index});
 }
@@ -148,7 +162,7 @@ const QImage &Field::getConcentrationImage() {
   return getConcentrationImage(indices);
 }
 
-void Field::diffusion_op() {
+void Field::applyDiffusionOperator() {
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     std::size_t index = n_species * i;
     std::size_t xup = n_species * nn[4 * i];
@@ -163,7 +177,7 @@ void Field::diffusion_op() {
   }
 }
 
-double Field::get_mean_concentration(std::size_t species_index) {
+double Field::getMeanConcentration(std::size_t species_index) {
   double sum = 0;
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     sum += conc[n_species * i + species_index];

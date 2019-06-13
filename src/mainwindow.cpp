@@ -327,19 +327,18 @@ void MainWindow::on_btnSimulate_clicked() {
   // simple 2d spatial simulation
 
   // for now only simulate first compartment
-  auto comp = sbml_doc.compartments[0];
   Field &species_field = sbml_doc.field;
 
   // compile reaction expressions
   Simulate sim(sbml_doc);
-  sim.compile_reactions(sbml_doc.speciesID);
+  sim.compile_reactions(sbml_doc.field.speciesID);
 
   // do euler integration
   images.clear();
   QVector<double> time{0};
   std::vector<QVector<double>> conc(sim.species_values.size());
   for (std::size_t i = 0; i < sim.species_values.size(); ++i) {
-    conc[i].push_back(species_field.get_mean_concentration(i));
+    conc[i].push_back(species_field.getMeanConcentration(i));
   }
   double t = 0;
   double dt = ui->txtSimDt->text().toDouble();
@@ -349,7 +348,7 @@ void MainWindow::on_btnSimulate_clicked() {
     sim.timestep_2d_euler(species_field, dt);
     images.push_back(species_field.getConcentrationImage().copy());
     for (std::size_t k = 0; k < sim.species_values.size(); ++k) {
-      conc[k].push_back(species_field.get_mean_concentration(k));
+      conc[k].push_back(species_field.getMeanConcentration(k));
     }
     time.push_back(t);
     ui->lblGeometry->setImage(images.back());
@@ -366,7 +365,7 @@ void MainWindow::on_btnSimulate_clicked() {
     auto *graph = ui->pltPlot->addGraph();
     graph->setData(time, conc[i]);
     graph->setPen(species_field.speciesColour[i]);
-    graph->setName(sbml_doc.speciesID[i].c_str());
+    graph->setName(species_field.speciesID[i].c_str());
   }
   ui->pltPlot->xAxis->setLabel("time");
   ui->pltPlot->yAxis->setLabel("concentration");

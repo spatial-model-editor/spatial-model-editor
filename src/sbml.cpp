@@ -26,9 +26,6 @@ void sbmlDocWrapper::importSBMLFile(const std::string &filename) {
   }
 
   // get all species, make a list for each compartment
-  speciesIndex.clear();
-  speciesID.clear();
-  std::size_t idx = 0;
   for (unsigned int i = 0; i < model->getNumSpecies(); ++i) {
     const auto *spec = model->getSpecies(i);
     if (spec->isSetHasOnlySubstanceUnits() &&
@@ -39,11 +36,6 @@ void sbmlDocWrapper::importSBMLFile(const std::string &filename) {
       exit(1);
     }
     const auto id = spec->getId().c_str();
-    // populate speciesID and speciesIndex for first compartment only
-    if (spec->getCompartment().c_str() == compartments[0]) {
-      speciesID.push_back(id);
-      speciesIndex[id] = idx++;
-    }
     species[spec->getCompartment().c_str()] << QString(id);
   }
 
@@ -204,13 +196,18 @@ void sbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   mapCompartmentToColour[compartmentID] = colour;
   // create compartment geometry for this colour
   geom.init(getCompartmentImage(), colour);
-  field.init(&geom, static_cast<std::size_t>(species[compartmentID].size()));
+  std::vector<std::string> tmpSpeciesID;
+  tmpSpeciesID.reserve(static_cast<std::size_t>(species[compartmentID].size()));
+  for (const auto &s : species[compartmentID]) {
+    tmpSpeciesID.push_back(s.toStdString());
+  }
+  field.init(&geom, tmpSpeciesID);
   // set all species concentrations to their initial value at all
   // points
   for (int i = 0; i < species[compartmentID].size(); ++i) {
     field.setConstantConcentration(
         static_cast<std::size_t>(i),
-        model->getSpecies(qPrintable(species[compartmentID][i]))
+        model->getSpecies(species[compartmentID][i].toStdString())
             ->getInitialConcentration());
   }
   // update list of possible inter-compartment membranes
@@ -220,10 +217,10 @@ void sbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
 void sbmlDocWrapper::importConcentrationFromImage(const QString &speciesID,
                                                   const QString &filename) {
   QString comp =
-      model->getSpecies(qPrintable(speciesID))->getCompartment().c_str();
+      model->getSpecies(speciesID.toStdString())->getCompartment().c_str();
   QImage img;
   img.load(filename);
-  field.importConcentration(speciesIndex[qPrintable(speciesID)], img);
+  field.importConcentration(speciesID.toStdString(), img);
 }
 
 const QImage &sbmlDocWrapper::getConcentrationImage(const QString &speciesID) {
@@ -231,8 +228,8 @@ const QImage &sbmlDocWrapper::getConcentrationImage(const QString &speciesID) {
     return compartmentImage;
   }
   QString comp =
-      model->getSpecies(qPrintable(speciesID))->getCompartment().c_str();
-  return field.getConcentrationImage(speciesIndex[qPrintable(speciesID)]);
+      model->getSpecies(speciesID.toStdString())->getCompartment().c_str();
+  return field.getConcentrationImage(speciesID.toStdString());
 }
 
 QString sbmlDocWrapper::getXml() const {
