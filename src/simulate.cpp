@@ -153,7 +153,7 @@ void Simulate::evaluate_reactions(Field &field) {
 }
 
 void Simulate::timestep_2d_euler(Field &field, double dt) {
-  field.diffusion_op();
+  field.applyDiffusionOperator();
   evaluate_reactions(field);
   for (std::size_t i = 0; i < field.conc.size(); ++i) {
     field.conc[i] += dt * field.dcdt[i];
