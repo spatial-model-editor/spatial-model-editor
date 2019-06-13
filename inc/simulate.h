@@ -16,7 +16,6 @@
 class Simulate {
  private:
   sbmlDocWrapper *doc;
-  Field *field;
   // vector of reaction expressions
   std::vector<numerics::ReactionEvaluate> reac_eval;
   // matrix M_ij of stoichiometric coefficients
@@ -25,6 +24,7 @@ class Simulate {
   std::vector<std::vector<double>> M;
 
  public:
+  Field *field;
   // vector of species that expressions will use
   std::vector<double> species_values;
 
