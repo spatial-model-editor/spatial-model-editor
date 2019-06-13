@@ -31,5 +31,5 @@ Translate the spatial model to a system of PDEs: [WP1b status](https://github.co
       - included in source code
     - ExprTK math parsing/evaluation library: https://github.com/ArashPartow/exprtk [license: MIT]
       - included in source code
-    - the tests also depend on the Catch2 testing framework: https://github.com/catchorg/Catch2 [license: BSL-1.0]
-      - included in source code
+    - Catch2 testing framework: https://github.com/catchorg/Catch2 [license: BSL-1.0]
+      - included in tests source code
