@@ -129,6 +129,8 @@ void sbmlDocWrapper::updateMembraneList() {
   membranes.clear();
   mapMembraneToIndex.clear();
   mapMembraneToImage.clear();
+  // clear vector of Membrane objects
+  membraneVec.clear();
   // iterate over pairs of compartments
   for (int i = 1; i < compartments.size(); ++i) {
     for (int j = 0; j < i; ++j) {
@@ -148,12 +150,19 @@ void sbmlDocWrapper::updateMembraneList() {
           mapMembraneToIndex[name] = index;
           // generate image
           QImage img = compartmentImage.convertToFormat(QImage::Format_ARGB32);
-          for (const auto &pair : membranePairs[mapColPairToIndex.at(
-                   {std::min(colA, colB), std::max(colA, colB)})]) {
+          for (const auto &pair : membranePairs[index]) {
             img.setPixel(pair.first, QColor(0, 155, 40, 255).rgba());
             img.setPixel(pair.second, QColor(0, 199, 40, 255).rgba());
           }
           mapMembraneToImage[name] = img;
+          // create Membrane object
+          Field *fieldA = &mapCompIdToField.at(compartments[i]);
+          Field *fieldB = &mapCompIdToField.at(compartments[j]);
+          if (colB < colA) {
+            std::swap(fieldA, fieldB);
+          }
+          membraneVec.emplace_back(name.toStdString(), fieldA, fieldB,
+                                   membranePairs[index]);
         }
       }
     }
@@ -195,16 +204,11 @@ void sbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   mapColourToCompartment[colour] = compartmentID;
   mapCompartmentToColour[compartmentID] = colour;
   // create compartment geometry for this colour
-  mapCompIdToGeometry[compartmentID] = Geometry();
-  mapCompIdToGeometry[compartmentID].init(getCompartmentImage(), colour);
-  std::vector<std::string> tmpSpeciesID;
-  tmpSpeciesID.reserve(static_cast<std::size_t>(species[compartmentID].size()));
-  for (const auto &s : species[compartmentID]) {
-    tmpSpeciesID.push_back(s.toStdString());
-  }
+  mapCompIdToGeometry[compartmentID] =
+      Compartment(getCompartmentImage(), colour);
   mapCompIdToField[compartmentID] = Field();
   mapCompIdToField[compartmentID].init(&mapCompIdToGeometry[compartmentID],
-                                       tmpSpeciesID);
+                                       species[compartmentID]);
   // set all species concentrations to their initial value at all
   // points
   for (int i = 0; i < species[compartmentID].size(); ++i) {

@@ -35,11 +35,10 @@ class sbmlDocWrapper {
   QStringList reactions;
   QStringList functions;
 
-  // compartment geometry and field of concentrations
-  // Will eventually do this for each compartment
-  // for now implicitly assuming first compartment for all of these:
-  std::map<QString, Geometry> mapCompIdToGeometry;
+  // spatial information
+  std::map<QString, Compartment> mapCompIdToGeometry;
   std::map<QString, Field> mapCompIdToField;
+  std::vector<Membrane> membraneVec;
 
   void importSBMLFile(const std::string &filename);
 

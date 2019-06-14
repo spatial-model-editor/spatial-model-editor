@@ -1,26 +1,44 @@
 // Spatial Geometry
-//  - Geometry class: defines set of points that make up compartment
-//  - Field class: species concentrations w/bcs within compartment
+//  - Compartment class: defines set of points that make up a compartment
+//  - CompartmentIndexer class: utility to invert QPoint to vector index for a
+//  Compartment, only used for initialising Fields and Membranes
+//  - Field class: species concentrations w/bcs within a compartment
+//  - Membrane class: defines points on either side of the boundary between two
+//  compartments, aka the membrane
 
 #ifndef MODEL_H
 #define MODEL_H
 
+#include <unordered_map>
+
 #include <QDebug>
 #include <QImage>
 
-class Geometry {
+class Compartment {
  private:
   QImage img_comp;
 
  public:
+  Compartment() = default;
   // create compartment geometry from all pixels in `img` of colour `col`
-  void init(QImage img, QRgb col);
+  Compartment(const QImage &img, QRgb col);
   // vector of points that make up compartment
   std::vector<QPoint> ix;
   // size of QImage
   QSize img_size;
   // return a QImage of the compartment geometry
   const QImage &getCompartmentImage();
+};
+
+class CompartmentIndexer {
+ private:
+  const Compartment &comp;
+  std::unordered_map<int, std::size_t> index;
+
+ public:
+  CompartmentIndexer(const Compartment &comp);
+  std::size_t getIndex(const QPoint &point);
+  bool isValid(const QPoint &point);
 };
 
 class Field {
@@ -34,13 +52,13 @@ class Field {
   // [4*i+3] = -y neighbour
   // size: 4*n_pixels
   std::vector<std::size_t> nn;
-  Geometry *geometry;
   QImage img_conc;
   // map from speciesID to species index
   std::map<std::string, std::size_t> mapSpeciesIdToIndex;
 
  public:
   enum BOUNDARY_CONDITION { DIRICHLET, NEUMANN };
+  Compartment *geometry;
   std::size_t n_species;
   std::size_t n_pixels;
   // vector of speciesID strings
@@ -59,7 +77,9 @@ class Field {
       {170, 110, 40}, {255, 250, 200}, {128, 0, 0},    {170, 255, 195},
       {128, 128, 0},  {255, 215, 180}, {0, 0, 128},    {128, 128, 128}};
 
-  void init(Geometry *geom, const std::vector<std::string> &speciesIDvec,
+  void init(Compartment *geom, const std::vector<std::string> &speciesIDvec,
+            BOUNDARY_CONDITION bc = NEUMANN);
+  void init(Compartment *geom, const QStringList &speciesIDvec,
             BOUNDARY_CONDITION bc = NEUMANN);
   void setConstantConcentration(std::size_t species_index,
                                 double concentration);
@@ -79,6 +99,19 @@ class Field {
   // field.dcdt = result of the diffusion operator acting on field.conc
   void applyDiffusionOperator();
   double getMeanConcentration(std::size_t species_index);
+};
+
+class Membrane {
+ private:
+ public:
+  std::string membraneID;
+  Field *fieldA;
+  Field *fieldB;
+  std::vector<std::pair<std::size_t, std::size_t>> indexPair;
+  Membrane() = default;
+  Membrane(const std::string &ID, Field *A, Field *B,
+           const std::vector<std::pair<QPoint, QPoint>> &membranePairs);
+  void applyDiffusionOperator();
 };
 
 #endif  // MODEL_H
