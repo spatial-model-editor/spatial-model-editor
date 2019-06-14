@@ -226,7 +226,8 @@ void MainWindow::on_listCompartments_currentTextChanged(
   ui->txtCompartmentSize->clear();
   if (currentText.size() > 0) {
     qDebug() << currentText;
-    const auto *comp = sbml_doc.model->getCompartment(qPrintable(currentText));
+    const auto *comp =
+        sbml_doc.model->getCompartment(currentText.toStdString());
     ui->txtCompartmentSize->setText(QString::number(comp->getSize()));
     QRgb col = sbml_doc.getCompartmentColour(currentText);
     qDebug() << qAlpha(col);
@@ -244,8 +245,8 @@ void MainWindow::on_listCompartments_currentTextChanged(
       ui->lblCompartmentColour->setPalette(palette);
       ui->lblCompartmentColour->setText("");
       // update image mask
-      ui->lblGeometry->setMaskColour(col);
-      QPixmap pixmap = QPixmap::fromImage(ui->lblGeometry->getMask());
+      QPixmap pixmap = QPixmap::fromImage(
+          sbml_doc.mapCompIdToGeometry.at(currentText).getCompartmentImage());
       ui->lblCompShape->setPixmap(pixmap);
       ui->lblCompShape->setText("");
     }
@@ -382,8 +383,11 @@ void MainWindow::on_btnSimulate_clicked() {
   ui->pltPlot->xAxis->setLabel("time");
   ui->pltPlot->yAxis->setLabel("concentration");
   ui->pltPlot->xAxis->setRange(time.front(), time.back());
-  ui->pltPlot->yAxis->setRange(
-      0, 1.5 * (*std::max_element(conc[0].cbegin(), conc[0].cend())));
+  double ymax = *std::max_element(conc[0].cbegin(), conc[0].cend());
+  for (std::size_t i = 1; i < conc.size(); ++i) {
+    ymax = std::max(ymax, *std::max_element(conc[i].cbegin(), conc[i].cend()));
+  }
+  ui->pltPlot->yAxis->setRange(0, 1.2 * ymax);
   ui->pltPlot->replot();
 
   // enable slider to choose time to display

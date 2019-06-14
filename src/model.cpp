@@ -2,7 +2,7 @@
 
 #include "model.h"
 
-void Geometry::init(QImage img, QRgb col) {
+Compartment::Compartment(const QImage &img, QRgb col) {
   img_size = img.size();
   img_comp = QImage(img_size, QImage::Format_Mono);
   img_comp.setColor(0, qRgba(0, 0, 0, 0));
@@ -23,9 +23,34 @@ void Geometry::init(QImage img, QRgb col) {
   }
 }
 
-const QImage &Geometry::getCompartmentImage() { return img_comp; }
+const QImage &Compartment::getCompartmentImage() { return img_comp; }
 
-void Field::init(Geometry *geom, const std::vector<std::string> &speciesIDvec,
+CompartmentIndexer::CompartmentIndexer(const Compartment &comp) : comp(comp) {
+  // map from (x,y) Qpoint p to index
+  std::size_t i = 0;
+  for (const auto &p : comp.ix) {
+    index[p.x() * comp.img_size.height() + p.y()] = i++;
+  }
+}
+
+std::size_t CompartmentIndexer::getIndex(const QPoint &point) {
+  auto it = index.find(point.x() * comp.img_size.height() + point.y());
+  if (it != index.cend()) {
+    return it->second;
+  }
+  return std::numeric_limits<size_t>::max();
+}
+
+bool CompartmentIndexer::isValid(const QPoint &point) {
+  auto it = index.find(point.x() * comp.img_size.height() + point.y());
+  if (it != index.cend()) {
+    return true;
+  }
+  return false;
+}
+
+void Field::init(Compartment *geom,
+                 const std::vector<std::string> &speciesIDvec,
                  BOUNDARY_CONDITION bc) {
   geometry = geom;
   speciesID = speciesIDvec;
@@ -40,25 +65,19 @@ void Field::init(Geometry *geom, const std::vector<std::string> &speciesIDvec,
 
   // set diffusion constants to 1 for now:
   diffusion_constant = std::vector<double>(n_species, 1.0);
-  std::unordered_map<int, std::size_t> index;
-  // temporary map from (x,y) point to ix index for neighbour lookup
-  std::size_t i = 0;
-  for (const auto &p : geometry->ix) {
-    index[p.x() * geometry->img_size.height() + p.y()] = i++;
-  }
 
   nn.clear();
   nn.reserve(4 * geometry->ix.size());
   // find neighbours of each pixel in compartment
+  CompartmentIndexer compIndex(*geom);
   std::size_t outside = geometry->ix.size();
   for (const auto &p : geometry->ix) {
     for (const auto &pp :
          {QPoint(p.x() + 1, p.y()), QPoint(p.x() - 1, p.y()),
           QPoint(p.x(), p.y() + 1), QPoint(p.x(), p.y() - 1)}) {
-      auto it = index.find(pp.x() * geometry->img_size.height() + pp.y());
-      if (it != index.cend()) {
+      if (compIndex.isValid(pp)) {
         // qDebug() << pp;
-        nn.push_back(it->second);
+        nn.push_back(compIndex.getIndex(pp));
       } else {
         if (bc == DIRICHLET) {
           // Dirichlet bcs: specify value of conc. at boundary.
@@ -69,9 +88,7 @@ void Field::init(Geometry *geom, const std::vector<std::string> &speciesIDvec,
           // Neumann bcs: specify derivative of conc. in direction normal to
           // boundary. Here we define a zero flux condition by setting the value
           // of the boundary conc. to be equal to that of the neighbour.
-          // This is done here very naively by making the neighbour of the pixel
-          // point to the pixel itself.
-          nn.push_back(index.at(p.x() * geometry->img_size.height() + p.y()));
+          nn.push_back(compIndex.getIndex(p));
         } else {
           qDebug() << "Error: boundary condition not supported";
           exit(1);
@@ -82,6 +99,16 @@ void Field::init(Geometry *geom, const std::vector<std::string> &speciesIDvec,
   // add n_species per pixel in comp, plus one for each boundary value
   conc.resize(n_species * (geometry->ix.size() + n_bcs), 0.0);
   dcdt = conc;
+}
+
+void Field::init(Compartment *geom, const QStringList &speciesIDvec,
+                 BOUNDARY_CONDITION bc) {
+  std::vector<std::string> StdStringSpeciesID;
+  StdStringSpeciesID.reserve(static_cast<std::size_t>(speciesIDvec.size()));
+  for (const auto &s : speciesIDvec) {
+    StdStringSpeciesID.push_back(s.toStdString());
+  }
+  init(geom, StdStringSpeciesID, bc);
 }
 
 void Field::importConcentration(std::size_t species_index, QImage img,
@@ -184,3 +211,19 @@ double Field::getMeanConcentration(std::size_t species_index) {
   }
   return sum / static_cast<double>(geometry->ix.size());
 }
+
+Membrane::Membrane(const std::string &ID, Field *A, Field *B,
+                   const std::vector<std::pair<QPoint, QPoint>> &membranePairs)
+    : membraneID(ID), fieldA(A), fieldB(B) {
+  // convert each QPoint into the corresponding index of the field
+  indexPair.clear();
+  CompartmentIndexer indexA(*A->geometry);
+  CompartmentIndexer indexB(*B->geometry);
+  for (const auto &p : membranePairs) {
+    auto iA = indexA.getIndex(p.first);
+    auto iB = indexB.getIndex(p.second);
+    indexPair.push_back({iA, iB});
+  }
+}
+
+void Membrane::applyDiffusionOperator() {}
