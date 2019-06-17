@@ -1,10 +1,11 @@
 #include "simulate.h"
 
 void Simulate::compile_reactions() {
+  QString compID = field->geometry->compartmentID.c_str();
   // init vector of species
   species_values = std::vector<double>(field->speciesID.size(), 0.0);
   M.clear();
-  reac_eval.reserve(doc->model->getNumReactions());
+  reac_eval.reserve(static_cast<std::size_t>(doc->reactions.at(compID).size()));
 
   // get global constants
   std::vector<std::string> constant_names;
@@ -44,8 +45,8 @@ void Simulate::compile_reactions() {
   }
 
   // process each reaction
-  for (unsigned i_reac = 0; i_reac < doc->model->getNumReactions(); ++i_reac) {
-    const auto *reac = doc->model->getReaction(i_reac);
+  for (const auto &reacID : doc->reactions.at(compID)) {
+    const auto *reac = doc->model->getReaction(reacID.toStdString());
 
     // construct row of stoichiometric coefficients for each
     // species produced and consumed by this reaction

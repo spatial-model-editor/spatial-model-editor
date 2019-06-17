@@ -199,7 +199,10 @@ void SbmlDocWrapper::updateReactionList() {
       if (colA > colB) {
         membraneID = compB + "-" + compA;
       }
-      reactions[membraneID] << QString(reac->getId().c_str());
+      // check that compartments map to colours - if not do nothing
+      if (colA != 0 && colB != 0) {
+        reactions[membraneID] << QString(reac->getId().c_str());
+      }
     } else {
       // invalid reaction
       qDebug("SbmlDocWrapper::updateReactionList :: Error: invalid reaction");
