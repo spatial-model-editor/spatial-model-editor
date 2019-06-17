@@ -347,7 +347,6 @@ void MainWindow::on_listMembranes_currentTextChanged(
 void MainWindow::on_btnSimulate_clicked() {
   // simple 2d spatial simulation
 
-  //
   std::vector<Simulate> sim;
   // create a Simulate object for each compartment
   for (const auto &compartmentID : sbml_doc.compartments) {
@@ -379,12 +378,13 @@ void MainWindow::on_btnSimulate_clicked() {
     for (auto &s : sim) {
       s.timestep_2d_euler(dt);
     }
-    images.push_back(sim[0].field->getConcentrationImage().copy());
+    // images.push_back(sim[0].field->getConcentrationImage().copy());
     for (std::size_t k = 0; k < sim[0].species_values.size(); ++k) {
+      qDebug() << conc[k].back();
       conc[k].push_back(sim[0].field->getMeanConcentration(k));
     }
     time.push_back(t);
-    ui->lblGeometry->setImage(images.back());
+    // ui->lblGeometry->setImage(images.back());
     ui->lblGeometry->repaint();
   }
 

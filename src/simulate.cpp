@@ -139,10 +139,12 @@ void Simulate::compile_reactions() {
 }
 
 void Simulate::evaluate_reactions() {
-  qDebug("evaluate_reactions: n_pixels=%lu", field->n_pixels);
-  qDebug("evaluate_reactions: n_species=%lu", field->n_species);
-  qDebug("evaluate_reactions: M=%lu%lu", M.size(), M[0].size());
-  qDebug("evaluate_reactions: n_reacs=%lu", reac_eval.size());
+  qDebug("Simulate::evaluate_reactions : Compartment=%s",
+         field->geometry->compartmentID.c_str());
+  qDebug("Simulate::evaluate_reactions : n_pixels=%lu", field->n_pixels);
+  qDebug("Simulate::evaluate_reactions : n_species=%lu", field->n_species);
+  qDebug("Simulate::evaluate_reactions : M=%lux%lu", M.size(), M[0].size());
+  qDebug("Simulate::evaluate_reactions : n_reacs=%lu", reac_eval.size());
   for (std::size_t ix = 0; ix < field->n_pixels; ++ix) {
     // populate species concentrations
     for (std::size_t s = 0; s < field->n_species; ++s) {
@@ -151,6 +153,7 @@ void Simulate::evaluate_reactions() {
     for (std::size_t j = 0; j < reac_eval.size(); ++j) {
       // evaluate reaction terms
       double r_j = reac_eval[j]();
+      qDebug("R[%lu] = %f", j, r_j);
       for (std::size_t s = 0; s < field->n_species; ++s) {
         // add results to dcdt
         field->dcdt[ix * field->n_species + s] += M[j][s] * r_j;
