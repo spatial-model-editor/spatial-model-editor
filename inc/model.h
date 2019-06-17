@@ -21,7 +21,9 @@ class Compartment {
  public:
   Compartment() = default;
   // create compartment geometry from all pixels in `img` of colour `col`
-  Compartment(const QImage &img, QRgb col);
+  Compartment(const std::string &compID, const QImage &img, QRgb col);
+  // compartmentID
+  std::string compartmentID;
   // vector of points that make up compartment
   std::vector<QPoint> ix;
   // size of QImage

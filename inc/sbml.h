@@ -20,7 +20,7 @@
 
 #include "model.h"
 
-class sbmlDocWrapper {
+class SbmlDocWrapper {
  public:
   bool isValid = false;
   bool hasGeometry = false;
@@ -32,7 +32,7 @@ class sbmlDocWrapper {
   QStringList membranes;
   // <compartment ID, list of species ID in this compartment>
   std::map<QString, QStringList> species;
-  QStringList reactions;
+  std::map<QString, QStringList> reactions;
   QStringList functions;
 
   // spatial information
@@ -53,6 +53,8 @@ class sbmlDocWrapper {
   void updateMembraneList();
   const QImage &getMembraneImage(const QString &membraneID);
 
+  void updateReactionList();
+
   // species concentrations
   void importConcentrationFromImage(const QString &speciesID,
                                     const QString &filename);
@@ -61,11 +63,14 @@ class sbmlDocWrapper {
   // return raw XML as QString
   QString getXml() const;
 
-  // return supplied math expression as string with any function calls inlined
+  // return supplied math expression as string with any Function calls inlined
   // e.g. given mathExpression = "z*f(x,y)"
   // where the SBML model contains a function "f(a,b) = a*b-2"
   // it returns "z*(x*y-2)"
   std::string inlineFunctions(const std::string &mathExpression) const;
+
+  // return supplied math expression as string with any Assignment rules inlined
+  std::string inlineAssignments(const std::string &mathExpression) const;
 
  private:
   std::unique_ptr<libsbml::SBMLDocument> doc;

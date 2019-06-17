@@ -83,7 +83,7 @@
         </sizepolicy>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="tabGeometry">
         <attribute name="title">
@@ -599,13 +599,21 @@
         </attribute>
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
-          <widget class="QListWidget" name="listReactions">
+          <widget class="QTreeWidget" name="listReactions">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <attribute name="headerVisible">
+            <bool>false</bool>
+           </attribute>
+           <column>
+            <property name="text">
+             <string notr="true">1</string>
+            </property>
+           </column>
           </widget>
          </item>
          <item>
