@@ -3,7 +3,6 @@
 //  - displays (and rescales without interpolation) an image,
 //  - tracks the mouse location in terms of the pixels of the original image
 //  - provides the colour of the last pixel that was clicked on
-//  - provides a mask of the image with this colour
 //  - emits a signal when the user clicks the mouse
 
 #ifndef QLABEL_MOUSE_TRACKER_H
@@ -18,8 +17,6 @@ class QLabelMouseTracker : public QLabel {
   void setImage(const QImage &img);
   const QImage &getImage() const;
   const QRgb &getColour() const;
-  void setMaskColour(QRgb colour);
-  const QImage &getMask() const;
 
  signals:
   void mouseClicked();
@@ -35,10 +32,6 @@ class QLabelMouseTracker : public QLabel {
   QRgb colour;
   // QImage used for pixel location and colour
   QImage image;
-  // colour used for image mask
-  QRgb maskColour;
-  // masked image
-  QImage maskImage;
   // Pixmap used to display scaled version of image
   QPixmap pixmap = QPixmap(1, 1);
 };

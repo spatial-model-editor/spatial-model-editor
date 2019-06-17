@@ -36,7 +36,9 @@ class MainWindow : public QMainWindow {
 
   void on_chkShowSpatialAdvanced_stateChanged(int arg1);
 
-  void on_listReactions_currentTextChanged(const QString &currentText);
+  void on_listReactions_itemActivated(QTreeWidgetItem *item, int column);
+
+  void on_listReactions_itemClicked(QTreeWidgetItem *item, int column);
 
   void on_btnSimulate_clicked();
 
@@ -62,7 +64,7 @@ class MainWindow : public QMainWindow {
 
  private:
   Ui::MainWindow *ui;
-  sbmlDocWrapper sbml_doc;
+  SbmlDocWrapper sbml_doc;
   bool waiting_for_compartment_choice = false;
 
   // temp: vector of simulation images to display

@@ -5,7 +5,7 @@ QLabelMouseTracker::QLabelMouseTracker(QWidget *parent) : QLabel(parent) {}
 
 void QLabelMouseTracker::setImage(const QImage &img) {
   image = img;
-  pixmap = QPixmap::fromImage(img);
+  pixmap = QPixmap::fromImage(image);
   this->setPixmap(pixmap.scaledToWidth(this->width(), Qt::FastTransformation));
 
   // set first mouse click to top left corner of image
@@ -19,20 +19,13 @@ const QImage &QLabelMouseTracker::getImage() const { return image; }
 
 const QRgb &QLabelMouseTracker::getColour() const { return colour; }
 
-void QLabelMouseTracker::setMaskColour(QRgb colour) {
-  maskColour = colour;
-  maskImage = image.createMaskFromColor(maskColour, Qt::MaskOutColor);
-}
-
-const QImage &QLabelMouseTracker::getMask() const { return maskImage; }
-
 void QLabelMouseTracker::mouseMoveEvent(QMouseEvent *event) {
   // on mouse move: update current pixel
   currentPixel.setX((pixmap.width() * event->pos().x()) / this->size().width());
   currentPixel.setY((pixmap.height() * event->pos().y()) /
                     this->size().height());
-  qDebug("QLabelMouseTracker :: currentPixel %d,%d", currentPixel.x(),
-         currentPixel.y());
+  // qDebug("QLabelMouseTracker :: currentPixel %d,%d", currentPixel.x(),
+  // currentPixel.y());
   // todo: highlight/colour currently selected colour region on mouseover?
 
   if (event->buttons() != Qt::NoButton) {

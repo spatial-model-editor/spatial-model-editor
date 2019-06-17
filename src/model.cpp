@@ -2,7 +2,8 @@
 
 #include "model.h"
 
-Compartment::Compartment(const QImage &img, QRgb col) {
+Compartment::Compartment(const std::string &compID, const QImage &img, QRgb col)
+    : compartmentID(compID) {
   img_size = img.size();
   img_comp = QImage(img_size, QImage::Format_Mono);
   img_comp.setColor(0, qRgba(0, 0, 0, 0));
@@ -14,19 +15,22 @@ Compartment::Compartment(const QImage &img, QRgb col) {
     for (int y = 0; y < img.height(); ++y) {
       if (img.pixel(x, y) == col) {
         // if colour matches, add pixel to field
-        // qDebug("%d, %d", x, y);
+        // qDebug("Compartment::init :: add Qpoint (%d, %d)", x, y);
         QPoint p = QPoint(x, y);
         ix.push_back(p);
         img_comp.setPixel(p, 1);
       }
     }
   }
+  qDebug("Compartment::init :: compartmentID: %s", compartmentID.c_str());
+  qDebug("Compartment::init :: n_pixels: %lu", ix.size());
+  qDebug("Compartment::init :: colour: %u", col);
 }
 
 const QImage &Compartment::getCompartmentImage() { return img_comp; }
 
 CompartmentIndexer::CompartmentIndexer(const Compartment &comp) : comp(comp) {
-  // map from (x,y) Qpoint p to index
+  // construct map from (x,y) Qpoint p to index
   std::size_t i = 0;
   for (const auto &p : comp.ix) {
     index[p.x() * comp.img_size.height() + p.y()] = i++;
@@ -34,19 +38,12 @@ CompartmentIndexer::CompartmentIndexer(const Compartment &comp) : comp(comp) {
 }
 
 std::size_t CompartmentIndexer::getIndex(const QPoint &point) {
-  auto it = index.find(point.x() * comp.img_size.height() + point.y());
-  if (it != index.cend()) {
-    return it->second;
-  }
-  return std::numeric_limits<size_t>::max();
+  return index.at(point.x() * comp.img_size.height() + point.y());
 }
 
 bool CompartmentIndexer::isValid(const QPoint &point) {
-  auto it = index.find(point.x() * comp.img_size.height() + point.y());
-  if (it != index.cend()) {
-    return true;
-  }
-  return false;
+  return index.find(point.x() * comp.img_size.height() + point.y()) !=
+         index.cend();
 }
 
 void Field::init(Compartment *geom,
@@ -60,7 +57,10 @@ void Field::init(Compartment *geom,
     mapSpeciesIdToIndex[speciesID[i]] = i;
   }
   n_pixels = geom->ix.size();
-  qDebug("field: n_species: %lu", n_species);
+  qDebug("Field::init :: n_species: %lu", n_species);
+  for (const auto &s : speciesIDvec) {
+    qDebug("Field::init ::   - %s", s.c_str());
+  }
   img_conc = QImage(geom->img_size, QImage::Format_ARGB32);
 
   // set diffusion constants to 1 for now:
@@ -122,6 +122,7 @@ void Field::importConcentration(std::size_t species_index, QImage img,
       max = std::max(max, img.pixel(x, y));
     }
   }
+  qDebug("Field::importConcentration :: rescaling (%d, %d)->(0,1)", min, max);
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     conc[n_species * i + species_index] =
         scale_factor * static_cast<double>(img.pixel(geometry->ix[i]) - min) /
@@ -147,7 +148,7 @@ const QImage &Field::getConcentrationImage(
   // alpha opacity factor
   double alpha = 0.75;
   // for now rescale each conc to [0,1] to multiply species colour
-  std::vector<double> max_conc(species_indices.size(), 1e-5);
+  std::vector<double> max_conc(n_species, 1e-5);
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     for (const auto species_index : species_indices) {
       max_conc[species_index] = std::max(max_conc[species_index],
@@ -168,6 +169,10 @@ const QImage &Field::getConcentrationImage(
           QColor(r > 255 ? 255 : r, g > 255 ? 255 : g, b > 255 ? 255 : b, 255)
               .rgba());
     }
+  }
+  qDebug("Field::getConcentrationImage :: species indices:");
+  for (const auto &s : species_indices) {
+    qDebug("Field::getConcentrationImage ::   - %lu", s);
   }
   return img_conc;
 }

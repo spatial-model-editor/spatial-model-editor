@@ -70,17 +70,12 @@ void MainWindow::update_ui() {
   ui->listMembranes->clear();
   ui->listMembranes->insertItems(0, sbml_doc.membranes);
 
-  // update list of reactions
-  ui->listReactions->clear();
-  ui->listReactions->insertItems(0, sbml_doc.reactions);
-
   // update list of functions
   ui->listFunctions->clear();
   ui->listFunctions->insertItems(0, sbml_doc.functions);
 
   // update tree list of species
   ui->listSpecies->clear();
-  QList<QTreeWidgetItem *> items;
   for (auto c : sbml_doc.compartments) {
     // add compartments as top level items
     QTreeWidgetItem *comp =
@@ -140,15 +135,19 @@ void MainWindow::on_chkShowSpatialAdvanced_stateChanged(int arg1) {
   ui->grpSpatialAdavanced->setEnabled(arg1);
 }
 
-void MainWindow::on_listReactions_currentTextChanged(
-    const QString &currentText) {
+void MainWindow::on_listReactions_itemActivated(QTreeWidgetItem *item,
+                                                int column) {
   ui->listProducts->clear();
   ui->listReactants->clear();
   ui->listReactionParams->clear();
   ui->lblReactionRate->clear();
-  if (currentText.size() > 0) {
-    qDebug() << currentText;
-    const auto *reac = sbml_doc.model->getReaction(qPrintable(currentText));
+  // if user selects a species (i.e. an item with a parent)
+  if ((item != nullptr) && (item->parent() != nullptr)) {
+    qDebug("ui::listReactions :: Reaction '%s' selected",
+           item->text(column).toStdString().c_str());
+    // display species information
+    const auto *reac =
+        sbml_doc.model->getReaction(item->text(column).toStdString());
     for (unsigned i = 0; i < reac->getNumProducts(); ++i) {
       ui->listProducts->addItem(reac->getProduct(i)->getSpecies().c_str());
     }
@@ -161,6 +160,11 @@ void MainWindow::on_listReactions_currentTextChanged(
     }
     ui->lblReactionRate->setText(reac->getKineticLaw()->getFormula().c_str());
   }
+}
+
+void MainWindow::on_listReactions_itemClicked(QTreeWidgetItem *item,
+                                              int column) {
+  on_listReactions_itemActivated(item, column);
 }
 
 void MainWindow::on_listFunctions_currentTextChanged(
@@ -184,9 +188,10 @@ void MainWindow::on_listSpecies_itemActivated(QTreeWidgetItem *item,
                                               int column) {
   // if user selects a species (i.e. an item with a parent)
   if ((item != nullptr) && (item->parent() != nullptr)) {
-    qDebug() << item->text(column);
+    qDebug("ui::listSpecies :: Species '%s' selected",
+           item->text(column).toStdString().c_str());
     // display species information
-    auto *spec = sbml_doc.model->getSpecies(qPrintable(item->text(column)));
+    auto *spec = sbml_doc.model->getSpecies(item->text(column).toStdString());
     ui->txtInitialConcentration->setText(
         QString::number(spec->getInitialConcentration()));
     if ((spec->isSetConstant() && spec->getConstant()) ||
@@ -288,6 +293,21 @@ void MainWindow::on_tabMain_currentChanged(int index) {
       break;
     case 3:
       // reactions tab
+      // update list of reactions
+      ui->listReactions->clear();
+      for (auto iter = sbml_doc.reactions.cbegin();
+           iter != sbml_doc.reactions.cend(); ++iter) {
+        // add compartments as top level items
+        QTreeWidgetItem *comp =
+            new QTreeWidgetItem(ui->listReactions, QStringList({iter->first}));
+        ui->listReactions->addTopLevelItem(comp);
+        for (auto s : iter->second) {
+          // add each species as child of compartment
+          comp->addChild(new QTreeWidgetItem(comp, QStringList({s})));
+        }
+      }
+      ui->listReactions->expandAll();
+      break;
     case 4:
       // functions tab
     case 5:
