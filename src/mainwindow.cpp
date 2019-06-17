@@ -259,14 +259,14 @@ void MainWindow::on_listCompartments_currentTextChanged(
 }
 
 void MainWindow::on_hslideTime_valueChanged(int value) {
-  qDebug() << value;
   if (images.size() > value) {
     ui->lblGeometry->setImage(images[value]);
   }
 }
 
 void MainWindow::on_tabMain_currentChanged(int index) {
-  qDebug("Tab changed to %d", index);
+  qDebug("ui::tabMain :: Tab changed to %d [%s]", index,
+         ui->tabMain->tabText(index).toStdString().c_str());
   ui->hslideTime->setEnabled(false);
   ui->hslideTime->setVisible(false);
   switch (index) {
@@ -310,6 +310,7 @@ void MainWindow::on_tabMain_currentChanged(int index) {
       break;
     case 4:
       // functions tab
+      break;
     case 5:
       // simulate tab
       ui->lblGeometryStatus->setText("Simulation concentration:");
@@ -321,6 +322,7 @@ void MainWindow::on_tabMain_currentChanged(int index) {
     case 6:
       // SBML tab
       ui->txtSBML->setText(sbml_doc.getXml());
+      break;
   }
 }
 
@@ -347,7 +349,6 @@ void MainWindow::on_listMembranes_currentTextChanged(
 void MainWindow::on_btnSimulate_clicked() {
   // simple 2d spatial simulation
 
-  //
   std::vector<Simulate> sim;
   // create a Simulate object for each compartment
   for (const auto &compartmentID : sbml_doc.compartments) {
@@ -379,12 +380,13 @@ void MainWindow::on_btnSimulate_clicked() {
     for (auto &s : sim) {
       s.timestep_2d_euler(dt);
     }
-    images.push_back(sim[0].field->getConcentrationImage().copy());
+    // images.push_back(sim[0].field->getConcentrationImage().copy());
     for (std::size_t k = 0; k < sim[0].species_values.size(); ++k) {
+      qDebug() << conc[k].back();
       conc[k].push_back(sim[0].field->getMeanConcentration(k));
     }
     time.push_back(t);
-    ui->lblGeometry->setImage(images.back());
+    // ui->lblGeometry->setImage(images.back());
     ui->lblGeometry->repaint();
   }
 
