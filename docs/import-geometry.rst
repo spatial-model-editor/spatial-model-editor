@@ -5,7 +5,11 @@ To import an image of the compartments in the model, go to `Import->Geometry fro
 
 The image should be colour coded such that each compartment has a unique colour.
 
-To assign a compartment, click on "Select compartment geometry", then click on the desired part of the image.
+To assign a compartment in the model to a colour in the image:
+
+- click on the compartment name
+- click on "Select compartment geometry..."
+- then click on the desired part of the image.
 
 .. figure:: img/geometry.png
    :alt: screenshot showing geometry settings
