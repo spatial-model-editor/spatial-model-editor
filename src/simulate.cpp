@@ -139,9 +139,9 @@ void Simulate::compile_reactions() {
       }
 
       // compile expression and add to reac_eval vector
-      reac_eval.emplace_back(numerics::ReactionEvaluate(
-          expr, field->speciesID, species_values, reac_constant_names,
-          reac_constant_values));
+      reac_eval.emplace_back(
+          numerics::ExprEval(expr, field->speciesID, species_values,
+                             reac_constant_names, reac_constant_values));
     }
   }
   qDebug("Simulate::compile_reactions ::   - final matrix M:");

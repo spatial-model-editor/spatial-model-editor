@@ -24,15 +24,15 @@
 
 namespace numerics {
 
-class ReactionEvaluate {
+class ExprEval {
  public:
   // the variables are stored as references, so their values can be changed
   // and the expression can then be re-evaluated without re-compiling
-  ReactionEvaluate(const std::string &expression,
-                   const std::vector<std::string> &variableName,
-                   std::vector<double> &variableValue,
-                   const std::vector<std::string> &constantName,
-                   const std::vector<double> &constantValue);
+  ExprEval(const std::string &expression,
+           const std::vector<std::string> &variableName,
+           std::vector<double> &variableValue,
+           const std::vector<std::string> &constantName,
+           const std::vector<double> &constantValue);
   // evaluate compiled expression
   double operator()();
 

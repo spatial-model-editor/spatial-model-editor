@@ -16,7 +16,7 @@ class Simulate {
  private:
   SbmlDocWrapper *doc;
   // vector of reaction expressions
-  std::vector<numerics::ReactionEvaluate> reac_eval;
+  std::vector<numerics::ExprEval> reac_eval;
   // matrix M_ij of stoichiometric coefficients
   // i is the species index
   // j is the reaction index
