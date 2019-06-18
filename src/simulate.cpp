@@ -2,9 +2,19 @@
 
 void Simulate::compile_reactions() {
   QString compID = field->geometry->compartmentID.c_str();
+  qDebug("Simulate::compile_reactions :: compartment: %s",
+         compID.toStdString().c_str());
+
   // init vector of species
   species_values = std::vector<double>(field->speciesID.size(), 0.0);
+
+  reac_eval.clear();
   M.clear();
+  if (doc->reactions.find(compID) == doc->reactions.cend()) {
+    // If there are no reactions in this compartment: we are done
+    qDebug("Simulate::compile_reactions ::   - no reactions to compile.");
+    return;
+  }
   reac_eval.reserve(static_cast<std::size_t>(doc->reactions.at(compID).size()));
 
   // get global constants
@@ -63,7 +73,7 @@ void Simulate::compile_reactions() {
             static_cast<std::size_t>(it - field->speciesID.cbegin());
         isNullReaction = false;
         Mrow[species_index] += spec_ref->getStoichiometry();
-        qDebug("Simulate::compile_reactions :: M[%lu] += %f", species_index,
+        qDebug("Simulate::compile_reactions ::   - M[%lu] += %f", species_index,
                spec_ref->getStoichiometry());
       }
     }
@@ -78,7 +88,7 @@ void Simulate::compile_reactions() {
             static_cast<std::size_t>(it - field->speciesID.cbegin());
         isNullReaction = false;
         Mrow[species_index] -= spec_ref->getStoichiometry();
-        qDebug("Simulate::compile_reactions :: M[%lu] -= %f", species_index,
+        qDebug("Simulate::compile_reactions ::   - M[%lu] -= %f", species_index,
                spec_ref->getStoichiometry());
       }
     }
@@ -124,7 +134,7 @@ void Simulate::compile_reactions() {
       }
 
       for (std::size_t k = 0; k < reac_constant_names.size(); ++k) {
-        qDebug("Simulate::compile_reactions :: constant: %s %f",
+        qDebug("Simulate::compile_reactions ::   - constant: %s %f",
                reac_constant_names[k].c_str(), reac_constant_values[k]);
       }
 
@@ -134,17 +144,21 @@ void Simulate::compile_reactions() {
           reac_constant_values));
     }
   }
-  qDebug("Simulate::compile_reactions :: matrix M:");
+  qDebug("Simulate::compile_reactions ::   - final matrix M:");
   qDebug() << M;
 }
 
 void Simulate::evaluate_reactions() {
-  qDebug("Simulate::evaluate_reactions : Compartment=%s",
+  qDebug("Simulate::evaluate_reactions : compartment: %s",
          field->geometry->compartmentID.c_str());
-  qDebug("Simulate::evaluate_reactions : n_pixels=%lu", field->n_pixels);
-  qDebug("Simulate::evaluate_reactions : n_species=%lu", field->n_species);
-  qDebug("Simulate::evaluate_reactions : M=%lux%lu", M.size(), M[0].size());
-  qDebug("Simulate::evaluate_reactions : n_reacs=%lu", reac_eval.size());
+  if (reac_eval.empty()) {
+    qDebug("Simulate::evaluate_reactions :   - no reactions to evaluate");
+    return;
+  }
+  qDebug("Simulate::evaluate_reactions :   - n_pixels=%lu", field->n_pixels);
+  qDebug("Simulate::evaluate_reactions :   - n_species=%lu", field->n_species);
+  qDebug("Simulate::evaluate_reactions :   - n_reacs=%lu", reac_eval.size());
+  qDebug("Simulate::evaluate_reactions :   - M=%lux%lu", M.size(), M[0].size());
   for (std::size_t ix = 0; ix < field->n_pixels; ++ix) {
     // populate species concentrations
     for (std::size_t s = 0; s < field->n_species; ++s) {

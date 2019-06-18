@@ -5,8 +5,8 @@
 //  - provides the colour of the last pixel that was clicked on
 //  - emits a signal when the user clicks the mouse
 
-#ifndef QLABEL_MOUSE_TRACKER_H
-#define QLABEL_MOUSE_TRACKER_H
+#pragma once
+
 #include <QLabel>
 #include <QMouseEvent>
 
@@ -35,5 +35,3 @@ class QLabelMouseTracker : public QLabel {
   // Pixmap used to display scaled version of image
   QPixmap pixmap = QPixmap(1, 1);
 };
-
-#endif  // QLABEL_MOUSE_TRACKER_H

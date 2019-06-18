@@ -6,8 +6,7 @@
 //  expression when evaluated will use the new values)
 //  - evaluates the expression
 
-#ifndef NUMERICS_H
-#define NUMERICS_H
+#pragma once
 
 #include <string>
 
@@ -43,5 +42,3 @@ class ReactionEvaluate {
 };
 
 }  // namespace numerics
-
-#endif  // NUMERICS_H

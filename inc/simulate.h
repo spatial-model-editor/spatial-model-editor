@@ -2,8 +2,7 @@
 //  - compiles reaction equations
 //  - 2d reaction-diffusion with forwards Euler
 
-#ifndef SIMULATE_H
-#define SIMULATE_H
+#pragma once
 
 #include <QDebug>
 #include <QImage>
@@ -37,5 +36,3 @@ class Simulate {
   // integration timestep: forwards euler: conc += dcdt * dt
   void timestep_2d_euler(double dt);
 };
-
-#endif  // SIMULATE_H

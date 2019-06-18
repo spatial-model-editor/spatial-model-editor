@@ -4,8 +4,7 @@
 // - augments the model with spatial information
 // - keeps track of geometry, membranes, colours, etc
 
-#ifndef SBML_H
-#define SBML_H
+#pragma once
 
 #include <QColor>
 #include <QDebug>
@@ -92,5 +91,3 @@ class SbmlDocWrapper {
   std::map<QString, std::size_t> mapMembraneToIndex;
   std::map<QString, QImage> mapMembraneToImage;
 };
-
-#endif  // SBML_H

@@ -1,9 +1,9 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 #include <QTreeWidgetItem>
 #include "ext/qcustomplot/qcustomplot.h"
+
 #include "sbml.h"
 
 namespace Ui {
@@ -73,5 +73,3 @@ class MainWindow : public QMainWindow {
   // update all UI elements with new model
   void update_ui();
 };
-
-#endif  // MAINWINDOW_H

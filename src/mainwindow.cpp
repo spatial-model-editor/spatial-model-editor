@@ -172,9 +172,10 @@ void MainWindow::on_listFunctions_currentTextChanged(
   ui->listFunctionParams->clear();
   ui->lblFunctionDef->clear();
   if (currentText.size() > 0) {
-    qDebug() << currentText;
+    qDebug("ui::listFunctions :: Function '%s' selected",
+           currentText.toStdString().c_str());
     const auto *func =
-        sbml_doc.model->getFunctionDefinition(qPrintable(currentText));
+        sbml_doc.model->getFunctionDefinition(currentText.toStdString());
     for (unsigned i = 0; i < func->getNumArguments(); ++i) {
       ui->listFunctionParams->addItem(
           libsbml::SBML_formulaToL3String(func->getArgument(i)));
@@ -230,12 +231,13 @@ void MainWindow::on_listCompartments_currentTextChanged(
     const QString &currentText) {
   ui->txtCompartmentSize->clear();
   if (currentText.size() > 0) {
-    qDebug() << currentText;
+    qDebug("ui::listCompartments :: Compartment '%s' selected",
+           currentText.toStdString().c_str());
     const auto *comp =
         sbml_doc.model->getCompartment(currentText.toStdString());
     ui->txtCompartmentSize->setText(QString::number(comp->getSize()));
     QRgb col = sbml_doc.getCompartmentColour(currentText);
-    qDebug() << qAlpha(col);
+    qDebug("ui::listCompartments :: Compartment colour: %u", col);
     if (col == 0) {
       // null (transparent white) RGB colour: compartment does not have
       // an assigned colour in the image
@@ -328,7 +330,8 @@ void MainWindow::on_tabMain_currentChanged(int index) {
 
 void MainWindow::on_btnImportConcentration_clicked() {
   auto spec = ui->listSpecies->selectedItems()[0]->text(0);
-  qDebug() << spec;
+  qDebug("ui::btnImportConcentration :: clicked with Species '%s' selected",
+         spec.toStdString().c_str());
   QString filename = QFileDialog::getOpenFileName(
       this, "Import species concentration from image", "",
       "Image Files (*.png *.jpg *.bmp)");
@@ -339,7 +342,8 @@ void MainWindow::on_btnImportConcentration_clicked() {
 void MainWindow::on_listMembranes_currentTextChanged(
     const QString &currentText) {
   if (currentText.size() > 0) {
-    qDebug() << currentText;
+    qDebug("ui::listMembranes :: Membrane '%s' selected",
+           currentText.toStdString().c_str());
     // update image
     QPixmap pixmap = QPixmap::fromImage(sbml_doc.getMembraneImage(currentText));
     ui->lblMembraneShape->setPixmap(pixmap);
