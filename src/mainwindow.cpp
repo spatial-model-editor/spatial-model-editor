@@ -259,14 +259,14 @@ void MainWindow::on_listCompartments_currentTextChanged(
 }
 
 void MainWindow::on_hslideTime_valueChanged(int value) {
-  qDebug() << value;
   if (images.size() > value) {
     ui->lblGeometry->setImage(images[value]);
   }
 }
 
 void MainWindow::on_tabMain_currentChanged(int index) {
-  qDebug("Tab changed to %d", index);
+  qDebug("ui::tabMain :: Tab changed to %d [%s]", index,
+         ui->tabMain->tabText(index).toStdString().c_str());
   ui->hslideTime->setEnabled(false);
   ui->hslideTime->setVisible(false);
   switch (index) {
@@ -310,6 +310,7 @@ void MainWindow::on_tabMain_currentChanged(int index) {
       break;
     case 4:
       // functions tab
+      break;
     case 5:
       // simulate tab
       ui->lblGeometryStatus->setText("Simulation concentration:");
@@ -321,6 +322,7 @@ void MainWindow::on_tabMain_currentChanged(int index) {
     case 6:
       // SBML tab
       ui->txtSBML->setText(sbml_doc.getXml());
+      break;
   }
 }
 
