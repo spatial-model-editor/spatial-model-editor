@@ -2,7 +2,7 @@
 
 namespace numerics {
 
-ReactionEvaluate::ReactionEvaluate(const std::string &expression,
+ExprEval::ExprEval(const std::string &expression,
                                    const std::vector<std::string> &variableName,
                                    std::vector<double> &variableValue,
                                    const std::vector<std::string> &constantName,
@@ -18,6 +18,6 @@ ReactionEvaluate::ReactionEvaluate(const std::string &expression,
   exprtkParser.compile(expression, exprtkExpression);
 }
 
-double ReactionEvaluate::operator()() { return exprtkExpression.value(); }
+double ExprEval::operator()() { return exprtkExpression.value(); }
 
 }  // namespace numerics

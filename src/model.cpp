@@ -50,6 +50,7 @@ void Field::init(Compartment *geom,
                  const std::vector<std::string> &speciesIDvec,
                  BOUNDARY_CONDITION bc) {
   geometry = geom;
+  qDebug("Field::init :: compartmentID: %s", geom->compartmentID.c_str());
   speciesID = speciesIDvec;
   n_species = speciesID.size();
   mapSpeciesIdToIndex.clear();
@@ -90,7 +91,7 @@ void Field::init(Compartment *geom,
           // of the boundary conc. to be equal to that of the neighbour.
           nn.push_back(compIndex.getIndex(p));
         } else {
-          qDebug() << "Error: boundary condition not supported";
+          qDebug() << "Field::init :: Error: boundary condition not supported";
           exit(1);
         }
       }
@@ -230,5 +231,3 @@ Membrane::Membrane(const std::string &ID, Field *A, Field *B,
     indexPair.push_back({iA, iB});
   }
 }
-
-void Membrane::applyDiffusionOperator() {}

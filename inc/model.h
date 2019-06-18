@@ -113,5 +113,4 @@ class Membrane {
   Membrane() = default;
   Membrane(const std::string &ID, Field *A, Field *B,
            const std::vector<std::pair<QPoint, QPoint>> &membranePairs);
-  void applyDiffusionOperator();
 };
