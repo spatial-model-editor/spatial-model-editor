@@ -1,13 +1,13 @@
 // Spatial Geometry
 //  - Compartment class: defines set of points that make up a compartment
-//  - CompartmentIndexer class: utility to invert QPoint to vector index for a
-//  Compartment, only used for initialising Fields and Membranes
 //  - Field class: species concentrations w/bcs within a compartment
-//  - Membrane class: defines points on either side of the boundary between two
-//  compartments, aka the membrane
+//  - Membrane class: defines set of points on either side of the boundary
+//  between two compartments, aka the membrane
+//  - CompartmentIndexer class: utility class to convert a QPoint to the
+//  corresponding vector index for a Compartment (only used for initialising
+//  Fields and Membranes)
 
-#ifndef MODEL_H
-#define MODEL_H
+#pragma once
 
 #include <unordered_map>
 
@@ -115,5 +115,3 @@ class Membrane {
            const std::vector<std::pair<QPoint, QPoint>> &membranePairs);
   void applyDiffusionOperator();
 };
-
-#endif  // MODEL_H

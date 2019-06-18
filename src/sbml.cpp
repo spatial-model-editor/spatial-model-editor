@@ -140,8 +140,11 @@ void SbmlDocWrapper::updateMembraneList() {
       if (iter != mapColPairToIndex.cend()) {
         std::size_t index = iter->second;
         if (!membranePairs[index].empty()) {
-          // generate membrane name
+          // generate membrane name, compartments ordered by colour
           QString name = compartments[i] + "-" + compartments[j];
+          if (colA > colB) {
+            name = compartments[j] + "-" + compartments[i];
+          }
           membranes.push_back(name);
           // map name to index of membrane location pairs
           mapMembraneToIndex[name] = index;
@@ -171,13 +174,13 @@ void SbmlDocWrapper::updateReactionList() {
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
     const auto *reac = model->getReaction(i);
     QString reacID = reac->getId().c_str();
-    // get set of compartments where reaction takes place
+    // construct the set of compartments where reaction takes place
     std::unordered_set<std::string> comps;
     for (unsigned int k = 0; k < reac->getNumProducts(); ++k) {
       const std::string &specID = reac->getProduct(k)->getSpecies();
       comps.insert(model->getSpecies(specID)->getCompartment());
     }
-    // TODO: also include modifiers here??
+    // TODO: also include modifiers here?? (and when compiling reactions??)
     for (unsigned int k = 0; k < reac->getNumReactants(); ++k) {
       const std::string &specID = reac->getReactant(k)->getSpecies();
       comps.insert(model->getSpecies(specID)->getCompartment());
@@ -204,7 +207,7 @@ void SbmlDocWrapper::updateReactionList() {
         reactions[membraneID] << QString(reac->getId().c_str());
       }
     } else {
-      // invalid reaction
+      // invalid reaction: number of compartments for reaction must be 1 or 2
       qDebug("SbmlDocWrapper::updateReactionList :: Error: invalid reaction");
       exit(1);
     }
