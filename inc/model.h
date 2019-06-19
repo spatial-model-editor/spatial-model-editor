@@ -38,7 +38,7 @@ class CompartmentIndexer {
   std::unordered_map<int, std::size_t> index;
 
  public:
-  CompartmentIndexer(const Compartment &comp);
+  explicit CompartmentIndexer(const Compartment &comp);
   std::size_t getIndex(const QPoint &point);
   bool isValid(const QPoint &point);
 };
