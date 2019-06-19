@@ -13,7 +13,7 @@
 class QLabelMouseTracker : public QLabel {
   Q_OBJECT
  public:
-  QLabelMouseTracker(QWidget *parent);
+  explicit QLabelMouseTracker(QWidget *parent);
   void setImage(const QImage &img);
   const QImage &getImage() const;
   const QRgb &getColour() const;

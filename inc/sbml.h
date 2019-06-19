@@ -62,6 +62,10 @@ class SbmlDocWrapper {
   // return raw XML as QString
   QString getXml() const;
 
+  // returns true if species is constant or a boundary condition
+  // i.e. should if it should not be updated in the PDE
+  bool isSpeciesConstant(const std::string &speciesID) const;
+
   // return supplied math expression as string with any Function calls inlined
   // e.g. given mathExpression = "z*f(x,y)"
   // where the SBML model contains a function "f(a,b) = a*b-2"

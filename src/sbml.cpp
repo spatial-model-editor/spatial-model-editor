@@ -158,9 +158,13 @@ void SbmlDocWrapper::updateMembraneList() {
           // create Membrane object
           Field *fieldA = &mapCompIdToField.at(compartments[i]);
           Field *fieldB = &mapCompIdToField.at(compartments[j]);
-          if (colB < colA) {
+          if (colA > colB) {
             std::swap(fieldA, fieldB);
           }
+          assert(mapCompartmentToColour.at(
+                     fieldA->geometry->compartmentID.c_str()) <
+                 mapCompartmentToColour.at(
+                     fieldB->geometry->compartmentID.c_str()));
           membraneVec.emplace_back(name.toStdString(), fieldA, fieldB,
                                    membranePairs[index]);
         }
@@ -291,6 +295,15 @@ QString SbmlDocWrapper::getXml() const {
   return libsbml::writeSBMLToString(doc.get());
 }
 
+bool SbmlDocWrapper::isSpeciesConstant(const std::string &speciesID) const {
+  auto *spec = model->getSpecies(speciesID);
+  if ((spec->isSetConstant() && spec->getConstant()) ||
+      (spec->isSetBoundaryCondition() && spec->getBoundaryCondition())) {
+    return true;
+  }
+  return false;
+}
+
 std::string SbmlDocWrapper::inlineFunctions(
     const std::string &mathExpression) const {
   std::string expr = mathExpression;
@@ -303,12 +316,14 @@ std::string SbmlDocWrapper::inlineFunctions(
     std::string funcCallString = func->getId() + "(";
     auto loc = expr.find(funcCallString);
     auto fn_loc = loc;
-    // qDebug("SbmlDocWrapper::inlineFunctions :: searching for function '%s'",
+    // qDebug("SbmlDocWrapper::inlineFunctions :: searching for function
+    // '%s'",
     //       func->getId().c_str());
     while (loc != std::string::npos) {
       // function call found
       fn_loc = loc;
-      // qDebug("SbmlDocWrapper::inlineFunctions ::   -> found at %lu", fn_loc);
+      // qDebug("SbmlDocWrapper::inlineFunctions ::   -> found at %lu",
+      // fn_loc);
       loc += func->getId().size() + 1;
       for (unsigned int j = 0; j < func->getNumArguments(); ++j) {
         // compare each argument used in the function call (arg)
@@ -368,7 +383,8 @@ std::string SbmlDocWrapper::inlineAssignments(
     while (start != std::string::npos) {
       auto end = expr.find_first_of(delimeters, start);
       std::string name = expr.substr(start, end - start);
-      // qDebug("SbmlDocWrapper::inlineAssignments:: name '%s'", name.c_str());
+      // qDebug("SbmlDocWrapper::inlineAssignments:: name '%s'",
+      // name.c_str());
       const auto *assignment = model->getAssignmentRule(name);
       if (assignment != nullptr) {
         // replace name with inlined body of Assignment rule

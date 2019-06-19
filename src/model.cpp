@@ -221,6 +221,7 @@ double Field::getMeanConcentration(std::size_t species_index) {
 Membrane::Membrane(const std::string &ID, Field *A, Field *B,
                    const std::vector<std::pair<QPoint, QPoint>> &membranePairs)
     : membraneID(ID), fieldA(A), fieldB(B) {
+  qDebug("Membrane::init :: membraneID: %s", membraneID.c_str());
   // convert each QPoint into the corresponding index of the field
   indexPair.clear();
   CompartmentIndexer indexA(*A->geometry);
