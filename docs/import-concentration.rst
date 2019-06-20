@@ -13,4 +13,4 @@ To import a spatial concentration from an image, ensure the `Spatial` checkbox i
    An example of importing a spatial distribution of species concentration from an image. The image used in this example can be downloaded `here <https://raw.githubusercontent.com/lkeegan/spatial-model-editor/master/examples/concentration/one-blob-100x100.bmp>`_.
 
 .. warning::
-	Currently any other changes (initial concentraiton, diffusion constant, etc are ignored)
+	Currently any other changes (initial concentration, diffusion constant, etc are ignored)
