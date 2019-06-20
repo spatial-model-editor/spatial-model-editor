@@ -130,6 +130,26 @@ SCENARIO("import SBML level 2 document", "[sbml]") {
   }
 }
 
+SCENARIO("import geometry from image", "[sbml]") {
+  SbmlDocWrapper s;
+  REQUIRE(s.hasGeometry == false);
+  GIVEN("Single pixel image") {
+    QImage img(1, 1, QImage::Format_RGB32);
+    QRgb col = QColor(12, 243, 154).rgba();
+    img.setPixel(0, 0, col);
+    img.save("tmp.bmp");
+    s.importGeometryFromImage("tmp.bmp");
+    REQUIRE(s.hasGeometry == true);
+    THEN("getCompartmentImage returns image") {
+      REQUIRE(s.getCompartmentImage().size() == QSize(1, 1));
+      REQUIRE(s.getCompartmentImage().pixel(0, 0) == col);
+    }
+    THEN("image contains no membranes") {
+      // todo
+    }
+  }
+}
+
 TEST_CASE("load SBML level 3 document with spatial extension") {
   // create SBML level 3.1.1 model with spatial extension
   libsbml::SpatialPkgNamespaces sbmlns(3, 1, 1);
