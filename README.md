@@ -2,11 +2,11 @@
 
 GUI spatial model editor prototype
 
-  - Download the latest executable here:
-    - [![linux](docs/img/icon-linux.png)](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor) linux
-    - [![mac](docs/img/icon-osx.png)](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg) mac
-    - [![windows](docs/img/icon-windows.png)](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) windows
-  - See the [documentation](https://spatial-model-editor.readthedocs.io/en/latest/)
+  - Read the [documentation](https://spatial-model-editor.readthedocs.io/en/latest/)
+  - Download the latest executable:
+    - [![linux](docs/img/icon-linux.png) linux](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor)
+    - [![mac](docs/img/icon-osx.png) mac](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg)
+    - [![windows](docs/img/icon-windows.png) windows](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.exe)
 
 ![screenshot](docs/img/geometry.png)
 
