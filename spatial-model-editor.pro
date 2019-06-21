@@ -51,3 +51,6 @@ win32: QMAKE_LFLAGS += -static-libgcc -static-libstdc++
 
 # on osx: set visibility to match setting used for compiling static Qt5 libs
 mac: QMAKE_CXXFLAGS += -fvisibility=hidden
+
+# on linux, enable compiler warnings
+unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wextra -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wuseless-cast -Wpedantic
