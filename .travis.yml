@@ -3,6 +3,7 @@ language: cpp
 env:
   global:
     - QT5_INSTALL_PREFIX="/opt/qt5-static"
+    - secure: "OOz0J/S83SowmOvo0iIYBWsEjojWHEdP3l1tjN67NWkiJuyEsdfBV4cAJyGLYSX1Nfa634WHQy+azpbLQUNAID1kOcaAl8ntVzpOYy55PE4IO2mKtzLu46rGJOVuqJHBVIDBJ89RLgdNWn5sZnUGZ9giln4iAApf4Prg1nPZZ7dTyiWYiEgtiyiAaXx6s6RUd2pt0xhBDH8SW/b9HFoEVHuoFn2JlBZrmHqS+UUcF2htDWBGui2+2ONlIIluYiqdZlUaABN0q3A3s5ST/4DtimLeDaVgOdhpjtW8bH4cCbsOCQ280Wqln7nDcbktSADsSBwJaA6Da7yMoeJkX9TT5YmpAhEhnhwXbx9UC5i9SCB/KkK8o+2723n85oVk78SmXw0vrOxqxSunge+2d7IQqNBlCDbNIOlhbrlnlv62RP8GXMnxqYyRaXNcvFqGULLvJozfaQyMlqWQFiIeP6nkl2yVr6ppuYUi9IGhifIGxZPG7RomvCCo02CcA3y51QTNQZgGKzfCbnO3sq0G1xV72wKRnUmkuMElSO4pn7XIIcXPHDn1OFapT9mYKQWoZkxEEq/73zMsWyx83INs3MBhlHYGWfAjfU8NU9EQ0+Sfh2m3F/Bz2JckFrOtK/afSj10rce84FpSglBENCYj/qJgwD1tAFSsSCs1lzc77qkaWJI="
 
 matrix:
   include:
@@ -15,6 +16,7 @@ matrix:
           packages:
             - libxkbcommon-dev
             - lcov
+            - valgrind
       env: 
         - DEPLOY_FILE="spatial-model-editor"
         - COVERAGE="upload"
@@ -23,14 +25,25 @@ matrix:
       osx_image: xcode9.4
       compiler: clang
       env: DEPLOY_FILE="spatial-model-editor.dmg"
-    # other test builds
+    # linux test build with clang & coverity scan
     - os: linux
       dist: xenial
       compiler: clang
+      before_install:
+        - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
       addons:
         apt:
           packages:
             - libxkbcommon-dev
+            - valgrind
+        coverity_scan:
+          project:
+            name: "lkeegan/spatial-model-editor"
+            description: "Spatial Model Editor"
+          notification_email: liam@keegan.ch
+          build_command_prepend: "qmake spatial-model-editor.pro"
+          build_command: "make"
+          branch_pattern: coverity_scan
       services: xvfb
 
 before_script:
@@ -69,7 +82,7 @@ script:
   # -config debug fails on osx because it looks for non-existent "debug" qt5 static libraries
   - '[ "$TRAVIS_OS_NAME" != osx ] || qmake -Wall -config release ../test.pro'
   - make -j2
-  - '[ "$TRAVIS_OS_NAME" != linux ] || ./test -d=yes'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind ./test -d=yes'
   - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes'
   # upload coverage report
   - '[ "$COVERAGE" != "upload" ] || lcov --directory . --capture --output-file coverage.info'
