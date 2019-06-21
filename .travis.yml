@@ -16,11 +16,10 @@ matrix:
           packages:
             - libxkbcommon-dev
             - lcov
-            - valgrind
       env: 
         - DEPLOY_FILE="spatial-model-editor"
         - COVERAGE="upload"
-      before_script:
+      install:
         # install a recent version of valgrind
         - wget "https://sourceware.org/pub/valgrind/valgrind-3.15.0.tar.bz2"
         - tar -xjf valgrind-3.15.0.tar.bz2
@@ -35,17 +34,17 @@ matrix:
       osx_image: xcode9.4
       compiler: clang
       env: DEPLOY_FILE="spatial-model-editor.dmg"
-    # linux test build with clang & coverity scan
+    # linux clang build with coverity scan (only runs on coverity_scan branch)
     - os: linux
       dist: xenial
       compiler: clang
       before_install:
+        - '[ "$TRAVIS_BRANCH" == coverity_scan ] || exit 0'
         - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
       addons:
         apt:
           packages:
             - libxkbcommon-dev
-            - valgrind
         coverity_scan:
           project:
             name: "lkeegan/spatial-model-editor"
