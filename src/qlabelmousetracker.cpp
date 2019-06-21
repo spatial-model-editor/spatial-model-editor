@@ -19,20 +19,21 @@ const QImage &QLabelMouseTracker::getImage() const { return image; }
 
 const QRgb &QLabelMouseTracker::getColour() const { return colour; }
 
-void QLabelMouseTracker::mouseMoveEvent(QMouseEvent *event) {
+void QLabelMouseTracker::mouseMoveEvent(QMouseEvent *ev) {
   // on mouse move: update current pixel
-  currentPixel.setX((pixmap.width() * event->pos().x()) / this->size().width());
-  currentPixel.setY((pixmap.height() * event->pos().y()) /
-                    this->size().height());
-  // qDebug("QLabelMouseTracker :: currentPixel %d,%d", currentPixel.x(),
-  // currentPixel.y());
-  // todo: highlight/colour currently selected colour region on mouseover?
+  currentPixel.setX((pixmap.width() * ev->pos().x()) / this->size().width());
+  currentPixel.setY((pixmap.height() * ev->pos().y()) / this->size().height());
+  qDebug("QLabelMouseTracker :: currentPixel %d,%d", currentPixel.x(),
+         currentPixel.y());
+  // possible todo: highlight colour region on mouseover?
+}
 
-  if (event->buttons() != Qt::NoButton) {
-    // on mouse click: update current colour and compartment ID
+void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
+  if (ev->buttons() != Qt::NoButton) {
+    // on mouse click: update current colour and emit mouseClicked signal
     if (!pixmap.isNull()) {
       colour = image.pixelColor(currentPixel).rgb();
-      qDebug("QLabelMouseTracker :: mouseclick at colour %u", colour);
+      qDebug("QLabelMouseTracker :: mouseclick on colour %u", colour);
       emit mouseClicked();
     }
   }

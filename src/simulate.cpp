@@ -318,7 +318,8 @@ void Simulate::integrateForwardsEuler(double dt) {
 }
 
 QImage Simulate::getConcentrationImage() {
-  QImage img(field[0]->geometry->img_size, QImage::Format_ARGB32);
+  QImage img(field[0]->geometry->getCompartmentImage().size(),
+             QImage::Format_ARGB32);
   img.fill(qRgba(0, 0, 0, 0));
   // alpha opacity factor
   double alpha = 0.75;
