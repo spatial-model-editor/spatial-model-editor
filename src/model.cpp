@@ -4,11 +4,10 @@
 
 Compartment::Compartment(const std::string &compID, const QImage &img, QRgb col)
     : compartmentID(compID) {
-  img_size = img.size();
-  img_comp = QImage(img_size, QImage::Format_Mono);
-  img_comp.setColor(0, qRgba(0, 0, 0, 0));
-  img_comp.setColor(1, qRgba(0, 0, 0, 255));
-  img_comp.fill(0);
+  imgComp = QImage(img.size(), QImage::Format_Mono);
+  imgComp.setColor(0, qRgba(0, 0, 0, 0));
+  imgComp.setColor(1, qRgba(0, 0, 0, 255));
+  imgComp.fill(0);
   ix.clear();
   // find pixels in compartment: store image QPoint for each
   for (int x = 0; x < img.width(); ++x) {
@@ -18,7 +17,7 @@ Compartment::Compartment(const std::string &compID, const QImage &img, QRgb col)
         // qDebug("Compartment::init :: add Qpoint (%d, %d)", x, y);
         QPoint p = QPoint(x, y);
         ix.push_back(p);
-        img_comp.setPixel(p, 1);
+        imgComp.setPixel(p, 1);
       }
     }
   }
@@ -27,23 +26,26 @@ Compartment::Compartment(const std::string &compID, const QImage &img, QRgb col)
   qDebug("Compartment::init :: colour: %u", col);
 }
 
-const QImage &Compartment::getCompartmentImage() { return img_comp; }
+const QImage &Compartment::getCompartmentImage() const { return imgComp; }
+
+int CompartmentIndexer::qPointToInt(const QPoint &point) const {
+  return point.x() * comp.getCompartmentImage().height() + point.y();
+}
 
 CompartmentIndexer::CompartmentIndexer(const Compartment &c) : comp(c) {
-  // construct map from (x,y) Qpoint p to index
+  // construct map from QPoint in image to index in compartment vector
   std::size_t i = 0;
-  for (const auto &p : comp.ix) {
-    index[p.x() * comp.img_size.height() + p.y()] = i++;
+  for (const auto &point : comp.ix) {
+    index[qPointToInt(point)] = i++;
   }
 }
 
 std::size_t CompartmentIndexer::getIndex(const QPoint &point) {
-  return index.at(point.x() * comp.img_size.height() + point.y());
+  return index.at(qPointToInt(point));
 }
 
 bool CompartmentIndexer::isValid(const QPoint &point) {
-  return index.find(point.x() * comp.img_size.height() + point.y()) !=
-         index.cend();
+  return index.find(qPointToInt(point)) != index.cend();
 }
 
 void Field::init(Compartment *geom,
@@ -62,7 +64,7 @@ void Field::init(Compartment *geom,
   for (const auto &s : speciesIDvec) {
     qDebug("Field::init ::   - %s", s.c_str());
   }
-  img_conc = QImage(geom->img_size, QImage::Format_ARGB32);
+  img_conc = QImage(geom->getCompartmentImage().size(), QImage::Format_ARGB32);
 
   // set diffusion constants to 1 for now:
   diffusion_constant = std::vector<double>(n_species, 1.0);

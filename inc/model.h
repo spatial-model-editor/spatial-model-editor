@@ -16,7 +16,7 @@
 
 class Compartment {
  private:
-  QImage img_comp;
+  QImage imgComp;
 
  public:
   Compartment() = default;
@@ -26,16 +26,15 @@ class Compartment {
   std::string compartmentID;
   // vector of points that make up compartment
   std::vector<QPoint> ix;
-  // size of QImage
-  QSize img_size;
   // return a QImage of the compartment geometry
-  const QImage &getCompartmentImage();
+  const QImage &getCompartmentImage() const;
 };
 
 class CompartmentIndexer {
  private:
   const Compartment &comp;
   std::unordered_map<int, std::size_t> index;
+  int qPointToInt(const QPoint &point) const;
 
  public:
   explicit CompartmentIndexer(const Compartment &c);
