@@ -20,6 +20,16 @@ matrix:
       env: 
         - DEPLOY_FILE="spatial-model-editor"
         - COVERAGE="upload"
+      before_script:
+        # install a recent version of valgrind
+        - wget "https://sourceware.org/pub/valgrind/valgrind-3.15.0.tar.bz2"
+        - tar -xjf valgrind-3.15.0.tar.bz2
+        - cd valgrind-3.15.0
+        - ./configure --prefix=/usr/local
+        - make -j2
+        - sudo make install
+        - cd ..
+        - valgrind --version
     # osx release build: xcode 9.4.1 [9F2000], macOS 10.13
     - os: osx
       osx_image: xcode9.4
@@ -47,15 +57,6 @@ matrix:
       services: xvfb
 
 before_script:
-  # install a recent version of valgrind
-  - wget "https://sourceware.org/pub/valgrind/valgrind-3.15.0.tar.bz2"
-  - tar -xjf valgrind-3.15.0.tar.bz2
-  - cd valgrind-3.15.0
-  - ./configure --prefix=/usr/local
-  - make -j2
-  - sudo make install
-  - cd ..
-  - /usr/local/bin/valgrind --version
   # install pre-compiled Qt5 binaries & static libraries to $QT5_INSTALL_PREFIX
   # (note this has to match the install prefix hard coded in the pre-compiled library)
   - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"
@@ -72,6 +73,12 @@ before_script:
   - cd ..
 
 script:
+  # if coverity_scan is enabled, do nothing here
+  - if [[ "${COVERITY_SCAN_BRANCH}" == 1 ]];
+      then
+        echo "Don't build on coverty_scan branch.";
+        exit 0;
+    fi
   # run qmake to generate make file
   - mkdir build
   - cd build
@@ -91,8 +98,8 @@ script:
   # -config debug fails on osx because it looks for non-existent "debug" qt5 static libraries
   - '[ "$TRAVIS_OS_NAME" != osx ] || qmake -Wall -config release ../test.pro'
   - make -j2
-  - '[ "$TRAVIS_OS_NAME" != linux ] || /usr/local/bin/valgrind ./test -d=yes'
-  - '[ "$TRAVIS_OS_NAME" != osx ] || /usr/local/bin/valgrind ./test.app/Contents/MacOS/test -d=yes'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind ./test -d=yes'
+  - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes'
   # upload coverage report
   - '[ "$COVERAGE" != "upload" ] || lcov --directory . --capture --output-file coverage.info'
   - '[ "$COVERAGE" != "upload" ] || lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/exprtk/*" --output-file coverage.info'
