@@ -51,9 +51,10 @@ before_script:
   - wget "https://sourceware.org/pub/valgrind/valgrind-3.15.0.tar.bz2"
   - tar -xjf valgrind-3.15.0.tar.bz2
   - cd valgrind-3.15.0
-  - ./configure --prefix=/usr/local/bin
+  - ./configure --prefix=/usr/local
   - make -j2
   - sudo make install
+  - cd ..
   - /usr/local/bin/valgrind --version
   # install pre-compiled Qt5 binaries & static libraries to $QT5_INSTALL_PREFIX
   # (note this has to match the install prefix hard coded in the pre-compiled library)
