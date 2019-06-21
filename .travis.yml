@@ -16,6 +16,7 @@ matrix:
           packages:
             - libxkbcommon-dev
             - lcov
+            - valgrind
       env: 
         - DEPLOY_FILE="spatial-model-editor"
         - COVERAGE="upload"
@@ -31,10 +32,11 @@ matrix:
       before_install:
         - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
       addons:
-        - apt:
+        apt:
           packages:
             - libxkbcommon-dev
-        - coverity_scan:
+            - valgrind
+        coverity_scan:
           project:
             name: "lkeegan/spatial-model-editor"
             description: "Spatial Model Editor"
