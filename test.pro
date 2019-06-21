@@ -1,4 +1,4 @@
-QT       += core gui #testlib
+QT       += core gui testlib
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
 

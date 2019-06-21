@@ -14,7 +14,7 @@
 class QLabelMouseTracker : public QLabel {
   Q_OBJECT
  public:
-  explicit QLabelMouseTracker(QWidget *parent);
+  explicit QLabelMouseTracker(QWidget *parent = nullptr);
   // QImage used for pixel location and colour
   void setImage(const QImage &img);
   const QImage &getImage() const;
