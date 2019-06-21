@@ -47,8 +47,7 @@ matrix:
       services: xvfb
 
 before_script:
-  # get a more recent version of valgrind than apt provides
-  - valgrind --version
+  # install a recent version of valgrind
   - wget "https://sourceware.org/pub/valgrind/valgrind-3.15.0.tar.bz2"
   - tar -xjf valgrind-3.15.0.tar.bz2
   - cd valgrind-3.15.0
