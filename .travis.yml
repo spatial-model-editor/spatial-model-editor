@@ -47,6 +47,15 @@ matrix:
       services: xvfb
 
 before_script:
+  # get a more recent version of valgrind than apt provides
+  - valgrind --version
+  - wget "https://sourceware.org/pub/valgrind/valgrind-3.15.0.tar.bz2"
+  - tar -xjf valgrind-3.15.0.tar.bz2
+  - cd valgrind-3.15.0
+  - ./configure --prefix=/usr/bin
+  - make -j2
+  - sudo make install
+  - valgrind --version
   # install pre-compiled Qt5 binaries & static libraries to $QT5_INSTALL_PREFIX
   # (note this has to match the install prefix hard coded in the pre-compiled library)
   - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"
