@@ -54,8 +54,8 @@ void MainWindow::on_action_Open_SBML_file_triggered() {
   QString filename = QFileDialog::getOpenFileName(this, "Open SBML file", "",
                                                   "SBML file (*.xml)");
   if (!filename.isEmpty()) {
-    sbml_doc.importSBMLFile(qPrintable(filename));
-    if (sbml_doc.isValid) {
+    sbmlDoc.importSBMLFile(qPrintable(filename));
+    if (sbmlDoc.isValid) {
       update_ui();
     }
   }
@@ -64,24 +64,24 @@ void MainWindow::on_action_Open_SBML_file_triggered() {
 void MainWindow::update_ui() {
   // update list of compartments
   ui->listCompartments->clear();
-  ui->listCompartments->insertItems(0, sbml_doc.compartments);
+  ui->listCompartments->insertItems(0, sbmlDoc.compartments);
 
   // update list of membranes
   ui->listMembranes->clear();
-  ui->listMembranes->insertItems(0, sbml_doc.membranes);
+  ui->listMembranes->insertItems(0, sbmlDoc.membranes);
 
   // update list of functions
   ui->listFunctions->clear();
-  ui->listFunctions->insertItems(0, sbml_doc.functions);
+  ui->listFunctions->insertItems(0, sbmlDoc.functions);
 
   // update tree list of species
   ui->listSpecies->clear();
-  for (auto c : sbml_doc.compartments) {
+  for (auto c : sbmlDoc.compartments) {
     // add compartments as top level items
     QTreeWidgetItem *comp =
         new QTreeWidgetItem(ui->listSpecies, QStringList({c}));
     ui->listSpecies->addTopLevelItem(comp);
-    for (auto s : sbml_doc.species[c]) {
+    for (auto s : sbmlDoc.species[c]) {
       // add each species as child of compartment
       comp->addChild(new QTreeWidgetItem(comp, QStringList({s})));
     }
@@ -101,24 +101,23 @@ void MainWindow::on_actionGeometry_from_image_triggered() {
   QString filename =
       QFileDialog::getOpenFileName(this, "Import geometry from image", "",
                                    "Image Files (*.png *.jpg *.bmp *.tiff)");
-  sbml_doc.importGeometryFromImage(filename);
-  ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
+  sbmlDoc.importGeometryFromImage(filename);
+  ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
   ui->tabMain->setCurrentIndex(0);
 }
 
-void MainWindow::on_lblGeometry_mouseClicked() {
-  QRgb col = ui->lblGeometry->getColour();
-  if (waiting_for_compartment_choice) {
+void MainWindow::on_lblGeometry_mouseClicked(QRgb col) {
+  if (waitingForCompartmentChoice) {
     // update compartment geometry (i.e. colour) of selected compartment to the
     // one the user just clicked on
     auto comp = ui->listCompartments->selectedItems()[0]->text();
-    sbml_doc.setCompartmentColour(comp, col);
+    sbmlDoc.setCompartmentColour(comp, col);
     // update display by simulating user click on listCompartments
     on_listCompartments_currentTextChanged(comp);
-    waiting_for_compartment_choice = false;
+    waitingForCompartmentChoice = false;
   } else {
     // display compartment the user just clicked on
-    auto items = ui->listCompartments->findItems(sbml_doc.getCompartmentID(col),
+    auto items = ui->listCompartments->findItems(sbmlDoc.getCompartmentID(col),
                                                  Qt::MatchExactly);
     if (!items.empty()) {
       ui->listCompartments->setCurrentRow(ui->listCompartments->row(items[0]));
@@ -147,7 +146,7 @@ void MainWindow::on_listReactions_itemActivated(QTreeWidgetItem *item,
            item->text(column).toStdString().c_str());
     // display species information
     const auto *reac =
-        sbml_doc.model->getReaction(item->text(column).toStdString());
+        sbmlDoc.model->getReaction(item->text(column).toStdString());
     for (unsigned i = 0; i < reac->getNumProducts(); ++i) {
       ui->listProducts->addItem(reac->getProduct(i)->getSpecies().c_str());
     }
@@ -175,7 +174,7 @@ void MainWindow::on_listFunctions_currentTextChanged(
     qDebug("ui::listFunctions :: Function '%s' selected",
            currentText.toStdString().c_str());
     const auto *func =
-        sbml_doc.model->getFunctionDefinition(currentText.toStdString());
+        sbmlDoc.model->getFunctionDefinition(currentText.toStdString());
     for (unsigned i = 0; i < func->getNumArguments(); ++i) {
       ui->listFunctionParams->addItem(
           libsbml::SBML_formulaToL3String(func->getArgument(i)));
@@ -192,7 +191,7 @@ void MainWindow::on_listSpecies_itemActivated(QTreeWidgetItem *item,
     qDebug("ui::listSpecies :: Species '%s' selected",
            item->text(column).toStdString().c_str());
     // display species information
-    auto *spec = sbml_doc.model->getSpecies(item->text(column).toStdString());
+    auto *spec = sbmlDoc.model->getSpecies(item->text(column).toStdString());
     ui->txtInitialConcentration->setText(
         QString::number(spec->getInitialConcentration()));
     if ((spec->isSetConstant() && spec->getConstant()) ||
@@ -203,7 +202,7 @@ void MainWindow::on_listSpecies_itemActivated(QTreeWidgetItem *item,
     }
     ui->lblGeometryStatus->setText("Species concentration:");
     ui->lblGeometry->setImage(
-        sbml_doc.getConcentrationImage(item->text(column)));
+        sbmlDoc.getConcentrationImage(item->text(column)));
   }
 }
 
@@ -224,7 +223,7 @@ void MainWindow::on_graphClicked(QCPAbstractPlottable *plottable,
 }
 
 void MainWindow::on_btnChangeCompartment_clicked() {
-  waiting_for_compartment_choice = true;
+  waitingForCompartmentChoice = true;
 }
 
 void MainWindow::on_listCompartments_currentTextChanged(
@@ -233,10 +232,9 @@ void MainWindow::on_listCompartments_currentTextChanged(
   if (currentText.size() > 0) {
     qDebug("ui::listCompartments :: Compartment '%s' selected",
            currentText.toStdString().c_str());
-    const auto *comp =
-        sbml_doc.model->getCompartment(currentText.toStdString());
+    const auto *comp = sbmlDoc.model->getCompartment(currentText.toStdString());
     ui->txtCompartmentSize->setText(QString::number(comp->getSize()));
-    QRgb col = sbml_doc.getCompartmentColour(currentText);
+    QRgb col = sbmlDoc.getCompartmentColour(currentText);
     qDebug("ui::listCompartments :: Compartment colour: %u", col);
     if (col == 0) {
       // null (transparent white) RGB colour: compartment does not have
@@ -253,7 +251,7 @@ void MainWindow::on_listCompartments_currentTextChanged(
       ui->lblCompartmentColour->setText("");
       // update image mask
       QPixmap pixmap = QPixmap::fromImage(
-          sbml_doc.mapCompIdToGeometry.at(currentText).getCompartmentImage());
+          sbmlDoc.mapCompIdToGeometry.at(currentText).getCompartmentImage());
       ui->lblCompShape->setPixmap(pixmap);
       ui->lblCompShape->setText("");
     }
@@ -274,15 +272,15 @@ void MainWindow::on_tabMain_currentChanged(int index) {
   switch (index) {
     case 0:
       // geometry tab
-      ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
+      ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
       ui->lblGeometryStatus->setText("Compartment Geometry:");
       break;
     case 1:
       // membranes tab
       ui->lblMembraneShape->clear();
       ui->listMembranes->clear();
-      ui->listMembranes->addItems(sbml_doc.membranes);
-      ui->lblGeometry->setImage(sbml_doc.getCompartmentImage());
+      ui->listMembranes->addItems(sbmlDoc.membranes);
+      ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
       ui->lblGeometryStatus->setText("Compartment Geometry:");
       if (ui->listMembranes->count() > 0) {
         ui->listMembranes->setCurrentRow(0);
@@ -297,8 +295,8 @@ void MainWindow::on_tabMain_currentChanged(int index) {
       // reactions tab
       // update list of reactions
       ui->listReactions->clear();
-      for (auto iter = sbml_doc.reactions.cbegin();
-           iter != sbml_doc.reactions.cend(); ++iter) {
+      for (auto iter = sbmlDoc.reactions.cbegin();
+           iter != sbmlDoc.reactions.cend(); ++iter) {
         // add compartments as top level items
         QTreeWidgetItem *comp =
             new QTreeWidgetItem(ui->listReactions, QStringList({iter->first}));
@@ -323,7 +321,7 @@ void MainWindow::on_tabMain_currentChanged(int index) {
       break;
     case 6:
       // SBML tab
-      ui->txtSBML->setText(sbml_doc.getXml());
+      ui->txtSBML->setText(sbmlDoc.getXml());
       break;
   }
 }
@@ -335,8 +333,8 @@ void MainWindow::on_btnImportConcentration_clicked() {
   QString filename = QFileDialog::getOpenFileName(
       this, "Import species concentration from image", "",
       "Image Files (*.png *.jpg *.bmp)");
-  sbml_doc.importConcentrationFromImage(spec, filename);
-  ui->lblGeometry->setImage(sbml_doc.getConcentrationImage(spec));
+  sbmlDoc.importConcentrationFromImage(spec, filename);
+  ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(spec));
 }
 
 void MainWindow::on_listMembranes_currentTextChanged(
@@ -345,20 +343,20 @@ void MainWindow::on_listMembranes_currentTextChanged(
     qDebug("ui::listMembranes :: Membrane '%s' selected",
            currentText.toStdString().c_str());
     // update image
-    QPixmap pixmap = QPixmap::fromImage(sbml_doc.getMembraneImage(currentText));
+    QPixmap pixmap = QPixmap::fromImage(sbmlDoc.getMembraneImage(currentText));
     ui->lblMembraneShape->setPixmap(pixmap);
   }
 }
 
 void MainWindow::on_btnSimulate_clicked() {
   // simple 2d spatial simulation
-  Simulate sim(&sbml_doc);
+  simulate::Simulate sim(&sbmlDoc);
   // add fields
-  for (const auto &compartmentID : sbml_doc.compartments) {
-    sim.addField(&sbml_doc.mapCompIdToField.at(compartmentID));
+  for (const auto &compartmentID : sbmlDoc.compartments) {
+    sim.addField(&sbmlDoc.mapCompIdToField.at(compartmentID));
   }
   // add membranes
-  for (auto &membrane : sbml_doc.membraneVec) {
+  for (auto &membrane : sbmlDoc.membraneVec) {
     sim.addMembrane(&membrane);
   }
 

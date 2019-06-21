@@ -10,9 +10,11 @@
 #include <QImage>
 #include <QPoint>
 
-#include "model.h"
+#include "geometry.h"
 #include "numerics.h"
 #include "sbml.h"
+
+namespace simulate {
 
 class ReacEval {
  private:
@@ -44,9 +46,9 @@ class SimCompartment {
   ReacEval reacEval;
 
  public:
-  Field *field;
+  geometry::Field *field;
 
-  SimCompartment(SbmlDocWrapper *doc_ptr, Field *field_ptr);
+  SimCompartment(SbmlDocWrapper *doc_ptr, geometry::Field *field_ptr);
   // field.dcdt += result of applying reaction expressions to field.conc
   void evaluate_reactions();
 };
@@ -57,9 +59,9 @@ class SimMembrane {
   ReacEval reacEval;
 
  public:
-  Membrane *membrane;
+  geometry::Membrane *membrane;
 
-  SimMembrane(SbmlDocWrapper *doc_ptr, Membrane *membrane_ptr);
+  SimMembrane(SbmlDocWrapper *doc_ptr, geometry::Membrane *membrane_ptr);
   // field.dcdt += result of applying reaction expressions to field.conc
   void evaluate_reactions();
 };
@@ -78,11 +80,13 @@ class Simulate {
       {210, 245, 60}, {250, 190, 190}, {0, 128, 128},  {230, 190, 255},
       {170, 110, 40}, {255, 250, 200}, {128, 0, 0},    {170, 255, 195},
       {128, 128, 0},  {255, 215, 180}, {0, 0, 128},    {128, 128, 128}};
-  std::vector<Field *> field;
+  std::vector<geometry::Field *> field;
   std::vector<std::string> speciesID;
   explicit Simulate(SbmlDocWrapper *doc_ptr) : doc(doc_ptr) {}
-  void addField(Field *f);
-  void addMembrane(Membrane *membrane);
+  void addField(geometry::Field *f);
+  void addMembrane(geometry::Membrane *membrane);
   void integrateForwardsEuler(double dt);
   QImage getConcentrationImage();
 };
+
+}  // namespace simulate

@@ -17,7 +17,7 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-#include "model.h"
+#include "geometry.h"
 
 class SbmlDocWrapper {
  public:
@@ -35,9 +35,9 @@ class SbmlDocWrapper {
   QStringList functions;
 
   // spatial information
-  std::map<QString, Compartment> mapCompIdToGeometry;
-  std::map<QString, Field> mapCompIdToField;
-  std::vector<Membrane> membraneVec;
+  std::map<QString, geometry::Compartment> mapCompIdToGeometry;
+  std::map<QString, geometry::Field> mapCompIdToField;
+  std::vector<geometry::Membrane> membraneVec;
 
   void importSBMLFile(const std::string &filename);
 

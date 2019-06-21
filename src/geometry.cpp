@@ -1,6 +1,8 @@
 #include <unordered_map>
 
-#include "model.h"
+#include "geometry.h"
+
+namespace geometry {
 
 Compartment::Compartment(const std::string &compID, const QImage &img, QRgb col)
     : compartmentID(compID) {
@@ -234,3 +236,5 @@ Membrane::Membrane(const std::string &ID, Field *A, Field *B,
     indexPair.push_back({iA, iB});
   }
 }
+
+}  // namespace geometry

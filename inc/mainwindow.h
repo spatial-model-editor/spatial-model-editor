@@ -30,7 +30,7 @@ class MainWindow : public QMainWindow {
 
   void on_actionGeometry_from_image_triggered();
 
-  void on_lblGeometry_mouseClicked();
+  void on_lblGeometry_mouseClicked(QRgb col);
 
   void on_chkSpeciesIsSpatial_stateChanged(int arg1);
 
@@ -64,8 +64,8 @@ class MainWindow : public QMainWindow {
 
  private:
   Ui::MainWindow *ui;
-  SbmlDocWrapper sbml_doc;
-  bool waiting_for_compartment_choice = false;
+  SbmlDocWrapper sbmlDoc;
+  bool waitingForCompartmentChoice = false;
 
   // temp: vector of simulation images to display
   QVector<QImage> images;

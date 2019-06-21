@@ -14,6 +14,8 @@
 #include <QDebug>
 #include <QImage>
 
+namespace geometry {
+
 class Compartment {
  private:
   QImage imgComp;
@@ -113,3 +115,5 @@ class Membrane {
   Membrane(const std::string &ID, Field *A, Field *B,
            const std::vector<std::pair<QPoint, QPoint>> &membranePairs);
 };
+
+}  // namespace geometry
