@@ -11,6 +11,7 @@ CONFIG += c++11
 
 SOURCES += \
     test/main.cpp \
+    test/test_geometry.cpp \
     test/test_mainwindow.cpp \
     test/test_numerics.cpp \
     test/test_qlabelmousetracker.cpp \
@@ -25,8 +26,6 @@ SOURCES += \
     ext/qcustomplot/qcustomplot.cpp
 
 HEADERS += \
-    test/catch/catch.hpp \
-    test/catch/catch_qt_ostream.h \
     inc/mainwindow.h \
     inc/geometry.h \
     inc/numerics.h \
@@ -34,7 +33,9 @@ HEADERS += \
     inc/sbml.h \
     inc/simulate.h \
     ext/exprtk/exprtk.hpp \
-    ext/qcustomplot/qcustomplot.h
+    ext/qcustomplot/qcustomplot.h \
+    test/catch/catch.hpp \
+    test/catch/catch_qt_ostream.hpp
 
 FORMS += \
     ui/mainwindow.ui
