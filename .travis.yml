@@ -3,7 +3,7 @@ language: cpp
 env:
   global:
     - QT5_INSTALL_PREFIX="/opt/qt5-static"
-    - secure: "OOz0J/S83SowmOvo0iIYBWsEjojWHEdP3l1tjN67NWkiJuyEsdfBV4cAJyGLYSX1Nfa634WHQy+azpbLQUNAID1kOcaAl8ntVzpOYy55PE4IO2mKtzLu46rGJOVuqJHBVIDBJ89RLgdNWn5sZnUGZ9giln4iAApf4Prg1nPZZ7dTyiWYiEgtiyiAaXx6s6RUd2pt0xhBDH8SW/b9HFoEVHuoFn2JlBZrmHqS+UUcF2htDWBGui2+2ONlIIluYiqdZlUaABN0q3A3s5ST/4DtimLeDaVgOdhpjtW8bH4cCbsOCQ280Wqln7nDcbktSADsSBwJaA6Da7yMoeJkX9TT5YmpAhEhnhwXbx9UC5i9SCB/KkK8o+2723n85oVk78SmXw0vrOxqxSunge+2d7IQqNBlCDbNIOlhbrlnlv62RP8GXMnxqYyRaXNcvFqGULLvJozfaQyMlqWQFiIeP6nkl2yVr6ppuYUi9IGhifIGxZPG7RomvCCo02CcA3y51QTNQZgGKzfCbnO3sq0G1xV72wKRnUmkuMElSO4pn7XIIcXPHDn1OFapT9mYKQWoZkxEEq/73zMsWyx83INs3MBhlHYGWfAjfU8NU9EQ0+Sfh2m3F/Bz2JckFrOtK/afSj10rce84FpSglBENCYj/qJgwD1tAFSsSCs1lzc77qkaWJI="
+    - secure: "f5KWIIVpVdy66JpgiWbu/Ua9lbDmQJ0lxuki0GNL0d8WAetPlsFONgg0Ujr+vchFcz18FR58sTYAamxUPejrfjNXqeTNXAKPEqB2DZZlOs6v59SJx0NN7zZM2S+l03z9XBzdAq7VsFOrdqcPtiCv9LeHPGdSsrLqEuxBip7BQ1GAuFTIEOocYlbCFzhdnTY5fOKkagyUqxITMtgO/sNWX0052w/1mKs3iO41jlXkj897c7uW7ekx2mQ/MIMW5smcEm37IeZ02WWK8aKCXoFLq0RppP1UzDfqDYcJk5N+pVRDfXz6VHz0QOYYIDNLXC+RMbVeLo6rA4HCo7UhTl+GXfCjgsWocX4Kc48L0xiZus7kwscyFOSyRdzwMFXFppAfsr9GBuFhMdsvRfD1DtTWKOk1tyU/6h+6MdiB/bDkA1R3BVjVkwNuJfu0jZKGX2tXn6ZeFxWl++XlOrHkklRLWh7gLLBe8jKQfn15Ee7GyvBZytK0LDGKxLPupnTeWtIA65ucXYDUHzNbEr2SnQ3XCGJ+uyp52NPXeMVySdyxEj+vMDAtpLe4jQiYKqn8Mz/eyTf3tJdru2BTB4rFyrCpUW3yCn3WEffiF79ruAya3rBwv8ST4zFAmqUoAoBkt6Iz2URLYmGAbUq5VpggRLgljsa27dRDLdpyUWZanlhsxfo="
 
 matrix:
   include:
@@ -21,7 +21,7 @@ matrix:
         - DEPLOY_FILE="spatial-model-editor"
         - COVERAGE="upload"
       install:
-        # install a recent version of valgrind
+        # install a recent version of valgrind for tests
         - wget "https://sourceware.org/pub/valgrind/valgrind-3.15.0.tar.bz2"
         - tar -xjf valgrind-3.15.0.tar.bz2
         - cd valgrind-3.15.0
