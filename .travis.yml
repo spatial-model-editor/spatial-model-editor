@@ -52,10 +52,10 @@ before_script:
   - wget "https://sourceware.org/pub/valgrind/valgrind-3.15.0.tar.bz2"
   - tar -xjf valgrind-3.15.0.tar.bz2
   - cd valgrind-3.15.0
-  - ./configure --prefix=/usr/bin
+  - ./configure --prefix=/usr/local/bin
   - make -j2
   - sudo make install
-  - valgrind --version
+  - /usr/local/bin/valgrind --version
   # install pre-compiled Qt5 binaries & static libraries to $QT5_INSTALL_PREFIX
   # (note this has to match the install prefix hard coded in the pre-compiled library)
   - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"
@@ -91,8 +91,8 @@ script:
   # -config debug fails on osx because it looks for non-existent "debug" qt5 static libraries
   - '[ "$TRAVIS_OS_NAME" != osx ] || qmake -Wall -config release ../test.pro'
   - make -j2
-  - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind ./test -d=yes'
-  - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || /usr/local/bin/valgrind ./test -d=yes'
+  - '[ "$TRAVIS_OS_NAME" != osx ] || /usr/local/bin/valgrind ./test.app/Contents/MacOS/test -d=yes'
   # upload coverage report
   - '[ "$COVERAGE" != "upload" ] || lcov --directory . --capture --output-file coverage.info'
   - '[ "$COVERAGE" != "upload" ] || lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/exprtk/*" --output-file coverage.info'
