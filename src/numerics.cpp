@@ -3,10 +3,11 @@
 namespace numerics {
 
 ExprEval::ExprEval(const std::string &expression,
-                                   const std::vector<std::string> &variableName,
-                                   std::vector<double> &variableValue,
-                                   const std::vector<std::string> &constantName,
-                                   const std::vector<double> &constantValue) {
+                   const std::vector<std::string> &variableName,
+                   std::vector<double> &variableValue,
+                   const std::vector<std::string> &constantName,
+                   const std::vector<double> &constantValue) {
+  exprtk::symbol_table<double> exprtkSymbolTable;
   for (std::size_t i = 0; i < variableName.size(); ++i) {
     exprtkSymbolTable.add_variable(variableName[i], variableValue[i]);
   }
@@ -18,6 +19,6 @@ ExprEval::ExprEval(const std::string &expression,
   exprtkParser.compile(expression, exprtkExpression);
 }
 
-double ExprEval::operator()() { return exprtkExpression.value(); }
+double ExprEval::operator()() const { return exprtkExpression.value(); }
 
 }  // namespace numerics

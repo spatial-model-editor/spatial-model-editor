@@ -156,8 +156,8 @@ void SbmlDocWrapper::updateMembraneList() {
           }
           mapMembraneToImage[name] = img;
           // create Membrane object
-          Field *fieldA = &mapCompIdToField.at(compartments[i]);
-          Field *fieldB = &mapCompIdToField.at(compartments[j]);
+          geometry::Field *fieldA = &mapCompIdToField.at(compartments[i]);
+          geometry::Field *fieldB = &mapCompIdToField.at(compartments[j]);
           if (colA > colB) {
             std::swap(fieldA, fieldB);
           }
@@ -253,9 +253,9 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   mapColourToCompartment[colour] = compartmentID;
   mapCompartmentToColour[compartmentID] = colour;
   // create compartment geometry for this colour
-  mapCompIdToGeometry[compartmentID] =
-      Compartment(compartmentID.toStdString(), getCompartmentImage(), colour);
-  mapCompIdToField[compartmentID] = Field();
+  mapCompIdToGeometry[compartmentID] = geometry::Compartment(
+      compartmentID.toStdString(), getCompartmentImage(), colour);
+  mapCompIdToField[compartmentID] = geometry::Field();
   mapCompIdToField[compartmentID].init(&mapCompIdToGeometry[compartmentID],
                                        species[compartmentID]);
   // set all species concentrations to their initial value at all

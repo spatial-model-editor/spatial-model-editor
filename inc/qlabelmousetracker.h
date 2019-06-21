@@ -3,7 +3,8 @@
 //  - displays (and rescales without interpolation) an image,
 //  - tracks the mouse location in terms of the pixels of the original image
 //  - provides the colour of the last pixel that was clicked on
-//  - emits a signal when the user clicks the mouse
+//  - emits a signal when the user clicks the mouse, along with the colour of
+//  the pixel that was clicked on
 
 #pragma once
 
@@ -22,7 +23,7 @@ class QLabelMouseTracker : public QLabel {
 
  signals:
   // user clicks somewhere on the image
-  void mouseClicked();
+  void mouseClicked(QRgb col);
 
  protected:
   void mouseMoveEvent(QMouseEvent *ev) override;

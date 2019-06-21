@@ -16,8 +16,8 @@ SOURCES += \
     test/test_qlabelmousetracker.cpp \
     test/test_sbml.cpp \
     test/test_simulate.cpp \
+    src/geometry.cpp \
     src/mainwindow.cpp \
-    src/model.cpp \
     src/numerics.cpp \
     src/qlabelmousetracker.cpp \
     src/sbml.cpp \
@@ -28,7 +28,7 @@ HEADERS += \
     test/catch/catch.hpp \
     test/catch/catch_qt_ostream.h \
     inc/mainwindow.h \
-    inc/model.h \
+    inc/geometry.h \
     inc/numerics.h \
     inc/qlabelmousetracker.h \
     inc/sbml.h \

@@ -14,8 +14,8 @@ CONFIG += c++11
 
 SOURCES += \
     src/main.cpp \
+    src/geometry.cpp \
     src/mainwindow.cpp \
-    src/model.cpp \
     src/numerics.cpp \
     src/qlabelmousetracker.cpp \
     src/sbml.cpp \
@@ -23,8 +23,8 @@ SOURCES += \
     ext/qcustomplot/qcustomplot.cpp
 
 HEADERS += \
+    inc/geometry.h \
     inc/mainwindow.h \
-    inc/model.h \
     inc/numerics.h \
     inc/qlabelmousetracker.h \
     inc/sbml.h \

@@ -1,5 +1,7 @@
 #include "simulate.h"
 
+namespace simulate {
+
 ReacEval::ReacEval(SbmlDocWrapper *doc_ptr,
                    const std::vector<std::string> &speciesID,
                    const std::vector<std::string> &reactionID)
@@ -162,7 +164,8 @@ void ReacEval::evaluate() {
   }
 }
 
-SimCompartment::SimCompartment(SbmlDocWrapper *doc_ptr, Field *field_ptr)
+SimCompartment::SimCompartment(SbmlDocWrapper *doc_ptr,
+                               geometry::Field *field_ptr)
     : doc(doc_ptr), field(field_ptr) {
   std::vector<std::string> reactionID;
   QString compID = field->geometry->compartmentID.c_str();
@@ -210,7 +213,8 @@ void SimCompartment::evaluate_reactions() {
   }
 }
 
-SimMembrane::SimMembrane(SbmlDocWrapper *doc_ptr, Membrane *membrane_ptr)
+SimMembrane::SimMembrane(SbmlDocWrapper *doc_ptr,
+                         geometry::Membrane *membrane_ptr)
     : doc(doc_ptr), membrane(membrane_ptr) {
   std::vector<std::string> speciesID;
   std::vector<std::string> reactionID;
@@ -286,13 +290,13 @@ void SimMembrane::evaluate_reactions() {
   }
 }
 
-void Simulate::addField(Field *f) {
+void Simulate::addField(geometry::Field *f) {
   field.push_back(f);
   speciesID.insert(speciesID.end(), f->speciesID.begin(), f->speciesID.end());
   simComp.emplace_back(doc, f);
 }
 
-void Simulate::addMembrane(Membrane *membrane) {
+void Simulate::addMembrane(geometry::Membrane *membrane) {
   simMembrane.emplace_back(doc, membrane);
 }
 
@@ -354,3 +358,5 @@ QImage Simulate::getConcentrationImage() {
   }
   return img;
 }
+
+}  // namespace simulate

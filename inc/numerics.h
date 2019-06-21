@@ -1,4 +1,4 @@
-// Math expression evaluator
+// Math expression evaluator (simple wrapper around ExprTk)
 //  - takes a math expression as a string
 //  - also a list of constants and variables
 //  - compiles the mathematical expression using exprtk
@@ -34,10 +34,9 @@ class ExprEval {
            const std::vector<std::string> &constantName,
            const std::vector<double> &constantValue);
   // evaluate compiled expression
-  double operator()();
+  double operator()() const;
 
  private:
-  exprtk::symbol_table<double> exprtkSymbolTable;
   exprtk::expression<double> exprtkExpression;
 };
 
