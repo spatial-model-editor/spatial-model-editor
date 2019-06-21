@@ -191,8 +191,8 @@ void SbmlDocWrapper::updateReactionList() {
     }
     // single compartment
     if (comps.size() == 1) {
-      QString comp = QString(QString(comps.begin()->c_str()));
-      reactions[comp] << QString(reacID);
+      QString comp = comps.begin()->c_str();
+      reactions[comp] << reacID;
     } else if (comps.size() == 2) {
       auto iter = comps.cbegin();
       QString compA = iter->c_str();

@@ -19,7 +19,6 @@ matrix:
             - lcov
       env: 
         - DEPLOY_FILE="spatial-model-editor"
-        - COVERAGE="upload"
       install:
         # install a recent version of valgrind for tests
         - wget "https://sourceware.org/pub/valgrind/valgrind-3.15.0.tar.bz2"
@@ -32,19 +31,19 @@ matrix:
         - valgrind --version
       after_script:
         # upload coverage report
-        - '[ "$COVERAGE" != "upload" ] || lcov --directory build-tests --capture --output-file coverage.info'
-        - '[ "$COVERAGE" != "upload" ] || lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/exprtk/*" --output-file coverage.info'
-        - '[ "$COVERAGE" != "upload" ] || lcov --list coverage.info'
-        - '[ "$COVERAGE" != "upload" ] || bash <(curl -s https://codecov.io/bash) -X gcov -f "coverage.info"'
+        - lcov --directory build-tests --capture --output-file coverage.info
+        - lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/exprtk/*" --output-file coverage.info
+        - lcov --list coverage.info
+        - bash <(curl -s https://codecov.io/bash) -X gcov -f "coverage.info"
     # osx release build: xcode 9.4.1 [9F2000], macOS 10.13
     - os: osx
       osx_image: xcode9.4
       compiler: clang
       env: DEPLOY_FILE="spatial-model-editor.dmg"
-    # linux build with coverity scan (only runs on push to coverity_scan branch)
+    # linux build for coverity scan (only runs on push to coverity_scan branch)
     - os: linux
       dist: xenial
-      compiler: clang
+      compiler: gcc
       before_install:
         - '[ "$TRAVIS_BRANCH" == coverity_scan ] || exit 0'
         - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
@@ -97,7 +96,7 @@ script:
   - mkdir build-tests
   - cd build-tests
   - '[ "$TRAVIS_OS_NAME" != linux ] || qmake -Wall -config debug ../test.pro'
-  # -config debug fails on osx because it looks for non-existent "debug" qt5 static libraries
+  # NB -config debug fails on osx because it looks for non-existent "debug" qt5 static libraries
   - '[ "$TRAVIS_OS_NAME" != osx ] || qmake -Wall -config release ../test.pro'
   - make -j2
   - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind ./test -d=yes'

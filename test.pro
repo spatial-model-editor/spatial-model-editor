@@ -16,37 +16,41 @@ SOURCES += \
     test/test_qlabelmousetracker.cpp \
     test/test_sbml.cpp \
     test/test_simulate.cpp \
+    src/mainwindow.cpp \
     src/model.cpp \
     src/numerics.cpp \
+    src/qlabelmousetracker.cpp \
     src/sbml.cpp \
-    src/simulate.cpp
-
-    # src/mainwindow.cpp \
-    # src/qlabelmousetracker.cpp \
+    src/simulate.cpp \
+    ext/qcustomplot/qcustomplot.cpp
 
 HEADERS += \
+    test/catch/catch.hpp \
+    test/catch/catch_qt_ostream.h \
+    inc/mainwindow.h \
     inc/model.h \
     inc/numerics.h \
+    inc/qlabelmousetracker.h \
     inc/sbml.h \
     inc/simulate.h \
-    test/catch/catch.hpp \
     ext/exprtk/exprtk.hpp \
-    test/catch/catch_qt_ostream.h
+    ext/qcustomplot/qcustomplot.h
 
-    # inc/mainwindow.h \
-    # inc/qlabelmousetracker.h \
+FORMS += \
+    ui/mainwindow.ui
 
-INCLUDEPATH += inc ext/exprtk test/catch
+INCLUDEPATH += inc ext/qcustomplot ext/exprtk test/catch
 
-# for linux build, remove optimizations & add coverage info
+# for linux build, remove optimizations, add coverage info & compiler warnings
 unix: QMAKE_CXXFLAGS_RELEASE -= -O2
 unix: QMAKE_CXXFLAGS += --coverage
 unix: QMAKE_LFLAGS += --coverage
+unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wextra -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wuseless-cast -Wpedantic
 
 # these static libraries are available from
 # from https://github.com/lkeegan/libsbml-static
 LIBS += $$PWD/ext/libsbml/lib/libsbml-static.a $$PWD/ext/libsbml/lib/libexpat.a
-INCLUDEPATH += ext/libsbml/include
+QMAKE_CXXFLAGS += -isystem $$PWD/ext/libsbml/include
 
 # on windows add flags to support large object files
 # https://stackoverflow.com/questions/16596876/object-file-has-too-many-sections

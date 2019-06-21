@@ -29,7 +29,7 @@ Compartment::Compartment(const std::string &compID, const QImage &img, QRgb col)
 
 const QImage &Compartment::getCompartmentImage() { return img_comp; }
 
-CompartmentIndexer::CompartmentIndexer(const Compartment &comp) : comp(comp) {
+CompartmentIndexer::CompartmentIndexer(const Compartment &c) : comp(c) {
   // construct map from (x,y) Qpoint p to index
   std::size_t i = 0;
   for (const auto &p : comp.ix) {
