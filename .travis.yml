@@ -14,6 +14,7 @@ matrix:
       addons:
         apt:
           packages:
+            - libc6-dbg
             - libxkbcommon-dev
             - lcov
       env: 
