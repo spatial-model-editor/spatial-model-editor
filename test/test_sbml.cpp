@@ -1,5 +1,5 @@
 #include "catch.hpp"
-#include "catch_qt_ostream.h"
+#include "catch_qt_ostream.hpp"
 
 #include "sbml.h"
 
