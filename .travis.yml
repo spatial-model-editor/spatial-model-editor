@@ -15,9 +15,9 @@ matrix:
         apt:
           packages:
             - libc6-dbg
-#            - libxkbcommon-x11-dev
             - libxkbcommon-dev
             - lcov
+      services: xvfb
       env: 
         - DEPLOY_FILE="spatial-model-editor"
       install:
@@ -60,7 +60,6 @@ matrix:
           build_command_prepend: "qmake spatial-model-editor.pro"
           build_command: "make"
           branch_pattern: coverity_scan
-      services: xvfb
 
 before_script:
   # install pre-compiled Qt5 binaries & static libraries to $QT5_INSTALL_PREFIX
@@ -101,6 +100,7 @@ script:
   - '[ "$TRAVIS_OS_NAME" != osx ] || qmake -Wall -config release ../test.pro'
   - make -j2
   - '[ "$TRAVIS_OS_NAME" != linux ] || ldd ./test'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || ./test -d=yes'
   - '[ "$TRAVIS_OS_NAME" != linux ] || xvfb-run ./test -d=yes'
   - '[ "$TRAVIS_OS_NAME" != linux ] || xvfb-run valgrind ./test -d=yes'
   - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes'
