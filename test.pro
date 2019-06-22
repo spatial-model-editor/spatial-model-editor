@@ -57,6 +57,9 @@ QMAKE_CXXFLAGS += -isystem $$PWD/ext/libsbml/include
 # https://stackoverflow.com/questions/16596876/object-file-has-too-many-sections
 win32: QMAKE_CXXFLAGS += -Wa,-mbig-obj
 
+# on osx: set visibility to match setting used for compiling static Qt5 libs
+mac: QMAKE_CXXFLAGS += -fvisibility=hidden
+
 # on osx/linux, include QT headers as system headers to supress compiler warnings
 mac|unix: QMAKE_CXXFLAGS += -isystem "$$[QT_INSTALL_HEADERS]/qt5" \
                         -isystem "$$[QT_INSTALL_HEADERS]/QtCore" \
