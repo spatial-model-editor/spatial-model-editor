@@ -57,4 +57,5 @@ unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wext
 
 # on linux, include QT headers as system headers to supress compiler warnings
 
-unix: QMAKE_CXXFLAGS += -isystem "$$[QT_INSTALL_HEADERS]/qt5"
+unix: QMAKE_CXXFLAGS += -isystem "$$[QT_INSTALL_HEADERS]/qt5" \
+                        -isystem "$$[QT_INSTALL_HEADERS]/QtCore" \
