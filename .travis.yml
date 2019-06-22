@@ -2,7 +2,7 @@ language: cpp
 
 env:
   global:
-    - QT5_INSTALL_PREFIX="/opt/qt5-static"
+    - QT5_INSTALL_PREFIX="/usr/local/qt5-static"
     - secure: "f5KWIIVpVdy66JpgiWbu/Ua9lbDmQJ0lxuki0GNL0d8WAetPlsFONgg0Ujr+vchFcz18FR58sTYAamxUPejrfjNXqeTNXAKPEqB2DZZlOs6v59SJx0NN7zZM2S+l03z9XBzdAq7VsFOrdqcPtiCv9LeHPGdSsrLqEuxBip7BQ1GAuFTIEOocYlbCFzhdnTY5fOKkagyUqxITMtgO/sNWX0052w/1mKs3iO41jlXkj897c7uW7ekx2mQ/MIMW5smcEm37IeZ02WWK8aKCXoFLq0RppP1UzDfqDYcJk5N+pVRDfXz6VHz0QOYYIDNLXC+RMbVeLo6rA4HCo7UhTl+GXfCjgsWocX4Kc48L0xiZus7kwscyFOSyRdzwMFXFppAfsr9GBuFhMdsvRfD1DtTWKOk1tyU/6h+6MdiB/bDkA1R3BVjVkwNuJfu0jZKGX2tXn6ZeFxWl++XlOrHkklRLWh7gLLBe8jKQfn15Ee7GyvBZytK0LDGKxLPupnTeWtIA65ucXYDUHzNbEr2SnQ3XCGJ+uyp52NPXeMVySdyxEj+vMDAtpLe4jQiYKqn8Mz/eyTf3tJdru2BTB4rFyrCpUW3yCn3WEffiF79ruAya3rBwv8ST4zFAmqUoAoBkt6Iz2URLYmGAbUq5VpggRLgljsa27dRDLdpyUWZanlhsxfo="
 
 matrix:
@@ -15,13 +15,13 @@ matrix:
         apt:
           packages:
             - libc6-dbg
-            - libx11-xcb1
+#            - libxkbcommon-x11-dev
             - libxkbcommon-dev
             - lcov
       env: 
         - DEPLOY_FILE="spatial-model-editor"
       install:
-        # install a recent version of valgrind for tests
+        # install a recent version of valgrind to run tests
         - wget "https://sourceware.org/pub/valgrind/valgrind-3.15.0.tar.bz2"
         - tar -xjf valgrind-3.15.0.tar.bz2
         - cd valgrind-3.15.0
@@ -31,7 +31,7 @@ matrix:
         - cd ..
         - valgrind --version
       after_script:
-        # upload coverage report
+        # upload coverage report to codecov.io
         - lcov --directory build-tests --capture --output-file coverage.info
         - lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/exprtk/*" --output-file coverage.info
         - lcov --list coverage.info
@@ -41,7 +41,7 @@ matrix:
       osx_image: xcode9.4
       compiler: clang
       env: DEPLOY_FILE="spatial-model-editor.dmg"
-    # linux build for coverity scan (only runs on push to coverity_scan branch)
+    # linux build for coverity scan (only runs on push to "coverity_scan" branch)
     - os: linux
       dist: xenial
       compiler: gcc
@@ -100,7 +100,9 @@ script:
   # NB -config debug fails on osx because it looks for non-existent "debug" qt5 static libraries
   - '[ "$TRAVIS_OS_NAME" != osx ] || qmake -Wall -config release ../test.pro'
   - make -j2
-  - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind ./test -d=yes'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || ldd ./test'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || xvfb-run ./test -d=yes'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || xvfb-run valgrind ./test -d=yes'
   - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes'
   - cd ../build
 
