@@ -54,3 +54,6 @@ mac: QMAKE_CXXFLAGS += -fvisibility=hidden
 
 # on linux, enable compiler warnings
 unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wextra -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wuseless-cast -Wpedantic
+
+# and force qmake to include QT as system headers
+mac|unix: QMAKE_CXXFLAGS += -isystem $$[QT_INSTALL_HEADERS]
