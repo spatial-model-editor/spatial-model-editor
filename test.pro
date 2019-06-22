@@ -46,7 +46,7 @@ INCLUDEPATH += inc ext/qcustomplot ext/exprtk test/catch
 unix: QMAKE_CXXFLAGS_RELEASE -= -O2
 unix: QMAKE_CXXFLAGS += --coverage
 unix: QMAKE_LFLAGS += --coverage
-unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wextra -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wuseless-cast -Wpedantic
+unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wextra -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wpedantic
 
 # these static libraries are available from
 # from https://github.com/lkeegan/libsbml-static
@@ -61,4 +61,5 @@ win32: QMAKE_CXXFLAGS += -Wa,-mbig-obj
 mac|unix: QMAKE_CXXFLAGS += -isystem "$$[QT_INSTALL_HEADERS]/qt5" \
                         -isystem "$$[QT_INSTALL_HEADERS]/QtCore" \
                         -isystem "$$[QT_INSTALL_HEADERS]/QtWidgets" \
-                        -isystem "$$[QT_INSTALL_HEADERS]/QtGui"
+                        -isystem "$$[QT_INSTALL_HEADERS]/QtGui" \
+                        -isystem "$$[QT_INSTALL_HEADERS]/QtTest"

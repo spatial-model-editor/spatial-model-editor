@@ -53,7 +53,7 @@ win32: QMAKE_LFLAGS += -static-libgcc -static-libstdc++
 mac: QMAKE_CXXFLAGS += -fvisibility=hidden
 
 # on linux, enable compiler warnings
-unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wextra -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wuseless-cast -Wpedantic
+unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wextra -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wpedantic
 
 # on osx/linux, include QT headers as system headers to supress compiler warnings
 mac|unix: QMAKE_CXXFLAGS += -isystem "$$[QT_INSTALL_HEADERS]/qt5" \
