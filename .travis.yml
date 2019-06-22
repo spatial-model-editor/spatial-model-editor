@@ -15,9 +15,9 @@ matrix:
         apt:
           packages:
             - libc6-dbg
-#            - libxkbcommon-x11-dev
             - libxkbcommon-dev
             - lcov
+      services: xvfb
       env: 
         - DEPLOY_FILE="spatial-model-editor"
       install:
@@ -32,8 +32,8 @@ matrix:
         - valgrind --version
       after_script:
         # upload coverage report to codecov.io
-        - lcov --directory build-tests --capture --output-file coverage.info
-        - lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/exprtk/*" --output-file coverage.info
+        - lcov --directory ../build-tests --capture --output-file coverage.info
+        - lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/exprtk/*" "*/build-tests/*" "*/qcustomplot/*" --output-file coverage.info
         - lcov --list coverage.info
         - bash <(curl -s https://codecov.io/bash) -X gcov -f "coverage.info"
     # osx release build: xcode 9.4.1 [9F2000], macOS 10.13
@@ -60,7 +60,6 @@ matrix:
           build_command_prepend: "qmake spatial-model-editor.pro"
           build_command: "make"
           branch_pattern: coverity_scan
-      services: xvfb
 
 before_script:
   # install pre-compiled Qt5 binaries & static libraries to $QT5_INSTALL_PREFIX
@@ -100,9 +99,7 @@ script:
   # NB -config debug fails on osx because it looks for non-existent "debug" qt5 static libraries
   - '[ "$TRAVIS_OS_NAME" != osx ] || qmake -Wall -config release ../test.pro'
   - make -j2
-  - '[ "$TRAVIS_OS_NAME" != linux ] || ldd ./test'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || xvfb-run ./test -d=yes'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || xvfb-run valgrind ./test -d=yes'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind ./test -d=yes'
   - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes'
   - cd ../build
 

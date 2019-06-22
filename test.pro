@@ -46,7 +46,7 @@ INCLUDEPATH += inc ext/qcustomplot ext/exprtk test/catch
 unix: QMAKE_CXXFLAGS_RELEASE -= -O2
 unix: QMAKE_CXXFLAGS += --coverage
 unix: QMAKE_LFLAGS += --coverage
-unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wextra -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wuseless-cast -Wpedantic
+unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wextra -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wpedantic
 
 # these static libraries are available from
 # from https://github.com/lkeegan/libsbml-static
@@ -56,3 +56,13 @@ QMAKE_CXXFLAGS += -isystem $$PWD/ext/libsbml/include
 # on windows add flags to support large object files
 # https://stackoverflow.com/questions/16596876/object-file-has-too-many-sections
 win32: QMAKE_CXXFLAGS += -Wa,-mbig-obj
+
+# on osx: set visibility to match setting used for compiling static Qt5 libs
+mac: QMAKE_CXXFLAGS += -fvisibility=hidden
+
+# on osx/linux, include QT headers as system headers to supress compiler warnings
+mac|unix: QMAKE_CXXFLAGS += -isystem "$$[QT_INSTALL_HEADERS]/qt5" \
+                        -isystem "$$[QT_INSTALL_HEADERS]/QtCore" \
+                        -isystem "$$[QT_INSTALL_HEADERS]/QtWidgets" \
+                        -isystem "$$[QT_INSTALL_HEADERS]/QtGui" \
+                        -isystem "$$[QT_INSTALL_HEADERS]/QtTest"
