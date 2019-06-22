@@ -56,3 +56,9 @@ QMAKE_CXXFLAGS += -isystem $$PWD/ext/libsbml/include
 # on windows add flags to support large object files
 # https://stackoverflow.com/questions/16596876/object-file-has-too-many-sections
 win32: QMAKE_CXXFLAGS += -Wa,-mbig-obj
+
+# on osx/linux, include QT headers as system headers to supress compiler warnings
+mac|unix: QMAKE_CXXFLAGS += -isystem "$$[QT_INSTALL_HEADERS]/qt5" \
+                        -isystem "$$[QT_INSTALL_HEADERS]/QtCore" \
+                        -isystem "$$[QT_INSTALL_HEADERS]/QtWidgets" \
+                        -isystem "$$[QT_INSTALL_HEADERS]/QtGui"
