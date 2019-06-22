@@ -99,10 +99,7 @@ script:
   # NB -config debug fails on osx because it looks for non-existent "debug" qt5 static libraries
   - '[ "$TRAVIS_OS_NAME" != osx ] || qmake -Wall -config release ../test.pro'
   - make -j2
-  - '[ "$TRAVIS_OS_NAME" != linux ] || ldd ./test'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || ./test -d=yes'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || xvfb-run ./test -d=yes'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || xvfb-run valgrind ./test -d=yes'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind ./test -d=yes'
   - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes'
   - cd ../build
 
