@@ -1,4 +1,4 @@
-// operator << overloads to enable catch2 to display some Qt types
+// ostream operator << overloads to enable catch2 to display some Qt types
 
 #pragma once
 
