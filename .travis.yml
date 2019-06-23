@@ -33,7 +33,7 @@ matrix:
       after_script:
         # upload coverage report to codecov.io
         - lcov --directory ../build-tests --capture --output-file coverage.info
-        - lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/exprtk/*" --output-file coverage.info
+        - lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/exprtk/*" "*/build-tests/*" "*/qcustomplot/*" --output-file coverage.info
         - lcov --list coverage.info
         - bash <(curl -s https://codecov.io/bash) -X gcov -f "coverage.info"
     # osx release build: xcode 9.4.1 [9F2000], macOS 10.13
