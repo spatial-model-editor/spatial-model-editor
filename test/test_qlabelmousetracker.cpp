@@ -23,14 +23,14 @@ TEST_CASE("qlabelmousetracker", "[qlabelmousetracker]") {
 
   REQUIRE(clicks.size() == 0);
   // click on image:
-  QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                    QPoint(mouseTracker.pos()) + QPoint(1, 1));
+  QTest::mouseMove(&mouseTracker, mouseTracker.pos() + QPoint(1, 1));
+  QTest::mouseClick(&mouseTracker, Qt::LeftButton);
   REQUIRE(clicks.size() == 1);
   REQUIRE(clicks.back() == col);
   REQUIRE(mouseTracker.getColour() == col);
-  // click again on image:
-  QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                    QPoint(mouseTracker.pos() + QPoint(4, 3)));
+  // click again elsewhere on image:
+  QTest::mouseMove(&mouseTracker, mouseTracker.pos() + QPoint(6, 3));
+  QTest::mouseClick(&mouseTracker, Qt::LeftButton);
   REQUIRE(clicks.size() == 2);
   REQUIRE(clicks.back() == col);
   REQUIRE(mouseTracker.getColour() == col);
