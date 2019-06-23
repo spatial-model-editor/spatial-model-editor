@@ -1,4 +1,4 @@
-#include <QtTest/QtTest>
+#include <QtTest>
 
 #include "catch.hpp"
 #include "catch_qt_ostream.hpp"
@@ -19,7 +19,7 @@ TEST_CASE("qlabelmousetracker", "[qlabelmousetracker]") {
 
   std::vector<QRgb> clicks;
   QObject::connect(&mouseTracker, &QLabelMouseTracker::mouseClicked,
-                   [&](QRgb c) { clicks.push_back(c); });
+                   [&clicks](QRgb c) { clicks.push_back(c); });
 
   REQUIRE(clicks.size() == 0);
   // click on image:
