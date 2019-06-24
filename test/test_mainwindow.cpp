@@ -39,6 +39,9 @@ TEST_CASE("F1: opens about dialog", "[mainwindow][gui]") {
   QTest::keyClick(&w, Qt::Key_F1);
   // but about 50ms later the singleShot lambda fires
   // which captures the msgbox title & then closes it
+  QApplication::processEvents();
+  qDebug("Finished processing events now: %llu",
+         QDateTime::currentMSecsSinceEpoch() - startTime);
   REQUIRE(title == "About");
   qDebug("End of test now: %llu",
          QDateTime::currentMSecsSinceEpoch() - startTime);
