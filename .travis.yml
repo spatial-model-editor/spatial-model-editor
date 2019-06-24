@@ -22,9 +22,8 @@ matrix:
         - DEPLOY_FILE="spatial-model-editor"
       install:
         # install a recent version of valgrind to run tests
-        - wget "https://github.com/lkeegan/travis-binaries/releases/latest/download/valgrind"
-        - chmod +x valgrind
-        - sudo cp valgrind /usr/local/bin/.
+        - wget "https://github.com/lkeegan/travis-binaries/releases/latest/download/valgrind.tgz"
+        - sudo tar -xzvf valgrind.tgz -C /
         - valgrind --version
       after_script:
         # upload coverage report to codecov.io
