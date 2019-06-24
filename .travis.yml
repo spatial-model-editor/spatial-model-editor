@@ -20,10 +20,16 @@ matrix:
       services: xvfb
       env: 
         - DEPLOY_FILE="spatial-model-editor"
+        - VALGRIND_VERSION="3.15.0"
       install:
         # install a recent version of valgrind to run tests
-        - wget "https://github.com/lkeegan/travis-binaries/releases/latest/download/valgrind.tgz"
-        - sudo tar -xzvf valgrind.tgz -C /
+        - wget "https://sourceware.org/pub/valgrind/valgrind-${VALGRIND_VERSION}.tar.bz2"
+        - tar -xjf valgrind-${VALGRIND_VERSION}.tar.bz2
+        - cd valgrind-${VALGRIND_VERSION}
+        - "./configure"
+        - make -j2
+        - sudo make install
+        - cd ../
         - valgrind --version
       after_script:
         # upload coverage report to codecov.io
