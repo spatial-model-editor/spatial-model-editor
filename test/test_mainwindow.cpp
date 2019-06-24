@@ -36,7 +36,9 @@ TEST_CASE("F1: opens about dialog", "[mainwindow][gui]") {
   // this message box is blocking until user clicks ok...
   qDebug("Key click now: %llu",
          QDateTime::currentMSecsSinceEpoch() - startTime);
-  w.setFocus();
+  w.setFocus(Qt::MouseFocusReason);
+  w.raise();
+  w.activateWindow();
   QTest::keyClick(&w, Qt::Key_F1);
   // but about 50ms later the singleShot lambda fires
   // which captures the msgbox title & then closes it

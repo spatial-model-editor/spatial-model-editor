@@ -17,6 +17,7 @@ matrix:
             - libc6-dbg
             - libxkbcommon-dev
             - lcov
+            - herbstluftwm
       services: xvfb
       env: 
         - DEPLOY_FILE="spatial-model-editor"
@@ -31,6 +32,9 @@ matrix:
         - sudo make install
         - cd ../
         - valgrind --version
+        # start a window manager so the GUI tests can have focus set
+        - "herbstluftwm &"
+        - sleep 1
       after_script:
         # upload coverage report to codecov.io
         - lcov --directory ../build-tests --capture --output-file coverage.info
