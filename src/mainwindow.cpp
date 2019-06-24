@@ -57,7 +57,7 @@ void MainWindow::on_action_Open_SBML_file_triggered() {
   QString filename = QFileDialog::getOpenFileName(this, "Open SBML file", "",
                                                   "SBML file (*.xml)");
   if (!filename.isEmpty()) {
-    sbmlDoc.importSBMLFile(qPrintable(filename));
+    sbmlDoc.importSBMLFile(filename.toStdString());
     if (sbmlDoc.isValid) {
       update_ui();
     }

@@ -5,7 +5,7 @@
 
 #include "mainwindow.h"
 
-constexpr int delay = 500;
+constexpr int delay = 200;
 
 TEST_CASE("F1: opens about dialog", "[mainwindow][gui]") {
   MainWindow w;
