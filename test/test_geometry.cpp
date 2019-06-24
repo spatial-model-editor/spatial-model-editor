@@ -3,7 +3,7 @@
 
 #include "geometry.h"
 
-TEST_CASE("single pixel compartment", "[geometry]") {
+TEST_CASE("single pixel compartment", "[geometry][non-gui]") {
   QImage img(1, 1, QImage::Format_RGB32);
   QRgb col = QColor(12, 243, 154).rgba();
   img.setPixel(0, 0, col);

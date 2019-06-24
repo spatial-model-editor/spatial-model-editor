@@ -3,4 +3,4 @@
 
 #include "simulate.h"
 
-TEST_CASE("simulate: todo") { REQUIRE(1 == 1); }
+TEST_CASE("simulate: todo", "[simulate][non-gui]") { REQUIRE(1 == 1); }
