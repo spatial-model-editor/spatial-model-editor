@@ -9,17 +9,24 @@ constexpr int delay = 500;
 
 TEST_CASE("F1: opens about dialog", "[mainwindow][gui]") {
   MainWindow w;
+  long long startTime = QDateTime::currentMSecsSinceEpoch();
   w.show();
   // wait for mainwindow to load fully
   QTest::qWait(delay);
   QString title;
   // call this lambda in 50ms:
   // captures title of active messagebox & closes it
-  QTimer::singleShot(delay, [&title]() {
+  qDebug("Timer defined now: %llu",
+         QDateTime::currentMSecsSinceEpoch() - startTime);
+  QTimer::singleShot(delay, [&title, &startTime]() {
+    qDebug("Timer running now: %llu",
+           QDateTime::currentMSecsSinceEpoch() - startTime);
     QWidget* widget = QApplication::activeModalWidget();
     if (widget) {
       auto* msgBox = qobject_cast<QMessageBox*>(widget);
       title = msgBox->windowTitle();
+      qDebug("Closing QMessageBox with title '%s'",
+             title.toStdString().c_str());
       widget->close();
     }
   });
@@ -27,10 +34,14 @@ TEST_CASE("F1: opens about dialog", "[mainwindow][gui]") {
   REQUIRE(title == "");
   // press F1: opens modal message box
   // this message box is blocking until user clicks ok...
+  qDebug("Key click now: %llu",
+         QDateTime::currentMSecsSinceEpoch() - startTime);
   QTest::keyClick(&w, Qt::Key_F1);
   // but about 50ms later the singleShot lambda fires
   // which captures the msgbox title & then closes it
   REQUIRE(title == "About");
+  qDebug("End of test now: %llu",
+         QDateTime::currentMSecsSinceEpoch() - startTime);
 }
 
 TEST_CASE("ctrl+o: opens open file dialog", "[mainwindow][gui]") {
