@@ -32,7 +32,7 @@ matrix:
         - sudo make install
         - cd ../
         - valgrind --version
-        # start a window manager so the GUI tests can have focus set
+        # start a window manager so the Qt GUI tests can have their focus set
         - "herbstluftwm &"
         - sleep 1
       after_script:
@@ -104,10 +104,8 @@ script:
   # NB -config debug fails on osx because it looks for non-existent "debug" qt5 static libraries
   - '[ "$TRAVIS_OS_NAME" != osx ] || qmake -Wall -config release ../test.pro'
   - make -j2
-  - '[ "$TRAVIS_OS_NAME" != linux ] || ./test -d=yes'
-  # also run non-gui tests with valgrind:
-  - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind ./test -d=yes "[non-gui]"'
-  # skip gui tests on osx for now:
+  - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind ./test -d=yes'
+  # skip gui tests on osx for now (message boxes have no titles on osx):
   - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes "[non-gui]"'
   - cd ../build
 
