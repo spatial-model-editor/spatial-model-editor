@@ -100,8 +100,11 @@ script:
   # NB -config debug fails on osx because it looks for non-existent "debug" qt5 static libraries
   - '[ "$TRAVIS_OS_NAME" != osx ] || qmake -Wall -config release ../test.pro'
   - make -j2
-  - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind ./test -d=yes'
-  - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || ./test -d=yes'
+  # also run non-gui tests with valgrind:
+  - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind ./test -d=yes "[non-gui]"'
+  # skip gui tests on osx for now:
+  - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes "[non-gui]"'
   - cd ../build
 
 notifications:
