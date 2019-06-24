@@ -17,6 +17,7 @@ matrix:
             - libc6-dbg
             - libxkbcommon-dev
             - lcov
+            - herbstluftwm
       services: xvfb
       env: 
         - DEPLOY_FILE="spatial-model-editor"
@@ -31,6 +32,9 @@ matrix:
         - sudo make install
         - cd ../
         - valgrind --version
+        # start a window manager so the Qt GUI tests can have their focus set
+        - "herbstluftwm &"
+        - sleep 1
       after_script:
         # upload coverage report to codecov.io
         - lcov --directory ../build-tests --capture --output-file coverage.info
@@ -101,7 +105,8 @@ script:
   - '[ "$TRAVIS_OS_NAME" != osx ] || qmake -Wall -config release ../test.pro'
   - make -j2
   - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind ./test -d=yes'
-  - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes'
+  # skip gui tests on osx for now (message boxes have no titles on osx):
+  - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes "[non-gui]"'
   - cd ../build
 
 notifications:

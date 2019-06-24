@@ -5,7 +5,7 @@
 
 #include "qlabelmousetracker.h"
 
-TEST_CASE("qlabelmousetracker", "[qlabelmousetracker]") {
+TEST_CASE("qlabelmousetracker", "[qlabelmousetracker][gui]") {
   QLabelMouseTracker mouseTracker;
   QImage img(1, 1, QImage::Format_RGB32);
   QRgb col = QColor(12, 243, 154).rgba();

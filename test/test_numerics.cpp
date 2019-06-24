@@ -49,7 +49,7 @@ TEST_CASE("evaluate expression: pow function", "[numerics]") {
   REQUIRE(r() == Approx(pow(2, 10)));
 }
 
-TEST_CASE("evaluate expression: cos, sin functions", "[numerics]") {
+TEST_CASE("evaluate expression: cos, sin functions", "[numerics][non-gui]") {
   // mathematical expression as string
   std::string expr = "cos(1.234)*cos(1.234) + sin(1.234)*sin(1.234)";
   // names of variables in expression
@@ -72,7 +72,7 @@ TEST_CASE("evaluate expression: cos, sin functions", "[numerics]") {
   REQUIRE(r() == Approx(1.0));
 }
 
-TEST_CASE("evaluate expression: constants, no vars", "[numerics]") {
+TEST_CASE("evaluate expression: constants, no vars", "[numerics][non-gui]") {
   std::string expr = "a+b+c";
   std::vector<std::string> var_names = {};
   std::vector<double> vars = {};
@@ -87,7 +87,7 @@ TEST_CASE("evaluate expression: constants, no vars", "[numerics]") {
   REQUIRE(r() == Approx(4.8));
 }
 
-TEST_CASE("evaluate expression: vars and constants", "[numerics]") {
+TEST_CASE("evaluate expression: vars and constants", "[numerics][non-gui]") {
   GIVEN("expression with vars and constants") {
     std::string expr = "x*c0 + y*cd";
     std::vector<std::string> var_names = {"x", "y"};

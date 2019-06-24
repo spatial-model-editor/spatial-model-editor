@@ -3,7 +3,7 @@
 
 #include "sbml.h"
 
-SCENARIO("import SBML level 2 document", "[sbml]") {
+SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
   // create simple SBML level 2.4 model
   std::unique_ptr<libsbml::SBMLDocument> document(
       new libsbml::SBMLDocument(2, 4));
@@ -130,7 +130,7 @@ SCENARIO("import SBML level 2 document", "[sbml]") {
   }
 }
 
-SCENARIO("import geometry from image", "[sbml]") {
+SCENARIO("import geometry from image", "[sbml][non-gui]") {
   SbmlDocWrapper s;
   REQUIRE(s.hasGeometry == false);
   GIVEN("Single pixel image") {
@@ -150,7 +150,8 @@ SCENARIO("import geometry from image", "[sbml]") {
   }
 }
 
-TEST_CASE("load SBML level 3 document with spatial extension") {
+TEST_CASE("load SBML level 3 document with spatial extension",
+          "[sbml][non-gui]") {
   // create SBML level 3.1.1 model with spatial extension
   libsbml::SpatialPkgNamespaces sbmlns(3, 1, 1);
   libsbml::SBMLDocument document(&sbmlns);

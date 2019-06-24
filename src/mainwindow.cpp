@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
 MainWindow::~MainWindow() { delete ui; }
 
 void MainWindow::on_action_About_triggered() {
+  qDebug("ui::on_action_About_triggered :: constructing 'About' MessageBox");
   QMessageBox msgBox;
   msgBox.setWindowTitle("About");
   QString info("Spatial Model Editor\n");
@@ -44,7 +45,9 @@ void MainWindow::on_action_About_triggered() {
   }
   info.append("\nC++ Mathematical Expression  Toolkit Library (ExprTk)");
   msgBox.setText(info);
+  qDebug("ui::on_action_About_triggered :: executing 'About' MessageBox");
   msgBox.exec();
+  qDebug("ui::on_action_About_triggered :: 'About' MessageBox closed");
 }
 
 void MainWindow::on_actionE_xit_triggered() { QApplication::quit(); }
