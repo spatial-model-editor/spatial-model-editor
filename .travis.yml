@@ -106,7 +106,7 @@ script:
   - make -j2
   - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind ./test -d=yes'
   # skip gui tests on osx for now (message boxes have no titles on osx):
-  - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes "[non-gui]"'
+  - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes'
   - cd ../build
 
 notifications:
