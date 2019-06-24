@@ -23,6 +23,7 @@ matrix:
       install:
         # install a recent version of valgrind to run tests
         - wget "https://github.com/lkeegan/travis-binaries/releases/latest/download/valgrind"
+        - chmod +x valgrind
         - sudo cp valgrind /usr/local/bin/.
         - valgrind --version
       after_script:
