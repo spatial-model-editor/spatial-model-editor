@@ -39,6 +39,7 @@ TEST_CASE("F1: opens about dialog", "[mainwindow][gui]") {
   w.setFocus(Qt::MouseFocusReason);
   w.raise();
   w.activateWindow();
+  QApplication::setActiveWindow(&w);
   QTest::keyClick(&w, Qt::Key_F1);
   // but about 50ms later the singleShot lambda fires
   // which captures the msgbox title & then closes it
