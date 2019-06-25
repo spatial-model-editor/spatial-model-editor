@@ -2,6 +2,8 @@
 #include "catch_qt_ostream.hpp"
 
 #include "sbml.h"
+#include "sbml_test_data/ABtoC.h"
+#include "sbml_test_data/very_simple_model.h"
 
 SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
   // create simple SBML level 2.4 model
@@ -157,4 +159,61 @@ TEST_CASE("load SBML level 3 document with spatial extension",
   libsbml::SBMLDocument document(&sbmlns);
 
   REQUIRE(1 == 1);
+}
+
+SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {
+  std::unique_ptr<libsbml::SBMLDocument> doc(
+      libsbml::readSBMLFromString(sbml_test_data::ABtoC));
+  // write SBML document to file
+  libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
+
+  SbmlDocWrapper s;
+  s.importSBMLFile("tmp.xml");
+  GIVEN("SBML document") {
+    WHEN("importSBMLFile called") {
+      THEN("find compartments") {
+        REQUIRE(s.compartments.size() == 1);
+        REQUIRE(s.compartments[0] == "comp");
+      }
+      THEN("find species") {
+        REQUIRE(s.species.size() == 1);
+        REQUIRE(s.species["comp"].size() == 3);
+        REQUIRE(s.species["comp"][0] == "A");
+        REQUIRE(s.species["comp"][1] == "B");
+        REQUIRE(s.species["comp"][2] == "C");
+      }
+    }
+  }
+}
+
+SCENARIO("SBML test data: very-simple-model.xml", "[sbml][non-gui]") {
+  std::unique_ptr<libsbml::SBMLDocument> doc(
+      libsbml::readSBMLFromString(sbml_test_data::very_simple_model));
+  // write SBML document to file
+  libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
+
+  SbmlDocWrapper s;
+  s.importSBMLFile("tmp.xml");
+  GIVEN("SBML document") {
+    WHEN("importSBMLFile called") {
+      THEN("find compartments") {
+        REQUIRE(s.compartments.size() == 3);
+        REQUIRE(s.compartments[0] == "c1");
+        REQUIRE(s.compartments[1] == "c2");
+        REQUIRE(s.compartments[2] == "c3");
+      }
+      THEN("find species") {
+        REQUIRE(s.species.size() == 3);
+        REQUIRE(s.species["c1"].size() == 2);
+        REQUIRE(s.species["c1"][0] == "A_c1");
+        REQUIRE(s.species["c1"][1] == "B_c1");
+        REQUIRE(s.species["c2"].size() == 2);
+        REQUIRE(s.species["c2"][0] == "A_c2");
+        REQUIRE(s.species["c2"][1] == "B_c2");
+        REQUIRE(s.species["c3"].size() == 2);
+        REQUIRE(s.species["c3"][0] == "A_c3");
+        REQUIRE(s.species["c3"][1] == "B_c3");
+      }
+    }
+  }
 }
