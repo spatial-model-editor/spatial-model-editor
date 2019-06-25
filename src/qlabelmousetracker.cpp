@@ -36,6 +36,9 @@ void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
     currentPixel.setX((pixmap.width() * ev->pos().x()) / this->size().width());
     currentPixel.setY((pixmap.height() * ev->pos().y()) /
                       this->size().height());
+    qDebug("QLabelMouseTracker :: pixmap size %dx%d, widget size %dx%d",
+           pixmap.width(), pixmap.height(), this->size().width(),
+           this->size().height());
     // update current colour and emit mouseClicked signal
     if (!pixmap.isNull()) {
       colour = image.pixelColor(currentPixel).rgb();
