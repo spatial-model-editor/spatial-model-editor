@@ -57,6 +57,9 @@ void MainWindow::on_action_Open_SBML_file_triggered() {
   QString filename = QFileDialog::getOpenFileName(
       this, "Open SBML file", "", "SBML file (*.xml)", nullptr,
       QFileDialog::Option::DontUseNativeDialog);
+  // TODO: QFileDialog::Option::DontUseNativeDialog is used above to avoid this
+  // call hanging on mac CI tests - check if it works with/without on a real
+  // mac, and also if it looks worse - if so maybe remove this flag?
   if (!filename.isEmpty()) {
     sbmlDoc.importSBMLFile(filename.toStdString());
     if (sbmlDoc.isValid) {
