@@ -60,9 +60,9 @@ class ModalWidgetCloser : public QObject {
         } else if (p->acceptMode() == QFileDialog::AcceptSave) {
           result = "QFileDialog::AcceptSave";
         }
+        qDebug("ModalWidgetCloser :: found QFileDialog with acceptMode '%s'",
+               result.toStdString().c_str());
       }
-      qDebug("ModalWidgetCloser :: found QFileDialog with acceptMode '%s'",
-             result.toStdString().c_str());
       // check if widget is a QMessageBox
       auto *msgBox = qobject_cast<QMessageBox *>(widget);
       if (msgBox != nullptr) {

@@ -32,16 +32,3 @@ TEST_CASE("ctrl+o: opens open file dialog", "[mainwindow][gui]") {
   QTest::keyClick(&w, Qt::Key_O, Qt::ControlModifier);
   REQUIRE(mwc.result == "QFileDialog::AcceptOpen");
 }
-
-TEST_CASE("alt+f, o: opens open file dialog", "[mainwindow][gui]") {
-  MainWindow w;
-  w.show();
-  QTest::qWait(delay);
-  ModalWidgetCloser mwc;
-  // alt-f goes to mainwindow, which opens File menu:
-  QTest::keyClick(&w, Qt::Key_F, Qt::AltModifier, 100);
-  // o then needs to go to the menu, not the mainwindow:
-  QTest::keyClick(QApplication::activePopupWidget(), Qt::Key_O, Qt::NoModifier,
-                  100);
-  REQUIRE(mwc.result == "QFileDialog::AcceptOpen");
-}
