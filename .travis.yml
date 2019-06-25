@@ -18,6 +18,7 @@ matrix:
             - libxkbcommon-dev
             - lcov
             - herbstluftwm
+            - jwm
       services: xvfb
       env: 
         - DEPLOY_FILE="spatial-model-editor"
@@ -33,7 +34,8 @@ matrix:
         - cd ../
         - valgrind --version
         # start a window manager so the Qt GUI tests can have their focus set
-        - "herbstluftwm &"
+        #- "herbstluftwm &"
+        - "jwm &"
         - sleep 1
       after_script:
         # upload coverage report to codecov.io
