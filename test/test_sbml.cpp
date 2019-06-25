@@ -4,6 +4,7 @@
 #include "sbml.h"
 #include "sbml_test_data/ABtoC.h"
 #include "sbml_test_data/very_simple_model.h"
+#include "sbml_test_data/yeast_glycolysis.h"
 
 SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
   // create simple SBML level 2.4 model
@@ -183,6 +184,23 @@ SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {
         REQUIRE(s.species["comp"][2] == "C");
       }
     }
+    WHEN("image geometry imported, assigned to compartment") {
+      QImage img(1, 1, QImage::Format_RGB32);
+      QRgb col = QColor(12, 243, 154).rgba();
+      img.setPixel(0, 0, col);
+      img.save("tmp.bmp");
+      s.importGeometryFromImage("tmp.bmp");
+      s.setCompartmentColour("comp", col);
+      THEN("getCompartmentImage returns image") {
+        REQUIRE(s.getCompartmentImage().size() == QSize(1, 1));
+        REQUIRE(s.getCompartmentImage().pixel(0, 0) == col);
+      }
+      THEN("find membranes") { REQUIRE(s.membraneVec.empty()); }
+      THEN("find reactions") {
+        REQUIRE(s.reactions.at("comp").size() == 1);
+        REQUIRE(s.reactions.at("comp")[0] == "r1");
+      }
+    }
   }
 }
 
@@ -215,5 +233,42 @@ SCENARIO("SBML test data: very-simple-model.xml", "[sbml][non-gui]") {
         REQUIRE(s.species["c3"][1] == "B_c3");
       }
     }
+  }
+}
+
+SCENARIO("SBML test data: yeast-glycolysis.xml", "[sbml][non-gui][inlining]") {
+  std::unique_ptr<libsbml::SBMLDocument> doc(
+      libsbml::readSBMLFromString(sbml_test_data::yeast_glycolysis));
+  // write SBML document to file
+  libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
+
+  SbmlDocWrapper s;
+  s.importSBMLFile("tmp.xml");
+  GIVEN("SBML document") {
+    WHEN("importSBMLFile called") {
+      THEN("find compartments") {
+        REQUIRE(s.compartments.size() == 1);
+        REQUIRE(s.compartments[0] == "compartment");
+      }
+      THEN("find species") {
+        REQUIRE(s.species.size() == 1);
+        REQUIRE(s.species["compartment"].size() == 25);
+      }
+    }
+  }
+  GIVEN("inline fn: Glycogen_synthesis_kinetics") {
+    std::string expr = "Glycogen_synthesis_kinetics(abc)";
+    std::string inlined = "(abc)";
+    THEN("return inlined fn") { REQUIRE(s.inlineFunctions(expr) == inlined); }
+  }
+  GIVEN("inline fn: ATPase_0") {
+    std::string expr = "ATPase_0(a,b)";
+    std::string inlined = "(b * a)";
+    THEN("return inlined fn") { REQUIRE(s.inlineFunctions(expr) == inlined); }
+  }
+  GIVEN("inline fn: PDC_kinetics") {
+    std::string expr = "PDC_kinetics(a,V,k,n)";
+    std::string inlined = "(V * (a / k)^n / (1 + (a / k)^n))";
+    THEN("return inlined fn") { REQUIRE(s.inlineFunctions(expr) == inlined); }
   }
 }

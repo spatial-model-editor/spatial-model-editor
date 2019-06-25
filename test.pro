@@ -37,7 +37,8 @@ HEADERS += \
     test/catch/catch.hpp \
     test/catch/catch_qt_ostream.hpp \
     test/sbml_test_data/ABtoC.h \
-    test/sbml_test_data/very_simple_model.h
+    test/sbml_test_data/very_simple_model.h \
+    test/sbml_test_data/yeast_glycolysis.h
 
 FORMS += \
     ui/mainwindow.ui
