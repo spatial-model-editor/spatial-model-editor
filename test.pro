@@ -35,7 +35,8 @@ HEADERS += \
     ext/exprtk/exprtk.hpp \
     ext/qcustomplot/qcustomplot.h \
     test/catch/catch.hpp \
-    test/catch/catch_qt_ostream.hpp
+    test/catch/catch_qt_ostream.hpp \
+    test/sbml/ABtoC.h
 
 FORMS += \
     ui/mainwindow.ui
