@@ -205,8 +205,8 @@ SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {
 }
 
 SCENARIO("SBML test data: very-simple-model.xml", "[sbml][non-gui]") {
-  std::unique_ptr<libsbml::SBMLDocument> doc(
-      libsbml::readSBMLFromString(sbml_test_data::very_simple_model));
+  std::unique_ptr<libsbml::SBMLDocument> doc(libsbml::readSBMLFromString(
+      sbml_test_data::very_simple_model().xml().c_str()));
   // write SBML document to file
   libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
 
@@ -262,7 +262,7 @@ SCENARIO("SBML test data: yeast-glycolysis.xml", "[sbml][non-gui][inlining]") {
     THEN("return inlined fn") { REQUIRE(s.inlineFunctions(expr) == inlined); }
   }
   GIVEN("inline fn: ATPase_0") {
-    std::string expr = "ATPase_0(a,b)";
+    std::string expr = "ATPase_0( a,b)";
     std::string inlined = "(b * a)";
     THEN("return inlined fn") { REQUIRE(s.inlineFunctions(expr) == inlined); }
   }
