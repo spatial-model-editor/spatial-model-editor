@@ -5,17 +5,7 @@
 
 #include "qlabelmousetracker.h"
 
-static void sendMouseMove(QWidget *widget, const QPoint &point,
-                          Qt::MouseButton button = Qt::NoButton,
-                          Qt::MouseButtons buttons = 0) {
-  QTest::mouseMove(widget, point);
-  QTest::qWait(40);
-  QMouseEvent event(QEvent::MouseMove, point, button, buttons, 0);
-  QApplication::sendEvent(widget, &event);
-  QTest::qWait(40);
-  QApplication::processEvents();
-  QTest::qWait(40);
-}
+constexpr int mouseDelay = 50;
 
 TEST_CASE("qlabelmousetracker", "[qlabelmousetracker][gui]") {
   QLabelMouseTracker mouseTracker;
@@ -27,8 +17,6 @@ TEST_CASE("qlabelmousetracker", "[qlabelmousetracker][gui]") {
   mouseTracker.show();
   QTest::qWait(100);
 
-  QCursor::setPos(500, 500);
-
   REQUIRE(mouseTracker.getImage().size() == img.size());
   REQUIRE(mouseTracker.getImage().pixel(0, 0) == img.pixel(0, 0));
   REQUIRE(mouseTracker.getColour() == col);
@@ -38,23 +26,24 @@ TEST_CASE("qlabelmousetracker", "[qlabelmousetracker][gui]") {
                    [&clicks](QRgb c) { clicks.push_back(c); });
 
   REQUIRE(clicks.size() == 0);
-  // click on image:
-  QApplication::setActiveWindow(&mouseTracker);
-  // QTest::mouseMove(mouseTracker.windowHandle(), QPoint(1, 1));
-  sendMouseMove(&mouseTracker, QPoint(3, 6));
-  QTest::qWait(100);
-  QTest::mouseMove(mouseTracker.windowHandle(), QPoint(1, 11));
-  QApplication::processEvents();
-  QTest::qWait(100);
-  QTest::mouseClick(&mouseTracker, Qt::LeftButton);
+
+  //  QApplication::setActiveWindow(&mouseTracker);
+  // move mouse over image
+  QTest::mouseMove(mouseTracker.windowHandle(), QPoint(1, 1), mouseDelay);
+  QTest::mouseMove(mouseTracker.windowHandle(), QPoint(1, 11), mouseDelay);
+  // click on image
+  QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
+                    QPoint(2, 3), mouseDelay);
   REQUIRE(clicks.size() == 1);
   REQUIRE(clicks.back() == col);
   REQUIRE(mouseTracker.getColour() == col);
   // click again elsewhere on image:
-  QTest::mouseMove(&mouseTracker, QPoint(66, 32));
-  QTest::qWait(100);
-  QApplication::processEvents();
-  QTest::mouseClick(&mouseTracker, Qt::LeftButton);
+  // move mouse over image
+  QTest::mouseMove(mouseTracker.windowHandle(), QPoint(33, 44), mouseDelay);
+  QTest::mouseMove(mouseTracker.windowHandle(), QPoint(55, 54), mouseDelay);
+  // click on image
+  QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
+                    QPoint(66, 81), mouseDelay);
   REQUIRE(clicks.size() == 2);
   REQUIRE(clicks.back() == col);
   REQUIRE(mouseTracker.getColour() == col);

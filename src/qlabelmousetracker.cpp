@@ -25,7 +25,7 @@ void QLabelMouseTracker::mouseMoveEvent(QMouseEvent *ev) {
   // on mouse move: update current pixel
   currentPixel.setX((pixmap.width() * ev->pos().x()) / this->size().width());
   currentPixel.setY((pixmap.height() * ev->pos().y()) / this->size().height());
-  qDebug("QLabelMouseTracker :: mouse at (%d,%d) -> pixel (%d,%d)",
+  qDebug("QLabelMouseTracker :: mouseMove at (%d,%d) -> pixel (%d,%d)",
          ev->pos().x(), ev->pos().y(), currentPixel.x(), currentPixel.y());
   // possible todo: highlight colour region on mouseover?
 }
@@ -36,7 +36,7 @@ void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
     if (!pixmap.isNull()) {
       colour = image.pixelColor(currentPixel).rgb();
       qDebug(
-          "QLabelMouseTracker :: mouseclick at (%d,%d) -> pixel (%d,%d) with "
+          "QLabelMouseTracker :: mousePress at (%d,%d) -> pixel (%d,%d) with "
           "colour %u",
           ev->pos().x(), ev->pos().y(), currentPixel.x(), currentPixel.y(),
           colour);
