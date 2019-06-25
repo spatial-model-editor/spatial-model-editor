@@ -36,7 +36,8 @@ HEADERS += \
     ext/qcustomplot/qcustomplot.h \
     test/catch/catch.hpp \
     test/catch/catch_qt_ostream.hpp \
-    test/sbml/ABtoC.h
+    test/sbml_test_data/ABtoC.h \
+    test/sbml_test_data/very_simple_model.h
 
 FORMS += \
     ui/mainwindow.ui
