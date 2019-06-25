@@ -22,31 +22,18 @@ const QImage &QLabelMouseTracker::getImage() const { return image; }
 const QRgb &QLabelMouseTracker::getColour() const { return colour; }
 
 void QLabelMouseTracker::mouseMoveEvent(QMouseEvent *ev) {
-  // on mouse move: update current pixel
-  currentPixel.setX((pixmap.width() * ev->pos().x()) / this->size().width());
-  currentPixel.setY((pixmap.height() * ev->pos().y()) / this->size().height());
-  qDebug("QLabelMouseTracker :: mouseMove at (%d,%d) -> pixel (%d,%d)",
-         ev->pos().x(), ev->pos().y(), currentPixel.x(), currentPixel.y());
+  setCurrentPixel(ev);
   // possible todo: highlight colour region on mouseover?
 }
 
 void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
   if (ev->buttons() != Qt::NoButton) {
-    // update current pixel
-    currentPixel.setX((pixmap.width() * ev->pos().x()) / this->size().width());
-    currentPixel.setY((pixmap.height() * ev->pos().y()) /
-                      this->size().height());
-    qDebug("QLabelMouseTracker :: pixmap size %dx%d, widget size %dx%d",
-           pixmap.width(), pixmap.height(), this->size().width(),
-           this->size().height());
+    setCurrentPixel(ev);
     // update current colour and emit mouseClicked signal
     if (!pixmap.isNull()) {
       colour = image.pixelColor(currentPixel).rgb();
-      qDebug(
-          "QLabelMouseTracker :: mousePress at (%d,%d) -> pixel (%d,%d) with "
-          "colour %u",
-          ev->pos().x(), ev->pos().y(), currentPixel.x(), currentPixel.y(),
-          colour);
+      qDebug("QLabelMouseTracker :: pixel (%d,%d) -> colour %u",
+             currentPixel.x(), currentPixel.y(), colour);
       emit mouseClicked(colour);
     }
   }
@@ -57,4 +44,11 @@ void QLabelMouseTracker::resizeEvent(QResizeEvent *event) {
     this->setPixmap(
         pixmap.scaledToWidth(event->size().width(), Qt::FastTransformation));
   }
+}
+
+void QLabelMouseTracker::setCurrentPixel(QMouseEvent *ev) {
+  currentPixel.setX((pixmap.width() * ev->pos().x()) / this->size().width());
+  currentPixel.setY((pixmap.height() * ev->pos().y()) / this->size().height());
+  qDebug("QLabelMouseTracker :: setPixel : mouse at (%d,%d) -> pixel (%d,%d)",
+         ev->pos().x(), ev->pos().y(), currentPixel.x(), currentPixel.y());
 }

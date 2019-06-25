@@ -17,7 +17,6 @@ matrix:
             - libc6-dbg
             - libxkbcommon-dev
             - lcov
-            - herbstluftwm
             - jwm
       services: xvfb
       env: 
@@ -34,7 +33,6 @@ matrix:
         - cd ../
         - valgrind --version
         # start a window manager so the Qt GUI tests can have their focus set
-        #- "herbstluftwm &"
         - "jwm &"
         - sleep 1
       after_script:

@@ -32,6 +32,7 @@ class QLabelMouseTracker : public QLabel {
 
  private:
   // (x,y) location of current pixel
+  void setCurrentPixel(QMouseEvent *ev);
   QPoint currentPixel;
   QRgb colour;
   QImage image;
