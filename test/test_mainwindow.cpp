@@ -1,3 +1,4 @@
+#include <QSignalSpy>
 #include <QtTest>
 
 #include "catch.hpp"
@@ -5,49 +6,29 @@
 
 #include "mainwindow.h"
 
-constexpr int delay = 200;
+constexpr int delay = 500;
 
 TEST_CASE("F1: opens about dialog", "[mainwindow][gui]") {
   MainWindow w;
   w.show();
   // wait for mainwindow to load fully
   QTest::qWait(delay);
-  QString text;
-  // call this lambda in 50ms:
-  // captures text of active messagebox & closes it
-  // (note on osx messageboxes have no title text, so can't use that)
-  QTimer::singleShot(delay, [&text]() {
-    QWidget* widget = QApplication::activeModalWidget();
-    if (widget) {
-      auto* msgBox = qobject_cast<QMessageBox*>(widget);
-      text = msgBox->text();
-      qDebug("Closing QMessageBox with text '%s'", text.toStdString().c_str());
-      widget->close();
-    }
-  });
-  // at this point the above lambda has *not* yet ran:
-  REQUIRE(text == "");
+  // close the next modal window to open
+  // after capturing the text in mwc.result
+  ModalWidgetCloser mwc;
   // press F1: opens modal 'About' message box
-  // this message box is blocking until user clicks ok...
+  // this message box is blocking until user clicks ok
+  // (or until the ModalWindowCloser closes it)
   QTest::keyClick(&w, Qt::Key_F1);
-  // but about 50ms later the singleShot lambda fires
-  // which captures the msgbox text & then closes it
   QString correctText = "Spatial Model Editor";
-  REQUIRE(text.left(correctText.size()) == correctText);
+  REQUIRE(mwc.result.left(correctText.size()) == correctText);
 }
 
 TEST_CASE("ctrl+o: opens open file dialog", "[mainwindow][gui]") {
   MainWindow w;
   w.show();
   QTest::qWait(delay);
-  QTimer::singleShot(delay, []() {
-    QWidget* widget = QApplication::activeModalWidget();
-    if (widget) {
-      //      auto* msgBox = qobject_cast<QFileDialog*>(widget);
-      qDebug("Closing ModalWidget");
-      widget->close();
-    }
-  });
+  ModalWidgetCloser mwc;
   QTest::keyClick(&w, Qt::Key_O, Qt::ControlModifier);
   REQUIRE(1 == 1);
 }
@@ -56,16 +37,11 @@ TEST_CASE("alt+f, o: opens open file dialog", "[mainwindow][gui]") {
   MainWindow w;
   w.show();
   QTest::qWait(delay);
-  QTimer::singleShot(delay, []() {
-    QWidget* widget = QApplication::activeModalWidget();
-    if (widget) {
-      qDebug("Closing ModalWidget");
-      widget->close();
-    }
-  });
+  ModalWidgetCloser mwc;
   // alt-f goes to mainwindow, which opens File menu:
-  QTest::keyClick(&w, Qt::Key_F, Qt::AltModifier);
+  QTest::keyClick(&w, Qt::Key_F, Qt::AltModifier, 100);
   // o then needs to go to the menu, not the mainwindow:
-  QTest::keyClick(QApplication::activePopupWidget(), Qt::Key_O);
+  QTest::keyClick(QApplication::activePopupWidget(), Qt::Key_O, Qt::NoModifier,
+                  100);
   REQUIRE(1 == 1);
 }
