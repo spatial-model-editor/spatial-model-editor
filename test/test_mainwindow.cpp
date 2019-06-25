@@ -1,3 +1,4 @@
+#include <QSignalSpy>
 #include <QtTest>
 
 #include "catch.hpp"
@@ -38,8 +39,9 @@ TEST_CASE("alt+f, o: opens open file dialog", "[mainwindow][gui]") {
   QTest::qWait(delay);
   ModalWidgetCloser mwc;
   // alt-f goes to mainwindow, which opens File menu:
-  QTest::keyClick(&w, Qt::Key_F, Qt::AltModifier);
+  QTest::keyClick(&w, Qt::Key_F, Qt::AltModifier, 100);
   // o then needs to go to the menu, not the mainwindow:
-  QTest::keyClick(QApplication::activePopupWidget(), Qt::Key_O);
+  QTest::keyClick(QApplication::activePopupWidget(), Qt::Key_O, Qt::NoModifier,
+                  100);
   REQUIRE(1 == 1);
 }
