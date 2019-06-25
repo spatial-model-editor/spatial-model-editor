@@ -16,7 +16,8 @@ SCENARIO("qlabelmousetracker", "[qlabelmousetracker][gui]") {
     mouseTracker.setImage(img);
     mouseTracker.show();
     mouseTracker.resize(100, 100);
-    QTest::qWait(100);
+    mouseTracker.setFixedSize(100, 100);
+    QTest::qWait(mouseDelay);
 
     REQUIRE(mouseTracker.getImage().size() == img.size());
     REQUIRE(mouseTracker.getImage().pixel(0, 0) == img.pixel(0, 0));
@@ -70,7 +71,7 @@ SCENARIO("qlabelmousetracker", "[qlabelmousetracker][gui]") {
     mouseTracker.setImage(img);
     mouseTracker.show();
     mouseTracker.resize(100, 100);
-    QTest::qWait(100);
+    QTest::qWait(mouseDelay);
 
     CAPTURE(col1);
     CAPTURE(col2);
@@ -136,6 +137,39 @@ SCENARIO("qlabelmousetracker", "[qlabelmousetracker][gui]") {
         REQUIRE(clicks[1] == col3);
         REQUIRE(clicks[2] == col4);
         REQUIRE(mouseTracker.getColour() == col4);
+      }
+    }
+    WHEN("resized to 600x600, mouseclick (300,300)") {
+      mouseTracker.resize(600, 600);
+      QTest::qWait(mouseDelay);
+      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
+                        QPoint(300, 300), mouseDelay);
+      THEN("pix (1,1) <-> col4") {
+        REQUIRE(clicks.size() == 1);
+        REQUIRE(clicks.back() == col4);
+        REQUIRE(mouseTracker.getColour() == col4);
+      }
+    }
+    WHEN("resized to 6x6, mouseclick (1,3)") {
+      mouseTracker.resize(6, 6);
+      QTest::qWait(mouseDelay);
+      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
+                        QPoint(1, 3), mouseDelay);
+      THEN("pix (0,1) <-> col3") {
+        REQUIRE(clicks.size() == 1);
+        REQUIRE(clicks.back() == col3);
+        REQUIRE(mouseTracker.getColour() == col3);
+      }
+    }
+    WHEN("resized to 900x3, mouseclick (865,0)") {
+      mouseTracker.resize(900, 3);
+      QTest::qWait(mouseDelay);
+      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
+                        QPoint(865, 0), mouseDelay);
+      THEN("pix (2,0) <-> col1") {
+        REQUIRE(clicks.size() == 1);
+        REQUIRE(clicks.back() == col1);
+        REQUIRE(mouseTracker.getColour() == col1);
       }
     }
   }
