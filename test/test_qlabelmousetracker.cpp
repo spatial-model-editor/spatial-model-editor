@@ -14,8 +14,8 @@ SCENARIO("qlabelmousetracker", "[qlabelmousetracker][gui]") {
     QRgb col = QColor(12, 243, 154).rgba();
     img.setPixel(0, 0, col);
     mouseTracker.setImage(img);
-    mouseTracker.resize(100, 100);
     mouseTracker.show();
+    mouseTracker.resize(100, 100);
     QTest::qWait(100);
 
     REQUIRE(mouseTracker.getImage().size() == img.size());
@@ -68,8 +68,8 @@ SCENARIO("qlabelmousetracker", "[qlabelmousetracker][gui]") {
     img.setPixel(0, 2, col3);
     img.setPixel(1, 1, col4);
     mouseTracker.setImage(img);
-    mouseTracker.resize(100, 100);
     mouseTracker.show();
+    mouseTracker.resize(100, 100);
     QTest::qWait(100);
 
     CAPTURE(col1);
