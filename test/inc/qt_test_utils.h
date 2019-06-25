@@ -1,40 +1,17 @@
-// ostream operator << overloads to enable catch2 to display some Qt types
+// some useful routines for testing Qt widgets
 
 #pragma once
 
-#include <iostream>
-
 #include <QApplication>
-#include <QByteArray>
 #include <QFileDialog>
-#include <QLatin1String>
 #include <QMessageBox>
 #include <QObject>
-#include <QPoint>
-#include <QSize>
-#include <QString>
 #include <QTimer>
 
-inline std::ostream &operator<<(std::ostream &os, const QByteArray &value) {
-  return os << '"' << (value.isEmpty() ? "" : value.constData()) << '"';
-}
-
-inline std::ostream &operator<<(std::ostream &os, const QLatin1String &value) {
-  return os << '"' << value.latin1() << '"';
-}
-
-inline std::ostream &operator<<(std::ostream &os, const QString &value) {
-  return os << value.toLocal8Bit();
-}
-
-inline std::ostream &operator<<(std::ostream &os, const QPoint &value) {
-  return os << "(" << value.x() << "," << value.y() << ")";
-}
-
-inline std::ostream &operator<<(std::ostream &os, const QSize &value) {
-  return os << "(" << value.width() << "," << value.height() << ")";
-}
-
+// timer class that repeatedly checks for an active
+// modal widget (which blocks execution pending user input, e.g. a message box)
+// if found, extracts some info about it and stores this in result
+// then closes the widget, allowing the test to continue
 class ModalWidgetCloser : public QObject {
   Q_OBJECT
  public:

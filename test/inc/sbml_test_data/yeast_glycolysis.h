@@ -2,8 +2,8 @@
 
 namespace sbml_test_data {
 
-extern const char* yeast_glycolysis;
-const char* yeast_glycolysis = R"=====(<?xml version="1.0" encoding="UTF-8"?>
+struct yeast_glycolysis {
+  const char* xml = R"=====(<?xml version="1.0" encoding="UTF-8"?>
 <sbml xmlns="http://www.sbml.org/sbml/level2/version4" level="2" version="4">
 <model metaid="COPASI0" id="Yeast_glycolysis_model_of_Pritchard_and_Kell" name="Yeast glycolysis model of Pritchard and Kell">
 <listOfFunctionDefinitions>
@@ -2212,5 +2212,5 @@ const char* yeast_glycolysis = R"=====(<?xml version="1.0" encoding="UTF-8"?>
 </listOfReactions>
 </model>
 </sbml>)=====";
-
+};
 }  // namespace sbml_test_data
