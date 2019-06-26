@@ -77,6 +77,13 @@ SCENARIO("simulate very_simple_model.xml", "[simulate][non-gui]") {
   REQUIRE(f3.getMeanConcentration(0) == 0.0);
   REQUIRE(f3.getMeanConcentration(1) == 0.0);
 
+  // check initial conentration image
+  img = sim.getConcentrationImage();
+  REQUIRE(img.size() == QSize(1, 3));
+  REQUIRE(img.pixel(0, 0) == sim.speciesColour[0].rgba());
+  REQUIRE(img.pixel(0, 1) == QColor(0, 0, 0).rgba());
+  REQUIRE(img.pixel(0, 2) == QColor(0, 0, 0).rgba());
+
   double dt = 0.134521234;
   WHEN("single Euler step") {
     sim.integrateForwardsEuler(dt);

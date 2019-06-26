@@ -232,7 +232,7 @@ SimMembrane::SimMembrane(SbmlDocWrapper *doc_ptr,
           doc->reactions.cend() ||
       doc->reactions.at(membrane->membraneID.c_str()).empty()) {
     // If there are no reactions in this membrane: we are done
-    qDebug("SimMembrane::compile_reactions ::   - no reactions to compile.");
+    // qDebug("SimMembrane::compile_reactions ::   - no reactions to compile.");
     return;
   }
 
@@ -328,7 +328,7 @@ QImage Simulate::getConcentrationImage() {
              QImage::Format_ARGB32);
   img.fill(qRgba(0, 0, 0, 0));
   // alpha opacity factor
-  double alpha = 0.75;
+  double alpha = 1.0;
   // offset to go from species index in a field to the species index used in
   // speciesID here, which includes all species in the model
   std::size_t s_offset = 0;

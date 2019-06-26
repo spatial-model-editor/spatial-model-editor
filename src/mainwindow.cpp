@@ -233,6 +233,12 @@ void MainWindow::on_btnChangeCompartment_clicked() {
   waitingForCompartmentChoice = true;
 }
 
+void MainWindow::on_listCompartments_itemDoubleClicked(QListWidgetItem *item) {
+  // double-click on compartment list is equivalent to clicking
+  // btnChangeCompartment
+  on_btnChangeCompartment_clicked();
+}
+
 void MainWindow::on_listCompartments_currentTextChanged(
     const QString &currentText) {
   ui->txtCompartmentSize->clear();
@@ -276,6 +282,8 @@ void MainWindow::on_tabMain_currentChanged(int index) {
          ui->tabMain->tabText(index).toStdString().c_str());
   ui->hslideTime->setEnabled(false);
   ui->hslideTime->setVisible(false);
+  ui->btnSpeciesDisplaySelect->setEnabled(false);
+  ui->btnSpeciesDisplaySelect->setVisible(false);
   switch (index) {
     case 0:
       // geometry tab
@@ -324,6 +332,8 @@ void MainWindow::on_tabMain_currentChanged(int index) {
       ui->hslideTime->setVisible(true);
       ui->hslideTime->setEnabled(true);
       ui->hslideTime->setValue(0);
+      ui->btnSpeciesDisplaySelect->setEnabled(true);
+      ui->btnSpeciesDisplaySelect->setVisible(true);
       on_hslideTime_valueChanged(0);
       break;
     case 6:
@@ -358,6 +368,9 @@ void MainWindow::on_listMembranes_currentTextChanged(
 void MainWindow::on_btnSimulate_clicked() {
   // simple 2d spatial simulation
   simulate::Simulate sim(&sbmlDoc);
+  // temporary: set custom set of colours
+  sim.speciesColour = {{255, 0, 0}, {0, 0, 255}, {255, 0, 0},
+                       {0, 0, 255}, {255, 0, 0}, {0, 0, 255}};
   // add fields
   for (const auto &compartmentID : sbmlDoc.compartments) {
     sim.addField(&sbmlDoc.mapCompIdToField.at(compartmentID));
@@ -426,4 +439,30 @@ void MainWindow::on_btnSimulate_clicked() {
   ui->hslideTime->setMinimum(0);
   ui->hslideTime->setMaximum(time.size() - 1);
   ui->hslideTime->setValue(time.size() - 1);
+
+  // populate species display list
+  QMenu *menu = new QMenu(this);
+  for (const auto &s : sim.speciesID) {
+    QAction *act = new QAction(s.c_str(), menu);
+    act->setCheckable(true);
+    act->setChecked(true);
+    menu->addAction(act);
+    connect(act, &QAction::triggered, this,
+            &MainWindow::on_btnSpeciesDisplaySelect_MenuItemChecked);
+  }
+  ui->btnSpeciesDisplaySelect->setMenu(menu);
+}
+
+void MainWindow::on_btnSpeciesDisplaySelect_MenuItemChecked() {
+  std::vector<std::string> species;
+  for (auto *act : ui->btnSpeciesDisplaySelect->menu()->actions()) {
+    if (act->isChecked()) {
+      qDebug("show %s", act->text().toStdString().c_str());
+      species.push_back(act->text().toStdString());
+    }
+  }
+}
+
+void MainWindow::on_btnSpeciesDisplaySelect_clicked() {
+  qDebug("ui::on_btnSpeciesDisplaySelect_clicked");
 }

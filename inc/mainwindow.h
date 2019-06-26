@@ -54,6 +54,8 @@ class MainWindow : public QMainWindow {
 
   void on_listCompartments_currentTextChanged(const QString &currentText);
 
+  void on_listCompartments_itemDoubleClicked(QListWidgetItem *item);
+
   void on_hslideTime_valueChanged(int value);
 
   void on_tabMain_currentChanged(int index);
@@ -61,6 +63,10 @@ class MainWindow : public QMainWindow {
   void on_btnImportConcentration_clicked();
 
   void on_listMembranes_currentTextChanged(const QString &currentText);
+
+  void on_btnSpeciesDisplaySelect_clicked();
+
+  void on_btnSpeciesDisplaySelect_MenuItemChecked();
 
  private:
   Ui::MainWindow *ui;
