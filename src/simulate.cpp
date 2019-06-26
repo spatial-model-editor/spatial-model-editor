@@ -186,18 +186,19 @@ SimCompartment::SimCompartment(SbmlDocWrapper *doc_ptr,
 }
 
 void SimCompartment::evaluate_reactions() {
-  qDebug("SimCompartment::evaluate_reactions : compartment: %s",
-         field->geometry->compartmentID.c_str());
+  // qDebug("SimCompartment::evaluate_reactions : compartment: %s",
+  //       field->geometry->compartmentID.c_str());
   if (reacEval.nReactions == 0) {
-    qDebug("SimCompartment::evaluate_reactions :   - no reactions to evaluate");
+    // qDebug("SimCompartment::evaluate_reactions :   - no reactions to
+    // evaluate");
     return;
   }
-  qDebug("SimCompartment::evaluate_reactions :   - n_pixels=%lu",
-         field->n_pixels);
-  qDebug("SimCompartment::evaluate_reactions :   - n_species=%lu",
-         reacEval.nSpecies);
-  qDebug("SimCompartment::evaluate_reactions :   - n_reacs=%lu",
-         reacEval.nReactions);
+  // qDebug("SimCompartment::evaluate_reactions :   - n_pixels=%lu",
+  // field->n_pixels);
+  // qDebug("SimCompartment::evaluate_reactions :   - n_species=%lu",
+  //       reacEval.nSpecies);
+  // qDebug("SimCompartment::evaluate_reactions :   - n_reacs=%lu",
+  //       reacEval.nReactions);
   for (std::size_t ix = 0; ix < field->n_pixels; ++ix) {
     // populate species concentrations
     for (std::size_t s = 0; s < field->n_species; ++s) {
@@ -231,7 +232,7 @@ SimMembrane::SimMembrane(SbmlDocWrapper *doc_ptr,
           doc->reactions.cend() ||
       doc->reactions.at(membrane->membraneID.c_str()).empty()) {
     // If there are no reactions in this membrane: we are done
-    qDebug("SimMembrane::compile_reactions ::   - no reactions to compile.");
+    // qDebug("SimMembrane::compile_reactions ::   - no reactions to compile.");
     return;
   }
 
@@ -249,18 +250,19 @@ SimMembrane::SimMembrane(SbmlDocWrapper *doc_ptr,
 }
 
 void SimMembrane::evaluate_reactions() {
-  qDebug("SimMembrane::evaluate_reactions : membrane: %s",
-         membrane->membraneID.c_str());
+  // qDebug("SimMembrane::evaluate_reactions : membrane: %s",
+  //         membrane->membraneID.c_str());
   if (reacEval.nReactions == 0) {
-    qDebug("SimMembrane::evaluate_reactions :   - no reactions to evaluate");
+    // qDebug("SimMembrane::evaluate_reactions :   - no reactions to
+    // evaluate");
     return;
   }
-  qDebug("SimMembrane::evaluate_reactions :   - n_pixel pairs=%lu",
-         membrane->indexPair.size());
-  qDebug("SimMembrane::evaluate_reactions :   - n_species=%lu",
-         reacEval.nSpecies);
-  qDebug("SimMembrane::evaluate_reactions :   - n_reacs=%lu",
-         reacEval.nReactions);
+  // qDebug("SimMembrane::evaluate_reactions :   - n_pixel pairs=%lu",
+  //    membrane->indexPair.size());
+  // qDebug("SimMembrane::evaluate_reactions :   - n_species=%lu",
+  //       reacEval.nSpecies);
+  // qDebug("SimMembrane::evaluate_reactions :   - n_reacs=%lu",
+  //       reacEval.nReactions);
   for (const auto &p : membrane->indexPair) {
     std::size_t ixA = p.first;
     std::size_t ixB = p.second;
@@ -326,7 +328,7 @@ QImage Simulate::getConcentrationImage() {
              QImage::Format_ARGB32);
   img.fill(qRgba(0, 0, 0, 0));
   // alpha opacity factor
-  double alpha = 0.75;
+  double alpha = 1.0;
   // offset to go from species index in a field to the species index used in
   // speciesID here, which includes all species in the model
   std::size_t s_offset = 0;

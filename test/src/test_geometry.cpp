@@ -16,10 +16,10 @@ TEST_CASE("one pixel compartment, one species field", "[geometry][non-gui]") {
   field.setConstantConcentration(0, 1.3);
   REQUIRE(field.n_pixels == 1);
   REQUIRE(field.n_species == 1);
-  REQUIRE(field.conc[0] == Approx(1.3));
+  REQUIRE(field.conc[0] == dbl_approx(1.3));
   // Diff op on single site is a no-op: dcdt = 0
   field.applyDiffusionOperator();
-  REQUIRE(field.dcdt[0] == Approx(0));
+  REQUIRE(field.dcdt[0] == dbl_approx(0));
 }
 
 TEST_CASE("two pixel compartment, three species field", "[geometry][non-gui]") {
@@ -43,19 +43,19 @@ TEST_CASE("two pixel compartment, three species field", "[geometry][non-gui]") {
   REQUIRE(field.n_pixels == 2);
   REQUIRE(field.n_species == 3);
   // (3,3)
-  REQUIRE(field.conc[0] == Approx(1.3));
-  REQUIRE(field.conc[1] == Approx(0.3));
-  REQUIRE(field.conc[2] == Approx(2.0));
+  REQUIRE(field.conc[0] == dbl_approx(1.3));
+  REQUIRE(field.conc[1] == dbl_approx(0.3));
+  REQUIRE(field.conc[2] == dbl_approx(2.0));
   // (3,4)
-  REQUIRE(field.conc[3] == Approx(1.3));
-  REQUIRE(field.conc[4] == Approx(0.3));
-  REQUIRE(field.conc[5] == Approx(2.0));
+  REQUIRE(field.conc[3] == dbl_approx(1.3));
+  REQUIRE(field.conc[4] == dbl_approx(0.3));
+  REQUIRE(field.conc[5] == dbl_approx(2.0));
   // Diff op on uniform distribution is also a no-op:
   field.applyDiffusionOperator();
-  REQUIRE(field.dcdt[0] == Approx(0));
-  REQUIRE(field.dcdt[1] == Approx(0));
-  REQUIRE(field.dcdt[2] == Approx(0));
-  REQUIRE(field.dcdt[3] == Approx(0));
-  REQUIRE(field.dcdt[4] == Approx(0));
-  REQUIRE(field.dcdt[5] == Approx(0));
+  REQUIRE(field.dcdt[0] == dbl_approx(0));
+  REQUIRE(field.dcdt[1] == dbl_approx(0));
+  REQUIRE(field.dcdt[2] == dbl_approx(0));
+  REQUIRE(field.dcdt[3] == dbl_approx(0));
+  REQUIRE(field.dcdt[4] == dbl_approx(0));
+  REQUIRE(field.dcdt[5] == dbl_approx(0));
 }
