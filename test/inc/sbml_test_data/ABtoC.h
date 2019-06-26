@@ -2,8 +2,8 @@
 
 namespace sbml_test_data {
 
-extern const char* ABtoC;
-const char* ABtoC = R"=====(<?xml version="1.0" encoding="UTF-8"?>
+struct ABtoC {
+  const char* xml = R"=====(<?xml version="1.0" encoding="UTF-8"?>
 <sbml xmlns="http://www.sbml.org/sbml/level2/version4" level="2" version="4">
   <model metaid="COPASI0" id="New_Model" name="New Model">
     <listOfUnitDefinitions>
@@ -57,5 +57,6 @@ const char* ABtoC = R"=====(<?xml version="1.0" encoding="UTF-8"?>
     </listOfReactions>
   </model>
 </sbml>)=====";
+};
 
 }  // namespace sbml_test_data

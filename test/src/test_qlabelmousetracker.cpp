@@ -1,7 +1,5 @@
 #include <QtTest>
-
-#include "catch.hpp"
-#include "catch_qt_ostream.hpp"
+#include "catch_qt.h"
 
 #include "qlabelmousetracker.h"
 

@@ -1,5 +1,4 @@
-#include "catch.hpp"
-#include "catch_qt_ostream.hpp"
+#include "catch_qt.h"
 
 #include "geometry.h"
 

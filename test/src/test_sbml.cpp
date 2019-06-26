@@ -1,10 +1,9 @@
-#include "catch.hpp"
-#include "catch_qt_ostream.hpp"
-
-#include "sbml.h"
+#include "catch_qt.h"
 #include "sbml_test_data/ABtoC.h"
 #include "sbml_test_data/very_simple_model.h"
 #include "sbml_test_data/yeast_glycolysis.h"
+
+#include "sbml.h"
 
 SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
   // create simple SBML level 2.4 model
@@ -164,7 +163,7 @@ TEST_CASE("load SBML level 3 document with spatial extension",
 
 SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {
   std::unique_ptr<libsbml::SBMLDocument> doc(
-      libsbml::readSBMLFromString(sbml_test_data::ABtoC));
+      libsbml::readSBMLFromString(sbml_test_data::ABtoC().xml));
   // write SBML document to file
   libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
 
@@ -205,8 +204,8 @@ SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {
 }
 
 SCENARIO("SBML test data: very-simple-model.xml", "[sbml][non-gui]") {
-  std::unique_ptr<libsbml::SBMLDocument> doc(libsbml::readSBMLFromString(
-      sbml_test_data::very_simple_model().xml().c_str()));
+  std::unique_ptr<libsbml::SBMLDocument> doc(
+      libsbml::readSBMLFromString(sbml_test_data::very_simple_model().xml));
   // write SBML document to file
   libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
 
@@ -238,7 +237,7 @@ SCENARIO("SBML test data: very-simple-model.xml", "[sbml][non-gui]") {
 
 SCENARIO("SBML test data: yeast-glycolysis.xml", "[sbml][non-gui][inlining]") {
   std::unique_ptr<libsbml::SBMLDocument> doc(
-      libsbml::readSBMLFromString(sbml_test_data::yeast_glycolysis));
+      libsbml::readSBMLFromString(sbml_test_data::yeast_glycolysis().xml));
   // write SBML document to file
   libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
 

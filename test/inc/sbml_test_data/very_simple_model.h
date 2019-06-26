@@ -5,8 +5,7 @@
 namespace sbml_test_data {
 
 struct very_simple_model {
-  std::string xml() { return text; }
-  const char* text =
+  const char* xml =
       R"=====(<?xml version="1.0" encoding="UTF-8"?>
     <sbml xmlns="http://www.sbml.org/sbml/level2/version4" level="2" version="4">
       <model metaid="COPASI0" id="New_Model" name="New Model">

@@ -10,13 +10,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
-    test/main.cpp \
-    test/test_geometry.cpp \
-    test/test_mainwindow.cpp \
-    test/test_numerics.cpp \
-    test/test_qlabelmousetracker.cpp \
-    test/test_sbml.cpp \
-    test/test_simulate.cpp \
+    test/src/main.cpp \
+    test/src/test_geometry.cpp \
+    test/src/test_mainwindow.cpp \
+    test/src/test_numerics.cpp \
+    test/src/test_qlabelmousetracker.cpp \
+    test/src/test_sbml.cpp \
+    test/src/test_simulate.cpp \
     src/geometry.cpp \
     src/mainwindow.cpp \
     src/numerics.cpp \
@@ -34,16 +34,17 @@ HEADERS += \
     inc/simulate.h \
     ext/exprtk/exprtk.hpp \
     ext/qcustomplot/qcustomplot.h \
+    test/inc/qt_test_utils.h \
     test/catch/catch.hpp \
-    test/catch/catch_qt_ostream.hpp \
-    test/sbml_test_data/ABtoC.h \
-    test/sbml_test_data/very_simple_model.h \
-    test/sbml_test_data/yeast_glycolysis.h
+    test/catch/catch_qt.h \
+    test/inc/sbml_test_data/ABtoC.h \
+    test/inc/sbml_test_data/very_simple_model.h \
+    test/inc/sbml_test_data/yeast_glycolysis.h
 
 FORMS += \
     ui/mainwindow.ui
 
-INCLUDEPATH += inc ext/qcustomplot ext/exprtk test/catch
+INCLUDEPATH += inc ext/qcustomplot ext/exprtk test/catch test/inc
 
 # for linux build, remove optimizations, add coverage info & compiler warnings
 unix: QMAKE_CXXFLAGS_RELEASE -= -O2

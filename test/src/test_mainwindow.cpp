@@ -1,8 +1,6 @@
-#include <QSignalSpy>
 #include <QtTest>
-
-#include "catch.hpp"
-#include "catch_qt_ostream.hpp"
+#include "catch_qt.h"
+#include "qt_test_utils.h"
 
 #include "mainwindow.h"
 
