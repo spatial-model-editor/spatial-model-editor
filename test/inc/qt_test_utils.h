@@ -8,10 +8,11 @@
 #include <QObject>
 #include <QTimer>
 
-// timer class that repeatedly checks for an active
-// modal widget (which blocks execution pending user input, e.g. a message box)
-// if found, extracts some info about it and stores this in result
+// timer class that repeatedly checks for an active modal widget
+// (a modal widget blocks execution pending user input, e.g. a message box)
+// if found, extracts some info about it and stores this in `result`
 // then closes the widget, allowing the test to continue
+// by default: check every 0.1s, give up after 30s if no modal widget found
 class ModalWidgetCloser : public QObject {
   Q_OBJECT
  public:

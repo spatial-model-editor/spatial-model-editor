@@ -22,7 +22,7 @@ TEST_CASE("evaluate expression: no vars, no constants", "[numerics]") {
   CAPTURE(constant_names);
   CAPTURE(constants);
   // evaluate expression
-  REQUIRE(r() == Approx(10));
+  REQUIRE(r() == dbl_approx(10));
 }
 
 TEST_CASE("evaluate expression: pow function", "[numerics]") {
@@ -45,7 +45,7 @@ TEST_CASE("evaluate expression: pow function", "[numerics]") {
   CAPTURE(constant_names);
   CAPTURE(constants);
   // evaluate expression
-  REQUIRE(r() == Approx(pow(2, 10)));
+  REQUIRE(r() == dbl_approx(pow(2, 10)));
 }
 
 TEST_CASE("evaluate expression: cos, sin functions", "[numerics][non-gui]") {
@@ -68,7 +68,7 @@ TEST_CASE("evaluate expression: cos, sin functions", "[numerics][non-gui]") {
   CAPTURE(constant_names);
   CAPTURE(constants);
   // evaluate expression
-  REQUIRE(r() == Approx(1.0));
+  REQUIRE(r() == dbl_approx(1.0));
 }
 
 TEST_CASE("evaluate expression: constants, no vars", "[numerics][non-gui]") {
@@ -83,7 +83,7 @@ TEST_CASE("evaluate expression: constants, no vars", "[numerics][non-gui]") {
   CAPTURE(vars);
   CAPTURE(constant_names);
   CAPTURE(constants);
-  REQUIRE(r() == Approx(4.8));
+  REQUIRE(r() == dbl_approx(4.8));
 }
 
 TEST_CASE("evaluate expression: vars and constants", "[numerics][non-gui]") {
@@ -99,7 +99,7 @@ TEST_CASE("evaluate expression: vars and constants", "[numerics][non-gui]") {
     CAPTURE(vars);
     CAPTURE(constant_names);
     CAPTURE(constants);
-    REQUIRE(r() == Approx(0.5));
+    REQUIRE(r() == dbl_approx(0.5));
     WHEN("value of vars change after compiling expression") {
       vars[0] = 1.0;
       THEN("evaluated expression uses updated vars") {
@@ -108,7 +108,7 @@ TEST_CASE("evaluate expression: vars and constants", "[numerics][non-gui]") {
         CAPTURE(vars);
         CAPTURE(constant_names);
         CAPTURE(constants);
-        REQUIRE(r() == Approx(1.0));
+        REQUIRE(r() == dbl_approx(1.0));
       }
     }
     WHEN("value of constants change after compiling expression") {
@@ -120,7 +120,7 @@ TEST_CASE("evaluate expression: vars and constants", "[numerics][non-gui]") {
         CAPTURE(vars);
         CAPTURE(constant_names);
         CAPTURE(constants);
-        REQUIRE(r() == Approx(0.5));
+        REQUIRE(r() == dbl_approx(0.5));
       }
     }
   }
