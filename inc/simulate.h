@@ -43,12 +43,14 @@ class ReacEval {
 class SimCompartment {
  private:
   SbmlDocWrapper *doc;
+  const geometry::Compartment *comp;
   ReacEval reacEval;
 
  public:
-  geometry::Field *field;
+  std::vector<geometry::Field *> field;
 
-  SimCompartment(SbmlDocWrapper *doc_ptr, geometry::Field *field_ptr);
+  SimCompartment(SbmlDocWrapper *docWrapper,
+                 const geometry::Compartment *compartment);
   // field.dcdt += result of applying reaction expressions to field.conc
   void evaluate_reactions();
 };
@@ -60,6 +62,8 @@ class SimMembrane {
 
  public:
   geometry::Membrane *membrane;
+  std::vector<geometry::Field *> fieldA;
+  std::vector<geometry::Field *> fieldB;
 
   SimMembrane(SbmlDocWrapper *doc_ptr, geometry::Membrane *membrane_ptr);
   // field.dcdt += result of applying reaction expressions to field.conc
@@ -73,17 +77,10 @@ class Simulate {
   SbmlDocWrapper *doc;
 
  public:
-  // a set of default colours for display purposes
-  std::vector<QColor> speciesColour{
-      {230, 25, 75},  {60, 180, 75},   {255, 225, 25}, {0, 130, 200},
-      {245, 130, 48}, {145, 30, 180},  {70, 240, 240}, {240, 50, 230},
-      {210, 245, 60}, {250, 190, 190}, {0, 128, 128},  {230, 190, 255},
-      {170, 110, 40}, {255, 250, 200}, {128, 0, 0},    {170, 255, 195},
-      {128, 128, 0},  {255, 215, 180}, {0, 0, 128},    {128, 128, 128}};
   std::vector<geometry::Field *> field;
   std::vector<std::string> speciesID;
   explicit Simulate(SbmlDocWrapper *doc_ptr) : doc(doc_ptr) {}
-  void addField(geometry::Field *f);
+  void addCompartment(geometry::Compartment *compartment);
   void addMembrane(geometry::Membrane *membrane);
   void integrateForwardsEuler(double dt);
   QImage getConcentrationImage();

@@ -164,25 +164,30 @@ void ReacEval::evaluate() {
   }
 }
 
-SimCompartment::SimCompartment(SbmlDocWrapper *doc_ptr,
-                               geometry::Field *field_ptr)
-    : doc(doc_ptr), field(field_ptr) {
-  std::vector<std::string> reactionID;
-  QString compID = field->geometry->compartmentID.c_str();
+SimCompartment::SimCompartment(SbmlDocWrapper *docWrapper,
+                               const geometry::Compartment *compartment)
+    : doc(docWrapper), comp(compartment) {
+  QString compID = compartment->compartmentID.c_str();
   qDebug("SimCompartment::compile_reactions :: compartment: %s",
          compID.toStdString().c_str());
-
+  std::vector<std::string> speciesID;
+  for (const auto &s : doc->species.at(compID)) {
+    speciesID.push_back(s.toStdString());
+    field.push_back(&doc->mapSpeciesIdToField.at(s));
+    qDebug("SimCompartment::compile_reactions :: - adding field: %s",
+           s.toStdString().c_str());
+  }
   if (doc->reactions.find(compID) == doc->reactions.cend() ||
       doc->reactions.at(compID).empty()) {
     // If there are no reactions in this compartment: we are done
     qDebug("SimCompartment::compile_reactions ::   - no reactions to compile.");
     return;
   }
+  std::vector<std::string> reactionID;
   for (const auto &reac : doc->reactions.at(compID)) {
     reactionID.push_back(reac.toStdString());
   }
-
-  reacEval = ReacEval(doc, field->speciesID, reactionID);
+  reacEval = ReacEval(doc, speciesID, reactionID);
 }
 
 void SimCompartment::evaluate_reactions() {
@@ -199,17 +204,17 @@ void SimCompartment::evaluate_reactions() {
   //       reacEval.nSpecies);
   // qDebug("SimCompartment::evaluate_reactions :   - n_reacs=%lu",
   //       reacEval.nReactions);
-  for (std::size_t ix = 0; ix < field->n_pixels; ++ix) {
+  for (std::size_t i = 0; i < comp->ix.size(); ++i) {
     // populate species concentrations
-    for (std::size_t s = 0; s < field->n_species; ++s) {
-      reacEval.species_values[s] = field->conc[ix * field->n_species + s];
+    for (std::size_t s = 0; s < field.size(); ++s) {
+      reacEval.species_values[s] = field[s]->conc[i];
     }
     // evaluate reaction terms
     reacEval.evaluate();
     const std::vector<double> &result = reacEval.getResult();
-    for (std::size_t s = 0; s < field->n_species; ++s) {
+    for (std::size_t s = 0; s < field.size(); ++s) {
       // add results to dcdt
-      field->dcdt[ix * field->n_species + s] += result[s];
+      field[s]->dcdt[i] += result[s];
     }
   }
 }
@@ -217,10 +222,8 @@ void SimCompartment::evaluate_reactions() {
 SimMembrane::SimMembrane(SbmlDocWrapper *doc_ptr,
                          geometry::Membrane *membrane_ptr)
     : doc(doc_ptr), membrane(membrane_ptr) {
-  std::vector<std::string> speciesID;
-  std::vector<std::string> reactionID;
-  QString compA = membrane->fieldA->geometry->compartmentID.c_str();
-  QString compB = membrane->fieldB->geometry->compartmentID.c_str();
+  QString compA = membrane->compA->compartmentID.c_str();
+  QString compB = membrane->compB->compartmentID.c_str();
   qDebug("SimMembrane::compile_reactions :: membrane: %s",
          membrane->membraneID.c_str());
   qDebug("SimMembrane::compile_reactions :: compA: %s",
@@ -236,12 +239,19 @@ SimMembrane::SimMembrane(SbmlDocWrapper *doc_ptr,
     return;
   }
 
-  // make vector of species from compartments A and B
-  speciesID = membrane->fieldA->speciesID;
-  speciesID.insert(speciesID.end(), membrane->fieldB->speciesID.begin(),
-                   membrane->fieldB->speciesID.end());
+  // make vector of species & fields from compartments A and B
+  std::vector<std::string> speciesID;
+  for (const auto &spec : doc->species.at(compA)) {
+    speciesID.push_back(spec.toStdString());
+    fieldA.push_back(&doc->mapSpeciesIdToField.at(spec));
+  }
+  for (const auto &spec : doc->species.at(compB)) {
+    speciesID.push_back(spec.toStdString());
+    fieldB.push_back(&doc->mapSpeciesIdToField.at(spec));
+  }
 
   // make vector of reactions from membrane
+  std::vector<std::string> reactionID;
   for (const auto &reac : doc->reactions.at(membrane->membraneID.c_str())) {
     reactionID.push_back(reac.toStdString());
   }
@@ -263,42 +273,47 @@ void SimMembrane::evaluate_reactions() {
   //       reacEval.nSpecies);
   // qDebug("SimMembrane::evaluate_reactions :   - n_reacs=%lu",
   //       reacEval.nReactions);
+  assert(reacEval.species_values.size() == fieldA.size() + fieldB.size());
   for (const auto &p : membrane->indexPair) {
     std::size_t ixA = p.first;
     std::size_t ixB = p.second;
     // populate species concentrations: first A, then B
     std::size_t reacIndex = 0;
-    for (std::size_t s = 0; s < membrane->fieldA->n_species; ++s) {
-      reacEval.species_values[reacIndex++] =
-          membrane->fieldA->conc[ixA * membrane->fieldA->n_species + s];
+    for (const auto *fA : fieldA) {
+      reacEval.species_values[reacIndex++] = fA->conc[ixA];
     }
-    for (std::size_t s = 0; s < membrane->fieldB->n_species; ++s) {
-      reacEval.species_values[reacIndex++] =
-          membrane->fieldB->conc[ixB * membrane->fieldB->n_species + s];
+    for (const auto *fB : fieldB) {
+      reacEval.species_values[reacIndex++] = fB->conc[ixB];
     }
     // evaluate reaction terms
     reacEval.evaluate();
     const std::vector<double> &result = reacEval.getResult();
     // add results to dc/dt: first A, then B
     reacIndex = 0;
-    for (std::size_t s = 0; s < membrane->fieldA->n_species; ++s) {
-      membrane->fieldA->dcdt[ixA * membrane->fieldA->n_species + s] +=
-          result[reacIndex++];
+    for (auto *fA : fieldA) {
+      fA->dcdt[ixA] += result[reacIndex++];
     }
-    for (std::size_t s = 0; s < membrane->fieldB->n_species; ++s) {
-      membrane->fieldB->dcdt[ixB * membrane->fieldB->n_species + s] +=
-          result[reacIndex++];
+    for (auto *fB : fieldB) {
+      fB->dcdt[ixB] += result[reacIndex++];
     }
   }
 }
 
-void Simulate::addField(geometry::Field *f) {
-  field.push_back(f);
-  speciesID.insert(speciesID.end(), f->speciesID.begin(), f->speciesID.end());
-  simComp.emplace_back(doc, f);
+void Simulate::addCompartment(geometry::Compartment *compartment) {
+  qDebug("Simulate::addCompartment :: adding compartment %s",
+         compartment->compartmentID.c_str());
+  simComp.emplace_back(doc, compartment);
+  for (auto *f : simComp.back().field) {
+    field.push_back(f);
+    speciesID.push_back(f->speciesID);
+    qDebug("Simulate::addCompartment ::   - adding species %s",
+           f->speciesID.c_str());
+  }
 }
 
 void Simulate::addMembrane(geometry::Membrane *membrane) {
+  qDebug("Simulate::addMembrane :: adding membrane %s",
+         membrane->membraneID.c_str());
   simMembrane.emplace_back(doc, membrane);
 }
 
@@ -329,34 +344,30 @@ QImage Simulate::getConcentrationImage() {
   img.fill(qRgba(0, 0, 0, 0));
   // alpha opacity factor
   double alpha = 1.0;
-  // offset to go from species index in a field to the species index used in
-  // speciesID here, which includes all species in the model
-  std::size_t s_offset = 0;
   // normalise species concentration: max value of any species = max colour
   // intensity
   double max_conc = 0;
-  for (auto *f : field) {
+  for (const auto *f : field) {
     max_conc =
         std::max(max_conc, *std::max_element(f->conc.cbegin(), f->conc.cend()));
   }
-  for (auto *f : field) {
+  if (max_conc < 1e-15) {
+    max_conc = 1.0;
+  }
+  for (const auto *f : field) {
     for (std::size_t i = 0; i < f->geometry->ix.size(); ++i) {
-      int r = 0;
-      int g = 0;
-      int b = 0;
-      for (std::size_t s = 0; s < f->n_species; ++s) {
-        double c = f->conc[i * f->n_species + s] / max_conc;
-        r += static_cast<int>((speciesColour[s + s_offset].red() * c) * alpha);
-        g +=
-            static_cast<int>((speciesColour[s + s_offset].green() * c) * alpha);
-        b += static_cast<int>((speciesColour[s + s_offset].blue() * c) * alpha);
-        img.setPixel(
-            f->geometry->ix[i],
-            QColor(r > 255 ? 255 : r, g > 255 ? 255 : g, b > 255 ? 255 : b, 255)
-                .rgba());
-      }
+      double c = f->conc[i] / max_conc;
+      QColor oldCol = img.pixelColor(f->geometry->ix[i]);
+      int r = oldCol.red();
+      int g = oldCol.green();
+      int b = oldCol.blue();
+      r += static_cast<int>(f->colour.red() * c * alpha);
+      g += static_cast<int>(f->colour.green() * c * alpha);
+      b += static_cast<int>(f->colour.blue() * c * alpha);
+      img.setPixelColor(
+          f->geometry->ix[i],
+          QColor(r > 255 ? 255 : r, g > 255 ? 255 : g, b > 255 ? 255 : b, 255));
     }
-    s_offset += f->speciesID.size();
   }
   return img;
 }

@@ -11,18 +11,18 @@ TEST_CASE("one pixel compartment, one species field", "[geometry][non-gui]") {
   REQUIRE(comp.ix.size() == 1);
   REQUIRE(comp.ix[0] == QPoint(0, 0));
 
-  geometry::Field field;
-  field.init(&comp, std::vector<std::string>{"spec1"});
-  field.setConstantConcentration(0, 1.3);
-  REQUIRE(field.n_pixels == 1);
-  REQUIRE(field.n_species == 1);
+  geometry::Field field(&comp, "spec1");
+  field.setConstantConcentration(1.3);
+  REQUIRE(field.conc.size() == 1);
   REQUIRE(field.conc[0] == dbl_approx(1.3));
+  REQUIRE(field.dcdt.size() == 1);
+  REQUIRE(field.dcdt[0] == dbl_approx(0));
   // Diff op on single site is a no-op: dcdt = 0
   field.applyDiffusionOperator();
   REQUIRE(field.dcdt[0] == dbl_approx(0));
 }
 
-TEST_CASE("two pixel compartment, three species field", "[geometry][non-gui]") {
+TEST_CASE("two pixel compartment, one species field", "[geometry][non-gui]") {
   QImage img(6, 7, QImage::Format_RGB32);
   QRgb colBG = QColor(112, 43, 4).rgba();
   QRgb col = QColor(12, 12, 12).rgba();
@@ -35,27 +35,15 @@ TEST_CASE("two pixel compartment, three species field", "[geometry][non-gui]") {
   REQUIRE(comp.ix[0] == QPoint(3, 3));
   REQUIRE(comp.ix[1] == QPoint(3, 4));
 
-  geometry::Field field;
-  field.init(&comp, std::vector<std::string>{"s1", "s2", "s3"});
-  field.setConstantConcentration(0, 1.3);
-  field.setConstantConcentration(1, 0.3);
-  field.setConstantConcentration(2, 2.0);
-  REQUIRE(field.n_pixels == 2);
-  REQUIRE(field.n_species == 3);
+  geometry::Field field(&comp, "s1");
+  field.setConstantConcentration(1.3);
+  REQUIRE(field.conc.size() == 2);
   // (3,3)
   REQUIRE(field.conc[0] == dbl_approx(1.3));
-  REQUIRE(field.conc[1] == dbl_approx(0.3));
-  REQUIRE(field.conc[2] == dbl_approx(2.0));
   // (3,4)
-  REQUIRE(field.conc[3] == dbl_approx(1.3));
-  REQUIRE(field.conc[4] == dbl_approx(0.3));
-  REQUIRE(field.conc[5] == dbl_approx(2.0));
+  REQUIRE(field.conc[1] == dbl_approx(1.3));
   // Diff op on uniform distribution is also a no-op:
   field.applyDiffusionOperator();
   REQUIRE(field.dcdt[0] == dbl_approx(0));
   REQUIRE(field.dcdt[1] == dbl_approx(0));
-  REQUIRE(field.dcdt[2] == dbl_approx(0));
-  REQUIRE(field.dcdt[3] == dbl_approx(0));
-  REQUIRE(field.dcdt[4] == dbl_approx(0));
-  REQUIRE(field.dcdt[5] == dbl_approx(0));
 }

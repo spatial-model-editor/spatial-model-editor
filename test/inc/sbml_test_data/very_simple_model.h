@@ -9,18 +9,6 @@ struct very_simple_model {
       R"=====(<?xml version="1.0" encoding="UTF-8"?>
     <sbml xmlns="http://www.sbml.org/sbml/level2/version4" level="2" version="4">
       <model metaid="COPASI0" id="New_Model" name="New Model">
-        <listOfUnitDefinitions>
-          <unitDefinition id="volume" name="volume">
-            <listOfUnits>
-              <unit kind="litre" exponent="1" scale="-3" multiplier="1"/>
-            </listOfUnits>
-          </unitDefinition>
-          <unitDefinition id="substance" name="substance">
-            <listOfUnits>
-              <unit kind="mole" exponent="1" scale="-3" multiplier="1"/>
-            </listOfUnits>
-          </unitDefinition>
-        </listOfUnitDefinitions>
         <listOfCompartments>
           <compartment metaid="COPASI1" id="c1" name="c1" spatialDimensions="3" size="10" constant="true">
           </compartment>
