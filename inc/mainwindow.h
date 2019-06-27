@@ -64,8 +64,6 @@ class MainWindow : public QMainWindow {
 
   void on_listMembranes_currentTextChanged(const QString &currentText);
 
-  void on_btnSpeciesDisplaySelect_clicked();
-
  private:
   Ui::MainWindow *ui;
   SbmlDocWrapper sbmlDoc;

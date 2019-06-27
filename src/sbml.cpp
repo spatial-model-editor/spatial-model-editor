@@ -42,7 +42,7 @@ void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
     const auto id = spec->getId().c_str();
     species[spec->getCompartment().c_str()] << QString(id);
     // assign a default colour for displaying the species
-    mapSpeciesIdToColour[id] = geometry::defaultSpeciesColour[i];
+    mapSpeciesIdToColour[id] = geometry::defaultSpeciesColours()[i];
   }
 
   // get list of functions
@@ -345,8 +345,9 @@ std::string SbmlDocWrapper::inlineFunctions(
         loc += arg_len + 1;
       }
       // replace function call with inlined body of function
-      std::string funcBodyString =
-          libsbml::SBML_formulaToL3String(funcBody.get());
+      std::unique_ptr<char, decltype(&std::free)> funcBodyChar(
+          libsbml::SBML_formulaToL3String(funcBody.get()), std::free);
+      std::string funcBodyString(funcBodyChar.get());
       // wrap function body in parentheses
       std::string pre_expr = expr.substr(0, fn_loc);
       std::string post_expr = expr.substr(loc);

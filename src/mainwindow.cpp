@@ -446,7 +446,3 @@ void MainWindow::updateSpeciesDisplaySelect() {
     }
   }
 }
-
-void MainWindow::on_btnSpeciesDisplaySelect_clicked() {
-  qDebug("ui::on_btnSpeciesDisplaySelect_clicked");
-}

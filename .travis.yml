@@ -106,7 +106,7 @@ script:
   - make -j2
   - '[ "$TRAVIS_OS_NAME" != linux ] || ./test -d=yes'
   # also run non-gui tests with valgrind on linux
-  - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind ./test -d=yes "[non-gui]"'
+  - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind --leak-check=full ./test -d=yes "[non-gui]"'
   - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes'
   - cd ../build
 
