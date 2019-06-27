@@ -77,9 +77,10 @@ void MainWindow::on_action_Save_SBML_file_triggered() {
 void MainWindow::on_actionAbout_Qt_triggered() { QMessageBox::aboutQt(this); }
 
 void MainWindow::on_actionGeometry_from_image_triggered() {
-  QString filename =
-      QFileDialog::getOpenFileName(this, "Import geometry from image", "",
-                                   "Image Files (*.png *.jpg *.bmp *.tiff)");
+  QString filename = QFileDialog::getOpenFileName(
+      this, "Import geometry from image", "",
+      "Image Files (*.png *.jpg *.bmp *.tiff)", nullptr,
+      QFileDialog::Option::DontUseNativeDialog);
   sbmlDoc.importGeometryFromImage(filename);
   ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
   ui->tabMain->setCurrentIndex(0);
@@ -341,7 +342,8 @@ void MainWindow::on_btnImportConcentration_clicked() {
          spec.toStdString().c_str());
   QString filename = QFileDialog::getOpenFileName(
       this, "Import species concentration from image", "",
-      "Image Files (*.png *.jpg *.bmp)");
+      "Image Files (*.png *.jpg *.bmp *.tiff)", nullptr,
+      QFileDialog::Option::DontUseNativeDialog);
   sbmlDoc.importConcentrationFromImage(spec, filename);
   ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(spec));
 }
