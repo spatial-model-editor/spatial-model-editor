@@ -29,6 +29,13 @@ TEST_CASE("one pixel compartment, one species field", "[geometry][non-gui]") {
   // constant field set to rescaling value
   field.importConcentration(img, 1.99);
   REQUIRE(field.getMeanConcentration() == dbl_approx(1.99));
+
+  // set zero concentration, get image
+  // (must avoid dividing by zero in normalisation)
+  field.setConstantConcentration(0.0);
+  REQUIRE(field.getMeanConcentration() == dbl_approx(0.0));
+  REQUIRE(field.getConcentrationImage().pixelColor(0, 0) ==
+          QColor(0, 0, 0, 255));
 }
 
 TEST_CASE("two pixel compartment, one species field", "[geometry][non-gui]") {

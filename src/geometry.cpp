@@ -149,24 +149,17 @@ double Field::getMeanConcentration() {
          static_cast<double>(conc.size());
 }
 
-int CompartmentIndexer::toIndex(const QPoint &point) const {
-  return qPointToInt(point, comp.getCompartmentImage().height());
-}
-
-CompartmentIndexer::CompartmentIndexer(const Compartment &c) : comp(c) {
+CompartmentIndexer::CompartmentIndexer(const Compartment &c)
+    : comp(c), imgHeight(c.getCompartmentImage().height()) {
   // construct map from QPoint in image to index in compartment vector
   std::size_t i = 0;
   for (const auto &point : comp.ix) {
-    index[toIndex(point)] = i++;
+    index[qPointToInt(point, imgHeight)] = i++;
   }
 }
 
 std::size_t CompartmentIndexer::getIndex(const QPoint &point) {
-  return index.at(toIndex(point));
-}
-
-bool CompartmentIndexer::isValid(const QPoint &point) {
-  return index.find(toIndex(point)) != index.cend();
+  return index.at(qPointToInt(point, imgHeight));
 }
 
 }  // namespace geometry
