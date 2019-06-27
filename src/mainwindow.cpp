@@ -58,42 +58,14 @@ void MainWindow::on_action_Open_SBML_file_triggered() {
       this, "Open SBML file", "", "SBML file (*.xml)", nullptr,
       QFileDialog::Option::DontUseNativeDialog);
   // TODO: QFileDialog::Option::DontUseNativeDialog is used above to avoid this
-  // call hanging on mac CI tests - check if it works with/without on a real
-  // mac, and also if it looks worse - if so maybe remove this flag?
+  // call hanging on mac CI tests - check if it works with/without on a real mac
   if (!filename.isEmpty()) {
     sbmlDoc.importSBMLFile(filename.toStdString());
     if (sbmlDoc.isValid) {
-      update_ui();
+      ui->tabMain->setCurrentIndex(0);
+      on_tabMain_currentChanged(0);
     }
   }
-}
-
-void MainWindow::update_ui() {
-  // update list of compartments
-  ui->listCompartments->clear();
-  ui->listCompartments->insertItems(0, sbmlDoc.compartments);
-
-  // update list of membranes
-  ui->listMembranes->clear();
-  ui->listMembranes->insertItems(0, sbmlDoc.membranes);
-
-  // update list of functions
-  ui->listFunctions->clear();
-  ui->listFunctions->insertItems(0, sbmlDoc.functions);
-
-  // update tree list of species
-  ui->listSpecies->clear();
-  for (auto c : sbmlDoc.compartments) {
-    // add compartments as top level items
-    QTreeWidgetItem *comp =
-        new QTreeWidgetItem(ui->listSpecies, QStringList({c}));
-    ui->listSpecies->addTopLevelItem(comp);
-    for (auto s : sbmlDoc.species[c]) {
-      // add each species as child of compartment
-      comp->addChild(new QTreeWidgetItem(comp, QStringList({s})));
-    }
-  }
-  ui->listSpecies->expandAll();
 }
 
 void MainWindow::on_action_Save_SBML_file_triggered() {
@@ -289,6 +261,8 @@ void MainWindow::on_tabMain_currentChanged(int index) {
   switch (index) {
     case 0:
       // geometry tab
+      ui->listCompartments->clear();
+      ui->listCompartments->insertItems(0, sbmlDoc.compartments);
       ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
       ui->lblGeometryStatus->setText("Compartment Geometry:");
       break;
@@ -305,8 +279,22 @@ void MainWindow::on_tabMain_currentChanged(int index) {
       break;
     case 2:
       // species tab
-      on_listSpecies_itemActivated(ui->listSpecies->currentItem(),
-                                   ui->listSpecies->currentColumn());
+      // update tree list of species
+      ui->listSpecies->clear();
+      for (auto c : sbmlDoc.compartments) {
+        // add compartments as top level items
+        QTreeWidgetItem *comp =
+            new QTreeWidgetItem(ui->listSpecies, QStringList({c}));
+        ui->listSpecies->addTopLevelItem(comp);
+        for (auto s : sbmlDoc.species[c]) {
+          // add each species as child of compartment
+          comp->addChild(new QTreeWidgetItem(comp, QStringList({s})));
+        }
+      }
+      ui->listSpecies->expandAll();
+      // select first species
+      ui->listSpecies->setCurrentItem(
+          ui->listSpecies->topLevelItem(0)->child(0));
       break;
     case 3:
       // reactions tab
@@ -327,6 +315,8 @@ void MainWindow::on_tabMain_currentChanged(int index) {
       break;
     case 4:
       // functions tab
+      ui->listFunctions->clear();
+      ui->listFunctions->insertItems(0, sbmlDoc.functions);
       break;
     case 5:
       // simulate tab
