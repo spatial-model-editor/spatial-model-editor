@@ -74,9 +74,6 @@ class MainWindow : public QMainWindow {
   // temp: vector of simulation images to display
   QVector<QImage> images;
 
-  // update all UI elements with new model
-  void update_ui();
-
   // update list of species to display in simulation result image
   void updateSpeciesDisplaySelect();
 };
