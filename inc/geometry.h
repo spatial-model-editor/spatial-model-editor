@@ -90,13 +90,12 @@ class Field {
 class CompartmentIndexer {
  private:
   const Compartment &comp;
+  int imgHeight;
   std::unordered_map<int, std::size_t> index;
-  int toIndex(const QPoint &point) const;
 
  public:
   explicit CompartmentIndexer(const Compartment &c);
   std::size_t getIndex(const QPoint &point);
-  bool isValid(const QPoint &point);
 };
 
 }  // namespace geometry

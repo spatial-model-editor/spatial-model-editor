@@ -8,6 +8,7 @@
 #include <utility>
 
 #include <QByteArray>
+#include <QColor>
 #include <QLatin1String>
 #include <QPoint>
 #include <QSize>
@@ -31,6 +32,10 @@ inline std::ostream &operator<<(std::ostream &os, const QPoint &value) {
 
 inline std::ostream &operator<<(std::ostream &os, const QSize &value) {
   return os << "(" << value.width() << "," << value.height() << ")";
+}
+
+inline std::ostream &operator<<(std::ostream &os, const QColor &value) {
+  return os << value.rgba();
 }
 
 template <typename T>
