@@ -101,7 +101,12 @@ void Field::importConcentration(QImage img, double scale_factor) {
       max = std::max(max, img.pixel(x, y));
     }
   }
-  qDebug("Field::importConcentration :: rescaling (%u, %u)->(0,1)", min, max);
+  if (max == min) {
+    // rescale uniform distribution to scale_factor
+    min = 0;
+  }
+  qDebug("Field::importConcentration :: rescaling [%u, %u] -> [%f, %f]", min,
+         max, 0.0, scale_factor);
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     conc[i] = scale_factor *
               static_cast<double>(img.pixel(geometry->ix[i]) - min) /

@@ -11,15 +11,24 @@ TEST_CASE("one pixel compartment, one species field", "[geometry][non-gui]") {
   REQUIRE(comp.ix.size() == 1);
   REQUIRE(comp.ix[0] == QPoint(0, 0));
 
-  geometry::Field field(&comp, "spec1");
+  QColor specCol = QColor(123, 12, 1);
+  geometry::Field field(&comp, "spec1", 1.0, specCol);
   field.setConstantConcentration(1.3);
   REQUIRE(field.conc.size() == 1);
   REQUIRE(field.conc[0] == dbl_approx(1.3));
   REQUIRE(field.dcdt.size() == 1);
   REQUIRE(field.dcdt[0] == dbl_approx(0));
+  QImage imgConc = field.getConcentrationImage();
+  REQUIRE(imgConc.size() == img.size());
+  REQUIRE(imgConc.pixelColor(0, 0) == specCol);
   // Diff op on single site is a no-op: dcdt = 0
   field.applyDiffusionOperator();
   REQUIRE(field.dcdt[0] == dbl_approx(0));
+
+  // Import concentration with rescaling:
+  // constant field set to rescaling value
+  field.importConcentration(img, 1.99);
+  REQUIRE(field.getMeanConcentration() == dbl_approx(1.99));
 }
 
 TEST_CASE("two pixel compartment, one species field", "[geometry][non-gui]") {
