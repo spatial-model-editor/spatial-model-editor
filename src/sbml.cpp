@@ -41,6 +41,8 @@ void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
     }
     const auto id = spec->getId().c_str();
     species[spec->getCompartment().c_str()] << QString(id);
+    // assign a default colour for displaying the species
+    mapSpeciesIdToColour[id] = geometry::defaultSpeciesColour[i];
   }
 
   // get list of functions
@@ -156,16 +158,16 @@ void SbmlDocWrapper::updateMembraneList() {
           }
           mapMembraneToImage[name] = img;
           // create Membrane object
-          geometry::Field *fieldA = &mapCompIdToField.at(compartments[i]);
-          geometry::Field *fieldB = &mapCompIdToField.at(compartments[j]);
+          geometry::Compartment *compA =
+              &mapCompIdToGeometry.at(compartments[i]);
+          geometry::Compartment *compB =
+              &mapCompIdToGeometry.at(compartments[j]);
           if (colA > colB) {
-            std::swap(fieldA, fieldB);
+            std::swap(compA, compB);
           }
-          assert(mapCompartmentToColour.at(
-                     fieldA->geometry->compartmentID.c_str()) <
-                 mapCompartmentToColour.at(
-                     fieldB->geometry->compartmentID.c_str()));
-          membraneVec.emplace_back(name.toStdString(), fieldA, fieldB,
+          assert(mapCompartmentToColour.at(compA->compartmentID.c_str()) <
+                 mapCompartmentToColour.at(compB->compartmentID.c_str()));
+          membraneVec.emplace_back(name.toStdString(), compA, compB,
                                    membranePairs[index]);
         }
       }
@@ -255,16 +257,14 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   // create compartment geometry for this colour
   mapCompIdToGeometry[compartmentID] = geometry::Compartment(
       compartmentID.toStdString(), getCompartmentImage(), colour);
-  mapCompIdToField[compartmentID] = geometry::Field();
-  mapCompIdToField[compartmentID].init(&mapCompIdToGeometry[compartmentID],
-                                       species[compartmentID]);
-  // set all species concentrations to their initial value at all
-  // points
-  for (int i = 0; i < species[compartmentID].size(); ++i) {
-    mapCompIdToField[compartmentID].setConstantConcentration(
-        static_cast<std::size_t>(i),
-        model->getSpecies(species[compartmentID][i].toStdString())
-            ->getInitialConcentration());
+  geometry::Compartment &comp = mapCompIdToGeometry.at(compartmentID);
+  // create a field for each species in this compartment
+  for (const auto &s : species[compartmentID]) {
+    mapSpeciesIdToField[s] = geometry::Field(&comp, s.toStdString(), 1.0,
+                                             mapSpeciesIdToColour.at(s));
+    // set all species concentrations to their initial values
+    mapSpeciesIdToField.at(s).setConstantConcentration(
+        model->getSpecies(s.toStdString())->getInitialConcentration());
   }
   // update list of possible inter-compartment membranes
   updateMembraneList();
@@ -274,21 +274,16 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
 
 void SbmlDocWrapper::importConcentrationFromImage(const QString &speciesID,
                                                   const QString &filename) {
-  QString comp =
-      model->getSpecies(speciesID.toStdString())->getCompartment().c_str();
   QImage img;
   img.load(filename);
-  mapCompIdToField.at(comp).importConcentration(speciesID.toStdString(), img);
+  mapSpeciesIdToField.at(speciesID).importConcentration(img);
 }
 
 const QImage &SbmlDocWrapper::getConcentrationImage(const QString &speciesID) {
   if (!hasGeometry) {
     return compartmentImage;
   }
-  QString comp =
-      model->getSpecies(speciesID.toStdString())->getCompartment().c_str();
-  return mapCompIdToField.at(comp).getConcentrationImage(
-      speciesID.toStdString());
+  return mapSpeciesIdToField.at(speciesID).getConcentrationImage();
 }
 
 QString SbmlDocWrapper::getXml() const {

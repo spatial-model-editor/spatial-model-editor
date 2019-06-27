@@ -31,38 +31,44 @@ SCENARIO("simulate very_simple_model.xml", "[simulate][non-gui]") {
   REQUIRE(s.membranes == QStringList{"c1-c2", "c2-c3"});
 
   // check fields have correct compartments & sizes
-  geometry::Field &f1 = s.mapCompIdToField.at("c1");
-  REQUIRE(f1.geometry->compartmentID == "c1");
-  REQUIRE(f1.n_pixels == 1);
-  REQUIRE(f1.n_species == 2);
-  geometry::Field &f2 = s.mapCompIdToField.at("c2");
-  REQUIRE(f2.geometry->compartmentID == "c2");
-  REQUIRE(f2.n_pixels == 1);
-  REQUIRE(f2.n_species == 2);
-  geometry::Field &f3 = s.mapCompIdToField.at("c3");
-  REQUIRE(f3.geometry->compartmentID == "c3");
-  REQUIRE(f3.n_pixels == 1);
-  REQUIRE(f3.n_species == 2);
-  simulate::Simulate sim(&s);
+  geometry::Field &fa1 = s.mapSpeciesIdToField.at("A_c1");
+  REQUIRE(fa1.geometry->compartmentID == "c1");
+  REQUIRE(fa1.speciesID == "A_c1");
+  geometry::Field &fb1 = s.mapSpeciesIdToField.at("B_c1");
+  REQUIRE(fb1.geometry->compartmentID == "c1");
+  REQUIRE(fb1.speciesID == "B_c1");
+  geometry::Field &fa2 = s.mapSpeciesIdToField.at("A_c2");
+  REQUIRE(fa2.geometry->compartmentID == "c2");
+  REQUIRE(fa2.speciesID == "A_c2");
+  geometry::Field &fb2 = s.mapSpeciesIdToField.at("B_c2");
+  REQUIRE(fb2.geometry->compartmentID == "c2");
+  REQUIRE(fb2.speciesID == "B_c2");
+  geometry::Field &fa3 = s.mapSpeciesIdToField.at("A_c3");
+  REQUIRE(fa3.geometry->compartmentID == "c3");
+  REQUIRE(fa3.speciesID == "A_c3");
+  geometry::Field &fb3 = s.mapSpeciesIdToField.at("B_c3");
+  REQUIRE(fb3.geometry->compartmentID == "c3");
+  REQUIRE(fb3.speciesID == "B_c3");
 
   // check membranes have correct compartment pairs & sizes
   geometry::Membrane &m0 = s.membraneVec[0];
   REQUIRE(m0.membraneID == "c1-c2");
-  REQUIRE(m0.fieldA->geometry->compartmentID == "c1");
-  REQUIRE(m0.fieldB->geometry->compartmentID == "c2");
+  REQUIRE(m0.compA->compartmentID == "c1");
+  REQUIRE(m0.compB->compartmentID == "c2");
   REQUIRE(m0.indexPair.size() == 1);
   REQUIRE(m0.indexPair[0] == std::pair<std::size_t, std::size_t>{0, 0});
 
   geometry::Membrane &m1 = s.membraneVec[1];
   REQUIRE(m1.membraneID == "c2-c3");
-  REQUIRE(m1.fieldA->geometry->compartmentID == "c2");
-  REQUIRE(m1.fieldB->geometry->compartmentID == "c3");
+  REQUIRE(m1.compA->compartmentID == "c2");
+  REQUIRE(m1.compB->compartmentID == "c3");
   REQUIRE(m1.indexPair.size() == 1);
   REQUIRE(m1.indexPair[0] == std::pair<std::size_t, std::size_t>{0, 0});
 
+  simulate::Simulate sim(&s);
   // add fields
   for (const auto &compartmentID : s.compartments) {
-    sim.addField(&s.mapCompIdToField.at(compartmentID));
+    sim.addCompartment(&s.mapCompIdToGeometry.at(compartmentID));
   }
   // add membranes
   for (auto &membrane : s.membraneVec) {
@@ -70,17 +76,19 @@ SCENARIO("simulate very_simple_model.xml", "[simulate][non-gui]") {
   }
 
   // check initial concentrations: A_c1=1=fixed, the rest zero
-  REQUIRE(f1.getMeanConcentration(0) == 1.0);
-  REQUIRE(f1.getMeanConcentration(1) == 0.0);
-  REQUIRE(f2.getMeanConcentration(0) == 0.0);
-  REQUIRE(f2.getMeanConcentration(1) == 0.0);
-  REQUIRE(f3.getMeanConcentration(0) == 0.0);
-  REQUIRE(f3.getMeanConcentration(1) == 0.0);
+  REQUIRE(sim.field[0] == &fa1);
+  REQUIRE(sim.field[0]->conc[0] == 1.0);
+  REQUIRE(sim.field[0]->getMeanConcentration() == 1.0);
+  REQUIRE(fb1.getMeanConcentration() == 0.0);
+  REQUIRE(fa2.getMeanConcentration() == 0.0);
+  REQUIRE(fb2.getMeanConcentration() == 0.0);
+  REQUIRE(fa3.getMeanConcentration() == 0.0);
+  REQUIRE(fb3.getMeanConcentration() == 0.0);
 
-  // check initial conentration image
+  // check initial concentration image
   img = sim.getConcentrationImage();
   REQUIRE(img.size() == QSize(1, 3));
-  REQUIRE(img.pixel(0, 0) == sim.speciesColour[0].rgba());
+  REQUIRE(img.pixel(0, 0) == sim.field[0]->colour.rgba());
   REQUIRE(img.pixel(0, 1) == QColor(0, 0, 0).rgba());
   REQUIRE(img.pixel(0, 2) == QColor(0, 0, 0).rgba());
 
@@ -88,59 +96,59 @@ SCENARIO("simulate very_simple_model.xml", "[simulate][non-gui]") {
   WHEN("single Euler step") {
     sim.integrateForwardsEuler(dt);
     // A_c1 = 1 = const
-    REQUIRE(f1.getMeanConcentration(0) == 1.0);
+    REQUIRE(fa1.getMeanConcentration() == 1.0);
     // B_c1 = 0
-    REQUIRE(f1.getMeanConcentration(1) == 0.0);
+    REQUIRE(fb1.getMeanConcentration() == 0.0);
     // A_c2 += k_1 A_c1 dt
-    REQUIRE(f2.getMeanConcentration(0) == dbl_approx(0.1 * 1.0 * dt));
+    REQUIRE(fa2.getMeanConcentration() == dbl_approx(0.1 * 1.0 * dt));
     // B_c2 = 0
-    REQUIRE(f2.getMeanConcentration(1) == 0.0);
+    REQUIRE(fb2.getMeanConcentration() == 0.0);
     // A_c3 = 0
-    REQUIRE(f3.getMeanConcentration(0) == 0.0);
+    REQUIRE(fa3.getMeanConcentration() == 0.0);
     // B_c3 = 0
-    REQUIRE(f3.getMeanConcentration(1) == 0.0);
+    REQUIRE(fb3.getMeanConcentration() == 0.0);
   }
 
   WHEN("two Euler steps") {
     sim.integrateForwardsEuler(dt);
-    double A_c2 = f2.getMeanConcentration(0);
+    double A_c2 = fa2.getMeanConcentration();
     sim.integrateForwardsEuler(dt);
     // A_c1 = 1 = const
-    REQUIRE(f1.getMeanConcentration(0) == 1.0);
+    REQUIRE(fa1.getMeanConcentration() == 1.0);
     // B_c1 = 0
-    REQUIRE(f1.getMeanConcentration(1) == 0.0);
+    REQUIRE(fb1.getMeanConcentration() == 0.0);
     // A_c2 += k_1 A_c1 dt - k1 * A_c2 * dt
-    REQUIRE(f2.getMeanConcentration(0) ==
+    REQUIRE(fa2.getMeanConcentration() ==
             dbl_approx(A_c2 + 0.1 * dt - A_c2 * 0.1 * dt));
     // B_c2 = 0
-    REQUIRE(f2.getMeanConcentration(1) == 0.0);
+    REQUIRE(fb2.getMeanConcentration() == 0.0);
     // A_c3 += k_1 A_c2 dt
-    REQUIRE(f3.getMeanConcentration(0) == dbl_approx(0.1 * A_c2 * dt));
+    REQUIRE(fa3.getMeanConcentration() == dbl_approx(0.1 * A_c2 * dt));
     // B_c3 = 0
-    REQUIRE(f3.getMeanConcentration(1) == 0.0);
+    REQUIRE(fb3.getMeanConcentration() == 0.0);
   }
 
   WHEN("three Euler steps") {
     sim.integrateForwardsEuler(dt);
     sim.integrateForwardsEuler(dt);
-    double A_c2 = f2.getMeanConcentration(0);
-    double A_c3 = f3.getMeanConcentration(0);
+    double A_c2 = fa2.getMeanConcentration();
+    double A_c3 = fa3.getMeanConcentration();
     sim.integrateForwardsEuler(dt);
     // A_c1 = 1 = const
-    REQUIRE(f1.getMeanConcentration(0) == 1.0);
+    REQUIRE(fa1.getMeanConcentration() == 1.0);
     // B_c1 = 0
-    REQUIRE(f1.getMeanConcentration(1) == 0.0);
+    REQUIRE(fb1.getMeanConcentration() == 0.0);
     // A_c2 += k_1 (A_c1 - A_c2) dt + k2 * A_c3 * dt
-    REQUIRE(f2.getMeanConcentration(0) ==
+    REQUIRE(fa2.getMeanConcentration() ==
             dbl_approx(A_c2 + 0.1 * dt - A_c2 * 0.1 * dt + A_c3 * 0.1 * dt));
     // B_c2 = 0
-    REQUIRE(f2.getMeanConcentration(1) == 0.0);
+    REQUIRE(fb2.getMeanConcentration() == 0.0);
     // A_c3 += k_1 A_c2 dt - k_1 A_c3 dt -
     REQUIRE(
-        f3.getMeanConcentration(0) ==
+        fa3.getMeanConcentration() ==
         dbl_approx(A_c3 + 0.1 * (A_c2 - A_c3) * dt - 0.2 * 0.3 * A_c3 * dt));
     // B_c3 = 0.2 * 0.3 * A_c3 * dt
-    REQUIRE(f3.getMeanConcentration(1) == dbl_approx(0.2 * 0.3 * A_c3 * dt));
+    REQUIRE(fb3.getMeanConcentration() == dbl_approx(0.2 * 0.3 * A_c3 * dt));
   }
 
   WHEN("many Euler steps -> steady state solution") {
@@ -152,12 +160,12 @@ SCENARIO("simulate very_simple_model.xml", "[simulate][non-gui]") {
     for (int i = 0; i < 5000; ++i) {
       sim.integrateForwardsEuler(0.2);
     }
-    double A_c1 = f1.getMeanConcentration(0);
-    double A_c2 = f2.getMeanConcentration(0);
-    double A_c3 = f3.getMeanConcentration(0);
-    double B_c1 = f1.getMeanConcentration(1);
-    double B_c2 = f2.getMeanConcentration(1);
-    double B_c3 = f3.getMeanConcentration(1);
+    double A_c1 = fa1.getMeanConcentration();
+    double A_c2 = fa2.getMeanConcentration();
+    double A_c3 = fa3.getMeanConcentration();
+    double B_c1 = fb1.getMeanConcentration();
+    double B_c2 = fb2.getMeanConcentration();
+    double B_c3 = fb3.getMeanConcentration();
 
     // check concentration values
     REQUIRE(A_c1 == Approx(1.0).epsilon(acceptable_error));
@@ -171,17 +179,17 @@ SCENARIO("simulate very_simple_model.xml", "[simulate][non-gui]") {
     // check concentration derivatives
     double eps = 1.e-5;
     sim.integrateForwardsEuler(eps);
-    double dA1 = (f1.getMeanConcentration(0) - A_c1) / eps;
+    double dA1 = (fa1.getMeanConcentration() - A_c1) / eps;
     REQUIRE(dA1 == Approx(0).epsilon(acceptable_error));
-    double dA2 = (f2.getMeanConcentration(0) - A_c2) / eps;
+    double dA2 = (fa2.getMeanConcentration() - A_c2) / eps;
     REQUIRE(dA2 == Approx(0).epsilon(acceptable_error));
-    double dA3 = (f3.getMeanConcentration(0) - A_c3) / eps;
+    double dA3 = (fa3.getMeanConcentration() - A_c3) / eps;
     REQUIRE(dA3 == Approx(0).epsilon(acceptable_error));
-    double dB1 = (f1.getMeanConcentration(1) - B_c1) / eps;
+    double dB1 = (fb1.getMeanConcentration() - B_c1) / eps;
     REQUIRE(dB1 == Approx(0.1).epsilon(acceptable_error));
-    double dB2 = (f2.getMeanConcentration(1) - B_c2) / eps;
+    double dB2 = (fb2.getMeanConcentration() - B_c2) / eps;
     REQUIRE(dB2 == Approx(0).epsilon(acceptable_error));
-    double dB3 = (f3.getMeanConcentration(1) - B_c3) / eps;
+    double dB3 = (fb3.getMeanConcentration() - B_c3) / eps;
     REQUIRE(dB3 == Approx(0).epsilon(acceptable_error));
   }
 }

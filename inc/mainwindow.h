@@ -66,8 +66,6 @@ class MainWindow : public QMainWindow {
 
   void on_btnSpeciesDisplaySelect_clicked();
 
-  void on_btnSpeciesDisplaySelect_MenuItemChecked();
-
  private:
   Ui::MainWindow *ui;
   SbmlDocWrapper sbmlDoc;
@@ -78,4 +76,7 @@ class MainWindow : public QMainWindow {
 
   // update all UI elements with new model
   void update_ui();
+
+  // update list of species to display in simulation result image
+  void updateSpeciesDisplaySelect();
 };

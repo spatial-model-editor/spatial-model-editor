@@ -1,11 +1,11 @@
 // Spatial Geometry
-//  - Compartment class: defines set of points that make up a compartment
-//  - Field class: species concentrations w/bcs within a compartment
+//  - Compartment class: defines set of points that make up a compartment &
+//  nearest neighbours for each point
 //  - Membrane class: defines set of points on either side of the boundary
 //  between two compartments, aka the membrane
+//  - Field class: species concentration within a compartment
 //  - CompartmentIndexer class: utility class to convert a QPoint to the
-//  corresponding vector index for a Compartment (only used for initialising
-//  Fields and Membranes)
+//  corresponding vector index for a Compartment (for initialising Membranes)
 
 #pragma once
 
@@ -16,9 +16,19 @@
 
 namespace geometry {
 
+// a set of default colours for display purposes
+const std::vector<QColor> defaultSpeciesColour{
+    {230, 25, 75},  {60, 180, 75},   {255, 225, 25}, {0, 130, 200},
+    {245, 130, 48}, {145, 30, 180},  {70, 240, 240}, {240, 50, 230},
+    {210, 245, 60}, {250, 190, 190}, {0, 128, 128},  {230, 190, 255},
+    {170, 110, 40}, {255, 250, 200}, {128, 0, 0},    {170, 255, 195},
+    {128, 128, 0},  {255, 215, 180}, {0, 0, 128},    {128, 128, 128}};
+
 class Compartment {
  private:
   QImage imgComp;
+  // vector of indices of nearest-neighbours
+  std::vector<std::size_t> nn;
 
  public:
   Compartment() = default;
@@ -28,92 +38,65 @@ class Compartment {
   std::string compartmentID;
   // vector of points that make up compartment
   std::vector<QPoint> ix;
+  // indices of nearest neighbours
+  // e.g. ix[up_x[i]] is the +x neigbour of point ix[i]
+  // a field stores the concentration at point ix[i] at index i
+  // zero flux Neumann bcs: outside neighbour of point on boundary is itself
+  inline std::size_t up_x(std::size_t i) const { return nn[4 * i]; }
+  inline std::size_t dn_x(std::size_t i) const { return nn[4 * i + 1]; }
+  inline std::size_t up_y(std::size_t i) const { return nn[4 * i + 2]; }
+  inline std::size_t dn_y(std::size_t i) const { return nn[4 * i + 3]; }
   // return a QImage of the compartment geometry
   const QImage &getCompartmentImage() const;
-};
-
-class CompartmentIndexer {
- private:
-  const Compartment &comp;
-  std::unordered_map<int, std::size_t> index;
-  int qPointToInt(const QPoint &point) const;
-
- public:
-  explicit CompartmentIndexer(const Compartment &c);
-  std::size_t getIndex(const QPoint &point);
-  bool isValid(const QPoint &point);
-};
-
-class Field {
- private:
-  std::size_t n_bcs = 1;
-  // vector of indices of the nearest-neighbours
-  // of the point i:
-  // [4*i+0] = +x neighbour
-  // [4*i+1] = -x neighbour
-  // [4*i+2] = +y neighbour
-  // [4*i+3] = -y neighbour
-  // size: 4*n_pixels
-  std::vector<std::size_t> nn;
-  QImage img_conc;
-  // map from speciesID to species index
-  std::map<std::string, std::size_t> mapSpeciesIdToIndex;
-
- public:
-  enum BOUNDARY_CONDITION { DIRICHLET, NEUMANN };
-  Compartment *geometry;
-  std::size_t n_species;
-  std::size_t n_pixels;
-  // vector of speciesID strings
-  std::vector<std::string> speciesID;
-  // field of species concentrations
-  std::vector<double> conc;
-  // field of dcdt values
-  std::vector<double> dcdt;
-  // vector of diffusion constants for each species
-  std::vector<double> diffusion_constant;
-  // a set of default colours for display purposes
-  std::vector<QColor> speciesColour{
-      {230, 25, 75},  {60, 180, 75},   {255, 225, 25}, {0, 130, 200},
-      {245, 130, 48}, {145, 30, 180},  {70, 240, 240}, {240, 50, 230},
-      {210, 245, 60}, {250, 190, 190}, {0, 128, 128},  {230, 190, 255},
-      {170, 110, 40}, {255, 250, 200}, {128, 0, 0},    {170, 255, 195},
-      {128, 128, 0},  {255, 215, 180}, {0, 0, 128},    {128, 128, 128}};
-
-  void init(Compartment *geom, const std::vector<std::string> &speciesIDvec,
-            BOUNDARY_CONDITION bc = NEUMANN);
-  void init(Compartment *geom, const QStringList &speciesIDvec,
-            BOUNDARY_CONDITION bc = NEUMANN);
-  void setConstantConcentration(std::size_t species_index,
-                                double concentration);
-  void importConcentration(std::size_t species_index, QImage img,
-                           double scale_factor = 1.0);
-  void importConcentration(const std::string &species_ID, QImage img,
-                           double scale_factor = 1.0);
-  // return a QImage of the concentration of given species
-  const QImage &getConcentrationImage(std::size_t species_index);
-  // return a QImage of the concentration of given species
-  const QImage &getConcentrationImage(std::string species_ID);
-  // return a QImage of the concentration of the given set of species
-  const QImage &getConcentrationImage(
-      const std::vector<std::size_t> &species_indices);
-  // return a QImage of the concentration of all species
-  const QImage &getConcentrationImage();
-  // field.dcdt = result of the diffusion operator acting on field.conc
-  void applyDiffusionOperator();
-  double getMeanConcentration(std::size_t species_index);
 };
 
 class Membrane {
  private:
  public:
   std::string membraneID;
-  Field *fieldA;
-  Field *fieldB;
+  const Compartment *compA;
+  const Compartment *compB;
   std::vector<std::pair<std::size_t, std::size_t>> indexPair;
   Membrane() = default;
-  Membrane(const std::string &ID, Field *A, Field *B,
+  Membrane(const std::string &ID, const Compartment *A, const Compartment *B,
            const std::vector<std::pair<QPoint, QPoint>> &membranePairs);
+};
+
+class Field {
+ private:
+  QImage imgConc;
+
+ public:
+  std::string speciesID;
+  const Compartment *geometry;
+  double diffusionConstant;
+  QColor colour;
+  // field of species concentration
+  std::vector<double> conc;
+  // field of dcdt values
+  std::vector<double> dcdt;
+  Field() = default;
+  Field(const Compartment *geom, const std::string &specID,
+        double diffConst = 1.0, const QColor &col = QColor(255, 0, 0));
+  void setConstantConcentration(double concentration);
+  void importConcentration(QImage img, double scale_factor = 1.0);
+  // return a QImage of the concentration of given species
+  const QImage &getConcentrationImage();
+  double getMeanConcentration();
+  // field.dcdt = result of the diffusion operator acting on field.conc
+  void applyDiffusionOperator();
+};
+
+class CompartmentIndexer {
+ private:
+  const Compartment &comp;
+  std::unordered_map<int, std::size_t> index;
+  int toIndex(const QPoint &point) const;
+
+ public:
+  explicit CompartmentIndexer(const Compartment &c);
+  std::size_t getIndex(const QPoint &point);
+  bool isValid(const QPoint &point);
 };
 
 }  // namespace geometry

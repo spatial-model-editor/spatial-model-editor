@@ -234,9 +234,11 @@ void MainWindow::on_btnChangeCompartment_clicked() {
 }
 
 void MainWindow::on_listCompartments_itemDoubleClicked(QListWidgetItem *item) {
-  // double-click on compartment list is equivalent to clicking
-  // btnChangeCompartment
-  on_btnChangeCompartment_clicked();
+  // double-click on compartment list item is equivalent to
+  // selecting item, then clicking on btnChangeCompartment
+  if (item != nullptr) {
+    on_btnChangeCompartment_clicked();
+  }
 }
 
 void MainWindow::on_listCompartments_currentTextChanged(
@@ -368,12 +370,9 @@ void MainWindow::on_listMembranes_currentTextChanged(
 void MainWindow::on_btnSimulate_clicked() {
   // simple 2d spatial simulation
   simulate::Simulate sim(&sbmlDoc);
-  // temporary: set custom set of colours
-  sim.speciesColour = {{255, 0, 0}, {0, 0, 255}, {255, 0, 0},
-                       {0, 0, 255}, {255, 0, 0}, {0, 0, 255}};
-  // add fields
+  // add compartments
   for (const auto &compartmentID : sbmlDoc.compartments) {
-    sim.addField(&sbmlDoc.mapCompIdToField.at(compartmentID));
+    sim.addCompartment(&sbmlDoc.mapCompIdToGeometry.at(compartmentID));
   }
   // add membranes
   for (auto &membrane : sbmlDoc.membraneVec) {
@@ -383,33 +382,26 @@ void MainWindow::on_btnSimulate_clicked() {
   // get initial concentrations
   images.clear();
   QVector<double> time{0};
-  std::vector<QVector<double>> conc(sim.speciesID.size());
-  std::size_t offset = 0;
-  for (auto *f : sim.field) {
-    for (std::size_t i = 0; i < f->speciesID.size(); ++i) {
-      conc[i + offset].push_back(f->getMeanConcentration(i));
-    }
-    offset += f->speciesID.size();
+  std::vector<QVector<double>> conc(sim.field.size());
+  for (std::size_t s = 0; s < sim.field.size(); ++s) {
+    conc[s].push_back(sim.field[s]->getMeanConcentration());
   }
+
   // do Euler integration
   double t = 0;
   double dt = ui->txtSimDt->text().toDouble();
-  for (int i_step = 0;
-       i_step < static_cast<int>(ui->txtSimLength->text().toDouble() / dt);
-       ++i_step) {
+  int n_steps = static_cast<int>(ui->txtSimLength->text().toDouble() / dt);
+  for (int i_step = 0; i_step < n_steps; ++i_step) {
     t += dt;
     sim.integrateForwardsEuler(dt);
     images.push_back(sim.getConcentrationImage());
-    offset = 0;
-    for (auto *f : sim.field) {
-      for (std::size_t i = 0; i < f->speciesID.size(); ++i) {
-        conc[i + offset].push_back(f->getMeanConcentration(i));
-      }
-      offset += f->speciesID.size();
+    for (std::size_t s = 0; s < sim.field.size(); ++s) {
+      conc[s].push_back(sim.field[s]->getMeanConcentration());
     }
     time.push_back(t);
     ui->lblGeometry->setImage(images.back());
     ui->lblGeometry->repaint();
+    QApplication::processEvents();
   }
 
   // plot results
@@ -421,7 +413,7 @@ void MainWindow::on_btnSimulate_clicked() {
   for (std::size_t i = 0; i < sim.speciesID.size(); ++i) {
     auto *graph = ui->pltPlot->addGraph();
     graph->setData(time, conc[i]);
-    graph->setPen(sim.speciesColour[i]);
+    graph->setPen(sim.field[i]->colour);
     graph->setName(sim.speciesID[i].c_str());
   }
   ui->pltPlot->xAxis->setLabel("time");
@@ -448,12 +440,12 @@ void MainWindow::on_btnSimulate_clicked() {
     act->setChecked(true);
     menu->addAction(act);
     connect(act, &QAction::triggered, this,
-            &MainWindow::on_btnSpeciesDisplaySelect_MenuItemChecked);
+            &MainWindow::updateSpeciesDisplaySelect);
   }
   ui->btnSpeciesDisplaySelect->setMenu(menu);
 }
 
-void MainWindow::on_btnSpeciesDisplaySelect_MenuItemChecked() {
+void MainWindow::updateSpeciesDisplaySelect() {
   std::vector<std::string> species;
   for (auto *act : ui->btnSpeciesDisplaySelect->menu()->actions()) {
     if (act->isChecked()) {

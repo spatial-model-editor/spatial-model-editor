@@ -33,10 +33,11 @@ class SbmlDocWrapper {
   std::map<QString, QStringList> species;
   std::map<QString, QStringList> reactions;
   QStringList functions;
+  std::map<QString, QColor> mapSpeciesIdToColour;
 
   // spatial information
   std::map<QString, geometry::Compartment> mapCompIdToGeometry;
-  std::map<QString, geometry::Field> mapCompIdToField;
+  std::map<QString, geometry::Field> mapSpeciesIdToField;
   std::vector<geometry::Membrane> membraneVec;
 
   void importSBMLFile(const std::string &filename);
@@ -90,7 +91,6 @@ class SbmlDocWrapper {
   // add the pair of QPoints to the vector for this pair of colours,
   // i.e. the membrane between compartments of these two colours
   // NOTE: colour pairs are ordered in ascending order
-  // x-neighbours
   std::vector<std::vector<std::pair<QPoint, QPoint>>> membranePairs;
   std::map<QString, std::size_t> mapMembraneToIndex;
   std::map<QString, QImage> mapMembraneToImage;
