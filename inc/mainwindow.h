@@ -24,24 +24,24 @@ class MainWindow : public QMainWindow {
   // temp: vector of simulation images to display
   QVector<QImage> images;
 
+  void setupConnections();
+
   // update list of species to display in simulation result image
   void updateSpeciesDisplaySelect();
 
   // <UI>
   void tabMain_currentChanged(int index);
 
-  // menu actions
+  // File menu actions
   void action_Open_SBML_file_triggered();
 
   void action_Save_SBML_file_triggered();
 
-  void actionE_xit_triggered();
-
+  // Import menu actions
   void actionGeometry_from_image_triggered();
 
+  // About menu actions
   void action_About_triggered();
-
-  void actionAbout_Qt_triggered();
 
   // geometry
   void lblGeometry_mouseClicked(QRgb col);

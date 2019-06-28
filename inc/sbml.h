@@ -41,6 +41,7 @@ class SbmlDocWrapper {
   std::vector<geometry::Membrane> membraneVec;
 
   void importSBMLFile(const std::string &filename);
+  void exportSBMLFile(const std::string &filename) const;
 
   // compartment geometry
   void importGeometryFromImage(const QString &filename);
