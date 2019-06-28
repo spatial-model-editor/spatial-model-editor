@@ -115,7 +115,7 @@ matrix:
         # generate gcov test coverage data for sonar-source
         - mkdir ../gcov
         - cd ../gcov
-        - gcov -p ../build-tests/*.gcno
+        - gcov -r ../build-tests/*.gcno
         - cd ../
         # upload to sonar-scanner
         - sonar-scanner -Dsonar.login=$SONAR_LOGIN
