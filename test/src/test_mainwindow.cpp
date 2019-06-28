@@ -52,6 +52,20 @@ SCENARIO("Shortcut keys", "[gui][mainwindow]") {
       }
     }
   }
+  WHEN("user presses ctrl+shift+tab") {
+    THEN("display previous tab") {
+      int nTabs = 7;
+      QTabWidget *tabMain =
+          w.topLevelWidget()->findChild<QTabWidget *>("tabMain");
+      REQUIRE(tabMain != nullptr);
+      REQUIRE(tabMain->currentIndex() == 0);
+      for (int index = -1; index > -2 * nTabs + 1; --index) {
+        QTest::keyPress(w.windowHandle(), Qt::Key_Tab,
+                        Qt::ControlModifier | Qt::ShiftModifier, key_delay);
+        REQUIRE(tabMain->currentIndex() == (index + 5 * nTabs) % nTabs);
+      }
+    }
+  }
 }
 
 SCENARIO("Load SBML file", "[gui][mainwindow]") {

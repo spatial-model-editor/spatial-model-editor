@@ -54,7 +54,11 @@ void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
 }
 
 void SbmlDocWrapper::exportSBMLFile(const std::string &filename) const {
-  libsbml::SBMLWriter().writeSBML(doc.get(), filename);
+  if (isValid) {
+    qDebug("SbmlDocWrapper::exportSBMLFile : exporting SBML model to %s",
+           filename.c_str());
+    libsbml::SBMLWriter().writeSBML(doc.get(), filename);
+  }
 }
 
 void SbmlDocWrapper::importGeometryFromImage(const QString &filename) {
