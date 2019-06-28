@@ -3,14 +3,15 @@
 [![linux/osx build status](https://travis-ci.org/lkeegan/spatial-model-editor.svg?branch=master)](https://travis-ci.org/lkeegan/spatial-model-editor)
 [![windows build status](https://ci.appveyor.com/api/projects/status/0m87yyaalrrj5ndn?svg=true)](https://ci.appveyor.com/project/lkeegan/spatial-model-editor)
 [![codecov](https://codecov.io/gh/lkeegan/spatial-model-editor/branch/master/graph/badge.svg)](https://codecov.io/gh/lkeegan/spatial-model-editor)
+[![sonarcloud quality gate status](https://sonarcloud.io/api/project_badges/measure?project=lkeegan_spatial-model-editor&metric=alert_status)](https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor)
 [![coverity scan status](https://scan.coverity.com/projects/18642/badge.svg)](https://scan.coverity.com/projects/lkeegan-spatial-model-editor)
 [![documentation status](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/en/latest/)
 
 GUI spatial model editor prototype
 
-[<img src="docs/img/icon-linux.png" width="32"> linux executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor) | 
-[<img src="docs/img/icon-osx.png" width="32"> mac executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg) | 
-[<img src="docs/img/icon-windows.png" width="32"> windows executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) | 
+[<img src="docs/img/icon-linux.png" width="32"> linux executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor) |
+[<img src="docs/img/icon-osx.png" width="32"> mac executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg) |
+[<img src="docs/img/icon-windows.png" width="32"> windows executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) |
 [<img src="docs/img/icon-docs.png" width="32"> documentation](https://spatial-model-editor.readthedocs.io/en/latest/)
 ---|---|---|---
 
