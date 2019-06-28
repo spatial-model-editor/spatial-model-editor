@@ -320,7 +320,7 @@ void MainWindow::hslideTime_valueChanged(int value) {
 }
 
 void MainWindow::tabMain_currentChanged(int index) {
-  enum TabName {
+  enum TabIndex {
     GEOMETRY = 0,
     MEMBRANES = 1,
     SPECIES = 2,
@@ -336,13 +336,13 @@ void MainWindow::tabMain_currentChanged(int index) {
   ui->btnSpeciesDisplaySelect->setEnabled(false);
   ui->btnSpeciesDisplaySelect->setVisible(false);
   switch (index) {
-    case TabName::GEOMETRY:
+    case TabIndex::GEOMETRY: {
       ui->listCompartments->clear();
       ui->listCompartments->insertItems(0, sbmlDoc.compartments);
       ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
       ui->lblGeometryStatus->setText("Compartment Geometry:");
-      break;
-    case TabName::MEMBRANES:
+    } break;
+    case TabIndex::MEMBRANES: {
       ui->lblMembraneShape->clear();
       ui->listMembranes->clear();
       ui->listMembranes->addItems(sbmlDoc.membranes);
@@ -351,26 +351,27 @@ void MainWindow::tabMain_currentChanged(int index) {
       if (ui->listMembranes->count() > 0) {
         ui->listMembranes->setCurrentRow(0);
       }
-      break;
-    case TabName::SPECIES:
+    } break;
+    case TabIndex::SPECIES: {
       // update tree list of species
-      ui->listSpecies->clear();
+      auto *ls = ui->listSpecies;
+      ls->clear();
       for (auto c : sbmlDoc.compartments) {
         // add compartments as top level items
-        QTreeWidgetItem *comp =
-            new QTreeWidgetItem(ui->listSpecies, QStringList({c}));
-        ui->listSpecies->addTopLevelItem(comp);
+        QTreeWidgetItem *comp = new QTreeWidgetItem(ls, QStringList({c}));
+        ls->addTopLevelItem(comp);
         for (auto s : sbmlDoc.species[c]) {
           // add each species as child of compartment
           comp->addChild(new QTreeWidgetItem(comp, QStringList({s})));
         }
       }
-      ui->listSpecies->expandAll();
-      // select first species
-      ui->listSpecies->setCurrentItem(
-          ui->listSpecies->topLevelItem(0)->child(0));
-      break;
-    case TabName::REACTIONS:
+      ls->expandAll();
+      // select first species if it exists
+      if (ls->topLevelItem(0) != nullptr) {
+        ls->setCurrentItem(ls->topLevelItem(0)->child(0));
+      }
+    } break;
+    case TabIndex::REACTIONS: {
       // update list of reactions
       ui->listReactions->clear();
       for (auto iter = sbmlDoc.reactions.cbegin();
@@ -385,12 +386,12 @@ void MainWindow::tabMain_currentChanged(int index) {
         }
       }
       ui->listReactions->expandAll();
-      break;
-    case TabName::FUNCTIONS:
+    } break;
+    case TabIndex::FUNCTIONS: {
       ui->listFunctions->clear();
       ui->listFunctions->insertItems(0, sbmlDoc.functions);
-      break;
-    case TabName::SIMULATE:
+    } break;
+    case TabIndex::SIMULATE: {
       ui->lblGeometryStatus->setText("Simulation concentration:");
       ui->hslideTime->setVisible(true);
       ui->hslideTime->setEnabled(true);
@@ -398,13 +399,13 @@ void MainWindow::tabMain_currentChanged(int index) {
       ui->btnSpeciesDisplaySelect->setEnabled(true);
       ui->btnSpeciesDisplaySelect->setVisible(true);
       hslideTime_valueChanged(0);
-      break;
-    case TabName::SBML:
+    } break;
+    case TabIndex::SBML: {
       ui->txtSBML->setText(sbmlDoc.getXml());
-      break;
-    default:
+    } break;
+    default: {
       qDebug("ui::tabMain :: Errror: Tab index not known");
-      break;
+    } break;
   }
 }
 
