@@ -72,6 +72,7 @@ matrix:
       compiler: gcc
       env:
         - VALGRIND_VERSION="3.15.0"
+        - secure: "Muu56AqHMCZOpCG2d5Byeh6P++9xXKl7otulxdhZCfA1/yTAJM9M67B1ZHo7czEvLKdoVzqCz6aFMnsVvFHUHQDmAtmth/WzdfXZ7OTG7puDIeWRmYqQacpLeF6h9ws3sUr5Bjz9m0guhjbKN/6VIqoyuWLH/J0MwzJN5JKgWitQBeJ15GWjNJN20FLgiYW0vWtQ71dncM6VaLAyH6V/T8jLRNacmCjApAOsS2FuhnSfbL+rY5nRVXPtoy/muwRgpl2Bez8OV6z5nDCaBLxXLgNkC7Y/0OhfzY/t+6wZ4nuDZDJ/4Hn4AyycH1O1ldmfEjw9nHBdqG/0JW2NmvSLojp5NiCUSI1MDmcgqKv6VKdVV2cdn6b7s6YY/8p08pnm+uExHYRkiXPFNeYfoQF3ruYSzFOQXRA+VI3Rg0dMfs4cO+PXCWS/hIAHudG3vaDgOwOnLFaOPjJKGYidmbmu6u4jdvBNFuCkooSYmnO2JCe0LIGgJAwlOEfG51WYD9bewCx+w+NmB+Cow3E4G0DCHomz1XGUhp1DsmjGarU1kDf4PtFLQgLC88h7AQfJtg15mSV6xDcKV+nmuDNS+ifTpQTTSe/w6LqqzcE/EOLaVAtCSe4ACOORW2yBF7DPgUY47ZSkU4iwA7pAOAYDKs37fNHjK8s/TJhM++RZ+21oMME="
       addons:
         apt:
           packages:
@@ -81,8 +82,6 @@ matrix:
             - jwm
         sonarcloud:
           organization: "lkeegan-github"
-          token:
-            - secure: "Muu56AqHMCZOpCG2d5Byeh6P++9xXKl7otulxdhZCfA1/yTAJM9M67B1ZHo7czEvLKdoVzqCz6aFMnsVvFHUHQDmAtmth/WzdfXZ7OTG7puDIeWRmYqQacpLeF6h9ws3sUr5Bjz9m0guhjbKN/6VIqoyuWLH/J0MwzJN5JKgWitQBeJ15GWjNJN20FLgiYW0vWtQ71dncM6VaLAyH6V/T8jLRNacmCjApAOsS2FuhnSfbL+rY5nRVXPtoy/muwRgpl2Bez8OV6z5nDCaBLxXLgNkC7Y/0OhfzY/t+6wZ4nuDZDJ/4Hn4AyycH1O1ldmfEjw9nHBdqG/0JW2NmvSLojp5NiCUSI1MDmcgqKv6VKdVV2cdn6b7s6YY/8p08pnm+uExHYRkiXPFNeYfoQF3ruYSzFOQXRA+VI3Rg0dMfs4cO+PXCWS/hIAHudG3vaDgOwOnLFaOPjJKGYidmbmu6u4jdvBNFuCkooSYmnO2JCe0LIGgJAwlOEfG51WYD9bewCx+w+NmB+Cow3E4G0DCHomz1XGUhp1DsmjGarU1kDf4PtFLQgLC88h7AQfJtg15mSV6xDcKV+nmuDNS+ifTpQTTSe/w6LqqzcE/EOLaVAtCSe4ACOORW2yBF7DPgUY47ZSkU4iwA7pAOAYDKs37fNHjK8s/TJhM++RZ+21oMME="
       services: xvfb
       install:
         # install a recent version of valgrind to run tests
