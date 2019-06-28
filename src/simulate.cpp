@@ -280,10 +280,12 @@ void SimMembrane::evaluate_reactions() {
     // populate species concentrations: first A, then B
     std::size_t reacIndex = 0;
     for (const auto *fA : fieldA) {
-      reacEval.species_values[reacIndex++] = fA->conc[ixA];
+      reacEval.species_values[reacIndex] = fA->conc[ixA];
+      ++reacIndex;
     }
     for (const auto *fB : fieldB) {
-      reacEval.species_values[reacIndex++] = fB->conc[ixB];
+      reacEval.species_values[reacIndex] = fB->conc[ixB];
+      ++reacIndex;
     }
     // evaluate reaction terms
     reacEval.evaluate();
@@ -291,10 +293,12 @@ void SimMembrane::evaluate_reactions() {
     // add results to dc/dt: first A, then B
     reacIndex = 0;
     for (auto *fA : fieldA) {
-      fA->dcdt[ixA] += result[reacIndex++];
+      fA->dcdt[ixA] += result[reacIndex];
+      ++reacIndex;
     }
     for (auto *fB : fieldB) {
-      fB->dcdt[ixB] += result[reacIndex++];
+      fB->dcdt[ixB] += result[reacIndex];
+      ++reacIndex;
     }
   }
 }

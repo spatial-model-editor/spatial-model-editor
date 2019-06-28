@@ -346,7 +346,7 @@ std::string SbmlDocWrapper::inlineFunctions(
       }
       // replace function call with inlined body of function
       std::unique_ptr<char, decltype(&std::free)> funcBodyChar(
-          libsbml::SBML_formulaToL3String(funcBody.get()), std::free);
+          libsbml::SBML_formulaToL3String(funcBody.get()), &std::free);
       std::string funcBodyString(funcBodyChar.get());
       // wrap function body in parentheses
       std::string pre_expr = expr.substr(0, fn_loc);

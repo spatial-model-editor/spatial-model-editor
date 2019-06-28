@@ -17,6 +17,10 @@ MainWindow::MainWindow(QWidget *parent)
   connect(ui->pltPlot,
           SIGNAL(plottableClick(QCPAbstractPlottable *, int, QMouseEvent *)),
           this, SLOT(on_graphClicked(QCPAbstractPlottable *, int)));
+
+  connect(ui->lblGeometry, &QLabelMouseTracker::mouseClicked, this,
+          &MainWindow::lblGeometry_mouseClicked);
+
   ui->tabMain->setCurrentIndex(0);
   on_tabMain_currentChanged(0);
 }
@@ -84,7 +88,7 @@ void MainWindow::on_actionGeometry_from_image_triggered() {
   ui->tabMain->setCurrentIndex(0);
 }
 
-void MainWindow::on_lblGeometry_mouseClicked(QRgb col) {
+void MainWindow::lblGeometry_mouseClicked(QRgb col) {
   if (waitingForCompartmentChoice) {
     // update compartment geometry (i.e. colour) of selected compartment to the
     // one the user just clicked on
@@ -251,6 +255,15 @@ void MainWindow::on_hslideTime_valueChanged(int value) {
 }
 
 void MainWindow::on_tabMain_currentChanged(int index) {
+  enum TabName {
+    GEOMETRY = 0,
+    MEMBRANES = 1,
+    SPECIES = 2,
+    REACTIONS = 3,
+    FUNCTIONS = 4,
+    SIMULATE = 5,
+    SBML = 6
+  };
   qDebug("ui::tabMain :: Tab changed to %d [%s]", index,
          ui->tabMain->tabText(index).toStdString().c_str());
   ui->hslideTime->setEnabled(false);
@@ -258,15 +271,13 @@ void MainWindow::on_tabMain_currentChanged(int index) {
   ui->btnSpeciesDisplaySelect->setEnabled(false);
   ui->btnSpeciesDisplaySelect->setVisible(false);
   switch (index) {
-    case 0:
-      // geometry tab
+    case TabName::GEOMETRY:
       ui->listCompartments->clear();
       ui->listCompartments->insertItems(0, sbmlDoc.compartments);
       ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
       ui->lblGeometryStatus->setText("Compartment Geometry:");
       break;
-    case 1:
-      // membranes tab
+    case TabName::MEMBRANES:
       ui->lblMembraneShape->clear();
       ui->listMembranes->clear();
       ui->listMembranes->addItems(sbmlDoc.membranes);
@@ -276,8 +287,7 @@ void MainWindow::on_tabMain_currentChanged(int index) {
         ui->listMembranes->setCurrentRow(0);
       }
       break;
-    case 2:
-      // species tab
+    case TabName::SPECIES:
       // update tree list of species
       ui->listSpecies->clear();
       for (auto c : sbmlDoc.compartments) {
@@ -295,8 +305,7 @@ void MainWindow::on_tabMain_currentChanged(int index) {
       ui->listSpecies->setCurrentItem(
           ui->listSpecies->topLevelItem(0)->child(0));
       break;
-    case 3:
-      // reactions tab
+    case TabName::REACTIONS:
       // update list of reactions
       ui->listReactions->clear();
       for (auto iter = sbmlDoc.reactions.cbegin();
@@ -312,13 +321,11 @@ void MainWindow::on_tabMain_currentChanged(int index) {
       }
       ui->listReactions->expandAll();
       break;
-    case 4:
-      // functions tab
+    case TabName::FUNCTIONS:
       ui->listFunctions->clear();
       ui->listFunctions->insertItems(0, sbmlDoc.functions);
       break;
-    case 5:
-      // simulate tab
+    case TabName::SIMULATE:
       ui->lblGeometryStatus->setText("Simulation concentration:");
       ui->hslideTime->setVisible(true);
       ui->hslideTime->setEnabled(true);
@@ -327,9 +334,11 @@ void MainWindow::on_tabMain_currentChanged(int index) {
       ui->btnSpeciesDisplaySelect->setVisible(true);
       on_hslideTime_valueChanged(0);
       break;
-    case 6:
-      // SBML tab
+    case TabName::SBML:
       ui->txtSBML->setText(sbmlDoc.getXml());
+      break;
+    default:
+      qDebug("ui::tabMain :: Errror: Tab index not known");
       break;
   }
 }
