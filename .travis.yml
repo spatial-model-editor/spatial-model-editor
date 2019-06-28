@@ -64,9 +64,9 @@ matrix:
         - otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor
         # package app dir as a .dmg
         - hdiutil create spatial-model-editor -fs HFS+ -srcfolder spatial-model-editor.app
-    ######################################################
-    # linux build for test coverage, valgrind, sonarsource
-    ######################################################
+    ###################################################
+    # linux test build: coverage, valgrind, sonarsource
+    ###################################################
     - os: linux
       dist: xenial
       compiler: gcc
@@ -82,7 +82,7 @@ matrix:
         sonarcloud:
           organization: "lkeegan-github"
           token:
-            - secure: "gNsYFxup3I93wvrAK+a+4vr9rVE1FpwZ+xMV25UNKTDLOgkcCkw/dn+tTyv+SgID7SNaq9OTN5ygFFa4EaWAkHLtKzM4dw44H0zvIexd7UspqpOmHDZDhMXb4cG4Urbl5r3zi5XnEQUoIP8H0JgjHO87mITa9ZkGHUdiq2wIhAAmG+mBty5Eocy4xyq1WXU+uRy3TOP9gO6VuK7TP026VKqvGvbh1vrmAItlqMzQtNaKgpxbxFOJg8afCLAVxY0ebSP7rIRua27dWcpbFBeLwqh4aijg8AXaF6xnSYvxXC4mKKGwP9/C7DJ2/v275CxmqT3OkqfTbUstVFVVzSgPgERRNVG1kwbMU7b8wssd9aLKnGwUuq3U3Cqjbkgl3iNbKRfcQrDCEtEqoHEa8W5SRmuFjmLTxVSfwmep/CiErafRfgUeCm841eK+XIFLfRHKcvEvFXMB/3DfY6kttDm8fgtllS9cVzfv6TooaMwQoTA1kVDLW65enzDJQwKw8t2teeI/Clx6Tem5AEvcDhCliaA4LhXo5iRnYM0cOLRaUeQ+OxAOTfpPL6TYF335eoNMKexiv83/9cEweklfLCAEs6TUyjiiJiz4bczq3CjlhAe9oOv4pDUoimtVR1EATySG8JrsThfsyTdjxD0otXj42lgBhUub/Enljs7fSaiqDwk="
+            - secure: "Muu56AqHMCZOpCG2d5Byeh6P++9xXKl7otulxdhZCfA1/yTAJM9M67B1ZHo7czEvLKdoVzqCz6aFMnsVvFHUHQDmAtmth/WzdfXZ7OTG7puDIeWRmYqQacpLeF6h9ws3sUr5Bjz9m0guhjbKN/6VIqoyuWLH/J0MwzJN5JKgWitQBeJ15GWjNJN20FLgiYW0vWtQ71dncM6VaLAyH6V/T8jLRNacmCjApAOsS2FuhnSfbL+rY5nRVXPtoy/muwRgpl2Bez8OV6z5nDCaBLxXLgNkC7Y/0OhfzY/t+6wZ4nuDZDJ/4Hn4AyycH1O1ldmfEjw9nHBdqG/0JW2NmvSLojp5NiCUSI1MDmcgqKv6VKdVV2cdn6b7s6YY/8p08pnm+uExHYRkiXPFNeYfoQF3ruYSzFOQXRA+VI3Rg0dMfs4cO+PXCWS/hIAHudG3vaDgOwOnLFaOPjJKGYidmbmu6u4jdvBNFuCkooSYmnO2JCe0LIGgJAwlOEfG51WYD9bewCx+w+NmB+Cow3E4G0DCHomz1XGUhp1DsmjGarU1kDf4PtFLQgLC88h7AQfJtg15mSV6xDcKV+nmuDNS+ifTpQTTSe/w6LqqzcE/EOLaVAtCSe4ACOORW2yBF7DPgUY47ZSkU4iwA7pAOAYDKs37fNHjK8s/TJhM++RZ+21oMME="
       services: xvfb
       install:
         # install a recent version of valgrind to run tests
@@ -109,6 +109,7 @@ matrix:
         - mkdir build-tests
         - cd build-tests
         - qmake -Wall -config debug ../test.pro
+        - make -j2
         - ./test -d=yes
         # also run non-gui tests with valgrind
         - valgrind --leak-check=full ./test -d=yes "[non-gui]"
@@ -118,16 +119,16 @@ matrix:
         - gcov -p ../build-tests/*.gcno
         - cd ../
         # upload to sonar-scanner
-        - sonar-scanner
+        - sonar-scanner -Dsonar.login=$SONAR_LOGIN
       after_script:
         # upload coverage report to codecov.io
         - lcov --directory build-tests --capture --output-file coverage.info
         - lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/exprtk/*" "*/build-tests/*" "*/qcustomplot/*" --output-file coverage.info
         - lcov --list coverage.info
         - bash <(curl -s https://codecov.io/bash) -X gcov -f "coverage.info"
-    #############################################################################
-    # linux build for coverity scan (only runs on push to "coverity_scan" branch)
-    #############################################################################
+    ##########################################################################
+    # linux build: coverity scan (only runs on push to "coverity_scan" branch)
+    ##########################################################################
     - os: linux
       dist: xenial
       compiler: gcc
