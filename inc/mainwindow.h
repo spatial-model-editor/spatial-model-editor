@@ -16,7 +16,7 @@ class MainWindow : public QMainWindow {
  public:
   explicit MainWindow(QWidget *parent = nullptr);
 
- protected:
+ private:
   std::shared_ptr<Ui::MainWindow> ui;
   SbmlDocWrapper sbmlDoc;
   bool waitingForCompartmentChoice = false;
@@ -27,50 +27,58 @@ class MainWindow : public QMainWindow {
   // update list of species to display in simulation result image
   void updateSpeciesDisplaySelect();
 
+  // <UI>
+  void tabMain_currentChanged(int index);
+
+  // menu actions
+  void action_Open_SBML_file_triggered();
+
+  void action_Save_SBML_file_triggered();
+
+  void actionE_xit_triggered();
+
+  void actionGeometry_from_image_triggered();
+
+  void action_About_triggered();
+
+  void actionAbout_Qt_triggered();
+
+  // geometry
   void lblGeometry_mouseClicked(QRgb col);
 
- private slots:
-  void on_action_About_triggered();
+  void btnChangeCompartment_clicked();
 
-  void on_actionE_xit_triggered();
+  void listCompartments_currentTextChanged(const QString &currentText);
 
-  void on_action_Open_SBML_file_triggered();
+  void listCompartments_itemDoubleClicked(QListWidgetItem *item);
 
-  void on_action_Save_SBML_file_triggered();
+  // membranes
+  void listMembranes_currentTextChanged(const QString &currentText);
 
-  void on_actionAbout_Qt_triggered();
+  // species
+  void listSpecies_itemActivated(QTreeWidgetItem *item, int column);
 
-  void on_actionGeometry_from_image_triggered();
+  void listSpecies_itemClicked(QTreeWidgetItem *item, int column);
 
-  void on_chkSpeciesIsSpatial_stateChanged(int arg1);
+  void chkSpeciesIsSpatial_stateChanged(int arg1);
 
-  void on_chkShowSpatialAdvanced_stateChanged(int arg1);
+  void chkShowSpatialAdvanced_stateChanged(int arg1);
 
-  void on_listReactions_itemActivated(QTreeWidgetItem *item, int column);
+  void btnImportConcentration_clicked();
 
-  void on_listReactions_itemClicked(QTreeWidgetItem *item, int column);
+  // reactions
+  void listReactions_itemActivated(QTreeWidgetItem *item, int column);
 
-  void on_btnSimulate_clicked();
+  void listReactions_itemClicked(QTreeWidgetItem *item, int column);
 
-  void on_listFunctions_currentTextChanged(const QString &currentText);
+  // functions
+  void listFunctions_currentTextChanged(const QString &currentText);
 
-  void on_listSpecies_itemActivated(QTreeWidgetItem *item, int column);
+  // simulate
+  void btnSimulate_clicked();
 
-  void on_listSpecies_itemClicked(QTreeWidgetItem *item, int column);
+  void graphClicked(QCPAbstractPlottable *plottable, int dataIndex);
 
-  void on_graphClicked(QCPAbstractPlottable *plottable, int dataIndex);
-
-  void on_btnChangeCompartment_clicked();
-
-  void on_listCompartments_currentTextChanged(const QString &currentText);
-
-  void on_listCompartments_itemDoubleClicked(QListWidgetItem *item);
-
-  void on_hslideTime_valueChanged(int value);
-
-  void on_tabMain_currentChanged(int index);
-
-  void on_btnImportConcentration_clicked();
-
-  void on_listMembranes_currentTextChanged(const QString &currentText);
+  void hslideTime_valueChanged(int value);
+  // </UI>
 };

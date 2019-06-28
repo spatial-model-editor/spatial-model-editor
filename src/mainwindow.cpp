@@ -14,19 +14,88 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
   ui->setupUi(this);
 
-  connect(ui->pltPlot,
-          SIGNAL(plottableClick(QCPAbstractPlottable *, int, QMouseEvent *)),
-          this, SLOT(on_graphClicked(QCPAbstractPlottable *, int)));
+  connect(ui->tabMain, &QTabWidget::currentChanged, this,
+          &MainWindow::tabMain_currentChanged);
 
+  // menu actions
+  connect(ui->action_Open_SBML_file, &QAction::triggered, this,
+          &MainWindow::action_Open_SBML_file_triggered);
+
+  connect(ui->action_Save_SBML_file, &QAction::triggered, this,
+          &MainWindow::action_Save_SBML_file_triggered);
+
+  connect(ui->actionE_xit, &QAction::triggered, this,
+          &MainWindow::actionE_xit_triggered);
+
+  connect(ui->actionGeometry_from_image, &QAction::triggered, this,
+          &MainWindow::actionGeometry_from_image_triggered);
+
+  connect(ui->action_About, &QAction::triggered, this,
+          &MainWindow::action_About_triggered);
+
+  connect(ui->actionAbout_Qt, &QAction::triggered, this,
+          &MainWindow::actionAbout_Qt_triggered);
+
+  // geometry
   connect(ui->lblGeometry, &QLabelMouseTracker::mouseClicked, this,
           &MainWindow::lblGeometry_mouseClicked);
 
+  connect(ui->btnChangeCompartment, &QPushButton::clicked, this,
+          &MainWindow::btnChangeCompartment_clicked);
+
+  connect(ui->listCompartments, &QListWidget::currentTextChanged, this,
+          &MainWindow::listCompartments_currentTextChanged);
+
+  connect(ui->listCompartments, &QListWidget::itemDoubleClicked, this,
+          &MainWindow::listCompartments_itemDoubleClicked);
+
+  // membranes
+  connect(ui->listMembranes, &QListWidget::currentTextChanged, this,
+          &MainWindow::listMembranes_currentTextChanged);
+
+  // species
+  connect(ui->listSpecies, &QTreeWidget::itemActivated, this,
+          &MainWindow::listSpecies_itemActivated);
+
+  connect(ui->listSpecies, &QTreeWidget::itemClicked, this,
+          &MainWindow ::listSpecies_itemClicked);
+
+  connect(ui->chkSpeciesIsSpatial, &QCheckBox::stateChanged, this,
+          &MainWindow ::chkSpeciesIsSpatial_stateChanged);
+
+  connect(ui->chkShowSpatialAdvanced, &QCheckBox::stateChanged, this,
+          &MainWindow ::chkShowSpatialAdvanced_stateChanged);
+
+  connect(ui->btnImportConcentration, &QPushButton::clicked, this,
+          &MainWindow::btnImportConcentration_clicked);
+
+  // reactions
+  connect(ui->listReactions, &QTreeWidget::itemActivated, this,
+          &MainWindow::listReactions_itemActivated);
+
+  connect(ui->listReactions, &QTreeWidget::itemClicked, this,
+          &MainWindow::listReactions_itemClicked);
+
+  // functions
+  connect(ui->listFunctions, &QListWidget::currentTextChanged, this,
+          &MainWindow::listFunctions_currentTextChanged);
+
+  // simulate
+  connect(ui->btnSimulate, &QPushButton::clicked, this,
+          &MainWindow::btnSimulate_clicked);
+
+  connect(ui->pltPlot, &QCustomPlot::plottableClick, this,
+          &MainWindow::graphClicked);
+
+  connect(ui->hslideTime, &QSlider::valueChanged, this,
+          &MainWindow::hslideTime_valueChanged);
+
   ui->tabMain->setCurrentIndex(0);
-  on_tabMain_currentChanged(0);
+  tabMain_currentChanged(0);
 }
 
-void MainWindow::on_action_About_triggered() {
-  qDebug("ui::on_action_About_triggered :: constructing 'About' MessageBox");
+void MainWindow::action_About_triggered() {
+  qDebug("ui::action_About_triggered :: constructing 'About' MessageBox");
   QMessageBox msgBox;
   msgBox.setWindowTitle("About");
   QString info("Spatial Model Editor\n");
@@ -47,14 +116,14 @@ void MainWindow::on_action_About_triggered() {
   }
   info.append("\nC++ Mathematical Expression  Toolkit Library (ExprTk)");
   msgBox.setText(info);
-  qDebug("ui::on_action_About_triggered :: executing 'About' MessageBox");
+  qDebug("ui::action_About_triggered :: executing 'About' MessageBox");
   msgBox.exec();
-  qDebug("ui::on_action_About_triggered :: 'About' MessageBox closed");
+  qDebug("ui::action_About_triggered :: 'About' MessageBox closed");
 }
 
-void MainWindow::on_actionE_xit_triggered() { QApplication::quit(); }
+void MainWindow::actionE_xit_triggered() { QApplication::quit(); }
 
-void MainWindow::on_action_Open_SBML_file_triggered() {
+void MainWindow::action_Open_SBML_file_triggered() {
   // load SBML file
   QString filename = QFileDialog::getOpenFileName(
       this, "Open SBML file", "", "SBML file (*.xml)", nullptr,
@@ -65,20 +134,20 @@ void MainWindow::on_action_Open_SBML_file_triggered() {
     sbmlDoc.importSBMLFile(filename.toStdString());
     if (sbmlDoc.isValid) {
       ui->tabMain->setCurrentIndex(0);
-      on_tabMain_currentChanged(0);
+      tabMain_currentChanged(0);
     }
   }
 }
 
-void MainWindow::on_action_Save_SBML_file_triggered() {
+void MainWindow::action_Save_SBML_file_triggered() {
   QMessageBox msgBox;
   msgBox.setText("todo");
   msgBox.exec();
 }
 
-void MainWindow::on_actionAbout_Qt_triggered() { QMessageBox::aboutQt(this); }
+void MainWindow::actionAbout_Qt_triggered() { QMessageBox::aboutQt(this); }
 
-void MainWindow::on_actionGeometry_from_image_triggered() {
+void MainWindow::actionGeometry_from_image_triggered() {
   QString filename = QFileDialog::getOpenFileName(
       this, "Import geometry from image", "",
       "Image Files (*.png *.jpg *.bmp *.tiff)", nullptr,
@@ -95,7 +164,7 @@ void MainWindow::lblGeometry_mouseClicked(QRgb col) {
     auto comp = ui->listCompartments->selectedItems()[0]->text();
     sbmlDoc.setCompartmentColour(comp, col);
     // update display by simulating user click on listCompartments
-    on_listCompartments_currentTextChanged(comp);
+    listCompartments_currentTextChanged(comp);
     waitingForCompartmentChoice = false;
   } else {
     // display compartment the user just clicked on
@@ -107,17 +176,17 @@ void MainWindow::lblGeometry_mouseClicked(QRgb col) {
   }
 }
 
-void MainWindow::on_chkSpeciesIsSpatial_stateChanged(int arg1) {
+void MainWindow::chkSpeciesIsSpatial_stateChanged(int arg1) {
   ui->grpSpatial->setEnabled(arg1);
   ui->btnImportConcentration->setEnabled(arg1);
 }
 
-void MainWindow::on_chkShowSpatialAdvanced_stateChanged(int arg1) {
+void MainWindow::chkShowSpatialAdvanced_stateChanged(int arg1) {
   ui->grpSpatialAdavanced->setEnabled(arg1);
 }
 
-void MainWindow::on_listReactions_itemActivated(QTreeWidgetItem *item,
-                                                int column) {
+void MainWindow::listReactions_itemActivated(QTreeWidgetItem *item,
+                                             int column) {
   ui->listProducts->clear();
   ui->listReactants->clear();
   ui->listReactionParams->clear();
@@ -143,13 +212,11 @@ void MainWindow::on_listReactions_itemActivated(QTreeWidgetItem *item,
   }
 }
 
-void MainWindow::on_listReactions_itemClicked(QTreeWidgetItem *item,
-                                              int column) {
-  on_listReactions_itemActivated(item, column);
+void MainWindow::listReactions_itemClicked(QTreeWidgetItem *item, int column) {
+  listReactions_itemActivated(item, column);
 }
 
-void MainWindow::on_listFunctions_currentTextChanged(
-    const QString &currentText) {
+void MainWindow::listFunctions_currentTextChanged(const QString &currentText) {
   ui->listFunctionParams->clear();
   ui->lblFunctionDef->clear();
   if (currentText.size() > 0) {
@@ -166,8 +233,7 @@ void MainWindow::on_listFunctions_currentTextChanged(
   }
 }
 
-void MainWindow::on_listSpecies_itemActivated(QTreeWidgetItem *item,
-                                              int column) {
+void MainWindow::listSpecies_itemActivated(QTreeWidgetItem *item, int column) {
   // if user selects a species (i.e. an item with a parent)
   if ((item != nullptr) && (item->parent() != nullptr)) {
     qDebug("ui::listSpecies :: Species '%s' selected",
@@ -188,12 +254,11 @@ void MainWindow::on_listSpecies_itemActivated(QTreeWidgetItem *item,
   }
 }
 
-void MainWindow::on_listSpecies_itemClicked(QTreeWidgetItem *item, int column) {
-  on_listSpecies_itemActivated(item, column);
+void MainWindow::listSpecies_itemClicked(QTreeWidgetItem *item, int column) {
+  listSpecies_itemActivated(item, column);
 }
 
-void MainWindow::on_graphClicked(QCPAbstractPlottable *plottable,
-                                 int dataIndex) {
+void MainWindow::graphClicked(QCPAbstractPlottable *plottable, int dataIndex) {
   double dataValue = plottable->interface1D()->dataMainValue(dataIndex);
   QString message =
       QString("Clicked on graph '%1' at data point #%2 with value %3.")
@@ -204,19 +269,19 @@ void MainWindow::on_graphClicked(QCPAbstractPlottable *plottable,
   ui->hslideTime->setValue(dataIndex);
 }
 
-void MainWindow::on_btnChangeCompartment_clicked() {
+void MainWindow::btnChangeCompartment_clicked() {
   waitingForCompartmentChoice = true;
 }
 
-void MainWindow::on_listCompartments_itemDoubleClicked(QListWidgetItem *item) {
+void MainWindow::listCompartments_itemDoubleClicked(QListWidgetItem *item) {
   // double-click on compartment list item is equivalent to
   // selecting item, then clicking on btnChangeCompartment
   if (item != nullptr) {
-    on_btnChangeCompartment_clicked();
+    btnChangeCompartment_clicked();
   }
 }
 
-void MainWindow::on_listCompartments_currentTextChanged(
+void MainWindow::listCompartments_currentTextChanged(
     const QString &currentText) {
   ui->txtCompartmentSize->clear();
   if (currentText.size() > 0) {
@@ -248,13 +313,13 @@ void MainWindow::on_listCompartments_currentTextChanged(
   }
 }
 
-void MainWindow::on_hslideTime_valueChanged(int value) {
+void MainWindow::hslideTime_valueChanged(int value) {
   if (images.size() > value) {
     ui->lblGeometry->setImage(images[value]);
   }
 }
 
-void MainWindow::on_tabMain_currentChanged(int index) {
+void MainWindow::tabMain_currentChanged(int index) {
   enum TabName {
     GEOMETRY = 0,
     MEMBRANES = 1,
@@ -332,7 +397,7 @@ void MainWindow::on_tabMain_currentChanged(int index) {
       ui->hslideTime->setValue(0);
       ui->btnSpeciesDisplaySelect->setEnabled(true);
       ui->btnSpeciesDisplaySelect->setVisible(true);
-      on_hslideTime_valueChanged(0);
+      hslideTime_valueChanged(0);
       break;
     case TabName::SBML:
       ui->txtSBML->setText(sbmlDoc.getXml());
@@ -343,7 +408,7 @@ void MainWindow::on_tabMain_currentChanged(int index) {
   }
 }
 
-void MainWindow::on_btnImportConcentration_clicked() {
+void MainWindow::btnImportConcentration_clicked() {
   auto spec = ui->listSpecies->selectedItems()[0]->text(0);
   qDebug("ui::btnImportConcentration :: clicked with Species '%s' selected",
          spec.toStdString().c_str());
@@ -355,8 +420,7 @@ void MainWindow::on_btnImportConcentration_clicked() {
   ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(spec));
 }
 
-void MainWindow::on_listMembranes_currentTextChanged(
-    const QString &currentText) {
+void MainWindow::listMembranes_currentTextChanged(const QString &currentText) {
   if (currentText.size() > 0) {
     qDebug("ui::listMembranes :: Membrane '%s' selected",
            currentText.toStdString().c_str());
@@ -366,7 +430,7 @@ void MainWindow::on_listMembranes_currentTextChanged(
   }
 }
 
-void MainWindow::on_btnSimulate_clicked() {
+void MainWindow::btnSimulate_clicked() {
   // simple 2d spatial simulation
   simulate::Simulate sim(&sbmlDoc);
   // add compartments
