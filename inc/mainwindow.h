@@ -15,7 +15,6 @@ class MainWindow : public QMainWindow {
 
  public:
   explicit MainWindow(QWidget *parent = nullptr);
-  virtual ~MainWindow() override;
 
  private slots:
   void on_action_About_triggered();
@@ -65,7 +64,7 @@ class MainWindow : public QMainWindow {
   void on_listMembranes_currentTextChanged(const QString &currentText);
 
  private:
-  Ui::MainWindow *ui;
+  std::shared_ptr<Ui::MainWindow> ui;
   SbmlDocWrapper sbmlDoc;
   bool waitingForCompartmentChoice = false;
 

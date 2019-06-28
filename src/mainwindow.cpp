@@ -21,8 +21,6 @@ MainWindow::MainWindow(QWidget *parent)
   on_tabMain_currentChanged(0);
 }
 
-MainWindow::~MainWindow() { delete ui; }
-
 void MainWindow::on_action_About_triggered() {
   qDebug("ui::on_action_About_triggered :: constructing 'About' MessageBox");
   QMessageBox msgBox;
