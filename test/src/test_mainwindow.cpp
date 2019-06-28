@@ -1,18 +1,16 @@
 #include <QtTest>
 #include "catch_qt.h"
 #include "qt_test_utils.h"
+#include "sbml_test_data/very_simple_model.h"
 
 #include "mainwindow.h"
-
-constexpr int delay = 250;
 
 constexpr int key_delay = 50;
 
 SCENARIO("Shortcut keys", "[gui][mainwindow]") {
   MainWindow w;
   w.show();
-  // wait for mainwindow to load fully
-  QTest::qWait(delay);
+  CAPTURE(QTest::qWaitForWindowExposed(&w));
   WHEN("user presses F1") {
     THEN("open About dialog box") {
       // this object closes the next modal window to open
@@ -47,4 +45,27 @@ SCENARIO("Shortcut keys", "[gui][mainwindow]") {
       }
     }
   }
+}
+
+SCENARIO("Load SBML file", "[gui][mainwindow]") {
+  // create SBML file to load
+  std::unique_ptr<libsbml::SBMLDocument> doc(
+      libsbml::readSBMLFromString(sbml_test_data::very_simple_model().xml));
+  // write SBML document to file
+  libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
+
+  MainWindow w;
+  w.show();
+  CAPTURE(QTest::qWaitForWindowExposed(&w));
+  QListWidget *listCompartments =
+      w.topLevelWidget()->findChild<QListWidget *>("listCompartments");
+  REQUIRE(listCompartments != nullptr);
+  REQUIRE(listCompartments->count() == 0);
+
+  // open SBML file
+  ModalWidgetTextInput mwti("tmp.xml");
+  QTest::keyClick(&w, Qt::Key_O, Qt::ControlModifier, key_delay);
+  REQUIRE(listCompartments->count() == 3);
+
+  // import Geometry
 }
