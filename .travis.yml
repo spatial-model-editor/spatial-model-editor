@@ -1,16 +1,77 @@
 language: cpp
-
 env:
   global:
     - QT5_INSTALL_PREFIX="/usr/local/qt5-static"
-    - secure: "f5KWIIVpVdy66JpgiWbu/Ua9lbDmQJ0lxuki0GNL0d8WAetPlsFONgg0Ujr+vchFcz18FR58sTYAamxUPejrfjNXqeTNXAKPEqB2DZZlOs6v59SJx0NN7zZM2S+l03z9XBzdAq7VsFOrdqcPtiCv9LeHPGdSsrLqEuxBip7BQ1GAuFTIEOocYlbCFzhdnTY5fOKkagyUqxITMtgO/sNWX0052w/1mKs3iO41jlXkj897c7uW7ekx2mQ/MIMW5smcEm37IeZ02WWK8aKCXoFLq0RppP1UzDfqDYcJk5N+pVRDfXz6VHz0QOYYIDNLXC+RMbVeLo6rA4HCo7UhTl+GXfCjgsWocX4Kc48L0xiZus7kwscyFOSyRdzwMFXFppAfsr9GBuFhMdsvRfD1DtTWKOk1tyU/6h+6MdiB/bDkA1R3BVjVkwNuJfu0jZKGX2tXn6ZeFxWl++XlOrHkklRLWh7gLLBe8jKQfn15Ee7GyvBZytK0LDGKxLPupnTeWtIA65ucXYDUHzNbEr2SnQ3XCGJ+uyp52NPXeMVySdyxEj+vMDAtpLe4jQiYKqn8Mz/eyTf3tJdru2BTB4rFyrCpUW3yCn3WEffiF79ruAya3rBwv8ST4zFAmqUoAoBkt6Iz2URLYmGAbUq5VpggRLgljsa27dRDLdpyUWZanlhsxfo="
 
 matrix:
   include:
+    ################################################
     # linux release build: gcc 5.4.0 on ubuntu 16.04
+    ################################################
     - os: linux
       dist: xenial
       compiler: gcc
+      env:
+        - DEPLOY_FILE="spatial-model-editor"
+      addons:
+        apt:
+          packages:
+            - libc6-dbg
+            - libxkbcommon-dev
+            - jwm
+      services: xvfb
+      install:
+        # start a window manager so the Qt GUI tests can have their focus set
+        - "jwm &"
+        - sleep 1
+      script:
+        # compile and run unit tests
+        - mkdir build-tests
+        - cd build-tests
+        - qmake -Wall -config release ../test.pro
+        - make -j2
+        - ./test -d=yes
+        - cd ../
+        # compile release executable
+        - mkdir build
+        - cd build
+        - qmake -Wall -config release ../spatial-model-editor.pro
+        - make -j2
+        # check dependencies of resulting executable
+        - ldd spatial-model-editor
+    ######################################################
+    # osx release build: xcode 9.4.1 [9F2000], macOS 10.13
+    ######################################################
+    - os: osx
+      osx_image: xcode9.4
+      compiler: clang
+      env:
+        - DEPLOY_FILE="spatial-model-editor.dmg"
+      script:
+        # compile and run unit tests
+        - mkdir build-tests
+        - cd build-tests
+        - qmake -Wall -config release ../test.pro
+        - make -j2
+        - ./test.app/Contents/MacOS/test -d=yes
+        - cd ../
+        # compile release executable
+        - mkdir build
+        - cd build
+        - qmake -Wall -config release ../spatial-model-editor.pro
+        - make -j2
+        # check dependencies of resulting executable
+        - otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor
+        # package app dir as a .dmg
+        - hdiutil create spatial-model-editor -fs HFS+ -srcfolder spatial-model-editor.app
+    ######################################################
+    # linux build for test coverage, valgrind, sonarsource
+    ######################################################
+    - os: linux
+      dist: xenial
+      compiler: gcc
+      env:
+        - VALGRIND_VERSION="3.15.0"
       addons:
         apt:
           packages:
@@ -18,10 +79,11 @@ matrix:
             - libxkbcommon-dev
             - lcov
             - jwm
+        sonarcloud:
+          organization: "lkeegan-github"
+          token:
+            - secure: "gNsYFxup3I93wvrAK+a+4vr9rVE1FpwZ+xMV25UNKTDLOgkcCkw/dn+tTyv+SgID7SNaq9OTN5ygFFa4EaWAkHLtKzM4dw44H0zvIexd7UspqpOmHDZDhMXb4cG4Urbl5r3zi5XnEQUoIP8H0JgjHO87mITa9ZkGHUdiq2wIhAAmG+mBty5Eocy4xyq1WXU+uRy3TOP9gO6VuK7TP026VKqvGvbh1vrmAItlqMzQtNaKgpxbxFOJg8afCLAVxY0ebSP7rIRua27dWcpbFBeLwqh4aijg8AXaF6xnSYvxXC4mKKGwP9/C7DJ2/v275CxmqT3OkqfTbUstVFVVzSgPgERRNVG1kwbMU7b8wssd9aLKnGwUuq3U3Cqjbkgl3iNbKRfcQrDCEtEqoHEa8W5SRmuFjmLTxVSfwmep/CiErafRfgUeCm841eK+XIFLfRHKcvEvFXMB/3DfY6kttDm8fgtllS9cVzfv6TooaMwQoTA1kVDLW65enzDJQwKw8t2teeI/Clx6Tem5AEvcDhCliaA4LhXo5iRnYM0cOLRaUeQ+OxAOTfpPL6TYF335eoNMKexiv83/9cEweklfLCAEs6TUyjiiJiz4bczq3CjlhAe9oOv4pDUoimtVR1EATySG8JrsThfsyTdjxD0otXj42lgBhUub/Enljs7fSaiqDwk="
       services: xvfb
-      env: 
-        - DEPLOY_FILE="spatial-model-editor"
-        - VALGRIND_VERSION="3.15.0"
       install:
         # install a recent version of valgrind to run tests
         - wget "https://sourceware.org/pub/valgrind/valgrind-${VALGRIND_VERSION}.tar.bz2"
@@ -35,21 +97,42 @@ matrix:
         # start a window manager so the Qt GUI tests can have their focus set
         - "jwm &"
         - sleep 1
+      script:
+        # compile debug version of executable
+        - mkdir build
+        - cd build
+        - qmake -Wall -config debug ../spatial-model-editor.pro
+        # wrap make call with sonar-source build wrapper
+        - build-wrapper-linux-x86-64 --out-dir ../bw-output make -j2
+        - cd ../
+        # compile and run unit tests
+        - mkdir build-tests
+        - cd build-tests
+        - qmake -Wall -config debug ../test.pro
+        - ./test -d=yes
+        # also run non-gui tests with valgrind
+        - valgrind --leak-check=full ./test -d=yes "[non-gui]"
+        # generate gcov test coverage data for sonar-source
+        - mkdir ../gcov
+        - cd ../gcov
+        - gcov -p ../build-tests/*.gcno
+        - cd ../
+        # upload to sonar-scanner
+        - sonar-scanner
       after_script:
         # upload coverage report to codecov.io
-        - lcov --directory ../build-tests --capture --output-file coverage.info
+        - lcov --directory build-tests --capture --output-file coverage.info
         - lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/exprtk/*" "*/build-tests/*" "*/qcustomplot/*" --output-file coverage.info
         - lcov --list coverage.info
         - bash <(curl -s https://codecov.io/bash) -X gcov -f "coverage.info"
-    # osx release build: xcode 9.4.1 [9F2000], macOS 10.13
-    - os: osx
-      osx_image: xcode9.4
-      compiler: clang
-      env: DEPLOY_FILE="spatial-model-editor.dmg"
+    #############################################################################
     # linux build for coverity scan (only runs on push to "coverity_scan" branch)
+    #############################################################################
     - os: linux
       dist: xenial
       compiler: gcc
+      env:
+        - secure: "f5KWIIVpVdy66JpgiWbu/Ua9lbDmQJ0lxuki0GNL0d8WAetPlsFONgg0Ujr+vchFcz18FR58sTYAamxUPejrfjNXqeTNXAKPEqB2DZZlOs6v59SJx0NN7zZM2S+l03z9XBzdAq7VsFOrdqcPtiCv9LeHPGdSsrLqEuxBip7BQ1GAuFTIEOocYlbCFzhdnTY5fOKkagyUqxITMtgO/sNWX0052w/1mKs3iO41jlXkj897c7uW7ekx2mQ/MIMW5smcEm37IeZ02WWK8aKCXoFLq0RppP1UzDfqDYcJk5N+pVRDfXz6VHz0QOYYIDNLXC+RMbVeLo6rA4HCo7UhTl+GXfCjgsWocX4Kc48L0xiZus7kwscyFOSyRdzwMFXFppAfsr9GBuFhMdsvRfD1DtTWKOk1tyU/6h+6MdiB/bDkA1R3BVjVkwNuJfu0jZKGX2tXn6ZeFxWl++XlOrHkklRLWh7gLLBe8jKQfn15Ee7GyvBZytK0LDGKxLPupnTeWtIA65ucXYDUHzNbEr2SnQ3XCGJ+uyp52NPXeMVySdyxEj+vMDAtpLe4jQiYKqn8Mz/eyTf3tJdru2BTB4rFyrCpUW3yCn3WEffiF79ruAya3rBwv8ST4zFAmqUoAoBkt6Iz2URLYmGAbUq5VpggRLgljsa27dRDLdpyUWZanlhsxfo="
       before_install:
         - '[ "$TRAVIS_BRANCH" == coverity_scan ] || exit 0'
         - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
@@ -82,38 +165,10 @@ before_script:
   - ls libsbml
   - cd ..
 
-script:
-  # if coverity_scan is enabled, skip script
-  - '[ "$COVERITY_SCAN_BRANCH" != 1 ] || exit 0'
-  # run qmake to generate make file
-  - mkdir build
-  - cd build
-  - qmake -Wall -config release ../spatial-model-editor.pro
-  # compile executable
-  - make -j2
-  # check dependencies of resulting executable
-  - '[ "$TRAVIS_OS_NAME" != osx ] || otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor'
-  - '[ "$TRAVIS_OS_NAME" != linux ] || ldd spatial-model-editor'
-  # for osx package app dir as a .dmg
-  - '[ "$TRAVIS_OS_NAME" != osx ] || hdiutil create spatial-model-editor -fs HFS+ -srcfolder spatial-model-editor.app'
-  # compile and run unit tests
-  - cd ../
-  - mkdir build-tests
-  - cd build-tests
-  - '[ "$TRAVIS_OS_NAME" != linux ] || qmake -Wall -config debug ../test.pro'
-  # NB -config debug fails on osx because it looks for non-existent "debug" qt5 static libraries (todo: add them to the osx qt5 build?)
-  - '[ "$TRAVIS_OS_NAME" != osx ] || qmake -Wall -config release ../test.pro'
-  - make -j2
-  - '[ "$TRAVIS_OS_NAME" != linux ] || ./test -d=yes'
-  # also run non-gui tests with valgrind on linux
-  - '[ "$TRAVIS_OS_NAME" != linux ] || valgrind --leak-check=full ./test -d=yes "[non-gui]"'
-  - '[ "$TRAVIS_OS_NAME" != osx ] || ./test.app/Contents/MacOS/test -d=yes'
-  - cd ../build
-
 notifications:
   email: false
 deploy:
-  # if build is tagged, upload executable to github release
+  # if build is tagged, upload executables to github release
   provider: releases
   api_key:
     secure: E0WtptZea2n40eN+FBYZ2XYv/pjKUjVFZavl8BTVYhidzXYuT/DvhoehPVauJRy/t5QLMtmyd5ww9dhYkIcNcpAc1INrUlYG274D8xgXwbgsftmFbMqdrKR9f/qkynP0r6LCd1p0Tuhxxf37OcTYVEOjbvV+KsTzpWHtS9AqZGvMfv/rpI4r/Zu/LfGBs2T7Rr8Mlfy5YBI2L7lGka3ziTIic01pKDfjHJQ2xD2N366mEqcpB0vjF8c9b+qIUbQ8g8ybLoMfKM6ZSvcpz2NmLQK8l8gzzTN/k1PI2DJxmzi+9G031RXLAXvbR8I8NEQlZfsicepHk0m13EI7x5/TIGaa2ngSgX1W7oAL0IAkJFpcWcN5RQOgowCBAB/UnHCX8EgnBAiD8eTlc4DUC2WY84Dr3EcdhLg0bEX/Ky4mDAxt0QgABG0hEU3kE6USsUvp7IZmnCEdu8e+F/HRmvSUqECI9FvjmpHdBHwIv6anVA2pndN/ZGn4+4BWbo6IwycAh0FPAnvvs6guxnOqQW/eMRgBI3y4grzEYP/bPzlL1W6q42r6fwvh45LtcgC+joAoJCL3I51QcZ1joMY/OShSaKi3MnokImmb/GPRvebe3hDGGSsEAarrmIRb0zCMYDMdHzA+pqeojGZf6SCfIculmeE1MO2t/DqumxQRxTGx+8k=
