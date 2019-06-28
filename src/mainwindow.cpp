@@ -124,7 +124,6 @@ void MainWindow::action_About_triggered() {
 void MainWindow::actionE_xit_triggered() { QApplication::quit(); }
 
 void MainWindow::action_Open_SBML_file_triggered() {
-  // load SBML file
   QString filename = QFileDialog::getOpenFileName(
       this, "Open SBML file", "", "SBML file (*.xml)", nullptr,
       QFileDialog::Option::DontUseNativeDialog);
@@ -140,9 +139,12 @@ void MainWindow::action_Open_SBML_file_triggered() {
 }
 
 void MainWindow::action_Save_SBML_file_triggered() {
-  QMessageBox msgBox;
-  msgBox.setText("todo");
-  msgBox.exec();
+  QString filename = QFileDialog::getSaveFileName(
+      this, "Save SBML file", "", "SBML file (*.xml)", nullptr,
+      QFileDialog::Option::DontUseNativeDialog);
+  if (!filename.isEmpty()) {
+    sbmlDoc.exportSBMLFile(filename.toStdString());
+  }
 }
 
 void MainWindow::actionAbout_Qt_triggered() { QMessageBox::aboutQt(this); }

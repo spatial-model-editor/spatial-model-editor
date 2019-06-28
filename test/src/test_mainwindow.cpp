@@ -25,10 +25,17 @@ SCENARIO("Shortcut keys", "[gui][mainwindow]") {
     }
   }
   WHEN("user presses ctrl+o") {
-    THEN("open FileDialog") {
+    THEN("open AcceptOpen FileDialog") {
       ModalWidgetCloser mwc;
       QTest::keyClick(&w, Qt::Key_O, Qt::ControlModifier);
       REQUIRE(mwc.result == "QFileDialog::AcceptOpen");
+    }
+  }
+  WHEN("user presses ctrl+s") {
+    THEN("open AcceptSave FileDialog") {
+      ModalWidgetCloser mwc;
+      QTest::keyClick(&w, Qt::Key_S, Qt::ControlModifier);
+      REQUIRE(mwc.result == "QFileDialog::AcceptSave");
     }
   }
   WHEN("user presses ctrl+tab") {
