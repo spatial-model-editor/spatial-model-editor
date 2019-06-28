@@ -97,6 +97,8 @@ matrix:
         - "jwm &"
         - sleep 1
       script:
+        # get blame info for sonar-scanner
+        - git fetch --unshallow
         # compile debug version of executable
         - mkdir build
         - cd build
