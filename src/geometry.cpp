@@ -91,7 +91,7 @@ Field::Field(const Compartment *geom, const std::string &specID,
   dcdt = conc;
 }
 
-void Field::importConcentration(QImage img, double scale_factor) {
+void Field::importConcentration(const QImage &img, double scale_factor) {
   // rescaling [min, max] pixel values to the range [0, scale_factor] for now
   QRgb min = std::numeric_limits<QRgb>::max();
   QRgb max = 0;

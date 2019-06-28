@@ -17,14 +17,19 @@
 namespace geometry {
 
 // a set of default colours for display purposes
-struct defaultSpeciesColours {
+class defaultSpeciesColours {
+ private:
   const std::vector<QColor> colours{
       {230, 25, 75},  {60, 180, 75},   {255, 225, 25}, {0, 130, 200},
       {245, 130, 48}, {145, 30, 180},  {70, 240, 240}, {240, 50, 230},
       {210, 245, 60}, {250, 190, 190}, {0, 128, 128},  {230, 190, 255},
       {170, 110, 40}, {255, 250, 200}, {128, 0, 0},    {170, 255, 195},
       {128, 128, 0},  {255, 215, 180}, {0, 0, 128},    {128, 128, 128}};
-  QColor operator[](std::size_t i) { return colours[i % colours.size()]; }
+
+ public:
+  const QColor &operator[](std::size_t i) const {
+    return colours[i % colours.size()];
+  }
 };
 
 class Compartment {
@@ -54,7 +59,6 @@ class Compartment {
 };
 
 class Membrane {
- private:
  public:
   std::string membraneID;
   const Compartment *compA;
@@ -82,7 +86,7 @@ class Field {
   Field(const Compartment *geom, const std::string &specID,
         double diffConst = 1.0, const QColor &col = QColor(255, 0, 0));
   void setConstantConcentration(double concentration);
-  void importConcentration(QImage img, double scale_factor = 1.0);
+  void importConcentration(const QImage &img, double scale_factor = 1.0);
   // return a QImage of the concentration of given species
   const QImage &getConcentrationImage();
   double getMeanConcentration();

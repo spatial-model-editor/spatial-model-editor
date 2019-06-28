@@ -15,7 +15,19 @@ class MainWindow : public QMainWindow {
 
  public:
   explicit MainWindow(QWidget *parent = nullptr);
-  virtual ~MainWindow() override;
+
+ protected:
+  std::shared_ptr<Ui::MainWindow> ui;
+  SbmlDocWrapper sbmlDoc;
+  bool waitingForCompartmentChoice = false;
+
+  // temp: vector of simulation images to display
+  QVector<QImage> images;
+
+  // update list of species to display in simulation result image
+  void updateSpeciesDisplaySelect();
+
+  void lblGeometry_mouseClicked(QRgb col);
 
  private slots:
   void on_action_About_triggered();
@@ -29,8 +41,6 @@ class MainWindow : public QMainWindow {
   void on_actionAbout_Qt_triggered();
 
   void on_actionGeometry_from_image_triggered();
-
-  void on_lblGeometry_mouseClicked(QRgb col);
 
   void on_chkSpeciesIsSpatial_stateChanged(int arg1);
 
@@ -63,15 +73,4 @@ class MainWindow : public QMainWindow {
   void on_btnImportConcentration_clicked();
 
   void on_listMembranes_currentTextChanged(const QString &currentText);
-
- private:
-  Ui::MainWindow *ui;
-  SbmlDocWrapper sbmlDoc;
-  bool waitingForCompartmentChoice = false;
-
-  // temp: vector of simulation images to display
-  QVector<QImage> images;
-
-  // update list of species to display in simulation result image
-  void updateSpeciesDisplaySelect();
 };
