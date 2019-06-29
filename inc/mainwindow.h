@@ -32,6 +32,13 @@ class MainWindow : public QMainWindow {
   // <UI>
   void tabMain_currentChanged(int index);
 
+  void tabMain_updateGeometry();
+  void tabMain_updateMembranes();
+  void tabMain_updateSpecies();
+  void tabMain_updateReactions();
+  void tabMain_updateFunctions();
+  void tabMain_updateSimulate();
+
   // File menu actions
   void action_Open_SBML_file_triggered();
 
