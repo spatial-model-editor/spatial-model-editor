@@ -125,85 +125,110 @@ void MainWindow::tabMain_currentChanged(int index) {
   ui->btnSpeciesDisplaySelect->setEnabled(false);
   ui->btnSpeciesDisplaySelect->setVisible(false);
   switch (index) {
-    case TabIndex::GEOMETRY: {
-      ui->listCompartments->clear();
-      ui->listCompartments->insertItems(0, sbmlDoc.compartments);
-      ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
-      ui->lblGeometryStatus->setText("Compartment Geometry:");
-    } break;
-    case TabIndex::MEMBRANES: {
-      ui->lblMembraneShape->clear();
-      ui->listMembranes->clear();
-      ui->listMembranes->addItems(sbmlDoc.membranes);
-      ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
-      ui->lblGeometryStatus->setText("Compartment Geometry:");
-      if (ui->listMembranes->count() > 0) {
-        ui->listMembranes->setCurrentRow(0);
-      }
-    } break;
-    case TabIndex::SPECIES: {
-      // update tree list of species
-      auto *ls = ui->listSpecies;
-      ls->clear();
-      for (auto c : sbmlDoc.compartments) {
-        // add compartments as top level items
-        QTreeWidgetItem *comp = new QTreeWidgetItem(ls, QStringList({c}));
-        ls->addTopLevelItem(comp);
-        for (auto s : sbmlDoc.species[c]) {
-          // add each species as child of compartment
-          comp->addChild(new QTreeWidgetItem(comp, QStringList({s})));
-        }
-      }
-      ls->expandAll();
-      // select first species if it exists
-      if (ls->topLevelItem(0) != nullptr) {
-        ls->setCurrentItem(ls->topLevelItem(0)->child(0));
-      }
-    } break;
-    case TabIndex::REACTIONS: {
-      // update list of reactions
-      ui->listReactions->clear();
-      for (auto iter = sbmlDoc.reactions.cbegin();
-           iter != sbmlDoc.reactions.cend(); ++iter) {
-        // add compartments as top level items
-        QTreeWidgetItem *comp =
-            new QTreeWidgetItem(ui->listReactions, QStringList({iter->first}));
-        ui->listReactions->addTopLevelItem(comp);
-        for (auto s : iter->second) {
-          // add each species as child of compartment
-          comp->addChild(new QTreeWidgetItem(comp, QStringList({s})));
-        }
-      }
-      ui->listReactions->expandAll();
-    } break;
-    case TabIndex::FUNCTIONS: {
-      ui->listFunctions->clear();
-      ui->listFunctions->insertItems(0, sbmlDoc.functions);
-    } break;
-    case TabIndex::SIMULATE: {
-      ui->lblGeometryStatus->setText("Simulation concentration:");
-      ui->hslideTime->setVisible(true);
-      ui->hslideTime->setEnabled(true);
-      ui->hslideTime->setValue(0);
-      ui->btnSpeciesDisplaySelect->setEnabled(true);
-      ui->btnSpeciesDisplaySelect->setVisible(true);
-      hslideTime_valueChanged(0);
-    } break;
-    case TabIndex::SBML: {
+    case TabIndex::GEOMETRY:
+      tabMain_updateGeometry();
+      break;
+    case TabIndex::MEMBRANES:
+      tabMain_updateMembranes();
+      break;
+    case TabIndex::SPECIES:
+      tabMain_updateSpecies();
+      break;
+    case TabIndex::REACTIONS:
+      tabMain_updateReactions();
+      break;
+    case TabIndex::FUNCTIONS:
+      tabMain_updateFunctions();
+      break;
+    case TabIndex::SIMULATE:
+      tabMain_updateSimulate();
+      break;
+    case TabIndex::SBML:
       ui->txtSBML->setText(sbmlDoc.getXml());
-    } break;
-    default: {
+      break;
+    default:
       qDebug("ui::tabMain :: Errror: Tab index not known");
-    } break;
+      break;
   }
+}
+
+void MainWindow::tabMain_updateGeometry() {
+  ui->listCompartments->clear();
+  ui->listCompartments->insertItems(0, sbmlDoc.compartments);
+  ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
+  ui->lblGeometryStatus->setText("Compartment Geometry:");
+}
+
+void MainWindow::tabMain_updateMembranes() {
+  ui->lblMembraneShape->clear();
+  ui->listMembranes->clear();
+  ui->listMembranes->addItems(sbmlDoc.membranes);
+  ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
+  ui->lblGeometryStatus->setText("Compartment Geometry:");
+  if (ui->listMembranes->count() > 0) {
+    ui->listMembranes->setCurrentRow(0);
+  }
+}
+
+void MainWindow::tabMain_updateSpecies() {
+  // update tree list of species
+  auto *ls = ui->listSpecies;
+  ls->clear();
+  for (auto c : sbmlDoc.compartments) {
+    // add compartments as top level items
+    QTreeWidgetItem *comp = new QTreeWidgetItem(ls, QStringList({c}));
+    ls->addTopLevelItem(comp);
+    for (auto s : sbmlDoc.species[c]) {
+      // add each species as child of compartment
+      comp->addChild(new QTreeWidgetItem(comp, QStringList({s})));
+    }
+  }
+  ls->expandAll();
+  // select first species if it exists
+  if (ls->topLevelItem(0) != nullptr) {
+    ls->setCurrentItem(ls->topLevelItem(0)->child(0));
+  }
+}
+
+void MainWindow::tabMain_updateReactions() {
+  // update list of reactions
+  ui->listReactions->clear();
+  for (auto iter = sbmlDoc.reactions.cbegin(); iter != sbmlDoc.reactions.cend();
+       ++iter) {
+    // add compartments as top level items
+    QTreeWidgetItem *comp =
+        new QTreeWidgetItem(ui->listReactions, QStringList({iter->first}));
+    ui->listReactions->addTopLevelItem(comp);
+    for (auto s : iter->second) {
+      // add each species as child of compartment
+      comp->addChild(new QTreeWidgetItem(comp, QStringList({s})));
+    }
+  }
+  ui->listReactions->expandAll();
+}
+
+void MainWindow::tabMain_updateFunctions() {
+  ui->listFunctions->clear();
+  ui->listFunctions->insertItems(0, sbmlDoc.functions);
+}
+
+void MainWindow::tabMain_updateSimulate() {
+  ui->lblGeometryStatus->setText("Simulation concentration:");
+  ui->hslideTime->setVisible(true);
+  ui->hslideTime->setEnabled(true);
+  ui->hslideTime->setValue(0);
+  ui->btnSpeciesDisplaySelect->setEnabled(true);
+  ui->btnSpeciesDisplaySelect->setVisible(true);
+  hslideTime_valueChanged(0);
 }
 
 void MainWindow::action_Open_SBML_file_triggered() {
   QString filename = QFileDialog::getOpenFileName(
       this, "Open SBML file", "", "SBML file (*.xml)", nullptr,
       QFileDialog::Option::DontUseNativeDialog);
-  // TODO: QFileDialog::Option::DontUseNativeDialog is used above to avoid this
-  // call hanging on mac CI tests - check if it works with/without on a real mac
+  // TODO: QFileDialog::Option::DontUseNativeDialog is used above to avoid
+  // this call hanging on mac CI tests - check if it works with/without on a
+  // real mac
   if (!filename.isEmpty()) {
     sbmlDoc.importSBMLFile(filename.toStdString());
     if (sbmlDoc.isValid) {
@@ -261,8 +286,8 @@ void MainWindow::action_About_triggered() {
 
 void MainWindow::lblGeometry_mouseClicked(QRgb col) {
   if (waitingForCompartmentChoice) {
-    // update compartment geometry (i.e. colour) of selected compartment to the
-    // one the user just clicked on
+    // update compartment geometry (i.e. colour) of selected compartment to
+    // the one the user just clicked on
     auto comp = ui->listCompartments->selectedItems()[0]->text();
     sbmlDoc.setCompartmentColour(comp, col);
     // update display by simulating user click on listCompartments
