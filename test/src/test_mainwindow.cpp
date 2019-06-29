@@ -5,7 +5,7 @@
 #include "qt_test_utils.h"
 #include "sbml_test_data/very_simple_model.h"
 
-constexpr int key_delay = 150;
+constexpr int key_delay = 50;
 
 SCENARIO("Shortcut keys", "[gui][mainwindow]") {
   MainWindow w;
@@ -186,24 +186,62 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   CAPTURE(
       QTest::qWaitFor([tabMain]() { return tabMain->currentIndex() == 1; }));
   REQUIRE(listMembranes->count() == 3);
+  // select each item in listSpecies
+  listMembranes->setFocus();
+  if (listMembranes->count() > 0) {
+    listMembranes->setCurrentRow(0);
+  }
+  for (int i = 0; i < listMembranes->count(); ++i) {
+    QTest::keyClick(listMembranes, Qt::Key_Down, Qt::ControlModifier,
+                    key_delay);
+    QTest::keyClick(listMembranes, Qt::Key_Enter, Qt::ControlModifier,
+                    key_delay);
+  }
 
   // display species tab
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
                   key_delay);
   QApplication::processEvents();
   REQUIRE(listSpecies->topLevelItemCount() == 3);
+  // select each item in listSpecies
+  listSpecies->setFocus();
+  listSpecies->setCurrentItem(listSpecies->topLevelItem(0));
+  for (int i = 0; i < 8; ++i) {
+    QTest::keyClick(listSpecies, Qt::Key_Down, Qt::ControlModifier, key_delay);
+    QTest::keyClick(listSpecies, Qt::Key_Enter, Qt::ControlModifier, key_delay);
+  }
 
   // display reactions tab
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
                   key_delay);
   QApplication::processEvents();
   REQUIRE(listReactions->topLevelItemCount() == 3);
+  // select each item in listReactions
+  listReactions->setFocus();
+  listReactions->setCurrentItem(listReactions->topLevelItem(0));
+  for (int i = 0; i < 12; ++i) {
+    QTest::keyClick(listReactions, Qt::Key_Down, Qt::ControlModifier,
+                    key_delay);
+    QTest::keyClick(listReactions, Qt::Key_Enter, Qt::ControlModifier,
+                    key_delay);
+  }
 
   // display functions tab
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
                   key_delay);
   QApplication::processEvents();
   REQUIRE(listFunctions->count() == 0);
+  // select each item in listSpecies
+  listFunctions->setFocus();
+  if (listFunctions->count() > 0) {
+    listFunctions->setCurrentRow(0);
+  }
+  for (int i = 0; i < listFunctions->count(); ++i) {
+    QTest::keyClick(listFunctions, Qt::Key_Down, Qt::ControlModifier,
+                    key_delay);
+    QTest::keyClick(listFunctions, Qt::Key_Enter, Qt::ControlModifier,
+                    key_delay);
+  }
 
   // display simulate tab
   QApplication::processEvents();
