@@ -1,9 +1,9 @@
 #include <QtTest>
 #include "catch_qt.h"
+#include "mainwindow.h"
+#include "qlabelmousetracker.h"
 #include "qt_test_utils.h"
 #include "sbml_test_data/very_simple_model.h"
-
-#include "mainwindow.h"
 
 constexpr int key_delay = 50;
 
@@ -11,11 +11,12 @@ SCENARIO("Shortcut keys", "[gui][mainwindow]") {
   MainWindow w;
   w.show();
   CAPTURE(QTest::qWaitForWindowExposed(&w));
+  ModalWidgetCloser mwc;
   WHEN("user presses F1") {
     THEN("open About dialog box") {
       // this object closes the next modal window to open
       // after capturing the text in mwc.result
-      ModalWidgetCloser mwc;
+      mwc.start();
       // press F1: opens modal 'About' message box
       // this message box is blocking until user clicks ok
       // (or until the ModalWindowCloser closes it)
@@ -26,14 +27,14 @@ SCENARIO("Shortcut keys", "[gui][mainwindow]") {
   }
   WHEN("user presses ctrl+o") {
     THEN("open AcceptOpen FileDialog") {
-      ModalWidgetCloser mwc;
+      mwc.start();
       QTest::keyClick(&w, Qt::Key_O, Qt::ControlModifier);
       REQUIRE(mwc.result == "QFileDialog::AcceptOpen");
     }
   }
   WHEN("user presses ctrl+s") {
     THEN("open AcceptSave FileDialog") {
-      ModalWidgetCloser mwc;
+      mwc.start();
       QTest::keyClick(&w, Qt::Key_S, Qt::ControlModifier);
       REQUIRE(mwc.result == "QFileDialog::AcceptSave");
     }
@@ -84,9 +85,68 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   REQUIRE(listCompartments->count() == 0);
 
   // open SBML file
-  ModalWidgetTextInput mwti("tmp.xml");
+  ModalWidgetTextInput mwti;
+  mwti.start("tmp.xml");
   QTest::keyClick(&w, Qt::Key_O, Qt::ControlModifier, key_delay);
   REQUIRE(listCompartments->count() == 3);
 
-  // import Geometry
+  // create geometry image
+  QImage img(3, 3, QImage::Format_RGB32);
+  QRgb col1 = QColor(112, 43, 4).rgba();
+  QRgb col2 = QColor(92, 142, 22).rgba();
+  QRgb col3 = QColor(33, 77, 221).rgba();
+  CAPTURE(col1);
+  CAPTURE(col2);
+  CAPTURE(col3);
+  img.fill(col1);
+  img.setPixel(2, 0, col2);
+  img.setPixel(2, 1, col2);
+  img.setPixel(2, 2, col2);
+  img.setPixel(1, 1, col3);
+  img.save("tmp.bmp");
+
+  // import Geometry from image
+  mwti.start("tmp.bmp");
+  QTest::keyClick(&w, Qt::Key_I, Qt::ControlModifier, key_delay);
+  QLabelMouseTracker *lblGeometry =
+      w.topLevelWidget()->findChild<QLabelMouseTracker *>("lblGeometry");
+  // wait until image is being displayed by QLabelMouseTracker
+  CAPTURE(QTest::qWaitFor([lblGeometry]() {
+    return lblGeometry->getImage().size() != QSize(0, 0);
+  }));
+  REQUIRE(lblGeometry != nullptr);
+  REQUIRE(lblGeometry->getImage().size() == img.size());
+
+  // assign geometry
+  QPushButton *btnChangeCompartment =
+      w.topLevelWidget()->findChild<QPushButton *>("btnChangeCompartment");
+  // c1 -> col1
+  listCompartments->setCurrentRow(0);
+  QApplication::processEvents();
+  btnChangeCompartment->click();
+  QApplication::processEvents();
+  QTest::mouseClick(lblGeometry, Qt::LeftButton, Qt::KeyboardModifiers(),
+                    QPoint(1, 1), 0);
+  QApplication::processEvents();
+  REQUIRE(lblGeometry->getColour() == col1);
+  // c2 -> col2
+  listCompartments->setCurrentRow(1);
+  QApplication::processEvents();
+  btnChangeCompartment->click();
+  QApplication::processEvents();
+  QTest::mouseClick(lblGeometry, Qt::LeftButton, Qt::KeyboardModifiers(),
+                    QPoint(lblGeometry->width() - 1, lblGeometry->height() - 1),
+                    0);
+  QApplication::processEvents();
+  REQUIRE(lblGeometry->getColour() == col2);
+  // c3 -> col3
+  listCompartments->setCurrentRow(2);
+  QApplication::processEvents();
+  btnChangeCompartment->click();
+  QApplication::processEvents();
+  QTest::mouseClick(lblGeometry, Qt::LeftButton, Qt::KeyboardModifiers(),
+                    QPoint(lblGeometry->width() / 2, lblGeometry->height() / 2),
+                    0);
+  QApplication::processEvents();
+  REQUIRE(lblGeometry->getColour() == col3);
 }

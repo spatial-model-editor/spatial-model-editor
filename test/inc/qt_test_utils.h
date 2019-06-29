@@ -26,8 +26,8 @@ class ModalWidgetCloser : public QObject {
     timer.setInterval(delay);
     QObject::connect(&timer, &QTimer::timeout, this,
                      &ModalWidgetCloser::closeWidget);
-    timer.start(delay);
   }
+  void start() { timer.start(); }
   void closeWidget() {
     QWidget *widget = QApplication::activeModalWidget();
     if (widget) {
@@ -74,8 +74,9 @@ class ModalWidgetTextInput : public QObject {
   int keyDelay;
   int timeLeft;
 
-  explicit ModalWidgetTextInput(const QString &msg, int keyInterval = 50,
-                                int delay = 100, int timeout = 30000)
+  explicit ModalWidgetTextInput(const QString &msg = QString{},
+                                int keyInterval = 50, int delay = 100,
+                                int timeout = 30000)
       : QObject(nullptr),
         message(msg),
         keyDelay(keyInterval),
@@ -83,7 +84,11 @@ class ModalWidgetTextInput : public QObject {
     timer.setInterval(delay);
     QObject::connect(&timer, &QTimer::timeout, this,
                      &ModalWidgetTextInput::closeWidget);
-    timer.start(delay);
+  }
+  void start() { timer.start(); }
+  void start(const QString &msg) {
+    message = msg;
+    timer.start();
   }
   void closeWidget() {
     QWidget *widget = QApplication::activeModalWidget();
