@@ -75,20 +75,23 @@ SCENARIO("simulate very_simple_model.xml", "[simulate][non-gui]") {
     sim.addMembrane(&membrane);
   }
 
-  // check initial concentrations: A_c1=1=fixed, the rest zero
-  REQUIRE(sim.field[0] == &fa1);
-  REQUIRE(sim.field[0]->conc[0] == 1.0);
-  REQUIRE(sim.field[0]->getMeanConcentration() == 1.0);
-  REQUIRE(fb1.getMeanConcentration() == 0.0);
-  REQUIRE(fa2.getMeanConcentration() == 0.0);
-  REQUIRE(fb2.getMeanConcentration() == 0.0);
-  REQUIRE(fa3.getMeanConcentration() == 0.0);
-  REQUIRE(fb3.getMeanConcentration() == 0.0);
+  // check initial concentrations:
+  // note A_c1 is a constant, so it does not have a field,
+  // and the first field in sim is B_c1
+  REQUIRE(sim.field[0] == &fb1);
+  REQUIRE(sim.field[0]->conc[0] == dbl_approx(0.0));
+  REQUIRE(sim.field[0]->getMeanConcentration() == dbl_approx(0.0));
+  REQUIRE(fa1.getMeanConcentration() == dbl_approx(1.0));
+  REQUIRE(fb1.getMeanConcentration() == dbl_approx(0.0));
+  REQUIRE(fa2.getMeanConcentration() == dbl_approx(0.0));
+  REQUIRE(fb2.getMeanConcentration() == dbl_approx(0.0));
+  REQUIRE(fa3.getMeanConcentration() == dbl_approx(0.0));
+  REQUIRE(fb3.getMeanConcentration() == dbl_approx(0.0));
 
   // check initial concentration image
   img = sim.getConcentrationImage();
   REQUIRE(img.size() == QSize(1, 3));
-  REQUIRE(img.pixel(0, 0) == sim.field[0]->colour.rgba());
+  REQUIRE(img.pixel(0, 0) == QColor(0, 0, 0).rgba());
   REQUIRE(img.pixel(0, 1) == QColor(0, 0, 0).rgba());
   REQUIRE(img.pixel(0, 2) == QColor(0, 0, 0).rgba());
 

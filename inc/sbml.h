@@ -61,12 +61,18 @@ class SbmlDocWrapper {
                                     const QString &filename);
   const QImage &getConcentrationImage(const QString &speciesID);
 
+  // species Diffusion constant
+  void setDiffusionConstant(const QString &speciesID, double diffusionConstant);
+  double getDiffusionConstant(const QString &speciesID) const;
+
   // return raw XML as QString
   QString getXml() const;
 
-  // returns true if species is constant or a boundary condition
-  // i.e. should if it should not be updated in the PDE
+  // returns true if species is fixed throughout the simulation
   bool isSpeciesConstant(const std::string &speciesID) const;
+
+  // returns true if species should be altered by Reactions
+  bool isSpeciesReactive(const std::string &speciesID) const;
 
   // return supplied math expression as string with any Function calls inlined
   // e.g. given mathExpression = "z*f(x,y)"
