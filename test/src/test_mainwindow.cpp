@@ -5,7 +5,7 @@
 #include "qt_test_utils.h"
 #include "sbml_test_data/very_simple_model.h"
 
-constexpr int key_delay = 5;
+constexpr int key_delay = 50;
 
 SCENARIO("Shortcut keys", "[gui][mainwindow]") {
   MainWindow w;
@@ -216,13 +216,13 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
     QTest::keyClick(listSpecies, Qt::Key_Down, Qt::ControlModifier, key_delay);
     QTest::keyClick(listSpecies, Qt::Key_Enter, Qt::ControlModifier, key_delay);
   }
-  REQUIRE(lblSpeciesColour->palette().color(QPalette::Window) ==
+  REQUIRE(lblSpeciesColour->pixmap()->toImage().pixelColor(0, 0) ==
           sbml::defaultSpeciesColours()[3]);
   // just click Enter, so accept default colour, ie no-op
   mwti.start("");
   QTest::mouseClick(btnChangeSpeciesColour, Qt::LeftButton,
                     Qt::KeyboardModifier(), QPoint(), key_delay);
-  REQUIRE(lblSpeciesColour->palette().color(QPalette::Window) ==
+  REQUIRE(lblSpeciesColour->pixmap()->toImage().pixelColor(0, 0) ==
           sbml::defaultSpeciesColours()[3]);
 
   // display reactions tab

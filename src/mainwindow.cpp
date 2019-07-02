@@ -384,9 +384,9 @@ void MainWindow::listSpecies_itemActivated(QTreeWidgetItem *item, int column) {
     ui->txtDiffusionConstant->setText(
         QString::number(sbmlDoc.getDiffusionConstant(speciesID)));
     // update colour box
-    QPalette palette;
-    palette.setColor(QPalette::Window, sbmlDoc.getSpeciesColour(speciesID));
-    ui->lblSpeciesColour->setPalette(palette);
+    QImage img(1, 1, QImage::Format_RGB32);
+    img.fill(sbmlDoc.getSpeciesColour(speciesID));
+    ui->lblSpeciesColour->setPixmap(QPixmap::fromImage(img));
     ui->lblSpeciesColour->setText("");
   }
 }
