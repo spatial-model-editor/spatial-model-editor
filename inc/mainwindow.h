@@ -73,6 +73,8 @@ class MainWindow : public QMainWindow {
 
   void btnImportConcentration_clicked();
 
+  void txtDiffusionConstant_editingFinished();
+
   // reactions
   void listReactions_itemActivated(QTreeWidgetItem *item, int column);
 

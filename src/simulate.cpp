@@ -2,22 +2,8 @@
 
 namespace simulate {
 
-ReacEval::ReacEval(SbmlDocWrapper *doc_ptr,
-                   const std::vector<std::string> &speciesID,
-                   const std::vector<std::string> &reactionID)
-    : doc(doc_ptr) {
-  // init vector of species
-  species_values = std::vector<double>(speciesID.size(), 0.0);
-  result = species_values;
-  nSpecies = species_values.size();
-
-  M.clear();
-  reac_eval.clear();
-  reac_eval.reserve(reactionID.size());
-
-  // get global constants
-  std::vector<std::string> constant_names;
-  std::vector<double> constant_values;
+static std::map<std::string, double> getGlobalConstants(SbmlDocWrapper *doc) {
+  std::map<std::string, double> constants;
   // add all *constant* species as constants
   for (unsigned k = 0; k < doc->model->getNumSpecies(); ++k) {
     const auto *spec = doc->model->getSpecies(k);
@@ -33,15 +19,14 @@ ReacEval::ReacEval(SbmlDocWrapper *doc_ptr,
       }
       qDebug("ReacEval::ReacEval :: adding constant species '%s' as const",
              spec->getId().c_str());
-      constant_names.push_back(spec->getId());
-      constant_values.push_back(init_conc);
+      constants[spec->getId()] = init_conc;
     }
   }
   for (unsigned k = 0; k < doc->model->getNumParameters(); ++k) {
     if (doc->model->getAssignmentRule(doc->model->getParameter(k)->getId()) ==
         nullptr) {
-      constant_names.push_back(doc->model->getParameter(k)->getId());
-      constant_values.push_back(doc->model->getParameter(k)->getValue());
+      constants[doc->model->getParameter(k)->getId()] =
+          doc->model->getParameter(k)->getValue();
     }
   }
   // also get compartment volumes (the compartmentID may be used in the reaction
@@ -49,14 +34,60 @@ ReacEval::ReacEval(SbmlDocWrapper *doc_ptr,
   // parameter for this compartment)
   for (unsigned int k = 0; k < doc->model->getNumCompartments(); ++k) {
     const auto *comp = doc->model->getCompartment(k);
-    constant_names.push_back(comp->getId());
-    constant_values.push_back(comp->getSize());
+    constants[comp->getId()] = comp->getSize();
+  }
+  return constants;
+}
+
+static std::string inlineExpr(SbmlDocWrapper *doc, const std::string &expr) {
+  std::string inlined;
+  // inline any Function calls in expr
+  inlined = doc->inlineFunctions(expr);
+
+  // inline any Assignment Rules in expr
+  inlined = doc->inlineAssignments(inlined);
+  return inlined;
+}
+
+ReacEval::ReacEval(SbmlDocWrapper *doc_ptr,
+                   const std::vector<std::string> &speciesID,
+                   const std::vector<std::string> &reactionID, int nRateRules)
+    : doc(doc_ptr) {
+  // init vector of species
+  species_values = std::vector<double>(speciesID.size(), 0.0);
+  result = species_values;
+  nSpecies = species_values.size();
+
+  M.clear();
+  reac_eval.clear();
+  reac_eval.reserve(reactionID.size() + nRateRules);
+
+  // check if any species have a RateRule
+  // NOTE: not currently valid if raterule involves species in multiple
+  // compartments
+  for (std::size_t sIndex = 0; sIndex < speciesID.size(); ++sIndex) {
+    const auto *rule = doc->model->getRateRule(speciesID[sIndex]);
+    if (rule != nullptr) {
+      std::map<std::string, double> constants = getGlobalConstants(doc);
+      std::string expr = inlineExpr(doc, rule->getFormula());
+      std::vector<double> Mrow(speciesID.size(), 0);
+      Mrow[sIndex] = 1.0;
+      M.push_back(Mrow);
+      ++nReactions;
+      // compile expression and add to reac_eval vector
+      reac_eval.emplace_back(
+          numerics::ExprEval(expr, speciesID, species_values, constants));
+      qDebug("ReacEval::ReacEval :: adding rate rule for species %s",
+             speciesID[sIndex].c_str());
+    }
   }
 
   // process each reaction
   for (const auto &reacID : reactionID) {
     const auto *reac = doc->model->getReaction(reacID);
     bool isNullReaction = true;
+
+    std::map<std::string, double> constants = getGlobalConstants(doc);
 
     // construct row of stoichiometric coefficients for each
     // species produced and consumed by this reaction
@@ -68,7 +99,7 @@ ReacEval::ReacEval(SbmlDocWrapper *doc_ptr,
       auto it = std::find(speciesID.cbegin(), speciesID.cend(),
                           spec_ref->getSpecies());
       if (it != speciesID.cend() &&
-          !doc->isSpeciesConstant(spec_ref->getSpecies())) {
+          doc->isSpeciesReactive(spec_ref->getSpecies())) {
         std::size_t species_index =
             static_cast<std::size_t>(it - speciesID.cbegin());
         isNullReaction = false;
@@ -84,7 +115,7 @@ ReacEval::ReacEval(SbmlDocWrapper *doc_ptr,
       auto it = std::find(speciesID.cbegin(), speciesID.cend(),
                           spec_ref->getSpecies());
       if (it != speciesID.cend() &&
-          !doc->isSpeciesConstant(spec_ref->getSpecies())) {
+          doc->isSpeciesReactive(spec_ref->getSpecies())) {
         std::size_t species_index =
             static_cast<std::size_t>(it - speciesID.cbegin());
         isNullReaction = false;
@@ -101,50 +132,35 @@ ReacEval::ReacEval(SbmlDocWrapper *doc_ptr,
       ++nReactions;
       // get mathematical formula
       const auto *kin = reac->getKineticLaw();
-      std::string expr = kin->getFormula();
+      std::string expr = inlineExpr(doc, kin->getFormula());
 
       // TODO: deal with amount vs concentration issues correctly
       // if getHasOnlySubstanceUnits is true for some (all?) species
       // note: would also need to also do this in the inlining step,
       // and in the stoich matrix factors
 
-      // inline any Function calls in expr
-      expr = doc->inlineFunctions(expr);
-
-      // inline any Assignment Rules in expr
-      expr = doc->inlineAssignments(expr);
-
       // get local parameters, append to global constants
       // NOTE: if a parameter is set by an assignment rule
       // it should *not* be added as a constant below:
       // (it should no longer be present in expr after inlining)
-      std::vector<std::string> reac_constant_names(constant_names);
-      std::vector<double> reac_constant_values(constant_values);
       // append local parameters and their values
       for (unsigned k = 0; k < kin->getNumLocalParameters(); ++k) {
         if (doc->model->getAssignmentRule(kin->getLocalParameter(k)->getId()) ==
             nullptr) {
-          reac_constant_names.push_back(kin->getLocalParameter(k)->getId());
-          reac_constant_values.push_back(kin->getLocalParameter(k)->getValue());
+          constants[kin->getLocalParameter(k)->getId()] =
+              kin->getLocalParameter(k)->getValue();
         }
       }
       for (unsigned k = 0; k < kin->getNumParameters(); ++k) {
         if (doc->model->getAssignmentRule(kin->getParameter(k)->getId()) ==
             nullptr) {
-          reac_constant_names.push_back(kin->getParameter(k)->getId());
-          reac_constant_values.push_back(kin->getParameter(k)->getValue());
+          constants[kin->getParameter(k)->getId()] =
+              kin->getParameter(k)->getValue();
         }
       }
-
-      for (std::size_t k = 0; k < reac_constant_names.size(); ++k) {
-        // qDebug("ReacEval::ReacEval ::   - constant: %s %f",
-        //        reac_constant_names[k].c_str(), reac_constant_values[k]);
-      }
-
       // compile expression and add to reac_eval vector
-      reac_eval.emplace_back(numerics::ExprEval(expr, speciesID, species_values,
-                                                reac_constant_names,
-                                                reac_constant_values));
+      reac_eval.emplace_back(
+          numerics::ExprEval(expr, speciesID, species_values, constants));
     }
   }
   qDebug("ReacEval::ReacEval ::   - final matrix M:");
@@ -168,26 +184,37 @@ SimCompartment::SimCompartment(SbmlDocWrapper *docWrapper,
                                const geometry::Compartment *compartment)
     : doc(docWrapper), comp(compartment) {
   QString compID = compartment->compartmentID.c_str();
-  qDebug("SimCompartment::compile_reactions :: compartment: %s",
+  qDebug("SimCompartment::SimCompartment :: compartment: %s",
          compID.toStdString().c_str());
   std::vector<std::string> speciesID;
+  int nRateRules = 0;
   for (const auto &s : doc->species.at(compID)) {
-    speciesID.push_back(s.toStdString());
-    field.push_back(&doc->mapSpeciesIdToField.at(s));
-    qDebug("SimCompartment::compile_reactions :: - adding field: %s",
-           s.toStdString().c_str());
+    if (!doc->isSpeciesConstant(s.toStdString())) {
+      speciesID.push_back(s.toStdString());
+      field.push_back(&doc->mapSpeciesIdToField.at(s));
+      qDebug("SimCompartment::SimCompartment :: - adding field: %s",
+             s.toStdString().c_str());
+      if (doc->model->getRateRule(s.toStdString()) != nullptr) {
+        ++nRateRules;
+      }
+    }
   }
-  if (doc->reactions.find(compID) == doc->reactions.cend() ||
-      doc->reactions.at(compID).empty()) {
-    // If there are no reactions in this compartment: we are done
-    qDebug("SimCompartment::compile_reactions ::   - no reactions to compile.");
+  const auto iter = doc->reactions.find(compID);
+  if ((nRateRules == 0) &&
+      (iter == doc->reactions.cend() || doc->reactions.at(compID).empty())) {
+    // If there are no reactions or RateRules in this compartment: we are done
+    qDebug(
+        "SimCompartment::SimCompartment ::   - no Reactions or RateRules to "
+        "compile.");
     return;
   }
   std::vector<std::string> reactionID;
-  for (const auto &reac : doc->reactions.at(compID)) {
-    reactionID.push_back(reac.toStdString());
+  if (iter != doc->reactions.cend()) {
+    for (const auto &reac : iter->second) {
+      reactionID.push_back(reac.toStdString());
+    }
   }
-  reacEval = ReacEval(doc, speciesID, reactionID);
+  reacEval = ReacEval(doc, speciesID, reactionID, nRateRules);
 }
 
 void SimCompartment::evaluate_reactions() {
@@ -242,12 +269,16 @@ SimMembrane::SimMembrane(SbmlDocWrapper *doc_ptr,
   // make vector of species & fields from compartments A and B
   std::vector<std::string> speciesID;
   for (const auto &spec : doc->species.at(compA)) {
-    speciesID.push_back(spec.toStdString());
-    fieldA.push_back(&doc->mapSpeciesIdToField.at(spec));
+    if (!doc->isSpeciesConstant(spec.toStdString())) {
+      speciesID.push_back(spec.toStdString());
+      fieldA.push_back(&doc->mapSpeciesIdToField.at(spec));
+    }
   }
   for (const auto &spec : doc->species.at(compB)) {
-    speciesID.push_back(spec.toStdString());
-    fieldB.push_back(&doc->mapSpeciesIdToField.at(spec));
+    if (!doc->isSpeciesConstant(spec.toStdString())) {
+      speciesID.push_back(spec.toStdString());
+      fieldB.push_back(&doc->mapSpeciesIdToField.at(spec));
+    }
   }
 
   // make vector of reactions from membrane

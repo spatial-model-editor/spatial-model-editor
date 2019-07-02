@@ -10,10 +10,17 @@
 
 #include <string>
 
-// disable unused exprtk features: reduces build time and executable size
+// disable unused/undesired exprtk features:
+//  - reduces build time and executable size
+//  - don't parse undesired language features
+#define exprtk_disable_comments
 #define exprtk_disable_break_continue
 #define exprtk_disable_sc_andor
 #define exprtk_disable_return_statement
+// note: disabling enhanced_features gives:
+//  - smaller executable
+//  - faster compilation
+//  - but slower evaluation of expressions
 #define exprtk_disable_enhanced_features
 #define exprtk_disable_string_capabilities
 #define exprtk_disable_superscalar_unroll
@@ -31,13 +38,15 @@ class ExprEval {
   ExprEval(const std::string &expression,
            const std::vector<std::string> &variableName,
            std::vector<double> &variableValue,
-           const std::vector<std::string> &constantName,
-           const std::vector<double> &constantValue);
+           const std::map<std::string, double> &constants);
   // evaluate compiled expression
   double operator()() const;
 
  private:
   exprtk::expression<double> exprtkExpression;
 };
+
+// return a vector of all symbols in the expression
+std::vector<std::string> getSymbols(const std::string &expression);
 
 }  // namespace numerics
