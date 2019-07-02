@@ -79,6 +79,9 @@ void MainWindow::setupConnections() {
   connect(ui->txtDiffusionConstant, &QLineEdit::editingFinished, this,
           &MainWindow::txtDiffusionConstant_editingFinished);
 
+  connect(ui->btnChangeSpeciesColour, &QPushButton::clicked, this,
+          &MainWindow::btnChangeSpeciesColour_clicked);
+
   // reactions
   connect(ui->listReactions, &QTreeWidget::itemActivated, this,
           &MainWindow::listReactions_itemActivated);
@@ -377,10 +380,14 @@ void MainWindow::listSpecies_itemActivated(QTreeWidgetItem *item, int column) {
       ui->chkSpeciesIsConstant->setCheckState(Qt::CheckState::Unchecked);
     }
     ui->lblGeometryStatus->setText("Species concentration:");
-    ui->lblGeometry->setImage(
-        sbmlDoc.getConcentrationImage(item->text(column)));
+    ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
     ui->txtDiffusionConstant->setText(
         QString::number(sbmlDoc.getDiffusionConstant(speciesID)));
+    // update colour box
+    QPalette palette;
+    palette.setColor(QPalette::Window, sbmlDoc.getSpeciesColour(speciesID));
+    ui->lblSpeciesColour->setPalette(palette);
+    ui->lblSpeciesColour->setText("");
   }
 }
 
@@ -417,6 +424,16 @@ void MainWindow::txtDiffusionConstant_editingFinished() {
       "Constant of Species '%s' to %f",
       speciesID.toStdString().c_str(), diffConst);
   sbmlDoc.setDiffusionConstant(speciesID, diffConst);
+}
+
+void MainWindow::btnChangeSpeciesColour_clicked() {
+  QString speciesID = ui->listSpecies->currentItem()->text(0);
+  QColor newCol = QColorDialog::getColor(sbmlDoc.getSpeciesColour(speciesID),
+                                         this, "Choose new species colour");
+  if (newCol.isValid()) {
+    sbmlDoc.setSpeciesColour(speciesID, newCol);
+    listSpecies_itemActivated(ui->listSpecies->currentItem(), 0);
+  }
 }
 
 void MainWindow::listReactions_itemActivated(QTreeWidgetItem *item,

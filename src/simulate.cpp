@@ -2,7 +2,8 @@
 
 namespace simulate {
 
-static std::map<std::string, double> getGlobalConstants(SbmlDocWrapper *doc) {
+static std::map<std::string, double> getGlobalConstants(
+    sbml::SbmlDocWrapper *doc) {
   std::map<std::string, double> constants;
   // add all *constant* species as constants
   for (unsigned k = 0; k < doc->model->getNumSpecies(); ++k) {
@@ -39,7 +40,8 @@ static std::map<std::string, double> getGlobalConstants(SbmlDocWrapper *doc) {
   return constants;
 }
 
-static std::string inlineExpr(SbmlDocWrapper *doc, const std::string &expr) {
+static std::string inlineExpr(sbml::SbmlDocWrapper *doc,
+                              const std::string &expr) {
   std::string inlined;
   // inline any Function calls in expr
   inlined = doc->inlineFunctions(expr);
@@ -49,7 +51,7 @@ static std::string inlineExpr(SbmlDocWrapper *doc, const std::string &expr) {
   return inlined;
 }
 
-ReacEval::ReacEval(SbmlDocWrapper *doc_ptr,
+ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
                    const std::vector<std::string> &speciesID,
                    const std::vector<std::string> &reactionID, int nRateRules)
     : doc(doc_ptr) {
@@ -180,7 +182,7 @@ void ReacEval::evaluate() {
   }
 }
 
-SimCompartment::SimCompartment(SbmlDocWrapper *docWrapper,
+SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
                                const geometry::Compartment *compartment)
     : doc(docWrapper), comp(compartment) {
   QString compID = compartment->compartmentID.c_str();
@@ -246,7 +248,7 @@ void SimCompartment::evaluate_reactions() {
   }
 }
 
-SimMembrane::SimMembrane(SbmlDocWrapper *doc_ptr,
+SimMembrane::SimMembrane(sbml::SbmlDocWrapper *doc_ptr,
                          geometry::Membrane *membrane_ptr)
     : doc(doc_ptr), membrane(membrane_ptr) {
   QString compA = membrane->compA->compartmentID.c_str();

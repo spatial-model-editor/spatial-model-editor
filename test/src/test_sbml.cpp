@@ -46,7 +46,7 @@ SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
   libsbml::SBMLWriter w;
   w.writeSBML(document.get(), "tmp.xml");
 
-  SbmlDocWrapper s;
+  sbml::SbmlDocWrapper s;
   s.importSBMLFile("tmp.xml");
   REQUIRE(s.isValid == true);
 
@@ -133,7 +133,7 @@ SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
 }
 
 SCENARIO("import geometry from image", "[sbml][non-gui]") {
-  SbmlDocWrapper s;
+  sbml::SbmlDocWrapper s;
   REQUIRE(s.hasGeometry == false);
   GIVEN("Single pixel image") {
     QImage img(1, 1, QImage::Format_RGB32);
@@ -167,7 +167,7 @@ SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {
   // write SBML document to file
   libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
 
-  SbmlDocWrapper s;
+  sbml::SbmlDocWrapper s;
   s.importSBMLFile("tmp.xml");
   GIVEN("SBML document") {
     WHEN("importSBMLFile called") {
@@ -199,6 +199,24 @@ SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {
         REQUIRE(s.reactions.at("comp").size() == 1);
         REQUIRE(s.reactions.at("comp")[0] == "r1");
       }
+      THEN("species have default colours") {
+        REQUIRE(s.getSpeciesColour("A") == sbml::defaultSpeciesColours()[0]);
+        REQUIRE(s.getSpeciesColour("B") == sbml::defaultSpeciesColours()[1]);
+        REQUIRE(s.getSpeciesColour("C") == sbml::defaultSpeciesColours()[2]);
+      }
+      WHEN("species colours changed") {
+        QColor newA = QColor(12, 12, 12);
+        QColor newB = QColor(123, 321, 1);
+        QColor newC = QColor(0, 22, 99);
+        s.setSpeciesColour("A", newA);
+        s.setSpeciesColour("B", newB);
+        s.setSpeciesColour("C", newC);
+        REQUIRE(s.getSpeciesColour("A") == newA);
+        REQUIRE(s.getSpeciesColour("B") == newB);
+        REQUIRE(s.getSpeciesColour("C") == newC);
+        s.setSpeciesColour("A", newC);
+        REQUIRE(s.getSpeciesColour("A") == newC);
+      }
     }
   }
 }
@@ -209,7 +227,7 @@ SCENARIO("SBML test data: very-simple-model.xml", "[sbml][non-gui]") {
   // write SBML document to file
   libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
 
-  SbmlDocWrapper s;
+  sbml::SbmlDocWrapper s;
   s.importSBMLFile("tmp.xml");
   GIVEN("SBML document") {
     WHEN("importSBMLFile called") {
@@ -241,7 +259,7 @@ SCENARIO("SBML test data: yeast-glycolysis.xml", "[sbml][non-gui][inlining]") {
   // write SBML document to file
   libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
 
-  SbmlDocWrapper s;
+  sbml::SbmlDocWrapper s;
   s.importSBMLFile("tmp.xml");
   GIVEN("SBML document") {
     WHEN("importSBMLFile called") {

@@ -461,16 +461,6 @@
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="1" colspan="2">
-                 <widget class="QLabel" name="lblSpeciesColour">
-                  <property name="text">
-                   <string>none</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
-                  </property>
-                 </widget>
-                </item>
                 <item row="2" column="1" colspan="2">
                  <widget class="QCheckBox" name="chkSpeciesIsConstant">
                   <property name="toolTip">
@@ -488,6 +478,26 @@
                   </property>
                   <property name="text">
                    <string>Spatial</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QLabel" name="lblSpeciesColour">
+                  <property name="autoFillBackground">
+                   <bool>true</bool>
+                  </property>
+                  <property name="text">
+                   <string>none</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QPushButton" name="btnChangeSpeciesColour">
+                  <property name="text">
+                   <string>change colour...</string>
                   </property>
                  </widget>
                 </item>

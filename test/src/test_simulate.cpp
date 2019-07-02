@@ -9,7 +9,7 @@ SCENARIO("simulate very_simple_model.xml", "[simulate][non-gui]") {
   std::unique_ptr<libsbml::SBMLDocument> doc(
       libsbml::readSBMLFromString(sbml_test_data::very_simple_model().xml));
   libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-  SbmlDocWrapper s;
+  sbml::SbmlDocWrapper s;
   s.importSBMLFile("tmp.xml");
 
   // import geometry & assign compartments
