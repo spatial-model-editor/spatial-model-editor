@@ -76,6 +76,9 @@ void MainWindow::setupConnections() {
   connect(ui->btnImportConcentration, &QPushButton::clicked, this,
           &MainWindow::btnImportConcentration_clicked);
 
+  connect(ui->txtDiffusionConstant, &QLineEdit::editingFinished, this,
+          &MainWindow::txtDiffusionConstant_editingFinished);
+
   // reactions
   connect(ui->listReactions, &QTreeWidget::itemActivated, this,
           &MainWindow::listReactions_itemActivated);
@@ -360,10 +363,11 @@ void MainWindow::listMembranes_currentTextChanged(const QString &currentText) {
 void MainWindow::listSpecies_itemActivated(QTreeWidgetItem *item, int column) {
   // if user selects a species (i.e. an item with a parent)
   if ((item != nullptr) && (item->parent() != nullptr)) {
+    QString speciesID = item->text(column);
     qDebug("ui::listSpecies :: Species '%s' selected",
-           item->text(column).toStdString().c_str());
+           speciesID.toStdString().c_str());
     // display species information
-    auto *spec = sbmlDoc.model->getSpecies(item->text(column).toStdString());
+    auto *spec = sbmlDoc.model->getSpecies(speciesID.toStdString());
     ui->txtInitialConcentration->setText(
         QString::number(spec->getInitialConcentration()));
     if ((spec->isSetConstant() && spec->getConstant()) ||
@@ -375,6 +379,8 @@ void MainWindow::listSpecies_itemActivated(QTreeWidgetItem *item, int column) {
     ui->lblGeometryStatus->setText("Species concentration:");
     ui->lblGeometry->setImage(
         sbmlDoc.getConcentrationImage(item->text(column)));
+    ui->txtDiffusionConstant->setText(
+        QString::number(sbmlDoc.getDiffusionConstant(speciesID)));
   }
 }
 
@@ -401,6 +407,16 @@ void MainWindow::btnImportConcentration_clicked() {
       QFileDialog::Option::DontUseNativeDialog);
   sbmlDoc.importConcentrationFromImage(spec, filename);
   ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(spec));
+}
+
+void MainWindow::txtDiffusionConstant_editingFinished() {
+  double diffConst = ui->txtDiffusionConstant->text().toDouble();
+  QString speciesID = ui->listSpecies->currentItem()->text(0);
+  qDebug(
+      "MainWindow::txtDiffusionConstant_editingFinished :: setting Diffusion "
+      "Constant of Species '%s' to %f",
+      speciesID.toStdString().c_str(), diffConst);
+  sbmlDoc.setDiffusionConstant(speciesID, diffConst);
 }
 
 void MainWindow::listReactions_itemActivated(QTreeWidgetItem *item,

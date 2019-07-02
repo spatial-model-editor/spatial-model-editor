@@ -294,17 +294,43 @@ const QImage &SbmlDocWrapper::getConcentrationImage(const QString &speciesID) {
   return mapSpeciesIdToField.at(speciesID).getConcentrationImage();
 }
 
+void SbmlDocWrapper::setDiffusionConstant(const QString &speciesID,
+                                          double diffusionConstant) {
+  mapSpeciesIdToField.at(speciesID).diffusionConstant = diffusionConstant;
+}
+
+double SbmlDocWrapper::getDiffusionConstant(const QString &speciesID) const {
+  return mapSpeciesIdToField.at(speciesID).diffusionConstant;
+}
+
 QString SbmlDocWrapper::getXml() const {
   return libsbml::writeSBMLToString(doc.get());
 }
 
 bool SbmlDocWrapper::isSpeciesConstant(const std::string &speciesID) const {
   auto *spec = model->getSpecies(speciesID);
-  if ((spec->isSetConstant() && spec->getConstant()) ||
-      (spec->isSetBoundaryCondition() && spec->getBoundaryCondition())) {
+  if (spec->isSetConstant() && spec->getConstant()) {
+    // `Constant` species is a constant:
+    //  - cannot be altered by Reactions or by RateRules
+    return true;
+  }
+  if ((spec->isSetBoundaryCondition() && spec->getBoundaryCondition()) &&
+      model->getRateRule(speciesID) == nullptr) {
+    // `BoundaryCondition` species is usually constant:
+    //   - unless it is altered by a RateRule
     return true;
   }
   return false;
+}
+
+bool SbmlDocWrapper::isSpeciesReactive(const std::string &speciesID) const {
+  // true if this species have a PDE generated for it by Reactions involving it
+  auto *spec = model->getSpecies(speciesID);
+  if ((spec->isSetConstant() && spec->getConstant()) ||
+      (spec->isSetBoundaryCondition() && spec->getBoundaryCondition())) {
+    return false;
+  }
+  return true;
 }
 
 std::string SbmlDocWrapper::inlineFunctions(

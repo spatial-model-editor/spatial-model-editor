@@ -219,7 +219,7 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   // select each item in listReactions
   listReactions->setFocus();
   listReactions->setCurrentItem(listReactions->topLevelItem(0));
-  for (int i = 0; i < 12; ++i) {
+  for (int i = 0; i < 7; ++i) {
     QTest::keyClick(listReactions, Qt::Key_Down, Qt::ControlModifier,
                     key_delay);
     QTest::keyClick(listReactions, Qt::Key_Enter, Qt::ControlModifier,

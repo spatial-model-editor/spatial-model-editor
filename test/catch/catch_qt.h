@@ -38,9 +38,11 @@ inline std::ostream &operator<<(std::ostream &os, const QColor &value) {
   return os << value.rgba();
 }
 
-template <typename T>
-inline std::ostream &operator<<(std::ostream &os, const std::pair<T, T> &p) {
-  return os << "{ " << p.first << ", " << p.second << " }";
+// non-Qt
+
+template <typename T, typename U>
+inline std::ostream &operator<<(std::ostream &os, const std::pair<T, U> &p) {
+  return os << p.first << ": " << p.second;
 }
 
 #include "catch.hpp"
