@@ -5,7 +5,7 @@
 #include "qt_test_utils.h"
 #include "sbml_test_data/very_simple_model.h"
 
-constexpr int key_delay = 50;
+constexpr int key_delay = 5;
 
 SCENARIO("Shortcut keys", "[gui][mainwindow]") {
   MainWindow w;
@@ -89,6 +89,12 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
       w.topLevelWidget()->findChild<QTreeWidget *>("listSpecies");
   REQUIRE(listSpecies != nullptr);
   REQUIRE(listSpecies->topLevelItemCount() == 0);
+  QPushButton *btnChangeSpeciesColour =
+      w.topLevelWidget()->findChild<QPushButton *>("btnChangeSpeciesColour");
+  REQUIRE(btnChangeSpeciesColour != nullptr);
+  QLabel *lblSpeciesColour =
+      w.topLevelWidget()->findChild<QLabel *>("lblSpeciesColour");
+  REQUIRE(lblSpeciesColour != nullptr);
   QTreeWidget *listReactions =
       w.topLevelWidget()->findChild<QTreeWidget *>("listReactions");
   REQUIRE(listReactions != nullptr);
@@ -210,6 +216,14 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
     QTest::keyClick(listSpecies, Qt::Key_Down, Qt::ControlModifier, key_delay);
     QTest::keyClick(listSpecies, Qt::Key_Enter, Qt::ControlModifier, key_delay);
   }
+  REQUIRE(lblSpeciesColour->palette().color(QPalette::Window) ==
+          sbml::defaultSpeciesColours()[3]);
+  // just click Enter, so accept default colour, ie no-op
+  mwti.start("");
+  QTest::mouseClick(btnChangeSpeciesColour, Qt::LeftButton,
+                    Qt::KeyboardModifier(), QPoint(), key_delay);
+  REQUIRE(lblSpeciesColour->palette().color(QPalette::Window) ==
+          sbml::defaultSpeciesColours()[3]);
 
   // display reactions tab
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,

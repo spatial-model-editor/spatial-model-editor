@@ -2,6 +2,8 @@
 
 #include <unordered_set>
 
+namespace sbml {
+
 void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
   doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
   hasGeometry = false;
@@ -42,7 +44,7 @@ void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
     const auto id = spec->getId().c_str();
     species[spec->getCompartment().c_str()] << QString(id);
     // assign a default colour for displaying the species
-    mapSpeciesIdToColour[id] = geometry::defaultSpeciesColours()[i];
+    mapSpeciesIdToColour[id] = defaultSpeciesColours()[i];
   }
 
   // get list of functions
@@ -303,6 +305,15 @@ double SbmlDocWrapper::getDiffusionConstant(const QString &speciesID) const {
   return mapSpeciesIdToField.at(speciesID).diffusionConstant;
 }
 
+void SbmlDocWrapper::setSpeciesColour(const QString &speciesID,
+                                      const QColor &colour) {
+  mapSpeciesIdToField.at(speciesID).colour = colour;
+}
+
+const QColor &SbmlDocWrapper::getSpeciesColour(const QString &speciesID) const {
+  return mapSpeciesIdToField.at(speciesID).colour;
+}
+
 QString SbmlDocWrapper::getXml() const {
   return libsbml::writeSBMLToString(doc.get());
 }
@@ -436,3 +447,5 @@ std::string SbmlDocWrapper::inlineAssignments(
   }
   return expr;
 }
+
+}  // namespace sbml

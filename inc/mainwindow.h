@@ -18,7 +18,7 @@ class MainWindow : public QMainWindow {
 
  private:
   std::shared_ptr<Ui::MainWindow> ui;
-  SbmlDocWrapper sbmlDoc;
+  sbml::SbmlDocWrapper sbmlDoc;
   bool waitingForCompartmentChoice = false;
 
   // temp: vector of simulation images to display
@@ -74,6 +74,8 @@ class MainWindow : public QMainWindow {
   void btnImportConcentration_clicked();
 
   void txtDiffusionConstant_editingFinished();
+
+  void btnChangeSpeciesColour_clicked();
 
   // reactions
   void listReactions_itemActivated(QTreeWidgetItem *item, int column);
