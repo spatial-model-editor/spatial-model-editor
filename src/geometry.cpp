@@ -1,6 +1,7 @@
 #include <unordered_map>
 
 #include "geometry.h"
+#include "logger.h"
 
 namespace geometry {
 
@@ -52,9 +53,9 @@ Compartment::Compartment(const std::string &compID, const QImage &img, QRgb col)
       }
     }
   }
-  qDebug("Compartment::init :: compartmentID: %s", compartmentID.c_str());
-  qDebug("Compartment::init :: n_pixels: %lu", ix.size());
-  qDebug("Compartment::init :: colour: %u", col);
+  spdlog::info("Compartment::Compartment :: compartmentID: {}", compartmentID);
+  spdlog::info("Compartment::Compartment :: n_pixels: {}", ix.size());
+  spdlog::info("Compartment::Compartment :: colour: {:x}", col);
 }
 
 const QImage &Compartment::getCompartmentImage() const { return imgComp; }
@@ -63,10 +64,11 @@ Membrane::Membrane(const std::string &ID, const Compartment *A,
                    const Compartment *B,
                    const std::vector<std::pair<QPoint, QPoint>> &membranePairs)
     : membraneID(ID), compA(A), compB(B) {
-  qDebug("Membrane::init :: membraneID: %s", membraneID.c_str());
-  qDebug("Membrane::init :: compartment A: %s", compA->compartmentID.c_str());
-  qDebug("Membrane::init :: compartment B: %s", compB->compartmentID.c_str());
-  qDebug("Membrane::init :: number of point pairs: %lu", membranePairs.size());
+  spdlog::info("Membrane::Membrane :: membraneID: {}", membraneID);
+  spdlog::info("Membrane::Membrane :: compartment A: {}", compA->compartmentID);
+  spdlog::info("Membrane::Membrane :: compartment B: {}", compB->compartmentID);
+  spdlog::info("Membrane::Membrane :: number of point pairs: {}",
+               membranePairs.size());
   // convert each QPoint into the corresponding index of the field
   indexPair.clear();
   CompartmentIndexer indexA(*A);
@@ -84,8 +86,8 @@ Field::Field(const Compartment *geom, const std::string &specID,
       geometry(geom),
       diffusionConstant(diffConst),
       colour(col) {
-  qDebug("Field::init :: speciesID: %s", speciesID.c_str());
-  qDebug("Field::init :: compartmentID: %s", geom->compartmentID.c_str());
+  spdlog::info("Field::Field :: speciesID: {}", speciesID);
+  spdlog::info("Field::Field :: compartmentID: {}", geom->compartmentID);
   imgConc = QImage(geom->getCompartmentImage().size(), QImage::Format_ARGB32);
   conc.resize(geom->ix.size(), 0.0);
   dcdt = conc;
@@ -105,8 +107,8 @@ void Field::importConcentration(const QImage &img, double scale_factor) {
     // rescale uniform distribution to scale_factor
     min = 0;
   }
-  qDebug("Field::importConcentration :: rescaling [%u, %u] -> [%f, %f]", min,
-         max, 0.0, scale_factor);
+  spdlog::info("Field::importConcentration :: rescaling [{}, {}] -> [{}, {}]",
+               min, max, 0.0, scale_factor);
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     conc[i] = scale_factor *
               static_cast<double>(img.pixel(geometry->ix[i]) - min) /

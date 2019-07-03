@@ -1,6 +1,7 @@
-#include "sbml.h"
-
 #include <unordered_set>
+
+#include "logger.h"
+#include "sbml.h"
 
 namespace sbml {
 
@@ -11,14 +12,16 @@ void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
       0) {
     isValid = false;
     // doc->printErrors();
-    qDebug(
-        "sbmlDocWrapper::importSBMLFile :: Warning - errors while reading "
-        "SBML file (continuing anyway...)");
+    spdlog::warn(
+        "SbmlDocWrapper::importSBMLFile :: Warning - errors while reading SBML "
+        "file (continuing anyway...)");
     isValid = true;
   } else {
+    spdlog::info(
+        "SbmlDocWrapper::importSBMLFile :: Successfully imported file {}",
+        filename);
     isValid = true;
   }
-
   model = doc->getModel();
 
   // get list of compartments
@@ -38,8 +41,11 @@ void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
         spec->getHasOnlySubstanceUnits()) {
       // equations expect amount, not concentration for this species
       // for now this is not supported:
-      qDebug() << "Error: HasOnlySubstanceUnits=true not yet supported.";
-      exit(1);
+      std::string errorMessage(
+          "SbmlDocWrapper::importSBMLFile :: Error: HasOnlySubstanceUnits=true "
+          "is not yet supported.");
+      spdlog::critical(errorMessage);
+      qFatal("%s", errorMessage.c_str());
     }
     const auto id = spec->getId().c_str();
     species[spec->getCompartment().c_str()] << QString(id);
@@ -57,9 +63,12 @@ void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
 
 void SbmlDocWrapper::exportSBMLFile(const std::string &filename) const {
   if (isValid) {
-    qDebug("SbmlDocWrapper::exportSBMLFile : exporting SBML model to %s",
-           filename.c_str());
-    libsbml::SBMLWriter().writeSBML(doc.get(), filename);
+    spdlog::info("SbmlDocWrapper::exportSBMLFile : exporting SBML model to %s",
+                 filename);
+    if (!libsbml::SBMLWriter().writeSBML(doc.get(), filename)) {
+      spdlog::error("SbmlDocWrapper::exportSBMLFile : failed to write to %s",
+                    filename);
+    }
   }
 }
 
@@ -81,8 +90,10 @@ void SbmlDocWrapper::importGeometryFromImage(const QString &filename) {
       QRgb colB = compartmentImage.colorTable()[iB];
       membranePairs.push_back(std::vector<std::pair<QPoint, QPoint>>());
       mapColPairToIndex[{std::min(colA, colB), std::max(colA, colB)}] = i++;
-      qDebug("ColourPair iA,iB: %d,%d: %u,%u", iA, iB, std::min(colA, colB),
-             std::max(colA, colB));
+      spdlog::debug(
+          "SbmlDocWrapper::importGeometryFromImage : ColourPair iA,iB: {},{}: "
+          "{:x},{:x}",
+          iA, iB, std::min(colA, colB), std::max(colA, colB));
     }
   }
   // for each pair of adjacent pixels of different colour,
@@ -224,7 +235,10 @@ void SbmlDocWrapper::updateReactionList() {
       }
     } else {
       // invalid reaction: number of compartments for reaction must be 1 or 2
-      qDebug("SbmlDocWrapper::updateReactionList :: Error: invalid reaction");
+      spdlog::error(
+          "SbmlDocWrapper::updateReactionList :: reaction involves {} "
+          "compartments - not supported",
+          comps.size());
       exit(1);
     }
   }
@@ -347,7 +361,7 @@ bool SbmlDocWrapper::isSpeciesReactive(const std::string &speciesID) const {
 std::string SbmlDocWrapper::inlineFunctions(
     const std::string &mathExpression) const {
   std::string expr = mathExpression;
-  qDebug("SbmlDocWrapper::inlineFunctions :: inlining %s", expr.c_str());
+  spdlog::debug("SbmlDocWrapper::inlineFunctions :: inlining {}", expr);
   for (unsigned int i = 0; i < model->getNumFunctionDefinitions(); ++i) {
     const auto *func = model->getFunctionDefinition(i);
     // get copy of function body as AST node
@@ -399,8 +413,8 @@ std::string SbmlDocWrapper::inlineFunctions(
       expr = pre_expr + "(" + funcBodyString + ")" + post_expr;
       // go to end of inlined function body in expr
       loc = fn_loc + funcBodyString.size() + 2;
-      qDebug("SbmlDocWrapper::inlineFunctions ::   - new expr = %s",
-             expr.c_str());
+      spdlog::debug("SbmlDocWrapper::inlineFunctions ::   - new expr = {}",
+                    expr);
       // search for next call to same function in expr
       loc = expr.find(funcCallString, loc);
     }
@@ -413,7 +427,7 @@ std::string SbmlDocWrapper::inlineAssignments(
   std::string delimeters = "()-^*/+, ";
   std::string expr = mathExpression;
   std::string old_expr;
-  qDebug("SbmlDocWrapper::inlineAssignments :: inlining %s", expr.c_str());
+  spdlog::debug("SbmlDocWrapper::inlineAssignments :: inlining {}", expr);
   // iterate through names in expression
   // Assuming that names are things in between any of these chars:
   // "()^*/+, "
@@ -437,8 +451,8 @@ std::string SbmlDocWrapper::inlineAssignments(
         std::string pre_expr = expr.substr(0, start);
         std::string post_expr = expr.substr(end);
         expr = pre_expr + "(" + assignmentBody + ")" + post_expr;
-        qDebug("SbmlDocWrapper::inlineAssignments ::   - new expr = %s",
-               expr.c_str());
+        spdlog::debug("SbmlDocWrapper::inlineAssignments ::   - new expr = {}",
+                      expr);
         // go to end of inlined assignment body in expr
         end = start + assignmentBody.size() + 2;
       }

@@ -44,7 +44,7 @@ HEADERS += \
 FORMS += \
     ui/mainwindow.ui
 
-INCLUDEPATH += inc ext/qcustomplot ext/exprtk test/catch test/inc
+INCLUDEPATH += inc ext ext/qcustomplot test/catch test/inc
 
 # for linux build, remove optimizations, add coverage info & compiler warnings
 unix: QMAKE_CXXFLAGS_RELEASE -= -O2

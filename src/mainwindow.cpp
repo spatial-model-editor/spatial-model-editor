@@ -5,8 +5,8 @@
 #include <QString>
 #include <QStringListModel>
 
+#include "logger.h"
 #include "mainwindow.h"
-#include "sbml.h"
 #include "simulate.h"
 #include "ui_mainwindow.h"
 
@@ -23,6 +23,9 @@ static void selectFirstChild(QTreeWidget *tree) {
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
   ui->setupUi(this);
+
+  spdlog::set_pattern("[%^%l%$] %v");
+  spdlog::set_level(spdlog::level::debug);
 
   setupConnections();
 
@@ -134,8 +137,8 @@ void MainWindow::tabMain_currentChanged(int index) {
     SIMULATE = 5,
     SBML = 6
   };
-  qDebug("ui::tabMain :: Tab changed to %d [%s]", index,
-         ui->tabMain->tabText(index).toStdString().c_str());
+  spdlog::debug("MainWindow::tabMain_currentChanged :: Tab changed to {} [{}]",
+                index, ui->tabMain->tabText(index).toStdString());
   ui->hslideTime->setEnabled(false);
   ui->hslideTime->setVisible(false);
   ui->btnSpeciesDisplaySelect->setEnabled(false);
@@ -163,8 +166,7 @@ void MainWindow::tabMain_currentChanged(int index) {
       ui->txtSBML->setText(sbmlDoc.getXml());
       break;
     default:
-      qDebug("ui::tabMain :: Errror: Tab index not known");
-      break;
+      qFatal("ui::tabMain :: Errror: Tab index %d not valid", index);
   }
 }
 
@@ -272,30 +274,28 @@ void MainWindow::actionGeometry_from_image_triggered() {
 }
 
 void MainWindow::action_About_triggered() {
-  qDebug("ui::action_About_triggered :: constructing 'About' MessageBox");
   QMessageBox msgBox;
   msgBox.setWindowTitle("About");
   QString info("Spatial Model Editor\n");
   info.append("github.com/lkeegan/spatial-model-editor\n\n");
   info.append("Included libraries:\n");
-  info.append("\nQt5:\t\t");
-  info.append(QT_VERSION_STR);
-  info.append("\nlibSBML:\t\t");
-  info.append(libsbml::getLibSBMLDottedVersion());
+  info.append(QString("\nQt5:\t\t%1").arg(QT_VERSION_STR));
+  info.append(
+      QString("\nlibSBML:\t\t%1").arg(libsbml::getLibSBMLDottedVersion()));
   info.append("\nQCustomPlot:\t2.0.1");
+  info.append(QString("\nspdlog:\t\t%1.%2.%3")
+                  .arg(QString::number(SPDLOG_VER_MAJOR),
+                       QString::number(SPDLOG_VER_MINOR),
+                       QString::number(SPDLOG_VER_PATCH)));
   for (const auto &dep : {"expat", "libxml", "xerces-c", "bzip2", "zip"}) {
     if (libsbml::isLibSBMLCompiledWith(dep) != 0) {
-      info.append("\n");
-      info.append(dep);
-      info.append(":\t\t");
-      info.append(libsbml::getLibSBMLDependencyVersionOf(dep));
+      info.append(QString("\n%1:\t\t%2")
+                      .arg(dep, libsbml::getLibSBMLDependencyVersionOf(dep)));
     }
   }
-  info.append("\nC++ Mathematical Expression  Toolkit Library (ExprTk)");
+  info.append("\nC++ Mathematical Expression Toolkit Library (ExprTk)");
   msgBox.setText(info);
-  qDebug("ui::action_About_triggered :: executing 'About' MessageBox");
   msgBox.exec();
-  qDebug("ui::action_About_triggered :: 'About' MessageBox closed");
 }
 
 void MainWindow::lblGeometry_mouseClicked(QRgb col) {
@@ -306,6 +306,10 @@ void MainWindow::lblGeometry_mouseClicked(QRgb col) {
     sbmlDoc.setCompartmentColour(comp, col);
     // update display by simulating user click on listCompartments
     listCompartments_currentTextChanged(comp);
+    spdlog::info(
+        "MainWindow::lblGeometry_mouseClicked: assigned compartment {} to "
+        "colour {}",
+        comp.toStdString(), col);
     waitingForCompartmentChoice = false;
   } else {
     // display compartment the user just clicked on
@@ -318,20 +322,27 @@ void MainWindow::lblGeometry_mouseClicked(QRgb col) {
 }
 
 void MainWindow::btnChangeCompartment_clicked() {
+  spdlog::debug(
+      "MainWindow::btnChangeCompartment_clicked: waiting for user to choose "
+      "compartment...");
   waitingForCompartmentChoice = true;
 }
 
 void MainWindow::listCompartments_currentTextChanged(
     const QString &currentText) {
   ui->txtCompartmentSize->clear();
-  if (currentText.size() > 0) {
+  if (!currentText.isEmpty()) {
     const QString &compID = currentText;
-    qDebug("ui::listCompartments :: Compartment '%s' selected",
-           compID.toStdString().c_str());
+    spdlog::debug(
+        "MainWindow::listCompartments_currentTextChanged :: Compartment {} "
+        "selected",
+        compID.toStdString());
     const auto *comp = sbmlDoc.model->getCompartment(compID.toStdString());
     ui->txtCompartmentSize->setText(QString::number(comp->getSize()));
     QRgb col = sbmlDoc.getCompartmentColour(compID);
-    qDebug("ui::listCompartments :: Compartment colour: %u", col);
+    spdlog::debug(
+        "MainWindow::listCompartments_currentTextChanged ::   - colour {:x} ",
+        col);
     if (col == 0) {
       // null (transparent white) RGB colour: compartment does not have
       // an assigned colour in the image
@@ -361,9 +372,10 @@ void MainWindow::listCompartments_itemDoubleClicked(QListWidgetItem *item) {
 }
 
 void MainWindow::listMembranes_currentTextChanged(const QString &currentText) {
-  if (currentText.size() > 0) {
-    qDebug("ui::listMembranes :: Membrane '%s' selected",
-           currentText.toStdString().c_str());
+  if (!currentText.isEmpty()) {
+    spdlog::debug(
+        "MainWindow::listMembranes_currentTextChanged :: Membrane {} selected",
+        currentText.toStdString());
     // update image
     QPixmap pixmap = QPixmap::fromImage(sbmlDoc.getMembraneImage(currentText));
     ui->lblMembraneShape->setPixmap(pixmap);
@@ -375,9 +387,9 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
   // if user selects a species (i.e. an item with a parent)
   if ((current != nullptr) && (current->parent() != nullptr)) {
     QString speciesID = current->text(0);
-    qDebug(
-        "MainWindow::listSpecies_currentItemChanged :: Species '%s' selected",
-        speciesID.toStdString().c_str());
+    spdlog::debug(
+        "MainWindow::listSpecies_currentItemChanged :: Species {} selected",
+        speciesID.toStdString());
     // display species information
     auto *spec = sbmlDoc.model->getSpecies(speciesID.toStdString());
     ui->txtInitialConcentration->setText(
@@ -421,20 +433,19 @@ void MainWindow::radInitialConcentration_toggled() {
 void MainWindow::txtInitialConcentration_editingFinished() {
   double initConc = ui->txtInitialConcentration->text().toDouble();
   QString speciesID = ui->listSpecies->currentItem()->text(0);
-  qDebug(
+  spdlog::info(
       "MainWindow::txttxtInitialConcentration_editingFinished :: setting "
-      "initial concentration of "
-      "Species '%s' to %f",
-      speciesID.toStdString().c_str(), initConc);
+      "initial concentration of Species {} to {}",
+      speciesID.toStdString(), initConc);
   sbmlDoc.mapSpeciesIdToField.at(speciesID).setConstantConcentration(initConc);
 }
 
 void MainWindow::btnImportConcentration_clicked() {
   auto spec = ui->listSpecies->selectedItems()[0]->text(0);
-  qDebug(
-      "MainWindow::btnImportConcentration_clicked :: clicked with Species '%s' "
+  spdlog::debug(
+      "MainWindow::btnImportConcentration_clicked :: clicked with Species {} "
       "selected",
-      spec.toStdString().c_str());
+      spec.toStdString());
   QString filename = QFileDialog::getOpenFileName(
       this, "Import species concentration from image", "",
       "Image Files (*.png *.jpg *.bmp *.tiff)", nullptr,
@@ -449,15 +460,19 @@ void MainWindow::btnImportConcentration_clicked() {
 void MainWindow::txtDiffusionConstant_editingFinished() {
   double diffConst = ui->txtDiffusionConstant->text().toDouble();
   QString speciesID = ui->listSpecies->currentItem()->text(0);
-  qDebug(
+  spdlog::info(
       "MainWindow::txtDiffusionConstant_editingFinished :: setting Diffusion "
-      "Constant of Species '%s' to %f",
-      speciesID.toStdString().c_str(), diffConst);
+      "Constant of Species {} to {}",
+      speciesID.toStdString(), diffConst);
   sbmlDoc.setDiffusionConstant(speciesID, diffConst);
 }
 
 void MainWindow::btnChangeSpeciesColour_clicked() {
   QString speciesID = ui->listSpecies->currentItem()->text(0);
+  spdlog::debug(
+      "MainWindow::btnChangeSpeciesColour_clicked :: waiting for new colour "
+      "for species {} from user...",
+      speciesID.toStdString());
   QColor newCol = QColorDialog::getColor(sbmlDoc.getSpeciesColour(speciesID),
                                          this, "Choose new species colour",
                                          QColorDialog::DontUseNativeDialog);
@@ -477,8 +492,9 @@ void MainWindow::listReactions_currentItemChanged(QTreeWidgetItem *current,
   if ((current != nullptr) && (current->parent() != nullptr)) {
     const QString &compID = current->parent()->text(0);
     const QString &reacID = current->text(0);
-    qDebug("ui::listReactions :: Reaction '%s' selected",
-           reacID.toStdString().c_str());
+    spdlog::debug(
+        "MainWindow::listReactions_currentItemChanged :: Reaction {} selected",
+        reacID.toStdString());
     // display image of reaction compartment or membrane
     if (std::find(sbmlDoc.compartments.cbegin(), sbmlDoc.compartments.cend(),
                   compID) != sbmlDoc.compartments.cend()) {
@@ -507,8 +523,9 @@ void MainWindow::listFunctions_currentTextChanged(const QString &currentText) {
   ui->listFunctionParams->clear();
   ui->lblFunctionDef->clear();
   if (currentText.size() > 0) {
-    qDebug("ui::listFunctions :: Function '%s' selected",
-           currentText.toStdString().c_str());
+    spdlog::debug(
+        "MainWindow::listFunctions_currentTextChanged :: Function {} selected",
+        currentText.toStdString());
     const auto *func =
         sbmlDoc.model->getFunctionDefinition(currentText.toStdString());
     for (unsigned i = 0; i < func->getNumArguments(); ++i) {

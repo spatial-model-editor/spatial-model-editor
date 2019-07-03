@@ -2,7 +2,6 @@
 #include <QtGui>
 
 #include "mainwindow.h"
-#include "sbml.h"
 
 LIBSBML_CPP_NAMESPACE_USE
 

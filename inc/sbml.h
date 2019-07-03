@@ -18,6 +18,7 @@
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 #include "geometry.h"
+#include "logger.h"
 
 namespace sbml {
 

@@ -222,10 +222,6 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   mwti.start("");
   QTest::mouseClick(btnChangeSpeciesColour, Qt::LeftButton,
                     Qt::KeyboardModifier(), QPoint(), key_delay);
-  REQUIRE(lblSpeciesColour->pixmap() != nullptr);
-  img = lblSpeciesColour->pixmap()->toImage();
-  REQUIRE(!img.isNull());
-  REQUIRE(img.pixelColor(0, 0) == sbml::defaultSpeciesColours()[3]);
   REQUIRE(lblSpeciesColour->pixmap()->toImage().pixelColor(0, 0) ==
           sbml::defaultSpeciesColours()[3]);
 

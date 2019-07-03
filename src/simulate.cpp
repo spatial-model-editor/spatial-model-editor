@@ -1,40 +1,46 @@
 #include "simulate.h"
+#include "logger.h"
 
 namespace simulate {
 
 static std::map<std::string, double> getGlobalConstants(
     sbml::SbmlDocWrapper *doc) {
   std::map<std::string, double> constants;
+  const auto *model = doc->model;
   // add all *constant* species as constants
-  for (unsigned k = 0; k < doc->model->getNumSpecies(); ++k) {
-    const auto *spec = doc->model->getSpecies(k);
+  for (unsigned k = 0; k < model->getNumSpecies(); ++k) {
+    const auto *spec = model->getSpecies(k);
     if (doc->isSpeciesConstant(spec->getId())) {
+      spdlog::info("simulate::getGlobalConstants :: found constant species {}",
+                   spec->getId());
       double init_conc = 0;
       // if SBML file specifies amount: convert to concentration
       if (spec->isSetInitialAmount()) {
-        double vol =
-            doc->model->getCompartment(spec->getCompartment())->getSize();
-        init_conc = spec->getInitialAmount() / vol;
+        double amount = spec->getInitialAmount();
+        double vol = model->getCompartment(spec->getCompartment())->getSize();
+        init_conc = amount / vol;
+        spdlog::info(
+            "simulate::getGlobalConstants :: converting amount {} to "
+            "concentration {} by dividing by vol {}",
+            amount, init_conc, vol);
       } else {
         init_conc = spec->getInitialConcentration();
       }
-      qDebug("ReacEval::ReacEval :: adding constant species '%s' as const",
-             spec->getId().c_str());
       constants[spec->getId()] = init_conc;
     }
   }
-  for (unsigned k = 0; k < doc->model->getNumParameters(); ++k) {
-    if (doc->model->getAssignmentRule(doc->model->getParameter(k)->getId()) ==
-        nullptr) {
-      constants[doc->model->getParameter(k)->getId()] =
-          doc->model->getParameter(k)->getValue();
+  // add any parameters (that are not replaced by an AssignmentRule)
+  for (unsigned k = 0; k < model->getNumParameters(); ++k) {
+    const auto *param = model->getParameter(k);
+    if (model->getAssignmentRule(param->getId()) == nullptr) {
+      constants[param->getId()] = param->getValue();
     }
   }
   // also get compartment volumes (the compartmentID may be used in the reaction
   // equation, and it should be replaced with the value of the "Size"
   // parameter for this compartment)
-  for (unsigned int k = 0; k < doc->model->getNumCompartments(); ++k) {
-    const auto *comp = doc->model->getCompartment(k);
+  for (unsigned int k = 0; k < model->getNumCompartments(); ++k) {
+    const auto *comp = model->getCompartment(k);
     constants[comp->getId()] = comp->getSize();
   }
   return constants;
@@ -45,7 +51,6 @@ static std::string inlineExpr(sbml::SbmlDocWrapper *doc,
   std::string inlined;
   // inline any Function calls in expr
   inlined = doc->inlineFunctions(expr);
-
   // inline any Assignment Rules in expr
   inlined = doc->inlineAssignments(inlined);
   return inlined;
@@ -60,6 +65,7 @@ ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
   result = species_values;
   nSpecies = species_values.size();
 
+  spdlog::info("ReacEval::ReacEval :: species vector: {}", speciesID);
   M.clear();
   reac_eval.clear();
   reac_eval.reserve(reactionID.size() + nRateRules);
@@ -79,8 +85,9 @@ ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
       // compile expression and add to reac_eval vector
       reac_eval.emplace_back(
           numerics::ExprEval(expr, speciesID, species_values, constants));
-      qDebug("ReacEval::ReacEval :: adding rate rule for species %s",
-             speciesID[sIndex].c_str());
+      spdlog::info("ReacEval::ReacEval :: adding rate rule for species {}",
+                   speciesID[sIndex]);
+      spdlog::info("ReacEval::ReacEval ::   - expr: {}", expr);
     }
   }
 
@@ -106,8 +113,6 @@ ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
             static_cast<std::size_t>(it - speciesID.cbegin());
         isNullReaction = false;
         Mrow[species_index] += spec_ref->getStoichiometry();
-        qDebug("ReacEval::ReacEval ::   - M[%lu] += %f", species_index,
-               spec_ref->getStoichiometry());
       }
     }
     for (unsigned k = 0; k < reac->getNumReactants(); ++k) {
@@ -122,8 +127,6 @@ ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
             static_cast<std::size_t>(it - speciesID.cbegin());
         isNullReaction = false;
         Mrow[species_index] -= spec_ref->getStoichiometry();
-        qDebug("ReacEval::ReacEval ::   - M[%lu] -= %f", species_index,
-               spec_ref->getStoichiometry());
       }
     }
 
@@ -163,10 +166,12 @@ ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
       // compile expression and add to reac_eval vector
       reac_eval.emplace_back(
           numerics::ExprEval(expr, speciesID, species_values, constants));
+      spdlog::info("ReacEval::ReacEval :: adding reaction {}", reacID);
+      spdlog::info("ReacEval::ReacEval ::   - stoichiometric matrix row: {}",
+                   Mrow);
+      spdlog::info("ReacEval::ReacEval ::   - expr: {}", expr);
     }
   }
-  qDebug("ReacEval::ReacEval ::   - final matrix M:");
-  qDebug() << M;
 }
 
 void ReacEval::evaluate() {
@@ -186,16 +191,16 @@ SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
                                const geometry::Compartment *compartment)
     : doc(docWrapper), comp(compartment) {
   QString compID = compartment->compartmentID.c_str();
-  qDebug("SimCompartment::SimCompartment :: compartment: %s",
-         compID.toStdString().c_str());
+  spdlog::debug("SimCompartment::SimCompartment :: compartment: {}",
+                compID.toStdString());
   std::vector<std::string> speciesID;
   int nRateRules = 0;
   for (const auto &s : doc->species.at(compID)) {
     if (!doc->isSpeciesConstant(s.toStdString())) {
       speciesID.push_back(s.toStdString());
       field.push_back(&doc->mapSpeciesIdToField.at(s));
-      qDebug("SimCompartment::SimCompartment :: - adding field: %s",
-             s.toStdString().c_str());
+      spdlog::debug("SimCompartment::SimCompartment :: - adding field: {}",
+                    s.toStdString());
       if (doc->model->getRateRule(s.toStdString()) != nullptr) {
         ++nRateRules;
       }
@@ -205,7 +210,7 @@ SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
   if ((nRateRules == 0) &&
       (iter == doc->reactions.cend() || doc->reactions.at(compID).empty())) {
     // If there are no reactions or RateRules in this compartment: we are done
-    qDebug(
+    spdlog::debug(
         "SimCompartment::SimCompartment ::   - no Reactions or RateRules to "
         "compile.");
     return;
@@ -253,12 +258,12 @@ SimMembrane::SimMembrane(sbml::SbmlDocWrapper *doc_ptr,
     : doc(doc_ptr), membrane(membrane_ptr) {
   QString compA = membrane->compA->compartmentID.c_str();
   QString compB = membrane->compB->compartmentID.c_str();
-  qDebug("SimMembrane::compile_reactions :: membrane: %s",
-         membrane->membraneID.c_str());
-  qDebug("SimMembrane::compile_reactions :: compA: %s",
-         compA.toStdString().c_str());
-  qDebug("SimMembrane::compile_reactions :: compB: %s",
-         compB.toStdString().c_str());
+  spdlog::debug("SimMembrane::compile_reactions :: membrane: {}",
+                membrane->membraneID);
+  spdlog::debug("SimMembrane::compile_reactions ::   - compA: {}",
+                compA.toStdString());
+  spdlog::debug("SimMembrane::compile_reactions ::   - compB: {}",
+                compB.toStdString());
 
   if (doc->reactions.find(membrane->membraneID.c_str()) ==
           doc->reactions.cend() ||
@@ -337,20 +342,20 @@ void SimMembrane::evaluate_reactions() {
 }
 
 void Simulate::addCompartment(geometry::Compartment *compartment) {
-  qDebug("Simulate::addCompartment :: adding compartment %s",
-         compartment->compartmentID.c_str());
+  spdlog::debug("Simulate::addCompartment :: adding compartment {}",
+                compartment->compartmentID);
   simComp.emplace_back(doc, compartment);
   for (auto *f : simComp.back().field) {
     field.push_back(f);
     speciesID.push_back(f->speciesID);
-    qDebug("Simulate::addCompartment ::   - adding species %s",
-           f->speciesID.c_str());
+    spdlog::debug("Simulate::addCompartment ::   - adding species {}",
+                  f->speciesID);
   }
 }
 
 void Simulate::addMembrane(geometry::Membrane *membrane) {
-  qDebug("Simulate::addMembrane :: adding membrane %s",
-         membrane->membraneID.c_str());
+  spdlog::debug("Simulate::addMembrane :: adding membrane {}",
+                membrane->membraneID);
   simMembrane.emplace_back(doc, membrane);
 }
 

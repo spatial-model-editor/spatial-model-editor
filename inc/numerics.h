@@ -27,7 +27,8 @@
 #define exprtk_disable_rtl_io_file
 #define exprtk_disable_rtl_vecops
 #define exprtk_disable_caseinsensitivity
-#include "exprtk.hpp"
+
+#include "exprtk/exprtk.hpp"
 
 namespace numerics {
 

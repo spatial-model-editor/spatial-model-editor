@@ -14,6 +14,8 @@
 #include <QDebug>
 #include <QImage>
 
+#include "logger.h"
+
 namespace geometry {
 
 class Compartment {

@@ -53,7 +53,7 @@ matrix:
         - cd build-tests
         - qmake -Wall -config release ../test.pro
         - make -j2
-        - ./test.app/Contents/MacOS/test -s -d=yes
+        - ./test.app/Contents/MacOS/test -d=yes
         - cd ../
         # compile release executable
         - mkdir build
@@ -124,7 +124,7 @@ matrix:
       after_script:
         # upload coverage report to codecov.io
         - lcov --directory build-tests --capture --output-file coverage.info
-        - lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/exprtk/*" "*/build-tests/*" "*/qcustomplot/*" --output-file coverage.info
+        - lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/ext/*" "*/build-tests/*" "*/qcustomplot/*" --output-file coverage.info
         - lcov --list coverage.info
         - bash <(curl -s https://codecov.io/bash) -X gcov -f "coverage.info"
     ##########################################################################

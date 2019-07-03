@@ -1,8 +1,8 @@
 #pragma once
 
 #include <QMainWindow>
-#include <QTreeWidgetItem>
-#include "ext/qcustomplot/qcustomplot.h"
+
+#include "qcustomplot/qcustomplot.h"
 
 #include "sbml.h"
 

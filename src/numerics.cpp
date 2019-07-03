@@ -1,6 +1,5 @@
-#include <QDebug>
-
 #include "numerics.h"
+#include "logger.h"
 
 namespace numerics {
 
@@ -13,7 +12,7 @@ namespace numerics {
   if (symbolTable.symbol_exists(symbol)) {
     errorMessage.append(" already exists");
   }
-  qDebug("%s", errorMessage.c_str());
+  spdlog::critical(errorMessage);
   throw std::invalid_argument(errorMessage);
 }
 
@@ -23,7 +22,7 @@ ExprEval::ExprEval(const std::string &expression,
                    const std::map<std::string, double> &constants) {
   // construct symbol table of variables and constants
   exprtk::symbol_table<double> exprtkSymbolTable;
-  qDebug("ExprEval::ExprEval : compiling %s", expression.c_str());
+  spdlog::debug("ExprEval::ExprEval : compiling {}", expression);
   for (std::size_t i = 0; i < variableName.size(); ++i) {
     if (!exprtkSymbolTable.add_variable(variableName[i], variableValue[i])) {
       throwSymbolTableError(exprtkSymbolTable, variableName[i]);
@@ -48,7 +47,7 @@ ExprEval::ExprEval(const std::string &expression,
   if (!exprtkParser.compile(expression, exprtkExpression)) {
     std::string errorMessage = "ExprEval::ExprEval : compilation error: ";
     errorMessage.append(exprtkParser.error());
-    qDebug("%s", errorMessage.c_str());
+    spdlog::critical(errorMessage);
     throw std::invalid_argument(errorMessage);
   }
   // get list of variables the expression depends on
@@ -63,7 +62,7 @@ ExprEval::ExprEval(const std::string &expression,
       strListSymbols.append(pair.first);
     }
   }
-  qDebug("ExprEval::ExprEval :   - symbols used:%s", strListSymbols.c_str());
+  spdlog::debug("ExprEval::ExprEval :   - symbols used: {}", strListSymbols);
 }
 
 double ExprEval::operator()() const { return exprtkExpression.value(); }

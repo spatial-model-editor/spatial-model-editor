@@ -24,18 +24,18 @@ SOURCES += \
 
 HEADERS += \
     inc/geometry.h \
+    inc/logger.h \
     inc/mainwindow.h \
     inc/numerics.h \
     inc/qlabelmousetracker.h \
     inc/sbml.h \
     inc/simulate.h \
-    ext/exprtk/exprtk.hpp \
     ext/qcustomplot/qcustomplot.h
 
 FORMS += \
     ui/mainwindow.ui
 
-INCLUDEPATH += inc ext/exprtk ext/qcustomplot
+INCLUDEPATH += inc ext ext/qcustomplot
 
 # these static libraries are available from
 # from https://github.com/lkeegan/libsbml-static
