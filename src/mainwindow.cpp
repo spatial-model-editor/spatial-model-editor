@@ -459,7 +459,8 @@ void MainWindow::txtDiffusionConstant_editingFinished() {
 void MainWindow::btnChangeSpeciesColour_clicked() {
   QString speciesID = ui->listSpecies->currentItem()->text(0);
   QColor newCol = QColorDialog::getColor(sbmlDoc.getSpeciesColour(speciesID),
-                                         this, "Choose new species colour");
+                                         this, "Choose new species colour",
+                                         QColorDialog::DontUseNativeDialog);
   if (newCol.isValid()) {
     sbmlDoc.setSpeciesColour(speciesID, newCol);
     listSpecies_currentItemChanged(ui->listSpecies->currentItem(), nullptr);
