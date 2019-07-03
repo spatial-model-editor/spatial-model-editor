@@ -5,7 +5,7 @@
 #include "qt_test_utils.h"
 #include "sbml_test_data/very_simple_model.h"
 
-constexpr int key_delay = 50;
+constexpr int key_delay = 5;
 
 SCENARIO("Shortcut keys", "[gui][mainwindow]") {
   MainWindow w;
@@ -192,7 +192,7 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   CAPTURE(
       QTest::qWaitFor([tabMain]() { return tabMain->currentIndex() == 1; }));
   REQUIRE(listMembranes->count() == 3);
-  // select each item in listSpecies
+  // select each item in listMembranes
   listMembranes->setFocus();
   if (listMembranes->count() > 0) {
     listMembranes->setCurrentRow(0);
@@ -222,6 +222,10 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   mwti.start("");
   QTest::mouseClick(btnChangeSpeciesColour, Qt::LeftButton,
                     Qt::KeyboardModifier(), QPoint(), key_delay);
+  REQUIRE(lblSpeciesColour->pixmap() != nullptr);
+  img = lblSpeciesColour->pixmap()->toImage();
+  REQUIRE(!img.isNull());
+  REQUIRE(img.pixelColor(0, 0) == sbml::defaultSpeciesColours()[3]);
   REQUIRE(lblSpeciesColour->pixmap()->toImage().pixelColor(0, 0) ==
           sbml::defaultSpeciesColours()[3]);
 

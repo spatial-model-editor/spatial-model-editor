@@ -21,6 +21,9 @@ class MainWindow : public QMainWindow {
   sbml::SbmlDocWrapper sbmlDoc;
   bool waitingForCompartmentChoice = false;
 
+  QPixmap lblSpeciesColourPixmap;
+  QPixmap lblCompartmentColourPixmap;
+
   // temp: vector of simulation images to display
   QVector<QImage> images;
 
@@ -63,13 +66,14 @@ class MainWindow : public QMainWindow {
   void listMembranes_currentTextChanged(const QString &currentText);
 
   // species
-  void listSpecies_itemActivated(QTreeWidgetItem *item, int column);
+  void listSpecies_currentItemChanged(QTreeWidgetItem *current,
+                                      QTreeWidgetItem *previous);
 
-  void listSpecies_itemClicked(QTreeWidgetItem *item, int column);
+  void chkSpeciesIsConstant_toggled(bool enabled);
 
-  void chkSpeciesIsSpatial_stateChanged(int arg1);
+  void radInitialConcentration_toggled();
 
-  void chkShowSpatialAdvanced_stateChanged(int arg1);
+  void txtInitialConcentration_editingFinished();
 
   void btnImportConcentration_clicked();
 
@@ -78,9 +82,8 @@ class MainWindow : public QMainWindow {
   void btnChangeSpeciesColour_clicked();
 
   // reactions
-  void listReactions_itemActivated(QTreeWidgetItem *item, int column);
-
-  void listReactions_itemClicked(QTreeWidgetItem *item, int column);
+  void listReactions_currentItemChanged(QTreeWidgetItem *current,
+                                        QTreeWidgetItem *previous);
 
   // functions
   void listFunctions_currentTextChanged(const QString &currentText);

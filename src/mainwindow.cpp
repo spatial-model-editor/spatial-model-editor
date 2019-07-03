@@ -10,11 +10,24 @@
 #include "simulate.h"
 #include "ui_mainwindow.h"
 
+static void selectFirstChild(QTreeWidget *tree) {
+  auto *firstParent = tree->topLevelItem(0);
+  if (firstParent != nullptr) {
+    auto *firstChild = firstParent->child(0);
+    if (firstChild != nullptr) {
+      tree->setCurrentItem(firstChild);
+    }
+  }
+}
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
   ui->setupUi(this);
 
   setupConnections();
+
+  lblSpeciesColourPixmap = QPixmap(1, 1);
+  lblCompartmentColourPixmap = QPixmap(1, 1);
 
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
@@ -61,17 +74,17 @@ void MainWindow::setupConnections() {
           &MainWindow::listMembranes_currentTextChanged);
 
   // species
-  connect(ui->listSpecies, &QTreeWidget::itemActivated, this,
-          &MainWindow::listSpecies_itemActivated);
+  connect(ui->listSpecies, &QTreeWidget::currentItemChanged, this,
+          &MainWindow::listSpecies_currentItemChanged);
 
-  connect(ui->listSpecies, &QTreeWidget::itemClicked, this,
-          &MainWindow ::listSpecies_itemClicked);
+  connect(ui->chkSpeciesIsConstant, &QCheckBox::toggled, this,
+          &MainWindow::chkSpeciesIsConstant_toggled);
 
-  connect(ui->chkSpeciesIsSpatial, &QCheckBox::stateChanged, this,
-          &MainWindow ::chkSpeciesIsSpatial_stateChanged);
+  connect(ui->radInitialConcentrationUniform, &QRadioButton::toggled, this,
+          &MainWindow::radInitialConcentration_toggled);
 
-  connect(ui->chkShowSpatialAdvanced, &QCheckBox::stateChanged, this,
-          &MainWindow ::chkShowSpatialAdvanced_stateChanged);
+  connect(ui->radInitialConcentrationVarying, &QRadioButton::toggled, this,
+          &MainWindow::radInitialConcentration_toggled);
 
   connect(ui->btnImportConcentration, &QPushButton::clicked, this,
           &MainWindow::btnImportConcentration_clicked);
@@ -83,11 +96,8 @@ void MainWindow::setupConnections() {
           &MainWindow::btnChangeSpeciesColour_clicked);
 
   // reactions
-  connect(ui->listReactions, &QTreeWidget::itemActivated, this,
-          &MainWindow::listReactions_itemActivated);
-
-  connect(ui->listReactions, &QTreeWidget::itemClicked, this,
-          &MainWindow::listReactions_itemClicked);
+  connect(ui->listReactions, &QTreeWidget::currentItemChanged, this,
+          &MainWindow::listReactions_currentItemChanged);
 
   // functions
   connect(ui->listFunctions, &QListWidget::currentTextChanged, this,
@@ -190,27 +200,25 @@ void MainWindow::tabMain_updateSpecies() {
     }
   }
   ls->expandAll();
-  // select first species if it exists
-  if (ls->topLevelItem(0) != nullptr) {
-    ls->setCurrentItem(ls->topLevelItem(0)->child(0));
-  }
+  selectFirstChild(ls);
 }
 
 void MainWindow::tabMain_updateReactions() {
-  // update list of reactions
-  ui->listReactions->clear();
+  // update tree list of reactions
+  auto *ls = ui->listReactions;
+  ls->clear();
   for (auto iter = sbmlDoc.reactions.cbegin(); iter != sbmlDoc.reactions.cend();
        ++iter) {
-    // add compartments as top level items
-    QTreeWidgetItem *comp =
-        new QTreeWidgetItem(ui->listReactions, QStringList({iter->first}));
-    ui->listReactions->addTopLevelItem(comp);
+    // add compartments/membranes as top level items
+    QTreeWidgetItem *comp = new QTreeWidgetItem(ls, QStringList({iter->first}));
+    ls->addTopLevelItem(comp);
     for (auto s : iter->second) {
       // add each species as child of compartment
       comp->addChild(new QTreeWidgetItem(comp, QStringList({s})));
     }
   }
   ui->listReactions->expandAll();
+  selectFirstChild(ls);
 }
 
 void MainWindow::tabMain_updateFunctions() {
@@ -317,29 +325,28 @@ void MainWindow::listCompartments_currentTextChanged(
     const QString &currentText) {
   ui->txtCompartmentSize->clear();
   if (currentText.size() > 0) {
+    const QString &compID = currentText;
     qDebug("ui::listCompartments :: Compartment '%s' selected",
-           currentText.toStdString().c_str());
-    const auto *comp = sbmlDoc.model->getCompartment(currentText.toStdString());
+           compID.toStdString().c_str());
+    const auto *comp = sbmlDoc.model->getCompartment(compID.toStdString());
     ui->txtCompartmentSize->setText(QString::number(comp->getSize()));
-    QRgb col = sbmlDoc.getCompartmentColour(currentText);
+    QRgb col = sbmlDoc.getCompartmentColour(compID);
     qDebug("ui::listCompartments :: Compartment colour: %u", col);
     if (col == 0) {
       // null (transparent white) RGB colour: compartment does not have
       // an assigned colour in the image
-      ui->lblCompartmentColour->setPalette(QPalette());
+      ui->lblCompShape->setPixmap(QPixmap());
       ui->lblCompartmentColour->setText("none");
       ui->lblCompShape->setPixmap(QPixmap());
       ui->lblCompShape->setText("none");
     } else {
       // update colour box
-      QPalette palette;
-      palette.setColor(QPalette::Window, QColor::fromRgb(col));
-      ui->lblCompartmentColour->setPalette(palette);
+      lblCompartmentColourPixmap.fill(QColor::fromRgb(col));
+      ui->lblCompartmentColour->setPixmap(lblCompartmentColourPixmap);
       ui->lblCompartmentColour->setText("");
       // update image mask
-      QPixmap pixmap = QPixmap::fromImage(
-          sbmlDoc.mapCompIdToGeometry.at(currentText).getCompartmentImage());
-      ui->lblCompShape->setPixmap(pixmap);
+      ui->lblCompShape->setPixmap(QPixmap::fromImage(
+          sbmlDoc.mapCompIdToGeometry.at(compID).getCompartmentImage()));
       ui->lblCompShape->setText("");
     }
   }
@@ -363,12 +370,14 @@ void MainWindow::listMembranes_currentTextChanged(const QString &currentText) {
   }
 }
 
-void MainWindow::listSpecies_itemActivated(QTreeWidgetItem *item, int column) {
+void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
+                                                QTreeWidgetItem *previous) {
   // if user selects a species (i.e. an item with a parent)
-  if ((item != nullptr) && (item->parent() != nullptr)) {
-    QString speciesID = item->text(column);
-    qDebug("ui::listSpecies :: Species '%s' selected",
-           speciesID.toStdString().c_str());
+  if ((current != nullptr) && (current->parent() != nullptr)) {
+    QString speciesID = current->text(0);
+    qDebug(
+        "MainWindow::listSpecies_currentItemChanged :: Species '%s' selected",
+        speciesID.toStdString().c_str());
     // display species information
     auto *spec = sbmlDoc.model->getSpecies(speciesID.toStdString());
     ui->txtInitialConcentration->setText(
@@ -384,36 +393,57 @@ void MainWindow::listSpecies_itemActivated(QTreeWidgetItem *item, int column) {
     ui->txtDiffusionConstant->setText(
         QString::number(sbmlDoc.getDiffusionConstant(speciesID)));
     // update colour box
-    QImage img(1, 1, QImage::Format_RGB32);
-    img.fill(sbmlDoc.getSpeciesColour(speciesID));
-    ui->lblSpeciesColour->setPixmap(QPixmap::fromImage(img));
+    lblSpeciesColourPixmap.fill(sbmlDoc.getSpeciesColour(speciesID));
+    ui->lblSpeciesColour->setPixmap(lblSpeciesColourPixmap);
     ui->lblSpeciesColour->setText("");
   }
 }
 
-void MainWindow::listSpecies_itemClicked(QTreeWidgetItem *item, int column) {
-  listSpecies_itemActivated(item, column);
+void MainWindow::chkSpeciesIsConstant_toggled(bool enabled) {
+  if (enabled) {
+    // must be spatially uniform if constant
+    ui->radInitialConcentrationUniform->setChecked(enabled);
+  }
+  // disable incompatible options
+  ui->txtDiffusionConstant->setEnabled(!enabled);
+  ui->radInitialConcentrationVarying->setEnabled(!enabled);
+  ui->btnImportConcentration->setEnabled(!enabled);
 }
 
-void MainWindow::chkSpeciesIsSpatial_stateChanged(int arg1) {
-  ui->grpSpatial->setEnabled(arg1);
-  ui->btnImportConcentration->setEnabled(arg1);
+void MainWindow::radInitialConcentration_toggled() {
+  if (ui->radInitialConcentrationUniform->isChecked()) {
+    ui->txtInitialConcentration->setEnabled(true);
+  } else {
+    ui->txtInitialConcentration->setEnabled(false);
+  }
 }
 
-void MainWindow::chkShowSpatialAdvanced_stateChanged(int arg1) {
-  ui->grpSpatialAdavanced->setEnabled(arg1);
+void MainWindow::txtInitialConcentration_editingFinished() {
+  double initConc = ui->txtInitialConcentration->text().toDouble();
+  QString speciesID = ui->listSpecies->currentItem()->text(0);
+  qDebug(
+      "MainWindow::txttxtInitialConcentration_editingFinished :: setting "
+      "initial concentration of "
+      "Species '%s' to %f",
+      speciesID.toStdString().c_str(), initConc);
+  sbmlDoc.mapSpeciesIdToField.at(speciesID).setConstantConcentration(initConc);
 }
 
 void MainWindow::btnImportConcentration_clicked() {
   auto spec = ui->listSpecies->selectedItems()[0]->text(0);
-  qDebug("ui::btnImportConcentration :: clicked with Species '%s' selected",
-         spec.toStdString().c_str());
+  qDebug(
+      "MainWindow::btnImportConcentration_clicked :: clicked with Species '%s' "
+      "selected",
+      spec.toStdString().c_str());
   QString filename = QFileDialog::getOpenFileName(
       this, "Import species concentration from image", "",
       "Image Files (*.png *.jpg *.bmp *.tiff)", nullptr,
       QFileDialog::Option::DontUseNativeDialog);
-  sbmlDoc.importConcentrationFromImage(spec, filename);
-  ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(spec));
+  if (!filename.isEmpty()) {
+    ui->radInitialConcentrationVarying->setChecked(true);
+    sbmlDoc.importConcentrationFromImage(spec, filename);
+    ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(spec));
+  }
 }
 
 void MainWindow::txtDiffusionConstant_editingFinished() {
@@ -432,23 +462,32 @@ void MainWindow::btnChangeSpeciesColour_clicked() {
                                          this, "Choose new species colour");
   if (newCol.isValid()) {
     sbmlDoc.setSpeciesColour(speciesID, newCol);
-    listSpecies_itemActivated(ui->listSpecies->currentItem(), 0);
+    listSpecies_currentItemChanged(ui->listSpecies->currentItem(), nullptr);
   }
 }
 
-void MainWindow::listReactions_itemActivated(QTreeWidgetItem *item,
-                                             int column) {
+void MainWindow::listReactions_currentItemChanged(QTreeWidgetItem *current,
+                                                  QTreeWidgetItem *previous) {
   ui->listProducts->clear();
   ui->listReactants->clear();
   ui->listReactionParams->clear();
   ui->lblReactionRate->clear();
   // if user selects a species (i.e. an item with a parent)
-  if ((item != nullptr) && (item->parent() != nullptr)) {
+  if ((current != nullptr) && (current->parent() != nullptr)) {
+    const QString &compID = current->parent()->text(0);
+    const QString &reacID = current->text(0);
     qDebug("ui::listReactions :: Reaction '%s' selected",
-           item->text(column).toStdString().c_str());
-    // display species information
-    const auto *reac =
-        sbmlDoc.model->getReaction(item->text(column).toStdString());
+           reacID.toStdString().c_str());
+    // display image of reaction compartment or membrane
+    if (std::find(sbmlDoc.compartments.cbegin(), sbmlDoc.compartments.cend(),
+                  compID) != sbmlDoc.compartments.cend()) {
+      ui->lblGeometry->setImage(
+          sbmlDoc.mapCompIdToGeometry.at(compID).getCompartmentImage());
+    } else {
+      ui->lblGeometry->setImage(sbmlDoc.getMembraneImage(compID));
+    }
+    // display reaction information
+    const auto *reac = sbmlDoc.model->getReaction(reacID.toStdString());
     for (unsigned i = 0; i < reac->getNumProducts(); ++i) {
       ui->listProducts->addItem(reac->getProduct(i)->getSpecies().c_str());
     }
@@ -461,10 +500,6 @@ void MainWindow::listReactions_itemActivated(QTreeWidgetItem *item,
     }
     ui->lblReactionRate->setText(reac->getKineticLaw()->getFormula().c_str());
   }
-}
-
-void MainWindow::listReactions_itemClicked(QTreeWidgetItem *item, int column) {
-  listReactions_itemActivated(item, column);
 }
 
 void MainWindow::listFunctions_currentTextChanged(const QString &currentText) {
