@@ -1,7 +1,8 @@
+#include "geometry.hpp"
+
 #include <unordered_map>
 
-#include "geometry.h"
-#include "logger.h"
+#include "logger.hpp"
 
 namespace geometry {
 

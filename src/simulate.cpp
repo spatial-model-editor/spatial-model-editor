@@ -1,5 +1,6 @@
-#include "simulate.h"
-#include "logger.h"
+#include "simulate.hpp"
+
+#include "logger.hpp"
 
 namespace simulate {
 

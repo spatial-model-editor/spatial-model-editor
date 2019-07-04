@@ -12,13 +12,12 @@
 #include <QStringList>
 #include <QStringListModel>
 
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
+#include "sbml/SBMLTypes.h"
+#include "sbml/extension/SBMLDocumentPlugin.h"
+#include "sbml/packages/spatial/common/SpatialExtensionTypes.h"
+#include "sbml/packages/spatial/extension/SpatialExtension.h"
 
-#include "geometry.h"
-#include "logger.h"
+#include "geometry.hpp"
 
 namespace sbml {
 
@@ -29,7 +28,6 @@ class SbmlDocWrapper {
   libsbml::Model *model = nullptr;
 
   // Qt data structures containing model data to pass to UI widgets
-  // todo: when model structure more concretely defined, replace this with MVC
   QStringList compartments;
   QStringList membranes;
   // <compartment ID, list of species ID in this compartment>

@@ -4,7 +4,7 @@
 
 #include "qcustomplot/qcustomplot.h"
 
-#include "sbml.h"
+#include "sbml.hpp"
 
 namespace Ui {
 class MainWindow;

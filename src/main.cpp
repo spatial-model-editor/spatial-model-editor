@@ -1,7 +1,7 @@
 #include <QApplication>
 #include <QtGui>
 
-#include "mainwindow.h"
+#include "mainwindow.hpp"
 
 LIBSBML_CPP_NAMESPACE_USE
 

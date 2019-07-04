@@ -1,6 +1,6 @@
-#include "catch_qt.h"
+#include "geometry.hpp"
 
-#include "geometry.h"
+#include "catch.hpp"
 
 TEST_CASE("one pixel compartment, one species field", "[geometry][non-gui]") {
   QImage img(1, 1, QImage::Format_RGB32);

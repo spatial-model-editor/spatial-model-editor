@@ -1,5 +1,6 @@
-#include "numerics.h"
-#include "logger.h"
+#include "numerics.hpp"
+
+#include "logger.hpp"
 
 namespace numerics {
 

@@ -1,7 +1,8 @@
-#include <QtTest>
-#include "catch_qt.h"
+#include "qlabelmousetracker.hpp"
 
-#include "qlabelmousetracker.h"
+#include <QtTest>
+
+#include "catch.hpp"
 
 constexpr int mouseDelay = 50;
 

@@ -23,13 +23,14 @@ SOURCES += \
     ext/qcustomplot/qcustomplot.cpp
 
 HEADERS += \
-    inc/geometry.h \
-    inc/logger.h \
-    inc/mainwindow.h \
-    inc/numerics.h \
-    inc/qlabelmousetracker.h \
-    inc/sbml.h \
-    inc/simulate.h \
+    inc/geometry.hpp \
+    inc/exprtk.hpp \
+    inc/logger.hpp \
+    inc/mainwindow.hpp \
+    inc/numerics.hpp \
+    inc/qlabelmousetracker.hpp \
+    inc/sbml.hpp \
+    inc/simulate.hpp \
     ext/qcustomplot/qcustomplot.h
 
 FORMS += \

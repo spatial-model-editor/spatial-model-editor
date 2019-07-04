@@ -10,9 +10,9 @@
 #include <QImage>
 #include <QPoint>
 
-#include "geometry.h"
-#include "numerics.h"
-#include "sbml.h"
+#include "geometry.hpp"
+#include "numerics.hpp"
+#include "sbml.hpp"
 
 namespace simulate {
 

@@ -1,7 +1,8 @@
+#include "qlabelmousetracker.hpp"
+
 #include <QDebug>
 
-#include "logger.h"
-#include "qlabelmousetracker.h"
+#include "logger.hpp"
 
 QLabelMouseTracker::QLabelMouseTracker(QWidget *parent) : QLabel(parent) {
   setMouseTracking(true);

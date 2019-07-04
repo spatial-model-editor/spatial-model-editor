@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 namespace sbml_test_data {
 
 struct very_simple_model {

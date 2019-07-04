@@ -1,8 +1,10 @@
-#include "catch_qt.h"
-#include "sbml_test_data/very_simple_model.h"
+#include "simulate.hpp"
 
-#include "sbml.h"
-#include "simulate.h"
+#include "catch.hpp"
+
+#include "sbml_test_data/very_simple_model.hpp"
+
+#include "sbml.hpp"
 
 SCENARIO("simulate very_simple_model.xml", "[simulate][non-gui]") {
   // import model

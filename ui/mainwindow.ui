@@ -1075,7 +1075,7 @@
   <customwidget>
    <class>QLabelMouseTracker</class>
    <extends>QWidget</extends>
-   <header>qlabelmousetracker.h</header>
+   <header>qlabelmousetracker.hpp</header>
   </customwidget>
  </customwidgets>
  <resources/>

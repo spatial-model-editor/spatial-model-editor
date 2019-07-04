@@ -4,8 +4,6 @@
 //
 
 #pragma once
-
-
 //
 // include bundled or external copy of fmtlib's ostream support
 //
