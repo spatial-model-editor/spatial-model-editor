@@ -1,3 +1,5 @@
+#include "mainwindow.hpp"
+
 #include <QErrorMessage>
 #include <QFileDialog>
 #include <QInputDialog>
@@ -5,9 +7,8 @@
 #include <QString>
 #include <QStringListModel>
 
-#include "logger.h"
-#include "mainwindow.h"
-#include "simulate.h"
+#include "logger.hpp"
+#include "simulate.hpp"
 #include "ui_mainwindow.h"
 
 static void selectFirstChild(QTreeWidget *tree) {
@@ -384,6 +385,7 @@ void MainWindow::listMembranes_currentTextChanged(const QString &currentText) {
 
 void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
                                                 QTreeWidgetItem *previous) {
+  Q_UNUSED(previous);
   // if user selects a species (i.e. an item with a parent)
   if ((current != nullptr) && (current->parent() != nullptr)) {
     QString speciesID = current->text(0);
@@ -484,6 +486,7 @@ void MainWindow::btnChangeSpeciesColour_clicked() {
 
 void MainWindow::listReactions_currentItemChanged(QTreeWidgetItem *current,
                                                   QTreeWidgetItem *previous) {
+  Q_UNUSED(previous);
   ui->listProducts->clear();
   ui->listReactants->clear();
   ui->listReactionParams->clear();

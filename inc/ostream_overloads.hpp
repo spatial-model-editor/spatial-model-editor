@@ -1,11 +1,19 @@
-// catch2 header include with
-// - additional ostream operator << overloads for some Qt types
-// - dbl_approx() convenience function for Approx(x).epsilon(1e-14)
+// ostream << overloads to log data types not natively supported by spdlog
+//  - Qt types
+//     - QString
+//     - QPoint
+//     - QSize
+//     - QColor
+//  - std types
+//     - vector<T>
+//     - pair<T,U>
 
 #pragma once
 
 #include <iostream>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include <QByteArray>
 #include <QColor>
@@ -13,6 +21,8 @@
 #include <QPoint>
 #include <QSize>
 #include <QString>
+
+// Qt types
 
 inline std::ostream &operator<<(std::ostream &os, const QByteArray &value) {
   return os << '"' << (value.isEmpty() ? "" : value.constData()) << '"';
@@ -38,16 +48,18 @@ inline std::ostream &operator<<(std::ostream &os, const QColor &value) {
   return os << value.rgba();
 }
 
-// non-Qt
+// std types
 
 template <typename T, typename U>
 inline std::ostream &operator<<(std::ostream &os, const std::pair<T, U> &p) {
   return os << p.first << ": " << p.second;
 }
 
-#include "catch.hpp"
-
-// add custom Approximation convenience function for doubles
-inline Catch::Detail::Approx dbl_approx(double x) {
-  return Catch::Detail::Approx(x).epsilon(1e-14);
+template <class T>
+inline std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec) {
+  os << "{ ";
+  for (const auto &v : vec) {
+    os << v << " ";
+  }
+  return os << "}";
 }

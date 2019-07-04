@@ -10,25 +10,11 @@
 
 #include <string>
 
-// disable unused/undesired exprtk features:
-//  - reduces build time and executable size
-//  - don't parse undesired language features
-#define exprtk_disable_comments
-#define exprtk_disable_break_continue
-#define exprtk_disable_sc_andor
-#define exprtk_disable_return_statement
-// note: disabling enhanced_features gives:
-//  - smaller executable
-//  - faster compilation
-//  - but slower evaluation of expressions
-#define exprtk_disable_enhanced_features
-#define exprtk_disable_string_capabilities
-#define exprtk_disable_superscalar_unroll
-#define exprtk_disable_rtl_io_file
-#define exprtk_disable_rtl_vecops
-#define exprtk_disable_caseinsensitivity
+#include "exprtk.hpp"
 
-#include "exprtk/exprtk.hpp"
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
 
 namespace numerics {
 

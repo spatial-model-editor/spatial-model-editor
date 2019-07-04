@@ -1,9 +1,12 @@
+#include "mainwindow.hpp"
+
 #include <QtTest>
-#include "catch_qt.h"
-#include "mainwindow.h"
-#include "qlabelmousetracker.h"
-#include "qt_test_utils.h"
-#include "sbml_test_data/very_simple_model.h"
+
+#include "catch.hpp"
+#include "qt_test_utils.hpp"
+#include "sbml_test_data/very_simple_model.hpp"
+
+#include "qlabelmousetracker.hpp"
 
 constexpr int key_delay = 5;
 

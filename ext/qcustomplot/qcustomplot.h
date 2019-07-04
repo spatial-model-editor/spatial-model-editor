@@ -26,6 +26,10 @@
 #ifndef QCUSTOMPLOT_H
 #define QCUSTOMPLOT_H
 
+// todo: these warnings are ignored in all files that include this one
+// this can hide useful warnings
+// should instead statically compile the qcustomplot library
+// then include it as a system header
 #ifdef __GNUC__
 #pragma GCC diagnostic ignored "-Wshadow"
 #pragma GCC diagnostic ignored "-Wdouble-promotion"

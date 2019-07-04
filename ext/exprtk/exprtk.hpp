@@ -32,15 +32,6 @@
 #ifndef INCLUDE_EXPRTK_HPP
 #define INCLUDE_EXPRTK_HPP
 
-#ifdef __GNUC__
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#pragma GCC diagnostic ignored "-Wfloat-conversion"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
-
 #include <algorithm>
 #include <cctype>
 #include <cmath>

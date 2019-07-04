@@ -1,6 +1,6 @@
-#include "catch_qt.h"
+#include "numerics.hpp"
 
-#include "numerics.h"
+#include "catch.hpp"
 
 TEST_CASE("evaluate valid expression: no vars, no constants", "[numerics]") {
   // mathematical expression as string

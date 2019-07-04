@@ -1,9 +1,10 @@
-#include "catch_qt.h"
-#include "sbml_test_data/ABtoC.h"
-#include "sbml_test_data/very_simple_model.h"
-#include "sbml_test_data/yeast_glycolysis.h"
+#include "sbml.hpp"
 
-#include "sbml.h"
+#include "catch.hpp"
+
+#include "sbml_test_data/ABtoC.hpp"
+#include "sbml_test_data/very_simple_model.hpp"
+#include "sbml_test_data/yeast_glycolysis.hpp"
 
 SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
   // create simple SBML level 2.4 model

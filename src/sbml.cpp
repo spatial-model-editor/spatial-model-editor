@@ -1,7 +1,8 @@
+#include "sbml.hpp"
+
 #include <unordered_set>
 
-#include "logger.h"
-#include "sbml.h"
+#include "logger.hpp"
 
 namespace sbml {
 

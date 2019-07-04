@@ -26,25 +26,19 @@ SOURCES += \
     ext/qcustomplot/qcustomplot.cpp
 
 HEADERS += \
-    inc/mainwindow.h \
-    inc/geometry.h \
-    inc/numerics.h \
-    inc/qlabelmousetracker.h \
-    inc/sbml.h \
-    inc/simulate.h \
-    ext/exprtk/exprtk.hpp \
+    inc/mainwindow.hpp \
+    inc/qlabelmousetracker.hpp \
     ext/qcustomplot/qcustomplot.h \
-    test/inc/qt_test_utils.h \
-    test/catch/catch.hpp \
-    test/catch/catch_qt.h \
-    test/inc/sbml_test_data/ABtoC.h \
-    test/inc/sbml_test_data/very_simple_model.h \
-    test/inc/sbml_test_data/yeast_glycolysis.h
+    test/inc/catch.hpp \
+    test/inc/qt_test_utils.hpp \
+    test/inc/sbml_test_data/ABtoC.hpp \
+    test/inc/sbml_test_data/very_simple_model.hpp \
+    test/inc/sbml_test_data/yeast_glycolysis.hpp
 
 FORMS += \
     ui/mainwindow.ui
 
-INCLUDEPATH += inc ext ext/qcustomplot test/catch test/inc
+INCLUDEPATH += inc ext ext/qcustomplot test/inc
 
 # for linux build, remove optimizations, add coverage info & compiler warnings
 unix: QMAKE_CXXFLAGS_RELEASE -= -O2
