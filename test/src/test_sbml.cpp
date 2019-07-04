@@ -1,5 +1,7 @@
 #include "sbml.hpp"
 
+#include <fstream>
+
 #include "catch.hpp"
 
 #include "sbml_test_data/ABtoC.hpp"
@@ -78,56 +80,66 @@ SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
         REQUIRE(s.functions[0] == "func1");
       }
     }
-  }
-  GIVEN("Compartment Colours") {
-    QRgb col1 = 34573423;
-    QRgb col2 = 1334573423;
-    QRgb col3 = 17423;
-    WHEN("compartment colours have not been assigned") {
-      THEN("unassigned colours map to null CompartmentIDs") {
-        REQUIRE(s.getCompartmentID(col1) == "");
-        REQUIRE(s.getCompartmentID(123) == "");
-      }
-      THEN("invalid/unassigned CompartmentIDs map to null colour") {
-        REQUIRE(s.getCompartmentColour("compartment0") == 0);
-        REQUIRE(s.getCompartmentColour("invalid_comp") == 0);
+    WHEN("exportSBMLFile called") {
+      THEN("export identical file to imported one") {
+        s.exportSBMLFile("export.xml");
+        std::ifstream fsOld("tmp.xml");
+        std::ifstream fsNew("export.xml");
+        REQUIRE(std::equal(std::istreambuf_iterator<char>(fsOld.rdbuf()),
+                           std::istreambuf_iterator<char>(),
+                           std::istreambuf_iterator<char>(fsNew.rdbuf())));
       }
     }
-    WHEN("compartment colours have been assigned") {
-      s.setCompartmentColour("compartment0", col1);
-      s.setCompartmentColour("compartment1", col2);
-      THEN("can get CompartmentID from colour") {
-        REQUIRE(s.getCompartmentID(col1) == "compartment0");
-        REQUIRE(s.getCompartmentID(col2) == "compartment1");
-        REQUIRE(s.getCompartmentID(col3) == "");
+    GIVEN("Compartment Colours") {
+      QRgb col1 = 34573423;
+      QRgb col2 = 1334573423;
+      QRgb col3 = 17423;
+      WHEN("compartment colours have not been assigned") {
+        THEN("unassigned colours map to null CompartmentIDs") {
+          REQUIRE(s.getCompartmentID(col1) == "");
+          REQUIRE(s.getCompartmentID(123) == "");
+        }
+        THEN("invalid/unassigned CompartmentIDs map to null colour") {
+          REQUIRE(s.getCompartmentColour("compartment0") == 0);
+          REQUIRE(s.getCompartmentColour("invalid_comp") == 0);
+        }
       }
-      THEN("can get colour from CompartmentID") {
-        REQUIRE(s.getCompartmentColour("compartment0") == col1);
-        REQUIRE(s.getCompartmentColour("compartment1") == col2);
+      WHEN("compartment colours have been assigned") {
+        s.setCompartmentColour("compartment0", col1);
+        s.setCompartmentColour("compartment1", col2);
+        THEN("can get CompartmentID from colour") {
+          REQUIRE(s.getCompartmentID(col1) == "compartment0");
+          REQUIRE(s.getCompartmentID(col2) == "compartment1");
+          REQUIRE(s.getCompartmentID(col3) == "");
+        }
+        THEN("can get colour from CompartmentID") {
+          REQUIRE(s.getCompartmentColour("compartment0") == col1);
+          REQUIRE(s.getCompartmentColour("compartment1") == col2);
+        }
       }
-    }
-    WHEN("new colour assigned") {
-      s.setCompartmentColour("compartment0", col1);
-      s.setCompartmentColour("compartment1", col2);
-      s.setCompartmentColour("compartment0", col3);
-      THEN("unassign old colour mapping") {
-        REQUIRE(s.getCompartmentID(col1) == "");
-        REQUIRE(s.getCompartmentID(col2) == "compartment1");
-        REQUIRE(s.getCompartmentID(col3) == "compartment0");
-        REQUIRE(s.getCompartmentColour("compartment0") == col3);
-        REQUIRE(s.getCompartmentColour("compartment1") == col2);
+      WHEN("new colour assigned") {
+        s.setCompartmentColour("compartment0", col1);
+        s.setCompartmentColour("compartment1", col2);
+        s.setCompartmentColour("compartment0", col3);
+        THEN("unassign old colour mapping") {
+          REQUIRE(s.getCompartmentID(col1) == "");
+          REQUIRE(s.getCompartmentID(col2) == "compartment1");
+          REQUIRE(s.getCompartmentID(col3) == "compartment0");
+          REQUIRE(s.getCompartmentColour("compartment0") == col3);
+          REQUIRE(s.getCompartmentColour("compartment1") == col2);
+        }
       }
-    }
-    WHEN("existing colour re-assigned") {
-      s.setCompartmentColour("compartment0", col1);
-      s.setCompartmentColour("compartment1", col2);
-      s.setCompartmentColour("compartment0", col2);
-      THEN("unassign old colour mapping") {
-        REQUIRE(s.getCompartmentID(col1) == "");
-        REQUIRE(s.getCompartmentID(col2) == "compartment0");
-        REQUIRE(s.getCompartmentID(col3) == "");
-        REQUIRE(s.getCompartmentColour("compartment0") == col2);
-        REQUIRE(s.getCompartmentColour("compartment1") == 0);
+      WHEN("existing colour re-assigned") {
+        s.setCompartmentColour("compartment0", col1);
+        s.setCompartmentColour("compartment1", col2);
+        s.setCompartmentColour("compartment0", col2);
+        THEN("unassign old colour mapping") {
+          REQUIRE(s.getCompartmentID(col1) == "");
+          REQUIRE(s.getCompartmentID(col2) == "compartment0");
+          REQUIRE(s.getCompartmentID(col3) == "");
+          REQUIRE(s.getCompartmentColour("compartment0") == col2);
+          REQUIRE(s.getCompartmentColour("compartment1") == 0);
+        }
       }
     }
   }

@@ -1,18 +1,53 @@
 #include "sbml.hpp"
 
+#include <sstream>
 #include <unordered_set>
 
 #include "logger.hpp"
 
 namespace sbml {
 
+void SbmlDocWrapper::clearAllModelData() {
+  compartments.clear();
+  membranes.clear();
+  species.clear();
+  reactions.clear();
+  functions.clear();
+  mapSpeciesIdToColour.clear();
+  mapCompIdToGeometry.clear();
+  mapSpeciesIdToField.clear();
+  membraneVec.clear();
+  mapCompartmentToColour.clear();
+  mapColourToCompartment.clear();
+  mapMembraneToIndex.clear();
+  mapMembraneToImage.clear();
+}
+
+void SbmlDocWrapper::clearAllGeometryData() {
+  membranes.clear();
+  reactions.clear();
+  mapCompIdToGeometry.clear();
+  mapSpeciesIdToField.clear();
+  membraneVec.clear();
+  mapCompartmentToColour.clear();
+  mapColourToCompartment.clear();
+  membranePairs.clear();
+  mapColPairToIndex.clear();
+  mapMembraneToIndex.clear();
+  mapMembraneToImage.clear();
+  compartmentImage = QImage();
+}
+
 void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
+  clearAllModelData();
   doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
-  hasGeometry = false;
+
   if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
       0) {
     isValid = false;
-    // doc->printErrors();
+    std::stringstream ss;
+    doc->printErrors(ss);
+    spdlog::warn(ss.str());
     spdlog::warn(
         "SbmlDocWrapper::importSBMLFile :: Warning - errors while reading SBML "
         "file (continuing anyway...)");
@@ -26,8 +61,6 @@ void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
   model = doc->getModel();
 
   // get list of compartments
-  species.clear();
-  compartments.clear();
   for (unsigned int i = 0; i < model->getNumCompartments(); ++i) {
     const auto *comp = model->getCompartment(i);
     QString id = comp->getId().c_str();
@@ -55,7 +88,6 @@ void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
   }
 
   // get list of functions
-  functions.clear();
   for (unsigned int i = 0; i < model->getNumFunctionDefinitions(); ++i) {
     const auto *func = model->getFunctionDefinition(i);
     functions << QString(func->getId().c_str());
@@ -74,6 +106,7 @@ void SbmlDocWrapper::exportSBMLFile(const std::string &filename) const {
 }
 
 void SbmlDocWrapper::importGeometryFromImage(const QString &filename) {
+  clearAllGeometryData();
   compartmentImage.load(filename);
   // convert geometry image to 8-bit indexed format:
   // each pixel points to an index in the colorTable
@@ -288,7 +321,7 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
     mapSpeciesIdToField[s] = geometry::Field(&comp, s.toStdString(), 1.0,
                                              mapSpeciesIdToColour.at(s));
     // set all species concentrations to their initial values
-    mapSpeciesIdToField.at(s).setConstantConcentration(
+    mapSpeciesIdToField.at(s).setUniformConcentration(
         model->getSpecies(s.toStdString())->getInitialConcentration());
   }
   // update list of possible inter-compartment membranes
@@ -329,8 +362,11 @@ const QColor &SbmlDocWrapper::getSpeciesColour(const QString &speciesID) const {
   return mapSpeciesIdToField.at(speciesID).colour;
 }
 
-QString SbmlDocWrapper::getXml() const {
-  return libsbml::writeSBMLToString(doc.get());
+const QString &SbmlDocWrapper::getXml() {
+  std::unique_ptr<char, decltype(&std::free)> xmlChar(
+      libsbml::writeSBMLToString(doc.get()), &std::free);
+  xmlString = QString(xmlChar.get());
+  return xmlString;
 }
 
 bool SbmlDocWrapper::isSpeciesConstant(const std::string &speciesID) const {
@@ -350,7 +386,8 @@ bool SbmlDocWrapper::isSpeciesConstant(const std::string &speciesID) const {
 }
 
 bool SbmlDocWrapper::isSpeciesReactive(const std::string &speciesID) const {
-  // true if this species have a PDE generated for it by Reactions involving it
+  // true if this species should have a PDE generated for it
+  // by the Reactions that involve it
   auto *spec = model->getSpecies(speciesID);
   if ((spec->isSetConstant() && spec->getConstant()) ||
       (spec->isSetBoundaryCondition() && spec->getBoundaryCondition())) {
@@ -371,14 +408,9 @@ std::string SbmlDocWrapper::inlineFunctions(
     std::string funcCallString = func->getId() + "(";
     auto loc = expr.find(funcCallString);
     auto fn_loc = loc;
-    // qDebug("SbmlDocWrapper::inlineFunctions :: searching for function
-    // '%s'",
-    //       func->getId().c_str());
     while (loc != std::string::npos) {
       // function call found
       fn_loc = loc;
-      // qDebug("SbmlDocWrapper::inlineFunctions ::   -> found at %lu",
-      // fn_loc);
       loc += func->getId().size() + 1;
       for (unsigned int j = 0; j < func->getNumArguments(); ++j) {
         // compare each argument used in the function call (arg)
@@ -389,9 +421,6 @@ std::string SbmlDocWrapper::inlineFunctions(
         }
         auto arg_len = expr.find_first_of(",)", loc + 1) - loc;
         std::string arg = expr.substr(loc, arg_len);
-        // qDebug("SbmlDocWrapper::inlineFunctions ::   - arg = %s",
-        // arg.c_str()); qDebug("SbmlDocWrapper::inlineFunctions ::   - def =
-        // %s", func->getArgument(j)->getName());
         if (func->getArgument(j)->getName() != arg) {
           // create desired new argument as AST node
           std::unique_ptr<libsbml::ASTNode> argAST(
@@ -399,8 +428,6 @@ std::string SbmlDocWrapper::inlineFunctions(
           // replace existing argument with new argument
           funcBody->replaceArgument(func->getArgument(j)->getName(),
                                     argAST.get());
-          // qDebug("SbmlDocWrapper::inlineFunctions ::      - %s -> %s",
-          //       func->getArgument(j)->getName(), arg.c_str());
         }
         loc += arg_len + 1;
       }
@@ -425,12 +452,12 @@ std::string SbmlDocWrapper::inlineFunctions(
 
 std::string SbmlDocWrapper::inlineAssignments(
     const std::string &mathExpression) const {
-  std::string delimeters = "()-^*/+, ";
+  const std::string delimeters = "()-^*/+, ";
   std::string expr = mathExpression;
   std::string old_expr;
   spdlog::debug("SbmlDocWrapper::inlineAssignments :: inlining {}", expr);
   // iterate through names in expression
-  // Assuming that names are things in between any of these chars:
+  // where names are things in between any of these chars:
   // "()^*/+, "
   // http://sbml.org/Special/Software/libSBML/docs/formatted/cpp-api/class_a_s_t_node.html
   while (expr != old_expr) {
@@ -439,15 +466,11 @@ std::string SbmlDocWrapper::inlineAssignments(
     while (start != std::string::npos) {
       auto end = expr.find_first_of(delimeters, start);
       std::string name = expr.substr(start, end - start);
-      // qDebug("SbmlDocWrapper::inlineAssignments:: name '%s'",
-      // name.c_str());
       const auto *assignment = model->getAssignmentRule(name);
       if (assignment != nullptr) {
         // replace name with inlined body of Assignment rule
-        std::string assignmentBody =
+        const std::string &assignmentBody =
             model->getAssignmentRule(name)->getFormula();
-        // qDebug("SbmlDocWrapper::inlineAssignments:: -> %s",
-        //       assignmentBody.c_str());
         // wrap function body in parentheses
         std::string pre_expr = expr.substr(0, start);
         std::string post_expr = expr.substr(end);

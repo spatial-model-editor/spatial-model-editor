@@ -1,5 +1,6 @@
 #include "mainwindow.hpp"
 
+#include <QDebug>
 #include <QErrorMessage>
 #include <QFileDialog>
 #include <QInputDialog>
@@ -54,6 +55,14 @@ void MainWindow::setupConnections() {
   connect(ui->actionGeometry_from_image, &QAction::triggered, this,
           &MainWindow::actionGeometry_from_image_triggered);
 
+  connect(ui->action_What_s_this, &QAction::triggered, this,
+          []() { QWhatsThis::enterWhatsThisMode(); });
+
+  connect(ui->actionOnline_Documentation, &QAction::triggered, this, []() {
+    QDesktopServices::openUrl(
+        QUrl(QString("https://spatial-model-editor.readthedocs.io")));
+  });
+
   connect(ui->action_About, &QAction::triggered, this,
           &MainWindow::action_About_triggered);
 
@@ -81,11 +90,17 @@ void MainWindow::setupConnections() {
   connect(ui->listSpecies, &QTreeWidget::currentItemChanged, this,
           &MainWindow::listSpecies_currentItemChanged);
 
+  connect(ui->chkSpeciesIsSpatial, &QCheckBox::toggled, this,
+          &MainWindow::chkSpeciesIsSpatial_toggled);
+
   connect(ui->chkSpeciesIsConstant, &QCheckBox::toggled, this,
           &MainWindow::chkSpeciesIsConstant_toggled);
 
   connect(ui->radInitialConcentrationUniform, &QRadioButton::toggled, this,
           &MainWindow::radInitialConcentration_toggled);
+
+  connect(ui->txtInitialConcentration, &QLineEdit::editingFinished, this,
+          &MainWindow::txtInitialConcentration_editingFinished);
 
   connect(ui->radInitialConcentrationVarying, &QRadioButton::toggled, this,
           &MainWindow::radInitialConcentration_toggled);
@@ -124,6 +139,7 @@ void MainWindow::updateSpeciesDisplaySelect() {
     if (act->isChecked()) {
       qDebug("show %s", act->text().toStdString().c_str());
       species.push_back(act->text().toStdString());
+      // todo
     }
   }
 }
@@ -243,9 +259,6 @@ void MainWindow::action_Open_SBML_file_triggered() {
   QString filename = QFileDialog::getOpenFileName(
       this, "Open SBML file", "", "SBML file (*.xml)", nullptr,
       QFileDialog::Option::DontUseNativeDialog);
-  // TODO: QFileDialog::Option::DontUseNativeDialog is used above to avoid
-  // this call hanging on mac CI tests - check if it works with/without on a
-  // real mac
   if (!filename.isEmpty()) {
     sbmlDoc.importSBMLFile(filename.toStdString());
     if (sbmlDoc.isValid) {
@@ -269,32 +282,42 @@ void MainWindow::actionGeometry_from_image_triggered() {
       this, "Import geometry from image", "",
       "Image Files (*.png *.jpg *.bmp *.tiff)", nullptr,
       QFileDialog::Option::DontUseNativeDialog);
-  sbmlDoc.importGeometryFromImage(filename);
-  ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
-  ui->tabMain->setCurrentIndex(0);
+  if (!filename.isEmpty()) {
+    sbmlDoc.importGeometryFromImage(filename);
+    ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
+    ui->tabMain->setCurrentIndex(0);
+  }
 }
 
 void MainWindow::action_About_triggered() {
   QMessageBox msgBox;
-  msgBox.setWindowTitle("About");
-  QString info("Spatial Model Editor\n");
-  info.append("github.com/lkeegan/spatial-model-editor\n\n");
-  info.append("Included libraries:\n");
-  info.append(QString("\nQt5:\t\t%1").arg(QT_VERSION_STR));
+  msgBox.setWindowTitle("About Spatial Model Editor");
+  QString info("<h3>About Spatial Model Editor</h3>\n");
   info.append(
-      QString("\nlibSBML:\t\t%1").arg(libsbml::getLibSBMLDottedVersion()));
-  info.append("\nQCustomPlot:\t2.0.1");
-  info.append(QString("\nspdlog:\t\t%1.%2.%3")
+      "<p>Documentation:<ul><li><a href="
+      "\"https://spatial-model-editor.readthedocs.io\">"
+      "spatial-model-editor.readthedocs.io</a></p></li></ul>");
+  info.append(
+      "<p>Source code:<ul><li><a href="
+      "\"https://github.com/lkeegan/spatial-model-editor\">"
+      "github.com/lkeegan/spatial-model-editor</a></p></li></ul>");
+  info.append("<p>Included libraries:<p><ul>");
+  info.append(QString("<li>Qt5: %1</li>").arg(QT_VERSION_STR));
+  info.append(
+      QString("<li>libSBML: %1</li>").arg(libsbml::getLibSBMLDottedVersion()));
+  info.append("<li>QCustomPlot: 2.0.1</li>");
+  info.append(QString("<li>spdlog: %1.%2.%3</li>")
                   .arg(QString::number(SPDLOG_VER_MAJOR),
                        QString::number(SPDLOG_VER_MINOR),
                        QString::number(SPDLOG_VER_PATCH)));
   for (const auto &dep : {"expat", "libxml", "xerces-c", "bzip2", "zip"}) {
     if (libsbml::isLibSBMLCompiledWith(dep) != 0) {
-      info.append(QString("\n%1:\t\t%2")
+      info.append(QString("<li>%1: %2</li>")
                       .arg(dep, libsbml::getLibSBMLDependencyVersionOf(dep)));
     }
   }
-  info.append("\nC++ Mathematical Expression Toolkit Library (ExprTk)");
+  info.append(
+      "<li>C++ Mathematical Expression Toolkit Library (ExprTk)</li></ul>");
   msgBox.setText(info);
   msgBox.exec();
 }
@@ -303,29 +326,55 @@ void MainWindow::lblGeometry_mouseClicked(QRgb col) {
   if (waitingForCompartmentChoice) {
     // update compartment geometry (i.e. colour) of selected compartment to
     // the one the user just clicked on
-    auto comp = ui->listCompartments->selectedItems()[0]->text();
-    sbmlDoc.setCompartmentColour(comp, col);
+    const auto &compartmentID =
+        ui->listCompartments->selectedItems()[0]->text();
+    sbmlDoc.setCompartmentColour(compartmentID, col);
     // update display by simulating user click on listCompartments
-    listCompartments_currentTextChanged(comp);
+    listCompartments_currentTextChanged(compartmentID);
     spdlog::info(
         "MainWindow::lblGeometry_mouseClicked: assigned compartment {} to "
         "colour {}",
-        comp.toStdString(), col);
+        compartmentID, col);
     waitingForCompartmentChoice = false;
   } else {
     // display compartment the user just clicked on
     auto items = ui->listCompartments->findItems(sbmlDoc.getCompartmentID(col),
                                                  Qt::MatchExactly);
     if (!items.empty()) {
-      ui->listCompartments->setCurrentRow(ui->listCompartments->row(items[0]));
+      ui->listCompartments->setCurrentItem(items[0]);
     }
   }
 }
 
 void MainWindow::btnChangeCompartment_clicked() {
+  spdlog::debug("MainWindow::btnChangeCompartment_clicked");
+  if (sbmlDoc.isValid == false) {
+    spdlog::debug(
+        "MainWindow::btnChangeCompartment_clicked :: - no SBML model");
+    if (QMessageBox::question(
+            this, "No SBML model loaded",
+            "No SBML model to assign compartment geometry - import one now?",
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::Yes) == QMessageBox::Yes) {
+      action_Open_SBML_file_triggered();
+    }
+    return;
+  }
+  if (sbmlDoc.hasGeometry == false) {
+    spdlog::debug(
+        "MainWindow::btnChangeCompartment_clicked :: - no geometry image");
+    if (QMessageBox::question(this, "No image loaded",
+                              "No image of compartment geometry loaded - "
+                              "import one now?",
+                              QMessageBox::Yes | QMessageBox::No,
+                              QMessageBox::Yes) == QMessageBox::Yes) {
+      actionGeometry_from_image_triggered();
+    }
+    return;
+  }
   spdlog::debug(
-      "MainWindow::btnChangeCompartment_clicked: waiting for user to choose "
-      "compartment...");
+      "MainWindow::btnChangeCompartment_clicked :: - waiting for user to click "
+      "on geometry image");
   waitingForCompartmentChoice = true;
 }
 
@@ -394,34 +443,83 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
         speciesID.toStdString());
     // display species information
     auto *spec = sbmlDoc.model->getSpecies(speciesID.toStdString());
-    ui->txtInitialConcentration->setText(
-        QString::number(spec->getInitialConcentration()));
-    if ((spec->isSetConstant() && spec->getConstant()) ||
-        (spec->isSetBoundaryCondition() && spec->getBoundaryCondition())) {
-      ui->chkSpeciesIsConstant->setCheckState(Qt::CheckState::Checked);
-    } else {
-      ui->chkSpeciesIsConstant->setCheckState(Qt::CheckState::Unchecked);
+    auto &field = sbmlDoc.mapSpeciesIdToField.at(speciesID);
+    // spatial
+    bool isSpatial = field.isSpatial;
+    ui->chkSpeciesIsSpatial->setChecked(isSpatial);
+    ui->txtDiffusionConstant->setEnabled(isSpatial);
+    ui->radInitialConcentrationVarying->setEnabled(isSpatial);
+    ui->btnImportConcentration->setEnabled(isSpatial);
+    // constant
+    bool isConstant = sbmlDoc.isSpeciesConstant(speciesID.toStdString());
+    ui->chkSpeciesIsConstant->setChecked(isConstant);
+    if (isConstant) {
+      ui->txtDiffusionConstant->setEnabled(false);
     }
-    ui->lblGeometryStatus->setText("Species concentration:");
+    // concentration
+    ui->lblGeometryStatus->setText(
+        QString("Species '%1' concentration:").arg(speciesID));
     ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
-    ui->txtDiffusionConstant->setText(
-        QString::number(sbmlDoc.getDiffusionConstant(speciesID)));
-    // update colour box
+    if (field.isUniformConcentration) {
+      ui->txtInitialConcentration->setText(
+          QString::number(spec->getInitialConcentration()));
+      ui->radInitialConcentrationUniform->setChecked(true);
+    } else {
+      ui->radInitialConcentrationVarying->setChecked(true);
+    }
+    // diffusion constant
+    if (ui->txtDiffusionConstant->isEnabled()) {
+      ui->txtDiffusionConstant->setText(
+          QString::number(sbmlDoc.getDiffusionConstant(speciesID)));
+    }
+    // colour
     lblSpeciesColourPixmap.fill(sbmlDoc.getSpeciesColour(speciesID));
     ui->lblSpeciesColour->setPixmap(lblSpeciesColourPixmap);
     ui->lblSpeciesColour->setText("");
   }
 }
 
-void MainWindow::chkSpeciesIsConstant_toggled(bool enabled) {
-  if (enabled) {
-    // must be spatially uniform if constant
-    ui->radInitialConcentrationUniform->setChecked(enabled);
+void MainWindow::chkSpeciesIsSpatial_toggled(bool enabled) {
+  const auto &speciesID = ui->listSpecies->currentItem()->text(0);
+  // if new value differs from previous one - update model
+  if (sbmlDoc.mapSpeciesIdToField.at(speciesID).isSpatial != enabled) {
+    spdlog::info(
+        "MainWindow::chkSpeciesIsSpatial_toggled :: setting species {} "
+        "isSpatial: {}",
+        speciesID, enabled);
+    sbmlDoc.mapSpeciesIdToField.at(speciesID).isSpatial = enabled;
+    if (!enabled) {
+      // must be spatially uniform if not spatial
+      ui->radInitialConcentrationUniform->setChecked(enabled);
+    }
+    // disable incompatible options
+    ui->txtDiffusionConstant->setEnabled(enabled);
+    ui->radInitialConcentrationVarying->setEnabled(enabled);
+    ui->btnImportConcentration->setEnabled(enabled);
+    // update displayed info for this species
+    txtInitialConcentration_editingFinished();
   }
-  // disable incompatible options
-  ui->txtDiffusionConstant->setEnabled(!enabled);
-  ui->radInitialConcentrationVarying->setEnabled(!enabled);
-  ui->btnImportConcentration->setEnabled(!enabled);
+}
+
+void MainWindow::chkSpeciesIsConstant_toggled(bool enabled) {
+  const auto &speciesID = ui->listSpecies->currentItem()->text(0).toStdString();
+  // if new value differs from previous one - update model
+  if (sbmlDoc.isSpeciesConstant(speciesID) != enabled) {
+    spdlog::info(
+        "MainWindow::chkSpeciesIsConstant_toggled :: setting species {} "
+        "isConstant: {}",
+        speciesID, enabled);
+    sbmlDoc.model->getSpecies(speciesID)->setConstant(enabled);
+    // todo: think about how to deal with boundaryCondition properly
+    // for now, set it false here: species is either constant, or not
+    sbmlDoc.model->getSpecies(speciesID)->setBoundaryCondition(false);
+    // disable incompatible options
+    ui->txtDiffusionConstant->setEnabled(!enabled);
+    ui->radInitialConcentrationVarying->setEnabled(!enabled);
+    ui->btnImportConcentration->setEnabled(!enabled);
+    // update displayed info for this species
+    txtInitialConcentration_editingFinished();
+  }
 }
 
 void MainWindow::radInitialConcentration_toggled() {
@@ -439,23 +537,32 @@ void MainWindow::txtInitialConcentration_editingFinished() {
       "MainWindow::txttxtInitialConcentration_editingFinished :: setting "
       "initial concentration of Species {} to {}",
       speciesID.toStdString(), initConc);
-  sbmlDoc.mapSpeciesIdToField.at(speciesID).setConstantConcentration(initConc);
+  sbmlDoc.mapSpeciesIdToField.at(speciesID).setUniformConcentration(initConc);
+  sbmlDoc.model->getSpecies(speciesID.toStdString())
+      ->setInitialConcentration(initConc);
+  // update displayed info for this species
+  listSpecies_currentItemChanged(ui->listSpecies->currentItem(), nullptr);
 }
 
 void MainWindow::btnImportConcentration_clicked() {
-  auto spec = ui->listSpecies->selectedItems()[0]->text(0);
+  const auto &speciesID = ui->listSpecies->currentItem()->text(0);
   spdlog::debug(
-      "MainWindow::btnImportConcentration_clicked :: clicked with Species {} "
+      "MainWindow::btnImportConcentration_clicked :: ask user for "
+      "concentration image for species {}... "
       "selected",
-      spec.toStdString());
+      speciesID);
   QString filename = QFileDialog::getOpenFileName(
       this, "Import species concentration from image", "",
       "Image Files (*.png *.jpg *.bmp *.tiff)", nullptr,
       QFileDialog::Option::DontUseNativeDialog);
   if (!filename.isEmpty()) {
     ui->radInitialConcentrationVarying->setChecked(true);
-    sbmlDoc.importConcentrationFromImage(spec, filename);
-    ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(spec));
+    spdlog::debug(
+        "MainWindow::btnImportConcentration_clicked ::   - import file "
+        "{}",
+        filename);
+    sbmlDoc.importConcentrationFromImage(speciesID, filename);
+    ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
   }
 }
 
@@ -479,6 +586,10 @@ void MainWindow::btnChangeSpeciesColour_clicked() {
                                          this, "Choose new species colour",
                                          QColorDialog::DontUseNativeDialog);
   if (newCol.isValid()) {
+    spdlog::debug(
+        "MainWindow::btnChangeSpeciesColour_clicked ::   - set new colour to "
+        "{:x}",
+        newCol.rgba());
     sbmlDoc.setSpeciesColour(speciesID, newCol);
     listSpecies_currentItemChanged(ui->listSpecies->currentItem(), nullptr);
   }

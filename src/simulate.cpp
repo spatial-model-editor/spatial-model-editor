@@ -14,6 +14,7 @@ static std::map<std::string, double> getGlobalConstants(
     if (doc->isSpeciesConstant(spec->getId())) {
       spdlog::info("simulate::getGlobalConstants :: found constant species {}",
                    spec->getId());
+      // todo: check if species is *also* non-spatial
       double init_conc = 0;
       // if SBML file specifies amount: convert to concentration
       if (spec->isSetInitialAmount()) {
@@ -59,7 +60,8 @@ static std::string inlineExpr(sbml::SbmlDocWrapper *doc,
 
 ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
                    const std::vector<std::string> &speciesID,
-                   const std::vector<std::string> &reactionID, int nRateRules)
+                   const std::vector<std::string> &reactionID,
+                   std::size_t nRateRules)
     : doc(doc_ptr) {
   // init vector of species
   species_values = std::vector<double>(speciesID.size(), 0.0);
@@ -195,7 +197,7 @@ SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
   spdlog::debug("SimCompartment::SimCompartment :: compartment: {}",
                 compID.toStdString());
   std::vector<std::string> speciesID;
-  int nRateRules = 0;
+  std::size_t nRateRules = 0;
   for (const auto &s : doc->species.at(compID)) {
     if (!doc->isSpeciesConstant(s.toStdString())) {
       speciesID.push_back(s.toStdString());
@@ -363,7 +365,11 @@ void Simulate::addMembrane(geometry::Membrane *membrane) {
 void Simulate::integrateForwardsEuler(double dt) {
   // apply Diffusion operator in all compartments: dc/dt = D ...
   for (auto *f : field) {
-    f->applyDiffusionOperator();
+    if (f->isSpatial) {
+      f->applyDiffusionOperator();
+    } else {
+      std::fill(f->dcdt.begin(), f->dcdt.end(), 0.0);
+    }
   }
   // evaluate reaction terms in all compartments: dc/dt += ...
   for (auto &sim : simComp) {
@@ -372,6 +378,15 @@ void Simulate::integrateForwardsEuler(double dt) {
   // evaluate reaction terms in all membranes: dc/dt += ...
   for (auto &sim : simMembrane) {
     sim.evaluate_reactions();
+  }
+  // for non-spatial species: spatially average dc/dt:
+  // roughly equivalent to infinite rate of diffusion
+  for (auto *f : field) {
+    if (!f->isSpatial) {
+      double av_dcdt = std::accumulate(f->dcdt.cbegin(), f->dcdt.cend(), 0.0) /
+                       static_cast<double>(f->dcdt.size());
+      std::fill(f->dcdt.begin(), f->dcdt.end(), av_dcdt);
+    }
   }
   // forwards Euler timestep: c += dt * (dc/dt) in all compartments
   for (auto *f : field) {
@@ -386,20 +401,19 @@ QImage Simulate::getConcentrationImage() {
              QImage::Format_ARGB32);
   img.fill(qRgba(0, 0, 0, 0));
   // alpha opacity factor
-  double alpha = 1.0;
-  // normalise species concentration: max value of any species = max colour
-  // intensity
-  double max_conc = 0;
+  double alpha = 0.7;
+  // normalise species concentration:
+  // max value of each species = max colour intensity
+  // with lower bound, so constant zero is still zero
+  std::vector<double> max_conc;
   for (const auto *f : field) {
-    max_conc =
-        std::max(max_conc, *std::max_element(f->conc.cbegin(), f->conc.cend()));
+    double m = *std::max_element(f->conc.cbegin(), f->conc.cend());
+    max_conc.push_back(m < 1e-15 ? 1.0 : m);
   }
-  if (max_conc < 1e-15) {
-    max_conc = 1.0;
-  }
-  for (const auto *f : field) {
+  for (std::size_t i_f = 0; i_f < field.size(); ++i_f) {
+    const auto *f = field[i_f];
     for (std::size_t i = 0; i < f->geometry->ix.size(); ++i) {
-      double c = f->conc[i] / max_conc;
+      double c = f->conc[i] / max_conc[i_f];
       QColor oldCol = img.pixelColor(f->geometry->ix[i]);
       int r = oldCol.red();
       int g = oldCol.green();

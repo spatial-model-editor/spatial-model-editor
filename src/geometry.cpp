@@ -92,9 +92,13 @@ Field::Field(const Compartment *geom, const std::string &specID,
   imgConc = QImage(geom->getCompartmentImage().size(), QImage::Format_ARGB32);
   conc.resize(geom->ix.size(), 0.0);
   dcdt = conc;
+  isUniformConcentration = true;
+  isSpatial = false;
 }
 
 void Field::importConcentration(const QImage &img, double scale_factor) {
+  spdlog::info("Field::importConcentration :: species {}, compartment {}",
+               speciesID, geometry->compartmentID);
   // rescaling [min, max] pixel values to the range [0, scale_factor] for now
   QRgb min = std::numeric_limits<QRgb>::max();
   QRgb max = 0;
@@ -108,17 +112,24 @@ void Field::importConcentration(const QImage &img, double scale_factor) {
     // rescale uniform distribution to scale_factor
     min = 0;
   }
-  spdlog::info("Field::importConcentration :: rescaling [{}, {}] -> [{}, {}]",
-               min, max, 0.0, scale_factor);
+  spdlog::info(
+      "Field::importConcentration ::   - rescaling [{}, {}] -> [{}, {}]", min,
+      max, 0.0, scale_factor);
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     conc[i] = scale_factor *
               static_cast<double>(img.pixel(geometry->ix[i]) - min) /
               static_cast<double>(max - min);
   }
+  isUniformConcentration = false;
 }
 
-void Field::setConstantConcentration(double concentration) {
+void Field::setUniformConcentration(double concentration) {
+  spdlog::info("Field::setUniformConcentration :: species {}, compartment {}",
+               speciesID, geometry->compartmentID);
+  spdlog::info("Field::setUniformConcentration ::   - concentration = {}",
+               concentration);
   std::fill(conc.begin(), conc.end(), concentration);
+  isUniformConcentration = true;
 }
 
 const QImage &Field::getConcentrationImage() {

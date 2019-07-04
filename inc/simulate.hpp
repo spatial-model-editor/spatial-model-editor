@@ -36,7 +36,8 @@ class ReacEval {
   ReacEval() = default;
   ReacEval(sbml::SbmlDocWrapper *doc_ptr,
            const std::vector<std::string> &speciesID,
-           const std::vector<std::string> &reactionID, int nRateRules = 0);
+           const std::vector<std::string> &reactionID,
+           std::size_t nRateRules = 0);
   void evaluate();
   const std::vector<double> &getResult() const { return result; }
 };

@@ -12,10 +12,6 @@
 
 #include "exprtk.hpp"
 
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
-
 namespace numerics {
 
 class ExprEval {

@@ -6,18 +6,21 @@
 
 QLabelMouseTracker::QLabelMouseTracker(QWidget *parent) : QLabel(parent) {
   setMouseTracking(true);
+  pixmap.fill();
 }
 
 void QLabelMouseTracker::setImage(const QImage &img) {
   image = img;
   pixmap = QPixmap::fromImage(image);
-  this->setPixmap(pixmap.scaledToWidth(this->width(), Qt::FastTransformation));
-
-  // set first mouse click to top left corner of image
-  currentPixel.setX(0);
-  currentPixel.setY(0);
-  colour = image.pixelColor(currentPixel).rgb();
-  emit mouseClicked(colour);
+  if (!img.isNull()) {
+    this->setPixmap(
+        pixmap.scaledToWidth(this->width(), Qt::FastTransformation));
+    // set first mouse click to top left corner of image
+    currentPixel.setX(0);
+    currentPixel.setY(0);
+    colour = image.pixelColor(currentPixel).rgb();
+    emit mouseClicked(colour);
+  }
 }
 
 const QImage &QLabelMouseTracker::getImage() const { return image; }
