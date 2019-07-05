@@ -69,11 +69,13 @@ class Field {
   Field() = default;
   Field(const Compartment *geom, const std::string &specID,
         double diffConst = 1.0, const QColor &col = QColor(255, 0, 0));
-  void setConstantConcentration(double concentration);
+  void setUniformConcentration(double concentration);
   void importConcentration(const QImage &img, double scale_factor = 1.0);
   // return a QImage of the concentration of given species
   const QImage &getConcentrationImage();
   double getMeanConcentration();
+  bool isUniformConcentration;
+  bool isSpatial;
   // field.dcdt = result of the diffusion operator acting on field.conc
   void applyDiffusionOperator();
 };

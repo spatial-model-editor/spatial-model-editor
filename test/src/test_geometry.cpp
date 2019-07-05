@@ -13,7 +13,7 @@ TEST_CASE("one pixel compartment, one species field", "[geometry][non-gui]") {
 
   QColor specCol = QColor(123, 12, 1);
   geometry::Field field(&comp, "spec1", 1.0, specCol);
-  field.setConstantConcentration(1.3);
+  field.setUniformConcentration(1.3);
   REQUIRE(field.conc.size() == 1);
   REQUIRE(field.conc[0] == dbl_approx(1.3));
   REQUIRE(field.dcdt.size() == 1);
@@ -32,7 +32,7 @@ TEST_CASE("one pixel compartment, one species field", "[geometry][non-gui]") {
 
   // set zero concentration, get image
   // (must avoid dividing by zero in normalisation)
-  field.setConstantConcentration(0.0);
+  field.setUniformConcentration(0.0);
   REQUIRE(field.getMeanConcentration() == dbl_approx(0.0));
   REQUIRE(field.getConcentrationImage().pixelColor(0, 0) ==
           QColor(0, 0, 0, 255));
@@ -52,7 +52,7 @@ TEST_CASE("two pixel compartment, one species field", "[geometry][non-gui]") {
   REQUIRE(comp.ix[1] == QPoint(3, 4));
 
   geometry::Field field(&comp, "s1");
-  field.setConstantConcentration(1.3);
+  field.setUniformConcentration(1.3);
   REQUIRE(field.conc.size() == 2);
   // (3,3)
   REQUIRE(field.conc[0] == dbl_approx(1.3));

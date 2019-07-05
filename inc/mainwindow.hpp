@@ -69,6 +69,8 @@ class MainWindow : public QMainWindow {
   void listSpecies_currentItemChanged(QTreeWidgetItem *current,
                                       QTreeWidgetItem *previous);
 
+  void chkSpeciesIsSpatial_toggled(bool enabled);
+
   void chkSpeciesIsConstant_toggled(bool enabled);
 
   void radInitialConcentration_toggled();

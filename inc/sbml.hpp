@@ -41,6 +41,11 @@ class SbmlDocWrapper {
   std::map<QString, geometry::Field> mapSpeciesIdToField;
   std::vector<geometry::Membrane> membraneVec;
 
+  // call before importing new SBML model
+  void clearAllModelData();
+  // call before importing new compartment geometry
+  void clearAllGeometryData();
+
   void importSBMLFile(const std::string &filename);
   void exportSBMLFile(const std::string &filename) const;
 
@@ -71,7 +76,7 @@ class SbmlDocWrapper {
   const QColor &getSpeciesColour(const QString &speciesID) const;
 
   // return raw XML as QString
-  QString getXml() const;
+  const QString &getXml();
 
   // returns true if species is fixed throughout the simulation
   bool isSpeciesConstant(const std::string &speciesID) const;
@@ -89,6 +94,7 @@ class SbmlDocWrapper {
   std::string inlineAssignments(const std::string &mathExpression) const;
 
  private:
+  QString xmlString;
   std::unique_ptr<libsbml::SBMLDocument> doc;
   // map between compartment IDs and colours in compartment image
   std::map<QString, QRgb> mapCompartmentToColour;

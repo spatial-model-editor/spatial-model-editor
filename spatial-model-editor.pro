@@ -20,7 +20,7 @@ SOURCES += \
     src/qlabelmousetracker.cpp \
     src/sbml.cpp \
     src/simulate.cpp \
-    ext/qcustomplot/qcustomplot.cpp
+    ext/qcustomplot/qcustomplot.cpp \
 
 HEADERS += \
     inc/geometry.hpp \
@@ -31,7 +31,7 @@ HEADERS += \
     inc/qlabelmousetracker.hpp \
     inc/sbml.hpp \
     inc/simulate.hpp \
-    ext/qcustomplot/qcustomplot.h
+    ext/qcustomplot/qcustomplot.h \
 
 FORMS += \
     ui/mainwindow.ui
