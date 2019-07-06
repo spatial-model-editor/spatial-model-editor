@@ -20,6 +20,7 @@ extraction:
           - tar xzvf libsbml-static-linux.tgz -C libsbml
           - ls libsbml
           - cd ..
+          - ls
         configure:
             command:
               - mkdir build
