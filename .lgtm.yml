@@ -1,0 +1,37 @@
+path_classifiers:
+  library:
+    - "ext"
+  docs:
+    - docs/conf.py
+extraction:
+    cpp:
+        prepare:
+            packages:
+              - libxkbcommon-dev
+        after_prepare:
+          - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-linux.tgz"
+          - mkdir $LGTM_WORKSPACE/qt5
+          - tar xzvf qt5-static-linux.tgz -C $LGTM_WORKSPACE/qt5
+          - echo "[Paths]" > $LGTM_WORKSPACE/qt5/qt.conf
+          - echo "Prefix = $LGTM_WORKSPACE/qt5" >> $LGTM_WORKSPACE/qt5/qt.conf
+          - cat $LGTM_WORKSPACE/qt5/qt.conf
+          # export path for Qt5 binaries
+          - export PATH=$LGTM_WORKSPACE/qt5/bin:$PATH
+          - qmake -v
+          # download pre-compiled static libSBML library
+          - cd ext
+          - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-linux.tgz"
+          - mkdir -p libsbml
+          - tar xzvf libsbml-static-linux.tgz -C libsbml
+          - ls libsbml
+          - cd ..
+          - ls
+        configure:
+            command:
+              - mkdir build
+              - cd build
+              - qmake -Wall -config debug ../spatial-model-editor.pro
+        index:
+            build_command:
+              - cd build
+              - make

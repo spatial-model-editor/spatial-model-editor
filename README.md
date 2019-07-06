@@ -5,6 +5,7 @@
 [![codecov](https://codecov.io/gh/lkeegan/spatial-model-editor/branch/master/graph/badge.svg)](https://codecov.io/gh/lkeegan/spatial-model-editor)
 [![sonarcloud quality gate status](https://sonarcloud.io/api/project_badges/measure?project=lkeegan_spatial-model-editor&metric=alert_status)](https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor)
 [![coverity scan status](https://scan.coverity.com/projects/18642/badge.svg)](https://scan.coverity.com/projects/lkeegan-spatial-model-editor)
+[![lgtm status](https://img.shields.io/lgtm/grade/cpp/g/lkeegan/spatial-model-editor.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/lkeegan/spatial-model-editor/context:cpp)
 [![documentation status](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/en/latest/)
 
 GUI spatial model editor prototype

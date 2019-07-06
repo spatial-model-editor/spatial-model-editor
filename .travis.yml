@@ -138,6 +138,8 @@ matrix:
       before_install:
         - '[ "$TRAVIS_BRANCH" == coverity_scan ] || exit 0'
         - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+        - # get blame info
+        - git fetch --unshallow
       addons:
         apt:
           packages:
@@ -150,6 +152,8 @@ matrix:
           build_command_prepend: "qmake spatial-model-editor.pro"
           build_command: "make"
           branch_pattern: coverity_scan
+      script:
+        cat /home/travis/build/lkeegan/spatial-model-editor/cov-int/build-log.txt
 
 before_script:
   # install pre-compiled Qt5 binaries & static libraries to $QT5_INSTALL_PREFIX
