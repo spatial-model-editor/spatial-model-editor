@@ -36,6 +36,9 @@ HEADERS += \
 FORMS += \
     ui/mainwindow.ui
 
+RESOURCES += \
+    resources/resources.qrc
+
 INCLUDEPATH += inc ext ext/qcustomplot
 
 # these static libraries are available from
@@ -53,7 +56,7 @@ win32: QMAKE_LFLAGS += -static-libgcc -static-libstdc++
 # on osx: set visibility to match setting used for compiling static Qt5 libs
 mac: QMAKE_CXXFLAGS += -fvisibility=hidden
 
-# on linux, enable compiler warnings
+# on linux, enable GCC compiler warnings
 unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wextra -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wpedantic
 
 # on osx/linux, include QT headers as system headers to supress compiler warnings

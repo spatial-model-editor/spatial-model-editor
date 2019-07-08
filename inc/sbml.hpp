@@ -47,10 +47,14 @@ class SbmlDocWrapper {
   void clearAllGeometryData();
 
   void importSBMLFile(const std::string &filename);
+  void importSBMLString(const std::string &xml);
+  void initModelData();
   void exportSBMLFile(const std::string &filename) const;
 
   // compartment geometry
+  void importGeometryFromImage(const QImage &img);
   void importGeometryFromImage(const QString &filename);
+  void initMembraneColourPairs();
   const QImage &getCompartmentImage();
   QString getCompartmentID(QRgb colour) const;
   QRgb getCompartmentColour(const QString &compartmentID) const;

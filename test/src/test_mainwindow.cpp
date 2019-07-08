@@ -122,17 +122,31 @@ SCENARIO("click on btnChangeCompartment",
   }
   WHEN("valid SBML model loaded, but no geometry image loaded") {
     // load SBML file
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(sbml_test_data::very_simple_model().xml));
-    libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
     QListWidget *listCompartments =
         w.topLevelWidget()->findChild<QListWidget *>("listCompartments");
     REQUIRE(listCompartments != nullptr);
-    listCompartments->setFocus();
+    QMenu *menuFile = w.topLevelWidget()->findChild<QMenu *>("menuFile");
+    REQUIRE(menuFile != nullptr);
+    QMenu *menuOpen_example_SBML_file =
+        w.topLevelWidget()->findChild<QMenu *>("menuOpen_example_SBML_file");
+    REQUIRE(menuOpen_example_SBML_file != nullptr);
+    // open built-in very-simple-model.xml SBML file
+    QTest::keyClick(&w, Qt::Key_F, Qt::AltModifier, key_delay);
+    QTest::keyClick(menuFile, Qt::Key_E, Qt::AltModifier, key_delay);
+    QTest::keyClick(menuOpen_example_SBML_file, Qt::Key_V, Qt::AltModifier,
+                    key_delay);
+#ifdef Q_OS_MAC
+    // alt+letter doesn't seem to work for opening menus on mac
+    // so write SBML file to disk and open it with ctrl+O instead
+    std::unique_ptr<libsbml::SBMLDocument> doc(
+        libsbml::readSBMLFromString(sbml_test_data::very_simple_model().xml));
+    libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
     mwt1.setMessage("tmp.xml");
     mwt1.start();
+    listCompartments->setFocus();
     QApplication::setActiveWindow(&w);
     QTest::keyClick(&w, Qt::Key_O, Qt::ControlModifier, key_delay);
+#endif
     THEN("tell user, offer to load one") {
       mwt1.setMessage();
       mwt1.start();
@@ -158,6 +172,31 @@ SCENARIO("click on btnChangeCompartment",
     }
   }
 }
+
+// skip on mac since alt-letter doesn't seem to open menus...
+#ifndef Q_OS_MAC
+SCENARIO("import built-in geometry image", "[gui][mainwindow]") {
+  MainWindow w;
+  w.show();
+  CAPTURE(QTest::qWaitForWindowExposed(&w));
+  QMenu *menuImport = w.topLevelWidget()->findChild<QMenu *>("menuImport");
+  REQUIRE(menuImport != nullptr);
+  QMenu *menuExample_geometry_image =
+      w.topLevelWidget()->findChild<QMenu *>("menuExample_geometry_image");
+  REQUIRE(menuExample_geometry_image != nullptr);
+  // open built-in three-pixel geometry image
+  QTest::keyClick(&w, Qt::Key_I, Qt::AltModifier, key_delay);
+  QTest::keyClick(menuImport, Qt::Key_E, Qt::AltModifier, key_delay);
+  QTest::keyClick(menuExample_geometry_image, Qt::Key_S, Qt::AltModifier,
+                  key_delay);
+  QLabelMouseTracker *lblGeometry =
+      w.topLevelWidget()->findChild<QLabelMouseTracker *>("lblGeometry");
+  REQUIRE(lblGeometry->getImage().size() == QSize(3, 1));
+  REQUIRE(lblGeometry->getImage().pixel(0, 0) == 0xffffffff);
+  REQUIRE(lblGeometry->getImage().pixel(1, 0) == 0xffaaaaaa);
+  REQUIRE(lblGeometry->getImage().pixel(2, 0) == 0xff525252);
+}
+#endif
 
 SCENARIO("Load SBML file", "[gui][mainwindow]") {
   // create SBML file to load

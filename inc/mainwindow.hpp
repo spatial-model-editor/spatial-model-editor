@@ -45,10 +45,14 @@ class MainWindow : public QMainWindow {
   // File menu actions
   void action_Open_SBML_file_triggered();
 
+  void menuOpen_example_SBML_file_triggered(QAction *action);
+
   void action_Save_SBML_file_triggered();
 
   // Import menu actions
   void actionGeometry_from_image_triggered();
+
+  void menuExample_geometry_image_triggered(QAction *action);
 
   // About menu actions
   void action_About_triggered();

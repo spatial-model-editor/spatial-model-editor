@@ -1,0 +1,14 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>models/ABtoC.xml</file>
+    <file>models/liver-simplified.xml</file>
+    <file>models/very-simple-model.xml</file>
+	<file>geometry/single-pixels-3x1.bmp</file>
+    <file>geometry/empty-donut-100x100.bmp</file>
+    <file>geometry/two-blobs-100x100.bmp</file>
+	<file>geometry/filled-donut-100x100.bmp</file>
+	<file>concentration/one-blob-100x100.bmp</file>
+	<file>concentration/two-blobs-100x100.bmp</file>
+	<file>concentration/three-blobs-100x100.bmp</file>
+</qresource>
+</RCC>

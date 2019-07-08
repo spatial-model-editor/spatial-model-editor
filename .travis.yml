@@ -64,19 +64,17 @@ matrix:
         - otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor
         # package app dir as a .dmg
         - hdiutil create spatial-model-editor -fs HFS+ -srcfolder spatial-model-editor.app
-    ###################################################
-    # linux test build: coverage, valgrind, sonarsource
-    ###################################################
+    #####################################################
+    # linux code quality build: sonarcloud.io, codecov.io
+    #####################################################
     - os: linux
       dist: xenial
       compiler: gcc
       env:
-        - VALGRIND_VERSION="3.15.0"
         - secure: "Muu56AqHMCZOpCG2d5Byeh6P++9xXKl7otulxdhZCfA1/yTAJM9M67B1ZHo7czEvLKdoVzqCz6aFMnsVvFHUHQDmAtmth/WzdfXZ7OTG7puDIeWRmYqQacpLeF6h9ws3sUr5Bjz9m0guhjbKN/6VIqoyuWLH/J0MwzJN5JKgWitQBeJ15GWjNJN20FLgiYW0vWtQ71dncM6VaLAyH6V/T8jLRNacmCjApAOsS2FuhnSfbL+rY5nRVXPtoy/muwRgpl2Bez8OV6z5nDCaBLxXLgNkC7Y/0OhfzY/t+6wZ4nuDZDJ/4Hn4AyycH1O1ldmfEjw9nHBdqG/0JW2NmvSLojp5NiCUSI1MDmcgqKv6VKdVV2cdn6b7s6YY/8p08pnm+uExHYRkiXPFNeYfoQF3ruYSzFOQXRA+VI3Rg0dMfs4cO+PXCWS/hIAHudG3vaDgOwOnLFaOPjJKGYidmbmu6u4jdvBNFuCkooSYmnO2JCe0LIGgJAwlOEfG51WYD9bewCx+w+NmB+Cow3E4G0DCHomz1XGUhp1DsmjGarU1kDf4PtFLQgLC88h7AQfJtg15mSV6xDcKV+nmuDNS+ifTpQTTSe/w6LqqzcE/EOLaVAtCSe4ACOORW2yBF7DPgUY47ZSkU4iwA7pAOAYDKs37fNHjK8s/TJhM++RZ+21oMME="
       addons:
         apt:
           packages:
-            - libc6-dbg
             - libxkbcommon-dev
             - lcov
             - jwm
@@ -84,15 +82,6 @@ matrix:
           organization: "lkeegan-github"
       services: xvfb
       install:
-        # install a recent version of valgrind to run tests
-        - wget "https://sourceware.org/pub/valgrind/valgrind-${VALGRIND_VERSION}.tar.bz2"
-        - tar -xjf valgrind-${VALGRIND_VERSION}.tar.bz2
-        - cd valgrind-${VALGRIND_VERSION}
-        - "./configure"
-        - make -j2
-        - sudo make install
-        - cd ../
-        - valgrind --version
         # start a window manager so the Qt GUI tests can have their focus set
         - "jwm &"
         - sleep 1
@@ -112,8 +101,6 @@ matrix:
         - qmake -Wall -config debug ../test.pro
         - make -j2
         - ./test -d=yes
-        # also run non-gui tests with valgrind
-        - valgrind --leak-check=full ./test -d=yes "[non-gui]"
         # generate gcov test coverage data for sonar-source
         - mkdir ../gcov
         - cd ../gcov
@@ -127,6 +114,39 @@ matrix:
         - lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/ext/*" "*/build-tests/*" "*/qcustomplot/*" --output-file coverage.info
         - lcov --list coverage.info
         - bash <(curl -s https://codecov.io/bash) -X gcov -f "coverage.info"
+    ##############################################
+    # linux test build: valgrind for non-gui tests
+    ##############################################
+    - os: linux
+      dist: xenial
+      compiler: gcc
+      env:
+        - VALGRIND_VERSION="3.15.0"
+      addons:
+        apt:
+          packages:
+            - libc6-dbg
+            - libxkbcommon-dev
+        sonarcloud:
+          organization: "lkeegan-github"
+      services: xvfb
+      install:
+        # install a recent version of valgrind to run tests
+        - wget "https://sourceware.org/pub/valgrind/valgrind-${VALGRIND_VERSION}.tar.bz2"
+        - tar -xjf valgrind-${VALGRIND_VERSION}.tar.bz2
+        - cd valgrind-${VALGRIND_VERSION}
+        - "./configure"
+        - make -j2
+        - sudo make install
+        - cd ../
+        - valgrind --version
+      script:
+        # compile and run non-gui unit tests with valgrind
+        - mkdir build-tests
+        - cd build-tests
+        - qmake -Wall -config debug ../test.pro
+        - make -j2
+        - valgrind --leak-check=full ./test -d=yes "[non-gui]"
     ##########################################################################
     # linux build: coverity scan (only runs on push to "coverity_scan" branch)
     ##########################################################################
@@ -149,7 +169,7 @@ matrix:
             name: "lkeegan/spatial-model-editor"
             description: "Spatial Model Editor"
           notification_email: liam@keegan.ch
-          build_command_prepend: "qmake spatial-model-editor.pro"
+          build_command_prepend: "qmake spatial-model-editor.pro -config debug"
           build_command: "make"
           branch_pattern: coverity_scan
       script:
