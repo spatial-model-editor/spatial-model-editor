@@ -62,26 +62,20 @@ SCENARIO("Shortcut keys", "[gui][mainwindow]") {
       REQUIRE(mwt.result == "QFileDialog::AcceptSave");
     }
   }
-  WHEN("user presses ctrl+tab") {
-    THEN("display next tab") {
-      int nTabs = 7;
+  WHEN("user presses ctrl+tab (no SBML & compartment image loaded)") {
+    THEN("remain on Geometry tab: all others disabled") {
       REQUIRE(tabMain->currentIndex() == 0);
-      for (int index = 1; index < 2 * nTabs + 1; ++index) {
-        QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
-                        key_delay);
-        REQUIRE(tabMain->currentIndex() == index % nTabs);
-      }
+      QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
+                      key_delay);
+      REQUIRE(tabMain->currentIndex() == 0);
     }
   }
-  WHEN("user presses ctrl+shift+tab") {
-    THEN("display previous tab") {
-      int nTabs = 7;
+  WHEN("user presses ctrl+shift+tab (no SBML & compartment image loaded)") {
+    THEN("remain on Geometry tab: all others disabled") {
       REQUIRE(tabMain->currentIndex() == 0);
-      for (int index = -1; index > -2 * nTabs + 1; --index) {
-        QTest::keyPress(w.windowHandle(), Qt::Key_Tab,
-                        Qt::ControlModifier | Qt::ShiftModifier, key_delay);
-        REQUIRE(tabMain->currentIndex() == (index + 5 * nTabs) % nTabs);
-      }
+      QTest::keyPress(w.windowHandle(), Qt::Key_Tab,
+                      Qt::ControlModifier | Qt::ShiftModifier, key_delay);
+      REQUIRE(tabMain->currentIndex() == 0);
     }
   }
 }
@@ -101,8 +95,7 @@ SCENARIO("click on btnChangeCompartment",
       mwt1.start();
       QTest::mouseClick(btnChangeCompartment, Qt::LeftButton,
                         Qt::KeyboardModifiers(), QPoint(), key_delay);
-      QString correctText =
-          "No SBML model to assign compartment geometry - import one now?";
+      QString correctText = "No valid SBML model loaded - import one now?";
       REQUIRE(mwt1.result.left(correctText.size()) == correctText);
     }
     WHEN("user clicks yes") {

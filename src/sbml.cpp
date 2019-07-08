@@ -393,7 +393,7 @@ bool SbmlDocWrapper::isSpeciesConstant(const std::string &speciesID) const {
   }
   if ((spec->isSetBoundaryCondition() && spec->getBoundaryCondition()) &&
       model->getRateRule(speciesID) == nullptr) {
-    // `BoundaryCondition` species is usually constant:
+    // `BoundaryCondition` species is a constant:
     //   - unless it is altered by a RateRule
     return true;
   }
