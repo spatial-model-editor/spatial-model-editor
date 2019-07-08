@@ -1029,11 +1029,19 @@
      <height>29</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuHello">
+   <widget class="QMenu" name="menuFile">
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <widget class="QMenu" name="menuOpen_example_SBML_file">
+     <property name="title">
+      <string>Open &amp;example SBML file</string>
+     </property>
+     <addaction name="action_ABtoC"/>
+     <addaction name="action_very_simple_model"/>
+    </widget>
     <addaction name="action_Open_SBML_file"/>
+    <addaction name="menuOpen_example_SBML_file"/>
     <addaction name="action_Save_SBML_file"/>
     <addaction name="actionE_xit"/>
    </widget>
@@ -1050,9 +1058,19 @@
     <property name="title">
      <string>&amp;Import</string>
     </property>
+    <widget class="QMenu" name="menuExample_geometry_image">
+     <property name="title">
+      <string>&amp;Example geometry image</string>
+     </property>
+     <addaction name="actions"/>
+     <addaction name="action_filled_donut_100x100_bmp"/>
+     <addaction name="actionside_by_side_100x100"/>
+     <addaction name="actionsingle_pixels_3x1"/>
+    </widget>
     <addaction name="actionGeometry_from_image"/>
+    <addaction name="menuExample_geometry_image"/>
    </widget>
-   <addaction name="menuHello"/>
+   <addaction name="menuFile"/>
    <addaction name="menuImport"/>
    <addaction name="menu_Help"/>
   </widget>
@@ -1110,7 +1128,7 @@
   </action>
   <action name="actionGeometry_from_image">
    <property name="text">
-    <string>Geometry from image</string>
+    <string>&amp;Geometry from image</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+I</string>
@@ -1130,6 +1148,36 @@
    </property>
    <property name="shortcut">
     <string>F1</string>
+   </property>
+  </action>
+  <action name="action_ABtoC">
+   <property name="text">
+    <string>&amp;ABtoC</string>
+   </property>
+  </action>
+  <action name="action_very_simple_model">
+   <property name="text">
+    <string>&amp;very-simple-model</string>
+   </property>
+  </action>
+  <action name="actions">
+   <property name="text">
+    <string>&amp;empty-donut-100x100</string>
+   </property>
+  </action>
+  <action name="action_filled_donut_100x100_bmp">
+   <property name="text">
+    <string>&amp;filled-donut-100x100</string>
+   </property>
+  </action>
+  <action name="actionside_by_side_100x100">
+   <property name="text">
+    <string>&amp;two-blobs-100x100</string>
+   </property>
+  </action>
+  <action name="actionsingle_pixels_3x1">
+   <property name="text">
+    <string>&amp;single-pixels-3x1</string>
    </property>
   </action>
  </widget>

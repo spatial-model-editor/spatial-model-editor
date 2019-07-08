@@ -38,6 +38,9 @@ HEADERS += \
 FORMS += \
     ui/mainwindow.ui
 
+RESOURCES += \
+    resources/resources.qrc
+
 INCLUDEPATH += inc ext ext/qcustomplot test/inc
 
 # for linux build, remove optimizations, add coverage info & compiler warnings

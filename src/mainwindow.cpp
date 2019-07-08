@@ -46,6 +46,9 @@ void MainWindow::setupConnections() {
   connect(ui->action_Open_SBML_file, &QAction::triggered, this,
           &MainWindow::action_Open_SBML_file_triggered);
 
+  connect(ui->menuOpen_example_SBML_file, &QMenu::triggered, this,
+          &MainWindow::menuOpen_example_SBML_file_triggered);
+
   connect(ui->action_Save_SBML_file, &QAction::triggered, this,
           &MainWindow::action_Save_SBML_file_triggered);
 
@@ -54,6 +57,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->actionGeometry_from_image, &QAction::triggered, this,
           &MainWindow::actionGeometry_from_image_triggered);
+
+  connect(ui->menuExample_geometry_image, &QMenu::triggered, this,
+          &MainWindow::menuExample_geometry_image_triggered);
 
   connect(ui->action_What_s_this, &QAction::triggered, this,
           []() { QWhatsThis::enterWhatsThisMode(); });
@@ -268,6 +274,21 @@ void MainWindow::action_Open_SBML_file_triggered() {
   }
 }
 
+void MainWindow::menuOpen_example_SBML_file_triggered(QAction *action) {
+  QString filename =
+      QString(":/models/%1.xml").arg(action->text().remove(0, 1));
+  QFile f(filename);
+  if (!f.open(QIODevice::ReadOnly)) {
+    spdlog::warn(
+        "MainWindow::menuOpen_example_SBML_file_triggered :: failed to open "
+        "built-in file: {}",
+        filename);
+  }
+  sbmlDoc.importSBMLString(f.readAll().toStdString());
+  ui->tabMain->setCurrentIndex(0);
+  tabMain_currentChanged(0);
+}
+
 void MainWindow::action_Save_SBML_file_triggered() {
   QString filename = QFileDialog::getSaveFileName(
       this, "Save SBML file", "", "SBML file (*.xml)", nullptr,
@@ -287,6 +308,21 @@ void MainWindow::actionGeometry_from_image_triggered() {
     ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
     ui->tabMain->setCurrentIndex(0);
   }
+}
+
+void MainWindow::menuExample_geometry_image_triggered(QAction *action) {
+  QString filename =
+      QString(":/geometry/%1.bmp").arg(action->text().remove(0, 1));
+  QFile f(filename);
+  if (!f.open(QIODevice::ReadOnly)) {
+    spdlog::warn(
+        "MainWindow::menuExample_geometry_image_triggered :: failed to open "
+        "built-in file: {}",
+        filename);
+  }
+  sbmlDoc.importGeometryFromImage(filename);
+  ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
+  ui->tabMain->setCurrentIndex(0);
 }
 
 void MainWindow::action_About_triggered() {

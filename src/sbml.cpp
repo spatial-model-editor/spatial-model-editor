@@ -35,13 +35,24 @@ void SbmlDocWrapper::clearAllGeometryData() {
   mapColPairToIndex.clear();
   mapMembraneToIndex.clear();
   mapMembraneToImage.clear();
-  compartmentImage = QImage();
+}
+
+void SbmlDocWrapper::importSBMLString(const std::string &xml) {
+  clearAllModelData();
+  doc.reset(libsbml::readSBMLFromString(xml.c_str()));
+  spdlog::info("SbmlDocWrapper::importSBMLFile :: importing SBML from string");
+  initModelData();
 }
 
 void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
   clearAllModelData();
+  spdlog::info("SbmlDocWrapper::importSBMLFile :: Loading SBML file {}",
+               filename);
   doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
+  initModelData();
+}
 
+void SbmlDocWrapper::initModelData() {
   if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
       0) {
     isValid = false;
@@ -54,8 +65,7 @@ void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
     isValid = true;
   } else {
     spdlog::info(
-        "SbmlDocWrapper::importSBMLFile :: Successfully imported file {}",
-        filename);
+        "SbmlDocWrapper::importSBMLFile :: Successfully imported SBML model");
     isValid = true;
   }
   model = doc->getModel();
@@ -108,6 +118,11 @@ void SbmlDocWrapper::exportSBMLFile(const std::string &filename) const {
 void SbmlDocWrapper::importGeometryFromImage(const QString &filename) {
   clearAllGeometryData();
   compartmentImage.load(filename);
+  initMembraneColourPairs();
+  hasGeometry = true;
+}
+
+void SbmlDocWrapper::initMembraneColourPairs() {
   // convert geometry image to 8-bit indexed format:
   // each pixel points to an index in the colorTable
   // which contains an RGB value for each color in the image
@@ -168,7 +183,6 @@ void SbmlDocWrapper::importGeometryFromImage(const QString &filename) {
       prevPix = currPix;
     }
   }
-  hasGeometry = true;
 }
 
 const QImage &SbmlDocWrapper::getMembraneImage(const QString &membraneID) {
@@ -298,6 +312,7 @@ QRgb SbmlDocWrapper::getCompartmentColour(const QString &compartmentID) const {
 
 void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
                                           QRgb colour) {
+  // todo: add check that colour exists in geometry image?
   QRgb oldColour = getCompartmentColour(compartmentID);
   if (oldColour != 0) {
     // if there was already a colour mapped to this compartment, map it to a

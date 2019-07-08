@@ -2,9 +2,10 @@
 
 #include <fstream>
 
+#include <QFile>
+
 #include "catch.hpp"
 
-#include "sbml_test_data/ABtoC.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
 #include "sbml_test_data/yeast_glycolysis.hpp"
 
@@ -49,36 +50,39 @@ SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
   libsbml::SBMLWriter w;
   w.writeSBML(document.get(), "tmp.xml");
 
+  // import SBML model
   sbml::SbmlDocWrapper s;
   s.importSBMLFile("tmp.xml");
   REQUIRE(s.isValid == true);
 
-  GIVEN("SBML document") {
-    WHEN("importSBMLFile called") {
-      THEN("find compartments") {
-        REQUIRE(s.compartments.size() == 2);
-        REQUIRE(s.compartments[0] == "compartment0");
-        REQUIRE(s.compartments[1] == "compartment1");
-      }
-      THEN("find species") {
-        REQUIRE(s.species.size() == 2);
-        REQUIRE(s.species["compartment0"].size() == 2);
-        REQUIRE(s.species["compartment0"][0] == "spec0c0");
-        REQUIRE(s.species["compartment0"][1] == "spec1c0");
-        REQUIRE(s.species["compartment1"].size() == 3);
-        REQUIRE(s.species["compartment1"][0] == "spec0c1");
-        REQUIRE(s.species["compartment1"][1] == "spec1c1");
-        REQUIRE(s.species["compartment1"][2] == "spec2c1");
-      }
-      // Note: need to import geometry image before we have the reactions
-      /* THEN("find reactions") {
-        REQUIRE(s.reactions.at("compartment0").size() == 1);
-        REQUIRE(s.reactions.at("compartment0")[0] == "reac1");
-      }*/
-      THEN("find functions") {
-        REQUIRE(s.functions.size() == 1);
-        REQUIRE(s.functions[0] == "func1");
-      }
+  // import geometry image & assign compartments to colours
+  s.importGeometryFromImage(":/geometry/single-pixels-3x1.bmp");
+  s.setCompartmentColour("compartment0", 0xffaaaaaa);
+  s.setCompartmentColour("compartment1", 0xff525252);
+
+  GIVEN("SBML document & geometry image") {
+    THEN("find compartments") {
+      REQUIRE(s.compartments.size() == 2);
+      REQUIRE(s.compartments[0] == "compartment0");
+      REQUIRE(s.compartments[1] == "compartment1");
+    }
+    THEN("find species") {
+      REQUIRE(s.species.size() == 2);
+      REQUIRE(s.species["compartment0"].size() == 2);
+      REQUIRE(s.species["compartment0"][0] == "spec0c0");
+      REQUIRE(s.species["compartment0"][1] == "spec1c0");
+      REQUIRE(s.species["compartment1"].size() == 3);
+      REQUIRE(s.species["compartment1"][0] == "spec0c1");
+      REQUIRE(s.species["compartment1"][1] == "spec1c1");
+      REQUIRE(s.species["compartment1"][2] == "spec2c1");
+    }
+    THEN("find reactions") {
+      REQUIRE(s.reactions.at("compartment0").size() == 1);
+      REQUIRE(s.reactions.at("compartment0")[0] == "reac1");
+    }
+    THEN("find functions") {
+      REQUIRE(s.functions.size() == 1);
+      REQUIRE(s.functions[0] == "func1");
     }
     WHEN("exportSBMLFile called") {
       THEN("export identical file to imported one") {
@@ -91,22 +95,10 @@ SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
       }
     }
     GIVEN("Compartment Colours") {
-      QRgb col1 = 34573423;
-      QRgb col2 = 1334573423;
+      QRgb col1 = 0xffaaaaaa;
+      QRgb col2 = 0xff525252;
       QRgb col3 = 17423;
-      WHEN("compartment colours have not been assigned") {
-        THEN("unassigned colours map to null CompartmentIDs") {
-          REQUIRE(s.getCompartmentID(col1) == "");
-          REQUIRE(s.getCompartmentID(123) == "");
-        }
-        THEN("invalid/unassigned CompartmentIDs map to null colour") {
-          REQUIRE(s.getCompartmentColour("compartment0") == 0);
-          REQUIRE(s.getCompartmentColour("invalid_comp") == 0);
-        }
-      }
       WHEN("compartment colours have been assigned") {
-        s.setCompartmentColour("compartment0", col1);
-        s.setCompartmentColour("compartment1", col2);
         THEN("can get CompartmentID from colour") {
           REQUIRE(s.getCompartmentID(col1) == "compartment0");
           REQUIRE(s.getCompartmentID(col2) == "compartment1");
@@ -175,13 +167,10 @@ TEST_CASE("load SBML level 3 document with spatial extension",
 }
 
 SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {
-  std::unique_ptr<libsbml::SBMLDocument> doc(
-      libsbml::readSBMLFromString(sbml_test_data::ABtoC().xml));
-  // write SBML document to file
-  libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-
   sbml::SbmlDocWrapper s;
-  s.importSBMLFile("tmp.xml");
+  QFile f(":/models/ABtoC.xml");
+  f.open(QIODevice::ReadOnly);
+  s.importSBMLString(f.readAll().toStdString());
   GIVEN("SBML document") {
     WHEN("importSBMLFile called") {
       THEN("find compartments") {
