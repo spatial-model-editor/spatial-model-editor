@@ -5,9 +5,13 @@ extraction:
               - libxkbcommon-dev
         after_prepare:
           - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-linux.tgz"
-          - sudo tar xzvf qt5-static-linux.tgz -C /
+          - mkdir $LGTM_WORKSPACE/qt5
+          - tar xzvf qt5-static-linux.tgz -C $LGTM_WORKSPACE/qt5
+          - echo "[Paths]" > $LGTM_WORKSPACE/qt5/qt.conf
+          - echo "Prefix = $LGTM_WORKSPACE/qt5" >> $LGTM_WORKSPACE/qt5/qt.conf
+          - cat $LGTM_WORKSPACE/qt5/qt.conf
           # export path for Qt5 binaries
-          - export PATH=$QT5_INSTALL_PREFIX/bin:$PATH
+          - export PATH=$LGTM_WORKSPACE/qt5/bin:$PATH
           - qmake -v
           # download pre-compiled static libSBML library
           - cd ext
