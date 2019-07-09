@@ -4,8 +4,10 @@
 
 #pragma once
 
-#include "ext/catch/catch.hpp"
+// ostream overloads need to be included before catch header
 #include "ostream_overloads.hpp"
+
+#include "ext/catch/catch.hpp"
 
 // add custom Approximation convenience function for doubles
 inline Catch::Detail::Approx dbl_approx(double x) {

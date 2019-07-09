@@ -27,6 +27,9 @@ class ReacEval {
   std::vector<std::vector<double>> M;
   // vector of result of evaluating reactions
   std::vector<double> result;
+  bool addStoichCoeff(std::vector<double> &Mrow,
+                      const libsbml::SpeciesReference *spec_ref, double sign,
+                      const std::vector<std::string> &speciesIDs);
 
  public:
   // vector of species concentrations that Reaction expressions will use

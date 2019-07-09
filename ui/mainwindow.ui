@@ -109,7 +109,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>5</number>
        </property>
        <widget class="QWidget" name="tabGeometry">
         <property name="whatsThis">
@@ -1138,24 +1138,15 @@
         <layout class="QHBoxLayout" name="horizontalLayout_7">
          <item>
           <layout class="QGridLayout" name="gridSimulate">
-           <item row="0" column="0">
-            <widget class="QLabel" name="lblSimLength">
-             <property name="text">
-              <string>simulation length:</string>
+           <item row="0" column="3">
+            <widget class="QLineEdit" name="txtSimDt">
+             <property name="whatsThis">
+              <string>&lt;h4&gt;Simulation dt&lt;/h4&gt;
+&lt;p&gt;The size of the timestep used by the numerical integrator.&lt;/p&gt;
+&lt;p&gt;If the simulation is unstable, a smaller timestep may improve the situation, although it will also take longer for the simulation to run.&lt;/p&gt;</string>
              </property>
-            </widget>
-           </item>
-           <item row="0" column="4">
-            <widget class="QPushButton" name="btnSimulate">
              <property name="text">
-              <string>Simulate</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QLabel" name="lblSimDt">
-             <property name="text">
-              <string>dt:</string>
+              <string>0.1</string>
              </property>
             </widget>
            </item>
@@ -1172,19 +1163,41 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="3">
-            <widget class="QLineEdit" name="txtSimDt">
+           <item row="0" column="4">
+            <widget class="QPushButton" name="btnSimulate">
              <property name="whatsThis">
-              <string>&lt;h4&gt;Simulation dt&lt;/h4&gt;
-&lt;p&gt;The size of the timestep used by the numerical integrator.&lt;/p&gt;
-&lt;p&gt;If the simulation is unstable, a smaller timestep may improve the situation, although it will also take longer for the simulation to run.&lt;/p&gt;</string>
+              <string>Run a simulation of the specified length, using the timestep 'dt' for the numerical integration</string>
              </property>
              <property name="text">
-              <string>0.1</string>
+              <string>Simulate</string>
              </property>
             </widget>
            </item>
-           <item row="1" column="0" colspan="5">
+           <item row="0" column="2">
+            <widget class="QLabel" name="lblSimDt">
+             <property name="text">
+              <string>dt:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="lblSimLength">
+             <property name="text">
+              <string>simulation length:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="5">
+            <widget class="QPushButton" name="btnResetSimulation">
+             <property name="whatsThis">
+              <string>Reset all concentrations to their initial values, clear all simulation data.</string>
+             </property>
+             <property name="text">
+              <string>Reset Simulation</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0" colspan="6">
             <widget class="QCustomPlot" name="pltPlot" native="true"/>
            </item>
           </layout>

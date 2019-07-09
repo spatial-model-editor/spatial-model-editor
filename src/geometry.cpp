@@ -92,6 +92,7 @@ Field::Field(const Compartment *geom, const std::string &specID,
   imgConc = QImage(geom->getCompartmentImage().size(), QImage::Format_ARGB32);
   conc.resize(geom->ix.size(), 0.0);
   dcdt = conc;
+  init = conc;
   isUniformConcentration = true;
   isSpatial = false;
 }
@@ -120,6 +121,7 @@ void Field::importConcentration(const QImage &img, double scale_factor) {
               static_cast<double>(img.pixel(geometry->ix[i]) - min) /
               static_cast<double>(max - min);
   }
+  init = conc;
   isUniformConcentration = false;
 }
 
@@ -129,6 +131,7 @@ void Field::setUniformConcentration(double concentration) {
   spdlog::info("Field::setUniformConcentration ::   - concentration = {}",
                concentration);
   std::fill(conc.begin(), conc.end(), concentration);
+  init = conc;
   isUniformConcentration = true;
 }
 

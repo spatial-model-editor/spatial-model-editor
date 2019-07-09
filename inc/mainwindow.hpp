@@ -103,6 +103,8 @@ class MainWindow : public QMainWindow {
   // simulate
   void btnSimulate_clicked();
 
+  void btnResetSimulation_clicked();
+
   void graphClicked(QCPAbstractPlottable *plottable, int dataIndex);
 
   void hslideTime_valueChanged(int value);
