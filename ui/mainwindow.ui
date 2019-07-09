@@ -23,6 +23,9 @@
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
+      <property name="childrenCollapsible">
+       <bool>false</bool>
+      </property>
       <widget class="QWidget" name="gridLayoutWidget">
        <layout class="QGridLayout" name="gridLayout">
         <item row="0" column="0">
@@ -62,6 +65,10 @@
           <property name="mouseTracking">
            <bool>true</bool>
           </property>
+          <property name="whatsThis">
+           <string>&lt;h4&gt;Compartment geometry image&lt;/h4&gt;
+&lt;p&gt;An image of the geometry of the model.&lt;/p&gt;</string>
+          </property>
           <property name="lineWidth" stdset="0">
            <number>2</number>
           </property>
@@ -75,8 +82,14 @@
         </item>
         <item row="2" column="0" colspan="2">
          <widget class="QSlider" name="hslideTime">
+          <property name="maximum">
+           <number>0</number>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="tickPosition">
+           <enum>QSlider::NoTicks</enum>
           </property>
          </widget>
         </item>
@@ -89,10 +102,21 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="whatsThis">
+        <string/>
+       </property>
+       <property name="tabShape">
+        <enum>QTabWidget::Rounded</enum>
+       </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tabGeometry">
+        <property name="whatsThis">
+         <string>&lt;h4&gt;Geometry tab&lt;/h4&gt;
+&lt;p&gt;In the Geometry tab you can define the geometry of the model&lt;/p&gt;
+&lt;p&gt;First import an image of the geometry, then double-click on a compartment from the list, and select the corresponding colour on the image.&lt;/p&gt;</string>
+        </property>
         <attribute name="title">
          <string>Geometry</string>
         </attribute>
@@ -135,6 +159,16 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="whatsThis">
+              <string>&lt;p&gt;A list of all the compartments in the model.&lt;/p&gt;
+&lt;p&gt;To assign a compartment to an area of the geometry image:
+&lt;ul&gt;
+&lt;li&gt;Click on the compartment name, then on the 'Select compartment geometry...' button (or simply double-click on the compartment name)&lt;/li&gt;
+&lt;li&gt;Click on the corresponding point on the geometry image on the left&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/p&gt;
+&lt;p&gt;The Compartment settings on the right will be updated to show an image of the new shape of the compartment&lt;/p&gt;</string>
+             </property>
             </widget>
            </item>
            <item row="1" column="1">
@@ -158,6 +192,17 @@
                     <weight>50</weight>
                     <bold>false</bold>
                    </font>
+                  </property>
+                  <property name="toolTip">
+                   <string>The colour of the compartment</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>The colour of the compartment</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>&lt;h4&gt;Compartment Colour&lt;/h4&gt;
+&lt;p&gt;The compartment geometry is generated from all the pixels of this colour in the compartment geometry image on the left.&lt;/p&gt;
+&lt;p&gt;To change the colour, click on 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
                   </property>
                   <property name="autoFillBackground">
                    <bool>false</bool>
@@ -216,6 +261,15 @@
                 </item>
                 <item row="0" column="0">
                  <widget class="QLabel" name="lblCompartmentSize">
+                  <property name="toolTip">
+                   <string>The size of the compartment</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>The size of the compartment</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>The size of the compartment</string>
+                  </property>
                   <property name="text">
                    <string>Size:</string>
                   </property>
@@ -226,8 +280,17 @@
                 </item>
                 <item row="2" column="0">
                  <widget class="QLabel" name="lblCompShapeLabel">
+                  <property name="toolTip">
+                   <string>The shape of the compartment</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>The shape of the compartment</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>The shape of the compartment</string>
+                  </property>
                   <property name="text">
-                   <string>Shape:</string>
+                   <string>Geometry:</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -241,6 +304,17 @@
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>The shape of the compartment</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>The shape of the compartment</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>&lt;h4&gt;Compartment Geometry&lt;/h4&gt;
+&lt;p&gt;The compartment geometry is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
+&lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
                   </property>
                   <property name="text">
                    <string>none</string>
@@ -263,6 +337,17 @@
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="toolTip">
+                 <string/>
+                </property>
+                <property name="statusTip">
+                 <string/>
+                </property>
+                <property name="whatsThis">
+                 <string>&lt;h4&gt;Select compartment geometry...&lt;/h4&gt;
+&lt;p&gt;To assign a geometry to this compartment, click here, then click on the compartment geometry image on the left .&lt;/p&gt;
+&lt;p&gt;The shape of the compartment will be generated from all the pixels in the image of the same colour as the one that was clicked on&lt;/p&gt;</string>
+                </property>
                 <property name="text">
                  <string>Select compartment geometry...</string>
                 </property>
@@ -275,7 +360,12 @@
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="tab">
+       <widget class="QWidget" name="tabMembranes">
+        <property name="whatsThis">
+         <string>&lt;h4&gt;Membranes tab&lt;/h4&gt;
+&lt;p&gt;In the Membranes tab you can see all the membranes in the model, highlighted in green.&lt;/p&gt;
+&lt;p&gt;A membrane is the region where two adjacent compartments touch, and it is where reactions that involve species from both compartments will take place.&lt;/p&gt;</string>
+        </property>
         <attribute name="title">
          <string>Membranes</string>
         </attribute>
@@ -329,7 +419,7 @@
               <item>
                <layout class="QGridLayout" name="gridMembranesSettings">
                 <item row="0" column="0">
-                 <widget class="QLabel" name="lblCompShapeLabel_2">
+                 <widget class="QLabel" name="lblMembraneShapeLabel">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
                     <horstretch>0</horstretch>
@@ -352,6 +442,9 @@
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
+                  <property name="whatsThis">
+                   <string/>
+                  </property>
                   <property name="text">
                    <string>none</string>
                   </property>
@@ -373,6 +466,13 @@
         </layout>
        </widget>
        <widget class="QWidget" name="tabSpecies">
+        <property name="whatsThis">
+         <string>&lt;h4&gt;Species tab&lt;/h4&gt;
+&lt;p&gt;The Species tab contains a list of all the species that live in each compartment of the model.&lt;/p&gt;
+&lt;p&gt;Here you can specify the properties of each species, such as its initial concentration.&lt;/p&gt;
+&lt;p&gt;If the 'Spatial' checkbox is enabled, then its concentration can vary within the compartment, and this concentration can be imported from an image.&lt;/p&gt;
+&lt;p&gt;The species will also diffuse throughout the compartment at a rate given by the 'Diffusion Constant'&lt;/p&gt;</string>
+        </property>
         <attribute name="title">
          <string>Species</string>
         </attribute>
@@ -439,7 +539,14 @@
                    </sizepolicy>
                   </property>
                   <property name="toolTip">
-                   <string>Spatially uniform initial concentration: varies with position</string>
+                   <string>Spatially varying initial concentration: varies with position</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>Spatially varying initial concentration: varies with position</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>&lt;h4&gt;Spatially varying initial concentration&lt;/h4&gt;
+&lt;p&gt;The initial concentration of the species can vary depending on the location within the compartment.&lt;/p&gt;</string>
                   </property>
                   <property name="text">
                    <string>Spatially varying</string>
@@ -448,6 +555,15 @@
                 </item>
                 <item row="0" column="0">
                  <widget class="QLabel" name="lblSpeciesIsSpacial">
+                  <property name="toolTip">
+                   <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>&lt;h4&gt;Spatial&lt;/h4&gt;&lt;p&gt;A spatial species has a concentration that is a function of space within the compartment, i.e. it can take different values at different locations within the compartment&lt;/p&gt;</string>
+                  </property>
                   <property name="text">
                    <string>Spatial:</string>
                   </property>
@@ -458,6 +574,9 @@
                 </item>
                 <item row="0" column="1" colspan="3">
                  <widget class="QCheckBox" name="chkSpeciesIsSpatial">
+                  <property name="toolTip">
+                   <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
+                  </property>
                   <property name="statusTip">
                    <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
                   </property>
@@ -493,6 +612,16 @@
                 </item>
                 <item row="6" column="0">
                  <widget class="QLabel" name="lblDiffConst">
+                  <property name="toolTip">
+                   <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>&lt;h4&gt;Diffusion constant&lt;/h4&gt;
+&lt;p&gt;The rate at which the species diffuses within the compartment&lt;/p&gt;</string>
+                  </property>
                   <property name="text">
                    <string>Diffusion Constant:</string>
                   </property>
@@ -516,7 +645,8 @@
                    <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
                   </property>
                   <property name="whatsThis">
-                   <string>&lt;h4&gt;Diffusion constant&lt;/h4&gt;&lt;p&gt;The rate at which the species diffuses within the compartment&lt;/p&gt;</string>
+                   <string>&lt;h4&gt;Diffusion constant&lt;/h4&gt;
+&lt;p&gt;The rate at which the species diffuses within the compartment&lt;/p&gt;</string>
                   </property>
                  </widget>
                 </item>
@@ -537,6 +667,15 @@
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>A constant species has a fixed concentration</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>A constant species has a fixed concentration</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>&lt;h4&gt;Constant&lt;/h4&gt;&lt;p&gt;A constant species has a fixed concentration. It keeps its initial concentration for the whole simulation.&lt;/p&gt;</string>
                   </property>
                   <property name="text">
                    <string>Constant:</string>
@@ -602,7 +741,8 @@
                    <string>Spatially uniform initial concentration: no spatial dependence</string>
                   </property>
                   <property name="whatsThis">
-                   <string>&lt;h4&gt;Spatiall uuiform initial concentration&lt;/h4&gt;&lt;p&gt;The concentration of the species is the same everywhere in the compartment&lt;/p&gt;</string>
+                   <string>&lt;h4&gt;Spatially uniform initial concentration&lt;/h4&gt;
+&lt;p&gt;The initial concentration of the species is the same everywhere in the compartment.&lt;/p&gt;</string>
                   </property>
                   <property name="text">
                    <string>Spatially uniform</string>
@@ -630,6 +770,15 @@
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
+                  <property name="toolTip">
+                   <string>The colour that is used to display the concentration of this species</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>The colour that is used to display the concentration of this species</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>The colour that is used to display the concentration of this species</string>
+                  </property>
                   <property name="text">
                    <string>Colour:</string>
                   </property>
@@ -646,6 +795,15 @@
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
+                  <property name="toolTip">
+                   <string>Change the colour that is used to display the concentration of this species</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>Change the colour that is used to display the concentration of this species</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>Change the colour that is used to display the concentration of this species</string>
+                  </property>
                   <property name="text">
                    <string>change colour...</string>
                   </property>
@@ -659,7 +817,13 @@
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
+                  <property name="toolTip">
+                   <string>The colour that is used to display the concentration of this species</string>
+                  </property>
                   <property name="statusTip">
+                   <string>The colour that is used to display the concentration of this species</string>
+                  </property>
+                  <property name="whatsThis">
                    <string>The colour that is used to display the concentration of this species</string>
                   </property>
                   <property name="autoFillBackground">
@@ -699,6 +863,12 @@
         </layout>
        </widget>
        <widget class="QWidget" name="tabReactions">
+        <property name="whatsThis">
+         <string>&lt;h4&gt;Reactions tab&lt;/h4&gt;
+&lt;p&gt;In the Reactions tab all the reactions in the model are shown.&lt;/p&gt;
+&lt;p&gt;They can take place either within a compartment, or on the membrane between two compartments.&lt;/p&gt;
+&lt;p&gt;'Reactants' are consumed by the reaction, while 'Products' are produced by the reaction.&lt;/p&gt;</string>
+        </property>
         <attribute name="title">
          <string>Reactions</string>
         </attribute>
@@ -869,6 +1039,10 @@
         </layout>
        </widget>
        <widget class="QWidget" name="tabFunctions">
+        <property name="whatsThis">
+         <string>&lt;h4&gt;Functions tab&lt;/h4&gt;
+&lt;p&gt;A list of the mathematical functions that are defined in the model.&lt;/p&gt;</string>
+        </property>
         <attribute name="title">
          <string>Functions</string>
         </attribute>
@@ -954,6 +1128,10 @@
         </layout>
        </widget>
        <widget class="QWidget" name="tabSimulate">
+        <property name="whatsThis">
+         <string>&lt;h4&gt;Simulate tab&lt;/h4&gt;
+&lt;p&gt;In the Simulate tab you can perform a simple numerical simulation of the model.&lt;/p&gt;</string>
+        </property>
         <attribute name="title">
          <string>Simulate</string>
         </attribute>
@@ -983,6 +1161,9 @@
            </item>
            <item row="0" column="1">
             <widget class="QLineEdit" name="txtSimLength">
+             <property name="whatsThis">
+              <string>&lt;h4&gt;Simulation length&lt;/h4&gt;&lt;p&gt;The length of time that sould be simulated&lt;/p&gt;</string>
+             </property>
              <property name="inputMask">
               <string/>
              </property>
@@ -993,6 +1174,11 @@
            </item>
            <item row="0" column="3">
             <widget class="QLineEdit" name="txtSimDt">
+             <property name="whatsThis">
+              <string>&lt;h4&gt;Simulation dt&lt;/h4&gt;
+&lt;p&gt;The size of the timestep used by the numerical integrator.&lt;/p&gt;
+&lt;p&gt;If the simulation is unstable, a smaller timestep may improve the situation, although it will also take longer for the simulation to run.&lt;/p&gt;</string>
+             </property>
              <property name="text">
               <string>0.1</string>
              </property>
@@ -1006,6 +1192,10 @@
         </layout>
        </widget>
        <widget class="QWidget" name="tabSBML">
+        <property name="whatsThis">
+         <string>&lt;h4&gt;SBML tab&lt;/h4&gt;
+&lt;p&gt;The SBML tab displays the raw xml SBML document that defines the model. Note: currently does not contain any spatial information.&lt;/p&gt;</string>
+        </property>
         <attribute name="title">
          <string>SBML</string>
         </attribute>

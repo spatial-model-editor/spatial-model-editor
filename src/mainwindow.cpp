@@ -34,11 +34,16 @@ MainWindow::MainWindow(QWidget *parent)
   lblSpeciesColourPixmap = QPixmap(1, 1);
   lblCompartmentColourPixmap = QPixmap(1, 1);
 
+  enableTabs();
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
+
+  statusBarPermanentMessage = new QLabel(QString(), this);
+  ui->statusBar->addWidget(statusBarPermanentMessage);
 }
 
 void MainWindow::setupConnections() {
+  // tab bar
   connect(ui->tabMain, &QTabWidget::currentChanged, this,
           &MainWindow::tabMain_currentChanged);
 
@@ -160,6 +165,7 @@ void MainWindow::tabMain_currentChanged(int index) {
     SIMULATE = 5,
     SBML = 6
   };
+  ui->tabMain->setWhatsThis(ui->tabMain->tabWhatsThis(index));
   spdlog::debug("MainWindow::tabMain_currentChanged :: Tab changed to {} [{}]",
                 index, ui->tabMain->tabText(index).toStdString());
   ui->hslideTime->setEnabled(false);
@@ -196,6 +202,9 @@ void MainWindow::tabMain_currentChanged(int index) {
 void MainWindow::tabMain_updateGeometry() {
   ui->listCompartments->clear();
   ui->listCompartments->insertItems(0, sbmlDoc.compartments);
+  if (ui->listCompartments->count() > 0) {
+    ui->listCompartments->setCurrentRow(0);
+  }
   ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
   ui->lblGeometryStatus->setText("Compartment Geometry:");
 }
@@ -261,6 +270,13 @@ void MainWindow::tabMain_updateSimulate() {
   hslideTime_valueChanged(0);
 }
 
+void MainWindow::enableTabs() {
+  bool enable = sbmlDoc.isValid && sbmlDoc.hasGeometry;
+  for (int i = 1; i < ui->tabMain->count(); ++i) {
+    ui->tabMain->setTabEnabled(i, enable);
+  }
+}
+
 void MainWindow::action_Open_SBML_file_triggered() {
   QString filename = QFileDialog::getOpenFileName(
       this, "Open SBML file", "", "SBML file (*.xml)", nullptr,
@@ -270,6 +286,7 @@ void MainWindow::action_Open_SBML_file_triggered() {
     if (sbmlDoc.isValid) {
       ui->tabMain->setCurrentIndex(0);
       tabMain_currentChanged(0);
+      enableTabs();
     }
   }
 }
@@ -287,6 +304,7 @@ void MainWindow::menuOpen_example_SBML_file_triggered(QAction *action) {
   sbmlDoc.importSBMLString(f.readAll().toStdString());
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
+  enableTabs();
 }
 
 void MainWindow::action_Save_SBML_file_triggered() {
@@ -305,8 +323,9 @@ void MainWindow::actionGeometry_from_image_triggered() {
       QFileDialog::Option::DontUseNativeDialog);
   if (!filename.isEmpty()) {
     sbmlDoc.importGeometryFromImage(filename);
-    ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
     ui->tabMain->setCurrentIndex(0);
+    tabMain_currentChanged(0);
+    enableTabs();
   }
 }
 
@@ -321,8 +340,9 @@ void MainWindow::menuExample_geometry_image_triggered(QAction *action) {
         filename);
   }
   sbmlDoc.importGeometryFromImage(filename);
-  ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
   ui->tabMain->setCurrentIndex(0);
+  tabMain_currentChanged(0);
+  enableTabs();
 }
 
 void MainWindow::action_About_triggered() {
@@ -369,9 +389,10 @@ void MainWindow::lblGeometry_mouseClicked(QRgb col) {
     listCompartments_currentTextChanged(compartmentID);
     spdlog::info(
         "MainWindow::lblGeometry_mouseClicked: assigned compartment {} to "
-        "colour {}",
+        "colour {:x}",
         compartmentID, col);
     waitingForCompartmentChoice = false;
+    statusBarPermanentMessage->clear();
   } else {
     // display compartment the user just clicked on
     auto items = ui->listCompartments->findItems(sbmlDoc.getCompartmentID(col),
@@ -382,36 +403,44 @@ void MainWindow::lblGeometry_mouseClicked(QRgb col) {
   }
 }
 
-void MainWindow::btnChangeCompartment_clicked() {
-  spdlog::debug("MainWindow::btnChangeCompartment_clicked");
+bool MainWindow::isValidModelAndGeometry() {
   if (sbmlDoc.isValid == false) {
-    spdlog::debug(
-        "MainWindow::btnChangeCompartment_clicked :: - no SBML model");
-    if (QMessageBox::question(
-            this, "No SBML model loaded",
-            "No SBML model to assign compartment geometry - import one now?",
-            QMessageBox::Yes | QMessageBox::No,
-            QMessageBox::Yes) == QMessageBox::Yes) {
+    spdlog::debug("MainWindow::isValidModelAndGeometry :: - no SBML model");
+    if (QMessageBox::question(this, "No SBML model",
+                              "No valid SBML model loaded - import one now?",
+                              QMessageBox::Yes | QMessageBox::No,
+                              QMessageBox::Yes) == QMessageBox::Yes) {
       action_Open_SBML_file_triggered();
     }
-    return;
+    return false;
   }
   if (sbmlDoc.hasGeometry == false) {
-    spdlog::debug(
-        "MainWindow::btnChangeCompartment_clicked :: - no geometry image");
-    if (QMessageBox::question(this, "No image loaded",
+    spdlog::debug("MainWindow::isValidModelAndGeometry :: - no geometry image");
+    if (QMessageBox::question(this, "No compartment geometry",
                               "No image of compartment geometry loaded - "
                               "import one now?",
                               QMessageBox::Yes | QMessageBox::No,
                               QMessageBox::Yes) == QMessageBox::Yes) {
       actionGeometry_from_image_triggered();
     }
+    return false;
+  }
+  return true;
+}
+
+void MainWindow::btnChangeCompartment_clicked() {
+  spdlog::debug("MainWindow::btnChangeCompartment_clicked");
+  if (!isValidModelAndGeometry()) {
     return;
   }
   spdlog::debug(
-      "MainWindow::btnChangeCompartment_clicked :: - waiting for user to click "
+      "MainWindow::btnChangeCompartment_clicked :: - waiting for user to "
+      "click "
       "on geometry image");
   waitingForCompartmentChoice = true;
+  statusBarPermanentMessage->setText(
+      "Please click on the desired location on the compartment geometry "
+      "image...");
 }
 
 void MainWindow::listCompartments_currentTextChanged(
@@ -460,7 +489,8 @@ void MainWindow::listCompartments_itemDoubleClicked(QListWidgetItem *item) {
 void MainWindow::listMembranes_currentTextChanged(const QString &currentText) {
   if (!currentText.isEmpty()) {
     spdlog::debug(
-        "MainWindow::listMembranes_currentTextChanged :: Membrane {} selected",
+        "MainWindow::listMembranes_currentTextChanged :: Membrane {} "
+        "selected",
         currentText.toStdString());
     // update image
     QPixmap pixmap = QPixmap::fromImage(sbmlDoc.getMembraneImage(currentText));
@@ -643,7 +673,8 @@ void MainWindow::listReactions_currentItemChanged(QTreeWidgetItem *current,
     const QString &compID = current->parent()->text(0);
     const QString &reacID = current->text(0);
     spdlog::debug(
-        "MainWindow::listReactions_currentItemChanged :: Reaction {} selected",
+        "MainWindow::listReactions_currentItemChanged :: Reaction {} "
+        "selected",
         reacID.toStdString());
     // display image of reaction compartment or membrane
     if (std::find(sbmlDoc.compartments.cbegin(), sbmlDoc.compartments.cend(),
@@ -674,7 +705,8 @@ void MainWindow::listFunctions_currentTextChanged(const QString &currentText) {
   ui->lblFunctionDef->clear();
   if (currentText.size() > 0) {
     spdlog::debug(
-        "MainWindow::listFunctions_currentTextChanged :: Function {} selected",
+        "MainWindow::listFunctions_currentTextChanged :: Function {} "
+        "selected",
         currentText.toStdString());
     const auto *func =
         sbmlDoc.model->getFunctionDefinition(currentText.toStdString());

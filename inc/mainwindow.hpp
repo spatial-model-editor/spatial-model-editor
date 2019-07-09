@@ -18,6 +18,7 @@ class MainWindow : public QMainWindow {
 
  private:
   std::shared_ptr<Ui::MainWindow> ui;
+  QLabel *statusBarPermanentMessage;
   sbml::SbmlDocWrapper sbmlDoc;
   bool waitingForCompartmentChoice = false;
 
@@ -32,15 +33,20 @@ class MainWindow : public QMainWindow {
   // update list of species to display in simulation result image
   void updateSpeciesDisplaySelect();
 
+  // check if SBML model and geometry image are both valid
+  // offer user to load a valid one if not
+  bool isValidModelAndGeometry();
+
   // <UI>
   void tabMain_currentChanged(int index);
-
   void tabMain_updateGeometry();
   void tabMain_updateMembranes();
   void tabMain_updateSpecies();
   void tabMain_updateReactions();
   void tabMain_updateFunctions();
   void tabMain_updateSimulate();
+  // if SBML model and geometry image are both valid, enable all tabs
+  void enableTabs();
 
   // File menu actions
   void action_Open_SBML_file_triggered();
