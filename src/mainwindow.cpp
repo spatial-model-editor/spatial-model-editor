@@ -137,6 +137,9 @@ void MainWindow::setupConnections() {
   connect(ui->btnSimulate, &QPushButton::clicked, this,
           &MainWindow::btnSimulate_clicked);
 
+  connect(ui->btnResetSimulation, &QPushButton::clicked, this,
+          &MainWindow::btnResetSimulation_clicked);
+
   connect(ui->pltPlot, &QCustomPlot::plottableClick, this,
           &MainWindow::graphClicked);
 
@@ -221,6 +224,8 @@ void MainWindow::tabMain_updateMembranes() {
 }
 
 void MainWindow::tabMain_updateSpecies() {
+  // clear any changes to species concentrations by simulations
+  btnResetSimulation_clicked();
   // update tree list of species
   auto *ls = ui->listSpecies;
   ls->clear();
@@ -741,6 +746,8 @@ void MainWindow::btnSimulate_clicked() {
     conc[s].push_back(sim.field[s]->getMeanConcentration());
   }
 
+  ui->statusBar->showMessage("Simulating...");
+  this->setCursor(Qt::WaitCursor);
   // do Euler integration
   double t = 0;
   double dt = ui->txtSimDt->text().toDouble();
@@ -756,6 +763,10 @@ void MainWindow::btnSimulate_clicked() {
     ui->lblGeometry->setImage(images.back());
     ui->lblGeometry->repaint();
     QApplication::processEvents();
+    ui->statusBar->showMessage(
+        QString("Simulating... %1%")
+            .arg(QString::number(static_cast<int>(
+                100 * t / ui->txtSimLength->text().toDouble()))));
   }
 
   // plot results
@@ -797,6 +808,23 @@ void MainWindow::btnSimulate_clicked() {
             &MainWindow::updateSpeciesDisplaySelect);
   }
   ui->btnSpeciesDisplaySelect->setMenu(menu);
+
+  ui->statusBar->showMessage("Simulation complete.");
+  this->setCursor(Qt::ArrowCursor);
+}
+
+void MainWindow::btnResetSimulation_clicked() {
+  ui->pltPlot->clearGraphs();
+  ui->pltPlot->replot();
+  ui->hslideTime->setMinimum(0);
+  ui->hslideTime->setMaximum(0);
+  ui->hslideTime->setEnabled(false);
+  images.clear();
+  // reset all fields to their initial values
+  for (auto &field : sbmlDoc.mapSpeciesIdToField) {
+    field.second.conc = field.second.init;
+  }
+  ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
 }
 
 void MainWindow::graphClicked(QCPAbstractPlottable *plottable, int dataIndex) {

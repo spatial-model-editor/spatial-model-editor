@@ -59,8 +59,13 @@ ExprEval::ExprEval(const std::string &expression,
   std::string strListSymbols = "";
   for (const auto &pair : symbolPairList) {
     if (pair.second == exprtk::parser<double>::e_st_variable) {
-      strListSymbols.append(" ");
-      strListSymbols.append(pair.first);
+      QString value;
+      const auto iter = constants.find(pair.first);
+      if (iter != constants.cend()) {
+        value = QString::number(iter->second);
+      }
+      strListSymbols.append(
+          QString(" %1 (%2),").arg(pair.first.c_str(), value).toStdString());
     }
   }
   spdlog::debug("ExprEval::ExprEval :   - symbols used: {}", strListSymbols);

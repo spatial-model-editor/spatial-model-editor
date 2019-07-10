@@ -66,6 +66,8 @@ class Field {
   std::vector<double> conc;
   // field of dcdt values
   std::vector<double> dcdt;
+  // field of initial species concentration
+  std::vector<double> init;
   Field() = default;
   Field(const Compartment *geom, const std::string &specID,
         double diffConst = 1.0, const QColor &col = QColor(255, 0, 0));
