@@ -100,26 +100,69 @@ Field::Field(const Compartment *geom, const std::string &specID,
 void Field::importConcentration(const QImage &img, double scale_factor) {
   spdlog::info("Field::importConcentration :: species {}, compartment {}",
                speciesID, geometry->compartmentID);
+  spdlog::info("Field::importConcentration ::   - importing from {}x{} image",
+               img.width(), img.height());
   // rescaling [min, max] pixel values to the range [0, scale_factor] for now
   QRgb min = std::numeric_limits<QRgb>::max();
   QRgb max = 0;
   for (int x = 0; x < img.width(); ++x) {
     for (int y = 0; y < img.height(); ++y) {
-      min = std::min(min, img.pixel(x, y));
-      max = std::max(max, img.pixel(x, y));
+      min = std::min(min, img.pixel(x, y) & 0x00ffffff);
+      max = std::max(max, img.pixel(x, y) & 0x00ffffff);
     }
   }
   if (max == min) {
-    // rescale uniform distribution to scale_factor
-    min = 0;
+    if (max == 0) {
+      // if all pixels zero, then set conc to zero
+      spdlog::info(
+          "Field::importConcentration ::   - all pixels black: rescaling -> 0");
+      scale_factor = 0;
+      max = 1;
+    } else {
+      // if all pixels equal, then set conc to scale_factor
+      spdlog::info(
+          "Field::importConcentration ::   - all pixels equal: rescaling -> {}",
+          scale_factor);
+      min -= 1;
+    }
+  } else {
+    spdlog::info(
+        "Field::importConcentration ::   - rescaling [{},{}] -> [{},{}]", min,
+        max, 0.0, scale_factor);
   }
-  spdlog::info(
-      "Field::importConcentration ::   - rescaling [{}, {}] -> [{}, {}]", min,
-      max, 0.0, scale_factor);
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
-    conc[i] = scale_factor *
-              static_cast<double>(img.pixel(geometry->ix[i]) - min) /
-              static_cast<double>(max - min);
+    conc[i] =
+        scale_factor *
+        static_cast<double>((img.pixel(geometry->ix[i]) & 0x00ffffff) - min) /
+        static_cast<double>(max - min);
+  }
+  init = conc;
+  isUniformConcentration = false;
+}
+
+void Field::importConcentration(
+    const std::vector<double> &sbmlConcentrationArray) {
+  spdlog::info("Field::importConcentration :: species {}, compartment {}",
+               speciesID, geometry->compartmentID);
+  spdlog::info(
+      "Field::importConcentration ::   - importing from sbml array of size {}",
+      sbmlConcentrationArray.size());
+  if (static_cast<int>(sbmlConcentrationArray.size()) !=
+      geometry->getCompartmentImage().width() *
+          geometry->getCompartmentImage().height()) {
+    spdlog::warn(
+        "Field::importConcentration ::   - mismatch between array size [{}] "
+        "and compartment image size [{}x{} = {}]",
+        sbmlConcentrationArray.size(), geometry->getCompartmentImage().width(),
+        geometry->getCompartmentImage().height(),
+        geometry->getCompartmentImage().width() *
+            geometry->getCompartmentImage().height());
+  }
+  for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
+    const auto &point = geometry->ix[i];
+    int Lx = geometry->getCompartmentImage().width();
+    int arrayIndex = point.x() + Lx * point.y();
+    conc[i] = sbmlConcentrationArray[static_cast<std::size_t>(arrayIndex)];
   }
   init = conc;
   isUniformConcentration = false;
@@ -152,6 +195,19 @@ const QImage &Field::getConcentrationImage() {
   return imgConc;
 }
 
+std::vector<double> Field::getConcentrationArray() const {
+  int size = geometry->getCompartmentImage().width() *
+             geometry->getCompartmentImage().height();
+  std::vector<double> arr(static_cast<std::size_t>(size), 0.0);
+  for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
+    const auto &point = geometry->ix[i];
+    int Lx = geometry->getCompartmentImage().width();
+    int arrayIndex = point.x() + Lx * point.y();
+    arr[static_cast<std::size_t>(arrayIndex)] = conc[i];
+  }
+  return arr;
+}
+
 void Field::applyDiffusionOperator() {
   const Compartment *g = geometry;
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
@@ -161,7 +217,7 @@ void Field::applyDiffusionOperator() {
   }
 }
 
-double Field::getMeanConcentration() {
+double Field::getMeanConcentration() const {
   return std::accumulate(conc.cbegin(), conc.cend(), 0.0) /
          static_cast<double>(conc.size());
 }

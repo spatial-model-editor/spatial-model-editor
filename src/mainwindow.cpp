@@ -11,6 +11,7 @@
 #include "logger.hpp"
 #include "simulate.hpp"
 #include "ui_mainwindow.h"
+#include "version.hpp"
 
 static void selectFirstChild(QTreeWidget *tree) {
   auto *firstParent = tree->topLevelItem(0);
@@ -29,17 +30,20 @@ MainWindow::MainWindow(QWidget *parent)
   spdlog::set_pattern("[%^%l%$] %v");
   spdlog::set_level(spdlog::level::debug);
 
-  setupConnections();
+  shortcutStopSimulation = new QShortcut(this);
+  shortcutStopSimulation->setKey(Qt::CTRL + Qt::Key_C);
 
   lblSpeciesColourPixmap = QPixmap(1, 1);
   lblCompartmentColourPixmap = QPixmap(1, 1);
 
+  statusBarPermanentMessage = new QLabel(QString(), this);
+  ui->statusBar->addWidget(statusBarPermanentMessage);
+
+  setupConnections();
+
   enableTabs();
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
-
-  statusBarPermanentMessage = new QLabel(QString(), this);
-  ui->statusBar->addWidget(statusBarPermanentMessage);
 }
 
 void MainWindow::setupConnections() {
@@ -139,6 +143,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->btnResetSimulation, &QPushButton::clicked, this,
           &MainWindow::btnResetSimulation_clicked);
+
+  connect(shortcutStopSimulation, &QShortcut::activated, this,
+          [this]() { isSimulationRunning = false; });
 
   connect(ui->pltPlot, &QCustomPlot::plottableClick, this,
           &MainWindow::graphClicked);
@@ -353,7 +360,8 @@ void MainWindow::menuExample_geometry_image_triggered(QAction *action) {
 void MainWindow::action_About_triggered() {
   QMessageBox msgBox;
   msgBox.setWindowTitle("About Spatial Model Editor");
-  QString info("<h3>About Spatial Model Editor</h3>\n");
+  QString info(QString("<h3>Spatial Model Editor %1</h3>")
+                   .arg(SPATIAL_MODEL_EDITOR_VERSION));
   info.append(
       "<p>Documentation:<ul><li><a href="
       "\"https://spatial-model-editor.readthedocs.io\">"
@@ -553,12 +561,12 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
 void MainWindow::chkSpeciesIsSpatial_toggled(bool enabled) {
   const auto &speciesID = ui->listSpecies->currentItem()->text(0);
   // if new value differs from previous one - update model
-  if (sbmlDoc.mapSpeciesIdToField.at(speciesID).isSpatial != enabled) {
+  if (sbmlDoc.getIsSpatial(speciesID) != enabled) {
     spdlog::info(
         "MainWindow::chkSpeciesIsSpatial_toggled :: setting species {} "
         "isSpatial: {}",
         speciesID, enabled);
-    sbmlDoc.mapSpeciesIdToField.at(speciesID).isSpatial = enabled;
+    sbmlDoc.setIsSpatial(speciesID, enabled);
     if (!enabled) {
       // must be spatially uniform if not spatial
       ui->radInitialConcentrationUniform->setChecked(enabled);
@@ -747,6 +755,7 @@ void MainWindow::btnSimulate_clicked() {
   }
 
   ui->statusBar->showMessage("Simulating...");
+  isSimulationRunning = true;
   this->setCursor(Qt::WaitCursor);
   // do Euler integration
   double t = 0;
@@ -763,8 +772,11 @@ void MainWindow::btnSimulate_clicked() {
     ui->lblGeometry->setImage(images.back());
     ui->lblGeometry->repaint();
     QApplication::processEvents();
+    if (!isSimulationRunning) {
+      break;
+    }
     ui->statusBar->showMessage(
-        QString("Simulating... %1%")
+        QString("Simulating... %1% (press ctrl+c to cancel)")
             .arg(QString::number(static_cast<int>(
                 100 * t / ui->txtSimLength->text().toDouble()))));
   }

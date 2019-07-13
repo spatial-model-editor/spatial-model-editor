@@ -23,6 +23,7 @@ SOURCES += \
     src/qlabelmousetracker.cpp \
     src/sbml.cpp \
     src/simulate.cpp \
+    src/version.cpp \
     ext/qcustomplot/qcustomplot.cpp
 
 HEADERS += \

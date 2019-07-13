@@ -147,33 +147,6 @@ matrix:
         - qmake -Wall -config debug ../test.pro
         - make -j2
         - valgrind --leak-check=full ./test -d=yes "[non-gui]"
-    ##########################################################################
-    # linux build: coverity scan (only runs on push to "coverity_scan" branch)
-    ##########################################################################
-    - os: linux
-      dist: xenial
-      compiler: gcc
-      env:
-        - secure: "f5KWIIVpVdy66JpgiWbu/Ua9lbDmQJ0lxuki0GNL0d8WAetPlsFONgg0Ujr+vchFcz18FR58sTYAamxUPejrfjNXqeTNXAKPEqB2DZZlOs6v59SJx0NN7zZM2S+l03z9XBzdAq7VsFOrdqcPtiCv9LeHPGdSsrLqEuxBip7BQ1GAuFTIEOocYlbCFzhdnTY5fOKkagyUqxITMtgO/sNWX0052w/1mKs3iO41jlXkj897c7uW7ekx2mQ/MIMW5smcEm37IeZ02WWK8aKCXoFLq0RppP1UzDfqDYcJk5N+pVRDfXz6VHz0QOYYIDNLXC+RMbVeLo6rA4HCo7UhTl+GXfCjgsWocX4Kc48L0xiZus7kwscyFOSyRdzwMFXFppAfsr9GBuFhMdsvRfD1DtTWKOk1tyU/6h+6MdiB/bDkA1R3BVjVkwNuJfu0jZKGX2tXn6ZeFxWl++XlOrHkklRLWh7gLLBe8jKQfn15Ee7GyvBZytK0LDGKxLPupnTeWtIA65ucXYDUHzNbEr2SnQ3XCGJ+uyp52NPXeMVySdyxEj+vMDAtpLe4jQiYKqn8Mz/eyTf3tJdru2BTB4rFyrCpUW3yCn3WEffiF79ruAya3rBwv8ST4zFAmqUoAoBkt6Iz2URLYmGAbUq5VpggRLgljsa27dRDLdpyUWZanlhsxfo="
-      before_install:
-        - '[ "$TRAVIS_BRANCH" == coverity_scan ] || exit 0'
-        - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
-        - # get blame info
-        - git fetch --unshallow
-      addons:
-        apt:
-          packages:
-            - libxkbcommon-dev
-        coverity_scan:
-          project:
-            name: "lkeegan/spatial-model-editor"
-            description: "Spatial Model Editor"
-          notification_email: liam@keegan.ch
-          build_command_prepend: "qmake spatial-model-editor.pro -config debug"
-          build_command: "make"
-          branch_pattern: coverity_scan
-      script:
-        cat /home/travis/build/lkeegan/spatial-model-editor/cov-int/build-log.txt
 
 before_script:
   # install pre-compiled Qt5 binaries & static libraries to $QT5_INSTALL_PREFIX

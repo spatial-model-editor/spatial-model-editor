@@ -21,36 +21,14 @@
 // this one starts
 class ModalWidgetTimer : public QObject {
   Q_OBJECT
- public:
+
+ private:
   QTimer timer;
   QString message;
   QString result;
   int keyDelay;
   int timeLeft;
   ModalWidgetTimer *waitUntilDone;
-
-  explicit ModalWidgetTimer(int keyInterval = 50, int timerInterval = 100,
-                            int timeout = 30000)
-      : QObject(nullptr), keyDelay(keyInterval), timeLeft(timeout) {
-    timer.setInterval(timerInterval);
-    QObject::connect(&timer, &QTimer::timeout, this,
-                     &ModalWidgetTimer::lookForWidget);
-  }
-
-  void setMessage(const QString &msg = {}) { message = msg; }
-
-  void start() {
-    qDebug() << "ModalWidgetTimer :: starting timer" << this;
-    waitUntilDone = nullptr;
-    timer.start();
-  }
-
-  void startAfter(ModalWidgetTimer *waitForMe = nullptr) {
-    qDebug() << "ModalWidgetTimer :: waiting for " << waitForMe
-             << "to complete, then starting timer" << this;
-    waitUntilDone = waitForMe;
-    timer.start();
-  }
 
   void getText(QWidget *widget) {
     // check if widget is a QFileDialog
@@ -115,4 +93,32 @@ class ModalWidgetTimer : public QObject {
       timer.stop();
     }
   }
+
+ public:
+  explicit ModalWidgetTimer(int keyInterval = 50, int timerInterval = 100,
+                            int timeout = 30000)
+      : QObject(nullptr), keyDelay(keyInterval), timeLeft(timeout) {
+    timer.setInterval(timerInterval);
+    QObject::connect(&timer, &QTimer::timeout, this,
+                     &ModalWidgetTimer::lookForWidget);
+  }
+
+  void setMessage(const QString &msg = {}) { message = msg; }
+
+  void start() {
+    qDebug() << "ModalWidgetTimer :: starting timer" << this;
+    waitUntilDone = nullptr;
+    timer.start();
+  }
+
+  void startAfter(ModalWidgetTimer *waitForMe = nullptr) {
+    qDebug() << "ModalWidgetTimer :: waiting for " << waitForMe
+             << "to complete, then starting timer" << this;
+    waitUntilDone = waitForMe;
+    timer.start();
+  }
+
+  const QString &getResult() const { return result; }
+
+  bool isRunning() const { return timer.isActive(); }
 };

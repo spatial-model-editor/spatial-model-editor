@@ -21,6 +21,8 @@ class MainWindow : public QMainWindow {
   QLabel *statusBarPermanentMessage;
   sbml::SbmlDocWrapper sbmlDoc;
   bool waitingForCompartmentChoice = false;
+  QShortcut *shortcutStopSimulation;
+  bool isSimulationRunning = false;
 
   QPixmap lblSpeciesColourPixmap;
   QPixmap lblCompartmentColourPixmap;
