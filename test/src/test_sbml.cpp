@@ -177,6 +177,7 @@ SCENARIO("import SBML doc without geometry", "[sbml][non-gui]") {
       s.setIsSpatial("spec1c0", true);
       s.setIsSpatial("spec0c1", true);
       s.setDiffusionConstant("spec0c0", 0.123);
+      s.setDiffusionConstant("spec1c0", 0.1);
       s.setDiffusionConstant("spec1c0", 0.999999);
       s.setDiffusionConstant("spec0c1", 23.1 + 1e-12);
       CAPTURE(s.getDiffusionConstant("spec0c0"));
