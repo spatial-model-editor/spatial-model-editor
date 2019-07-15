@@ -9,8 +9,7 @@
 #include "sbml_test_data/very_simple_model.hpp"
 #include "sbml_test_data/yeast_glycolysis.hpp"
 
-SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
-  // create simple SBML level 2.4 model
+void createSBMLlvl2doc(const std::string &filename) {
   std::unique_ptr<libsbml::SBMLDocument> document(
       new libsbml::SBMLDocument(2, 4));
   // create model
@@ -43,13 +42,182 @@ SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
   auto *kin = model->createKineticLaw();
   kin->setFormula("5*spec0c0");
   reac->setKineticLaw(kin);
-  // create a function
-  auto *func = model->createFunctionDefinition();
-  func->setId("func1");
   // write SBML document to file
-  libsbml::SBMLWriter w;
-  w.writeSBML(document.get(), "tmp.xml");
+  libsbml::SBMLWriter().writeSBML(document.get(), filename);
+}
 
+SCENARIO("import SBML doc without geometry", "[sbml][non-gui]") {
+  // create simple SBML level 2.4 model
+  createSBMLlvl2doc("tmp.xml");
+  // import SBML model
+  sbml::SbmlDocWrapper s;
+  s.importSBMLFile("tmp.xml");
+  REQUIRE(s.isValid == true);
+  // export it again
+  s.exportSBMLFile("tmp.xml");
+  THEN("upgrade SBML doc and add default 2d spatial geometry") {
+    // load new model
+    std::unique_ptr<libsbml::SBMLDocument> doc(
+        libsbml::readSBMLFromFile("tmp.xml"));
+    REQUIRE(doc != nullptr);
+    auto *model = doc->getModel();
+    REQUIRE(model != nullptr);
+    REQUIRE(model->getLevel() == 3);
+    REQUIRE(model->getVersion() == 2);
+
+    REQUIRE(doc->isPackageEnabled("spatial") == true);
+    auto *plugin = dynamic_cast<libsbml::SpatialModelPlugin *>(
+        model->getPlugin("spatial"));
+    REQUIRE(plugin != nullptr);
+    REQUIRE(plugin->isSetGeometry() == true);
+    auto *geom = plugin->getGeometry();
+    REQUIRE(geom != nullptr);
+    REQUIRE(geom->getNumCoordinateComponents() == 2);
+    REQUIRE(geom->getCoordinateComponent(0)->getType() ==
+            libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
+    REQUIRE(geom->getCoordinateComponent(1)->getType() ==
+            libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
+
+    REQUIRE(geom->getNumGeometryDefinitions() == 1);
+    REQUIRE(geom->getGeometryDefinition(0)->isSampledFieldGeometry() == true);
+    REQUIRE(geom->getGeometryDefinition(0)->getIsActive() == true);
+    auto *sfgeom = dynamic_cast<libsbml::SampledFieldGeometry *>(
+        geom->getGeometryDefinition(0));
+    REQUIRE(sfgeom != nullptr);
+    for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
+      auto *comp = model->getCompartment(i);
+      auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
+          comp->getPlugin("spatial"));
+      REQUIRE(scp->isSetCompartmentMapping() == true);
+      std::string domainTypeID = scp->getCompartmentMapping()->getDomainType();
+      REQUIRE(geom->getDomainByDomainType(domainTypeID) ==
+              geom->getDomain(comp->getId() + "_domain"));
+      REQUIRE(sfgeom->getSampledVolumeByDomainType(domainTypeID)->getId() ==
+              comp->getId() + "_sampledVolume");
+    }
+  }
+  WHEN("import geometry & assign compartments") {
+    // import geometry image & assign compartments to colours
+    s.importGeometryFromImage(":/geometry/single-pixels-3x1.bmp");
+    s.setCompartmentColour("compartment0", 0xffaaaaaa);
+    s.setCompartmentColour("compartment1", 0xff525252);
+    // export it again
+    s.exportSBMLFile("tmp.xml");
+
+    std::unique_ptr<libsbml::SBMLDocument> doc(
+        libsbml::readSBMLFromFile("tmp.xml"));
+    auto *model = doc->getModel();
+    auto *plugin = dynamic_cast<libsbml::SpatialModelPlugin *>(
+        model->getPlugin("spatial"));
+    auto *geom = plugin->getGeometry();
+    auto *sfgeom = dynamic_cast<libsbml::SampledFieldGeometry *>(
+        geom->getGeometryDefinition(0));
+    std::vector<int> sfvals;
+    auto *sf = geom->getSampledField(sfgeom->getSampledField());
+    sf->getSamples(sfvals);
+    REQUIRE(sf->getNumSamples1() == 3);
+    REQUIRE(sf->getNumSamples2() == 1);
+    CAPTURE(static_cast<unsigned>(sfvals[0]));
+    CAPTURE(static_cast<unsigned>(sfvals[1]));
+    CAPTURE(static_cast<unsigned>(sfvals[2]));
+
+    auto *scp0 = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
+        model->getCompartment("compartment0")->getPlugin("spatial"));
+    REQUIRE(scp0->isSetCompartmentMapping() == true);
+    auto *sfvol0 = sfgeom->getSampledVolumeByDomainType(
+        scp0->getCompartmentMapping()->getDomainType());
+    CAPTURE(sfvol0->getSampledValue());
+    REQUIRE(static_cast<unsigned>(sfvol0->getSampledValue()) == 0xffaaaaaa);
+    REQUIRE(static_cast<unsigned>(sfvol0->getSampledValue()) ==
+            static_cast<unsigned>(sfvals[1]));
+
+    auto *scp1 = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
+        model->getCompartment("compartment1")->getPlugin("spatial"));
+    REQUIRE(scp1->isSetCompartmentMapping() == true);
+    auto *sfvol1 = sfgeom->getSampledVolumeByDomainType(
+        scp1->getCompartmentMapping()->getDomainType());
+    CAPTURE(sfvol1->getSampledValue());
+    REQUIRE(static_cast<unsigned>(sfvol1->getSampledValue()) == 0xff525252);
+    REQUIRE(static_cast<unsigned>(sfvol1->getSampledValue()) ==
+            static_cast<unsigned>(sfvals[2]));
+
+    WHEN("import concentration & set diff constants") {
+      // import concentration
+      s.importConcentrationFromImage("spec0c0",
+                                     ":/geometry/single-pixels-3x1.bmp");
+      // spec0c0 concentration set to 1 (default rescaling)
+      // -> c0 pixel (1,0) has default species colour (230,25,75)
+      // -> other pixels transparent
+      REQUIRE(s.getConcentrationImage("spec0c0").size() == QSize(3, 1));
+      REQUIRE(s.getConcentrationImage("spec0c0").pixel(1, 0) ==
+              QColor(230, 25, 75).rgba());
+      REQUIRE(s.getConcentrationImage("spec0c0").pixel(0, 0) == 0x00000000);
+      REQUIRE(s.getConcentrationImage("spec0c0").pixel(2, 0) == 0x00000000);
+      // set spec1c1conc to zero -> black pixel
+      QImage img(":/geometry/single-pixels-3x1.bmp");
+      img.fill(0xff000000);
+      img.save("tmp.bmp");
+      s.importConcentrationFromImage("spec1c1", "tmp.bmp");
+      REQUIRE(s.getConcentrationImage("spec1c1").pixel(0, 0) == 0x00000000);
+      REQUIRE(s.getConcentrationImage("spec1c1").pixel(1, 0) == 0x00000000);
+      REQUIRE(s.getConcentrationImage("spec1c1").pixel(2, 0) == 0xff000000);
+      // set and then re-set spec2c1conc
+      s.importConcentrationFromImage("spec2c1", "tmp.bmp");
+      REQUIRE(s.getConcentrationImage("spec2c1").pixel(0, 0) == 0x00000000);
+      REQUIRE(s.getConcentrationImage("spec2c1").pixel(1, 0) == 0x00000000);
+      REQUIRE(s.getConcentrationImage("spec2c1").pixel(2, 0) == 0xff000000);
+      img.fill(0xff221321);
+      img.save("tmp.bmp");
+      s.importConcentrationFromImage("spec2c1", "tmp.bmp");
+      REQUIRE(s.getConcentrationImage("spec2c1").pixel(0, 0) == 0x00000000);
+      REQUIRE(s.getConcentrationImage("spec2c1").pixel(1, 0) == 0x00000000);
+      REQUIRE(s.getConcentrationImage("spec2c1").pixel(2, 0) ==
+              QColor(245, 130, 48).rgba());
+      s.setIsSpatial("spec0c0", true);
+      s.setIsSpatial("spec1c0", true);
+      s.setIsSpatial("spec0c1", true);
+      s.setDiffusionConstant("spec0c0", 0.123);
+      s.setDiffusionConstant("spec1c0", 0.999999);
+      s.setDiffusionConstant("spec0c1", 23.1 + 1e-12);
+      CAPTURE(s.getDiffusionConstant("spec0c0"));
+      CAPTURE(s.getDiffusionConstant("spec1c0"));
+      CAPTURE(s.getDiffusionConstant("spec0c1"));
+      REQUIRE(s.getDiffusionConstant("spec0c0") == dbl_approx(0.123));
+      REQUIRE(s.getDiffusionConstant("spec1c0") == dbl_approx(0.999999));
+      REQUIRE(s.getDiffusionConstant("spec0c1") == dbl_approx(23.1 + 1e-12));
+
+      // export model
+      s.exportSBMLFile("tmp2.xml");
+      // import model again, recover concentration & compartment assignments
+      sbml::SbmlDocWrapper s2;
+      s2.importSBMLFile("tmp2.xml");
+      REQUIRE(s2.getCompartmentColour("compartment0") == 0xffaaaaaa);
+      REQUIRE(s2.getCompartmentColour("compartment1") == 0xff525252);
+      REQUIRE(s2.getConcentrationImage("spec0c0").pixel(1, 0) ==
+              QColor(230, 25, 75).rgba());
+      REQUIRE(s2.getConcentrationImage("spec0c0").pixel(0, 0) == 0x00000000);
+      REQUIRE(s2.getConcentrationImage("spec0c0").pixel(2, 0) == 0x00000000);
+      REQUIRE(s2.getConcentrationImage("spec1c1").pixel(0, 0) == 0x00000000);
+      REQUIRE(s2.getConcentrationImage("spec1c1").pixel(1, 0) == 0x00000000);
+      REQUIRE(s2.getConcentrationImage("spec1c1").pixel(2, 0) == 0xff000000);
+      REQUIRE(s2.getConcentrationImage("spec2c1").pixel(0, 0) == 0x00000000);
+      REQUIRE(s2.getConcentrationImage("spec2c1").pixel(1, 0) == 0x00000000);
+      REQUIRE(s2.getConcentrationImage("spec2c1").pixel(2, 0) ==
+              QColor(245, 130, 48).rgba());
+
+      CAPTURE(s2.getDiffusionConstant("spec0c0"));
+      CAPTURE(s2.getDiffusionConstant("spec1c0"));
+      CAPTURE(s2.getDiffusionConstant("spec0c1"));
+      REQUIRE(s2.getDiffusionConstant("spec0c0") == dbl_approx(0.123));
+      REQUIRE(s2.getDiffusionConstant("spec1c0") == dbl_approx(0.999999));
+      REQUIRE(s2.getDiffusionConstant("spec0c1") == dbl_approx(23.1 + 1e-12));
+    }
+  }
+}
+
+SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
+  // create simple SBML level 2.4 model
+  createSBMLlvl2doc("tmp.xml");
   // import SBML model
   sbml::SbmlDocWrapper s;
   s.importSBMLFile("tmp.xml");
@@ -80,18 +248,18 @@ SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
       REQUIRE(s.reactions.at("compartment0").size() == 1);
       REQUIRE(s.reactions.at("compartment0")[0] == "reac1");
     }
-    THEN("find functions") {
-      REQUIRE(s.functions.size() == 1);
-      REQUIRE(s.functions[0] == "func1");
-    }
     WHEN("exportSBMLFile called") {
-      THEN("export identical file to imported one") {
+      THEN(
+          "exported file is a SBML level (3,2) document with spatial "
+          "extension enabled & required") {
         s.exportSBMLFile("export.xml");
-        std::ifstream fsOld("tmp.xml");
-        std::ifstream fsNew("export.xml");
-        REQUIRE(std::equal(std::istreambuf_iterator<char>(fsOld.rdbuf()),
-                           std::istreambuf_iterator<char>(),
-                           std::istreambuf_iterator<char>(fsNew.rdbuf())));
+        std::unique_ptr<libsbml::SBMLDocument> doc(
+            libsbml::readSBMLFromFile("export.xml"));
+        REQUIRE(doc->getLevel() == 3);
+        REQUIRE(doc->getVersion() == 2);
+        REQUIRE(doc->getPackageRequired("spatial") == true);
+        REQUIRE(dynamic_cast<libsbml::SpatialModelPlugin *>(
+                    doc->getModel()->getPlugin("spatial")) != nullptr);
       }
     }
     GIVEN("Compartment Colours") {
@@ -155,15 +323,6 @@ SCENARIO("import geometry from image", "[sbml][non-gui]") {
       // todo
     }
   }
-}
-
-TEST_CASE("load SBML level 3 document with spatial extension",
-          "[sbml][non-gui]") {
-  // create SBML level 3.1.1 model with spatial extension
-  libsbml::SpatialPkgNamespaces sbmlns(3, 1, 1);
-  libsbml::SBMLDocument document(&sbmlns);
-
-  REQUIRE(1 == 1);
 }
 
 SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {

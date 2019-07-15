@@ -23,9 +23,13 @@ namespace sbml {
 
 class SbmlDocWrapper {
  public:
+  const std::size_t nDimensions = 2;
   bool isValid = false;
   bool hasGeometry = false;
   libsbml::Model *model = nullptr;
+  libsbml::SpatialModelPlugin *plugin = nullptr;
+  libsbml::Geometry *geom = nullptr;
+  libsbml::SampledFieldGeometry *sfgeom = nullptr;
 
   // Qt data structures containing model data to pass to UI widgets
   QStringList compartments;
@@ -49,16 +53,20 @@ class SbmlDocWrapper {
   void importSBMLFile(const std::string &filename);
   void importSBMLString(const std::string &xml);
   void initModelData();
+  void importSpatialData();
+  void initSpatialData();
   void exportSBMLFile(const std::string &filename) const;
 
   // compartment geometry
-  void importGeometryFromImage(const QImage &img);
-  void importGeometryFromImage(const QString &filename);
+  void importGeometryFromImage(const QImage &img, bool updateSBML = true);
+  void importGeometryFromImage(const QString &filename, bool updateSBML = true);
   void initMembraneColourPairs();
+  void initSampledFieldGeometry();
   const QImage &getCompartmentImage();
   QString getCompartmentID(QRgb colour) const;
   QRgb getCompartmentColour(const QString &compartmentID) const;
-  void setCompartmentColour(const QString &compartmentID, QRgb colour);
+  void setCompartmentColour(const QString &compartmentID, QRgb colour,
+                            bool updateSBML = true);
 
   // inter-compartment membranes
   void updateMembraneList();
@@ -70,6 +78,10 @@ class SbmlDocWrapper {
   void importConcentrationFromImage(const QString &speciesID,
                                     const QString &filename);
   const QImage &getConcentrationImage(const QString &speciesID);
+
+  // species isSpatial flag
+  void setIsSpatial(const QString &speciesID, bool isSpatial);
+  bool getIsSpatial(const QString &speciesID) const;
 
   // species Diffusion constant
   void setDiffusionConstant(const QString &speciesID, double diffusionConstant);
