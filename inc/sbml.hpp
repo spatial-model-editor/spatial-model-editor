@@ -24,6 +24,7 @@ namespace sbml {
 class SbmlDocWrapper {
  public:
   const std::size_t nDimensions = 2;
+  QString currentFilename;
   bool isValid = false;
   bool hasGeometry = false;
   libsbml::Model *model = nullptr;

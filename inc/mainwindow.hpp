@@ -91,6 +91,8 @@ class MainWindow : public QMainWindow {
 
   void btnImportConcentration_clicked();
 
+  void cmbImportExampleConcentration_currentTextChanged(const QString &text);
+
   void txtDiffusionConstant_editingFinished();
 
   void btnChangeSpeciesColour_clicked();

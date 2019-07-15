@@ -123,6 +123,9 @@ void MainWindow::setupConnections() {
   connect(ui->btnImportConcentration, &QPushButton::clicked, this,
           &MainWindow::btnImportConcentration_clicked);
 
+  connect(ui->cmbImportExampleConcentration, &QComboBox::currentTextChanged,
+          this, &MainWindow::cmbImportExampleConcentration_currentTextChanged);
+
   connect(ui->txtDiffusionConstant, &QLineEdit::editingFinished, this,
           &MainWindow::txtDiffusionConstant_editingFinished);
 
@@ -232,7 +235,10 @@ void MainWindow::tabMain_updateMembranes() {
 
 void MainWindow::tabMain_updateSpecies() {
   // clear any changes to species concentrations by simulations
-  btnResetSimulation_clicked();
+  // reset all fields to their initial values
+  for (auto &field : sbmlDoc.mapSpeciesIdToField) {
+    field.second.conc = field.second.init;
+  }
   // update tree list of species
   auto *ls = ui->listSpecies;
   ls->clear();
@@ -250,6 +256,7 @@ void MainWindow::tabMain_updateSpecies() {
 }
 
 void MainWindow::tabMain_updateReactions() {
+  ui->lblGeometryStatus->setText("Reaction location:");
   // update tree list of reactions
   auto *ls = ui->listReactions;
   ls->clear();
@@ -279,6 +286,13 @@ void MainWindow::tabMain_updateSimulate() {
   ui->hslideTime->setValue(0);
   ui->btnSpeciesDisplaySelect->setEnabled(true);
   ui->btnSpeciesDisplaySelect->setVisible(true);
+  if (images.empty()) {
+    simulate::Simulate sim(&sbmlDoc);
+    for (const auto &compartmentID : sbmlDoc.compartments) {
+      sim.addCompartment(&sbmlDoc.mapCompIdToGeometry.at(compartmentID));
+    }
+    ui->lblGeometry->setImage(sim.getConcentrationImage());
+  }
   hslideTime_valueChanged(0);
 }
 
@@ -321,9 +335,12 @@ void MainWindow::menuOpen_example_SBML_file_triggered(QAction *action) {
 
 void MainWindow::action_Save_SBML_file_triggered() {
   QString filename = QFileDialog::getSaveFileName(
-      this, "Save SBML file", "", "SBML file (*.xml)", nullptr,
-      QFileDialog::Option::DontUseNativeDialog);
+      this, "Save SBML file", sbmlDoc.currentFilename, "SBML file (*.xml)",
+      nullptr, QFileDialog::Option::DontUseNativeDialog);
   if (!filename.isEmpty()) {
+    if (filename.right(4) != ".xml") {
+      filename.append(".xml");
+    }
     sbmlDoc.exportSBMLFile(filename.toStdString());
   }
 }
@@ -529,6 +546,7 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
     ui->txtDiffusionConstant->setEnabled(isSpatial);
     ui->radInitialConcentrationVarying->setEnabled(isSpatial);
     ui->btnImportConcentration->setEnabled(isSpatial);
+    ui->cmbImportExampleConcentration->setEnabled(isSpatial);
     // constant
     bool isConstant = sbmlDoc.isSpeciesConstant(speciesID.toStdString());
     ui->chkSpeciesIsConstant->setChecked(isConstant);
@@ -575,6 +593,7 @@ void MainWindow::chkSpeciesIsSpatial_toggled(bool enabled) {
     ui->txtDiffusionConstant->setEnabled(enabled);
     ui->radInitialConcentrationVarying->setEnabled(enabled);
     ui->btnImportConcentration->setEnabled(enabled);
+    ui->cmbImportExampleConcentration->setEnabled(enabled);
     // update displayed info for this species
     txtInitialConcentration_editingFinished();
   }
@@ -596,6 +615,7 @@ void MainWindow::chkSpeciesIsConstant_toggled(bool enabled) {
     ui->txtDiffusionConstant->setEnabled(!enabled);
     ui->radInitialConcentrationVarying->setEnabled(!enabled);
     ui->btnImportConcentration->setEnabled(!enabled);
+    ui->cmbImportExampleConcentration->setEnabled(!enabled);
     // update displayed info for this species
     txtInitialConcentration_editingFinished();
   }
@@ -642,6 +662,22 @@ void MainWindow::btnImportConcentration_clicked() {
         filename);
     sbmlDoc.importConcentrationFromImage(speciesID, filename);
     ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
+  }
+}
+
+void MainWindow::cmbImportExampleConcentration_currentTextChanged(
+    const QString &text) {
+  if (ui->cmbImportExampleConcentration->currentIndex() != 0) {
+    const auto &speciesID = ui->listSpecies->currentItem()->text(0);
+    ui->radInitialConcentrationVarying->setChecked(true);
+    spdlog::debug(
+        "MainWindow::cmbImportExampleConcentration_currentTextChanged :: "
+        "import {}",
+        text);
+    sbmlDoc.importConcentrationFromImage(
+        speciesID, QString(":/concentration/%1.bmp").arg(text));
+    ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
+    ui->cmbImportExampleConcentration->setCurrentIndex(0);
   }
 }
 
@@ -760,21 +796,27 @@ void MainWindow::btnSimulate_clicked() {
   // do Euler integration
   double t = 0;
   double dt = ui->txtSimDt->text().toDouble();
-  int n_steps = static_cast<int>(ui->txtSimLength->text().toDouble() / dt);
-  for (int i_step = 0; i_step < n_steps; ++i_step) {
-    t += dt;
-    sim.integrateForwardsEuler(dt);
+  int n_images = static_cast<int>(ui->txtSimLength->text().toDouble() /
+                                  ui->txtSimInterval->text().toDouble());
+  int n_steps = static_cast<int>(ui->txtSimInterval->text().toDouble() / dt);
+  for (int i_image = 0; i_image < n_images; ++i_image) {
+    for (int i_step = 0; i_step < n_steps; ++i_step) {
+      t += dt;
+      sim.integrateForwardsEuler(dt);
+      QApplication::processEvents();
+      if (!isSimulationRunning) {
+        break;
+      }
+    }
+    if (!isSimulationRunning) {
+      break;
+    }
     images.push_back(sim.getConcentrationImage());
     for (std::size_t s = 0; s < sim.field.size(); ++s) {
       conc[s].push_back(sim.field[s]->getMeanConcentration());
     }
     time.push_back(t);
     ui->lblGeometry->setImage(images.back());
-    ui->lblGeometry->repaint();
-    QApplication::processEvents();
-    if (!isSimulationRunning) {
-      break;
-    }
     ui->statusBar->showMessage(
         QString("Simulating... %1% (press ctrl+c to cancel)")
             .arg(QString::number(static_cast<int>(
@@ -836,7 +878,7 @@ void MainWindow::btnResetSimulation_clicked() {
   for (auto &field : sbmlDoc.mapSpeciesIdToField) {
     field.second.conc = field.second.init;
   }
-  ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
+  tabMain_updateSimulate();
 }
 
 void MainWindow::graphClicked(QCPAbstractPlottable *plottable, int dataIndex) {

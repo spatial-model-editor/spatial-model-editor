@@ -100,19 +100,17 @@ void openTempSBMLFile(MainWindow *w, const UIPointers &ui,
 
 void openABtoC(MainWindow *w, const UIPointers &ui, ModalWidgetTimer &mwt) {
   REQUIRE(!mwt.isRunning());
-#ifndef Q_OS_MAC
-  QTest::keyClick(w, Qt::Key_F, Qt::AltModifier, key_delay);
-  QTest::keyClick(ui.menuFile, Qt::Key_E, Qt::AltModifier, key_delay);
-  QTest::keyClick(ui.menuOpen_example_SBML_file, Qt::Key_A, Qt::AltModifier,
-                  key_delay);
-#else
+  //  QTest::keyClick(w, Qt::Key_F, Qt::AltModifier, key_delay);
+  //  QTest::keyClick(ui.menuFile, Qt::Key_E, Qt::AltModifier, key_delay);
+  //  QTest::keyClick(ui.menuOpen_example_SBML_file, Qt::Key_A, Qt::AltModifier,
+  //  key_delay);
+
   // alt+letter doesn't seem to work for opening menus on mac
   // so write SBML file to disk and open it with ctrl+O instead
   std::unique_ptr<libsbml::SBMLDocument> doc(
       libsbml::readSBMLFromString(sbml_test_data::ABtoC().xml));
   libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
   openTempSBMLFile(w, ui, mwt);
-#endif
 }
 
 void openThreePixelImage(MainWindow *w, const UIPointers &ui,

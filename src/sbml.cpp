@@ -47,6 +47,7 @@ void SbmlDocWrapper::importSBMLString(const std::string &xml) {
 
 void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
   clearAllModelData();
+  currentFilename = filename.c_str();
   spdlog::info("SbmlDocWrapper::importSBMLFile :: Loading SBML file {}...",
                filename);
   doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
