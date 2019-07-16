@@ -407,30 +407,31 @@ QImage Simulate::getConcentrationImage() {
   QImage img(field[0]->geometry->getCompartmentImage().size(),
              QImage::Format_ARGB32);
   img.fill(qRgba(0, 0, 0, 0));
-  // alpha opacity factor
-  double alpha = 0.7;
-  // normalise species concentration:
-  // max value of each species = max colour intensity
-  // with lower bound, so constant zero is still zero
-  std::vector<double> max_conc;
-  for (const auto *f : field) {
-    double m = *std::max_element(f->conc.cbegin(), f->conc.cend());
-    max_conc.push_back(m < 1e-15 ? 1.0 : m);
-  }
-  for (std::size_t i_f = 0; i_f < field.size(); ++i_f) {
-    const auto *f = field[i_f];
-    for (std::size_t i = 0; i < f->geometry->ix.size(); ++i) {
-      double c = f->conc[i] / max_conc[i_f];
-      QColor oldCol = img.pixelColor(f->geometry->ix[i]);
-      int r = oldCol.red();
-      int g = oldCol.green();
-      int b = oldCol.blue();
-      r += static_cast<int>(f->colour.red() * c * alpha);
-      g += static_cast<int>(f->colour.green() * c * alpha);
-      b += static_cast<int>(f->colour.blue() * c * alpha);
-      img.setPixelColor(
-          f->geometry->ix[i],
-          QColor(r > 255 ? 255 : r, g > 255 ? 255 : g, b > 255 ? 255 : b, 255));
+  // iterate over compartments
+  for (const auto &comp : simComp) {
+    // normalise species concentration:
+    // max value of each species = max colour intensity
+    // with lower bound, so constant zero is still zero
+    std::vector<double> max_conc;
+    for (const auto *f : comp.field) {
+      double m = *std::max_element(f->conc.cbegin(), f->conc.cend());
+      max_conc.push_back(m < 1e-15 ? 1.0 : m);
+    }
+    // equal contribution from each field
+    double alpha = 1.0 / static_cast<double>(comp.field.size());
+    for (std::size_t i = 0; i < comp.field[0]->geometry->ix.size(); ++i) {
+      const QPoint &p = comp.field[0]->geometry->ix[i];
+      int r = 0;
+      int g = 0;
+      int b = 0;
+      for (std::size_t i_f = 0; i_f < comp.field.size(); ++i_f) {
+        const auto *f = comp.field[i_f];
+        double c = alpha * f->conc[i] / max_conc[i_f];
+        r += static_cast<int>(f->red * c);
+        g += static_cast<int>(f->green * c);
+        b += static_cast<int>(f->blue * c);
+      }
+      img.setPixel(p, qRgb(r, g, b));
     }
   }
   return img;

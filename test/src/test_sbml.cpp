@@ -98,7 +98,7 @@ SCENARIO("import SBML doc without geometry", "[sbml][non-gui]") {
   }
   WHEN("import geometry & assign compartments") {
     // import geometry image & assign compartments to colours
-    s.importGeometryFromImage(":/geometry/single-pixels-3x1.bmp");
+    s.importGeometryFromImage(":/geometry/single-pixels-3x1.png");
     s.setCompartmentColour("compartment0", 0xffaaaaaa);
     s.setCompartmentColour("compartment1", 0xff525252);
     // export it again
@@ -144,7 +144,7 @@ SCENARIO("import SBML doc without geometry", "[sbml][non-gui]") {
     WHEN("import concentration & set diff constants") {
       // import concentration
       s.importConcentrationFromImage("spec0c0",
-                                     ":/geometry/single-pixels-3x1.bmp");
+                                     ":/geometry/single-pixels-3x1.png");
       // spec0c0 concentration set to 1 (default rescaling)
       // -> c0 pixel (1,0) has default species colour (230,25,75)
       // -> other pixels transparent
@@ -154,21 +154,21 @@ SCENARIO("import SBML doc without geometry", "[sbml][non-gui]") {
       REQUIRE(s.getConcentrationImage("spec0c0").pixel(0, 0) == 0x00000000);
       REQUIRE(s.getConcentrationImage("spec0c0").pixel(2, 0) == 0x00000000);
       // set spec1c1conc to zero -> black pixel
-      QImage img(":/geometry/single-pixels-3x1.bmp");
+      QImage img(":/geometry/single-pixels-3x1.png");
       img.fill(0xff000000);
-      img.save("tmp.bmp");
-      s.importConcentrationFromImage("spec1c1", "tmp.bmp");
+      img.save("tmp.png");
+      s.importConcentrationFromImage("spec1c1", "tmp.png");
       REQUIRE(s.getConcentrationImage("spec1c1").pixel(0, 0) == 0x00000000);
       REQUIRE(s.getConcentrationImage("spec1c1").pixel(1, 0) == 0x00000000);
       REQUIRE(s.getConcentrationImage("spec1c1").pixel(2, 0) == 0xff000000);
       // set and then re-set spec2c1conc
-      s.importConcentrationFromImage("spec2c1", "tmp.bmp");
+      s.importConcentrationFromImage("spec2c1", "tmp.png");
       REQUIRE(s.getConcentrationImage("spec2c1").pixel(0, 0) == 0x00000000);
       REQUIRE(s.getConcentrationImage("spec2c1").pixel(1, 0) == 0x00000000);
       REQUIRE(s.getConcentrationImage("spec2c1").pixel(2, 0) == 0xff000000);
       img.fill(0xff221321);
-      img.save("tmp.bmp");
-      s.importConcentrationFromImage("spec2c1", "tmp.bmp");
+      img.save("tmp.png");
+      s.importConcentrationFromImage("spec2c1", "tmp.png");
       REQUIRE(s.getConcentrationImage("spec2c1").pixel(0, 0) == 0x00000000);
       REQUIRE(s.getConcentrationImage("spec2c1").pixel(1, 0) == 0x00000000);
       REQUIRE(s.getConcentrationImage("spec2c1").pixel(2, 0) ==
@@ -225,7 +225,7 @@ SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
   REQUIRE(s.isValid == true);
 
   // import geometry image & assign compartments to colours
-  s.importGeometryFromImage(":/geometry/single-pixels-3x1.bmp");
+  s.importGeometryFromImage(":/geometry/single-pixels-3x1.png");
   s.setCompartmentColour("compartment0", 0xffaaaaaa);
   s.setCompartmentColour("compartment1", 0xff525252);
 
@@ -313,8 +313,8 @@ SCENARIO("import geometry from image", "[sbml][non-gui]") {
     QImage img(1, 1, QImage::Format_RGB32);
     QRgb col = QColor(12, 243, 154).rgba();
     img.setPixel(0, 0, col);
-    img.save("tmp.bmp");
-    s.importGeometryFromImage("tmp.bmp");
+    img.save("tmp.png");
+    s.importGeometryFromImage("tmp.png");
     REQUIRE(s.hasGeometry == true);
     THEN("getCompartmentImage returns image") {
       REQUIRE(s.getCompartmentImage().size() == QSize(1, 1));
@@ -349,8 +349,8 @@ SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {
       QImage img(1, 1, QImage::Format_RGB32);
       QRgb col = QColor(12, 243, 154).rgba();
       img.setPixel(0, 0, col);
-      img.save("tmp.bmp");
-      s.importGeometryFromImage("tmp.bmp");
+      img.save("tmp.png");
+      s.importGeometryFromImage("tmp.png");
       s.setCompartmentColour("comp", col);
       THEN("getCompartmentImage returns image") {
         REQUIRE(s.getCompartmentImage().size() == QSize(1, 1));

@@ -95,6 +95,9 @@ Field::Field(const Compartment *geom, const std::string &specID,
   init = conc;
   isUniformConcentration = true;
   isSpatial = false;
+  red = colour.red();
+  green = colour.green();
+  blue = colour.blue();
 }
 
 void Field::importConcentration(const QImage &img, double scale_factor) {
@@ -187,10 +190,10 @@ const QImage &Field::getConcentrationImage() {
   }
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     double scale = conc[i] / cmax;
-    int red = static_cast<int>(scale * colour.red());
-    int green = static_cast<int>(scale * colour.green());
-    int blue = static_cast<int>(scale * colour.blue());
-    imgConc.setPixel(geometry->ix[i], QColor(red, green, blue).rgb());
+    int r = static_cast<int>(std::round(scale * red));
+    int g = static_cast<int>(std::round(scale * green));
+    int b = static_cast<int>(std::round(scale * blue));
+    imgConc.setPixel(geometry->ix[i], qRgb(r, g, b));
   }
   return imgConc;
 }
