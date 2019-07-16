@@ -124,9 +124,9 @@ void openThreePixelImage(MainWindow *w, const UIPointers &ui,
 #else
   // alt+letter doesn't seem to work for opening menus on mac
   // so write iamge to disk and open it with ctrl+I instead
-  QImage img(":/geometry/single-pixels-3x1.bmp");
-  img.save("tmp.bmp");
-  mwt.setMessage("tmp.bmp");
+  QImage img(":/geometry/single-pixels-3x1.png");
+  img.save("tmp.png");
+  mwt.setMessage("tmp.png");
   mwt.start();
   ui.listCompartments->setFocus();
   QApplication::setActiveWindow(w);
@@ -335,10 +335,10 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   img.setPixel(2, 1, col2);
   img.setPixel(2, 2, col2);
   img.setPixel(1, 1, col3);
-  img.save("tmp.bmp");
+  img.save("tmp.png");
 
   // import Geometry from image
-  mwt.setMessage("tmp.bmp");
+  mwt.setMessage("tmp.png");
   mwt.start();
   ui.listCompartments->setFocus();
   QApplication::setActiveWindow(&w);

@@ -1295,6 +1295,8 @@
      <addaction name="action_ABtoC"/>
      <addaction name="action_very_simple_model"/>
      <addaction name="actionbrusselator_model"/>
+     <addaction name="actioncircadian_clock"/>
+     <addaction name="actionliver_simplified_2"/>
     </widget>
     <addaction name="action_Open_SBML_file"/>
     <addaction name="menuOpen_example_SBML_file"/>
@@ -1318,9 +1320,11 @@
      <property name="title">
       <string>&amp;Example geometry image</string>
      </property>
+     <addaction name="actionone_blob_100x100"/>
+     <addaction name="actionside_by_side_100x100"/>
      <addaction name="actions"/>
      <addaction name="action_filled_donut_100x100_bmp"/>
-     <addaction name="actionside_by_side_100x100"/>
+     <addaction name="actionliver_300x100"/>
      <addaction name="actionsingle_pixels_3x1"/>
     </widget>
     <addaction name="actionGeometry_from_image"/>
@@ -1439,6 +1443,31 @@
   <action name="actionbrusselator_model">
    <property name="text">
     <string>&amp;brusselator-model</string>
+   </property>
+  </action>
+  <action name="actionone_blob_100x100">
+   <property name="text">
+    <string>&amp;one-blob-100x100</string>
+   </property>
+  </action>
+  <action name="actionliver_300x100">
+   <property name="text">
+    <string>&amp;liver-300x100</string>
+   </property>
+  </action>
+  <action name="actionliver_simplified">
+   <property name="text">
+    <string>&amp;liver-simplified</string>
+   </property>
+  </action>
+  <action name="actioncircadian_clock">
+   <property name="text">
+    <string>&amp;circadian-clock</string>
+   </property>
+  </action>
+  <action name="actionliver_simplified_2">
+   <property name="text">
+    <string>&amp;liver-simplified</string>
    </property>
   </action>
  </widget>

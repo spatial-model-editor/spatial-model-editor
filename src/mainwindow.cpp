@@ -313,6 +313,7 @@ void MainWindow::action_Open_SBML_file_triggered() {
       ui->tabMain->setCurrentIndex(0);
       tabMain_currentChanged(0);
       enableTabs();
+      images.clear();
     }
   }
 }
@@ -331,6 +332,7 @@ void MainWindow::menuOpen_example_SBML_file_triggered(QAction *action) {
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   enableTabs();
+  images.clear();
 }
 
 void MainWindow::action_Save_SBML_file_triggered() {
@@ -355,12 +357,13 @@ void MainWindow::actionGeometry_from_image_triggered() {
     ui->tabMain->setCurrentIndex(0);
     tabMain_currentChanged(0);
     enableTabs();
+    images.clear();
   }
 }
 
 void MainWindow::menuExample_geometry_image_triggered(QAction *action) {
   QString filename =
-      QString(":/geometry/%1.bmp").arg(action->text().remove(0, 1));
+      QString(":/geometry/%1.png").arg(action->text().remove(0, 1));
   QFile f(filename);
   if (!f.open(QIODevice::ReadOnly)) {
     spdlog::warn(
@@ -372,6 +375,7 @@ void MainWindow::menuExample_geometry_image_triggered(QAction *action) {
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   enableTabs();
+  images.clear();
 }
 
 void MainWindow::action_About_triggered() {
@@ -675,7 +679,7 @@ void MainWindow::cmbImportExampleConcentration_currentTextChanged(
         "import {}",
         text);
     sbmlDoc.importConcentrationFromImage(
-        speciesID, QString(":/concentration/%1.bmp").arg(text));
+        speciesID, QString(":/concentration/%1.png").arg(text));
     ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
     ui->cmbImportExampleConcentration->setCurrentIndex(0);
   }
@@ -789,6 +793,8 @@ void MainWindow::btnSimulate_clicked() {
   for (std::size_t s = 0; s < sim.field.size(); ++s) {
     conc[s].push_back(sim.field[s]->getMeanConcentration());
   }
+  images.clear();
+  images.push_back(sim.getConcentrationImage());
 
   ui->statusBar->showMessage("Simulating...");
   isSimulationRunning = true;
