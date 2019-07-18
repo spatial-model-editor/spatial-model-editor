@@ -57,6 +57,8 @@ class MainWindow : public QMainWindow {
 
   void action_Save_SBML_file_triggered();
 
+  void actionExport_Dune_ini_file_triggered();
+
   // Import menu actions
   void actionGeometry_from_image_triggered();
 

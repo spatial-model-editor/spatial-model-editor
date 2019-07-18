@@ -1270,6 +1270,29 @@
          </item>
         </layout>
        </widget>
+       <widget class="QWidget" name="tabDUNE">
+        <attribute name="title">
+         <string>DUNE</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <item>
+          <widget class="QTextBrowser" name="txtDUNE">
+           <property name="lineWrapMode">
+            <enum>QTextEdit::NoWrap</enum>
+           </property>
+           <property name="acceptRichText">
+            <bool>false</bool>
+           </property>
+           <property name="textInteractionFlags">
+            <set>Qt::TextSelectableByMouse</set>
+           </property>
+           <property name="openLinks">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </widget>
     </item>
@@ -1301,6 +1324,7 @@
     <addaction name="action_Open_SBML_file"/>
     <addaction name="menuOpen_example_SBML_file"/>
     <addaction name="action_Save_SBML_file"/>
+    <addaction name="actionExport_Dune_ini_file"/>
     <addaction name="actionE_xit"/>
    </widget>
    <widget class="QMenu" name="menu_Help">
@@ -1468,6 +1492,14 @@
   <action name="actionliver_simplified_2">
    <property name="text">
     <string>&amp;liver-simplified</string>
+   </property>
+  </action>
+  <action name="actionExport_Dune_ini_file">
+   <property name="text">
+    <string>Export &amp;Dune ini file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
    </property>
   </action>
  </widget>

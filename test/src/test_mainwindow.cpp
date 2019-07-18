@@ -320,6 +320,7 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
       libsbml::readSBMLFromString(sbml_test_data::very_simple_model().xml));
   libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
   openTempSBMLFile(&w, ui, mwt);
+  REQUIRE(ui.tabMain->currentIndex() == 0);
   REQUIRE(ui.listCompartments->count() == 3);
 
   // create geometry image
@@ -390,6 +391,7 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
                   key_delay);
   CAPTURE(QTest::qWaitFor([&ui]() { return ui.tabMain->currentIndex() == 1; }));
+  REQUIRE(ui.tabMain->currentIndex() == 1);
   REQUIRE(ui.listMembranes->count() == 3);
   // select each item in listMembranes
   ui.listMembranes->setFocus();
@@ -407,6 +409,7 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
                   key_delay);
   QApplication::processEvents();
+  REQUIRE(ui.tabMain->currentIndex() == 2);
   REQUIRE(ui.listSpecies->topLevelItemCount() == 3);
   // select each item in listSpecies
   ui.listSpecies->setFocus();
@@ -431,6 +434,7 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
                   key_delay);
   QApplication::processEvents();
+  REQUIRE(ui.tabMain->currentIndex() == 3);
   REQUIRE(ui.listReactions->topLevelItemCount() == 3);
   // select each item in listReactions
   ui.listReactions->setFocus();
@@ -446,6 +450,7 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
                   key_delay);
   QApplication::processEvents();
+  REQUIRE(ui.tabMain->currentIndex() == 4);
   REQUIRE(ui.listFunctions->count() == 0);
   // select each item in listSpecies
   ui.listFunctions->setFocus();
@@ -463,5 +468,18 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   QApplication::processEvents();
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
                   key_delay);
+  REQUIRE(ui.tabMain->currentIndex() == 5);
   ui.btnSimulate->click();
+
+  // display SBML tab
+  QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
+                  key_delay);
+  QApplication::processEvents();
+  REQUIRE(ui.tabMain->currentIndex() == 6);
+
+  // display DUNE tab
+  QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
+                  key_delay);
+  QApplication::processEvents();
+  REQUIRE(ui.tabMain->currentIndex() == 7);
 }

@@ -8,7 +8,6 @@
 
 #include <QDebug>
 #include <QImage>
-#include <QPoint>
 
 #include "geometry.hpp"
 #include "numerics.hpp"
@@ -27,9 +26,6 @@ class ReacEval {
   std::vector<std::vector<double>> M;
   // vector of result of evaluating reactions
   std::vector<double> result;
-  bool addStoichCoeff(std::vector<double> &Mrow,
-                      const libsbml::SpeciesReference *spec_ref, double sign,
-                      const std::vector<std::string> &speciesIDs);
 
  public:
   // vector of species concentrations that Reaction expressions will use
@@ -39,8 +35,7 @@ class ReacEval {
   ReacEval() = default;
   ReacEval(sbml::SbmlDocWrapper *doc_ptr,
            const std::vector<std::string> &speciesID,
-           const std::vector<std::string> &reactionID,
-           std::size_t nRateRules = 0);
+           const std::vector<std::string> &reactionID);
   void evaluate();
   const std::vector<double> &getResult() const { return result; }
 };

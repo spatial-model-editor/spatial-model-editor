@@ -79,6 +79,16 @@ Translate the spatial model to a system of PDEs and simulate it: [WP1b status](h
         -   license: MIT
         -   included in source code
 
+    -   SymEngine symbolic manipulation library: <https://github.com/symengine/symengine>
+
+        -   license: MIT
+        -   included in binary
+
+    -   GNU Multiple Precision Arithmetic Library: <https://gmplib.org/>
+
+        -   license: LGPL
+        -   included in binary
+
     -   Catch2 testing framework: <https://github.com/catchorg/Catch2>
 
         -   license: BSL-1.0
