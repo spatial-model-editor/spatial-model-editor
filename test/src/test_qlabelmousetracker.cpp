@@ -4,6 +4,8 @@
 
 #include "catch.hpp"
 
+#include "logger.hpp"
+
 constexpr int mouseDelay = 50;
 
 SCENARIO("qlabelmousetracker", "[qlabelmousetracker][gui]") {

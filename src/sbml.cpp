@@ -291,10 +291,11 @@ void SbmlDocWrapper::initModelData() {
         "SbmlDocWrapper::initModelData :: Error - failed to upgrade SBML "
         "file (continuing anyway...)");
   }
-  if (doc->getNumErrors() > 0) {
+  if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
+      0) {
     std::stringstream ss;
     doc->printErrors(ss);
-    spdlog::warn("SBML document warnings:\n\n{}", ss.str());
+    spdlog::warn("SBML document errors:\n\n{}", ss.str());
   }
 
   if (!doc->isPackageEnabled("spatial")) {
@@ -679,6 +680,48 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
           static_cast<double>(getCompartmentColour(compID.c_str())));
     }
   }
+}
+
+QPoint SbmlDocWrapper::getCompartmentInteriorPoint(
+    const QString &compartmentID) const {
+  const std::string fn("SbmlDocWrapper::getCompartmentInteriorPoint");
+  spdlog::info("{} :: compartmentID: {}", fn, compartmentID);
+  auto *comp = model->getCompartment(compartmentID.toStdString());
+  auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
+      comp->getPlugin("spatial"));
+  const std::string &domainType = scp->getCompartmentMapping()->getDomainType();
+  spdlog::info("{} ::   - domainType: {}", fn, domainType);
+  auto *geom = plugin->getGeometry();
+  auto *domain = geom->getDomainByDomainType(domainType);
+  spdlog::info("{} ::   - domain: {}", fn, domain->getId());
+  auto *interiorPoint = domain->getInteriorPoint(0);
+  if (interiorPoint == nullptr) {
+    spdlog::info("{} ::   - no interior point found", fn);
+    return QPoint(0, 0);
+  }
+  return QPoint(interiorPoint->getCoord1(), interiorPoint->getCoord2());
+}
+
+void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
+                                                 const QPoint &point) {
+  const std::string fn("SbmlDocWrapper::setCompartmentInteriorPoint");
+  spdlog::info("{} :: compartmentID: {}", fn, compartmentID);
+  spdlog::info("{} ::   - setting interior point {}", fn, point);
+  auto *comp = model->getCompartment(compartmentID.toStdString());
+  auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
+      comp->getPlugin("spatial"));
+  const std::string &domainType = scp->getCompartmentMapping()->getDomainType();
+  spdlog::info("{} ::   - domainType: {}", fn, domainType);
+  auto *geom = plugin->getGeometry();
+  auto *domain = geom->getDomainByDomainType(domainType);
+  spdlog::info("{} ::   - domain: {}", fn, domain->getId());
+  auto *interiorPoint = domain->getInteriorPoint(0);
+  if (interiorPoint == nullptr) {
+    spdlog::info("{} ::   - creating new interior point", fn);
+    interiorPoint = domain->createInteriorPoint();
+  }
+  interiorPoint->setCoord1(point.x());
+  interiorPoint->setCoord2(point.y());
 }
 
 void SbmlDocWrapper::importConcentrationFromImage(const QString &speciesID,

@@ -5,9 +5,10 @@
 #include <QFile>
 
 #include "catch.hpp"
-
 #include "sbml_test_data/very_simple_model.hpp"
 #include "sbml_test_data/yeast_glycolysis.hpp"
+
+#include "logger.hpp"
 
 void createSBMLlvl2doc(const std::string &filename) {
   std::unique_ptr<libsbml::SBMLDocument> document(

@@ -14,6 +14,7 @@ SOURCES += \
     test/src/test_dune.cpp \
     test/src/test_geometry.cpp \
     test/src/test_mainwindow.cpp \
+    test/src/test_mesh.cpp \
     test/src/test_numerics.cpp \
     test/src/test_qlabelmousetracker.cpp \
     test/src/test_reactions.cpp \
@@ -23,6 +24,7 @@ SOURCES += \
     src/dune.cpp \
     src/geometry.cpp \
     src/mainwindow.cpp \
+    src/mesh.cpp \
     src/numerics.cpp \
     src/qlabelmousetracker.cpp \
     src/reactions.cpp \
@@ -57,11 +59,15 @@ unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wext
 # these static libraries are available pre-compiled from
 # from https://github.com/lkeegan/libsbml-static
 LIBS += \
-    $$PWD/ext/qcustomplot/libqcustomplot.a \
     $$PWD/ext/libsbml/lib/libsbml-static.a \
     $$PWD/ext/libsbml/lib/libexpat.a \
     $$PWD/ext/symengine/lib/libsymengine.a \
     $$PWD/ext/gmp/lib/libgmp.a
+
+# these static libraries should be compiled first in their directories
+LIBS += \
+    $$PWD/ext/qcustomplot/libqcustomplot.a \
+    $$PWD/ext/triangle/triangle.o
 
 # on windows add flags to support large object files
 # https://stackoverflow.com/questions/16596876/object-file-has-too-many-sections
@@ -80,4 +86,5 @@ QMAKE_CXXFLAGS += \
     -isystem "$$PWD/ext/libsbml/include" \
     -isystem "$$PWD/ext/symengine/include" \
     -isystem "$$PWD/ext/gmp/include" \
-    -isystem "$$PWD/ext/qcustomplot"
+    -isystem "$$PWD/ext/qcustomplot" \
+    -isystem "$$PWD/ext/triangle"

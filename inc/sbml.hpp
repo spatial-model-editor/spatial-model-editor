@@ -68,6 +68,9 @@ class SbmlDocWrapper {
   QRgb getCompartmentColour(const QString &compartmentID) const;
   void setCompartmentColour(const QString &compartmentID, QRgb colour,
                             bool updateSBML = true);
+  QPoint getCompartmentInteriorPoint(const QString &compartmentID) const;
+  void setCompartmentInteriorPoint(const QString &compartmentID,
+                                   const QPoint &point);
 
   // inter-compartment membranes
   void updateMembraneList();

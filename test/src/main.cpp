@@ -5,6 +5,8 @@
 
 #include <QApplication>
 
+#include "logger.hpp"
+
 int main(int argc, char *argv[]) {
   Catch::StringMaker<double>::precision = 15;
 
@@ -15,6 +17,9 @@ int main(int argc, char *argv[]) {
   // e.g. when a double is "3,142" vs "3.142"
   // Here we reset the default "C" locale to avoid these issues
   std::locale::global(std::locale::classic());
+
+  spdlog::set_pattern("[test][%^%l%$] %v");
+  spdlog::set_level(spdlog::level::debug);
 
   int result = Catch::Session().run(argc, argv);
 

@@ -97,10 +97,13 @@ matrix:
         # force qt to use desired compiler version
         - sudo rm /usr/bin/gcc
         - sudo rm /usr/bin/g++
+        - sudo rm /usr/bin/gcov
         - sudo ln -s /usr/bin/gcc-9 /usr/bin/gcc
         - sudo ln -s /usr/bin/g++-9 /usr/bin/g++
+        - sudo ln -s /usr/bin/gcov-9 /usr/bin/gcov
         - gcc --version
         - g++ --version
+        - gcov --version
         # start a window manager so the Qt GUI tests can have their focus set
         - "jwm &"
         - sleep 1
@@ -179,6 +182,10 @@ before_script:
   - qmake qcustomplot.pro
   - make -j2
   - ls
+  - cd ../../
+  # build triangle library
+  - cd ext/triangle
+  - make -j2
   - cd ../../
   # download pre-compiled static libSBML (and other) libraries
   - cd ext

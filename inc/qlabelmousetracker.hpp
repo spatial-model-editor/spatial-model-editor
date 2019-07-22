@@ -23,7 +23,7 @@ class QLabelMouseTracker : public QLabel {
 
  signals:
   // user clicks somewhere on the image
-  void mouseClicked(QRgb col);
+  void mouseClicked(QRgb col, QPoint point);
 
  protected:
   void mouseMoveEvent(QMouseEvent *ev) override;

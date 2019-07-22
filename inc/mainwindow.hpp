@@ -68,9 +68,11 @@ class MainWindow : public QMainWindow {
   void action_About_triggered();
 
   // geometry
-  void lblGeometry_mouseClicked(QRgb col);
+  void lblGeometry_mouseClicked(QRgb col, QPoint point);
 
   void btnChangeCompartment_clicked();
+
+  void btnGenerateMesh_clicked();
 
   void listCompartments_currentTextChanged(const QString &currentText);
 
