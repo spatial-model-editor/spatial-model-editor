@@ -61,6 +61,9 @@ void MainWindow::setupConnections() {
   connect(ui->action_Save_SBML_file, &QAction::triggered, this,
           &MainWindow::action_Save_SBML_file_triggered);
 
+  connect(ui->actionExport_Dune_ini_file, &QAction::triggered, this,
+          &MainWindow::actionExport_Dune_ini_file_triggered);
+
   connect(ui->actionE_xit, &QAction::triggered, this,
           []() { QApplication::quit(); });
 
@@ -176,7 +179,8 @@ void MainWindow::tabMain_currentChanged(int index) {
     REACTIONS = 3,
     FUNCTIONS = 4,
     SIMULATE = 5,
-    SBML = 6
+    SBML = 6,
+    DUNE = 7
   };
   ui->tabMain->setWhatsThis(ui->tabMain->tabWhatsThis(index));
   spdlog::debug("MainWindow::tabMain_currentChanged :: Tab changed to {} [{}]",
@@ -206,6 +210,9 @@ void MainWindow::tabMain_currentChanged(int index) {
       break;
     case TabIndex::SBML:
       ui->txtSBML->setText(sbmlDoc.getXml());
+      break;
+    case TabIndex::DUNE:
+      ui->txtDUNE->setText(sbmlDoc.getDUNE());
       break;
     default:
       qFatal("ui::tabMain :: Errror: Tab index %d not valid", index);
@@ -347,6 +354,22 @@ void MainWindow::action_Save_SBML_file_triggered() {
   }
 }
 
+void MainWindow::actionExport_Dune_ini_file_triggered() {
+  QString filename = QFileDialog::getSaveFileName(
+      this, "Export DUNE ini file", "", "DUNE ini file (*.ini)", nullptr,
+      QFileDialog::Option::DontUseNativeDialog);
+  if (!filename.isEmpty()) {
+    if (filename.right(4) != ".ini") {
+      filename.append(".ini");
+    }
+    QString iniFileString = sbmlDoc.getDUNE();
+    QFile f(filename);
+    if (f.open(QIODevice::ReadWrite | QIODevice::Text)) {
+      f.write(iniFileString.toUtf8());
+    }
+  }
+}
+
 void MainWindow::actionGeometry_from_image_triggered() {
   QString filename = QFileDialog::getOpenFileName(
       this, "Import geometry from image", "",
@@ -400,6 +423,8 @@ void MainWindow::action_About_triggered() {
                   .arg(QString::number(SPDLOG_VER_MAJOR),
                        QString::number(SPDLOG_VER_MINOR),
                        QString::number(SPDLOG_VER_PATCH)));
+  info.append(QString("<li>symenginge: 0.4.0</li>"));
+  info.append(QString("<li>gmp: 6.1.2</li>"));
   for (const auto &dep : {"expat", "libxml", "xerces-c", "bzip2", "zip"}) {
     if (libsbml::isLibSBMLCompiledWith(dep) != 0) {
       info.append(QString("<li>%1: %2</li>")

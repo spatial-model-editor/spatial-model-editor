@@ -1,186 +1,34 @@
 #include "simulate.hpp"
 
 #include "logger.hpp"
+#include "reactions.hpp"
 
 namespace simulate {
 
-static std::map<std::string, double> getGlobalConstants(
-    sbml::SbmlDocWrapper *doc) {
-  std::map<std::string, double> constants;
-  const auto *model = doc->model;
-  // add all *constant* species as constants
-  for (unsigned k = 0; k < model->getNumSpecies(); ++k) {
-    const auto *spec = model->getSpecies(k);
-    if (doc->isSpeciesConstant(spec->getId())) {
-      spdlog::debug("simulate::getGlobalConstants :: found constant species {}",
-                    spec->getId());
-      // todo: check if species is *also* non-spatial
-      double init_conc = 0;
-      // if SBML file specifies amount: convert to concentration
-      if (spec->isSetInitialAmount()) {
-        double amount = spec->getInitialAmount();
-        double vol = model->getCompartment(spec->getCompartment())->getSize();
-        init_conc = amount / vol;
-        spdlog::debug(
-            "simulate::getGlobalConstants :: converting amount {} to "
-            "concentration {} by dividing by vol {}",
-            amount, init_conc, vol);
-      } else {
-        init_conc = spec->getInitialConcentration();
-      }
-      constants[spec->getId()] = init_conc;
-    }
-  }
-  // add any parameters (that are not replaced by an AssignmentRule)
-  for (unsigned k = 0; k < model->getNumParameters(); ++k) {
-    const auto *param = model->getParameter(k);
-    if (model->getAssignmentRule(param->getId()) == nullptr) {
-      constants[param->getId()] = param->getValue();
-    }
-  }
-  // also get compartment volumes (the compartmentID may be used in the reaction
-  // equation, and it should be replaced with the value of the "Size"
-  // parameter for this compartment)
-  for (unsigned int k = 0; k < model->getNumCompartments(); ++k) {
-    const auto *comp = model->getCompartment(k);
-    constants[comp->getId()] = comp->getSize();
-  }
-  return constants;
-}
-
-static std::string inlineExpr(sbml::SbmlDocWrapper *doc,
-                              const std::string &expr) {
-  std::string inlined;
-  // inline any Function calls in expr
-  inlined = doc->inlineFunctions(expr);
-  // inline any Assignment Rules in expr
-  inlined = doc->inlineAssignments(inlined);
-  return inlined;
-}
-
-bool ReacEval::addStoichCoeff(std::vector<double> &Mrow,
-                              const libsbml::SpeciesReference *spec_ref,
-                              double sign,
-                              const std::vector<std::string> &speciesIDs) {
-  const std::string &speciesID = spec_ref->getSpecies();
-  const auto *species = doc->model->getSpecies(speciesID);
-  const auto *compartment =
-      doc->model->getCompartment(species->getCompartment());
-  double volFactor = compartment->getSize();
-  spdlog::debug(
-      "ReacEval::addStoichCoeff :: species '{}', sign: {}, compartment volume: "
-      "{}",
-      speciesID, sign, volFactor);
-  // if it is in the species vector, and not constant, insert into matrix M
-  auto it = std::find(speciesIDs.cbegin(), speciesIDs.cend(), speciesID);
-  if (it != speciesIDs.cend() && doc->isSpeciesReactive(speciesID)) {
-    std::size_t speciesIndex =
-        static_cast<std::size_t>(it - speciesIDs.cbegin());
-    double coeff = sign * spec_ref->getStoichiometry() / volFactor;
-    spdlog::debug("ReacEval::addStoichCoeff ::   -> stoich coeff[{}]: {}",
-                  speciesIndex, coeff);
-    Mrow[speciesIndex] += coeff;
-    return true;
-  }
-  return false;
-}
-
 ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
                    const std::vector<std::string> &speciesIDs,
-                   const std::vector<std::string> &reactionIDs,
-                   std::size_t nRateRules)
+                   const std::vector<std::string> &reactionIDs)
     : doc(doc_ptr) {
+  spdlog::info("ReacEval::ReacEval :: species vector: {}", speciesIDs);
+
+  // construct reaction expressions and stoich matrix
+  reactions::Reaction reactions(doc_ptr, speciesIDs, reactionIDs);
+  M = reactions.M;
+  nReactions = reactions.reacExpressions.size();
+
   // init vector of species
   species_values = std::vector<double>(speciesIDs.size(), 0.0);
   result = species_values;
   nSpecies = species_values.size();
 
-  spdlog::info("ReacEval::ReacEval :: species vector: {}", speciesIDs);
-  M.clear();
+  // compile reaction expressions
   reac_eval.clear();
-  reac_eval.reserve(reactionIDs.size() + nRateRules);
-
-  // check if any species have a RateRule
-  // NOTE: not currently valid if raterule involves species in multiple
-  // compartments
-  // NOTE: check if should divide by volume here as well as for kinetic law
-  // i.e. if the rate rule is for amount
-  for (std::size_t sIndex = 0; sIndex < speciesIDs.size(); ++sIndex) {
-    const auto *rule = doc->model->getRateRule(speciesIDs[sIndex]);
-    if (rule != nullptr) {
-      std::map<std::string, double> constants = getGlobalConstants(doc);
-      std::string expr = inlineExpr(doc, rule->getFormula());
-      std::vector<double> Mrow(speciesIDs.size(), 0);
-      Mrow[sIndex] = 1.0;
-      M.push_back(Mrow);
-      ++nReactions;
-      // compile expression and add to reac_eval vector
-      reac_eval.emplace_back(
-          numerics::ExprEval(expr, speciesIDs, species_values, constants));
-      spdlog::info("ReacEval::ReacEval :: adding rate rule for species {}",
-                   speciesIDs[sIndex]);
-      spdlog::info("ReacEval::ReacEval ::   - expr: {}", expr);
-    }
-  }
-
-  // process each reaction
-  for (const auto &reacID : reactionIDs) {
-    const auto *reac = doc->model->getReaction(reacID);
-    bool isReaction = false;
-
-    std::map<std::string, double> constants = getGlobalConstants(doc);
-
-    // construct row of stoichiometric coefficients for each
-    // species produced and consumed by this reaction
-    std::vector<double> Mrow(speciesIDs.size(), 0);
-    for (unsigned k = 0; k < reac->getNumProducts(); ++k) {
-      if (addStoichCoeff(Mrow, reac->getProduct(k), +1.0, speciesIDs)) {
-        isReaction = true;
-      }
-    }
-    for (unsigned k = 0; k < reac->getNumReactants(); ++k) {
-      if (addStoichCoeff(Mrow, reac->getReactant(k), -1.0, speciesIDs)) {
-        isReaction = true;
-      }
-    }
-    if (isReaction) {
-      // if matrix row is non-zero, i.e. reaction does something, then insert it
-      // into the M matrix, and construct the corresponding reaction term
-      M.push_back(Mrow);
-      ++nReactions;
-      // get mathematical formula
-      const auto *kin = reac->getKineticLaw();
-      std::string expr = inlineExpr(doc, kin->getFormula());
-
-      // TODO: deal with amount vs concentration issues correctly
-      // if getHasOnlySubstanceUnits is true for some (all?) species
-      // note: would also need to also do this in the inlining step,
-      // and in the stoich matrix factors
-
-      // get local parameters, append to global constants
-      // NOTE: if a parameter is set by an assignment rule
-      // it should *not* be added as a constant below:
-      // (it should no longer be present in expr after inlining)
-      for (unsigned k = 0; k < kin->getNumLocalParameters(); ++k) {
-        const auto *param = kin->getLocalParameter(k);
-        if (doc->model->getAssignmentRule(param->getId()) == nullptr) {
-          constants[param->getId()] = param->getValue();
-        }
-      }
-      for (unsigned k = 0; k < kin->getNumParameters(); ++k) {
-        const auto *param = kin->getParameter(k);
-        if (doc->model->getAssignmentRule(param->getId()) == nullptr) {
-          constants[param->getId()] = param->getValue();
-        }
-      }
-      // compile expression and add to reac_eval vector
-      reac_eval.emplace_back(
-          numerics::ExprEval(expr, speciesIDs, species_values, constants));
-      spdlog::info("ReacEval::ReacEval :: adding reaction {}", reacID);
-      spdlog::info("ReacEval::ReacEval ::   - stoichiometric matrix row: {}",
-                   Mrow);
-      spdlog::info("ReacEval::ReacEval ::   - expr: {}", expr);
-    }
+  reac_eval.reserve(reactions.reacExpressions.size());
+  for (std::size_t reac_index = 0;
+       reac_index < reactions.reacExpressions.size(); ++reac_index) {
+    reac_eval.emplace_back(
+        numerics::ExprEval(reactions.reacExpressions[reac_index], speciesIDs,
+                           species_values, reactions.constants[reac_index]));
   }
 }
 
@@ -231,7 +79,7 @@ SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
       reactionID.push_back(reac.toStdString());
     }
   }
-  reacEval = ReacEval(doc, speciesID, reactionID, nRateRules);
+  reacEval = ReacEval(doc, speciesID, reactionID);
 }
 
 void SimCompartment::evaluate_reactions() {

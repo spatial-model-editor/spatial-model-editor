@@ -2,9 +2,11 @@
 image:
   - Visual Studio 2015
 install:
-  - set PATH=%PATH%;C:\mingw-w64\i686-6.3.0-posix-dwarf-rt_v5-rev1\mingw32\bin
+  - set PATH=C:\msys64\mingw64\bin;%PATH%
 
 before_build:
+  - mingw32-make --version
+  - g++ --version
   # note absolute paths currently hard coded in QT binaries
   # TODO: add a qt.conf file to override this, see: https://doc.qt.io/qt-5/qt-conf.html#overriding-paths
   # install pre-compiled Qt5 binaries & static libraries
@@ -21,12 +23,10 @@ before_build:
   - qmake -v
   # download pre-compiled static libSBML library
   - cd ext
-  - mkdir libsbml
-  - cd libsbml
   - appveyor DownloadFile "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-win32.zip"
   - 7z x libsbml-static-win32.zip
   - dir
-  - cd ..
+  - dir libsbml
   - cd ..
 
 build_script:

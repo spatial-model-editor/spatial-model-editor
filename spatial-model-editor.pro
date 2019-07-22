@@ -18,8 +18,10 @@ SOURCES += \
     src/mainwindow.cpp \
     src/numerics.cpp \
     src/qlabelmousetracker.cpp \
+    src/reactions.cpp \
     src/sbml.cpp \
     src/simulate.cpp \
+    src/symbolic.cpp \
     src/version.cpp \
     ext/qcustomplot/qcustomplot.cpp \
 
@@ -30,8 +32,10 @@ HEADERS += \
     inc/mainwindow.hpp \
     inc/numerics.hpp \
     inc/qlabelmousetracker.hpp \
+    inc/reactions.hpp \
     inc/sbml.hpp \
     inc/simulate.hpp \
+    inc/symbolic.hpp \
     inc/version.hpp \
     ext/qcustomplot/qcustomplot.h \
 
@@ -43,10 +47,9 @@ RESOURCES += \
 
 INCLUDEPATH += inc ext ext/qcustomplot
 
-# these static libraries are available from
+# these static libraries are available pre-compiled from
 # from https://github.com/lkeegan/libsbml-static
-LIBS += $$PWD/ext/libsbml/lib/libsbml-static.a $$PWD/ext/libsbml/lib/libexpat.a
-INCLUDEPATH += $$PWD/ext/libsbml/include
+LIBS += $$PWD/ext/libsbml/lib/libsbml-static.a $$PWD/ext/libsbml/lib/libexpat.a $$PWD/ext/symengine/lib/libsymengine.a $$PWD/ext/gmp/lib/libgmp.a
 
 # on windows add flags to support large object files
 # https://stackoverflow.com/questions/16596876/object-file-has-too-many-sections
@@ -62,7 +65,10 @@ mac: QMAKE_CXXFLAGS += -fvisibility=hidden
 unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wextra -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wpedantic
 
 # on osx/linux, include QT headers as system headers to supress compiler warnings
-mac|unix: QMAKE_CXXFLAGS += -isystem "$$[QT_INSTALL_HEADERS]/qt5" \
+QMAKE_CXXFLAGS += -isystem "$$[QT_INSTALL_HEADERS]/qt5" \
                         -isystem "$$[QT_INSTALL_HEADERS]/QtCore" \
                         -isystem "$$[QT_INSTALL_HEADERS]/QtWidgets" \
-                        -isystem "$$[QT_INSTALL_HEADERS]/QtGui"
+                        -isystem "$$[QT_INSTALL_HEADERS]/QtGui" \
+                        -isystem "$$PWD/ext/libsbml/include" \
+                        -isystem "$$PWD/ext/symengine/include" \
+                        -isystem "$$PWD/ext/gmp/include"
