@@ -2,7 +2,7 @@
 
 #include <QMainWindow>
 
-#include "qcustomplot/qcustomplot.h"
+#include "qcustomplot.h"
 
 #include "sbml.hpp"
 
