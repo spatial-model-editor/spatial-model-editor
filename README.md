@@ -58,6 +58,7 @@ Translate the spatial model to a system of PDEs and simulate it: [WP1b status](h
     -   Expat XML library (included in libSBML) <https://github.com/libexpat/libexpat>
 
         -   license: [MIT](https://github.com/libexpat/libexpat/blob/master/expat/COPYING)
+        -   included in <https://github.com/lkeegan/libsbml-static>
 
     -   Qt 5.12 LTS <https://www.qt.io/qt-5-12>
 
@@ -82,12 +83,12 @@ Translate the spatial model to a system of PDEs and simulate it: [WP1b status](h
     -   SymEngine symbolic manipulation library: <https://github.com/symengine/symengine>
 
         -   license: MIT
-        -   included in binary
+        -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
 
     -   GNU Multiple Precision Arithmetic Library: <https://gmplib.org/>
 
         -   license: LGPL
-        -   included in binary
+        -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
 
     -   Catch2 testing framework: <https://github.com/catchorg/Catch2>
 

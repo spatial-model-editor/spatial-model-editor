@@ -18,6 +18,12 @@ extraction:
           # export path for Qt5 binaries
           - export PATH=$LGTM_WORKSPACE/qt5/bin:$PATH
           - qmake -v
+          # build qcustomplot library
+          - cd ext/qcustomplot
+          - qmake qcustomplot.pro
+          - make -j2
+          - ls
+          - cd ../../
           # download pre-compiled static libSBML library
           - cd ext
           - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-linux.tgz"

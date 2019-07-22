@@ -1506,12 +1506,6 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>QCustomPlot</class>
-   <extends>QWidget</extends>
-   <header>qcustomplot.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>QLabelMouseTracker</class>
    <extends>QWidget</extends>
    <header>qlabelmousetracker.hpp</header>

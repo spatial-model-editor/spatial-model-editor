@@ -423,8 +423,8 @@ void MainWindow::action_About_triggered() {
                   .arg(QString::number(SPDLOG_VER_MAJOR),
                        QString::number(SPDLOG_VER_MINOR),
                        QString::number(SPDLOG_VER_PATCH)));
-  info.append(QString("<li>symenginge: 0.4.0</li>"));
-  info.append(QString("<li>gmp: 6.1.2</li>"));
+  info.append(QString("<li>SymEngine: 0.4.0</li>"));
+  info.append(QString("<li>GMP: 6.1.2</li>"));
   for (const auto &dep : {"expat", "libxml", "xerces-c", "bzip2", "zip"}) {
     if (libsbml::isLibSBMLCompiledWith(dep) != 0) {
       info.append(QString("<li>%1: %2</li>")
