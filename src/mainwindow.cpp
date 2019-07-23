@@ -8,6 +8,7 @@
 #include <QString>
 #include <QStringListModel>
 
+#include "dune.hpp"
 #include "logger.hpp"
 #include "simulate.hpp"
 #include "ui_mainwindow.h"
@@ -212,7 +213,7 @@ void MainWindow::tabMain_currentChanged(int index) {
       ui->txtSBML->setText(sbmlDoc.getXml());
       break;
     case TabIndex::DUNE:
-      ui->txtDUNE->setText(sbmlDoc.getDUNE());
+      ui->txtDUNE->setText(dune::DuneConverter(sbmlDoc).getIniFile());
       break;
     default:
       qFatal("ui::tabMain :: Errror: Tab index %d not valid", index);
@@ -362,10 +363,10 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
     if (filename.right(4) != ".ini") {
       filename.append(".ini");
     }
-    QString iniFileString = sbmlDoc.getDUNE();
+    QString iniFileString = dune::DuneConverter(sbmlDoc).getIniFile();
     QFile f(filename);
     if (f.open(QIODevice::ReadWrite | QIODevice::Text)) {
-      f.write(iniFileString.toUtf8());
+      f.write(dune::DuneConverter(sbmlDoc).getIniFile().toUtf8());
     }
   }
 }

@@ -5,7 +5,7 @@
 namespace reactions {
 
 static std::map<std::string, double> getGlobalConstants(
-    sbml::SbmlDocWrapper *doc) {
+    const sbml::SbmlDocWrapper *doc) {
   std::map<std::string, double> constants;
   const auto *model = doc->model;
   // add all *constant* species as constants
@@ -49,7 +49,7 @@ static std::map<std::string, double> getGlobalConstants(
   return constants;
 }
 
-static std::string inlineExpr(sbml::SbmlDocWrapper *doc,
+static std::string inlineExpr(const sbml::SbmlDocWrapper *doc,
                               const std::string &expr) {
   std::string inlined;
   // inline any Function calls in expr
@@ -59,7 +59,8 @@ static std::string inlineExpr(sbml::SbmlDocWrapper *doc,
   return inlined;
 }
 
-static bool addStoichCoeff(sbml::SbmlDocWrapper *doc, std::vector<double> &Mrow,
+static bool addStoichCoeff(const sbml::SbmlDocWrapper *doc,
+                           std::vector<double> &Mrow,
                            const libsbml::SpeciesReference *spec_ref,
                            double sign,
                            const std::vector<std::string> &speciesIDs) {
@@ -87,7 +88,7 @@ static bool addStoichCoeff(sbml::SbmlDocWrapper *doc, std::vector<double> &Mrow,
   return false;
 }
 
-void Reaction::init(sbml::SbmlDocWrapper *doc_ptr,
+void Reaction::init(const sbml::SbmlDocWrapper *doc_ptr,
                     const std::vector<std::string> &species,
                     const std::vector<std::string> &reactionIDs) {
   doc = doc_ptr;
@@ -177,14 +178,14 @@ void Reaction::init(sbml::SbmlDocWrapper *doc_ptr,
   }
 }
 
-Reaction::Reaction(sbml::SbmlDocWrapper *doc_ptr,
+Reaction::Reaction(const sbml::SbmlDocWrapper *doc_ptr,
                    const std::vector<std::string> &species,
                    const std::vector<std::string> &reactionIDs) {
   init(doc_ptr, species, reactionIDs);
 }
 
-Reaction::Reaction(sbml::SbmlDocWrapper *doc_ptr, const QStringList &species,
-                   const QStringList &reactionIDs) {
+Reaction::Reaction(const sbml::SbmlDocWrapper *doc_ptr,
+                   const QStringList &species, const QStringList &reactionIDs) {
   std::vector<std::string> svec;
   for (const auto &s : species) {
     svec.push_back(s.toStdString());

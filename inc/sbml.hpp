@@ -95,9 +95,6 @@ class SbmlDocWrapper {
   // return raw XML as QString
   const QString &getXml();
 
-  // return DUNE ini file for current model
-  QString getDUNE();
-
   // returns true if species is fixed throughout the simulation
   bool isSpeciesConstant(const std::string &speciesID) const;
 
