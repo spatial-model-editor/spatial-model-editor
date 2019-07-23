@@ -13,7 +13,7 @@ namespace reactions {
 
 class Reaction {
  private:
-  sbml::SbmlDocWrapper *doc;
+  const sbml::SbmlDocWrapper *doc;
 
  public:
   // vector of reaction expressions as strings
@@ -26,13 +26,13 @@ class Reaction {
   std::vector<std::string> speciesIDs;
   // vector of maps of constants
   std::vector<std::map<std::string, double>> constants;
-  void init(sbml::SbmlDocWrapper *doc_ptr,
+  void init(const sbml::SbmlDocWrapper *doc_ptr,
             const std::vector<std::string> &species,
             const std::vector<std::string> &reactionIDs);
-  Reaction(sbml::SbmlDocWrapper *doc_ptr,
+  Reaction(const sbml::SbmlDocWrapper *doc_ptr,
            const std::vector<std::string> &species,
            const std::vector<std::string> &reactionIDs);
-  Reaction(sbml::SbmlDocWrapper *doc_ptr, const QStringList &species,
+  Reaction(const sbml::SbmlDocWrapper *doc_ptr, const QStringList &species,
            const QStringList &reactionIDs);
 };
 
