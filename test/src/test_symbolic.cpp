@@ -41,8 +41,8 @@ TEST_CASE("3*x + 4/x - 1.0*x + 0.2*x*x - 0.1: one var, no constants",
   std::string expr = "3*x + 4/x - 1.0*x + 0.2*x*x - 0.1";
   symbolic::Symbolic sym(expr, {"x"}, {});
   CAPTURE(expr);
-  REQUIRE(sym.simplify() == "-0.1 + 2.0*x + 4*x**(-1) + 0.2*x**2");
-  REQUIRE(sym.diff("x") == "2.0 + 0.4*x - 4*x**(-2)");
+  REQUIRE(sym.simplify() == "-0.1 + 2.0*x + 4*x^(-1) + 0.2*x^2");
+  REQUIRE(sym.diff("x") == "2.0 + 0.4*x - 4*x^(-2)");
 }
 
 TEST_CASE("3*x + 4/y - 1.0*x + 0.2*x*y - 0.1: two vars, no constants",
@@ -50,10 +50,26 @@ TEST_CASE("3*x + 4/y - 1.0*x + 0.2*x*y - 0.1: two vars, no constants",
   std::string expr = "3*x + 4/y - 1.0*x + 0.2*x*y - 0.1";
   symbolic::Symbolic sym(expr, {"x", "y", "z"}, {});
   CAPTURE(expr);
-  REQUIRE(sym.simplify() == "-0.1 + 2.0*x + 0.2*x*y + 4*y**(-1)");
+  REQUIRE(sym.simplify() == "-0.1 + 2.0*x + 0.2*x*y + 4*y^(-1)");
   REQUIRE(sym.diff("x") == "2.0 + 0.2*y");
-  REQUIRE(sym.diff("y") == "0.2*x - 4*y**(-2)");
+  REQUIRE(sym.diff("y") == "0.2*x - 4*y^(-2)");
   REQUIRE(sym.diff("z") == "0");
+}
+
+TEST_CASE("e^(4*x): print exponential function", "[symbolic]") {
+  std::string expr = "e^(4*x)";
+  symbolic::Symbolic sym(expr, {"x"}, {});
+  CAPTURE(expr);
+  REQUIRE(sym.simplify() == "exp(4*x)");
+  REQUIRE(sym.diff("x") == "4*exp(4*x)");
+}
+
+TEST_CASE("x^(3/2): print square-root function", "[symbolic]") {
+  std::string expr = "x^(3/2)";
+  symbolic::Symbolic sym(expr, {"x"}, {});
+  CAPTURE(expr);
+  REQUIRE(sym.simplify() == "x^(3/2)");
+  REQUIRE(sym.diff("x") == "(3/2)*sqrt(x)");
 }
 
 TEST_CASE("3*x + alpha*x - a*n/x: one var, constants", "[symbolic]") {
