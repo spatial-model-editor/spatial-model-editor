@@ -13,8 +13,28 @@
 #include <vector>
 
 #include "symengine/basic.h"
+#include "symengine/printers/strprinter.h"
 #include "symengine/symbol.h"
 #include "symengine/symengine_rcp.h"
+
+namespace SymEngine {
+
+// modify string printer to use ^ for power operator instead of **
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+// ignore warning that base clase has non-virtual destructor
+#pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
+#endif
+class muPrinter : public StrPrinter {
+ protected:
+  virtual void _print_pow(std::ostringstream &o, const RCP<const Basic> &a,
+                          const RCP<const Basic> &b) override;
+};
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
+}  // namespace SymEngine
 
 namespace symbolic {
 
@@ -27,7 +47,7 @@ class Symbolic {
   std::string simplify() const;
   // differentiate given expression wrt a variable
   std::string diff(const std::string &var) const;
-  // relabel variables as u_0, u_1, etc in order
+  // relabel variables in order as u_0, u_1, etc
   std::string relabel(const std::vector<std::string> &variables,
                       const std::string &label = "u_") const;
 

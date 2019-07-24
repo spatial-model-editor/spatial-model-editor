@@ -10,6 +10,21 @@
 
 #include <iostream>
 
+namespace SymEngine {
+void muPrinter::_print_pow(std::ostringstream &o, const RCP<const Basic> &a,
+                           const RCP<const Basic> &b) {
+  if (eq(*a, *E)) {
+    o << "exp(" << apply(b) << ")";
+  } else if (eq(*b, *rational(1, 2))) {
+    o << "sqrt(" << apply(a) << ")";
+  } else {
+    o << parenthesizeLE(a, PrecedenceEnum::Pow);
+    o << "^";
+    o << parenthesizeLE(b, PrecedenceEnum::Pow);
+  }
+}
+}  // namespace SymEngine
+
 namespace symbolic {
 
 Symbolic::Symbolic(const std::string &expression,
@@ -53,7 +68,8 @@ std::string Symbolic::relabel(const std::vector<std::string> &variables,
 
 std::string Symbolic::toString(
     const SymEngine::RCP<const SymEngine::Basic> &e) const {
-  return e->__str__();
+  SymEngine::muPrinter p;
+  return p.apply(e);
 }
 
 }  // namespace symbolic
