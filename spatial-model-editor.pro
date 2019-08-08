@@ -59,7 +59,7 @@ LIBS += \
 # on linux, enable GCC compiler warnings
 unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wextra -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wpedantic
 
-# on windows statically link to avoid missing dll errors:
+# on windows statically link libgcc & libstdc++ to avoid missing dll errors:
 win32: QMAKE_LFLAGS += -static-libgcc -static-libstdc++
 
 # on windows add flags to support large object files

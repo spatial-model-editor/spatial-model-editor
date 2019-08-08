@@ -1,4 +1,4 @@
-# windows release build: MinGW-w64 6.3.0 i686 on Windows Server 2012 R2
+# windows release build: MinGW-w64 from msys64, currently gcc 9.1.0 on Windows Server 2012 R2
 image:
   - Visual Studio 2015
 install:
