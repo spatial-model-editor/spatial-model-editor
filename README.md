@@ -55,10 +55,10 @@ Translate the spatial model to a system of PDEs and simulate it: [WP1b status](h
         -   license: [LGPL](http://sbml.org/Software/libSBML/LibSBML_License)
         -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
 
-    -   Expat XML library (included in libSBML) <https://github.com/libexpat/libexpat>
+    -   Expat XML library <https://github.com/libexpat/libexpat>
 
         -   license: [MIT](https://github.com/libexpat/libexpat/blob/master/expat/COPYING)
-        -   included in <https://github.com/lkeegan/libsbml-static>
+        -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
 
     -   Qt 5.12 LTS <https://www.qt.io/qt-5-12>
 
@@ -89,6 +89,11 @@ Translate the spatial model to a system of PDEs and simulate it: [WP1b status](h
 
         -   license: LGPL
         -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
+
+    -   Triangle - a Two-Dimensional Quality Mesh Generator and Delaunay Triangulator: <http://www.cs.cmu.edu/~quake/triangle.html>
+
+        -   license: "Private, research, and institutional use is free."
+        -   included in source code
 
     -   Catch2 testing framework: <https://github.com/catchorg/Catch2>
 

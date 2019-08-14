@@ -1,5 +1,8 @@
-#include "catch.hpp"
 #include "dune.hpp"
+
+#include "catch.hpp"
+
+#include "logger.hpp"
 
 #include <QFile>
 

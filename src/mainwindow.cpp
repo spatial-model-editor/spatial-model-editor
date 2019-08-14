@@ -10,6 +10,7 @@
 
 #include "dune.hpp"
 #include "logger.hpp"
+#include "mesh.hpp"
 #include "simulate.hpp"
 #include "ui_mainwindow.h"
 #include "version.hpp"
@@ -27,9 +28,6 @@ static void selectFirstChild(QTreeWidget *tree) {
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
   ui->setupUi(this);
-
-  spdlog::set_pattern("[%^%l%$] %v");
-  spdlog::set_level(spdlog::level::debug);
 
   shortcutStopSimulation = new QShortcut(this);
   shortcutStopSimulation->setKey(Qt::CTRL + Qt::Key_C);
@@ -94,6 +92,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->btnChangeCompartment, &QPushButton::clicked, this,
           &MainWindow::btnChangeCompartment_clicked);
+
+  connect(ui->btnGenerateMesh, &QPushButton::clicked, this,
+          &MainWindow::btnGenerateMesh_clicked);
 
   connect(ui->listCompartments, &QListWidget::currentTextChanged, this,
           &MainWindow::listCompartments_currentTextChanged);
@@ -181,7 +182,8 @@ void MainWindow::tabMain_currentChanged(int index) {
     FUNCTIONS = 4,
     SIMULATE = 5,
     SBML = 6,
-    DUNE = 7
+    DUNE = 7,
+    GMSH = 8
   };
   ui->tabMain->setWhatsThis(ui->tabMain->tabWhatsThis(index));
   spdlog::debug("MainWindow::tabMain_currentChanged :: Tab changed to {} [{}]",
@@ -214,6 +216,9 @@ void MainWindow::tabMain_currentChanged(int index) {
       break;
     case TabIndex::DUNE:
       ui->txtDUNE->setText(dune::DuneConverter(sbmlDoc).getIniFile());
+      break;
+    case TabIndex::GMSH:
+      // todo: add sbmlDoc to GMSH converter call here
       break;
     default:
       qFatal("ui::tabMain :: Errror: Tab index %d not valid", index);
@@ -426,6 +431,7 @@ void MainWindow::action_About_triggered() {
                        QString::number(SPDLOG_VER_PATCH)));
   info.append(QString("<li>SymEngine: 0.4.0</li>"));
   info.append(QString("<li>GMP: 6.1.2</li>"));
+  info.append(QString("<li>Triangle: 1.6</li>"));
   for (const auto &dep : {"expat", "libxml", "xerces-c", "bzip2", "zip"}) {
     if (libsbml::isLibSBMLCompiledWith(dep) != 0) {
       info.append(QString("<li>%1: %2</li>")
@@ -438,13 +444,14 @@ void MainWindow::action_About_triggered() {
   msgBox.exec();
 }
 
-void MainWindow::lblGeometry_mouseClicked(QRgb col) {
+void MainWindow::lblGeometry_mouseClicked(QRgb col, QPoint point) {
   if (waitingForCompartmentChoice) {
     // update compartment geometry (i.e. colour) of selected compartment to
     // the one the user just clicked on
     const auto &compartmentID =
         ui->listCompartments->selectedItems()[0]->text();
     sbmlDoc.setCompartmentColour(compartmentID, col);
+    sbmlDoc.setCompartmentInteriorPoint(compartmentID, point);
     // update display by simulating user click on listCompartments
     listCompartments_currentTextChanged(compartmentID);
     spdlog::info(
@@ -495,12 +502,84 @@ void MainWindow::btnChangeCompartment_clicked() {
   }
   spdlog::debug(
       "MainWindow::btnChangeCompartment_clicked :: - waiting for user to "
-      "click "
-      "on geometry image");
+      "click on geometry image");
   waitingForCompartmentChoice = true;
   statusBarPermanentMessage->setText(
       "Please click on the desired location on the compartment geometry "
       "image...");
+}
+
+void MainWindow::btnGenerateMesh_clicked() {
+  QImage img = sbmlDoc.getCompartmentImage();
+
+  std::vector<QPoint> interiorPoints;
+  for (const auto &compID : sbmlDoc.compartments) {
+    interiorPoints.push_back(sbmlDoc.getCompartmentInteriorPoint(compID));
+  }
+  mesh::Mesh mesh(img, interiorPoints);
+
+  auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
+
+  // rescale image
+  double scaleFactor = 1;
+  if (img.width() * ui->lblCompShape->height() >
+      img.height() * ui->lblCompShape->width()) {
+    scaleFactor = static_cast<double>(ui->lblCompShape->width()) /
+                  static_cast<double>(img.width());
+    img = img.scaledToWidth(ui->lblCompShape->width(), Qt::FastTransformation);
+  } else {
+    scaleFactor = static_cast<double>(ui->lblCompShape->height()) /
+                  static_cast<double>(img.height());
+    img =
+        img.scaledToHeight(ui->lblCompShape->height(), Qt::FastTransformation);
+  }
+  img = img.convertToFormat(QImage::Format_ARGB32);
+  img.fill(QColor(0, 0, 0, 0));
+  QPainter p(&img);
+
+  // draw vertices
+  for (const auto &v : mesh.getVertices()) {
+    p.setPen(QPen(Qt::red, 2));
+    p.drawEllipse(v * scaleFactor, 2, 2);
+  }
+
+  // draw triangles
+  const auto &triangles = mesh.getTriangles();
+  for (std::size_t k = 0; k < triangles.size(); ++k) {
+    p.setPen(QPen(Qt::gray, 1, Qt::DotLine));
+    if (k == compIndex + 1) {
+      p.setPen(QPen(Qt::black, 3, Qt::SolidLine));
+    }
+    for (const auto &t : triangles[k]) {
+      p.drawLine(t[0] * scaleFactor, t[1] * scaleFactor);
+      p.drawLine(t[1] * scaleFactor, t[2] * scaleFactor);
+      p.drawLine(t[2] * scaleFactor, t[0] * scaleFactor);
+    }
+  }
+
+  // draw boundary lines
+  /*
+  const auto &boundaries = mesh.getBoundaries();
+  for (std::size_t k = 0; k < boundaries.size(); ++k) {
+    const auto &boundary = boundaries[k];
+    std::size_t maxPoint = boundary.points.size();
+    if (!boundary.isLoop) {
+      --maxPoint;
+    }
+    for (std::size_t i = 0; i < maxPoint; ++i) {
+      p.setPen(QPen(sbml::defaultSpeciesColours()[k], 1));
+      p.drawEllipse(boundary.points[i] * scaleFactor, 1, 1);
+      p.setPen(QPen(sbml::defaultSpeciesColours()[k], 1));
+      p.drawLine(
+          boundary.points[i] * scaleFactor,
+          boundary.points[(i + 1) % boundary.points.size()] * scaleFactor);
+    }
+  }
+  */
+  p.end();
+  ui->lblCompShape->setPixmap(QPixmap::fromImage(img));
+
+  ui->txtGMSH->setText(mesh.getGMSH());
 }
 
 void MainWindow::listCompartments_currentTextChanged(
@@ -530,9 +609,18 @@ void MainWindow::listCompartments_currentTextChanged(
       lblCompartmentColourPixmap.fill(QColor::fromRgb(col));
       ui->lblCompartmentColour->setPixmap(lblCompartmentColourPixmap);
       ui->lblCompartmentColour->setText("");
-      // update image mask
-      ui->lblCompShape->setPixmap(QPixmap::fromImage(
-          sbmlDoc.mapCompIdToGeometry.at(compID).getCompartmentImage()));
+      // update image of compartment
+      const auto &img =
+          sbmlDoc.mapCompIdToGeometry.at(compID).getCompartmentImage();
+      // rescale image
+      if (img.width() * ui->lblCompShape->height() >
+          img.height() * ui->lblCompShape->width()) {
+        ui->lblCompShape->setPixmap(QPixmap::fromImage(img.scaledToWidth(
+            ui->lblCompShape->width(), Qt::FastTransformation)));
+      } else {
+        ui->lblCompShape->setPixmap(QPixmap::fromImage(img.scaledToHeight(
+            ui->lblCompShape->height(), Qt::FastTransformation)));
+      }
       ui->lblCompShape->setText("");
     }
   }
@@ -715,7 +803,8 @@ void MainWindow::txtDiffusionConstant_editingFinished() {
   double diffConst = ui->txtDiffusionConstant->text().toDouble();
   QString speciesID = ui->listSpecies->currentItem()->text(0);
   spdlog::info(
-      "MainWindow::txtDiffusionConstant_editingFinished :: setting Diffusion "
+      "MainWindow::txtDiffusionConstant_editingFinished :: setting "
+      "Diffusion "
       "Constant of Species {} to {}",
       speciesID.toStdString(), diffConst);
   sbmlDoc.setDiffusionConstant(speciesID, diffConst);
@@ -724,7 +813,8 @@ void MainWindow::txtDiffusionConstant_editingFinished() {
 void MainWindow::btnChangeSpeciesColour_clicked() {
   QString speciesID = ui->listSpecies->currentItem()->text(0);
   spdlog::debug(
-      "MainWindow::btnChangeSpeciesColour_clicked :: waiting for new colour "
+      "MainWindow::btnChangeSpeciesColour_clicked :: waiting for new "
+      "colour "
       "for species {} from user...",
       speciesID.toStdString());
   QColor newCol = QColorDialog::getColor(sbmlDoc.getSpeciesColour(speciesID),
@@ -732,7 +822,8 @@ void MainWindow::btnChangeSpeciesColour_clicked() {
                                          QColorDialog::DontUseNativeDialog);
   if (newCol.isValid()) {
     spdlog::debug(
-        "MainWindow::btnChangeSpeciesColour_clicked ::   - set new colour to "
+        "MainWindow::btnChangeSpeciesColour_clicked ::   - set new colour "
+        "to "
         "{:x}",
         newCol.rgba());
     sbmlDoc.setSpeciesColour(speciesID, newCol);

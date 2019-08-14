@@ -16,9 +16,15 @@ extraction:
           - make -j2
           - ls
           - cd ../../
+          # build triangle library
+          - cd ext/triangle
+          - make -j2
+          - ls
+          - cd ../../
           # download pre-compiled static libSBML (and other) libraries
+          # pin old version as lgtm doesn't allow external PPA so no gcc-9 available
           - cd ext
-          - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-linux.tgz"
+          - wget "https://github.com/lkeegan/libsbml-static/releases/download/mingw64-fpic/libsbml-static-linux.tgz"
           - tar xzvf libsbml-static-linux.tgz
           - ls */*
           - cd ..

@@ -19,7 +19,7 @@ void QLabelMouseTracker::setImage(const QImage &img) {
     currentPixel.setX(0);
     currentPixel.setY(0);
     colour = image.pixelColor(currentPixel).rgb();
-    emit mouseClicked(colour);
+    emit mouseClicked(colour, currentPixel);
   }
 }
 
@@ -41,7 +41,7 @@ void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
       spdlog::debug(
           "QLabelMouseTracker::::mousePressEvent pixel ({},{}) -> colour {:x}",
           currentPixel.x(), currentPixel.y(), colour);
-      emit mouseClicked(colour);
+      emit mouseClicked(colour, currentPixel);
     }
   }
 }

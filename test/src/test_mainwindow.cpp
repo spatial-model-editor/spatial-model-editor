@@ -7,6 +7,7 @@
 #include "sbml_test_data/ABtoC.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
 
+#include "logger.hpp"
 #include "qlabelmousetracker.hpp"
 
 // class that provides a pointer to each Widget in mainWindow
@@ -482,4 +483,10 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
                   key_delay);
   QApplication::processEvents();
   REQUIRE(ui.tabMain->currentIndex() == 7);
+
+  // display GMSH tab
+  QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
+                  key_delay);
+  QApplication::processEvents();
+  REQUIRE(ui.tabMain->currentIndex() == 8);
 }

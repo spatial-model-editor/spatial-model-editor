@@ -30,10 +30,14 @@ before_build:
   - mv release/* .
   - dir
   - cd ..\..\
+  # build triangle library
+  - cd ext\triangle
+  - mingw32-make -j2
+  - cd ..\..\
   # download pre-compiled static libSBML (and other) libraries
   - cd ext
-  - appveyor DownloadFile "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-win32.zip"
-  - 7z x libsbml-static-win32.zip
+  - appveyor DownloadFile "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-windows.zip"
+  - 7z x libsbml-static-windows.zip
   - dir
   - dir libsbml
   - cd ..

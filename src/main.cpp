@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QtGui>
 
+#include "logger.hpp"
 #include "mainwindow.hpp"
 #include "version.hpp"
 
@@ -23,6 +24,9 @@ int main(int argc, char *argv[]) {
       return 0;
     }
   }
+
+  spdlog::set_pattern("[%^%l%$] %v");
+  spdlog::set_level(spdlog::level::debug);
 
   QApplication a(argc, argv);
 

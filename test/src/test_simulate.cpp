@@ -1,9 +1,9 @@
 #include "simulate.hpp"
 
 #include "catch.hpp"
-
 #include "sbml_test_data/very_simple_model.hpp"
 
+#include "logger.hpp"
 #include "sbml.hpp"
 
 SCENARIO("simulate very_simple_model.xml", "[simulate][non-gui]") {

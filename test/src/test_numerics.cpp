@@ -2,7 +2,10 @@
 
 #include "catch.hpp"
 
-TEST_CASE("evaluate valid expression: no vars, no constants", "[numerics]") {
+#include "logger.hpp"
+
+TEST_CASE("evaluate valid expression: no vars, no constants",
+          "[numerics][non-gui]") {
   // mathematical expression as string
   std::string expr = "5+5";
   // names of variables in expression
@@ -22,7 +25,7 @@ TEST_CASE("evaluate valid expression: no vars, no constants", "[numerics]") {
   REQUIRE(r() == dbl_approx(10));
 }
 
-TEST_CASE("evaluate valid expression: pow function", "[numerics]") {
+TEST_CASE("evaluate valid expression: pow function", "[numerics][non-gui]") {
   std::string expr = "pow(2, 10)";
   std::vector<double> vars = {};
   numerics::ExprEval r(expr, {}, vars, {});
@@ -168,7 +171,7 @@ TEST_CASE("evaluate invalid expression: variable with reserved word as name",
   CAPTURE(constants);
 }
 
-TEST_CASE("extract symbols from expression", "[numerics]") {
+TEST_CASE("extract symbols from expression", "[numerics][non-gui]") {
   REQUIRE(numerics::getSymbols("") == std::vector<std::string>{});
   REQUIRE(numerics::getSymbols("3-2/14.4") == std::vector<std::string>{});
   REQUIRE(numerics::getSymbols("x+3-2*y") ==

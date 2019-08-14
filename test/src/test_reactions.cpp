@@ -1,9 +1,12 @@
-#include "catch.hpp"
 #include "reactions.hpp"
 
 #include <QFile>
 
-TEST_CASE("reactions for ABtoC model", "[reactions]") {
+#include "catch.hpp"
+
+#include "logger.hpp"
+
+TEST_CASE("reactions for ABtoC model", "[reactions][non-gui]") {
   sbml::SbmlDocWrapper s;
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);

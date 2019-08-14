@@ -1,10 +1,10 @@
 // Math expression evaluator (simple wrapper around ExprTk)
-//  - takes a math expression as a string
-//  - also a list of constants and variables
-//  - compiles the mathematical expression using exprtk
-//  - stores the variables as references (i.e. if they are later changed the
-//  expression when evaluated will use the new values)
-//  - evaluates the expression
+//   - takes a math expression as a string
+//   - also a list of constants and variables
+//   - compiles the mathematical expression using exprtk
+//   - stores the variables as references (i.e. if they are later changed the
+//     expression when evaluated will use the new values)
+//   - evaluates the expression
 
 #pragma once
 

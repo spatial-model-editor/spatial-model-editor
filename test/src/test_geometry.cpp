@@ -2,6 +2,8 @@
 
 #include "catch.hpp"
 
+#include "logger.hpp"
+
 TEST_CASE("one pixel compartment, one species field", "[geometry][non-gui]") {
   QImage img(1, 1, QImage::Format_RGB32);
   QRgb col = QColor(12, 243, 154).rgba();
