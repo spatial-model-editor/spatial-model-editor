@@ -141,16 +141,13 @@ void SbmlDocWrapper::initSpatialData() {
 }
 
 void SbmlDocWrapper::importSpatialData() {
+  const std::string fn("SbmlDocWrapper::importSpatialData");
   geom = plugin->getGeometry();
-  spdlog::info(
-      "SbmlDocWrapper::importSpatialData :: Importing existing {}d SBML model "
-      "geometry",
-      geom->getNumCoordinateComponents());
+  spdlog::info("{} :: Importing existing {}d SBML model geometry", fn,
+               geom->getNumCoordinateComponents());
   if (geom->getNumCoordinateComponents() != nDimensions) {
-    spdlog::critical(
-        "SbmlDocWrapper::initModelData :: Error: Only {}d models are "
-        "currently supported",
-        nDimensions);
+    spdlog::critical("{} :: Error: Only {}d models are currently supported", fn,
+                     nDimensions);
     // todo: offer to delete spatial part of model & import anyway
     qFatal(
         "SbmlDocWrapper::initModelData :: Error: Only 2d models are "
@@ -166,8 +163,8 @@ void SbmlDocWrapper::importSpatialData() {
   }
   if (sfgeom == nullptr) {
     spdlog::critical(
-        "SbmlDocWrapper::initModelData :: Error: Only sampled field "
-        "geometries are currently supported");
+        "{} :: Error: Only sampled field geometries are currently supported",
+        fn);
     qFatal(
         "SbmlDocWrapper::initModelData :: Error: Only sampled field "
         "geometries are currently supported");
@@ -180,8 +177,9 @@ void SbmlDocWrapper::importSpatialData() {
   int totalVals = sf->getSamplesLength();
   if (xVals * yVals != totalVals) {
     spdlog::critical(
-        "SbmlDocWrapper::initModelData :: Error: interpolation not yet "
-        "supported: should be one value for each pixel");
+        "{} :: Error: interpolation not yet supported: should be one value for "
+        "each pixel",
+        fn);
   }
   std::vector<int> samples;
   // this push-backs all ints in the samples array
@@ -196,9 +194,7 @@ void SbmlDocWrapper::importSpatialData() {
       ++iter;
     }
   }
-  spdlog::info(
-      "SbmlDocWrapper::importSpatialData ::   - found {} geometry image",
-      img.size());
+  spdlog::info("{} ::   - found {} geometry image", fn, img.size());
   importGeometryFromImage(img, false);
 
   // assign each compartment to a colour
@@ -211,35 +207,32 @@ void SbmlDocWrapper::importSpatialData() {
           scp->getCompartmentMapping()->getDomainType();
       auto *sfvol = sfgeom->getSampledVolumeByDomainType(domainTypeID);
       QRgb col = static_cast<QRgb>(sfvol->getSampledValue());
-      spdlog::info(
-          "SbmlDocWrapper::importSpatialData :: setting compartment {} colour "
-          "to {:x}",
-          compartmentID, col);
-      spdlog::info("SbmlDocWrapper::importSpatialData ::   - DomainType: {}",
-                   domainTypeID);
-      spdlog::info(
-          "SbmlDocWrapper::importSpatialData ::   - SampledFieldVolume: {}",
-          sfvol->getId());
+      spdlog::info("{} :: setting compartment {} colour to {:x}", fn,
+                   compartmentID, col);
+      spdlog::info("{} ::   - DomainType: {}", fn, domainTypeID);
+      spdlog::info("{} ::   - SampledFieldVolume: {}", fn, sfvol->getId());
       setCompartmentColour(compartmentID, col, false);
     }
   }
 }
 
 void SbmlDocWrapper::initModelData() {
+  const std::string fn("SbmlDocWrapper::initModelData");
   if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
       0) {
     std::stringstream ss;
     doc->printErrors(ss);
     spdlog::warn("SBML document errors:\n\n{}", ss.str());
     spdlog::warn(
-        "SbmlDocWrapper::initModelData :: Warning - errors while reading "
-        "SBML file (continuing anyway...)");
+        "{} :: Warning - errors while reading "
+        "SBML file (continuing anyway...)",
+        fn);
     isValid = true;
   } else {
     spdlog::info(
-        "SbmlDocWrapper::initModelData :: Successfully imported SBML Level {}, "
+        "{} :: Successfully imported SBML Level {}, "
         "Version {} model",
-        doc->getLevel(), doc->getVersion());
+        fn, doc->getLevel(), doc->getVersion());
     isValid = true;
   }
 
@@ -283,13 +276,11 @@ void SbmlDocWrapper::initModelData() {
   if (doc->setLevelAndVersion(libsbml::SBMLDocument::getDefaultLevel(),
                               libsbml::SBMLDocument::getDefaultVersion())) {
     spdlog::info(
-        "SbmlDocWrapper::initModelData :: Successfully upgraded SBML model "
-        "to Level {}, Version {}",
+        "{} :: Successfully upgraded SBML model to Level {}, Version {}", fn,
         doc->getLevel(), doc->getVersion());
   } else {
     spdlog::critical(
-        "SbmlDocWrapper::initModelData :: Error - failed to upgrade SBML "
-        "file (continuing anyway...)");
+        "{} :: Error - failed to upgrade SBML file (continuing anyway...)", fn);
   }
   if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
       0) {
@@ -302,15 +293,14 @@ void SbmlDocWrapper::initModelData() {
     doc->enablePackage(libsbml::SpatialExtension::getXmlnsL3V1V1(), "spatial",
                        true);
     doc->setPackageRequired("spatial", true);
-    spdlog::info("SbmlDocWrapper::initModelData :: Enabling spatial extension");
+    spdlog::info("{} :: Enabling spatial extension", fn);
   }
 
   plugin =
       dynamic_cast<libsbml::SpatialModelPlugin *>(model->getPlugin("spatial"));
   if (plugin == nullptr) {
-    spdlog::warn(
-        "SbmlDocWrapper::initModelData :: Failed to get SpatialModelPlugin "
-        "from SBML document");
+    spdlog::warn("{} :: Failed to get SpatialModelPlugin from SBML document",
+                 fn);
   }
 
   if (plugin->isSetGeometry()) {
@@ -330,7 +320,7 @@ void SbmlDocWrapper::exportSBMLFile(const std::string &filename) const {
     spdlog::info("SbmlDocWrapper::exportSBMLFile : exporting SBML model to {}",
                  filename);
     if (!libsbml::SBMLWriter().writeSBML(doc.get(), filename)) {
-      spdlog::error("SbmlDocWrapper::exportSBMLFile : failed to write to %s",
+      spdlog::error("SbmlDocWrapper::exportSBMLFile : failed to write to {}",
                     filename);
     }
   }
@@ -682,7 +672,7 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   }
 }
 
-QPoint SbmlDocWrapper::getCompartmentInteriorPoint(
+QPointF SbmlDocWrapper::getCompartmentInteriorPoint(
     const QString &compartmentID) const {
   const std::string fn("SbmlDocWrapper::getCompartmentInteriorPoint");
   spdlog::info("{} :: compartmentID: {}", fn, compartmentID);
@@ -691,19 +681,18 @@ QPoint SbmlDocWrapper::getCompartmentInteriorPoint(
       comp->getPlugin("spatial"));
   const std::string &domainType = scp->getCompartmentMapping()->getDomainType();
   spdlog::info("{} ::   - domainType: {}", fn, domainType);
-  auto *geom = plugin->getGeometry();
   auto *domain = geom->getDomainByDomainType(domainType);
   spdlog::info("{} ::   - domain: {}", fn, domain->getId());
   auto *interiorPoint = domain->getInteriorPoint(0);
   if (interiorPoint == nullptr) {
     spdlog::info("{} ::   - no interior point found", fn);
-    return QPoint(0, 0);
+    return QPointF(0, 0);
   }
-  return QPoint(interiorPoint->getCoord1(), interiorPoint->getCoord2());
+  return QPointF(interiorPoint->getCoord1(), interiorPoint->getCoord2());
 }
 
 void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
-                                                 const QPoint &point) {
+                                                 const QPointF &point) {
   const std::string fn("SbmlDocWrapper::setCompartmentInteriorPoint");
   spdlog::info("{} :: compartmentID: {}", fn, compartmentID);
   spdlog::info("{} ::   - setting interior point {}", fn, point);
@@ -712,7 +701,6 @@ void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
       comp->getPlugin("spatial"));
   const std::string &domainType = scp->getCompartmentMapping()->getDomainType();
   spdlog::info("{} ::   - domainType: {}", fn, domainType);
-  auto *geom = plugin->getGeometry();
   auto *domain = geom->getDomainByDomainType(domainType);
   spdlog::info("{} ::   - domain: {}", fn, domain->getId());
   auto *interiorPoint = domain->getInteriorPoint(0);

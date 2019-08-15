@@ -42,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
 
   enableTabs();
   ui->tabMain->setCurrentIndex(0);
+  ui->tabCompartmentGeometry->setCurrentIndex(0);
   tabMain_currentChanged(0);
 }
 
@@ -94,6 +95,9 @@ void MainWindow::setupConnections() {
           &MainWindow::btnChangeCompartment_clicked);
 
   connect(ui->btnGenerateMesh, &QPushButton::clicked, this,
+          &MainWindow::btnGenerateMesh_clicked);
+
+  connect(ui->btnGenerateBoundary, &QPushButton::clicked, this,
           &MainWindow::btnGenerateMesh_clicked);
 
   connect(ui->listCompartments, &QListWidget::currentTextChanged, this,
@@ -510,55 +514,39 @@ void MainWindow::btnChangeCompartment_clicked() {
 }
 
 void MainWindow::btnGenerateMesh_clicked() {
-  QImage img = sbmlDoc.getCompartmentImage();
-
-  std::vector<QPoint> interiorPoints;
+  double maxTriangleArea = ui->txtMaxTriangleArea->text().toDouble();
+  auto maxBoundaryPoints =
+      static_cast<std::size_t>(ui->txtMaxBoundaryPoints->text().toInt());
+  std::vector<QPointF> interiorPoints;
   for (const auto &compID : sbmlDoc.compartments) {
     interiorPoints.push_back(sbmlDoc.getCompartmentInteriorPoint(compID));
   }
-  mesh::Mesh mesh(img, interiorPoints);
+  QImage img = sbmlDoc.getCompartmentImage();
 
-  auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
+  // generate mesh
+  mesh::Mesh mesh(img, interiorPoints, maxTriangleArea, maxBoundaryPoints);
 
-  // rescale image
+  // get rescaling factor
   double scaleFactor = 1;
   if (img.width() * ui->lblCompShape->height() >
       img.height() * ui->lblCompShape->width()) {
     scaleFactor = static_cast<double>(ui->lblCompShape->width()) /
                   static_cast<double>(img.width());
-    img = img.scaledToWidth(ui->lblCompShape->width(), Qt::FastTransformation);
   } else {
     scaleFactor = static_cast<double>(ui->lblCompShape->height()) /
                   static_cast<double>(img.height());
-    img =
-        img.scaledToHeight(ui->lblCompShape->height(), Qt::FastTransformation);
-  }
-  img = img.convertToFormat(QImage::Format_ARGB32);
-  img.fill(QColor(0, 0, 0, 0));
-  QPainter p(&img);
-
-  // draw vertices
-  for (const auto &v : mesh.getVertices()) {
-    p.setPen(QPen(Qt::red, 2));
-    p.drawEllipse(v * scaleFactor, 2, 2);
   }
 
-  // draw triangles
-  const auto &triangles = mesh.getTriangles();
-  for (std::size_t k = 0; k < triangles.size(); ++k) {
-    p.setPen(QPen(Qt::gray, 1, Qt::DotLine));
-    if (k == compIndex + 1) {
-      p.setPen(QPen(Qt::black, 3, Qt::SolidLine));
-    }
-    for (const auto &t : triangles[k]) {
-      p.drawLine(t[0] * scaleFactor, t[1] * scaleFactor);
-      p.drawLine(t[1] * scaleFactor, t[2] * scaleFactor);
-      p.drawLine(t[2] * scaleFactor, t[0] * scaleFactor);
-    }
-  }
+  auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
 
+  // construct boundary image
+  QImage boundaryImage(static_cast<int>(scaleFactor * img.width()),
+                       static_cast<int>(scaleFactor * img.height()),
+                       QImage::Format_ARGB32);
+  boundaryImage.fill(QColor(0, 0, 0, 0));
+
+  QPainter p(&boundaryImage);
   // draw boundary lines
-  /*
   const auto &boundaries = mesh.getBoundaries();
   for (std::size_t k = 0; k < boundaries.size(); ++k) {
     const auto &boundary = boundaries[k];
@@ -567,17 +555,41 @@ void MainWindow::btnGenerateMesh_clicked() {
       --maxPoint;
     }
     for (std::size_t i = 0; i < maxPoint; ++i) {
-      p.setPen(QPen(sbml::defaultSpeciesColours()[k], 1));
-      p.drawEllipse(boundary.points[i] * scaleFactor, 1, 1);
-      p.setPen(QPen(sbml::defaultSpeciesColours()[k], 1));
+      p.setPen(QPen(sbml::defaultSpeciesColours()[k], 2));
+      p.drawEllipse(boundary.points[i] * scaleFactor, 2, 2);
+      p.setPen(QPen(sbml::defaultSpeciesColours()[k], 2));
       p.drawLine(
           boundary.points[i] * scaleFactor,
           boundary.points[(i + 1) % boundary.points.size()] * scaleFactor);
     }
   }
-  */
   p.end();
-  ui->lblCompShape->setPixmap(QPixmap::fromImage(img));
+  ui->lblCompBoundary->setPixmap(QPixmap::fromImage(boundaryImage));
+
+  // construct mesh image
+  QImage meshImage = boundaryImage.copy();
+  meshImage.fill(QColor(0, 0, 0, 0));
+  p.begin(&meshImage);
+  // draw vertices
+  for (const auto &v : mesh.getVertices()) {
+    p.setPen(QPen(Qt::red, 2));
+    p.drawEllipse(v * scaleFactor, 2, 2);
+  }
+  // draw triangles
+  const auto &triangles = mesh.getTriangles();
+  for (std::size_t k = 0; k < triangles.size(); ++k) {
+    p.setPen(QPen(Qt::gray, 1, Qt::DotLine));
+    if (k == compIndex) {
+      p.setPen(QPen(Qt::black, 3, Qt::SolidLine));
+    }
+    for (const auto &t : triangles[k]) {
+      p.drawLine(t[0] * scaleFactor, t[1] * scaleFactor);
+      p.drawLine(t[1] * scaleFactor, t[2] * scaleFactor);
+      p.drawLine(t[2] * scaleFactor, t[0] * scaleFactor);
+    }
+  }
+  p.end();
+  ui->lblCompMesh->setPixmap(QPixmap::fromImage(meshImage));
 
   ui->txtGMSH->setText(mesh.getGMSH());
 }
@@ -604,6 +616,8 @@ void MainWindow::listCompartments_currentTextChanged(
       ui->lblCompartmentColour->setText("none");
       ui->lblCompShape->setPixmap(QPixmap());
       ui->lblCompShape->setText("none");
+      ui->lblCompMesh->setPixmap(QPixmap());
+      ui->lblCompMesh->setText("none");
     } else {
       // update colour box
       lblCompartmentColourPixmap.fill(QColor::fromRgb(col));
@@ -622,6 +636,12 @@ void MainWindow::listCompartments_currentTextChanged(
             ui->lblCompShape->height(), Qt::FastTransformation)));
       }
       ui->lblCompShape->setText("");
+      // update mesh if mesh or boundary tab is visible
+      qDebug() << ui->tabCompartmentGeometry->currentIndex();
+      if (ui->tabCompartmentGeometry->currentIndex() > 0) {
+        // todo: don't regenerate every time - load from sbmlDoc
+        btnGenerateMesh_clicked();
+      }
     }
   }
 }

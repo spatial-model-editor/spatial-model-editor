@@ -1,8 +1,11 @@
 // Meshing
-//   - Mesh
-//      - class that generates boundary lines & mesh from image
-//   - BoundaryBoolGrid
-//      - helper class that identifies boundary pixels in image
+//  - Mesh class:
+//     - generates boundary vertices and segments from image
+//     - simplifies these boundary lines
+//     - generates mesh from these points using the Triangle library
+//       https://www.cs.cmu.edu/~quake/triangle.html
+//     - outputs vertices and triangles in GMSH .msh format
+//  - BoundaryBoolGrid: utility class that identifies boundary pixels in image
 
 #pragma once
 
@@ -11,13 +14,13 @@
 #include <QImage>
 #include <QPoint>
 
-#include "triangle/triangle.hpp"
+#include "triangle_wrapper.hpp"
 
 namespace mesh {
 
 constexpr std::size_t NULL_INDEX = std::numeric_limits<std::size_t>::max();
 
-using QTriangle = std::array<QPoint, 3>;
+using QTriangleF = std::array<QPointF, 3>;
 
 class BoundaryBoolGrid {
  private:
@@ -54,8 +57,8 @@ class Mesh {
       QPoint(1, 1), QPoint(1, -1), QPoint(-1, 1), QPoint(-1, -1)};
   QImage img;
   std::vector<Boundary> boundaries;
-  std::vector<QPoint> vertices;
-  std::vector<std::vector<QTriangle>> triangles;
+  std::vector<QPointF> vertices;
+  std::vector<std::vector<QTriangleF>> triangles;
   std::vector<std::array<std::size_t, 4>> triangleIDs;
   std::size_t maxPoints;
   inline int pointToIndex(const QPoint& p) const {
@@ -66,14 +69,16 @@ class Mesh {
   }
   void simplifyBoundary(Boundary& boundaryPoints) const;
   void constructBoundaries();
-  void constructMesh(const std::vector<QPoint>& regions = {});
+  void constructMesh(const std::vector<QPointF>& regions,
+                     double maxTriangleArea);
 
  public:
-  explicit Mesh(const QImage& image, const std::vector<QPoint>& regions = {},
-                std::size_t maxBoundaryPoints = 14);
+  explicit Mesh(const QImage& image, const std::vector<QPointF>& regions = {},
+                double maxTriangleArea = -1,
+                std::size_t maxBoundaryPoints = 13);
   const std::vector<Boundary>& getBoundaries() const { return boundaries; }
-  const std::vector<QPoint>& getVertices() const { return vertices; }
-  const std::vector<std::vector<QTriangle>>& getTriangles() const {
+  const std::vector<QPointF>& getVertices() const { return vertices; }
+  const std::vector<std::vector<QTriangleF>>& getTriangles() const {
     return triangles;
   }
   QString getGMSH() const;

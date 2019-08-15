@@ -10,7 +10,7 @@
 
 #include <string>
 
-#include "exprtk.hpp"
+#include "exprtk_wrapper.hpp"
 
 namespace numerics {
 

@@ -2,6 +2,7 @@
 //  - Qt types
 //     - QString
 //     - QPoint
+//     - QPointF
 //     - QSize
 //     - QColor
 //  - std types
@@ -37,6 +38,10 @@ inline std::ostream &operator<<(std::ostream &os, const QString &value) {
 }
 
 inline std::ostream &operator<<(std::ostream &os, const QPoint &value) {
+  return os << "(" << value.x() << "," << value.y() << ")";
+}
+
+inline std::ostream &operator<<(std::ostream &os, const QPointF &value) {
   return os << "(" << value.x() << "," << value.y() << ")";
 }
 
