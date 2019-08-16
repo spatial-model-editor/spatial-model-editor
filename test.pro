@@ -31,6 +31,7 @@ SOURCES += \
     src/sbml.cpp \
     src/simulate.cpp \
     src/symbolic.cpp \
+    src/triangle_wrapper.cpp \
     src/version.cpp
 
 HEADERS += \

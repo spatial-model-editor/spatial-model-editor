@@ -176,44 +176,35 @@
              <property name="title">
               <string>Compartment Settings</string>
              </property>
-             <layout class="QGridLayout" name="gridLayout_2">
-              <item row="1" column="0">
-               <widget class="QPushButton" name="btnChangeCompartment">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="toolTip">
-                 <string/>
-                </property>
-                <property name="statusTip">
-                 <string/>
-                </property>
-                <property name="whatsThis">
-                 <string>&lt;h4&gt;Select compartment geometry...&lt;/h4&gt;
-&lt;p&gt;To assign a geometry to this compartment, click here, then click on the compartment geometry image on the left .&lt;/p&gt;
-&lt;p&gt;The shape of the compartment will be generated from all the pixels in the image of the same colour as the one that was clicked on&lt;/p&gt;</string>
-                </property>
-                <property name="text">
-                 <string>Select compartment geometry...</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QPushButton" name="btnGenerateMesh">
-                <property name="text">
-                 <string>Generate &amp;mesh</string>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0" colspan="2">
+             <layout class="QVBoxLayout" name="verticalLayout_2">
+              <item>
                <layout class="QGridLayout" name="gridCompartmentSettings">
-                <item row="1" column="1">
+                <item row="0" column="2">
+                 <widget class="QLabel" name="lblCompColourLabel">
+                  <property name="font">
+                   <font>
+                    <weight>50</weight>
+                    <bold>false</bold>
+                   </font>
+                  </property>
+                  <property name="autoFillBackground">
+                   <bool>true</bool>
+                  </property>
+                  <property name="text">
+                   <string>Colour:</string>
+                  </property>
+                  <property name="scaledContents">
+                   <bool>false</bool>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="3">
                  <widget class="QLabel" name="lblCompartmentColour">
                   <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
@@ -249,30 +240,14 @@
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="lblCompColourLabel">
-                  <property name="font">
-                   <font>
-                    <weight>50</weight>
-                    <bold>false</bold>
-                   </font>
-                  </property>
-                  <property name="autoFillBackground">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>Colour:</string>
-                  </property>
-                  <property name="scaledContents">
-                   <bool>false</bool>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
                 <item row="0" column="0">
                  <widget class="QLabel" name="lblCompartmentSize">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
                   <property name="toolTip">
                    <string>The size of the compartment</string>
                   </property>
@@ -287,36 +262,6 @@
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QLabel" name="lblCompShape">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>The shape of the compartment</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>The shape of the compartment</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;Compartment Geometry&lt;/h4&gt;
-&lt;p&gt;The compartment geometry is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
-&lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>none</string>
-                  </property>
-                  <property name="scaledContents">
-                   <bool>false</bool>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
                   </property>
                  </widget>
                 </item>
@@ -339,26 +284,226 @@
                   </property>
                  </widget>
                 </item>
-                <item row="2" column="0">
-                 <widget class="QLabel" name="lblCompShapeLabel">
-                  <property name="toolTip">
-                   <string>The shape of the compartment</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>The shape of the compartment</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>The shape of the compartment</string>
-                  </property>
-                  <property name="text">
-                   <string>Geometry:</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
                </layout>
+              </item>
+              <item>
+               <widget class="QTabWidget" name="tabCompartmentGeometry">
+                <property name="toolTip">
+                 <string>The boundaries of the geometry of the compartments</string>
+                </property>
+                <property name="statusTip">
+                 <string>The boundaries of the geometry of the compartments</string>
+                </property>
+                <property name="whatsThis">
+                 <string>The boundaries of the geometry of the compartments</string>
+                </property>
+                <property name="currentIndex">
+                 <number>1</number>
+                </property>
+                <widget class="QWidget" name="tabCompartmentImage">
+                 <attribute name="title">
+                  <string>Image</string>
+                 </attribute>
+                 <layout class="QVBoxLayout" name="verticalLayout_4">
+                  <item>
+                   <widget class="QLabel" name="lblCompShape">
+                    <property name="sizePolicy">
+                     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                      <horstretch>0</horstretch>
+                      <verstretch>0</verstretch>
+                     </sizepolicy>
+                    </property>
+                    <property name="toolTip">
+                     <string>The shape of the compartment</string>
+                    </property>
+                    <property name="statusTip">
+                     <string>The shape of the compartment</string>
+                    </property>
+                    <property name="whatsThis">
+                     <string>&lt;h4&gt;Compartment Geometry&lt;/h4&gt;
+&lt;p&gt;The compartment geometry is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
+&lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
+                    </property>
+                    <property name="text">
+                     <string>none</string>
+                    </property>
+                    <property name="scaledContents">
+                     <bool>false</bool>
+                    </property>
+                    <property name="alignment">
+                     <set>Qt::AlignCenter</set>
+                    </property>
+                   </widget>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="tabCompartmentBoundary">
+                 <attribute name="title">
+                  <string>Boundary</string>
+                 </attribute>
+                 <layout class="QHBoxLayout" name="horizontalLayout_12">
+                  <item>
+                   <layout class="QGridLayout" name="gridLayout_3">
+                    <item row="1" column="1">
+                     <widget class="QLineEdit" name="txtMaxBoundaryPoints">
+                      <property name="inputMethodHints">
+                       <set>Qt::ImhFormattedNumbersOnly</set>
+                      </property>
+                      <property name="text">
+                       <string>10</string>
+                      </property>
+                      <property name="maxLength">
+                       <number>16</number>
+                      </property>
+                      <property name="clearButtonEnabled">
+                       <bool>false</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="2">
+                     <widget class="QPushButton" name="btnGenerateBoundary">
+                      <property name="text">
+                       <string>Generate &amp;boundary</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="lblMaxBoundaryPoints">
+                      <property name="text">
+                       <string>Max boundary points:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="0" colspan="3">
+                     <widget class="QLabel" name="lblCompBoundary">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="toolTip">
+                       <string>The mesh representing the geometry of the compartment</string>
+                      </property>
+                      <property name="statusTip">
+                       <string>The mesh representing the geometry of the compartment</string>
+                      </property>
+                      <property name="whatsThis">
+                       <string>&lt;h4&gt;Compartment Geometry: Mesh&lt;/h4&gt;
+&lt;p&gt;The compartment geometry mesh is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
+&lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
+                      </property>
+                      <property name="text">
+                       <string>none</string>
+                      </property>
+                      <property name="scaledContents">
+                       <bool>false</bool>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </widget>
+                <widget class="QWidget" name="tabCompartmentMesh">
+                 <attribute name="title">
+                  <string>Mesh</string>
+                 </attribute>
+                 <layout class="QVBoxLayout" name="verticalLayout_3">
+                  <item>
+                   <layout class="QGridLayout" name="gridLayout_2">
+                    <item row="1" column="1">
+                     <widget class="QLineEdit" name="txtMaxTriangleArea">
+                      <property name="inputMethodHints">
+                       <set>Qt::ImhFormattedNumbersOnly</set>
+                      </property>
+                      <property name="text">
+                       <string>15</string>
+                      </property>
+                      <property name="maxLength">
+                       <number>16</number>
+                      </property>
+                      <property name="clearButtonEnabled">
+                       <bool>false</bool>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="2">
+                     <widget class="QPushButton" name="btnGenerateMesh">
+                      <property name="text">
+                       <string>Generate &amp;mesh</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="label">
+                      <property name="text">
+                       <string>Max triangle area:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="0" colspan="3">
+                     <widget class="QLabel" name="lblCompMesh">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="toolTip">
+                       <string>The mesh representing the geometry of the compartment</string>
+                      </property>
+                      <property name="statusTip">
+                       <string>The mesh representing the geometry of the compartment</string>
+                      </property>
+                      <property name="whatsThis">
+                       <string>&lt;h4&gt;Compartment Geometry: Mesh&lt;/h4&gt;
+&lt;p&gt;The compartment geometry mesh is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
+&lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
+                      </property>
+                      <property name="text">
+                       <string>none</string>
+                      </property>
+                      <property name="scaledContents">
+                       <bool>false</bool>
+                      </property>
+                      <property name="alignment">
+                       <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                   </layout>
+                  </item>
+                 </layout>
+                </widget>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="btnChangeCompartment">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="toolTip">
+                 <string/>
+                </property>
+                <property name="statusTip">
+                 <string/>
+                </property>
+                <property name="whatsThis">
+                 <string>&lt;h4&gt;Select compartment geometry...&lt;/h4&gt;
+&lt;p&gt;To assign a geometry to this compartment, click here, then click on the compartment geometry image on the left .&lt;/p&gt;
+&lt;p&gt;The shape of the compartment will be generated from all the pixels in the image of the same colour as the one that was clicked on&lt;/p&gt;</string>
+                </property>
+                <property name="text">
+                 <string>Select compartment geometry...</string>
+                </property>
+               </widget>
               </item>
              </layout>
             </widget>
@@ -1203,7 +1348,7 @@
             </widget>
            </item>
            <item row="1" column="0" colspan="8">
-            <widget class="QCustomPlot" name="pltPlot"/>
+            <widget class="QCustomPlot" name="pltPlot" native="true"/>
            </item>
            <item row="0" column="5">
             <widget class="QLineEdit" name="txtSimDt">
@@ -1374,10 +1519,12 @@
      <property name="title">
       <string>&amp;Example geometry image</string>
      </property>
+     <addaction name="action_circle_100x100"/>
      <addaction name="actionone_blob_100x100"/>
      <addaction name="actionside_by_side_100x100"/>
      <addaction name="actions"/>
      <addaction name="action_filled_donut_100x100_bmp"/>
+     <addaction name="actionconcave_cell_nucleus_100x100"/>
      <addaction name="actionliver_300x100"/>
      <addaction name="actionsingle_pixels_3x1"/>
     </widget>
@@ -1530,6 +1677,16 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+D</string>
+   </property>
+  </action>
+  <action name="action_circle_100x100">
+   <property name="text">
+    <string>&amp;circle-100x100</string>
+   </property>
+  </action>
+  <action name="actionconcave_cell_nucleus_100x100">
+   <property name="text">
+    <string>&amp;concave-cell-nucleus-100x100</string>
    </property>
   </action>
  </widget>

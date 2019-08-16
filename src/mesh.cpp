@@ -4,129 +4,10 @@
 
 #include <QDebug>
 
-#include "triangle/triangle.hpp"
-
 #include "logger.hpp"
 
 static int qPointToInt(const QPoint& point) {
   return point.x() + 65536 * point.y();
-}
-
-static void setPointList(struct triangle::triangulateio& s,
-                         const std::vector<mesh::Boundary>& boundaries,
-                         bool setSegments = false) {
-  // points may be used by multiple boundary lines,
-  // so first construct set of unique points for each line
-  // with a mapping from each point to its index
-  std::map<int, int> mapPointToIndex;
-  int index = 0;
-  std::size_t nPoints = 0;
-  std::vector<std::vector<QPoint>> uniquePoints;
-  for (const auto& boundary : boundaries) {
-    std::vector<QPoint> unique;
-    for (const auto& point : boundary.points) {
-      if (mapPointToIndex.find(qPointToInt(point)) == mapPointToIndex.cend()) {
-        // QPoint not already in list: add it
-        unique.push_back(point);
-        mapPointToIndex[qPointToInt(point)] = index;
-        ++index;
-      }
-    }
-    uniquePoints.push_back(unique);
-    nPoints += unique.size();
-  }
-
-  s.pointlist = static_cast<double*>(malloc(2 * nPoints * sizeof(double)));
-  s.numberofpoints = static_cast<int>(nPoints);
-  s.pointmarkerlist = static_cast<int*>(malloc(nPoints * sizeof(int)));
-  double* d = s.pointlist;
-  int* m = s.pointmarkerlist;
-  for (std::size_t i = 0; i < uniquePoints.size(); ++i) {
-    for (const auto& p : uniquePoints[i]) {
-      *d = static_cast<double>(p.x());
-      ++d;
-      *d = static_cast<double>(p.y());
-      ++d;
-      // marker id starts at 2, since 0 means not assigned, and 1 may be
-      // assigned by the Triangle library
-      *m = static_cast<int>(i) + 2;
-      ++m;
-    }
-  }
-
-  if (setSegments) {
-    std::size_t nSegments = 0;
-    for (const auto& boundary : boundaries) {
-      nSegments += boundary.points.size();
-      if (!boundary.isLoop) {
-        --nSegments;
-      }
-    }
-    s.segmentlist = static_cast<int*>(malloc(2 * nSegments * sizeof(int)));
-    s.numberofsegments = static_cast<int>(nSegments);
-    s.segmentmarkerlist = static_cast<int*>(malloc(nSegments * sizeof(int)));
-    int* seg = s.segmentlist;
-    int* segm = s.segmentmarkerlist;
-    for (std::size_t i = 0; i < boundaries.size(); ++i) {
-      for (std::size_t j = 0; j < boundaries[i].points.size() - 1; ++j) {
-        *seg = mapPointToIndex.at(qPointToInt(boundaries[i].points[j]));
-        ++seg;
-        *seg = mapPointToIndex.at(qPointToInt(boundaries[i].points[j + 1]));
-        ++seg;
-        // marker id starts at 2, since 0 means not assigned, and 1 may be
-        // assigned by Triangle library
-        *segm = static_cast<int>(i + 2);
-        ++segm;
-      }
-      if (boundaries[i].isLoop) {
-        // connect last point to first point
-        *seg = mapPointToIndex.at(qPointToInt(boundaries[i].points.back()));
-        ++seg;
-        *seg = mapPointToIndex.at(qPointToInt(boundaries[i].points.front()));
-        ++seg;
-        *segm = static_cast<int>(i + 2);
-        ++segm;
-      }
-    }
-  }
-}
-
-static void setHoleList(struct triangle::triangulateio& s,
-                        const std::vector<QPoint>& holes) {
-  auto nHoles = holes.size();
-  s.holelist = static_cast<double*>(malloc(2 * holes.size() * sizeof(double)));
-  s.numberofholes = static_cast<int>(nHoles);
-  double* h = s.holelist;
-  for (const auto& hole : holes) {
-    *h = hole.x();
-    ++h;
-    *h = hole.y();
-    ++h;
-  }
-}
-
-static void setRegionList(struct triangle::triangulateio& s,
-                          const std::vector<QPoint>& regions) {
-  if (regions.empty()) {
-    s.numberofregions = 0;
-    return;
-  }
-  s.regionlist =
-      static_cast<double*>(malloc(4 * regions.size() * sizeof(double)));
-  s.numberofregions = static_cast<int>(regions.size());
-  double* r = s.regionlist;
-  int i = 1;
-  for (const auto& region : regions) {
-    *r = region.x();
-    ++r;
-    *r = region.y();
-    ++r;
-    *r = static_cast<double>(i);  // compartment index
-    ++r;
-    *r = 0.0;  // unused
-    ++r;
-    ++i;
-  }
 }
 
 namespace mesh {
@@ -268,11 +149,11 @@ static double triangleArea(const QPoint& a, const QPoint& b, const QPoint& c) {
                          b.x() * a.y() - c.x() * b.y() - a.x() * c.y());
 }
 
-Mesh::Mesh(const QImage& image, const std::vector<QPoint>& regions,
-           std::size_t maxBoundaryPoints)
+Mesh::Mesh(const QImage& image, const std::vector<QPointF>& regions,
+           double maxTriangleArea, std::size_t maxBoundaryPoints)
     : img(image), maxPoints(maxBoundaryPoints) {
   constructBoundaries();
-  constructMesh(regions);
+  constructMesh(regions, maxTriangleArea);
 }
 
 // Visvalingam polyline simplification
@@ -283,6 +164,7 @@ Mesh::Mesh(const QImage& image, const std::vector<QPoint>& regions,
 void Mesh::simplifyBoundary(Boundary& bp) const {
   std::size_t size = bp.points.size();
   double minArea = std::numeric_limits<double>::max();
+  double totalArea = 0;
   std::size_t iMin = 0;
   std::size_t iMax = size;
   auto iter = bp.points.begin();
@@ -302,9 +184,17 @@ void Mesh::simplifyBoundary(Boundary& bp) const {
       minArea = area;
       iterSmallest = iter;
     }
+    totalArea += area;
     ++iter;
   }
-  if (minArea > 0 && size <= maxPoints) {
+  // use total area of triangles as a measure of the complexity
+  spdlog::debug("Mesh::simplifyBoundary :: {} points, area {}", size,
+                totalArea);
+
+  if (size < 4 || (minArea > 0 && size <= maxPoints)) {
+    // if we have less than 4 points,
+    // or less than maxPoints and the minArea is non-zero,
+    // then we are done
     return;
   }
   // remove point with smallest triangle
@@ -425,41 +315,56 @@ void Mesh::constructBoundaries() {
   } while (foundStartPoint);
 }
 
-void Mesh::constructMesh(const std::vector<QPoint>& regions) {
-  // construct triangle library input
-  triangle::triangulateio in;
-  setPointList(in, boundaries, true);
-  // setHoleList(in, {QPoint(25, 25), QPoint(24, 24)});
-  setRegionList(in, regions);
-  triangle::triangulateio out;
-  // call triangle library
-  triangle::triangulate("zVqpA", &in, &out, nullptr);
-  // parse triangle library output
-  vertices.clear();
-  spdlog::info("Mesh::constructMesh :: {} vertices", out.numberofpoints);
-  for (int i = 0; i < out.numberofpoints; ++i) {
-    auto x = static_cast<int>(out.pointlist[2 * i]);
-    auto y = static_cast<int>(out.pointlist[2 * i + 1]);
-    vertices.push_back(QPoint(x, y));
-  }
-  triangleIDs.clear();
-  spdlog::info("Mesh::constructMesh :: {} triangles", out.numberoftriangles);
-  std::size_t maxCompIndex = 0;
-  for (int i = 0; i < out.numberoftriangles; ++i) {
-    auto t0 = static_cast<std::size_t>(out.trianglelist[i * 3]);
-    auto t1 = static_cast<std::size_t>(out.trianglelist[i * 3 + 1]);
-    auto t2 = static_cast<std::size_t>(out.trianglelist[i * 3 + 2]);
-    std::size_t compIndex = 0;
-    if (out.numberoftriangleattributes > 0) {
-      compIndex = static_cast<std::size_t>(out.triangleattributelist[i]);
+void Mesh::constructMesh(const std::vector<QPointF>& regions,
+                         double maxTriangleArea) {
+  // points may be used by multiple boundary lines,
+  // so first construct a set of unique points with map to their index
+  std::map<int, std::size_t> mapPointToIndex;
+  std::size_t index = 0;
+  std::vector<QPoint> boundaryPoints;
+  for (const auto& boundary : boundaries) {
+    for (const auto& point : boundary.points) {
+      if (mapPointToIndex.find(qPointToInt(point)) == mapPointToIndex.cend()) {
+        // QPoint not already in list: add it
+        boundaryPoints.push_back(point);
+        mapPointToIndex[qPointToInt(point)] = index;
+        ++index;
+      }
     }
-    maxCompIndex = std::max(maxCompIndex, compIndex);
-    spdlog::info("Mesh::constructMesh :: compIndex {} triangle {} {} {}",
-                 compIndex, t0, t1, t2);
-    triangleIDs.push_back({compIndex, t0, t1, t2});
   }
-  triangles = std::vector<std::vector<QTriangle>>(maxCompIndex + 1,
-                                                  std::vector<QTriangle>{});
+  // for each boundary line, replace each QPoint
+  // with its index in the list of boundaryPoints
+  std::vector<triangle_wrapper::BoundarySegments> boundarySegmentsVector;
+  for (std::size_t i = 0; i < boundaries.size(); ++i) {
+    boundarySegmentsVector.emplace_back();
+    for (std::size_t j = 0; j < boundaries[i].points.size() - 1; ++j) {
+      auto i0 = mapPointToIndex.at(qPointToInt(boundaries[i].points[j]));
+      auto i1 = mapPointToIndex.at(qPointToInt(boundaries[i].points[j + 1]));
+      boundarySegmentsVector.back().push_back({i0, i1});
+    }
+    if (boundaries[i].isLoop) {
+      // connect last point to first point
+      auto i0 = mapPointToIndex.at(qPointToInt(boundaries[i].points.back()));
+      auto i1 = mapPointToIndex.at(qPointToInt(boundaries[i].points.front()));
+      boundarySegmentsVector.back().push_back({i0, i1});
+    }
+  }
+  // interior point for each compartment
+  std::vector<triangle_wrapper::Compartment> compartments;
+  for (const auto& interiorPoint : regions) {
+    compartments.emplace_back(interiorPoint, maxTriangleArea);
+  }
+  // generate mesh
+  triangle_wrapper::Triangulate triangulate(
+      boundaryPoints, boundarySegmentsVector, compartments, {});
+  vertices = triangulate.getPoints();
+  triangleIDs = triangulate.getTriangleIndices();
+  spdlog::info("Mesh::constructMesh :: {} vertices, {} triangles",
+               vertices.size(), triangleIDs.size());
+
+  // construct triangles from triangle indices & vertices
+  triangles = std::vector<std::vector<QTriangleF>>(compartments.size(),
+                                                   std::vector<QTriangleF>{});
   for (const auto& t : triangleIDs) {
     triangles[t[0]].push_back({vertices[t[1]], vertices[t[2]], vertices[t[3]]});
   }
@@ -467,7 +372,7 @@ void Mesh::constructMesh(const std::vector<QPoint>& regions) {
 
 QString Mesh::getGMSH() const {
   // note: gmsh indexing starts with 1
-  // note: gmsh (0,0) is bottom left, in Qt it is top left, so flip y coords
+  // note: gmsh (0,0) is bottom left, but in Qt it is top left, so flip y coords
   // todo: use actual xy values in physical units instead of pixels
   QString msh;
   msh.append("$MeshFormat\n");

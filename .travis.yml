@@ -87,7 +87,6 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-9
-            - lcov
             - libxkbcommon-dev
             - jwm
         sonarcloud:
@@ -123,19 +122,26 @@ matrix:
         - qmake -Wall -config debug ../test.pro
         - make -j2
         - ./test -d=yes
-        # generate gcov test coverage data for sonar-source
+        # generate gcov test coverage data for sonar-source & codecov.io
         - mkdir ../gcov
         - cd ../gcov
-        - gcov -r ../build-tests/*.gcno
+        - gcov -r -p ../build-tests/*.gcno
+        # only want coverage data for src and inc folders
+        - mkdir tmp
+        - mv *.* tmp
+        - cd tmp
+        - mv ^#inc* ../
+        - mv ^#src* ../
+        - rm *
+        - cd ../
+        - rmdir tmp
+        - ls
         - cd ../
         # upload to sonar-scanner
         - sonar-scanner -Dsonar.login=$SONAR_LOGIN
       after_script:
         # upload coverage report to codecov.io
-        - lcov --directory build-tests --capture --output-file coverage.info
-        - lcov --remove coverage.info "catch/*" "/usr/*" "*/catch/*" "*/test/*" "*/QtCore/*" "*/libsbml/*" "*/ext/*" "*/build-tests/*" "*/qcustomplot/*" --output-file coverage.info
-        - lcov --list coverage.info
-        - bash <(curl -s https://codecov.io/bash) -X gcov -f "coverage.info"
+        - bash <(curl -s https://codecov.io/bash) -X gcov -f "gcov/*"
     ##############################################
     # linux test build: valgrind for non-gui tests
     ##############################################

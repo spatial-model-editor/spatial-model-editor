@@ -55,7 +55,7 @@ SCENARIO("image: empty image", "[mesh][boundary][non-gui]") {
   imgBoundary.emplace_back(img.width() - 1, img.height() - 1);
   imgBoundary.emplace_back(img.width() - 1, 0);
 
-  mesh::Mesh mesh(img);
+  mesh::Mesh mesh(img, {QPointF(8, 8)});
 
   // check boundaries
   const auto& boundaries = mesh.getBoundaries();
@@ -64,14 +64,20 @@ SCENARIO("image: empty image", "[mesh][boundary][non-gui]") {
   REQUIRE(boundaries[0].isLoop);
   REQUIRE(isCyclicPermutation(boundaries[0].points, imgBoundary));
 
+  // check output vertices
+  const auto& vertices = mesh.getVertices();
+  REQUIRE(vertices.size() == 4);
+
   // check triangles
   const auto& triangles = mesh.getTriangles();
   REQUIRE(triangles.size() == 1);
   REQUIRE(triangles[0].size() == 2);
-  REQUIRE(triangles[0][0] ==
-          std::array<QPoint, 3>{QPoint(0, 31), QPoint(0, 0), QPoint(23, 0)});
-  REQUIRE(triangles[0][1] ==
-          std::array<QPoint, 3>{QPoint(23, 0), QPoint(23, 31), QPoint(0, 31)});
+  REQUIRE(triangles[0][0] == std::array<QPointF, 3>{QPointF(0, 31),
+                                                    QPointF(0, 0),
+                                                    QPointF(23, 0)});
+  REQUIRE(triangles[0][1] == std::array<QPointF, 3>{QPointF(23, 0),
+                                                    QPointF(23, 31),
+                                                    QPointF(0, 31)});
 
   // check gmsh output
   QStringList msh = mesh.getGMSH().split("\n");
@@ -118,7 +124,7 @@ SCENARIO("image: single convex compartment", "[mesh][boundary][non-gui]") {
   img.setPixel(5, 6, col);
   img.setPixel(6, 6, col);
 
-  mesh::Mesh mesh(img);
+  mesh::Mesh mesh(img, {QPointF(6, 6)});
 
   // check boundaries
   const auto& boundaries = mesh.getBoundaries();
@@ -166,7 +172,7 @@ SCENARIO("image: larger convex compartment, degenerate points",
   img.setPixel(8, 6, col);
   img.setPixel(6, 7, col);
   img.setPixel(7, 7, col);
-  mesh::Mesh mesh(img);
+  mesh::Mesh mesh(img, {QPointF(7, 6)});
   const auto& boundaries = mesh.getBoundaries();
   CAPTURE(boundaries[0].points);
   CAPTURE(boundaries[1].points);
@@ -226,7 +232,7 @@ SCENARIO("image: single concave compartment", "[mesh][boundary][non-gui]") {
   img.setPixel(13, 14, col);
   img.setPixel(13, 15, col);
   img.setPixel(14, 15, col);
-  mesh::Mesh mesh(img);
+  mesh::Mesh mesh(img, {QPointF(12, 13)});
   const auto& boundaries = mesh.getBoundaries();
   CAPTURE(boundaries[0].points);
   CAPTURE(boundaries[1].points);
@@ -288,7 +294,7 @@ SCENARIO("image: two touching comps, two fixed point pixels",
   bound3.emplace_back(15, 12);
   bound3.emplace_back(12, 12);
 
-  mesh::Mesh mesh(img);
+  mesh::Mesh mesh(img, {QPointF(11, 11), QPointF(14, 11)});
   const auto& boundaries = mesh.getBoundaries();
   CAPTURE(boundaries[0].points);
   CAPTURE(boundaries[1].points);
