@@ -7,6 +7,7 @@
 #include "sbml_test_data/ABtoC.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
 
+#include "colours.hpp"
 #include "logger.hpp"
 #include "qlabelmousetracker.hpp"
 
@@ -422,14 +423,14 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
                     key_delay);
   }
   REQUIRE(ui.lblSpeciesColour->pixmap()->toImage().pixelColor(0, 0) ==
-          sbml::defaultSpeciesColours()[3]);
+          colours::indexedColours()[3]);
   // just click Enter, so accept default colour, ie no-op
   mwt.setMessage();
   mwt.start();
   QTest::mouseClick(ui.btnChangeSpeciesColour, Qt::LeftButton,
                     Qt::KeyboardModifier(), QPoint(), key_delay);
   REQUIRE(ui.lblSpeciesColour->pixmap()->toImage().pixelColor(0, 0) ==
-          sbml::defaultSpeciesColours()[3]);
+          colours::indexedColours()[3]);
 
   // display reactions tab
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,

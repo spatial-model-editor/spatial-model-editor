@@ -52,36 +52,54 @@ struct Boundary {
 
 class Mesh {
  private:
-  const std::vector<QPoint> nearestNeighbourDirectionPoints = {
+  std::size_t defaultBoundaryMaxPoints = 12;
+  std::size_t defaultCompartmentMaxTriangleArea = 40;
+  std::vector<QPoint> nearestNeighbourDirectionPoints = {
       QPoint(1, 0), QPoint(-1, 0), QPoint(0, 1),  QPoint(0, -1),
       QPoint(1, 1), QPoint(1, -1), QPoint(-1, 1), QPoint(-1, -1)};
+  // input data
   QImage img;
+  std::vector<QPointF> compartmentInteriorPoints;
+  std::vector<std::size_t> boundaryMaxPoints;
+  std::vector<std::size_t> compartmentMaxTriangleArea;
+  // output data
+  std::vector<Boundary> fullBoundaries;
   std::vector<Boundary> boundaries;
   std::vector<QPointF> vertices;
   std::vector<std::vector<QTriangleF>> triangles;
   std::vector<std::array<std::size_t, 4>> triangleIDs;
-  std::size_t maxPoints;
   inline int pointToIndex(const QPoint& p) const {
     return p.x() + img.width() * p.y();
   }
   inline QPoint indexToPoint(int i) const {
     return QPoint(i % img.width(), i / img.width());
   }
-  void simplifyBoundary(Boundary& boundaryPoints) const;
-  void constructBoundaries();
-  void constructMesh(const std::vector<QPointF>& regions,
-                     double maxTriangleArea);
+  void simplifyBoundary(Boundary& boundaryPoints, std::size_t maxPoints) const;
+  void updateBoundary(std::size_t boundaryIndex);
+  void updateBoundaries();
+  void constructFullBoundaries();
+  void constructMesh();
 
  public:
-  explicit Mesh(const QImage& image, const std::vector<QPointF>& regions = {},
-                double maxTriangleArea = -1,
-                std::size_t maxBoundaryPoints = 13);
+  Mesh() = default;
+  explicit Mesh(const QImage& image,
+                const std::vector<QPointF>& interiorPoints = {},
+                const std::vector<std::size_t>& maxPoints = {},
+                const std::vector<std::size_t>& maxTriangleArea = {});
+  void setBoundaryMaxPoints(std::size_t boundaryIndex, std::size_t maxPoints);
+  std::size_t getBoundaryMaxPoints(std::size_t boundaryIndex) const;
+  void setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
+                                     std::size_t maxTriangleArea);
+  std::size_t getCompartmentMaxTriangleArea(std::size_t compartmentIndex) const;
   const std::vector<Boundary>& getBoundaries() const { return boundaries; }
   const std::vector<QPointF>& getVertices() const { return vertices; }
   const std::vector<std::vector<QTriangleF>>& getTriangles() const {
     return triangles;
   }
-  QString getGMSH() const;
+  QImage getBoundariesImage(const QSize& size,
+                            std::size_t boldBoundaryIndex) const;
+  QImage getMeshImage(const QSize& size, std::size_t compartmentIndex) const;
+  QString getGMSH(double pixelPhysicalSize = 1.0) const;
 };
 
 }  // namespace mesh

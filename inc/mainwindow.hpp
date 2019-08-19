@@ -72,7 +72,15 @@ class MainWindow : public QMainWindow {
 
   void btnChangeCompartment_clicked();
 
-  void btnGenerateMesh_clicked();
+  void tabCompartmentGeometry_currentChanged(int index);
+
+  void spinBoundaryIndex_valueChanged(int value);
+
+  void spinMaxBoundaryPoints_valueChanged(int value);
+
+  void spinMaxTriangleArea_valueChanged(int value);
+
+  void generateMesh(int value = 0);
 
   void listCompartments_currentTextChanged(const QString &currentText);
 

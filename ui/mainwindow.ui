@@ -298,7 +298,7 @@
                  <string>The boundaries of the geometry of the compartments</string>
                 </property>
                 <property name="currentIndex">
-                 <number>1</number>
+                 <number>2</number>
                 </property>
                 <widget class="QWidget" name="tabCompartmentImage">
                  <attribute name="title">
@@ -339,42 +339,48 @@
                 </widget>
                 <widget class="QWidget" name="tabCompartmentBoundary">
                  <attribute name="title">
-                  <string>Boundary</string>
+                  <string>Boundaries</string>
                  </attribute>
                  <layout class="QHBoxLayout" name="horizontalLayout_12">
                   <item>
                    <layout class="QGridLayout" name="gridLayout_3">
                     <item row="1" column="1">
-                     <widget class="QLineEdit" name="txtMaxBoundaryPoints">
-                      <property name="inputMethodHints">
-                       <set>Qt::ImhFormattedNumbersOnly</set>
+                     <widget class="QSpinBox" name="spinBoundaryIndex">
+                      <property name="wrapping">
+                       <bool>true</bool>
                       </property>
-                      <property name="text">
-                       <string>10</string>
-                      </property>
-                      <property name="maxLength">
-                       <number>16</number>
-                      </property>
-                      <property name="clearButtonEnabled">
-                       <bool>false</bool>
+                      <property name="maximum">
+                       <number>0</number>
                       </property>
                      </widget>
                     </item>
                     <item row="1" column="2">
-                     <widget class="QPushButton" name="btnGenerateBoundary">
+                     <widget class="QLabel" name="lblMaxBoundaryPointsLabel">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
                       <property name="text">
-                       <string>Generate &amp;boundary</string>
+                       <string>Max points:</string>
                       </property>
                      </widget>
                     </item>
                     <item row="1" column="0">
-                     <widget class="QLabel" name="lblMaxBoundaryPoints">
+                     <widget class="QLabel" name="lblBoundaryIndexLabel">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
                       <property name="text">
-                       <string>Max boundary points:</string>
+                       <string>Boundary:</string>
                       </property>
                      </widget>
                     </item>
-                    <item row="0" column="0" colspan="3">
+                    <item row="0" column="0" colspan="5">
                      <widget class="QLabel" name="lblCompBoundary">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -383,15 +389,14 @@
                        </sizepolicy>
                       </property>
                       <property name="toolTip">
-                       <string>The mesh representing the geometry of the compartment</string>
+                       <string>The boundary lines separating the compartments</string>
                       </property>
                       <property name="statusTip">
-                       <string>The mesh representing the geometry of the compartment</string>
+                       <string>The boundary lines separating the compartments</string>
                       </property>
                       <property name="whatsThis">
-                       <string>&lt;h4&gt;Compartment Geometry: Mesh&lt;/h4&gt;
-&lt;p&gt;The compartment geometry mesh is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
-&lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
+                       <string>&lt;h4&gt;Compartment Geometry: Boundaries&lt;/h4&gt;
+&lt;p&gt;The boundary lines separate the compartments. Each line consists of a set of vertices connected by straight lines, and these vertices will also be included in the final mesh.&lt;/p&gt;</string>
                       </property>
                       <property name="text">
                        <string>none</string>
@@ -401,6 +406,16 @@
                       </property>
                       <property name="alignment">
                        <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="3" colspan="2">
+                     <widget class="QSpinBox" name="spinMaxBoundaryPoints">
+                      <property name="minimum">
+                       <number>3</number>
+                      </property>
+                      <property name="value">
+                       <number>12</number>
                       </property>
                      </widget>
                     </item>
@@ -415,36 +430,6 @@
                  <layout class="QVBoxLayout" name="verticalLayout_3">
                   <item>
                    <layout class="QGridLayout" name="gridLayout_2">
-                    <item row="1" column="1">
-                     <widget class="QLineEdit" name="txtMaxTriangleArea">
-                      <property name="inputMethodHints">
-                       <set>Qt::ImhFormattedNumbersOnly</set>
-                      </property>
-                      <property name="text">
-                       <string>15</string>
-                      </property>
-                      <property name="maxLength">
-                       <number>16</number>
-                      </property>
-                      <property name="clearButtonEnabled">
-                       <bool>false</bool>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="2">
-                     <widget class="QPushButton" name="btnGenerateMesh">
-                      <property name="text">
-                       <string>Generate &amp;mesh</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="0">
-                     <widget class="QLabel" name="label">
-                      <property name="text">
-                       <string>Max triangle area:</string>
-                      </property>
-                     </widget>
-                    </item>
                     <item row="0" column="0" colspan="3">
                      <widget class="QLabel" name="lblCompMesh">
                       <property name="sizePolicy">
@@ -472,6 +457,32 @@
                       </property>
                       <property name="alignment">
                        <set>Qt::AlignCenter</set>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="0">
+                     <widget class="QLabel" name="lblMaxTriangleAreaLabel">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="text">
+                       <string>Max triangle area:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="1" colspan="2">
+                     <widget class="QSpinBox" name="spinMaxTriangleArea">
+                      <property name="minimum">
+                       <number>2</number>
+                      </property>
+                      <property name="maximum">
+                       <number>9999</number>
+                      </property>
+                      <property name="value">
+                       <number>32</number>
                       </property>
                      </widget>
                     </item>

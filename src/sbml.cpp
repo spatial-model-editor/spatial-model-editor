@@ -3,6 +3,7 @@
 #include <sstream>
 #include <unordered_set>
 
+#include "colours.hpp"
 #include "logger.hpp"
 #include "reactions.hpp"
 #include "symbolic.hpp"
@@ -263,7 +264,7 @@ void SbmlDocWrapper::initModelData() {
     const auto id = spec->getId().c_str();
     species[spec->getCompartment().c_str()] << QString(id);
     // assign a default colour for displaying the species
-    mapSpeciesIdToColour[id] = defaultSpeciesColours()[i];
+    mapSpeciesIdToColour[id] = colours::indexedColours()[i];
   }
 
   // get list of functions
@@ -305,6 +306,7 @@ void SbmlDocWrapper::initModelData() {
 
   if (plugin->isSetGeometry()) {
     importSpatialData();
+    updateMesh();
   } else {
     initSpatialData();
     // if we already had a geometry image, and we loaded a model without spatial
@@ -672,6 +674,22 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   }
 }
 
+void SbmlDocWrapper::updateMesh() {
+  std::vector<QPointF> interiorPoints;
+  for (const auto &compID : compartments) {
+    const QPointF interior = getCompartmentInteriorPoint(compID);
+    if (interior == QPointF()) {
+      spdlog::info(
+          "SbmlDocWrapper::updateMesh :: compartment {} missing interiorPoint",
+          compID);
+      return;
+    }
+    interiorPoints.push_back(interior);
+  }
+  spdlog::info("SbmlDocWrapper::updateMesh :: updating mesh interior points");
+  mesh = mesh::Mesh(compartmentImage, interiorPoints);
+}
+
 QPointF SbmlDocWrapper::getCompartmentInteriorPoint(
     const QString &compartmentID) const {
   const std::string fn("SbmlDocWrapper::getCompartmentInteriorPoint");
@@ -683,12 +701,16 @@ QPointF SbmlDocWrapper::getCompartmentInteriorPoint(
   spdlog::info("{} ::   - domainType: {}", fn, domainType);
   auto *domain = geom->getDomainByDomainType(domainType);
   spdlog::info("{} ::   - domain: {}", fn, domain->getId());
-  auto *interiorPoint = domain->getInteriorPoint(0);
-  if (interiorPoint == nullptr) {
+  spdlog::info("{} ::   - numInteriorPoints: {}", fn,
+               domain->getNumInteriorPoints());
+  if (domain->getNumInteriorPoints() == 0) {
     spdlog::info("{} ::   - no interior point found", fn);
     return QPointF(0, 0);
   }
-  return QPointF(interiorPoint->getCoord1(), interiorPoint->getCoord2());
+  auto *interiorPoint = domain->getInteriorPoint(0);
+  QPointF point(interiorPoint->getCoord1(), interiorPoint->getCoord2());
+  spdlog::info("{} ::   - interior point {}", fn, point);
+  return point;
 }
 
 void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
@@ -710,6 +732,8 @@ void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
   }
   interiorPoint->setCoord1(point.x());
   interiorPoint->setCoord2(point.y());
+  // update mesh with new interior point
+  updateMesh();
 }
 
 void SbmlDocWrapper::importConcentrationFromImage(const QString &speciesID,
