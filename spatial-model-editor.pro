@@ -10,10 +10,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # disable qtDebug() output in release build
 CONFIG(release, debug|release):DEFINES += QT_NO_DEBUG_OUTPUT
 
-CONFIG += c++11
+CONFIG += c++14
 
 SOURCES += \
     src/main.cpp \
+    src/colours.cpp \
     src/dune.cpp \
     src/geometry.cpp \
     src/mainwindow.cpp \
@@ -28,6 +29,7 @@ SOURCES += \
     src/version.cpp
 
 HEADERS += \
+    inc/colours.hpp \
     inc/dune.hpp \
     inc/geometry.hpp \
     inc/exprtk_wrapper.hpp \

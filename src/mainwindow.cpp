@@ -94,11 +94,17 @@ void MainWindow::setupConnections() {
   connect(ui->btnChangeCompartment, &QPushButton::clicked, this,
           &MainWindow::btnChangeCompartment_clicked);
 
-  connect(ui->btnGenerateMesh, &QPushButton::clicked, this,
-          &MainWindow::btnGenerateMesh_clicked);
+  connect(ui->tabCompartmentGeometry, &QTabWidget::currentChanged, this,
+          &MainWindow::tabCompartmentGeometry_currentChanged);
 
-  connect(ui->btnGenerateBoundary, &QPushButton::clicked, this,
-          &MainWindow::btnGenerateMesh_clicked);
+  connect(ui->spinBoundaryIndex, qOverload<int>(&QSpinBox::valueChanged), this,
+          &MainWindow::spinBoundaryIndex_valueChanged);
+
+  connect(ui->spinMaxBoundaryPoints, qOverload<int>(&QSpinBox::valueChanged),
+          this, &MainWindow::spinMaxBoundaryPoints_valueChanged);
+
+  connect(ui->spinMaxTriangleArea, qOverload<int>(&QSpinBox::valueChanged),
+          this, &MainWindow::spinMaxTriangleArea_valueChanged);
 
   connect(ui->listCompartments, &QListWidget::currentTextChanged, this,
           &MainWindow::listCompartments_currentTextChanged);
@@ -222,7 +228,7 @@ void MainWindow::tabMain_currentChanged(int index) {
       ui->txtDUNE->setText(dune::DuneConverter(sbmlDoc).getIniFile());
       break;
     case TabIndex::GMSH:
-      // todo: add sbmlDoc to GMSH converter call here
+      ui->txtGMSH->setText(sbmlDoc.mesh.getGMSH());
       break;
     default:
       qFatal("ui::tabMain :: Errror: Tab index %d not valid", index);
@@ -513,85 +519,47 @@ void MainWindow::btnChangeCompartment_clicked() {
       "image...");
 }
 
-void MainWindow::btnGenerateMesh_clicked() {
-  double maxTriangleArea = ui->txtMaxTriangleArea->text().toDouble();
-  auto maxBoundaryPoints =
-      static_cast<std::size_t>(ui->txtMaxBoundaryPoints->text().toInt());
-  std::vector<QPointF> interiorPoints;
-  for (const auto &compID : sbmlDoc.compartments) {
-    interiorPoints.push_back(sbmlDoc.getCompartmentInteriorPoint(compID));
+void MainWindow::tabCompartmentGeometry_currentChanged(int index) {
+  spdlog::debug(
+      "MainWindow::tabGeometry_currentChanged :: Tab changed to {} [{}]", index,
+      ui->tabCompartmentGeometry->tabText(index).toStdString());
+  if (index == 1) {
+    ui->spinBoundaryIndex->setMaximum(
+        static_cast<int>(sbmlDoc.mesh.getBoundaries().size()) - 1);
+    spinBoundaryIndex_valueChanged(ui->spinBoundaryIndex->value());
+  } else if (index == 2) {
+    auto compIndex =
+        static_cast<std::size_t>(ui->listCompartments->currentRow());
+    ui->spinMaxTriangleArea->setValue(static_cast<int>(
+        sbmlDoc.mesh.getCompartmentMaxTriangleArea(compIndex)));
+    spinMaxTriangleArea_valueChanged(ui->spinMaxTriangleArea->value());
   }
-  QImage img = sbmlDoc.getCompartmentImage();
+}
 
-  // generate mesh
-  mesh::Mesh mesh(img, interiorPoints, maxTriangleArea, maxBoundaryPoints);
+void MainWindow::spinBoundaryIndex_valueChanged(int value) {
+  const auto &size = ui->lblCompBoundary->size();
+  auto boundaryIndex = static_cast<size_t>(value);
+  ui->spinMaxBoundaryPoints->setValue(
+      static_cast<int>(sbmlDoc.mesh.getBoundaryMaxPoints(boundaryIndex)));
+  ui->lblCompBoundary->setPixmap(
+      QPixmap::fromImage(sbmlDoc.mesh.getBoundariesImage(size, boundaryIndex)));
+}
 
-  // get rescaling factor
-  double scaleFactor = 1;
-  if (img.width() * ui->lblCompShape->height() >
-      img.height() * ui->lblCompShape->width()) {
-    scaleFactor = static_cast<double>(ui->lblCompShape->width()) /
-                  static_cast<double>(img.width());
-  } else {
-    scaleFactor = static_cast<double>(ui->lblCompShape->height()) /
-                  static_cast<double>(img.height());
-  }
+void MainWindow::spinMaxBoundaryPoints_valueChanged(int value) {
+  const auto &size = ui->lblCompBoundary->size();
+  auto boundaryIndex = static_cast<std::size_t>(ui->spinBoundaryIndex->value());
+  sbmlDoc.mesh.setBoundaryMaxPoints(boundaryIndex, static_cast<size_t>(value));
+  ui->lblCompBoundary->setPixmap(
+      QPixmap::fromImage(sbmlDoc.mesh.getBoundariesImage(size, boundaryIndex)));
+}
 
+void MainWindow::spinMaxTriangleArea_valueChanged(int value) {
+  const auto &size = ui->lblCompBoundary->size();
   auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
-
-  // construct boundary image
-  QImage boundaryImage(static_cast<int>(scaleFactor * img.width()),
-                       static_cast<int>(scaleFactor * img.height()),
-                       QImage::Format_ARGB32);
-  boundaryImage.fill(QColor(0, 0, 0, 0));
-
-  QPainter p(&boundaryImage);
-  // draw boundary lines
-  const auto &boundaries = mesh.getBoundaries();
-  for (std::size_t k = 0; k < boundaries.size(); ++k) {
-    const auto &boundary = boundaries[k];
-    std::size_t maxPoint = boundary.points.size();
-    if (!boundary.isLoop) {
-      --maxPoint;
-    }
-    for (std::size_t i = 0; i < maxPoint; ++i) {
-      p.setPen(QPen(sbml::defaultSpeciesColours()[k], 2));
-      p.drawEllipse(boundary.points[i] * scaleFactor, 2, 2);
-      p.setPen(QPen(sbml::defaultSpeciesColours()[k], 2));
-      p.drawLine(
-          boundary.points[i] * scaleFactor,
-          boundary.points[(i + 1) % boundary.points.size()] * scaleFactor);
-    }
-  }
-  p.end();
-  ui->lblCompBoundary->setPixmap(QPixmap::fromImage(boundaryImage));
-
-  // construct mesh image
-  QImage meshImage = boundaryImage.copy();
-  meshImage.fill(QColor(0, 0, 0, 0));
-  p.begin(&meshImage);
-  // draw vertices
-  for (const auto &v : mesh.getVertices()) {
-    p.setPen(QPen(Qt::red, 2));
-    p.drawEllipse(v * scaleFactor, 2, 2);
-  }
-  // draw triangles
-  const auto &triangles = mesh.getTriangles();
-  for (std::size_t k = 0; k < triangles.size(); ++k) {
-    p.setPen(QPen(Qt::gray, 1, Qt::DotLine));
-    if (k == compIndex) {
-      p.setPen(QPen(Qt::black, 3, Qt::SolidLine));
-    }
-    for (const auto &t : triangles[k]) {
-      p.drawLine(t[0] * scaleFactor, t[1] * scaleFactor);
-      p.drawLine(t[1] * scaleFactor, t[2] * scaleFactor);
-      p.drawLine(t[2] * scaleFactor, t[0] * scaleFactor);
-    }
-  }
-  p.end();
-  ui->lblCompMesh->setPixmap(QPixmap::fromImage(meshImage));
-
-  ui->txtGMSH->setText(mesh.getGMSH());
+  sbmlDoc.mesh.setCompartmentMaxTriangleArea(compIndex,
+                                             static_cast<std::size_t>(value));
+  ui->lblCompMesh->setPixmap(
+      QPixmap::fromImage(sbmlDoc.mesh.getMeshImage(size, compIndex)));
 }
 
 void MainWindow::listCompartments_currentTextChanged(
@@ -630,18 +598,15 @@ void MainWindow::listCompartments_currentTextChanged(
       if (img.width() * ui->lblCompShape->height() >
           img.height() * ui->lblCompShape->width()) {
         ui->lblCompShape->setPixmap(QPixmap::fromImage(img.scaledToWidth(
-            ui->lblCompShape->width(), Qt::FastTransformation)));
+            ui->lblCompShape->width() - 2, Qt::FastTransformation)));
       } else {
         ui->lblCompShape->setPixmap(QPixmap::fromImage(img.scaledToHeight(
-            ui->lblCompShape->height(), Qt::FastTransformation)));
+            ui->lblCompShape->height() - 2, Qt::FastTransformation)));
       }
       ui->lblCompShape->setText("");
-      // update mesh if mesh or boundary tab is visible
-      qDebug() << ui->tabCompartmentGeometry->currentIndex();
-      if (ui->tabCompartmentGeometry->currentIndex() > 0) {
-        // todo: don't regenerate every time - load from sbmlDoc
-        btnGenerateMesh_clicked();
-      }
+      // update mesh or boundary image if tab is currently visible
+      tabCompartmentGeometry_currentChanged(
+          ui->tabCompartmentGeometry->currentIndex());
     }
   }
 }

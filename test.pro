@@ -7,7 +7,7 @@ TEMPLATE = app
 
 DEFINES += QT_DEPRECATED_WARNINGS
 
-CONFIG += c++11
+CONFIG += c++14
 
 SOURCES += \
     test/src/main.cpp \
@@ -21,6 +21,7 @@ SOURCES += \
     test/src/test_sbml.cpp \
     test/src/test_simulate.cpp \
     test/src/test_symbolic.cpp \
+    src/colours.cpp \
     src/dune.cpp \
     src/geometry.cpp \
     src/mainwindow.cpp \

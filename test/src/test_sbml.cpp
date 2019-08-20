@@ -8,6 +8,7 @@
 #include "sbml_test_data/very_simple_model.hpp"
 #include "sbml_test_data/yeast_glycolysis.hpp"
 
+#include "colours.hpp"
 #include "logger.hpp"
 
 void createSBMLlvl2doc(const std::string &filename) {
@@ -363,9 +364,9 @@ SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {
         REQUIRE(s.reactions.at("comp")[0] == "r1");
       }
       THEN("species have default colours") {
-        REQUIRE(s.getSpeciesColour("A") == sbml::defaultSpeciesColours()[0]);
-        REQUIRE(s.getSpeciesColour("B") == sbml::defaultSpeciesColours()[1]);
-        REQUIRE(s.getSpeciesColour("C") == sbml::defaultSpeciesColours()[2]);
+        REQUIRE(s.getSpeciesColour("A") == colours::indexedColours()[0]);
+        REQUIRE(s.getSpeciesColour("B") == colours::indexedColours()[1]);
+        REQUIRE(s.getSpeciesColour("C") == colours::indexedColours()[2]);
       }
       WHEN("species colours changed") {
         QColor newA = QColor(12, 12, 12);

@@ -4,6 +4,7 @@
 
 #include "catch.hpp"
 
+#include "colours.hpp"
 #include "logger.hpp"
 
 // note: only valid for vectors of unique values
@@ -55,7 +56,7 @@ SCENARIO("image: empty image", "[mesh][boundary][non-gui]") {
   imgBoundary.emplace_back(img.width() - 1, img.height() - 1);
   imgBoundary.emplace_back(img.width() - 1, 0);
 
-  mesh::Mesh mesh(img, {QPointF(8, 8)});
+  mesh::Mesh mesh(img, {QPointF(8, 8)}, {}, {999});
 
   // check boundaries
   const auto& boundaries = mesh.getBoundaries();
@@ -86,16 +87,58 @@ SCENARIO("image: empty image", "[mesh][boundary][non-gui]") {
   REQUIRE(msh[2] == "$EndMeshFormat");
   REQUIRE(msh[3] == "$Nodes");
   REQUIRE(msh[4] == "4");
-  REQUIRE(msh[5] == "1 0 31 0");
-  REQUIRE(msh[6] == "2 0 0 0");
-  REQUIRE(msh[7] == "3 23 0 0");
-  REQUIRE(msh[8] == "4 23 31 0");
+  REQUIRE(msh[5] == "1 0 0 0");
+  REQUIRE(msh[6] == "2 0 31 0");
+  REQUIRE(msh[7] == "3 23 31 0");
+  REQUIRE(msh[8] == "4 23 0 0");
   REQUIRE(msh[9] == "$EndNodes");
   REQUIRE(msh[10] == "$Elements");
   REQUIRE(msh[11] == "2");
   REQUIRE(msh[12] == "1 2 2 1 1 2 1 4");
   REQUIRE(msh[13] == "2 2 2 1 1 4 3 2");
   REQUIRE(msh[14] == "$EndElements");
+
+  // check image output
+  auto boundaryImage = mesh.getBoundariesImage(QSize(100, 100), 0);
+  auto col0 = colours::indexedColours()[0].rgba();
+  // 75x100, minus two pixels to avoid resizing qlabel widgets
+  REQUIRE(boundaryImage.width() == 73);
+  REQUIRE(boundaryImage.height() == 98);
+  REQUIRE(boundaryImage.pixel(0, 0) == col0);
+  REQUIRE(boundaryImage.pixel(0, 33) == col0);
+  REQUIRE(boundaryImage.pixel(72, 28) == col0);
+  REQUIRE(boundaryImage.pixel(63, 1) == col0);
+  REQUIRE(boundaryImage.pixel(71, 97) == col0);
+  REQUIRE(boundaryImage.pixel(30, 30) == 0);
+  REQUIRE(boundaryImage.pixel(21, 77) == 0);
+
+  auto meshImage = mesh.getMeshImage(QSize(100, 100), 0);
+  REQUIRE(meshImage.width() == 73);
+  REQUIRE(meshImage.height() == 98);
+
+  WHEN("max boundary points increased") {
+    THEN("boundary unchanged") {
+      auto oldBoundaryPoints = mesh.getBoundaries()[0].points;
+      mesh.setBoundaryMaxPoints(0, 99);
+      REQUIRE(mesh.getBoundaries()[0].points == oldBoundaryPoints);
+    }
+  }
+
+  WHEN("max triangle area decreased") {
+    THEN("more vertices & triangles") {
+      mesh.setCompartmentMaxTriangleArea(0, 60);
+      REQUIRE(mesh.getVertices().size() == 13);
+      REQUIRE(mesh.getTriangles()[0].size() == 16);
+
+      mesh.setCompartmentMaxTriangleArea(0, 30);
+      REQUIRE(mesh.getVertices().size() == 26);
+      REQUIRE(mesh.getTriangles()[0].size() == 37);
+
+      mesh.setCompartmentMaxTriangleArea(0, 12);
+      REQUIRE(mesh.getVertices().size() == 54);
+      REQUIRE(mesh.getTriangles()[0].size() == 88);
+    }
+  }
 }
 
 SCENARIO("image: single convex compartment", "[mesh][boundary][non-gui]") {
@@ -123,6 +166,8 @@ SCENARIO("image: single convex compartment", "[mesh][boundary][non-gui]") {
   // fill in internal compartment pixels
   img.setPixel(5, 6, col);
   img.setPixel(6, 6, col);
+  // flip y-axis to match (0,0) == bottom-left of meshing output
+  img = img.mirrored(false, true);
 
   mesh::Mesh mesh(img, {QPointF(6, 6)});
 
@@ -172,6 +217,10 @@ SCENARIO("image: larger convex compartment, degenerate points",
   img.setPixel(8, 6, col);
   img.setPixel(6, 7, col);
   img.setPixel(7, 7, col);
+
+  // flip y-axis to match (0,0) == bottom-left of meshing output
+  img = img.mirrored(false, true);
+
   mesh::Mesh mesh(img, {QPointF(7, 6)});
   const auto& boundaries = mesh.getBoundaries();
   CAPTURE(boundaries[0].points);
@@ -232,6 +281,10 @@ SCENARIO("image: single concave compartment", "[mesh][boundary][non-gui]") {
   img.setPixel(13, 14, col);
   img.setPixel(13, 15, col);
   img.setPixel(14, 15, col);
+
+  // flip y-axis to match (0,0) == bottom-left of meshing output
+  img = img.mirrored(false, true);
+
   mesh::Mesh mesh(img, {QPointF(12, 13)});
   const auto& boundaries = mesh.getBoundaries();
   CAPTURE(boundaries[0].points);
@@ -293,6 +346,9 @@ SCENARIO("image: two touching comps, two fixed point pixels",
   bound3.emplace_back(15, 10);
   bound3.emplace_back(15, 12);
   bound3.emplace_back(12, 12);
+
+  // flip y-axis to match (0,0) == bottom-left of meshing output
+  img = img.mirrored(false, true);
 
   mesh::Mesh mesh(img, {QPointF(11, 11), QPointF(14, 11)});
   const auto& boundaries = mesh.getBoundaries();
