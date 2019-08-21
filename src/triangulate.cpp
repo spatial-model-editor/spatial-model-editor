@@ -1,4 +1,4 @@
-#include "triangle_wrapper.hpp"
+#include "triangulate.hpp"
 
 #include <set>
 
@@ -6,9 +6,11 @@
 
 #include "logger.hpp"
 
-namespace triangle_wrapper {
+namespace triangulate {
 
-void Triangulate::setPointList(const std::vector<QPoint>& boundaryPoints) {
+void Triangulate::setPointList(
+    triangle::triangulateio& in,
+    const std::vector<QPoint>& boundaryPoints) const {
   free(in.pointlist);
   in.pointlist = nullptr;
   in.pointlist =
@@ -24,7 +26,8 @@ void Triangulate::setPointList(const std::vector<QPoint>& boundaryPoints) {
 }
 
 void Triangulate::setSegmentList(
-    const std::vector<BoundarySegments>& boundaries) {
+    triangle::triangulateio& in,
+    const std::vector<BoundarySegments>& boundaries) const {
   free(in.segmentlist);
   in.segmentlist = nullptr;
   free(in.segmentmarkerlist);
@@ -52,7 +55,9 @@ void Triangulate::setSegmentList(
   }
 }
 
-void Triangulate::setRegionList(const std::vector<Compartment>& compartments) {
+void Triangulate::setRegionList(
+    triangle::triangulateio& in,
+    const std::vector<Compartment>& compartments) const {
   // 1-based indexing of compartments
   // 0 is then used for triangles that are not part of a compartment
   free(in.regionlist);
@@ -77,7 +82,8 @@ void Triangulate::setRegionList(const std::vector<Compartment>& compartments) {
   }
 }
 
-void Triangulate::setHoleList(const std::vector<QPointF>& holes) {
+void Triangulate::setHoleList(triangle::triangulateio& in,
+                              const std::vector<QPointF>& holes) const {
   free(in.holelist);
   in.holelist = nullptr;
   if (!holes.empty()) {
@@ -98,9 +104,10 @@ Triangulate::Triangulate(const std::vector<QPoint>& boundaryPoints,
                          const std::vector<BoundarySegments>& boundaries,
                          const std::vector<Compartment>& compartments) {
   // init Triangle library input data
-  setPointList(boundaryPoints);
-  setSegmentList(boundaries);
-  setRegionList(compartments);
+  triangle::triangulateio in;
+  setPointList(in, boundaryPoints);
+  setSegmentList(in, boundaries);
+  setRegionList(in, compartments);
 
   triangle::triangulateio out;
   bool allTrianglesAssigned = true;
@@ -136,7 +143,7 @@ Triangulate::Triangulate(const std::vector<QPoint>& boundaryPoints,
         out = triangle::triangulateio{};
         holes.push_back(centroid);
       }
-      setHoleList(holes);
+      setHoleList(in, holes);
     }
   } while (!allTrianglesAssigned);
 
@@ -163,4 +170,4 @@ const std::vector<TriangleIndex>& Triangulate::getTriangleIndices() const {
   return triangleIndices;
 }
 
-}  // namespace triangle_wrapper
+}  // namespace triangulate

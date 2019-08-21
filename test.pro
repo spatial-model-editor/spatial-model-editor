@@ -21,6 +21,7 @@ SOURCES += \
     test/src/test_sbml.cpp \
     test/src/test_simulate.cpp \
     test/src/test_symbolic.cpp \
+    src/boundary.cpp \
     src/colours.cpp \
     src/dune.cpp \
     src/geometry.cpp \
@@ -32,8 +33,8 @@ SOURCES += \
     src/sbml.cpp \
     src/simulate.cpp \
     src/symbolic.cpp \
-    src/triangle_wrapper.cpp \
-    src/version.cpp
+    src/triangulate.cpp \
+    src/version.cpp \
 
 HEADERS += \
     inc/mainwindow.hpp \
@@ -42,7 +43,7 @@ HEADERS += \
     test/inc/qt_test_utils.hpp \
     test/inc/sbml_test_data/ABtoC.hpp \
     test/inc/sbml_test_data/very_simple_model.hpp \
-    test/inc/sbml_test_data/yeast_glycolysis.hpp
+    test/inc/sbml_test_data/yeast_glycolysis.hpp \
 
 FORMS += \
     ui/mainwindow.ui
