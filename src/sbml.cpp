@@ -731,7 +731,8 @@ void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
     interiorPoint = domain->createInteriorPoint();
   }
   interiorPoint->setCoord1(point.x());
-  interiorPoint->setCoord2(point.y());
+  // convert from QPoint with (0,0) in top-left to (0,0) in bottom-left
+  interiorPoint->setCoord2(compartmentImage.height() - 1 - point.y());
   // update mesh with new interior point
   updateMesh();
 }
