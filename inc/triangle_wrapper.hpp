@@ -29,20 +29,18 @@ struct Compartment {
 class Triangulate {
  private:
   triangle::triangulateio in;
-  triangle::triangulateio out;
   std::vector<QPointF> points;
   std::vector<TriangleIndex> triangleIndices;
 
   void setPointList(const std::vector<QPoint>& boundaryPoints);
   void setSegmentList(const std::vector<BoundarySegments>& boundaries);
   void setRegionList(const std::vector<Compartment>& compartments);
-  void setHoleList(const std::vector<QPoint>& holes);
+  void setHoleList(const std::vector<QPointF>& holes);
 
  public:
   Triangulate(const std::vector<QPoint>& boundaryPoints,
               const std::vector<BoundarySegments>& boundaries,
-              const std::vector<Compartment>& compartments,
-              const std::vector<QPoint>& holes);
+              const std::vector<Compartment>& compartments);
   const std::vector<QPointF>& getPoints() const;
   const std::vector<TriangleIndex>& getTriangleIndices() const;
 };

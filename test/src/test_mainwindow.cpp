@@ -30,6 +30,7 @@ class UIPointers {
   QListWidget *listFunctions;
   QTabWidget *tabMain;
   QPushButton *btnChangeCompartment;
+  QLineEdit *txtSimLength;
   QPushButton *btnSimulate;
 };
 
@@ -72,6 +73,8 @@ UIPointers::UIPointers(MainWindow *mainWindow) : w(mainWindow) {
   btnChangeCompartment =
       w->topLevelWidget()->findChild<QPushButton *>("btnChangeCompartment");
   REQUIRE(btnChangeCompartment != nullptr);
+  txtSimLength = w->topLevelWidget()->findChild<QLineEdit *>("txtSimLength");
+  REQUIRE(txtSimLength != nullptr);
   btnSimulate = w->topLevelWidget()->findChild<QPushButton *>("btnSimulate");
   REQUIRE(btnSimulate != nullptr);
 }
@@ -326,19 +329,14 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   REQUIRE(ui.listCompartments->count() == 3);
 
   // create geometry image
-  QImage img(3, 3, QImage::Format_RGB32);
-  QRgb col1 = QColor(112, 43, 4).rgba();
-  QRgb col2 = QColor(92, 142, 22).rgba();
-  QRgb col3 = QColor(33, 77, 221).rgba();
+  QImage img(":/geometry/filled-donut-100x100.png");
+  img.save("tmp.png");
+  QRgb col1 = img.pixel(0, 0);
+  QRgb col2 = img.pixel(40, 30);
+  QRgb col3 = img.pixel(50, 50);
   CAPTURE(col1);
   CAPTURE(col2);
   CAPTURE(col3);
-  img.fill(col1);
-  img.setPixel(2, 0, col2);
-  img.setPixel(2, 1, col2);
-  img.setPixel(2, 2, col2);
-  img.setPixel(1, 1, col3);
-  img.save("tmp.png");
 
   // import Geometry from image
   mwt.setMessage("tmp.png");
@@ -367,10 +365,10 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   QApplication::processEvents();
   ui.btnChangeCompartment->click();
   QApplication::processEvents();
-  // click on middle
-  QTest::mouseClick(
-      ui.lblGeometry, Qt::LeftButton, Qt::KeyboardModifiers(),
-      QPoint(ui.lblGeometry->width() - 1, ui.lblGeometry->height() - 1));
+  // click on ~(40,30)
+  QTest::mouseClick(ui.lblGeometry, Qt::LeftButton, Qt::KeyboardModifiers(),
+                    QPoint(2 * ui.lblGeometry->width() / 5,
+                           3 * ui.lblGeometry->height() / 10));
   QApplication::processEvents();
   REQUIRE(ui.lblGeometry->getColour() == col2);
   // c3 -> col3
@@ -378,7 +376,7 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   QApplication::processEvents();
   ui.btnChangeCompartment->click();
   QApplication::processEvents();
-  // click on bottom right
+  // click on middle
   QTest::mouseClick(
       ui.lblGeometry, Qt::LeftButton, Qt::KeyboardModifiers(),
       QPoint(ui.lblGeometry->width() / 2, ui.lblGeometry->height() / 2));
@@ -394,7 +392,7 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
                   key_delay);
   CAPTURE(QTest::qWaitFor([&ui]() { return ui.tabMain->currentIndex() == 1; }));
   REQUIRE(ui.tabMain->currentIndex() == 1);
-  REQUIRE(ui.listMembranes->count() == 3);
+  REQUIRE(ui.listMembranes->count() == 2);
   // select each item in listMembranes
   ui.listMembranes->setFocus();
   if (ui.listMembranes->count() > 0) {
@@ -471,6 +469,7 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
                   key_delay);
   REQUIRE(ui.tabMain->currentIndex() == 5);
+  ui.txtSimLength->setText("1.0");
   ui.btnSimulate->click();
 
   // display SBML tab

@@ -9,6 +9,8 @@
 namespace triangle_wrapper {
 
 void Triangulate::setPointList(const std::vector<QPoint>& boundaryPoints) {
+  free(in.pointlist);
+  in.pointlist = nullptr;
   in.pointlist =
       static_cast<double*>(malloc(2 * boundaryPoints.size() * sizeof(double)));
   in.numberofpoints = static_cast<int>(boundaryPoints.size());
@@ -23,6 +25,10 @@ void Triangulate::setPointList(const std::vector<QPoint>& boundaryPoints) {
 
 void Triangulate::setSegmentList(
     const std::vector<BoundarySegments>& boundaries) {
+  free(in.segmentlist);
+  in.segmentlist = nullptr;
+  free(in.segmentmarkerlist);
+  in.segmentmarkerlist = nullptr;
   std::size_t nSegments = 0;
   for (const auto& boundarySegments : boundaries) {
     nSegments += boundarySegments.size();
@@ -47,18 +53,22 @@ void Triangulate::setSegmentList(
 }
 
 void Triangulate::setRegionList(const std::vector<Compartment>& compartments) {
+  // 1-based indexing of compartments
+  // 0 is then used for triangles that are not part of a compartment
+  free(in.regionlist);
+  in.regionlist = nullptr;
   if (!compartments.empty()) {
     in.regionlist =
         static_cast<double*>(malloc(4 * compartments.size() * sizeof(double)));
     in.numberofregions = static_cast<int>(compartments.size());
     double* r = in.regionlist;
-    int i = 0;
+    int i = 1;
     for (const auto& compartment : compartments) {
       *r = static_cast<double>(compartment.interiorPoint.x());
       ++r;
       *r = static_cast<double>(compartment.interiorPoint.y());
       ++r;
-      *r = static_cast<double>(i);  // compartment index
+      *r = static_cast<double>(i);  // compartment index + 1
       ++r;
       *r = compartment.maxTriangleArea;
       ++r;
@@ -67,7 +77,9 @@ void Triangulate::setRegionList(const std::vector<Compartment>& compartments) {
   }
 }
 
-void Triangulate::setHoleList(const std::vector<QPoint>& holes) {
+void Triangulate::setHoleList(const std::vector<QPointF>& holes) {
+  free(in.holelist);
+  in.holelist = nullptr;
   if (!holes.empty()) {
     in.holelist =
         static_cast<double*>(malloc(2 * holes.size() * sizeof(double)));
@@ -84,25 +96,49 @@ void Triangulate::setHoleList(const std::vector<QPoint>& holes) {
 
 Triangulate::Triangulate(const std::vector<QPoint>& boundaryPoints,
                          const std::vector<BoundarySegments>& boundaries,
-                         const std::vector<Compartment>& compartments,
-                         const std::vector<QPoint>& holes) {
+                         const std::vector<Compartment>& compartments) {
   // init Triangle library input data
   setPointList(boundaryPoints);
   setSegmentList(boundaries);
   setRegionList(compartments);
-  setHoleList(holes);
 
-  // call Triangle library
-  //  - Q: no printf output
-  //       (use V, VV, VVV for more verbose output)
-  //  - z: 0-based indexing
-  //  - p: supply Planar Straight Line Graph with vertices, segments, etc
-  //  - j: remove unused vertices from output
-  //  - q: generate quality triangles
-  //       (add vertices such that triangle angles between 20-140 degrees)
-  //  - A: regional attributes (interior point for each compartment)
-  //  - a: max triangle area for each compartment
-  triangle::triangulate("QzpjqAa", &in, &out, nullptr);
+  triangle::triangulateio out;
+  bool allTrianglesAssigned = true;
+  std::vector<QPointF> holes;
+  do {
+    // call Triangle library
+    //  - Q: no printf output
+    //       (use V, VV, VVV for more verbose output)
+    //  - z: 0-based indexing
+    //  - p: supply Planar Straight Line Graph with vertices, segments, etc
+    //  - j: remove unused vertices from output
+    //  - q: generate quality triangles
+    //       (add vertices such that triangle angles between 20-140 degrees)
+    //  - A: regional attributes (interior point for each compartment)
+    //  - a: max triangle area for each compartment
+    triangle::triangulate("QzpjqAa", &in, &out, nullptr);
+    allTrianglesAssigned = true;
+
+    // if there are triangles with 0 as regional attribute,
+    // insert a hole in the middle of the first such triangle and re-mesh
+    // repeat until all triangles are assigned to a non-zero region
+    for (int i = 0; i < out.numberoftriangles; ++i) {
+      if (static_cast<int>(out.triangleattributelist[i]) == 0) {
+        allTrianglesAssigned = false;
+        QPointF centroid(0, 0);
+        for (int v = 0; v < 3; ++v) {
+          int tIndex = out.trianglelist[i * 3 + v];
+          double x = out.pointlist[2 * tIndex];
+          double y = out.pointlist[2 * tIndex + 1];
+          centroid += QPointF(x, y);
+        }
+        centroid /= 3.0;
+        out = triangle::triangulateio{};
+        holes.push_back(centroid);
+      }
+      setHoleList(holes);
+    }
+  } while (!allTrianglesAssigned);
 
   // parse Triangle library output
   points.clear();

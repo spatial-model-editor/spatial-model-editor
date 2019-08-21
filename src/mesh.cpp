@@ -230,7 +230,7 @@ std::size_t Mesh::getCompartmentMaxTriangleArea(
 // NB: very inefficient & not quite right:
 // when recalculating triangle, if new one is smaller
 // than the one just removed, should use the just-removed value
-// for the area - but good enough for now
+// for the area - but good enough for now & also works for closed loops
 void Mesh::simplifyBoundary(Boundary& bp, std::size_t maxPoints) const {
   std::size_t size = bp.points.size();
   double minArea = std::numeric_limits<double>::max();
@@ -258,9 +258,6 @@ void Mesh::simplifyBoundary(Boundary& bp, std::size_t maxPoints) const {
     ++iter;
   }
   if (size < 4 || (minArea > 0 && size <= maxPoints)) {
-    // if we have less than 4 points,
-    // or less than maxPoints and the minArea is non-zero,
-    // then we are done
     return;
   }
   // remove point with smallest triangle
@@ -307,7 +304,8 @@ void Mesh::constructFullBoundaries() {
 
   // do line between fixed points first:
   //   - start at a fixed point
-  //   - visit nearest (unvisited) neighbouring boundary point in x or y
+  //   - visit nearest (unvisited) neighbouring
+  //   boundary point in x or y
   //   - if not found, check diagonal neighbours
   //   - repeat until we hit another fixed point
   for (std::size_t i = 0; i < bbg.fixedPoints.size(); ++i) {
@@ -434,17 +432,19 @@ void Mesh::constructMesh() {
   }
   // generate mesh
   triangle_wrapper::Triangulate triangulate(
-      boundaryPoints, boundarySegmentsVector, compartments, {});
+      boundaryPoints, boundarySegmentsVector, compartments);
   vertices = triangulate.getPoints();
   triangleIDs = triangulate.getTriangleIndices();
   spdlog::info("Mesh::constructMesh :: {} vertices, {} triangles",
                vertices.size(), triangleIDs.size());
 
   // construct triangles from triangle indices & vertices
+  // a vector of triangles for each compartment:
   triangles = std::vector<std::vector<QTriangleF>>(compartments.size(),
                                                    std::vector<QTriangleF>{});
   for (const auto& t : triangleIDs) {
-    triangles[t[0]].push_back({vertices[t[1]], vertices[t[2]], vertices[t[3]]});
+    triangles[t[0] - 1].push_back(
+        {vertices[t[1]], vertices[t[2]], vertices[t[3]]});
   }
 }
 
@@ -508,8 +508,8 @@ QImage Mesh::getMeshImage(const QSize& size,
   for (const auto& v : vertices) {
     p.drawEllipse(v * scaleFactor, 2, 2);
   }
-  // fill triangles
-  for (const auto& t : triangles[compartmentIndex]) {
+  // fill triangles in chosen compartment
+  for (const auto& t : triangles.at(compartmentIndex)) {
     QPainterPath path;
     path.moveTo(t.back() * scaleFactor);
     for (const auto& tp : t) {
@@ -537,7 +537,6 @@ QImage Mesh::getMeshImage(const QSize& size,
 QString Mesh::getGMSH(double pixelPhysicalSize) const {
   // note: gmsh indexing starts with 1, so need to add 1 to all indices
   // note: gmsh (0,0) is bottom left, but in Qt it is top left, so flip y
-  // todo: use actual xy values in physical units instead of pixels
   QString msh;
   msh.append("$MeshFormat\n");
   msh.append("2.2 0 8\n");
@@ -555,17 +554,14 @@ QString Mesh::getGMSH(double pixelPhysicalSize) const {
   msh.append("$Elements\n");
   msh.append(QString("%1\n").arg(triangleIDs.size()));
   // order triangles by compartment index
-  std::size_t maxCompIndex = 0;
-  for (const auto& t : triangleIDs) {
-    maxCompIndex = std::max(t[0], maxCompIndex);
-  }
   std::size_t triangleIndex = 1;
-  for (std::size_t compIndex = 0; compIndex <= maxCompIndex; ++compIndex) {
+  for (std::size_t compIndex = 0; compIndex < compartmentInteriorPoints.size();
+       ++compIndex) {
     for (const auto& t : triangleIDs) {
-      if (t[0] == compIndex) {
+      if (t[0] == compIndex + 1) {
         msh.append(QString("%1 2 2 %2 %2 %3 %4 %5\n")
                        .arg(triangleIndex)
-                       .arg(t[0] + 1)
+                       .arg(compIndex + 1)
                        .arg(t[1] + 1)
                        .arg(t[2] + 1)
                        .arg(t[3] + 1));
