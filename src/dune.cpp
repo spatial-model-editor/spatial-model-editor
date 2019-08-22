@@ -65,7 +65,7 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc)
     ini.addValue(doc.compartments[i], i);
   }
 
-  // list of membranes (?)
+  // todo: list of membranes (?)
 
   // for each compartment
   for (const auto &compartmentID : doc.compartments) {
@@ -74,8 +74,6 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc)
     // runtime
     ini.addSection("model", compartmentID);
     ini.addValue("name", compartmentID);
-    ini.addValue("begin_time", begin_time);
-    ini.addValue("end_time", end_time);
 
     // initial concentrations
     ini.addSection("model", compartmentID, "initial");
@@ -101,7 +99,7 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc)
       reactions::Reaction reacs(&doc, speciesList,
                                 doc.reactions.at(compartmentID));
       for (std::size_t i = 0; i < nSpecies; ++i) {
-        QString rhs;
+        QString rhs("0.0");
         for (std::size_t j = 0; j < reacs.reacExpressions.size(); ++j) {
           // get reaction term
           QString expr = QString("%1*(%2) ")
@@ -112,16 +110,8 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc)
                                  reacs.constants[j]);
           // relabel species to u vector components
           QString newTerm = sym.relabel(reacs.speciesIDs).c_str();
-          // add term if non-zero
-          if (newTerm != QString("0.0")) {
-            if (!rhs.isEmpty()) {
-              rhs.append(" + ");
-            }
-            rhs.append(QString("(%1)").arg(newTerm));
-          }
-        }
-        if (rhs.isEmpty()) {
-          rhs = "0.0";
+          // add term to rhs
+          rhs.append(QString(" + (%1)").arg(newTerm));
         }
         // reparse full rhs to simplify
         symbolic::Symbolic sym(rhs.toStdString(), uVars, {});

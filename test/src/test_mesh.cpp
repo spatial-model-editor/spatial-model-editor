@@ -56,7 +56,8 @@ SCENARIO("image: empty image", "[mesh][boundary][non-gui]") {
   imgBoundary.emplace_back(img.width() - 1, img.height() - 1);
   imgBoundary.emplace_back(img.width() - 1, 0);
 
-  mesh::Mesh mesh(img, {QPointF(8, 8)}, {}, {999});
+  mesh::Mesh mesh;
+  mesh = mesh::Mesh(img, {QPointF(8, 8)}, {}, {999});
 
   // check boundaries
   const auto& boundaries = mesh.getBoundaries();
@@ -116,25 +117,37 @@ SCENARIO("image: empty image", "[mesh][boundary][non-gui]") {
   REQUIRE(meshImage.width() == 73);
   REQUIRE(meshImage.height() == 98);
 
+  // check rescaling of image
+  boundaryImage = mesh.getBoundariesImage(QSize(30, 120), 0);
+  REQUIRE(boundaryImage.width() == 28);
+  REQUIRE(boundaryImage.height() == 37);
+
   WHEN("max boundary points increased") {
     THEN("boundary unchanged") {
+      REQUIRE(mesh.getBoundaryMaxPoints(0) == 12);
       auto oldBoundaryPoints = mesh.getBoundaries()[0].points;
       mesh.setBoundaryMaxPoints(0, 99);
+      REQUIRE(mesh.getBoundaryMaxPoints(0) == 99);
       REQUIRE(mesh.getBoundaries()[0].points == oldBoundaryPoints);
     }
   }
 
   WHEN("max triangle area decreased") {
     THEN("more vertices & triangles") {
+      REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 999);
+
       mesh.setCompartmentMaxTriangleArea(0, 60);
+      REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 60);
       REQUIRE(mesh.getVertices().size() == 13);
       REQUIRE(mesh.getTriangles()[0].size() == 16);
 
       mesh.setCompartmentMaxTriangleArea(0, 30);
+      REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 30);
       REQUIRE(mesh.getVertices().size() == 26);
       REQUIRE(mesh.getTriangles()[0].size() == 37);
 
       mesh.setCompartmentMaxTriangleArea(0, 12);
+      REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 12);
       REQUIRE(mesh.getVertices().size() == 54);
       REQUIRE(mesh.getTriangles()[0].size() == 88);
     }
@@ -180,6 +193,14 @@ SCENARIO("image: single convex compartment", "[mesh][boundary][non-gui]") {
   REQUIRE(boundaries[1].isLoop);
   REQUIRE(isCyclicPermutation(boundaries[0].points, imgBoundary));
   REQUIRE(isCyclicPermutation(boundaries[1].points, correctBoundary));
+
+  auto boundaryImage = mesh.getBoundariesImage(QSize(100, 100), 1);
+  REQUIRE(boundaryImage.width() == 73);
+  REQUIRE(boundaryImage.height() == 98);
+  auto col0 = colours::indexedColours()[0].rgba();
+  REQUIRE(boundaryImage.width() == 73);
+  REQUIRE(boundaryImage.height() == 98);
+  REQUIRE(boundaryImage.pixel(0, 0) == col0);
 }
 
 SCENARIO("image: larger convex compartment, degenerate points",
@@ -364,4 +385,8 @@ SCENARIO("image: two touching comps, two fixed point pixels",
   REQUIRE(isCyclicPermutation(boundaries[1].points, bound3));
   REQUIRE(isCyclicPermutation(boundaries[2].points, bound2));
   REQUIRE(isCyclicPermutation(boundaries[3].points, bound1));
+
+  auto boundaryImage = mesh.getBoundariesImage(QSize(100, 100), 3);
+  REQUIRE(boundaryImage.width() == 98);
+  REQUIRE(boundaryImage.height() == 88);
 }

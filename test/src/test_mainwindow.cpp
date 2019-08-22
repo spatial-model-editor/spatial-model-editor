@@ -32,6 +32,8 @@ class UIPointers {
   QPushButton *btnChangeCompartment;
   QLineEdit *txtSimLength;
   QPushButton *btnSimulate;
+  QPushButton *btnResetSimulation;
+  QCustomPlot *pltPlot;
 };
 
 UIPointers::UIPointers(MainWindow *mainWindow) : w(mainWindow) {
@@ -77,6 +79,11 @@ UIPointers::UIPointers(MainWindow *mainWindow) : w(mainWindow) {
   REQUIRE(txtSimLength != nullptr);
   btnSimulate = w->topLevelWidget()->findChild<QPushButton *>("btnSimulate");
   REQUIRE(btnSimulate != nullptr);
+  btnResetSimulation =
+      w->topLevelWidget()->findChild<QPushButton *>("btnResetSimulation");
+  REQUIRE(btnResetSimulation != nullptr);
+  pltPlot = w->topLevelWidget()->findChild<QCustomPlot *>("pltPlot");
+  REQUIRE(pltPlot != nullptr);
 }
 
 constexpr int key_delay = 5;
@@ -300,7 +307,8 @@ SCENARIO("import built-in SBML model and compartment geometry image",
     openThreePixelImage(&w, ui, mwt);
     openABtoC(&w, ui, mwt);
     REQUIRE_threePixelImageLoaded(ui);
-    saveTempSBMLFile(&w, ui, mwt);
+    // missing ".xml" will automatically be appended to "tmp" by code here:
+    saveTempSBMLFile(&w, ui, mwt, "tmp");
     THEN("user opens saved SBML file: finds image") {
       openTempSBMLFile(&w, ui, mwt);
       REQUIRE_threePixelImageLoaded(ui);
@@ -470,7 +478,15 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
                   key_delay);
   REQUIRE(ui.tabMain->currentIndex() == 5);
   ui.txtSimLength->setText("1.0");
-  ui.btnSimulate->click();
+  // start simulation
+  QTest::mouseClick(ui.btnSimulate, Qt::LeftButton);
+  // click on graph
+  QTest::mouseClick(ui.pltPlot, Qt::LeftButton);
+  // reset simulation
+  QTest::mouseClick(ui.btnResetSimulation, Qt::LeftButton,
+                    Qt::KeyboardModifiers(), QPoint(), key_delay);
+  // click on graph again
+  QTest::mouseClick(ui.pltPlot, Qt::LeftButton);
 
   // display SBML tab
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,

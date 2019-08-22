@@ -109,7 +109,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>5</number>
        </property>
        <widget class="QWidget" name="tabGeometry">
         <property name="whatsThis">
@@ -298,7 +298,7 @@
                  <string>The boundaries of the geometry of the compartments</string>
                 </property>
                 <property name="currentIndex">
-                 <number>2</number>
+                 <number>1</number>
                 </property>
                 <widget class="QWidget" name="tabCompartmentImage">
                  <attribute name="title">

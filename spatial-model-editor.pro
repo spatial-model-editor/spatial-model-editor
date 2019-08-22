@@ -14,6 +14,7 @@ CONFIG += c++14
 
 SOURCES += \
     src/main.cpp \
+    src/boundary.cpp \
     src/colours.cpp \
     src/dune.cpp \
     src/geometry.cpp \
@@ -25,10 +26,11 @@ SOURCES += \
     src/sbml.cpp \
     src/simulate.cpp \
     src/symbolic.cpp \
-    src/triangle_wrapper.cpp \
-    src/version.cpp
+    src/triangulate.cpp \
+    src/version.cpp \
 
 HEADERS += \
+    inc/boundary.hpp \
     inc/colours.hpp \
     inc/dune.hpp \
     inc/geometry.hpp \
@@ -43,8 +45,8 @@ HEADERS += \
     inc/sbml.hpp \
     inc/simulate.hpp \
     inc/symbolic.hpp \
-    inc/triangle_wrapper.hpp \
-    inc/version.hpp
+    inc/triangulate.hpp \
+    inc/version.hpp \
 
 FORMS += \
     ui/mainwindow.ui

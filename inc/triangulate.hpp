@@ -1,5 +1,10 @@
 // Wrapper around Triangle meshing library
 //   - https://www.cs.cmu.edu/~quake/triangle.html
+//   - takes a set of boundary points & segments connecting them
+//   - also an interior point for each compartment
+//   - generates mesh with triangles labelled according to compartment
+//   - replaces triangles not assigned a compartment with holes and re-meshes
+//   - provides resulting vertices & triangles
 
 #pragma once
 
@@ -12,7 +17,7 @@
 
 #include "triangle/triangle.hpp"
 
-namespace triangle_wrapper {
+namespace triangulate {
 
 using SegmentIndexPair = std::array<std::size_t, 2>;
 using BoundarySegments = std::vector<SegmentIndexPair>;
@@ -28,14 +33,17 @@ struct Compartment {
 
 class Triangulate {
  private:
-  triangle::triangulateio in;
   std::vector<QPointF> points;
   std::vector<TriangleIndex> triangleIndices;
 
-  void setPointList(const std::vector<QPoint>& boundaryPoints);
-  void setSegmentList(const std::vector<BoundarySegments>& boundaries);
-  void setRegionList(const std::vector<Compartment>& compartments);
-  void setHoleList(const std::vector<QPointF>& holes);
+  void setPointList(triangle::triangulateio& in,
+                    const std::vector<QPoint>& boundaryPoints) const;
+  void setSegmentList(triangle::triangulateio& in,
+                      const std::vector<BoundarySegments>& boundaries) const;
+  void setRegionList(triangle::triangulateio& in,
+                     const std::vector<Compartment>& compartments) const;
+  void setHoleList(triangle::triangulateio& in,
+                   const std::vector<QPointF>& holes) const;
 
  public:
   Triangulate(const std::vector<QPoint>& boundaryPoints,
@@ -45,4 +53,4 @@ class Triangulate {
   const std::vector<TriangleIndex>& getTriangleIndices() const;
 };
 
-}  // namespace triangle_wrapper
+}  // namespace triangulate

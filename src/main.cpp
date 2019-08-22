@@ -7,8 +7,6 @@
 #include "mainwindow.hpp"
 #include "version.hpp"
 
-LIBSBML_CPP_NAMESPACE_USE
-
 int main(int argc, char *argv[]) {
   if (argc > 1) {
     std::string arg = argv[1];
