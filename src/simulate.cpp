@@ -54,12 +54,12 @@ SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
   std::vector<std::string> speciesID;
   std::size_t nRateRules = 0;
   for (const auto &s : doc->species.at(compID)) {
-    if (!doc->isSpeciesConstant(s.toStdString())) {
+    if (!doc->getIsSpeciesConstant(s.toStdString())) {
       speciesID.push_back(s.toStdString());
       field.push_back(&doc->mapSpeciesIdToField.at(s));
       spdlog::debug("SimCompartment::SimCompartment :: - adding field: {}",
                     s.toStdString());
-      if (doc->model->getRateRule(s.toStdString()) != nullptr) {
+      if (doc->getRateRule(s.toStdString()) != nullptr) {
         ++nRateRules;
       }
     }
@@ -134,13 +134,13 @@ SimMembrane::SimMembrane(sbml::SbmlDocWrapper *doc_ptr,
   // make vector of species & fields from compartments A and B
   std::vector<std::string> speciesID;
   for (const auto &spec : doc->species.at(compA)) {
-    if (!doc->isSpeciesConstant(spec.toStdString())) {
+    if (!doc->getIsSpeciesConstant(spec.toStdString())) {
       speciesID.push_back(spec.toStdString());
       fieldA.push_back(&doc->mapSpeciesIdToField.at(spec));
     }
   }
   for (const auto &spec : doc->species.at(compB)) {
-    if (!doc->isSpeciesConstant(spec.toStdString())) {
+    if (!doc->getIsSpeciesConstant(spec.toStdString())) {
       speciesID.push_back(spec.toStdString());
       fieldB.push_back(&doc->mapSpeciesIdToField.at(spec));
     }

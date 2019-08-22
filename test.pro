@@ -7,7 +7,7 @@ TEMPLATE = app
 
 DEFINES += QT_DEPRECATED_WARNINGS
 
-CONFIG += c++14
+CONFIG += c++17
 
 SOURCES += \
     test/src/main.cpp \
@@ -16,11 +16,13 @@ SOURCES += \
     test/src/test_mainwindow.cpp \
     test/src/test_mesh.cpp \
     test/src/test_numerics.cpp \
+    test/src/test_ostream_overloads.cpp \
     test/src/test_qlabelmousetracker.cpp \
     test/src/test_reactions.cpp \
     test/src/test_sbml.cpp \
     test/src/test_simulate.cpp \
     test/src/test_symbolic.cpp \
+    test/src/test_utils.cpp \
     src/boundary.cpp \
     src/colours.cpp \
     src/dune.cpp \
@@ -28,12 +30,14 @@ SOURCES += \
     src/mainwindow.cpp \
     src/mesh.cpp \
     src/numerics.cpp \
+    src/ostream_overloads.cpp \
     src/qlabelmousetracker.cpp \
     src/reactions.cpp \
     src/sbml.cpp \
     src/simulate.cpp \
     src/symbolic.cpp \
     src/triangulate.cpp \
+    src/utils.cpp \
     src/version.cpp \
 
 HEADERS += \

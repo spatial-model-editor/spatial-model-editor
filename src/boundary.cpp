@@ -3,17 +3,7 @@
 #include <set>
 
 #include "logger.hpp"
-/*
-static int qPointToInt(const QPoint& point) {
-  return point.x() + 65536 * point.y();
-}
 
-static int pointToIndex(const QPoint& p) { return p.x() + img.width() * p.y(); }
-
-static inline QPoint indexToPoint(int i) {
-  return QPoint(i % img.width(), i / img.width());
-}
-*/
 namespace boundary {
 
 bool BoundaryBoolGrid::isBoundary(std::size_t x, std::size_t y) const {
@@ -60,12 +50,7 @@ void BoundaryBoolGrid::setBoundaryPoint(const QPoint& point, bool multi) {
     std::size_t i;
     if (isFixed(point)) {
       i = getFixedPointIndex(point);
-      spdlog::debug(
-          "BoundaryBoolGrid::setBoundaryPoint :: adding {} to existing FP {}",
-          point, fixedPoints.at(i));
     } else {
-      spdlog::debug("BoundaryBoolGrid::setBoundaryPoint :: creating new FP {}",
-                    point);
       fixedPoints.push_back(point);
       fixedPointCounter.push_back(3);
       i = fixedPoints.size() - 1;
@@ -81,7 +66,6 @@ void BoundaryBoolGrid::setBoundaryPoint(const QPoint& point, bool multi) {
     fixedPointIndex[x - 1][y + 1] = i;
     fixedPointIndex[x - 1][y - 1] = i;
   }
-  spdlog::debug("BoundaryBoolGrid::setBoundaryPoint :: BP: {}", point);
   grid[x][y] = true;
 }
 
@@ -104,8 +88,6 @@ BoundaryBoolGrid::BoundaryBoolGrid(const QImage& inputImage)
           std::vector<std::size_t>(static_cast<size_t>(inputImage.height() + 2),
                                    NULL_INDEX)) {
   auto img = inputImage.convertToFormat(QImage::Format_Indexed8);
-  spdlog::debug("BoundaryBoolGrid::BoundaryBoolGrid :: nColours = {}",
-                img.colorCount());
   // check colours of 4 nearest neighbours of each pixel
   for (int x = 0; x < img.width(); ++x) {
     for (int y = 0; y < img.height(); ++y) {

@@ -89,7 +89,6 @@ Field::Field(const Compartment *geom, const std::string &specID,
       colour(col) {
   spdlog::info("Field::Field :: speciesID: {}", speciesID);
   spdlog::info("Field::Field :: compartmentID: {}", geom->compartmentID);
-  imgConc = QImage(geom->getCompartmentImage().size(), QImage::Format_ARGB32);
   conc.resize(geom->ix.size(), 0.0);
   dcdt = conc;
   init = conc;
@@ -161,10 +160,14 @@ void Field::importConcentration(
         geometry->getCompartmentImage().width() *
             geometry->getCompartmentImage().height());
   }
+  // NOTE: order of concentration array is [ (x=0,y=0), (x=1,y=0), ... ]
+  // NOTE: (0,0) point is at bottom-left
+  // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
+  int Lx = geometry->getCompartmentImage().width();
+  int Ly = geometry->getCompartmentImage().height();
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     const auto &point = geometry->ix[i];
-    int Lx = geometry->getCompartmentImage().width();
-    int arrayIndex = point.x() + Lx * point.y();
+    int arrayIndex = point.x() + Lx * (Ly - 1 - point.y());
     conc[i] = sbmlConcentrationArray[static_cast<std::size_t>(arrayIndex)];
   }
   init = conc;
@@ -181,8 +184,10 @@ void Field::setUniformConcentration(double concentration) {
   isUniformConcentration = true;
 }
 
-const QImage &Field::getConcentrationImage() {
-  imgConc.fill(qRgba(0, 0, 0, 0));
+QImage Field::getConcentrationImage() const {
+  auto img =
+      QImage(geometry->getCompartmentImage().size(), QImage::Format_ARGB32);
+  img.fill(qRgba(0, 0, 0, 0));
   // for now rescale conc to [0,1] to multiply species colour
   double cmax = *std::max_element(conc.begin(), conc.end());
   if (cmax < 1e-15) {
@@ -193,19 +198,23 @@ const QImage &Field::getConcentrationImage() {
     int r = static_cast<int>(std::round(scale * red));
     int g = static_cast<int>(std::round(scale * green));
     int b = static_cast<int>(std::round(scale * blue));
-    imgConc.setPixel(geometry->ix[i], qRgb(r, g, b));
+    img.setPixel(geometry->ix[i], qRgb(r, g, b));
   }
-  return imgConc;
+  return img;
 }
 
 std::vector<double> Field::getConcentrationArray() const {
   int size = geometry->getCompartmentImage().width() *
              geometry->getCompartmentImage().height();
+  // NOTE: order of concentration array is [ (x=0,y=0), (x=1,y=0), ... ]
+  // NOTE: (0,0) point is at bottom-left
+  // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
   std::vector<double> arr(static_cast<std::size_t>(size), 0.0);
+  int Lx = geometry->getCompartmentImage().width();
+  int Ly = geometry->getCompartmentImage().height();
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     const auto &point = geometry->ix[i];
-    int Lx = geometry->getCompartmentImage().width();
-    int arrayIndex = point.x() + Lx * point.y();
+    int arrayIndex = point.x() + Lx * (Ly - 1 - point.y());
     arr[static_cast<std::size_t>(arrayIndex)] = conc[i];
   }
   return arr;

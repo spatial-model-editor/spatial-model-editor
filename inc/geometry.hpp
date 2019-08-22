@@ -55,8 +55,6 @@ class Membrane {
 
 class Field {
  private:
-  QImage imgConc;
-
  public:
   std::string speciesID;
   const Compartment *geometry;
@@ -77,8 +75,7 @@ class Field {
   void setUniformConcentration(double concentration);
   void importConcentration(const QImage &img, double scale_factor = 1.0);
   void importConcentration(const std::vector<double> &sbmlConcentrationArray);
-  // return a QImage of the concentration of given species
-  const QImage &getConcentrationImage();
+  QImage getConcentrationImage() const;
   std::vector<double> getConcentrationArray() const;
   double getMeanConcentration() const;
   bool isUniformConcentration;

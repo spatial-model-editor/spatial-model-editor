@@ -56,8 +56,54 @@ Mesh::Mesh(const QImage& image, const std::vector<QPointF>& interiorPoints,
   constructMesh();
 }
 
+Mesh::Mesh(const std::vector<double>& inputVertices,
+           const std::vector<std::vector<int>>& inputTriangleIndices,
+           const std::vector<QPointF>& interiorPoints)
+    : compartmentInteriorPoints(interiorPoints) {
+  // we don't have the original image, so no boundary info: read only mesh
+  readOnlyMesh = true;
+  // import vertices
+  std::size_t nV = inputVertices.size() / 2;
+  vertices.clear();
+  vertices.reserve(nV);
+  for (std::size_t i = 0; i < nV; ++i) {
+    vertices.push_back(QPointF(inputVertices[2 * i], inputVertices[2 * i + 1]));
+  }
+  // import triangles
+  nTriangles = 0;
+  triangles = std::vector<std::vector<QTriangleF>>(interiorPoints.size(),
+                                                   std::vector<QTriangleF>{});
+  triangleIndices = std::vector<std::vector<std::array<std::size_t, 3>>>(
+      interiorPoints.size(), std::vector<std::array<std::size_t, 3>>{});
+  for (std::size_t compIndex = 0; compIndex < interiorPoints.size();
+       ++compIndex) {
+    const auto& t = inputTriangleIndices[compIndex];
+    std::size_t nT = t.size() / 3;
+    triangles[compIndex].reserve(nT);
+    triangleIndices[compIndex].reserve(nT);
+    for (std::size_t i = 0; i < nT; ++i) {
+      auto t0 = static_cast<std::size_t>(t[3 * i]);
+      auto t1 = static_cast<std::size_t>(t[3 * i + 1]);
+      auto t2 = static_cast<std::size_t>(t[3 * i + 2]);
+      triangleIndices[compIndex].push_back({{t0, t1, t2}});
+      triangles[compIndex].push_back(
+          {{vertices[t0], vertices[t1], vertices[t2]}});
+      ++nTriangles;
+    }
+  }
+  spdlog::info(
+      "Mesh::Mesh :: Imported read-only mesh of {} vertices, {} triangles",
+      vertices.size(), nTriangles);
+}
+
+bool Mesh::isReadOnly() const { return readOnlyMesh; }
+
 void Mesh::setBoundaryMaxPoints(std::size_t boundaryIndex,
                                 std::size_t maxPoints) {
+  if (readOnlyMesh) {
+    spdlog::info("Mesh::setBoundaryMaxPoint :: mesh is read only");
+    return;
+  }
   spdlog::info(
       "Mesh::setBoundaryMaxPoint :: boundaryIndex {}: max points {} -> {}",
       boundaryIndex, boundaries.at(boundaryIndex).getMaxPoints(), maxPoints);
@@ -68,8 +114,20 @@ std::size_t Mesh::getBoundaryMaxPoints(std::size_t boundaryIndex) const {
   return boundaries.at(boundaryIndex).getMaxPoints();
 }
 
+std::vector<std::size_t> Mesh::getBoundaryMaxPoints() const {
+  std::vector<std::size_t> v;
+  for (const auto& boundary : boundaries) {
+    v.push_back(boundary.getMaxPoints());
+  }
+  return v;
+}
+
 void Mesh::setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
                                          std::size_t maxTriangleArea) {
+  if (readOnlyMesh) {
+    spdlog::info("Mesh::setCompartmentMaxTriangleArea :: mesh is read only");
+    return;
+  }
   spdlog::info(
       "Mesh::setCompartmentMaxTriangleArea :: compIndex {}: max triangle area "
       "{} -> {}",
@@ -82,6 +140,10 @@ void Mesh::setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
 std::size_t Mesh::getCompartmentMaxTriangleArea(
     std::size_t compartmentIndex) const {
   return compartmentMaxTriangleArea.at(compartmentIndex);
+}
+
+const std::vector<std::size_t>& Mesh::getCompartmentMaxTriangleArea() const {
+  return compartmentMaxTriangleArea;
 }
 
 void Mesh::constructMesh() {
@@ -111,13 +173,13 @@ void Mesh::constructMesh() {
     for (std::size_t j = 0; j < boundaries[i].points.size() - 1; ++j) {
       auto i0 = mapPointToIndex.at(qPointToInt(boundaries[i].points[j]));
       auto i1 = mapPointToIndex.at(qPointToInt(boundaries[i].points[j + 1]));
-      boundarySegmentsVector.back().push_back({i0, i1});
+      boundarySegmentsVector.back().push_back({{i0, i1}});
     }
     if (boundaries[i].isLoop) {
       // connect last point to first point
       auto i0 = mapPointToIndex.at(qPointToInt(boundaries[i].points.back()));
       auto i1 = mapPointToIndex.at(qPointToInt(boundaries[i].points.front()));
-      boundarySegmentsVector.back().push_back({i0, i1});
+      boundarySegmentsVector.back().push_back({{i0, i1}});
     }
   }
   // interior point & max triangle area for each compartment
@@ -130,18 +192,22 @@ void Mesh::constructMesh() {
   triangulate::Triangulate triangulate(boundaryPoints, boundarySegmentsVector,
                                        compartments);
   vertices = triangulate.getPoints();
-  triangleIDs = triangulate.getTriangleIndices();
-  spdlog::info("Mesh::constructMesh :: {} vertices, {} triangles",
-               vertices.size(), triangleIDs.size());
 
-  // construct triangles from triangle indices & vertices
-  // a vector of triangles for each compartment:
+  // construct triangles & indices for each compartment:
+  triangleIndices = std::vector<std::vector<std::array<std::size_t, 3>>>(
+      compartments.size(), std::vector<std::array<std::size_t, 3>>{});
   triangles = std::vector<std::vector<QTriangleF>>(compartments.size(),
                                                    std::vector<QTriangleF>{});
-  for (const auto& t : triangleIDs) {
-    triangles[t[0] - 1].push_back(
-        {vertices[t[1]], vertices[t[2]], vertices[t[3]]});
+  nTriangles = 0;
+  for (const auto& t : triangulate.getTriangleIndices()) {
+    std::size_t compIndex = t[0] - 1;
+    triangleIndices[compIndex].push_back({{t[1], t[2], t[3]}});
+    triangles[compIndex].push_back(
+        {{vertices[t[1]], vertices[t[2]], vertices[t[3]]}});
+    ++nTriangles;
   }
+  spdlog::info("Mesh::constructMesh :: {} vertices, {} triangles",
+               vertices.size(), nTriangles);
 }
 
 static double getScaleFactor(const QImage& img, const QSize& size) {
@@ -248,23 +314,22 @@ QString Mesh::getGMSH(double pixelPhysicalSize) const {
   }
   msh.append("$EndNodes\n");
   msh.append("$Elements\n");
-  msh.append(QString("%1\n").arg(triangleIDs.size()));
-  // order triangles by compartment index
+  msh.append(QString("%1\n").arg(nTriangles));
   std::size_t triangleIndex = 1;
-  for (std::size_t compIndex = 0; compIndex < compartmentInteriorPoints.size();
-       ++compIndex) {
-    for (const auto& t : triangleIDs) {
-      if (t[0] == compIndex + 1) {
-        msh.append(QString("%1 2 2 %2 %2 %3 %4 %5\n")
-                       .arg(triangleIndex)
-                       .arg(compIndex + 1)
-                       .arg(t[1] + 1)
-                       .arg(t[2] + 1)
-                       .arg(t[3] + 1));
-        ++triangleIndex;
-      }
+  std::size_t compartmentIndex = 1;
+  for (const auto& comp : triangleIndices) {
+    for (const auto& t : comp) {
+      msh.append(QString("%1 2 2 %2 %2 %3 %4 %5\n")
+                     .arg(triangleIndex)
+                     .arg(compartmentIndex)
+                     .arg(t[0] + 1)
+                     .arg(t[1] + 1)
+                     .arg(t[2] + 1));
+      ++triangleIndex;
     }
+    ++compartmentIndex;
   }
+
   msh.append("$EndElements\n");
   return msh;
 }

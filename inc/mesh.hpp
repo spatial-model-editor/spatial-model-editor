@@ -23,6 +23,7 @@ using QTriangleF = std::array<QPointF, 3>;
 
 class Mesh {
  private:
+  bool readOnlyMesh = false;
   std::size_t defaultBoundaryMaxPoints = 12;
   std::size_t defaultCompartmentMaxTriangleArea = 40;
   std::vector<QPoint> nearestNeighbourDirectionPoints = {
@@ -36,8 +37,9 @@ class Mesh {
   // output data
   std::vector<boundary::Boundary> boundaries;
   std::vector<QPointF> vertices;
+  std::size_t nTriangles;
   std::vector<std::vector<QTriangleF>> triangles;
-  std::vector<std::array<std::size_t, 4>> triangleIDs;
+  std::vector<std::vector<std::array<std::size_t, 3>>> triangleIndices;
   inline int pointToIndex(const QPoint& p) const {
     return p.x() + img.width() * p.y();
   }
@@ -52,15 +54,28 @@ class Mesh {
                 const std::vector<QPointF>& interiorPoints = {},
                 const std::vector<std::size_t>& maxPoints = {},
                 const std::vector<std::size_t>& maxTriangleArea = {});
+  // constructor to load existing vertices&trianges without image
+  Mesh(const std::vector<double>& inputVertices,
+       const std::vector<std::vector<int>>& inputTriangleIndices,
+       const std::vector<QPointF>& interiorPoints);
+  // if mesh not constructed from image, but supplied as vertices&trianges,
+  // we cannot alter boundary or triangle area easily, so treat as read-only
+  bool isReadOnly() const;
   void setBoundaryMaxPoints(std::size_t boundaryIndex, std::size_t maxPoints);
   std::size_t getBoundaryMaxPoints(std::size_t boundaryIndex) const;
+  std::vector<std::size_t> getBoundaryMaxPoints() const;
   void setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
                                      std::size_t maxTriangleArea);
   std::size_t getCompartmentMaxTriangleArea(std::size_t compartmentIndex) const;
+  const std::vector<std::size_t>& getCompartmentMaxTriangleArea() const;
   const std::vector<boundary::Boundary>& getBoundaries() const {
     return boundaries;
   }
   const std::vector<QPointF>& getVertices() const { return vertices; }
+  const std::vector<std::vector<std::array<std::size_t, 3>>>&
+  getTriangleIndices() const {
+    return triangleIndices;
+  }
   const std::vector<std::vector<QTriangleF>>& getTriangles() const {
     return triangles;
   }

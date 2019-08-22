@@ -4,71 +4,13 @@
 
 namespace reactions {
 
-static std::map<std::string, double> getGlobalConstants(
-    const sbml::SbmlDocWrapper *doc) {
-  std::map<std::string, double> constants;
-  const auto *model = doc->model;
-  // add all *constant* species as constants
-  for (unsigned k = 0; k < model->getNumSpecies(); ++k) {
-    const auto *spec = model->getSpecies(k);
-    if (doc->isSpeciesConstant(spec->getId())) {
-      spdlog::debug(
-          "reactions::getGlobalConstants :: found constant species {}",
-          spec->getId());
-      // todo: check if species is *also* non-spatial
-      double init_conc = 0;
-      // if SBML file specifies amount: convert to concentration
-      if (spec->isSetInitialAmount()) {
-        double amount = spec->getInitialAmount();
-        double vol = model->getCompartment(spec->getCompartment())->getSize();
-        init_conc = amount / vol;
-        spdlog::debug(
-            "reactions::getGlobalConstants :: converting amount {} to "
-            "concentration {} by dividing by vol {}",
-            amount, init_conc, vol);
-      } else {
-        init_conc = spec->getInitialConcentration();
-      }
-      constants[spec->getId()] = init_conc;
-    }
-  }
-  // add any parameters (that are not replaced by an AssignmentRule)
-  for (unsigned k = 0; k < model->getNumParameters(); ++k) {
-    const auto *param = model->getParameter(k);
-    if (model->getAssignmentRule(param->getId()) == nullptr) {
-      constants[param->getId()] = param->getValue();
-    }
-  }
-  // also get compartment volumes (the compartmentID may be used in the reaction
-  // equation, and it should be replaced with the value of the "Size"
-  // parameter for this compartment)
-  for (unsigned int k = 0; k < model->getNumCompartments(); ++k) {
-    const auto *comp = model->getCompartment(k);
-    constants[comp->getId()] = comp->getSize();
-  }
-  return constants;
-}
-
-static std::string inlineExpr(const sbml::SbmlDocWrapper *doc,
-                              const std::string &expr) {
-  std::string inlined;
-  // inline any Function calls in expr
-  inlined = doc->inlineFunctions(expr);
-  // inline any Assignment Rules in expr
-  inlined = doc->inlineAssignments(inlined);
-  return inlined;
-}
-
 static bool addStoichCoeff(const sbml::SbmlDocWrapper *doc,
                            std::vector<double> &Mrow,
                            const libsbml::SpeciesReference *spec_ref,
                            double sign,
                            const std::vector<std::string> &speciesIDs) {
   const std::string &speciesID = spec_ref->getSpecies();
-  const auto *species = doc->model->getSpecies(speciesID);
-  const auto *compartment =
-      doc->model->getCompartment(species->getCompartment());
-  double volFactor = compartment->getSize();
+  double volFactor = doc->getSpeciesCompartmentSize(speciesID.c_str());
   spdlog::debug(
       "reactions::addStoichCoeff :: species '{}', sign: {}, compartment "
       "volume: "
@@ -103,10 +45,10 @@ void Reaction::init(const sbml::SbmlDocWrapper *doc_ptr,
   // todo: check if should divide by volume here as well as for kinetic law
   // i.e. if the rate rule is for amount like the kinetic law
   for (std::size_t sIndex = 0; sIndex < speciesIDs.size(); ++sIndex) {
-    const auto *rule = doc->model->getRateRule(speciesIDs[sIndex]);
+    const auto *rule = doc->getRateRule(speciesIDs[sIndex]);
     if (rule != nullptr) {
-      std::map<std::string, double> c = getGlobalConstants(doc);
-      std::string expr = inlineExpr(doc, rule->getFormula());
+      std::map<std::string, double> c = doc->getGlobalConstants();
+      std::string expr = doc->inlineExpr(rule->getFormula());
       std::vector<double> Mrow(speciesIDs.size(), 0);
       Mrow[sIndex] = 1.0;
       M.push_back(Mrow);
@@ -120,10 +62,10 @@ void Reaction::init(const sbml::SbmlDocWrapper *doc_ptr,
 
   // process each reaction
   for (const auto &reacID : reactionIDs) {
-    const auto *reac = doc->model->getReaction(reacID);
+    const auto *reac = doc->getReaction(reacID.c_str());
     bool isReaction = false;
 
-    std::map<std::string, double> c = getGlobalConstants(doc);
+    std::map<std::string, double> c = doc->getGlobalConstants();
 
     // construct row of stoichiometric coefficients for each
     // species produced and consumed by this reaction
@@ -144,7 +86,7 @@ void Reaction::init(const sbml::SbmlDocWrapper *doc_ptr,
       M.push_back(Mrow);
       // get mathematical formula
       const auto *kin = reac->getKineticLaw();
-      std::string expr = inlineExpr(doc, kin->getFormula());
+      std::string expr = doc->inlineExpr(kin->getFormula());
 
       // TODO: deal with amount vs concentration issues correctly
       // if getHasOnlySubstanceUnits is true for some (all?) species
@@ -157,13 +99,13 @@ void Reaction::init(const sbml::SbmlDocWrapper *doc_ptr,
       // (it should no longer be present in expr after inlining)
       for (unsigned k = 0; k < kin->getNumLocalParameters(); ++k) {
         const auto *param = kin->getLocalParameter(k);
-        if (doc->model->getAssignmentRule(param->getId()) == nullptr) {
+        if (doc->getAssignmentRule(param->getId()) == nullptr) {
           c[param->getId()] = param->getValue();
         }
       }
       for (unsigned k = 0; k < kin->getNumParameters(); ++k) {
         const auto *param = kin->getParameter(k);
-        if (doc->model->getAssignmentRule(param->getId()) == nullptr) {
+        if (doc->getAssignmentRule(param->getId()) == nullptr) {
           c[param->getId()] = param->getValue();
         }
       }

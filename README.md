@@ -1,7 +1,7 @@
 # Spatial Model Editor
 [![github releases](https://img.shields.io/github/release/lkeegan/spatial-model-editor.svg)](https://github.com/lkeegan/spatial-model-editor/releases)
 [![linux/osx build status](https://travis-ci.org/lkeegan/spatial-model-editor.svg?branch=master)](https://travis-ci.org/lkeegan/spatial-model-editor)
-[![windows build status](https://ci.appveyor.com/api/projects/status/0m87yyaalrrj5ndn?svg=true)](https://ci.appveyor.com/project/lkeegan/spatial-model-editor)
+[![windows build status](https://ci.appveyor.com/api/projects/status/0m87yyaalrrj5ndn/branch/master?svg=true)](https://ci.appveyor.com/project/lkeegan/spatial-model-editor/branch/master)
 [![codecov](https://codecov.io/gh/lkeegan/spatial-model-editor/branch/master/graph/badge.svg)](https://codecov.io/gh/lkeegan/spatial-model-editor)
 [![sonarcloud quality gate status](https://sonarcloud.io/api/project_badges/measure?project=lkeegan_spatial-model-editor&metric=alert_status)](https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor)
 [![lgtm status](https://img.shields.io/lgtm/grade/cpp/g/lkeegan/spatial-model-editor.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/lkeegan/spatial-model-editor/context:cpp)
