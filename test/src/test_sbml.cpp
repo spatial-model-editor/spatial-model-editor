@@ -10,6 +10,27 @@
 
 #include "colours.hpp"
 #include "logger.hpp"
+#include "utils.hpp"
+
+/*
+// NOTE:
+// getParametricObjectByDomainType was returning null when compiled with gcc9
+// todo: reproducible test case showing this failing...
+  for (unsigned i = 0; i < parageom->getNumParametricObjects(); ++i) {
+    const auto *po = parageom->getParametricObject(i);
+    std::string id = po->getId();
+    std::string dt = po->getDomainType();
+    spdlog::debug("{} ::   * {} -> {}", fn, po->getId(), po->getDomainType());
+    const auto *po2 = parageom->getParametricObject(id);
+    spdlog::debug("{} ::   get with ID ->null? {}", fn, po2 == nullptr);
+    spdlog::debug("{} ::   ->* {} -> {}", fn, po2->getId(),
+                  po2->getDomainType());
+    const auto *po3 = parageom->getParametricObjectByDomainType(dt);
+    spdlog::debug("{} ::   get with domainType ->null? {}", fn, po3 == nullptr);
+    spdlog::debug("{} ::   ->* {} -> {}", fn, po3->getId(),
+                  po3->getDomainType());
+  }
+*/
 
 void createSBMLlvl2doc(const std::string &filename) {
   std::unique_ptr<libsbml::SBMLDocument> document(
@@ -114,14 +135,13 @@ SCENARIO("import SBML doc without geometry", "[sbml][non-gui]") {
     auto *geom = plugin->getGeometry();
     auto *sfgeom = dynamic_cast<libsbml::SampledFieldGeometry *>(
         geom->getGeometryDefinition(0));
-    std::vector<int> sfvals;
     auto *sf = geom->getSampledField(sfgeom->getSampledField());
-    sf->getSamples(sfvals);
+    auto sfvals = utils::stringToVector<QRgb>(sf->getSamples());
     REQUIRE(sf->getNumSamples1() == 3);
     REQUIRE(sf->getNumSamples2() == 1);
-    CAPTURE(static_cast<unsigned>(sfvals[0]));
-    CAPTURE(static_cast<unsigned>(sfvals[1]));
-    CAPTURE(static_cast<unsigned>(sfvals[2]));
+    CAPTURE(sfvals[0]);
+    CAPTURE(sfvals[1]);
+    CAPTURE(sfvals[2]);
 
     auto *scp0 = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
         model->getCompartment("compartment0")->getPlugin("spatial"));
@@ -440,16 +460,85 @@ SCENARIO("SBML test data: yeast-glycolysis.xml", "[sbml][non-gui][inlining]") {
   GIVEN("inline fn: Glycogen_synthesis_kinetics") {
     std::string expr = "Glycogen_synthesis_kinetics(abc)";
     std::string inlined = "(abc)";
-    THEN("return inlined fn") { REQUIRE(s.inlineFunctions(expr) == inlined); }
+    THEN("return inlined fn") { REQUIRE(s.inlineExpr(expr) == inlined); }
   }
   GIVEN("inline fn: ATPase_0") {
     std::string expr = "ATPase_0( a,b)";
     std::string inlined = "(b * a)";
-    THEN("return inlined fn") { REQUIRE(s.inlineFunctions(expr) == inlined); }
+    THEN("return inlined fn") { REQUIRE(s.inlineExpr(expr) == inlined); }
   }
   GIVEN("inline fn: PDC_kinetics") {
     std::string expr = "PDC_kinetics(a,V,k,n)";
     std::string inlined = "(V * (a / k)^n / (1 + (a / k)^n))";
-    THEN("return inlined fn") { REQUIRE(s.inlineFunctions(expr) == inlined); }
+    THEN("return inlined fn") { REQUIRE(s.inlineExpr(expr) == inlined); }
   }
+}
+
+SCENARIO("Load model, refine mesh, save", "[sbml][mesh][non-gui]") {
+  sbml::SbmlDocWrapper s;
+  QFile f(":/models/ABtoC.xml");
+  f.open(QIODevice::ReadOnly);
+  s.importSBMLString(f.readAll().toStdString());
+  REQUIRE(s.mesh.getBoundaryMaxPoints(1) == 16);
+  REQUIRE(s.mesh.getCompartmentMaxTriangleArea(0) == 72);
+  REQUIRE(s.mesh.getVertices().size() == 44);
+  REQUIRE(s.mesh.getTriangleIndices()[0].size() == 70);
+  // refine boundary and mesh
+  s.mesh.setBoundaryMaxPoints(1, 20);
+  s.mesh.setCompartmentMaxTriangleArea(0, 32);
+  REQUIRE(s.mesh.getVertices().size() == 89);
+  REQUIRE(s.mesh.getTriangleIndices()[0].size() == 148);
+  // save SBML doc
+  s.exportSBMLFile("tmp.xml");
+  // import again
+  sbml::SbmlDocWrapper s2;
+  s2.importSBMLFile("tmp.xml");
+  REQUIRE(s2.mesh.getBoundaryMaxPoints(1) == 20);
+  REQUIRE(s2.mesh.getCompartmentMaxTriangleArea(0) == 32);
+  REQUIRE(s2.mesh.getVertices().size() == 89);
+  REQUIRE(s2.mesh.getTriangleIndices()[0].size() == 148);
+}
+
+SCENARIO("Delete mesh annotation, load as read-only mesh",
+         "[sbml][mesh][non-gui]") {
+  // delete mesh info annotation
+  QFile f(":/models/ABtoC.xml");
+  f.open(QIODevice::ReadOnly);
+  std::unique_ptr<libsbml::SBMLDocument> doc(
+      libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
+  auto *plugin = dynamic_cast<libsbml::SpatialModelPlugin *>(
+      doc->getModel()->getPlugin("spatial"));
+  auto *geom = plugin->getGeometry();
+  libsbml::ParametricGeometry *parageom = nullptr;
+  for (unsigned i = 0; i < geom->getNumGeometryDefinitions(); ++i) {
+    if (geom->getGeometryDefinition(i)->isParametricGeometry()) {
+      parageom = dynamic_cast<libsbml::ParametricGeometry *>(
+          geom->getGeometryDefinition(i));
+    }
+  }
+  auto *annotation = parageom->getAnnotation();
+  annotation->removeChildren();
+
+  // load model: without annotation should load as read-only mesh
+  sbml::SbmlDocWrapper s;
+  s.importSBMLString(libsbml::writeSBMLToString(doc.get()));
+
+  REQUIRE(s.mesh.isReadOnly() == true);
+  REQUIRE(s.mesh.getVertices().size() == 44);
+  REQUIRE(s.mesh.getTriangleIndices()[0].size() == 70);
+
+  // changing maxBoundaryPoints or maxTriangleAreas is a no-op:
+  s.mesh.setBoundaryMaxPoints(1, 99);
+  s.mesh.setCompartmentMaxTriangleArea(0, 3);
+  REQUIRE(s.mesh.getVertices().size() == 44);
+  REQUIRE(s.mesh.getTriangleIndices()[0].size() == 70);
+
+  // save SBML doc
+  s.exportSBMLFile("tmp.xml");
+  // import again: mesh is still read-only
+  sbml::SbmlDocWrapper s2;
+  s2.importSBMLFile("tmp.xml");
+  REQUIRE(s2.mesh.isReadOnly() == true);
+  REQUIRE(s2.mesh.getVertices().size() == 44);
+  REQUIRE(s2.mesh.getTriangleIndices()[0].size() == 70);
 }

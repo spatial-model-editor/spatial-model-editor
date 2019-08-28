@@ -23,11 +23,10 @@ class ModalWidgetTimer : public QObject {
   Q_OBJECT
 
  private:
+  int timeLeft;
   QTimer timer;
   QString message;
   QString result;
-  int keyDelay;
-  int timeLeft;
   ModalWidgetTimer *waitUntilDone;
 
   void getText(QWidget *widget) {
@@ -95,9 +94,8 @@ class ModalWidgetTimer : public QObject {
   }
 
  public:
-  explicit ModalWidgetTimer(int keyInterval = 50, int timerInterval = 100,
-                            int timeout = 30000)
-      : QObject(nullptr), keyDelay(keyInterval), timeLeft(timeout) {
+  explicit ModalWidgetTimer(int timerInterval = 100, int timeout = 30000)
+      : QObject(nullptr), timeLeft(timeout) {
     timer.setInterval(timerInterval);
     QObject::connect(&timer, &QTimer::timeout, this,
                      &ModalWidgetTimer::lookForWidget);

@@ -74,12 +74,12 @@ SCENARIO("image: empty image", "[mesh][boundary][non-gui]") {
   const auto& triangles = mesh.getTriangles();
   REQUIRE(triangles.size() == 1);
   REQUIRE(triangles[0].size() == 2);
-  REQUIRE(triangles[0][0] == std::array<QPointF, 3>{QPointF(0, 31),
-                                                    QPointF(0, 0),
-                                                    QPointF(23, 0)});
-  REQUIRE(triangles[0][1] == std::array<QPointF, 3>{QPointF(23, 0),
-                                                    QPointF(23, 31),
-                                                    QPointF(0, 31)});
+  REQUIRE(
+      triangles[0][0] ==
+      std::array<QPointF, 3>{{QPointF(0, 31), QPointF(0, 0), QPointF(23, 0)}});
+  REQUIRE(triangles[0][1] ==
+          std::array<QPointF, 3>{
+              {QPointF(23, 0), QPointF(23, 31), QPointF(0, 31)}});
 
   // check gmsh output
   QStringList msh = mesh.getGMSH().split("\n");

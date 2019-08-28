@@ -80,8 +80,7 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc)
     int i_species = 0;
     for (const auto &speciesID : speciesList) {
       ini.addValue(QString("u_%1").arg(QString::number(i_species)),
-                   doc.model->getSpecies(speciesID.toStdString())
-                       ->getInitialConcentration());
+                   doc.getInitialConcentration(speciesID));
       ++i_species;
     }
 

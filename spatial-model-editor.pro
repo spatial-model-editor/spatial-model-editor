@@ -10,7 +10,7 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # disable qtDebug() output in release build
 CONFIG(release, debug|release):DEFINES += QT_NO_DEBUG_OUTPUT
 
-CONFIG += c++14
+CONFIG += c++17
 
 SOURCES += \
     src/main.cpp \
@@ -21,12 +21,14 @@ SOURCES += \
     src/mainwindow.cpp \
     src/mesh.cpp \
     src/numerics.cpp \
+    src/ostream_overloads.cpp \
     src/qlabelmousetracker.cpp \
     src/reactions.cpp \
     src/sbml.cpp \
     src/simulate.cpp \
     src/symbolic.cpp \
     src/triangulate.cpp \
+    src/utils.cpp \
     src/version.cpp \
 
 HEADERS += \
@@ -46,6 +48,7 @@ HEADERS += \
     inc/simulate.hpp \
     inc/symbolic.hpp \
     inc/triangulate.hpp \
+    inc/utils.hpp \
     inc/version.hpp \
 
 FORMS += \

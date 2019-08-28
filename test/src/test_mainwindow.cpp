@@ -477,11 +477,16 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
                   key_delay);
   REQUIRE(ui.tabMain->currentIndex() == 5);
-  ui.txtSimLength->setText("1.0");
+  ui.txtSimLength->setText("1000.0");
+  // stop simulation after 1 second
+  QTimer::singleShot(1000, [=]() {
+    QTest::keyClick(ui.pltPlot, Qt::Key_C, Qt::ControlModifier, 0);
+  });
   // start simulation
   QTest::mouseClick(ui.btnSimulate, Qt::LeftButton);
   // click on graph
   QTest::mouseClick(ui.pltPlot, Qt::LeftButton);
+
   // reset simulation
   QTest::mouseClick(ui.btnResetSimulation, Qt::LeftButton,
                     Qt::KeyboardModifiers(), QPoint(), key_delay);

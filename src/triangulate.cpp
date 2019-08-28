@@ -160,7 +160,7 @@ Triangulate::Triangulate(const std::vector<QPoint>& boundaryPoints,
     auto t1 = static_cast<std::size_t>(out.trianglelist[i * 3 + 1]);
     auto t2 = static_cast<std::size_t>(out.trianglelist[i * 3 + 2]);
     auto compIndex = static_cast<std::size_t>(out.triangleattributelist[i]);
-    triangleIndices.push_back({compIndex, t0, t1, t2});
+    triangleIndices.push_back({{compIndex, t0, t1, t2}});
   }
 }
 
