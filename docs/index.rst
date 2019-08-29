@@ -8,6 +8,7 @@ Spatial Model Editor Documentation
    get-started
    import-model
    import-geometry
+   mesh
    membrane-properties
    import-concentration
    run-simulation

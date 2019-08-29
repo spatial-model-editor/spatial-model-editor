@@ -45,13 +45,13 @@ class ModalWidgetTimer : public QObject {
       result = msgBox->text();
     }
     if (!result.isEmpty()) {
-      qDebug() << "ModalWidgetTimer :: found text '" << result << "'";
+      qDebug() << "ModalWidgetTimer :: found text " << result;
     }
   }
 
   void sendKeyEvents(QWidget *widget) {
-    qDebug() << "ModalWidgetTimer :: typing message '" << message
-             << "' + enter key into" << widget;
+    qDebug() << "ModalWidgetTimer :: typing message " << message
+             << " + enter key into" << widget;
     for (QChar c : message) {
       QKeySequence seq(c);
       QKeyEvent press(QEvent::KeyPress, seq[0], Qt::NoModifier, c);

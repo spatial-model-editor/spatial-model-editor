@@ -54,9 +54,9 @@ Compartment::Compartment(const std::string &compID, const QImage &img, QRgb col)
       }
     }
   }
-  spdlog::info("Compartment::Compartment :: compartmentID: {}", compartmentID);
-  spdlog::info("Compartment::Compartment :: n_pixels: {}", ix.size());
-  spdlog::info("Compartment::Compartment :: colour: {:x}", col);
+  SPDLOG_INFO("compartmentID: {}", compartmentID);
+  SPDLOG_INFO("n_pixels: {}", ix.size());
+  SPDLOG_INFO("colour: {:x}", col);
 }
 
 const QImage &Compartment::getCompartmentImage() const { return imgComp; }
@@ -65,11 +65,10 @@ Membrane::Membrane(const std::string &ID, const Compartment *A,
                    const Compartment *B,
                    const std::vector<std::pair<QPoint, QPoint>> &membranePairs)
     : membraneID(ID), compA(A), compB(B) {
-  spdlog::info("Membrane::Membrane :: membraneID: {}", membraneID);
-  spdlog::info("Membrane::Membrane :: compartment A: {}", compA->compartmentID);
-  spdlog::info("Membrane::Membrane :: compartment B: {}", compB->compartmentID);
-  spdlog::info("Membrane::Membrane :: number of point pairs: {}",
-               membranePairs.size());
+  SPDLOG_INFO("membraneID: {}", membraneID);
+  SPDLOG_INFO("compartment A: {}", compA->compartmentID);
+  SPDLOG_INFO("compartment B: {}", compB->compartmentID);
+  SPDLOG_INFO("number of point pairs: {}", membranePairs.size());
   // convert each QPoint into the corresponding index of the field
   indexPair.clear();
   CompartmentIndexer indexA(*A);
@@ -87,8 +86,8 @@ Field::Field(const Compartment *geom, const std::string &specID,
       geometry(geom),
       diffusionConstant(diffConst),
       colour(col) {
-  spdlog::info("Field::Field :: speciesID: {}", speciesID);
-  spdlog::info("Field::Field :: compartmentID: {}", geom->compartmentID);
+  SPDLOG_INFO("speciesID: {}", speciesID);
+  SPDLOG_INFO("compartmentID: {}", geom->compartmentID);
   conc.resize(geom->ix.size(), 0.0);
   dcdt = conc;
   init = conc;
@@ -100,10 +99,8 @@ Field::Field(const Compartment *geom, const std::string &specID,
 }
 
 void Field::importConcentration(const QImage &img, double scale_factor) {
-  spdlog::info("Field::importConcentration :: species {}, compartment {}",
-               speciesID, geometry->compartmentID);
-  spdlog::info("Field::importConcentration ::   - importing from {}x{} image",
-               img.width(), img.height());
+  SPDLOG_INFO("species {}, compartment {}", speciesID, geometry->compartmentID);
+  SPDLOG_INFO("  - importing from {}x{} image", img.width(), img.height());
   // rescaling [min, max] pixel values to the range [0, scale_factor] for now
   QRgb min = std::numeric_limits<QRgb>::max();
   QRgb max = 0;
@@ -116,21 +113,17 @@ void Field::importConcentration(const QImage &img, double scale_factor) {
   if (max == min) {
     if (max == 0) {
       // if all pixels zero, then set conc to zero
-      spdlog::info(
-          "Field::importConcentration ::   - all pixels black: rescaling -> 0");
+      SPDLOG_INFO("  - all pixels black: rescaling -> 0");
       scale_factor = 0;
       max = 1;
     } else {
       // if all pixels equal, then set conc to scale_factor
-      spdlog::info(
-          "Field::importConcentration ::   - all pixels equal: rescaling -> {}",
-          scale_factor);
+      SPDLOG_INFO("  - all pixels equal: rescaling -> {}", scale_factor);
       min -= 1;
     }
   } else {
-    spdlog::info(
-        "Field::importConcentration ::   - rescaling [{},{}] -> [{},{}]", min,
-        max, 0.0, scale_factor);
+    SPDLOG_INFO("  - rescaling [{},{}] -> [{},{}]", min, max, 0.0,
+                scale_factor);
   }
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     conc[i] =
@@ -144,17 +137,15 @@ void Field::importConcentration(const QImage &img, double scale_factor) {
 
 void Field::importConcentration(
     const std::vector<double> &sbmlConcentrationArray) {
-  spdlog::info("Field::importConcentration :: species {}, compartment {}",
-               speciesID, geometry->compartmentID);
-  spdlog::info(
-      "Field::importConcentration ::   - importing from sbml array of size {}",
-      sbmlConcentrationArray.size());
+  SPDLOG_INFO("species {}, compartment {}", speciesID, geometry->compartmentID);
+  SPDLOG_INFO("  - importing from sbml array of size {}",
+              sbmlConcentrationArray.size());
   if (static_cast<int>(sbmlConcentrationArray.size()) !=
       geometry->getCompartmentImage().width() *
           geometry->getCompartmentImage().height()) {
-    spdlog::warn(
-        "Field::importConcentration ::   - mismatch between array size [{}] "
-        "and compartment image size [{}x{} = {}]",
+    SPDLOG_WARN(
+        "  - mismatch between array size [{}] and compartment image size "
+        "[{}x{} = {}]",
         sbmlConcentrationArray.size(), geometry->getCompartmentImage().width(),
         geometry->getCompartmentImage().height(),
         geometry->getCompartmentImage().width() *
@@ -175,10 +166,8 @@ void Field::importConcentration(
 }
 
 void Field::setUniformConcentration(double concentration) {
-  spdlog::info("Field::setUniformConcentration :: species {}, compartment {}",
-               speciesID, geometry->compartmentID);
-  spdlog::info("Field::setUniformConcentration ::   - concentration = {}",
-               concentration);
+  SPDLOG_INFO("species {}, compartment {}", speciesID, geometry->compartmentID);
+  SPDLOG_INFO("  - concentration = {}", concentration);
   std::fill(conc.begin(), conc.end(), concentration);
   init = conc;
   isUniformConcentration = true;

@@ -25,6 +25,8 @@ class UIPointers {
   QListWidget *listMembranes;
   QTreeWidget *listSpecies;
   QPushButton *btnChangeSpeciesColour;
+  QCheckBox *chkSpeciesIsSpatial;
+  QCheckBox *chkSpeciesIsConstant;
   QLabel *lblSpeciesColour;
   QTreeWidget *listReactions;
   QListWidget *listFunctions;
@@ -61,6 +63,12 @@ UIPointers::UIPointers(MainWindow *mainWindow) : w(mainWindow) {
   btnChangeSpeciesColour =
       w->topLevelWidget()->findChild<QPushButton *>("btnChangeSpeciesColour");
   REQUIRE(btnChangeSpeciesColour != nullptr);
+  chkSpeciesIsSpatial =
+      w->topLevelWidget()->findChild<QCheckBox *>("chkSpeciesIsSpatial");
+  REQUIRE(chkSpeciesIsSpatial != nullptr);
+  chkSpeciesIsConstant =
+      w->topLevelWidget()->findChild<QCheckBox *>("chkSpeciesIsConstant");
+  REQUIRE(chkSpeciesIsConstant != nullptr);
   lblSpeciesColour =
       w->topLevelWidget()->findChild<QLabel *>("lblSpeciesColour");
   REQUIRE(lblSpeciesColour != nullptr);
@@ -419,13 +427,44 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   QApplication::processEvents();
   REQUIRE(ui.tabMain->currentIndex() == 2);
   REQUIRE(ui.listSpecies->topLevelItemCount() == 3);
-  // select each item in listSpecies
+  // select first item in listSpecies
   ui.listSpecies->setFocus();
-  ui.listSpecies->setCurrentItem(ui.listSpecies->topLevelItem(0));
-  for (int i = 0; i < 8; ++i) {
+  // ui.listSpecies->setCurrentItem(ui.listSpecies->topLevelItem(0));
+  // QTest::keyClick(ui.listSpecies, Qt::Key_Down, Qt::ControlModifier,
+  // key_delay);
+  REQUIRE(ui.chkSpeciesIsConstant->isChecked() == true);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
+  // toggle is spatial checkbox
+  QTest::mouseClick(ui.chkSpeciesIsSpatial, Qt::LeftButton,
+                    Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == true);
+  QTest::mouseClick(ui.chkSpeciesIsSpatial, Qt::LeftButton,
+                    Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
+  // toggle is constant checkbox
+  QTest::mouseClick(ui.chkSpeciesIsConstant, Qt::LeftButton,
+                    Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
+  REQUIRE(ui.chkSpeciesIsConstant->isChecked() == false);
+  QTest::mouseClick(ui.chkSpeciesIsConstant, Qt::LeftButton,
+                    Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
+  REQUIRE(ui.chkSpeciesIsConstant->isChecked() == true);
+  // select second item in listSpecies
+  QTest::keyClick(ui.listSpecies, Qt::Key_Down, Qt::ControlModifier, key_delay);
+  REQUIRE(ui.chkSpeciesIsConstant->isChecked() == false);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
+  // toggle is spatial checkbox
+  QTest::mouseClick(ui.chkSpeciesIsSpatial, Qt::LeftButton,
+                    Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == true);
+  QTest::mouseClick(ui.chkSpeciesIsSpatial, Qt::LeftButton,
+                    Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
+  QTest::keyClick(ui.listSpecies, Qt::Key_Enter, Qt::ControlModifier,
+                  key_delay);
+  // keep pressing down until we have selected the B_c3 species
+  // (4th in the SBML doc hence has colour index 3)
+  for (int i = 0; i < 6; ++i) {
     QTest::keyClick(ui.listSpecies, Qt::Key_Down, Qt::ControlModifier,
-                    key_delay);
-    QTest::keyClick(ui.listSpecies, Qt::Key_Enter, Qt::ControlModifier,
                     key_delay);
   }
   REQUIRE(ui.lblSpeciesColour->pixmap()->toImage().pixelColor(0, 0) ==

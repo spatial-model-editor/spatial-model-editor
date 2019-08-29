@@ -71,14 +71,21 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc)
   for (const auto &compartmentID : doc.compartments) {
     const auto &speciesList = doc.species.at(compartmentID);
 
-    // runtime
     ini.addSection("model", compartmentID);
     ini.addValue("name", compartmentID);
+
+    // remove any constant species from the list of species
+    QStringList nonConstantSpecies;
+    for (const auto &s : speciesList) {
+      if (!doc.getIsSpeciesConstant(s.toStdString())) {
+        nonConstantSpecies.push_back(s);
+      }
+    }
 
     // initial concentrations
     ini.addSection("model", compartmentID, "initial");
     int i_species = 0;
-    for (const auto &speciesID : speciesList) {
+    for (const auto &speciesID : nonConstantSpecies) {
       ini.addValue(QString("u_%1").arg(QString::number(i_species)),
                    doc.getInitialConcentration(speciesID));
       ++i_species;
@@ -88,14 +95,14 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc)
     ini.addSection("model", compartmentID, "reaction");
     // reaction terms
     std::vector<std::string> uExpressions;
-    std::size_t nSpecies = static_cast<std::size_t>(speciesList.size());
+    std::size_t nSpecies = static_cast<std::size_t>(nonConstantSpecies.size());
     std::vector<std::string> uVars;
     for (std::size_t i = 0; i < nSpecies; ++i) {
       uVars.push_back("u_" + std::to_string(i));
     }
 
     if (doc.reactions.find(compartmentID) != doc.reactions.cend()) {
-      reactions::Reaction reacs(&doc, speciesList,
+      reactions::Reaction reacs(&doc, nonConstantSpecies,
                                 doc.reactions.at(compartmentID));
       for (std::size_t i = 0; i < nSpecies; ++i) {
         QString rhs("0.0");
@@ -104,6 +111,8 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc)
           QString expr = QString("%1*(%2) ")
                              .arg(QString::number(reacs.M.at(j).at(i)),
                                   reacs.reacExpressions[j].c_str());
+          SPDLOG_DEBUG("Species {} Reaction {} = {}",
+                       nonConstantSpecies.at(static_cast<int>(i)), j, expr);
           // parse and inline constants
           symbolic::Symbolic sym(expr.toStdString(), reacs.speciesIDs,
                                  reacs.constants[j]);
@@ -113,6 +122,8 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc)
           rhs.append(QString(" + (%1)").arg(newTerm));
         }
         // reparse full rhs to simplify
+        SPDLOG_DEBUG("Species {} Reparsing all reaction terms",
+                     nonConstantSpecies.at(static_cast<int>(i)));
         symbolic::Symbolic sym(rhs.toStdString(), uVars, {});
         rhs = sym.simplify().c_str();
         uExpressions.push_back(rhs.toStdString());
@@ -142,7 +153,7 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc)
     // diffusion coefficients
     ini.addSection("model", compartmentID, "diffusion");
     i_species = 0;
-    for (const auto &speciesID : speciesList) {
+    for (const auto &speciesID : nonConstantSpecies) {
       ini.addValue(QString("u_%1").arg(QString::number(i_species)),
                    doc.mapSpeciesIdToField.at(speciesID).diffusionConstant);
       ++i_species;

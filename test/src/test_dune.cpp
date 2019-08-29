@@ -97,7 +97,9 @@ TEST_CASE("DUNE ini file for brusselator model", "[dune][ini]") {
   REQUIRE(*line++ == "[model.compartment.reaction]");
   REQUIRE(*line++ == "u_0 = 0.5 - 4.0*u_0 + 1.0*u_1*u_0^2");
   REQUIRE(*line++ == "u_1 = 3.0*u_0 - 1.0*u_1*u_0^2");
-  REQUIRE(*line++ == "u_2 = 0");
+  // the rest of the species are constant,
+  // so they don't exist from DUNE's point of view:
+  REQUIRE(*line++ == "");
 }
 
 TEST_CASE("DUNE ini file for very simple model", "[dune][ini]") {

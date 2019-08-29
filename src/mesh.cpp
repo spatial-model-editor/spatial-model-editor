@@ -22,36 +22,33 @@ Mesh::Mesh(const QImage& image, const std::vector<QPointF>& interiorPoints,
       boundaryMaxPoints(maxPoints),
       compartmentMaxTriangleArea(maxTriangleArea) {
   boundaries = boundary::constructBoundaries(image);
-  spdlog::info("Mesh::Mesh :: found {} boundaries", boundaries.size());
+  SPDLOG_INFO("found {} boundaries", boundaries.size());
   for (const auto& boundary : boundaries) {
-    spdlog::info("Mesh::Mesh ::   - {} points, loop={}", boundary.points.size(),
-                 boundary.isLoop);
+    SPDLOG_INFO("  - {} points, loop={}", boundary.points.size(),
+                boundary.isLoop);
   }
   if (boundaryMaxPoints.empty()) {
     // if boundary points not specified use default value
     boundaryMaxPoints =
         std::vector<std::size_t>(boundaries.size(), defaultBoundaryMaxPoints);
-    spdlog::info(
-        "Mesh::Mesh :: no boundaryMaxPoints values specified, using default "
-        "value: {}",
+    SPDLOG_INFO(
+        "no boundaryMaxPoints values specified, using default value: {}",
         defaultBoundaryMaxPoints);
   }
   for (std::size_t i = 0; i < boundaries.size(); ++i) {
     boundaries[i].setMaxPoints(boundaryMaxPoints[i]);
   }
-  spdlog::info("Mesh::Mesh :: simplified {} boundaries", boundaries.size());
+  SPDLOG_INFO("simplified {} boundaries", boundaries.size());
   for (const auto& boundary : boundaries) {
-    spdlog::info("Mesh::Mesh ::   - {} points, loop={}", boundary.points.size(),
-                 boundary.isLoop);
+    SPDLOG_INFO("  - {} points, loop={}", boundary.points.size(),
+                boundary.isLoop);
   }
   if (compartmentMaxTriangleArea.empty()) {
     // if triangle areas not specified use default value
     compartmentMaxTriangleArea = std::vector<std::size_t>(
         interiorPoints.size(), defaultCompartmentMaxTriangleArea);
-    spdlog::info(
-        "Mesh::Mesh :: no max triangle areas specified, using default value: "
-        "{}",
-        defaultCompartmentMaxTriangleArea);
+    SPDLOG_INFO("no max triangle areas specified, using default value: {}",
+                defaultCompartmentMaxTriangleArea);
   }
   constructMesh();
 }
@@ -91,9 +88,8 @@ Mesh::Mesh(const std::vector<double>& inputVertices,
       ++nTriangles;
     }
   }
-  spdlog::info(
-      "Mesh::Mesh :: Imported read-only mesh of {} vertices, {} triangles",
-      vertices.size(), nTriangles);
+  SPDLOG_INFO("Imported read-only mesh of {} vertices, {} triangles",
+              vertices.size(), nTriangles);
 }
 
 bool Mesh::isReadOnly() const { return readOnlyMesh; }
@@ -101,12 +97,11 @@ bool Mesh::isReadOnly() const { return readOnlyMesh; }
 void Mesh::setBoundaryMaxPoints(std::size_t boundaryIndex,
                                 std::size_t maxPoints) {
   if (readOnlyMesh) {
-    spdlog::info("Mesh::setBoundaryMaxPoint :: mesh is read only");
+    SPDLOG_INFO("mesh is read only, ignoring.");
     return;
   }
-  spdlog::info(
-      "Mesh::setBoundaryMaxPoint :: boundaryIndex {}: max points {} -> {}",
-      boundaryIndex, boundaries.at(boundaryIndex).getMaxPoints(), maxPoints);
+  SPDLOG_INFO("boundaryIndex {}: max points {} -> {}", boundaryIndex,
+              boundaries.at(boundaryIndex).getMaxPoints(), maxPoints);
   boundaries.at(boundaryIndex).setMaxPoints(maxPoints);
 }
 
@@ -125,14 +120,11 @@ std::vector<std::size_t> Mesh::getBoundaryMaxPoints() const {
 void Mesh::setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
                                          std::size_t maxTriangleArea) {
   if (readOnlyMesh) {
-    spdlog::info("Mesh::setCompartmentMaxTriangleArea :: mesh is read only");
+    SPDLOG_INFO("mesh is read only, ignoring.");
     return;
   }
-  spdlog::info(
-      "Mesh::setCompartmentMaxTriangleArea :: compIndex {}: max triangle area "
-      "{} -> {}",
-      compartmentIndex, compartmentMaxTriangleArea.at(compartmentIndex),
-      maxTriangleArea);
+  SPDLOG_INFO("compIndex {}: max triangle area {} -> {}", compartmentIndex,
+              compartmentMaxTriangleArea.at(compartmentIndex), maxTriangleArea);
   compartmentMaxTriangleArea.at(compartmentIndex) = maxTriangleArea;
   constructMesh();
 }
@@ -206,8 +198,7 @@ void Mesh::constructMesh() {
         {{vertices[t[1]], vertices[t[2]], vertices[t[3]]}});
     ++nTriangles;
   }
-  spdlog::info("Mesh::constructMesh :: {} vertices, {} triangles",
-               vertices.size(), nTriangles);
+  SPDLOG_INFO("{} vertices, {} triangles", vertices.size(), nTriangles);
 }
 
 static double getScaleFactor(const QImage& img, const QSize& size) {

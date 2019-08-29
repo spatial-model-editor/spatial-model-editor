@@ -1,7 +1,5 @@
 #include "qlabelmousetracker.hpp"
 
-#include <QDebug>
-
 #include "logger.hpp"
 
 QLabelMouseTracker::QLabelMouseTracker(QWidget *parent) : QLabel(parent) {
@@ -38,9 +36,8 @@ void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
     // update current colour and emit mouseClicked signal
     if (!pixmap.isNull()) {
       colour = image.pixelColor(currentPixel).rgb();
-      spdlog::debug(
-          "QLabelMouseTracker::::mousePressEvent pixel ({},{}) -> colour {:x}",
-          currentPixel.x(), currentPixel.y(), colour);
+      SPDLOG_DEBUG("pixel ({},{}) -> colour {:x}", currentPixel.x(),
+                   currentPixel.y(), colour);
       emit mouseClicked(colour, currentPixel);
     }
   }
@@ -48,7 +45,7 @@ void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
 
 void QLabelMouseTracker::resizeEvent(QResizeEvent *event) {
   if (!pixmap.isNull()) {
-    qDebug() << "QLabelMouseTracker::resizeEvent:" << event->size();
+    SPDLOG_TRACE("{}", event->size());
     this->setPixmap(
         pixmap.scaledToWidth(event->size().width(), Qt::FastTransformation));
   }
@@ -57,6 +54,5 @@ void QLabelMouseTracker::resizeEvent(QResizeEvent *event) {
 void QLabelMouseTracker::setCurrentPixel(QMouseEvent *ev) {
   currentPixel.setX((pixmap.width() * ev->pos().x()) / this->size().width());
   currentPixel.setY((pixmap.height() * ev->pos().y()) / this->size().height());
-  qDebug() << "QLabelMouseTracker::setCurrentPixel : mouse at" << ev->pos()
-           << "-> pixel" << currentPixel;
+  SPDLOG_TRACE("mouse at {} -> pixel {}", ev->pos(), currentPixel);
 }

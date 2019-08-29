@@ -1,6 +1,7 @@
 #include "mesh.hpp"
 
 #include <QPoint>
+#include <QDebug>
 
 #include "catch.hpp"
 
@@ -10,8 +11,8 @@
 // note: only valid for vectors of unique values
 static bool isCyclicPermutation(const std::vector<QPoint>& v1,
                                 const std::vector<QPoint>& v2) {
-  spdlog::info("isCyclicPermutation :: v1 {}", v1);
-  spdlog::info("isCyclicPermutation :: v2 {}", v2);
+  qDebug() << "isCyclicPermutation :: v1:" << v1;
+  qDebug() << "isCyclicPermutation :: v2:" << v2;
   if (v1.size() != v2.size()) {
     // different size cannot be permutations
     return false;

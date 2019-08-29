@@ -11,19 +11,15 @@ static bool addStoichCoeff(const sbml::SbmlDocWrapper *doc,
                            const std::vector<std::string> &speciesIDs) {
   const std::string &speciesID = spec_ref->getSpecies();
   double volFactor = doc->getSpeciesCompartmentSize(speciesID.c_str());
-  spdlog::debug(
-      "reactions::addStoichCoeff :: species '{}', sign: {}, compartment "
-      "volume: "
-      "{}",
-      speciesID, sign, volFactor);
+  SPDLOG_DEBUG("species '{}', sign: {}, compartment volume: {}", speciesID,
+               sign, volFactor);
   // if it is in the species vector, and not constant, insert into matrix M
   auto it = std::find(speciesIDs.cbegin(), speciesIDs.cend(), speciesID);
   if (it != speciesIDs.cend() && doc->isSpeciesReactive(speciesID)) {
     std::size_t speciesIndex =
         static_cast<std::size_t>(it - speciesIDs.cbegin());
     double coeff = sign * spec_ref->getStoichiometry() / volFactor;
-    spdlog::debug("reactions::addStoichCoeff ::   -> stoich coeff[{}]: {}",
-                  speciesIndex, coeff);
+    SPDLOG_DEBUG("  -> stoich coeff[{}]: {}", speciesIndex, coeff);
     Mrow[speciesIndex] += coeff;
     return true;
   }
@@ -35,7 +31,7 @@ void Reaction::init(const sbml::SbmlDocWrapper *doc_ptr,
                     const std::vector<std::string> &reactionIDs) {
   doc = doc_ptr;
   speciesIDs = species;
-  spdlog::info("Reaction::Reaction :: species vector: {}", speciesIDs);
+  SPDLOG_INFO("species vector: {}", speciesIDs);
   M.clear();
   reacExpressions.clear();
 
@@ -54,9 +50,8 @@ void Reaction::init(const sbml::SbmlDocWrapper *doc_ptr,
       M.push_back(Mrow);
       reacExpressions.push_back(expr);
       constants.push_back(c);
-      spdlog::info("Reaction::Reaction :: adding rate rule for species {}",
-                   speciesIDs[sIndex]);
-      spdlog::info("Reaction::Reaction ::   - expr: {}", expr);
+      SPDLOG_INFO("adding rate rule for species {}", speciesIDs[sIndex]);
+      SPDLOG_INFO("  - expr: {}", expr);
     }
   }
 
@@ -112,10 +107,9 @@ void Reaction::init(const sbml::SbmlDocWrapper *doc_ptr,
       // construct expression and add to reactions
       reacExpressions.push_back(expr);
       constants.push_back(c);
-      spdlog::info("Reaction::Reaction :: adding reaction {}", reacID);
-      spdlog::info("Reaction::Reaction ::   - stoichiometric matrix row: {}",
-                   Mrow);
-      spdlog::info("Reaction::Reaction ::   - expr: {}", expr);
+      SPDLOG_INFO("adding reaction {}", reacID);
+      SPDLOG_INFO("  - stoichiometric matrix row: {}", Mrow);
+      SPDLOG_INFO("  - expr: {}", expr);
     }
   }
 }
