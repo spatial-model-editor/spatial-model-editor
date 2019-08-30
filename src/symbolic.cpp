@@ -30,18 +30,17 @@ namespace symbolic {
 Symbolic::Symbolic(const std::string &expression,
                    const std::vector<std::string> &variables,
                    const std::map<std::string, double> &constants) {
-  spdlog::debug("Symbolic::Symbolic :: parsing {}", expression);
+  SPDLOG_DEBUG("parsing {}", expression);
   for (const auto &v : variables) {
     symbols[v] = SymEngine::symbol(v);
   }
   SymEngine::map_basic_basic d;
   for (const auto &p : constants) {
     d[SymEngine::symbol(p.first)] = SymEngine::real_double(p.second);
-    spdlog::debug("Symbolic::Symbolic ::   --> constant {} = {}", p.first,
-                  p.second);
+    SPDLOG_DEBUG("  - constant {} = {}", p.first, p.second);
   }
   expr = SymEngine::parse(expression)->subs(d);
-  spdlog::debug("Symbolic::Symbolic :: --> {}", *expr);
+  SPDLOG_DEBUG("  --> {}", *expr);
 }
 
 std::string Symbolic::simplify() const { return toString(expr); }
@@ -54,13 +53,12 @@ std::string Symbolic::diff(const std::string &var) const {
 std::string Symbolic::relabel(const std::vector<std::string> &variables,
                               const std::string &label) const {
   SymEngine::map_basic_basic d;
-  spdlog::debug("Symbolic::relabel :: expr = {}", *expr);
+  SPDLOG_DEBUG("expr = {}", *expr);
   std::vector<SymEngine::RCP<const SymEngine::Symbol>> u;
   for (std::size_t i = 0; i < variables.size(); ++i) {
     u.push_back(SymEngine::symbol(label + std::to_string(i)));
     d[symbols.at(variables.at(i))] = u[i];
-    spdlog::debug("Symbolic::relabel ::   - {} -> {}",
-                  *symbols.at(variables.at(i)), *u[i]);
+    SPDLOG_DEBUG("  - {} -> {}", *symbols.at(variables.at(i)), *u[i]);
   }
   auto eu = expr->subs(d);
   return toString(eu);

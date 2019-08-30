@@ -7,6 +7,9 @@ TEMPLATE = app
 
 DEFINES += QT_DEPRECATED_WARNINGS
 
+# enable (at compile time) TRACE and DEBUG spdlog logging
+DEFINES += SPDLOG_ACTIVE_LEVEL="SPDLOG_LEVEL_TRACE"
+
 CONFIG += c++17
 
 SOURCES += \

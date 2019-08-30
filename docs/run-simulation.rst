@@ -9,7 +9,3 @@ The resulting average species concentrations are plotted as a function of time. 
    :alt: screenshot showing simulation
 
    An example of a simple spatial simulation.
-
-
-.. warning::
-	Simulation only works for a single compartment and is both numerically unstable and innacurate (forwards Euler).

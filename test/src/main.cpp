@@ -18,8 +18,8 @@ int main(int argc, char *argv[]) {
   // Here we reset the default "C" locale to avoid these issues
   std::locale::global(std::locale::classic());
 
-  spdlog::set_pattern("[test][%^%l%$] %v");
-  spdlog::set_level(spdlog::level::debug);
+  spdlog::set_pattern("%^[%L%$][%14s:%4#] %! :: %v%$");
+  spdlog::set_level(spdlog::level::trace);
 
   int result = Catch::Session().run(argc, argv);
 

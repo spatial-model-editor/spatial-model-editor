@@ -13,7 +13,7 @@ namespace numerics {
   if (symbolTable.symbol_exists(symbol)) {
     errorMessage.append(" already exists");
   }
-  spdlog::critical(errorMessage);
+  SPDLOG_CRITICAL(errorMessage);
   throw std::invalid_argument(errorMessage);
 }
 
@@ -23,13 +23,15 @@ ExprEval::ExprEval(const std::string &expression,
                    const std::map<std::string, double> &constants) {
   // construct symbol table of variables and constants
   exprtk::symbol_table<double> exprtkSymbolTable;
-  spdlog::debug("ExprEval::ExprEval : compiling {}", expression);
+  SPDLOG_DEBUG("compiling {}", expression);
   for (std::size_t i = 0; i < variableName.size(); ++i) {
+    SPDLOG_TRACE("adding var {}", variableName[i]);
     if (!exprtkSymbolTable.add_variable(variableName[i], variableValue[i])) {
       throwSymbolTableError(exprtkSymbolTable, variableName[i]);
     }
   }
   for (const auto &v : constants) {
+    SPDLOG_TRACE("adding constant {} = {}", v.first, v.second);
     if (!exprtkSymbolTable.add_constant(v.first, v.second)) {
       throwSymbolTableError(exprtkSymbolTable, v.first);
     }
@@ -48,7 +50,7 @@ ExprEval::ExprEval(const std::string &expression,
   if (!exprtkParser.compile(expression, exprtkExpression)) {
     std::string errorMessage = "ExprEval::ExprEval : compilation error: ";
     errorMessage.append(exprtkParser.error());
-    spdlog::critical(errorMessage);
+    SPDLOG_CRITICAL(errorMessage);
     throw std::invalid_argument(errorMessage);
   }
   // get list of variables the expression depends on
@@ -68,7 +70,7 @@ ExprEval::ExprEval(const std::string &expression,
           QString(" %1 (%2),").arg(pair.first.c_str(), value).toStdString());
     }
   }
-  spdlog::debug("ExprEval::ExprEval :   - symbols used: {}", strListSymbols);
+  SPDLOG_DEBUG("  - symbols used: {}", strListSymbols);
 }
 
 double ExprEval::operator()() const { return exprtkExpression.value(); }

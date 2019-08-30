@@ -23,8 +23,7 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  spdlog::set_pattern("[%^%l%$] %v");
-  spdlog::set_level(spdlog::level::debug);
+  spdlog::set_pattern("%^[%L%$][%14s:%4#] %! :: %v%$");
 
   QApplication a(argc, argv);
 
