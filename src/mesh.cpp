@@ -1,23 +1,29 @@
 #include "mesh.hpp"
 
-#include <set>
-
-#include <QDebug>
 #include <QPainter>
 
-#include "colours.hpp"
 #include "logger.hpp"
-
-static int qPointToInt(const QPoint& point) {
-  return point.x() + 65536 * point.y();
-}
+#include "triangulate.hpp"
+#include "utils.hpp"
 
 namespace mesh {
 
+QPointF Mesh::pixelPointToPhysicalPoint(const QPointF& pixelPoint) const
+    noexcept {
+  return pixelPoint * pixel + origin;
+}
+
+std::size_t Mesh::flattenQPoint(const QPoint& p) const noexcept {
+  return static_cast<std::size_t>(p.x() + img.width() * p.y());
+}
+
 Mesh::Mesh(const QImage& image, const std::vector<QPointF>& interiorPoints,
            const std::vector<std::size_t>& maxPoints,
-           const std::vector<std::size_t>& maxTriangleArea)
+           const std::vector<std::size_t>& maxTriangleArea, double pixelWidth,
+           const QPointF& originPoint)
     : img(image),
+      origin(originPoint),
+      pixel(pixelWidth),
       compartmentInteriorPoints(interiorPoints),
       boundaryMaxPoints(maxPoints),
       compartmentMaxTriangleArea(maxTriangleArea) {
@@ -59,14 +65,14 @@ Mesh::Mesh(const std::vector<double>& inputVertices,
     : compartmentInteriorPoints(interiorPoints) {
   // we don't have the original image, so no boundary info: read only mesh
   readOnlyMesh = true;
-  // import vertices
+  // import vertices: supplied as list of doubles, two for each vertex
   std::size_t nV = inputVertices.size() / 2;
   vertices.clear();
   vertices.reserve(nV);
   for (std::size_t i = 0; i < nV; ++i) {
     vertices.push_back(QPointF(inputVertices[2 * i], inputVertices[2 * i + 1]));
   }
-  // import triangles
+  // import triangles: supplies as list of ints, three for each triangle
   nTriangles = 0;
   triangles = std::vector<std::vector<QTriangleF>>(interiorPoints.size(),
                                                    std::vector<QTriangleF>{});
@@ -138,21 +144,58 @@ const std::vector<std::size_t>& Mesh::getCompartmentMaxTriangleArea() const {
   return compartmentMaxTriangleArea;
 }
 
+const std::vector<boundary::Boundary>& Mesh::getBoundaries() const {
+  return boundaries;
+}
+
+void Mesh::setPhysicalGeometry(double pixelWidth, const QPointF& originPoint) {
+  pixel = pixelWidth;
+  origin = originPoint;
+}
+
+std::vector<double> Mesh::getVertices() const {
+  // convert from pixels to physical coordinates
+  std::vector<double> v;
+  v.reserve(vertices.size() * 2);
+  for (const auto& pixelPoint : vertices) {
+    auto physicalPoint = pixelPointToPhysicalPoint(pixelPoint);
+    v.push_back(physicalPoint.x());
+    v.push_back(physicalPoint.y());
+  }
+  return v;
+}
+
+std::vector<int> Mesh::getTriangleIndices(std::size_t compartmentIndex) const {
+  std::vector<int> out;
+  const auto& indices = triangleIndices[compartmentIndex];
+  out.reserve(indices.size() * 3);
+  for (const auto& t : indices) {
+    for (std::size_t ti : t) {
+      out.push_back(static_cast<int>(ti));
+    }
+  }
+  return out;
+}
+
+const std::vector<std::vector<QTriangleF>>& Mesh::getTriangles() const {
+  return triangles;
+}
+
 void Mesh::constructMesh() {
   // points may be used by multiple boundary lines,
-  // so first construct a set of unique points with map to their index
-  // todo: optimise this: we know image size, so can use array instead of map
-  //       also (maybe) can assume only first/last points can be used multiple
-  //       times
-  std::map<int, std::size_t> mapPointToIndex;
+  // so first construct a set of unique points with a map to their index
+  constexpr std::size_t NULL_INDEX = std::numeric_limits<std::size_t>::max();
+  std::vector<std::size_t> mapPointToIndex(
+      static_cast<std::size_t>(img.width() * img.height()), NULL_INDEX);
   std::size_t index = 0;
   std::vector<QPoint> boundaryPoints;
   for (const auto& boundary : boundaries) {
     for (const auto& point : boundary.points) {
-      if (mapPointToIndex.find(qPointToInt(point)) == mapPointToIndex.cend()) {
+      std::size_t flatQPoint = flattenQPoint(point);
+      if (mapPointToIndex[flatQPoint] == NULL_INDEX) {
         // QPoint not already in list: add it
         boundaryPoints.push_back(point);
-        mapPointToIndex[qPointToInt(point)] = index;
+        mapPointToIndex[flatQPoint] = index;
         ++index;
       }
     }
@@ -161,16 +204,17 @@ void Mesh::constructMesh() {
   // with its index in the list of boundaryPoints
   std::vector<triangulate::BoundarySegments> boundarySegmentsVector;
   for (std::size_t i = 0; i < boundaries.size(); ++i) {
+    const auto& points = boundaries[i].points;
     boundarySegmentsVector.emplace_back();
-    for (std::size_t j = 0; j < boundaries[i].points.size() - 1; ++j) {
-      auto i0 = mapPointToIndex.at(qPointToInt(boundaries[i].points[j]));
-      auto i1 = mapPointToIndex.at(qPointToInt(boundaries[i].points[j + 1]));
+    for (std::size_t j = 0; j < points.size() - 1; ++j) {
+      auto i0 = mapPointToIndex[flattenQPoint(points[j])];
+      auto i1 = mapPointToIndex[flattenQPoint(points[j + 1])];
       boundarySegmentsVector.back().push_back({{i0, i1}});
     }
     if (boundaries[i].isLoop) {
       // connect last point to first point
-      auto i0 = mapPointToIndex.at(qPointToInt(boundaries[i].points.back()));
-      auto i1 = mapPointToIndex.at(qPointToInt(boundaries[i].points.front()));
+      auto i0 = mapPointToIndex[flattenQPoint(points.back())];
+      auto i1 = mapPointToIndex[flattenQPoint(points.front())];
       boundarySegmentsVector.back().push_back({{i0, i1}});
     }
   }
@@ -186,8 +230,8 @@ void Mesh::constructMesh() {
   vertices = triangulate.getPoints();
 
   // construct triangles & indices for each compartment:
-  triangleIndices = std::vector<std::vector<std::array<std::size_t, 3>>>(
-      compartments.size(), std::vector<std::array<std::size_t, 3>>{});
+  triangleIndices = std::vector<std::vector<TriangleIndex>>(
+      compartments.size(), std::vector<TriangleIndex>{});
   triangles = std::vector<std::vector<QTriangleF>>(compartments.size(),
                                                    std::vector<QTriangleF>{});
   nTriangles = 0;
@@ -219,27 +263,27 @@ QImage Mesh::getBoundariesImage(const QSize& size,
   // construct boundary image
   QImage boundaryImage(static_cast<int>(scaleFactor * img.width()),
                        static_cast<int>(scaleFactor * img.height()),
-                       QImage::Format_ARGB32);
+                       QImage::Format_ARGB32_Premultiplied);
   boundaryImage.fill(QColor(0, 0, 0, 0));
 
   QPainter p(&boundaryImage);
+  p.setRenderHint(QPainter::Antialiasing);
   // draw boundary lines
   for (std::size_t k = 0; k < boundaries.size(); ++k) {
-    const auto& boundary = boundaries[k];
-    std::size_t maxPoint = boundary.points.size();
-    if (!boundary.isLoop) {
+    const auto& points = boundaries[k].points;
+    std::size_t maxPoint = points.size();
+    if (!boundaries[k].isLoop) {
       --maxPoint;
     }
     int penSize = 2;
     if (k == boldBoundaryIndex) {
       penSize = 5;
     }
-    p.setPen(QPen(colours::indexedColours()[k], penSize));
+    p.setPen(QPen(utils::indexedColours()[k], penSize));
     for (std::size_t i = 0; i < maxPoint; ++i) {
-      p.drawEllipse(boundary.points[i] * scaleFactor, penSize, penSize);
-      p.drawLine(
-          boundary.points[i] * scaleFactor,
-          boundary.points[(i + 1) % boundary.points.size()] * scaleFactor);
+      p.drawEllipse(points[i] * scaleFactor, penSize, penSize);
+      p.drawLine(points[i] * scaleFactor,
+                 points[(i + 1) % points.size()] * scaleFactor);
     }
   }
   p.end();
@@ -253,43 +297,49 @@ QImage Mesh::getMeshImage(const QSize& size,
   // construct mesh image
   QImage meshImage(static_cast<int>(scaleFactor * img.width()),
                    static_cast<int>(scaleFactor * img.height()),
-                   QImage::Format_ARGB32);
+                   QImage::Format_ARGB32_Premultiplied);
   meshImage.fill(QColor(0, 0, 0, 0));
   QPainter p(&meshImage);
-  // draw vertices
-  p.setPen(QPen(Qt::red, 2));
-  for (const auto& v : vertices) {
-    p.drawEllipse(v * scaleFactor, 2, 2);
-  }
-  // fill triangles in chosen compartment
+  p.setRenderHint(QPainter::Antialiasing);
+  QBrush fillBrush(QColor(235, 235, 255));
+  p.setPen(QPen(Qt::black, 2));
+  // fill triangles in chosen compartment & outline with bold lines
   for (const auto& t : triangles.at(compartmentIndex)) {
-    QPainterPath path;
-    path.moveTo(t.back() * scaleFactor);
+    QPainterPath path(t.back() * scaleFactor);
     for (const auto& tp : t) {
       path.lineTo(tp * scaleFactor);
     }
-    p.fillPath(path, QBrush(QColor(235, 235, 255)));
+    p.fillPath(path, fillBrush);
+    p.drawPath(path);
   }
-  // draw triangle lines
+  // outline all other triangles with gray lines
+  p.setPen(QPen(Qt::gray, 1));
   for (std::size_t k = 0; k < triangles.size(); ++k) {
-    p.setPen(QPen(Qt::gray, 1, Qt::DotLine));
-    if (k == compartmentIndex) {
-      p.setPen(QPen(Qt::black, 3, Qt::SolidLine));
+    if (k != compartmentIndex) {
+      for (const auto& t : triangles.at(k)) {
+        QPainterPath path(t.back() * scaleFactor);
+        for (const auto& tp : t) {
+          path.lineTo(tp * scaleFactor);
+        }
+        p.drawPath(path);
+      }
     }
-    for (const auto& t : triangles[k]) {
-      p.drawLine(t[0] * scaleFactor, t[1] * scaleFactor);
-      p.drawLine(t[1] * scaleFactor, t[2] * scaleFactor);
-      p.drawLine(t[2] * scaleFactor, t[0] * scaleFactor);
-    }
+  }
+  // draw vertices
+  p.setPen(QPen(Qt::red, 3));
+  for (const auto& v : vertices) {
+    p.drawPoint(v * scaleFactor);
   }
   p.end();
-
   return meshImage.mirrored(false, true);
 }
 
-QString Mesh::getGMSH(double pixelPhysicalSize) const {
-  // note: gmsh indexing starts with 1, so need to add 1 to all indices
-  // note: gmsh (0,0) is bottom left, but in Qt it is top left, so flip y
+QString Mesh::getGMSH() const {
+  // note: gmsh indexing starts with 1, so we need to add 1 to all indices
+  // note: gmsh (0,0) is bottom left, but we use top left, so flip y axis
+  // meshing is done in terms of pixels, to convert to physical points:
+  //   - rescale each vertex by a factor pixel
+  //   - add origin to each vertex
   QString msh;
   msh.append("$MeshFormat\n");
   msh.append("2.2 0 8\n");
@@ -299,8 +349,8 @@ QString Mesh::getGMSH(double pixelPhysicalSize) const {
   for (std::size_t i = 0; i < vertices.size(); ++i) {
     msh.append(QString("%1 %2 %3 %4\n")
                    .arg(i + 1)
-                   .arg(vertices[i].x() * pixelPhysicalSize)
-                   .arg(vertices[i].y() * pixelPhysicalSize)
+                   .arg(vertices[i].x() * pixel + origin.x())
+                   .arg(vertices[i].y() * pixel + origin.y())
                    .arg(0));
   }
   msh.append("$EndNodes\n");
@@ -320,7 +370,6 @@ QString Mesh::getGMSH(double pixelPhysicalSize) const {
     }
     ++compartmentIndex;
   }
-
   msh.append("$EndElements\n");
   return msh;
 }

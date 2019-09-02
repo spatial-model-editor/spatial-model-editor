@@ -7,9 +7,9 @@
 #include "sbml_test_data/ABtoC.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
 
-#include "colours.hpp"
 #include "logger.hpp"
 #include "qlabelmousetracker.hpp"
+#include "utils.hpp"
 
 // class that provides a pointer to each Widget in mainWindow
 class UIPointers {
@@ -324,6 +324,28 @@ SCENARIO("import built-in SBML model and compartment geometry image",
   }
 }
 
+#ifndef Q_OS_MACOS
+SCENARIO("load built-in SBML model very-simple-model", "[gui][mainwindow]") {
+  MainWindow w;
+  w.show();
+  UIPointers ui(&w);
+  CAPTURE(QTest::qWaitForWindowExposed(&w));
+  REQUIRE(ui.listCompartments->count() == 0);
+  // very-simple-model
+  QTest::keyClick(&w, Qt::Key_F, Qt::AltModifier, key_delay);
+  QTest::keyClick(ui.menuFile, Qt::Key_E, Qt::NoModifier, key_delay);
+  QTest::keyClick(ui.menuOpen_example_SBML_file, Qt::Key_V, Qt::NoModifier,
+                  key_delay);
+  REQUIRE(ui.listCompartments->count() == 3);
+  // circadian-clock
+  QTest::keyClick(&w, Qt::Key_F, Qt::AltModifier, key_delay);
+  QTest::keyClick(ui.menuFile, Qt::Key_E, Qt::NoModifier, key_delay);
+  QTest::keyClick(ui.menuOpen_example_SBML_file, Qt::Key_C, Qt::NoModifier,
+                  key_delay);
+  REQUIRE(ui.listCompartments->count() == 1);
+}
+#endif
+
 SCENARIO("Load SBML file", "[gui][mainwindow]") {
   MainWindow w;
   w.show();
@@ -468,14 +490,14 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
                     key_delay);
   }
   REQUIRE(ui.lblSpeciesColour->pixmap()->toImage().pixelColor(0, 0) ==
-          colours::indexedColours()[3]);
+          utils::indexedColours()[3]);
   // just click Enter, so accept default colour, ie no-op
   mwt.setMessage();
   mwt.start();
   QTest::mouseClick(ui.btnChangeSpeciesColour, Qt::LeftButton,
                     Qt::KeyboardModifier(), QPoint(), key_delay);
   REQUIRE(ui.lblSpeciesColour->pixmap()->toImage().pixelColor(0, 0) ==
-          colours::indexedColours()[3]);
+          utils::indexedColours()[3]);
 
   // display reactions tab
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,

@@ -27,6 +27,10 @@ extraction:
           - wget "https://github.com/lkeegan/libsbml-static/releases/download/mingw64-fpic/libsbml-static-linux.tgz"
           - tar xzvf libsbml-static-linux.tgz
           - ls */*
+          # expat library location has changed
+          - mkdir expat
+          - mkdir expat/lib
+          - cp libsbml/lib/libexpat.a expat/lib/.
           - cd ..
         configure:
             command:

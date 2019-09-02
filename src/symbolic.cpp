@@ -8,7 +8,7 @@
 
 #include "logger.hpp"
 
-#include <iostream>
+#include <sstream>
 
 namespace SymEngine {
 void muPrinter::_print_pow(std::ostringstream &o, const RCP<const Basic> &a,
@@ -48,20 +48,6 @@ std::string Symbolic::simplify() const { return toString(expr); }
 std::string Symbolic::diff(const std::string &var) const {
   auto dexpr_dvar = expr->diff(symbols.at(var));
   return toString(dexpr_dvar);
-}
-
-std::string Symbolic::relabel(const std::vector<std::string> &variables,
-                              const std::string &label) const {
-  SymEngine::map_basic_basic d;
-  SPDLOG_DEBUG("expr = {}", *expr);
-  std::vector<SymEngine::RCP<const SymEngine::Symbol>> u;
-  for (std::size_t i = 0; i < variables.size(); ++i) {
-    u.push_back(SymEngine::symbol(label + std::to_string(i)));
-    d[symbols.at(variables.at(i))] = u[i];
-    SPDLOG_DEBUG("  - {} -> {}", *symbols.at(variables.at(i)), *u[i]);
-  }
-  auto eu = expr->subs(d);
-  return toString(eu);
 }
 
 std::string Symbolic::toString(

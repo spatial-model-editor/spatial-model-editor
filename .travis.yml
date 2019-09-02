@@ -107,15 +107,6 @@ matrix:
         - "jwm &"
         - sleep 1
       script:
-        # get blame info for sonar-scanner
-        - git fetch --unshallow
-        # compile debug version of executable
-        - mkdir build
-        - cd build
-        - qmake -Wall -config debug ../spatial-model-editor.pro
-        # wrap make call with sonar-source build wrapper
-        - build-wrapper-linux-x86-64 --out-dir ../bw-output make -j2
-        - cd ../
         # compile and run unit tests
         - mkdir build-tests
         - cd build-tests
@@ -137,11 +128,19 @@ matrix:
         - rmdir tmp
         - ls
         - cd ../
-        # upload to sonar-scanner
-        - sonar-scanner -Dsonar.login=$SONAR_LOGIN
-      after_script:
         # upload coverage report to codecov.io
         - bash <(curl -s https://codecov.io/bash) -X gcov -f "gcov/*"
+        # get blame info for sonar-scanner
+        - git fetch --unshallow
+        # compile debug version of executable
+        - mkdir build
+        - cd build
+        - qmake -Wall -config debug ../spatial-model-editor.pro
+        # wrap make call with sonar-source build wrapper
+        - build-wrapper-linux-x86-64 --out-dir ../bw-output make -j2
+        - cd ../
+        # upload to sonar-scanner
+        - sonar-scanner -Dsonar.login=$SONAR_LOGIN
     ##############################################
     # linux test build: valgrind for non-gui tests
     ##############################################

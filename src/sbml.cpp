@@ -2,7 +2,6 @@
 
 #include <unordered_set>
 
-#include "colours.hpp"
 #include "logger.hpp"
 #include "reactions.hpp"
 #include "symbolic.hpp"
@@ -78,10 +77,9 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
   auto *min = coord->createBoundaryMin();
   min->setId("xBoundaryMin");
   min->setValue(0);
-  // todo: use actual dimensions of geometry here
   auto *max = coord->createBoundaryMax();
   max->setId("xBoundaryMax");
-  max->setValue(1);
+  max->setValue(pixelWidth * static_cast<double>(compartmentImage.width()));
   SPDLOG_INFO("  - x in range [{},{}]", min->getValue(), max->getValue());
 
   coord = geom->getCoordinateComponent(1);
@@ -92,7 +90,7 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
   min->setValue(0);
   max = coord->createBoundaryMax();
   max->setId("yBoundaryMax");
-  max->setValue(1);
+  max->setValue(pixelWidth * static_cast<double>(compartmentImage.height()));
   SPDLOG_INFO("  - y in range [{},{}]", min->getValue(), max->getValue());
 
   // set isSpatial to false for all species
@@ -154,19 +152,37 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
 }
 
 void SbmlDocWrapper::importSpatialData() {
+  importGeometryDimensions();
+  importSampledFieldGeometry();
+  importParametricGeometry();
+}
+
+void SbmlDocWrapper::importGeometryDimensions() {
   geom = plugin->getGeometry();
   SPDLOG_INFO("Importing existing {}d SBML model geometry",
               geom->getNumCoordinateComponents());
   if (geom->getNumCoordinateComponents() != nDimensions) {
     SPDLOG_CRITICAL("Error: Only {}d models are currently supported",
                     nDimensions);
-    // todo: offer to delete spatial part of model & import anyway
-    qFatal(
-        "SbmlDocWrapper::initModelData :: Error: Only 2d models are "
-        "currently supported");
+    // todo: offer to ignore spatial part of model & import anyway
   }
-  importSampledFieldGeometry();
-  importParametricGeometry();
+  // import xy coordinates
+  const auto *xcoord = geom->getCoordinateComponentByKind(
+      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
+  if (xcoord == nullptr) {
+    SPDLOG_CRITICAL("Error: no x-coordinate found in SBML model");
+  }
+  SPDLOG_INFO("- found x range [{},{}]", xcoord->getBoundaryMin()->getValue(),
+              xcoord->getBoundaryMax()->getValue());
+  const auto *ycoord = geom->getCoordinateComponentByKind(
+      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
+  if (ycoord == nullptr) {
+    SPDLOG_CRITICAL("Error: no y-coordinate found in SBML model");
+  }
+  SPDLOG_INFO("- found y range [{},{}]", ycoord->getBoundaryMin()->getValue(),
+              ycoord->getBoundaryMax()->getValue());
+  origin = QPointF(xcoord->getBoundaryMin()->getValue(),
+                   ycoord->getBoundaryMin()->getValue());
 }
 
 void SbmlDocWrapper::importSampledFieldGeometry() {
@@ -210,6 +226,25 @@ void SbmlDocWrapper::importSampledFieldGeometry() {
   SPDLOG_INFO("  - found {} geometry image", img.size());
   importGeometryFromImage(img, false);
 
+  // calculate pixel size from image dimensions
+  const auto *xcoord = geom->getCoordinateComponentByKind(
+      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
+  double xPixels = static_cast<double>(compartmentImage.width());
+  double xPixelSize = (xcoord->getBoundaryMax()->getValue() -
+                       xcoord->getBoundaryMin()->getValue()) /
+                      xPixels;
+  const auto *ycoord = geom->getCoordinateComponentByKind(
+      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
+  double yPixels = static_cast<double>(compartmentImage.height());
+  double yPixelSize = (ycoord->getBoundaryMax()->getValue() -
+                       ycoord->getBoundaryMin()->getValue()) /
+                      yPixels;
+  if (std::abs((xPixelSize - yPixelSize) / xPixelSize) > 1e-12) {
+    SPDLOG_WARN("Pixels are not square: {} x {}", xPixelSize, yPixelSize);
+  }
+  SPDLOG_INFO("  - pixel size: {}", pixelWidth);
+  pixelWidth = xPixelSize;
+
   // assign each compartment to a colour
   for (const auto &compartmentID : compartments) {
     auto *comp = model->getCompartment(compartmentID.toStdString());
@@ -242,10 +277,16 @@ void SbmlDocWrapper::importParametricGeometry() {
     return;
   }
 
-  // get interiorPoints
+  // get interiorPoints in terms of physical location
+  // & convert them to integer pixel points
   std::vector<QPointF> interiorPoints;
   for (const auto &compartmentID : compartments) {
-    interiorPoints.push_back(getCompartmentInteriorPoint(compartmentID));
+    SPDLOG_DEBUG("Found interior point: {}");
+    QPointF interiorFloatPhysical = getCompartmentInteriorPoint(compartmentID);
+    QPointF interiorFloatPixel =
+        (interiorFloatPhysical - origin) / pixelWidth + QPointF(0.3, 0.3);
+    interiorPoints.push_back(interiorFloatPixel);
+    SPDLOG_DEBUG("  - pixel location: {}", interiorPoints.back());
   }
 
   // get maxBoundaryPoints and maxTriangleAreas
@@ -263,8 +304,8 @@ void SbmlDocWrapper::importParametricGeometry() {
         SPDLOG_INFO("  - maxTriangleAreas: {}", maxAreas);
         // generate Mesh
         SPDLOG_INFO("  - re-generating mesh");
-        mesh =
-            mesh::Mesh(compartmentImage, interiorPoints, maxPoints, maxAreas);
+        mesh = mesh::Mesh(compartmentImage, interiorPoints, maxPoints, maxAreas,
+                          pixelWidth, origin);
       }
     }
     return;
@@ -334,7 +375,7 @@ void SbmlDocWrapper::initModelData() {
     const auto id = spec->getId().c_str();
     species[spec->getCompartment().c_str()] << QString(id);
     // assign a default colour for displaying the species
-    mapSpeciesIdToColour[id] = colours::indexedColours()[i];
+    mapSpeciesIdToColour[id] = utils::indexedColours()[i];
   }
 
   // get list of functions
@@ -394,12 +435,13 @@ void SbmlDocWrapper::exportSBMLFile(const std::string &filename) {
   }
 }
 
-const QString &SbmlDocWrapper::getXml() {
+QString SbmlDocWrapper::getXml() {
+  QString xml;
   writeGeometryMeshToSBML();
   std::unique_ptr<char, decltype(&std::free)> xmlChar(
       libsbml::writeSBMLToString(doc.get()), &std::free);
-  xmlString = QString(xmlChar.get());
-  return xmlString;
+  xml = QString(xmlChar.get());
+  return xml;
 }
 
 void SbmlDocWrapper::importGeometryFromImage(const QImage &img,
@@ -720,8 +762,8 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
           field.setUniformConcentration(param->getValue());
         }
       } else {
-        // parse expression using Symengine/ExprTk, get constants, evaluate &
-        // assign result as initialConcentration
+        // todo: parse expression using Symengine/ExprTk, get constants,
+        // evaluate & assign result as initialConcentration
         SPDLOG_WARN("  - initialAssignment too complicated (todo)");
       }
     }
@@ -785,7 +827,8 @@ void SbmlDocWrapper::updateMesh() {
     interiorPoints.push_back(interior);
   }
   SPDLOG_INFO("Updating mesh interior points");
-  mesh = mesh::Mesh(compartmentImage, interiorPoints);
+  mesh =
+      mesh::Mesh(compartmentImage, interiorPoints, {}, {}, pixelWidth, origin);
 }
 
 libsbml::ParametricObject *SbmlDocWrapper::getParametricObject(
@@ -877,17 +920,12 @@ void SbmlDocWrapper::writeGeometryMeshToSBML() {
   }
 
   // write vertices
-  std::vector<double> vertices;
-  vertices.reserve(mesh.getVertices().size() * 2);
-  for (const auto &point : mesh.getVertices()) {
-    vertices.push_back(point.x());
-    vertices.push_back(point.y());
-  }
+  std::vector<double> vertices = mesh.getVertices();
   auto *sp = parageom->getSpatialPoints();
-  sp->setArrayData(vertices.data(), static_cast<int>(vertices.size()));
-  sp->setArrayDataLength(static_cast<int>(vertices.size()));
-  SPDLOG_INFO("  - added {} vertices ({} doubles)", mesh.getVertices().size(),
-              sp->getArrayDataLength());
+  int sz = static_cast<int>(vertices.size());
+  sp->setArrayData(vertices.data(), sz);
+  sp->setArrayDataLength(sz);
+  SPDLOG_INFO("  - added {} doubles ({} vertices)", sz, sz / 2);
 
   SPDLOG_INFO(" Writing mesh triangles:");
   // write mesh triangles for each compartment
@@ -899,20 +937,12 @@ void SbmlDocWrapper::writeGeometryMeshToSBML() {
       SPDLOG_CRITICAL("    - no parametricObject found");
     }
     SPDLOG_INFO("    - parametricObject: {}", po->getId());
-    const auto &trianglesIndices =
-        mesh.getTriangleIndices()[static_cast<std::size_t>(i)];
-    std::vector<int> triangleInts;
-    triangleInts.reserve(trianglesIndices.size());
-    for (const auto &t : trianglesIndices) {
-      for (std::size_t ti : t) {
-        triangleInts.push_back(static_cast<int>(ti));
-      }
-    }
-    po->setPointIndexLength(static_cast<int>(triangleInts.size()));
-    po->setPointIndex(triangleInts.data(),
-                      static_cast<int>(triangleInts.size()));
-    SPDLOG_INFO("    - added {} triangles ({} uints)", trianglesIndices.size(),
-                triangleInts.size());
+    std::vector<int> triangleInts =
+        mesh.getTriangleIndices(static_cast<std::size_t>(i));
+    int size = static_cast<int>(triangleInts.size());
+    po->setPointIndexLength(size);
+    po->setPointIndex(triangleInts.data(), size);
+    SPDLOG_INFO("    - added {} uints ({} triangles)", size, size / 2);
   }
   return;
 }
@@ -1193,6 +1223,45 @@ std::map<std::string, double> SbmlDocWrapper::getGlobalConstants() const {
     constants[comp->getId()] = comp->getSize();
   }
   return constants;
+}
+
+double SbmlDocWrapper::getPixelWidth() const { return pixelWidth; }
+
+void SbmlDocWrapper::setPixelWidth(double width, bool resizeCompartments) {
+  pixelWidth = width;
+  if (resizeCompartments) {
+    // update compartment Size based on pixel count & pixel size
+    for (unsigned int k = 0; k < model->getNumCompartments(); ++k) {
+      auto *comp = model->getCompartment(k);
+      SPDLOG_INFO("compartmentID {}", comp->getId());
+      SPDLOG_INFO("  - previous size: {}", comp->getSize());
+      std::size_t nPixels =
+          mapCompIdToGeometry.at(comp->getId().c_str()).ix.size();
+      SPDLOG_INFO("  - number of pixels: {}", nPixels);
+      double pixelArea = pixelWidth * pixelWidth;
+      SPDLOG_INFO("  - pixel area (width*width): {}", pixelArea);
+      double newSize = static_cast<double>(nPixels) * pixelArea;
+      comp->setSize(newSize);
+      SPDLOG_INFO("  - new size: {}", comp->getSize());
+    }
+  }
+  SPDLOG_DEBUG("New pixel width = {}", pixelWidth);
+  mesh.setPhysicalGeometry(width, origin);
+  // update xy coordinates
+  auto *coord = geom->getCoordinateComponentByKind(
+      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
+  auto *min = coord->getBoundaryMin();
+  auto *max = coord->getBoundaryMax();
+  max->setValue(origin.x() +
+                pixelWidth * static_cast<double>(compartmentImage.width()));
+  SPDLOG_INFO("  - x now in range [{},{}]", min->getValue(), max->getValue());
+  coord = geom->getCoordinateComponentByKind(
+      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
+  min = coord->getBoundaryMin();
+  max = coord->getBoundaryMax();
+  max->setValue(origin.y() +
+                pixelWidth * static_cast<double>(compartmentImage.height()));
+  SPDLOG_INFO("  - y now in range [{},{}]", min->getValue(), max->getValue());
 }
 
 std::string SbmlDocWrapper::inlineExpr(

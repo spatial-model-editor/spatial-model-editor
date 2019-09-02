@@ -7,53 +7,53 @@
 
 #pragma once
 
+#include <array>
 #include <vector>
 
 #include <QImage>
 #include <QPoint>
+#include <QPointF>
 
 #include "boundary.hpp"
-#include "triangulate.hpp"
 
 namespace mesh {
 
-constexpr std::size_t NULL_INDEX = std::numeric_limits<std::size_t>::max();
-
 using QTriangleF = std::array<QPointF, 3>;
+using TriangleIndex = std::array<std::size_t, 3>;
 
 class Mesh {
  private:
+  static constexpr std::size_t defaultBoundaryMaxPoints = 12;
+  static constexpr std::size_t defaultCompartmentMaxTriangleArea = 40;
   bool readOnlyMesh = false;
-  std::size_t defaultBoundaryMaxPoints = 12;
-  std::size_t defaultCompartmentMaxTriangleArea = 40;
-  std::vector<QPoint> nearestNeighbourDirectionPoints = {
-      QPoint(1, 0), QPoint(-1, 0), QPoint(0, 1),  QPoint(0, -1),
-      QPoint(1, 1), QPoint(1, -1), QPoint(-1, 1), QPoint(-1, -1)};
   // input data
   QImage img;
+  QPointF origin;
+  double pixel;
   std::vector<QPointF> compartmentInteriorPoints;
   std::vector<std::size_t> boundaryMaxPoints;
   std::vector<std::size_t> compartmentMaxTriangleArea;
-  // output data
+  // generated data
   std::vector<boundary::Boundary> boundaries;
   std::vector<QPointF> vertices;
   std::size_t nTriangles;
   std::vector<std::vector<QTriangleF>> triangles;
-  std::vector<std::vector<std::array<std::size_t, 3>>> triangleIndices;
-  inline int pointToIndex(const QPoint& p) const {
-    return p.x() + img.width() * p.y();
-  }
-  inline QPoint indexToPoint(int i) const {
-    return QPoint(i % img.width(), i / img.width());
-  }
+  std::vector<std::vector<TriangleIndex>> triangleIndices;
+  // convert point in pixel units to point in physical units
+  QPointF pixelPointToPhysicalPoint(const QPointF& pixelPoint) const noexcept;
+  // flatten QPoint to a value in range [0, width*height]
+  std::size_t flattenQPoint(const QPoint& p) const noexcept;
   void constructMesh();
 
  public:
   Mesh() = default;
+  // constructor to generate mesh from supplied image
   explicit Mesh(const QImage& image,
                 const std::vector<QPointF>& interiorPoints = {},
                 const std::vector<std::size_t>& maxPoints = {},
-                const std::vector<std::size_t>& maxTriangleArea = {});
+                const std::vector<std::size_t>& maxTriangleArea = {},
+                double pixelWidth = 1.0,
+                const QPointF& originPoint = QPointF(0, 0));
   // constructor to load existing vertices&trianges without image
   Mesh(const std::vector<double>& inputVertices,
        const std::vector<std::vector<int>>& inputTriangleIndices,
@@ -68,21 +68,19 @@ class Mesh {
                                      std::size_t maxTriangleArea);
   std::size_t getCompartmentMaxTriangleArea(std::size_t compartmentIndex) const;
   const std::vector<std::size_t>& getCompartmentMaxTriangleArea() const;
-  const std::vector<boundary::Boundary>& getBoundaries() const {
-    return boundaries;
-  }
-  const std::vector<QPointF>& getVertices() const { return vertices; }
-  const std::vector<std::vector<std::array<std::size_t, 3>>>&
-  getTriangleIndices() const {
-    return triangleIndices;
-  }
-  const std::vector<std::vector<QTriangleF>>& getTriangles() const {
-    return triangles;
-  }
+  const std::vector<boundary::Boundary>& getBoundaries() const;
+  void setPhysicalGeometry(double pixelWidth,
+                           const QPointF& originPoint = QPointF(0, 0));
+  // return vertices as an array of doubles for SBML
+  std::vector<double> getVertices() const;
+  // return triangle indices as an array of ints for SBML
+  std::vector<int> getTriangleIndices(std::size_t compartmentIndex) const;
+  const std::vector<std::vector<QTriangleF>>& getTriangles() const;
+
   QImage getBoundariesImage(const QSize& size,
                             std::size_t boldBoundaryIndex) const;
   QImage getMeshImage(const QSize& size, std::size_t compartmentIndex) const;
-  QString getGMSH(double pixelPhysicalSize = 1.0) const;
+  QString getGMSH() const;
 };
 
 }  // namespace mesh
