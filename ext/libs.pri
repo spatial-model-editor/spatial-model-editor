@@ -15,10 +15,18 @@ LIBS += \
 # include QT and ext headers as system headers to suppress compiler warnings
 QMAKE_CXXFLAGS += \
     -isystem "$$PWD/libsbml/include" \
-    -isystem "$$PWD/symengine/include" \
     -isystem "$$PWD/gmp/include" \
-    -isystem "$$PWD/expat/include" \
+    -isystem "$$PWD/symengine/include" \
+    -isystem "$$PWD/llvm/include" \
     -isystem "$$PWD/qcustomplot" \
     -isystem "$$PWD/triangle" \
     -isystem "$$PWD/spdlog/include" \
 
+# LLVM libs:
+LIBS += $$PWD/llvm/lib/libLLVMX86Disassembler.a $$PWD/llvm/lib/libLLVMX86AsmParser.a $$PWD/llvm/lib/libLLVMVectorize.a $$PWD/llvm/lib/libLLVMX86CodeGen.a $$PWD/llvm/lib/libLLVMX86Desc.a $$PWD/llvm/lib/libLLVMX86Info.a $$PWD/llvm/lib/libLLVMMCDisassembler.a $$PWD/llvm/lib/libLLVMX86AsmPrinter.a $$PWD/llvm/lib/libLLVMX86Utils.a $$PWD/llvm/lib/libLLVMSelectionDAG.a $$PWD/llvm/lib/libLLVMGlobalISel.a $$PWD/llvm/lib/libLLVMAsmPrinter.a $$PWD/llvm/lib/libLLVMCodeGen.a $$PWD/llvm/lib/libLLVMScalarOpts.a $$PWD/llvm/lib/libLLVMAggressiveInstCombine.a $$PWD/llvm/lib/libLLVMBitWriter.a $$PWD/llvm/lib/libLLVMMCJIT.a $$PWD/llvm/lib/libLLVMInstCombine.a $$PWD/llvm/lib/libLLVMTransformUtils.a $$PWD/llvm/lib/libLLVMExecutionEngine.a $$PWD/llvm/lib/libLLVMTarget.a $$PWD/llvm/lib/libLLVMAnalysis.a $$PWD/llvm/lib/libLLVMProfileData.a $$PWD/llvm/lib/libLLVMRuntimeDyld.a $$PWD/llvm/lib/libLLVMObject.a $$PWD/llvm/lib/libLLVMMCParser.a $$PWD/llvm/lib/libLLVMBitReader.a $$PWD/llvm/lib/libLLVMMC.a $$PWD/llvm/lib/libLLVMDebugInfoCodeView.a $$PWD/llvm/lib/libLLVMDebugInfoMSF.a $$PWD/llvm/lib/libLLVMAsmParser.a $$PWD/llvm/lib/libLLVMCore.a $$PWD/llvm/lib/libLLVMBinaryFormat.a $$PWD/llvm/lib/libLLVMSupport.a $$PWD/llvm/lib/libLLVMDemangle.a
+
+unix:!mac {
+    LIBS += -ldl -ltinfo
+}
+
+mac: LIBS += -lcurses

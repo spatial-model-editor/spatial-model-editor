@@ -24,6 +24,7 @@ int main(int argc, char *argv[]) {
   }
 
   spdlog::set_pattern("%^[%L%$][%14s:%4#] %! :: %v%$");
+  spdlog::set_level(spdlog::level::trace);
 
   QApplication a(argc, argv);
 

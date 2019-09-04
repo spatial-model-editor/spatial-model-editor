@@ -138,7 +138,7 @@ Triangulate::Triangulate(const std::vector<QPoint>& boundaryPoints,
           centroid += QPointF(x, y);
         }
         centroid /= 3.0;
-        out = triangle::triangulateio{};
+        out.clear();
         holes.push_back(centroid);
       }
       setHoleList(in, holes);

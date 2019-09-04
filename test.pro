@@ -33,7 +33,9 @@ HEADERS += \
 
 INCLUDEPATH += test/inc
 
-# for linux test build, remove optimizations & add coverage info
-unix: QMAKE_CXXFLAGS_RELEASE -= -O2
-unix: QMAKE_CXXFLAGS += --coverage
-unix: QMAKE_LFLAGS += --coverage
+# for linux debug build, remove optimizations, add coverage & ASAN
+CONFIG(debug, debug|release) {
+    unix: QMAKE_CXXFLAGS_RELEASE -= -O2
+    unix: QMAKE_CXXFLAGS += --coverage -fsanitize=address -fno-omit-frame-pointer
+    unix: QMAKE_LFLAGS += --coverage -fsanitize=address -fno-omit-frame-pointer
+}

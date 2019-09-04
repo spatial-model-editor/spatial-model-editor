@@ -28,7 +28,7 @@ class SbmlDocWrapper {
   // to the ParametricGeometry object
   inline static const std::string annotationURI =
       "https://github.com/lkeegan/spatial-model-editor";
-  inline static const std::string annotationPrefix = "SpatialModelEditor";
+  inline static const std::string annotationPrefix = "spatialModelEditor";
 
   // some useful pointers
   libsbml::Model *model = nullptr;

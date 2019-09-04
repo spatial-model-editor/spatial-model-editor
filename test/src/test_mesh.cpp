@@ -24,7 +24,7 @@ static bool isCyclicPermutation(const std::vector<QPoint>& v1,
   }
   // v1[i0] == v2[0]
   std::size_t i0 = static_cast<std::size_t>(iter - v1.cbegin());
-  if (v1[i0 + 1] == v2[1]) {
+  if (v1[(i0 + 1) % v1.size()] == v2[1]) {
     // match next element going forwards
     for (std::size_t i = 0; i < v1.size(); ++i) {
       // check the rest

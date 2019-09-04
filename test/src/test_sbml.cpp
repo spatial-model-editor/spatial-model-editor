@@ -473,7 +473,7 @@ SCENARIO("SBML test data: yeast-glycolysis.xml", "[sbml][non-gui][inlining]") {
   }
 }
 
-SCENARIO("Load model, refine mesh, save", "[sbml][mesh][non-gui]") {
+SCENARIO("Load model, refine mesh, save", "[sbml][mesh][non-gui][x1]") {
   sbml::SbmlDocWrapper s;
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
@@ -489,6 +489,7 @@ SCENARIO("Load model, refine mesh, save", "[sbml][mesh][non-gui]") {
   REQUIRE(s.mesh.getTriangleIndices(0).size() == 3 * 148);
   // save SBML doc
   s.exportSBMLFile("tmp.xml");
+
   // import again
   sbml::SbmlDocWrapper s2;
   s2.importSBMLFile("tmp.xml");
@@ -498,7 +499,8 @@ SCENARIO("Load model, refine mesh, save", "[sbml][mesh][non-gui]") {
   REQUIRE(s2.mesh.getTriangleIndices(0).size() == 3 * 148);
 }
 
-SCENARIO("Load model, change size of geometry, save", "[sbml][mesh][non-gui]") {
+SCENARIO("Load model, change size of geometry, save",
+         "[sbml][mesh][non-gui][x2]") {
   sbml::SbmlDocWrapper s;
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
@@ -553,7 +555,9 @@ SCENARIO("Delete mesh annotation, load as read-only mesh",
 
   // load model: without annotation should load as read-only mesh
   sbml::SbmlDocWrapper s;
-  s.importSBMLString(libsbml::writeSBMLToString(doc.get()));
+  std::unique_ptr<char, decltype(&std::free)> xmlChar(
+      libsbml::writeSBMLToString(doc.get()), &std::free);
+  s.importSBMLString(xmlChar.get());
 
   REQUIRE(s.mesh.isReadOnly() == true);
   REQUIRE(s.mesh.getVertices().size() == 2 * 44);

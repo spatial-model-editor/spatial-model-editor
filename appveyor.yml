@@ -38,6 +38,8 @@ before_build:
   - cd ext
   - appveyor DownloadFile "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-windows.zip"
   - 7z x libsbml-static-windows.zip
+  - appveyor DownloadFile "https://github.com/lkeegan/llvm-static/releases/latest/download/llvm-static-windows.zip"
+  - 7z x llvm-static-windows.zip
   - dir
   - dir libsbml
   - cd ..
@@ -46,14 +48,14 @@ build_script:
   # compile and run unit tests
   - mkdir build-tests
   - cd build-tests
-  - qmake -Wall -config release ..\test.pro
+  - qmake CONFIG+=release ..\test.pro
   - mingw32-make -j2
   - release\test.exe -d=yes
   - cd ..
   # compile release executable
   - mkdir build
   - cd build
-  - qmake -Wall -config release ..\spatial-model-editor.pro
+  - qmake CONFIG+=release ..\spatial-model-editor.pro
   - mingw32-make -j2
 
 artifacts:

@@ -13,6 +13,8 @@
 #include <vector>
 
 #include "symengine/basic.h"
+#include "symengine/lambda_double.h"
+#include "symengine/llvm_double.h"
 #include "symengine/printers/strprinter.h"
 #include "symengine/symbol.h"
 #include "symengine/symengine_rcp.h"
@@ -39,20 +41,32 @@ class muPrinter : public StrPrinter {
 namespace symbolic {
 
 class Symbolic {
- public:
-  Symbolic(const std::string &expression,
-           const std::vector<std::string> &variables,
-           const std::map<std::string, double> &constants);
-  // simplify given expression
-  std::string simplify() const;
-  // differentiate given expression wrt a variable
-  std::string diff(const std::string &var) const;
-
  private:
-  SymEngine::RCP<const SymEngine::Basic> expr;
+  SymEngine::vec_basic expr;
+  SymEngine::vec_basic varVec;
+  SymEngine::LambdaRealDoubleVisitor lambda;
+  SymEngine::LLVMDoubleVisitor lambdaLLVM;
   std::map<std::string, SymEngine::RCP<const SymEngine::Symbol>> symbols;
   std::string toString(
       const SymEngine::RCP<const SymEngine::Basic> &expr) const;
+
+ public:
+  Symbolic() = default;
+  Symbolic(const std::vector<std::string> &expressions,
+           const std::vector<std::string> &variables = {},
+           const std::map<std::string, double> &constants = {});
+  Symbolic(const std::string &expression,
+           const std::vector<std::string> &variables = {},
+           const std::map<std::string, double> &constants = {})
+      : Symbolic(std::vector<std::string>{expression}, variables, constants) {}
+  // simplify given expression
+  std::string simplify(std::size_t i = 0) const;
+  // differentiate given expression wrt a variable
+  std::string diff(const std::string &var, std::size_t i = 0) const;
+  // evaluate compiled expressions
+  void eval(std::vector<double> &results, const std::vector<double> &vars = {});
+  void evalLLVM(std::vector<double> &results,
+                const std::vector<double> &vars = {});
 };
 
 }  // namespace symbolic

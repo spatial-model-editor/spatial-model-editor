@@ -11,14 +11,22 @@
 #include "geometry.hpp"
 #include "numerics.hpp"
 #include "sbml.hpp"
+#include "symbolic.hpp"
 
 namespace simulate {
+
+enum class BACKEND { EXPRTK, SYMENGINE, SYMENGINE_LLVM };
+std::string strBackend(BACKEND b);
 
 class ReacEval {
  private:
   sbml::SbmlDocWrapper *doc;
-  // vector of reaction expressions
-  std::vector<numerics::ExprEval> reac_eval;
+  BACKEND backend;
+  // vector of exprtk reaction expressions
+  std::vector<numerics::ExprEval> reac_eval_exprtk;
+  // symengine reaction expression
+  symbolic::Symbolic reac_eval_symengine;
+
   // matrix M_ij of stoichiometric coefficients
   // i is the species index
   // j is the reaction index
@@ -34,7 +42,7 @@ class ReacEval {
   ReacEval() = default;
   ReacEval(sbml::SbmlDocWrapper *doc_ptr,
            const std::vector<std::string> &speciesID,
-           const std::vector<std::string> &reactionID);
+           const std::vector<std::string> &reactionID, BACKEND mathBackend);
   void evaluate();
   const std::vector<double> &getResult() const { return result; }
 };
@@ -49,7 +57,7 @@ class SimCompartment {
   std::vector<geometry::Field *> field;
 
   SimCompartment(sbml::SbmlDocWrapper *docWrapper,
-                 const geometry::Compartment *compartment);
+                 const geometry::Compartment *compartment, BACKEND mathBackend);
   // field.dcdt += result of applying reaction expressions to field.conc
   void evaluate_reactions();
 };
@@ -64,7 +72,8 @@ class SimMembrane {
   std::vector<geometry::Field *> fieldA;
   std::vector<geometry::Field *> fieldB;
 
-  SimMembrane(sbml::SbmlDocWrapper *doc_ptr, geometry::Membrane *membrane_ptr);
+  SimMembrane(sbml::SbmlDocWrapper *doc_ptr, geometry::Membrane *membrane_ptr,
+              BACKEND mathBackend);
   // field.dcdt += result of applying reaction expressions to field.conc
   void evaluate_reactions();
 };
@@ -74,11 +83,16 @@ class Simulate {
   std::vector<SimCompartment> simComp;
   std::vector<SimMembrane> simMembrane;
   sbml::SbmlDocWrapper *doc;
+  BACKEND backend;
 
  public:
   std::vector<geometry::Field *> field;
   std::vector<std::string> speciesID;
-  explicit Simulate(sbml::SbmlDocWrapper *doc_ptr) : doc(doc_ptr) {}
+  void setMathBackend(BACKEND mathBackend);
+  BACKEND getMathBackend() const;
+  explicit Simulate(sbml::SbmlDocWrapper *doc_ptr,
+                    BACKEND mathBackend = BACKEND::EXPRTK)
+      : doc(doc_ptr), backend(mathBackend) {}
   void addCompartment(geometry::Compartment *compartment);
   void addMembrane(geometry::Membrane *membrane);
   void integrateForwardsEuler(double dt);
