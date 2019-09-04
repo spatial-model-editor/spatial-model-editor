@@ -11,7 +11,6 @@
 
 #include <unordered_map>
 
-#include <QDebug>
 #include <QImage>
 
 namespace geometry {
@@ -54,7 +53,6 @@ class Membrane {
 };
 
 class Field {
- private:
  public:
   std::string speciesID;
   const Compartment *geometry;

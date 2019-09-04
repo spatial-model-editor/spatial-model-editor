@@ -42,11 +42,6 @@ std::ostream &operator<<(std::ostream &os, const QColor &value);
 
 // std types
 
-template <typename T, typename U>
-inline std::ostream &operator<<(std::ostream &os, const std::pair<T, U> &p) {
-  return os << p.first << ": " << p.second;
-}
-
 template <class T>
 inline std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec) {
   os << "{ ";
@@ -54,4 +49,9 @@ inline std::ostream &operator<<(std::ostream &os, const std::vector<T> &vec) {
     os << v << " ";
   }
   return os << "}";
+}
+
+template <typename T, typename U>
+inline std::ostream &operator<<(std::ostream &os, const std::pair<T, U> &p) {
+  return os << p.first << ": " << p.second;
 }

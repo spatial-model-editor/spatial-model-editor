@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include <QDebug>
 #include <QImage>
 
 #include "geometry.hpp"

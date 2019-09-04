@@ -7,7 +7,6 @@
 #pragma once
 
 #include <QColor>
-#include <QDebug>
 #include <QImage>
 #include <QStringList>
 
@@ -23,14 +22,13 @@ namespace sbml {
 
 class SbmlDocWrapper {
  private:
-  // names of additional custom attributes we add
+  // the SBML document
+  std::unique_ptr<libsbml::SBMLDocument> doc;
+  // names of additional custom annotations that we add
   // to the ParametricGeometry object
   inline static const std::string annotationURI =
       "https://github.com/lkeegan/spatial-model-editor";
   inline static const std::string annotationPrefix = "SpatialModelEditor";
-
-  QString xmlString;
-  std::unique_ptr<libsbml::SBMLDocument> doc;
 
   // some useful pointers
   libsbml::Model *model = nullptr;
@@ -65,6 +63,7 @@ class SbmlDocWrapper {
   void initModelData();
   // import existing spatial information (image/mesh) from SBML
   void importSpatialData();
+  void importGeometryDimensions();
   void importSampledFieldGeometry();
   void importParametricGeometry();
   // add default 2d Parametric & SampledField geometry to SBML
@@ -94,6 +93,10 @@ class SbmlDocWrapper {
   // inlined
   std::string inlineAssignments(const std::string &mathExpression) const;
 
+  // todo: remove this?
+  double pixelWidth = 1.0;
+  QPointF origin = QPointF(0, 0);
+
  public:
   const std::size_t nDimensions = 2;
   QString currentFilename;
@@ -118,7 +121,7 @@ class SbmlDocWrapper {
   void importSBMLFile(const std::string &filename);
   void importSBMLString(const std::string &xml);
   void exportSBMLFile(const std::string &filename);
-  const QString &getXml();
+  QString getXml();
 
   // compartment geometry: pixel-based image
   void importGeometryFromImage(const QImage &img, bool updateSBML = true);
@@ -171,6 +174,9 @@ class SbmlDocWrapper {
   // get map of name->value for all global constants
   // (this includes any constant species)
   std::map<std::string, double> getGlobalConstants() const;
+
+  double getPixelWidth() const;
+  void setPixelWidth(double width, bool resizeCompartments);
 
   std::string inlineExpr(const std::string &mathExpression) const;
 

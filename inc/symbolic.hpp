@@ -47,9 +47,6 @@ class Symbolic {
   std::string simplify() const;
   // differentiate given expression wrt a variable
   std::string diff(const std::string &var) const;
-  // relabel variables in order as u_0, u_1, etc
-  std::string relabel(const std::vector<std::string> &variables,
-                      const std::string &label = "u_") const;
 
  private:
   SymEngine::RCP<const SymEngine::Basic> expr;

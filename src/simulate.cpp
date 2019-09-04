@@ -37,7 +37,6 @@ void ReacEval::evaluate() {
   for (std::size_t j = 0; j < nReactions; ++j) {
     // evaluate reaction term
     double r_j = reac_eval[j]();
-    // qDebug("ReacEval::ReacEval :: R[%lu] = %f", j, r_j);
     for (std::size_t s = 0; s < nSpecies; ++s) {
       // add contribution for each species to result
       result[s] += M[j][s] * r_j;

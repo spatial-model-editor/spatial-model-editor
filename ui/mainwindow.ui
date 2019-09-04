@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1454</width>
-    <height>706</height>
+    <width>1400</width>
+    <height>700</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -58,7 +58,7 @@
           </property>
           <property name="minimumSize">
            <size>
-            <width>89</width>
+            <width>100</width>
             <height>0</height>
            </size>
           </property>
@@ -109,7 +109,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>5</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tabGeometry">
         <property name="whatsThis">
@@ -298,7 +298,7 @@
                  <string>The boundaries of the geometry of the compartments</string>
                 </property>
                 <property name="currentIndex">
-                 <number>1</number>
+                 <number>0</number>
                 </property>
                 <widget class="QWidget" name="tabCompartmentImage">
                  <attribute name="title">
@@ -1489,7 +1489,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1454</width>
+     <width>1400</width>
      <height>29</height>
     </rect>
    </property>
@@ -1505,7 +1505,7 @@
      <addaction name="action_very_simple_model"/>
      <addaction name="actionbrusselator_model"/>
      <addaction name="actioncircadian_clock"/>
-     <addaction name="actionliver_simplified_2"/>
+     <addaction name="actionliver_simplified"/>
     </widget>
     <addaction name="action_Open_SBML_file"/>
     <addaction name="menuOpen_example_SBML_file"/>
@@ -1531,19 +1531,27 @@
       <string>&amp;Example geometry image</string>
      </property>
      <addaction name="action_circle_100x100"/>
-     <addaction name="actionone_blob_100x100"/>
-     <addaction name="actionside_by_side_100x100"/>
-     <addaction name="actions"/>
+     <addaction name="action_one_blob_100x100"/>
+     <addaction name="action_two_blobs_100x100"/>
+     <addaction name="action_empty_donut_100x100"/>
      <addaction name="action_filled_donut_100x100_bmp"/>
-     <addaction name="actionconcave_cell_nucleus_100x100"/>
-     <addaction name="actionliver_300x100"/>
-     <addaction name="actionsingle_pixels_3x1"/>
+     <addaction name="action_concave_cell_nucleus_100x100"/>
+     <addaction name="action_liver_300x100"/>
+     <addaction name="action_single_pixels_3x1"/>
+     <addaction name="action_four_compartments_150x100"/>
     </widget>
     <addaction name="actionGeometry_from_image"/>
     <addaction name="menuExample_geometry_image"/>
    </widget>
+   <widget class="QMenu" name="menu_Tools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+    <addaction name="action_Set_geometry_dimensions"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuImport"/>
+   <addaction name="menu_Tools"/>
    <addaction name="menu_Help"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -1632,7 +1640,7 @@
     <string>&amp;very-simple-model</string>
    </property>
   </action>
-  <action name="actions">
+  <action name="action_empty_donut_100x100">
    <property name="text">
     <string>&amp;empty-donut-100x100</string>
    </property>
@@ -1642,12 +1650,12 @@
     <string>&amp;filled-donut-100x100</string>
    </property>
   </action>
-  <action name="actionside_by_side_100x100">
+  <action name="action_two_blobs_100x100">
    <property name="text">
     <string>&amp;two-blobs-100x100</string>
    </property>
   </action>
-  <action name="actionsingle_pixels_3x1">
+  <action name="action_single_pixels_3x1">
    <property name="text">
     <string>&amp;single-pixels-3x1</string>
    </property>
@@ -1657,12 +1665,12 @@
     <string>&amp;brusselator-model</string>
    </property>
   </action>
-  <action name="actionone_blob_100x100">
+  <action name="action_one_blob_100x100">
    <property name="text">
     <string>&amp;one-blob-100x100</string>
    </property>
   </action>
-  <action name="actionliver_300x100">
+  <action name="action_liver_300x100">
    <property name="text">
     <string>&amp;liver-300x100</string>
    </property>
@@ -1675,11 +1683,6 @@
   <action name="actioncircadian_clock">
    <property name="text">
     <string>&amp;circadian-clock</string>
-   </property>
-  </action>
-  <action name="actionliver_simplified_2">
-   <property name="text">
-    <string>&amp;liver-simplified</string>
    </property>
   </action>
   <action name="actionExport_Dune_ini_file">
@@ -1695,9 +1698,19 @@
     <string>&amp;circle-100x100</string>
    </property>
   </action>
-  <action name="actionconcave_cell_nucleus_100x100">
+  <action name="action_concave_cell_nucleus_100x100">
    <property name="text">
     <string>&amp;concave-cell-nucleus-100x100</string>
+   </property>
+  </action>
+  <action name="action_Set_geometry_dimensions">
+   <property name="text">
+    <string>&amp;Set geometry dimensions...</string>
+   </property>
+  </action>
+  <action name="action_four_compartments_150x100">
+   <property name="text">
+    <string>&amp;four-compartments-150x100</string>
    </property>
   </action>
  </widget>

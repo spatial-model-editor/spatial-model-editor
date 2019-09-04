@@ -2,8 +2,6 @@
 
 #include <set>
 
-#include <QDebug>
-
 #include "logger.hpp"
 
 namespace triangulate {

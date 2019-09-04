@@ -64,6 +64,10 @@ class MainWindow : public QMainWindow {
 
   void menuExample_geometry_image_triggered(QAction *action);
 
+  // Tools menu actions
+
+  void action_Set_geometry_dimensions_triggered();
+
   // About menu actions
   void action_About_triggered();
 

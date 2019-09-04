@@ -22,7 +22,6 @@ Compartment::Compartment(const std::string &compID, const QImage &img, QRgb col)
     for (int y = 0; y < img.height(); ++y) {
       if (img.pixel(x, y) == col) {
         // if colour matches, add pixel to field
-        // qDebug("Compartment::init :: add Qpoint (%d, %d)", x, y);
         QPoint p = QPoint(x, y);
         ix.push_back(p);
         imgComp.setPixel(p, 1);

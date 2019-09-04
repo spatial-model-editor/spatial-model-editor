@@ -1,6 +1,5 @@
 #include "mainwindow.hpp"
 
-#include <QDebug>
 #include <QErrorMessage>
 #include <QFileDialog>
 #include <QInputDialog>
@@ -8,6 +7,7 @@
 #include <QString>
 #include <QStringListModel>
 
+#include "dialogdimensions.hpp"
 #include "dune.hpp"
 #include "logger.hpp"
 #include "mesh.hpp"
@@ -72,6 +72,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->menuExample_geometry_image, &QMenu::triggered, this,
           &MainWindow::menuExample_geometry_image_triggered);
+
+  connect(ui->action_Set_geometry_dimensions, &QAction::triggered, this,
+          &MainWindow::action_Set_geometry_dimensions_triggered);
 
   connect(ui->action_What_s_this, &QAction::triggered, this,
           []() { QWhatsThis::enterWhatsThisMode(); });
@@ -387,8 +390,7 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
     QString meshFilename = QDir(dir).filePath("grid.msh");
     QFile f2(meshFilename);
     if (f2.open(QIODevice::ReadWrite | QIODevice::Text)) {
-      // todo: replace hard-coded physical pixel size here
-      f2.write(sbmlDoc.mesh.getGMSH(0.01).toUtf8());
+      f2.write(sbmlDoc.mesh.getGMSH().toUtf8());
     }
   }
 }
@@ -419,6 +421,16 @@ void MainWindow::menuExample_geometry_image_triggered(QAction *action) {
   tabMain_currentChanged(0);
   enableTabs();
   images.clear();
+}
+
+void MainWindow::action_Set_geometry_dimensions_triggered() {
+  DialogDimensions dialog(sbmlDoc.getCompartmentImage().size(),
+                          sbmlDoc.getPixelWidth());
+  if (dialog.exec() == QDialog::Accepted) {
+    double pixelWidth = dialog.getPixelWidth();
+    SPDLOG_INFO("Set new pixel width = {}", pixelWidth);
+    sbmlDoc.setPixelWidth(pixelWidth, dialog.resizeCompartments());
+  }
 }
 
 void MainWindow::action_About_triggered() {

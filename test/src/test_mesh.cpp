@@ -1,12 +1,12 @@
 #include "mesh.hpp"
 
-#include <QPoint>
 #include <QDebug>
+#include <QPoint>
 
 #include "catch.hpp"
 
-#include "colours.hpp"
 #include "logger.hpp"
+#include "utils.hpp"
 
 // note: only valid for vectors of unique values
 static bool isCyclicPermutation(const std::vector<QPoint>& v1,
@@ -69,7 +69,7 @@ SCENARIO("image: empty image", "[mesh][boundary][non-gui]") {
 
   // check output vertices
   const auto& vertices = mesh.getVertices();
-  REQUIRE(vertices.size() == 4);
+  REQUIRE(vertices.size() == 2 * 4);
 
   // check triangles
   const auto& triangles = mesh.getTriangles();
@@ -102,17 +102,21 @@ SCENARIO("image: empty image", "[mesh][boundary][non-gui]") {
 
   // check image output
   auto boundaryImage = mesh.getBoundariesImage(QSize(100, 100), 0);
-  auto col0 = colours::indexedColours()[0].rgba();
+  auto col0 = utils::indexedColours()[0].rgba();
   // 75x100, minus two pixels to avoid resizing qlabel widgets
   REQUIRE(boundaryImage.width() == 73);
   REQUIRE(boundaryImage.height() == 98);
-  REQUIRE(boundaryImage.pixel(0, 0) == col0);
-  REQUIRE(boundaryImage.pixel(0, 33) == col0);
-  REQUIRE(boundaryImage.pixel(72, 28) == col0);
-  REQUIRE(boundaryImage.pixel(63, 1) == col0);
-  REQUIRE(boundaryImage.pixel(71, 97) == col0);
-  REQUIRE(boundaryImage.pixel(30, 30) == 0);
-  REQUIRE(boundaryImage.pixel(21, 77) == 0);
+  REQUIRE(boundaryImage.pixel(3, 3) == col0);
+  REQUIRE(boundaryImage.pixel(34, 2) == col0);
+  REQUIRE(boundaryImage.pixel(69, 4) == col0);
+  REQUIRE(boundaryImage.pixel(70, 51) == col0);
+  REQUIRE(boundaryImage.pixel(67, 95) == col0);
+  REQUIRE(boundaryImage.pixel(30, 97) == col0);
+  REQUIRE(boundaryImage.pixel(2, 94) == col0);
+  REQUIRE(boundaryImage.pixel(9, 11) == 0);
+  REQUIRE(boundaryImage.pixel(54, 19) == 0);
+  REQUIRE(boundaryImage.pixel(53, 78) == 0);
+  REQUIRE(boundaryImage.pixel(9, 81) == 0);
 
   auto meshImage = mesh.getMeshImage(QSize(100, 100), 0);
   REQUIRE(meshImage.width() == 73);
@@ -139,17 +143,17 @@ SCENARIO("image: empty image", "[mesh][boundary][non-gui]") {
 
       mesh.setCompartmentMaxTriangleArea(0, 60);
       REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 60);
-      REQUIRE(mesh.getVertices().size() == 13);
+      REQUIRE(mesh.getVertices().size() == 2 * 13);
       REQUIRE(mesh.getTriangles()[0].size() == 16);
 
       mesh.setCompartmentMaxTriangleArea(0, 30);
       REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 30);
-      REQUIRE(mesh.getVertices().size() == 26);
+      REQUIRE(mesh.getVertices().size() == 2 * 26);
       REQUIRE(mesh.getTriangles()[0].size() == 37);
 
       mesh.setCompartmentMaxTriangleArea(0, 12);
       REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 12);
-      REQUIRE(mesh.getVertices().size() == 54);
+      REQUIRE(mesh.getVertices().size() == 2 * 54);
       REQUIRE(mesh.getTriangles()[0].size() == 88);
     }
   }
@@ -195,16 +199,33 @@ SCENARIO("image: single convex compartment", "[mesh][boundary][non-gui]") {
   REQUIRE(isCyclicPermutation(boundaries[0].points, imgBoundary));
   REQUIRE(isCyclicPermutation(boundaries[1].points, correctBoundary));
 
-  auto boundaryImage = mesh.getBoundariesImage(QSize(100, 100), 1);
+  auto boundaryImage = mesh.getBoundariesImage(QSize(100, 100), 0);
+  boundaryImage.save("tmp0.png");
   REQUIRE(boundaryImage.width() == 73);
   REQUIRE(boundaryImage.height() == 98);
-  auto col0 = colours::indexedColours()[0].rgba();
+  auto col0 = utils::indexedColours()[0].rgba();
+  auto col1 = utils::indexedColours()[1].rgba();
   REQUIRE(boundaryImage.width() == 73);
   REQUIRE(boundaryImage.height() == 98);
-  REQUIRE(boundaryImage.pixel(0, 0) == col0);
+  REQUIRE(boundaryImage.pixel(1, 3) == col0);
+  REQUIRE(boundaryImage.pixel(3, 6) == col0);
+  REQUIRE(boundaryImage.pixel(70, 62) == col0);
+  REQUIRE(boundaryImage.pixel(70, 2) == col0);
+  REQUIRE(boundaryImage.pixel(5, 78) == 0);
+  REQUIRE(boundaryImage.pixel(16, 79) != col1);
+  REQUIRE(boundaryImage.pixel(26, 80) == 0);
+  boundaryImage.save("tmp1.png");
+  boundaryImage = mesh.getBoundariesImage(QSize(100, 100), 1);
+  REQUIRE(boundaryImage.pixel(1, 3) == col0);
+  REQUIRE(boundaryImage.pixel(3, 6) == 0);
+  REQUIRE(boundaryImage.pixel(70, 62) == col0);
+  REQUIRE(boundaryImage.pixel(70, 2) == col0);
+  REQUIRE(boundaryImage.pixel(5, 78) == col1);
+  REQUIRE(boundaryImage.pixel(16, 79) == col1);
+  REQUIRE(boundaryImage.pixel(26, 80) == col1);
 }
 
-SCENARIO("image: larger convex compartment, degenerate points",
+SCENARIO("image: single convex compartment, degenerate points",
          "[mesh][boundary][non-gui]") {
   QImage img(24, 32, QImage::Format_RGB32);
   img.fill(QColor(0, 0, 0).rgb());
@@ -390,4 +411,27 @@ SCENARIO("image: two touching comps, two fixed point pixels",
   auto boundaryImage = mesh.getBoundariesImage(QSize(100, 100), 3);
   REQUIRE(boundaryImage.width() == 98);
   REQUIRE(boundaryImage.height() == 88);
+
+  QSize sz(502, 502);
+  auto meshImg = mesh.getMeshImage(sz, 0);
+  QRgb fillColour = QColor(235, 235, 255).rgba();
+  // outside
+  REQUIRE(meshImg.pixel(5, 5) == 0);
+  REQUIRE(meshImg.pixel(112, 95) == 0);
+  // compartment 1
+  REQUIRE(meshImg.pixel(335, 179) == 0);
+  REQUIRE(meshImg.pixel(303, 201) == 0);
+  // compartment 2
+  REQUIRE(meshImg.pixel(247, 196) == fillColour);
+  REQUIRE(meshImg.pixel(272, 179) == fillColour);
+  meshImg = mesh.getMeshImage(sz, 1);
+  // outside
+  REQUIRE(meshImg.pixel(5, 5) == 0);
+  REQUIRE(meshImg.pixel(112, 95) == 0);
+  // compartment 1
+  REQUIRE(meshImg.pixel(335, 179) == fillColour);
+  REQUIRE(meshImg.pixel(303, 201) == fillColour);
+  // compartment 2
+  REQUIRE(meshImg.pixel(247, 196) == 0);
+  REQUIRE(meshImg.pixel(272, 179) == 0);
 }

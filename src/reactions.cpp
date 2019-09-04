@@ -19,7 +19,7 @@ static bool addStoichCoeff(const sbml::SbmlDocWrapper *doc,
     std::size_t speciesIndex =
         static_cast<std::size_t>(it - speciesIDs.cbegin());
     double coeff = sign * spec_ref->getStoichiometry() / volFactor;
-    SPDLOG_DEBUG("  -> stoich coeff[{}]: {}", speciesIndex, coeff);
+    SPDLOG_DEBUG("  -> stoich coeff[{}]: {:16.16e}", speciesIndex, coeff);
     Mrow[speciesIndex] += coeff;
     return true;
   }

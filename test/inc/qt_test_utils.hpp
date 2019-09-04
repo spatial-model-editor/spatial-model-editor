@@ -28,6 +28,7 @@ class ModalWidgetTimer : public QObject {
   QString message;
   QString result;
   ModalWidgetTimer *waitUntilDone;
+  std::vector<std::pair<QKeySequence, QChar>> keySeqs;
 
   void getText(QWidget *widget) {
     // check if widget is a QFileDialog
@@ -52,11 +53,12 @@ class ModalWidgetTimer : public QObject {
   void sendKeyEvents(QWidget *widget) {
     qDebug() << "ModalWidgetTimer :: typing message " << message
              << " + enter key into" << widget;
-    for (QChar c : message) {
-      QKeySequence seq(c);
-      QKeyEvent press(QEvent::KeyPress, seq[0], Qt::NoModifier, c);
+    for (const auto &pair : keySeqs) {
+      QKeyEvent press(QEvent::KeyPress, pair.first[0], Qt::NoModifier,
+                      pair.second);
       QCoreApplication::sendEvent(widget->windowHandle(), &press);
-      QKeyEvent release(QEvent::KeyRelease, seq[0], Qt::NoModifier, c);
+      QKeyEvent release(QEvent::KeyRelease, pair.first[0], Qt::NoModifier,
+                        pair.second);
       QCoreApplication::sendEvent(widget->windowHandle(), &release);
     }
     // call `accept` on QDialog
@@ -101,7 +103,28 @@ class ModalWidgetTimer : public QObject {
                      &ModalWidgetTimer::lookForWidget);
   }
 
-  void setMessage(const QString &msg = {}) { message = msg; }
+  void setMessage(const QString &msg = {}) {
+    keySeqs.clear();
+    for (QChar c : msg) {
+      keySeqs.emplace_back(c, c);
+    }
+    message = msg;
+  }
+
+  void setKeySeq(const QStringList &keySeqStrings = {}) {
+    keySeqs.clear();
+    message.clear();
+    for (const auto &s : keySeqStrings) {
+      if (s.size() == 1) {
+        // string is a single char
+        keySeqs.emplace_back(s[0], s[0]);
+      } else {
+        // string is not a char, e.g. "Ctrl" or "Tab"
+        keySeqs.emplace_back(s, QChar());
+      }
+      message.append(s);
+    }
+  }
 
   void start() {
     qDebug() << "ModalWidgetTimer :: starting timer" << this;
