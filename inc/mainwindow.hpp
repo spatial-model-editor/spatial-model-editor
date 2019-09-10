@@ -5,6 +5,7 @@
 #include "qcustomplot.h"
 
 #include "sbml.hpp"
+#include "simulate.hpp"
 
 namespace Ui {
 class MainWindow;
@@ -23,6 +24,8 @@ class MainWindow : public QMainWindow {
   bool waitingForCompartmentChoice = false;
   QShortcut *shortcutStopSimulation;
   bool isSimulationRunning = false;
+  QShortcut *shortcutSetMathBackend;
+  simulate::BACKEND simMathBackend = simulate::BACKEND::EXPRTK;
 
   QPixmap lblSpeciesColourPixmap;
   QPixmap lblCompartmentColourPixmap;
@@ -31,6 +34,8 @@ class MainWindow : public QMainWindow {
   QVector<QImage> images;
 
   void setupConnections();
+
+  void setMathBackend();
 
   // update list of species to display in simulation result image
   void updateSpeciesDisplaySelect();

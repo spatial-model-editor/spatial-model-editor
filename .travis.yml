@@ -23,11 +23,8 @@ matrix:
             - jwm
       services: xvfb
       install:
-        # force qt to use desired compiler version
-        - sudo rm /usr/bin/gcc
-        - sudo rm /usr/bin/g++
-        - sudo ln -s /usr/bin/gcc-9 /usr/bin/gcc
-        - sudo ln -s /usr/bin/g++-9 /usr/bin/g++
+        - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 100
+        - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 100
         - gcc --version
         - g++ --version
         # start a window manager so the Qt GUI tests can have their focus set
@@ -37,22 +34,22 @@ matrix:
         # compile and run unit tests
         - mkdir build-tests
         - cd build-tests
-        - qmake -Wall -config release ../test.pro
+        - qmake CONFIG+=release ../test.pro
         - make -j2
         - ./test -d=yes
         - cd ../
         # compile release executable
         - mkdir build
         - cd build
-        - qmake -Wall -config release ../spatial-model-editor.pro
+        - qmake CONFIG+=release ../spatial-model-editor.pro
         - make -j2
         # check dependencies of resulting executable
         - ldd spatial-model-editor
-    ######################################################
-    # osx release build: xcode 9.4.1 [9F2000], macOS 10.13
-    ######################################################
+    ##############################################################
+    # osx release build: xcode 10.3, macOS 10.14 (target >= 10.12)
+    ##############################################################
     - os: osx
-      osx_image: xcode9.4
+      osx_image: xcode10.3
       compiler: clang
       env:
         - DEPLOY_FILE="spatial-model-editor.dmg"
@@ -60,14 +57,14 @@ matrix:
         # compile and run unit tests
         - mkdir build-tests
         - cd build-tests
-        - qmake -Wall -config release ../test.pro
+        - qmake CONFIG+=release ../test.pro
         - make -j2
         - ./test.app/Contents/MacOS/test -d=yes
         - cd ../
         # compile release executable
         - mkdir build
         - cd build
-        - qmake -Wall -config release ../spatial-model-editor.pro
+        - qmake CONFIG+=release ../spatial-model-editor.pro
         - make -j2
         # check dependencies of resulting executable
         - otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor
@@ -93,13 +90,9 @@ matrix:
           organization: "lkeegan-github"
       services: xvfb
       install:
-        # force qt to use desired compiler version
-        - sudo rm /usr/bin/gcc
-        - sudo rm /usr/bin/g++
-        - sudo rm /usr/bin/gcov
-        - sudo ln -s /usr/bin/gcc-9 /usr/bin/gcc
-        - sudo ln -s /usr/bin/g++-9 /usr/bin/g++
-        - sudo ln -s /usr/bin/gcov-9 /usr/bin/gcov
+        - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 100
+        - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 100
+        - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-9 100
         - gcc --version
         - g++ --version
         - gcov --version
@@ -110,9 +103,14 @@ matrix:
         # compile and run unit tests
         - mkdir build-tests
         - cd build-tests
-        - qmake -Wall -config debug ../test.pro
+        - qmake CONFIG+=debug ../test.pro
         - make -j2
-        - ./test -d=yes
+        # make list of "leaks" from system libraries that LeakSanitizer should ignore
+        - echo "leak:libfontconfig.so" > suppr.txt
+        - echo "leak:libX11.so" >> suppr.txt
+        # NB: can also set ASAN_OPTIONS=fast_unwind_on_malloc=0
+        # to see more info about any memory leaks from linked libraries
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test -d=yes
         # generate gcov test coverage data for sonar-source & codecov.io
         - mkdir ../gcov
         - cd ../gcov
@@ -135,45 +133,16 @@ matrix:
         # compile debug version of executable
         - mkdir build
         - cd build
-        - qmake -Wall -config debug ../spatial-model-editor.pro
+        - qmake CONFIG+=debug ../spatial-model-editor.pro
         # wrap make call with sonar-source build wrapper
         - build-wrapper-linux-x86-64 --out-dir ../bw-output make -j2
         - cd ../
         # upload to sonar-scanner
         - sonar-scanner -Dsonar.login=$SONAR_LOGIN
-    ##############################################
-    # linux test build: valgrind for non-gui tests
-    ##############################################
-    - os: linux
-      dist: bionic
-      compiler: gcc
-      addons:
-        apt:
-          sources:
-            - sourceline: 'ppa:ubuntu-toolchain-r/test'
-          packages:
-            - g++-9
-            - libxkbcommon-dev
-            - valgrind
-      services: xvfb
-      install:
-        # force qt to use desired compiler version
-        - sudo rm /usr/bin/gcc
-        - sudo rm /usr/bin/g++
-        - sudo ln -s /usr/bin/gcc-9 /usr/bin/gcc
-        - sudo ln -s /usr/bin/g++-9 /usr/bin/g++
-        - gcc --version
-        - g++ --version
-        - valgrind --version
-      script:
-        # compile and run non-gui unit tests with valgrind
-        - mkdir build-tests
-        - cd build-tests
-        - qmake -Wall -config debug ../test.pro
-        - make -j2
-        - valgrind --leak-check=full ./test -d=yes "[non-gui]"
 
 before_script:
+  # on osx, this should make clang compile for target osx>=10.12
+  - export MACOSX_DEPLOYMENT_TARGET=10.12
   # install pre-compiled Qt5 binaries & static libraries to $QT5_INSTALL_PREFIX
   # note absolute paths currently hard coded in QT binaries
   # to override this, add a qt.conf file (https://doc.qt.io/qt-5/qt-conf.html#overriding-paths)
@@ -196,6 +165,8 @@ before_script:
   - cd ext
   - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
   - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz
+  - wget "https://github.com/lkeegan/llvm-static/releases/latest/download/llvm-static-$TRAVIS_OS_NAME.tgz"
+  - tar xzvf llvm-static-$TRAVIS_OS_NAME.tgz
   - ls */*
   - cd ..
 

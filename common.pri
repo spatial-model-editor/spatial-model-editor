@@ -49,17 +49,35 @@ FORMS += \
     ui/mainwindow.ui \
 
 RESOURCES += \
-    resources/resources.qrc
+    resources/resources.qrc \
 
-INCLUDEPATH += inc ext
+INCLUDEPATH += \
+    inc \
+    ext \
 
-include(ext/libs.pri)
+include(ext/ext.pri)
+
+# set logging level (at compile time)
+CONFIG(release, debug|release):DEFINES += SPDLOG_ACTIVE_LEVEL="SPDLOG_LEVEL_INFO"
+CONFIG(debug, debug|release):DEFINES += SPDLOG_ACTIVE_LEVEL="SPDLOG_LEVEL_TRACE"
 
 # on linux, enable GCC compiler warnings
 unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wextra -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wpedantic
 
 # on windows statically link libgcc & libstdc++ to avoid missing dll errors:
 win32: QMAKE_LFLAGS += -static-libgcc -static-libstdc++
+
+# on linux (but not mac) statically link libstdc++
+unix:!mac {
+    QMAKE_LFLAGS += -static-libstdc++
+}
+
+# for linux debug build, remove optimizations, add coverage & ASAN
+CONFIG(debug, debug|release) {
+    unix: QMAKE_CXXFLAGS_RELEASE -= -O2
+    unix: QMAKE_CXXFLAGS += --coverage -fsanitize=address -fno-omit-frame-pointer
+    unix: QMAKE_LFLAGS += --coverage -fsanitize=address -fno-omit-frame-pointer
+}
 
 # on windows add flags to support large object files
 # https://stackoverflow.com/questions/16596876/object-file-has-too-many-sections

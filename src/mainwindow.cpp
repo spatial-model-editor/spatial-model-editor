@@ -32,6 +32,9 @@ MainWindow::MainWindow(QWidget *parent)
   shortcutStopSimulation = new QShortcut(this);
   shortcutStopSimulation->setKey(Qt::CTRL + Qt::Key_C);
 
+  shortcutSetMathBackend = new QShortcut(this);
+  shortcutSetMathBackend->setKey(Qt::CTRL + Qt::SHIFT + Qt::Key_B);
+
   lblSpeciesColourPixmap = QPixmap(1, 1);
   lblCompartmentColourPixmap = QPixmap(1, 1);
 
@@ -168,11 +171,42 @@ void MainWindow::setupConnections() {
   connect(shortcutStopSimulation, &QShortcut::activated, this,
           [this]() { isSimulationRunning = false; });
 
+  connect(shortcutSetMathBackend, &QShortcut::activated, this,
+          &MainWindow::setMathBackend);
+
   connect(ui->pltPlot, &QCustomPlot::plottableClick, this,
           &MainWindow::graphClicked);
 
   connect(ui->hslideTime, &QSlider::valueChanged, this,
           &MainWindow::hslideTime_valueChanged);
+}
+
+void MainWindow::setMathBackend() {
+  bool ok;
+  QStringList items;
+  items << simulate::strBackend(simulate::BACKEND::EXPRTK).c_str();
+  items << simulate::strBackend(simulate::BACKEND::SYMENGINE).c_str();
+  items << simulate::strBackend(simulate::BACKEND::SYMENGINE_LLVM).c_str();
+  int currentIndex = 0;
+  if (simMathBackend == simulate::BACKEND::SYMENGINE) {
+    currentIndex = 1;
+  } else if (simMathBackend == simulate::BACKEND::SYMENGINE_LLVM) {
+    currentIndex = 2;
+  }
+  QString item = QInputDialog::getItem(this, "Select simulation math backend",
+                                       "Simulation math backend:", items,
+                                       currentIndex, false, &ok);
+  if (ok && !item.isEmpty()) {
+    if (item == items[0]) {
+      simMathBackend = simulate::BACKEND::EXPRTK;
+    } else if (item == items[1]) {
+      simMathBackend = simulate::BACKEND::SYMENGINE;
+    } else if (item == items[2]) {
+      simMathBackend = simulate::BACKEND::SYMENGINE_LLVM;
+    }
+
+    SPDLOG_INFO("Setting math backend to {}", item);
+  }
 }
 
 void MainWindow::updateSpeciesDisplaySelect() {
@@ -456,6 +490,7 @@ void MainWindow::action_About_triggered() {
                        QString::number(SPDLOG_VER_MINOR),
                        QString::number(SPDLOG_VER_PATCH)));
   info.append(QString("<li>SymEngine: 0.4.0</li>"));
+  info.append(QString("<li>LLVM Core: 8.0.1</li>"));
   info.append(QString("<li>GMP: 6.1.2</li>"));
   info.append(QString("<li>Triangle: 1.6</li>"));
   for (const auto &dep : {"expat", "libxml", "xerces-c", "bzip2", "zip"}) {
@@ -838,7 +873,7 @@ void MainWindow::listFunctions_currentTextChanged(const QString &currentText) {
 
 void MainWindow::btnSimulate_clicked() {
   // simple 2d spatial simulation
-  simulate::Simulate sim(&sbmlDoc);
+  simulate::Simulate sim(&sbmlDoc, simMathBackend);
   // add compartments
   for (const auto &compartmentID : sbmlDoc.compartments) {
     sim.addCompartment(&sbmlDoc.mapCompIdToGeometry.at(compartmentID));
@@ -859,6 +894,8 @@ void MainWindow::btnSimulate_clicked() {
   images.push_back(sim.getConcentrationImage());
 
   ui->statusBar->showMessage("Simulating...");
+  QTime qtime;
+  qtime.start();
   isSimulationRunning = true;
   this->setCursor(Qt::WaitCursor);
   // do Euler integration
@@ -932,6 +969,7 @@ void MainWindow::btnSimulate_clicked() {
   ui->btnSpeciesDisplaySelect->setMenu(menu);
 
   ui->statusBar->showMessage("Simulation complete.");
+  SPDLOG_INFO("simulation run-time: {}", qtime.elapsed());
   this->setCursor(Qt::ArrowCursor);
 }
 

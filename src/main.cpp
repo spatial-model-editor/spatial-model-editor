@@ -24,6 +24,9 @@ int main(int argc, char *argv[]) {
   }
 
   spdlog::set_pattern("%^[%L%$][%14s:%4#] %! :: %v%$");
+  // set to lowest level here to show everything
+  // then disable lower levels at compile time
+  spdlog::set_level(spdlog::level::trace);
 
   QApplication a(argc, argv);
 

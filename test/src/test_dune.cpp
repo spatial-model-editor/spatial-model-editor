@@ -52,34 +52,51 @@ TEST_CASE("DUNE ini file for ABtoC model", "[dune][ini]") {
 
   dune::DuneConverter dc(s, 14);
   QStringList ini = dc.getIniFile().split("\n");
-  REQUIRE(ini[10] == "[model]");
-  REQUIRE(ini[14] == "[model.compartements]");
-  REQUIRE(ini[15] == "comp = 0");
-  REQUIRE(ini[16] == "");
-  REQUIRE(ini[17] == "[model.comp]");
-  REQUIRE(ini[18] == "name = comp");
-  REQUIRE(ini[20] == "[model.comp.initial]");
-  REQUIRE(ini[21] == "A = 1");
-  REQUIRE(ini[22] == "B = 1");
-  REQUIRE(ini[23] == "C = 0");
-  REQUIRE(ini[25] == "[model.comp.reaction]");
-  REQUIRE(ini[26] == "A = -0.1*A*B");
-  REQUIRE(ini[27] == "B = -0.1*A*B");
-  REQUIRE(ini[28] == "C = 0.1*A*B");
-  REQUIRE(ini[30] == "[model.comp.reaction.jacobian]");
-  REQUIRE(ini[31] == "d(A)/d(A) = -0.1*B");
-  REQUIRE(ini[32] == "d(A)/d(B) = -0.1*A");
-  REQUIRE(ini[33] == "d(A)/d(C) = 0");
-  REQUIRE(ini[34] == "d(B)/d(A) = -0.1*B");
-  REQUIRE(ini[35] == "d(B)/d(B) = -0.1*A");
-  REQUIRE(ini[36] == "d(B)/d(C) = 0");
-  REQUIRE(ini[37] == "d(C)/d(A) = 0.1*B");
-  REQUIRE(ini[38] == "d(C)/d(B) = 0.1*A");
-  REQUIRE(ini[39] == "d(C)/d(C) = 0");
-  REQUIRE(ini[41] == "[model.comp.diffusion]");
-  REQUIRE(ini[42] == "A = 0.4");
-  REQUIRE(ini[43] == "B = 0.4");
-  REQUIRE(ini[44] == "C = 25");
+  auto line = ini.cbegin();
+  while (line != ini.cend() && *line != "[model.compartments]") {
+    ++line;
+  }
+  REQUIRE(*line++ == "[model.compartments]");
+  REQUIRE(*line++ == "comp = 0");
+  REQUIRE(*line++ == "");
+  REQUIRE(*line++ == "[model.comp]");
+  REQUIRE((*line++).left(10) == "begin_time");
+  REQUIRE((*line++).left(8) == "end_time");
+  REQUIRE((*line++).left(9) == "time_step");
+  REQUIRE(*line++ == "");
+  REQUIRE(*line++ == "[model.comp.operator]");
+  REQUIRE(*line++ == "A = 0");
+  REQUIRE(*line++ == "B = 0");
+  REQUIRE(*line++ == "C = 0");
+  REQUIRE(*line++ == "");
+  REQUIRE(*line++ == "[model.comp.initial]");
+  REQUIRE(*line++ == "A = 1");
+  REQUIRE(*line++ == "B = 1");
+  REQUIRE(*line++ == "C = 0");
+  REQUIRE(*line++ == "");
+  REQUIRE(*line++ == "[model.comp.reaction]");
+  REQUIRE(*line++ == "A = -0.1*A*B");
+  REQUIRE(*line++ == "B = -0.1*A*B");
+  REQUIRE(*line++ == "C = 0.1*A*B");
+  REQUIRE(*line++ == "");
+  REQUIRE(*line++ == "[model.comp.reaction.jacobian]");
+  REQUIRE(*line++ == "dA__dA = -0.1*B");
+  REQUIRE(*line++ == "dA__dB = -0.1*A");
+  REQUIRE(*line++ == "dA__dC = 0");
+  REQUIRE(*line++ == "dB__dA = -0.1*B");
+  REQUIRE(*line++ == "dB__dB = -0.1*A");
+  REQUIRE(*line++ == "dB__dC = 0");
+  REQUIRE(*line++ == "dC__dA = 0.1*B");
+  REQUIRE(*line++ == "dC__dB = 0.1*A");
+  REQUIRE(*line++ == "dC__dC = 0");
+  REQUIRE(*line++ == "");
+  REQUIRE(*line++ == "[model.comp.diffusion]");
+  REQUIRE(*line++ == "A = 0.4");
+  REQUIRE(*line++ == "B = 0.4");
+  REQUIRE(*line++ == "C = 25");
+  REQUIRE(*line++ == "");
+  REQUIRE(*line++ == "[model.comp.writer]");
+  REQUIRE((*line++).left(9) == "file_name");
 }
 
 TEST_CASE("DUNE ini file for brusselator model", "[dune][ini]") {
@@ -125,8 +142,8 @@ TEST_CASE("DUNE ini file for very simple model", "[dune][ini]") {
   REQUIRE(*line++ == "B_c3 = 0.3*A_c3");
   REQUIRE(*line++ == "");
   REQUIRE(*line++ == "[model.c3.reaction.jacobian]");
-  REQUIRE(*line++ == "d(A_c3)/d(A_c3) = -0.3");
-  REQUIRE(*line++ == "d(A_c3)/d(B_c3) = 0");
-  REQUIRE(*line++ == "d(B_c3)/d(A_c3) = 0.3");
-  REQUIRE(*line++ == "d(B_c3)/d(B_c3) = 0");
+  REQUIRE(*line++ == "dA_c3__dA_c3 = -0.3");
+  REQUIRE(*line++ == "dA_c3__dB_c3 = 0");
+  REQUIRE(*line++ == "dB_c3__dA_c3 = 0.3");
+  REQUIRE(*line++ == "dB_c3__dB_c3 = 0");
 }

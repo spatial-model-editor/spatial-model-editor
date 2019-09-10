@@ -20,14 +20,14 @@ class iniFile {
                   const QString &str3);
   void addValue(const QString &var, const QString &value);
   void addValue(const QString &var, int value);
-  void addValue(const QString &var, double value, int precision = 17);
+  void addValue(const QString &var, double value, int precision);
   void clear();
 };
 
 class DuneConverter {
  public:
   explicit DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
-                         int doublePrecision = 17);
+                         int doublePrecision = 15);
   QString getIniFile() const;
 
  private:

@@ -5,9 +5,6 @@ TEMPLATE = app
 
 include(common.pri)
 
-# enable (at compile time) TRACE and DEBUG spdlog logging
-DEFINES += SPDLOG_ACTIVE_LEVEL="SPDLOG_LEVEL_TRACE"
-
 SOURCES += \
     test/src/main.cpp \
     test/src/test_dialogdimensions.cpp \
@@ -32,8 +29,3 @@ HEADERS += \
     test/inc/sbml_test_data/yeast_glycolysis.hpp \
 
 INCLUDEPATH += test/inc
-
-# for linux test build, remove optimizations & add coverage info
-unix: QMAKE_CXXFLAGS_RELEASE -= -O2
-unix: QMAKE_CXXFLAGS += --coverage
-unix: QMAKE_LFLAGS += --coverage

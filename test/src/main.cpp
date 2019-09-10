@@ -8,7 +8,8 @@
 #include "logger.hpp"
 
 int main(int argc, char *argv[]) {
-  Catch::StringMaker<double>::precision = 15;
+  Catch::StringMaker<double>::precision = 25;
+  Catch::StringMaker<float>::precision = 25;
 
   QApplication a(argc, argv);
 

@@ -5,10 +5,22 @@
 
 namespace simulate {
 
+std::string strBackend(BACKEND b) {
+  if (b == BACKEND::EXPRTK) {
+    return "ExprTK";
+  } else if (b == BACKEND::SYMENGINE) {
+    return "SymEngine";
+  } else if (b == BACKEND::SYMENGINE_LLVM) {
+    return "SymEngine+LLVM";
+  }
+  return "";
+}
+
 ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
                    const std::vector<std::string> &speciesIDs,
-                   const std::vector<std::string> &reactionIDs)
-    : doc(doc_ptr) {
+                   const std::vector<std::string> &reactionIDs,
+                   BACKEND mathBackend)
+    : doc(doc_ptr), backend(mathBackend) {
   SPDLOG_DEBUG("species vector: {}", speciesIDs);
 
   // construct reaction expressions and stoich matrix
@@ -21,31 +33,56 @@ ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
   result = species_values;
   nSpecies = species_values.size();
 
-  // compile reaction expressions
-  reac_eval.clear();
-  reac_eval.reserve(reactions.reacExpressions.size());
-  for (std::size_t reac_index = 0;
-       reac_index < reactions.reacExpressions.size(); ++reac_index) {
-    reac_eval.emplace_back(
-        numerics::ExprEval(reactions.reacExpressions[reac_index], speciesIDs,
-                           species_values, reactions.constants[reac_index]));
+  reac_eval_exprtk.clear();
+  reac_eval_exprtk.reserve(speciesIDs.size());
+
+  // compile symbolic expressions: one rhs for each species
+  std::vector<std::string> expressions;
+  for (std::size_t i = 0; i < nSpecies; ++i) {
+    QString rhs("0.0");
+    for (std::size_t j = 0; j < reactions.reacExpressions.size(); ++j) {
+      // get reaction term
+      QString expr = QString("%1*(%2) ")
+                         .arg(QString::number(reactions.M.at(j).at(i), 'g', 18),
+                              reactions.reacExpressions[j].c_str());
+      SPDLOG_DEBUG("Species {} Reaction {} = {}", speciesIDs.at(i), j, expr);
+      // parse and inline constants
+      symbolic::Symbolic sym(expr.toStdString(), reactions.speciesIDs,
+                             reactions.constants[j]);
+      // add term to rhs
+      rhs.append(QString(" + (%1)").arg(sym.simplify().c_str()));
+    }
+    // reparse full rhs to simplify
+    SPDLOG_DEBUG("Species {} Reparsing all reaction terms", speciesIDs.at(i));
+    // parse expression with symengine to simplify
+    std::string rhs_simplified =
+        symbolic::Symbolic(rhs.toStdString(), speciesIDs).simplify();
+    expressions.push_back(rhs_simplified);
+    // compile expression with exprtk
+    reac_eval_exprtk.emplace_back(
+        numerics::ExprEval(rhs_simplified, speciesIDs, species_values, {}));
   }
+  reac_eval_symengine = symbolic::Symbolic(expressions, speciesIDs);
 }
 
 void ReacEval::evaluate() {
-  std::fill(result.begin(), result.end(), 0.0);
-  for (std::size_t j = 0; j < nReactions; ++j) {
-    // evaluate reaction term
-    double r_j = reac_eval[j]();
+  //  for (std::size_t s = 0; s < nSpecies; ++s) {
+  //    SPDLOG_WARN(reac_eval_symengine.simplify(s));
+  //  }
+  if (backend == BACKEND::EXPRTK) {
     for (std::size_t s = 0; s < nSpecies; ++s) {
-      // add contribution for each species to result
-      result[s] += M[j][s] * r_j;
+      result[s] = reac_eval_exprtk[s]();
     }
+  } else if (backend == BACKEND::SYMENGINE) {
+    reac_eval_symengine.eval(result, species_values);
+  } else if (backend == BACKEND::SYMENGINE_LLVM) {
+    reac_eval_symengine.evalLLVM(result, species_values);
   }
 }
 
 SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
-                               const geometry::Compartment *compartment)
+                               const geometry::Compartment *compartment,
+                               BACKEND mathBackend)
     : doc(docWrapper), comp(compartment) {
   QString compID = compartment->compartmentID.c_str();
   SPDLOG_DEBUG("compartment: {}", compID.toStdString());
@@ -74,7 +111,7 @@ SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
       reactionID.push_back(reac.toStdString());
     }
   }
-  reacEval = ReacEval(doc, speciesID, reactionID);
+  reacEval = ReacEval(doc, speciesID, reactionID, mathBackend);
 }
 
 void SimCompartment::evaluate_reactions() {
@@ -96,9 +133,13 @@ void SimCompartment::evaluate_reactions() {
     for (std::size_t s = 0; s < field.size(); ++s) {
       reacEval.species_values[s] = field[s]->conc[i];
     }
+    // SPDLOG_WARN("Sim {} vars: {}", reacEval.species_values.size(),
+    //                reacEval.species_values);
     // evaluate reaction terms
     reacEval.evaluate();
     const std::vector<double> &result = reacEval.getResult();
+    //    SPDLOG_WARN("Sim {} result: {}", reacEval.getResult().size(),
+    //                reacEval.getResult());
     for (std::size_t s = 0; s < field.size(); ++s) {
       // add results to dcdt
       field[s]->dcdt[i] += result[s];
@@ -107,7 +148,7 @@ void SimCompartment::evaluate_reactions() {
 }
 
 SimMembrane::SimMembrane(sbml::SbmlDocWrapper *doc_ptr,
-                         geometry::Membrane *membrane_ptr)
+                         geometry::Membrane *membrane_ptr, BACKEND mathBackend)
     : doc(doc_ptr), membrane(membrane_ptr) {
   QString compA = membrane->compA->compartmentID.c_str();
   QString compB = membrane->compB->compartmentID.c_str();
@@ -144,7 +185,7 @@ SimMembrane::SimMembrane(sbml::SbmlDocWrapper *doc_ptr,
     reactionID.push_back(reac.toStdString());
   }
 
-  reacEval = ReacEval(doc, speciesID, reactionID);
+  reacEval = ReacEval(doc, speciesID, reactionID, mathBackend);
 }
 
 void SimMembrane::evaluate_reactions() {
@@ -191,9 +232,16 @@ void SimMembrane::evaluate_reactions() {
   }
 }
 
+void Simulate::setMathBackend(BACKEND mathBackend) {
+  SPDLOG_INFO("Setting math backend to {}", strBackend(mathBackend));
+  backend = mathBackend;
+}
+
+BACKEND Simulate::getMathBackend() const { return backend; }
+
 void Simulate::addCompartment(geometry::Compartment *compartment) {
   SPDLOG_DEBUG("adding compartment {}", compartment->compartmentID);
-  simComp.emplace_back(doc, compartment);
+  simComp.emplace_back(doc, compartment, backend);
   for (auto *f : simComp.back().field) {
     field.push_back(f);
     speciesID.push_back(f->speciesID);
@@ -203,7 +251,7 @@ void Simulate::addCompartment(geometry::Compartment *compartment) {
 
 void Simulate::addMembrane(geometry::Membrane *membrane) {
   SPDLOG_DEBUG("adding membrane {}", membrane->membraneID);
-  simMembrane.emplace_back(doc, membrane);
+  simMembrane.emplace_back(doc, membrane, backend);
 }
 
 void Simulate::integrateForwardsEuler(double dt) {

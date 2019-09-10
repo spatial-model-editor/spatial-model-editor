@@ -48,8 +48,8 @@ void SbmlDocWrapper::clearAllGeometryData() {
 
 void SbmlDocWrapper::importSBMLString(const std::string &xml) {
   clearAllModelData();
-  doc.reset(libsbml::readSBMLFromString(xml.c_str()));
   SPDLOG_INFO("Importing SBML from string...");
+  doc.reset(libsbml::readSBMLFromString(xml.c_str()));
   initModelData();
 }
 
@@ -859,19 +859,30 @@ void SbmlDocWrapper::writeMeshParamsAnnotation(
       if (child.getURI() == annotationURI &&
           child.getPrefix() == annotationPrefix && child.getName() == "mesh") {
         SPDLOG_INFO("removing annotation {} : {}", i, node->toXMLString());
-        node->removeChild(i);
+        // Note: removeChild returns a pointer to the child,
+        // and removes this pointer from the SBML doc,
+        // but does not delete the Child,
+        // so now we own it and it will be deleted when
+        // this unique pointer goes out of scope
+        std::unique_ptr<libsbml::XMLNode> childNode(node->removeChild(i));
         break;
       }
     }
   }
-  // append annotation with extra mesh info
-  // todo: refactor this xml stuff into a function/class
-  std::string xml =
-      "<SpatialModelEditor:mesh "
-      "xmlns:SpatialModelEditor=\"https://github.com/lkeegan/"
-      "spatial-model-editor\" SpatialModelEditor:maxBoundaryPoints=\"";
+  // append annotation with mesh info
+  std::string xml = "<";
+  xml.append(annotationPrefix);
+  xml.append(":mesh xmlns:");
+  xml.append(annotationPrefix);
+  xml.append("=\"");
+  xml.append(annotationURI);
+  xml.append("\" ");
+  xml.append(annotationPrefix);
+  xml.append(":maxBoundaryPoints=\"");
   xml.append(utils::vectorToString(mesh.getBoundaryMaxPoints()));
-  xml.append("\" SpatialModelEditor:maxTriangleAreas=\"");
+  xml.append("\" ");
+  xml.append(annotationPrefix);
+  xml.append(":maxTriangleAreas=\"");
   xml.append(utils::vectorToString(mesh.getCompartmentMaxTriangleArea()));
   xml.append("\"/>");
   pg->appendAnnotation(xml);

@@ -96,7 +96,7 @@ class ModalWidgetTimer : public QObject {
   }
 
  public:
-  explicit ModalWidgetTimer(int timerInterval = 100, int timeout = 30000)
+  explicit ModalWidgetTimer(int timerInterval = 250, int timeout = 30000)
       : QObject(nullptr), timeLeft(timeout) {
     timer.setInterval(timerInterval);
     QObject::connect(&timer, &QTimer::timeout, this,

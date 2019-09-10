@@ -4,7 +4,6 @@
 [![windows build status](https://ci.appveyor.com/api/projects/status/0m87yyaalrrj5ndn/branch/master?svg=true)](https://ci.appveyor.com/project/lkeegan/spatial-model-editor/branch/master)
 [![codecov](https://codecov.io/gh/lkeegan/spatial-model-editor/branch/master/graph/badge.svg)](https://codecov.io/gh/lkeegan/spatial-model-editor)
 [![sonarcloud quality gate status](https://sonarcloud.io/api/project_badges/measure?project=lkeegan_spatial-model-editor&metric=alert_status)](https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor)
-[![lgtm status](https://img.shields.io/lgtm/grade/cpp/g/lkeegan/spatial-model-editor.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/lkeegan/spatial-model-editor/context:cpp)
 [![codacy status](https://api.codacy.com/project/badge/Grade/2cc27d99b42041668944f41d88abeef0)](https://www.codacy.com/app/lkeegan/spatial-model-editor?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=lkeegan/spatial-model-editor&amp;utm_campaign=Badge_Grade)
 [![documentation status](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/en/latest/)
 
@@ -84,6 +83,11 @@ Translate the spatial model to a system of PDEs and simulate it: [WP1b status](h
 
         -   license: MIT
         -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
+
+    -   LLVM Core libraries: <https://llvm.org/>
+
+        -   license: University of Illinois/NCSA Open Source License
+        -   using pre-compiled binaries from <https://github.com/lkeegan/llvm-static>
 
     -   GNU Multiple Precision Arithmetic Library: <https://gmplib.org/>
 

@@ -42,38 +42,34 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
                              int doublePrecision)
     : doc(SbmlDoc) {
   double begin_time = 0.0;
-  double end_time = 0.01;
-
-  // standard boilerplate
-  ini.addSection("logging");
-  ini.addValue("default.level", "trace");
-  ini.addSection("logging.backend.model");
-  ini.addValue("level", "trace");
-  ini.addValue("indent", 2);
+  double end_time = 0.02;
+  double time_step = 0.01;
 
   // grid
   ini.addSection("grid");
   ini.addValue("file", "grid.msh");
+  ini.addValue("initial_level", 0);
 
   // simulation
   ini.addSection("model");
-  ini.addValue("begin_time", begin_time);
-  ini.addValue("end_time", end_time);
+  ini.addValue("begin_time", begin_time, doublePrecision);
+  ini.addValue("end_time", end_time, doublePrecision);
+  ini.addValue("time_step", time_step, doublePrecision);
 
   // list of compartments with corresponding gmsh surface index - 1
-  ini.addSection("model.compartements");
+  ini.addSection("model.compartments");
   for (int i = 0; i < doc.compartments.size(); ++i) {
     ini.addValue(doc.compartments[i], i);
   }
-
-  // todo: list of membranes (?)
 
   // for each compartment
   for (const auto &compartmentID : doc.compartments) {
     const auto &speciesList = doc.species.at(compartmentID);
 
     ini.addSection("model", compartmentID);
-    ini.addValue("name", compartmentID);
+    ini.addValue("begin_time", begin_time, doublePrecision);
+    ini.addValue("end_time", end_time, doublePrecision);
+    ini.addValue("time_step", time_step, doublePrecision);
 
     // remove any constant species from the list of species
     std::vector<std::string> nonConstantSpecies;
@@ -81,6 +77,12 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
       if (!doc.getIsSpeciesConstant(s.toStdString())) {
         nonConstantSpecies.push_back(s.toStdString());
       }
+    }
+
+    // operator splitting indexing: all set to zero for now...
+    ini.addSection("model", compartmentID, "operator");
+    for (const auto &speciesID : nonConstantSpecies) {
+      ini.addValue(speciesID.c_str(), 0);
     }
 
     // initial concentrations
@@ -142,7 +144,7 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
     for (std::size_t i = 0; i < nSpecies; ++i) {
       for (std::size_t j = 0; j < nSpecies; ++j) {
         symbolic::Symbolic sym(rhsExpressions[i], nonConstantSpecies, {});
-        QString lhs = QString("d(%1)/d(%2)")
+        QString lhs = QString("d%1__d%2")
                           .arg(nonConstantSpecies.at(i).c_str(),
                                nonConstantSpecies.at(j).c_str());
         QString rhs = sym.diff(nonConstantSpecies[j]).c_str();
@@ -160,7 +162,23 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
           doublePrecision);
       ++i_species;
     }
+
+    // output file
+    ini.addSection("model", compartmentID, "writer");
+    ini.addValue("file_name", compartmentID);
   }
+
+  // logger settings
+  ini.addSection("logging");
+  ini.addValue("default.level", "trace");
+
+  ini.addSection("logging.backend.model");
+  ini.addValue("level", "trace");
+  ini.addValue("indent", 2);
+
+  ini.addSection("logging.backend.solver");
+  ini.addValue("level", "trace");
+  ini.addValue("indent", 4);
 }
 
 QString dune::DuneConverter::getIniFile() const { return ini.getText(); }
