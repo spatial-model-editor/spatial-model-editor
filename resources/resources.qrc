@@ -1,10 +1,11 @@
 <RCC>
     <qresource prefix="/">
         <file>models/ABtoC.xml</file>
-        <file>models/liver-simplified.xml</file>
-        <file>models/very-simple-model.xml</file>
         <file>models/brusselator-model.xml</file>
         <file>models/circadian-clock.xml</file>
+        <file>models/gray-scott.xml</file>
+        <file>models/liver-simplified.xml</file>
+        <file>models/very-simple-model.xml</file>
         <file>geometry/empty-donut-100x100.png</file>
         <file>geometry/filled-donut-100x100.png</file>
         <file>geometry/liver-300x100.png</file>

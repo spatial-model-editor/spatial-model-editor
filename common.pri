@@ -15,6 +15,7 @@ SOURCES += \
     src/mesh.cpp \
     src/numerics.cpp \
     src/ostream_overloads.cpp \
+    src/pde.cpp \
     src/qlabelmousetracker.cpp \
     src/reactions.cpp \
     src/sbml.cpp \
@@ -35,6 +36,7 @@ HEADERS += \
     inc/mesh.hpp \
     inc/numerics.hpp \
     inc/ostream_overloads.hpp \
+    inc/pde.hpp \
     inc/qlabelmousetracker.hpp \
     inc/reactions.hpp \
     inc/sbml.hpp \

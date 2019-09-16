@@ -1506,6 +1506,7 @@
      <addaction name="actionbrusselator_model"/>
      <addaction name="actioncircadian_clock"/>
      <addaction name="actionliver_simplified"/>
+     <addaction name="action_gray_scott"/>
     </widget>
     <addaction name="action_Open_SBML_file"/>
     <addaction name="menuOpen_example_SBML_file"/>
@@ -1711,6 +1712,11 @@
   <action name="action_four_compartments_150x100">
    <property name="text">
     <string>&amp;four-compartments-150x100</string>
+   </property>
+  </action>
+  <action name="action_gray_scott">
+   <property name="text">
+    <string>&amp;gray-scott</string>
    </property>
   </action>
  </widget>

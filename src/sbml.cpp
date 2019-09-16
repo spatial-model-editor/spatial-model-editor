@@ -1240,6 +1240,10 @@ double SbmlDocWrapper::getPixelWidth() const { return pixelWidth; }
 
 void SbmlDocWrapper::setPixelWidth(double width, bool resizeCompartments) {
   pixelWidth = width;
+  // update pixelWidth for each compartment
+  for (auto &pair : mapCompIdToGeometry) {
+    pair.second.pixelWidth = width;
+  }
   if (resizeCompartments) {
     // update compartment Size based on pixel count & pixel size
     for (unsigned int k = 0; k < model->getNumCompartments(); ++k) {

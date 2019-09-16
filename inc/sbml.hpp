@@ -93,7 +93,6 @@ class SbmlDocWrapper {
   // inlined
   std::string inlineAssignments(const std::string &mathExpression) const;
 
-  // todo: remove this?
   double pixelWidth = 1.0;
   QPointF origin = QPointF(0, 0);
 

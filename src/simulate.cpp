@@ -1,6 +1,7 @@
 #include "simulate.hpp"
 
 #include "logger.hpp"
+#include "pde.hpp"
 #include "reactions.hpp"
 
 namespace simulate {
@@ -24,9 +25,7 @@ ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
   SPDLOG_DEBUG("species vector: {}", speciesIDs);
 
   // construct reaction expressions and stoich matrix
-  reactions::Reaction reactions(doc_ptr, speciesIDs, reactionIDs);
-  M = reactions.M;
-  nReactions = reactions.reacExpressions.size();
+  pde::PDE pde(doc_ptr, speciesIDs, reactionIDs);
 
   // init vector of species
   species_values = std::vector<double>(speciesIDs.size(), 0.0);
@@ -36,39 +35,16 @@ ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
   reac_eval_exprtk.clear();
   reac_eval_exprtk.reserve(speciesIDs.size());
 
-  // compile symbolic expressions: one rhs for each species
-  std::vector<std::string> expressions;
-  for (std::size_t i = 0; i < nSpecies; ++i) {
-    QString rhs("0.0");
-    for (std::size_t j = 0; j < reactions.reacExpressions.size(); ++j) {
-      // get reaction term
-      QString expr = QString("%1*(%2) ")
-                         .arg(QString::number(reactions.M.at(j).at(i), 'g', 18),
-                              reactions.reacExpressions[j].c_str());
-      SPDLOG_DEBUG("Species {} Reaction {} = {}", speciesIDs.at(i), j, expr);
-      // parse and inline constants
-      symbolic::Symbolic sym(expr.toStdString(), reactions.speciesIDs,
-                             reactions.constants[j]);
-      // add term to rhs
-      rhs.append(QString(" + (%1)").arg(sym.simplify().c_str()));
-    }
-    // reparse full rhs to simplify
-    SPDLOG_DEBUG("Species {} Reparsing all reaction terms", speciesIDs.at(i));
-    // parse expression with symengine to simplify
-    std::string rhs_simplified =
-        symbolic::Symbolic(rhs.toStdString(), speciesIDs).simplify();
-    expressions.push_back(rhs_simplified);
+  for (std::size_t i = 0; i < speciesIDs.size(); ++i) {
     // compile expression with exprtk
     reac_eval_exprtk.emplace_back(
-        numerics::ExprEval(rhs_simplified, speciesIDs, species_values, {}));
+        numerics::ExprEval(pde.getRHS().at(i), speciesIDs, species_values, {}));
   }
-  reac_eval_symengine = symbolic::Symbolic(expressions, speciesIDs);
+  // compile expressions with symengine
+  reac_eval_symengine = symbolic::Symbolic(pde.getRHS(), speciesIDs);
 }
 
 void ReacEval::evaluate() {
-  //  for (std::size_t s = 0; s < nSpecies; ++s) {
-  //    SPDLOG_WARN(reac_eval_symengine.simplify(s));
-  //  }
   if (backend == BACKEND::EXPRTK) {
     for (std::size_t s = 0; s < nSpecies; ++s) {
       result[s] = reac_eval_exprtk[s]();
@@ -87,25 +63,15 @@ SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
   QString compID = compartment->compartmentID.c_str();
   SPDLOG_DEBUG("compartment: {}", compID.toStdString());
   std::vector<std::string> speciesID;
-  std::size_t nRateRules = 0;
   for (const auto &s : doc->species.at(compID)) {
     if (!doc->getIsSpeciesConstant(s.toStdString())) {
       speciesID.push_back(s.toStdString());
       field.push_back(&doc->mapSpeciesIdToField.at(s));
       SPDLOG_DEBUG("  - adding field: {}", s.toStdString());
-      if (doc->getRateRule(s.toStdString()) != nullptr) {
-        ++nRateRules;
-      }
     }
   }
-  const auto iter = doc->reactions.find(compID);
-  if ((nRateRules == 0) &&
-      (iter == doc->reactions.cend() || doc->reactions.at(compID).empty())) {
-    // If there are no reactions or RateRules in this compartment: we are done
-    SPDLOG_DEBUG("  - no Reactions or RateRules to compile.");
-    return;
-  }
   std::vector<std::string> reactionID;
+  const auto iter = doc->reactions.find(compID);
   if (iter != doc->reactions.cend()) {
     for (const auto &reac : iter->second) {
       reactionID.push_back(reac.toStdString());
@@ -117,11 +83,6 @@ SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
 void SimCompartment::evaluate_reactions() {
   // qDebug("SimCompartment::evaluate_reactions : compartment: %s",
   //       field->geometry->compartmentID.c_str());
-  if (reacEval.nReactions == 0) {
-    // qDebug("SimCompartment::evaluate_reactions :   - no reactions to
-    // evaluate");
-    return;
-  }
   // qDebug("SimCompartment::evaluate_reactions :   - n_pixels=%lu",
   // field->n_pixels);
   // qDebug("SimCompartment::evaluate_reactions :   - n_species=%lu",
@@ -156,14 +117,6 @@ SimMembrane::SimMembrane(sbml::SbmlDocWrapper *doc_ptr,
   SPDLOG_DEBUG("  - compA: {}", compA.toStdString());
   SPDLOG_DEBUG("  - compB: {}", compB.toStdString());
 
-  if (doc->reactions.find(membrane->membraneID.c_str()) ==
-          doc->reactions.cend() ||
-      doc->reactions.at(membrane->membraneID.c_str()).empty()) {
-    // If there are no reactions in this membrane: we are done
-    // qDebug("SimMembrane::compile_reactions ::   - no reactions to compile.");
-    return;
-  }
-
   // make vector of species & fields from compartments A and B
   std::vector<std::string> speciesID;
   for (const auto &spec : doc->species.at(compA)) {
@@ -191,11 +144,6 @@ SimMembrane::SimMembrane(sbml::SbmlDocWrapper *doc_ptr,
 void SimMembrane::evaluate_reactions() {
   // qDebug("SimMembrane::evaluate_reactions : membrane: %s",
   //         membrane->membraneID.c_str());
-  if (reacEval.nReactions == 0) {
-    // qDebug("SimMembrane::evaluate_reactions :   - no reactions to
-    // evaluate");
-    return;
-  }
   // qDebug("SimMembrane::evaluate_reactions :   - n_pixel pairs=%lu",
   //    membrane->indexPair.size());
   // qDebug("SimMembrane::evaluate_reactions :   - n_species=%lu",
@@ -239,7 +187,7 @@ void Simulate::setMathBackend(BACKEND mathBackend) {
 
 BACKEND Simulate::getMathBackend() const { return backend; }
 
-void Simulate::addCompartment(geometry::Compartment *compartment) {
+void Simulate::addCompartment(const geometry::Compartment *compartment) {
   SPDLOG_DEBUG("adding compartment {}", compartment->compartmentID);
   simComp.emplace_back(doc, compartment, backend);
   for (auto *f : simComp.back().field) {
