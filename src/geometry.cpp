@@ -210,8 +210,9 @@ std::vector<double> Field::getConcentrationArray() const {
 
 void Field::applyDiffusionOperator() {
   const Compartment *g = geometry;
+  double pixelWidth = g->pixelWidth;
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
-    dcdt[i] = diffusionConstant *
+    dcdt[i] = (diffusionConstant / pixelWidth / pixelWidth) *
               (conc[g->up_x(i)] + conc[g->dn_x(i)] + conc[g->up_y(i)] +
                conc[g->dn_y(i)] - 4.0 * conc[i]);
   }

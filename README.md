@@ -40,7 +40,6 @@ Translate the spatial model to a system of PDEs and simulate it: [WP1b status](h
     -   static analysis reports:
 
         -   <https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor>
-        -   <https://lgtm.com/projects/g/lkeegan/spatial-model-editor/context:cpp>
         -   <https://www.codacy.com/app/lkeegan/spatial-model-editor>
 
 -   _Deployment_: tagged commits result in github release with a binary executable for each OS

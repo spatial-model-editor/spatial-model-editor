@@ -1,6 +1,7 @@
 #include "dune.hpp"
 
 #include "logger.hpp"
+#include "pde.hpp"
 #include "reactions.hpp"
 #include "symbolic.hpp"
 
@@ -97,57 +98,28 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
 
     // reactions
     ini.addSection("model", compartmentID, "reaction");
-    // reaction terms
-    std::vector<std::string> rhsExpressions;
     std::size_t nSpecies = static_cast<std::size_t>(nonConstantSpecies.size());
 
+    std::vector<std::string> reacs;
     if (doc.reactions.find(compartmentID) != doc.reactions.cend()) {
-      QStringList qstringlistSpecies;
-      for (const auto &s : nonConstantSpecies) {
-        qstringlistSpecies.push_back(s.c_str());
-      }
-      reactions::Reaction reacs(&doc, qstringlistSpecies,
-                                doc.reactions.at(compartmentID));
-      for (std::size_t i = 0; i < nSpecies; ++i) {
-        QString rhs("0.0");
-        for (std::size_t j = 0; j < reacs.reacExpressions.size(); ++j) {
-          // get reaction term
-          QString expr = QString("%1*(%2) ")
-                             .arg(QString::number(reacs.M.at(j).at(i), 'g', 18),
-                                  reacs.reacExpressions[j].c_str());
-          SPDLOG_DEBUG("Species {} Reaction {} = {}", nonConstantSpecies.at(i),
-                       j, expr);
-          // parse and inline constants
-          symbolic::Symbolic sym(expr.toStdString(), reacs.speciesIDs,
-                                 reacs.constants[j]);
-          // add term to rhs
-          rhs.append(QString(" + (%1)").arg(sym.simplify().c_str()));
-        }
-        // reparse full rhs to simplify
-        SPDLOG_DEBUG("Species {} Reparsing all reaction terms",
-                     nonConstantSpecies.at(i));
-        symbolic::Symbolic sym(rhs.toStdString(), nonConstantSpecies, {});
-        rhsExpressions.push_back(sym.simplify());
-      }
-    } else {
-      // no reactions
-      for (std::size_t i = 0; i < nSpecies; ++i) {
-        rhsExpressions.push_back("0.0");
+      for (const auto &r : doc.reactions.at(compartmentID)) {
+        reacs.push_back(r.toStdString());
       }
     }
+    pde::PDE pde(&doc, nonConstantSpecies, reacs);
     for (std::size_t i = 0; i < nSpecies; ++i) {
-      ini.addValue(nonConstantSpecies[i].c_str(), rhsExpressions[i].c_str());
+      ini.addValue(nonConstantSpecies.at(i).c_str(),
+                   pde.getRHS().at(i).c_str());
     }
 
     // reaction term jacobian
     ini.addSection("model", compartmentID, "reaction.jacobian");
     for (std::size_t i = 0; i < nSpecies; ++i) {
       for (std::size_t j = 0; j < nSpecies; ++j) {
-        symbolic::Symbolic sym(rhsExpressions[i], nonConstantSpecies, {});
         QString lhs = QString("d%1__d%2")
                           .arg(nonConstantSpecies.at(i).c_str(),
                                nonConstantSpecies.at(j).c_str());
-        QString rhs = sym.diff(nonConstantSpecies[j]).c_str();
+        QString rhs = pde.getJacobian().at(i).at(j).c_str();
         ini.addValue(lhs, rhs);
       }
     }
@@ -166,6 +138,89 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
     // output file
     ini.addSection("model", compartmentID, "writer");
     ini.addValue("file_name", compartmentID);
+  }
+
+  // for each membrane
+  for (const auto &membrane : doc.membraneVec) {
+    ini.addSection("model", membrane.membraneID.c_str());
+    ini.addValue("begin_time", begin_time, doublePrecision);
+    ini.addValue("end_time", end_time, doublePrecision);
+    ini.addValue("time_step", time_step, doublePrecision);
+
+    // remove any constant species from the list of species
+    std::vector<std::string> nonConstantSpecies;
+    QString compA = membrane.compA->compartmentID.c_str();
+    QString compB = membrane.compB->compartmentID.c_str();
+    for (const auto &s : doc.species.at(compA)) {
+      if (!doc.getIsSpeciesConstant(s.toStdString())) {
+        nonConstantSpecies.push_back(s.toStdString());
+      }
+    }
+    for (const auto &s : doc.species.at(compB)) {
+      if (!doc.getIsSpeciesConstant(s.toStdString())) {
+        nonConstantSpecies.push_back(s.toStdString());
+      }
+    }
+
+    // operator splitting indexing: all set to zero for now...
+    ini.addSection("model", membrane.membraneID.c_str(), "operator");
+    for (const auto &speciesID : nonConstantSpecies) {
+      ini.addValue(speciesID.c_str(), 0);
+    }
+
+    // initial concentrations
+    ini.addSection("model", membrane.membraneID.c_str(), "initial");
+    std::size_t i_species = 0;
+    for (const auto &speciesID : nonConstantSpecies) {
+      ini.addValue(nonConstantSpecies.at(i_species).c_str(),
+                   doc.getInitialConcentration(speciesID.c_str()),
+                   doublePrecision);
+      ++i_species;
+    }
+
+    // reactions
+    ini.addSection("model", membrane.membraneID.c_str(), "reaction");
+    std::size_t nSpecies = static_cast<std::size_t>(nonConstantSpecies.size());
+
+    std::vector<std::string> reacs;
+    if (doc.reactions.find(membrane.membraneID.c_str()) !=
+        doc.reactions.cend()) {
+      for (const auto &r : doc.reactions.at(membrane.membraneID.c_str())) {
+        reacs.push_back(r.toStdString());
+      }
+    }
+    pde::PDE pde(&doc, nonConstantSpecies, reacs);
+    for (std::size_t i = 0; i < nSpecies; ++i) {
+      ini.addValue(nonConstantSpecies.at(i).c_str(),
+                   pde.getRHS().at(i).c_str());
+    }
+
+    // reaction term jacobian
+    ini.addSection("model", membrane.membraneID.c_str(), "reaction.jacobian");
+    for (std::size_t i = 0; i < nSpecies; ++i) {
+      for (std::size_t j = 0; j < nSpecies; ++j) {
+        QString lhs = QString("d%1__d%2")
+                          .arg(nonConstantSpecies.at(i).c_str(),
+                               nonConstantSpecies.at(j).c_str());
+        QString rhs = pde.getJacobian().at(i).at(j).c_str();
+        ini.addValue(lhs, rhs);
+      }
+    }
+
+    // diffusion coefficients
+    ini.addSection("model", membrane.membraneID.c_str(), "diffusion");
+    i_species = 0;
+    for (const auto &speciesID : nonConstantSpecies) {
+      ini.addValue(
+          nonConstantSpecies.at(i_species).c_str(),
+          doc.mapSpeciesIdToField.at(speciesID.c_str()).diffusionConstant,
+          doublePrecision);
+      ++i_species;
+    }
+
+    // output file
+    ini.addSection("model", membrane.membraneID.c_str(), "writer");
+    ini.addValue("file_name", membrane.membraneID.c_str());
   }
 
   // logger settings

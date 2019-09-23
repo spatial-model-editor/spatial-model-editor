@@ -22,6 +22,7 @@ class Compartment {
   std::vector<std::size_t> nn;
 
  public:
+  double pixelWidth = 1.0;
   Compartment() = default;
   // create compartment geometry from all pixels in `img` of colour `col`
   Compartment(const std::string &compID, const QImage &img, QRgb col);

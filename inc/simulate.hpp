@@ -27,10 +27,6 @@ class ReacEval {
   // symengine reaction expression
   symbolic::Symbolic reac_eval_symengine;
 
-  // matrix M_ij of stoichiometric coefficients
-  // i is the species index
-  // j is the reaction index
-  std::vector<std::vector<double>> M;
   // vector of result of evaluating reactions
   std::vector<double> result;
 
@@ -38,7 +34,6 @@ class ReacEval {
   // vector of species concentrations that Reaction expressions will use
   std::vector<double> species_values;
   std::size_t nSpecies = 0;
-  std::size_t nReactions = 0;
   ReacEval() = default;
   ReacEval(sbml::SbmlDocWrapper *doc_ptr,
            const std::vector<std::string> &speciesID,
@@ -56,8 +51,9 @@ class SimCompartment {
  public:
   std::vector<geometry::Field *> field;
 
-  SimCompartment(sbml::SbmlDocWrapper *docWrapper,
-                 const geometry::Compartment *compartment, BACKEND mathBackend);
+  explicit SimCompartment(sbml::SbmlDocWrapper *docWrapper,
+                          const geometry::Compartment *compartment,
+                          BACKEND mathBackend);
   // field.dcdt += result of applying reaction expressions to field.conc
   void evaluate_reactions();
 };
@@ -93,7 +89,7 @@ class Simulate {
   explicit Simulate(sbml::SbmlDocWrapper *doc_ptr,
                     BACKEND mathBackend = BACKEND::EXPRTK)
       : doc(doc_ptr), backend(mathBackend) {}
-  void addCompartment(geometry::Compartment *compartment);
+  void addCompartment(const geometry::Compartment *compartment);
   void addMembrane(geometry::Membrane *membrane);
   void integrateForwardsEuler(double dt);
   QImage getConcentrationImage();

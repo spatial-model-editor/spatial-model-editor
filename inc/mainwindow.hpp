@@ -25,7 +25,7 @@ class MainWindow : public QMainWindow {
   QShortcut *shortcutStopSimulation;
   bool isSimulationRunning = false;
   QShortcut *shortcutSetMathBackend;
-  simulate::BACKEND simMathBackend = simulate::BACKEND::EXPRTK;
+  simulate::BACKEND simMathBackend = simulate::BACKEND::SYMENGINE_LLVM;
 
   QPixmap lblSpeciesColourPixmap;
   QPixmap lblCompartmentColourPixmap;

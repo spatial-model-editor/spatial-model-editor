@@ -34,6 +34,7 @@ void Reaction::init(const sbml::SbmlDocWrapper *doc_ptr,
   SPDLOG_INFO("species vector: {}", speciesIDs);
   M.clear();
   reacExpressions.clear();
+  constants.clear();
 
   // check if any species have a RateRule
   // todo: not currently valid if raterule involves species in multiple
