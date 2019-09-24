@@ -27,6 +27,10 @@ class MainWindow : public QMainWindow {
   QShortcut *shortcutSetMathBackend;
   simulate::BACKEND simMathBackend = simulate::BACKEND::SYMENGINE_LLVM;
 
+  // temp debugging shortcut:
+  QShortcut *shortcutToggleDune;
+  bool useDuneSimulator = false;
+
   QPixmap lblSpeciesColourPixmap;
   QPixmap lblCompartmentColourPixmap;
 

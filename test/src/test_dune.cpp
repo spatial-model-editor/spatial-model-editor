@@ -6,7 +6,7 @@
 
 #include <QFile>
 
-TEST_CASE("iniFile class", "[dune][ini]") {
+TEST_CASE("iniFile class", "[dune][ini][non-gui]") {
   dune::iniFile ini;
   ini.addSection("t1");
   QString correct("[t1]\n");
@@ -44,7 +44,7 @@ TEST_CASE("iniFile class", "[dune][ini]") {
   REQUIRE(ini.getText() == correct);
 }
 
-TEST_CASE("DUNE ini file for ABtoC model", "[dune][ini]") {
+TEST_CASE("DUNE ini file for ABtoC model", "[dune][ini][non-gui]") {
   sbml::SbmlDocWrapper s;
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
@@ -99,7 +99,7 @@ TEST_CASE("DUNE ini file for ABtoC model", "[dune][ini]") {
   REQUIRE((*line++).left(9) == "file_name");
 }
 
-TEST_CASE("DUNE ini file for brusselator model", "[dune][ini]") {
+TEST_CASE("DUNE ini file for brusselator model", "[dune][ini][non-gui]") {
   sbml::SbmlDocWrapper s;
   QFile f(":/models/brusselator-model.xml");
   f.open(QIODevice::ReadOnly);
@@ -119,7 +119,7 @@ TEST_CASE("DUNE ini file for brusselator model", "[dune][ini]") {
   REQUIRE(*line++ == "");
 }
 
-TEST_CASE("DUNE ini file for very simple model", "[dune][ini]") {
+TEST_CASE("DUNE ini file for very simple model", "[dune][ini][non-gui]") {
   sbml::SbmlDocWrapper s;
   QFile f(":/models/very-simple-model.xml");
   f.open(QIODevice::ReadOnly);
@@ -146,4 +146,23 @@ TEST_CASE("DUNE ini file for very simple model", "[dune][ini]") {
   REQUIRE(*line++ == "dA_c3__dB_c3 = 0");
   REQUIRE(*line++ == "dB_c3__dA_c3 = 0.3");
   REQUIRE(*line++ == "dB_c3__dB_c3 = 0");
+}
+
+TEST_CASE("DUNE simulation of ABtoC model", "[dune][simulate][non-gui]") {
+  sbml::SbmlDocWrapper s;
+  QFile f(":/models/ABtoC.xml");
+  f.open(QIODevice::ReadOnly);
+  s.importSBMLString(f.readAll().toStdString());
+
+  dune::DuneSimulation duneSim(s);
+  REQUIRE(duneSim.getAverageConcentration("A") == dbl_approx(1.0));
+  REQUIRE(duneSim.getAverageConcentration("B") == dbl_approx(1.0));
+  REQUIRE(duneSim.getAverageConcentration("C") == dbl_approx(0.0));
+  QImage conc = duneSim.getConcImage(QSize(200, 200));
+  duneSim.doTimestep(0.05);
+  conc = duneSim.getConcImage(QSize(200, 200));
+  REQUIRE(std::abs(duneSim.getAverageConcentration("A") - 0.995) < 5e-5);
+  REQUIRE(std::abs(duneSim.getAverageConcentration("B") - 0.995) < 5e-5);
+  REQUIRE(std::abs(duneSim.getAverageConcentration("C") - 0.005) < 5e-5);
+  REQUIRE(conc.size() == QSize(200, 200));
 }

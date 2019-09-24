@@ -44,10 +44,13 @@ class Boundary {
  private:
   // full set of ordered vertices that make up the boundary
   std::vector<QPoint> vertices;
+  // unit vector perpendicular to boundary
+  std::vector<QPointF> normalUnitVectors;
   // vertex indices in reverse order of importance
   std::vector<std::size_t> orderedBoundaryIndices;
   std::size_t maxPoints;
   void removeDegenerateVertices();
+  void constructNormalUnitVectors();
   std::vector<std::size_t>::const_iterator smallestTrianglePointIndex(
       const std::vector<std::size_t>& pointIndices) const;
 

@@ -31,19 +31,11 @@ matrix:
         - "jwm &"
         - sleep 1
       script:
-        # compile and run unit tests
-        - mkdir build-tests
-        - cd build-tests
-        - qmake CONFIG+=release ../test.pro
-        - make -j2
-        - ./test -d=yes
-        - cd ../
-        # compile release executable
-        - mkdir build
-        - cd build
-        - qmake CONFIG+=release ../spatial-model-editor.pro
-        - make -j2
+        - bash ci-build.sh release
+        # run tests
+        - ./build-tests/test -a
         # check dependencies of resulting executable
+        - cd build
         - ldd spatial-model-editor
     ##############################################################
     # osx release build: xcode 10.3, macOS 10.14 (target >= 10.12)
@@ -53,20 +45,14 @@ matrix:
       compiler: clang
       env:
         - DEPLOY_FILE="spatial-model-editor.dmg"
+      install:
+        - export MACOSX_DEPLOYMENT_TARGET=10.14
       script:
-        # compile and run unit tests
-        - mkdir build-tests
-        - cd build-tests
-        - qmake CONFIG+=release ../test.pro
-        - make -j2
-        - ./test.app/Contents/MacOS/test -d=yes
-        - cd ../
-        # compile release executable
-        - mkdir build
-        - cd build
-        - qmake CONFIG+=release ../spatial-model-editor.pro
-        - make -j2
+        - bash ci-build.sh release
+        # run tests
+        - ./build-tests/test.app/Contents/MacOS/test -a
         # check dependencies of resulting executable
+        - cd build
         - otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor
         # package app dir as a .dmg
         - hdiutil create spatial-model-editor -fs HFS+ -srcfolder spatial-model-editor.app
@@ -100,20 +86,19 @@ matrix:
         - "jwm &"
         - sleep 1
       script:
-        # compile and run unit tests
-        - mkdir build-tests
-        - cd build-tests
-        - qmake CONFIG+=debug ../test.pro
-        - make -j2
+        # build tests & compile executable using sonar-source build wrapper
+        # only use 1 core to avoid running out of memory on travis
+        - bash ci-build.sh debug make "build-wrapper-linux-x86-64 --out-dir ../bw-output" 1
+        # run tests
         # make list of "leaks" from system libraries that LeakSanitizer should ignore
-        - echo "leak:libfontconfig.so" > suppr.txt
-        - echo "leak:libX11.so" >> suppr.txt
         # NB: can also set ASAN_OPTIONS=fast_unwind_on_malloc=0
         # to see more info about any memory leaks from linked libraries
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test -d=yes
+        - echo "leak:libfontconfig.so" > suppr.txt
+        - echo "leak:libX11.so" >> suppr.txt
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build-tests/test -a
         # generate gcov test coverage data for sonar-source & codecov.io
-        - mkdir ../gcov
-        - cd ../gcov
+        - mkdir gcov
+        - cd gcov
         - gcov -r -p ../build-tests/*.gcno
         # only want coverage data for src and inc folders
         - mkdir tmp
@@ -130,19 +115,10 @@ matrix:
         - bash <(curl -s https://codecov.io/bash) -X gcov -f "gcov/*"
         # get blame info for sonar-scanner
         - git fetch --unshallow
-        # compile debug version of executable
-        - mkdir build
-        - cd build
-        - qmake CONFIG+=debug ../spatial-model-editor.pro
-        # wrap make call with sonar-source build wrapper
-        - build-wrapper-linux-x86-64 --out-dir ../bw-output make -j2
-        - cd ../
         # upload to sonar-scanner
         - sonar-scanner -Dsonar.login=$SONAR_LOGIN
 
 before_script:
-  # on osx, this should make clang compile for target osx>=10.12
-  - export MACOSX_DEPLOYMENT_TARGET=10.12
   # install pre-compiled Qt5 binaries & static libraries to $QT5_INSTALL_PREFIX
   # note absolute paths currently hard coded in QT binaries
   # to override this, add a qt.conf file (https://doc.qt.io/qt-5/qt-conf.html#overriding-paths)
@@ -150,23 +126,14 @@ before_script:
   - sudo tar xzvf qt5-static-$TRAVIS_OS_NAME.tgz -C /
   # export path for Qt5 binaries
   - export PATH=$QT5_INSTALL_PREFIX/bin:$PATH
-  - qmake -v
-  # build qcustomplot library
-  - cd ext/qcustomplot
-  - qmake qcustomplot.pro
-  - make -j2
-  - ls
-  - cd ../../
-  # build triangle library
-  - cd ext/triangle
-  - make -j2
-  - cd ../../
   # download pre-compiled static libSBML (and other) libraries
   - cd ext
   - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
   - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz
   - wget "https://github.com/lkeegan/llvm-static/releases/latest/download/llvm-static-$TRAVIS_OS_NAME.tgz"
   - tar xzvf llvm-static-$TRAVIS_OS_NAME.tgz
+  - wget "https://github.com/lkeegan/dune-copasi-static/releases/latest/download/dune-copasi-static-$TRAVIS_OS_NAME.tgz"
+  - tar xzvf dune-copasi-static-$TRAVIS_OS_NAME.tgz
   - ls */*
   - cd ..
 

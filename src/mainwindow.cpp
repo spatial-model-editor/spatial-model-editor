@@ -1,5 +1,7 @@
 #include "mainwindow.hpp"
 
+#include <sstream>
+
 #include <QErrorMessage>
 #include <QFileDialog>
 #include <QInputDialog>
@@ -35,6 +37,9 @@ MainWindow::MainWindow(QWidget *parent)
   shortcutSetMathBackend = new QShortcut(this);
   shortcutSetMathBackend->setKey(Qt::CTRL + Qt::SHIFT + Qt::Key_B);
 
+  shortcutToggleDune = new QShortcut(this);
+  shortcutToggleDune->setKey(Qt::CTRL + Qt::SHIFT + Qt::Key_D);
+
   lblSpeciesColourPixmap = QPixmap(1, 1);
   lblCompartmentColourPixmap = QPixmap(1, 1);
 
@@ -50,6 +55,10 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 void MainWindow::setupConnections() {
+  // temp:
+  connect(shortcutToggleDune, &QShortcut::activated, this,
+          [this]() { useDuneSimulator = !useDuneSimulator; });
+
   // tab bar
   connect(ui->tabMain, &QTabWidget::currentChanged, this,
           &MainWindow::tabMain_currentChanged);
@@ -481,6 +490,7 @@ void MainWindow::action_About_triggered() {
       "\"https://github.com/lkeegan/spatial-model-editor\">"
       "github.com/lkeegan/spatial-model-editor</a></p></li></ul>");
   info.append("<p>Included libraries:<p><ul>");
+  info.append(QString("<li>dune-copasi</li>"));
   info.append(QString("<li>Qt5: %1</li>").arg(QT_VERSION_STR));
   info.append(
       QString("<li>libSBML: %1</li>").arg(libsbml::getLibSBMLDottedVersion()));
@@ -493,6 +503,8 @@ void MainWindow::action_About_triggered() {
   info.append(QString("<li>LLVM Core: 8.0.1</li>"));
   info.append(QString("<li>GMP: 6.1.2</li>"));
   info.append(QString("<li>Triangle: 1.6</li>"));
+  info.append(QString("<li>muParser: 2.2.6.1</li>"));
+  info.append(QString("<li>libTIFF: 4.0.10</li>"));
   for (const auto &dep : {"expat", "libxml", "xerces-c", "bzip2", "zip"}) {
     if (libsbml::isLibSBMLCompiledWith(dep) != 0) {
       info.append(QString("<li>%1: %2</li>")
@@ -883,42 +895,69 @@ void MainWindow::btnSimulate_clicked() {
     sim.addMembrane(&membrane);
   }
 
+  // Dune simulation
+  dune::DuneSimulation duneSim(sbmlDoc);
+
   // get initial concentrations
   images.clear();
   QVector<double> time{0};
   std::vector<QVector<double>> conc(sim.field.size());
   for (std::size_t s = 0; s < sim.field.size(); ++s) {
-    conc[s].push_back(sim.field[s]->getMeanConcentration());
+    if (useDuneSimulator) {
+      conc[s].push_back(
+          duneSim.getAverageConcentration(sim.field[s]->speciesID));
+    } else {
+      conc[s].push_back(sim.field[s]->getMeanConcentration());
+    }
   }
   images.clear();
-  images.push_back(sim.getConcentrationImage());
+  if (useDuneSimulator) {
+    images.push_back(duneSim.getConcImage(ui->lblGeometry->size()));
+  } else {
+    images.push_back(sim.getConcentrationImage());
+  }
 
   ui->statusBar->showMessage("Simulating...");
   QTime qtime;
   qtime.start();
   isSimulationRunning = true;
   this->setCursor(Qt::WaitCursor);
-  // do Euler integration
+  // integrate Model
   double t = 0;
   double dt = ui->txtSimDt->text().toDouble();
   int n_images = static_cast<int>(ui->txtSimLength->text().toDouble() /
                                   ui->txtSimInterval->text().toDouble());
   int n_steps = static_cast<int>(ui->txtSimInterval->text().toDouble() / dt);
   for (int i_image = 0; i_image < n_images; ++i_image) {
-    for (int i_step = 0; i_step < n_steps; ++i_step) {
-      t += dt;
-      sim.integrateForwardsEuler(dt);
-      QApplication::processEvents();
-      if (!isSimulationRunning) {
-        break;
+    if (useDuneSimulator) {
+      duneSim.doTimestep(ui->txtSimInterval->text().toDouble());
+      t += ui->txtSimInterval->text().toDouble();
+    } else {
+      for (int i_step = 0; i_step < n_steps; ++i_step) {
+        t += dt;
+        sim.integrateForwardsEuler(dt);
+        QApplication::processEvents();
+        if (!isSimulationRunning) {
+          break;
+        }
       }
     }
+    QApplication::processEvents();
     if (!isSimulationRunning) {
       break;
     }
-    images.push_back(sim.getConcentrationImage());
+    if (useDuneSimulator) {
+      images.push_back(duneSim.getConcImage(ui->lblGeometry->size()));
+    } else {
+      images.push_back(sim.getConcentrationImage());
+    }
     for (std::size_t s = 0; s < sim.field.size(); ++s) {
-      conc[s].push_back(sim.field[s]->getMeanConcentration());
+      if (useDuneSimulator) {
+        conc[s].push_back(
+            duneSim.getAverageConcentration(sim.field[s]->speciesID));
+      } else {
+        conc[s].push_back(sim.field[s]->getMeanConcentration());
+      }
     }
     time.push_back(t);
     ui->lblGeometry->setImage(images.back());
