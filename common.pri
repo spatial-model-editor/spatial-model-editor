@@ -69,10 +69,11 @@ unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wext
 # on windows statically link libgcc & libstdc++ to avoid missing dll errors:
 win32: QMAKE_LFLAGS += -static-libgcc -static-libstdc++
 
-# on linux (but not mac) statically link libstdc++
-unix:!mac {
-    QMAKE_LFLAGS += -static-libstdc++
-}
+# on linux & mac statically link libstdc++
+unix: QMAKE_LFLAGS += -static-libstdc++
+
+# dune won't compile without c++17 features only available in osx >= 10.14
+QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.14
 
 # for linux debug build, remove optimizations, add coverage & ASAN
 CONFIG(debug, debug|release) {

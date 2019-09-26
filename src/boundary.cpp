@@ -155,6 +155,24 @@ void Boundary::removeDegenerateVertices() {
   return;
 }
 
+void Boundary::constructNormalUnitVectors() {
+  normalUnitVectors.clear();
+  if (!isLoop) {
+    // for now we only support for closed loops
+    return;
+  }
+  normalUnitVectors.reserve(vertices.size());
+  // calculate unit vector normal (perpendicular) to boundary
+  for (std::size_t i = 0; i < vertices.size(); ++i) {
+    std::size_t ip = (i + 1) % vertices.size();
+    std::size_t im = (i + vertices.size() - 1) % vertices.size();
+    QPoint delta = vertices[ip] - vertices[im];
+    auto normal = QPointF(-delta.y(), delta.x());
+    normal /= sqrt(QPointF::dotProduct(normal, normal));
+    normalUnitVectors.push_back(normal);
+  }
+}
+
 // Visvalingam polyline simplification
 // return index of vertex which forms smallest area triangle
 // NB: very inefficient & not quite right:
@@ -194,8 +212,8 @@ std::vector<std::size_t>::const_iterator Boundary::smallestTrianglePointIndex(
 
 Boundary::Boundary(const std::vector<QPoint>& boundaryPoints, bool isClosedLoop)
     : vertices(boundaryPoints), isLoop(isClosedLoop) {
-  // remove degenerate points from vertices
   removeDegenerateVertices();
+  constructNormalUnitVectors();
 
   // construct list of points in reverse order of importance
   // start by using all points

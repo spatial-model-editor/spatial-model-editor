@@ -19,13 +19,11 @@ A GUI to convert non-spatial SBML models of bio-chemical reactions into 2d spati
 
 ## Project status
 
-### WP1a
-Allow the user to describe a spatial model: [WP1a status](https://github.com/lkeegan/spatial-model-editor/projects/1)
+### [WP1a](https://github.com/lkeegan/spatial-model-editor/projects/1)
+Allow the user to describe a spatial model: import/export SBML, add geometry, diffusion coefficients, spatially varying initial concentrations, etc.
 
-(a partial re-implementation of the spatial model editing part of <https://github.com/fbergmann/edit-spatial> using C++/Qt5, with all dependencies statically linked so that it can be supplied as a stand-alone compiled executable for linux, windows and osx.)
-
-### WP1b
-Translate the spatial model to a system of PDEs and simulate it: [WP1b status](https://github.com/lkeegan/spatial-model-editor/projects/2)
+### [WP1b](https://github.com/lkeegan/spatial-model-editor/projects/2)
+Translate the spatial model to a system of PDEs and simulate it: generate 2d triangular mesh, construct PDEs and Jacobians, simulate using DUNE, visualize simulation results, etc.
 
 ## Implementation details
 
@@ -47,6 +45,11 @@ Translate the spatial model to a system of PDEs and simulate it: [WP1b status](h
 -   _Documentation_: documentation is at <https://spatial-model-editor.readthedocs.io> and is compiled with each commit
 
 -   _Dependencies_: the result is a standalone GUI executable that includes these statically linked libraries:
+
+    -   dune-copasi Biochemical System Simulator <https://gitlab.dune-project.org/copasi/dune-copasi>
+
+        -   license: [GPL2 + runtime exception](https://dune-project.org/about/license/)
+        -   using pre-compiled binaries from <https://github.com/lkeegan/dune-copasi-static>
 
     -   libSBML <http://sbml.org/Software/libSBML>
 
@@ -97,6 +100,16 @@ Translate the spatial model to a system of PDEs and simulate it: [WP1b status](h
 
         -   license: "Private, research, and institutional use is free."
         -   included in source code
+
+    -   muParser <https://github.com/beltoforion/muparser>
+
+        -   license: [MIT](https://github.com/beltoforion/muparser/blob/master/License.txt)
+        -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
+
+    -   libTIFF <http://www.libtiff.org/>
+
+        -   license: [MIT](http://www.libtiff.org/misc.html)
+        -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
 
     -   Catch2 testing framework: <https://github.com/catchorg/Catch2>
 
