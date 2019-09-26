@@ -230,15 +230,15 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
 
   // logger settings
   ini.addSection("logging");
-  ini.addValue("default.level", "debug");
+  ini.addValue("default.level", "off");
 
-  ini.addSection("logging.backend.model");
-  ini.addValue("level", "debug");
-  ini.addValue("indent", 2);
+  //  ini.addSection("logging.backend.model");
+  //  ini.addValue("level", "debug");
+  //  ini.addValue("indent", 2);
 
-  ini.addSection("logging.backend.solver");
-  ini.addValue("level", "debug");
-  ini.addValue("indent", 4);
+  //  ini.addSection("logging.backend.solver");
+  //  ini.addValue("level", "debug");
+  //  ini.addValue("indent", 4);
 }
 
 QString DuneConverter::getIniFile() const { return ini.getText(); }
@@ -262,7 +262,7 @@ void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc) {
     auto &mpi_helper = Dune::MPIHelper::instance(0, nullptr);
     auto comm = mpi_helper.getCollectiveCommunication();
     Dune::Logging::Logging::init(comm, config.sub("logging"));
-    // Dune::Logging::Logging::mute();
+    Dune::Logging::Logging::mute();
   }
 
   // NB: msh file needs to be file for gmshreader

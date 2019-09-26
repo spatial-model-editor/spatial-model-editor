@@ -54,6 +54,10 @@ matrix:
         # check dependencies of resulting executable
         - cd build
         - otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor
+        # alter plist file manually to require minimum osx 10.12
+        - plutil -p spatial-model-editor.app/Contents/Info.plist
+        - plutil -replace LSMinimumSystemVersion -string "10.12" spatial-model-editor.app/Contents/Info.plist
+        - plutil -p spatial-model-editor.app/Contents/Info.plist
         # package app dir as a .dmg
         - hdiutil create spatial-model-editor -fs HFS+ -srcfolder spatial-model-editor.app
     #####################################################
