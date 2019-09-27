@@ -10,7 +10,16 @@ namespace pde {
 
 PDE::PDE(const sbml::SbmlDocWrapper *doc_ptr,
          const std::vector<std::string> &speciesIDs,
-         const std::vector<std::string> &reactionIDs) {
+         const std::vector<std::string> &reactionIDs,
+         const std::vector<std::string> &relabelledSpeciesIDs)
+    : species(speciesIDs) {
+  if (!relabelledSpeciesIDs.empty() &&
+      relabelledSpeciesIDs.size() != speciesIDs.size()) {
+    SPDLOG_WARN(
+        "Ignoring relabelledSpecies:"
+        "size {} does not match number of species {}",
+        relabelledSpeciesIDs.size(), speciesIDs.size());
+  }
   // construct reaction expressions and stoich matrix
   reactions::Reaction reactions(doc_ptr, speciesIDs, reactionIDs);
 
@@ -36,10 +45,16 @@ PDE::PDE(const sbml::SbmlDocWrapper *doc_ptr,
     SPDLOG_DEBUG("Species {} Reparsing all reaction terms", speciesIDs.at(i));
     // parse expression with symengine to simplify
     symbolic::Symbolic sym(r.toStdString(), speciesIDs);
-    rhs.push_back(sym.simplify());
-    for (const auto &s : speciesIDs) {
+    // if provided, relabel species with relabelledSpeciesIDs
+    auto *outputSpecies = &speciesIDs;
+    if (relabelledSpeciesIDs.size() == speciesIDs.size()) {
+      sym.relabel(relabelledSpeciesIDs);
+      outputSpecies = &relabelledSpeciesIDs;
+    }
+    for (const auto &s : *outputSpecies) {
       jacobian.back().push_back(sym.diff(s));
     }
+    rhs.push_back(sym.simplify());
   }
 }
 

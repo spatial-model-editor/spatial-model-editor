@@ -63,6 +63,8 @@ class Symbolic {
   std::string simplify(std::size_t i = 0) const;
   // differentiate given expression wrt a variable
   std::string diff(const std::string &var, std::size_t i = 0) const;
+  // relabel variables
+  void relabel(const std::vector<std::string> &newVariables);
   // evaluate compiled expressions
   void eval(std::vector<double> &results, const std::vector<double> &vars = {});
   void evalLLVM(std::vector<double> &results,

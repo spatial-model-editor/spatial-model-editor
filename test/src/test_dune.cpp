@@ -1,10 +1,9 @@
-#include "dune.hpp"
+#include <QFile>
 
 #include "catch.hpp"
-
+#include "dune.hpp"
 #include "logger.hpp"
-
-#include <QFile>
+#include "sbml_test_data/invalid_dune_names.hpp"
 
 TEST_CASE("iniFile class", "[dune][ini][non-gui]") {
   dune::iniFile ini;
@@ -165,4 +164,28 @@ TEST_CASE("DUNE simulation of ABtoC model", "[dune][simulate][non-gui]") {
   REQUIRE(std::abs(duneSim.getAverageConcentration("B") - 0.995) < 5e-5);
   REQUIRE(std::abs(duneSim.getAverageConcentration("C") - 0.005) < 5e-5);
   REQUIRE(conc.size() == QSize(200, 200));
+}
+
+TEST_CASE("Species names that are invalid dune variables",
+          "[dune][ini][non-gui]") {
+  std::unique_ptr<libsbml::SBMLDocument> doc(
+      libsbml::readSBMLFromString(sbml_test_data::invalid_dune_names().xml));
+  libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
+  sbml::SbmlDocWrapper s;
+  s.importSBMLFile("tmp.xml");
+  dune::DuneConverter dc(s);
+  QStringList ini = dc.getIniFile().split("\n");
+  auto line = ini.cbegin();
+  while (line != ini.cend() && *line != "[model.comp.reaction]") {
+    ++line;
+  }
+  REQUIRE(*line++ == "[model.comp.reaction]");
+  REQUIRE(*line++ == "dim_ = -0.1*x__*dim_");
+  REQUIRE(*line++ == "x__ = -0.1*x__*dim_");
+  REQUIRE(*line++ == "x_ = 0.1*x__*dim_");
+  REQUIRE(*line++ == "");
+  REQUIRE(*line++ == "[model.comp.reaction.jacobian]");
+  REQUIRE(*line++ == "ddim___ddim_ = -0.1*x__");
+  REQUIRE(*line++ == "ddim___dx__ = -0.1*dim_");
+  REQUIRE(*line++ == "ddim___dx_ = 0");
 }
