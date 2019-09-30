@@ -2,13 +2,12 @@
 
 #include <sstream>
 
+#include "logger.hpp"
 #include "symengine/eval.h"
 #include "symengine/parser.h"
 #include "symengine/subs.h"
 #include "symengine/symengine_exception.h"
 #include "symengine/visitor.h"
-
-#include "logger.hpp"
 
 namespace SymEngine {
 void muPrinter::_print_pow(std::ostringstream &o, const RCP<const Basic> &a,
@@ -66,6 +65,35 @@ std::string Symbolic::simplify(std::size_t i) const {
 std::string Symbolic::diff(const std::string &var, std::size_t i) const {
   auto dexpr_dvar = expr.at(i)->diff(symbols.at(var));
   return toString(dexpr_dvar);
+}
+
+void Symbolic::relabel(const std::vector<std::string> &newVariables) {
+  if (varVec.size() != newVariables.size()) {
+    SPDLOG_ERROR(
+        "cannot relabel variables: newVariables size {} "
+        "does not match number of existing variables {}",
+        newVariables.size(), varVec.size());
+    return;
+  }
+  decltype(varVec) newVarVec;
+  decltype(symbols) newSymbols;
+  SymEngine::map_basic_basic d;
+  for (std::size_t i = 0; i < newVariables.size(); ++i) {
+    const auto &v = newVariables.at(i);
+    newSymbols[v] = SymEngine::symbol(v);
+    newVarVec.push_back(newSymbols.at(v));
+    d[varVec.at(i)] = newVarVec[i];
+    SPDLOG_DEBUG("relabeling {} -> {}", *varVec.at(i), *newVarVec.at(i));
+  }
+  // substitute new variables into all expressions
+  for (auto &e : expr) {
+    SPDLOG_DEBUG("expr {}", *e);
+    e = e->subs(d);
+    SPDLOG_DEBUG("  -> {}", *e);
+  }
+  // replace old variables with new variables in vector & map
+  std::swap(varVec, newVarVec);
+  std::swap(symbols, newSymbols);
 }
 
 void Symbolic::eval(std::vector<double> &results,

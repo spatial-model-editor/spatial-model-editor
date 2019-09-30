@@ -1,8 +1,6 @@
-#include "symbolic.hpp"
-
 #include "catch.hpp"
-
 #include "logger.hpp"
+#include "symbolic.hpp"
 
 TEST_CASE("5+5: no vars, no constants", "[symbolic][non-gui]") {
   // mathematical expression as string
@@ -167,4 +165,29 @@ TEST_CASE("3*x + alpha*x - a*n/x: one var, constants", "[symbolic][non-gui]") {
     REQUIRE(res[0] == dbl_approx(3 * x + constants["alpha"] * x -
                                  constants["a"] * constants["n"] * x));
   }
+}
+
+TEST_CASE("relabel one expression with two vars", "[symbolic][non-gui]") {
+  std::string expr = "3*x + 12*sin(y)";
+  symbolic::Symbolic sym(expr, {"x", "y"});
+  CAPTURE(expr);
+  REQUIRE(sym.diff("x") == "3");
+  REQUIRE(sym.diff("y") == "12*cos(y)");
+  sym.relabel({"newX", "newY"});
+  REQUIRE(sym.simplify() == "3*newX + 12*sin(newY)");
+  REQUIRE(sym.diff("newX") == "3");
+  REQUIRE(sym.diff("newY") == "12*cos(newY)");
+}
+
+TEST_CASE("invalid variable relabeling is a no-op", "[symbolic][non-gui]") {
+  std::string expr = "3*x + 12*sin(y)";
+  symbolic::Symbolic sym(expr, {"x", "y"});
+  CAPTURE(expr);
+  REQUIRE(sym.simplify() == expr);
+  REQUIRE(sym.diff("x") == "3");
+  REQUIRE(sym.diff("y") == "12*cos(y)");
+  sym.relabel({"a"});
+  REQUIRE(sym.simplify() == expr);
+  sym.relabel({"a", "b", "c"});
+  REQUIRE(sym.simplify() == expr);
 }

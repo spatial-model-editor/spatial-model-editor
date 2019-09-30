@@ -14,6 +14,7 @@ SOURCES += \
     test/src/test_mesh.cpp \
     test/src/test_numerics.cpp \
     test/src/test_ostream_overloads.cpp \
+    test/src/test_pde.cpp \
     test/src/test_qlabelmousetracker.cpp \
     test/src/test_reactions.cpp \
     test/src/test_sbml.cpp \
@@ -27,5 +28,6 @@ HEADERS += \
     test/inc/sbml_test_data/ABtoC.hpp \
     test/inc/sbml_test_data/very_simple_model.hpp \
     test/inc/sbml_test_data/yeast_glycolysis.hpp \
+    test/inc/sbml_test_data/invalid_dune_names.hpp \
 
 INCLUDEPATH += test/inc

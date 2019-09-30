@@ -3,12 +3,46 @@
 #include <QFile>
 #include <QImage>
 #include <QPainter>
+#include <algorithm>
 
 #include "logger.hpp"
 #include "pde.hpp"
 #include "reactions.hpp"
 #include "symbolic.hpp"
 #include "utils.hpp"
+
+static std::vector<std::string> makeValidDuneSpeciesNames(
+    const std::vector<std::string> &names) {
+  std::vector<std::string> duneNames = names;
+  // muparser reserved words, taken from:
+  // https://beltoforion.de/article.php?a=muparser&p=features
+  std::vector<std::string> reservedNames{
+      {"sin",  "cos",  "tan",   "asin",  "acos",  "atan", "sinh",
+       "cosh", "tanh", "asinh", "acosh", "atanh", "log2", "log10",
+       "log",  "ln",   "exp",   "sqrt",  "sign",  "rint", "abs",
+       "min",  "max",  "sum",   "avg"}};
+  // dune-copasi reserved words:
+  reservedNames.insert(reservedNames.end(), {"x", "y", "t", "pi", "dim"});
+  for (auto &name : duneNames) {
+    SPDLOG_TRACE("name {}", name);
+    std::string duneName = name;
+    name = "";
+    // if species name clashes with a reserved name, append an underscore
+    if (std::find(reservedNames.cbegin(), reservedNames.cend(), duneName) !=
+        reservedNames.cend()) {
+      duneName.append("_");
+    }
+    // if species name clashes with another species name,
+    // append another underscore
+    while (std::find(duneNames.cbegin(), duneNames.cend(), duneName) !=
+           duneNames.cend()) {
+      duneName.append("_");
+    }
+    name = duneName;
+    SPDLOG_TRACE("  -> {}", name);
+  }
+  return duneNames;
+}
 
 namespace dune {
 
@@ -70,8 +104,6 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
 
   // for each compartment
   for (const auto &compartmentID : doc.compartments) {
-    const auto &speciesList = doc.species.at(compartmentID);
-
     ini.addSection("model", compartmentID);
     ini.addValue("begin_time", begin_time, doublePrecision);
     ini.addValue("end_time", end_time, doublePrecision);
@@ -79,26 +111,26 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
 
     // remove any constant species from the list of species
     std::vector<std::string> nonConstantSpecies;
-    for (const auto &s : speciesList) {
+    for (const auto &s : doc.species.at(compartmentID)) {
       if (!doc.getIsSpeciesConstant(s.toStdString())) {
         nonConstantSpecies.push_back(s.toStdString());
       }
     }
+    auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
 
     // operator splitting indexing: all set to zero for now...
     ini.addSection("model", compartmentID, "operator");
-    for (const auto &speciesID : nonConstantSpecies) {
+    for (const auto &speciesID : duneSpeciesNames) {
       ini.addValue(speciesID.c_str(), 0);
     }
 
     // initial concentrations
     ini.addSection("model", compartmentID, "initial");
-    std::size_t i_species = 0;
-    for (const auto &speciesID : nonConstantSpecies) {
-      ini.addValue(nonConstantSpecies.at(i_species).c_str(),
-                   doc.getInitialConcentration(speciesID.c_str()),
-                   doublePrecision);
-      ++i_species;
+    for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
+      ini.addValue(
+          duneSpeciesNames.at(i).c_str(),
+          doc.getInitialConcentration(nonConstantSpecies.at(i).c_str()),
+          doublePrecision);
     }
 
     // reactions
@@ -111,10 +143,9 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
         reacs.push_back(r.toStdString());
       }
     }
-    pde::PDE pde(&doc, nonConstantSpecies, reacs);
+    pde::PDE pde(&doc, nonConstantSpecies, reacs, duneSpeciesNames);
     for (std::size_t i = 0; i < nSpecies; ++i) {
-      ini.addValue(nonConstantSpecies.at(i).c_str(),
-                   pde.getRHS().at(i).c_str());
+      ini.addValue(duneSpeciesNames.at(i).c_str(), pde.getRHS().at(i).c_str());
     }
 
     // reaction term jacobian
@@ -122,8 +153,8 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
     for (std::size_t i = 0; i < nSpecies; ++i) {
       for (std::size_t j = 0; j < nSpecies; ++j) {
         QString lhs = QString("d%1__d%2")
-                          .arg(nonConstantSpecies.at(i).c_str(),
-                               nonConstantSpecies.at(j).c_str());
+                          .arg(duneSpeciesNames.at(i).c_str(),
+                               duneSpeciesNames.at(j).c_str());
         QString rhs = pde.getJacobian().at(i).at(j).c_str();
         ini.addValue(lhs, rhs);
       }
@@ -131,13 +162,10 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
 
     // diffusion coefficients
     ini.addSection("model", compartmentID, "diffusion");
-    i_species = 0;
-    for (const auto &speciesID : nonConstantSpecies) {
-      ini.addValue(
-          nonConstantSpecies.at(i_species).c_str(),
-          doc.mapSpeciesIdToField.at(speciesID.c_str()).diffusionConstant,
-          doublePrecision);
-      ++i_species;
+    for (std::size_t i = 0; i < nSpecies; ++i) {
+      ini.addValue(duneSpeciesNames.at(i).c_str(),
+                   doc.getDiffusionConstant(nonConstantSpecies.at(i).c_str()),
+                   doublePrecision);
     }
 
     // output file
@@ -145,7 +173,7 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
     ini.addValue("file_name", compartmentID);
   }
 
-  // for each membrane
+  // for each membrane do the same
   for (const auto &membrane : doc.membraneVec) {
     ini.addSection("model", membrane.membraneID.c_str());
     ini.addValue("begin_time", begin_time, doublePrecision);
@@ -166,6 +194,7 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
         nonConstantSpecies.push_back(s.toStdString());
       }
     }
+    auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
 
     // operator splitting indexing: all set to zero for now...
     ini.addSection("model", membrane.membraneID.c_str(), "operator");
@@ -175,12 +204,11 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
 
     // initial concentrations
     ini.addSection("model", membrane.membraneID.c_str(), "initial");
-    std::size_t i_species = 0;
-    for (const auto &speciesID : nonConstantSpecies) {
-      ini.addValue(nonConstantSpecies.at(i_species).c_str(),
-                   doc.getInitialConcentration(speciesID.c_str()),
-                   doublePrecision);
-      ++i_species;
+    for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
+      ini.addValue(
+          duneSpeciesNames.at(i).c_str(),
+          doc.getInitialConcentration(nonConstantSpecies.at(i).c_str()),
+          doublePrecision);
     }
 
     // reactions
@@ -194,10 +222,9 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
         reacs.push_back(r.toStdString());
       }
     }
-    pde::PDE pde(&doc, nonConstantSpecies, reacs);
+    pde::PDE pde(&doc, nonConstantSpecies, reacs, duneSpeciesNames);
     for (std::size_t i = 0; i < nSpecies; ++i) {
-      ini.addValue(nonConstantSpecies.at(i).c_str(),
-                   pde.getRHS().at(i).c_str());
+      ini.addValue(duneSpeciesNames.at(i).c_str(), pde.getRHS().at(i).c_str());
     }
 
     // reaction term jacobian
@@ -205,8 +232,8 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
     for (std::size_t i = 0; i < nSpecies; ++i) {
       for (std::size_t j = 0; j < nSpecies; ++j) {
         QString lhs = QString("d%1__d%2")
-                          .arg(nonConstantSpecies.at(i).c_str(),
-                               nonConstantSpecies.at(j).c_str());
+                          .arg(duneSpeciesNames.at(i).c_str(),
+                               duneSpeciesNames.at(j).c_str());
         QString rhs = pde.getJacobian().at(i).at(j).c_str();
         ini.addValue(lhs, rhs);
       }
@@ -214,13 +241,10 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
 
     // diffusion coefficients
     ini.addSection("model", membrane.membraneID.c_str(), "diffusion");
-    i_species = 0;
-    for (const auto &speciesID : nonConstantSpecies) {
-      ini.addValue(
-          nonConstantSpecies.at(i_species).c_str(),
-          doc.mapSpeciesIdToField.at(speciesID.c_str()).diffusionConstant,
-          doublePrecision);
-      ++i_species;
+    for (std::size_t i = 0; i < nSpecies; ++i) {
+      ini.addValue(duneSpeciesNames.at(i).c_str(),
+                   doc.getDiffusionConstant(nonConstantSpecies.at(i).c_str()),
+                   doublePrecision);
     }
 
     // output file
@@ -230,15 +254,20 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
 
   // logger settings
   ini.addSection("logging");
-  ini.addValue("default.level", "off");
+  if (SPDLOG_ACTIVE_LEVEL >= 2) {
+    // for release builds disable DUNE logging
+    ini.addValue("default.level", "off");
+  } else {
+    // for debug builds enable verbose DUNE logging
+    ini.addValue("default.level", "trace");
+    ini.addSection("logging.backend.model");
+    ini.addValue("level", "trace");
+    ini.addValue("indent", 2);
 
-  //  ini.addSection("logging.backend.model");
-  //  ini.addValue("level", "debug");
-  //  ini.addValue("indent", 2);
-
-  //  ini.addSection("logging.backend.solver");
-  //  ini.addValue("level", "debug");
-  //  ini.addValue("indent", 4);
+    ini.addSection("logging.backend.solver");
+    ini.addValue("level", "trace");
+    ini.addValue("indent", 4);
+  }
 }
 
 QString DuneConverter::getIniFile() const { return ini.getText(); }
@@ -247,10 +276,12 @@ void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc) {
   geometrySize = sbmlDoc.getCompartmentImage().size() * sbmlDoc.getPixelWidth();
   // export gmsh file `grid.msh` in the same dir
   QFile f2("grid.msh");
-  if (f2.open(QIODevice::ReadWrite | QIODevice::Text)) {
+  if (f2.open(QIODevice::WriteOnly | QIODevice::Text)) {
     f2.write(sbmlDoc.mesh.getGMSH().toUtf8());
+    f2.close();
+  } else {
+    SPDLOG_ERROR("Cannot write to file grid.msh");
   }
-  f2.close();
 
   // pass dune ini file directly as istream
   std::stringstream ssIni(
@@ -262,7 +293,10 @@ void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc) {
     auto &mpi_helper = Dune::MPIHelper::instance(0, nullptr);
     auto comm = mpi_helper.getCollectiveCommunication();
     Dune::Logging::Logging::init(comm, config.sub("logging"));
-    Dune::Logging::Logging::mute();
+    if (SPDLOG_ACTIVE_LEVEL >= 2) {
+      // for release builds disable DUNE logging
+      Dune::Logging::Logging::mute();
+    }
   }
 
   // NB: msh file needs to be file for gmshreader
@@ -273,7 +307,7 @@ void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc) {
   model = std::make_unique<
       Dune::Copasi::ModelMultiDomainDiffusionReaction<dune::Grid>>(
       grid_ptr, config.sub("model"));
-}
+}  // namespace dune
 
 void DuneSimulation::updateCompartmentNames() {
   const auto &compartments = config.sub("model.compartments").getValueKeys();

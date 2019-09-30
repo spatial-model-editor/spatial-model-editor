@@ -578,9 +578,9 @@ void SbmlDocWrapper::updateMembraneList() {
         std::size_t index = iter->second;
         if (!membranePairs[index].empty()) {
           // generate membrane name, compartments ordered by colour
-          QString name = compartments[i] + "-" + compartments[j];
+          QString name = compartments[i] + "_" + compartments[j];
           if (colA > colB) {
-            name = compartments[j] + "-" + compartments[i];
+            name = compartments[j] + "_" + compartments[i];
           }
           membranes.push_back(name);
           // map name to index of membrane location pairs
@@ -643,9 +643,9 @@ void SbmlDocWrapper::updateReactionList() {
       // membrane name is compA-compB, ordered by colour
       QRgb colA = mapCompartmentToColour[compA];
       QRgb colB = mapCompartmentToColour[compB];
-      QString membraneID = compA + "-" + compB;
+      QString membraneID = compA + "_" + compB;
       if (colA > colB) {
-        membraneID = compB + "-" + compA;
+        membraneID = compB + "_" + compA;
       }
       // check that compartments map to colours - if not do nothing
       if (colA != 0 && colB != 0) {

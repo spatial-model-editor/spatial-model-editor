@@ -15,13 +15,15 @@ namespace pde {
 
 class PDE {
  private:
+  std::vector<std::string> species;
   std::vector<std::string> rhs;
   std::vector<std::vector<std::string>> jacobian;
 
  public:
   explicit PDE(const sbml::SbmlDocWrapper *doc_ptr,
                const std::vector<std::string> &speciesIDs,
-               const std::vector<std::string> &reactionIDs);
+               const std::vector<std::string> &reactionIDs,
+               const std::vector<std::string> &relabelledSpeciesIDs = {});
   const std::vector<std::string> &getRHS() const;
   const std::vector<std::vector<std::string>> &getJacobian() const;
 };

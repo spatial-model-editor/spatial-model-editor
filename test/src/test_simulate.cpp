@@ -1,12 +1,10 @@
-#include "simulate.hpp"
-
 #include <QFile>
 
 #include "catch.hpp"
-#include "sbml_test_data/very_simple_model.hpp"
-
 #include "logger.hpp"
 #include "sbml.hpp"
+#include "sbml_test_data/very_simple_model.hpp"
+#include "simulate.hpp"
 
 SCENARIO("simulate very_simple_model: single pixel geometry",
          "[simulate][non-gui]") {
@@ -33,7 +31,7 @@ SCENARIO("simulate very_simple_model: single pixel geometry",
 
   // check we have identified the compartments and membranes
   REQUIRE(s.compartments == QStringList{"c1", "c2", "c3"});
-  REQUIRE(s.membranes == QStringList{"c1-c2", "c2-c3"});
+  REQUIRE(s.membranes == QStringList{"c1_c2", "c2_c3"});
 
   // check fields have correct compartments & sizes
   geometry::Field &fa1 = s.mapSpeciesIdToField.at("A_c1");
@@ -57,14 +55,14 @@ SCENARIO("simulate very_simple_model: single pixel geometry",
 
   // check membranes have correct compartment pairs & sizes
   geometry::Membrane &m0 = s.membraneVec[0];
-  REQUIRE(m0.membraneID == "c1-c2");
+  REQUIRE(m0.membraneID == "c1_c2");
   REQUIRE(m0.compA->compartmentID == "c1");
   REQUIRE(m0.compB->compartmentID == "c2");
   REQUIRE(m0.indexPair.size() == 1);
   REQUIRE(m0.indexPair[0] == std::pair<std::size_t, std::size_t>{0, 0});
 
   geometry::Membrane &m1 = s.membraneVec[1];
-  REQUIRE(m1.membraneID == "c2-c3");
+  REQUIRE(m1.membraneID == "c2_c3");
   REQUIRE(m1.compA->compartmentID == "c2");
   REQUIRE(m1.compB->compartmentID == "c3");
   REQUIRE(m1.indexPair.size() == 1);
@@ -235,13 +233,13 @@ SCENARIO("simulate very_simple_model: 2d geometry", "[simulate][non-gui]") {
 
   // check membranes have correct compartment pairs & sizes
   geometry::Membrane &m0 = s.membraneVec[0];
-  REQUIRE(m0.membraneID == "c1-c2");
+  REQUIRE(m0.membraneID == "c1_c2");
   REQUIRE(m0.compA->compartmentID == "c1");
   REQUIRE(m0.compB->compartmentID == "c2");
   REQUIRE(m0.indexPair.size() == 338);
 
   geometry::Membrane &m1 = s.membraneVec[1];
-  REQUIRE(m1.membraneID == "c2-c3");
+  REQUIRE(m1.membraneID == "c2_c3");
   REQUIRE(m1.compA->compartmentID == "c2");
   REQUIRE(m1.compB->compartmentID == "c3");
   REQUIRE(m1.indexPair.size() == 108);
