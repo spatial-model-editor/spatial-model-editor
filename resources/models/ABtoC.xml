@@ -41,6 +41,12 @@
       <parameter id="C_diffusionConstant" value="25" constant="true">
         <spatial:diffusionCoefficient spatial:variable="C" spatial:type="isotropic"/>
       </parameter>
+      <parameter id="x" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="xCoord"/>
+      </parameter>
+      <parameter id="y" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="yCoord"/>
+      </parameter>
     </listOfParameters>
     <listOfInitialAssignments>
       <initialAssignment symbol="A">

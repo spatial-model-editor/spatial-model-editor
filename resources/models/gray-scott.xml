@@ -164,6 +164,12 @@
       <parameter id="V_diffusionConstant" value="0.005" constant="true">
         <spatial:diffusionCoefficient spatial:variable="V" spatial:type="isotropic"/>
       </parameter>
+      <parameter id="x" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="xCoord"/>
+      </parameter>
+      <parameter id="y" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="yCoord"/>
+      </parameter>
     </listOfParameters>
     <listOfInitialAssignments>
       <initialAssignment symbol="U">

@@ -3,7 +3,6 @@
 #include <QMainWindow>
 
 #include "qcustomplot.h"
-
 #include "sbml.hpp"
 #include "simulate.hpp"
 
@@ -113,6 +112,8 @@ class MainWindow : public QMainWindow {
   void radInitialConcentration_toggled();
 
   void txtInitialConcentration_editingFinished();
+
+  void btnAnalyticConcentration_clicked();
 
   void btnImportConcentration_clicked();
 

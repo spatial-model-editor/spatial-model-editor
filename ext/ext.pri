@@ -73,7 +73,7 @@ LIBS += \
     $$PWD/dune/dune-uggrid/build-cmake/lib/libugS2.a \
     $$PWD/dune/dune-uggrid/build-cmake/lib/libugL.a \
     $$PWD/dune/dune-common/build-cmake/lib/libdunecommon.a \
-    $$PWD/dune/dune-copasi/build-cmake/dune/copasi/libdune_copasi_lib.a \
+    $$PWD/dune/dune-copasi/build-cmake/lib/libdune_copasi_lib.a \
 
 INCLUDEPATH += \
     $$PWD/dune/dune-copasi \

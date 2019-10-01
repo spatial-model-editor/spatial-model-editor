@@ -1,14 +1,12 @@
-#include "mainwindow.hpp"
-
 #include <QtTest>
 
 #include "catch.hpp"
+#include "logger.hpp"
+#include "mainwindow.hpp"
+#include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
 #include "sbml_test_data/ABtoC.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
-
-#include "logger.hpp"
-#include "qlabelmousetracker.hpp"
 #include "utils.hpp"
 
 // class that provides a pointer to each Widget in mainWindow
@@ -455,14 +453,14 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   // QTest::keyClick(ui.listSpecies, Qt::Key_Down, Qt::ControlModifier,
   // key_delay);
   REQUIRE(ui.chkSpeciesIsConstant->isChecked() == true);
-  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == true);
   // toggle is spatial checkbox
   QTest::mouseClick(ui.chkSpeciesIsSpatial, Qt::LeftButton,
                     Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
-  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == true);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
   QTest::mouseClick(ui.chkSpeciesIsSpatial, Qt::LeftButton,
                     Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
-  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == true);
   // toggle is constant checkbox
   QTest::mouseClick(ui.chkSpeciesIsConstant, Qt::LeftButton,
                     Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
@@ -473,14 +471,14 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   // select second item in listSpecies
   QTest::keyClick(ui.listSpecies, Qt::Key_Down, Qt::ControlModifier, key_delay);
   REQUIRE(ui.chkSpeciesIsConstant->isChecked() == false);
-  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == true);
   // toggle is spatial checkbox
   QTest::mouseClick(ui.chkSpeciesIsSpatial, Qt::LeftButton,
                     Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
-  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == true);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
   QTest::mouseClick(ui.chkSpeciesIsSpatial, Qt::LeftButton,
                     Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
-  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == true);
   QTest::keyClick(ui.listSpecies, Qt::Key_Enter, Qt::ControlModifier,
                   key_delay);
   // keep pressing down until we have selected the B_c3 species

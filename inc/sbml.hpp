@@ -10,13 +10,12 @@
 #include <QImage>
 #include <QStringList>
 
+#include "geometry.hpp"
+#include "mesh.hpp"
 #include "sbml/SBMLTypes.h"
 #include "sbml/extension/SBMLDocumentPlugin.h"
 #include "sbml/packages/spatial/common/SpatialExtensionTypes.h"
 #include "sbml/packages/spatial/extension/SpatialExtension.h"
-
-#include "geometry.hpp"
-#include "mesh.hpp"
 
 namespace sbml {
 
@@ -69,9 +68,15 @@ class SbmlDocWrapper {
   // add default 2d Parametric & SampledField geometry to SBML
   void writeDefaultGeometryToSBML();
 
+  void setFieldConcAnalytic(geometry::Field &field, const std::string &expr);
+
   void initMembraneColourPairs();
   void updateMembraneList();
   void updateReactionList();
+
+  // remove initialAssignment and related things from SBML
+  // (sampledField, spatialref, etc)
+  void removeInitialAssignment(const std::string &speciesID);
 
   // update mesh object
   void updateMesh();
@@ -143,6 +148,12 @@ class SbmlDocWrapper {
   const QImage &getMembraneImage(const QString &membraneID) const;
 
   // species concentrations
+  void setAnalyticConcentration(const QString &speciesID,
+                                const QString &analyticExpression);
+  QString getAnalyticConcentration(const QString &speciesID) const;
+
+  std::string getSpeciesSampledFieldInitialAssignment(
+      const std::string &speciesID) const;
   void importConcentrationFromImage(const QString &speciesID,
                                     const QString &filename);
   QImage getConcentrationImage(const QString &speciesID) const;

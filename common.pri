@@ -21,6 +21,7 @@ SOURCES += \
     src/sbml.cpp \
     src/simulate.cpp \
     src/symbolic.cpp \
+    src/tiff.cpp \
     src/triangulate.cpp \
     src/utils.cpp \
     src/version.cpp \
@@ -42,6 +43,7 @@ HEADERS += \
     inc/sbml.hpp \
     inc/simulate.hpp \
     inc/symbolic.hpp \
+    inc/tiff.hpp \
     inc/triangulate.hpp \
     inc/utils.hpp \
     inc/version.hpp \
@@ -61,7 +63,7 @@ include(ext/ext.pri)
 
 # set logging level (at compile time)
 CONFIG(release, debug|release):DEFINES += SPDLOG_ACTIVE_LEVEL="SPDLOG_LEVEL_INFO"
-CONFIG(debug, debug|release):DEFINES += SPDLOG_ACTIVE_LEVEL="SPDLOG_LEVEL_TRACE"
+CONFIG(debug, debug|release):DEFINES += SPDLOG_ACTIVE_LEVEL="SPDLOG_LEVEL_DEBUG"
 
 # on linux, enable GCC compiler warnings
 unix: QMAKE_CXXFLAGS += -Wall -Wcast-align -Wconversion -Wdouble-promotion -Wextra -Wformat=2 -Wnon-virtual-dtor -Wold-style-cast -Woverloaded-virtual -Wshadow -Wsign-conversion -Wunused -Wpedantic

@@ -69,9 +69,13 @@ TEST_CASE("DUNE ini file for ABtoC model", "[dune][ini][non-gui]") {
   REQUIRE(*line++ == "C = 0");
   REQUIRE(*line++ == "");
   REQUIRE(*line++ == "[model.comp.initial]");
-  REQUIRE(*line++ == "A = 1");
-  REQUIRE(*line++ == "B = 1");
+  REQUIRE(*line++ == "A = 1*A_initialConcentration(x,y)");
+  REQUIRE(*line++ == "B = 1*B_initialConcentration(x,y)");
   REQUIRE(*line++ == "C = 0");
+  REQUIRE(*line++ == "");
+  REQUIRE(*line++ == "[model.data]");
+  REQUIRE(*line++ == "A_initialConcentration = A_initialConcentration.tif");
+  REQUIRE(*line++ == "B_initialConcentration = B_initialConcentration.tif");
   REQUIRE(*line++ == "");
   REQUIRE(*line++ == "[model.comp.reaction]");
   REQUIRE(*line++ == "A = -0.1*A*B");
@@ -153,17 +157,78 @@ TEST_CASE("DUNE simulation of ABtoC model", "[dune][simulate][non-gui]") {
   f.open(QIODevice::ReadOnly);
   s.importSBMLString(f.readAll().toStdString());
 
-  dune::DuneSimulation duneSim(s);
+  // set spatially constant initial conditions
+  s.setInitialConcentration("A", 1.0);
+  s.setInitialConcentration("B", 1.0);
+  s.setInitialConcentration("C", 0.0);
+
+  dune::DuneSimulation duneSim(s, QSize(200, 200));
   REQUIRE(duneSim.getAverageConcentration("A") == dbl_approx(1.0));
   REQUIRE(duneSim.getAverageConcentration("B") == dbl_approx(1.0));
   REQUIRE(duneSim.getAverageConcentration("C") == dbl_approx(0.0));
-  QImage conc = duneSim.getConcImage(QSize(200, 200));
   duneSim.doTimestep(0.05);
-  conc = duneSim.getConcImage(QSize(200, 200));
+  auto imgConcFull = duneSim.getConcImage();
+  auto imgConcLinear = duneSim.getConcImage(true);
   REQUIRE(std::abs(duneSim.getAverageConcentration("A") - 0.995) < 5e-5);
   REQUIRE(std::abs(duneSim.getAverageConcentration("B") - 0.995) < 5e-5);
   REQUIRE(std::abs(duneSim.getAverageConcentration("C") - 0.005) < 5e-5);
-  REQUIRE(conc.size() == QSize(200, 200));
+  REQUIRE(imgConcFull.size() == QSize(200, 200));
+  REQUIRE(imgConcLinear.size() == QSize(200, 200));
+  std::vector<QPoint> points{
+      QPoint(0, 0),    QPoint(12, 54),   QPoint(33, 31),
+      QPoint(66, 3),   QPoint(88, 44),   QPoint(144, 189),
+      QPoint(170, 14), QPoint(199, 199), QPoint(175, 77)};
+  for (const auto& point : points) {
+    REQUIRE(imgConcFull.pixel(point) == imgConcLinear.pixel(point));
+  }
+}
+
+TEST_CASE("DUNE visualization self-consistency: 500x300",
+          "[dune][visualization][non-gui]") {
+  sbml::SbmlDocWrapper s;
+  QFile f(":/models/ABtoC.xml");
+  f.open(QIODevice::ReadOnly);
+  s.importSBMLString(f.readAll().toStdString());
+
+  QSize imgSize(500, 300);
+  dune::DuneSimulation duneSim(s, imgSize);
+  auto imgConcFull = duneSim.getConcImage();
+  auto imgConcLinear = duneSim.getConcImage(true);
+  REQUIRE(imgConcFull.size() == imgSize);
+  REQUIRE(imgConcLinear.size() == imgSize);
+  // 1st order FEM: linear interpolation should be equivalent
+  std::vector<QPoint> points{
+      QPoint(0, 0),    QPoint(12, 54),   QPoint(33, 31),
+      QPoint(66, 3),   QPoint(88, 44),   QPoint(144, 189),
+      QPoint(170, 14), QPoint(199, 199), QPoint(175, 77)};
+  for (const auto& point : points) {
+    REQUIRE(imgConcFull.pixel(point) == imgConcLinear.pixel(point));
+  }
+}
+
+TEST_CASE("DUNE visualization analytic", "[dune][visualization][non-gui]") {
+  sbml::SbmlDocWrapper s;
+  QFile f(":/models/ABtoC.xml");
+  f.open(QIODevice::ReadOnly);
+  s.importSBMLString(f.readAll().toStdString());
+
+  s.setAnalyticConcentration("A", "x");
+  s.setAnalyticConcentration("B", "y");
+  s.setAnalyticConcentration("C", "0");
+
+  QSize imgSize(200, 200);
+  dune::DuneSimulation duneSim(s, imgSize);
+  auto imgConc = duneSim.getConcImage();
+  imgConc.save("img.png");
+  QPoint p(50, 130);
+  auto oldCol = imgConc.pixel(p);
+  for (int i = 0; i < 5; ++i) {
+    p += QPoint(+10, -10);
+    auto newCol = imgConc.pixel(p);
+    CAPTURE(p);
+    REQUIRE(newCol > oldCol);
+    oldCol = newCol;
+  }
 }
 
 TEST_CASE("Species names that are invalid dune variables",

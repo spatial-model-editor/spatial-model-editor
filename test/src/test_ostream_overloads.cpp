@@ -43,6 +43,13 @@ TEST_CASE("QSize", "[ostream][non-gui]") {
   REQUIRE(ss.str() == "1024x768");
 }
 
+TEST_CASE("QSizeF", "[ostream][non-gui]") {
+  std::stringstream ss;
+  QSizeF p(1024.3, 768.99);
+  ss << p;
+  REQUIRE(ss.str() == "1024.3x768.99");
+}
+
 TEST_CASE("QColor", "[ostream][non-gui]") {
   std::stringstream ss;
   QColor c(123, 22, 99);
