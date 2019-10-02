@@ -1056,6 +1056,12 @@
           </COPASI>
         </annotation>
       </parameter>
+      <parameter id="x" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="xCoord"/>
+      </parameter>
+      <parameter id="y" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="yCoord"/>
+      </parameter>
     </listOfParameters>
     <listOfRules>
       <assignmentRule variable="IkBa_phosphorylation_kcat">

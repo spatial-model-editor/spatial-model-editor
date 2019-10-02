@@ -74,6 +74,15 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
   auto *coord = geom->getCoordinateComponent(0);
   coord->setType(libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
   coord->setId("xCoord");
+  auto *param = model->createParameter();
+  param->setId("x");
+  param->setConstant(false);
+  auto *ssr = dynamic_cast<libsbml::SpatialParameterPlugin *>(
+                  param->getPlugin("spatial"))
+                  ->createSpatialSymbolReference();
+  ssr->setSpatialRef(coord->getId());
+  SPDLOG_INFO("  - creating Parameter: {}", param->getId());
+  SPDLOG_INFO("  - with spatialSymbolReference: {}", ssr->getSpatialRef());
   auto *min = coord->createBoundaryMin();
   min->setId("xBoundaryMin");
   min->setValue(0);
@@ -85,6 +94,15 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
   coord = geom->getCoordinateComponent(1);
   coord->setType(libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
   coord->setId("yCoord");
+  param = model->createParameter();
+  param->setId("y");
+  param->setConstant(false);
+  ssr = dynamic_cast<libsbml::SpatialParameterPlugin *>(
+            param->getPlugin("spatial"))
+            ->createSpatialSymbolReference();
+  ssr->setSpatialRef(coord->getId());
+  SPDLOG_INFO("  - creating Parameter: {}", ssr->getId());
+  SPDLOG_INFO("  - with spatialSymbolReference: {}", ssr->getSpatialRef());
   min = coord->createBoundaryMin();
   min->setId("yBoundaryMin");
   min->setValue(0);
@@ -93,18 +111,18 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
   max->setValue(pixelWidth * static_cast<double>(compartmentImage.height()));
   SPDLOG_INFO("  - y in range [{},{}]", min->getValue(), max->getValue());
 
-  // set isSpatial to false for all species
+  // set isSpatial to true for all species
   for (unsigned i = 0; i < model->getNumSpecies(); ++i) {
     auto *ssp = dynamic_cast<libsbml::SpatialSpeciesPlugin *>(
         model->getSpecies(i)->getPlugin("spatial"));
-    ssp->setIsSpatial(false);
+    ssp->setIsSpatial(true);
   }
 
-  // set isLocal to false for all reactions
+  // set isLocal to true for all reactions
   for (unsigned i = 0; i < model->getNumReactions(); ++i) {
     auto *srp = dynamic_cast<libsbml::SpatialReactionPlugin *>(
         model->getReaction(i)->getPlugin("spatial"));
-    srp->setIsLocal(false);
+    srp->setIsLocal(true);
   }
 
   // create sampled field geometry with empty SampledField
@@ -489,6 +507,41 @@ void SbmlDocWrapper::writeGeometryImageToSBML() {
               sf->getSamplesLength());
 }
 
+void SbmlDocWrapper::setFieldConcAnalytic(geometry::Field &field,
+                                          const std::string &expr) {
+  SPDLOG_INFO("expr: {}", expr);
+  auto inlinedExpr = inlineExpr(expr);
+  SPDLOG_INFO("  - inlined expr: {}", inlinedExpr);
+  symbolic::Symbolic sym(inlinedExpr, {"x", "y"}, getGlobalConstants());
+  SPDLOG_INFO("  - parsed expr: {}", sym.simplify());
+  auto result = std::vector<double>(1, 0);
+  auto vars = std::vector<double>(2, 0);
+  for (std::size_t i = 0; i < field.geometry->ix.size(); ++i) {
+    // position in pixels (with (0,0) in top-left of image):
+    const auto &point = field.geometry->ix.at(i);
+    // rescale to physical x,y point (with (0,0) in bottom-left):
+    double minX =
+        geom->getCoordinateComponentByKind(
+                libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X)
+            ->getBoundaryMin()
+            ->getValue();
+    vars[0] = minX + pixelWidth * static_cast<double>(point.x());
+    double minY =
+        geom->getCoordinateComponentByKind(
+                libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y)
+            ->getBoundaryMin()
+            ->getValue();
+    vars[1] =
+        minY + pixelWidth * static_cast<double>(
+                                field.geometry->getCompartmentImage().height() -
+                                1 - point.y());
+    sym.evalLLVM(result, vars);
+    field.conc[i] = result[0];
+  }
+  field.init = field.conc;
+  field.isUniformConcentration = false;
+}
+
 void SbmlDocWrapper::initMembraneColourPairs() {
   // convert geometry image to 8-bit indexed format:
   // each pixel points to an index in the colorTable
@@ -762,9 +815,7 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
           field.setUniformConcentration(param->getValue());
         }
       } else {
-        // todo: parse expression using Symengine/ExprTk, get constants,
-        // evaluate & assign result as initialConcentration
-        SPDLOG_WARN("  - initialAssignment too complicated (todo)");
+        setFieldConcAnalytic(field, expr);
       }
     }
 
@@ -1002,6 +1053,64 @@ void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
   updateMesh();
 }
 
+void SbmlDocWrapper::setAnalyticConcentration(
+    const QString &speciesID, const QString &analyticExpression) {
+  SPDLOG_INFO("speciesID: {}", speciesID);
+  SPDLOG_INFO("  - expression: {}", analyticExpression);
+  libsbml::InitialAssignment *asgn;
+  if (model->getInitialAssignmentBySymbol(speciesID.toStdString()) != nullptr) {
+    asgn = model->getInitialAssignmentBySymbol(speciesID.toStdString());
+    SPDLOG_INFO("  - replacing existing assignment: {}", asgn->getId());
+  } else {
+    asgn = model->createInitialAssignment();
+    asgn->setSymbol(speciesID.toStdString());
+    asgn->setId(speciesID.toStdString() + "_initialConcentration");
+    SPDLOG_INFO("  - creating new assignment: {}", asgn->getId());
+  }
+  std::unique_ptr<libsbml::ASTNode> argAST(
+      libsbml::SBML_parseL3Formula(analyticExpression.toStdString().c_str()));
+  asgn->setMath(argAST.get());
+  setFieldConcAnalytic(mapSpeciesIdToField.at(speciesID),
+                       analyticExpression.toStdString());
+}
+
+QString SbmlDocWrapper::getAnalyticConcentration(
+    const QString &speciesID) const {
+  const auto *asgn =
+      model->getInitialAssignmentBySymbol(speciesID.toStdString());
+  if (asgn != nullptr) {
+    return ASTtoString(asgn->getMath()).c_str();
+  }
+  return QString();
+}
+
+std::string SbmlDocWrapper::getSpeciesSampledFieldInitialAssignment(
+    const std::string &speciesID) const {
+  // look for existing initialAssignment to a sampledField
+  std::string sampledFieldID;
+  if (model->getInitialAssignmentBySymbol(speciesID) != nullptr) {
+    auto *asgn = model->getInitialAssignmentBySymbol(speciesID);
+    if (asgn->getMath()->isName()) {
+      std::string paramID = asgn->getMath()->getName();
+      SPDLOG_INFO("  - found initialAssignment: {}", paramID);
+      auto *param = model->getParameter(paramID);
+      if (param != nullptr) {
+        auto *spp = dynamic_cast<libsbml::SpatialParameterPlugin *>(
+            param->getPlugin("spatial"));
+        if (spp != nullptr) {
+          const auto &ref = spp->getSpatialSymbolReference()->getSpatialRef();
+          SPDLOG_INFO("  - found spatialSymbolReference: {}", ref);
+          if (geom->getSampledField(ref) != nullptr) {
+            sampledFieldID = ref;
+            SPDLOG_INFO("  - this is a reference to a SampledField");
+          }
+        }
+      }
+    }
+  }
+  return sampledFieldID;
+}
+
 void SbmlDocWrapper::importConcentrationFromImage(const QString &speciesID,
                                                   const QString &filename) {
   SPDLOG_INFO("speciesID: {}", speciesID);
@@ -1011,24 +1120,9 @@ void SbmlDocWrapper::importConcentrationFromImage(const QString &speciesID,
   field.importConcentration(img);
   std::vector<double> concentrationArray = field.getConcentrationArray();
 
-  // look for existing initialAssignment
-  std::string sampledFieldID;
-  if (model->getInitialAssignmentBySymbol(speciesID.toStdString()) != nullptr) {
-    auto *asgn = model->getInitialAssignmentBySymbol(speciesID.toStdString());
-    if (asgn->getMath()->isName()) {
-      std::string paramID = asgn->getMath()->getName();
-      SPDLOG_INFO("  - found initialAssignment: {}", paramID);
-      auto *param = model->getParameter(paramID);
-      if (param != nullptr) {
-        auto *spp = dynamic_cast<libsbml::SpatialParameterPlugin *>(
-            param->getPlugin("spatial"));
-        if (spp != nullptr) {
-          sampledFieldID = spp->getSpatialSymbolReference()->getSpatialRef();
-          SPDLOG_INFO("  - found spatialSymbolReference: {}", sampledFieldID);
-        }
-      }
-    }
-  }
+  // look for existing initialAssignment to a sampledField
+  std::string sampledFieldID =
+      getSpeciesSampledFieldInitialAssignment(speciesID.toStdString());
   // if found, update existing sampledField with new concentration array
   if (!sampledFieldID.empty()) {
     auto *sf = geom->getSampledField(sampledFieldID);
@@ -1232,6 +1326,14 @@ std::map<std::string, double> SbmlDocWrapper::getGlobalConstants() const {
     const auto *comp = model->getCompartment(k);
     SPDLOG_TRACE("parameter {} = {}", comp->getId(), comp->getSize());
     constants[comp->getId()] = comp->getSize();
+  }
+  // remove x and y if present, as these are not really parameters
+  // (we want them to remain as variables to be parsed by symbolic parser)
+  for (const auto &c : {"x", "y"}) {
+    auto iter = constants.find(c);
+    if (iter != constants.cend()) {
+      constants.erase(iter);
+    }
   }
   return constants;
 }

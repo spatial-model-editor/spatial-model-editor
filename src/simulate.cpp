@@ -237,6 +237,9 @@ void Simulate::integrateForwardsEuler(double dt) {
 }
 
 QImage Simulate::getConcentrationImage() {
+  if (field.empty()) {
+    return QImage();
+  }
   QImage img(field[0]->geometry->getCompartmentImage().size(),
              QImage::Format_ARGB32);
   img.fill(qRgba(0, 0, 0, 0));

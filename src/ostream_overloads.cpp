@@ -24,6 +24,10 @@ std::ostream &operator<<(std::ostream &os, const QSize &value) {
   return os << value.width() << "x" << value.height();
 }
 
+std::ostream &operator<<(std::ostream &os, const QSizeF &value) {
+  return os << value.width() << "x" << value.height();
+}
+
 std::ostream &operator<<(std::ostream &os, const QColor &value) {
   return os << std::hex << value.rgba();
 }

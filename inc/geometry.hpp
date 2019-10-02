@@ -9,9 +9,8 @@
 
 #pragma once
 
-#include <unordered_map>
-
 #include <QImage>
+#include <unordered_map>
 
 namespace geometry {
 

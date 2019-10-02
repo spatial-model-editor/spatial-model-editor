@@ -39,6 +39,12 @@
       <parameter id="X_diffusionConstant" value="0.2" constant="true">
         <spatial:diffusionCoefficient spatial:variable="X" spatial:type="isotropic"/>
       </parameter>
+      <parameter id="x" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="xCoord"/>
+      </parameter>
+      <parameter id="y" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="yCoord"/>
+      </parameter>
     </listOfParameters>
     <listOfInitialAssignments>
       <initialAssignment symbol="X">

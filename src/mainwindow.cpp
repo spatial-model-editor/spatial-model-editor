@@ -1,13 +1,12 @@
 #include "mainwindow.hpp"
 
-#include <sstream>
-
 #include <QErrorMessage>
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QString>
 #include <QStringListModel>
+#include <sstream>
 
 #include "dialogdimensions.hpp"
 #include "dune.hpp"
@@ -149,6 +148,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->radInitialConcentrationVarying, &QRadioButton::toggled, this,
           &MainWindow::radInitialConcentration_toggled);
+
+  connect(ui->btnAnalyticConcentration, &QPushButton::clicked, this,
+          &MainWindow::btnAnalyticConcentration_clicked);
 
   connect(ui->btnImportConcentration, &QPushButton::clicked, this,
           &MainWindow::btnImportConcentration_clicked);
@@ -779,6 +781,24 @@ void MainWindow::txtInitialConcentration_editingFinished() {
   listSpecies_currentItemChanged(ui->listSpecies->currentItem(), nullptr);
 }
 
+void MainWindow::btnAnalyticConcentration_clicked() {
+  const auto &speciesID = ui->listSpecies->currentItem()->text(0);
+  SPDLOG_DEBUG("ask user for analytic initial concentration of species {}...",
+               speciesID);
+  // todo: have dedicated window for this
+  // which parses & checks expression is valid
+  QString expr = QInputDialog::getText(
+      this, "Analytic initial concentration",
+      "Analytic initial concentration, e.g. \"cos(x)^2 + sin(y)^2:\"",
+      QLineEdit::Normal, sbmlDoc.getAnalyticConcentration(speciesID));
+  if (!expr.isEmpty()) {
+    ui->radInitialConcentrationVarying->setChecked(true);
+    SPDLOG_DEBUG("  - set expr: {}", expr);
+    sbmlDoc.setAnalyticConcentration(speciesID, expr);
+    ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
+  }
+}
+
 void MainWindow::btnImportConcentration_clicked() {
   const auto &speciesID = ui->listSpecies->currentItem()->text(0);
   SPDLOG_DEBUG("ask user for concentration image for species {}... selected",
@@ -896,7 +916,7 @@ void MainWindow::btnSimulate_clicked() {
   }
 
   // Dune simulation
-  dune::DuneSimulation duneSim(sbmlDoc);
+  dune::DuneSimulation duneSim(sbmlDoc, ui->lblGeometry->size());
 
   // get initial concentrations
   images.clear();
@@ -912,7 +932,7 @@ void MainWindow::btnSimulate_clicked() {
   }
   images.clear();
   if (useDuneSimulator) {
-    images.push_back(duneSim.getConcImage(ui->lblGeometry->size()));
+    images.push_back(duneSim.getConcImage());
   } else {
     images.push_back(sim.getConcentrationImage());
   }
@@ -947,7 +967,7 @@ void MainWindow::btnSimulate_clicked() {
       break;
     }
     if (useDuneSimulator) {
-      images.push_back(duneSim.getConcImage(ui->lblGeometry->size()));
+      images.push_back(duneSim.getConcImage());
     } else {
       images.push_back(sim.getConcentrationImage());
     }

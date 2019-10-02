@@ -11,18 +11,17 @@
 
 #pragma once
 
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
-
 #include <QByteArray>
 #include <QColor>
 #include <QLatin1String>
 #include <QPoint>
 #include <QSize>
 #include <QString>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
 // Qt types
 
@@ -37,6 +36,8 @@ std::ostream &operator<<(std::ostream &os, const QPoint &value);
 std::ostream &operator<<(std::ostream &os, const QPointF &value);
 
 std::ostream &operator<<(std::ostream &os, const QSize &value);
+
+std::ostream &operator<<(std::ostream &os, const QSizeF &value);
 
 std::ostream &operator<<(std::ostream &os, const QColor &value);
 

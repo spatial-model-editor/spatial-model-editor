@@ -1,17 +1,40 @@
 // utilities
+//  - decltypeStr<T>: type of T as a string
+//    (taken from https://stackoverflow.com/a/56766138)
 //  - stringToVector: convert space-delimited list of values to a vector
 //  - vectorToString: convert vector of values to a space-delimited list
 //  - indexedColours: a set of default colours for display purposes
 
 #pragma once
 
+#include <QColor>
 #include <iomanip>
 #include <iterator>
 #include <sstream>
 #include <vector>
-#include <QColor>
 
 namespace utils {
+
+template <typename T>
+constexpr auto decltypeStr() {
+  std::string_view name, prefix, suffix;
+#ifdef __clang__
+  name = __PRETTY_FUNCTION__;
+  prefix = "auto type_name() [T = ";
+  suffix = "]";
+#elif defined(__GNUC__)
+  name = __PRETTY_FUNCTION__;
+  prefix = "constexpr auto type_name() [with T = ";
+  suffix = "]";
+#elif defined(_MSC_VER)
+  name = __FUNCSIG__;
+  prefix = "auto __cdecl type_name<";
+  suffix = ">(void)";
+#endif
+  name.remove_prefix(prefix.size());
+  name.remove_suffix(suffix.size());
+  return name;
+}
 
 template <class T>
 std::vector<T> stringToVector(const std::string &str) {

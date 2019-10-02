@@ -173,8 +173,8 @@ void Field::setUniformConcentration(double concentration) {
 }
 
 QImage Field::getConcentrationImage() const {
-  auto img =
-      QImage(geometry->getCompartmentImage().size(), QImage::Format_ARGB32);
+  auto img = QImage(geometry->getCompartmentImage().size(),
+                    QImage::Format_ARGB32_Premultiplied);
   img.fill(qRgba(0, 0, 0, 0));
   // for now rescale conc to [0,1] to multiply species colour
   double cmax = *std::max_element(conc.begin(), conc.end());
@@ -183,9 +183,9 @@ QImage Field::getConcentrationImage() const {
   }
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     double scale = conc[i] / cmax;
-    int r = static_cast<int>(std::round(scale * red));
-    int g = static_cast<int>(std::round(scale * green));
-    int b = static_cast<int>(std::round(scale * blue));
+    int r = static_cast<int>(scale * red);
+    int g = static_cast<int>(scale * green);
+    int b = static_cast<int>(scale * blue);
     img.setPixel(geometry->ix[i], qRgb(r, g, b));
   }
   return img;
@@ -211,10 +211,10 @@ std::vector<double> Field::getConcentrationArray() const {
 void Field::applyDiffusionOperator() {
   const Compartment *g = geometry;
   double pixelWidth = g->pixelWidth;
+  double d = diffusionConstant / pixelWidth / pixelWidth;
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
-    dcdt[i] = (diffusionConstant / pixelWidth / pixelWidth) *
-              (conc[g->up_x(i)] + conc[g->dn_x(i)] + conc[g->up_y(i)] +
-               conc[g->dn_y(i)] - 4.0 * conc[i]);
+    dcdt[i] = d * (conc[g->up_x(i)] + conc[g->dn_x(i)] + conc[g->up_y(i)] +
+                   conc[g->dn_y(i)] - 4.0 * conc[i]);
   }
 }
 

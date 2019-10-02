@@ -109,7 +109,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="tabGeometry">
         <property name="whatsThis">
@@ -693,8 +693,8 @@
              <layout class="QVBoxLayout" name="verticalLayout">
               <item>
                <layout class="QGridLayout" name="gridSpeciesSettings">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="lblSpeciesIsSpacial">
+                <item row="0" column="1" colspan="6">
+                 <widget class="QCheckBox" name="chkSpeciesIsSpatial">
                   <property name="toolTip">
                    <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
                   </property>
@@ -705,7 +705,61 @@
                    <string>&lt;h4&gt;Spatial&lt;/h4&gt;&lt;p&gt;A spatial species has a concentration that is a function of space within the compartment, i.e. it can take different values at different locations within the compartment&lt;/p&gt;</string>
                   </property>
                   <property name="text">
-                   <string>Spatial:</string>
+                   <string>species concentration has a spatial dependence</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1" colspan="6">
+                 <widget class="QCheckBox" name="chkSpeciesIsConstant">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>if &quot;Constant&quot; is checked: the species has a fixed concentration during the simulation</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>'Constant': species concentration cannot be altered by the simulation</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>&lt;h4&gt;Constant&lt;/h4&gt;&lt;p&gt;A constant species has a fixed concentration. It keeps its initial concentration for the whole simulation.&lt;/p&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>species concentration is fixed throughout the whole simulation</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="0" rowspan="2">
+                 <widget class="QLabel" name="lblInitConc">
+                  <property name="text">
+                   <string>Initial Concentration:</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="7" column="0">
+                 <widget class="QLabel" name="lblSpeciesColourLabel">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>The colour that is used to display the concentration of this species</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>The colour that is used to display the concentration of this species</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>The colour that is used to display the concentration of this species</string>
+                  </property>
+                  <property name="text">
+                   <string>Colour:</string>
                   </property>
                   <property name="alignment">
                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -738,135 +792,7 @@
                   </property>
                  </widget>
                 </item>
-                <item row="3" column="1">
-                 <widget class="QRadioButton" name="radInitialConcentrationVarying">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>Spatially varying initial concentration: varies with position</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>Spatially varying initial concentration: varies with position</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;Spatially varying initial concentration&lt;/h4&gt;
-&lt;p&gt;The initial concentration of the species can vary depending on the location within the compartment.&lt;/p&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>Spatially varying</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="2" colspan="3">
-                 <widget class="QPushButton" name="btnImportConcentration">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>Import an image of the spatial concentration of this species</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>Import an image of the spatial concentration of this species</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;import from image&lt;/h4&gt;&lt;p&gt;Import an image of the spatial concentration of this species&lt;/p&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>import from image...</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="lblSpeciesIsConstant">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>A constant species has a fixed concentration</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>A constant species has a fixed concentration</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;Constant&lt;/h4&gt;&lt;p&gt;A constant species has a fixed concentration. It keeps its initial concentration for the whole simulation.&lt;/p&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>Constant:</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0" rowspan="2">
-                 <widget class="QLabel" name="lblInitConc">
-                  <property name="text">
-                   <string>Initial Concentration:</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="6" column="0">
-                 <widget class="QLabel" name="lblDiffConst">
-                  <property name="toolTip">
-                   <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;Diffusion constant&lt;/h4&gt;
-&lt;p&gt;The rate at which the species diffuses within the compartment&lt;/p&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>Diffusion Constant:</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="7" column="0">
-                 <widget class="QLabel" name="lblSpeciesColourLabel">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>The colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>The colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>The colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="text">
-                   <string>Colour:</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="5">
+                <item row="3" column="6">
                  <widget class="QComboBox" name="cmbImportExampleConcentration">
                   <property name="currentText">
                    <string>example images...</string>
@@ -901,55 +827,52 @@
                   </item>
                  </widget>
                 </item>
-                <item row="2" column="2" colspan="4">
-                 <widget class="QLineEdit" name="txtInitialConcentration">
+                <item row="6" column="0">
+                 <widget class="QLabel" name="lblDiffConst">
+                  <property name="toolTip">
+                   <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>&lt;h4&gt;Diffusion constant&lt;/h4&gt;
+&lt;p&gt;The rate at which the species diffuses within the compartment&lt;/p&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>Diffusion Constant:</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="lblSpeciesIsConstant">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
-                 </widget>
-                </item>
-                <item row="0" column="1" colspan="5">
-                 <widget class="QCheckBox" name="chkSpeciesIsSpatial">
                   <property name="toolTip">
-                   <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
+                   <string>A constant species has a fixed concentration</string>
                   </property>
                   <property name="statusTip">
-                   <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
+                   <string>A constant species has a fixed concentration</string>
                   </property>
                   <property name="whatsThis">
-                   <string>&lt;h4&gt;Spatial&lt;/h4&gt;&lt;p&gt;A spatial species has a concentration that is a function of space within the compartment, i.e. it can take different values at different locations within the compartment&lt;/p&gt;</string>
+                   <string>&lt;h4&gt;Constant&lt;/h4&gt;&lt;p&gt;A constant species has a fixed concentration. It keeps its initial concentration for the whole simulation.&lt;/p&gt;</string>
                   </property>
                   <property name="text">
-                   <string>species concentration has a spatial dependence</string>
+                   <string>Constant:</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                   </property>
                  </widget>
                 </item>
-                <item row="7" column="5">
-                 <widget class="QPushButton" name="btnChangeSpeciesColour">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>Change the colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>Change the colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>Change the colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="text">
-                   <string>change colour...</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="7" column="1" colspan="4">
+                <item row="7" column="1" colspan="5">
                  <widget class="QLabel" name="lblSpeciesColour">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -980,7 +903,96 @@
                   </property>
                  </widget>
                 </item>
-                <item row="6" column="1" colspan="5">
+                <item row="0" column="0">
+                 <widget class="QLabel" name="lblSpeciesIsSpacial">
+                  <property name="toolTip">
+                   <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>&lt;h4&gt;Spatial&lt;/h4&gt;&lt;p&gt;A spatial species has a concentration that is a function of space within the compartment, i.e. it can take different values at different locations within the compartment&lt;/p&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>Spatial:</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="1">
+                 <widget class="QRadioButton" name="radInitialConcentrationVarying">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>Spatially varying initial concentration: varies with position</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>Spatially varying initial concentration: varies with position</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>&lt;h4&gt;Spatially varying initial concentration&lt;/h4&gt;
+&lt;p&gt;The initial concentration of the species can vary depending on the location within the compartment.&lt;/p&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>Spatially varying</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="3" column="3" colspan="3">
+                 <widget class="QPushButton" name="btnImportConcentration">
+                  <property name="enabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>Import an image of the spatial concentration of this species</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>Import an image of the spatial concentration of this species</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>&lt;h4&gt;import from image&lt;/h4&gt;&lt;p&gt;Import an image of the spatial concentration of this species&lt;/p&gt;</string>
+                  </property>
+                  <property name="text">
+                   <string>import from image...</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="7" column="6">
+                 <widget class="QPushButton" name="btnChangeSpeciesColour">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="toolTip">
+                   <string>Change the colour that is used to display the concentration of this species</string>
+                  </property>
+                  <property name="statusTip">
+                   <string>Change the colour that is used to display the concentration of this species</string>
+                  </property>
+                  <property name="whatsThis">
+                   <string>Change the colour that is used to display the concentration of this species</string>
+                  </property>
+                  <property name="text">
+                   <string>change colour...</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="6" column="1" colspan="6">
                  <widget class="QLineEdit" name="txtDiffusionConstant">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -1000,25 +1012,26 @@
                   </property>
                  </widget>
                 </item>
-                <item row="1" column="1" colspan="5">
-                 <widget class="QCheckBox" name="chkSpeciesIsConstant">
+                <item row="3" column="2">
+                 <widget class="QPushButton" name="btnAnalyticConcentration">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                     <horstretch>0</horstretch>
                     <verstretch>0</verstretch>
                    </sizepolicy>
                   </property>
-                  <property name="toolTip">
-                   <string>if &quot;Constant&quot; is checked: the species has a fixed concentration during the simulation</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>'Constant': species concentration cannot be altered by the simulation</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;Constant&lt;/h4&gt;&lt;p&gt;A constant species has a fixed concentration. It keeps its initial concentration for the whole simulation.&lt;/p&gt;</string>
-                  </property>
                   <property name="text">
-                   <string>species concentration is fixed throughout the whole simulation</string>
+                   <string>analytic...</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="2" column="2" colspan="5">
+                 <widget class="QLineEdit" name="txtInitialConcentration">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
                   </property>
                  </widget>
                 </item>

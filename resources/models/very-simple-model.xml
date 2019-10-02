@@ -57,6 +57,12 @@
       <parameter id="A_c1_diffusionConstant" value="15" constant="true">
         <spatial:diffusionCoefficient spatial:variable="A_c1" spatial:type="isotropic"/>
       </parameter>
+      <parameter id="x" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="xCoord"/>
+      </parameter>
+      <parameter id="y" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="yCoord"/>
+      </parameter>
     </listOfParameters>
     <listOfReactions>
       <reaction id="A_uptake" name="A_uptake" reversible="false" compartment="c1" spatial:isLocal="true">

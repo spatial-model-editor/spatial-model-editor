@@ -33,6 +33,7 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertree.hh>
 #include <dune/common/parametertreeparser.hh>
+#include <dune/copasi/enum.hh>
 #include <dune/copasi/gmsh_reader.hh>
 #include <dune/copasi/model_diffusion_reaction.cc>
 #include <dune/copasi/model_diffusion_reaction.hh>
@@ -80,11 +81,16 @@ class DuneConverter {
 };
 
 constexpr int dim = 2;
+constexpr int Order = 1;
 using HostGrid = Dune::UGGrid<dim>;
 using MDGTraits = Dune::mdgrid::DynamicSubDomainCountTraits<dim, 1>;
 using Grid = Dune::mdgrid::MultiDomainGrid<HostGrid, MDGTraits>;
+using ModelTraits =
+    Dune::Copasi::ModelMultiDomainDiffusionReactionTraits<Grid, Order>;
 
 using QTriangleF = std::array<QPointF, 3>;
+using Weight = std::pair<QPoint, std::array<double, 3>>;
+using PixelLocalPair = std::pair<QPoint, Dune::FieldVector<double, 2>>;
 
 class DuneSimulation {
  private:
@@ -92,26 +98,46 @@ class DuneSimulation {
   Dune::ParameterTree config;
   std::shared_ptr<Grid> grid_ptr;
   std::shared_ptr<HostGrid> host_grid_ptr;
-  std::unique_ptr<Dune::Copasi::ModelMultiDomainDiffusionReaction<dune::Grid>>
+  std::unique_ptr<Dune::Copasi::ModelMultiDomainDiffusionReaction<ModelTraits>>
       model;
   // index of compartment/species name in these vectors is the Dune index:
   std::vector<std::string> compartmentNames;
   std::vector<std::vector<std::string>> speciesNames;
   std::map<std::string, double> mapSpeciesIDToAvConc;
+  std::vector<std::vector<double>> maxConcs;
   // dimensions of model
   QSizeF geometrySize;
+  QPointF scaleFactor;
+  // dimensions of the image
+  QSize imageSize = QSize(500, 500);
+  // pixels+dune local coords for each triangle
+  // compartment::triangle::pixels+local-coord
+  std::vector<std::vector<std::vector<PixelLocalPair>>> pixels;
   // triangles that make up each compartment
+  // compartment::triangle
   std::vector<std::vector<QTriangleF>> triangles;
+  // for each triangle: vector of {pixel, W1, W2, W3}
+  // compartment::triangle::pixels-with-weights
+  std::vector<std::vector<std::vector<Weight>>> weights;
+  // for each triangle corner: concentration
+  // compartment::species::triangle::corner-conentration-values
+  std::vector<std::vector<std::vector<std::vector<double>>>> concentrations;
   void initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc);
   void updateCompartmentNames();
   void updateSpeciesNames();
+  void updatePixels();
   void updateTriangles();
+  void updateBarycentricWeights();
+  void updateSpeciesConcentrations();
+  QRgb pixelColour(std::size_t iDomain, const std::vector<double> &concs) const;
 
  public:
-  explicit DuneSimulation(const sbml::SbmlDocWrapper &sbmlDoc);
+  explicit DuneSimulation(const sbml::SbmlDocWrapper &sbmlDoc,
+                          QSize imgSize = QSize(500, 500));
   void doTimestep(double dt);
-  QImage getConcImage(const QSize &imageSize = QSize(800, 800));
+  QImage getConcImage(bool linearInterpolationOnly = false) const;
   double getAverageConcentration(const std::string &speciesID) const;
+  void setImageSize(const QSize &imgSize);
 };
 
 }  // namespace dune

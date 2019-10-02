@@ -9,6 +9,7 @@
 #include "pde.hpp"
 #include "reactions.hpp"
 #include "symbolic.hpp"
+#include "tiff.hpp"
 #include "utils.hpp"
 
 static std::vector<std::string> makeValidDuneSpeciesNames(
@@ -95,6 +96,7 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
   ini.addValue("begin_time", begin_time, doublePrecision);
   ini.addValue("end_time", end_time, doublePrecision);
   ini.addValue("time_step", time_step, doublePrecision);
+  ini.addValue("order", 1);
 
   // list of compartments with corresponding gmsh surface index - 1
   ini.addSection("model.compartments");
@@ -125,12 +127,40 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
     }
 
     // initial concentrations
+    std::vector<QString> tiffs;
     ini.addSection("model", compartmentID, "initial");
     for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
-      ini.addValue(
-          duneSpeciesNames.at(i).c_str(),
-          doc.getInitialConcentration(nonConstantSpecies.at(i).c_str()),
-          doublePrecision);
+      QString name = nonConstantSpecies.at(i).c_str();
+      QString duneName = duneSpeciesNames.at(i).c_str();
+      double initConc = doc.getInitialConcentration(name);
+      QString expr = doc.getAnalyticConcentration(name);
+      QString sampledField =
+          doc.getSpeciesSampledFieldInitialAssignment(name.toStdString())
+              .c_str();
+      if (!sampledField.isEmpty()) {
+        // if there is a sampledField then make a TIFF
+        auto sampledFieldFile = QString("%1.tif").arg(sampledField);
+        double max = utils::writeTIFF(sampledFieldFile.toStdString(),
+                                      doc.mapSpeciesIdToField.at(name),
+                                      doc.getPixelWidth());
+        tiffs.push_back(sampledField);
+        ini.addValue(duneName,
+                     QString("%2*%3(x,y)").arg(max).arg(sampledField));
+      } else if (!expr.isEmpty()) {
+        // otherwise, initialAssignments take precedence:
+        std::string e = doc.inlineExpr(expr.toStdString());
+        symbolic::Symbolic sym(e, {"x", "y"}, doc.getGlobalConstants());
+        ini.addValue(duneName, sym.simplify().c_str());
+      } else {
+        // otherwise just use initialConcentration value
+        ini.addValue(duneName, initConc, doublePrecision);
+      }
+    }
+    if (!tiffs.empty()) {
+      ini.addSection("model", "data");
+      for (const auto &tiff : tiffs) {
+        ini.addValue(tiff, tiff + QString(".tif"));
+      }
     }
 
     // reactions
@@ -288,7 +318,7 @@ void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc) {
       dune::DuneConverter(sbmlDoc).getIniFile().toStdString());
   Dune::ParameterTreeParser::readINITree(ssIni, config);
 
-  // init Dune logging if not already done & mute it
+  // init Dune logging if not already done
   if (!Dune::Logging::Logging::initialized()) {
     auto &mpi_helper = Dune::MPIHelper::instance(0, nullptr);
     auto comm = mpi_helper.getCollectiveCommunication();
@@ -305,9 +335,9 @@ void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc) {
 
   // initialize model
   model = std::make_unique<
-      Dune::Copasi::ModelMultiDomainDiffusionReaction<dune::Grid>>(
+      Dune::Copasi::ModelMultiDomainDiffusionReaction<ModelTraits>>(
       grid_ptr, config.sub("model"));
-}  // namespace dune
+}
 
 void DuneSimulation::updateCompartmentNames() {
   const auto &compartments = config.sub("model.compartments").getValueKeys();
@@ -340,6 +370,59 @@ void DuneSimulation::updateSpeciesNames() {
   }
 }
 
+static std::pair<QPoint, QPoint> getBoundingBox(const QTriangleF &t,
+                                                const QPointF &scale) {
+  // get triangle bounding box in physical units
+  QPointF fmin(t[0].x(), t[0].y());
+  QPointF fmax = fmin;
+  for (std::size_t i = 1; i < 3; ++i) {
+    fmin.setX(std::min(fmin.x(), t[i].x()));
+    fmax.setX(std::max(fmax.x(), t[i].x()));
+    fmin.setY(std::min(fmin.y(), t[i].y()));
+    fmax.setY(std::max(fmax.y(), t[i].y()));
+  }
+  // convert physical points to pixel locations
+  return std::make_pair<QPoint, QPoint>(
+      QPoint(static_cast<int>(fmin.x() * scale.x()),
+             static_cast<int>(fmin.y() * scale.y())),
+      QPoint(static_cast<int>(fmax.x() * scale.x()),
+             static_cast<int>(fmax.y() * scale.y())));
+}
+
+void DuneSimulation::updatePixels() {
+  pixels.clear();
+  for (std::size_t iDomain = 0; iDomain < compartmentNames.size(); ++iDomain) {
+    auto &pixelsComp = pixels.emplace_back();
+    const auto &gridview =
+        grid_ptr->subDomain(static_cast<int>(iDomain)).leafGridView();
+    SPDLOG_TRACE("compartment[{}]: {}", iDomain, compartmentNames.at(iDomain));
+    // get vertices of triangles:
+    for (const auto e : elements(gridview)) {
+      auto &pixelsTriangle = pixelsComp.emplace_back();
+      const auto &geo = e.geometry();
+      assert(geo.type().isTriangle());
+      auto ref = Dune::referenceElement(geo);
+      QPointF c0(geo.corner(0)[0], geo.corner(0)[1]);
+      QPointF c1(geo.corner(1)[0], geo.corner(1)[1]);
+      QPointF c2(geo.corner(2)[0], geo.corner(2)[1]);
+      auto [pMin, pMax] = getBoundingBox({{c0, c1, c2}}, scaleFactor);
+      SPDLOG_TRACE("  - bounding box {} - {}", pMin, pMax);
+      for (int x = pMin.x(); x < pMax.x() + 1; ++x) {
+        for (int y = pMin.y(); y < pMax.y() + 1; ++y) {
+          auto localPoint =
+              e.geometry().local({static_cast<double>(x) / scaleFactor.x(),
+                                  static_cast<double>(y) / scaleFactor.y()});
+          if (ref.checkInside(localPoint)) {
+            pixelsTriangle.push_back(
+                std::make_pair(QPoint(x, y), std::move(localPoint)));
+          }
+        }
+      }
+      SPDLOG_TRACE("    - found {} pixels", pixelsTriangle.size());
+    }
+  }
+}
+
 void DuneSimulation::updateTriangles() {
   triangles.clear();
   for (std::size_t iDomain = 0; iDomain < compartmentNames.size(); ++iDomain) {
@@ -360,101 +443,190 @@ void DuneSimulation::updateTriangles() {
   }
 }
 
-DuneSimulation::DuneSimulation(const sbml::SbmlDocWrapper &sbmlDoc) {
-  initDuneModel(sbmlDoc);
-  updateCompartmentNames();
-  updateSpeciesNames();
-  updateTriangles();
-  // temp call to construct map to av concentrations as side effect
-  // todo: remove this
-  QImage img = getConcImage();
+void DuneSimulation::updateBarycentricWeights() {
+  SPDLOG_TRACE("geometry size: {}", geometrySize);
+  SPDLOG_TRACE("image size: {}", imageSize);
+  SPDLOG_TRACE("scaleFactor (where pixel = scaleFactor*physical): {}",
+               scaleFactor);
+  weights.clear();
+  for (const auto &comp : triangles) {
+    SPDLOG_TRACE("compartment with {} triangles:", comp.size());
+    weights.emplace_back();
+    for (const auto &t : comp) {
+      auto &triangleWeights = weights.back().emplace_back();
+      auto [pMin, pMax] = getBoundingBox(t, scaleFactor);
+      SPDLOG_TRACE("  - bounding box {} - {}", pMin, pMax);
+      // get weights for each point
+      double denom = (t[1].y() - t[2].y()) * (t[0].x() - t[2].x()) +
+                     (t[2].x() - t[1].x()) * (t[0].y() - t[2].y());
+      QPointF w1((t[1].y() - t[2].y()) / denom, (t[2].x() - t[1].x()) / denom);
+      QPointF w2((t[2].y() - t[0].y()) / denom, (t[0].x() - t[2].x()) / denom);
+      for (int x = pMin.x(); x < pMax.x() + 1; ++x) {
+        for (int y = pMin.y(); y < pMax.y() + 1; ++y) {
+          double W1 =
+              w1.x() * (static_cast<double>(x) / scaleFactor.x() - t[2].x()) +
+              w1.y() * (static_cast<double>(y) / scaleFactor.y() - t[2].y());
+          double W2 =
+              w2.x() * (static_cast<double>(x) / scaleFactor.x() - t[2].x()) +
+              w2.y() * (static_cast<double>(y) / scaleFactor.y() - t[2].y());
+          double W3 = 1.0 - W1 - W2;
+          if (W1 >= 0 && W2 >= 0 && W3 >= 0) {
+            // if all weights positive: add point
+            triangleWeights.push_back({QPoint(x, y), {W1, W2, W3}});
+          }
+        }
+      }
+      SPDLOG_TRACE("  - triangle with {} pixels", triangleWeights.size());
+    }
+  }
 }
 
-void DuneSimulation::doTimestep(double dt) {
-  model->end_time() = model->current_time() + dt;
-  model->run();
-}
-
-QImage DuneSimulation::getConcImage(const QSize &imageSize) {
-  // resize to imageSize but maintain aspect ratio
-  double scaleFactor = std::min(imageSize.width() / geometrySize.width(),
-                                imageSize.height() / geometrySize.height());
-  QImage img(imageSize, QImage::Format_ARGB32_Premultiplied);
-  img.fill(0);
-  QPainter p(&img);
-  p.setRenderHint(QPainter::Antialiasing);
-  p.setPen(QPen(Qt::black, 1));
-  QBrush fillBrush(QColor(0, 0, 0));
+void DuneSimulation::updateSpeciesConcentrations() {
+  concentrations.clear();
+  maxConcs.clear();
   for (std::size_t iDomain = 0; iDomain < compartmentNames.size(); ++iDomain) {
+    maxConcs.emplace_back();
     SPDLOG_TRACE("compartment[{}]: {}", iDomain, compartmentNames.at(iDomain));
     const auto &gridview =
         grid_ptr->subDomain(static_cast<int>(iDomain)).leafGridView();
-
-    // get average conc for each triangle & species
-    // also keep track of max conc for each species
-    // todo: ensure species colours match GUI simulator colours
-    // todo: do linear interpolation between vertices instead of av over
-    // triangle (i.e. 1st order instead of 0th order)
-    std::vector<std::vector<double>> conc;
-    std::vector<double> concMax;
     const auto &species = speciesNames.at(iDomain);
     const auto &compTriangles = triangles.at(iDomain);
+    auto &comp = concentrations.emplace_back();
     for (std::size_t iSpecies = 0; iSpecies < species.size(); ++iSpecies) {
+      auto &spec = comp.emplace_back();
       auto gf = model->get_grid_function(model->states(), iDomain, iSpecies);
       using GF = decltype(gf);
       using Range = typename GF::Traits::RangeType;
       using Domain = typename GF::Traits::DomainType;
       Range result;
-      double m = 0;
-      conc.emplace_back();
-      conc.back().reserve(compTriangles.size());
+      spec.reserve(compTriangles.size());
+      double avC = 0;
+      double maxC = 0;
       for (const auto e : elements(gridview)) {
-        double av = 0;
+        auto &corners = spec.emplace_back();
+        corners.reserve(3);
         for (const auto &dom : {Domain{0, 0}, Domain{1, 0}, Domain{0, 1}}) {
           gf.evaluate(e, dom, result);
-          av += result / 3.0;
+          corners.push_back(result[0]);
+          avC += corners.back();
+          maxC = std::max(maxC, corners.back());
         }
-        m = std::max(m, av);
-        conc.back().push_back(av);
       }
-      concMax.push_back(m < 1e-15 ? 1.0 : m);
-      mapSpeciesIDToAvConc[species.at(iSpecies)] =
-          std::accumulate(conc.back().begin(), conc.back().end(), 0.0) /
-          static_cast<double>(conc.back().size());
-      SPDLOG_TRACE("  - species[{}]: {} - max = {}", iSpecies,
-                   species.at(iSpecies), concMax.back());
-    }
-
-    // equal contribution from each field
-    double alpha = 1.0 / static_cast<double>(species.size());
-    for (std::size_t i = 0; i < compTriangles.size(); ++i) {
-      int r = 0;
-      int g = 0;
-      int b = 0;
-      for (std::size_t i_f = 0; i_f < species.size(); ++i_f) {
-        double c = alpha * conc[i_f][i] / concMax[i_f];
-        QColor col = utils::indexedColours()[i_f];
-        r += static_cast<int>(col.red() * c);
-        g += static_cast<int>(col.green() * c);
-        b += static_cast<int>(col.blue() * c);
-      }
-      const auto &t = compTriangles[i];
-      QPainterPath path(t[0] * scaleFactor);
-      path.lineTo(t[1] * scaleFactor);
-      path.lineTo(t[2] * scaleFactor);
-      path.lineTo(t[0] * scaleFactor);
-      fillBrush.setColor(qRgb(r, g, b));
-      p.setBrush(fillBrush);
-      p.drawPath(path);
+      avC /= static_cast<double>(spec.size() * 3);
+      mapSpeciesIDToAvConc[species.at(iSpecies)] = avC;
+      maxConcs.back().push_back(maxC);
+      SPDLOG_TRACE("  - species[{}]: {}", iSpecies, species.at(iSpecies));
+      SPDLOG_TRACE("    - avg = {}", avC);
+      SPDLOG_TRACE("    - max = {}", maxC);
     }
   }
-  p.end();
+}
+
+DuneSimulation::DuneSimulation(const sbml::SbmlDocWrapper &sbmlDoc,
+                               QSize imgSize) {
+  initDuneModel(sbmlDoc);
+  updateCompartmentNames();
+  updateSpeciesNames();
+  setImageSize(imgSize);
+  updateSpeciesConcentrations();
+}
+
+void DuneSimulation::doTimestep(double dt) {
+  model->end_time() = model->current_time() + dt;
+  model->run();
+  updateSpeciesConcentrations();
+}
+
+QRgb DuneSimulation::pixelColour(std::size_t iDomain,
+                                 const std::vector<double> &concs) const {
+  double alpha = 1.0 / static_cast<double>(concs.size());
+  int r = 0;
+  int g = 0;
+  int b = 0;
+  for (std::size_t iSpecies = 0; iSpecies < concs.size(); ++iSpecies) {
+    QColor col = utils::indexedColours()[iSpecies];
+    double c = concs[iSpecies] * alpha;
+    c /= maxConcs[iDomain][iSpecies];
+    r += static_cast<int>(col.red() * c);
+    g += static_cast<int>(col.green() * c);
+    b += static_cast<int>(col.blue() * c);
+  }
+  return qRgb(r, g, b);
+}
+
+QImage DuneSimulation::getConcImage(bool linearInterpolationOnly) const {
+  QImage img(imageSize, QImage::Format_ARGB32_Premultiplied);
+  img.fill(0);
+  using GF = decltype(model->get_grid_function(model->states(), 0, 0));
+  for (std::size_t iDomain = 0; iDomain < compartmentNames.size(); ++iDomain) {
+    std::size_t nSpecies = speciesNames.at(iDomain).size();
+    // get grid function for each species in this compartment
+    std::vector<GF> gridFunctions;
+    gridFunctions.reserve(nSpecies);
+    for (std::size_t iSpecies = 0; iSpecies < nSpecies; ++iSpecies) {
+      gridFunctions.push_back(
+          model->get_grid_function(model->states(), iDomain, iSpecies));
+    }
+    const auto &domainWeights = weights.at(iDomain);
+    const auto &gridview =
+        grid_ptr->subDomain(static_cast<int>(iDomain)).leafGridView();
+    std::size_t iTriangle = 0;
+    for (const auto e : elements(gridview)) {
+      SPDLOG_TRACE("triangle {}", iTriangle);
+      if (linearInterpolationOnly) {
+        for (const auto &weight : domainWeights[iTriangle]) {
+          auto [point, w] = weight;
+          SPDLOG_TRACE("  - point {}", point);
+          SPDLOG_TRACE("  - weights {}", w);
+          std::vector<double> localConcs;
+          localConcs.reserve(nSpecies);
+          // interpolate linearly between corner values
+          for (std::size_t iSpecies = 0; iSpecies < nSpecies; ++iSpecies) {
+            const auto &conc = concentrations[iDomain][iSpecies][iTriangle];
+            double c = w[0] * conc[0] + w[1] * conc[1] + w[2] * conc[2];
+            // replace negative values with zero
+            localConcs.push_back(c < 0 ? 0 : c);
+          }
+          img.setPixel(point, pixelColour(iDomain, localConcs));
+        }
+      } else {
+        for (const auto &pair : pixels[iDomain][iTriangle]) {
+          // evaluate DUNE grid function at this pixel location
+          // convert pixel->global->local
+          auto localPoint = pair.second;
+          SPDLOG_TRACE("  - pixel {} -> -> local ({},{})", point, x, y,
+                       localPoint[0], localPoint[1]);
+          GF::Traits::RangeType result;
+          std::vector<double> localConcs;
+          localConcs.reserve(nSpecies);
+          for (std::size_t iSpecies = 0; iSpecies < nSpecies; ++iSpecies) {
+            gridFunctions[iSpecies].evaluate(e, localPoint, result);
+            SPDLOG_TRACE("    - species[{}] = {}", iSpecies, result[0]);
+            // replace negative values with zero
+            localConcs.push_back(result[0] < 0 ? 0 : result[0]);
+          }
+          img.setPixel(pair.first, pixelColour(iDomain, localConcs));
+        }
+      }
+      ++iTriangle;
+    }
+  }
+  // (0,0) pixel is bottom-left in the above, but (0,0) is top-left in QImage:
   return img.mirrored(false, true);
 }
 
 double DuneSimulation::getAverageConcentration(
     const std::string &speciesID) const {
   return mapSpeciesIDToAvConc.at(speciesID);
+}
+
+void DuneSimulation::setImageSize(const QSize &imgSize) {
+  imageSize = imgSize;
+  scaleFactor.setX(imageSize.width() / geometrySize.width());
+  scaleFactor.setY(imageSize.height() / geometrySize.height());
+  updatePixels();
+  updateTriangles();
+  updateBarycentricWeights();
 }
 
 }  // namespace dune
