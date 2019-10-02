@@ -56,24 +56,14 @@ Translate the spatial model to a system of PDEs and simulate it: generate 2d tri
         -   license: [LGPL](http://sbml.org/Software/libSBML/LibSBML_License)
         -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
 
-    -   Expat XML library <https://github.com/libexpat/libexpat>
-
-        -   license: [MIT](https://github.com/libexpat/libexpat/blob/master/expat/COPYING)
-        -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
-
-    -   Qt 5.12 LTS <https://www.qt.io/qt-5-12>
+    -   Qt5 <https://www.qt.io/>
 
         -   license: [LGPL](https://doc.qt.io/qt-5/lgpl.html)
         -   using pre-compiled binaries from <https://github.com/lkeegan/qt5-static>
 
-    -   QCustomPlot 2.0.1 <https://www.qcustomplot.com>
+    -   QCustomPlot <https://www.qcustomplot.com>
 
         -   license: GPL
-        -   included in source code
-
-    -   ExprTK math parsing/evaluation library: <https://github.com/ArashPartow/exprtk>
-
-        -   license: MIT
         -   included in source code
 
     -   spdlog logging library: <https://github.com/gabime/spdlog>
@@ -110,6 +100,16 @@ Translate the spatial model to a system of PDEs and simulate it: generate 2d tri
 
         -   license: [MIT](http://www.libtiff.org/misc.html)
         -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
+
+    -   Expat XML library <https://github.com/libexpat/libexpat>
+
+        -   license: [MIT](https://github.com/libexpat/libexpat/blob/master/expat/COPYING)
+        -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
+
+    -   ExprTK math parsing/evaluation library: <https://github.com/ArashPartow/exprtk>
+
+        -   license: MIT
+        -   included in source code
 
     -   Catch2 testing framework: <https://github.com/catchorg/Catch2>
 

@@ -12,6 +12,11 @@ DialogDimensions::DialogDimensions(const QSize& imageSize, double pixelWidth,
       pixel(pixelWidth) {
   ui->setupUi(this);
 
+  connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
+          &DialogDimensions::accept);
+  connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
+          &DialogDimensions::reject);
+
   updateAll();
   connect(ui->txtImageWidth, &QLineEdit::editingFinished, this,
           &DialogDimensions::txtImageWidth_editingFinished);

@@ -8,6 +8,7 @@ CONFIG += c++17
 
 SOURCES += \
     src/boundary.cpp \
+    src/dialogabout.cpp \
     src/dialogdimensions.cpp \
     src/dune.cpp \
     src/geometry.cpp \
@@ -28,8 +29,9 @@ SOURCES += \
 
 HEADERS += \
     inc/boundary.hpp \
-    inc/dune.hpp \
+    inc/dialogabout.hpp \
     inc/dialogdimensions.hpp \
+    inc/dune.hpp \
     inc/geometry.hpp \
     inc/exprtk_wrapper.hpp \
     inc/logger.hpp \
@@ -49,6 +51,7 @@ HEADERS += \
     inc/version.hpp \
 
 FORMS += \
+    ui/dialogabout.ui \
     ui/dialogdimensions.ui \
     ui/mainwindow.ui \
 

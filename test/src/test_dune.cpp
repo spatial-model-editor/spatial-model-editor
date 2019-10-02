@@ -194,8 +194,9 @@ TEST_CASE("DUNE visualization self-consistency: 500x300",
   dune::DuneSimulation duneSim(s, imgSize);
   auto imgConcFull = duneSim.getConcImage();
   auto imgConcLinear = duneSim.getConcImage(true);
-  REQUIRE(imgConcFull.size() == imgSize);
-  REQUIRE(imgConcLinear.size() == imgSize);
+  // 1-1 aspect ratio maintained:
+  REQUIRE(imgConcFull.size() == QSize(300, 300));
+  REQUIRE(imgConcLinear.size() == QSize(300, 300));
   // 1st order FEM: linear interpolation should be equivalent
   std::vector<QPoint> points{
       QPoint(0, 0),    QPoint(12, 54),   QPoint(33, 31),

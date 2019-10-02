@@ -76,9 +76,6 @@ class MainWindow : public QMainWindow {
 
   void action_Set_geometry_dimensions_triggered();
 
-  // About menu actions
-  void action_About_triggered();
-
   // geometry
   void lblGeometry_mouseClicked(QRgb col, QPoint point);
 
