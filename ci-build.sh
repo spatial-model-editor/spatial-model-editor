@@ -1,5 +1,5 @@
 #!/bin/bash
-BUILDTYPE=${1:-"release"}
+BUILDTYPE=${1:-"release optimize_full"}
 MAKECMD=${2:-"make"}
 MAKEWRAPPER=${3:-""}
 NPROCS=${4:-2}
@@ -28,13 +28,13 @@ cd ../../
 # compile unit tests
 mkdir build-tests
 cd build-tests
-qmake ../test.pro CONFIG+=$BUILDTYPE
+qmake ../test.pro CONFIG+="$BUILDTYPE"
 $MAKECMD -j$NPROCS
 cd ../
 
 # compile executable
 mkdir build
 cd build
-qmake ../spatial-model-editor.pro CONFIG+=$BUILDTYPE
+qmake ../spatial-model-editor.pro CONFIG+="$BUILDTYPE"
 $MAKEWRAPPER $MAKECMD -j$NPROCS
 cd ../

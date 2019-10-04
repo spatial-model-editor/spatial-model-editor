@@ -8,12 +8,11 @@
 
 #pragma once
 
+#include <QPoint>
+#include <QPointF>
 #include <array>
 #include <string>
 #include <vector>
-
-#include <QPoint>
-#include <QPointF>
 
 #include "triangle/triangle.hpp"
 
@@ -37,7 +36,7 @@ class Triangulate {
   std::vector<TriangleIndex> triangleIndices;
 
   void setPointList(triangle::triangulateio& in,
-                    const std::vector<QPoint>& boundaryPoints) const;
+                    const std::vector<QPointF>& boundaryPoints) const;
   void setSegmentList(triangle::triangulateio& in,
                       const std::vector<BoundarySegments>& boundaries) const;
   void setRegionList(triangle::triangulateio& in,
@@ -46,7 +45,7 @@ class Triangulate {
                    const std::vector<QPointF>& holes) const;
 
  public:
-  Triangulate(const std::vector<QPoint>& boundaryPoints,
+  Triangulate(const std::vector<QPointF>& boundaryPoints,
               const std::vector<BoundarySegments>& boundaries,
               const std::vector<Compartment>& compartments);
   const std::vector<QPointF>& getPoints() const;

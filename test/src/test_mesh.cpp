@@ -1,11 +1,9 @@
-#include "mesh.hpp"
-
 #include <QDebug>
 #include <QPoint>
 
 #include "catch.hpp"
-
 #include "logger.hpp"
+#include "mesh.hpp"
 #include "utils.hpp"
 
 // note: only valid for vectors of unique values
@@ -434,4 +432,37 @@ SCENARIO("image: two touching comps, two fixed point pixels",
   // compartment 2
   REQUIRE(meshImg.pixel(247, 196) == 0);
   REQUIRE(meshImg.pixel(272, 179) == 0);
+}
+
+SCENARIO("image: concave cell nucleus, one membrane",
+         "[mesh][boundary][non-gui]") {
+  QImage img(":/geometry/concave-cell-nucleus-100x100.png");
+  QRgb c1 = QColor(144, 97, 193).rgb();
+  QRgb c2 = QColor(197, 133, 96).rgb();
+  mesh::Mesh mesh(img, {{QPointF(28, 27), QPointF(40, 52)}}, {{5, 12, 16}},
+                  {{15, 19}}, {{{"membrane", {c1, c2}}}});
+  const auto& boundaries = mesh.getBoundaries();
+  REQUIRE(boundaries.size() == 3);
+  REQUIRE(boundaries[0].getMaxPoints() == 5);
+  REQUIRE(boundaries[0].isLoop == true);
+  REQUIRE(boundaries[0].isMembrane == false);
+  REQUIRE(boundaries[1].getMaxPoints() == 12);
+  REQUIRE(boundaries[1].isLoop == true);
+  REQUIRE(boundaries[1].isMembrane == false);
+  REQUIRE(boundaries[2].getMaxPoints() == 16);
+  REQUIRE(boundaries[2].isLoop == true);
+  REQUIRE(boundaries[2].isMembrane == true);
+
+  // change membrane width
+  for (double w : {0.2, 0.6, 1.0, 2.0, 3.0}) {
+    mesh.setBoundaryWidth(2, w);
+    REQUIRE(mesh.getBoundaryWidth(2) == dbl_approx(w));
+    auto diff = mesh.getBoundaries()[2].points[5] -
+                mesh.getBoundaries()[2].outerPoints[5];
+    double dot = QPointF::dotProduct(diff, diff);
+    REQUIRE(sqrt(dot) == Approx(w));
+  }
+
+  img = mesh.getBoundariesImage(QSize(200, 200), 0);
+  REQUIRE(img.size() == QSize(198, 198));
 }

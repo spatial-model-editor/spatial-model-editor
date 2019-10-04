@@ -31,6 +31,8 @@ class UIPointers {
   QTabWidget *tabMain;
   QPushButton *btnChangeCompartment;
   QLineEdit *txtSimLength;
+  QLineEdit *txtSimInterval;
+  QLineEdit *txtSimDt;
   QPushButton *btnSimulate;
   QPushButton *btnResetSimulation;
   QCustomPlot *pltPlot;
@@ -83,6 +85,11 @@ UIPointers::UIPointers(MainWindow *mainWindow) : w(mainWindow) {
   REQUIRE(btnChangeCompartment != nullptr);
   txtSimLength = w->topLevelWidget()->findChild<QLineEdit *>("txtSimLength");
   REQUIRE(txtSimLength != nullptr);
+  txtSimInterval =
+      w->topLevelWidget()->findChild<QLineEdit *>("txtSimInterval");
+  REQUIRE(txtSimInterval != nullptr);
+  txtSimDt = w->topLevelWidget()->findChild<QLineEdit *>("txtSimDt");
+  REQUIRE(txtSimDt != nullptr);
   btnSimulate = w->topLevelWidget()->findChild<QPushButton *>("btnSimulate");
   REQUIRE(btnSimulate != nullptr);
   btnResetSimulation =
@@ -531,8 +538,10 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
                   key_delay);
   REQUIRE(ui.tabMain->currentIndex() == 5);
   ui.txtSimLength->setText("1000.0");
-  // stop simulation after 1 second
-  QTimer::singleShot(1000, [=]() {
+  ui.txtSimInterval->setText("0.01");
+  ui.txtSimDt->setText("0.01");
+  // stop simulation after 5 seconds
+  QTimer::singleShot(5000, [=]() {
     QTest::keyClick(ui.pltPlot, Qt::Key_C, Qt::ControlModifier, 0);
   });
   // start simulation

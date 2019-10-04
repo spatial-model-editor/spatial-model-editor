@@ -46,6 +46,8 @@ DialogAbout::DialogAbout(QWidget* parent)
                        QCUSTOMPLOT_VERSION_STR));
   libraries.append(dep("spdlog", "https://github.com/gabime/spdlog",
                        SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH));
+  libraries.append(dep("fmt", "https://github.com/fmtlib/fmt",
+                       QString::number(FMT_VERSION)));
   libraries.append(dep("SymEngine", "https://github.com/symengine/symengine",
                        SYMENGINE_VERSION));
   libraries.append(dep("LLVM core", "https://llvm.org", LLVM_VERSION_STRING));

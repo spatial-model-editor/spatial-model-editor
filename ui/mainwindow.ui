@@ -97,7 +97,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tabGeometry">
         <property name="whatsThis">
@@ -286,7 +286,7 @@
                  <string>The boundaries of the geometry of the compartments</string>
                 </property>
                 <property name="currentIndex">
-                 <number>0</number>
+                 <number>1</number>
                 </property>
                 <widget class="QWidget" name="tabCompartmentImage">
                  <attribute name="title">
@@ -300,6 +300,12 @@
                       <horstretch>0</horstretch>
                       <verstretch>0</verstretch>
                      </sizepolicy>
+                    </property>
+                    <property name="minimumSize">
+                     <size>
+                      <width>1</width>
+                      <height>1</height>
+                     </size>
                     </property>
                     <property name="toolTip">
                      <string>The shape of the compartment</string>
@@ -332,16 +338,6 @@
                  <layout class="QHBoxLayout" name="horizontalLayout_12">
                   <item>
                    <layout class="QGridLayout" name="gridLayout_3">
-                    <item row="1" column="1">
-                     <widget class="QSpinBox" name="spinBoundaryIndex">
-                      <property name="wrapping">
-                       <bool>true</bool>
-                      </property>
-                      <property name="maximum">
-                       <number>0</number>
-                      </property>
-                     </widget>
-                    </item>
                     <item row="1" column="2">
                      <widget class="QLabel" name="lblMaxBoundaryPointsLabel">
                       <property name="sizePolicy">
@@ -352,6 +348,19 @@
                       </property>
                       <property name="text">
                        <string>Max points:</string>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="5">
+                     <widget class="QLabel" name="lblBoundaryWidthLabel">
+                      <property name="sizePolicy">
+                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                        <horstretch>0</horstretch>
+                        <verstretch>0</verstretch>
+                       </sizepolicy>
+                      </property>
+                      <property name="text">
+                       <string>Width:</string>
                       </property>
                      </widget>
                     </item>
@@ -368,13 +377,61 @@
                       </property>
                      </widget>
                     </item>
-                    <item row="0" column="0" colspan="5">
+                    <item row="1" column="1">
+                     <widget class="QSpinBox" name="spinBoundaryIndex">
+                      <property name="wrapping">
+                       <bool>true</bool>
+                      </property>
+                      <property name="maximum">
+                       <number>0</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="3" colspan="2">
+                     <widget class="QSpinBox" name="spinMaxBoundaryPoints">
+                      <property name="minimum">
+                       <number>3</number>
+                      </property>
+                      <property name="value">
+                       <number>12</number>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="1" column="6">
+                     <widget class="QDoubleSpinBox" name="spinBoundaryWidth">
+                      <property name="decimals">
+                       <number>2</number>
+                      </property>
+                      <property name="minimum">
+                       <double>0.010000000000000</double>
+                      </property>
+                      <property name="maximum">
+                       <double>20.000000000000000</double>
+                      </property>
+                      <property name="singleStep">
+                       <double>0.100000000000000</double>
+                      </property>
+                      <property name="stepType">
+                       <enum>QAbstractSpinBox::DefaultStepType</enum>
+                      </property>
+                      <property name="value">
+                       <double>1.000000000000000</double>
+                      </property>
+                     </widget>
+                    </item>
+                    <item row="0" column="0" colspan="7">
                      <widget class="QLabel" name="lblCompBoundary">
                       <property name="sizePolicy">
                        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
+                      </property>
+                      <property name="minimumSize">
+                       <size>
+                        <width>1</width>
+                        <height>1</height>
+                       </size>
                       </property>
                       <property name="toolTip">
                        <string>The boundary lines separating the compartments</string>
@@ -397,16 +454,6 @@
                       </property>
                      </widget>
                     </item>
-                    <item row="1" column="3" colspan="2">
-                     <widget class="QSpinBox" name="spinMaxBoundaryPoints">
-                      <property name="minimum">
-                       <number>3</number>
-                      </property>
-                      <property name="value">
-                       <number>12</number>
-                      </property>
-                     </widget>
-                    </item>
                    </layout>
                   </item>
                  </layout>
@@ -425,6 +472,12 @@
                         <horstretch>0</horstretch>
                         <verstretch>0</verstretch>
                        </sizepolicy>
+                      </property>
+                      <property name="minimumSize">
+                       <size>
+                        <width>1</width>
+                        <height>1</height>
+                       </size>
                       </property>
                       <property name="toolTip">
                        <string>The mesh representing the geometry of the compartment</string>
@@ -1549,7 +1602,15 @@
     <property name="title">
      <string>&amp;Tools</string>
     </property>
+    <widget class="QMenu" name="menuSimulation_type">
+     <property name="title">
+      <string>Set &amp;simulation type</string>
+     </property>
+     <addaction name="actionSimTypeDUNE"/>
+     <addaction name="actionSimTypePixel"/>
+    </widget>
     <addaction name="action_Set_geometry_dimensions"/>
+    <addaction name="menuSimulation_type"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuImport"/>
@@ -1707,7 +1768,7 @@
   </action>
   <action name="action_Set_geometry_dimensions">
    <property name="text">
-    <string>&amp;Set geometry dimensions...</string>
+    <string>Set &amp;geometry dimensions...</string>
    </property>
   </action>
   <action name="action_four_compartments_150x100">
@@ -1720,6 +1781,30 @@
     <string>&amp;gray-scott</string>
    </property>
   </action>
+  <actiongroup name="actionGroupSimType">
+  <action name="actionSimTypeDUNE">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;DUNE (high quality)</string>
+   </property>
+  </action>
+  <action name="actionSimTypePixel">
+   <property name="checkable">
+    <bool>true</bool>
+    </property>
+    <property name="checked">
+     <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Pixel (fast but unreliable)</string>
+   </property>
+  </action>
+  </actiongroup>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>

@@ -79,12 +79,12 @@ void iniFile::addValue(const QString &var, double value, int precision) {
 
 void iniFile::clear() { text.clear(); }
 
-DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
+DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
                              int doublePrecision)
     : doc(SbmlDoc) {
   double begin_time = 0.0;
   double end_time = 0.02;
-  double time_step = 0.01;
+  double time_step = dt;
 
   mapDuneNameToColour.clear();
 
@@ -102,8 +102,14 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
 
   // list of compartments with corresponding gmsh surface index - 1
   ini.addSection("model.compartments");
-  for (int i = 0; i < doc.compartments.size(); ++i) {
-    ini.addValue(doc.compartments[i], i);
+  int compMeshIndex = 0;
+  for (const auto &comp : doc.compartments) {
+    ini.addValue(comp, compMeshIndex);
+    ++compMeshIndex;
+  }
+  for (const auto &mem : doc.membranes) {
+    ini.addValue(mem, compMeshIndex);
+    ++compMeshIndex;
   }
 
   // for each compartment
@@ -211,7 +217,8 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
 
   // for each membrane do the same
   for (const auto &membrane : doc.membraneVec) {
-    ini.addSection("model", membrane.membraneID.c_str());
+    QString membraneID = membrane.membraneID.c_str();
+    ini.addSection("model", membraneID);
     ini.addValue("begin_time", begin_time, doublePrecision);
     ini.addValue("end_time", end_time, doublePrecision);
     ini.addValue("time_step", time_step, doublePrecision);
@@ -237,13 +244,13 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
     }
 
     // operator splitting indexing: all set to zero for now...
-    ini.addSection("model", membrane.membraneID.c_str(), "operator");
+    ini.addSection("model", membraneID, "operator");
     for (const auto &speciesID : nonConstantSpecies) {
       ini.addValue(speciesID.c_str(), 0);
     }
 
     // initial concentrations
-    ini.addSection("model", membrane.membraneID.c_str(), "initial");
+    ini.addSection("model", membraneID, "initial");
     for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
       ini.addValue(
           duneSpeciesNames.at(i).c_str(),
@@ -251,18 +258,34 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
           doublePrecision);
     }
 
-    // reactions
-    ini.addSection("model", membrane.membraneID.c_str(), "reaction");
+    // reactions: want reactions for both neighbouring compartments
+    // as well as membrane reactions (that involve species from both
+    // compartments in the same reaction)
+    ini.addSection("model", membraneID, "reaction");
     std::size_t nSpecies = static_cast<std::size_t>(nonConstantSpecies.size());
 
     std::vector<std::string> reacs;
-    if (doc.reactions.find(membrane.membraneID.c_str()) !=
-        doc.reactions.cend()) {
-      for (const auto &r : doc.reactions.at(membrane.membraneID.c_str())) {
+    std::vector<std::string> reacScaleFactors;
+    for (const auto &comp : {compA, compB}) {
+      if (doc.reactions.find(comp) != doc.reactions.cend()) {
+        for (const auto &r : doc.reactions.at(comp)) {
+          reacs.push_back(r.toStdString());
+          reacScaleFactors.push_back("1");
+        }
+      }
+    }
+    // divide membrane reaction rates by width of membrane
+    if (doc.reactions.find(membraneID) != doc.reactions.cend()) {
+      for (const auto &r : doc.reactions.at(membraneID)) {
+        double width = doc.mesh.getMembraneWidth(membraneID.toStdString());
+        reacScaleFactors.push_back(
+            QString::number(width, 'g', 17).toStdString());
+        SPDLOG_INFO("dividing membrane reaction by membrane width {}:", width);
         reacs.push_back(r.toStdString());
       }
     }
-    pde::PDE pde(&doc, nonConstantSpecies, reacs, duneSpeciesNames);
+    pde::PDE pde(&doc, nonConstantSpecies, reacs, duneSpeciesNames,
+                 reacScaleFactors);
     for (std::size_t i = 0; i < nSpecies; ++i) {
       ini.addValue(duneSpeciesNames.at(i).c_str(), pde.getRHS().at(i).c_str());
     }
@@ -316,7 +339,8 @@ QColor DuneConverter::getSpeciesColour(const std::string &duneName) const {
   return mapDuneNameToColour.at(duneName);
 }
 
-void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc) {
+void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc,
+                                   double dt) {
   geometrySize = sbmlDoc.getCompartmentImage().size() * sbmlDoc.getPixelWidth();
   // export gmsh file `grid.msh` in the same dir
   QFile f2("grid.msh");
@@ -328,7 +352,7 @@ void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc) {
   }
 
   // pass dune ini file directly as istream
-  dune::DuneConverter dc(sbmlDoc);
+  dune::DuneConverter dc(sbmlDoc, dt);
   std::stringstream ssIni(dc.getIniFile().toStdString());
   Dune::ParameterTreeParser::readINITree(ssIni, config);
 
@@ -545,16 +569,18 @@ void DuneSimulation::updateSpeciesConcentrations() {
   }
 }
 
-DuneSimulation::DuneSimulation(const sbml::SbmlDocWrapper &sbmlDoc,
+DuneSimulation::DuneSimulation(const sbml::SbmlDocWrapper &sbmlDoc, double dt,
                                QSize imgSize) {
-  initDuneModel(sbmlDoc);
+  initDuneModel(sbmlDoc, dt);
   setImageSize(imgSize);
   updateSpeciesConcentrations();
 }
 
 void DuneSimulation::doTimestep(double dt) {
-  model->end_time() = model->current_time() + dt;
-  model->run();
+  double endTime = model->current_time() + dt;
+  while (model->current_time() < endTime) {
+    model->step();
+  }
   updateSpeciesConcentrations();
 }
 

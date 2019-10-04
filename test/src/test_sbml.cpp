@@ -1,14 +1,11 @@
-#include "sbml.hpp"
-
+#include <QFile>
 #include <fstream>
 
-#include <QFile>
-
 #include "catch.hpp"
+#include "logger.hpp"
+#include "sbml.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
 #include "sbml_test_data/yeast_glycolysis.hpp"
-
-#include "logger.hpp"
 #include "utils.hpp"
 
 /*
@@ -367,15 +364,15 @@ SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {
       }
     }
     WHEN("image geometry imported, assigned to compartment") {
-      QImage img(1, 1, QImage::Format_RGB32);
-      QRgb col = QColor(12, 243, 154).rgba();
-      img.setPixel(0, 0, col);
+      QImage img(":/geometry/circle-100x100.png");
+      QRgb col = QColor(144, 97, 193).rgba();
+      REQUIRE(img.pixel(50, 50) == col);
       img.save("tmp.png");
       s.importGeometryFromImage("tmp.png");
       s.setCompartmentColour("comp", col);
       THEN("getCompartmentImage returns image") {
-        REQUIRE(s.getCompartmentImage().size() == QSize(1, 1));
-        REQUIRE(s.getCompartmentImage().pixel(0, 0) == col);
+        REQUIRE(s.getCompartmentImage().size() == QSize(100, 100));
+        REQUIRE(s.getCompartmentImage().pixel(50, 50) == col);
       }
       THEN("find membranes") { REQUIRE(s.membraneVec.empty()); }
       THEN("find reactions") {
