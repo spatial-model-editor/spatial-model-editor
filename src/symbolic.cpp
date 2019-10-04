@@ -52,11 +52,11 @@ Symbolic::Symbolic(const std::vector<std::string> &expressions,
     SPDLOG_DEBUG("  --> {}", *expr.back());
   }
 
-  // don't do symbolic CSE - segfaults!
+  // NOTE: don't do symbolic CSE - segfaults!
   lambda.init(varVec, expr, false);
   // compile with LLVM, again no symbolic CSE
   lambdaLLVM.init(varVec, expr, false, 2);
-}  // namespace symbolic
+}
 
 std::string Symbolic::simplify(std::size_t i) const {
   return toString(expr.at(i));
@@ -98,10 +98,7 @@ void Symbolic::relabel(const std::vector<std::string> &newVariables) {
 
 void Symbolic::eval(std::vector<double> &results,
                     const std::vector<double> &vars) {
-  //  SPDLOG_WARN("{} vars: {}", vars.size(), vars);
-  //  SPDLOG_WARN("{} results before: {}", results.size(), results);
   lambda.call(results.data(), vars.data());
-  //  SPDLOG_WARN("results after: {}", results);
 }
 
 void Symbolic::evalLLVM(std::vector<double> &results,

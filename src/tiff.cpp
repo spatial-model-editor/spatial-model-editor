@@ -60,7 +60,7 @@ double writeTIFF(const std::string& filename, const geometry::Field& field,
   // pixelX = TIFFTAG_XRESOLUTION * physicalX, etc.
   TIFFSetField(tif, TIFFTAG_XRESOLUTION, 1.0 / pixelWidth);
   TIFFSetField(tif, TIFFTAG_YRESOLUTION, 1.0 / pixelWidth);
-  // NB: location of (0,0) pixel (ignored by DUNE):
+  // NB: location of (0,0) pixel
   TIFFSetField(tif, TIFFTAG_XPOSITION, 0.0);
   TIFFSetField(tif, TIFFTAG_YPOSITION, 0.0);
   for (std::size_t y = 0; y < static_cast<std::size_t>(height); y++) {

@@ -74,10 +74,12 @@ class DuneConverter {
   explicit DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
                          int doublePrecision = 15);
   QString getIniFile() const;
+  QColor getSpeciesColour(const std::string &duneName) const;
 
  private:
   const sbml::SbmlDocWrapper &doc;
   iniFile ini;
+  std::map<std::string, QColor> mapDuneNameToColour;
 };
 
 constexpr int dim = 2;
@@ -103,6 +105,7 @@ class DuneSimulation {
   // index of compartment/species name in these vectors is the Dune index:
   std::vector<std::string> compartmentNames;
   std::vector<std::vector<std::string>> speciesNames;
+  std::vector<std::vector<QColor>> speciesColours;
   std::map<std::string, double> mapSpeciesIDToAvConc;
   std::vector<std::vector<double>> maxConcs;
   // dimensions of model
@@ -123,8 +126,8 @@ class DuneSimulation {
   // compartment::species::triangle::corner-conentration-values
   std::vector<std::vector<std::vector<std::vector<double>>>> concentrations;
   void initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc);
-  void updateCompartmentNames();
-  void updateSpeciesNames();
+  void initCompartmentNames();
+  void initSpeciesNames(const DuneConverter &dc);
   void updatePixels();
   void updateTriangles();
   void updateBarycentricWeights();

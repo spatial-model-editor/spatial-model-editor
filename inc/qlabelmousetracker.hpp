@@ -33,9 +33,10 @@ class QLabelMouseTracker : public QLabel {
  private:
   // (x,y) location of current pixel
   void setCurrentPixel(QMouseEvent *ev);
-  QPoint currentPixel;
-  QRgb colour;
+  void resizeImage(const QSize &size);
   QImage image;
   // Pixmap used to display scaled version of image
   QPixmap pixmap = QPixmap(1, 1);
+  QPoint currentPixel;
+  QRgb colour;
 };

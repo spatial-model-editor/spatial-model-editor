@@ -58,9 +58,6 @@ class Field {
   const Compartment *geometry;
   double diffusionConstant;
   QColor colour;
-  int red;
-  int green;
-  int blue;
   // field of species concentration
   std::vector<double> conc;
   // field of dcdt values

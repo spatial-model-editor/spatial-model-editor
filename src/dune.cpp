@@ -86,6 +86,8 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
   double end_time = 0.02;
   double time_step = 0.01;
 
+  mapDuneNameToColour.clear();
+
   // grid
   ini.addSection("grid");
   ini.addValue("file", "grid.msh");
@@ -119,6 +121,10 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
       }
     }
     auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
+    for (std::size_t is = 0; is < duneSpeciesNames.size(); ++is) {
+      mapDuneNameToColour[duneSpeciesNames.at(is)] =
+          doc.getSpeciesColour(nonConstantSpecies.at(is).c_str());
+    }
 
     // operator splitting indexing: all set to zero for now...
     ini.addSection("model", compartmentID, "operator");
@@ -225,6 +231,10 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
       }
     }
     auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
+    for (std::size_t is = 0; is < duneSpeciesNames.size(); ++is) {
+      mapDuneNameToColour[duneSpeciesNames.at(is)] =
+          doc.getSpeciesColour(nonConstantSpecies.at(is).c_str());
+    }
 
     // operator splitting indexing: all set to zero for now...
     ini.addSection("model", membrane.membraneID.c_str(), "operator");
@@ -302,6 +312,10 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc,
 
 QString DuneConverter::getIniFile() const { return ini.getText(); }
 
+QColor DuneConverter::getSpeciesColour(const std::string &duneName) const {
+  return mapDuneNameToColour.at(duneName);
+}
+
 void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc) {
   geometrySize = sbmlDoc.getCompartmentImage().size() * sbmlDoc.getPixelWidth();
   // export gmsh file `grid.msh` in the same dir
@@ -314,15 +328,15 @@ void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc) {
   }
 
   // pass dune ini file directly as istream
-  std::stringstream ssIni(
-      dune::DuneConverter(sbmlDoc).getIniFile().toStdString());
+  dune::DuneConverter dc(sbmlDoc);
+  std::stringstream ssIni(dc.getIniFile().toStdString());
   Dune::ParameterTreeParser::readINITree(ssIni, config);
 
   // init Dune logging if not already done
   if (!Dune::Logging::Logging::initialized()) {
-    auto &mpi_helper = Dune::MPIHelper::instance(0, nullptr);
-    auto comm = mpi_helper.getCollectiveCommunication();
-    Dune::Logging::Logging::init(comm, config.sub("logging"));
+    Dune::Logging::Logging::init(
+        Dune::FakeMPIHelper::getCollectiveCommunication(),
+        config.sub("logging"));
     if (SPDLOG_ACTIVE_LEVEL >= 2) {
       // for release builds disable DUNE logging
       Dune::Logging::Logging::mute();
@@ -337,9 +351,12 @@ void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc) {
   model = std::make_unique<
       Dune::Copasi::ModelMultiDomainDiffusionReaction<ModelTraits>>(
       grid_ptr, config.sub("model"));
+
+  initCompartmentNames();
+  initSpeciesNames(dc);
 }
 
-void DuneSimulation::updateCompartmentNames() {
+void DuneSimulation::initCompartmentNames() {
   const auto &compartments = config.sub("model.compartments").getValueKeys();
   compartmentNames.resize(compartments.size());
   for (const auto &compartment : compartments) {
@@ -355,8 +372,9 @@ void DuneSimulation::updateCompartmentNames() {
   }
 }
 
-void DuneSimulation::updateSpeciesNames() {
+void DuneSimulation::initSpeciesNames(const DuneConverter &dc) {
   speciesNames.clear();
+  speciesColours.clear();
   for (std::size_t iDomain = 0; iDomain < compartmentNames.size(); ++iDomain) {
     SPDLOG_DEBUG("compartment[{}]: {}", iDomain, compartmentNames.at(iDomain));
     // NB: species index is position in *sorted* list of species names
@@ -365,8 +383,13 @@ void DuneSimulation::updateSpeciesNames() {
         config.sub("model." + compartmentNames.at(iDomain) + ".initial")
             .getValueKeys();
     std::sort(names.begin(), names.end());
-    SPDLOG_DEBUG("  - species: {}", names);
     speciesNames.push_back(std::move(names));
+    auto &speciesColoursCompartment = speciesColours.emplace_back();
+    for (const auto &name : speciesNames.back()) {
+      const QColor &c = dc.getSpeciesColour(name);
+      speciesColoursCompartment.push_back(c);
+      SPDLOG_DEBUG("  - species: {} --> colour {}", names, c);
+    }
   }
 }
 
@@ -525,8 +548,6 @@ void DuneSimulation::updateSpeciesConcentrations() {
 DuneSimulation::DuneSimulation(const sbml::SbmlDocWrapper &sbmlDoc,
                                QSize imgSize) {
   initDuneModel(sbmlDoc);
-  updateCompartmentNames();
-  updateSpeciesNames();
   setImageSize(imgSize);
   updateSpeciesConcentrations();
 }
@@ -544,7 +565,7 @@ QRgb DuneSimulation::pixelColour(std::size_t iDomain,
   int g = 0;
   int b = 0;
   for (std::size_t iSpecies = 0; iSpecies < concs.size(); ++iSpecies) {
-    QColor col = utils::indexedColours()[iSpecies];
+    const QColor &col = speciesColours.at(iDomain).at(iSpecies);
     double c = concs[iSpecies] * alpha;
     c /= maxConcs[iDomain][iSpecies];
     r += static_cast<int>(col.red() * c);
@@ -594,7 +615,7 @@ QImage DuneSimulation::getConcImage(bool linearInterpolationOnly) const {
           // evaluate DUNE grid function at this pixel location
           // convert pixel->global->local
           auto localPoint = pair.second;
-          SPDLOG_TRACE("  - pixel {} -> -> local ({},{})", point, x, y,
+          SPDLOG_TRACE("  - pixel {} -> -> local ({},{})", pair.first,
                        localPoint[0], localPoint[1]);
           GF::Traits::RangeType result;
           std::vector<double> localConcs;
@@ -621,9 +642,13 @@ double DuneSimulation::getAverageConcentration(
 }
 
 void DuneSimulation::setImageSize(const QSize &imgSize) {
-  imageSize = imgSize;
-  scaleFactor.setX(imageSize.width() / geometrySize.width());
-  scaleFactor.setY(imageSize.height() / geometrySize.height());
+  // maintain aspect-ratio
+  double scale = std::min(imgSize.width() / geometrySize.width(),
+                          imgSize.height() / geometrySize.height());
+  imageSize.setWidth(static_cast<int>(scale * geometrySize.width()));
+  imageSize.setHeight(static_cast<int>(scale * geometrySize.height()));
+  scaleFactor.setX(scale);
+  scaleFactor.setY(scale);
   updatePixels();
   updateTriangles();
   updateBarycentricWeights();

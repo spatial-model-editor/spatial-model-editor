@@ -8,6 +8,7 @@
 #include <QStringListModel>
 #include <sstream>
 
+#include "dialogabout.hpp"
 #include "dialogdimensions.hpp"
 #include "dune.hpp"
 #include "logger.hpp"
@@ -96,7 +97,7 @@ void MainWindow::setupConnections() {
   });
 
   connect(ui->action_About, &QAction::triggered, this,
-          &MainWindow::action_About_triggered);
+          [this]() { DialogAbout(this).exec(); });
 
   connect(ui->actionAbout_Qt, &QAction::triggered, this,
           [this]() { QMessageBox::aboutQt(this); });
@@ -476,47 +477,6 @@ void MainWindow::action_Set_geometry_dimensions_triggered() {
     SPDLOG_INFO("Set new pixel width = {}", pixelWidth);
     sbmlDoc.setPixelWidth(pixelWidth, dialog.resizeCompartments());
   }
-}
-
-void MainWindow::action_About_triggered() {
-  QMessageBox msgBox;
-  msgBox.setWindowTitle("About Spatial Model Editor");
-  QString info(QString("<h3>Spatial Model Editor %1</h3>")
-                   .arg(SPATIAL_MODEL_EDITOR_VERSION));
-  info.append(
-      "<p>Documentation:<ul><li><a href="
-      "\"https://spatial-model-editor.readthedocs.io\">"
-      "spatial-model-editor.readthedocs.io</a></p></li></ul>");
-  info.append(
-      "<p>Source code:<ul><li><a href="
-      "\"https://github.com/lkeegan/spatial-model-editor\">"
-      "github.com/lkeegan/spatial-model-editor</a></p></li></ul>");
-  info.append("<p>Included libraries:<p><ul>");
-  info.append(QString("<li>dune-copasi</li>"));
-  info.append(QString("<li>Qt5: %1</li>").arg(QT_VERSION_STR));
-  info.append(
-      QString("<li>libSBML: %1</li>").arg(libsbml::getLibSBMLDottedVersion()));
-  info.append("<li>QCustomPlot: 2.0.1</li>");
-  info.append(QString("<li>spdlog: %1.%2.%3</li>")
-                  .arg(QString::number(SPDLOG_VER_MAJOR),
-                       QString::number(SPDLOG_VER_MINOR),
-                       QString::number(SPDLOG_VER_PATCH)));
-  info.append(QString("<li>SymEngine: 0.4.0</li>"));
-  info.append(QString("<li>LLVM Core: 8.0.1</li>"));
-  info.append(QString("<li>GMP: 6.1.2</li>"));
-  info.append(QString("<li>Triangle: 1.6</li>"));
-  info.append(QString("<li>muParser: 2.2.6.1</li>"));
-  info.append(QString("<li>libTIFF: 4.0.10</li>"));
-  for (const auto &dep : {"expat", "libxml", "xerces-c", "bzip2", "zip"}) {
-    if (libsbml::isLibSBMLCompiledWith(dep) != 0) {
-      info.append(QString("<li>%1: %2</li>")
-                      .arg(dep, libsbml::getLibSBMLDependencyVersionOf(dep)));
-    }
-  }
-  info.append(
-      "<li>C++ Mathematical Expression Toolkit Library (ExprTk)</li></ul>");
-  msgBox.setText(info);
-  msgBox.exec();
 }
 
 void MainWindow::lblGeometry_mouseClicked(QRgb col, QPoint point) {

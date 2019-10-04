@@ -263,9 +263,10 @@ QImage Simulate::getConcentrationImage() {
       for (std::size_t i_f = 0; i_f < comp.field.size(); ++i_f) {
         const auto *f = comp.field[i_f];
         double c = alpha * f->conc[i] / max_conc[i_f];
-        r += static_cast<int>(f->red * c);
-        g += static_cast<int>(f->green * c);
-        b += static_cast<int>(f->blue * c);
+        const auto &col = f->colour;
+        r += static_cast<int>(col.red() * c);
+        g += static_cast<int>(col.green() * c);
+        b += static_cast<int>(col.blue() * c);
       }
       img.setPixel(p, qRgb(r, g, b));
     }
