@@ -8,7 +8,7 @@ namespace triangulate {
 
 void Triangulate::setPointList(
     triangle::triangulateio& in,
-    const std::vector<QPoint>& boundaryPoints) const {
+    const std::vector<QPointF>& boundaryPoints) const {
   free(in.pointlist);
   in.pointlist = nullptr;
   in.pointlist =
@@ -98,7 +98,7 @@ void Triangulate::setHoleList(triangle::triangulateio& in,
   }
 }
 
-Triangulate::Triangulate(const std::vector<QPoint>& boundaryPoints,
+Triangulate::Triangulate(const std::vector<QPointF>& boundaryPoints,
                          const std::vector<BoundarySegments>& boundaries,
                          const std::vector<Compartment>& compartments) {
   // init Triangle library input data

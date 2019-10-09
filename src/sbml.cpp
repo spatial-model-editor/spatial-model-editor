@@ -299,7 +299,7 @@ void SbmlDocWrapper::importParametricGeometry() {
   // & convert them to integer pixel points
   std::vector<QPointF> interiorPoints;
   for (const auto &compartmentID : compartments) {
-    SPDLOG_DEBUG("Found interior point: {}");
+    SPDLOG_DEBUG("Found interior point:");
     QPointF interiorFloatPhysical = getCompartmentInteriorPoint(compartmentID);
     QPointF interiorFloatPixel =
         (interiorFloatPhysical - origin) / pixelWidth + QPointF(0.3, 0.3);
@@ -308,6 +308,7 @@ void SbmlDocWrapper::importParametricGeometry() {
   }
 
   // get maxBoundaryPoints and maxTriangleAreas
+  // todo: add membrane colours, indices, widths to this??
   if (parageom->isSetAnnotation()) {
     auto *node = parageom->getAnnotation();
     for (unsigned i = 0; i < node->getNumChildren(); ++i) {
@@ -323,7 +324,7 @@ void SbmlDocWrapper::importParametricGeometry() {
         // generate Mesh
         SPDLOG_INFO("  - re-generating mesh");
         mesh = mesh::Mesh(compartmentImage, interiorPoints, maxPoints, maxAreas,
-                          pixelWidth, origin);
+                          vecMembraneColourPairs, pixelWidth, origin);
       }
     }
     return;
@@ -614,6 +615,7 @@ const QImage &SbmlDocWrapper::getMembraneImage(
 void SbmlDocWrapper::updateMembraneList() {
   // construct membrane list & images
   membranes.clear();
+  vecMembraneColourPairs.clear();
   mapMembraneToIndex.clear();
   mapMembraneToImage.clear();
   // clear vector of Membrane objects
@@ -636,6 +638,10 @@ void SbmlDocWrapper::updateMembraneList() {
             name = compartments[j] + "_" + compartments[i];
           }
           membranes.push_back(name);
+          // also add the colour pairs for use by the mesh for membranes
+          vecMembraneColourPairs.push_back(
+              {name.toStdString(),
+               {std::min(colA, colB), std::max(colA, colB)}});
           // map name to index of membrane location pairs
           mapMembraneToIndex[name] = index;
           // generate image
@@ -777,7 +783,7 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   geometry::Compartment &comp = mapCompIdToGeometry.at(compartmentID);
   // create a field for each species in this compartment
   for (const auto &s : species[compartmentID]) {
-    SPDLOG_INFO("creating field for species {}", s);
+    SPDLOG_INFO("creating field for species {}", s.toStdString());
     mapSpeciesIdToField[s] = geometry::Field(&comp, s.toStdString(), 1.0,
                                              mapSpeciesIdToColour.at(s));
     geometry::Field &field = mapSpeciesIdToField.at(s);
@@ -849,6 +855,9 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   // update list of reactions for each compartment/membrane
   updateReactionList();
 
+  // update mesh
+  updateMesh();
+
   // update all compartment mappings in SBML
   // (don't want to do this when importing an SBML file)
   if (updateSBML) {
@@ -878,8 +887,9 @@ void SbmlDocWrapper::updateMesh() {
     interiorPoints.push_back(interior);
   }
   SPDLOG_INFO("Updating mesh interior points");
-  mesh =
-      mesh::Mesh(compartmentImage, interiorPoints, {}, {}, pixelWidth, origin);
+  // todo: check if we should be passing non-empty vectors here:
+  mesh = mesh::Mesh(compartmentImage, interiorPoints, {}, {},
+                    vecMembraneColourPairs, pixelWidth, origin);
 }
 
 libsbml::ParametricObject *SbmlDocWrapper::getParametricObject(
@@ -1011,7 +1021,7 @@ void SbmlDocWrapper::writeGeometryMeshToSBML() {
 
 QPointF SbmlDocWrapper::getCompartmentInteriorPoint(
     const QString &compartmentID) const {
-  SPDLOG_INFO("compartmentID: {}", compartmentID);
+  SPDLOG_INFO("compartmentID: {}", compartmentID.toStdString());
   auto *comp = model->getCompartment(compartmentID.toStdString());
   auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
       comp->getPlugin("spatial"));

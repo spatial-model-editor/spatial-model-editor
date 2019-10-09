@@ -26,9 +26,7 @@ class MainWindow : public QMainWindow {
   QShortcut *shortcutSetMathBackend;
   simulate::BACKEND simMathBackend = simulate::BACKEND::SYMENGINE_LLVM;
 
-  // temp debugging shortcut:
-  QShortcut *shortcutToggleDune;
-  bool useDuneSimulator = false;
+  bool useDuneSimulator = true;
 
   QPixmap lblSpeciesColourPixmap;
   QPixmap lblCompartmentColourPixmap;
@@ -86,6 +84,8 @@ class MainWindow : public QMainWindow {
   void spinBoundaryIndex_valueChanged(int value);
 
   void spinMaxBoundaryPoints_valueChanged(int value);
+
+  void spinBoundaryWidth_valueChanged(double value);
 
   void spinMaxTriangleArea_valueChanged(int value);
 

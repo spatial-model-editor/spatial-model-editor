@@ -68,12 +68,17 @@ Translate the spatial model to a system of PDEs and simulate it: generate 2d tri
 
     -   spdlog logging library: <https://github.com/gabime/spdlog>
 
-        -   license: MIT
-        -   included in source code
+        -   license: [MIT](https://github.com/gabime/spdlog/blob/v1.x/LICENSE)
+        -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
+
+    -   fmt formatting library: <https://github.com/fmtlib/fmt>
+
+        -   license: [MIT](https://github.com/fmtlib/fmt/blob/master/LICENSE.rst)
+        -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
 
     -   SymEngine symbolic manipulation library: <https://github.com/symengine/symengine>
 
-        -   license: MIT
+        -   license: [MIT](https://github.com/symengine/symengine/blob/master/LICENSE)
         -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
 
     -   LLVM Core libraries: <https://llvm.org/>
@@ -108,10 +113,10 @@ Translate the spatial model to a system of PDEs and simulate it: generate 2d tri
 
     -   ExprTK math parsing/evaluation library: <https://github.com/ArashPartow/exprtk>
 
-        -   license: MIT
+        -   license: [MIT](https://github.com/ArashPartow/exprtk/blob/a1b1854ee6206869f0e693929f41469daf7b901c/readme.txt#L113)
         -   included in source code
 
     -   Catch2 testing framework: <https://github.com/catchorg/Catch2>
 
-        -   license: BSL-1.0
+        -   license: [BSL-1.0](https://github.com/catchorg/Catch2/blob/master/LICENSE.txt)
         -   included in tests source code

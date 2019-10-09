@@ -37,9 +37,6 @@ MainWindow::MainWindow(QWidget *parent)
   shortcutSetMathBackend = new QShortcut(this);
   shortcutSetMathBackend->setKey(Qt::CTRL + Qt::SHIFT + Qt::Key_B);
 
-  shortcutToggleDune = new QShortcut(this);
-  shortcutToggleDune->setKey(Qt::CTRL + Qt::SHIFT + Qt::Key_D);
-
   lblSpeciesColourPixmap = QPixmap(1, 1);
   lblCompartmentColourPixmap = QPixmap(1, 1);
 
@@ -55,10 +52,6 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 void MainWindow::setupConnections() {
-  // temp:
-  connect(shortcutToggleDune, &QShortcut::activated, this,
-          [this]() { useDuneSimulator = !useDuneSimulator; });
-
   // tab bar
   connect(ui->tabMain, &QTabWidget::currentChanged, this,
           &MainWindow::tabMain_currentChanged);
@@ -118,6 +111,10 @@ void MainWindow::setupConnections() {
   connect(ui->spinMaxBoundaryPoints, qOverload<int>(&QSpinBox::valueChanged),
           this, &MainWindow::spinMaxBoundaryPoints_valueChanged);
 
+  connect(ui->spinBoundaryWidth,
+          qOverload<double>(&QDoubleSpinBox::valueChanged), this,
+          &MainWindow::spinBoundaryWidth_valueChanged);
+
   connect(ui->spinMaxTriangleArea, qOverload<int>(&QSpinBox::valueChanged),
           this, &MainWindow::spinMaxTriangleArea_valueChanged);
 
@@ -174,6 +171,13 @@ void MainWindow::setupConnections() {
           &MainWindow::listFunctions_currentTextChanged);
 
   // simulate
+
+  connect(ui->actionGroupSimType, &QActionGroup::triggered, this,
+          [this](QAction *action) {
+            Q_UNUSED(action);
+            useDuneSimulator = ui->actionSimTypeDUNE->isChecked();
+          });
+
   connect(ui->btnSimulate, &QPushButton::clicked, this,
           &MainWindow::btnSimulate_clicked);
 
@@ -377,8 +381,8 @@ void MainWindow::enableTabs() {
 
 void MainWindow::action_Open_SBML_file_triggered() {
   QString filename = QFileDialog::getOpenFileName(
-      this, "Open SBML file", "", "SBML file (*.xml)", nullptr,
-      QFileDialog::Option::DontUseNativeDialog);
+      this, "Open SBML file", "", "SBML file (*.xml);; All files (*.*)",
+      nullptr, QFileDialog::Option::DontUseNativeDialog);
   if (!filename.isEmpty()) {
     sbmlDoc.importSBMLFile(filename.toStdString());
     if (sbmlDoc.isValid) {
@@ -444,7 +448,7 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
 void MainWindow::actionGeometry_from_image_triggered() {
   QString filename = QFileDialog::getOpenFileName(
       this, "Import geometry from image", "",
-      "Image Files (*.png *.jpg *.bmp *.tiff)", nullptr,
+      "Image Files (*.png *.jpg *.bmp *.tiff);; All files (*.*)", nullptr,
       QFileDialog::Option::DontUseNativeDialog);
   if (!filename.isEmpty()) {
     sbmlDoc.importGeometryFromImage(filename);
@@ -562,6 +566,13 @@ void MainWindow::spinBoundaryIndex_valueChanged(int value) {
       static_cast<int>(sbmlDoc.mesh.getBoundaryMaxPoints(boundaryIndex)));
   ui->lblCompBoundary->setPixmap(
       QPixmap::fromImage(sbmlDoc.mesh.getBoundariesImage(size, boundaryIndex)));
+  if (sbmlDoc.mesh.isMembrane(boundaryIndex)) {
+    ui->spinBoundaryWidth->setEnabled(true);
+    ui->spinBoundaryWidth->setValue(
+        sbmlDoc.mesh.getBoundaryWidth(boundaryIndex));
+  } else {
+    ui->spinBoundaryWidth->setEnabled(false);
+  }
 }
 
 void MainWindow::spinMaxBoundaryPoints_valueChanged(int value) {
@@ -572,8 +583,16 @@ void MainWindow::spinMaxBoundaryPoints_valueChanged(int value) {
       QPixmap::fromImage(sbmlDoc.mesh.getBoundariesImage(size, boundaryIndex)));
 }
 
-void MainWindow::spinMaxTriangleArea_valueChanged(int value) {
+void MainWindow::spinBoundaryWidth_valueChanged(double value) {
   const auto &size = ui->lblCompBoundary->size();
+  auto boundaryIndex = static_cast<std::size_t>(ui->spinBoundaryIndex->value());
+  sbmlDoc.mesh.setBoundaryWidth(boundaryIndex, value);
+  ui->lblCompBoundary->setPixmap(
+      QPixmap::fromImage(sbmlDoc.mesh.getBoundariesImage(size, boundaryIndex)));
+}
+
+void MainWindow::spinMaxTriangleArea_valueChanged(int value) {
+  const auto &size = ui->lblCompMesh->size();
   auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
   sbmlDoc.mesh.setCompartmentMaxTriangleArea(compIndex,
                                              static_cast<std::size_t>(value));
@@ -609,14 +628,9 @@ void MainWindow::listCompartments_currentTextChanged(
       const auto &img =
           sbmlDoc.mapCompIdToGeometry.at(compID).getCompartmentImage();
       // rescale image
-      if (img.width() * ui->lblCompShape->height() >
-          img.height() * ui->lblCompShape->width()) {
-        ui->lblCompShape->setPixmap(QPixmap::fromImage(img.scaledToWidth(
-            ui->lblCompShape->width() - 2, Qt::FastTransformation)));
-      } else {
-        ui->lblCompShape->setPixmap(QPixmap::fromImage(img.scaledToHeight(
-            ui->lblCompShape->height() - 2, Qt::FastTransformation)));
-      }
+      ui->lblCompShape->setPixmap(QPixmap::fromImage(
+          img.scaled(ui->lblCompShape->size(), Qt::KeepAspectRatio,
+                     Qt::FastTransformation)));
       ui->lblCompShape->setText("");
       // update mesh or boundary image if tab is currently visible
       tabCompartmentGeometry_currentChanged(
@@ -765,7 +779,7 @@ void MainWindow::btnImportConcentration_clicked() {
                speciesID);
   QString filename = QFileDialog::getOpenFileName(
       this, "Import species concentration from image", "",
-      "Image Files (*.png *.jpg *.bmp *.tiff)", nullptr,
+      "Image Files (*.png *.jpg *.bmp *.tiff);; All files (*.*)", nullptr,
       QFileDialog::Option::DontUseNativeDialog);
   if (!filename.isEmpty()) {
     ui->radInitialConcentrationVarying->setChecked(true);
@@ -876,7 +890,8 @@ void MainWindow::btnSimulate_clicked() {
   }
 
   // Dune simulation
-  dune::DuneSimulation duneSim(sbmlDoc, ui->lblGeometry->size());
+  dune::DuneSimulation duneSim(sbmlDoc, ui->txtSimDt->text().toDouble(),
+                               ui->lblGeometry->size());
 
   // get initial concentrations
   images.clear();

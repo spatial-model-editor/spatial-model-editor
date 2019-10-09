@@ -31,7 +31,7 @@ matrix:
         - "jwm &"
         - sleep 1
       script:
-        - bash ci-build.sh release
+        - bash ci-build.sh "release optimize_full"
         # run tests
         - ./build-tests/test -a
         # check dependencies of resulting executable
@@ -48,7 +48,7 @@ matrix:
       install:
         - export MACOSX_DEPLOYMENT_TARGET=10.14
       script:
-        - bash ci-build.sh release
+        - bash ci-build.sh "release optimize_full"
         # run tests
         - ./build-tests/test.app/Contents/MacOS/test -a
         # check dependencies of resulting executable

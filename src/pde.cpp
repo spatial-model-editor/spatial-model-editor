@@ -11,7 +11,8 @@ namespace pde {
 PDE::PDE(const sbml::SbmlDocWrapper *doc_ptr,
          const std::vector<std::string> &speciesIDs,
          const std::vector<std::string> &reactionIDs,
-         const std::vector<std::string> &relabelledSpeciesIDs)
+         const std::vector<std::string> &relabelledSpeciesIDs,
+         const std::vector<std::string> &reactionScaleFactors)
     : species(speciesIDs) {
   if (!relabelledSpeciesIDs.empty() &&
       relabelledSpeciesIDs.size() != speciesIDs.size()) {
@@ -19,6 +20,13 @@ PDE::PDE(const sbml::SbmlDocWrapper *doc_ptr,
         "Ignoring relabelledSpecies:"
         "size {} does not match number of species {}",
         relabelledSpeciesIDs.size(), speciesIDs.size());
+  }
+  if (!reactionScaleFactors.empty() &&
+      reactionScaleFactors.size() != reactionIDs.size()) {
+    SPDLOG_WARN(
+        "Ignoring reactionScaleFactors:"
+        "size {} does not match number of reactions {}",
+        reactionScaleFactors.size(), reactionIDs.size());
   }
   // construct reaction expressions and stoich matrix
   reactions::Reaction reactions(doc_ptr, speciesIDs, reactionIDs);
@@ -34,6 +42,12 @@ PDE::PDE(const sbml::SbmlDocWrapper *doc_ptr,
       QString expr = QString("%1*(%2) ")
                          .arg(QString::number(reactions.M.at(j).at(i), 'g', 18),
                               reactions.reacExpressions.at(j).c_str());
+      // rescale by supplied reactionScaleFactor
+      QString scaleFactor("1");
+      if (reactionScaleFactors.size() == reactionIDs.size()) {
+        scaleFactor = reactionScaleFactors[j].c_str();
+      }
+      expr = QString("((%1)/%2) ").arg(expr, scaleFactor);
       SPDLOG_DEBUG("Species {} Reaction {} = {}", speciesIDs.at(i), j, expr);
       // parse and inline constants
       symbolic::Symbolic sym(expr.toStdString(), reactions.speciesIDs,

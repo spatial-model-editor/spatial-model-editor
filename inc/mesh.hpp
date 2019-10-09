@@ -7,12 +7,11 @@
 
 #pragma once
 
-#include <array>
-#include <vector>
-
 #include <QImage>
 #include <QPoint>
 #include <QPointF>
+#include <array>
+#include <vector>
 
 #include "boundary.hpp"
 
@@ -20,6 +19,7 @@ namespace mesh {
 
 using QTriangleF = std::array<QPointF, 3>;
 using TriangleIndex = std::array<std::size_t, 3>;
+using ColourPair = std::pair<QRgb, QRgb>;
 
 class Mesh {
  private:
@@ -52,6 +52,8 @@ class Mesh {
                 const std::vector<QPointF>& interiorPoints = {},
                 const std::vector<std::size_t>& maxPoints = {},
                 const std::vector<std::size_t>& maxTriangleArea = {},
+                const std::vector<std::pair<std::string, ColourPair>>&
+                    membraneColourPairs = {},
                 double pixelWidth = 1.0,
                 const QPointF& originPoint = QPointF(0, 0));
   // constructor to load existing vertices&trianges without image
@@ -61,8 +63,12 @@ class Mesh {
   // if mesh not constructed from image, but supplied as vertices&trianges,
   // we cannot alter boundary or triangle area easily, so treat as read-only
   bool isReadOnly() const;
+  bool isMembrane(std::size_t boundaryIndex) const;
   void setBoundaryMaxPoints(std::size_t boundaryIndex, std::size_t maxPoints);
   std::size_t getBoundaryMaxPoints(std::size_t boundaryIndex) const;
+  void setBoundaryWidth(std::size_t boundaryIndex, double width);
+  double getBoundaryWidth(std::size_t boundaryIndex) const;
+  double getMembraneWidth(const std::string& membraneID) const;
   std::vector<std::size_t> getBoundaryMaxPoints() const;
   void setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
                                      std::size_t maxTriangleArea);

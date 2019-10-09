@@ -17,37 +17,56 @@ std::size_t Mesh::flattenQPoint(const QPoint& p) const noexcept {
   return static_cast<std::size_t>(p.x() + img.width() * p.y());
 }
 
-Mesh::Mesh(const QImage& image, const std::vector<QPointF>& interiorPoints,
-           const std::vector<std::size_t>& maxPoints,
-           const std::vector<std::size_t>& maxTriangleArea, double pixelWidth,
-           const QPointF& originPoint)
+Mesh::Mesh(
+    const QImage& image, const std::vector<QPointF>& interiorPoints,
+    const std::vector<std::size_t>& maxPoints,
+    const std::vector<std::size_t>& maxTriangleArea,
+    const std::vector<std::pair<std::string, ColourPair>>& membraneColourPairs,
+    double pixelWidth, const QPointF& originPoint)
     : img(image),
       origin(originPoint),
       pixel(pixelWidth),
       compartmentInteriorPoints(interiorPoints),
       boundaryMaxPoints(maxPoints),
       compartmentMaxTriangleArea(maxTriangleArea) {
-  boundaries = boundary::constructBoundaries(image);
+  // construct map from colourPair to membrane index
+  std::map<ColourPair, std::pair<std::size_t, std::string>>
+      mapColourPairToMembraneIndex;
+  for (std::size_t membraneIndex = 0;
+       membraneIndex < membraneColourPairs.size(); ++membraneIndex) {
+    auto membraneID = membraneColourPairs.at(membraneIndex).first;
+    auto colPair = membraneColourPairs.at(membraneIndex).second;
+    mapColourPairToMembraneIndex[colPair] = {membraneIndex, membraneID};
+    mapColourPairToMembraneIndex[{colPair.second, colPair.first}] = {
+        membraneIndex, membraneID};
+    SPDLOG_DEBUG("Colour pair {} -> membrane '{}', index {}", colPair,
+                 membraneID, membraneIndex);
+  }
+
+  boundaries =
+      boundary::constructBoundaries(image, mapColourPairToMembraneIndex);
   SPDLOG_INFO("found {} boundaries", boundaries.size());
   for (const auto& boundary : boundaries) {
-    SPDLOG_INFO("  - {} points, loop={}", boundary.points.size(),
-                boundary.isLoop);
+    SPDLOG_INFO("  - {} points, loop={}, membrane={} [{}]",
+                boundary.points.size(), boundary.isLoop, boundary.isMembrane,
+                boundary.membraneID);
   }
-  if (boundaryMaxPoints.empty()) {
-    // if boundary points not specified use default value
+  if (boundaryMaxPoints.size() != boundaries.size()) {
+    // if boundary points not correctly specified use default value
+    SPDLOG_INFO(
+        "boundaryMaxPoints has size {}, but there are {} boundaries - "
+        "using default value: {}",
+        boundaryMaxPoints.size(), boundaries.size(), defaultBoundaryMaxPoints);
     boundaryMaxPoints =
         std::vector<std::size_t>(boundaries.size(), defaultBoundaryMaxPoints);
-    SPDLOG_INFO(
-        "no boundaryMaxPoints values specified, using default value: {}",
-        defaultBoundaryMaxPoints);
   }
   for (std::size_t i = 0; i < boundaries.size(); ++i) {
     boundaries[i].setMaxPoints(boundaryMaxPoints[i]);
   }
   SPDLOG_INFO("simplified {} boundaries", boundaries.size());
   for (const auto& boundary : boundaries) {
-    SPDLOG_INFO("  - {} points, loop={}", boundary.points.size(),
-                boundary.isLoop);
+    SPDLOG_INFO("  - {} points, loop={}, membrane={}", boundary.points.size(),
+                boundary.isLoop, boundary.isMembrane);
   }
   if (compartmentMaxTriangleArea.empty()) {
     // if triangle areas not specified use default value
@@ -55,6 +74,16 @@ Mesh::Mesh(const QImage& image, const std::vector<QPointF>& interiorPoints,
         interiorPoints.size(), defaultCompartmentMaxTriangleArea);
     SPDLOG_INFO("no max triangle areas specified, using default value: {}",
                 defaultCompartmentMaxTriangleArea);
+  }
+  // add interior point for each membrane
+  for (const auto& boundary : boundaries) {
+    if (boundary.isMembrane) {
+      QPointF membraneInterior =
+          (boundary.points[0] + boundary.outerPoints[0]) / 2.0;
+      compartmentInteriorPoints.push_back(membraneInterior);
+      // no max area for membrane triangles
+      compartmentMaxTriangleArea.push_back(99);
+    }
   }
   constructMesh();
 }
@@ -100,6 +129,10 @@ Mesh::Mesh(const std::vector<double>& inputVertices,
 
 bool Mesh::isReadOnly() const { return readOnlyMesh; }
 
+bool Mesh::isMembrane(std::size_t boundaryIndex) const {
+  return boundaries.at(boundaryIndex).isMembrane;
+}
+
 void Mesh::setBoundaryMaxPoints(std::size_t boundaryIndex,
                                 std::size_t maxPoints) {
   if (readOnlyMesh) {
@@ -116,11 +149,33 @@ std::size_t Mesh::getBoundaryMaxPoints(std::size_t boundaryIndex) const {
 }
 
 std::vector<std::size_t> Mesh::getBoundaryMaxPoints() const {
-  std::vector<std::size_t> v;
-  for (const auto& boundary : boundaries) {
-    v.push_back(boundary.getMaxPoints());
-  }
+  std::vector<std::size_t> v(boundaries.size());
+  std::transform(boundaries.cbegin(), boundaries.cend(), v.begin(),
+                 [](const auto& b) { return b.getMaxPoints(); });
   return v;
+}
+
+void Mesh::setBoundaryWidth(std::size_t boundaryIndex, double width) {
+  if (readOnlyMesh) {
+    SPDLOG_INFO("mesh is read only, ignoring.");
+    return;
+  }
+  SPDLOG_INFO("boundaryIndex {}: width {} -> {}", boundaryIndex,
+              boundaries.at(boundaryIndex).getMembraneWidth(), width);
+  boundaries.at(boundaryIndex).setMembraneWidth(width);
+}
+
+double Mesh::getBoundaryWidth(std::size_t boundaryIndex) const {
+  return boundaries.at(boundaryIndex).getMembraneWidth();
+}
+
+double Mesh::getMembraneWidth(const std::string& membraneID) const {
+  for (const auto& boundary : boundaries) {
+    if (boundary.membraneID == membraneID) {
+      return boundary.getMembraneWidth();
+    }
+  }
+  return 0;
 }
 
 void Mesh::setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
@@ -182,13 +237,14 @@ const std::vector<std::vector<QTriangleF>>& Mesh::getTriangles() const {
 }
 
 void Mesh::constructMesh() {
-  // points may be used by multiple boundary lines,
+  // pixel points may be used by multiple boundary lines,
   // so first construct a set of unique points with a map to their index
   constexpr std::size_t NULL_INDEX = std::numeric_limits<std::size_t>::max();
   std::vector<std::size_t> mapPointToIndex(
       static_cast<std::size_t>(img.width() * img.height()), NULL_INDEX);
   std::size_t index = 0;
-  std::vector<QPoint> boundaryPoints;
+  std::vector<QPointF> boundaryPoints;
+  std::vector<size_t> membraneIndexOffsets;
   for (const auto& boundary : boundaries) {
     for (const auto& point : boundary.points) {
       std::size_t flatQPoint = flattenQPoint(point);
@@ -199,7 +255,18 @@ void Mesh::constructMesh() {
         ++index;
       }
     }
+    // add outer membrane boundary lines: non-integers
+    // can't be used by multiple boundary lines - no check for duplicates
+    if (boundary.isMembrane) {
+      // index of first membrane outer line point:
+      membraneIndexOffsets.push_back(index);
+      for (const auto& point : boundary.outerPoints) {
+        boundaryPoints.push_back(point);
+        ++index;
+      }
+    }
   }
+
   // for each boundary line, replace each QPoint
   // with its index in the list of boundaryPoints
   std::vector<triangulate::BoundarySegments> boundarySegmentsVector;
@@ -218,6 +285,24 @@ void Mesh::constructMesh() {
       boundarySegmentsVector.back().push_back({{i0, i1}});
     }
   }
+  // repeat for outer boundaries of membranes:
+  std::size_t iMembrane = 0;
+  for (const auto& boundary : boundaries) {
+    if (boundary.isMembrane) {
+      // index of first point in loop:
+      std::size_t pIndex = membraneIndexOffsets[iMembrane];
+      boundarySegmentsVector.emplace_back();
+      for (std::size_t j = 0; j < boundary.outerPoints.size() - 1; ++j) {
+        boundarySegmentsVector.back().push_back({{pIndex, pIndex + 1}});
+        ++pIndex;
+      }
+      // connect last point to first point
+      boundarySegmentsVector.back().push_back(
+          {{pIndex, membraneIndexOffsets[iMembrane]}});
+      ++iMembrane;
+    }
+  }
+
   // interior point & max triangle area for each compartment
   std::vector<triangulate::Compartment> compartments;
   for (std::size_t i = 0; i < compartmentInteriorPoints.size(); ++i) {
@@ -284,6 +369,14 @@ QImage Mesh::getBoundariesImage(const QSize& size,
       p.drawEllipse(points[i] * scaleFactor, penSize, penSize);
       p.drawLine(points[i] * scaleFactor,
                  points[(i + 1) % points.size()] * scaleFactor);
+    }
+    if (boundaries[k].isMembrane) {
+      const auto& outerPoints = boundaries[k].outerPoints;
+      for (std::size_t i = 0; i < maxPoint; ++i) {
+        p.drawEllipse(outerPoints[i] * scaleFactor, penSize, penSize);
+        p.drawLine(outerPoints[i] * scaleFactor,
+                   outerPoints[(i + 1) % outerPoints.size()] * scaleFactor);
+      }
     }
   }
   p.end();

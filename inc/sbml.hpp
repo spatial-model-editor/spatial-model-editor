@@ -40,11 +40,14 @@ class SbmlDocWrapper {
   std::map<QString, QRgb> mapCompartmentToColour;
   std::map<QRgb, QString> mapColourToCompartment;
   QImage compartmentImage;
+  std::map<QString, QColor> mapSpeciesIdToColour;
 
   // membrane maps
   // for each pair of different colours: map to a continuous index
   // NOTE: colours ordered by ascending numerical value
   std::map<std::pair<QRgb, QRgb>, std::size_t> mapColPairToIndex;
+  std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>>
+      vecMembraneColourPairs;
   // for each pair of adjacent pixels of different colour,
   // add the pair of QPoints to the vector for this pair of colours,
   // i.e. the membrane between compartments of these two colours
@@ -114,7 +117,6 @@ class SbmlDocWrapper {
   std::map<QString, QStringList> species;
   std::map<QString, QStringList> reactions;
   QStringList functions;
-  std::map<QString, QColor> mapSpeciesIdToColour;
 
   // spatial information
   std::map<QString, geometry::Compartment> mapCompIdToGeometry;

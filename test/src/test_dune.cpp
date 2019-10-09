@@ -162,7 +162,7 @@ TEST_CASE("DUNE simulation of ABtoC model", "[dune][simulate][non-gui]") {
   s.setInitialConcentration("B", 1.0);
   s.setInitialConcentration("C", 0.0);
 
-  dune::DuneSimulation duneSim(s, QSize(200, 200));
+  dune::DuneSimulation duneSim(s, 0.01, QSize(200, 200));
   REQUIRE(duneSim.getAverageConcentration("A") == dbl_approx(1.0));
   REQUIRE(duneSim.getAverageConcentration("B") == dbl_approx(1.0));
   REQUIRE(duneSim.getAverageConcentration("C") == dbl_approx(0.0));
@@ -191,7 +191,7 @@ TEST_CASE("DUNE visualization self-consistency: 500x300",
   s.importSBMLString(f.readAll().toStdString());
 
   QSize imgSize(500, 300);
-  dune::DuneSimulation duneSim(s, imgSize);
+  dune::DuneSimulation duneSim(s, 0.01, imgSize);
   auto imgConcFull = duneSim.getConcImage();
   auto imgConcLinear = duneSim.getConcImage(true);
   // 1-1 aspect ratio maintained:
@@ -218,7 +218,7 @@ TEST_CASE("DUNE visualization analytic", "[dune][visualization][non-gui]") {
   s.setAnalyticConcentration("C", "0");
 
   QSize imgSize(200, 200);
-  dune::DuneSimulation duneSim(s, imgSize);
+  dune::DuneSimulation duneSim(s, 0.01, imgSize);
   auto imgConc = duneSim.getConcImage();
   imgConc.save("img.png");
   QPoint p(50, 130);
