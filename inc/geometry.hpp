@@ -4,13 +4,11 @@
 //  - Membrane class: defines set of points on either side of the boundary
 //  between two compartments, aka the membrane
 //  - Field class: species concentration within a compartment
-//  - CompartmentIndexer class: utility class to convert a QPoint to the
-//  corresponding vector index for a Compartment (for initialising Membranes)
 
 #pragma once
 
 #include <QImage>
-#include <unordered_map>
+#include <vector>
 
 namespace geometry {
 
@@ -77,17 +75,6 @@ class Field {
   bool isSpatial;
   // field.dcdt = result of the diffusion operator acting on field.conc
   void applyDiffusionOperator();
-};
-
-class CompartmentIndexer {
- private:
-  const Compartment &comp;
-  int imgHeight;
-  std::unordered_map<int, std::size_t> index;
-
- public:
-  explicit CompartmentIndexer(const Compartment &c);
-  std::size_t getIndex(const QPoint &point);
 };
 
 }  // namespace geometry

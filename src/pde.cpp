@@ -4,6 +4,7 @@
 
 #include "logger.hpp"
 #include "reactions.hpp"
+#include "sbml.hpp"
 #include "symbolic.hpp"
 
 namespace pde {
@@ -48,7 +49,8 @@ PDE::PDE(const sbml::SbmlDocWrapper *doc_ptr,
         scaleFactor = reactionScaleFactors[j].c_str();
       }
       expr = QString("((%1)/%2) ").arg(expr, scaleFactor);
-      SPDLOG_DEBUG("Species {} Reaction {} = {}", speciesIDs.at(i), j, expr);
+      SPDLOG_DEBUG("Species {} Reaction {} = {}", speciesIDs.at(i), j,
+                   expr.toStdString());
       // parse and inline constants
       symbolic::Symbolic sym(expr.toStdString(), reactions.speciesIDs,
                              reactions.constants[j]);

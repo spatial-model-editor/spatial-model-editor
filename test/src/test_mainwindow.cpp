@@ -1,3 +1,6 @@
+#include <qcustomplot.h>
+#include <sbml/SBMLTypes.h>
+
 #include <QtTest>
 
 #include "catch.hpp"
@@ -540,8 +543,8 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   ui.txtSimLength->setText("1000.0");
   ui.txtSimInterval->setText("0.01");
   ui.txtSimDt->setText("0.01");
-  // stop simulation after 5 seconds
-  QTimer::singleShot(5000, [=]() {
+  // stop simulation after 2 seconds
+  QTimer::singleShot(2000, [=]() {
     QTest::keyClick(ui.pltPlot, Qt::Key_C, Qt::ControlModifier, 0);
   });
   // start simulation

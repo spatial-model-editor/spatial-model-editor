@@ -1,11 +1,7 @@
 // catch2 header include with
-// - additional ostream operator << overloads for some Qt types
 // - dbl_approx() convenience function for Approx(x).epsilon(1e-14)
 
 #pragma once
-
-// ostream overloads need to be included before catch header
-#include "ostream_overloads.hpp"
 
 #include "ext/catch/catch.hpp"
 

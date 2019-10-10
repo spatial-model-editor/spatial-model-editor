@@ -8,13 +8,14 @@
 
 #pragma once
 
-#include <QPoint>
 #include <QPointF>
 #include <array>
 #include <string>
 #include <vector>
 
-#include "triangle/triangle.hpp"
+namespace triangle {
+struct triangulateio;
+}
 
 namespace triangulate {
 

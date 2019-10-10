@@ -6,7 +6,7 @@ LIBS += \
     $$PWD/symengine/lib/libsymengine.a \
     $$PWD/gmp/lib/libgmp.a \
     $$PWD/gmp/lib/libgmpxx.a \
-    $$PWD/spdlog/lib/spdlog/libspdlog.a \
+    $$PWD/spdlog/lib/libspdlog.a \
     $$PWD/libtiff/lib/libtiff.a \
     $$PWD/muparser/lib/libmuparser.a \
 

@@ -5,14 +5,19 @@
 #pragma once
 
 #include <QStringList>
+#include <map>
 
-#include "sbml.hpp"
+namespace sbml {
+class SbmlDocWrapper;
+}
 
 namespace reactions {
 
 class Reaction {
  private:
-  const sbml::SbmlDocWrapper *doc;
+  void init(const sbml::SbmlDocWrapper *doc,
+            const std::vector<std::string> &species,
+            const std::vector<std::string> &reactionIDs);
 
  public:
   // vector of reaction expressions as strings
@@ -25,9 +30,6 @@ class Reaction {
   std::vector<std::string> speciesIDs;
   // vector of maps of constants
   std::vector<std::map<std::string, double>> constants;
-  void init(const sbml::SbmlDocWrapper *doc_ptr,
-            const std::vector<std::string> &species,
-            const std::vector<std::string> &reactionIDs);
   Reaction(const sbml::SbmlDocWrapper *doc_ptr,
            const std::vector<std::string> &species,
            const std::vector<std::string> &reactionIDs);

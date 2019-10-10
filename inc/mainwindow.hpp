@@ -2,9 +2,14 @@
 
 #include <QMainWindow>
 
-#include "qcustomplot.h"
 #include "sbml.hpp"
 #include "simulate.hpp"
+
+class QLabel;
+class QListWidgetItem;
+class QTreeWidgetItem;
+class QShortcut;
+class QCPAbstractPlottable;
 
 namespace Ui {
 class MainWindow;

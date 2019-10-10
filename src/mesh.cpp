@@ -39,8 +39,8 @@ Mesh::Mesh(
     mapColourPairToMembraneIndex[colPair] = {membraneIndex, membraneID};
     mapColourPairToMembraneIndex[{colPair.second, colPair.first}] = {
         membraneIndex, membraneID};
-    SPDLOG_DEBUG("Colour pair {} -> membrane '{}', index {}", colPair,
-                 membraneID, membraneIndex);
+    SPDLOG_DEBUG("Colour pair ({x},{x}) -> membrane '{}', index {}",
+                 colPair.first, colPair.second, membraneID, membraneIndex);
   }
 
   boundaries =

@@ -347,7 +347,7 @@ std::vector<Boundary> constructBoundaries(
   std::size_t maxIterations = bbg.nPixels;
   for (std::size_t i = 0; i < bbg.fixedPoints.size(); ++i) {
     const auto& fp = bbg.fixedPoints[i];
-    SPDLOG_TRACE("fixedPoint {}", fp);
+    SPDLOG_TRACE("fixedPoint ({},{})", fp.x(), fp.y());
     bbg.visitPoint(fp);
     for (const auto& dfp : nearestNeighbourDirectionPoints) {
       if (bbg.isBoundary(fp + dfp) && bbg.fixedPointCounter.at(i) > 0) {
@@ -372,15 +372,16 @@ std::vector<Boundary> constructBoundaries(
             }
           }
           if (iterCount++ > maxIterations) {
-            SPDLOG_ERROR("Failed to find another fixed point: stuck at {}",
-                         currPoint);
+            SPDLOG_ERROR("Failed to find another fixed point: stuck at ({},{})",
+                         currPoint.x(), currPoint.y());
             return boundaries;
           }
         }
         // add final fixed point to boundary line
         points.push_back(bbg.getFixedPoint(currPoint));
         SPDLOG_TRACE("  - {} connecting pixels", points.size());
-        SPDLOG_TRACE("  -> fixedPoint {}", points.back());
+        SPDLOG_TRACE("  -> fixedPoint ({},{})", points.back().x(),
+                     points.back().y());
         // we now have a line between two fixed points
         boundaries.emplace_back(points, false);
         --bbg.fixedPointCounter[i];
@@ -411,7 +412,7 @@ std::vector<Boundary> constructBoundaries(
       }
     }
     if (foundStartPoint) {
-      SPDLOG_TRACE("loop start point {}", startPoint);
+      SPDLOG_TRACE("loop start point ({},{})", startPoint.x(), startPoint.y());
       bool isMembrane = bbg.isMembrane(startPoint);
       std::size_t membraneIndex = bbg.getMembraneIndex(startPoint);
       points.clear();
@@ -435,7 +436,8 @@ std::vector<Boundary> constructBoundaries(
                       bbg.getMembraneIndex(currPoint));
         }
         if (iterCount++ > maxIterations) {
-          SPDLOG_ERROR("Failed to find end of loop: stuck at {}", currPoint);
+          SPDLOG_ERROR("Failed to find end of loop: stuck at ({},{})",
+                       currPoint.x(), currPoint.y());
           return boundaries;
         }
       }

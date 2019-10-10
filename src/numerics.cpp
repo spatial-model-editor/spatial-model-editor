@@ -1,5 +1,31 @@
 #include "numerics.hpp"
 
+#define exprtk_disable_comments
+#define exprtk_disable_break_continue
+#define exprtk_disable_sc_andor
+#define exprtk_disable_return_statement
+#define exprtk_disable_string_capabilities
+#define exprtk_disable_superscalar_unroll
+#define exprtk_disable_rtl_io_file
+#define exprtk_disable_rtl_vecops
+#define exprtk_disable_caseinsensitivity
+
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wold-style-cast"
+#pragma GCC diagnostic ignored "-Wconversion"
+#pragma GCC diagnostic ignored "-Wsign-conversion"
+#pragma GCC diagnostic ignored "-Wfloat-conversion"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
+
+#include <exprtk/exprtk.hpp>
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
+#endif
+
 #include "logger.hpp"
 
 namespace numerics {
@@ -20,7 +46,8 @@ namespace numerics {
 ExprEval::ExprEval(const std::string &expression,
                    const std::vector<std::string> &variableName,
                    std::vector<double> &variableValue,
-                   const std::map<std::string, double> &constants) {
+                   const std::map<std::string, double> &constants)
+    : exprtkExpression(std::make_shared<exprtk::expression<double>>()) {
   // construct symbol table of variables and constants
   exprtk::symbol_table<double> exprtkSymbolTable;
   SPDLOG_DEBUG("compiling {}", expression);
@@ -36,7 +63,7 @@ ExprEval::ExprEval(const std::string &expression,
       throwSymbolTableError(exprtkSymbolTable, v.first);
     }
   }
-  exprtkExpression.register_symbol_table(exprtkSymbolTable);
+  exprtkExpression->register_symbol_table(exprtkSymbolTable);
   // compile expression
   exprtk::parser<double> exprtkParser;
   exprtkParser.settings().disable_all_control_structures();
@@ -47,7 +74,7 @@ ExprEval::ExprEval(const std::string &expression,
   // todo: try to make the parser more compatible with libSBML
   // http://sbml.org/Software/libSBML/5.12.0/docs/formatted/cpp-api/libsbml-math.html
   exprtkParser.dec().collect_variables() = true;
-  if (!exprtkParser.compile(expression, exprtkExpression)) {
+  if (!exprtkParser.compile(expression, *exprtkExpression.get())) {
     std::string errorMessage = "ExprEval::ExprEval : compilation error: ";
     errorMessage.append(exprtkParser.error());
     SPDLOG_CRITICAL(errorMessage);
@@ -61,19 +88,21 @@ ExprEval::ExprEval(const std::string &expression,
   std::string strListSymbols = "";
   for (const auto &pair : symbolPairList) {
     if (pair.second == exprtk::parser<double>::e_st_variable) {
-      QString value;
+      std::string str = pair.first;
       const auto iter = constants.find(pair.first);
       if (iter != constants.cend()) {
-        value = QString::number(iter->second);
+        str.append(" (");
+        str.append(std::to_string(iter->second));
+        str.append(")");
       }
-      strListSymbols.append(
-          QString(" %1 (%2),").arg(pair.first.c_str(), value).toStdString());
+      str.append(", ");
+      strListSymbols.append(str);
     }
   }
   SPDLOG_DEBUG("  - symbols used: {}", strListSymbols);
 }
 
-double ExprEval::operator()() const { return exprtkExpression.value(); }
+double ExprEval::operator()() const { return exprtkExpression->value(); }
 
 std::vector<std::string> getSymbols(const std::string &expression) {
   std::vector<std::string> symbols;

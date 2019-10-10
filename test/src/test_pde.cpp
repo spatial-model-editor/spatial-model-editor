@@ -1,8 +1,11 @@
+#include <sbml/SBMLTypes.h>
+
 #include <QFile>
 
 #include "catch.hpp"
 #include "logger.hpp"
 #include "pde.hpp"
+#include "sbml.hpp"
 #include "sbml_test_data/invalid_dune_names.hpp"
 
 TEST_CASE("PDE", "[pde][non-gui]") {

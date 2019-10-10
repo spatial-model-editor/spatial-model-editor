@@ -1,7 +1,9 @@
 #include "tiff.hpp"
 
+#include <tiffio.h>
+
+#include "geometry.hpp"
 #include "logger.hpp"
-#include "tiffio.h"
 #include "utils.hpp"
 
 namespace utils {
@@ -42,7 +44,7 @@ double writeTIFF(const std::string& filename, const geometry::Field& field,
   TIFF* tif = TIFFOpen(filename.c_str(), "w");
   TIFFSetField(tif, TIFFTAG_IMAGEWIDTH, width);
   TIFFSetField(tif, TIFFTAG_IMAGELENGTH, height);
-  // 16-bit grayscale - one uint16_t per pixel:
+  // one unsigned int per pixel:
   TIFFSetField(tif, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_UINT);
   TIFFSetField(tif, TIFFTAG_BITSPERSAMPLE, TiffDataTypeBits);
   TIFFSetField(tif, TIFFTAG_SAMPLESPERPIXEL, 1);
@@ -63,6 +65,7 @@ double writeTIFF(const std::string& filename, const geometry::Field& field,
   // NB: location of (0,0) pixel
   TIFFSetField(tif, TIFFTAG_XPOSITION, 0.0);
   TIFFSetField(tif, TIFFTAG_YPOSITION, 0.0);
+
   for (std::size_t y = 0; y < static_cast<std::size_t>(height); y++) {
     int ret = TIFFWriteScanline(tif, tifValues.at(y).data(),
                                 static_cast<uint32_t>(y));

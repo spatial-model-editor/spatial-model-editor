@@ -1,13 +1,9 @@
-#include "dialogdimensions.hpp"
-
 #include <QtTest>
 
 #include "catch.hpp"
-#include "qt_test_utils.hpp"
-
+#include "dialogdimensions.hpp"
 #include "logger.hpp"
-
-constexpr int mouseDelay = 50;
+#include "qt_test_utils.hpp"
 
 // osx CI tests have issues with key presses & modal dialogs
 // for now commenting out this test on osx

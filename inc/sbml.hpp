@@ -9,20 +9,49 @@
 #include <QColor>
 #include <QImage>
 #include <QStringList>
+#include <memory>
 
 #include "geometry.hpp"
-#include "mesh.hpp"
-#include "sbml/SBMLTypes.h"
-#include "sbml/extension/SBMLDocumentPlugin.h"
-#include "sbml/packages/spatial/common/SpatialExtensionTypes.h"
-#include "sbml/packages/spatial/extension/SpatialExtension.h"
+
+// SBML forward declarations
+namespace libsbml {
+class SBMLDocument;
+class Model;
+class SpatialModelPlugin;
+class Geometry;
+class SampledFieldGeometry;
+class ParametricGeometry;
+class ParametricObject;
+}  // namespace libsbml
+
+namespace mesh {
+class Mesh;
+}
 
 namespace sbml {
+
+using NameDoublePair = std::pair<std::string, double>;
+
+class Reac {
+ public:
+  std::string ID;
+  std::string expression;
+  std::vector<NameDoublePair> products;
+  std::vector<NameDoublePair> reactants;
+  std::vector<NameDoublePair> constants;
+};
+
+class Func {
+ public:
+  std::string ID;
+  std::string expression;
+  std::vector<std::string> arguments;
+};
 
 class SbmlDocWrapper {
  private:
   // the SBML document
-  std::unique_ptr<libsbml::SBMLDocument> doc;
+  std::shared_ptr<libsbml::SBMLDocument> doc;
   // names of additional custom annotations that we add
   // to the ParametricGeometry object
   inline static const std::string annotationURI =
@@ -76,6 +105,7 @@ class SbmlDocWrapper {
   void initMembraneColourPairs();
   void updateMembraneList();
   void updateReactionList();
+  void updateFunctionList();
 
   // remove initialAssignment and related things from SBML
   // (sampledField, spatialref, etc)
@@ -122,7 +152,9 @@ class SbmlDocWrapper {
   std::map<QString, geometry::Compartment> mapCompIdToGeometry;
   std::map<QString, geometry::Field> mapSpeciesIdToField;
   std::vector<geometry::Membrane> membraneVec;
-  mesh::Mesh mesh;
+  std::shared_ptr<mesh::Mesh> mesh;
+
+  explicit SbmlDocWrapper();
 
   void importSBMLFile(const std::string &filename);
   void importSBMLString(const std::string &xml);
@@ -192,21 +224,9 @@ class SbmlDocWrapper {
 
   std::string inlineExpr(const std::string &mathExpression) const;
 
-  // temporary functions exposing SBML doc directly: to be refactored
-  const libsbml::Reaction *getReaction(const QString &reactionID) const {
-    return model->getReaction(reactionID.toStdString());
-  }
-  const libsbml::FunctionDefinition *getFunctionDefinition(
-      const QString &functionID) const {
-    return model->getFunctionDefinition(functionID.toStdString());
-  }
-  const libsbml::RateRule *getRateRule(const std::string &speciesID) const {
-    return model->getRateRule(speciesID);
-  }
-  const libsbml::AssignmentRule *getAssignmentRule(
-      const std::string &paramID) const {
-    return model->getAssignmentRule(paramID);
-  }
+  std::string getRateRule(const std::string &speciesID) const;
+  Reac getReaction(const QString &reactionID) const;
+  Func getFunctionDefinition(const QString &functionID) const;
 };
 
 }  // namespace sbml

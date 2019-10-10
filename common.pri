@@ -15,7 +15,6 @@ SOURCES += \
     src/mainwindow.cpp \
     src/mesh.cpp \
     src/numerics.cpp \
-    src/ostream_overloads.cpp \
     src/pde.cpp \
     src/qlabelmousetracker.cpp \
     src/reactions.cpp \
@@ -33,12 +32,10 @@ HEADERS += \
     inc/dialogdimensions.hpp \
     inc/dune.hpp \
     inc/geometry.hpp \
-    inc/exprtk_wrapper.hpp \
     inc/logger.hpp \
     inc/mainwindow.hpp \
     inc/mesh.hpp \
     inc/numerics.hpp \
-    inc/ostream_overloads.hpp \
     inc/pde.hpp \
     inc/qlabelmousetracker.hpp \
     inc/reactions.hpp \

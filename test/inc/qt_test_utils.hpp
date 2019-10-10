@@ -10,6 +10,8 @@
 #include <QTest>
 #include <QTimer>
 
+const int mouseDelay = 50;
+
 // timer class that repeatedly checks for an active modal widget
 // (a modal widget blocks execution pending user input, e.g. a message box)
 // when it finds a modal widget

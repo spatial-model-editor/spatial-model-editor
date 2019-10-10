@@ -3,6 +3,7 @@
 #include <set>
 
 #include "logger.hpp"
+#include "triangle/triangle.hpp"
 
 namespace triangulate {
 

@@ -13,7 +13,6 @@ SOURCES += \
     test/src/test_mainwindow.cpp \
     test/src/test_mesh.cpp \
     test/src/test_numerics.cpp \
-    test/src/test_ostream_overloads.cpp \
     test/src/test_pde.cpp \
     test/src/test_qlabelmousetracker.cpp \
     test/src/test_reactions.cpp \

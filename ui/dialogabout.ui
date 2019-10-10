@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>497</width>
-    <height>481</height>
+    <width>454</width>
+    <height>380</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -29,7 +29,7 @@
    <item>
     <layout class="QGridLayout" name="gridLayout">
      <item row="1" column="1">
-      <widget class="Line" name="line_2">
+      <widget class="Line" name="line">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -57,26 +57,6 @@
        </property>
        <property name="textInteractionFlags">
         <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse</set>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QTextBrowser" name="txtLibraries">
-       <property name="lineWrapMode">
-        <enum>QTextEdit::NoWrap</enum>
-       </property>
-       <property name="textInteractionFlags">
-        <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse</set>
-       </property>
-       <property name="openExternalLinks">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="1">
-      <widget class="QLabel" name="lblLibraries">
-       <property name="text">
-        <string>Included libraries:</string>
        </property>
       </widget>
      </item>
@@ -125,6 +105,28 @@
        </property>
        <property name="alignment">
         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1" rowspan="2">
+      <widget class="QLabel" name="lblLibraries">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Included libraries:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+       </property>
+       <property name="openExternalLinks">
+        <bool>true</bool>
+       </property>
+       <property name="textInteractionFlags">
+        <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse</set>
        </property>
       </widget>
      </item>

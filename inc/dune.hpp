@@ -5,51 +5,23 @@
 
 #pragma once
 
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#pragma GCC diagnostic ignored "-Wfloat-conversion"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wshadow"
-#pragma GCC diagnostic ignored "-Wpedantic"
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-#pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
-#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#pragma GCC diagnostic ignored "-Wdeprecated-copy"
-#pragma GCC diagnostic ignored "-Woverloaded-virtual"
-#pragma GCC diagnostic ignored "-Wpessimizing-move"
-#pragma GCC diagnostic ignored "-Wdouble-promotion"
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
-#endif
-
-#include <config.h>
-
-#include <dune/common/exceptions.hh>
-#include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/parametertree.hh>
-#include <dune/common/parametertreeparser.hh>
-#include <dune/copasi/enum.hh>
-#include <dune/copasi/gmsh_reader.hh>
-#include <dune/copasi/model_diffusion_reaction.cc>
-#include <dune/copasi/model_diffusion_reaction.hh>
-#include <dune/copasi/model_multidomain_diffusion_reaction.cc>
-#include <dune/copasi/model_multidomain_diffusion_reaction.hh>
-#include <dune/grid/io/file/gmshreader.hh>
-#include <dune/grid/multidomaingrid.hh>
-#include <dune/logging/logging.hh>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
-
+#include <QColor>
+#include <QImage>
+#include <QPointF>
+#include <QSizeF>
 #include <QString>
+#include <map>
+#include <memory>
 
-#include "sbml.hpp"
+namespace sbml {
+class SbmlDocWrapper;
+}
 
 namespace dune {
+
+using QTriangleF = std::array<QPointF, 3>;
+using Weight = std::pair<QPoint, std::array<double, 3>>;
+using PixelLocalPair = std::pair<QPoint, std::array<double, 2>>;
 
 class iniFile {
  private:
@@ -80,26 +52,11 @@ class DuneConverter {
   std::map<std::string, QColor> mapDuneNameToColour;
 };
 
-constexpr int dim = 2;
-constexpr int Order = 1;
-using HostGrid = Dune::UGGrid<dim>;
-using MDGTraits = Dune::mdgrid::DynamicSubDomainCountTraits<dim, 1>;
-using Grid = Dune::mdgrid::MultiDomainGrid<HostGrid, MDGTraits>;
-using ModelTraits =
-    Dune::Copasi::ModelMultiDomainDiffusionReactionTraits<Grid, Order>;
-
-using QTriangleF = std::array<QPointF, 3>;
-using Weight = std::pair<QPoint, std::array<double, 3>>;
-using PixelLocalPair = std::pair<QPoint, Dune::FieldVector<double, 2>>;
-
 class DuneSimulation {
  private:
-  // Dune objects
-  Dune::ParameterTree config;
-  std::shared_ptr<Grid> grid_ptr;
-  std::shared_ptr<HostGrid> host_grid_ptr;
-  std::unique_ptr<Dune::Copasi::ModelMultiDomainDiffusionReaction<ModelTraits>>
-      model;
+  // Dune objects via pimpl to hide DUNE headers
+  class DuneImpl;
+  std::shared_ptr<DuneImpl> pDuneImpl;
   // index of compartment/species name in these vectors is the Dune index:
   std::vector<std::string> compartmentNames;
   std::vector<std::vector<std::string>> speciesNames;

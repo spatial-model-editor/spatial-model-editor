@@ -1,6 +1,8 @@
 // utilities
 //  - decltypeStr<T>: type of T as a string
 //    (taken from https://stackoverflow.com/a/56766138)
+//  - toStdString: convert QStringList to std::vector<std::string>
+//  - toQString: convert std::vector<std::string> to QStringList
 //  - stringToVector: convert space-delimited list of values to a vector
 //  - vectorToString: convert vector of values to a space-delimited list
 //  - indexedColours: a set of default colours for display purposes
@@ -8,6 +10,8 @@
 #pragma once
 
 #include <QColor>
+#include <QString>
+#include <QStringList>
 #include <iomanip>
 #include <iterator>
 #include <sstream>
@@ -37,6 +41,9 @@ constexpr auto decltypeStr() {
   name.remove_suffix(suffix.size());
   return name;
 }
+
+std::vector<std::string> toStdString(const QStringList &q);
+QStringList toQString(const std::vector<std::string> &v);
 
 template <class T>
 std::vector<T> stringToVector(const std::string &str) {
