@@ -1,37 +1,39 @@
 #include "reactions.hpp"
 
 #include "logger.hpp"
+#include "sbml.hpp"
+#include "utils.hpp"
 
 namespace reactions {
 
-static bool addStoichCoeff(const sbml::SbmlDocWrapper *doc,
-                           std::vector<double> &Mrow,
-                           const libsbml::SpeciesReference *spec_ref,
-                           double sign,
-                           const std::vector<std::string> &speciesIDs) {
-  const std::string &speciesID = spec_ref->getSpecies();
-  double volFactor = doc->getSpeciesCompartmentSize(speciesID.c_str());
-  SPDLOG_DEBUG("species '{}', sign: {}, compartment volume: {}", speciesID,
-               sign, volFactor);
-  // if it is in the species vector, and not constant, insert into matrix M
-  auto it = std::find(speciesIDs.cbegin(), speciesIDs.cend(), speciesID);
-  if (it != speciesIDs.cend() && doc->isSpeciesReactive(speciesID)) {
-    std::size_t speciesIndex =
-        static_cast<std::size_t>(it - speciesIDs.cbegin());
-    double coeff = sign * spec_ref->getStoichiometry() / volFactor;
-    SPDLOG_DEBUG("  -> stoich coeff[{}]: {:16.16e}", speciesIndex, coeff);
-    Mrow[speciesIndex] += coeff;
-    return true;
+static bool addStoichCoeff(
+    const sbml::SbmlDocWrapper *doc, std::vector<double> &Mrow,
+    const std::vector<std::pair<std::string, double>> &reacSpecies, double sign,
+    const std::vector<std::string> &speciesIDs) {
+  bool isReaction = false;
+  for (const auto &reacSpec : reacSpecies) {
+    const std::string &speciesID = reacSpec.first;
+    double volFactor = doc->getSpeciesCompartmentSize(speciesID.c_str());
+    SPDLOG_DEBUG("species '{}', sign: {}, compartment volume: {}", speciesID,
+                 sign, volFactor);
+    // if it is in the species vector, and not constant, insert into matrix M
+    auto it = std::find(speciesIDs.cbegin(), speciesIDs.cend(), speciesID);
+    if (it != speciesIDs.cend() && doc->isSpeciesReactive(speciesID)) {
+      std::size_t speciesIndex =
+          static_cast<std::size_t>(it - speciesIDs.cbegin());
+      double coeff = sign * reacSpec.second / volFactor;
+      SPDLOG_DEBUG("  -> stoich coeff[{}]: {:16.16e}", speciesIndex, coeff);
+      Mrow[speciesIndex] += coeff;
+      isReaction = true;
+    }
   }
-  return false;
+  return isReaction;
 }
 
-void Reaction::init(const sbml::SbmlDocWrapper *doc_ptr,
+void Reaction::init(const sbml::SbmlDocWrapper *doc,
                     const std::vector<std::string> &species,
                     const std::vector<std::string> &reactionIDs) {
-  doc = doc_ptr;
   speciesIDs = species;
-  SPDLOG_INFO("species vector: {}", speciesIDs);
   M.clear();
   reacExpressions.clear();
   constants.clear();
@@ -42,47 +44,35 @@ void Reaction::init(const sbml::SbmlDocWrapper *doc_ptr,
   // todo: check if should divide by volume here as well as for kinetic law
   // i.e. if the rate rule is for amount like the kinetic law
   for (std::size_t sIndex = 0; sIndex < speciesIDs.size(); ++sIndex) {
-    const auto *rule = doc->getRateRule(speciesIDs[sIndex]);
-    if (rule != nullptr) {
+    auto ruleExpr = doc->getRateRule(speciesIDs[sIndex]);
+    if (!ruleExpr.empty()) {
       std::map<std::string, double> c = doc->getGlobalConstants();
-      std::string expr = doc->inlineExpr(rule->getFormula());
       std::vector<double> Mrow(speciesIDs.size(), 0);
       Mrow[sIndex] = 1.0;
       M.push_back(Mrow);
-      reacExpressions.push_back(expr);
+      reacExpressions.push_back(ruleExpr);
       constants.push_back(c);
       SPDLOG_INFO("adding rate rule for species {}", speciesIDs[sIndex]);
-      SPDLOG_INFO("  - expr: {}", expr);
+      SPDLOG_INFO("  - expr: {}", ruleExpr);
     }
   }
 
   // process each reaction
   for (const auto &reacID : reactionIDs) {
-    const auto *reac = doc->getReaction(reacID.c_str());
-    bool isReaction = false;
-
+    auto reac = doc->getReaction(reacID.c_str());
     std::map<std::string, double> c = doc->getGlobalConstants();
 
     // construct row of stoichiometric coefficients for each
     // species produced and consumed by this reaction
     std::vector<double> Mrow(speciesIDs.size(), 0);
-    for (unsigned k = 0; k < reac->getNumProducts(); ++k) {
-      if (addStoichCoeff(doc, Mrow, reac->getProduct(k), +1.0, speciesIDs)) {
-        isReaction = true;
-      }
-    }
-    for (unsigned k = 0; k < reac->getNumReactants(); ++k) {
-      if (addStoichCoeff(doc, Mrow, reac->getReactant(k), -1.0, speciesIDs)) {
-        isReaction = true;
-      }
-    }
-    if (isReaction) {
+    bool hasProducts =
+        addStoichCoeff(doc, Mrow, reac.products, +1.0, speciesIDs);
+    bool hasReactants =
+        addStoichCoeff(doc, Mrow, reac.reactants, -1.0, speciesIDs);
+    if (hasProducts || hasReactants) {
       // if matrix row is non-zero, i.e. reaction does something, then insert it
       // into the M matrix, and construct the corresponding reaction term
       M.push_back(Mrow);
-      // get mathematical formula
-      const auto *kin = reac->getKineticLaw();
-      std::string expr = doc->inlineExpr(kin->getFormula());
 
       // TODO: deal with amount vs concentration issues correctly
       // if getHasOnlySubstanceUnits is true for some (all?) species
@@ -90,27 +80,16 @@ void Reaction::init(const sbml::SbmlDocWrapper *doc_ptr,
       // and in the stoich matrix factors
 
       // get local parameters, append to global constants
-      // NOTE: if a parameter is set by an assignment rule
-      // it should *not* be added as a constant below:
-      // (it should no longer be present in expr after inlining)
-      for (unsigned k = 0; k < kin->getNumLocalParameters(); ++k) {
-        const auto *param = kin->getLocalParameter(k);
-        if (doc->getAssignmentRule(param->getId()) == nullptr) {
-          c[param->getId()] = param->getValue();
-        }
-      }
-      for (unsigned k = 0; k < kin->getNumParameters(); ++k) {
-        const auto *param = kin->getParameter(k);
-        if (doc->getAssignmentRule(param->getId()) == nullptr) {
-          c[param->getId()] = param->getValue();
-        }
+      for (const auto &constant : reac.constants) {
+        c[constant.first] = constant.second;
       }
       // construct expression and add to reactions
-      reacExpressions.push_back(expr);
+      reacExpressions.push_back(reac.expression);
       constants.push_back(c);
       SPDLOG_INFO("adding reaction {}", reacID);
-      SPDLOG_INFO("  - stoichiometric matrix row: {}", Mrow);
-      SPDLOG_INFO("  - expr: {}", expr);
+      SPDLOG_INFO("  - stoichiometric matrix row: {}",
+                  utils::vectorToString(Mrow));
+      SPDLOG_INFO("  - expr: {}", reac.expression);
     }
   }
 }
@@ -123,15 +102,7 @@ Reaction::Reaction(const sbml::SbmlDocWrapper *doc_ptr,
 
 Reaction::Reaction(const sbml::SbmlDocWrapper *doc_ptr,
                    const QStringList &species, const QStringList &reactionIDs) {
-  std::vector<std::string> svec;
-  for (const auto &s : species) {
-    svec.push_back(s.toStdString());
-  }
-  std::vector<std::string> rvec;
-  for (const auto &r : reactionIDs) {
-    rvec.push_back(r.toStdString());
-  }
-  init(doc_ptr, svec, rvec);
+  init(doc_ptr, utils::toStdString(species), utils::toStdString(reactionIDs));
 }
 
 }  // namespace reactions

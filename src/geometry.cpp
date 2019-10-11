@@ -10,6 +10,32 @@ static int qPointToInt(const QPoint &point, int imgHeight) {
   return point.x() * imgHeight + point.y();
 }
 
+//  - CompartmentIndexer class: utility class to convert a QPoint to the
+//  corresponding vector index for a Compartment (for initialising Membranes)
+class CompartmentIndexer {
+ private:
+  const Compartment &comp;
+  int imgHeight;
+  std::unordered_map<int, std::size_t> index;
+
+ public:
+  explicit CompartmentIndexer(const Compartment &c);
+  std::size_t getIndex(const QPoint &point);
+};
+
+CompartmentIndexer::CompartmentIndexer(const Compartment &c)
+    : comp(c), imgHeight(c.getCompartmentImage().height()) {
+  // construct map from QPoint in image to index in compartment vector
+  std::size_t i = 0;
+  for (const auto &point : comp.ix) {
+    index[qPointToInt(point, imgHeight)] = i++;
+  }
+}
+
+std::size_t CompartmentIndexer::getIndex(const QPoint &point) {
+  return index.at(qPointToInt(point, imgHeight));
+}
+
 Compartment::Compartment(const std::string &compID, const QImage &img, QRgb col)
     : compartmentID(compID) {
   imgComp = QImage(img.size(), QImage::Format_Mono);
@@ -218,19 +244,6 @@ void Field::applyDiffusionOperator() {
 double Field::getMeanConcentration() const {
   return std::accumulate(conc.cbegin(), conc.cend(), 0.0) /
          static_cast<double>(conc.size());
-}
-
-CompartmentIndexer::CompartmentIndexer(const Compartment &c)
-    : comp(c), imgHeight(c.getCompartmentImage().height()) {
-  // construct map from QPoint in image to index in compartment vector
-  std::size_t i = 0;
-  for (const auto &point : comp.ix) {
-    index[qPointToInt(point, imgHeight)] = i++;
-  }
-}
-
-std::size_t CompartmentIndexer::getIndex(const QPoint &point) {
-  return index.at(qPointToInt(point, imgHeight));
 }
 
 }  // namespace geometry

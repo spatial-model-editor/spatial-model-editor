@@ -1,10 +1,9 @@
-#include "reactions.hpp"
-
 #include <QFile>
 
 #include "catch.hpp"
-
 #include "logger.hpp"
+#include "reactions.hpp"
+#include "sbml.hpp"
 
 TEST_CASE("reactions for ABtoC model", "[reactions][non-gui]") {
   sbml::SbmlDocWrapper s;

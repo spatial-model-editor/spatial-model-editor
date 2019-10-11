@@ -1,8 +1,10 @@
 #include "simulate.hpp"
 
+#include "geometry.hpp"
 #include "logger.hpp"
 #include "pde.hpp"
 #include "reactions.hpp"
+#include "sbml.hpp"
 
 namespace simulate {
 
@@ -21,9 +23,7 @@ ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
                    const std::vector<std::string> &speciesIDs,
                    const std::vector<std::string> &reactionIDs,
                    BACKEND mathBackend)
-    : doc(doc_ptr), backend(mathBackend) {
-  SPDLOG_DEBUG("species vector: {}", speciesIDs);
-
+    : backend(mathBackend) {
   // construct reaction expressions and stoich matrix
   pde::PDE pde(doc_ptr, speciesIDs, reactionIDs);
 
@@ -45,14 +45,14 @@ ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
 }
 
 void ReacEval::evaluate() {
-  if (backend == BACKEND::EXPRTK) {
+  if (backend == BACKEND::SYMENGINE_LLVM) {
+    reac_eval_symengine.evalLLVM(result, species_values);
+  } else if (backend == BACKEND::EXPRTK) {
     for (std::size_t s = 0; s < nSpecies; ++s) {
       result[s] = reac_eval_exprtk[s]();
     }
   } else if (backend == BACKEND::SYMENGINE) {
     reac_eval_symengine.eval(result, species_values);
-  } else if (backend == BACKEND::SYMENGINE_LLVM) {
-    reac_eval_symengine.evalLLVM(result, species_values);
   }
 }
 
@@ -81,26 +81,13 @@ SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
 }
 
 void SimCompartment::evaluate_reactions() {
-  // qDebug("SimCompartment::evaluate_reactions : compartment: %s",
-  //       field->geometry->compartmentID.c_str());
-  // qDebug("SimCompartment::evaluate_reactions :   - n_pixels=%lu",
-  // field->n_pixels);
-  // qDebug("SimCompartment::evaluate_reactions :   - n_species=%lu",
-  //       reacEval.nSpecies);
-  // qDebug("SimCompartment::evaluate_reactions :   - n_reacs=%lu",
-  //       reacEval.nReactions);
   for (std::size_t i = 0; i < comp->ix.size(); ++i) {
     // populate species concentrations
     for (std::size_t s = 0; s < field.size(); ++s) {
       reacEval.species_values[s] = field[s]->conc[i];
     }
-    // SPDLOG_WARN("Sim {} vars: {}", reacEval.species_values.size(),
-    //                reacEval.species_values);
-    // evaluate reaction terms
     reacEval.evaluate();
     const std::vector<double> &result = reacEval.getResult();
-    //    SPDLOG_WARN("Sim {} result: {}", reacEval.getResult().size(),
-    //                reacEval.getResult());
     for (std::size_t s = 0; s < field.size(); ++s) {
       // add results to dcdt
       field[s]->dcdt[i] += result[s];
@@ -142,14 +129,6 @@ SimMembrane::SimMembrane(sbml::SbmlDocWrapper *doc_ptr,
 }
 
 void SimMembrane::evaluate_reactions() {
-  // qDebug("SimMembrane::evaluate_reactions : membrane: %s",
-  //         membrane->membraneID.c_str());
-  // qDebug("SimMembrane::evaluate_reactions :   - n_pixel pairs=%lu",
-  //    membrane->indexPair.size());
-  // qDebug("SimMembrane::evaluate_reactions :   - n_species=%lu",
-  //       reacEval.nSpecies);
-  // qDebug("SimMembrane::evaluate_reactions :   - n_reacs=%lu",
-  //       reacEval.nReactions);
   assert(reacEval.species_values.size() == fieldA.size() + fieldB.size());
   for (const auto &p : membrane->indexPair) {
     std::size_t ixA = p.first;

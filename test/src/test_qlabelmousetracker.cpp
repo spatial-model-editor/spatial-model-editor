@@ -3,8 +3,7 @@
 #include "catch.hpp"
 #include "logger.hpp"
 #include "qlabelmousetracker.hpp"
-
-constexpr int mouseDelay = 50;
+#include "qt_test_utils.hpp"
 
 SCENARIO("qlabelmousetracker", "[qlabelmousetracker][gui]") {
   GIVEN("single pixel, single colour image") {

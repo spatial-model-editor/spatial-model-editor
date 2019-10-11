@@ -1,8 +1,11 @@
+#include <sbml/SBMLTypes.h>
+
 #include <QFile>
 
 #include "catch.hpp"
 #include "dune.hpp"
 #include "logger.hpp"
+#include "sbml.hpp"
 #include "sbml_test_data/invalid_dune_names.hpp"
 
 TEST_CASE("iniFile class", "[dune][ini][non-gui]") {

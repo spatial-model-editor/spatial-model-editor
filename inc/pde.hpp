@@ -9,7 +9,9 @@
 #include <string>
 #include <vector>
 
-#include "sbml.hpp"
+namespace sbml {
+class SbmlDocWrapper;
+}
 
 namespace pde {
 

@@ -1,8 +1,14 @@
+#include <sbml/SBMLTypes.h>
+#include <sbml/extension/SBMLDocumentPlugin.h>
+#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
+#include <sbml/packages/spatial/extension/SpatialExtension.h>
+
 #include <QFile>
 #include <fstream>
 
 #include "catch.hpp"
 #include "logger.hpp"
+#include "mesh.hpp"
 #include "sbml.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
 #include "sbml_test_data/yeast_glycolysis.hpp"
@@ -475,25 +481,25 @@ SCENARIO("Load model, refine mesh, save", "[sbml][mesh][non-gui][x1]") {
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
   s.importSBMLString(f.readAll().toStdString());
-  REQUIRE(s.mesh.getBoundaryMaxPoints(1) == 16);
-  REQUIRE(s.mesh.getCompartmentMaxTriangleArea(0) == 72);
-  REQUIRE(s.mesh.getVertices().size() == 2 * 44);
-  REQUIRE(s.mesh.getTriangleIndices(0).size() == 3 * 70);
+  REQUIRE(s.mesh->getBoundaryMaxPoints(1) == 16);
+  REQUIRE(s.mesh->getCompartmentMaxTriangleArea(0) == 72);
+  REQUIRE(s.mesh->getVertices().size() == 2 * 44);
+  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 70);
   // refine boundary and mesh
-  s.mesh.setBoundaryMaxPoints(1, 20);
-  s.mesh.setCompartmentMaxTriangleArea(0, 32);
-  REQUIRE(s.mesh.getVertices().size() == 2 * 89);
-  REQUIRE(s.mesh.getTriangleIndices(0).size() == 3 * 148);
+  s.mesh->setBoundaryMaxPoints(1, 20);
+  s.mesh->setCompartmentMaxTriangleArea(0, 32);
+  REQUIRE(s.mesh->getVertices().size() == 2 * 89);
+  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 148);
   // save SBML doc
   s.exportSBMLFile("tmp.xml");
 
   // import again
   sbml::SbmlDocWrapper s2;
   s2.importSBMLFile("tmp.xml");
-  REQUIRE(s2.mesh.getBoundaryMaxPoints(1) == 20);
-  REQUIRE(s2.mesh.getCompartmentMaxTriangleArea(0) == 32);
-  REQUIRE(s2.mesh.getVertices().size() == 2 * 89);
-  REQUIRE(s2.mesh.getTriangleIndices(0).size() == 3 * 148);
+  REQUIRE(s2.mesh->getBoundaryMaxPoints(1) == 20);
+  REQUIRE(s2.mesh->getCompartmentMaxTriangleArea(0) == 32);
+  REQUIRE(s2.mesh->getVertices().size() == 2 * 89);
+  REQUIRE(s2.mesh->getTriangleIndices(0).size() == 3 * 148);
 }
 
 SCENARIO("Load model, change size of geometry, save",
@@ -502,10 +508,10 @@ SCENARIO("Load model, change size of geometry, save",
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
   s.importSBMLString(f.readAll().toStdString());
-  std::vector<double> v = s.mesh.getVertices();
-  REQUIRE(s.mesh.getBoundaryMaxPoints(1) == 16);
-  REQUIRE(s.mesh.getCompartmentMaxTriangleArea(0) == 72);
-  REQUIRE(s.mesh.getTriangleIndices(0).size() == 3 * 70);
+  std::vector<double> v = s.mesh->getVertices();
+  REQUIRE(s.mesh->getBoundaryMaxPoints(1) == 16);
+  REQUIRE(s.mesh->getCompartmentMaxTriangleArea(0) == 72);
+  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 70);
   REQUIRE(v.size() == 2 * 44);
   REQUIRE(v[0] == dbl_approx(17.0));
   REQUIRE(v[1] == dbl_approx(45.0));
@@ -514,7 +520,7 @@ SCENARIO("Load model, change size of geometry, save",
   REQUIRE(s.getCompartmentSize("comp") == dbl_approx(3149.0));
   // change size of geometry, but not of compartments
   s.setPixelWidth(0.01, false);
-  v = s.mesh.getVertices();
+  v = s.mesh->getVertices();
   REQUIRE(v[0] == dbl_approx(0.17));
   REQUIRE(v[1] == dbl_approx(0.45));
   REQUIRE(v[2] == dbl_approx(0.17));
@@ -522,7 +528,7 @@ SCENARIO("Load model, change size of geometry, save",
   REQUIRE(s.getCompartmentSize("comp") == dbl_approx(3149.0));
   // change size of geometry & update compartment volumes accordingly
   s.setPixelWidth(1.6e-13, true);
-  v = s.mesh.getVertices();
+  v = s.mesh->getVertices();
   REQUIRE(v[0] == dbl_approx(2.72e-12));
   REQUIRE(v[1] == dbl_approx(7.2e-12));
   REQUIRE(v[2] == dbl_approx(2.72e-12));
@@ -556,22 +562,22 @@ SCENARIO("Delete mesh annotation, load as read-only mesh",
       libsbml::writeSBMLToString(doc.get()), &std::free);
   s.importSBMLString(xmlChar.get());
 
-  REQUIRE(s.mesh.isReadOnly() == true);
-  REQUIRE(s.mesh.getVertices().size() == 2 * 44);
-  REQUIRE(s.mesh.getTriangleIndices(0).size() == 3 * 70);
+  REQUIRE(s.mesh->isReadOnly() == true);
+  REQUIRE(s.mesh->getVertices().size() == 2 * 44);
+  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 70);
 
   // changing maxBoundaryPoints or maxTriangleAreas is a no-op:
-  s.mesh.setBoundaryMaxPoints(1, 99);
-  s.mesh.setCompartmentMaxTriangleArea(0, 3);
-  REQUIRE(s.mesh.getVertices().size() == 2 * 44);
-  REQUIRE(s.mesh.getTriangleIndices(0).size() == 3 * 70);
+  s.mesh->setBoundaryMaxPoints(1, 99);
+  s.mesh->setCompartmentMaxTriangleArea(0, 3);
+  REQUIRE(s.mesh->getVertices().size() == 2 * 44);
+  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 70);
 
   // save SBML doc
   s.exportSBMLFile("tmp.xml");
   // import again: mesh is still read-only
   sbml::SbmlDocWrapper s2;
   s2.importSBMLFile("tmp.xml");
-  REQUIRE(s2.mesh.isReadOnly() == true);
-  REQUIRE(s2.mesh.getVertices().size() == 2 * 44);
-  REQUIRE(s2.mesh.getTriangleIndices(0).size() == 3 * 70);
+  REQUIRE(s2.mesh->isReadOnly() == true);
+  REQUIRE(s2.mesh->getVertices().size() == 2 * 44);
+  REQUIRE(s2.mesh->getTriangleIndices(0).size() == 3 * 70);
 }

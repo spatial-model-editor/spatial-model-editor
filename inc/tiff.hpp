@@ -4,9 +4,10 @@
 #pragma once
 
 #include <string>
-#include <vector>
 
-#include "geometry.hpp"
+namespace geometry {
+class Field;
+}
 
 namespace utils {
 

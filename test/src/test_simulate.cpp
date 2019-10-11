@@ -1,3 +1,5 @@
+#include <sbml/SBMLTypes.h>
+
 #include <QFile>
 
 #include "catch.hpp"

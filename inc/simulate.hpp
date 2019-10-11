@@ -8,10 +8,18 @@
 
 #include <QImage>
 
-#include "geometry.hpp"
 #include "numerics.hpp"
-#include "sbml.hpp"
 #include "symbolic.hpp"
+
+namespace sbml {
+class SbmlDocWrapper;
+}
+
+namespace geometry {
+class Field;
+class Compartment;
+class Membrane;
+}  // namespace geometry
 
 namespace simulate {
 
@@ -20,7 +28,6 @@ std::string strBackend(BACKEND b);
 
 class ReacEval {
  private:
-  sbml::SbmlDocWrapper *doc;
   BACKEND backend;
   // vector of exprtk reaction expressions
   std::vector<numerics::ExprEval> reac_eval_exprtk;

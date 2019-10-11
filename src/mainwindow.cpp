@@ -1,5 +1,7 @@
 #include "mainwindow.hpp"
 
+#include <qcustomplot.h>
+
 #include <QErrorMessage>
 #include <QFileDialog>
 #include <QInputDialog>
@@ -221,7 +223,7 @@ void MainWindow::setMathBackend() {
       simMathBackend = simulate::BACKEND::SYMENGINE_LLVM;
     }
 
-    SPDLOG_INFO("Setting math backend to {}", item);
+    SPDLOG_INFO("Setting math backend to {}", item.toStdString());
   }
 }
 
@@ -281,7 +283,7 @@ void MainWindow::tabMain_currentChanged(int index) {
       ui->txtDUNE->setText(dune::DuneConverter(sbmlDoc).getIniFile());
       break;
     case TabIndex::GMSH:
-      ui->txtGMSH->setText(sbmlDoc.mesh.getGMSH());
+      ui->txtGMSH->setText(sbmlDoc.mesh->getGMSH());
       break;
     default:
       qFatal("ui::tabMain :: Errror: Tab index %d not valid", index);
@@ -401,7 +403,7 @@ void MainWindow::menuOpen_example_SBML_file_triggered(QAction *action) {
       QString(":/models/%1.xml").arg(action->text().remove(0, 1));
   QFile f(filename);
   if (!f.open(QIODevice::ReadOnly)) {
-    SPDLOG_WARN("failed to open built-in file: {}", filename);
+    SPDLOG_WARN("failed to open built-in file: {}", filename.toStdString());
   }
   sbmlDoc.importSBMLString(f.readAll().toStdString());
   ui->tabMain->setCurrentIndex(0);
@@ -440,7 +442,7 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
     QString meshFilename = QDir(dir).filePath("grid.msh");
     QFile f2(meshFilename);
     if (f2.open(QIODevice::ReadWrite | QIODevice::Text)) {
-      f2.write(sbmlDoc.mesh.getGMSH().toUtf8());
+      f2.write(sbmlDoc.mesh->getGMSH().toUtf8());
     }
   }
 }
@@ -464,7 +466,7 @@ void MainWindow::menuExample_geometry_image_triggered(QAction *action) {
       QString(":/geometry/%1.png").arg(action->text().remove(0, 1));
   QFile f(filename);
   if (!f.open(QIODevice::ReadOnly)) {
-    SPDLOG_WARN("failed to open built-in file: {}", filename);
+    SPDLOG_WARN("failed to open built-in file: {}", filename.toStdString());
   }
   sbmlDoc.importGeometryFromImage(filename);
   ui->tabMain->setCurrentIndex(0);
@@ -493,7 +495,8 @@ void MainWindow::lblGeometry_mouseClicked(QRgb col, QPoint point) {
     sbmlDoc.setCompartmentInteriorPoint(compartmentID, point);
     // update display by simulating user click on listCompartments
     listCompartments_currentTextChanged(compartmentID);
-    SPDLOG_INFO("assigned compartment {} to colour {:x}", compartmentID, col);
+    SPDLOG_INFO("assigned compartment {} to colour {:x}",
+                compartmentID.toStdString(), col);
     waitingForCompartmentChoice = false;
     statusBarPermanentMessage->clear();
   } else {
@@ -548,13 +551,13 @@ void MainWindow::tabCompartmentGeometry_currentChanged(int index) {
                ui->tabCompartmentGeometry->tabText(index).toStdString());
   if (index == 1) {
     ui->spinBoundaryIndex->setMaximum(
-        static_cast<int>(sbmlDoc.mesh.getBoundaries().size()) - 1);
+        static_cast<int>(sbmlDoc.mesh->getBoundaries().size()) - 1);
     spinBoundaryIndex_valueChanged(ui->spinBoundaryIndex->value());
   } else if (index == 2) {
     auto compIndex =
         static_cast<std::size_t>(ui->listCompartments->currentRow());
     ui->spinMaxTriangleArea->setValue(static_cast<int>(
-        sbmlDoc.mesh.getCompartmentMaxTriangleArea(compIndex)));
+        sbmlDoc.mesh->getCompartmentMaxTriangleArea(compIndex)));
     spinMaxTriangleArea_valueChanged(ui->spinMaxTriangleArea->value());
   }
 }
@@ -563,13 +566,13 @@ void MainWindow::spinBoundaryIndex_valueChanged(int value) {
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<size_t>(value);
   ui->spinMaxBoundaryPoints->setValue(
-      static_cast<int>(sbmlDoc.mesh.getBoundaryMaxPoints(boundaryIndex)));
-  ui->lblCompBoundary->setPixmap(
-      QPixmap::fromImage(sbmlDoc.mesh.getBoundariesImage(size, boundaryIndex)));
-  if (sbmlDoc.mesh.isMembrane(boundaryIndex)) {
+      static_cast<int>(sbmlDoc.mesh->getBoundaryMaxPoints(boundaryIndex)));
+  ui->lblCompBoundary->setPixmap(QPixmap::fromImage(
+      sbmlDoc.mesh->getBoundariesImage(size, boundaryIndex)));
+  if (sbmlDoc.mesh->isMembrane(boundaryIndex)) {
     ui->spinBoundaryWidth->setEnabled(true);
     ui->spinBoundaryWidth->setValue(
-        sbmlDoc.mesh.getBoundaryWidth(boundaryIndex));
+        sbmlDoc.mesh->getBoundaryWidth(boundaryIndex));
   } else {
     ui->spinBoundaryWidth->setEnabled(false);
   }
@@ -578,26 +581,26 @@ void MainWindow::spinBoundaryIndex_valueChanged(int value) {
 void MainWindow::spinMaxBoundaryPoints_valueChanged(int value) {
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<std::size_t>(ui->spinBoundaryIndex->value());
-  sbmlDoc.mesh.setBoundaryMaxPoints(boundaryIndex, static_cast<size_t>(value));
-  ui->lblCompBoundary->setPixmap(
-      QPixmap::fromImage(sbmlDoc.mesh.getBoundariesImage(size, boundaryIndex)));
+  sbmlDoc.mesh->setBoundaryMaxPoints(boundaryIndex, static_cast<size_t>(value));
+  ui->lblCompBoundary->setPixmap(QPixmap::fromImage(
+      sbmlDoc.mesh->getBoundariesImage(size, boundaryIndex)));
 }
 
 void MainWindow::spinBoundaryWidth_valueChanged(double value) {
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<std::size_t>(ui->spinBoundaryIndex->value());
-  sbmlDoc.mesh.setBoundaryWidth(boundaryIndex, value);
-  ui->lblCompBoundary->setPixmap(
-      QPixmap::fromImage(sbmlDoc.mesh.getBoundariesImage(size, boundaryIndex)));
+  sbmlDoc.mesh->setBoundaryWidth(boundaryIndex, value);
+  ui->lblCompBoundary->setPixmap(QPixmap::fromImage(
+      sbmlDoc.mesh->getBoundariesImage(size, boundaryIndex)));
 }
 
 void MainWindow::spinMaxTriangleArea_valueChanged(int value) {
   const auto &size = ui->lblCompMesh->size();
   auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
-  sbmlDoc.mesh.setCompartmentMaxTriangleArea(compIndex,
-                                             static_cast<std::size_t>(value));
+  sbmlDoc.mesh->setCompartmentMaxTriangleArea(compIndex,
+                                              static_cast<std::size_t>(value));
   ui->lblCompMesh->setPixmap(
-      QPixmap::fromImage(sbmlDoc.mesh.getMeshImage(size, compIndex)));
+      QPixmap::fromImage(sbmlDoc.mesh->getMeshImage(size, compIndex)));
 }
 
 void MainWindow::listCompartments_currentTextChanged(
@@ -705,7 +708,8 @@ void MainWindow::chkSpeciesIsSpatial_toggled(bool enabled) {
   const auto &speciesID = ui->listSpecies->currentItem()->text(0);
   // if new value differs from previous one - update model
   if (sbmlDoc.getIsSpatial(speciesID) != enabled) {
-    SPDLOG_INFO("setting species {} isSpatial: {}", speciesID, enabled);
+    SPDLOG_INFO("setting species {} isSpatial: {}", speciesID.toStdString(),
+                enabled);
     sbmlDoc.setIsSpatial(speciesID, enabled);
     if (!enabled) {
       // must be spatially uniform if not spatial
@@ -758,7 +762,7 @@ void MainWindow::txtInitialConcentration_editingFinished() {
 void MainWindow::btnAnalyticConcentration_clicked() {
   const auto &speciesID = ui->listSpecies->currentItem()->text(0);
   SPDLOG_DEBUG("ask user for analytic initial concentration of species {}...",
-               speciesID);
+               speciesID.toStdString());
   // todo: have dedicated window for this
   // which parses & checks expression is valid
   QString expr = QInputDialog::getText(
@@ -767,7 +771,7 @@ void MainWindow::btnAnalyticConcentration_clicked() {
       QLineEdit::Normal, sbmlDoc.getAnalyticConcentration(speciesID));
   if (!expr.isEmpty()) {
     ui->radInitialConcentrationVarying->setChecked(true);
-    SPDLOG_DEBUG("  - set expr: {}", expr);
+    SPDLOG_DEBUG("  - set expr: {}", expr.toStdString());
     sbmlDoc.setAnalyticConcentration(speciesID, expr);
     ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
   }
@@ -776,14 +780,14 @@ void MainWindow::btnAnalyticConcentration_clicked() {
 void MainWindow::btnImportConcentration_clicked() {
   const auto &speciesID = ui->listSpecies->currentItem()->text(0);
   SPDLOG_DEBUG("ask user for concentration image for species {}... selected",
-               speciesID);
+               speciesID.toStdString());
   QString filename = QFileDialog::getOpenFileName(
       this, "Import species concentration from image", "",
       "Image Files (*.png *.jpg *.bmp *.tiff);; All files (*.*)", nullptr,
       QFileDialog::Option::DontUseNativeDialog);
   if (!filename.isEmpty()) {
     ui->radInitialConcentrationVarying->setChecked(true);
-    SPDLOG_DEBUG("  - import file {}", filename);
+    SPDLOG_DEBUG("  - import file {}", filename.toStdString());
     sbmlDoc.importConcentrationFromImage(speciesID, filename);
     ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
   }
@@ -794,7 +798,7 @@ void MainWindow::cmbImportExampleConcentration_currentTextChanged(
   if (ui->cmbImportExampleConcentration->currentIndex() != 0) {
     const auto &speciesID = ui->listSpecies->currentItem()->text(0);
     ui->radInitialConcentrationVarying->setChecked(true);
-    SPDLOG_DEBUG("import {}", text);
+    SPDLOG_DEBUG("import {}", text.toStdString());
     sbmlDoc.importConcentrationFromImage(
         speciesID, QString(":/concentration/%1.png").arg(text));
     ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
@@ -845,18 +849,17 @@ void MainWindow::listReactions_currentItemChanged(QTreeWidgetItem *current,
       ui->lblGeometry->setImage(sbmlDoc.getMembraneImage(compID));
     }
     // display reaction information
-    const auto *reac = sbmlDoc.getReaction(reacID);
-    for (unsigned i = 0; i < reac->getNumProducts(); ++i) {
-      ui->listProducts->addItem(reac->getProduct(i)->getSpecies().c_str());
+    auto reac = sbmlDoc.getReaction(reacID);
+    for (const auto &product : reac.products) {
+      ui->listProducts->addItem(product.first.c_str());
     }
-    for (unsigned i = 0; i < reac->getNumReactants(); ++i) {
-      ui->listReactants->addItem(reac->getReactant(i)->getSpecies().c_str());
+    for (const auto &reactant : reac.reactants) {
+      ui->listReactants->addItem(reactant.first.c_str());
     }
-    for (unsigned i = 0; i < reac->getKineticLaw()->getNumParameters(); ++i) {
-      ui->listReactionParams->addItem(
-          reac->getKineticLaw()->getParameter(i)->getId().c_str());
+    for (const auto &constant : reac.constants) {
+      ui->listReactionParams->addItem(constant.first.c_str());
     }
-    ui->lblReactionRate->setText(reac->getKineticLaw()->getFormula().c_str());
+    ui->lblReactionRate->setText(reac.expression.c_str());
   }
 }
 
@@ -865,15 +868,11 @@ void MainWindow::listFunctions_currentTextChanged(const QString &currentText) {
   ui->lblFunctionDef->clear();
   if (currentText.size() > 0) {
     SPDLOG_DEBUG("Function {} selected", currentText.toStdString());
-    const auto *func = sbmlDoc.getFunctionDefinition(currentText);
-    for (unsigned i = 0; i < func->getNumArguments(); ++i) {
-      ui->listFunctionParams->addItem(
-          libsbml::SBML_formulaToL3String(func->getArgument(i)));
-      // todo: check the above is not leaking a malloced char *
+    auto func = sbmlDoc.getFunctionDefinition(currentText);
+    for (const auto &argument : func.arguments) {
+      ui->listFunctionParams->addItem(argument.c_str());
     }
-    ui->lblFunctionDef->setText(
-        libsbml::SBML_formulaToL3String(func->getBody()));
-    // todo: check the above is not leaking a malloced char *
+    ui->lblFunctionDef->setText(func.expression.c_str());
   }
 }
 
@@ -894,7 +893,6 @@ void MainWindow::btnSimulate_clicked() {
                                ui->lblGeometry->size());
 
   // get initial concentrations
-  images.clear();
   QVector<double> time{0};
   std::vector<QVector<double>> conc(sim.field.size());
   for (std::size_t s = 0; s < sim.field.size(); ++s) {
@@ -911,12 +909,14 @@ void MainWindow::btnSimulate_clicked() {
   } else {
     images.push_back(sim.getConcentrationImage());
   }
+  ui->lblGeometry->setImage(images.back());
+  ui->statusBar->showMessage("Simulating...     (press ctrl+c to cancel)");
 
-  ui->statusBar->showMessage("Simulating...");
   QTime qtime;
   qtime.start();
   isSimulationRunning = true;
   this->setCursor(Qt::WaitCursor);
+  QApplication::processEvents();
   // integrate Model
   double t = 0;
   double dt = ui->txtSimDt->text().toDouble();

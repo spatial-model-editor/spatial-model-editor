@@ -1,8 +1,21 @@
-#include "utils.hpp"
-
 #include <QRgb>
 
 #include "catch.hpp"
+#include "utils.hpp"
+
+TEST_CASE("QStringList <-> std::vector<std::string>", "[utils]") {
+  std::vector<std::string> s{"ab", "qwef", "Qvsdss!"};
+  QStringList q;
+  q << "ab";
+  q << "qwef";
+  q << "Qvsdss!";
+  auto s2q = utils::toQString(s);
+  auto q2s = utils::toStdString(q);
+  REQUIRE(s2q == q);
+  REQUIRE(q2s == s);
+  REQUIRE(utils::toQString(q2s) == q);
+  REQUIRE(utils::toStdString(s2q) == s);
+}
 
 TEST_CASE("vector <-> string: int", "[utils]") {
   std::vector<int> v{1, 4, 7, -12, 999, 22, 0, 0};

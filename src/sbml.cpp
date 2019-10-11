@@ -1,8 +1,14 @@
 #include "sbml.hpp"
 
+#include <sbml/SBMLTypes.h>
+#include <sbml/extension/SBMLDocumentPlugin.h>
+#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
+#include <sbml/packages/spatial/extension/SpatialExtension.h>
+
 #include <unordered_set>
 
 #include "logger.hpp"
+#include "mesh.hpp"
 #include "reactions.hpp"
 #include "symbolic.hpp"
 #include "utils.hpp"
@@ -43,8 +49,10 @@ void SbmlDocWrapper::clearAllGeometryData() {
   mapColPairToIndex.clear();
   mapMembraneToIndex.clear();
   mapMembraneToImage.clear();
-  mesh = mesh::Mesh{};
+  mesh = std::make_shared<mesh::Mesh>();
 }
+
+SbmlDocWrapper::SbmlDocWrapper() : mesh(std::make_shared<mesh::Mesh>()) {}
 
 void SbmlDocWrapper::importSBMLString(const std::string &xml) {
   clearAllModelData();
@@ -241,7 +249,8 @@ void SbmlDocWrapper::importSampledFieldGeometry() {
       ++iter;
     }
   }
-  SPDLOG_INFO("  - found {} geometry image", img.size());
+  SPDLOG_INFO("  - found {}x{} geometry image", img.size().width(),
+              img.size().height());
   importGeometryFromImage(img, false);
 
   // calculate pixel size from image dimensions
@@ -273,7 +282,8 @@ void SbmlDocWrapper::importSampledFieldGeometry() {
           scp->getCompartmentMapping()->getDomainType();
       auto *sfvol = sfgeom->getSampledVolumeByDomainType(domainTypeID);
       QRgb col = static_cast<QRgb>(sfvol->getSampledValue());
-      SPDLOG_INFO("setting compartment {} colour to {:x}", compartmentID, col);
+      SPDLOG_INFO("setting compartment {} colour to {:x}",
+                  compartmentID.toStdString(), col);
       SPDLOG_INFO("  - DomainType: {}", domainTypeID);
       SPDLOG_INFO("  - SampledFieldVolume: {}", sfvol->getId());
       setCompartmentColour(compartmentID, col, false);
@@ -304,7 +314,8 @@ void SbmlDocWrapper::importParametricGeometry() {
     QPointF interiorFloatPixel =
         (interiorFloatPhysical - origin) / pixelWidth + QPointF(0.3, 0.3);
     interiorPoints.push_back(interiorFloatPixel);
-    SPDLOG_DEBUG("  - pixel location: {}", interiorPoints.back());
+    SPDLOG_DEBUG("  - pixel location: ({},{})", interiorPoints.back().x(),
+                 interiorPoints.back().y());
   }
 
   // get maxBoundaryPoints and maxTriangleAreas
@@ -317,14 +328,17 @@ void SbmlDocWrapper::importParametricGeometry() {
           child.getPrefix() == annotationPrefix && child.getName() == "mesh") {
         auto maxPoints = utils::stringToVector<std::size_t>(
             child.getAttrValue("maxBoundaryPoints", annotationURI));
-        SPDLOG_INFO("  - maxBoundaryPoints: {}", maxPoints);
+        SPDLOG_INFO("  - maxBoundaryPoints: {}",
+                    utils::vectorToString(maxPoints));
         auto maxAreas = utils::stringToVector<std::size_t>(
             child.getAttrValue("maxTriangleAreas", annotationURI));
-        SPDLOG_INFO("  - maxTriangleAreas: {}", maxAreas);
+        SPDLOG_INFO("  - maxTriangleAreas: {}",
+                    utils::vectorToString(maxAreas));
         // generate Mesh
         SPDLOG_INFO("  - re-generating mesh");
-        mesh = mesh::Mesh(compartmentImage, interiorPoints, maxPoints, maxAreas,
-                          vecMembraneColourPairs, pixelWidth, origin);
+        mesh = std::make_shared<mesh::Mesh>(
+            compartmentImage, interiorPoints, maxPoints, maxAreas,
+            vecMembraneColourPairs, pixelWidth, origin);
       }
     }
     return;
@@ -344,12 +358,12 @@ void SbmlDocWrapper::importParametricGeometry() {
   for (const auto &compartmentID : compartments) {
     auto *po = getParametricObject(compartmentID.toStdString());
     auto nPoints = static_cast<std::size_t>(po->getPointIndexLength());
-    SPDLOG_INFO("  - compartment {}: found {} triangles", compartmentID,
-                nPoints / 3);
+    SPDLOG_INFO("  - compartment {}: found {} triangles",
+                compartmentID.toStdString(), nPoints / 3);
     triangles.emplace_back(nPoints, 0);
     po->getPointIndex(triangles.back().data());
   }
-  mesh = mesh::Mesh(vertices, triangles, interiorPoints);
+  mesh = std::make_shared<mesh::Mesh>(vertices, triangles, interiorPoints);
 }
 
 void SbmlDocWrapper::initModelData() {
@@ -756,7 +770,8 @@ QRgb SbmlDocWrapper::getCompartmentColour(const QString &compartmentID) const {
 
 void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
                                           QRgb colour, bool updateSBML) {
-  SPDLOG_INFO("assigning colour {} to compartment {}", colour, compartmentID);
+  SPDLOG_INFO("assigning colour {:x} to compartment {}", colour,
+              compartmentID.toStdString());
   // todo: add check that colour exists in geometry image?
   QRgb oldColour = getCompartmentColour(compartmentID);
   if (oldColour != 0) {
@@ -769,8 +784,8 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   }
   auto oldCompartmentID = getCompartmentID(colour);
   if (oldCompartmentID != "") {
-    SPDLOG_INFO("colour {} used to point to compartment to {}: removing",
-                colour, oldCompartmentID);
+    SPDLOG_INFO("colour {:x} used to point to compartment to {}: removing",
+                colour, oldCompartmentID.toStdString());
     // if the new colour was already mapped to another compartment, set the
     // colour of that compartment to null
     mapCompartmentToColour[oldCompartmentID] = 0;
@@ -797,7 +812,7 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
       // the InitialConcentration set above
       const auto *asgn = model->getInitialAssignmentBySymbol(s.toStdString());
       std::string expr = ASTtoString(asgn->getMath());
-      SPDLOG_INFO("found initialAssignment: {} = {}", s, expr);
+      SPDLOG_INFO("found initialAssignment: {} = {}", s.toStdString(), expr);
       if (model->getParameter(expr) != nullptr) {
         // simplest case: formula is just the name of a parameter
         const auto *param = model->getParameter(expr);
@@ -881,15 +896,16 @@ void SbmlDocWrapper::updateMesh() {
     const QPointF interior = getCompartmentInteriorPoint(compID);
     if (interior == QPointF()) {
       SPDLOG_INFO("compartment {} missing interiorPoint: skip mesh update",
-                  compID);
+                  compID.toStdString());
       return;
     }
     interiorPoints.push_back(interior);
   }
   SPDLOG_INFO("Updating mesh interior points");
   // todo: check if we should be passing non-empty vectors here:
-  mesh = mesh::Mesh(compartmentImage, interiorPoints, {}, {},
-                    vecMembraneColourPairs, pixelWidth, origin);
+  mesh = std::make_shared<mesh::Mesh>(
+      compartmentImage, interiorPoints, std::vector<std::size_t>{},
+      std::vector<std::size_t>{}, vecMembraneColourPairs, pixelWidth, origin);
 }
 
 libsbml::ParametricObject *SbmlDocWrapper::getParametricObject(
@@ -940,18 +956,18 @@ void SbmlDocWrapper::writeMeshParamsAnnotation(
   xml.append("\" ");
   xml.append(annotationPrefix);
   xml.append(":maxBoundaryPoints=\"");
-  xml.append(utils::vectorToString(mesh.getBoundaryMaxPoints()));
+  xml.append(utils::vectorToString(mesh->getBoundaryMaxPoints()));
   xml.append("\" ");
   xml.append(annotationPrefix);
   xml.append(":maxTriangleAreas=\"");
-  xml.append(utils::vectorToString(mesh.getCompartmentMaxTriangleArea()));
+  xml.append(utils::vectorToString(mesh->getCompartmentMaxTriangleArea()));
   xml.append("\"/>");
   pg->appendAnnotation(xml);
   SPDLOG_INFO("appending annotation: {}", xml);
 }
 
 void SbmlDocWrapper::writeGeometryMeshToSBML() {
-  if (mesh.getVertices().empty()) {
+  if (mesh->getVertices().empty()) {
     SPDLOG_INFO("No mesh to export to SBML");
     return;
   }
@@ -985,14 +1001,14 @@ void SbmlDocWrapper::writeGeometryMeshToSBML() {
     }
   }
 
-  if (!mesh.isReadOnly()) {
+  if (!mesh->isReadOnly()) {
     // if we constructed the mesh, add the parameters required
     // to reconstruct it from the geometry image as an annotation
     writeMeshParamsAnnotation(parageom);
   }
 
   // write vertices
-  std::vector<double> vertices = mesh.getVertices();
+  std::vector<double> vertices = mesh->getVertices();
   auto *sp = parageom->getSpatialPoints();
   int sz = static_cast<int>(vertices.size());
   sp->setArrayData(vertices.data(), sz);
@@ -1010,7 +1026,7 @@ void SbmlDocWrapper::writeGeometryMeshToSBML() {
     }
     SPDLOG_INFO("    - parametricObject: {}", po->getId());
     std::vector<int> triangleInts =
-        mesh.getTriangleIndices(static_cast<std::size_t>(i));
+        mesh->getTriangleIndices(static_cast<std::size_t>(i));
     int size = static_cast<int>(triangleInts.size());
     po->setPointIndexLength(size);
     po->setPointIndex(triangleInts.data(), size);
@@ -1036,14 +1052,14 @@ QPointF SbmlDocWrapper::getCompartmentInteriorPoint(
   }
   auto *interiorPoint = domain->getInteriorPoint(0);
   QPointF point(interiorPoint->getCoord1(), interiorPoint->getCoord2());
-  SPDLOG_INFO("  - interior point {}", point);
+  SPDLOG_INFO("  - interior point ({},{})", point.x(), point.y());
   return point;
 }
 
 void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
                                                  const QPointF &point) {
-  SPDLOG_INFO("compartmentID: {}", compartmentID);
-  SPDLOG_INFO("  - setting interior point {}", point);
+  SPDLOG_INFO("compartmentID: {}", compartmentID.toStdString());
+  SPDLOG_INFO("  - setting interior point ({},{})", point.x(), point.y());
   auto *comp = model->getCompartment(compartmentID.toStdString());
   auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
       comp->getPlugin("spatial"));
@@ -1065,8 +1081,8 @@ void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
 
 void SbmlDocWrapper::setAnalyticConcentration(
     const QString &speciesID, const QString &analyticExpression) {
-  SPDLOG_INFO("speciesID: {}", speciesID);
-  SPDLOG_INFO("  - expression: {}", analyticExpression);
+  SPDLOG_INFO("speciesID: {}", speciesID.toStdString());
+  SPDLOG_INFO("  - expression: {}", analyticExpression.toStdString());
   libsbml::InitialAssignment *asgn;
   if (model->getInitialAssignmentBySymbol(speciesID.toStdString()) != nullptr) {
     asgn = model->getInitialAssignmentBySymbol(speciesID.toStdString());
@@ -1123,7 +1139,7 @@ std::string SbmlDocWrapper::getSpeciesSampledFieldInitialAssignment(
 
 void SbmlDocWrapper::importConcentrationFromImage(const QString &speciesID,
                                                   const QString &filename) {
-  SPDLOG_INFO("speciesID: {}", speciesID);
+  SPDLOG_INFO("speciesID: {}", speciesID.toStdString());
   QImage img;
   img.load(filename);
   auto &field = mapSpeciesIdToField.at(speciesID);
@@ -1208,7 +1224,7 @@ void SbmlDocWrapper::setDiffusionConstant(const QString &speciesID,
         diffConstantExists = true;
         param->setValue(diffusionConstant);
         SPDLOG_INFO("Setting diffusion constant:");
-        SPDLOG_INFO("  - speciesID: {}", speciesID);
+        SPDLOG_INFO("  - speciesID: {}", speciesID.toStdString());
         SPDLOG_INFO("  - paramID: {}", param->getId());
         SPDLOG_INFO("  - new value: {}", param->getValue());
       }
@@ -1227,7 +1243,7 @@ void SbmlDocWrapper::setDiffusionConstant(const QString &speciesID,
     diffCoeff->setType(
         libsbml::DiffusionKind_t::SPATIAL_DIFFUSIONKIND_ISOTROPIC);
     SPDLOG_INFO("Setting new diffusion constant:");
-    SPDLOG_INFO("  - speciesID: {}", speciesID);
+    SPDLOG_INFO("  - speciesID: {}", speciesID.toStdString());
     SPDLOG_INFO("  - paramID: {}", param->getId());
     SPDLOG_INFO("  - new value: {}", param->getValue());
   }
@@ -1373,7 +1389,7 @@ void SbmlDocWrapper::setPixelWidth(double width, bool resizeCompartments) {
     }
   }
   SPDLOG_DEBUG("New pixel width = {}", pixelWidth);
-  mesh.setPhysicalGeometry(width, origin);
+  mesh->setPhysicalGeometry(width, origin);
   // update xy coordinates
   auto *coord = geom->getCoordinateComponentByKind(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
@@ -1485,6 +1501,74 @@ std::string SbmlDocWrapper::inlineAssignments(
     }
   }
   return expr;
+}
+
+Reac SbmlDocWrapper::getReaction(const QString &reactionID) const {
+  Reac r;
+  const auto *reac = model->getReaction(reactionID.toStdString());
+  if (reac == nullptr) {
+    SPDLOG_WARN("reaction {} does not exist", reactionID.toStdString());
+    return {};
+  }
+  const auto *kin = reac->getKineticLaw();
+  if (kin == nullptr) {
+    SPDLOG_WARN("reaction {} has no KineticLaw", reactionID.toStdString());
+    return {};
+  }
+  r.ID = reac->getId();
+  r.expression = inlineExpr(kin->getFormula());
+  r.products.reserve(reac->getNumProducts());
+  for (unsigned k = 0; k < reac->getNumProducts(); ++k) {
+    const auto *s = reac->getProduct(k);
+    r.products.push_back({s->getSpecies(), s->getStoichiometry()});
+  }
+  r.reactants.reserve(reac->getNumReactants());
+  for (unsigned k = 0; k < reac->getNumReactants(); ++k) {
+    const auto *s = reac->getReactant(k);
+    r.reactants.push_back({s->getSpecies(), s->getStoichiometry()});
+  }
+
+  // todo: modifiers??
+
+  // add all local parameters that are not replaced
+  // by an assignment rule
+  for (unsigned k = 0; k < kin->getNumLocalParameters(); ++k) {
+    const auto *param = kin->getLocalParameter(k);
+    if (model->getAssignmentRule(param->getId()) == nullptr) {
+      r.constants.push_back({param->getId(), param->getValue()});
+    }
+  }
+  for (unsigned k = 0; k < kin->getNumParameters(); ++k) {
+    const auto *param = kin->getParameter(k);
+    if (model->getAssignmentRule(param->getId()) == nullptr) {
+      r.constants.push_back({param->getId(), param->getValue()});
+    }
+  }
+  return r;
+}
+
+std::string SbmlDocWrapper::getRateRule(const std::string &speciesID) const {
+  const auto *rule = model->getRateRule(speciesID);
+  if (rule != nullptr) {
+    return inlineExpr(rule->getFormula());
+  }
+  return {};
+}
+
+Func SbmlDocWrapper::getFunctionDefinition(const QString &functionID) const {
+  Func f;
+  const auto *func = model->getFunctionDefinition(functionID.toStdString());
+  if (func == nullptr) {
+    SPDLOG_WARN("function {} does not exist", functionID.toStdString());
+    return {};
+  }
+  f.ID = func->getId();
+  f.expression = ASTtoString(func->getBody());
+  f.arguments.reserve(func->getNumArguments());
+  for (unsigned i = 0; i < func->getNumArguments(); ++i) {
+    f.arguments.push_back(ASTtoString(func->getArgument(i)));
+  }
+  return f;
 }
 
 }  // namespace sbml

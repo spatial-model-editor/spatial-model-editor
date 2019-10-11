@@ -1,8 +1,7 @@
 #pragma once
 
-#include <memory>
-
 #include <QDialog>
+#include <memory>
 
 namespace Ui {
 class DialogDimensions;

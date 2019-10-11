@@ -8,9 +8,16 @@
 
 #pragma once
 
+#include <map>
+#include <memory>
 #include <string>
+#include <vector>
 
-#include "exprtk_wrapper.hpp"
+// forward declaration to avoid exposing exprtk header
+namespace exprtk {
+template <typename T>
+class expression;
+}
 
 namespace numerics {
 
@@ -26,7 +33,8 @@ class ExprEval {
   double operator()() const;
 
  private:
-  exprtk::expression<double> exprtkExpression;
+  // store pointer to exprtk::expression as the type is not yet defined
+  std::shared_ptr<exprtk::expression<double>> exprtkExpression;
 };
 
 // return a vector of all symbols in the expression

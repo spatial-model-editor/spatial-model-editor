@@ -1,7 +1,7 @@
-#include <locale>
-
 #include <QApplication>
 #include <QtGui>
+#include <iostream>
+#include <locale>
 
 #include "logger.hpp"
 #include "mainwindow.hpp"

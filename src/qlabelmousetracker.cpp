@@ -47,14 +47,16 @@ void QLabelMouseTracker::resizeEvent(QResizeEvent *event) {
 void QLabelMouseTracker::setCurrentPixel(QMouseEvent *ev) {
   currentPixel.setX((image.width() * ev->pos().x()) / pixmap.width());
   currentPixel.setY((image.height() * ev->pos().y()) / pixmap.height());
-  SPDLOG_DEBUG("mouse at {} -> pixel {}", ev->pos(), currentPixel);
+  SPDLOG_DEBUG("mouse at ({},{}) -> pixel ({},{})", ev->pos().x(),
+               ev->pos().y(), currentPixel.x(), currentPixel.y());
 }
 
 void QLabelMouseTracker::resizeImage(const QSize &size) {
   if (!image.isNull()) {
     pixmap = QPixmap::fromImage(
         image.scaled(size, Qt::KeepAspectRatio, Qt::FastTransformation));
-    SPDLOG_DEBUG("resize 0-> {}, pixmap -> {}", size, pixmap.size());
+    SPDLOG_DEBUG("resize -> {}x{}, pixmap -> {}x{}", size.width(),
+                 size.height(), pixmap.size().width(), pixmap.size().height());
     this->setPixmap(pixmap);
   }
 }
