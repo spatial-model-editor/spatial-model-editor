@@ -41,8 +41,6 @@ class Mesh {
   std::vector<std::vector<TriangleIndex>> triangleIndices;
   // convert point in pixel units to point in physical units
   QPointF pixelPointToPhysicalPoint(const QPointF& pixelPoint) const noexcept;
-  // flatten QPoint to a value in range [0, width*height]
-  std::size_t flattenQPoint(const QPoint& p) const noexcept;
   void constructMesh();
 
  public:

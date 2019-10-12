@@ -6,7 +6,7 @@
 #include <QFile>
 #include <fstream>
 
-#include "catch.hpp"
+#include "catch_wrapper.hpp"
 #include "logger.hpp"
 #include "mesh.hpp"
 #include "sbml.hpp"

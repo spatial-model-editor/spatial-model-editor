@@ -3,8 +3,8 @@
 #include "geometry.hpp"
 #include "logger.hpp"
 #include "pde.hpp"
-#include "reactions.hpp"
 #include "sbml.hpp"
+#include "utils.hpp"
 
 namespace simulate {
 
@@ -32,15 +32,14 @@ ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
   result = species_values;
   nSpecies = species_values.size();
 
+  // compile each expression with exprtk
   reac_eval_exprtk.clear();
   reac_eval_exprtk.reserve(speciesIDs.size());
-
-  for (std::size_t i = 0; i < speciesIDs.size(); ++i) {
-    // compile expression with exprtk
+  for (const auto &rhs : pde.getRHS()) {
     reac_eval_exprtk.emplace_back(
-        numerics::ExprEval(pde.getRHS().at(i), speciesIDs, species_values, {}));
+        numerics::ExprEval(rhs, speciesIDs, species_values, {}));
   }
-  // compile expressions with symengine
+  // compile all expressions with symengine
   reac_eval_symengine = symbolic::Symbolic(pde.getRHS(), speciesIDs);
 }
 
@@ -73,9 +72,7 @@ SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
   std::vector<std::string> reactionID;
   const auto iter = doc->reactions.find(compID);
   if (iter != doc->reactions.cend()) {
-    for (const auto &reac : iter->second) {
-      reactionID.push_back(reac.toStdString());
-    }
+    reactionID = utils::toStdString(iter->second);
   }
   reacEval = ReacEval(doc, speciesID, reactionID, mathBackend);
 }
@@ -120,10 +117,8 @@ SimMembrane::SimMembrane(sbml::SbmlDocWrapper *doc_ptr,
   }
 
   // make vector of reactions from membrane
-  std::vector<std::string> reactionID;
-  for (const auto &reac : doc->reactions.at(membrane->membraneID.c_str())) {
-    reactionID.push_back(reac.toStdString());
-  }
+  std::vector<std::string> reactionID =
+      utils::toStdString(doc->reactions.at(membrane->membraneID.c_str()));
 
   reacEval = ReacEval(doc, speciesID, reactionID, mathBackend);
 }
@@ -215,12 +210,12 @@ void Simulate::integrateForwardsEuler(double dt) {
   }
 }
 
-QImage Simulate::getConcentrationImage() {
+QImage Simulate::getConcentrationImage() const {
   if (field.empty()) {
     return QImage();
   }
   QImage img(field[0]->geometry->getCompartmentImage().size(),
-             QImage::Format_ARGB32);
+             QImage::Format_ARGB32_Premultiplied);
   img.fill(qRgba(0, 0, 0, 0));
   // iterate over compartments
   for (const auto &comp : simComp) {

@@ -9,7 +9,6 @@
 
 #include "logger.hpp"
 #include "mesh.hpp"
-#include "reactions.hpp"
 #include "symbolic.hpp"
 #include "utils.hpp"
 

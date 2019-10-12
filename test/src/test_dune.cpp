@@ -2,7 +2,7 @@
 
 #include <QFile>
 
-#include "catch.hpp"
+#include "catch_wrapper.hpp"
 #include "dune.hpp"
 #include "logger.hpp"
 #include "sbml.hpp"

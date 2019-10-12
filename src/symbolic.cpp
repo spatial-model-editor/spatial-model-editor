@@ -81,8 +81,8 @@ void Symbolic::SymEngineImpl::init(
   }
   SymEngine::map_basic_basic d;
   for (const auto &p : constants) {
-    d[SymEngine::symbol(p.first)] = SymEngine::real_double(p.second);
     SPDLOG_DEBUG("  - constant {} = {}", p.first, p.second);
+    d[SymEngine::symbol(p.first)] = SymEngine::real_double(p.second);
   }
   for (const auto &expression : expressions) {
     SPDLOG_DEBUG("expr {}", expression);
@@ -92,7 +92,7 @@ void Symbolic::SymEngineImpl::init(
 
   // NOTE: don't do symbolic CSE - segfaults!
   lambda.init(varVec, expr, false);
-  // compile with LLVM, again no symbolic CSE
+  // compile with LLVM - again no symbolic CSE to avoid segfaults.
   lambdaLLVM.init(varVec, expr, false, 2);
 }
 

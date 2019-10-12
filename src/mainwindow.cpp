@@ -33,6 +33,8 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow) {
   ui->setupUi(this);
 
+  Q_INIT_RESOURCE(resources);
+
   shortcutStopSimulation = new QShortcut(this);
   shortcutStopSimulation->setKey(Qt::CTRL + Qt::Key_C);
 

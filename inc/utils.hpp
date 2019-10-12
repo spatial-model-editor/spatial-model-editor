@@ -6,14 +6,23 @@
 //  - stringToVector: convert space-delimited list of values to a vector
 //  - vectorToString: convert vector of values to a space-delimited list
 //  - indexedColours: a set of default colours for display purposes
+//  - QPointIndexer class:
+//     - given vector of QPoints
+//     - lookup index of any QPoint in the vector
+//     - returns std::optional with index if found
+//  - QPointUniqueIndexer class:
+//     - as above but removes duplicated QPoints first
 
 #pragma once
 
 #include <QColor>
+#include <QPoint>
+#include <QSize>
 #include <QString>
 #include <QStringList>
 #include <iomanip>
 #include <iterator>
+#include <optional>
 #include <sstream>
 #include <vector>
 
@@ -73,6 +82,33 @@ class indexedColours {
 
  public:
   const QColor &operator[](std::size_t i) const;
+};
+
+class QPointIndexer {
+ protected:
+  QSize box;
+  std::size_t nPoints;
+  std::vector<std::size_t> pointIndex;
+  bool validQPoint(const QPoint &point) const;
+  std::size_t flattenQPoint(const QPoint &point) const;
+
+ public:
+  explicit QPointIndexer(const QSize &boundingBox,
+                         const std::vector<QPoint> &qPoints = {});
+  void addPoints(const std::vector<QPoint> &qPoints);
+  std::optional<std::size_t> getIndex(const QPoint &point) const;
+};
+
+class QPointUniqueIndexer : public QPointIndexer {
+ protected:
+  std::vector<QPoint> points;
+  void init(const std::vector<QPoint> &qPoints);
+
+ public:
+  explicit QPointUniqueIndexer(const QSize &boundingBox,
+                               const std::vector<QPoint> &qPoints = {});
+  void addPoints(const std::vector<QPoint> &qPoints);
+  std::vector<QPoint> getPoints() const;
 };
 
 }  // namespace utils

@@ -1,6 +1,6 @@
 #include <QtTest>
 
-#include "catch.hpp"
+#include "catch_wrapper.hpp"
 #include "logger.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"

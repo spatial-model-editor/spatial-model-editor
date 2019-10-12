@@ -2,7 +2,7 @@
 
 #include <QFile>
 
-#include "catch.hpp"
+#include "catch_wrapper.hpp"
 #include "logger.hpp"
 #include "sbml.hpp"
 #include "sbml_test_data/very_simple_model.hpp"

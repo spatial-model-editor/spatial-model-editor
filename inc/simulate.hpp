@@ -99,7 +99,7 @@ class Simulate {
   void addCompartment(const geometry::Compartment *compartment);
   void addMembrane(geometry::Membrane *membrane);
   void integrateForwardsEuler(double dt);
-  QImage getConcentrationImage();
+  QImage getConcentrationImage() const;
 };
 
 }  // namespace simulate

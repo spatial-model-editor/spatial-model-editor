@@ -1,7 +1,7 @@
 #include <QDebug>
 #include <QPoint>
 
-#include "catch.hpp"
+#include "catch_wrapper.hpp"
 #include "logger.hpp"
 #include "mesh.hpp"
 #include "utils.hpp"
