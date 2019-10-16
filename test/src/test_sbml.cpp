@@ -332,14 +332,16 @@ SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
 
 SCENARIO("import geometry from image", "[sbml][non-gui]") {
   sbml::SbmlDocWrapper s;
-  REQUIRE(s.hasGeometry == false);
+  REQUIRE(s.hasGeometryImage == false);
+  REQUIRE(s.hasValidGeometry == false);
+  REQUIRE(s.isValid == false);
   GIVEN("Single pixel image") {
     QImage img(1, 1, QImage::Format_RGB32);
     QRgb col = QColor(12, 243, 154).rgba();
     img.setPixel(0, 0, col);
     img.save("tmp.png");
     s.importGeometryFromImage("tmp.png");
-    REQUIRE(s.hasGeometry == true);
+    REQUIRE(s.hasGeometryImage == true);
     THEN("getCompartmentImage returns image") {
       REQUIRE(s.getCompartmentImage().size() == QSize(1, 1));
       REQUIRE(s.getCompartmentImage().pixel(0, 0) == col);

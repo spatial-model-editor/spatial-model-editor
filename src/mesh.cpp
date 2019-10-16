@@ -327,26 +327,32 @@ void Mesh::constructMesh() {
 static double getScaleFactor(const QImage& img, const QSize& size) {
   double scaleFactor = 1;
   if (img.width() * size.height() > img.height() * size.width()) {
-    scaleFactor = static_cast<double>(size.width() - 2) /
-                  static_cast<double>(img.width());
+    scaleFactor =
+        static_cast<double>(size.width()) / static_cast<double>(img.width());
   } else {
-    scaleFactor = static_cast<double>(size.height() - 2) /
-                  static_cast<double>(img.height());
+    scaleFactor =
+        static_cast<double>(size.height()) / static_cast<double>(img.height());
   }
   return scaleFactor;
 }
 
-QImage Mesh::getBoundariesImage(const QSize& size,
-                                std::size_t boldBoundaryIndex) const {
+std::pair<QImage, QImage> Mesh::getBoundariesImages(
+    const QSize& size, std::size_t boldBoundaryIndex) const {
   double scaleFactor = getScaleFactor(img, size);
   // construct boundary image
   QImage boundaryImage(static_cast<int>(scaleFactor * img.width()),
                        static_cast<int>(scaleFactor * img.height()),
                        QImage::Format_ARGB32_Premultiplied);
-  boundaryImage.fill(QColor(0, 0, 0, 0));
+  boundaryImage.fill(QColor(0, 0, 0, 0).rgba());
+
+  QImage maskImage(boundaryImage.size(), QImage::Format_ARGB32_Premultiplied);
+  maskImage.fill(QColor(255, 255, 255).rgba());
 
   QPainter p(&boundaryImage);
   p.setRenderHint(QPainter::Antialiasing);
+
+  QPainter pMask(&maskImage);
+
   // draw boundary lines
   for (std::size_t k = 0; k < boundaries.size(); ++k) {
     const auto& points = boundaries[k].points;
@@ -359,10 +365,13 @@ QImage Mesh::getBoundariesImage(const QSize& size,
       penSize = 5;
     }
     p.setPen(QPen(utils::indexedColours()[k], penSize));
+    pMask.setPen(QPen(QColor(0, 0, static_cast<int>(k)), 15));
     for (std::size_t i = 0; i < maxPoint; ++i) {
       p.drawEllipse(points[i] * scaleFactor, penSize, penSize);
       p.drawLine(points[i] * scaleFactor,
                  points[(i + 1) % points.size()] * scaleFactor);
+      pMask.drawLine(points[i] * scaleFactor,
+                     points[(i + 1) % points.size()] * scaleFactor);
     }
     if (boundaries[k].isMembrane) {
       const auto& outerPoints = boundaries[k].outerPoints;
@@ -370,24 +379,36 @@ QImage Mesh::getBoundariesImage(const QSize& size,
         p.drawEllipse(outerPoints[i] * scaleFactor, penSize, penSize);
         p.drawLine(outerPoints[i] * scaleFactor,
                    outerPoints[(i + 1) % outerPoints.size()] * scaleFactor);
+        pMask.drawLine(outerPoints[i] * scaleFactor,
+                       outerPoints[(i + 1) % outerPoints.size()] * scaleFactor);
       }
     }
   }
   p.end();
+  pMask.end();
   // flip image on y-axis, to change (0,0) from bottom-left to top-left corner
-  return boundaryImage.mirrored(false, true);
+  return std::make_pair(boundaryImage.mirrored(false, true),
+                        maskImage.mirrored(false, true));
 }
 
-QImage Mesh::getMeshImage(const QSize& size,
-                          std::size_t compartmentIndex) const {
+std::pair<QImage, QImage> Mesh::getMeshImages(
+    const QSize& size, std::size_t compartmentIndex) const {
   double scaleFactor = getScaleFactor(img, size);
   // construct mesh image
   QImage meshImage(static_cast<int>(scaleFactor * img.width()),
                    static_cast<int>(scaleFactor * img.height()),
                    QImage::Format_ARGB32_Premultiplied);
   meshImage.fill(QColor(0, 0, 0, 0));
+
+  QImage maskImage(meshImage.size(), QImage::Format_ARGB32_Premultiplied);
+  maskImage.fill(QColor(255, 255, 255).rgba());
+
   QPainter p(&meshImage);
   p.setRenderHint(QPainter::Antialiasing);
+
+  QPainter pMask(&maskImage);
+  QBrush maskBrush(QColor(0, 0, static_cast<int>(compartmentIndex)));
+
   QBrush fillBrush(QColor(235, 235, 255));
   p.setPen(QPen(Qt::black, 2));
   // fill triangles in chosen compartment & outline with bold lines
@@ -397,11 +418,13 @@ QImage Mesh::getMeshImage(const QSize& size,
       path.lineTo(tp * scaleFactor);
     }
     p.fillPath(path, fillBrush);
+    pMask.fillPath(path, maskBrush);
     p.drawPath(path);
   }
   // outline all other triangles with gray lines
   p.setPen(QPen(Qt::gray, 1));
   for (std::size_t k = 0; k < triangles.size(); ++k) {
+    maskBrush.setColor(QColor(0, 0, static_cast<int>(k)));
     if (k != compartmentIndex) {
       for (const auto& t : triangles.at(k)) {
         QPainterPath path(t.back() * scaleFactor);
@@ -409,6 +432,7 @@ QImage Mesh::getMeshImage(const QSize& size,
           path.lineTo(tp * scaleFactor);
         }
         p.drawPath(path);
+        pMask.fillPath(path, maskBrush);
       }
     }
   }
@@ -418,7 +442,10 @@ QImage Mesh::getMeshImage(const QSize& size,
     p.drawPoint(v * scaleFactor);
   }
   p.end();
-  return meshImage.mirrored(false, true);
+  pMask.end();
+
+  return std::make_pair(meshImage.mirrored(false, true),
+                        maskImage.mirrored(false, true));
 }
 
 QString Mesh::getGMSH() const {

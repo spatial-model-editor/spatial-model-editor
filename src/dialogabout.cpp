@@ -1,5 +1,6 @@
 #include "dialogabout.hpp"
 
+#include <config.h>
 #include <expat.h>
 #include <fmt/core.h>
 #include <gmp.h>
@@ -40,8 +41,8 @@ DialogAbout::DialogAbout(QWidget* parent)
                             .arg(SPATIAL_MODEL_EDITOR_VERSION));
 
   QString libraries("<p>Included libraries:</p><ul>");
-  libraries.append(
-      dep("dune-copasi", "https://gitlab.dune-project.org/copasi/", "master"));
+  libraries.append(dep("dune-copasi", "https://gitlab.dune-project.org/copasi/",
+                       PACKAGE_VERSION));
   libraries.append(dep("libSBML[experimental]",
                        "http://sbml.org/Software/libSBML",
                        libsbml::getLibSBMLDottedVersion()));

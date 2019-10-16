@@ -15,8 +15,10 @@
 #include "dune.hpp"
 #include "logger.hpp"
 #include "mesh.hpp"
+#include "sbml.hpp"
 #include "simulate.hpp"
 #include "ui_mainwindow.h"
+#include "utils.hpp"
 #include "version.hpp"
 
 static void selectFirstChild(QTreeWidget *tree) {
@@ -109,6 +111,14 @@ void MainWindow::setupConnections() {
   connect(ui->tabCompartmentGeometry, &QTabWidget::currentChanged, this,
           &MainWindow::tabCompartmentGeometry_currentChanged);
 
+  connect(ui->lblCompBoundary, &QLabelMouseTracker::mouseClicked, this,
+          &MainWindow::lblCompBoundary_mouseClicked);
+
+  connect(ui->lblCompBoundary, &QLabelMouseTracker::mouseWheelEvent, this,
+          [this](QWheelEvent *ev) {
+            QApplication::sendEvent(ui->spinMaxBoundaryPoints, ev);
+          });
+
   connect(ui->spinBoundaryIndex, qOverload<int>(&QSpinBox::valueChanged), this,
           &MainWindow::spinBoundaryIndex_valueChanged);
 
@@ -118,6 +128,14 @@ void MainWindow::setupConnections() {
   connect(ui->spinBoundaryWidth,
           qOverload<double>(&QDoubleSpinBox::valueChanged), this,
           &MainWindow::spinBoundaryWidth_valueChanged);
+
+  connect(ui->lblCompMesh, &QLabelMouseTracker::mouseClicked, this,
+          &MainWindow::lblCompMesh_mouseClicked);
+
+  connect(ui->lblCompMesh, &QLabelMouseTracker::mouseWheelEvent, this,
+          [this](QWheelEvent *ev) {
+            QApplication::sendEvent(ui->spinMaxTriangleArea, ev);
+          });
 
   connect(ui->spinMaxTriangleArea, qOverload<int>(&QSpinBox::valueChanged),
           this, &MainWindow::spinMaxTriangleArea_valueChanged);
@@ -377,10 +395,12 @@ void MainWindow::tabMain_updateSimulate() {
 }
 
 void MainWindow::enableTabs() {
-  bool enable = sbmlDoc.isValid && sbmlDoc.hasGeometry;
+  bool enable = sbmlDoc.isValid && sbmlDoc.hasValidGeometry;
   for (int i = 1; i < ui->tabMain->count(); ++i) {
     ui->tabMain->setTabEnabled(i, enable);
   }
+  ui->tabCompartmentGeometry->setTabEnabled(1, enable);
+  ui->tabCompartmentGeometry->setTabEnabled(2, enable);
 }
 
 void MainWindow::action_Open_SBML_file_triggered() {
@@ -388,6 +408,7 @@ void MainWindow::action_Open_SBML_file_triggered() {
       this, "Open SBML file", "", "SBML file (*.xml);; All files (*.*)",
       nullptr, QFileDialog::Option::DontUseNativeDialog);
   if (!filename.isEmpty()) {
+    sbmlDoc = sbml::SbmlDocWrapper();
     sbmlDoc.importSBMLFile(filename.toStdString());
     if (sbmlDoc.isValid) {
       ui->tabMain->setCurrentIndex(0);
@@ -406,7 +427,9 @@ void MainWindow::menuOpen_example_SBML_file_triggered(QAction *action) {
   QFile f(filename);
   if (!f.open(QIODevice::ReadOnly)) {
     SPDLOG_WARN("failed to open built-in file: {}", filename.toStdString());
+    return;
   }
+  sbmlDoc = sbml::SbmlDocWrapper();
   sbmlDoc.importSBMLString(f.readAll().toStdString());
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
@@ -434,7 +457,6 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
     if (filename.right(4) != ".ini") {
       filename.append(".ini");
     }
-    QString iniFileString = dune::DuneConverter(sbmlDoc).getIniFile();
     QFile f(filename);
     if (f.open(QIODevice::ReadWrite | QIODevice::Text)) {
       f.write(dune::DuneConverter(sbmlDoc).getIniFile().toUtf8());
@@ -495,8 +517,10 @@ void MainWindow::lblGeometry_mouseClicked(QRgb col, QPoint point) {
         ui->listCompartments->selectedItems()[0]->text();
     sbmlDoc.setCompartmentColour(compartmentID, col);
     sbmlDoc.setCompartmentInteriorPoint(compartmentID, point);
+    ui->tabCompartmentGeometry->setCurrentIndex(0);
     // update display by simulating user click on listCompartments
     listCompartments_currentTextChanged(compartmentID);
+    enableTabs();
     SPDLOG_INFO("assigned compartment {} to colour {:x}",
                 compartmentID.toStdString(), col);
     waitingForCompartmentChoice = false;
@@ -511,7 +535,7 @@ void MainWindow::lblGeometry_mouseClicked(QRgb col, QPoint point) {
   }
 }
 
-bool MainWindow::isValidModelAndGeometry() {
+bool MainWindow::isValidModelAndGeometryImage() {
   if (sbmlDoc.isValid == false) {
     SPDLOG_DEBUG("  - no SBML model");
     if (QMessageBox::question(this, "No SBML model",
@@ -522,9 +546,9 @@ bool MainWindow::isValidModelAndGeometry() {
     }
     return false;
   }
-  if (sbmlDoc.hasGeometry == false) {
+  if (sbmlDoc.hasGeometryImage == false) {
     SPDLOG_DEBUG("  - no geometry image");
-    if (QMessageBox::question(this, "No compartment geometry",
+    if (QMessageBox::question(this, "No compartment geometry image",
                               "No image of compartment geometry loaded - "
                               "import one now?",
                               QMessageBox::Yes | QMessageBox::No,
@@ -537,7 +561,7 @@ bool MainWindow::isValidModelAndGeometry() {
 }
 
 void MainWindow::btnChangeCompartment_clicked() {
-  if (!isValidModelAndGeometry()) {
+  if (!isValidModelAndGeometryImage()) {
     SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
     return;
   }
@@ -549,13 +573,14 @@ void MainWindow::btnChangeCompartment_clicked() {
 }
 
 void MainWindow::tabCompartmentGeometry_currentChanged(int index) {
+  enum TabIndex { IMAGE = 0, BOUNDARIES = 1, MESH = 2 };
   SPDLOG_DEBUG("Tab changed to {} [{}]", index,
                ui->tabCompartmentGeometry->tabText(index).toStdString());
-  if (index == 1) {
-    ui->spinBoundaryIndex->setMaximum(
-        static_cast<int>(sbmlDoc.mesh->getBoundaries().size()) - 1);
+  if (index == TabIndex::BOUNDARIES) {
+    auto size = sbmlDoc.mesh->getBoundaries().size();
+    ui->spinBoundaryIndex->setMaximum(static_cast<int>(size) - 1);
     spinBoundaryIndex_valueChanged(ui->spinBoundaryIndex->value());
-  } else if (index == 2) {
+  } else if (index == TabIndex::MESH) {
     auto compIndex =
         static_cast<std::size_t>(ui->listCompartments->currentRow());
     ui->spinMaxTriangleArea->setValue(static_cast<int>(
@@ -564,13 +589,23 @@ void MainWindow::tabCompartmentGeometry_currentChanged(int index) {
   }
 }
 
+void MainWindow::lblCompBoundary_mouseClicked(QRgb col, QPoint point) {
+  Q_UNUSED(col);
+  Q_UNUSED(point);
+  auto index = ui->lblCompBoundary->getMaskIndex();
+  if (index <= ui->spinBoundaryIndex->maximum() &&
+      index != ui->spinBoundaryIndex->value()) {
+    ui->spinBoundaryIndex->setValue(index);
+  }
+}
+
 void MainWindow::spinBoundaryIndex_valueChanged(int value) {
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<size_t>(value);
   ui->spinMaxBoundaryPoints->setValue(
       static_cast<int>(sbmlDoc.mesh->getBoundaryMaxPoints(boundaryIndex)));
-  ui->lblCompBoundary->setPixmap(QPixmap::fromImage(
-      sbmlDoc.mesh->getBoundariesImage(size, boundaryIndex)));
+  ui->lblCompBoundary->setImages(
+      sbmlDoc.mesh->getBoundariesImages(size, boundaryIndex));
   if (sbmlDoc.mesh->isMembrane(boundaryIndex)) {
     ui->spinBoundaryWidth->setEnabled(true);
     ui->spinBoundaryWidth->setValue(
@@ -584,16 +619,28 @@ void MainWindow::spinMaxBoundaryPoints_valueChanged(int value) {
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<std::size_t>(ui->spinBoundaryIndex->value());
   sbmlDoc.mesh->setBoundaryMaxPoints(boundaryIndex, static_cast<size_t>(value));
-  ui->lblCompBoundary->setPixmap(QPixmap::fromImage(
-      sbmlDoc.mesh->getBoundariesImage(size, boundaryIndex)));
+  ui->lblCompBoundary->setImages(
+      sbmlDoc.mesh->getBoundariesImages(size, boundaryIndex));
 }
 
 void MainWindow::spinBoundaryWidth_valueChanged(double value) {
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<std::size_t>(ui->spinBoundaryIndex->value());
   sbmlDoc.mesh->setBoundaryWidth(boundaryIndex, value);
-  ui->lblCompBoundary->setPixmap(QPixmap::fromImage(
-      sbmlDoc.mesh->getBoundariesImage(size, boundaryIndex)));
+  ui->lblCompBoundary->setImages(
+      sbmlDoc.mesh->getBoundariesImages(size, boundaryIndex));
+}
+
+void MainWindow::lblCompMesh_mouseClicked(QRgb col, QPoint point) {
+  Q_UNUSED(col);
+  Q_UNUSED(point);
+  auto index = ui->lblCompMesh->getMaskIndex();
+  if (index < ui->listCompartments->count() &&
+      index != ui->listCompartments->currentRow()) {
+    ui->listCompartments->setCurrentRow(index);
+    ui->spinMaxTriangleArea->setFocus();
+    ui->spinMaxTriangleArea->selectAll();
+  }
 }
 
 void MainWindow::spinMaxTriangleArea_valueChanged(int value) {
@@ -601,8 +648,7 @@ void MainWindow::spinMaxTriangleArea_valueChanged(int value) {
   auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
   sbmlDoc.mesh->setCompartmentMaxTriangleArea(compIndex,
                                               static_cast<std::size_t>(value));
-  ui->lblCompMesh->setPixmap(
-      QPixmap::fromImage(sbmlDoc.mesh->getMeshImage(size, compIndex)));
+  ui->lblCompMesh->setImages(sbmlDoc.mesh->getMeshImages(size, compIndex));
 }
 
 void MainWindow::listCompartments_currentTextChanged(
@@ -618,11 +664,16 @@ void MainWindow::listCompartments_currentTextChanged(
     if (col == 0) {
       // null (transparent white) RGB colour: compartment does not have
       // an assigned colour in the image
-      ui->lblCompShape->setPixmap(QPixmap());
+      ui->lblCompShape->setImage(QImage());
       ui->lblCompartmentColour->setText("none");
-      ui->lblCompShape->setPixmap(QPixmap());
-      ui->lblCompShape->setText("none");
-      ui->lblCompMesh->setPixmap(QPixmap());
+      ui->lblCompShape->setImage(QImage());
+      ui->lblCompShape->setText(
+          "<p>Compartment has no assigned geometry</p> "
+          "<ul><li>please click on the 'Select compartment geometry...' "
+          "button below</li> "
+          "<li> then on the desired location in the geometry "
+          "image on the left</li></ul>");
+      ui->lblCompMesh->setImage(QImage());
       ui->lblCompMesh->setText("none");
     } else {
       // update colour box
@@ -630,12 +681,8 @@ void MainWindow::listCompartments_currentTextChanged(
       ui->lblCompartmentColour->setPixmap(lblCompartmentColourPixmap);
       ui->lblCompartmentColour->setText("");
       // update image of compartment
-      const auto &img =
-          sbmlDoc.mapCompIdToGeometry.at(compID).getCompartmentImage();
-      // rescale image
-      ui->lblCompShape->setPixmap(QPixmap::fromImage(
-          img.scaled(ui->lblCompShape->size(), Qt::KeepAspectRatio,
-                     Qt::FastTransformation)));
+      ui->lblCompShape->setImage(
+          sbmlDoc.mapCompIdToGeometry.at(compID).getCompartmentImage());
       ui->lblCompShape->setText("");
       // update mesh or boundary image if tab is currently visible
       tabCompartmentGeometry_currentChanged(

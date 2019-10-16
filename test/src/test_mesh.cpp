@@ -99,31 +99,33 @@ SCENARIO("image: empty image", "[mesh][boundary][non-gui]") {
   REQUIRE(msh[14] == "$EndElements");
 
   // check image output
-  auto boundaryImage = mesh.getBoundariesImage(QSize(100, 100), 0);
+  auto [boundaryImage, maskImage] =
+      mesh.getBoundariesImages(QSize(100, 100), 0);
   auto col0 = utils::indexedColours()[0].rgba();
-  // 75x100, minus two pixels to avoid resizing qlabel widgets
-  REQUIRE(boundaryImage.width() == 73);
-  REQUIRE(boundaryImage.height() == 98);
+  boundaryImage.save("xx.png");
+  REQUIRE(boundaryImage.width() == 75);
+  REQUIRE(boundaryImage.height() == 100);
   REQUIRE(boundaryImage.pixel(3, 3) == col0);
   REQUIRE(boundaryImage.pixel(34, 2) == col0);
   REQUIRE(boundaryImage.pixel(69, 4) == col0);
   REQUIRE(boundaryImage.pixel(70, 51) == col0);
   REQUIRE(boundaryImage.pixel(67, 95) == col0);
-  REQUIRE(boundaryImage.pixel(30, 97) == col0);
+  REQUIRE(boundaryImage.pixel(30, 99) == col0);
   REQUIRE(boundaryImage.pixel(2, 94) == col0);
   REQUIRE(boundaryImage.pixel(9, 11) == 0);
   REQUIRE(boundaryImage.pixel(54, 19) == 0);
   REQUIRE(boundaryImage.pixel(53, 78) == 0);
   REQUIRE(boundaryImage.pixel(9, 81) == 0);
 
-  auto meshImage = mesh.getMeshImage(QSize(100, 100), 0);
-  REQUIRE(meshImage.width() == 73);
-  REQUIRE(meshImage.height() == 98);
+  auto [meshImage, meshMaskImage] = mesh.getMeshImages(QSize(100, 100), 0);
+  REQUIRE(meshImage.width() == 75);
+  REQUIRE(meshImage.height() == 100);
 
   // check rescaling of image
-  boundaryImage = mesh.getBoundariesImage(QSize(30, 120), 0);
-  REQUIRE(boundaryImage.width() == 28);
-  REQUIRE(boundaryImage.height() == 37);
+  auto [boundaryImage2, maskImage2] =
+      mesh.getBoundariesImages(QSize(30, 120), 0);
+  REQUIRE(boundaryImage2.width() == 30);
+  REQUIRE(boundaryImage2.height() == 40);
 
   WHEN("max boundary points increased") {
     THEN("boundary unchanged") {
@@ -197,30 +199,30 @@ SCENARIO("image: single convex compartment", "[mesh][boundary][non-gui]") {
   REQUIRE(isCyclicPermutation(boundaries[0].points, imgBoundary));
   REQUIRE(isCyclicPermutation(boundaries[1].points, correctBoundary));
 
-  auto boundaryImage = mesh.getBoundariesImage(QSize(100, 100), 0);
+  auto [boundaryImage, maskImage] =
+      mesh.getBoundariesImages(QSize(100, 100), 0);
   boundaryImage.save("tmp0.png");
-  REQUIRE(boundaryImage.width() == 73);
-  REQUIRE(boundaryImage.height() == 98);
+  REQUIRE(boundaryImage.width() == 75);
+  REQUIRE(boundaryImage.height() == 100);
   auto col0 = utils::indexedColours()[0].rgba();
   auto col1 = utils::indexedColours()[1].rgba();
-  REQUIRE(boundaryImage.width() == 73);
-  REQUIRE(boundaryImage.height() == 98);
   REQUIRE(boundaryImage.pixel(1, 3) == col0);
   REQUIRE(boundaryImage.pixel(3, 6) == col0);
   REQUIRE(boundaryImage.pixel(70, 62) == col0);
   REQUIRE(boundaryImage.pixel(70, 2) == col0);
   REQUIRE(boundaryImage.pixel(5, 78) == 0);
-  REQUIRE(boundaryImage.pixel(16, 79) != col1);
+  REQUIRE(boundaryImage.pixel(17, 80) != col1);
   REQUIRE(boundaryImage.pixel(26, 80) == 0);
-  boundaryImage.save("tmp1.png");
-  boundaryImage = mesh.getBoundariesImage(QSize(100, 100), 1);
-  REQUIRE(boundaryImage.pixel(1, 3) == col0);
-  REQUIRE(boundaryImage.pixel(3, 6) == 0);
-  REQUIRE(boundaryImage.pixel(70, 62) == col0);
-  REQUIRE(boundaryImage.pixel(70, 2) == col0);
-  REQUIRE(boundaryImage.pixel(5, 78) == col1);
-  REQUIRE(boundaryImage.pixel(16, 79) == col1);
-  REQUIRE(boundaryImage.pixel(26, 80) == col1);
+  auto [boundaryImage2, maskImage2] =
+      mesh.getBoundariesImages(QSize(100, 100), 1);
+  boundaryImage2.save("tmp1.png");
+  REQUIRE(boundaryImage2.pixel(1, 3) == col0);
+  REQUIRE(boundaryImage2.pixel(3, 6) == 0);
+  REQUIRE(boundaryImage2.pixel(72, 62) == col0);
+  REQUIRE(boundaryImage2.pixel(72, 2) == col0);
+  REQUIRE(boundaryImage2.pixel(8, 78) == col1);
+  REQUIRE(boundaryImage2.pixel(16, 79) == col1);
+  REQUIRE(boundaryImage2.pixel(26, 80) == col1);
 }
 
 SCENARIO("image: single convex compartment, degenerate points",
@@ -406,12 +408,13 @@ SCENARIO("image: two touching comps, two fixed point pixels",
   REQUIRE(isCyclicPermutation(boundaries[2].points, bound2));
   REQUIRE(isCyclicPermutation(boundaries[3].points, bound1));
 
-  auto boundaryImage = mesh.getBoundariesImage(QSize(100, 100), 3);
-  REQUIRE(boundaryImage.width() == 98);
-  REQUIRE(boundaryImage.height() == 88);
+  auto [boundaryImage, maskImage] =
+      mesh.getBoundariesImages(QSize(100, 100), 3);
+  REQUIRE(boundaryImage.width() == 100);
+  REQUIRE(boundaryImage.height() == 90);
 
-  QSize sz(502, 502);
-  auto meshImg = mesh.getMeshImage(sz, 0);
+  QSize sz(500, 500);
+  auto [meshImg, maskMeshImage] = mesh.getMeshImages(sz, 0);
   QRgb fillColour = QColor(235, 235, 255).rgba();
   // outside
   REQUIRE(meshImg.pixel(5, 5) == 0);
@@ -422,16 +425,17 @@ SCENARIO("image: two touching comps, two fixed point pixels",
   // compartment 2
   REQUIRE(meshImg.pixel(247, 196) == fillColour);
   REQUIRE(meshImg.pixel(272, 179) == fillColour);
-  meshImg = mesh.getMeshImage(sz, 1);
+  auto [meshImg2, maskMeshImage2] = mesh.getMeshImages(sz, 1);
+  meshImg2.save("meshImg2.png");
   // outside
-  REQUIRE(meshImg.pixel(5, 5) == 0);
-  REQUIRE(meshImg.pixel(112, 95) == 0);
+  REQUIRE(meshImg2.pixel(5, 5) == 0);
+  REQUIRE(meshImg2.pixel(112, 95) == 0);
   // compartment 1
-  REQUIRE(meshImg.pixel(335, 179) == fillColour);
-  REQUIRE(meshImg.pixel(303, 201) == fillColour);
+  REQUIRE(meshImg2.pixel(335, 179) == fillColour);
+  REQUIRE(meshImg2.pixel(303, 201) == fillColour);
   // compartment 2
-  REQUIRE(meshImg.pixel(247, 196) == 0);
-  REQUIRE(meshImg.pixel(272, 179) == 0);
+  REQUIRE(meshImg2.pixel(247, 196) == 0);
+  REQUIRE(meshImg2.pixel(272, 179) == 0);
 }
 
 SCENARIO("image: concave cell nucleus, one membrane",
@@ -463,6 +467,7 @@ SCENARIO("image: concave cell nucleus, one membrane",
     REQUIRE(sqrt(dot) == Approx(w));
   }
 
-  img = mesh.getBoundariesImage(QSize(200, 200), 0);
-  REQUIRE(img.size() == QSize(198, 198));
+  auto [boundaryImage, maskImage] =
+      mesh.getBoundariesImages(QSize(200, 200), 0);
+  REQUIRE(boundaryImage.size() == QSize(200, 200));
 }

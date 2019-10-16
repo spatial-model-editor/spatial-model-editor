@@ -48,9 +48,8 @@ class MainWindow : public QMainWindow {
 
   // check if SBML model and geometry image are both valid
   // offer user to load a valid one if not
-  bool isValidModelAndGeometry();
+  bool isValidModelAndGeometryImage();
 
-  // <UI>
   void tabMain_currentChanged(int index);
   void tabMain_updateGeometry();
   void tabMain_updateMembranes();
@@ -58,7 +57,7 @@ class MainWindow : public QMainWindow {
   void tabMain_updateReactions();
   void tabMain_updateFunctions();
   void tabMain_updateSimulate();
-  // if SBML model and geometry image are both valid, enable all tabs
+  // if SBML model and geometry are both valid, enable all tabs
   void enableTabs();
 
   // File menu actions
@@ -86,11 +85,15 @@ class MainWindow : public QMainWindow {
 
   void tabCompartmentGeometry_currentChanged(int index);
 
+  void lblCompBoundary_mouseClicked(QRgb col, QPoint point);
+
   void spinBoundaryIndex_valueChanged(int value);
 
   void spinMaxBoundaryPoints_valueChanged(int value);
 
   void spinBoundaryWidth_valueChanged(double value);
+
+  void lblCompMesh_mouseClicked(QRgb col, QPoint point);
 
   void spinMaxTriangleArea_valueChanged(int value);
 
@@ -140,5 +143,4 @@ class MainWindow : public QMainWindow {
   void graphClicked(QCPAbstractPlottable *plottable, int dataIndex);
 
   void hslideTime_valueChanged(int value);
-  // </UI>
 };

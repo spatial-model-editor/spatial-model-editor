@@ -81,9 +81,10 @@ class Mesh {
   std::vector<int> getTriangleIndices(std::size_t compartmentIndex) const;
   const std::vector<std::vector<QTriangleF>>& getTriangles() const;
 
-  QImage getBoundariesImage(const QSize& size,
-                            std::size_t boldBoundaryIndex) const;
-  QImage getMeshImage(const QSize& size, std::size_t compartmentIndex) const;
+  std::pair<QImage, QImage> getBoundariesImages(
+      const QSize& size, std::size_t boldBoundaryIndex) const;
+  std::pair<QImage, QImage> getMeshImages(const QSize& size,
+                                          std::size_t compartmentIndex) const;
   QString getGMSH() const;
 };
 

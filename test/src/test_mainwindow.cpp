@@ -22,9 +22,13 @@ class UIPointers {
   QMenu *menuExample_geometry_image;
   QMenu *menuOpen_example_SBML_file;
   QLabelMouseTracker *lblGeometry;
+  QLabelMouseTracker *lblCompShape;
+  QLabelMouseTracker *lblCompMesh;
+  QLabelMouseTracker *lblCompBoundary;
   QListWidget *listCompartments;
   QListWidget *listMembranes;
   QTreeWidget *listSpecies;
+
   QPushButton *btnChangeSpeciesColour;
   QCheckBox *chkSpeciesIsSpatial;
   QCheckBox *chkSpeciesIsConstant;
@@ -32,6 +36,7 @@ class UIPointers {
   QTreeWidget *listReactions;
   QListWidget *listFunctions;
   QTabWidget *tabMain;
+  QTabWidget *tabCompartmentGeometry;
   QPushButton *btnChangeCompartment;
   QLineEdit *txtSimLength;
   QLineEdit *txtSimInterval;
@@ -55,6 +60,15 @@ UIPointers::UIPointers(MainWindow *mainWindow) : w(mainWindow) {
   lblGeometry =
       w->topLevelWidget()->findChild<QLabelMouseTracker *>("lblGeometry");
   REQUIRE(lblGeometry != nullptr);
+  lblCompShape =
+      w->topLevelWidget()->findChild<QLabelMouseTracker *>("lblCompShape");
+  REQUIRE(lblCompShape != nullptr);
+  lblCompMesh =
+      w->topLevelWidget()->findChild<QLabelMouseTracker *>("lblCompMesh");
+  REQUIRE(lblCompMesh != nullptr);
+  lblCompBoundary =
+      w->topLevelWidget()->findChild<QLabelMouseTracker *>("lblCompBoundary");
+  REQUIRE(lblCompBoundary != nullptr);
   listCompartments =
       w->topLevelWidget()->findChild<QListWidget *>("listCompartments");
   REQUIRE(listCompartments != nullptr);
@@ -83,6 +97,9 @@ UIPointers::UIPointers(MainWindow *mainWindow) : w(mainWindow) {
   REQUIRE(listFunctions != nullptr);
   tabMain = w->topLevelWidget()->findChild<QTabWidget *>("tabMain");
   REQUIRE(tabMain != nullptr);
+  tabCompartmentGeometry =
+      w->topLevelWidget()->findChild<QTabWidget *>("tabCompartmentGeometry");
+  REQUIRE(tabCompartmentGeometry != nullptr);
   btnChangeCompartment =
       w->topLevelWidget()->findChild<QPushButton *>("btnChangeCompartment");
   REQUIRE(btnChangeCompartment != nullptr);
@@ -311,17 +328,6 @@ SCENARIO("import built-in SBML model and compartment geometry image",
       REQUIRE_threePixelImageLoaded(ui);
     }
   }
-  WHEN("user opens three-pixel image, then ABtoC model, then saves SBML") {
-    openThreePixelImage(&w, ui, mwt);
-    openABtoC(&w, ui, mwt);
-    REQUIRE_threePixelImageLoaded(ui);
-    // missing ".xml" will automatically be appended to "tmp" by code here:
-    saveTempSBMLFile(&w, ui, mwt, "tmp");
-    THEN("user opens saved SBML file: finds image") {
-      openTempSBMLFile(&w, ui, mwt);
-      REQUIRE_threePixelImageLoaded(ui);
-    }
-  }
 }
 
 #ifndef Q_OS_MACOS
@@ -422,6 +428,39 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
                     QPoint(imgDisplayWidth / 2, imgDisplayWidth / 2));
   QApplication::processEvents();
   REQUIRE(ui.lblGeometry->getColour() == col3);
+#ifndef Q_OS_MACOS
+  ui.tabCompartmentGeometry->setFocus();
+  QApplication::processEvents();
+  // display Boundaries sub-tab
+  QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
+                  key_delay);
+  QApplication::processEvents();
+  QTest::mouseClick(ui.lblCompBoundary, Qt::LeftButton, Qt::KeyboardModifiers(),
+                    QPoint(ui.lblCompBoundary->width() / 2,
+                           ui.lblCompBoundary->height() / 2));
+  QApplication::processEvents();
+
+  QApplication::processEvents();
+  // display Mesh sub-tab
+  QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
+                  key_delay);
+  QApplication::processEvents();
+  REQUIRE(ui.listCompartments->currentRow() == 2);
+  QTest::mouseMove(
+      ui.lblCompMesh,
+      QPoint(ui.lblCompMesh->width() / 3, ui.lblCompMesh->height() / 3),
+      mouseDelay);
+  QTest::mouseClick(
+      ui.lblCompMesh, Qt::LeftButton, Qt::KeyboardModifiers(),
+      QPoint(ui.lblCompMesh->width() / 3, ui.lblCompMesh->height() / 3));
+  QApplication::processEvents();
+  REQUIRE(ui.listCompartments->currentRow() == 1);
+  QTest::mouseMove(ui.lblCompMesh, QPoint(6, 6), mouseDelay);
+  QTest::mouseClick(ui.lblCompMesh, Qt::LeftButton, Qt::KeyboardModifiers(),
+                    QPoint(6, 6));
+  QApplication::processEvents();
+  REQUIRE(ui.listCompartments->currentRow() == 0);
+#endif
   // if lblGeometry has focus then ctrl+tab doesn't work to change tabs:
   ui.listCompartments->setCurrentRow(0);
   QApplication::processEvents();

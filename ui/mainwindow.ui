@@ -56,9 +56,6 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <property name="mouseTracking">
-           <bool>true</bool>
-          </property>
           <property name="whatsThis">
            <string>&lt;h4&gt;Compartment geometry image&lt;/h4&gt;
 &lt;p&gt;An image of the geometry of the model.&lt;/p&gt;</string>
@@ -97,7 +94,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>4</number>
        </property>
        <widget class="QWidget" name="tabGeometry">
         <property name="whatsThis">
@@ -110,45 +107,53 @@
         </attribute>
         <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
-          <layout class="QGridLayout" name="gridCompartment">
-           <item row="0" column="0">
-            <widget class="QLabel" name="lblCompartments">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="autoFillBackground">
-              <bool>true</bool>
-             </property>
-             <property name="text">
-              <string>Compartments:</string>
-             </property>
-             <property name="scaledContents">
-              <bool>false</bool>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QListWidget" name="listCompartments">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="whatsThis">
-              <string>&lt;p&gt;A list of all the compartments in the model.&lt;/p&gt;
+          <widget class="QSplitter" name="splitter_2">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="childrenCollapsible">
+            <bool>false</bool>
+           </property>
+           <widget class="QWidget" name="verticalLayoutWidget">
+            <layout class="QVBoxLayout" name="verticalLayout_4">
+             <item>
+              <widget class="QLabel" name="lblCompartments">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="autoFillBackground">
+                <bool>true</bool>
+               </property>
+               <property name="text">
+                <string>Compartments:</string>
+               </property>
+               <property name="scaledContents">
+                <bool>false</bool>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QListWidget" name="listCompartments">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="whatsThis">
+                <string>&lt;p&gt;A list of all the compartments in the model.&lt;/p&gt;
 &lt;p&gt;To assign a compartment to an area of the geometry image:
 &lt;ul&gt;
 &lt;li&gt;Click on the compartment name, then on the 'Select compartment geometry...' button (or simply double-click on the compartment name)&lt;/li&gt;
@@ -156,411 +161,379 @@
 &lt;/ul&gt;
 &lt;/p&gt;
 &lt;p&gt;The Compartment settings on the right will be updated to show an image of the new shape of the compartment&lt;/p&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QGroupBox" name="grpCompartment">
-             <property name="title">
-              <string>Compartment Settings</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_2">
-              <item>
-               <layout class="QGridLayout" name="gridCompartmentSettings">
-                <item row="0" column="2">
-                 <widget class="QLabel" name="lblCompColourLabel">
-                  <property name="font">
-                   <font>
-                    <weight>50</weight>
-                    <bold>false</bold>
-                   </font>
-                  </property>
-                  <property name="autoFillBackground">
-                   <bool>true</bool>
-                  </property>
-                  <property name="text">
-                   <string>Colour:</string>
-                  </property>
-                  <property name="scaledContents">
-                   <bool>false</bool>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="3">
-                 <widget class="QLabel" name="lblCompartmentColour">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="font">
-                   <font>
-                    <weight>50</weight>
-                    <bold>false</bold>
-                   </font>
-                  </property>
-                  <property name="toolTip">
-                   <string>The colour of the compartment</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>The colour of the compartment</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;Compartment Colour&lt;/h4&gt;
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QGroupBox" name="grpCompartment">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>1</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="title">
+             <string>Compartment Settings</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_2">
+             <item>
+              <layout class="QGridLayout" name="gridCompartmentSettings">
+               <item row="0" column="2">
+                <widget class="QLabel" name="lblCompColourLabel">
+                 <property name="font">
+                  <font>
+                   <weight>50</weight>
+                   <bold>false</bold>
+                  </font>
+                 </property>
+                 <property name="autoFillBackground">
+                  <bool>true</bool>
+                 </property>
+                 <property name="text">
+                  <string>Colour:</string>
+                 </property>
+                 <property name="scaledContents">
+                  <bool>false</bool>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="3">
+                <widget class="QLabel" name="lblCompartmentColour">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="font">
+                  <font>
+                   <weight>50</weight>
+                   <bold>false</bold>
+                  </font>
+                 </property>
+                 <property name="toolTip">
+                  <string>The colour of the compartment</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>The colour of the compartment</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;h4&gt;Compartment Colour&lt;/h4&gt;
 &lt;p&gt;The compartment geometry is generated from all the pixels of this colour in the compartment geometry image on the left.&lt;/p&gt;
 &lt;p&gt;To change the colour, click on 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
-                  </property>
-                  <property name="autoFillBackground">
-                   <bool>false</bool>
-                  </property>
-                  <property name="text">
-                   <string>none</string>
-                  </property>
-                  <property name="scaledContents">
-                   <bool>true</bool>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="0">
-                 <widget class="QLabel" name="lblCompartmentSize">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>The size of the compartment</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>The size of the compartment</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>The size of the compartment</string>
-                  </property>
-                  <property name="text">
-                   <string>Size:</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QLineEdit" name="txtCompartmentSize">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>The size of the compartment</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>The size of the compartment</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>The size of the compartment</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QTabWidget" name="tabCompartmentGeometry">
-                <property name="toolTip">
-                 <string>The boundaries of the geometry of the compartments</string>
-                </property>
-                <property name="statusTip">
-                 <string>The boundaries of the geometry of the compartments</string>
-                </property>
-                <property name="whatsThis">
-                 <string>The boundaries of the geometry of the compartments</string>
-                </property>
-                <property name="currentIndex">
-                 <number>1</number>
-                </property>
-                <widget class="QWidget" name="tabCompartmentImage">
-                 <attribute name="title">
-                  <string>Image</string>
-                 </attribute>
-                 <layout class="QVBoxLayout" name="verticalLayout_4">
-                  <item>
-                   <widget class="QLabel" name="lblCompShape">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>1</width>
-                      <height>1</height>
-                     </size>
-                    </property>
-                    <property name="toolTip">
-                     <string>The shape of the compartment</string>
-                    </property>
-                    <property name="statusTip">
-                     <string>The shape of the compartment</string>
-                    </property>
-                    <property name="whatsThis">
-                     <string>&lt;h4&gt;Compartment Geometry&lt;/h4&gt;
+                 </property>
+                 <property name="autoFillBackground">
+                  <bool>false</bool>
+                 </property>
+                 <property name="text">
+                  <string>none</string>
+                 </property>
+                 <property name="scaledContents">
+                  <bool>true</bool>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="0">
+                <widget class="QLabel" name="lblCompartmentSize">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>The size of the compartment</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>The size of the compartment</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>The size of the compartment</string>
+                 </property>
+                 <property name="text">
+                  <string>Size:</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QLineEdit" name="txtCompartmentSize">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>The size of the compartment</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>The size of the compartment</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>The size of the compartment</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <widget class="QTabWidget" name="tabCompartmentGeometry">
+               <property name="toolTip">
+                <string>The boundaries of the geometry of the compartments</string>
+               </property>
+               <property name="statusTip">
+                <string>The boundaries of the geometry of the compartments</string>
+               </property>
+               <property name="whatsThis">
+                <string>The boundaries of the geometry of the compartments</string>
+               </property>
+               <property name="currentIndex">
+                <number>0</number>
+               </property>
+               <widget class="QWidget" name="tabCompartmentImage">
+                <attribute name="title">
+                 <string>Image</string>
+                </attribute>
+                <layout class="QHBoxLayout" name="horizontalLayout_13">
+                 <item>
+                  <layout class="QGridLayout" name="gridLayout_4">
+                   <item row="0" column="0">
+                    <widget class="QLabelMouseTracker" name="lblCompShape" native="true">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="toolTip">
+                      <string>The shape of the compartment</string>
+                     </property>
+                     <property name="statusTip">
+                      <string>The shape of the compartment</string>
+                     </property>
+                     <property name="whatsThis">
+                      <string>&lt;h4&gt;Compartment Geometry&lt;/h4&gt;
 &lt;p&gt;The compartment geometry is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
 &lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
-                    </property>
-                    <property name="text">
-                     <string>none</string>
-                    </property>
-                    <property name="scaledContents">
-                     <bool>false</bool>
-                    </property>
-                    <property name="alignment">
-                     <set>Qt::AlignCenter</set>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </widget>
-                <widget class="QWidget" name="tabCompartmentBoundary">
-                 <attribute name="title">
-                  <string>Boundaries</string>
-                 </attribute>
-                 <layout class="QHBoxLayout" name="horizontalLayout_12">
-                  <item>
-                   <layout class="QGridLayout" name="gridLayout_3">
-                    <item row="1" column="2">
-                     <widget class="QLabel" name="lblMaxBoundaryPointsLabel">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="text">
-                       <string>Max points:</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="5">
-                     <widget class="QLabel" name="lblBoundaryWidthLabel">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="text">
-                       <string>Width:</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="0">
-                     <widget class="QLabel" name="lblBoundaryIndexLabel">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="text">
-                       <string>Boundary:</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="1">
-                     <widget class="QSpinBox" name="spinBoundaryIndex">
-                      <property name="wrapping">
-                       <bool>true</bool>
-                      </property>
-                      <property name="maximum">
-                       <number>0</number>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="3" colspan="2">
-                     <widget class="QSpinBox" name="spinMaxBoundaryPoints">
-                      <property name="minimum">
-                       <number>3</number>
-                      </property>
-                      <property name="value">
-                       <number>12</number>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="6">
-                     <widget class="QDoubleSpinBox" name="spinBoundaryWidth">
-                      <property name="decimals">
-                       <number>2</number>
-                      </property>
-                      <property name="minimum">
-                       <double>0.010000000000000</double>
-                      </property>
-                      <property name="maximum">
-                       <double>20.000000000000000</double>
-                      </property>
-                      <property name="singleStep">
-                       <double>0.100000000000000</double>
-                      </property>
-                      <property name="stepType">
-                       <enum>QAbstractSpinBox::DefaultStepType</enum>
-                      </property>
-                      <property name="value">
-                       <double>1.000000000000000</double>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="0" column="0" colspan="7">
-                     <widget class="QLabel" name="lblCompBoundary">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="minimumSize">
-                       <size>
-                        <width>1</width>
-                        <height>1</height>
-                       </size>
-                      </property>
-                      <property name="toolTip">
-                       <string>The boundary lines separating the compartments</string>
-                      </property>
-                      <property name="statusTip">
-                       <string>The boundary lines separating the compartments</string>
-                      </property>
-                      <property name="whatsThis">
-                       <string>&lt;h4&gt;Compartment Geometry: Boundaries&lt;/h4&gt;
-&lt;p&gt;The boundary lines separate the compartments. Each line consists of a set of vertices connected by straight lines, and these vertices will also be included in the final mesh.&lt;/p&gt;</string>
-                      </property>
-                      <property name="text">
-                       <string>none</string>
-                      </property>
-                      <property name="scaledContents">
-                       <bool>false</bool>
-                      </property>
-                      <property name="alignment">
-                       <set>Qt::AlignCenter</set>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </item>
-                 </layout>
-                </widget>
-                <widget class="QWidget" name="tabCompartmentMesh">
-                 <attribute name="title">
-                  <string>Mesh</string>
-                 </attribute>
-                 <layout class="QVBoxLayout" name="verticalLayout_3">
-                  <item>
-                   <layout class="QGridLayout" name="gridLayout_2">
-                    <item row="0" column="0" colspan="3">
-                     <widget class="QLabel" name="lblCompMesh">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="minimumSize">
-                       <size>
-                        <width>1</width>
-                        <height>1</height>
-                       </size>
-                      </property>
-                      <property name="toolTip">
-                       <string>The mesh representing the geometry of the compartment</string>
-                      </property>
-                      <property name="statusTip">
-                       <string>The mesh representing the geometry of the compartment</string>
-                      </property>
-                      <property name="whatsThis">
-                       <string>&lt;h4&gt;Compartment Geometry: Mesh&lt;/h4&gt;
-&lt;p&gt;The compartment geometry mesh is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
-&lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
-                      </property>
-                      <property name="text">
-                       <string>none</string>
-                      </property>
-                      <property name="scaledContents">
-                       <bool>false</bool>
-                      </property>
-                      <property name="alignment">
-                       <set>Qt::AlignCenter</set>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="0">
-                     <widget class="QLabel" name="lblMaxTriangleAreaLabel">
-                      <property name="sizePolicy">
-                       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                        <horstretch>0</horstretch>
-                        <verstretch>0</verstretch>
-                       </sizepolicy>
-                      </property>
-                      <property name="text">
-                       <string>Max triangle area:</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item row="1" column="1" colspan="2">
-                     <widget class="QSpinBox" name="spinMaxTriangleArea">
-                      <property name="minimum">
-                       <number>2</number>
-                      </property>
-                      <property name="maximum">
-                       <number>9999</number>
-                      </property>
-                      <property name="value">
-                       <number>32</number>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </item>
-                 </layout>
-                </widget>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="btnChangeCompartment">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="toolTip">
-                 <string/>
-                </property>
-                <property name="statusTip">
-                 <string/>
-                </property>
-                <property name="whatsThis">
-                 <string>&lt;h4&gt;Select compartment geometry...&lt;/h4&gt;
+                     </property>
+                     <property name="text" stdset="0">
+                      <string>none</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QPushButton" name="btnChangeCompartment">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="toolTip">
+                      <string/>
+                     </property>
+                     <property name="statusTip">
+                      <string/>
+                     </property>
+                     <property name="whatsThis">
+                      <string>&lt;h4&gt;Select compartment geometry...&lt;/h4&gt;
 &lt;p&gt;To assign a geometry to this compartment, click here, then click on the compartment geometry image on the left .&lt;/p&gt;
 &lt;p&gt;The shape of the compartment will be generated from all the pixels in the image of the same colour as the one that was clicked on&lt;/p&gt;</string>
-                </property>
-                <property name="text">
-                 <string>Select compartment geometry...</string>
-                </property>
+                     </property>
+                     <property name="text">
+                      <string>Select compartment geometry...</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
                </widget>
-              </item>
-             </layout>
-            </widget>
-           </item>
-          </layout>
+               <widget class="QWidget" name="tabCompartmentBoundary">
+                <attribute name="title">
+                 <string>Boundaries</string>
+                </attribute>
+                <layout class="QHBoxLayout" name="horizontalLayout_12">
+                 <item>
+                  <layout class="QGridLayout" name="gridLayout_3">
+                   <item row="1" column="2">
+                    <widget class="QLabel" name="lblMaxBoundaryPointsLabel">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Max points:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="5">
+                    <widget class="QLabel" name="lblBoundaryWidthLabel">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Width:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="lblBoundaryIndexLabel">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Boundary:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1">
+                    <widget class="QSpinBox" name="spinBoundaryIndex">
+                     <property name="wrapping">
+                      <bool>true</bool>
+                     </property>
+                     <property name="maximum">
+                      <number>0</number>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="3" colspan="2">
+                    <widget class="QSpinBox" name="spinMaxBoundaryPoints">
+                     <property name="minimum">
+                      <number>3</number>
+                     </property>
+                     <property name="value">
+                      <number>12</number>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="6">
+                    <widget class="QDoubleSpinBox" name="spinBoundaryWidth">
+                     <property name="decimals">
+                      <number>2</number>
+                     </property>
+                     <property name="minimum">
+                      <double>0.010000000000000</double>
+                     </property>
+                     <property name="maximum">
+                      <double>20.000000000000000</double>
+                     </property>
+                     <property name="singleStep">
+                      <double>0.100000000000000</double>
+                     </property>
+                     <property name="stepType">
+                      <enum>QAbstractSpinBox::DefaultStepType</enum>
+                     </property>
+                     <property name="value">
+                      <double>1.000000000000000</double>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="0" column="0" colspan="7">
+                    <widget class="QLabelMouseTracker" name="lblCompBoundary" native="true">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="toolTip">
+                      <string>The boundary lines separating the compartments</string>
+                     </property>
+                     <property name="statusTip">
+                      <string>The boundary lines separating the compartments</string>
+                     </property>
+                     <property name="whatsThis">
+                      <string>&lt;h4&gt;Compartment Geometry: Boundaries&lt;/h4&gt;
+&lt;p&gt;The boundary lines separate the compartments. Each line consists of a set of vertices connected by straight lines, and these vertices will also be included in the final mesh.&lt;/p&gt;</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="tabCompartmentMesh">
+                <attribute name="title">
+                 <string>Mesh</string>
+                </attribute>
+                <layout class="QVBoxLayout" name="verticalLayout_3">
+                 <item>
+                  <layout class="QGridLayout" name="gridLayout_2">
+                   <item row="0" column="0" colspan="3">
+                    <widget class="QLabelMouseTracker" name="lblCompMesh" native="true">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="toolTip">
+                      <string>The mesh representing the geometry of the compartment</string>
+                     </property>
+                     <property name="statusTip">
+                      <string>The mesh representing the geometry of the compartment</string>
+                     </property>
+                     <property name="whatsThis">
+                      <string>&lt;h4&gt;Compartment Geometry: Mesh&lt;/h4&gt;
+&lt;p&gt;The compartment geometry mesh is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
+&lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="0">
+                    <widget class="QLabel" name="lblMaxTriangleAreaLabel">
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="text">
+                      <string>Max triangle area:</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item row="1" column="1" colspan="2">
+                    <widget class="QSpinBox" name="spinMaxTriangleArea">
+                     <property name="minimum">
+                      <number>2</number>
+                     </property>
+                     <property name="maximum">
+                      <number>9999</number>
+                     </property>
+                     <property name="value">
+                      <number>32</number>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -575,97 +548,111 @@
         </attribute>
         <layout class="QHBoxLayout" name="horizontalLayout_10">
          <item>
-          <layout class="QGridLayout" name="gridMembranes">
-           <item row="0" column="0">
-            <widget class="QLabel" name="lblMembranes">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="autoFillBackground">
-              <bool>true</bool>
-             </property>
-             <property name="text">
-              <string>Membranes:</string>
-             </property>
-             <property name="scaledContents">
-              <bool>false</bool>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QListWidget" name="listMembranes">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QGroupBox" name="grpMembranes">
-             <property name="title">
-              <string>Membrane Settings</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_5">
-              <item>
-               <layout class="QGridLayout" name="gridMembranesSettings">
-                <item row="0" column="0">
-                 <widget class="QLabel" name="lblMembraneShapeLabel">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="text">
-                   <string>Shape:</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1" colspan="2">
-                 <widget class="QLabel" name="lblMembraneShape">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="whatsThis">
-                   <string/>
-                  </property>
-                  <property name="text">
-                   <string>none</string>
-                  </property>
-                  <property name="scaledContents">
-                   <bool>true</bool>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </widget>
-           </item>
-          </layout>
+          <widget class="QSplitter" name="splitter_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="childrenCollapsible">
+            <bool>false</bool>
+           </property>
+           <widget class="QWidget" name="verticalLayoutWidget_2">
+            <layout class="QVBoxLayout" name="verticalLayout_6">
+             <item>
+              <widget class="QLabel" name="lblMembranes">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="autoFillBackground">
+                <bool>true</bool>
+               </property>
+               <property name="text">
+                <string>Membranes:</string>
+               </property>
+               <property name="scaledContents">
+                <bool>false</bool>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QListWidget" name="listMembranes">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QGroupBox" name="grpMembranes">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>1</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="title">
+             <string>Membrane Settings</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_5">
+             <item>
+              <layout class="QGridLayout" name="gridMembranesSettings">
+               <item row="0" column="0">
+                <widget class="QLabel" name="lblMembraneShapeLabel">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Shape:</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1" colspan="2">
+                <widget class="QLabel" name="lblMembraneShape">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="whatsThis">
+                  <string/>
+                 </property>
+                 <property name="text">
+                  <string>none</string>
+                 </property>
+                 <property name="scaledContents">
+                  <bool>true</bool>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -682,419 +669,439 @@
         </attribute>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <item>
-          <layout class="QGridLayout" name="gridSpecies">
-           <item row="1" column="0">
-            <widget class="QTreeWidget" name="listSpecies">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="editTriggers">
-              <set>QAbstractItemView::NoEditTriggers</set>
-             </property>
-             <property name="headerHidden">
-              <bool>true</bool>
-             </property>
-             <column>
-              <property name="text">
-               <string notr="true">1</string>
-              </property>
-             </column>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="lblSpecies">
-             <property name="font">
-              <font>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="autoFillBackground">
-              <bool>true</bool>
-             </property>
-             <property name="text">
-              <string>Species:</string>
-             </property>
-             <property name="scaledContents">
-              <bool>false</bool>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QGroupBox" name="grpSpecies">
-             <property name="title">
-              <string>Species Settings</string>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout">
-              <item>
-               <layout class="QGridLayout" name="gridSpeciesSettings">
-                <item row="0" column="1" colspan="6">
-                 <widget class="QCheckBox" name="chkSpeciesIsSpatial">
-                  <property name="toolTip">
-                   <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;Spatial&lt;/h4&gt;&lt;p&gt;A spatial species has a concentration that is a function of space within the compartment, i.e. it can take different values at different locations within the compartment&lt;/p&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>species concentration has a spatial dependence</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1" colspan="6">
-                 <widget class="QCheckBox" name="chkSpeciesIsConstant">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>if &quot;Constant&quot; is checked: the species has a fixed concentration during the simulation</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>'Constant': species concentration cannot be altered by the simulation</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;Constant&lt;/h4&gt;&lt;p&gt;A constant species has a fixed concentration. It keeps its initial concentration for the whole simulation.&lt;/p&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>species concentration is fixed throughout the whole simulation</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0" rowspan="2">
-                 <widget class="QLabel" name="lblInitConc">
-                  <property name="text">
-                   <string>Initial Concentration:</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="7" column="0">
-                 <widget class="QLabel" name="lblSpeciesColourLabel">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>The colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>The colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>The colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="text">
-                   <string>Colour:</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QRadioButton" name="radInitialConcentrationUniform">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>Spatially uniform initial concentration: no spatial dependence</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>Spatially uniform initial concentration: no spatial dependence</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;Spatially uniform initial concentration&lt;/h4&gt;
+          <widget class="QSplitter" name="splitter_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="childrenCollapsible">
+            <bool>false</bool>
+           </property>
+           <widget class="QWidget" name="verticalLayoutWidget_3">
+            <layout class="QVBoxLayout" name="verticalLayout_7">
+             <item>
+              <widget class="QLabel" name="lblSpecies">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="autoFillBackground">
+                <bool>true</bool>
+               </property>
+               <property name="text">
+                <string>Species:</string>
+               </property>
+               <property name="scaledContents">
+                <bool>false</bool>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QTreeWidget" name="listSpecies">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="editTriggers">
+                <set>QAbstractItemView::NoEditTriggers</set>
+               </property>
+               <property name="headerHidden">
+                <bool>true</bool>
+               </property>
+               <column>
+                <property name="text">
+                 <string notr="true">1</string>
+                </property>
+               </column>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QGroupBox" name="grpSpecies">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>1</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="title">
+             <string>Species Settings</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout">
+             <item>
+              <layout class="QGridLayout" name="gridSpeciesSettings">
+               <item row="0" column="1" colspan="6">
+                <widget class="QCheckBox" name="chkSpeciesIsSpatial">
+                 <property name="toolTip">
+                  <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;h4&gt;Spatial&lt;/h4&gt;&lt;p&gt;A spatial species has a concentration that is a function of space within the compartment, i.e. it can take different values at different locations within the compartment&lt;/p&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>species concentration has a spatial dependence</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1" colspan="6">
+                <widget class="QCheckBox" name="chkSpeciesIsConstant">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>if &quot;Constant&quot; is checked: the species has a fixed concentration during the simulation</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>'Constant': species concentration cannot be altered by the simulation</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;h4&gt;Constant&lt;/h4&gt;&lt;p&gt;A constant species has a fixed concentration. It keeps its initial concentration for the whole simulation.&lt;/p&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>species concentration is fixed throughout the whole simulation</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="0" rowspan="2">
+                <widget class="QLabel" name="lblInitConc">
+                 <property name="text">
+                  <string>Initial Concentration:</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="7" column="0">
+                <widget class="QLabel" name="lblSpeciesColourLabel">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>The colour that is used to display the concentration of this species</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>The colour that is used to display the concentration of this species</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>The colour that is used to display the concentration of this species</string>
+                 </property>
+                 <property name="text">
+                  <string>Colour:</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="1">
+                <widget class="QRadioButton" name="radInitialConcentrationUniform">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>Spatially uniform initial concentration: no spatial dependence</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>Spatially uniform initial concentration: no spatial dependence</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;h4&gt;Spatially uniform initial concentration&lt;/h4&gt;
 &lt;p&gt;The initial concentration of the species is the same everywhere in the compartment.&lt;/p&gt;</string>
-                  </property>
+                 </property>
+                 <property name="text">
+                  <string>Spatially uniform</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="6">
+                <widget class="QComboBox" name="cmbImportExampleConcentration">
+                 <property name="currentText">
+                  <string>example images...</string>
+                 </property>
+                 <property name="frame">
+                  <bool>true</bool>
+                 </property>
+                 <item>
                   <property name="text">
-                   <string>Spatially uniform</string>
-                  </property>
-                  <property name="checked">
-                   <bool>true</bool>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="6">
-                 <widget class="QComboBox" name="cmbImportExampleConcentration">
-                  <property name="currentText">
                    <string>example images...</string>
                   </property>
-                  <property name="frame">
-                   <bool>true</bool>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>one-blob-100x100</string>
                   </property>
-                  <item>
-                   <property name="text">
-                    <string>example images...</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>one-blob-100x100</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>two-blobs-100x100</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>three-blobs-100x100</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>gradient-100x100</string>
-                   </property>
-                  </item>
-                 </widget>
-                </item>
-                <item row="6" column="0">
-                 <widget class="QLabel" name="lblDiffConst">
-                  <property name="toolTip">
-                   <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>two-blobs-100x100</string>
                   </property>
-                  <property name="statusTip">
-                   <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>three-blobs-100x100</string>
                   </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;Diffusion constant&lt;/h4&gt;
+                 </item>
+                 <item>
+                  <property name="text">
+                   <string>gradient-100x100</string>
+                  </property>
+                 </item>
+                </widget>
+               </item>
+               <item row="6" column="0">
+                <widget class="QLabel" name="lblDiffConst">
+                 <property name="toolTip">
+                  <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;h4&gt;Diffusion constant&lt;/h4&gt;
 &lt;p&gt;The rate at which the species diffuses within the compartment&lt;/p&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>Diffusion Constant:</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="lblSpeciesIsConstant">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>A constant species has a fixed concentration</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>A constant species has a fixed concentration</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;Constant&lt;/h4&gt;&lt;p&gt;A constant species has a fixed concentration. It keeps its initial concentration for the whole simulation.&lt;/p&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>Constant:</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="7" column="1" colspan="5">
-                 <widget class="QLabel" name="lblSpeciesColour">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>The colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>The colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>The colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="autoFillBackground">
-                   <bool>false</bool>
-                  </property>
-                  <property name="text">
-                   <string>none</string>
-                  </property>
-                  <property name="scaledContents">
-                   <bool>true</bool>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="0">
-                 <widget class="QLabel" name="lblSpeciesIsSpacial">
-                  <property name="toolTip">
-                   <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;Spatial&lt;/h4&gt;&lt;p&gt;A spatial species has a concentration that is a function of space within the compartment, i.e. it can take different values at different locations within the compartment&lt;/p&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>Spatial:</string>
-                  </property>
-                  <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="1">
-                 <widget class="QRadioButton" name="radInitialConcentrationVarying">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>Spatially varying initial concentration: varies with position</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>Spatially varying initial concentration: varies with position</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;Spatially varying initial concentration&lt;/h4&gt;
+                 </property>
+                 <property name="text">
+                  <string>Diffusion Constant:</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="lblSpeciesIsConstant">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>A constant species has a fixed concentration</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>A constant species has a fixed concentration</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;h4&gt;Constant&lt;/h4&gt;&lt;p&gt;A constant species has a fixed concentration. It keeps its initial concentration for the whole simulation.&lt;/p&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>Constant:</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="7" column="1" colspan="5">
+                <widget class="QLabel" name="lblSpeciesColour">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>The colour that is used to display the concentration of this species</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>The colour that is used to display the concentration of this species</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>The colour that is used to display the concentration of this species</string>
+                 </property>
+                 <property name="autoFillBackground">
+                  <bool>false</bool>
+                 </property>
+                 <property name="text">
+                  <string>none</string>
+                 </property>
+                 <property name="scaledContents">
+                  <bool>true</bool>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="0">
+                <widget class="QLabel" name="lblSpeciesIsSpacial">
+                 <property name="toolTip">
+                  <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>'Spatial': species concentration can vary depending on the location within the compartment</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;h4&gt;Spatial&lt;/h4&gt;&lt;p&gt;A spatial species has a concentration that is a function of space within the compartment, i.e. it can take different values at different locations within the compartment&lt;/p&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>Spatial:</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="1">
+                <widget class="QRadioButton" name="radInitialConcentrationVarying">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>Spatially varying initial concentration: varies with position</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>Spatially varying initial concentration: varies with position</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;h4&gt;Spatially varying initial concentration&lt;/h4&gt;
 &lt;p&gt;The initial concentration of the species can vary depending on the location within the compartment.&lt;/p&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>Spatially varying</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="3" colspan="3">
-                 <widget class="QPushButton" name="btnImportConcentration">
-                  <property name="enabled">
-                   <bool>true</bool>
-                  </property>
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>Import an image of the spatial concentration of this species</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>Import an image of the spatial concentration of this species</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;import from image&lt;/h4&gt;&lt;p&gt;Import an image of the spatial concentration of this species&lt;/p&gt;</string>
-                  </property>
-                  <property name="text">
-                   <string>import from image...</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="7" column="6">
-                 <widget class="QPushButton" name="btnChangeSpeciesColour">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>Change the colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>Change the colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>Change the colour that is used to display the concentration of this species</string>
-                  </property>
-                  <property name="text">
-                   <string>change colour...</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="6" column="1" colspan="6">
-                 <widget class="QLineEdit" name="txtDiffusionConstant">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="toolTip">
-                   <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
-                  </property>
-                  <property name="statusTip">
-                   <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
-                  </property>
-                  <property name="whatsThis">
-                   <string>&lt;h4&gt;Diffusion constant&lt;/h4&gt;
+                 </property>
+                 <property name="text">
+                  <string>Spatially varying</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="3" colspan="3">
+                <widget class="QPushButton" name="btnImportConcentration">
+                 <property name="enabled">
+                  <bool>true</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>Import an image of the spatial concentration of this species</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>Import an image of the spatial concentration of this species</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;h4&gt;import from image&lt;/h4&gt;&lt;p&gt;Import an image of the spatial concentration of this species&lt;/p&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>import from image...</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="7" column="6">
+                <widget class="QPushButton" name="btnChangeSpeciesColour">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>Change the colour that is used to display the concentration of this species</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>Change the colour that is used to display the concentration of this species</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>Change the colour that is used to display the concentration of this species</string>
+                 </property>
+                 <property name="text">
+                  <string>change colour...</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="6" column="1" colspan="6">
+                <widget class="QLineEdit" name="txtDiffusionConstant">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>Diffusion constant: how fast the species diffuses (spreads out) within the compartment</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;h4&gt;Diffusion constant&lt;/h4&gt;
 &lt;p&gt;The rate at which the species diffuses within the compartment&lt;/p&gt;</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="2">
-                 <widget class="QPushButton" name="btnAnalyticConcentration">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                  <property name="text">
-                   <string>analytic...</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="2" colspan="5">
-                 <widget class="QLineEdit" name="txtInitialConcentration">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <spacer name="verticalSpacer">
-                <property name="orientation">
-                 <enum>Qt::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>40</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </widget>
-           </item>
-          </layout>
+                 </property>
+                </widget>
+               </item>
+               <item row="3" column="2">
+                <widget class="QPushButton" name="btnAnalyticConcentration">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>analytic...</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="2" column="2" colspan="5">
+                <widget class="QLineEdit" name="txtInitialConcentration">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <spacer name="verticalSpacer">
+               <property name="orientation">
+                <enum>Qt::Vertical</enum>
+               </property>
+               <property name="sizeHint" stdset="0">
+                <size>
+                 <width>20</width>
+                 <height>40</height>
+                </size>
+               </property>
+              </spacer>
+             </item>
+            </layout>
+           </widget>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -1108,29 +1115,68 @@
         <attribute name="title">
          <string>Reactions</string>
         </attribute>
-        <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <layout class="QHBoxLayout" name="horizontalLayout_14">
          <item>
-          <layout class="QGridLayout" name="gridReactions">
-           <item row="1" column="1">
-            <widget class="QGroupBox" name="grpReactions">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="title">
-              <string>Reaction Settings</string>
-             </property>
-             <widget class="QWidget" name="layoutWidget">
-              <property name="geometry">
-               <rect>
-                <x>0</x>
-                <y>0</y>
-                <width>346</width>
-                <height>613</height>
-               </rect>
-              </property>
+          <widget class="QSplitter" name="splitter_5">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="childrenCollapsible">
+            <bool>false</bool>
+           </property>
+           <widget class="QWidget" name="verticalLayoutWidget_4">
+            <layout class="QVBoxLayout" name="verticalLayout_8">
+             <item>
+              <widget class="QLabel" name="lblReactions">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>Reactions:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QTreeWidget" name="listReactions">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <attribute name="headerVisible">
+                <bool>false</bool>
+               </attribute>
+               <column>
+                <property name="text">
+                 <string notr="true">1</string>
+                </property>
+               </column>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QGroupBox" name="grpReactions">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>1</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="title">
+             <string>Reaction Settings</string>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_3">
+             <item>
               <layout class="QGridLayout" name="gridReaction">
                <item row="1" column="0">
                 <widget class="QLabel" name="lblReactants">
@@ -1230,47 +1276,10 @@
                 </widget>
                </item>
               </layout>
-             </widget>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QTreeWidget" name="listReactions">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Maximum" vsizetype="Expanding">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <attribute name="headerVisible">
-              <bool>false</bool>
-             </attribute>
-             <column>
-              <property name="text">
-               <string notr="true">1</string>
-              </property>
-             </column>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="lblReactions">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="font">
-              <font>
-               <weight>75</weight>
-               <bold>true</bold>
-              </font>
-             </property>
-             <property name="text">
-              <string>Reactions:</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+             </item>
+            </layout>
+           </widget>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -1284,81 +1293,118 @@
         </attribute>
         <layout class="QHBoxLayout" name="horizontalLayout_9">
          <item>
-          <widget class="QListWidget" name="listFunctions">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+          <widget class="QSplitter" name="splitter_6">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
            </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QGroupBox" name="grpFunction">
-           <property name="title">
-            <string>Function Definition</string>
+           <property name="childrenCollapsible">
+            <bool>false</bool>
            </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_8">
-            <item>
-             <layout class="QGridLayout" name="gridFunction">
-              <item row="0" column="0">
-               <widget class="QLabel" name="lblFunctionLabel">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Function:</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QListWidget" name="listFunctionParams">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QLabel" name="lblFunctionDef">
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-                </property>
-                <property name="wordWrap">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QLabel" name="lblFunctionParams">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="text">
-                 <string>Parameters:</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-           </layout>
+           <widget class="QWidget" name="verticalLayoutWidget_5">
+            <layout class="QVBoxLayout" name="verticalLayout_9">
+             <item>
+              <widget class="QLabel" name="lblFunctionsLabel">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="text">
+                <string>Functions:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QListWidget" name="listFunctions">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QGroupBox" name="grpFunction">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>1</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="title">
+             <string>Function Definition</string>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_8">
+             <item>
+              <layout class="QGridLayout" name="gridFunction">
+               <item row="0" column="0">
+                <widget class="QLabel" name="lblFunctionLabel">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Function:</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QListWidget" name="listFunctionParams">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1">
+                <widget class="QLabel" name="lblFunctionDef">
+                 <property name="text">
+                  <string/>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+                 </property>
+                 <property name="wordWrap">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QLabel" name="lblFunctionParams">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Parameters:</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
           </widget>
          </item>
         </layout>
@@ -1782,28 +1828,28 @@
    </property>
   </action>
   <actiongroup name="actionGroupSimType">
-  <action name="actionSimTypeDUNE">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>&amp;DUNE (high quality)</string>
-   </property>
-  </action>
-  <action name="actionSimTypePixel">
-   <property name="checkable">
-    <bool>true</bool>
+   <action name="actionSimTypeDUNE">
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+    <property name="text">
+     <string>&amp;DUNE (high quality)</string>
+    </property>
+   </action>
+   <action name="actionSimTypePixel">
+    <property name="checkable">
+     <bool>true</bool>
     </property>
     <property name="checked">
      <bool>false</bool>
-   </property>
-   <property name="text">
-    <string>&amp;Pixel (fast but unreliable)</string>
-   </property>
-  </action>
+    </property>
+    <property name="text">
+     <string>&amp;Pixel (fast but unreliable)</string>
+    </property>
+   </action>
   </actiongroup>
  </widget>
  <layoutdefault spacing="6" margin="11"/>

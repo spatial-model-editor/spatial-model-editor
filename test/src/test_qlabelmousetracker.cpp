@@ -19,7 +19,6 @@ SCENARIO("qlabelmousetracker", "[qlabelmousetracker][gui]") {
 
     REQUIRE(mouseTracker.getImage().size() == img.size());
     REQUIRE(mouseTracker.getImage().pixel(0, 0) == img.pixel(0, 0));
-    REQUIRE(mouseTracker.getColour() == col);
 
     std::vector<QRgb> clicks;
     QObject::connect(&mouseTracker, &QLabelMouseTracker::mouseClicked,
@@ -81,7 +80,6 @@ SCENARIO("qlabelmousetracker", "[qlabelmousetracker][gui]") {
     REQUIRE(mouseTracker.getImage().size() == img.size());
     REQUIRE(mouseTracker.getImage().pixel(0, 0) == img.pixel(0, 0));
     REQUIRE(mouseTracker.getImage().pixel(2, 2) == img.pixel(2, 2));
-    REQUIRE(mouseTracker.getColour() == col2);
     int imgDisplaySize = std::min(mouseTracker.width(), mouseTracker.height());
     CAPTURE(imgDisplaySize);
 
@@ -180,6 +178,46 @@ SCENARIO("qlabelmousetracker", "[qlabelmousetracker][gui]") {
         REQUIRE(clicks.back() == col1);
         REQUIRE(mouseTracker.getColour() == col1);
       }
+    }
+  }
+
+  GIVEN("image and mask") {
+    QLabelMouseTracker mouseTracker;
+    QImage img(":/geometry/circle-100x100.png");
+    QImage mask(":/geometry/concave-cell-nucleus-100x100.png");
+    mouseTracker.setImages({img, mask});
+    mouseTracker.show();
+    mouseTracker.resize(100, 100);
+    QTest::qWait(mouseDelay);
+
+    REQUIRE(mouseTracker.getImage().size() == img.size());
+    REQUIRE(mouseTracker.getImage().pixel(0, 0) == img.pixel(0, 0));
+    REQUIRE(mouseTracker.getImage().pixel(2, 2) == img.pixel(2, 2));
+    REQUIRE(mouseTracker.getMaskImage().size() == mask.size());
+    REQUIRE(mouseTracker.getMaskImage().pixel(0, 0) == mask.pixel(0, 0));
+    REQUIRE(mouseTracker.getMaskImage().pixel(2, 2) == mask.pixel(2, 2));
+
+    std::vector<QRgb> clicks;
+    QObject::connect(&mouseTracker, &QLabelMouseTracker::mouseClicked,
+                     [&clicks](QRgb c) { clicks.push_back(c); });
+    REQUIRE(clicks.size() == 0);
+    WHEN("mouse click (0,1)") {
+      QTest::mouseMove(mouseTracker.windowHandle(), QPoint(99, 99), mouseDelay);
+      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
+                        QPoint(0, 1), mouseDelay);
+      REQUIRE(clicks.size() == 1);
+      REQUIRE(clicks.back() == 0xff000200);
+      REQUIRE(mouseTracker.getColour() == 0xff000200);
+      REQUIRE(mouseTracker.getMaskIndex() == 512);
+    }
+    WHEN("mouse click (50,50)") {
+      QTest::mouseMove(mouseTracker.windowHandle(), QPoint(99, 99), mouseDelay);
+      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
+                        QPoint(50, 50), mouseDelay);
+      REQUIRE(clicks.size() == 1);
+      REQUIRE(clicks.back() == QColor(144, 97, 193).rgb());
+      REQUIRE(mouseTracker.getColour() == QColor(144, 97, 193).rgb());
+      REQUIRE(mouseTracker.getMaskIndex() == 12944736);
     }
   }
 #endif
