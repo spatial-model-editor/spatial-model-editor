@@ -33,9 +33,9 @@ matrix:
       script:
         - bash ci-build.sh "release optimize_full"
         # run tests
-        - ./build-tests/test -a
+        - ./build/test/test -a
         # check dependencies of resulting executable
-        - cd build
+        - cd build/app
         - ldd spatial-model-editor
     ##############################################################
     # osx release build: xcode 10.3, macOS 10.14 (target >= 10.12)
@@ -50,11 +50,11 @@ matrix:
       script:
         - bash ci-build.sh "release optimize_full"
         # run tests
-        - ./build-tests/test.app/Contents/MacOS/test -a
+        - ./build/test/test.app/Contents/MacOS/test -a
         # check dependencies of resulting executable
-        - cd build
+        - cd build/app
         - otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor
-        # NOTE: this does not work: alter plist file manually to require minimum osx 10.12
+        # NOTE: (does not work): alter plist file manually to require minimum osx 10.12
         # - plutil -p spatial-model-editor.app/Contents/Info.plist
         # - plutil -replace LSMinimumSystemVersion -string "10.12" spatial-model-editor.app/Contents/Info.plist
         # - plutil -p spatial-model-editor.app/Contents/Info.plist
@@ -95,25 +95,25 @@ matrix:
         - sleep 1
       script:
         # build tests & compile executable using sonar-source build wrapper
-        # only use 1 core to avoid running out of memory on travis
-        - bash ci-build.sh debug make "build-wrapper-linux-x86-64 --out-dir ../bw-output" 1
+        - bash ci-build.sh debug make "build-wrapper-linux-x86-64 --out-dir bw-output" 2
         # run tests
         # make list of "leaks" from system libraries that LeakSanitizer should ignore
         # NB: can also set ASAN_OPTIONS=fast_unwind_on_malloc=0
         # to see more info about any memory leaks from linked libraries
         - echo "leak:libfontconfig.so" > suppr.txt
         - echo "leak:libX11.so" >> suppr.txt
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build-tests/test -a
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build/test/test -a
         # generate gcov test coverage data for sonar-source & codecov.io
+        - cd build
         - mkdir gcov
         - cd gcov
-        - gcov -r -p ../build-tests/*.gcno
+        - gcov -r -p ../src/*.gcno
         # only want coverage data for src and inc folders
         - mkdir tmp
         - mv *.* tmp
         - cd tmp
-        - mv ^#inc* ../
-        - mv ^#src* ../
+        - mv ^#^#inc* ../
+        - mv ^#^#src* ../
         - rm *
         - cd ../
         - rmdir tmp
@@ -124,6 +124,7 @@ matrix:
         # get blame info for sonar-scanner
         - git fetch --unshallow
         # upload to sonar-scanner
+        - cd ../
         - sonar-scanner -Dsonar.login=$SONAR_LOGIN
 
 before_script:

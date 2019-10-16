@@ -48,7 +48,6 @@
 #include "logger.hpp"
 #include "mesh.hpp"
 #include "pde.hpp"
-#include "reactions.hpp"
 #include "sbml.hpp"
 #include "symbolic.hpp"
 #include "tiff.hpp"

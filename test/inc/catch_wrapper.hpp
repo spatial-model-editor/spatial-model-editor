@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "ext/catch/catch.hpp"
+#include <catch.hpp>
 
 // add custom Approximation convenience function for doubles
 inline Catch::Detail::Approx dbl_approx(double x) {

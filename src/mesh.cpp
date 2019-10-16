@@ -8,13 +8,9 @@
 
 namespace mesh {
 
-QPointF Mesh::pixelPointToPhysicalPoint(const QPointF& pixelPoint) const
-    noexcept {
+QPointF Mesh::pixelPointToPhysicalPoint(
+    const QPointF& pixelPoint) const noexcept {
   return pixelPoint * pixel + origin;
-}
-
-std::size_t Mesh::flattenQPoint(const QPoint& p) const noexcept {
-  return static_cast<std::size_t>(p.x() + img.width() * p.y());
 }
 
 Mesh::Mesh(
@@ -170,10 +166,12 @@ double Mesh::getBoundaryWidth(std::size_t boundaryIndex) const {
 }
 
 double Mesh::getMembraneWidth(const std::string& membraneID) const {
-  for (const auto& boundary : boundaries) {
-    if (boundary.membraneID == membraneID) {
-      return boundary.getMembraneWidth();
-    }
+  auto iter = std::find_if(boundaries.cbegin(), boundaries.cend(),
+                           [membraneID](const auto& boundary) {
+                             return boundary.membraneID == membraneID;
+                           });
+  if (iter != boundaries.cend()) {
+    return iter->getMembraneWidth();
   }
   return 0;
 }
@@ -239,31 +237,27 @@ const std::vector<std::vector<QTriangleF>>& Mesh::getTriangles() const {
 void Mesh::constructMesh() {
   // pixel points may be used by multiple boundary lines,
   // so first construct a set of unique points with a map to their index
-  constexpr std::size_t NULL_INDEX = std::numeric_limits<std::size_t>::max();
-  std::vector<std::size_t> mapPointToIndex(
-      static_cast<std::size_t>(img.width() * img.height()), NULL_INDEX);
-  std::size_t index = 0;
-  std::vector<QPointF> boundaryPoints;
-  std::vector<size_t> membraneIndexOffsets;
+  auto pointIndex = utils::QPointUniqueIndexer(img.size());
   for (const auto& boundary : boundaries) {
-    for (const auto& point : boundary.points) {
-      std::size_t flatQPoint = flattenQPoint(point);
-      if (mapPointToIndex[flatQPoint] == NULL_INDEX) {
-        // QPoint not already in list: add it
-        boundaryPoints.push_back(point);
-        mapPointToIndex[flatQPoint] = index;
-        ++index;
-      }
-    }
-    // add outer membrane boundary lines: non-integers
-    // can't be used by multiple boundary lines - no check for duplicates
+    pointIndex.addPoints(boundary.points);
+  }
+  std::vector<QPointF> boundaryPoints;
+  // convert unique QPoints vector into vector of QPointF
+  boundaryPoints.reserve(pointIndex.getPoints().size());
+  for (const auto& p : pointIndex.getPoints()) {
+    boundaryPoints.push_back(p);
+  }
+  // add outer membrane boundary lines: non-integers
+  // can't be used by multiple boundary lines - no check for duplicates
+  std::vector<size_t> membraneIndexOffsets;
+  std::size_t index = pointIndex.getPoints().size();
+  for (const auto& boundary : boundaries) {
     if (boundary.isMembrane) {
       // index of first membrane outer line point:
       membraneIndexOffsets.push_back(index);
-      for (const auto& point : boundary.outerPoints) {
-        boundaryPoints.push_back(point);
-        ++index;
-      }
+      index += boundary.outerPoints.size();
+      boundaryPoints.insert(boundaryPoints.end(), boundary.outerPoints.cbegin(),
+                            boundary.outerPoints.cend());
     }
   }
 
@@ -274,14 +268,14 @@ void Mesh::constructMesh() {
     const auto& points = boundaries[i].points;
     boundarySegmentsVector.emplace_back();
     for (std::size_t j = 0; j < points.size() - 1; ++j) {
-      auto i0 = mapPointToIndex[flattenQPoint(points[j])];
-      auto i1 = mapPointToIndex[flattenQPoint(points[j + 1])];
+      auto i0 = pointIndex.getIndex(points[j]).value();
+      auto i1 = pointIndex.getIndex(points[j + 1]).value();
       boundarySegmentsVector.back().push_back({{i0, i1}});
     }
     if (boundaries[i].isLoop) {
       // connect last point to first point
-      auto i0 = mapPointToIndex[flattenQPoint(points.back())];
-      auto i1 = mapPointToIndex[flattenQPoint(points.front())];
+      auto i0 = pointIndex.getIndex(points.back()).value();
+      auto i1 = pointIndex.getIndex(points.front()).value();
       boundarySegmentsVector.back().push_back({{i0, i1}});
     }
   }

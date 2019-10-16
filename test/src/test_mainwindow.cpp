@@ -3,7 +3,7 @@
 
 #include <QtTest>
 
-#include "catch.hpp"
+#include "catch_wrapper.hpp"
 #include "logger.hpp"
 #include "mainwindow.hpp"
 #include "qlabelmousetracker.hpp"
@@ -543,8 +543,8 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   ui.txtSimLength->setText("1000.0");
   ui.txtSimInterval->setText("0.01");
   ui.txtSimDt->setText("0.01");
-  // stop simulation after 2 seconds
-  QTimer::singleShot(2000, [=]() {
+  // stop simulation after 1 second
+  QTimer::singleShot(1000, [=]() {
     QTest::keyClick(ui.pltPlot, Qt::Key_C, Qt::ControlModifier, 0);
   });
   // start simulation

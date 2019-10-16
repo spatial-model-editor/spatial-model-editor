@@ -1,6 +1,6 @@
 #include "geometry.hpp"
 
-#include "catch.hpp"
+#include "catch_wrapper.hpp"
 
 #include "logger.hpp"
 

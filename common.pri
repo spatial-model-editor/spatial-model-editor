@@ -1,65 +1,6 @@
-QT += core gui
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
-
 DEFINES += QT_DEPRECATED_WARNINGS
 
 CONFIG += c++17
-
-SOURCES += \
-    src/boundary.cpp \
-    src/dialogabout.cpp \
-    src/dialogdimensions.cpp \
-    src/dune.cpp \
-    src/geometry.cpp \
-    src/mainwindow.cpp \
-    src/mesh.cpp \
-    src/numerics.cpp \
-    src/pde.cpp \
-    src/qlabelmousetracker.cpp \
-    src/reactions.cpp \
-    src/sbml.cpp \
-    src/simulate.cpp \
-    src/symbolic.cpp \
-    src/tiff.cpp \
-    src/triangulate.cpp \
-    src/utils.cpp \
-    src/version.cpp \
-
-HEADERS += \
-    inc/boundary.hpp \
-    inc/dialogabout.hpp \
-    inc/dialogdimensions.hpp \
-    inc/dune.hpp \
-    inc/geometry.hpp \
-    inc/logger.hpp \
-    inc/mainwindow.hpp \
-    inc/mesh.hpp \
-    inc/numerics.hpp \
-    inc/pde.hpp \
-    inc/qlabelmousetracker.hpp \
-    inc/reactions.hpp \
-    inc/sbml.hpp \
-    inc/simulate.hpp \
-    inc/symbolic.hpp \
-    inc/tiff.hpp \
-    inc/triangulate.hpp \
-    inc/utils.hpp \
-    inc/version.hpp \
-
-FORMS += \
-    ui/dialogabout.ui \
-    ui/dialogdimensions.ui \
-    ui/mainwindow.ui \
-
-RESOURCES += \
-    resources/resources.qrc \
-
-INCLUDEPATH += \
-    inc \
-    ext \
-
-include(ext/ext.pri)
 
 # set logging level (at compile time)
 CONFIG(release, debug|release):DEFINES += SPDLOG_ACTIVE_LEVEL="SPDLOG_LEVEL_INFO"
@@ -98,3 +39,4 @@ QMAKE_CXXFLAGS += \
     -isystem "$$[QT_INSTALL_HEADERS]/QtWidgets" \
     -isystem "$$[QT_INSTALL_HEADERS]/QtGui" \
     -isystem "$$[QT_INSTALL_HEADERS]/QtTest" \
+

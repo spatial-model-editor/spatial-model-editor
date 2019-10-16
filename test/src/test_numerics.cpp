@@ -1,6 +1,6 @@
 #include "numerics.hpp"
 
-#include "catch.hpp"
+#include "catch_wrapper.hpp"
 
 #include "logger.hpp"
 

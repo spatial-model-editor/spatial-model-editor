@@ -1,5 +1,5 @@
 #define CATCH_CONFIG_RUNNER
-#include "catch.hpp"
+#include "catch_wrapper.hpp"
 
 #include <locale>
 
@@ -12,6 +12,8 @@ int main(int argc, char *argv[]) {
   Catch::StringMaker<float>::precision = 25;
 
   QApplication a(argc, argv);
+
+  Q_INIT_RESOURCE(resources);
 
   // Qt sets the locale according to the system one
   // This can cause problems with numerical code

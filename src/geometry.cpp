@@ -1,40 +1,9 @@
 #include "geometry.hpp"
 
-#include <unordered_map>
-
 #include "logger.hpp"
+#include "utils.hpp"
 
 namespace geometry {
-
-static int qPointToInt(const QPoint &point, int imgHeight) {
-  return point.x() * imgHeight + point.y();
-}
-
-//  - CompartmentIndexer class: utility class to convert a QPoint to the
-//  corresponding vector index for a Compartment (for initialising Membranes)
-class CompartmentIndexer {
- private:
-  const Compartment &comp;
-  int imgHeight;
-  std::unordered_map<int, std::size_t> index;
-
- public:
-  explicit CompartmentIndexer(const Compartment &c);
-  std::size_t getIndex(const QPoint &point);
-};
-
-CompartmentIndexer::CompartmentIndexer(const Compartment &c)
-    : comp(c), imgHeight(c.getCompartmentImage().height()) {
-  // construct map from QPoint in image to index in compartment vector
-  std::size_t i = 0;
-  for (const auto &point : comp.ix) {
-    index[qPointToInt(point, imgHeight)] = i++;
-  }
-}
-
-std::size_t CompartmentIndexer::getIndex(const QPoint &point) {
-  return index.at(qPointToInt(point, imgHeight));
-}
 
 Compartment::Compartment(const std::string &compID, const QImage &img, QRgb col)
     : compartmentID(compID) {
@@ -54,24 +23,20 @@ Compartment::Compartment(const std::string &compID, const QImage &img, QRgb col)
       }
     }
   }
+  utils::QPointIndexer ixIndexer(img.size(), ix);
   // find nearest neighbours of each point
   nn.clear();
   nn.reserve(4 * ix.size());
-  // construct temporary map from qPoint to index
-  std::unordered_map<int, std::size_t> nn_index;
-  for (std::size_t i = 0; i < ix.size(); ++i) {
-    nn_index[qPointToInt(ix[i], img.height())] = i;
-  }
   // find neighbours of each pixel in compartment
   for (std::size_t i = 0; i < ix.size(); ++i) {
     const QPoint &p = ix[i];
     for (const auto &pp :
          {QPoint(p.x() + 1, p.y()), QPoint(p.x() - 1, p.y()),
           QPoint(p.x(), p.y() + 1), QPoint(p.x(), p.y() - 1)}) {
-      const auto iter = nn_index.find(qPointToInt(pp, img.height()));
-      if (iter != nn_index.cend()) {
+      auto index = ixIndexer.getIndex(pp);
+      if (index) {
         // neighbour of p is in same compartment
-        nn.push_back(iter->second);
+        nn.push_back(index.value());
       } else {
         // neighbour of p is outside compartment
         // Neumann zero flux bcs: set external neighbour of p to itself
@@ -96,12 +61,12 @@ Membrane::Membrane(const std::string &ID, const Compartment *A,
   SPDLOG_INFO("number of point pairs: {}", membranePairs.size());
   // convert each QPoint into the corresponding index of the field
   indexPair.clear();
-  CompartmentIndexer indexA(*A);
-  CompartmentIndexer indexB(*B);
+  utils::QPointIndexer Aindexer(A->getCompartmentImage().size(), A->ix);
+  utils::QPointIndexer Bindexer(B->getCompartmentImage().size(), B->ix);
   for (const auto &p : membranePairs) {
-    auto iA = indexA.getIndex(p.first);
-    auto iB = indexB.getIndex(p.second);
-    indexPair.push_back({iA, iB});
+    auto iA = Aindexer.getIndex(p.first);
+    auto iB = Bindexer.getIndex(p.second);
+    indexPair.push_back({iA.value(), iB.value()});
   }
 }
 
