@@ -34,6 +34,8 @@ void SbmlDocWrapper::clearAllModelData() {
   mapColourToCompartment.clear();
   mapMembraneToIndex.clear();
   mapMembraneToImage.clear();
+  isValid = false;
+  hasValidGeometry = false;
 }
 
 void SbmlDocWrapper::clearAllGeometryData() {
@@ -49,12 +51,16 @@ void SbmlDocWrapper::clearAllGeometryData() {
   mapMembraneToIndex.clear();
   mapMembraneToImage.clear();
   mesh = std::make_shared<mesh::Mesh>();
+  hasGeometryImage = false;
+  compartmentImage = {};
+  hasValidGeometry = false;
 }
 
 SbmlDocWrapper::SbmlDocWrapper() : mesh(std::make_shared<mesh::Mesh>()) {}
 
 void SbmlDocWrapper::importSBMLString(const std::string &xml) {
   clearAllModelData();
+  clearAllGeometryData();
   SPDLOG_INFO("Importing SBML from string...");
   doc.reset(libsbml::readSBMLFromString(xml.c_str()));
   initModelData();
@@ -62,6 +68,7 @@ void SbmlDocWrapper::importSBMLString(const std::string &xml) {
 
 void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
   clearAllModelData();
+  clearAllGeometryData();
   currentFilename = filename.c_str();
   SPDLOG_INFO("Loading SBML file {}...", filename);
   doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
@@ -379,7 +386,6 @@ void SbmlDocWrapper::initModelData() {
                 doc->getLevel(), doc->getVersion());
     isValid = true;
   }
-
   model = doc->getModel();
 
   // get list of compartments
@@ -451,7 +457,7 @@ void SbmlDocWrapper::initModelData() {
     writeDefaultGeometryToSBML();
     // if we already had a geometry image, and we loaded a model without spatial
     // info, use this geometry image
-    if (hasGeometry) {
+    if (hasGeometryImage) {
       importGeometryFromImage(compartmentImage);
     }
   }
@@ -484,7 +490,7 @@ void SbmlDocWrapper::importGeometryFromImage(const QImage &img,
   if (isValid && updateSBML) {
     writeGeometryImageToSBML();
   }
-  hasGeometry = true;
+  hasGeometryImage = true;
 }
 
 void SbmlDocWrapper::importGeometryFromImage(const QString &filename,
@@ -619,7 +625,7 @@ void SbmlDocWrapper::initMembraneColourPairs() {
 
 const QImage &SbmlDocWrapper::getMembraneImage(
     const QString &membraneID) const {
-  if (!hasGeometry) {
+  if (!hasValidGeometry) {
     return compartmentImage;
   }
   return mapMembraneToImage.at(membraneID);
@@ -868,6 +874,10 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   updateMembraneList();
   // update list of reactions for each compartment/membrane
   updateReactionList();
+
+  hasValidGeometry = std::none_of(
+      compartments.cbegin(), compartments.cend(),
+      [this](const auto &c) { return getCompartmentColour(c) == 0; });
 
   // update mesh
   updateMesh();
@@ -1189,7 +1199,7 @@ void SbmlDocWrapper::importConcentrationFromImage(const QString &speciesID,
 }
 
 QImage SbmlDocWrapper::getConcentrationImage(const QString &speciesID) const {
-  if (!hasGeometry) {
+  if (!hasValidGeometry) {
     return compartmentImage;
   }
   return mapSpeciesIdToField.at(speciesID).getConcentrationImage();

@@ -135,10 +135,11 @@ class SbmlDocWrapper {
   QPointF origin = QPointF(0, 0);
 
  public:
-  const std::size_t nDimensions = 2;
+  std::size_t nDimensions = 2;
   QString currentFilename;
   bool isValid = false;
-  bool hasGeometry = false;
+  bool hasGeometryImage = false;
+  bool hasValidGeometry = false;
 
   // Qt data structures containing model data to pass to UI widgets
   QStringList compartments;
