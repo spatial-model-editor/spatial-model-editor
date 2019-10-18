@@ -15,7 +15,8 @@ include(../ext/ext.pri)
 
 SOURCES += \
     src/main.cpp \
-    src/test_dialogdimensions.cpp \
+    src/test_dialogimagesize.cpp \
+    src/test_dialogunits.cpp \
     src/test_dune.cpp \
     src/test_geometry.cpp \
     src/test_mainwindow.cpp \

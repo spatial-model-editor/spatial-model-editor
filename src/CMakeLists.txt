@@ -1,7 +1,8 @@
 set(SRC_LIST
     boundary.cpp
     dialogabout.cpp
-    dialogdimensions.cpp
+    dialogimagesize.cpp
+    dialogunits.cpp
     dune.cpp
     geometry.cpp
     mainwindow.cpp
@@ -26,7 +27,8 @@ add_library(mainwindow STATIC
             ${SRC_LIST}
             ${PROJECT_SOURCE_DIR}/inc/mainwindow.hpp
             ${PROJECT_SOURCE_DIR}/inc/dialogabout.hpp
-            ${PROJECT_SOURCE_DIR}/inc/dialogdimensions.hpp
+            ${PROJECT_SOURCE_DIR}/inc/dialogimagesize.hpp
+            ${PROJECT_SOURCE_DIR}/inc/dialogunits.hpp
             ${PROJECT_SOURCE_DIR}/inc/qlabelmousetracker.hpp
             ${PROJECT_SOURCE_DIR}/ext/qcustomplot/qcustomplot.h
             ${PROJECT_SOURCE_DIR}/resources/resources.qrc)

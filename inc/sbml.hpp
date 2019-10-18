@@ -12,6 +12,7 @@
 #include <memory>
 
 #include "geometry.hpp"
+#include "units.hpp"
 
 // SBML forward declarations
 namespace libsbml {
@@ -92,6 +93,10 @@ class SbmlDocWrapper {
 
   // import existing (non-spatial) model information from SBML
   void initModelData();
+  void importTimeUnitsFromSBML(int defaultUnitIndex = 0);
+  void importLengthUnitsFromSBML(int defaultUnitIndex = 0);
+  void importVolumeUnitsFromSBML(int defaultUnitIndex = 0);
+  void importAmountUnitsFromSBML(int defaultUnitIndex = 0);
   // import existing spatial information (image/mesh) from SBML
   void importSpatialData();
   void importGeometryDimensions();
@@ -121,6 +126,8 @@ class SbmlDocWrapper {
 
   void writeGeometryImageToSBML();
 
+  void setSBMLCompartmentSizeUnit(int metreExponent);
+
   // return supplied math expression as string with any Function calls inlined
   // e.g. given mathExpression = "z*f(x,y)"
   // where the SBML model contains a function "f(a,b) = a*b-2"
@@ -136,10 +143,17 @@ class SbmlDocWrapper {
 
  public:
   std::size_t nDimensions = 2;
+  units::ModelUnits modelUnits;
+
   QString currentFilename;
   bool isValid = false;
   bool hasGeometryImage = false;
   bool hasValidGeometry = false;
+
+  void setUnitsTimeIndex(int index);
+  void setUnitsLengthIndex(int index);
+  void setUnitsVolumeIndex(int index);
+  void setUnitsAmountIndex(int index);
 
   // Qt data structures containing model data to pass to UI widgets
   QStringList compartments;
@@ -173,6 +187,7 @@ class SbmlDocWrapper {
 
   double getCompartmentSize(const QString &compartmentID) const;
   double getSpeciesCompartmentSize(const QString &speciesID) const;
+  QString getCompartmentSizeUnits(const QString &compartmentID) const;
 
   // compartment geometry: interiorPoints - used for mesh generation
   QPointF getCompartmentInteriorPoint(const QString &compartmentID) const;
@@ -221,7 +236,8 @@ class SbmlDocWrapper {
   std::map<std::string, double> getGlobalConstants() const;
 
   double getPixelWidth() const;
-  void setPixelWidth(double width, bool resizeCompartments);
+  void setPixelWidth(double width);
+  void setCompartmentSizeFromImage(const std::string &compartmentID);
 
   std::string inlineExpr(const std::string &mathExpression) const;
 
