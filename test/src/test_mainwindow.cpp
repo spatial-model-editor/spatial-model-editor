@@ -17,8 +17,9 @@ class UIPointers {
  public:
   explicit UIPointers(MainWindow *mainWindow);
   MainWindow *w;
-  QMenu *menuImport;
   QMenu *menuFile;
+  QMenu *menuImport;
+  QMenu *menuTools;
   QMenu *menuExample_geometry_image;
   QMenu *menuOpen_example_SBML_file;
   QLabelMouseTracker *lblGeometry;
@@ -47,10 +48,12 @@ class UIPointers {
 };
 
 UIPointers::UIPointers(MainWindow *mainWindow) : w(mainWindow) {
-  menuImport = w->topLevelWidget()->findChild<QMenu *>("menuImport");
-  REQUIRE(menuImport != nullptr);
   menuFile = w->topLevelWidget()->findChild<QMenu *>("menuFile");
   REQUIRE(menuFile != nullptr);
+  menuImport = w->topLevelWidget()->findChild<QMenu *>("menuImport");
+  REQUIRE(menuImport != nullptr);
+  menuTools = w->topLevelWidget()->findChild<QMenu *>("menu_Tools");
+  REQUIRE(menuTools != nullptr);
   menuExample_geometry_image =
       w->topLevelWidget()->findChild<QMenu *>("menuExample_geometry_image");
   REQUIRE(menuExample_geometry_image != nullptr);
@@ -161,7 +164,10 @@ void openABtoC(MainWindow *w, const UIPointers &ui, ModalWidgetTimer &mwt) {
 void openThreePixelImage(MainWindow *w, const UIPointers &ui,
                          ModalWidgetTimer &mwt) {
   REQUIRE(!mwt.isRunning());
+  // to close setImageDimensions dialog that pops up after loading image
+  ModalWidgetTimer mwt2;
 #ifndef Q_OS_MAC
+  mwt2.start();
   QTest::keyClick(w, Qt::Key_I, Qt::AltModifier, key_delay);
   QTest::keyClick(ui.menuImport, Qt::Key_E, Qt::AltModifier, key_delay);
   QTest::keyClick(ui.menuExample_geometry_image, Qt::Key_S, Qt::AltModifier,
@@ -172,6 +178,7 @@ void openThreePixelImage(MainWindow *w, const UIPointers &ui,
   QImage img(":/geometry/single-pixels-3x1.png");
   img.save("tmp.png");
   mwt.setMessage("tmp.png");
+  mwt2.startAfter(&mwt);
   mwt.start();
   ui.listCompartments->setFocus();
   QApplication::setActiveWindow(w);
@@ -222,13 +229,20 @@ SCENARIO("Shortcut keys", "[gui][mainwindow]") {
       REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
     }
   }
+#ifndef Q_OS_MACOS
   WHEN("user presses ctrl+s") {
     THEN("open AcceptSave FileDialog") {
+      // open very-simple-model to have something to save
+      QTest::keyClick(&w, Qt::Key_F, Qt::AltModifier, key_delay);
+      QTest::keyClick(ui.menuFile, Qt::Key_E, Qt::NoModifier, key_delay);
+      QTest::keyClick(ui.menuOpen_example_SBML_file, Qt::Key_V, Qt::NoModifier,
+                      key_delay);
       mwt.start();
       QTest::keyClick(&w, Qt::Key_S, Qt::ControlModifier);
       REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
     }
   }
+#endif
   WHEN("user presses ctrl+tab (no SBML & compartment image loaded)") {
     THEN("remain on Geometry tab: all others disabled") {
       REQUIRE(ui.tabMain->currentIndex() == 0);
@@ -314,10 +328,6 @@ SCENARIO("import built-in SBML model and compartment geometry image",
   ModalWidgetTimer mwt;
   CAPTURE(QTest::qWaitForWindowExposed(&w));
   WHEN("user opens ABtoC model") { openABtoC(&w, ui, mwt); }
-  WHEN("user opens three-pixel geometry image") {
-    openThreePixelImage(&w, ui, mwt);
-    REQUIRE_threePixelImageLoaded(ui);
-  }
   WHEN("user opens ABtoC model, then three-pixel image, then saves SBML") {
     openABtoC(&w, ui, mwt);
     openThreePixelImage(&w, ui, mwt);
@@ -349,6 +359,54 @@ SCENARIO("load built-in SBML model very-simple-model", "[gui][mainwindow]") {
   QTest::keyClick(ui.menuOpen_example_SBML_file, Qt::Key_C, Qt::NoModifier,
                   key_delay);
   REQUIRE(ui.listCompartments->count() == 1);
+}
+
+SCENARIO("load built-in SBML model, change units", "[gui][mainwindow]") {
+  MainWindow w;
+  w.show();
+  UIPointers ui(&w);
+  CAPTURE(QTest::qWaitForWindowExposed(&w));
+  REQUIRE(ui.listCompartments->count() == 0);
+  // very-simple-model
+  QTest::keyClick(&w, Qt::Key_F, Qt::AltModifier, key_delay);
+  QTest::keyClick(ui.menuFile, Qt::Key_E, Qt::NoModifier, key_delay);
+  QTest::keyClick(ui.menuOpen_example_SBML_file, Qt::Key_V, Qt::NoModifier,
+                  key_delay);
+  REQUIRE(ui.listCompartments->count() == 3);
+  // change units
+  ModalWidgetTimer mwt;
+  QTest::keyClick(&w, Qt::Key_T, Qt::AltModifier, key_delay);
+  mwt.setKeySeq({"Down", "Tab", "Down", "Tab", "Down", "Tab", "Down"});
+  mwt.start();
+  QTest::keyClick(ui.menuTools, Qt::Key_U, Qt::NoModifier, key_delay);
+  // save SBML file
+  mwt.setMessage("units.xml");
+  mwt.start();
+  QTest::keyClick(&w, Qt::Key_S, Qt::ControlModifier, key_delay);
+  // check units of SBML model
+  std::unique_ptr<libsbml::SBMLDocument> doc(
+      libsbml::readSBMLFromFile("units.xml"));
+  const auto *model = doc->getModel();
+  // millisecond
+  const auto *timeunit =
+      model->getUnitDefinition(model->getTimeUnits())->getUnit(0);
+  REQUIRE(timeunit->isSecond() == true);
+  REQUIRE(timeunit->getScale() == dbl_approx(-3));
+  // decimetre
+  const auto *lengthunit =
+      model->getUnitDefinition(model->getLengthUnits())->getUnit(0);
+  REQUIRE(lengthunit->isMetre() == true);
+  REQUIRE(lengthunit->getScale() == dbl_approx(-1));
+  // decilitre
+  const auto *volunit =
+      model->getUnitDefinition(model->getVolumeUnits())->getUnit(0);
+  REQUIRE(volunit->isLitre() == true);
+  REQUIRE(volunit->getScale() == dbl_approx(-1));
+  // millimole
+  const auto *amountunit =
+      model->getUnitDefinition(model->getSubstanceUnits())->getUnit(0);
+  REQUIRE(amountunit->isMole() == true);
+  REQUIRE(amountunit->getScale() == dbl_approx(-3));
 }
 #endif
 
@@ -384,6 +442,9 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
 
   // import Geometry from image
   mwt.setMessage("tmp.png");
+  // to close setImageDimensions dialog that pops up after loading image
+  ModalWidgetTimer mwt2;
+  mwt2.startAfter(&mwt);
   mwt.start();
   ui.listCompartments->setFocus();
   QApplication::setActiveWindow(&w);

@@ -478,7 +478,7 @@ SCENARIO("SBML test data: yeast-glycolysis.xml", "[sbml][non-gui][inlining]") {
   }
 }
 
-SCENARIO("Load model, refine mesh, save", "[sbml][mesh][non-gui][x1]") {
+SCENARIO("Load model, refine mesh, save", "[sbml][mesh][non-gui]") {
   sbml::SbmlDocWrapper s;
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
@@ -504,8 +504,7 @@ SCENARIO("Load model, refine mesh, save", "[sbml][mesh][non-gui][x1]") {
   REQUIRE(s2.mesh->getTriangleIndices(0).size() == 3 * 148);
 }
 
-SCENARIO("Load model, change size of geometry, save",
-         "[sbml][mesh][non-gui][x2]") {
+SCENARIO("Load model, change size of geometry, save", "[sbml][mesh][non-gui]") {
   sbml::SbmlDocWrapper s;
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
@@ -521,7 +520,7 @@ SCENARIO("Load model, change size of geometry, save",
   REQUIRE(v[3] == dbl_approx(57.0));
   REQUIRE(s.getCompartmentSize("comp") == dbl_approx(3149.0));
   // change size of geometry, but not of compartments
-  s.setPixelWidth(0.01, false);
+  s.setPixelWidth(0.01);
   v = s.mesh->getVertices();
   REQUIRE(v[0] == dbl_approx(0.17));
   REQUIRE(v[1] == dbl_approx(0.45));
@@ -529,13 +528,14 @@ SCENARIO("Load model, change size of geometry, save",
   REQUIRE(v[3] == dbl_approx(0.57));
   REQUIRE(s.getCompartmentSize("comp") == dbl_approx(3149.0));
   // change size of geometry & update compartment volumes accordingly
-  s.setPixelWidth(1.6e-13, true);
+  s.setPixelWidth(1.6e-13);
+  s.setCompartmentSizeFromImage("comp");
   v = s.mesh->getVertices();
   REQUIRE(v[0] == dbl_approx(2.72e-12));
   REQUIRE(v[1] == dbl_approx(7.2e-12));
   REQUIRE(v[2] == dbl_approx(2.72e-12));
   REQUIRE(v[3] == dbl_approx(9.12e-12));
-  REQUIRE(s.getCompartmentSize("comp") == dbl_approx(8.06144e-23));
+  REQUIRE(s.getCompartmentSize("comp") == dbl_approx(8.06144e-20));
 }
 
 SCENARIO("Delete mesh annotation, load as read-only mesh",

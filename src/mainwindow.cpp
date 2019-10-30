@@ -11,7 +11,8 @@
 #include <sstream>
 
 #include "dialogabout.hpp"
-#include "dialogdimensions.hpp"
+#include "dialogimagesize.hpp"
+#include "dialogunits.hpp"
 #include "dune.hpp"
 #include "logger.hpp"
 #include "mesh.hpp"
@@ -84,8 +85,11 @@ void MainWindow::setupConnections() {
   connect(ui->menuExample_geometry_image, &QMenu::triggered, this,
           &MainWindow::menuExample_geometry_image_triggered);
 
-  connect(ui->action_Set_geometry_dimensions, &QAction::triggered, this,
-          &MainWindow::action_Set_geometry_dimensions_triggered);
+  connect(ui->actionSet_model_units, &QAction::triggered, this,
+          &MainWindow::actionSet_model_units_triggered);
+
+  connect(ui->actionSet_image_size, &QAction::triggered, this,
+          &MainWindow::actionSet_image_size_triggered);
 
   connect(ui->action_What_s_this, &QAction::triggered, this,
           []() { QWhatsThis::enterWhatsThisMode(); });
@@ -100,13 +104,15 @@ void MainWindow::setupConnections() {
 
   connect(ui->actionAbout_Qt, &QAction::triggered, this,
           [this]() { QMessageBox::aboutQt(this); });
-
   // geometry
   connect(ui->lblGeometry, &QLabelMouseTracker::mouseClicked, this,
           &MainWindow::lblGeometry_mouseClicked);
 
   connect(ui->btnChangeCompartment, &QPushButton::clicked, this,
           &MainWindow::btnChangeCompartment_clicked);
+
+  connect(ui->btnSetCompartmentSizeFromImage, &QPushButton::clicked, this,
+          &MainWindow::btnSetCompartmentSizeFromImage_clicked);
 
   connect(ui->tabCompartmentGeometry, &QTabWidget::currentChanged, this,
           &MainWindow::tabCompartmentGeometry_currentChanged);
@@ -438,6 +444,10 @@ void MainWindow::menuOpen_example_SBML_file_triggered(QAction *action) {
 }
 
 void MainWindow::action_Save_SBML_file_triggered() {
+  if (!isValidModelAndGeometryImage()) {
+    SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
+    return;
+  }
   QString filename = QFileDialog::getSaveFileName(
       this, "Save SBML file", sbmlDoc.currentFilename, "SBML file (*.xml)",
       nullptr, QFileDialog::Option::DontUseNativeDialog);
@@ -450,6 +460,10 @@ void MainWindow::action_Save_SBML_file_triggered() {
 }
 
 void MainWindow::actionExport_Dune_ini_file_triggered() {
+  if (!isValidModelAndGeometryImage()) {
+    SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
+    return;
+  }
   QString filename = QFileDialog::getSaveFileName(
       this, "Export DUNE ini file", "", "DUNE ini file (*.ini)", nullptr,
       QFileDialog::Option::DontUseNativeDialog);
@@ -472,40 +486,74 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
 }
 
 void MainWindow::actionGeometry_from_image_triggered() {
+  if (!isValidModel()) {
+    return;
+  }
   QString filename = QFileDialog::getOpenFileName(
       this, "Import geometry from image", "",
       "Image Files (*.png *.jpg *.bmp *.tiff);; All files (*.*)", nullptr,
       QFileDialog::Option::DontUseNativeDialog);
   if (!filename.isEmpty()) {
-    sbmlDoc.importGeometryFromImage(filename);
-    ui->tabMain->setCurrentIndex(0);
-    tabMain_currentChanged(0);
-    enableTabs();
-    images.clear();
+    importGeometryImage(filename);
   }
 }
 
 void MainWindow::menuExample_geometry_image_triggered(QAction *action) {
+  if (!isValidModel()) {
+    return;
+  }
   QString filename =
       QString(":/geometry/%1.png").arg(action->text().remove(0, 1));
   QFile f(filename);
   if (!f.open(QIODevice::ReadOnly)) {
     SPDLOG_WARN("failed to open built-in file: {}", filename.toStdString());
+    return;
   }
+  importGeometryImage(filename);
+}
+
+void MainWindow::importGeometryImage(const QString &filename) {
   sbmlDoc.importGeometryFromImage(filename);
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   enableTabs();
   images.clear();
+  // set default pixelwidth in case user doesn't set image physical size
+  sbmlDoc.setPixelWidth(1.0);
+  actionSet_image_size_triggered();
 }
 
-void MainWindow::action_Set_geometry_dimensions_triggered() {
-  DialogDimensions dialog(sbmlDoc.getCompartmentImage().size(),
-                          sbmlDoc.getPixelWidth());
+void MainWindow::actionSet_model_units_triggered() {
+  if (!isValidModel()) {
+    SPDLOG_DEBUG("invalid model: ignoring");
+    return;
+  }
+  units::Unit oldLengthUnit = sbmlDoc.modelUnits.length.get();
+  double oldPixelWidth = sbmlDoc.getPixelWidth();
+  DialogUnits dialog(sbmlDoc.modelUnits);
+  if (dialog.exec() == QDialog::Accepted) {
+    sbmlDoc.setUnitsTimeIndex(dialog.getTimeUnitIndex());
+    sbmlDoc.setUnitsLengthIndex(dialog.getLengthUnitIndex());
+    sbmlDoc.setUnitsVolumeIndex(dialog.getVolumeUnitIndex());
+    sbmlDoc.setUnitsAmountIndex(dialog.getAmountUnitIndex());
+    // rescale pixelsize to match new units
+    sbmlDoc.setPixelWidth(units::rescale(oldPixelWidth, oldLengthUnit,
+                                         sbmlDoc.modelUnits.length.get()));
+  }
+  return;
+}
+
+void MainWindow::actionSet_image_size_triggered() {
+  if (!isValidModelAndGeometryImage()) {
+    SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
+    return;
+  }
+  DialogImageSize dialog(sbmlDoc.getCompartmentImage(), sbmlDoc.getPixelWidth(),
+                         sbmlDoc.modelUnits.length);
   if (dialog.exec() == QDialog::Accepted) {
     double pixelWidth = dialog.getPixelWidth();
     SPDLOG_INFO("Set new pixel width = {}", pixelWidth);
-    sbmlDoc.setPixelWidth(pixelWidth, dialog.resizeCompartments());
+    sbmlDoc.setPixelWidth(pixelWidth);
   }
 }
 
@@ -535,7 +583,7 @@ void MainWindow::lblGeometry_mouseClicked(QRgb col, QPoint point) {
   }
 }
 
-bool MainWindow::isValidModelAndGeometryImage() {
+bool MainWindow::isValidModel() {
   if (sbmlDoc.isValid == false) {
     SPDLOG_DEBUG("  - no SBML model");
     if (QMessageBox::question(this, "No SBML model",
@@ -544,6 +592,13 @@ bool MainWindow::isValidModelAndGeometryImage() {
                               QMessageBox::Yes) == QMessageBox::Yes) {
       action_Open_SBML_file_triggered();
     }
+    return false;
+  }
+  return true;
+}
+
+bool MainWindow::isValidModelAndGeometryImage() {
+  if (!isValidModel()) {
     return false;
   }
   if (sbmlDoc.hasGeometryImage == false) {
@@ -570,6 +625,12 @@ void MainWindow::btnChangeCompartment_clicked() {
   statusBarPermanentMessage->setText(
       "Please click on the desired location on the compartment geometry "
       "image...");
+}
+
+void MainWindow::btnSetCompartmentSizeFromImage_clicked() {
+  const auto &compartmentID = ui->listCompartments->selectedItems()[0]->text();
+  sbmlDoc.setCompartmentSizeFromImage(compartmentID.toStdString());
+  listCompartments_currentTextChanged(compartmentID);
 }
 
 void MainWindow::tabCompartmentGeometry_currentChanged(int index) {
@@ -659,11 +720,15 @@ void MainWindow::listCompartments_currentTextChanged(
     SPDLOG_DEBUG("Compartment {} selected", compID.toStdString());
     ui->txtCompartmentSize->setText(
         QString::number(sbmlDoc.getCompartmentSize(compID)));
+    ui->lblCompartmentSizeUnits->setText(
+        sbmlDoc.modelUnits.volume.units.at(sbmlDoc.modelUnits.volume.index)
+            .symbol);
     QRgb col = sbmlDoc.getCompartmentColour(compID);
     SPDLOG_DEBUG("  - colour {:x} ", col);
     if (col == 0) {
       // null (transparent white) RGB colour: compartment does not have
       // an assigned colour in the image
+      ui->btnSetCompartmentSizeFromImage->setEnabled(false);
       ui->lblCompShape->setImage(QImage());
       ui->lblCompartmentColour->setText("none");
       ui->lblCompShape->setImage(QImage());
@@ -676,6 +741,7 @@ void MainWindow::listCompartments_currentTextChanged(
       ui->lblCompMesh->setImage(QImage());
       ui->lblCompMesh->setText("none");
     } else {
+      ui->btnSetCompartmentSizeFromImage->setEnabled(true);
       // update colour box
       lblCompartmentColourPixmap.fill(QColor::fromRgb(col));
       ui->lblCompartmentColour->setPixmap(lblCompartmentColourPixmap);

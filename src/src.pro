@@ -13,7 +13,8 @@ include($$TOPDIR/ext/ext.pri)
 SOURCES += \
     $$TOPDIR/src/boundary.cpp \
     $$TOPDIR/src/dialogabout.cpp \
-    $$TOPDIR/src/dialogdimensions.cpp \
+    $$TOPDIR/src/dialogimagesize.cpp \
+    $$TOPDIR/src/dialogunits.cpp \
     $$TOPDIR/src/dune.cpp \
     $$TOPDIR/src/geometry.cpp \
     $$TOPDIR/src/mainwindow.cpp \
@@ -32,7 +33,8 @@ SOURCES += \
 HEADERS += \
     $$TOPDIR/inc/boundary.hpp \
     $$TOPDIR/inc/dialogabout.hpp \
-    $$TOPDIR/inc/dialogdimensions.hpp \
+    $$TOPDIR/inc/dialogimagesize.hpp \
+    $$TOPDIR/inc/dialogunits.hpp \
     $$TOPDIR/inc/dune.hpp \
     $$TOPDIR/inc/geometry.hpp \
     $$TOPDIR/inc/logger.hpp \
@@ -46,12 +48,14 @@ HEADERS += \
     $$TOPDIR/inc/symbolic.hpp \
     $$TOPDIR/inc/tiff.hpp \
     $$TOPDIR/inc/triangulate.hpp \
+    $$TOPDIR/inc/units.hpp \
     $$TOPDIR/inc/utils.hpp \
     $$TOPDIR/inc/version.hpp \
 
 FORMS += \
     $$TOPDIR/ui/dialogabout.ui \
-    $$TOPDIR/ui/dialogdimensions.ui \
+    $$TOPDIR/ui/dialogimagesize.ui \
+    $$TOPDIR/ui/dialogunits.ui \
     $$TOPDIR/ui/mainwindow.ui \
 
 RESOURCES += \

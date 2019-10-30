@@ -48,7 +48,10 @@ class MainWindow : public QMainWindow {
 
   // check if SBML model and geometry image are both valid
   // offer user to load a valid one if not
+  bool isValidModel();
   bool isValidModelAndGeometryImage();
+
+  void importGeometryImage(const QString &filename);
 
   void tabMain_currentChanged(int index);
   void tabMain_updateGeometry();
@@ -76,12 +79,16 @@ class MainWindow : public QMainWindow {
 
   // Tools menu actions
 
-  void action_Set_geometry_dimensions_triggered();
+  void actionSet_model_units_triggered();
+
+  void actionSet_image_size_triggered();
 
   // geometry
   void lblGeometry_mouseClicked(QRgb col, QPoint point);
 
   void btnChangeCompartment_clicked();
+
+  void btnSetCompartmentSizeFromImage_clicked();
 
   void tabCompartmentGeometry_currentChanged(int index);
 
