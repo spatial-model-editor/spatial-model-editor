@@ -153,23 +153,35 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
 
   // list of compartments with corresponding gmsh surface index - 1
   ini.addSection("model.compartments");
-  int compMeshIndex = 0;
+  gmshCompIndices.clear();
+  int gmshCompIndex = 1;
+  int duneCompIndex = 0;
   for (const auto &comp : doc.compartments) {
-    ini.addValue(comp, compMeshIndex);
-    ++compMeshIndex;
+    SPDLOG_TRACE("compartment {}", comp.toStdString());
+    // skip compartments which contain no non-constant species
+    if (!std::all_of(doc.species.at(comp).cbegin(), doc.species.at(comp).cend(),
+                     [=](const auto &s) {
+                       return doc.getIsSpeciesConstant(s.toStdString());
+                     })) {
+      ini.addValue(comp, duneCompIndex);
+      SPDLOG_TRACE("  -> added with index {}", duneCompIndex);
+      gmshCompIndices.insert(gmshCompIndex);
+      ++duneCompIndex;
+    }
+    ++gmshCompIndex;
   }
   for (const auto &mem : doc.membranes) {
-    ini.addValue(mem, compMeshIndex);
-    ++compMeshIndex;
+    ini.addValue(mem, duneCompIndex);
+    SPDLOG_TRACE("membrane {} added with index {}", mem.toStdString(),
+                 duneCompIndex);
+    gmshCompIndices.insert(gmshCompIndex);
+    ++duneCompIndex;
+    ++gmshCompIndex;
   }
 
   // for each compartment
   for (const auto &compartmentID : doc.compartments) {
-    ini.addSection("model", compartmentID);
-    ini.addValue("begin_time", begin_time, doublePrecision);
-    ini.addValue("end_time", end_time, doublePrecision);
-    ini.addValue("time_step", time_step, doublePrecision);
-
+    SPDLOG_TRACE("compartment {}", compartmentID.toStdString());
     // remove any constant species from the list of species
     std::vector<std::string> nonConstantSpecies;
     for (const auto &s : doc.species.at(compartmentID)) {
@@ -177,103 +189,109 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
         nonConstantSpecies.push_back(s.toStdString());
       }
     }
-    auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
-    for (std::size_t is = 0; is < duneSpeciesNames.size(); ++is) {
-      mapDuneNameToColour[duneSpeciesNames.at(is)] =
-          doc.getSpeciesColour(nonConstantSpecies.at(is).c_str());
-    }
+    if (!nonConstantSpecies.empty()) {
+      ini.addSection("model", compartmentID);
+      ini.addValue("begin_time", begin_time, doublePrecision);
+      ini.addValue("end_time", end_time, doublePrecision);
+      ini.addValue("time_step", time_step, doublePrecision);
 
-    // operator splitting indexing: all set to zero for now...
-    ini.addSection("model", compartmentID, "operator");
-    for (const auto &speciesID : duneSpeciesNames) {
-      ini.addValue(speciesID.c_str(), 0);
-    }
-
-    // initial concentrations
-    std::vector<QString> tiffs;
-    ini.addSection("model", compartmentID, "initial");
-    for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
-      QString name = nonConstantSpecies.at(i).c_str();
-      QString duneName = duneSpeciesNames.at(i).c_str();
-      double initConc = doc.getInitialConcentration(name);
-      QString expr = doc.getAnalyticConcentration(name);
-      QString sampledField =
-          doc.getSpeciesSampledFieldInitialAssignment(name.toStdString())
-              .c_str();
-      if (!sampledField.isEmpty()) {
-        // if there is a sampledField then make a TIFF
-        auto sampledFieldFile = QString("%1.tif").arg(sampledField);
-        double max = utils::writeTIFF(sampledFieldFile.toStdString(),
-                                      doc.mapSpeciesIdToField.at(name),
-                                      doc.getPixelWidth());
-        tiffs.push_back(sampledField);
-        ini.addValue(duneName,
-                     QString("%2*%3(x,y)").arg(max).arg(sampledField));
-      } else if (!expr.isEmpty()) {
-        // otherwise, initialAssignments take precedence:
-        std::string e = doc.inlineExpr(expr.toStdString());
-        symbolic::Symbolic sym(e, {"x", "y"}, doc.getGlobalConstants());
-        ini.addValue(duneName, sym.simplify().c_str());
-      } else {
-        // otherwise just use initialConcentration value
-        ini.addValue(duneName, initConc, doublePrecision);
+      auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
+      for (std::size_t is = 0; is < duneSpeciesNames.size(); ++is) {
+        SPDLOG_TRACE("  - species {}", duneSpeciesNames.at(is));
+        QColor col = doc.getSpeciesColour(nonConstantSpecies.at(is).c_str());
+        mapDuneNameToColour[duneSpeciesNames.at(is)] = col;
+        SPDLOG_TRACE("     - colour {:x}", col.rgba());
       }
-    }
-    if (!tiffs.empty()) {
-      ini.addSection("model", "data");
-      for (const auto &tiff : tiffs) {
-        ini.addValue(tiff, tiff + QString(".tif"));
+
+      // operator splitting indexing: all set to zero for now...
+      ini.addSection("model", compartmentID, "operator");
+      for (const auto &speciesID : duneSpeciesNames) {
+        ini.addValue(speciesID.c_str(), 0);
       }
-    }
 
-    // reactions
-    ini.addSection("model", compartmentID, "reaction");
-    std::size_t nSpecies = static_cast<std::size_t>(nonConstantSpecies.size());
-
-    std::vector<std::string> reacs;
-    if (doc.reactions.find(compartmentID) != doc.reactions.cend()) {
-      for (const auto &r : doc.reactions.at(compartmentID)) {
-        reacs.push_back(r.toStdString());
+      // initial concentrations
+      std::vector<QString> tiffs;
+      ini.addSection("model", compartmentID, "initial");
+      for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
+        QString name = nonConstantSpecies.at(i).c_str();
+        QString duneName = duneSpeciesNames.at(i).c_str();
+        double initConc = doc.getInitialConcentration(name);
+        QString expr = doc.getAnalyticConcentration(name);
+        QString sampledField =
+            doc.getSpeciesSampledFieldInitialAssignment(name.toStdString())
+                .c_str();
+        if (!sampledField.isEmpty()) {
+          // if there is a sampledField then make a TIFF
+          auto sampledFieldFile = QString("%1.tif").arg(sampledField);
+          double max = utils::writeTIFF(sampledFieldFile.toStdString(),
+                                        doc.mapSpeciesIdToField.at(name),
+                                        doc.getPixelWidth());
+          tiffs.push_back(sampledField);
+          ini.addValue(duneName,
+                       QString("%2*%3(x,y)").arg(max).arg(sampledField));
+        } else if (!expr.isEmpty()) {
+          // otherwise, initialAssignments take precedence:
+          std::string e = doc.inlineExpr(expr.toStdString());
+          symbolic::Symbolic sym(e, {"x", "y"}, doc.getGlobalConstants());
+          ini.addValue(duneName, sym.simplify().c_str());
+        } else {
+          // otherwise just use initialConcentration value
+          ini.addValue(duneName, initConc, doublePrecision);
+        }
       }
-    }
-    pde::PDE pde(&doc, nonConstantSpecies, reacs, duneSpeciesNames);
-    for (std::size_t i = 0; i < nSpecies; ++i) {
-      ini.addValue(duneSpeciesNames.at(i).c_str(), pde.getRHS().at(i).c_str());
-    }
-
-    // reaction term jacobian
-    ini.addSection("model", compartmentID, "reaction.jacobian");
-    for (std::size_t i = 0; i < nSpecies; ++i) {
-      for (std::size_t j = 0; j < nSpecies; ++j) {
-        QString lhs = QString("d%1__d%2")
-                          .arg(duneSpeciesNames.at(i).c_str(),
-                               duneSpeciesNames.at(j).c_str());
-        QString rhs = pde.getJacobian().at(i).at(j).c_str();
-        ini.addValue(lhs, rhs);
+      if (!tiffs.empty()) {
+        ini.addSection("model", "data");
+        for (const auto &tiff : tiffs) {
+          ini.addValue(tiff, tiff + QString(".tif"));
+        }
       }
-    }
 
-    // diffusion coefficients
-    ini.addSection("model", compartmentID, "diffusion");
-    for (std::size_t i = 0; i < nSpecies; ++i) {
-      ini.addValue(duneSpeciesNames.at(i).c_str(),
-                   doc.getDiffusionConstant(nonConstantSpecies.at(i).c_str()),
-                   doublePrecision);
-    }
+      // reactions
+      ini.addSection("model", compartmentID, "reaction");
+      std::size_t nSpecies =
+          static_cast<std::size_t>(nonConstantSpecies.size());
 
-    // output file
-    ini.addSection("model", compartmentID, "writer");
-    ini.addValue("file_name", compartmentID);
+      std::vector<std::string> reacs;
+      if (doc.reactions.find(compartmentID) != doc.reactions.cend()) {
+        for (const auto &r : doc.reactions.at(compartmentID)) {
+          reacs.push_back(r.toStdString());
+        }
+      }
+      pde::PDE pde(&doc, nonConstantSpecies, reacs, duneSpeciesNames);
+      for (std::size_t i = 0; i < nSpecies; ++i) {
+        ini.addValue(duneSpeciesNames.at(i).c_str(),
+                     pde.getRHS().at(i).c_str());
+      }
+
+      // reaction term jacobian
+      ini.addSection("model", compartmentID, "reaction.jacobian");
+      for (std::size_t i = 0; i < nSpecies; ++i) {
+        for (std::size_t j = 0; j < nSpecies; ++j) {
+          QString lhs = QString("d%1__d%2")
+                            .arg(duneSpeciesNames.at(i).c_str(),
+                                 duneSpeciesNames.at(j).c_str());
+          QString rhs = pde.getJacobian().at(i).at(j).c_str();
+          ini.addValue(lhs, rhs);
+        }
+      }
+
+      // diffusion coefficients
+      ini.addSection("model", compartmentID, "diffusion");
+      for (std::size_t i = 0; i < nSpecies; ++i) {
+        ini.addValue(duneSpeciesNames.at(i).c_str(),
+                     doc.getDiffusionConstant(nonConstantSpecies.at(i).c_str()),
+                     doublePrecision);
+      }
+
+      // output file
+      ini.addSection("model", compartmentID, "writer");
+      ini.addValue("file_name", compartmentID);
+    }
   }
 
   // for each membrane do the same
   for (const auto &membrane : doc.membraneVec) {
     QString membraneID = membrane.membraneID.c_str();
-    ini.addSection("model", membraneID);
-    ini.addValue("begin_time", begin_time, doublePrecision);
-    ini.addValue("end_time", end_time, doublePrecision);
-    ini.addValue("time_step", time_step, doublePrecision);
-
     // remove any constant species from the list of species
     std::vector<std::string> nonConstantSpecies;
     QString compA = membrane.compA->compartmentID.c_str();
@@ -288,82 +306,92 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
         nonConstantSpecies.push_back(s.toStdString());
       }
     }
-    auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
-    for (std::size_t is = 0; is < duneSpeciesNames.size(); ++is) {
-      mapDuneNameToColour[duneSpeciesNames.at(is)] =
-          doc.getSpeciesColour(nonConstantSpecies.at(is).c_str());
-    }
+    if (!nonConstantSpecies.empty()) {
+      ini.addSection("model", membraneID);
+      ini.addValue("begin_time", begin_time, doublePrecision);
+      ini.addValue("end_time", end_time, doublePrecision);
+      ini.addValue("time_step", time_step, doublePrecision);
 
-    // operator splitting indexing: all set to zero for now...
-    ini.addSection("model", membraneID, "operator");
-    for (const auto &speciesID : nonConstantSpecies) {
-      ini.addValue(speciesID.c_str(), 0);
-    }
+      auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
+      for (std::size_t is = 0; is < duneSpeciesNames.size(); ++is) {
+        mapDuneNameToColour[duneSpeciesNames.at(is)] =
+            doc.getSpeciesColour(nonConstantSpecies.at(is).c_str());
+      }
 
-    // initial concentrations
-    ini.addSection("model", membraneID, "initial");
-    for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
-      ini.addValue(
-          duneSpeciesNames.at(i).c_str(),
-          doc.getInitialConcentration(nonConstantSpecies.at(i).c_str()),
-          doublePrecision);
-    }
+      // operator splitting indexing: all set to zero for now...
+      ini.addSection("model", membraneID, "operator");
+      for (const auto &speciesID : nonConstantSpecies) {
+        ini.addValue(speciesID.c_str(), 0);
+      }
 
-    // reactions: want reactions for both neighbouring compartments
-    // as well as membrane reactions (that involve species from both
-    // compartments in the same reaction)
-    ini.addSection("model", membraneID, "reaction");
-    std::size_t nSpecies = static_cast<std::size_t>(nonConstantSpecies.size());
+      // initial concentrations
+      ini.addSection("model", membraneID, "initial");
+      for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
+        ini.addValue(
+            duneSpeciesNames.at(i).c_str(),
+            doc.getInitialConcentration(nonConstantSpecies.at(i).c_str()),
+            doublePrecision);
+      }
 
-    std::vector<std::string> reacs;
-    std::vector<std::string> reacScaleFactors;
-    for (const auto &comp : {compA, compB}) {
-      if (doc.reactions.find(comp) != doc.reactions.cend()) {
-        for (const auto &r : doc.reactions.at(comp)) {
-          reacs.push_back(r.toStdString());
-          reacScaleFactors.push_back("1");
+      // reactions: want reactions for both neighbouring compartments
+      // as well as membrane reactions (that involve species from both
+      // compartments in the same reaction)
+      ini.addSection("model", membraneID, "reaction");
+      std::size_t nSpecies =
+          static_cast<std::size_t>(nonConstantSpecies.size());
+
+      std::vector<std::string> reacs;
+      std::vector<std::string> reacScaleFactors;
+      for (const auto &comp : {compA, compB}) {
+        if (doc.reactions.find(comp) != doc.reactions.cend()) {
+          for (const auto &r : doc.reactions.at(comp)) {
+            reacs.push_back(r.toStdString());
+            reacScaleFactors.push_back("1");
+          }
         }
       }
-    }
-    // divide membrane reaction rates by width of membrane
-    if (doc.reactions.find(membraneID) != doc.reactions.cend()) {
-      for (const auto &r : doc.reactions.at(membraneID)) {
-        double width = doc.mesh->getMembraneWidth(membraneID.toStdString());
-        reacScaleFactors.push_back(
-            QString::number(width, 'g', 17).toStdString());
-        SPDLOG_INFO("dividing membrane reaction by membrane width {}:", width);
-        reacs.push_back(r.toStdString());
+      // divide membrane reaction rates by width of membrane
+      if (doc.reactions.find(membraneID) != doc.reactions.cend()) {
+        for (const auto &r : doc.reactions.at(membraneID)) {
+          double width = doc.mesh->getMembraneWidth(membraneID.toStdString());
+          reacScaleFactors.push_back(
+              QString::number(width, 'g', 17).toStdString());
+          SPDLOG_INFO("dividing membrane reaction by membrane width {}:",
+                      width);
+          reacs.push_back(r.toStdString());
+        }
       }
-    }
-    pde::PDE pde(&doc, nonConstantSpecies, reacs, duneSpeciesNames,
-                 reacScaleFactors);
-    for (std::size_t i = 0; i < nSpecies; ++i) {
-      ini.addValue(duneSpeciesNames.at(i).c_str(), pde.getRHS().at(i).c_str());
-    }
-
-    // reaction term jacobian
-    ini.addSection("model", membrane.membraneID.c_str(), "reaction.jacobian");
-    for (std::size_t i = 0; i < nSpecies; ++i) {
-      for (std::size_t j = 0; j < nSpecies; ++j) {
-        QString lhs = QString("d%1__d%2")
-                          .arg(duneSpeciesNames.at(i).c_str(),
-                               duneSpeciesNames.at(j).c_str());
-        QString rhs = pde.getJacobian().at(i).at(j).c_str();
-        ini.addValue(lhs, rhs);
+      pde::PDE pde(&doc, nonConstantSpecies, reacs, duneSpeciesNames,
+                   reacScaleFactors);
+      for (std::size_t i = 0; i < nSpecies; ++i) {
+        ini.addValue(duneSpeciesNames.at(i).c_str(),
+                     pde.getRHS().at(i).c_str());
       }
-    }
 
-    // diffusion coefficients
-    ini.addSection("model", membrane.membraneID.c_str(), "diffusion");
-    for (std::size_t i = 0; i < nSpecies; ++i) {
-      ini.addValue(duneSpeciesNames.at(i).c_str(),
-                   doc.getDiffusionConstant(nonConstantSpecies.at(i).c_str()),
-                   doublePrecision);
-    }
+      // reaction term jacobian
+      ini.addSection("model", membrane.membraneID.c_str(), "reaction.jacobian");
+      for (std::size_t i = 0; i < nSpecies; ++i) {
+        for (std::size_t j = 0; j < nSpecies; ++j) {
+          QString lhs = QString("d%1__d%2")
+                            .arg(duneSpeciesNames.at(i).c_str(),
+                                 duneSpeciesNames.at(j).c_str());
+          QString rhs = pde.getJacobian().at(i).at(j).c_str();
+          ini.addValue(lhs, rhs);
+        }
+      }
 
-    // output file
-    ini.addSection("model", membrane.membraneID.c_str(), "writer");
-    ini.addValue("file_name", membrane.membraneID.c_str());
+      // diffusion coefficients
+      ini.addSection("model", membrane.membraneID.c_str(), "diffusion");
+      for (std::size_t i = 0; i < nSpecies; ++i) {
+        ini.addValue(duneSpeciesNames.at(i).c_str(),
+                     doc.getDiffusionConstant(nonConstantSpecies.at(i).c_str()),
+                     doublePrecision);
+      }
+
+      // output file
+      ini.addSection("model", membrane.membraneID.c_str(), "writer");
+      ini.addValue("file_name", membrane.membraneID.c_str());
+    }
   }
 
   // logger settings
@@ -388,6 +416,10 @@ QString DuneConverter::getIniFile() const { return ini.getText(); }
 
 QColor DuneConverter::getSpeciesColour(const std::string &duneName) const {
   return mapDuneNameToColour.at(duneName);
+}
+
+const std::unordered_set<int> &DuneConverter::getGMSHCompIndices() const {
+  return gmshCompIndices;
 }
 
 class DuneSimulation::DuneImpl {
@@ -425,16 +457,17 @@ void DuneSimulation::DuneImpl::init(const std::string &iniFile) {
 void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc,
                                    double dt) {
   geometrySize = sbmlDoc.getCompartmentImage().size() * sbmlDoc.getPixelWidth();
+  dune::DuneConverter dc(sbmlDoc, dt);
+
   // export gmsh file `grid.msh` in the same dir
   QFile f2("grid.msh");
   if (f2.open(QIODevice::WriteOnly | QIODevice::Text)) {
-    f2.write(sbmlDoc.mesh->getGMSH().toUtf8());
+    f2.write(sbmlDoc.mesh->getGMSH(dc.getGMSHCompIndices()).toUtf8());
     f2.close();
   } else {
     SPDLOG_ERROR("Cannot write to file grid.msh");
   }
 
-  dune::DuneConverter dc(sbmlDoc, dt);
   pDuneImpl->init(dc.getIniFile().toStdString());
 
   initCompartmentNames();
@@ -442,32 +475,29 @@ void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc,
 }
 
 void DuneSimulation::initCompartmentNames() {
-  const auto &compartments =
-      pDuneImpl->config.sub("model.compartments").getValueKeys();
-  compartmentNames.resize(compartments.size());
-  for (const auto &compartment : compartments) {
-    std::size_t iDomain = pDuneImpl->config.sub("model.compartments")
-                              .get<std::size_t>(compartment);
-    SPDLOG_DEBUG("compartment[{}]: {}", iDomain, compartment);
-    if (iDomain >= compartmentNames.size()) {
-      SPDLOG_ERROR(
-          "found compartment index {}, but there are only {} compartments",
-          iDomain, compartmentNames.size());
+  compartmentNames = pDuneImpl->config.sub("model.compartments").getValueKeys();
+
+  for (std::size_t i = 0; i < compartmentNames.size(); ++i) {
+    const auto &name = compartmentNames.at(i);
+    std::size_t iDune =
+        pDuneImpl->config.sub("model.compartments").get<std::size_t>(name);
+    SPDLOG_DEBUG("compartment[{}]: {} - Dune index {}", i, name, iDune);
+    if (i != iDune) {
+      SPDLOG_WARN("Mismatch between Dune compartment order and index:");
+      SPDLOG_WARN("compartment[{}]: {} - Dune index {}", i, name, iDune);
     }
-    compartmentNames[iDomain] = compartment;
   }
 }
 
 void DuneSimulation::initSpeciesNames(const DuneConverter &dc) {
   speciesNames.clear();
   speciesColours.clear();
-  for (std::size_t iDomain = 0; iDomain < compartmentNames.size(); ++iDomain) {
-    SPDLOG_DEBUG("compartment[{}]: {}", iDomain, compartmentNames.at(iDomain));
+  for (const auto &compName : compartmentNames) {
+    SPDLOG_DEBUG("compartment: {}", compName);
     // NB: species index is position in *sorted* list of species names
     // so make copy of list of names from ini file and sort it
-    auto names = pDuneImpl->config
-                     .sub("model." + compartmentNames.at(iDomain) + ".initial")
-                     .getValueKeys();
+    auto names =
+        pDuneImpl->config.sub("model." + compName + ".initial").getValueKeys();
     std::sort(names.begin(), names.end());
     speciesNames.push_back(std::move(names));
     auto &speciesColoursCompartment = speciesColours.emplace_back();
@@ -500,12 +530,14 @@ static std::pair<QPoint, QPoint> getBoundingBox(const QTriangleF &t,
 
 void DuneSimulation::updatePixels() {
   pixels.clear();
-  for (std::size_t iDomain = 0; iDomain < compartmentNames.size(); ++iDomain) {
+  for (std::size_t compIndex = 0; compIndex < compartmentNames.size();
+       ++compIndex) {
     auto &pixelsComp = pixels.emplace_back();
     const auto &gridview =
-        pDuneImpl->grid_ptr->subDomain(static_cast<int>(iDomain))
+        pDuneImpl->grid_ptr->subDomain(static_cast<int>(compIndex))
             .leafGridView();
-    SPDLOG_TRACE("compartment[{}]: {}", iDomain, compartmentNames.at(iDomain));
+    SPDLOG_TRACE("compartment[{}]: {}", compIndex,
+                 compartmentNames.at(compIndex));
     // get vertices of triangles:
     for (const auto e : elements(gridview)) {
       auto &pixelsTriangle = pixelsComp.emplace_back();
@@ -536,12 +568,14 @@ void DuneSimulation::updatePixels() {
 
 void DuneSimulation::updateTriangles() {
   triangles.clear();
-  for (std::size_t iDomain = 0; iDomain < compartmentNames.size(); ++iDomain) {
+  for (std::size_t compIndex = 0; compIndex < compartmentNames.size();
+       ++compIndex) {
     triangles.emplace_back();
     const auto &gridview =
-        pDuneImpl->grid_ptr->subDomain(static_cast<int>(iDomain))
+        pDuneImpl->grid_ptr->subDomain(static_cast<int>(compIndex))
             .leafGridView();
-    SPDLOG_TRACE("compartment[{}]: {}", iDomain, compartmentNames.at(iDomain));
+    SPDLOG_TRACE("compartment[{}]: {}", compIndex,
+                 compartmentNames.at(compIndex));
     // get vertices of triangles:
     for (const auto e : elements(gridview)) {
       const auto &geo = e.geometry();
@@ -598,19 +632,24 @@ void DuneSimulation::updateBarycentricWeights() {
 void DuneSimulation::updateSpeciesConcentrations() {
   concentrations.clear();
   maxConcs.clear();
-  for (std::size_t iDomain = 0; iDomain < compartmentNames.size(); ++iDomain) {
+  for (std::size_t compIndex = 0; compIndex < compartmentNames.size();
+       ++compIndex) {
     maxConcs.emplace_back();
-    SPDLOG_TRACE("compartment[{}]: {}", iDomain, compartmentNames.at(iDomain));
+    SPDLOG_TRACE("compartment[{}]: {}", compIndex,
+                 compartmentNames.at(compIndex));
     const auto &gridview =
-        pDuneImpl->grid_ptr->subDomain(static_cast<int>(iDomain))
+        pDuneImpl->grid_ptr->subDomain(static_cast<int>(compIndex))
             .leafGridView();
-    const auto &species = speciesNames.at(iDomain);
-    const auto &compTriangles = triangles.at(iDomain);
+    const auto &species = speciesNames.at(compIndex);
+    const auto &compTriangles = triangles.at(compIndex);
     auto &comp = concentrations.emplace_back();
     for (std::size_t iSpecies = 0; iSpecies < species.size(); ++iSpecies) {
       auto &spec = comp.emplace_back();
+      // NB: it seems "domain" in get_grid_function is the location of the
+      // compartment in the vector of compartments, rather than the gmsh index -
+      // 1, i.e. iComp instead of compIndex
       auto gf = pDuneImpl->model->get_grid_function(pDuneImpl->model->states(),
-                                                    iDomain, iSpecies);
+                                                    compIndex, iSpecies);
       using GF = decltype(gf);
       using Range = typename GF::Traits::RangeType;
       using Domain = typename GF::Traits::DomainType;
@@ -654,16 +693,16 @@ void DuneSimulation::doTimestep(double dt) {
   updateSpeciesConcentrations();
 }
 
-QRgb DuneSimulation::pixelColour(std::size_t iDomain,
+QRgb DuneSimulation::pixelColour(std::size_t iComp,
                                  const std::vector<double> &concs) const {
   double alpha = 1.0 / static_cast<double>(concs.size());
   int r = 0;
   int g = 0;
   int b = 0;
   for (std::size_t iSpecies = 0; iSpecies < concs.size(); ++iSpecies) {
-    const QColor &col = speciesColours.at(iDomain).at(iSpecies);
+    const QColor &col = speciesColours.at(iComp).at(iSpecies);
     double c = concs[iSpecies] * alpha;
-    c /= maxConcs[iDomain][iSpecies];
+    c /= maxConcs[iComp][iSpecies];
     r += static_cast<int>(col.red() * c);
     g += static_cast<int>(col.green() * c);
     b += static_cast<int>(col.blue() * c);
@@ -676,40 +715,39 @@ QImage DuneSimulation::getConcImage(bool linearInterpolationOnly) const {
   img.fill(0);
   using GF = decltype(
       pDuneImpl->model->get_grid_function(pDuneImpl->model->states(), 0, 0));
-  for (std::size_t iDomain = 0; iDomain < compartmentNames.size(); ++iDomain) {
-    std::size_t nSpecies = speciesNames.at(iDomain).size();
+
+  for (std::size_t iComp = 0; iComp < compartmentNames.size(); ++iComp) {
+    std::size_t nSpecies = speciesNames.at(iComp).size();
     // get grid function for each species in this compartment
     std::vector<GF> gridFunctions;
     gridFunctions.reserve(nSpecies);
     for (std::size_t iSpecies = 0; iSpecies < nSpecies; ++iSpecies) {
       gridFunctions.push_back(pDuneImpl->model->get_grid_function(
-          pDuneImpl->model->states(), iDomain, iSpecies));
+          pDuneImpl->model->states(), iComp, iSpecies));
     }
-    const auto &domainWeights = weights.at(iDomain);
+    const auto &domainWeights = weights.at(iComp);
     const auto &gridview =
-        pDuneImpl->grid_ptr->subDomain(static_cast<int>(iDomain))
-            .leafGridView();
+        pDuneImpl->grid_ptr->subDomain(static_cast<int>(iComp)).leafGridView();
     std::size_t iTriangle = 0;
     for (const auto e : elements(gridview)) {
       SPDLOG_TRACE("triangle {}", iTriangle);
       if (linearInterpolationOnly) {
-        for (const auto &weight : domainWeights[iTriangle]) {
-          auto [point, w] = weight;
+        for (const auto &[point, w] : domainWeights[iTriangle]) {
           SPDLOG_TRACE("  - point ({},{})", point.x(), point.y());
           SPDLOG_TRACE("  - weights {}", w);
           std::vector<double> localConcs;
           localConcs.reserve(nSpecies);
           // interpolate linearly between corner values
           for (std::size_t iSpecies = 0; iSpecies < nSpecies; ++iSpecies) {
-            const auto &conc = concentrations[iDomain][iSpecies][iTriangle];
+            const auto &conc = concentrations[iComp][iSpecies][iTriangle];
             double c = w[0] * conc[0] + w[1] * conc[1] + w[2] * conc[2];
             // replace negative values with zero
             localConcs.push_back(c < 0 ? 0 : c);
           }
-          img.setPixel(point, pixelColour(iDomain, localConcs));
+          img.setPixel(point, pixelColour(iComp, localConcs));
         }
       } else {
-        for (const auto &pair : pixels[iDomain][iTriangle]) {
+        for (const auto &pair : pixels[iComp][iTriangle]) {
           // evaluate DUNE grid function at this pixel location
           // convert pixel->global->local
           Dune::FieldVector<double, 2> localPoint = {pair.second[0],
@@ -725,7 +763,7 @@ QImage DuneSimulation::getConcImage(bool linearInterpolationOnly) const {
             // replace negative values with zero
             localConcs.push_back(result[0] < 0 ? 0 : result[0]);
           }
-          img.setPixel(pair.first, pixelColour(iDomain, localConcs));
+          img.setPixel(pair.first, pixelColour(iComp, localConcs));
         }
       }
       ++iTriangle;

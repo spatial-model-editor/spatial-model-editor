@@ -35,8 +35,8 @@ Mesh::Mesh(
     mapColourPairToMembraneIndex[colPair] = {membraneIndex, membraneID};
     mapColourPairToMembraneIndex[{colPair.second, colPair.first}] = {
         membraneIndex, membraneID};
-    SPDLOG_DEBUG("Colour pair ({x},{x}) -> membrane '{}', index {}",
-                 colPair.first, colPair.second, membraneID, membraneIndex);
+    SPDLOG_DEBUG("Colour pair ({},{}) -> membrane {}, index {}", colPair.first,
+                 colPair.second, membraneID, membraneIndex);
   }
 
   boundaries =
@@ -448,7 +448,7 @@ std::pair<QImage, QImage> Mesh::getMeshImages(
                         maskImage.mirrored(false, true));
 }
 
-QString Mesh::getGMSH() const {
+QString Mesh::getGMSH(const std::unordered_set<int>& gmshCompIndices) const {
   // note: gmsh indexing starts with 1, so we need to add 1 to all indices
   // note: gmsh (0,0) is bottom left, but we use top left, so flip y axis
   // meshing is done in terms of pixels, to convert to physical points:
@@ -469,18 +469,34 @@ QString Mesh::getGMSH() const {
   }
   msh.append("$EndNodes\n");
   msh.append("$Elements\n");
-  msh.append(QString("%1\n").arg(nTriangles));
-  std::size_t triangleIndex = 1;
+  int nT = 0;
   std::size_t compartmentIndex = 1;
   for (const auto& comp : triangleIndices) {
-    for (const auto& t : comp) {
-      msh.append(QString("%1 2 2 %2 %2 %3 %4 %5\n")
-                     .arg(triangleIndex)
-                     .arg(compartmentIndex)
-                     .arg(t[0] + 1)
-                     .arg(t[1] + 1)
-                     .arg(t[2] + 1));
-      ++triangleIndex;
+    if (gmshCompIndices.empty() ||
+        gmshCompIndices.find(static_cast<int>(compartmentIndex)) !=
+            gmshCompIndices.cend()) {
+      nT += static_cast<int>(comp.size());
+    }
+    compartmentIndex++;
+  }
+  msh.append(QString("%1\n").arg(nT));
+  std::size_t triangleIndex = 1;
+  compartmentIndex = 1;
+  std::size_t outputCompartmentIndex = 1;
+  for (const auto& comp : triangleIndices) {
+    if (gmshCompIndices.empty() ||
+        gmshCompIndices.find(static_cast<int>(compartmentIndex)) !=
+            gmshCompIndices.cend()) {
+      for (const auto& t : comp) {
+        msh.append(QString("%1 2 2 %2 %2 %3 %4 %5\n")
+                       .arg(triangleIndex)
+                       .arg(outputCompartmentIndex)
+                       .arg(t[0] + 1)
+                       .arg(t[1] + 1)
+                       .arg(t[2] + 1));
+        ++triangleIndex;
+      }
+      ++outputCompartmentIndex;
     }
     ++compartmentIndex;
   }

@@ -471,16 +471,17 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
     if (filename.right(4) != ".ini") {
       filename.append(".ini");
     }
+    dune::DuneConverter dc(sbmlDoc);
     QFile f(filename);
     if (f.open(QIODevice::ReadWrite | QIODevice::Text)) {
-      f.write(dune::DuneConverter(sbmlDoc).getIniFile().toUtf8());
+      f.write(dc.getIniFile().toUtf8());
     }
     // also export gmsh file `grid.msh` in the same dir
     QString dir = QFileInfo(filename).absolutePath();
     QString meshFilename = QDir(dir).filePath("grid.msh");
     QFile f2(meshFilename);
     if (f2.open(QIODevice::ReadWrite | QIODevice::Text)) {
-      f2.write(sbmlDoc.mesh->getGMSH().toUtf8());
+      f2.write(sbmlDoc.mesh->getGMSH(dc.getGMSHCompIndices()).toUtf8());
     }
   }
 }
