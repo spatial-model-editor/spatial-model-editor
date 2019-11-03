@@ -11,6 +11,7 @@
 #include <QPoint>
 #include <QPointF>
 #include <array>
+#include <unordered_set>
 #include <vector>
 
 #include "boundary.hpp"
@@ -85,7 +86,7 @@ class Mesh {
       const QSize& size, std::size_t boldBoundaryIndex) const;
   std::pair<QImage, QImage> getMeshImages(const QSize& size,
                                           std::size_t compartmentIndex) const;
-  QString getGMSH() const;
+  QString getGMSH(const std::unordered_set<int>& gmshCompIndices = {}) const;
 };
 
 }  // namespace mesh

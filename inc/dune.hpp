@@ -12,6 +12,7 @@
 #include <QString>
 #include <map>
 #include <memory>
+#include <unordered_set>
 
 namespace sbml {
 class SbmlDocWrapper;
@@ -45,10 +46,12 @@ class DuneConverter {
                          int doublePrecision = 15);
   QString getIniFile() const;
   QColor getSpeciesColour(const std::string &duneName) const;
+  const std::unordered_set<int> &getGMSHCompIndices() const;
 
  private:
   const sbml::SbmlDocWrapper &doc;
   iniFile ini;
+  std::unordered_set<int> gmshCompIndices;
   std::map<std::string, QColor> mapDuneNameToColour;
 };
 
