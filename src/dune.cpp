@@ -138,6 +138,7 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
   double time_step = dt;
 
   mapDuneNameToColour.clear();
+  mapSpeciesIdsToDuneNames.clear();
 
   // grid
   ini.addSection("grid");
@@ -200,6 +201,8 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
         SPDLOG_TRACE("  - species {}", duneSpeciesNames.at(is));
         QColor col = doc.getSpeciesColour(nonConstantSpecies.at(is).c_str());
         mapDuneNameToColour[duneSpeciesNames.at(is)] = col;
+        mapSpeciesIdsToDuneNames[nonConstantSpecies.at(is)] =
+            duneSpeciesNames.at(is);
         SPDLOG_TRACE("     - colour {:x}", col.rgba());
       }
 
@@ -316,11 +319,13 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
       for (std::size_t is = 0; is < duneSpeciesNames.size(); ++is) {
         mapDuneNameToColour[duneSpeciesNames.at(is)] =
             doc.getSpeciesColour(nonConstantSpecies.at(is).c_str());
+        mapSpeciesIdsToDuneNames[nonConstantSpecies.at(is)] =
+            duneSpeciesNames.at(is);
       }
 
       // operator splitting indexing: all set to zero for now...
       ini.addSection("model", membraneID, "operator");
-      for (const auto &speciesID : nonConstantSpecies) {
+      for (const auto &speciesID : duneSpeciesNames) {
         ini.addValue(speciesID.c_str(), 0);
       }
 
@@ -491,6 +496,7 @@ void DuneSimulation::initCompartmentNames() {
 
 void DuneSimulation::initSpeciesNames(const DuneConverter &dc) {
   speciesNames.clear();
+  mapSpeciesIdsToDuneNames = dc.mapSpeciesIdsToDuneNames;
   speciesColours.clear();
   for (const auto &compName : compartmentNames) {
     SPDLOG_DEBUG("compartment: {}", compName);
@@ -645,9 +651,6 @@ void DuneSimulation::updateSpeciesConcentrations() {
     auto &comp = concentrations.emplace_back();
     for (std::size_t iSpecies = 0; iSpecies < species.size(); ++iSpecies) {
       auto &spec = comp.emplace_back();
-      // NB: it seems "domain" in get_grid_function is the location of the
-      // compartment in the vector of compartments, rather than the gmsh index -
-      // 1, i.e. iComp instead of compIndex
       auto gf = pDuneImpl->model->get_grid_function(pDuneImpl->model->states(),
                                                     compIndex, iSpecies);
       using GF = decltype(gf);
@@ -775,7 +778,8 @@ QImage DuneSimulation::getConcImage(bool linearInterpolationOnly) const {
 
 double DuneSimulation::getAverageConcentration(
     const std::string &speciesID) const {
-  return mapSpeciesIDToAvConc.at(speciesID);
+  const auto &duneName = mapSpeciesIdsToDuneNames.at(speciesID);
+  return mapSpeciesIDToAvConc.at(duneName);
 }
 
 void DuneSimulation::setImageSize(const QSize &imgSize) {

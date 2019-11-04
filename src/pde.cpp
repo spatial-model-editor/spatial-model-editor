@@ -193,12 +193,12 @@ Reaction::Reaction(const sbml::SbmlDocWrapper *doc,
         c[constant.first] = constant.second;
       }
       // construct expression and add to reactions
-      expressions.push_back(reac.expression);
+      expressions.push_back(reac.inlinedExpression);
       constants.push_back(c);
       SPDLOG_INFO("adding reaction {}", reacID);
       SPDLOG_INFO("  - stoichiometric matrix row: {}",
                   utils::vectorToString(row));
-      SPDLOG_INFO("  - expr: {}", reac.expression);
+      SPDLOG_INFO("  - expr: {}", reac.inlinedExpression);
     }
   }
 }

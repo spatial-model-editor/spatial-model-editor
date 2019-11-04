@@ -62,7 +62,7 @@ void QLabelMouseTracker::setCurrentPixel(QMouseEvent *ev) {
   if (!image.isNull() && !pixmap.isNull()) {
     currentPixel.setX((image.width() * ev->pos().x()) / pixmap.width());
     currentPixel.setY((image.height() * ev->pos().y()) / pixmap.height());
-    SPDLOG_DEBUG("mouse at ({},{}) -> pixel ({},{})", ev->pos().x(),
+    SPDLOG_TRACE("mouse at ({},{}) -> pixel ({},{})", ev->pos().x(),
                  ev->pos().y(), currentPixel.x(), currentPixel.y());
   }
 }

@@ -606,11 +606,11 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
                   key_delay);
   QApplication::processEvents();
   REQUIRE(ui.tabMain->currentIndex() == 3);
-  REQUIRE(ui.listReactions->topLevelItemCount() == 3);
+  REQUIRE(ui.listReactions->topLevelItemCount() == 5);
   // select each item in listReactions
   ui.listReactions->setFocus();
   ui.listReactions->setCurrentItem(ui.listReactions->topLevelItem(0));
-  for (int i = 0; i < 7; ++i) {
+  for (int i = 0; i < 10; ++i) {
     QTest::keyClick(ui.listReactions, Qt::Key_Down, Qt::ControlModifier,
                     key_delay);
     QTest::keyClick(ui.listReactions, Qt::Key_Enter, Qt::ControlModifier,

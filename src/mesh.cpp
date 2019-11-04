@@ -18,7 +18,8 @@ Mesh::Mesh(
     const std::vector<std::size_t>& maxPoints,
     const std::vector<std::size_t>& maxTriangleArea,
     const std::vector<std::pair<std::string, ColourPair>>& membraneColourPairs,
-    double pixelWidth, const QPointF& originPoint)
+    const std::vector<double>& membraneWidths, double pixelWidth,
+    const QPointF& originPoint)
     : img(image),
       origin(originPoint),
       pixel(pixelWidth),
@@ -79,6 +80,14 @@ Mesh::Mesh(
       compartmentInteriorPoints.push_back(membraneInterior);
       // no max area for membrane triangles
       compartmentMaxTriangleArea.push_back(99);
+    }
+  }
+  // set membrane widths if supplied
+  if (!membraneWidths.empty() && membraneWidths.size() == boundaries.size()) {
+    for (std::size_t i = 0; i < membraneWidths.size(); ++i) {
+      if (boundaries.at(i).isMembrane) {
+        boundaries.at(i).setMembraneWidth(membraneWidths.at(i));
+      }
     }
   }
   constructMesh();
@@ -163,6 +172,13 @@ void Mesh::setBoundaryWidth(std::size_t boundaryIndex, double width) {
 
 double Mesh::getBoundaryWidth(std::size_t boundaryIndex) const {
   return boundaries.at(boundaryIndex).getMembraneWidth();
+}
+
+std::vector<double> Mesh::getBoundaryWidths() const {
+  std::vector<double> v(boundaries.size(), 0.0);
+  std::transform(boundaries.cbegin(), boundaries.cend(), v.begin(),
+                 [](const auto& b) { return b.getMembraneWidth(); });
+  return v;
 }
 
 double Mesh::getMembraneWidth(const std::string& membraneID) const {
