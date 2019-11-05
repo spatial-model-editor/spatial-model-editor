@@ -36,7 +36,9 @@ using NameDoublePair = std::pair<std::string, double>;
 class Reac {
  public:
   std::string ID;
-  std::string expression;
+  std::string Name;
+  std::string fullExpression;
+  std::string inlinedExpression;
   std::vector<NameDoublePair> products;
   std::vector<NameDoublePair> reactants;
   std::vector<NameDoublePair> constants;
@@ -45,6 +47,7 @@ class Reac {
 class Func {
  public:
   std::string ID;
+  std::string Name;
   std::string expression;
   std::vector<std::string> arguments;
 };
@@ -157,9 +160,12 @@ class SbmlDocWrapper {
 
   // Qt data structures containing model data to pass to UI widgets
   QStringList compartments;
+  QStringList compartmentNames;
   QStringList membranes;
+  QStringList membraneNames;
   // <compartment ID, list of species ID in this compartment>
   std::map<QString, QStringList> species;
+  QString currentSpecies;
   std::map<QString, QStringList> reactions;
   QStringList functions;
 
@@ -227,6 +233,9 @@ class SbmlDocWrapper {
   // true if species is fixed throughout the simulation
   void setIsSpeciesConstant(const std::string &speciesID, bool constant);
   bool getIsSpeciesConstant(const std::string &speciesID) const;
+
+  QString getSpeciesName(const QString &speciesID) const;
+  QString getReactionName(const QString &reactionID) const;
 
   // true if species should be altered by Reactions
   bool isSpeciesReactive(const std::string &speciesID) const;

@@ -46,6 +46,7 @@ class DuneConverter {
                          int doublePrecision = 15);
   QString getIniFile() const;
   QColor getSpeciesColour(const std::string &duneName) const;
+  std::map<std::string, std::string> mapSpeciesIdsToDuneNames;
   const std::unordered_set<int> &getGMSHCompIndices() const;
 
  private:
@@ -63,6 +64,8 @@ class DuneSimulation {
   // index of compartment/species name in these vectors is the Dune index:
   std::vector<std::string> compartmentNames;
   std::vector<std::vector<std::string>> speciesNames;
+  // map SBML speciesIds to corresponding DUNE name
+  std::map<std::string, std::string> mapSpeciesIdsToDuneNames;
   std::vector<std::vector<QColor>> speciesColours;
   std::map<std::string, double> mapSpeciesIDToAvConc;
   std::vector<std::vector<double>> maxConcs;

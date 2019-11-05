@@ -146,15 +146,15 @@ void MainWindow::setupConnections() {
   connect(ui->spinMaxTriangleArea, qOverload<int>(&QSpinBox::valueChanged),
           this, &MainWindow::spinMaxTriangleArea_valueChanged);
 
-  connect(ui->listCompartments, &QListWidget::currentTextChanged, this,
-          &MainWindow::listCompartments_currentTextChanged);
+  connect(ui->listCompartments, &QListWidget::currentRowChanged, this,
+          &MainWindow::listCompartments_currentRowChanged);
 
   connect(ui->listCompartments, &QListWidget::itemDoubleClicked, this,
           &MainWindow::listCompartments_itemDoubleClicked);
 
   // membranes
-  connect(ui->listMembranes, &QListWidget::currentTextChanged, this,
-          &MainWindow::listMembranes_currentTextChanged);
+  connect(ui->listMembranes, &QListWidget::currentRowChanged, this,
+          &MainWindow::listMembranes_currentRowChanged);
 
   // species
   connect(ui->listSpecies, &QTreeWidget::currentItemChanged, this,
@@ -318,7 +318,7 @@ void MainWindow::tabMain_currentChanged(int index) {
 
 void MainWindow::tabMain_updateGeometry() {
   ui->listCompartments->clear();
-  ui->listCompartments->insertItems(0, sbmlDoc.compartments);
+  ui->listCompartments->insertItems(0, sbmlDoc.compartmentNames);
   if (ui->listCompartments->count() > 0) {
     ui->listCompartments->setCurrentRow(0);
   }
@@ -329,7 +329,7 @@ void MainWindow::tabMain_updateGeometry() {
 void MainWindow::tabMain_updateMembranes() {
   ui->lblMembraneShape->clear();
   ui->listMembranes->clear();
-  ui->listMembranes->addItems(sbmlDoc.membranes);
+  ui->listMembranes->addItems(sbmlDoc.membraneNames);
   ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
   ui->lblGeometryStatus->setText("Compartment Geometry:");
   if (ui->listMembranes->count() > 0) {
@@ -346,13 +346,15 @@ void MainWindow::tabMain_updateSpecies() {
   // update tree list of species
   auto *ls = ui->listSpecies;
   ls->clear();
-  for (auto c : sbmlDoc.compartments) {
+  for (int iComp = 0; iComp < sbmlDoc.compartments.size(); ++iComp) {
     // add compartments as top level items
-    QTreeWidgetItem *comp = new QTreeWidgetItem(ls, QStringList({c}));
+    QTreeWidgetItem *comp =
+        new QTreeWidgetItem(ls, QStringList({sbmlDoc.compartmentNames[iComp]}));
     ls->addTopLevelItem(comp);
-    for (auto s : sbmlDoc.species[c]) {
+    for (const auto &s : sbmlDoc.species.at(sbmlDoc.compartments[iComp])) {
       // add each species as child of compartment
-      comp->addChild(new QTreeWidgetItem(comp, QStringList({s})));
+      comp->addChild(
+          new QTreeWidgetItem(comp, QStringList({sbmlDoc.getSpeciesName(s)})));
     }
   }
   ls->expandAll();
@@ -364,14 +366,34 @@ void MainWindow::tabMain_updateReactions() {
   // update tree list of reactions
   auto *ls = ui->listReactions;
   ls->clear();
-  for (auto iter = sbmlDoc.reactions.cbegin(); iter != sbmlDoc.reactions.cend();
-       ++iter) {
-    // add compartments/membranes as top level items
-    QTreeWidgetItem *comp = new QTreeWidgetItem(ls, QStringList({iter->first}));
+  for (int i = 0; i < sbmlDoc.compartments.size(); ++i) {
+    // add compartment as top level item
+    QTreeWidgetItem *comp =
+        new QTreeWidgetItem(ls, QStringList({sbmlDoc.compartmentNames.at(i)}));
     ls->addTopLevelItem(comp);
-    for (auto s : iter->second) {
-      // add each species as child of compartment
-      comp->addChild(new QTreeWidgetItem(comp, QStringList({s})));
+    const auto &compID = sbmlDoc.compartments.at(i);
+    auto iter = sbmlDoc.reactions.find(compID);
+    if (iter != sbmlDoc.reactions.cend()) {
+      for (const auto &reacID : iter->second) {
+        // add each reaction as child of compartment
+        comp->addChild(new QTreeWidgetItem(
+            comp, QStringList({sbmlDoc.getReactionName(reacID)})));
+      }
+    }
+  }
+  for (int i = 0; i < sbmlDoc.membranes.size(); ++i) {
+    // add compartment as top level item
+    QTreeWidgetItem *memb =
+        new QTreeWidgetItem(ls, QStringList({sbmlDoc.membraneNames.at(i)}));
+    ls->addTopLevelItem(memb);
+    const auto &membID = sbmlDoc.membranes.at(i);
+    auto iter = sbmlDoc.reactions.find(membID);
+    if (iter != sbmlDoc.reactions.cend()) {
+      for (const auto &reacID : iter->second) {
+        // add each reaction as child of compartment
+        memb->addChild(new QTreeWidgetItem(
+            memb, QStringList({sbmlDoc.getReactionName(reacID)})));
+      }
     }
   }
   ui->listReactions->expandAll();
@@ -563,12 +585,12 @@ void MainWindow::lblGeometry_mouseClicked(QRgb col, QPoint point) {
     // update compartment geometry (i.e. colour) of selected compartment to
     // the one the user just clicked on
     const auto &compartmentID =
-        ui->listCompartments->selectedItems()[0]->text();
+        sbmlDoc.compartments.at(ui->listCompartments->currentRow());
     sbmlDoc.setCompartmentColour(compartmentID, col);
     sbmlDoc.setCompartmentInteriorPoint(compartmentID, point);
     ui->tabCompartmentGeometry->setCurrentIndex(0);
     // update display by simulating user click on listCompartments
-    listCompartments_currentTextChanged(compartmentID);
+    listCompartments_currentRowChanged(ui->listCompartments->currentRow());
     enableTabs();
     SPDLOG_INFO("assigned compartment {} to colour {:x}",
                 compartmentID.toStdString(), col);
@@ -576,10 +598,11 @@ void MainWindow::lblGeometry_mouseClicked(QRgb col, QPoint point) {
     statusBarPermanentMessage->clear();
   } else {
     // display compartment the user just clicked on
-    auto items = ui->listCompartments->findItems(sbmlDoc.getCompartmentID(col),
-                                                 Qt::MatchExactly);
-    if (!items.empty()) {
-      ui->listCompartments->setCurrentItem(items[0]);
+    auto compID = sbmlDoc.getCompartmentID(col);
+    for (int i = 0; i < sbmlDoc.compartments.size(); ++i) {
+      if (sbmlDoc.compartments.at(i) == compID) {
+        ui->listCompartments->setCurrentRow(i);
+      }
     }
   }
 }
@@ -629,9 +652,10 @@ void MainWindow::btnChangeCompartment_clicked() {
 }
 
 void MainWindow::btnSetCompartmentSizeFromImage_clicked() {
-  const auto &compartmentID = ui->listCompartments->selectedItems()[0]->text();
+  const auto &compartmentID =
+      sbmlDoc.compartments.at(ui->listCompartments->currentRow());
   sbmlDoc.setCompartmentSizeFromImage(compartmentID.toStdString());
-  listCompartments_currentTextChanged(compartmentID);
+  listCompartments_currentRowChanged(ui->listCompartments->currentRow());
 }
 
 void MainWindow::tabCompartmentGeometry_currentChanged(int index) {
@@ -713,19 +737,21 @@ void MainWindow::spinMaxTriangleArea_valueChanged(int value) {
   ui->lblCompMesh->setImages(sbmlDoc.mesh->getMeshImages(size, compIndex));
 }
 
-void MainWindow::listCompartments_currentTextChanged(
-    const QString &currentText) {
+void MainWindow::listCompartments_currentRowChanged(int currentRow) {
   ui->txtCompartmentSize->clear();
-  if (!currentText.isEmpty()) {
-    const QString &compID = currentText;
-    SPDLOG_DEBUG("Compartment {} selected", compID.toStdString());
+  if (currentRow >= 0 && currentRow < ui->listCompartments->count()) {
+    const QString &compID = sbmlDoc.compartments.at(currentRow);
+    SPDLOG_DEBUG("row {} selected", currentRow);
+    SPDLOG_DEBUG("  - Compartment Name: {}",
+                 ui->listCompartments->currentItem()->text().toStdString());
+    SPDLOG_DEBUG("  - Compartment Id: {}", compID.toStdString());
     ui->txtCompartmentSize->setText(
         QString::number(sbmlDoc.getCompartmentSize(compID)));
     ui->lblCompartmentSizeUnits->setText(
         sbmlDoc.modelUnits.volume.units.at(sbmlDoc.modelUnits.volume.index)
             .symbol);
     QRgb col = sbmlDoc.getCompartmentColour(compID);
-    SPDLOG_DEBUG("  - colour {:x} ", col);
+    SPDLOG_DEBUG("  - Compartment colour {:x} ", col);
     if (col == 0) {
       // null (transparent white) RGB colour: compartment does not have
       // an assigned colour in the image
@@ -766,11 +792,15 @@ void MainWindow::listCompartments_itemDoubleClicked(QListWidgetItem *item) {
   }
 }
 
-void MainWindow::listMembranes_currentTextChanged(const QString &currentText) {
-  if (!currentText.isEmpty()) {
-    SPDLOG_DEBUG("Membrane {} selected", currentText.toStdString());
+void MainWindow::listMembranes_currentRowChanged(int currentRow) {
+  if (currentRow >= 0 && currentRow < ui->listMembranes->count()) {
+    const QString &membraneID = sbmlDoc.membranes.at(currentRow);
+    SPDLOG_DEBUG("row {} selected", currentRow);
+    SPDLOG_DEBUG("  - Membrane Name: {}",
+                 ui->listMembranes->currentItem()->text().toStdString());
+    SPDLOG_DEBUG("  - Membrane Id: {}", membraneID.toStdString());
     // update image
-    QPixmap pixmap = QPixmap::fromImage(sbmlDoc.getMembraneImage(currentText));
+    QPixmap pixmap = QPixmap::fromImage(sbmlDoc.getMembraneImage(membraneID));
     ui->lblMembraneShape->setPixmap(pixmap);
   }
 }
@@ -780,8 +810,19 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
   Q_UNUSED(previous);
   // if user selects a species (i.e. an item with a parent)
   if ((current != nullptr) && (current->parent() != nullptr)) {
-    QString speciesID = current->text(0);
-    SPDLOG_DEBUG("Species {} selected", speciesID.toStdString());
+    SPDLOG_DEBUG("item {} / {} selected",
+                 current->parent()->text(0).toStdString(),
+                 current->text(0).toStdString());
+    int compartmentIndex =
+        ui->listSpecies->indexOfTopLevelItem(current->parent());
+    QString compartmentID = sbmlDoc.compartments.at(compartmentIndex);
+    int speciesIndex = current->parent()->indexOfChild(current);
+    QString speciesID = sbmlDoc.species.at(compartmentID).at(speciesIndex);
+    sbmlDoc.currentSpecies = speciesID;
+    SPDLOG_DEBUG("  - species index {}", speciesIndex);
+    SPDLOG_DEBUG("  - species Id {}", speciesID.toStdString());
+    SPDLOG_DEBUG("  - compartment index {}", compartmentIndex);
+    SPDLOG_DEBUG("  - compartment Id {}", compartmentID.toStdString());
     // display species information
     auto &field = sbmlDoc.mapSpeciesIdToField.at(speciesID);
     // spatial
@@ -799,7 +840,7 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
     }
     // concentration
     ui->lblGeometryStatus->setText(
-        QString("Species '%1' concentration:").arg(speciesID));
+        QString("Species '%1' concentration:").arg(current->text(0)));
     ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
     if (field.isUniformConcentration) {
       ui->txtInitialConcentration->setText(
@@ -821,7 +862,7 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
 }
 
 void MainWindow::chkSpeciesIsSpatial_toggled(bool enabled) {
-  const auto &speciesID = ui->listSpecies->currentItem()->text(0);
+  const auto &speciesID = sbmlDoc.currentSpecies;
   // if new value differs from previous one - update model
   if (sbmlDoc.getIsSpatial(speciesID) != enabled) {
     SPDLOG_INFO("setting species {} isSpatial: {}", speciesID.toStdString(),
@@ -842,7 +883,7 @@ void MainWindow::chkSpeciesIsSpatial_toggled(bool enabled) {
 }
 
 void MainWindow::chkSpeciesIsConstant_toggled(bool enabled) {
-  const auto &speciesID = ui->listSpecies->currentItem()->text(0).toStdString();
+  const auto &speciesID = sbmlDoc.currentSpecies.toStdString();
   // if new value differs from previous one - update model
   if (sbmlDoc.getIsSpeciesConstant(speciesID) != enabled) {
     SPDLOG_INFO("setting species {} isConstant: {}", speciesID, enabled);
@@ -867,7 +908,7 @@ void MainWindow::radInitialConcentration_toggled() {
 
 void MainWindow::txtInitialConcentration_editingFinished() {
   double initConc = ui->txtInitialConcentration->text().toDouble();
-  QString speciesID = ui->listSpecies->currentItem()->text(0);
+  const auto &speciesID = sbmlDoc.currentSpecies;
   SPDLOG_INFO("setting initial concentration of Species {} to {}",
               speciesID.toStdString(), initConc);
   sbmlDoc.setInitialConcentration(speciesID, initConc);
@@ -876,14 +917,14 @@ void MainWindow::txtInitialConcentration_editingFinished() {
 }
 
 void MainWindow::btnAnalyticConcentration_clicked() {
-  const auto &speciesID = ui->listSpecies->currentItem()->text(0);
+  const auto &speciesID = sbmlDoc.currentSpecies;
   SPDLOG_DEBUG("ask user for analytic initial concentration of species {}...",
                speciesID.toStdString());
   // todo: have dedicated window for this
   // which parses & checks expression is valid
   QString expr = QInputDialog::getText(
       this, "Analytic initial concentration",
-      "Analytic initial concentration, e.g. \"cos(x)^2 + sin(y)^2:\"",
+      "Analytic initial concentration, e.g. \"cos(x)^2 + sin(y)^2\":",
       QLineEdit::Normal, sbmlDoc.getAnalyticConcentration(speciesID));
   if (!expr.isEmpty()) {
     ui->radInitialConcentrationVarying->setChecked(true);
@@ -894,7 +935,7 @@ void MainWindow::btnAnalyticConcentration_clicked() {
 }
 
 void MainWindow::btnImportConcentration_clicked() {
-  const auto &speciesID = ui->listSpecies->currentItem()->text(0);
+  const auto &speciesID = sbmlDoc.currentSpecies;
   SPDLOG_DEBUG("ask user for concentration image for species {}... selected",
                speciesID.toStdString());
   QString filename = QFileDialog::getOpenFileName(
@@ -912,7 +953,7 @@ void MainWindow::btnImportConcentration_clicked() {
 void MainWindow::cmbImportExampleConcentration_currentTextChanged(
     const QString &text) {
   if (ui->cmbImportExampleConcentration->currentIndex() != 0) {
-    const auto &speciesID = ui->listSpecies->currentItem()->text(0);
+    const auto &speciesID = sbmlDoc.currentSpecies;
     ui->radInitialConcentrationVarying->setChecked(true);
     SPDLOG_DEBUG("import {}", text.toStdString());
     sbmlDoc.importConcentrationFromImage(
@@ -924,14 +965,14 @@ void MainWindow::cmbImportExampleConcentration_currentTextChanged(
 
 void MainWindow::txtDiffusionConstant_editingFinished() {
   double diffConst = ui->txtDiffusionConstant->text().toDouble();
-  QString speciesID = ui->listSpecies->currentItem()->text(0);
+  const auto &speciesID = sbmlDoc.currentSpecies;
   SPDLOG_INFO("setting Diffusion Constant of Species {} to {}",
               speciesID.toStdString(), diffConst);
   sbmlDoc.setDiffusionConstant(speciesID, diffConst);
 }
 
 void MainWindow::btnChangeSpeciesColour_clicked() {
-  QString speciesID = ui->listSpecies->currentItem()->text(0);
+  const auto &speciesID = sbmlDoc.currentSpecies;
   SPDLOG_DEBUG("waiting for new colour for species {} from user...",
                speciesID.toStdString());
   QColor newCol = QColorDialog::getColor(sbmlDoc.getSpeciesColour(speciesID),
@@ -953,29 +994,53 @@ void MainWindow::listReactions_currentItemChanged(QTreeWidgetItem *current,
   ui->lblReactionRate->clear();
   // if user selects a species (i.e. an item with a parent)
   if ((current != nullptr) && (current->parent() != nullptr)) {
-    const QString &compID = current->parent()->text(0);
-    const QString &reacID = current->text(0);
-    SPDLOG_DEBUG("Reaction {} selected", reacID.toStdString());
-    // display image of reaction compartment or membrane
-    if (std::find(sbmlDoc.compartments.cbegin(), sbmlDoc.compartments.cend(),
-                  compID) != sbmlDoc.compartments.cend()) {
+    SPDLOG_DEBUG("item {} / {} selected",
+                 current->parent()->text(0).toStdString(),
+                 current->text(0).toStdString());
+    int compartmentIndex =
+        ui->listReactions->indexOfTopLevelItem(current->parent());
+    QString compartmentID;
+    if (compartmentIndex < sbmlDoc.compartments.size()) {
+      // compartment
+      compartmentID = sbmlDoc.compartments.at(compartmentIndex);
       ui->lblGeometry->setImage(
-          sbmlDoc.mapCompIdToGeometry.at(compID).getCompartmentImage());
+          sbmlDoc.mapCompIdToGeometry.at(compartmentID).getCompartmentImage());
     } else {
-      ui->lblGeometry->setImage(sbmlDoc.getMembraneImage(compID));
+      // membrane
+      compartmentIndex -= sbmlDoc.compartments.size();
+      compartmentID = sbmlDoc.membranes.at(compartmentIndex);
+      ui->lblGeometry->setImage(sbmlDoc.getMembraneImage(compartmentID));
     }
+    int reactionIndex = current->parent()->indexOfChild(current);
+    QString reactionID = sbmlDoc.reactions.at(compartmentID).at(reactionIndex);
+    SPDLOG_DEBUG("  - reaction index {}", reactionIndex);
+    SPDLOG_DEBUG("  - reaction Id {}", reactionID.toStdString());
+    SPDLOG_DEBUG("  - compartment index {}", compartmentIndex);
+    SPDLOG_DEBUG("  - compartment Id {}", compartmentID.toStdString());
+
     // display reaction information
-    auto reac = sbmlDoc.getReaction(reacID);
-    for (const auto &product : reac.products) {
-      ui->listProducts->addItem(product.first.c_str());
+    auto reac = sbmlDoc.getReaction(reactionID);
+    for (const auto &[speciesID, number] : reac.products) {
+      auto speciesName = sbmlDoc.getSpeciesName(speciesID.c_str());
+      ui->listProducts->addItem(QString("%1 %2 (symbol '%3' in rate equation)")
+                                    .arg(number)
+                                    .arg(speciesName)
+                                    .arg(speciesID.c_str()));
     }
-    for (const auto &reactant : reac.reactants) {
-      ui->listReactants->addItem(reactant.first.c_str());
+    for (const auto &[speciesID, number] : reac.reactants) {
+      auto speciesName = sbmlDoc.getSpeciesName(speciesID.c_str());
+      ui->listReactants->addItem(QString("%1 %2 (symbol '%3' in rate equation)")
+                                     .arg(number)
+                                     .arg(speciesName)
+                                     .arg(speciesID.c_str()));
     }
     for (const auto &constant : reac.constants) {
-      ui->listReactionParams->addItem(constant.first.c_str());
+      ui->listReactionParams->addItem(QString("%1: %2")
+                                          .arg(constant.first.c_str())
+                                          .arg(constant.second, 14, 'g', 14));
     }
-    ui->lblReactionRate->setText(reac.expression.c_str());
+    ui->lblReactionRate->setText(reac.fullExpression.c_str());
+    ui->lblInlinedReactionRate->setText(reac.inlinedExpression.c_str());
   }
 }
 

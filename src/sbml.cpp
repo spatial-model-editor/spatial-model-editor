@@ -22,6 +22,7 @@ static std::string ASTtoString(const libsbml::ASTNode *node) {
 
 void SbmlDocWrapper::clearAllModelData() {
   compartments.clear();
+  compartmentNames.clear();
   membranes.clear();
   species.clear();
   reactions.clear();
@@ -344,8 +345,7 @@ void SbmlDocWrapper::importParametricGeometry() {
                  interiorPoints.back().y());
   }
 
-  // get maxBoundaryPoints and maxTriangleAreas
-  // todo: add membrane colours, indices, widths to this??
+  // get maxBoundaryPoints, maxTriangleAreas, membraneWidths
   if (parageom->isSetAnnotation()) {
     auto *node = parageom->getAnnotation();
     for (unsigned i = 0; i < node->getNumChildren(); ++i) {
@@ -360,11 +360,15 @@ void SbmlDocWrapper::importParametricGeometry() {
             child.getAttrValue("maxTriangleAreas", annotationURI));
         SPDLOG_INFO("  - maxTriangleAreas: {}",
                     utils::vectorToString(maxAreas));
+        auto membraneWidths = utils::stringToVector<double>(
+            child.getAttrValue("membraneWidths", annotationURI));
+        SPDLOG_INFO("  - membraneWidths: {}",
+                    utils::vectorToString(membraneWidths));
         // generate Mesh
         SPDLOG_INFO("  - re-generating mesh");
         mesh = std::make_shared<mesh::Mesh>(
             compartmentImage, interiorPoints, maxPoints, maxAreas,
-            vecMembraneColourPairs, pixelWidth, origin);
+            vecMembraneColourPairs, membraneWidths, pixelWidth, origin);
       }
     }
     return;
@@ -426,16 +430,34 @@ void SbmlDocWrapper::initModelData() {
   model = doc->getModel();
 
   // get list of compartments
+  compartments.clear();
+  compartmentNames.clear();
+  species.clear();
   for (unsigned int i = 0; i < model->getNumCompartments(); ++i) {
-    const auto *comp = model->getCompartment(i);
+    auto *comp = model->getCompartment(i);
+    if (comp->getName().empty()) {
+      // if compartment has no name, use Id
+      SPDLOG_INFO("Compartment with Id {} has no Name, using Id",
+                  comp->getId());
+      comp->setName(comp->getId());
+    }
     QString id = comp->getId().c_str();
-    compartments << id;
+    QString name = comp->getName().c_str();
+    SPDLOG_TRACE("compartmentID: {}", id.toStdString());
+    SPDLOG_TRACE("compartmentName: {}", name.toStdString());
+    compartments.push_back(id);
+    compartmentNames.push_back(name);
     species[id] = QStringList();
   }
 
   // get all species, make a list for each compartment
   for (unsigned int i = 0; i < model->getNumSpecies(); ++i) {
-    const auto *spec = model->getSpecies(i);
+    auto *spec = model->getSpecies(i);
+    if (spec->getName().empty()) {
+      // if species has no name, use Id
+      SPDLOG_INFO("Species with Id {} has no Name, using Id", spec->getId());
+      spec->setName(spec->getId());
+    }
     if (spec->isSetHasOnlySubstanceUnits() &&
         spec->getHasOnlySubstanceUnits()) {
       // equations expect amount, not concentration for this species
@@ -448,15 +470,19 @@ void SbmlDocWrapper::initModelData() {
       qFatal("%s", errorMessage.c_str());
     }
     const auto id = spec->getId().c_str();
-    species[spec->getCompartment().c_str()] << QString(id);
+    species[spec->getCompartment().c_str()].push_back(QString(id));
     // assign a default colour for displaying the species
     mapSpeciesIdToColour[id] = utils::indexedColours()[i];
   }
 
   // get list of functions
   for (unsigned int i = 0; i < model->getNumFunctionDefinitions(); ++i) {
-    const auto *func = model->getFunctionDefinition(i);
-    functions << QString(func->getId().c_str());
+    auto *func = model->getFunctionDefinition(i);
+    if (func->getName().empty()) {
+      SPDLOG_INFO("Function with Id {} has no Name, using Id", func->getId());
+      func->setName(func->getId());
+    }
+    functions.push_back(func->getId().c_str());
   }
 
   importTimeUnitsFromSBML(2);
@@ -474,18 +500,13 @@ void SbmlDocWrapper::initModelData() {
   plugin =
       dynamic_cast<libsbml::SpatialModelPlugin *>(model->getPlugin("spatial"));
   if (plugin == nullptr) {
-    SPDLOG_WARN("Failed to get SpatialModelPlugin from SBML document");
+    SPDLOG_ERROR("Failed to get SpatialModelPlugin from SBML document");
   }
 
   if (plugin->isSetGeometry()) {
     importSpatialData();
   } else {
     writeDefaultGeometryToSBML();
-    // if we already had a geometry image, and we loaded a model without spatial
-    // info, use this geometry image
-    if (hasGeometryImage) {
-      importGeometryFromImage(compartmentImage);
-    }
   }
 }
 
@@ -660,6 +681,7 @@ const QImage &SbmlDocWrapper::getMembraneImage(
 void SbmlDocWrapper::updateMembraneList() {
   // construct membrane list & images
   membranes.clear();
+  membraneNames.clear();
   vecMembraneColourPairs.clear();
   mapMembraneToIndex.clear();
   mapMembraneToImage.clear();
@@ -678,24 +700,28 @@ void SbmlDocWrapper::updateMembraneList() {
         std::size_t index = iter->second;
         if (!membranePairs[index].empty()) {
           // generate membrane name, compartments ordered by colour
-          QString name = compartments[i] + "_" + compartments[j];
+          QString id = compartments[i] + "_" + compartments[j];
+          QString name = compartmentNames[i] + " <-> " + compartmentNames[j];
           if (colA > colB) {
-            name = compartments[j] + "_" + compartments[i];
+            id = compartments[j] + "_" + compartments[i];
+            name = compartmentNames[j] + " <-> " + compartmentNames[i];
           }
-          membranes.push_back(name);
+          membranes.push_back(id);
+          membraneNames.push_back(name);
           // also add the colour pairs for use by the mesh for membranes
           vecMembraneColourPairs.push_back(
-              {name.toStdString(),
-               {std::min(colA, colB), std::max(colA, colB)}});
+              {id.toStdString(), {std::min(colA, colB), std::max(colA, colB)}});
           // map name to index of membrane location pairs
-          mapMembraneToIndex[name] = index;
+          mapMembraneToIndex[id] = index;
           // generate image
-          QImage img = compartmentImage.convertToFormat(QImage::Format_ARGB32);
+          QImage img = QImage(compartmentImage.size(),
+                              QImage::Format_ARGB32_Premultiplied);
+          img.fill(0);
           for (const auto &pair : membranePairs[index]) {
-            img.setPixel(pair.first, QColor(0, 155, 40, 255).rgba());
-            img.setPixel(pair.second, QColor(0, 199, 40, 255).rgba());
+            img.setPixel(pair.first, std::min(colA, colB));
+            img.setPixel(pair.second, std::max(colA, colB));
           }
-          mapMembraneToImage[name] = img;
+          mapMembraneToImage[id] = img;
           // create Membrane object
           geometry::Compartment *compA =
               &mapCompIdToGeometry.at(compartments[i]);
@@ -706,7 +732,7 @@ void SbmlDocWrapper::updateMembraneList() {
           }
           assert(mapCompartmentToColour.at(compA->compartmentID.c_str()) <
                  mapCompartmentToColour.at(compB->compartmentID.c_str()));
-          membraneVec.emplace_back(name.toStdString(), compA, compB,
+          membraneVec.emplace_back(id.toStdString(), compA, compB,
                                    membranePairs[index]);
         }
       }
@@ -718,8 +744,10 @@ void SbmlDocWrapper::updateReactionList() {
   reactions.clear();
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
     auto *reac = model->getReaction(i);
-    auto *srp = dynamic_cast<libsbml::SpatialReactionPlugin *>(
-        reac->getPlugin("spatial"));
+    if (reac->getName().empty()) {
+      SPDLOG_INFO("Reaction with Id {} has no Name, using Id", reac->getId());
+      reac->setName(reac->getId());
+    }
     QString reacID = reac->getId().c_str();
     // construct the set of compartments where reaction takes place
     std::unordered_set<std::string> comps;
@@ -736,8 +764,10 @@ void SbmlDocWrapper::updateReactionList() {
     if (comps.size() == 1) {
       QString comp = comps.begin()->c_str();
       reactions[comp] << reacID;
-      srp->setIsLocal(true);
-      reac->setCompartment(comp.toStdString());
+      // todo: this editing of the SBML should be done on import, or when the
+      // reaction is modified in the GUI, not here:
+      // srp->setIsLocal(true);
+      // reac->setCompartment(comp.toStdString());
     } else if (comps.size() == 2) {
       auto iter = comps.cbegin();
       QString compA = iter->c_str();
@@ -755,10 +785,10 @@ void SbmlDocWrapper::updateReactionList() {
       if (colA != 0 && colB != 0) {
         reactions[membraneID] << QString(reac->getId().c_str());
       }
-      srp->setIsLocal(true);
-      // todo: work out what to do with reactions on a membrane
-      // for now just setting the compartment to compA and ignoring it
-      reac->setCompartment(compA.toStdString());
+      // todo: this editing of the SBML should be done on import, or when the
+      // reaction is modified in the GUI, not here:
+      // srp->setIsLocal(true);
+      // reac->setCompartment(compA.toStdString());
     } else {
       // invalid reaction: number of compartments for reaction must be 1 or 2
       SPDLOG_ERROR("Reaction involves {} compartments - not supported",
@@ -1088,7 +1118,8 @@ void SbmlDocWrapper::updateMesh() {
   // todo: check if we should be passing non-empty vectors here:
   mesh = std::make_shared<mesh::Mesh>(
       compartmentImage, interiorPoints, std::vector<std::size_t>{},
-      std::vector<std::size_t>{}, vecMembraneColourPairs, pixelWidth, origin);
+      std::vector<std::size_t>{}, vecMembraneColourPairs, std::vector<double>{},
+      pixelWidth, origin);
 }
 
 libsbml::ParametricObject *SbmlDocWrapper::getParametricObject(
@@ -1144,6 +1175,10 @@ void SbmlDocWrapper::writeMeshParamsAnnotation(
   xml.append(annotationPrefix);
   xml.append(":maxTriangleAreas=\"");
   xml.append(utils::vectorToString(mesh->getCompartmentMaxTriangleArea()));
+  xml.append("\" ");
+  xml.append(annotationPrefix);
+  xml.append(":membraneWidths=\"");
+  xml.append(utils::vectorToString(mesh->getBoundaryWidths()));
   xml.append("\"/>");
   pg->appendAnnotation(xml);
   SPDLOG_INFO("appending annotation: {}", xml);
@@ -1484,6 +1519,14 @@ bool SbmlDocWrapper::getIsSpeciesConstant(const std::string &speciesID) const {
   return false;
 }
 
+QString SbmlDocWrapper::getSpeciesName(const QString &speciesID) const {
+  return model->getSpecies(speciesID.toStdString())->getName().c_str();
+}
+
+QString SbmlDocWrapper::getReactionName(const QString &reactionID) const {
+  return model->getReaction(reactionID.toStdString())->getName().c_str();
+}
+
 bool SbmlDocWrapper::isSpeciesReactive(const std::string &speciesID) const {
   // true if this species should have a PDE generated for it
   // by the Reactions that involve it
@@ -1707,7 +1750,9 @@ Reac SbmlDocWrapper::getReaction(const QString &reactionID) const {
     return {};
   }
   r.ID = reac->getId();
-  r.expression = inlineExpr(kin->getFormula());
+  r.Name = reac->getName();
+  r.fullExpression = kin->getFormula();
+  r.inlinedExpression = inlineExpr(kin->getFormula());
   r.products.reserve(reac->getNumProducts());
   for (unsigned k = 0; k < reac->getNumProducts(); ++k) {
     const auto *s = reac->getProduct(k);
@@ -1721,16 +1766,10 @@ Reac SbmlDocWrapper::getReaction(const QString &reactionID) const {
 
   // todo: modifiers??
 
-  // add all local parameters that are not replaced
-  // by an assignment rule
+  // add all local parameters that are not
+  // replaced by an assignment rule
   for (unsigned k = 0; k < kin->getNumLocalParameters(); ++k) {
     const auto *param = kin->getLocalParameter(k);
-    if (model->getAssignmentRule(param->getId()) == nullptr) {
-      r.constants.push_back({param->getId(), param->getValue()});
-    }
-  }
-  for (unsigned k = 0; k < kin->getNumParameters(); ++k) {
-    const auto *param = kin->getParameter(k);
     if (model->getAssignmentRule(param->getId()) == nullptr) {
       r.constants.push_back({param->getId(), param->getValue()});
     }
@@ -1754,6 +1793,7 @@ Func SbmlDocWrapper::getFunctionDefinition(const QString &functionID) const {
     return {};
   }
   f.ID = func->getId();
+  f.Name = func->getName();
   f.expression = ASTtoString(func->getBody());
   f.arguments.reserve(func->getNumArguments());
   for (unsigned i = 0; i < func->getNumArguments(); ++i) {

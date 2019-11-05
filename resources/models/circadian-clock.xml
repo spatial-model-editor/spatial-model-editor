@@ -3269,7 +3269,7 @@
         </spatial:sampledFieldGeometry>
         <spatial:parametricGeometry spatial:id="parametricGeometry" spatial:isActive="true">
           <annotation>
-            <SpatialModelEditor:mesh xmlns:SpatialModelEditor="https://github.com/lkeegan/spatial-model-editor" SpatialModelEditor:maxBoundaryPoints="12 16" SpatialModelEditor:maxTriangleAreas="90"/>
+            <spatialModelEditor:mesh xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:maxBoundaryPoints="12 16" spatialModelEditor:maxTriangleAreas="90" spatialModelEditor:membraneWidths="1.0 1.0"/>
           </annotation>
           <spatial:spatialPoints spatial:id="spatialPoints" spatial:compression="uncompressed" spatial:arrayDataLength="66" spatial:dataType="double">17 45 17 57 22 69 30 77 42 82 54 82 66 77 74 69 79 57 79 45 74 33 66 25 54 20 42 20 30 25 22 33 47.5508709145473 50.5508709145473 36.6409481121682 62.3590518878318 36.4042207610453 39.4042207610453 59.3590518878318 39.6409481121682 59.1317967205346 62.1317967205346 26.7372694866129 59.9844710472446 34.1504815691894 50.9060992196476 39.0155289527554 72.2627305133871 47.9131230361216 64.8928630691097 38.9733976312956 29.6361543151094 47.9055126057163 37.2073639854625 26.6361543151094 41.9733976312956 69.2627305133871 42.0155289527554 61.8928630691097 50.9131230361216 56.9844710472446 29.7372694866129 56.9430470061471 72.163312814753 69.163312814753 59.9430470061471 </spatial:spatialPoints>
           <spatial:listOfParametricObjects>

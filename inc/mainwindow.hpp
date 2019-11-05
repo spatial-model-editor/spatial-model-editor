@@ -106,12 +106,12 @@ class MainWindow : public QMainWindow {
 
   void generateMesh(int value = 0);
 
-  void listCompartments_currentTextChanged(const QString &currentText);
+  void listCompartments_currentRowChanged(int currentRow);
 
   void listCompartments_itemDoubleClicked(QListWidgetItem *item);
 
   // membranes
-  void listMembranes_currentTextChanged(const QString &currentText);
+  void listMembranes_currentRowChanged(int currentRow);
 
   // species
   void listSpecies_currentItemChanged(QTreeWidgetItem *current,

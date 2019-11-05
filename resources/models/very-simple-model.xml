@@ -20,13 +20,13 @@
       </unitDefinition>
     </listOfUnitDefinitions>
     <listOfCompartments>
-      <compartment id="c1" name="c1" spatialDimensions="2" size="10" units="area" constant="true">
+      <compartment id="c1" name="Outside" spatialDimensions="2" size="10" units="area" constant="true">
         <spatial:compartmentMapping spatial:id="c1_compartmentMapping" spatial:domainType="c1_domainType" spatial:unitSize="1"/>
       </compartment>
-      <compartment id="c2" name="c2" spatialDimensions="2" size="1" units="area" constant="true">
+      <compartment id="c2" name="Cell" spatialDimensions="2" size="1" units="area" constant="true">
         <spatial:compartmentMapping spatial:id="c2_compartmentMapping" spatial:domainType="c2_domainType" spatial:unitSize="1"/>
       </compartment>
-      <compartment id="c3" name="c3" spatialDimensions="2" size="0.2" units="area" constant="true">
+      <compartment id="c3" name="Nucleus" spatialDimensions="2" size="0.2" units="area" constant="true">
         <spatial:compartmentMapping spatial:id="c3_compartmentMapping" spatial:domainType="c3_domainType" spatial:unitSize="1"/>
       </compartment>
     </listOfCompartments>
@@ -65,7 +65,7 @@
       </parameter>
     </listOfParameters>
     <listOfReactions>
-      <reaction id="A_uptake" name="A_uptake" reversible="false" compartment="c1" spatial:isLocal="true">
+      <reaction id="A_uptake" name="A uptake from outside" reversible="false" compartment="c1" spatial:isLocal="true">
         <listOfReactants>
           <speciesReference species="A_c1" stoichiometry="1" constant="true"/>
         </listOfReactants>
@@ -85,7 +85,7 @@
           </listOfLocalParameters>
         </kineticLaw>
       </reaction>
-      <reaction id="A_transport" name="A_transport" reversible="true" compartment="c2" spatial:isLocal="true">
+      <reaction id="A_transport" name="A internal transport" reversible="true" compartment="c2" spatial:isLocal="true">
         <listOfReactants>
           <speciesReference species="A_c2" stoichiometry="1" constant="true"/>
         </listOfReactants>
@@ -114,7 +114,7 @@
           </listOfLocalParameters>
         </kineticLaw>
       </reaction>
-      <reaction id="A_B_conversion" name="A_B_conversion" reversible="false" compartment="c3" spatial:isLocal="true">
+      <reaction id="A_B_conversion" name="A to B conversion" reversible="false" compartment="c3" spatial:isLocal="true">
         <listOfReactants>
           <speciesReference species="A_c3" stoichiometry="1" constant="true"/>
         </listOfReactants>
@@ -135,7 +135,7 @@
           </listOfLocalParameters>
         </kineticLaw>
       </reaction>
-      <reaction id="B_transport" name="B_transport" reversible="false" compartment="c3" spatial:isLocal="true">
+      <reaction id="B_transport" name="B internal transport" reversible="false" compartment="c3" spatial:isLocal="true">
         <listOfReactants>
           <speciesReference species="B_c3" stoichiometry="1" constant="true"/>
         </listOfReactants>
@@ -155,7 +155,7 @@
           </listOfLocalParameters>
         </kineticLaw>
       </reaction>
-      <reaction id="B_excretion" name="B_excretion" reversible="false" compartment="c2" spatial:isLocal="true">
+      <reaction id="B_excretion" name="B excretion to outside" reversible="false" compartment="c2" spatial:isLocal="true">
         <listOfReactants>
           <speciesReference species="B_c2" stoichiometry="1" constant="true"/>
         </listOfReactants>
@@ -219,7 +219,7 @@
         </spatial:sampledFieldGeometry>
         <spatial:parametricGeometry spatial:id="parametricGeometry" spatial:isActive="true">
           <annotation>
-            <spatialModelEditor:mesh xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:maxBoundaryPoints="4 30 15" spatialModelEditor:maxTriangleAreas="120 32 8"/>
+            <spatialModelEditor:mesh xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:maxBoundaryPoints="4 30 15" spatialModelEditor:maxTriangleAreas="120 32 8" spatialModelEditor:membraneWidths="1.0 3.0 2.0"/>
           </annotation>
           <spatial:spatialPoints spatial:id="spatialPoints" spatial:compression="uncompressed" spatial:arrayDataLength="394" spatial:dataType="double">0 0 0 99 99 99 99 0 10 51 10 62 11 66 20 81 27 88 33 91 43 91 48 89 51 83 53 71 59 65 66 64 76 69 80 68 87 63 88 52 86 43 82 36 77 30 75 23 65 13 55 8 51 8 36 14 28 14 19 17 15 21 15 30 15 39 12 44 28 52 30 57 33 60 38 61 41 60 44 57 48 56 51 53 52 46 50 38 47 35 40 33 37 34 32 39 30 43 0 49.5 49.5 99 99 49.5 49.5 0 24.75 99 35.8061411356816 25.4184234070448 37 53 42.1938588643184 68.5815765929552 41.1938588643184 41.5815765929552 38.3 56.9 39.8005275951307 37.401582785392 53 18.7754354572737 23.5 37.25 20.5 61.5 0 74.25 44.1666666666667 49.1666666666667 54.4 59.4 74.25 99 75.3333333333333 57.8333333333333 34.0454545454545 55.9545454545455 47.4732776314446 63.4732776314446 45.484831241679 39.515168758321 35.7332536973796 43.3666268486898 35.84375 58.78125 41.2058823529412 53.7647058823529 41.1465517241379 57.1465517241379 43.115288299619 35.3464909513336 45.2127342738544 36.9120511130777 35.8228113737855 37.8228113737855 38.095469173891 40.2921543744515 34.5777598423802 40.5753292823476 55.922196902779 29.077803097221 27.0178571428571 62.9821428571429 0 61.875 47.0442708333333 52.0442708333333 31.2764302906869 53.5894278837252 30.8607421424181 50.2746093649818 29 47.5 33.1581282478773 46.7226670654192 33.9605337481027 51.5693597615883 42.5076916320466 38.8214135550662 39.7904592515472 49.601003528255 4.95689655172414 65.385775862069 45.5025217128408 54.5100868513632 48.2400173611111 47.9709201388889 20.0625 47.875 30.7844610865968 45.5354357970215 42.1509753666929 51.1209947154064 39.3403802662679 52.0764379472913 36.9823850243457 46.9910793560512 36.5571387471763 49.9968120939812 39.0449884412799 44.2527471395012 43.011965291639 45.2441181824947 51 42 51.5 49.5 61.1785060251144 49.0969294321592 56.4514723013569 51.9930674716224 41.8142158304224 47.7279380580691 44.2141031142881 42.3648401778196 45.6270225901674 46.605541935763 48.4253477891872 44.4332431174773 47.9668114120874 41.3692974388949 59.3586472680109 37.7853381829973 0 24.75 23.5 25.5 42.5 82.5 33.9632563230295 68.1837183848523 62.6744866108577 56.8444131700673 12.375 0 80.6938588643184 79.2754354572736 22.6510048017915 74.3462477442164 33.6603773584906 82.1792452830189 0 37.125 24.75 0 99 24.75 64.1666666666667 76.1666666666667 32 19.6429464407393 45.9590472720349 25.3933345478777 47.761864351317 69.0538164290084 48.0356287215324 76.3392714535887 66.4749883970216 29.2214318865653 14.7634797955209 48.5752799415774 18.2755195520806 54.7519041886947 29.2840909090909 31.2840909090909 69.4587788201878 51.5162444483671 68.9297745362155 58.2878569557135 72.525040036639 63.6042264654743 87.0385638297872 23.3461246200608 25.826429101975 19.7799070399033 44.5261928559686 30.40832500411 71.8805380346028 27.6769891329706 23.9977203973411 56.6062986166089 15.1440416816791 59.5248753152614 71.0900379904566 40.0083016746195 70.7044428546105 33.792589245562 76.0227012431785 36.5824846818263 65.5396540609377 37.2328062738326 77.9263421928754 44.5874990282053 65.6257846865795 43.998088679525 18.5036764705882 34.5 80.6700470311581 61.5380658436214 81.5253543629601 54.6098170929039 87.5 57.5 99 74.25 99 61.875 82.8207715655784 48.4872718018205 53.1076534923522 65.1285099042494 20.0481638090825 42.0017956441149 54.60448032082 34.6297126036986 18.0588235294118 25.5 38 87.0294117647059 27.7183983035522 69.2844527425613 31.9702368293014 75.1416279684081 26.9616971743205 80.0662282345579 15.5 73.5 93.0981326219512 34.3010670731707 40.9843115858776 75.5707596059256 61.1592140220326 32.0428706559327 29.5705539673901 25.2135369417008 72.021724239751 46.00995633854 76.3057794285397 50.8268040176057 23.433925060998 31.3501658480929 74.25 0 43.5 11 49.025893499669 13.9397337491724 43.0650498132351 18.4810363893563 47.9774653175206 20.4863065987816 40.8777826683219 23.4587570159756 37.4274081123256 19.2509898910092 58.1692220147528 14.1615559704943 62.908795027812 21.3679249544613 70 18 68.2050720009044 23.3700278720195 81.3506025078815 11.6493974921185 57.8434667778536 43.8312961936029 19.7493553595546 68.2288980664811 16.0051410049249 64.6396172965019 57.1449837400021 23.165353367129 9.07638888888889 11.0763888888889 37.125 0 61.6346153846154 92.0673076923077 86.625 0 72.3726309541547 87.4718173419329 12.375 92.6388888888889 0 86.625 92.5543412590868 86.625 86.625 99 99 12.375 </spatial:spatialPoints>
           <spatial:listOfParametricObjects>

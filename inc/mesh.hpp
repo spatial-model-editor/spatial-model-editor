@@ -53,6 +53,7 @@ class Mesh {
                 const std::vector<std::size_t>& maxTriangleArea = {},
                 const std::vector<std::pair<std::string, ColourPair>>&
                     membraneColourPairs = {},
+                const std::vector<double>& membraneWidths = {},
                 double pixelWidth = 1.0,
                 const QPointF& originPoint = QPointF(0, 0));
   // constructor to load existing vertices&trianges without image
@@ -67,6 +68,7 @@ class Mesh {
   std::size_t getBoundaryMaxPoints(std::size_t boundaryIndex) const;
   void setBoundaryWidth(std::size_t boundaryIndex, double width);
   double getBoundaryWidth(std::size_t boundaryIndex) const;
+  std::vector<double> getBoundaryWidths() const;
   double getMembraneWidth(const std::string& membraneID) const;
   std::vector<std::size_t> getBoundaryMaxPoints() const;
   void setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
