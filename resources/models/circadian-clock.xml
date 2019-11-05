@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" xmlns:spatial="http://www.sbml.org/sbml/level3/version1/spatial/version1" level="3" version="2" spatial:required="true">
-  <model metaid="COPASI0" id="Circadian_Clock" name="Circadian Clock" substanceUnits="substance" timeUnits="time" volumeUnits="volume" areaUnits="area" lengthUnits="metre" extentUnits="substance">
+  <model metaid="COPASI0" id="Circadian_Clock" name="Circadian Clock" substanceUnits="substance" timeUnits="time" volumeUnits="volume" areaUnits="area" lengthUnits="unit_of_length" extentUnits="substance">
     <notes>
       <html xmlns="http://www.w3.org/1999/xhtml">
         <head>
@@ -1872,24 +1872,29 @@
       </functionDefinition>
     </listOfFunctionDefinitions>
     <listOfUnitDefinitions>
-      <unitDefinition id="time" name="time">
+      <unitDefinition id="time" name="hour">
         <listOfUnits>
           <unit kind="second" exponent="1" scale="0" multiplier="3600"/>
         </listOfUnits>
       </unitDefinition>
-      <unitDefinition id="substance" name="substance">
+      <unitDefinition id="substance" name="millimole">
         <listOfUnits>
-          <unit kind="mole" exponent="1" scale="-9" multiplier="1"/>
+          <unit kind="mole" exponent="1" scale="-3" multiplier="1"/>
         </listOfUnits>
       </unitDefinition>
-      <unitDefinition id="volume">
+      <unitDefinition id="volume" name="litre">
         <listOfUnits>
           <unit kind="litre" exponent="1" scale="0" multiplier="1"/>
         </listOfUnits>
       </unitDefinition>
-      <unitDefinition id="area">
+      <unitDefinition id="area" name="metre squared">
         <listOfUnits>
           <unit kind="metre" exponent="2" scale="0" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="unit_of_length" name="metre">
+        <listOfUnits>
+          <unit kind="metre" exponent="1" scale="0" multiplier="1"/>
         </listOfUnits>
       </unitDefinition>
     </listOfUnitDefinitions>
@@ -3269,7 +3274,7 @@
         </spatial:sampledFieldGeometry>
         <spatial:parametricGeometry spatial:id="parametricGeometry" spatial:isActive="true">
           <annotation>
-            <spatialModelEditor:mesh xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:maxBoundaryPoints="12 16" spatialModelEditor:maxTriangleAreas="90" spatialModelEditor:membraneWidths="1.0 1.0"/>
+            <spatialModelEditor:mesh xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:maxBoundaryPoints="12 16" spatialModelEditor:maxTriangleAreas="90" spatialModelEditor:membraneWidths="1.00000000000000000e+00 1.00000000000000000e+00"/>
           </annotation>
           <spatial:spatialPoints spatial:id="spatialPoints" spatial:compression="uncompressed" spatial:arrayDataLength="66" spatial:dataType="double">17 45 17 57 22 69 30 77 42 82 54 82 66 77 74 69 79 57 79 45 74 33 66 25 54 20 42 20 30 25 22 33 47.5508709145473 50.5508709145473 36.6409481121682 62.3590518878318 36.4042207610453 39.4042207610453 59.3590518878318 39.6409481121682 59.1317967205346 62.1317967205346 26.7372694866129 59.9844710472446 34.1504815691894 50.9060992196476 39.0155289527554 72.2627305133871 47.9131230361216 64.8928630691097 38.9733976312956 29.6361543151094 47.9055126057163 37.2073639854625 26.6361543151094 41.9733976312956 69.2627305133871 42.0155289527554 61.8928630691097 50.9131230361216 56.9844710472446 29.7372694866129 56.9430470061471 72.163312814753 69.163312814753 59.9430470061471 </spatial:spatialPoints>
           <spatial:listOfParametricObjects>

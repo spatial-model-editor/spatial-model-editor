@@ -32,6 +32,7 @@ int QLabelMouseTracker::getMaskIndex() const { return maskIndex; }
 
 void QLabelMouseTracker::mouseMoveEvent(QMouseEvent *ev) {
   setCurrentPixel(ev);
+  emit mouseOver(currentPixel);
 }
 
 void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {

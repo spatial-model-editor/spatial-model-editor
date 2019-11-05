@@ -246,6 +246,7 @@ class SbmlDocWrapper {
 
   double getPixelWidth() const;
   void setPixelWidth(double width);
+  const QPointF &getOrigin() const;
   void setCompartmentSizeFromImage(const std::string &compartmentID);
 
   std::string inlineExpr(const std::string &mathExpression) const;

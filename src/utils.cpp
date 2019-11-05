@@ -26,28 +26,21 @@ const QColor &indexedColours::operator[](std::size_t i) const {
 
 constexpr std::size_t NULL_INDEX = std::numeric_limits<std::size_t>::max();
 
-bool QPointIndexer::validQPoint(const QPoint &point) const {
+QPointFlattener::QPointFlattener(const QSize &boundingBox) : box(boundingBox) {}
+
+bool QPointFlattener::isValid(const QPoint &point) const {
   bool xInside = (point.x() >= 0) && (point.x() < box.width());
   bool yInside = (point.y() >= 0) && (point.y() < box.height());
   return xInside && yInside;
 }
 
-std::size_t QPointIndexer::flattenQPoint(const QPoint &point) const {
+std::size_t QPointFlattener::flatten(const QPoint &point) const {
   return static_cast<std::size_t>(point.x() * box.height() + point.y());
-}
-
-void QPointIndexer::addPoints(const std::vector<QPoint> &qPoints) {
-  for (const auto &point : qPoints) {
-    if (!validQPoint(point)) {
-      throw std::invalid_argument("invalid point: not within bounding box");
-    }
-    pointIndex[flattenQPoint(point)] = nPoints++;
-  }
 }
 
 QPointIndexer::QPointIndexer(const QSize &boundingBox,
                              const std::vector<QPoint> &qPoints)
-    : box(boundingBox),
+    : flattener(boundingBox),
       nPoints(0),
       pointIndex(
           static_cast<std::size_t>(boundingBox.width() * boundingBox.height()),
@@ -55,11 +48,20 @@ QPointIndexer::QPointIndexer(const QSize &boundingBox,
   addPoints(qPoints);
 }
 
+void QPointIndexer::addPoints(const std::vector<QPoint> &qPoints) {
+  for (const auto &point : qPoints) {
+    if (!flattener.isValid(point)) {
+      throw std::invalid_argument("invalid point: not within bounding box");
+    }
+    pointIndex[flattener.flatten(point)] = nPoints++;
+  }
+}
+
 std::optional<std::size_t> QPointIndexer::getIndex(const QPoint &point) const {
-  if (!validQPoint(point)) {
+  if (!flattener.isValid(point)) {
     return {};
   }
-  auto index = pointIndex[flattenQPoint(point)];
+  auto index = pointIndex[flattener.flatten(point)];
   if (index == NULL_INDEX) {
     return {};
   }
@@ -68,22 +70,38 @@ std::optional<std::size_t> QPointIndexer::getIndex(const QPoint &point) const {
 
 QPointUniqueIndexer::QPointUniqueIndexer(const QSize &boundingBox,
                                          const std::vector<QPoint> &qPoints)
-    : QPointIndexer(boundingBox) {
+    : flattener(boundingBox),
+      nPoints(0),
+      pointIndex(
+          static_cast<std::size_t>(boundingBox.width() * boundingBox.height()),
+          NULL_INDEX) {
   addPoints(qPoints);
 }
 
 void QPointUniqueIndexer::addPoints(const std::vector<QPoint> &qPoints) {
   // add only unique points to vector & index
   for (const auto &point : qPoints) {
-    if (!validQPoint(point)) {
+    if (!flattener.isValid(point)) {
       throw std::invalid_argument("invalid point: not within bounding box");
     }
-    auto existingIndex = pointIndex[flattenQPoint(point)];
+    auto existingIndex = pointIndex[flattener.flatten(point)];
     if (existingIndex == NULL_INDEX) {
-      pointIndex[flattenQPoint(point)] = nPoints++;
+      pointIndex[flattener.flatten(point)] = nPoints++;
       points.push_back(point);
     }
   }
+}
+
+std::optional<std::size_t> QPointUniqueIndexer::getIndex(
+    const QPoint &point) const {
+  if (!flattener.isValid(point)) {
+    return {};
+  }
+  auto index = pointIndex[flattener.flatten(point)];
+  if (index == NULL_INDEX) {
+    return {};
+  }
+  return index;
 }
 
 std::vector<QPoint> QPointUniqueIndexer::getPoints() const { return points; }

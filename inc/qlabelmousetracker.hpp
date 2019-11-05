@@ -28,8 +28,8 @@ class QLabelMouseTracker : public QLabel {
   int getMaskIndex() const;
 
  signals:
-  // user clicks somewhere on the image
   void mouseClicked(QRgb col, QPoint point);
+  void mouseOver(QPoint point);
   void mouseWheelEvent(QWheelEvent *ev);
 
  protected:

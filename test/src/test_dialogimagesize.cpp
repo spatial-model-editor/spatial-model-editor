@@ -16,12 +16,12 @@ SCENARIO("set size of image", "[dialogimagesize][gui]") {
     f.open(QIODevice::ReadOnly);
     doc.importSBMLString(f.readAll().toStdString());
     auto lengthUnits = doc.modelUnits.length;
-    lengthUnits.index = 0;
-    REQUIRE(lengthUnits.units[0].scale == 0);
-    REQUIRE(lengthUnits.units[1].scale == -1);
-    REQUIRE(lengthUnits.units[2].scale == -2);
-    REQUIRE(lengthUnits.units[3].scale == -3);
-    REQUIRE(lengthUnits.units[4].scale == -6);
+    lengthUnits.setIndex(0);
+    REQUIRE(lengthUnits.getUnits()[0].scale == 0);
+    REQUIRE(lengthUnits.getUnits()[1].scale == -1);
+    REQUIRE(lengthUnits.getUnits()[2].scale == -2);
+    REQUIRE(lengthUnits.getUnits()[3].scale == -3);
+    REQUIRE(lengthUnits.getUnits()[4].scale == -6);
     QImage img(100, 50, QImage::Format_ARGB32_Premultiplied);
     img.fill(0xFFFFFFFF);
     DialogImageSize dim(img, 1.0, lengthUnits);
@@ -67,7 +67,7 @@ SCENARIO("set size of image", "[dialogimagesize][gui]") {
       REQUIRE(dim.getPixelWidth() == dbl_approx(0.0000002));
     }
     WHEN("default units changed to mm, user sets width = 1, units = m") {
-      lengthUnits.index = 3;  // mm
+      lengthUnits.setIndex(3);  // mm
       DialogImageSize dim2(img, 22.0, lengthUnits);
       REQUIRE(dim2.getPixelWidth() == dbl_approx(22.0));
       mwt.setKeySeq({"1", "Tab", "Up", "Up", "Up", "Up", "Up", "Up"});
