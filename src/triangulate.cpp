@@ -1,7 +1,5 @@
 #include "triangulate.hpp"
 
-#include <set>
-
 #include "logger.hpp"
 #include "triangle/triangle.hpp"
 

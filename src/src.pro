@@ -28,6 +28,7 @@ SOURCES += \
     $$TOPDIR/src/symbolic.cpp \
     $$TOPDIR/src/tiff.cpp \
     $$TOPDIR/src/triangulate.cpp \
+    $$TOPDIR/src/units.cpp \
     $$TOPDIR/src/utils.cpp \
     $$TOPDIR/src/version.cpp \
 

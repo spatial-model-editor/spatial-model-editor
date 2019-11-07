@@ -18,7 +18,7 @@ SCENARIO("simple expression", "[dialoganalytic][gui]") {
     auto compartmentPoints = std::vector<QPoint>{
         QPoint(5, 5), QPoint(5, 6), QPoint(5, 7), QPoint(6, 6), QPoint(6, 7)};
     DialogAnalytic dia("x", QSize(100, 100), compartmentPoints,
-                       QPointF(0.0, 0.0), 1, doc.modelUnits);
+                       QPointF(0.0, 0.0), 1, doc.getModelUnits());
     REQUIRE(dia.getExpression() == "x");
     ModalWidgetTimer mwt;
     ModalWidgetTimer mwt2;

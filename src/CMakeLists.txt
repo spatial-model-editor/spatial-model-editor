@@ -16,6 +16,7 @@ set(SRC_LIST
     symbolic.cpp
     tiff.cpp
     triangulate.cpp
+    units.cpp
     utils.cpp
     ${PROJECT_BINARY_DIR}/src/version.cpp)
 

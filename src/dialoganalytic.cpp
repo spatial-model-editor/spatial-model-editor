@@ -24,10 +24,10 @@ DialogAnalytic::DialogAnalytic(const QString& analyticExpression,
       qpi(imageSize, imagePoints) {
   ui->setupUi(this);
 
-  lengthUnit = modelUnits.length.get().symbol;
+  lengthUnit = modelUnits.getLength().symbol;
   concentrationUnit = QString("%1/%2")
-                          .arg(modelUnits.amount.get().symbol)
-                          .arg(modelUnits.volume.get().symbol);
+                          .arg(modelUnits.getAmount().symbol)
+                          .arg(modelUnits.getVolume().symbol);
   img = QImage(imageSize, QImage::Format_ARGB32_Premultiplied);
   img.fill(0);
   concentration.resize(points.size(), 0.0);

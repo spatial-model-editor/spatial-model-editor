@@ -562,16 +562,20 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   QTest::mouseClick(ui.chkSpeciesIsSpatial, Qt::LeftButton,
                     Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
   REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
+  REQUIRE(ui.chkSpeciesIsConstant->isChecked() == true);
   QTest::mouseClick(ui.chkSpeciesIsSpatial, Qt::LeftButton,
                     Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
   REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == true);
+  REQUIRE(ui.chkSpeciesIsConstant->isChecked() == false);
   // toggle is constant checkbox
   QTest::mouseClick(ui.chkSpeciesIsConstant, Qt::LeftButton,
                     Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
-  REQUIRE(ui.chkSpeciesIsConstant->isChecked() == false);
+  REQUIRE(ui.chkSpeciesIsConstant->isChecked() == true);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
   QTest::mouseClick(ui.chkSpeciesIsConstant, Qt::LeftButton,
                     Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
-  REQUIRE(ui.chkSpeciesIsConstant->isChecked() == true);
+  REQUIRE(ui.chkSpeciesIsConstant->isChecked() == false);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
   // select second item in listSpecies
   QTest::keyClick(ui.listSpecies, Qt::Key_Down, Qt::ControlModifier, key_delay);
   REQUIRE(ui.chkSpeciesIsConstant->isChecked() == false);
@@ -580,6 +584,7 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   QTest::mouseClick(ui.chkSpeciesIsSpatial, Qt::LeftButton,
                     Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
   REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
+  REQUIRE(ui.chkSpeciesIsConstant->isChecked() == false);
   QTest::mouseClick(ui.chkSpeciesIsSpatial, Qt::LeftButton,
                     Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
   REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == true);

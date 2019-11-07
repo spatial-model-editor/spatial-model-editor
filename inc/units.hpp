@@ -4,7 +4,6 @@
 
 #include <QString>
 #include <QVector>
-#include <cmath>
 
 namespace units {
 
@@ -26,43 +25,51 @@ class UnitVector {
   int index = 0;
 
  public:
-  explicit UnitVector(const QVector<Unit>& unitsVec = {}) : units(unitsVec) {}
-  inline const Unit& get() const { return units.at(index); }
-  inline const QVector<Unit>& getUnits() const { return units; }
-  inline int getIndex() const { return index; }
-  inline void setIndex(int newIndex) { index = newIndex; }
+  explicit UnitVector(const QVector<Unit>& unitsVec = {});
+  const Unit& get() const;
+  const QVector<Unit>& getUnits() const;
+  int getIndex() const;
+  void setIndex(int newIndex);
 };
 
-struct ModelUnits {
+class ModelUnits {
+ private:
   UnitVector time;
   UnitVector length;
   UnitVector volume;
   UnitVector amount;
+  QString concentration;
+  QString diffusion;
+  void updateConcentration();
+  void updateDiffusion();
+
+ public:
+  ModelUnits(const UnitVector& timeUnits, const UnitVector& lengthUnits,
+             const UnitVector& volumeUnits, const UnitVector& amountUnits);
+  const Unit& getTime() const;
+  int getTimeIndex() const;
+  const QVector<Unit>& getTimeUnits() const;
+  void setTime(int index);
+  const Unit& getLength() const;
+  int getLengthIndex() const;
+  const QVector<Unit>& getLengthUnits() const;
+  void setLength(int index);
+  const Unit& getVolume() const;
+  int getVolumeIndex() const;
+  const QVector<Unit>& getVolumeUnits() const;
+  void setVolume(int index);
+  const Unit& getAmount() const;
+  int getAmountIndex() const;
+  const QVector<Unit>& getAmountUnits() const;
+  void setAmount(int index);
+  const QString& getConcentration() const;
+  const QString& getDiffusion() const;
 };
 
-inline double rescale(double val, const Unit& oldUnit, const Unit& newUnit) {
-  // rescale units, assuming same base unit & same exponent
-  // e.g. m -> cm, or mol -> mmol
-  return (oldUnit.multiplier / newUnit.multiplier) *
-         std::pow(10, oldUnit.scale - newUnit.scale) * val;
-}
+double rescale(double val, const Unit& oldUnit, const Unit& newUnit);
 
 // convert pixel width to pixel volume (with unit length in third dimension)
-inline double pixelWidthToVolume(double width, const Unit& lengthUnit,
-                                 const Unit& volumeUnit) {
-  // assume base unit of length is always metre
-  // length^3 unit in m^3:
-  double l3 = std::pow(lengthUnit.multiplier * std::pow(10, lengthUnit.scale),
-                       3 * lengthUnit.exponent);
-  // volume unit in base volume unit:
-  double v = std::pow(volumeUnit.multiplier * std::pow(10, volumeUnit.scale),
-                      volumeUnit.exponent);
-  // if base volume unit is litre, not m^3, need to should convert l3 from m^3
-  // to litre, i.e. multiply by 1e3
-  if (volumeUnit.kind == "litre") {
-    l3 *= 1000;
-  }
-  return width * width * l3 / v;
-}
+double pixelWidthToVolume(double width, const Unit& lengthUnit,
+                          const Unit& volumeUnit);
 
 }  // namespace units

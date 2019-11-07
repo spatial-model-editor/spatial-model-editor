@@ -5,22 +5,22 @@
 static QString dblToString(double val) { return QString::number(val, 'g', 14); }
 
 DialogImageSize::DialogImageSize(const QImage& image, double pixelWidth,
-                                 const units::UnitVector& lengthUnits,
+                                 const units::ModelUnits& modelUnits,
                                  QWidget* parent)
     : QDialog(parent),
       ui(new Ui::DialogImageSize),
       img(image),
       pixelModelUnits(pixelWidth),
-      length(lengthUnits) {
+      units(modelUnits) {
   ui->setupUi(this);
 
   ui->lblImage->setImage(img);
 
   for (auto* cmb : {ui->cmbUnitsWidth, ui->cmbUnitsHeight}) {
-    for (const auto& u : length.getUnits()) {
+    for (const auto& u : units.getLengthUnits()) {
       cmb->addItem(u.symbol);
     }
-    cmb->setCurrentIndex(length.getIndex());
+    cmb->setCurrentIndex(units.getLengthIndex());
   }
   modelUnitSymbol = ui->cmbUnitsWidth->currentText();
   pixelLocalUnits = pixelModelUnits;
@@ -62,8 +62,9 @@ void DialogImageSize::updateAll() {
   ui->txtImageHeight->setText(dblToString(h));
   // calculate pixel width in model units
   pixelModelUnits = units::rescale(
-      pixelLocalUnits, length.getUnits().at(ui->cmbUnitsWidth->currentIndex()),
-      length.get());
+      pixelLocalUnits,
+      units.getLengthUnits().at(ui->cmbUnitsWidth->currentIndex()),
+      units.getLength());
   ui->lblPixelSize->setText(
       QString("%1 %2").arg(pixelModelUnits).arg(modelUnitSymbol));
 }

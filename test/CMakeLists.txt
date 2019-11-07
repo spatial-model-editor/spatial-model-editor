@@ -14,6 +14,7 @@ set(SRC_LIST
     src/test_sbml.cpp
     src/test_simulate.cpp
     src/test_symbolic.cpp
+    src/test_units.cpp
     src/test_utils.cpp)
 
 add_executable(tests ${SRC_LIST} inc/qt_test_utils.hpp
