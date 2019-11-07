@@ -84,13 +84,21 @@ class indexedColours {
   const QColor &operator[](std::size_t i) const;
 };
 
-class QPointIndexer {
- protected:
+class QPointFlattener {
+ private:
   QSize box;
+
+ public:
+  explicit QPointFlattener(const QSize &boundingBox);
+  bool isValid(const QPoint &point) const;
+  std::size_t flatten(const QPoint &point) const;
+};
+
+class QPointIndexer {
+ private:
+  QPointFlattener flattener;
   std::size_t nPoints;
   std::vector<std::size_t> pointIndex;
-  bool validQPoint(const QPoint &point) const;
-  std::size_t flattenQPoint(const QPoint &point) const;
 
  public:
   explicit QPointIndexer(const QSize &boundingBox,
@@ -99,15 +107,18 @@ class QPointIndexer {
   std::optional<std::size_t> getIndex(const QPoint &point) const;
 };
 
-class QPointUniqueIndexer : public QPointIndexer {
- protected:
+class QPointUniqueIndexer {
+ private:
+  QPointFlattener flattener;
+  std::size_t nPoints;
+  std::vector<std::size_t> pointIndex;
   std::vector<QPoint> points;
-  void init(const std::vector<QPoint> &qPoints);
 
  public:
   explicit QPointUniqueIndexer(const QSize &boundingBox,
                                const std::vector<QPoint> &qPoints = {});
   void addPoints(const std::vector<QPoint> &qPoints);
+  std::optional<std::size_t> getIndex(const QPoint &point) const;
   std::vector<QPoint> getPoints() const;
 };
 

@@ -58,25 +58,28 @@ void SbmlDocWrapper::clearAllGeometryData() {
 }
 
 SbmlDocWrapper::SbmlDocWrapper() : mesh(std::make_shared<mesh::Mesh>()) {
-  modelUnits.time.units = {{"hour", "h", "second", 0, 1, 3600},
-                           {"minute", "m", "second", 0, 1, 60},
-                           {"second", "s", "second", 0},
-                           {"millisecond", "ms", "second", -3},
-                           {"microsecond", "us", "second", -6}};
-  modelUnits.length.units = {
-      {"metre", "m", "metre", 0},        {"decimetre", "dm", "metre", -1},
-      {"centimetre", "cm", "metre", -2}, {"millimetre", "mm", "metre", -3},
-      {"micrometre", "um", "metre", -6}, {"nanometre", "nm", "metre", -9}};
-  modelUnits.volume.units = {{"litre", "L", "litre", 0},
-                             {"decilitre", "dL", "litre", -1},
-                             {"centilitre", "cL", "litre", -2},
-                             {"millilitre", "mL", "litre", -3},
-                             {"cubic metre", "m^3", "metre", 0, 3},
-                             {"cubic decimetre", "dm^3", "metre", -1, 3},
-                             {"cubic centimetre", "cm^3", "metre", -2, 3},
-                             {"cubic millimetre", "mm^3", "metre", -3, 3}};
-  modelUnits.amount.units = {{"mole", "mol", "mole", 0},
-                             {"millimole", "mmol", "mole", -3}};
+  modelUnits.time = units::UnitVector{{{"hour", "h", "second", 0, 1, 3600},
+                                       {"minute", "m", "second", 0, 1, 60},
+                                       {"second", "s", "second", 0},
+                                       {"millisecond", "ms", "second", -3},
+                                       {"microsecond", "us", "second", -6}}};
+  modelUnits.length = units::UnitVector{{{"metre", "m", "metre", 0},
+                                         {"decimetre", "dm", "metre", -1},
+                                         {"centimetre", "cm", "metre", -2},
+                                         {"millimetre", "mm", "metre", -3},
+                                         {"micrometre", "um", "metre", -6},
+                                         {"nanometre", "nm", "metre", -9}}};
+  modelUnits.volume =
+      units::UnitVector{{{"litre", "L", "litre", 0},
+                         {"decilitre", "dL", "litre", -1},
+                         {"centilitre", "cL", "litre", -2},
+                         {"millilitre", "mL", "litre", -3},
+                         {"cubic metre", "m^3", "metre", 0, 3},
+                         {"cubic decimetre", "dm^3", "metre", -1, 3},
+                         {"cubic centimetre", "cm^3", "metre", -2, 3},
+                         {"cubic millimetre", "mm^3", "metre", -3, 3}}};
+  modelUnits.amount = units::UnitVector{
+      {{"mole", "mol", "mole", 0}, {"millimole", "mmol", "mole", -3}}};
 }
 
 void SbmlDocWrapper::importSBMLString(const std::string &xml) {
@@ -397,13 +400,14 @@ void SbmlDocWrapper::importParametricGeometry() {
 }
 
 void SbmlDocWrapper::initModelData() {
-  if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
-      0) {
+  if (doc->getErrorLog()->getNumErrors() > 0) {
     std::stringstream ss;
     doc->printErrors(ss);
-    SPDLOG_WARN("SBML document errors:\n\n{}", ss.str());
-    SPDLOG_WARN(
-        "Warning - errors while reading SBML file (continuing anyway...)");
+    SPDLOG_INFO("SBML document warnings/errors:\n\n{}", ss.str());
+  }
+  if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
+      0) {
+    SPDLOG_WARN("Errors while reading SBML file (continuing anyway...)");
     isValid = true;
   } else {
     SPDLOG_INFO("Successfully imported SBML Level {}, Version {} model",
@@ -412,19 +416,22 @@ void SbmlDocWrapper::initModelData() {
   }
 
   // upgrade SBML document to latest version
-  if (doc->setLevelAndVersion(libsbml::SBMLDocument::getDefaultLevel(),
-                              libsbml::SBMLDocument::getDefaultVersion())) {
-    SPDLOG_INFO("Successfully upgraded SBML model to Level {}, Version {}",
-                doc->getLevel(), doc->getVersion());
-  } else {
-    SPDLOG_CRITICAL(
-        "Error - failed to upgrade SBML file (continuing anyway...)");
-  }
-  if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
-      0) {
-    std::stringstream ss;
-    doc->printErrors(ss);
-    SPDLOG_WARN("SBML document errors:\n\n{}", ss.str());
+  if (!(doc->getLevel() == libsbml::SBMLDocument::getDefaultLevel() &&
+        doc->getVersion() == libsbml::SBMLDocument::getDefaultVersion())) {
+    if (doc->setLevelAndVersion(libsbml::SBMLDocument::getDefaultLevel(),
+                                libsbml::SBMLDocument::getDefaultVersion())) {
+      SPDLOG_INFO("Successfully upgraded SBML model to Level {}, Version {}",
+                  doc->getLevel(), doc->getVersion());
+    } else {
+      SPDLOG_CRITICAL(
+          "Error - failed to upgrade SBML file (continuing anyway...)");
+    }
+    if (doc->getErrorLog()->getNumFailsWithSeverity(
+            libsbml::LIBSBML_SEV_ERROR) > 0) {
+      std::stringstream ss;
+      doc->printErrors(ss);
+      SPDLOG_WARN("SBML document errors:\n\n{}", ss.str());
+    }
   }
 
   model = doc->getModel();
@@ -846,7 +853,7 @@ static void setSBMLUnitDef(libsbml::UnitDefinition *unitdef,
 }
 
 void SbmlDocWrapper::setUnitsTimeIndex(int index) {
-  modelUnits.time.index = index;
+  modelUnits.time.setIndex(index);
   auto *unitdef =
       getOrCreateUnitDef(model, model->getTimeUnits(), "unit_of_time");
   model->setTimeUnits(unitdef->getId());
@@ -854,7 +861,7 @@ void SbmlDocWrapper::setUnitsTimeIndex(int index) {
 }
 
 void SbmlDocWrapper::setUnitsLengthIndex(int index) {
-  modelUnits.length.index = index;
+  modelUnits.length.setIndex(index);
   auto *unitdef =
       getOrCreateUnitDef(model, model->getLengthUnits(), "unit_of_length");
   model->setLengthUnits(unitdef->getId());
@@ -870,7 +877,7 @@ void SbmlDocWrapper::setUnitsLengthIndex(int index) {
 }
 
 void SbmlDocWrapper::setUnitsVolumeIndex(int index) {
-  modelUnits.volume.index = index;
+  modelUnits.volume.setIndex(index);
   auto *unitdef =
       getOrCreateUnitDef(model, model->getVolumeUnits(), "unit_of_volume");
   model->setVolumeUnits(unitdef->getId());
@@ -878,7 +885,7 @@ void SbmlDocWrapper::setUnitsVolumeIndex(int index) {
 }
 
 void SbmlDocWrapper::setUnitsAmountIndex(int index) {
-  modelUnits.amount.index = index;
+  modelUnits.amount.setIndex(index);
   auto *unitdef = getOrCreateUnitDef(model, model->getSubstanceUnits(),
                                      "units_of_substance");
   model->setSubstanceUnits(unitdef->getId());
@@ -921,7 +928,7 @@ static std::optional<int> getUnitIndex(libsbml::Model *model,
 void SbmlDocWrapper::importTimeUnitsFromSBML(int defaultUnitIndex) {
   SPDLOG_INFO("SId {}:", model->getTimeUnits());
   auto uIndex =
-      getUnitIndex(model, model->getTimeUnits(), modelUnits.time.units);
+      getUnitIndex(model, model->getTimeUnits(), modelUnits.time.getUnits());
   setUnitsTimeIndex(uIndex.value_or(defaultUnitIndex));
   SPDLOG_INFO("  -> {}", modelUnits.time.get().name.toStdString());
   return;
@@ -929,8 +936,8 @@ void SbmlDocWrapper::importTimeUnitsFromSBML(int defaultUnitIndex) {
 
 void SbmlDocWrapper::importLengthUnitsFromSBML(int defaultUnitIndex) {
   SPDLOG_INFO("SId {}:", model->getLengthUnits());
-  auto uIndex =
-      getUnitIndex(model, model->getLengthUnits(), modelUnits.length.units);
+  auto uIndex = getUnitIndex(model, model->getLengthUnits(),
+                             modelUnits.length.getUnits());
   setUnitsLengthIndex(uIndex.value_or(defaultUnitIndex));
   SPDLOG_INFO("  -> {}", modelUnits.length.get().name.toStdString());
   return;
@@ -938,8 +945,8 @@ void SbmlDocWrapper::importLengthUnitsFromSBML(int defaultUnitIndex) {
 
 void SbmlDocWrapper::importVolumeUnitsFromSBML(int defaultUnitIndex) {
   SPDLOG_INFO("SId {}:", model->getVolumeUnits());
-  auto uIndex =
-      getUnitIndex(model, model->getVolumeUnits(), modelUnits.volume.units);
+  auto uIndex = getUnitIndex(model, model->getVolumeUnits(),
+                             modelUnits.volume.getUnits());
   setUnitsVolumeIndex(uIndex.value_or(defaultUnitIndex));
   SPDLOG_INFO("  -> {}", modelUnits.volume.get().name.toStdString());
   return;
@@ -947,8 +954,8 @@ void SbmlDocWrapper::importVolumeUnitsFromSBML(int defaultUnitIndex) {
 
 void SbmlDocWrapper::importAmountUnitsFromSBML(int defaultUnitIndex) {
   SPDLOG_INFO("SId {}:", model->getSubstanceUnits());
-  auto uIndex =
-      getUnitIndex(model, model->getSubstanceUnits(), modelUnits.amount.units);
+  auto uIndex = getUnitIndex(model, model->getSubstanceUnits(),
+                             modelUnits.amount.getUnits());
   setUnitsAmountIndex(uIndex.value_or(defaultUnitIndex));
   SPDLOG_INFO("  -> {}", modelUnits.amount.get().name.toStdString());
   return;
@@ -1313,6 +1320,10 @@ void SbmlDocWrapper::setAnalyticConcentration(
   }
   std::unique_ptr<libsbml::ASTNode> argAST(
       libsbml::SBML_parseL3Formula(analyticExpression.toStdString().c_str()));
+  if (argAST == nullptr) {
+    SPDLOG_ERROR("  - failed to parse expression");
+    return;
+  }
   asgn->setMath(argAST.get());
   setFieldConcAnalytic(mapSpeciesIdToField.at(speciesID),
                        analyticExpression.toStdString());
@@ -1616,6 +1627,8 @@ void SbmlDocWrapper::setPixelWidth(double width) {
                 pixelWidth * static_cast<double>(compartmentImage.height()));
   SPDLOG_INFO("  - y now in range [{},{}]", min->getValue(), max->getValue());
 }
+
+const QPointF &SbmlDocWrapper::getOrigin() const { return origin; }
 
 void SbmlDocWrapper::setCompartmentSizeFromImage(
     const std::string &compartmentID) {

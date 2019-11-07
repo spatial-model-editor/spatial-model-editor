@@ -20,10 +20,17 @@ struct Unit {
   double multiplier = 1.0;
 };
 
-struct UnitVector {
+class UnitVector {
+ private:
   QVector<Unit> units;
   int index = 0;
+
+ public:
+  explicit UnitVector(const QVector<Unit>& unitsVec = {}) : units(unitsVec) {}
   inline const Unit& get() const { return units.at(index); }
+  inline const QVector<Unit>& getUnits() const { return units; }
+  inline int getIndex() const { return index; }
+  inline void setIndex(int newIndex) { index = newIndex; }
 };
 
 struct ModelUnits {

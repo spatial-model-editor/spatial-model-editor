@@ -17,10 +17,10 @@ DialogImageSize::DialogImageSize(const QImage& image, double pixelWidth,
   ui->lblImage->setImage(img);
 
   for (auto* cmb : {ui->cmbUnitsWidth, ui->cmbUnitsHeight}) {
-    for (const auto& u : length.units) {
+    for (const auto& u : length.getUnits()) {
       cmb->addItem(u.symbol);
     }
-    cmb->setCurrentIndex(length.index);
+    cmb->setCurrentIndex(length.getIndex());
   }
   modelUnitSymbol = ui->cmbUnitsWidth->currentText();
   pixelLocalUnits = pixelModelUnits;
@@ -62,7 +62,7 @@ void DialogImageSize::updateAll() {
   ui->txtImageHeight->setText(dblToString(h));
   // calculate pixel width in model units
   pixelModelUnits = units::rescale(
-      pixelLocalUnits, length.units.at(ui->cmbUnitsWidth->currentIndex()),
+      pixelLocalUnits, length.getUnits().at(ui->cmbUnitsWidth->currentIndex()),
       length.get());
   ui->lblPixelSize->setText(
       QString("%1 %2").arg(pixelModelUnits).arg(modelUnitSymbol));
