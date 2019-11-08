@@ -28,6 +28,7 @@ SOURCES += \
     src/test_sbml.cpp \
     src/test_simulate.cpp \
     src/test_symbolic.cpp \
+    src/test_units.cpp \
     src/test_utils.cpp \
 
 HEADERS += \

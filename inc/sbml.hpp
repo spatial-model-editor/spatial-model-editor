@@ -96,10 +96,12 @@ class SbmlDocWrapper {
 
   // import existing (non-spatial) model information from SBML
   void initModelData();
-  void importTimeUnitsFromSBML(int defaultUnitIndex = 0);
-  void importLengthUnitsFromSBML(int defaultUnitIndex = 0);
-  void importVolumeUnitsFromSBML(int defaultUnitIndex = 0);
-  void importAmountUnitsFromSBML(int defaultUnitIndex = 0);
+
+  units::ModelUnits modelUnits;
+  void importTimeUnitsFromSBML(int defaultUnitIndex);
+  void importLengthUnitsFromSBML(int defaultUnitIndex);
+  void importVolumeUnitsFromSBML(int defaultUnitIndex);
+  void importAmountUnitsFromSBML(int defaultUnitIndex);
   // import existing spatial information (image/mesh) from SBML
   void importSpatialData();
   void importGeometryDimensions();
@@ -146,7 +148,6 @@ class SbmlDocWrapper {
 
  public:
   std::size_t nDimensions = 2;
-  units::ModelUnits modelUnits;
 
   QString currentFilename;
   bool isValid = false;
@@ -157,6 +158,7 @@ class SbmlDocWrapper {
   void setUnitsLengthIndex(int index);
   void setUnitsVolumeIndex(int index);
   void setUnitsAmountIndex(int index);
+  const units::ModelUnits &getModelUnits() const;
 
   // Qt data structures containing model data to pass to UI widgets
   QStringList compartments;

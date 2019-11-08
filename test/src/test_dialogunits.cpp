@@ -14,11 +14,11 @@ SCENARIO("set model units", "[dialogdimensions][gui]") {
   f.open(QIODevice::ReadOnly);
   doc.importSBMLString(f.readAll().toStdString());
   GIVEN("no default units") {
-    auto units = doc.modelUnits;
-    units.time.setIndex(0);
-    units.length.setIndex(0);
-    units.volume.setIndex(0);
-    units.amount.setIndex(0);
+    auto units = doc.getModelUnits();
+    units.setTime(0);
+    units.setLength(0);
+    units.setVolume(0);
+    units.setAmount(0);
     DialogUnits dia(units);
     REQUIRE(dia.getTimeUnitIndex() == 0);
     REQUIRE(dia.getLengthUnitIndex() == 0);
@@ -36,11 +36,11 @@ SCENARIO("set model units", "[dialogdimensions][gui]") {
     }
   }
   GIVEN("default units") {
-    auto units = doc.modelUnits;
-    units.time.setIndex(0);
-    units.length.setIndex(3);
-    units.volume.setIndex(2);
-    units.amount.setIndex(1);
+    auto units = doc.getModelUnits();
+    units.setTime(0);
+    units.setLength(3);
+    units.setVolume(2);
+    units.setAmount(1);
     DialogUnits dia(units);
     REQUIRE(dia.getTimeUnitIndex() == 0);
     REQUIRE(dia.getLengthUnitIndex() == 3);
@@ -73,10 +73,10 @@ SCENARIO("set model units", "[dialogdimensions][gui]") {
                      "Down", "Down", "Down", "Down", "Down", "Down"});
       mwt.start();
       dia.exec();
-      REQUIRE(dia.getTimeUnitIndex() == units.time.getUnits().size() - 1);
-      REQUIRE(dia.getLengthUnitIndex() == units.length.getUnits().size() - 1);
-      REQUIRE(dia.getVolumeUnitIndex() == units.volume.getUnits().size() - 1);
-      REQUIRE(dia.getAmountUnitIndex() == units.amount.getUnits().size() - 1);
+      REQUIRE(dia.getTimeUnitIndex() == units.getTimeUnits().size() - 1);
+      REQUIRE(dia.getLengthUnitIndex() == units.getLengthUnits().size() - 1);
+      REQUIRE(dia.getVolumeUnitIndex() == units.getVolumeUnits().size() - 1);
+      REQUIRE(dia.getAmountUnitIndex() == units.getAmountUnits().size() - 1);
     }
   }
 }

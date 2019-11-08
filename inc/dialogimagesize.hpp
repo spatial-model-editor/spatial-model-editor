@@ -14,7 +14,7 @@ class DialogImageSize : public QDialog {
 
  public:
   explicit DialogImageSize(const QImage& image, double pixelWidth,
-                           const units::UnitVector& lengthUnit,
+                           const units::ModelUnits& modelUnits,
                            QWidget* parent = nullptr);
   double getPixelWidth() const;
 
@@ -23,7 +23,7 @@ class DialogImageSize : public QDialog {
   const QImage& img;
   double pixelLocalUnits;
   double pixelModelUnits;
-  const units::UnitVector& length;
+  const units::ModelUnits& units;
   QString modelUnitSymbol;
 
   void updateAll();

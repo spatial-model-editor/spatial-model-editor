@@ -34,18 +34,13 @@
       </compartment>
     </listOfCompartments>
     <listOfSpecies>
-      <species id="U" name="U" compartment="compartment" initialConcentration="1" substanceUnits="substance" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true">
-      </species>
-      <species id="V" name="V" compartment="compartment" initialConcentration="1" substanceUnits="substance" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true">
-      </species>
-      <species id="P" name="P" compartment="compartment" initialConcentration="1" substanceUnits="substance" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="true" spatial:isSpatial="false">
-      </species>
+      <species id="U" name="U" compartment="compartment" initialConcentration="1" substanceUnits="substance" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
+      <species id="V" name="V" compartment="compartment" initialConcentration="1" substanceUnits="substance" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
+      <species id="P" name="P" compartment="compartment" initialConcentration="1" substanceUnits="substance" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="true" spatial:isSpatial="false"/>
     </listOfSpecies>
     <listOfParameters>
-      <parameter id="f" name="f" value="0.037" constant="true">
-      </parameter>
-      <parameter id="k" name="k" value="0.06" constant="true">
-      </parameter>
+      <parameter id="f" name="f" value="0.037" constant="true"/>
+      <parameter id="k" name="k" value="0.06" constant="true"/>
       <parameter id="U_diffusionConstant" value="0.2097" constant="true">
         <spatial:diffusionCoefficient spatial:variable="U" spatial:type="isotropic"/>
       </parameter>
@@ -265,7 +260,7 @@
         </spatial:sampledFieldGeometry>
         <spatial:parametricGeometry spatial:id="parametricGeometry" spatial:isActive="true">
           <annotation>
-            <spatialModelEditor:mesh xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:maxBoundaryPoints="12 16" spatialModelEditor:maxTriangleAreas="40" spatialModelEditor:membraneWidths="1 1"/>
+            <spatialModelEditor:mesh xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:maxBoundaryPoints="12 16" spatialModelEditor:maxTriangleAreas="40" spatialModelEditor:membraneWidths="1.00000000000000000e+00 1.00000000000000000e+00"/>
           </annotation>
           <spatial:spatialPoints spatial:id="spatialPoints" spatial:compression="uncompressed" spatial:arrayDataLength="140" spatial:dataType="double">17 45 17 57 22 69 30 77 42 82 54 82 66 77 74 69 79 57 79 45 74 33 66 25 54 20 42 20 30 25 22 33 47.5508709145473 50.5508709145473 36.6409481121682 62.3590518878318 36.4042207610453 39.4042207610453 59.3590518878318 39.6409481121682 59.1317967205346 62.1317967205346 30.568661349578 68.431338650422 25.7326621127004 60.4030574530415 40.1600549407457 71.9504454789996 19.5 63 24.3675630282689 51 34.3392747301275 72.9847766997352 17 51 25.8563399329093 41.6484749720455 32.3964557698488 54.6350153689822 19.5 39 29.8839319298131 34.668573595633 30.9042889114724 47.2463863510694 39.12173593706 49.4318253814493 42.4364306863503 56.7695788446662 44.3118297504458 42.6432619251468 51.0453528546594 58.6373147804225 44.3834493480635 31.1963022566921 52.3955424027271 43.9492642540849 51.0443407139471 69.743159508488 42.0449521354805 36.9053749862567 51.9003010494546 35.3671076047351 61.5162503642665 50.9093176135368 44.5202141058782 64.729442634439 53.4438902821052 64.190455783348 51.3680167956563 27.4673774980167 45.6077986558422 25.0838215019395 58.6149451639799 25.8241316064482 63.0996803595533 32.511050762727 57.0582235261132 55.826668706715 58.285314675892 45.6871726801916 56.9512422763768 31.7872866486444 70 29 65.3019905913645 68.3019905913645 60 79.5 68.8199807300911 58.613806581808 54.7440755879226 75.3357814110142 47.1533079674292 76.3372971298026 69.9826011382542 64.5188006533668 60.8348765801119 73.0374855854302 36.4103564746802 29.9119377145995 36 22.5 53.9068617704585 50.3012881400243 70.7653762723217 49.4554498698503 66.6411164372037 53.3651811860159 71.5474811538161 41.0635495192433 79 51 73.434621794841 54.8082408368386 65.385771441503 44.7216883487298 65.7592958309661 38.3324354066139 </spatial:spatialPoints>
           <spatial:listOfParametricObjects>

@@ -15,16 +15,16 @@ SCENARIO("set size of image", "[dialogimagesize][gui]") {
     QFile f(":/models/ABtoC.xml");
     f.open(QIODevice::ReadOnly);
     doc.importSBMLString(f.readAll().toStdString());
-    auto lengthUnits = doc.modelUnits.length;
-    lengthUnits.setIndex(0);
-    REQUIRE(lengthUnits.getUnits()[0].scale == 0);
-    REQUIRE(lengthUnits.getUnits()[1].scale == -1);
-    REQUIRE(lengthUnits.getUnits()[2].scale == -2);
-    REQUIRE(lengthUnits.getUnits()[3].scale == -3);
-    REQUIRE(lengthUnits.getUnits()[4].scale == -6);
+    auto modelUnits = doc.getModelUnits();
+    modelUnits.setLength(0);
+    REQUIRE(modelUnits.getLengthUnits()[0].scale == 0);
+    REQUIRE(modelUnits.getLengthUnits()[1].scale == -1);
+    REQUIRE(modelUnits.getLengthUnits()[2].scale == -2);
+    REQUIRE(modelUnits.getLengthUnits()[3].scale == -3);
+    REQUIRE(modelUnits.getLengthUnits()[4].scale == -6);
     QImage img(100, 50, QImage::Format_ARGB32_Premultiplied);
     img.fill(0xFFFFFFFF);
-    DialogImageSize dim(img, 1.0, lengthUnits);
+    DialogImageSize dim(img, 1.0, modelUnits);
     REQUIRE(dim.getPixelWidth() == dbl_approx(1.0));
     ModalWidgetTimer mwt;
     WHEN("user sets width to 1, same units, pixel size -> 0.01") {
@@ -67,8 +67,8 @@ SCENARIO("set size of image", "[dialogimagesize][gui]") {
       REQUIRE(dim.getPixelWidth() == dbl_approx(0.0000002));
     }
     WHEN("default units changed to mm, user sets width = 1, units = m") {
-      lengthUnits.setIndex(3);  // mm
-      DialogImageSize dim2(img, 22.0, lengthUnits);
+      modelUnits.setLength(3);  // mm
+      DialogImageSize dim2(img, 22.0, modelUnits);
       REQUIRE(dim2.getPixelWidth() == dbl_approx(22.0));
       mwt.setKeySeq({"1", "Tab", "Up", "Up", "Up", "Up", "Up", "Up"});
       mwt.start();

@@ -57,30 +57,30 @@ void SbmlDocWrapper::clearAllGeometryData() {
   hasValidGeometry = false;
 }
 
-SbmlDocWrapper::SbmlDocWrapper() : mesh(std::make_shared<mesh::Mesh>()) {
-  modelUnits.time = units::UnitVector{{{"hour", "h", "second", 0, 1, 3600},
-                                       {"minute", "m", "second", 0, 1, 60},
-                                       {"second", "s", "second", 0},
-                                       {"millisecond", "ms", "second", -3},
-                                       {"microsecond", "us", "second", -6}}};
-  modelUnits.length = units::UnitVector{{{"metre", "m", "metre", 0},
-                                         {"decimetre", "dm", "metre", -1},
-                                         {"centimetre", "cm", "metre", -2},
-                                         {"millimetre", "mm", "metre", -3},
-                                         {"micrometre", "um", "metre", -6},
-                                         {"nanometre", "nm", "metre", -9}}};
-  modelUnits.volume =
-      units::UnitVector{{{"litre", "L", "litre", 0},
-                         {"decilitre", "dL", "litre", -1},
-                         {"centilitre", "cL", "litre", -2},
-                         {"millilitre", "mL", "litre", -3},
-                         {"cubic metre", "m^3", "metre", 0, 3},
-                         {"cubic decimetre", "dm^3", "metre", -1, 3},
-                         {"cubic centimetre", "cm^3", "metre", -2, 3},
-                         {"cubic millimetre", "mm^3", "metre", -3, 3}}};
-  modelUnits.amount = units::UnitVector{
-      {{"mole", "mol", "mole", 0}, {"millimole", "mmol", "mole", -3}}};
-}
+SbmlDocWrapper::SbmlDocWrapper()
+    : modelUnits(
+          units::UnitVector{{{"hour", "h", "second", 0, 1, 3600},
+                             {"minute", "m", "second", 0, 1, 60},
+                             {"second", "s", "second", 0},
+                             {"millisecond", "ms", "second", -3},
+                             {"microsecond", "us", "second", -6}}},
+          units::UnitVector{{{"metre", "m", "metre", 0},
+                             {"decimetre", "dm", "metre", -1},
+                             {"centimetre", "cm", "metre", -2},
+                             {"millimetre", "mm", "metre", -3},
+                             {"micrometre", "um", "metre", -6},
+                             {"nanometre", "nm", "metre", -9}}},
+          units::UnitVector{{{"litre", "L", "litre", 0},
+                             {"decilitre", "dL", "litre", -1},
+                             {"centilitre", "cL", "litre", -2},
+                             {"millilitre", "mL", "litre", -3},
+                             {"cubic metre", "m^3", "metre", 0, 3},
+                             {"cubic decimetre", "dm^3", "metre", -1, 3},
+                             {"cubic centimetre", "cm^3", "metre", -2, 3},
+                             {"cubic millimetre", "mm^3", "metre", -3, 3}}},
+          units::UnitVector{
+              {{"mole", "mol", "mole", 0}, {"millimole", "mmol", "mole", -3}}}),
+      mesh(std::make_shared<mesh::Mesh>()) {}
 
 void SbmlDocWrapper::importSBMLString(const std::string &xml) {
   clearAllModelData();
@@ -804,6 +804,9 @@ void SbmlDocWrapper::updateReactionList() {
     }
   }
 }
+const units::ModelUnits &SbmlDocWrapper::getModelUnits() const {
+  return modelUnits;
+}
 
 const QImage &SbmlDocWrapper::getCompartmentImage() const {
   return compartmentImage;
@@ -853,23 +856,23 @@ static void setSBMLUnitDef(libsbml::UnitDefinition *unitdef,
 }
 
 void SbmlDocWrapper::setUnitsTimeIndex(int index) {
-  modelUnits.time.setIndex(index);
+  modelUnits.setTime(index);
   auto *unitdef =
       getOrCreateUnitDef(model, model->getTimeUnits(), "unit_of_time");
   model->setTimeUnits(unitdef->getId());
-  setSBMLUnitDef(unitdef, modelUnits.time.get());
+  setSBMLUnitDef(unitdef, modelUnits.getTime());
 }
 
 void SbmlDocWrapper::setUnitsLengthIndex(int index) {
-  modelUnits.length.setIndex(index);
+  modelUnits.setLength(index);
   auto *unitdef =
       getOrCreateUnitDef(model, model->getLengthUnits(), "unit_of_length");
   model->setLengthUnits(unitdef->getId());
-  setSBMLUnitDef(unitdef, modelUnits.length.get());
+  setSBMLUnitDef(unitdef, modelUnits.getLength());
 
   // also set units of area as length^2
   unitdef = getOrCreateUnitDef(model, model->getAreaUnits(), "unit_of_area");
-  auto u = modelUnits.length.get();
+  auto u = modelUnits.getLength();
   u.name.append(" squared");
   u.exponent *= 2;
   model->setAreaUnits(unitdef->getId());
@@ -877,20 +880,20 @@ void SbmlDocWrapper::setUnitsLengthIndex(int index) {
 }
 
 void SbmlDocWrapper::setUnitsVolumeIndex(int index) {
-  modelUnits.volume.setIndex(index);
+  modelUnits.setVolume(index);
   auto *unitdef =
       getOrCreateUnitDef(model, model->getVolumeUnits(), "unit_of_volume");
   model->setVolumeUnits(unitdef->getId());
-  setSBMLUnitDef(unitdef, modelUnits.volume.get());
+  setSBMLUnitDef(unitdef, modelUnits.getVolume());
 }
 
 void SbmlDocWrapper::setUnitsAmountIndex(int index) {
-  modelUnits.amount.setIndex(index);
+  modelUnits.setAmount(index);
   auto *unitdef = getOrCreateUnitDef(model, model->getSubstanceUnits(),
                                      "units_of_substance");
   model->setSubstanceUnits(unitdef->getId());
   model->setExtentUnits(unitdef->getId());
-  setSBMLUnitDef(unitdef, modelUnits.amount.get());
+  setSBMLUnitDef(unitdef, modelUnits.getAmount());
 }
 
 static std::optional<int> getUnitIndex(libsbml::Model *model,
@@ -928,36 +931,36 @@ static std::optional<int> getUnitIndex(libsbml::Model *model,
 void SbmlDocWrapper::importTimeUnitsFromSBML(int defaultUnitIndex) {
   SPDLOG_INFO("SId {}:", model->getTimeUnits());
   auto uIndex =
-      getUnitIndex(model, model->getTimeUnits(), modelUnits.time.getUnits());
+      getUnitIndex(model, model->getTimeUnits(), modelUnits.getTimeUnits());
   setUnitsTimeIndex(uIndex.value_or(defaultUnitIndex));
-  SPDLOG_INFO("  -> {}", modelUnits.time.get().name.toStdString());
+  SPDLOG_INFO("  -> {}", modelUnits.getTime().name.toStdString());
   return;
 }
 
 void SbmlDocWrapper::importLengthUnitsFromSBML(int defaultUnitIndex) {
   SPDLOG_INFO("SId {}:", model->getLengthUnits());
-  auto uIndex = getUnitIndex(model, model->getLengthUnits(),
-                             modelUnits.length.getUnits());
+  auto uIndex =
+      getUnitIndex(model, model->getLengthUnits(), modelUnits.getLengthUnits());
   setUnitsLengthIndex(uIndex.value_or(defaultUnitIndex));
-  SPDLOG_INFO("  -> {}", modelUnits.length.get().name.toStdString());
+  SPDLOG_INFO("  -> {}", modelUnits.getLength().name.toStdString());
   return;
 }
 
 void SbmlDocWrapper::importVolumeUnitsFromSBML(int defaultUnitIndex) {
   SPDLOG_INFO("SId {}:", model->getVolumeUnits());
-  auto uIndex = getUnitIndex(model, model->getVolumeUnits(),
-                             modelUnits.volume.getUnits());
+  auto uIndex =
+      getUnitIndex(model, model->getVolumeUnits(), modelUnits.getVolumeUnits());
   setUnitsVolumeIndex(uIndex.value_or(defaultUnitIndex));
-  SPDLOG_INFO("  -> {}", modelUnits.volume.get().name.toStdString());
+  SPDLOG_INFO("  -> {}", modelUnits.getVolume().name.toStdString());
   return;
 }
 
 void SbmlDocWrapper::importAmountUnitsFromSBML(int defaultUnitIndex) {
   SPDLOG_INFO("SId {}:", model->getSubstanceUnits());
   auto uIndex = getUnitIndex(model, model->getSubstanceUnits(),
-                             modelUnits.amount.getUnits());
+                             modelUnits.getAmountUnits());
   setUnitsAmountIndex(uIndex.value_or(defaultUnitIndex));
-  SPDLOG_INFO("  -> {}", modelUnits.amount.get().name.toStdString());
+  SPDLOG_INFO("  -> {}", modelUnits.getAmount().name.toStdString());
   return;
 }
 
@@ -1024,7 +1027,7 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
     field.setUniformConcentration(spec->getInitialConcentration());
 
     if (model->getInitialAssignmentBySymbol(s.toStdString()) != nullptr) {
-      // if an initial assingment exists, it takes precedence over
+      // if an initial assignment exists, it takes precedence over
       // the InitialConcentration set above
       const auto *asgn = model->getInitialAssignmentBySymbol(s.toStdString());
       std::string expr = ASTtoString(asgn->getMath());
@@ -1304,26 +1307,36 @@ void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
   updateMesh();
 }
 
+void SbmlDocWrapper::removeInitialAssignment(const std::string &speciesID) {
+  auto sampledFieldID = getSpeciesSampledFieldInitialAssignment(speciesID);
+  if (!sampledFieldID.empty()) {
+    // remove sampled field
+    std::unique_ptr<libsbml::SampledField> sf(
+        geom->removeSampledField(sampledFieldID));
+    // remove parameter with spatialref to sampled field
+    std::string paramID =
+        model->getInitialAssignmentBySymbol(speciesID)->getMath()->getName();
+    std::unique_ptr<libsbml::Parameter> p(model->removeParameter(paramID));
+  }
+  std::unique_ptr<libsbml::InitialAssignment> ia(
+      model->removeInitialAssignment(speciesID));
+}
+
 void SbmlDocWrapper::setAnalyticConcentration(
     const QString &speciesID, const QString &analyticExpression) {
   SPDLOG_INFO("speciesID: {}", speciesID.toStdString());
   SPDLOG_INFO("  - expression: {}", analyticExpression.toStdString());
-  libsbml::InitialAssignment *asgn;
-  if (model->getInitialAssignmentBySymbol(speciesID.toStdString()) != nullptr) {
-    asgn = model->getInitialAssignmentBySymbol(speciesID.toStdString());
-    SPDLOG_INFO("  - replacing existing assignment: {}", asgn->getId());
-  } else {
-    asgn = model->createInitialAssignment();
-    asgn->setSymbol(speciesID.toStdString());
-    asgn->setId(speciesID.toStdString() + "_initialConcentration");
-    SPDLOG_INFO("  - creating new assignment: {}", asgn->getId());
-  }
   std::unique_ptr<libsbml::ASTNode> argAST(
       libsbml::SBML_parseL3Formula(analyticExpression.toStdString().c_str()));
   if (argAST == nullptr) {
-    SPDLOG_ERROR("  - failed to parse expression");
+    SPDLOG_ERROR("  - libSBML failed to parse expression");
     return;
   }
+  removeInitialAssignment(speciesID.toStdString());
+  auto asgn = model->createInitialAssignment();
+  asgn->setSymbol(speciesID.toStdString());
+  asgn->setId(speciesID.toStdString() + "_initialConcentration");
+  SPDLOG_INFO("  - creating new assignment: {}", asgn->getId());
   asgn->setMath(argAST.get());
   setFieldConcAnalytic(mapSpeciesIdToField.at(speciesID),
                        analyticExpression.toStdString());
@@ -1433,6 +1446,14 @@ void SbmlDocWrapper::setIsSpatial(const QString &speciesID, bool isSpatial) {
   if (ssp != nullptr) {
     ssp->setIsSpatial(isSpatial);
   }
+  if (isSpatial) {
+    // for now spatial species cannot be constant
+    setIsSpeciesConstant(speciesID.toStdString(), false);
+  }
+  if (!isSpatial) {
+    removeInitialAssignment(speciesID.toStdString());
+    setDiffusionConstant(speciesID, 0.0);
+  }
 }
 
 bool SbmlDocWrapper::getIsSpatial(const QString &speciesID) const {
@@ -1485,9 +1506,10 @@ double SbmlDocWrapper::getDiffusionConstant(const QString &speciesID) const {
 
 void SbmlDocWrapper::setInitialConcentration(const QString &speciesID,
                                              double concentration) {
-  mapSpeciesIdToField.at(speciesID).setUniformConcentration(concentration);
+  removeInitialAssignment(speciesID.toStdString());
   model->getSpecies(speciesID.toStdString())
       ->setInitialConcentration(concentration);
+  mapSpeciesIdToField.at(speciesID).setUniformConcentration(concentration);
 }
 
 double SbmlDocWrapper::getInitialConcentration(const QString &speciesID) const {
@@ -1507,8 +1529,12 @@ void SbmlDocWrapper::setIsSpeciesConstant(const std::string &speciesID,
                                           bool constant) {
   auto *spec = model->getSpecies(speciesID);
   spec->setConstant(constant);
+  if (constant) {
+    // for now: constant species must be non-spatial
+    setIsSpatial(speciesID.c_str(), false);
+  }
   // todo: think about how to deal with boundaryCondition properly
-  // for now, set it to false here: species is either constant, or not
+  // for now, just set it to false here: species is either constant, or not
   // todo: check if "constant" refers to constant concentration or amount?
   // what happens to a constant species when compartment size is changed?
   spec->setBoundaryCondition(false);
@@ -1642,16 +1668,16 @@ void SbmlDocWrapper::setCompartmentSizeFromImage(
   std::size_t nPixels = mapCompIdToGeometry.at(comp->getId().c_str()).ix.size();
   SPDLOG_INFO("  - number of pixels: {}", nPixels);
   SPDLOG_INFO("  - pixel width: {} {}", pixelWidth,
-              modelUnits.length.get().name.toStdString());
+              modelUnits.getLength().name.toStdString());
   double pixelVol = units::pixelWidthToVolume(
-      pixelWidth, modelUnits.length.get(), modelUnits.volume.get());
+      pixelWidth, modelUnits.getLength(), modelUnits.getVolume());
   SPDLOG_INFO("  - pixel volume (width*width*1): {} {}", pixelVol,
-              modelUnits.volume.get().name.toStdString());
+              modelUnits.getVolume().name.toStdString());
   double newSize = static_cast<double>(nPixels) * pixelVol;
   comp->setSize(newSize);
   comp->setUnits(model->getVolumeUnits());
   SPDLOG_INFO("  - new size: {} {}", comp->getSize(),
-              modelUnits.volume.get().name.toStdString());
+              modelUnits.getVolume().name.toStdString());
 }
 
 std::string SbmlDocWrapper::inlineExpr(

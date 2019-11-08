@@ -555,9 +555,9 @@ void MainWindow::actionSet_model_units_triggered() {
     SPDLOG_DEBUG("invalid model: ignoring");
     return;
   }
-  units::Unit oldLengthUnit = sbmlDoc.modelUnits.length.get();
+  units::Unit oldLengthUnit = sbmlDoc.getModelUnits().getLength();
   double oldPixelWidth = sbmlDoc.getPixelWidth();
-  DialogUnits dialog(sbmlDoc.modelUnits);
+  DialogUnits dialog(sbmlDoc.getModelUnits());
   if (dialog.exec() == QDialog::Accepted) {
     sbmlDoc.setUnitsTimeIndex(dialog.getTimeUnitIndex());
     sbmlDoc.setUnitsLengthIndex(dialog.getLengthUnitIndex());
@@ -565,7 +565,7 @@ void MainWindow::actionSet_model_units_triggered() {
     sbmlDoc.setUnitsAmountIndex(dialog.getAmountUnitIndex());
     // rescale pixelsize to match new units
     sbmlDoc.setPixelWidth(units::rescale(oldPixelWidth, oldLengthUnit,
-                                         sbmlDoc.modelUnits.length.get()));
+                                         sbmlDoc.getModelUnits().getLength()));
   }
   return;
 }
@@ -576,7 +576,7 @@ void MainWindow::actionSet_image_size_triggered() {
     return;
   }
   DialogImageSize dialog(sbmlDoc.getCompartmentImage(), sbmlDoc.getPixelWidth(),
-                         sbmlDoc.modelUnits.length);
+                         sbmlDoc.getModelUnits());
   if (dialog.exec() == QDialog::Accepted) {
     double pixelWidth = dialog.getPixelWidth();
     SPDLOG_INFO("Set new pixel width = {}", pixelWidth);
@@ -752,7 +752,7 @@ void MainWindow::listCompartments_currentRowChanged(int currentRow) {
     ui->txtCompartmentSize->setText(
         QString::number(sbmlDoc.getCompartmentSize(compID)));
     ui->lblCompartmentSizeUnits->setText(
-        sbmlDoc.modelUnits.volume.get().symbol);
+        sbmlDoc.getModelUnits().getVolume().symbol);
     QRgb col = sbmlDoc.getCompartmentColour(compID);
     SPDLOG_DEBUG("  - Compartment colour {:x} ", col);
     if (col == 0) {
@@ -844,8 +844,11 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
     ui->chkSpeciesIsConstant->setChecked(isConstant);
     if (isConstant) {
       ui->txtDiffusionConstant->setEnabled(false);
+      ui->lblDiffusionConstantUnits->setText("");
     }
     // initial concentration
+    ui->txtInitialConcentration->setText("");
+    ui->lblInitialConcentrationUnits->setText("");
     ui->lblGeometryStatus->setText(
         QString("Species '%1' concentration:").arg(current->text(0)));
     ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
@@ -853,8 +856,13 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
       // scalar
       ui->txtInitialConcentration->setText(
           QString::number(sbmlDoc.getInitialConcentration(speciesID)));
+      ui->lblInitialConcentrationUnits->setText(
+          sbmlDoc.getModelUnits().getConcentration());
       ui->radInitialConcentrationUniform->setChecked(true);
-    } else if (!sbmlDoc.getAnalyticConcentration(speciesID).isEmpty()) {
+    } else if (!sbmlDoc
+                    .getSpeciesSampledFieldInitialAssignment(
+                        speciesID.toStdString())
+                    .empty()) {
       // image
       ui->radInitialConcentrationImage->setChecked(true);
     } else {
@@ -866,6 +874,8 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
     if (ui->txtDiffusionConstant->isEnabled()) {
       ui->txtDiffusionConstant->setText(
           QString::number(sbmlDoc.getDiffusionConstant(speciesID)));
+      ui->lblDiffusionConstantUnits->setText(
+          sbmlDoc.getModelUnits().getDiffusion());
     }
     // colour
     lblSpeciesColourPixmap.fill(sbmlDoc.getSpeciesColour(speciesID));
@@ -881,16 +891,6 @@ void MainWindow::chkSpeciesIsSpatial_toggled(bool enabled) {
     SPDLOG_INFO("setting species {} isSpatial: {}", speciesID.toStdString(),
                 enabled);
     sbmlDoc.setIsSpatial(speciesID, enabled);
-    if (!enabled) {
-      // must be spatially uniform if not spatial
-      ui->radInitialConcentrationUniform->setChecked(enabled);
-    }
-    // disable incompatible options
-    ui->txtDiffusionConstant->setEnabled(enabled);
-    ui->radInitialConcentrationAnalytic->setEnabled(enabled);
-    ui->radInitialConcentrationImage->setEnabled(enabled);
-    ui->btnImportConcentration->setEnabled(enabled);
-    ui->cmbImportExampleConcentration->setEnabled(enabled);
     // update displayed info for this species
     txtInitialConcentration_editingFinished();
   }
@@ -902,12 +902,6 @@ void MainWindow::chkSpeciesIsConstant_toggled(bool enabled) {
   if (sbmlDoc.getIsSpeciesConstant(speciesID) != enabled) {
     SPDLOG_INFO("setting species {} isConstant: {}", speciesID, enabled);
     sbmlDoc.setIsSpeciesConstant(speciesID, enabled);
-    // disable incompatible options
-    ui->txtDiffusionConstant->setEnabled(!enabled);
-    ui->radInitialConcentrationAnalytic->setEnabled(!enabled);
-    ui->radInitialConcentrationImage->setEnabled(!enabled);
-    ui->btnImportConcentration->setEnabled(!enabled);
-    ui->cmbImportExampleConcentration->setEnabled(!enabled);
     // update displayed info for this species
     txtInitialConcentration_editingFinished();
   }
@@ -950,7 +944,7 @@ void MainWindow::btnAnalyticConcentration_clicked() {
                         sbmlDoc.getCompartmentImage().size(),
                         sbmlDoc.mapSpeciesIdToField.at(speciesID).geometry->ix,
                         sbmlDoc.getOrigin(), sbmlDoc.getPixelWidth(),
-                        sbmlDoc.modelUnits);
+                        sbmlDoc.getModelUnits());
   if (dialog.exec() == QDialog::Accepted) {
     ui->radInitialConcentrationAnalytic->setChecked(true);
     const std::string &expr = dialog.getExpression();
