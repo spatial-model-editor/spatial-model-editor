@@ -14,6 +14,7 @@ SOURCES += \
     $$TOPDIR/src/boundary.cpp \
     $$TOPDIR/src/dialogabout.cpp \
     $$TOPDIR/src/dialoganalytic.cpp \
+    $$TOPDIR/src/dialogconcentrationimage.cpp \
     $$TOPDIR/src/dialogimagesize.cpp \
     $$TOPDIR/src/dialogunits.cpp \
     $$TOPDIR/src/dune.cpp \
@@ -36,6 +37,7 @@ HEADERS += \
     $$TOPDIR/inc/boundary.hpp \
     $$TOPDIR/inc/dialogabout.hpp \
     $$TOPDIR/inc/dialoganalytic.hpp \
+    $$TOPDIR/inc/dialogconcentrationimage.hpp \
     $$TOPDIR/inc/dialogimagesize.hpp \
     $$TOPDIR/inc/dialogunits.hpp \
     $$TOPDIR/inc/dune.hpp \
@@ -58,6 +60,7 @@ HEADERS += \
 FORMS += \
     $$TOPDIR/ui/dialogabout.ui \
     $$TOPDIR/ui/dialoganalytic.ui \
+    $$TOPDIR/ui/dialogconcentrationimage.ui \
     $$TOPDIR/ui/dialogimagesize.ui \
     $$TOPDIR/ui/dialogunits.ui \
     $$TOPDIR/ui/mainwindow.ui \

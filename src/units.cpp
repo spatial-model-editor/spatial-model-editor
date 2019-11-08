@@ -116,4 +116,4 @@ double pixelWidthToVolume(double width, const Unit& lengthUnit,
   return width * width * l3 / v;
 }
 
-};  // namespace units
+}  // namespace units

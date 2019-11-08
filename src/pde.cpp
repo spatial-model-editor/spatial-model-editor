@@ -151,11 +151,11 @@ Reaction::Reaction(const sbml::SbmlDocWrapper *doc,
                    const std::vector<std::string> &species,
                    const std::vector<std::string> &reactionIDs)
     : speciesIDs(species) {
-  // check if any species have a RateRule
+  // RateRule is f(...) for a species s: ds/dt = f(...)
+  // Species which have a raterule cannot be created or destroyed in any kinetic
+  // reactions
   // todo: not currently valid if raterule involves species in multiple
   // compartments
-  // todo: check if should divide by volume here as well as for kinetic law
-  // i.e. if the rate rule is for amount like the kinetic law
   for (std::size_t sIndex = 0; sIndex < speciesIDs.size(); ++sIndex) {
     auto ruleExpr = doc->getRateRule(speciesIDs[sIndex]);
     if (!ruleExpr.empty()) {
@@ -182,15 +182,10 @@ Reaction::Reaction(const sbml::SbmlDocWrapper *doc,
       // it into the M matrix, and construct the corresponding reaction term
       M.push_back(row);
 
-      // TODO: deal with amount vs concentration issues correctly
-      // if getHasOnlySubstanceUnits is true for some (all?) species
-      // note: would also need to also do this in the inlining step,
-      // and in the stoich matrix factors
-
       // get local parameters, append to global constants
       std::map<std::string, double> c = doc->getGlobalConstants();
-      for (const auto &constant : reac.constants) {
-        c[constant.first] = constant.second;
+      for (const auto &[constantName, constantValue] : reac.constants) {
+        c[constantName] = constantValue;
       }
       // construct expression and add to reactions
       expressions.push_back(reac.inlinedExpression);

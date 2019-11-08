@@ -195,7 +195,7 @@
       <spatial:listOfDomains>
         <spatial:domain spatial:id="c1_domain" spatial:domainType="c1_domainType">
           <spatial:listOfInteriorPoints>
-            <spatial:interiorPoint spatial:coord1="64" spatial:coord2="83"/>
+            <spatial:interiorPoint spatial:coord1="89" spatial:coord2="89"/>
           </spatial:listOfInteriorPoints>
         </spatial:domain>
         <spatial:domain spatial:id="c2_domain" spatial:domainType="c2_domainType">

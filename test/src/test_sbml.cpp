@@ -167,36 +167,17 @@ SCENARIO("import SBML doc without geometry", "[sbml][non-gui]") {
 
     WHEN("import concentration & set diff constants") {
       // import concentration
-      s.importConcentrationFromImage("spec0c0",
-                                     ":/geometry/single-pixels-3x1.png");
-      // spec0c0 concentration set to 1 (default rescaling)
-      // -> c0 pixel (1,0) has default species colour (230,25,75)
-      // -> other pixels transparent
+      s.setSampledFieldConcentration("spec0c0", {0.0, 0.0, 0.0});
       REQUIRE(s.getConcentrationImage("spec0c0").size() == QSize(3, 1));
       REQUIRE(s.getConcentrationImage("spec0c0").pixel(1, 0) ==
-              QColor(230, 25, 75).rgba());
-      REQUIRE(s.getConcentrationImage("spec0c0").pixel(0, 0) == 0x00000000);
-      REQUIRE(s.getConcentrationImage("spec0c0").pixel(2, 0) == 0x00000000);
+              QColor(0, 0, 0).rgba());
+      REQUIRE(s.getConcentrationImage("spec0c0").pixel(0, 0) == 0);
+      REQUIRE(s.getConcentrationImage("spec0c0").pixel(2, 0) == 0);
       // set spec1c1conc to zero -> black pixel
-      QImage img(":/geometry/single-pixels-3x1.png");
-      img.fill(0xff000000);
-      img.save("tmp.png");
-      s.importConcentrationFromImage("spec1c1", "tmp.png");
+      s.setSampledFieldConcentration("spec0c0", {0.0, 0.0, 0.0});
       REQUIRE(s.getConcentrationImage("spec1c1").pixel(0, 0) == 0x00000000);
       REQUIRE(s.getConcentrationImage("spec1c1").pixel(1, 0) == 0x00000000);
       REQUIRE(s.getConcentrationImage("spec1c1").pixel(2, 0) == 0xff000000);
-      // set and then re-set spec2c1conc
-      s.importConcentrationFromImage("spec2c1", "tmp.png");
-      REQUIRE(s.getConcentrationImage("spec2c1").pixel(0, 0) == 0x00000000);
-      REQUIRE(s.getConcentrationImage("spec2c1").pixel(1, 0) == 0x00000000);
-      REQUIRE(s.getConcentrationImage("spec2c1").pixel(2, 0) == 0xff000000);
-      img.fill(0xff221321);
-      img.save("tmp.png");
-      s.importConcentrationFromImage("spec2c1", "tmp.png");
-      REQUIRE(s.getConcentrationImage("spec2c1").pixel(0, 0) == 0x00000000);
-      REQUIRE(s.getConcentrationImage("spec2c1").pixel(1, 0) == 0x00000000);
-      REQUIRE(s.getConcentrationImage("spec2c1").pixel(2, 0) ==
-              QColor(245, 130, 48).rgba());
       s.setIsSpatial("spec0c0", true);
       s.setIsSpatial("spec1c0", true);
       s.setIsSpatial("spec0c1", true);
@@ -219,7 +200,7 @@ SCENARIO("import SBML doc without geometry", "[sbml][non-gui]") {
       REQUIRE(s2.getCompartmentColour("compartment0") == 0xffaaaaaa);
       REQUIRE(s2.getCompartmentColour("compartment1") == 0xff525252);
       REQUIRE(s2.getConcentrationImage("spec0c0").pixel(1, 0) ==
-              QColor(230, 25, 75).rgba());
+              QColor(0, 0, 0).rgba());
       REQUIRE(s2.getConcentrationImage("spec0c0").pixel(0, 0) == 0x00000000);
       REQUIRE(s2.getConcentrationImage("spec0c0").pixel(2, 0) == 0x00000000);
       REQUIRE(s2.getConcentrationImage("spec1c1").pixel(0, 0) == 0x00000000);
@@ -228,7 +209,7 @@ SCENARIO("import SBML doc without geometry", "[sbml][non-gui]") {
       REQUIRE(s2.getConcentrationImage("spec2c1").pixel(0, 0) == 0x00000000);
       REQUIRE(s2.getConcentrationImage("spec2c1").pixel(1, 0) == 0x00000000);
       REQUIRE(s2.getConcentrationImage("spec2c1").pixel(2, 0) ==
-              QColor(245, 130, 48).rgba());
+              QColor(0, 0, 0).rgba());
 
       CAPTURE(s2.getDiffusionConstant("spec0c0"));
       CAPTURE(s2.getDiffusionConstant("spec1c0"));
@@ -272,6 +253,15 @@ SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
     THEN("find reactions") {
       REQUIRE(s.reactions.at("compartment0").size() == 1);
       REQUIRE(s.reactions.at("compartment0")[0] == "reac1");
+      auto r = s.getReaction("reac1");
+      REQUIRE(r.id == "reac1");
+      REQUIRE(r.name == "reac1");
+      REQUIRE(r.products.size() == 1);
+      REQUIRE(r.products[0].first == "spec1c0");
+      REQUIRE(r.reactants.size() == 1);
+      REQUIRE(r.reactants[0].first == "spec0c0");
+      REQUIRE(r.fullExpression == "5 * spec0c0");
+      REQUIRE(r.inlinedExpression == "5 * spec0c0");
     }
     WHEN("exportSBMLFile called") {
       THEN(

@@ -102,11 +102,13 @@ matrix:
         # to see more info about any memory leaks from linked libraries
         - echo "leak:libfontconfig.so" > suppr.txt
         - echo "leak:libX11.so" >> suppr.txt
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build/test/test -a
         # generate gcov test coverage data for sonar-source & codecov.io
+
+        # unit tests (i.e. not mainwindow)
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build/test/test -a "~[mainwindow]"
         - cd build
-        - mkdir gcov
-        - cd gcov
+        - mkdir gcov-unit
+        - cd gcov-unit
         - gcov -r -p ../src/*.gcno
         # only want coverage data for src and inc folders
         - mkdir tmp
@@ -120,7 +122,30 @@ matrix:
         - ls
         - cd ../
         # upload coverage report to codecov.io
-        - bash <(curl -s https://codecov.io/bash) -X gcov -f "gcov/*"
+        - bash <(curl -s https://codecov.io/bash) -X gcov -F unit
+
+        # integration tests (i.e. mainwindow)
+        - rm src/*.gcda
+        - cd ..
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build/test/test -a "[mainwindow]"
+        - cd build
+        - mkdir gcov-integration
+        - cd gcov-integration
+        - gcov -r -p ../src/*.gcno
+        # only want coverage data for src and inc folders
+        - mkdir tmp
+        - mv *.* tmp
+        - cd tmp
+        - mv ^#^#inc* ../
+        - mv ^#^#src* ../
+        - rm *
+        - cd ../
+        - rmdir tmp
+        - ls
+        - cd ../
+        # upload coverage report to codecov.io
+        - bash <(curl -s https://codecov.io/bash) -X gcov -f '!*/gcov-unit/*' -F integration
+
         # get blame info for sonar-scanner
         - git fetch --unshallow
         # upload to sonar-scanner

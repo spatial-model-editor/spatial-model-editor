@@ -11,24 +11,24 @@
 #include "units.hpp"
 
 DialogAnalytic::DialogAnalytic(const QString& analyticExpression,
-                               const QSize& imageSize,
-                               const std::vector<QPoint>& imagePoints,
-                               const QPointF& physicalOrigin, double pixelWidth,
-                               const units::ModelUnits& modelUnits,
+                               const sbml::SpeciesGeometry& speciesGeometry,
                                QWidget* parent)
     : QDialog(parent),
       ui(new Ui::DialogAnalytic),
-      points(imagePoints),
-      width(pixelWidth),
-      origin(physicalOrigin),
-      qpi(imageSize, imagePoints) {
+      points(speciesGeometry.compartmentPoints),
+      width(speciesGeometry.pixelWidth),
+      origin(speciesGeometry.physicalOrigin),
+      qpi(speciesGeometry.compartmentImageSize,
+          speciesGeometry.compartmentPoints) {
   ui->setupUi(this);
 
-  lengthUnit = modelUnits.getLength().symbol;
+  const auto& units = speciesGeometry.modelUnits;
+  lengthUnit = units.getLength().symbol;
   concentrationUnit = QString("%1/%2")
-                          .arg(modelUnits.getAmount().symbol)
-                          .arg(modelUnits.getVolume().symbol);
-  img = QImage(imageSize, QImage::Format_ARGB32_Premultiplied);
+                          .arg(units.getAmount().symbol)
+                          .arg(units.getVolume().symbol);
+  img = QImage(speciesGeometry.compartmentImageSize,
+               QImage::Format_ARGB32_Premultiplied);
   img.fill(0);
   concentration.resize(points.size(), 0.0);
 

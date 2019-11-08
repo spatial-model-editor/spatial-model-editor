@@ -85,67 +85,27 @@ Field::Field(const Compartment *geom, const std::string &specID,
   isSpatial = false;
 }
 
-void Field::importConcentration(const QImage &img, double scale_factor) {
-  SPDLOG_INFO("species {}, compartment {}", speciesID, geometry->compartmentID);
-  SPDLOG_INFO("  - importing from {}x{} image", img.width(), img.height());
-  // rescaling [min, max] pixel values to the range [0, scale_factor] for now
-  QRgb min = std::numeric_limits<QRgb>::max();
-  QRgb max = 0;
-  for (int x = 0; x < img.width(); ++x) {
-    for (int y = 0; y < img.height(); ++y) {
-      min = std::min(min, img.pixel(x, y) & 0x00ffffff);
-      max = std::max(max, img.pixel(x, y) & 0x00ffffff);
-    }
-  }
-  if (max == min) {
-    if (max == 0) {
-      // if all pixels zero, then set conc to zero
-      SPDLOG_INFO("  - all pixels black: rescaling -> 0");
-      scale_factor = 0;
-      max = 1;
-    } else {
-      // if all pixels equal, then set conc to scale_factor
-      SPDLOG_INFO("  - all pixels equal: rescaling -> {}", scale_factor);
-      min -= 1;
-    }
-  } else {
-    SPDLOG_INFO("  - rescaling [{},{}] -> [{},{}]", min, max, 0.0,
-                scale_factor);
-  }
-  for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
-    conc[i] =
-        scale_factor *
-        static_cast<double>((img.pixel(geometry->ix[i]) & 0x00ffffff) - min) /
-        static_cast<double>(max - min);
-  }
-  init = conc;
-  isUniformConcentration = false;
-}
-
 void Field::importConcentration(
     const std::vector<double> &sbmlConcentrationArray) {
   SPDLOG_INFO("species {}, compartment {}", speciesID, geometry->compartmentID);
   SPDLOG_INFO("  - importing from sbml array of size {}",
               sbmlConcentrationArray.size());
+  const auto &img = geometry->getCompartmentImage();
   if (static_cast<int>(sbmlConcentrationArray.size()) !=
-      geometry->getCompartmentImage().width() *
-          geometry->getCompartmentImage().height()) {
-    SPDLOG_WARN(
-        "  - mismatch between array size [{}] and compartment image size "
-        "[{}x{} = {}]",
-        sbmlConcentrationArray.size(), geometry->getCompartmentImage().width(),
-        geometry->getCompartmentImage().height(),
-        geometry->getCompartmentImage().width() *
-            geometry->getCompartmentImage().height());
+      img.width() * img.height()) {
+    SPDLOG_ERROR(
+        "  - mismatch between array size [{}]"
+        " and compartment image size [{}x{} = {}]",
+        sbmlConcentrationArray.size(), img.width(), img.height(),
+        img.width() * img.height());
+    throw std::invalid_argument("invalid array size");
   }
   // NOTE: order of concentration array is [ (x=0,y=0), (x=1,y=0), ... ]
   // NOTE: (0,0) point is at bottom-left
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
-  int Lx = geometry->getCompartmentImage().width();
-  int Ly = geometry->getCompartmentImage().height();
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     const auto &point = geometry->ix[i];
-    int arrayIndex = point.x() + Lx * (Ly - 1 - point.y());
+    int arrayIndex = point.x() + img.width() * (img.height() - 1 - point.y());
     conc[i] = sbmlConcentrationArray[static_cast<std::size_t>(arrayIndex)];
   }
   init = conc;
@@ -165,7 +125,7 @@ QImage Field::getConcentrationImage() const {
                     QImage::Format_ARGB32_Premultiplied);
   img.fill(qRgba(0, 0, 0, 0));
   // for now rescale conc to [0,1] to multiply species colour
-  double cmax = *std::max_element(conc.begin(), conc.end());
+  double cmax = *std::max_element(conc.cbegin(), conc.cend());
   if (cmax < 1e-15) {
     cmax = 1.0;
   }
@@ -180,17 +140,15 @@ QImage Field::getConcentrationImage() const {
 }
 
 std::vector<double> Field::getConcentrationArray() const {
-  int size = geometry->getCompartmentImage().width() *
-             geometry->getCompartmentImage().height();
+  const auto &img = geometry->getCompartmentImage();
+  int size = img.width() * img.height();
   // NOTE: order of concentration array is [ (x=0,y=0), (x=1,y=0), ... ]
   // NOTE: (0,0) point is at bottom-left
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
   std::vector<double> arr(static_cast<std::size_t>(size), 0.0);
-  int Lx = geometry->getCompartmentImage().width();
-  int Ly = geometry->getCompartmentImage().height();
   for (std::size_t i = 0; i < geometry->ix.size(); ++i) {
     const auto &point = geometry->ix[i];
-    int arrayIndex = point.x() + Lx * (Ly - 1 - point.y());
+    int arrayIndex = point.x() + img.width() * (img.height() - 1 - point.y());
     arr[static_cast<std::size_t>(arrayIndex)] = conc[i];
   }
   return arr;
@@ -207,7 +165,7 @@ void Field::applyDiffusionOperator() {
 }
 
 double Field::getMeanConcentration() const {
-  return std::accumulate(conc.cbegin(), conc.cend(), 0.0) /
+  return std::accumulate(conc.cbegin(), conc.cend(), static_cast<double>(0)) /
          static_cast<double>(conc.size());
 }
 

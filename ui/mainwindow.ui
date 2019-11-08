@@ -820,31 +820,6 @@
                  </property>
                 </widget>
                </item>
-               <item row="4" column="3" colspan="5">
-                <widget class="QPushButton" name="btnImportConcentration">
-                 <property name="enabled">
-                  <bool>true</bool>
-                 </property>
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="toolTip">
-                  <string>Import an image of the spatial concentration of this species</string>
-                 </property>
-                 <property name="statusTip">
-                  <string>Import an image of the spatial concentration of this species</string>
-                 </property>
-                 <property name="whatsThis">
-                  <string>&lt;h4&gt;import from image&lt;/h4&gt;&lt;p&gt;Import an image of the spatial concentration of this species&lt;/p&gt;</string>
-                 </property>
-                 <property name="text">
-                  <string>import from image...</string>
-                 </property>
-                </widget>
-               </item>
                <item row="1" column="2" colspan="7">
                 <widget class="QCheckBox" name="chkSpeciesIsConstant">
                  <property name="sizePolicy">
@@ -928,7 +903,7 @@
                 </widget>
                </item>
                <item row="3" column="3" colspan="6">
-                <widget class="QPushButton" name="btnAnalyticConcentration">
+                <widget class="QPushButton" name="btnEditAnalyticConcentration">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                    <horstretch>0</horstretch>
@@ -981,41 +956,6 @@
                  <property name="text">
                   <string>Analytic expression</string>
                  </property>
-                </widget>
-               </item>
-               <item row="4" column="8">
-                <widget class="QComboBox" name="cmbImportExampleConcentration">
-                 <property name="currentText">
-                  <string>example images...</string>
-                 </property>
-                 <property name="frame">
-                  <bool>true</bool>
-                 </property>
-                 <item>
-                  <property name="text">
-                   <string>example images...</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>one-blob-100x100</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>two-blobs-100x100</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>three-blobs-100x100</string>
-                  </property>
-                 </item>
-                 <item>
-                  <property name="text">
-                   <string>gradient-100x100</string>
-                  </property>
-                 </item>
                 </widget>
                </item>
                <item row="8" column="8">
@@ -1119,6 +1059,31 @@
                  <property name="whatsThis">
                   <string>&lt;h4&gt;Diffusion constant&lt;/h4&gt;
 &lt;p&gt;The rate at which the species diffuses within the compartment&lt;/p&gt;</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="4" column="3" colspan="6">
+                <widget class="QPushButton" name="btnEditImageConcentration">
+                 <property name="enabled">
+                  <bool>true</bool>
+                 </property>
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="toolTip">
+                  <string>Import an image of the spatial concentration of this species</string>
+                 </property>
+                 <property name="statusTip">
+                  <string>Import an image of the spatial concentration of this species</string>
+                 </property>
+                 <property name="whatsThis">
+                  <string>&lt;h4&gt;import from image&lt;/h4&gt;&lt;p&gt;Import an image of the spatial concentration of this species&lt;/p&gt;</string>
+                 </property>
+                 <property name="text">
+                  <string>edit image...</string>
                  </property>
                 </widget>
                </item>

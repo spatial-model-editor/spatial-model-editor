@@ -28,31 +28,31 @@ SCENARIO("set size of image", "[dialogimagesize][gui]") {
     REQUIRE(dim.getPixelWidth() == dbl_approx(1.0));
     ModalWidgetTimer mwt;
     WHEN("user sets width to 1, same units, pixel size -> 0.01") {
-      mwt.setMessage("1");
+      mwt.addUserAction("1");
       mwt.start();
       dim.exec();
       REQUIRE(dim.getPixelWidth() == dbl_approx(0.01));
     }
     WHEN("user sets width to 1e-8, pixel size -> 1e-10") {
-      mwt.setMessage("1e-8");
+      mwt.addUserAction("1e-8");
       mwt.start();
       dim.exec();
       REQUIRE(dim.getPixelWidth() == dbl_approx(1e-10));
     }
     WHEN("user sets height to 10, pixel size -> 0.2") {
-      mwt.setKeySeq({"Tab", "Tab", "1", "0"});
+      mwt.addUserAction({"Tab", "Tab", "1", "0"});
       mwt.start();
       dim.exec();
       REQUIRE(dim.getPixelWidth() == dbl_approx(0.2));
     }
     WHEN("user sets height to 10, units to dm, pixel size -> 0.02") {
-      mwt.setKeySeq({"Tab", "Down", "Tab", "1", "0"});
+      mwt.addUserAction({"Tab", "Down", "Tab", "1", "0"});
       mwt.start();
       dim.exec();
       REQUIRE(dim.getPixelWidth() == dbl_approx(0.02));
     }
     WHEN("user sets height to 10, units to cm, pixel size -> 0.002") {
-      mwt.setKeySeq({"Tab", "Down", "Down", "Tab", "1", "0"});
+      mwt.addUserAction({"Tab", "Down", "Down", "Tab", "1", "0"});
       mwt.start();
       dim.exec();
       REQUIRE(dim.getPixelWidth() == dbl_approx(0.002));
@@ -60,7 +60,7 @@ SCENARIO("set size of image", "[dialogimagesize][gui]") {
     WHEN(
         "user sets width to 9 & units to dm, then height 10, units um,"
         " pixel size -> 0.0000002") {
-      mwt.setKeySeq(
+      mwt.addUserAction(
           {"9", "Tab", "Down", "Tab", "1", "0", "Tab", "Down", "Down", "Down"});
       mwt.start();
       dim.exec();
@@ -70,7 +70,7 @@ SCENARIO("set size of image", "[dialogimagesize][gui]") {
       modelUnits.setLength(3);  // mm
       DialogImageSize dim2(img, 22.0, modelUnits);
       REQUIRE(dim2.getPixelWidth() == dbl_approx(22.0));
-      mwt.setKeySeq({"1", "Tab", "Up", "Up", "Up", "Up", "Up", "Up"});
+      mwt.addUserAction({"1", "Tab", "Up", "Up", "Up", "Up", "Up", "Up"});
       mwt.start();
       dim2.exec();
       REQUIRE(dim2.getPixelWidth() == dbl_approx(10.0));
