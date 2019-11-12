@@ -129,7 +129,7 @@ void saveTempSBMLFile(MainWindow *w, const UIPointers &ui,
   REQUIRE(!mwt.isRunning());
   QFile file(tempFileName);
   file.remove();
-  mwt.setMessage(tempFileName);
+  mwt.addUserAction(tempFileName);
   mwt.start();
   ui.listCompartments->setFocus();
   QApplication::setActiveWindow(w);
@@ -139,7 +139,7 @@ void saveTempSBMLFile(MainWindow *w, const UIPointers &ui,
 void openTempSBMLFile(MainWindow *w, const UIPointers &ui,
                       ModalWidgetTimer &mwt, QString tempFileName = "tmp.xml") {
   REQUIRE(!mwt.isRunning());
-  mwt.setMessage(tempFileName);
+  mwt.addUserAction(tempFileName);
   mwt.start();
   ui.listCompartments->setFocus();
   QApplication::setActiveWindow(w);
@@ -177,8 +177,7 @@ void openThreePixelImage(MainWindow *w, const UIPointers &ui,
   // so write iamge to disk and open it with ctrl+I instead
   QImage img(":/geometry/single-pixels-3x1.png");
   img.save("tmp.png");
-  mwt.setMessage("tmp.png");
-  mwt2.startAfter(&mwt);
+  mwt.addUserAction("tmp.png", true, &mwt2);
   mwt.start();
   ui.listCompartments->setFocus();
   QApplication::setActiveWindow(w);
@@ -193,6 +192,8 @@ void REQUIRE_threePixelImageLoaded(const UIPointers &ui) {
   REQUIRE(ui.lblGeometry->getImage().pixel(2, 0) == 0xff525252);
 }
 
+// skip tests on osx due to modal dialog box issues
+#ifndef Q_OS_MAC
 SCENARIO("Shortcut keys", "[gui][mainwindow]") {
   MainWindow w;
   w.show();
@@ -210,8 +211,6 @@ SCENARIO("Shortcut keys", "[gui][mainwindow]") {
       REQUIRE(mwt.getResult().left(correctText.size()) == correctText);
     }
   }
-  // on osx, about QT is not a modal dialog box, so skip this test:
-#ifndef Q_OS_MAC
   WHEN("user presses F9") {
     THEN("open About Qt dialog box") {
       mwt.start();
@@ -221,15 +220,14 @@ SCENARIO("Shortcut keys", "[gui][mainwindow]") {
       REQUIRE(mwt.getResult().left(correctText.size()) == correctText);
     }
   }
-#endif
   WHEN("user presses ctrl+o") {
     THEN("open AcceptOpen FileDialog") {
+      mwt.addUserAction(QStringList{"Escape"});
       mwt.start();
       QTest::keyClick(&w, Qt::Key_O, Qt::ControlModifier);
       REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
     }
   }
-#ifndef Q_OS_MACOS
   WHEN("user presses ctrl+s") {
     THEN("open AcceptSave FileDialog") {
       // open very-simple-model to have something to save
@@ -237,12 +235,12 @@ SCENARIO("Shortcut keys", "[gui][mainwindow]") {
       QTest::keyClick(ui.menuFile, Qt::Key_E, Qt::NoModifier, key_delay);
       QTest::keyClick(ui.menuOpen_example_SBML_file, Qt::Key_V, Qt::NoModifier,
                       key_delay);
+      mwt.addUserAction(QStringList{"Escape"});
       mwt.start();
       QTest::keyClick(&w, Qt::Key_S, Qt::ControlModifier);
       REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
     }
   }
-#endif
   WHEN("user presses ctrl+tab (no SBML & compartment image loaded)") {
     THEN("remain on Geometry tab: all others disabled") {
       REQUIRE(ui.tabMain->currentIndex() == 0);
@@ -270,7 +268,8 @@ SCENARIO("click on btnChangeCompartment",
   ModalWidgetTimer mwt1;
   ModalWidgetTimer mwt2;
   WHEN("no valid SBML model loaded") {
-    THEN("tell user, offer to load one") {
+    THEN("tell user, offer to load one, user clicks no") {
+      mwt1.addUserAction(QStringList{"Escape"});
       mwt1.start();
       QTest::mouseClick(ui.btnChangeCompartment, Qt::LeftButton,
                         Qt::KeyboardModifiers(), QPoint(), key_delay);
@@ -280,11 +279,11 @@ SCENARIO("click on btnChangeCompartment",
     WHEN("user clicks yes") {
       THEN("open SBML import file dialog") {
         // start timer to press spacebar (i.e. accept default "yes") on first
-        // modal widget
-        mwt1.setMessage(" ");
+        // modal widget, then close second widget
+        mwt1.addUserAction(" ", true, &mwt2);
+        mwt2.addUserAction(QStringList{"Escape"});
         mwt1.start();
         // start timer to close second widget (after first timer is done)
-        mwt2.startAfter(&mwt1);
         QTest::mouseClick(ui.btnChangeCompartment, Qt::LeftButton,
                           Qt::KeyboardModifiers(), QPoint(), key_delay);
         // check that second widget was a file open dialog
@@ -294,27 +293,27 @@ SCENARIO("click on btnChangeCompartment",
   }
   WHEN("valid SBML model loaded, but no geometry image loaded") {
     openABtoC(&w, ui, mwt1);
-    THEN("tell user, offer to load one") {
-      mwt1.setMessage();
+    THEN("tell user, offer to load one, user clicks no") {
+      mwt1.addUserAction(QStringList{"Escape"});
       mwt1.start();
       QTest::mouseClick(ui.btnChangeCompartment, Qt::LeftButton,
                         Qt::KeyboardModifiers(), QPoint(), key_delay);
       QString correctText =
           "No image of compartment geometry loaded - import one now?";
-      REQUIRE(mwt1.getResult().left(correctText.size()) == correctText);
-      WHEN("user clicks yes") {
-        THEN("open import geometry from image dialog") {
-          // start timer to press spacebar (i.e. accept default "yes") on first
-          // modal widget
-          mwt1.setMessage(" ");
-          mwt1.start();
-          // start timer to close second widget (after first timer is done)
-          mwt2.startAfter(&mwt1);
-          QTest::mouseClick(ui.btnChangeCompartment, Qt::LeftButton,
-                            Qt::KeyboardModifiers(), QPoint(), key_delay);
-          // check that second widget was a file open dialog
-          REQUIRE(mwt2.getResult() == "QFileDialog::AcceptOpen");
-        }
+      REQUIRE(mwt1.getResult().left(correctText.size()).toStdString() ==
+              correctText.toStdString());
+    }
+    WHEN("user clicks yes") {
+      THEN("open import geometry from image dialog") {
+        // start timer to press spacebar (i.e. accept default "yes") on first
+        // modal widget, then close second widget
+        mwt1.addUserAction(" ", true, &mwt2);
+        mwt2.addUserAction(QStringList{"Escape"});
+        mwt1.start();
+        QTest::mouseClick(ui.btnChangeCompartment, Qt::LeftButton,
+                          Qt::KeyboardModifiers(), QPoint(), key_delay);
+        // check that second widget was a file open dialog
+        REQUIRE(mwt2.getResult() == "QFileDialog::AcceptOpen");
       }
     }
   }
@@ -340,7 +339,6 @@ SCENARIO("import built-in SBML model and compartment geometry image",
   }
 }
 
-#ifndef Q_OS_MACOS
 SCENARIO("load built-in SBML model very-simple-model", "[gui][mainwindow]") {
   MainWindow w;
   w.show();
@@ -376,11 +374,11 @@ SCENARIO("load built-in SBML model, change units", "[gui][mainwindow]") {
   // change units
   ModalWidgetTimer mwt;
   QTest::keyClick(&w, Qt::Key_T, Qt::AltModifier, key_delay);
-  mwt.setKeySeq({"Down", "Tab", "Down", "Tab", "Down", "Tab", "Down"});
+  mwt.addUserAction({"Down", "Tab", "Down", "Tab", "Down", "Tab", "Down"});
   mwt.start();
   QTest::keyClick(ui.menuTools, Qt::Key_U, Qt::NoModifier, key_delay);
   // save SBML file
-  mwt.setMessage("units.xml");
+  mwt.addUserAction("units.xml");
   mwt.start();
   QTest::keyClick(&w, Qt::Key_S, Qt::ControlModifier, key_delay);
   // check units of SBML model
@@ -408,7 +406,6 @@ SCENARIO("load built-in SBML model, change units", "[gui][mainwindow]") {
   REQUIRE(amountunit->isMole() == true);
   REQUIRE(amountunit->getScale() == dbl_approx(-3));
 }
-#endif
 
 SCENARIO("Load SBML file", "[gui][mainwindow]") {
   MainWindow w;
@@ -441,10 +438,9 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   CAPTURE(col3);
 
   // import Geometry from image
-  mwt.setMessage("tmp.png");
-  // to close setImageDimensions dialog that pops up after loading image
-  ModalWidgetTimer mwt2;
-  mwt2.startAfter(&mwt);
+  // mwt to close setImageDimensions dialog that pops up after loading image
+  ModalWidgetTimer mwtClose;
+  mwt.addUserAction("tmp.png", true, &mwtClose);
   mwt.start();
   ui.listCompartments->setFocus();
   QApplication::setActiveWindow(&w);
@@ -489,7 +485,6 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
                     QPoint(imgDisplayWidth / 2, imgDisplayWidth / 2));
   QApplication::processEvents();
   REQUIRE(ui.lblGeometry->getColour() == col3);
-#ifndef Q_OS_MACOS
   ui.tabCompartmentGeometry->setFocus();
   QApplication::processEvents();
   // display Boundaries sub-tab
@@ -521,7 +516,7 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
                     QPoint(6, 6));
   QApplication::processEvents();
   REQUIRE(ui.listCompartments->currentRow() == 0);
-#endif
+
   // if lblGeometry has focus then ctrl+tab doesn't work to change tabs:
   ui.listCompartments->setCurrentRow(0);
   QApplication::processEvents();
@@ -599,7 +594,6 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   REQUIRE(ui.lblSpeciesColour->pixmap()->toImage().pixelColor(0, 0) ==
           utils::indexedColours()[3]);
   // just click Enter, so accept default colour, ie no-op
-  mwt.setMessage();
   mwt.start();
   QTest::mouseClick(ui.btnChangeSpeciesColour, Qt::LeftButton,
                     Qt::KeyboardModifier(), QPoint(), key_delay);
@@ -681,3 +675,4 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   QApplication::processEvents();
   REQUIRE(ui.tabMain->currentIndex() == 8);
 }
+#endif

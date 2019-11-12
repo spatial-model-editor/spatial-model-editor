@@ -7,7 +7,7 @@
 [![codacy status](https://api.codacy.com/project/badge/Grade/2cc27d99b42041668944f41d88abeef0)](https://www.codacy.com/app/lkeegan/spatial-model-editor?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=lkeegan/spatial-model-editor&amp;utm_campaign=Badge_Grade)
 [![documentation status](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/en/latest/)
 
-A GUI to convert non-spatial SBML models of bio-chemical reactions into 2d spatial models, and to simulate them.
+A GUI editor to convert non-spatial SBML models of bio-chemical reactions into 2d spatial models and simulate them using the [dune-copasi](https://gitlab.dune-project.org/copasi/dune-copasi) solver for reaction-diffusion systems.
 
 [<img src="docs/img/icon-linux.png" width="32"> linux executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor) |
 [<img src="docs/img/icon-osx.png" width="32"> mac executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg) |

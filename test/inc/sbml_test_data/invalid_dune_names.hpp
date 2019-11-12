@@ -85,9 +85,6 @@ struct invalid_dune_names {
       </spatial:listOfDomainTypes>
       <spatial:listOfDomains>
         <spatial:domain spatial:id="comp_domain" spatial:domainType="comp_domainType">
-          <spatial:listOfInteriorPoints>
-            <spatial:interiorPoint spatial:coord1="0" spatial:coord2="0"/>
-          </spatial:listOfInteriorPoints>
         </spatial:domain>
       </spatial:listOfDomains>
       <spatial:listOfGeometryDefinitions>

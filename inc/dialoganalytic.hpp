@@ -3,6 +3,7 @@
 #include <QDialog>
 #include <memory>
 
+#include "sbml.hpp"
 #include "symbolic.hpp"
 #include "utils.hpp"
 
@@ -19,10 +20,7 @@ class DialogAnalytic : public QDialog {
 
  public:
   explicit DialogAnalytic(const QString& analyticExpression,
-                          const QSize& imageSize,
-                          const std::vector<QPoint>& imagePoints,
-                          const QPointF& physicalOrigin, double pixelWidth,
-                          const units::ModelUnits& modelUnits,
+                          const sbml::SpeciesGeometry& speciesGeometry,
                           QWidget* parent = nullptr);
   const std::string& getExpression() const;
   bool isExpressionValid() const;

@@ -12,6 +12,7 @@
 
 #include "dialogabout.hpp"
 #include "dialoganalytic.hpp"
+#include "dialogconcentrationimage.hpp"
 #include "dialogimagesize.hpp"
 #include "dialogunits.hpp"
 #include "dune.hpp"
@@ -179,14 +180,11 @@ void MainWindow::setupConnections() {
   connect(ui->radInitialConcentrationAnalytic, &QRadioButton::toggled, this,
           &MainWindow::radInitialConcentration_toggled);
 
-  connect(ui->btnAnalyticConcentration, &QPushButton::clicked, this,
-          &MainWindow::btnAnalyticConcentration_clicked);
+  connect(ui->btnEditAnalyticConcentration, &QPushButton::clicked, this,
+          &MainWindow::btnEditAnalyticConcentration_clicked);
 
-  connect(ui->btnImportConcentration, &QPushButton::clicked, this,
-          &MainWindow::btnImportConcentration_clicked);
-
-  connect(ui->cmbImportExampleConcentration, &QComboBox::currentTextChanged,
-          this, &MainWindow::cmbImportExampleConcentration_currentTextChanged);
+  connect(ui->btnEditImageConcentration, &QPushButton::clicked, this,
+          &MainWindow::btnEditImageConcentration_clicked);
 
   connect(ui->txtDiffusionConstant, &QLineEdit::editingFinished, this,
           &MainWindow::txtDiffusionConstant_editingFinished);
@@ -203,7 +201,6 @@ void MainWindow::setupConnections() {
           &MainWindow::listFunctions_currentTextChanged);
 
   // simulate
-
   connect(ui->actionGroupSimType, &QActionGroup::triggered, this,
           [this](QAction *action) {
             Q_UNUSED(action);
@@ -552,7 +549,6 @@ void MainWindow::importGeometryImage(const QString &filename) {
 
 void MainWindow::actionSet_model_units_triggered() {
   if (!isValidModel()) {
-    SPDLOG_DEBUG("invalid model: ignoring");
     return;
   }
   units::Unit oldLengthUnit = sbmlDoc.getModelUnits().getLength();
@@ -572,7 +568,6 @@ void MainWindow::actionSet_model_units_triggered() {
 
 void MainWindow::actionSet_image_size_triggered() {
   if (!isValidModelAndGeometryImage()) {
-    SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
     return;
   }
   DialogImageSize dialog(sbmlDoc.getCompartmentImage(), sbmlDoc.getPixelWidth(),
@@ -833,12 +828,9 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
     ui->chkSpeciesIsSpatial->setChecked(isSpatial);
     ui->txtDiffusionConstant->setEnabled(isSpatial);
     ui->radInitialConcentrationAnalytic->setEnabled(isSpatial);
-    ui->btnAnalyticConcentration->setEnabled(isSpatial);
+    ui->btnEditAnalyticConcentration->setEnabled(isSpatial);
     ui->radInitialConcentrationImage->setEnabled(isSpatial);
-    ui->btnImportConcentration->setEnabled(isSpatial);
-    ui->cmbImportExampleConcentration->setEnabled(isSpatial);
-    ui->btnImportConcentration->setEnabled(isSpatial);
-    ui->cmbImportExampleConcentration->setEnabled(isSpatial);
+    ui->btnEditImageConcentration->setEnabled(isSpatial);
     // constant
     bool isConstant = sbmlDoc.getIsSpeciesConstant(speciesID.toStdString());
     ui->chkSpeciesIsConstant->setChecked(isConstant);
@@ -910,19 +902,16 @@ void MainWindow::chkSpeciesIsConstant_toggled(bool enabled) {
 void MainWindow::radInitialConcentration_toggled() {
   if (ui->radInitialConcentrationUniform->isChecked()) {
     ui->txtInitialConcentration->setEnabled(true);
-    ui->btnAnalyticConcentration->setEnabled(false);
-    ui->btnImportConcentration->setEnabled(false);
-    ui->cmbImportExampleConcentration->setEnabled(false);
+    ui->btnEditAnalyticConcentration->setEnabled(false);
+    ui->btnEditImageConcentration->setEnabled(false);
   } else if (ui->radInitialConcentrationImage->isChecked()) {
     ui->txtInitialConcentration->setEnabled(false);
-    ui->btnAnalyticConcentration->setEnabled(false);
-    ui->btnImportConcentration->setEnabled(true);
-    ui->cmbImportExampleConcentration->setEnabled(true);
+    ui->btnEditAnalyticConcentration->setEnabled(false);
+    ui->btnEditImageConcentration->setEnabled(true);
   } else {
     ui->txtInitialConcentration->setEnabled(false);
-    ui->btnAnalyticConcentration->setEnabled(true);
-    ui->btnImportConcentration->setEnabled(false);
-    ui->cmbImportExampleConcentration->setEnabled(false);
+    ui->btnEditAnalyticConcentration->setEnabled(true);
+    ui->btnEditImageConcentration->setEnabled(false);
   }
 }
 
@@ -936,17 +925,13 @@ void MainWindow::txtInitialConcentration_editingFinished() {
   listSpecies_currentItemChanged(ui->listSpecies->currentItem(), nullptr);
 }
 
-void MainWindow::btnAnalyticConcentration_clicked() {
+void MainWindow::btnEditAnalyticConcentration_clicked() {
   const auto &speciesID = sbmlDoc.currentSpecies;
-  SPDLOG_DEBUG("ask user for analytic initial concentration of species {}...",
+  SPDLOG_DEBUG("editing analytic initial concentration of species {}...",
                speciesID.toStdString());
   DialogAnalytic dialog(sbmlDoc.getAnalyticConcentration(speciesID),
-                        sbmlDoc.getCompartmentImage().size(),
-                        sbmlDoc.mapSpeciesIdToField.at(speciesID).geometry->ix,
-                        sbmlDoc.getOrigin(), sbmlDoc.getPixelWidth(),
-                        sbmlDoc.getModelUnits());
+                        sbmlDoc.getSpeciesGeometry(speciesID));
   if (dialog.exec() == QDialog::Accepted) {
-    ui->radInitialConcentrationAnalytic->setChecked(true);
     const std::string &expr = dialog.getExpression();
     SPDLOG_DEBUG("  - set expr: {}", expr);
     sbmlDoc.setAnalyticConcentration(speciesID, expr.c_str());
@@ -954,32 +939,18 @@ void MainWindow::btnAnalyticConcentration_clicked() {
   }
 }
 
-void MainWindow::btnImportConcentration_clicked() {
+void MainWindow::btnEditImageConcentration_clicked() {
   const auto &speciesID = sbmlDoc.currentSpecies;
-  SPDLOG_DEBUG("ask user for concentration image for species {}... selected",
+  SPDLOG_DEBUG("editing initial concentration image for species {}...",
                speciesID.toStdString());
-  QString filename = QFileDialog::getOpenFileName(
-      this, "Import species concentration from image", "",
-      "Image Files (*.png *.jpg *.bmp *.tiff);; All files (*.*)", nullptr,
-      QFileDialog::Option::DontUseNativeDialog);
-  if (!filename.isEmpty()) {
-    ui->radInitialConcentrationImage->setChecked(true);
-    SPDLOG_DEBUG("  - import file {}", filename.toStdString());
-    sbmlDoc.importConcentrationFromImage(speciesID, filename);
+  DialogConcentrationImage dialog(
+      sbmlDoc.getSampledFieldConcentration(speciesID),
+      sbmlDoc.getSpeciesGeometry(speciesID));
+  if (dialog.exec() == QDialog::Accepted) {
+    SPDLOG_DEBUG("  - setting new sampled field concentration array");
+    sbmlDoc.setSampledFieldConcentration(speciesID,
+                                         dialog.getConcentrationArray());
     ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
-  }
-}
-
-void MainWindow::cmbImportExampleConcentration_currentTextChanged(
-    const QString &text) {
-  if (ui->cmbImportExampleConcentration->currentIndex() != 0) {
-    const auto &speciesID = sbmlDoc.currentSpecies;
-    ui->radInitialConcentrationImage->setChecked(true);
-    SPDLOG_DEBUG("import {}", text.toStdString());
-    sbmlDoc.importConcentrationFromImage(
-        speciesID, QString(":/concentration/%1.png").arg(text));
-    ui->lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
-    ui->cmbImportExampleConcentration->setCurrentIndex(0);
   }
 }
 

@@ -197,7 +197,8 @@ void Simulate::integrateForwardsEuler(double dt) {
   // roughly equivalent to infinite rate of diffusion
   for (auto *f : field) {
     if (!f->isSpatial) {
-      double av_dcdt = std::accumulate(f->dcdt.cbegin(), f->dcdt.cend(), 0.0) /
+      double av_dcdt = std::accumulate(f->dcdt.cbegin(), f->dcdt.cend(),
+                                       static_cast<double>(0)) /
                        static_cast<double>(f->dcdt.size());
       std::fill(f->dcdt.begin(), f->dcdt.end(), av_dcdt);
     }

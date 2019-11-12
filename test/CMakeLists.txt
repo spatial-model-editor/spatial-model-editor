@@ -2,6 +2,7 @@
 set(SRC_LIST
     src/main.cpp
     src/test_dialoganalytic.cpp
+    src/test_dialogconcentrationimage.cpp
     src/test_dialogimagesize.cpp
     src/test_dialogunits.cpp
     src/test_dune.cpp
@@ -16,6 +17,7 @@ set(SRC_LIST
     src/test_symbolic.cpp
     src/test_units.cpp
     src/test_utils.cpp)
+
 
 add_executable(tests ${SRC_LIST} inc/qt_test_utils.hpp
                      ../resources/resources.qrc)

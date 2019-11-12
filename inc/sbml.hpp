@@ -35,8 +35,8 @@ using NameDoublePair = std::pair<std::string, double>;
 
 class Reac {
  public:
-  std::string ID;
-  std::string Name;
+  std::string id;
+  std::string name;
   std::string fullExpression;
   std::string inlinedExpression;
   std::vector<NameDoublePair> products;
@@ -46,10 +46,18 @@ class Reac {
 
 class Func {
  public:
-  std::string ID;
-  std::string Name;
+  std::string id;
+  std::string name;
   std::string expression;
   std::vector<std::string> arguments;
+};
+
+struct SpeciesGeometry {
+  QSize compartmentImageSize;
+  const std::vector<QPoint> &compartmentPoints;
+  const QPointF &physicalOrigin;
+  double pixelWidth;
+  const units::ModelUnits &modelUnits;
 };
 
 class SbmlDocWrapper {
@@ -121,6 +129,7 @@ class SbmlDocWrapper {
   // (sampledField, spatialref, etc)
   void removeInitialAssignment(const std::string &speciesID);
 
+  std::vector<QPointF> getInteriorPixelPoints() const;
   // update mesh object
   void updateMesh();
   // update SBML doc with mesh
@@ -195,10 +204,12 @@ class SbmlDocWrapper {
 
   double getCompartmentSize(const QString &compartmentID) const;
   double getSpeciesCompartmentSize(const QString &speciesID) const;
+  SpeciesGeometry getSpeciesGeometry(const QString &speciesID) const;
   QString getCompartmentSizeUnits(const QString &compartmentID) const;
 
   // compartment geometry: interiorPoints - used for mesh generation
-  QPointF getCompartmentInteriorPoint(const QString &compartmentID) const;
+  std::optional<QPointF> getCompartmentInteriorPoint(
+      const QString &compartmentID) const;
   void setCompartmentInteriorPoint(const QString &compartmentID,
                                    const QPointF &point);
 
@@ -212,8 +223,11 @@ class SbmlDocWrapper {
 
   std::string getSpeciesSampledFieldInitialAssignment(
       const std::string &speciesID) const;
-  void importConcentrationFromImage(const QString &speciesID,
-                                    const QString &filename);
+  void setSampledFieldConcentration(
+      const QString &speciesID, const std::vector<double> &concentrationArray);
+  std::vector<double> getSampledFieldConcentration(
+      const QString &speciesID) const;
+
   QImage getConcentrationImage(const QString &speciesID) const;
 
   // species isSpatial flag

@@ -66,7 +66,6 @@ class Field {
   Field(const Compartment *geom, const std::string &specID,
         double diffConst = 1.0, const QColor &col = QColor(255, 0, 0));
   void setUniformConcentration(double concentration);
-  void importConcentration(const QImage &img, double scale_factor = 1.0);
   void importConcentration(const std::vector<double> &sbmlConcentrationArray);
   QImage getConcentrationImage() const;
   std::vector<double> getConcentrationArray() const;

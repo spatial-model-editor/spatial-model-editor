@@ -2,6 +2,7 @@ set(SRC_LIST
     boundary.cpp
     dialogabout.cpp
     dialoganalytic.cpp
+    dialogconcentrationimage.cpp
     dialogimagesize.cpp
     dialogunits.cpp
     dune.cpp
@@ -30,6 +31,7 @@ add_library(mainwindow STATIC
             ${PROJECT_SOURCE_DIR}/inc/mainwindow.hpp
             ${PROJECT_SOURCE_DIR}/inc/dialogabout.hpp
             ${PROJECT_SOURCE_DIR}/inc/dialoganalytic.hpp
+            ${PROJECT_SOURCE_DIR}/inc/dialogconcentrationimage.hpp
             ${PROJECT_SOURCE_DIR}/inc/dialogimagesize.hpp
             ${PROJECT_SOURCE_DIR}/inc/dialogunits.hpp
             ${PROJECT_SOURCE_DIR}/inc/qlabelmousetracker.hpp
@@ -48,7 +50,7 @@ target_compile_features(mainwindow PUBLIC cxx_std_17)
 
 target_compile_definitions(mainwindow PUBLIC $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE>)
 target_compile_definitions(mainwindow PUBLIC $<$<CONFIG:Release>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO>)
-target_link_options(mainwindow PUBLIC $<$<CONFIG:Debug>:-fsanitize=address -Wall -Wextra>)
+target_link_options(mainwindow PUBLIC $<$<CONFIG:Debug>:--coverage -fsanitize=address -fno-omit-frame-pointer -Wall -Wextra -Wpedantic>)
 
 # Find the libraries that correspond to the LLVM components
 # that we wish to use

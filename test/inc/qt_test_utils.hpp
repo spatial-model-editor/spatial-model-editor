@@ -9,31 +9,46 @@
 #include <QObject>
 #include <QTest>
 #include <QTimer>
+#include <queue>
 
 const int mouseDelay = 50;
 
 // timer class that repeatedly checks for an active modal widget
 // (a modal widget blocks execution pending user input, e.g. a message box)
-// when it finds a modal widget
-//    - stores some text about it in result
-//    - if there is a message, it enters it as keyevents, then presses enter
-//    - otherwise it closes the Modal dialog
-// by default: check every 0.1s, give up after 30s if no modal widget found
-// can also be given another ModalWidgetTimer to wait for it to complete before
-// this one starts
+// and when it finds a modal widget
+//    - stores some text about it in results
+//    - optionally start another ModalWidgetTimer
+//       - for the case where the UserAction will open another modal widget
+//       - the new modal widget blocks execution of the currently running
+//       ModalWidgetTimer
+//       - so the newly started one can deal with & close the new modal widget
+//       - once closed, execution returns to the current ModalWidgetTimer
+//    - sends KeyEvents for the keys specified in UserAction to the modal widget
+//    - optionally calls accept (i.e. press OK) on the modal widget
+// default timing:
+//    - check for a modal widget every 0.1s
+//    - give up after 30s if no modal widget found
+
 class ModalWidgetTimer : public QObject {
   Q_OBJECT
+
+  using KeyPair = std::pair<QKeySequence, QChar>;
+  struct UserAction {
+    std::vector<KeyPair> keySequence;
+    QString message;
+    bool callAccept = true;
+    ModalWidgetTimer *mwtToStart = nullptr;
+  };
 
  private:
   int timeLeft;
   QTimer timer;
-  QString message;
-  QString result;
-  ModalWidgetTimer *waitUntilDone;
-  std::vector<std::pair<QKeySequence, QChar>> keySeqs;
+  QStringList results;
+  std::queue<UserAction> userActions;
 
   void getText(QWidget *widget) {
     // check if widget is a QFileDialog
+    QString result;
     auto *p = qobject_cast<QFileDialog *>(widget);
     if (p != nullptr) {
       if (p->acceptMode() == QFileDialog::AcceptOpen) {
@@ -47,101 +62,105 @@ class ModalWidgetTimer : public QObject {
     if (msgBox != nullptr) {
       result = msgBox->text();
     }
-    if (!result.isEmpty()) {
-      qDebug() << "ModalWidgetTimer :: found text " << result;
-    }
+    results.push_back(result);
   }
 
   void sendKeyEvents(QWidget *widget) {
-    qDebug() << "ModalWidgetTimer :: typing message " << message
-             << " + enter key into" << widget;
-    for (const auto &pair : keySeqs) {
-      QKeyEvent press(QEvent::KeyPress, pair.first[0], Qt::NoModifier,
-                      pair.second);
-      QCoreApplication::sendEvent(widget->windowHandle(), &press);
-      QKeyEvent release(QEvent::KeyRelease, pair.first[0], Qt::NoModifier,
-                        pair.second);
-      QCoreApplication::sendEvent(widget->windowHandle(), &release);
+    const auto &action = userActions.front();
+    if (action.mwtToStart != nullptr) {
+      qDebug() << this << ":: starting" << action.mwtToStart;
+      action.mwtToStart->start();
     }
-    // call `accept` on QDialog
-    auto *p = qobject_cast<QDialog *>(widget);
-    if (p != nullptr) {
-      p->accept();
+    qDebug() << this << ":: entering" << action.message << "into" << widget;
+    for (const auto &[keySeq, character] : action.keySequence) {
+      auto press =
+          new QKeyEvent(QEvent::KeyPress, keySeq[0], Qt::NoModifier, character);
+      QCoreApplication::postEvent(widget->windowHandle(), press);
+      QApplication::processEvents();
+      auto release = new QKeyEvent(QEvent::KeyRelease, keySeq[0],
+                                   Qt::NoModifier, character);
+      QCoreApplication::postEvent(widget->windowHandle(), release);
+      QApplication::processEvents();
     }
-    // QKeyEvent enter(QEvent::KeyPress, Qt::Key_Enter, Qt::NoModifier);
-    // QCoreApplication::sendEvent(widget->windowHandle(), &enter);
+    if (action.callAccept) {
+      auto *p = qobject_cast<QDialog *>(widget);
+      if (p != nullptr) {
+        qDebug() << this << ":: calling accept on widget" << widget;
+        QApplication::processEvents();
+        p->accept();
+      }
+    }
   }
 
   void lookForWidget() {
-    if ((waitUntilDone != nullptr) && waitUntilDone->timer.isActive()) {
-      // wait until previous ModalWidgetTimer is done
-      return;
-    }
     QWidget *widget = QApplication::activeModalWidget();
     if (widget) {
-      timer.stop();
-      qDebug() << "ModalWidgetTimer :: found widget " << widget;
+      qDebug() << this << ":: found widget" << widget;
       getText(widget);
-      if (!message.isEmpty()) {
-        sendKeyEvents(widget);
-      } else {
-        qDebug("ModalWidgetTimer :: closing ModalWidget");
-        widget->close();
+      sendKeyEvents(widget);
+      userActions.pop();
+      qDebug() << this
+               << ":: action done, remaining actions:" << userActions.size();
+      if (userActions.empty()) {
+        timer.stop();
       }
     }
     timeLeft -= timer.interval();
     if (timeLeft < 0) {
       // give up
-      qDebug("ModalWidgetTimer :: timeout: no ModalWidget found");
+      qDebug() << this << ":: timeout: no ModalWidget found";
       timer.stop();
     }
   }
 
  public:
-  explicit ModalWidgetTimer(int timerInterval = 250, int timeout = 30000)
+  explicit ModalWidgetTimer(int timerInterval = 100, int timeout = 30000)
       : QObject(nullptr), timeLeft(timeout) {
     timer.setInterval(timerInterval);
     QObject::connect(&timer, &QTimer::timeout, this,
                      &ModalWidgetTimer::lookForWidget);
   }
 
-  void setMessage(const QString &msg = {}) {
-    keySeqs.clear();
+  void addUserAction(const QString &msg = {}, bool callAcceptOnDialog = true,
+                     ModalWidgetTimer *otherMwtToStart = nullptr) {
+    auto &action = userActions.emplace();
     for (QChar c : msg) {
-      keySeqs.emplace_back(c, c);
+      action.keySequence.emplace_back(c, c);
     }
-    message = msg;
+    action.message = msg;
+    action.callAccept = callAcceptOnDialog;
+    action.mwtToStart = otherMwtToStart;
   }
 
-  void setKeySeq(const QStringList &keySeqStrings = {}) {
-    keySeqs.clear();
-    message.clear();
+  void addUserAction(const QStringList &keySeqStrings = {},
+                     bool callAcceptOnDialog = true,
+                     ModalWidgetTimer *otherMwtToStart = nullptr) {
+    auto &action = userActions.emplace();
     for (const auto &s : keySeqStrings) {
       if (s.size() == 1) {
         // string is a single char
-        keySeqs.emplace_back(s[0], s[0]);
+        action.keySequence.emplace_back(s[0], s[0]);
       } else {
         // string is not a char, e.g. "Ctrl" or "Tab"
-        keySeqs.emplace_back(s, QChar());
+        action.keySequence.emplace_back(s, QChar());
       }
-      message.append(s);
+      action.message.append(QString("%1 ").arg(s));
     }
+    action.callAccept = callAcceptOnDialog;
+    action.mwtToStart = otherMwtToStart;
   }
 
   void start() {
-    qDebug() << "ModalWidgetTimer :: starting timer" << this;
-    waitUntilDone = nullptr;
+    qDebug() << this << " :: starting timer";
+    if (userActions.empty()) {
+      qDebug() << this << " :: no UserActions defined: adding default";
+      userActions.emplace();
+    }
+    results.clear();
     timer.start();
   }
 
-  void startAfter(ModalWidgetTimer *waitForMe = nullptr) {
-    qDebug() << "ModalWidgetTimer :: waiting for " << waitForMe
-             << "to complete, then starting timer" << this;
-    waitUntilDone = waitForMe;
-    timer.start();
-  }
-
-  const QString &getResult() const { return result; }
+  const QString &getResult(int i = 0) const { return results[i]; }
 
   bool isRunning() const { return timer.isActive(); }
 };

@@ -335,18 +335,7 @@ void SbmlDocWrapper::importParametricGeometry() {
     return;
   }
 
-  // get interiorPoints in terms of physical location
-  // & convert them to integer pixel points
-  std::vector<QPointF> interiorPoints;
-  for (const auto &compartmentID : compartments) {
-    SPDLOG_DEBUG("Found interior point:");
-    QPointF interiorFloatPhysical = getCompartmentInteriorPoint(compartmentID);
-    QPointF interiorFloatPixel =
-        (interiorFloatPhysical - origin) / pixelWidth + QPointF(0.3, 0.3);
-    interiorPoints.push_back(interiorFloatPixel);
-    SPDLOG_DEBUG("  - pixel location: ({},{})", interiorPoints.back().x(),
-                 interiorPoints.back().y());
-  }
+  auto interiorPoints = getInteriorPixelPoints();
 
   // get maxBoundaryPoints, maxTriangleAreas, membraneWidths
   if (parageom->isSetAnnotation()) {
@@ -971,6 +960,13 @@ double SbmlDocWrapper::getSpeciesCompartmentSize(
   return getCompartmentSize(compID);
 }
 
+SpeciesGeometry SbmlDocWrapper::getSpeciesGeometry(
+    const QString &speciesID) const {
+  return {getCompartmentImage().size(),
+          mapSpeciesIdToField.at(speciesID).geometry->ix, getOrigin(),
+          getPixelWidth(), getModelUnits()};
+}
+
 QString SbmlDocWrapper::getCompartmentID(QRgb colour) const {
   auto iter = mapColourToCompartment.find(colour);
   if (iter == mapColourToCompartment.cend()) {
@@ -1114,18 +1110,13 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
 }
 
 void SbmlDocWrapper::updateMesh() {
-  std::vector<QPointF> interiorPoints;
-  for (const auto &compID : compartments) {
-    const QPointF interior = getCompartmentInteriorPoint(compID);
-    if (interior == QPointF()) {
-      SPDLOG_INFO("compartment {} missing interiorPoint: skip mesh update",
-                  compID.toStdString());
-      return;
-    }
-    interiorPoints.push_back(interior);
+  auto interiorPoints = getInteriorPixelPoints();
+  if (interiorPoints.empty()) {
+    SPDLOG_DEBUG(
+        "some compartments are missing interiorPoint: skip mesh update");
+    return;
   }
   SPDLOG_INFO("Updating mesh interior points");
-  // todo: check if we should be passing non-empty vectors here:
   mesh = std::make_shared<mesh::Mesh>(
       compartmentImage, interiorPoints, std::vector<std::size_t>{},
       std::vector<std::size_t>{}, vecMembraneColourPairs, std::vector<double>{},
@@ -1263,7 +1254,30 @@ void SbmlDocWrapper::writeGeometryMeshToSBML() {
   return;
 }
 
-QPointF SbmlDocWrapper::getCompartmentInteriorPoint(
+std::vector<QPointF> SbmlDocWrapper::getInteriorPixelPoints() const {
+  // get interiorPoints in terms of physical location
+  // & convert them to integer pixel points
+  // if any interior points are missing: return an empty vector
+  std::vector<QPointF> interiorPoints;
+  for (const auto &compartmentID : compartments) {
+    SPDLOG_DEBUG("Found interior point:");
+    auto interiorFloatPhysical = getCompartmentInteriorPoint(compartmentID);
+    if (!interiorFloatPhysical) {
+      return {};
+    }
+    SPDLOG_DEBUG("  - physical location: ({},{})",
+                 interiorFloatPhysical.value().x(),
+                 interiorFloatPhysical.value().y());
+    QPointF interiorFloatPixel =
+        (interiorFloatPhysical.value() - origin) / pixelWidth;
+    SPDLOG_DEBUG("  - pixel location: ({},{})", interiorFloatPixel.x(),
+                 interiorFloatPixel.y());
+    interiorPoints.push_back(interiorFloatPixel);
+  }
+  return interiorPoints;
+}
+
+std::optional<QPointF> SbmlDocWrapper::getCompartmentInteriorPoint(
     const QString &compartmentID) const {
   SPDLOG_INFO("compartmentID: {}", compartmentID.toStdString());
   auto *comp = model->getCompartment(compartmentID.toStdString());
@@ -1276,7 +1290,7 @@ QPointF SbmlDocWrapper::getCompartmentInteriorPoint(
   SPDLOG_INFO("  - numInteriorPoints: {}", domain->getNumInteriorPoints());
   if (domain->getNumInteriorPoints() == 0) {
     SPDLOG_INFO("  - no interior point found");
-    return QPointF(0, 0);
+    return {};
   }
   auto *interiorPoint = domain->getInteriorPoint(0);
   QPointF point(interiorPoint->getCoord1(), interiorPoint->getCoord2());
@@ -1287,7 +1301,7 @@ QPointF SbmlDocWrapper::getCompartmentInteriorPoint(
 void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
                                                  const QPointF &point) {
   SPDLOG_INFO("compartmentID: {}", compartmentID.toStdString());
-  SPDLOG_INFO("  - setting interior point ({},{})", point.x(), point.y());
+  SPDLOG_INFO("  - setting interior pixel point ({},{})", point.x(), point.y());
   auto *comp = model->getCompartment(compartmentID.toStdString());
   auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
       comp->getPlugin("spatial"));
@@ -1300,9 +1314,11 @@ void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
     SPDLOG_INFO("  - creating new interior point");
     interiorPoint = domain->createInteriorPoint();
   }
-  interiorPoint->setCoord1(point.x());
   // convert from QPoint with (0,0) in top-left to (0,0) in bottom-left
-  interiorPoint->setCoord2(compartmentImage.height() - 1 - point.y());
+  // and to physical units with pixelWidth and origin
+  interiorPoint->setCoord1(origin.x() + pixelWidth * point.x());
+  interiorPoint->setCoord2(
+      origin.y() + pixelWidth * (compartmentImage.height() - 1 - point.y()));
   // update mesh with new interior point
   updateMesh();
 }
@@ -1379,15 +1395,9 @@ std::string SbmlDocWrapper::getSpeciesSampledFieldInitialAssignment(
   return sampledFieldID;
 }
 
-void SbmlDocWrapper::importConcentrationFromImage(const QString &speciesID,
-                                                  const QString &filename) {
+void SbmlDocWrapper::setSampledFieldConcentration(
+    const QString &speciesID, const std::vector<double> &concentrationArray) {
   SPDLOG_INFO("speciesID: {}", speciesID.toStdString());
-  QImage img;
-  img.load(filename);
-  auto &field = mapSpeciesIdToField.at(speciesID);
-  field.importConcentration(img);
-  std::vector<double> concentrationArray = field.getConcentrationArray();
-
   // look for existing initialAssignment to a sampledField
   std::string sampledFieldID =
       getSpeciesSampledFieldInitialAssignment(speciesID.toStdString());
@@ -1429,6 +1439,20 @@ void SbmlDocWrapper::importConcentrationFromImage(const QString &speciesID,
     SPDLOG_INFO("  - creating initialAssignment: {}",
                 asgn->getMath()->getName());
   }
+  mapSpeciesIdToField.at(speciesID).importConcentration(concentrationArray);
+}
+
+std::vector<double> SbmlDocWrapper::getSampledFieldConcentration(
+    const QString &speciesID) const {
+  std::vector<double> array;
+  std::string sampledFieldID =
+      getSpeciesSampledFieldInitialAssignment(speciesID.toStdString());
+  if (!sampledFieldID.empty()) {
+    const auto *sf = geom->getSampledField(sampledFieldID);
+    sf->getSamples(array);
+  }
+  SPDLOG_DEBUG("returning array of size {}", array.size());
+  return array;
 }
 
 QImage SbmlDocWrapper::getConcentrationImage(const QString &speciesID) const {
@@ -1630,18 +1654,50 @@ std::map<std::string, double> SbmlDocWrapper::getGlobalConstants() const {
 double SbmlDocWrapper::getPixelWidth() const { return pixelWidth; }
 
 void SbmlDocWrapper::setPixelWidth(double width) {
+  double oldWidth = pixelWidth;
+
   pixelWidth = width;
   // update pixelWidth for each compartment
   for (auto &pair : mapCompIdToGeometry) {
     pair.second.pixelWidth = width;
   }
   SPDLOG_INFO("New pixel width = {}", pixelWidth);
+
+  // update compartment interior points
+  for (const auto &compartmentID : compartments) {
+    SPDLOG_INFO("  - compartmentID: {}", compartmentID.toStdString());
+    auto *comp = model->getCompartment(compartmentID.toStdString());
+    auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
+        comp->getPlugin("spatial"));
+    const std::string &domainType =
+        scp->getCompartmentMapping()->getDomainType();
+    auto *domain = geom->getDomainByDomainType(domainType);
+    if (domain != nullptr) {
+      auto *interiorPoint = domain->getInteriorPoint(0);
+      if (interiorPoint != nullptr) {
+        double c1 = interiorPoint->getCoord1();
+        double c2 = interiorPoint->getCoord2();
+        double newc1 = c1 * width / oldWidth;
+        double newc2 = c2 * width / oldWidth;
+        SPDLOG_INFO("    -> rescaling interior point from ({},{}) to ({},{})",
+                    c1, c2, newc1, newc2);
+        interiorPoint->setCoord1(newc1);
+        interiorPoint->setCoord2(newc2);
+      }
+    }
+  }
+
+  // update origin
+  origin *= width / oldWidth;
+  SPDLOG_INFO("  - origin rescaled to ({},{})", origin.x(), origin.y());
+
   mesh->setPhysicalGeometry(width, origin);
   // update xy coordinates
   auto *coord = geom->getCoordinateComponentByKind(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
   auto *min = coord->getBoundaryMin();
   auto *max = coord->getBoundaryMax();
+  min->setValue(origin.x());
   max->setValue(origin.x() +
                 pixelWidth * static_cast<double>(compartmentImage.width()));
   SPDLOG_INFO("  - x now in range [{},{}]", min->getValue(), max->getValue());
@@ -1649,6 +1705,7 @@ void SbmlDocWrapper::setPixelWidth(double width) {
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
   min = coord->getBoundaryMin();
   max = coord->getBoundaryMax();
+  min->setValue(origin.y());
   max->setValue(origin.y() +
                 pixelWidth * static_cast<double>(compartmentImage.height()));
   SPDLOG_INFO("  - y now in range [{},{}]", min->getValue(), max->getValue());
@@ -1788,8 +1845,8 @@ Reac SbmlDocWrapper::getReaction(const QString &reactionID) const {
     SPDLOG_WARN("reaction {} has no KineticLaw", reactionID.toStdString());
     return {};
   }
-  r.ID = reac->getId();
-  r.Name = reac->getName();
+  r.id = reac->getId();
+  r.name = reac->getName();
   r.fullExpression = kin->getFormula();
   r.inlinedExpression = inlineExpr(kin->getFormula());
   r.products.reserve(reac->getNumProducts());
@@ -1831,8 +1888,8 @@ Func SbmlDocWrapper::getFunctionDefinition(const QString &functionID) const {
     SPDLOG_WARN("function {} does not exist", functionID.toStdString());
     return {};
   }
-  f.ID = func->getId();
-  f.Name = func->getName();
+  f.id = func->getId();
+  f.name = func->getName();
   f.expression = ASTtoString(func->getBody());
   f.arguments.reserve(func->getNumArguments());
   for (unsigned i = 0; i < func->getNumArguments(); ++i) {

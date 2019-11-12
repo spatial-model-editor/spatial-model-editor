@@ -125,11 +125,9 @@ class MainWindow : public QMainWindow {
 
   void txtInitialConcentration_editingFinished();
 
-  void btnAnalyticConcentration_clicked();
+  void btnEditAnalyticConcentration_clicked();
 
-  void btnImportConcentration_clicked();
-
-  void cmbImportExampleConcentration_currentTextChanged(const QString &text);
+  void btnEditImageConcentration_clicked();
 
   void txtDiffusionConstant_editingFinished();
 
