@@ -250,7 +250,7 @@ SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
       REQUIRE(s.species["compartment1"][1] == "spec1c1");
       REQUIRE(s.species["compartment1"][2] == "spec2c1");
     }
-    THEN("find reactions") {
+    THEN("find reaction (divided by compartment volume factor)") {
       REQUIRE(s.reactions.at("compartment0").size() == 1);
       REQUIRE(s.reactions.at("compartment0")[0] == "reac1");
       auto r = s.getReaction("reac1");
@@ -260,8 +260,8 @@ SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
       REQUIRE(r.products[0].first == "spec1c0");
       REQUIRE(r.reactants.size() == 1);
       REQUIRE(r.reactants[0].first == "spec0c0");
-      REQUIRE(r.fullExpression == "5 * spec0c0");
-      REQUIRE(r.inlinedExpression == "5 * spec0c0");
+      REQUIRE(r.fullExpression == "5 * spec0c0 / compartment0");
+      REQUIRE(r.inlinedExpression == "5 * spec0c0 / compartment0");
     }
     WHEN("exportSBMLFile called") {
       THEN(

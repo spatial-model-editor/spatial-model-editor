@@ -191,3 +191,30 @@ TEST_CASE("invalid variable relabeling is a no-op", "[symbolic][non-gui]") {
   sym.relabel({"a", "b", "c"});
   REQUIRE(sym.simplify() == expr);
 }
+
+TEST_CASE("divide expression", "[symbolic][non-gui][QQ]") {
+  REQUIRE(symbolic::divide("x", "x") == "1");
+  REQUIRE(symbolic::divide("1", "x") == "x**(-1)");
+  REQUIRE(symbolic::divide("0", "x") == "0");
+  REQUIRE(symbolic::divide("x^2", "x") == "x");
+  REQUIRE(symbolic::divide("x+3*x", "x") == "4");
+}
+
+TEST_CASE("divide expression with other symbols", "[symbolic][non-gui][QQ]") {
+  REQUIRE(symbolic::divide("x+a", "x") == "(a + x)/x");
+  REQUIRE(symbolic::divide("x+y", "x") == "(x + y)/x");
+  REQUIRE(symbolic::divide("y*x", "x") == "y");
+  REQUIRE(symbolic::divide("y*x*z/y", "x") == "z");
+}
+
+TEST_CASE("divide expression with other symbols & functions",
+          "[symbolic][non-gui][QQ]") {
+  REQUIRE(symbolic::divide("sin(x+a)", "x") == "sin(a + x)/x");
+  REQUIRE(symbolic::divide("x*sin(x+a)", "x") == "sin(a + x)");
+  REQUIRE(symbolic::divide("x*unknown(z)", "x") == "unknown(z)");
+  REQUIRE(symbolic::divide("x*(unknown1(unknown2(x)) + 2*another_unknown(q))",
+                           "x") ==
+          "2*another_unknown(q) + unknown1(unknown2(x))");
+  REQUIRE(symbolic::divide("unknown1(unknown2(z))", "x") ==
+          "unknown1(unknown2(z))/x");
+}

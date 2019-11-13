@@ -552,15 +552,15 @@ SCENARIO("Load SBML file", "[gui][mainwindow]") {
   // QTest::keyClick(ui.listSpecies, Qt::Key_Down, Qt::ControlModifier,
   // key_delay);
   REQUIRE(ui.chkSpeciesIsConstant->isChecked() == true);
-  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == true);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
   // toggle is spatial checkbox
   QTest::mouseClick(ui.chkSpeciesIsSpatial, Qt::LeftButton,
                     Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
-  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
-  REQUIRE(ui.chkSpeciesIsConstant->isChecked() == true);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == true);
+  REQUIRE(ui.chkSpeciesIsConstant->isChecked() == false);
   QTest::mouseClick(ui.chkSpeciesIsSpatial, Qt::LeftButton,
                     Qt::KeyboardModifiers(), QPoint(1, 1), key_delay);
-  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == true);
+  REQUIRE(ui.chkSpeciesIsSpatial->isChecked() == false);
   REQUIRE(ui.chkSpeciesIsConstant->isChecked() == false);
   // toggle is constant checkbox
   QTest::mouseClick(ui.chkSpeciesIsConstant, Qt::LeftButton,

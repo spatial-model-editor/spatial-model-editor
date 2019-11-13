@@ -66,6 +66,7 @@ class Symbolic::SymEngineImpl {
   void init(const std::vector<std::string> &expressions,
             const std::vector<std::string> &variables,
             const std::map<std::string, double> &constants);
+  void compile();
   void relabel(const std::vector<std::string> &newVariables);
 };
 
@@ -89,7 +90,9 @@ void Symbolic::SymEngineImpl::init(
     expr.push_back(SymEngine::parse(expression)->subs(d));
     SPDLOG_DEBUG("  --> {}", toString(expr.back()));
   }
+}
 
+void Symbolic::SymEngineImpl::compile() {
   // NOTE: don't do symbolic CSE - segfaults!
   lambda.init(varVec, expr, false);
   // compile with LLVM - again no symbolic CSE to avoid segfaults.
@@ -127,11 +130,17 @@ void Symbolic::SymEngineImpl::relabel(
   std::swap(symbols, newSymbols);
 }
 
+std::string divide(const std::string &expr, const std::string &var) {
+  return SymEngine::StrPrinter().apply(
+      SymEngine::div(SymEngine::parse(expr), SymEngine::symbol(var)));
+}
+
 Symbolic::Symbolic(const std::vector<std::string> &expressions,
                    const std::vector<std::string> &variables,
                    const std::map<std::string, double> &constants)
     : pSymEngineImpl(std::make_shared<SymEngineImpl>()) {
   pSymEngineImpl->init(expressions, variables, constants);
+  pSymEngineImpl->compile();
 }
 
 std::string Symbolic::simplify(std::size_t i) const {

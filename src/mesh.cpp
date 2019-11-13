@@ -466,7 +466,6 @@ std::pair<QImage, QImage> Mesh::getMeshImages(
 
 QString Mesh::getGMSH(const std::unordered_set<int>& gmshCompIndices) const {
   // note: gmsh indexing starts with 1, so we need to add 1 to all indices
-  // note: gmsh (0,0) is bottom left, but we use top left, so flip y axis
   // meshing is done in terms of pixels, to convert to physical points:
   //   - rescale each vertex by a factor pixel
   //   - add origin to each vertex
