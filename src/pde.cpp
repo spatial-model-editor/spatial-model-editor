@@ -95,26 +95,20 @@ std::vector<double> Reaction::getStoichMatrixRow(
     const sbml::SbmlDocWrapper *doc, const sbml::Reac &reac) const {
   std::vector<double> matrixRow(speciesIDs.size(), 0);
   bool isReaction = false;
-  for (const auto &product : reac.products) {
-    const std::string &speciesID = product.first;
-    double volFactor = doc->getSpeciesCompartmentSize(speciesID.c_str());
-    SPDLOG_DEBUG("product '{}', compartment volume: {}", speciesID, volFactor);
+  for (const auto &[speciesID, coeff] : reac.products) {
+    SPDLOG_DEBUG("product '{}'", speciesID);
     auto speciesIndex = getSpeciesIndex(doc, speciesID, speciesIDs);
     if (speciesIndex) {
-      double coeff = product.second / volFactor;
       SPDLOG_DEBUG("  -> stoich coeff[+{}]: {:16.16e}", speciesIndex.value(),
                    coeff);
       matrixRow[speciesIndex.value()] += coeff;
       isReaction = true;
     }
   }
-  for (const auto &reactant : reac.reactants) {
-    const std::string &speciesID = reactant.first;
-    double volFactor = doc->getSpeciesCompartmentSize(speciesID.c_str());
-    SPDLOG_DEBUG("product '{}', compartment volume: {}", speciesID, volFactor);
+  for (const auto &[speciesID, coeff] : reac.reactants) {
+    SPDLOG_DEBUG("product '{}'", speciesID);
     auto speciesIndex = getSpeciesIndex(doc, speciesID, speciesIDs);
     if (speciesIndex) {
-      double coeff = reactant.second / volFactor;
       SPDLOG_DEBUG("  -> stoich coeff[-{}]: {:16.16e}", speciesIndex.value(),
                    coeff);
       matrixRow[speciesIndex.value()] -= coeff;

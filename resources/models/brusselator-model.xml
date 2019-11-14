@@ -85,9 +85,8 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> compartment </ci>
-              <ci> k1 </ci>
               <ci> A </ci>
+              <ci> k1 </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -95,7 +94,7 @@
           </listOfLocalParameters>
         </kineticLaw>
       </reaction>
-      <reaction id="R2" name="R2" reversible="false" compartment="compartment" spatial:isLocal="true">
+      <reaction id="R2" name="R2" reversible="false" compartment="compartment">
         <listOfReactants>
           <speciesReference species="X" stoichiometry="2" constant="true"/>
           <speciesReference species="Y" stoichiometry="1" constant="true"/>
@@ -135,10 +134,9 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> compartment </ci>
-              <ci> k1 </ci>
-              <ci> X </ci>
               <ci> B </ci>
+              <ci> X </ci>
+              <ci> k1 </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -157,9 +155,8 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> compartment </ci>
-              <ci> k1 </ci>
               <ci> X </ci>
+              <ci> k1 </ci>
             </apply>
           </math>
           <listOfLocalParameters>

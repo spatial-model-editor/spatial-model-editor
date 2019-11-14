@@ -81,7 +81,7 @@ TEST_CASE("DUNE ini file for ABtoC model", "[dune][ini][non-gui]") {
   REQUIRE(*line++ == "B_initialConcentration = B_initialConcentration.tif");
   REQUIRE(*line++ == "");
   REQUIRE(*line++ == "[model.comp.reaction]");
-  REQUIRE(*line++ == "A = -0.1*A*B");
+  REQUIRE((*line++).toStdString() == "A = -0.1*A*B");
   REQUIRE(*line++ == "B = -0.1*A*B");
   REQUIRE(*line++ == "C = 0.1*A*B");
   REQUIRE(*line++ == "");

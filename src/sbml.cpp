@@ -149,18 +149,13 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
   max->setValue(pixelWidth * static_cast<double>(compartmentImage.height()));
   SPDLOG_INFO("  - y in range [{},{}]", min->getValue(), max->getValue());
 
-  // set isSpatial to true for all species
+  // set isSpatial to true for all non-constant species
   for (unsigned i = 0; i < model->getNumSpecies(); ++i) {
-    auto *ssp = dynamic_cast<libsbml::SpatialSpeciesPlugin *>(
-        model->getSpecies(i)->getPlugin("spatial"));
-    ssp->setIsSpatial(true);
-  }
-
-  // set isLocal to true for all reactions
-  for (unsigned i = 0; i < model->getNumReactions(); ++i) {
-    auto *srp = dynamic_cast<libsbml::SpatialReactionPlugin *>(
-        model->getReaction(i)->getPlugin("spatial"));
-    srp->setIsLocal(true);
+    auto *spec = model->getSpecies(i);
+    if (isSpeciesReactive(spec->getId())) {
+      dynamic_cast<libsbml::SpatialSpeciesPlugin *>(spec->getPlugin("spatial"))
+          ->setIsSpatial(true);
+    }
   }
 
   // create sampled field geometry with empty SampledField
@@ -461,7 +456,7 @@ void SbmlDocWrapper::initModelData() {
       std::string errorMessage(
           "SbmlDocWrapper::importSBMLFile :: Error: "
           "HasOnlySubstanceUnits=true "
-          "is not yet supported.");
+          "is not supported for spatial models.");
       SPDLOG_CRITICAL(errorMessage);
       qFatal("%s", errorMessage.c_str());
     }
@@ -740,6 +735,8 @@ void SbmlDocWrapper::updateReactionList() {
   reactions.clear();
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
     auto *reac = model->getReaction(i);
+    auto *srp = dynamic_cast<libsbml::SpatialReactionPlugin *>(
+        model->getReaction(i)->getPlugin("spatial"));
     if (reac->getName().empty()) {
       SPDLOG_INFO("Reaction with Id {} has no Name, using Id", reac->getId());
       reac->setName(reac->getId());
@@ -760,10 +757,32 @@ void SbmlDocWrapper::updateReactionList() {
     if (comps.size() == 1) {
       QString comp = comps.begin()->c_str();
       reactions[comp] << reacID;
-      // todo: this editing of the SBML should be done on import, or when the
-      // reaction is modified in the GUI, not here:
-      // srp->setIsLocal(true);
-      // reac->setCompartment(comp.toStdString());
+      // if reaction `isLocal` is not set, then the reaction rate is for amount,
+      // so here we divide the reaction formula by compartment factor to convert
+      // it to concentration, and set `isLocal` to true
+      if (!srp->isSetIsLocal()) {
+        SPDLOG_INFO("Reaction {} is a single compartment reaction",
+                    reac->getId());
+        SPDLOG_INFO(
+            "  - isLocal has not been set, so dividing reaction rate by "
+            "compartment:");
+        auto expr = ASTtoString(reac->getKineticLaw()->getMath());
+        SPDLOG_INFO("  - {}", expr);
+        auto newExpr = symbolic::divide(expr, comp.toStdString());
+        SPDLOG_INFO("  --> {}", newExpr);
+        std::unique_ptr<libsbml::ASTNode> argAST(
+            libsbml::SBML_parseL3Formula(newExpr.c_str()));
+        if (argAST != nullptr) {
+          reac->getKineticLaw()->setMath(argAST.get());
+          SPDLOG_INFO("  - new math: {}",
+                      ASTtoString(reac->getKineticLaw()->getMath()));
+          SPDLOG_INFO("  - setting isLocal to true");
+          srp->setIsLocal(true);
+        } else {
+          SPDLOG_ERROR("  - libSBML failed to parse expression");
+        }
+        reac->setCompartment(comp.toStdString());
+      }
     } else if (comps.size() == 2) {
       auto iter = comps.cbegin();
       QString compA = iter->c_str();

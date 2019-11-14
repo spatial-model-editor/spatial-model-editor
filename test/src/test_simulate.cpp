@@ -133,7 +133,7 @@ SCENARIO("simulate very_simple_model: single pixel geometry",
     // B_c2 = 0
     REQUIRE(fb2.getMeanConcentration() == 0.0);
     // A_c3 += k_1 A_c2 dt / c3
-    REQUIRE(fa3.getMeanConcentration() == dbl_approx(0.1 * A_c2 * dt / volC3));
+    REQUIRE(fa3.getMeanConcentration() == dbl_approx(0.1 * A_c2 * dt));
     // B_c3 = 0
     REQUIRE(fb3.getMeanConcentration() == 0.0);
   }
@@ -154,13 +154,10 @@ SCENARIO("simulate very_simple_model: single pixel geometry",
     // B_c2 = 0
     REQUIRE(fb2.getMeanConcentration() == 0.0);
     // A_c3 += k_1 A_c2 dt - k_1 A_c3 dt -
-    REQUIRE(
-        fa3.getMeanConcentration() ==
-        dbl_approx(A_c3 +
-                   (0.1 * (A_c2 - A_c3) * dt - 0.2 * 0.3 * A_c3 * dt) / volC3));
+    REQUIRE(fa3.getMeanConcentration() ==
+            dbl_approx(A_c3 + (0.1 * (A_c2 - A_c3) * dt - 0.3 * A_c3 * dt)));
     // B_c3 = 0.2 * 0.3 * A_c3 * dt
-    REQUIRE(fb3.getMeanConcentration() ==
-            dbl_approx(0.2 * 0.3 * A_c3 * dt / volC3));
+    REQUIRE(fb3.getMeanConcentration() == dbl_approx(0.3 * A_c3 * dt));
   }
 
   WHEN("many Euler steps -> steady state solution") {
@@ -181,11 +178,13 @@ SCENARIO("simulate very_simple_model: single pixel geometry",
 
     // check concentration values
     REQUIRE(A_c1 == Approx(1.0).epsilon(acceptable_error));
-    REQUIRE(A_c2 ==
-            Approx(A_c1 * (0.06 + 0.10) / 0.06).epsilon(acceptable_error));
+    REQUIRE(
+        A_c2 ==
+        Approx(0.5 * A_c1 * (0.06 + 0.10) / 0.06).epsilon(acceptable_error));
     REQUIRE(A_c3 == Approx(A_c2 - A_c1).epsilon(acceptable_error));
     // B_c1 "steady state" solution is linear growth
-    REQUIRE(B_c3 == Approx((0.06 / 0.10) * A_c3).epsilon(acceptable_error));
+    REQUIRE(B_c3 ==
+            Approx((0.06 / 0.10) * A_c3 / 0.2).epsilon(acceptable_error));
     REQUIRE(B_c2 == Approx(B_c3 / 2.0).epsilon(acceptable_error));
 
     // check concentration derivatives
@@ -198,7 +197,7 @@ SCENARIO("simulate very_simple_model: single pixel geometry",
     double dA3 = (fa3.getMeanConcentration() - A_c3) / eps;
     REQUIRE(dA3 == Approx(0).epsilon(acceptable_error));
     double dB1 = volC1 * (fb1.getMeanConcentration() - B_c1) / eps;
-    REQUIRE(dB1 == Approx(0.1).epsilon(acceptable_error));
+    REQUIRE(dB1 == Approx(1).epsilon(acceptable_error));
     double dB2 = (fb2.getMeanConcentration() - B_c2) / eps;
     REQUIRE(dB2 == Approx(0).epsilon(acceptable_error));
     double dB3 = (fb3.getMeanConcentration() - B_c3) / eps;

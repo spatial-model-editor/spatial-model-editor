@@ -16,6 +16,9 @@
 
 namespace symbolic {
 
+// divide given expression by a variable
+std::string divide(const std::string &expr, const std::string &var);
+
 class Symbolic {
  private:
   class SymEngineImpl;
