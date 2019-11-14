@@ -22,10 +22,11 @@ std::string strBackend(BACKEND b) {
 ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
                    const std::vector<std::string> &speciesIDs,
                    const std::vector<std::string> &reactionIDs,
+                   const std::vector<std::string> &reactionScaleFactors,
                    BACKEND mathBackend)
     : backend(mathBackend) {
   // construct reaction expressions and stoich matrix
-  pde::PDE pde(doc_ptr, speciesIDs, reactionIDs);
+  pde::PDE pde(doc_ptr, speciesIDs, reactionIDs, {}, reactionScaleFactors);
 
   // init vector of species
   species_values = std::vector<double>(speciesIDs.size(), 0.0);
@@ -74,7 +75,7 @@ SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
   if (iter != doc->reactions.cend()) {
     reactionID = utils::toStdString(iter->second);
   }
-  reacEval = ReacEval(doc, speciesID, reactionID, mathBackend);
+  reacEval = ReacEval(doc, speciesID, reactionID, {}, mathBackend);
 }
 
 void SimCompartment::evaluate_reactions() {
@@ -116,11 +117,25 @@ SimMembrane::SimMembrane(sbml::SbmlDocWrapper *doc_ptr,
     }
   }
 
-  // make vector of reactions from membrane
+  // get rescaling factor to convert flux to amount/length^3,
+  // then length^3 to volume to give concentration
+  const auto &lengthUnit = doc->getModelUnits().getLength();
+  const auto &volumeUnit = doc->getModelUnits().getVolume();
+  double lengthCubedToVolFactor =
+      units::pixelWidthToVolume(1.0, lengthUnit, volumeUnit);
+  std::string strFactor =
+      QString::number(lengthCubedToVolFactor, 'g', 17).toStdString();
+  SPDLOG_INFO("  - [length]^3/[vol] = {}", lengthCubedToVolFactor);
+  SPDLOG_INFO("  - dividing flux by {}", strFactor);
+
+  // make vector of reaction IDs from membrane
   std::vector<std::string> reactionID =
       utils::toStdString(doc->reactions.at(membrane->membraneID.c_str()));
+  // vector of reaction scale factors to convert flux to concentration
+  std::vector<std::string> reactionScaleFactors(reactionID.size(), strFactor);
 
-  reacEval = ReacEval(doc, speciesID, reactionID, mathBackend);
+  reacEval =
+      ReacEval(doc, speciesID, reactionID, reactionScaleFactors, mathBackend);
 }
 
 void SimMembrane::evaluate_reactions() {

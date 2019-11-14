@@ -27,6 +27,7 @@ SCENARIO("simulate very_simple_model: single pixel geometry",
   img.setPixel(0, 2, col3);
   img.save("tmp.bmp");
   s.importGeometryFromImage("tmp.bmp");
+  s.setPixelWidth(1.0);
   s.setCompartmentColour("c1", col1);
   s.setCompartmentColour("c2", col2);
   s.setCompartmentColour("c3", col3);
@@ -102,7 +103,6 @@ SCENARIO("simulate very_simple_model: single pixel geometry",
 
   double dt = 0.134521234;
   double volC1 = 10.0;
-  double volC3 = 0.2;
   WHEN("single Euler step") {
     sim.integrateForwardsEuler(dt);
     // A_c1 = 1 = const

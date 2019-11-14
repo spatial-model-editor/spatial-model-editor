@@ -352,12 +352,19 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
       }
       // divide membrane reaction rates by width of membrane
       if (doc.reactions.find(membraneID) != doc.reactions.cend()) {
+        const auto &lengthUnit = SbmlDoc.getModelUnits().getLength();
+        const auto &volumeUnit = SbmlDoc.getModelUnits().getVolume();
         for (const auto &r : doc.reactions.at(membraneID)) {
+          double lengthCubedToVolFactor =
+              units::pixelWidthToVolume(1.0, lengthUnit, volumeUnit);
           double width = doc.mesh->getMembraneWidth(membraneID.toStdString());
+          double scaleFactor = width * lengthCubedToVolFactor;
+          SPDLOG_INFO("  - membrane width = {} {}", width,
+                      lengthUnit.symbol.toStdString());
+          SPDLOG_INFO("  - [length]^3/[vol] = {}", lengthCubedToVolFactor);
+          SPDLOG_INFO("  - dividing flux by {}", scaleFactor);
           reacScaleFactors.push_back(
-              QString::number(width, 'g', 17).toStdString());
-          SPDLOG_INFO("dividing membrane reaction by membrane width {}:",
-                      width);
+              QString::number(scaleFactor, 'g', 17).toStdString());
           reacs.push_back(r.toStdString());
         }
       }
@@ -456,7 +463,8 @@ void DuneSimulation::DuneImpl::init(const std::string &iniFile) {
 
 void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc,
                                    double dt) {
-  geometrySize = sbmlDoc.getCompartmentImage().size() * sbmlDoc.getPixelWidth();
+  geometrySize = sbmlDoc.getCompartmentImage().size();
+  geometrySize *= sbmlDoc.getPixelWidth();
   dune::DuneConverter dc(sbmlDoc, dt);
 
   // export gmsh file `grid.msh` in the same dir

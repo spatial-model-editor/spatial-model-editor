@@ -294,8 +294,8 @@ void SbmlDocWrapper::importSampledFieldGeometry() {
   if (std::abs((xPixelSize - yPixelSize) / xPixelSize) > 1e-12) {
     SPDLOG_WARN("Pixels are not square: {} x {}", xPixelSize, yPixelSize);
   }
-  SPDLOG_INFO("  - pixel size: {}", pixelWidth);
   pixelWidth = xPixelSize;
+  SPDLOG_INFO("  - pixel size: {}", pixelWidth);
 
   // assign each compartment to a colour
   for (const auto &compartmentID : compartments) {
@@ -761,11 +761,11 @@ void SbmlDocWrapper::updateReactionList() {
       // so here we divide the reaction formula by compartment factor to convert
       // it to concentration, and set `isLocal` to true
       if (!srp->isSetIsLocal()) {
-        SPDLOG_INFO("Reaction {} is a single compartment reaction",
-                    reac->getId());
+        SPDLOG_INFO("Reaction {} takes place in compartment {}", reac->getId(),
+                    comp.toStdString());
         SPDLOG_INFO(
             "  - isLocal has not been set, so dividing reaction rate by "
-            "compartment:");
+            "compartment volume:");
         auto expr = ASTtoString(reac->getKineticLaw()->getMath());
         SPDLOG_INFO("  - {}", expr);
         auto newExpr = symbolic::divide(expr, comp.toStdString());
@@ -792,18 +792,43 @@ void SbmlDocWrapper::updateReactionList() {
       // membrane name is compA-compB, ordered by colour
       QRgb colA = mapCompartmentToColour[compA];
       QRgb colB = mapCompartmentToColour[compB];
-      QString membraneID = compA + "_" + compB;
-      if (colA > colB) {
-        membraneID = compB + "_" + compA;
-      }
       // check that compartments map to colours - if not do nothing
       if (colA != 0 && colB != 0) {
+        QString membraneID = compA + "_" + compB;
+        if (colA > colB) {
+          membraneID = compB + "_" + compA;
+        }
         reactions[membraneID] << QString(reac->getId().c_str());
+        if (!srp->isSetIsLocal()) {
+          SPDLOG_INFO("Reaction {} takes place on the {} membrane",
+                      reac->getId(), membraneID.toStdString());
+          SPDLOG_INFO(
+              "  - isLocal has not been set, so dividing reaction rate by "
+              "membrane area:");
+          auto expr = ASTtoString(reac->getKineticLaw()->getMath());
+          auto nPixels =
+              membranePairs.at(mapMembraneToIndex.at(membraneID)).size();
+          SPDLOG_INFO("  - membrane has {} pixels", nPixels);
+          // model has unit height in z-direction
+          double membraneArea = pixelWidth * 1.0 * static_cast<double>(nPixels);
+          SPDLOG_INFO("  - pixelWidth {}", pixelWidth);
+          SPDLOG_INFO("  - membrane Area {}", membraneArea);
+          auto newExpr = symbolic::divide(expr, std::to_string(membraneArea));
+          SPDLOG_INFO("  --> {}", newExpr);
+          std::unique_ptr<libsbml::ASTNode> argAST(
+              libsbml::SBML_parseL3Formula(newExpr.c_str()));
+          if (argAST != nullptr) {
+            reac->getKineticLaw()->setMath(argAST.get());
+            SPDLOG_INFO("  - new math: {}",
+                        ASTtoString(reac->getKineticLaw()->getMath()));
+            SPDLOG_INFO("  - setting isLocal to true");
+            srp->setIsLocal(true);
+          } else {
+            SPDLOG_ERROR("  - libSBML failed to parse expression");
+          }
+          reac->setCompartment(compA.toStdString());
+        }
       }
-      // todo: this editing of the SBML should be done on import, or when the
-      // reaction is modified in the GUI, not here:
-      // srp->setIsLocal(true);
-      // reac->setCompartment(compA.toStdString());
     } else {
       // invalid reaction: number of compartments for reaction must be 1 or 2
       SPDLOG_ERROR("Reaction involves {} compartments - not supported",

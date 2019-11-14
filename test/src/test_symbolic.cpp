@@ -192,7 +192,16 @@ TEST_CASE("invalid variable relabeling is a no-op", "[symbolic][non-gui]") {
   REQUIRE(sym.simplify() == expr);
 }
 
-TEST_CASE("divide expression", "[symbolic][non-gui][QQ]") {
+TEST_CASE("divide expression with number", "[symbolic][non-gui][QQ]") {
+  REQUIRE(symbolic::divide("x", "1.3") == "x/1.3");
+  REQUIRE(symbolic::divide("1", "2") == "2**(-1)");
+  REQUIRE(symbolic::divide("10*x", "5") == "10*x/5");
+  REQUIRE(symbolic::divide("(cos(x))^2+3", "3.14") == "(3 + cos(x)**2)/3.14");
+  REQUIRE(symbolic::divide("2*unknown_function(a,b,c)", "2") ==
+          "2*unknown_function(a, b, c)/2");
+}
+
+TEST_CASE("divide expression with symbol", "[symbolic][non-gui][QQ]") {
   REQUIRE(symbolic::divide("x", "x") == "1");
   REQUIRE(symbolic::divide("1", "x") == "x**(-1)");
   REQUIRE(symbolic::divide("0", "x") == "0");
