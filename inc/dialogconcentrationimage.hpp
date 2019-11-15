@@ -44,7 +44,7 @@ class DialogConcentrationImage : public QDialog {
   QPointF physicalPoint(const QPoint& pixelPoint) const;
   std::size_t pointToConcentrationArrayIndex(const QPoint& point) const;
   void importConcentrationArray(const std::vector<double>& concentrationArray);
-  void importConcentrationImage(const QString& filename);
+  void importConcentrationImage(const QImage& concentrationImage);
   void updateImageFromConcentration();
   void rescaleConcentration(double newMin, double newMax);
   void gaussianFilter(const QPoint& direction, double sigma);

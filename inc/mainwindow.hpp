@@ -51,7 +51,7 @@ class MainWindow : public QMainWindow {
   bool isValidModel();
   bool isValidModelAndGeometryImage();
 
-  void importGeometryImage(const QString &filename);
+  void importGeometryImage(const QImage &image);
 
   void tabMain_currentChanged(int index);
   void tabMain_updateGeometry();

@@ -1,6 +1,7 @@
 #include <QRgb>
 
 #include "catch_wrapper.hpp"
+#include "tiff.hpp"
 #include "utils.hpp"
 
 TEST_CASE("QStringList <-> std::vector<std::string>", "[utils]") {
@@ -124,4 +125,9 @@ TEST_CASE("QPointUniqueIndexer", "[utils]") {
   REQUIRE(qpi.getIndex(v[0]).has_value() == true);
   REQUIRE(qpi.getIndex(v[0]).value() == 0);
   REQUIRE(qpi.getPoints().size() == v.size());
+}
+
+TEST_CASE("Read Tiff", "[utils][tiff]") {
+  utils::TiffReader tiffReader("x");
+  REQUIRE(tiffReader.size() == 0);
 }

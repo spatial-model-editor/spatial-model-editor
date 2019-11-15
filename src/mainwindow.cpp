@@ -20,6 +20,7 @@
 #include "mesh.hpp"
 #include "sbml.hpp"
 #include "simulate.hpp"
+#include "tiff.hpp"
 #include "ui_mainwindow.h"
 #include "utils.hpp"
 #include "version.hpp"
@@ -515,10 +516,29 @@ void MainWindow::actionGeometry_from_image_triggered() {
   }
   QString filename = QFileDialog::getOpenFileName(
       this, "Import geometry from image", "",
-      "Image Files (*.png *.jpg *.bmp *.tiff);; All files (*.*)", nullptr,
-      QFileDialog::Option::DontUseNativeDialog);
+      "Image Files (*.tif *.tiff *.gif *.jpg *.jpeg *.png *.bmp);; All files "
+      "(*.*)",
+      nullptr, QFileDialog::Option::DontUseNativeDialog);
   if (!filename.isEmpty()) {
-    importGeometryImage(filename);
+    utils::TiffReader tiffReader(filename.toStdString());
+    QImage img;
+    if (tiffReader.size() == 0) {
+      img.load(filename);
+    } else if (tiffReader.size() == 1) {
+      img = tiffReader.getImage();
+    } else {
+      bool ok;
+      int i = QInputDialog::getInt(
+          this, "Import tiff image",
+          "Please choose the page to use from this multi-page tiff", 0, 0,
+          static_cast<int>(tiffReader.size()) - 1, 1, &ok);
+      if (ok) {
+        img = tiffReader.getImage(static_cast<std::size_t>(i));
+      } else {
+        return;
+      }
+    }
+    importGeometryImage(img);
   }
 }
 
@@ -528,16 +548,12 @@ void MainWindow::menuExample_geometry_image_triggered(QAction *action) {
   }
   QString filename =
       QString(":/geometry/%1.png").arg(action->text().remove(0, 1));
-  QFile f(filename);
-  if (!f.open(QIODevice::ReadOnly)) {
-    SPDLOG_WARN("failed to open built-in file: {}", filename.toStdString());
-    return;
-  }
-  importGeometryImage(filename);
+  QImage img(filename);
+  importGeometryImage(img);
 }
 
-void MainWindow::importGeometryImage(const QString &filename) {
-  sbmlDoc.importGeometryFromImage(filename);
+void MainWindow::importGeometryImage(const QImage &image) {
+  sbmlDoc.importGeometryFromImage(image);
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   enableTabs();
