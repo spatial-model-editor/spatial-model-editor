@@ -1,11 +1,13 @@
 #include "dialogconcentrationimage.hpp"
 
 #include <QFileDialog>
+#include <QInputDialog>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QToolTip>
 
 #include "logger.hpp"
+#include "tiff.hpp"
 #include "ui_dialogconcentrationimage.h"
 #include "units.hpp"
 
@@ -125,8 +127,8 @@ void DialogConcentrationImage::importConcentrationArray(
 }
 
 void DialogConcentrationImage::importConcentrationImage(
-    const QString& filename) {
-  QImage concImg(filename);
+    const QImage& concentrationImage) {
+  QImage concImg = concentrationImage;
   if (concImg.size() != img.size()) {
     SPDLOG_WARN(
         "mismatch between concentration image size {}x{},"
@@ -268,11 +270,30 @@ void DialogConcentrationImage::lblImage_mouseOver(QPoint point) {
 void DialogConcentrationImage::btnImportImage_clicked() {
   QString filename = QFileDialog::getOpenFileName(
       this, "Import species concentration from image", "",
-      "Image Files (*.png *.jpg *.bmp *.tiff);; All files (*.*)", nullptr,
-      QFileDialog::Option::DontUseNativeDialog);
+      "Image Files (*.tif *.tiff *.gif *.jpg *.jpeg *.png *.bmp);; All files "
+      "(*.*)",
+      nullptr, QFileDialog::Option::DontUseNativeDialog);
   if (!filename.isEmpty()) {
     SPDLOG_DEBUG("  - import file {}", filename.toStdString());
-    importConcentrationImage(filename);
+    utils::TiffReader tiffReader(filename.toStdString());
+    QImage concImg;
+    if (tiffReader.size() == 0) {
+      concImg.load(filename);
+    } else if (tiffReader.size() == 1) {
+      concImg = tiffReader.getImage();
+    } else {
+      bool ok;
+      int i = QInputDialog::getInt(
+          this, "Import tiff image",
+          "Please choose the page to use from this multi-page tiff", 0, 0,
+          static_cast<int>(tiffReader.size()) - 1, 1, &ok);
+      if (ok) {
+        concImg = tiffReader.getImage(static_cast<std::size_t>(i));
+      } else {
+        return;
+      }
+    }
+    importConcentrationImage(concImg);
   }
 }
 
@@ -280,7 +301,8 @@ void DialogConcentrationImage::cmbExampleImages_currentTextChanged(
     const QString& text) {
   if (ui->cmbExampleImages->currentIndex() != 0) {
     SPDLOG_DEBUG("import {}", text.toStdString());
-    importConcentrationImage(QString(":/concentration/%1.png").arg(text));
+    QImage concImg(QString(":/concentration/%1.png").arg(text));
+    importConcentrationImage(concImg);
     ui->cmbExampleImages->setCurrentIndex(0);
   }
 }
