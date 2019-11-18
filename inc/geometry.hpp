@@ -74,6 +74,7 @@ class Field {
   bool isSpatial;
   // field.dcdt = result of the diffusion operator acting on field.conc
   void applyDiffusionOperator();
+  void setCompartment(const Compartment *compartment);
 };
 
 }  // namespace geometry

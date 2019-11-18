@@ -130,6 +130,14 @@ void iniFile::addValue(const QString &var, double value, int precision) {
 
 void iniFile::clear() { text.clear(); }
 
+static bool compartmentContainsNonConstantSpecies(
+    const sbml::SbmlDocWrapper &doc, const QString &compID) {
+  const auto &specs = doc.species.at(compID);
+  return std::any_of(specs.cbegin(), specs.cend(), [doc](const auto &s) {
+    return !doc.getIsSpeciesConstant(s.toStdString());
+  });
+}
+
 DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
                              int doublePrecision)
     : doc(SbmlDoc) {
@@ -160,10 +168,7 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
   for (const auto &comp : doc.compartments) {
     SPDLOG_TRACE("compartment {}", comp.toStdString());
     // skip compartments which contain no non-constant species
-    if (!std::all_of(doc.species.at(comp).cbegin(), doc.species.at(comp).cend(),
-                     [&d = doc](const auto &s) {
-                       return d.getIsSpeciesConstant(s.toStdString());
-                     })) {
+    if (compartmentContainsNonConstantSpecies(doc, comp)) {
       ini.addValue(comp, duneCompIndex);
       SPDLOG_TRACE("  -> added with index {}", duneCompIndex);
       gmshCompIndices.insert(gmshCompIndex);
@@ -171,12 +176,18 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
     }
     ++gmshCompIndex;
   }
-  for (const auto &mem : doc.membranes) {
-    ini.addValue(mem, duneCompIndex);
-    SPDLOG_TRACE("membrane {} added with index {}", mem.toStdString(),
-                 duneCompIndex);
-    gmshCompIndices.insert(gmshCompIndex);
-    ++duneCompIndex;
+  for (const auto &mem : doc.membraneVec) {
+    QString compA = mem.compA->compartmentID.c_str();
+    QString compB = mem.compB->compartmentID.c_str();
+    // skip membranes which contain no non-constant species
+    if (compartmentContainsNonConstantSpecies(doc, compA) ||
+        compartmentContainsNonConstantSpecies(doc, compB)) {
+      ini.addValue(mem.membraneID.c_str(), duneCompIndex);
+      SPDLOG_TRACE("membrane {} added with index {}", mem.membraneID,
+                   duneCompIndex);
+      gmshCompIndices.insert(gmshCompIndex);
+      ++duneCompIndex;
+    }
     ++gmshCompIndex;
   }
 

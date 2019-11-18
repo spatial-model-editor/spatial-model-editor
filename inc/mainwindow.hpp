@@ -117,6 +117,10 @@ class MainWindow : public QMainWindow {
   void listSpecies_currentItemChanged(QTreeWidgetItem *current,
                                       QTreeWidgetItem *previous);
 
+  void txtSpeciesName_editingFinished();
+
+  void cmbSpeciesCompartment_activated(int index);
+
   void chkSpeciesIsSpatial_toggled(bool enabled);
 
   void chkSpeciesIsConstant_toggled(bool enabled);

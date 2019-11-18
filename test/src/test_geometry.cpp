@@ -99,3 +99,38 @@ TEST_CASE("two pixel compartment, 6x7 image", "[geometry][non-gui]") {
   REQUIRE_THROWS(field.importConcentration({1.0, 2.0}));
   REQUIRE_THROWS(field.importConcentration({}));
 }
+
+TEST_CASE("change compartment of field", "[geometry][non-gui]") {
+  QImage img(6, 7, QImage::Format_RGB32);
+  QRgb colBG = QColor(112, 43, 4).rgba();
+  QRgb col = QColor(12, 12, 12).rgba();
+  img.fill(colBG);
+  img.setPixel(3, 3, col);
+  img.setPixel(3, 4, col);
+  geometry::Compartment comp1("comp1", img, colBG);
+  geometry::Compartment comp2("comp2", img, col);
+  REQUIRE(comp1.ix.size() == 40);
+  REQUIRE(comp2.ix.size() == 2);
+
+  geometry::Field field(&comp1, "field");
+  REQUIRE(field.geometry == &comp1);
+  field.setUniformConcentration(2.0);
+  REQUIRE(field.conc.size() == comp1.ix.size());
+  REQUIRE(field.dcdt.size() == comp1.ix.size());
+  REQUIRE(field.init.size() == comp1.ix.size());
+  REQUIRE(field.getMeanConcentration() == dbl_approx(2.0));
+
+  // changing compartment to the same one is a no-op
+  field.setCompartment(&comp1);
+  REQUIRE(field.getMeanConcentration() == dbl_approx(2.0));
+
+  // changing compartment: concentration reset to zero
+  field.setCompartment(&comp2);
+  REQUIRE(field.geometry == &comp2);
+  REQUIRE(field.conc.size() == comp2.ix.size());
+  REQUIRE(field.dcdt.size() == comp2.ix.size());
+  REQUIRE(field.init.size() == comp2.ix.size());
+  REQUIRE(field.conc[0] == dbl_approx(0.0));
+  REQUIRE(field.conc[1] == dbl_approx(0.0));
+  REQUIRE(field.getMeanConcentration() == dbl_approx(0.0));
+}

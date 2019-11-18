@@ -140,8 +140,6 @@ class SbmlDocWrapper {
 
   void writeGeometryImageToSBML();
 
-  void setSBMLCompartmentSizeUnit(int metreExponent);
-
   // return supplied math expression as string with any Function calls inlined
   // e.g. given mathExpression = "z*f(x,y)"
   // where the SBML model contains a function "f(a,b) = a*b-2"
@@ -207,6 +205,10 @@ class SbmlDocWrapper {
   SpeciesGeometry getSpeciesGeometry(const QString &speciesID) const;
   QString getCompartmentSizeUnits(const QString &compartmentID) const;
 
+  QString getSpeciesCompartment(const QString &speciesID) const;
+  void setSpeciesCompartment(const QString &speciesID,
+                             const QString &compartmentID);
+
   // compartment geometry: interiorPoints - used for mesh generation
   std::optional<QPointF> getCompartmentInteriorPoint(
       const QString &compartmentID) const;
@@ -250,6 +252,7 @@ class SbmlDocWrapper {
   void setIsSpeciesConstant(const std::string &speciesID, bool constant);
   bool getIsSpeciesConstant(const std::string &speciesID) const;
 
+  void setSpeciesName(const QString &speciesID, const QString &name);
   QString getSpeciesName(const QString &speciesID) const;
   QString getReactionName(const QString &reactionID) const;
 

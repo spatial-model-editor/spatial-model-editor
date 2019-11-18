@@ -16,6 +16,11 @@ TEST_CASE("QStringList <-> std::vector<std::string>", "[utils]") {
   REQUIRE(q2s == s);
   REQUIRE(utils::toQString(q2s) == q);
   REQUIRE(utils::toStdString(s2q) == s);
+
+  QStringList qEmpty;
+  std::vector<std::string> sEmpty;
+  REQUIRE(utils::toStdString(qEmpty) == sEmpty);
+  REQUIRE(utils::toQString(sEmpty) == qEmpty);
 }
 
 TEST_CASE("vector <-> string: int", "[utils]") {
