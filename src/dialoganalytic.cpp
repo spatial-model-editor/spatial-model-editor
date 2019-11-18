@@ -137,7 +137,7 @@ void DialogAnalytic::txtExpression_textChanged() {
     }
     // construct image of concentration
     if (expressionIsValid) {
-      expression = ui->txtExpression->toPlainText().toStdString();
+      expression = sym.simplify();
       // normalise intensity to max concentration
       double maxConc =
           *std::max_element(concentration.cbegin(), concentration.cend());
