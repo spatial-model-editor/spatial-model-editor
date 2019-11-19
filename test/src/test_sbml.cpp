@@ -400,33 +400,69 @@ SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {
 }
 
 SCENARIO("SBML test data: very-simple-model.xml", "[sbml][non-gui]") {
-  std::unique_ptr<libsbml::SBMLDocument> doc(
-      libsbml::readSBMLFromString(sbml_test_data::very_simple_model().xml));
-  // write SBML document to file
-  libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-
+  QFile f(":/models/very-simple-model.xml");
+  f.open(QIODevice::ReadOnly);
   sbml::SbmlDocWrapper s;
-  s.importSBMLFile("tmp.xml");
+  s.importSBMLString(f.readAll().toStdString());
   GIVEN("SBML document") {
-    WHEN("importSBMLFile called") {
-      THEN("find compartments") {
-        REQUIRE(s.compartments.size() == 3);
-        REQUIRE(s.compartments[0] == "c1");
-        REQUIRE(s.compartments[1] == "c2");
-        REQUIRE(s.compartments[2] == "c3");
-      }
-      THEN("find species") {
-        REQUIRE(s.species.size() == 3);
-        REQUIRE(s.species["c1"].size() == 2);
-        REQUIRE(s.species["c1"][0] == "A_c1");
-        REQUIRE(s.species["c1"][1] == "B_c1");
-        REQUIRE(s.species["c2"].size() == 2);
-        REQUIRE(s.species["c2"][0] == "A_c2");
-        REQUIRE(s.species["c2"][1] == "B_c2");
-        REQUIRE(s.species["c3"].size() == 2);
-        REQUIRE(s.species["c3"][0] == "A_c3");
-        REQUIRE(s.species["c3"][1] == "B_c3");
-      }
+    THEN("find compartments") {
+      REQUIRE(s.compartments.size() == 3);
+      REQUIRE(s.compartments[0] == "c1");
+      REQUIRE(s.compartments[1] == "c2");
+      REQUIRE(s.compartments[2] == "c3");
+    }
+    THEN("find species") {
+      REQUIRE(s.species.size() == 3);
+      REQUIRE(s.species["c1"].size() == 2);
+      REQUIRE(s.species["c1"][0] == "A_c1");
+      REQUIRE(s.species["c1"][1] == "B_c1");
+      REQUIRE(s.species["c2"].size() == 2);
+      REQUIRE(s.species["c2"][0] == "A_c2");
+      REQUIRE(s.species["c2"][1] == "B_c2");
+      REQUIRE(s.species["c3"].size() == 2);
+      REQUIRE(s.species["c3"][0] == "A_c3");
+      REQUIRE(s.species["c3"][1] == "B_c3");
+      REQUIRE(s.getSpeciesCompartment("A_c1") == "c1");
+      REQUIRE(s.getSpeciesCompartment("A_c2") == "c2");
+      REQUIRE(s.getSpeciesCompartment("A_c3") == "c3");
+      REQUIRE(s.getSpeciesCompartment("B_c1") == "c1");
+      REQUIRE(s.getSpeciesCompartment("B_c2") == "c2");
+      REQUIRE(s.getSpeciesCompartment("B_c3") == "c3");
+    }
+    WHEN("species name changed") {
+      REQUIRE(s.getSpeciesName("A_c1") == "A");
+      s.setSpeciesName("A_c1", "long name with Spaces");
+      REQUIRE(s.getSpeciesName("A_c1") == "long name with Spaces");
+      REQUIRE(s.getSpeciesName("B_c2") == "B");
+      s.setSpeciesName("B_c2", "non-alphanumeric chars allowed: @#$%^&*(_");
+      REQUIRE(s.getSpeciesName("B_c2") ==
+              "non-alphanumeric chars allowed: @#$%^&*(_");
+    }
+    WHEN("species compartment changed") {
+      REQUIRE(s.getSpeciesCompartment("A_c1") == "c1");
+      REQUIRE(s.species.at("c1") == QStringList{"A_c1", "B_c1"});
+      REQUIRE(s.species.at("c2") == QStringList{"A_c2", "B_c2"});
+      REQUIRE(s.species.at("c3") == QStringList{"A_c3", "B_c3"});
+      s.setSpeciesCompartment("A_c1", "c2");
+      REQUIRE(s.getSpeciesCompartment("A_c1") == "c2");
+      REQUIRE(s.species.at("c1") == QStringList{"B_c1"});
+      REQUIRE(s.species.at("c2") == QStringList{"A_c2", "B_c2", "A_c1"});
+      REQUIRE(s.species.at("c3") == QStringList{"A_c3", "B_c3"});
+      s.setSpeciesCompartment("A_c1", "c1");
+      REQUIRE(s.getSpeciesCompartment("A_c1") == "c1");
+      REQUIRE(s.species.at("c1") == QStringList{"B_c1", "A_c1"});
+      REQUIRE(s.species.at("c2") == QStringList{"A_c2", "B_c2"});
+      REQUIRE(s.species.at("c3") == QStringList{"A_c3", "B_c3"});
+    }
+    WHEN("invalid get species compartment call returns empty string") {
+      REQUIRE(s.getSpeciesCompartment("non_existent_species").isEmpty());
+    }
+    WHEN("invalid species compartment change call is a no-op") {
+      REQUIRE(s.getSpeciesCompartment("A_c1") == "c1");
+      s.setSpeciesCompartment("A_c1", "invalid_compartment");
+      REQUIRE(s.getSpeciesCompartment("A_c1") == "c1");
+      s.setSpeciesCompartment("invalid_species", "invalid_compartment");
+      REQUIRE(s.getSpeciesCompartment("A_c1") == "c1");
     }
   }
 }

@@ -160,6 +160,12 @@ void MainWindow::setupConnections() {
           &MainWindow::listMembranes_currentRowChanged);
 
   // species
+  connect(ui->txtSpeciesName, &QLineEdit::editingFinished, this,
+          &MainWindow::txtSpeciesName_editingFinished);
+
+  connect(ui->cmbSpeciesCompartment, qOverload<int>(&QComboBox::activated),
+          this, &MainWindow::cmbSpeciesCompartment_activated);
+
   connect(ui->listSpecies, &QTreeWidget::currentItemChanged, this,
           &MainWindow::listSpecies_currentItemChanged);
 
@@ -255,17 +261,6 @@ void MainWindow::setMathBackend() {
   }
 }
 
-void MainWindow::updateSpeciesDisplaySelect() {
-  std::vector<std::string> species;
-  for (auto *act : ui->btnSpeciesDisplaySelect->menu()->actions()) {
-    if (act->isChecked()) {
-      qDebug("show %s", act->text().toStdString().c_str());
-      species.push_back(act->text().toStdString());
-      // todo
-    }
-  }
-}
-
 void MainWindow::tabMain_currentChanged(int index) {
   enum TabIndex {
     GEOMETRY = 0,
@@ -283,8 +278,6 @@ void MainWindow::tabMain_currentChanged(int index) {
                ui->tabMain->tabText(index).toStdString());
   ui->hslideTime->setEnabled(false);
   ui->hslideTime->setVisible(false);
-  ui->btnSpeciesDisplaySelect->setEnabled(false);
-  ui->btnSpeciesDisplaySelect->setVisible(false);
   switch (index) {
     case TabIndex::GEOMETRY:
       tabMain_updateGeometry();
@@ -348,10 +341,13 @@ void MainWindow::tabMain_updateSpecies() {
   // update tree list of species
   auto *ls = ui->listSpecies;
   ls->clear();
+  ui->cmbSpeciesCompartment->clear();
   for (int iComp = 0; iComp < sbmlDoc.compartments.size(); ++iComp) {
     // add compartments as top level items
-    QTreeWidgetItem *comp =
-        new QTreeWidgetItem(ls, QStringList({sbmlDoc.compartmentNames[iComp]}));
+    QString compName = sbmlDoc.compartmentNames[iComp];
+    QTreeWidgetItem *comp = new QTreeWidgetItem(ls, {compName});
+    // also add to species compartment combo box
+    ui->cmbSpeciesCompartment->addItem(compName);
     ls->addTopLevelItem(comp);
     for (const auto &s : sbmlDoc.species.at(sbmlDoc.compartments[iComp])) {
       // add each species as child of compartment
@@ -412,8 +408,6 @@ void MainWindow::tabMain_updateSimulate() {
   ui->hslideTime->setVisible(true);
   ui->hslideTime->setEnabled(true);
   ui->hslideTime->setValue(0);
-  ui->btnSpeciesDisplaySelect->setEnabled(true);
-  ui->btnSpeciesDisplaySelect->setVisible(true);
   if (images.empty()) {
     simulate::Simulate sim(&sbmlDoc);
     for (const auto &compartmentID : sbmlDoc.compartments) {
@@ -839,6 +833,8 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
     SPDLOG_DEBUG("  - compartment Id {}", compartmentID.toStdString());
     // display species information
     auto &field = sbmlDoc.mapSpeciesIdToField.at(speciesID);
+    ui->txtSpeciesName->setText(current->text(0));
+    ui->cmbSpeciesCompartment->setCurrentIndex(compartmentIndex);
     // spatial
     bool isSpatial = field.isSpatial;
     ui->chkSpeciesIsSpatial->setChecked(isSpatial);
@@ -889,6 +885,22 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
     lblSpeciesColourPixmap.fill(sbmlDoc.getSpeciesColour(speciesID));
     ui->lblSpeciesColour->setPixmap(lblSpeciesColourPixmap);
     ui->lblSpeciesColour->setText("");
+  }
+}
+
+void MainWindow::txtSpeciesName_editingFinished() {
+  const QString &name = ui->txtSpeciesName->text();
+  sbmlDoc.setSpeciesName(sbmlDoc.currentSpecies, name);
+  tabMain_updateSpecies();
+}
+
+void MainWindow::cmbSpeciesCompartment_activated(int index) {
+  const auto &currentComp =
+      sbmlDoc.getSpeciesCompartment(sbmlDoc.currentSpecies);
+  if (sbmlDoc.compartments[index] != currentComp) {
+    sbmlDoc.setSpeciesCompartment(sbmlDoc.currentSpecies,
+                                  sbmlDoc.compartments[index]);
+    tabMain_updateSpecies();
   }
 }
 
@@ -1073,7 +1085,10 @@ void MainWindow::btnSimulate_clicked() {
   }
   // add membranes
   for (auto &membrane : sbmlDoc.membraneVec) {
-    sim.addMembrane(&membrane);
+    if (sbmlDoc.reactions.find(membrane.membraneID.c_str()) !=
+        sbmlDoc.reactions.cend()) {
+      sim.addMembrane(&membrane);
+    }
   }
 
   // Dune simulation
@@ -1160,7 +1175,7 @@ void MainWindow::btnSimulate_clicked() {
     auto *graph = ui->pltPlot->addGraph();
     graph->setData(time, conc[i]);
     graph->setPen(sim.field[i]->colour);
-    graph->setName(sim.speciesID[i].c_str());
+    graph->setName(sbmlDoc.getSpeciesName(sim.speciesID[i].c_str()));
   }
   ui->pltPlot->xAxis->setLabel("time");
   ui->pltPlot->yAxis->setLabel("concentration");
@@ -1177,18 +1192,6 @@ void MainWindow::btnSimulate_clicked() {
   ui->hslideTime->setMinimum(0);
   ui->hslideTime->setMaximum(time.size() - 1);
   ui->hslideTime->setValue(time.size() - 1);
-
-  // populate species display list
-  QMenu *menu = new QMenu(this);
-  for (const auto &s : sim.speciesID) {
-    QAction *act = new QAction(s.c_str(), menu);
-    act->setCheckable(true);
-    act->setChecked(true);
-    menu->addAction(act);
-    connect(act, &QAction::triggered, this,
-            &MainWindow::updateSpeciesDisplaySelect);
-  }
-  ui->btnSpeciesDisplaySelect->setMenu(menu);
 
   ui->statusBar->showMessage("Simulation complete.");
   SPDLOG_INFO("simulation run-time: {}", qtime.elapsed());

@@ -192,7 +192,7 @@ TEST_CASE("invalid variable relabeling is a no-op", "[symbolic][non-gui]") {
   REQUIRE(sym.simplify() == expr);
 }
 
-TEST_CASE("divide expression with number", "[symbolic][non-gui][QQ]") {
+TEST_CASE("divide expression with number", "[symbolic][non-gui]") {
   REQUIRE(symbolic::divide("x", "1.3") == "x/1.3");
   REQUIRE(symbolic::divide("1", "2") == "2^(-1)");
   REQUIRE(symbolic::divide("10*x", "5") == "10*x/5");
@@ -201,7 +201,7 @@ TEST_CASE("divide expression with number", "[symbolic][non-gui][QQ]") {
           "2*unknown_function(a, b, c)/2");
 }
 
-TEST_CASE("divide expression with symbol", "[symbolic][non-gui][QQ]") {
+TEST_CASE("divide expression with symbol", "[symbolic][non-gui]") {
   REQUIRE(symbolic::divide("x", "x") == "1");
   REQUIRE(symbolic::divide("1", "x") == "x^(-1)");
   REQUIRE(symbolic::divide("0", "x") == "0");
@@ -209,7 +209,7 @@ TEST_CASE("divide expression with symbol", "[symbolic][non-gui][QQ]") {
   REQUIRE(symbolic::divide("x+3*x", "x") == "4");
 }
 
-TEST_CASE("divide expression with other symbols", "[symbolic][non-gui][QQ]") {
+TEST_CASE("divide expression with other symbols", "[symbolic][non-gui]") {
   REQUIRE(symbolic::divide("x+a", "x") == "(a + x)/x");
   REQUIRE(symbolic::divide("x+y", "x") == "(x + y)/x");
   REQUIRE(symbolic::divide("y*x", "x") == "y");
@@ -217,7 +217,7 @@ TEST_CASE("divide expression with other symbols", "[symbolic][non-gui][QQ]") {
 }
 
 TEST_CASE("divide expression with other symbols & functions",
-          "[symbolic][non-gui][QQ]") {
+          "[symbolic][non-gui]") {
   REQUIRE(symbolic::divide("sin(x+a)", "x") == "sin(a + x)/x");
   REQUIRE(symbolic::divide("x*sin(x+a)", "x") == "sin(a + x)");
   REQUIRE(symbolic::divide("x*unknown(z)", "x") == "unknown(z)");

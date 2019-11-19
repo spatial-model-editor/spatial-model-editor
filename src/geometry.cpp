@@ -169,4 +169,15 @@ double Field::getMeanConcentration() const {
          static_cast<double>(conc.size());
 }
 
+void Field::setCompartment(const Compartment *compartment) {
+  if (geometry == compartment) {
+    return;
+  }
+  SPDLOG_DEBUG("Changing compartment to {}", compartment->compartmentID);
+  geometry = compartment;
+  conc.assign(geometry->ix.size(), 0.0);
+  dcdt = conc;
+  init = conc;
+}
+
 }  // namespace geometry

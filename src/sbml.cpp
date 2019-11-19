@@ -1624,6 +1624,49 @@ bool SbmlDocWrapper::getIsSpeciesConstant(const std::string &speciesID) const {
   return false;
 }
 
+QString SbmlDocWrapper::getSpeciesCompartment(const QString &speciesID) const {
+  auto sID = speciesID.toStdString();
+  const auto *spec = model->getSpecies(sID);
+  if (spec == nullptr) {
+    SPDLOG_WARN("Species {} not found", sID);
+    return {};
+  }
+  return spec->getCompartment().c_str();
+}
+
+void SbmlDocWrapper::setSpeciesCompartment(const QString &speciesID,
+                                           const QString &compartmentID) {
+  if (model->getCompartment(compartmentID.toStdString()) == nullptr) {
+    SPDLOG_WARN("Compartment {} not found", compartmentID.toStdString());
+    return;
+  }
+  auto *spec = model->getSpecies(speciesID.toStdString());
+  if (spec == nullptr) {
+    SPDLOG_WARN("Species {} not found", speciesID.toStdString());
+    return;
+  }
+  // update species list
+  species.at(spec->getCompartment().c_str()).removeOne(speciesID);
+  species.at(compartmentID).push_back(speciesID);
+  // update species compartment in SBML
+  spec->setCompartment(compartmentID.toStdString());
+  // update field with new compartment
+  auto &field = mapSpeciesIdToField.at(speciesID);
+  field.setCompartment(&mapCompIdToGeometry.at(compartmentID));
+  // set initial concentration to spatially uniform
+  setInitialConcentration(speciesID, spec->getInitialConcentration());
+  // update reaction list
+  updateReactionList();
+}
+
+void SbmlDocWrapper::setSpeciesName(const QString &speciesID,
+                                    const QString &name) {
+  auto *spec = model->getSpecies(speciesID.toStdString());
+  SPDLOG_INFO("Setting species {} name to {}", spec->getId(),
+              name.toStdString());
+  spec->setName(name.toStdString());
+}
+
 QString SbmlDocWrapper::getSpeciesName(const QString &speciesID) const {
   return model->getSpecies(speciesID.toStdString())->getName().c_str();
 }
