@@ -48,13 +48,36 @@ target_include_directories(mainwindow SYSTEM
 
 target_compile_features(mainwindow PUBLIC cxx_std_17)
 
-target_compile_definitions(mainwindow PUBLIC $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE>)
-target_compile_definitions(mainwindow PUBLIC $<$<CONFIG:Release>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO>)
-target_link_options(mainwindow PUBLIC $<$<CONFIG:Debug>:--coverage -fsanitize=address -fno-omit-frame-pointer -Wall -Wextra -Wpedantic>)
+target_compile_definitions(
+  mainwindow PUBLIC $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE>)
+target_compile_definitions(
+  mainwindow PUBLIC $<$<CONFIG:Release>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO>)
+target_link_options(mainwindow
+                    PUBLIC
+                    $<$<CONFIG:Debug>:--coverage
+                    -fsanitize=address
+                    -fno-omit-frame-pointer>)
+target_compile_options(mainwindow
+                       PUBLIC $<$<CONFIG:Debug>:--coverage
+                              -fsanitize=address
+                              -fno-omit-frame-pointer
+                              -Wall
+                              -Wextra
+                              -Wpedantic>)
 
-# Find the libraries that correspond to the LLVM components
-# that we wish to use
-llvm_map_components_to_libnames(llvm_libs asmparser core executionengine instcombine mcjit native nativecodegen scalaropts vectorize support transformutils)
+# Find the libraries that correspond to the LLVM components that we wish to use
+llvm_map_components_to_libnames(llvm_libs
+                                asmparser
+                                core
+                                executionengine
+                                instcombine
+                                mcjit
+                                native
+                                nativecodegen
+                                scalaropts
+                                vectorize
+                                support
+                                transformutils)
 
 target_link_libraries(
   mainwindow

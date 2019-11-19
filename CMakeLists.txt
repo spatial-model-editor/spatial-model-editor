@@ -14,8 +14,7 @@ project(SpatialModelEditor
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
 # this seems to be needed to pull in plugins for static builds todo: only do
-# this for static qt5 library build
-# add_definitions(-DQT_STATIC)
+# this for static qt5 library build add_definitions(-DQT_STATIC)
 
 # find required Qt5 modules
 find_package(Qt5 COMPONENTS Widgets Test PrintSupport REQUIRED)
@@ -42,8 +41,6 @@ find_package(muparser REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(symengine REQUIRED)
 
-enable_testing()
-
 # compile mainwindow library
 add_subdirectory(src)
 
@@ -51,4 +48,6 @@ add_subdirectory(src)
 add_subdirectory(app)
 
 # compile tests
+include(CTest)
+include(Catch)
 add_subdirectory(test)

@@ -5,7 +5,7 @@
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
 
-SCENARIO("qlabelmousetracker", "[qlabelmousetracker][gui]") {
+SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
   GIVEN("single pixel, single colour image") {
     QLabelMouseTracker mouseTracker;
     QImage img(1, 1, QImage::Format_RGB32);
@@ -180,7 +180,6 @@ SCENARIO("qlabelmousetracker", "[qlabelmousetracker][gui]") {
       }
     }
   }
-
   GIVEN("image and mask") {
     QLabelMouseTracker mouseTracker;
     QImage img(":/geometry/circle-100x100.png");

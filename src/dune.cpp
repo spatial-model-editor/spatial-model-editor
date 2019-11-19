@@ -98,37 +98,37 @@ static std::vector<std::string> makeValidDuneSpeciesNames(
 
 namespace dune {
 
-const QString &iniFile::getText() const { return text; }
+const QString &IniFile::getText() const { return text; }
 
-void iniFile::addSection(const QString &str) {
+void IniFile::addSection(const QString &str) {
   if (!text.isEmpty()) {
     text.append("\n");
   }
   text.append(QString("[%1]\n").arg(str));
 }
 
-void iniFile::addSection(const QString &str1, const QString &str2) {
+void IniFile::addSection(const QString &str1, const QString &str2) {
   addSection(QString("%1.%2").arg(str1, str2));
 }
 
-void iniFile::addSection(const QString &str1, const QString &str2,
+void IniFile::addSection(const QString &str1, const QString &str2,
                          const QString &str3) {
   addSection(QString("%1.%2.%3").arg(str1, str2, str3));
 }
 
-void iniFile::addValue(const QString &var, const QString &value) {
+void IniFile::addValue(const QString &var, const QString &value) {
   text.append(QString("%1 = %2\n").arg(var, value));
 }
 
-void iniFile::addValue(const QString &var, int value) {
+void IniFile::addValue(const QString &var, int value) {
   addValue(var, QString::number(value));
 }
 
-void iniFile::addValue(const QString &var, double value, int precision) {
+void IniFile::addValue(const QString &var, double value, int precision) {
   addValue(var, QString::number(value, 'g', precision));
 }
 
-void iniFile::clear() { text.clear(); }
+void IniFile::clear() { text.clear(); }
 
 static bool compartmentContainsNonConstantSpecies(
     const sbml::SbmlDocWrapper &doc, const QString &compID) {

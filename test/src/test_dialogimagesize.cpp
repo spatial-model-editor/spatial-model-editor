@@ -9,7 +9,7 @@
 // osx CI tests have issues with key presses & modal dialogs
 // for now commenting out this test on osx
 #ifndef Q_OS_MACOS
-SCENARIO("set size of image", "[dialogimagesize][gui]") {
+SCENARIO("DialogImageSize", "[dialogimagesize][gui]") {
   GIVEN("100x50 image, initial pixel size 1") {
     sbml::SbmlDocWrapper doc;
     QFile f(":/models/ABtoC.xml");

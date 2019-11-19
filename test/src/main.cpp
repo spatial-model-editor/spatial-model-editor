@@ -1,10 +1,8 @@
 #define CATCH_CONFIG_RUNNER
-#include "catch_wrapper.hpp"
-
+#include <QApplication>
 #include <locale>
 
-#include <QApplication>
-
+#include "catch_wrapper.hpp"
 #include "logger.hpp"
 
 int main(int argc, char *argv[]) {
