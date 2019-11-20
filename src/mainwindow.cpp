@@ -26,11 +26,12 @@
 #include "version.hpp"
 
 static void selectFirstChild(QTreeWidget *tree) {
-  auto *firstParent = tree->topLevelItem(0);
-  if (firstParent != nullptr) {
-    auto *firstChild = firstParent->child(0);
-    if (firstChild != nullptr) {
-      tree->setCurrentItem(firstChild);
+  for (int i = 0; i < tree->topLevelItemCount(); ++i) {
+    if (auto *parent = tree->topLevelItem(i); parent != nullptr) {
+      if (auto *child = parent->child(0); child != nullptr) {
+        tree->setCurrentItem(child);
+        return;
+      }
     }
   }
 }
@@ -160,14 +161,20 @@ void MainWindow::setupConnections() {
           &MainWindow::listMembranes_currentRowChanged);
 
   // species
+  connect(ui->listSpecies, &QTreeWidget::currentItemChanged, this,
+          &MainWindow::listSpecies_currentItemChanged);
+
+  connect(ui->btnAddSpecies, &QPushButton::clicked, this,
+          &MainWindow::btnAddSpecies_clicked);
+
+  connect(ui->btnRemoveSpecies, &QPushButton::clicked, this,
+          &MainWindow::btnRemoveSpecies_clicked);
+
   connect(ui->txtSpeciesName, &QLineEdit::editingFinished, this,
           &MainWindow::txtSpeciesName_editingFinished);
 
   connect(ui->cmbSpeciesCompartment, qOverload<int>(&QComboBox::activated),
           this, &MainWindow::cmbSpeciesCompartment_activated);
-
-  connect(ui->listSpecies, &QTreeWidget::currentItemChanged, this,
-          &MainWindow::listSpecies_currentItemChanged);
 
   connect(ui->chkSpeciesIsSpatial, &QCheckBox::toggled, this,
           &MainWindow::chkSpeciesIsSpatial_toggled);
@@ -202,6 +209,12 @@ void MainWindow::setupConnections() {
   // reactions
   connect(ui->listReactions, &QTreeWidget::currentItemChanged, this,
           &MainWindow::listReactions_currentItemChanged);
+
+  connect(ui->btnAddReaction, &QPushButton::clicked, this,
+          &MainWindow::btnAddReaction_clicked);
+
+  connect(ui->btnRemoveReaction, &QPushButton::clicked, this,
+          &MainWindow::btnRemoveReaction_clicked);
 
   // functions
   connect(ui->listFunctions, &QListWidget::currentTextChanged, this,
@@ -831,6 +844,7 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
     SPDLOG_DEBUG("  - species Id {}", speciesID.toStdString());
     SPDLOG_DEBUG("  - compartment index {}", compartmentIndex);
     SPDLOG_DEBUG("  - compartment Id {}", compartmentID.toStdString());
+    ui->btnRemoveSpecies->setEnabled(true);
     // display species information
     auto &field = sbmlDoc.mapSpeciesIdToField.at(speciesID);
     ui->txtSpeciesName->setText(current->text(0));
@@ -885,6 +899,45 @@ void MainWindow::listSpecies_currentItemChanged(QTreeWidgetItem *current,
     lblSpeciesColourPixmap.fill(sbmlDoc.getSpeciesColour(speciesID));
     ui->lblSpeciesColour->setPixmap(lblSpeciesColourPixmap);
     ui->lblSpeciesColour->setText("");
+  } else {
+    ui->btnRemoveSpecies->setEnabled(false);
+  }
+}
+
+void MainWindow::btnAddSpecies_clicked() {
+  // get currently selected compartment
+  int compartmentIndex = 0;
+  if (auto *item = ui->listSpecies->currentItem(); item != nullptr) {
+    auto *parent = item->parent() != nullptr ? item->parent() : item;
+    compartmentIndex = ui->listSpecies->indexOfTopLevelItem(parent);
+  }
+  QString compartmentID = sbmlDoc.compartments.at(compartmentIndex);
+  bool ok;
+  auto speciesName = QInputDialog::getText(
+      this, "Add species", "New species name:", QLineEdit::Normal, {}, &ok);
+  if (ok) {
+    sbmlDoc.addSpecies(speciesName, compartmentID);
+    tabMain_updateSpecies();
+  }
+}
+
+void MainWindow::btnRemoveSpecies_clicked() {
+  if (auto *item = ui->listSpecies->currentItem();
+      (item != nullptr) && (item->parent() != nullptr)) {
+    SPDLOG_DEBUG("item {} / {} selected", item->parent()->text(0).toStdString(),
+                 item->text(0).toStdString());
+    int compartmentIndex = ui->listSpecies->indexOfTopLevelItem(item->parent());
+    QString compartmentID = sbmlDoc.compartments.at(compartmentIndex);
+    int speciesIndex = item->parent()->indexOfChild(item);
+    QString speciesID = sbmlDoc.species.at(compartmentID).at(speciesIndex);
+    if (QMessageBox::question(
+            this, "Remove species",
+            QString("Remove species '%1' from the model?").arg(item->text(0)),
+            QMessageBox::Yes | QMessageBox::No,
+            QMessageBox::Yes) == QMessageBox::Yes) {
+      sbmlDoc.removeSpecies(speciesID);
+      tabMain_updateSpecies();
+    }
   }
 }
 
@@ -1011,11 +1064,14 @@ void MainWindow::listReactions_currentItemChanged(QTreeWidgetItem *current,
   ui->listReactants->clear();
   ui->listReactionParams->clear();
   ui->lblReactionRate->clear();
-  // if user selects a species (i.e. an item with a parent)
+  ui->lblInlinedReactionRate->clear();
+  sbmlDoc.currentReaction.clear();
+  // if user selects a reaction (i.e. an item with a parent)
   if ((current != nullptr) && (current->parent() != nullptr)) {
     SPDLOG_DEBUG("item {} / {} selected",
                  current->parent()->text(0).toStdString(),
                  current->text(0).toStdString());
+    ui->btnRemoveReaction->setEnabled(true);
     int compartmentIndex =
         ui->listReactions->indexOfTopLevelItem(current->parent());
     QString compartmentID;
@@ -1032,6 +1088,7 @@ void MainWindow::listReactions_currentItemChanged(QTreeWidgetItem *current,
     }
     int reactionIndex = current->parent()->indexOfChild(current);
     QString reactionID = sbmlDoc.reactions.at(compartmentID).at(reactionIndex);
+    sbmlDoc.currentReaction = reactionID;
     SPDLOG_DEBUG("  - reaction index {}", reactionIndex);
     SPDLOG_DEBUG("  - reaction Id {}", reactionID.toStdString());
     SPDLOG_DEBUG("  - compartment index {}", compartmentIndex);
@@ -1060,7 +1117,19 @@ void MainWindow::listReactions_currentItemChanged(QTreeWidgetItem *current,
     }
     ui->lblReactionRate->setText(reac.fullExpression.c_str());
     ui->lblInlinedReactionRate->setText(reac.inlinedExpression.c_str());
+  } else {
+    ui->btnRemoveReaction->setEnabled(false);
   }
+}
+
+void MainWindow::btnAddReaction_clicked() {
+  // todo
+  SPDLOG_INFO("Todo");
+}
+
+void MainWindow::btnRemoveReaction_clicked() {
+  sbmlDoc.removeReaction(sbmlDoc.currentReaction);
+  tabMain_updateReactions();
 }
 
 void MainWindow::listFunctions_currentTextChanged(const QString &currentText) {

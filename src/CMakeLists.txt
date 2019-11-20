@@ -63,7 +63,11 @@ target_compile_options(mainwindow
                               -fno-omit-frame-pointer
                               -Wall
                               -Wextra
-                              -Wpedantic>)
+                              -Wpedantic
+                              -Wshadow
+                              -Wunused
+                              -Wsign-conversion
+                              -Wcast-align>)
 
 # Find the libraries that correspond to the LLVM components that we wish to use
 llvm_map_components_to_libnames(llvm_libs

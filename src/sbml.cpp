@@ -513,7 +513,23 @@ void SbmlDocWrapper::exportSBMLFile(const std::string &filename) {
 
 QString SbmlDocWrapper::getXml() {
   QString xml;
+  if (!isValid) {
+    return {};
+  }
   writeGeometryMeshToSBML();
+  doc->checkInternalConsistency();
+  if (doc->getNumErrors() > 0) {
+    std::stringstream ss;
+    doc->printErrors(ss);
+    SPDLOG_WARN("SBML internal consistency check warnings/errors:\n\n{}",
+                ss.str());
+  }
+  doc->checkConsistency();
+  if (doc->getNumErrors() > 0) {
+    std::stringstream ss;
+    doc->printErrors(ss);
+    SPDLOG_WARN("SBML consistency check warnings/errors:\n\n{}", ss.str());
+  }
   std::unique_ptr<char, decltype(&std::free)> xmlChar(
       libsbml::writeSBMLToString(doc.get()), &std::free);
   xml = QString(xmlChar.get());
@@ -546,6 +562,7 @@ void SbmlDocWrapper::writeGeometryImageToSBML() {
   sf->setNumSamples1(compartmentImage.width());
   sf->setNumSamples2(compartmentImage.height());
   sf->setSamplesLength(compartmentImage.width() * compartmentImage.height());
+
   std::vector<QRgb> samples;
   samples.reserve(static_cast<std::size_t>(compartmentImage.width() *
                                            compartmentImage.height()));
@@ -733,6 +750,11 @@ void SbmlDocWrapper::updateMembraneList() {
 
 void SbmlDocWrapper::updateReactionList() {
   reactions.clear();
+  for (const auto &container : {compartments, membranes}) {
+    for (const auto &comp : container) {
+      reactions[comp] = QStringList();
+    }
+  }
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
     auto *reac = model->getReaction(i);
     auto *srp = dynamic_cast<libsbml::SpatialReactionPlugin *>(
@@ -748,18 +770,21 @@ void SbmlDocWrapper::updateReactionList() {
       const std::string &specID = reac->getProduct(k)->getSpecies();
       comps.insert(model->getSpecies(specID)->getCompartment());
     }
-    // TODO: also include modifiers here?? (and when compiling reactions??)
     for (unsigned int k = 0; k < reac->getNumReactants(); ++k) {
       const std::string &specID = reac->getReactant(k)->getSpecies();
+      comps.insert(model->getSpecies(specID)->getCompartment());
+    }
+    for (unsigned int k = 0; k < reac->getNumModifiers(); ++k) {
+      const std::string &specID = reac->getModifier(k)->getSpecies();
       comps.insert(model->getSpecies(specID)->getCompartment());
     }
     // single compartment
     if (comps.size() == 1) {
       QString comp = comps.begin()->c_str();
-      reactions[comp] << reacID;
-      // if reaction `isLocal` is not set, then the reaction rate is for amount,
-      // so here we divide the reaction formula by compartment factor to convert
-      // it to concentration, and set `isLocal` to true
+      reactions[comp].push_back(reacID);
+      // if reaction `isLocal` is not set, then the reaction rate is for
+      // amount, so here we divide the reaction formula by compartment factor
+      // to convert it to concentration, and set `isLocal` to true
       if (!srp->isSetIsLocal()) {
         SPDLOG_INFO("Reaction {} takes place in compartment {}", reac->getId(),
                     comp.toStdString());
@@ -798,7 +823,7 @@ void SbmlDocWrapper::updateReactionList() {
         if (colA > colB) {
           membraneID = compB + "_" + compA;
         }
-        reactions[membraneID] << QString(reac->getId().c_str());
+        reactions[membraneID].push_back(QString(reac->getId().c_str()));
         if (!srp->isSetIsLocal()) {
           SPDLOG_INFO("Reaction {} takes place on the {} membrane",
                       reac->getId(), membraneID.toStdString());
@@ -837,6 +862,7 @@ void SbmlDocWrapper::updateReactionList() {
     }
   }
 }
+
 const units::ModelUnits &SbmlDocWrapper::getModelUnits() const {
   return modelUnits;
 }
@@ -851,19 +877,18 @@ double SbmlDocWrapper::getCompartmentSize(const QString &compartmentID) const {
 
 // returns UnitDef with supplied Id, or if it doesn't exist,
 // creates one with Id=defaultId and returns it
-static libsbml::UnitDefinition *getOrCreateUnitDef(
-    libsbml::Model *model, const std::string &Id,
-    const std::string &defaultId) {
+libsbml::UnitDefinition *SbmlDocWrapper::getOrCreateUnitDef(
+    const std::string &Id, const std::string &defaultId) {
   libsbml::UnitDefinition *unitdef = nullptr;
   unitdef = model->getUnitDefinition(Id);
   if (unitdef == nullptr) {
     // if no existing unitdef, create one
     std::string newId = defaultId;
+    // ensure it is unique among unitdef Ids
+    // note: they are in a different namespace to other SBML objects
     while (model->getUnitDefinition(newId) != nullptr) {
-      // ensure Id is not already in use as a unit definition
-      // NB: should really check all SIds in model here, but
-      // getElementBySId(newId) to search whole doc didn't work
       newId.append("_");
+      SPDLOG_DEBUG("  -> {}", newId);
     }
     SPDLOG_DEBUG("creating UnitDefinition {}", newId);
     unitdef = model->createUnitDefinition();
@@ -890,21 +915,19 @@ static void setSBMLUnitDef(libsbml::UnitDefinition *unitdef,
 
 void SbmlDocWrapper::setUnitsTimeIndex(int index) {
   modelUnits.setTime(index);
-  auto *unitdef =
-      getOrCreateUnitDef(model, model->getTimeUnits(), "unit_of_time");
+  auto *unitdef = getOrCreateUnitDef(model->getTimeUnits(), "unit_of_time");
   model->setTimeUnits(unitdef->getId());
   setSBMLUnitDef(unitdef, modelUnits.getTime());
 }
 
 void SbmlDocWrapper::setUnitsLengthIndex(int index) {
   modelUnits.setLength(index);
-  auto *unitdef =
-      getOrCreateUnitDef(model, model->getLengthUnits(), "unit_of_length");
+  auto *unitdef = getOrCreateUnitDef(model->getLengthUnits(), "unit_of_length");
   model->setLengthUnits(unitdef->getId());
   setSBMLUnitDef(unitdef, modelUnits.getLength());
 
   // also set units of area as length^2
-  unitdef = getOrCreateUnitDef(model, model->getAreaUnits(), "unit_of_area");
+  unitdef = getOrCreateUnitDef(model->getAreaUnits(), "unit_of_area");
   auto u = modelUnits.getLength();
   u.name.append(" squared");
   u.exponent *= 2;
@@ -914,16 +937,15 @@ void SbmlDocWrapper::setUnitsLengthIndex(int index) {
 
 void SbmlDocWrapper::setUnitsVolumeIndex(int index) {
   modelUnits.setVolume(index);
-  auto *unitdef =
-      getOrCreateUnitDef(model, model->getVolumeUnits(), "unit_of_volume");
+  auto *unitdef = getOrCreateUnitDef(model->getVolumeUnits(), "unit_of_volume");
   model->setVolumeUnits(unitdef->getId());
   setSBMLUnitDef(unitdef, modelUnits.getVolume());
 }
 
 void SbmlDocWrapper::setUnitsAmountIndex(int index) {
   modelUnits.setAmount(index);
-  auto *unitdef = getOrCreateUnitDef(model, model->getSubstanceUnits(),
-                                     "units_of_substance");
+  auto *unitdef =
+      getOrCreateUnitDef(model->getSubstanceUnits(), "units_of_substance");
   model->setSubstanceUnits(unitdef->getId());
   model->setExtentUnits(unitdef->getId());
   setSBMLUnitDef(unitdef, modelUnits.getAmount());
@@ -1027,6 +1049,45 @@ QRgb SbmlDocWrapper::getCompartmentColour(const QString &compartmentID) const {
   return iter->second;
 }
 
+void SbmlDocWrapper::createField(const QString &speciesID,
+                                 const QString &compartmentID) {
+  std::string sId = speciesID.toStdString();
+  SPDLOG_INFO("creating field for species {} in compartment {}", sId,
+              compartmentID.toStdString());
+  geometry::Compartment &comp = mapCompIdToGeometry.at(compartmentID);
+  mapSpeciesIdToField[speciesID] =
+      geometry::Field(&comp, sId, 1.0, mapSpeciesIdToColour.at(speciesID));
+  geometry::Field &field = mapSpeciesIdToField.at(speciesID);
+  // set all species concentrations to their initial values
+  const auto *spec = model->getSpecies(sId);
+  // start by setting the uniform concentration
+  field.setUniformConcentration(spec->getInitialConcentration());
+  // if sampled field or analytic are present, they override the above
+  if (auto sf = getSpeciesSampledFieldInitialAssignment(sId); !sf.empty()) {
+    auto arr = getSampledFieldConcentration(speciesID);
+    field.importConcentration(arr);
+  } else if (auto expr = getAnalyticConcentration(speciesID); !expr.isEmpty()) {
+    setFieldConcAnalytic(field, expr.toStdString());
+  }
+  // set isSpatial flag
+  const auto *ssp = dynamic_cast<const libsbml::SpatialSpeciesPlugin *>(
+      spec->getPlugin("spatial"));
+  bool isSpatial =
+      (ssp != nullptr && ssp->isSetIsSpatial() && ssp->getIsSpatial());
+  field.isSpatial = isSpatial;
+  // set diffusion constant
+  for (unsigned i = 0; i < model->getNumParameters(); ++i) {
+    const auto *param = model->getParameter(i);
+    if (const auto *spp = dynamic_cast<const libsbml::SpatialParameterPlugin *>(
+            param->getPlugin("spatial"));
+        (spp != nullptr) && spp->isSetDiffusionCoefficient() &&
+        (spp->getDiffusionCoefficient()->getVariable() == sId)) {
+      field.diffusionConstant = param->getValue();
+      break;
+    }
+  }
+}
+
 void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
                                           QRgb colour, bool updateSBML) {
   SPDLOG_INFO("assigning colour {:x} to compartment {}", colour,
@@ -1054,75 +1115,9 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   // create compartment geometry for this colour
   mapCompIdToGeometry[compartmentID] = geometry::Compartment(
       compartmentID.toStdString(), getCompartmentImage(), colour);
-  geometry::Compartment &comp = mapCompIdToGeometry.at(compartmentID);
   // create a field for each species in this compartment
-  for (const auto &s : species[compartmentID]) {
-    SPDLOG_INFO("creating field for species {}", s.toStdString());
-    mapSpeciesIdToField[s] = geometry::Field(&comp, s.toStdString(), 1.0,
-                                             mapSpeciesIdToColour.at(s));
-    geometry::Field &field = mapSpeciesIdToField.at(s);
-    // set all species concentrations to their initial values
-    const auto *spec = model->getSpecies(s.toStdString());
-    // todo: deal with case of initialAmount, or neither being set
-    field.setUniformConcentration(spec->getInitialConcentration());
-
-    if (model->getInitialAssignmentBySymbol(s.toStdString()) != nullptr) {
-      // if an initial assignment exists, it takes precedence over
-      // the InitialConcentration set above
-      const auto *asgn = model->getInitialAssignmentBySymbol(s.toStdString());
-      std::string expr = ASTtoString(asgn->getMath());
-      SPDLOG_INFO("found initialAssignment: {} = {}", s.toStdString(), expr);
-      if (model->getParameter(expr) != nullptr) {
-        // simplest case: formula is just the name of a parameter
-        const auto *param = model->getParameter(expr);
-        const auto *spp = dynamic_cast<const libsbml::SpatialParameterPlugin *>(
-            param->getPlugin("spatial"));
-        if (spp != nullptr && spp->isSetSpatialSymbolReference()) {
-          // parameter is a spatialref to a sampled field
-          // -> set initial concentration to this sampled field
-          const std::string &sampledFieldID =
-              spp->getSpatialSymbolReference()->getSpatialRef();
-          SPDLOG_INFO("  - spatialSymbolReference: {} -> {}", param->getId(),
-                      sampledFieldID);
-          const auto *sf = geom->getSampledField(sampledFieldID);
-          std::vector<double> arrayConc;
-          sf->getSamples(arrayConc);
-          field.importConcentration(arrayConc);
-        } else {
-          // normal parameter, set initialConcentration to its value
-          SPDLOG_INFO("  - parameter {} = {}", param->getId(),
-                      param->getValue());
-          field.setUniformConcentration(param->getValue());
-        }
-      } else {
-        setFieldConcAnalytic(field, expr);
-      }
-    }
-
-    // set isSpatial flag
-    const auto *ssp = dynamic_cast<const libsbml::SpatialSpeciesPlugin *>(
-        spec->getPlugin("spatial"));
-    if (ssp != nullptr && ssp->isSetIsSpatial() && ssp->getIsSpatial()) {
-      field.isSpatial = true;
-    } else {
-      field.isSpatial = false;
-    }
-    // set diffusion constant value
-    // todo: deal with potential non-isotropic case in SBML
-    for (unsigned i = 0; i < model->getNumParameters(); ++i) {
-      const auto *param = model->getParameter(i);
-      const auto *pplugin =
-          dynamic_cast<const libsbml::SpatialParameterPlugin *>(
-              param->getPlugin("spatial"));
-      // iterate over diff coeff params
-      if (pplugin != nullptr && pplugin->isSetDiffusionCoefficient()) {
-        // check if diff coeff applies to our species
-        const auto *diffcoeff = pplugin->getDiffusionCoefficient();
-        if (diffcoeff->getVariable() == s.toStdString()) {
-          field.diffusionConstant = param->getValue();
-        }
-      }
-    }
+  for (const auto &speciesID : species[compartmentID]) {
+    createField(speciesID, compartmentID);
   }
   // update list of possible inter-compartment membranes
   updateMembraneList();
@@ -1441,48 +1436,48 @@ std::string SbmlDocWrapper::getSpeciesSampledFieldInitialAssignment(
 
 void SbmlDocWrapper::setSampledFieldConcentration(
     const QString &speciesID, const std::vector<double> &concentrationArray) {
-  SPDLOG_INFO("speciesID: {}", speciesID.toStdString());
-  // look for existing initialAssignment to a sampledField
-  std::string sampledFieldID =
-      getSpeciesSampledFieldInitialAssignment(speciesID.toStdString());
-  // if found, update existing sampledField with new concentration array
-  if (!sampledFieldID.empty()) {
-    auto *sf = geom->getSampledField(sampledFieldID);
-    sf->setSamples(concentrationArray);
-    sf->setNumSamples1(static_cast<int>(concentrationArray.size()));
-    SPDLOG_INFO("  - set samples to array of length {}",
-                concentrationArray.size());
-  } else {
-    auto *sf = geom->createSampledField();
-    sf->setId(speciesID.toStdString() + "_initialConcentration");
-    sf->setDataType(libsbml::DataKind_t::SPATIAL_DATAKIND_DOUBLE);
-    sf->setInterpolationType(
-        libsbml::InterpolationKind_t::SPATIAL_INTERPOLATIONKIND_LINEAR);
-    sf->setCompression(
-        libsbml::CompressionKind_t::SPATIAL_COMPRESSIONKIND_UNCOMPRESSED);
-    SPDLOG_INFO("  - creating SampledField: {}", sf->getId());
-    sf->setSamples(concentrationArray);
-    sf->setNumSamples1(static_cast<int>(concentrationArray.size()));
-    SPDLOG_INFO("  - set samples to array of length {}",
-                concentrationArray.size());
-    auto *param = model->createParameter();
-    param->setId(speciesID.toStdString() + "_initialConcentration");
-    param->setConstant(true);
-    SPDLOG_INFO("  - creating Parameter: {}", param->getId());
-    auto *spp = dynamic_cast<libsbml::SpatialParameterPlugin *>(
-        param->getPlugin("spatial"));
-    auto *ssr = spp->createSpatialSymbolReference();
-    ssr->setSpatialRef(sf->getId());
-    SPDLOG_INFO("  - with spatialSymbolReference: {}", ssr->getSpatialRef());
-    auto *asgn = model->createInitialAssignment();
-    asgn->setSymbol(speciesID.toStdString());
-    asgn->setId(speciesID.toStdString() + "_initialConcentration");
-    std::unique_ptr<libsbml::ASTNode> argAST(
-        libsbml::SBML_parseL3Formula(param->getId().c_str()));
-    asgn->setMath(argAST.get());
-    SPDLOG_INFO("  - creating initialAssignment: {}",
-                asgn->getMath()->getName());
+  std::string sId = speciesID.toStdString();
+  SPDLOG_INFO("speciesID: {}", sId);
+  removeInitialAssignment(sId);
+  // sampled field
+  auto *sf = geom->createSampledField();
+  std::string id = speciesID.toStdString() + "_initialConcentration";
+  while (!isSpatialIdAvailable(id)) {
+    id.append("_");
   }
+  sf->setId(id);
+  SPDLOG_INFO("  - creating SampledField: {}", sf->getId());
+  sf->setSamples(concentrationArray);
+  sf->setNumSamples1(compartmentImage.width());
+  sf->setNumSamples2(compartmentImage.height());
+  SPDLOG_INFO("  - set samples to {}x{} array", sf->getNumSamples1(),
+              sf->getNumSamples2());
+  sf->setDataType(libsbml::DataKind_t::SPATIAL_DATAKIND_DOUBLE);
+  sf->setInterpolationType(
+      libsbml::InterpolationKind_t::SPATIAL_INTERPOLATIONKIND_LINEAR);
+  sf->setCompression(
+      libsbml::CompressionKind_t::SPATIAL_COMPRESSIONKIND_UNCOMPRESSED);
+  // create SBML parameter with spatial ref to sampled field
+  auto *param = model->createParameter();
+  id = speciesID.toStdString() + "_initialConcentration";
+  while (!isSIdAvailable(id)) {
+    id.append("_");
+  }
+  param->setId(id);
+  param->setConstant(true);
+  SPDLOG_INFO("  - creating Parameter: {}", param->getId());
+  auto *spp = dynamic_cast<libsbml::SpatialParameterPlugin *>(
+      param->getPlugin("spatial"));
+  auto *ssr = spp->createSpatialSymbolReference();
+  ssr->setSpatialRef(sf->getId());
+  SPDLOG_INFO("  - with spatialSymbolReference: {}", ssr->getSpatialRef());
+  auto *asgn = model->createInitialAssignment();
+  asgn->setSymbol(sId);
+  std::unique_ptr<libsbml::ASTNode> argAST(
+      libsbml::SBML_parseL3Formula(param->getId().c_str()));
+  asgn->setMath(argAST.get());
+  SPDLOG_INFO("  - creating initialAssignment: {}", asgn->getMath()->getName());
+
   mapSpeciesIdToField.at(speciesID).importConcentration(concentrationArray);
 }
 
@@ -1657,6 +1652,127 @@ void SbmlDocWrapper::setSpeciesCompartment(const QString &speciesID,
   setInitialConcentration(speciesID, spec->getInitialConcentration());
   // update reaction list
   updateReactionList();
+}
+
+bool SbmlDocWrapper::isSIdAvailable(const std::string &id) const {
+  return model->getElementBySId(id) == nullptr;
+}
+
+bool SbmlDocWrapper::isSpatialIdAvailable(const std::string &id) const {
+  return geom->getElementBySId(id) == nullptr;
+}
+
+QString SbmlDocWrapper::nameToSId(const QString &name) const {
+  SPDLOG_DEBUG("name: '{}'", name.toStdString());
+  const std::string charsToConvertToUnderscore = " -_/";
+  std::string id;
+  // remove any non-alphanumeric chars, convert spaces etc to underscores
+  for (auto c : name.toStdString()) {
+    if (std::isalnum(c, std::locale::classic())) {
+      id.push_back(c);
+    } else if (charsToConvertToUnderscore.find(c) != std::string::npos) {
+      id.push_back('_');
+    }
+  }
+  // first char must be a letter or underscore
+  if (!std::isalpha(id.front())) {
+    id = "_" + id;
+  }
+  SPDLOG_DEBUG("  -> '{}'", id);
+  // ensure it is unique, i.e. doesn't clash with any other SId in model
+  while (!isSIdAvailable(id)) {
+    id.append("_");
+    SPDLOG_DEBUG("  -> '{}'", id);
+  }
+  return id.c_str();
+}
+
+void SbmlDocWrapper::addSpecies(const QString &speciesName,
+                                const QString &compartmentID) {
+  SPDLOG_INFO("Adding new species");
+  auto *spec = model->createSpecies();
+  SPDLOG_INFO("  - name: {}", speciesName.toStdString());
+  spec->setName(speciesName.toStdString());
+  auto speciesID = nameToSId(speciesName);
+  SPDLOG_INFO("  - id: {}", speciesID.toStdString());
+  spec->setId(speciesID.toStdString());
+  SPDLOG_INFO("  - compartment: {}", compartmentID.toStdString());
+  spec->setCompartment(compartmentID.toStdString());
+  // add to species list
+  species.at(compartmentID).push_back(speciesID);
+  // set default colour
+  mapSpeciesIdToColour[speciesID] =
+      utils::indexedColours()[model->getNumSpecies() - 1];
+  // create field
+  mapSpeciesIdToField[speciesID] = geometry::Field(
+      &mapCompIdToGeometry.at(compartmentID), speciesID.toStdString(), 1.0,
+      mapSpeciesIdToColour.at(speciesID));
+  // set initial spatial parameters
+  setIsSpatial(speciesID, true);
+  setDiffusionConstant(speciesID, 1.0);
+  setInitialConcentration(speciesID, 0.0);
+}
+
+std::vector<std::string> SbmlDocWrapper::getSpeciesReactions(
+    const QString &speciesID) const {
+  std::vector<std::string> reactionIds;
+  std::string sId = speciesID.toStdString();
+  for (unsigned i = 0; i < model->getNumReactions(); ++i) {
+    const auto *reac = model->getReaction(i);
+    bool containsSpecies = false;
+    for (unsigned j = 0; j < reac->getNumProducts(); ++j) {
+      if (reac->getProduct(j)->getSpecies() == sId) {
+        containsSpecies = true;
+      }
+    }
+    for (unsigned j = 0; j < reac->getNumReactants(); ++j) {
+      if (reac->getReactant(j)->getSpecies() == sId) {
+        containsSpecies = true;
+      }
+    }
+    for (unsigned j = 0; j < reac->getNumModifiers(); ++j) {
+      if (reac->getModifier(j)->getSpecies() == sId) {
+        containsSpecies = true;
+      }
+    }
+    if (containsSpecies) {
+      reactionIds.push_back(reac->getId());
+    }
+  }
+  return reactionIds;
+}
+
+void SbmlDocWrapper::removeSpecies(const QString &speciesID) {
+  std::string sId = speciesID.toStdString();
+  SPDLOG_INFO("Removing species {}", sId);
+  std::unique_ptr<libsbml::Species> spec(model->removeSpecies(sId));
+  if (spec == nullptr) {
+    SPDLOG_WARN("  - species {} not found", sId);
+    return;
+  }
+  // remove species from species list
+  species.at(spec->getCompartment().c_str()).removeOne(speciesID);
+  // remove any reactions that depend on it
+  for (const auto &reacID : getSpeciesReactions(speciesID)) {
+    removeReaction(reacID.c_str(), false);
+  }
+  updateReactionList();
+  SPDLOG_INFO("  - species {} removed", spec->getId());
+}
+
+void SbmlDocWrapper::removeReaction(const QString &reactionID,
+                                    bool callUpdateReactionList) {
+  std::string sId = reactionID.toStdString();
+  SPDLOG_INFO("Removing reaction {}", sId);
+  std::unique_ptr<libsbml::Reaction> reac(model->removeReaction(sId));
+  if (reac == nullptr) {
+    SPDLOG_WARN("  - reaction {} not found", sId);
+    return;
+  }
+  if (callUpdateReactionList) {
+    updateReactionList();
+  }
+  SPDLOG_INFO("  - reaction {} removed", reac->getId());
 }
 
 void SbmlDocWrapper::setSpeciesName(const QString &speciesID,
