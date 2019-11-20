@@ -71,7 +71,7 @@ static void createSBMLlvl2doc(const std::string &filename) {
   libsbml::SBMLWriter().writeSBML(document.get(), filename);
 }
 
-SCENARIO("import SBML doc without geometry", "[sbml][non-gui]") {
+SCENARIO("SBML: import SBML doc without geometry", "[sbml][non-gui]") {
   // create simple SBML level 2.4 model
   createSBMLlvl2doc("tmp.xml");
   // import SBML model
@@ -221,7 +221,7 @@ SCENARIO("import SBML doc without geometry", "[sbml][non-gui]") {
   }
 }
 
-SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
+SCENARIO("SBML: import SBML level 2 document", "[sbml][non-gui]") {
   // create simple SBML level 2.4 model
   createSBMLlvl2doc("tmp.xml");
   // import SBML model
@@ -320,7 +320,7 @@ SCENARIO("import SBML level 2 document", "[sbml][non-gui]") {
   }
 }
 
-SCENARIO("import geometry from image", "[sbml][non-gui]") {
+SCENARIO("SBML: import geometry from image", "[sbml][non-gui]") {
   sbml::SbmlDocWrapper s;
   REQUIRE(s.hasGeometryImage == false);
   REQUIRE(s.hasValidGeometry == false);
@@ -342,7 +342,7 @@ SCENARIO("import geometry from image", "[sbml][non-gui]") {
   }
 }
 
-SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {
+SCENARIO("SBML: ABtoC.xml", "[sbml][non-gui]") {
   sbml::SbmlDocWrapper s;
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
@@ -399,7 +399,7 @@ SCENARIO("SBML test data: ABtoC.xml", "[sbml][non-gui]") {
   }
 }
 
-SCENARIO("SBML test data: very-simple-model.xml", "[sbml][non-gui]") {
+SCENARIO("SBML: very-simple-model.xml", "[sbml][non-gui]") {
   QFile f(":/models/very-simple-model.xml");
   f.open(QIODevice::ReadOnly);
   sbml::SbmlDocWrapper s;
@@ -467,7 +467,7 @@ SCENARIO("SBML test data: very-simple-model.xml", "[sbml][non-gui]") {
   }
 }
 
-SCENARIO("SBML test data: yeast-glycolysis.xml", "[sbml][non-gui][inlining]") {
+SCENARIO("SBML: yeast-glycolysis.xml", "[sbml][non-gui][inlining]") {
   std::unique_ptr<libsbml::SBMLDocument> doc(
       libsbml::readSBMLFromString(sbml_test_data::yeast_glycolysis().xml));
   // write SBML document to file
@@ -504,7 +504,7 @@ SCENARIO("SBML test data: yeast-glycolysis.xml", "[sbml][non-gui][inlining]") {
   }
 }
 
-SCENARIO("Load model, refine mesh, save", "[sbml][mesh][non-gui]") {
+SCENARIO("SBML: load model, refine mesh, save", "[sbml][mesh][non-gui]") {
   sbml::SbmlDocWrapper s;
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
@@ -530,7 +530,8 @@ SCENARIO("Load model, refine mesh, save", "[sbml][mesh][non-gui]") {
   REQUIRE(s2.mesh->getTriangleIndices(0).size() == 3 * 148);
 }
 
-SCENARIO("Load model, change size of geometry, save", "[sbml][mesh][non-gui]") {
+SCENARIO("SBML: load model, change size of geometry, save",
+         "[sbml][mesh][non-gui]") {
   sbml::SbmlDocWrapper s;
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
@@ -564,7 +565,7 @@ SCENARIO("Load model, change size of geometry, save", "[sbml][mesh][non-gui]") {
   REQUIRE(s.getCompartmentSize("comp") == dbl_approx(8.06144e-20));
 }
 
-SCENARIO("Delete mesh annotation, load as read-only mesh",
+SCENARIO("SBML: Delete mesh annotation, load as read-only mesh",
          "[sbml][mesh][non-gui]") {
   // delete mesh info annotation
   QFile f(":/models/ABtoC.xml");

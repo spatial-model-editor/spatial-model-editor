@@ -24,7 +24,7 @@ using QTriangleF = std::array<QPointF, 3>;
 using Weight = std::pair<QPoint, std::array<double, 3>>;
 using PixelLocalPair = std::pair<QPoint, std::array<double, 2>>;
 
-class iniFile {
+class IniFile {
  private:
   QString text;
 
@@ -51,7 +51,7 @@ class DuneConverter {
 
  private:
   const sbml::SbmlDocWrapper &doc;
-  iniFile ini;
+  IniFile ini;
   std::unordered_set<int> gmshCompIndices;
   std::map<std::string, QColor> mapDuneNameToColour;
 };

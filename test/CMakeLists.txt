@@ -18,7 +18,6 @@ set(SRC_LIST
     src/test_units.cpp
     src/test_utils.cpp)
 
-
 add_executable(tests ${SRC_LIST} inc/qt_test_utils.hpp
                      ../resources/resources.qrc)
 
@@ -30,4 +29,58 @@ target_link_libraries(tests PRIVATE mainwindow Qt5::Test)
 
 target_compile_features(tests PUBLIC cxx_std_17)
 
-# discover tests include(cmake/Catch.cmake) catch_discover_tests(tests)
+catch_discover_tests(tests
+                     PROPERTIES
+                     ENVIRONMENT
+                     LSAN_OPTIONS=exitcode=0)
+
+# add custom target to generate coverage report
+add_custom_target(coverage
+                  COMMAND ${CMAKE_COMMAND}
+                          -E
+                          make_directory
+                          coverage
+                  COMMAND lcov
+                          -q
+                          -d
+                          .
+                          -c
+                          -o
+                          coverage/cov.info
+                  COMMAND lcov
+                          -q
+                          -r
+                          coverage/cov.info
+                          */usr/*
+                          -o
+                          coverage/cov.info
+                  COMMAND lcov
+                          -q
+                          -r
+                          coverage/cov.info
+                          */ext/*
+                          -o
+                          coverage/cov.info
+                  COMMAND lcov
+                          -q
+                          -r
+                          coverage/cov.info
+                          */test/*
+                          -o
+                          coverage/cov.info
+                  COMMAND lcov
+                          -q
+                          -r
+                          coverage/cov.info
+                          *_autogen/*
+                          -o
+                          coverage/cov.info
+                  COMMAND lcov -l coverage/cov.info
+                  COMMAND genhtml
+                          -q
+                          coverage/cov.info
+                          -o
+                          coverage
+                  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                  COMMENT "Generating coverage report in coverage/index.html"
+                  VERBATIM)

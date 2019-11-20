@@ -8,7 +8,7 @@
 // osx CI tests have issues with key presses & modal dialogs
 // for now commenting out this test on osx
 #ifndef Q_OS_MACOS
-SCENARIO("set model units", "[dialogunits][gui]") {
+SCENARIO("DialogUnits", "[dialogunits][gui]") {
   sbml::SbmlDocWrapper doc;
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);

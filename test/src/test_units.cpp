@@ -1,7 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "units.hpp"
 
-SCENARIO("Default units", "[units]") {
+SCENARIO("Units", "[units][non-gui]") {
   auto timeUnits = units::UnitVector{{{"hour", "h", "second", 0, 1, 3600},
                                       {"minute", "m", "second", 0, 1, 60},
                                       {"second", "s", "second", 0},
@@ -26,7 +26,6 @@ SCENARIO("Default units", "[units]") {
       {{"mole", "mol", "mole", 0}, {"millimole", "mmol", "mole", -3}}};
   auto modelUnits =
       units::ModelUnits(timeUnits, lengthUnits, volumeUnits, amountUnits);
-
   WHEN("no index is set: zero used by default") {
     auto units = std::vector<const units::Unit*>{
         &(modelUnits.getTime()), &(modelUnits.getLength()),
@@ -45,7 +44,6 @@ SCENARIO("Default units", "[units]") {
       REQUIRE(unit->multiplier == dbl_approx(ref->multiplier));
     }
   }
-
   WHEN("index is set: units updated") {
     modelUnits.setTime(2);
     REQUIRE(modelUnits.getTimeIndex() == 2);
@@ -60,7 +58,6 @@ SCENARIO("Default units", "[units]") {
     REQUIRE(modelUnits.getAmountIndex() == 1);
     REQUIRE(modelUnits.getAmount().name == amountUnits.getUnits()[1].name);
   }
-
   WHEN("no index is set: derived units correct") {
     REQUIRE(modelUnits.getLength().symbol.toStdString() == "m");
     REQUIRE(modelUnits.getTime().symbol.toStdString() == "h");
@@ -70,7 +67,6 @@ SCENARIO("Default units", "[units]") {
     REQUIRE(modelUnits.getVolume().symbol.toStdString() == "L");
     REQUIRE(modelUnits.getConcentration().toStdString() == "mol/L");
   }
-
   WHEN("index is set: derived units updated") {
     modelUnits.setTime(2);
     modelUnits.setLength(2);

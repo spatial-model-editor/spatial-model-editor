@@ -194,7 +194,7 @@ void REQUIRE_threePixelImageLoaded(const UIPointers &ui) {
 
 // skip tests on osx due to modal dialog box issues
 #ifndef Q_OS_MAC
-SCENARIO("Shortcut keys", "[gui][mainwindow]") {
+SCENARIO("Mainwindow: shortcut keys", "[gui][mainwindow]") {
   MainWindow w;
   w.show();
   CAPTURE(QTest::qWaitForWindowExposed(&w));
@@ -259,7 +259,7 @@ SCENARIO("Shortcut keys", "[gui][mainwindow]") {
   }
 }
 
-SCENARIO("click on btnChangeCompartment",
+SCENARIO("Mainwindow: click on btnChangeCompartment",
          "[gui][mainwindow][btnChangeCompartment]") {
   MainWindow w;
   w.show();
@@ -319,8 +319,9 @@ SCENARIO("click on btnChangeCompartment",
   }
 }
 
-SCENARIO("import built-in SBML model and compartment geometry image",
-         "[gui][mainwindow]") {
+SCENARIO(
+    "Mainwindow: import built-in SBML model and compartment geometry image",
+    "[gui][mainwindow]") {
   MainWindow w;
   w.show();
   UIPointers ui(&w);
@@ -339,7 +340,8 @@ SCENARIO("import built-in SBML model and compartment geometry image",
   }
 }
 
-SCENARIO("load built-in SBML model very-simple-model", "[gui][mainwindow]") {
+SCENARIO("Mainwindow: load built-in SBML model very-simple-model",
+         "[gui][mainwindow]") {
   MainWindow w;
   w.show();
   UIPointers ui(&w);
@@ -359,7 +361,8 @@ SCENARIO("load built-in SBML model very-simple-model", "[gui][mainwindow]") {
   REQUIRE(ui.listCompartments->count() == 1);
 }
 
-SCENARIO("load built-in SBML model, change units", "[gui][mainwindow]") {
+SCENARIO("Mainwindow: load built-in SBML model, change units",
+         "[gui][mainwindow]") {
   MainWindow w;
   w.show();
   UIPointers ui(&w);
@@ -407,7 +410,7 @@ SCENARIO("load built-in SBML model, change units", "[gui][mainwindow]") {
   REQUIRE(amountunit->getScale() == dbl_approx(-3));
 }
 
-SCENARIO("Load SBML file", "[gui][mainwindow]") {
+SCENARIO("Mainwindow: click on many things", "[gui][mainwindow]") {
   MainWindow w;
   w.show();
   CAPTURE(QTest::qWaitForWindowExposed(&w));
