@@ -33,7 +33,7 @@ matrix:
       script:
         - bash ci-build.sh "release optimize_full"
         # run tests
-        - ./build/test/test -a
+        - ./build/test_unity/test_unity -a
         # check dependencies of resulting executable
         - cd build/app
         - ldd spatial-model-editor
@@ -50,7 +50,7 @@ matrix:
       script:
         - bash ci-build.sh "release optimize_full"
         # run tests
-        - ./build/test/test.app/Contents/MacOS/test -a
+        - ./build/test_unity/test_unity.app/Contents/MacOS/test_unity -a
         # check dependencies of resulting executable
         - cd build/app
         - otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor
@@ -95,7 +95,7 @@ matrix:
         - sleep 1
       script:
         # build tests & compile executable using sonar-source build wrapper
-        - bash ci-build.sh debug make "build-wrapper-linux-x86-64 --out-dir bw-output" 2
+        - bash ci-build.sh debug make "build-wrapper-linux-x86-64 --out-dir bw-output"
         # run tests
         # make list of "leaks" from system libraries that LeakSanitizer should ignore
         # NB: can also set ASAN_OPTIONS=fast_unwind_on_malloc=0
@@ -105,7 +105,7 @@ matrix:
         # generate gcov test coverage data for sonar-source & codecov.io
 
         # unit tests (i.e. not mainwindow)
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build/test/test -a "~[mainwindow]"
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build/test_unity/test_unity -a "~[mainwindow]"
         - cd build
         - mkdir gcov-unit
         - cd gcov-unit
@@ -127,7 +127,7 @@ matrix:
         # integration tests (i.e. mainwindow)
         - rm src/*.gcda
         - cd ..
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build/test/test -a "[mainwindow]"
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build/test_unity/test_unity -a "[mainwindow]"
         - cd build
         - mkdir gcov-integration
         - cd gcov-integration
@@ -151,7 +151,7 @@ matrix:
         - rm src/*.gcda
         - cd ..
         - rm units.xml
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build/test/test > /dev/null 2>&1
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build/test_unity/test_unity > /dev/null 2>&1
         - cd build
         - mkdir gcov
         - cd gcov

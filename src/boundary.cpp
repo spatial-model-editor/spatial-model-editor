@@ -320,7 +320,6 @@ std::vector<Boundary> constructBoundaries(
       QPoint(1, 1), QPoint(1, -1), QPoint(-1, 1), QPoint(-1, -1)};
 
   // add image boundary loop
-  // todo: decide if this should be done or not
   std::vector<QPoint> points;
   points.push_back(QPoint(0, 0));
   points.push_back(QPoint(0, img.height() - 1));

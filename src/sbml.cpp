@@ -1399,12 +1399,16 @@ void SbmlDocWrapper::setAnalyticConcentration(
 
 QString SbmlDocWrapper::getAnalyticConcentration(
     const QString &speciesID) const {
+  auto sf = getSpeciesSampledFieldInitialAssignment(speciesID.toStdString());
+  if (!sf.empty()) {
+    return {};
+  }
   const auto *asgn =
       model->getInitialAssignmentBySymbol(speciesID.toStdString());
   if (asgn != nullptr) {
     return ASTtoString(asgn->getMath()).c_str();
   }
-  return QString();
+  return {};
 }
 
 std::string SbmlDocWrapper::getSpeciesSampledFieldInitialAssignment(
@@ -1503,12 +1507,19 @@ QImage SbmlDocWrapper::getConcentrationImage(const QString &speciesID) const {
 
 void SbmlDocWrapper::setIsSpatial(const QString &speciesID, bool isSpatial) {
   mapSpeciesIdToField.at(speciesID).isSpatial = isSpatial;
-  auto *spec = model->getSpecies(speciesID.toStdString());
+  std::string sId = speciesID.toStdString();
+  auto *spec = model->getSpecies(sId);
+  if (spec == nullptr) {
+    SPDLOG_ERROR("Failed to get species {}", sId);
+    return;
+  }
   auto *ssp =
       dynamic_cast<libsbml::SpatialSpeciesPlugin *>(spec->getPlugin("spatial"));
-  if (ssp != nullptr) {
-    ssp->setIsSpatial(isSpatial);
+  if (ssp == nullptr) {
+    SPDLOG_ERROR("Failed to get SpatialSpeciesPlugin for species {}", sId);
+    return;
   }
+  ssp->setIsSpatial(isSpatial);
   if (isSpatial) {
     // for now spatial species cannot be constant
     setIsSpeciesConstant(speciesID.toStdString(), false);
@@ -1525,41 +1536,39 @@ bool SbmlDocWrapper::getIsSpatial(const QString &speciesID) const {
 
 void SbmlDocWrapper::setDiffusionConstant(const QString &speciesID,
                                           double diffusionConstant) {
-  bool diffConstantExists = false;
+  SPDLOG_INFO("SpeciesID: {}", speciesID.toStdString());
+  libsbml::Parameter *param = nullptr;
+  // look for existing diffusion constant parameter
   for (unsigned i = 0; i < model->getNumParameters(); ++i) {
-    auto *param = model->getParameter(i);
-    auto *pplugin = dynamic_cast<libsbml::SpatialParameterPlugin *>(
-        param->getPlugin("spatial"));
-    // iterate over diff coeff params
-    if (pplugin != nullptr && pplugin->isSetDiffusionCoefficient()) {
-      auto *diffcoeff = pplugin->getDiffusionCoefficient();
-      if (diffcoeff->getVariable() == speciesID.toStdString()) {
-        diffConstantExists = true;
-        param->setValue(diffusionConstant);
-        SPDLOG_INFO("Setting diffusion constant:");
-        SPDLOG_INFO("  - speciesID: {}", speciesID.toStdString());
-        SPDLOG_INFO("  - paramID: {}", param->getId());
-        SPDLOG_INFO("  - new value: {}", param->getValue());
-      }
+    auto *par = model->getParameter(i);
+    if (auto *spp = dynamic_cast<const libsbml::SpatialParameterPlugin *>(
+            par->getPlugin("spatial"));
+        (spp != nullptr) && spp->isSetDiffusionCoefficient() &&
+        (spp->getDiffusionCoefficient()->getVariable() ==
+         speciesID.toStdString())) {
+      param = par;
+      SPDLOG_INFO("  - found existing diffusion constant: {}", param->getId());
     }
   }
-  if (!diffConstantExists) {
-    auto *param = model->createParameter();
+  if (param == nullptr) {
+    // create new diffusion constant parameter
+    param = model->createParameter();
     param->setConstant(true);
-    // todo: first check for ID name clash
-    param->setId(speciesID.toStdString() + "_diffusionConstant");
-    param->setValue(diffusionConstant);
+    std::string id = speciesID.toStdString() + "_diffusionConstant";
+    while (!isSIdAvailable(id)) {
+      id.append("_");
+    }
+    param->setId(id);
     auto *pplugin = dynamic_cast<libsbml::SpatialParameterPlugin *>(
         param->getPlugin("spatial"));
     auto *diffCoeff = pplugin->createDiffusionCoefficient();
     diffCoeff->setVariable(speciesID.toStdString());
     diffCoeff->setType(
         libsbml::DiffusionKind_t::SPATIAL_DIFFUSIONKIND_ISOTROPIC);
-    SPDLOG_INFO("Setting new diffusion constant:");
-    SPDLOG_INFO("  - speciesID: {}", speciesID.toStdString());
-    SPDLOG_INFO("  - paramID: {}", param->getId());
-    SPDLOG_INFO("  - new value: {}", param->getValue());
+    SPDLOG_INFO("  - created new diffusion constant: {}", param->getId());
   }
+  param->setValue(diffusionConstant);
+  SPDLOG_INFO("  - new value: {}", param->getValue());
   mapSpeciesIdToField.at(speciesID).diffusionConstant = diffusionConstant;
 }
 
@@ -1598,8 +1607,6 @@ void SbmlDocWrapper::setIsSpeciesConstant(const std::string &speciesID,
   }
   // todo: think about how to deal with boundaryCondition properly
   // for now, just set it to false here: species is either constant, or not
-  // todo: check if "constant" refers to constant concentration or amount?
-  // what happens to a constant species when compartment size is changed?
   spec->setBoundaryCondition(false);
 }
 
@@ -1809,20 +1816,7 @@ std::map<std::string, double> SbmlDocWrapper::getGlobalConstants() const {
     const auto *spec = model->getSpecies(k);
     if (getIsSpeciesConstant(spec->getId())) {
       SPDLOG_TRACE("found constant species {}", spec->getId());
-      // todo: check if species is *also* non-spatial - work out what constant
-      // spatial means, boundaryCondition spatial, etc...
-      double init_conc = 0;
-      // if SBML file specifies amount: convert to concentration
-      if (spec->isSetInitialAmount()) {
-        double amount = spec->getInitialAmount();
-        double vol = model->getCompartment(spec->getCompartment())->getSize();
-        init_conc = amount / vol;
-        SPDLOG_INFO(
-            "converting amount {} to concentration {} by dividing by vol {}",
-            amount, init_conc, vol);
-      } else {
-        init_conc = spec->getInitialConcentration();
-      }
+      double init_conc = spec->getInitialConcentration();
       constants[spec->getId()] = init_conc;
       SPDLOG_TRACE("parameter {} = {}", spec->getId(), init_conc);
     }
@@ -1845,6 +1839,7 @@ std::map<std::string, double> SbmlDocWrapper::getGlobalConstants() const {
   }
   // remove x and y if present, as these are not really parameters
   // (we want them to remain as variables to be parsed by symbolic parser)
+  // todo: check if this can be done in a better way
   for (const auto &c : {"x", "y"}) {
     auto iter = constants.find(c);
     if (iter != constants.cend()) {
