@@ -29,7 +29,8 @@ class UIPointers {
   QListWidget *listCompartments;
   QListWidget *listMembranes;
   QTreeWidget *listSpecies;
-
+  QPushButton *btnAddSpecies;
+  QPushButton *btnRemoveSpecies;
   QPushButton *btnChangeSpeciesColour;
   QCheckBox *chkSpeciesIsSpatial;
   QCheckBox *chkSpeciesIsConstant;
@@ -80,6 +81,12 @@ UIPointers::UIPointers(MainWindow *mainWindow) : w(mainWindow) {
   REQUIRE(listMembranes != nullptr);
   listSpecies = w->topLevelWidget()->findChild<QTreeWidget *>("listSpecies");
   REQUIRE(listSpecies != nullptr);
+  btnAddSpecies =
+      w->topLevelWidget()->findChild<QPushButton *>("btnAddSpecies");
+  REQUIRE(btnAddSpecies != nullptr);
+  btnRemoveSpecies =
+      w->topLevelWidget()->findChild<QPushButton *>("btnRemoveSpecies");
+  REQUIRE(btnRemoveSpecies != nullptr);
   btnChangeSpeciesColour =
       w->topLevelWidget()->findChild<QPushButton *>("btnChangeSpeciesColour");
   REQUIRE(btnChangeSpeciesColour != nullptr);
@@ -340,8 +347,7 @@ SCENARIO(
   }
 }
 
-SCENARIO("Mainwindow: load built-in SBML model very-simple-model",
-         "[gui][mainwindow]") {
+SCENARIO("Mainwindow: load built-in SBML models", "[gui][mainwindow]") {
   MainWindow w;
   w.show();
   UIPointers ui(&w);
@@ -381,6 +387,7 @@ SCENARIO("Mainwindow: load built-in SBML model, change units",
   mwt.start();
   QTest::keyClick(ui.menuTools, Qt::Key_U, Qt::NoModifier, key_delay);
   // save SBML file
+  QFile::remove("units.xml");
   mwt.addUserAction("units.xml");
   mwt.start();
   QTest::keyClick(&w, Qt::Key_S, Qt::ControlModifier, key_delay);
@@ -408,6 +415,95 @@ SCENARIO("Mainwindow: load built-in SBML model, change units",
       model->getUnitDefinition(model->getSubstanceUnits())->getUnit(0);
   REQUIRE(amountunit->isMole() == true);
   REQUIRE(amountunit->getScale() == dbl_approx(-3));
+}
+
+SCENARIO("Mainwindow: load built-in SBML model, add/remove species",
+         "[gui][mainwindow][Q]") {
+  MainWindow w;
+  ModalWidgetTimer mwt;
+  w.show();
+  UIPointers ui(&w);
+  CAPTURE(QTest::qWaitForWindowExposed(&w));
+  REQUIRE(ui.listCompartments->count() == 0);
+  // very-simple-model
+  QTest::keyClick(&w, Qt::Key_F, Qt::AltModifier, key_delay);
+  QTest::keyClick(ui.menuFile, Qt::Key_E, Qt::NoModifier, key_delay);
+  QTest::keyClick(ui.menuOpen_example_SBML_file, Qt::Key_V, Qt::NoModifier,
+                  key_delay);
+  REQUIRE(ui.listCompartments->count() == 3);
+  // display species tab
+  QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
+                  key_delay);
+  QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
+                  key_delay);
+  REQUIRE(ui.listSpecies->currentItem()->text(0) == "A");
+  // click remove species, then "no" to cancel
+  mwt.addUserAction(QStringList{"Esc"});
+  mwt.start();
+  QTest::mouseClick(ui.btnRemoveSpecies, Qt::LeftButton, {}, {}, key_delay);
+  REQUIRE(ui.listSpecies->currentItem()->text(0) == "A");
+  REQUIRE(ui.listSpecies->currentItem()->parent()->text(0) == "Outside");
+  // click remove species, then "yes" to confirm
+  mwt.addUserAction(" ");
+  mwt.start();
+  QTest::mouseClick(ui.btnRemoveSpecies, Qt::LeftButton, {}, {}, key_delay);
+  REQUIRE(ui.listSpecies->currentItem()->text(0) == "B");
+  REQUIRE(ui.listSpecies->currentItem()->parent()->text(0) == "Outside");
+  // click remove species, then "yes" to confirm
+  mwt.addUserAction(" ");
+  mwt.start();
+  QTest::mouseClick(ui.btnRemoveSpecies, Qt::LeftButton, {}, {}, key_delay);
+  REQUIRE(ui.listSpecies->currentItem()->text(0) == "A");
+  REQUIRE(ui.listSpecies->currentItem()->parent()->text(0) == "Cell");
+  // click remove species, then "yes" to confirm
+  mwt.addUserAction(" ");
+  mwt.start();
+  QTest::mouseClick(ui.btnRemoveSpecies, Qt::LeftButton, {}, {}, key_delay);
+  REQUIRE(ui.listSpecies->currentItem()->text(0) == "B");
+  REQUIRE(ui.listSpecies->currentItem()->parent()->text(0) == "Cell");
+  // click remove species, then "yes" to confirm
+  mwt.addUserAction(" ");
+  mwt.start();
+  QTest::mouseClick(ui.btnRemoveSpecies, Qt::LeftButton, {}, {}, key_delay);
+  REQUIRE(ui.listSpecies->currentItem()->text(0) == "A");
+  REQUIRE(ui.listSpecies->currentItem()->parent()->text(0) == "Nucleus");
+  REQUIRE(ui.listSpecies->currentItem()->parent()->childCount() == 2);
+  // add species - defaults to compartment of current selection
+  // click add species
+  mwt.addUserAction("new species in nucleus");
+  mwt.start();
+  QTest::mouseClick(ui.btnAddSpecies, Qt::LeftButton, {}, {}, key_delay);
+  REQUIRE(ui.listSpecies->currentItem()->text(0) == "A");
+  REQUIRE(ui.listSpecies->currentItem()->parent()->text(0) == "Nucleus");
+  REQUIRE(ui.listSpecies->currentItem()->parent()->childCount() == 3);
+  // click remove species, then "yes" to confirm
+  mwt.addUserAction(" ");
+  mwt.start();
+  QTest::mouseClick(ui.btnRemoveSpecies, Qt::LeftButton, {}, {}, key_delay);
+  REQUIRE(ui.listSpecies->currentItem()->text(0) == "B");
+  REQUIRE(ui.listSpecies->currentItem()->parent()->text(0) == "Nucleus");
+  REQUIRE(ui.listSpecies->currentItem()->parent()->childCount() == 2);
+  // click remove species, then "yes" to confirm
+  mwt.addUserAction(" ");
+  mwt.start();
+  QTest::mouseClick(ui.btnRemoveSpecies, Qt::LeftButton, {}, {}, key_delay);
+  REQUIRE(ui.listSpecies->currentItem()->text(0) == "new species in nucleus");
+  REQUIRE(ui.listSpecies->currentItem()->parent()->text(0) == "Nucleus");
+  REQUIRE(ui.listSpecies->currentItem()->parent()->childCount() == 1);
+  // click remove species, then "yes" to confirm
+  mwt.addUserAction(" ");
+  mwt.start();
+  QTest::mouseClick(ui.btnRemoveSpecies, Qt::LeftButton, {}, {}, key_delay);
+  // no species left in model:
+  REQUIRE(ui.listSpecies->topLevelItem(0)->childCount() == 0);
+  REQUIRE(ui.listSpecies->topLevelItem(1)->childCount() == 0);
+  REQUIRE(ui.listSpecies->topLevelItem(2)->childCount() == 0);
+  // add species - no current selection so defaults to first compartment
+  // click add species
+  mwt.addUserAction("new spec!");
+  mwt.start();
+  QTest::mouseClick(ui.btnAddSpecies, Qt::LeftButton, {}, {}, key_delay);
+  REQUIRE(ui.listSpecies->currentItem()->text(0) == "new spec!");
 }
 
 SCENARIO("Mainwindow: click on many things", "[gui][mainwindow]") {

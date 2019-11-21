@@ -23,6 +23,7 @@ class Geometry;
 class SampledFieldGeometry;
 class ParametricGeometry;
 class ParametricObject;
+class UnitDefinition;
 }  // namespace libsbml
 
 namespace mesh {
@@ -118,6 +119,7 @@ class SbmlDocWrapper {
   // add default 2d Parametric & SampledField geometry to SBML
   void writeDefaultGeometryToSBML();
 
+  void createField(const QString &speciesID, const QString &compartmentID);
   void setFieldConcAnalytic(geometry::Field &field, const std::string &expr);
 
   void initMembraneColourPairs();
@@ -129,6 +131,10 @@ class SbmlDocWrapper {
   // (sampledField, spatialref, etc)
   void removeInitialAssignment(const std::string &speciesID);
 
+  // convert name to a unique alphanumeric SId
+  QString nameToSId(const QString &name) const;
+  std::vector<std::string> getSpeciesReactions(const QString &speciesID) const;
+
   std::vector<QPointF> getInteriorPixelPoints() const;
   // update mesh object
   void updateMesh();
@@ -137,9 +143,10 @@ class SbmlDocWrapper {
       const std::string &compartmentID) const;
   void writeMeshParamsAnnotation(libsbml::ParametricGeometry *parageom);
   void writeGeometryMeshToSBML();
-
   void writeGeometryImageToSBML();
 
+  libsbml::UnitDefinition *getOrCreateUnitDef(const std::string &Id,
+                                              const std::string &defaultId);
   // return supplied math expression as string with any Function calls inlined
   // e.g. given mathExpression = "z*f(x,y)"
   // where the SBML model contains a function "f(a,b) = a*b-2"
@@ -176,6 +183,7 @@ class SbmlDocWrapper {
   std::map<QString, QStringList> species;
   QString currentSpecies;
   std::map<QString, QStringList> reactions;
+  QString currentReaction;
   QStringList functions;
 
   // spatial information
@@ -208,6 +216,8 @@ class SbmlDocWrapper {
   QString getSpeciesCompartment(const QString &speciesID) const;
   void setSpeciesCompartment(const QString &speciesID,
                              const QString &compartmentID);
+  void addSpecies(const QString &speciesID, const QString &compartmentID);
+  void removeSpecies(const QString &speciesID);
 
   // compartment geometry: interiorPoints - used for mesh generation
   std::optional<QPointF> getCompartmentInteriorPoint(
@@ -262,6 +272,8 @@ class SbmlDocWrapper {
   // get map of name->value for all global constants
   // (this includes any constant species)
   std::map<std::string, double> getGlobalConstants() const;
+  bool isSIdAvailable(const std::string &id) const;
+  bool isSpatialIdAvailable(const std::string &id) const;
 
   double getPixelWidth() const;
   void setPixelWidth(double width);
@@ -272,6 +284,9 @@ class SbmlDocWrapper {
 
   std::string getRateRule(const std::string &speciesID) const;
   Reac getReaction(const QString &reactionID) const;
+  void removeReaction(const QString &speciesID,
+                      bool callUpdateReactionList = true);
+
   Func getFunctionDefinition(const QString &functionID) const;
 };
 

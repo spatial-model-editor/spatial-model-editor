@@ -361,6 +361,55 @@ SCENARIO("SBML: ABtoC.xml", "[sbml][non-gui]") {
         REQUIRE(s.species["comp"][2] == "C");
       }
     }
+    WHEN("add / remove species") {
+      REQUIRE(s.isSIdAvailable("_1_stupd_Name") == true);
+      REQUIRE(s.species["comp"].size() == 3);
+      s.addSpecies("1 stup!d N@ame?", "comp");
+      REQUIRE(s.species["comp"].size() == 4);
+      REQUIRE(s.species["comp"][3] == "_1_stupd_Name");
+      REQUIRE(s.getSpeciesName("_1_stupd_Name") == "1 stup!d N@ame?");
+      REQUIRE(s.getSpeciesCompartment("_1_stupd_Name") == "comp");
+      REQUIRE(s.isSIdAvailable("_1_stupd_Name") == false);
+      REQUIRE(s.getIsSpatial("_1_stupd_Name") == true);
+      REQUIRE(s.getIsSpeciesConstant("_1_stupd_Name") == false);
+      REQUIRE(s.getDiffusionConstant("_1_stupd_Name") == dbl_approx(1.0));
+      REQUIRE(s.getInitialConcentration("_1_stupd_Name") == dbl_approx(0.0));
+      // add another species with the same name: GUI appends underscore
+      s.addSpecies("1 stup!d N@ame?", "comp");
+      REQUIRE(s.species["comp"].size() == 5);
+      REQUIRE(s.species["comp"][4] == "_1_stupd_Name_");
+      REQUIRE(s.getSpeciesName("_1_stupd_Name_") == "1 stup!d N@ame?");
+      REQUIRE(s.getSpeciesCompartment("_1_stupd_Name_") == "comp");
+      REQUIRE(s.isSIdAvailable("_1_stupd_Name_") == false);
+      REQUIRE(s.getIsSpatial("_1_stupd_Name_") == true);
+      REQUIRE(s.getIsSpeciesConstant("_1_stupd_Name_") == false);
+      REQUIRE(s.getDiffusionConstant("_1_stupd_Name_") == dbl_approx(1.0));
+      REQUIRE(s.getInitialConcentration("_1_stupd_Name_") == dbl_approx(0.0));
+      // remove species _1_stupd_Name
+      s.removeSpecies("_1_stupd_Name");
+      REQUIRE(s.species["comp"].size() == 4);
+      REQUIRE(s.species["comp"][0] == "A");
+      REQUIRE(s.species["comp"][1] == "B");
+      REQUIRE(s.species["comp"][2] == "C");
+      REQUIRE(s.species["comp"][3] == "_1_stupd_Name_");
+      // remove non-existent species is a no-op
+      s.removeSpecies("_1_stupd_Name");
+      REQUIRE(s.species["comp"].size() == 4);
+      s.removeSpecies("Idontexist");
+      REQUIRE(s.species["comp"].size() == 4);
+      // remove species involved in a reaction: also removes reaction
+      REQUIRE(s.reactions.at("comp").size() == 1);
+      s.removeSpecies("A");
+      REQUIRE(s.species["comp"].size() == 3);
+      REQUIRE(s.reactions.at("comp").size() == 0);
+      s.removeSpecies("B");
+      REQUIRE(s.species["comp"].size() == 2);
+      REQUIRE(s.reactions.at("comp").size() == 0);
+      s.removeSpecies("C");
+      REQUIRE(s.species["comp"].size() == 1);
+      s.removeSpecies("_1_stupd_Name_");
+      REQUIRE(s.species["comp"].size() == 0);
+    }
     WHEN("image geometry imported, assigned to compartment") {
       QImage img(":/geometry/circle-100x100.png");
       QRgb col = QColor(144, 97, 193).rgba();
@@ -376,6 +425,23 @@ SCENARIO("SBML: ABtoC.xml", "[sbml][non-gui]") {
       THEN("find reactions") {
         REQUIRE(s.reactions.at("comp").size() == 1);
         REQUIRE(s.reactions.at("comp")[0] == "r1");
+        auto r = s.getReaction("r1");
+        REQUIRE(s.getReactionName("r1") == "r1");
+        REQUIRE(r.id == "r1");
+        REQUIRE(r.name == "r1");
+        REQUIRE(r.products.size() == 1);
+        REQUIRE(r.products[0].first == "C");
+        REQUIRE(r.products[0].second == dbl_approx(1.0));
+        REQUIRE(r.reactants.size() == 2);
+        REQUIRE(r.reactants[0].first == "A");
+        REQUIRE(r.reactants[0].second == dbl_approx(1.0));
+        REQUIRE(r.reactants[1].first == "B");
+        REQUIRE(r.reactants[0].second == dbl_approx(1.0));
+        REQUIRE(r.constants.size() == 1);
+        REQUIRE(r.constants[0].first == "k1");
+        REQUIRE(r.constants[0].second == dbl_approx(0.1));
+        REQUIRE(r.fullExpression == "A * B * k1");
+        REQUIRE(r.inlinedExpression == "A * B * k1");
       }
       THEN("species have default colours") {
         REQUIRE(s.getSpeciesColour("A") == utils::indexedColours()[0]);
@@ -428,6 +494,12 @@ SCENARIO("SBML: very-simple-model.xml", "[sbml][non-gui]") {
       REQUIRE(s.getSpeciesCompartment("B_c1") == "c1");
       REQUIRE(s.getSpeciesCompartment("B_c2") == "c2");
       REQUIRE(s.getSpeciesCompartment("B_c3") == "c3");
+      REQUIRE(s.getSpeciesCompartmentSize("A_c1") ==
+              dbl_approx(s.getCompartmentSize("c1")));
+      REQUIRE(s.getSpeciesCompartmentSize("A_c2") ==
+              dbl_approx(s.getCompartmentSize("c2")));
+      REQUIRE(s.getSpeciesCompartmentSize("B_c3") ==
+              dbl_approx(s.getCompartmentSize("c3")));
     }
     WHEN("species name changed") {
       REQUIRE(s.getSpeciesName("A_c1") == "A");
@@ -463,6 +535,36 @@ SCENARIO("SBML: very-simple-model.xml", "[sbml][non-gui]") {
       REQUIRE(s.getSpeciesCompartment("A_c1") == "c1");
       s.setSpeciesCompartment("invalid_species", "invalid_compartment");
       REQUIRE(s.getSpeciesCompartment("A_c1") == "c1");
+    }
+    WHEN("check if Model contains given SId") {
+      // species
+      REQUIRE(s.isSIdAvailable("A_c1") == false);
+      REQUIRE(s.isSIdAvailable("A_c1_q") == true);
+      // compartments
+      REQUIRE(s.isSIdAvailable("c1") == false);
+      REQUIRE(s.isSIdAvailable("c12") == true);
+      // reactions
+      REQUIRE(s.isSIdAvailable("A_uptake") == false);
+      // (non-local) parameters
+      REQUIRE(s.isSIdAvailable("B_c2_diffusionConstant") == false);
+      REQUIRE(s.isSIdAvailable("A_c3_diffusionConstant") == false);
+      REQUIRE(s.isSIdAvailable("A_c3_diffusion_Constant") == true);
+      REQUIRE(s.isSIdAvailable("A_c3_diffusionConst") == true);
+      REQUIRE(s.isSIdAvailable("x") == false);
+      REQUIRE(s.isSIdAvailable("y") == false);
+    }
+    WHEN("check if Geometry (spatial part of model) contains given SpId") {
+      REQUIRE(s.isSpatialIdAvailable("xCoord") == false);
+      REQUIRE(s.isSpatialIdAvailable("xCoor") == true);
+      REQUIRE(s.isSpatialIdAvailable("xBoundaryMin") == false);
+      REQUIRE(s.isSpatialIdAvailable("c1_domain") == false);
+      REQUIRE(s.isSpatialIdAvailable("c1_domainType") == false);
+      REQUIRE(s.isSpatialIdAvailable("c1_sampledVolume") == false);
+      REQUIRE(s.isSpatialIdAvailable("c1_triangles") == false);
+      REQUIRE(s.isSpatialIdAvailable("geometry") == false);
+      REQUIRE(s.isSpatialIdAvailable("geometryImage") == false);
+      REQUIRE(s.isSpatialIdAvailable("parametricGeometry") == false);
+      REQUIRE(s.isSpatialIdAvailable("spatialPoints") == false);
     }
   }
 }

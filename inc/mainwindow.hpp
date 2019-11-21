@@ -117,6 +117,10 @@ class MainWindow : public QMainWindow {
   void listSpecies_currentItemChanged(QTreeWidgetItem *current,
                                       QTreeWidgetItem *previous);
 
+  void btnAddSpecies_clicked();
+
+  void btnRemoveSpecies_clicked();
+
   void txtSpeciesName_editingFinished();
 
   void cmbSpeciesCompartment_activated(int index);
@@ -140,6 +144,9 @@ class MainWindow : public QMainWindow {
   // reactions
   void listReactions_currentItemChanged(QTreeWidgetItem *current,
                                         QTreeWidgetItem *previous);
+  void btnAddReaction_clicked();
+
+  void btnRemoveReaction_clicked();
 
   // functions
   void listFunctions_currentTextChanged(const QString &currentText);
