@@ -27,11 +27,10 @@
 
 static void selectFirstChild(QTreeWidget *tree) {
   for (int i = 0; i < tree->topLevelItemCount(); ++i) {
-    if (auto *parent = tree->topLevelItem(i); parent != nullptr) {
-      if (auto *child = parent->child(0); child != nullptr) {
-        tree->setCurrentItem(child);
-        return;
-      }
+    if (auto *p = tree->topLevelItem(i);
+        (p != nullptr) && (p->childCount() > 0)) {
+      tree->setCurrentItem(p->child(0));
+      return;
     }
   }
 }

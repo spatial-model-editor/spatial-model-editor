@@ -22,9 +22,9 @@ cd ext/triangle
 $MAKECMD -j$NPROCS
 cd ../../
 
-# compile spatial model editor
+# compile spatial model editor & tests
 mkdir build
 cd build
 qmake ../qmake.pro CONFIG+="$BUILDTYPE"
-time $MAKEWRAPPER $MAKECMD -j$NPROCS
+time $MAKEWRAPPER $MAKECMD -j$NPROCS sub-app sub-test_unity
 cd ../

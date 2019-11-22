@@ -71,8 +71,6 @@ ExprEval::ExprEval(const std::string &expression,
   exprtkParser.settings().disable_all_logic_ops();
   exprtkParser.settings().disable_all_inequality_ops();
   exprtkParser.settings().disable_all_assignment_ops();
-  // todo: try to make the parser more compatible with libSBML
-  // http://sbml.org/Software/libSBML/5.12.0/docs/formatted/cpp-api/libsbml-math.html
   exprtkParser.dec().collect_variables() = true;
   if (!exprtkParser.compile(expression, *exprtkExpression.get())) {
     std::string errorMessage = "ExprEval::ExprEval : compilation error: ";

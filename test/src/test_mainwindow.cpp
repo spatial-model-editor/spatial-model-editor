@@ -584,6 +584,21 @@ SCENARIO("Mainwindow: click on many things", "[gui][mainwindow]") {
                     QPoint(imgDisplayWidth / 2, imgDisplayWidth / 2));
   QApplication::processEvents();
   REQUIRE(ui.lblGeometry->getColour() == col3);
+  // check that clicking on geometry image selects compartment
+  REQUIRE(ui.listCompartments->currentItem()->text() == "c3");
+  QTest::mouseClick(ui.lblGeometry, Qt::LeftButton, Qt::KeyboardModifiers(),
+                    QPoint(1, 1));
+  QApplication::processEvents();
+  REQUIRE(ui.listCompartments->currentItem()->text() == "c1");
+  QTest::mouseClick(ui.lblGeometry, Qt::LeftButton, Qt::KeyboardModifiers(),
+                    QPoint(2 * imgDisplaySize / 5, 3 * imgDisplaySize / 10));
+  QApplication::processEvents();
+  REQUIRE(ui.listCompartments->currentItem()->text() == "c2");
+  QTest::mouseClick(ui.lblGeometry, Qt::LeftButton, Qt::KeyboardModifiers(),
+                    QPoint(imgDisplayWidth / 2, imgDisplayWidth / 2));
+  QApplication::processEvents();
+  REQUIRE(ui.listCompartments->currentItem()->text() == "c3");
+
   ui.tabCompartmentGeometry->setFocus();
   QApplication::processEvents();
   // display Boundaries sub-tab
