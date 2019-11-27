@@ -4,7 +4,6 @@
 #include <memory>
 
 #include "sbml.hpp"
-#include "symbolic.hpp"
 #include "utils.hpp"
 
 namespace Ui {
@@ -42,7 +41,7 @@ class DialogAnalytic : public QDialog {
   bool expressionIsValid = false;
 
   QPointF physicalPoint(const QPoint& pixelPoint) const;
-  void txtExpression_cursorPositionChanged();
-  void txtExpression_textChanged();
+  void txtExpression_mathChanged(const QString& math, bool valid,
+                                 const QString& errorMessage);
   void lblImage_mouseOver(QPoint point);
 };

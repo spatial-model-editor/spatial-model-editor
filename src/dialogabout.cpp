@@ -68,8 +68,6 @@ DialogAbout::DialogAbout(QWidget* parent)
   libraries.append(dep("expat", "https://libexpat.github.io/",
                        XML_MAJOR_VERSION, XML_MINOR_VERSION,
                        XML_MICRO_VERSION));
-  libraries.append(
-      dep("ExprTk", "https://github.com/ArashPartow/exprtk", "master"));
   libraries.append("</ul>");
   ui->lblLibraries->setText(libraries);
 }

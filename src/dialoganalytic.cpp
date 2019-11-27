@@ -1,10 +1,6 @@
 #include "dialoganalytic.hpp"
 
-#include <symengine/symengine_exception.h>
-
-#include <QPlainTextEdit>
 #include <QPushButton>
-#include <QToolTip>
 
 #include "logger.hpp"
 #include "ui_dialoganalytic.h"
@@ -31,15 +27,14 @@ DialogAnalytic::DialogAnalytic(const QString& analyticExpression,
                QImage::Format_ARGB32_Premultiplied);
   img.fill(0);
   concentration.resize(points.size(), 0.0);
+  ui->txtExpression->setVariables({"x", "y"});
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogAnalytic::accept);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogAnalytic::reject);
-  connect(ui->txtExpression, &QPlainTextEdit::textChanged, this,
-          &DialogAnalytic::txtExpression_textChanged);
-  connect(ui->txtExpression, &QPlainTextEdit::cursorPositionChanged, this,
-          &DialogAnalytic::txtExpression_cursorPositionChanged);
+  connect(ui->txtExpression, &QPlainTextMathEdit::mathChanged, this,
+          &DialogAnalytic::txtExpression_mathChanged);
   connect(ui->lblImage, &QLabelMouseTracker::mouseOver, this,
           &DialogAnalytic::lblImage_mouseOver);
 
@@ -61,102 +56,51 @@ QPointF DialogAnalytic::physicalPoint(const QPoint& pixelPoint) const {
   return physical;
 }
 
-static std::pair<int, QColor> getClosingBracket(const QString& expr, int pos,
-                                                int sign) {
-  int len = 0;
-  int count = sign;
-  int iEnd = (sign < 0) ? -1 : expr.size();
-  for (int i = pos + sign; i != iEnd; i += sign) {
-    ++len;
-    if (expr[i] == ')') {
-      --count;
-    } else if (expr[i] == '(') {
-      ++count;
-    }
-    if (count == 0) {
-      // green: found closing bracket
-      return {len + 1, QColor(200, 255, 200)};
-    }
-  }
-  // red: did not find closing bracket
-  return {len + 1, QColor(255, 150, 150)};
-}
-
-void DialogAnalytic::txtExpression_cursorPositionChanged() {
-  // very basic syntax highlighting:
-  // if cursor is before a '(', highlight with green until closing bracket
-  // if there is no closing bracket, highlight until end with red
-  auto expr = ui->txtExpression->toPlainText();
-  int i = ui->txtExpression->textCursor().position();
-  QTextEdit::ExtraSelection s;
-  s.cursor = ui->txtExpression->textCursor();
-  if (expr[i] == '(') {
-    const auto& [len, col] = getClosingBracket(expr, i, +1);
-    s.cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor,
-                          len);
-    s.format.setBackground(QBrush(col));
-  } else if (i > 0 && expr[i - 1] == ')') {
-    const auto& [len, col] = getClosingBracket(expr, i - 1, -1);
-    s.cursor.movePosition(QTextCursor::PreviousCharacter,
-                          QTextCursor::KeepAnchor, len);
-    s.format.setBackground(QBrush(col));
-  }
-  ui->txtExpression->setExtraSelections({s});
-}
-
-void DialogAnalytic::txtExpression_textChanged() {
+void DialogAnalytic::txtExpression_mathChanged(const QString& math, bool valid,
+                                               const QString& errorMessage) {
+  SPDLOG_DEBUG("math {}", math.toStdString());
+  SPDLOG_DEBUG("  - is valid: {}", valid);
+  SPDLOG_DEBUG("  - error: {}", errorMessage.toStdString());
   expressionIsValid = false;
   ui->lblConcentration->setText("");
   expression.clear();
-  // check for illegal chars
-  std::string newExpr = ui->txtExpression->toPlainText().toStdString();
-  if (newExpr.find_first_of("%@&!") != std::string::npos) {
-    ui->lblExpressionStatus->setText("expression contains illegal character");
+  if (!valid) {
+    // if expression not valid, show error message
+    ui->lblExpressionStatus->setText(errorMessage);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
-    return;
-  }
-  try {
-    // parse symbolic expression
-    symbolic::Symbolic sym(newExpr, {"x", "y"}, {});
-    // calculate concentration
-    auto res = std::vector<double>(1, 0);
-    auto vars = std::vector<double>(2, 0);
-    for (std::size_t i = 0; i < points.size(); ++i) {
-      auto physical = physicalPoint(points[i]);
-      vars[0] = physical.x();
-      vars[1] = physical.y();
-      sym.evalLLVM(res, vars);
-      concentration[i] = res[0];
-    }
-    // check for negative values
-    if (*std::min_element(concentration.cbegin(), concentration.cend()) < 0) {
-      ui->lblExpressionStatus->setText("concentration cannot be negative");
-    } else {
-      ui->lblExpressionStatus->setText("");
-      expressionIsValid = true;
-    }
-    // construct image of concentration
-    if (expressionIsValid) {
-      expression = sym.simplify();
-      // normalise intensity to max concentration
-      double maxConc =
-          *std::max_element(concentration.cbegin(), concentration.cend());
-      for (std::size_t i = 0; i < points.size(); ++i) {
-        int intensity = static_cast<int>(255 * concentration[i] / maxConc);
-        img.setPixel(points[i], QColor(intensity, intensity, intensity).rgb());
-      }
-    } else {
-      img.fill(0);
-    }
-    ui->lblImage->setImage(img);
-  } catch (SymEngine::SymEngineException& e) {
-    // if SymEngine failed to parse, show error message
     img.fill(0);
     ui->lblImage->setImage(img);
-    ui->lblExpressionStatus->setText(e.what());
+    return;
   }
-  ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(expressionIsValid);
-  return;
+  // calculate concentration
+  ui->txtExpression->compileMath();
+  auto vars = std::vector<double>(2, 0);
+  for (std::size_t i = 0; i < points.size(); ++i) {
+    auto physical = physicalPoint(points[i]);
+    vars[0] = physical.x();
+    vars[1] = physical.y();
+    concentration[i] = ui->txtExpression->evaluateMath(vars);
+  }
+  if (*std::min_element(concentration.cbegin(), concentration.cend()) < 0) {
+    // if concentration contains negative values, show error message
+    ui->lblExpressionStatus->setText("concentration cannot be negative");
+    ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+    img.fill(0);
+    ui->lblImage->setImage(img);
+    return;
+  }
+  ui->lblExpressionStatus->setText("");
+  expressionIsValid = true;
+  ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+  expression = math.toStdString();
+  // normalise displayed pixel intensity to max concentration
+  double maxConc =
+      *std::max_element(concentration.cbegin(), concentration.cend());
+  for (std::size_t i = 0; i < points.size(); ++i) {
+    int intensity = static_cast<int>(255 * concentration[i] / maxConc);
+    img.setPixel(points[i], QColor(intensity, intensity, intensity).rgb());
+  }
+  ui->lblImage->setImage(img);
 }
 
 void DialogAnalytic::lblImage_mouseOver(QPoint point) {

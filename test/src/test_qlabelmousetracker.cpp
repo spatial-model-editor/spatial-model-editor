@@ -5,14 +5,18 @@
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
 
+// CI on windows has issues resizing widgets correctly,
+// so skip these tests on windows
+#ifndef Q_OS_WIN
 SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
   GIVEN("single pixel, single colour image") {
     QLabelMouseTracker mouseTracker;
     QImage img(1, 1, QImage::Format_RGB32);
     QRgb col = QColor(12, 243, 154).rgba();
     img.setPixel(0, 0, col);
-    mouseTracker.setImage(img);
     mouseTracker.show();
+    mouseTracker.resize(100, 100);
+    mouseTracker.setImage(img);
     mouseTracker.resize(100, 100);
     mouseTracker.setFixedSize(100, 100);
     QTest::qWait(mouseDelay);
@@ -49,9 +53,6 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
       }
     }
   }
-#ifndef Q_OS_WIN
-  // CI on windows has issues resizing widgets correctly,
-  // so skip these tests on windows
   GIVEN("3x3 pixel, 4 colour image") {
     // pixel colours:
     // 2 1 1
@@ -219,5 +220,5 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
       REQUIRE(mouseTracker.getMaskIndex() == 12944736);
     }
   }
-#endif
 }
+#endif

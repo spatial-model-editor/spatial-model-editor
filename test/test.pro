@@ -23,9 +23,9 @@ SOURCES += \
     src/test_geometry.cpp \
     src/test_mainwindow.cpp \
     src/test_mesh.cpp \
-    src/test_numerics.cpp \
     src/test_pde.cpp \
     src/test_qlabelmousetracker.cpp \
+    src/test_qplaintextmathedit.cpp \
     src/test_sbml.cpp \
     src/test_simulate.cpp \
     src/test_symbolic.cpp \
@@ -34,6 +34,7 @@ SOURCES += \
 
 HEADERS += \
     inc/catch_wrapper.hpp \
+    inc/mainwindow_test_utils.hpp \
     inc/qt_test_utils.hpp \
     inc/sbml_test_data/ABtoC.hpp \
     inc/sbml_test_data/very_simple_model.hpp \

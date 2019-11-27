@@ -5,7 +5,8 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-#include <unordered_set>
+#include <algorithm>
+#include <set>
 
 #include "logger.hpp"
 #include "mesh.hpp"
@@ -15,6 +16,9 @@
 namespace sbml {
 
 static std::string ASTtoString(const libsbml::ASTNode *node) {
+  if (node == nullptr) {
+    return {};
+  }
   std::unique_ptr<char, decltype(&std::free)> charAST(
       libsbml::SBML_formulaToL3String(node), &std::free);
   return charAST.get();
@@ -115,7 +119,7 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
   auto *param = model->createParameter();
   param->setId("x");
   param->setConstant(false);
-  auto *ssr = dynamic_cast<libsbml::SpatialParameterPlugin *>(
+  auto *ssr = static_cast<libsbml::SpatialParameterPlugin *>(
                   param->getPlugin("spatial"))
                   ->createSpatialSymbolReference();
   ssr->setSpatialRef(coord->getId());
@@ -135,7 +139,7 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
   param = model->createParameter();
   param->setId("y");
   param->setConstant(false);
-  ssr = dynamic_cast<libsbml::SpatialParameterPlugin *>(
+  ssr = static_cast<libsbml::SpatialParameterPlugin *>(
             param->getPlugin("spatial"))
             ->createSpatialSymbolReference();
   ssr->setSpatialRef(coord->getId());
@@ -153,7 +157,7 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
   for (unsigned i = 0; i < model->getNumSpecies(); ++i) {
     auto *spec = model->getSpecies(i);
     if (isSpeciesReactive(spec->getId())) {
-      dynamic_cast<libsbml::SpatialSpeciesPlugin *>(spec->getPlugin("spatial"))
+      static_cast<libsbml::SpatialSpeciesPlugin *>(spec->getPlugin("spatial"))
           ->setIsSpatial(true);
     }
   }
@@ -178,7 +182,7 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
   //  - create SampledVolume with with DomainType (pixel geometry)
   for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
     auto *comp = model->getCompartment(i);
-    auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
+    auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
         comp->getPlugin("spatial"));
     const std::string &compartmentID = comp->getId();
     SPDLOG_INFO("  - compartment {}", compartmentID);
@@ -212,28 +216,30 @@ void SbmlDocWrapper::importGeometryDimensions() {
   geom = plugin->getGeometry();
   SPDLOG_INFO("Importing existing {}d SBML model geometry",
               geom->getNumCoordinateComponents());
-  if (geom->getNumCoordinateComponents() != nDimensions) {
-    SPDLOG_CRITICAL("Error: Only {}d models are currently supported",
-                    nDimensions);
-    // todo: offer to ignore spatial part of model & import anyway
+  if (geom->getNumCoordinateComponents() != 2) {
+    SPDLOG_WARN("Only 2d models are currently supported");
   }
-  // import xy coordinates
   const auto *xcoord = geom->getCoordinateComponentByKind(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
   if (xcoord == nullptr) {
-    SPDLOG_CRITICAL("Error: no x-coordinate found in SBML model");
+    SPDLOG_ERROR("No x-coordinate found in SBML model");
   }
-  SPDLOG_INFO("- found x range [{},{}]", xcoord->getBoundaryMin()->getValue(),
-              xcoord->getBoundaryMax()->getValue());
   const auto *ycoord = geom->getCoordinateComponentByKind(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
   if (ycoord == nullptr) {
-    SPDLOG_CRITICAL("Error: no y-coordinate found in SBML model");
+    SPDLOG_CRITICAL("No y-coordinate found in SBML model");
   }
-  SPDLOG_INFO("- found y range [{},{}]", ycoord->getBoundaryMin()->getValue(),
-              ycoord->getBoundaryMax()->getValue());
-  origin = QPointF(xcoord->getBoundaryMin()->getValue(),
-                   ycoord->getBoundaryMin()->getValue());
+  // import xy coordinates
+  double xmin = xcoord->getBoundaryMin()->getValue();
+  double xmax = xcoord->getBoundaryMax()->getValue();
+  double ymin = ycoord->getBoundaryMin()->getValue();
+  double ymax = ycoord->getBoundaryMax()->getValue();
+  SPDLOG_INFO("  - found x range [{},{}]", xmin, xmax);
+  SPDLOG_INFO("  - found y range [{},{}]", ymin, ymax);
+  physicalOrigin = QPointF(xmin, ymin);
+  SPDLOG_INFO("  -> origin [{},{}]", physicalOrigin.x(), physicalOrigin.y());
+  physicalSize = QSizeF(xmax - xmin, ymax - ymin);
+  SPDLOG_INFO("  -> size [{},{}]", physicalSize.width(), physicalSize.height());
 }
 
 void SbmlDocWrapper::importSampledFieldGeometry() {
@@ -242,29 +248,29 @@ void SbmlDocWrapper::importSampledFieldGeometry() {
   for (unsigned i = 0; i < geom->getNumGeometryDefinitions(); ++i) {
     auto *def = geom->getGeometryDefinition(i);
     if (def->getIsActive() && def->isSampledFieldGeometry()) {
-      sfgeom = dynamic_cast<libsbml::SampledFieldGeometry *>(def);
+      sfgeom = static_cast<libsbml::SampledFieldGeometry *>(def);
     }
   }
   if (sfgeom == nullptr) {
-    SPDLOG_CRITICAL("Error: Failed to load sampled field geometry");
-    qFatal(
-        "SbmlDocWrapper::initModelData :: Error: Failed to load sampled field "
-        "geometry");
+    SPDLOG_ERROR("Failed to find sampled field geometry");
   }
 
   // import geometry image
   auto *sf = geom->getSampledField(sfgeom->getSampledField());
   int xVals = sf->getNumSamples1();
   int yVals = sf->getNumSamples2();
-  int totalVals = sf->getSamplesLength();
+  if (sf->getDataType() != libsbml::DataKind_t::SPATIAL_DATAKIND_UINT32) {
+    SPDLOG_WARN(
+        "Sampled field data type '{}' is not uint32, importing anyway...",
+        sf->getDataTypeAsString());
+  }
   auto samples = utils::stringToVector<QRgb>(sf->getSamples());
-  if (static_cast<std::size_t>(totalVals) != samples.size()) {
-    SPDLOG_WARN("Number of ints in string {} doesn't match samplesLength {}",
-                samples.size(), totalVals);
+  if (static_cast<int>(samples.size()) != sf->getSamplesLength()) {
+    SPDLOG_WARN("Number of ints in string {} doesn't match SamplesLength {}",
+                samples.size(), sf->getSamplesLength());
   }
   // convert values into 2d pixmap
   // NOTE: order of samples is [ (x=0,y=0), (x=1,y=0), ... ]
-  // NOTE: (0,0) point is at bottom-left
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
   QImage img(xVals, yVals, QImage::Format_RGB32);
   auto iter = samples.begin();
@@ -274,35 +280,27 @@ void SbmlDocWrapper::importSampledFieldGeometry() {
       ++iter;
     }
   }
-  SPDLOG_INFO("  - found {}x{} geometry image", img.size().width(),
-              img.size().height());
+  SPDLOG_INFO("  - found {}x{} geometry image", img.width(), img.height());
   importGeometryFromImage(img, false);
 
   // calculate pixel size from image dimensions
-  const auto *xcoord = geom->getCoordinateComponentByKind(
-      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
   double xPixels = static_cast<double>(compartmentImage.width());
-  double xPixelSize = (xcoord->getBoundaryMax()->getValue() -
-                       xcoord->getBoundaryMin()->getValue()) /
-                      xPixels;
-  const auto *ycoord = geom->getCoordinateComponentByKind(
-      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
+  double xPixelSize = physicalSize.width() / xPixels;
   double yPixels = static_cast<double>(compartmentImage.height());
-  double yPixelSize = (ycoord->getBoundaryMax()->getValue() -
-                       ycoord->getBoundaryMin()->getValue()) /
-                      yPixels;
+  double yPixelSize = physicalSize.height() / yPixels;
   if (std::abs((xPixelSize - yPixelSize) / xPixelSize) > 1e-12) {
     SPDLOG_WARN("Pixels are not square: {} x {}", xPixelSize, yPixelSize);
   }
   pixelWidth = xPixelSize;
   SPDLOG_INFO("  - pixel size: {}", pixelWidth);
 
-  // assign each compartment to a colour
+  // assign each compartment to its colour
   for (const auto &compartmentID : compartments) {
-    auto *comp = model->getCompartment(compartmentID.toStdString());
-    auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
-        comp->getPlugin("spatial"));
-    if (scp->isSetCompartmentMapping()) {
+    const auto *comp = model->getCompartment(compartmentID.toStdString());
+    if (const auto *scp =
+            static_cast<const libsbml::SpatialCompartmentPlugin *>(
+                comp->getPlugin("spatial"));
+        scp->isSetCompartmentMapping()) {
       const std::string &domainTypeID =
           scp->getCompartmentMapping()->getDomainType();
       auto *sfvol = sfgeom->getSampledVolumeByDomainType(domainTypeID);
@@ -320,9 +318,9 @@ void SbmlDocWrapper::importParametricGeometry() {
   // get sampled field geometry
   parageom = nullptr;
   for (unsigned i = 0; i < geom->getNumGeometryDefinitions(); ++i) {
-    auto *def = geom->getGeometryDefinition(i);
-    if (def->getIsActive() && def->isParametricGeometry()) {
-      parageom = dynamic_cast<libsbml::ParametricGeometry *>(def);
+    if (auto *def = geom->getGeometryDefinition(i);
+        def->getIsActive() && def->isParametricGeometry()) {
+      parageom = static_cast<libsbml::ParametricGeometry *>(def);
     }
   }
   if (parageom == nullptr) {
@@ -355,7 +353,7 @@ void SbmlDocWrapper::importParametricGeometry() {
         SPDLOG_INFO("  - re-generating mesh");
         mesh = std::make_shared<mesh::Mesh>(
             compartmentImage, interiorPoints, maxPoints, maxAreas,
-            vecMembraneColourPairs, membraneWidths, pixelWidth, origin);
+            vecMembraneColourPairs, membraneWidths, pixelWidth, physicalOrigin);
       }
     }
     return;
@@ -383,6 +381,18 @@ void SbmlDocWrapper::importParametricGeometry() {
   mesh = std::make_shared<mesh::Mesh>(vertices, triangles, interiorPoints);
 }
 
+void SbmlDocWrapper::updateFunctionList() {
+  functions.clear();
+  for (unsigned int i = 0; i < model->getNumFunctionDefinitions(); ++i) {
+    auto *func = model->getFunctionDefinition(i);
+    if (func->getName().empty()) {
+      SPDLOG_INFO("Function with Id {} has no Name, using Id", func->getId());
+      func->setName(func->getId());
+    }
+    functions.push_back(func->getId().c_str());
+  }
+}
+
 void SbmlDocWrapper::initModelData() {
   if (doc->getErrorLog()->getNumErrors() > 0) {
     std::stringstream ss;
@@ -407,7 +417,7 @@ void SbmlDocWrapper::initModelData() {
       SPDLOG_INFO("Successfully upgraded SBML model to Level {}, Version {}",
                   doc->getLevel(), doc->getVersion());
     } else {
-      SPDLOG_CRITICAL(
+      SPDLOG_ERROR(
           "Error - failed to upgrade SBML file (continuing anyway...)");
     }
     if (doc->getErrorLog()->getNumFailsWithSeverity(
@@ -423,6 +433,8 @@ void SbmlDocWrapper::initModelData() {
   // get list of compartments
   compartments.clear();
   compartmentNames.clear();
+  compartments.reserve(static_cast<int>(model->getNumCompartments()));
+  compartmentNames.reserve(static_cast<int>(model->getNumCompartments()));
   species.clear();
   for (unsigned int i = 0; i < model->getNumCompartments(); ++i) {
     auto *comp = model->getCompartment(i);
@@ -434,8 +446,8 @@ void SbmlDocWrapper::initModelData() {
     }
     QString id = comp->getId().c_str();
     QString name = comp->getName().c_str();
-    SPDLOG_TRACE("compartmentID: {}", id.toStdString());
-    SPDLOG_TRACE("compartmentName: {}", name.toStdString());
+    SPDLOG_TRACE("compartmentID: {}", comp->getId());
+    SPDLOG_TRACE("compartmentName: {}", comp->getName());
     compartments.push_back(id);
     compartmentNames.push_back(name);
     species[id] = QStringList();
@@ -466,15 +478,7 @@ void SbmlDocWrapper::initModelData() {
     mapSpeciesIdToColour[id] = utils::indexedColours()[i];
   }
 
-  // get list of functions
-  for (unsigned int i = 0; i < model->getNumFunctionDefinitions(); ++i) {
-    auto *func = model->getFunctionDefinition(i);
-    if (func->getName().empty()) {
-      SPDLOG_INFO("Function with Id {} has no Name, using Id", func->getId());
-      func->setName(func->getId());
-    }
-    functions.push_back(func->getId().c_str());
-  }
+  updateFunctionList();
 
   importTimeUnitsFromSBML(2);
   importLengthUnitsFromSBML(2);
@@ -489,7 +493,7 @@ void SbmlDocWrapper::initModelData() {
   }
 
   plugin =
-      dynamic_cast<libsbml::SpatialModelPlugin *>(model->getPlugin("spatial"));
+      static_cast<libsbml::SpatialModelPlugin *>(model->getPlugin("spatial"));
   if (plugin == nullptr) {
     SPDLOG_ERROR("Failed to get SpatialModelPlugin from SBML document");
   }
@@ -502,12 +506,13 @@ void SbmlDocWrapper::initModelData() {
 }
 
 void SbmlDocWrapper::exportSBMLFile(const std::string &filename) {
-  if (isValid) {
-    writeGeometryMeshToSBML();
-    SPDLOG_INFO("Exporting SBML model to {}", filename);
-    if (!libsbml::SBMLWriter().writeSBML(doc.get(), filename)) {
-      SPDLOG_ERROR("Failed to write to {}", filename);
-    }
+  if (!isValid) {
+    return;
+  }
+  writeGeometryMeshToSBML();
+  SPDLOG_INFO("Exporting SBML model to {}", filename);
+  if (!libsbml::SBMLWriter().writeSBML(doc.get(), filename)) {
+    SPDLOG_ERROR("Failed to write to {}", filename);
   }
 }
 
@@ -568,7 +573,6 @@ void SbmlDocWrapper::writeGeometryImageToSBML() {
                                            compartmentImage.height()));
   // convert 2d pixmap into array of uints
   // NOTE: order of samples is [ (x=0,y=0), (x=1,y=0), ... ]
-  // NOTE: (0,0) point is at bottom-left
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
   for (int y = 0; y < compartmentImage.height(); ++y) {
     for (int x = 0; x < compartmentImage.width(); ++x) {
@@ -578,7 +582,8 @@ void SbmlDocWrapper::writeGeometryImageToSBML() {
   }
   std::string samplesString = utils::vectorToString(samples);
   sf->setSamples(samplesString);
-  SPDLOG_INFO("SampledField '{}': assigned an array of length {}", sf->getId(),
+  SPDLOG_INFO("SampledField '{}': assigned {}x{} array of total length {}",
+              sf->getId(), sf->getNumSamples1(), sf->getNumSamples2(),
               sf->getSamplesLength());
 }
 
@@ -595,21 +600,9 @@ void SbmlDocWrapper::setFieldConcAnalytic(geometry::Field &field,
     // position in pixels (with (0,0) in top-left of image):
     const auto &point = field.geometry->ix.at(i);
     // rescale to physical x,y point (with (0,0) in bottom-left):
-    double minX =
-        geom->getCoordinateComponentByKind(
-                libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X)
-            ->getBoundaryMin()
-            ->getValue();
-    vars[0] = minX + pixelWidth * static_cast<double>(point.x());
-    double minY =
-        geom->getCoordinateComponentByKind(
-                libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y)
-            ->getBoundaryMin()
-            ->getValue();
-    vars[1] =
-        minY + pixelWidth * static_cast<double>(
-                                field.geometry->getCompartmentImage().height() -
-                                1 - point.y());
+    vars[0] = physicalOrigin.x() + pixelWidth * static_cast<double>(point.x());
+    int y = field.geometry->getCompartmentImage().height() - 1 - point.y();
+    vars[1] = physicalOrigin.y() + pixelWidth * static_cast<double>(y);
     sym.evalLLVM(result, vars);
     field.conc[i] = result[0];
   }
@@ -632,10 +625,11 @@ void SbmlDocWrapper::initMembraneColourPairs() {
     for (int iA = 0; iA < iB; ++iA) {
       QRgb colA = compartmentImage.colorTable()[iA];
       QRgb colB = compartmentImage.colorTable()[iB];
-      membranePairs.push_back(std::vector<std::pair<QPoint, QPoint>>());
-      mapColPairToIndex[{std::min(colA, colB), std::max(colA, colB)}] = i++;
-      SPDLOG_DEBUG("ColourPair iA,iB: {},{}: {:x},{:x}", iA, iB,
-                   std::min(colA, colB), std::max(colA, colB));
+      membranePairs.emplace_back();
+      auto colPair = std::minmax({colA, colB});
+      mapColPairToIndex[colPair] = i++;
+      SPDLOG_DEBUG("ColourPair [{},{}] -> ({:x},{:x})", iA, iB, colPair.first,
+                   colPair.second);
     }
   }
   // for each pair of adjacent pixels of different colour,
@@ -700,44 +694,38 @@ void SbmlDocWrapper::updateMembraneList() {
     for (int j = 0; j < i; ++j) {
       QRgb colA = mapCompartmentToColour[compartments[i]];
       QRgb colB = mapCompartmentToColour[compartments[j]];
-      auto iter =
-          mapColPairToIndex.find({std::min(colA, colB), std::max(colA, colB)});
+      auto colPair = std::minmax({colA, colB});
+      auto iter = mapColPairToIndex.find(colPair);
       // if membrane for pair of colours exists, generate name and image, and
       // add to list
       if (iter != mapColPairToIndex.cend()) {
         std::size_t index = iter->second;
-        if (!membranePairs[index].empty()) {
+        if (!membranePairs.at(index).empty()) {
           // generate membrane name, compartments ordered by colour
-          QString id = compartments[i] + "_" + compartments[j];
-          QString name = compartmentNames[i] + " <-> " + compartmentNames[j];
-          if (colA > colB) {
-            id = compartments[j] + "_" + compartments[i];
-            name = compartmentNames[j] + " <-> " + compartmentNames[i];
-          }
+          int iA = colA < colB ? i : j;
+          int iB = colA < colB ? j : i;
+          QString id = compartments[iA] + "_" + compartments[iB];
+          QString name = compartmentNames[iA] + " <-> " + compartmentNames[iB];
           membranes.push_back(id);
           membraneNames.push_back(name);
           // also add the colour pairs for use by the mesh for membranes
-          vecMembraneColourPairs.push_back(
-              {id.toStdString(), {std::min(colA, colB), std::max(colA, colB)}});
+          vecMembraneColourPairs.push_back({id.toStdString(), colPair});
           // map name to index of membrane location pairs
           mapMembraneToIndex[id] = index;
           // generate image
           QImage img = QImage(compartmentImage.size(),
                               QImage::Format_ARGB32_Premultiplied);
           img.fill(0);
-          for (const auto &pair : membranePairs[index]) {
-            img.setPixel(pair.first, std::min(colA, colB));
-            img.setPixel(pair.second, std::max(colA, colB));
+          for (const auto &pixelPair : membranePairs[index]) {
+            img.setPixel(pixelPair.first, colPair.first);
+            img.setPixel(pixelPair.second, colPair.second);
           }
           mapMembraneToImage[id] = img;
           // create Membrane object
           geometry::Compartment *compA =
-              &mapCompIdToGeometry.at(compartments[i]);
+              &mapCompIdToGeometry.at(compartments[iA]);
           geometry::Compartment *compB =
-              &mapCompIdToGeometry.at(compartments[j]);
-          if (colA > colB) {
-            std::swap(compA, compB);
-          }
+              &mapCompIdToGeometry.at(compartments[iB]);
           assert(mapCompartmentToColour.at(compA->compartmentID.c_str()) <
                  mapCompartmentToColour.at(compB->compartmentID.c_str()));
           membraneVec.emplace_back(id.toStdString(), compA, compB,
@@ -757,7 +745,7 @@ void SbmlDocWrapper::updateReactionList() {
   }
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
     auto *reac = model->getReaction(i);
-    auto *srp = dynamic_cast<libsbml::SpatialReactionPlugin *>(
+    auto *srp = static_cast<libsbml::SpatialReactionPlugin *>(
         model->getReaction(i)->getPlugin("spatial"));
     if (reac->getName().empty()) {
       SPDLOG_INFO("Reaction with Id {} has no Name, using Id", reac->getId());
@@ -765,7 +753,10 @@ void SbmlDocWrapper::updateReactionList() {
     }
     QString reacID = reac->getId().c_str();
     // construct the set of compartments where reaction takes place
-    std::unordered_set<std::string> comps;
+    std::set<std::string> comps;
+    if (reac->isSetCompartment()) {
+      comps.insert(reac->getCompartment());
+    }
     for (unsigned int k = 0; k < reac->getNumProducts(); ++k) {
       const std::string &specID = reac->getProduct(k)->getSpecies();
       comps.insert(model->getSpecies(specID)->getCompartment());
@@ -783,8 +774,8 @@ void SbmlDocWrapper::updateReactionList() {
       QString comp = comps.begin()->c_str();
       reactions[comp].push_back(reacID);
       // if reaction `isLocal` is not set, then the reaction rate is for
-      // amount, so here we divide the reaction formula by compartment factor
-      // to convert it to concentration, and set `isLocal` to true
+      // amount, so here we divide the reaction formula by the compartment
+      // volume to convert it to concentration, and set `isLocal` to true
       if (!srp->isSetIsLocal()) {
         SPDLOG_INFO("Reaction {} takes place in compartment {}", reac->getId(),
                     comp.toStdString());
@@ -806,59 +797,63 @@ void SbmlDocWrapper::updateReactionList() {
         } else {
           SPDLOG_ERROR("  - libSBML failed to parse expression");
         }
-        reac->setCompartment(comp.toStdString());
+        if (!reac->isSetCompartment()) {
+          reac->setCompartment(comp.toStdString());
+        }
       }
     } else if (comps.size() == 2) {
-      auto iter = comps.cbegin();
-      QString compA = iter->c_str();
-      ++iter;
-      QString compB = iter->c_str();
-      // two compartments: want the membrane between them
+      // two compartments: takes place on the membrane between them
+      QString compA = comps.cbegin()->c_str();
+      QString compB = comps.crbegin()->c_str();
       // membrane name is compA-compB, ordered by colour
-      QRgb colA = mapCompartmentToColour[compA];
-      QRgb colB = mapCompartmentToColour[compB];
+      QRgb colA = mapCompartmentToColour.at(compA);
+      QRgb colB = mapCompartmentToColour.at(compB);
       // check that compartments map to colours - if not do nothing
-      if (colA != 0 && colB != 0) {
-        QString membraneID = compA + "_" + compB;
-        if (colA > colB) {
-          membraneID = compB + "_" + compA;
+      if (colA == 0 || colB == 0) {
+        SPDLOG_WARN("Reaction {} compartments not mapped to colours",
+                    reac->getId());
+        break;
+      }
+      QString membraneID = compA + "_" + compB;
+      if (colA > colB) {
+        membraneID = compB + "_" + compA;
+      }
+      reactions[membraneID].push_back(reac->getId().c_str());
+      if (!srp->isSetIsLocal()) {
+        SPDLOG_INFO("Reaction {} takes place on the {} membrane", reac->getId(),
+                    membraneID.toStdString());
+        SPDLOG_INFO(
+            "  - isLocal has not been set, so dividing reaction rate by "
+            "membrane area:");
+        auto expr = ASTtoString(reac->getKineticLaw()->getMath());
+        auto nPixels =
+            membranePairs.at(mapMembraneToIndex.at(membraneID)).size();
+        SPDLOG_INFO("  - membrane has {} pixels", nPixels);
+        // model has unit height in z-direction
+        double membraneArea = pixelWidth * 1.0 * static_cast<double>(nPixels);
+        SPDLOG_INFO("  - pixelWidth {}", pixelWidth);
+        SPDLOG_INFO("  - membrane Area {}", membraneArea);
+        auto newExpr = symbolic::divide(expr, std::to_string(membraneArea));
+        SPDLOG_INFO("  --> {}", newExpr);
+        std::unique_ptr<libsbml::ASTNode> argAST(
+            libsbml::SBML_parseL3Formula(newExpr.c_str()));
+        if (argAST != nullptr) {
+          reac->getKineticLaw()->setMath(argAST.get());
+          SPDLOG_INFO("  - new math: {}",
+                      ASTtoString(reac->getKineticLaw()->getMath()));
+          SPDLOG_INFO("  - setting isLocal to true");
+          srp->setIsLocal(true);
+        } else {
+          SPDLOG_ERROR("  - libSBML failed to parse expression");
         }
-        reactions[membraneID].push_back(QString(reac->getId().c_str()));
-        if (!srp->isSetIsLocal()) {
-          SPDLOG_INFO("Reaction {} takes place on the {} membrane",
-                      reac->getId(), membraneID.toStdString());
-          SPDLOG_INFO(
-              "  - isLocal has not been set, so dividing reaction rate by "
-              "membrane area:");
-          auto expr = ASTtoString(reac->getKineticLaw()->getMath());
-          auto nPixels =
-              membranePairs.at(mapMembraneToIndex.at(membraneID)).size();
-          SPDLOG_INFO("  - membrane has {} pixels", nPixels);
-          // model has unit height in z-direction
-          double membraneArea = pixelWidth * 1.0 * static_cast<double>(nPixels);
-          SPDLOG_INFO("  - pixelWidth {}", pixelWidth);
-          SPDLOG_INFO("  - membrane Area {}", membraneArea);
-          auto newExpr = symbolic::divide(expr, std::to_string(membraneArea));
-          SPDLOG_INFO("  --> {}", newExpr);
-          std::unique_ptr<libsbml::ASTNode> argAST(
-              libsbml::SBML_parseL3Formula(newExpr.c_str()));
-          if (argAST != nullptr) {
-            reac->getKineticLaw()->setMath(argAST.get());
-            SPDLOG_INFO("  - new math: {}",
-                        ASTtoString(reac->getKineticLaw()->getMath()));
-            SPDLOG_INFO("  - setting isLocal to true");
-            srp->setIsLocal(true);
-          } else {
-            SPDLOG_ERROR("  - libSBML failed to parse expression");
-          }
+        if (!reac->isSetCompartment()) {
           reac->setCompartment(compA.toStdString());
         }
       }
     } else {
       // invalid reaction: number of compartments for reaction must be 1 or 2
-      SPDLOG_ERROR("Reaction involves {} compartments - not supported",
-                   comps.size());
-      exit(1);
+      SPDLOG_WARN("Reaction involves {} compartments - not supported",
+                  comps.size());
     }
   }
 }
@@ -1034,19 +1029,19 @@ SpeciesGeometry SbmlDocWrapper::getSpeciesGeometry(
 }
 
 QString SbmlDocWrapper::getCompartmentID(QRgb colour) const {
-  auto iter = mapColourToCompartment.find(colour);
-  if (iter == mapColourToCompartment.cend()) {
-    return "";
+  if (auto iter = mapColourToCompartment.find(colour);
+      iter != mapColourToCompartment.cend()) {
+    return iter->second;
   }
-  return iter->second;
+  return {};
 }
 
 QRgb SbmlDocWrapper::getCompartmentColour(const QString &compartmentID) const {
-  auto iter = mapCompartmentToColour.find(compartmentID);
-  if (iter == mapCompartmentToColour.cend()) {
-    return 0;
+  if (auto iter = mapCompartmentToColour.find(compartmentID);
+      iter != mapCompartmentToColour.cend()) {
+    return iter->second;
   }
-  return iter->second;
+  return 0;
 }
 
 void SbmlDocWrapper::createField(const QString &speciesID,
@@ -1054,9 +1049,9 @@ void SbmlDocWrapper::createField(const QString &speciesID,
   std::string sId = speciesID.toStdString();
   SPDLOG_INFO("creating field for species {} in compartment {}", sId,
               compartmentID.toStdString());
-  geometry::Compartment &comp = mapCompIdToGeometry.at(compartmentID);
   mapSpeciesIdToField[speciesID] =
-      geometry::Field(&comp, sId, 1.0, mapSpeciesIdToColour.at(speciesID));
+      geometry::Field(&mapCompIdToGeometry.at(compartmentID), sId, 1.0,
+                      mapSpeciesIdToColour.at(speciesID));
   geometry::Field &field = mapSpeciesIdToField.at(speciesID);
   // set all species concentrations to their initial values
   const auto *spec = model->getSpecies(sId);
@@ -1070,15 +1065,14 @@ void SbmlDocWrapper::createField(const QString &speciesID,
     setFieldConcAnalytic(field, expr.toStdString());
   }
   // set isSpatial flag
-  const auto *ssp = dynamic_cast<const libsbml::SpatialSpeciesPlugin *>(
+  const auto *ssp = static_cast<const libsbml::SpatialSpeciesPlugin *>(
       spec->getPlugin("spatial"));
-  bool isSpatial =
+  field.isSpatial =
       (ssp != nullptr && ssp->isSetIsSpatial() && ssp->getIsSpatial());
-  field.isSpatial = isSpatial;
   // set diffusion constant
   for (unsigned i = 0; i < model->getNumParameters(); ++i) {
     const auto *param = model->getParameter(i);
-    if (const auto *spp = dynamic_cast<const libsbml::SpatialParameterPlugin *>(
+    if (const auto *spp = static_cast<const libsbml::SpatialParameterPlugin *>(
             param->getPlugin("spatial"));
         (spp != nullptr) && spp->isSetDiffusionCoefficient() &&
         (spp->getDiffusionCoefficient()->getVariable() == sId)) {
@@ -1093,21 +1087,18 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   SPDLOG_INFO("assigning colour {:x} to compartment {}", colour,
               compartmentID.toStdString());
   // todo: add check that colour exists in geometry image?
-  QRgb oldColour = getCompartmentColour(compartmentID);
-  if (oldColour != 0) {
+  if (QRgb oldColour = getCompartmentColour(compartmentID); oldColour != 0) {
     SPDLOG_INFO(
-        "setting previous compartment colour {} to point to null compartment",
+        "  - colour {:x} used to point to this compartment - "
+        "now it doesn't point anywhere",
         oldColour);
-    // if there was already a colour mapped to this compartment, map it to a
-    // null compartment
     mapColourToCompartment[oldColour] = "";
   }
-  auto oldCompartmentID = getCompartmentID(colour);
-  if (oldCompartmentID != "") {
-    SPDLOG_INFO("colour {:x} used to point to compartment to {}: removing",
-                colour, oldCompartmentID.toStdString());
-    // if the new colour was already mapped to another compartment, set the
-    // colour of that compartment to null
+  if (auto oldCompartmentID = getCompartmentID(colour);
+      !oldCompartmentID.isEmpty()) {
+    SPDLOG_INFO(
+        "  - compartment {} used to have colour {:x} - now it has no colour",
+        oldCompartmentID.toStdString(), colour);
     mapCompartmentToColour[oldCompartmentID] = 0;
   }
   mapColourToCompartment[colour] = compartmentID;
@@ -1116,7 +1107,7 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   mapCompIdToGeometry[compartmentID] = geometry::Compartment(
       compartmentID.toStdString(), getCompartmentImage(), colour);
   // create a field for each species in this compartment
-  for (const auto &speciesID : species[compartmentID]) {
+  for (const auto &speciesID : species.at(compartmentID)) {
     createField(speciesID, compartmentID);
   }
   // update list of possible inter-compartment membranes
@@ -1124,6 +1115,7 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   // update list of reactions for each compartment/membrane
   updateReactionList();
 
+  // geometry only valid if all compartments have a colour
   hasValidGeometry = std::none_of(
       compartments.cbegin(), compartments.cend(),
       [this](const auto &c) { return getCompartmentColour(c) == 0; });
@@ -1137,7 +1129,7 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
     for (unsigned int i = 0; i < model->getNumCompartments(); ++i) {
       const std::string &compID = model->getCompartment(i)->getId();
       // set SampledValue (aka colour) of SampledFieldVolume
-      auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
+      auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
           model->getCompartment(compID)->getPlugin("spatial"));
       const std::string &domainType =
           scp->getCompartmentMapping()->getDomainType();
@@ -1149,6 +1141,10 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
 }
 
 void SbmlDocWrapper::updateMesh() {
+  if (!hasValidGeometry) {
+    SPDLOG_DEBUG("model does not have valid geometry: skip mesh update");
+    return;
+  }
   auto interiorPoints = getInteriorPixelPoints();
   if (interiorPoints.empty()) {
     SPDLOG_DEBUG(
@@ -1159,25 +1155,17 @@ void SbmlDocWrapper::updateMesh() {
   mesh = std::make_shared<mesh::Mesh>(
       compartmentImage, interiorPoints, std::vector<std::size_t>{},
       std::vector<std::size_t>{}, vecMembraneColourPairs, std::vector<double>{},
-      pixelWidth, origin);
+      pixelWidth, physicalOrigin);
 }
 
 libsbml::ParametricObject *SbmlDocWrapper::getParametricObject(
     const std::string &compartmentID) const {
-  // NB: parageom->getParametricObjectByDomainType returned null when compiled
-  // with gcc9 - have not understood why, for now just avoiding using it
   const auto *comp = model->getCompartment(compartmentID);
-  const auto *scp = dynamic_cast<const libsbml::SpatialCompartmentPlugin *>(
+  const auto *scp = static_cast<const libsbml::SpatialCompartmentPlugin *>(
       comp->getPlugin("spatial"));
-  const std::string &domainTypeID =
+  const std::string domainTypeID =
       scp->getCompartmentMapping()->getDomainType();
-  for (unsigned j = 0; j < parageom->getNumParametricObjects(); ++j) {
-    auto *p = parageom->getParametricObject(j);
-    if (p->getDomainType() == domainTypeID) {
-      return p;
-    }
-  }
-  return nullptr;
+  return parageom->getParametricObjectByDomainType(domainTypeID);
 }
 
 void SbmlDocWrapper::writeMeshParamsAnnotation(
@@ -1186,8 +1174,8 @@ void SbmlDocWrapper::writeMeshParamsAnnotation(
   if (pg->isSetAnnotation()) {
     auto *node = pg->getAnnotation();
     for (unsigned i = 0; i < node->getNumChildren(); ++i) {
-      auto &child = node->getChild(i);
-      if (child.getURI() == annotationURI &&
+      if (const auto &child = node->getChild(i);
+          child.getURI() == annotationURI &&
           child.getPrefix() == annotationPrefix && child.getName() == "mesh") {
         SPDLOG_INFO("removing annotation {} : {}", i, node->toXMLString());
         // Note: removeChild returns a pointer to the child,
@@ -1241,7 +1229,7 @@ void SbmlDocWrapper::writeGeometryMeshToSBML() {
         libsbml::CompressionKind_t::SPATIAL_COMPRESSIONKIND_UNCOMPRESSED);
     for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
       auto *comp = model->getCompartment(i);
-      auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
+      auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
           comp->getPlugin("spatial"));
       const std::string &compartmentID = comp->getId();
       SPDLOG_INFO("  - compartment {}", compartmentID);
@@ -1308,7 +1296,7 @@ std::vector<QPointF> SbmlDocWrapper::getInteriorPixelPoints() const {
                  interiorFloatPhysical.value().x(),
                  interiorFloatPhysical.value().y());
     QPointF interiorFloatPixel =
-        (interiorFloatPhysical.value() - origin) / pixelWidth;
+        (interiorFloatPhysical.value() - physicalOrigin) / pixelWidth;
     SPDLOG_DEBUG("  - pixel location: ({},{})", interiorFloatPixel.x(),
                  interiorFloatPixel.y());
     interiorPoints.push_back(interiorFloatPixel);
@@ -1319,19 +1307,19 @@ std::vector<QPointF> SbmlDocWrapper::getInteriorPixelPoints() const {
 std::optional<QPointF> SbmlDocWrapper::getCompartmentInteriorPoint(
     const QString &compartmentID) const {
   SPDLOG_INFO("compartmentID: {}", compartmentID.toStdString());
-  auto *comp = model->getCompartment(compartmentID.toStdString());
-  auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
+  const auto *comp = model->getCompartment(compartmentID.toStdString());
+  const auto *scp = static_cast<const libsbml::SpatialCompartmentPlugin *>(
       comp->getPlugin("spatial"));
   const std::string &domainType = scp->getCompartmentMapping()->getDomainType();
   SPDLOG_INFO("  - domainType: {}", domainType);
-  auto *domain = geom->getDomainByDomainType(domainType);
+  const auto *domain = geom->getDomainByDomainType(domainType);
   SPDLOG_INFO("  - domain: {}", domain->getId());
   SPDLOG_INFO("  - numInteriorPoints: {}", domain->getNumInteriorPoints());
   if (domain->getNumInteriorPoints() == 0) {
     SPDLOG_INFO("  - no interior point found");
     return {};
   }
-  auto *interiorPoint = domain->getInteriorPoint(0);
+  const auto *interiorPoint = domain->getInteriorPoint(0);
   QPointF point(interiorPoint->getCoord1(), interiorPoint->getCoord2());
   SPDLOG_INFO("  - interior point ({},{})", point.x(), point.y());
   return point;
@@ -1342,7 +1330,7 @@ void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
   SPDLOG_INFO("compartmentID: {}", compartmentID.toStdString());
   SPDLOG_INFO("  - setting interior pixel point ({},{})", point.x(), point.y());
   auto *comp = model->getCompartment(compartmentID.toStdString());
-  auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
+  auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
       comp->getPlugin("spatial"));
   const std::string &domainType = scp->getCompartmentMapping()->getDomainType();
   SPDLOG_INFO("  - domainType: {}", domainType);
@@ -1355,16 +1343,17 @@ void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
   }
   // convert from QPoint with (0,0) in top-left to (0,0) in bottom-left
   // and to physical units with pixelWidth and origin
-  interiorPoint->setCoord1(origin.x() + pixelWidth * point.x());
-  interiorPoint->setCoord2(
-      origin.y() + pixelWidth * (compartmentImage.height() - 1 - point.y()));
+  interiorPoint->setCoord1(physicalOrigin.x() + pixelWidth * point.x());
+  interiorPoint->setCoord2(physicalOrigin.y() +
+                           pixelWidth *
+                               (compartmentImage.height() - 1 - point.y()));
   // update mesh with new interior point
   updateMesh();
 }
 
 void SbmlDocWrapper::removeInitialAssignment(const std::string &speciesID) {
-  auto sampledFieldID = getSpeciesSampledFieldInitialAssignment(speciesID);
-  if (!sampledFieldID.empty()) {
+  if (auto sampledFieldID = getSpeciesSampledFieldInitialAssignment(speciesID);
+      !sampledFieldID.empty()) {
     // remove sampled field
     std::unique_ptr<libsbml::SampledField> sf(
         geom->removeSampledField(sampledFieldID));
@@ -1415,22 +1404,20 @@ std::string SbmlDocWrapper::getSpeciesSampledFieldInitialAssignment(
     const std::string &speciesID) const {
   // look for existing initialAssignment to a sampledField
   std::string sampledFieldID;
-  if (model->getInitialAssignmentBySymbol(speciesID) != nullptr) {
-    auto *asgn = model->getInitialAssignmentBySymbol(speciesID);
-    if (asgn->getMath()->isName()) {
-      std::string paramID = asgn->getMath()->getName();
-      SPDLOG_INFO("  - found initialAssignment: {}", paramID);
-      auto *param = model->getParameter(paramID);
-      if (param != nullptr) {
-        auto *spp = dynamic_cast<libsbml::SpatialParameterPlugin *>(
-            param->getPlugin("spatial"));
-        if (spp != nullptr) {
-          const auto &ref = spp->getSpatialSymbolReference()->getSpatialRef();
-          SPDLOG_INFO("  - found spatialSymbolReference: {}", ref);
-          if (geom->getSampledField(ref) != nullptr) {
-            sampledFieldID = ref;
-            SPDLOG_INFO("  - this is a reference to a SampledField");
-          }
+  if (const auto *asgn = model->getInitialAssignmentBySymbol(speciesID);
+      asgn != nullptr && asgn->getMath()->isName()) {
+    std::string paramID = asgn->getMath()->getName();
+    SPDLOG_INFO("  - found initialAssignment: {}", paramID);
+    if (const auto *param = model->getParameter(paramID); param != nullptr) {
+      if (const auto *spp =
+              dynamic_cast<const libsbml::SpatialParameterPlugin *>(
+                  param->getPlugin("spatial"));
+          spp != nullptr) {
+        const auto &ref = spp->getSpatialSymbolReference()->getSpatialRef();
+        SPDLOG_INFO("  - found spatialSymbolReference: {}", ref);
+        if (geom->getSampledField(ref) != nullptr) {
+          sampledFieldID = ref;
+          SPDLOG_INFO("  - this is a reference to a SampledField");
         }
       }
     }
@@ -1470,7 +1457,7 @@ void SbmlDocWrapper::setSampledFieldConcentration(
   param->setId(id);
   param->setConstant(true);
   SPDLOG_INFO("  - creating Parameter: {}", param->getId());
-  auto *spp = dynamic_cast<libsbml::SpatialParameterPlugin *>(
+  auto *spp = static_cast<libsbml::SpatialParameterPlugin *>(
       param->getPlugin("spatial"));
   auto *ssr = spp->createSpatialSymbolReference();
   ssr->setSpatialRef(sf->getId());
@@ -1481,7 +1468,6 @@ void SbmlDocWrapper::setSampledFieldConcentration(
       libsbml::SBML_parseL3Formula(param->getId().c_str()));
   asgn->setMath(argAST.get());
   SPDLOG_INFO("  - creating initialAssignment: {}", asgn->getMath()->getName());
-
   mapSpeciesIdToField.at(speciesID).importConcentration(concentrationArray);
 }
 
@@ -1514,7 +1500,7 @@ void SbmlDocWrapper::setIsSpatial(const QString &speciesID, bool isSpatial) {
     return;
   }
   auto *ssp =
-      dynamic_cast<libsbml::SpatialSpeciesPlugin *>(spec->getPlugin("spatial"));
+      static_cast<libsbml::SpatialSpeciesPlugin *>(spec->getPlugin("spatial"));
   if (ssp == nullptr) {
     SPDLOG_ERROR("Failed to get SpatialSpeciesPlugin for species {}", sId);
     return;
@@ -1523,8 +1509,7 @@ void SbmlDocWrapper::setIsSpatial(const QString &speciesID, bool isSpatial) {
   if (isSpatial) {
     // for now spatial species cannot be constant
     setIsSpeciesConstant(speciesID.toStdString(), false);
-  }
-  if (!isSpatial) {
+  } else {
     removeInitialAssignment(speciesID.toStdString());
     setDiffusionConstant(speciesID, 0.0);
   }
@@ -1559,7 +1544,7 @@ void SbmlDocWrapper::setDiffusionConstant(const QString &speciesID,
       id.append("_");
     }
     param->setId(id);
-    auto *pplugin = dynamic_cast<libsbml::SpatialParameterPlugin *>(
+    auto *pplugin = static_cast<libsbml::SpatialParameterPlugin *>(
         param->getPlugin("spatial"));
     auto *diffCoeff = pplugin->createDiffusionCoefficient();
     diffCoeff->setVariable(speciesID.toStdString());
@@ -1865,7 +1850,7 @@ void SbmlDocWrapper::setPixelWidth(double width) {
   for (const auto &compartmentID : compartments) {
     SPDLOG_INFO("  - compartmentID: {}", compartmentID.toStdString());
     auto *comp = model->getCompartment(compartmentID.toStdString());
-    auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
+    auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
         comp->getPlugin("spatial"));
     const std::string &domainType =
         scp->getCompartmentMapping()->getDomainType();
@@ -1886,30 +1871,31 @@ void SbmlDocWrapper::setPixelWidth(double width) {
   }
 
   // update origin
-  origin *= width / oldWidth;
-  SPDLOG_INFO("  - origin rescaled to ({},{})", origin.x(), origin.y());
+  physicalOrigin *= width / oldWidth;
+  SPDLOG_INFO("  - origin rescaled to ({},{})", physicalOrigin.x(),
+              physicalOrigin.y());
 
-  mesh->setPhysicalGeometry(width, origin);
+  mesh->setPhysicalGeometry(width, physicalOrigin);
   // update xy coordinates
   auto *coord = geom->getCoordinateComponentByKind(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
   auto *min = coord->getBoundaryMin();
   auto *max = coord->getBoundaryMax();
-  min->setValue(origin.x());
-  max->setValue(origin.x() +
+  min->setValue(physicalOrigin.x());
+  max->setValue(physicalOrigin.x() +
                 pixelWidth * static_cast<double>(compartmentImage.width()));
   SPDLOG_INFO("  - x now in range [{},{}]", min->getValue(), max->getValue());
   coord = geom->getCoordinateComponentByKind(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
   min = coord->getBoundaryMin();
   max = coord->getBoundaryMax();
-  min->setValue(origin.y());
-  max->setValue(origin.y() +
+  min->setValue(physicalOrigin.y());
+  max->setValue(physicalOrigin.y() +
                 pixelWidth * static_cast<double>(compartmentImage.height()));
   SPDLOG_INFO("  - y now in range [{},{}]", min->getValue(), max->getValue());
 }
 
-const QPointF &SbmlDocWrapper::getOrigin() const { return origin; }
+const QPointF &SbmlDocWrapper::getOrigin() const { return physicalOrigin; }
 
 void SbmlDocWrapper::setCompartmentSizeFromImage(
     const std::string &compartmentID) {
@@ -2094,6 +2080,69 @@ Func SbmlDocWrapper::getFunctionDefinition(const QString &functionID) const {
     f.arguments.push_back(ASTtoString(func->getArgument(i)));
   }
   return f;
+}
+
+static libsbml::ASTNode *newLambdaBvar(const std::string &variableName) {
+  libsbml::ASTNode *n = new libsbml::ASTNode(libsbml::ASTNodeType_t::AST_NAME);
+  n->setBvar();
+  n->setName(variableName.c_str());
+  return n;
+}
+
+void SbmlDocWrapper::setFunctionDefinition(const Func &func) {
+  SPDLOG_INFO("Setting function");
+  SPDLOG_INFO("  - Id: {}", func.id);
+  auto *f = model->getFunctionDefinition(func.id);
+  SPDLOG_INFO("  - Name: {}", func.name);
+  f->setName(func.name);
+  auto lambdaAST =
+      std::make_unique<libsbml::ASTNode>(libsbml::ASTNodeType_t::AST_LAMBDA);
+  for (const auto &arg : func.arguments) {
+    SPDLOG_INFO("  - arg: {}", arg);
+    lambdaAST->addChild(newLambdaBvar(arg));
+  }
+  SPDLOG_INFO("  - expr: {}", func.expression);
+  auto bodyAST = libsbml::SBML_parseL3Formula(func.expression.c_str());
+  if (bodyAST == nullptr) {
+    SPDLOG_ERROR("  - libSBML failed to parse expression");
+    return;
+  }
+  lambdaAST->addChild(bodyAST);
+  SPDLOG_DEBUG("  - ast: {}", ASTtoString(lambdaAST.get()));
+  if (!lambdaAST->isWellFormedASTNode()) {
+    SPDLOG_ERROR("  - AST node is not well formed");
+    return;
+  }
+  f->setMath(lambdaAST.get());
+}
+
+void SbmlDocWrapper::addFunction(const QString &functionName) {
+  auto functionId = nameToSId(functionName).toStdString();
+  SPDLOG_INFO("Adding function");
+  SPDLOG_INFO("  - Id: {}", functionId);
+  SPDLOG_INFO("  - Name: {}", functionName.toStdString());
+  auto *func = model->createFunctionDefinition();
+  auto lambdaAST =
+      std::make_unique<libsbml::ASTNode>(libsbml::ASTNodeType_t::AST_LAMBDA);
+  lambdaAST->addChild(libsbml::SBML_parseL3Formula("0"));
+  SPDLOG_DEBUG("  - AST: {}", ASTtoString(lambdaAST.get()));
+  func->setId(functionId);
+  func->setName(functionName.toStdString());
+  func->setMath(lambdaAST.get());
+  updateFunctionList();
+}
+
+void SbmlDocWrapper::removeFunction(const QString &functionID) {
+  std::string sId = functionID.toStdString();
+  SPDLOG_INFO("Removing function {}", sId);
+  std::unique_ptr<libsbml::FunctionDefinition> func(
+      model->removeFunctionDefinition(sId));
+  if (func == nullptr) {
+    SPDLOG_WARN("  - function {} not found", sId);
+    return;
+  }
+  SPDLOG_INFO("  - function {} removed", func->getId());
+  updateFunctionList();
 }
 
 }  // namespace sbml

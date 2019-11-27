@@ -10,6 +10,7 @@
 #include <QImage>
 #include <QStringList>
 #include <memory>
+#include <optional>
 
 #include "geometry.hpp"
 #include "units.hpp"
@@ -158,7 +159,8 @@ class SbmlDocWrapper {
   std::string inlineAssignments(const std::string &mathExpression) const;
 
   double pixelWidth = 1.0;
-  QPointF origin = QPointF(0, 0);
+  QPointF physicalOrigin = QPointF(0, 0);
+  QSizeF physicalSize = QSizeF(0, 0);
 
  public:
   std::size_t nDimensions = 2;
@@ -288,6 +290,9 @@ class SbmlDocWrapper {
                       bool callUpdateReactionList = true);
 
   Func getFunctionDefinition(const QString &functionID) const;
+  void setFunctionDefinition(const Func &func);
+  void addFunction(const QString &functionName);
+  void removeFunction(const QString &functionID);
 };
 
 }  // namespace sbml

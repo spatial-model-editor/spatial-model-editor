@@ -19,17 +19,15 @@ using TiffDataType = uint16_t;
 double writeTIFF(const std::string& filename, const geometry::Field& field,
                  double pixelWidth = 1.0);
 
-struct TiffImage {
-  QImage img;
-  std::vector<std::vector<TiffDataType>> values;
-  TiffDataType maxValue = 0;
-  std::size_t width;
-  std::size_t height;
-};
-
 class TiffReader {
  private:
-  std::vector<TiffImage> imgs;
+  struct TiffImageData {
+    std::vector<std::vector<TiffDataType>> values;
+    TiffDataType maxValue = 0;
+    std::size_t width = 0;
+    std::size_t height = 0;
+  };
+  std::vector<TiffImageData> tiffImages;
 
  public:
   explicit TiffReader(const std::string& filename);

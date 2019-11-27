@@ -110,7 +110,7 @@ TiffReader::TiffReader(const std::string& filename) {
     if (samplespp == 1 && bitspp == TiffDataTypeBits &&
         photometric == PHOTOMETRIC_MINISBLACK) {
       SPDLOG_INFO("    --> importing {}bit grayscale image...", bitspp);
-      auto& img = imgs.emplace_back();
+      auto& img = tiffImages.emplace_back();
       img.width = width;
       img.height = height;
       img.values = std::vector<std::vector<TiffDataType>>(
@@ -127,19 +127,20 @@ TiffReader::TiffReader(const std::string& filename) {
   TIFFClose(tif);
 }
 
-std::size_t TiffReader::size() const { return imgs.size(); }
+std::size_t TiffReader::size() const { return tiffImages.size(); }
 
 QImage TiffReader::getImage(std::size_t i) const {
-  const auto& img = imgs.at(i);
-  QImage image(static_cast<int>(img.width), static_cast<int>(img.height),
+  const auto& tiffImage = tiffImages.at(i);
+  QImage image(static_cast<int>(tiffImage.width),
+               static_cast<int>(tiffImage.height),
                QImage::Format_ARGB32_Premultiplied);
   for (int x = 0; x < image.width(); ++x) {
     for (int y = 0; y < image.height(); ++y) {
       // rescale pixel values from [0, max] to [0,255]
-      unsigned int val16 = img.values.at(static_cast<std::size_t>(y))
+      unsigned int val16 = tiffImage.values.at(static_cast<std::size_t>(y))
                                .at(static_cast<std::size_t>(x));
       double intensity =
-          static_cast<double>(val16) / static_cast<double>(img.maxValue);
+          static_cast<double>(val16) / static_cast<double>(tiffImage.maxValue);
       unsigned int val8 = 0x0000ff & static_cast<unsigned int>(256 * intensity);
       unsigned int rgb = 0xff000000 | val8 | (val8 << 8) | (val8 << 16);
       image.setPixel(x, y, rgb);

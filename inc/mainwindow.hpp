@@ -28,8 +28,6 @@ class MainWindow : public QMainWindow {
   bool waitingForCompartmentChoice = false;
   QShortcut *shortcutStopSimulation;
   bool isSimulationRunning = false;
-  QShortcut *shortcutSetMathBackend;
-  simulate::BACKEND simMathBackend = simulate::BACKEND::SYMENGINE_LLVM;
 
   bool useDuneSimulator = true;
 
@@ -40,8 +38,6 @@ class MainWindow : public QMainWindow {
   QVector<QImage> images;
 
   void setupConnections();
-
-  void setMathBackend();
 
   // update list of species to display in simulation result image
   void updateSpeciesDisplaySelect();
@@ -58,7 +54,7 @@ class MainWindow : public QMainWindow {
   void tabMain_updateMembranes();
   void tabMain_updateSpecies();
   void tabMain_updateReactions();
-  void tabMain_updateFunctions();
+  void tabMain_updateFunctions(const QString &selection = {});
   void tabMain_updateSimulate();
   // if SBML model and geometry are both valid, enable all tabs
   void enableTabs();
@@ -149,7 +145,22 @@ class MainWindow : public QMainWindow {
   void btnRemoveReaction_clicked();
 
   // functions
-  void listFunctions_currentTextChanged(const QString &currentText);
+  void listFunctions_currentRowChanged(int row);
+
+  void btnAddFunction_clicked();
+
+  void btnRemoveFunction_clicked();
+
+  void listFunctionParams_currentRowChanged(int row);
+
+  void btnAddFunctionParam_clicked();
+
+  void btnRemoveFunctionParam_clicked();
+
+  void txtFunctionDef_mathChanged(const QString &math, bool valid,
+                                  const QString &errorMessage);
+
+  void btnSaveFunctionChanges_clicked();
 
   // simulate
   void btnSimulate_clicked();

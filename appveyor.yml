@@ -3,7 +3,10 @@ image:
   - Visual Studio 2015
 install:
   - set PATH=C:\msys64\usr\bin;%PATH%
-
+# only build master branch (and PRs to master)
+branches:
+  only:
+    - master
 before_build:
   # note absolute paths currently hard coded in QT binaries
   # to override this, add a qt.conf file (https://doc.qt.io/qt-5/qt-conf.html#overriding-paths)

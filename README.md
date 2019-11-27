@@ -111,11 +111,6 @@ Translate the spatial model to a system of PDEs and simulate it: generate 2d tri
         -   license: [MIT](https://github.com/libexpat/libexpat/blob/master/expat/COPYING)
         -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
 
-    -   ExprTK math parsing/evaluation library: <https://github.com/ArashPartow/exprtk>
-
-        -   license: [MIT](https://github.com/ArashPartow/exprtk/blob/a1b1854ee6206869f0e693929f41469daf7b901c/readme.txt#L113)
-        -   included in source code
-
     -   Catch2 testing framework: <https://github.com/catchorg/Catch2>
 
         -   license: [BSL-1.0](https://github.com/catchorg/Catch2/blob/master/LICENSE.txt)

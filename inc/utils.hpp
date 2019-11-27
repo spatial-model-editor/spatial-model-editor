@@ -54,14 +54,14 @@ constexpr auto decltypeStr() {
 std::vector<std::string> toStdString(const QStringList &q);
 QStringList toQString(const std::vector<std::string> &v);
 
-template <class T>
+template <typename T>
 std::vector<T> stringToVector(const std::string &str) {
   std::istringstream ss(str);
   return std::vector<T>(std::istream_iterator<T>(ss),
                         std::istream_iterator<T>{});
 }
 
-template <class T>
+template <typename T>
 std::string vectorToString(const std::vector<T> &vec) {
   std::stringstream ss;
   for (std::size_t i = 0; i < vec.size() - 1; ++i) {

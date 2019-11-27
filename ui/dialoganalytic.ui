@@ -56,7 +56,7 @@
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QPlainTextEdit" name="txtExpression">
+      <widget class="QPlainTextMathEdit" name="txtExpression">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
          <horstretch>0</horstretch>
@@ -118,6 +118,11 @@
    <class>QLabelMouseTracker</class>
    <extends>QWidget</extends>
    <header>qlabelmousetracker.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>QPlainTextMathEdit</class>
+   <extends>QPlainTextEdit</extends>
+   <header>qplaintextmathedit.hpp</header>
   </customwidget>
  </customwidgets>
  <resources/>

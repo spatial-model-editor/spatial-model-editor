@@ -1,19 +1,21 @@
 #include "symbolic.hpp"
 
+#include <symengine/basic.h>
+#include <symengine/eval.h>
+#include <symengine/lambda_double.h>
+#include <symengine/llvm_double.h>
+#include <symengine/parser.h>
+#include <symengine/parser/parser.h>
+#include <symengine/printers/strprinter.h>
+#include <symengine/subs.h>
+#include <symengine/symbol.h>
+#include <symengine/symengine_exception.h>
+#include <symengine/symengine_rcp.h>
+#include <symengine/visitor.h>
+
 #include <sstream>
 
 #include "logger.hpp"
-#include "symengine/basic.h"
-#include "symengine/eval.h"
-#include "symengine/lambda_double.h"
-#include "symengine/llvm_double.h"
-#include "symengine/parser.h"
-#include "symengine/printers/strprinter.h"
-#include "symengine/subs.h"
-#include "symengine/symbol.h"
-#include "symengine/symengine_exception.h"
-#include "symengine/symengine_rcp.h"
-#include "symengine/visitor.h"
 
 namespace SymEngine {
 
@@ -80,22 +82,35 @@ void Symbolic::SymEngineImpl::init(
     varVec.push_back(symbols.at(v));
   }
   SymEngine::map_basic_basic d;
-  for (const auto &p : constants) {
-    SPDLOG_DEBUG("  - constant {} = {}", p.first, p.second);
-    d[SymEngine::symbol(p.first)] = SymEngine::real_double(p.second);
+  for (const auto &[name, value] : constants) {
+    SPDLOG_DEBUG("  - constant {} = {}", name, value);
+    d[SymEngine::symbol(name)] = SymEngine::real_double(value);
   }
+  SymEngine::Parser parser;
   for (const auto &expression : expressions) {
     SPDLOG_DEBUG("expr {}", expression);
-    expr.push_back(SymEngine::parse(expression)->subs(d));
+    // parse expression & substitute all numeric constants
+    expr.push_back(parser.parse(expression)->subs(d));
     SPDLOG_DEBUG("  --> {}", toString(expr.back()));
+    // check that all remaining symbols are in the variables vector
+    auto fs = SymEngine::free_symbols(*expr.back());
+    if (auto iter = find_if(fs.cbegin(), fs.cend(),
+                            [v = variables](const auto &s) {
+                              return std::find(v.cbegin(), v.cend(),
+                                               toString(s)) == v.cend();
+                            });
+        iter != fs.cend()) {
+      throw SymEngine::SymEngineException("Unknown symbol: " + toString(*iter));
+    }
   }
 }
 
 void Symbolic::SymEngineImpl::compile() {
+  SPDLOG_DEBUG("compiling expression");
   // NOTE: don't do symbolic CSE - segfaults!
   lambda.init(varVec, expr, false);
   // compile with LLVM - again no symbolic CSE to avoid segfaults.
-  lambdaLLVM.init(varVec, expr, false, 2);
+  lambdaLLVM.init(varVec, expr, false);
 }
 
 void Symbolic::SymEngineImpl::relabel(
@@ -136,11 +151,15 @@ std::string divide(const std::string &expr, const std::string &var) {
 
 Symbolic::Symbolic(const std::vector<std::string> &expressions,
                    const std::vector<std::string> &variables,
-                   const std::map<std::string, double> &constants)
+                   const std::map<std::string, double> &constants, bool compile)
     : pSymEngineImpl(std::make_shared<SymEngineImpl>()) {
   pSymEngineImpl->init(expressions, variables, constants);
-  pSymEngineImpl->compile();
+  if (compile) {
+    pSymEngineImpl->compile();
+  }
 }
+
+void Symbolic::compile() { pSymEngineImpl->compile(); }
 
 std::string Symbolic::simplify(std::size_t i) const {
   return toString(pSymEngineImpl->expr.at(i));

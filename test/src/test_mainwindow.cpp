@@ -6,133 +6,17 @@
 #include "catch_wrapper.hpp"
 #include "logger.hpp"
 #include "mainwindow.hpp"
-#include "qlabelmousetracker.hpp"
+#include "mainwindow_test_utils.hpp"
 #include "qt_test_utils.hpp"
 #include "sbml_test_data/ABtoC.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
 #include "utils.hpp"
 
-// class that provides a pointer to each Widget in mainWindow
-class UIPointers {
- public:
-  explicit UIPointers(MainWindow *mainWindow);
-  MainWindow *w;
-  QMenu *menuFile;
-  QMenu *menuImport;
-  QMenu *menuTools;
-  QMenu *menuExample_geometry_image;
-  QMenu *menuOpen_example_SBML_file;
-  QLabelMouseTracker *lblGeometry;
-  QLabelMouseTracker *lblCompShape;
-  QLabelMouseTracker *lblCompMesh;
-  QLabelMouseTracker *lblCompBoundary;
-  QListWidget *listCompartments;
-  QListWidget *listMembranes;
-  QTreeWidget *listSpecies;
-  QPushButton *btnAddSpecies;
-  QPushButton *btnRemoveSpecies;
-  QPushButton *btnChangeSpeciesColour;
-  QCheckBox *chkSpeciesIsSpatial;
-  QCheckBox *chkSpeciesIsConstant;
-  QLabel *lblSpeciesColour;
-  QTreeWidget *listReactions;
-  QListWidget *listFunctions;
-  QTabWidget *tabMain;
-  QTabWidget *tabCompartmentGeometry;
-  QPushButton *btnChangeCompartment;
-  QLineEdit *txtSimLength;
-  QLineEdit *txtSimInterval;
-  QLineEdit *txtSimDt;
-  QPushButton *btnSimulate;
-  QPushButton *btnResetSimulation;
-  QCustomPlot *pltPlot;
-};
-
-UIPointers::UIPointers(MainWindow *mainWindow) : w(mainWindow) {
-  menuFile = w->topLevelWidget()->findChild<QMenu *>("menuFile");
-  REQUIRE(menuFile != nullptr);
-  menuImport = w->topLevelWidget()->findChild<QMenu *>("menuImport");
-  REQUIRE(menuImport != nullptr);
-  menuTools = w->topLevelWidget()->findChild<QMenu *>("menu_Tools");
-  REQUIRE(menuTools != nullptr);
-  menuExample_geometry_image =
-      w->topLevelWidget()->findChild<QMenu *>("menuExample_geometry_image");
-  REQUIRE(menuExample_geometry_image != nullptr);
-  menuOpen_example_SBML_file =
-      w->topLevelWidget()->findChild<QMenu *>("menuOpen_example_SBML_file");
-  REQUIRE(menuOpen_example_SBML_file != nullptr);
-  lblGeometry =
-      w->topLevelWidget()->findChild<QLabelMouseTracker *>("lblGeometry");
-  REQUIRE(lblGeometry != nullptr);
-  lblCompShape =
-      w->topLevelWidget()->findChild<QLabelMouseTracker *>("lblCompShape");
-  REQUIRE(lblCompShape != nullptr);
-  lblCompMesh =
-      w->topLevelWidget()->findChild<QLabelMouseTracker *>("lblCompMesh");
-  REQUIRE(lblCompMesh != nullptr);
-  lblCompBoundary =
-      w->topLevelWidget()->findChild<QLabelMouseTracker *>("lblCompBoundary");
-  REQUIRE(lblCompBoundary != nullptr);
-  listCompartments =
-      w->topLevelWidget()->findChild<QListWidget *>("listCompartments");
-  REQUIRE(listCompartments != nullptr);
-  listMembranes =
-      w->topLevelWidget()->findChild<QListWidget *>("listMembranes");
-  REQUIRE(listMembranes != nullptr);
-  listSpecies = w->topLevelWidget()->findChild<QTreeWidget *>("listSpecies");
-  REQUIRE(listSpecies != nullptr);
-  btnAddSpecies =
-      w->topLevelWidget()->findChild<QPushButton *>("btnAddSpecies");
-  REQUIRE(btnAddSpecies != nullptr);
-  btnRemoveSpecies =
-      w->topLevelWidget()->findChild<QPushButton *>("btnRemoveSpecies");
-  REQUIRE(btnRemoveSpecies != nullptr);
-  btnChangeSpeciesColour =
-      w->topLevelWidget()->findChild<QPushButton *>("btnChangeSpeciesColour");
-  REQUIRE(btnChangeSpeciesColour != nullptr);
-  chkSpeciesIsSpatial =
-      w->topLevelWidget()->findChild<QCheckBox *>("chkSpeciesIsSpatial");
-  REQUIRE(chkSpeciesIsSpatial != nullptr);
-  chkSpeciesIsConstant =
-      w->topLevelWidget()->findChild<QCheckBox *>("chkSpeciesIsConstant");
-  REQUIRE(chkSpeciesIsConstant != nullptr);
-  lblSpeciesColour =
-      w->topLevelWidget()->findChild<QLabel *>("lblSpeciesColour");
-  REQUIRE(lblSpeciesColour != nullptr);
-  listReactions =
-      w->topLevelWidget()->findChild<QTreeWidget *>("listReactions");
-  REQUIRE(listReactions != nullptr);
-  listFunctions =
-      w->topLevelWidget()->findChild<QListWidget *>("listFunctions");
-  REQUIRE(listFunctions != nullptr);
-  tabMain = w->topLevelWidget()->findChild<QTabWidget *>("tabMain");
-  REQUIRE(tabMain != nullptr);
-  tabCompartmentGeometry =
-      w->topLevelWidget()->findChild<QTabWidget *>("tabCompartmentGeometry");
-  REQUIRE(tabCompartmentGeometry != nullptr);
-  btnChangeCompartment =
-      w->topLevelWidget()->findChild<QPushButton *>("btnChangeCompartment");
-  REQUIRE(btnChangeCompartment != nullptr);
-  txtSimLength = w->topLevelWidget()->findChild<QLineEdit *>("txtSimLength");
-  REQUIRE(txtSimLength != nullptr);
-  txtSimInterval =
-      w->topLevelWidget()->findChild<QLineEdit *>("txtSimInterval");
-  REQUIRE(txtSimInterval != nullptr);
-  txtSimDt = w->topLevelWidget()->findChild<QLineEdit *>("txtSimDt");
-  REQUIRE(txtSimDt != nullptr);
-  btnSimulate = w->topLevelWidget()->findChild<QPushButton *>("btnSimulate");
-  REQUIRE(btnSimulate != nullptr);
-  btnResetSimulation =
-      w->topLevelWidget()->findChild<QPushButton *>("btnResetSimulation");
-  REQUIRE(btnResetSimulation != nullptr);
-  pltPlot = w->topLevelWidget()->findChild<QCustomPlot *>("pltPlot");
-  REQUIRE(pltPlot != nullptr);
-}
-
 constexpr int key_delay = 5;
 
-void saveTempSBMLFile(MainWindow *w, const UIPointers &ui,
-                      ModalWidgetTimer &mwt, QString tempFileName = "tmp.xml") {
+static void saveTempSBMLFile(MainWindow *w, const UIPointers &ui,
+                             ModalWidgetTimer &mwt,
+                             QString tempFileName = "tmp.xml") {
   REQUIRE(!mwt.isRunning());
   QFile file(tempFileName);
   file.remove();
@@ -143,8 +27,9 @@ void saveTempSBMLFile(MainWindow *w, const UIPointers &ui,
   QTest::keyClick(w, Qt::Key_S, Qt::ControlModifier, key_delay);
 }
 
-void openTempSBMLFile(MainWindow *w, const UIPointers &ui,
-                      ModalWidgetTimer &mwt, QString tempFileName = "tmp.xml") {
+static void openTempSBMLFile(MainWindow *w, const UIPointers &ui,
+                             ModalWidgetTimer &mwt,
+                             QString tempFileName = "tmp.xml") {
   REQUIRE(!mwt.isRunning());
   mwt.addUserAction(tempFileName);
   mwt.start();
@@ -153,7 +38,8 @@ void openTempSBMLFile(MainWindow *w, const UIPointers &ui,
   QTest::keyClick(w, Qt::Key_O, Qt::ControlModifier, key_delay);
 }
 
-void openABtoC(MainWindow *w, const UIPointers &ui, ModalWidgetTimer &mwt) {
+static void openABtoC(MainWindow *w, const UIPointers &ui,
+                      ModalWidgetTimer &mwt) {
   REQUIRE(!mwt.isRunning());
   //  QTest::keyClick(w, Qt::Key_F, Qt::AltModifier, key_delay);
   //  QTest::keyClick(ui.menuFile, Qt::Key_E, Qt::AltModifier, key_delay);
@@ -168,8 +54,8 @@ void openABtoC(MainWindow *w, const UIPointers &ui, ModalWidgetTimer &mwt) {
   openTempSBMLFile(w, ui, mwt);
 }
 
-void openThreePixelImage(MainWindow *w, const UIPointers &ui,
-                         ModalWidgetTimer &mwt) {
+static void openThreePixelImage(MainWindow *w, const UIPointers &ui,
+                                ModalWidgetTimer &mwt) {
   REQUIRE(!mwt.isRunning());
   // to close setImageDimensions dialog that pops up after loading image
   ModalWidgetTimer mwt2;
@@ -192,7 +78,7 @@ void openThreePixelImage(MainWindow *w, const UIPointers &ui,
 #endif
 }
 
-void REQUIRE_threePixelImageLoaded(const UIPointers &ui) {
+static void REQUIRE_threePixelImageLoaded(const UIPointers &ui) {
   REQUIRE(ui.lblGeometry->getImage().size() == QSize(3, 1));
   REQUIRE(ui.lblGeometry->getImage().pixel(0, 0) == 0xffffffff);
   REQUIRE(ui.lblGeometry->getImage().pixel(1, 0) == 0xffaaaaaa);
@@ -266,7 +152,7 @@ SCENARIO("Mainwindow: shortcut keys", "[gui][mainwindow]") {
   }
 }
 
-SCENARIO("Mainwindow: click on btnChangeCompartment",
+SCENARIO("Mainwindow: import geometry to non-spatial model",
          "[gui][mainwindow][btnChangeCompartment]") {
   MainWindow w;
   w.show();
@@ -324,24 +210,13 @@ SCENARIO("Mainwindow: click on btnChangeCompartment",
       }
     }
   }
-}
-
-SCENARIO(
-    "Mainwindow: import built-in SBML model and compartment geometry image",
-    "[gui][mainwindow]") {
-  MainWindow w;
-  w.show();
-  UIPointers ui(&w);
-  ModalWidgetTimer mwt;
-  CAPTURE(QTest::qWaitForWindowExposed(&w));
-  WHEN("user opens ABtoC model") { openABtoC(&w, ui, mwt); }
   WHEN("user opens ABtoC model, then three-pixel image, then saves SBML") {
-    openABtoC(&w, ui, mwt);
-    openThreePixelImage(&w, ui, mwt);
+    openABtoC(&w, ui, mwt1);
+    openThreePixelImage(&w, ui, mwt1);
     REQUIRE_threePixelImageLoaded(ui);
-    saveTempSBMLFile(&w, ui, mwt);
+    saveTempSBMLFile(&w, ui, mwt1);
     THEN("user opens saved SBML file: finds image") {
-      openTempSBMLFile(&w, ui, mwt);
+      openTempSBMLFile(&w, ui, mwt1);
       REQUIRE_threePixelImageLoaded(ui);
     }
   }
@@ -385,7 +260,7 @@ SCENARIO("Mainwindow: load built-in SBML model, change units",
   QTest::keyClick(&w, Qt::Key_T, Qt::AltModifier, key_delay);
   mwt.addUserAction({"Down", "Tab", "Down", "Tab", "Down", "Tab", "Down"});
   mwt.start();
-  QTest::keyClick(ui.menuTools, Qt::Key_U, Qt::NoModifier, key_delay);
+  QTest::keyClick(ui.menu_Tools, Qt::Key_U, Qt::NoModifier, key_delay);
   // save SBML file
   QFile::remove("units.xml");
   mwt.addUserAction("units.xml");
@@ -418,7 +293,7 @@ SCENARIO("Mainwindow: load built-in SBML model, change units",
 }
 
 SCENARIO("Mainwindow: load built-in SBML model, add/remove species",
-         "[gui][mainwindow][Q]") {
+         "[gui][mainwindow]") {
   MainWindow w;
   ModalWidgetTimer mwt;
   w.show();
@@ -504,6 +379,89 @@ SCENARIO("Mainwindow: load built-in SBML model, add/remove species",
   mwt.start();
   QTest::mouseClick(ui.btnAddSpecies, Qt::LeftButton, {}, {}, key_delay);
   REQUIRE(ui.listSpecies->currentItem()->text(0) == "new spec!");
+}
+
+SCENARIO("Mainwindow: load built-in SBML model, add/remove functions",
+         "[gui][mainwindow]") {
+  MainWindow w;
+  ModalWidgetTimer mwt;
+  w.show();
+  UIPointers ui(&w);
+  CAPTURE(QTest::qWaitForWindowExposed(&w));
+  REQUIRE(ui.listCompartments->count() == 0);
+  // very-simple-model
+  QTest::keyClick(&w, Qt::Key_F, Qt::AltModifier, key_delay);
+  QTest::keyClick(ui.menuFile, Qt::Key_E, Qt::NoModifier, key_delay);
+  QTest::keyClick(ui.menuOpen_example_SBML_file, Qt::Key_V, Qt::NoModifier,
+                  key_delay);
+  // display functions tab
+  for (std::size_t i = 0; i < 4; ++i) {
+    QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
+                    key_delay);
+  }
+  REQUIRE(ui.listFunctions->count() == 0);
+  REQUIRE(ui.btnRemoveFunction->isEnabled() == false);
+  // add function
+  mwt.addUserAction("func1");
+  mwt.start();
+  QTest::mouseClick(ui.btnAddFunction, Qt::LeftButton, {}, {}, key_delay);
+  REQUIRE(ui.listFunctions->count() == 1);
+  REQUIRE(ui.listFunctions->item(0)->text().toStdString() == "func1");
+  REQUIRE(ui.btnRemoveFunction->isEnabled() == true);
+  REQUIRE(ui.btnRemoveFunctionParam->isEnabled() == false);
+  // add function params
+  mwt.addUserAction("y");
+  mwt.start();
+  QTest::mouseClick(ui.btnAddFunctionParam, Qt::LeftButton, {}, {}, key_delay);
+  REQUIRE(ui.listFunctionParams->count() == 1);
+  REQUIRE(ui.listFunctionParams->item(0)->text().toStdString() == "y");
+  REQUIRE(ui.btnRemoveFunctionParam->isEnabled() == true);
+  mwt.addUserAction("qq");
+  mwt.start();
+  QTest::mouseClick(ui.btnAddFunctionParam, Qt::LeftButton, {}, {}, key_delay);
+  REQUIRE(ui.listFunctionParams->count() == 2);
+  REQUIRE(ui.listFunctionParams->item(0)->text().toStdString() == "y");
+  REQUIRE(ui.listFunctionParams->item(1)->text().toStdString() == "qq");
+  REQUIRE(ui.btnRemoveFunctionParam->isEnabled() == true);
+  REQUIRE(ui.btnSaveFunctionChanges->isEnabled() == true);
+  // remove param, then no
+  mwt.addUserAction(QStringList{"Esc"});
+  mwt.start();
+  QTest::mouseClick(ui.btnRemoveFunctionParam, Qt::LeftButton, {}, {},
+                    key_delay);
+  REQUIRE(ui.listFunctionParams->count() == 2);
+  // remove param, then yes
+  mwt.addUserAction(" ");
+  mwt.start();
+  QTest::mouseClick(ui.btnRemoveFunctionParam, Qt::LeftButton, {}, {},
+                    key_delay);
+  REQUIRE(ui.listFunctionParams->count() == 1);
+  REQUIRE(ui.listFunctionParams->item(0)->text().toStdString() == "y");
+  // edit expression: empty is invalid
+  ui.txtFunctionDef->setFocus();
+  QTest::keyClick(ui.txtFunctionDef, Qt::Key_Delete, {}, key_delay);
+  REQUIRE(ui.btnSaveFunctionChanges->isEnabled() == false);
+  // edit expression: x is not a parameter
+  QTest::keyClick(ui.txtFunctionDef, Qt::Key_X, {}, key_delay);
+  REQUIRE(ui.btnSaveFunctionChanges->isEnabled() == false);
+  // edit expression: y is valid
+  QTest::keyClick(ui.txtFunctionDef, Qt::Key_Backspace, {}, key_delay);
+  QTest::keyClick(ui.txtFunctionDef, Qt::Key_Y, {}, key_delay);
+  REQUIRE(ui.btnSaveFunctionChanges->isEnabled() == true);
+  // save changes
+  QTest::mouseClick(ui.btnSaveFunctionChanges, Qt::LeftButton, {}, {},
+                    key_delay);
+  // click remove, then no
+  mwt.addUserAction(QStringList{"Esc"});
+  mwt.start();
+  QTest::mouseClick(ui.btnRemoveFunction, Qt::LeftButton, {}, {}, key_delay);
+  REQUIRE(ui.listFunctions->count() == 1);
+  // click remove, then yes
+  mwt.addUserAction(" ");
+  mwt.start();
+  QTest::mouseClick(ui.btnRemoveFunction, Qt::LeftButton, {}, {}, key_delay);
+  REQUIRE(ui.listFunctions->count() == 0);
+  REQUIRE(ui.listFunctionParams->count() == 0);
 }
 
 SCENARIO("Mainwindow: click on many things", "[gui][mainwindow]") {
@@ -753,13 +711,9 @@ SCENARIO("Mainwindow: click on many things", "[gui][mainwindow]") {
   QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
                   key_delay);
   REQUIRE(ui.tabMain->currentIndex() == 5);
-  ui.txtSimLength->setText("1000.0");
-  ui.txtSimInterval->setText("0.01");
-  ui.txtSimDt->setText("0.01");
-  // stop simulation after 1 second
-  QTimer::singleShot(1000, [=]() {
-    QTest::keyClick(ui.pltPlot, Qt::Key_C, Qt::ControlModifier, 0);
-  });
+  ui.txtSimLength->setText("0.0000002");
+  ui.txtSimInterval->setText("0.0000001");
+  ui.txtSimDt->setText("0.0000001");
   // start simulation
   QTest::mouseClick(ui.btnSimulate, Qt::LeftButton);
   // click on graph
