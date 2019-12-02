@@ -21,9 +21,9 @@ SOURCES += \
     $$TOPDIR/src/geometry.cpp \
     $$TOPDIR/src/mainwindow.cpp \
     $$TOPDIR/src/mesh.cpp \
-    $$TOPDIR/src/numerics.cpp \
     $$TOPDIR/src/pde.cpp \
     $$TOPDIR/src/qlabelmousetracker.cpp \
+    $$TOPDIR/src/qplaintextmathedit.cpp \
     $$TOPDIR/src/sbml.cpp \
     $$TOPDIR/src/simulate.cpp \
     $$TOPDIR/src/symbolic.cpp \
@@ -45,9 +45,9 @@ HEADERS += \
     $$TOPDIR/inc/logger.hpp \
     $$TOPDIR/inc/mainwindow.hpp \
     $$TOPDIR/inc/mesh.hpp \
-    $$TOPDIR/inc/numerics.hpp \
     $$TOPDIR/inc/pde.hpp \
     $$TOPDIR/inc/qlabelmousetracker.hpp \
+    $$TOPDIR/inc/qplaintextmathedit.hpp \
     $$TOPDIR/inc/sbml.hpp \
     $$TOPDIR/inc/simulate.hpp \
     $$TOPDIR/inc/symbolic.hpp \

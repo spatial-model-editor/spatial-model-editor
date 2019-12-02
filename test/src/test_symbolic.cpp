@@ -24,6 +24,7 @@ SCENARIO("Symbolic", "[symbolic][non-gui]") {
   }
   GIVEN("3*x + 7*x: one var, no constants") {
     std::string expr = "3*x + 7 * x";
+    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {}, {}), "Unknown symbol: x");
     symbolic::Symbolic sym(expr, {"x"}, {});
     CAPTURE(expr);
     REQUIRE(sym.simplify() == "10*x");
@@ -73,6 +74,10 @@ SCENARIO("Symbolic", "[symbolic][non-gui]") {
   }
   GIVEN("3*x + 4/y - 1.0*x + 0.2*x*y - 0.1: two vars, no constants") {
     std::string expr = "3*x + 4/y - 1.0*x + 0.2*x*y - 0.1";
+    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {"x"}, {}),
+                        "Unknown symbol: y");
+    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {"y"}, {}),
+                        "Unknown symbol: x");
     symbolic::Symbolic sym(expr, {"x", "y", "z"}, {});
     CAPTURE(expr);
     REQUIRE(sym.simplify() == "-0.1 + 2.0*x + 0.2*x*y + 4*y^(-1)");
@@ -91,6 +96,12 @@ SCENARIO("Symbolic", "[symbolic][non-gui]") {
   GIVEN("two expressions, three vars, no constants") {
     std::vector<std::string> expr = {"3*x + 4/y - 1.0*x + 0.2*x*y - 0.1",
                                      "z - cos(x)*sin(y) - x*y"};
+    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {"z", "x"}, {}),
+                        "Unknown symbol: y");
+    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {"x", "y"}, {}),
+                        "Unknown symbol: z");
+    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {"z", "y"}, {}),
+                        "Unknown symbol: x");
     symbolic::Symbolic sym(expr, {"x", "y", "z"}, {});
     CAPTURE(expr);
     REQUIRE(sym.simplify(0) == "-0.1 + 2.0*x + 0.2*x*y + 4*y^(-1)");
@@ -115,6 +126,7 @@ SCENARIO("Symbolic", "[symbolic][non-gui]") {
   }
   GIVEN("e^(4*x): print exponential function") {
     std::string expr = "e^(4*x)";
+    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {}, {}), "Unknown symbol: x");
     symbolic::Symbolic sym(expr, {"x"}, {});
     CAPTURE(expr);
     REQUIRE(sym.simplify() == "exp(4*x)");
@@ -144,6 +156,10 @@ SCENARIO("Symbolic", "[symbolic][non-gui]") {
     constants["n"] = -23;
     constants["Unused"] = -99;
     std::string expr = "3*x + alpha*x - a*n*x";
+    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {}, constants),
+                        "Unknown symbol: x");
+    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {"x"}, {{"a", 1}, {"n", 2}}),
+                        "Unknown symbol: alpha");
     symbolic::Symbolic sym(expr, {"x", "y"}, constants);
     CAPTURE(expr);
     REQUIRE(sym.simplify() == "21.90000000023*x");
@@ -156,6 +172,21 @@ SCENARIO("Symbolic", "[symbolic][non-gui]") {
                                    constants["a"] * constants["n"] * x));
     }
   }
+  GIVEN("expression: parse without compiling, then compile") {
+    std::string expr = "1.324 * x + 2*3";
+    symbolic::Symbolic sym(expr, {"x"}, {}, false);
+    CAPTURE(expr);
+    REQUIRE(sym.simplify() == "6 + 1.324*x");
+    REQUIRE(sym.diff("x") == "1.324");
+    std::vector<double> res(1, 0.0);
+    sym.compile();
+    sym.evalLLVM(res, {0.1});
+    REQUIRE(res[0] == dbl_approx(6.1324));
+    sym.compile();
+    sym.evalLLVM(res, {0.1});
+    REQUIRE(res[0] == dbl_approx(6.1324));
+  }
+
   GIVEN("relabel one expression with two vars") {
     std::string expr = "3*x + 12*sin(y)";
     symbolic::Symbolic sym(expr, {"x", "y"});

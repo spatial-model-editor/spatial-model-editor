@@ -9,9 +9,9 @@ set(SRC_LIST
     geometry.cpp
     mainwindow.cpp
     mesh.cpp
-    numerics.cpp
     pde.cpp
     qlabelmousetracker.cpp
+    qplaintextmathedit.cpp
     sbml.cpp
     simulate.cpp
     symbolic.cpp
@@ -24,8 +24,7 @@ set(SRC_LIST
 configure_file("${PROJECT_SOURCE_DIR}/src/version.cpp.in"
                "${PROJECT_BINARY_DIR}/src/version.cpp")
 
-# note: have to explicitly add headers here for automoc to find them: (and .qrc
-# for autorcc)
+# note: have to add headers for automoc / autorcc to find them:
 add_library(mainwindow STATIC
             ${SRC_LIST}
             ${PROJECT_SOURCE_DIR}/inc/mainwindow.hpp
@@ -35,28 +34,27 @@ add_library(mainwindow STATIC
             ${PROJECT_SOURCE_DIR}/inc/dialogimagesize.hpp
             ${PROJECT_SOURCE_DIR}/inc/dialogunits.hpp
             ${PROJECT_SOURCE_DIR}/inc/qlabelmousetracker.hpp
-            ${PROJECT_SOURCE_DIR}/ext/qcustomplot/qcustomplot.h
+            ${PROJECT_SOURCE_DIR}/inc/qplaintextmathedit.hpp
             ${PROJECT_SOURCE_DIR}/resources/resources.qrc)
 
 target_include_directories(mainwindow PUBLIC ${PROJECT_SOURCE_DIR}/inc)
 
-target_include_directories(mainwindow SYSTEM
-                           PUBLIC ${PROJECT_SOURCE_DIR}/ext
-                                  ${LLVM_INCLUDE_DIRS}
-                                  ${PROJECT_SOURCE_DIR}/ext/qcustomplot
-                                  ${PROJECT_SOURCE_DIR}/ext/triangle)
+target_include_directories(mainwindow SYSTEM PUBLIC ${LLVM_INCLUDE_DIRS})
 
-target_compile_features(mainwindow PUBLIC cxx_std_17)
+set_property(TARGET mainwindow PROPERTY CXX_STANDARD 17)
 
 target_compile_definitions(
-  mainwindow PUBLIC $<$<CONFIG:Debug>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE>)
-target_compile_definitions(
-  mainwindow PUBLIC $<$<CONFIG:Release>:SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_INFO>)
+  mainwindow PUBLIC
+  SPDLOG_ACTIVE_LEVEL=$<$<CONFIG:Debug>:SPDLOG_LEVEL_DEBUG>$<$<CONFIG:Release>:SPDLOG_LEVEL_INFO>
+  )
+
 target_link_options(mainwindow
                     PUBLIC
-                    $<$<CONFIG:Debug>:--coverage
+                    $<$<CONFIG:Debug>:
+                    --coverage
                     -fsanitize=address
-                    -fno-omit-frame-pointer>)
+                    -fno-omit-frame-pointer>
+                    $<$<CXX_COMPILER_ID:Clang>:-fuse-ld=lld>)
 target_compile_options(mainwindow
                        PUBLIC $<$<CONFIG:Debug>:--coverage
                               -fsanitize=address
@@ -66,6 +64,7 @@ target_compile_options(mainwindow
                               -Wpedantic
                               -Wshadow
                               -Wunused
+                              -Wconversion
                               -Wsign-conversion
                               -Wcast-align>)
 
@@ -83,22 +82,18 @@ llvm_map_components_to_libnames(llvm_libs
                                 support
                                 transformutils)
 
-target_link_libraries(
-  mainwindow
-  PUBLIC ${PROJECT_SOURCE_DIR}/ext/libsbml/lib/libsbml-static.a
-         expat::expat
-         sbml::sbml
-         dunecopasi::dunecopasi
-         TIFF::TIFF
-         muparser::muparser
-         spdlog::spdlog
-         symengine::symengine
-         ${llvm_libs}
-         ${PROJECT_SOURCE_DIR}/ext/qcustomplot/libqcustomplot.a
-         ${PROJECT_SOURCE_DIR}/ext/triangle/triangle.o
-         Qt5::Widgets
-         Qt5::PrintSupport
-         fmt::fmt
-         GMP::GMP)
+target_link_libraries(mainwindow
+                      PUBLIC sbml::sbml
+                             expat::expat
+                             dunecopasi::dunecopasi
+                             TIFF::TIFF
+                             muparser::muparser
+                             spdlog::spdlog
+                             symengine::symengine
+                             ${llvm_libs}
+                             qcustomplot
+                             triangle
+                             fmt::fmt
+                             GMP::GMP)
 
 set_target_properties(mainwindow PROPERTIES POSITION_INDEPENDENT_CODE ON)

@@ -9,9 +9,9 @@ set(SRC_LIST
     src/test_geometry.cpp
     src/test_mainwindow.cpp
     src/test_mesh.cpp
-    src/test_numerics.cpp
     src/test_pde.cpp
     src/test_qlabelmousetracker.cpp
+    src/test_qplaintextmathedit.cpp
     src/test_sbml.cpp
     src/test_simulate.cpp
     src/test_symbolic.cpp
@@ -27,12 +27,35 @@ find_package(Qt5 COMPONENTS Test REQUIRED)
 
 target_link_libraries(tests PRIVATE mainwindow Qt5::Test)
 
-target_compile_features(tests PUBLIC cxx_std_17)
+set_property(TARGET tests PROPERTY CXX_STANDARD 17)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  file(WRITE ${PROJECT_BINARY_DIR}/coverage/llvm-cov-wrapper.sh "#!/bin/bash\n")
+  file(APPEND ${PROJECT_BINARY_DIR}/coverage/llvm-cov-wrapper.sh
+       "exec llvm-cov gcov \"$@\"\n")
+  file(COPY ${PROJECT_BINARY_DIR}/coverage/llvm-cov-wrapper.sh
+       DESTINATION ${PROJECT_BINARY_DIR}
+       FILE_PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ)
+  set(GCOV "${PROJECT_BINARY_DIR}/llvm-cov-wrapper.sh")
+else()
+  set(GCOV "gcov")
+endif()
 
 catch_discover_tests(tests
                      PROPERTIES
                      ENVIRONMENT
                      LSAN_OPTIONS=exitcode=0)
+
+# add custom target to generate coverage report
+add_custom_target(clean-coverage
+                  COMMAND lcov
+                          -q
+                          -z
+                          -d
+                          .
+                  WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+                  COMMENT "Removing all gcda files"
+                  VERBATIM)
 
 # add custom target to generate coverage report
 add_custom_target(coverage
@@ -41,6 +64,8 @@ add_custom_target(coverage
                           make_directory
                           coverage
                   COMMAND lcov
+                          --gcov-tool
+                          ${GCOV}
                           -q
                           -d
                           .
@@ -52,27 +77,9 @@ add_custom_target(coverage
                           -r
                           coverage/cov.info
                           */usr/*
-                          -o
-                          coverage/cov.info
-                  COMMAND lcov
-                          -q
-                          -r
-                          coverage/cov.info
                           */ext/*
-                          -o
-                          coverage/cov.info
-                  COMMAND lcov
-                          -q
-                          -r
-                          coverage/cov.info
-                          */test/*
-                          -o
-                          coverage/cov.info
-                  COMMAND lcov
-                          -q
-                          -r
-                          coverage/cov.info
                           *_autogen/*
+                          */test/*
                           -o
                           coverage/cov.info
                   COMMAND lcov -l coverage/cov.info

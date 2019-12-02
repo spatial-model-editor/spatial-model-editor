@@ -28,11 +28,16 @@ class Symbolic {
   Symbolic() = default;
   explicit Symbolic(const std::vector<std::string> &expressions,
                     const std::vector<std::string> &variables = {},
-                    const std::map<std::string, double> &constants = {});
+                    const std::map<std::string, double> &constants = {},
+                    bool compile = true);
   explicit Symbolic(const std::string &expression,
                     const std::vector<std::string> &variables = {},
-                    const std::map<std::string, double> &constants = {})
-      : Symbolic(std::vector<std::string>{expression}, variables, constants) {}
+                    const std::map<std::string, double> &constants = {},
+                    bool compile = true)
+      : Symbolic(std::vector<std::string>{expression}, variables, constants,
+                 compile) {}
+  // compile expression (done by default in constructor)
+  void compile();
   // simplify given expression
   std::string simplify(std::size_t i = 0) const;
   // differentiate given expression wrt a variable

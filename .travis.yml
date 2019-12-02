@@ -1,13 +1,17 @@
 language: cpp
+# only build master branch (and pull requests), i.e. don't build pr branches
+branches:
+  only:
+    - master
 env:
   global:
     - QT5_INSTALL_PREFIX="/usr/local/qt5-static"
 
 matrix:
   include:
-    ################################################
-    # linux release build: gcc 9.1.0 on ubuntu 16.04
-    ################################################
+    ########################################################
+    # linux release build: qmake / g++ 9.2.1 on ubuntu 16.04
+    ########################################################
     - os: linux
       dist: xenial
       compiler: gcc
@@ -31,15 +35,17 @@ matrix:
         - "jwm &"
         - sleep 1
       script:
+        # export path for Qt5 static binaries
+        - export PATH=$QT5_INSTALL_PREFIX/bin:$PATH
         - bash ci-build.sh "release optimize_full"
         # run tests
         - ./build/test_unity/test_unity -a
         # check dependencies of resulting executable
         - cd build/app
         - ldd spatial-model-editor
-    ##############################################################
-    # osx release build: xcode 10.3, macOS 10.14 (target >= 10.12)
-    ##############################################################
+    ####################################################
+    # osx release build: qmake / xcode 10.3, macOS 10.14
+    ####################################################
     - os: osx
       osx_image: xcode10.3
       compiler: clang
@@ -48,6 +54,8 @@ matrix:
       install:
         - export MACOSX_DEPLOYMENT_TARGET=10.14
       script:
+        # export path for Qt5 static binaries
+        - export PATH=$QT5_INSTALL_PREFIX/bin:$PATH
         - bash ci-build.sh "release optimize_full"
         # run tests
         - ./build/test_unity/test_unity.app/Contents/MacOS/test_unity -a
@@ -64,114 +72,93 @@ matrix:
         - mkdir spatial-model-editor
         - cp spatial-model-editor.app/Contents/MacOS/spatial-model-editor spatial-model-editor/.
         - hdiutil create spatial-model-editor -fs HFS+ -srcfolder spatial-model-editor
-    #####################################################
-    # linux code quality build: sonarcloud.io, codecov.io
-    #####################################################
+    ########################################################################
+    # linux code quality build: cmake / clang 9 -> sonarcloud.io, codecov.io
+    ########################################################################
     - os: linux
       dist: xenial
-      compiler: gcc
+      compiler: clang
       env:
         - secure: "Muu56AqHMCZOpCG2d5Byeh6P++9xXKl7otulxdhZCfA1/yTAJM9M67B1ZHo7czEvLKdoVzqCz6aFMnsVvFHUHQDmAtmth/WzdfXZ7OTG7puDIeWRmYqQacpLeF6h9ws3sUr5Bjz9m0guhjbKN/6VIqoyuWLH/J0MwzJN5JKgWitQBeJ15GWjNJN20FLgiYW0vWtQ71dncM6VaLAyH6V/T8jLRNacmCjApAOsS2FuhnSfbL+rY5nRVXPtoy/muwRgpl2Bez8OV6z5nDCaBLxXLgNkC7Y/0OhfzY/t+6wZ4nuDZDJ/4Hn4AyycH1O1ldmfEjw9nHBdqG/0JW2NmvSLojp5NiCUSI1MDmcgqKv6VKdVV2cdn6b7s6YY/8p08pnm+uExHYRkiXPFNeYfoQF3ruYSzFOQXRA+VI3Rg0dMfs4cO+PXCWS/hIAHudG3vaDgOwOnLFaOPjJKGYidmbmu6u4jdvBNFuCkooSYmnO2JCe0LIGgJAwlOEfG51WYD9bewCx+w+NmB+Cow3E4G0DCHomz1XGUhp1DsmjGarU1kDf4PtFLQgLC88h7AQfJtg15mSV6xDcKV+nmuDNS+ifTpQTTSe/w6LqqzcE/EOLaVAtCSe4ACOORW2yBF7DPgUY47ZSkU4iwA7pAOAYDKs37fNHjK8s/TJhM++RZ+21oMME="
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
+            # latest cmake
+            - sourceline: 'deb https://apt.kitware.com/ubuntu/ xenial main'
+              key_url: 'https://apt.kitware.com/keys/kitware-archive-latest.asc'
+            # clang-9
+            - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-9 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+            # gcc-9
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
+            # qt5
+            - sourceline: 'ppa:beineri/opt-qt-5.12.3-xenial'
           packages:
-            - g++-9
+            - cmake
+            - clang-9
+            - lld-9
+            - llvm-9
+            - libstdc++-9-dev # need to update libstdc++ to get c++17 features
+            - qt512base
             - libxkbcommon-dev
+            - mesa-common-dev
+            - libglu1-mesa-dev
             - jwm
         sonarcloud:
           organization: "lkeegan-github"
       services: xvfb
       install:
-        - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 100
-        - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 100
-        - sudo update-alternatives --install /usr/bin/gcov gcov /usr/bin/gcov-9 100
-        - gcc --version
-        - g++ --version
-        - gcov --version
+        - eval "CC=clang-9 && CXX=clang++-9 && COV=llvm-cov-9"
+        - /usr/bin/cmake --version
+        - $CC --version
+        - $CXX --version
+        - $COV --version
         # start a window manager so the Qt GUI tests can have their focus set
         - "jwm &"
         - sleep 1
+        # remove static qt5 libs if present
+        - rm -rf $QT5_INSTALL_PREFIX
+        # set up qt5 environment
+        - source /opt/qt512/bin/qt512-env.sh
       script:
         # build tests & compile executable using sonar-source build wrapper
-        - bash ci-build.sh debug make "build-wrapper-linux-x86-64 --out-dir bw-output"
+        - mkdir build
+        - cd build
+        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -Dsbml_ROOT=`pwd`/../ext/libsbml -Dsymengine_ROOT=`pwd`/../ext/symengine -Ddunecopasi_ROOT=`pwd`/../ext/dune -Dfmt_ROOT=`pwd`/../ext/fmt -Dspdlog_DIR=`pwd`/../ext/spdlog/lib/spdlog/cmake -DCMAKE_PREFIX_PATH=`pwd`/../ext/llvm -Dmuparser_ROOT=`pwd`/../ext/muparser -DTIFF_ROOT=`pwd`/../ext/libtiff -DGMP_ROOT=`pwd`/../ext/gmp -Dexpat_ROOT=`pwd`/../ext/expat
+        - build-wrapper-linux-x86-64 --out-dir bw-output make -j2
         # run tests
         # make list of "leaks" from system libraries that LeakSanitizer should ignore
-        # NB: can also set ASAN_OPTIONS=fast_unwind_on_malloc=0
-        # to see more info about any memory leaks from linked libraries
         - echo "leak:libfontconfig.so" > suppr.txt
         - echo "leak:libX11.so" >> suppr.txt
-        # generate gcov test coverage data for sonar-source & codecov.io
-
+        # generate gcov test coverage data for codecov.io
+        - mkdir gcov
         # unit tests (i.e. not mainwindow)
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build/test_unity/test_unity -a "~[mainwindow]"
-        - cd build
-        - mkdir gcov-unit
-        - cd gcov-unit
-        - gcov -r -p ../src/*.gcno
-        # only want coverage data for src and inc folders
-        - mkdir tmp
-        - mv *.* tmp
-        - cd tmp
-        - mv ^#^#inc* ../
-        - mv ^#^#src* ../
-        - rm *
-        - cd ../
-        - rmdir tmp
-        - ls
-        - cd ../
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -a "~[mainwindow]" > /dev/null 2>&1
+        - $COV gcov -p src/CMakeFiles/mainwindow.dir/*.gcno > /dev/null
+        - mv *#spatial-model-editor#inc*.gcov *#spatial-model-editor#src*.gcov gcov/
+        - rm *.gcov src/CMakeFiles/mainwindow.dir/*.gcda
         # upload coverage report to codecov.io
-        - bash <(curl --connect-timeout 10 --retry 5 -v -s https://codecov.io/bash) -X gcov -F unit
+        - bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F unit
 
         # integration tests (i.e. mainwindow)
-        - rm src/*.gcda
-        - cd ..
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build/test_unity/test_unity -a "[mainwindow]"
-        - cd build
-        - mkdir gcov-integration
-        - cd gcov-integration
-        - gcov -r -p ../src/*.gcno
-        # only want coverage data for src and inc folders
-        - mkdir tmp
-        - mv *.* tmp
-        - cd tmp
-        - mv ^#^#inc* ../
-        - mv ^#^#src* ../
-        - rm *
-        - cd ../
-        - rmdir tmp
-        - ls
-        - cd ../
+        - rm gcov/*
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -a "[mainwindow]" > /dev/null 2>&1
+        - $COV gcov -p src/CMakeFiles/mainwindow.dir/*.gcno  > /dev/null
+        - mv *#spatial-model-editor#inc*.gcov *#spatial-model-editor#src*.gcov gcov/
+        - rm *.gcov
         # upload coverage report to codecov.io
-        - bash <(curl --connect-timeout 10 --retry 5 -v https://codecov.io/bash) -X gcov -f '!*/gcov-unit/*' -F integration
+        - bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F integration
 
-        # run all tests again for sonarsource
-        # inefficient but haven't found a way to combine previous coverage data such that sonarsource can read it
-        - rm src/*.gcda
+        # run unit tests again, then gcov again to get full coverage for sonarsource
+        - rm gcov/*
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -a "~[mainwindow]" > /dev/null 2>&1
+        - $COV gcov -p src/CMakeFiles/mainwindow.dir/*.gcno  > /dev/null
+        - mv *#spatial-model-editor#inc*.gcov *#spatial-model-editor#src*.gcov gcov/
+        - rm *.gcov
         - cd ..
-        - rm units.xml
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./build/test_unity/test_unity > /dev/null 2>&1
-        - cd build
-        - mkdir gcov
-        - cd gcov
-        - gcov -r -p ../src/*.gcno
-        # only want coverage data for src and inc folders
-        - mkdir tmp
-        - mv *.* tmp
-        - cd tmp
-        - mv ^#^#inc* ../
-        - mv ^#^#src* ../
-        - rm *
-        - cd ../
-        - rmdir tmp
-        - ls
-        - cd ../
-
         # get blame info for sonar-scanner
         - git fetch --unshallow
         # upload to sonar-scanner
-        - cd ../
         - sonar-scanner -Dsonar.login=$SONAR_LOGIN
 
 before_script:
@@ -179,17 +166,15 @@ before_script:
   # note absolute paths currently hard coded in QT binaries
   # to override this, add a qt.conf file (https://doc.qt.io/qt-5/qt-conf.html#overriding-paths)
   - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"
-  - sudo tar xzvf qt5-static-$TRAVIS_OS_NAME.tgz -C /
-  # export path for Qt5 binaries
-  - export PATH=$QT5_INSTALL_PREFIX/bin:$PATH
+  - sudo tar xf qt5-static-$TRAVIS_OS_NAME.tgz -C /
   # download pre-compiled static libSBML (and other) libraries
   - cd ext
   - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
-  - tar xzvf libsbml-static-$TRAVIS_OS_NAME.tgz
+  - tar xf libsbml-static-$TRAVIS_OS_NAME.tgz
   - wget "https://github.com/lkeegan/llvm-static/releases/latest/download/llvm-static-$TRAVIS_OS_NAME.tgz"
-  - tar xzvf llvm-static-$TRAVIS_OS_NAME.tgz
+  - tar xf llvm-static-$TRAVIS_OS_NAME.tgz
   - wget "https://github.com/lkeegan/dune-copasi-static/releases/latest/download/dune-copasi-static-$TRAVIS_OS_NAME.tgz"
-  - tar xzvf dune-copasi-static-$TRAVIS_OS_NAME.tgz
+  - tar xf dune-copasi-static-$TRAVIS_OS_NAME.tgz
   - ls */*
   - cd ..
 

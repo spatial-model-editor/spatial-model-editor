@@ -14,26 +14,6 @@
 #include "sbml_test_data/yeast_glycolysis.hpp"
 #include "utils.hpp"
 
-/*
-// NOTE:
-// getParametricObjectByDomainType was returning null when compiled with gcc9
-// todo: reproducible test case showing this failing...
-  for (unsigned i = 0; i < parageom->getNumParametricObjects(); ++i) {
-    const auto *po = parageom->getParametricObject(i);
-    std::string id = po->getId();
-    std::string dt = po->getDomainType();
-    spdlog::debug("{} ::   * {} -> {}", fn, po->getId(), po->getDomainType());
-    const auto *po2 = parageom->getParametricObject(id);
-    spdlog::debug("{} ::   get with ID ->null? {}", fn, po2 == nullptr);
-    spdlog::debug("{} ::   ->* {} -> {}", fn, po2->getId(),
-                  po2->getDomainType());
-    const auto *po3 = parageom->getParametricObjectByDomainType(dt);
-    spdlog::debug("{} ::   get with domainType ->null? {}", fn, po3 == nullptr);
-    spdlog::debug("{} ::   ->* {} -> {}", fn, po3->getId(),
-                  po3->getDomainType());
-  }
-*/
-
 static void createSBMLlvl2doc(const std::string &filename) {
   std::unique_ptr<libsbml::SBMLDocument> document(
       new libsbml::SBMLDocument(2, 4));
@@ -336,9 +316,6 @@ SCENARIO("SBML: import geometry from image", "[sbml][non-gui]") {
       REQUIRE(s.getCompartmentImage().size() == QSize(1, 1));
       REQUIRE(s.getCompartmentImage().pixel(0, 0) == col);
     }
-    THEN("image contains no membranes") {
-      // todo
-    }
   }
 }
 
@@ -359,6 +336,16 @@ SCENARIO("SBML: ABtoC.xml", "[sbml][non-gui]") {
         REQUIRE(s.species["comp"][0] == "A");
         REQUIRE(s.species["comp"][1] == "B");
         REQUIRE(s.species["comp"][2] == "C");
+      }
+      THEN("find species geometry") {
+        auto g = s.getSpeciesGeometry("A");
+        REQUIRE(g.modelUnits.getAmount().symbol ==
+                s.getModelUnits().getAmount().symbol);
+        REQUIRE(g.pixelWidth == dbl_approx(1.0));
+        REQUIRE(g.physicalOrigin.x() == dbl_approx(0.0));
+        REQUIRE(g.physicalOrigin.y() == dbl_approx(0.0));
+        REQUIRE(g.compartmentPoints.size() == 3149);
+        REQUIRE(g.compartmentImageSize == QSize(100, 100));
       }
     }
     WHEN("add / remove species") {
@@ -587,22 +574,84 @@ SCENARIO("SBML: yeast-glycolysis.xml", "[sbml][non-gui][inlining]") {
         REQUIRE(s.species.size() == 1);
         REQUIRE(s.species["compartment"].size() == 25);
       }
+      THEN("find functions") {
+        REQUIRE(s.functions.size() == 17);
+        REQUIRE(s.functions[0].toStdString() == "HK_kinetics");
+        auto f = s.getFunctionDefinition("HK_kinetics");
+        REQUIRE(f.id == "HK_kinetics");
+        REQUIRE(f.name == "HK kinetics");
+        REQUIRE(f.arguments.size() == 10);
+        REQUIRE(f.arguments[0] == "A");
+        REQUIRE(f.arguments[1] == "B");
+        REQUIRE(f.arguments[2] == "P");
+        REQUIRE(f.arguments[3] == "Q");
+        REQUIRE(f.expression ==
+                "Vmax * (A * B / (Kglc * Katp) - P * Q / (Kglc * Katp * Keq)) "
+                "/ ((1 + A / Kglc + P / Kg6p) * (1 + B / Katp + Q / Kadp))");
+        auto emptyF = s.getFunctionDefinition("non_existent_function");
+        REQUIRE(emptyF.id.empty() == true);
+        REQUIRE(emptyF.name.empty() == true);
+        REQUIRE(emptyF.arguments.empty() == true);
+        REQUIRE(emptyF.expression.empty() == true);
+      }
     }
   }
   GIVEN("inline fn: Glycogen_synthesis_kinetics") {
     std::string expr = "Glycogen_synthesis_kinetics(abc)";
     std::string inlined = "(abc)";
-    THEN("return inlined fn") { REQUIRE(s.inlineExpr(expr) == inlined); }
+    REQUIRE(s.inlineExpr(expr) == inlined);
   }
   GIVEN("inline fn: ATPase_0") {
     std::string expr = "ATPase_0( a,b)";
     std::string inlined = "(b * a)";
-    THEN("return inlined fn") { REQUIRE(s.inlineExpr(expr) == inlined); }
+    REQUIRE(s.inlineExpr(expr) == inlined);
   }
   GIVEN("inline fn: PDC_kinetics") {
     std::string expr = "PDC_kinetics(a,V,k,n)";
     std::string inlined = "(V * (a / k)^n / (1 + (a / k)^n))";
-    THEN("return inlined fn") { REQUIRE(s.inlineExpr(expr) == inlined); }
+    REQUIRE(s.inlineExpr(expr) == inlined);
+  }
+  GIVEN("edit function: PDC_kinetics") {
+    auto f = s.getFunctionDefinition("PDC_kinetics");
+    REQUIRE(f.arguments.size() == 4);
+    REQUIRE(f.arguments[0] == "A");
+    REQUIRE(f.arguments[1] == "Vmax");
+    REQUIRE(f.arguments[2] == "Kpyr");
+    REQUIRE(f.arguments[3] == "nH");
+    f.arguments.push_back("x");
+    f.name = "newName!";
+    f.expression = "(V*(x/k)^n/(1+(a/k)^n))";
+    s.setFunctionDefinition(f);
+    auto newF = s.getFunctionDefinition("PDC_kinetics");
+    REQUIRE(newF.name == "newName!");
+    REQUIRE(newF.arguments.size() == 5);
+    REQUIRE(newF.arguments[0] == "A");
+    REQUIRE(newF.arguments[1] == "Vmax");
+    REQUIRE(newF.arguments[2] == "Kpyr");
+    REQUIRE(newF.arguments[3] == "nH");
+    REQUIRE(newF.arguments[4] == "x");
+    REQUIRE(newF.expression == "V * (x / k)^n / (1 + (a / k)^n)");
+    std::string expr = "PDC_kinetics(a,V,k,n,Q)";
+    std::string inlined = "(V * (Q / k)^n / (1 + (a / k)^n))";
+    REQUIRE(s.inlineExpr(expr) == inlined);
+    REQUIRE(std::find(s.functions.cbegin(), s.functions.cend(),
+                      "PDC_kinetics") != s.functions.cend());
+    s.removeFunction("PDC_kinetics");
+    REQUIRE(std::find(s.functions.cbegin(), s.functions.cend(),
+                      "PDC_kinetics") == s.functions.cend());
+    REQUIRE(s.getFunctionDefinition("PDC_kinetics").name.empty());
+    // removing a non-existent function is no-op
+    REQUIRE(s.functions.size() == 16);
+    REQUIRE_NOTHROW(s.removeFunction("I don't exist"));
+    REQUIRE(s.functions.size() == 16);
+  }
+  GIVEN("add function") {
+    s.addFunction("func N~!me");
+    auto f = s.getFunctionDefinition("func_Nme");
+    REQUIRE(f.id == "func_Nme");
+    REQUIRE(f.name == "func N~!me");
+    REQUIRE(f.arguments.empty() == true);
+    REQUIRE(f.expression == "0");
   }
 }
 
