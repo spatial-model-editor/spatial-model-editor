@@ -24,6 +24,7 @@ class Geometry;
 class SampledFieldGeometry;
 class ParametricGeometry;
 class ParametricObject;
+class Reaction;
 class UnitDefinition;
 }  // namespace libsbml
 
@@ -33,21 +34,25 @@ class Mesh;
 
 namespace sbml {
 
-using NameDoublePair = std::pair<std::string, double>;
+class SbmlDocWrapper;
 
-class Reac {
- public:
+struct IdNameValue {
   std::string id;
   std::string name;
-  std::string fullExpression;
-  std::string inlinedExpression;
-  std::vector<NameDoublePair> products;
-  std::vector<NameDoublePair> reactants;
-  std::vector<NameDoublePair> constants;
+  double value;
 };
 
-class Func {
- public:
+struct Reac {
+  std::string id;
+  std::string name;
+  std::string locationId;
+  std::vector<IdNameValue> species;
+  std::vector<IdNameValue> constants;
+  std::string expression;
+  std::vector<std::string> compartments;
+};
+
+struct Func {
   std::string id;
   std::string name;
   std::string expression;
@@ -99,6 +104,13 @@ class SbmlDocWrapper {
   std::map<QString, std::size_t> mapMembraneToIndex;
   std::map<QString, QImage> mapMembraneToImage;
 
+  // map between pair of compartment Ids to corresponding Membrane Id
+  std::map<std::pair<std::string, std::string>, std::string>
+      mapCompartmentPairToMembrane;
+
+  // map from reaction Ids to Reac objects
+  std::map<QString, Reac> mapReactionIdToReac;
+
   // call before importing new SBML model
   void clearAllModelData();
   // call before importing new compartment geometry image
@@ -132,8 +144,6 @@ class SbmlDocWrapper {
   // (sampledField, spatialref, etc)
   void removeInitialAssignment(const std::string &speciesID);
 
-  // convert name to a unique alphanumeric SId
-  QString nameToSId(const QString &name) const;
   std::vector<std::string> getSpeciesReactions(const QString &speciesID) const;
 
   std::vector<QPointF> getInteriorPixelPoints() const;
@@ -145,6 +155,8 @@ class SbmlDocWrapper {
   void writeMeshParamsAnnotation(libsbml::ParametricGeometry *parageom);
   void writeGeometryMeshToSBML();
   void writeGeometryImageToSBML();
+
+  Reac getReactionFromSBML(const QString &reactionID) const;
 
   libsbml::UnitDefinition *getOrCreateUnitDef(const std::string &Id,
                                               const std::string &defaultId);
@@ -185,7 +197,6 @@ class SbmlDocWrapper {
   std::map<QString, QStringList> species;
   QString currentSpecies;
   std::map<QString, QStringList> reactions;
-  QString currentReaction;
   QStringList functions;
 
   // spatial information
@@ -205,6 +216,7 @@ class SbmlDocWrapper {
   void importGeometryFromImage(const QImage &img, bool updateSBML = true);
   void importGeometryFromImage(const QString &filename, bool updateSBML = true);
   QString getCompartmentID(QRgb colour) const;
+  QString getCompartmentName(const QString &compartmentID) const;
   QRgb getCompartmentColour(const QString &compartmentID) const;
   void setCompartmentColour(const QString &compartmentID, QRgb colour,
                             bool updateSBML = true);
@@ -276,6 +288,8 @@ class SbmlDocWrapper {
   std::map<std::string, double> getGlobalConstants() const;
   bool isSIdAvailable(const std::string &id) const;
   bool isSpatialIdAvailable(const std::string &id) const;
+  // convert name to a unique alphanumeric SId
+  QString nameToSId(const QString &name) const;
 
   double getPixelWidth() const;
   void setPixelWidth(double width);
@@ -285,9 +299,12 @@ class SbmlDocWrapper {
   std::string inlineExpr(const std::string &mathExpression) const;
 
   std::string getRateRule(const std::string &speciesID) const;
-  Reac getReaction(const QString &reactionID) const;
-  void removeReaction(const QString &speciesID,
-                      bool callUpdateReactionList = true);
+  const Reac &getReaction(const QString &reactionID) const;
+  void setReaction(const Reac &reac);
+  void setReactionLocation(const QString &reactionId,
+                           const QString &locationId);
+  void addReaction(const QString &reactionName, const QString &locationId);
+  void removeReaction(const QString &reactionID);
 
   Func getFunctionDefinition(const QString &functionID) const;
   void setFunctionDefinition(const Func &func);

@@ -183,12 +183,14 @@ std::vector<double> Mesh::getBoundaryWidths() const {
 
 double Mesh::getMembraneWidth(const std::string& membraneID) const {
   auto iter = std::find_if(boundaries.cbegin(), boundaries.cend(),
-                           [membraneID](const auto& boundary) {
-                             return boundary.membraneID == membraneID;
+                           [membraneID](const boundary::Boundary& b) {
+                             SPDLOG_CRITICAL("- {}", b.membraneID);
+                             return b.membraneID == membraneID;
                            });
   if (iter != boundaries.cend()) {
     return iter->getMembraneWidth();
   }
+  SPDLOG_WARN("Boundary for Membrane {} not found", membraneID);
   return 0;
 }
 

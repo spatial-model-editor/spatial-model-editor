@@ -3,6 +3,7 @@
 
 #define CATCH_CONFIG_RUNNER
 
+#include "main.cpp"
 #include "test_dialoganalytic.cpp"
 #include "test_dialogconcentrationimage.cpp"
 #include "test_dialogimagesize.cpp"
@@ -19,4 +20,3 @@
 #include "test_symbolic.cpp"
 #include "test_units.cpp"
 #include "test_utils.cpp"
-#include "main.cpp"

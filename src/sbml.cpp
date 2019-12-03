@@ -209,7 +209,6 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
 void SbmlDocWrapper::importSpatialData() {
   importGeometryDimensions();
   importSampledFieldGeometry();
-  importParametricGeometry();
 }
 
 void SbmlDocWrapper::importGeometryDimensions() {
@@ -315,7 +314,6 @@ void SbmlDocWrapper::importSampledFieldGeometry() {
 }
 
 void SbmlDocWrapper::importParametricGeometry() {
-  // get sampled field geometry
   parageom = nullptr;
   for (unsigned i = 0; i < geom->getNumGeometryDefinitions(); ++i) {
     if (auto *def = geom->getGeometryDefinition(i);
@@ -503,6 +501,9 @@ void SbmlDocWrapper::initModelData() {
   } else {
     writeDefaultGeometryToSBML();
   }
+  updateMembraneList();
+  updateReactionList();
+  importParametricGeometry();
 }
 
 void SbmlDocWrapper::exportSBMLFile(const std::string &filename) {
@@ -687,6 +688,7 @@ void SbmlDocWrapper::updateMembraneList() {
   vecMembraneColourPairs.clear();
   mapMembraneToIndex.clear();
   mapMembraneToImage.clear();
+  mapCompartmentPairToMembrane.clear();
   // clear vector of Membrane objects
   membraneVec.clear();
   // iterate over pairs of compartments
@@ -706,6 +708,13 @@ void SbmlDocWrapper::updateMembraneList() {
           int iB = colA < colB ? j : i;
           QString id = compartments[iA] + "_" + compartments[iB];
           QString name = compartmentNames[iA] + " <-> " + compartmentNames[iB];
+          // map pair of compartment Ids to membrane Id
+          mapCompartmentPairToMembrane[{compartments[iA].toStdString(),
+                                        compartments[iB].toStdString()}] =
+              id.toStdString();
+          mapCompartmentPairToMembrane[{compartments[iB].toStdString(),
+                                        compartments[iA].toStdString()}] =
+              id.toStdString();
           membranes.push_back(id);
           membraneNames.push_back(name);
           // also add the colour pairs for use by the mesh for membranes
@@ -738,123 +747,22 @@ void SbmlDocWrapper::updateMembraneList() {
 
 void SbmlDocWrapper::updateReactionList() {
   reactions.clear();
+  mapReactionIdToReac.clear();
+  if (!hasValidGeometry) {
+    return;
+  }
   for (const auto &container : {compartments, membranes}) {
     for (const auto &comp : container) {
       reactions[comp] = QStringList();
     }
   }
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
-    auto *reac = model->getReaction(i);
-    auto *srp = static_cast<libsbml::SpatialReactionPlugin *>(
-        model->getReaction(i)->getPlugin("spatial"));
-    if (reac->getName().empty()) {
-      SPDLOG_INFO("Reaction with Id {} has no Name, using Id", reac->getId());
-      reac->setName(reac->getId());
-    }
-    QString reacID = reac->getId().c_str();
-    // construct the set of compartments where reaction takes place
-    std::set<std::string> comps;
-    if (reac->isSetCompartment()) {
-      comps.insert(reac->getCompartment());
-    }
-    for (unsigned int k = 0; k < reac->getNumProducts(); ++k) {
-      const std::string &specID = reac->getProduct(k)->getSpecies();
-      comps.insert(model->getSpecies(specID)->getCompartment());
-    }
-    for (unsigned int k = 0; k < reac->getNumReactants(); ++k) {
-      const std::string &specID = reac->getReactant(k)->getSpecies();
-      comps.insert(model->getSpecies(specID)->getCompartment());
-    }
-    for (unsigned int k = 0; k < reac->getNumModifiers(); ++k) {
-      const std::string &specID = reac->getModifier(k)->getSpecies();
-      comps.insert(model->getSpecies(specID)->getCompartment());
-    }
-    // single compartment
-    if (comps.size() == 1) {
-      QString comp = comps.begin()->c_str();
-      reactions[comp].push_back(reacID);
-      // if reaction `isLocal` is not set, then the reaction rate is for
-      // amount, so here we divide the reaction formula by the compartment
-      // volume to convert it to concentration, and set `isLocal` to true
-      if (!srp->isSetIsLocal()) {
-        SPDLOG_INFO("Reaction {} takes place in compartment {}", reac->getId(),
-                    comp.toStdString());
-        SPDLOG_INFO(
-            "  - isLocal has not been set, so dividing reaction rate by "
-            "compartment volume:");
-        auto expr = ASTtoString(reac->getKineticLaw()->getMath());
-        SPDLOG_INFO("  - {}", expr);
-        auto newExpr = symbolic::divide(expr, comp.toStdString());
-        SPDLOG_INFO("  --> {}", newExpr);
-        std::unique_ptr<libsbml::ASTNode> argAST(
-            libsbml::SBML_parseL3Formula(newExpr.c_str()));
-        if (argAST != nullptr) {
-          reac->getKineticLaw()->setMath(argAST.get());
-          SPDLOG_INFO("  - new math: {}",
-                      ASTtoString(reac->getKineticLaw()->getMath()));
-          SPDLOG_INFO("  - setting isLocal to true");
-          srp->setIsLocal(true);
-        } else {
-          SPDLOG_ERROR("  - libSBML failed to parse expression");
-        }
-        if (!reac->isSetCompartment()) {
-          reac->setCompartment(comp.toStdString());
-        }
-      }
-    } else if (comps.size() == 2) {
-      // two compartments: takes place on the membrane between them
-      QString compA = comps.cbegin()->c_str();
-      QString compB = comps.crbegin()->c_str();
-      // membrane name is compA-compB, ordered by colour
-      QRgb colA = mapCompartmentToColour.at(compA);
-      QRgb colB = mapCompartmentToColour.at(compB);
-      // check that compartments map to colours - if not do nothing
-      if (colA == 0 || colB == 0) {
-        SPDLOG_WARN("Reaction {} compartments not mapped to colours",
-                    reac->getId());
-        break;
-      }
-      QString membraneID = compA + "_" + compB;
-      if (colA > colB) {
-        membraneID = compB + "_" + compA;
-      }
-      reactions[membraneID].push_back(reac->getId().c_str());
-      if (!srp->isSetIsLocal()) {
-        SPDLOG_INFO("Reaction {} takes place on the {} membrane", reac->getId(),
-                    membraneID.toStdString());
-        SPDLOG_INFO(
-            "  - isLocal has not been set, so dividing reaction rate by "
-            "membrane area:");
-        auto expr = ASTtoString(reac->getKineticLaw()->getMath());
-        auto nPixels =
-            membranePairs.at(mapMembraneToIndex.at(membraneID)).size();
-        SPDLOG_INFO("  - membrane has {} pixels", nPixels);
-        // model has unit height in z-direction
-        double membraneArea = pixelWidth * 1.0 * static_cast<double>(nPixels);
-        SPDLOG_INFO("  - pixelWidth {}", pixelWidth);
-        SPDLOG_INFO("  - membrane Area {}", membraneArea);
-        auto newExpr = symbolic::divide(expr, std::to_string(membraneArea));
-        SPDLOG_INFO("  --> {}", newExpr);
-        std::unique_ptr<libsbml::ASTNode> argAST(
-            libsbml::SBML_parseL3Formula(newExpr.c_str()));
-        if (argAST != nullptr) {
-          reac->getKineticLaw()->setMath(argAST.get());
-          SPDLOG_INFO("  - new math: {}",
-                      ASTtoString(reac->getKineticLaw()->getMath()));
-          SPDLOG_INFO("  - setting isLocal to true");
-          srp->setIsLocal(true);
-        } else {
-          SPDLOG_ERROR("  - libSBML failed to parse expression");
-        }
-        if (!reac->isSetCompartment()) {
-          reac->setCompartment(compA.toStdString());
-        }
-      }
-    } else {
-      // invalid reaction: number of compartments for reaction must be 1 or 2
-      SPDLOG_WARN("Reaction involves {} compartments - not supported",
-                  comps.size());
-    }
+    QString reacId = model->getReaction(i)->getId().c_str();
+    SPDLOG_DEBUG("Adding reaction {}", reacId.toStdString());
+    mapReactionIdToReac[reacId] = getReactionFromSBML(reacId);
+    SPDLOG_DEBUG(" - location {}", mapReactionIdToReac.at(reacId).locationId);
+    reactions.at(mapReactionIdToReac.at(reacId).locationId.c_str())
+        .push_back(reacId);
   }
 }
 
@@ -1110,22 +1018,20 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   for (const auto &speciesID : species.at(compartmentID)) {
     createField(speciesID, compartmentID);
   }
-  // update list of possible inter-compartment membranes
-  updateMembraneList();
-  // update list of reactions for each compartment/membrane
-  updateReactionList();
-
   // geometry only valid if all compartments have a colour
   hasValidGeometry = std::none_of(
       compartments.cbegin(), compartments.cend(),
       [this](const auto &c) { return getCompartmentColour(c) == 0; });
 
-  // update mesh
-  updateMesh();
-
-  // update all compartment mappings in SBML
-  // (don't want to do this when importing an SBML file)
   if (updateSBML) {
+    // update list of possible inter-compartment membranes
+    updateMembraneList();
+    // update list of reactions for each compartment/membrane
+    updateReactionList();
+    // update mesh
+    updateMesh();
+    // update all compartment mappings in SBML
+    // (don't want to do this when importing an SBML file)
     for (unsigned int i = 0; i < model->getNumCompartments(); ++i) {
       const std::string &compID = model->getCompartment(i)->getId();
       // set SampledValue (aka colour) of SampledFieldVolume
@@ -1667,7 +1573,7 @@ QString SbmlDocWrapper::nameToSId(const QString &name) const {
     }
   }
   // first char must be a letter or underscore
-  if (!std::isalpha(id.front())) {
+  if (!std::isalpha(id.front(), std::locale::classic())) {
     id = "_" + id;
   }
   SPDLOG_DEBUG("  -> '{}'", id);
@@ -1705,33 +1611,24 @@ void SbmlDocWrapper::addSpecies(const QString &speciesName,
   setInitialConcentration(speciesID, 0.0);
 }
 
-std::vector<std::string> SbmlDocWrapper::getSpeciesReactions(
-    const QString &speciesID) const {
-  std::vector<std::string> reactionIds;
-  std::string sId = speciesID.toStdString();
-  for (unsigned i = 0; i < model->getNumReactions(); ++i) {
-    const auto *reac = model->getReaction(i);
-    bool containsSpecies = false;
-    for (unsigned j = 0; j < reac->getNumProducts(); ++j) {
-      if (reac->getProduct(j)->getSpecies() == sId) {
-        containsSpecies = true;
-      }
-    }
-    for (unsigned j = 0; j < reac->getNumReactants(); ++j) {
-      if (reac->getReactant(j)->getSpecies() == sId) {
-        containsSpecies = true;
-      }
-    }
-    for (unsigned j = 0; j < reac->getNumModifiers(); ++j) {
-      if (reac->getModifier(j)->getSpecies() == sId) {
-        containsSpecies = true;
-      }
-    }
-    if (containsSpecies) {
-      reactionIds.push_back(reac->getId());
+static bool reactionInvolvesSpecies(const libsbml::Reaction *reac,
+                                    const std::string &speciesId) {
+  for (unsigned i = 0; i < reac->getNumProducts(); ++i) {
+    if (reac->getProduct(i)->getSpecies() == speciesId) {
+      return true;
     }
   }
-  return reactionIds;
+  for (unsigned i = 0; i < reac->getNumReactants(); ++i) {
+    if (reac->getReactant(i)->getSpecies() == speciesId) {
+      return true;
+    }
+  }
+  for (unsigned i = 0; i < reac->getNumModifiers(); ++i) {
+    if (reac->getModifier(i)->getSpecies() == speciesId) {
+      return true;
+    }
+  }
+  return false;
 }
 
 void SbmlDocWrapper::removeSpecies(const QString &speciesID) {
@@ -1744,27 +1641,28 @@ void SbmlDocWrapper::removeSpecies(const QString &speciesID) {
   }
   // remove species from species list
   species.at(spec->getCompartment().c_str()).removeOne(speciesID);
-  // remove any reactions that depend on it
-  for (const auto &reacID : getSpeciesReactions(speciesID)) {
-    removeReaction(reacID.c_str(), false);
+  // also remove any reactions that depend on it
+  for (unsigned i = 0; i < model->getNumReactions(); ++i) {
+    const auto *reac = model->getReaction(i);
+    if (reactionInvolvesSpecies(reac, sId)) {
+      SPDLOG_INFO("  - removing reaction {}", reac->getId());
+      removeReaction(reac->getId().c_str());
+    }
   }
-  updateReactionList();
   SPDLOG_INFO("  - species {} removed", spec->getId());
 }
 
-void SbmlDocWrapper::removeReaction(const QString &reactionID,
-                                    bool callUpdateReactionList) {
+void SbmlDocWrapper::removeReaction(const QString &reactionID) {
   std::string sId = reactionID.toStdString();
   SPDLOG_INFO("Removing reaction {}", sId);
   std::unique_ptr<libsbml::Reaction> reac(model->removeReaction(sId));
   if (reac == nullptr) {
-    SPDLOG_WARN("  - reaction {} not found", sId);
+    SPDLOG_WARN("  - reaction {} not found in SBML", sId);
     return;
   }
-  if (callUpdateReactionList) {
-    updateReactionList();
+  for (auto &location : reactions) {
+    location.second.removeOne(reactionID);
   }
-  SPDLOG_INFO("  - reaction {} removed", reac->getId());
 }
 
 void SbmlDocWrapper::setSpeciesName(const QString &speciesID,
@@ -1921,6 +1819,10 @@ void SbmlDocWrapper::setCompartmentSizeFromImage(
               modelUnits.getVolume().name.toStdString());
 }
 
+QString SbmlDocWrapper::getCompartmentName(const QString &compartmentID) const {
+  return model->getCompartment(compartmentID.toStdString())->getName().c_str();
+}
+
 std::string SbmlDocWrapper::inlineExpr(
     const std::string &mathExpression) const {
   std::string inlined;
@@ -1998,8 +1900,8 @@ std::string SbmlDocWrapper::inlineAssignments(
     while (start != std::string::npos) {
       auto end = expr.find_first_of(delimeters, start);
       std::string name = expr.substr(start, end - start);
-      const auto *assignment = model->getAssignmentRule(name);
-      if (assignment != nullptr) {
+      if (const auto *assignment = model->getAssignmentRule(name);
+          assignment != nullptr) {
         // replace name with inlined body of Assignment rule
         const std::string &assignmentBody =
             model->getAssignmentRule(name)->getFormula();
@@ -2017,44 +1919,257 @@ std::string SbmlDocWrapper::inlineAssignments(
   return expr;
 }
 
-Reac SbmlDocWrapper::getReaction(const QString &reactionID) const {
+Reac SbmlDocWrapper::getReactionFromSBML(const QString &reactionID) const {
   Reac r;
-  const auto *reac = model->getReaction(reactionID.toStdString());
+  auto *reac = model->getReaction(reactionID.toStdString());
   if (reac == nullptr) {
-    SPDLOG_WARN("reaction {} does not exist", reactionID.toStdString());
-    return {};
+    SPDLOG_WARN("Reaction {} not found", reactionID.toStdString());
+    return r;
   }
-  const auto *kin = reac->getKineticLaw();
-  if (kin == nullptr) {
-    SPDLOG_WARN("reaction {} has no KineticLaw", reactionID.toStdString());
-    return {};
-  }
+  SPDLOG_INFO("Importing reaction {}", reac->getId());
   r.id = reac->getId();
+  if (reac->getName().empty()) {
+    SPDLOG_INFO("Reaction with Id {0} has no Name, setting Name = {0}",
+                reac->getId());
+    reac->setName(reac->getId());
+  }
   r.name = reac->getName();
-  r.fullExpression = kin->getFormula();
-  r.inlinedExpression = inlineExpr(kin->getFormula());
-  r.products.reserve(reac->getNumProducts());
-  for (unsigned k = 0; k < reac->getNumProducts(); ++k) {
+  auto *srp =
+      static_cast<libsbml::SpatialReactionPlugin *>(reac->getPlugin("spatial"));
+  // construct the set of compartments where reaction takes place
+  std::set<std::string> comps;
+  if (reac->isSetCompartment()) {
+    comps.insert(reac->getCompartment());
+  }
+  r.species.reserve(reac->getNumProducts() + reac->getNumReactants());
+  for (unsigned int k = 0; k < reac->getNumProducts(); ++k) {
     const auto *s = reac->getProduct(k);
-    r.products.push_back({s->getSpecies(), s->getStoichiometry()});
+    const auto &sId = s->getSpecies();
+    const auto &sName = model->getSpecies(sId)->getName();
+    comps.insert(model->getSpecies(sId)->getCompartment());
+    r.species.push_back({sId, sName, s->getStoichiometry()});
+    SPDLOG_INFO("  - adding product {} x {}", s->getStoichiometry(), sId);
+    SPDLOG_INFO("    -> {} stoich coeff: {}", r.species.back().id,
+                r.species.back().value);
   }
-  r.reactants.reserve(reac->getNumReactants());
-  for (unsigned k = 0; k < reac->getNumReactants(); ++k) {
+  for (unsigned int k = 0; k < reac->getNumReactants(); ++k) {
     const auto *s = reac->getReactant(k);
-    r.reactants.push_back({s->getSpecies(), s->getStoichiometry()});
-  }
-
-  // todo: modifiers??
-
-  // add all local parameters that are not
-  // replaced by an assignment rule
-  for (unsigned k = 0; k < kin->getNumLocalParameters(); ++k) {
-    const auto *param = kin->getLocalParameter(k);
-    if (model->getAssignmentRule(param->getId()) == nullptr) {
-      r.constants.push_back({param->getId(), param->getValue()});
+    const auto &sId = s->getSpecies();
+    const auto &sName = model->getSpecies(sId)->getName();
+    comps.insert(model->getSpecies(sId)->getCompartment());
+    SPDLOG_INFO("  - adding reactant {} x {}", s->getStoichiometry(), sId);
+    if (auto iter =
+            std::find_if(r.species.begin(), r.species.end(),
+                         [sId](const IdNameValue &x) { return x.id == sId; });
+        iter != r.species.end()) {
+      iter->value -= s->getStoichiometry();
+      SPDLOG_INFO("    -> {} stoich coeff: {}", iter->id, iter->value);
+    } else {
+      r.species.push_back({sId, sName, -(s->getStoichiometry())});
+      SPDLOG_INFO("    -> {} stoich coeff {}", r.species.back().id,
+                  r.species.back().value);
     }
   }
+  for (unsigned int k = 0; k < reac->getNumModifiers(); ++k) {
+    const std::string &sId = reac->getModifier(k)->getSpecies();
+    comps.insert(model->getSpecies(sId)->getCompartment());
+  }
+  auto *kin = reac->getKineticLaw();
+  if (kin == nullptr) {
+    kin = reac->createKineticLaw();
+  }
+  // single compartment
+  if (comps.size() == 1) {
+    std::string compId = *comps.begin();
+    SPDLOG_INFO("  - compartment: {}", compId);
+    r.locationId = compId;
+    r.compartments = {compId};
+    // if reaction `isLocal` is not set, then the reaction rate is for
+    // amount, so here we divide the reaction formula by the compartment
+    // volume to convert it to concentration, and set `isLocal` to true
+    if (!srp->isSetIsLocal()) {
+      SPDLOG_INFO("Reaction {} takes place in compartment {}", reac->getId(),
+                  compId);
+      SPDLOG_INFO(
+          "  - isLocal has not been set, so dividing reaction rate by "
+          "compartment volume:");
+      auto expr = ASTtoString(kin->getMath());
+      SPDLOG_INFO("  - {}", expr);
+      auto newExpr = symbolic::divide(expr, compId);
+      SPDLOG_INFO("  --> {}", newExpr);
+      std::unique_ptr<libsbml::ASTNode> argAST(
+          libsbml::SBML_parseL3Formula(newExpr.c_str()));
+      if (argAST != nullptr) {
+        reac->getKineticLaw()->setMath(argAST.get());
+        SPDLOG_INFO("  - new math: {}",
+                    ASTtoString(reac->getKineticLaw()->getMath()));
+        SPDLOG_INFO("  - setting isLocal to true");
+        srp->setIsLocal(true);
+      } else {
+        SPDLOG_ERROR("  - libSBML failed to parse expression");
+      }
+    }
+    if (!reac->isSetCompartment()) {
+      reac->setCompartment(compId);
+    }
+  } else if (comps.size() == 2) {
+    // two compartments: takes place on the membrane between them
+    QString compA = comps.cbegin()->c_str();
+    QString compB = comps.crbegin()->c_str();
+    SPDLOG_INFO("  - compartments: {}, {}", compA.toStdString(),
+                compB.toStdString());
+    r.compartments = {compA.toStdString(), compB.toStdString()};
+    if (auto iter = mapCompartmentPairToMembrane.find(
+            {compA.toStdString(), compB.toStdString()});
+        iter != mapCompartmentPairToMembrane.end()) {
+      r.locationId = iter->second;
+      SPDLOG_INFO("    -> membrane: {}", r.locationId);
+    } else {
+      SPDLOG_ERROR("No membrane between compartments {}, {} - reaction invalid",
+                   compA.toStdString(), compB.toStdString());
+      r.locationId = compA.toStdString();
+    }
+    if (!srp->isSetIsLocal()) {
+      SPDLOG_INFO("Reaction {} takes place on the {} membrane", reac->getId(),
+                  r.locationId);
+      SPDLOG_INFO("  - isLocal has not been set, so setting it");
+      SPDLOG_WARN(
+          "  - should warn user that units of membrane reaction have "
+          "changed, "
+          "and that their reaction rate should be adjusted");
+      srp->setIsLocal(true);
+    }
+    if (!reac->isSetCompartment()) {
+      reac->setCompartment(compA.toStdString());
+    }
+  } else {
+    SPDLOG_ERROR(
+        "Reaction involves species from {} compartments - not supported",
+        comps.size());
+    return r;
+  }
+  r.expression = kin->getFormula();
+  // get all local parameters that are not
+  // replaced by an assignment rule
+  for (unsigned k = 0; k < kin->getNumLocalParameters(); ++k) {
+    auto *param = kin->getLocalParameter(k);
+    if (param->getName().empty()) {
+      SPDLOG_INFO("Parameter with Id {0} has no Name, setting Name = {0}",
+                  param->getId());
+      param->setName(param->getId());
+    }
+    r.constants.push_back(
+        {param->getId(), param->getName(), param->getValue()});
+  }
   return r;
+}
+
+const Reac &SbmlDocWrapper::getReaction(const QString &reactionID) const {
+  return mapReactionIdToReac.at(reactionID);
+}
+
+void SbmlDocWrapper::setReactionLocation(const QString &reactionId,
+                                         const QString &locationId) {
+  // remove reac from current location:
+  for (auto &location : reactions) {
+    location.second.removeOne(reactionId);
+  }
+  // add reac to new location:
+  reactions.at(locationId).push_back(reactionId);
+  // update compartments list in reaction
+  auto &r = mapReactionIdToReac.at(reactionId);
+  r.locationId = locationId.toStdString();
+  if (auto iter =
+          std::find_if(membraneVec.cbegin(), membraneVec.cend(),
+                       [id = r.locationId](const geometry::Membrane &m) {
+                         return m.membraneID == id;
+                       });
+      iter != membraneVec.cend()) {
+    SPDLOG_DEBUG("membrane ID: {}", iter->membraneID);
+    // location is a membrane
+    r.compartments = {iter->compA->compartmentID, iter->compB->compartmentID};
+  } else {
+    // location is a compartment
+    r.compartments = {locationId.toStdString()};
+  }
+  // clear rate equation, params, species
+  r.expression.clear();
+  r.species.clear();
+  r.constants.clear();
+}
+
+void SbmlDocWrapper::setReaction(const Reac &reac) {
+  SPDLOG_INFO("Setting reaction");
+  mapReactionIdToReac[reac.id.c_str()] = reac;
+  SPDLOG_INFO("  - Id: {}", reac.id);
+  auto *r = model->getReaction(reac.id);
+  SPDLOG_INFO("  - Name: {}", reac.name);
+  r->setName(reac.name);
+  if (auto iter =
+          std::find_if(membraneVec.cbegin(), membraneVec.cend(),
+                       [id = reac.locationId](const geometry::Membrane &m) {
+                         return m.membraneID == id;
+                       });
+      iter != membraneVec.cend()) {
+    // hack for SBML: if a membrane reac only involves species from one
+    // compartment, we set the reaction compartment to the other compartment
+
+    // todo: check for case of no species in reaction
+    if (auto firstSpeciesComp =
+            getSpeciesCompartment(reac.species.front().id.c_str())
+                .toStdString();
+        firstSpeciesComp != iter->compA->compartmentID) {
+      r->setCompartment(iter->compA->compartmentID);
+    } else {
+      r->setCompartment(iter->compB->compartmentID);
+    }
+  } else {
+    // location is a compartment
+    r->setCompartment(reac.locationId);
+  }
+  SPDLOG_INFO("  - Compartment: {}", r->getCompartment());
+  r->getListOfProducts()->clear();
+  r->getListOfReactants()->clear();
+  r->getListOfModifiers()->clear();
+  // todo: add modifiers here
+  for (const auto &[id, name, stoich] : reac.species) {
+    if (stoich > 0) {
+      SPDLOG_INFO("  - product: {} x {}", stoich, id);
+      r->addProduct(model->getSpecies(id), stoich);
+    } else if (stoich < 0) {
+      SPDLOG_INFO("  - reactant: {} x {}", -stoich, id);
+      r->addReactant(model->getSpecies(id), -stoich);
+    }
+  }
+  auto *kin = r->createKineticLaw();
+  std::unique_ptr<libsbml::ASTNode> exprAST(
+      libsbml::SBML_parseL3Formula(reac.expression.c_str()));
+  kin->setMath(exprAST.get());
+  for (const auto &[id, name, value] : reac.constants) {
+    auto *param = kin->createLocalParameter();
+    param->setId(id);
+    param->setName(name);
+    param->setValue(value);
+    SPDLOG_INFO("  - param: {} = {}", param->getId(), param->getValue());
+  }
+}
+
+void SbmlDocWrapper::addReaction(const QString &reactionName,
+                                 const QString &locationId) {
+  auto reactionId = nameToSId(reactionName);
+  SPDLOG_INFO("Adding reaction");
+  SPDLOG_INFO("  - Id: {}", reactionId.toStdString());
+  SPDLOG_INFO("  - Name: {}", reactionName.toStdString());
+  SPDLOG_INFO("  - Compartment: {}", locationId.toStdString());
+  auto *reac = model->createReaction();
+  reac->setId(reactionId.toStdString());
+  reac->setName(reactionName.toStdString());
+  reac->setCompartment(locationId.toStdString());
+  auto *srp =
+      static_cast<libsbml::SpatialReactionPlugin *>(reac->getPlugin("spatial"));
+  srp->setIsLocal(true);
+  reactions.at(locationId).push_back(reactionId);
+  mapReactionIdToReac[reactionId] = getReactionFromSBML(reactionId);
 }
 
 std::string SbmlDocWrapper::getRateRule(const std::string &speciesID) const {

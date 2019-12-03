@@ -6,7 +6,6 @@
 #include <gmp.h>
 #include <llvm/Config/llvm-config.h>
 #include <muParserDef.h>
-#include <qcustomplot.h>
 #include <sbml/common/libsbml-version.h>
 #include <spdlog/version.h>
 #include <symengine/symengine_config.h>
@@ -47,8 +46,7 @@ DialogAbout::DialogAbout(QWidget* parent)
                        "http://sbml.org/Software/libSBML",
                        libsbml::getLibSBMLDottedVersion()));
   libraries.append(dep("Qt", "https://qt.io", QT_VERSION_STR));
-  libraries.append(dep("QCustomPlot", "https://www.qcustomplot.com",
-                       QCUSTOMPLOT_VERSION_STR));
+  libraries.append(dep("QCustomPlot", "https://www.qcustomplot.com", "2.0.1"));
   libraries.append(dep("spdlog", "https://github.com/gabime/spdlog",
                        SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH));
   libraries.append(dep("fmt", "https://github.com/fmtlib/fmt",

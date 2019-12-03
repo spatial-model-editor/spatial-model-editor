@@ -138,11 +138,30 @@ class MainWindow : public QMainWindow {
   void btnChangeSpeciesColour_clicked();
 
   // reactions
+
+  sbml::Reac currentReac;
+  int currentReacLocIndex;
+
   void listReactions_currentItemChanged(QTreeWidgetItem *current,
                                         QTreeWidgetItem *previous);
   void btnAddReaction_clicked();
 
   void btnRemoveReaction_clicked();
+
+  void cmbReactionLocation_activated(int index);
+
+  void listReactionParams_currentCellChanged(int currentRow, int currentColumn,
+                                             int previousRow,
+                                             int previousColumn);
+
+  void btnAddReactionParam_clicked();
+
+  void btnRemoveReactionParam_clicked();
+
+  void txtReactionRate_mathChanged(const QString &math, bool valid,
+                                   const QString &errorMessage);
+
+  void btnSaveReactionChanges_clicked();
 
   // functions
   void listFunctions_currentRowChanged(int row);

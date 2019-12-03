@@ -13,11 +13,15 @@
 #pragma GCC diagnostic ignored "-Wformat-nonliteral"
 #pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
 #pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#pragma GCC diagnostic ignored "-Wdeprecated-copy"
 #pragma GCC diagnostic ignored "-Woverloaded-virtual"
 #pragma GCC diagnostic ignored "-Wpessimizing-move"
 #pragma GCC diagnostic ignored "-Wdouble-promotion"
+#if (__GNUC__ > 6)
 #pragma GCC diagnostic ignored "-Wsubobject-linkage"
+#endif
+#if (__GNUC__ > 8)
+#pragma GCC diagnostic ignored "-Wdeprecated-copy"
+#endif
 #endif
 
 #include <config.h>

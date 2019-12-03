@@ -1,18 +1,14 @@
-#include <qcustomplot.h>
 #include <sbml/SBMLTypes.h>
 
 #include <QtTest>
 
 #include "catch_wrapper.hpp"
-#include "logger.hpp"
 #include "mainwindow.hpp"
 #include "mainwindow_test_utils.hpp"
 #include "qt_test_utils.hpp"
 #include "sbml_test_data/ABtoC.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
 #include "utils.hpp"
-
-constexpr int key_delay = 5;
 
 static void saveTempSBMLFile(MainWindow *w, const UIPointers &ui,
                              ModalWidgetTimer &mwt,
@@ -462,6 +458,69 @@ SCENARIO("Mainwindow: load built-in SBML model, add/remove functions",
   QTest::mouseClick(ui.btnRemoveFunction, Qt::LeftButton, {}, {}, key_delay);
   REQUIRE(ui.listFunctions->count() == 0);
   REQUIRE(ui.listFunctionParams->count() == 0);
+}
+
+SCENARIO("Mainwindow: load built-in SBML model, add/remove reactions",
+         "[gui][mainwindow]") {
+  MainWindow w;
+  ModalWidgetTimer mwt;
+  w.show();
+  UIPointers ui(&w);
+  CAPTURE(QTest::qWaitForWindowExposed(&w));
+  REQUIRE(ui.listCompartments->count() == 0);
+  // very-simple-model
+  QTest::keyClick(&w, Qt::Key_F, Qt::AltModifier, key_delay);
+  QTest::keyClick(ui.menuFile, Qt::Key_E, Qt::NoModifier, key_delay);
+  QTest::keyClick(ui.menuOpen_example_SBML_file, Qt::Key_V, Qt::NoModifier,
+                  key_delay);
+  // display reactions tab
+  for (std::size_t i = 0; i < 3; ++i) {
+    QTest::keyPress(w.windowHandle(), Qt::Key_Tab, Qt::ControlModifier,
+                    key_delay);
+  }
+  REQUIRE(ui.listReactions->topLevelItemCount() == 5);
+  REQUIRE(ui.listReactions->topLevelItem(0)->childCount() == 0);
+  REQUIRE(ui.listReactions->topLevelItem(1)->childCount() == 0);
+  REQUIRE(ui.listReactions->topLevelItem(2)->childCount() == 1);
+  REQUIRE(ui.listReactions->topLevelItem(3)->childCount() == 2);
+  REQUIRE(ui.listReactions->topLevelItem(4)->childCount() == 2);
+  REQUIRE(ui.btnSaveReactionChanges->isEnabled() == true);
+  // add reaction
+  mwt.addUserAction("reacQ!");
+  mwt.start();
+  sendMouseClick(ui.btnAddReaction);
+  REQUIRE(ui.listReactions->topLevelItem(0)->childCount() == 1);
+  REQUIRE(ui.listReactions->topLevelItem(0)->child(0)->text(0).toStdString() ==
+          "reacQ!");
+  REQUIRE(ui.btnRemoveReaction->isEnabled() == true);
+  REQUIRE(ui.btnRemoveReactionParam->isEnabled() == false);
+  REQUIRE(ui.listReactionParams->rowCount() == 0);
+  // add reaction param
+  mwt.addUserAction("y");
+  mwt.start();
+  sendMouseClick(ui.btnAddReactionParam);
+  REQUIRE(ui.listReactionParams->rowCount() == 1);
+  REQUIRE(ui.listReactionParams->item(0, 0)->text().toStdString() == "y");
+  REQUIRE(ui.btnRemoveReactionParam->isEnabled() == true);
+  mwt.addUserAction("qq");
+  mwt.start();
+  sendMouseClick(ui.btnAddReactionParam);
+  REQUIRE(ui.listReactionParams->rowCount() == 2);
+  REQUIRE(ui.listReactionParams->item(0, 0)->text().toStdString() == "y");
+  REQUIRE(ui.listReactionParams->item(1, 0)->text().toStdString() == "qq");
+  REQUIRE(ui.btnRemoveReactionParam->isEnabled() == true);
+  REQUIRE(ui.btnSaveReactionChanges->isEnabled() == false);
+  // remove param, then no
+  mwt.addUserAction(QStringList{"Esc"});
+  mwt.start();
+  sendMouseClick(ui.btnRemoveReactionParam);
+  REQUIRE(ui.listReactionParams->rowCount() == 2);
+  // remove param, then yes
+  mwt.addUserAction(" ");
+  mwt.start();
+  sendMouseClick(ui.btnRemoveReactionParam);
+  REQUIRE(ui.listReactionParams->rowCount() == 1);
+  REQUIRE(ui.listReactionParams->item(0, 0)->text().toStdString() == "y");
 }
 
 SCENARIO("Mainwindow: click on many things", "[gui][mainwindow]") {

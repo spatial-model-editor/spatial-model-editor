@@ -86,9 +86,19 @@ class UIPointers {
   QLineEdit *txtDiffusionConstant;
   QLabel *lblSpeciesColour;
   QPushButton *btnChangeSpeciesColour;
-  // reactions TODO: update
+  // reactions
   QWidget *tabReactions;
   QTreeWidget *listReactions;
+  QPushButton *btnAddReaction;
+  QPushButton *btnRemoveReaction;
+  QLineEdit *txtReactionName;
+  QComboBox *cmbReactionLocation;
+  QTreeWidget *listReactionSpecies;
+  QTableWidget *listReactionParams;
+  QPushButton *btnAddReactionParam;
+  QPushButton *btnRemoveReactionParam;
+  QPlainTextMathEdit *txtReactionRate;
+  QPushButton *btnSaveReactionChanges;
   // functions
   QWidget *tabFunctions;
   QListWidget *listFunctions;
@@ -165,6 +175,16 @@ UIPointers::UIPointers(MainWindow *mainWindow) : w(mainWindow) {
   UIPOINTER_INIT_(btnChangeSpeciesColour);
   UIPOINTER_INIT_(tabReactions);
   UIPOINTER_INIT_(listReactions);
+  UIPOINTER_INIT_(btnAddReaction);
+  UIPOINTER_INIT_(btnRemoveReaction);
+  UIPOINTER_INIT_(txtReactionName);
+  UIPOINTER_INIT_(cmbReactionLocation);
+  UIPOINTER_INIT_(txtReactionRate);
+  UIPOINTER_INIT_(btnSaveReactionChanges);
+  UIPOINTER_INIT_(listReactionSpecies);
+  UIPOINTER_INIT_(listReactionParams);
+  UIPOINTER_INIT_(btnAddReactionParam);
+  UIPOINTER_INIT_(btnRemoveReactionParam);
   UIPOINTER_INIT_(tabFunctions);
   UIPOINTER_INIT_(listFunctions);
   UIPOINTER_INIT_(btnAddFunction);

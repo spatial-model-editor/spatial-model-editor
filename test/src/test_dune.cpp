@@ -1,10 +1,11 @@
-#include <sbml/SBMLTypes.h>
+#include <sbml/SBMLDocument.h>
+#include <sbml/SBMLReader.h>
+#include <sbml/SBMLWriter.h>
 
 #include <QFile>
 
 #include "catch_wrapper.hpp"
 #include "dune.hpp"
-#include "logger.hpp"
 #include "sbml.hpp"
 #include "sbml_test_data/invalid_dune_names.hpp"
 
