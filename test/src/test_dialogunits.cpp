@@ -1,4 +1,4 @@
-#include <QtTest>
+#include <QFile>
 
 #include "catch_wrapper.hpp"
 #include "dialogunits.hpp"

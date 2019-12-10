@@ -1,5 +1,3 @@
-#include <QtTest>
-
 #include "catch_wrapper.hpp"
 #include "logger.hpp"
 #include "qplaintextmathedit.hpp"
@@ -24,7 +22,7 @@ SCENARIO("QPlainTextMathEdit", "[qplaintextmathedit][gui]") {
   GIVEN("expression and/or variables") {
     mathEdit.show();
     // "1"
-    QTest::keyClick(&mathEdit, Qt::Key_1);
+    sendKeyEvents(&mathEdit, {"1"});
     REQUIRE(mathEdit.getMath().toStdString() == "1");
     REQUIRE(mathEdit.mathIsValid() == true);
     REQUIRE(mathEdit.getErrorMessage().toStdString() == "");
@@ -35,7 +33,7 @@ SCENARIO("QPlainTextMathEdit", "[qplaintextmathedit][gui]") {
     REQUIRE(mathEdit.evaluateMath() == dbl_approx(1.0));
 
     // "1*"
-    QTest::keyClick(&mathEdit, Qt::Key_Asterisk);
+    sendKeyEvents(&mathEdit, {"*"});
     REQUIRE(mathEdit.getMath().toStdString() == "");
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage().toStdString() == "syntax error");
@@ -44,7 +42,7 @@ SCENARIO("QPlainTextMathEdit", "[qplaintextmathedit][gui]") {
     REQUIRE(signal.error == mathEdit.getErrorMessage());
 
     // "1*2"
-    QTest::keyClick(&mathEdit, Qt::Key_2);
+    sendKeyEvents(&mathEdit, {"2"});
     REQUIRE(mathEdit.getMath().toStdString() == "2");
     REQUIRE(mathEdit.mathIsValid() == true);
     REQUIRE(mathEdit.getErrorMessage().toStdString() == "");
@@ -55,8 +53,7 @@ SCENARIO("QPlainTextMathEdit", "[qplaintextmathedit][gui]") {
     REQUIRE(mathEdit.evaluateMath() == dbl_approx(2.0));
 
     // "1*2+x" (x not a variable)
-    QTest::keyClick(&mathEdit, Qt::Key_Plus);
-    QTest::keyClick(&mathEdit, Qt::Key_X);
+    sendKeyEvents(&mathEdit, {"+", "x"});
     REQUIRE(mathEdit.getMath().toStdString() == "");
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage().toStdString() == "Unknown symbol: x");
@@ -82,7 +79,7 @@ SCENARIO("QPlainTextMathEdit", "[qplaintextmathedit][gui]") {
     REQUIRE(signal.error == mathEdit.getErrorMessage());
 
     // "1*2+x&" (& not a valid character)
-    QTest::keyClick(&mathEdit, Qt::Key_Ampersand);
+    sendKeyEvents(&mathEdit, {"&"});
     REQUIRE(mathEdit.getMath().toStdString() == "");
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage().toStdString() == "Illegal character: &");
@@ -91,8 +88,7 @@ SCENARIO("QPlainTextMathEdit", "[qplaintextmathedit][gui]") {
     REQUIRE(signal.error == mathEdit.getErrorMessage());
 
     // "1*2+x!" (! not a valid character)
-    QTest::keyClick(&mathEdit, Qt::Key_Backspace);
-    QTest::keyClick(&mathEdit, Qt::Key_Exclam);
+    sendKeyEvents(&mathEdit, {"Backspace", "!"});
     REQUIRE(mathEdit.getMath().toStdString() == "");
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage().toStdString() == "Illegal character: !");
@@ -101,15 +97,8 @@ SCENARIO("QPlainTextMathEdit", "[qplaintextmathedit][gui]") {
     REQUIRE(signal.error == mathEdit.getErrorMessage());
 
     // "1*2+5*(1+3)"
-    QTest::keyClick(&mathEdit, Qt::Key_Backspace);
-    QTest::keyClick(&mathEdit, Qt::Key_Backspace);
-    QTest::keyClick(&mathEdit, Qt::Key_5);
-    QTest::keyClick(&mathEdit, Qt::Key_Asterisk);
-    QTest::keyClick(&mathEdit, Qt::Key_ParenLeft);
-    QTest::keyClick(&mathEdit, Qt::Key_1);
-    QTest::keyClick(&mathEdit, Qt::Key_Plus);
-    QTest::keyClick(&mathEdit, Qt::Key_3);
-    QTest::keyClick(&mathEdit, Qt::Key_ParenRight);
+    sendKeyEvents(&mathEdit, {"Backspace", "Backspace", "5", "*", "(", "1", "+",
+                              "3", ")"});
     REQUIRE(mathEdit.getMath().toStdString() == "22");
     REQUIRE(mathEdit.mathIsValid() == true);
     REQUIRE(mathEdit.getErrorMessage().toStdString() == "");
@@ -146,11 +135,7 @@ SCENARIO("QPlainTextMathEdit", "[qplaintextmathedit][gui]") {
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage().toStdString() == "syntax error");
     // x+2*y
-    QTest::keyClick(&mathEdit, Qt::Key_X);
-    QTest::keyClick(&mathEdit, Qt::Key_Plus);
-    QTest::keyClick(&mathEdit, Qt::Key_2);
-    QTest::keyClick(&mathEdit, Qt::Key_Asterisk);
-    QTest::keyClick(&mathEdit, Qt::Key_Y);
+    sendKeyEvents(&mathEdit, {"x", "+", "2", "*", "y"});
     REQUIRE(mathEdit.getMath().toStdString() == "x + 2*y");
     REQUIRE(mathEdit.mathIsValid() == true);
     REQUIRE(mathEdit.getErrorMessage().toStdString() == "");
@@ -162,5 +147,50 @@ SCENARIO("QPlainTextMathEdit", "[qplaintextmathedit][gui]") {
     REQUIRE(mathEdit.evaluateMath({1.0, 0.0}) == dbl_approx(1.0));
     REQUIRE(mathEdit.evaluateMath({0.0, 1.0}) == dbl_approx(2.0));
     REQUIRE(mathEdit.evaluateMath({1.0, 1.0}) == dbl_approx(3.0));
+    mathEdit.clearVariables();
+    REQUIRE(mathEdit.getVariables().empty() == true);
+  }
+  GIVEN("expression with unquoted display names") {
+    mathEdit.show();
+    mathEdit.clearVariables();
+    REQUIRE(mathEdit.getVariables().empty() == true);
+    // "X + y_var"
+    sendKeyEvents(&mathEdit, {"X", "+", "y", "_", "v", "a", "r"});
+    REQUIRE(mathEdit.mathIsValid() == false);
+    REQUIRE(mathEdit.getErrorMessage().toStdString() == "Unknown symbol: X");
+    mathEdit.addVariable("x", "X");
+    REQUIRE(mathEdit.mathIsValid() == false);
+    REQUIRE(mathEdit.getErrorMessage().toStdString() ==
+            "Unknown symbol: y_var");
+    mathEdit.addVariable("y", "y_var");
+    REQUIRE(mathEdit.getVariables().size() == 2);
+    REQUIRE(mathEdit.mathIsValid() == true);
+    REQUIRE(signal.math.toStdString() == "X + y_var");
+    // "X + y_var + 3*X"
+    sendKeyEvents(&mathEdit, {"+", "3", "*", "X"});
+    REQUIRE(mathEdit.mathIsValid() == true);
+    REQUIRE(signal.math.toStdString() == "4*X + y_var");
+    mathEdit.removeVariable("y");
+    REQUIRE(mathEdit.mathIsValid() == false);
+    REQUIRE(mathEdit.getErrorMessage().toStdString() ==
+            "Unknown symbol: y_var");
+    mathEdit.removeVariable("x");
+    REQUIRE(mathEdit.mathIsValid() == false);
+    REQUIRE(mathEdit.getErrorMessage().toStdString() == "Unknown symbol: X");
+  }
+  GIVEN("expression with quoted display names") {
+    mathEdit.show();
+    REQUIRE(mathEdit.getVariables().empty() == true);
+    mathEdit.addVariable("x", "X var!");
+    REQUIRE(mathEdit.getVariables().size() == 1);
+    // "X var!"
+    sendKeyEvents(&mathEdit, {"\"", "X", " ", "v", "a", "r", "!", "\""});
+    REQUIRE(signal.math.toStdString() == "\"X var!\"");
+    // "X var!" + "X var!"
+    sendKeyEvents(&mathEdit, {"+", "\"", "X", " ", "v", "a", "r", "!", "\""});
+    REQUIRE(signal.math.toStdString() == "2*\"X var!\"");
+    mathEdit.removeVariable("x");
+    REQUIRE(mathEdit.mathIsValid() == false);
+    REQUIRE(mathEdit.getErrorMessage().toStdString() == "Illegal character: !");
   }
 }

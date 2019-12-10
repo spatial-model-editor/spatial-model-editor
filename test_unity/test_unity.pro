@@ -14,7 +14,8 @@ win32 {
 include(../ext/ext.pri)
 
 SOURCES += \
-    main_unity.cpp
+    $${TOPDIR}/test/src/qt_test_utils.cpp \
+    main_unity.cpp \
 
 HEADERS += \
     $${TOPDIR}/test/inc/qt_test_utils.hpp

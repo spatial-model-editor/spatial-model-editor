@@ -1,6 +1,5 @@
 #include "catch_wrapper.hpp"
 #include "geometry.hpp"
-#include "logger.hpp"
 
 SCENARIO("Geometry: Compartments and Fields", "[geometry][non-gui]") {
   GIVEN("one pixel compartment, 1x1 image") {

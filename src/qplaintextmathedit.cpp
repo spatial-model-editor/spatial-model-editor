@@ -3,12 +3,19 @@
 #include <symengine/symengine_exception.h>
 
 #include <algorithm>
+#include <locale>
 
 #include "logger.hpp"
 
 bool QPlainTextMathEdit::mathIsValid() const { return expressionIsValid; }
 
-const QString& QPlainTextMathEdit::getMath() const { return currentMath; }
+const QString& QPlainTextMathEdit::getMath() const {
+  return currentDisplayMath;
+}
+
+void QPlainTextMathEdit::importVariableMath(const std::string& expr) {
+  setPlainText(variablesToDisplayNames(expr).c_str());
+}
 
 void QPlainTextMathEdit::compileMath() { sym.compile(); }
 
@@ -25,19 +32,64 @@ const std::vector<std::string>& QPlainTextMathEdit::getVariables() const {
   return vars;
 }
 
+void QPlainTextMathEdit::clearVariables() {
+  vars.clear();
+  mapDisplayNamesToVars.clear();
+  mapVarsToDisplayNames.clear();
+}
+
 void QPlainTextMathEdit::setVariables(
     const std::vector<std::string>& variables) {
+  clearVariables();
   vars = variables;
   qPlainTextEdit_textChanged();
 }
 
-void QPlainTextMathEdit::addVariable(const std::string& variable) {
+static bool isValidSymbol(const std::string& name) {
+  // first char must be a letter or underscore
+  if (auto c = name.front();
+      !(std::isalpha(c, std::locale::classic()) || c == '_')) {
+    return false;
+  }
+  // other chars must be letters, numbers or underscores
+  for (auto c : name) {
+    if (!(std::isalnum(c, std::locale::classic()) || c == '_')) {
+      return false;
+    }
+  }
+  return true;
+}
+
+void QPlainTextMathEdit::addVariable(const std::string& variable,
+                                     const std::string& displayName) {
   vars.push_back(variable);
+  if (!displayName.empty()) {
+    mapDisplayNamesToVars[displayName] = variable;
+    if (isValidSymbol(displayName)) {
+      mapVarsToDisplayNames[variable] = displayName;
+    } else {
+      mapVarsToDisplayNames[variable] = "\"" + displayName + "\"";
+    }
+  }
   qPlainTextEdit_textChanged();
 }
 
 void QPlainTextMathEdit::removeVariable(const std::string& variable) {
   vars.erase(std::remove(vars.begin(), vars.end(), variable), vars.end());
+  if (auto iter = mapVarsToDisplayNames.find(variable);
+      iter != mapVarsToDisplayNames.cend()) {
+    SPDLOG_TRACE("removing var: {}", variable);
+    auto displayName = iter->second;
+    std::size_t nQuoteChars = 0;
+    // remove quotes if present
+    if (displayName.front() == '"' && displayName.back() == '"') {
+      nQuoteChars = 1;
+    }
+    SPDLOG_TRACE("  -> display name {}", displayName);
+    mapDisplayNamesToVars.erase(
+        displayName.substr(nQuoteChars, displayName.size() - 2 * nQuoteChars));
+    mapVarsToDisplayNames.erase(iter);
+  }
   qPlainTextEdit_textChanged();
 }
 
@@ -49,26 +101,129 @@ QPlainTextMathEdit::QPlainTextMathEdit(QWidget* parent)
           &QPlainTextMathEdit::qPlainTextEdit_cursorPositionChanged);
 }
 
+// - iterate through each variable in expr
+// - a variable is any text with a delimeter char before and after it
+// - look-up variable in map and replace it with result
+// - if map contents are not a valid symbol, wrap it in quotes
+static std::string substitute(const std::string& expr,
+                              const std::map<std::string, std::string>& map,
+                              const std::string& delimeters = "()-^*/+, ") {
+  SPDLOG_DEBUG("expr: {}", expr);
+  std::string out;
+  out.reserve(expr.size());
+  // skip over any initial delimeters
+  auto start = expr.find_first_not_of(delimeters);
+  // append them to output
+  out.append(expr.substr(0, start));
+  while (start != std::string::npos) {
+    // find next delimeter
+    auto end = expr.find_first_of(delimeters, start);
+    // extract variable
+    std::string var = expr.substr(start, end - start);
+    SPDLOG_TRACE("  - var {}", var);
+    if (auto iter = map.find(var); iter != map.cend()) {
+      // replace variable with map result
+      SPDLOG_TRACE("    -> {} ", iter->second);
+      out.append(iter->second);
+    } else {
+      out.append(var);
+    }
+    SPDLOG_TRACE("  - out: {}", e);
+    if (end == std::string::npos) {
+      break;
+    }
+    // skip over any delimeters to start of next variable
+    start = expr.find_first_not_of(delimeters, end);
+    // append them to output
+    out.append(expr.substr(end, start - end));
+  }
+  SPDLOG_DEBUG("  -> {}", out);
+  return out;
+}
+
+std::string QPlainTextMathEdit::variablesToDisplayNames(
+    const std::string& expr) const {
+  const auto& map = mapVarsToDisplayNames;
+  if (map.empty()) {
+    return expr;
+  }
+  return substitute(expr, map);
+}
+
+std::pair<std::string, QString> QPlainTextMathEdit::displayNamesToVariables(
+    const std::string& expr) const {
+  std::string out;
+  const char quoteChar = '"';
+  const auto& map = mapDisplayNamesToVars;
+  if (map.empty()) {
+    return {expr, ""};
+  }
+  // find first quote char
+  auto start = expr.find(quoteChar);
+  if (start > 0) {
+    // substitute any text before opening quote
+    out.append(substitute(expr.substr(0, start), map));
+  }
+  while (start != std::string::npos) {
+    // skip over opening quote char
+    ++start;
+    // find closing quote char
+    auto end = expr.find(quoteChar, start);
+    if (end == std::string::npos) {
+      SPDLOG_DEBUG("  - no closing quote");
+      return {out, "no closing quote"};
+    }
+    // extract name & replace with variable if found
+    std::string name = expr.substr(start, end - start);
+    SPDLOG_TRACE("  - name {} (chars {}-{})", name, start, end);
+    if (auto iter = map.find(name); iter != map.cend()) {
+      out.append(iter->second);
+    } else {
+      SPDLOG_DEBUG("  - name {} not found", name);
+      return {out, QString("name '%1' not found").arg(name.c_str())};
+    }
+    SPDLOG_TRACE("  - out: {}", out);
+    // skip over closing quote char
+    ++end;
+    // find next opening quote char
+    start = expr.find(quoteChar, end);
+    if (start > end) {
+      // substitute any text before next "
+      out.append(substitute(expr.substr(end, start - end), map));
+    }
+  }
+  SPDLOG_DEBUG(" -> {}", out);
+  return {out, {}};
+}
+
 void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
   expressionIsValid = false;
-  currentMath.clear();
-  // check for illegal chars
-  std::string newExpr = toPlainText().toStdString();
+  currentDisplayMath.clear();
+  currentErrorMessage.clear();
+  // convert display names in expression to variables
+  auto [newExpr, errorMessage] =
+      displayNamesToVariables(toPlainText().toStdString());
+  if (!errorMessage.isEmpty()) {
+    currentErrorMessage = errorMessage;
+  }
   if (auto i = newExpr.find_first_of(illegalChars); i != std::string::npos) {
+    // check for illegal chars
     currentErrorMessage = QString("Illegal character: %1").arg(newExpr[i]);
-  } else {
+  }
+  if (currentErrorMessage.isEmpty()) {
     try {
       // parse (but don't compile) symbolic expression
+      SPDLOG_DEBUG("parsing {}", newExpr);
       sym = symbolic::Symbolic(newExpr, vars, {}, false);
       expressionIsValid = true;
       currentErrorMessage = "";
-      currentMath = sym.simplify().c_str();
+      currentDisplayMath = variablesToDisplayNames(sym.simplify()).c_str();
     } catch (SymEngine::SymEngineException& e) {
       // if SymEngine failed to parse, capture error message
       currentErrorMessage = e.what();
     }
   }
-  emit mathChanged(currentMath, expressionIsValid, currentErrorMessage);
+  emit mathChanged(currentDisplayMath, expressionIsValid, currentErrorMessage);
 }
 
 static std::pair<int, bool> getClosingBracket(const QString& expr, int pos,

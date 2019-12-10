@@ -13,7 +13,7 @@
 
 namespace sbml {
 class SbmlDocWrapper;
-class Reac;
+struct Reac;
 }  // namespace sbml
 
 namespace pde {

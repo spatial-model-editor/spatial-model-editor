@@ -1,5 +1,4 @@
 #include "catch_wrapper.hpp"
-#include "logger.hpp"
 #include "symbolic.hpp"
 
 SCENARIO("Symbolic", "[symbolic][non-gui]") {

@@ -84,8 +84,8 @@ const std::vector<std::vector<std::string>> &PDE::getJacobian() const {
 static std::optional<std::size_t> getSpeciesIndex(
     const sbml::SbmlDocWrapper *doc, const std::string &speciesID,
     const std::vector<std::string> &speciesIDs) {
-  auto it = std::find(speciesIDs.cbegin(), speciesIDs.cend(), speciesID);
-  if (it != speciesIDs.cend() && doc->isSpeciesReactive(speciesID)) {
+  if (auto it = std::find(speciesIDs.cbegin(), speciesIDs.cend(), speciesID);
+      it != speciesIDs.cend() && doc->isSpeciesReactive(speciesID)) {
     return static_cast<std::size_t>(it - speciesIDs.cbegin());
   }
   return {};
@@ -95,23 +95,13 @@ std::vector<double> Reaction::getStoichMatrixRow(
     const sbml::SbmlDocWrapper *doc, const sbml::Reac &reac) const {
   std::vector<double> matrixRow(speciesIDs.size(), 0);
   bool isReaction = false;
-  for (const auto &[speciesID, coeff] : reac.products) {
+  for (const auto &[speciesID, speciesName, stoichCoeff] : reac.species) {
     SPDLOG_DEBUG("product '{}'", speciesID);
     auto speciesIndex = getSpeciesIndex(doc, speciesID, speciesIDs);
     if (speciesIndex) {
-      SPDLOG_DEBUG("  -> stoich coeff[+{}]: {:16.16e}", speciesIndex.value(),
-                   coeff);
-      matrixRow[speciesIndex.value()] += coeff;
-      isReaction = true;
-    }
-  }
-  for (const auto &[speciesID, coeff] : reac.reactants) {
-    SPDLOG_DEBUG("product '{}'", speciesID);
-    auto speciesIndex = getSpeciesIndex(doc, speciesID, speciesIDs);
-    if (speciesIndex) {
-      SPDLOG_DEBUG("  -> stoich coeff[-{}]: {:16.16e}", speciesIndex.value(),
-                   coeff);
-      matrixRow[speciesIndex.value()] -= coeff;
+      SPDLOG_DEBUG("  -> stoich coeff[{}]: {:16.16e}", speciesIndex.value(),
+                   stoichCoeff);
+      matrixRow[speciesIndex.value()] += stoichCoeff;
       isReaction = true;
     }
   }
@@ -178,16 +168,17 @@ Reaction::Reaction(const sbml::SbmlDocWrapper *doc,
 
       // get local parameters, append to global constants
       std::map<std::string, double> c = doc->getGlobalConstants();
-      for (const auto &[constantName, constantValue] : reac.constants) {
-        c[constantName] = constantValue;
+      for (const auto &[id, name, value] : reac.constants) {
+        c[id] = value;
       }
       // construct expression and add to reactions
-      expressions.push_back(reac.inlinedExpression);
+      auto inlinedExpr = doc->inlineExpr(reac.expression);
+      expressions.push_back(inlinedExpr);
       constants.push_back(c);
       SPDLOG_INFO("adding reaction {}", reacID);
       SPDLOG_INFO("  - stoichiometric matrix row: {}",
                   utils::vectorToString(row));
-      SPDLOG_INFO("  - expr: {}", reac.inlinedExpression);
+      SPDLOG_INFO("  - expr: {}", inlinedExpr);
     }
   }
 }

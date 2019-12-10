@@ -17,13 +17,16 @@ class QPlainTextMathEdit : public QPlainTextEdit {
   explicit QPlainTextMathEdit(QWidget *parent = nullptr);
   bool mathIsValid() const;
   const QString &getMath() const;
+  void importVariableMath(const std::string &expr);
   void compileMath();
   double evaluateMath(const std::vector<double> &variables = {});
   const QString &getErrorMessage() const;
   const std::vector<std::string> &getVariables() const;
+  void clearVariables();
   void setVariables(const std::vector<std::string> &variables);
-  void addVariable(const std::string &variable);
-  void removeVariable(const std::string &variables);
+  void addVariable(const std::string &variable,
+                   const std::string &displayName = {});
+  void removeVariable(const std::string &variable);
 
  signals:
   void mathChanged(const QString &math, bool valid,
@@ -36,9 +39,14 @@ class QPlainTextMathEdit : public QPlainTextEdit {
   const QColor colourInvalid = QColor(255, 150, 150);
   const char *illegalChars = "%@&!";
   std::vector<std::string> vars;
-  QString currentMath;
+  std::map<std::string, std::string> mapVarsToDisplayNames;
+  std::map<std::string, std::string> mapDisplayNamesToVars;
+  QString currentDisplayMath;
   QString currentErrorMessage;
   bool expressionIsValid = false;
+  std::pair<std::string, QString> displayNamesToVariables(
+      const std::string &expr) const;
+  std::string variablesToDisplayNames(const std::string &expr) const;
   void qPlainTextEdit_textChanged();
   void qPlainTextEdit_cursorPositionChanged();
 };

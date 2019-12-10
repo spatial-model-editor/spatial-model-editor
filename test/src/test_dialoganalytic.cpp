@@ -1,8 +1,7 @@
-#include <QtTest>
+#include <QFile>
 
 #include "catch_wrapper.hpp"
 #include "dialoganalytic.hpp"
-#include "logger.hpp"
 #include "qt_test_utils.hpp"
 #include "sbml.hpp"
 

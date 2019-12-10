@@ -1,5 +1,3 @@
-#include <QtTest>
-
 #include "catch_wrapper.hpp"
 #include "logger.hpp"
 #include "qlabelmousetracker.hpp"
@@ -19,7 +17,6 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
     mouseTracker.setImage(img);
     mouseTracker.resize(100, 100);
     mouseTracker.setFixedSize(100, 100);
-    QTest::qWait(mouseDelay);
 
     REQUIRE(mouseTracker.getImage().size() == img.size());
     REQUIRE(mouseTracker.getImage().pixel(0, 0) == img.pixel(0, 0));
@@ -30,10 +27,9 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
     REQUIRE(clicks.size() == 0);
     WHEN("mouse clicked on image") {
       // move mouse over image
-      QTest::mouseMove(mouseTracker.windowHandle(), QPoint(2, 3), mouseDelay);
+      sendMouseMove(&mouseTracker, {2, 3});
       // click on image
-      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                        QPoint(2, 3), mouseDelay);
+      sendMouseClick(&mouseTracker, {2, 3});
       THEN("register click, get colour of pixel") {
         REQUIRE(clicks.size() == 1);
         REQUIRE(clicks.back() == col);
@@ -42,10 +38,8 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
     }
     WHEN("mouse clicked twice on image") {
       // click on image
-      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                        QPoint(66, 81), mouseDelay);
-      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                        QPoint(55, 11), mouseDelay);
+      sendMouseClick(&mouseTracker, {66, 81});
+      sendMouseClick(&mouseTracker, {55, 11});
       THEN("register clicks, get colour of last pixel clicked") {
         REQUIRE(clicks.size() == 2);
         REQUIRE(clicks.back() == col);
@@ -72,7 +66,6 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
     mouseTracker.setImage(img);
     mouseTracker.show();
     mouseTracker.resize(100, 100);
-    QTest::qWait(mouseDelay);
 
     CAPTURE(col1);
     CAPTURE(col2);
@@ -89,9 +82,8 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
                      [&clicks](QRgb c) { clicks.push_back(c); });
     REQUIRE(clicks.size() == 0);
     WHEN("mouse click (0,1)") {
-      QTest::mouseMove(mouseTracker.windowHandle(), QPoint(99, 99), mouseDelay);
-      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                        QPoint(0, 1), mouseDelay);
+      sendMouseMove(&mouseTracker, {99, 99});
+      sendMouseClick(&mouseTracker, {0, 1});
       THEN("pix (0,0) <-> col2") {
         REQUIRE(clicks.size() == 1);
         REQUIRE(clicks.back() == col2);
@@ -99,8 +91,7 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
       }
     }
     WHEN("mouse click (3,7)") {
-      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                        QPoint(3, 7), mouseDelay);
+      sendMouseClick(&mouseTracker, {3, 7});
       THEN("pix (0,0) <-> col2") {
         REQUIRE(clicks.size() == 1);
         REQUIRE(clicks.back() == col2);
@@ -109,11 +100,9 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
     }
     WHEN("mouse click (5,44)") {
       THEN("pix (0,1) <-> col3") {
-        QTest::mouseClick(&mouseTracker, Qt::LeftButton,
-                          Qt::KeyboardModifiers(),
-                          QPoint(static_cast<int>(0.05 * imgDisplaySize),
-                                 static_cast<int>(0.44 * imgDisplaySize)),
-                          mouseDelay);
+        sendMouseClick(&mouseTracker,
+                       QPoint(static_cast<int>(0.05 * imgDisplaySize),
+                              static_cast<int>(0.44 * imgDisplaySize)));
         REQUIRE(clicks.size() == 1);
         REQUIRE(clicks.back() == col3);
         REQUIRE(mouseTracker.getColour() == col3);
@@ -121,24 +110,19 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
     }
     WHEN("mouse click (5,84)") {
       THEN("pix (0,2) <-> col3") {
-        QTest::mouseClick(&mouseTracker, Qt::LeftButton,
-                          Qt::KeyboardModifiers(),
-                          QPoint(static_cast<int>(0.05 * imgDisplaySize),
-                                 static_cast<int>(0.84 * imgDisplaySize)),
-                          mouseDelay);
+        sendMouseClick(&mouseTracker,
+                       QPoint(static_cast<int>(0.05 * imgDisplaySize),
+                              static_cast<int>(0.84 * imgDisplaySize)));
         REQUIRE(clicks.size() == 1);
         REQUIRE(clicks.back() == col3);
         REQUIRE(mouseTracker.getColour() == col3);
       }
     }
     WHEN("mouse clicks (99,99), (5,84), (50,50)") {
-      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                        QPoint(99, 99), mouseDelay);
-      QTest::mouseMove(mouseTracker.windowHandle(), QPoint(79, 19), mouseDelay);
-      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                        QPoint(5, 84), mouseDelay);
-      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                        QPoint(50, 50), mouseDelay);
+      sendMouseClick(&mouseTracker, {99, 99});
+      sendMouseMove(&mouseTracker, {79, 19});
+      sendMouseClick(&mouseTracker, {5, 84});
+      sendMouseClick(&mouseTracker, {50, 50});
       THEN("pix (2,2),(0,2),(1,1) <-> col1,col3,col4") {
         REQUIRE(clicks.size() == 3);
         REQUIRE(clicks[0] == col1);
@@ -149,9 +133,7 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
     }
     WHEN("resized to 600x600, mouseclick (300,300)") {
       mouseTracker.resize(600, 600);
-      QTest::qWait(mouseDelay);
-      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                        QPoint(300, 300), mouseDelay);
+      sendMouseClick(&mouseTracker, {300, 300});
       THEN("pix (1,1) <-> col4") {
         REQUIRE(clicks.size() == 1);
         REQUIRE(clicks.back() == col4);
@@ -160,9 +142,7 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
     }
     WHEN("resized to 6x6, mouseclick (1,3)") {
       mouseTracker.resize(6, 6);
-      QTest::qWait(mouseDelay);
-      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                        QPoint(1, 3), mouseDelay);
+      sendMouseClick(&mouseTracker, {1, 3});
       THEN("pix (0,1) <-> col3") {
         REQUIRE(clicks.size() == 1);
         REQUIRE(clicks.back() == col3);
@@ -171,9 +151,7 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
     }
     WHEN("resized to 900x3, mouseclick (2,2)") {
       mouseTracker.resize(900, 3);
-      QTest::qWait(mouseDelay);
-      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                        QPoint(2, 2), mouseDelay);
+      sendMouseClick(&mouseTracker, {2, 2});
       THEN("pix (2,0) <-> col1") {
         REQUIRE(clicks.size() == 1);
         REQUIRE(clicks.back() == col1);
@@ -188,7 +166,6 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
     mouseTracker.setImages({img, mask});
     mouseTracker.show();
     mouseTracker.resize(100, 100);
-    QTest::qWait(mouseDelay);
 
     REQUIRE(mouseTracker.getImage().size() == img.size());
     REQUIRE(mouseTracker.getImage().pixel(0, 0) == img.pixel(0, 0));
@@ -202,18 +179,16 @@ SCENARIO("QLabelMouseTracker", "[qlabelmousetracker][gui]") {
                      [&clicks](QRgb c) { clicks.push_back(c); });
     REQUIRE(clicks.size() == 0);
     WHEN("mouse click (0,1)") {
-      QTest::mouseMove(mouseTracker.windowHandle(), QPoint(99, 99), mouseDelay);
-      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                        QPoint(0, 1), mouseDelay);
+      sendMouseMove(&mouseTracker, {99, 99});
+      sendMouseClick(&mouseTracker, {0, 1});
       REQUIRE(clicks.size() == 1);
       REQUIRE(clicks.back() == 0xff000200);
       REQUIRE(mouseTracker.getColour() == 0xff000200);
       REQUIRE(mouseTracker.getMaskIndex() == 512);
     }
     WHEN("mouse click (50,50)") {
-      QTest::mouseMove(mouseTracker.windowHandle(), QPoint(99, 99), mouseDelay);
-      QTest::mouseClick(&mouseTracker, Qt::LeftButton, Qt::KeyboardModifiers(),
-                        QPoint(50, 50), mouseDelay);
+      sendMouseMove(&mouseTracker, {99, 99});
+      sendMouseClick(&mouseTracker, {50, 50});
       REQUIRE(clicks.size() == 1);
       REQUIRE(clicks.back() == QColor(144, 97, 193).rgb());
       REQUIRE(mouseTracker.getColour() == QColor(144, 97, 193).rgb());

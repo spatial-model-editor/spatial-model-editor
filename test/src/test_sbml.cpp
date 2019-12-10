@@ -4,10 +4,8 @@
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 #include <QFile>
-#include <fstream>
 
 #include "catch_wrapper.hpp"
-#include "logger.hpp"
 #include "mesh.hpp"
 #include "sbml.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
@@ -236,12 +234,10 @@ SCENARIO("SBML: import SBML level 2 document", "[sbml][non-gui]") {
       auto r = s.getReaction("reac1");
       REQUIRE(r.id == "reac1");
       REQUIRE(r.name == "reac1");
-      REQUIRE(r.products.size() == 1);
-      REQUIRE(r.products[0].first == "spec1c0");
-      REQUIRE(r.reactants.size() == 1);
-      REQUIRE(r.reactants[0].first == "spec0c0");
-      REQUIRE(r.fullExpression == "5 * spec0c0 / compartment0");
-      REQUIRE(r.inlinedExpression == "5 * spec0c0 / compartment0");
+      REQUIRE(r.species.size() == 2);
+      REQUIRE(r.species[0].id == "spec1c0");
+      REQUIRE(r.species[1].id == "spec0c0");
+      REQUIRE(r.expression == "5 * spec0c0 / compartment0");
     }
     WHEN("exportSBMLFile called") {
       THEN(
@@ -416,19 +412,18 @@ SCENARIO("SBML: ABtoC.xml", "[sbml][non-gui]") {
         REQUIRE(s.getReactionName("r1") == "r1");
         REQUIRE(r.id == "r1");
         REQUIRE(r.name == "r1");
-        REQUIRE(r.products.size() == 1);
-        REQUIRE(r.products[0].first == "C");
-        REQUIRE(r.products[0].second == dbl_approx(1.0));
-        REQUIRE(r.reactants.size() == 2);
-        REQUIRE(r.reactants[0].first == "A");
-        REQUIRE(r.reactants[0].second == dbl_approx(1.0));
-        REQUIRE(r.reactants[1].first == "B");
-        REQUIRE(r.reactants[0].second == dbl_approx(1.0));
+        REQUIRE(r.species.size() == 3);
+        REQUIRE(r.species[0].id == "C");
+        REQUIRE(r.species[0].value == dbl_approx(1.0));
+        REQUIRE(r.species[1].id == "A");
+        REQUIRE(r.species[1].value == dbl_approx(-1.0));
+        REQUIRE(r.species[2].id == "B");
+        REQUIRE(r.species[2].value == dbl_approx(-1.0));
         REQUIRE(r.constants.size() == 1);
-        REQUIRE(r.constants[0].first == "k1");
-        REQUIRE(r.constants[0].second == dbl_approx(0.1));
-        REQUIRE(r.fullExpression == "A * B * k1");
-        REQUIRE(r.inlinedExpression == "A * B * k1");
+        REQUIRE(r.constants[0].id == "k1");
+        REQUIRE(r.constants[0].name == "k1");
+        REQUIRE(r.constants[0].value == dbl_approx(0.1));
+        REQUIRE(r.expression == "A * B * k1");
       }
       THEN("species have default colours") {
         REQUIRE(s.getSpeciesColour("A") == utils::indexedColours()[0]);
@@ -552,6 +547,69 @@ SCENARIO("SBML: very-simple-model.xml", "[sbml][non-gui]") {
       REQUIRE(s.isSpatialIdAvailable("geometryImage") == false);
       REQUIRE(s.isSpatialIdAvailable("parametricGeometry") == false);
       REQUIRE(s.isSpatialIdAvailable("spatialPoints") == false);
+    }
+    WHEN("add/remove empty reaction") {
+      REQUIRE(s.reactions.at("c2").size() == 0);
+      s.addReaction("re ac~!1", "c2");
+      REQUIRE(s.reactions.at("c2").size() == 1);
+      REQUIRE(s.reactions.at("c2")[0].toStdString() == "re_ac1");
+      auto r = s.getReaction("re_ac1");
+      REQUIRE(r.id == "re_ac1");
+      REQUIRE(r.name == "re ac~!1");
+      REQUIRE(r.locationId == "c2");
+      REQUIRE(r.species.empty() == true);
+      REQUIRE(r.constants.empty() == true);
+      REQUIRE(r.expression.empty() == true);
+      s.removeReaction("re_ac1");
+      REQUIRE(s.reactions.at("c2").size() == 0);
+    }
+    WHEN("set reaction") {
+      REQUIRE(s.reactions.at("c2").size() == 0);
+      REQUIRE(s.reactions.at("c3").size() == 1);
+      s.addReaction("re ac~!1", "c2");
+      auto r = s.getReaction("re_ac1");
+      REQUIRE(r.locationId == "c2");
+      r.name = "new Name";
+      r.locationId = "c3";
+      r.species.push_back({"A_c3", "A c3", 1});
+      r.species.push_back({"B_c3", "B c3", -2});
+      r.constants.push_back({"c1", "const 1", 0.2});
+      r.expression = "0.2 + A_c3 * B_c3 * c1";
+      s.setReaction(r);
+      auto r2 = s.getReaction("re_ac1");
+      REQUIRE(r2.id == "re_ac1");
+      REQUIRE(r2.name == "new Name");
+      REQUIRE(r2.locationId == "c3");
+      REQUIRE(r2.species[0].id == "A_c3");
+      REQUIRE(r2.species[0].value == dbl_approx(1));
+      REQUIRE(r2.species[1].id == "B_c3");
+      REQUIRE(r2.species[1].value == dbl_approx(-2));
+      REQUIRE(r2.constants[0].id == "c1");
+      REQUIRE(r2.constants[0].value == dbl_approx(0.2));
+      REQUIRE(r2.expression == "0.2 + A_c3 * B_c3 * c1");
+    }
+    WHEN("change reaction location") {
+      REQUIRE(s.reactions.at("c2").size() == 0);
+      REQUIRE(s.reactions.at("c3").size() == 1);
+      s.setReactionLocation("A_B_conversion", "c2");
+      REQUIRE(s.reactions.at("c2").size() == 1);
+      REQUIRE(s.reactions.at("c3").size() == 0);
+      auto r = s.getReaction("A_B_conversion");
+      REQUIRE(r.id == "A_B_conversion");
+      REQUIRE(r.name == "A to B conversion");
+      REQUIRE(r.locationId == "c2");
+      REQUIRE(r.species.empty() == true);
+      REQUIRE(r.constants.empty() == true);
+      REQUIRE(r.expression.empty() == true);
+      s.setReactionLocation("A_B_conversion", "c1");
+      REQUIRE(s.reactions.at("c1").size() == 1);
+      REQUIRE(s.reactions.at("c2").size() == 0);
+      auto r2 = s.getReaction("A_B_conversion");
+      REQUIRE(r2.id == "A_B_conversion");
+      REQUIRE(r2.name == "A to B conversion");
+      REQUIRE(r2.locationId == "c1");
+      s.removeReaction("A_B_conversion");
+      REQUIRE(s.reactions.at("c1").size() == 0);
     }
   }
 }

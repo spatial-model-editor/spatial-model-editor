@@ -1,9 +1,8 @@
-#include <QtTest>
+#include <QFile>
 #include <numeric>
 
 #include "catch_wrapper.hpp"
 #include "dialogconcentrationimage.hpp"
-#include "logger.hpp"
 #include "qt_test_utils.hpp"
 #include "sbml.hpp"
 

@@ -18,11 +18,11 @@ unix: QMAKE_LFLAGS += -static-libstdc++
 # dune won't compile without c++17 features only available in osx >= 10.14
 QMAKE_MACOSX_DEPLOYMENT_TARGET = 10.14
 
-# for linux debug build, remove optimizations & add coverage
+# for linux debug build, remove optimizations & add ASAN
 CONFIG(debug, debug|release) {
     unix: QMAKE_CXXFLAGS_RELEASE -= -O2
-    unix: QMAKE_CXXFLAGS += --coverage
-    unix: QMAKE_LFLAGS += --coverage
+    unix: QMAKE_CXXFLAGS += -fsanitize=address -fno-omit-frame-pointer
+    unix: QMAKE_LFLAGS += -fsanitize=address -fno-omit-frame-pointer
 }
 
 # on windows add flags to support large object files

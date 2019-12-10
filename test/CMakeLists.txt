@@ -1,6 +1,7 @@
 # compile tests
 set(SRC_LIST
     src/main.cpp
+    src/qt_test_utils.cpp
     src/test_dialoganalytic.cpp
     src/test_dialogconcentrationimage.cpp
     src/test_dialogimagesize.cpp
