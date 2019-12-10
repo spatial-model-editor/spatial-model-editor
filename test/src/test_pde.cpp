@@ -24,10 +24,10 @@ SCENARIO("PDE", "[pde][non-gui]") {
     REQUIRE(reac.size() == 1);
     REQUIRE(reac.getExpression(0) == "A * B * k1");
     REQUIRE_THROWS(reac.getExpression(1));
-    REQUIRE(reac.getConstants(0).at("comp") == dbl_approx(3149.0));
-    REQUIRE(reac.getConstants(0).at("k1") == dbl_approx(0.1));
-    REQUIRE_THROWS(reac.getConstants(0).at("not_a_constant"));
-    REQUIRE_THROWS(reac.getConstants(1));
+    REQUIRE(reac.getConstants(0)[5].first == "comp");
+    REQUIRE(reac.getConstants(0)[5].second == dbl_approx(3149.0));
+    REQUIRE(reac.getConstants(0)[6].first == "k1");
+    REQUIRE(reac.getConstants(0)[6].second == dbl_approx(0.1));
     REQUIRE(reac.getMatrixElement(0, 0) == dbl_approx(-1.0));
     REQUIRE(reac.getMatrixElement(0, 1) == dbl_approx(-1.0));
     REQUIRE(reac.getMatrixElement(0, 2) == dbl_approx(+1.0));

@@ -111,14 +111,11 @@ class SbmlDocWrapper {
   // map from reaction Ids to Reac objects
   std::map<QString, Reac> mapReactionIdToReac;
 
-  // call before importing new SBML model
-  void clearAllModelData();
   // call before importing new compartment geometry image
   void clearAllGeometryData();
 
-  // import existing (non-spatial) model information from SBML
+  // import existing SBML Model
   void initModelData();
-
   units::ModelUnits modelUnits;
   void importTimeUnitsFromSBML(int defaultUnitIndex);
   void importLengthUnitsFromSBML(int defaultUnitIndex);
@@ -131,20 +128,18 @@ class SbmlDocWrapper {
   void importParametricGeometry();
   // add default 2d Parametric & SampledField geometry to SBML
   void writeDefaultGeometryToSBML();
-
   void createField(const QString &speciesID, const QString &compartmentID);
   void setFieldConcAnalytic(geometry::Field &field, const std::string &expr);
-
   void initMembraneColourPairs();
   void updateMembraneList();
   void updateReactionList();
   void updateFunctionList();
+  void importCompartmentsAndSpeciesFromSBML();
+  void validateAndUpgradeSBMLDoc();
 
   // remove initialAssignment and related things from SBML
   // (sampledField, spatialref, etc)
   void removeInitialAssignment(const std::string &speciesID);
-
-  std::vector<std::string> getSpeciesReactions(const QString &speciesID) const;
 
   std::vector<QPointF> getInteriorPixelPoints() const;
   // update mesh object
@@ -156,7 +151,8 @@ class SbmlDocWrapper {
   void writeGeometryMeshToSBML();
   void writeGeometryImageToSBML();
 
-  Reac getReactionFromSBML(const QString &reactionID) const;
+  bool isSIdAvailable(const std::string &id) const;
+  bool isSpatialIdAvailable(const std::string &id) const;
 
   libsbml::UnitDefinition *getOrCreateUnitDef(const std::string &Id,
                                               const std::string &defaultId);
@@ -223,7 +219,6 @@ class SbmlDocWrapper {
   const QImage &getCompartmentImage() const;
 
   double getCompartmentSize(const QString &compartmentID) const;
-  double getSpeciesCompartmentSize(const QString &speciesID) const;
   SpeciesGeometry getSpeciesGeometry(const QString &speciesID) const;
   QString getCompartmentSizeUnits(const QString &compartmentID) const;
 
@@ -283,11 +278,7 @@ class SbmlDocWrapper {
   // true if species should be altered by Reactions
   bool isSpeciesReactive(const std::string &speciesID) const;
 
-  // get map of name->value for all global constants
-  // (this includes any constant species)
-  std::map<std::string, double> getGlobalConstants() const;
-  bool isSIdAvailable(const std::string &id) const;
-  bool isSpatialIdAvailable(const std::string &id) const;
+  std::vector<IdNameValue> getGlobalConstants() const;
   // convert name to a unique alphanumeric SId
   QString nameToSId(const QString &name) const;
 

@@ -17,6 +17,7 @@ class QPlainTextMathEdit : public QPlainTextEdit {
   explicit QPlainTextMathEdit(QWidget *parent = nullptr);
   bool mathIsValid() const;
   const QString &getMath() const;
+  const std::string &getVariableMath() const;
   void importVariableMath(const std::string &expr);
   void compileMath();
   double evaluateMath(const std::vector<double> &variables = {});
@@ -42,6 +43,7 @@ class QPlainTextMathEdit : public QPlainTextEdit {
   std::map<std::string, std::string> mapVarsToDisplayNames;
   std::map<std::string, std::string> mapDisplayNamesToVars;
   QString currentDisplayMath;
+  std::string currentVariableMath;
   QString currentErrorMessage;
   bool expressionIsValid = false;
   std::pair<std::string, QString> displayNamesToVariables(

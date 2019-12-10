@@ -17,7 +17,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 # find required Qt5 modules
 find_package(Qt5 COMPONENTS Widgets Test PrintSupport REQUIRED)
 get_target_property(Qt5Core_location Qt5::Core LOCATION)
-message(STATUS "Using Qt5Core from ${Qt5Core_location}")
+message(STATUS "Found Qt5Core: ${Qt5Core_location}")
 
 # enable Qt5 utils: moc, uic, rcc
 set(CMAKE_AUTOMOC ON)
@@ -26,18 +26,6 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 # moc generates code in current dir:
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-find_package(expat REQUIRED)
-find_package(dunecopasi REQUIRED)
-find_package(fmt REQUIRED)
-find_package(GMP REQUIRED)
-find_package(sbml REQUIRED)
-find_package(TIFF REQUIRED)
-find_package(LLVM 8 REQUIRED)
-message(STATUS "LLVM version: ${LLVM_VERSION}")
-find_package(muparser REQUIRED)
-find_package(spdlog REQUIRED)
-find_package(symengine REQUIRED)
 
 # compile triangle library
 add_subdirectory(ext/triangle)

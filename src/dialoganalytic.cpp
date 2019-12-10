@@ -27,7 +27,9 @@ DialogAnalytic::DialogAnalytic(const QString& analyticExpression,
                QImage::Format_ARGB32_Premultiplied);
   img.fill(0);
   concentration.resize(points.size(), 0.0);
-  ui->txtExpression->setVariables({"x", "y"});
+  // add some built-in functions, as well as x,y variables
+  ui->txtExpression->setVariables(
+      {"x", "y", "sin", "cos", "exp", "log", "ln", "pow", "sqrt"});
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogAnalytic::accept);

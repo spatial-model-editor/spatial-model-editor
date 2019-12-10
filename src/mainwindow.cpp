@@ -1141,7 +1141,18 @@ void MainWindow::listReactions_currentItemChanged(QTreeWidgetItem *current,
   ui->txtReactionName->setText(currentReac.name.c_str());
   ui->cmbReactionLocation->setEnabled(true);
   ui->cmbReactionLocation->setCurrentIndex(locationIndex);
-  ui->txtReactionRate->clearVariables();
+  // reset variables to only built-in functions
+  ui->txtReactionRate->setVariables(
+      {"sin", "cos", "exp", "log", "ln", "pow", "sqrt"});
+  // get model global parameters
+  for (const auto &[id, name, value] : sbmlDoc.getGlobalConstants()) {
+    ui->txtReactionRate->addVariable(id, name);
+  }
+  // add model functions
+  for (const auto &f : sbmlDoc.functions) {
+    auto func = sbmlDoc.getFunctionDefinition(f);
+    ui->txtReactionRate->addVariable(func.id, func.name);
+  }
   // species stoich
   for (const auto &compID : currentReac.compartments) {
     auto *comp = new QTreeWidgetItem;
@@ -1368,9 +1379,8 @@ void MainWindow::btnSaveReactionChanges_clicked() {
     // todo: add proper checking of numerical value
   }
   // set expression
-  currentReac.expression = ui->txtReactionRate->getMath().toStdString();
+  currentReac.expression = ui->txtReactionRate->getVariableMath();
   sbmlDoc.setReaction(currentReac);
-  //  tabMain_updateReactions();
 }
 
 void MainWindow::listFunctions_currentRowChanged(int row) {

@@ -24,7 +24,7 @@
 #endif
 #endif
 
-#include <config.h>
+#include <dune_config.h>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>
@@ -250,7 +250,11 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
         } else if (!expr.isEmpty()) {
           // otherwise, initialAssignments take precedence:
           std::string e = doc.inlineExpr(expr.toStdString());
-          symbolic::Symbolic sym(e, {"x", "y"}, doc.getGlobalConstants());
+          std::vector<std::pair<std::string, double>> constants;
+          for (const auto &[id, n, value] : doc.getGlobalConstants()) {
+            constants.push_back({id, value});
+          }
+          symbolic::Symbolic sym(e, {"x", "y"}, constants);
           ini.addValue(duneName, sym.simplify().c_str());
         } else {
           // otherwise just use initialConcentration value

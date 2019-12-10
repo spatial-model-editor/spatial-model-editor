@@ -8,7 +8,7 @@ SCENARIO("Symbolic", "[symbolic][non-gui]") {
     // names of variables in expression
     std::vector<std::string> vars = {};
     // names and values of constants in expression
-    std::map<std::string, double> constants = {};
+    std::vector<std::pair<std::string, double>> constants = {};
     // parse expression
     symbolic::Symbolic sym(expr, vars, constants);
     // ouput these variables as part of the test
@@ -149,11 +149,11 @@ SCENARIO("Symbolic", "[symbolic][non-gui]") {
     }
   }
   GIVEN("3*x + alpha*x - a*n/x: one var, constants") {
-    std::map<std::string, double> constants;
-    constants["alpha"] = 0.5;
-    constants["a"] = 0.8 + 1e-11;
-    constants["n"] = -23;
-    constants["Unused"] = -99;
+    std::vector<std::pair<std::string, double>> constants;
+    constants.push_back({"alpha", 0.5});
+    constants.push_back({"a", 0.8 + 1e-11});
+    constants.push_back({"n", -23});
+    constants.push_back({"Unused", -99});
     std::string expr = "3*x + alpha*x - a*n*x";
     REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {}, constants),
                         "Unknown symbol: x");
@@ -167,8 +167,8 @@ SCENARIO("Symbolic", "[symbolic][non-gui]") {
     std::vector<double> res(1, 0);
     for (auto x : std::vector<double>{-0.1, 0, 0.9, 23e-17, 4.88e11, 7e32}) {
       sym.eval(res, {x, 2356.546});
-      REQUIRE(res[0] == dbl_approx(3 * x + constants["alpha"] * x -
-                                   constants["a"] * constants["n"] * x));
+      REQUIRE(res[0] ==
+              dbl_approx(3 * x + 0.5 * x - (0.8 + 1e-11) * (-23) * x));
     }
   }
   GIVEN("expression: parse without compiling, then compile") {
@@ -179,10 +179,10 @@ SCENARIO("Symbolic", "[symbolic][non-gui]") {
     REQUIRE(sym.diff("x") == "1.324");
     std::vector<double> res(1, 0.0);
     sym.compile();
-    sym.evalLLVM(res, {0.1});
+    sym.eval(res, {0.1});
     REQUIRE(res[0] == dbl_approx(6.1324));
     sym.compile();
-    sym.evalLLVM(res, {0.1});
+    sym.eval(res, {0.1});
     REQUIRE(res[0] == dbl_approx(6.1324));
   }
 

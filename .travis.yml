@@ -1,8 +1,10 @@
 language: cpp
-# only build master branch (and pull requests), i.e. don't build pr branches
+# only build master branch & version tags (and pull requests), i.e. don't build pr branches
 branches:
   only:
     - master
+    - /[0-9]+\.[0-9]+\.[0-9]+/
+
 env:
   global:
     - QT5_INSTALL_PREFIX="/usr/local/qt5-static"
@@ -37,6 +39,7 @@ matrix:
       script:
         # export path for Qt5 static binaries
         - export PATH=$QT5_INSTALL_PREFIX/bin:$PATH
+        - cp -r /opt/libs/* ext/.
         - bash ci-build.sh "release optimize_full"
         # run tests
         - ./build/test_unity/test_unity -a
@@ -56,6 +59,7 @@ matrix:
       script:
         # export path for Qt5 static binaries
         - export PATH=$QT5_INSTALL_PREFIX/bin:$PATH
+        - cp -r /opt/libs/* ext/.
         - bash ci-build.sh "release optimize_full"
         # run tests
         - ./build/test_unity/test_unity.app/Contents/MacOS/test_unity -a
@@ -124,7 +128,7 @@ matrix:
         # build tests & compile executable using sonar-source build wrapper
         - mkdir build
         - cd build
-        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -Dsbml_ROOT=`pwd`/../ext/libsbml -Dsymengine_ROOT=`pwd`/../ext/symengine -Ddunecopasi_ROOT=`pwd`/../ext/dune -Dfmt_ROOT=`pwd`/../ext/fmt -Dspdlog_DIR=`pwd`/../ext/spdlog/lib/spdlog/cmake -DCMAKE_PREFIX_PATH=`pwd`/../ext/llvm -Dmuparser_ROOT=`pwd`/../ext/muparser -DTIFF_ROOT=`pwd`/../ext/libtiff -DGMP_ROOT=`pwd`/../ext/gmp -Dexpat_ROOT=`pwd`/../ext/expat
+        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;`pwd`/../ext/dune"
         - build-wrapper-linux-x86-64 --out-dir bw-output make -j2
         # run tests
         # make list of "leaks" from system libraries that LeakSanitizer should ignore
@@ -167,16 +171,12 @@ before_script:
   # to override this, add a qt.conf file (https://doc.qt.io/qt-5/qt-conf.html#overriding-paths)
   - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"
   - sudo tar xf qt5-static-$TRAVIS_OS_NAME.tgz -C /
-  # download pre-compiled static libSBML (and other) libraries
-  - cd ext
+  # download pre-compiled static libSBML (and other) libraries to /opt/libs
   - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
-  - tar xf libsbml-static-$TRAVIS_OS_NAME.tgz
-  - wget "https://github.com/lkeegan/llvm-static/releases/latest/download/llvm-static-$TRAVIS_OS_NAME.tgz"
-  - tar xf llvm-static-$TRAVIS_OS_NAME.tgz
+  - sudo tar xf libsbml-static-$TRAVIS_OS_NAME.tgz -C /
   - wget "https://github.com/lkeegan/dune-copasi-static/releases/latest/download/dune-copasi-static-$TRAVIS_OS_NAME.tgz"
-  - tar xf dune-copasi-static-$TRAVIS_OS_NAME.tgz
-  - ls */*
-  - cd ..
+  - tar xf dune-copasi-static-$TRAVIS_OS_NAME.tgz -C ext/
+  - ls /opt/libs
 
 notifications:
   email: false

@@ -28,12 +28,12 @@ before_build:
   - cd C:\msys64\home\appveyor\ext
   - appveyor DownloadFile "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-windows.zip"
   - 7z x libsbml-static-windows.zip
-  - appveyor DownloadFile "https://github.com/lkeegan/llvm-static/releases/latest/download/llvm-static-windows.zip"
-  - 7z x llvm-static-windows.zip
   - appveyor DownloadFile "https://github.com/lkeegan/dune-copasi-static/releases/latest/download/dune-copasi-static-windows.zip"
   - 7z x dune-copasi-static-windows.zip
   - dir
-  - dir libsbml
+  - dir lib
+  - dir include
+  - dir dune
   - cd %APPVEYOR_BUILD_FOLDER%
 
 build_script:

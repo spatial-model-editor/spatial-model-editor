@@ -10,7 +10,7 @@
 #include <queue>
 
 const int key_delay = 5;
-const int mouseDelay = 50;
+const int mouseDelay = 100;
 
 void sendKeyEvents(QWidget *widget, const QStringList &keySeqStrings);
 

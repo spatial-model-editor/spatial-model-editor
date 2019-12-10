@@ -39,4 +39,3 @@ QMAKE_CXXFLAGS += \
     -isystem "$$[QT_INSTALL_HEADERS]/QtWidgets" \
     -isystem "$$[QT_INSTALL_HEADERS]/QtGui" \
     -isystem "$$[QT_INSTALL_HEADERS]/QtTest" \
-

@@ -45,7 +45,7 @@ class Reaction {
   // j is the reaction index
   std::vector<std::vector<double>> M;
   // vector of maps of constants
-  std::vector<std::map<std::string, double>> constants;
+  std::vector<std::vector<std::pair<std::string, double>>> constants;
   std::vector<double> getStoichMatrixRow(const sbml::SbmlDocWrapper *doc,
                                          const sbml::Reac &reac) const;
 
@@ -55,7 +55,7 @@ class Reaction {
   const std::string &getExpression(std::size_t reactionIndex) const;
   double getMatrixElement(std::size_t speciesIndex,
                           std::size_t reactionIndex) const;
-  const std::map<std::string, double> &getConstants(
+  const std::vector<std::pair<std::string, double>> &getConstants(
       std::size_t reactionIndex) const;
   Reaction(const sbml::SbmlDocWrapper *doc,
            const std::vector<std::string> &species,

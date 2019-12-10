@@ -24,9 +24,7 @@ ReacEval::ReacEval(sbml::SbmlDocWrapper *doc_ptr,
   reac_eval_symengine = symbolic::Symbolic(pde.getRHS(), speciesIDs);
 }
 
-void ReacEval::evaluate() {
-  reac_eval_symengine.evalLLVM(result, species_values);
-}
+void ReacEval::evaluate() { reac_eval_symengine.eval(result, species_values); }
 
 SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
                                const geometry::Compartment *compartment)

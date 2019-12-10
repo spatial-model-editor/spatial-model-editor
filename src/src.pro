@@ -70,4 +70,3 @@ RESOURCES += \
 
 INCLUDEPATH += \
     $$TOPDIR/inc \
-    $$TOPDIR/ext \
