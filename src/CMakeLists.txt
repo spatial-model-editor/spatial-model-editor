@@ -1,3 +1,41 @@
+find_package(SymEngine CONFIG REQUIRED)
+message(STATUS "Testing SymEngine LLVM support")
+try_compile(SYMENGINE_LLVM "${CMAKE_CURRENT_BINARY_DIR}/cxx"
+            "${CMAKE_SOURCE_DIR}/cmake/checkSymEngineLLVM.cpp"
+            CMAKE_FLAGS -DINCLUDE_DIRECTORIES=${SYMENGINE_INCLUDE_DIRS}
+            LINK_LIBRARIES ${SYMENGINE_LIBRARIES}
+            OUTPUT_VARIABLE SYMENGINE_LLVM_ERROR_LOG)
+if(${SYMENGINE_LLVM})
+  message(STATUS "Testing SymEngine LLVM support - found")
+else()
+  message(
+    FATAL_ERROR
+      "Supplied SymEngine library is not compiled with LLVM support")
+endif()
+
+#message(STATUS "SYMENGINE_INCLUDE_DIRS ${SYMENGINE_INCLUDE_DIRS}")
+#message(STATUS "SYMENGINE_LIBRARIES ${SYMENGINE_LIBRARIES}")
+
+find_package(dunecopasi REQUIRED)
+
+find_package(sbml-static REQUIRED)
+message(STATUS "Testing libSBML spatial extension support")
+try_compile(SBML_SPATIAL "${CMAKE_CURRENT_BINARY_DIR}/cxx"
+            "${CMAKE_SOURCE_DIR}/cmake/checkSpatialSBML.cpp"
+            LINK_LIBRARIES sbml-static
+            OUTPUT_VARIABLE SBML_SPATIAL_ERROR_LOG)
+if(${SBML_SPATIAL})
+  message(STATUS "Testing libSBML spatial extension support - found")
+else()
+  message(
+    FATAL_ERROR
+      "Supplied libSBML library is not compiled with spatial extension support")
+endif()
+
+find_package(TIFF REQUIRED)
+find_package(muparser REQUIRED)
+find_package(spdlog REQUIRED)
+
 set(SRC_LIST
     boundary.cpp
     dialogabout.cpp
@@ -39,7 +77,7 @@ add_library(mainwindow STATIC
 
 target_include_directories(mainwindow PUBLIC ${PROJECT_SOURCE_DIR}/inc)
 
-target_include_directories(mainwindow SYSTEM PUBLIC ${LLVM_INCLUDE_DIRS})
+target_include_directories(mainwindow SYSTEM PUBLIC ${SYMENGINE_INCLUDE_DIRS})
 
 set_property(TARGET mainwindow PROPERTY CXX_STANDARD 17)
 
@@ -68,32 +106,14 @@ target_compile_options(mainwindow
                               -Wsign-conversion
                               -Wcast-align>)
 
-# Find the libraries that correspond to the LLVM components that we wish to use
-llvm_map_components_to_libnames(llvm_libs
-                                asmparser
-                                core
-                                executionengine
-                                instcombine
-                                mcjit
-                                native
-                                nativecodegen
-                                scalaropts
-                                vectorize
-                                support
-                                transformutils)
-
 target_link_libraries(mainwindow
-                      PUBLIC sbml::sbml
-                             expat::expat
+                      PUBLIC sbml-static
                              dunecopasi::dunecopasi
                              TIFF::TIFF
                              muparser::muparser
                              spdlog::spdlog
-                             symengine::symengine
-                             ${llvm_libs}
+                             ${SYMENGINE_LIBRARIES}
                              qcustomplot
-                             triangle
-                             fmt::fmt
-                             GMP::GMP)
+                             triangle)
 
 set_target_properties(mainwindow PROPERTIES POSITION_INDEPENDENT_CODE ON)

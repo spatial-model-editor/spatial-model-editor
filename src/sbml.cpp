@@ -24,23 +24,20 @@ static std::string ASTtoString(const libsbml::ASTNode *node) {
   return charAST.get();
 }
 
-void SbmlDocWrapper::clearAllModelData() {
-  compartments.clear();
-  compartmentNames.clear();
-  membranes.clear();
-  species.clear();
-  reactions.clear();
-  functions.clear();
-  mapSpeciesIdToColour.clear();
-  mapCompIdToGeometry.clear();
-  mapSpeciesIdToField.clear();
-  membraneVec.clear();
-  mapCompartmentToColour.clear();
-  mapColourToCompartment.clear();
-  mapMembraneToIndex.clear();
-  mapMembraneToImage.clear();
-  isValid = false;
-  hasValidGeometry = false;
+static void printSBMLDocErrors(libsbml::SBMLDocument *doc) {
+  doc->checkInternalConsistency();
+  if (doc->getNumErrors() > 0) {
+    std::stringstream ss;
+    doc->printErrors(ss);
+    SPDLOG_WARN("SBML internal consistency check warnings/errors:\n\n{}",
+                ss.str());
+  }
+  doc->checkConsistency();
+  if (doc->getNumErrors() > 0) {
+    std::stringstream ss;
+    doc->printErrors(ss);
+    SPDLOG_WARN("SBML consistency check warnings/errors:\n\n{}", ss.str());
+  }
 }
 
 void SbmlDocWrapper::clearAllGeometryData() {
@@ -87,7 +84,6 @@ SbmlDocWrapper::SbmlDocWrapper()
       mesh(std::make_shared<mesh::Mesh>()) {}
 
 void SbmlDocWrapper::importSBMLString(const std::string &xml) {
-  clearAllModelData();
   clearAllGeometryData();
   SPDLOG_INFO("Importing SBML from string...");
   doc.reset(libsbml::readSBMLFromString(xml.c_str()));
@@ -95,7 +91,6 @@ void SbmlDocWrapper::importSBMLString(const std::string &xml) {
 }
 
 void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
-  clearAllModelData();
   clearAllGeometryData();
   currentFilename = filename.c_str();
   SPDLOG_INFO("Loading SBML file {}...", filename);
@@ -118,6 +113,7 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
   coord->setId("xCoord");
   auto *param = model->createParameter();
   param->setId("x");
+  param->setUnits(model->getLengthUnits());
   param->setConstant(false);
   auto *ssr = static_cast<libsbml::SpatialParameterPlugin *>(
                   param->getPlugin("spatial"))
@@ -138,6 +134,7 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
   coord->setId("yCoord");
   param = model->createParameter();
   param->setId("y");
+  param->setUnits(model->getLengthUnits());
   param->setConstant(false);
   ssr = static_cast<libsbml::SpatialParameterPlugin *>(
             param->getPlugin("spatial"))
@@ -391,43 +388,7 @@ void SbmlDocWrapper::updateFunctionList() {
   }
 }
 
-void SbmlDocWrapper::initModelData() {
-  if (doc->getErrorLog()->getNumErrors() > 0) {
-    std::stringstream ss;
-    doc->printErrors(ss);
-    SPDLOG_INFO("SBML document warnings/errors:\n\n{}", ss.str());
-  }
-  if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
-      0) {
-    SPDLOG_WARN("Errors while reading SBML file (continuing anyway...)");
-    isValid = true;
-  } else {
-    SPDLOG_INFO("Successfully imported SBML Level {}, Version {} model",
-                doc->getLevel(), doc->getVersion());
-    isValid = true;
-  }
-
-  // upgrade SBML document to latest version
-  if (!(doc->getLevel() == libsbml::SBMLDocument::getDefaultLevel() &&
-        doc->getVersion() == libsbml::SBMLDocument::getDefaultVersion())) {
-    if (doc->setLevelAndVersion(libsbml::SBMLDocument::getDefaultLevel(),
-                                libsbml::SBMLDocument::getDefaultVersion())) {
-      SPDLOG_INFO("Successfully upgraded SBML model to Level {}, Version {}",
-                  doc->getLevel(), doc->getVersion());
-    } else {
-      SPDLOG_ERROR(
-          "Error - failed to upgrade SBML file (continuing anyway...)");
-    }
-    if (doc->getErrorLog()->getNumFailsWithSeverity(
-            libsbml::LIBSBML_SEV_ERROR) > 0) {
-      std::stringstream ss;
-      doc->printErrors(ss);
-      SPDLOG_WARN("SBML document errors:\n\n{}", ss.str());
-    }
-  }
-
-  model = doc->getModel();
-
+void SbmlDocWrapper::importCompartmentsAndSpeciesFromSBML() {
   // get list of compartments
   compartments.clear();
   compartmentNames.clear();
@@ -475,26 +436,62 @@ void SbmlDocWrapper::initModelData() {
     // assign a default colour for displaying the species
     mapSpeciesIdToColour[id] = utils::indexedColours()[i];
   }
+}
 
-  updateFunctionList();
-
-  importTimeUnitsFromSBML(2);
-  importLengthUnitsFromSBML(2);
-  importVolumeUnitsFromSBML(3);
-  importAmountUnitsFromSBML(1);
-
+void SbmlDocWrapper::validateAndUpgradeSBMLDoc() {
+  // check for import errors
+  if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
+      0) {
+    SPDLOG_WARN("Errors while reading SBML file (continuing anyway...)");
+    isValid = true;
+  } else {
+    SPDLOG_INFO("Successfully imported SBML Level {}, Version {} model",
+                doc->getLevel(), doc->getVersion());
+    isValid = true;
+  }
+  // upgrade SBML document to latest version
+  auto lvl = libsbml::SBMLDocument::getDefaultLevel();
+  auto ver = libsbml::SBMLDocument::getDefaultVersion();
+  if (!(doc->getLevel() == lvl && doc->getVersion() == ver)) {
+    if (doc->setLevelAndVersion(lvl, ver)) {
+      SPDLOG_INFO("Successfully upgraded SBML model to Level {}, Version {}",
+                  doc->getLevel(), doc->getVersion());
+    } else {
+      SPDLOG_ERROR(
+          "Error - failed to upgrade SBML file (continuing anyway...)");
+    }
+    if (doc->getErrorLog()->getNumFailsWithSeverity(
+            libsbml::LIBSBML_SEV_ERROR) > 0) {
+      std::stringstream ss;
+      doc->printErrors(ss);
+      SPDLOG_WARN("SBML document errors:\n\n{}", ss.str());
+    }
+  }
+  model = doc->getModel();
+  // enable spatial extension
   if (!doc->isPackageEnabled("spatial")) {
     doc->enablePackage(libsbml::SpatialExtension::getXmlnsL3V1V1(), "spatial",
                        true);
     doc->setPackageRequired("spatial", true);
     SPDLOG_INFO("Enabling spatial extension");
   }
-
   plugin =
       static_cast<libsbml::SpatialModelPlugin *>(model->getPlugin("spatial"));
   if (plugin == nullptr) {
     SPDLOG_ERROR("Failed to get SpatialModelPlugin from SBML document");
   }
+}
+
+void SbmlDocWrapper::initModelData() {
+  validateAndUpgradeSBMLDoc();
+  printSBMLDocErrors(doc.get());
+  importCompartmentsAndSpeciesFromSBML();
+  updateFunctionList();
+
+  importTimeUnitsFromSBML(2);
+  importLengthUnitsFromSBML(2);
+  importVolumeUnitsFromSBML(3);
+  importAmountUnitsFromSBML(1);
 
   if (plugin->isSetGeometry()) {
     importSpatialData();
@@ -523,19 +520,7 @@ QString SbmlDocWrapper::getXml() {
     return {};
   }
   writeGeometryMeshToSBML();
-  doc->checkInternalConsistency();
-  if (doc->getNumErrors() > 0) {
-    std::stringstream ss;
-    doc->printErrors(ss);
-    SPDLOG_WARN("SBML internal consistency check warnings/errors:\n\n{}",
-                ss.str());
-  }
-  doc->checkConsistency();
-  if (doc->getNumErrors() > 0) {
-    std::stringstream ss;
-    doc->printErrors(ss);
-    SPDLOG_WARN("SBML consistency check warnings/errors:\n\n{}", ss.str());
-  }
+  printSBMLDocErrors(doc.get());
   std::unique_ptr<char, decltype(&std::free)> xmlChar(
       libsbml::writeSBMLToString(doc.get()), &std::free);
   xml = QString(xmlChar.get());
@@ -593,7 +578,11 @@ void SbmlDocWrapper::setFieldConcAnalytic(geometry::Field &field,
   SPDLOG_INFO("expr: {}", expr);
   auto inlinedExpr = inlineExpr(expr);
   SPDLOG_INFO("  - inlined expr: {}", inlinedExpr);
-  symbolic::Symbolic sym(inlinedExpr, {"x", "y"}, getGlobalConstants());
+  std::vector<std::pair<std::string, double>> constants;
+  for (const auto &[id, name, value] : getGlobalConstants()) {
+    constants.push_back({id, value});
+  }
+  symbolic::Symbolic sym(inlinedExpr, {"x", "y"}, constants);
   SPDLOG_INFO("  - parsed expr: {}", sym.simplify());
   auto result = std::vector<double>(1, 0);
   auto vars = std::vector<double>(2, 0);
@@ -604,7 +593,7 @@ void SbmlDocWrapper::setFieldConcAnalytic(geometry::Field &field,
     vars[0] = physicalOrigin.x() + pixelWidth * static_cast<double>(point.x());
     int y = field.geometry->getCompartmentImage().height() - 1 - point.y();
     vars[1] = physicalOrigin.y() + pixelWidth * static_cast<double>(y);
-    sym.evalLLVM(result, vars);
+    sym.eval(result, vars);
     field.conc[i] = result[0];
   }
   field.init = field.conc;
@@ -745,6 +734,151 @@ void SbmlDocWrapper::updateMembraneList() {
   }
 }
 
+static Reac getReactionFromSBML(
+    libsbml::Reaction *reac,
+    const std::map<std::pair<std::string, std::string>, std::string>
+        &mapCompartmentPairToMembrane) {
+  Reac r;
+  auto *model = reac->getModel();
+  SPDLOG_INFO("Importing reaction {}", reac->getId());
+  r.id = reac->getId();
+  if (reac->getName().empty()) {
+    SPDLOG_INFO("Reaction with Id {0} has no Name, setting Name = {0}",
+                reac->getId());
+    reac->setName(reac->getId());
+  }
+  r.name = reac->getName();
+  reac->setFast(false);
+  // construct the set of compartments where reaction takes place
+  std::set<std::string> comps;
+  if (reac->isSetCompartment()) {
+    comps.insert(reac->getCompartment());
+  }
+  r.species.reserve(reac->getNumProducts() + reac->getNumReactants());
+  for (unsigned int k = 0; k < reac->getNumProducts(); ++k) {
+    const auto *s = reac->getProduct(k);
+    const auto &sId = s->getSpecies();
+    const auto &sName = model->getSpecies(sId)->getName();
+    comps.insert(model->getSpecies(sId)->getCompartment());
+    r.species.push_back({sId, sName, s->getStoichiometry()});
+    SPDLOG_INFO("  - adding product {} x {}", s->getStoichiometry(), sId);
+    SPDLOG_INFO("    -> {} stoich coeff: {}", r.species.back().id,
+                r.species.back().value);
+  }
+  for (unsigned int k = 0; k < reac->getNumReactants(); ++k) {
+    const auto *s = reac->getReactant(k);
+    const auto &sId = s->getSpecies();
+    const auto &sName = model->getSpecies(sId)->getName();
+    comps.insert(model->getSpecies(sId)->getCompartment());
+    SPDLOG_INFO("  - adding reactant {} x {}", s->getStoichiometry(), sId);
+    if (auto iter =
+            std::find_if(r.species.begin(), r.species.end(),
+                         [sId](const IdNameValue &x) { return x.id == sId; });
+        iter != r.species.end()) {
+      iter->value -= s->getStoichiometry();
+      SPDLOG_INFO("    -> {} stoich coeff: {}", iter->id, iter->value);
+    } else {
+      r.species.push_back({sId, sName, -(s->getStoichiometry())});
+      SPDLOG_INFO("    -> {} stoich coeff {}", r.species.back().id,
+                  r.species.back().value);
+    }
+  }
+  for (unsigned int k = 0; k < reac->getNumModifiers(); ++k) {
+    const std::string &sId = reac->getModifier(k)->getSpecies();
+    comps.insert(model->getSpecies(sId)->getCompartment());
+  }
+  auto *kin = reac->getKineticLaw();
+  if (kin == nullptr) {
+    kin = reac->createKineticLaw();
+  }
+  auto *srp =
+      static_cast<libsbml::SpatialReactionPlugin *>(reac->getPlugin("spatial"));
+  // single compartment
+  if (comps.size() == 1) {
+    std::string compId = *comps.begin();
+    SPDLOG_INFO("  - compartment: {}", compId);
+    r.locationId = compId;
+    r.compartments = {compId};
+    // if reaction `isLocal` is not set, then the reaction rate is for
+    // amount, so here we divide the reaction formula by the compartment
+    // volume to convert it to concentration, and set `isLocal` to true
+    if (!srp->isSetIsLocal()) {
+      SPDLOG_INFO("Reaction {} takes place in compartment {}", reac->getId(),
+                  compId);
+      SPDLOG_INFO(
+          "  - isLocal has not been set, so dividing reaction rate by "
+          "compartment volume:");
+      auto expr = ASTtoString(kin->getMath());
+      SPDLOG_INFO("  - {}", expr);
+      auto newExpr = symbolic::divide(expr, compId);
+      SPDLOG_INFO("  --> {}", newExpr);
+      std::unique_ptr<libsbml::ASTNode> argAST(
+          libsbml::SBML_parseL3Formula(newExpr.c_str()));
+      if (argAST != nullptr) {
+        reac->getKineticLaw()->setMath(argAST.get());
+        SPDLOG_INFO("  - new math: {}",
+                    ASTtoString(reac->getKineticLaw()->getMath()));
+        SPDLOG_INFO("  - setting isLocal to true");
+        srp->setIsLocal(true);
+      } else {
+        SPDLOG_ERROR("  - libSBML failed to parse expression");
+      }
+    }
+    if (!reac->isSetCompartment()) {
+      reac->setCompartment(compId);
+    }
+  } else if (comps.size() == 2) {
+    // two compartments: takes place on the membrane between them
+    QString compA = comps.cbegin()->c_str();
+    QString compB = comps.crbegin()->c_str();
+    SPDLOG_INFO("  - compartments: {}, {}", compA.toStdString(),
+                compB.toStdString());
+    r.compartments = {compA.toStdString(), compB.toStdString()};
+    if (auto iter = mapCompartmentPairToMembrane.find(
+            {compA.toStdString(), compB.toStdString()});
+        iter != mapCompartmentPairToMembrane.end()) {
+      r.locationId = iter->second;
+      SPDLOG_INFO("    -> membrane: {}", r.locationId);
+    } else {
+      SPDLOG_ERROR("No membrane between compartments {}, {} - reaction invalid",
+                   compA.toStdString(), compB.toStdString());
+      r.locationId = compA.toStdString();
+    }
+    if (!srp->isSetIsLocal()) {
+      SPDLOG_INFO("Reaction {} takes place on the {} membrane", reac->getId(),
+                  r.locationId);
+      SPDLOG_INFO("  - isLocal has not been set, so setting it");
+      SPDLOG_WARN(
+          "  - should warn user that units of membrane reaction have "
+          "changed, "
+          "and that their reaction rate should be adjusted");
+      srp->setIsLocal(true);
+    }
+    if (!reac->isSetCompartment()) {
+      reac->setCompartment(compA.toStdString());
+    }
+  } else {
+    SPDLOG_ERROR(
+        "Reaction involves species from {} compartments - not supported",
+        comps.size());
+    return r;
+  }
+  r.expression = kin->getFormula();
+  // get all local parameters that are not
+  // replaced by an assignment rule
+  for (unsigned k = 0; k < kin->getNumLocalParameters(); ++k) {
+    auto *param = kin->getLocalParameter(k);
+    if (param->getName().empty()) {
+      SPDLOG_INFO("Parameter with Id {0} has no Name, setting Name = {0}",
+                  param->getId());
+      param->setName(param->getId());
+    }
+    r.constants.push_back(
+        {param->getId(), param->getName(), param->getValue()});
+  }
+  return r;
+}
+
 void SbmlDocWrapper::updateReactionList() {
   reactions.clear();
   mapReactionIdToReac.clear();
@@ -757,9 +891,11 @@ void SbmlDocWrapper::updateReactionList() {
     }
   }
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
-    QString reacId = model->getReaction(i)->getId().c_str();
+    auto *reac = model->getReaction(i);
+    QString reacId = reac->getId().c_str();
     SPDLOG_DEBUG("Adding reaction {}", reacId.toStdString());
-    mapReactionIdToReac[reacId] = getReactionFromSBML(reacId);
+    mapReactionIdToReac[reacId] =
+        getReactionFromSBML(reac, mapCompartmentPairToMembrane);
     SPDLOG_DEBUG(" - location {}", mapReactionIdToReac.at(reacId).locationId);
     reactions.at(mapReactionIdToReac.at(reacId).locationId.c_str())
         .push_back(reacId);
@@ -920,13 +1056,6 @@ void SbmlDocWrapper::importAmountUnitsFromSBML(int defaultUnitIndex) {
   setUnitsAmountIndex(uIndex.value_or(defaultUnitIndex));
   SPDLOG_INFO("  -> {}", modelUnits.getAmount().name.toStdString());
   return;
-}
-
-double SbmlDocWrapper::getSpeciesCompartmentSize(
-    const QString &speciesID) const {
-  QString compID =
-      model->getSpecies(speciesID.toStdString())->getCompartment().c_str();
-  return getCompartmentSize(compID);
 }
 
 SpeciesGeometry SbmlDocWrapper::getSpeciesGeometry(
@@ -1362,6 +1491,7 @@ void SbmlDocWrapper::setSampledFieldConcentration(
   }
   param->setId(id);
   param->setConstant(true);
+  param->setUnits(model->getSubstanceUnits());
   SPDLOG_INFO("  - creating Parameter: {}", param->getId());
   auto *spp = static_cast<libsbml::SpatialParameterPlugin *>(
       param->getPlugin("spatial"));
@@ -1497,7 +1627,8 @@ void SbmlDocWrapper::setIsSpeciesConstant(const std::string &speciesID,
     setIsSpatial(speciesID.c_str(), false);
   }
   // todo: think about how to deal with boundaryCondition properly
-  // for now, just set it to false here: species is either constant, or not
+  // for now, just set it to false here
+  // i.e. this species cannot be a product or reactant
   spec->setBoundaryCondition(false);
 }
 
@@ -1692,15 +1823,15 @@ bool SbmlDocWrapper::isSpeciesReactive(const std::string &speciesID) const {
   return true;
 }
 
-std::map<std::string, double> SbmlDocWrapper::getGlobalConstants() const {
-  std::map<std::string, double> constants;
+std::vector<IdNameValue> SbmlDocWrapper::getGlobalConstants() const {
+  std::vector<IdNameValue> constants;
   // add all *constant* species as constants
   for (unsigned k = 0; k < model->getNumSpecies(); ++k) {
     const auto *spec = model->getSpecies(k);
     if (getIsSpeciesConstant(spec->getId())) {
       SPDLOG_TRACE("found constant species {}", spec->getId());
       double init_conc = spec->getInitialConcentration();
-      constants[spec->getId()] = init_conc;
+      constants.push_back({spec->getId(), spec->getName(), init_conc});
       SPDLOG_TRACE("parameter {} = {}", spec->getId(), init_conc);
     }
   }
@@ -1709,7 +1840,13 @@ std::map<std::string, double> SbmlDocWrapper::getGlobalConstants() const {
     const auto *param = model->getParameter(k);
     if (model->getAssignmentRule(param->getId()) == nullptr) {
       SPDLOG_TRACE("parameter {} = {}", param->getId(), param->getValue());
-      constants[param->getId()] = param->getValue();
+      if (!(param->getId() == "x" || param->getId() == "y")) {
+        // remove x and y if present, as these are not really parameters
+        // (we want them to remain as variables to be parsed by symbolic parser)
+        // todo: check if this can be done in a better way
+        constants.push_back(
+            {param->getId(), param->getName(), param->getValue()});
+      }
     }
   }
   // also get compartment volumes (the compartmentID may be used in the
@@ -1718,16 +1855,7 @@ std::map<std::string, double> SbmlDocWrapper::getGlobalConstants() const {
   for (unsigned int k = 0; k < model->getNumCompartments(); ++k) {
     const auto *comp = model->getCompartment(k);
     SPDLOG_TRACE("parameter {} = {}", comp->getId(), comp->getSize());
-    constants[comp->getId()] = comp->getSize();
-  }
-  // remove x and y if present, as these are not really parameters
-  // (we want them to remain as variables to be parsed by symbolic parser)
-  // todo: check if this can be done in a better way
-  for (const auto &c : {"x", "y"}) {
-    auto iter = constants.find(c);
-    if (iter != constants.cend()) {
-      constants.erase(iter);
-    }
+    constants.push_back({comp->getId(), comp->getName(), comp->getSize()});
   }
   return constants;
 }
@@ -1919,151 +2047,6 @@ std::string SbmlDocWrapper::inlineAssignments(
   return expr;
 }
 
-Reac SbmlDocWrapper::getReactionFromSBML(const QString &reactionID) const {
-  Reac r;
-  auto *reac = model->getReaction(reactionID.toStdString());
-  if (reac == nullptr) {
-    SPDLOG_WARN("Reaction {} not found", reactionID.toStdString());
-    return r;
-  }
-  SPDLOG_INFO("Importing reaction {}", reac->getId());
-  r.id = reac->getId();
-  if (reac->getName().empty()) {
-    SPDLOG_INFO("Reaction with Id {0} has no Name, setting Name = {0}",
-                reac->getId());
-    reac->setName(reac->getId());
-  }
-  r.name = reac->getName();
-  auto *srp =
-      static_cast<libsbml::SpatialReactionPlugin *>(reac->getPlugin("spatial"));
-  // construct the set of compartments where reaction takes place
-  std::set<std::string> comps;
-  if (reac->isSetCompartment()) {
-    comps.insert(reac->getCompartment());
-  }
-  r.species.reserve(reac->getNumProducts() + reac->getNumReactants());
-  for (unsigned int k = 0; k < reac->getNumProducts(); ++k) {
-    const auto *s = reac->getProduct(k);
-    const auto &sId = s->getSpecies();
-    const auto &sName = model->getSpecies(sId)->getName();
-    comps.insert(model->getSpecies(sId)->getCompartment());
-    r.species.push_back({sId, sName, s->getStoichiometry()});
-    SPDLOG_INFO("  - adding product {} x {}", s->getStoichiometry(), sId);
-    SPDLOG_INFO("    -> {} stoich coeff: {}", r.species.back().id,
-                r.species.back().value);
-  }
-  for (unsigned int k = 0; k < reac->getNumReactants(); ++k) {
-    const auto *s = reac->getReactant(k);
-    const auto &sId = s->getSpecies();
-    const auto &sName = model->getSpecies(sId)->getName();
-    comps.insert(model->getSpecies(sId)->getCompartment());
-    SPDLOG_INFO("  - adding reactant {} x {}", s->getStoichiometry(), sId);
-    if (auto iter =
-            std::find_if(r.species.begin(), r.species.end(),
-                         [sId](const IdNameValue &x) { return x.id == sId; });
-        iter != r.species.end()) {
-      iter->value -= s->getStoichiometry();
-      SPDLOG_INFO("    -> {} stoich coeff: {}", iter->id, iter->value);
-    } else {
-      r.species.push_back({sId, sName, -(s->getStoichiometry())});
-      SPDLOG_INFO("    -> {} stoich coeff {}", r.species.back().id,
-                  r.species.back().value);
-    }
-  }
-  for (unsigned int k = 0; k < reac->getNumModifiers(); ++k) {
-    const std::string &sId = reac->getModifier(k)->getSpecies();
-    comps.insert(model->getSpecies(sId)->getCompartment());
-  }
-  auto *kin = reac->getKineticLaw();
-  if (kin == nullptr) {
-    kin = reac->createKineticLaw();
-  }
-  // single compartment
-  if (comps.size() == 1) {
-    std::string compId = *comps.begin();
-    SPDLOG_INFO("  - compartment: {}", compId);
-    r.locationId = compId;
-    r.compartments = {compId};
-    // if reaction `isLocal` is not set, then the reaction rate is for
-    // amount, so here we divide the reaction formula by the compartment
-    // volume to convert it to concentration, and set `isLocal` to true
-    if (!srp->isSetIsLocal()) {
-      SPDLOG_INFO("Reaction {} takes place in compartment {}", reac->getId(),
-                  compId);
-      SPDLOG_INFO(
-          "  - isLocal has not been set, so dividing reaction rate by "
-          "compartment volume:");
-      auto expr = ASTtoString(kin->getMath());
-      SPDLOG_INFO("  - {}", expr);
-      auto newExpr = symbolic::divide(expr, compId);
-      SPDLOG_INFO("  --> {}", newExpr);
-      std::unique_ptr<libsbml::ASTNode> argAST(
-          libsbml::SBML_parseL3Formula(newExpr.c_str()));
-      if (argAST != nullptr) {
-        reac->getKineticLaw()->setMath(argAST.get());
-        SPDLOG_INFO("  - new math: {}",
-                    ASTtoString(reac->getKineticLaw()->getMath()));
-        SPDLOG_INFO("  - setting isLocal to true");
-        srp->setIsLocal(true);
-      } else {
-        SPDLOG_ERROR("  - libSBML failed to parse expression");
-      }
-    }
-    if (!reac->isSetCompartment()) {
-      reac->setCompartment(compId);
-    }
-  } else if (comps.size() == 2) {
-    // two compartments: takes place on the membrane between them
-    QString compA = comps.cbegin()->c_str();
-    QString compB = comps.crbegin()->c_str();
-    SPDLOG_INFO("  - compartments: {}, {}", compA.toStdString(),
-                compB.toStdString());
-    r.compartments = {compA.toStdString(), compB.toStdString()};
-    if (auto iter = mapCompartmentPairToMembrane.find(
-            {compA.toStdString(), compB.toStdString()});
-        iter != mapCompartmentPairToMembrane.end()) {
-      r.locationId = iter->second;
-      SPDLOG_INFO("    -> membrane: {}", r.locationId);
-    } else {
-      SPDLOG_ERROR("No membrane between compartments {}, {} - reaction invalid",
-                   compA.toStdString(), compB.toStdString());
-      r.locationId = compA.toStdString();
-    }
-    if (!srp->isSetIsLocal()) {
-      SPDLOG_INFO("Reaction {} takes place on the {} membrane", reac->getId(),
-                  r.locationId);
-      SPDLOG_INFO("  - isLocal has not been set, so setting it");
-      SPDLOG_WARN(
-          "  - should warn user that units of membrane reaction have "
-          "changed, "
-          "and that their reaction rate should be adjusted");
-      srp->setIsLocal(true);
-    }
-    if (!reac->isSetCompartment()) {
-      reac->setCompartment(compA.toStdString());
-    }
-  } else {
-    SPDLOG_ERROR(
-        "Reaction involves species from {} compartments - not supported",
-        comps.size());
-    return r;
-  }
-  r.expression = kin->getFormula();
-  // get all local parameters that are not
-  // replaced by an assignment rule
-  for (unsigned k = 0; k < kin->getNumLocalParameters(); ++k) {
-    auto *param = kin->getLocalParameter(k);
-    if (param->getName().empty()) {
-      SPDLOG_INFO("Parameter with Id {0} has no Name, setting Name = {0}",
-                  param->getId());
-      param->setName(param->getId());
-    }
-    r.constants.push_back(
-        {param->getId(), param->getName(), param->getValue()});
-  }
-  return r;
-}
-
 const Reac &SbmlDocWrapper::getReaction(const QString &reactionID) const {
   return mapReactionIdToReac.at(reactionID);
 }
@@ -2142,6 +2125,7 @@ void SbmlDocWrapper::setReaction(const Reac &reac) {
     }
   }
   auto *kin = r->createKineticLaw();
+  SPDLOG_INFO("  - expr: {}", reac.expression);
   std::unique_ptr<libsbml::ASTNode> exprAST(
       libsbml::SBML_parseL3Formula(reac.expression.c_str()));
   kin->setMath(exprAST.get());
@@ -2169,7 +2153,8 @@ void SbmlDocWrapper::addReaction(const QString &reactionName,
       static_cast<libsbml::SpatialReactionPlugin *>(reac->getPlugin("spatial"));
   srp->setIsLocal(true);
   reactions.at(locationId).push_back(reactionId);
-  mapReactionIdToReac[reactionId] = getReactionFromSBML(reactionId);
+  mapReactionIdToReac[reactionId] =
+      getReactionFromSBML(reac, mapCompartmentPairToMembrane);
 }
 
 std::string SbmlDocWrapper::getRateRule(const std::string &speciesID) const {

@@ -61,12 +61,11 @@ class Symbolic::SymEngineImpl {
  public:
   SymEngine::vec_basic expr;
   SymEngine::vec_basic varVec;
-  SymEngine::LambdaRealDoubleVisitor lambda;
   SymEngine::LLVMDoubleVisitor lambdaLLVM;
   std::map<std::string, SymEngine::RCP<const SymEngine::Symbol>> symbols;
   void init(const std::vector<std::string> &expressions,
             const std::vector<std::string> &variables,
-            const std::map<std::string, double> &constants);
+            const std::vector<std::pair<std::string, double>> &constants);
   void compile();
   void relabel(const std::vector<std::string> &newVariables);
 };
@@ -74,7 +73,7 @@ class Symbolic::SymEngineImpl {
 void Symbolic::SymEngineImpl::init(
     const std::vector<std::string> &expressions,
     const std::vector<std::string> &variables,
-    const std::map<std::string, double> &constants) {
+    const std::vector<std::pair<std::string, double>> &constants) {
   SPDLOG_DEBUG("parsing {} expressions", expressions.size());
   for (const auto &v : variables) {
     SPDLOG_DEBUG("  - variable {}", v);
@@ -107,10 +106,7 @@ void Symbolic::SymEngineImpl::init(
 
 void Symbolic::SymEngineImpl::compile() {
   SPDLOG_DEBUG("compiling expression");
-  // NOTE: don't do symbolic CSE - segfaults!
-  lambda.init(varVec, expr, false);
-  // compile with LLVM - again no symbolic CSE to avoid segfaults.
-  lambdaLLVM.init(varVec, expr, false);
+  lambdaLLVM.init(varVec, expr, true);
 }
 
 void Symbolic::SymEngineImpl::relabel(
@@ -151,7 +147,8 @@ std::string divide(const std::string &expr, const std::string &var) {
 
 Symbolic::Symbolic(const std::vector<std::string> &expressions,
                    const std::vector<std::string> &variables,
-                   const std::map<std::string, double> &constants, bool compile)
+                   const std::vector<std::pair<std::string, double>> &constants,
+                   bool compile)
     : pSymEngineImpl(std::make_shared<SymEngineImpl>()) {
   pSymEngineImpl->init(expressions, variables, constants);
   if (compile) {
@@ -176,12 +173,7 @@ void Symbolic::relabel(const std::vector<std::string> &newVariables) {
 }
 
 void Symbolic::eval(std::vector<double> &results,
-                    const std::vector<double> &vars) {
-  pSymEngineImpl->lambda.call(results.data(), vars.data());
-}
-
-void Symbolic::evalLLVM(std::vector<double> &results,
-                        const std::vector<double> &vars) {
+                    const std::vector<double> &vars) const {
   pSymEngineImpl->lambdaLLVM.call(results.data(), vars.data());
 }
 

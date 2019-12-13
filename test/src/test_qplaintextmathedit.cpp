@@ -73,7 +73,7 @@ SCENARIO("QPlainTextMathEdit", "[qplaintextmathedit][gui]") {
     mathEdit.removeVariable("x");
     REQUIRE(mathEdit.getMath().toStdString() == "");
     REQUIRE(mathEdit.mathIsValid() == false);
-    REQUIRE(mathEdit.getErrorMessage().toStdString() == "Unknown symbol: x");
+    REQUIRE(mathEdit.getErrorMessage().toStdString() == "name 'x' not found");
     REQUIRE(signal.math == mathEdit.getMath());
     REQUIRE(signal.valid == mathEdit.mathIsValid());
     REQUIRE(signal.error == mathEdit.getErrorMessage());
@@ -82,7 +82,7 @@ SCENARIO("QPlainTextMathEdit", "[qplaintextmathedit][gui]") {
     sendKeyEvents(&mathEdit, {"&"});
     REQUIRE(mathEdit.getMath().toStdString() == "");
     REQUIRE(mathEdit.mathIsValid() == false);
-    REQUIRE(mathEdit.getErrorMessage().toStdString() == "Illegal character: &");
+    REQUIRE(mathEdit.getErrorMessage().toStdString() == "name 'x&' not found");
     REQUIRE(signal.math == mathEdit.getMath());
     REQUIRE(signal.valid == mathEdit.mathIsValid());
     REQUIRE(signal.error == mathEdit.getErrorMessage());
@@ -91,7 +91,7 @@ SCENARIO("QPlainTextMathEdit", "[qplaintextmathedit][gui]") {
     sendKeyEvents(&mathEdit, {"Backspace", "!"});
     REQUIRE(mathEdit.getMath().toStdString() == "");
     REQUIRE(mathEdit.mathIsValid() == false);
-    REQUIRE(mathEdit.getErrorMessage().toStdString() == "Illegal character: !");
+    REQUIRE(mathEdit.getErrorMessage().toStdString() == "name 'x!' not found");
     REQUIRE(signal.math == mathEdit.getMath());
     REQUIRE(signal.valid == mathEdit.mathIsValid());
     REQUIRE(signal.error == mathEdit.getErrorMessage());
@@ -161,20 +161,23 @@ SCENARIO("QPlainTextMathEdit", "[qplaintextmathedit][gui]") {
     mathEdit.addVariable("x", "X");
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage().toStdString() ==
-            "Unknown symbol: y_var");
+            "name 'y_var' not found");
     mathEdit.addVariable("y", "y_var");
     REQUIRE(mathEdit.getVariables().size() == 2);
     REQUIRE(mathEdit.mathIsValid() == true);
     REQUIRE(signal.math.toStdString() == "X + y_var");
+    REQUIRE(mathEdit.getVariableMath() == "x + y");
     // "X + y_var + 3*X"
     sendKeyEvents(&mathEdit, {"+", "3", "*", "X"});
     REQUIRE(mathEdit.mathIsValid() == true);
     REQUIRE(signal.math.toStdString() == "4*X + y_var");
+    REQUIRE(mathEdit.getVariableMath() == "4*x + y");
     mathEdit.removeVariable("y");
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage().toStdString() ==
-            "Unknown symbol: y_var");
+            "name 'y_var' not found");
     mathEdit.removeVariable("x");
+    REQUIRE(mathEdit.getVariableMath().empty() == true);
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage().toStdString() == "Unknown symbol: X");
   }
@@ -186,11 +189,31 @@ SCENARIO("QPlainTextMathEdit", "[qplaintextmathedit][gui]") {
     // "X var!"
     sendKeyEvents(&mathEdit, {"\"", "X", " ", "v", "a", "r", "!", "\""});
     REQUIRE(signal.math.toStdString() == "\"X var!\"");
+    REQUIRE(mathEdit.getVariableMath() == "x");
     // "X var!" + "X var!"
     sendKeyEvents(&mathEdit, {"+", "\"", "X", " ", "v", "a", "r", "!", "\""});
     REQUIRE(signal.math.toStdString() == "2*\"X var!\"");
+    REQUIRE(mathEdit.getVariableMath() == "2*x");
     mathEdit.removeVariable("x");
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage().toStdString() == "Illegal character: !");
+  }
+  GIVEN("expression with user-defined function") {
+    mathEdit.show();
+    REQUIRE(mathEdit.getVariables().empty() == true);
+    mathEdit.addVariable("x", "X");
+    REQUIRE(mathEdit.getVariables().size() == 1);
+    // "cos(X)"
+    sendKeyEvents(&mathEdit, {"c", "o", "s", "(", "X", ")"});
+    REQUIRE(signal.math.toStdString() == "");
+    REQUIRE(mathEdit.getVariableMath().empty() == true);
+    REQUIRE(mathEdit.getErrorMessage().toStdString() == "name 'cos' not found");
+    REQUIRE(mathEdit.mathIsValid() == false);
+    mathEdit.addVariable("cos");
+    REQUIRE(mathEdit.getVariables().size() == 2);
+    REQUIRE(signal.math.toStdString() == "cos(X)");
+    REQUIRE(mathEdit.getVariableMath() == "cos(x)");
+    REQUIRE(mathEdit.getErrorMessage().toStdString() == "");
+    REQUIRE(mathEdit.mathIsValid() == true);
   }
 }

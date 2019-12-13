@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -26,14 +25,16 @@ class Symbolic {
 
  public:
   Symbolic() = default;
-  explicit Symbolic(const std::vector<std::string> &expressions,
-                    const std::vector<std::string> &variables = {},
-                    const std::map<std::string, double> &constants = {},
-                    bool compile = true);
-  explicit Symbolic(const std::string &expression,
-                    const std::vector<std::string> &variables = {},
-                    const std::map<std::string, double> &constants = {},
-                    bool compile = true)
+  explicit Symbolic(
+      const std::vector<std::string> &expressions,
+      const std::vector<std::string> &variables = {},
+      const std::vector<std::pair<std::string, double>> &constants = {},
+      bool compile = true);
+  explicit Symbolic(
+      const std::string &expression,
+      const std::vector<std::string> &variables = {},
+      const std::vector<std::pair<std::string, double>> &constants = {},
+      bool compile = true)
       : Symbolic(std::vector<std::string>{expression}, variables, constants,
                  compile) {}
   // compile expression (done by default in constructor)
@@ -45,9 +46,8 @@ class Symbolic {
   // relabel variables
   void relabel(const std::vector<std::string> &newVariables);
   // evaluate compiled expressions
-  void eval(std::vector<double> &results, const std::vector<double> &vars = {});
-  void evalLLVM(std::vector<double> &results,
-                const std::vector<double> &vars = {});
+  void eval(std::vector<double> &results,
+            const std::vector<double> &vars = {}) const;
 };
 
 }  // namespace symbolic

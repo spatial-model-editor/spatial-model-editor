@@ -62,63 +62,69 @@
             <apply>
               <exp/>
               <apply>
-                <divide/>
+                <times/>
+                <cn type="rational"> -1 <sep/> 15 </cn>
                 <apply>
-                  <minus/>
+                  <plus/>
                   <apply>
-                    <plus/>
+                    <power/>
                     <apply>
-                      <power/>
+                      <plus/>
                       <apply>
                         <minus/>
-                        <ci> x </ci>
-                        <cn type="integer"> 50 </cn>
+                        <cn type="integer"> 68 </cn>
                       </apply>
-                      <cn type="integer"> 2 </cn>
+                      <ci> x </ci>
                     </apply>
+                    <cn type="integer"> 2 </cn>
+                  </apply>
+                  <apply>
+                    <power/>
                     <apply>
-                      <power/>
+                      <plus/>
                       <apply>
                         <minus/>
-                        <ci> y </ci>
-                        <cn type="integer"> 50 </cn>
+                        <cn type="integer"> 68 </cn>
                       </apply>
-                      <cn type="integer"> 2 </cn>
+                      <ci> y </ci>
                     </apply>
+                    <cn type="integer"> 2 </cn>
                   </apply>
                 </apply>
-                <cn type="integer"> 15 </cn>
               </apply>
             </apply>
             <apply>
               <exp/>
               <apply>
-                <divide/>
+                <times/>
+                <cn type="rational"> -1 <sep/> 15 </cn>
                 <apply>
-                  <minus/>
+                  <plus/>
                   <apply>
-                    <plus/>
+                    <power/>
                     <apply>
-                      <power/>
+                      <plus/>
                       <apply>
                         <minus/>
-                        <ci> x </ci>
-                        <cn type="integer"> 68 </cn>
+                        <cn type="integer"> 50 </cn>
                       </apply>
-                      <cn type="integer"> 2 </cn>
+                      <ci> x </ci>
                     </apply>
+                    <cn type="integer"> 2 </cn>
+                  </apply>
+                  <apply>
+                    <power/>
                     <apply>
-                      <power/>
+                      <plus/>
                       <apply>
                         <minus/>
-                        <ci> y </ci>
-                        <cn type="integer"> 68 </cn>
+                        <cn type="integer"> 50 </cn>
                       </apply>
-                      <cn type="integer"> 2 </cn>
+                      <ci> y </ci>
                     </apply>
+                    <cn type="integer"> 2 </cn>
                   </apply>
                 </apply>
-                <cn type="integer"> 15 </cn>
               </apply>
             </apply>
           </apply>
@@ -137,9 +143,8 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> compartment </ci>
-              <ci> k </ci>
               <ci> V </ci>
+              <ci> k </ci>
             </apply>
           </math>
         </kineticLaw>
@@ -147,23 +152,21 @@
       <reaction id="UVVtoVVV" name="convert U + 2V to 3V" reversible="false" compartment="compartment" spatial:isLocal="true">
         <listOfReactants>
           <speciesReference species="U" stoichiometry="1" constant="true"/>
-          <speciesReference species="V" stoichiometry="2" constant="true"/>
         </listOfReactants>
         <listOfProducts>
-          <speciesReference species="V" stoichiometry="3" constant="true"/>
+          <speciesReference species="V" stoichiometry="1" constant="true"/>
         </listOfProducts>
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> compartment </ci>
-              <ci> k1 </ci>
               <ci> U </ci>
               <apply>
                 <power/>
                 <ci> V </ci>
-                <cn> 2 </cn>
+                <cn type="integer"> 2 </cn>
               </apply>
+              <ci> k1 </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -177,11 +180,7 @@
         </listOfProducts>
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
-            <apply>
-              <times/>
-              <ci> compartment </ci>
-              <ci> f </ci>
-            </apply>
+            <ci> f </ci>
           </math>
         </kineticLaw>
       </reaction>
@@ -193,9 +192,8 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> compartment </ci>
-              <ci> f </ci>
               <ci> U </ci>
+              <ci> f </ci>
             </apply>
           </math>
         </kineticLaw>
@@ -208,9 +206,8 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> compartment </ci>
-              <ci> f </ci>
               <ci> V </ci>
+              <ci> f </ci>
             </apply>
           </math>
         </kineticLaw>
@@ -223,9 +220,8 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> compartment </ci>
-              <ci> f </ci>
               <ci> P </ci>
+              <ci> f </ci>
             </apply>
           </math>
         </kineticLaw>

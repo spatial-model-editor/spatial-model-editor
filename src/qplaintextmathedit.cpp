@@ -2,6 +2,7 @@
 
 #include <symengine/symengine_exception.h>
 
+#include <QString>
 #include <algorithm>
 #include <locale>
 
@@ -13,6 +14,10 @@ const QString& QPlainTextMathEdit::getMath() const {
   return currentDisplayMath;
 }
 
+const std::string& QPlainTextMathEdit::getVariableMath() const {
+  return currentVariableMath;
+}
+
 void QPlainTextMathEdit::importVariableMath(const std::string& expr) {
   setPlainText(variablesToDisplayNames(expr).c_str());
 }
@@ -20,7 +25,7 @@ void QPlainTextMathEdit::importVariableMath(const std::string& expr) {
 void QPlainTextMathEdit::compileMath() { sym.compile(); }
 
 double QPlainTextMathEdit::evaluateMath(const std::vector<double>& variables) {
-  sym.evalLLVM(result, variables);
+  sym.eval(result, variables);
   return result[0];
 }
 
@@ -41,7 +46,9 @@ void QPlainTextMathEdit::clearVariables() {
 void QPlainTextMathEdit::setVariables(
     const std::vector<std::string>& variables) {
   clearVariables();
-  vars = variables;
+  for (const auto& v : variables) {
+    addVariable(v, v);
+  }
   qPlainTextEdit_textChanged();
 }
 
@@ -63,13 +70,15 @@ static bool isValidSymbol(const std::string& name) {
 void QPlainTextMathEdit::addVariable(const std::string& variable,
                                      const std::string& displayName) {
   vars.push_back(variable);
-  if (!displayName.empty()) {
-    mapDisplayNamesToVars[displayName] = variable;
-    if (isValidSymbol(displayName)) {
-      mapVarsToDisplayNames[variable] = displayName;
-    } else {
-      mapVarsToDisplayNames[variable] = "\"" + displayName + "\"";
-    }
+  auto name = displayName;
+  if (displayName.empty()) {
+    name = variable;
+  }
+  mapDisplayNamesToVars[name] = variable;
+  if (isValidSymbol(name)) {
+    mapVarsToDisplayNames[variable] = name;
+  } else {
+    mapVarsToDisplayNames[variable] = "\"" + name + "\"";
   }
   qPlainTextEdit_textChanged();
 }
@@ -105,9 +114,10 @@ QPlainTextMathEdit::QPlainTextMathEdit(QWidget* parent)
 // - a variable is any text with a delimeter char before and after it
 // - look-up variable in map and replace it with result
 // - if map contents are not a valid symbol, wrap it in quotes
-static std::string substitute(const std::string& expr,
-                              const std::map<std::string, std::string>& map,
-                              const std::string& delimeters = "()-^*/+, ") {
+// - if variable not found in map, return instead a QString error message
+static std::pair<std::string, QString> substitute(
+    const std::string& expr, const std::map<std::string, std::string>& map,
+    const std::string& delimeters = "()-^*/+, ") {
   SPDLOG_DEBUG("expr: {}", expr);
   std::string out;
   out.reserve(expr.size());
@@ -120,13 +130,22 @@ static std::string substitute(const std::string& expr,
     auto end = expr.find_first_of(delimeters, start);
     // extract variable
     std::string var = expr.substr(start, end - start);
-    SPDLOG_TRACE("  - var {}", var);
+    SPDLOG_DEBUG("  - var {}", var);
     if (auto iter = map.find(var); iter != map.cend()) {
       // replace variable with map result
-      SPDLOG_TRACE("    -> {} ", iter->second);
+      SPDLOG_DEBUG("    -> {} ", iter->second);
       out.append(iter->second);
     } else {
-      out.append(var);
+      // if not found, check if it is a number, if so append it and continue
+      bool ok;
+      QString(var.c_str()).toDouble(&ok);
+      if (ok) {
+        out.append(var);
+      } else {
+        // not found and not a number: return error message
+        SPDLOG_DEBUG("    -> not found");
+        return {out, QString("name '%1' not found").arg(var.c_str())};
+      }
     }
     SPDLOG_TRACE("  - out: {}", e);
     if (end == std::string::npos) {
@@ -138,7 +157,7 @@ static std::string substitute(const std::string& expr,
     out.append(expr.substr(end, start - end));
   }
   SPDLOG_DEBUG("  -> {}", out);
-  return out;
+  return {out, {}};
 }
 
 std::string QPlainTextMathEdit::variablesToDisplayNames(
@@ -147,7 +166,7 @@ std::string QPlainTextMathEdit::variablesToDisplayNames(
   if (map.empty()) {
     return expr;
   }
-  return substitute(expr, map);
+  return substitute(expr, map).first;
 }
 
 std::pair<std::string, QString> QPlainTextMathEdit::displayNamesToVariables(
@@ -162,7 +181,12 @@ std::pair<std::string, QString> QPlainTextMathEdit::displayNamesToVariables(
   auto start = expr.find(quoteChar);
   if (start > 0) {
     // substitute any text before opening quote
-    out.append(substitute(expr.substr(0, start), map));
+    auto subs = substitute(expr.substr(0, start), map);
+    if (subs.second.isEmpty()) {
+      out.append(subs.first);
+    } else {
+      return subs;
+    }
   }
   while (start != std::string::npos) {
     // skip over opening quote char
@@ -189,7 +213,12 @@ std::pair<std::string, QString> QPlainTextMathEdit::displayNamesToVariables(
     start = expr.find(quoteChar, end);
     if (start > end) {
       // substitute any text before next "
-      out.append(substitute(expr.substr(end, start - end), map));
+      auto subs = substitute(expr.substr(end, start - end), map);
+      if (subs.second.isEmpty()) {
+        out.append(subs.first);
+      } else {
+        return subs;
+      }
     }
   }
   SPDLOG_DEBUG(" -> {}", out);
@@ -199,6 +228,7 @@ std::pair<std::string, QString> QPlainTextMathEdit::displayNamesToVariables(
 void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
   expressionIsValid = false;
   currentDisplayMath.clear();
+  currentVariableMath.clear();
   currentErrorMessage.clear();
   // convert display names in expression to variables
   auto [newExpr, errorMessage] =
@@ -217,7 +247,8 @@ void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
       sym = symbolic::Symbolic(newExpr, vars, {}, false);
       expressionIsValid = true;
       currentErrorMessage = "";
-      currentDisplayMath = variablesToDisplayNames(sym.simplify()).c_str();
+      currentVariableMath = sym.simplify();
+      currentDisplayMath = variablesToDisplayNames(currentVariableMath).c_str();
     } catch (SymEngine::SymEngineException& e) {
       // if SymEngine failed to parse, capture error message
       currentErrorMessage = e.what();

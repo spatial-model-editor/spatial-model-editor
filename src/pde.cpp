@@ -126,7 +126,7 @@ const std::vector<std::string> &Reaction::getSpeciesIDs() const {
   return speciesIDs;
 }
 
-const std::map<std::string, double> &Reaction::getConstants(
+const std::vector<std::pair<std::string, double>> &Reaction::getConstants(
     std::size_t reactionIndex) const {
   return constants.at(reactionIndex);
 }
@@ -143,12 +143,14 @@ Reaction::Reaction(const sbml::SbmlDocWrapper *doc,
   for (std::size_t sIndex = 0; sIndex < speciesIDs.size(); ++sIndex) {
     auto ruleExpr = doc->getRateRule(speciesIDs[sIndex]);
     if (!ruleExpr.empty()) {
-      std::map<std::string, double> c = doc->getGlobalConstants();
       std::vector<double> Mrow(speciesIDs.size(), 0);
       Mrow[sIndex] = 1.0;
       M.push_back(Mrow);
       expressions.push_back(ruleExpr);
-      constants.push_back(c);
+      constants.emplace_back();
+      for (const auto &[id, name, value] : doc->getGlobalConstants()) {
+        constants.back().push_back({id, value});
+      }
       SPDLOG_INFO("adding rate rule for species {}", speciesIDs[sIndex]);
       SPDLOG_INFO("  - expr: {}", ruleExpr);
     }
@@ -167,14 +169,16 @@ Reaction::Reaction(const sbml::SbmlDocWrapper *doc,
       M.push_back(row);
 
       // get local parameters, append to global constants
-      std::map<std::string, double> c = doc->getGlobalConstants();
+      constants.emplace_back();
+      for (const auto &[id, name, value] : doc->getGlobalConstants()) {
+        constants.back().push_back({id, value});
+      }
       for (const auto &[id, name, value] : reac.constants) {
-        c[id] = value;
+        constants.back().push_back({id, value});
       }
       // construct expression and add to reactions
       auto inlinedExpr = doc->inlineExpr(reac.expression);
       expressions.push_back(inlinedExpr);
-      constants.push_back(c);
       SPDLOG_INFO("adding reaction {}", reacID);
       SPDLOG_INFO("  - stoichiometric matrix row: {}",
                   utils::vectorToString(row));

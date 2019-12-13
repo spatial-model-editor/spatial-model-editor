@@ -1,5 +1,5 @@
-find_path(dunecopasi_INCLUDE_DIR dune/logging.hh)
 find_library(dunecopasi_LIBRARY dune_copasi_lib)
+find_path(dunecopasi_INCLUDE_DIR dune/logging.hh)
 mark_as_advanced(dunecopasi_INCLUDE_DIR dunecopasi_LIBRARY)
 
 include(FindPackageHandleStandardArgs)
