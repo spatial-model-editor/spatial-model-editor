@@ -4,28 +4,25 @@ message(STATUS "CMake version ${CMAKE_VERSION}")
 
 # version number here is embedded in compiled executable
 project(SpatialModelEditor
-        VERSION 0.6.5
+        VERSION 0.6.6
         DESCRIPTION "Spatial Model Editor"
         LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
-# this seems to be needed to pull in plugins for static builds todo: only do
-# this for static qt5 library build
-#add_definitions(-DQT_STATIC)
-
 # find required Qt5 modules
+
+# NOTE: this seems to be needed to pull in plugins for static builds
+# add_definitions(-DQT_STATIC)
 find_package(Qt5 COMPONENTS Widgets Test PrintSupport REQUIRED)
 get_target_property(Qt5Core_location Qt5::Core LOCATION)
 message(STATUS "Found Qt5Core: ${Qt5Core_location}")
 
 # enable Qt5 utils: moc, uic, rcc
 set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC_SEARCH_PATHS ${PROJECT_SOURCE_DIR}/ui)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
-# moc generates code in current dir:
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
+# moc generates code in current dir: set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # compile triangle library
 add_subdirectory(ext/triangle)
@@ -33,11 +30,8 @@ add_subdirectory(ext/triangle)
 # compile qcustomplot library
 add_subdirectory(ext/qcustomplot)
 
-# compile mainwindow library
+# compile spatial model editor
 add_subdirectory(src)
-
-# compile GUI application
-add_subdirectory(app)
 
 # compile tests
 include(CTest)

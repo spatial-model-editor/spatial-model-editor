@@ -1,3 +1,5 @@
+version: ~> 1.0
+os: linux
 language: cpp
 # only build master branch & version tags (and pull requests), i.e. don't build pr branches
 branches:
@@ -9,13 +11,12 @@ env:
   global:
     - QT5_INSTALL_PREFIX="/usr/local/qt5-static"
 
-matrix:
+jobs:
   include:
     ########################################################
     # linux release build: qmake / g++ 9.2.1 on ubuntu 16.04
     ########################################################
-    - os: linux
-      dist: xenial
+    - dist: xenial
       compiler: gcc
       env:
         - DEPLOY_FILE="spatial-model-editor"
@@ -42,9 +43,9 @@ matrix:
         - cp -r /opt/libs/* ext/.
         - bash ci-build.sh "release optimize_full"
         # run tests
-        - ./build/test_unity/test_unity -a
+        - ./build/test/test -as
         # check dependencies of resulting executable
-        - cd build/app
+        - cd build/src
         - ldd spatial-model-editor
     ####################################################
     # osx release build: qmake / xcode 10.3, macOS 10.14
@@ -62,9 +63,9 @@ matrix:
         - cp -r /opt/libs/* ext/.
         - bash ci-build.sh "release optimize_full"
         # run tests
-        - ./build/test_unity/test_unity.app/Contents/MacOS/test_unity -a
+        - ./build/test/test.app/Contents/MacOS/test -as "~[gui]"
         # check dependencies of resulting executable
-        - cd build/app
+        - cd build/src
         - otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor
         # NOTE: (does not work): alter plist file manually to require minimum osx 10.12
         # - plutil -p spatial-model-editor.app/Contents/Info.plist
@@ -79,11 +80,14 @@ matrix:
     ########################################################################
     # linux code quality build: cmake / clang 9 -> sonarcloud.io, codecov.io
     ########################################################################
-    - os: linux
-      dist: xenial
+    - dist: xenial
       compiler: clang
       env:
         - secure: "Muu56AqHMCZOpCG2d5Byeh6P++9xXKl7otulxdhZCfA1/yTAJM9M67B1ZHo7czEvLKdoVzqCz6aFMnsVvFHUHQDmAtmth/WzdfXZ7OTG7puDIeWRmYqQacpLeF6h9ws3sUr5Bjz9m0guhjbKN/6VIqoyuWLH/J0MwzJN5JKgWitQBeJ15GWjNJN20FLgiYW0vWtQ71dncM6VaLAyH6V/T8jLRNacmCjApAOsS2FuhnSfbL+rY5nRVXPtoy/muwRgpl2Bez8OV6z5nDCaBLxXLgNkC7Y/0OhfzY/t+6wZ4nuDZDJ/4Hn4AyycH1O1ldmfEjw9nHBdqG/0JW2NmvSLojp5NiCUSI1MDmcgqKv6VKdVV2cdn6b7s6YY/8p08pnm+uExHYRkiXPFNeYfoQF3ruYSzFOQXRA+VI3Rg0dMfs4cO+PXCWS/hIAHudG3vaDgOwOnLFaOPjJKGYidmbmu6u4jdvBNFuCkooSYmnO2JCe0LIGgJAwlOEfG51WYD9bewCx+w+NmB+Cow3E4G0DCHomz1XGUhp1DsmjGarU1kDf4PtFLQgLC88h7AQfJtg15mSV6xDcKV+nmuDNS+ifTpQTTSe/w6LqqzcE/EOLaVAtCSe4ACOORW2yBF7DPgUY47ZSkU4iwA7pAOAYDKs37fNHjK8s/TJhM++RZ+21oMME="
+      cache:
+        ccache: true
+        directories:
+          - $HOME/sonarcache
       addons:
         apt:
           sources:
@@ -111,6 +115,8 @@ matrix:
         sonarcloud:
           organization: "lkeegan-github"
       services: xvfb
+      git:
+        depth: false
       install:
         - eval "CC=clang-9 && CXX=clang++-9 && COV=llvm-cov-9"
         - /usr/bin/cmake --version
@@ -126,42 +132,69 @@ matrix:
         - source /opt/qt512/bin/qt512-env.sh
       script:
         # build tests & compile executable using sonar-source build wrapper
+        - ccache --show-stats
         - mkdir build
         - cd build
-        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;`pwd`/../ext/dune"
+        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;`pwd`/../ext/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
         - build-wrapper-linux-x86-64 --out-dir bw-output make -j2
+        - ccache --show-stats
         # run tests
         # make list of "leaks" from system libraries that LeakSanitizer should ignore
         - echo "leak:libfontconfig.so" > suppr.txt
         - echo "leak:libX11.so" >> suppr.txt
         # generate gcov test coverage data for codecov.io
         - mkdir gcov
-        # unit tests (i.e. not mainwindow)
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -a "~[mainwindow]" > /dev/null 2>&1
-        - $COV gcov -p src/CMakeFiles/mainwindow.dir/*.gcno > /dev/null
-        - mv *#spatial-model-editor#inc*.gcov *#spatial-model-editor#src*.gcov gcov/
-        - rm *.gcov src/CMakeFiles/mainwindow.dir/*.gcda
+        # core unit tests
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -a "[core]" > /dev/null 2>&1
+        - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
+        - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
+        - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
+        - mv *#spatial-model-editor#src#core*.gcov *#spatial-model-editor#src#gui*.gcov gcov/
+        - rm -f *.gcov src/core/CMakeFiles/core.dir/*.gcda
+        - rm -f *.gcov src/gui/CMakeFiles/gui.dir/*.gcda
+        - rm -f *.gcov src/gui/CMakeFiles/gui.dir/*/*.gcda
         # upload coverage report to codecov.io
-        - bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F unit
+        - bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F core
 
-        # integration tests (i.e. mainwindow)
+        # gui unit tests
         - rm gcov/*
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -a "[mainwindow]" > /dev/null 2>&1
-        - $COV gcov -p src/CMakeFiles/mainwindow.dir/*.gcno  > /dev/null
-        - mv *#spatial-model-editor#inc*.gcov *#spatial-model-editor#src*.gcov gcov/
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -a "~[mainwindow][gui]" > /dev/null 2>&1
+        - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
+        - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
+        - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
+        - mv *#spatial-model-editor#src#core*.gcov *#spatial-model-editor#src#gui*.gcov gcov/
         - rm *.gcov
+        - rm -f *.gcov src/core/CMakeFiles/core.dir/*.gcda
+        - rm -f *.gcov src/gui/CMakeFiles/gui.dir/*.gcda
+        - rm -f *.gcov src/gui/CMakeFiles/gui.dir/*/*.gcda
         # upload coverage report to codecov.io
-        - bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F integration
+        - bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F gui
 
-        # run unit tests again, then gcov again to get full coverage for sonarsource
+        # mainwindow unit tests
         - rm gcov/*
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -a "~[mainwindow]" > /dev/null 2>&1
-        - $COV gcov -p src/CMakeFiles/mainwindow.dir/*.gcno  > /dev/null
-        - mv *#spatial-model-editor#inc*.gcov *#spatial-model-editor#src*.gcov gcov/
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -a "[mainwindow][gui]" > /dev/null 2>&1
+        - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
+        - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
+        - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
+        - mv *#spatial-model-editor#src#core*.gcov *#spatial-model-editor#src#gui*.gcov gcov/
+        - rm *.gcov
+        - rm -f *.gcov src/core/CMakeFiles/core.dir/*.gcda
+        - rm -f *.gcov src/gui/CMakeFiles/gui.dir/*.gcda
+        - rm -f *.gcov src/gui/CMakeFiles/gui.dir/*/*.gcda
+        # upload coverage report to codecov.io
+        - bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F mainwindow
+
+        # run all tests again, then gcov again to get full coverage for sonarsource
+        - rm gcov/*
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -a > /dev/null 2>&1
+        - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
+        - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
+        - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
+        - mv *#spatial-model-editor#src#core*.gcov *#spatial-model-editor#src#gui*.gcov gcov/
         - rm *.gcov
         - cd ..
         # get blame info for sonar-scanner
-        - git fetch --unshallow
+        #- git fetch --unshallow
         # upload to sonar-scanner
         - sonar-scanner -Dsonar.login=$SONAR_LOGIN
 
@@ -183,13 +216,13 @@ notifications:
 deploy:
   # if build is tagged, upload executables to github release
   provider: releases
-  api_key:
+  token:
     secure: E0WtptZea2n40eN+FBYZ2XYv/pjKUjVFZavl8BTVYhidzXYuT/DvhoehPVauJRy/t5QLMtmyd5ww9dhYkIcNcpAc1INrUlYG274D8xgXwbgsftmFbMqdrKR9f/qkynP0r6LCd1p0Tuhxxf37OcTYVEOjbvV+KsTzpWHtS9AqZGvMfv/rpI4r/Zu/LfGBs2T7Rr8Mlfy5YBI2L7lGka3ziTIic01pKDfjHJQ2xD2N366mEqcpB0vjF8c9b+qIUbQ8g8ybLoMfKM6ZSvcpz2NmLQK8l8gzzTN/k1PI2DJxmzi+9G031RXLAXvbR8I8NEQlZfsicepHk0m13EI7x5/TIGaa2ngSgX1W7oAL0IAkJFpcWcN5RQOgowCBAB/UnHCX8EgnBAiD8eTlc4DUC2WY84Dr3EcdhLg0bEX/Ky4mDAxt0QgABG0hEU3kE6USsUvp7IZmnCEdu8e+F/HRmvSUqECI9FvjmpHdBHwIv6anVA2pndN/ZGn4+4BWbo6IwycAh0FPAnvvs6guxnOqQW/eMRgBI3y4grzEYP/bPzlL1W6q42r6fwvh45LtcgC+joAoJCL3I51QcZ1joMY/OShSaKi3MnokImmb/GPRvebe3hDGGSsEAarrmIRb0zCMYDMdHzA+pqeojGZf6SCfIculmeE1MO2t/DqumxQRxTGx+8k=
   file: $DEPLOY_FILE
   skip_cleanup: true
+  overwrite: true
   on:
     repo: lkeegan/spatial-model-editor
-    overwrite: true
     tags: true
     all_branches: true
     condition: $DEPLOY_FILE != ""

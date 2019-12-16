@@ -26,5 +26,5 @@ cd ../../
 mkdir build
 cd build
 qmake ../qmake.pro CONFIG+="$BUILDTYPE"
-time $MAKEWRAPPER $MAKECMD -j$NPROCS sub-app sub-test_unity
+time $MAKEWRAPPER $MAKECMD -j$NPROCS
 cd ../
