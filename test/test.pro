@@ -4,42 +4,45 @@ TARGET = test
 TEMPLATE = app
 
 include(../topdir.pri)
-include(../src/src.pri)
+include(../src/core/core.pri)
+include(../src/gui/gui.pri)
 include(../common.pri)
-win32 {
-    CONFIG(release, debug|release):LIBS += -L../src/release -lmainwindow
-    CONFIG(debug, debug|release):LIBS += -L../src/debug -lmainwindow
-}
-!win32: LIBS += -L../src -lmainwindow
+LIBS += -L../src/gui -lgui -L../src/core -lcore
 include(../ext/ext.pri)
 
 SOURCES += \
-    src/main.cpp \
-    src/qt_test_utils.cpp \
-    src/test_dialoganalytic.cpp \
-    src/test_dialogconcentrationimage.cpp \
-    src/test_dialogimagesize.cpp \
-    src/test_dialogunits.cpp \
-    src/test_dune.cpp \
-    src/test_geometry.cpp \
-    src/test_mainwindow.cpp \
-    src/test_mesh.cpp \
-    src/test_pde.cpp \
-    src/test_qlabelmousetracker.cpp \
-    src/test_qplaintextmathedit.cpp \
-    src/test_sbml.cpp \
-    src/test_simulate.cpp \
-    src/test_symbolic.cpp \
-    src/test_units.cpp \
-    src/test_utils.cpp \
+    main.cpp \
+    test_utils/catch_wrapper.cpp \
+    test_utils/qt_test_utils.cpp \
+    gui/test_mainwindow.cpp \
+    gui/dialogs/test_dialoganalytic.cpp \
+    gui/dialogs/test_dialogconcentrationimage.cpp \
+    gui/dialogs/test_dialogimagesize.cpp \
+    gui/dialogs/test_dialogunits.cpp \
+    gui/widgets/test_qlabelmousetracker.cpp \
+    gui/widgets/test_qplaintextmathedit.cpp \
+    gui/tabs/test_qtabfunctions.cpp \
+    gui/tabs/test_qtabgeometry.cpp \
+    gui/tabs/test_qtabreactions.cpp \
+    gui/tabs/test_qtabsimulate.cpp \
+    gui/tabs/test_qtabspecies.cpp \
+    core/test_dune.cpp \
+    core/test_geometry.cpp \
+    core/test_mesh.cpp \
+    core/test_pde.cpp \
+    core/test_sbml.cpp \
+    core/test_simulate.cpp \
+    core/test_symbolic.cpp \
+    core/test_units.cpp \
+    core/test_utils.cpp \
 
 HEADERS += \
-    inc/catch_wrapper.hpp \
-    inc/mainwindow_test_utils.hpp \
-    inc/qt_test_utils.hpp \
-    inc/sbml_test_data/ABtoC.hpp \
-    inc/sbml_test_data/very_simple_model.hpp \
-    inc/sbml_test_data/yeast_glycolysis.hpp \
-    inc/sbml_test_data/invalid_dune_names.hpp \
+    test_utils/catch_wrapper.hpp \
+    test_utils/mainwindow_test_utils.hpp \
+    test_utils/qt_test_utils.hpp \
+    test_utils/sbml_test_data/ABtoC.hpp \
+    test_utils/sbml_test_data/very_simple_model.hpp \
+    test_utils/sbml_test_data/yeast_glycolysis.hpp \
+    test_utils/sbml_test_data/invalid_dune_names.hpp \
 
-INCLUDEPATH += inc $${TOPDIR}/ext/catch
+INCLUDEPATH += test_utils $${TOPDIR}/ext/catch

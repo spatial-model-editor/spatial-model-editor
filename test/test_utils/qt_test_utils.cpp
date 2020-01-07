@@ -1,0 +1,178 @@
+#include "qt_test_utils.hpp"
+
+#include <QApplication>
+#include <QDebug>
+#include <QDialog>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QTest>
+
+void wait(int milliseconds) {
+  QApplication::processEvents();
+  QTest::qWait(milliseconds);
+  QApplication::processEvents();
+}
+
+void waitFor(QWidget *widget) {
+  if (!QTest::qWaitForWindowExposed(widget->windowHandle())) {
+    qDebug() << "Timeout waiting for" << widget << "to be exposed";
+  }
+}
+
+void sendKeyEvents(QObject *object, const QStringList &keySeqStrings,
+                   bool sendReleaseEvents) {
+  QApplication::processEvents();
+  qDebug() << "sending key events to" << object;
+  for (const auto &s : keySeqStrings) {
+    // get string equivalent of key if appropriate (i.e. single chars)
+    QString str;
+    if (s.size() == 1) {
+      str = s;
+    }
+    auto keyseq = QKeySequence(s);
+    // get key code & modifier if any
+    int key = keyseq[0] & Qt::Key::Key_unknown;
+    auto modifier = static_cast<Qt::KeyboardModifier>(
+        static_cast<std::size_t>(keyseq[0]) &
+        Qt::KeyboardModifier::KeyboardModifierMask);
+    qDebug() << "  - " << static_cast<Qt::Key>(key) << modifier;
+    // send key press & key release events to the object
+    auto press = new QKeyEvent(QEvent::KeyPress, key, modifier, str);
+    QApplication::postEvent(object, press);
+    QApplication::processEvents();
+    if (sendReleaseEvents) {
+      auto release = new QKeyEvent(QEvent::KeyRelease, key, modifier, str);
+      QApplication::postEvent(object, release);
+      QApplication::processEvents();
+    }
+    wait(keyDelay);
+  }
+}
+
+static QDialog *getNextQDialog() {
+  QApplication::processEvents();
+  while (true) {
+    qDebug() << "activeWindow:" << QApplication::activeWindow();
+    if (auto *p = qobject_cast<QDialog *>(QApplication::activeWindow());
+        p != nullptr) {
+      return p;
+    }
+    wait(10);
+  }
+}
+
+QString sendKeyEventsToNextQDialog(const QStringList &keySeqStrings,
+                                   bool sendReleaseEvents) {
+  auto *dialog = getNextQDialog();
+  QString title = dialog->windowTitle();
+  qDebug() << "send key events to QDialog:" << dialog;
+  sendKeyEvents(dialog, keySeqStrings, sendReleaseEvents);
+  qDebug() << "activeWindow:" << QApplication::activeWindow();
+  while (static_cast<void *>(QApplication::activeWindow()) ==
+         static_cast<void *>(dialog)) {
+    qDebug() << "waiting for dialog to close..";
+    wait(10);
+  }
+  return title;
+}
+
+void sendMouseMove(QWidget *widget, const QPoint &location) {
+  QApplication::processEvents();
+  QTest::mouseMove(widget->windowHandle(), location, mouseDelay);
+  QApplication::processEvents();
+}
+
+void sendMouseClick(QWidget *widget, const QPoint &location) {
+  QApplication::processEvents();
+  QTest::mouseClick(widget, Qt::LeftButton, Qt::KeyboardModifiers(), location,
+                    mouseDelay);
+  QApplication::processEvents();
+}
+
+void ModalWidgetTimer::getText(QWidget *widget) {
+  // check if widget is a QFileDialog
+  QString result;
+  auto *p = qobject_cast<QFileDialog *>(widget);
+  if (p != nullptr) {
+    if (p->acceptMode() == QFileDialog::AcceptOpen) {
+      result = "QFileDialog::AcceptOpen";
+    } else if (p->acceptMode() == QFileDialog::AcceptSave) {
+      result = "QFileDialog::AcceptSave";
+    }
+  }
+  // check if widget is a QMessageBox
+  auto *msgBox = qobject_cast<QMessageBox *>(widget);
+  if (msgBox != nullptr) {
+    result = msgBox->text();
+  }
+  results.push_back(result);
+}
+
+void ModalWidgetTimer::executeUserAction(QWidget *widget) {
+  const auto &action = userActions.front();
+  if (auto *mwt = action.mwtToStart; mwt != nullptr) {
+    qDebug() << this << ":: starting" << mwt;
+    mwt->setIgnoredWidget(widget);
+    mwt->start();
+  }
+  qDebug() << this << ":: entering" << action.keySeqStrings << "into" << widget;
+  sendKeyEvents(widget->windowHandle(), action.keySeqStrings);
+  if (action.callAccept) {
+    if (auto *p = qobject_cast<QDialog *>(widget); p != nullptr) {
+      qDebug() << this << ":: calling accept on widget" << widget;
+      p->accept();
+    }
+  }
+}
+
+void ModalWidgetTimer::lookForWidget() {
+  if (QWidget *widget = QApplication::activeModalWidget();
+      widget != nullptr && widget != ignoreMe) {
+    qDebug() << this << ":: found active Modal widget" << widget;
+    getText(widget);
+    executeUserAction(widget);
+    userActions.pop();
+    qDebug() << this
+             << ":: action done, remaining actions:" << userActions.size();
+    if (userActions.empty()) {
+      timer.stop();
+    }
+  }
+  timeLeft -= timer.interval();
+  if (timeLeft < 0) {
+    // give up
+    qDebug() << this << ":: timeout: no ModalWidget found";
+    timer.stop();
+  }
+}
+
+ModalWidgetTimer::ModalWidgetTimer(int timerInterval, int timeout)
+    : QObject(nullptr), timeLeft(timeout) {
+  timer.setInterval(timerInterval);
+  QObject::connect(&timer, &QTimer::timeout, this,
+                   &ModalWidgetTimer::lookForWidget);
+}
+
+void ModalWidgetTimer::addUserAction(QStringList &&keySeqStrings,
+                                     bool callAcceptOnDialog,
+                                     ModalWidgetTimer *otherMwtToStart) {
+  userActions.emplace(std::move(keySeqStrings), callAcceptOnDialog,
+                      otherMwtToStart);
+}
+
+void ModalWidgetTimer::setIgnoredWidget(QWidget *widgetToIgnore) {
+  ignoreMe = widgetToIgnore;
+}
+
+void ModalWidgetTimer::start() {
+  qDebug() << this << " :: starting timer";
+  if (userActions.empty()) {
+    qDebug() << this
+             << " :: no UserActions defined: adding one that just calls accept";
+    userActions.emplace();
+  }
+  results.clear();
+  timer.start();
+}
+
+const QString &ModalWidgetTimer::getResult(int i) const { return results[i]; }

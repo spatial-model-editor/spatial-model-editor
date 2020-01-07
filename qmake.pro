@@ -1,11 +1,14 @@
 TEMPLATE = subdirs
 
 SUBDIRS = \
+          core \
+          gui \
           src \
-          app \
           test \
-          test_unity \
 
-app.depends = src
-test.depends = src
-test_unity.depends = src
+core.subdir = src/core
+gui.subdir = src/gui
+
+gui.depends = core
+src.depends = gui
+test.depends = gui

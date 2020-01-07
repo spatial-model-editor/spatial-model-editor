@@ -38,8 +38,8 @@ before_build:
 
 build_script:
   - bash -l ci-build.sh "release optimize_full" mingw32-make
-  - C:\msys64\home\appveyor\build\test_unity\release\test_unity.exe -a
-  - cp C:\msys64\home\appveyor\build\app\release\spatial-model-editor.exe %APPVEYOR_BUILD_FOLDER%\.
+  - C:\msys64\home\appveyor\build\test\test.exe -as "~[gui]"
+  - cp C:\msys64\home\appveyor\build\src\spatial-model-editor.exe %APPVEYOR_BUILD_FOLDER%\.
 
 artifacts:
   - path: spatial-model-editor.exe

@@ -1,0 +1,623 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1400</width>
+    <height>700</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Spatial Model Editor</string>
+  </property>
+  <property name="unifiedTitleAndToolBarOnMac">
+   <bool>false</bool>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="childrenCollapsible">
+       <bool>false</bool>
+      </property>
+      <widget class="QWidget" name="gridLayoutWidget">
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0" colspan="2">
+         <widget class="QLabel" name="lblGeometryStatus">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0" colspan="2">
+         <widget class="QLabelMouseTracker" name="lblGeometry" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="whatsThis">
+           <string>&lt;h4&gt;Compartment geometry image&lt;/h4&gt;
+&lt;p&gt;An image of the geometry of the model.&lt;/p&gt;</string>
+          </property>
+          <property name="text" stdset="0">
+           <string/>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QTabWidget" name="tabMain">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="whatsThis">
+        <string/>
+       </property>
+       <property name="tabShape">
+        <enum>QTabWidget::Rounded</enum>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <widget class="QWidget" name="tabGeometry">
+        <property name="whatsThis">
+         <string>&lt;h4&gt;Geometry tab&lt;/h4&gt;
+&lt;p&gt;In the Geometry tab you can define the geometry of the model&lt;/p&gt;
+&lt;p&gt;First import an image of the geometry, then double-click on a compartment from the list, and select the corresponding colour on the image.&lt;/p&gt;</string>
+        </property>
+        <attribute name="title">
+         <string>Geometry</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_5"/>
+       </widget>
+       <widget class="QWidget" name="tabMembranes">
+        <property name="whatsThis">
+         <string>&lt;h4&gt;Membranes tab&lt;/h4&gt;
+&lt;p&gt;In the Membranes tab you can see all the membranes in the model, highlighted in green.&lt;/p&gt;
+&lt;p&gt;A membrane is the region where two adjacent compartments touch, and it is where reactions that involve species from both compartments will take place.&lt;/p&gt;</string>
+        </property>
+        <attribute name="title">
+         <string>Membranes</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_10">
+         <item>
+          <widget class="QSplitter" name="splitter_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="childrenCollapsible">
+            <bool>false</bool>
+           </property>
+           <widget class="QWidget" name="verticalLayoutWidget_2">
+            <layout class="QVBoxLayout" name="verticalLayout_6">
+             <item>
+              <widget class="QLabel" name="lblMembranes">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="font">
+                <font>
+                 <weight>75</weight>
+                 <bold>true</bold>
+                </font>
+               </property>
+               <property name="autoFillBackground">
+                <bool>true</bool>
+               </property>
+               <property name="text">
+                <string>Membranes:</string>
+               </property>
+               <property name="scaledContents">
+                <bool>false</bool>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QListWidget" name="listMembranes">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QGroupBox" name="grpMembranes">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+              <horstretch>1</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="title">
+             <string>Membrane Settings</string>
+            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_5">
+             <item>
+              <layout class="QGridLayout" name="gridMembranesSettings">
+               <item row="0" column="0">
+                <widget class="QLabel" name="lblMembraneShapeLabel">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="text">
+                  <string>Shape:</string>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="1" colspan="2">
+                <widget class="QLabel" name="lblMembraneShape">
+                 <property name="sizePolicy">
+                  <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                   <horstretch>0</horstretch>
+                   <verstretch>0</verstretch>
+                  </sizepolicy>
+                 </property>
+                 <property name="whatsThis">
+                  <string/>
+                 </property>
+                 <property name="text">
+                  <string>none</string>
+                 </property>
+                 <property name="scaledContents">
+                  <bool>true</bool>
+                 </property>
+                 <property name="alignment">
+                  <set>Qt::AlignCenter</set>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tabSpecies">
+        <property name="whatsThis">
+         <string>&lt;h4&gt;Species tab&lt;/h4&gt;
+&lt;p&gt;The Species tab contains a list of all the species that live in each compartment of the model.&lt;/p&gt;
+&lt;p&gt;Here you can specify the properties of each species, such as its initial concentration.&lt;/p&gt;
+&lt;p&gt;If the 'Spatial' checkbox is enabled, then its concentration can vary within the compartment, and this concentration can be imported from an image.&lt;/p&gt;
+&lt;p&gt;The species will also diffuse throughout the compartment at a rate given by the 'Diffusion Constant'&lt;/p&gt;</string>
+        </property>
+        <attribute name="title">
+         <string>Species</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_4"/>
+       </widget>
+       <widget class="QWidget" name="tabReactions">
+        <property name="whatsThis">
+         <string>&lt;h4&gt;Reactions tab&lt;/h4&gt;
+&lt;p&gt;In the Reactions tab all the reactions in the model are shown.&lt;/p&gt;
+&lt;p&gt;They can take place either within a compartment, or on the membrane between two compartments.&lt;/p&gt;
+&lt;p&gt;'Reactants' are consumed by the reaction, while 'Products' are produced by the reaction.&lt;/p&gt;</string>
+        </property>
+        <attribute name="title">
+         <string>Reactions</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_14"/>
+       </widget>
+       <widget class="QWidget" name="tabFunctions">
+        <property name="whatsThis">
+         <string>&lt;h4&gt;Functions tab&lt;/h4&gt;
+&lt;p&gt;A list of the mathematical functions that are defined in the model.&lt;/p&gt;</string>
+        </property>
+        <attribute name="title">
+         <string>Functions</string>
+        </attribute>
+        <layout class="QGridLayout" name="gridLayout_7"/>
+       </widget>
+       <widget class="QWidget" name="tabSimulate">
+        <property name="whatsThis">
+         <string>&lt;h4&gt;Simulate tab&lt;/h4&gt;
+&lt;p&gt;In the Simulate tab you can perform a simple numerical simulation of the model.&lt;/p&gt;</string>
+        </property>
+        <attribute name="title">
+         <string>Simulate</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_7"/>
+       </widget>
+       <widget class="QWidget" name="tabSBML">
+        <property name="whatsThis">
+         <string>&lt;h4&gt;SBML tab&lt;/h4&gt;
+&lt;p&gt;The SBML tab displays the raw xml SBML document that defines the model. Note: currently does not contain any spatial information.&lt;/p&gt;</string>
+        </property>
+        <attribute name="title">
+         <string>SBML</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QTextBrowser" name="txtSBML">
+           <property name="lineWrapMode">
+            <enum>QTextEdit::NoWrap</enum>
+           </property>
+           <property name="acceptRichText">
+            <bool>false</bool>
+           </property>
+           <property name="textInteractionFlags">
+            <set>Qt::TextSelectableByMouse</set>
+           </property>
+           <property name="openLinks">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tabDUNE">
+        <attribute name="title">
+         <string>DUNE</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <item>
+          <widget class="QTextBrowser" name="txtDUNE">
+           <property name="lineWrapMode">
+            <enum>QTextEdit::NoWrap</enum>
+           </property>
+           <property name="acceptRichText">
+            <bool>false</bool>
+           </property>
+           <property name="textInteractionFlags">
+            <set>Qt::TextSelectableByMouse</set>
+           </property>
+           <property name="openLinks">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="tabGMSH">
+        <attribute name="title">
+         <string>GMSH</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_11">
+         <item>
+          <widget class="QTextBrowser" name="txtGMSH">
+           <property name="lineWrapMode">
+            <enum>QTextEdit::NoWrap</enum>
+           </property>
+           <property name="acceptRichText">
+            <bool>false</bool>
+           </property>
+           <property name="textInteractionFlags">
+            <set>Qt::TextSelectableByMouse</set>
+           </property>
+           <property name="openLinks">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1400</width>
+     <height>29</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>&amp;File</string>
+    </property>
+    <widget class="QMenu" name="menuOpen_example_SBML_file">
+     <property name="title">
+      <string>Open &amp;example SBML file</string>
+     </property>
+     <addaction name="action_ABtoC"/>
+     <addaction name="action_very_simple_model"/>
+     <addaction name="actionbrusselator_model"/>
+     <addaction name="actioncircadian_clock"/>
+     <addaction name="actionliver_simplified"/>
+     <addaction name="action_gray_scott"/>
+    </widget>
+    <addaction name="action_Open_SBML_file"/>
+    <addaction name="menuOpen_example_SBML_file"/>
+    <addaction name="action_Save_SBML_file"/>
+    <addaction name="actionExport_Dune_ini_file"/>
+    <addaction name="actionE_xit"/>
+   </widget>
+   <widget class="QMenu" name="menu_Help">
+    <property name="title">
+     <string>&amp;Help</string>
+    </property>
+    <addaction name="action_What_s_this"/>
+    <addaction name="actionOnline_Documentation"/>
+    <addaction name="action_About"/>
+    <addaction name="actionAbout_Qt"/>
+   </widget>
+   <widget class="QMenu" name="menuImport">
+    <property name="title">
+     <string>&amp;Import</string>
+    </property>
+    <widget class="QMenu" name="menuExample_geometry_image">
+     <property name="title">
+      <string>&amp;Example geometry image</string>
+     </property>
+     <addaction name="action_circle_100x100"/>
+     <addaction name="action_one_blob_100x100"/>
+     <addaction name="action_two_blobs_100x100"/>
+     <addaction name="action_empty_donut_100x100"/>
+     <addaction name="action_filled_donut_100x100_bmp"/>
+     <addaction name="action_concave_cell_nucleus_100x100"/>
+     <addaction name="action_liver_300x100"/>
+     <addaction name="action_single_pixels_3x1"/>
+     <addaction name="action_four_compartments_150x100"/>
+    </widget>
+    <addaction name="actionGeometry_from_image"/>
+    <addaction name="menuExample_geometry_image"/>
+   </widget>
+   <widget class="QMenu" name="menu_Tools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+    <widget class="QMenu" name="menuSimulation_type">
+     <property name="title">
+      <string>Set &amp;simulation type</string>
+     </property>
+     <addaction name="actionSimTypeDUNE"/>
+     <addaction name="actionSimTypePixel"/>
+    </widget>
+    <addaction name="actionSet_model_units"/>
+    <addaction name="actionSet_image_size"/>
+    <addaction name="menuSimulation_type"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuImport"/>
+   <addaction name="menu_Tools"/>
+   <addaction name="menu_Help"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <action name="actionE_xit">
+   <property name="text">
+    <string>E&amp;xit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
+   </property>
+  </action>
+  <action name="action_About">
+   <property name="text">
+    <string>&amp;About</string>
+   </property>
+   <property name="shortcut">
+    <string>F8</string>
+   </property>
+  </action>
+  <action name="action_Open_SBML_file">
+   <property name="text">
+    <string>&amp;Open SBML file</string>
+   </property>
+   <property name="toolTip">
+    <string>Open SBML file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+O</string>
+   </property>
+  </action>
+  <action name="action_Save_SBML_file">
+   <property name="text">
+    <string>&amp;Save SBML file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionAbout_Qt">
+   <property name="text">
+    <string>About &amp;Qt</string>
+   </property>
+   <property name="shortcut">
+    <string>F9</string>
+   </property>
+  </action>
+  <action name="actionGeometry_from_image">
+   <property name="text">
+    <string>&amp;Geometry from image</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+I</string>
+   </property>
+  </action>
+  <action name="actionOnline_Documentation">
+   <property name="text">
+    <string>Online &amp;Documentation</string>
+   </property>
+   <property name="shortcut">
+    <string>F2</string>
+   </property>
+  </action>
+  <action name="action_What_s_this">
+   <property name="text">
+    <string>&amp;What's this?</string>
+   </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
+  </action>
+  <action name="action_ABtoC">
+   <property name="text">
+    <string>&amp;ABtoC</string>
+   </property>
+  </action>
+  <action name="action_very_simple_model">
+   <property name="text">
+    <string>&amp;very-simple-model</string>
+   </property>
+  </action>
+  <action name="action_empty_donut_100x100">
+   <property name="text">
+    <string>&amp;empty-donut-100x100</string>
+   </property>
+  </action>
+  <action name="action_filled_donut_100x100_bmp">
+   <property name="text">
+    <string>&amp;filled-donut-100x100</string>
+   </property>
+  </action>
+  <action name="action_two_blobs_100x100">
+   <property name="text">
+    <string>&amp;two-blobs-100x100</string>
+   </property>
+  </action>
+  <action name="action_single_pixels_3x1">
+   <property name="text">
+    <string>&amp;single-pixels-3x1</string>
+   </property>
+  </action>
+  <action name="actionbrusselator_model">
+   <property name="text">
+    <string>&amp;brusselator-model</string>
+   </property>
+  </action>
+  <action name="action_one_blob_100x100">
+   <property name="text">
+    <string>&amp;one-blob-100x100</string>
+   </property>
+  </action>
+  <action name="action_liver_300x100">
+   <property name="text">
+    <string>&amp;liver-300x100</string>
+   </property>
+  </action>
+  <action name="actionliver_simplified">
+   <property name="text">
+    <string>&amp;liver-simplified</string>
+   </property>
+  </action>
+  <action name="actioncircadian_clock">
+   <property name="text">
+    <string>&amp;circadian-clock</string>
+   </property>
+  </action>
+  <action name="actionExport_Dune_ini_file">
+   <property name="text">
+    <string>Export &amp;Dune ini file</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+D</string>
+   </property>
+  </action>
+  <action name="action_circle_100x100">
+   <property name="text">
+    <string>&amp;circle-100x100</string>
+   </property>
+  </action>
+  <action name="action_concave_cell_nucleus_100x100">
+   <property name="text">
+    <string>&amp;concave-cell-nucleus-100x100</string>
+   </property>
+  </action>
+  <action name="actionSet_image_size">
+   <property name="text">
+    <string>Set &amp;image size</string>
+   </property>
+  </action>
+  <action name="action_four_compartments_150x100">
+   <property name="text">
+    <string>&amp;four-compartments-150x100</string>
+   </property>
+  </action>
+  <action name="action_gray_scott">
+   <property name="text">
+    <string>&amp;gray-scott</string>
+   </property>
+  </action>
+  <action name="actionSet_model_units">
+   <property name="text">
+    <string>Set model &amp;units</string>
+   </property>
+  </action>
+  <actiongroup name="actionGroupSimType">
+   <action name="actionSimTypeDUNE">
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+    <property name="checked">
+     <bool>true</bool>
+    </property>
+    <property name="text">
+     <string>&amp;DUNE (high quality)</string>
+    </property>
+   </action>
+   <action name="actionSimTypePixel">
+    <property name="checkable">
+     <bool>true</bool>
+    </property>
+    <property name="checked">
+     <bool>false</bool>
+    </property>
+    <property name="text">
+     <string>&amp;Pixel (fast but unreliable)</string>
+    </property>
+   </action>
+  </actiongroup>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QLabelMouseTracker</class>
+   <extends>QWidget</extends>
+   <header>qlabelmousetracker.hpp</header>
+  </customwidget>
+ </customwidgets>
+ <tabstops>
+  <tabstop>tabMain</tabstop>
+  <tabstop>listMembranes</tabstop>
+  <tabstop>txtSBML</tabstop>
+  <tabstop>txtDUNE</tabstop>
+  <tabstop>txtGMSH</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,33 +1,12 @@
 # compile tests
-set(SRC_LIST
-    src/main.cpp
-    src/qt_test_utils.cpp
-    src/test_dialoganalytic.cpp
-    src/test_dialogconcentrationimage.cpp
-    src/test_dialogimagesize.cpp
-    src/test_dialogunits.cpp
-    src/test_dune.cpp
-    src/test_geometry.cpp
-    src/test_mainwindow.cpp
-    src/test_mesh.cpp
-    src/test_pde.cpp
-    src/test_qlabelmousetracker.cpp
-    src/test_qplaintextmathedit.cpp
-    src/test_sbml.cpp
-    src/test_simulate.cpp
-    src/test_symbolic.cpp
-    src/test_units.cpp
-    src/test_utils.cpp)
+add_executable(tests main.cpp)
+add_subdirectory(test_utils)
+add_subdirectory(core)
+add_subdirectory(gui)
 
-add_executable(tests ${SRC_LIST} inc/qt_test_utils.hpp
-                     ../resources/resources.qrc)
-
-target_include_directories(tests PRIVATE inc ../ext/catch)
-
+target_include_directories(tests PRIVATE test_utils ../ext/catch)
 find_package(Qt5 COMPONENTS Test REQUIRED)
-
-target_link_libraries(tests PRIVATE mainwindow Qt5::Test)
-
+target_link_libraries(tests PRIVATE gui Qt5::Test)
 set_property(TARGET tests PROPERTY CXX_STANDARD 17)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
@@ -75,12 +54,9 @@ add_custom_target(coverage
                           coverage/cov.info
                   COMMAND lcov
                           -q
-                          -r
+                          -e
                           coverage/cov.info
-                          */usr/*
-                          */ext/*
-                          *_autogen/*
-                          */test/*
+                          */spatial-model-editor/src/*
                           -o
                           coverage/cov.info
                   COMMAND lcov -l coverage/cov.info
