@@ -2,6 +2,8 @@
 
 #include <qcustomplot.h>
 
+#include <QElapsedTimer>
+
 #include "dune.hpp"
 #include "logger.hpp"
 #include "qlabelmousetracker.hpp"
@@ -109,7 +111,7 @@ void QTabSimulate::btnSimulate_clicked() {
   lblGeometry->setImage(images.back());
   // ui->statusBar->showMessage("Simulating...     (press ctrl+c to cancel)");
 
-  QTime qtime;
+  QElapsedTimer qtime;
   qtime.start();
   isSimulationRunning = true;
   this->setCursor(Qt::WaitCursor);
@@ -188,7 +190,8 @@ void QTabSimulate::btnSimulate_clicked() {
   ui->hslideTime->setValue(time.size() - 1);
 
   // ui->statusBar->showMessage("Simulation complete.");
-  SPDLOG_INFO("simulation run-time: {}", qtime.elapsed());
+  SPDLOG_INFO("simulation run-time: {}s",
+              static_cast<double>(qtime.elapsed()) / 1000.0);
   this->setCursor(Qt::ArrowCursor);
 }
 

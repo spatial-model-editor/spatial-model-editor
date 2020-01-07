@@ -37,8 +37,13 @@ before_build:
   - cd %APPVEYOR_BUILD_FOLDER%
 
 build_script:
+  # compile
   - bash -l ci-build.sh "release optimize_full" mingw32-make
+  # run non-gui tests
   - C:\msys64\home\appveyor\build\test\test.exe -as "~[gui]"
+  # run benchmarks (~1 sec per benchmark, ~20secs total)
+  - C:\msys64\home\appveyor\build\benchmark\benchmark.exe 1
+
   - cp C:\msys64\home\appveyor\build\src\spatial-model-editor.exe %APPVEYOR_BUILD_FOLDER%\.
 
 artifacts:

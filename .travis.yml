@@ -44,6 +44,8 @@ jobs:
         - bash ci-build.sh "release optimize_full"
         # run tests
         - ./build/test/test -as
+        # run benchmarks (~1 sec per benchmark, ~20secs total)
+        - ./build/benchmark/benchmark 1
         # check dependencies of resulting executable
         - cd build/src
         - ldd spatial-model-editor
@@ -64,6 +66,8 @@ jobs:
         - bash ci-build.sh "release optimize_full"
         # run tests
         - ./build/test/test.app/Contents/MacOS/test -as "~[gui]"
+        # run benchmarks (~1 sec per benchmark, ~20secs total)
+        - ./build/benchmark/benchmark.app/Contents/MacOS/benchmark 1
         # check dependencies of resulting executable
         - cd build/src
         - otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor
