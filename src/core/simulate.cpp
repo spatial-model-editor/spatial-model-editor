@@ -105,9 +105,7 @@ SimMembrane::SimMembrane(sbml::SbmlDocWrapper *doc_ptr,
 
 void SimMembrane::evaluate_reactions() {
   assert(reacEval.species_values.size() == fieldA.size() + fieldB.size());
-  for (const auto &p : membrane->indexPair) {
-    std::size_t ixA = p.first;
-    std::size_t ixB = p.second;
+  for (const auto &[ixA, ixB] : membrane->indexPair) {
     // populate species concentrations: first A, then B
     std::size_t reacIndex = 0;
     for (const auto *fA : fieldA) {
