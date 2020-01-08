@@ -22,7 +22,6 @@ message(STATUS "Found Qt5Core: ${Qt5Core_location}")
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
-# moc generates code in current dir: set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 # compile triangle library
 add_subdirectory(ext/triangle)
@@ -37,3 +36,6 @@ add_subdirectory(src)
 include(CTest)
 include(Catch)
 add_subdirectory(test)
+
+# compile benchmarks
+add_subdirectory(benchmark)
