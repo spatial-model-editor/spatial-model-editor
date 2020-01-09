@@ -44,7 +44,9 @@ if(${SYMENGINE_LLVM})
   message(STATUS "Testing SymEngine LLVM support - found")
 else()
   message(
-    FATAL_ERROR "Supplied SymEngine library is not compiled with LLVM support")
+    WARNING
+      "Supplied SymEngine library does not appear to be compiled with LLVM support"
+    )
 endif()
 target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 target_include_directories(core PUBLIC .)
@@ -61,8 +63,9 @@ if(${SBML_SPATIAL})
   message(STATUS "Testing libSBML spatial extension support - found")
 else()
   message(
-    FATAL_ERROR
-      "Supplied libSBML library is not compiled with spatial extension support")
+    WARNING
+      "Supplied libSBML library does not appear to be compiled with spatial extension support"
+    )
 endif()
 
 find_package(dunecopasi REQUIRED)

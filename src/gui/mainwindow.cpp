@@ -31,6 +31,9 @@ MainWindow::MainWindow(QWidget *parent)
   ui->setupUi(this);
   Q_INIT_RESOURCE(resources);
 
+  statusBarPermanentMessage = new QLabel(QString(), this);
+  ui->statusBar->addWidget(statusBarPermanentMessage);
+
   tabGeometry = new QTabGeometry(sbmlDoc, ui->lblGeometry,
                                  statusBarPermanentMessage, ui->tabReactions);
   ui->tabGeometry->layout()->addWidget(tabGeometry);
@@ -46,12 +49,6 @@ MainWindow::MainWindow(QWidget *parent)
 
   tabSimulate = new QTabSimulate(sbmlDoc, ui->lblGeometry, ui->tabSimulate);
   ui->tabSimulate->layout()->addWidget(tabSimulate);
-
-  shortcutStopSimulation = new QShortcut(this);
-  shortcutStopSimulation->setKey(Qt::Key_Control + Qt::Key_C);
-
-  statusBarPermanentMessage = new QLabel(QString(), this);
-  ui->statusBar->addWidget(statusBarPermanentMessage);
 
   setupConnections();
 
@@ -112,14 +109,14 @@ void MainWindow::setupConnections() {
   connect(ui->tabMain, &QTabWidget::currentChanged, this,
           &MainWindow::tabMain_currentChanged);
 
-  connect(tabGeometry, &QTabGeometry::invalidGeometryOrModel, this,
+  connect(tabGeometry, &QTabGeometry::invalidModelOrNoGeometryImage, this,
           &MainWindow::isValidModelAndGeometryImage);
+
+  connect(tabGeometry, &QTabGeometry::modelGeometryChanged, this,
+          &MainWindow::enableTabs);
 
   connect(ui->listMembranes, &QListWidget::currentRowChanged, this,
           &MainWindow::listMembranes_currentRowChanged);
-
-  connect(shortcutStopSimulation, &QShortcut::activated, tabSimulate,
-          &QTabSimulate::stopSimulation);
 
   connect(ui->actionGroupSimType, &QActionGroup::triggered, this,
           [s = tabSimulate, ui = ui.get()](QAction *action) {

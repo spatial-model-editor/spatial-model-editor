@@ -214,7 +214,7 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
       auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
       for (std::size_t is = 0; is < duneSpeciesNames.size(); ++is) {
         SPDLOG_TRACE("  - species {}", duneSpeciesNames.at(is));
-        QColor col = doc.getSpeciesColour(nonConstantSpecies.at(is).c_str());
+        QColor col(doc.getSpeciesColour(nonConstantSpecies.at(is).c_str()));
         mapDuneNameToColour[duneSpeciesNames.at(is)] = col;
         mapSpeciesIdsToDuneNames[nonConstantSpecies.at(is)] =
             duneSpeciesNames.at(is);

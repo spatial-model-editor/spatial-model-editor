@@ -344,6 +344,37 @@ SCENARIO("SBML: ABtoC.xml", "[core][sbml]") {
         REQUIRE(g.compartmentImageSize == QSize(100, 100));
       }
     }
+    WHEN("add / remove compartment") {
+      // add compartment
+      s.addCompartment("newComp !");
+      REQUIRE(s.compartments.size() == 2);
+      REQUIRE(s.compartments[0] == "comp");
+      REQUIRE(s.compartments[1] == "newComp_");
+      REQUIRE(s.compartmentNames.size() == 2);
+      REQUIRE(s.compartmentNames[0] == "comp");
+      REQUIRE(s.compartmentNames[1] == "newComp !");
+      REQUIRE(s.getCompartmentName("newComp_") == "newComp !");
+      REQUIRE(s.species.at("newComp_").size() == 0);
+      REQUIRE(s.reactions.at("newComp_").size() == 0);
+      // add species to compartment
+      s.addSpecies("q", "newComp_");
+      REQUIRE(s.species.at("newComp_").size() == 1);
+      REQUIRE(s.species.at("newComp_")[0] == "q");
+      s.addSpecies(" !Wq", "newComp_");
+      REQUIRE(s.species.at("newComp_").size() == 2);
+      REQUIRE(s.species.at("newComp_")[0] == "q");
+      REQUIRE(s.species.at("newComp_")[1] == "__Wq");
+      REQUIRE(s.getSpeciesName("__Wq") == " !Wq");
+      // removing a compartment also removes the species in it, and any
+      // reactions involving them
+      REQUIRE(s.reactions.at("comp").size() == 1);
+      s.removeCompartment("comp");
+      REQUIRE(s.reactions.find("comp") == s.reactions.cend());
+      REQUIRE(s.species.find("comp") == s.species.cend());
+      // no compartments left, so no species either
+      s.removeCompartment("newComp_");
+      REQUIRE(s.species.empty());
+    }
     WHEN("add / remove species") {
       REQUIRE(s.species["comp"].size() == 3);
       s.addSpecies("1 stup!d N@ame?", "comp");
@@ -423,14 +454,14 @@ SCENARIO("SBML: ABtoC.xml", "[core][sbml]") {
         REQUIRE(r.expression == "A * B * k1");
       }
       THEN("species have default colours") {
-        REQUIRE(s.getSpeciesColour("A") == utils::indexedColours()[0]);
-        REQUIRE(s.getSpeciesColour("B") == utils::indexedColours()[1]);
-        REQUIRE(s.getSpeciesColour("C") == utils::indexedColours()[2]);
+        REQUIRE(s.getSpeciesColour("A") == utils::indexedColours()[0].rgb());
+        REQUIRE(s.getSpeciesColour("B") == utils::indexedColours()[1].rgb());
+        REQUIRE(s.getSpeciesColour("C") == utils::indexedColours()[2].rgb());
       }
       WHEN("species colours changed") {
-        QColor newA = QColor(12, 12, 12);
-        QColor newB = QColor(123, 321, 1);
-        QColor newC = QColor(0, 22, 99);
+        auto newA = QColor(12, 12, 12).rgb();
+        auto newB = QColor(123, 321, 1).rgb();
+        auto newC = QColor(0, 22, 99).rgb();
         s.setSpeciesColour("A", newA);
         s.setSpeciesColour("B", newB);
         s.setSpeciesColour("C", newC);

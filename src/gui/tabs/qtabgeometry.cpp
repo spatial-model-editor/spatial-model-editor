@@ -1,5 +1,9 @@
 #include "qtabgeometry.hpp"
 
+#include <QInputDialog>
+#include <QMessageBox>
+
+#include "guiutils.hpp"
 #include "logger.hpp"
 #include "mesh.hpp"
 #include "qlabelmousetracker.hpp"
@@ -19,6 +23,12 @@ QTabGeometry::QTabGeometry(sbml::SbmlDocWrapper &doc,
 
   connect(lblGeometry, &QLabelMouseTracker::mouseClicked, this,
           &QTabGeometry::lblGeometry_mouseClicked);
+
+  connect(ui->btnAddCompartment, &QPushButton::clicked, this,
+          &QTabGeometry::btnAddCompartment_clicked);
+
+  connect(ui->btnRemoveCompartment, &QPushButton::clicked, this,
+          &QTabGeometry::btnRemoveCompartment_clicked);
 
   connect(ui->btnChangeCompartment, &QPushButton::clicked, this,
           &QTabGeometry::btnChangeCompartment_clicked);
@@ -67,13 +77,15 @@ QTabGeometry::QTabGeometry(sbml::SbmlDocWrapper &doc,
 
 QTabGeometry::~QTabGeometry() = default;
 
-void QTabGeometry::loadModelData() {
+void QTabGeometry::loadModelData(const QString &selection) {
   ui->listCompartments->clear();
   ui->listCompartments->insertItems(0, sbmlDoc.compartmentNames);
   if (ui->listCompartments->count() > 0) {
     ui->listCompartments->setCurrentRow(0);
   }
   lblGeometry->setImage(sbmlDoc.getCompartmentImage());
+  enableTabs(sbmlDoc.hasValidGeometry);
+  selectMatchingOrFirstItem(ui->listCompartments, selection);
   // ui->lblGeometryStatus->setText("Compartment Geometry:");
 }
 
@@ -98,6 +110,8 @@ void QTabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
                 compartmentID.toStdString(), col);
     waitingForCompartmentChoice = false;
     statusBarPermanentMessage->clear();
+    enableTabs(sbmlDoc.hasValidGeometry);
+    emit modelGeometryChanged();
   } else {
     // display compartment the user just clicked on
     auto compID = sbmlDoc.getCompartmentID(col);
@@ -109,9 +123,47 @@ void QTabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
   }
 }
 
+void QTabGeometry::btnAddCompartment_clicked() {
+  bool ok;
+  auto compartmentName = QInputDialog::getText(
+      this, "Add compartment", "New compartment name:", QLineEdit::Normal, {},
+      &ok);
+  if (ok && !compartmentName.isEmpty()) {
+    sbmlDoc.addCompartment(compartmentName);
+    ui->tabCompartmentGeometry->setCurrentIndex(0);
+    enableTabs(false);
+    loadModelData(compartmentName);
+    emit modelGeometryChanged();
+  }
+}
+
+void QTabGeometry::btnRemoveCompartment_clicked() {
+  int index = ui->listCompartments->currentRow();
+  if (index < 0 || index >= sbmlDoc.compartments.size()) {
+    return;
+  }
+  const auto &compartmentName = ui->listCompartments->item(index)->text();
+  const auto &compartmentId = sbmlDoc.compartments.at(index);
+  auto msgbox = newYesNoMessageBox(
+      "Remove compartment?",
+      QString("Remove compartment '%1' from the model?").arg(compartmentName),
+      this);
+  connect(msgbox, &QMessageBox::finished, this,
+          [compartmentId, this](int result) {
+            if (result == QMessageBox::Yes) {
+              sbmlDoc.removeCompartment(compartmentId);
+              ui->tabCompartmentGeometry->setCurrentIndex(0);
+              enableTabs(false);
+              loadModelData();
+              emit modelGeometryChanged();
+            }
+          });
+  msgbox->open();
+}
+
 void QTabGeometry::btnChangeCompartment_clicked() {
   if (!(sbmlDoc.isValid && sbmlDoc.hasGeometryImage)) {
-    emit invalidGeometryOrModel();
+    emit invalidModelOrNoGeometryImage();
     SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
     return;
   }
@@ -210,47 +262,50 @@ void QTabGeometry::spinMaxTriangleArea_valueChanged(int value) {
 
 void QTabGeometry::listCompartments_currentRowChanged(int currentRow) {
   ui->txtCompartmentSize->clear();
-  if (currentRow >= 0 && currentRow < ui->listCompartments->count()) {
-    const QString &compID = sbmlDoc.compartments.at(currentRow);
-    SPDLOG_DEBUG("row {} selected", currentRow);
-    SPDLOG_DEBUG("  - Compartment Name: {}",
-                 ui->listCompartments->currentItem()->text().toStdString());
-    SPDLOG_DEBUG("  - Compartment Id: {}", compID.toStdString());
-    ui->txtCompartmentSize->setText(
-        QString::number(sbmlDoc.getCompartmentSize(compID)));
-    ui->lblCompartmentSizeUnits->setText(
-        sbmlDoc.getModelUnits().getVolume().symbol);
-    QRgb col = sbmlDoc.getCompartmentColour(compID);
-    SPDLOG_DEBUG("  - Compartment colour {:x} ", col);
-    if (col == 0) {
-      // null (transparent white) RGB colour: compartment does not have
-      // an assigned colour in the image
-      ui->btnSetCompartmentSizeFromImage->setEnabled(false);
-      ui->lblCompShape->setImage(QImage());
-      ui->lblCompartmentColour->setText("none");
-      ui->lblCompShape->setImage(QImage());
-      ui->lblCompShape->setText(
-          "<p>Compartment has no assigned geometry</p> "
-          "<ul><li>please click on the 'Select compartment geometry...' "
-          "button below</li> "
-          "<li> then on the desired location in the geometry "
-          "image on the left</li></ul>");
-      ui->lblCompMesh->setImage(QImage());
-      ui->lblCompMesh->setText("none");
-    } else {
-      ui->btnSetCompartmentSizeFromImage->setEnabled(true);
-      // update colour box
-      lblCompartmentColourPixmap.fill(QColor::fromRgb(col));
-      ui->lblCompartmentColour->setPixmap(lblCompartmentColourPixmap);
-      ui->lblCompartmentColour->setText("");
-      // update image of compartment
-      ui->lblCompShape->setImage(
-          sbmlDoc.mapCompIdToGeometry.at(compID).getCompartmentImage());
-      ui->lblCompShape->setText("");
-      // update mesh or boundary image if tab is currently visible
-      tabCompartmentGeometry_currentChanged(
-          ui->tabCompartmentGeometry->currentIndex());
-    }
+  if (currentRow < 0 || currentRow >= ui->listCompartments->count()) {
+    ui->btnRemoveCompartment->setEnabled(false);
+    return;
+  }
+  const QString &compID = sbmlDoc.compartments.at(currentRow);
+  ui->btnRemoveCompartment->setEnabled(true);
+  SPDLOG_DEBUG("row {} selected", currentRow);
+  SPDLOG_DEBUG("  - Compartment Name: {}",
+               ui->listCompartments->currentItem()->text().toStdString());
+  SPDLOG_DEBUG("  - Compartment Id: {}", compID.toStdString());
+  ui->txtCompartmentSize->setText(
+      QString::number(sbmlDoc.getCompartmentSize(compID)));
+  ui->lblCompartmentSizeUnits->setText(
+      sbmlDoc.getModelUnits().getVolume().symbol);
+  QRgb col = sbmlDoc.getCompartmentColour(compID);
+  SPDLOG_DEBUG("  - Compartment colour {:x} ", col);
+  if (col == 0) {
+    // null (transparent white) RGB colour: compartment does not have
+    // an assigned colour in the image
+    ui->btnSetCompartmentSizeFromImage->setEnabled(false);
+    ui->lblCompShape->setImage(QImage());
+    ui->lblCompartmentColour->setText("none");
+    ui->lblCompShape->setImage(QImage());
+    ui->lblCompShape->setText(
+        "<p>Compartment has no assigned geometry</p> "
+        "<ul><li>please click on the 'Select compartment geometry...' "
+        "button below</li> "
+        "<li> then on the desired location in the geometry "
+        "image on the left</li></ul>");
+    ui->lblCompMesh->setImage(QImage());
+    ui->lblCompMesh->setText("none");
+  } else {
+    ui->btnSetCompartmentSizeFromImage->setEnabled(true);
+    // update colour box
+    lblCompartmentColourPixmap.fill(QColor::fromRgb(col));
+    ui->lblCompartmentColour->setPixmap(lblCompartmentColourPixmap);
+    ui->lblCompartmentColour->setText("");
+    // update image of compartment
+    ui->lblCompShape->setImage(
+        sbmlDoc.mapCompIdToGeometry.at(compID).getCompartmentImage());
+    ui->lblCompShape->setText("");
+    // update mesh or boundary image if tab is currently visible
+    tabCompartmentGeometry_currentChanged(
+        ui->tabCompartmentGeometry->currentIndex());
   }
 }
 

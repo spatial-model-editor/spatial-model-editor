@@ -20,7 +20,7 @@ QTabSimulate::QTabSimulate(sbml::SbmlDocWrapper &doc,
   ui->setupUi(this);
   pltPlot = new QCustomPlot(this);
   pltPlot->setObjectName(QString::fromUtf8("pltPlot"));
-  ui->gridSimulate->addWidget(pltPlot, 1, 0, 1, 8);
+  ui->gridSimulate->addWidget(pltPlot, 1, 0, 1, 9);
 
   connect(ui->btnSimulate, &QPushButton::clicked, this,
           &QTabSimulate::btnSimulate_clicked);
@@ -30,6 +30,8 @@ QTabSimulate::QTabSimulate(sbml::SbmlDocWrapper &doc,
           &QTabSimulate::graphClicked);
   connect(ui->hslideTime, &QSlider::valueChanged, this,
           &QTabSimulate::hslideTime_valueChanged);
+  connect(ui->btnStopSimulation, &QPushButton::clicked, this,
+          &QTabSimulate::stopSimulation);
 
   ui->hslideTime->setEnabled(false);
 }
@@ -54,7 +56,10 @@ void QTabSimulate::loadModelData() {
   }
 }
 
-void QTabSimulate::stopSimulation() { isSimulationRunning = false; }
+void QTabSimulate::stopSimulation() {
+  SPDLOG_INFO("Simulation cancelled by user");
+  isSimulationRunning = false;
+}
 
 void QTabSimulate::useDune(bool enable) { useDuneSimulator = enable; }
 

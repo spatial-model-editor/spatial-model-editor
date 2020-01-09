@@ -43,7 +43,7 @@ jobs:
         - cp -r /opt/libs/* ext/.
         - bash ci-build.sh "release optimize_full"
         # run tests
-        - ./build/test/test -as
+        - ./build/test/test -as 2>&1 | tail -n 100
         # run benchmarks (~1 sec per benchmark, ~20secs total)
         - ./build/benchmark/benchmark 1
         # check dependencies of resulting executable
@@ -65,7 +65,7 @@ jobs:
         - cp -r /opt/libs/* ext/.
         - bash ci-build.sh "release optimize_full"
         # run tests
-        - ./build/test/test.app/Contents/MacOS/test -as "~[gui]"
+        - ./build/test/test.app/Contents/MacOS/test -as "~[gui]" 2>&1 | tail -n 100
         # run benchmarks (~1 sec per benchmark, ~20secs total)
         - ./build/benchmark/benchmark.app/Contents/MacOS/benchmark 1
         # check dependencies of resulting executable
@@ -149,7 +149,7 @@ jobs:
         # generate gcov test coverage data for codecov.io
         - mkdir gcov
         # core unit tests
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -a "[core]" > /dev/null 2>&1
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "[core]" 2>&1 | tail -n 100
         - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
@@ -162,7 +162,7 @@ jobs:
 
         # gui unit tests
         - rm gcov/*
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -a "~[mainwindow][gui]" > /dev/null 2>&1
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "~[mainwindow][gui]" 2>&1 | tail -n 100
         - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
@@ -176,7 +176,7 @@ jobs:
 
         # mainwindow unit tests
         - rm gcov/*
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -a "[mainwindow][gui]" > /dev/null 2>&1
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "[mainwindow][gui]" 2>&1 | tail -n 100
         - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
