@@ -51,8 +51,8 @@ int main(int argc, char *argv[]) {
     }
     fmt::print("# ms/timestep\ttimesteps\tmodel\n");
     for (const auto &model :
-         {"ABtoC", "very-simple-model", "brusselator-model", "circadian-clock",
-          "gray-scott", "liver-simplified"}) {
+         {"liver-simplified", "ABtoC", "very-simple-model", "brusselator-model",
+          "circadian-clock", "gray-scott", "liver-simplified"}) {
       // import model
       sbml::SbmlDocWrapper s;
       QFile f(QString(":/models/%1.xml").arg(model));

@@ -44,6 +44,8 @@ class ReacEval {
 
 class SimCompartment {
  private:
+  std::vector<double> conc;
+  std::vector<double> dcdt;
   sbml::SbmlDocWrapper *doc;
   const geometry::Compartment *comp;
   ReacEval reacEval;

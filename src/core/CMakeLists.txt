@@ -29,7 +29,8 @@ target_compile_options(core
                               -Wunused
                               -Wconversion
                               -Wsign-conversion
-                              -Wcast-align>)
+                              -Wcast-align>
+                              -g)
 
 # find SymEngine and check it is compiled with LLVM enabled
 
