@@ -5,7 +5,6 @@
 
 #include "sbml.hpp"
 class QLabel;
-class QShortcut;
 class QTabFunctions;
 class QTabGeometry;
 class QTabReactions;
@@ -27,7 +26,6 @@ class MainWindow : public QMainWindow {
   std::unique_ptr<Ui::MainWindow> ui;
   QLabel *statusBarPermanentMessage;
   sbml::SbmlDocWrapper sbmlDoc;
-  QShortcut *shortcutStopSimulation;
 
   void setupConnections();
 

@@ -23,8 +23,45 @@
       <bool>false</bool>
      </property>
      <widget class="QWidget" name="verticalLayoutWidget">
-      <layout class="QVBoxLayout" name="verticalLayout_4">
-       <item>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="2" column="0">
+        <widget class="QPushButton" name="btnAddCompartment">
+         <property name="text">
+          <string>Add</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QPushButton" name="btnRemoveCompartment">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
+         <property name="text">
+          <string>Remove</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0" colspan="2">
+        <widget class="QListWidget" name="listCompartments">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="whatsThis">
+          <string>&lt;p&gt;A list of all the compartments in the model.&lt;/p&gt;
+&lt;p&gt;To assign a compartment to an area of the geometry image:
+&lt;ul&gt;
+&lt;li&gt;Click on the compartment name, then on the 'Select compartment geometry...' button (or simply double-click on the compartment name)&lt;/li&gt;
+&lt;li&gt;Click on the corresponding point on the geometry image on the left&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/p&gt;
+&lt;p&gt;The Compartment settings on the right will be updated to show an image of the new shape of the compartment&lt;/p&gt;</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0" colspan="2">
         <widget class="QLabel" name="lblCompartments">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -49,26 +86,6 @@
          </property>
          <property name="alignment">
           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QListWidget" name="listCompartments">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="whatsThis">
-          <string>&lt;p&gt;A list of all the compartments in the model.&lt;/p&gt;
-&lt;p&gt;To assign a compartment to an area of the geometry image:
-&lt;ul&gt;
-&lt;li&gt;Click on the compartment name, then on the 'Select compartment geometry...' button (or simply double-click on the compartment name)&lt;/li&gt;
-&lt;li&gt;Click on the corresponding point on the geometry image on the left&lt;/li&gt;
-&lt;/ul&gt;
-&lt;/p&gt;
-&lt;p&gt;The Compartment settings on the right will be updated to show an image of the new shape of the compartment&lt;/p&gt;</string>
          </property>
         </widget>
        </item>

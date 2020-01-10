@@ -15,39 +15,41 @@ LIBS += \
 # these LLVM core static libraries are available pre-compiled from
 # https://github.com/lkeegan/llvm-static
 LIBS += \
-    $${TOPDIR}/ext/lib/libLLVMX86Disassembler.a \
-    $${TOPDIR}/ext/lib/libLLVMX86AsmParser.a \
-    $${TOPDIR}/ext/lib/libLLVMVectorize.a \
-    $${TOPDIR}/ext/lib/libLLVMX86CodeGen.a \
-    $${TOPDIR}/ext/lib/libLLVMX86Desc.a \
-    $${TOPDIR}/ext/lib/libLLVMX86Info.a \
-    $${TOPDIR}/ext/lib/libLLVMMCDisassembler.a \
-    $${TOPDIR}/ext/lib/libLLVMX86AsmPrinter.a \
-    $${TOPDIR}/ext/lib/libLLVMX86Utils.a \
-    $${TOPDIR}/ext/lib/libLLVMSelectionDAG.a \
-    $${TOPDIR}/ext/lib/libLLVMGlobalISel.a \
-    $${TOPDIR}/ext/lib/libLLVMAsmPrinter.a \
-    $${TOPDIR}/ext/lib/libLLVMCodeGen.a \
-    $${TOPDIR}/ext/lib/libLLVMScalarOpts.a \
-    $${TOPDIR}/ext/lib/libLLVMAggressiveInstCombine.a \
-    $${TOPDIR}/ext/lib/libLLVMBitWriter.a \
+    $${TOPDIR}/ext/lib/libLLVMAsmParser.a \
     $${TOPDIR}/ext/lib/libLLVMMCJIT.a \
-    $${TOPDIR}/ext/lib/libLLVMInstCombine.a \
-    $${TOPDIR}/ext/lib/libLLVMTransformUtils.a \
     $${TOPDIR}/ext/lib/libLLVMExecutionEngine.a \
+    $${TOPDIR}/ext/lib/libLLVMRuntimeDyld.a \
+    $${TOPDIR}/ext/lib/libLLVMX86CodeGen.a \
+    $${TOPDIR}/ext/lib/libLLVMAsmPrinter.a \
+    $${TOPDIR}/ext/lib/libLLVMDebugInfoDWARF.a \
+    $${TOPDIR}/ext/lib/libLLVMGlobalISel.a \
+    $${TOPDIR}/ext/lib/libLLVMSelectionDAG.a \
+    $${TOPDIR}/ext/lib/libLLVMCodeGen.a \
     $${TOPDIR}/ext/lib/libLLVMTarget.a \
+    $${TOPDIR}/ext/lib/libLLVMBitWriter.a \
+    $${TOPDIR}/ext/lib/libLLVMScalarOpts.a \
+    $${TOPDIR}/ext/lib/libLLVMInstCombine.a \
+    $${TOPDIR}/ext/lib/libLLVMAggressiveInstCombine.a \
+    $${TOPDIR}/ext/lib/libLLVMVectorize.a \
+    $${TOPDIR}/ext/lib/libLLVMTransformUtils.a \
     $${TOPDIR}/ext/lib/libLLVMAnalysis.a \
     $${TOPDIR}/ext/lib/libLLVMProfileData.a \
-    $${TOPDIR}/ext/lib/libLLVMRuntimeDyld.a \
+    $${TOPDIR}/ext/lib/libLLVMX86AsmParser.a \
+    $${TOPDIR}/ext/lib/libLLVMX86Desc.a \
     $${TOPDIR}/ext/lib/libLLVMObject.a \
-    $${TOPDIR}/ext/lib/libLLVMMCParser.a \
     $${TOPDIR}/ext/lib/libLLVMBitReader.a \
+    $${TOPDIR}/ext/lib/libLLVMCore.a \
+    $${TOPDIR}/ext/lib/libLLVMRemarks.a \
+    $${TOPDIR}/ext/lib/libLLVMBitstreamReader.a \
+    $${TOPDIR}/ext/lib/libLLVMMCParser.a \
+    $${TOPDIR}/ext/lib/libLLVMX86Disassembler.a \
+    $${TOPDIR}/ext/lib/libLLVMX86Info.a \
+    $${TOPDIR}/ext/lib/libLLVMMCDisassembler.a \
     $${TOPDIR}/ext/lib/libLLVMMC.a \
+    $${TOPDIR}/ext/lib/libLLVMBinaryFormat.a \
     $${TOPDIR}/ext/lib/libLLVMDebugInfoCodeView.a \
     $${TOPDIR}/ext/lib/libLLVMDebugInfoMSF.a \
-    $${TOPDIR}/ext/lib/libLLVMAsmParser.a \
-    $${TOPDIR}/ext/lib/libLLVMCore.a \
-    $${TOPDIR}/ext/lib/libLLVMBinaryFormat.a \
+    $${TOPDIR}/ext/lib/libLLVMX86Utils.a \
     $${TOPDIR}/ext/lib/libLLVMSupport.a \
     $${TOPDIR}/ext/lib/libLLVMDemangle.a \
 

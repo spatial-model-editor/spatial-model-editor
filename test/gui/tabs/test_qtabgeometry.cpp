@@ -25,6 +25,9 @@ SCENARIO("Geometry Tab", "[gui][tabs][geometry]") {
   ModalWidgetTimer mwt;
   // get pointers to widgets within tab
   auto *listCompartments = tab.findChild<QListWidget *>("listCompartments");
+  auto *btnAddCompartment = tab.findChild<QPushButton *>("btnAddCompartment");
+  auto *btnRemoveCompartment =
+      tab.findChild<QPushButton *>("btnRemoveCompartment");
   auto *txtCompartmentSize = tab.findChild<QLineEdit *>("txtCompartmentSize");
   auto *btnSetCompartmentSizeFromImage =
       tab.findChild<QPushButton *>("btnSetCompartmentSizeFromImage");
@@ -48,50 +51,79 @@ SCENARIO("Geometry Tab", "[gui][tabs][geometry]") {
       sbmlDoc.importSBMLString(f.readAll().toStdString());
     }
     tab.loadModelData();
+    WHEN("select some stuff") {
+      // select compartments
+      REQUIRE(listCompartments->count() == 3);
+      REQUIRE(listCompartments->currentItem()->text() == "Outside");
+      REQUIRE(txtCompartmentSize->text() == "10");
+      REQUIRE(tabCompartmentGeometry->currentIndex() == 0);
+      REQUIRE(lblCompShape->getImage().pixel(1, 1) == 0xff000200);
+      sendMouseClick(btnSetCompartmentSizeFromImage);
+      REQUIRE(txtCompartmentSize->text() != "10");
+      listCompartments->setFocus();
+      sendKeyEvents(listCompartments, {"Down"});
+      REQUIRE(listCompartments->currentItem()->text() == "Cell");
+      REQUIRE(lblCompShape->getImage().pixel(20, 20) == 0xff9061c1);
+      REQUIRE(txtCompartmentSize->text() == "1");
+      sendKeyEvents(listCompartments, {"Down"});
+      REQUIRE(listCompartments->currentItem()->text() == "Nucleus");
+      REQUIRE(txtCompartmentSize->text() == "0.2");
+      REQUIRE(lblCompShape->getImage().pixel(50, 50) == 0xffc58560);
 
-    // select compartments
-    REQUIRE(listCompartments->count() == 3);
-    REQUIRE(listCompartments->currentItem()->text() == "Outside");
-    REQUIRE(txtCompartmentSize->text() == "10");
-    REQUIRE(tabCompartmentGeometry->currentIndex() == 0);
-    REQUIRE(lblCompShape->getImage().pixel(1, 1) == 0xff000200);
-    sendMouseClick(btnSetCompartmentSizeFromImage);
-    REQUIRE(txtCompartmentSize->text() != "10");
-    listCompartments->setFocus();
-    sendKeyEvents(listCompartments, {"Down"});
-    REQUIRE(listCompartments->currentItem()->text() == "Cell");
-    REQUIRE(lblCompShape->getImage().pixel(20, 20) == 0xff9061c1);
-    REQUIRE(txtCompartmentSize->text() == "1");
-    sendKeyEvents(listCompartments, {"Down"});
-    REQUIRE(listCompartments->currentItem()->text() == "Nucleus");
-    REQUIRE(txtCompartmentSize->text() == "0.2");
-    REQUIRE(lblCompShape->getImage().pixel(50, 50) == 0xffc58560);
+      // boundary tab
+      tabCompartmentGeometry->setFocus();
+      sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
+      REQUIRE(tabCompartmentGeometry->currentIndex() == 1);
+      spinBoundaryIndex->setFocus();
+      sendKeyEvents(spinBoundaryIndex, {"Up"});
+      sendKeyEvents(spinMaxBoundaryPoints, {"Up"});
+      sendKeyEvents(spinMaxBoundaryPoints, {"Up"});
+      sendKeyEvents(spinMaxBoundaryPoints, {"Up"});
+      sendKeyEvents(spinBoundaryIndex, {"Up"});
+      sendKeyEvents(spinMaxBoundaryPoints, {"Down"});
+      sendKeyEvents(spinBoundaryWidth, {"Down"});
+      sendKeyEvents(spinBoundaryWidth, {"Down"});
+      sendKeyEvents(spinBoundaryIndex, {"Up"});
 
-    // boundary tab
-    tabCompartmentGeometry->setFocus();
-    sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
-    REQUIRE(tabCompartmentGeometry->currentIndex() == 1);
-    spinBoundaryIndex->setFocus();
-    sendKeyEvents(spinBoundaryIndex, {"Up"});
-    sendKeyEvents(spinMaxBoundaryPoints, {"Up"});
-    sendKeyEvents(spinMaxBoundaryPoints, {"Up"});
-    sendKeyEvents(spinMaxBoundaryPoints, {"Up"});
-    sendKeyEvents(spinBoundaryIndex, {"Up"});
-    sendKeyEvents(spinMaxBoundaryPoints, {"Down"});
-    sendKeyEvents(spinBoundaryWidth, {"Down"});
-    sendKeyEvents(spinBoundaryWidth, {"Down"});
-    sendKeyEvents(spinBoundaryIndex, {"Up"});
+      // mesh tab
+      tabCompartmentGeometry->setFocus();
+      sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
+      REQUIRE(tabCompartmentGeometry->currentIndex() == 2);
+      sendKeyEvents(spinMaxTriangleArea,
+                    {"End", "Backspace", "Backspace", "Backspace", "3"});
 
-    // mesh tab
-    tabCompartmentGeometry->setFocus();
-    sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
-    REQUIRE(tabCompartmentGeometry->currentIndex() == 2);
-    sendKeyEvents(spinMaxTriangleArea,
-                  {"End", "Backspace", "Backspace", "Backspace", "3"});
-
-    // image tab
-    tabCompartmentGeometry->setFocus();
-    sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
-    REQUIRE(tabCompartmentGeometry->currentIndex() == 0);
+      // image tab
+      tabCompartmentGeometry->setFocus();
+      sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
+      REQUIRE(tabCompartmentGeometry->currentIndex() == 0);
+    }
+    WHEN("add/remove compartments") {
+      // add compartment
+      mwt.addUserAction({"C", "o", "M", "p", "!"});
+      mwt.start();
+      sendMouseClick(btnAddCompartment);
+      REQUIRE(listCompartments->count() == 4);
+      REQUIRE(listCompartments->currentItem()->text() == "CoMp!");
+      // click remove compartment, then "no" to cancel
+      sendMouseClick(btnRemoveCompartment);
+      sendKeyEventsToNextQDialog({"Esc"});
+      REQUIRE(listCompartments->count() == 4);
+      // click remove compartment, then confirm
+      sendMouseClick(btnRemoveCompartment);
+      sendKeyEventsToNextQDialog({"Enter"});
+      REQUIRE(listCompartments->count() == 3);
+      REQUIRE(listCompartments->currentItem()->text() == "Outside");
+      sendMouseClick(btnRemoveCompartment);
+      sendKeyEventsToNextQDialog({"Enter"});
+      REQUIRE(listCompartments->count() == 2);
+      REQUIRE(listCompartments->currentItem()->text() == "Cell");
+      sendMouseClick(btnRemoveCompartment);
+      sendKeyEventsToNextQDialog({"Enter"});
+      REQUIRE(listCompartments->count() == 1);
+      REQUIRE(listCompartments->currentItem()->text() == "Nucleus");
+      sendMouseClick(btnRemoveCompartment);
+      sendKeyEventsToNextQDialog({"Enter"});
+      REQUIRE(listCompartments->count() == 0);
+    }
   }
 }

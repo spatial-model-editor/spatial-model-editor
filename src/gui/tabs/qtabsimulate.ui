@@ -16,10 +16,20 @@
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
     <layout class="QGridLayout" name="gridSimulate">
-     <item row="0" column="0">
-      <widget class="QLabel" name="lblSimLength">
+     <item row="0" column="8">
+      <widget class="QPushButton" name="btnResetSimulation">
+       <property name="whatsThis">
+        <string>Reset all concentrations to their initial values, clear all simulation data.</string>
+       </property>
        <property name="text">
-        <string>Simulation length:</string>
+        <string>Reset Simulation</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="4">
+      <widget class="QLabel" name="lblSimDt">
+       <property name="text">
+        <string>dt:</string>
        </property>
       </widget>
      </item>
@@ -47,22 +57,23 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="3">
-      <widget class="QLineEdit" name="txtSimInterval">
-       <property name="whatsThis">
-        <string>&lt;h4&gt;Image interval&lt;/h4&gt;
-&lt;p&gt;The length of time in seconds between each concentration image&lt;/p&gt;
-&lt;p&gt;For example, if the simulation length is 100, and the image interval is 5, a total of 20 images would be produced with an interval of 5s of model simulation between each&lt;/p&gt;</string>
-       </property>
-       <property name="text">
-        <string>0.5</string>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="2">
       <widget class="QLabel" name="lblSimInterval">
        <property name="text">
         <string>Image interval:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0" colspan="9">
+      <widget class="QSlider" name="hslideTime">
+       <property name="maximum">
+        <number>0</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="tickPosition">
+        <enum>QSlider::NoTicks</enum>
        </property>
       </widget>
      </item>
@@ -78,33 +89,29 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="7">
-      <widget class="QPushButton" name="btnResetSimulation">
+     <item row="0" column="3">
+      <widget class="QLineEdit" name="txtSimInterval">
        <property name="whatsThis">
-        <string>Reset all concentrations to their initial values, clear all simulation data.</string>
+        <string>&lt;h4&gt;Image interval&lt;/h4&gt;
+&lt;p&gt;The length of time in seconds between each concentration image&lt;/p&gt;
+&lt;p&gt;For example, if the simulation length is 100, and the image interval is 5, a total of 20 images would be produced with an interval of 5s of model simulation between each&lt;/p&gt;</string>
        </property>
        <property name="text">
-        <string>Reset Simulation</string>
+        <string>0.5</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="4">
-      <widget class="QLabel" name="lblSimDt">
+     <item row="0" column="0">
+      <widget class="QLabel" name="lblSimLength">
        <property name="text">
-        <string>dt:</string>
+        <string>Simulation length:</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="0" colspan="8">
-      <widget class="QSlider" name="hslideTime">
-       <property name="maximum">
-        <number>0</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::NoTicks</enum>
+     <item row="0" column="7">
+      <widget class="QPushButton" name="btnStopSimulation">
+       <property name="text">
+        <string>Stop Simulation</string>
        </property>
       </widget>
      </item>

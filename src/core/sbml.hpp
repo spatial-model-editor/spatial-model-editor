@@ -19,6 +19,7 @@
 namespace libsbml {
 class SBMLDocument;
 class Model;
+class Compartment;
 class SpatialModelPlugin;
 class Geometry;
 class SampledFieldGeometry;
@@ -82,7 +83,6 @@ class SbmlDocWrapper {
   libsbml::SpatialModelPlugin *plugin = nullptr;
   libsbml::Geometry *geom = nullptr;
   libsbml::SampledFieldGeometry *sfgeom = nullptr;
-  libsbml::ParametricGeometry *parageom = nullptr;
 
   // map between compartment IDs and colours in compartment image
   std::map<QString, QRgb> mapCompartmentToColour;
@@ -127,6 +127,7 @@ class SbmlDocWrapper {
   void importSampledFieldGeometry();
   void importParametricGeometry();
   // add default 2d Parametric & SampledField geometry to SBML
+  void createDefaultCompartmentGeometry(libsbml::Compartment *comp);
   void writeDefaultGeometryToSBML();
   void createField(const QString &speciesID, const QString &compartmentID);
   void setFieldConcAnalytic(geometry::Field &field, const std::string &expr);
@@ -137,6 +138,7 @@ class SbmlDocWrapper {
   void importCompartmentsAndSpeciesFromSBML();
   void validateAndUpgradeSBMLDoc();
 
+  void checkIfGeometryIsValid();
   // remove initialAssignment and related things from SBML
   // (sampledField, spatialref, etc)
   void removeInitialAssignment(const std::string &speciesID);
@@ -215,12 +217,15 @@ class SbmlDocWrapper {
   // compartment geometry: pixel-based image
   void importGeometryFromImage(const QImage &img, bool updateSBML = true);
   void importGeometryFromImage(const QString &filename, bool updateSBML = true);
+
   QString getCompartmentID(QRgb colour) const;
   QString getCompartmentName(const QString &compartmentID) const;
   QRgb getCompartmentColour(const QString &compartmentID) const;
   void setCompartmentColour(const QString &compartmentID, QRgb colour,
                             bool updateSBML = true);
   const QImage &getCompartmentImage() const;
+  void addCompartment(const QString &compartmentName);
+  void removeCompartment(const QString &compartmentID);
 
   double getCompartmentSize(const QString &compartmentID) const;
   SpeciesGeometry getSpeciesGeometry(const QString &speciesID) const;
@@ -229,7 +234,7 @@ class SbmlDocWrapper {
   QString getSpeciesCompartment(const QString &speciesID) const;
   void setSpeciesCompartment(const QString &speciesID,
                              const QString &compartmentID);
-  void addSpecies(const QString &speciesID, const QString &compartmentID);
+  void addSpecies(const QString &speciesName, const QString &compartmentID);
   void removeSpecies(const QString &speciesID);
 
   // compartment geometry: interiorPoints - used for mesh generation
@@ -269,7 +274,7 @@ class SbmlDocWrapper {
 
   // species Colour (not currently stored in SBML)
   void setSpeciesColour(const QString &speciesID, const QColor &colour);
-  const QColor &getSpeciesColour(const QString &speciesID) const;
+  QRgb getSpeciesColour(const QString &speciesID) const;
 
   // true if species is fixed throughout the simulation
   void setIsSpeciesConstant(const std::string &speciesID, bool constant);
