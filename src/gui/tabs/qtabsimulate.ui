@@ -22,7 +22,7 @@
         <string>Reset all concentrations to their initial values, clear all simulation data.</string>
        </property>
        <property name="text">
-        <string>Reset Simulation</string>
+        <string>Reset</string>
        </property>
       </widget>
      </item>
@@ -111,7 +111,7 @@
      <item row="0" column="7">
       <widget class="QPushButton" name="btnStopSimulation">
        <property name="text">
-        <string>Stop Simulation</string>
+        <string>Stop</string>
        </property>
       </widget>
      </item>

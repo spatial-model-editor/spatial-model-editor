@@ -3,6 +3,7 @@
 #include <qcustomplot.h>
 
 #include <QElapsedTimer>
+#include <algorithm>
 
 #include "dune.hpp"
 #include "logger.hpp"
@@ -19,6 +20,12 @@ QTabSimulate::QTabSimulate(sbml::SbmlDocWrapper &doc,
       lblGeometry(mouseTracker) {
   ui->setupUi(this);
   pltPlot = new QCustomPlot(this);
+  pltPlot->setInteraction(QCP::iRangeDrag, true);
+  pltPlot->setInteraction(QCP::iRangeZoom, true);
+  pltPlot->setInteraction(QCP::iSelectPlottables, false);
+  pltPlot->legend->setVisible(true);
+  pltTimeLine = new QCPItemStraightLine(pltPlot);
+  pltTimeLine->setVisible(false);
   pltPlot->setObjectName(QString::fromUtf8("pltPlot"));
   ui->gridSimulate->addWidget(pltPlot, 1, 0, 1, 9);
 
@@ -26,8 +33,7 @@ QTabSimulate::QTabSimulate(sbml::SbmlDocWrapper &doc,
           &QTabSimulate::btnSimulate_clicked);
   connect(ui->btnResetSimulation, &QPushButton::clicked, this,
           &QTabSimulate::reset);
-  connect(pltPlot, &QCustomPlot::plottableClick, this,
-          &QTabSimulate::graphClicked);
+  connect(pltPlot, &QCustomPlot::mousePress, this, &QTabSimulate::graphClicked);
   connect(ui->hslideTime, &QSlider::valueChanged, this,
           &QTabSimulate::hslideTime_valueChanged);
   connect(ui->btnStopSimulation, &QPushButton::clicked, this,
@@ -70,6 +76,7 @@ void QTabSimulate::reset() {
   ui->hslideTime->setMaximum(0);
   ui->hslideTime->setEnabled(false);
   images.clear();
+  time.clear();
   // reset all fields to their initial values
   for (auto &field : sbmlDoc.mapSpeciesIdToField) {
     field.second.conc = field.second.init;
@@ -78,66 +85,89 @@ void QTabSimulate::reset() {
 }
 
 void QTabSimulate::btnSimulate_clicked() {
-  // simple 2d spatial simulation
-  simulate::Simulate sim(&sbmlDoc);
+  simulate::Simulate simPixel(&sbmlDoc);
   // add compartments
   for (const auto &compartmentID : sbmlDoc.compartments) {
-    sim.addCompartment(&sbmlDoc.mapCompIdToGeometry.at(compartmentID));
+    simPixel.addCompartment(&sbmlDoc.mapCompIdToGeometry.at(compartmentID));
   }
   // add membranes
   for (auto &membrane : sbmlDoc.membraneVec) {
     if (sbmlDoc.reactions.find(membrane.membraneID.c_str()) !=
         sbmlDoc.reactions.cend()) {
-      sim.addMembrane(&membrane);
+      simPixel.addMembrane(&membrane);
     }
   }
+  std::unique_ptr<dune::DuneSimulation> simDune;
+  if (useDuneSimulator) {
+    simDune = std::make_unique<dune::DuneSimulation>(
+        sbmlDoc, ui->txtSimDt->text().toDouble(), lblGeometry->size());
+  }
 
-  // Dune simulation
-  dune::DuneSimulation duneSim(sbmlDoc, ui->txtSimDt->text().toDouble(),
-                               lblGeometry->size());
+  // integration time parameters
+  double dt = ui->txtSimDt->text().toDouble();
+  double dtImage = ui->txtSimInterval->text().toDouble();
+  int n_images =
+      static_cast<int>(ui->txtSimLength->text().toDouble() / dtImage);
+  int n_steps = static_cast<int>(dtImage / dt);
 
-  // get initial concentrations
-  QVector<double> time{0};
-  std::vector<QVector<double>> conc(sim.field.size());
-  for (std::size_t s = 0; s < sim.field.size(); ++s) {
-    if (useDuneSimulator) {
-      conc[s].push_back(
-          duneSim.getAverageConcentration(sim.field[s]->speciesID));
-    } else {
-      conc[s].push_back(sim.field[s]->getMeanConcentration());
+  // setup plot
+  pltPlot->clearGraphs();
+  for (std::size_t i = 0; i < simPixel.speciesID.size(); ++i) {
+    auto *graph = pltPlot->addGraph();
+    graph->setPen(simPixel.field[i]->colour);
+    graph->setName(sbmlDoc.getSpeciesName(simPixel.speciesID[i].c_str()));
+    graph->setScatterStyle(
+        QCPScatterStyle(QCPScatterStyle::ScatterShape::ssDisc));
+    if (!useDuneSimulator) {
+      graph->setScatterSkip(n_steps - 1);
     }
+  }
+  pltPlot->xAxis->setLabel("time");
+  pltPlot->yAxis->setLabel("concentration");
+  pltPlot->xAxis->setRange(0, ui->txtSimLength->text().toDouble());
+
+  double ymax = 0;
+  time.push_back(0);
+  // get initial concentrations
+  for (std::size_t s = 0; s < simPixel.field.size(); ++s) {
+    QVector<double> c_{0};
+    if (useDuneSimulator) {
+      c_[0] = simDune->getAverageConcentration(simPixel.field[s]->speciesID);
+    } else {
+      c_[0] = simPixel.field[s]->getMeanConcentration();
+    }
+    pltPlot->graph(static_cast<int>(s))->setData(time, c_, true);
+    ymax = std::max(ymax, c_[0]);
   }
   images.clear();
   if (useDuneSimulator) {
-    images.push_back(duneSim.getConcImage());
+    images.push_back(simDune->getConcImage());
   } else {
-    images.push_back(sim.getConcentrationImage());
+    images.push_back(simPixel.getConcentrationImage());
   }
   lblGeometry->setImage(images.back());
   // ui->statusBar->showMessage("Simulating...     (press ctrl+c to cancel)");
 
-  QElapsedTimer qtime;
-  qtime.start();
+  QElapsedTimer qElapsedTimer;
+  qElapsedTimer.start();
   isSimulationRunning = true;
   this->setCursor(Qt::WaitCursor);
   QApplication::processEvents();
   // integrate Model
-  double t = 0;
-  double dt = ui->txtSimDt->text().toDouble();
-  int n_images = static_cast<int>(ui->txtSimLength->text().toDouble() /
-                                  ui->txtSimInterval->text().toDouble());
-  int n_steps = static_cast<int>(ui->txtSimInterval->text().toDouble() / dt);
+  QVector<double> subTime(n_steps, 0);
+  std::vector<QVector<double>> subConc(simPixel.field.size());
+  for (std::size_t s = 0; s < simPixel.field.size(); ++s) {
+    subConc[s].resize(n_steps);
+  }
   for (int i_image = 0; i_image < n_images; ++i_image) {
     if (useDuneSimulator) {
-      duneSim.doTimestep(ui->txtSimInterval->text().toDouble());
-      t += ui->txtSimInterval->text().toDouble();
+      simDune->doTimestep(ui->txtSimInterval->text().toDouble());
     } else {
       for (int i_step = 0; i_step < n_steps; ++i_step) {
-        t += dt;
-        sim.integrateForwardsEuler(dt);
-        QApplication::processEvents();
-        if (!isSimulationRunning) {
-          break;
+        subTime[i_step] = time.back() + dt + dt * i_step;
+        simPixel.integrateForwardsEuler(dt);
+        for (std::size_t s = 0; s < simPixel.field.size(); ++s) {
+          subConc[s][i_step] = simPixel.field[s]->getMeanConcentration();
         }
       }
     }
@@ -146,46 +176,40 @@ void QTabSimulate::btnSimulate_clicked() {
       break;
     }
     if (useDuneSimulator) {
-      images.push_back(duneSim.getConcImage());
+      images.push_back(simDune->getConcImage());
     } else {
-      images.push_back(sim.getConcentrationImage());
+      images.push_back(simPixel.getConcentrationImage());
     }
-    for (std::size_t s = 0; s < sim.field.size(); ++s) {
+    time.push_back(time.back() + dtImage);
+    for (std::size_t s = 0; s < simPixel.field.size(); ++s) {
       if (useDuneSimulator) {
-        conc[s].push_back(
-            duneSim.getAverageConcentration(sim.field[s]->speciesID));
+        QVector<double> c_{
+            simDune->getAverageConcentration(simPixel.field[s]->speciesID)};
+        ymax = std::max(ymax, c_[0]);
+        pltPlot->graph(static_cast<int>(s))->addData({time.back()}, c_, true);
       } else {
-        conc[s].push_back(sim.field[s]->getMeanConcentration());
+        pltPlot->graph(static_cast<int>(s))->addData(subTime, subConc[s], true);
+        ymax = std::max(
+            ymax, *std::max_element(subConc[s].cbegin(), subConc[s].cend()));
       }
     }
-    time.push_back(t);
     lblGeometry->setImage(images.back());
+    // rescale & replot plot
+    pltPlot->yAxis->setRange(0, 1.2 * ymax);
+    pltPlot->replot();
     // ui->statusBar->showMessage(
     //    QString("Simulating... %1% (press ctrl+c to cancel)")
     //        .arg(QString::number(static_cast<int>(
     //            100 * t / ui->txtSimLength->text().toDouble()))));
   }
 
-  // plot results
-  pltPlot->clearGraphs();
-  pltPlot->setInteraction(QCP::iRangeDrag, true);
-  pltPlot->setInteraction(QCP::iRangeZoom, true);
-  pltPlot->setInteraction(QCP::iSelectPlottables, true);
-  pltPlot->legend->setVisible(true);
-  for (std::size_t i = 0; i < sim.speciesID.size(); ++i) {
-    auto *graph = pltPlot->addGraph();
-    graph->setData(time, conc[i]);
-    graph->setPen(sim.field[i]->colour);
-    graph->setName(sbmlDoc.getSpeciesName(sim.speciesID[i].c_str()));
-  }
-  pltPlot->xAxis->setLabel("time");
-  pltPlot->yAxis->setLabel("concentration");
-  pltPlot->xAxis->setRange(time.front(), time.back());
-  double ymax = *std::max_element(conc[0].cbegin(), conc[0].cend());
-  for (std::size_t i = 1; i < conc.size(); ++i) {
-    ymax = std::max(ymax, *std::max_element(conc[i].cbegin(), conc[i].cend()));
-  }
-  pltPlot->yAxis->setRange(0, 1.2 * ymax);
+  // display vertical at current time point
+  pltTimeLine->setVisible(true);
+  pltTimeLine->point1->setCoords(time.back(), 0);
+  pltTimeLine->point2->setCoords(time.back(), 1);
+
+  // rescale & replot plot
+  pltPlot->xAxis->rescale();
   pltPlot->replot();
 
   // enable slider to choose time to display
@@ -196,24 +220,28 @@ void QTabSimulate::btnSimulate_clicked() {
 
   // ui->statusBar->showMessage("Simulation complete.");
   SPDLOG_INFO("simulation run-time: {}s",
-              static_cast<double>(qtime.elapsed()) / 1000.0);
+              static_cast<double>(qElapsedTimer.elapsed()) / 1000.0);
   this->setCursor(Qt::ArrowCursor);
 }
 
-void QTabSimulate::graphClicked(QCPAbstractPlottable *plottable,
-                                int dataIndex) {
-  double dataValue = plottable->interface1D()->dataMainValue(dataIndex);
-  QString message =
-      QString("Clicked on graph '%1' at data point #%2 with value %3.")
-          .arg(plottable->name())
-          .arg(dataIndex)
-          .arg(dataValue);
-  qDebug() << message;
-  ui->hslideTime->setValue(dataIndex);
+void QTabSimulate::graphClicked(const QMouseEvent *event) {
+  double key;
+  double val;
+  pltPlot->graph(0)->pixelsToCoords(static_cast<double>(event->x()),
+                                    static_cast<double>(event->y()), key, val);
+  int max = ui->hslideTime->maximum();
+  int nearest = static_cast<int>(0.5 + max * key / time.back());
+  ui->hslideTime->setValue(std::clamp(nearest, 0, max));
 }
 
 void QTabSimulate::hslideTime_valueChanged(int value) {
   if (images.size() > value) {
     lblGeometry->setImage(images[value]);
+    pltTimeLine->point1->setCoords(time[value], 0);
+    pltTimeLine->point2->setCoords(time[value], 1);
+    if (!pltPlot->xAxis->range().contains(time[value])) {
+      pltPlot->rescaleAxes();
+    }
+    pltPlot->replot();
   }
 }
