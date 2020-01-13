@@ -197,8 +197,6 @@ jobs:
         - mv *#spatial-model-editor#src#core*.gcov *#spatial-model-editor#src#gui*.gcov gcov/
         - rm *.gcov
         - cd ..
-        # get blame info for sonar-scanner
-        #- git fetch --unshallow
         # upload to sonar-scanner
         - sonar-scanner -Dsonar.login=$SONAR_LOGIN
 

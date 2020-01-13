@@ -5,6 +5,8 @@
         <file>models/circadian-clock.xml</file>
         <file>models/gray-scott.xml</file>
         <file>models/liver-simplified.xml</file>
+        <file>models/single-compartment-diffusion.xml</file>
+        <file>models/small-single-compartment-diffusion.xml</file>
         <file>models/very-simple-model.xml</file>
         <file>geometry/empty-donut-100x100.png</file>
         <file>geometry/filled-donut-100x100.png</file>
