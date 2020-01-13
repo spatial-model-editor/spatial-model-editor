@@ -136,7 +136,7 @@ jobs:
         - source /opt/qt512/bin/qt512-env.sh
       script:
         # build tests & compile executable using sonar-source build wrapper
-        - ccache --show-stats
+        - ccache --zero-stats
         - mkdir build
         - cd build
         - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;`pwd`/../ext/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache

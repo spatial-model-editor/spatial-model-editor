@@ -9,6 +9,7 @@ namespace Ui {
 class QTabSimulate;
 }
 class QCustomPlot;
+class QCPItemStraightLine;
 class QCPAbstractPlottable;
 class QLabelMouseTracker;
 namespace sbml {
@@ -33,13 +34,15 @@ class QTabSimulate : public QWidget {
   sbml::SbmlDocWrapper &sbmlDoc;
   QLabelMouseTracker *lblGeometry;
   QCustomPlot *pltPlot;
+  QCPItemStraightLine *pltTimeLine;
+  QVector<double> time;
   QVector<QImage> images;
   bool isSimulationRunning = false;
   bool useDuneSimulator = true;
 
   void btnSimulate_clicked();
 
-  void graphClicked(QCPAbstractPlottable *plottable, int dataIndex);
+  void graphClicked(const QMouseEvent *event);
 
   void hslideTime_valueChanged(int value);
 };
