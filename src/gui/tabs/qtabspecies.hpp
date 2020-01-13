@@ -33,6 +33,7 @@ class QTabSpecies : public QWidget {
   QLabelMouseTracker *lblGeometry;
   QPixmap lblSpeciesColourPixmap = QPixmap(1, 1);
   QString currentSpeciesId;
+  void enableWidgets(bool enable);
   void listSpecies_currentItemChanged(QTreeWidgetItem *current,
                                       QTreeWidgetItem *previous);
   void btnAddSpecies_clicked();

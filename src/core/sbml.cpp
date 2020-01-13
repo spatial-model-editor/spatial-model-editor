@@ -88,10 +88,15 @@ SbmlDocWrapper::SbmlDocWrapper(SbmlDocWrapper &&) = default;
 SbmlDocWrapper &SbmlDocWrapper::operator=(SbmlDocWrapper &&) = default;
 SbmlDocWrapper::~SbmlDocWrapper() = default;
 
-void SbmlDocWrapper::importSBMLString(const std::string &xml) {
+void SbmlDocWrapper::createSBMLFile(const std::string &name) {
   clearAllGeometryData();
-  SPDLOG_INFO("Importing SBML from string...");
-  doc.reset(libsbml::readSBMLFromString(xml.c_str()));
+  SPDLOG_INFO("Creating new SBML model '{}'...", name);
+  doc = std::make_unique<libsbml::SBMLDocument>(libsbml::SBMLDocument());
+  doc->createModel(name);
+  currentFilename = name.c_str();
+  if (currentFilename.right(4) != ".xml") {
+    currentFilename.append(".xml");
+  }
   initModelData();
 }
 
@@ -100,6 +105,13 @@ void SbmlDocWrapper::importSBMLFile(const std::string &filename) {
   currentFilename = filename.c_str();
   SPDLOG_INFO("Loading SBML file {}...", filename);
   doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
+  initModelData();
+}
+
+void SbmlDocWrapper::importSBMLString(const std::string &xml) {
+  clearAllGeometryData();
+  SPDLOG_INFO("Importing SBML from string...");
+  doc.reset(libsbml::readSBMLFromString(xml.c_str()));
   initModelData();
 }
 
@@ -1001,7 +1013,7 @@ void SbmlDocWrapper::setUnitsVolumeIndex(int index) {
 void SbmlDocWrapper::setUnitsAmountIndex(int index) {
   modelUnits.setAmount(index);
   auto *unitdef =
-      getOrCreateUnitDef(model->getSubstanceUnits(), "units_of_substance");
+      getOrCreateUnitDef(model->getSubstanceUnits(), "unit_of_substance");
   model->setSubstanceUnits(unitdef->getId());
   model->setExtentUnits(unitdef->getId());
   setSBMLUnitDef(unitdef, modelUnits.getAmount());
@@ -1786,6 +1798,8 @@ void SbmlDocWrapper::addCompartment(const QString &compartmentName) {
   auto compartmentId = nameToSId(compartmentName);
   SPDLOG_INFO("  - id: {}", compartmentId.toStdString());
   comp->setId(compartmentId.toStdString());
+  comp->setConstant(true);
+  comp->setSpatialDimensions(static_cast<unsigned>(nDimensions));
   createDefaultCompartmentGeometry(comp);
   compartments.push_back(compartmentId);
   compartmentNames.push_back(compartmentName);
@@ -1878,7 +1892,9 @@ void SbmlDocWrapper::addSpecies(const QString &speciesName,
   spec->setId(speciesID.toStdString());
   SPDLOG_INFO("  - compartment: {}", compartmentID.toStdString());
   spec->setCompartment(compartmentID.toStdString());
-  SPDLOG_WARN("{}", species.at(compartmentID).size());
+  spec->setHasOnlySubstanceUnits(false);
+  spec->setBoundaryCondition(false);
+  spec->setConstant(false);
 
   // add to species list
   species.at(compartmentID).push_back(speciesID);
@@ -2308,6 +2324,7 @@ void SbmlDocWrapper::addReaction(const QString &reactionName,
   reac->setId(reactionId.toStdString());
   reac->setName(reactionName.toStdString());
   reac->setCompartment(locationId.toStdString());
+  reac->setReversible(true);
   auto *srp =
       static_cast<libsbml::SpatialReactionPlugin *>(reac->getPlugin("spatial"));
   srp->setIsLocal(true);

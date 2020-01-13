@@ -47,6 +47,18 @@ SCENARIO("Mainwindow: shortcut keys", "[gui][mainwindow][shortcuts]") {
       REQUIRE(mwt.getResult().left(correctText.size()) == correctText);
     }
   }
+  WHEN("user presses ctrl+n") {
+    THEN("ask for name of new model") {
+      mwt.addUserAction({"Esc"});
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+N"});
+      REQUIRE(w.windowTitle().right(6) == "Editor");
+      mwt.addUserAction({"n", "e", "w"});
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+N"});
+      REQUIRE(w.windowTitle().right(9) == "[new.xml]");
+    }
+  }
   WHEN("user presses ctrl+o") {
     THEN("open AcceptOpen FileDialog") {
       mwt.addUserAction({"Esc"});

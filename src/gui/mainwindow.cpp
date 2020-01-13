@@ -64,6 +64,9 @@ MainWindow::~MainWindow() = default;
 
 void MainWindow::setupConnections() {
   // menu actions
+  connect(ui->action_New, &QAction::triggered, this,
+          &MainWindow::action_New_triggered);
+
   connect(ui->action_Open_SBML_file, &QAction::triggered, this,
           &MainWindow::action_Open_SBML_file_triggered);
 
@@ -190,6 +193,22 @@ void MainWindow::enableTabs() {
     ui->tabMain->setTabEnabled(i, enable);
   }
   tabGeometry->enableTabs(enable);
+}
+
+void MainWindow::action_New_triggered() {
+  bool ok;
+  auto modelName = QInputDialog::getText(
+      this, "New model", "New model name:", QLineEdit::Normal, {}, &ok);
+  if (ok && !modelName.isEmpty()) {
+    sbmlDoc = sbml::SbmlDocWrapper();
+    sbmlDoc.createSBMLFile(modelName.toStdString());
+    tabSimulate->reset();
+    ui->tabMain->setCurrentIndex(0);
+    tabMain_currentChanged(0);
+    enableTabs();
+    this->setWindowTitle(
+        QString("Spatial Model Editor [%1]").arg(sbmlDoc.currentFilename));
+  }
 }
 
 void MainWindow::action_Open_SBML_file_triggered() {

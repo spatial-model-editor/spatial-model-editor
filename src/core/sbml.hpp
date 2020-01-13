@@ -209,6 +209,7 @@ class SbmlDocWrapper {
   SbmlDocWrapper &operator=(SbmlDocWrapper &&);
   SbmlDocWrapper &operator=(const SbmlDocWrapper &) = delete;
 
+  void createSBMLFile(const std::string &name);
   void importSBMLFile(const std::string &filename);
   void importSBMLString(const std::string &xml);
   void exportSBMLFile(const std::string &filename);

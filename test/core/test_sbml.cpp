@@ -296,18 +296,24 @@ SCENARIO("SBML: import SBML level 2 document", "[core][sbml]") {
   }
 }
 
-SCENARIO("SBML: import geometry from image", "[core][sbml]") {
+SCENARIO("SBML: create new model, import geometry from image", "[core][sbml]") {
   sbml::SbmlDocWrapper s;
   REQUIRE(s.hasGeometryImage == false);
   REQUIRE(s.hasValidGeometry == false);
   REQUIRE(s.isValid == false);
+  s.createSBMLFile("new");
+  REQUIRE(s.isValid == true);
+  REQUIRE(s.hasGeometryImage == false);
+  REQUIRE(s.hasValidGeometry == false);
   GIVEN("Single pixel image") {
     QImage img(1, 1, QImage::Format_RGB32);
     QRgb col = QColor(12, 243, 154).rgba();
     img.setPixel(0, 0, col);
     img.save("tmp.png");
     s.importGeometryFromImage("tmp.png");
+    REQUIRE(s.isValid == true);
     REQUIRE(s.hasGeometryImage == true);
+    REQUIRE(s.hasValidGeometry == false);
     THEN("getCompartmentImage returns image") {
       REQUIRE(s.getCompartmentImage().size() == QSize(1, 1));
       REQUIRE(s.getCompartmentImage().pixel(0, 0) == col);

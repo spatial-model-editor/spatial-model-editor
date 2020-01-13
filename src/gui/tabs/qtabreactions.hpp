@@ -32,6 +32,7 @@ class QTabReactions : public QWidget {
   sbml::Reac currentReac;
   int currentReacLocIndex;
 
+  void enableWidgets(bool enable);
   void listReactions_currentItemChanged(QTreeWidgetItem *current,
                                         QTreeWidgetItem *previous);
   void btnAddReaction_clicked();
