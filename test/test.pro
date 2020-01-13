@@ -38,7 +38,6 @@ SOURCES += \
 
 HEADERS += \
     test_utils/catch_wrapper.hpp \
-    test_utils/mainwindow_test_utils.hpp \
     test_utils/qt_test_utils.hpp \
     test_utils/sbml_test_data/ABtoC.hpp \
     test_utils/sbml_test_data/very_simple_model.hpp \

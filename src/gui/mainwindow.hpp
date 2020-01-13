@@ -47,6 +47,7 @@ class MainWindow : public QMainWindow {
   void enableTabs();
 
   // File menu actions
+  void action_New_triggered();
   void action_Open_SBML_file_triggered();
   void menuOpen_example_SBML_file_triggered(const QAction *action);
   void action_Save_SBML_file_triggered();

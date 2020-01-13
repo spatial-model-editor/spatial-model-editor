@@ -353,6 +353,7 @@
      <addaction name="actionliver_simplified"/>
      <addaction name="action_gray_scott"/>
     </widget>
+    <addaction name="action_New"/>
     <addaction name="action_Open_SBML_file"/>
     <addaction name="menuOpen_example_SBML_file"/>
     <addaction name="action_Save_SBML_file"/>
@@ -576,6 +577,14 @@
   <action name="actionSet_model_units">
    <property name="text">
     <string>Set model &amp;units</string>
+   </property>
+  </action>
+  <action name="action_New">
+   <property name="text">
+    <string>&amp;New</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+N</string>
    </property>
   </action>
   <actiongroup name="actionGroupSimType">

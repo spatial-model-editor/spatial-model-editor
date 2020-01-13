@@ -53,6 +53,7 @@ QTabReactions::~QTabReactions() = default;
 void QTabReactions::loadModelData(const QString &selection) {
   ui->cmbReactionLocation->clear();
   ui->listReactionParams->clear();
+  enableWidgets(false);
   auto *ls = ui->listReactions;
   ls->clear();
   for (int i = 0; i < sbmlDoc.compartments.size(); ++i) {
@@ -83,6 +84,18 @@ void QTabReactions::loadModelData(const QString &selection) {
   selectMatchingOrFirstChild(ls, selection);
 }
 
+void QTabReactions::enableWidgets(bool enable) {
+  ui->btnRemoveReaction->setEnabled(enable);
+  ui->txtReactionName->setEnabled(enable);
+  ui->cmbReactionLocation->setEnabled(enable);
+  ui->listReactionSpecies->setEnabled(enable);
+  ui->listReactionParams->setEnabled(enable);
+  ui->btnAddReactionParam->setEnabled(enable);
+  ui->btnRemoveReactionParam->setEnabled(enable);
+  ui->txtReactionRate->setEnabled(enable);
+  ui->btnSaveReactionChanges->setEnabled(enable);
+}
+
 void QTabReactions::listReactions_currentItemChanged(
     QTreeWidgetItem *current, QTreeWidgetItem *previous) {
   Q_UNUSED(previous);
@@ -106,27 +119,14 @@ void QTabReactions::listReactions_currentItemChanged(
   }
   if ((current == nullptr) || (current->parent() == nullptr)) {
     // selection is not a reaction
-    ui->btnRemoveReaction->setEnabled(false);
-    ui->txtReactionName->setEnabled(false);
-    ui->cmbReactionLocation->setEnabled(false);
-    ui->listReactionSpecies->setEnabled(false);
-    ui->listReactionParams->setEnabled(false);
-    ui->btnAddReactionParam->setEnabled(false);
-    ui->btnRemoveReactionParam->setEnabled(false);
-    ui->txtReactionRate->setEnabled(false);
+    enableWidgets(false);
     return;
   }
   SPDLOG_DEBUG("item {} / {} selected",
                current->parent()->text(0).toStdString(),
                current->text(0).toStdString());
-  ui->btnRemoveReaction->setEnabled(true);
-  ui->txtReactionName->setEnabled(true);
-  ui->cmbReactionLocation->setEnabled(true);
-  ui->listReactionSpecies->setEnabled(true);
-  ui->listReactionParams->setEnabled(true);
-  ui->btnAddReactionParam->setEnabled(true);
+  enableWidgets(true);
   ui->btnRemoveReactionParam->setEnabled(false);
-  ui->txtReactionRate->setEnabled(true);
   bool isMembrane = false;
   int locationIndex = ui->listReactions->indexOfTopLevelItem(current->parent());
   int compartmentIndex = locationIndex;
@@ -154,7 +154,6 @@ void QTabReactions::listReactions_currentItemChanged(
   currentReac = sbmlDoc.getReaction(reactionID);
   currentReacLocIndex = locationIndex;
   ui->txtReactionName->setText(currentReac.name.c_str());
-  ui->cmbReactionLocation->setEnabled(true);
   ui->cmbReactionLocation->setCurrentIndex(locationIndex);
   // reset variables to only built-in functions
   ui->txtReactionRate->setVariables(
@@ -223,7 +222,6 @@ void QTabReactions::btnAddReaction_clicked() {
   if (auto *item = ui->listReactions->currentItem(); item != nullptr) {
     auto *parent = item->parent() != nullptr ? item->parent() : item;
     index = ui->listReactions->indexOfTopLevelItem(parent);
-    SPDLOG_ERROR("Current location index: {}", index);
   }
   QString locationId;
   int nComps = sbmlDoc.compartments.size();
@@ -278,7 +276,7 @@ void QTabReactions::cmbReactionLocation_activated(int index) {
   }
   auto msgbox = newYesNoMessageBox(
       "Change reaction location?",
-      QString("Change reaction location? (Species stoichiometry and rate "
+      QString("Change reaction '%1' location? (Species stoichiometry and rate "
               "equation will be removed)")
           .arg(ui->listReactions->currentItem()->text(0)),
       this);
