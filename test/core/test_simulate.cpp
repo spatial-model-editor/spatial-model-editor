@@ -3,6 +3,7 @@
 #include <sbml/SBMLWriter.h>
 
 #include <QFile>
+#include <algorithm>
 
 #include "catch_wrapper.hpp"
 #include "sbml.hpp"
@@ -289,5 +290,144 @@ SCENARIO("Simulate: very_simple_model, 2d geometry", "[core][simulate]") {
     REQUIRE(fb2.getMeanConcentration() > 0);
     REQUIRE(fa3.getMeanConcentration() > 0);
     REQUIRE(fb3.getMeanConcentration() > 0);
+  }
+}
+
+// return r2 distance from origin of point
+static double r2(const QPoint &p) {
+  // nb: flip y axis since qpoint has y=0 at top
+  return std::pow(p.x() - 48, 2) + std::pow((99 - p.y()) - 48, 2);
+}
+
+// return analytic prediction for concentration
+// u(t) = [t0/(t+t0)] * exp(-r^2/(4Dt))
+static double analytic(const QPoint &p, double t, double D, double t0) {
+  return (t0 / (t + t0)) * exp(-r2(p) / (4.0 * D * (t + t0)));
+}
+
+SCENARIO("Simulate: single-compartment-diffusion, circular geometry",
+         "[core][simulate]") {
+  // initial distribution: u(r) = exp(-r^2/sigma^2)
+  // where r^2 = (x-48^2) + (y-48)^2,
+  // and sigma = 6
+
+  // 2d isotropic diffusion: u(r,t) = A exp{-r^2 / (4 D t)} / (4 pi D t)
+  // so matching this expression to initial condition above:
+  // A = pi sigma^2  <-- total amount: conserved quantity
+  // t0 = sigma^2/4D  <-- analytic time where our simulation starts
+  // u(t) = [t0/(t+t0)] * exp(-r^2/4Dt)  <-- analytic prediction
+
+  // NB central point: (48,99-48) <-> ix=1577
+
+  constexpr double pi = 3.14159265358979323846;
+  double sigma2 = 36.0;
+  double epsilon = 1e-6;
+  // import model
+  sbml::SbmlDocWrapper s;
+  if (QFile f(":/models/single-compartment-diffusion.xml");
+      f.open(QIODevice::ReadOnly)) {
+    s.importSBMLString(f.readAll().toStdString());
+  }
+
+  // check fields have correct compartments
+  geometry::Field &slow = s.mapSpeciesIdToField.at("slow");
+  REQUIRE(slow.geometry->getId() == "circle");
+  REQUIRE(slow.speciesID == "slow");
+  geometry::Field &fast = s.mapSpeciesIdToField.at("fast");
+  REQUIRE(fast.geometry->getId() == "circle");
+  REQUIRE(fast.speciesID == "fast");
+
+  // check total concentration matches analytic value
+  double analytic_total = sigma2 * pi;
+  for (const auto &c : {slow.conc, fast.conc}) {
+    double sum = std::accumulate(cbegin(c), cend(c), 0.0);
+    REQUIRE(std::abs(sum - analytic_total) / analytic_total < epsilon);
+  }
+
+  // check initial distribution matches analytic one
+  for (const auto &f : {slow, fast}) {
+    double D = f.diffusionConstant;
+    double t0 = sigma2 / 4.0 / D;
+    for (std::size_t i = 0; i < f.geometry->nPixels(); ++i) {
+      const auto &p = f.geometry->getPixel(i);
+      double c = analytic(p, 0, D, t0);
+      REQUIRE(std::abs(f.conc[i] - c) / c < epsilon);
+    }
+  }
+
+  // integrate & compare
+  simulate::Simulate sim(&s);
+  sim.addCompartment(&s.mapCompIdToGeometry.at("circle"));
+  double t = 0;
+  double dt = 0.02;
+  for (int step = 0; step < 2; ++step) {
+    for (int k = 0; k < static_cast<int>(10.0 / dt); ++k) {
+      sim.integrateForwardsEuler(dt);
+      t += dt;
+    }
+    // check total concentration matches conserved analytic value
+    for (const auto &c : {slow.conc, fast.conc}) {
+      double sum = std::accumulate(cbegin(c), cend(c), 0.0);
+      REQUIRE(std::abs(sum - analytic_total) / analytic_total < epsilon);
+    }
+    // check new distribution matches analytic one
+    for (const auto &f : {slow, fast}) {
+      double D = f.diffusionConstant;
+      double t0 = sigma2 / 4.0 / D;
+      for (std::size_t i = 0; i < f.geometry->nPixels(); ++i) {
+        const auto &p = f.geometry->getPixel(i);
+        // only check part within a radius of 16 units from centre to avoid
+        // boundary effects: analytic solution is in infinite volume
+        if (r2(p) < 16 * 16) {
+          double c0 = analytic(p, 0, D, t0);
+          double c = analytic(p, t, D, t0);
+          double dc_analytic = c - c0;
+          double dc_measured = f.conc[i] - f.init[i];
+          CAPTURE(t);
+          CAPTURE(r2(p));
+          CAPTURE(p);
+          CAPTURE(c0);
+          CAPTURE(c);
+          CAPTURE(f.conc[i]);
+          CAPTURE(f.init[i]);
+          // relative error on *change* in concentration vs analytic < 2%
+          REQUIRE(std::abs(dc_measured - dc_analytic) / dc_analytic < 0.10);
+        }
+      }
+    }
+  }
+}
+
+SCENARIO("Simulate: small-single-compartment-diffusion, circular geometry",
+         "[core][simulate]") {
+  WHEN("many steps: both species end up equally & uniformly distributed") {
+    double epsilon = 1e-6;
+    // import model
+    sbml::SbmlDocWrapper s;
+    if (QFile f(":/models/small-single-compartment-diffusion.xml");
+        f.open(QIODevice::ReadOnly)) {
+      s.importSBMLString(f.readAll().toStdString());
+    }
+    simulate::Simulate sim(&s);
+    sim.addCompartment(&s.mapCompIdToGeometry.at("circle"));
+    geometry::Field &slow = s.mapSpeciesIdToField.at("slow");
+    geometry::Field &fast = s.mapSpeciesIdToField.at("fast");
+    for (int j = 0; j < 1000; ++j) {
+      sim.integrateForwardsEuler(0.05);
+    }
+    // after many steps in a finite volume, diffusion has reached the limiting
+    // case of a uniform distribution
+    for (const auto &c : {slow.conc, fast.conc}) {
+      auto pair = std::minmax_element(c.cbegin(), c.cend());
+      double min = *pair.first;
+      double max = *pair.second;
+      double av = std::accumulate(c.cbegin(), c.cend(), 0.0) /
+                  static_cast<double>(c.size());
+      CAPTURE(min);
+      CAPTURE(max);
+      CAPTURE(av);
+      REQUIRE(std::abs((min - av) / av) < epsilon);
+      REQUIRE(std::abs((max - av) / av) < epsilon);
+    }
   }
 }

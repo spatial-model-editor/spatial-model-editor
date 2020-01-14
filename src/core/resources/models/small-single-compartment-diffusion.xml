@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" xmlns:spatial="http://www.sbml.org/sbml/level3/version1/spatial/version1" level="3" version="2" spatial:required="true">
+  <model substanceUnits="unit_of_substance" timeUnits="unit_of_time" volumeUnits="unit_of_volume" areaUnits="unit_of_area" lengthUnits="unit_of_length" extentUnits="unit_of_substance">
+    <listOfUnitDefinitions>
+      <unitDefinition id="unit_of_time" name="second">
+        <listOfUnits>
+          <unit kind="second" exponent="1" scale="0" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="unit_of_length" name="centimetre">
+        <listOfUnits>
+          <unit kind="metre" exponent="1" scale="-2" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="unit_of_area" name="centimetre squared">
+        <listOfUnits>
+          <unit kind="metre" exponent="2" scale="-2" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="unit_of_volume" name="millilitre">
+        <listOfUnits>
+          <unit kind="litre" exponent="1" scale="-3" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="unit_of_substance" name="millimole">
+        <listOfUnits>
+          <unit kind="mole" exponent="1" scale="-3" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+    </listOfUnitDefinitions>
+    <listOfCompartments>
+      <compartment id="circle" name="circle" spatialDimensions="2" size="3149" units="unit_of_volume" constant="true">
+        <spatial:compartmentMapping spatial:id="circle_compartmentMapping" spatial:domainType="circle_domainType" spatial:unitSize="1"/>
+      </compartment>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="slow" name="slow" compartment="circle" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
+      <species id="fast" name="fast" compartment="circle" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
+    </listOfSpecies>
+    <listOfParameters>
+      <parameter id="x" units="unit_of_length" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="xCoord"/>
+      </parameter>
+      <parameter id="y" units="unit_of_length" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="yCoord"/>
+      </parameter>
+      <parameter id="slow_diffusionConstant" value="1" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="slow" spatial:type="isotropic"/>
+      </parameter>
+      <parameter id="fast_diffusionConstant" value="3" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="fast" spatial:type="isotropic"/>
+      </parameter>
+    </listOfParameters>
+    <listOfInitialAssignments>
+      <initialAssignment symbol="slow">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <exp/>
+            <apply>
+              <times/>
+              <cn type="rational"> -1 <sep/> 6 </cn>
+              <apply>
+                <plus/>
+                <apply>
+                  <power/>
+                  <apply>
+                    <plus/>
+                    <apply>
+                      <minus/>
+                      <cn type="integer"> 5 </cn>
+                    </apply>
+                    <ci> x </ci>
+                  </apply>
+                  <cn type="integer"> 2 </cn>
+                </apply>
+                <apply>
+                  <power/>
+                  <apply>
+                    <plus/>
+                    <apply>
+                      <minus/>
+                      <cn type="integer"> 5 </cn>
+                    </apply>
+                    <ci> y </ci>
+                  </apply>
+                  <cn type="integer"> 2 </cn>
+                </apply>
+              </apply>
+            </apply>
+          </apply>
+        </math>
+      </initialAssignment>
+      <initialAssignment symbol="fast">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <apply>
+            <exp/>
+            <apply>
+              <times/>
+              <cn type="rational"> -1 <sep/> 2 </cn>
+              <apply>
+                <plus/>
+                <apply>
+                  <power/>
+                  <apply>
+                    <plus/>
+                    <apply>
+                      <minus/>
+                      <cn type="integer"> 5 </cn>
+                    </apply>
+                    <ci> y </ci>
+                  </apply>
+                  <cn type="integer"> 2 </cn>
+                </apply>
+                <apply>
+                  <power/>
+                  <apply>
+                    <plus/>
+                    <apply>
+                      <minus/>
+                      <cn type="integer"> 4 </cn>
+                    </apply>
+                    <ci> x </ci>
+                  </apply>
+                  <cn type="integer"> 2 </cn>
+                </apply>
+              </apply>
+            </apply>
+          </apply>
+        </math>
+      </initialAssignment>
+    </listOfInitialAssignments>
+    <spatial:geometry spatial:coordinateSystem="cartesian">
+      <spatial:listOfCoordinateComponents>
+        <spatial:coordinateComponent spatial:id="xCoord" spatial:type="cartesianX">
+          <spatial:boundaryMin spatial:id="xBoundaryMin" spatial:value="0"/>
+          <spatial:boundaryMax spatial:id="xBoundaryMax" spatial:value="10"/>
+        </spatial:coordinateComponent>
+        <spatial:coordinateComponent spatial:id="yCoord" spatial:type="cartesianY">
+          <spatial:boundaryMin spatial:id="yBoundaryMin" spatial:value="0"/>
+          <spatial:boundaryMax spatial:id="yBoundaryMax" spatial:value="10"/>
+        </spatial:coordinateComponent>
+      </spatial:listOfCoordinateComponents>
+      <spatial:listOfDomainTypes>
+        <spatial:domainType spatial:id="circle_domainType" spatial:spatialDimensions="2"/>
+      </spatial:listOfDomainTypes>
+      <spatial:listOfDomains>
+        <spatial:domain spatial:id="circle_domain" spatial:domainType="circle_domainType">
+          <spatial:listOfInteriorPoints>
+            <spatial:interiorPoint spatial:coord1="5" spatial:coord2="5"/>
+          </spatial:listOfInteriorPoints>
+        </spatial:domain>
+      </spatial:listOfDomains>
+      <spatial:listOfGeometryDefinitions>
+        <spatial:sampledFieldGeometry spatial:id="sampledFieldGeometry" spatial:isActive="true" spatial:sampledField="geometryImage">
+          <spatial:listOfSampledVolumes>
+            <spatial:sampledVolume spatial:id="circle_sampledVolume" spatial:domainType="circle_domainType" spatial:sampledValue="4287652289"/>
+          </spatial:listOfSampledVolumes>
+        </spatial:sampledFieldGeometry>
+        <spatial:parametricGeometry spatial:id="parametricGeometry" spatial:isActive="true">
+          <annotation>
+            <spatialModelEditor:mesh xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:maxBoundaryPoints="12 12" spatialModelEditor:maxTriangleAreas="40" spatialModelEditor:membraneWidths="1.00000000000000000e+00 1.00000000000000000e+00"/>
+          </annotation>
+          <spatial:spatialPoints spatial:id="spatialPoints" spatial:compression="uncompressed" spatial:arrayDataLength="18" spatial:dataType="double">2 3 2 6 3 7 6 7 7 6 7 4 5 2 3 2 4.35714285714286 4.64285714285714 </spatial:spatialPoints>
+          <spatial:listOfParametricObjects>
+            <spatial:parametricObject spatial:id="circle_triangles" spatial:polygonType="triangle" spatial:domainType="circle_domainType" spatial:pointIndexLength="24" spatial:compression="uncompressed" spatial:dataType="uint32">0 7 8 1 0 8 7 6 8 3 2 8 6 5 8 3 8 4 8 5 4 2 1 8 </spatial:parametricObject>
+          </spatial:listOfParametricObjects>
+        </spatial:parametricGeometry>
+      </spatial:listOfGeometryDefinitions>
+      <spatial:listOfSampledFields>
+        <spatial:sampledField spatial:id="geometryImage" spatial:dataType="uint32" spatial:numSamples1="10" spatial:numSamples2="10" spatial:interpolationType="nearestNeighbor" spatial:compression="uncompressed" spatial:samplesLength="100">4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4287652289 4287652289 4287652289 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4287652289 4287652289 4287652289 4287652289 4287652289 4278190592 4278190592 4278190592 4278190592 4278190592 4287652289 4287652289 4287652289 4287652289 4287652289 4287652289 4278190592 4278190592 4278190592 4278190592 4287652289 4287652289 4287652289 4287652289 4287652289 4287652289 4278190592 4278190592 4278190592 4278190592 4287652289 4287652289 4287652289 4287652289 4287652289 4287652289 4278190592 4278190592 4278190592 4278190592 4278190592 4287652289 4287652289 4287652289 4287652289 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592 4278190592</spatial:sampledField>
+      </spatial:listOfSampledFields>
+    </spatial:geometry>
+  </model>
+</sbml>

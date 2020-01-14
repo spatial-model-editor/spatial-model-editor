@@ -352,6 +352,7 @@
      <addaction name="actioncircadian_clock"/>
      <addaction name="actionliver_simplified"/>
      <addaction name="action_gray_scott"/>
+     <addaction name="action_single_compartment_diffusion"/>
     </widget>
     <addaction name="action_New"/>
     <addaction name="action_Open_SBML_file"/>
@@ -585,6 +586,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
+   </property>
+  </action>
+  <action name="action_single_compartment_diffusion">
+   <property name="text">
+    <string>&amp;single-compartment-diffusion</string>
    </property>
   </action>
   <actiongroup name="actionGroupSimType">
