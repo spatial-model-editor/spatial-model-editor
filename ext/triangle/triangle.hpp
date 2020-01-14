@@ -249,86 +249,88 @@
 /*****************************************************************************/
 #pragma once
 
+#include <stdlib.h>
+
 namespace triangle {
 
 struct triangulateio {
-	double *pointlist = nullptr;                                               /* In / out */
-	double *pointattributelist = nullptr;                                       /* In / out */
-	int *pointmarkerlist = nullptr;                                           /* In / out */
-	int numberofpoints = 0;                                            /* In / out */
-	int numberofpointattributes = 0;                                   /* In / out */
+    double *pointlist = nullptr;                                               /* In / out */
+    double *pointattributelist = nullptr;                                       /* In / out */
+    int *pointmarkerlist = nullptr;                                           /* In / out */
+    int numberofpoints = 0;                                            /* In / out */
+    int numberofpointattributes = 0;                                   /* In / out */
 
-	int *trianglelist = nullptr;                                              /* In / out */
-	double *triangleattributelist = nullptr;                                    /* In / out */
-	double *trianglearealist = nullptr;                                          /* In only */
-	int *neighborlist = nullptr;                                              /* Out only */
-	int numberoftriangles = 0;                                         /* In / out */
-	int numberofcorners = 0;                                           /* In / out */
-	int numberoftriangleattributes = 0;                                /* In / out */
+    int *trianglelist = nullptr;                                              /* In / out */
+    double *triangleattributelist = nullptr;                                    /* In / out */
+    double *trianglearealist = nullptr;                                          /* In only */
+    int *neighborlist = nullptr;                                              /* Out only */
+    int numberoftriangles = 0;                                         /* In / out */
+    int numberofcorners = 0;                                           /* In / out */
+    int numberoftriangleattributes = 0;                                /* In / out */
 
-	int *segmentlist = nullptr;                                               /* In / out */
-	int *segmentmarkerlist = nullptr;                                         /* In / out */
-	int numberofsegments = 0;                                          /* In / out */
+    int *segmentlist = nullptr;                                               /* In / out */
+    int *segmentmarkerlist = nullptr;                                         /* In / out */
+    int numberofsegments = 0;                                          /* In / out */
 
-	double *holelist = nullptr;                         /* In / pointer to array copied out */
-	int numberofholes = 0;                                      /* In / copied out */
+    double *holelist = nullptr;                         /* In / pointer to array copied out */
+    int numberofholes = 0;                                      /* In / copied out */
 
-	double *regionlist = nullptr;                       /* In / pointer to array copied out */
-	int numberofregions = 0;                                    /* In / copied out */
+    double *regionlist = nullptr;                       /* In / pointer to array copied out */
+    int numberofregions = 0;                                    /* In / copied out */
 
-	int *edgelist = nullptr;                                                  /* Out only */
-	int *edgemarkerlist = nullptr;             /* Not used with Voronoi diagram; out only */
-	double *normlist = nullptr;                 /* Used only with Voronoi diagram; out only */
-	int numberofedges = 0;                                             /* Out only */
+    int *edgelist = nullptr;                                                  /* Out only */
+    int *edgemarkerlist = nullptr;             /* Not used with Voronoi diagram; out only */
+    double *normlist = nullptr;                 /* Used only with Voronoi diagram; out only */
+    int numberofedges = 0;                                             /* Out only */
 
-	void clear(){
-		free(pointlist);
-		pointlist = nullptr;
-		free(pointattributelist);
-		pointattributelist = nullptr;
-		free(pointmarkerlist);
-		pointmarkerlist = nullptr;
-		numberofpoints = 0;
-		numberofpointattributes = 0;
+    void clear(){
+        free(pointlist);
+        pointlist = nullptr;
+        free(pointattributelist);
+        pointattributelist = nullptr;
+        free(pointmarkerlist);
+        pointmarkerlist = nullptr;
+        numberofpoints = 0;
+        numberofpointattributes = 0;
 
-		free(trianglelist);
-		trianglelist = nullptr;
-		free(triangleattributelist);
-		triangleattributelist = nullptr;
-		free(trianglearealist);
-		trianglearealist = nullptr;
-		free(neighborlist);
-		neighborlist = nullptr;
-		numberoftriangles = 0;
-		numberofcorners = 0;
-		numberoftriangleattributes = 0;
+        free(trianglelist);
+        trianglelist = nullptr;
+        free(triangleattributelist);
+        triangleattributelist = nullptr;
+        free(trianglearealist);
+        trianglearealist = nullptr;
+        free(neighborlist);
+        neighborlist = nullptr;
+        numberoftriangles = 0;
+        numberofcorners = 0;
+        numberoftriangleattributes = 0;
 
-		free(segmentlist);
-		segmentlist = nullptr;
-		free(segmentmarkerlist);
-		segmentmarkerlist = nullptr;
-		numberofsegments = 0;
+        free(segmentlist);
+        segmentlist = nullptr;
+        free(segmentmarkerlist);
+        segmentmarkerlist = nullptr;
+        numberofsegments = 0;
 
-		free(holelist);
-		holelist = nullptr;
-		numberofholes = 0;
+        free(holelist);
+        holelist = nullptr;
+        numberofholes = 0;
 
-		free(regionlist);
-		regionlist = nullptr;
-		numberofregions = 0;
+        free(regionlist);
+        regionlist = nullptr;
+        numberofregions = 0;
 
-		free(edgelist);
-		edgelist = nullptr;
-		free(edgemarkerlist);
-		edgemarkerlist = nullptr;
-		free(normlist);
-		normlist = nullptr;
-		numberofedges = 0;
-	}
+        free(edgelist);
+        edgelist = nullptr;
+        free(edgemarkerlist);
+        edgemarkerlist = nullptr;
+        free(normlist);
+        normlist = nullptr;
+        numberofedges = 0;
+    }
 
-	~triangulateio(){
-		clear();
-	}
+    ~triangulateio(){
+        clear();
+    }
 };
 
 void triangulate(const char *triswitches, struct triangulateio *in, struct triangulateio *out,

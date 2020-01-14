@@ -300,7 +300,8 @@ void QTabSpecies::btnEditAnalyticConcentration_clicked() {
   SPDLOG_DEBUG("editing analytic initial concentration of species {}...",
                speciesID.toStdString());
   DialogAnalytic dialog(sbmlDoc.getAnalyticConcentration(speciesID),
-                        sbmlDoc.getSpeciesGeometry(speciesID));
+                        sbmlDoc.getSpeciesGeometry(speciesID),
+                        sbmlDoc.getGlobalConstants());
   if (dialog.exec() == QDialog::Accepted) {
     const std::string &expr = dialog.getExpression();
     SPDLOG_DEBUG("  - set expr: {}", expr);

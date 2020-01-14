@@ -49,7 +49,7 @@ void SbmlDocWrapper::clearAllGeometryData() {
   membraneVec.clear();
   mapCompartmentToColour.clear();
   mapColourToCompartment.clear();
-  membranePairs.clear();
+  membranePixelPairs.clear();
   mapColPairToIndex.clear();
   mapMembraneToIndex.clear();
   mapMembraneToImage.clear();
@@ -374,7 +374,8 @@ void SbmlDocWrapper::importParametricGeometry() {
         SPDLOG_INFO("  - re-generating mesh");
         mesh = std::make_unique<mesh::Mesh>(
             compartmentImage, interiorPoints, maxPoints, maxAreas,
-            vecMembraneColourPairs, membraneWidths, pixelWidth, physicalOrigin);
+            vecMembraneColourPairs, membraneWidths, pixelWidth, physicalOrigin,
+            getCompartmentColours());
       }
     }
     return;
@@ -634,14 +635,14 @@ void SbmlDocWrapper::initMembraneColourPairs() {
 
   // for each pair of different colours: map to a continuous index
   // NOTE: colours ordered by ascending numerical value
-  membranePairs.clear();
+  membranePixelPairs.clear();
   mapColPairToIndex.clear();
   std::size_t i = 0;
   for (int iB = 1; iB < compartmentImage.colorCount(); ++iB) {
     for (int iA = 0; iA < iB; ++iA) {
       QRgb colA = compartmentImage.colorTable()[iA];
       QRgb colB = compartmentImage.colorTable()[iB];
-      membranePairs.emplace_back();
+      membranePixelPairs.emplace_back();
       auto colPair = std::minmax({colA, colB});
       mapColPairToIndex[colPair] = i++;
       SPDLOG_DEBUG("ColourPair [{},{}] -> ({:x},{:x})", iA, iB, colPair.first,
@@ -659,11 +660,11 @@ void SbmlDocWrapper::initMembraneColourPairs() {
       QRgb currPix = compartmentImage.pixel(x, y);
       if (currPix != prevPix) {
         if (currPix < prevPix) {
-          membranePairs[mapColPairToIndex.at({currPix, prevPix})].push_back(
-              {QPoint(x, y), QPoint(x - 1, y)});
+          membranePixelPairs[mapColPairToIndex.at({currPix, prevPix})]
+              .push_back({QPoint(x, y), QPoint(x - 1, y)});
         } else {
-          membranePairs[mapColPairToIndex.at({prevPix, currPix})].push_back(
-              {QPoint(x - 1, y), QPoint(x, y)});
+          membranePixelPairs[mapColPairToIndex.at({prevPix, currPix})]
+              .push_back({QPoint(x - 1, y), QPoint(x, y)});
         }
       }
       prevPix = currPix;
@@ -676,11 +677,11 @@ void SbmlDocWrapper::initMembraneColourPairs() {
       QRgb currPix = compartmentImage.pixel(x, y);
       if (currPix != prevPix) {
         if (currPix < prevPix) {
-          membranePairs[mapColPairToIndex.at({currPix, prevPix})].push_back(
-              {QPoint(x, y), QPoint(x, y - 1)});
+          membranePixelPairs[mapColPairToIndex.at({currPix, prevPix})]
+              .push_back({QPoint(x, y), QPoint(x, y - 1)});
         } else {
-          membranePairs[mapColPairToIndex.at({prevPix, currPix})].push_back(
-              {QPoint(x, y - 1), QPoint(x, y)});
+          membranePixelPairs[mapColPairToIndex.at({prevPix, currPix})]
+              .push_back({QPoint(x, y - 1), QPoint(x, y)});
         }
       }
       prevPix = currPix;
@@ -717,12 +718,14 @@ void SbmlDocWrapper::updateMembraneList() {
       // add to list
       if (iter != mapColPairToIndex.cend()) {
         std::size_t index = iter->second;
-        if (!membranePairs.at(index).empty()) {
+        if (!membranePixelPairs.at(index).empty()) {
           // generate membrane name, compartments ordered by colour
           int iA = colA < colB ? i : j;
           int iB = colA < colB ? j : i;
           QString id = compartments[iA] + "_" + compartments[iB];
           QString name = compartmentNames[iA] + " <-> " + compartmentNames[iB];
+          SPDLOG_DEBUG("  - {}: ({:x},{:x})", id.toStdString(), colPair.first,
+                       colPair.second);
           // map pair of compartment Ids to membrane Id
           mapCompartmentPairToMembrane[{compartments[iA].toStdString(),
                                         compartments[iB].toStdString()}] =
@@ -740,7 +743,7 @@ void SbmlDocWrapper::updateMembraneList() {
           QImage img = QImage(compartmentImage.size(),
                               QImage::Format_ARGB32_Premultiplied);
           img.fill(0);
-          for (const auto &pixelPair : membranePairs[index]) {
+          for (const auto &pixelPair : membranePixelPairs[index]) {
             img.setPixel(pixelPair.first, colPair.first);
             img.setPixel(pixelPair.second, colPair.second);
           }
@@ -753,7 +756,7 @@ void SbmlDocWrapper::updateMembraneList() {
           assert(mapCompartmentToColour.at(compA->getId().c_str()) <
                  mapCompartmentToColour.at(compB->getId().c_str()));
           membraneVec.emplace_back(id.toStdString(), compA, compB,
-                                   membranePairs[index]);
+                                   membranePixelPairs[index]);
         }
       }
     }
@@ -1113,14 +1116,14 @@ QRgb SbmlDocWrapper::getCompartmentColour(const QString &compartmentID) const {
 void SbmlDocWrapper::createField(const QString &speciesID,
                                  const QString &compartmentID) {
   std::string sId = speciesID.toStdString();
-  SPDLOG_INFO("creating field for species {} in compartment {}", sId,
-              compartmentID.toStdString());
+  const auto *spec = model->getSpecies(sId);
+  SPDLOG_INFO("creating field for species {} ('{}') in compartment {}", sId,
+              spec->getName(), compartmentID.toStdString());
   mapSpeciesIdToField[speciesID] =
       geometry::Field(&mapCompIdToGeometry.at(compartmentID), sId, 1.0,
                       mapSpeciesIdToColour.at(speciesID));
   geometry::Field &field = mapSpeciesIdToField.at(speciesID);
   // set all species concentrations to their initial values
-  const auto *spec = model->getSpecies(sId);
   // start by setting the uniform concentration
   field.setUniformConcentration(spec->getInitialConcentration());
   // if sampled field or analytic are present, they override the above
@@ -1211,6 +1214,15 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
   }
 }
 
+std::vector<QRgb> SbmlDocWrapper::getCompartmentColours() const {
+  std::vector<QRgb> c;
+  for (unsigned int i = 0; i < model->getNumCompartments(); ++i) {
+    const std::string &compID = model->getCompartment(i)->getId();
+    c.push_back(getCompartmentColour(compID.c_str()));
+  }
+  return c;
+}
+
 void SbmlDocWrapper::updateMesh() {
   if (!hasValidGeometry) {
     SPDLOG_DEBUG("model does not have valid geometry: skip mesh update");
@@ -1226,7 +1238,7 @@ void SbmlDocWrapper::updateMesh() {
   mesh = std::make_unique<mesh::Mesh>(
       compartmentImage, interiorPoints, std::vector<std::size_t>{},
       std::vector<std::size_t>{}, vecMembraneColourPairs, std::vector<double>{},
-      pixelWidth, physicalOrigin);
+      pixelWidth, physicalOrigin, getCompartmentColours());
 }
 
 libsbml::ParametricObject *SbmlDocWrapper::getParametricObject(
@@ -1496,11 +1508,14 @@ std::string SbmlDocWrapper::getSpeciesSampledFieldInitialAssignment(
               dynamic_cast<const libsbml::SpatialParameterPlugin *>(
                   param->getPlugin("spatial"));
           spp != nullptr) {
-        const auto &ref = spp->getSpatialSymbolReference()->getSpatialRef();
-        SPDLOG_INFO("  - found spatialSymbolReference: {}", ref);
-        if (geom->getSampledField(ref) != nullptr) {
-          sampledFieldID = ref;
-          SPDLOG_INFO("  - this is a reference to a SampledField");
+        if (const auto *ssr = spp->getSpatialSymbolReference();
+            ssr != nullptr) {
+          const auto &ref = ssr->getSpatialRef();
+          SPDLOG_INFO("  - found spatialSymbolReference: {}", ref);
+          if (geom->getSampledField(ref) != nullptr) {
+            sampledFieldID = ref;
+            SPDLOG_INFO("  - this is a reference to a SampledField");
+          }
         }
       }
     }
@@ -2033,6 +2048,18 @@ std::vector<IdNameValue> SbmlDocWrapper::getGlobalConstants() const {
   return constants;
 }
 
+std::vector<IdNameExpr> SbmlDocWrapper::getNonConstantParameters() const {
+  std::vector<IdNameExpr> rules;
+  for (unsigned k = 0; k < model->getNumRules(); ++k) {
+    if (const auto *rule = model->getRule(k); rule->isAssignment()) {
+      std::string sId = rule->getVariable();
+      rules.push_back(
+          {sId, model->getParameter(sId)->getName(), rule->getFormula()});
+    }
+  }
+  return rules;
+}
+
 double SbmlDocWrapper::getPixelWidth() const { return pixelWidth; }
 
 void SbmlDocWrapper::setPixelWidth(double width) {
@@ -2203,14 +2230,19 @@ std::string SbmlDocWrapper::inlineAssignments(
     while (start != std::string::npos) {
       auto end = expr.find_first_of(delimeters, start);
       std::string name = expr.substr(start, end - start);
+      SPDLOG_TRACE("  - name: {}", name);
       if (const auto *assignment = model->getAssignmentRule(name);
           assignment != nullptr) {
         // replace name with inlined body of Assignment rule
         const std::string &assignmentBody =
             model->getAssignmentRule(name)->getFormula();
+        SPDLOG_TRACE("    -> rule: {}", assignmentBody);
         // wrap function body in parentheses
         std::string pre_expr = expr.substr(0, start);
-        std::string post_expr = expr.substr(end);
+        std::string post_expr;
+        if (end != std::string::npos) {
+          post_expr = expr.substr(end);
+        }
         expr = pre_expr + "(" + assignmentBody + ")" + post_expr;
         SPDLOG_DEBUG("  - new expr = {}", expr);
         // go to end of inlined assignment body in expr

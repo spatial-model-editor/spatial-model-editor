@@ -1,6 +1,7 @@
+#include <fmt/core.h>
+
 #include <QApplication>
 #include <QtGui>
-#include <iostream>
 #include <locale>
 
 #include "logger.hpp"
@@ -9,16 +10,12 @@
 
 int main(int argc, char *argv[]) {
   if (argc > 1) {
-    std::string arg = argv[1];
-    if ((arg == "-v") || (arg == "--version")) {
-      std::cout << SPATIAL_MODEL_EDITOR_VERSION << std::endl;
+    if (std::string arg = argv[1]; (arg == "-v") || (arg == "--version")) {
+      fmt::print("{}\n", SPATIAL_MODEL_EDITOR_VERSION);
       return 0;
-    }
-    if ((arg == "-h") || (arg == "--help")) {
-      std::cout << "Spatial Model Editor " << SPATIAL_MODEL_EDITOR_VERSION
-                << std::endl;
-      std::cout << "https://www.github.com/lkeegan/spatial-model-editor"
-                << std::endl;
+    } else if ((arg == "-h") || (arg == "--help")) {
+      fmt::print("Spatial Model Editor {}\n", SPATIAL_MODEL_EDITOR_VERSION);
+      fmt::print("https://www.github.com/lkeegan/spatial-model-editor\n");
       return 0;
     }
   }

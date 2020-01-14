@@ -200,7 +200,7 @@ QImage Simulate::getConcentrationImage() const {
       std::vector<double> max_conc;
       for (const auto *f : comp.field) {
         double m = *std::max_element(f->conc.cbegin(), f->conc.cend());
-        max_conc.push_back(m < 1e-15 ? 1.0 : m);
+        max_conc.push_back(m < 1e-30 ? 1.0 : m);
       }
       // equal contribution from each field
       double alpha = 1.0 / static_cast<double>(comp.field.size());

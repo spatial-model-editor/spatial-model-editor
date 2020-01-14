@@ -716,25 +716,28 @@ SCENARIO("SBML: load model, refine mesh, save", "[core][sbml][mesh]") {
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
   s.importSBMLString(f.readAll().toStdString());
-  REQUIRE(s.mesh->getBoundaryMaxPoints(1) == 16);
+  REQUIRE(s.mesh->getBoundaryMaxPoints(0) == 16);
+  REQUIRE(s.mesh->getBoundaries().size() == 1);
   REQUIRE(s.mesh->getCompartmentMaxTriangleArea(0) == 72);
   REQUIRE(s.mesh->getVertices().size() == 2 * 44);
   REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 70);
   // refine boundary and mesh
-  s.mesh->setBoundaryMaxPoints(1, 20);
+  s.mesh->setBoundaryMaxPoints(0, 20);
   s.mesh->setCompartmentMaxTriangleArea(0, 32);
-  REQUIRE(s.mesh->getVertices().size() == 2 * 89);
-  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 148);
+  REQUIRE(s.mesh->getBoundaries().size() == 1);
+  REQUIRE(s.mesh->getVertices().size() == 2 * 91);
+  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 152);
   // save SBML doc
   s.exportSBMLFile("tmp.xml");
 
   // import again
   sbml::SbmlDocWrapper s2;
   s2.importSBMLFile("tmp.xml");
-  REQUIRE(s2.mesh->getBoundaryMaxPoints(1) == 20);
+  REQUIRE(s.mesh->getBoundaries().size() == 1);
+  REQUIRE(s2.mesh->getBoundaryMaxPoints(0) == 20);
   REQUIRE(s2.mesh->getCompartmentMaxTriangleArea(0) == 32);
-  REQUIRE(s2.mesh->getVertices().size() == 2 * 89);
-  REQUIRE(s2.mesh->getTriangleIndices(0).size() == 3 * 148);
+  REQUIRE(s2.mesh->getVertices().size() == 2 * 91);
+  REQUIRE(s2.mesh->getTriangleIndices(0).size() == 3 * 152);
 }
 
 SCENARIO("SBML: load model, change size of geometry, save",
@@ -744,7 +747,7 @@ SCENARIO("SBML: load model, change size of geometry, save",
   f.open(QIODevice::ReadOnly);
   s.importSBMLString(f.readAll().toStdString());
   std::vector<double> v = s.mesh->getVertices();
-  REQUIRE(s.mesh->getBoundaryMaxPoints(1) == 16);
+  REQUIRE(s.mesh->getBoundaryMaxPoints(0) == 16);
   REQUIRE(s.mesh->getCompartmentMaxTriangleArea(0) == 72);
   REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 70);
   REQUIRE(v.size() == 2 * 44);

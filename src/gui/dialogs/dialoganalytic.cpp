@@ -8,6 +8,7 @@
 
 DialogAnalytic::DialogAnalytic(const QString& analyticExpression,
                                const sbml::SpeciesGeometry& speciesGeometry,
+                               const std::vector<sbml::IdNameValue>& constants,
                                QWidget* parent)
     : QDialog(parent),
       ui{std::make_unique<Ui::DialogAnalytic>()},
@@ -27,9 +28,23 @@ DialogAnalytic::DialogAnalytic(const QString& analyticExpression,
                QImage::Format_ARGB32_Premultiplied);
   img.fill(0);
   concentration.resize(points.size(), 0.0);
-  // add some built-in functions, as well as x,y variables
-  ui->txtExpression->setVariables(
-      {"x", "y", "sin", "cos", "exp", "log", "ln", "pow", "sqrt"});
+  // add x,y variables
+  ui->txtExpression->setVariables({"x", "y"});
+  vars.clear();
+  vars.push_back(0);
+  vars.push_back(0);
+  // add any supplied constants
+  for (const auto& [id, name, value] : constants) {
+    ui->txtExpression->addVariable(id, name);
+    vars.push_back(value);
+  }
+  // add built-in functions
+  // todo: check if these need to be treated differently wrt substitution
+  // in symengine evaluation, or if they will be automatically treated as
+  // functions...?
+  for (auto f : {"sin", "cos", "exp", "log", "ln", "pow", "sqrt"}) {
+    ui->txtExpression->addVariable(f, f);
+  }
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogAnalytic::accept);
@@ -40,13 +55,15 @@ DialogAnalytic::DialogAnalytic(const QString& analyticExpression,
   connect(ui->lblImage, &QLabelMouseTracker::mouseOver, this,
           &DialogAnalytic::lblImage_mouseOver);
 
-  ui->txtExpression->setPlainText(analyticExpression);
+  ui->txtExpression->importVariableMath(analyticExpression.toStdString());
   lblImage_mouseOver(points.front());
 }
 
 DialogAnalytic::~DialogAnalytic() = default;
 
-const std::string& DialogAnalytic::getExpression() const { return expression; }
+const std::string& DialogAnalytic::getExpression() const {
+  return variableExpression;
+}
 
 bool DialogAnalytic::isExpressionValid() const { return expressionIsValid; }
 
@@ -67,7 +84,8 @@ void DialogAnalytic::txtExpression_mathChanged(const QString& math, bool valid,
   SPDLOG_DEBUG("  - error: {}", errorMessage.toStdString());
   expressionIsValid = false;
   ui->lblConcentration->setText("");
-  expression.clear();
+  displayExpression.clear();
+  variableExpression.clear();
   if (!valid) {
     // if expression not valid, show error message
     ui->lblExpressionStatus->setText(errorMessage);
@@ -78,7 +96,6 @@ void DialogAnalytic::txtExpression_mathChanged(const QString& math, bool valid,
   }
   // calculate concentration
   ui->txtExpression->compileMath();
-  auto vars = std::vector<double>(2, 0);
   for (std::size_t i = 0; i < points.size(); ++i) {
     auto physical = physicalPoint(points[i]);
     vars[0] = physical.x();
@@ -96,7 +113,8 @@ void DialogAnalytic::txtExpression_mathChanged(const QString& math, bool valid,
   ui->lblExpressionStatus->setText("");
   expressionIsValid = true;
   ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
-  expression = math.toStdString();
+  displayExpression = math.toStdString();
+  variableExpression = ui->txtExpression->getVariableMath();
   // normalise displayed pixel intensity to max concentration
   double maxConc =
       *std::max_element(concentration.cbegin(), concentration.cend());

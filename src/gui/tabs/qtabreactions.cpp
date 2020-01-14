@@ -162,6 +162,10 @@ void QTabReactions::listReactions_currentItemChanged(
   for (const auto &[id, name, value] : sbmlDoc.getGlobalConstants()) {
     ui->txtReactionRate->addVariable(id, name);
   }
+  // get non-constant parameters that are replaced by assignment rules
+  for (const auto &[id, name, expr] : sbmlDoc.getNonConstantParameters()) {
+    ui->txtReactionRate->addVariable(id, name);
+  }
   // add model functions
   for (const auto &f : sbmlDoc.functions) {
     auto func = sbmlDoc.getFunctionDefinition(f);

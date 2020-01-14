@@ -1,5 +1,29 @@
 include(../topdir.pri)
 
+# dune requires some definitions
+DEFINES += DUNE_LOGGING_VENDORED_FMT=0 ENABLE_GMP=1 ENABLE_UG=1 MUPARSER_STATIC UG_USE_NEW_DIMENSION_DEFINES
+
+# spdlog defines
+DEFINES += SPDLOG_FMT_EXTERNAL
+
+# on windows dune-copasi pdelab_expression_adapter doesn't compile unless we first remove unicode support
+# NB: may be due to compiling muparser without unicode support?
+DEFINES -= UNICODE _UNICODE
+
+# these static libraries are available pre-compiled from
+# https://github.com/lkeegan/dune-copasi-static
+LIBS += \
+    $${TOPDIR}/ext/dune/lib/libdune_copasi_md_lib.a \
+    $${TOPDIR}/ext/dune/lib/libdune_copasi_lib.a \
+    $${TOPDIR}/ext/dune/lib/libdune-logging.a \
+    $${TOPDIR}/ext/dune/lib/libdunepdelab.a \
+    $${TOPDIR}/ext/dune/lib/libdunegrid.a \
+    $${TOPDIR}/ext/dune/lib/libdunegeometry.a \
+    $${TOPDIR}/ext/dune/lib/libugS3.a \
+    $${TOPDIR}/ext/dune/lib/libugS2.a \
+    $${TOPDIR}/ext/dune/lib/libugL.a \
+    $${TOPDIR}/ext/dune/lib/libdunecommon.a \
+
 # these static libraries are available pre-compiled from
 # https://github.com/lkeegan/libsbml-static
 LIBS += \
@@ -9,6 +33,7 @@ LIBS += \
     $${TOPDIR}/ext/lib/libgmp.a \
     $${TOPDIR}/ext/lib/libgmpxx.a \
     $${TOPDIR}/ext/lib/libspdlog.a \
+    $${TOPDIR}/ext/lib/libfmt.a \
     $${TOPDIR}/ext/lib/libtiff.a \
     $${TOPDIR}/ext/lib/libmuparser.a \
 
@@ -57,30 +82,6 @@ LIBS += \
 LIBS += \
     $${TOPDIR}/ext/qcustomplot/libqcustomplot.a \
     $${TOPDIR}/ext/triangle/triangle.o \
-
-# dune requires some definitions
-DEFINES += DUNE_LOGGING_VENDORED_FMT=0 ENABLE_GMP=1 ENABLE_UG=1 MUPARSER_STATIC UG_USE_NEW_DIMENSION_DEFINES
-
-# spdlog defines
-DEFINES += SPDLOG_FMT_EXTERNAL
-
-# on windows dune-copasi pdelab_expression_adapter doesn't compile unless we first remove unicode support
-# NB: may be due to compiling muparser without unicode support?
-DEFINES -= UNICODE _UNICODE
-
-# these static libraries are available pre-compiled from
-# https://github.com/lkeegan/dune-copasi-static
-LIBS += \
-    $${TOPDIR}/ext/dune/lib/libdune-logging.a \
-    $${TOPDIR}/ext/dune/lib/libdunepdelab.a \
-    $${TOPDIR}/ext/dune/lib/libdunegrid.a \
-    $${TOPDIR}/ext/dune/lib/libdunegeometry.a \
-    $${TOPDIR}/ext/dune/lib/libugS3.a \
-    $${TOPDIR}/ext/dune/lib/libugS2.a \
-    $${TOPDIR}/ext/dune/lib/libugL.a \
-    $${TOPDIR}/ext/dune/lib/libdunecommon.a \
-    $${TOPDIR}/ext/dune/lib/libdune_copasi_lib.a \
-    $${TOPDIR}/ext/lib/libfmt.a \
 
 # include QT and ext headers as system headers to suppress compiler warnings
 QMAKE_CXXFLAGS += \
