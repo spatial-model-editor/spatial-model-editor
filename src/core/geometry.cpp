@@ -174,6 +174,14 @@ double Field::getMeanConcentration() const {
          static_cast<double>(conc.size());
 }
 
+double Field::getMinConcentration() const {
+  return *std::min_element(conc.cbegin(), conc.cend());
+}
+
+double Field::getMaxConcentration() const {
+  return *std::max_element(conc.cbegin(), conc.cend());
+}
+
 void Field::setCompartment(const Compartment *compartment) {
   if (geometry == compartment) {
     return;

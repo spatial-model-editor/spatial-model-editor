@@ -57,6 +57,12 @@ class DuneConverter {
   std::map<std::string, QColor> mapDuneNameToColour;
 };
 
+struct AvMinMax {
+  double average;
+  double min;
+  double max;
+};
+
 class DuneSimulation {
  private:
   // Dune objects via pimpl to hide DUNE headers
@@ -69,7 +75,7 @@ class DuneSimulation {
   // map SBML speciesIds to corresponding DUNE name
   std::map<std::string, std::string> mapSpeciesIdsToDuneNames;
   std::vector<std::vector<QColor>> speciesColours;
-  std::map<std::string, double> mapSpeciesIDToAvConc;
+  std::map<std::string, AvMinMax> mapSpeciesIDToConc;
   std::vector<std::vector<double>> maxConcs;
   // dimensions of model
   QSizeF geometrySize;
@@ -104,6 +110,8 @@ class DuneSimulation {
   void doTimestep(double dt);
   QImage getConcImage(bool linearInterpolationOnly = false) const;
   double getAverageConcentration(const std::string &speciesID) const;
+  double getMinConcentration(const std::string &speciesID) const;
+  double getMaxConcentration(const std::string &speciesID) const;
   void setImageSize(const QSize &imgSize);
 };
 

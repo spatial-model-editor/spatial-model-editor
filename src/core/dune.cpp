@@ -664,6 +664,9 @@ void DuneSimulation::updateBarycentricWeights() {
 }
 
 void DuneSimulation::updateSpeciesConcentrations() {
+  // quadrature rule integration order: should be > FEM order
+  // hard coded for now, pdelab uses something like 2 + 2*FEM order
+  constexpr int integration_order = 5;
   concentrations.clear();
   maxConcs.clear();
   for (const auto &[compIndex, compName] : compartmentNames) {
@@ -676,6 +679,7 @@ void DuneSimulation::updateSpeciesConcentrations() {
     const auto &compTriangles = triangles.at(compIndex);
     auto &comp = concentrations.emplace_back();
     for (std::size_t iSpecies = 0; iSpecies < species.size(); ++iSpecies) {
+      double compartmentVolume = 0;
       auto &spec = comp.emplace_back();
       auto gf = pDuneImpl->model->get_grid_function(pDuneImpl->model->states(),
                                                     compIndex, iSpecies);
@@ -686,21 +690,35 @@ void DuneSimulation::updateSpeciesConcentrations() {
       spec.reserve(compTriangles.size());
       double avC = 0;
       double maxC = 0;
+      double minC = std::numeric_limits<double>::max();
       for (const auto e : elements(gridview)) {
+        // calculate & store concentration at each corner of triangle
         auto &corners = spec.emplace_back();
         corners.reserve(3);
         for (const auto &dom : {Domain{0, 0}, Domain{1, 0}, Domain{0, 1}}) {
           gf->evaluate(e, dom, result);
           corners.push_back(result[0]);
-          avC += corners.back();
           maxC = std::max(maxC, corners.back());
+          minC = std::min(minC, corners.back());
+        }
+        // integration concentration over triangle
+        auto geo = e.geometry();
+        for (const auto &point : quadratureRule(geo, integration_order)) {
+          Range localConcentration;
+          const auto &localPosition = point.position();
+          gf->evaluate(e, localPosition, localConcentration);
+          auto localVolume =
+              point.weight() * geo.integrationElement(localPosition);
+          compartmentVolume += localVolume;
+          avC += localVolume * localConcentration;
         }
       }
-      avC /= static_cast<double>(spec.size() * 3);
-      mapSpeciesIDToAvConc[species.at(iSpecies)] = avC;
+      avC /= compartmentVolume;
+      mapSpeciesIDToConc[species.at(iSpecies)] = {avC, minC, maxC};
       maxConcs.back().push_back(maxC);
       SPDLOG_TRACE("  - species[{}]: {}", iSpecies, species.at(iSpecies));
       SPDLOG_TRACE("    - avg = {}", avC);
+      SPDLOG_TRACE("    - min = {}", minC);
       SPDLOG_TRACE("    - max = {}", maxC);
     }
   }
@@ -807,7 +825,17 @@ QImage DuneSimulation::getConcImage(bool linearInterpolationOnly) const {
 double DuneSimulation::getAverageConcentration(
     const std::string &speciesID) const {
   const auto &duneName = mapSpeciesIdsToDuneNames.at(speciesID);
-  return mapSpeciesIDToAvConc.at(duneName);
+  return mapSpeciesIDToConc.at(duneName).average;
+}
+
+double DuneSimulation::getMinConcentration(const std::string &speciesID) const {
+  const auto &duneName = mapSpeciesIdsToDuneNames.at(speciesID);
+  return mapSpeciesIDToConc.at(duneName).min;
+}
+
+double DuneSimulation::getMaxConcentration(const std::string &speciesID) const {
+  const auto &duneName = mapSpeciesIdsToDuneNames.at(speciesID);
+  return mapSpeciesIDToConc.at(duneName).max;
 }
 
 void DuneSimulation::setImageSize(const QSize &imgSize) {

@@ -74,6 +74,8 @@ class Field {
   QImage getConcentrationImage() const;
   std::vector<double> getConcentrationArray() const;
   double getMeanConcentration() const;
+  double getMinConcentration() const;
+  double getMaxConcentration() const;
   bool isUniformConcentration = true;
   bool isSpatial = true;
   // field.dcdt = result of the diffusion operator acting on field.conc
