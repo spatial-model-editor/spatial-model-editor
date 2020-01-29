@@ -19,7 +19,9 @@
 namespace mesh {
 
 using QTriangleF = std::array<QPointF, 3>;
+using QRectangleF = std::array<QPointF, 4>;
 using TriangleIndex = std::array<std::size_t, 3>;
+using RectangleIndex = std::array<std::size_t, 4>;
 using ColourPair = std::pair<QRgb, QRgb>;
 
 class Mesh {
@@ -39,7 +41,10 @@ class Mesh {
   std::vector<QPointF> vertices;
   std::size_t nTriangles;
   std::vector<std::vector<QTriangleF>> triangles;
+  std::size_t nRectangles;
+  std::vector<std::vector<QRectangleF>> rectangles;
   std::vector<std::vector<TriangleIndex>> triangleIndices;
+  std::vector<std::vector<RectangleIndex>> rectangleIndices;
   // convert point in pixel units to point in physical units
   QPointF pixelPointToPhysicalPoint(const QPointF& pixelPoint) const noexcept;
   void constructMesh();
@@ -55,7 +60,8 @@ class Mesh {
                     membraneColourPairs = {},
                 const std::vector<double>& membraneWidths = {},
                 double pixelWidth = 1.0,
-                const QPointF& originPoint = QPointF(0, 0));
+                const QPointF& originPoint = QPointF(0, 0),
+                const std::vector<QRgb>& compartmentColours = {});
   // constructor to load existing vertices&trianges without original image
   Mesh(const std::vector<double>& inputVertices,
        const std::vector<std::vector<int>>& inputTriangleIndices,

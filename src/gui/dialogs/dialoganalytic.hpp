@@ -20,6 +20,7 @@ class DialogAnalytic : public QDialog {
  public:
   explicit DialogAnalytic(const QString& analyticExpression,
                           const sbml::SpeciesGeometry& speciesGeometry,
+                          const std::vector<sbml::IdNameValue>& constants = {},
                           QWidget* parent = nullptr);
   ~DialogAnalytic();
   const std::string& getExpression() const;
@@ -34,11 +35,13 @@ class DialogAnalytic : public QDialog {
   QPointF origin;
   QString lengthUnit;
   QString concentrationUnit;
+  std::vector<double> vars;
 
   QImage img;
   utils::QPointIndexer qpi;
   std::vector<double> concentration;
-  std::string expression;
+  std::string displayExpression;
+  std::string variableExpression;
   bool expressionIsValid = false;
 
   QPointF physicalPoint(const QPoint& pixelPoint) const;

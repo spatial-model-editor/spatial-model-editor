@@ -10,7 +10,7 @@
         <file>models/very-simple-model.xml</file>
         <file>geometry/empty-donut-100x100.png</file>
         <file>geometry/filled-donut-100x100.png</file>
-        <file>geometry/liver-300x100.png</file>
+        <file>geometry/single-liver-cell-180x140.png</file>
         <file>geometry/one-blob-100x100.png</file>
         <file>geometry/single-pixels-3x1.png</file>
         <file>geometry/two-blobs-100x100.png</file>

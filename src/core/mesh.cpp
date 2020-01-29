@@ -19,7 +19,7 @@ Mesh::Mesh(
     const std::vector<std::size_t>& maxTriangleArea,
     const std::vector<std::pair<std::string, ColourPair>>& membraneColourPairs,
     const std::vector<double>& membraneWidths, double pixelWidth,
-    const QPointF& originPoint)
+    const QPointF& originPoint, const std::vector<QRgb>& compartmentColours)
     : img(image),
       origin(originPoint),
       pixel(pixelWidth),
@@ -40,8 +40,8 @@ Mesh::Mesh(
                  colPair.second, membraneID, membraneIndex);
   }
 
-  boundaries =
-      boundary::constructBoundaries(image, mapColourPairToMembraneIndex);
+  boundaries = boundary::constructBoundaries(
+      image, mapColourPairToMembraneIndex, compartmentColours);
   SPDLOG_INFO("found {} boundaries", boundaries.size());
   for (const auto& boundary : boundaries) {
     SPDLOG_INFO("  - {} points, loop={}, membrane={} [{}]",
@@ -71,16 +71,6 @@ Mesh::Mesh(
         interiorPoints.size(), defaultCompartmentMaxTriangleArea);
     SPDLOG_INFO("no max triangle areas specified, using default value: {}",
                 defaultCompartmentMaxTriangleArea);
-  }
-  // add interior point for each membrane
-  for (const auto& boundary : boundaries) {
-    if (boundary.isMembrane) {
-      QPointF membraneInterior =
-          (boundary.points[0] + boundary.outerPoints[0]) / 2.0;
-      compartmentInteriorPoints.push_back(membraneInterior);
-      // no max area for membrane triangles
-      compartmentMaxTriangleArea.push_back(99);
-    }
   }
   // set membrane widths if supplied
   if (!membraneWidths.empty() && membraneWidths.size() == boundaries.size()) {
@@ -263,19 +253,6 @@ void Mesh::constructMesh() {
   for (const auto& p : pointIndex.getPoints()) {
     boundaryPoints.push_back(p);
   }
-  // add outer membrane boundary lines: non-integers
-  // can't be used by multiple boundary lines - no check for duplicates
-  std::vector<size_t> membraneIndexOffsets;
-  std::size_t index = pointIndex.getPoints().size();
-  for (const auto& boundary : boundaries) {
-    if (boundary.isMembrane) {
-      // index of first membrane outer line point:
-      membraneIndexOffsets.push_back(index);
-      index += boundary.outerPoints.size();
-      boundaryPoints.insert(boundaryPoints.end(), boundary.outerPoints.cbegin(),
-                            boundary.outerPoints.cend());
-    }
-  }
 
   // for each boundary line, replace each QPoint
   // with its index in the list of boundaryPoints
@@ -295,23 +272,6 @@ void Mesh::constructMesh() {
       boundarySegmentsVector.back().push_back({{i0, i1}});
     }
   }
-  // repeat for outer boundaries of membranes:
-  std::size_t iMembrane = 0;
-  for (const auto& boundary : boundaries) {
-    if (boundary.isMembrane) {
-      // index of first point in loop:
-      std::size_t pIndex = membraneIndexOffsets[iMembrane];
-      boundarySegmentsVector.emplace_back();
-      for (std::size_t j = 0; j < boundary.outerPoints.size() - 1; ++j) {
-        boundarySegmentsVector.back().push_back({{pIndex, pIndex + 1}});
-        ++pIndex;
-      }
-      // connect last point to first point
-      boundarySegmentsVector.back().push_back(
-          {{pIndex, membraneIndexOffsets[iMembrane]}});
-      ++iMembrane;
-    }
-  }
 
   // interior point & max triangle area for each compartment
   std::vector<triangulate::Compartment> compartments;
@@ -319,25 +279,47 @@ void Mesh::constructMesh() {
     compartments.emplace_back(compartmentInteriorPoints[i],
                               compartmentMaxTriangleArea[i]);
   }
+
+  // boundary index and width for each membrane
+  std::vector<triangulate::Membrane> membranes;
+  for (std::size_t i = 0; i < boundaries.size(); ++i) {
+    if (boundaries[i].isMembrane) {
+      membranes.emplace_back(i, boundaries[i].getMembraneWidth());
+    }
+  }
+
   // generate mesh
   triangulate::Triangulate triangulate(boundaryPoints, boundarySegmentsVector,
-                                       compartments);
+                                       compartments, membranes);
   vertices = triangulate.getPoints();
+  triangleIndices = triangulate.getTriangleIndices();
+  rectangleIndices = triangulate.getRectangleIndices();
 
-  // construct triangles & indices for each compartment:
-  triangleIndices = std::vector<std::vector<TriangleIndex>>(
-      compartments.size(), std::vector<TriangleIndex>{});
-  triangles = std::vector<std::vector<QTriangleF>>(compartments.size(),
-                                                   std::vector<QTriangleF>{});
+  // construct triangles for each compartment:
   nTriangles = 0;
-  for (const auto& t : triangulate.getTriangleIndices()) {
-    std::size_t compIndex = t[0] - 1;
-    triangleIndices[compIndex].push_back({{t[1], t[2], t[3]}});
-    triangles[compIndex].push_back(
-        {{vertices[t[1]], vertices[t[2]], vertices[t[3]]}});
-    ++nTriangles;
+  triangles.clear();
+  for (const auto& compartmentTriangleIndices : triangleIndices) {
+    nTriangles += compartmentTriangleIndices.size();
+    auto& compTriangles = triangles.emplace_back();
+    for (const auto& t : compartmentTriangleIndices) {
+      compTriangles.push_back(
+          {{vertices[t[0]], vertices[t[1]], vertices[t[2]]}});
+    }
   }
-  SPDLOG_INFO("{} vertices, {} triangles", vertices.size(), nTriangles);
+
+  // construct rectangles for each membrane:
+  nRectangles = 0;
+  rectangles.clear();
+  for (const auto& membraneRectangleIndices : rectangleIndices) {
+    nRectangles += membraneRectangleIndices.size();
+    auto& membRectangles = rectangles.emplace_back();
+    for (const auto& r : membraneRectangleIndices) {
+      membRectangles.push_back(
+          {{vertices[r[0]], vertices[r[1]], vertices[r[2]], vertices[r[3]]}});
+    }
+  }
+  SPDLOG_INFO("{} vertices, {} triangles, {} rectangles", vertices.size(),
+              nTriangles, nRectangles);
 }
 
 static double getScaleFactor(const QImage& img, const QSize& size) {
@@ -452,6 +434,12 @@ std::pair<QImage, QImage> Mesh::getMeshImages(
       }
     }
   }
+  // draw any membrane rectangles
+  for (const auto& membraneRectangles : rectangles) {
+    for (const auto& r : membraneRectangles) {
+      p.drawLine(r[0] * scaleFactor, r[3] * scaleFactor);
+    }
+  }
   // draw vertices
   p.setPen(QPen(Qt::red, 3));
   for (const auto& v : vertices) {
@@ -484,18 +472,26 @@ QString Mesh::getGMSH(const std::unordered_set<int>& gmshCompIndices) const {
   }
   msh.append("$EndNodes\n");
   msh.append("$Elements\n");
-  int nT = 0;
+  std::size_t nElem = 0;
   std::size_t compartmentIndex = 1;
   for (const auto& comp : triangleIndices) {
     if (gmshCompIndices.empty() ||
         gmshCompIndices.find(static_cast<int>(compartmentIndex)) !=
             gmshCompIndices.cend()) {
-      nT += static_cast<int>(comp.size());
+      nElem += comp.size();
     }
     compartmentIndex++;
   }
-  msh.append(QString("%1\n").arg(nT));
-  std::size_t triangleIndex = 1;
+  for (const auto& memb : rectangleIndices) {
+    if (gmshCompIndices.empty() ||
+        gmshCompIndices.find(static_cast<int>(compartmentIndex)) !=
+            gmshCompIndices.cend()) {
+      nElem += memb.size();
+    }
+    compartmentIndex++;
+  }
+  msh.append(QString("%1\n").arg(nElem));
+  std::size_t elementIndex = 1;
   compartmentIndex = 1;
   std::size_t outputCompartmentIndex = 1;
   for (const auto& comp : triangleIndices) {
@@ -504,12 +500,30 @@ QString Mesh::getGMSH(const std::unordered_set<int>& gmshCompIndices) const {
             gmshCompIndices.cend()) {
       for (const auto& t : comp) {
         msh.append(QString("%1 2 2 %2 %2 %3 %4 %5\n")
-                       .arg(triangleIndex)
+                       .arg(elementIndex)
                        .arg(outputCompartmentIndex)
                        .arg(t[0] + 1)
                        .arg(t[1] + 1)
                        .arg(t[2] + 1));
-        ++triangleIndex;
+        ++elementIndex;
+      }
+      ++outputCompartmentIndex;
+    }
+    ++compartmentIndex;
+  }
+  for (const auto& memb : rectangleIndices) {
+    if (gmshCompIndices.empty() ||
+        gmshCompIndices.find(static_cast<int>(compartmentIndex)) !=
+            gmshCompIndices.cend()) {
+      for (const auto& r : memb) {
+        msh.append(QString("%1 3 2 %2 %2 %3 %4 %5 %6\n")
+                       .arg(elementIndex)
+                       .arg(outputCompartmentIndex)
+                       .arg(r[0] + 1)
+                       .arg(r[1] + 1)
+                       .arg(r[2] + 1)
+                       .arg(r[3] + 1));
+        ++elementIndex;
       }
       ++outputCompartmentIndex;
     }

@@ -30,15 +30,16 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertree.hh>
 #include <dune/common/parametertreeparser.hh>
-#include <dune/copasi/enum.hh>
-#include <dune/copasi/gmsh_reader.hh>
-#include <dune/copasi/model_diffusion_reaction.cc>
-#include <dune/copasi/model_diffusion_reaction.hh>
-#include <dune/copasi/model_multidomain_diffusion_reaction.cc>
-#include <dune/copasi/model_multidomain_diffusion_reaction.hh>
-#include <dune/grid/io/file/gmshreader.hh>
+#include <dune/copasi/common/enum.hh>
+#include <dune/copasi/grid/mark_stripes.hh>
+#include <dune/copasi/grid/multidomain_gmsh_reader.hh>
+#include <dune/copasi/model/base.hh>
+#include <dune/copasi/model/diffusion_reaction.hh>
+#include <dune/copasi/model/multidomain_diffusion_reaction.hh>
 #include <dune/grid/multidomaingrid.hh>
+#include <dune/grid/uggrid.hh>
 #include <dune/logging/logging.hh>
+#include <dune/logging/loggingstream.hh>
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -64,7 +65,8 @@ using HostGrid = Dune::UGGrid<DuneDimensions>;
 using MDGTraits = Dune::mdgrid::DynamicSubDomainCountTraits<DuneDimensions, 1>;
 using Grid = Dune::mdgrid::MultiDomainGrid<HostGrid, MDGTraits>;
 using ModelTraits =
-    Dune::Copasi::ModelMultiDomainDiffusionReactionTraits<Grid, DuneFEMOrder>;
+    Dune::Copasi::ModelMultiDomainP0PkDiffusionReactionTraits<Grid,
+                                                              DuneFEMOrder>;
 using Model = Dune::Copasi::ModelMultiDomainDiffusionReaction<ModelTraits>;
 
 static std::vector<std::string> makeValidDuneSpeciesNames(
@@ -409,9 +411,8 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
       // diffusion coefficients
       ini.addSection("model", membraneID, "diffusion");
       for (std::size_t i = 0; i < nSpecies; ++i) {
-        ini.addValue(duneSpeciesNames.at(i).c_str(),
-                     doc.getDiffusionConstant(nonConstantSpecies.at(i).c_str()),
-                     doublePrecision);
+        // NOTE: setting diffusion to zero for now within membranes
+        ini.addValue(duneSpeciesNames.at(i).c_str(), 0, doublePrecision);
       }
 
       // output file
@@ -474,7 +475,7 @@ void DuneSimulation::DuneImpl::init(const std::string &iniFile) {
   // NB: msh file needs to be file for gmshreader
   // todo: generate DUNE mesh directly
   std::tie(grid_ptr, host_grid_ptr) =
-      Dune::Copasi::GmshReader<Grid>::read("grid.msh", config);
+      Dune::Copasi::MultiDomainGmshReader<Grid>::read("grid.msh", config);
 
   // initialize model
   model = std::make_unique<Model>(grid_ptr, config.sub("model"));
@@ -502,15 +503,25 @@ void DuneSimulation::initDuneModel(const sbml::SbmlDocWrapper &sbmlDoc,
 }
 
 void DuneSimulation::initCompartmentNames() {
-  compartmentNames = pDuneImpl->config.sub("model.compartments").getValueKeys();
-  for (std::size_t i = 0; i < compartmentNames.size(); ++i) {
-    const auto &name = compartmentNames.at(i);
+  compartmentNames.clear();
+  for (const auto &name :
+       pDuneImpl->config.sub("model.compartments").getValueKeys()) {
     std::size_t iDune =
         pDuneImpl->config.sub("model.compartments").get<std::size_t>(name);
-    SPDLOG_DEBUG("compartment[{}]: {} - Dune index {}", i, name, iDune);
-    if (i != iDune) {
-      SPDLOG_WARN("Mismatch between Dune compartment order and index:");
-      SPDLOG_WARN("compartment[{}]: {} - Dune index {}", i, name, iDune);
+    SPDLOG_DEBUG("compartment: {} - Dune index {}", name, iDune);
+    const auto &gridview =
+        pDuneImpl->grid_ptr->subDomain(static_cast<int>(iDune)).leafGridView();
+    bool isCompartmentOfTriangles = true;
+    for (const auto e : elements(gridview)) {
+      if (!e.type().isTriangle()) {
+        isCompartmentOfTriangles = false;
+        SPDLOG_DEBUG("  -> not compartment of triangles: ignoring");
+        break;
+      }
+    }
+    if (isCompartmentOfTriangles) {
+      SPDLOG_DEBUG("  -> compartment of triangles: adding");
+      compartmentNames.push_back({iDune, name});
     }
   }
 }
@@ -519,7 +530,7 @@ void DuneSimulation::initSpeciesNames(const DuneConverter &dc) {
   speciesNames.clear();
   mapSpeciesIdsToDuneNames = dc.mapSpeciesIdsToDuneNames;
   speciesColours.clear();
-  for (const auto &compName : compartmentNames) {
+  for (const auto &[compIndex, compName] : compartmentNames) {
     SPDLOG_DEBUG("compartment: {}", compName);
     // NB: species index is position in *sorted* list of species names
     // so make copy of list of names from ini file and sort it
@@ -557,14 +568,12 @@ static std::pair<QPoint, QPoint> getBoundingBox(const QTriangleF &t,
 
 void DuneSimulation::updatePixels() {
   pixels.clear();
-  for (std::size_t compIndex = 0; compIndex < compartmentNames.size();
-       ++compIndex) {
+  for (const auto &[compIndex, compName] : compartmentNames) {
     auto &pixelsComp = pixels.emplace_back();
     const auto &gridview =
         pDuneImpl->grid_ptr->subDomain(static_cast<int>(compIndex))
             .leafGridView();
-    SPDLOG_TRACE("compartment[{}]: {}", compIndex,
-                 compartmentNames.at(compIndex));
+    SPDLOG_TRACE("compartment[{}]: {}", compIndex, compName);
     // get vertices of triangles:
     for (const auto e : elements(gridview)) {
       auto &pixelsTriangle = pixelsComp.emplace_back();
@@ -595,14 +604,12 @@ void DuneSimulation::updatePixels() {
 
 void DuneSimulation::updateTriangles() {
   triangles.clear();
-  for (std::size_t compIndex = 0; compIndex < compartmentNames.size();
-       ++compIndex) {
-    triangles.emplace_back();
+  for (const auto &[compIndex, compName] : compartmentNames) {
     const auto &gridview =
         pDuneImpl->grid_ptr->subDomain(static_cast<int>(compIndex))
             .leafGridView();
-    SPDLOG_TRACE("compartment[{}]: {}", compIndex,
-                 compartmentNames.at(compIndex));
+    triangles.emplace_back();
+    SPDLOG_TRACE("compartment[{}]: {}", compIndex, compName);
     // get vertices of triangles:
     for (const auto e : elements(gridview)) {
       const auto &geo = e.geometry();
@@ -620,7 +627,7 @@ void DuneSimulation::updateBarycentricWeights() {
   SPDLOG_TRACE("geometry size: {}x{}", geometrySize.width(),
                geometrySize.height());
   SPDLOG_TRACE("image size: {}x{}", imageSize.width(), imageSize.height());
-  SPDLOG_TRACE("scaleFactor: {} x {} (where pixel = scaleFactor*physical): {}",
+  SPDLOG_TRACE("scaleFactor: {} x {} (where pixel = scaleFactor*physical)",
                scaleFactor.x(), scaleFactor.y());
   weights.clear();
   for (const auto &comp : triangles) {
@@ -659,11 +666,9 @@ void DuneSimulation::updateBarycentricWeights() {
 void DuneSimulation::updateSpeciesConcentrations() {
   concentrations.clear();
   maxConcs.clear();
-  for (std::size_t compIndex = 0; compIndex < compartmentNames.size();
-       ++compIndex) {
+  for (const auto &[compIndex, compName] : compartmentNames) {
     maxConcs.emplace_back();
-    SPDLOG_TRACE("compartment[{}]: {}", compIndex,
-                 compartmentNames.at(compIndex));
+    SPDLOG_TRACE("compartment[{}]: {}", compIndex, compName);
     const auto &gridview =
         pDuneImpl->grid_ptr->subDomain(static_cast<int>(compIndex))
             .leafGridView();
@@ -674,7 +679,7 @@ void DuneSimulation::updateSpeciesConcentrations() {
       auto &spec = comp.emplace_back();
       auto gf = pDuneImpl->model->get_grid_function(pDuneImpl->model->states(),
                                                     compIndex, iSpecies);
-      using GF = decltype(gf);
+      using GF = std::remove_reference_t<decltype(*gf.get())>;
       using Range = typename GF::Traits::RangeType;
       using Domain = typename GF::Traits::DomainType;
       Range result;
@@ -685,7 +690,7 @@ void DuneSimulation::updateSpeciesConcentrations() {
         auto &corners = spec.emplace_back();
         corners.reserve(3);
         for (const auto &dom : {Domain{0, 0}, Domain{1, 0}, Domain{0, 1}}) {
-          gf.evaluate(e, dom, result);
+          gf->evaluate(e, dom, result);
           corners.push_back(result[0]);
           avC += corners.back();
           maxC = std::max(maxC, corners.back());
@@ -739,13 +744,14 @@ QRgb DuneSimulation::pixelColour(std::size_t iComp,
 QImage DuneSimulation::getConcImage(bool linearInterpolationOnly) const {
   QImage img(imageSize, QImage::Format_ARGB32_Premultiplied);
   img.fill(0);
-  using GF = decltype(
-      pDuneImpl->model->get_grid_function(pDuneImpl->model->states(), 0, 0));
+  using GF = std::remove_reference_t<decltype(
+      *pDuneImpl->model->get_grid_function(pDuneImpl->model->states(), 0, 0)
+           .get())>;
 
   for (std::size_t iComp = 0; iComp < compartmentNames.size(); ++iComp) {
     std::size_t nSpecies = speciesNames.at(iComp).size();
     // get grid function for each species in this compartment
-    std::vector<GF> gridFunctions;
+    std::vector<std::shared_ptr<GF>> gridFunctions;
     gridFunctions.reserve(nSpecies);
     for (std::size_t iSpecies = 0; iSpecies < nSpecies; ++iSpecies) {
       gridFunctions.push_back(pDuneImpl->model->get_grid_function(
@@ -773,23 +779,22 @@ QImage DuneSimulation::getConcImage(bool linearInterpolationOnly) const {
           img.setPixel(point, pixelColour(iComp, localConcs));
         }
       } else {
-        for (const auto &pair : pixels[iComp][iTriangle]) {
+        for (const auto &[pixel, point] : pixels[iComp][iTriangle]) {
           // evaluate DUNE grid function at this pixel location
           // convert pixel->global->local
-          Dune::FieldVector<double, 2> localPoint = {pair.second[0],
-                                                     pair.second[1]};
-          SPDLOG_TRACE("  - pixel ({},{}) -> -> local ({},{})", pair.first.x(),
-                       pair.first.y(), localPoint[0], localPoint[1]);
+          Dune::FieldVector<double, 2> localPoint = {point[0], point[1]};
+          SPDLOG_TRACE("  - pixel ({},{}) -> -> local ({},{})", pixel.x(),
+                       pixel.y(), localPoint[0], localPoint[1]);
           GF::Traits::RangeType result;
           std::vector<double> localConcs;
           localConcs.reserve(nSpecies);
           for (std::size_t iSpecies = 0; iSpecies < nSpecies; ++iSpecies) {
-            gridFunctions[iSpecies].evaluate(e, localPoint, result);
+            gridFunctions[iSpecies]->evaluate(e, localPoint, result);
             SPDLOG_TRACE("    - species[{}] = {}", iSpecies, result[0]);
             // replace negative values with zero
             localConcs.push_back(result[0] < 0 ? 0 : result[0]);
           }
-          img.setPixel(pair.first, pixelColour(iComp, localConcs));
+          img.setPixel(pixel, pixelColour(iComp, localConcs));
         }
       }
       ++iTriangle;

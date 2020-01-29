@@ -62,8 +62,9 @@ class DuneSimulation {
   // Dune objects via pimpl to hide DUNE headers
   class DuneImpl;
   std::unique_ptr<DuneImpl> pDuneImpl;
-  // index of compartment/species name in these vectors is the Dune index:
-  std::vector<std::string> compartmentNames;
+  // pair of compartment name & index (note: ignores membranes)
+  std::vector<std::pair<std::size_t, std::string>> compartmentNames;
+  // index of species name in these vectors is the Dune index:
   std::vector<std::vector<std::string>> speciesNames;
   // map SBML speciesIds to corresponding DUNE name
   std::map<std::string, std::string> mapSpeciesIdsToDuneNames;

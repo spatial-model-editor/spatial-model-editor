@@ -100,7 +100,8 @@ void BoundaryBoolGrid::visitPoint(const QPoint& point) {
 BoundaryBoolGrid::BoundaryBoolGrid(
     const QImage& inputImage,
     const std::map<ColourPair, std::pair<std::size_t, std::string>>&
-        mapColourPairToMembraneIndex)
+        mapColourPairToMembraneIndex,
+    const std::vector<QRgb>& compartmentColours)
     : grid(static_cast<size_t>(inputImage.width() + 2),
            std::vector<bool>(static_cast<size_t>(inputImage.height() + 2),
                              false)),
@@ -125,8 +126,8 @@ BoundaryBoolGrid::BoundaryBoolGrid(
         if (img.valid(nn)) {
           colours.insert(img.pixelIndex(nn));
         } else {
-          // assume external pixels have same colour index as top-left pixel
-          colours.insert(img.pixelIndex(0, 0));
+          // external pixels
+          colours.insert(-1);
         }
       }
       int largestColIndex = *colours.rbegin();
@@ -137,18 +138,25 @@ BoundaryBoolGrid::BoundaryBoolGrid(
       QPoint bottomLeftIndexedPoint = QPoint(x, img.height() - 1 - y);
       if (neighbours == 1 && largestColIndex == colIndex) {
         QRgb colA = img.color(*colours.rbegin());
-        QRgb colB = img.color(*colours.begin());
+        QRgb colB = 0;
+        if (int ci = *colours.begin(); ci >= 0) {
+          colB = img.color(ci);
+        }
         // - point has one other colour as neighbour
         // - this colour index is the larger
-        // - check if this pair of points is part of a membrane
-        auto iter = mapColourPairToMembraneIndex.find({colA, colB});
-        if (iter != mapColourPairToMembraneIndex.cend()) {
+        if (auto iter = mapColourPairToMembraneIndex.find({colA, colB});
+            iter != mapColourPairToMembraneIndex.cend()) {
+          // - these two colours correspond to a membrane
           std::size_t index = iter->second.first;
           setBoundaryPoint(bottomLeftIndexedPoint, false, index);
           if (membraneNames.find(index) == membraneNames.cend()) {
             membraneNames[index] = iter->second.second;
           }
-        } else {
+        } else if (std::vector<QRgb> c{colA, colB};
+                   std::find_first_of(compartmentColours.cbegin(),
+                                      compartmentColours.cend(), c.cbegin(),
+                                      c.cend()) != compartmentColours.cend()) {
+          // - one of these colours corresponds to a compartment
           setBoundaryPoint(bottomLeftIndexedPoint, false);
         }
       } else if (neighbours > 1) {
@@ -313,23 +321,26 @@ void Boundary::setMembraneWidth(double newMembraneWidth) {
 std::vector<Boundary> constructBoundaries(
     const QImage& img,
     const std::map<ColourPair, std::pair<std::size_t, std::string>>&
-        mapColourPairToMembraneIndex) {
+        mapColourPairToMembraneIndex,
+    const std::vector<QRgb>& compartmentColours) {
   std::vector<Boundary> boundaries;
   std::vector<QPoint> nearestNeighbourDirectionPoints = {
       QPoint(1, 0), QPoint(-1, 0), QPoint(0, 1),  QPoint(0, -1),
       QPoint(1, 1), QPoint(1, -1), QPoint(-1, 1), QPoint(-1, -1)};
 
   // add image boundary loop
-  std::vector<QPoint> points;
+  /*
   points.push_back(QPoint(0, 0));
   points.push_back(QPoint(0, img.height() - 1));
   points.push_back(QPoint(img.width() - 1, img.height() - 1));
   points.push_back(QPoint(img.width() - 1, 0));
   boundaries.emplace_back(points, true, false);
+*/
 
   // construct bool grid of all boundary points
-  BoundaryBoolGrid bbg(img, mapColourPairToMembraneIndex);
+  BoundaryBoolGrid bbg(img, mapColourPairToMembraneIndex, compartmentColours);
 
+  std::vector<QPoint> points;
   // we now have an unordered set of all boundary points
   // with points used by multiple boundary lines identified as "fixed"
   //

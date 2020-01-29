@@ -49,7 +49,8 @@ class BoundaryBoolGrid {
   explicit BoundaryBoolGrid(
       const QImage& inputImage,
       const std::map<ColourPair, std::pair<std::size_t, std::string>>&
-          mapColourPairToMembraneIndex = {});
+          mapColourPairToMembraneIndex = {},
+      const std::vector<QRgb>& compartmentColours = {});
 };
 
 class Boundary {
@@ -87,6 +88,7 @@ class Boundary {
 std::vector<Boundary> constructBoundaries(
     const QImage& image,
     const std::map<ColourPair, std::pair<std::size_t, std::string>>&
-        mapColourPairToMembraneIndex = {});
+        mapColourPairToMembraneIndex = {},
+    const std::vector<QRgb>& compartmentColours = {});
 
 }  // namespace boundary

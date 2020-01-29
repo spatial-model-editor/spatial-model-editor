@@ -529,7 +529,7 @@
   </action>
   <action name="action_liver_300x100">
    <property name="text">
-    <string>&amp;liver-300x100</string>
+    <string>&amp;single-liver-cell-180x140</string>
    </property>
   </action>
   <action name="actionliver_simplified">

@@ -43,6 +43,12 @@ struct IdNameValue {
   double value;
 };
 
+struct IdNameExpr {
+  std::string id;
+  std::string name;
+  std::string expr;
+};
+
 struct Reac {
   std::string id;
   std::string name;
@@ -87,6 +93,7 @@ class SbmlDocWrapper {
   // map between compartment IDs and colours in compartment image
   std::map<QString, QRgb> mapCompartmentToColour;
   std::map<QRgb, QString> mapColourToCompartment;
+  std::vector<QRgb> getCompartmentColours() const;
   QImage compartmentImage;
   std::map<QString, QColor> mapSpeciesIdToColour;
 
@@ -100,7 +107,7 @@ class SbmlDocWrapper {
   // add the pair of QPoints to the vector for this pair of colours,
   // i.e. the membrane between compartments of these two colours
   // NOTE: colour pairs are ordered in ascending order
-  std::vector<std::vector<std::pair<QPoint, QPoint>>> membranePairs;
+  std::vector<std::vector<std::pair<QPoint, QPoint>>> membranePixelPairs;
   std::map<QString, std::size_t> mapMembraneToIndex;
   std::map<QString, QImage> mapMembraneToImage;
 
@@ -289,6 +296,7 @@ class SbmlDocWrapper {
   bool isSpeciesReactive(const std::string &speciesID) const;
 
   std::vector<IdNameValue> getGlobalConstants() const;
+  std::vector<IdNameExpr> getNonConstantParameters() const;
   // convert name to a unique alphanumeric SId
   QString nameToSId(const QString &name) const;
 

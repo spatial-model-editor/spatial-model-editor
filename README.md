@@ -4,7 +4,6 @@
 [![windows build status](https://ci.appveyor.com/api/projects/status/0m87yyaalrrj5ndn/branch/master?svg=true)](https://ci.appveyor.com/project/lkeegan/spatial-model-editor/branch/master)
 [![codecov](https://codecov.io/gh/lkeegan/spatial-model-editor/branch/master/graph/badge.svg)](https://codecov.io/gh/lkeegan/spatial-model-editor)
 [![sonarcloud quality gate status](https://sonarcloud.io/api/project_badges/measure?project=lkeegan_spatial-model-editor&metric=alert_status)](https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor)
-[![codacy status](https://api.codacy.com/project/badge/Grade/2cc27d99b42041668944f41d88abeef0)](https://www.codacy.com/app/lkeegan/spatial-model-editor?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=lkeegan/spatial-model-editor&amp;utm_campaign=Badge_Grade)
 [![documentation status](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/en/latest/)
 
 A GUI editor to convert non-spatial SBML models of bio-chemical reactions into 2d spatial models and simulate them using the [dune-copasi](https://gitlab.dune-project.org/copasi/dune-copasi) solver for reaction-diffusion systems.
@@ -35,10 +34,7 @@ Translate the spatial model to a system of PDEs and simulate it: generate 2d tri
 
     -   test coverage report: <https://codecov.io/gh/lkeegan/spatial-model-editor>
 
-    -   static analysis reports:
-
-        -   <https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor>
-        -   <https://www.codacy.com/app/lkeegan/spatial-model-editor>
+    -   static analysis reports: <https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor>
 
 -   _Deployment_: tagged commits result in github release with a binary executable for each OS
 

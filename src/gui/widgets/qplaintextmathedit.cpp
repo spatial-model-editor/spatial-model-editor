@@ -147,7 +147,6 @@ static std::pair<std::string, QString> substitute(
         return {out, QString("name '%1' not found").arg(var.c_str())};
       }
     }
-    SPDLOG_TRACE("  - out: {}", e);
     if (end == std::string::npos) {
       break;
     }
