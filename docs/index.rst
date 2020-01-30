@@ -3,7 +3,7 @@ Spatial Model Editor Documentation
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
+   :caption: Getting started
 
    get-started
    import-model
@@ -12,6 +12,17 @@ Spatial Model Editor Documentation
    membrane-properties
    import-concentration
    run-simulation
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Reference documentation
+
    units
    maths
    source-code
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Tests
+
+   tests/diffusion

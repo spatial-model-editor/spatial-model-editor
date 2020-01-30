@@ -5,6 +5,26 @@
 #include "utils.hpp"
 
 SCENARIO("Utils", "[core][utils]") {
+  GIVEN("sum/average of vector of ints") {
+    std::vector<int> v{1, 2, 3, 4, 5, 6, -1};
+    REQUIRE(utils::sum(v) == 20);
+    REQUIRE(utils::average(v) == 20 / 7);
+    REQUIRE(utils::min(v) == -1);
+    REQUIRE(utils::max(v) == 6);
+    auto [min, max] = utils::minmax(v);
+    REQUIRE(min == -1);
+    REQUIRE(max == 6);
+  }
+  GIVEN("sum/average of vector of doubles") {
+    std::vector<double> v{1, 2, 3, 4, 5, 6, -1};
+    REQUIRE(utils::sum(v) == dbl_approx(20.0));
+    REQUIRE(utils::average(v) == dbl_approx(20.0 / 7.0));
+    REQUIRE(utils::min(v) == dbl_approx(-1.0));
+    REQUIRE(utils::max(v) == dbl_approx(6.0));
+    auto [min, max] = utils::minmax(v);
+    REQUIRE(min == dbl_approx(-1.0));
+    REQUIRE(max == dbl_approx(6.0));
+  }
   GIVEN("QStringList <-> std::vector<std::string>") {
     std::vector<std::string> s{"ab", "qwef", "Qvsdss!"};
     QStringList q;

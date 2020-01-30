@@ -1,4 +1,6 @@
 // utilities
+//  - sum/average/min/max: sum/average/min/max of a container of values
+//  - minmax: pair of min,max values in a container
 //  - decltypeStr<T>: type of T as a string
 //    (taken from https://stackoverflow.com/a/56766138)
 //  - toStdString: convert QStringList to std::vector<std::string>
@@ -20,6 +22,7 @@
 #include <QSize>
 #include <QString>
 #include <QStringList>
+#include <algorithm>
 #include <iomanip>
 #include <iterator>
 #include <optional>
@@ -28,6 +31,35 @@
 
 namespace utils {
 
+template <typename Container>
+typename Container::value_type sum(const Container &c) {
+  return (
+      std::accumulate(cbegin(c), cend(c), typename Container::value_type{0}));
+}
+
+template <typename Container>
+typename Container::value_type average(const Container &c) {
+  return sum(c) / static_cast<typename Container::value_type>(c.size());
+}
+
+template <typename Container>
+typename Container::value_type min(const Container &c) {
+  return *std::min_element(cbegin(c), cend(c));
+}
+
+template <typename Container>
+typename Container::value_type max(const Container &c) {
+  return *std::max_element(cbegin(c), cend(c));
+}
+
+template <typename Container>
+std::pair<typename Container::value_type, typename Container::value_type>
+minmax(const Container &c) {
+  auto p = std::minmax_element(cbegin(c), cend(c));
+  return {*p.first, *p.second};
+}
+
+// https://stackoverflow.com/a/56766138
 template <typename T>
 constexpr auto decltypeStr() {
   std::string_view name;
@@ -105,6 +137,7 @@ class QPointIndexer {
                          const std::vector<QPoint> &qPoints = {});
   void addPoints(const std::vector<QPoint> &qPoints);
   std::optional<std::size_t> getIndex(const QPoint &point) const;
+  std::size_t getNumPoints() const;
 };
 
 class QPointUniqueIndexer {

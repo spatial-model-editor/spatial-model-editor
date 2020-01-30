@@ -8,12 +8,12 @@ The PDE to be simulated is a simple version of the two-dimensional reaction-diff
 
 .. math::
 
-   \frac{\partial c_s}{\partial t} = D \left( \frac{\partial^2}{\partial x^2} + \frac{\partial^2}{\partial y^2} \right) c_s + R_s
+   \frac{\partial c_s}{\partial t} = D_s \left( \frac{\partial^2}{\partial x^2} + \frac{\partial^2}{\partial y^2} \right) c_s + R_s
 
 where
 
 * :math:`c_s` is the concentration of species :math:`s` at position :math:`(x, y)` and time :math:`t`
-* :math:`D` is the diffusion constant for species :math:`s`
+* :math:`D_s` is the diffusion constant for species :math:`s`
 * :math:`R_s` is the reaction term for species :math:`s`
 
 Assumptions:

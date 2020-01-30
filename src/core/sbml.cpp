@@ -623,7 +623,6 @@ void SbmlDocWrapper::setFieldConcAnalytic(geometry::Field &field,
     sym.eval(result, vars);
     field.conc[i] = result[0];
   }
-  field.init = field.conc;
   field.isUniformConcentration = false;
 }
 

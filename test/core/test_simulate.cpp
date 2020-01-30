@@ -9,9 +9,10 @@
 #include "sbml.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
 #include "simulate.hpp"
+#include "utils.hpp"
 
 SCENARIO("Simulate: very_simple_model, single pixel geometry",
-         "[core][simulate]") {
+         "[core][simulate][pixel]") {
   // import model
   std::unique_ptr<libsbml::SBMLDocument> doc(
       libsbml::readSBMLFromString(sbml_test_data::very_simple_model().xml));
@@ -73,31 +74,18 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   REQUIRE(m1.indexPair.size() == 1);
   REQUIRE(m1.indexPair[0] == std::pair<std::size_t, std::size_t>{0, 0});
 
-  simulate::Simulate sim(&s);
-  // add fields
-  for (const auto &compartmentID : s.compartments) {
-    sim.addCompartment(&s.mapCompIdToGeometry.at(compartmentID));
-  }
-  // add membranes
-  for (auto &membrane : s.membraneVec) {
-    sim.addMembrane(&membrane);
-  }
+  simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
 
   // check initial concentrations:
-  // note A_c1 is a constant, so it does not have a field,
-  // and the first field in sim is B_c1
-  REQUIRE(sim.field[0] == &fb1);
-  REQUIRE(sim.field[0]->conc[0] == dbl_approx(0.0));
-  REQUIRE(sim.field[0]->getMeanConcentration() == dbl_approx(0.0));
-  REQUIRE(fa1.getMeanConcentration() == dbl_approx(1.0));
-  REQUIRE(fb1.getMeanConcentration() == dbl_approx(0.0));
-  REQUIRE(fa2.getMeanConcentration() == dbl_approx(0.0));
-  REQUIRE(fb2.getMeanConcentration() == dbl_approx(0.0));
-  REQUIRE(fa3.getMeanConcentration() == dbl_approx(0.0));
-  REQUIRE(fb3.getMeanConcentration() == dbl_approx(0.0));
+  // note: A_c1 is constant, so not part of simulation
+  REQUIRE(sim.getAvgMinMax(0, 0, 0).avg == dbl_approx(0.0));
+  REQUIRE(sim.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
+  REQUIRE(sim.getAvgMinMax(0, 1, 1).avg == dbl_approx(0.0));
+  REQUIRE(sim.getAvgMinMax(0, 2, 0).avg == dbl_approx(0.0));
+  REQUIRE(sim.getAvgMinMax(0, 2, 1).avg == dbl_approx(0.0));
 
   // check initial concentration image
-  img = sim.getConcentrationImage();
+  img = sim.getConcImage(0);
   REQUIRE(img.size() == QSize(1, 3));
   REQUIRE(img.pixel(0, 0) == QColor(0, 0, 0).rgba());
   REQUIRE(img.pixel(0, 1) == QColor(0, 0, 0).rgba());
@@ -106,60 +94,57 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   double dt = 0.134521234;
   double volC1 = 10.0;
   WHEN("single Euler step") {
-    sim.integrateForwardsEuler(dt);
-    // A_c1 = 1 = const
-    REQUIRE(fa1.getMeanConcentration() == 1.0);
+    sim.doTimestep(dt, dt);
+    std::size_t it = 1;
     // B_c1 = 0
-    REQUIRE(fb1.getMeanConcentration() == 0.0);
+    REQUIRE(sim.getAvgMinMax(it, 0, 0).avg == dbl_approx(0.0));
     // A_c2 += k_1 A_c1 dt
-    REQUIRE(fa2.getMeanConcentration() == dbl_approx(0.1 * 1.0 * dt));
+    REQUIRE(sim.getAvgMinMax(it, 1, 0).avg == dbl_approx(0.1 * 1.0 * dt));
     // B_c2 = 0
-    REQUIRE(fb2.getMeanConcentration() == 0.0);
+    REQUIRE(sim.getAvgMinMax(it, 1, 1).avg == dbl_approx(0.0));
     // A_c3 = 0
-    REQUIRE(fa3.getMeanConcentration() == 0.0);
+    REQUIRE(sim.getAvgMinMax(it, 2, 0).avg == dbl_approx(0.0));
     // B_c3 = 0
-    REQUIRE(fb3.getMeanConcentration() == 0.0);
+    REQUIRE(sim.getAvgMinMax(it, 2, 1).avg == dbl_approx(0.0));
   }
 
   WHEN("two Euler steps") {
-    sim.integrateForwardsEuler(dt);
-    double A_c2 = fa2.getMeanConcentration();
-    sim.integrateForwardsEuler(dt);
-    // A_c1 = 1 = const
-    REQUIRE(fa1.getMeanConcentration() == 1.0);
+    sim.doTimestep(dt, dt);
+    double A_c2 = sim.getAvgMinMax(1, 1, 0).avg;
+    sim.doTimestep(dt, dt);
+    std::size_t it = 2;
     // B_c1 = 0
-    REQUIRE(fb1.getMeanConcentration() == 0.0);
+    REQUIRE(sim.getAvgMinMax(it, 0, 0).avg == dbl_approx(0.0));
     // A_c2 += k_1 A_c1 dt - k1 * A_c2 * dt
-    REQUIRE(fa2.getMeanConcentration() ==
+    REQUIRE(sim.getAvgMinMax(it, 1, 0).avg ==
             dbl_approx(A_c2 + 0.1 * dt - A_c2 * 0.1 * dt));
     // B_c2 = 0
-    REQUIRE(fb2.getMeanConcentration() == 0.0);
+    REQUIRE(sim.getAvgMinMax(it, 1, 1).avg == dbl_approx(0.0));
     // A_c3 += k_1 A_c2 dt / c3
-    REQUIRE(fa3.getMeanConcentration() == dbl_approx(0.1 * A_c2 * dt));
+    REQUIRE(sim.getAvgMinMax(it, 2, 0).avg == dbl_approx(0.1 * A_c2 * dt));
     // B_c3 = 0
-    REQUIRE(fb3.getMeanConcentration() == 0.0);
+    REQUIRE(sim.getAvgMinMax(it, 2, 1).avg == dbl_approx(0.0));
   }
 
   WHEN("three Euler steps") {
-    sim.integrateForwardsEuler(dt);
-    sim.integrateForwardsEuler(dt);
-    double A_c2 = fa2.getMeanConcentration();
-    double A_c3 = fa3.getMeanConcentration();
-    sim.integrateForwardsEuler(dt);
-    // A_c1 = 1 = const
-    REQUIRE(fa1.getMeanConcentration() == 1.0);
+    sim.doTimestep(dt, dt);
+    sim.doTimestep(dt, dt);
+    double A_c2 = sim.getAvgMinMax(2, 1, 0).avg;
+    double A_c3 = sim.getAvgMinMax(2, 2, 0).avg;
+    sim.doTimestep(dt, dt);
+    std::size_t it = 3;
     // B_c1 = 0
-    REQUIRE(fb1.getMeanConcentration() == 0.0);
+    REQUIRE(sim.getAvgMinMax(it, 0, 0).avg == dbl_approx(0.0));
     // A_c2 += k_1 (A_c1 - A_c2) dt + k2 * A_c3 * dt
-    REQUIRE(fa2.getMeanConcentration() ==
+    REQUIRE(sim.getAvgMinMax(it, 1, 0).avg ==
             dbl_approx(A_c2 + 0.1 * dt - A_c2 * 0.1 * dt + A_c3 * 0.1 * dt));
     // B_c2 = 0
-    REQUIRE(fb2.getMeanConcentration() == 0.0);
+    REQUIRE(sim.getAvgMinMax(it, 1, 1).avg == dbl_approx(0.0));
     // A_c3 += k_1 A_c2 dt - k_1 A_c3 dt -
-    REQUIRE(fa3.getMeanConcentration() ==
+    REQUIRE(sim.getAvgMinMax(it, 2, 0).avg ==
             dbl_approx(A_c3 + (0.1 * (A_c2 - A_c3) * dt - 0.3 * A_c3 * dt)));
     // B_c3 = 0.2 * 0.3 * A_c3 * dt
-    REQUIRE(fb3.getMeanConcentration() == dbl_approx(0.3 * A_c3 * dt));
+    REQUIRE(sim.getAvgMinMax(it, 2, 1).avg == dbl_approx(0.3 * A_c3 * dt));
   }
 
   WHEN("many Euler steps -> steady state solution") {
@@ -168,15 +153,14 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
     // all other net fluxes are zero
 
     double acceptable_error = 1.e-8;
-    for (int i = 0; i < 5000; ++i) {
-      sim.integrateForwardsEuler(0.20138571);
-    }
-    double A_c1 = fa1.getMeanConcentration();
-    double A_c2 = fa2.getMeanConcentration();
-    double A_c3 = fa3.getMeanConcentration();
-    double B_c1 = fb1.getMeanConcentration();
-    double B_c2 = fb2.getMeanConcentration();
-    double B_c3 = fb3.getMeanConcentration();
+    sim.doTimestep(1000, 0.20138571);
+    std::size_t it = sim.getTimePoints().size() - 1;
+    double A_c1 = 1.0;
+    double A_c2 = sim.getAvgMinMax(it, 1, 0).avg;
+    double A_c3 = sim.getAvgMinMax(it, 2, 0).avg;
+    double B_c1 = sim.getAvgMinMax(it, 0, 0).avg;
+    double B_c2 = sim.getAvgMinMax(it, 1, 1).avg;
+    double B_c3 = sim.getAvgMinMax(it, 2, 1).avg;
 
     // check concentration values
     REQUIRE(A_c1 == Approx(1.0).epsilon(acceptable_error));
@@ -191,23 +175,23 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
 
     // check concentration derivatives
     double eps = 1.e-5;
-    sim.integrateForwardsEuler(eps);
-    double dA1 = (fa1.getMeanConcentration() - A_c1) / eps;
-    REQUIRE(dA1 == Approx(0).epsilon(acceptable_error));
-    double dA2 = (fa2.getMeanConcentration() - A_c2) / eps;
+    sim.doTimestep(eps, eps);
+    ++it;
+    double dA2 = (sim.getAvgMinMax(it, 1, 0).avg - A_c2) / eps;
     REQUIRE(dA2 == Approx(0).epsilon(acceptable_error));
-    double dA3 = (fa3.getMeanConcentration() - A_c3) / eps;
+    double dA3 = (sim.getAvgMinMax(it, 2, 0).avg - A_c3) / eps;
     REQUIRE(dA3 == Approx(0).epsilon(acceptable_error));
-    double dB1 = volC1 * (fb1.getMeanConcentration() - B_c1) / eps;
+    double dB1 = volC1 * (sim.getAvgMinMax(it, 0, 0).avg - B_c1) / eps;
     REQUIRE(dB1 == Approx(1).epsilon(acceptable_error));
-    double dB2 = (fb2.getMeanConcentration() - B_c2) / eps;
+    double dB2 = (sim.getAvgMinMax(it, 1, 1).avg - B_c2) / eps;
     REQUIRE(dB2 == Approx(0).epsilon(acceptable_error));
-    double dB3 = (fb3.getMeanConcentration() - B_c3) / eps;
+    double dB3 = (sim.getAvgMinMax(it, 2, 1).avg - B_c3) / eps;
     REQUIRE(dB3 == Approx(0).epsilon(acceptable_error));
   }
 }
 
-SCENARIO("Simulate: very_simple_model, 2d geometry", "[core][simulate]") {
+SCENARIO("Simulate: very_simple_model, 2d geometry",
+         "[core][simulate][pixel]") {
   // import model
   sbml::SbmlDocWrapper s;
   QFile f(":/models/very-simple-model.xml");
@@ -247,49 +231,32 @@ SCENARIO("Simulate: very_simple_model, 2d geometry", "[core][simulate]") {
   REQUIRE(m1.compB->getId() == "c3");
   REQUIRE(m1.indexPair.size() == 108);
 
-  simulate::Simulate sim(&s);
-  // add fields
-  for (const auto &compartmentID : s.compartments) {
-    sim.addCompartment(&s.mapCompIdToGeometry.at(compartmentID));
-  }
-  // add membranes
-  for (auto &membrane : s.membraneVec) {
-    sim.addMembrane(&membrane);
-  }
+  simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
 
   // check initial concentrations:
-  // note A_c1 is a constant, so it does not have a field,
-  // and the first field in sim is B_c1
-  REQUIRE(sim.field[0] == &fb1);
-  REQUIRE(sim.field[0]->conc[0] == dbl_approx(0.0));
-  REQUIRE(sim.field[0]->getMeanConcentration() == dbl_approx(0.0));
-  REQUIRE(fa1.getMeanConcentration() == dbl_approx(1.0));
-  REQUIRE(fb1.getMeanConcentration() == dbl_approx(0.0));
-  REQUIRE(fa2.getMeanConcentration() == dbl_approx(0.0));
-  REQUIRE(fb2.getMeanConcentration() == dbl_approx(0.0));
-  REQUIRE(fa3.getMeanConcentration() == dbl_approx(0.0));
-  REQUIRE(fb3.getMeanConcentration() == dbl_approx(0.0));
+  // note: A_c1 is constant, so not part of simulation
+  REQUIRE(sim.getAvgMinMax(0, 0, 0).avg == dbl_approx(0.0));
+  REQUIRE(sim.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
+  REQUIRE(sim.getAvgMinMax(0, 1, 1).avg == dbl_approx(0.0));
+  REQUIRE(sim.getAvgMinMax(0, 2, 0).avg == dbl_approx(0.0));
+  REQUIRE(sim.getAvgMinMax(0, 2, 1).avg == dbl_approx(0.0));
 
   WHEN("one Euler steps: diffusion of A into c2") {
-    sim.integrateForwardsEuler(0.01);
-    REQUIRE(fa1.getMeanConcentration() == dbl_approx(1.0));
-    REQUIRE(fb1.getMeanConcentration() == dbl_approx(0.0));
-    REQUIRE(fa2.getMeanConcentration() > 0);
-    REQUIRE(fb2.getMeanConcentration() == dbl_approx(0.0));
-    REQUIRE(fa3.getMeanConcentration() == dbl_approx(0.0));
-    REQUIRE(fb3.getMeanConcentration() == dbl_approx(0.0));
+    sim.doTimestep(0.01, 0.01);
+    REQUIRE(sim.getAvgMinMax(1, 0, 0).avg == dbl_approx(0.0));
+    REQUIRE(sim.getAvgMinMax(1, 1, 0).avg > 0);
+    REQUIRE(sim.getAvgMinMax(1, 1, 1).avg == dbl_approx(0.0));
+    REQUIRE(sim.getAvgMinMax(1, 2, 0).avg == dbl_approx(0.0));
+    REQUIRE(sim.getAvgMinMax(1, 2, 1).avg == dbl_approx(0.0));
   }
 
   WHEN("many Euler steps: all species non-zero") {
-    for (int i = 0; i < 50; ++i) {
-      sim.integrateForwardsEuler(0.02);
-    }
-    REQUIRE(fa1.getMeanConcentration() == dbl_approx(1.0));
-    REQUIRE(fb1.getMeanConcentration() > 0);
-    REQUIRE(fa2.getMeanConcentration() > 0);
-    REQUIRE(fb2.getMeanConcentration() > 0);
-    REQUIRE(fa3.getMeanConcentration() > 0);
-    REQUIRE(fb3.getMeanConcentration() > 0);
+    sim.doTimestep(1.00, 0.02);
+    REQUIRE(sim.getAvgMinMax(1, 0, 0).avg > 0);
+    REQUIRE(sim.getAvgMinMax(1, 1, 0).avg > 0);
+    REQUIRE(sim.getAvgMinMax(1, 1, 1).avg > 0);
+    REQUIRE(sim.getAvgMinMax(1, 2, 0).avg > 0);
+    REQUIRE(sim.getAvgMinMax(1, 2, 1).avg > 0);
   }
 }
 
@@ -307,21 +274,12 @@ static double analytic(const QPoint &p, double t, double D, double t0) {
 
 SCENARIO("Simulate: single-compartment-diffusion, circular geometry",
          "[core][simulate]") {
-  // initial distribution: u(r) = exp(-r^2/sigma^2)
-  // where r^2 = (x-48^2) + (y-48)^2,
-  // and sigma = 6
-
-  // 2d isotropic diffusion: u(r,t) = A exp{-r^2 / (4 D t)} / (4 pi D t)
-  // so matching this expression to initial condition above:
-  // A = pi sigma^2  <-- total amount: conserved quantity
-  // t0 = sigma^2/4D  <-- analytic time where our simulation starts
-  // u(t) = [t0/(t+t0)] * exp(-r^2/4Dt)  <-- analytic prediction
-
-  // NB central point: (48,99-48) <-> ix=1577
+  // see docs/tests/diffusion.rst for analytic expressions used here
+  // NB central point of initial distribution: (48,99-48) <-> ix=1577
 
   constexpr double pi = 3.14159265358979323846;
   double sigma2 = 36.0;
-  double epsilon = 1e-6;
+  double epsilon = 1e-10;
   // import model
   sbml::SbmlDocWrapper s;
   if (QFile f(":/models/single-compartment-diffusion.xml");
@@ -337,63 +295,79 @@ SCENARIO("Simulate: single-compartment-diffusion, circular geometry",
   REQUIRE(fast.geometry->getId() == "circle");
   REQUIRE(fast.speciesID == "fast");
 
-  // check total concentration matches analytic value
+  // check total initial concentration matches analytic value
   double analytic_total = sigma2 * pi;
   for (const auto &c : {slow.conc, fast.conc}) {
-    double sum = std::accumulate(cbegin(c), cend(c), 0.0);
-    REQUIRE(std::abs(sum - analytic_total) / analytic_total < epsilon);
+    REQUIRE(std::abs(utils::sum(c) - analytic_total) / analytic_total <
+            epsilon);
   }
 
   // check initial distribution matches analytic one
   for (const auto &f : {slow, fast}) {
     double D = f.diffusionConstant;
     double t0 = sigma2 / 4.0 / D;
+    double maxRelErr = 0;
     for (std::size_t i = 0; i < f.geometry->nPixels(); ++i) {
       const auto &p = f.geometry->getPixel(i);
       double c = analytic(p, 0, D, t0);
-      REQUIRE(std::abs(f.conc[i] - c) / c < epsilon);
+      double relErr = std::abs(f.conc[i] - c) / c;
+      maxRelErr = std::max(maxRelErr, relErr);
     }
+    CAPTURE(f.diffusionConstant);
+    REQUIRE(maxRelErr < epsilon);
   }
 
-  // integrate & compare
-  simulate::Simulate sim(&s);
-  sim.addCompartment(&s.mapCompIdToGeometry.at("circle"));
-  double t = 0;
-  double dt = 0.02;
-  for (int step = 0; step < 2; ++step) {
-    for (int k = 0; k < static_cast<int>(10.0 / dt); ++k) {
-      sim.integrateForwardsEuler(dt);
-      t += dt;
+  for (auto simType :
+       {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
+    double initialRelativeError = 1e-9;
+    double evolvedRelativeError = 0.01;
+    double dt = 0.02;
+    if (simType == simulate::SimulatorType::DUNE) {
+      initialRelativeError = 0.05;
+      evolvedRelativeError = 0.2;
+      dt = 1.0;
     }
-    // check total concentration matches conserved analytic value
-    for (const auto &c : {slow.conc, fast.conc}) {
-      double sum = std::accumulate(cbegin(c), cend(c), 0.0);
-      REQUIRE(std::abs(sum - analytic_total) / analytic_total < epsilon);
+
+    // integrate & compare
+    simulate::Simulation sim(s, simType);
+    double t = 10.0;
+    for (std::size_t step = 0; step < 2; ++step) {
+      sim.doTimestep(t, dt);
+      for (auto speciesIndex : {std::size_t{0}, std::size_t{1}}) {
+        // check total concentration is conserved
+        auto c = sim.getConc(step + 1, 0, speciesIndex);
+        double totalC = utils::sum(c);
+        double relErr = std::abs(totalC - analytic_total) / analytic_total;
+        CAPTURE(simType);
+        CAPTURE(speciesIndex);
+        CAPTURE(sim.getTimePoints().back());
+        CAPTURE(totalC);
+        CAPTURE(analytic_total);
+        REQUIRE(relErr < initialRelativeError);
+      }
     }
+
     // check new distribution matches analytic one
-    for (const auto &f : {slow, fast}) {
-      double D = f.diffusionConstant;
-      double t0 = sigma2 / 4.0 / D;
-      for (std::size_t i = 0; i < f.geometry->nPixels(); ++i) {
-        const auto &p = f.geometry->getPixel(i);
+    std::vector<double> D{slow.diffusionConstant, fast.diffusionConstant};
+    std::size_t timeIndex = sim.getTimePoints().size() - 1;
+    t = sim.getTimePoints().back();
+    for (auto speciesIndex : {std::size_t{0}, std::size_t{1}}) {
+      double t0 = sigma2 / 4.0 / D[speciesIndex];
+      auto conc = sim.getConc(timeIndex, 0, speciesIndex);
+      double maxRelErr = 0;
+      for (std::size_t i = 0; i < slow.geometry->nPixels(); ++i) {
+        const auto &p = slow.geometry->getPixel(i);
         // only check part within a radius of 16 units from centre to avoid
         // boundary effects: analytic solution is in infinite volume
         if (r2(p) < 16 * 16) {
-          double c0 = analytic(p, 0, D, t0);
-          double c = analytic(p, t, D, t0);
-          double dc_analytic = c - c0;
-          double dc_measured = f.conc[i] - f.init[i];
-          CAPTURE(t);
-          CAPTURE(r2(p));
-          CAPTURE(p);
-          CAPTURE(c0);
-          CAPTURE(c);
-          CAPTURE(f.conc[i]);
-          CAPTURE(f.init[i]);
-          // relative error on *change* in concentration vs analytic < 2%
-          REQUIRE(std::abs(dc_measured - dc_analytic) / dc_analytic < 0.10);
+          double c_analytic = analytic(p, t, D[speciesIndex], t0);
+          double relErr = std::abs(conc[i] - c_analytic) / c_analytic;
+          maxRelErr = std::max(maxRelErr, relErr);
         }
       }
+      CAPTURE(simType);
+      CAPTURE(t);
+      REQUIRE(maxRelErr < evolvedRelativeError);
     }
   }
 }
@@ -408,26 +382,28 @@ SCENARIO("Simulate: small-single-compartment-diffusion, circular geometry",
         f.open(QIODevice::ReadOnly)) {
       s.importSBMLString(f.readAll().toStdString());
     }
-    simulate::Simulate sim(&s);
-    sim.addCompartment(&s.mapCompIdToGeometry.at("circle"));
-    geometry::Field &slow = s.mapSpeciesIdToField.at("slow");
-    geometry::Field &fast = s.mapSpeciesIdToField.at("fast");
-    for (int j = 0; j < 1000; ++j) {
-      sim.integrateForwardsEuler(0.05);
-    }
-    // after many steps in a finite volume, diffusion has reached the limiting
-    // case of a uniform distribution
-    for (const auto &c : {slow.conc, fast.conc}) {
-      auto pair = std::minmax_element(c.cbegin(), c.cend());
-      double min = *pair.first;
-      double max = *pair.second;
-      double av = std::accumulate(c.cbegin(), c.cend(), 0.0) /
-                  static_cast<double>(c.size());
-      CAPTURE(min);
-      CAPTURE(max);
-      CAPTURE(av);
-      REQUIRE(std::abs((min - av) / av) < epsilon);
-      REQUIRE(std::abs((max - av) / av) < epsilon);
+    for (auto simulator :
+         {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
+      auto sim = simulate::Simulation(s, simulator);
+      double dt = 0.05;
+      if (simulator == simulate::SimulatorType::DUNE) {
+        dt = 0.5;
+      }
+      sim.doTimestep(50.0, dt);
+      auto timeIndex = sim.getTimePoints().size() - 1;
+      // after many steps in a finite volume, diffusion has reached the limiting
+      // case of a uniform distribution
+      std::size_t speciesIndex = 0;
+      for (const auto &species : {"slow", "fast"}) {
+        auto conc = sim.getAvgMinMax(timeIndex, 0, speciesIndex++);
+        CAPTURE(simulator);
+        CAPTURE(species);
+        CAPTURE(conc.min);
+        CAPTURE(conc.avg);
+        CAPTURE(conc.max);
+        REQUIRE(std::abs((conc.min - conc.avg) / conc.avg) < epsilon);
+        REQUIRE(std::abs((conc.max - conc.avg) / conc.avg) < epsilon);
+      }
     }
   }
 }

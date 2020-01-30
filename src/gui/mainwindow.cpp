@@ -11,7 +11,7 @@
 #include "dialogabout.hpp"
 #include "dialogimagesize.hpp"
 #include "dialogunits.hpp"
-#include "dune.hpp"
+#include "duneini.hpp"
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "mesh.hpp"
