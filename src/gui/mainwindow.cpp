@@ -331,11 +331,11 @@ void MainWindow::menuExample_geometry_image_triggered(const QAction *action) {
 }
 
 void MainWindow::importGeometryImage(const QImage &image) {
+  tabSimulate->reset();
   sbmlDoc.importGeometryFromImage(image);
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   enableTabs();
-  tabSimulate->reset();
   // set default pixelwidth in case user doesn't set image physical size
   sbmlDoc.setPixelWidth(1.0);
   actionSet_image_size_triggered();

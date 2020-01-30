@@ -112,15 +112,41 @@ void QTabSimulate::btnSimulate_clicked() {
 
   // setup plot
   pltPlot->clearGraphs();
+  // average values
   for (std::size_t i = 0; i < simPixel.speciesID.size(); ++i) {
     auto *graph = pltPlot->addGraph();
     graph->setPen(simPixel.field[i]->colour);
-    graph->setName(sbmlDoc.getSpeciesName(simPixel.speciesID[i].c_str()));
+    graph->setName(
+        QString("%1 (average)")
+            .arg(sbmlDoc.getSpeciesName(simPixel.speciesID[i].c_str())));
     graph->setScatterStyle(
         QCPScatterStyle(QCPScatterStyle::ScatterShape::ssDisc));
     if (!useDuneSimulator) {
       graph->setScatterSkip(n_steps - 1);
     }
+  }
+  // min values
+  for (std::size_t i = 0; i < simPixel.speciesID.size(); ++i) {
+    auto *graph = pltPlot->addGraph();
+    QColor c = simPixel.field[i]->colour;
+    c.setAlpha(30);
+    graph->setPen(c);
+    graph->setBrush(QBrush(c));
+    graph->setName(
+        QString("%1 (min/max range)")
+            .arg(sbmlDoc.getSpeciesName(simPixel.speciesID[i].c_str())));
+  }
+  // max values
+  for (std::size_t i = 0; i < simPixel.speciesID.size(); ++i) {
+    auto *graph = pltPlot->addGraph();
+    QColor c = simPixel.field[i]->colour;
+    c.setAlpha(30);
+    graph->setPen(c);
+    pltPlot->graph(static_cast<int>(simPixel.speciesID.size() + i))
+        ->setChannelFillGraph(graph);
+    graph->setName(QString("max%1").arg(
+        sbmlDoc.getSpeciesName(simPixel.speciesID[i].c_str())));
+    pltPlot->legend->removeItem(pltPlot->legend->itemCount() - 1);
   }
   pltPlot->xAxis->setLabel("time");
   pltPlot->yAxis->setLabel("concentration");
@@ -131,13 +157,23 @@ void QTabSimulate::btnSimulate_clicked() {
   // get initial concentrations
   for (std::size_t s = 0; s < simPixel.field.size(); ++s) {
     QVector<double> c_{0};
+    QVector<double> min_{0};
+    QVector<double> max_{0};
     if (useDuneSimulator) {
       c_[0] = simDune->getAverageConcentration(simPixel.field[s]->speciesID);
+      min_[0] = simDune->getMinConcentration(simPixel.field[s]->speciesID);
+      max_[0] = simDune->getMaxConcentration(simPixel.field[s]->speciesID);
     } else {
       c_[0] = simPixel.field[s]->getMeanConcentration();
+      min_[0] = simPixel.field[s]->getMinConcentration();
+      max_[0] = simPixel.field[s]->getMaxConcentration();
     }
-    pltPlot->graph(static_cast<int>(s))->setData(time, c_, true);
-    ymax = std::max(ymax, c_[0]);
+    int speciesIndex = static_cast<int>(s);
+    int nSpecies = static_cast<int>(simPixel.field.size());
+    pltPlot->graph(speciesIndex)->setData(time, c_, true);
+    pltPlot->graph(speciesIndex + nSpecies)->setData(time, min_, true);
+    pltPlot->graph(speciesIndex + 2 * nSpecies)->setData(time, max_, true);
+    ymax = std::max(ymax, max_[0]);
   }
   images.clear();
   if (useDuneSimulator) {
@@ -155,9 +191,13 @@ void QTabSimulate::btnSimulate_clicked() {
   QApplication::processEvents();
   // integrate Model
   QVector<double> subTime(n_steps, 0);
-  std::vector<QVector<double>> subConc(simPixel.field.size());
+  std::vector<QVector<double>> subConcAv(simPixel.field.size());
+  std::vector<QVector<double>> subConcMin(simPixel.field.size());
+  std::vector<QVector<double>> subConcMax(simPixel.field.size());
   for (std::size_t s = 0; s < simPixel.field.size(); ++s) {
-    subConc[s].resize(n_steps);
+    subConcAv[s].resize(n_steps);
+    subConcMin[s].resize(n_steps);
+    subConcMax[s].resize(n_steps);
   }
   for (int i_image = 0; i_image < n_images; ++i_image) {
     if (useDuneSimulator) {
@@ -167,7 +207,9 @@ void QTabSimulate::btnSimulate_clicked() {
         subTime[i_step] = time.back() + dt + dt * i_step;
         simPixel.integrateForwardsEuler(dt);
         for (std::size_t s = 0; s < simPixel.field.size(); ++s) {
-          subConc[s][i_step] = simPixel.field[s]->getMeanConcentration();
+          subConcAv[s][i_step] = simPixel.field[s]->getMeanConcentration();
+          subConcMin[s][i_step] = simPixel.field[s]->getMinConcentration();
+          subConcMax[s][i_step] = simPixel.field[s]->getMaxConcentration();
         }
       }
     }
@@ -182,25 +224,35 @@ void QTabSimulate::btnSimulate_clicked() {
     }
     time.push_back(time.back() + dtImage);
     for (std::size_t s = 0; s < simPixel.field.size(); ++s) {
+      int speciesIndex = static_cast<int>(s);
+      int nSpecies = static_cast<int>(simPixel.field.size());
       if (useDuneSimulator) {
         QVector<double> c_{
             simDune->getAverageConcentration(simPixel.field[s]->speciesID)};
-        ymax = std::max(ymax, c_[0]);
-        pltPlot->graph(static_cast<int>(s))->addData({time.back()}, c_, true);
+        QVector<double> min_{
+            simDune->getMinConcentration(simPixel.field[s]->speciesID)};
+        QVector<double> max_{
+            simDune->getMaxConcentration(simPixel.field[s]->speciesID)};
+        ymax = std::max(ymax, max_[0]);
+        pltPlot->graph(speciesIndex)->addData({time.back()}, c_, true);
+        pltPlot->graph(speciesIndex + nSpecies)
+            ->addData({time.back()}, min_, true);
+        pltPlot->graph(speciesIndex + 2 * nSpecies)
+            ->addData({time.back()}, max_, true);
       } else {
-        pltPlot->graph(static_cast<int>(s))->addData(subTime, subConc[s], true);
-        ymax = std::max(
-            ymax, *std::max_element(subConc[s].cbegin(), subConc[s].cend()));
+        pltPlot->graph(speciesIndex)->addData(subTime, subConcAv[s], true);
+        pltPlot->graph(speciesIndex + nSpecies)
+            ->addData(subTime, subConcMin[s], true);
+        pltPlot->graph(speciesIndex + 2 * nSpecies)
+            ->addData(subTime, subConcMax[s], true);
+        ymax = std::max(ymax, *std::max_element(subConcMax[s].cbegin(),
+                                                subConcMax[s].cend()));
       }
     }
     lblGeometry->setImage(images.back());
     // rescale & replot plot
     pltPlot->yAxis->setRange(0, 1.2 * ymax);
     pltPlot->replot();
-    // ui->statusBar->showMessage(
-    //    QString("Simulating... %1% (press ctrl+c to cancel)")
-    //        .arg(QString::number(static_cast<int>(
-    //            100 * t / ui->txtSimLength->text().toDouble()))));
   }
 
   // display vertical at current time point
@@ -225,6 +277,9 @@ void QTabSimulate::btnSimulate_clicked() {
 }
 
 void QTabSimulate::graphClicked(const QMouseEvent *event) {
+  if (pltPlot->graphCount() == 0) {
+    return;
+  }
   double key;
   double val;
   pltPlot->graph(0)->pixelsToCoords(static_cast<double>(event->x()),

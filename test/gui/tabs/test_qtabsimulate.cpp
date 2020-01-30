@@ -47,7 +47,7 @@ SCENARIO("Simulate Tab", "[gui][tabs][simulate]") {
   REQUIRE(hslideTime->isEnabled() == true);
   REQUIRE(hslideTime->maximum() == 2);
   REQUIRE(hslideTime->minimum() == 0);
-  REQUIRE(pltPlot->graphCount() == 3);
+  REQUIRE(pltPlot->graphCount() == 9);
 
   sendMouseClick(btnResetSimulation);
   REQUIRE(hslideTime->isEnabled() == false);
@@ -59,7 +59,7 @@ SCENARIO("Simulate Tab", "[gui][tabs][simulate]") {
   REQUIRE(hslideTime->isEnabled() == true);
   REQUIRE(hslideTime->maximum() == 2);
   REQUIRE(hslideTime->minimum() == 0);
-  REQUIRE(pltPlot->graphCount() == 3);
+  REQUIRE(pltPlot->graphCount() == 9);
 
   sendMouseClick(btnResetSimulation);
   REQUIRE(hslideTime->isEnabled() == false);

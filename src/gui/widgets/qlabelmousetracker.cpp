@@ -34,14 +34,14 @@ const QRgb &QLabelMouseTracker::getColour() const { return colour; }
 int QLabelMouseTracker::getMaskIndex() const { return maskIndex; }
 
 void QLabelMouseTracker::mouseMoveEvent(QMouseEvent *ev) {
-  setCurrentPixel(ev);
-  emit mouseOver(currentPixel);
+  if (setCurrentPixel(ev)) {
+    emit mouseOver(currentPixel);
+  }
 }
 
 void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
   if (ev->buttons() != Qt::NoButton) {
-    setCurrentPixel(ev);
-    if (!pixmap.isNull()) {
+    if (setCurrentPixel(ev)) {
       // update current colour and emit mouseClicked signal
       colour = image.pixelColor(currentPixel).rgb();
       SPDLOG_DEBUG("pixel ({},{}) -> colour {:x}", currentPixel.x(),
@@ -64,13 +64,16 @@ void QLabelMouseTracker::wheelEvent(QWheelEvent *ev) {
   emit mouseWheelEvent(ev);
 }
 
-void QLabelMouseTracker::setCurrentPixel(const QMouseEvent *ev) {
-  if (!image.isNull() && !pixmap.isNull()) {
-    currentPixel.setX((image.width() * ev->pos().x()) / pixmap.width());
-    currentPixel.setY((image.height() * ev->pos().y()) / pixmap.height());
-    SPDLOG_TRACE("mouse at ({},{}) -> pixel ({},{})", ev->pos().x(),
-                 ev->pos().y(), currentPixel.x(), currentPixel.y());
+bool QLabelMouseTracker::setCurrentPixel(const QMouseEvent *ev) {
+  if (image.isNull() || pixmap.isNull() || (ev->pos().x() >= pixmap.width()) ||
+      (ev->pos().y() >= pixmap.height())) {
+    return false;
   }
+  currentPixel.setX((image.width() * ev->pos().x()) / pixmap.width());
+  currentPixel.setY((image.height() * ev->pos().y()) / pixmap.height());
+  SPDLOG_TRACE("mouse at ({},{}) -> pixel ({},{})", ev->pos().x(),
+               ev->pos().y(), currentPixel.x(), currentPixel.y());
+  return true;
 }
 
 void QLabelMouseTracker::resizeImage(const QSize &size) {

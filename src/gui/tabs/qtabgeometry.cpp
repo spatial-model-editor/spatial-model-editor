@@ -96,6 +96,8 @@ void QTabGeometry::enableTabs(bool enable) {
 
 void QTabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
   if (waitingForCompartmentChoice) {
+    SPDLOG_INFO("colour {:x}", col);
+    SPDLOG_INFO("point ({},{})", point.x(), point.y());
     // update compartment geometry (i.e. colour) of selected compartment to
     // the one the user just clicked on
     const auto &compartmentID =
@@ -106,8 +108,6 @@ void QTabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
     // update display by simulating user click on listCompartments
     listCompartments_currentRowChanged(ui->listCompartments->currentRow());
     enableTabs();
-    SPDLOG_INFO("assigned compartment {} to colour {:x}",
-                compartmentID.toStdString(), col);
     waitingForCompartmentChoice = false;
     statusBarPermanentMessage->clear();
     enableTabs(sbmlDoc.hasValidGeometry);
