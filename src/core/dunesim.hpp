@@ -51,7 +51,7 @@ class DuneSim : public BaseSim {
   // concentrations for each pixel in compartments
   std::vector<std::vector<double>> concentration;
   void initCompartmentNames();
-  void initSpeciesIndices(const dune::DuneConverter &dc);
+  void initSpeciesIndices();
   void updatePixels();
   void updateSpeciesConcentrations();
 

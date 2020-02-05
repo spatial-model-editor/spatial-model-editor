@@ -35,12 +35,15 @@ class Simulation {
   std::vector<std::string> compartmentIds;
   // compartment->species
   std::vector<std::vector<std::string>> compartmentSpeciesIds;
+  std::vector<std::vector<std::size_t>> compartmentSpeciesIndices;
   std::vector<std::vector<QColor>> compartmentSpeciesColors;
   std::vector<double> timePoints;
   // time->compartment->(ix->species)
   std::vector<std::vector<std::vector<double>>> concentration;
   // time->compartment->species
   std::vector<std::vector<std::vector<AvgMinMax>>> avgMinMax;
+  // compartment->species
+  std::vector<std::vector<double>> maxConcWholeSimulation;
   QSize imageSize;
   void updateConcentrations(double t);
 
@@ -61,7 +64,10 @@ class Simulation {
   std::vector<double> getConc(std::size_t timeIndex,
                               std::size_t compartmentIndex,
                               std::size_t speciesIndex) const;
-  QImage getConcImage(std::size_t timeIndex) const;
+  QImage getConcImage(
+      std::size_t timeIndex,
+      const std::vector<std::vector<std::size_t>> &speciesToDraw = {},
+      bool normaliseOverWholeSim = false) const;
 };
 
 }  // namespace simulate

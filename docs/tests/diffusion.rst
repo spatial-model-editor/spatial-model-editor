@@ -36,12 +36,14 @@ and a solution for our model can then be found by convolving this expression wit
 
 .. math::
 
-   c_s(t) = \frac{t}{t+t_0}e^{-((x-48)^2+(y-48)^2)/(4 D_s (t+t_0))}
+   c_s(t) = \frac{t_0}{t+t_0}e^{-((x-48)^2+(y-48)^2)/(4 D_s (t+t_0))}
 
 where :math:`t_0 = 9/D_s`. Note that this solution ignores boundary effects, so will not be valid at late times or close to the compartment boundary.
 
-The total amount of species in the compartment is a conserved quantity
+The total amount of species in the compartment is a conserved quantity,
 
 .. math::
 
    \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} c_s(t) dx dy = 36 \pi
+
+ and this is also valid at late times, since our zero flux Neumann boundary conditions also conserve the amount of species in the compartment.

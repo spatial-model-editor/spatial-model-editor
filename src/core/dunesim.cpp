@@ -115,16 +115,16 @@ void DuneSim::initCompartmentNames() {
     auto duneCompIndex =
         pDuneImpl->config.sub("model.compartments").get<int>(name);
     SPDLOG_DEBUG("compartment: {} - Dune index {}", name, duneCompIndex);
-    if (static_cast<std::size_t>(duneCompIndex) != compIndex) {
-      SPDLOG_ERROR(
-          "Dune compartment indices must match order: comp {} has DUNE index "
-          "{}",
-          compIndex, duneCompIndex);
-    }
     const auto &gv =
         pDuneImpl->grid_ptr->subDomain(duneCompIndex).leafGridView();
     if (std::all_of(elements(gv).begin(), elements(gv).end(),
                     [](const auto &e) { return e.type().isTriangle(); })) {
+      if (static_cast<std::size_t>(duneCompIndex) != compIndex) {
+        SPDLOG_ERROR(
+            "Dune compartment indices must match order: comp {} has DUNE index "
+            "{}",
+            compIndex, duneCompIndex);
+      }
       SPDLOG_DEBUG("  -> compartment of triangles: adding");
       compartmentSpeciesIndex.emplace_back();
       compartmentDuneNames.push_back(name);
@@ -135,7 +135,7 @@ void DuneSim::initCompartmentNames() {
   }
 }
 
-void DuneSim::initSpeciesIndices(const dune::DuneConverter &dc) {
+void DuneSim::initSpeciesIndices() {
   std::size_t nComps = compartmentSpeciesIndex.size();
   for (std::size_t iComp = 0; iComp < nComps; ++iComp) {
     const auto &compName = compartmentDuneNames[iComp];
@@ -146,8 +146,8 @@ void DuneSim::initSpeciesIndices(const dune::DuneConverter &dc) {
     auto &indices = compartmentSpeciesIndex[iComp];
     indices.resize(duneNames.size());
     std::iota(indices.begin(), indices.end(), 0);
-    // sort these indices by duneNames, i.e. find indices that would result in a
-    // sorted duneNames
+    // sort these indices by duneNames, i.e. find indices that would result in
+    // a sorted duneNames
     std::sort(indices.begin(), indices.end(),
               [&n = duneNames](std::size_t i1, std::size_t i2) {
                 return n[i1] < n[i2];
@@ -277,7 +277,7 @@ DuneSim::DuneSim(const sbml::SbmlDocWrapper &sbmlDoc)
   pDuneImpl->init(dc.getIniFile().toStdString());
 
   initCompartmentNames();
-  initSpeciesIndices(dc);
+  initSpeciesIndices();
   for (const auto &compId : sbmlDoc.compartments) {
     const auto &comp = sbmlDoc.mapCompIdToGeometry.at(compId);
     compartmentPointIndex.emplace_back(comp.getCompartmentImage().size(),

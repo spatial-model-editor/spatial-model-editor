@@ -55,6 +55,7 @@ class SimCompartment {
   std::string compartmentId;
   std::vector<std::string> speciesIds;
   std::vector<std::size_t> nonSpatialSpeciesIndices;
+  double maxStableTimestep = std::numeric_limits<double>::max();
   void spatiallyAverageDcdt();
 
  public:
@@ -70,6 +71,7 @@ class SimCompartment {
   const std::vector<double> &getConcentrations() const;
   const std::vector<QPoint> &getPixels() const;
   std::vector<double> &getDcdt();
+  double getMaxStableTimestep() const;
 };
 
 class SimMembrane {
@@ -91,6 +93,7 @@ class PixelSim : public BaseSim {
   std::vector<SimCompartment> simCompartments;
   std::vector<SimMembrane> simMembranes;
   const sbml::SbmlDocWrapper &doc;
+  double maxStableTimestep = std::numeric_limits<double>::max();
 
  public:
   explicit PixelSim(const sbml::SbmlDocWrapper &sbmlDoc);

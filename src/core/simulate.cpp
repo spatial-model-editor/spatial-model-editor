@@ -33,8 +33,12 @@ Simulation::Simulation(const sbml::SbmlDocWrapper &sbmlDoc,
       }
     }
     if (!sIds.empty()) {
+      maxConcWholeSimulation.push_back(std::vector<double>(sIds.size(), 0.0));
+      auto sIndices = std::vector<std::size_t>(sIds.size());
+      std::iota(sIndices.begin(), sIndices.end(), 0);
       compartmentIds.push_back(compartmentId.toStdString());
       compartmentSpeciesIds.push_back(std::move(sIds));
+      compartmentSpeciesIndices.push_back(std::move(sIndices));
       compartmentSpeciesColors.push_back(std::move(cols));
       compartments.push_back(comp);
     }
@@ -81,6 +85,10 @@ void Simulation::updateConcentrations(double t) {
     const auto &compConcs = simulator->getConcentrations(compIndex);
     c.push_back(compConcs);
     a.push_back(calculateAvgMinMax(compConcs, nSpecies));
+    auto &maxC = maxConcWholeSimulation[compIndex];
+    for (std::size_t is = 0; is < nSpecies; ++is) {
+      maxC[is] = std::max(maxC[is], a.back()[is].max);
+    }
   }
 }
 
@@ -122,9 +130,17 @@ std::vector<double> Simulation::getConc(std::size_t timeIndex,
   return c;
 }
 
-QImage Simulation::getConcImage(std::size_t timeIndex) const {
+QImage Simulation::getConcImage(
+    std::size_t timeIndex,
+    const std::vector<std::vector<std::size_t>> &speciesToDraw,
+    bool normaliseOverWholeSim) const {
   if (compartments.empty()) {
     return QImage();
+  }
+  const auto *speciesIndices = &speciesToDraw;
+  // default to drawing all species if not specified
+  if (speciesToDraw.empty()) {
+    speciesIndices = &compartmentSpeciesIndices;
   }
   QImage img(imageSize, QImage::Format_ARGB32_Premultiplied);
   img.fill(qRgba(0, 0, 0, 0));
@@ -134,28 +150,37 @@ QImage Simulation::getConcImage(std::size_t timeIndex) const {
     const auto &pixels = compartments[compIndex]->getPixels();
     const auto &conc = concentration[timeIndex][compIndex];
     std::size_t nSpecies = compartmentSpeciesIds[compIndex].size();
+    std::size_t nSpeciesToDraw = (*speciesIndices)[compIndex].size();
     // normalise species concentration:
     // max value of each species = max colour intensity
     // (with lower bound, so constant zero is still zero)
-    std::vector<double> maxConcs;
-    for (std::size_t is = 0; is < nSpecies; ++is) {
-      double m = avgMinMax[timeIndex][compIndex][is].max;
-      maxConcs.push_back(m > 1e-30 ? m : 1.0);
+    std::vector<double> maxConcs(compartmentSpeciesIds[compIndex].size(), 1.0);
+    if (normaliseOverWholeSim) {
+      maxConcs = maxConcWholeSimulation[compIndex];
+    } else {
+      for (std::size_t is : (*speciesIndices)[compIndex]) {
+        double m = avgMinMax[timeIndex][compIndex][is].max;
+        maxConcs[is] = m > 1e-30 ? m : 1.0;
+      }
     }
     // equal contribution from each field
-    double alpha = 1.0 / static_cast<double>(nSpecies);
+    // double alpha = 1.0 / static_cast<double>(nSpeciesToDraw);
+    double alpha = 1;
     for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
       const QPoint &p = pixels[ix];
       int r = 0;
       int g = 0;
       int b = 0;
-      for (std::size_t is = 0; is < nSpecies; ++is) {
+      for (std::size_t is : (*speciesIndices)[compIndex]) {
         double c = alpha * conc[ix * nSpecies + is] / maxConcs[is];
         const auto &col = compartmentSpeciesColors[compIndex][is];
         r += static_cast<int>(col.red() * c);
         g += static_cast<int>(col.green() * c);
         b += static_cast<int>(col.blue() * c);
       }
+      r = r < 256 ? r : 255;
+      g = g < 256 ? g : 255;
+      b = b < 256 ? b : 255;
       img.setPixel(p, qRgb(r, g, b));
     }
   }

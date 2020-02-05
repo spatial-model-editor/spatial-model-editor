@@ -512,10 +512,10 @@ SCENARIO("SBML: very-simple-model.xml", "[core][sbml]") {
       REQUIRE(s.getSpeciesCompartment("B_c3") == "c3");
     }
     WHEN("species name changed") {
-      REQUIRE(s.getSpeciesName("A_c1") == "A");
+      REQUIRE(s.getSpeciesName("A_c1") == "A_out");
       s.setSpeciesName("A_c1", "long name with Spaces");
       REQUIRE(s.getSpeciesName("A_c1") == "long name with Spaces");
-      REQUIRE(s.getSpeciesName("B_c2") == "B");
+      REQUIRE(s.getSpeciesName("B_c2") == "B_cell");
       s.setSpeciesName("B_c2", "non-alphanumeric chars allowed: @#$%^&*(_");
       REQUIRE(s.getSpeciesName("B_c2") ==
               "non-alphanumeric chars allowed: @#$%^&*(_");

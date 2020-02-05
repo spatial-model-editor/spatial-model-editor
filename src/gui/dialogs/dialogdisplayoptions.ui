@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DialogDisplayOptions</class>
+ <widget class="QDialog" name="DialogDisplayOptions">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>377</width>
+    <height>573</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Display options</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTreeWidget" name="listSpecies">
+     <column>
+      <property name="text">
+       <string>Species to display</string>
+      </property>
+     </column>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="chkShowMinMaxRanges">
+     <property name="text">
+      <string>Show min/max ranges on plot</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="cmbNormalisation">
+     <item>
+      <property name="text">
+       <string>Normalise intensity at each timepoint</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Normalise intensity over whole simulation</string>
+      </property>
+     </item>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

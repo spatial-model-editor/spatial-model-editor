@@ -56,7 +56,7 @@ SCENARIO("Species Tab", "[gui][tabs][species]") {
 
     // initial selection: Outside / A [constant species]
 
-    REQUIRE(listSpecies->currentItem()->text(0) == "A");
+    REQUIRE(listSpecies->currentItem()->text(0) == "A_out");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Outside");
     REQUIRE(chkSpeciesIsConstant->isChecked() == true);
     REQUIRE(chkSpeciesIsSpatial->isChecked() == false);
@@ -67,9 +67,9 @@ SCENARIO("Species Tab", "[gui][tabs][species]") {
     // edit name
     txtSpeciesName->setFocus();
     sendKeyEvents(txtSpeciesName, {" ", "!", "Enter"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "A !");
+    REQUIRE(listSpecies->currentItem()->text(0) == "A_out !");
     sendKeyEvents(txtSpeciesName, {"End", "Backspace", "Backspace", "Enter"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "A");
+    REQUIRE(listSpecies->currentItem()->text(0) == "A_out");
     // toggle is spatial checkbox
     sendMouseClick(chkSpeciesIsSpatial);
     REQUIRE(chkSpeciesIsSpatial->isChecked() == true);
@@ -96,7 +96,7 @@ SCENARIO("Species Tab", "[gui][tabs][species]") {
     // select second item in listSpecies: Outside / B [spatial species]
 
     sendKeyEvents(listSpecies, {"Down"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "B");
+    REQUIRE(listSpecies->currentItem()->text(0) == "B_out");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Outside");
     REQUIRE(chkSpeciesIsConstant->isChecked() == false);
     REQUIRE(chkSpeciesIsSpatial->isChecked() == true);
@@ -137,28 +137,28 @@ SCENARIO("Species Tab", "[gui][tabs][species]") {
     // edit name
     txtSpeciesName->setFocus();
     sendKeyEvents(txtSpeciesName, {"B", "Q", "Tab"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "BBQ");
+    REQUIRE(listSpecies->currentItem()->text(0) == "B_outBQ");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Outside");
     // change species location
     cmbSpeciesCompartment->setFocus();
     sendKeyEvents(cmbSpeciesCompartment, {"Down"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "BBQ");
+    REQUIRE(listSpecies->currentItem()->text(0) == "B_outBQ");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Cell");
     cmbSpeciesCompartment->setFocus();
     sendKeyEvents(cmbSpeciesCompartment, {"Down"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "BBQ");
+    REQUIRE(listSpecies->currentItem()->text(0) == "B_outBQ");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Nucleus");
     cmbSpeciesCompartment->setFocus();
     sendKeyEvents(cmbSpeciesCompartment, {"Up"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "BBQ");
+    REQUIRE(listSpecies->currentItem()->text(0) == "B_outBQ");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Cell");
     cmbSpeciesCompartment->setFocus();
     sendKeyEvents(cmbSpeciesCompartment, {"Up"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "BBQ");
+    REQUIRE(listSpecies->currentItem()->text(0) == "B_outBQ");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Outside");
     // edit name
     sendKeyEvents(txtSpeciesName, {"End", "Backspace", "Backspace", "Enter"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "B");
+    REQUIRE(listSpecies->currentItem()->text(0) == "B_out");
 
     // toggle is spatial checkbox
     sendMouseClick(chkSpeciesIsSpatial);
@@ -170,31 +170,31 @@ SCENARIO("Species Tab", "[gui][tabs][species]") {
     // add/remove species
 
     sendKeyEvents(listSpecies, {"Up"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "A");
+    REQUIRE(listSpecies->currentItem()->text(0) == "A_out");
     // click remove species, then "no" to cancel
     sendMouseClick(btnRemoveSpecies);
     sendKeyEventsToNextQDialog({"Esc"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "A");
+    REQUIRE(listSpecies->currentItem()->text(0) == "A_out");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Outside");
     // click remove species, then "yes" to confirm
     sendMouseClick(btnRemoveSpecies);
     sendKeyEventsToNextQDialog({"Enter"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "B");
+    REQUIRE(listSpecies->currentItem()->text(0) == "B_out");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Outside");
     // click remove species, then "yes" to confirm
     sendMouseClick(btnRemoveSpecies);
     sendKeyEventsToNextQDialog({"Enter"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "A");
+    REQUIRE(listSpecies->currentItem()->text(0) == "A_cell");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Cell");
     // click remove species, then "yes" to confirm
     sendMouseClick(btnRemoveSpecies);
     sendKeyEventsToNextQDialog({"Enter"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "B");
+    REQUIRE(listSpecies->currentItem()->text(0) == "B_cell");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Cell");
     // click remove species, then "yes" to confirm
     sendMouseClick(btnRemoveSpecies);
     sendKeyEventsToNextQDialog({"Enter"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "A");
+    REQUIRE(listSpecies->currentItem()->text(0) == "A_nucl");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Nucleus");
     REQUIRE(listSpecies->currentItem()->parent()->childCount() == 2);
     // click add species
@@ -214,13 +214,13 @@ SCENARIO("Species Tab", "[gui][tabs][species]") {
     // click remove species, then "yes" to confirm
     sendMouseClick(btnRemoveSpecies);
     sendKeyEventsToNextQDialog({"Enter"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "A");
+    REQUIRE(listSpecies->currentItem()->text(0) == "A_nucl");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Nucleus");
     REQUIRE(listSpecies->currentItem()->parent()->childCount() == 2);
     // click remove species, then "yes" to confirm
     sendMouseClick(btnRemoveSpecies);
     sendKeyEventsToNextQDialog({"Enter"});
-    REQUIRE(listSpecies->currentItem()->text(0) == "B");
+    REQUIRE(listSpecies->currentItem()->text(0) == "B_nucl");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Nucleus");
     REQUIRE(listSpecies->currentItem()->parent()->childCount() == 1);
     // click remove species, then "yes" to confirm
