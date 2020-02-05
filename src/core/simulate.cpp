@@ -1,227 +1,164 @@
 #include "simulate.hpp"
 
+#include "dunesim.hpp"
 #include "geometry.hpp"
 #include "logger.hpp"
 #include "pde.hpp"
+#include "pixelsim.hpp"
 #include "sbml.hpp"
 #include "utils.hpp"
 
 namespace simulate {
 
-ReacEval::ReacEval(const sbml::SbmlDocWrapper *doc_ptr,
-                   const std::vector<std::string> &speciesIDs,
-                   const std::vector<std::string> &reactionIDs,
-                   const std::vector<std::string> &reactionScaleFactors)
-    : result(speciesIDs.size(), 0.0),
-      species_values(speciesIDs.size(), 0.0),
-      nSpecies(speciesIDs.size()) {
-  // construct reaction expressions and stoich matrix
-  pde::PDE pde(doc_ptr, speciesIDs, reactionIDs, {}, reactionScaleFactors);
-  // compile all expressions with symengine
-  reac_eval_symengine = symbolic::Symbolic(pde.getRHS(), speciesIDs);
+Simulation::Simulation(const sbml::SbmlDocWrapper &sbmlDoc,
+                       SimulatorType simType)
+    : simulatorType(simType), imageSize(sbmlDoc.getCompartmentImage().size()) {
+  // init simulator
+  if (simulatorType == SimulatorType::DUNE) {
+    simulator = std::make_unique<sim::DuneSim>(sbmlDoc);
+  } else {
+    simulator = std::make_unique<sim::PixelSim>(sbmlDoc);
+  }
+  // get compartments with interacting species, name & colour of each species
+  for (const auto &compartmentId : sbmlDoc.compartments) {
+    std::vector<std::string> sIds;
+    std::vector<QColor> cols;
+    const geometry::Compartment *comp = nullptr;
+    for (const auto &s : sbmlDoc.species.at(compartmentId)) {
+      if (!sbmlDoc.getIsSpeciesConstant(s.toStdString())) {
+        sIds.push_back(s.toStdString());
+        const auto &field = sbmlDoc.mapSpeciesIdToField.at(s);
+        cols.push_back(field.colour);
+        comp = field.geometry;
+      }
+    }
+    if (!sIds.empty()) {
+      compartmentIds.push_back(compartmentId.toStdString());
+      compartmentSpeciesIds.push_back(std::move(sIds));
+      compartmentSpeciesColors.push_back(std::move(cols));
+      compartments.push_back(comp);
+    }
+  }
+  updateConcentrations(0);
 }
 
-void ReacEval::evaluate() { reac_eval_symengine.eval(result, species_values); }
+Simulation::~Simulation() = default;
 
-SimCompartment::SimCompartment(sbml::SbmlDocWrapper *docWrapper,
-                               const geometry::Compartment *compartment)
-    : doc(docWrapper), comp(compartment) {
-  QString compID = compartment->getId().c_str();
-  SPDLOG_DEBUG("compartment: {}", compID.toStdString());
-  std::vector<std::string> speciesID;
-  for (const auto &s : doc->species.at(compID)) {
-    if (!doc->getIsSpeciesConstant(s.toStdString())) {
-      speciesID.push_back(s.toStdString());
-      field.push_back(&doc->mapSpeciesIdToField.at(s));
-      SPDLOG_DEBUG("  - adding field: {}", s.toStdString());
+static std::vector<AvgMinMax> calculateAvgMinMax(
+    const std::vector<double> &concs, std::size_t nSpecies) {
+  std::vector<AvgMinMax> avgMinMax(nSpecies);
+  for (std::size_t ix = 0; ix < concs.size() / nSpecies; ++ix) {
+    for (std::size_t is = 0; is < nSpecies; ++is) {
+      auto &a = avgMinMax[is];
+      double c = concs[ix * nSpecies + is];
+      a.avg += c;
+      a.max = std::max(a.max, c);
+      a.min = std::min(a.min, c);
     }
   }
-  std::vector<std::string> reactionID;
-  const auto iter = doc->reactions.find(compID);
-  if (iter != doc->reactions.cend()) {
-    reactionID = utils::toStdString(iter->second);
+  for (auto &a : avgMinMax) {
+    a.avg /= static_cast<double>(concs.size() / nSpecies);
   }
-  reacEval = ReacEval(doc, speciesID, reactionID, {});
+  return avgMinMax;
 }
 
-void SimCompartment::evaluate_reactions() {
-  for (std::size_t i = 0; i < comp->nPixels(); ++i) {
-    // populate species concentrations
-    for (std::size_t s = 0; s < field.size(); ++s) {
-      reacEval.species_values[s] = field[s]->conc[i];
-    }
-    reacEval.evaluate();
-    const std::vector<double> &result = reacEval.getResult();
-    for (std::size_t s = 0; s < field.size(); ++s) {
-      // add results to dcdt
-      field[s]->dcdt[i] += result[s];
-    }
-  }
+void Simulation::doTimestep(double t, double dt) {
+  SPDLOG_DEBUG("integrating for time {} with dt = {}", t, dt);
+  simulator->doTimestep(t, dt);
+  updateConcentrations(timePoints.back() + t);
 }
 
-SimMembrane::SimMembrane(sbml::SbmlDocWrapper *doc_ptr,
-                         geometry::Membrane *membrane_ptr)
-    : doc(doc_ptr), membrane(membrane_ptr) {
-  QString compA = membrane->compA->getId().c_str();
-  QString compB = membrane->compB->getId().c_str();
-  SPDLOG_DEBUG("membrane: {}", membrane->membraneID);
-  SPDLOG_DEBUG("  - compA: {}", compA.toStdString());
-  SPDLOG_DEBUG("  - compB: {}", compB.toStdString());
-
-  // make vector of species & fields from compartments A and B
-  std::vector<std::string> speciesID;
-  for (const auto &spec : doc->species.at(compA)) {
-    if (!doc->getIsSpeciesConstant(spec.toStdString())) {
-      speciesID.push_back(spec.toStdString());
-      fieldA.push_back(&doc->mapSpeciesIdToField.at(spec));
-    }
-  }
-  for (const auto &spec : doc->species.at(compB)) {
-    if (!doc->getIsSpeciesConstant(spec.toStdString())) {
-      speciesID.push_back(spec.toStdString());
-      fieldB.push_back(&doc->mapSpeciesIdToField.at(spec));
-    }
-  }
-
-  // get rescaling factor to convert flux to amount/length^3,
-  // then length^3 to volume to give concentration
-  const auto &lengthUnit = doc->getModelUnits().getLength();
-  const auto &volumeUnit = doc->getModelUnits().getVolume();
-  double lengthCubedToVolFactor =
-      units::pixelWidthToVolume(1.0, lengthUnit, volumeUnit);
-  std::string strFactor =
-      QString::number(lengthCubedToVolFactor, 'g', 17).toStdString();
-  SPDLOG_INFO("  - [length]^3/[vol] = {}", lengthCubedToVolFactor);
-  SPDLOG_INFO("  - dividing flux by {}", strFactor);
-
-  // make vector of reaction IDs from membrane
-  std::vector<std::string> reactionID =
-      utils::toStdString(doc->reactions.at(membrane->membraneID.c_str()));
-  // vector of reaction scale factors to convert flux to concentration
-  std::vector<std::string> reactionScaleFactors(reactionID.size(), strFactor);
-
-  reacEval = ReacEval(doc, speciesID, reactionID, reactionScaleFactors);
-}
-
-void SimMembrane::evaluate_reactions() {
-  assert(reacEval.species_values.size() == fieldA.size() + fieldB.size());
-  for (const auto &p : membrane->indexPair) {
-    std::size_t ixA = p.first;
-    std::size_t ixB = p.second;
-    // populate species concentrations: first A, then B
-    std::size_t reacIndex = 0;
-    for (const auto *fA : fieldA) {
-      reacEval.species_values[reacIndex] = fA->conc[ixA];
-      ++reacIndex;
-    }
-    for (const auto *fB : fieldB) {
-      reacEval.species_values[reacIndex] = fB->conc[ixB];
-      ++reacIndex;
-    }
-    // evaluate reaction terms
-    reacEval.evaluate();
-    const std::vector<double> &result = reacEval.getResult();
-    // add results to dc/dt: first A, then B
-    reacIndex = 0;
-    for (auto *fA : fieldA) {
-      fA->dcdt[ixA] += result[reacIndex];
-      ++reacIndex;
-    }
-    for (auto *fB : fieldB) {
-      fB->dcdt[ixB] += result[reacIndex];
-      ++reacIndex;
-    }
+void Simulation::updateConcentrations(double t) {
+  SPDLOG_DEBUG("updating Concentrations at time {}", t);
+  timePoints.push_back(t);
+  auto &c = concentration.emplace_back();
+  c.reserve(compartments.size());
+  auto &a = avgMinMax.emplace_back();
+  a.reserve(compartments.size());
+  for (std::size_t compIndex = 0; compIndex < compartments.size();
+       ++compIndex) {
+    std::size_t nSpecies = compartmentSpeciesIds[compIndex].size();
+    const auto &compConcs = simulator->getConcentrations(compIndex);
+    c.push_back(compConcs);
+    a.push_back(calculateAvgMinMax(compConcs, nSpecies));
   }
 }
 
-void Simulate::addCompartment(const geometry::Compartment *compartment) {
-  SPDLOG_DEBUG("adding compartment {}", compartment->getId());
-  simComp.emplace_back(doc, compartment);
-  for (auto *f : simComp.back().field) {
-    field.push_back(f);
-    speciesID.push_back(f->speciesID);
-    SPDLOG_DEBUG("  - adding species {}", f->speciesID);
-  }
+const std::vector<std::string> &Simulation::getCompartmentIds() const {
+  return compartmentIds;
 }
 
-void Simulate::addMembrane(geometry::Membrane *membrane) {
-  SPDLOG_DEBUG("adding membrane {}", membrane->membraneID);
-  simMembrane.emplace_back(doc, membrane);
+const std::vector<std::string> &Simulation::getSpeciesIds(
+    std::size_t compartmentIndex) const {
+  return compartmentSpeciesIds[compartmentIndex];
 }
 
-void Simulate::integrateForwardsEuler(double dt) {
-  // apply Diffusion operator in all compartments: dc/dt = D ...
-  for (auto *f : field) {
-    if (f->isSpatial) {
-      f->applyDiffusionOperator();
-    } else {
-      std::fill(f->dcdt.begin(), f->dcdt.end(), 0.0);
-    }
-  }
-  // evaluate reaction terms in all compartments: dc/dt += ...
-  for (auto &sim : simComp) {
-    sim.evaluate_reactions();
-  }
-  // evaluate reaction terms in all membranes: dc/dt += ...
-  for (auto &sim : simMembrane) {
-    sim.evaluate_reactions();
-  }
-  // for non-spatial species: spatially average dc/dt:
-  // roughly equivalent to infinite rate of diffusion
-  for (auto *f : field) {
-    if (!f->isSpatial) {
-      double av_dcdt = std::accumulate(f->dcdt.cbegin(), f->dcdt.cend(),
-                                       static_cast<double>(0)) /
-                       static_cast<double>(f->dcdt.size());
-      std::fill(f->dcdt.begin(), f->dcdt.end(), av_dcdt);
-    }
-  }
-  // forwards Euler timestep: c += dt * (dc/dt) in all compartments
-  for (auto *f : field) {
-    for (std::size_t i = 0; i < f->conc.size(); ++i) {
-      f->conc[i] += dt * f->dcdt[i];
-    }
-  }
+const std::vector<QColor> &Simulation::getSpeciesColors(
+    std::size_t compartmentIndex) const {
+  return compartmentSpeciesColors[compartmentIndex];
 }
 
-QImage Simulate::getConcentrationImage() const {
-  if (field.empty()) {
+const std::vector<double> &Simulation::getTimePoints() const {
+  return timePoints;
+}
+
+const AvgMinMax &Simulation::getAvgMinMax(std::size_t timeIndex,
+                                          std::size_t compartmentIndex,
+                                          std::size_t speciesIndex) const {
+  return avgMinMax[timeIndex][compartmentIndex][speciesIndex];
+}
+
+std::vector<double> Simulation::getConc(std::size_t timeIndex,
+                                        std::size_t compartmentIndex,
+                                        std::size_t speciesIndex) const {
+  std::vector<double> c;
+  const auto &compConc = concentration[timeIndex][compartmentIndex];
+  std::size_t nPixels = compartments[compartmentIndex]->nPixels();
+  std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
+  c.reserve(nPixels);
+  for (std::size_t ix = 0; ix < nPixels; ++ix) {
+    c.push_back(compConc[ix * nSpecies + speciesIndex]);
+  }
+  return c;
+}
+
+QImage Simulation::getConcImage(std::size_t timeIndex) const {
+  if (compartments.empty()) {
     return QImage();
   }
-  QImage img(field[0]->geometry->getCompartmentImage().size(),
-             QImage::Format_ARGB32_Premultiplied);
+  QImage img(imageSize, QImage::Format_ARGB32_Premultiplied);
   img.fill(qRgba(0, 0, 0, 0));
   // iterate over compartments
-  for (const auto &comp : simComp) {
-    if (!comp.field.empty()) {
-      // normalise species concentration:
-      // max value of each species = max colour intensity
-      // with lower bound, so constant zero is still zero
-      std::vector<double> max_conc;
-      for (const auto *f : comp.field) {
-        double m = *std::max_element(f->conc.cbegin(), f->conc.cend());
-        max_conc.push_back(m < 1e-30 ? 1.0 : m);
+  for (std::size_t compIndex = 0; compIndex < compartments.size();
+       ++compIndex) {
+    const auto &pixels = compartments[compIndex]->getPixels();
+    const auto &conc = concentration[timeIndex][compIndex];
+    std::size_t nSpecies = compartmentSpeciesIds[compIndex].size();
+    // normalise species concentration:
+    // max value of each species = max colour intensity
+    // (with lower bound, so constant zero is still zero)
+    std::vector<double> maxConcs;
+    for (std::size_t is = 0; is < nSpecies; ++is) {
+      double m = avgMinMax[timeIndex][compIndex][is].max;
+      maxConcs.push_back(m > 1e-30 ? m : 1.0);
+    }
+    // equal contribution from each field
+    double alpha = 1.0 / static_cast<double>(nSpecies);
+    for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
+      const QPoint &p = pixels[ix];
+      int r = 0;
+      int g = 0;
+      int b = 0;
+      for (std::size_t is = 0; is < nSpecies; ++is) {
+        double c = alpha * conc[ix * nSpecies + is] / maxConcs[is];
+        const auto &col = compartmentSpeciesColors[compIndex][is];
+        r += static_cast<int>(col.red() * c);
+        g += static_cast<int>(col.green() * c);
+        b += static_cast<int>(col.blue() * c);
       }
-      // equal contribution from each field
-      double alpha = 1.0 / static_cast<double>(comp.field.size());
-      for (std::size_t i = 0; i < comp.field[0]->geometry->nPixels(); ++i) {
-        const QPoint &p = comp.field[0]->geometry->getPixel(i);
-        int r = 0;
-        int g = 0;
-        int b = 0;
-        for (std::size_t i_f = 0; i_f < comp.field.size(); ++i_f) {
-          const auto *f = comp.field[i_f];
-          double c = alpha * f->conc[i] / max_conc[i_f];
-          const auto &col = f->colour;
-          r += static_cast<int>(col.red() * c);
-          g += static_cast<int>(col.green() * c);
-          b += static_cast<int>(col.blue() * c);
-        }
-        img.setPixel(p, qRgb(r, g, b));
-      }
+      img.setPixel(p, qRgb(r, g, b));
     }
   }
   return img;
 }
-
 }  // namespace simulate

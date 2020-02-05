@@ -1,91 +1,67 @@
-// Simple simulation routines
-//  - ReacEval: evaluates reaction terms at a single location
-//  - SimCompartment: evaluates reactions in a compartment
-//  - SimMembrane: evaluates reactions in a membrane
-//  - Simulate: forwards Euler integration of a 2d reaction-diffusion model
+// Simulator
 
 #pragma once
 
 #include <QImage>
-
-#include "symbolic.hpp"
+#include <memory>
 
 namespace sbml {
 class SbmlDocWrapper;
 }
 
+namespace sim {
+class BaseSim;
+}
+
 namespace geometry {
-class Field;
 class Compartment;
-class Membrane;
-}  // namespace geometry
+}
 
 namespace simulate {
 
-class ReacEval {
- private:
-  // symengine reaction expression
-  symbolic::Symbolic reac_eval_symengine;
-  // vector of result of evaluating reactions
-  std::vector<double> result;
+enum class SimulatorType { DUNE, Pixel };
 
- public:
-  // vector of species concentrations that Reaction expressions will use
-  std::vector<double> species_values;
-  std::size_t nSpecies = 0;
-  ReacEval() = default;
-  ReacEval(const sbml::SbmlDocWrapper *doc_ptr,
-           const std::vector<std::string> &speciesID,
-           const std::vector<std::string> &reactionID,
-           const std::vector<std::string> &reactionScaleFactors);
-  void evaluate();
-  const std::vector<double> &getResult() const { return result; }
+struct AvgMinMax {
+  double avg = 0;
+  double min = std::numeric_limits<double>::max();
+  double max = 0;
 };
 
-class SimCompartment {
+class Simulation {
  private:
-  sbml::SbmlDocWrapper *doc;
-  const geometry::Compartment *comp;
-  ReacEval reacEval;
+  SimulatorType simulatorType;
+  std::unique_ptr<sim::BaseSim> simulator;
+  std::vector<const geometry::Compartment *> compartments;
+  std::vector<std::string> compartmentIds;
+  // compartment->species
+  std::vector<std::vector<std::string>> compartmentSpeciesIds;
+  std::vector<std::vector<QColor>> compartmentSpeciesColors;
+  std::vector<double> timePoints;
+  // time->compartment->(ix->species)
+  std::vector<std::vector<std::vector<double>>> concentration;
+  // time->compartment->species
+  std::vector<std::vector<std::vector<AvgMinMax>>> avgMinMax;
+  QSize imageSize;
+  void updateConcentrations(double t);
 
  public:
-  std::vector<geometry::Field *> field;
-
-  explicit SimCompartment(sbml::SbmlDocWrapper *docWrapper,
-                          const geometry::Compartment *compartment);
-  // field.dcdt += result of applying reaction expressions to field.conc
-  void evaluate_reactions();
-};
-
-class SimMembrane {
- private:
-  sbml::SbmlDocWrapper *doc;
-  ReacEval reacEval;
-
- public:
-  geometry::Membrane *membrane;
-  std::vector<geometry::Field *> fieldA;
-  std::vector<geometry::Field *> fieldB;
-
-  SimMembrane(sbml::SbmlDocWrapper *doc_ptr, geometry::Membrane *membrane_ptr);
-  // field.dcdt += result of applying reaction expressions to field.conc
-  void evaluate_reactions();
-};
-
-class Simulate {
- private:
-  std::vector<SimCompartment> simComp;
-  std::vector<SimMembrane> simMembrane;
-  sbml::SbmlDocWrapper *doc;
-
- public:
-  std::vector<geometry::Field *> field;
-  std::vector<std::string> speciesID;
-  explicit Simulate(sbml::SbmlDocWrapper *doc_ptr) : doc(doc_ptr) {}
-  void addCompartment(const geometry::Compartment *compartment);
-  void addMembrane(geometry::Membrane *membrane);
-  void integrateForwardsEuler(double dt);
-  QImage getConcentrationImage() const;
+  explicit Simulation(const sbml::SbmlDocWrapper &sbmlDoc,
+                      SimulatorType simType = SimulatorType::DUNE);
+  ~Simulation();
+  void doTimestep(double t, double dt);
+  const std::vector<std::string> &getCompartmentIds() const;
+  const std::vector<std::string> &getSpeciesIds(
+      std::size_t compartmentIndex) const;
+  const std::vector<QColor> &getSpeciesColors(
+      std::size_t compartmentIndex) const;
+  const std::vector<double> &getTimePoints() const;
+  const AvgMinMax &getAvgMinMax(std::size_t timeIndex,
+                                std::size_t compartmentIndex,
+                                std::size_t speciesIndex) const;
+  std::vector<double> getConc(std::size_t timeIndex,
+                              std::size_t compartmentIndex,
+                              std::size_t speciesIndex) const;
+  QImage getConcImage(std::size_t timeIndex) const;
 };
 
 }  // namespace simulate

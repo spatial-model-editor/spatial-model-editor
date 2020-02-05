@@ -4,18 +4,15 @@
 #include <QFile>
 #include <locale>
 
-#include "dune.hpp"
 #include "logger.hpp"
 #include "sbml.hpp"
 #include "simulate.hpp"
 #include "version.hpp"
 
-enum class Simulators { DUNE, Pixel };
-
-static std::string toString(const Simulators &s) {
-  if (s == Simulators::DUNE) {
+static std::string toString(const simulate::SimulatorType &s) {
+  if (s == simulate::SimulatorType::DUNE) {
     return "DUNE";
-  } else if (s == Simulators::Pixel) {
+  } else if (s == simulate::SimulatorType::Pixel) {
     return "Pixel";
   }
   return {};
@@ -30,7 +27,8 @@ struct BenchmarkParams {
                                    "circadian-clock",
                                    "gray-scott",
                                    "liver-simplified"};
-  std::vector<Simulators> simulators{Simulators::DUNE, Simulators::Pixel};
+  std::vector<simulate::SimulatorType> simulators{
+      simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel};
   double simulator_timestep{1e-3};
 };
 
@@ -81,9 +79,9 @@ static BenchmarkParams parseArgs(int argc, char *argv[]) {
   if (argc > 3) {
     // simulators
     if (std::string a = argv[3]; a[0] == 'p' || a[0] == 'P') {
-      params.simulators = {Simulators::Pixel};
+      params.simulators = {simulate::SimulatorType::Pixel};
     } else if (a[0] == 'd' || a[0] == 'D') {
-      params.simulators = {Simulators::DUNE};
+      params.simulators = {simulate::SimulatorType::DUNE};
     }
   }
   if (argc > 4) {
@@ -136,19 +134,7 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
       s.importSBMLString(f.readAll().toStdString());
 
       // setup simulator
-      std::unique_ptr<simulate::Simulate> simPixel;
-      std::unique_ptr<dune::DuneSimulation> simDune;
-      if (simulator == Simulators::DUNE) {
-        simDune = std::make_unique<dune::DuneSimulation>(s, dt, QSize(1, 1));
-      } else {
-        simPixel = std::make_unique<simulate::Simulate>(&s);
-        for (const auto &compartmentID : s.compartments) {
-          simPixel->addCompartment(&s.mapCompIdToGeometry.at(compartmentID));
-        }
-        for (auto &membrane : s.membraneVec) {
-          simPixel->addMembrane(&membrane);
-        }
-      }
+      simulate::Simulation sim(s, simulator);
 
       // do a series of simulations
       // increase length of run by a factor of 2 each time
@@ -162,13 +148,7 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
         iter += iter;
         ++ln2iter;
         time.start();
-        if (simulator == Simulators::DUNE) {
-          simDune->doTimestep(iter * dt);
-        } else {
-          for (int i = 0; i < iter; ++i) {
-            simPixel->integrateForwardsEuler(dt);
-          }
-        }
+        sim.doTimestep(iter * dt, dt);
         elapsed_ms = time.elapsed();
       }
       double ms = static_cast<double>(elapsed_ms) / static_cast<double>(iter);

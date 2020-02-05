@@ -76,10 +76,12 @@ find_package(spdlog REQUIRED)
 target_sources(core
                PRIVATE
                boundary.cpp
-               dune.cpp
+               duneini.cpp
+               dunesim.cpp
                geometry.cpp
                mesh.cpp
                pde.cpp
+               pixelsim.cpp
                sbml.cpp
                simulate.cpp
                symbolic.cpp
@@ -91,11 +93,14 @@ target_sources(core
 
 target_sources(core
                PRIVATE
+               basesim.hpp
                boundary.hpp
-               dune.hpp
+               duneini.hpp
+               dunesim.hpp
                geometry.hpp
                mesh.hpp
                pde.hpp
+               pixelsim.hpp
                sbml.hpp
                simulate.hpp
                symbolic.hpp

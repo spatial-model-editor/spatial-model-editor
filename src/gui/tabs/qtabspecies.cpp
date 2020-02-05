@@ -69,11 +69,6 @@ QTabSpecies::QTabSpecies(sbml::SbmlDocWrapper &doc,
 QTabSpecies::~QTabSpecies() = default;
 
 void QTabSpecies::loadModelData(const QString &selection) {
-  // clear any changes to species concentrations by simulations
-  // reset all fields to their initial values
-  for (auto &field : sbmlDoc.mapSpeciesIdToField) {
-    field.second.conc = field.second.init;
-  }
   enableWidgets(false);
   // update tree list of species
   auto *ls = ui->listSpecies;

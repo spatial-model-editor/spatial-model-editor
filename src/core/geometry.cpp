@@ -83,9 +83,7 @@ Field::Field(const Compartment *geom, const std::string &specID,
       geometry(geom),
       diffusionConstant(diffConst),
       colour(col),
-      conc(geom->nPixels(), 0.0),
-      dcdt(geom->nPixels(), 0.0),
-      init(geom->nPixels(), 0.0) {
+      conc(geom->nPixels(), 0.0) {
   SPDLOG_INFO("speciesID: {}", speciesID);
   SPDLOG_INFO("compartmentID: {}", geom->getId());
 }
@@ -113,7 +111,6 @@ void Field::importConcentration(
     int arrayIndex = point.x() + img.width() * (img.height() - 1 - point.y());
     conc[i] = sbmlConcentrationArray[static_cast<std::size_t>(arrayIndex)];
   }
-  init = conc;
   isUniformConcentration = false;
 }
 
@@ -121,7 +118,6 @@ void Field::setUniformConcentration(double concentration) {
   SPDLOG_INFO("species {}, compartment {}", speciesID, geometry->getId());
   SPDLOG_INFO("  - concentration = {}", concentration);
   std::fill(conc.begin(), conc.end(), concentration);
-  init = conc;
   isUniformConcentration = true;
 }
 
@@ -159,29 +155,6 @@ std::vector<double> Field::getConcentrationArray() const {
   return arr;
 }
 
-void Field::applyDiffusionOperator() {
-  const Compartment *g = geometry;
-  double pixelWidth = g->getPixelWidth();
-  double d = diffusionConstant / pixelWidth / pixelWidth;
-  for (std::size_t i = 0; i < geometry->nPixels(); ++i) {
-    dcdt[i] = d * (conc[g->up_x(i)] + conc[g->dn_x(i)] + conc[g->up_y(i)] +
-                   conc[g->dn_y(i)] - 4.0 * conc[i]);
-  }
-}
-
-double Field::getMeanConcentration() const {
-  return std::accumulate(conc.cbegin(), conc.cend(), static_cast<double>(0)) /
-         static_cast<double>(conc.size());
-}
-
-double Field::getMinConcentration() const {
-  return *std::min_element(conc.cbegin(), conc.cend());
-}
-
-double Field::getMaxConcentration() const {
-  return *std::max_element(conc.cbegin(), conc.cend());
-}
-
 void Field::setCompartment(const Compartment *compartment) {
   if (geometry == compartment) {
     return;
@@ -189,8 +162,6 @@ void Field::setCompartment(const Compartment *compartment) {
   SPDLOG_DEBUG("Changing compartment to {}", compartment->getId());
   geometry = compartment;
   conc.assign(geometry->nPixels(), 0.0);
-  dcdt = conc;
-  init = conc;
 }
 
 }  // namespace geometry

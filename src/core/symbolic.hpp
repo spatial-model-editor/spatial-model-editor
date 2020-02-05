@@ -5,7 +5,7 @@
 //  - parses expressions
 //  - returns simplified expressions with constants inlined as string
 //  - returns differential of any expression wrt any variable as string
-//  - evaluates expressions (optionally with LLVM compilation)
+//  - evaluates expressions (with LLVM compilation)
 
 #pragma once
 

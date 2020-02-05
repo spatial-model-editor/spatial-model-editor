@@ -67,6 +67,8 @@ std::optional<std::size_t> QPointIndexer::getIndex(const QPoint &point) const {
   return index;
 }
 
+std::size_t QPointIndexer::getNumPoints() const { return nPoints; }
+
 QPointUniqueIndexer::QPointUniqueIndexer(const QSize &boundingBox,
                                          const std::vector<QPoint> &qPoints)
     : flattener(boundingBox),
@@ -106,12 +108,54 @@ std::vector<QPoint> QPointUniqueIndexer::getPoints() const { return points; }
 
 }  // namespace utils
 
+//
 
+//
 
+//
 
+//
 
+//
 
+//
 
+//
 
+//
 
+//
 
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//

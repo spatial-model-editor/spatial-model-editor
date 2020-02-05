@@ -62,10 +62,6 @@ class Field {
   QColor colour;
   // field of species concentration
   std::vector<double> conc;
-  // field of dcdt values
-  std::vector<double> dcdt;
-  // field of initial species concentration
-  std::vector<double> init;
   Field() = default;
   Field(const Compartment *geom, const std::string &specID,
         double diffConst = 1.0, const QColor &col = QColor(255, 0, 0));
@@ -73,13 +69,8 @@ class Field {
   void importConcentration(const std::vector<double> &sbmlConcentrationArray);
   QImage getConcentrationImage() const;
   std::vector<double> getConcentrationArray() const;
-  double getMeanConcentration() const;
-  double getMinConcentration() const;
-  double getMaxConcentration() const;
   bool isUniformConcentration = true;
   bool isSpatial = true;
-  // field.dcdt = result of the diffusion operator acting on field.conc
-  void applyDiffusionOperator();
   void setCompartment(const Compartment *compartment);
 };
 

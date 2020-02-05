@@ -29,7 +29,7 @@
       </unitDefinition>
     </listOfUnitDefinitions>
     <listOfCompartments>
-      <compartment id="circle" name="circle" spatialDimensions="2" size="3149" units="unit_of_volume" constant="true">
+      <compartment id="circle" name="circle" spatialDimensions="2" size="30" units="unit_of_volume" constant="true">
         <spatial:compartmentMapping spatial:id="circle_compartmentMapping" spatial:domainType="circle_domainType" spatial:unitSize="1"/>
       </compartment>
     </listOfCompartments>
@@ -158,11 +158,11 @@
         </spatial:sampledFieldGeometry>
         <spatial:parametricGeometry spatial:id="parametricGeometry" spatial:isActive="true">
           <annotation>
-            <spatialModelEditor:mesh xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:maxBoundaryPoints="12 12" spatialModelEditor:maxTriangleAreas="40" spatialModelEditor:membraneWidths="1.00000000000000000e+00 1.00000000000000000e+00"/>
+            <spatialModelEditor:mesh xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:maxBoundaryPoints="12" spatialModelEditor:maxTriangleAreas="40" spatialModelEditor:membraneWidths="1"/>
           </annotation>
           <spatial:spatialPoints spatial:id="spatialPoints" spatial:compression="uncompressed" spatial:arrayDataLength="18" spatial:dataType="double">2 3 2 6 3 7 6 7 7 6 7 4 5 2 3 2 4.35714285714286 4.64285714285714 </spatial:spatialPoints>
           <spatial:listOfParametricObjects>
-            <spatial:parametricObject spatial:id="circle_triangles" spatial:polygonType="triangle" spatial:domainType="circle_domainType" spatial:pointIndexLength="24" spatial:compression="uncompressed" spatial:dataType="uint32">0 7 8 1 0 8 7 6 8 3 2 8 6 5 8 3 8 4 8 5 4 2 1 8 </spatial:parametricObject>
+            <spatial:parametricObject spatial:id="circle_triangles" spatial:polygonType="triangle" spatial:domainType="circle_domainType" spatial:pointIndexLength="24" spatial:compression="uncompressed" spatial:dataType="uint32">0 7 8 8 5 4 1 0 8 7 6 8 6 5 8 3 2 8 3 8 4 2 1 8 </spatial:parametricObject>
           </spatial:listOfParametricObjects>
         </spatial:parametricGeometry>
       </spatial:listOfGeometryDefinitions>

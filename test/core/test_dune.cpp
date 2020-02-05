@@ -5,9 +5,10 @@
 #include <QFile>
 
 #include "catch_wrapper.hpp"
-#include "dune.hpp"
+#include "duneini.hpp"
 #include "sbml.hpp"
 #include "sbml_test_data/invalid_dune_names.hpp"
+#include "simulate.hpp"
 
 SCENARIO("DUNE: ini files", "[core][dune][ini]") {
   GIVEN("IniFile class") {
@@ -188,73 +189,16 @@ SCENARIO("DUNE: simulation", "[core][dune][simulate]") {
     s.setInitialConcentration("B", 1.0);
     s.setInitialConcentration("C", 0.0);
 
-    dune::DuneSimulation duneSim(s, 0.01, QSize(200, 200));
-    REQUIRE(duneSim.getAverageConcentration("A") == dbl_approx(1.0));
-    REQUIRE(duneSim.getAverageConcentration("B") == dbl_approx(1.0));
-    REQUIRE(duneSim.getAverageConcentration("C") == dbl_approx(0.0));
-    duneSim.doTimestep(0.05);
-    auto imgConcFull = duneSim.getConcImage();
-    auto imgConcLinear = duneSim.getConcImage(true);
-    REQUIRE(std::abs(duneSim.getAverageConcentration("A") - 0.995) < 5e-5);
-    REQUIRE(std::abs(duneSim.getAverageConcentration("B") - 0.995) < 5e-5);
-    REQUIRE(std::abs(duneSim.getAverageConcentration("C") - 0.005) < 5e-5);
-    REQUIRE(imgConcFull.size() == QSize(200, 200));
-    REQUIRE(imgConcLinear.size() == QSize(200, 200));
-    std::vector<QPoint> points{
-        QPoint(0, 0),    QPoint(12, 54),   QPoint(33, 31),
-        QPoint(66, 3),   QPoint(88, 44),   QPoint(144, 189),
-        QPoint(170, 14), QPoint(199, 199), QPoint(175, 77)};
-    for (const auto& point : points) {
-      REQUIRE(imgConcFull.pixel(point) == imgConcLinear.pixel(point));
-    }
-  }
-}
-
-SCENARIO("DUNE: visualization", "[core][dune][visualization]") {
-  GIVEN("500x300 image: full vs 1st order visualization methods equivalent") {
-    sbml::SbmlDocWrapper s;
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    s.importSBMLString(f.readAll().toStdString());
-
-    QSize imgSize(500, 300);
-    dune::DuneSimulation duneSim(s, 0.01, imgSize);
-    auto imgConcFull = duneSim.getConcImage();
-    auto imgConcLinear = duneSim.getConcImage(true);
-    // 1-1 aspect ratio maintained:
-    REQUIRE(imgConcFull.size() == QSize(300, 300));
-    REQUIRE(imgConcLinear.size() == QSize(300, 300));
-    // 1st order FEM: linear interpolation should be equivalent
-    std::vector<QPoint> points{
-        QPoint(0, 0),    QPoint(12, 54),   QPoint(33, 31),
-        QPoint(66, 3),   QPoint(88, 44),   QPoint(144, 189),
-        QPoint(170, 14), QPoint(199, 199), QPoint(175, 77)};
-    for (const auto& point : points) {
-      REQUIRE(imgConcFull.pixel(point) == imgConcLinear.pixel(point));
-    }
-  }
-  GIVEN("analytic concentration") {
-    sbml::SbmlDocWrapper s;
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    s.importSBMLString(f.readAll().toStdString());
-
-    s.setAnalyticConcentration("A", "x");
-    s.setAnalyticConcentration("B", "y");
-    s.setAnalyticConcentration("C", "0");
-
-    QSize imgSize(200, 200);
-    dune::DuneSimulation duneSim(s, 0.01, imgSize);
-    auto imgConc = duneSim.getConcImage();
-    imgConc.save("img.png");
-    QPoint p(50, 130);
-    auto oldCol = imgConc.pixel(p);
-    for (int i = 0; i < 5; ++i) {
-      p += QPoint(+10, -10);
-      auto newCol = imgConc.pixel(p);
-      CAPTURE(p);
-      REQUIRE(newCol > oldCol);
-      oldCol = newCol;
-    }
+    simulate::Simulation duneSim(s);
+    REQUIRE(duneSim.getAvgMinMax(0, 0, 0).avg == dbl_approx(1.0));
+    REQUIRE(duneSim.getAvgMinMax(0, 0, 1).avg == dbl_approx(1.0));
+    REQUIRE(duneSim.getAvgMinMax(0, 0, 2).avg == dbl_approx(0.0));
+    duneSim.doTimestep(0.05, 0.01);
+    auto timeIndex = duneSim.getTimePoints().size() - 1;
+    auto imgConc = duneSim.getConcImage(timeIndex);
+    REQUIRE(std::abs(duneSim.getAvgMinMax(timeIndex, 0, 0).avg - 0.995) < 1e-4);
+    REQUIRE(std::abs(duneSim.getAvgMinMax(timeIndex, 0, 1).avg - 0.995) < 1e-4);
+    REQUIRE(std::abs(duneSim.getAvgMinMax(timeIndex, 0, 2).avg - 0.005) < 1e-4);
+    REQUIRE(imgConc.size() == QSize(100, 100));
   }
 }
