@@ -6,8 +6,12 @@ target_sources(gui
                dialoganalytic.hpp
                dialogconcentrationimage.cpp
                dialogconcentrationimage.hpp
+               dialogdisplayoptions.cpp
+               dialogdisplayoptions.hpp
                dialogimagesize.cpp
                dialogimagesize.hpp
+               dialogimageslice.cpp
+               dialogimageslice.hpp
                dialogunits.cpp
                dialogunits.hpp)
 

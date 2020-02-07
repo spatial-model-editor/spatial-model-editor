@@ -16,6 +16,39 @@
   <layout class="QHBoxLayout" name="horizontalLayout">
    <item>
     <layout class="QGridLayout" name="gridSimulate">
+     <item row="0" column="7">
+      <widget class="QPushButton" name="btnStopSimulation">
+       <property name="text">
+        <string>Stop</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QLabel" name="lblSimInterval">
+       <property name="text">
+        <string>Image interval:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="5">
+      <widget class="QLineEdit" name="txtSimDt">
+       <property name="whatsThis">
+        <string>&lt;h4&gt;Simulation dt&lt;/h4&gt;
+&lt;p&gt;The size of the timestep used by the numerical integrator.&lt;/p&gt;
+&lt;p&gt;If the simulation is unstable, a smaller timestep may improve the situation, although it will also take longer for the simulation to run.&lt;/p&gt;</string>
+       </property>
+       <property name="text">
+        <string>0.01</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="4">
+      <widget class="QLabel" name="lblSimDt">
+       <property name="text">
+        <string>dt:</string>
+       </property>
+      </widget>
+     </item>
      <item row="0" column="8">
       <widget class="QPushButton" name="btnResetSimulation">
        <property name="whatsThis">
@@ -26,10 +59,10 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="4">
-      <widget class="QLabel" name="lblSimDt">
+     <item row="0" column="0">
+      <widget class="QLabel" name="lblSimLength">
        <property name="text">
-        <string>dt:</string>
+        <string>Simulation length:</string>
        </property>
       </widget>
      </item>
@@ -47,48 +80,6 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="6">
-      <widget class="QPushButton" name="btnSimulate">
-       <property name="whatsThis">
-        <string>Run a simulation of the specified length, using the timestep 'dt' for the numerical integration</string>
-       </property>
-       <property name="text">
-        <string>Simulate</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="2">
-      <widget class="QLabel" name="lblSimInterval">
-       <property name="text">
-        <string>Image interval:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0" colspan="9">
-      <widget class="QSlider" name="hslideTime">
-       <property name="maximum">
-        <number>0</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::NoTicks</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="5">
-      <widget class="QLineEdit" name="txtSimDt">
-       <property name="whatsThis">
-        <string>&lt;h4&gt;Simulation dt&lt;/h4&gt;
-&lt;p&gt;The size of the timestep used by the numerical integrator.&lt;/p&gt;
-&lt;p&gt;If the simulation is unstable, a smaller timestep may improve the situation, although it will also take longer for the simulation to run.&lt;/p&gt;</string>
-       </property>
-       <property name="text">
-        <string>0.01</string>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="3">
       <widget class="QLineEdit" name="txtSimInterval">
        <property name="whatsThis">
@@ -101,17 +92,50 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="lblSimLength">
+     <item row="0" column="6">
+      <widget class="QPushButton" name="btnSimulate">
+       <property name="whatsThis">
+        <string>Run a simulation of the specified length, using the timestep 'dt' for the numerical integration</string>
+       </property>
        <property name="text">
-        <string>Simulation length:</string>
+        <string>Simulate</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="7">
-      <widget class="QPushButton" name="btnStopSimulation">
+     <item row="2" column="7" colspan="2">
+      <widget class="QPushButton" name="btnDisplayOptions">
        <property name="text">
-        <string>Stop</string>
+        <string>Display options...</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="lblCurrentTime">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1" colspan="5">
+      <widget class="QSlider" name="hslideTime">
+       <property name="maximum">
+        <number>0</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="tickPosition">
+        <enum>QSlider::NoTicks</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="6">
+      <widget class="QPushButton" name="btnSliceImage">
+       <property name="text">
+        <string>Slice image...</string>
        </property>
       </widget>
      </item>

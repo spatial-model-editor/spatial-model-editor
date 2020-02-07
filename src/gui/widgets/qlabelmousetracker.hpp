@@ -26,6 +26,8 @@ class QLabelMouseTracker : public QLabel {
   const QRgb &getColour() const;
   // value of mask index at last mouse click position
   int getMaskIndex() const;
+  void setAspectRatioMode(Qt::AspectRatioMode aspectRatioMode);
+  void setTransformationMode(Qt::TransformationMode transformationMode);
 
  signals:
   void mouseClicked(QRgb col, QPoint point);
@@ -39,6 +41,8 @@ class QLabelMouseTracker : public QLabel {
   void wheelEvent(QWheelEvent *ev) override;
 
  private:
+  Qt::AspectRatioMode aspectRatioMode = Qt::KeepAspectRatio;
+  Qt::TransformationMode transformationMode = Qt::FastTransformation;
   // (x,y) location of current pixel
   bool setCurrentPixel(const QMouseEvent *ev);
   void resizeImage(const QSize &size);

@@ -53,6 +53,9 @@ SimCompartment::SimCompartment(const sbml::SbmlDocWrapper &doc,
       double pixelWidth = comp.getPixelWidth();
       diffConstants.push_back(field->diffusionConstant / pixelWidth /
                               pixelWidth);
+      // forwards euler stability bound: dt < a^2/4D
+      maxStableTimestep =
+          std::min(maxStableTimestep, 1.0 / (4.0 * diffConstants.back()));
       fields.push_back(field);
       if (!field->isSpatial) {
         nonSpatialSpeciesIndices.push_back(fields.size() - 1);
@@ -139,6 +142,10 @@ const std::vector<QPoint> &SimCompartment::getPixels() const {
 
 std::vector<double> &SimCompartment::getDcdt() { return dcdt; }
 
+double SimCompartment::getMaxStableTimestep() const {
+  return maxStableTimestep;
+}
+
 SimMembrane::SimMembrane(const sbml::SbmlDocWrapper &doc,
                          const geometry::Membrane &membrane_ptr,
                          SimCompartment &simCompA, SimCompartment &simCompB)
@@ -215,6 +222,8 @@ PixelSim::PixelSim(const sbml::SbmlDocWrapper &sbmlDoc) : doc(sbmlDoc) {
   for (const auto &compartmentID : doc.compartments) {
     simCompartments.emplace_back(doc,
                                  doc.mapCompIdToGeometry.at(compartmentID));
+    maxStableTimestep = std::min(maxStableTimestep,
+                                 simCompartments.back().getMaxStableTimestep());
   }
   // add membranes
   for (auto &membrane : doc.membraneVec) {
@@ -248,6 +257,12 @@ PixelSim::~PixelSim() = default;
 
 void PixelSim::doTimestep(double t, double dt) {
   double tNow = 0;
+  double timestep = dt;
+  if (timestep >= maxStableTimestep) {
+    timestep = maxStableTimestep;
+    SPDLOG_INFO("requested dt={} above stability bound {}: using dt={}", dt,
+                maxStableTimestep, timestep);
+  }
   while (tNow < t) {
     // calculate dcd/dt in all compartments
     for (auto &sim : simCompartments) {
@@ -259,9 +274,9 @@ void PixelSim::doTimestep(double t, double dt) {
       sim.evaluateReactions();
     }
     for (auto &sim : simCompartments) {
-      sim.doForwardsEulerTimestep(dt);
+      sim.doForwardsEulerTimestep(timestep);
     }
-    tNow += dt;
+    tNow += timestep;
   }
 }
 

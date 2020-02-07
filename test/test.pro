@@ -17,7 +17,9 @@ SOURCES += \
     gui/test_mainwindow.cpp \
     gui/dialogs/test_dialoganalytic.cpp \
     gui/dialogs/test_dialogconcentrationimage.cpp \
+    gui/dialogs/test_dialogdisplayoptions.cpp \
     gui/dialogs/test_dialogimagesize.cpp \
+    gui/dialogs/test_dialogimageslice.cpp \
     gui/dialogs/test_dialogunits.cpp \
     gui/widgets/test_qlabelmousetracker.cpp \
     gui/widgets/test_qplaintextmathedit.cpp \

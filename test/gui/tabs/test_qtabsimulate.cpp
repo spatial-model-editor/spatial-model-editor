@@ -26,6 +26,7 @@ SCENARIO("Simulate Tab", "[gui][tabs][simulate]") {
   auto *btnResetSimulation = tab.findChild<QPushButton *>("btnResetSimulation");
   auto *hslideTime = tab.findChild<QSlider *>("hslideTime");
   auto *pltPlot = tab.findChild<QCustomPlot *>("pltPlot");
+  auto *btnDisplayOptions = tab.findChild<QPushButton *>("btnDisplayOptions");
   REQUIRE(pltPlot != nullptr);
 
   if (QFile f(":/models/ABtoC.xml"); f.open(QIODevice::ReadOnly)) {
@@ -35,8 +36,8 @@ SCENARIO("Simulate Tab", "[gui][tabs][simulate]") {
   txtSimLength->setFocus();
 
   // do DUNE simulation with two timesteps of 0.1
-  REQUIRE(hslideTime->isEnabled() == false);
-  REQUIRE(pltPlot->graphCount() == 0);
+  REQUIRE(hslideTime->isEnabled() == true);
+  REQUIRE(pltPlot->graphCount() == 9);
   sendKeyEvents(txtSimLength,
                 {"End", "Backspace", "Backspace", "Backspace", "0", ".", "2"});
   sendKeyEvents(txtSimInterval,
@@ -50,8 +51,24 @@ SCENARIO("Simulate Tab", "[gui][tabs][simulate]") {
   REQUIRE(pltPlot->graphCount() == 9);
 
   sendMouseClick(btnResetSimulation);
-  REQUIRE(hslideTime->isEnabled() == false);
-  REQUIRE(pltPlot->graphCount() == 0);
+  REQUIRE(hslideTime->isEnabled() == true);
+  REQUIRE(pltPlot->graphCount() == 9);
+
+  // hide all species
+  mwt.addUserAction({"Space"});
+  mwt.start();
+  sendMouseClick(btnDisplayOptions);
+  REQUIRE(pltPlot->graph(0)->visible() == false);
+  REQUIRE(pltPlot->graph(3)->visible() == false);
+  REQUIRE(pltPlot->graph(6)->visible() == false);
+
+  // only show species B
+  mwt.addUserAction({"Down", "Down", "Space"});
+  mwt.start();
+  sendMouseClick(btnDisplayOptions);
+  REQUIRE(pltPlot->graph(0)->visible() == false);
+  REQUIRE(pltPlot->graph(3)->visible() == true);
+  REQUIRE(pltPlot->graph(6)->visible() == false);
 
   // repeat simulation using Pixel simulator
   tab.useDune(false);
@@ -62,6 +79,6 @@ SCENARIO("Simulate Tab", "[gui][tabs][simulate]") {
   REQUIRE(pltPlot->graphCount() == 9);
 
   sendMouseClick(btnResetSimulation);
-  REQUIRE(hslideTime->isEnabled() == false);
-  REQUIRE(pltPlot->graphCount() == 0);
+  REQUIRE(hslideTime->isEnabled() == true);
+  REQUIRE(pltPlot->graphCount() == 9);
 }

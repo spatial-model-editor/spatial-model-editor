@@ -81,8 +81,15 @@ void QLabelMouseTracker::resizeImage(const QSize &size) {
     return;
   }
   pixmap = QPixmap::fromImage(
-      image.scaled(size, Qt::KeepAspectRatio, Qt::FastTransformation));
+      image.scaled(size, aspectRatioMode, transformationMode));
   SPDLOG_DEBUG("resize -> {}x{}, pixmap -> {}x{}", size.width(), size.height(),
                pixmap.size().width(), pixmap.size().height());
   this->setPixmap(pixmap);
+}
+
+void QLabelMouseTracker::setAspectRatioMode(Qt::AspectRatioMode mode) {
+  aspectRatioMode = mode;
+}
+void QLabelMouseTracker::setTransformationMode(Qt::TransformationMode mode) {
+  transformationMode = mode;
 }

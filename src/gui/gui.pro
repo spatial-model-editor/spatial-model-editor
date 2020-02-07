@@ -15,7 +15,9 @@ SOURCES += \
     $$TOPDIR/src/gui/dialogs/dialogabout.cpp \
     $$TOPDIR/src/gui/dialogs/dialoganalytic.cpp \
     $$TOPDIR/src/gui/dialogs/dialogconcentrationimage.cpp \
+    $$TOPDIR/src/gui/dialogs/dialogdisplayoptions.cpp \
     $$TOPDIR/src/gui/dialogs/dialogimagesize.cpp \
+    $$TOPDIR/src/gui/dialogs/dialogimageslice.cpp \
     $$TOPDIR/src/gui/dialogs/dialogunits.cpp \
     $$TOPDIR/src/gui/tabs/qtabfunctions.cpp \
     $$TOPDIR/src/gui/tabs/qtabgeometry.cpp \
@@ -31,7 +33,9 @@ HEADERS += \
     $$TOPDIR/src/gui/dialogs/dialogabout.hpp \
     $$TOPDIR/src/gui/dialogs/dialoganalytic.hpp \
     $$TOPDIR/src/gui/dialogs/dialogconcentrationimage.hpp \
+    $$TOPDIR/src/gui/dialogs/dialogdisplayoptions.hpp \
     $$TOPDIR/src/gui/dialogs/dialogimagesize.hpp \
+    $$TOPDIR/src/gui/dialogs/dialogimageslice.hpp \
     $$TOPDIR/src/gui/dialogs/dialogunits.hpp \
     $$TOPDIR/src/gui/tabs/qtabfunctions.hpp \
     $$TOPDIR/src/gui/tabs/qtabgeometry.hpp \
@@ -46,7 +50,9 @@ FORMS += \
     $$TOPDIR/src/gui/dialogs/dialogabout.ui \
     $$TOPDIR/src/gui/dialogs/dialoganalytic.ui \
     $$TOPDIR/src/gui/dialogs/dialogconcentrationimage.ui \
+    $$TOPDIR/src/gui/dialogs/dialogdisplayoptions.ui \
     $$TOPDIR/src/gui/dialogs/dialogimagesize.ui \
+    $$TOPDIR/src/gui/dialogs/dialogimageslice.ui \
     $$TOPDIR/src/gui/dialogs/dialogunits.ui \
     $$TOPDIR/src/gui/tabs/qtabfunctions.ui \
     $$TOPDIR/src/gui/tabs/qtabgeometry.ui \

@@ -5,12 +5,15 @@
 #include <QWidget>
 #include <memory>
 
+#include "simulate.hpp"
+
 namespace Ui {
 class QTabSimulate;
 }
 class QCustomPlot;
-class QCPItemStraightLine;
 class QCPAbstractPlottable;
+class QCPItemStraightLine;
+class QCPTextElement;
 class QLabelMouseTracker;
 namespace sbml {
 class SbmlDocWrapper;
@@ -34,15 +37,24 @@ class QTabSimulate : public QWidget {
   sbml::SbmlDocWrapper &sbmlDoc;
   QLabelMouseTracker *lblGeometry;
   QCustomPlot *pltPlot;
+  QCPTextElement *pltTitle;
   QCPItemStraightLine *pltTimeLine;
+  std::unique_ptr<simulate::Simulation> sim;
+  simulate::SimulatorType simType = simulate::SimulatorType::DUNE;
   QVector<double> time;
   QVector<QImage> images;
+  QStringList compartmentNames;
+  std::vector<QStringList> speciesNames;
+  std::vector<std::vector<std::size_t>> compartmentSpeciesToDraw;
+  bool normaliseImageIntensityOverWholeSimulation = false;
+  std::vector<bool> speciesVisible;
+  bool plotShowMinMax = true;
   bool isSimulationRunning = false;
-  bool useDuneSimulator = true;
 
   void btnSimulate_clicked();
-
+  void btnSliceImage_clicked();
+  void updateSpeciesToDraw();
+  void btnDisplayOptions_clicked();
   void graphClicked(const QMouseEvent *event);
-
   void hslideTime_valueChanged(int value);
 };
