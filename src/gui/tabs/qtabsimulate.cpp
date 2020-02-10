@@ -54,13 +54,7 @@ QTabSimulate::QTabSimulate(sbml::SbmlDocWrapper &doc,
 
 QTabSimulate::~QTabSimulate() = default;
 
-void QTabSimulate::loadModelData() {
-  if (sim == nullptr) {
-    reset();
-  } else {
-    hslideTime_valueChanged(ui->hslideTime->value());
-  }
-}
+void QTabSimulate::loadModelData() { reset(); }
 
 void QTabSimulate::stopSimulation() {
   SPDLOG_INFO("Simulation cancelled by user");
@@ -83,11 +77,15 @@ void QTabSimulate::reset() {
   ui->hslideTime->setMaximum(0);
   images.clear();
   time.clear();
-  normaliseImageIntensityOverWholeSimulation = false;
+  normaliseImageIntensityOverWholeSimulation = true;
   if (!(sbmlDoc.isValid && sbmlDoc.hasValidGeometry)) {
     ui->hslideTime->setEnabled(false);
     return;
   }
+  // Note: this reset is required to delete all current DUNE objects *before*
+  // creating a new one, otherwise the new ones make use of the existing ones,
+  // and once they are deleted it dereferences a nullptr and segfaults...
+  sim.reset();
   sim = std::make_unique<simulate::Simulation>(sbmlDoc, simType);
 
   // setup species names
@@ -154,6 +152,7 @@ void QTabSimulate::reset() {
   images.push_back(sim->getConcImage(0));
   ui->hslideTime->setEnabled(true);
   ui->hslideTime->setValue(0);
+  lblGeometry->setImage(images.back());
 }
 
 void QTabSimulate::btnSimulate_clicked() {
@@ -170,7 +169,11 @@ void QTabSimulate::btnSimulate_clicked() {
   QApplication::processEvents();
   // integrate Model
   for (int i_image = 0; i_image < n_images; ++i_image) {
-    sim->doTimestep(dtImage, dt);
+    if (simType == simulate::SimulatorType::DUNE) {
+      sim->doTimestep(dtImage, std::numeric_limits<double>::max(), dt);
+    } else {
+      sim->doTimestep(dtImage, dt, std::numeric_limits<double>::max());
+    }
     QApplication::processEvents();
     if (!isSimulationRunning) {
       break;
@@ -198,14 +201,12 @@ void QTabSimulate::btnSimulate_clicked() {
     pltPlot->replot();
   }
 
-  // display vertical at current time point
+  // add vertical at current time point
   pltTimeLine->setVisible(true);
   pltTimeLine->point1->setCoords(time.back(), 0);
   pltTimeLine->point2->setCoords(time.back(), 1);
 
-  // rescale & replot plot
-  pltPlot->xAxis->rescale();
-  pltPlot->replot();
+  updatePlotAndImages();
 
   // enable slider to choose time to display
   ui->hslideTime->setEnabled(true);
@@ -213,7 +214,6 @@ void QTabSimulate::btnSimulate_clicked() {
   ui->hslideTime->setMaximum(time.size() - 1);
   ui->hslideTime->setValue(time.size() - 1);
 
-  // ui->statusBar->showMessage("Simulation complete.");
   SPDLOG_INFO("simulation run-time: {}s",
               static_cast<double>(qElapsedTimer.elapsed()) / 1000.0);
   this->setCursor(Qt::ArrowCursor);
@@ -241,6 +241,34 @@ void QTabSimulate::updateSpeciesToDraw() {
   }
 }
 
+void QTabSimulate::updatePlotAndImages() {
+  // update plot
+  int iSpecies = 0;
+  pltPlot->legend->clearItems();
+  for (bool visible : speciesVisible) {
+    bool minMaxVisible = visible && plotShowMinMax;
+    pltPlot->graph(3 * iSpecies)->setVisible(visible);
+    if (visible) {
+      pltPlot->graph(3 * iSpecies)->addToLegend();
+    }
+    pltPlot->graph(3 * iSpecies + 1)->setVisible(minMaxVisible);
+    pltPlot->graph(3 * iSpecies + 2)->setVisible(minMaxVisible);
+    if (minMaxVisible) {
+      pltPlot->graph(3 * iSpecies + 1)->addToLegend();
+    }
+    ++iSpecies;
+  }
+  pltPlot->rescaleAxes(true);
+  pltPlot->replot();
+  updateSpeciesToDraw();
+  // update images
+  for (int iTime = 0; iTime < time.size(); ++iTime) {
+    images[iTime] = sim->getConcImage(
+        static_cast<std::size_t>(iTime), compartmentSpeciesToDraw,
+        normaliseImageIntensityOverWholeSimulation);
+  }
+}
+
 void QTabSimulate::btnDisplayOptions_clicked() {
   int norm = normaliseImageIntensityOverWholeSimulation ? 1 : 0;
   DialogDisplayOptions dialog(compartmentNames, speciesNames, speciesVisible,
@@ -250,31 +278,7 @@ void QTabSimulate::btnDisplayOptions_clicked() {
     speciesVisible = dialog.getShowSpecies();
     normaliseImageIntensityOverWholeSimulation =
         dialog.getNormalisationType() == 1;
-    // update plot
-    int iSpecies = 0;
-    pltPlot->legend->clearItems();
-    for (bool visible : speciesVisible) {
-      bool minMaxVisible = visible && plotShowMinMax;
-      pltPlot->graph(3 * iSpecies)->setVisible(visible);
-      if (visible) {
-        pltPlot->graph(3 * iSpecies)->addToLegend();
-      }
-      pltPlot->graph(3 * iSpecies + 1)->setVisible(minMaxVisible);
-      pltPlot->graph(3 * iSpecies + 2)->setVisible(minMaxVisible);
-      if (minMaxVisible) {
-        pltPlot->graph(3 * iSpecies + 1)->addToLegend();
-      }
-      ++iSpecies;
-    }
-    pltPlot->rescaleAxes(true);
-    pltPlot->replot();
-    updateSpeciesToDraw();
-    // update images
-    for (int iTime = 0; iTime < time.size(); ++iTime) {
-      images[iTime] = sim->getConcImage(
-          static_cast<std::size_t>(iTime), compartmentSpeciesToDraw,
-          normaliseImageIntensityOverWholeSimulation);
-    }
+    updatePlotAndImages();
     hslideTime_valueChanged(ui->hslideTime->value());
   }
 }

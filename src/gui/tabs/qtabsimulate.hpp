@@ -46,7 +46,7 @@ class QTabSimulate : public QWidget {
   QStringList compartmentNames;
   std::vector<QStringList> speciesNames;
   std::vector<std::vector<std::size_t>> compartmentSpeciesToDraw;
-  bool normaliseImageIntensityOverWholeSimulation = false;
+  bool normaliseImageIntensityOverWholeSimulation = true;
   std::vector<bool> speciesVisible;
   bool plotShowMinMax = true;
   bool isSimulationRunning = false;
@@ -54,6 +54,7 @@ class QTabSimulate : public QWidget {
   void btnSimulate_clicked();
   void btnSliceImage_clicked();
   void updateSpeciesToDraw();
+  void updatePlotAndImages();
   void btnDisplayOptions_clicked();
   void graphClicked(const QMouseEvent *event);
   void hslideTime_valueChanged(int value);

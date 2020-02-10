@@ -75,6 +75,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   REQUIRE(m1.indexPair[0] == std::pair<std::size_t, std::size_t>{0, 0});
 
   simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
+  sim.setIntegrationOrder(1);
 
   // check initial concentrations:
   // note: A_c1 is constant, so not part of simulation
@@ -94,7 +95,8 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   double dt = 0.134521234;
   double volC1 = 10.0;
   WHEN("single Euler step") {
-    sim.doTimestep(dt, dt);
+    auto steps = sim.doTimestep(dt, std::numeric_limits<double>::max(), dt);
+    REQUIRE(steps == 1);
     std::size_t it = 1;
     // B_c1 = 0
     REQUIRE(sim.getAvgMinMax(it, 0, 0).avg == dbl_approx(0.0));
@@ -109,9 +111,11 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   }
 
   WHEN("two Euler steps") {
-    sim.doTimestep(dt, dt);
+    auto steps = sim.doTimestep(dt, std::numeric_limits<double>::max(), dt);
+    REQUIRE(steps == 1);
     double A_c2 = sim.getAvgMinMax(1, 1, 0).avg;
-    sim.doTimestep(dt, dt);
+    steps = sim.doTimestep(dt, std::numeric_limits<double>::max(), dt);
+    REQUIRE(steps == 1);
     std::size_t it = 2;
     // B_c1 = 0
     REQUIRE(sim.getAvgMinMax(it, 0, 0).avg == dbl_approx(0.0));
@@ -127,11 +131,11 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   }
 
   WHEN("three Euler steps") {
-    sim.doTimestep(dt, dt);
-    sim.doTimestep(dt, dt);
+    sim.doTimestep(dt, std::numeric_limits<double>::max(), dt);
+    sim.doTimestep(dt, std::numeric_limits<double>::max(), dt);
     double A_c2 = sim.getAvgMinMax(2, 1, 0).avg;
     double A_c3 = sim.getAvgMinMax(2, 2, 0).avg;
-    sim.doTimestep(dt, dt);
+    sim.doTimestep(dt, std::numeric_limits<double>::max(), dt);
     std::size_t it = 3;
     // B_c1 = 0
     REQUIRE(sim.getAvgMinMax(it, 0, 0).avg == dbl_approx(0.0));
@@ -153,7 +157,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
     // all other net fluxes are zero
 
     double acceptable_error = 1.e-8;
-    sim.doTimestep(1000, 0.20138571);
+    sim.doTimestep(1000, std::numeric_limits<double>::max(), 0.20138571);
     std::size_t it = sim.getTimePoints().size() - 1;
     double A_c1 = 1.0;
     double A_c2 = sim.getAvgMinMax(it, 1, 0).avg;
@@ -175,7 +179,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
 
     // check concentration derivatives
     double eps = 1.e-5;
-    sim.doTimestep(eps, eps);
+    sim.doTimestep(eps, std::numeric_limits<double>::max(), eps);
     ++it;
     double dA2 = (sim.getAvgMinMax(it, 1, 0).avg - A_c2) / eps;
     REQUIRE(dA2 == Approx(0).epsilon(acceptable_error));
@@ -232,6 +236,7 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
   REQUIRE(m1.indexPair.size() == 108);
 
   simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
+  sim.setIntegrationOrder(1);
 
   // check initial concentrations:
   // note: A_c1 is constant, so not part of simulation
@@ -242,7 +247,7 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
   REQUIRE(sim.getAvgMinMax(0, 2, 1).avg == dbl_approx(0.0));
 
   WHEN("one Euler steps: diffusion of A into c2") {
-    sim.doTimestep(0.01, 0.01);
+    sim.doTimestep(0.01, std::numeric_limits<double>::max(), 0.01);
     REQUIRE(sim.getAvgMinMax(1, 0, 0).avg == dbl_approx(0.0));
     REQUIRE(sim.getAvgMinMax(1, 1, 0).avg > 0);
     REQUIRE(sim.getAvgMinMax(1, 1, 1).avg == dbl_approx(0.0));
@@ -251,7 +256,7 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
   }
 
   WHEN("many Euler steps: all species non-zero") {
-    sim.doTimestep(1.00, 0.02);
+    sim.doTimestep(1.00, std::numeric_limits<double>::max(), 0.02);
     REQUIRE(sim.getAvgMinMax(1, 0, 0).avg > 0);
     REQUIRE(sim.getAvgMinMax(1, 1, 0).avg > 0);
     REQUIRE(sim.getAvgMinMax(1, 1, 1).avg > 0);
@@ -320,11 +325,13 @@ SCENARIO("Simulate: single-compartment-diffusion, circular geometry",
   for (auto simType :
        {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
     double initialRelativeError = 1e-9;
-    double evolvedRelativeError = 0.01;
-    double dt = 0.02;
+    double evolvedRelativeError = 0.02;
+    double simRelErr = 0.01;
+    double dt = std::numeric_limits<double>::max();
     if (simType == simulate::SimulatorType::DUNE) {
       initialRelativeError = 0.05;
       evolvedRelativeError = 0.2;
+      simRelErr = std::numeric_limits<double>::max();
       dt = 1.0;
     }
 
@@ -332,7 +339,7 @@ SCENARIO("Simulate: single-compartment-diffusion, circular geometry",
     simulate::Simulation sim(s, simType);
     double t = 10.0;
     for (std::size_t step = 0; step < 2; ++step) {
-      sim.doTimestep(t, dt);
+      sim.doTimestep(t, simRelErr, dt);
       for (auto speciesIndex : {std::size_t{0}, std::size_t{1}}) {
         // check total concentration is conserved
         auto c = sim.getConc(step + 1, 0, speciesIndex);
@@ -375,7 +382,7 @@ SCENARIO("Simulate: single-compartment-diffusion, circular geometry",
 SCENARIO("Simulate: small-single-compartment-diffusion, circular geometry",
          "[core][simulate]") {
   WHEN("many steps: both species end up equally & uniformly distributed") {
-    double epsilon = 1e-6;
+    double epsilon = 1e-3;
     // import model
     sbml::SbmlDocWrapper s;
     if (QFile f(":/models/small-single-compartment-diffusion.xml");
@@ -385,11 +392,13 @@ SCENARIO("Simulate: small-single-compartment-diffusion, circular geometry",
     for (auto simulator :
          {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
       auto sim = simulate::Simulation(s, simulator);
-      double dt = 0.05;
+      double simRelErr = 0.001;
+      double dt = std::numeric_limits<double>::max();
       if (simulator == simulate::SimulatorType::DUNE) {
         dt = 0.5;
+        simRelErr = std::numeric_limits<double>::max();
       }
-      sim.doTimestep(50.0, dt);
+      sim.doTimestep(50.0, simRelErr, dt);
       auto timeIndex = sim.getTimePoints().size() - 1;
       // after many steps in a finite volume, diffusion has reached the limiting
       // case of a uniform distribution
@@ -405,5 +414,36 @@ SCENARIO("Simulate: small-single-compartment-diffusion, circular geometry",
         REQUIRE(std::abs((conc.max - conc.avg) / conc.avg) < epsilon);
       }
     }
+  }
+}
+
+SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
+         "[core][simulate][pixel]") {
+  double eps = 1e-20;
+  double time = 30.0;
+  double relErr = 0.01;
+  // import model
+  sbml::SbmlDocWrapper s;
+  if (QFile f(":/models/brusselator-model.xml"); f.open(QIODevice::ReadOnly)) {
+    s.importSBMLString(f.readAll().toStdString());
+  }
+  // do accurate simulation
+  simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
+  sim.setIntegrationOrder(4);
+  sim.doTimestep(time, 1e-6, std::numeric_limits<double>::max());
+  auto c4_accurate = sim.getConc(sim.getTimePoints().size() - 1, 0, 0);
+  // check lower accuracy & different orders are consistent
+  for (std::size_t order = 2; order < 5; ++order) {
+    double maxRelDiff = 0;
+    simulate::Simulation sim2(s, simulate::SimulatorType::Pixel);
+    sim2.setIntegrationOrder(order);
+    sim2.doTimestep(time, relErr, std::numeric_limits<double>::max());
+    auto conc = sim2.getConc(sim.getTimePoints().size() - 1, 0, 0);
+    for (std::size_t i = 0; i < conc.size(); ++i) {
+      maxRelDiff = std::max(
+          maxRelDiff, (conc[i] - c4_accurate[i]) / (c4_accurate[i] + eps));
+    }
+    CAPTURE(order);
+    REQUIRE(maxRelDiff < relErr);
   }
 }

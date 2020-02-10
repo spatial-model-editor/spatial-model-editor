@@ -58,7 +58,9 @@ class DuneSim : public BaseSim {
  public:
   explicit DuneSim(const sbml::SbmlDocWrapper &sbmlDoc);
   ~DuneSim() override;
-  void doTimestep(double t, double dt) override;
+  virtual void setIntegrationOrder(std::size_t order) override;
+  std::size_t run(double time, double relativeError,
+                  double maximumStepsize) override;
   const std::vector<double> &getConcentrations(
       std::size_t compartmentIndex) const override;
 };

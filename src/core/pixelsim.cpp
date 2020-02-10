@@ -116,12 +116,48 @@ void SimCompartment::evaluateReactions() {
 }
 
 void SimCompartment::doForwardsEulerTimestep(double dt) {
-  // first spatially average dc/dt for any non-spatial species
-  spatiallyAverageDcdt();
   // do forwards euler timestep
   for (std::size_t i = 0; i < conc.size(); ++i) {
     conc[i] += dt * dcdt[i];
   }
+}
+
+void SimCompartment::doRKInit() {
+  s2.assign(conc.size(), 0.0);
+  s3 = conc;
+}
+
+void SimCompartment::doRKSubstep(double dt, double g1, double g2, double g3,
+                                 double beta, double delta) {
+  for (std::size_t i = 0; i < conc.size(); ++i) {
+    s2[i] += delta * conc[i];
+    conc[i] = g1 * conc[i] + g2 * s2[i] + g3 * s3[i] + beta * dt * dcdt[i];
+  }
+}
+
+void SimCompartment::doRKFinalise(double cFactor, double s2Factor,
+                                  double s3Factor) {
+  for (std::size_t i = 0; i < conc.size(); ++i) {
+    s2[i] = cFactor * conc[i] + s2Factor * s2[i] + s3Factor * s3[i];
+  }
+}
+
+void SimCompartment::undoRKStep() {
+  for (std::size_t i = 0; i < conc.size(); ++i) {
+    conc[i] = s3[i];
+  }
+}
+
+double SimCompartment::calculateRKError(double epsilon) const {
+  double maxErr = 0;
+  for (std::size_t i = 0; i < conc.size(); ++i) {
+    double localErr = std::abs(conc[i] - s2[i]);
+    // average current and previous concentrations and add a (hopefully) small
+    // constant term to avoid dividing by c=0 issues
+    double localNorm = 0.5 * (conc[i] + s3[i] + epsilon);
+    maxErr = std::max(maxErr, localErr / localNorm);
+  }
+  return maxErr;
 }
 
 const std::string &SimCompartment::getCompartmentId() const {
@@ -134,6 +170,15 @@ const std::vector<std::string> &SimCompartment::getSpeciesIds() const {
 
 const std::vector<double> &SimCompartment::getConcentrations() const {
   return conc;
+}
+
+double SimCompartment::getLowerOrderConcentration(
+    std::size_t speciesIndex, std::size_t pixelIndex) const {
+  if (s2.empty()) {
+    return 0;
+  }
+  std::size_t nSpecies = speciesIds.size();
+  return s2[pixelIndex * nSpecies + speciesIndex];
 }
 
 const std::vector<QPoint> &SimCompartment::getPixels() const {
@@ -217,6 +262,194 @@ void SimMembrane::evaluateReactions() {
   }
 }
 
+void PixelSim::calculateDcdt() {
+  // calculate dcd/dt in all compartments
+  for (auto &sim : simCompartments) {
+    sim.evaluateDiffusionOperator();
+    sim.evaluateReactions();
+  }
+  // membrane contribution to dc/dt
+  for (auto &sim : simMembranes) {
+    sim.evaluateReactions();
+  }
+  for (auto &sim : simCompartments) {
+    sim.spatiallyAverageDcdt();
+  }
+}
+
+double PixelSim::doRK101(double dt) {
+  // RK1(0)1: Forwards Euler, no error estimate
+  calculateDcdt();
+  for (auto &sim : simCompartments) {
+    sim.doForwardsEulerTimestep(dt);
+  }
+  return dt;
+}
+
+double PixelSim::doRK212(double dtMax) {
+  // RK2(1)2: Heun / Modified Euler, with embedded forwards Euler error estimate
+  // Shu-Osher form used here taken from eq(2.15) of
+  // https://doi.org/10.1016/0021-9991(88)90177-5
+  constexpr std::array<double, 2> g1{0.0, 0.0};
+  constexpr std::array<double, 2> g2{0.0, 0.5};
+  constexpr std::array<double, 2> g3{1.0, 0.5};
+  constexpr std::array<double, 2> beta{1.0, 0.5};
+  constexpr std::array<double, 2> delta{0.0, 1.0};
+  double err;
+  double dt;
+  do {
+    // do timestep
+    dt = std::min(nextTimestep, dtMax);
+    for (auto &sim : simCompartments) {
+      sim.doRKInit();
+    }
+    for (std::size_t i = 0; i < 2; ++i) {
+      calculateDcdt();
+      for (auto &sim : simCompartments) {
+        sim.doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
+      }
+    }
+    // calculate error
+    err = 0;
+    for (const auto &sim : simCompartments) {
+      err = std::max(err, sim.calculateRKError(epsilon));
+    }
+    // calculate new timestep
+    nextTimestep =
+        std::min(0.95 * dt * std::sqrt(desiredRelativeError / err), dtMax);
+    SPDLOG_DEBUG("dt = {} gave err = {} -> new dt = {}", dt, err, nextTimestep);
+    if (err > desiredRelativeError) {
+      SPDLOG_DEBUG("discarding step");
+      ++discardedSteps;
+      for (auto &sim : simCompartments) {
+        sim.undoRKStep();
+      }
+    }
+  } while (err > desiredRelativeError);
+  return dt;
+}
+
+double PixelSim::doRK323(double dtMax) {
+  // RK3(2)3: Shu Osher method with embedded Heun error estimate
+  // Taken from eq(2.18) of
+  // https://doi.org/10.1016/0021-9991(88)90177-5
+  constexpr std::array<double, 3> g1{1.0, 0.25, 2.0 / 3.0};
+  constexpr std::array<double, 3> g2{0.0, 0.0, 0.0};
+  constexpr std::array<double, 3> g3{0.0, 0.75, 1.0 / 3.0};
+  constexpr std::array<double, 3> beta{1.0, 0.25, 2.0 / 3.0};
+  constexpr std::array<double, 3> delta{0.0, 0.0, 1.0};
+  double err;
+  double dt;
+  do {
+    // do timestep
+    dt = std::min(nextTimestep, dtMax);
+    for (auto &sim : simCompartments) {
+      sim.doRKInit();
+    }
+    for (std::size_t i = 0; i < 3; ++i) {
+      calculateDcdt();
+      for (auto &sim : simCompartments) {
+        sim.doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
+      }
+    }
+    for (auto &sim : simCompartments) {
+      sim.doRKFinalise(0.0, 2.0, -1.0);
+    }
+    // calculate error
+    err = 0;
+    for (const auto &sim : simCompartments) {
+      err = std::max(err, sim.calculateRKError(epsilon));
+    }
+    // calculate new timestep
+    nextTimestep = std::min(
+        0.95 * dt * std::pow((desiredRelativeError / err), 1.0 / 3.0), dtMax);
+    SPDLOG_DEBUG("dt = {} gave err = {} -> new dt = {}", dt, err, nextTimestep);
+    if (err > desiredRelativeError) {
+      SPDLOG_DEBUG("discarding step");
+      ++discardedSteps;
+      for (auto &sim : simCompartments) {
+        sim.undoRKStep();
+      }
+    }
+  } while (err > desiredRelativeError);
+  return dt;
+}
+
+double PixelSim::doRK435(double dtMax) {
+  // RK4(3)5: 3S* algorithm 6 + coefficients from table 6 from
+  // https://doi.org/10.1016/j.jcp.2009.11.006
+  // 5 stage RK4 with embedded RK3 error estimate
+  constexpr std::array<double, 5> g1{0.0, -0.497531095840104, 1.010070514199942,
+                                     -3.196559004608766, 1.717835630267259};
+  constexpr std::array<double, 5> g2{1.0, 1.384996869124138, 3.878155713328178,
+                                     -2.324512951813145, -0.514633322274467};
+  constexpr std::array<double, 5> g3{0.0, 0.0, 0.0, 1.642598936063715,
+                                     0.188295940828347};
+  constexpr std::array<double, 5> beta{0.075152045700771, 0.211361016946069,
+                                       1.100713347634329, 0.728537814675568,
+                                       0.393172889823198};
+  constexpr std::array<double, 7> delta{1.0,
+                                        0.081252332929194,
+                                        -1.083849060586449,
+                                        -1.096110881845602,
+                                        2.859440022030827,
+                                        -0.655568367959557,
+                                        -0.194421504490852};
+  double deltaSum = 1.0 / utils::sum(delta);
+  double err;
+  double dt;
+  do {
+    dt = std::min(nextTimestep, dtMax);
+    // do timestep
+    for (auto &sim : simCompartments) {
+      sim.doRKInit();
+    }
+    for (std::size_t i = 0; i < 5; ++i) {
+      calculateDcdt();
+      for (auto &sim : simCompartments) {
+        sim.doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
+      }
+    }
+    for (auto &sim : simCompartments) {
+      sim.doRKFinalise(deltaSum * delta[5], deltaSum, deltaSum * delta[6]);
+    }
+    // calculate error
+    err = 0;
+    for (const auto &sim : simCompartments) {
+      err = std::max(err, sim.calculateRKError(epsilon));
+    }
+    // calculate new timestep
+    nextTimestep = 0.98 * dt * std::pow(desiredRelativeError / err, 0.25);
+    SPDLOG_DEBUG("dt = {} gave err = {} -> new dt = {}", dt, err, nextTimestep);
+    if (err > desiredRelativeError) {
+      SPDLOG_DEBUG("discarding step");
+      ++discardedSteps;
+      for (auto &sim : simCompartments) {
+        sim.undoRKStep();
+      }
+    }
+  } while (err > desiredRelativeError);
+  return dt;
+}
+
+double PixelSim::doTimestep(double dt, double dtMax) {
+  if (integratorOrder == 2) {
+    return doRK212(dtMax);
+  } else if (integratorOrder == 3) {
+    return doRK323(dtMax);
+  } else if (integratorOrder == 4) {
+    return doRK435(dtMax);
+  } else {
+    double dtStable = dt;
+    if (dt >= maxStableTimestep) {
+      dtStable = maxStableTimestep;
+      SPDLOG_DEBUG("requested dt={} above RK1 stability bound {}: using dt={}",
+                   dt, maxStableTimestep, dtStable);
+    }
+    return doRK101(std::min(dtStable, dtMax));
+  }
+}
+
 PixelSim::PixelSim(const sbml::SbmlDocWrapper &sbmlDoc) : doc(sbmlDoc) {
   // add compartments
   for (const auto &compartmentID : doc.compartments) {
@@ -255,34 +488,44 @@ PixelSim::PixelSim(const sbml::SbmlDocWrapper &sbmlDoc) : doc(sbmlDoc) {
 
 PixelSim::~PixelSim() = default;
 
-void PixelSim::doTimestep(double t, double dt) {
+void PixelSim::setIntegrationOrder(std::size_t order) {
+  if (std::find(integratorOrders.cbegin(), integratorOrders.cend(), order) !=
+      integratorOrders.cend()) {
+    integratorOrder = order;
+    SPDLOG_INFO("Setting integration order to {}", order);
+  } else {
+    SPDLOG_WARN("Integration order {} not supported", order);
+  }
+}
+
+std::size_t PixelSim::run(double time, double relativeError,
+                          double maximumStepsize) {
+  desiredRelativeError = relativeError;
   double tNow = 0;
-  double timestep = dt;
-  if (timestep >= maxStableTimestep) {
-    timestep = maxStableTimestep;
-    SPDLOG_INFO("requested dt={} above stability bound {}: using dt={}", dt,
-                maxStableTimestep, timestep);
+  std::size_t steps = 0;
+  discardedSteps = 0;
+  // do timesteps until we reach t
+  while (tNow + time * 1e-12 < time) {
+    tNow += doTimestep(maximumStepsize, std::min(maximumStepsize, time - tNow));
+    ++steps;
   }
-  while (tNow < t) {
-    // calculate dcd/dt in all compartments
-    for (auto &sim : simCompartments) {
-      sim.evaluateDiffusionOperator();
-      sim.evaluateReactions();
-    }
-    // membrane contribution to dc/dt
-    for (auto &sim : simMembranes) {
-      sim.evaluateReactions();
-    }
-    for (auto &sim : simCompartments) {
-      sim.doForwardsEulerTimestep(timestep);
-    }
-    tNow += timestep;
-  }
+  SPDLOG_INFO("t={} integrated using {} RK{} steps ({:3.1f}% discarded)", time,
+              steps + discardedSteps, integratorOrder,
+              static_cast<double>(100 * discardedSteps) /
+                  static_cast<double>(steps + discardedSteps));
+  return steps;
 }
 
 const std::vector<double> &PixelSim::getConcentrations(
     std::size_t compartmentIndex) const {
   return simCompartments[compartmentIndex].getConcentrations();
+}
+
+double PixelSim::getLowerOrderConcentration(std::size_t compartmentIndex,
+                                            std::size_t speciesIndex,
+                                            std::size_t pixelIndex) const {
+  return simCompartments[compartmentIndex].getLowerOrderConcentration(
+      speciesIndex, pixelIndex);
 }
 
 }  // namespace sim
