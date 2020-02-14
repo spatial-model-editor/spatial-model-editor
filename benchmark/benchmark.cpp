@@ -2,6 +2,7 @@
 
 #include <QElapsedTimer>
 #include <QFile>
+#include <limits>
 #include <locale>
 
 #include "logger.hpp"
@@ -30,6 +31,7 @@ struct BenchmarkParams {
   std::vector<simulate::SimulatorType> simulators{
       simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel};
   double simulator_timestep{1e-3};
+  std::size_t simulator_integration_order = 1;
 };
 
 static void printHelpMessage() {
@@ -37,7 +39,7 @@ static void printHelpMessage() {
   fmt::print("\nUsage:\n");
   fmt::print(
       "\n./benchmark [seconds_per_benchmark=10] [model=all] "
-      "[simulator=all] [timestep=1e-3]\n");
+      "[simulator=all] [timestep=1e-3] [order=1]\n");
   fmt::print("\nPossible values for model:\n");
   for (const auto &model : params.models) {
     fmt::print("  - {}\n", model);
@@ -87,6 +89,10 @@ static BenchmarkParams parseArgs(int argc, char *argv[]) {
   if (argc > 4) {
     params.simulator_timestep = std::stod(argv[4]);
   }
+  if (argc > 5) {
+    params.simulator_integration_order =
+        static_cast<std::size_t>(std::stoi(argv[5]));
+  }
   fmt::print("\n# Benchmark parameters:\n");
   fmt::print("# seconds_per_benchmark: {}s\n", params.seconds_per_benchmark);
   fmt::print("# models:\n");
@@ -98,6 +104,7 @@ static BenchmarkParams parseArgs(int argc, char *argv[]) {
     fmt::print("#   - {}\n", toString(simulator));
   }
   fmt::print("# timestep: {}s\n", params.simulator_timestep);
+  fmt::print("# order: {}\n", params.simulator_integration_order);
   return params;
 }
 
@@ -135,6 +142,7 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
 
       // setup simulator
       simulate::Simulation sim(s, simulator);
+      sim.setIntegrationOrder(params.simulator_integration_order);
 
       // do a series of simulations
       // increase length of run by a factor of 2 each time
@@ -148,7 +156,7 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
         iter += iter;
         ++ln2iter;
         time.start();
-        sim.doTimestep(iter * dt, dt);
+        sim.doTimestep(iter * dt, std::numeric_limits<double>::max(), dt);
         elapsed_ms = time.elapsed();
       }
       double ms = static_cast<double>(elapsed_ms) / static_cast<double>(iter);

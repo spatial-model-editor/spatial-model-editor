@@ -51,7 +51,9 @@ class Simulation {
   explicit Simulation(const sbml::SbmlDocWrapper &sbmlDoc,
                       SimulatorType simType = SimulatorType::DUNE);
   ~Simulation();
-  void doTimestep(double t, double dt);
+  void setIntegrationOrder(std::size_t order);
+  std::size_t doTimestep(double time, double relativeError,
+                         double maximumStepsize);
   const std::vector<std::string> &getCompartmentIds() const;
   const std::vector<std::string> &getSpeciesIds(
       std::size_t compartmentIndex) const;
@@ -64,6 +66,9 @@ class Simulation {
   std::vector<double> getConc(std::size_t timeIndex,
                               std::size_t compartmentIndex,
                               std::size_t speciesIndex) const;
+  double getLowerOrderConc(std::size_t compartmentIndex,
+                           std::size_t speciesIndex,
+                           std::size_t pixelIndex) const;
   QImage getConcImage(
       std::size_t timeIndex,
       const std::vector<std::vector<std::size_t>> &speciesToDraw = {},

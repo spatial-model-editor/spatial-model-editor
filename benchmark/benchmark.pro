@@ -1,9 +1,17 @@
-TARGET = benchmark
 TEMPLATE = app
-
 include(../src/core/core.pri)
 include(../common.pri)
 LIBS += -L../src/core -lcore
 include(../ext/ext.pri)
 
-SOURCES += benchmark.cpp
+CONFIG += bench
+
+bench {
+    TARGET = benchmark
+    SOURCES += benchmark.cpp
+}
+
+pix {
+    TARGET = pixel
+    SOURCES += pixel.cpp
+}

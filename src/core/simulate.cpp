@@ -66,10 +66,18 @@ static std::vector<AvgMinMax> calculateAvgMinMax(
   return avgMinMax;
 }
 
-void Simulation::doTimestep(double t, double dt) {
-  SPDLOG_DEBUG("integrating for time {} with dt = {}", t, dt);
-  simulator->doTimestep(t, dt);
-  updateConcentrations(timePoints.back() + t);
+void Simulation::setIntegrationOrder(std::size_t order) {
+  simulator->setIntegrationOrder(order);
+}
+
+std::size_t Simulation::doTimestep(double time, double relativeError,
+                                   double maximumStepsize) {
+  SPDLOG_DEBUG("integrating for time {}", time);
+  SPDLOG_DEBUG("  - relative error {}", relativeError);
+  SPDLOG_DEBUG("  - maximum stepsize {}", maximumStepsize);
+  std::size_t steps = simulator->run(time, relativeError, maximumStepsize);
+  updateConcentrations(timePoints.back() + time);
+  return steps;
 }
 
 void Simulation::updateConcentrations(double t) {
@@ -130,6 +138,13 @@ std::vector<double> Simulation::getConc(std::size_t timeIndex,
   return c;
 }
 
+double Simulation::getLowerOrderConc(std::size_t compartmentIndex,
+                                     std::size_t speciesIndex,
+                                     std::size_t pixelIndex) const {
+  return simulator->getLowerOrderConcentration(compartmentIndex, speciesIndex,
+                                               pixelIndex);
+}
+
 QImage Simulation::getConcImage(
     std::size_t timeIndex,
     const std::vector<std::vector<std::size_t>> &speciesToDraw,
@@ -150,7 +165,6 @@ QImage Simulation::getConcImage(
     const auto &pixels = compartments[compIndex]->getPixels();
     const auto &conc = concentration[timeIndex][compIndex];
     std::size_t nSpecies = compartmentSpeciesIds[compIndex].size();
-    std::size_t nSpeciesToDraw = (*speciesIndices)[compIndex].size();
     // normalise species concentration:
     // max value of each species = max colour intensity
     // (with lower bound, so constant zero is still zero)
@@ -163,16 +177,13 @@ QImage Simulation::getConcImage(
         maxConcs[is] = m > 1e-30 ? m : 1.0;
       }
     }
-    // equal contribution from each field
-    // double alpha = 1.0 / static_cast<double>(nSpeciesToDraw);
-    double alpha = 1;
     for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
       const QPoint &p = pixels[ix];
       int r = 0;
       int g = 0;
       int b = 0;
       for (std::size_t is : (*speciesIndices)[compIndex]) {
-        double c = alpha * conc[ix * nSpecies + is] / maxConcs[is];
+        double c = conc[ix * nSpecies + is] / maxConcs[is];
         const auto &col = compartmentSpeciesColors[compIndex][is];
         r += static_cast<int>(col.red() * c);
         g += static_cast<int>(col.green() * c);

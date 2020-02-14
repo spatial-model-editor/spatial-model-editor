@@ -294,11 +294,20 @@ DuneSim::DuneSim(const sbml::SbmlDocWrapper &sbmlDoc)
 
 DuneSim::~DuneSim() = default;
 
-void DuneSim::doTimestep(double t, double dt) {
-  pDuneImpl->model->suggest_timestep(dt);
-  pDuneImpl->model->end_time() = pDuneImpl->model->current_time() + t;
+void DuneSim::setIntegrationOrder(std::size_t order) {
+  if (order != 1) {
+    SPDLOG_WARN("Only 1st order is currently supported");
+  }
+}
+
+std::size_t DuneSim::run(double time, double relativeError,
+                         double maximumStepsize) {
+  Q_UNUSED(relativeError);
+  pDuneImpl->model->suggest_timestep(maximumStepsize);
+  pDuneImpl->model->end_time() = pDuneImpl->model->current_time() + time;
   pDuneImpl->model->run();
   updateSpeciesConcentrations();
+  return 0;
 }
 
 const std::vector<double> &DuneSim::getConcentrations(
