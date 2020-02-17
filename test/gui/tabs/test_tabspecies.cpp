@@ -9,13 +9,13 @@
 #include "catch_wrapper.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
-#include "qtabspecies.hpp"
 #include "sbml.hpp"
+#include "tabspecies.hpp"
 
 SCENARIO("Species Tab", "[gui][tabs][species]") {
   sbml::SbmlDocWrapper sbmlDoc;
   QLabelMouseTracker mouseTracker;
-  auto tab = QTabSpecies(sbmlDoc, &mouseTracker);
+  auto tab = TabSpecies(sbmlDoc, &mouseTracker);
   tab.show();
   waitFor(&tab);
 

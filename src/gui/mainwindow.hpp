@@ -5,11 +5,11 @@
 
 #include "sbml.hpp"
 class QLabel;
-class QTabFunctions;
-class QTabGeometry;
-class QTabReactions;
-class QTabSimulate;
-class QTabSpecies;
+class TabFunctions;
+class TabGeometry;
+class TabReactions;
+class TabSimulate;
+class TabSpecies;
 
 namespace Ui {
 class MainWindow;
@@ -38,11 +38,11 @@ class MainWindow : public QMainWindow {
 
   void tabMain_currentChanged(int index);
   void tabMain_updateMembranes();
-  QTabGeometry *tabGeometry;
-  QTabSpecies *tabSpecies;
-  QTabReactions *tabReactions;
-  QTabFunctions *tabFunctions;
-  QTabSimulate *tabSimulate;
+  TabGeometry *tabGeometry;
+  TabSpecies *tabSpecies;
+  TabReactions *tabReactions;
+  TabFunctions *tabFunctions;
+  TabSimulate *tabSimulate;
   // if SBML model and geometry are both valid, enable all tabs
   void enableTabs();
 

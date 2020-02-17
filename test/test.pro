@@ -23,11 +23,11 @@ SOURCES += \
     gui/dialogs/test_dialogunits.cpp \
     gui/widgets/test_qlabelmousetracker.cpp \
     gui/widgets/test_qplaintextmathedit.cpp \
-    gui/tabs/test_qtabfunctions.cpp \
-    gui/tabs/test_qtabgeometry.cpp \
-    gui/tabs/test_qtabreactions.cpp \
-    gui/tabs/test_qtabsimulate.cpp \
-    gui/tabs/test_qtabspecies.cpp \
+    gui/tabs/test_tabfunctions.cpp \
+    gui/tabs/test_tabgeometry.cpp \
+    gui/tabs/test_tabreactions.cpp \
+    gui/tabs/test_tabsimulate.cpp \
+    gui/tabs/test_tabspecies.cpp \
     core/test_dune.cpp \
     core/test_geometry.cpp \
     core/test_mesh.cpp \

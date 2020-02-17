@@ -1,4 +1,4 @@
-// QTabSimulate
+// TabSimulate
 
 #pragma once
 
@@ -8,7 +8,7 @@
 #include "simulate.hpp"
 
 namespace Ui {
-class QTabSimulate;
+class TabSimulate;
 }
 class QCustomPlot;
 class QCPAbstractPlottable;
@@ -19,21 +19,21 @@ namespace sbml {
 class SbmlDocWrapper;
 }
 
-class QTabSimulate : public QWidget {
+class TabSimulate : public QWidget {
   Q_OBJECT
 
  public:
-  explicit QTabSimulate(sbml::SbmlDocWrapper &doc,
-                        QLabelMouseTracker *mouseTracker,
-                        QWidget *parent = nullptr);
-  ~QTabSimulate();
+  explicit TabSimulate(sbml::SbmlDocWrapper &doc,
+                       QLabelMouseTracker *mouseTracker,
+                       QWidget *parent = nullptr);
+  ~TabSimulate();
   void loadModelData();
   void stopSimulation();
   void useDune(bool enable);
   void reset();
 
  private:
-  std::unique_ptr<Ui::QTabSimulate> ui;
+  std::unique_ptr<Ui::TabSimulate> ui;
   sbml::SbmlDocWrapper &sbmlDoc;
   QLabelMouseTracker *lblGeometry;
   QCustomPlot *pltPlot;

@@ -1,4 +1,4 @@
-#include "qtabreactions.hpp"
+#include "tabreactions.hpp"
 
 #include <QInputDialog>
 #include <QMessageBox>
@@ -7,50 +7,50 @@
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "qlabelmousetracker.hpp"
-#include "ui_qtabreactions.h"
+#include "ui_tabreactions.h"
 
-QTabReactions::QTabReactions(sbml::SbmlDocWrapper &doc,
-                             QLabelMouseTracker *mouseTracker, QWidget *parent)
+TabReactions::TabReactions(sbml::SbmlDocWrapper &doc,
+                           QLabelMouseTracker *mouseTracker, QWidget *parent)
     : QWidget(parent),
-      ui{std::make_unique<Ui::QTabReactions>()},
+      ui{std::make_unique<Ui::TabReactions>()},
       sbmlDoc(doc),
       lblGeometry(mouseTracker) {
   ui->setupUi(this);
 
   connect(ui->listReactions, &QTreeWidget::currentItemChanged, this,
-          &QTabReactions::listReactions_currentItemChanged);
+          &TabReactions::listReactions_currentItemChanged);
 
   connect(ui->btnAddReaction, &QPushButton::clicked, this,
-          &QTabReactions::btnAddReaction_clicked);
+          &TabReactions::btnAddReaction_clicked);
 
   connect(ui->btnRemoveReaction, &QPushButton::clicked, this,
-          &QTabReactions::btnRemoveReaction_clicked);
+          &TabReactions::btnRemoveReaction_clicked);
 
   connect(ui->txtReactionName, &QLineEdit::editingFinished, this,
-          &QTabReactions::txtReactionName_editingFinished);
+          &TabReactions::txtReactionName_editingFinished);
 
   connect(ui->cmbReactionLocation, qOverload<int>(&QComboBox::activated), this,
-          &QTabReactions::cmbReactionLocation_activated);
+          &TabReactions::cmbReactionLocation_activated);
 
   connect(ui->listReactionParams, &QTableWidget::currentCellChanged, this,
-          &QTabReactions::listReactionParams_currentCellChanged);
+          &TabReactions::listReactionParams_currentCellChanged);
 
   connect(ui->btnAddReactionParam, &QPushButton::clicked, this,
-          &QTabReactions::btnAddReactionParam_clicked);
+          &TabReactions::btnAddReactionParam_clicked);
 
   connect(ui->btnRemoveReactionParam, &QPushButton::clicked, this,
-          &QTabReactions::btnRemoveReactionParam_clicked);
+          &TabReactions::btnRemoveReactionParam_clicked);
 
   connect(ui->txtReactionRate, &QPlainTextMathEdit::mathChanged, this,
-          &QTabReactions::txtReactionRate_mathChanged);
+          &TabReactions::txtReactionRate_mathChanged);
 
   connect(ui->btnSaveReactionChanges, &QPushButton::clicked, this,
-          &QTabReactions::btnSaveReactionChanges_clicked);
+          &TabReactions::btnSaveReactionChanges_clicked);
 }
 
-QTabReactions::~QTabReactions() = default;
+TabReactions::~TabReactions() = default;
 
-void QTabReactions::loadModelData(const QString &selection) {
+void TabReactions::loadModelData(const QString &selection) {
   ui->cmbReactionLocation->clear();
   ui->listReactionParams->clear();
   enableWidgets(false);
@@ -84,7 +84,7 @@ void QTabReactions::loadModelData(const QString &selection) {
   selectMatchingOrFirstChild(ls, selection);
 }
 
-void QTabReactions::enableWidgets(bool enable) {
+void TabReactions::enableWidgets(bool enable) {
   ui->btnRemoveReaction->setEnabled(enable);
   ui->txtReactionName->setEnabled(enable);
   ui->cmbReactionLocation->setEnabled(enable);
@@ -96,8 +96,8 @@ void QTabReactions::enableWidgets(bool enable) {
   ui->btnSaveReactionChanges->setEnabled(enable);
 }
 
-void QTabReactions::listReactions_currentItemChanged(
-    QTreeWidgetItem *current, QTreeWidgetItem *previous) {
+void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
+                                                    QTreeWidgetItem *previous) {
   Q_UNUSED(previous);
   ui->txtReactionName->clear();
   ui->listReactionSpecies->clear();
@@ -220,7 +220,7 @@ void QTabReactions::listReactions_currentItemChanged(
   ui->txtReactionRate->importVariableMath(currentReac.expression.c_str());
 }
 
-void QTabReactions::btnAddReaction_clicked() {
+void TabReactions::btnAddReaction_clicked() {
   // get currently selected compartment
   int index = 0;
   if (auto *item = ui->listReactions->currentItem(); item != nullptr) {
@@ -244,7 +244,7 @@ void QTabReactions::btnAddReaction_clicked() {
   }
 }
 
-void QTabReactions::btnRemoveReaction_clicked() {
+void TabReactions::btnRemoveReaction_clicked() {
   auto msgbox =
       newYesNoMessageBox("Remove reaction?",
                          QString("Remove reaction '%1' from the model?")
@@ -260,14 +260,14 @@ void QTabReactions::btnRemoveReaction_clicked() {
   msgbox->open();
 }
 
-void QTabReactions::txtReactionName_editingFinished() {
+void TabReactions::txtReactionName_editingFinished() {
   auto name = ui->txtReactionName->text();
   currentReac.name = name.toStdString();
   sbmlDoc.setReaction(currentReac);
   ui->listReactions->currentItem()->setText(0, name);
 }
 
-void QTabReactions::cmbReactionLocation_activated(int index) {
+void TabReactions::cmbReactionLocation_activated(int index) {
   QString locationId;
   int nComps = sbmlDoc.compartments.size();
   if (index < nComps) {
@@ -300,10 +300,10 @@ void QTabReactions::cmbReactionLocation_activated(int index) {
   msgbox->open();
 }
 
-void QTabReactions::listReactionParams_currentCellChanged(int currentRow,
-                                                          int currentColumn,
-                                                          int previousRow,
-                                                          int previousColumn) {
+void TabReactions::listReactionParams_currentCellChanged(int currentRow,
+                                                         int currentColumn,
+                                                         int previousRow,
+                                                         int previousColumn) {
   Q_UNUSED(currentColumn);
   Q_UNUSED(previousRow);
   Q_UNUSED(previousColumn);
@@ -312,7 +312,7 @@ void QTabReactions::listReactionParams_currentCellChanged(int currentRow,
   ui->btnRemoveReactionParam->setEnabled(valid);
 }
 
-void QTabReactions::btnAddReactionParam_clicked() {
+void TabReactions::btnAddReactionParam_clicked() {
   bool ok;
   auto name =
       QInputDialog::getText(this, "Add reaction parameter",
@@ -336,7 +336,7 @@ void QTabReactions::btnAddReactionParam_clicked() {
   }
 }
 
-void QTabReactions::btnRemoveReactionParam_clicked() {
+void TabReactions::btnRemoveReactionParam_clicked() {
   int row = ui->listReactionParams->currentRow();
   if ((row < 0) || (row > ui->listReactionParams->rowCount() - 1)) {
     return;
@@ -358,8 +358,8 @@ void QTabReactions::btnRemoveReactionParam_clicked() {
   msgbox->open();
 }
 
-void QTabReactions::txtReactionRate_mathChanged(const QString &math, bool valid,
-                                                const QString &errorMessage) {
+void TabReactions::txtReactionRate_mathChanged(const QString &math, bool valid,
+                                               const QString &errorMessage) {
   ui->btnSaveReactionChanges->setEnabled(valid);
   if (valid) {
     SPDLOG_INFO("new math: {}", math.toStdString());
@@ -370,7 +370,7 @@ void QTabReactions::txtReactionRate_mathChanged(const QString &math, bool valid,
   }
 }
 
-void QTabReactions::btnSaveReactionChanges_clicked() {
+void TabReactions::btnSaveReactionChanges_clicked() {
   if (!ui->txtReactionRate->mathIsValid()) {
     return;
   }

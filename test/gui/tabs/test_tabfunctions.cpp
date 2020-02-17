@@ -9,12 +9,12 @@
 #include "catch_wrapper.hpp"
 #include "qplaintextmathedit.hpp"
 #include "qt_test_utils.hpp"
-#include "qtabfunctions.hpp"
+#include "tabfunctions.hpp"
 #include "sbml.hpp"
 
 SCENARIO("Functions Tab", "[gui][tabs][functions]") {
   sbml::SbmlDocWrapper smblDoc;
-  auto tab = QTabFunctions(smblDoc);
+  auto tab = TabFunctions(smblDoc);
   ModalWidgetTimer mwt;
   // get pointers to widgets within tab
   auto *listFunctions = tab.findChild<QListWidget *>("listFunctions");

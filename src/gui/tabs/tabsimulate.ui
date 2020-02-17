@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>QTabSimulate</class>
- <widget class="QWidget" name="QTabSimulate">
+ <class>TabSimulate</class>
+ <widget class="QWidget" name="TabSimulate">
   <property name="geometry">
    <rect>
     <x>0</x>

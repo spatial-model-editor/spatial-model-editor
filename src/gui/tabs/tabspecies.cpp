@@ -1,4 +1,4 @@
-#include "qtabspecies.hpp"
+#include "tabspecies.hpp"
 
 #include <QColorDialog>
 #include <QInputDialog>
@@ -10,65 +10,65 @@
 #include "logger.hpp"
 #include "qlabelmousetracker.hpp"
 #include "sbml.hpp"
-#include "ui_qtabspecies.h"
+#include "ui_tabspecies.h"
 
-QTabSpecies::QTabSpecies(sbml::SbmlDocWrapper &doc,
-                         QLabelMouseTracker *mouseTracker, QWidget *parent)
+TabSpecies::TabSpecies(sbml::SbmlDocWrapper &doc,
+                       QLabelMouseTracker *mouseTracker, QWidget *parent)
     : QWidget(parent),
-      ui{std::make_unique<Ui::QTabSpecies>()},
+      ui{std::make_unique<Ui::TabSpecies>()},
       sbmlDoc(doc),
       lblGeometry(mouseTracker) {
   ui->setupUi(this);
 
   connect(ui->listSpecies, &QTreeWidget::currentItemChanged, this,
-          &QTabSpecies::listSpecies_currentItemChanged);
+          &TabSpecies::listSpecies_currentItemChanged);
 
   connect(ui->btnAddSpecies, &QPushButton::clicked, this,
-          &QTabSpecies::btnAddSpecies_clicked);
+          &TabSpecies::btnAddSpecies_clicked);
 
   connect(ui->btnRemoveSpecies, &QPushButton::clicked, this,
-          &QTabSpecies::btnRemoveSpecies_clicked);
+          &TabSpecies::btnRemoveSpecies_clicked);
 
   connect(ui->txtSpeciesName, &QLineEdit::editingFinished, this,
-          &QTabSpecies::txtSpeciesName_editingFinished);
+          &TabSpecies::txtSpeciesName_editingFinished);
 
   connect(ui->cmbSpeciesCompartment, qOverload<int>(&QComboBox::activated),
-          this, &QTabSpecies::cmbSpeciesCompartment_activated);
+          this, &TabSpecies::cmbSpeciesCompartment_activated);
 
   connect(ui->chkSpeciesIsSpatial, &QCheckBox::toggled, this,
-          &QTabSpecies::chkSpeciesIsSpatial_toggled);
+          &TabSpecies::chkSpeciesIsSpatial_toggled);
 
   connect(ui->chkSpeciesIsConstant, &QCheckBox::toggled, this,
-          &QTabSpecies::chkSpeciesIsConstant_toggled);
+          &TabSpecies::chkSpeciesIsConstant_toggled);
 
   connect(ui->radInitialConcentrationUniform, &QRadioButton::toggled, this,
-          &QTabSpecies::radInitialConcentration_toggled);
+          &TabSpecies::radInitialConcentration_toggled);
 
   connect(ui->txtInitialConcentration, &QLineEdit::editingFinished, this,
-          &QTabSpecies::txtInitialConcentration_editingFinished);
+          &TabSpecies::txtInitialConcentration_editingFinished);
 
   connect(ui->radInitialConcentrationImage, &QRadioButton::toggled, this,
-          &QTabSpecies::radInitialConcentration_toggled);
+          &TabSpecies::radInitialConcentration_toggled);
 
   connect(ui->radInitialConcentrationAnalytic, &QRadioButton::toggled, this,
-          &QTabSpecies::radInitialConcentration_toggled);
+          &TabSpecies::radInitialConcentration_toggled);
 
   connect(ui->btnEditAnalyticConcentration, &QPushButton::clicked, this,
-          &QTabSpecies::btnEditAnalyticConcentration_clicked);
+          &TabSpecies::btnEditAnalyticConcentration_clicked);
 
   connect(ui->btnEditImageConcentration, &QPushButton::clicked, this,
-          &QTabSpecies::btnEditImageConcentration_clicked);
+          &TabSpecies::btnEditImageConcentration_clicked);
 
   connect(ui->txtDiffusionConstant, &QLineEdit::editingFinished, this,
-          &QTabSpecies::txtDiffusionConstant_editingFinished);
+          &TabSpecies::txtDiffusionConstant_editingFinished);
 
   connect(ui->btnChangeSpeciesColour, &QPushButton::clicked, this,
-          &QTabSpecies::btnChangeSpeciesColour_clicked);
+          &TabSpecies::btnChangeSpeciesColour_clicked);
 }
 
-QTabSpecies::~QTabSpecies() = default;
+TabSpecies::~TabSpecies() = default;
 
-void QTabSpecies::loadModelData(const QString &selection) {
+void TabSpecies::loadModelData(const QString &selection) {
   enableWidgets(false);
   // update tree list of species
   auto *ls = ui->listSpecies;
@@ -91,7 +91,7 @@ void QTabSpecies::loadModelData(const QString &selection) {
   selectMatchingOrFirstChild(ls, selection);
 }
 
-void QTabSpecies::enableWidgets(bool enable) {
+void TabSpecies::enableWidgets(bool enable) {
   ui->btnRemoveSpecies->setEnabled(enable);
   ui->txtSpeciesName->setEnabled(enable);
   ui->cmbSpeciesCompartment->setEnabled(enable);
@@ -107,8 +107,8 @@ void QTabSpecies::enableWidgets(bool enable) {
   ui->btnChangeSpeciesColour->setEnabled(enable);
 }
 
-void QTabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
-                                                 QTreeWidgetItem *previous) {
+void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
+                                                QTreeWidgetItem *previous) {
   Q_UNUSED(previous);
   if ((current == nullptr) || (current->parent() == nullptr)) {
     // user selection is not a species
@@ -186,7 +186,7 @@ void QTabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
   ui->lblSpeciesColour->setText("");
 }
 
-void QTabSpecies::btnAddSpecies_clicked() {
+void TabSpecies::btnAddSpecies_clicked() {
   // get currently selected compartment
   int compartmentIndex = 0;
   if (auto *item = ui->listSpecies->currentItem(); item != nullptr) {
@@ -203,7 +203,7 @@ void QTabSpecies::btnAddSpecies_clicked() {
   }
 }
 
-void QTabSpecies::btnRemoveSpecies_clicked() {
+void TabSpecies::btnRemoveSpecies_clicked() {
   if (auto *item = ui->listSpecies->currentItem();
       (item != nullptr) && (item->parent() != nullptr)) {
     SPDLOG_DEBUG("item {} / {} selected", item->parent()->text(0).toStdString(),
@@ -227,13 +227,13 @@ void QTabSpecies::btnRemoveSpecies_clicked() {
   }
 }
 
-void QTabSpecies::txtSpeciesName_editingFinished() {
+void TabSpecies::txtSpeciesName_editingFinished() {
   const QString &name = ui->txtSpeciesName->text();
   sbmlDoc.setSpeciesName(currentSpeciesId, name);
   loadModelData(name);
 }
 
-void QTabSpecies::cmbSpeciesCompartment_activated(int index) {
+void TabSpecies::cmbSpeciesCompartment_activated(int index) {
   const auto &currentComp = sbmlDoc.getSpeciesCompartment(currentSpeciesId);
   if (sbmlDoc.compartments[index] != currentComp) {
     sbmlDoc.setSpeciesCompartment(currentSpeciesId,
@@ -242,7 +242,7 @@ void QTabSpecies::cmbSpeciesCompartment_activated(int index) {
   }
 }
 
-void QTabSpecies::chkSpeciesIsSpatial_toggled(bool enabled) {
+void TabSpecies::chkSpeciesIsSpatial_toggled(bool enabled) {
   // if new value differs from previous one - update model
   if (sbmlDoc.getIsSpatial(currentSpeciesId) != enabled) {
     SPDLOG_INFO("setting species {} isSpatial: {}",
@@ -253,7 +253,7 @@ void QTabSpecies::chkSpeciesIsSpatial_toggled(bool enabled) {
   }
 }
 
-void QTabSpecies::chkSpeciesIsConstant_toggled(bool enabled) {
+void TabSpecies::chkSpeciesIsConstant_toggled(bool enabled) {
   const auto &speciesID = currentSpeciesId.toStdString();
   // if new value differs from previous one - update model
   if (sbmlDoc.getIsSpeciesConstant(speciesID) != enabled) {
@@ -264,7 +264,7 @@ void QTabSpecies::chkSpeciesIsConstant_toggled(bool enabled) {
   }
 }
 
-void QTabSpecies::radInitialConcentration_toggled() {
+void TabSpecies::radInitialConcentration_toggled() {
   if (ui->radInitialConcentrationUniform->isChecked()) {
     ui->txtInitialConcentration->setEnabled(true);
     ui->btnEditAnalyticConcentration->setEnabled(false);
@@ -280,7 +280,7 @@ void QTabSpecies::radInitialConcentration_toggled() {
   }
 }
 
-void QTabSpecies::txtInitialConcentration_editingFinished() {
+void TabSpecies::txtInitialConcentration_editingFinished() {
   double initConc = ui->txtInitialConcentration->text().toDouble();
   const auto &speciesID = currentSpeciesId;
   SPDLOG_INFO("setting initial concentration of Species {} to {}",
@@ -290,7 +290,7 @@ void QTabSpecies::txtInitialConcentration_editingFinished() {
   listSpecies_currentItemChanged(ui->listSpecies->currentItem(), nullptr);
 }
 
-void QTabSpecies::btnEditAnalyticConcentration_clicked() {
+void TabSpecies::btnEditAnalyticConcentration_clicked() {
   const auto &speciesID = currentSpeciesId;
   SPDLOG_DEBUG("editing analytic initial concentration of species {}...",
                speciesID.toStdString());
@@ -305,7 +305,7 @@ void QTabSpecies::btnEditAnalyticConcentration_clicked() {
   }
 }
 
-void QTabSpecies::btnEditImageConcentration_clicked() {
+void TabSpecies::btnEditImageConcentration_clicked() {
   const auto &speciesID = currentSpeciesId;
   SPDLOG_DEBUG("editing initial concentration image for species {}...",
                speciesID.toStdString());
@@ -320,7 +320,7 @@ void QTabSpecies::btnEditImageConcentration_clicked() {
   }
 }
 
-void QTabSpecies::txtDiffusionConstant_editingFinished() {
+void TabSpecies::txtDiffusionConstant_editingFinished() {
   double diffConst = ui->txtDiffusionConstant->text().toDouble();
   const auto &speciesID = currentSpeciesId;
   SPDLOG_INFO("setting Diffusion Constant of Species {} to {}",
@@ -328,7 +328,7 @@ void QTabSpecies::txtDiffusionConstant_editingFinished() {
   sbmlDoc.setDiffusionConstant(speciesID, diffConst);
 }
 
-void QTabSpecies::btnChangeSpeciesColour_clicked() {
+void TabSpecies::btnChangeSpeciesColour_clicked() {
   const auto &speciesID = currentSpeciesId;
   SPDLOG_DEBUG("waiting for new colour for species {} from user...",
                speciesID.toStdString());

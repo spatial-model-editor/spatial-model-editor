@@ -1,4 +1,4 @@
-// QTabSpecies
+// TabSpecies
 
 #pragma once
 
@@ -8,7 +8,7 @@
 class QTreeWidgetItem;
 
 namespace Ui {
-class QTabSpecies;
+class TabSpecies;
 }
 
 namespace sbml {
@@ -17,18 +17,18 @@ class SbmlDocWrapper;
 
 class QLabelMouseTracker;
 
-class QTabSpecies : public QWidget {
+class TabSpecies : public QWidget {
   Q_OBJECT
 
  public:
-  explicit QTabSpecies(sbml::SbmlDocWrapper &doc,
-                       QLabelMouseTracker *mouseTracker,
-                       QWidget *parent = nullptr);
-  ~QTabSpecies();
+  explicit TabSpecies(sbml::SbmlDocWrapper &doc,
+                      QLabelMouseTracker *mouseTracker,
+                      QWidget *parent = nullptr);
+  ~TabSpecies();
   void loadModelData(const QString &selection = {});
 
  private:
-  std::unique_ptr<Ui::QTabSpecies> ui;
+  std::unique_ptr<Ui::TabSpecies> ui;
   sbml::SbmlDocWrapper &sbmlDoc;
   QLabelMouseTracker *lblGeometry;
   QPixmap lblSpeciesColourPixmap = QPixmap(1, 1);

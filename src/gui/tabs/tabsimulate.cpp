@@ -1,4 +1,4 @@
-#include "qtabsimulate.hpp"
+#include "tabsimulate.hpp"
 
 #include <qcustomplot.h>
 
@@ -10,12 +10,12 @@
 #include "logger.hpp"
 #include "qlabelmousetracker.hpp"
 #include "sbml.hpp"
-#include "ui_qtabsimulate.h"
+#include "ui_tabsimulate.h"
 
-QTabSimulate::QTabSimulate(sbml::SbmlDocWrapper &doc,
-                           QLabelMouseTracker *mouseTracker, QWidget *parent)
+TabSimulate::TabSimulate(sbml::SbmlDocWrapper &doc,
+                         QLabelMouseTracker *mouseTracker, QWidget *parent)
     : QWidget(parent),
-      ui{std::make_unique<Ui::QTabSimulate>()},
+      ui{std::make_unique<Ui::TabSimulate>()},
       sbmlDoc(doc),
       lblGeometry(mouseTracker) {
   ui->setupUi(this);
@@ -36,32 +36,32 @@ QTabSimulate::QTabSimulate(sbml::SbmlDocWrapper &doc,
   ui->gridSimulate->addWidget(pltPlot, 1, 0, 1, 9);
 
   connect(ui->btnSimulate, &QPushButton::clicked, this,
-          &QTabSimulate::btnSimulate_clicked);
+          &TabSimulate::btnSimulate_clicked);
   connect(ui->btnResetSimulation, &QPushButton::clicked, this,
-          &QTabSimulate::reset);
-  connect(pltPlot, &QCustomPlot::mousePress, this, &QTabSimulate::graphClicked);
+          &TabSimulate::reset);
+  connect(pltPlot, &QCustomPlot::mousePress, this, &TabSimulate::graphClicked);
   connect(ui->hslideTime, &QSlider::valueChanged, this,
-          &QTabSimulate::hslideTime_valueChanged);
+          &TabSimulate::hslideTime_valueChanged);
   connect(ui->btnStopSimulation, &QPushButton::clicked, this,
-          &QTabSimulate::stopSimulation);
+          &TabSimulate::stopSimulation);
   connect(ui->btnSliceImage, &QPushButton::clicked, this,
-          &QTabSimulate::btnSliceImage_clicked);
+          &TabSimulate::btnSliceImage_clicked);
   connect(ui->btnDisplayOptions, &QPushButton::clicked, this,
-          &QTabSimulate::btnDisplayOptions_clicked);
+          &TabSimulate::btnDisplayOptions_clicked);
 
   ui->hslideTime->setEnabled(false);
 }
 
-QTabSimulate::~QTabSimulate() = default;
+TabSimulate::~TabSimulate() = default;
 
-void QTabSimulate::loadModelData() { reset(); }
+void TabSimulate::loadModelData() { reset(); }
 
-void QTabSimulate::stopSimulation() {
+void TabSimulate::stopSimulation() {
   SPDLOG_INFO("Simulation cancelled by user");
   isSimulationRunning = false;
 }
 
-void QTabSimulate::useDune(bool enable) {
+void TabSimulate::useDune(bool enable) {
   if (enable) {
     simType = simulate::SimulatorType::DUNE;
   } else {
@@ -70,7 +70,7 @@ void QTabSimulate::useDune(bool enable) {
   reset();
 }
 
-void QTabSimulate::reset() {
+void TabSimulate::reset() {
   pltPlot->clearGraphs();
   pltPlot->replot();
   ui->hslideTime->setMinimum(0);
@@ -155,7 +155,7 @@ void QTabSimulate::reset() {
   lblGeometry->setImage(images.back());
 }
 
-void QTabSimulate::btnSimulate_clicked() {
+void TabSimulate::btnSimulate_clicked() {
   // integration time parameters
   double dt = ui->txtSimDt->text().toDouble();
   double dtImage = ui->txtSimInterval->text().toDouble();
@@ -219,14 +219,14 @@ void QTabSimulate::btnSimulate_clicked() {
   this->setCursor(Qt::ArrowCursor);
 }
 
-void QTabSimulate::btnSliceImage_clicked() {
+void TabSimulate::btnSliceImage_clicked() {
   DialogImageSlice dialog(images, time);
   if (dialog.exec() == QDialog::Accepted) {
     SPDLOG_DEBUG("do something");
   }
 }
 
-void QTabSimulate::updateSpeciesToDraw() {
+void TabSimulate::updateSpeciesToDraw() {
   compartmentSpeciesToDraw.clear();
   std::size_t speciesIndex = 0;
   for (const auto &compSpecies : speciesNames) {
@@ -241,7 +241,7 @@ void QTabSimulate::updateSpeciesToDraw() {
   }
 }
 
-void QTabSimulate::updatePlotAndImages() {
+void TabSimulate::updatePlotAndImages() {
   // update plot
   int iSpecies = 0;
   pltPlot->legend->clearItems();
@@ -269,7 +269,7 @@ void QTabSimulate::updatePlotAndImages() {
   }
 }
 
-void QTabSimulate::btnDisplayOptions_clicked() {
+void TabSimulate::btnDisplayOptions_clicked() {
   int norm = normaliseImageIntensityOverWholeSimulation ? 1 : 0;
   DialogDisplayOptions dialog(compartmentNames, speciesNames, speciesVisible,
                               plotShowMinMax, norm);
@@ -283,7 +283,7 @@ void QTabSimulate::btnDisplayOptions_clicked() {
   }
 }
 
-void QTabSimulate::graphClicked(const QMouseEvent *event) {
+void TabSimulate::graphClicked(const QMouseEvent *event) {
   if (pltPlot->graphCount() == 0) {
     return;
   }
@@ -296,7 +296,7 @@ void QTabSimulate::graphClicked(const QMouseEvent *event) {
   ui->hslideTime->setValue(std::clamp(nearest, 0, max));
 }
 
-void QTabSimulate::hslideTime_valueChanged(int value) {
+void TabSimulate::hslideTime_valueChanged(int value) {
   if (images.size() > value) {
     lblGeometry->setImage(images[value]);
     pltTimeLine->point1->setCoords(time[value], 0);

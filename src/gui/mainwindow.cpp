@@ -15,12 +15,12 @@
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "mesh.hpp"
-#include "qtabfunctions.hpp"
-#include "qtabgeometry.hpp"
-#include "qtabreactions.hpp"
-#include "qtabsimulate.hpp"
-#include "qtabspecies.hpp"
 #include "sbml.hpp"
+#include "tabfunctions.hpp"
+#include "tabgeometry.hpp"
+#include "tabreactions.hpp"
+#include "tabsimulate.hpp"
+#include "tabspecies.hpp"
 #include "tiff.hpp"
 #include "ui_mainwindow.h"
 #include "utils.hpp"
@@ -34,20 +34,20 @@ MainWindow::MainWindow(QWidget *parent)
   statusBarPermanentMessage = new QLabel(QString(), this);
   ui->statusBar->addWidget(statusBarPermanentMessage);
 
-  tabGeometry = new QTabGeometry(sbmlDoc, ui->lblGeometry,
-                                 statusBarPermanentMessage, ui->tabReactions);
+  tabGeometry = new TabGeometry(sbmlDoc, ui->lblGeometry,
+                                statusBarPermanentMessage, ui->tabReactions);
   ui->tabGeometry->layout()->addWidget(tabGeometry);
 
-  tabSpecies = new QTabSpecies(sbmlDoc, ui->lblGeometry, ui->tabSpecies);
+  tabSpecies = new TabSpecies(sbmlDoc, ui->lblGeometry, ui->tabSpecies);
   ui->tabSpecies->layout()->addWidget(tabSpecies);
 
-  tabReactions = new QTabReactions(sbmlDoc, ui->lblGeometry, ui->tabReactions);
+  tabReactions = new TabReactions(sbmlDoc, ui->lblGeometry, ui->tabReactions);
   ui->tabReactions->layout()->addWidget(tabReactions);
 
-  tabFunctions = new QTabFunctions(sbmlDoc, ui->tabFunctions);
+  tabFunctions = new TabFunctions(sbmlDoc, ui->tabFunctions);
   ui->tabFunctions->layout()->addWidget(tabFunctions);
 
-  tabSimulate = new QTabSimulate(sbmlDoc, ui->lblGeometry, ui->tabSimulate);
+  tabSimulate = new TabSimulate(sbmlDoc, ui->lblGeometry, ui->tabSimulate);
   ui->tabSimulate->layout()->addWidget(tabSimulate);
 
   setupConnections();
@@ -112,10 +112,10 @@ void MainWindow::setupConnections() {
   connect(ui->tabMain, &QTabWidget::currentChanged, this,
           &MainWindow::tabMain_currentChanged);
 
-  connect(tabGeometry, &QTabGeometry::invalidModelOrNoGeometryImage, this,
+  connect(tabGeometry, &TabGeometry::invalidModelOrNoGeometryImage, this,
           &MainWindow::isValidModelAndGeometryImage);
 
-  connect(tabGeometry, &QTabGeometry::modelGeometryChanged, this,
+  connect(tabGeometry, &TabGeometry::modelGeometryChanged, this,
           &MainWindow::enableTabs);
 
   connect(ui->listMembranes, &QListWidget::currentRowChanged, this,

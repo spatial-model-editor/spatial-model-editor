@@ -1,4 +1,4 @@
-// QTabReactions
+// TabReactions
 
 #pragma once
 
@@ -9,24 +9,24 @@
 #include "sbml.hpp"
 
 namespace Ui {
-class QTabReactions;
+class TabReactions;
 }
 
 class QLabelMouseTracker;
 class QTreeWidgetItem;
 
-class QTabReactions : public QWidget {
+class TabReactions : public QWidget {
   Q_OBJECT
 
  public:
-  explicit QTabReactions(sbml::SbmlDocWrapper &doc,
-                         QLabelMouseTracker *mouseTracker,
-                         QWidget *parent = nullptr);
-  ~QTabReactions();
+  explicit TabReactions(sbml::SbmlDocWrapper &doc,
+                        QLabelMouseTracker *mouseTracker,
+                        QWidget *parent = nullptr);
+  ~TabReactions();
   void loadModelData(const QString &selection = {});
 
  private:
-  std::unique_ptr<Ui::QTabReactions> ui;
+  std::unique_ptr<Ui::TabReactions> ui;
   sbml::SbmlDocWrapper &sbmlDoc;
   QLabelMouseTracker *lblGeometry;
   sbml::Reac currentReac;
