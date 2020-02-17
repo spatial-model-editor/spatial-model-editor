@@ -18,6 +18,7 @@ SOURCES += \
     $$TOPDIR/src/gui/dialogs/dialogdisplayoptions.cpp \
     $$TOPDIR/src/gui/dialogs/dialogimagesize.cpp \
     $$TOPDIR/src/gui/dialogs/dialogimageslice.cpp \
+    $$TOPDIR/src/gui/dialogs/dialogintegratoroptions.cpp \
     $$TOPDIR/src/gui/dialogs/dialogunits.cpp \
     $$TOPDIR/src/gui/tabs/tabfunctions.cpp \
     $$TOPDIR/src/gui/tabs/tabgeometry.cpp \
@@ -36,6 +37,7 @@ HEADERS += \
     $$TOPDIR/src/gui/dialogs/dialogdisplayoptions.hpp \
     $$TOPDIR/src/gui/dialogs/dialogimagesize.hpp \
     $$TOPDIR/src/gui/dialogs/dialogimageslice.hpp \
+    $$TOPDIR/src/gui/dialogs/dialogintegratoroptions.hpp \
     $$TOPDIR/src/gui/dialogs/dialogunits.hpp \
     $$TOPDIR/src/gui/tabs/tabfunctions.hpp \
     $$TOPDIR/src/gui/tabs/tabgeometry.hpp \
@@ -53,6 +55,7 @@ FORMS += \
     $$TOPDIR/src/gui/dialogs/dialogdisplayoptions.ui \
     $$TOPDIR/src/gui/dialogs/dialogimagesize.ui \
     $$TOPDIR/src/gui/dialogs/dialogimageslice.ui \
+    $$TOPDIR/src/gui/dialogs/dialogintegratoroptions.ui \
     $$TOPDIR/src/gui/dialogs/dialogunits.ui \
     $$TOPDIR/src/gui/tabs/tabfunctions.ui \
     $$TOPDIR/src/gui/tabs/tabgeometry.ui \

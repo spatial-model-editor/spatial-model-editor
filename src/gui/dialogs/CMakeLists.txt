@@ -12,6 +12,8 @@ target_sources(gui
                dialogimagesize.hpp
                dialogimageslice.cpp
                dialogimageslice.hpp
+               dialogintegratoroptions.cpp
+               dialogintegratoroptions.hpp
                dialogunits.cpp
                dialogunits.hpp)
 

@@ -148,16 +148,17 @@ void SimCompartment::undoRKStep() {
   }
 }
 
-double SimCompartment::calculateRKError(double epsilon) const {
-  double maxErr = 0;
+IntegratorError SimCompartment::calculateRKError(double epsilon) const {
+  IntegratorError err;
   for (std::size_t i = 0; i < conc.size(); ++i) {
     double localErr = std::abs(conc[i] - s2[i]);
+    err.abs = std::max(err.abs, localErr);
     // average current and previous concentrations and add a (hopefully) small
     // constant term to avoid dividing by c=0 issues
     double localNorm = 0.5 * (conc[i] + s3[i] + epsilon);
-    maxErr = std::max(maxErr, localErr / localNorm);
+    err.rel = std::max(err.rel, localErr / localNorm);
   }
-  return maxErr;
+  return err;
 }
 
 const std::string &SimCompartment::getCompartmentId() const {
@@ -277,16 +278,15 @@ void PixelSim::calculateDcdt() {
   }
 }
 
-double PixelSim::doRK101(double dt) {
+void PixelSim::doRK101(double dt) {
   // RK1(0)1: Forwards Euler, no error estimate
   calculateDcdt();
   for (auto &sim : simCompartments) {
     sim.doForwardsEulerTimestep(dt);
   }
-  return dt;
 }
 
-double PixelSim::doRK212(double dtMax) {
+void PixelSim::doRK212(double dt) {
   // RK2(1)2: Heun / Modified Euler, with embedded forwards Euler error estimate
   // Shu-Osher form used here taken from eq(2.15) of
   // https://doi.org/10.1016/0021-9991(88)90177-5
@@ -295,41 +295,15 @@ double PixelSim::doRK212(double dtMax) {
   constexpr std::array<double, 2> g3{1.0, 0.5};
   constexpr std::array<double, 2> beta{1.0, 0.5};
   constexpr std::array<double, 2> delta{0.0, 1.0};
-  double err;
-  double dt;
-  do {
-    // do timestep
-    dt = std::min(nextTimestep, dtMax);
+  for (std::size_t i = 0; i < 2; ++i) {
+    calculateDcdt();
     for (auto &sim : simCompartments) {
-      sim.doRKInit();
+      sim.doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
     }
-    for (std::size_t i = 0; i < 2; ++i) {
-      calculateDcdt();
-      for (auto &sim : simCompartments) {
-        sim.doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
-      }
-    }
-    // calculate error
-    err = 0;
-    for (const auto &sim : simCompartments) {
-      err = std::max(err, sim.calculateRKError(epsilon));
-    }
-    // calculate new timestep
-    nextTimestep =
-        std::min(0.95 * dt * std::sqrt(desiredRelativeError / err), dtMax);
-    SPDLOG_DEBUG("dt = {} gave err = {} -> new dt = {}", dt, err, nextTimestep);
-    if (err > desiredRelativeError) {
-      SPDLOG_DEBUG("discarding step");
-      ++discardedSteps;
-      for (auto &sim : simCompartments) {
-        sim.undoRKStep();
-      }
-    }
-  } while (err > desiredRelativeError);
-  return dt;
+  }
 }
 
-double PixelSim::doRK323(double dtMax) {
+void PixelSim::doRK323(double dt) {
   // RK3(2)3: Shu Osher method with embedded Heun error estimate
   // Taken from eq(2.18) of
   // https://doi.org/10.1016/0021-9991(88)90177-5
@@ -338,44 +312,18 @@ double PixelSim::doRK323(double dtMax) {
   constexpr std::array<double, 3> g3{0.0, 0.75, 1.0 / 3.0};
   constexpr std::array<double, 3> beta{1.0, 0.25, 2.0 / 3.0};
   constexpr std::array<double, 3> delta{0.0, 0.0, 1.0};
-  double err;
-  double dt;
-  do {
-    // do timestep
-    dt = std::min(nextTimestep, dtMax);
+  for (std::size_t i = 0; i < 3; ++i) {
+    calculateDcdt();
     for (auto &sim : simCompartments) {
-      sim.doRKInit();
+      sim.doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
     }
-    for (std::size_t i = 0; i < 3; ++i) {
-      calculateDcdt();
-      for (auto &sim : simCompartments) {
-        sim.doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
-      }
-    }
-    for (auto &sim : simCompartments) {
-      sim.doRKFinalise(0.0, 2.0, -1.0);
-    }
-    // calculate error
-    err = 0;
-    for (const auto &sim : simCompartments) {
-      err = std::max(err, sim.calculateRKError(epsilon));
-    }
-    // calculate new timestep
-    nextTimestep = std::min(
-        0.95 * dt * std::pow((desiredRelativeError / err), 1.0 / 3.0), dtMax);
-    SPDLOG_DEBUG("dt = {} gave err = {} -> new dt = {}", dt, err, nextTimestep);
-    if (err > desiredRelativeError) {
-      SPDLOG_DEBUG("discarding step");
-      ++discardedSteps;
-      for (auto &sim : simCompartments) {
-        sim.undoRKStep();
-      }
-    }
-  } while (err > desiredRelativeError);
-  return dt;
+  }
+  for (auto &sim : simCompartments) {
+    sim.doRKFinalise(0.0, 2.0, -1.0);
+  }
 }
 
-double PixelSim::doRK435(double dtMax) {
+void PixelSim::doRK435(double dt) {
   // RK4(3)5: 3S* algorithm 6 + coefficients from table 6 from
   // https://doi.org/10.1016/j.jcp.2009.11.006
   // 5 stage RK4 with embedded RK3 error estimate
@@ -396,58 +344,57 @@ double PixelSim::doRK435(double dtMax) {
                                         -0.655568367959557,
                                         -0.194421504490852};
   double deltaSum = 1.0 / utils::sum(delta);
-  double err;
+  for (std::size_t i = 0; i < 5; ++i) {
+    calculateDcdt();
+    for (auto &sim : simCompartments) {
+      sim.doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
+    }
+  }
+  for (auto &sim : simCompartments) {
+    sim.doRKFinalise(deltaSum * delta[5], deltaSum, deltaSum * delta[6]);
+  }
+}
+
+double PixelSim::doRKAdaptive(double dtMax) {
+  // Adaptive timestep Runge-Kutta
+  IntegratorError err;
   double dt;
   do {
-    dt = std::min(nextTimestep, dtMax);
     // do timestep
+    dt = std::min(nextTimestep, dtMax);
     for (auto &sim : simCompartments) {
       sim.doRKInit();
     }
-    for (std::size_t i = 0; i < 5; ++i) {
-      calculateDcdt();
-      for (auto &sim : simCompartments) {
-        sim.doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
-      }
-    }
-    for (auto &sim : simCompartments) {
-      sim.doRKFinalise(deltaSum * delta[5], deltaSum, deltaSum * delta[6]);
+    if (integratorOrder == 2) {
+      doRK212(dt);
+    } else if (integratorOrder == 3) {
+      doRK323(dt);
+    } else if (integratorOrder == 4) {
+      doRK435(dt);
     }
     // calculate error
-    err = 0;
+    err.abs = 0;
+    err.rel = 0;
     for (const auto &sim : simCompartments) {
-      err = std::max(err, sim.calculateRKError(epsilon));
+      auto compErr = sim.calculateRKError(epsilon);
+      err.rel = std::max(err.rel, compErr.rel);
+      err.abs = std::max(err.abs, compErr.abs);
     }
     // calculate new timestep
-    nextTimestep = 0.98 * dt * std::pow(desiredRelativeError / err, 0.25);
-    SPDLOG_DEBUG("dt = {} gave err = {} -> new dt = {}", dt, err, nextTimestep);
-    if (err > desiredRelativeError) {
+    double errFactor = std::min(errMax.abs / err.abs, errMax.rel / err.rel);
+    errFactor = std::pow(errFactor, 1.0 / static_cast<double>(integratorOrder));
+    nextTimestep = std::min(0.95 * dt * errFactor, dtMax);
+    SPDLOG_DEBUG("dt = {} gave rel err = {}, abs err = {} -> new dt = {}", dt,
+                 err.rel, err.abs, nextTimestep);
+    if (err.abs > errMax.abs || err.rel > errMax.rel) {
       SPDLOG_DEBUG("discarding step");
       ++discardedSteps;
       for (auto &sim : simCompartments) {
         sim.undoRKStep();
       }
     }
-  } while (err > desiredRelativeError);
+  } while (err.abs > errMax.abs || err.rel > errMax.rel);
   return dt;
-}
-
-double PixelSim::doTimestep(double dt, double dtMax) {
-  if (integratorOrder == 2) {
-    return doRK212(dtMax);
-  } else if (integratorOrder == 3) {
-    return doRK323(dtMax);
-  } else if (integratorOrder == 4) {
-    return doRK435(dtMax);
-  } else {
-    double dtStable = dt;
-    if (dt >= maxStableTimestep) {
-      dtStable = maxStableTimestep;
-      SPDLOG_DEBUG("requested dt={} above RK1 stability bound {}: using dt={}",
-                   dt, maxStableTimestep, dtStable);
-    }
-    return doRK101(std::min(dtStable, dtMax));
-  }
 }
 
 PixelSim::PixelSim(const sbml::SbmlDocWrapper &sbmlDoc) : doc(sbmlDoc) {
@@ -498,15 +445,38 @@ void PixelSim::setIntegrationOrder(std::size_t order) {
   }
 }
 
-std::size_t PixelSim::run(double time, double relativeError,
-                          double maximumStepsize) {
-  desiredRelativeError = relativeError;
+std::size_t PixelSim::getIntegrationOrder() const { return integratorOrder; }
+
+void PixelSim::setIntegratorError(const IntegratorError &err) {
+  SPDLOG_INFO("Setting max integration errors");
+  SPDLOG_INFO("  - relative: {}", err.rel);
+  SPDLOG_INFO("  - absolute: {}", err.abs);
+  errMax = err;
+}
+
+IntegratorError PixelSim::getIntegratorError() const { return errMax; }
+
+void PixelSim::setMaxDt(double maxDt) {
+  SPDLOG_INFO("Setting max timestep: {}", maxDt);
+  maxTimestep = maxDt;
+}
+
+double PixelSim::getMaxDt() const { return maxTimestep; }
+
+std::size_t PixelSim::run(double time) {
   double tNow = 0;
   std::size_t steps = 0;
   discardedSteps = 0;
   // do timesteps until we reach t
   while (tNow + time * 1e-12 < time) {
-    tNow += doTimestep(maximumStepsize, std::min(maximumStepsize, time - tNow));
+    double maxDt = std::min(maxTimestep, time - tNow);
+    if (integratorOrder > 1) {
+      tNow += doRKAdaptive(maxDt);
+    } else {
+      double timestep = std::min(maxDt, maxStableTimestep);
+      doRK101(timestep);
+      tNow += timestep;
+    }
     ++steps;
   }
   SPDLOG_INFO("t={} integrated using {} RK{} steps ({:3.1f}% discarded)", time,

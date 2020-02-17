@@ -27,6 +27,13 @@ struct AvgMinMax {
   double max = 0;
 };
 
+struct IntegratorOptions {
+  std::size_t order = 2;
+  double maxRelErr = 0.01;
+  double maxAbsErr = std::numeric_limits<double>::max();
+  double maxTimestep = std::numeric_limits<double>::max();
+};
+
 class Simulation {
  private:
   SimulatorType simulatorType;
@@ -51,9 +58,9 @@ class Simulation {
   explicit Simulation(const sbml::SbmlDocWrapper &sbmlDoc,
                       SimulatorType simType = SimulatorType::DUNE);
   ~Simulation();
-  void setIntegrationOrder(std::size_t order);
-  std::size_t doTimestep(double time, double relativeError,
-                         double maximumStepsize);
+  IntegratorOptions getIntegratorOptions() const;
+  void setIntegratorOptions(const IntegratorOptions &options);
+  std::size_t doTimestep(double time);
   const std::vector<std::string> &getCompartmentIds() const;
   const std::vector<std::string> &getSpeciesIds(
       std::size_t compartmentIndex) const;

@@ -48,6 +48,24 @@ Simulation::Simulation(const sbml::SbmlDocWrapper &sbmlDoc,
 
 Simulation::~Simulation() = default;
 
+IntegratorOptions Simulation::getIntegratorOptions() const {
+  IntegratorOptions options;
+  options.order = simulator->getIntegrationOrder();
+  options.maxRelErr = simulator->getIntegratorError().rel;
+  options.maxAbsErr = simulator->getIntegratorError().abs;
+  options.maxTimestep = simulator->getMaxDt();
+  return options;
+}
+
+void Simulation::setIntegratorOptions(const IntegratorOptions &options) {
+  simulator->setIntegrationOrder(options.order);
+  auto e = simulator->getIntegratorError();
+  e.rel = options.maxRelErr;
+  e.abs = options.maxAbsErr;
+  simulator->setIntegratorError(e);
+  simulator->setMaxDt(options.maxTimestep);
+}
+
 static std::vector<AvgMinMax> calculateAvgMinMax(
     const std::vector<double> &concs, std::size_t nSpecies) {
   std::vector<AvgMinMax> avgMinMax(nSpecies);
@@ -66,16 +84,12 @@ static std::vector<AvgMinMax> calculateAvgMinMax(
   return avgMinMax;
 }
 
-void Simulation::setIntegrationOrder(std::size_t order) {
-  simulator->setIntegrationOrder(order);
-}
-
-std::size_t Simulation::doTimestep(double time, double relativeError,
-                                   double maximumStepsize) {
+std::size_t Simulation::doTimestep(double time) {
   SPDLOG_DEBUG("integrating for time {}", time);
-  SPDLOG_DEBUG("  - relative error {}", relativeError);
-  SPDLOG_DEBUG("  - maximum stepsize {}", maximumStepsize);
-  std::size_t steps = simulator->run(time, relativeError, maximumStepsize);
+  SPDLOG_DEBUG("  - max rel local err {}", simulator->getIntegratorError().rel);
+  SPDLOG_DEBUG("  - max abs local err {}", simulator->getIntegratorError().abs);
+  SPDLOG_DEBUG("  - max stepsize {}", simulator->getMaxDt());
+  std::size_t steps = simulator->run(time);
   updateConcentrations(timePoints.back() + time);
   return steps;
 }

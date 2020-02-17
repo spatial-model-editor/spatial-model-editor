@@ -190,10 +190,13 @@ SCENARIO("DUNE: simulation", "[core][dune][simulate]") {
     s.setInitialConcentration("C", 0.0);
 
     simulate::Simulation duneSim(s);
+    auto options = duneSim.getIntegratorOptions();
+    options.maxTimestep = 0.01;
+    duneSim.setIntegratorOptions(options);
     REQUIRE(duneSim.getAvgMinMax(0, 0, 0).avg == dbl_approx(1.0));
     REQUIRE(duneSim.getAvgMinMax(0, 0, 1).avg == dbl_approx(1.0));
     REQUIRE(duneSim.getAvgMinMax(0, 0, 2).avg == dbl_approx(0.0));
-    duneSim.doTimestep(0.05, std::numeric_limits<double>::max(), 0.01);
+    duneSim.doTimestep(0.05);
     auto timeIndex = duneSim.getTimePoints().size() - 1;
     auto imgConc = duneSim.getConcImage(timeIndex);
     REQUIRE(std::abs(duneSim.getAvgMinMax(timeIndex, 0, 0).avg - 0.995) < 1e-4);

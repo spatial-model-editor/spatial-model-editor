@@ -33,7 +33,7 @@ TabSimulate::TabSimulate(sbml::SbmlDocWrapper &doc,
   pltPlot->plotLayout()->insertRow(0);
   pltPlot->plotLayout()->addElement(0, 0, pltTitle);
 
-  ui->gridSimulate->addWidget(pltPlot, 1, 0, 1, 9);
+  ui->gridSimulate->addWidget(pltPlot, 1, 0, 1, 8);
 
   connect(ui->btnSimulate, &QPushButton::clicked, this,
           &TabSimulate::btnSimulate_clicked);
@@ -49,6 +49,7 @@ TabSimulate::TabSimulate(sbml::SbmlDocWrapper &doc,
   connect(ui->btnDisplayOptions, &QPushButton::clicked, this,
           &TabSimulate::btnDisplayOptions_clicked);
 
+  useDune(true);
   ui->hslideTime->setEnabled(false);
 }
 
@@ -64,8 +65,17 @@ void TabSimulate::stopSimulation() {
 void TabSimulate::useDune(bool enable) {
   if (enable) {
     simType = simulate::SimulatorType::DUNE;
+    // reset some sensible default integration options:
+    integratorOptions.order = 1;
+    integratorOptions.maxTimestep = ui->txtSimInterval->text().toDouble() * 0.2;
+    integratorOptions.maxAbsErr = std::numeric_limits<double>::max();
+    integratorOptions.maxRelErr = std::numeric_limits<double>::max();
   } else {
     simType = simulate::SimulatorType::Pixel;
+    integratorOptions.order = 2;
+    integratorOptions.maxTimestep = std::numeric_limits<double>::max();
+    integratorOptions.maxAbsErr = std::numeric_limits<double>::max();
+    integratorOptions.maxRelErr = 0.01;
   }
   reset();
 }
@@ -87,6 +97,7 @@ void TabSimulate::reset() {
   // and once they are deleted it dereferences a nullptr and segfaults...
   sim.reset();
   sim = std::make_unique<simulate::Simulation>(sbmlDoc, simType);
+  sim->setIntegratorOptions(integratorOptions);
 
   // setup species names
   speciesNames.clear();
@@ -155,9 +166,18 @@ void TabSimulate::reset() {
   lblGeometry->setImage(images.back());
 }
 
+simulate::IntegratorOptions TabSimulate::getIntegratorOptions() const {
+  return integratorOptions;
+}
+
+void TabSimulate::setIntegratorOptions(
+    const simulate::IntegratorOptions &options) {
+  integratorOptions = options;
+  reset();
+}
+
 void TabSimulate::btnSimulate_clicked() {
   // integration time parameters
-  double dt = ui->txtSimDt->text().toDouble();
   double dtImage = ui->txtSimInterval->text().toDouble();
   int n_images =
       static_cast<int>(ui->txtSimLength->text().toDouble() / dtImage);
@@ -169,11 +189,7 @@ void TabSimulate::btnSimulate_clicked() {
   QApplication::processEvents();
   // integrate Model
   for (int i_image = 0; i_image < n_images; ++i_image) {
-    if (simType == simulate::SimulatorType::DUNE) {
-      sim->doTimestep(dtImage, std::numeric_limits<double>::max(), dt);
-    } else {
-      sim->doTimestep(dtImage, dt, std::numeric_limits<double>::max());
-    }
+    sim->doTimestep(dtImage);
     QApplication::processEvents();
     if (!isSimulationRunning) {
       break;

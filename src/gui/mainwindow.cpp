@@ -10,6 +10,7 @@
 
 #include "dialogabout.hpp"
 #include "dialogimagesize.hpp"
+#include "dialogintegratoroptions.hpp"
 #include "dialogunits.hpp"
 #include "duneini.hpp"
 #include "guiutils.hpp"
@@ -93,6 +94,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->actionSet_image_size, &QAction::triggered, this,
           &MainWindow::actionSet_image_size_triggered);
+
+  connect(ui->actionIntegrator_options, &QAction::triggered, this,
+          &MainWindow::actionIntegrator_options_triggered);
 
   connect(ui->action_What_s_this, &QAction::triggered, this,
           []() { QWhatsThis::enterWhatsThisMode(); });
@@ -370,6 +374,13 @@ void MainWindow::actionSet_image_size_triggered() {
     double pixelWidth = dialog.getPixelWidth();
     SPDLOG_INFO("Set new pixel width = {}", pixelWidth);
     sbmlDoc.setPixelWidth(pixelWidth);
+  }
+}
+
+void MainWindow::actionIntegrator_options_triggered() {
+  DialogIntegratorOptions dialog(tabSimulate->getIntegratorOptions());
+  if (dialog.exec() == QDialog::Accepted) {
+    tabSimulate->setIntegratorOptions(dialog.getIntegratorOptions());
   }
 }
 
