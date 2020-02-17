@@ -162,7 +162,7 @@ double SimCompartment::calculateRKError(double epsilon) const {
 
 const std::string &SimCompartment::getCompartmentId() const {
   return compartmentId;
-};
+}
 
 const std::vector<std::string> &SimCompartment::getSpeciesIds() const {
   return speciesIds;

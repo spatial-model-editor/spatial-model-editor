@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>QTabSpecies</class>
- <widget class="QWidget" name="QTabSpecies">
+ <class>TabSpecies</class>
+ <widget class="QWidget" name="TabSpecies">
   <property name="geometry">
    <rect>
     <x>0</x>

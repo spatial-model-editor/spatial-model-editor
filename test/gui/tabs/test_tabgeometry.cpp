@@ -10,8 +10,8 @@
 #include "catch_wrapper.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
-#include "qtabgeometry.hpp"
 #include "sbml.hpp"
+#include "tabgeometry.hpp"
 
 SCENARIO("Geometry Tab", "[gui][tabs][geometry]") {
   sbml::SbmlDocWrapper sbmlDoc;
@@ -19,7 +19,7 @@ SCENARIO("Geometry Tab", "[gui][tabs][geometry]") {
   mouseTracker.show();
   waitFor(&mouseTracker);
   QLabel statusBarMsg;
-  auto tab = QTabGeometry(sbmlDoc, &mouseTracker, &statusBarMsg);
+  auto tab = TabGeometry(sbmlDoc, &mouseTracker, &statusBarMsg);
   tab.show();
   waitFor(&tab);
   ModalWidgetTimer mwt;

@@ -1,4 +1,4 @@
-// QTabFunctions
+// TabFunctions
 
 #pragma once
 
@@ -6,23 +6,23 @@
 #include <memory>
 
 namespace Ui {
-class QTabFunctions;
+class TabFunctions;
 }
 
 namespace sbml {
 class SbmlDocWrapper;
 }
 
-class QTabFunctions : public QWidget {
+class TabFunctions : public QWidget {
   Q_OBJECT
 
  public:
-  explicit QTabFunctions(sbml::SbmlDocWrapper &doc, QWidget *parent = nullptr);
-  ~QTabFunctions();
+  explicit TabFunctions(sbml::SbmlDocWrapper &doc, QWidget *parent = nullptr);
+  ~TabFunctions();
   void loadModelData(const QString &selection = {});
 
  private:
-  std::unique_ptr<Ui::QTabFunctions> ui;
+  std::unique_ptr<Ui::TabFunctions> ui;
   sbml::SbmlDocWrapper &sbmlDoc;
   void listFunctions_currentRowChanged(int row);
   void btnAddFunction_clicked();

@@ -8,13 +8,13 @@
 #include "catch_wrapper.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
-#include "qtabsimulate.hpp"
 #include "sbml.hpp"
+#include "tabsimulate.hpp"
 
 SCENARIO("Simulate Tab", "[gui][tabs][simulate]") {
   sbml::SbmlDocWrapper sbmlDoc;
   QLabelMouseTracker mouseTracker;
-  auto tab = QTabSimulate(sbmlDoc, &mouseTracker);
+  auto tab = TabSimulate(sbmlDoc, &mouseTracker);
   tab.show();
   waitFor(&tab);
   ModalWidgetTimer mwt;

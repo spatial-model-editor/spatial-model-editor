@@ -1,4 +1,4 @@
-#include "qtabfunctions.hpp"
+#include "tabfunctions.hpp"
 
 #include <QInputDialog>
 #include <QMessageBox>
@@ -6,39 +6,39 @@
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "sbml.hpp"
-#include "ui_qtabfunctions.h"
+#include "ui_tabfunctions.h"
 
-QTabFunctions::QTabFunctions(sbml::SbmlDocWrapper &doc, QWidget *parent)
-    : QWidget(parent), ui{std::make_unique<Ui::QTabFunctions>()}, sbmlDoc(doc) {
+TabFunctions::TabFunctions(sbml::SbmlDocWrapper &doc, QWidget *parent)
+    : QWidget(parent), ui{std::make_unique<Ui::TabFunctions>()}, sbmlDoc(doc) {
   ui->setupUi(this);
   connect(ui->listFunctions, &QListWidget::currentRowChanged, this,
-          &QTabFunctions::listFunctions_currentRowChanged);
+          &TabFunctions::listFunctions_currentRowChanged);
 
   connect(ui->btnAddFunction, &QPushButton::clicked, this,
-          &QTabFunctions::btnAddFunction_clicked);
+          &TabFunctions::btnAddFunction_clicked);
 
   connect(ui->btnRemoveFunction, &QPushButton::clicked, this,
-          &QTabFunctions::btnRemoveFunction_clicked);
+          &TabFunctions::btnRemoveFunction_clicked);
 
   connect(ui->listFunctionParams, &QListWidget::currentRowChanged, this,
-          &QTabFunctions::listFunctionParams_currentRowChanged);
+          &TabFunctions::listFunctionParams_currentRowChanged);
 
   connect(ui->btnAddFunctionParam, &QPushButton::clicked, this,
-          &QTabFunctions::btnAddFunctionParam_clicked);
+          &TabFunctions::btnAddFunctionParam_clicked);
 
   connect(ui->btnRemoveFunctionParam, &QPushButton::clicked, this,
-          &QTabFunctions::btnRemoveFunctionParam_clicked);
+          &TabFunctions::btnRemoveFunctionParam_clicked);
 
   connect(ui->txtFunctionDef, &QPlainTextMathEdit::mathChanged, this,
-          &QTabFunctions::txtFunctionDef_mathChanged);
+          &TabFunctions::txtFunctionDef_mathChanged);
 
   connect(ui->btnSaveFunctionChanges, &QPushButton::clicked, this,
-          &QTabFunctions::btnSaveFunctionChanges_clicked);
+          &TabFunctions::btnSaveFunctionChanges_clicked);
 }
 
-QTabFunctions::~QTabFunctions() = default;
+TabFunctions::~TabFunctions() = default;
 
-void QTabFunctions::loadModelData(const QString &selection) {
+void TabFunctions::loadModelData(const QString &selection) {
   auto *list = ui->listFunctions;
   list->clear();
   ui->btnRemoveFunctionParam->setEnabled(false);
@@ -52,7 +52,7 @@ void QTabFunctions::loadModelData(const QString &selection) {
   ui->txtFunctionDef->setEnabled(enable);
 }
 
-void QTabFunctions::listFunctions_currentRowChanged(int row) {
+void TabFunctions::listFunctions_currentRowChanged(int row) {
   ui->txtFunctionName->clear();
   ui->listFunctionParams->clear();
   ui->txtFunctionDef->clear();
@@ -83,7 +83,7 @@ void QTabFunctions::listFunctions_currentRowChanged(int row) {
   ui->btnRemoveFunction->setEnabled(true);
 }
 
-void QTabFunctions::btnAddFunction_clicked() {
+void TabFunctions::btnAddFunction_clicked() {
   bool ok;
   auto functionName = QInputDialog::getText(
       this, "Add function", "New function name:", QLineEdit::Normal, {}, &ok);
@@ -93,7 +93,7 @@ void QTabFunctions::btnAddFunction_clicked() {
   }
 }
 
-void QTabFunctions::btnRemoveFunction_clicked() {
+void TabFunctions::btnRemoveFunction_clicked() {
   int row = ui->listFunctions->currentRow();
   if ((row < 0) || (row > sbmlDoc.functions.size() - 1)) {
     return;
@@ -115,12 +115,12 @@ void QTabFunctions::btnRemoveFunction_clicked() {
   msgbox->open();
 }
 
-void QTabFunctions::listFunctionParams_currentRowChanged(int row) {
+void TabFunctions::listFunctionParams_currentRowChanged(int row) {
   bool valid = (row >= 0) && (row < ui->listFunctionParams->count());
   ui->btnRemoveFunctionParam->setEnabled(valid);
 }
 
-void QTabFunctions::btnAddFunctionParam_clicked() {
+void TabFunctions::btnAddFunctionParam_clicked() {
   bool ok;
   auto param =
       QInputDialog::getText(this, "Add function parameter",
@@ -134,7 +134,7 @@ void QTabFunctions::btnAddFunctionParam_clicked() {
   }
 }
 
-void QTabFunctions::btnRemoveFunctionParam_clicked() {
+void TabFunctions::btnRemoveFunctionParam_clicked() {
   int row = ui->listFunctionParams->currentRow();
   if ((row < 0) || (row > ui->listFunctionParams->count() - 1)) {
     return;
@@ -157,8 +157,8 @@ void QTabFunctions::btnRemoveFunctionParam_clicked() {
   msgbox->open();
 }
 
-void QTabFunctions::txtFunctionDef_mathChanged(const QString &math, bool valid,
-                                               const QString &errorMessage) {
+void TabFunctions::txtFunctionDef_mathChanged(const QString &math, bool valid,
+                                              const QString &errorMessage) {
   ui->btnSaveFunctionChanges->setEnabled(valid);
   if (valid) {
     SPDLOG_INFO("new math: {}", math.toStdString());
@@ -169,7 +169,7 @@ void QTabFunctions::txtFunctionDef_mathChanged(const QString &math, bool valid,
   }
 }
 
-void QTabFunctions::btnSaveFunctionChanges_clicked() {
+void TabFunctions::btnSaveFunctionChanges_clicked() {
   if (!ui->txtFunctionDef->mathIsValid()) {
     return;
   }

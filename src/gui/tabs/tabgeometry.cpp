@@ -1,4 +1,4 @@
-#include "qtabgeometry.hpp"
+#include "tabgeometry.hpp"
 
 #include <QInputDialog>
 #include <QMessageBox>
@@ -8,13 +8,13 @@
 #include "mesh.hpp"
 #include "qlabelmousetracker.hpp"
 #include "sbml.hpp"
-#include "ui_qtabgeometry.h"
+#include "ui_tabgeometry.h"
 
-QTabGeometry::QTabGeometry(sbml::SbmlDocWrapper &doc,
-                           QLabelMouseTracker *mouseTracker,
-                           QLabel *statusBarMsg, QWidget *parent)
+TabGeometry::TabGeometry(sbml::SbmlDocWrapper &doc,
+                         QLabelMouseTracker *mouseTracker, QLabel *statusBarMsg,
+                         QWidget *parent)
     : QWidget(parent),
-      ui{std::make_unique<Ui::QTabGeometry>()},
+      ui{std::make_unique<Ui::TabGeometry>()},
       sbmlDoc(doc),
       lblGeometry(mouseTracker),
       statusBarPermanentMessage(statusBarMsg) {
@@ -22,25 +22,25 @@ QTabGeometry::QTabGeometry(sbml::SbmlDocWrapper &doc,
   ui->tabCompartmentGeometry->setCurrentIndex(0);
 
   connect(lblGeometry, &QLabelMouseTracker::mouseClicked, this,
-          &QTabGeometry::lblGeometry_mouseClicked);
+          &TabGeometry::lblGeometry_mouseClicked);
 
   connect(ui->btnAddCompartment, &QPushButton::clicked, this,
-          &QTabGeometry::btnAddCompartment_clicked);
+          &TabGeometry::btnAddCompartment_clicked);
 
   connect(ui->btnRemoveCompartment, &QPushButton::clicked, this,
-          &QTabGeometry::btnRemoveCompartment_clicked);
+          &TabGeometry::btnRemoveCompartment_clicked);
 
   connect(ui->btnChangeCompartment, &QPushButton::clicked, this,
-          &QTabGeometry::btnChangeCompartment_clicked);
+          &TabGeometry::btnChangeCompartment_clicked);
 
   connect(ui->btnSetCompartmentSizeFromImage, &QPushButton::clicked, this,
-          &QTabGeometry::btnSetCompartmentSizeFromImage_clicked);
+          &TabGeometry::btnSetCompartmentSizeFromImage_clicked);
 
   connect(ui->tabCompartmentGeometry, &QTabWidget::currentChanged, this,
-          &QTabGeometry::tabCompartmentGeometry_currentChanged);
+          &TabGeometry::tabCompartmentGeometry_currentChanged);
 
   connect(ui->lblCompBoundary, &QLabelMouseTracker::mouseClicked, this,
-          &QTabGeometry::lblCompBoundary_mouseClicked);
+          &TabGeometry::lblCompBoundary_mouseClicked);
 
   connect(ui->lblCompBoundary, &QLabelMouseTracker::mouseWheelEvent, this,
           [this](QWheelEvent *ev) {
@@ -48,17 +48,17 @@ QTabGeometry::QTabGeometry(sbml::SbmlDocWrapper &doc,
           });
 
   connect(ui->spinBoundaryIndex, qOverload<int>(&QSpinBox::valueChanged), this,
-          &QTabGeometry::spinBoundaryIndex_valueChanged);
+          &TabGeometry::spinBoundaryIndex_valueChanged);
 
   connect(ui->spinMaxBoundaryPoints, qOverload<int>(&QSpinBox::valueChanged),
-          this, &QTabGeometry::spinMaxBoundaryPoints_valueChanged);
+          this, &TabGeometry::spinMaxBoundaryPoints_valueChanged);
 
   connect(ui->spinBoundaryWidth,
           qOverload<double>(&QDoubleSpinBox::valueChanged), this,
-          &QTabGeometry::spinBoundaryWidth_valueChanged);
+          &TabGeometry::spinBoundaryWidth_valueChanged);
 
   connect(ui->lblCompMesh, &QLabelMouseTracker::mouseClicked, this,
-          &QTabGeometry::lblCompMesh_mouseClicked);
+          &TabGeometry::lblCompMesh_mouseClicked);
 
   connect(ui->lblCompMesh, &QLabelMouseTracker::mouseWheelEvent, this,
           [this](QWheelEvent *ev) {
@@ -66,18 +66,18 @@ QTabGeometry::QTabGeometry(sbml::SbmlDocWrapper &doc,
           });
 
   connect(ui->spinMaxTriangleArea, qOverload<int>(&QSpinBox::valueChanged),
-          this, &QTabGeometry::spinMaxTriangleArea_valueChanged);
+          this, &TabGeometry::spinMaxTriangleArea_valueChanged);
 
   connect(ui->listCompartments, &QListWidget::currentRowChanged, this,
-          &QTabGeometry::listCompartments_currentRowChanged);
+          &TabGeometry::listCompartments_currentRowChanged);
 
   connect(ui->listCompartments, &QListWidget::itemDoubleClicked, this,
-          &QTabGeometry::listCompartments_itemDoubleClicked);
+          &TabGeometry::listCompartments_itemDoubleClicked);
 }
 
-QTabGeometry::~QTabGeometry() = default;
+TabGeometry::~TabGeometry() = default;
 
-void QTabGeometry::loadModelData(const QString &selection) {
+void TabGeometry::loadModelData(const QString &selection) {
   ui->listCompartments->clear();
   ui->listCompartments->insertItems(0, sbmlDoc.compartmentNames);
   if (ui->listCompartments->count() > 0) {
@@ -89,12 +89,12 @@ void QTabGeometry::loadModelData(const QString &selection) {
   // ui->lblGeometryStatus->setText("Compartment Geometry:");
 }
 
-void QTabGeometry::enableTabs(bool enable) {
+void TabGeometry::enableTabs(bool enable) {
   ui->tabCompartmentGeometry->setTabEnabled(1, enable);
   ui->tabCompartmentGeometry->setTabEnabled(2, enable);
 }
 
-void QTabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
+void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
   if (waitingForCompartmentChoice) {
     SPDLOG_INFO("colour {:x}", col);
     SPDLOG_INFO("point ({},{})", point.x(), point.y());
@@ -123,7 +123,7 @@ void QTabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
   }
 }
 
-void QTabGeometry::btnAddCompartment_clicked() {
+void TabGeometry::btnAddCompartment_clicked() {
   bool ok;
   auto compartmentName = QInputDialog::getText(
       this, "Add compartment", "New compartment name:", QLineEdit::Normal, {},
@@ -137,7 +137,7 @@ void QTabGeometry::btnAddCompartment_clicked() {
   }
 }
 
-void QTabGeometry::btnRemoveCompartment_clicked() {
+void TabGeometry::btnRemoveCompartment_clicked() {
   int index = ui->listCompartments->currentRow();
   if (index < 0 || index >= sbmlDoc.compartments.size()) {
     return;
@@ -161,7 +161,7 @@ void QTabGeometry::btnRemoveCompartment_clicked() {
   msgbox->open();
 }
 
-void QTabGeometry::btnChangeCompartment_clicked() {
+void TabGeometry::btnChangeCompartment_clicked() {
   if (!(sbmlDoc.isValid && sbmlDoc.hasGeometryImage)) {
     emit invalidModelOrNoGeometryImage();
     SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
@@ -174,14 +174,14 @@ void QTabGeometry::btnChangeCompartment_clicked() {
       "image...");
 }
 
-void QTabGeometry::btnSetCompartmentSizeFromImage_clicked() {
+void TabGeometry::btnSetCompartmentSizeFromImage_clicked() {
   const auto &compartmentID =
       sbmlDoc.compartments.at(ui->listCompartments->currentRow());
   sbmlDoc.setCompartmentSizeFromImage(compartmentID.toStdString());
   listCompartments_currentRowChanged(ui->listCompartments->currentRow());
 }
 
-void QTabGeometry::tabCompartmentGeometry_currentChanged(int index) {
+void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
   enum TabIndex { IMAGE = 0, BOUNDARIES = 1, MESH = 2 };
   SPDLOG_DEBUG("Tab changed to {} [{}]", index,
                ui->tabCompartmentGeometry->tabText(index).toStdString());
@@ -198,7 +198,7 @@ void QTabGeometry::tabCompartmentGeometry_currentChanged(int index) {
   }
 }
 
-void QTabGeometry::lblCompBoundary_mouseClicked(QRgb col, QPoint point) {
+void TabGeometry::lblCompBoundary_mouseClicked(QRgb col, QPoint point) {
   Q_UNUSED(col);
   Q_UNUSED(point);
   auto index = ui->lblCompBoundary->getMaskIndex();
@@ -208,7 +208,7 @@ void QTabGeometry::lblCompBoundary_mouseClicked(QRgb col, QPoint point) {
   }
 }
 
-void QTabGeometry::spinBoundaryIndex_valueChanged(int value) {
+void TabGeometry::spinBoundaryIndex_valueChanged(int value) {
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<size_t>(value);
   ui->spinMaxBoundaryPoints->setValue(
@@ -224,7 +224,7 @@ void QTabGeometry::spinBoundaryIndex_valueChanged(int value) {
   }
 }
 
-void QTabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
+void TabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<std::size_t>(ui->spinBoundaryIndex->value());
   sbmlDoc.mesh->setBoundaryMaxPoints(boundaryIndex, static_cast<size_t>(value));
@@ -232,7 +232,7 @@ void QTabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
       sbmlDoc.mesh->getBoundariesImages(size, boundaryIndex));
 }
 
-void QTabGeometry::spinBoundaryWidth_valueChanged(double value) {
+void TabGeometry::spinBoundaryWidth_valueChanged(double value) {
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<std::size_t>(ui->spinBoundaryIndex->value());
   sbmlDoc.mesh->setBoundaryWidth(boundaryIndex, value);
@@ -240,7 +240,7 @@ void QTabGeometry::spinBoundaryWidth_valueChanged(double value) {
       sbmlDoc.mesh->getBoundariesImages(size, boundaryIndex));
 }
 
-void QTabGeometry::lblCompMesh_mouseClicked(QRgb col, QPoint point) {
+void TabGeometry::lblCompMesh_mouseClicked(QRgb col, QPoint point) {
   Q_UNUSED(col);
   Q_UNUSED(point);
   auto index = ui->lblCompMesh->getMaskIndex();
@@ -252,7 +252,7 @@ void QTabGeometry::lblCompMesh_mouseClicked(QRgb col, QPoint point) {
   }
 }
 
-void QTabGeometry::spinMaxTriangleArea_valueChanged(int value) {
+void TabGeometry::spinMaxTriangleArea_valueChanged(int value) {
   const auto &size = ui->lblCompMesh->size();
   auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
   sbmlDoc.mesh->setCompartmentMaxTriangleArea(compIndex,
@@ -260,7 +260,7 @@ void QTabGeometry::spinMaxTriangleArea_valueChanged(int value) {
   ui->lblCompMesh->setImages(sbmlDoc.mesh->getMeshImages(size, compIndex));
 }
 
-void QTabGeometry::listCompartments_currentRowChanged(int currentRow) {
+void TabGeometry::listCompartments_currentRowChanged(int currentRow) {
   ui->txtCompartmentSize->clear();
   if (currentRow < 0 || currentRow >= ui->listCompartments->count()) {
     ui->btnRemoveCompartment->setEnabled(false);
@@ -309,7 +309,7 @@ void QTabGeometry::listCompartments_currentRowChanged(int currentRow) {
   }
 }
 
-void QTabGeometry::listCompartments_itemDoubleClicked(QListWidgetItem *item) {
+void TabGeometry::listCompartments_itemDoubleClicked(QListWidgetItem *item) {
   // double-click on compartment list item is equivalent to
   // selecting item, then clicking on btnChangeCompartment
   if (item != nullptr) {

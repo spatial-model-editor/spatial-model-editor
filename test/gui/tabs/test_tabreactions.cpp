@@ -9,13 +9,13 @@
 #include "qlabelmousetracker.hpp"
 #include "qplaintextmathedit.hpp"
 #include "qt_test_utils.hpp"
-#include "qtabreactions.hpp"
 #include "sbml.hpp"
+#include "tabreactions.hpp"
 
 SCENARIO("Reactions Tab", "[gui][tabs][reactions]") {
   sbml::SbmlDocWrapper sbmlDoc;
   QLabelMouseTracker mouseTracker;
-  auto tab = QTabReactions(sbmlDoc, &mouseTracker);
+  auto tab = TabReactions(sbmlDoc, &mouseTracker);
   tab.show();
   waitFor(&tab);
   ModalWidgetTimer mwt;

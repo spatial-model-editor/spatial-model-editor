@@ -19,11 +19,11 @@ SOURCES += \
     $$TOPDIR/src/gui/dialogs/dialogimagesize.cpp \
     $$TOPDIR/src/gui/dialogs/dialogimageslice.cpp \
     $$TOPDIR/src/gui/dialogs/dialogunits.cpp \
-    $$TOPDIR/src/gui/tabs/qtabfunctions.cpp \
-    $$TOPDIR/src/gui/tabs/qtabgeometry.cpp \
-    $$TOPDIR/src/gui/tabs/qtabreactions.cpp \
-    $$TOPDIR/src/gui/tabs/qtabsimulate.cpp \
-    $$TOPDIR/src/gui/tabs/qtabspecies.cpp \
+    $$TOPDIR/src/gui/tabs/tabfunctions.cpp \
+    $$TOPDIR/src/gui/tabs/tabgeometry.cpp \
+    $$TOPDIR/src/gui/tabs/tabreactions.cpp \
+    $$TOPDIR/src/gui/tabs/tabsimulate.cpp \
+    $$TOPDIR/src/gui/tabs/tabspecies.cpp \
     $$TOPDIR/src/gui/widgets/qlabelmousetracker.cpp \
     $$TOPDIR/src/gui/widgets/qplaintextmathedit.cpp \
 
@@ -37,11 +37,11 @@ HEADERS += \
     $$TOPDIR/src/gui/dialogs/dialogimagesize.hpp \
     $$TOPDIR/src/gui/dialogs/dialogimageslice.hpp \
     $$TOPDIR/src/gui/dialogs/dialogunits.hpp \
-    $$TOPDIR/src/gui/tabs/qtabfunctions.hpp \
-    $$TOPDIR/src/gui/tabs/qtabgeometry.hpp \
-    $$TOPDIR/src/gui/tabs/qtabreactions.hpp \
-    $$TOPDIR/src/gui/tabs/qtabsimulate.hpp \
-    $$TOPDIR/src/gui/tabs/qtabspecies.hpp \
+    $$TOPDIR/src/gui/tabs/tabfunctions.hpp \
+    $$TOPDIR/src/gui/tabs/tabgeometry.hpp \
+    $$TOPDIR/src/gui/tabs/tabreactions.hpp \
+    $$TOPDIR/src/gui/tabs/tabsimulate.hpp \
+    $$TOPDIR/src/gui/tabs/tabspecies.hpp \
     $$TOPDIR/src/gui/widgets/qlabelmousetracker.hpp \
     $$TOPDIR/src/gui/widgets/qplaintextmathedit.hpp \
 
@@ -54,11 +54,11 @@ FORMS += \
     $$TOPDIR/src/gui/dialogs/dialogimagesize.ui \
     $$TOPDIR/src/gui/dialogs/dialogimageslice.ui \
     $$TOPDIR/src/gui/dialogs/dialogunits.ui \
-    $$TOPDIR/src/gui/tabs/qtabfunctions.ui \
-    $$TOPDIR/src/gui/tabs/qtabgeometry.ui \
-    $$TOPDIR/src/gui/tabs/qtabreactions.ui \
-    $$TOPDIR/src/gui/tabs/qtabsimulate.ui \
-    $$TOPDIR/src/gui/tabs/qtabspecies.ui \
+    $$TOPDIR/src/gui/tabs/tabfunctions.ui \
+    $$TOPDIR/src/gui/tabs/tabgeometry.ui \
+    $$TOPDIR/src/gui/tabs/tabreactions.ui \
+    $$TOPDIR/src/gui/tabs/tabsimulate.ui \
+    $$TOPDIR/src/gui/tabs/tabspecies.ui \
 
 INCLUDEPATH += \
     $$TOPDIR/src/gui \

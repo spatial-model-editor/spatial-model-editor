@@ -1,4 +1,4 @@
-// QTabGeometry
+// TabGeometry
 
 #pragma once
 
@@ -14,17 +14,17 @@ class SbmlDocWrapper;
 }
 
 namespace Ui {
-class QTabGeometry;
+class TabGeometry;
 }
 
-class QTabGeometry : public QWidget {
+class TabGeometry : public QWidget {
   Q_OBJECT
 
  public:
-  explicit QTabGeometry(sbml::SbmlDocWrapper &doc,
-                        QLabelMouseTracker *mouseTracker, QLabel *statusBarMsg,
-                        QWidget *parent = nullptr);
-  ~QTabGeometry();
+  explicit TabGeometry(sbml::SbmlDocWrapper &doc,
+                       QLabelMouseTracker *mouseTracker, QLabel *statusBarMsg,
+                       QWidget *parent = nullptr);
+  ~TabGeometry();
   void loadModelData(const QString &selection = {});
   void enableTabs(bool enable = true);
 
@@ -33,7 +33,7 @@ class QTabGeometry : public QWidget {
   void modelGeometryChanged();
 
  private:
-  std::unique_ptr<Ui::QTabGeometry> ui;
+  std::unique_ptr<Ui::TabGeometry> ui;
   sbml::SbmlDocWrapper &sbmlDoc;
   QLabelMouseTracker *lblGeometry;
   QLabel *statusBarPermanentMessage;
