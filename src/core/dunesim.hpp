@@ -54,13 +54,19 @@ class DuneSim : public BaseSim {
   void initSpeciesIndices();
   void updatePixels();
   void updateSpeciesConcentrations();
+  IntegratorError errMax;
+  double maxTimestep = std::numeric_limits<double>::max();
 
  public:
   explicit DuneSim(const sbml::SbmlDocWrapper &sbmlDoc);
   ~DuneSim() override;
   virtual void setIntegrationOrder(std::size_t order) override;
-  std::size_t run(double time, double relativeError,
-                  double maximumStepsize) override;
+  virtual std::size_t getIntegrationOrder() const override;
+  virtual void setIntegratorError(const IntegratorError &err) override;
+  virtual IntegratorError getIntegratorError() const override;
+  virtual void setMaxDt(double maxDt) override;
+  virtual double getMaxDt() const override;
+  std::size_t run(double time) override;
   const std::vector<double> &getConcentrations(
       std::size_t compartmentIndex) const override;
 };

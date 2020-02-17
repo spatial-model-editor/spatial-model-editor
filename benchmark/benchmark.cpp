@@ -142,7 +142,12 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
 
       // setup simulator
       simulate::Simulation sim(s, simulator);
-      sim.setIntegrationOrder(params.simulator_integration_order);
+      auto options = sim.getIntegratorOptions();
+      options.order = params.simulator_integration_order;
+      options.maxAbsErr = std::numeric_limits<double>::max();
+      options.maxRelErr = std::numeric_limits<double>::max();
+      options.maxTimestep = dt;
+      sim.setIntegratorOptions(options);
 
       // do a series of simulations
       // increase length of run by a factor of 2 each time
@@ -156,7 +161,7 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
         iter += iter;
         ++ln2iter;
         time.start();
-        sim.doTimestep(iter * dt, std::numeric_limits<double>::max(), dt);
+        sim.doTimestep(iter * dt);
         elapsed_ms = time.elapsed();
       }
       double ms = static_cast<double>(elapsed_ms) / static_cast<double>(iter);

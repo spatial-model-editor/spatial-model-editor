@@ -102,13 +102,17 @@ static void printFixedTimestepPixel(const PixelParams &params) {
 
     // setup simulator
     simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
-    sim.setIntegrationOrder(params.integration_order);
+    auto options = sim.getIntegratorOptions();
+    options.order = params.integration_order;
+    options.maxAbsErr = std::numeric_limits<double>::max();
+    options.maxRelErr = std::numeric_limits<double>::max();
+    options.maxTimestep = dt;
+    sim.setIntegratorOptions(options);
 
     QElapsedTimer time;
     long long elapsed_ms = 0;
     time.start();
-    std::size_t steps = sim.doTimestep(params.integration_time,
-                                       std::numeric_limits<double>::max(), dt);
+    std::size_t steps = sim.doTimestep(params.integration_time);
     elapsed_ms = time.elapsed();
     fmt::print(
         "{:11.8f}\t{:20.16e}\t{:20.16e}\t{}\t{}\t{}\n", dt,

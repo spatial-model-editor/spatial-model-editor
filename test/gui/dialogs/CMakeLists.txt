@@ -5,4 +5,5 @@ target_sources(tests
                test_dialogdisplayoptions.cpp
                test_dialogimagesize.cpp
                test_dialogimageslice.cpp
+               test_dialogintegratoroptions.cpp
                test_dialogunits.cpp)

@@ -61,6 +61,8 @@ class MainWindow : public QMainWindow {
   void actionSet_model_units_triggered();
   void actionSet_image_size_triggered();
 
+  // Advanced menu actions
+  void actionIntegrator_options_triggered();
   // membranes
   void listMembranes_currentRowChanged(int currentRow);
 };

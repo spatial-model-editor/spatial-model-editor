@@ -73,7 +73,7 @@ class SimCompartment {
                    double delta);
   void doRKFinalise(double cFactor, double s2Factor, double s3Factor);
   void undoRKStep();
-  double calculateRKError(double epsilon) const;
+  IntegratorError calculateRKError(double epsilon) const;
   const std::string &getCompartmentId() const;
   const std::vector<std::string> &getSpeciesIds() const;
   const std::vector<double> &getConcentrations() const;
@@ -105,15 +105,17 @@ class PixelSim : public BaseSim {
   const sbml::SbmlDocWrapper &doc;
   double maxStableTimestep = std::numeric_limits<double>::max();
   void calculateDcdt();
-  double doRK101(double dt);
-  double doRK212(double dtMax);
-  double doRK323(double dtMax);
-  double doRK435(double dtMax);
+  void doRK101(double dt);
+  void doRK212(double dt);
+  void doRK323(double dt);
+  void doRK435(double dt);
+  double doRKAdaptive(double dtMax);
   double doTimestep(double dt, double dtMax);
   std::vector<std::size_t> integratorOrders{1, 2, 3, 4};
   std::size_t integratorOrder = 2;
   std::size_t discardedSteps = 0;
-  double desiredRelativeError = 1e-2;
+  IntegratorError errMax{std::numeric_limits<double>::max(), 1e-2};
+  double maxTimestep = std::numeric_limits<double>::max();
   double nextTimestep = 1e-7;
   double epsilon = 1e-14;
 
@@ -121,8 +123,12 @@ class PixelSim : public BaseSim {
   explicit PixelSim(const sbml::SbmlDocWrapper &sbmlDoc);
   ~PixelSim() override;
   virtual void setIntegrationOrder(std::size_t order) override;
-  std::size_t run(double time, double relativeError,
-                  double maximumStepsize) override;
+  virtual std::size_t getIntegrationOrder() const override;
+  virtual void setIntegratorError(const IntegratorError &err) override;
+  virtual IntegratorError getIntegratorError() const override;
+  virtual void setMaxDt(double maxDt) override;
+  virtual double getMaxDt() const override;
+  std::size_t run(double time) override;
   const std::vector<double> &getConcentrations(
       std::size_t compartmentIndex) const override;
   double getLowerOrderConcentration(std::size_t compartmentIndex,

@@ -31,6 +31,8 @@ class TabSimulate : public QWidget {
   void stopSimulation();
   void useDune(bool enable);
   void reset();
+  simulate::IntegratorOptions getIntegratorOptions() const;
+  void setIntegratorOptions(const simulate::IntegratorOptions &options);
 
  private:
   std::unique_ptr<Ui::TabSimulate> ui;
@@ -50,6 +52,7 @@ class TabSimulate : public QWidget {
   std::vector<bool> speciesVisible;
   bool plotShowMinMax = true;
   bool isSimulationRunning = false;
+  simulate::IntegratorOptions integratorOptions;
 
   void btnSimulate_clicked();
   void btnSliceImage_clicked();

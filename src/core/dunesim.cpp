@@ -205,8 +205,8 @@ void DuneSim::updatePixels() {
     const auto &gridview =
         pDuneImpl->grid_ptr->subDomain(static_cast<int>(compIndex))
             .leafGridView();
-    const auto &compName = compartmentDuneNames[compIndex];
-    SPDLOG_TRACE("compartment[{}]: {}", compIndex, compName);
+    SPDLOG_TRACE("compartment[{}]: {}", compIndex,
+                 compartmentDuneNames[compIndex]);
     const auto &qpi = compartmentPointIndex[compIndex];
     std::vector<bool> ixAssigned(qpi.getNumPoints(), false);
     // get local coord for each pixel in each triangle
@@ -300,10 +300,21 @@ void DuneSim::setIntegrationOrder(std::size_t order) {
   }
 }
 
-std::size_t DuneSim::run(double time, double relativeError,
-                         double maximumStepsize) {
-  Q_UNUSED(relativeError);
-  pDuneImpl->model->suggest_timestep(maximumStepsize);
+std::size_t DuneSim::getIntegrationOrder() const { return 1; }
+
+void DuneSim::setIntegratorError(const IntegratorError &err) { errMax = err; }
+
+IntegratorError DuneSim::getIntegratorError() const { return errMax; }
+
+void DuneSim::setMaxDt(double maxDt) {
+  SPDLOG_INFO("Setting max timestep: {}", maxDt);
+  maxTimestep = maxDt;
+}
+
+double DuneSim::getMaxDt() const { return maxTimestep; }
+
+std::size_t DuneSim::run(double time) {
+  pDuneImpl->model->suggest_timestep(maxTimestep);
   pDuneImpl->model->end_time() = pDuneImpl->model->current_time() + time;
   pDuneImpl->model->run();
   updateSpeciesConcentrations();
