@@ -128,6 +128,7 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
   spdlog::set_level(spdlog::level::off);
   // symengine assumes C locale
   std::locale::global(std::locale::classic());
+
   double dt = params.simulator_timestep;
 
   for (auto simulator : params.simulators) {

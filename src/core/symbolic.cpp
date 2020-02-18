@@ -187,4 +187,8 @@ void Symbolic::eval(std::vector<double> &results,
   pSymEngineImpl->lambdaLLVM.call(results.data(), vars.data());
 }
 
+void Symbolic::eval(double *results, const double *vars) const {
+  pSymEngineImpl->lambdaLLVM.call(results, vars);
+}
+
 }  // namespace symbolic

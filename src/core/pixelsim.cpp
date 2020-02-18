@@ -1,5 +1,8 @@
 #include "pixelsim.hpp"
 
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+#include <tbb/parallel_for.h>
+#endif
 #include "geometry.hpp"
 #include "logger.hpp"
 #include "pde.hpp"
@@ -12,16 +15,16 @@ ReacEval::ReacEval(const sbml::SbmlDocWrapper &doc,
                    const std::vector<std::string> &speciesIDs,
                    const std::vector<std::string> &reactionIDs,
                    const std::vector<std::string> &reactionScaleFactors)
-    : result(speciesIDs.size(), 0.0),
-      species_values(speciesIDs.size(), 0.0),
-      nSpecies(speciesIDs.size()) {
+    : result(speciesIDs.size(), 0.0), nSpecies(speciesIDs.size()) {
   // construct reaction expressions and stoich matrix
   pde::PDE pde(&doc, speciesIDs, reactionIDs, {}, reactionScaleFactors);
   // compile all expressions with symengine
   sym = symbolic::Symbolic(pde.getRHS(), speciesIDs);
 }
 
-void ReacEval::evaluate() { sym.eval(result, species_values); }
+void ReacEval::evaluate(double *output, const double *input) const {
+  sym.eval(output, input);
+}
 
 void SimCompartment::spatiallyAverageDcdt() {
   // for any non-spatial species: spatially average dc/dt:
@@ -84,35 +87,55 @@ SimCompartment::SimCompartment(const sbml::SbmlDocWrapper &doc,
 }
 
 void SimCompartment::evaluateDiffusionOperator() {
-  std::size_t nSpecies = speciesIds.size();
-  for (std::size_t ix = 0; ix < comp.nPixels(); ++ix) {
-    std::size_t ix_upx = comp.up_x(ix);
-    std::size_t ix_dnx = comp.dn_x(ix);
-    std::size_t ix_upy = comp.up_y(ix);
-    std::size_t ix_dny = comp.dn_y(ix);
-    for (std::size_t is = 0; is < nSpecies; ++is) {
-      dcdt[ix * nSpecies + is] =
-          diffConstants[is] *
-          (conc[ix_upx * nSpecies + is] + conc[ix_dnx * nSpecies + is] +
-           conc[ix_upy * nSpecies + is] + conc[ix_dny * nSpecies + is] -
-           4.0 * conc[ix * nSpecies + is]);
-    }
-  }
+  std::size_t ns = speciesIds.size();
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  tbb::parallel_for(
+      tbb::blocked_range<size_t>(0, comp.nPixels()),
+      [&dcdt = dcdt, ns, &diffConstants = diffConstants, &conc = conc,
+       &comp = comp](const tbb::blocked_range<size_t> &r) {
+        for (size_t i = r.begin(); i != r.end(); ++i) {
+#else
+  for (std::size_t i = 0; i < comp.nPixels(); ++i) {
+#endif
+          std::size_t ix = i * ns;
+          std::size_t ix_upx = comp.up_x(i) * ns;
+          std::size_t ix_dnx = comp.dn_x(i) * ns;
+          std::size_t ix_upy = comp.up_y(i) * ns;
+          std::size_t ix_dny = comp.dn_y(i) * ns;
+          for (std::size_t is = 0; is < ns; ++is) {
+            dcdt[ix + is] =
+                diffConstants[is] *
+                (conc[ix_upx + is] + conc[ix_dnx + is] + conc[ix_upy + is] +
+                 conc[ix_dny + is] - 4.0 * conc[ix + is]);
+          }
+        }
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+      });
+#endif
 }
 
 void SimCompartment::evaluateReactions() {
-  std::size_t nSpecies = speciesIds.size();
+  std::size_t ns = speciesIds.size();
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  tbb::parallel_for(tbb::blocked_range<size_t>(0, comp.nPixels()),
+                    [&reacEval = reacEval, ns, &conc = conc,
+                     &dcdt = dcdt](const tbb::blocked_range<size_t> &r) {
+                      std::vector<double> result(ns, 0.0);
+                      for (size_t ix = r.begin(); ix != r.end(); ++ix) {
+#else
+  std::vector<double> result(ns, 0.0);
   for (std::size_t ix = 0; ix < comp.nPixels(); ++ix) {
-    // populate species concentrations
-    std::copy_n(&conc[ix * nSpecies], nSpecies,
-                reacEval.species_values.begin());
-    reacEval.evaluate();
-    const std::vector<double> &result = reacEval.getResult();
-    // add results to dcdt
-    for (std::size_t is = 0; is < nSpecies; ++is) {
-      dcdt[ix * nSpecies + is] += result[is];
-    }
-  }
+#endif
+                        std::size_t index = ix * ns;
+                        reacEval.evaluate(result.data(), conc.data() + index);
+                        // add results to dcdt
+                        for (std::size_t is = 0; is < ns; ++is) {
+                          dcdt[index + is] += result[is];
+                        }
+                      }
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+                    });
+#endif
 }
 
 void SimCompartment::doForwardsEulerTimestep(double dt) {
@@ -234,7 +257,7 @@ SimMembrane::SimMembrane(const sbml::SbmlDocWrapper &doc,
 }
 
 void SimMembrane::evaluateReactions() {
-  assert(reacEval.species_values.size() ==
+  assert(reacEval.nSpecies ==
          compA.getSpeciesIds().size() + compB.getSpeciesIds().size());
   std::size_t nSpeciesA = compA.getSpeciesIds().size();
   std::size_t nSpeciesB = compB.getSpeciesIds().size();
@@ -242,16 +265,15 @@ void SimMembrane::evaluateReactions() {
   const auto &concB = compB.getConcentrations();
   auto &dcdtA = compA.getDcdt();
   auto &dcdtB = compB.getDcdt();
+  std::vector<double> species(nSpeciesA + nSpeciesB, 0);
+  std::vector<double> result(nSpeciesA + nSpeciesB, 0);
   for (const auto &[ixA, ixB] : membrane.indexPair) {
     // populate species concentrations: first A, then B
-    auto iterReacValues = reacEval.species_values.begin();
-    std::copy_n(&concA[ixA * nSpeciesA], nSpeciesA, iterReacValues);
-    std::advance(iterReacValues, nSpeciesA);
-    std::copy_n(&concB[ixB * nSpeciesB], nSpeciesB, iterReacValues);
+    std::copy_n(&concA[ixA * nSpeciesA], nSpeciesA, &species[0]);
+    std::copy_n(&concB[ixB * nSpeciesB], nSpeciesB, &species[nSpeciesA]);
 
     // evaluate reaction terms
-    reacEval.evaluate();
-    const std::vector<double> &result = reacEval.getResult();
+    reacEval.evaluate(result.data(), species.data());
 
     // add results to dc/dt: first A, then B
     for (std::size_t is = 0; is < nSpeciesA; ++is) {
@@ -287,8 +309,8 @@ void PixelSim::doRK101(double dt) {
 }
 
 void PixelSim::doRK212(double dt) {
-  // RK2(1)2: Heun / Modified Euler, with embedded forwards Euler error estimate
-  // Shu-Osher form used here taken from eq(2.15) of
+  // RK2(1)2: Heun / Modified Euler, with embedded forwards Euler error
+  // estimate Shu-Osher form used here taken from eq(2.15) of
   // https://doi.org/10.1016/0021-9991(88)90177-5
   constexpr std::array<double, 2> g1{0.0, 0.0};
   constexpr std::array<double, 2> g2{0.0, 0.5};

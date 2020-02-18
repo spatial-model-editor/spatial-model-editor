@@ -8,13 +8,13 @@
 
 A GUI editor to convert non-spatial SBML models of bio-chemical reactions into 2d spatial models and simulate them using the [dune-copasi](https://gitlab.dune-project.org/copasi/dune-copasi) solver for reaction-diffusion systems.
 
-[<img src="docs/img/icon-linux.png" width="32"> linux executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor) |
-[<img src="docs/img/icon-osx.png" width="32"> mac executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg) |
-[<img src="docs/img/icon-windows.png" width="32"> windows executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) |
-[<img src="docs/img/icon-docs.png" width="32"> documentation](https://spatial-model-editor.readthedocs.io/en/latest/)
+[<img src="docs/quickstart/img/icon-linux.png" width="32"> linux executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor) |
+[<img src="docs/quickstart/img/icon-osx.png" width="32"> mac executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg) |
+[<img src="docs/quickstart/img/icon-windows.png" width="32"> windows executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) |
+[<img src="docs/quickstart/img/icon-docs.png" width="32"> documentation](https://spatial-model-editor.readthedocs.io/en/latest/)
 ---|---|---|---
 
-![screenshot](docs/img/geometry.png)
+![screenshot](docs/quickstart/img/geometry.png)
 
 ## Project status
 
@@ -105,6 +105,11 @@ Translate the spatial model to a system of PDEs and simulate it: generate 2d tri
     -   Expat XML library <https://github.com/libexpat/libexpat>
 
         -   license: [MIT](https://github.com/libexpat/libexpat/blob/master/expat/COPYING)
+        -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
+
+    -   Threading Building Blocks (TBB): <https://github.com/intel/tbb>
+
+        -   license: [Apache-2.0](https://github.com/intel/tbb/blob/tbb_2020/LICENSE)
         -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
 
     -   Catch2 testing framework: <https://github.com/catchorg/Catch2>

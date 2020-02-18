@@ -7,6 +7,9 @@
 #include <sbml/common/libsbml-version.h>
 #include <spdlog/version.h>
 #include <symengine/symengine_config.h>
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+#include <tbb/tbb_stddef.h>
+#endif
 #include <tiffvers.h>
 
 #include "symbolic.hpp"
@@ -16,6 +19,13 @@
 static QString dep(const QString& name, const QString& url,
                    const QString& version) {
   return QString("<li><a href=\"%2\">%1</a>: %3</li>").arg(name, url, version);
+}
+
+static QString dep(const QString& name, const QString& url, int major,
+                   int minor) {
+  auto version =
+      QString("%1.%2</li>").arg(QString::number(major), QString::number(minor));
+  return dep(name, url, version);
 }
 
 static QString dep(const QString& name, const QString& url, int major,
@@ -66,6 +76,10 @@ DialogAbout::DialogAbout(QWidget* parent)
   libraries.append(dep("expat", "https://libexpat.github.io/",
                        XML_MAJOR_VERSION, XML_MINOR_VERSION,
                        XML_MICRO_VERSION));
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  libraries.append(dep("TBB", "https://github.com/intel/tbb", TBB_VERSION_MAJOR,
+                       TBB_VERSION_MINOR));
+#endif
   libraries.append("</ul>");
   ui->lblLibraries->setText(libraries);
 }

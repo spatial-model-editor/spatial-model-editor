@@ -182,11 +182,19 @@ void TabSimulate::btnSimulate_clicked() {
   int n_images =
       static_cast<int>(ui->txtSimLength->text().toDouble() / dtImage);
 
-  QElapsedTimer qElapsedTimer;
-  qElapsedTimer.start();
+  QElapsedTimer simulationRuntimeTimer;
+  simulationRuntimeTimer.start();
   isSimulationRunning = true;
   this->setCursor(Qt::WaitCursor);
   QApplication::processEvents();
+  QTimer plotRefreshTimer;
+  plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
+  constexpr int plotMsRefreshInterval = 1000;
+  plotRefreshTimer.setInterval(plotMsRefreshInterval);
+  bool plotDueForRefresh = true;
+  connect(&plotRefreshTimer, &QTimer::timeout, this,
+          [&plotDueForRefresh]() { plotDueForRefresh = true; });
+  plotRefreshTimer.start();
   // integrate Model
   for (int i_image = 0; i_image < n_images; ++i_image) {
     sim->doTimestep(dtImage);
@@ -213,9 +221,13 @@ void TabSimulate::btnSimulate_clicked() {
     }
     lblGeometry->setImage(images.back());
     // rescale & replot plot
-    pltPlot->rescaleAxes(true);
-    pltPlot->replot();
+    if (plotDueForRefresh) {
+      pltPlot->rescaleAxes(true);
+      pltPlot->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
+      plotDueForRefresh = false;
+    }
   }
+  plotRefreshTimer.stop();
 
   // add vertical at current time point
   pltTimeLine->setVisible(true);
@@ -231,7 +243,7 @@ void TabSimulate::btnSimulate_clicked() {
   ui->hslideTime->setValue(time.size() - 1);
 
   SPDLOG_INFO("simulation run-time: {}s",
-              static_cast<double>(qElapsedTimer.elapsed()) / 1000.0);
+              static_cast<double>(simulationRuntimeTimer.elapsed()) / 1000.0);
   this->setCursor(Qt::ArrowCursor);
 }
 
