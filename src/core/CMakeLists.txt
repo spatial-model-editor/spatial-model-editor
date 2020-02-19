@@ -7,6 +7,13 @@ target_compile_definitions(
   SPDLOG_ACTIVE_LEVEL=$<$<CONFIG:Debug>:SPDLOG_LEVEL_TRACE>$<$<CONFIG:Release>:SPDLOG_LEVEL_INFO>
   )
 
+# use TBB
+if(WITH_TBB)
+  find_package(tbb REQUIRED)
+  target_compile_definitions(core PUBLIC SPATIAL_MODEL_EDITOR_USE_TBB)
+  target_link_libraries(core PUBLIC tbb::tbb)
+endif()
+
 # set Compile options and warnings
 
 set_target_properties(core PROPERTIES CXX_STANDARD 17)

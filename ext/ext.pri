@@ -36,6 +36,7 @@ LIBS += \
     $${TOPDIR}/ext/lib/libfmt.a \
     $${TOPDIR}/ext/lib/libtiff.a \
     $${TOPDIR}/ext/lib/libmuparser.a \
+    $${TOPDIR}/ext/lib/libtbb.a \
 
 # these LLVM core static libraries are available pre-compiled from
 # https://github.com/lkeegan/llvm-static

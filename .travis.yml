@@ -45,7 +45,7 @@ jobs:
         # run tests
         - ./build/test/test -as 2>&1 | tail -n 100
         # run benchmarks (~1 sec per benchmark, ~20secs total)
-        - ./build/benchmark/benchmark 1
+        - time ./build/benchmark/benchmark 1
         # check dependencies of resulting executable
         - cd build/src
         - ldd spatial-model-editor
@@ -67,7 +67,7 @@ jobs:
         # run tests
         - ./build/test/test.app/Contents/MacOS/test -as "~[gui]" 2>&1 | tail -n 100
         # run benchmarks (~1 sec per benchmark, ~20secs total)
-        - ./build/benchmark/benchmark.app/Contents/MacOS/benchmark 1
+        - time ./build/benchmark/benchmark.app/Contents/MacOS/benchmark 1
         # check dependencies of resulting executable
         - cd build/src
         - otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor

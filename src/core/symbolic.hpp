@@ -56,6 +56,7 @@ class Symbolic {
   // evaluate compiled expressions
   void eval(std::vector<double> &results,
             const std::vector<double> &vars = {}) const;
+  void eval(double *results, const double *vars) const;
 };
 
 }  // namespace symbolic

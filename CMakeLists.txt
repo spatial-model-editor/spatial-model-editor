@@ -4,11 +4,15 @@ message(STATUS "CMake version ${CMAKE_VERSION}")
 
 # version number here is embedded in compiled executable
 project(SpatialModelEditor
-        VERSION 0.8.0
+        VERSION 0.8.1
         DESCRIPTION "Spatial Model Editor"
         LANGUAGES CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
 
 # find required Qt5 modules
 
@@ -30,12 +34,18 @@ add_subdirectory(ext/triangle)
 add_subdirectory(ext/qcustomplot)
 
 # compile spatial model editor
+set(WITH_TBB yes CACHE BOOL "Build with TBB support (multithreading)")
 add_subdirectory(src)
 
 # compile tests
 include(CTest)
 include(Catch)
-add_subdirectory(test)
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
 
 # compile benchmarks
-add_subdirectory(benchmark)
+set(BUILD_BENCHMARKS yes CACHE BOOL "Build benchmarks")
+if(BUILD_BENCHMARKS)
+  add_subdirectory(benchmark)
+endif()

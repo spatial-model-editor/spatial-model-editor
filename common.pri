@@ -2,6 +2,9 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 CONFIG += c++17
 
+# enable use of TBB
+DEFINES += SPATIAL_MODEL_EDITOR_USE_TBB
+
 # set logging level (at compile time)
 CONFIG(release, debug|release):DEFINES += SPDLOG_ACTIVE_LEVEL="SPDLOG_LEVEL_INFO"
 CONFIG(debug, debug|release):DEFINES += SPDLOG_ACTIVE_LEVEL="SPDLOG_LEVEL_DEBUG"
