@@ -37,11 +37,13 @@ class DuneConverter {
                          int doublePrecision = 15);
   QString getIniFile() const;
   const std::unordered_set<int> &getGMSHCompIndices() const;
+  bool hasIndependentCompartments() const;
 
  private:
   const sbml::SbmlDocWrapper &doc;
   IniFile ini;
   std::unordered_set<int> gmshCompIndices;
+  bool independentCompartments = true;
 };
 
 }  // namespace dune

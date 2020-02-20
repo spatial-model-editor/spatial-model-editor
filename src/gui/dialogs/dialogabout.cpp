@@ -49,8 +49,9 @@ DialogAbout::DialogAbout(QWidget* parent)
                             .arg(SPATIAL_MODEL_EDITOR_VERSION));
 
   QString libraries("<p>Included libraries:</p><ul>");
-  libraries.append(
-      dep("dune-copasi", "https://gitlab.dune-project.org/copasi/", "0.1.0"));
+  libraries.append(dep("dune-copasi",
+                       "https://gitlab.dune-project.org/copasi/dune-copasi", 0,
+                       2, 0));
   libraries.append(dep("libSBML[experimental]",
                        "http://sbml.org/Software/libSBML",
                        libsbml::getLibSBMLDottedVersion()));

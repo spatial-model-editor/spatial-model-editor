@@ -3,6 +3,7 @@
 #include <qcustomplot.h>
 
 #include <QElapsedTimer>
+#include <QMessageBox>
 #include <algorithm>
 
 #include "dialogdisplayoptions.hpp"
@@ -96,7 +97,8 @@ void TabSimulate::reset() {
   // creating a new one, otherwise the new ones make use of the existing ones,
   // and once they are deleted it dereferences a nullptr and segfaults...
   sim.reset();
-  sim = std::make_unique<simulate::Simulation>(sbmlDoc, simType);
+  sim = std::make_unique<simulate::Simulation>(sbmlDoc, simType,
+                                               integratorOptions.order);
   sim->setIntegratorOptions(integratorOptions);
 
   // setup species names
@@ -198,6 +200,16 @@ void TabSimulate::btnSimulate_clicked() {
   // integrate Model
   for (int i_image = 0; i_image < n_images; ++i_image) {
     sim->doTimestep(dtImage);
+    if (!sim->errorMessage().empty()) {
+      isSimulationRunning = false;
+      QMessageBox::warning(
+          this, "Simulation Failed",
+          QString(
+              "Simulation failed - a smaller Max timestep "
+              "might help.\n\nGo to the \"Advanced\" menu and click on "
+              "\"Integrator Options...\" to adjust it.\n\nError message: %1")
+              .arg(sim->errorMessage().c_str()));
+    }
     QApplication::processEvents();
     if (!isSimulationRunning) {
       break;

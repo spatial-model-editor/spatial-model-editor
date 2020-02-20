@@ -123,7 +123,7 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
   for (const auto &mem : doc.membraneVec) {
     QString compA = mem.compA->getId().c_str();
     QString compB = mem.compB->getId().c_str();
-    // skip membranes which contain no non-constant species
+    // only add membranes which contain non-constant species
     if (compartmentContainsNonConstantSpecies(doc, compA) ||
         compartmentContainsNonConstantSpecies(doc, compB)) {
       ini.addValue(mem.membraneID.c_str(), duneCompIndex);
@@ -131,6 +131,7 @@ DuneConverter::DuneConverter(const sbml::SbmlDocWrapper &SbmlDoc, double dt,
                    duneCompIndex);
       gmshCompIndices.insert(gmshCompIndex);
       ++duneCompIndex;
+      independentCompartments = false;
     }
     ++gmshCompIndex;
   }
@@ -371,6 +372,10 @@ QString DuneConverter::getIniFile() const { return ini.getText(); }
 
 const std::unordered_set<int> &DuneConverter::getGMSHCompIndices() const {
   return gmshCompIndices;
+}
+
+bool DuneConverter::hasIndependentCompartments() const {
+  return independentCompartments;
 }
 
 }  // namespace dune

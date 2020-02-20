@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 
 namespace sim {
@@ -29,6 +30,7 @@ class BaseSim {
       [[maybe_unused]] std::size_t pixelIndex) const {
     return 0;
   }
+  virtual std::string errorMessage() const { return {}; }
 };
 
 }  // namespace sim
