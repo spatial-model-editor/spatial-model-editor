@@ -88,53 +88,46 @@ SimCompartment::SimCompartment(const sbml::SbmlDocWrapper &doc,
 
 void SimCompartment::evaluateDiffusionOperator() {
   std::size_t ns = speciesIds.size();
+  std::size_t np = comp.nPixels();
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
   tbb::parallel_for(
-      tbb::blocked_range<size_t>(0, comp.nPixels()),
-      [&dcdt = dcdt, ns, &diffConstants = diffConstants, &conc = conc,
-       &comp = comp](const tbb::blocked_range<size_t> &r) {
-        for (size_t i = r.begin(); i != r.end(); ++i) {
+      std::size_t{0}, np,
+      [ns, &dcdt = dcdt, &diffConstants = diffConstants, &conc = conc,
+       &comp = comp](std::size_t i) {
 #else
-  for (std::size_t i = 0; i < comp.nPixels(); ++i) {
+  for (std::size_t i = 0; i < np; ++i) {
 #endif
-          std::size_t ix = i * ns;
-          std::size_t ix_upx = comp.up_x(i) * ns;
-          std::size_t ix_dnx = comp.dn_x(i) * ns;
-          std::size_t ix_upy = comp.up_y(i) * ns;
-          std::size_t ix_dny = comp.dn_y(i) * ns;
-          for (std::size_t is = 0; is < ns; ++is) {
-            dcdt[ix + is] =
-                diffConstants[is] *
-                (conc[ix_upx + is] + conc[ix_dnx + is] + conc[ix_upy + is] +
-                 conc[ix_dny + is] - 4.0 * conc[ix + is]);
-          }
+        std::size_t ix = i * ns;
+        std::size_t ix_upx = comp.up_x(i) * ns;
+        std::size_t ix_dnx = comp.dn_x(i) * ns;
+        std::size_t ix_upy = comp.up_y(i) * ns;
+        std::size_t ix_dny = comp.dn_y(i) * ns;
+        for (std::size_t is = 0; is < ns; ++is) {
+          dcdt[ix + is] +=
+              diffConstants[is] *
+              (conc[ix_upx + is] + conc[ix_dnx + is] + conc[ix_upy + is] +
+               conc[ix_dny + is] - 4.0 * conc[ix + is]);
         }
+      }
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-      });
+  );
 #endif
 }
 
 void SimCompartment::evaluateReactions() {
   std::size_t ns = speciesIds.size();
+  std::size_t N = ns * comp.nPixels();
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  tbb::parallel_for(tbb::blocked_range<size_t>(0, comp.nPixels()),
-                    [&reacEval = reacEval, ns, &conc = conc,
-                     &dcdt = dcdt](const tbb::blocked_range<size_t> &r) {
-                      std::vector<double> result(ns, 0.0);
-                      for (size_t ix = r.begin(); ix != r.end(); ++ix) {
+  tbb::parallel_for(
+      std::size_t{0}, N, ns,
+      [&reacEval = reacEval, &conc = conc, &dcdt = dcdt](std::size_t index) {
 #else
-  std::vector<double> result(ns, 0.0);
-  for (std::size_t ix = 0; ix < comp.nPixels(); ++ix) {
+  for (std::size_t index = 0; index < N; index += ns) {
 #endif
-                        std::size_t index = ix * ns;
-                        reacEval.evaluate(result.data(), conc.data() + index);
-                        // add results to dcdt
-                        for (std::size_t is = 0; is < ns; ++is) {
-                          dcdt[index + is] += result[is];
-                        }
-                      }
+        reacEval.evaluate(dcdt.data() + index, conc.data() + index);
+      }
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-                    });
+  );
 #endif
 }
 
@@ -288,8 +281,8 @@ void SimMembrane::evaluateReactions() {
 void PixelSim::calculateDcdt() {
   // calculate dcd/dt in all compartments
   for (auto &sim : simCompartments) {
-    sim.evaluateDiffusionOperator();
     sim.evaluateReactions();
+    sim.evaluateDiffusionOperator();
   }
   // membrane contribution to dc/dt
   for (auto &sim : simMembranes) {
