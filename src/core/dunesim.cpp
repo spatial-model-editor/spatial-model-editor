@@ -170,7 +170,6 @@ class DuneIndependentCompartments : public DuneImpl {
     const auto &dataConfig = modelConfig.sub("data");
     for (const auto &compartmentName :
          modelConfig.sub("compartments").getValueKeys()) {
-      // todo: check ordering of index: we assume 0,1,2,..
       int compartmentIndex =
           modelConfig.sub("compartments").template get<int>(compartmentName);
       SPDLOG_INFO("{}[{}]", compartmentName, compartmentIndex);
@@ -286,7 +285,7 @@ static std::size_t getIxValidNeighbour(std::size_t ix,
   std::vector<std::size_t> queue{ix};
   std::size_t queueIndex = 0;
   // return nearest neighbour if valid, otherwise add to queue
-  for (std::size_t iter = 0; iter < 1024 * ixValid.size(); ++iter) {
+  for (std::size_t iter = 0; iter < 10 * ixValid.size(); ++iter) {
     std::size_t i = queue[queueIndex];
     for (auto iy : {g->up_x(i), g->dn_x(i), g->up_y(i), g->dn_y(i)}) {
       if (ixValid[iy]) {
@@ -297,13 +296,14 @@ static std::size_t getIxValidNeighbour(std::size_t ix,
     }
     ++queueIndex;
   }
-  SPDLOG_ERROR("Failed to find valid neighbour of pixel {}", ix);
+  SPDLOG_WARN("Failed to find valid neighbour of pixel {}", ix);
   return 0;
 }
 
 void DuneSim::updatePixels() {
   pixels.clear();
   missingPixels.clear();
+  SPDLOG_TRACE("pixel size: {}", pixelSize);
   for (std::size_t compIndex = 0; compIndex < compartmentSpeciesIndex.size();
        ++compIndex) {
     auto &pixelsComp = pixels.emplace_back();
@@ -365,7 +365,11 @@ void DuneSim::updatePixels() {
   }
 }
 
-DuneSim::DuneSim(const sbml::SbmlDocWrapper &sbmlDoc, std::size_t order)
+DuneSim::DuneSim(
+    const sbml::SbmlDocWrapper &sbmlDoc,
+    const std::vector<std::string> &compartmentIds,
+    const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
+    std::size_t order)
     : geometryImageSize(sbmlDoc.getCompartmentImage().size()),
       pixelSize(sbmlDoc.getPixelWidth()),
       integratorOrder(order) {
@@ -409,14 +413,19 @@ DuneSim::DuneSim(const sbml::SbmlDocWrapper &sbmlDoc, std::size_t order)
 
   initCompartmentNames();
   initSpeciesIndices();
-  for (const auto &compId : sbmlDoc.compartments) {
-    const auto &comp = sbmlDoc.mapCompIdToGeometry.at(compId);
+  for (std::size_t compIndex = 0; compIndex < compartmentIds.size();
+       ++compIndex) {
+    const auto &compId = compartmentIds[compIndex];
+    SPDLOG_INFO("compartmentId: {}", compId);
+    const auto &comp = sbmlDoc.mapCompIdToGeometry.at(compId.c_str());
     compartmentPointIndex.emplace_back(comp.getCompartmentImage().size(),
                                        comp.getPixels());
     compartmentGeometry.push_back(&comp);
     auto nPixels = comp.getPixels().size();
+    SPDLOG_INFO("  - {} pixels", nPixels);
     // todo: don't allocate wasted space for constant species here
-    auto nSpecies = static_cast<std::size_t>(sbmlDoc.species.at(compId).size());
+    auto nSpecies = compartmentSpeciesIds[compIndex].size();
+    SPDLOG_INFO("  - {} species", nSpecies);
     concentration.emplace_back(nPixels * nSpecies, 0.0);
   }
   updatePixels();

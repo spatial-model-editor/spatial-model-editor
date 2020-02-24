@@ -78,6 +78,7 @@ bool QLabelMouseTracker::setCurrentPixel(const QMouseEvent *ev) {
 
 void QLabelMouseTracker::resizeImage(const QSize &size) {
   if (image.isNull()) {
+    this->clear();
     return;
   }
   pixmap = QPixmap::fromImage(

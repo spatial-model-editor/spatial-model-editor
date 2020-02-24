@@ -199,6 +199,52 @@ SCENARIO("SBML: import SBML doc without geometry", "[core][sbml]") {
   }
 }
 
+SCENARIO("SBML: name clashes", "[core][sbml]") {
+  std::unique_ptr<libsbml::SBMLDocument> document(
+      new libsbml::SBMLDocument(2, 4));
+  // create model
+  auto *model = document->createModel();
+  // create 3 compartments with the same name
+  for (int i = 0; i < 3; ++i) {
+    auto *comp = model->createCompartment();
+    comp->setId("compartment" + std::to_string(i));
+    comp->setName("comp");
+  }
+  // create 3 species inside first two compartments with the same names
+  for (int iComp = 0; iComp < 2; ++iComp) {
+    for (int i = 0; i < 3; ++i) {
+      auto *spec = model->createSpecies();
+      spec->setId("spec" + std::to_string(i) + "c" + std::to_string(iComp));
+      spec->setName("spec");
+      spec->setCompartment("compartment" + std::to_string(iComp));
+    }
+  }
+  std::unique_ptr<char, decltype(&std::free)> xmlChar(
+      libsbml::writeSBMLToString(document.get()), &std::free);
+  sbml::SbmlDocWrapper s;
+  s.importSBMLString(xmlChar.get());
+  REQUIRE(s.compartments.size() == 3);
+  REQUIRE(s.compartmentNames[0] == "comp");
+  REQUIRE(s.compartmentNames[1] == "comp_");
+  REQUIRE(s.compartmentNames[2] == "comp__");
+  REQUIRE(s.species.size() == 3);
+  REQUIRE(s.species["compartment0"].size() == 3);
+  REQUIRE(s.getSpeciesName(s.species["compartment0"][0]) == "spec");
+  REQUIRE(s.getSpeciesName(s.species["compartment0"][1]) == "spec_comp");
+  REQUIRE(s.getSpeciesName(s.species["compartment0"][2]) == "spec_comp_comp");
+  REQUIRE(s.species["compartment1"].size() == 3);
+  REQUIRE(s.getSpeciesName(s.species["compartment1"][0]) == "spec_comp_");
+  REQUIRE(s.getSpeciesName(s.species["compartment1"][1]) == "spec_comp__comp_");
+  REQUIRE(s.getSpeciesName(s.species["compartment1"][2]) ==
+          "spec_comp__comp__comp_");
+  REQUIRE(s.species["compartment2"].size() == 0);
+  // add a species with a clashing name
+  auto newName = s.addSpecies("spec", "compartment0");
+  REQUIRE(newName == "spec_comp_comp_comp");
+  auto newName2 = s.addSpecies("spec", "compartment1");
+  REQUIRE(newName2 == "spec_comp__comp__comp__comp_");
+}
+
 SCENARIO("SBML: import SBML level 2 document", "[core][sbml]") {
   // create simple SBML level 2.4 model
   createSBMLlvl2doc("tmp.xml");
@@ -362,6 +408,20 @@ SCENARIO("SBML: ABtoC.xml", "[core][sbml]") {
       REQUIRE(s.getCompartmentName("newComp_") == "newComp !");
       REQUIRE(s.species.at("newComp_").size() == 0);
       REQUIRE(s.reactions.at("newComp_").size() == 0);
+      // add compartment with same name: GUI appends underscore
+      s.addCompartment("newComp !");
+      REQUIRE(s.compartments.size() == 3);
+      REQUIRE(s.compartments[0] == "comp");
+      REQUIRE(s.compartments[1] == "newComp_");
+      REQUIRE(s.compartments[2] == "newComp__");
+      REQUIRE(s.compartmentNames.size() == 3);
+      REQUIRE(s.compartmentNames[0] == "comp");
+      REQUIRE(s.compartmentNames[1] == "newComp !");
+      REQUIRE(s.compartmentNames[2] == "newComp !_");
+      // remove compartment
+      s.removeCompartment("newComp__");
+      REQUIRE(s.compartments.size() == 2);
+      REQUIRE(s.compartmentNames.size() == 2);
       // add species to compartment
       s.addSpecies("q", "newComp_");
       REQUIRE(s.species.at("newComp_").size() == 1);
@@ -392,25 +452,26 @@ SCENARIO("SBML: ABtoC.xml", "[core][sbml]") {
       REQUIRE(s.getIsSpeciesConstant("_1_stupd_Name") == false);
       REQUIRE(s.getDiffusionConstant("_1_stupd_Name") == dbl_approx(1.0));
       REQUIRE(s.getInitialConcentration("_1_stupd_Name") == dbl_approx(0.0));
-      // add another species with the same name: GUI appends underscore
+      // add another species with the same name: GUI appends _compartmentName
       s.addSpecies("1 stup!d N@ame?", "comp");
       REQUIRE(s.species["comp"].size() == 5);
-      REQUIRE(s.species["comp"][4] == "_1_stupd_Name_");
-      REQUIRE(s.getSpeciesName("_1_stupd_Name_") == "1 stup!d N@ame?");
-      REQUIRE(s.getSpeciesCompartment("_1_stupd_Name_") == "comp");
-      REQUIRE(s.getIsSpatial("_1_stupd_Name_") == true);
-      REQUIRE(s.getIsSpeciesConstant("_1_stupd_Name_") == false);
-      REQUIRE(s.getDiffusionConstant("_1_stupd_Name_") == dbl_approx(1.0));
-      REQUIRE(s.getInitialConcentration("_1_stupd_Name_") == dbl_approx(0.0));
+      REQUIRE(s.species["comp"][4] == "_1_stupd_Name_comp");
+      REQUIRE(s.getSpeciesName("_1_stupd_Name_comp") == "1 stup!d N@ame?_comp");
+      REQUIRE(s.getSpeciesCompartment("_1_stupd_Name_comp") == "comp");
+      REQUIRE(s.getIsSpatial("_1_stupd_Name_comp") == true);
+      REQUIRE(s.getIsSpeciesConstant("_1_stupd_Name_comp") == false);
+      REQUIRE(s.getDiffusionConstant("_1_stupd_Name_comp") == dbl_approx(1.0));
+      REQUIRE(s.getInitialConcentration("_1_stupd_Name_comp") ==
+              dbl_approx(0.0));
       // remove species _1_stupd_Name
-      s.removeSpecies("_1_stupd_Name");
+      s.removeSpecies("_1_stupd_Name_comp");
       REQUIRE(s.species["comp"].size() == 4);
       REQUIRE(s.species["comp"][0] == "A");
       REQUIRE(s.species["comp"][1] == "B");
       REQUIRE(s.species["comp"][2] == "C");
-      REQUIRE(s.species["comp"][3] == "_1_stupd_Name_");
+      REQUIRE(s.species["comp"][3] == "_1_stupd_Name");
       // remove non-existent species is a no-op
-      s.removeSpecies("_1_stupd_Name");
+      s.removeSpecies("QQ_1_stupd_NameQQ");
       REQUIRE(s.species["comp"].size() == 4);
       s.removeSpecies("Idontexist");
       REQUIRE(s.species["comp"].size() == 4);
@@ -424,7 +485,7 @@ SCENARIO("SBML: ABtoC.xml", "[core][sbml]") {
       REQUIRE(s.reactions.at("comp").size() == 0);
       s.removeSpecies("C");
       REQUIRE(s.species["comp"].size() == 1);
-      s.removeSpecies("_1_stupd_Name_");
+      s.removeSpecies("_1_stupd_Name");
       REQUIRE(s.species["comp"].size() == 0);
     }
     WHEN("image geometry imported, assigned to compartment") {

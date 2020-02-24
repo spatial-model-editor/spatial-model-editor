@@ -61,7 +61,11 @@ class DuneSim : public BaseSim {
   std::size_t integratorOrder = 1;
 
  public:
-  explicit DuneSim(const sbml::SbmlDocWrapper &sbmlDoc, std::size_t order = 1);
+  explicit DuneSim(
+      const sbml::SbmlDocWrapper &sbmlDoc,
+      const std::vector<std::string> &compartmentIds,
+      const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
+      std::size_t order = 1);
   ~DuneSim() override;
   virtual void setIntegrationOrder(std::size_t order) override;
   virtual std::size_t getIntegrationOrder() const override;

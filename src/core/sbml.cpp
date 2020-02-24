@@ -430,8 +430,16 @@ void SbmlDocWrapper::importCompartmentsAndSpeciesFromSBML() {
                   comp->getId());
       comp->setName(comp->getId());
     }
-    QString id = comp->getId().c_str();
+    // if name clashes with existing compartment name, make it unique
     QString name = comp->getName().c_str();
+    while (compartmentNames.contains(name)) {
+      SPDLOG_INFO("Compartment with Id '{}' has Name '{}'", comp->getId(),
+                  name.toStdString());
+      name.append("_");
+      comp->setName(name.toStdString());
+      SPDLOG_INFO("  -> changing to '{}' to avoid name clash", comp->getName());
+    }
+    QString id = comp->getId().c_str();
     SPDLOG_TRACE("compartmentID: {}", comp->getId());
     SPDLOG_TRACE("compartmentName: {}", comp->getName());
     compartments.push_back(id);
@@ -439,6 +447,7 @@ void SbmlDocWrapper::importCompartmentsAndSpeciesFromSBML() {
     species[id] = QStringList();
   }
 
+  QStringList speciesNames;
   // get all species, make a list for each compartment
   for (unsigned int i = 0; i < model->getNumSpecies(); ++i) {
     auto *spec = model->getSpecies(i);
@@ -458,6 +467,19 @@ void SbmlDocWrapper::importCompartmentsAndSpeciesFromSBML() {
       SPDLOG_CRITICAL(errorMessage);
       qFatal("%s", errorMessage.c_str());
     }
+    // if name clashes with existing species name, make it unique
+    QString name = spec->getName().c_str();
+    QString compName =
+        model->getCompartment(spec->getCompartment())->getName().c_str();
+    while (speciesNames.contains(name)) {
+      SPDLOG_INFO("Species with Id '{}' has Name '{}'", spec->getId(),
+                  name.toStdString());
+      name.append("_");
+      name.append(compName);
+      spec->setName(name.toStdString());
+      SPDLOG_INFO("  -> changing to '{}' to avoid name clash", spec->getName());
+    }
+    speciesNames.push_back(spec->getName().c_str());
     const auto id = spec->getId().c_str();
     species[spec->getCompartment().c_str()].push_back(QString(id));
     // assign a default colour for displaying the species
@@ -1804,24 +1826,29 @@ QString SbmlDocWrapper::nameToSId(const QString &name) const {
   return id.c_str();
 }
 
-void SbmlDocWrapper::addCompartment(const QString &compartmentName) {
+QString SbmlDocWrapper::addCompartment(const QString &compartmentName) {
   SPDLOG_INFO("Adding new compartment");
+  QString newName = compartmentName;
+  while (compartmentNames.contains(newName)) {
+    newName.append("_");
+  }
   auto *comp = model->createCompartment();
-  SPDLOG_INFO("  - name: {}", compartmentName.toStdString());
-  comp->setName(compartmentName.toStdString());
-  auto compartmentId = nameToSId(compartmentName);
+  SPDLOG_INFO("  - name: {}", newName.toStdString());
+  comp->setName(newName.toStdString());
+  auto compartmentId = nameToSId(newName);
   SPDLOG_INFO("  - id: {}", compartmentId.toStdString());
   comp->setId(compartmentId.toStdString());
   comp->setConstant(true);
   comp->setSpatialDimensions(static_cast<unsigned>(nDimensions));
   createDefaultCompartmentGeometry(comp);
   compartments.push_back(compartmentId);
-  compartmentNames.push_back(compartmentName);
+  compartmentNames.push_back(newName);
   species[compartmentId] = QStringList();
   reactions[compartmentId] = QStringList();
   hasValidGeometry = false;
   mesh.reset();
   writeGeometryMeshToSBML();
+  return newName;
 }
 
 void SbmlDocWrapper::removeCompartment(const QString &compartmentID) {
@@ -1895,13 +1922,24 @@ void SbmlDocWrapper::removeCompartment(const QString &compartmentID) {
   writeGeometryMeshToSBML();
 }
 
-void SbmlDocWrapper::addSpecies(const QString &speciesName,
-                                const QString &compartmentID) {
+QString SbmlDocWrapper::addSpecies(const QString &speciesName,
+                                   const QString &compartmentID) {
+  QString newName = speciesName;
+  QString compName =
+      model->getCompartment(compartmentID.toStdString())->getName().c_str();
+  QStringList existingNames;
+  for (unsigned i = 0; i < model->getNumSpecies(); ++i) {
+    existingNames.push_back(model->getSpecies(i)->getName().c_str());
+  }
+  while (existingNames.contains(newName)) {
+    newName.append("_");
+    newName.append(compName);
+  }
   SPDLOG_INFO("Adding new species");
   auto *spec = model->createSpecies();
-  SPDLOG_INFO("  - name: {}", speciesName.toStdString());
-  spec->setName(speciesName.toStdString());
-  auto speciesID = nameToSId(speciesName);
+  SPDLOG_INFO("  - name: {}", newName.toStdString());
+  spec->setName(newName.toStdString());
+  auto speciesID = nameToSId(newName);
   SPDLOG_INFO("  - id: {}", speciesID.toStdString());
   spec->setId(speciesID.toStdString());
   SPDLOG_INFO("  - compartment: {}", compartmentID.toStdString());
@@ -1926,6 +1964,7 @@ void SbmlDocWrapper::addSpecies(const QString &speciesName,
   setIsSpatial(speciesID, true);
   setDiffusionConstant(speciesID, 1.0);
   setInitialConcentration(speciesID, 0.0);
+  return newName;
 }
 
 static bool reactionInvolvesSpecies(const libsbml::Reaction *reac,
@@ -1960,12 +1999,16 @@ void SbmlDocWrapper::removeSpecies(const QString &speciesID) {
   species.at(spec->getCompartment().c_str()).removeOne(speciesID);
   removeInitialAssignment(speciesID.toStdString());
   // also remove any reactions that depend on it
+  QStringList reacIdsToRemove;
   for (unsigned i = 0; i < model->getNumReactions(); ++i) {
     const auto *reac = model->getReaction(i);
     if (reactionInvolvesSpecies(reac, sId)) {
       SPDLOG_INFO("  - removing reaction {}", reac->getId());
-      removeReaction(reac->getId().c_str());
+      reacIdsToRemove.push_back(reac->getId().c_str());
     }
+  }
+  for (const auto &reacId : reacIdsToRemove) {
+    removeReaction(reacId);
   }
   SPDLOG_INFO("  - species {} removed", spec->getId());
 }
