@@ -29,10 +29,11 @@ namespace sim {
 
 using PixelLocalPair = std::pair<std::size_t, std::array<double, 2>>;
 
+class DuneImpl;
+
 class DuneSim : public BaseSim {
  private:
   // Dune objects via pimpl to hide DUNE headers
-  class DuneImpl;
   std::unique_ptr<DuneImpl> pDuneImpl;
   std::vector<std::string> compartmentDuneNames;
   // DUNE species index for each species
@@ -56,9 +57,11 @@ class DuneSim : public BaseSim {
   void updateSpeciesConcentrations();
   IntegratorError errMax;
   double maxTimestep = std::numeric_limits<double>::max();
+  std::string currentErrorMessage;
+  std::size_t integratorOrder = 1;
 
  public:
-  explicit DuneSim(const sbml::SbmlDocWrapper &sbmlDoc);
+  explicit DuneSim(const sbml::SbmlDocWrapper &sbmlDoc, std::size_t order = 1);
   ~DuneSim() override;
   virtual void setIntegrationOrder(std::size_t order) override;
   virtual std::size_t getIntegrationOrder() const override;
@@ -69,6 +72,7 @@ class DuneSim : public BaseSim {
   std::size_t run(double time) override;
   const std::vector<double> &getConcentrations(
       std::size_t compartmentIndex) const override;
+  virtual std::string errorMessage() const override;
 };
 
 }  // namespace sim

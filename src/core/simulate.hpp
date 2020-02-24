@@ -56,11 +56,13 @@ class Simulation {
 
  public:
   explicit Simulation(const sbml::SbmlDocWrapper &sbmlDoc,
-                      SimulatorType simType = SimulatorType::DUNE);
+                      SimulatorType simType = SimulatorType::DUNE,
+                      std::size_t integratorOrder = 1);
   ~Simulation();
   IntegratorOptions getIntegratorOptions() const;
   void setIntegratorOptions(const IntegratorOptions &options);
   std::size_t doTimestep(double time);
+  std::string errorMessage() const;
   const std::vector<std::string> &getCompartmentIds() const;
   const std::vector<std::string> &getSpeciesIds(
       std::size_t compartmentIndex) const;

@@ -1,4 +1,4 @@
-find_library(dunecopasi_LIBRARY dune_copasi_md_lib)
+find_library(dunecopasi_LIBRARY dune_copasi_md_lib_fv_cg)
 find_path(dunecopasi_INCLUDE_DIR dune/logging.hh)
 mark_as_advanced(dunecopasi_INCLUDE_DIR dunecopasi_LIBRARY)
 
@@ -11,6 +11,8 @@ find_package_handle_standard_args(dunecopasi
 if(dunecopasi_FOUND AND NOT TARGET dunecopasi::dunecopasi)
   add_library(dunecopasi::dunecopasi STATIC IMPORTED)
   foreach(DUNE_COPASI_DEPENDENCY
+          dune_copasi_sd_lib_cg
+          dune_copasi_sd_lib_fv
           dune_copasi_lib
           dune-logging
           dunepdelab

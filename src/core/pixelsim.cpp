@@ -412,7 +412,8 @@ double PixelSim::doRKAdaptive(double dtMax) {
   return dt;
 }
 
-PixelSim::PixelSim(const sbml::SbmlDocWrapper &sbmlDoc) : doc(sbmlDoc) {
+PixelSim::PixelSim(const sbml::SbmlDocWrapper &sbmlDoc, std::size_t order)
+    : doc(sbmlDoc), integratorOrder(order) {
   // add compartments
   for (const auto &compartmentID : doc.compartments) {
     simCompartments.emplace_back(doc,

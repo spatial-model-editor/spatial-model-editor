@@ -180,9 +180,9 @@ SCENARIO("DUNE: ini files", "[core][dune][ini]") {
 SCENARIO("DUNE: simulation", "[core][dune][simulate]") {
   GIVEN("ABtoC model") {
     sbml::SbmlDocWrapper s;
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    s.importSBMLString(f.readAll().toStdString());
+    if (QFile f(":/models/ABtoC.xml"); f.open(QIODevice::ReadOnly)) {
+      s.importSBMLString(f.readAll().toStdString());
+    }
 
     // set spatially constant initial conditions
     s.setInitialConcentration("A", 1.0);
@@ -203,5 +203,36 @@ SCENARIO("DUNE: simulation", "[core][dune][simulate]") {
     REQUIRE(std::abs(duneSim.getAvgMinMax(timeIndex, 0, 1).avg - 0.995) < 1e-4);
     REQUIRE(std::abs(duneSim.getAvgMinMax(timeIndex, 0, 2).avg - 0.005) < 1e-4);
     REQUIRE(imgConc.size() == QSize(100, 100));
+  }
+  GIVEN("very-simple-model") {
+    sbml::SbmlDocWrapper s;
+    if (QFile f(":/models/very-simple-model.xml");
+        f.open(QIODevice::ReadOnly)) {
+      s.importSBMLString(f.readAll().toStdString());
+    }
+    simulate::Simulation duneSim(s);
+    auto options = duneSim.getIntegratorOptions();
+    options.maxTimestep = 0.01;
+    duneSim.setIntegratorOptions(options);
+    duneSim.doTimestep(0.01);
+    REQUIRE(duneSim.errorMessage().empty());
+  }
+  GIVEN("brusselator-model, too large timestep") {
+    sbml::SbmlDocWrapper s;
+    if (QFile f(":/models/brusselator-model.xml");
+        f.open(QIODevice::ReadOnly)) {
+      s.importSBMLString(f.readAll().toStdString());
+    }
+    for (auto order : {std::size_t{1}, std::size_t{2}}) {
+      simulate::Simulation duneSim(s, simulate::SimulatorType::DUNE, order);
+      auto options = duneSim.getIntegratorOptions();
+      options.maxTimestep = 50.0;
+      duneSim.setIntegratorOptions(options);
+      // DUNE simulation will fail, but Simulation wrapper should catch
+      // exception...
+      REQUIRE_NOTHROW(duneSim.doTimestep(500.0));
+      // and put the error message here:
+      REQUIRE(!duneSim.errorMessage().empty());
+    }
   }
 }

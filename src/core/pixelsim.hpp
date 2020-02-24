@@ -117,7 +117,7 @@ class PixelSim : public BaseSim {
   double epsilon = 1e-14;
 
  public:
-  explicit PixelSim(const sbml::SbmlDocWrapper &sbmlDoc);
+  explicit PixelSim(const sbml::SbmlDocWrapper &sbmlDoc, std::size_t order = 2);
   ~PixelSim() override;
   virtual void setIntegrationOrder(std::size_t order) override;
   virtual std::size_t getIntegrationOrder() const override;

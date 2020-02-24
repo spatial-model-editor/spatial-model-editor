@@ -13,7 +13,9 @@ DEFINES -= UNICODE _UNICODE
 # these static libraries are available pre-compiled from
 # https://github.com/lkeegan/dune-copasi-static
 LIBS += \
-    $${TOPDIR}/ext/dune/lib/libdune_copasi_md_lib.a \
+    $${TOPDIR}/ext/dune/lib/libdune_copasi_md_lib_fv_cg.a \
+    $${TOPDIR}/ext/dune/lib/libdune_copasi_sd_lib_cg.a \
+    $${TOPDIR}/ext/dune/lib/libdune_copasi_sd_lib_fv.a \
     $${TOPDIR}/ext/dune/lib/libdune_copasi_lib.a \
     $${TOPDIR}/ext/dune/lib/libdune-logging.a \
     $${TOPDIR}/ext/dune/lib/libdunepdelab.a \

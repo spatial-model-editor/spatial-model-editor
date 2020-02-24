@@ -11,11 +11,11 @@
 namespace simulate {
 
 Simulation::Simulation(const sbml::SbmlDocWrapper &sbmlDoc,
-                       SimulatorType simType)
+                       SimulatorType simType, std::size_t integratorOrder)
     : simulatorType(simType), imageSize(sbmlDoc.getCompartmentImage().size()) {
   // init simulator
   if (simulatorType == SimulatorType::DUNE) {
-    simulator = std::make_unique<sim::DuneSim>(sbmlDoc);
+    simulator = std::make_unique<sim::DuneSim>(sbmlDoc, integratorOrder);
   } else {
     simulator = std::make_unique<sim::PixelSim>(sbmlDoc);
   }
@@ -92,6 +92,10 @@ std::size_t Simulation::doTimestep(double time) {
   std::size_t steps = simulator->run(time);
   updateConcentrations(timePoints.back() + time);
   return steps;
+}
+
+std::string Simulation::errorMessage() const {
+  return simulator->errorMessage();
 }
 
 void Simulation::updateConcentrations(double t) {
