@@ -14,7 +14,7 @@ A GUI editor to convert non-spatial SBML models of bio-chemical reactions into 2
 [<img src="docs/quickstart/img/icon-docs.png" width="32"> documentation](https://spatial-model-editor.readthedocs.io/en/latest/)
 ---|---|---|---
 
-![screenshot](docs/quickstart/img/geometry.png)
+![screenshot](docs/img/mesh.png)
 
 ## Project status
 

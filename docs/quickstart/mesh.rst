@@ -7,7 +7,7 @@ The `Boundaries` tab shows the boundaries between compartments that have been au
 
 Once the boundaries are chosen, the `Mesh` tab shows the generated triangular mesh for the currently selected compartment. The maximum triangle area can be altered here to refine or coarsen the mesh.
 
-.. figure:: img/mesh.png
+.. figure:: img/mesh.apng
    :alt: screenshot showing geometry mesh settings
 
    An example of changing the points used in the compartment boundaries, and changing the coarseness of the mesh.

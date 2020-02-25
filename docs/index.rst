@@ -9,8 +9,7 @@ Spatial Model Editor Documentation
    quickstart/import-model
    quickstart/import-geometry
    quickstart/mesh
-   quickstart/membrane-properties
-   quickstart/import-concentration
+   quickstart/species
    quickstart/run-simulation
 
 .. toctree::
