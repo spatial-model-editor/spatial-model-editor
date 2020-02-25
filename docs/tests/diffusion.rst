@@ -46,4 +46,4 @@ The total amount of species in the compartment is a conserved quantity,
 
    \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} c_s(t) dx dy = 36 \pi
 
- and this is also valid at late times, since our zero flux Neumann boundary conditions also conserve the amount of species in the compartment.
+and this is also valid at late times, since our zero flux Neumann boundary conditions also conserve the amount of species in the compartment.
