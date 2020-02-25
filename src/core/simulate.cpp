@@ -13,12 +13,6 @@ namespace simulate {
 Simulation::Simulation(const sbml::SbmlDocWrapper &sbmlDoc,
                        SimulatorType simType, std::size_t integratorOrder)
     : simulatorType(simType), imageSize(sbmlDoc.getCompartmentImage().size()) {
-  // init simulator
-  if (simulatorType == SimulatorType::DUNE) {
-    simulator = std::make_unique<sim::DuneSim>(sbmlDoc, integratorOrder);
-  } else {
-    simulator = std::make_unique<sim::PixelSim>(sbmlDoc);
-  }
   // get compartments with interacting species, name & colour of each species
   for (const auto &compartmentId : sbmlDoc.compartments) {
     std::vector<std::string> sIds;
@@ -42,6 +36,14 @@ Simulation::Simulation(const sbml::SbmlDocWrapper &sbmlDoc,
       compartmentSpeciesColors.push_back(std::move(cols));
       compartments.push_back(comp);
     }
+  }
+  // init simulator
+  if (simulatorType == SimulatorType::DUNE) {
+    simulator = std::make_unique<sim::DuneSim>(
+        sbmlDoc, compartmentIds, compartmentSpeciesIds, integratorOrder);
+  } else {
+    simulator = std::make_unique<sim::PixelSim>(
+        sbmlDoc, compartmentIds, compartmentSpeciesIds, integratorOrder);
   }
   updateConcentrations(0);
 }

@@ -30,41 +30,39 @@ void SimCompartment::spatiallyAverageDcdt() {
   // for any non-spatial species: spatially average dc/dt:
   // roughly equivalent to infinite rate of diffusion
   std::size_t nSpecies = speciesIds.size();
+  std::size_t nPixels = comp.nPixels();
   for (std::size_t is : nonSpatialSpeciesIndices) {
     double av = 0;
-    for (std::size_t ix = 0; ix < comp.nPixels(); ++ix) {
+    for (std::size_t ix = 0; ix < nPixels; ++ix) {
       av += dcdt[ix * nSpecies + is];
     }
-    av /= static_cast<double>(comp.nPixels());
-    for (std::size_t ix = 0; ix < comp.nPixels(); ++ix) {
+    av /= static_cast<double>(nPixels);
+    for (std::size_t ix = 0; ix < nPixels; ++ix) {
       dcdt[ix * nSpecies + is] = av;
     }
   }
 }
 
 SimCompartment::SimCompartment(const sbml::SbmlDocWrapper &doc,
-                               const geometry::Compartment &compartment)
-    : comp(compartment), compartmentId(compartment.getId()) {
+                               const geometry::Compartment &compartment,
+                               const std::vector<std::string> &sIds)
+    : comp(compartment), compartmentId(compartment.getId()), speciesIds(sIds) {
   // get species in compartment
   SPDLOG_DEBUG("compartment: {}", compartmentId);
   std::vector<const geometry::Field *> fields;
-  speciesIds.clear();
-  for (const auto &s : doc.species.at(compartmentId.c_str())) {
-    if (!doc.getIsSpeciesConstant(s.toStdString())) {
-      speciesIds.push_back(s.toStdString());
-      const auto *field = &doc.mapSpeciesIdToField.at(s);
-      double pixelWidth = comp.getPixelWidth();
-      diffConstants.push_back(field->diffusionConstant / pixelWidth /
-                              pixelWidth);
-      // forwards euler stability bound: dt < a^2/4D
-      maxStableTimestep =
-          std::min(maxStableTimestep, 1.0 / (4.0 * diffConstants.back()));
-      fields.push_back(field);
-      if (!field->isSpatial) {
-        nonSpatialSpeciesIndices.push_back(fields.size() - 1);
-      }
-      SPDLOG_DEBUG("  - adding species: {}", s.toStdString());
+  for (const auto &s : speciesIds) {
+    const auto *field = &doc.mapSpeciesIdToField.at(s.c_str());
+    double pixelWidth = comp.getPixelWidth();
+    diffConstants.push_back(field->diffusionConstant / pixelWidth / pixelWidth);
+    // forwards euler stability bound: dt < a^2/4D
+    maxStableTimestep =
+        std::min(maxStableTimestep, 1.0 / (4.0 * diffConstants.back()));
+    fields.push_back(field);
+    if (!field->isSpatial) {
+      nonSpatialSpeciesIndices.push_back(fields.size() - 1);
     }
+    SPDLOG_DEBUG("  - adding species: {}, diff constant {}", s,
+                 diffConstants.back());
   }
   // get reactions in compartment
   std::vector<std::string> reactionIDs;
@@ -412,12 +410,18 @@ double PixelSim::doRKAdaptive(double dtMax) {
   return dt;
 }
 
-PixelSim::PixelSim(const sbml::SbmlDocWrapper &sbmlDoc, std::size_t order)
+PixelSim::PixelSim(
+    const sbml::SbmlDocWrapper &sbmlDoc,
+    const std::vector<std::string> &compartmentIds,
+    const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
+    std::size_t order)
     : doc(sbmlDoc), integratorOrder(order) {
   // add compartments
-  for (const auto &compartmentID : doc.compartments) {
-    simCompartments.emplace_back(doc,
-                                 doc.mapCompIdToGeometry.at(compartmentID));
+  for (std::size_t compIndex = 0; compIndex < compartmentIds.size();
+       ++compIndex) {
+    simCompartments.emplace_back(
+        doc, doc.mapCompIdToGeometry.at(compartmentIds[compIndex].c_str()),
+        compartmentSpeciesIds[compIndex]);
     maxStableTimestep = std::min(maxStableTimestep,
                                  simCompartments.back().getMaxStableTimestep());
   }
@@ -425,26 +429,21 @@ PixelSim::PixelSim(const sbml::SbmlDocWrapper &sbmlDoc, std::size_t order)
   for (auto &membrane : doc.membraneVec) {
     if (doc.reactions.find(membrane.membraneID.c_str()) !=
         doc.reactions.cend()) {
-      // find the two membrane compartments in simCompartments
+      // look for the two membrane compartments in simCompartments
       std::string compIdA = membrane.compA->getId();
       std::string compIdB = membrane.compB->getId();
       auto iterA = std::find_if(simCompartments.begin(), simCompartments.end(),
                                 [&compIdA](const auto &c) {
                                   return c.getCompartmentId() == compIdA;
                                 });
-      if (iterA == simCompartments.cend()) {
-        SPDLOG_ERROR("could not find compartment {} in simCompartments",
-                     compIdA);
-      }
       auto iterB = std::find_if(simCompartments.begin(), simCompartments.end(),
                                 [&compIdB](const auto &c) {
                                   return c.getCompartmentId() == compIdB;
                                 });
-      if (iterB == simCompartments.cend()) {
-        SPDLOG_ERROR("could not find compartment {} in simCompartments",
-                     compIdB);
+      if ((iterA != simCompartments.cend()) &&
+          (iterB != simCompartments.cend())) {
+        simMembranes.emplace_back(doc, membrane, *iterA, *iterB);
       }
-      simMembranes.emplace_back(doc, membrane, *iterA, *iterB);
     }
   }
 }

@@ -58,7 +58,8 @@ class SimCompartment {
 
  public:
   explicit SimCompartment(const sbml::SbmlDocWrapper &doc,
-                          const geometry::Compartment &compartment);
+                          const geometry::Compartment &compartment,
+                          const std::vector<std::string> &sIds);
   // dcdt = result of applying diffusion operator to conc
   void evaluateDiffusionOperator();
   // dcdt += result of applying reaction expressions to conc
@@ -117,7 +118,11 @@ class PixelSim : public BaseSim {
   double epsilon = 1e-14;
 
  public:
-  explicit PixelSim(const sbml::SbmlDocWrapper &sbmlDoc, std::size_t order = 2);
+  explicit PixelSim(
+      const sbml::SbmlDocWrapper &sbmlDoc,
+      const std::vector<std::string> &compartmentIds,
+      const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
+      std::size_t order = 2);
   ~PixelSim() override;
   virtual void setIntegrationOrder(std::size_t order) override;
   virtual std::size_t getIntegrationOrder() const override;

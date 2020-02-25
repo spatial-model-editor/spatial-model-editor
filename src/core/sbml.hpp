@@ -232,7 +232,7 @@ class SbmlDocWrapper {
   void setCompartmentColour(const QString &compartmentID, QRgb colour,
                             bool updateSBML = true);
   const QImage &getCompartmentImage() const;
-  void addCompartment(const QString &compartmentName);
+  QString addCompartment(const QString &compartmentName);
   void removeCompartment(const QString &compartmentID);
 
   double getCompartmentSize(const QString &compartmentID) const;
@@ -242,7 +242,7 @@ class SbmlDocWrapper {
   QString getSpeciesCompartment(const QString &speciesID) const;
   void setSpeciesCompartment(const QString &speciesID,
                              const QString &compartmentID);
-  void addSpecies(const QString &speciesName, const QString &compartmentID);
+  QString addSpecies(const QString &speciesName, const QString &compartmentID);
   void removeSpecies(const QString &speciesID);
 
   // compartment geometry: interiorPoints - used for mesh generation

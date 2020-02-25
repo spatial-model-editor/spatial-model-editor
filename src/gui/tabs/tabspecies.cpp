@@ -198,8 +198,8 @@ void TabSpecies::btnAddSpecies_clicked() {
   auto speciesName = QInputDialog::getText(
       this, "Add species", "New species name:", QLineEdit::Normal, {}, &ok);
   if (ok && !speciesName.isEmpty()) {
-    sbmlDoc.addSpecies(speciesName, compartmentID);
-    loadModelData(speciesName);
+    auto newName = sbmlDoc.addSpecies(speciesName, compartmentID);
+    loadModelData(newName);
   }
 }
 
