@@ -28,9 +28,7 @@ SCENARIO("Geometry Tab", "[gui][tabs][geometry]") {
   auto *btnAddCompartment = tab.findChild<QPushButton *>("btnAddCompartment");
   auto *btnRemoveCompartment =
       tab.findChild<QPushButton *>("btnRemoveCompartment");
-  auto *txtCompartmentSize = tab.findChild<QLineEdit *>("txtCompartmentSize");
-  auto *btnSetCompartmentSizeFromImage =
-      tab.findChild<QPushButton *>("btnSetCompartmentSizeFromImage");
+  auto *txtCompartmentName = tab.findChild<QLineEdit *>("txtCompartmentName");
   auto *tabCompartmentGeometry =
       tab.findChild<QTabWidget *>("tabCompartmentGeometry");
   auto *lblCompShape = tab.findChild<QLabelMouseTracker *>("lblCompShape");
@@ -55,19 +53,26 @@ SCENARIO("Geometry Tab", "[gui][tabs][geometry]") {
       // select compartments
       REQUIRE(listCompartments->count() == 3);
       REQUIRE(listCompartments->currentItem()->text() == "Outside");
-      REQUIRE(txtCompartmentSize->text() == "10");
+      REQUIRE(txtCompartmentName->text() == "Outside");
       REQUIRE(tabCompartmentGeometry->currentIndex() == 0);
       REQUIRE(lblCompShape->getImage().pixel(1, 1) == 0xff000200);
-      sendMouseClick(btnSetCompartmentSizeFromImage);
-      REQUIRE(txtCompartmentSize->text() != "10");
+      // change compartment name
+      txtCompartmentName->setFocus();
+      sendKeyEvents(txtCompartmentName, {"X", "Enter"});
+      REQUIRE(txtCompartmentName->text() == "OutsideX");
+      REQUIRE(listCompartments->currentItem()->text() == "OutsideX");
+      txtCompartmentName->setFocus();
+      sendKeyEvents(txtCompartmentName, {"Backspace", "Enter"});
+      REQUIRE(txtCompartmentName->text() == "Outside");
+      REQUIRE(listCompartments->currentItem()->text() == "Outside");
       listCompartments->setFocus();
       sendKeyEvents(listCompartments, {"Down"});
       REQUIRE(listCompartments->currentItem()->text() == "Cell");
       REQUIRE(lblCompShape->getImage().pixel(20, 20) == 0xff9061c1);
-      REQUIRE(txtCompartmentSize->text() == "1");
+      REQUIRE(txtCompartmentName->text() == "Cell");
       sendKeyEvents(listCompartments, {"Down"});
       REQUIRE(listCompartments->currentItem()->text() == "Nucleus");
-      REQUIRE(txtCompartmentSize->text() == "0.2");
+      REQUIRE(txtCompartmentName->text() == "Nucleus");
       REQUIRE(lblCompShape->getImage().pixel(50, 50) == 0xffc58560);
 
       // boundary tab

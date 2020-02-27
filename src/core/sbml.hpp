@@ -156,6 +156,7 @@ class SbmlDocWrapper {
   // update SBML doc with mesh
   libsbml::ParametricObject *getParametricObject(
       const std::string &compartmentID) const;
+  void removeMeshParamsAnnotation();
   void writeMeshParamsAnnotation(libsbml::ParametricGeometry *parageom);
   void writeGeometryMeshToSBML();
   void writeGeometryImageToSBML();
@@ -211,9 +212,9 @@ class SbmlDocWrapper {
 
   explicit SbmlDocWrapper();
   ~SbmlDocWrapper();
-  SbmlDocWrapper(SbmlDocWrapper &&);
+  SbmlDocWrapper(SbmlDocWrapper &&) noexcept;
   SbmlDocWrapper(const SbmlDocWrapper &) = delete;
-  SbmlDocWrapper &operator=(SbmlDocWrapper &&);
+  SbmlDocWrapper &operator=(SbmlDocWrapper &&) noexcept;
   SbmlDocWrapper &operator=(const SbmlDocWrapper &) = delete;
 
   void createSBMLFile(const std::string &name);
@@ -228,6 +229,7 @@ class SbmlDocWrapper {
 
   QString getCompartmentID(QRgb colour) const;
   QString getCompartmentName(const QString &compartmentID) const;
+  QString setCompartmentName(const QString &compartmentId, const QString &name);
   QRgb getCompartmentColour(const QString &compartmentID) const;
   void setCompartmentColour(const QString &compartmentID, QRgb colour,
                             bool updateSBML = true);
@@ -288,7 +290,7 @@ class SbmlDocWrapper {
   void setIsSpeciesConstant(const std::string &speciesID, bool constant);
   bool getIsSpeciesConstant(const std::string &speciesID) const;
 
-  void setSpeciesName(const QString &speciesID, const QString &name);
+  QString setSpeciesName(const QString &speciesID, const QString &name);
   QString getSpeciesName(const QString &speciesID) const;
   QString getReactionName(const QString &reactionID) const;
 

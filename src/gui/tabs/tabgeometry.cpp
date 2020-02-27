@@ -33,8 +33,8 @@ TabGeometry::TabGeometry(sbml::SbmlDocWrapper &doc,
   connect(ui->btnChangeCompartment, &QPushButton::clicked, this,
           &TabGeometry::btnChangeCompartment_clicked);
 
-  connect(ui->btnSetCompartmentSizeFromImage, &QPushButton::clicked, this,
-          &TabGeometry::btnSetCompartmentSizeFromImage_clicked);
+  connect(ui->txtCompartmentName, &QLineEdit::editingFinished, this,
+          &TabGeometry::txtCompartmentName_editingFinished);
 
   connect(ui->tabCompartmentGeometry, &QTabWidget::currentChanged, this,
           &TabGeometry::tabCompartmentGeometry_currentChanged);
@@ -78,10 +78,20 @@ TabGeometry::TabGeometry(sbml::SbmlDocWrapper &doc,
 TabGeometry::~TabGeometry() = default;
 
 void TabGeometry::loadModelData(const QString &selection) {
+  ui->tabCompartmentGeometry->setCurrentIndex(0);
   ui->listCompartments->clear();
+  ui->lblCompShape->clear();
+  ui->lblCompBoundary->clear();
+  ui->lblCompMesh->clear();
+  ui->lblCompartmentColour->clear();
+  ui->txtCompartmentName->clear();
   ui->listCompartments->insertItems(0, sbmlDoc.compartmentNames);
+  ui->btnChangeCompartment->setEnabled(false);
+  ui->txtCompartmentName->setEnabled(false);
   if (ui->listCompartments->count() > 0) {
+    ui->txtCompartmentName->setEnabled(true);
     ui->listCompartments->setCurrentRow(0);
+    ui->btnChangeCompartment->setEnabled(true);
   }
   lblGeometry->setImage(sbmlDoc.getCompartmentImage());
   enableTabs(sbmlDoc.hasValidGeometry);
@@ -129,10 +139,10 @@ void TabGeometry::btnAddCompartment_clicked() {
       this, "Add compartment", "New compartment name:", QLineEdit::Normal, {},
       &ok);
   if (ok && !compartmentName.isEmpty()) {
-    sbmlDoc.addCompartment(compartmentName);
+    QString newCompartmentName = sbmlDoc.addCompartment(compartmentName);
     ui->tabCompartmentGeometry->setCurrentIndex(0);
     enableTabs(false);
-    loadModelData(compartmentName);
+    loadModelData(newCompartmentName);
     emit modelGeometryChanged();
   }
 }
@@ -174,11 +184,19 @@ void TabGeometry::btnChangeCompartment_clicked() {
       "image...");
 }
 
-void TabGeometry::btnSetCompartmentSizeFromImage_clicked() {
-  const auto &compartmentID =
-      sbmlDoc.compartments.at(ui->listCompartments->currentRow());
-  sbmlDoc.setCompartmentSizeFromImage(compartmentID.toStdString());
-  listCompartments_currentRowChanged(ui->listCompartments->currentRow());
+void TabGeometry::txtCompartmentName_editingFinished() {
+  int compIndex = ui->listCompartments->currentRow();
+  if (compIndex < 0 || compIndex > sbmlDoc.compartments.size() - 1) {
+    return;
+  }
+  if (ui->txtCompartmentName->text() == sbmlDoc.compartmentNames[compIndex]) {
+    return;
+  }
+  const auto &compartmentId = sbmlDoc.compartments.at(compIndex);
+  QString name =
+      sbmlDoc.setCompartmentName(compartmentId, ui->txtCompartmentName->text());
+  ui->txtCompartmentName->setText(name);
+  ui->listCompartments->item(compIndex)->setText(name);
 }
 
 void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
@@ -261,7 +279,7 @@ void TabGeometry::spinMaxTriangleArea_valueChanged(int value) {
 }
 
 void TabGeometry::listCompartments_currentRowChanged(int currentRow) {
-  ui->txtCompartmentSize->clear();
+  ui->txtCompartmentName->clear();
   if (currentRow < 0 || currentRow >= ui->listCompartments->count()) {
     ui->btnRemoveCompartment->setEnabled(false);
     return;
@@ -272,16 +290,12 @@ void TabGeometry::listCompartments_currentRowChanged(int currentRow) {
   SPDLOG_DEBUG("  - Compartment Name: {}",
                ui->listCompartments->currentItem()->text().toStdString());
   SPDLOG_DEBUG("  - Compartment Id: {}", compID.toStdString());
-  ui->txtCompartmentSize->setText(
-      QString::number(sbmlDoc.getCompartmentSize(compID)));
-  ui->lblCompartmentSizeUnits->setText(
-      sbmlDoc.getModelUnits().getVolume().symbol);
+  ui->txtCompartmentName->setText(sbmlDoc.getCompartmentName(compID));
   QRgb col = sbmlDoc.getCompartmentColour(compID);
   SPDLOG_DEBUG("  - Compartment colour {:x} ", col);
   if (col == 0) {
     // null (transparent white) RGB colour: compartment does not have
     // an assigned colour in the image
-    ui->btnSetCompartmentSizeFromImage->setEnabled(false);
     ui->lblCompShape->setImage(QImage());
     ui->lblCompartmentColour->setText("none");
     ui->lblCompShape->setImage(QImage());
@@ -294,7 +308,6 @@ void TabGeometry::listCompartments_currentRowChanged(int currentRow) {
     ui->lblCompMesh->setImage(QImage());
     ui->lblCompMesh->setText("none");
   } else {
-    ui->btnSetCompartmentSizeFromImage->setEnabled(true);
     // update colour box
     lblCompartmentColourPixmap.fill(QColor::fromRgb(col));
     ui->lblCompartmentColour->setPixmap(lblCompartmentColourPixmap);

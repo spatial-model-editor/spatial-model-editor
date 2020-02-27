@@ -52,7 +52,7 @@ SCENARIO("Mainwindow: shortcut keys", "[gui][mainwindow][shortcuts]") {
       mwt.addUserAction({"Esc"});
       mwt.start();
       sendKeyEvents(&w, {"Ctrl+N"});
-      REQUIRE(w.windowTitle().right(6) == "Editor");
+      REQUIRE(w.windowTitle().right(20) == "[untitled-model.xml]");
       mwt.addUserAction({"n", "e", "w"});
       mwt.start();
       sendKeyEvents(&w, {"Ctrl+N"});
@@ -67,12 +67,12 @@ SCENARIO("Mainwindow: shortcut keys", "[gui][mainwindow][shortcuts]") {
       REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
     }
   }
-  WHEN("user presses ctrl+s (no SBML model loaded)") {
-    THEN("offer to import an SBML model") {
+  WHEN("user presses ctrl+s (SBML model but no geometry loaded)") {
+    THEN("offer to import a geometry image") {
       sendKeyEvents(&w, {"Ctrl+S"});
-      // press no when asked to import model
+      // press no when asked to import image
       auto title = sendKeyEventsToNextQDialog({"Esc"});
-      REQUIRE(title == "No SBML model");
+      REQUIRE(title == "No compartment geometry image");
     }
   }
   WHEN("user presses ctrl+s (with valid SBML model)") {
@@ -84,12 +84,12 @@ SCENARIO("Mainwindow: shortcut keys", "[gui][mainwindow][shortcuts]") {
       REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
     }
   }
-  WHEN("user presses ctrl+d (no SBML model loaded)") {
-    THEN("offer to import an SBML model") {
+  WHEN("user presses ctrl+d (SBML model but no geometry loaded)") {
+    THEN("offer to import a geometry image") {
       sendKeyEvents(&w, {"Ctrl+D"});
-      // press no when asked to import model
+      // press no when asked to import image
       auto title = sendKeyEventsToNextQDialog({"Esc"});
-      REQUIRE(title == "No SBML model");
+      REQUIRE(title == "No compartment geometry image");
     }
   }
   WHEN("user presses ctrl+d (with valid SBML model)") {
@@ -101,41 +101,23 @@ SCENARIO("Mainwindow: shortcut keys", "[gui][mainwindow][shortcuts]") {
       REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
     }
   }
-  WHEN("user presses ctrl+I to import image (no SBML model)") {
+  WHEN("user presses ctrl+I to import image (default empty SBML model)") {
     THEN("offer to import SBML model") {
-      sendKeyEvents(&w, {"Ctrl+I"});
-      // press no when asked to import model
-      sendKeyEventsToNextQDialog({"Esc"});
-
-      // repeat, this time say yes, but then escape on SBML file open dialog
-      sendKeyEvents(&w, {"Ctrl+I"});
+      // escape on SBML file open dialog
       mwt.addUserAction({"Esc"}, false);
       mwt.start();
-      // press yes when asked to import model
-      // NB: don't send release event, as dialog will be deleted by the
-      // time it is sent, since the modal QFileDialog opens in between the press
-      // & release events
-      sendKeyEventsToNextQDialog({"Enter"}, false);
+      sendKeyEvents(&w, {"Ctrl+I"});
       REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
     }
   }
-  WHEN("menu: Import->Example geometry image->Empty donut (no SBML model)") {
-    THEN("offer to import SBML model") {
-      sendKeyEvents(&w, {"Alt+I"});
-      sendKeyEvents(menuImport, {"E"});
-      sendKeyEvents(menuExample_geometry_image, {"E"});
-      // press no when asked to import model
-      sendKeyEventsToNextQDialog({"Esc"});
-    }
-  }
-  WHEN("user presses ctrl+tab (no SBML & compartment image loaded)") {
+  WHEN("user presses ctrl+tab (default SBML model loaded)") {
     THEN("remain on Geometry tab: all others disabled") {
       REQUIRE(tabMain->currentIndex() == 0);
       sendKeyEvents(tabMain, {"Ctrl+Tab"});
       REQUIRE(tabMain->currentIndex() == 0);
     }
   }
-  WHEN("user presses ctrl+shift+tab (no SBML & compartment image loaded)") {
+  WHEN("user presses ctrl+shift+tab (default SBML model loaded)") {
     THEN("remain on Geometry tab: all others disabled") {
       REQUIRE(tabMain->currentIndex() == 0);
       sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
@@ -172,20 +154,23 @@ SCENARIO("Mainwindow: shortcut keys", "[gui][mainwindow][shortcuts]") {
       REQUIRE(tabMain->currentIndex() == 8);
     }
   }
-  WHEN("menu: Tools->Set model units (no SBML model)") {
+  WHEN("menu: Tools->Set model units (default SBML model)") {
     THEN("offer to import SBML model") {
+      mwt.addUserAction({"Esc"}, false);
+      mwt.start();
       sendKeyEvents(&w, {"Alt+T"});
       sendKeyEvents(menu_Tools, {"U"});
-      // press no when asked to import model
-      sendKeyEventsToNextQDialog({"Esc"});
+      // press esc to close dialog
+      REQUIRE(mwt.getResult() == "");
     }
   }
-  WHEN("menu: Tools->Set image size (no SBML model)") {
-    THEN("offer to import SBML model") {
+  WHEN("menu: Tools->Set image size (default SBML model, no image)") {
+    THEN("offer to import geometry image") {
       sendKeyEvents(&w, {"Alt+T"});
       sendKeyEvents(menu_Tools, {"I"});
-      // press no when asked to import model
-      sendKeyEventsToNextQDialog({"Esc"});
+      // press no when asked to import image
+      auto title = sendKeyEventsToNextQDialog({"Esc"});
+      REQUIRE(title == "No compartment geometry image");
     }
   }
   WHEN("menu: Tools->Set simulation type") {

@@ -42,6 +42,42 @@ static void printSBMLDocErrors(libsbml::SBMLDocument *doc) {
 }
 
 void SbmlDocWrapper::clearAllGeometryData() {
+  // remove any SBML geometry-related stuff
+  removeMeshParamsAnnotation();
+  if (model != nullptr) {
+    for (unsigned i = 0; i < model->getNumSpecies(); ++i) {
+      removeInitialAssignment(model->getSpecies(i)->getId());
+    }
+    for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
+      auto *comp = model->getCompartment(i);
+      auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
+          comp->getPlugin("spatial"));
+      if (scp != nullptr && scp->isSetCompartmentMapping()) {
+        scp->unsetCompartmentMapping();
+      }
+    }
+  }
+  if (plugin != nullptr && plugin->isSetGeometry()) {
+    auto *g = plugin->getGeometry();
+    for (unsigned i = 0; i < g->getNumGeometryDefinitions(); ++i) {
+      std::unique_ptr<libsbml::GeometryDefinition> gd(
+          g->removeGeometryDefinition(i));
+      SPDLOG_INFO("removing GeometryDefinition {}", gd->getId());
+    }
+    for (unsigned i = 0; i < g->getNumDomainTypes(); ++i) {
+      std::unique_ptr<libsbml::DomainType> dt(g->removeDomainType(i));
+      SPDLOG_INFO("removing DomainType {}", dt->getId());
+    }
+    for (unsigned i = 0; i < g->getNumDomains(); ++i) {
+      std::unique_ptr<libsbml::Domain> d(g->removeDomain(i));
+      SPDLOG_INFO("removing Domain {}", d->getId());
+    }
+    for (unsigned i = 0; i < g->getNumSampledFields(); ++i) {
+      std::unique_ptr<libsbml::SampledField> sf(g->removeSampledField(i));
+      SPDLOG_INFO("removing SampledField {}", sf->getId());
+    }
+  }
+  // clear geometry-related data
   membranes.clear();
   reactions.clear();
   mapCompIdToGeometry.clear();
@@ -54,8 +90,8 @@ void SbmlDocWrapper::clearAllGeometryData() {
   mapMembraneToIndex.clear();
   mapMembraneToImage.clear();
   mesh.reset();
-  hasGeometryImage = false;
   compartmentImage = {};
+  hasGeometryImage = false;
   hasValidGeometry = false;
 }
 
@@ -80,12 +116,11 @@ SbmlDocWrapper::SbmlDocWrapper()
                              {"cubic decimetre", "dm^3", "metre", -1, 3},
                              {"cubic centimetre", "cm^3", "metre", -2, 3},
                              {"cubic millimetre", "mm^3", "metre", -3, 3}}},
-          units::UnitVector{
-              {{"mole", "mol", "mole", 0}, {"millimole", "mmol", "mole", -3}}}),
-      mesh(std::make_unique<mesh::Mesh>()) {}
+          units::UnitVector{{{"mole", "mol", "mole", 0},
+                             {"millimole", "mmol", "mole", -3}}}) {}
 
-SbmlDocWrapper::SbmlDocWrapper(SbmlDocWrapper &&) = default;
-SbmlDocWrapper &SbmlDocWrapper::operator=(SbmlDocWrapper &&) = default;
+SbmlDocWrapper::SbmlDocWrapper(SbmlDocWrapper &&) noexcept = default;
+SbmlDocWrapper &SbmlDocWrapper::operator=(SbmlDocWrapper &&) noexcept = default;
 SbmlDocWrapper::~SbmlDocWrapper() = default;
 
 void SbmlDocWrapper::createSBMLFile(const std::string &name) {
@@ -200,28 +235,6 @@ void SbmlDocWrapper::writeDefaultGeometryToSBML() {
           ->setIsSpatial(true);
     }
   }
-
-  // create sampled field geometry with empty SampledField
-  sfgeom = geom->createSampledFieldGeometry();
-  sfgeom->setId("sampledFieldGeometry");
-  sfgeom->setIsActive(true);
-  auto *sf = geom->createSampledField();
-  sf->setId("geometryImage");
-  sf->setDataType(libsbml::DataKind_t::SPATIAL_DATAKIND_UINT32);
-  sf->setInterpolationType(
-      libsbml::InterpolationKind_t::SPATIAL_INTERPOLATIONKIND_NEARESTNEIGHBOR);
-  sf->setCompression(
-      libsbml::CompressionKind_t::SPATIAL_COMPRESSIONKIND_UNCOMPRESSED);
-  sfgeom->setSampledField(sf->getId());
-
-  // for each compartment:
-  //  - create DomainType
-  //  - create CompartmentMapping from compartment to DomainType
-  //  - create Domain with this DomainType
-  //  - create SampledVolume with with DomainType (pixel geometry)
-  for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
-    createDefaultCompartmentGeometry(model->getCompartment(i));
-  }
 }
 
 void SbmlDocWrapper::importSpatialData() {
@@ -333,6 +346,9 @@ void SbmlDocWrapper::importSampledFieldGeometry() {
 
 static libsbml::ParametricGeometry *getParametricGeometry(
     libsbml::Geometry *geom) {
+  if (geom == nullptr) {
+    return nullptr;
+  }
   for (unsigned i = 0; i < geom->getNumGeometryDefinitions(); ++i) {
     if (auto *def = geom->getGeometryDefinition(i);
         def->getIsActive() && def->isParametricGeometry()) {
@@ -578,7 +594,30 @@ QString SbmlDocWrapper::getXml() {
 
 void SbmlDocWrapper::importGeometryFromImage(const QImage &img,
                                              bool updateSBML) {
-  clearAllGeometryData();
+  if (updateSBML) {
+    clearAllGeometryData();
+    // create sampled field geometry with empty SampledField
+    sfgeom = geom->createSampledFieldGeometry();
+    sfgeom->setId("sampledFieldGeometry");
+    sfgeom->setIsActive(true);
+    auto *sf = geom->createSampledField();
+    sf->setId("geometryImage");
+    sf->setDataType(libsbml::DataKind_t::SPATIAL_DATAKIND_UINT32);
+    sf->setInterpolationType(libsbml::InterpolationKind_t::
+                                 SPATIAL_INTERPOLATIONKIND_NEARESTNEIGHBOR);
+    sf->setCompression(
+        libsbml::CompressionKind_t::SPATIAL_COMPRESSIONKIND_UNCOMPRESSED);
+    sfgeom->setSampledField(sf->getId());
+
+    // for each compartment:
+    //  - create DomainType
+    //  - create CompartmentMapping from compartment to DomainType
+    //  - create Domain with this DomainType
+    //  - create SampledVolume with with DomainType (pixel geometry)
+    for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
+      createDefaultCompartmentGeometry(model->getCompartment(i));
+    }
+  }
   compartmentImage = img;
   initMembraneColourPairs();
   if (isValid && updateSBML) {
@@ -1273,26 +1312,26 @@ libsbml::ParametricObject *SbmlDocWrapper::getParametricObject(
   return parageom->getParametricObjectByDomainType(domainTypeID);
 }
 
-void SbmlDocWrapper::writeMeshParamsAnnotation(
-    libsbml::ParametricGeometry *pg) {
-  // if there is already an annotation set by us, remove it
-  if (pg->isSetAnnotation()) {
+void SbmlDocWrapper::removeMeshParamsAnnotation() {
+  if (auto *pg = getParametricGeometry(geom);
+      pg != nullptr && pg->isSetAnnotation()) {
     auto *node = pg->getAnnotation();
     for (unsigned i = 0; i < node->getNumChildren(); ++i) {
       if (const auto &child = node->getChild(i);
           child.getURI() == annotationURI &&
           child.getPrefix() == annotationPrefix && child.getName() == "mesh") {
-        SPDLOG_INFO("removing annotation {} : {}", i, node->toXMLString());
-        // Note: removeChild returns a pointer to the child,
-        // and removes this pointer from the SBML doc,
-        // but does not delete the Child,
-        // so now we own it and it will be deleted when
-        // this unique pointer goes out of scope
-        std::unique_ptr<libsbml::XMLNode> childNode(node->removeChild(i));
+        std::unique_ptr<libsbml::XMLNode> n(node->removeChild(i));
+        SPDLOG_INFO("removed annotation {} : '{}'", i, n->toXMLString());
         break;
       }
     }
   }
+}
+
+void SbmlDocWrapper::writeMeshParamsAnnotation(
+    libsbml::ParametricGeometry *pg) {
+  // if there is already an annotation set by us, remove it
+  removeMeshParamsAnnotation();
   // append annotation with mesh info
   std::string xml = "<";
   xml.append(annotationPrefix);
@@ -1470,16 +1509,22 @@ void SbmlDocWrapper::setCompartmentInteriorPoint(const QString &compartmentID,
 void SbmlDocWrapper::removeInitialAssignment(const std::string &speciesID) {
   if (auto sampledFieldID = getSpeciesSampledFieldInitialAssignment(speciesID);
       !sampledFieldID.empty()) {
-    // remove sampled field
-    std::unique_ptr<libsbml::SampledField> sf(
-        geom->removeSampledField(sampledFieldID));
+    if (std::unique_ptr<libsbml::SampledField> sf(
+            geom->removeSampledField(sampledFieldID));
+        sf != nullptr) {
+      SPDLOG_INFO("removed SampledField {}", sf->getId());
+    }
     // remove parameter with spatialref to sampled field
     std::string paramID =
         model->getInitialAssignmentBySymbol(speciesID)->getMath()->getName();
     std::unique_ptr<libsbml::Parameter> p(model->removeParameter(paramID));
+    SPDLOG_INFO("removed Parameter {}", p->getId());
   }
-  std::unique_ptr<libsbml::InitialAssignment> ia(
-      model->removeInitialAssignment(speciesID));
+  if (std::unique_ptr<libsbml::InitialAssignment> ia(
+          model->removeInitialAssignment(speciesID));
+      ia != nullptr) {
+    SPDLOG_INFO("removed InitialAssignment {}", ia->getId());
+  }
 }
 
 void SbmlDocWrapper::setAnalyticConcentration(
@@ -2026,12 +2071,25 @@ void SbmlDocWrapper::removeReaction(const QString &reactionID) {
   }
 }
 
-void SbmlDocWrapper::setSpeciesName(const QString &speciesID,
-                                    const QString &name) {
+QString SbmlDocWrapper::setSpeciesName(const QString &speciesID,
+                                       const QString &name) {
+  QString newName = name;
   auto *spec = model->getSpecies(speciesID.toStdString());
+  if (spec == nullptr) {
+    return {};
+  }
+  QStringList existingNames;
+  for (unsigned i = 0; i < model->getNumSpecies(); ++i) {
+    existingNames.push_back(model->getSpecies(i)->getName().c_str());
+  }
+  while (existingNames.contains(newName)) {
+    newName.append("_");
+    newName.append(spec->getCompartment().c_str());
+  }
   SPDLOG_INFO("Setting species {} name to {}", spec->getId(),
               name.toStdString());
   spec->setName(name.toStdString());
+  return newName;
 }
 
 QString SbmlDocWrapper::getSpeciesName(const QString &speciesID) const {
@@ -2193,6 +2251,24 @@ void SbmlDocWrapper::setCompartmentSizeFromImage(
 
 QString SbmlDocWrapper::getCompartmentName(const QString &compartmentID) const {
   return model->getCompartment(compartmentID.toStdString())->getName().c_str();
+}
+
+QString SbmlDocWrapper::setCompartmentName(const QString &compartmentId,
+                                           const QString &name) {
+  std::string sId = compartmentId.toStdString();
+  auto *comp = model->getCompartment(sId);
+  if (comp != nullptr) {
+    QString newName = name;
+    while (compartmentNames.contains(newName)) {
+      newName.append("_");
+    }
+    std::string sName = newName.toStdString();
+    SPDLOG_INFO("sId '{}' : name -> '{}'", sId, sName);
+    comp->setName(sName);
+    compartmentNames[compartments.indexOf(compartmentId)] = newName;
+    return newName;
+  }
+  return {};
 }
 
 std::string SbmlDocWrapper::inlineExpr(
