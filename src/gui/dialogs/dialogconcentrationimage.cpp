@@ -6,8 +6,8 @@
 #include <QPushButton>
 #include <QToolTip>
 
+#include "guiutils.hpp"
 #include "logger.hpp"
-#include "tiff.hpp"
 #include "ui_dialogconcentrationimage.h"
 #include "units.hpp"
 
@@ -269,31 +269,9 @@ void DialogConcentrationImage::lblImage_mouseOver(QPoint point) {
 }
 
 void DialogConcentrationImage::btnImportImage_clicked() {
-  QString filename = QFileDialog::getOpenFileName(
-      this, "Import species concentration from image", "",
-      "Image Files (*.tif *.tiff *.gif *.jpg *.jpeg *.png *.bmp);; All files "
-      "(*.*)",
-      nullptr, QFileDialog::Option::DontUseNativeDialog);
-  if (!filename.isEmpty()) {
-    SPDLOG_DEBUG("  - import file {}", filename.toStdString());
-    utils::TiffReader tiffReader(filename.toStdString());
-    QImage concImg;
-    if (tiffReader.size() == 0) {
-      concImg.load(filename);
-    } else if (tiffReader.size() == 1) {
-      concImg = tiffReader.getImage();
-    } else {
-      bool ok;
-      int i = QInputDialog::getInt(
-          this, "Import tiff image",
-          "Please choose the page to use from this multi-page tiff", 0, 0,
-          static_cast<int>(tiffReader.size()) - 1, 1, &ok);
-      if (ok) {
-        concImg = tiffReader.getImage(static_cast<std::size_t>(i));
-      } else {
-        return;
-      }
-    }
+  auto concImg =
+      getImageFromUser(this, "Import species concentration from image");
+  if (!concImg.isNull()) {
     importConcentrationImage(concImg);
   }
 }

@@ -190,7 +190,7 @@ jobs:
 
         # run all tests again, then gcov again to get full coverage for sonarsource
         - rm gcov/*
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -a > /dev/null 2>&1
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as 2>&1 | tail -n 100
         - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null

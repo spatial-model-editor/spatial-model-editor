@@ -5,6 +5,9 @@
 #pragma once
 
 #include <QImage>
+#include <QString>
+#include <cstdint>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -22,17 +25,20 @@ double writeTIFF(const std::string& filename, const geometry::Field& field,
 class TiffReader {
  private:
   struct TiffImageData {
-    std::vector<std::vector<TiffDataType>> values;
-    TiffDataType maxValue = 0;
+    std::vector<std::vector<double>> values;
+    double maxValue = 0;
+    double minValue = std::numeric_limits<double>::max();
     std::size_t width = 0;
     std::size_t height = 0;
   };
   std::vector<TiffImageData> tiffImages;
+  QString errorMessage;
 
  public:
   explicit TiffReader(const std::string& filename);
   std::size_t size() const;
   QImage getImage(std::size_t i = 0) const;
+  const QString& getErrorMessage() const;
 };
 
 }  // namespace utils
