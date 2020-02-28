@@ -208,24 +208,32 @@ double SimCompartment::getMaxStableTimestep() const {
 
 SimMembrane::SimMembrane(const sbml::SbmlDocWrapper &doc,
                          const geometry::Membrane &membrane_ptr,
-                         SimCompartment &simCompA, SimCompartment &simCompB)
+                         SimCompartment *simCompA, SimCompartment *simCompB)
     : membrane(membrane_ptr), compA(simCompA), compB(simCompB) {
-  if (membrane.compA->getId() != simCompA.getCompartmentId()) {
+  if (compA != nullptr &&
+      membrane.compA->getId() != compA->getCompartmentId()) {
     SPDLOG_ERROR("compA '{}' doesn't match simCompA '{}'",
-                 membrane.compA->getId(), simCompA.getCompartmentId());
+                 membrane.compA->getId(), compA->getCompartmentId());
   }
-  if (membrane.compB->getId() != simCompB.getCompartmentId()) {
+  if (compB != nullptr &&
+      membrane.compB->getId() != compB->getCompartmentId()) {
     SPDLOG_ERROR("compB '{}' doesn't match simCompB '{}'",
-                 membrane.compB->getId(), simCompB.getCompartmentId());
+                 membrane.compB->getId(), compB->getCompartmentId());
   }
   SPDLOG_DEBUG("membrane: {}", membrane.membraneID);
-  SPDLOG_DEBUG("  - compA: {}", compA.getCompartmentId());
-  SPDLOG_DEBUG("  - compB: {}", compB.getCompartmentId());
+  SPDLOG_DEBUG("  - compA: {}",
+               compA != nullptr ? compA->getCompartmentId() : "");
+  SPDLOG_DEBUG("  - compB: {}",
+               compB != nullptr ? compB->getCompartmentId() : "");
 
   // make vector of species from compartments A and B
-  auto speciesIds = compA.getSpeciesIds();
-  speciesIds.insert(speciesIds.end(), compB.getSpeciesIds().cbegin(),
-                    compB.getSpeciesIds().cend());
+  std::vector<std::string> speciesIds;
+  for (const auto *c : {compA, compB}) {
+    if (c != nullptr) {
+      speciesIds.insert(speciesIds.end(), c->getSpeciesIds().cbegin(),
+                        c->getSpeciesIds().cend());
+    }
+  }
 
   // get rescaling factor to convert flux to amount/length^3,
   // then length^3 to volume to give concentration
@@ -248,30 +256,42 @@ SimMembrane::SimMembrane(const sbml::SbmlDocWrapper &doc,
 }
 
 void SimMembrane::evaluateReactions() {
-  assert(reacEval.nSpecies ==
-         compA.getSpeciesIds().size() + compB.getSpeciesIds().size());
-  std::size_t nSpeciesA = compA.getSpeciesIds().size();
-  std::size_t nSpeciesB = compB.getSpeciesIds().size();
-  const auto &concA = compA.getConcentrations();
-  const auto &concB = compB.getConcentrations();
-  auto &dcdtA = compA.getDcdt();
-  auto &dcdtB = compB.getDcdt();
+  std::size_t nSpeciesA = 0;
+  const std::vector<double> *concA = nullptr;
+  std::vector<double> *dcdtA = nullptr;
+  if (compA != nullptr) {
+    nSpeciesA = compA->getSpeciesIds().size();
+    concA = &compA->getConcentrations();
+    dcdtA = &compA->getDcdt();
+  }
+  std::size_t nSpeciesB = 0;
+  const std::vector<double> *concB = nullptr;
+  std::vector<double> *dcdtB = nullptr;
+  if (compB != nullptr) {
+    nSpeciesB = compB->getSpeciesIds().size();
+    concB = &compB->getConcentrations();
+    dcdtB = &compB->getDcdt();
+  }
   std::vector<double> species(nSpeciesA + nSpeciesB, 0);
   std::vector<double> result(nSpeciesA + nSpeciesB, 0);
   for (const auto &[ixA, ixB] : membrane.indexPair) {
     // populate species concentrations: first A, then B
-    std::copy_n(&concA[ixA * nSpeciesA], nSpeciesA, &species[0]);
-    std::copy_n(&concB[ixB * nSpeciesB], nSpeciesB, &species[nSpeciesA]);
+    if (concA != nullptr) {
+      std::copy_n(&((*concA)[ixA * nSpeciesA]), nSpeciesA, &species[0]);
+    }
+    if (concB != nullptr) {
+      std::copy_n(&((*concB)[ixB * nSpeciesB]), nSpeciesB, &species[nSpeciesA]);
+    }
 
     // evaluate reaction terms
     reacEval.evaluate(result.data(), species.data());
 
     // add results to dc/dt: first A, then B
     for (std::size_t is = 0; is < nSpeciesA; ++is) {
-      dcdtA[ixA * nSpeciesA + is] += result[is];
+      (*dcdtA)[ixA * nSpeciesA + is] += result[is];
     }
     for (std::size_t is = 0; is < nSpeciesB; ++is) {
-      dcdtB[ixB * nSpeciesB + is] += result[is + nSpeciesA];
+      (*dcdtB)[ixB * nSpeciesB + is] += result[is + nSpeciesA];
     }
   }
 }
@@ -427,6 +447,7 @@ PixelSim::PixelSim(
   }
   // add membranes
   for (auto &membrane : doc.membraneVec) {
+    SPDLOG_ERROR("{}", membrane.membraneID);
     if (doc.reactions.find(membrane.membraneID.c_str()) !=
         doc.reactions.cend()) {
       // look for the two membrane compartments in simCompartments
@@ -440,10 +461,15 @@ PixelSim::PixelSim(
                                 [&compIdB](const auto &c) {
                                   return c.getCompartmentId() == compIdB;
                                 });
-      if ((iterA != simCompartments.cend()) &&
-          (iterB != simCompartments.cend())) {
-        simMembranes.emplace_back(doc, membrane, *iterA, *iterB);
+      SimCompartment *compA = nullptr;
+      if (iterA != simCompartments.cend()) {
+        compA = &(*iterA);
       }
+      SimCompartment *compB = nullptr;
+      if (iterB != simCompartments.cend()) {
+        compB = &(*iterB);
+      }
+      simMembranes.emplace_back(doc, membrane, compA, compB);
     }
   }
 }
