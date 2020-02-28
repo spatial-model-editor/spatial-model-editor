@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QImage>
 #include <QString>
 
 class QWidget;
@@ -15,3 +16,6 @@ void selectMatchingOrFirstItem(QListWidget *list, const QString &text = {});
 void selectFirstChild(QTreeWidget *tree);
 
 void selectMatchingOrFirstChild(QTreeWidget *list, const QString &text = {});
+
+QImage getImageFromUser(QWidget *parent = nullptr,
+                        const QString &title = "Import image");

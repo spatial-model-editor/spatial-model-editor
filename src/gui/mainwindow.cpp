@@ -22,7 +22,6 @@
 #include "tabreactions.hpp"
 #include "tabsimulate.hpp"
 #include "tabspecies.hpp"
-#include "tiff.hpp"
 #include "ui_mainwindow.h"
 #include "utils.hpp"
 #include "version.hpp"
@@ -302,30 +301,8 @@ void MainWindow::actionGeometry_from_image_triggered() {
   if (!isValidModel()) {
     return;
   }
-  QString filename = QFileDialog::getOpenFileName(
-      this, "Import geometry from image", "",
-      "Image Files (*.tif *.tiff *.gif *.jpg *.jpeg *.png *.bmp);; All files "
-      "(*.*)",
-      nullptr, QFileDialog::Option::DontUseNativeDialog);
-  if (!filename.isEmpty()) {
-    utils::TiffReader tiffReader(filename.toStdString());
-    QImage img;
-    if (tiffReader.size() == 0) {
-      img.load(filename);
-    } else if (tiffReader.size() == 1) {
-      img = tiffReader.getImage();
-    } else {
-      bool ok;
-      int i = QInputDialog::getInt(
-          this, "Import tiff image",
-          "Please choose the page to use from this multi-page tiff", 0, 0,
-          static_cast<int>(tiffReader.size()) - 1, 1, &ok);
-      if (ok) {
-        img = tiffReader.getImage(static_cast<std::size_t>(i));
-      } else {
-        return;
-      }
-    }
+  auto img = getImageFromUser(this, "Import geometry from image");
+  if (!img.isNull()) {
     importGeometryImage(img);
   }
 }

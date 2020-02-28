@@ -217,6 +217,8 @@ SCENARIO("DUNE: simulation", "[core][dune][simulate]") {
     duneSim.doTimestep(0.01);
     REQUIRE(duneSim.errorMessage().empty());
   }
+  /*
+  // too slow in debug mode:
   GIVEN("brusselator-model, too large timestep") {
     sbml::SbmlDocWrapper s;
     if (QFile f(":/models/brusselator-model.xml");
@@ -235,4 +237,5 @@ SCENARIO("DUNE: simulation", "[core][dune][simulate]") {
       REQUIRE(!duneSim.errorMessage().empty());
     }
   }
+  */
 }

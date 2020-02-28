@@ -83,6 +83,19 @@ double writeTIFF(const std::string& filename, const geometry::Field& field,
   return maxConc;
 }
 
+template <typename T>
+std::vector<double> readLineToDoubles(TIFF* tif, std::size_t y,
+                                      std::size_t width) {
+  std::vector<double> dblValues;
+  dblValues.reserve(width);
+  std::vector<T> tiffValues(width, 0);
+  TIFFReadScanline(tif, tiffValues.data(), static_cast<uint32_t>(y));
+  for (auto tiffValue : tiffValues) {
+    dblValues.push_back(static_cast<double>(tiffValue));
+  }
+  return dblValues;
+}
+
 TiffReader::TiffReader(const std::string& filename) {
   TIFF* tif = TIFFOpen(filename.c_str(), "r");
   if (tif == nullptr) {
@@ -95,33 +108,73 @@ TiffReader::TiffReader(const std::string& filename) {
     std::size_t height = 0;
     std::size_t samplespp = 0;
     std::size_t bitspp = 0;
-    std::size_t photometric = 0;
+    std::size_t samplefmt = 0;
 
-    TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width);
-    TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height);
-    TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samplespp);
-    TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bitspp);
-    TIFFGetField(tif, TIFFTAG_PHOTOMETRIC, &photometric);
+    bool ok = true;
+    if (TIFFGetField(tif, TIFFTAG_IMAGEWIDTH, &width) != 1) {
+      errorMessage = "failed to read TIFFTAG_IMAGEWIDTH";
+      SPDLOG_DEBUG("  - {}", errorMessage.toStdString());
+      ok = false;
+    }
+    if (TIFFGetField(tif, TIFFTAG_IMAGELENGTH, &height) != 1) {
+      errorMessage = "failed to read TIFFTAG_IMAGELENGTH";
+      SPDLOG_DEBUG("  - {}", errorMessage.toStdString());
+      ok = false;
+    }
+    if (TIFFGetField(tif, TIFFTAG_SAMPLESPERPIXEL, &samplespp) != 1) {
+      SPDLOG_DEBUG("  - failed to read TIFFTAG_SAMPLESPERPIXEL: assuming 1");
+      samplespp = 1;
+    }
+    if (TIFFGetField(tif, TIFFTAG_BITSPERSAMPLE, &bitspp) != 1) {
+      errorMessage = "failed to read TIFFTAG_BITSPERSAMPLE";
+      SPDLOG_DEBUG("  - {}", errorMessage.toStdString());
+      ok = false;
+    }
+    if (TIFFGetField(tif, TIFFTAG_SAMPLEFORMAT, &samplefmt) != 1) {
+      SPDLOG_DEBUG(
+          "  - failed to read TIFFTAG_SAMPLEFORMAT: assuming "
+          "SAMPLEFORMAT_UINT");
+      samplefmt = SAMPLEFORMAT_UINT;
+    }
+
     SPDLOG_DEBUG("  - {}x{} image", width, height);
     SPDLOG_DEBUG("    - {} samples per pixel", samplespp);
     SPDLOG_DEBUG("    - {} bits per sample", bitspp);
-    SPDLOG_DEBUG("    - photometric enum: {}", photometric);
 
-    if (samplespp == 1 && bitspp == TiffDataTypeBits &&
-        photometric == PHOTOMETRIC_MINISBLACK) {
-      SPDLOG_INFO("    --> importing {}bit grayscale image...", bitspp);
+    if (samplespp == 1) {
+      SPDLOG_INFO("    --> importing grayscale image...");
       auto& img = tiffImages.emplace_back();
       img.width = width;
       img.height = height;
-      img.values = std::vector<std::vector<TiffDataType>>(
-          height, std::vector<TiffDataType>(width, 0));
       for (std::size_t y = 0; y < height; y++) {
-        TIFFReadScanline(tif, img.values.at(y).data(),
-                         static_cast<uint32_t>(y));
-        img.maxValue = std::max(*std::max_element(img.values.at(y).cbegin(),
-                                                  img.values.at(y).cend()),
-                                img.maxValue);
+        if (samplefmt == SAMPLEFORMAT_UINT && bitspp == 8) {
+          img.values.push_back(readLineToDoubles<uint8_t>(tif, y, width));
+        } else if (samplefmt == SAMPLEFORMAT_UINT && bitspp == 16) {
+          img.values.push_back(readLineToDoubles<uint16_t>(tif, y, width));
+        } else if (samplefmt == SAMPLEFORMAT_UINT && bitspp == 32) {
+          img.values.push_back(readLineToDoubles<uint32_t>(tif, y, width));
+        } else if (samplefmt == SAMPLEFORMAT_INT && bitspp == 8) {
+          img.values.push_back(readLineToDoubles<int8_t>(tif, y, width));
+        } else if (samplefmt == SAMPLEFORMAT_INT && bitspp == 16) {
+          img.values.push_back(readLineToDoubles<int16_t>(tif, y, width));
+        } else if (samplefmt == SAMPLEFORMAT_INT && bitspp == 32) {
+          img.values.push_back(readLineToDoubles<int32_t>(tif, y, width));
+        } else if (samplefmt == SAMPLEFORMAT_IEEEFP && bitspp == 32) {
+          img.values.push_back(readLineToDoubles<float>(tif, y, width));
+        } else if (samplefmt == SAMPLEFORMAT_IEEEFP && bitspp == 64) {
+          img.values.push_back(readLineToDoubles<double>(tif, y, width));
+        } else {
+          errorMessage = QString("%1-bit SAMPLEFORMAT enum %2 not supported")
+                             .arg(bitspp)
+                             .arg(samplefmt);
+          break;
+        }
+        auto [minV, maxV] = utils::minmax(img.values.back());
+        img.maxValue = std::max(maxV, img.maxValue);
+        img.minValue = std::min(minV, img.minValue);
       }
+      SPDLOG_DEBUG("    - min value: {}", img.minValue);
+      SPDLOG_DEBUG("    - min value: {}", img.maxValue);
     }
   } while (TIFFReadDirectory(tif) != 0);
   TIFFClose(tif);
@@ -132,21 +185,26 @@ std::size_t TiffReader::size() const { return tiffImages.size(); }
 QImage TiffReader::getImage(std::size_t i) const {
   const auto& tiffImage = tiffImages.at(i);
   QImage image(static_cast<int>(tiffImage.width),
-               static_cast<int>(tiffImage.height),
-               QImage::Format_ARGB32_Premultiplied);
-  for (int x = 0; x < image.width(); ++x) {
-    for (int y = 0; y < image.height(); ++y) {
+               static_cast<int>(tiffImage.height), QImage::Format_RGB32);
+  double maxVal = tiffImage.maxValue;
+  // check for case of all zero's: should be black image
+  if (maxVal == 0) {
+    maxVal = 1.0;
+  }
+  for (int y = 0; y < image.height(); ++y) {
+    const auto& row = tiffImage.values[static_cast<std::size_t>(y)];
+    for (int x = 0; x < image.width(); ++x) {
       // rescale pixel values from [0, max] to [0,255]
-      unsigned int val16 = tiffImage.values.at(static_cast<std::size_t>(y))
-                               .at(static_cast<std::size_t>(x));
-      double intensity =
-          static_cast<double>(val16) / static_cast<double>(tiffImage.maxValue);
-      unsigned int val8 = 0x0000ff & static_cast<unsigned int>(256 * intensity);
+      double unitNormValue = row[static_cast<std::size_t>(x)] / maxVal;
+      unsigned int val8 =
+          0x0000ff & static_cast<unsigned int>(255 * unitNormValue);
       unsigned int rgb = 0xff000000 | val8 | (val8 << 8) | (val8 << 16);
       image.setPixel(x, y, rgb);
     }
   }
   return image;
 }
+
+const QString& TiffReader::getErrorMessage() const { return errorMessage; }
 
 }  // namespace utils

@@ -1,6 +1,8 @@
+#include <QImage>
 #include <QRgb>
 
 #include "catch_wrapper.hpp"
+#include "qt_test_utils.hpp"
 #include "tiff.hpp"
 #include "utils.hpp"
 
@@ -147,8 +149,23 @@ SCENARIO("Utils", "[core][utils]") {
     REQUIRE(qpi.getIndex(v[0]).value() == 0);
     REQUIRE(qpi.getPoints().size() == v.size());
   }
-  GIVEN("Tiff file to read") {
-    utils::TiffReader tiffReader("x");
-    REQUIRE(tiffReader.size() == 0);
+}
+
+SCENARIO("TiffReader", "[core][utils][tiff]") {
+  GIVEN("8bit grayscale tiff") {
+    QImage img(3, 3, QImage::Format_Grayscale8);
+    img.fill(0);
+    img.setPixel(1, 1, 123);
+    img.setPixel(1, 2, 255);
+    if (img.save("tmp.tif")) {
+      utils::TiffReader tiffReader("tmp.tif");
+      REQUIRE(tiffReader.size() == 1);
+      REQUIRE(tiffReader.getErrorMessage().isEmpty());
+      auto img2 = tiffReader.getImage();
+      REQUIRE(img2.size() == img.size());
+      REQUIRE(img2.pixel(0, 0) == img.pixel(0, 0));
+      REQUIRE(img2.pixel(1, 1) == img.pixel(1, 1));
+      REQUIRE(img2.pixel(1, 2) == img.pixel(1, 2));
+    }
   }
 }
