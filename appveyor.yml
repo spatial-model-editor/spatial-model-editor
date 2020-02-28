@@ -47,15 +47,18 @@ build_script:
   # - C:\msys64\home\appveyor\build\benchmark\benchmark.exe 1
 
   - cp C:\msys64\home\appveyor\build\src\spatial-model-editor.exe %APPVEYOR_BUILD_FOLDER%\.
+  - cp C:\msys64\home\appveyor\build\cli\spatial-cli.exe %APPVEYOR_BUILD_FOLDER%\.
 
 artifacts:
   - path: spatial-model-editor.exe
     name: spatial-model-editor
+  - path: spatial-cli.exe
+    name: spatial-cli
 
 deploy:
   provider: GitHub
   description: ''
-  artifact: spatial-model-editor
+  artifact: spatial-model-editor, spatial-cli
   auth_token:
     secure: AzIgTar/Vk7S6hA8HAZAImacEIrbwmfrR6PJ+qHuAQHuLyPSAAcpI5rl/w6BumKp
   draft: false
