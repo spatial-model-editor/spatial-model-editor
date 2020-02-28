@@ -86,13 +86,13 @@ class SimMembrane {
  private:
   ReacEval reacEval;
   const geometry::Membrane &membrane;
-  SimCompartment &compA;
-  SimCompartment &compB;
+  SimCompartment *compA;
+  SimCompartment *compB;
 
  public:
   SimMembrane(const sbml::SbmlDocWrapper &doc,
-              const geometry::Membrane &membrane_ptr, SimCompartment &simCompA,
-              SimCompartment &simCompB);
+              const geometry::Membrane &membrane_ptr, SimCompartment *simCompA,
+              SimCompartment *simCompB);
   void evaluateReactions();
 };
 
