@@ -37,6 +37,9 @@ add_subdirectory(ext/qcustomplot)
 set(WITH_TBB yes CACHE BOOL "Build with TBB support (multithreading)")
 add_subdirectory(src)
 
+# compile spatial cli
+add_subdirectory(cli)
+
 # compile tests
 include(CTest)
 include(Catch)

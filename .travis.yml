@@ -19,7 +19,8 @@ jobs:
     - dist: xenial
       compiler: gcc
       env:
-        - DEPLOY_FILE="spatial-model-editor"
+        - DEPLOY_FILE_GUI="spatial-model-editor"
+        - DEPLOY_FILE_CLI="spatial-cli"
       addons:
         apt:
           sources:
@@ -48,7 +49,9 @@ jobs:
         - time ./build/benchmark/benchmark 1
         # check dependencies of resulting executable
         - cd build/src
+        - cp ../cli/spatial-cli .
         - ldd spatial-model-editor
+        - ldd spatial-cli
     ####################################################
     # osx release build: qmake / xcode 10.3, macOS 10.14
     ####################################################
@@ -56,7 +59,8 @@ jobs:
       osx_image: xcode10.3
       compiler: clang
       env:
-        - DEPLOY_FILE="spatial-model-editor.dmg"
+        - DEPLOY_FILE_GUI="spatial-model-editor.dmg"
+        - DEPLOY_FILE_CLI="spatial-cli.dmg"
       install:
         - export MACOSX_DEPLOYMENT_TARGET=10.14
       script:
@@ -71,16 +75,20 @@ jobs:
         # check dependencies of resulting executable
         - cd build/src
         - otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor
+        - otool -L ../cli/spatial-cli.app/Contents/MacOS/spatial-cli
         # NOTE: (does not work): alter plist file manually to require minimum osx 10.12
         # - plutil -p spatial-model-editor.app/Contents/Info.plist
         # - plutil -replace LSMinimumSystemVersion -string "10.12" spatial-model-editor.app/Contents/Info.plist
         # - plutil -p spatial-model-editor.app/Contents/Info.plist
         # package app dir as a .dmg
 
-        # for now just distribute dmg of executable:
+        # for now just distribute dmg of executables:
         - mkdir spatial-model-editor
         - cp spatial-model-editor.app/Contents/MacOS/spatial-model-editor spatial-model-editor/.
         - hdiutil create spatial-model-editor -fs HFS+ -srcfolder spatial-model-editor
+        - mkdir spatial-cli
+        - cp ../cli/spatial-cli.app/Contents/MacOS/spatial-cli spatial-cli/.
+        - hdiutil create spatial-cli -fs HFS+ -srcfolder spatial-cli
     ########################################################################
     # linux code quality build: cmake / clang 9 -> sonarcloud.io, codecov.io
     ########################################################################
@@ -220,11 +228,13 @@ deploy:
   provider: releases
   token:
     secure: E0WtptZea2n40eN+FBYZ2XYv/pjKUjVFZavl8BTVYhidzXYuT/DvhoehPVauJRy/t5QLMtmyd5ww9dhYkIcNcpAc1INrUlYG274D8xgXwbgsftmFbMqdrKR9f/qkynP0r6LCd1p0Tuhxxf37OcTYVEOjbvV+KsTzpWHtS9AqZGvMfv/rpI4r/Zu/LfGBs2T7Rr8Mlfy5YBI2L7lGka3ziTIic01pKDfjHJQ2xD2N366mEqcpB0vjF8c9b+qIUbQ8g8ybLoMfKM6ZSvcpz2NmLQK8l8gzzTN/k1PI2DJxmzi+9G031RXLAXvbR8I8NEQlZfsicepHk0m13EI7x5/TIGaa2ngSgX1W7oAL0IAkJFpcWcN5RQOgowCBAB/UnHCX8EgnBAiD8eTlc4DUC2WY84Dr3EcdhLg0bEX/Ky4mDAxt0QgABG0hEU3kE6USsUvp7IZmnCEdu8e+F/HRmvSUqECI9FvjmpHdBHwIv6anVA2pndN/ZGn4+4BWbo6IwycAh0FPAnvvs6guxnOqQW/eMRgBI3y4grzEYP/bPzlL1W6q42r6fwvh45LtcgC+joAoJCL3I51QcZ1joMY/OShSaKi3MnokImmb/GPRvebe3hDGGSsEAarrmIRb0zCMYDMdHzA+pqeojGZf6SCfIculmeE1MO2t/DqumxQRxTGx+8k=
-  file: $DEPLOY_FILE
+  files:
+    - $DEPLOY_FILE_GUI
+    - $DEPLOY_FILE_CLI
   skip_cleanup: true
   overwrite: true
   on:
     repo: lkeegan/spatial-model-editor
     tags: true
     all_branches: true
-    condition: $DEPLOY_FILE != ""
+    condition: $DEPLOY_FILE_GUI != ""
