@@ -229,8 +229,12 @@ void TabSpecies::btnRemoveSpecies_clicked() {
 
 void TabSpecies::txtSpeciesName_editingFinished() {
   const QString &name = ui->txtSpeciesName->text();
-  sbmlDoc.setSpeciesName(currentSpeciesId, name);
-  loadModelData(name);
+  if (name == sbmlDoc.getSpeciesName(currentSpeciesId)) {
+    return;
+  }
+  QString newName = sbmlDoc.setSpeciesName(currentSpeciesId, name);
+  ui->txtSpeciesName->setText(newName);
+  loadModelData(newName);
 }
 
 void TabSpecies::cmbSpeciesCompartment_activated(int index) {

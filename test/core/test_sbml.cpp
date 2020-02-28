@@ -81,23 +81,7 @@ SCENARIO("SBML: import SBML doc without geometry", "[core][sbml]") {
     REQUIRE(geom->getCoordinateComponent(1)->getType() ==
             libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
 
-    REQUIRE(geom->getNumGeometryDefinitions() == 1);
-    REQUIRE(geom->getGeometryDefinition(0)->isSampledFieldGeometry() == true);
-    REQUIRE(geom->getGeometryDefinition(0)->getIsActive() == true);
-    auto *sfgeom = dynamic_cast<libsbml::SampledFieldGeometry *>(
-        geom->getGeometryDefinition(0));
-    REQUIRE(sfgeom != nullptr);
-    for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
-      auto *comp = model->getCompartment(i);
-      auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
-          comp->getPlugin("spatial"));
-      REQUIRE(scp->isSetCompartmentMapping() == true);
-      std::string domainTypeID = scp->getCompartmentMapping()->getDomainType();
-      REQUIRE(geom->getDomainByDomainType(domainTypeID) ==
-              geom->getDomain(comp->getId() + "_domain"));
-      REQUIRE(sfgeom->getSampledVolumeByDomainType(domainTypeID)->getId() ==
-              comp->getId() + "_sampledVolume");
-    }
+    REQUIRE(geom->getNumGeometryDefinitions() == 0);
   }
   WHEN("import geometry & assign compartments") {
     // import geometry image & assign compartments to colours

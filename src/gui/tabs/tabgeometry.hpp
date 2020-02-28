@@ -44,7 +44,7 @@ class TabGeometry : public QWidget {
   void btnAddCompartment_clicked();
   void btnRemoveCompartment_clicked();
   void btnChangeCompartment_clicked();
-  void btnSetCompartmentSizeFromImage_clicked();
+  void txtCompartmentName_editingFinished();
   void tabCompartmentGeometry_currentChanged(int index);
   void lblCompBoundary_mouseClicked(QRgb col, QPoint point);
   void spinBoundaryIndex_valueChanged(int value);

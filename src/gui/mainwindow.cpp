@@ -56,6 +56,11 @@ MainWindow::MainWindow(QWidget *parent)
   // set initial splitter position: 1/4 for image, 3/4 for tabs
   ui->splitter->setSizes({1000, 3000});
 
+  // load empty model by default
+  sbmlDoc.createSBMLFile("untitled-model");
+  this->setWindowTitle(
+      QString("Spatial Model Editor [%1]").arg(sbmlDoc.currentFilename));
+
   enableTabs();
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
@@ -173,7 +178,8 @@ void MainWindow::tabMain_currentChanged(int index) {
       ui->txtDUNE->setText(dune::DuneConverter(sbmlDoc).getIniFile());
       break;
     case TabIndex::GMSH:
-      ui->txtGMSH->setText(sbmlDoc.mesh->getGMSH());
+      ui->txtGMSH->setText(sbmlDoc.mesh == nullptr ? ""
+                                                   : sbmlDoc.mesh->getGMSH());
       break;
     default:
       SPDLOG_ERROR("Tab index {} not valid", index);
