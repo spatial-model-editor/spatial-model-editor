@@ -5,6 +5,7 @@ LIBS += -L../src/core -lcore
 include(../ext/ext.pri)
 
 CONFIG += bench
+CONFIG += console
 
 bench {
     TARGET = benchmark

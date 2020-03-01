@@ -44,7 +44,7 @@ build_script:
   - ps: Get-Content test.txt -Tail 100
   - rm test.txt
   # run benchmarks (~1 sec per benchmark, ~20secs total)
-  # - C:\msys64\home\appveyor\build\benchmark\benchmark.exe 1
+  - C:\msys64\home\appveyor\build\benchmark\benchmark.exe 1
 
   - cp C:\msys64\home\appveyor\build\src\spatial-model-editor.exe %APPVEYOR_BUILD_FOLDER%\.
   - cp C:\msys64\home\appveyor\build\cli\spatial-cli.exe %APPVEYOR_BUILD_FOLDER%\.
