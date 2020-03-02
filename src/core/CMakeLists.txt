@@ -5,6 +5,7 @@ add_library(core STATIC resources/resources.qrc)
 target_compile_definitions(
   core PUBLIC
   SPDLOG_ACTIVE_LEVEL=$<$<CONFIG:Debug>:SPDLOG_LEVEL_TRACE>$<$<CONFIG:Release>:SPDLOG_LEVEL_INFO>
+  ${SME_EXTRA_CORE_DEFS}
   )
 
 # use TBB
@@ -128,5 +129,12 @@ target_link_libraries(core
                              spdlog::spdlog
                              ${SYMENGINE_LIBRARIES}
                              triangle
+                             Qt5::Widgets
+                             Qt5::Gui
                              Qt5::Core
-                             Qt5::Gui)
+                             ${SME_EXTRA_CORE_LIBS})
+
+# qt5_import_plugins(core EXCLUDE_BY_TYPE bearer EXCLUDE_BY_TYPE generic INCLUDE
+# Qt5::QGifPlugin Qt5::QJpegPlugin EXCLUDE_BY_TYPE platforminputcontexts
+# EXCLUDE_BY_TYPE platforms EXCLUDE_BY_TYPE platformthemes EXCLUDE_BY_TYPE
+# printsupport EXCLUDE_BY_TYPE sqldrivers)

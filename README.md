@@ -1,10 +1,10 @@
 # Spatial Model Editor
 [![github releases](https://img.shields.io/github/release/lkeegan/spatial-model-editor.svg)](https://github.com/lkeegan/spatial-model-editor/releases)
-[![linux/osx build status](https://travis-ci.org/lkeegan/spatial-model-editor.svg?branch=master)](https://travis-ci.org/lkeegan/spatial-model-editor)
-[![windows build status](https://ci.appveyor.com/api/projects/status/0m87yyaalrrj5ndn/branch/master?svg=true)](https://ci.appveyor.com/project/lkeegan/spatial-model-editor/branch/master)
+[![pypi releases](https://img.shields.io/pypi/v/sme.svg)](https://pypi.org/project/sme)
+[![build status](https://travis-ci.org/lkeegan/spatial-model-editor.svg?branch=master)](https://travis-ci.org/lkeegan/spatial-model-editor)
 [![codecov](https://codecov.io/gh/lkeegan/spatial-model-editor/branch/master/graph/badge.svg)](https://codecov.io/gh/lkeegan/spatial-model-editor)
 [![sonarcloud quality gate status](https://sonarcloud.io/api/project_badges/measure?project=lkeegan_spatial-model-editor&metric=alert_status)](https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor)
-[![documentation status](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/en/latest/)
+[![documentation](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/en/latest/)
 
 A GUI editor to convert non-spatial SBML models of bio-chemical reactions into 2d spatial models and simulate them using the [dune-copasi](https://gitlab.dune-project.org/copasi/dune-copasi) solver for reaction-diffusion systems.
 
@@ -28,19 +28,21 @@ Translate the spatial model to a system of PDEs and simulate it: generate 2d tri
 
 -   _CI_: each commit is automatically compiled and tested on each supported OS:
 
-    -   linux & osx: <https://travis-ci.org/lkeegan/spatial-model-editor>
-
-    -   windows: <https://ci.appveyor.com/project/lkeegan/spatial-model-editor>
+    -   builds: <https://travis-ci.org/lkeegan/spatial-model-editor>
 
     -   test coverage report: <https://codecov.io/gh/lkeegan/spatial-model-editor>
 
     -   static analysis reports: <https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor>
 
--   _Deployment_: tagged commits result in github release with a binary executable for each OS
+-   _Deployment_: tagged commits result in 
+
+    -   GUI/CLI executables: github release <https://github.com/lkeegan/spatial-model-editor/releases>
+
+    -   Python library: PyPI release <https://test.pypi.org/project/sme/>
 
 -   _Documentation_: documentation is at <https://spatial-model-editor.readthedocs.io> and is compiled with each commit
 
--   _Dependencies_: the result is a standalone GUI executable that includes these statically linked libraries:
+-   _Dependencies_:
 
     -   dune-copasi Biochemical System Simulator <https://gitlab.dune-project.org/copasi/dune-copasi>
 
@@ -111,6 +113,11 @@ Translate the spatial model to a system of PDEs and simulate it: generate 2d tri
 
         -   license: [Apache-2.0](https://github.com/intel/tbb/blob/tbb_2020/LICENSE)
         -   using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
+
+    -   pybind11 (for optional python bindings): <https://github.com/pybind/pybind11>
+
+        -   license: [BSD-style](https://github.com/pybind/pybind11/blob/master/LICENSE)
+        -   included in source code
 
     -   Catch2 testing framework: <https://github.com/catchorg/Catch2>
 

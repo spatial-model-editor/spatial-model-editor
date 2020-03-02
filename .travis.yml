@@ -1,6 +1,8 @@
 version: ~> 1.0
 os: linux
+dist: xenial
 language: cpp
+
 # only build master branch & version tags (and pull requests), i.e. don't build pr branches
 branches:
   only:
@@ -9,14 +11,20 @@ branches:
 
 env:
   global:
-    - QT5_INSTALL_PREFIX="/usr/local/qt5-static"
+    - BUILD_PYTHON_WHEELS: true
+    # test-pypi TWINE_PASSWORD
+    # - secure: "UozZJyNpGzHAHSPvspG53gxo46SzNhznzVHJXwUmCcdl+TQljOGEFx832ymjJ0uBOi9PRJiIIMwXwVGHbG0ac6Rx7RWxIN2hYBM93aB6F943DYoqj1GqP+YiMK+LC8TO4dlhPUk46kaZGw78tRj+b6LTpzJ8Z16Cu9u6UgQRK5dUfRUcT6V4+Qgf3SF8QkYwae3KghEtdBoTciMgSSaMxDGB1he3I7q0WyFVM/fFUy/mlU/WMlS0Ej2Dc8OaFiIld929iBYWpf7izLEsL2uYNWRrQPt+wFoLICanh0d0bjZmYedaaorZ/IgJ+F8OkzM/nmfejhI5LQUO/9f2YAbCePOpPBqeV9E8Su0dCJcaKKvHxXJzQuOPM8tRYnE31gtFtD8qfJCcD2kQp7WdlkumQ7OeVmvtGYpq162Y1wSGpwfm5zRZSZEAtPKkHKaNeyLsUyeGDEFUlL6WCI48oofXpPB+8SFhSu/PYNCofnIChy5eiK+3T+7cVne2AmQUTHUj5qRRjtXTAKX0RhcCJT+YG64T7t+OwRayXvzA7t4Kh+t1lIqL8ZW/wgfiWwVO6bQgRqZJt+GzSgzAh+u7QOFzjj3sD2A7myCso0pwGDy9SU+KFbYDaEioQ/CV6tMp/V0oaN4dI0ebaamqVonsIb8lNmP1J6qkKEJLggVNqfT2vhQ="
+    # pypi TWINE_PASSWORD
+    - secure: "KhPulbFDnLCMEUXZmNfma3uCB2D4EgBHdVYSQ7lGr5jICvbcqtVhN/HKKtWPyJmCe7ThNzSKG/ekhbiTE/dEpKAsipfdPfe+qF5MjiPrZ/QY8/BOBels7oyvUXGHYt/EXVAtMyLSbRHQow5NepZkEDgM35i4hshLfLXJwdZEaqhvf15K9sDJgjM/0It49YXHY2SkKuMv5tgGgBGBRcCPDV6cEHgjwg+XfdfUF4xXznsC9wTDj7mX2I2Cf4M0qimZXVIB6e60JcYP4uk0xFsezDgRr8mQwPSFNrXS7ufm6gx/t4PgrmzmnkZRI05OQhbmNrtMNhEgVTgyeWDe+8g8u9kuFnZIH74Uhj5kNtJ//S8luFdkdcUlQG32TQVl3cHRLLLAzxln4jLyGTKoW0BzgthyWNiaUEW8gWIvTZi3KU2jQnKv0UJy6m1zi2LkK280Q3H0rLLHkCAyfKY0/7CPZ6Zybob+KUng4zTD0VmHxO4KbjLWA516rJjKQHUvWU4EvOkaewobfjyb0hQ3TzUzkT9EfgMZrvmdr360DsXRB2VFmyTKYGwDBbpQ2/f1OzejSeltl3s4yJYEfiIEWZkJrYW/M3mcVtbdq14s3lGLiw01drRGeFLoFCPVtCYusn18fSnciYjqqh1VyOJovJ7jt1oyG3F/6B6pBBPKnYQTon4="
 
 jobs:
   include:
-    ########################################################
-    # linux release build: qmake / g++ 9.2.1 on ubuntu 16.04
-    ########################################################
-    - dist: xenial
+    ######################################################
+    # linux GUI/CLI release build: gcc 9 on ubuntu 16.04 #
+    ######################################################
+    - name: "linux GUI/CLI"
+      dist: xenial
+      language: cpp
       compiler: gcc
       env:
         - DEPLOY_FILE_GUI="spatial-model-editor"
@@ -24,8 +32,13 @@ jobs:
       addons:
         apt:
           sources:
-            - ubuntu-toolchain-r-test
+            # latest cmake
+            - sourceline: 'deb https://apt.kitware.com/ubuntu/ xenial main'
+              key_url: 'https://apt.kitware.com/keys/kitware-archive-latest.asc'
+            # gcc-9
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
           packages:
+            - cmake
             - g++-9
             - libxkbcommon-dev
             - jwm
@@ -38,11 +51,16 @@ jobs:
         # start a window manager so the Qt GUI tests can have their focus set
         - "jwm &"
         - sleep 1
+        - which python3
+        - whereis python3
+        - python3-config --includes
       script:
-        # export path for Qt5 static binaries
-        - export PATH=$QT5_INSTALL_PREFIX/bin:$PATH
-        - cp -r /opt/libs/* ext/.
-        - bash ci-build.sh "release optimize_full"
+        - export SME_EXTRA_EXE_LIBS="-static-libgcc;-static-libstdc++"
+        - mkdir build
+        - cd build
+        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/local/qt5-static;/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS
+        - make -j2 VERBOSE=1
+        - cd ..
         # run tests
         - ./build/test/test -as 2>&1 | tail -n 100
         # run benchmarks (~1 sec per benchmark, ~20secs total)
@@ -52,74 +70,217 @@ jobs:
         - cp ../cli/spatial-cli .
         - ldd spatial-model-editor
         - ldd spatial-cli
-    ####################################################
-    # osx release build: qmake / xcode 10.3, macOS 10.14
-    ####################################################
-    - os: osx
+    ########################################################
+    # macOS GUI/CLI release build: xcode 10.3, macOS 10.14 #
+    ########################################################
+    - name: "macOS GUI/CLI"
+      os: osx
       osx_image: xcode10.3
+      language: cpp
       compiler: clang
       env:
         - DEPLOY_FILE_GUI="spatial-model-editor.dmg"
         - DEPLOY_FILE_CLI="spatial-cli.dmg"
       install:
-        - export MACOSX_DEPLOYMENT_TARGET=10.14
       script:
-        # export path for Qt5 static binaries
-        - export PATH=$QT5_INSTALL_PREFIX/bin:$PATH
-        - cp -r /opt/libs/* ext/.
-        - bash ci-build.sh "release optimize_full"
+        - mkdir build
+        - cd build
+        - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/local/qt5-static;/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/local/bin/python3
+        - make -j2 VERBOSE=1
         # run tests
-        - ./build/test/test.app/Contents/MacOS/test -as "~[gui]" 2>&1 | tail -n 100
+        - ./test/tests -as "~[gui]" 2>&1 | tail -n 100
         # run benchmarks (~1 sec per benchmark, ~20secs total)
-        - time ./build/benchmark/benchmark.app/Contents/MacOS/benchmark 1
+        - time ./benchmark/benchmark 1
         # check dependencies of resulting executable
-        - cd build/src
-        - otool -L spatial-model-editor.app/Contents/MacOS/spatial-model-editor
-        - otool -L ../cli/spatial-cli.app/Contents/MacOS/spatial-cli
-        # NOTE: (does not work): alter plist file manually to require minimum osx 10.12
-        # - plutil -p spatial-model-editor.app/Contents/Info.plist
-        # - plutil -replace LSMinimumSystemVersion -string "10.12" spatial-model-editor.app/Contents/Info.plist
-        # - plutil -p spatial-model-editor.app/Contents/Info.plist
-        # package app dir as a .dmg
+        - otool -L src/spatial-model-editor
+        - otool -L cli/spatial-cli
 
         # for now just distribute dmg of executables:
         - mkdir spatial-model-editor
-        - cp spatial-model-editor.app/Contents/MacOS/spatial-model-editor spatial-model-editor/.
+        - cp src/spatial-model-editor spatial-model-editor/.
         - hdiutil create spatial-model-editor -fs HFS+ -srcfolder spatial-model-editor
         - mkdir spatial-cli
-        - cp ../cli/spatial-cli.app/Contents/MacOS/spatial-cli spatial-cli/.
+        - cp cli/spatial-cli spatial-cli/.
         - hdiutil create spatial-cli -fs HFS+ -srcfolder spatial-cli
+        - ls
+    ##################################################
+    # windows GUI/CLI release build: mingw-w64 gcc 9 #
+    ##################################################
+    - name: "windows GUI/CLI"
+      os: windows
+      env:
+        - DEPLOY_FILE_GUI="spatial-model-editor.exe"
+        - DEPLOY_FILE_CLI="spatial-cli.exe"
+      # get up to date mingw-w64-x86_64 gcc, make, cmake from msys2
+      before_install:
+        - |
+          if [ ! -f "C:/tools/msys64/mingw64/bin/g++.exe" ]; then
+            rm -rf C:/tools/msys64
+            choco upgrade --no-progress -y msys2
+            export msys2='cmd //C RefreshEnv.cmd '
+            export msys2+='& set MSYS=winsymlinks:nativestrict '
+            export msys2+='& C:\\tools\\msys64\\msys2_shell.cmd -defterm -no-start'
+            export msys2+=" -msys2 -c "\"\$@"\" --"
+            $msys2 pacman --sync --noconfirm --needed mingw-w64-x86_64-gcc mingw-w64-x86_64-make mingw-w64-x86_64-cmake
+          fi
+      install:
+        - choco install python --version=3.8.2 --force --no-progress -y
+      before_script:
+        # download pre-compiled Qt5 static libraries
+        - mkdir /c/libs
+        - cd /c/libs
+        - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-win32.zip"
+        - unzip qt5-static-win32.zip
+        # download pre-compiled static libSBML (and other) libraries
+        - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.zip"
+        - unzip libsbml-static-$TRAVIS_OS_NAME.zip
+        # download pre-compiled dunecopasi libraries
+        - wget "https://github.com/lkeegan/dune-copasi-static/releases/latest/download/dune-copasi-static-$TRAVIS_OS_NAME.zip"
+        - unzip dune-copasi-static-$TRAVIS_OS_NAME.zip
+        - cd $TRAVIS_BUILD_DIR
+      script:
+        - cmd "/C ci-travis-windows-gui.bat"
+        - ls build/*/*.exe
+        - tail build/tests.txt
+        - cd build/src
+        - cp ../cli/spatial-cli.exe .
+        - ls
+      cache:
+        directories:
+          - /C/tools/msys64/mingw64
+        timeout: 5
+    ##############################################################
+    # linux python wheels release build: manylinux1 docker image #
+    ##############################################################
+    - name: "linux python wheels"
+      if: env(BUILD_PYTHON_WHEELS) = true
+      os: linux
+      language: python
+      python: 3.8
+      services:
+        - docker
+      env: DOCKER_IMAGE=lkeegan/sme_manylinux1_x86_64:2020.03.10.a
+      install:
+        - docker pull $DOCKER_IMAGE
+      before_script:
+        skip
+      script:
+        - python --version
+        - pip --version
+        - pip install --upgrade pip
+        - pip install --upgrade twine
+        - docker run --rm -v `pwd`:/io -u `id -u`:`id -g` $DOCKER_IMAGE bash /io/ci-wheels.sh
+        - ls dist
+        - export TWINE_USERNAME="__token__"
+        - if [ -n "${TRAVIS_TAG}" ]; then python -m twine upload --verbose --non-interactive --skip-existing dist/* ; fi
+    ##############################################################
+    # macOS python wheels release build: xcode 10.3, macOS 10.14 #
+    ##############################################################
+    - name: "macOS python wheels"
+      if: env(BUILD_PYTHON_WHEELS) = true
+      os: osx
+      osx_image: xcode10.3
+      language: cpp
+      compiler: clang
+      env:
+        # c++17 requirements means we can only create osx10_14 wheels
+        - MACOSX_DEPLOYMENT_TARGET: 10.14
+        # python 2.7 headers not compatible with c++17: use of 'register' causes clang error
+        - CIBW_SKIP: cp27-macosx_x86_64
+      install:
+        - python3 -m pip install cibuildwheel==1.2.0
+      script:
+        - export CMAKE_PREFIX_PATH="/usr/local/qt5-static;/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune"
+        - python3 -m cibuildwheel --output-dir dist
+        - ls dist
+        - export TWINE_USERNAME="__token__"
+        - python3 -m pip install twine
+        - if [ -n "${TRAVIS_TAG}" ]; then python3 -m twine upload --verbose --non-interactive --skip-existing dist/* ; fi
+    ########################################################
+    # windows python wheels release build: mingw-w64 gcc 9 #
+    ########################################################
+    - name: "windows python wheels"
+      if: env(BUILD_PYTHON_WHEELS) = true
+      os: windows
+      # get up to date mingw-w64-x86_64 gcc, make, cmake from msys2
+      before_install:
+        - |
+          if [ ! -f "C:/tools/msys64/mingw64/bin/g++.exe" ]; then
+            rm -rf C:/tools/msys64
+            choco upgrade --no-progress -y msys2
+            export msys2='cmd //C RefreshEnv.cmd '
+            export msys2+='& set MSYS=winsymlinks:nativestrict '
+            export msys2+='& C:\\tools\\msys64\\msys2_shell.cmd -defterm -no-start'
+            export msys2+=" -msys2 -c "\"\$@"\" --"
+            $msys2 pacman --sync --noconfirm --needed mingw-w64-x86_64-gcc mingw-w64-x86_64-make mingw-w64-x86_64-cmake
+          fi
+      install:
+        - choco install python --version=2.7.11 --force --no-progress -y
+        - choco install python --version=3.5.4.20200110 --force --no-progress -y
+        - choco install python --version=3.6.8 --force --no-progress -y
+        - choco install python --version=3.7.7 --force --no-progress -y
+        - choco install python --version=3.8.2 --force --no-progress -y
+        # 32-bit pypy
+        # - choco install python.pypy --version=7.1.0 --force --no-progress -y
+        # - choco install pypy3 --version=7.1.0 --force --no-progress -y
+        # - ls /c/ProgramData/chocolatey/lib/python.pypy/tools/*
+        # - ls /c/ProgramData/chocolatey/lib/pypy3/tools/*
+      before_script:
+        # download pre-compiled Qt5 static libraries
+        - mkdir /c/libs
+        - cd /c/libs
+        - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-win32.zip"
+        - unzip qt5-static-win32.zip
+        # download pre-compiled static libSBML (and other) libraries
+        - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.zip"
+        - unzip libsbml-static-$TRAVIS_OS_NAME.zip
+        # download pre-compiled dunecopasi libraries
+        - wget "https://github.com/lkeegan/dune-copasi-static/releases/latest/download/dune-copasi-static-$TRAVIS_OS_NAME.zip"
+        - unzip dune-copasi-static-$TRAVIS_OS_NAME.zip
+        - cd $TRAVIS_BUILD_DIR
+      script:
+        - cmd "/C ci-travis-windows-wheels.bat"
+        - ls dist
+        - export TWINE_USERNAME="__token__"
+        - /c/Python38/python.exe -m pip install --upgrade twine
+        - if [ -n "${TRAVIS_TAG}" ]; then /c/Python38/python.exe -m twine upload --verbose --non-interactive --skip-existing dist/* ; fi
+
+      cache:
+        directories:
+          - /C/tools/msys64/mingw64
+        timeout: 5
     ########################################################################
     # linux code quality build: cmake / clang 9 -> sonarcloud.io, codecov.io
     ########################################################################
-    - dist: xenial
+    - name: "static analysis / code coverage"
+      dist: xenial
+      language: cpp
       compiler: clang
       env:
+        # SONAR_LOGIN
         - secure: "Muu56AqHMCZOpCG2d5Byeh6P++9xXKl7otulxdhZCfA1/yTAJM9M67B1ZHo7czEvLKdoVzqCz6aFMnsVvFHUHQDmAtmth/WzdfXZ7OTG7puDIeWRmYqQacpLeF6h9ws3sUr5Bjz9m0guhjbKN/6VIqoyuWLH/J0MwzJN5JKgWitQBeJ15GWjNJN20FLgiYW0vWtQ71dncM6VaLAyH6V/T8jLRNacmCjApAOsS2FuhnSfbL+rY5nRVXPtoy/muwRgpl2Bez8OV6z5nDCaBLxXLgNkC7Y/0OhfzY/t+6wZ4nuDZDJ/4Hn4AyycH1O1ldmfEjw9nHBdqG/0JW2NmvSLojp5NiCUSI1MDmcgqKv6VKdVV2cdn6b7s6YY/8p08pnm+uExHYRkiXPFNeYfoQF3ruYSzFOQXRA+VI3Rg0dMfs4cO+PXCWS/hIAHudG3vaDgOwOnLFaOPjJKGYidmbmu6u4jdvBNFuCkooSYmnO2JCe0LIGgJAwlOEfG51WYD9bewCx+w+NmB+Cow3E4G0DCHomz1XGUhp1DsmjGarU1kDf4PtFLQgLC88h7AQfJtg15mSV6xDcKV+nmuDNS+ifTpQTTSe/w6LqqzcE/EOLaVAtCSe4ACOORW2yBF7DPgUY47ZSkU4iwA7pAOAYDKs37fNHjK8s/TJhM++RZ+21oMME="
       cache:
         ccache: true
         directories:
           - $HOME/sonarcache
+        timeout: 3
       addons:
         apt:
           sources:
             # latest cmake
             - sourceline: 'deb https://apt.kitware.com/ubuntu/ xenial main'
               key_url: 'https://apt.kitware.com/keys/kitware-archive-latest.asc'
-            # clang-9
-            - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-9 main'
+            # clang-10
+            - sourceline: 'deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-10 main'
               key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
             # gcc-9
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
-            # qt5
-            - sourceline: 'ppa:beineri/opt-qt-5.12.3-xenial'
           packages:
             - cmake
-            - clang-9
-            - lld-9
-            - llvm-9
+            - clang-10
+            - lld-10
+            - llvm-10
             - libstdc++-9-dev # need to update libstdc++ to get c++17 features
-            - qt512base
             - libxkbcommon-dev
             - mesa-common-dev
             - libglu1-mesa-dev
@@ -130,7 +291,7 @@ jobs:
       git:
         depth: false
       install:
-        - eval "CC=clang-9 && CXX=clang++-9 && COV=llvm-cov-9"
+        - eval "CC=clang-10 && CXX=clang++-10 && COV=llvm-cov-10"
         - /usr/bin/cmake --version
         - $CC --version
         - $CXX --version
@@ -138,16 +299,12 @@ jobs:
         # start a window manager so the Qt GUI tests can have their focus set
         - "jwm &"
         - sleep 1
-        # remove static qt5 libs if present
-        - rm -rf $QT5_INSTALL_PREFIX
-        # set up qt5 environment
-        - source /opt/qt512/bin/qt512-env.sh
       script:
         # build tests & compile executable using sonar-source build wrapper
         - ccache --zero-stats
         - mkdir build
         - cd build
-        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;`pwd`/../ext/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
+        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/usr/local/qt5-static;/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DPYTHON_EXECUTABLE=/usr/bin/python3
         - build-wrapper-linux-x86-64 --out-dir bw-output make -j2
         - ccache --show-stats
         # run tests
@@ -209,29 +366,29 @@ jobs:
         - sonar-scanner -Dsonar.login=$SONAR_LOGIN
 
 before_script:
-  # install pre-compiled Qt5 binaries & static libraries to $QT5_INSTALL_PREFIX
-  # note absolute paths currently hard coded in QT binaries
-  # to override this, add a qt.conf file (https://doc.qt.io/qt-5/qt-conf.html#overriding-paths)
+  # install pre-compiled Qt5 binaries & static libraries to /usr/local/qt5-static
   - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"
   - sudo tar xf qt5-static-$TRAVIS_OS_NAME.tgz -C /
   # download pre-compiled static libSBML (and other) libraries to /opt/libs
   - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
   - sudo tar xf libsbml-static-$TRAVIS_OS_NAME.tgz -C /
+  # download pre-compiled dunecopasi libraries to /opt/libs/dune
   - wget "https://github.com/lkeegan/dune-copasi-static/releases/latest/download/dune-copasi-static-$TRAVIS_OS_NAME.tgz"
-  - tar xf dune-copasi-static-$TRAVIS_OS_NAME.tgz -C ext/
+  - sudo tar xf dune-copasi-static-$TRAVIS_OS_NAME.tgz -C /opt/libs
   - ls /opt/libs
 
 notifications:
   email: false
+
 deploy:
   # if build is tagged, upload executables to github release
   provider: releases
   token:
     secure: E0WtptZea2n40eN+FBYZ2XYv/pjKUjVFZavl8BTVYhidzXYuT/DvhoehPVauJRy/t5QLMtmyd5ww9dhYkIcNcpAc1INrUlYG274D8xgXwbgsftmFbMqdrKR9f/qkynP0r6LCd1p0Tuhxxf37OcTYVEOjbvV+KsTzpWHtS9AqZGvMfv/rpI4r/Zu/LfGBs2T7Rr8Mlfy5YBI2L7lGka3ziTIic01pKDfjHJQ2xD2N366mEqcpB0vjF8c9b+qIUbQ8g8ybLoMfKM6ZSvcpz2NmLQK8l8gzzTN/k1PI2DJxmzi+9G031RXLAXvbR8I8NEQlZfsicepHk0m13EI7x5/TIGaa2ngSgX1W7oAL0IAkJFpcWcN5RQOgowCBAB/UnHCX8EgnBAiD8eTlc4DUC2WY84Dr3EcdhLg0bEX/Ky4mDAxt0QgABG0hEU3kE6USsUvp7IZmnCEdu8e+F/HRmvSUqECI9FvjmpHdBHwIv6anVA2pndN/ZGn4+4BWbo6IwycAh0FPAnvvs6guxnOqQW/eMRgBI3y4grzEYP/bPzlL1W6q42r6fwvh45LtcgC+joAoJCL3I51QcZ1joMY/OShSaKi3MnokImmb/GPRvebe3hDGGSsEAarrmIRb0zCMYDMdHzA+pqeojGZf6SCfIculmeE1MO2t/DqumxQRxTGx+8k=
-  files:
+  file:
     - $DEPLOY_FILE_GUI
     - $DEPLOY_FILE_CLI
-  skip_cleanup: true
+  cleanup: false
   overwrite: true
   on:
     repo: lkeegan/spatial-model-editor

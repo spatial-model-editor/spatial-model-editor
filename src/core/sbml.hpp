@@ -188,6 +188,9 @@ class SbmlDocWrapper {
   bool hasGeometryImage = false;
   bool hasValidGeometry = false;
 
+  void setName(const QString &name);
+  QString getName() const;
+
   void setUnitsTimeIndex(int index);
   void setUnitsLengthIndex(int index);
   void setUnitsVolumeIndex(int index);

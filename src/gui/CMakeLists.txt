@@ -1,9 +1,10 @@
-add_library(gui mainwindow.cpp mainwindow.hpp guiutils.cpp guiutils.hpp)
-target_link_libraries(gui
-                      PUBLIC qcustomplot
-                             core
-                             Qt5::Widgets
-                             Qt5::PrintSupport)
+add_library(gui
+            mainwindow.cpp
+            mainwindow.hpp
+            guiutils.cpp
+            guiutils.hpp)
+
+target_link_libraries(gui PUBLIC qcustomplot core)
 target_include_directories(gui PUBLIC .)
 
 add_subdirectory(widgets)

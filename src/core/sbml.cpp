@@ -994,6 +994,12 @@ void SbmlDocWrapper::updateReactionList() {
   }
 }
 
+void SbmlDocWrapper::setName(const QString &name) {
+  model->setName(name.toStdString());
+}
+
+QString SbmlDocWrapper::getName() const { return model->getName().c_str(); }
+
 const units::ModelUnits &SbmlDocWrapper::getModelUnits() const {
   return modelUnits;
 }
