@@ -6,7 +6,7 @@ add_subdirectory(gui)
 
 target_include_directories(tests PRIVATE test_utils ../ext/catch)
 find_package(Qt5 COMPONENTS Test REQUIRED)
-target_link_libraries(tests PRIVATE gui Qt5::Test)
+target_link_libraries(tests PRIVATE Qt5::Test gui)
 set_property(TARGET tests PROPERTY CXX_STANDARD 17)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

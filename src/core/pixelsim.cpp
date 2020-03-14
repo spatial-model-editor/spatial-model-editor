@@ -3,6 +3,8 @@
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
 #include <tbb/parallel_for.h>
 #endif
+#include <array>
+
 #include "geometry.hpp"
 #include "logger.hpp"
 #include "pde.hpp"

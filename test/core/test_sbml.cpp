@@ -380,6 +380,12 @@ SCENARIO("SBML: ABtoC.xml", "[core][sbml]") {
         REQUIRE(g.compartmentImageSize == QSize(100, 100));
       }
     }
+    WHEN("change model name") {
+      REQUIRE(s.getName() == "");
+      QString newName = "new model name";
+      s.setName(newName);
+      REQUIRE(s.getName() == newName);
+    }
     WHEN("add / remove compartment") {
       // add compartment
       s.addCompartment("newComp !");

@@ -16,6 +16,8 @@ Spatial Model Editor Documentation
    :maxdepth: 2
    :caption: Reference documentation
 
+   reference/cli
+   reference/python
    reference/maths
    reference/dune
    reference/pixel
