@@ -27,14 +27,6 @@ int main(int argc, char *argv[]) {
 
   QApplication a(argc, argv);
 
-  // Qt sets the locale according to the system one
-  // This can cause problems with symengine
-  // e.g. when a double is written as "3,142" vs "3.142"
-  // it looks for "." to identify a double, but then uses strtod
-  // to convert it, so "3.142" gets interpreted as "3"
-  // Here we reset to the default "C" locale to avoid these issues
-  std::locale::global(std::locale::classic());
-
   MainWindow w;
   w.show();
 

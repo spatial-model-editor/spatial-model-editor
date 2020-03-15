@@ -12,6 +12,7 @@ int main(int argc, char *argv[]) {
   QApplication a(argc, argv);
 
   Q_INIT_RESOURCE(resources);
+  Q_INIT_RESOURCE(test_resources);
 
   // Qt sets the locale according to the system one
   // This can cause problems with numerical code

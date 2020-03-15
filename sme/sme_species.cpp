@@ -8,7 +8,7 @@
 
 namespace sme {
 
-void pybindSpecies(pybind11::module& m) {
+void pybindSpecies(const pybind11::module& m) {
   pybind11::class_<sme::Species>(m, "Species")
       .def_property("name", &sme::Species::getName, &sme::Species::setName,
                     "The name of this species")

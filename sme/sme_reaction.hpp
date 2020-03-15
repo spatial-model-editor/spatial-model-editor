@@ -12,21 +12,19 @@ class module;
 
 namespace sme {
 
-void pybindSpecies(const pybind11::module& m);
+void pybindReaction(const pybind11::module& m);
 
-class Species {
+class Reaction {
  private:
   sbml::SbmlDocWrapper* s;
   std::string id;
 
  public:
-  explicit Species(sbml::SbmlDocWrapper* sbmlDocWrapper,
-                   const std::string& speciesId);
+  explicit Reaction(sbml::SbmlDocWrapper* sbmlDocWrapper,
+                    const std::string& speciesId);
   const std::string& getId() const;
   void setName(const std::string& name);
   std::string getName() const;
-  void setDiffusionConstant(double diffusionConstant);
-  double getDiffusionConstant() const;
   std::string getStr() const;
 };
 

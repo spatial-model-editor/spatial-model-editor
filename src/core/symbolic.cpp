@@ -14,6 +14,7 @@
 #include <symengine/symengine_rcp.h>
 #include <symengine/visitor.h>
 
+#include <locale>
 #include <sstream>
 
 #include "logger.hpp"
@@ -86,10 +87,13 @@ void Symbolic::SymEngineImpl::init(
     SPDLOG_DEBUG("  - constant {} = {}", name, value);
     d[SymEngine::symbol(name)] = SymEngine::real_double(value);
   }
+  // hack until https://github.com/symengine/symengine/issues/1566 is resolved:
+  // (SymEngine parser relies on strtod and assumes C locale)
+  std::locale userLocale = std::locale::global(std::locale::classic());
   SymEngine::Parser parser;
   for (const auto &expression : expressions) {
     SPDLOG_DEBUG("expr {}", expression);
-    // parse expression & substitute all numeric constants
+    // parse expression & substitute all supplied numeric constants
     expr.push_back(parser.parse(expression)->subs(d));
     SPDLOG_DEBUG("  --> {}", toString(expr.back()));
     // check that all remaining symbols are in the variables vector
@@ -103,6 +107,7 @@ void Symbolic::SymEngineImpl::init(
       throw SymEngine::SymEngineException("Unknown symbol: " + toString(*iter));
     }
   }
+  std::locale::global(userLocale);
 }
 
 void Symbolic::SymEngineImpl::compile() {
@@ -142,8 +147,11 @@ void Symbolic::SymEngineImpl::relabel(
 }
 
 std::string divide(const std::string &expr, const std::string &var) {
-  return SymEngine::muPrinter().apply(
+  std::locale userLocale = std::locale::global(std::locale::classic());
+  std::string result = SymEngine::muPrinter().apply(
       SymEngine::div(SymEngine::parse(expr), SymEngine::symbol(var)));
+  std::locale::global(userLocale);
+  return result;
 }
 
 const char *getLLVMVersion() { return LLVM_VERSION_STRING; }

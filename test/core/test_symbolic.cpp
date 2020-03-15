@@ -58,6 +58,16 @@ SCENARIO("Symbolic", "[core][symbolic]") {
     sym.eval(res, {0.1});
     REQUIRE(res[0] == dbl_approx(6.1324));
   }
+  GIVEN("0.324*x + 2*3: one var, no constants") {
+    std::string expr = "0.324 * x + 2*3";
+    symbolic::Symbolic sym(expr, {"x"}, {});
+    CAPTURE(expr);
+    REQUIRE(sym.simplify() == "6 + 0.324*x");
+    REQUIRE(sym.diff("x") == "0.324");
+    std::vector<double> res(1, 0);
+    sym.eval(res, {0.1});
+    REQUIRE(res[0] == dbl_approx(6.0324));
+  }
   GIVEN("3*x + 4/x - 1.0*x + 0.2*x*x - 0.1: one var, no constants") {
     std::string expr = "3*x + 4/x - 1.0*x + 0.2*x*x - 0.1";
     symbolic::Symbolic sym(expr, {"x"}, {});

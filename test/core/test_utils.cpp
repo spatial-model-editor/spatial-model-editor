@@ -1,3 +1,4 @@
+#include <QDir>
 #include <QImage>
 #include <QRgb>
 
@@ -152,20 +153,26 @@ SCENARIO("Utils", "[core][utils]") {
 }
 
 SCENARIO("TiffReader", "[core][utils][tiff]") {
-  GIVEN("8bit grayscale tiff") {
-    QImage img(3, 3, QImage::Format_Grayscale8);
-    img.fill(0);
-    img.setPixel(1, 1, 123);
-    img.setPixel(1, 2, 255);
-    if (img.save("tmp.tif")) {
-      utils::TiffReader tiffReader("tmp.tif");
-      REQUIRE(tiffReader.size() == 1);
-      REQUIRE(tiffReader.getErrorMessage().isEmpty());
-      auto img2 = tiffReader.getImage();
-      REQUIRE(img2.size() == img.size());
-      REQUIRE(img2.pixel(0, 0) == img.pixel(0, 0));
-      REQUIRE(img2.pixel(1, 1) == img.pixel(1, 1));
-      REQUIRE(img2.pixel(1, 2) == img.pixel(1, 2));
-    }
+  GIVEN("1 16bit grayscale tiff") {
+    QFile::remove("tmp.tif");
+    QFile::copy(":/test/16bit_gray.tif", "tmp.tif");
+    utils::TiffReader tiffReader(QDir::currentPath().toStdString() +
+                                 QDir::separator().toLatin1() + "tmp.tif");
+    REQUIRE(tiffReader.size() == 1);
+    REQUIRE(tiffReader.getErrorMessage().isEmpty());
+    auto img = tiffReader.getImage();
+    REQUIRE(img.size() == QSize(100, 100));
+    REQUIRE(img.pixel(0, 0) == 0xff000000);
+  }
+  GIVEN("3x 8bit grayscale tiff") {
+    QFile::remove("tmp.tif");
+    QFile::copy(":/test/8bit_gray_3x.tif", "tmp.tif");
+    utils::TiffReader tiffReader(QDir::currentPath().toStdString() +
+                                 QDir::separator().toLatin1() + "tmp.tif");
+    REQUIRE(tiffReader.size() == 3);
+    REQUIRE(tiffReader.getErrorMessage().isEmpty());
+    auto img = tiffReader.getImage(0);
+    REQUIRE(img.size() == QSize(5, 5));
+    REQUIRE(img.pixel(0, 0) == 0xff000000);
   }
 }

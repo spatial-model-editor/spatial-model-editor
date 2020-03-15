@@ -1,5 +1,8 @@
+// Python.h must come first:
 #include <pybind11/pybind11.h>
 
+// other headers
+#include "sme_module.hpp"
 #include "version.hpp"
 
 namespace sme {
@@ -17,7 +20,21 @@ void pybindModule(pybind11::module& m) {
           Source code:
           https://www.github.com/lkeegan/spatial-model-editor
       )";
+  m.def("open_sbml_file", openSbmlFile, pybind11::arg("filename"),
+        "Open an SBML file");
+  m.def("open_example_model", openExampleModel,
+        "Open a built-in example model");
   m.attr("__version__") = SPATIAL_MODEL_EDITOR_VERSION;
+}
+
+Model openSbmlFile(const std::string& filename) {
+  Model m(filename);
+  return m;
+}
+
+Model openExampleModel() {
+  Model m(":/models/very-simple-model.xml");
+  return m;
 }
 
 }  // namespace sme

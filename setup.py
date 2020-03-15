@@ -39,7 +39,7 @@ class CMakeBuild(build_ext):
                       '-DBUILD_BENCHMARKS=off',
                       '-DBUILD_CLI=off',
                       '-DBUILD_TESTING=off']
-        for e in ['CMAKE_PREFIX_PATH', 'SME_EXTRA_CORE_LIBS', 'SME_EXTRA_CORE_DEFS', 'SME_EXTRA_EXE_LIBS', 'PYTHON_LIBRARY']:
+        for e in ['CMAKE_PREFIX_PATH', 'SME_EXTRA_CORE_LIBS', 'SME_EXTRA_CORE_DEFS', 'SME_EXTRA_EXE_LIBS', 'PYTHON_LIBRARY', 'CMAKE_CXX_COMPILER_LAUNCHER']:
             try:
                 cmake_args += ['-D'+e+'=' + os.environ.get(e)]
             except:
@@ -59,16 +59,23 @@ class CMakeBuild(build_ext):
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp, env=env)
         subprocess.check_call(['cmake', '--build', '.', '--target', 'sme'] + build_args, cwd=self.build_temp)
 
+from os import path
+sme_directory = path.join(path.abspath(path.dirname(__file__)), 'sme')
+with open(path.join(sme_directory, 'README.md')) as f:
+    long_description = f.read()
+
 setup(
     name='sme',
-    version='0.8.5',
+    version='0.8.6',
     author='Liam Keegan',
     author_email='liam@keegan.ch',
     description='Spatial Model Editor python bindings',
-    long_description='Spatial Model Editor python bindings',
-    url="https://spatial-model-editor.readthedocs.io/",
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    url='https://spatial-model-editor.readthedocs.io/',
     project_urls={
         'Github': 'https://github.com/lkeegan/spatial-model-editor',
+        'Documentation': 'https://github.com/lkeegan/spatial-model-editor/issues',
     },
     classifiers=[
         "Topic :: Scientific/Engineering :: Bio-Informatics",
@@ -88,8 +95,10 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: Implementation :: CPython",
+        "Programming Language :: Python :: Implementation :: PyPy",
     ],
     ext_modules=[CMakeExtension('sme')],
     cmdclass=dict(build_ext=CMakeBuild),
+    test_suite='test',
     zip_safe=False,
 )

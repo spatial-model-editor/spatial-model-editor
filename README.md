@@ -1,10 +1,10 @@
 # Spatial Model Editor
 [![github releases](https://img.shields.io/github/release/lkeegan/spatial-model-editor.svg)](https://github.com/lkeegan/spatial-model-editor/releases)
 [![pypi releases](https://img.shields.io/pypi/v/sme.svg)](https://pypi.org/project/sme)
+[![documentation](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/en/latest/)
 [![build status](https://travis-ci.org/lkeegan/spatial-model-editor.svg?branch=master)](https://travis-ci.org/lkeegan/spatial-model-editor)
 [![codecov](https://codecov.io/gh/lkeegan/spatial-model-editor/branch/master/graph/badge.svg)](https://codecov.io/gh/lkeegan/spatial-model-editor)
 [![sonarcloud quality gate status](https://sonarcloud.io/api/project_badges/measure?project=lkeegan_spatial-model-editor&metric=alert_status)](https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor)
-[![documentation](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/en/latest/)
 
 A GUI editor to convert non-spatial SBML models of bio-chemical reactions into 2d spatial models and simulate them using the [dune-copasi](https://gitlab.dune-project.org/copasi/dune-copasi) solver for reaction-diffusion systems.
 
@@ -12,7 +12,6 @@ A GUI editor to convert non-spatial SBML models of bio-chemical reactions into 2
 [<img src="docs/quickstart/img/icon-osx.png" width="32"> mac executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg) |
 [<img src="docs/quickstart/img/icon-windows.png" width="32"> windows executable](https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) |
 [<img src="docs/quickstart/img/icon-docs.png" width="32"> documentation](https://spatial-model-editor.readthedocs.io/en/latest/)
----|---|---|---
 
 ![screenshot](docs/img/mesh.png)
 
@@ -38,7 +37,7 @@ Translate the spatial model to a system of PDEs and simulate it: generate 2d tri
 
     -   GUI/CLI executables: github release <https://github.com/lkeegan/spatial-model-editor/releases>
 
-    -   Python library: PyPI release <https://test.pypi.org/project/sme/>
+    -   Python library: PyPI release <https://pypi.org/project/sme/>
 
 -   _Documentation_: documentation is at <https://spatial-model-editor.readthedocs.io> and is compiled with each commit
 

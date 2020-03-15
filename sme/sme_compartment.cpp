@@ -8,12 +8,14 @@
 
 namespace sme {
 
-void pybindCompartment(pybind11::module& m) {
+void pybindCompartment(const pybind11::module& m) {
   pybind11::class_<sme::Compartment>(m, "Compartment")
       .def_property("name", &sme::Compartment::getName,
                     &sme::Compartment::setName, "The name of this compartment")
       .def_property_readonly("species", &sme::Compartment::getSpecies,
                              "The species in this compartment")
+      .def_property_readonly("reactions", &sme::Compartment::getReactions,
+                             "The reactions in this compartment")
       .def("__repr__",
            [](const sme::Compartment& a) {
              return fmt::format("<sme.Compartment named '{}'>", a.getName());
@@ -29,6 +31,12 @@ Compartment::Compartment(sbml::SbmlDocWrapper* sbmlDocWrapper,
   for (const auto& spec : compSpecies) {
     species.emplace_back(s, spec.toStdString());
   }
+  if (auto iter = s->reactions.find(compartmentId.c_str());
+      iter != s->reactions.cend()) {
+    for (const auto& reac : iter->second) {
+      reactions.emplace_back(s, reac.toStdString());
+    }
+  }
 }
 
 const std::string& Compartment::getId() const { return id; }
@@ -43,6 +51,10 @@ std::string Compartment::getName() const {
 
 std::map<std::string, Species*> Compartment::getSpecies() {
   return vecToNamePtrMap(species);
+}
+
+std::map<std::string, Reaction*> Compartment::getReactions() {
+  return vecToNamePtrMap(reactions);
 }
 
 std::string Compartment::getStr() const {

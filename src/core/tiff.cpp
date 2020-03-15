@@ -136,45 +136,46 @@ TiffReader::TiffReader(const std::string& filename) {
           "SAMPLEFORMAT_UINT");
       samplefmt = SAMPLEFORMAT_UINT;
     }
+    if (ok) {
+      SPDLOG_DEBUG("  - {}x{} image", width, height);
+      SPDLOG_DEBUG("    - {} samples per pixel", samplespp);
+      SPDLOG_DEBUG("    - {} bits per sample", bitspp);
 
-    SPDLOG_DEBUG("  - {}x{} image", width, height);
-    SPDLOG_DEBUG("    - {} samples per pixel", samplespp);
-    SPDLOG_DEBUG("    - {} bits per sample", bitspp);
-
-    if (samplespp == 1) {
-      SPDLOG_INFO("    --> importing grayscale image...");
-      auto& img = tiffImages.emplace_back();
-      img.width = width;
-      img.height = height;
-      for (std::size_t y = 0; y < height; y++) {
-        if (samplefmt == SAMPLEFORMAT_UINT && bitspp == 8) {
-          img.values.push_back(readLineToDoubles<uint8_t>(tif, y, width));
-        } else if (samplefmt == SAMPLEFORMAT_UINT && bitspp == 16) {
-          img.values.push_back(readLineToDoubles<uint16_t>(tif, y, width));
-        } else if (samplefmt == SAMPLEFORMAT_UINT && bitspp == 32) {
-          img.values.push_back(readLineToDoubles<uint32_t>(tif, y, width));
-        } else if (samplefmt == SAMPLEFORMAT_INT && bitspp == 8) {
-          img.values.push_back(readLineToDoubles<int8_t>(tif, y, width));
-        } else if (samplefmt == SAMPLEFORMAT_INT && bitspp == 16) {
-          img.values.push_back(readLineToDoubles<int16_t>(tif, y, width));
-        } else if (samplefmt == SAMPLEFORMAT_INT && bitspp == 32) {
-          img.values.push_back(readLineToDoubles<int32_t>(tif, y, width));
-        } else if (samplefmt == SAMPLEFORMAT_IEEEFP && bitspp == 32) {
-          img.values.push_back(readLineToDoubles<float>(tif, y, width));
-        } else if (samplefmt == SAMPLEFORMAT_IEEEFP && bitspp == 64) {
-          img.values.push_back(readLineToDoubles<double>(tif, y, width));
-        } else {
-          errorMessage = QString("%1-bit SAMPLEFORMAT enum %2 not supported")
-                             .arg(bitspp)
-                             .arg(samplefmt);
-          break;
+      if (samplespp == 1) {
+        SPDLOG_INFO("    --> importing grayscale image...");
+        auto& img = tiffImages.emplace_back();
+        img.width = width;
+        img.height = height;
+        for (std::size_t y = 0; y < height; y++) {
+          if (samplefmt == SAMPLEFORMAT_UINT && bitspp == 8) {
+            img.values.push_back(readLineToDoubles<uint8_t>(tif, y, width));
+          } else if (samplefmt == SAMPLEFORMAT_UINT && bitspp == 16) {
+            img.values.push_back(readLineToDoubles<uint16_t>(tif, y, width));
+          } else if (samplefmt == SAMPLEFORMAT_UINT && bitspp == 32) {
+            img.values.push_back(readLineToDoubles<uint32_t>(tif, y, width));
+          } else if (samplefmt == SAMPLEFORMAT_INT && bitspp == 8) {
+            img.values.push_back(readLineToDoubles<int8_t>(tif, y, width));
+          } else if (samplefmt == SAMPLEFORMAT_INT && bitspp == 16) {
+            img.values.push_back(readLineToDoubles<int16_t>(tif, y, width));
+          } else if (samplefmt == SAMPLEFORMAT_INT && bitspp == 32) {
+            img.values.push_back(readLineToDoubles<int32_t>(tif, y, width));
+          } else if (samplefmt == SAMPLEFORMAT_IEEEFP && bitspp == 32) {
+            img.values.push_back(readLineToDoubles<float>(tif, y, width));
+          } else if (samplefmt == SAMPLEFORMAT_IEEEFP && bitspp == 64) {
+            img.values.push_back(readLineToDoubles<double>(tif, y, width));
+          } else {
+            errorMessage = QString("%1-bit SAMPLEFORMAT enum %2 not supported")
+                               .arg(bitspp)
+                               .arg(samplefmt);
+            break;
+          }
+          auto [minV, maxV] = utils::minmax(img.values.back());
+          img.maxValue = std::max(maxV, img.maxValue);
+          img.minValue = std::min(minV, img.minValue);
         }
-        auto [minV, maxV] = utils::minmax(img.values.back());
-        img.maxValue = std::max(maxV, img.maxValue);
-        img.minValue = std::min(minV, img.minValue);
+        SPDLOG_DEBUG("    - min value: {}", img.minValue);
+        SPDLOG_DEBUG("    - min value: {}", img.maxValue);
       }
-      SPDLOG_DEBUG("    - min value: {}", img.minValue);
-      SPDLOG_DEBUG("    - min value: {}", img.maxValue);
     }
   } while (TIFFReadDirectory(tif) != 0);
   TIFFClose(tif);

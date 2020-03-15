@@ -7,8 +7,10 @@
 #include "version.hpp"
 
 PYBIND11_MODULE(sme, m) {
+  Q_INIT_RESOURCE(resources);
   sme::pybindModule(m);
   sme::pybindModel(m);
   sme::pybindCompartment(m);
   sme::pybindSpecies(m);
+  sme::pybindReaction(m);
 }
