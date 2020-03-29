@@ -54,14 +54,14 @@ PDE::PDE(const sbml::SbmlDocWrapper *doc_ptr,
                    expr.toStdString());
       // parse and inline constants
       symbolic::Symbolic sym(expr.toStdString(), reactions.getSpeciesIDs(),
-                             reactions.getConstants(j));
+                             reactions.getConstants(j), false);
       // add term to rhs
       r.append(QString(" + (%1)").arg(sym.simplify().c_str()));
     }
     // reparse full rhs to simplify
     SPDLOG_DEBUG("Species {} Reparsing all reaction terms", speciesIDs.at(i));
     // parse expression with symengine to simplify
-    symbolic::Symbolic sym(r.toStdString(), speciesIDs);
+    symbolic::Symbolic sym(r.toStdString(), speciesIDs, {}, false);
     // if provided, relabel species with relabelledSpeciesIDs
     auto *outputSpecies = &speciesIDs;
     if (relabelledSpeciesIDs.size() == speciesIDs.size()) {

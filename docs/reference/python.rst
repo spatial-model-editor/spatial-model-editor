@@ -9,7 +9,7 @@ A Python interface is available, which can be installed with
 
 .. Note::
 
-    CPython 3.5+ is supported on 64-bit linux, macOS(10.14+), and windows. If you would like support for another platform or Python version/implementation to be added, please file an `issue <https://github.com/lkeegan/spatial-model-editor/issues/new>`
+    If your python version or platform is not supported, please file an `issue <https://github.com/lkeegan/spatial-model-editor/issues/new>`_
 
 Once it is installed, you should be able to import the module
 
@@ -21,4 +21,6 @@ Once it is installed, you should be able to import the module
     Type "help", "copyright", "credits" or "license" for more information.
     >>> import sme
     >>> print(sme)
-    <module 'sme' from '/home/lkeegan/.pyenv/versions/3.8.2/lib/python3.8/site-packages/sme.cpython-38-x86_64-linux-gnu.so'>
+    <module 'sme' from 'sme.cpython-38-x86_64-linux-gnu.so'>
+
+There is also an online `colab <https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/improve_python_lib/sme/sme_getting_started.ipynb>`_ notebook available, where you can try it out in your browser without installing anything on your computer.

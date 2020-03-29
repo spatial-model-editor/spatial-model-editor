@@ -12,6 +12,15 @@
 #include "sbml_test_data/yeast_glycolysis.hpp"
 #include "utils.hpp"
 
+// avoid using std::to_string because of "multiple definition of vsnprintf"
+// mingw issue on windows
+template <typename T>
+static std::string toString(const T &x) {
+  std::ostringstream ss;
+  ss << x;
+  return ss.str();
+}
+
 static void createSBMLlvl2doc(const std::string &filename) {
   std::unique_ptr<libsbml::SBMLDocument> document(
       new libsbml::SBMLDocument(2, 4));
@@ -20,20 +29,20 @@ static void createSBMLlvl2doc(const std::string &filename) {
   // create two compartments of different size
   for (int i = 0; i < 2; ++i) {
     auto *comp = model->createCompartment();
-    comp->setId("compartment" + std::to_string(i));
+    comp->setId("compartment" + toString(i));
     comp->setSize(1e-10 * i);
   }
   // create 2 species inside first compartment with initialConcentration set
   for (int i = 0; i < 2; ++i) {
     auto *spec = model->createSpecies();
-    spec->setId("spec" + std::to_string(i) + "c0");
+    spec->setId("spec" + toString(i) + "c0");
     spec->setCompartment("compartment0");
     spec->setInitialConcentration(i * 1e-12);
   }
   // create 3 species inside second compartment with initialAmount set
   for (int i = 0; i < 3; ++i) {
     auto *spec = model->createSpecies();
-    spec->setId("spec" + std::to_string(i) + "c1");
+    spec->setId("spec" + toString(i) + "c1");
     spec->setCompartment("compartment1");
     spec->setInitialAmount(100 * i);
   }
@@ -191,16 +200,16 @@ SCENARIO("SBML: name clashes", "[core][sbml]") {
   // create 3 compartments with the same name
   for (int i = 0; i < 3; ++i) {
     auto *comp = model->createCompartment();
-    comp->setId("compartment" + std::to_string(i));
+    comp->setId("compartment" + toString(i));
     comp->setName("comp");
   }
   // create 3 species inside first two compartments with the same names
   for (int iComp = 0; iComp < 2; ++iComp) {
     for (int i = 0; i < 3; ++i) {
       auto *spec = model->createSpecies();
-      spec->setId("spec" + std::to_string(i) + "c" + std::to_string(iComp));
+      spec->setId("spec" + toString(i) + "c" + toString(iComp));
       spec->setName("spec");
-      spec->setCompartment("compartment" + std::to_string(iComp));
+      spec->setCompartment("compartment" + toString(iComp));
     }
   }
   std::unique_ptr<char, decltype(&std::free)> xmlChar(

@@ -35,4 +35,9 @@ for %%v in (27 35 36 37 38) DO (
 
     !PYBIN! -m pip -v wheel . -w dist
     !PYBIN! setup.py sdist -d dist
+
+    !PYBIN! -m pip install --target=C:\tmp_python_install --no-index --find-links=dist sme
+    set PYTHONPATH=C:\tmp_python_install
+    !PYBIN! -m unittest discover -v
+    rd /s /q "C:\tmp_python_install"
 )

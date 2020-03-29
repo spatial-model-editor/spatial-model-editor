@@ -38,6 +38,8 @@ target_compile_options(core
                               -Wconversion
                               -Wsign-conversion
                               -Wcast-align>)
+target_compile_options(core
+                       PUBLIC $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:Clang>>:-shared-libasan>)
 
 # find SymEngine and check it is compiled with LLVM enabled
 

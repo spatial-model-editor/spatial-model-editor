@@ -1,5 +1,5 @@
 # compile tests
-add_executable(tests main.cpp)
+add_executable(tests main.cpp resources/test_resources.qrc)
 add_subdirectory(test_utils)
 add_subdirectory(core)
 add_subdirectory(gui)

@@ -2,7 +2,6 @@
 
 #include <QFile>
 #include <limits>
-#include <locale>
 
 #include "logger.hpp"
 #include "sbml.hpp"
@@ -71,8 +70,6 @@ static Params parseArgs(int argc, char *argv[]) {
 static void doSimulation(const Params &params) {
   // disable logging
   spdlog::set_level(spdlog::level::off);
-  // symengine assumes C locale
-  std::locale::global(std::locale::classic());
 
   // import model
   sbml::SbmlDocWrapper s;
@@ -121,5 +118,5 @@ int main(int argc, char *argv[]) {
   fmt::print("# Spatial Model Editor CLI v{}\n", SPATIAL_MODEL_EDITOR_VERSION);
   auto params = parseArgs(argc, argv);
   doSimulation(params);
-  fmt::print("# Simulation complete.\n", SPATIAL_MODEL_EDITOR_VERSION);
+  fmt::print("# Simulation complete.\n");
 }

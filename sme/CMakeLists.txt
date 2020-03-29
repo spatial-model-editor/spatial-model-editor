@@ -1,10 +1,11 @@
-pybind11_add_module(sme sme.cpp)
+pybind11_add_module(sme SYSTEM sme.cpp)
 
 target_sources(sme
                PRIVATE
                sme_compartment.cpp
                sme_model.cpp
                sme_module.cpp
+               sme_reaction.cpp
                sme_species.cpp)
 
 target_compile_features(sme PRIVATE cxx_std_17)

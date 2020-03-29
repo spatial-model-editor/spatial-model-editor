@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "sme_reaction.hpp"
 #include "sme_species.hpp"
 
 namespace sbml {
@@ -16,13 +17,14 @@ class module;
 
 namespace sme {
 
-void pybindCompartment(pybind11::module& m);
+void pybindCompartment(const pybind11::module& m);
 
 class Compartment {
  private:
   sbml::SbmlDocWrapper* s;
   std::string id;
   std::vector<Species> species;
+  std::vector<Reaction> reactions;
 
  public:
   explicit Compartment(sbml::SbmlDocWrapper* sbmlDocWrapper,
@@ -31,6 +33,7 @@ class Compartment {
   void setName(const std::string& name);
   std::string getName() const;
   std::map<std::string, Species*> getSpecies();
+  std::map<std::string, Reaction*> getReactions();
   std::string getStr() const;
 };
 

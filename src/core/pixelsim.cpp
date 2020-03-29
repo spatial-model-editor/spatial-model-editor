@@ -449,7 +449,6 @@ PixelSim::PixelSim(
   }
   // add membranes
   for (auto &membrane : doc.membraneVec) {
-    SPDLOG_ERROR("{}", membrane.membraneID);
     if (doc.reactions.find(membrane.membraneID.c_str()) !=
         doc.reactions.cend()) {
       // look for the two membrane compartments in simCompartments

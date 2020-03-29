@@ -21,9 +21,6 @@ static void openBuiltInModel(MainWindow &w, const QString &shortcutKey = "V") {
 
 SCENARIO("Mainwindow: shortcut keys", "[gui][mainwindow][shortcuts]") {
   MainWindow w;
-  auto *menuImport = w.findChild<QMenu *>("menuImport");
-  auto *menuExample_geometry_image =
-      w.findChild<QMenu *>("menuExample_geometry_image");
   auto *menu_Tools = w.findChild<QMenu *>("menu_Tools");
   auto *menuSimulation_type = w.findChild<QMenu *>("menuSimulation_type");
   auto *actionSimTypeDUNE = w.findChild<QAction *>("actionSimTypeDUNE");

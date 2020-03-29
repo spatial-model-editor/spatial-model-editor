@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/test/">
+        <file>16bit_gray.tif</file>
+        <file>8bit_gray_3x.tif</file>
+    </qresource>
+</RCC>
