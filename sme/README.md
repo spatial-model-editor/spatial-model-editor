@@ -1,6 +1,6 @@
 # sme
 [![pypi releases](https://img.shields.io/pypi/v/sme.svg)](https://pypi.org/project/sme)
-[![open in colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/improve_python_lib/sme/sme_getting_started.ipynb)
+[![open in colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb)
 [![python versions](https://img.shields.io/pypi/pyversions/sme)](https://pypi.org/project/sme)
 
 sme is a python interface to the [Spatial Model Editor](https://github.com/lkeegan/spatial-model-editor).
@@ -11,7 +11,7 @@ It can be installed from [PyPI](https://pypi.org/project/sme/) using pip:
 pip install sme
 ```
 
-Or you can [try it out](https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/improve_python_lib/sme/sme_getting_started.ipynb) online using Google Colab (click on `Runtime -> Run all` or press `Ctrl+F9` to get started)
+Or you can [try it out](https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb) online using Google Colab (click on `Runtime -> Run all` or press `Ctrl+F9` to get started)
 
 Documentation: <https://spatial-model-editor.readthedocs.io/en/latest/reference/python.html>
 
