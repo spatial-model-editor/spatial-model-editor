@@ -778,14 +778,12 @@ SCENARIO("SBML: load model, refine mesh, save", "[core][sbml][mesh]") {
   s.importSBMLString(f.readAll().toStdString());
   REQUIRE(s.mesh->getBoundaryMaxPoints(0) == 16);
   REQUIRE(s.mesh->getBoundaries().size() == 1);
-  REQUIRE(s.mesh->getCompartmentMaxTriangleArea(0) == 72);
-  REQUIRE(s.mesh->getVertices().size() == 2 * 44);
-  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 70);
+  REQUIRE(s.mesh->getCompartmentMaxTriangleArea(0) == 92);
+  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 48);
   // refine boundary and mesh
   s.mesh->setBoundaryMaxPoints(0, 20);
   s.mesh->setCompartmentMaxTriangleArea(0, 32);
   REQUIRE(s.mesh->getBoundaries().size() == 1);
-  REQUIRE(s.mesh->getVertices().size() == 2 * 91);
   REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 152);
   // save SBML doc
   s.exportSBMLFile("tmp.xml");
@@ -796,7 +794,6 @@ SCENARIO("SBML: load model, refine mesh, save", "[core][sbml][mesh]") {
   REQUIRE(s.mesh->getBoundaries().size() == 1);
   REQUIRE(s2.mesh->getBoundaryMaxPoints(0) == 20);
   REQUIRE(s2.mesh->getCompartmentMaxTriangleArea(0) == 32);
-  REQUIRE(s2.mesh->getVertices().size() == 2 * 91);
   REQUIRE(s2.mesh->getTriangleIndices(0).size() == 3 * 152);
 }
 
@@ -808,30 +805,31 @@ SCENARIO("SBML: load model, change size of geometry, save",
   s.importSBMLString(f.readAll().toStdString());
   std::vector<double> v = s.mesh->getVertices();
   REQUIRE(s.mesh->getBoundaryMaxPoints(0) == 16);
-  REQUIRE(s.mesh->getCompartmentMaxTriangleArea(0) == 72);
-  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 70);
-  REQUIRE(v.size() == 2 * 44);
-  REQUIRE(v[0] == dbl_approx(17.0));
-  REQUIRE(v[1] == dbl_approx(45.0));
-  REQUIRE(v[2] == dbl_approx(17.0));
-  REQUIRE(v[3] == dbl_approx(57.0));
+  REQUIRE(s.mesh->getCompartmentMaxTriangleArea(0) == 92);
+  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 48);
+  double v0 = v[0];
+  double v1 = v[1];
+  double v2 = v[2];
+  double v3 = v[3];
   REQUIRE(s.getCompartmentSize("comp") == dbl_approx(3149.0));
   // change size of geometry, but not of compartments
-  s.setPixelWidth(0.01);
+  double a = 0.01;
+  s.setPixelWidth(a);
   v = s.mesh->getVertices();
-  REQUIRE(v[0] == dbl_approx(0.17));
-  REQUIRE(v[1] == dbl_approx(0.45));
-  REQUIRE(v[2] == dbl_approx(0.17));
-  REQUIRE(v[3] == dbl_approx(0.57));
+  REQUIRE(v[0] == dbl_approx(a * v0));
+  REQUIRE(v[1] == dbl_approx(a * v1));
+  REQUIRE(v[2] == dbl_approx(a * v2));
+  REQUIRE(v[3] == dbl_approx(a * v3));
   REQUIRE(s.getCompartmentSize("comp") == dbl_approx(3149.0));
   // change size of geometry & update compartment volumes accordingly
-  s.setPixelWidth(1.6e-13);
+  a = 1.6e-13;
+  s.setPixelWidth(a);
   s.setCompartmentSizeFromImage("comp");
   v = s.mesh->getVertices();
-  REQUIRE(v[0] == dbl_approx(2.72e-12));
-  REQUIRE(v[1] == dbl_approx(7.2e-12));
-  REQUIRE(v[2] == dbl_approx(2.72e-12));
-  REQUIRE(v[3] == dbl_approx(9.12e-12));
+  REQUIRE(v[0] == dbl_approx(a * v0));
+  REQUIRE(v[1] == dbl_approx(a * v1));
+  REQUIRE(v[2] == dbl_approx(a * v2));
+  REQUIRE(v[3] == dbl_approx(a * v3));
   REQUIRE(s.getCompartmentSize("comp") == dbl_approx(8.06144e-20));
 }
 
@@ -862,14 +860,12 @@ SCENARIO("SBML: Delete mesh annotation, load as read-only mesh",
   s.importSBMLString(xmlChar.get());
 
   REQUIRE(s.mesh->isReadOnly() == true);
-  REQUIRE(s.mesh->getVertices().size() == 2 * 44);
-  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 70);
+  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 48);
 
   // changing maxBoundaryPoints or maxTriangleAreas is a no-op:
-  s.mesh->setBoundaryMaxPoints(1, 99);
+  s.mesh->setBoundaryMaxPoints(0, 99);
   s.mesh->setCompartmentMaxTriangleArea(0, 3);
-  REQUIRE(s.mesh->getVertices().size() == 2 * 44);
-  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 70);
+  REQUIRE(s.mesh->getTriangleIndices(0).size() == 3 * 48);
 
   // save SBML doc
   s.exportSBMLFile("tmp.xml");
@@ -877,6 +873,5 @@ SCENARIO("SBML: Delete mesh annotation, load as read-only mesh",
   sbml::SbmlDocWrapper s2;
   s2.importSBMLFile("tmp.xml");
   REQUIRE(s2.mesh->isReadOnly() == true);
-  REQUIRE(s2.mesh->getVertices().size() == 2 * 44);
-  REQUIRE(s2.mesh->getTriangleIndices(0).size() == 3 * 70);
+  REQUIRE(s2.mesh->getTriangleIndices(0).size() == 3 * 48);
 }

@@ -75,10 +75,15 @@ SCENARIO("Geometry Tab", "[gui][tabs][geometry]") {
       REQUIRE(txtCompartmentName->text() == "Nucleus");
       REQUIRE(lblCompShape->getImage().pixel(50, 50) == 0xffc58560);
 
-      // boundary tab
+      // boundary pixels tab
       tabCompartmentGeometry->setFocus();
       sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
       REQUIRE(tabCompartmentGeometry->currentIndex() == 1);
+
+      // boundary tab
+      tabCompartmentGeometry->setFocus();
+      sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
+      REQUIRE(tabCompartmentGeometry->currentIndex() == 2);
       spinBoundaryIndex->setFocus();
       sendKeyEvents(spinBoundaryIndex, {"Up"});
       sendKeyEvents(spinMaxBoundaryPoints, {"Up"});
@@ -93,7 +98,7 @@ SCENARIO("Geometry Tab", "[gui][tabs][geometry]") {
       // mesh tab
       tabCompartmentGeometry->setFocus();
       sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
-      REQUIRE(tabCompartmentGeometry->currentIndex() == 2);
+      REQUIRE(tabCompartmentGeometry->currentIndex() == 3);
       sendKeyEvents(spinMaxTriangleArea,
                     {"End", "Backspace", "Backspace", "Backspace", "3"});
 

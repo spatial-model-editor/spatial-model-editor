@@ -2,6 +2,7 @@
 
 #include <QInputDialog>
 #include <QMessageBox>
+#include <stdexcept>
 
 #include "guiutils.hpp"
 #include "logger.hpp"
@@ -100,8 +101,10 @@ void TabGeometry::loadModelData(const QString &selection) {
 }
 
 void TabGeometry::enableTabs(bool enable) {
-  ui->tabCompartmentGeometry->setTabEnabled(1, enable);
-  ui->tabCompartmentGeometry->setTabEnabled(2, enable);
+  auto *tab = ui->tabCompartmentGeometry;
+  for (int i = 1; i < tab->count(); ++i) {
+    tab->setTabEnabled(i, enable);
+  }
 }
 
 void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
@@ -110,11 +113,15 @@ void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
     SPDLOG_INFO("point ({},{})", point.x(), point.y());
     // update compartment geometry (i.e. colour) of selected compartment to
     // the one the user just clicked on
-    const auto &compartmentID =
-        sbmlDoc.compartments.at(ui->listCompartments->currentRow());
-    sbmlDoc.setCompartmentColour(compartmentID, col);
-    sbmlDoc.setCompartmentInteriorPoint(compartmentID, point);
-    ui->tabCompartmentGeometry->setCurrentIndex(0);
+    try {
+      const auto &compartmentID =
+          sbmlDoc.compartments.at(ui->listCompartments->currentRow());
+      sbmlDoc.setCompartmentColour(compartmentID, col);
+      sbmlDoc.setCompartmentInteriorPoint(compartmentID, point);
+      ui->tabCompartmentGeometry->setCurrentIndex(0);
+    } catch (const std::runtime_error &e) {
+      QMessageBox::warning(this, "Mesh generation failed", e.what());
+    }
     // update display by simulating user click on listCompartments
     listCompartments_currentRowChanged(ui->listCompartments->currentRow());
     enableTabs();
@@ -200,10 +207,12 @@ void TabGeometry::txtCompartmentName_editingFinished() {
 }
 
 void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
-  enum TabIndex { IMAGE = 0, BOUNDARIES = 1, MESH = 2 };
+  enum TabIndex { IMAGE = 0, BOUNDARYPIXELS = 1, BOUNDARIES = 2, MESH = 3 };
   SPDLOG_DEBUG("Tab changed to {} [{}]", index,
                ui->tabCompartmentGeometry->tabText(index).toStdString());
-  if (index == TabIndex::BOUNDARIES) {
+  if (index == TabIndex::BOUNDARYPIXELS) {
+    ui->lblCompBoundaryPixels->setImage(sbmlDoc.mesh->getBoundaryPixelsImage());
+  } else if (index == TabIndex::BOUNDARIES) {
     auto size = sbmlDoc.mesh->getBoundaries().size();
     ui->spinBoundaryIndex->setMaximum(static_cast<int>(size) - 1);
     spinBoundaryIndex_valueChanged(ui->spinBoundaryIndex->value());

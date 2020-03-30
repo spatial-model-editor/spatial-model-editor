@@ -40,13 +40,17 @@ Mesh::Mesh(
                  colPair.second, membraneID, membraneIndex);
   }
 
-  boundaries = boundary::constructBoundaries(
+  std::tie(boundaries, boundaryPixelsImage) = boundary::constructBoundaries(
       image, mapColourPairToMembraneIndex, compartmentColours);
   SPDLOG_INFO("found {} boundaries", boundaries.size());
   for (const auto& boundary : boundaries) {
     SPDLOG_INFO("  - {} points, loop={}, membrane={} [{}]",
                 boundary.points.size(), boundary.isLoop, boundary.isMembrane,
                 boundary.membraneID);
+    if (boundary.isMembrane && !boundary.isLoop) {
+      // we don't yet implement non-loop membrane boundaries
+      validMesh = false;
+    }
   }
   if (boundaryMaxPoints.size() != boundaries.size()) {
     // if boundary points not correctly specified use default value
@@ -122,6 +126,8 @@ Mesh::Mesh(const std::vector<double>& inputVertices,
 }
 
 bool Mesh::isReadOnly() const { return readOnlyMesh; }
+
+bool Mesh::isValid() const { return validMesh; }
 
 bool Mesh::isMembrane(std::size_t boundaryIndex) const {
   return boundaries.at(boundaryIndex).isMembrane;
@@ -283,8 +289,9 @@ void Mesh::constructMesh() {
   // boundary index and width for each membrane
   std::vector<triangulate::Membrane> membranes;
   for (std::size_t i = 0; i < boundaries.size(); ++i) {
-    if (boundaries[i].isMembrane) {
-      membranes.emplace_back(i, boundaries[i].getMembraneWidth());
+    if (auto b = boundaries[i]; b.isMembrane && b.isLoop) {
+      // non-loop membranes not yet supported
+      membranes.emplace_back(i, b.getMembraneWidth());
     }
   }
 
@@ -334,8 +341,15 @@ static double getScaleFactor(const QImage& img, const QSize& size) {
   return scaleFactor;
 }
 
+const QImage& Mesh::getBoundaryPixelsImage() const {
+  return boundaryPixelsImage;
+}
+
 std::pair<QImage, QImage> Mesh::getBoundariesImages(
     const QSize& size, std::size_t boldBoundaryIndex) const {
+  constexpr int defaultPenSize = 2;
+  constexpr int boldPenSize = 5;
+  constexpr int maskPenSize = 15;
   double scaleFactor = getScaleFactor(img, size);
   // construct boundary image
   QImage boundaryImage(static_cast<int>(scaleFactor * img.width()),
@@ -346,43 +360,46 @@ std::pair<QImage, QImage> Mesh::getBoundariesImages(
   QImage maskImage(boundaryImage.size(), QImage::Format_ARGB32_Premultiplied);
   maskImage.fill(QColor(255, 255, 255).rgba());
 
-  QPainter p(&boundaryImage);
-  p.setRenderHint(QPainter::Antialiasing);
+  QPainter painter(&boundaryImage);
+  painter.setRenderHint(QPainter::Antialiasing);
 
   QPainter pMask(&maskImage);
 
   // draw boundary lines
   for (std::size_t k = 0; k < boundaries.size(); ++k) {
     const auto& points = boundaries[k].points;
-    std::size_t maxPoint = points.size();
-    if (!boundaries[k].isLoop) {
-      --maxPoint;
-    }
-    int penSize = 2;
+    int penSize = defaultPenSize;
     if (k == boldBoundaryIndex) {
-      penSize = 5;
+      penSize = boldPenSize;
     }
-    p.setPen(QPen(utils::indexedColours()[k], penSize));
-    pMask.setPen(QPen(QColor(0, 0, static_cast<int>(k)), 15));
-    for (std::size_t i = 0; i < maxPoint; ++i) {
-      p.drawEllipse(points[i] * scaleFactor, penSize, penSize);
-      p.drawLine(points[i] * scaleFactor,
-                 points[(i + 1) % points.size()] * scaleFactor);
-      pMask.drawLine(points[i] * scaleFactor,
-                     points[(i + 1) % points.size()] * scaleFactor);
+    painter.setPen(QPen(utils::indexedColours()[k], penSize));
+    pMask.setPen(QPen(QColor(0, 0, static_cast<int>(k)), maskPenSize));
+    for (std::size_t i = 0; i < points.size() - 1; ++i) {
+      auto p1 = points[i] * scaleFactor;
+      auto p2 = points[i + 1] * scaleFactor;
+      painter.drawEllipse(p1, penSize, penSize);
+      painter.drawLine(p1, p2);
+      pMask.drawLine(p1, p2);
     }
-    if (boundaries[k].isMembrane) {
+    painter.drawEllipse(points.back() * scaleFactor, penSize, penSize);
+    if (boundaries[k].isLoop) {
+      auto p1 = points.back() * scaleFactor;
+      auto p2 = points.front() * scaleFactor;
+      painter.drawLine(p1, p2);
+      pMask.drawLine(p1, p2);
+    }
+    if (boundaries[k].isMembrane && boundaries[k].isLoop) {
       const auto& outerPoints = boundaries[k].outerPoints;
-      for (std::size_t i = 0; i < maxPoint; ++i) {
-        p.drawEllipse(outerPoints[i] * scaleFactor, penSize, penSize);
-        p.drawLine(outerPoints[i] * scaleFactor,
-                   outerPoints[(i + 1) % outerPoints.size()] * scaleFactor);
-        pMask.drawLine(outerPoints[i] * scaleFactor,
-                       outerPoints[(i + 1) % outerPoints.size()] * scaleFactor);
+      for (std::size_t i = 0; i < points.size(); ++i) {
+        auto p1 = outerPoints[i] * scaleFactor;
+        auto p2 = outerPoints[(i + 1) % outerPoints.size()] * scaleFactor;
+        painter.drawEllipse(p1, penSize, penSize);
+        painter.drawLine(p1, p2);
+        pMask.drawLine(p1, p2);
       }
     }
   }
-  p.end();
+  painter.end();
   pMask.end();
   // flip image on y-axis, to change (0,0) from bottom-left to top-left corner
   return std::make_pair(boundaryImage.mirrored(false, true),

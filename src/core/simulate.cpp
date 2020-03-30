@@ -3,6 +3,7 @@
 #include "dunesim.hpp"
 #include "geometry.hpp"
 #include "logger.hpp"
+#include "mesh.hpp"
 #include "pde.hpp"
 #include "pixelsim.hpp"
 #include "sbml.hpp"
@@ -38,7 +39,7 @@ Simulation::Simulation(const sbml::SbmlDocWrapper &sbmlDoc,
     }
   }
   // init simulator
-  if (simulatorType == SimulatorType::DUNE) {
+  if (simulatorType == SimulatorType::DUNE && sbmlDoc.mesh->isValid()) {
     simulator = std::make_unique<sim::DuneSim>(
         sbmlDoc, compartmentIds, compartmentSpeciesIds, integratorOrder);
   } else {

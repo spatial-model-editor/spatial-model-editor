@@ -28,14 +28,19 @@ class BoundaryBoolGrid {
   std::vector<std::vector<std::size_t>> membraneIndex;
   std::map<std::size_t, std::string> membraneNames;
   bool isBoundary(std::size_t x, std::size_t y) const;
-  bool isFixed(std::size_t x, std::size_t y) const;
   std::size_t getFixedPointIndex(std::size_t x, std::size_t y) const;
   void visitPoint(std::size_t x, std::size_t y);
+  void setBoundaryPoint(const QPoint& point, bool multi,
+                        std::size_t iMembrane = NULL_INDEX);
+  QSize imageSize;
+  QImage boundaryPixelsImage;
 
  public:
   std::size_t nPixels;
+  const QSize& size() const;
   std::vector<QPoint> fixedPoints;
   std::vector<std::size_t> fixedPointCounter;
+  bool isValid(const QPoint& point) const;
   bool isBoundary(const QPoint& point) const;
   bool isFixed(const QPoint& point) const;
   bool isMembrane(const QPoint& point) const;
@@ -43,9 +48,8 @@ class BoundaryBoolGrid {
   std::string getMembraneName(std::size_t membraneIndex) const;
   std::size_t getFixedPointIndex(const QPoint& point) const;
   const QPoint& getFixedPoint(const QPoint& point) const;
-  void setBoundaryPoint(const QPoint& point, bool multi,
-                        std::size_t iMembrane = NULL_INDEX);
   void visitPoint(const QPoint& point);
+  QImage getBoundaryPixelsImage() const;
   explicit BoundaryBoolGrid(
       const QImage& inputImage,
       const std::map<ColourPair, std::pair<std::size_t, std::string>>&
@@ -85,7 +89,7 @@ class Boundary {
                     const std::string& membraneName = "");
 };
 
-std::vector<Boundary> constructBoundaries(
+std::pair<std::vector<Boundary>, QImage> constructBoundaries(
     const QImage& image,
     const std::map<ColourPair, std::pair<std::size_t, std::string>>&
         mapColourPairToMembraneIndex = {},
