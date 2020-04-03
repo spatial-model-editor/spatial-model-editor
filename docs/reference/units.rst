@@ -1,18 +1,32 @@
 Units
 =====
 
-The quantity of a species can be defined in terms of *amount* or in terms of *concentration*.
+Fundamental Units
+-----------------
 
-In a spatial simulation, as the diffusion equation is a function of the concentration we choose to use concentration as our unit of species quantity. Ensuring that units are consistent when importing an existing SBML model requires some care.
+To describe a spatial model we need to define the following fundamental units:
 
-SBML
-----
+- `amount` (e.g. `Mole`)
+- `length` (e.g. `metre`)
+- `time` (e.g. `second`)
 
-When importing a SBML model, if a species has an ``initialAmount``, this is converted to an ``initialConcentration`` by dividing the amount by the compartment volume.
+For convenience we also treat volume as a fundamental unit
 
-If ``hasOnlySubstanceUnits`` is ``true`` then when the species identifier appears in a mathematical expression it refers to the *amount*. In this case we would need to first multiply our value for the species *concentration* by the compartment volume before inserting this value into any mathematical expressions where it is used. Additionally, if the result of the expression is the rate of change for a species in units of *amount* per time, we would need to divide this by the compartment volume to get the *concentration* per time.
+- `volume` (e.g. `litre`)
 
-.. note::
-   Currently SBML files with ``hasOnlySubstanceUnits=true`` are not supported.
+Derived Units
+-------------
 
-See the SBML `cpp-api <http://sbml.org/Software/libSBML/5.18.0/docs/cpp-api/class_species.html>`_ for more details on the SBML specification.
+All quantities in the model have units that can be written as some combination of these fundamental units:
+
+- species concentrations
+    - have units of `amount / volume`
+- reactions *inside* a compartment
+    - describe the rate of change of the concentration of species
+    - have units of `concentration / time`, i.e. `amount / volume / time`
+- reactions *between* two compartments
+    - describe that rate at which a unit amount of species crosses a unit area of the *membrane*
+    - where the membrane is the area where the two compartments touch each other
+    - have units of `amount / membrane-area / time`, i.e. `amount / length^2 / time`
+- diffusion constants
+    - have units of `area / time`, i.e. `length^2 / time`

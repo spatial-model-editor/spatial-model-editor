@@ -19,9 +19,9 @@ Spatial Model Editor Documentation
    reference/cli
    reference/python
    reference/maths
+   reference/units
    reference/dune
    reference/pixel
-   reference/units
    reference/source-code
 
 .. toctree::
