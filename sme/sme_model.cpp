@@ -85,7 +85,7 @@ void Model::simulate(double simulationTime, double imageInterval) {
   options.order = 2;
   options.maxTimestep = std::numeric_limits<double>::max();
   options.maxAbsErr = std::numeric_limits<double>::max();
-  options.maxRelErr = 0.01;
+  options.maxRelErr = 0.005;
   sim->setIntegratorOptions(options);
   while (sim->getTimePoints().back() < simulationTime) {
     sim->doTimestep(imageInterval);

@@ -21,7 +21,7 @@ class Species {
 
  public:
   explicit Species(sbml::SbmlDocWrapper* sbmlDocWrapper,
-                   const std::string& speciesId);
+                   const std::string& sId);
   const std::string& getId() const;
   void setName(const std::string& name);
   std::string getName() const;

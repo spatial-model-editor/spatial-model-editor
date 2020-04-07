@@ -24,15 +24,14 @@ void pybindCompartment(const pybind11::module& m) {
 }
 
 Compartment::Compartment(sbml::SbmlDocWrapper* sbmlDocWrapper,
-                         const std::string& compartmentId)
-    : s(sbmlDocWrapper), id(compartmentId) {
+                         const std::string& sId)
+    : s(sbmlDocWrapper), id(sId) {
   const auto& compSpecies = s->species.at(id.c_str());
   species.reserve(static_cast<std::size_t>(compSpecies.size()));
   for (const auto& spec : compSpecies) {
     species.emplace_back(s, spec.toStdString());
   }
-  if (auto iter = s->reactions.find(compartmentId.c_str());
-      iter != s->reactions.cend()) {
+  if (auto iter = s->reactions.find(sId.c_str()); iter != s->reactions.cend()) {
     for (const auto& reac : iter->second) {
       reactions.emplace_back(s, reac.toStdString());
     }

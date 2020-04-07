@@ -1,9 +1,11 @@
 import unittest
 import sme
 
-class TestSme(unittest.TestCase):
+class TestModule(unittest.TestCase):
     def test_module(self):
         self.assertEqual(str(sme)[0:13], "<module 'sme'")
+
+class TestModel(unittest.TestCase):
     def test_load_open_sbml_file(self):
         with self.assertRaises(ValueError):
             sme.open_sbml_file('idontexist.xml')
@@ -25,18 +27,20 @@ class TestSme(unittest.TestCase):
         self.assertEqual(len(m2.compartments), 3)
         self.assertEqual(m2.compartments['C'].name, 'C')
         self.assertEqual(m2.compartments['Nucleus'].name, 'Nucleus')
-    def test_compartment_image(self):
-        m = sme.open_example_model()
-        img = m.compartment_image()
-        self.assertEqual(len(img), 100)
-        self.assertEqual(len(img[0]), 100)
-        self.assertEqual(len(img[0][0]), 3)
     def test_simulate(self):
         m = sme.open_example_model()
         m.simulate(0.02, 0.01)
         time_points = m.simulation_time_points()
         self.assertEqual(len(time_points), 3)
         img = m.concentration_image(1)
+        self.assertEqual(len(img), 100)
+        self.assertEqual(len(img[0]), 100)
+        self.assertEqual(len(img[0][0]), 3)
+
+class TestCompartment(unittest.TestCase):
+    def test_compartment_image(self):
+        m = sme.open_example_model()
+        img = m.compartment_image()
         self.assertEqual(len(img), 100)
         self.assertEqual(len(img[0]), 100)
         self.assertEqual(len(img[0][0]), 3)
@@ -50,6 +54,8 @@ class TestSme(unittest.TestCase):
         c.name = 'NewCell'
         self.assertEqual(c.name, 'NewCell')
         self.assertEqual(m.compartments['NewCell'].name, 'NewCell')
+
+class TestSpecies(unittest.TestCase):
     def test_species(self):
         m = sme.open_example_model()
         c = m.compartments['Cell']
@@ -65,6 +71,8 @@ class TestSme(unittest.TestCase):
         self.assertEqual(s.name, 'New A!')
         self.assertEqual(s.diffusion_constant, 1.0)
         self.assertEqual(m.compartments['Cell'].species['New A!'].name, 'New A!')
+
+class TestReaction(unittest.TestCase):
     def test_reaction(self):
         m = sme.open_example_model()
         c = m.compartments['Nucleus']
@@ -72,11 +80,32 @@ class TestSme(unittest.TestCase):
         self.assertEqual(repr(r), "<sme.Reaction named 'A to B conversion'>")
         self.assertEqual(str(r)[0:44], "<sme.Reaction>\n  - name: 'A to B conversion'")
         self.assertEqual(r.name, 'A to B conversion')
+        self.assertEqual(len(r.parameters), 1)
         r.name = 'New reac'
         self.assertEqual(repr(r), "<sme.Reaction named 'New reac'>")
         self.assertEqual(str(r)[0:35], "<sme.Reaction>\n  - name: 'New reac'")
         self.assertEqual(r.name, 'New reac')
         self.assertEqual(m.compartments['Nucleus'].reactions['New reac'].name, 'New reac')
+
+class TestReactionParameter(unittest.TestCase):
+    def test_reactionparameter(self):
+        m = sme.open_example_model()
+        c = m.compartments['Nucleus']
+        r = c.reactions['A to B conversion']
+        k = r.parameters['k1']
+        self.assertEqual(repr(k), "<sme.ReactionParameter named 'k1'>")
+        self.assertEqual(str(k)[0:38], "<sme.ReactionParameter>\n  - name: 'k1'")
+        self.assertEqual(k.name, 'k1')
+        self.assertEqual(k.value, 0.3)
+        k.name = 'New k'
+        k.value = 0.8765
+        self.assertEqual(repr(k), "<sme.ReactionParameter named 'New k'>")
+        self.assertEqual(str(k)[0:41], "<sme.ReactionParameter>\n  - name: 'New k'")
+        self.assertEqual(k.name, 'New k')
+        self.assertEqual(k.value, 0.8765)
+        params = m.compartments['Nucleus'].reactions['A to B conversion'].parameters
+        self.assertRaises(KeyError, lambda: params['k1'])
+        self.assertEqual(params['New k'].name, 'New k')
 
 if __name__ == '__main__':
     unittest.main()

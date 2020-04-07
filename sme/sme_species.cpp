@@ -22,9 +22,8 @@ void pybindSpecies(const pybind11::module& m) {
       .def("__str__", &sme::Species::getStr);
 }
 
-Species::Species(sbml::SbmlDocWrapper* sbmlDocWrapper,
-                 const std::string& speciesId)
-    : s(sbmlDocWrapper), id(speciesId) {}
+Species::Species(sbml::SbmlDocWrapper* sbmlDocWrapper, const std::string& sId)
+    : s(sbmlDocWrapper), id(sId) {}
 
 const std::string& Species::getId() const { return id; }
 
