@@ -8,7 +8,9 @@
 
 #include "dialogdisplayoptions.hpp"
 #include "dialogimageslice.hpp"
+#include "guiutils.hpp"
 #include "logger.hpp"
+#include "mesh.hpp"
 #include "qlabelmousetracker.hpp"
 #include "sbml.hpp"
 #include "ui_tabsimulate.h"
@@ -39,7 +41,7 @@ TabSimulate::TabSimulate(sbml::SbmlDocWrapper &doc,
   connect(ui->btnSimulate, &QPushButton::clicked, this,
           &TabSimulate::btnSimulate_clicked);
   connect(ui->btnResetSimulation, &QPushButton::clicked, this,
-          &TabSimulate::reset);
+          &TabSimulate::loadModelData);
   connect(pltPlot, &QCustomPlot::mousePress, this, &TabSimulate::graphClicked);
   connect(ui->hslideTime, &QSlider::valueChanged, this,
           &TabSimulate::hslideTime_valueChanged);
@@ -56,50 +58,36 @@ TabSimulate::TabSimulate(sbml::SbmlDocWrapper &doc,
 
 TabSimulate::~TabSimulate() = default;
 
-void TabSimulate::loadModelData() { reset(); }
-
-void TabSimulate::stopSimulation() {
-  SPDLOG_INFO("Simulation cancelled by user");
-  isSimulationRunning = false;
-}
-
-void TabSimulate::useDune(bool enable) {
-  if (enable) {
-    simType = simulate::SimulatorType::DUNE;
-    // reset some sensible default integration options:
-    integratorOptions.order = 1;
-    integratorOptions.maxTimestep = ui->txtSimInterval->text().toDouble() * 0.2;
-    integratorOptions.maxAbsErr = std::numeric_limits<double>::max();
-    integratorOptions.maxRelErr = std::numeric_limits<double>::max();
-  } else {
-    simType = simulate::SimulatorType::Pixel;
-    integratorOptions.order = 2;
-    integratorOptions.maxTimestep = std::numeric_limits<double>::max();
-    integratorOptions.maxAbsErr = std::numeric_limits<double>::max();
-    integratorOptions.maxRelErr = 0.01;
-  }
+void TabSimulate::loadModelData() {
   reset();
-}
-
-void TabSimulate::reset() {
-  pltPlot->clearGraphs();
-  pltPlot->replot();
-  ui->hslideTime->setMinimum(0);
-  ui->hslideTime->setMaximum(0);
-  images.clear();
-  time.clear();
-  normaliseImageIntensityOverWholeSimulation = true;
   if (!(sbmlDoc.isValid && sbmlDoc.hasValidGeometry)) {
     ui->hslideTime->setEnabled(false);
+    ui->btnSimulate->setEnabled(false);
     return;
   }
-  // Note: this reset is required to delete all current DUNE objects *before*
-  // creating a new one, otherwise the new ones make use of the existing ones,
-  // and once they are deleted it dereferences a nullptr and segfaults...
   sim.reset();
+  if (simType == simulate::SimulatorType::DUNE && !sbmlDoc.mesh->isValid()) {
+    ui->btnSimulate->setEnabled(false);
+    auto msgbox =
+        newYesNoMessageBox("Invalid mesh",
+                           "Geometry contains membrane boundaries that are not "
+                           "closed loops, which are not "
+                           "yet supported in mesh generation required for DUNE "
+                           "simulation. Would you like to use the Pixel "
+                           "simulator instead?",
+                           this);
+    connect(msgbox, &QMessageBox::finished, this, [this](int result) {
+      if (result == QMessageBox::Yes) {
+        useDune(false);
+      }
+    });
+    msgbox->open();
+    return;
+  }
   sim = std::make_unique<simulate::Simulation>(sbmlDoc, simType,
                                                integratorOptions.order);
   sim->setIntegratorOptions(integratorOptions);
+  ui->btnSimulate->setEnabled(true);
 
   // setup species names
   speciesNames.clear();
@@ -168,6 +156,43 @@ void TabSimulate::reset() {
   lblGeometry->setImage(images.back());
 }
 
+void TabSimulate::stopSimulation() {
+  SPDLOG_INFO("Simulation cancelled by user");
+  isSimulationRunning = false;
+}
+
+void TabSimulate::useDune(bool enable) {
+  if (enable) {
+    simType = simulate::SimulatorType::DUNE;
+    // reset some sensible default integration options:
+    integratorOptions.order = 1;
+    integratorOptions.maxTimestep = ui->txtSimInterval->text().toDouble() * 0.2;
+    integratorOptions.maxAbsErr = std::numeric_limits<double>::max();
+    integratorOptions.maxRelErr = std::numeric_limits<double>::max();
+  } else {
+    simType = simulate::SimulatorType::Pixel;
+    integratorOptions.order = 2;
+    integratorOptions.maxTimestep = std::numeric_limits<double>::max();
+    integratorOptions.maxAbsErr = std::numeric_limits<double>::max();
+    integratorOptions.maxRelErr = 0.01;
+  }
+  loadModelData();
+}
+
+void TabSimulate::reset() {
+  pltPlot->clearGraphs();
+  pltPlot->replot();
+  ui->hslideTime->setMinimum(0);
+  ui->hslideTime->setMaximum(0);
+  images.clear();
+  time.clear();
+  normaliseImageIntensityOverWholeSimulation = true;
+  // Note: this reset is required to delete all current DUNE objects *before*
+  // creating a new one, otherwise the new ones make use of the existing ones,
+  // and once they are deleted it dereferences a nullptr and segfaults...
+  sim.reset();
+}
+
 simulate::IntegratorOptions TabSimulate::getIntegratorOptions() const {
   return integratorOptions;
 }
@@ -175,7 +200,7 @@ simulate::IntegratorOptions TabSimulate::getIntegratorOptions() const {
 void TabSimulate::setIntegratorOptions(
     const simulate::IntegratorOptions &options) {
   integratorOptions = options;
-  reset();
+  loadModelData();
 }
 
 void TabSimulate::btnSimulate_clicked() {

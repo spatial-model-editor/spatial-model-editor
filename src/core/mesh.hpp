@@ -29,6 +29,7 @@ class Mesh {
   static constexpr std::size_t defaultBoundaryMaxPoints = 12;
   static constexpr std::size_t defaultCompartmentMaxTriangleArea = 40;
   bool readOnlyMesh = false;
+  bool validMesh = true;
   // input data
   QImage img;
   QPointF origin;
@@ -37,6 +38,7 @@ class Mesh {
   std::vector<std::size_t> boundaryMaxPoints;
   std::vector<std::size_t> compartmentMaxTriangleArea;
   // generated data
+  QImage boundaryPixelsImage;
   std::vector<boundary::Boundary> boundaries;
   std::vector<QPointF> vertices;
   std::size_t nTriangles;
@@ -69,6 +71,7 @@ class Mesh {
   // if mesh not constructed from image, but supplied as vertices&trianges,
   // we cannot alter boundary or triangle area easily, so treat as read-only
   bool isReadOnly() const;
+  bool isValid() const;
   bool isMembrane(std::size_t boundaryIndex) const;
   void setBoundaryMaxPoints(std::size_t boundaryIndex, std::size_t maxPoints);
   std::size_t getBoundaryMaxPoints(std::size_t boundaryIndex) const;
@@ -90,6 +93,7 @@ class Mesh {
   std::vector<int> getTriangleIndices(std::size_t compartmentIndex) const;
   const std::vector<std::vector<QTriangleF>>& getTriangles() const;
 
+  const QImage& getBoundaryPixelsImage() const;
   std::pair<QImage, QImage> getBoundariesImages(
       const QSize& size, std::size_t boldBoundaryIndex) const;
   std::pair<QImage, QImage> getMeshImages(const QSize& size,

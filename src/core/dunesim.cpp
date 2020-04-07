@@ -47,11 +47,11 @@
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
 #endif
-
 #include <QFile>
 #include <QImage>
 #include <QPainter>
 #include <algorithm>
+#include <locale>
 
 #include "logger.hpp"
 #include "mesh.hpp"
@@ -103,9 +103,12 @@ DuneImpl::DuneImpl(const std::string &iniFile) {
     }
   }
   // NB: msh file needs to be file for gmshreader
+  // also: gmshreader assumes C locale
   // todo: generate DUNE mesh directly
+  std::locale userLocale = std::locale::global(std::locale::classic());
   std::tie(grid_ptr, host_grid_ptr) =
       Dune::Copasi::MultiDomainGmshReader<Grid>::read("grid.msh", config);
+  std::locale::global(userLocale);
 }
 
 DuneImpl::~DuneImpl() = default;

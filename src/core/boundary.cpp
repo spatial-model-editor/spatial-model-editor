@@ -1,5 +1,7 @@
 #include "boundary.hpp"
 
+#include <array>
+#include <optional>
 #include <set>
 
 #include "logger.hpp"
@@ -10,14 +12,20 @@ bool BoundaryBoolGrid::isBoundary(std::size_t x, std::size_t y) const {
   return grid[x + 1][y + 1];
 }
 
+const QSize& BoundaryBoolGrid::size() const { return imageSize; }
+
+bool BoundaryBoolGrid::isValid(const QPoint& point) const {
+  auto x = static_cast<std::size_t>(point.x());
+  auto y = static_cast<std::size_t>(point.y());
+  auto w = static_cast<std::size_t>(imageSize.width());
+  auto h = static_cast<std::size_t>(imageSize.height());
+  return x < w && y < h;
+}
+
 bool BoundaryBoolGrid::isBoundary(const QPoint& point) const {
   auto x = static_cast<std::size_t>(point.x());
   auto y = static_cast<std::size_t>(point.y());
   return isBoundary(x, y);
-}
-
-bool BoundaryBoolGrid::isFixed(std::size_t x, std::size_t y) const {
-  return getFixedPointIndex(x, y) != NULL_INDEX;
 }
 
 bool BoundaryBoolGrid::isFixed(const QPoint& point) const {
@@ -56,7 +64,7 @@ std::size_t BoundaryBoolGrid::getFixedPointIndex(const QPoint& point) const {
 const QPoint& BoundaryBoolGrid::getFixedPoint(const QPoint& point) const {
   auto x = static_cast<std::size_t>(point.x());
   auto y = static_cast<std::size_t>(point.y());
-  return fixedPoints.at(getFixedPointIndex(x, y));
+  return fixedPoints[getFixedPointIndex(x, y)];
 }
 
 void BoundaryBoolGrid::setBoundaryPoint(const QPoint& point, bool multi,
@@ -97,6 +105,27 @@ void BoundaryBoolGrid::visitPoint(const QPoint& point) {
   visitPoint(x, y);
 }
 
+QImage BoundaryBoolGrid::getBoundaryPixelsImage() const {
+  QImage img(imageSize, QImage::Format_ARGB32_Premultiplied);
+  img.fill(0);
+  for (int x = 0; x < imageSize.width(); ++x) {
+    for (int y = 0; y < imageSize.height(); ++y) {
+      QPoint p(x, y);
+      QPoint pInv(x, imageSize.height() - y - 1);
+      if (isBoundary(p)) {
+        img.setPixel(pInv, 0xff888888);
+      }
+      if (isMembrane(p)) {
+        img.setPixel(pInv, 0xffff0000);
+      }
+      if (isFixed(p)) {
+        img.setPixel(pInv, 0xff0000ff);
+      }
+    }
+  }
+  return img;
+}
+
 BoundaryBoolGrid::BoundaryBoolGrid(
     const QImage& inputImage,
     const std::map<ColourPair, std::pair<std::size_t, std::string>>&
@@ -108,10 +137,18 @@ BoundaryBoolGrid::BoundaryBoolGrid(
       fixedPointIndex(
           static_cast<size_t>(inputImage.width() + 2),
           std::vector<std::size_t>(static_cast<size_t>(inputImage.height() + 2),
-                                   NULL_INDEX)) {
+                                   NULL_INDEX)),
+      imageSize(inputImage.size()) {
   membraneIndex = fixedPointIndex;
   membraneNames.clear();
   auto img = inputImage.convertToFormat(QImage::Format_Indexed8);
+  std::vector<int> compartmentColourIndices;
+  for (int i = 0; i < img.colorCount(); ++i) {
+    if (std::find(compartmentColours.cbegin(), compartmentColours.cend(),
+                  img.color(i)) != compartmentColours.cend()) {
+      compartmentColourIndices.push_back(i);
+    }
+  }
   nPixels = static_cast<std::size_t>(img.width() * img.height());
   // check colours of 4 nearest neighbours of each pixel
   for (int x = 0; x < img.width(); ++x) {
@@ -124,7 +161,8 @@ BoundaryBoolGrid::BoundaryBoolGrid(
            {QPoint(1, 0), QPoint(-1, 0), QPoint(0, 1), QPoint(0, -1)}) {
         QPoint nn = point + dp;
         if (img.valid(nn)) {
-          colours.insert(img.pixelIndex(nn));
+          int idx = img.pixelIndex(nn);
+          colours.insert(idx);
         } else {
           // external pixels
           colours.insert(-1);
@@ -152,15 +190,16 @@ BoundaryBoolGrid::BoundaryBoolGrid(
           if (membraneNames.find(index) == membraneNames.cend()) {
             membraneNames[index] = iter->second.second;
           }
-        } else if (std::vector<QRgb> c{colA, colB};
-                   std::find_first_of(compartmentColours.cbegin(),
-                                      compartmentColours.cend(), c.cbegin(),
-                                      c.cend()) != compartmentColours.cend()) {
-          // - one of these colours corresponds to a compartment
+        } else if (std::find_if(compartmentColourIndices.cbegin(),
+                                compartmentColourIndices.cend(),
+                                [&colours](int i) {
+                                  return colours.find(i) != colours.cend();
+                                }) != compartmentColourIndices.cend()) {
+          // at least one colour corresponds to a compartment
           setBoundaryPoint(bottomLeftIndexedPoint, false);
         }
       } else if (neighbours > 1) {
-        // - point has multiple colour neighbours
+        // - point has multiple colour neighbours -> fixed point
         setBoundaryPoint(bottomLeftIndexedPoint, true);
       }
     }
@@ -264,12 +303,10 @@ Boundary::Boundary(const std::vector<QPoint>& boundaryPoints, bool isClosedLoop,
   constructNormalUnitVectors();
 
   // construct list of points in reverse order of importance
+  orderedBoundaryIndices.reserve(vertices.size());
   // start by using all points
-  std::vector<std::size_t> pointIndices;
-  pointIndices.reserve(vertices.size());
-  for (std::size_t i = 0; i < vertices.size(); ++i) {
-    pointIndices.push_back(i);
-  }
+  std::vector<std::size_t> pointIndices(vertices.size());
+  std::iota(pointIndices.begin(), pointIndices.end(), 0);
   // remove one-by-one to get point indices in reverse order of importance
   while (pointIndices.size() > 3) {
     auto iter = smallestTrianglePointIndex(pointIndices);
@@ -303,7 +340,8 @@ void Boundary::setMaxPoints(std::size_t nMaxPoints) {
   for (std::size_t i = 0; i < vertices.size(); ++i) {
     if (usePoint.at(i)) {
       points.push_back(vertices[i]);
-      if (isMembrane) {
+      if (isMembrane && isLoop) {
+        // note: non-loop membranes not yet supported
         outerPoints.push_back(vertices[i] +
                               membraneWidth * normalUnitVectors[i]);
       }
@@ -318,149 +356,184 @@ void Boundary::setMembraneWidth(double newMembraneWidth) {
   setMaxPoints(maxPoints);
 }
 
-std::vector<Boundary> constructBoundaries(
+static std::vector<QPoint> getBPNeighboursOfFP(const QPoint& fp,
+                                               const BoundaryBoolGrid& bbg) {
+  std::vector<QPoint> neighbours;
+  neighbours.reserve(8);
+  constexpr std::array<QPoint, 4> nnp = {QPoint(1, 0), QPoint(-1, 0),
+                                         QPoint(0, 1), QPoint(0, -1)};
+  SPDLOG_TRACE("FP ({},{})", fp.x(), fp.y());
+  // fill queue with all pixels in this FP
+  std::vector<QPoint> queue;
+  queue.reserve(8);
+  queue.push_back(fp);
+  std::size_t queueIndex = 0;
+  while (queueIndex < queue.size()) {
+    QPoint p = queue[queueIndex];
+    for (const auto& dp : nnp) {
+      if (QPoint bp = p + dp;
+          bbg.isValid(bp) && bbg.isFixed(bp) &&
+          std::find(queue.cbegin(), queue.cend(), bp) == queue.cend()) {
+        queue.push_back(bp);
+      }
+    }
+    ++queueIndex;
+  }
+  // return all non-FP BP neighbours of this fixed point
+  for (const auto& p : queue) {
+    for (const auto& dp : nnp) {
+      if (QPoint bp = p + dp;
+          bbg.isValid(bp) && !bbg.isFixed(bp) && bbg.isBoundary(bp)) {
+        neighbours.push_back(bp);
+        SPDLOG_TRACE("  - ({},{})", bp.x(), bp.y());
+      }
+    }
+  }
+  return neighbours;
+}
+
+static std::optional<QPoint> getBPNeighbourOfBP(const QPoint& bp,
+                                                const BoundaryBoolGrid& bbg) {
+  constexpr std::array<QPoint, 8> nnp = {
+      QPoint(1, 0), QPoint(-1, 0), QPoint(0, 1),  QPoint(0, -1),
+      QPoint(1, 1), QPoint(1, -1), QPoint(-1, 1), QPoint(-1, -1)};
+  for (const auto& dp : nnp) {
+    if (QPoint n = bp + dp;
+        bbg.isValid(n) && bbg.isBoundary(n) && !bbg.isFixed(n)) {
+      return n;
+    }
+  }
+  return {};
+}
+
+static std::optional<QPoint> getFPNeighbourOfBP(const QPoint& bp,
+                                                const BoundaryBoolGrid& bbg) {
+  constexpr std::array<QPoint, 8> nnp = {
+      QPoint(1, 0), QPoint(-1, 0), QPoint(0, 1),  QPoint(0, -1),
+      QPoint(1, 1), QPoint(1, -1), QPoint(-1, 1), QPoint(-1, -1)};
+  for (const auto& dp : nnp) {
+    if (QPoint n = bp + dp;
+        bbg.isValid(n) && bbg.isBoundary(n) && bbg.isFixed(n)) {
+      return bbg.getFixedPoint(n);
+    }
+  }
+  return {};
+}
+
+static std::optional<QPoint> getBoundaryPoint(const BoundaryBoolGrid& bbg) {
+  for (int x = 0; x < bbg.size().width(); ++x) {
+    for (int y = 0; y < bbg.size().height(); ++y) {
+      auto p = QPoint(x, y);
+      if (bbg.isBoundary(p) && !bbg.isFixed(p)) {
+        return p;
+      }
+    }
+  }
+  return {};
+}
+
+std::pair<std::vector<Boundary>, QImage> constructBoundaries(
     const QImage& img,
     const std::map<ColourPair, std::pair<std::size_t, std::string>>&
         mapColourPairToMembraneIndex,
     const std::vector<QRgb>& compartmentColours) {
   std::vector<Boundary> boundaries;
-  std::vector<QPoint> nearestNeighbourDirectionPoints = {
-      QPoint(1, 0), QPoint(-1, 0), QPoint(0, 1),  QPoint(0, -1),
-      QPoint(1, 1), QPoint(1, -1), QPoint(-1, 1), QPoint(-1, -1)};
-
-  // add image boundary loop
-  /*
-  points.push_back(QPoint(0, 0));
-  points.push_back(QPoint(0, img.height() - 1));
-  points.push_back(QPoint(img.width() - 1, img.height() - 1));
-  points.push_back(QPoint(img.width() - 1, 0));
-  boundaries.emplace_back(points, true, false);
-*/
 
   // construct bool grid of all boundary points
   BoundaryBoolGrid bbg(img, mapColourPairToMembraneIndex, compartmentColours);
+  QImage boundaryPixelsImage = bbg.getBoundaryPixelsImage();
 
-  std::vector<QPoint> points;
   // we now have an unordered set of all boundary points
   // with points used by multiple boundary lines identified as "fixed"
   //
   // two possible kinds of boundary
-  //   - line between two fixed point
+  //   - line between two fixed points
   //   - closed loop not involving any fixed points
 
-  // do line between fixed points first:
+  // do lines between fixed points first:
   //   - start at a fixed point
   //   - visit nearest (unvisited) neighbouring
   //   boundary point in x or y
   //   - if not found, check diagonal neighbours
   //   - repeat until we hit another fixed point
-  std::size_t maxIterations = bbg.nPixels;
-  for (std::size_t i = 0; i < bbg.fixedPoints.size(); ++i) {
-    const auto& fp = bbg.fixedPoints[i];
+  for (const auto& fp : bbg.fixedPoints) {
     SPDLOG_TRACE("fixedPoint ({},{})", fp.x(), fp.y());
-    bbg.visitPoint(fp);
-    for (const auto& dfp : nearestNeighbourDirectionPoints) {
-      if (bbg.isBoundary(fp + dfp) && bbg.fixedPointCounter.at(i) > 0) {
-        points.clear();
-        points.push_back(fp);
-        QPoint currPoint = fp + dfp;
-        std::size_t iterCount = 0;
-        while (!bbg.isFixed(currPoint) ||
-               (bbg.getFixedPoint(currPoint) == fp)) {
-          // repeat until we hit another fixed point
-          if (!(bbg.isFixed(currPoint) &&
-                (bbg.getFixedPoint(currPoint) == fp))) {
-            // only add point to boundary if
-            // we are outside of the initial fixed point radius
-            points.push_back(currPoint);
-          }
-          bbg.visitPoint(currPoint);
-          for (const auto& directionPoint : nearestNeighbourDirectionPoints) {
-            if (bbg.isBoundary(currPoint + directionPoint)) {
-              currPoint += directionPoint;
-              break;
-            }
-          }
-          if (iterCount++ > maxIterations) {
-            SPDLOG_ERROR("Failed to find another fixed point: stuck at ({},{})",
-                         currPoint.x(), currPoint.y());
-            return boundaries;
-          }
-        }
+    for (const auto& startPoint : getBPNeighboursOfFP(fp, bbg)) {
+      std::vector<QPoint> points{fp};
+      bbg.visitPoint(startPoint);
+      SPDLOG_TRACE("  - ({},{})", startPoint.x(), startPoint.y());
+      points.push_back(startPoint);
+      // visit boundary neighbours until we can't find another non-fp
+      // neighbour
+      auto currPoint = getBPNeighbourOfBP(startPoint, bbg);
+      while (currPoint.has_value()) {
+        bbg.visitPoint(currPoint.value());
+        SPDLOG_TRACE("  - ({},{})", currPoint.value().x(),
+                     currPoint.value().y());
+        points.push_back(currPoint.value());
+        currPoint = getBPNeighbourOfBP(currPoint.value(), bbg);
+      }
+      // look for neighbour of last point which is in a FP
+      if (auto lastPoint = getFPNeighbourOfBP(points.back(), bbg);
+          lastPoint.has_value()) {
         // add final fixed point to boundary line
-        points.push_back(bbg.getFixedPoint(currPoint));
-        SPDLOG_TRACE("  - {} connecting pixels", points.size());
+        points.push_back(lastPoint.value());
         SPDLOG_TRACE("  -> fixedPoint ({},{})", points.back().x(),
                      points.back().y());
-        // we now have a line between two fixed points
-        boundaries.emplace_back(points, false);
-        --bbg.fixedPointCounter[i];
-        --bbg.fixedPointCounter[bbg.getFixedPointIndex(currPoint)];
+        SPDLOG_TRACE("  [{} connecting pixels]", points.size());
+        // check if is membrane - for now just check a point in the middle
+        bool isMembrane = false;
+        std::string membraneName;
+        if (auto p = points[points.size() / 2]; bbg.isMembrane(p)) {
+          isMembrane = true;
+          membraneName = bbg.getMembraneName(bbg.getMembraneIndex(p));
+        }
+        SPDLOG_TRACE("  membrane={}", membraneName);
+        // add line to boundaries
+        boundaries.emplace_back(points, false, isMembrane, membraneName);
+      } else {
+        SPDLOG_WARN(
+            "Failed to find FP neighbour of point ({},{}): skipping this "
+            "boundary line",
+            points.back().x(), points.back().y());
       }
     }
   }
+
   // any remaining points should be independent closed loops:
   //   - find (any non-fixed) boundary point
   //   - visit nearest (unvisited) neighbouring boundary point in x or y
   //   - if not found, check diagonal neighbours
   //   - if not found, loop is done
-  bool foundStartPoint;
-  do {
-    // find a boundary point to start from
-    QPoint startPoint;
-    foundStartPoint = false;
-    for (int x = 0; x < img.width(); ++x) {
-      for (int y = 0; y < img.height(); ++y) {
-        startPoint = QPoint(x, y);
-        if (bbg.isBoundary(startPoint) && !bbg.isFixed(startPoint)) {
-          foundStartPoint = true;
-          break;
-        }
+  auto startPoint = getBoundaryPoint(bbg);
+  while (startPoint.has_value()) {
+    SPDLOG_TRACE("loop start point ({},{})", startPoint.value().x(),
+                 startPoint.value().y());
+    bool isMembrane = bbg.isMembrane(startPoint.value());
+    std::size_t membraneIndex = bbg.getMembraneIndex(startPoint.value());
+    std::vector<QPoint> points{startPoint.value()};
+    bbg.visitPoint(startPoint.value());
+    auto currPoint = getBPNeighbourOfBP(startPoint.value(), bbg);
+    while (currPoint.has_value()) {
+      points.push_back(currPoint.value());
+      bbg.visitPoint(currPoint.value());
+      if (isMembrane &&
+          bbg.getMembraneIndex(currPoint.value()) != membraneIndex) {
+        SPDLOG_WARN("inconsistent membrane index: {} and {}", membraneIndex,
+                    bbg.getMembraneIndex(currPoint.value()));
       }
-      if (foundStartPoint) {
-        break;
-      }
+      currPoint = getBPNeighbourOfBP(currPoint.value(), bbg);
     }
-    if (foundStartPoint) {
-      SPDLOG_TRACE("loop start point ({},{})", startPoint.x(), startPoint.y());
-      bool isMembrane = bbg.isMembrane(startPoint);
-      std::size_t membraneIndex = bbg.getMembraneIndex(startPoint);
-      points.clear();
-      QPoint currPoint = startPoint;
-      bool finished = false;
-      std::size_t iterCount = 0;
-      while (!finished) {
-        points.push_back(currPoint);
-        finished = true;
-        bbg.visitPoint(currPoint);
-        for (const auto& directionPoint : nearestNeighbourDirectionPoints) {
-          if (bbg.isBoundary(currPoint + directionPoint) &&
-              !bbg.isFixed(currPoint + directionPoint)) {
-            currPoint += directionPoint;
-            finished = false;
-            break;
-          }
-        }
-        if (isMembrane && bbg.getMembraneIndex(currPoint) != membraneIndex) {
-          SPDLOG_WARN("inconsistent membrane index: {} and {}", membraneIndex,
-                      bbg.getMembraneIndex(currPoint));
-        }
-        if (iterCount++ > maxIterations) {
-          SPDLOG_ERROR("Failed to find end of loop: stuck at ({},{})",
-                       currPoint.x(), currPoint.y());
-          return boundaries;
-        }
-      }
-      SPDLOG_TRACE("  - {} points", points.size());
-      SPDLOG_TRACE("  - membrane: {}", isMembrane);
-      SPDLOG_TRACE("  - membrane index: {}", membraneIndex);
-      SPDLOG_TRACE("  - membrane name: {}", bbg.getMembraneName(membraneIndex));
-      boundaries.emplace_back(points, true, isMembrane,
-                              bbg.getMembraneName(membraneIndex));
-    }
-  } while (foundStartPoint);
+    SPDLOG_TRACE("  - {} points", points.size());
+    SPDLOG_TRACE("  - membrane: {}", isMembrane);
+    SPDLOG_TRACE("  - membrane index: {}", membraneIndex);
+    SPDLOG_TRACE("  - membrane name: {}", bbg.getMembraneName(membraneIndex));
+    boundaries.emplace_back(points, true, isMembrane,
+                            bbg.getMembraneName(membraneIndex));
+    startPoint = getBoundaryPoint(bbg);
+  }
 
-  return boundaries;
+  return {boundaries, boundaryPixelsImage};
 }
 
 }  // namespace boundary

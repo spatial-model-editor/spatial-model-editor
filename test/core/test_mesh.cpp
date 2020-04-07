@@ -45,7 +45,8 @@ static bool isCyclicPermutation(const std::vector<QPoint>& v1,
 SCENARIO("Mesh", "[core][mesh][boundary]") {
   GIVEN("empty image") {
     QImage img(24, 32, QImage::Format_RGB32);
-    img.fill(QColor(0, 0, 0).rgb());
+    QRgb col = QColor(0, 0, 0).rgb();
+    img.fill(col);
     // image boundary pixels
     std::vector<QPoint> imgBoundary;
     imgBoundary.emplace_back(0, 0);
@@ -55,7 +56,7 @@ SCENARIO("Mesh", "[core][mesh][boundary]") {
 
     mesh::Mesh mesh;
     mesh = mesh::Mesh(img, {QPointF(8, 8)}, {}, {999}, {}, {}, 1.0,
-                      QPointF(0, 0), std::vector<QRgb>{0});
+                      QPointF(0, 0), std::vector<QRgb>{col});
 
     // check boundaries
     const auto& boundaries = mesh.getBoundaries();
@@ -135,7 +136,6 @@ SCENARIO("Mesh", "[core][mesh][boundary]") {
         REQUIRE(mesh.getBoundaries()[0].points == oldBoundaryPoints);
       }
     }
-
     WHEN("max triangle area decreased") {
       THEN("more vertices & triangles") {
         REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 999);
@@ -159,7 +159,8 @@ SCENARIO("Mesh", "[core][mesh][boundary]") {
   }
   GIVEN("single convex compartment") {
     QImage img(24, 32, QImage::Format_RGB32);
-    img.fill(QColor(0, 0, 0).rgb());
+    QRgb bgcol = QColor(0, 0, 0).rgb();
+    img.fill(bgcol);
     // image boundary pixels
     std::vector<QPoint> imgBoundary;
     imgBoundary.emplace_back(0, 0);
@@ -186,7 +187,7 @@ SCENARIO("Mesh", "[core][mesh][boundary]") {
     img = img.mirrored(false, true);
 
     mesh::Mesh mesh(img, {QPointF(6, 6)}, {}, {999}, {}, {}, 1.0, QPointF(0, 0),
-                    std::vector<QRgb>{0, col});
+                    std::vector<QRgb>{bgcol, col});
 
     // check boundaries
     const auto& boundaries = mesh.getBoundaries();
@@ -225,7 +226,8 @@ SCENARIO("Mesh", "[core][mesh][boundary]") {
   }
   GIVEN("single convex compartment, degenerate points") {
     QImage img(24, 32, QImage::Format_RGB32);
-    img.fill(QColor(0, 0, 0).rgb());
+    QRgb bgcol = QColor(0, 0, 0).rgb();
+    img.fill(bgcol);
     // image boundary pixels
     std::vector<QPoint> imgBoundary;
     imgBoundary.emplace_back(0, 0);
@@ -262,7 +264,7 @@ SCENARIO("Mesh", "[core][mesh][boundary]") {
     img = img.mirrored(false, true);
 
     mesh::Mesh mesh(img, {QPointF(7, 6)}, {}, {999}, {}, {}, 1.0, QPointF(0, 0),
-                    std::vector<QRgb>{0, col});
+                    std::vector<QRgb>{bgcol, col});
 
     const auto& boundaries = mesh.getBoundaries();
     CAPTURE(boundaries[0].points);
@@ -274,7 +276,8 @@ SCENARIO("Mesh", "[core][mesh][boundary]") {
   }
   GIVEN("single concave compartment") {
     QImage img(24, 32, QImage::Format_RGB32);
-    img.fill(QColor(0, 0, 0).rgb());
+    QRgb bgcol = QColor(0, 0, 0).rgb();
+    img.fill(bgcol);
     // image boundary pixels
     std::vector<QPoint> imgBoundary;
     imgBoundary.emplace_back(0, 0);
@@ -327,7 +330,7 @@ SCENARIO("Mesh", "[core][mesh][boundary]") {
     img = img.mirrored(false, true);
 
     mesh::Mesh mesh(img, {QPointF(12, 13)}, {}, {999}, {}, {}, 1.0,
-                    QPointF(0, 0), std::vector<QRgb>{0, col});
+                    QPointF(0, 0), std::vector<QRgb>{bgcol, col});
 
     const auto& boundaries = mesh.getBoundaries();
     CAPTURE(boundaries[0].points);
@@ -337,111 +340,24 @@ SCENARIO("Mesh", "[core][mesh][boundary]") {
     REQUIRE(isCyclicPermutation(boundaries[0].points, imgBoundary));
     REQUIRE(isCyclicPermutation(boundaries[1].points, correctBoundary));
   }
-  // TODO: work out how to mesh these kinds of geometry, then re-enable & fix
-  // this test
-  /*
- GIVEN("two touching compartments, two fixed point pixels") { QImage
-img(21, 19, QImage::Format_RGB32);
-  // background compartment
-  img.fill(QColor(0, 0, 0).rgb());
-  // left compartment
-  QRgb col0 = QColor(223, 183, 243).rgb();
-  img.setPixel(10, 10, col0);
-  img.setPixel(11, 10, col0);
-  img.setPixel(12, 10, col0);
-  img.setPixel(10, 11, col0);
-  img.setPixel(11, 11, col0);
-  img.setPixel(12, 11, col0);
-  img.setPixel(10, 12, col0);
-  img.setPixel(11, 12, col0);
-  img.setPixel(12, 12, col0);
-  // right compartment
-  QRgb col1 = QColor(77, 73, 11).rgb();
-  img.setPixel(13, 10, col1);
-  img.setPixel(14, 10, col1);
-  img.setPixel(15, 10, col1);
-  img.setPixel(13, 11, col1);
-  img.setPixel(14, 11, col1);
-  img.setPixel(15, 11, col1);
-  img.setPixel(13, 12, col1);
-  img.setPixel(14, 12, col1);
-  img.setPixel(15, 12, col1);
+  GIVEN("two touching compartments, two fixed point pixels") {
+    QImage img(":/geometry/two-blobs-100x100.png");
+    QRgb colblack = QColor(0, 2, 0).rgb();
+    QRgb colgrey = QColor(132, 134, 131).rgb();
+    QRgb colwhite = QColor(250, 252, 249).rgb();
+    std::vector<QPointF> interiorPoints = {QPointF(12, 12), QPointF(33, 66),
+                                           QPointF(66, 33)};
+    mesh::Mesh mesh(img, interiorPoints, {}, {999, 999, 999}, {}, {}, 1.0,
+                    QPointF(0, 0),
+                    std::vector<QRgb>{colblack, colgrey, colwhite});
 
-  // image boundary pixels
-  std::vector<QPoint> imgBoundary;
-  imgBoundary.emplace_back(0, 0);
-  imgBoundary.emplace_back(0, img.height() - 1);
-  imgBoundary.emplace_back(img.width() - 1, img.height() - 1);
-  imgBoundary.emplace_back(img.width() - 1, 0);
-
-  // boundary lines
-  std::vector<QPoint> bound1;
-  bound1.emplace_back(12, 10);
-  bound1.emplace_back(12, 12);
-
-  std::vector<QPoint> bound2;
-  bound2.emplace_back(12, 12);
-  bound2.emplace_back(10, 12);
-  bound2.emplace_back(10, 10);
-  bound2.emplace_back(12, 10);
-
-  std::vector<QPoint> bound3;
-  bound3.emplace_back(12, 10);
-  bound3.emplace_back(15, 10);
-  bound3.emplace_back(15, 12);
-  bound3.emplace_back(12, 12);
-
-  // flip y-axis to match (0,0) == bottom-left of meshing output
-  img = img.mirrored(false, true);
-
-  mesh::Mesh mesh(img, {QPointF(11, 11), QPointF(14, 11)}, {}, {999}, {}, {},
-                  1.0, QPointF(0, 0), std::vector<QRgb>{0, col0, col1});
-
-  const auto& boundaries = mesh.getBoundaries();
-  CAPTURE(boundaries[0].points);
-  CAPTURE(boundaries[1].points);
-  CAPTURE(boundaries[2].points);
-  CAPTURE(boundaries[3].points);
-  REQUIRE(boundaries[0].isLoop);
-  REQUIRE(!boundaries[1].isLoop);
-  REQUIRE(!boundaries[2].isLoop);
-  REQUIRE(!boundaries[3].isLoop);
-  REQUIRE(isCyclicPermutation(boundaries[0].points, imgBoundary));
-  REQUIRE(isCyclicPermutation(boundaries[1].points, bound3));
-  REQUIRE(isCyclicPermutation(boundaries[2].points, bound2));
-  REQUIRE(isCyclicPermutation(boundaries[3].points, bound1));
-
-  auto [boundaryImage, maskImage] =
-      mesh.getBoundariesImages(QSize(100, 100), 3);
-  REQUIRE(boundaryImage.width() == 100);
-  REQUIRE(boundaryImage.height() == 90);
-
-  QSize sz(500, 500);
-  auto [meshImg, maskMeshImage] = mesh.getMeshImages(sz, 0);
-  meshImg.save("meshImg.png");
-  QRgb fillColour = QColor(235, 235, 255).rgba();
-  // outside
-  REQUIRE(meshImg.pixel(5, 5) == 0);
-  REQUIRE(meshImg.pixel(112, 95) == 0);
-  // compartment 1
-  REQUIRE(meshImg.pixel(335, 179) == 0);
-  REQUIRE(meshImg.pixel(303, 201) == 0);
-  // compartment 2
-  REQUIRE(meshImg.pixel(247, 196) == fillColour);
-  REQUIRE(meshImg.pixel(255, 179) == fillColour);
-  auto [meshImg2, maskMeshImage2] = mesh.getMeshImages(sz, 1);
-  meshImg2.save("meshImg2.png");
-  // outside
-  REQUIRE(meshImg2.pixel(5, 5) == 0);
-  REQUIRE(meshImg2.pixel(112, 95) == 0);
-  // compartment 1
-  REQUIRE(meshImg2.pixel(335, 179) == fillColour);
-  REQUIRE(meshImg2.pixel(303, 201) == fillColour);
-  // compartment 2
-  REQUIRE(meshImg2.pixel(247, 196) == 0);
-  REQUIRE(meshImg2.pixel(255, 179) == 0);
-}
-*/
+    const auto& boundaries = mesh.getBoundaries();
+    REQUIRE(boundaries.size() == 4);
+    REQUIRE(!boundaries[0].isLoop);
+    REQUIRE(!boundaries[1].isLoop);
+    REQUIRE(!boundaries[2].isLoop);
+    REQUIRE(boundaries[3].isLoop);
+  }
   GIVEN("concave cell nucleus, one membrane") {
     QImage img(":/geometry/concave-cell-nucleus-100x100.png");
     QRgb c1 = QColor(144, 97, 193).rgb();
