@@ -28,7 +28,7 @@ class Compartment {
 
  public:
   explicit Compartment(sbml::SbmlDocWrapper* sbmlDocWrapper,
-                       const std::string& compartmentId);
+                       const std::string& sId);
   const std::string& getId() const;
   void setName(const std::string& name);
   std::string getName() const;

@@ -1,6 +1,10 @@
 #pragma once
 
+#include <map>
 #include <string>
+#include <vector>
+
+#include "sme_reactionparameter.hpp"
 
 namespace sbml {
 class SbmlDocWrapper;
@@ -18,13 +22,15 @@ class Reaction {
  private:
   sbml::SbmlDocWrapper* s;
   std::string id;
+  std::vector<ReactionParameter> parameters;
 
  public:
   explicit Reaction(sbml::SbmlDocWrapper* sbmlDocWrapper,
-                    const std::string& speciesId);
+                    const std::string& sId);
   const std::string& getId() const;
   void setName(const std::string& name);
   std::string getName() const;
+  std::map<std::string, ReactionParameter*> getParameters();
   std::string getStr() const;
 };
 

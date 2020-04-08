@@ -6,6 +6,7 @@ target_sources(sme
                sme_model.cpp
                sme_module.cpp
                sme_reaction.cpp
+               sme_reactionparameter.cpp
                sme_species.cpp)
 
 target_compile_features(sme PRIVATE cxx_std_17)
