@@ -4,6 +4,8 @@ target_sources(gui
                tabfunctions.hpp
                tabgeometry.cpp
                tabgeometry.hpp
+               tabmembranes.cpp
+               tabmembranes.hpp
                tabreactions.cpp
                tabreactions.hpp
                tabsimulate.cpp

@@ -135,8 +135,3 @@ target_link_libraries(core
                              Qt5::Gui
                              Qt5::Core
                              ${SME_EXTRA_CORE_LIBS})
-
-# qt5_import_plugins(core EXCLUDE_BY_TYPE bearer EXCLUDE_BY_TYPE generic INCLUDE
-# Qt5::QGifPlugin Qt5::QJpegPlugin EXCLUDE_BY_TYPE platforminputcontexts
-# EXCLUDE_BY_TYPE platforms EXCLUDE_BY_TYPE platformthemes EXCLUDE_BY_TYPE
-# printsupport EXCLUDE_BY_TYPE sqldrivers)
