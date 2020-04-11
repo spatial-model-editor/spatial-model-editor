@@ -75,7 +75,8 @@ setup(
     url='https://spatial-model-editor.readthedocs.io/',
     project_urls={
         'Github': 'https://github.com/lkeegan/spatial-model-editor',
-        'Documentation': 'https://github.com/lkeegan/spatial-model-editor/issues',
+        'Issues': 'https://github.com/lkeegan/spatial-model-editor/issues',
+        'Try it online': 'https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb',
     },
     classifiers=[
         "Topic :: Scientific/Engineering :: Bio-Informatics",

@@ -7,6 +7,7 @@
 class QLabel;
 class TabFunctions;
 class TabGeometry;
+class TabMembranes;
 class TabReactions;
 class TabSimulate;
 class TabSpecies;
@@ -37,8 +38,8 @@ class MainWindow : public QMainWindow {
   void importGeometryImage(const QImage &image);
 
   void tabMain_currentChanged(int index);
-  void tabMain_updateMembranes();
   TabGeometry *tabGeometry;
+  TabMembranes *tabMembranes;
   TabSpecies *tabSpecies;
   TabReactions *tabReactions;
   TabFunctions *tabFunctions;
@@ -63,6 +64,4 @@ class MainWindow : public QMainWindow {
 
   // Advanced menu actions
   void actionIntegrator_options_triggered();
-  // membranes
-  void listMembranes_currentRowChanged(int currentRow);
 };

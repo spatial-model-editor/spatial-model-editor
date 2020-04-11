@@ -19,6 +19,7 @@
 #include "sbml.hpp"
 #include "tabfunctions.hpp"
 #include "tabgeometry.hpp"
+#include "tabmembranes.hpp"
 #include "tabreactions.hpp"
 #include "tabsimulate.hpp"
 #include "tabspecies.hpp"
@@ -37,6 +38,9 @@ MainWindow::MainWindow(QWidget *parent)
   tabGeometry = new TabGeometry(sbmlDoc, ui->lblGeometry,
                                 statusBarPermanentMessage, ui->tabReactions);
   ui->tabGeometry->layout()->addWidget(tabGeometry);
+
+  tabMembranes = new TabMembranes(sbmlDoc, ui->tabMembranes);
+  ui->tabMembranes->layout()->addWidget(tabMembranes);
 
   tabSpecies = new TabSpecies(sbmlDoc, ui->lblGeometry, ui->tabSpecies);
   ui->tabSpecies->layout()->addWidget(tabSpecies);
@@ -126,9 +130,6 @@ void MainWindow::setupConnections() {
   connect(tabGeometry, &TabGeometry::modelGeometryChanged, this,
           &MainWindow::enableTabs);
 
-  connect(ui->listMembranes, &QListWidget::currentRowChanged, this,
-          &MainWindow::listMembranes_currentRowChanged);
-
   connect(ui->actionGroupSimType, &QActionGroup::triggered, this,
           [s = tabSimulate, ui = ui.get()](QAction *action) {
             Q_UNUSED(action);
@@ -156,7 +157,7 @@ void MainWindow::tabMain_currentChanged(int index) {
       tabGeometry->loadModelData();
       break;
     case TabIndex::MEMBRANES:
-      tabMain_updateMembranes();
+      tabMembranes->loadModelData();
       break;
     case TabIndex::SPECIES:
       tabSpecies->loadModelData();
@@ -182,17 +183,6 @@ void MainWindow::tabMain_currentChanged(int index) {
       break;
     default:
       SPDLOG_ERROR("Tab index {} not valid", index);
-  }
-}
-
-void MainWindow::tabMain_updateMembranes() {
-  ui->lblMembraneShape->clear();
-  ui->listMembranes->clear();
-  ui->listMembranes->addItems(sbmlDoc.membraneNames);
-  ui->lblGeometry->setImage(sbmlDoc.getCompartmentImage());
-  ui->lblGeometryStatus->setText("Compartment Geometry:");
-  if (ui->listMembranes->count() > 0) {
-    ui->listMembranes->setCurrentRow(0);
   }
 }
 
@@ -401,17 +391,4 @@ bool MainWindow::isValidModelAndGeometryImage() {
   });
   msgbox->open();
   return false;
-}
-
-void MainWindow::listMembranes_currentRowChanged(int currentRow) {
-  if (currentRow >= 0 && currentRow < ui->listMembranes->count()) {
-    const QString &membraneID = sbmlDoc.membranes.at(currentRow);
-    SPDLOG_DEBUG("row {} selected", currentRow);
-    SPDLOG_DEBUG("  - Membrane Name: {}",
-                 ui->listMembranes->currentItem()->text().toStdString());
-    SPDLOG_DEBUG("  - Membrane Id: {}", membraneID.toStdString());
-    // update image
-    QPixmap pixmap = QPixmap::fromImage(sbmlDoc.getMembraneImage(membraneID));
-    ui->lblMembraneShape->setPixmap(pixmap);
-  }
 }
