@@ -49,6 +49,8 @@ TabSimulate::TabSimulate(sbml::SbmlDocWrapper &doc,
           &TabSimulate::stopSimulation);
   connect(ui->btnSliceImage, &QPushButton::clicked, this,
           &TabSimulate::btnSliceImage_clicked);
+  connect(ui->btnSaveImage, &QPushButton::clicked, this,
+          &TabSimulate::btnSaveImage_clicked);
   connect(ui->btnDisplayOptions, &QPushButton::clicked, this,
           &TabSimulate::btnDisplayOptions_clicked);
 
@@ -289,6 +291,19 @@ void TabSimulate::btnSliceImage_clicked() {
   if (dialog.exec() == QDialog::Accepted) {
     SPDLOG_DEBUG("do something");
   }
+}
+
+void TabSimulate::btnSaveImage_clicked() {
+  QString filename = QFileDialog::getSaveFileName(
+      this, "Save concentration image", "", "PNG (*.png)", nullptr,
+      QFileDialog::Option::DontUseNativeDialog);
+  if (filename.isEmpty()) {
+    return;
+  }
+  if (filename.right(4) != ".png") {
+    filename.append(".png");
+  }
+  lblGeometry->getImage().save(filename);
 }
 
 void TabSimulate::updateSpeciesToDraw() {

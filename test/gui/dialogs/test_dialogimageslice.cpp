@@ -40,5 +40,24 @@ SCENARIO("DialogImageSlice", "[gui][dialogs][imageslice]") {
       REQUIRE(slice.pixel(3, 99) == col2);
       REQUIRE(slice.pixel(4, 0) == col1);
     }
+    WHEN("user clicks save image, then cancel") {
+      ModalWidgetTimer mwt2;
+      mwt.addUserAction({"Enter"}, true, &mwt2);
+      mwt2.addUserAction({"Esc"});
+      mwt.start();
+      dia.exec();
+      REQUIRE(mwt2.getResult() == "QFileDialog::AcceptSave");
+    }
+    WHEN("user clicks save image, then enters filename") {
+      ModalWidgetTimer mwt2;
+      mwt.addUserAction({"Enter"}, true, &mwt2);
+      mwt2.addUserAction({"x", "y", "z"});
+      mwt.start();
+      dia.exec();
+      REQUIRE(mwt2.getResult() == "QFileDialog::AcceptSave");
+      QImage img("xyz.png");
+      REQUIRE(img.width() == imgs.size());
+      REQUIRE(img.height() == imgs[0].height());
+    }
   }
 }

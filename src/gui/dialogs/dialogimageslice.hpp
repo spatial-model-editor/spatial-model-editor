@@ -26,4 +26,5 @@ class DialogImageSlice : public QDialog {
   void sliceAtX(int x);
   void sliceAtY(int y);
   void lblImage_mouseOver(const QPoint& point);
+  void saveSlicedImage();
 };

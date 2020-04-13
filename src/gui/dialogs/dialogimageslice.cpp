@@ -1,5 +1,7 @@
 #include "dialogimageslice.hpp"
 
+#include <QFileDialog>
+
 #include "ui_dialogimageslice.h"
 
 DialogImageSlice::DialogImageSlice(const QVector<QImage>& images,
@@ -15,7 +17,7 @@ DialogImageSlice::DialogImageSlice(const QVector<QImage>& images,
   ui->lblImage->setTransformationMode(Qt::SmoothTransformation);
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
-          &DialogImageSlice::accept);
+          &DialogImageSlice::saveSlicedImage);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogImageSlice::reject);
   connect(ui->cmbImageVerticalAxis, qOverload<int>(&QComboBox::activated), this,
@@ -87,4 +89,17 @@ void DialogImageSlice::lblImage_mouseOver(const QPoint& point) {
   }
   ui->lblMouseLocation->setText(
       QString("Mouse location: (x=%1, y=%2, t=%3)").arg(x).arg(y).arg(t));
+}
+
+void DialogImageSlice::saveSlicedImage() {
+  QString filename = QFileDialog::getSaveFileName(
+      this, "Save sliced image", "", "PNG (*.png)", nullptr,
+      QFileDialog::Option::DontUseNativeDialog);
+  if (filename.isEmpty()) {
+    return;
+  }
+  if (filename.right(4) != ".png") {
+    filename.append(".png");
+  }
+  getSlicedImage().save(filename);
 }
