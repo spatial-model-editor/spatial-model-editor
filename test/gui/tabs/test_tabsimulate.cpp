@@ -26,6 +26,7 @@ SCENARIO("Simulate Tab", "[gui][tabs][simulate]") {
   auto *btnResetSimulation = tab.findChild<QPushButton *>("btnResetSimulation");
   auto *hslideTime = tab.findChild<QSlider *>("hslideTime");
   auto *pltPlot = tab.findChild<QCustomPlot *>("pltPlot");
+  auto *btnSaveImage = tab.findChild<QPushButton *>("btnSaveImage");
   auto *btnDisplayOptions = tab.findChild<QPushButton *>("btnDisplayOptions");
   REQUIRE(pltPlot != nullptr);
 
@@ -81,4 +82,19 @@ SCENARIO("Simulate Tab", "[gui][tabs][simulate]") {
   sendMouseClick(btnResetSimulation);
   REQUIRE(hslideTime->isEnabled() == true);
   REQUIRE(pltPlot->graphCount() == 9);
+
+  // click save image & cancel
+  mwt.addUserAction({"Esc"});
+  mwt.start();
+  sendMouseClick(btnSaveImage);
+  REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
+
+  // click save image & save x1.png
+  mwt.addUserAction({"x", "1"});
+  mwt.start();
+  sendMouseClick(btnSaveImage);
+  REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
+  QImage img("x1.png");
+  REQUIRE(img.width() == 100);
+  REQUIRE(img.height() == 100);
 }

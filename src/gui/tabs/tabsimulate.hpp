@@ -56,6 +56,7 @@ class TabSimulate : public QWidget {
 
   void btnSimulate_clicked();
   void btnSliceImage_clicked();
+  void btnSaveImage_clicked();
   void updateSpeciesToDraw();
   void updatePlotAndImages();
   void btnDisplayOptions_clicked();

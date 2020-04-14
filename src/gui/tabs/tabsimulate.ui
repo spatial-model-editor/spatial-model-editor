@@ -37,13 +37,6 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="6" colspan="2">
-      <widget class="QPushButton" name="btnDisplayOptions">
-       <property name="text">
-        <string>Display options...</string>
-       </property>
-      </widget>
-     </item>
      <item row="0" column="6">
       <widget class="QPushButton" name="btnStopSimulation">
        <property name="text">
@@ -117,6 +110,20 @@
        </property>
        <property name="tickPosition">
         <enum>QSlider::NoTicks</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="7">
+      <widget class="QPushButton" name="btnDisplayOptions">
+       <property name="text">
+        <string>Display options...</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="6">
+      <widget class="QPushButton" name="btnSaveImage">
+       <property name="text">
+        <string>Save image...</string>
        </property>
       </widget>
      </item>
