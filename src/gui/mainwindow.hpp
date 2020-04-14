@@ -20,7 +20,7 @@ class MainWindow : public QMainWindow {
   Q_OBJECT
 
  public:
-  explicit MainWindow(QWidget *parent = nullptr);
+  explicit MainWindow(const QString &filename = {}, QWidget *parent = nullptr);
   ~MainWindow();
 
  private:
@@ -44,6 +44,8 @@ class MainWindow : public QMainWindow {
   TabReactions *tabReactions;
   TabFunctions *tabFunctions;
   TabSimulate *tabSimulate;
+
+  void validateSBMLDoc(const QString &filename = {});
   // if SBML model and geometry are both valid, enable all tabs
   void enableTabs();
 
@@ -64,4 +66,5 @@ class MainWindow : public QMainWindow {
 
   // Advanced menu actions
   void actionIntegrator_options_triggered();
+  void actionMax_cpu_threads_triggered();
 };

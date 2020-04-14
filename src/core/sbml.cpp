@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <set>
+#include <stdexcept>
 #include <utility>
 
 #include "logger.hpp"
@@ -507,13 +508,13 @@ void SbmlDocWrapper::validateAndUpgradeSBMLDoc() {
   // check for import errors
   if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
       0) {
-    SPDLOG_WARN("Errors while reading SBML file (continuing anyway...)");
-    isValid = true;
-  } else {
-    SPDLOG_INFO("Successfully imported SBML Level {}, Version {} model",
-                doc->getLevel(), doc->getVersion());
-    isValid = true;
+    SPDLOG_ERROR("Errors while reading SBML file");
+    isValid = false;
+    return;
   }
+  SPDLOG_INFO("Successfully imported SBML Level {}, Version {} model",
+              doc->getLevel(), doc->getVersion());
+  isValid = true;
   // upgrade SBML document to latest version
   auto lvl = libsbml::SBMLDocument::getDefaultLevel();
   auto ver = libsbml::SBMLDocument::getDefaultVersion();
@@ -550,6 +551,9 @@ void SbmlDocWrapper::validateAndUpgradeSBMLDoc() {
 void SbmlDocWrapper::initModelData() {
   validateAndUpgradeSBMLDoc();
   printSBMLDocErrors(doc.get());
+  if (!isValid) {
+    return;
+  }
   importCompartmentsAndSpeciesFromSBML();
   updateFunctionList();
 
@@ -574,6 +578,7 @@ void SbmlDocWrapper::exportSBMLFile(const std::string &filename) {
   }
   writeGeometryMeshToSBML();
   SPDLOG_INFO("Exporting SBML model to {}", filename);
+  currentFilename = filename.c_str();
   if (!libsbml::SBMLWriter().writeSBML(doc.get(), filename)) {
     SPDLOG_ERROR("Failed to write to {}", filename);
   }
@@ -1611,6 +1616,7 @@ void SbmlDocWrapper::setSampledFieldConcentration(
   sf->setSamples(concentrationArray);
   sf->setNumSamples1(compartmentImage.width());
   sf->setNumSamples2(compartmentImage.height());
+  sf->setSamplesLength(compartmentImage.width() * compartmentImage.height());
   SPDLOG_INFO("  - set samples to {}x{} array", sf->getNumSamples1(),
               sf->getNumSamples2());
   sf->setDataType(libsbml::DataKind_t::SPATIAL_DATAKIND_DOUBLE);

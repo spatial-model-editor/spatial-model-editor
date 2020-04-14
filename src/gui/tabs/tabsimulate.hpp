@@ -33,6 +33,8 @@ class TabSimulate : public QWidget {
   void reset();
   simulate::IntegratorOptions getIntegratorOptions() const;
   void setIntegratorOptions(const simulate::IntegratorOptions &options);
+  void setMaxThreads(std::size_t maxThreads);
+  std::size_t getMaxThreads() const;
 
  private:
   std::unique_ptr<Ui::TabSimulate> ui;
@@ -53,6 +55,7 @@ class TabSimulate : public QWidget {
   bool plotShowMinMax = true;
   bool isSimulationRunning = false;
   simulate::IntegratorOptions integratorOptions;
+  std::size_t numMaxThreads = 0;
 
   void btnSimulate_clicked();
   void btnSliceImage_clicked();

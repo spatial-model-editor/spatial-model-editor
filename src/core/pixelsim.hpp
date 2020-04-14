@@ -116,6 +116,7 @@ class PixelSim : public BaseSim {
   double maxTimestep = std::numeric_limits<double>::max();
   double nextTimestep = 1e-7;
   double epsilon = 1e-14;
+  std::size_t numMaxThreads = 1;
 
  public:
   explicit PixelSim(
@@ -130,6 +131,8 @@ class PixelSim : public BaseSim {
   virtual IntegratorError getIntegratorError() const override;
   virtual void setMaxDt(double maxDt) override;
   virtual double getMaxDt() const override;
+  virtual void setMaxThreads(std::size_t maxThreads) override;
+  virtual std::size_t getMaxThreads() const override;
   std::size_t run(double time) override;
   const std::vector<double> &getConcentrations(
       std::size_t compartmentIndex) const override;

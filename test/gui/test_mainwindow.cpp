@@ -19,12 +19,21 @@ static void openBuiltInModel(MainWindow &w, const QString &shortcutKey = "V") {
   sendKeyEvents(menuOpen_example_SBML_file, {shortcutKey});
 }
 
+SCENARIO("Mainwindow: open non-existent file", "[gui][mainwindow]") {
+  ModalWidgetTimer mwt;
+  mwt.addUserAction({"Esc"});
+  mwt.start();
+  MainWindow w("dontexist.xml");
+  w.show();
+}
+
 SCENARIO("Mainwindow: shortcut keys", "[gui][mainwindow][shortcuts]") {
   MainWindow w;
   auto *menu_Tools = w.findChild<QMenu *>("menu_Tools");
   auto *menuSimulation_type = w.findChild<QMenu *>("menuSimulation_type");
   auto *actionSimTypeDUNE = w.findChild<QAction *>("actionSimTypeDUNE");
   auto *actionSimTypePixel = w.findChild<QAction *>("actionSimTypePixel");
+  auto *menu_Advanced = w.findChild<QMenu *>("menu_Advanced");
   auto *tabMain = w.findChild<QTabWidget *>("tabMain");
   w.show();
   waitFor(&w);
@@ -183,6 +192,22 @@ SCENARIO("Mainwindow: shortcut keys", "[gui][mainwindow][shortcuts]") {
     sendKeyEvents(menuSimulation_type, {"D"});
     REQUIRE(actionSimTypeDUNE->isChecked() == true);
     REQUIRE(actionSimTypePixel->isChecked() == false);
+  }
+  WHEN("menu: Advanced->Max cpu threads... ") {
+    THEN("cancel") {
+      mwt.addUserAction({"Esc"});
+      mwt.start();
+      sendKeyEvents(&w, {"Alt+A "});
+      sendKeyEvents(menu_Advanced, {"M"});
+      REQUIRE(mwt.getResult() == "");
+    }
+    THEN("enter a value") {
+      mwt.addUserAction({"7"});
+      mwt.start();
+      sendKeyEvents(&w, {"Alt+A "});
+      sendKeyEvents(menu_Advanced, {"M"});
+      REQUIRE(mwt.getResult() == "");
+    }
   }
 }
 

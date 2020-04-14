@@ -37,7 +37,8 @@ void pybindModel(const pybind11::module& m) {
       .def("export_sbml_file", &sme::Model::exportSbmlFile,
            pybind11::arg("filename"))
       .def("simulate", &sme::Model::simulate, pybind11::arg("simulation_time"),
-           pybind11::arg("image_interval"))
+           pybind11::arg("image_interval"),
+           pybind11::arg("max_cpu_threads") = 0)
       .def("simulation_time_points", &sme::Model::simulationTimePoints)
       .def("concentration_image", &sme::Model::concentrationImage,
            pybind11::arg("time_point_index"))
@@ -78,7 +79,8 @@ void Model::exportSbmlFile(const std::string& filename) const {
   s->exportSBMLFile(filename);
 }
 
-void Model::simulate(double simulationTime, double imageInterval) {
+void Model::simulate(double simulationTime, double imageInterval,
+                     std::size_t maxThreads) {
   sim = std::make_unique<simulate::Simulation>(
       *s.get(), simulate::SimulatorType::Pixel, 2);
   auto options = sim->getIntegratorOptions();
@@ -87,6 +89,7 @@ void Model::simulate(double simulationTime, double imageInterval) {
   options.maxAbsErr = std::numeric_limits<double>::max();
   options.maxRelErr = 0.005;
   sim->setIntegratorOptions(options);
+  sim->setMaxThreads(maxThreads);
   while (sim->getTimePoints().back() < simulationTime) {
     sim->doTimestep(imageInterval);
   }

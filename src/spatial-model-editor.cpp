@@ -9,6 +9,7 @@
 #include "version.hpp"
 
 int main(int argc, char *argv[]) {
+  QString filename;
   if (argc > 1) {
     if (std::string arg = argv[1]; (arg == "-v") || (arg == "--version")) {
       fmt::print("{}\n", SPATIAL_MODEL_EDITOR_VERSION);
@@ -17,6 +18,8 @@ int main(int argc, char *argv[]) {
       fmt::print("Spatial Model Editor {}\n", SPATIAL_MODEL_EDITOR_VERSION);
       fmt::print("https://www.github.com/lkeegan/spatial-model-editor\n");
       return 0;
+    } else {
+      filename = argv[1];
     }
   }
 
@@ -27,7 +30,7 @@ int main(int argc, char *argv[]) {
 
   QApplication a(argc, argv);
 
-  MainWindow w;
+  MainWindow w(filename);
   w.show();
 
   return a.exec();

@@ -303,6 +303,7 @@
      <string>&amp;Advanced</string>
     </property>
     <addaction name="actionIntegrator_options"/>
+    <addaction name="actionMax_cpu_threads"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuImport"/>
@@ -494,7 +495,12 @@
   </action>
   <action name="actionIntegrator_options">
    <property name="text">
-    <string>Integrator options...</string>
+    <string>&amp;Integrator options...</string>
+   </property>
+  </action>
+  <action name="actionMax_cpu_threads">
+   <property name="text">
+    <string>&amp;Max cpu threads...</string>
    </property>
   </action>
   <actiongroup name="actionGroupSimType">

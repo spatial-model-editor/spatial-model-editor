@@ -457,6 +457,12 @@ void DuneSim::setMaxDt(double maxDt) {
 
 double DuneSim::getMaxDt() const { return maxTimestep; }
 
+void DuneSim::setMaxThreads(std::size_t maxThreads) {
+  SPDLOG_INFO("DUNE is single threaded - ignoring");
+}
+
+std::size_t DuneSim::getMaxThreads() const { return 0; }
+
 std::size_t DuneSim::run(double time) {
   try {
     pDuneImpl->run(time, maxTimestep);

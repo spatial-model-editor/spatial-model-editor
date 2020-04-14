@@ -69,6 +69,14 @@ void Simulation::setIntegratorOptions(const IntegratorOptions &options) {
   simulator->setMaxDt(options.maxTimestep);
 }
 
+void Simulation::setMaxThreads(std::size_t maxThreads) {
+  simulator->setMaxThreads(maxThreads);
+}
+
+std::size_t Simulation::getMaxThreads() const {
+  return simulator->getMaxThreads();
+}
+
 static std::vector<AvgMinMax> calculateAvgMinMax(
     const std::vector<double> &concs, std::size_t nSpecies) {
   std::vector<AvgMinMax> avgMinMax(nSpecies);
