@@ -27,7 +27,7 @@
 #include "utils.hpp"
 #include "version.hpp"
 
-MainWindow::MainWindow(QWidget *parent)
+MainWindow::MainWindow(const QString &filename, QWidget *parent)
     : QMainWindow(parent), ui{std::make_unique<Ui::MainWindow>()} {
   ui->setupUi(this);
   Q_INIT_RESOURCE(resources);
@@ -59,14 +59,10 @@ MainWindow::MainWindow(QWidget *parent)
   // set initial splitter position: 1/4 for image, 3/4 for tabs
   ui->splitter->setSizes({1000, 3000});
 
-  // load empty model by default
-  sbmlDoc.createSBMLFile("untitled-model");
-  this->setWindowTitle(
-      QString("Spatial Model Editor [%1]").arg(sbmlDoc.currentFilename));
-
-  enableTabs();
-  ui->tabMain->setCurrentIndex(0);
-  tabMain_currentChanged(0);
+  if (!filename.isEmpty()) {
+    sbmlDoc.importSBMLFile(filename.toStdString());
+  }
+  validateSBMLDoc(filename);
 }
 
 MainWindow::~MainWindow() = default;
@@ -105,6 +101,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->actionIntegrator_options, &QAction::triggered, this,
           &MainWindow::actionIntegrator_options_triggered);
+
+  connect(ui->actionMax_cpu_threads, &QAction::triggered, this,
+          &MainWindow::actionMax_cpu_threads_triggered);
 
   connect(ui->action_What_s_this, &QAction::triggered, this,
           []() { QWhatsThis::enterWhatsThisMode(); });
@@ -186,6 +185,25 @@ void MainWindow::tabMain_currentChanged(int index) {
   }
 }
 
+void MainWindow::validateSBMLDoc(const QString &filename) {
+  if (!sbmlDoc.isValid) {
+    // load empty model by default
+    sbmlDoc = sbml::SbmlDocWrapper();
+    sbmlDoc.createSBMLFile("untitled-model");
+    // warn user if they tried to load an invalid file
+    if (!filename.isEmpty()) {
+      QMessageBox::warning(this, "Failed to load file",
+                           "Failed to load file " + filename);
+    }
+  }
+  tabSimulate->reset();
+  ui->tabMain->setCurrentIndex(0);
+  tabMain_currentChanged(0);
+  enableTabs();
+  this->setWindowTitle(
+      QString("Spatial Model Editor [%1]").arg(sbmlDoc.currentFilename));
+}
+
 void MainWindow::enableTabs() {
   bool enable = sbmlDoc.isValid && sbmlDoc.hasValidGeometry;
   for (int i = 1; i < ui->tabMain->count(); ++i) {
@@ -201,12 +219,7 @@ void MainWindow::action_New_triggered() {
   if (ok && !modelName.isEmpty()) {
     sbmlDoc = sbml::SbmlDocWrapper();
     sbmlDoc.createSBMLFile(modelName.toStdString());
-    tabSimulate->reset();
-    ui->tabMain->setCurrentIndex(0);
-    tabMain_currentChanged(0);
-    enableTabs();
-    this->setWindowTitle(
-        QString("Spatial Model Editor [%1]").arg(sbmlDoc.currentFilename));
+    validateSBMLDoc();
   }
 }
 
@@ -214,18 +227,12 @@ void MainWindow::action_Open_SBML_file_triggered() {
   QString filename = QFileDialog::getOpenFileName(
       this, "Open SBML file", "", "SBML file (*.xml);; All files (*.*)",
       nullptr, QFileDialog::Option::DontUseNativeDialog);
-  if (!filename.isEmpty()) {
-    sbmlDoc = sbml::SbmlDocWrapper();
-    sbmlDoc.importSBMLFile(filename.toStdString());
-    if (sbmlDoc.isValid) {
-      tabSimulate->reset();
-      ui->tabMain->setCurrentIndex(0);
-      tabMain_currentChanged(0);
-      enableTabs();
-      this->setWindowTitle(
-          QString("Spatial Model Editor [%1]").arg(sbmlDoc.currentFilename));
-    }
+  if (filename.isEmpty()) {
+    return;
   }
+  sbmlDoc = sbml::SbmlDocWrapper();
+  sbmlDoc.importSBMLFile(filename.toStdString());
+  validateSBMLDoc(filename);
 }
 
 void MainWindow::menuOpen_example_SBML_file_triggered(const QAction *action) {
@@ -238,10 +245,7 @@ void MainWindow::menuOpen_example_SBML_file_triggered(const QAction *action) {
   }
   sbmlDoc = sbml::SbmlDocWrapper();
   sbmlDoc.importSBMLString(f.readAll().toStdString());
-  tabSimulate->reset();
-  ui->tabMain->setCurrentIndex(0);
-  tabMain_currentChanged(0);
-  enableTabs();
+  validateSBMLDoc(filename);
 }
 
 void MainWindow::action_Save_SBML_file_triggered() {
@@ -252,12 +256,15 @@ void MainWindow::action_Save_SBML_file_triggered() {
   QString filename = QFileDialog::getSaveFileName(
       this, "Save SBML file", sbmlDoc.currentFilename, "SBML file (*.xml)",
       nullptr, QFileDialog::Option::DontUseNativeDialog);
-  if (!filename.isEmpty()) {
-    if (filename.right(4) != ".xml") {
-      filename.append(".xml");
-    }
-    sbmlDoc.exportSBMLFile(filename.toStdString());
+  if (filename.isEmpty()) {
+    return;
   }
+  if (filename.right(4) != ".xml") {
+    filename.append(".xml");
+  }
+  sbmlDoc.exportSBMLFile(filename.toStdString());
+  this->setWindowTitle(
+      QString("Spatial Model Editor [%1]").arg(sbmlDoc.currentFilename));
 }
 
 void MainWindow::actionExport_Dune_ini_file_triggered() {
@@ -354,6 +361,19 @@ void MainWindow::actionIntegrator_options_triggered() {
   DialogIntegratorOptions dialog(tabSimulate->getIntegratorOptions());
   if (dialog.exec() == QDialog::Accepted) {
     tabSimulate->setIntegratorOptions(dialog.getIntegratorOptions());
+  }
+}
+
+void MainWindow::actionMax_cpu_threads_triggered() {
+  bool ok;
+  int numThreads =
+      QInputDialog::getInt(this, "Set max cpu threads",
+                           "Max cpu threads (0 is the default and means use "
+                           "all available threads):",
+                           tabSimulate->getMaxThreads(), 0, 64, 1, &ok);
+  if (ok) {
+    SPDLOG_DEBUG("setting max threads to {}", numThreads);
+    tabSimulate->setMaxThreads(numThreads);
   }
 }
 

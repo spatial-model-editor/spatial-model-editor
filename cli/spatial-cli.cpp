@@ -21,7 +21,8 @@ static void printHelpMessage() {
   fmt::print("\nUsage:\n\n");
   fmt::print(
       "./spatial-cli sbml-model-file.xml "
-      "[simulator=dune] [simulation_time=100] [image_interval=10]\n");
+      "[simulator=dune] [simulation_time=100] [image_interval=10] "
+      "[max_cpu_threads=0]\n");
   fmt::print("\nPossible values for simulator:\n");
   fmt::print("  - DUNE\n");
   fmt::print("  - Pixel\n");
@@ -32,6 +33,7 @@ struct Params {
   simulate::SimulatorType simType = simulate::SimulatorType::DUNE;
   double simulationTime = 100.0;
   double imageInterval = 1.0;
+  std::size_t maxThreads = 0;
 };
 
 static Params parseArgs(int argc, char *argv[]) {
@@ -59,11 +61,15 @@ static Params parseArgs(int argc, char *argv[]) {
   if (argc > 4) {
     params.imageInterval = std::stod(argv[4]);
   }
+  if (argc > 5) {
+    params.maxThreads = static_cast<std::size_t>(std::stoi(argv[5]));
+  }
   fmt::print("\n# Simulation parameters:\n");
   fmt::print("#   - Model: {}\n", params.filename);
   fmt::print("#   - Simulation Type: {}\n", toString(params.simType));
   fmt::print("#   - Simulation Length: {}\n", params.simulationTime);
   fmt::print("#   - Image Interval: {}\n", params.imageInterval);
+  fmt::print("#   - Max CPU threads: {}\n", params.maxThreads);
   return params;
 }
 
@@ -101,6 +107,7 @@ static void doSimulation(const Params &params) {
     options.maxRelErr = 0.01;
   }
   sim.setIntegratorOptions(options);
+  sim.setMaxThreads(params.maxThreads);
 
   fmt::print("# t = {} [img{}.png]\n", sim.getTimePoints().back(),
              sim.getTimePoints().size() - 1);

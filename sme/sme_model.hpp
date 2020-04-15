@@ -27,7 +27,8 @@ class Model {
  public:
   explicit Model(const std::string& filename);
   void exportSbmlFile(const std::string& filename) const;
-  void simulate(double simulationTime, double imageInterval);
+  void simulate(double simulationTime, double imageInterval,
+                std::size_t maxThreads = 0);
   std::vector<double> simulationTimePoints() const;
   std::vector<std::vector<std::vector<int>>> concentrationImage(
       std::size_t timePointIndex) const;

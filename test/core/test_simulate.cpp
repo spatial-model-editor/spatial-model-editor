@@ -82,6 +82,8 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   options.maxRelErr = std::numeric_limits<double>::max();
   options.maxTimestep = dt;
   sim.setIntegratorOptions(options);
+  sim.setMaxThreads(2);
+  REQUIRE(sim.getMaxThreads() == 2);
 
   // check initial concentrations:
   // note: A_c1 is constant, so not part of simulation
@@ -420,6 +422,10 @@ SCENARIO("Simulate: small-single-compartment-diffusion, circular geometry",
       double simRelErr = 0.001;
       double dt = std::numeric_limits<double>::max();
       if (simulator == simulate::SimulatorType::DUNE) {
+        REQUIRE(sim.getMaxThreads() == 0);
+        // DuneSim ignores setMaxThreads call: always single threaded
+        sim.setMaxThreads(2);
+        REQUIRE(sim.getMaxThreads() == 0);
         dt = 0.5;
         simRelErr = std::numeric_limits<double>::max();
       }

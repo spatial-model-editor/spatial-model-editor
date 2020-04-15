@@ -21,6 +21,8 @@ class BaseSim {
   virtual IntegratorError getIntegratorError() const = 0;
   virtual void setMaxDt(double maxDt) = 0;
   virtual double getMaxDt() const = 0;
+  virtual void setMaxThreads([[maybe_unused]] std::size_t maxThreads) = 0;
+  virtual std::size_t getMaxThreads() const = 0;
   virtual std::size_t run(double time) = 0;
   virtual const std::vector<double>& getConcentrations(
       std::size_t compartmentIndex) const = 0;

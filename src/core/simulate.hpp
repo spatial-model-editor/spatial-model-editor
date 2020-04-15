@@ -61,6 +61,9 @@ class Simulation {
   ~Simulation();
   IntegratorOptions getIntegratorOptions() const;
   void setIntegratorOptions(const IntegratorOptions &options);
+  void setMaxThreads(std::size_t maxThreads);
+  std::size_t getMaxThreads() const;
+
   std::size_t doTimestep(double time);
   std::string errorMessage() const;
   const std::vector<std::string> &getCompartmentIds() const;

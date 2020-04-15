@@ -1,7 +1,9 @@
 #include "pixelsim.hpp"
 
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+#include <tbb/global_control.h>
 #include <tbb/parallel_for.h>
+#include <tbb/task_scheduler_init.h>
 #endif
 #include <array>
 
@@ -473,6 +475,8 @@ PixelSim::PixelSim(
       simMembranes.emplace_back(doc, membrane, compA, compB);
     }
   }
+  // use all threads by default
+  numMaxThreads = tbb::task_scheduler_init::default_num_threads();
 }
 
 PixelSim::~PixelSim() = default;
@@ -505,7 +509,20 @@ void PixelSim::setMaxDt(double maxDt) {
 
 double PixelSim::getMaxDt() const { return maxTimestep; }
 
+void PixelSim::setMaxThreads(std::size_t maxThreads) {
+  if (maxThreads < 1) {
+    numMaxThreads = tbb::task_scheduler_init::default_num_threads();
+  } else {
+    numMaxThreads = maxThreads;
+  }
+  SPDLOG_INFO("using {} cpu threads", numMaxThreads);
+}
+
+std::size_t PixelSim::getMaxThreads() const { return numMaxThreads; }
+
 std::size_t PixelSim::run(double time) {
+  tbb::global_control control(tbb::global_control::max_allowed_parallelism,
+                              numMaxThreads);
   double tNow = 0;
   std::size_t steps = 0;
   discardedSteps = 0;

@@ -89,6 +89,7 @@ void TabSimulate::loadModelData() {
   sim = std::make_unique<simulate::Simulation>(sbmlDoc, simType,
                                                integratorOptions.order);
   sim->setIntegratorOptions(integratorOptions);
+  sim->setMaxThreads(numMaxThreads);
   ui->btnSimulate->setEnabled(true);
 
   // setup species names
@@ -204,6 +205,15 @@ void TabSimulate::setIntegratorOptions(
   integratorOptions = options;
   loadModelData();
 }
+
+void TabSimulate::setMaxThreads(std::size_t maxThreads) {
+  numMaxThreads = maxThreads;
+  if (sim != nullptr) {
+    sim->setMaxThreads(numMaxThreads);
+  }
+}
+
+std::size_t TabSimulate::getMaxThreads() const { return numMaxThreads; }
 
 void TabSimulate::btnSimulate_clicked() {
   // integration time parameters
