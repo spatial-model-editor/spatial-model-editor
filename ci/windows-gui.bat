@@ -29,6 +29,10 @@ test\tests.exe -as "~[gui]" > tests.txt 2>&1
 
 benchmark\benchmark.exe 1
 
+dir C:\Python38\lib\site-packages
+dir C:\Python38\lib\site-packages\*
+if not exist "C:\Python38\lib\site-packages\sme\" mkdir C:\Python38\lib\site-packages\sme
+
 cd ..
 move build\sme\sme.cp37-win_amd64.pyd .
 

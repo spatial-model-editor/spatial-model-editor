@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "boundary.hpp"
+#include "image_boundaries.hpp"
 
 namespace mesh {
 
@@ -38,8 +39,7 @@ class Mesh {
   std::vector<std::size_t> boundaryMaxPoints;
   std::vector<std::size_t> compartmentMaxTriangleArea;
   // generated data
-  QImage boundaryPixelsImage;
-  std::vector<boundary::Boundary> boundaries;
+  ImageBoundaries imageBoundaries;
   std::vector<QPointF> vertices;
   std::size_t nTriangles;
   std::vector<std::vector<QTriangleF>> triangles;
@@ -72,6 +72,7 @@ class Mesh {
   // we cannot alter boundary or triangle area easily, so treat as read-only
   bool isReadOnly() const;
   bool isValid() const;
+  std::size_t getNumBoundaries() const;
   bool isMembrane(std::size_t boundaryIndex) const;
   void setBoundaryMaxPoints(std::size_t boundaryIndex, std::size_t maxPoints);
   std::size_t getBoundaryMaxPoints(std::size_t boundaryIndex) const;
@@ -84,7 +85,6 @@ class Mesh {
                                      std::size_t maxTriangleArea);
   std::size_t getCompartmentMaxTriangleArea(std::size_t compartmentIndex) const;
   const std::vector<std::size_t>& getCompartmentMaxTriangleArea() const;
-  const std::vector<boundary::Boundary>& getBoundaries() const;
   void setPhysicalGeometry(double pixelWidth,
                            const QPointF& originPoint = QPointF(0, 0));
   // return vertices as an array of doubles for SBML

@@ -213,7 +213,7 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
   if (index == TabIndex::BOUNDARYPIXELS) {
     ui->lblCompBoundaryPixels->setImage(sbmlDoc.mesh->getBoundaryPixelsImage());
   } else if (index == TabIndex::BOUNDARIES) {
-    auto size = sbmlDoc.mesh->getBoundaries().size();
+    auto size = sbmlDoc.mesh->getNumBoundaries();
     ui->spinBoundaryIndex->setMaximum(static_cast<int>(size) - 1);
     spinBoundaryIndex_valueChanged(ui->spinBoundaryIndex->value());
   } else if (index == TabIndex::MESH) {

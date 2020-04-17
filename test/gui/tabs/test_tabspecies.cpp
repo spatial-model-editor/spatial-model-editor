@@ -71,14 +71,14 @@ SCENARIO("Species Tab", "[gui][tabs][species]") {
     sendKeyEvents(txtSpeciesName, {"End", "Backspace", "Backspace", "Enter"});
     REQUIRE(listSpecies->currentItem()->text(0) == "A_out");
     // toggle is spatial checkbox
-    sendMouseClick(chkSpeciesIsSpatial);
+    sendKeyEvents(chkSpeciesIsSpatial, {" "});
     REQUIRE(chkSpeciesIsSpatial->isChecked() == true);
     REQUIRE(chkSpeciesIsConstant->isChecked() == false);
     REQUIRE(radInitialConcentrationUniform->isEnabled() == true);
     REQUIRE(radInitialConcentrationAnalytic->isEnabled() == true);
     REQUIRE(radInitialConcentrationImage->isEnabled() == true);
     REQUIRE(txtDiffusionConstant->isEnabled() == true);
-    sendMouseClick(chkSpeciesIsSpatial);
+    sendKeyEvents(chkSpeciesIsSpatial, {" "});
     REQUIRE(chkSpeciesIsSpatial->isChecked() == false);
     REQUIRE(chkSpeciesIsConstant->isChecked() == false);
     REQUIRE(radInitialConcentrationUniform->isEnabled() == true);
@@ -161,10 +161,10 @@ SCENARIO("Species Tab", "[gui][tabs][species]") {
     REQUIRE(listSpecies->currentItem()->text(0) == "B_out");
 
     // toggle is spatial checkbox
-    sendMouseClick(chkSpeciesIsSpatial);
+    sendKeyEvents(chkSpeciesIsSpatial, {" "});
     REQUIRE(chkSpeciesIsSpatial->isChecked() == false);
     REQUIRE(chkSpeciesIsConstant->isChecked() == false);
-    sendMouseClick(chkSpeciesIsSpatial);
+    sendKeyEvents(chkSpeciesIsSpatial, {" "});
     REQUIRE(chkSpeciesIsSpatial->isChecked() == true);
 
     // add/remove species

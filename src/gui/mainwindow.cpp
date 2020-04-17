@@ -369,11 +369,11 @@ void MainWindow::actionIntegrator_options_triggered() {
 
 void MainWindow::actionMax_cpu_threads_triggered() {
   bool ok;
-  int numThreads = QInputDialog::getInt(
+  auto numThreads = static_cast<std::size_t>(QInputDialog::getInt(
       this, "Set max cpu threads",
       "Max cpu threads (0 is the default and means use "
       "all available threads):",
-      static_cast<int>(tabSimulate->getMaxThreads()), 0, 64, 1, &ok);
+      static_cast<int>(tabSimulate->getMaxThreads()), 0, 64, 1, &ok));
   if (ok) {
     SPDLOG_DEBUG("setting max threads to {}", numThreads);
     tabSimulate->setMaxThreads(static_cast<std::size_t>(numThreads));
