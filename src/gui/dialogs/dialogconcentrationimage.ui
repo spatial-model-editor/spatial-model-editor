@@ -57,6 +57,9 @@
        <string/>
       </property>
       <layout class="QGridLayout" name="gridLayout">
+       <item row="3" column="0">
+        <widget class="QLineEdit" name="txtMinConc"/>
+       </item>
        <item row="7" column="1">
         <widget class="QLabel" name="lblMaxConcUnits">
          <property name="sizePolicy">
@@ -67,6 +70,129 @@
          </property>
          <property name="text">
           <string>units</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="0" colspan="2">
+        <widget class="QLabel" name="lblMaxConcColour">
+         <property name="text">
+          <string>white</string>
+         </property>
+         <property name="scaledContents">
+          <bool>true</bool>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0" colspan="2">
+        <widget class="QLabel" name="lblMaxConcLabel">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Maximum concentration</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="0" colspan="2">
+        <widget class="QPushButton" name="btnSmoothImage">
+         <property name="text">
+          <string>smooth image</string>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="0" colspan="2">
+        <widget class="Line" name="line">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="0" colspan="2">
+        <widget class="Line" name="lineMax">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0" colspan="2">
+        <widget class="QLabel" name="lblMinConcColour">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>black</string>
+         </property>
+         <property name="scaledContents">
+          <bool>true</bool>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="0" colspan="2">
+        <widget class="QPushButton" name="btnImportImage">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>Import an image of the spatial concentration of this species</string>
+         </property>
+         <property name="statusTip">
+          <string>Import an image of the spatial concentration of this species</string>
+         </property>
+         <property name="whatsThis">
+          <string>&lt;h4&gt;import from image&lt;/h4&gt;&lt;p&gt;Import an image of the spatial concentration of this species&lt;/p&gt;</string>
+         </property>
+         <property name="text">
+          <string>import image...</string>
+         </property>
+        </widget>
+       </item>
+       <item row="17" column="0" colspan="2">
+        <widget class="QLabel" name="lblConcentration">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="textFormat">
+          <enum>Qt::PlainText</enum>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLineEdit" name="txtMaxConc"/>
+       </item>
+       <item row="5" column="0" colspan="2">
+        <widget class="Line" name="lineMin">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
          </property>
         </widget>
        </item>
@@ -99,65 +225,7 @@
          </property>
         </widget>
        </item>
-       <item row="9" column="0" colspan="2">
-        <widget class="Line" name="lineMax">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="0" colspan="2">
-        <widget class="QLabel" name="lblMaxConcColour">
-         <property name="text">
-          <string>white</string>
-         </property>
-         <property name="scaledContents">
-          <bool>true</bool>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="16" column="0" colspan="2">
-        <widget class="QLabel" name="lblConcentration">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::PlainText</enum>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0" colspan="2">
-        <widget class="QLabel" name="lblMinConcColour">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>black</string>
-         </property>
-         <property name="scaledContents">
-          <bool>true</bool>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="13" column="0" colspan="2">
+       <item row="14" column="0" colspan="2">
         <widget class="QComboBox" name="cmbExampleImages">
          <property name="currentText">
           <string>load example image...</string>
@@ -192,71 +260,19 @@
          </item>
         </widget>
        </item>
-       <item row="5" column="0" colspan="2">
-        <widget class="Line" name="lineMin">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="0" colspan="2">
-        <widget class="QLabel" name="lblMaxConcLabel">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Maximum concentration</string>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignCenter</set>
-         </property>
-        </widget>
-       </item>
-       <item row="15" column="0" colspan="2">
-        <widget class="Line" name="line">
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="0">
-        <widget class="QLineEdit" name="txtMaxConc"/>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLineEdit" name="txtMinConc"/>
-       </item>
-       <item row="12" column="0" colspan="2">
-        <widget class="QPushButton" name="btnImportImage">
-         <property name="enabled">
-          <bool>true</bool>
-         </property>
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
+       <item row="13" column="0" colspan="2">
+        <widget class="QPushButton" name="btnExportImage">
          <property name="toolTip">
-          <string>Import an image of the spatial concentration of this species</string>
+          <string>Export an image of the spatial concentration of this species</string>
          </property>
          <property name="statusTip">
-          <string>Import an image of the spatial concentration of this species</string>
+          <string>Export an image of the spatial concentration of this species</string>
          </property>
          <property name="whatsThis">
-          <string>&lt;h4&gt;import from image&lt;/h4&gt;&lt;p&gt;Import an image of the spatial concentration of this species&lt;/p&gt;</string>
+          <string>Export an image of the spatial concentration of this species</string>
          </property>
          <property name="text">
-          <string>import image...</string>
-         </property>
-        </widget>
-       </item>
-       <item row="14" column="0" colspan="2">
-        <widget class="QPushButton" name="btnSmoothImage">
-         <property name="text">
-          <string>smooth image</string>
+          <string>export image...</string>
          </property>
         </widget>
        </item>
@@ -287,7 +303,9 @@
   <tabstop>txtMinConc</tabstop>
   <tabstop>txtMaxConc</tabstop>
   <tabstop>btnImportImage</tabstop>
+  <tabstop>btnExportImage</tabstop>
   <tabstop>cmbExampleImages</tabstop>
+  <tabstop>btnSmoothImage</tabstop>
  </tabstops>
  <resources/>
  <connections/>

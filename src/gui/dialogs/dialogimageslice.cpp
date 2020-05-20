@@ -92,9 +92,8 @@ void DialogImageSlice::lblImage_mouseOver(const QPoint& point) {
 }
 
 void DialogImageSlice::saveSlicedImage() {
-  QString filename = QFileDialog::getSaveFileName(
-      this, "Save sliced image", "", "PNG (*.png)", nullptr,
-      QFileDialog::Option::DontUseNativeDialog);
+  QString filename = QFileDialog::getSaveFileName(this, "Save sliced image", "",
+                                                  "PNG (*.png)");
   if (filename.isEmpty()) {
     return;
   }

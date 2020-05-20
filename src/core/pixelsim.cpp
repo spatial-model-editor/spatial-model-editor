@@ -476,7 +476,8 @@ PixelSim::PixelSim(
     }
   }
   // use all threads by default
-  numMaxThreads = tbb::task_scheduler_init::default_num_threads();
+  numMaxThreads =
+      static_cast<std::size_t>(tbb::task_scheduler_init::default_num_threads());
 }
 
 PixelSim::~PixelSim() = default;
@@ -511,7 +512,8 @@ double PixelSim::getMaxDt() const { return maxTimestep; }
 
 void PixelSim::setMaxThreads(std::size_t maxThreads) {
   if (maxThreads < 1) {
-    numMaxThreads = tbb::task_scheduler_init::default_num_threads();
+    numMaxThreads = static_cast<std::size_t>(
+        tbb::task_scheduler_init::default_num_threads());
   } else {
     numMaxThreads = maxThreads;
   }

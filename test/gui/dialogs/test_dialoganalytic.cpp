@@ -61,6 +61,20 @@ SCENARIO("DialogAnalytic", "[gui][dialogs][concentration][analytic]") {
       REQUIRE(dia.isExpressionValid() == true);
       REQUIRE(dia.getExpression() == "1.5 + sin(x)");
     }
+    WHEN("valid expr: 1.5 + sin(x) & export image") {
+      ModalWidgetTimer mwt2;
+      mwt2.addUserAction(
+          {"a", "n", "a", "l", "y", "t", "i", "c", "C", "o", "n", "c"});
+      mwt.addUserAction({"Delete", "1", ".", "5", " ", "+", " ", "s", "i", "n",
+                         "(", "x", ")", "Tab", "Space"},
+                        true, &mwt2);
+      mwt.start();
+      dia.exec();
+      REQUIRE(dia.isExpressionValid() == true);
+      REQUIRE(dia.getExpression() == "1.5 + sin(x)");
+      QImage img("analyticConc.png");
+      REQUIRE(img.size() == QSize(10, 10));
+    }
   }
   GIVEN("100x100 image") {
     sbml::SbmlDocWrapper doc;

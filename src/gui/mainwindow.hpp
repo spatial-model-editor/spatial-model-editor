@@ -36,6 +36,7 @@ class MainWindow : public QMainWindow {
   bool isValidModelAndGeometryImage();
 
   void importGeometryImage(const QImage &image);
+  void openSBMLFile(const QString &filename);
 
   void tabMain_currentChanged(int index);
   TabGeometry *tabGeometry;
@@ -67,4 +68,7 @@ class MainWindow : public QMainWindow {
   // Advanced menu actions
   void actionIntegrator_options_triggered();
   void actionMax_cpu_threads_triggered();
+
+  void dragEnterEvent(QDragEnterEvent *event) override;
+  void dropEvent(QDropEvent *event) override;
 };

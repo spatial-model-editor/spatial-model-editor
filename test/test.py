@@ -3,7 +3,7 @@ import sme
 
 class TestModule(unittest.TestCase):
     def test_module(self):
-        self.assertEqual(str(sme)[0:13], "<module 'sme'")
+        self.assertEqual(str(sme)[0:18], "<module 'sme' from")
 
 class TestModel(unittest.TestCase):
     def test_load_open_sbml_file(self):

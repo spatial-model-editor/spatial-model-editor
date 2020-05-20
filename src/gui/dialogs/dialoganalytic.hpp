@@ -48,4 +48,5 @@ class DialogAnalytic : public QDialog {
   void txtExpression_mathChanged(const QString& math, bool valid,
                                  const QString& errorMessage);
   void lblImage_mouseOver(QPoint point);
+  void btnExportImage_clicked();
 };

@@ -205,10 +205,10 @@ SCENARIO("DialogConcentrationImage", "[gui][dialogs][concentration][image]") {
     WHEN("pixel image loaded") {
       QImage concImg(3, 3, QImage::Format_ARGB32_Premultiplied);
       concImg.fill(0);
-      concImg.setPixel(0, 0, QColor(0, 0, 0).rgb());
-      concImg.setPixel(0, 1, QColor(100, 100, 100).rgb());
-      concImg.setPixel(0, 2, QColor(50, 50, 50).rgb());
-      concImg.setPixel(1, 0, QColor(25, 25, 25).rgb());
+      concImg.setPixel(0, 0, qRgb(0, 0, 0));
+      concImg.setPixel(0, 1, qRgb(100, 100, 100));
+      concImg.setPixel(0, 2, qRgb(50, 50, 50));
+      concImg.setPixel(1, 0, qRgb(25, 25, 25));
       concImg.save("tmp.png");
       DialogConcentrationImage dia({}, specGeom);
       std::vector<double> values = {0, 1, 0.5, 0.25};
@@ -229,9 +229,24 @@ SCENARIO("DialogConcentrationImage", "[gui][dialogs][concentration][image]") {
           REQUIRE(a[i] == dbl_approx(0.0));
         }
       }
+      THEN("export image") {
+        // export image
+        mwt.addUserAction({"Tab", "Space"}, false, &mwtImage);
+        mwtImage.addUserAction({"q", "q", "q"});
+        mwt.addUserAction();
+        mwt.start();
+        dia.exec();
+        auto exportedImage = QImage("qqq.png");
+        REQUIRE(exportedImage.size() == concImg.size());
+        // exported image normalised to black=min, white=max:
+        REQUIRE(exportedImage.pixel(0, 0) == qRgb(0, 0, 0));
+        REQUIRE(exportedImage.pixel(0, 1) == qRgb(255, 255, 255));
+        REQUIRE(exportedImage.pixel(0, 2) == qRgb(127, 127, 127));
+        REQUIRE(exportedImage.pixel(1, 0) == qRgb(63, 63, 63));
+      }
       THEN("smooth image") {
         // click on smooth image
-        mwt.addUserAction({"Tab", "Tab", "Space"});
+        mwt.addUserAction({"Tab", "Tab", "Tab", "Space"});
         mwt.start();
         dia.exec();
         auto a = dia.getConcentrationArray();
@@ -251,7 +266,7 @@ SCENARIO("DialogConcentrationImage", "[gui][dialogs][concentration][image]") {
       // load built-in two-blobs image
       ModalWidgetTimer mwtImage;
       mwt.addUserAction(
-          {"Tab", "Tab", "Tab", "Space", "Down", "Down", "Enter"});
+          {"Tab", "Tab", "Tab", "Tab", "Space", "Down", "Down", "Enter"});
       mwt.start();
       dia.exec();
       auto a = dia.getConcentrationArray();

@@ -73,7 +73,7 @@ class DuneSim : public BaseSim {
   virtual IntegratorError getIntegratorError() const override;
   virtual void setMaxDt(double maxDt) override;
   virtual double getMaxDt() const override;
-  virtual void setMaxThreads(std::size_t maxThreads) override;
+  virtual void setMaxThreads([[maybe_unused]] std::size_t maxThreads) override;
   virtual std::size_t getMaxThreads() const override;
   std::size_t run(double time) override;
   const std::vector<double> &getConcentrations(

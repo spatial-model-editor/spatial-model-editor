@@ -82,12 +82,22 @@ SCENARIO("Mainwindow: shortcut keys", "[gui][mainwindow][shortcuts]") {
     }
   }
   WHEN("user presses ctrl+s (with valid SBML model)") {
-    THEN("open AcceptSave FileDialog") {
-      openBuiltInModel(w, "V");
+    openBuiltInModel(w, "V");
+    THEN("cancel") {
       mwt.addUserAction(QStringList{"Escape"});
       mwt.start();
       sendKeyEvents(&w, {"Ctrl+S"});
       REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
+    }
+    THEN("save xml file") {
+      mwt.addUserAction({"w", "q", "z"});
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+S"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
+      QFile file("wqz.xml");
+      REQUIRE(file.open(QIODevice::ReadOnly | QIODevice::Text));
+      auto line = file.readLine().toStdString();
+      REQUIRE(line == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
     }
   }
   WHEN("user presses ctrl+d (SBML model but no geometry loaded)") {
@@ -99,12 +109,23 @@ SCENARIO("Mainwindow: shortcut keys", "[gui][mainwindow][shortcuts]") {
     }
   }
   WHEN("user presses ctrl+d (with valid SBML model)") {
-    THEN("open AcceptSave FileDialog") {
+    THEN("cancel") {
       openBuiltInModel(w, "A");
       mwt.addUserAction(QStringList{"Escape"});
       mwt.start();
       sendKeyEvents(&w, {"Ctrl+D"});
       REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
+    }
+    THEN("save dune ini file") {
+      openBuiltInModel(w, "A");
+      mwt.addUserAction({"w", "q", "z"});
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+D"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
+      QFile file("wqz.ini");
+      REQUIRE(file.open(QIODevice::ReadOnly | QIODevice::Text));
+      auto line = file.readLine().toStdString();
+      REQUIRE(line == "[grid]\n");
     }
   }
   WHEN("user presses ctrl+I to import image (default empty SBML model)") {
