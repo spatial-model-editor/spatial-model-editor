@@ -65,8 +65,7 @@ QImage getImageFromUser(QWidget *parent, const QString &title) {
   QString filename = QFileDialog::getOpenFileName(
       parent, title, "",
       "Image Files (*.tif *.tiff *.gif *.jpg *.jpeg *.png *.bmp);; All files "
-      "(*.*)",
-      nullptr, QFileDialog::Option::DontUseNativeDialog);
+      "(*.*)");
   if (filename.isEmpty()) {
     return img;
   }

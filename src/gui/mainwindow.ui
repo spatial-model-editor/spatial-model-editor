@@ -10,6 +10,9 @@
     <height>700</height>
    </rect>
   </property>
+  <property name="acceptDrops">
+   <bool>true</bool>
+  </property>
   <property name="windowTitle">
    <string>Spatial Model Editor</string>
   </property>

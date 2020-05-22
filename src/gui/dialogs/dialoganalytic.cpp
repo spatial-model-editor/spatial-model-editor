@@ -1,5 +1,6 @@
 #include "dialoganalytic.hpp"
 
+#include <QFileDialog>
 #include <QPushButton>
 
 #include "logger.hpp"
@@ -54,6 +55,8 @@ DialogAnalytic::DialogAnalytic(const QString& analyticExpression,
           &DialogAnalytic::txtExpression_mathChanged);
   connect(ui->lblImage, &QLabelMouseTracker::mouseOver, this,
           &DialogAnalytic::lblImage_mouseOver);
+  connect(ui->btnExportImage, &QPushButton::clicked, this,
+          &DialogAnalytic::btnExportImage_clicked);
 
   ui->txtExpression->importVariableMath(analyticExpression.toStdString());
   lblImage_mouseOver(points.front());
@@ -90,6 +93,7 @@ void DialogAnalytic::txtExpression_mathChanged(const QString& math, bool valid,
     // if expression not valid, show error message
     ui->lblExpressionStatus->setText(errorMessage);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+    ui->btnExportImage->setEnabled(false);
     img.fill(0);
     ui->lblImage->setImage(img);
     return;
@@ -106,6 +110,7 @@ void DialogAnalytic::txtExpression_mathChanged(const QString& math, bool valid,
     // if concentration contains negative values, show error message
     ui->lblExpressionStatus->setText("concentration cannot be negative");
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+    ui->btnExportImage->setEnabled(false);
     img.fill(0);
     ui->lblImage->setImage(img);
     return;
@@ -113,6 +118,7 @@ void DialogAnalytic::txtExpression_mathChanged(const QString& math, bool valid,
   ui->lblExpressionStatus->setText("");
   expressionIsValid = true;
   ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(true);
+  ui->btnExportImage->setEnabled(true);
   displayExpression = math.toStdString();
   variableExpression = ui->txtExpression->getVariableMath();
   // normalise displayed pixel intensity to max concentration
@@ -141,4 +147,18 @@ void DialogAnalytic::lblImage_mouseOver(QPoint point) {
                                     .arg(physical.y())
                                     .arg(concentration[*index])
                                     .arg(concentrationUnit));
+}
+
+void DialogAnalytic::btnExportImage_clicked() {
+  QString filename = QFileDialog::getSaveFileName(
+      this, "Export species concentration as image", "conc.png", "PNG (*.png)");
+  if (filename.isEmpty()) {
+    return;
+  }
+  if (filename.right(4) != ".png") {
+    filename.append(".png");
+  }
+  SPDLOG_DEBUG("exporting concentration iage to file {}",
+               filename.toStdString());
+  img.save(filename);
 }

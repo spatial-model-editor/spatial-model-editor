@@ -59,6 +59,8 @@ DialogConcentrationImage::DialogConcentrationImage(
           &DialogConcentrationImage::lblImage_mouseOver);
   connect(ui->btnImportImage, &QPushButton::clicked, this,
           &DialogConcentrationImage::btnImportImage_clicked);
+  connect(ui->btnExportImage, &QPushButton::clicked, this,
+          &DialogConcentrationImage::btnExportImage_clicked);
   connect(ui->cmbExampleImages, &QComboBox::currentTextChanged, this,
           &DialogConcentrationImage::cmbExampleImages_currentTextChanged);
   connect(ui->btnSmoothImage, &QPushButton::clicked, this,
@@ -274,6 +276,20 @@ void DialogConcentrationImage::btnImportImage_clicked() {
   if (!concImg.isNull()) {
     importConcentrationImage(concImg);
   }
+}
+
+void DialogConcentrationImage::btnExportImage_clicked() {
+  QString filename = QFileDialog::getSaveFileName(
+      this, "Export species concentration as image", "conc.png", "PNG (*.png)");
+  if (filename.isEmpty()) {
+    return;
+  }
+  if (filename.right(4) != ".png") {
+    filename.append(".png");
+  }
+  SPDLOG_DEBUG("exporting concentration iage to file {}",
+               filename.toStdString());
+  img.save(filename);
 }
 
 void DialogConcentrationImage::cmbExampleImages_currentTextChanged(

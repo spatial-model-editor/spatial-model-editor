@@ -305,8 +305,7 @@ void TabSimulate::btnSliceImage_clicked() {
 
 void TabSimulate::btnSaveImage_clicked() {
   QString filename = QFileDialog::getSaveFileName(
-      this, "Save concentration image", "", "PNG (*.png)", nullptr,
-      QFileDialog::Option::DontUseNativeDialog);
+      this, "Save concentration image", "", "PNG (*.png)");
   if (filename.isEmpty()) {
     return;
   }

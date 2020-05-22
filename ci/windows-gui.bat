@@ -3,12 +3,12 @@ setlocal EnableDelayedExpansion
 set PATH=C:\tools\msys64\mingw64\bin
 dir C:\tools\msys64\mingw64\bin
 
-C:\Python38\python.exe --version
+C:\Python37\python.exe --version
 g++.exe --version
 mingw32-make.exe --version
 cmake.exe --version
 
-C:\Python38\python.exe -m pip install nose
+C:\Python37\python.exe -m pip install nose
 
 set CXX=g++.exe
 set CMAKE_GENERATOR=MinGW Makefiles
@@ -21,7 +21,7 @@ set SME_EXTRA_CORE_LIBS=C:\\libs\\install\\lib\\libqtfreetype.a;C:\\libs\\instal
 
 mkdir build
 cd build
-cmake.exe .. -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=C:\Python38\python.exe -DPYTHON_LIBRARY=C:\Python38\python38.dll -DSME_EXTRA_EXE_LIBS=%SME_EXTRA_EXE_LIBS% -DCMAKE_PREFIX_PATH=%CMAKE_PREFIX_PATH% -DSME_EXTRA_CORE_LIBS=%SME_EXTRA_CORE_LIBS%
+cmake.exe .. -G "%CMAKE_GENERATOR%" -DCMAKE_BUILD_TYPE=Release -DPYTHON_EXECUTABLE=C:\Python37\python.exe -DPYTHON_LIBRARY=C:\Python37\Python37.dll -DSME_EXTRA_EXE_LIBS=%SME_EXTRA_EXE_LIBS% -DCMAKE_PREFIX_PATH=%CMAKE_PREFIX_PATH% -DSME_EXTRA_CORE_LIBS=%SME_EXTRA_CORE_LIBS%
 
 mingw32-make.exe -j2 VERBOSE=1
 
@@ -30,6 +30,6 @@ test\tests.exe -as "~[gui]" > tests.txt 2>&1
 benchmark\benchmark.exe 1
 
 cd ..
-move build\sme\sme.cp38-win_amd64.pyd .
+move build\sme\sme.cp37-win_amd64.pyd .
 
-C:\Python38\python.exe -m unittest discover -v
+C:\Python37\python.exe -m unittest discover -v

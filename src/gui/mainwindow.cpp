@@ -5,6 +5,7 @@
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QMimeData>
 #include <QShortcut>
 #include <QWhatsThis>
 
@@ -60,9 +61,10 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
   ui->splitter->setSizes({1000, 3000});
 
   if (!filename.isEmpty()) {
-    sbmlDoc.importSBMLFile(filename.toStdString());
+    openSBMLFile(filename);
+  } else {
+    validateSBMLDoc();
   }
-  validateSBMLDoc(filename);
 }
 
 MainWindow::~MainWindow() = default;
@@ -225,14 +227,11 @@ void MainWindow::action_New_triggered() {
 
 void MainWindow::action_Open_SBML_file_triggered() {
   QString filename = QFileDialog::getOpenFileName(
-      this, "Open SBML file", "", "SBML file (*.xml);; All files (*.*)",
-      nullptr, QFileDialog::Option::DontUseNativeDialog);
+      this, "Open SBML file", "", "SBML file (*.xml);; All files (*.*)");
   if (filename.isEmpty()) {
     return;
   }
-  sbmlDoc = sbml::SbmlDocWrapper();
-  sbmlDoc.importSBMLFile(filename.toStdString());
-  validateSBMLDoc(filename);
+  openSBMLFile(filename);
 }
 
 void MainWindow::menuOpen_example_SBML_file_triggered(const QAction *action) {
@@ -254,8 +253,7 @@ void MainWindow::action_Save_SBML_file_triggered() {
     return;
   }
   QString filename = QFileDialog::getSaveFileName(
-      this, "Save SBML file", sbmlDoc.currentFilename, "SBML file (*.xml)",
-      nullptr, QFileDialog::Option::DontUseNativeDialog);
+      this, "Save SBML file", sbmlDoc.currentFilename, "SBML file (*.xml)");
   if (filename.isEmpty()) {
     return;
   }
@@ -272,9 +270,8 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
     SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
     return;
   }
-  QString filename = QFileDialog::getSaveFileName(
-      this, "Export DUNE ini file", "", "DUNE ini file (*.ini)", nullptr,
-      QFileDialog::Option::DontUseNativeDialog);
+  QString filename = QFileDialog::getSaveFileName(this, "Export DUNE ini file",
+                                                  "", "DUNE ini file (*.ini)");
   if (!filename.isEmpty()) {
     if (filename.right(4) != ".ini") {
       filename.append(".ini");
@@ -325,6 +322,12 @@ void MainWindow::importGeometryImage(const QImage &image) {
   actionSet_image_size_triggered();
 }
 
+void MainWindow::openSBMLFile(const QString &filename) {
+  sbmlDoc = sbml::SbmlDocWrapper();
+  sbmlDoc.importSBMLFile(filename.toStdString());
+  validateSBMLDoc(filename);
+}
+
 void MainWindow::actionSet_model_units_triggered() {
   if (!isValidModel()) {
     return;
@@ -366,15 +369,27 @@ void MainWindow::actionIntegrator_options_triggered() {
 
 void MainWindow::actionMax_cpu_threads_triggered() {
   bool ok;
-  int numThreads =
-      QInputDialog::getInt(this, "Set max cpu threads",
-                           "Max cpu threads (0 is the default and means use "
-                           "all available threads):",
-                           tabSimulate->getMaxThreads(), 0, 64, 1, &ok);
+  int numThreads = QInputDialog::getInt(
+      this, "Set max cpu threads",
+      "Max cpu threads (0 is the default and means use "
+      "all available threads):",
+      static_cast<int>(tabSimulate->getMaxThreads()), 0, 64, 1, &ok);
   if (ok) {
     SPDLOG_DEBUG("setting max threads to {}", numThreads);
-    tabSimulate->setMaxThreads(numThreads);
+    tabSimulate->setMaxThreads(static_cast<std::size_t>(numThreads));
   }
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event) {
+  event->acceptProposedAction();
+}
+
+void MainWindow::dropEvent(QDropEvent *event) {
+  const QMimeData *mimeData = event->mimeData();
+  if (!mimeData->hasUrls() || mimeData->urls().isEmpty()) {
+    return;
+  }
+  openSBMLFile(mimeData->urls().front().toLocalFile());
 }
 
 bool MainWindow::isValidModel() {

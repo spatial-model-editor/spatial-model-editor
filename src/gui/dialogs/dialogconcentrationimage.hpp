@@ -52,5 +52,6 @@ class DialogConcentrationImage : public QDialog {
   void smoothConcentration();
   void lblImage_mouseOver(QPoint point);
   void btnImportImage_clicked();
+  void btnExportImage_clicked();
   void cmbExampleImages_currentTextChanged(const QString& text);
 };
