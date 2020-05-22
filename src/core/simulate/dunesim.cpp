@@ -74,7 +74,7 @@ using Elem = decltype(
 namespace sim {
 
 class DuneImpl {
- public:
+public:
   Dune::ParameterTree config;
   std::shared_ptr<Grid> grid_ptr;
   std::shared_ptr<HostGrid> host_grid_ptr;
@@ -113,9 +113,8 @@ DuneImpl::DuneImpl(const std::string &iniFile) {
 
 DuneImpl::~DuneImpl() = default;
 
-template <int DuneFEMOrder>
-class DuneCoupledCompartments : public DuneImpl {
- public:
+template <int DuneFEMOrder> class DuneCoupledCompartments : public DuneImpl {
+public:
   using ModelTraits =
       Dune::Copasi::ModelMultiDomainP0PkDiffusionReactionTraits<Grid,
                                                                 DuneFEMOrder>;
@@ -156,7 +155,7 @@ class DuneCoupledCompartments : public DuneImpl {
 
 template <int DuneFEMOrder>
 class DuneIndependentCompartments : public DuneImpl {
- public:
+public:
   using ModelTraits = Dune::Copasi::ModelPkDiffusionReactionTraits<
       Grid::SubDomainGrid, Grid::SubDomainGrid::Traits::LeafGridView,
       DuneFEMOrder>;
@@ -374,8 +373,7 @@ DuneSim::DuneSim(
     const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
     std::size_t order)
     : geometryImageSize(sbmlDoc.getCompartmentImage().size()),
-      pixelSize(sbmlDoc.getPixelWidth()),
-      integratorOrder(order) {
+      pixelSize(sbmlDoc.getPixelWidth()), integratorOrder(order) {
   dune::DuneConverter dc(sbmlDoc, 1e-6);
   // export gmsh file `grid.msh` in the same dir
   QFile f2("grid.msh");
@@ -386,53 +384,57 @@ DuneSim::DuneSim(
     SPDLOG_ERROR("Cannot write to file grid.msh");
   }
 
-  if (dc.hasIndependentCompartments()) {
-    if (integratorOrder == 0) {
-      pDuneImpl = std::make_unique<DuneIndependentCompartments<0>>(
-          dc.getIniFile().toStdString());
-    } else if (integratorOrder == 1) {
-      pDuneImpl = std::make_unique<DuneIndependentCompartments<1>>(
-          dc.getIniFile().toStdString());
-    } else if (integratorOrder == 2) {
-      pDuneImpl = std::make_unique<DuneIndependentCompartments<2>>(
-          dc.getIniFile().toStdString());
+  try {
+    if (dc.hasIndependentCompartments()) {
+      if (integratorOrder == 0) {
+        pDuneImpl = std::make_unique<DuneIndependentCompartments<0>>(
+            dc.getIniFile().toStdString());
+      } else if (integratorOrder == 1) {
+        pDuneImpl = std::make_unique<DuneIndependentCompartments<1>>(
+            dc.getIniFile().toStdString());
+      } else if (integratorOrder == 2) {
+        pDuneImpl = std::make_unique<DuneIndependentCompartments<2>>(
+            dc.getIniFile().toStdString());
+      }
+    } else {
+      if (integratorOrder == 0) {
+        integratorOrder = 1;
+        SPDLOG_WARN(
+            "Zero order / finite volume method not supported for models with "
+            "membranes (inter-compartment reactions). Using 1st order FEM "
+            "instead.");
+      }
+      if (integratorOrder == 1) {
+        pDuneImpl = std::make_unique<DuneCoupledCompartments<1>>(
+            dc.getIniFile().toStdString());
+      } else if (integratorOrder == 2) {
+        pDuneImpl = std::make_unique<DuneCoupledCompartments<2>>(
+            dc.getIniFile().toStdString());
+      }
     }
-  } else {
-    if (integratorOrder == 0) {
-      integratorOrder = 1;
-      SPDLOG_WARN(
-          "Zero order / finite volume method not supported for models with "
-          "membranes (inter-compartment reactions). Using 1st order FEM "
-          "instead.");
-    }
-    if (integratorOrder == 1) {
-      pDuneImpl = std::make_unique<DuneCoupledCompartments<1>>(
-          dc.getIniFile().toStdString());
-    } else if (integratorOrder == 2) {
-      pDuneImpl = std::make_unique<DuneCoupledCompartments<2>>(
-          dc.getIniFile().toStdString());
-    }
-  }
 
-  initCompartmentNames();
-  initSpeciesIndices();
-  for (std::size_t compIndex = 0; compIndex < compartmentIds.size();
-       ++compIndex) {
-    const auto &compId = compartmentIds[compIndex];
-    SPDLOG_INFO("compartmentId: {}", compId);
-    const auto &comp = sbmlDoc.mapCompIdToGeometry.at(compId.c_str());
-    compartmentPointIndex.emplace_back(comp.getCompartmentImage().size(),
-                                       comp.getPixels());
-    compartmentGeometry.push_back(&comp);
-    auto nPixels = comp.getPixels().size();
-    SPDLOG_INFO("  - {} pixels", nPixels);
-    // todo: don't allocate wasted space for constant species here
-    auto nSpecies = compartmentSpeciesIds[compIndex].size();
-    SPDLOG_INFO("  - {} species", nSpecies);
-    concentration.emplace_back(nPixels * nSpecies, 0.0);
+    initCompartmentNames();
+    initSpeciesIndices();
+    for (std::size_t compIndex = 0; compIndex < compartmentIds.size();
+         ++compIndex) {
+      const auto &compId = compartmentIds[compIndex];
+      SPDLOG_INFO("compartmentId: {}", compId);
+      const auto &comp = sbmlDoc.mapCompIdToGeometry.at(compId.c_str());
+      compartmentPointIndex.emplace_back(comp.getCompartmentImage().size(),
+                                         comp.getPixels());
+      compartmentGeometry.push_back(&comp);
+      auto nPixels = comp.getPixels().size();
+      SPDLOG_INFO("  - {} pixels", nPixels);
+      // todo: don't allocate wasted space for constant species here
+      auto nSpecies = compartmentSpeciesIds[compIndex].size();
+      SPDLOG_INFO("  - {} species", nSpecies);
+      concentration.emplace_back(nPixels * nSpecies, 0.0);
+    }
+    updatePixels();
+    updateSpeciesConcentrations();
+  } catch (const Dune::Exception &e) {
+    currentErrorMessage = e.what();
   }
-  updatePixels();
-  updateSpeciesConcentrations();
 }
 
 DuneSim::~DuneSim() = default;
@@ -464,6 +466,9 @@ void DuneSim::setMaxThreads([[maybe_unused]] std::size_t maxThreads) {
 std::size_t DuneSim::getMaxThreads() const { return 0; }
 
 std::size_t DuneSim::run(double time) {
+  if (pDuneImpl == nullptr) {
+    return 0;
+  }
   try {
     pDuneImpl->run(time, maxTimestep);
     updateSpeciesConcentrations();
@@ -478,8 +483,8 @@ std::size_t DuneSim::run(double time) {
   return 0;
 }
 
-const std::vector<double> &DuneSim::getConcentrations(
-    std::size_t compartmentIndex) const {
+const std::vector<double> &
+DuneSim::getConcentrations(std::size_t compartmentIndex) const {
   return concentration[compartmentIndex];
 }
 
@@ -529,4 +534,4 @@ void DuneSim::updateSpeciesConcentrations() {
   }
 }
 
-}  // namespace sim
+} // namespace sim

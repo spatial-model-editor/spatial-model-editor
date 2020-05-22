@@ -20,19 +20,19 @@ class TabGeometry;
 class TabGeometry : public QWidget {
   Q_OBJECT
 
- public:
+public:
   explicit TabGeometry(sbml::SbmlDocWrapper &doc,
                        QLabelMouseTracker *mouseTracker, QLabel *statusBarMsg,
                        QWidget *parent = nullptr);
   ~TabGeometry();
   void loadModelData(const QString &selection = {});
-  void enableTabs(bool enable = true);
+  void enableTabs();
 
- signals:
+signals:
   void invalidModelOrNoGeometryImage();
   void modelGeometryChanged();
 
- private:
+private:
   std::unique_ptr<Ui::TabGeometry> ui;
   sbml::SbmlDocWrapper &sbmlDoc;
   QLabelMouseTracker *lblGeometry;

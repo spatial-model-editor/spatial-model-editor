@@ -6,7 +6,7 @@
 
 namespace mesh {
 
-static QPointF getNormalUnitVector(const QPoint& p0, const QPoint& pNext) {
+static QPointF getNormalUnitVector(const QPoint &p0, const QPoint &pNext) {
   QPointF normal;
   double dx = static_cast<double>(pNext.x() - p0.x());
   double dy = static_cast<double>(pNext.y() - p0.y());
@@ -15,8 +15,8 @@ static QPointF getNormalUnitVector(const QPoint& p0, const QPoint& pNext) {
   return normal;
 }
 
-static QPointF getAvgNormalUnitVector(const QPoint& pPrev, const QPoint& p0,
-                                      const QPoint& pNext) {
+static QPointF getAvgNormalUnitVector(const QPoint &pPrev, const QPoint &p0,
+                                      const QPoint &pNext) {
   QPointF normal = getNormalUnitVector(p0, pNext);
   normal += getNormalUnitVector(pPrev, p0);
   normal /= std::hypot(normal.x(), normal.y());
@@ -24,7 +24,7 @@ static QPointF getAvgNormalUnitVector(const QPoint& pPrev, const QPoint& p0,
 }
 
 void Boundary::constructMembraneBoundarySegment(std::size_t index,
-                                                const QPointF& normal) {
+                                                const QPointF &normal) {
   auto n = 0.5 * membraneWidth * normal;
   outerPoints.push_back(points[index] + n);
   innerPoints.push_back(points[index] - n);
@@ -41,6 +41,10 @@ void Boundary::constructMembraneBoundaries() {
   QPointF normal;
   // do first point
   if (loop) {
+    SPDLOG_ERROR("{}", nP);
+    SPDLOG_ERROR("{} {}", points[0].x(), points[0].y());
+    SPDLOG_ERROR("{} {}", points[1].x(), points[1].y());
+    SPDLOG_ERROR("{} {}", points[nP - 1].x(), points[nP - 1].y());
     normal = getAvgNormalUnitVector(points[nP - 1], points[0], points[1]);
   } else {
     normal = getNormalUnitVector(points[0], points[1]);
@@ -64,43 +68,45 @@ bool Boundary::isLoop() const { return loop; }
 
 bool Boundary::isMembrane() const { return membrane; }
 
-const std::vector<QPoint>& Boundary::getPoints() const { return points; }
+bool Boundary::isValid() const { return valid; }
 
-const std::vector<QPointF>& Boundary::getInnerPoints() const {
+const std::vector<QPoint> &Boundary::getPoints() const { return points; }
+
+const std::vector<QPointF> &Boundary::getInnerPoints() const {
   return innerPoints;
 }
 
-void Boundary::setInnerStartPoint(const QPointF& point, std::size_t index) {
+void Boundary::setInnerStartPoint(const QPointF &point, std::size_t index) {
   innerPoints.front() = point;
   innerFpIndices.startPoint = index;
 }
 
-void Boundary::setInnerEndPoint(const QPointF& point, std::size_t index) {
+void Boundary::setInnerEndPoint(const QPointF &point, std::size_t index) {
   innerPoints.back() = point;
   innerFpIndices.endPoint = index;
 }
 
-const std::vector<QPointF>& Boundary::getOuterPoints() const {
+const std::vector<QPointF> &Boundary::getOuterPoints() const {
   return outerPoints;
 }
 
-void Boundary::setOuterStartPoint(const QPointF& point, std::size_t index) {
+void Boundary::setOuterStartPoint(const QPointF &point, std::size_t index) {
   outerPoints.front() = point;
   outerFpIndices.startPoint = index;
 }
 
-void Boundary::setOuterEndPoint(const QPointF& point, std::size_t index) {
+void Boundary::setOuterEndPoint(const QPointF &point, std::size_t index) {
   outerPoints.back() = point;
   outerFpIndices.endPoint = index;
 }
 
-const FpIndices& Boundary::getFpIndices() const { return fpIndices; }
+const FpIndices &Boundary::getFpIndices() const { return fpIndices; }
 
-void Boundary::setFpIndices(const FpIndices& indices) { fpIndices = indices; }
+void Boundary::setFpIndices(const FpIndices &indices) { fpIndices = indices; }
 
-const FpIndices& Boundary::getInnerFpIndices() const { return innerFpIndices; }
+const FpIndices &Boundary::getInnerFpIndices() const { return innerFpIndices; }
 
-const FpIndices& Boundary::getOuterFpIndices() const { return outerFpIndices; }
+const FpIndices &Boundary::getOuterFpIndices() const { return outerFpIndices; }
 
 std::size_t Boundary::getMaxPoints() const { return maxPoints; }
 
@@ -124,17 +130,19 @@ void Boundary::setMembraneWidth(double newMembraneWidth) {
   setMaxPoints(maxPoints);
 }
 
-const std::string& Boundary::getMembraneId() const { return membraneID; }
+const std::string &Boundary::getMembraneId() const { return membraneID; }
 
-Boundary::Boundary(const std::vector<QPoint>& boundaryPoints, bool isClosedLoop,
-                   bool isMembraneCompartment, const std::string& membraneName)
-    : loop{isClosedLoop},
-      membrane{isMembraneCompartment},
-      membraneID(membraneName),
-      lineSimplifier(boundaryPoints, isClosedLoop) {
+Boundary::Boundary(const std::vector<QPoint> &boundaryPoints, bool isClosedLoop,
+                   bool isMembraneCompartment, const std::string &membraneName)
+    : loop{isClosedLoop}, membrane{isMembraneCompartment},
+      membraneID(membraneName), lineSimplifier(boundaryPoints, isClosedLoop) {
+  valid = lineSimplifier.isValid();
+  if (!valid) {
+    return;
+  }
   innerPoints.reserve(lineSimplifier.maxPoints());
   outerPoints.reserve(lineSimplifier.maxPoints());
   setMaxPoints();
 }
 
-}  // namespace mesh
+} // namespace mesh

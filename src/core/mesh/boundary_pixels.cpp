@@ -11,7 +11,7 @@ namespace mesh {
 static constexpr std::size_t nullIndex =
     std::numeric_limits<std::size_t>::max();
 
-inline std::size_t BoundaryPixels::toIndex(const QPoint& point) const noexcept {
+inline std::size_t BoundaryPixels::toIndex(const QPoint &point) const noexcept {
   // grid is 1 pixel larger than image on all sides
   auto w = boundaryPixelsImage.width() + 2;
   auto ix = point.x() + 1;
@@ -19,8 +19,8 @@ inline std::size_t BoundaryPixels::toIndex(const QPoint& point) const noexcept {
   return static_cast<std::size_t>(ix + iy * w);
 }
 
-void BoundaryPixels::setPointColour(const QPoint& point, std::size_t value) {
-  QRgb rgb = qRgb(255, 0, 0);  // fixed point colour
+void BoundaryPixels::setPointColour(const QPoint &point, std::size_t value) {
+  QRgb rgb = qRgb(255, 0, 0); // fixed point colour
   if (value < fpIndexOffset) {
     rgb = pixelColours[value];
   }
@@ -29,9 +29,9 @@ void BoundaryPixels::setPointColour(const QPoint& point, std::size_t value) {
   boundaryPixelsImage.setPixel(x, y, rgb);
 }
 
-void BoundaryPixels::setBoundaryPoint(const QPoint& point, std::size_t value) {
+void BoundaryPixels::setBoundaryPoint(const QPoint &point, std::size_t value) {
   SPDLOG_TRACE("({},{}) -> {}", point.x(), point.y(), value);
-  auto& v = values[toIndex(point)];
+  auto &v = values[toIndex(point)];
   if (v == nullIndex || value > v) {
     // only overwrite with higher value (i.e. FP overwrites boundary)
     v = value;
@@ -39,12 +39,14 @@ void BoundaryPixels::setBoundaryPoint(const QPoint& point, std::size_t value) {
   }
 }
 
-void BoundaryPixels::setFixedPoint(const QPoint& point) {
+void BoundaryPixels::setFixedPoint(const QPoint &point) {
   auto value = getOrInsertFixedPointIndex(point) + fpIndexOffset;
   // set all neighbouring pixels to point to this fixed point
   for (int x = point.x() - 1; x <= point.x() + 1; ++x) {
     for (int y = point.y() - 1; y <= point.y() + 1; ++y) {
-      setBoundaryPoint(QPoint(x, y), value);
+      if (QPoint p(x, y); isValid(p)) {
+        setBoundaryPoint(p, value);
+      }
     }
   }
 }
@@ -53,7 +55,7 @@ int BoundaryPixels::width() const { return boundaryPixelsImage.width(); }
 
 int BoundaryPixels::height() const { return boundaryPixelsImage.height(); }
 
-bool BoundaryPixels::isValid(const QPoint& point) const {
+bool BoundaryPixels::isValid(const QPoint &point) const {
   auto x = static_cast<std::size_t>(point.x());
   auto y = static_cast<std::size_t>(point.y());
   auto w = static_cast<std::size_t>(boundaryPixelsImage.width());
@@ -61,31 +63,31 @@ bool BoundaryPixels::isValid(const QPoint& point) const {
   return x < w && y < h;
 }
 
-bool BoundaryPixels::isBoundary(const QPoint& point) const {
+bool BoundaryPixels::isBoundary(const QPoint &point) const {
   return values[toIndex(point)] != nullIndex;
 }
 
-bool BoundaryPixels::isFixed(const QPoint& point) const {
+bool BoundaryPixels::isFixed(const QPoint &point) const {
   return getFixedPointIndex(point) != nullIndex;
 }
 
-bool BoundaryPixels::isMembrane(const QPoint& point) const {
+bool BoundaryPixels::isMembrane(const QPoint &point) const {
   return getMembraneIndex(point) != nullIndex;
 }
 
-std::size_t BoundaryPixels::getMembraneIndex(const QPoint& point) const {
+std::size_t BoundaryPixels::getMembraneIndex(const QPoint &point) const {
   auto value = values[toIndex(point)];
   return value < membraneIndexOffset ? membraneIndices[value] : nullIndex;
 }
 
-const std::string& BoundaryPixels::getMembraneName(std::size_t i) const {
+const std::string &BoundaryPixels::getMembraneName(std::size_t i) const {
   if (i >= membraneNames.size()) {
     return defaultMembraneName;
   }
   return membraneNames[i];
 }
 
-std::size_t BoundaryPixels::getFixedPointIndex(const QPoint& point) const {
+std::size_t BoundaryPixels::getFixedPointIndex(const QPoint &point) const {
   auto value = values[toIndex(point)];
   if (value == nullIndex || value < fpIndexOffset) {
     return nullIndex;
@@ -93,7 +95,7 @@ std::size_t BoundaryPixels::getFixedPointIndex(const QPoint& point) const {
   return value - fpIndexOffset;
 }
 
-std::size_t BoundaryPixels::getOrInsertFixedPointIndex(const QPoint& point) {
+std::size_t BoundaryPixels::getOrInsertFixedPointIndex(const QPoint &point) {
   auto i = getFixedPointIndex(point);
   if (i == nullIndex) {
     i = fixedPoints.size();
@@ -102,17 +104,17 @@ std::size_t BoundaryPixels::getOrInsertFixedPointIndex(const QPoint& point) {
   return i;
 }
 
-const QPoint& BoundaryPixels::getFixedPoint(const QPoint& point) const {
+const QPoint &BoundaryPixels::getFixedPoint(const QPoint &point) const {
   return fixedPoints[getFixedPointIndex(point)];
 }
 
-std::optional<QPoint> BoundaryPixels::getNeighbourOnBoundary(
-    const QPoint& point) const {
+std::optional<QPoint>
+BoundaryPixels::getNeighbourOnBoundary(const QPoint &point) const {
   constexpr std::array<QPoint, 8> nnp = {
       QPoint(1, 0), QPoint(-1, 0), QPoint(0, 1),  QPoint(0, -1),
       QPoint(1, 1), QPoint(1, -1), QPoint(-1, 1), QPoint(-1, -1)};
   auto value = values[toIndex(point)];
-  for (const auto& dp : nnp) {
+  for (const auto &dp : nnp) {
     if (QPoint newPoint = point + dp;
         isValid(newPoint) && values[toIndex(newPoint)] == value) {
       return newPoint;
@@ -121,23 +123,23 @@ std::optional<QPoint> BoundaryPixels::getNeighbourOnBoundary(
   return {};
 }
 
-const std::vector<QPoint>& BoundaryPixels::getFixedPoints() const {
+const std::vector<QPoint> &BoundaryPixels::getFixedPoints() const {
   return fixedPoints;
 }
 
-const QImage& BoundaryPixels::getBoundaryPixelsImage() const {
+const QImage &BoundaryPixels::getBoundaryPixelsImage() const {
   return boundaryPixelsImage;
 }
 
-void BoundaryPixels::visitPoint(const QPoint& point) {
-  auto& value = values[toIndex(point)];
+void BoundaryPixels::visitPoint(const QPoint &point) {
+  auto &value = values[toIndex(point)];
   if (value < fpIndexOffset) {
     value = nullIndex;
   }
 }
 
 template <typename T>
-static std::size_t findIndex(const std::vector<T>& vec, T val) {
+static std::size_t findIndex(const std::vector<T> &vec, T val) {
   auto iter = std::find(vec.cbegin(), vec.cend(), val);
   if (iter == vec.cend()) {
     return nullIndex;
@@ -145,7 +147,7 @@ static std::size_t findIndex(const std::vector<T>& vec, T val) {
   return static_cast<std::size_t>(std::distance(vec.cbegin(), iter));
 }
 
-static QRgb avgColours(const std::pair<QRgb, QRgb>& cols) {
+static QRgb avgColours(const std::pair<QRgb, QRgb> &cols) {
   auto [c1, c2] = cols;
   return qRgb((qRed(c1) + qRed(c2)) / 2, (qGreen(c1) + qGreen(c2)) / 2,
               (qBlue(c1) + qBlue(c2)) / 2);
@@ -155,12 +157,12 @@ static QRgb avgColours(const std::pair<QRgb, QRgb>& cols) {
 static std::tuple<std::vector<std::string>, std::vector<std::size_t>,
                   std::vector<QRgb>>
 getMembraneVectors(
-    const std::vector<std::pair<std::string, ColourPair>>& membraneColourPairs,
-    const std::vector<QRgb>& compartments) {
+    const std::vector<std::pair<std::string, ColourPair>> &membraneColourPairs,
+    const std::vector<QRgb> &compartments) {
   std::tuple<std::vector<std::string>, std::vector<std::size_t>,
              std::vector<QRgb>>
       tup;
-  auto& [names, indices, colours] = tup;
+  auto &[names, indices, colours] = tup;
   names.reserve(membraneColourPairs.size());
   std::size_t nC = compartments.size();
   indices = std::vector<std::size_t>(nC * nC, nullIndex);
@@ -168,7 +170,7 @@ getMembraneVectors(
   for (std::size_t i = 0; i < compartments.size(); ++i) {
     colours[nC * nC + i] = compartments[i];
   }
-  for (const auto& [name, cols] : membraneColourPairs) {
+  for (const auto &[name, cols] : membraneColourPairs) {
     auto i1 = findIndex(compartments, cols.first);
     auto i2 = findIndex(compartments, cols.second);
     auto avgCol = avgColours(cols);
@@ -182,7 +184,7 @@ getMembraneVectors(
 }
 
 // get index of given Rgb colour in indexed image
-static std::size_t getColourIndex(QRgb col, const QImage& img) {
+static std::size_t getColourIndex(QRgb col, const QImage &img) {
   for (int i = 0; i < img.colorCount(); ++i) {
     if (col == img.color(i)) {
       return static_cast<std::size_t>(i);
@@ -193,8 +195,9 @@ static std::size_t getColourIndex(QRgb col, const QImage& img) {
 
 // map from img indexed colours to index in compartments vector
 // indexed colours not present in cols vector set to nullIndex
-static std::vector<std::size_t> getColourIndexToCompartmentIndex(
-    const std::vector<QRgb>& compartmentColours, const QImage& img) {
+static std::vector<std::size_t>
+getColourIndexToCompartmentIndex(const std::vector<QRgb> &compartmentColours,
+                                 const QImage &img) {
   auto nImgColours = static_cast<std::size_t>(img.colorCount());
   SPDLOG_TRACE("{}-colour image", nImgColours);
   for (int i = 0; i < img.colorCount(); ++i) {
@@ -217,23 +220,23 @@ static std::vector<std::size_t> getColourIndexToCompartmentIndex(
 
 namespace {
 class PixelCompartments {
- private:
+private:
   QImage img;
   QPoint meshPoint;
   utils::SmallStackSet<std::size_t, 5> set;
   std::vector<std::size_t> compartments;
   std::size_t nCompartments;
-  std::size_t pointToCompIndex(const QPoint& p) {
+  std::size_t pointToCompIndex(const QPoint &p) {
     return compartments[static_cast<std::size_t>(img.pixelIndex(p))];
   }
 
- public:
-  void setPixel(const QPoint& point) {
+public:
+  void setPixel(const QPoint &point) {
     // want (0,0) point in bottom left for mesh
     meshPoint = QPoint(point.x(), img.height() - 1 - point.y());
     set.clear();
     set.insert(pointToCompIndex(point));
-    for (const auto& dp :
+    for (const auto &dp :
          {QPoint(1, 0), QPoint(-1, 0), QPoint(0, 1), QPoint(0, -1)}) {
       QPoint nn = point + dp;
       if (img.valid(nn)) {
@@ -253,21 +256,21 @@ class PixelCompartments {
     return compartmentIndex() + nCompartments * otherIndex;
   }
   std::size_t neighbourCount() const { return set.size() - 1; }
-  const QPoint& getMeshPoint() const { return meshPoint; }
-  explicit PixelCompartments(const std::vector<QRgb>& compartmentColours,
-                             const QImage& inputImage)
+  const QPoint &getMeshPoint() const { return meshPoint; }
+  explicit PixelCompartments(const std::vector<QRgb> &compartmentColours,
+                             const QImage &inputImage)
       : img{inputImage.convertToFormat(QImage::Format_Indexed8)},
-
         nCompartments{compartmentColours.size()} {
     compartments = getColourIndexToCompartmentIndex(compartmentColours, img);
+    SPDLOG_TRACE("{}x{} image", img.width(), img.height());
   }
 };
 
-}  // namespace
+} // namespace
 
 BoundaryPixels::BoundaryPixels(
-    const QImage& inputImage, const std::vector<QRgb>& compartmentColours,
-    const std::vector<std::pair<std::string, ColourPair>>& membraneColourPairs)
+    const QImage &inputImage, const std::vector<QRgb> &compartmentColours,
+    const std::vector<std::pair<std::string, ColourPair>> &membraneColourPairs)
     : boundaryPixelsImage(inputImage.size(),
                           QImage::Format_ARGB32_Premultiplied),
       values(static_cast<std::size_t>((inputImage.width() + 2) *
@@ -282,9 +285,12 @@ BoundaryPixels::BoundaryPixels(
   std::tie(membraneNames, membraneIndices, pixelColours) =
       getMembraneVectors(membraneColourPairs, compartmentColours);
   auto pixel = PixelCompartments(compartmentColours, inputImage);
+  SPDLOG_TRACE("{}x{} image", inputImage.width(), inputImage.height());
   for (int x = 0; x < inputImage.width(); ++x) {
     for (int y = 0; y < inputImage.height(); ++y) {
       pixel.setPixel(QPoint(x, y));
+      SPDLOG_TRACE("({},{}) -> ({},{})", x, y, pixel.getMeshPoint().x(),
+                   pixel.getMeshPoint().y());
       if (pixel.neighbourCount() > 1) {
         // multiple neighbours -> fixed point
         setFixedPoint(pixel.getMeshPoint());
@@ -295,6 +301,10 @@ BoundaryPixels::BoundaryPixels(
       }
     }
   }
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+  inputImage.save("boundaryPixelsInputImage.png");
+  boundaryPixelsImage.save("boundaryPixels.png");
+#endif
 }
 
-}  // namespace mesh
+} // namespace mesh

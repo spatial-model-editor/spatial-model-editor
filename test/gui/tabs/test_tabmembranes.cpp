@@ -26,6 +26,7 @@ SCENARIO("Membranes Tab", "[gui][tabs][membranes]") {
     tab.loadModelData();
     REQUIRE(listMembranes->count() == 2);
     REQUIRE(listMembranes->currentRow() == 0);
+    // with qt5.15 do lblMembraneShape->pixmap(Qt::ReturnByValue).size() instead
     REQUIRE(lblMembraneShape->pixmap()->size() == QSize(100, 100));
     REQUIRE(lblMembraneLength->text() == "338");
     REQUIRE(lblMembraneLengthUnits->text() == "m");

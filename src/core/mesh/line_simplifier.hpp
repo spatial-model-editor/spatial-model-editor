@@ -18,19 +18,21 @@ struct LineError {
 };
 
 class LineSimplifier {
- private:
+private:
   std::vector<QPoint> vertices;
   std::size_t minNumPoints;
   std::vector<std::size_t> priorities;
-  LineError getLineError(const std::vector<QPoint>& line) const;
+  LineError getLineError(const std::vector<QPoint> &line) const;
+  bool valid{true};
 
- public:
-  void getSimplifiedLine(std::vector<QPoint>& line,
-                         const LineError& allowedError = {1.0, 0.2}) const;
-  void getSimplifiedLine(std::vector<QPoint>& line, std::size_t nPoints) const;
+public:
+  void getSimplifiedLine(std::vector<QPoint> &line,
+                         const LineError &allowedError = {1.0, 0.2}) const;
+  void getSimplifiedLine(std::vector<QPoint> &line, std::size_t nPoints) const;
   std::size_t maxPoints() const;
-  explicit LineSimplifier(const std::vector<QPoint>& points,
+  bool isValid() const;
+  explicit LineSimplifier(const std::vector<QPoint> &points,
                           bool isClosedLoop = false);
 };
 
-}  // namespace mesh
+} // namespace mesh

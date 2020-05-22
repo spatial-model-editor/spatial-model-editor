@@ -17,9 +17,7 @@
 
 TabSimulate::TabSimulate(sbml::SbmlDocWrapper &doc,
                          QLabelMouseTracker *mouseTracker, QWidget *parent)
-    : QWidget(parent),
-      ui{std::make_unique<Ui::TabSimulate>()},
-      sbmlDoc(doc),
+    : QWidget(parent), ui{std::make_unique<Ui::TabSimulate>()}, sbmlDoc(doc),
       lblGeometry(mouseTracker) {
   ui->setupUi(this);
   pltPlot = new QCustomPlot(this);
@@ -68,16 +66,14 @@ void TabSimulate::loadModelData() {
     return;
   }
   sim.reset();
-  if (simType == simulate::SimulatorType::DUNE && !sbmlDoc.mesh->isValid()) {
+  if (simType == simulate::SimulatorType::DUNE &&
+      (sbmlDoc.mesh == nullptr || !sbmlDoc.mesh->isValid())) {
     ui->btnSimulate->setEnabled(false);
-    auto msgbox =
-        newYesNoMessageBox("Invalid mesh",
-                           "Geometry contains membrane boundaries that are not "
-                           "closed loops, which are not "
-                           "yet supported in mesh generation required for DUNE "
-                           "simulation. Would you like to use the Pixel "
-                           "simulator instead?",
-                           this);
+    auto msgbox = newYesNoMessageBox(
+        "Invalid mesh",
+        "Mesh geometry is not valid, and is required for a DUNE "
+        "simulation. Would you like to use the Pixel simulator instead?",
+        this);
     connect(msgbox, &QMessageBox::finished, this, [this](int result) {
       if (result == QMessageBox::Yes) {
         useDune(false);
