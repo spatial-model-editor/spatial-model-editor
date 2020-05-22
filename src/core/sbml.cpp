@@ -26,19 +26,23 @@ static std::string ASTtoString(const libsbml::ASTNode *node) {
   return charAST.get();
 }
 
-static void printSBMLDocErrors(libsbml::SBMLDocument *doc) {
-  doc->checkInternalConsistency();
-  if (doc->getNumErrors() > 0) {
-    std::stringstream ss;
-    doc->printErrors(ss);
-    SPDLOG_WARN("SBML internal consistency check warnings/errors:\n\n{}",
-                ss.str());
+static void printSBMLDocWarnings(const libsbml::SBMLDocument *doc) {
+  auto severity = libsbml::LIBSBML_SEV_WARNING;
+  unsigned n = doc->getNumErrors(severity);
+  for (unsigned i = 0; i < n; ++i) {
+    const auto *err = doc->getErrorWithSeverity(i, severity);
+    SPDLOG_WARN("[{}] line {}:{} {}", err->getCategoryAsString(),
+                err->getLine(), err->getColumn(), err->getMessage());
   }
-  doc->checkConsistency();
-  if (doc->getNumErrors() > 0) {
-    std::stringstream ss;
-    doc->printErrors(ss);
-    SPDLOG_WARN("SBML consistency check warnings/errors:\n\n{}", ss.str());
+}
+
+static void printSBMLDocErrors(const libsbml::SBMLDocument *doc) {
+  auto severity = libsbml::LIBSBML_SEV_ERROR;
+  unsigned n = doc->getNumErrors(severity);
+  for (unsigned i = 0; i < n; ++i) {
+    const auto *err = doc->getErrorWithSeverity(i, severity);
+    SPDLOG_ERROR("[{}] line {}:{} {}", err->getCategoryAsString(),
+                 err->getLine(), err->getColumn(), err->getMessage());
   }
 }
 
@@ -254,11 +258,13 @@ void SbmlDocWrapper::importGeometryDimensions() {
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
   if (xcoord == nullptr) {
     SPDLOG_ERROR("No x-coordinate found in SBML model");
+    // todo: handle this, e.g. offer to import model without geometry / using
+    // default geometry
   }
   const auto *ycoord = geom->getCoordinateComponentByKind(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
   if (ycoord == nullptr) {
-    SPDLOG_CRITICAL("No y-coordinate found in SBML model");
+    SPDLOG_ERROR("No y-coordinate found in SBML model");
   }
   // import xy coordinates
   double xmin = xcoord->getBoundaryMin()->getValue();
@@ -273,6 +279,35 @@ void SbmlDocWrapper::importGeometryDimensions() {
   SPDLOG_INFO("  -> size [{},{}]", physicalSize.width(), physicalSize.height());
 }
 
+template <typename T>
+static QRgb sampledValueToColour(T value, libsbml::DataKind_t dataKind) {
+  QRgb col = static_cast<QRgb>(value);
+  if (dataKind == libsbml::DataKind_t::SPATIAL_DATAKIND_UINT8) {
+    int gray = static_cast<int>(value);
+    col = qRgb(gray, gray, gray);
+  }
+  return col;
+}
+
+static std::vector<QRgb> samplesToColours(const std::string &samples,
+                                          libsbml::DataKind_t dataKind) {
+  std::vector<QRgb> colours = utils::stringToVector<QRgb>(samples);
+  if (dataKind == libsbml::DataKind_t::SPATIAL_DATAKIND_UINT8) {
+    SPDLOG_INFO(
+        "Importing sampled field geometry of uint8 values as 8-bit grayscale "
+        "values");
+    for (auto &col : colours) {
+      col = sampledValueToColour(col, dataKind);
+    }
+  } else {
+    SPDLOG_INFO(
+        "Importing sampled field geometry of {} values as QRgb (i.e. "
+        "0xffRRGGBB) values",
+        libsbml::DataKind_toString(dataKind));
+  }
+  return colours;
+}
+
 void SbmlDocWrapper::importSampledFieldGeometry() {
   // get sampled field geometry
   sfgeom = nullptr;
@@ -284,20 +319,16 @@ void SbmlDocWrapper::importSampledFieldGeometry() {
   }
   if (sfgeom == nullptr) {
     SPDLOG_ERROR("Failed to find sampled field geometry");
+    return;
   }
 
   // import geometry image
   const auto *sf = geom->getSampledField(sfgeom->getSampledField());
   int xVals = sf->getNumSamples1();
   int yVals = sf->getNumSamples2();
-  if (sf->getDataType() != libsbml::DataKind_t::SPATIAL_DATAKIND_UINT32) {
-    SPDLOG_WARN(
-        "Sampled field data type '{}' is not uint32, importing anyway...",
-        sf->getDataTypeAsString());
-  }
-  auto samples = utils::stringToVector<QRgb>(sf->getSamples());
+  auto samples = samplesToColours(sf->getSamples(), sf->getDataType());
   if (static_cast<int>(samples.size()) != sf->getSamplesLength()) {
-    SPDLOG_WARN("Number of ints in string {} doesn't match SamplesLength {}",
+    SPDLOG_WARN("Number of samples {} doesn't match SamplesLength {}",
                 samples.size(), sf->getSamplesLength());
   }
   // convert values into 2d pixmap
@@ -334,13 +365,17 @@ void SbmlDocWrapper::importSampledFieldGeometry() {
         scp->isSetCompartmentMapping()) {
       const std::string &domainTypeID =
           scp->getCompartmentMapping()->getDomainType();
-      const auto *sfvol = sfgeom->getSampledVolumeByDomainType(domainTypeID);
-      QRgb col = static_cast<QRgb>(sfvol->getSampledValue());
-      SPDLOG_INFO("setting compartment {} colour to {:x}",
-                  compartmentID.toStdString(), col);
-      SPDLOG_INFO("  - DomainType: {}", domainTypeID);
-      SPDLOG_INFO("  - SampledFieldVolume: {}", sfvol->getId());
-      setCompartmentColour(compartmentID, col, false);
+      if (const auto *sfvol =
+              sfgeom->getSampledVolumeByDomainType(domainTypeID);
+          sfvol != nullptr) {
+        auto col =
+            sampledValueToColour(sfvol->getSampledValue(), sf->getDataType());
+        SPDLOG_INFO("setting compartment {} colour to {:x}",
+                    compartmentID.toStdString(), col);
+        SPDLOG_INFO("  - DomainType: {}", domainTypeID);
+        SPDLOG_INFO("  - SampledFieldVolume: {}", sfvol->getId());
+        setCompartmentColour(compartmentID, col, false);
+      }
     }
   }
 }
@@ -456,6 +491,12 @@ void SbmlDocWrapper::importCompartmentsAndSpeciesFromSBML() {
       comp->setName(name.toStdString());
       SPDLOG_INFO("  -> changing to '{}' to avoid name clash", comp->getName());
     }
+    // if compartment size is not defined, set it to 1 as default
+    if (!comp->isSetSize()) {
+      SPDLOG_WARN("Compartment {} has no size, assigning default value: 1",
+                  comp->getId());
+      comp->setSize(1.0);
+    }
     QString id = comp->getId().c_str();
     SPDLOG_TRACE("compartmentID: {}", comp->getId());
     SPDLOG_TRACE("compartmentName: {}", comp->getName());
@@ -475,14 +516,29 @@ void SbmlDocWrapper::importCompartmentsAndSpeciesFromSBML() {
     }
     if (spec->isSetHasOnlySubstanceUnits() &&
         spec->getHasOnlySubstanceUnits()) {
-      // equations expect amount, not concentration for this species
-      // for now this is not supported:
-      std::string errorMessage(
-          "SbmlDocWrapper::importSBMLFile :: Error: "
-          "HasOnlySubstanceUnits=true "
-          "is not supported for spatial models.");
-      SPDLOG_CRITICAL(errorMessage);
-      qFatal("%s", errorMessage.c_str());
+      // meaning unclear in PDE context, for now we just ignore this
+      SPDLOG_WARN("Species {} hasOnlySubstanceUnits=true : ignoring",
+                  spec->getId());
+    }
+    if (!spec->isSetInitialConcentration()) {
+      SPDLOG_WARN("Species {} initialConcentration is not set...",
+                  spec->getId());
+      double newInitialConcentration = 0;
+      if (spec->isSetInitialAmount()) {
+        // convert initial amount to initial concentration
+        double initialAmount = spec->getInitialAmount();
+        const auto *comp = model->getCompartment(spec->getCompartment());
+        double compartmentSize = comp->getSize();
+        newInitialConcentration = initialAmount / compartmentSize;
+        SPDLOG_WARN("  - using initialAmount / compartmentSize = {} / {} = {}",
+                    initialAmount, compartmentSize, newInitialConcentration);
+        spec->setInitialConcentration(newInitialConcentration);
+      } else {
+        // if no initial condition is set, just use zero as default
+        SPDLOG_WARN("  - initialAmount also not set, using {}",
+                    newInitialConcentration);
+        spec->setInitialConcentration(newInitialConcentration);
+      }
     }
     // if name clashes with existing species name, make it unique
     QString name = spec->getName().c_str();
@@ -525,12 +581,7 @@ void SbmlDocWrapper::validateAndUpgradeSBMLDoc() {
     } else {
       SPDLOG_ERROR(
           "Error - failed to upgrade SBML file (continuing anyway...)");
-    }
-    if (doc->getErrorLog()->getNumFailsWithSeverity(
-            libsbml::LIBSBML_SEV_ERROR) > 0) {
-      std::stringstream ss;
-      doc->printErrors(ss);
-      SPDLOG_WARN("SBML document errors:\n\n{}", ss.str());
+      printSBMLDocErrors(doc.get());
     }
   }
   model = doc->getModel();
@@ -550,7 +601,9 @@ void SbmlDocWrapper::validateAndUpgradeSBMLDoc() {
 
 void SbmlDocWrapper::initModelData() {
   validateAndUpgradeSBMLDoc();
+  doc->checkConsistency();
   printSBMLDocErrors(doc.get());
+  printSBMLDocWarnings(doc.get());
   if (!isValid) {
     return;
   }
@@ -2142,8 +2195,8 @@ std::vector<IdNameValue> SbmlDocWrapper::getGlobalConstants() const {
       SPDLOG_TRACE("parameter {} = {}", param->getId(), param->getValue());
       if (!(param->getId() == "x" || param->getId() == "y")) {
         // remove x and y if present, as these are not really parameters
-        // (we want them to remain as variables to be parsed by symbolic parser)
-        // todo: check if this can be done in a better way
+        // (we want them to remain as variables to be parsed by symbolic
+        // parser) todo: check if this can be done in a better way
         constants.push_back(
             {param->getId(), param->getName(), param->getValue()});
       }

@@ -140,15 +140,15 @@ SCENARIO("SBML: import SBML doc without geometry", "[core][sbml]") {
       // import concentration
       s.setSampledFieldConcentration("spec0c0", {0.0, 0.0, 0.0});
       REQUIRE(s.getConcentrationImage("spec0c0").size() == QSize(3, 1));
-      REQUIRE(s.getConcentrationImage("spec0c0").pixel(1, 0) ==
-              QColor(0, 0, 0).rgba());
+      REQUIRE(s.getConcentrationImage("spec0c0").pixel(1, 0) == qRgb(0, 0, 0));
       REQUIRE(s.getConcentrationImage("spec0c0").pixel(0, 0) == 0);
       REQUIRE(s.getConcentrationImage("spec0c0").pixel(2, 0) == 0);
       // set spec1c1conc to zero -> black pixel
-      s.setSampledFieldConcentration("spec0c0", {0.0, 0.0, 0.0});
-      REQUIRE(s.getConcentrationImage("spec1c1").pixel(0, 0) == 0x00000000);
-      REQUIRE(s.getConcentrationImage("spec1c1").pixel(1, 0) == 0x00000000);
-      REQUIRE(s.getConcentrationImage("spec1c1").pixel(2, 0) == 0xff000000);
+      s.setSampledFieldConcentration("spec1c1", {0.0, 0.0, 0.0});
+      REQUIRE(s.getConcentrationImage("spec1c1").pixel(0, 0) == 0);
+      REQUIRE(s.getConcentrationImage("spec1c1").pixel(1, 0) == 0);
+      REQUIRE(s.getConcentrationImage("spec1c1").pixel(2, 0) == qRgb(0, 0, 0));
+      s.setSampledFieldConcentration("spec2c1", {0.0, 0.0, 0.0});
       s.setIsSpatial("spec0c0", true);
       s.setIsSpatial("spec1c0", true);
       s.setIsSpatial("spec0c1", true);
@@ -170,17 +170,15 @@ SCENARIO("SBML: import SBML doc without geometry", "[core][sbml]") {
       s2.importSBMLFile("tmp2.xml");
       REQUIRE(s2.getCompartmentColour("compartment0") == 0xffaaaaaa);
       REQUIRE(s2.getCompartmentColour("compartment1") == 0xff525252);
-      REQUIRE(s2.getConcentrationImage("spec0c0").pixel(1, 0) ==
-              QColor(0, 0, 0).rgba());
-      REQUIRE(s2.getConcentrationImage("spec0c0").pixel(0, 0) == 0x00000000);
-      REQUIRE(s2.getConcentrationImage("spec0c0").pixel(2, 0) == 0x00000000);
-      REQUIRE(s2.getConcentrationImage("spec1c1").pixel(0, 0) == 0x00000000);
-      REQUIRE(s2.getConcentrationImage("spec1c1").pixel(1, 0) == 0x00000000);
-      REQUIRE(s2.getConcentrationImage("spec1c1").pixel(2, 0) == 0xff000000);
-      REQUIRE(s2.getConcentrationImage("spec2c1").pixel(0, 0) == 0x00000000);
-      REQUIRE(s2.getConcentrationImage("spec2c1").pixel(1, 0) == 0x00000000);
-      REQUIRE(s2.getConcentrationImage("spec2c1").pixel(2, 0) ==
-              QColor(0, 0, 0).rgba());
+      REQUIRE(s2.getConcentrationImage("spec0c0").pixel(1, 0) == qRgb(0, 0, 0));
+      REQUIRE(s2.getConcentrationImage("spec0c0").pixel(0, 0) == 0);
+      REQUIRE(s2.getConcentrationImage("spec0c0").pixel(2, 0) == 0);
+      REQUIRE(s2.getConcentrationImage("spec1c1").pixel(0, 0) == 0);
+      REQUIRE(s2.getConcentrationImage("spec1c1").pixel(1, 0) == 0);
+      REQUIRE(s2.getConcentrationImage("spec1c1").pixel(2, 0) == qRgb(0, 0, 0));
+      REQUIRE(s2.getConcentrationImage("spec2c1").pixel(0, 0) == 0);
+      REQUIRE(s2.getConcentrationImage("spec2c1").pixel(1, 0) == 0);
+      REQUIRE(s2.getConcentrationImage("spec2c1").pixel(2, 0) == qRgb(0, 0, 0));
 
       CAPTURE(s2.getDiffusionConstant("spec0c0"));
       CAPTURE(s2.getDiffusionConstant("spec1c0"));
@@ -358,6 +356,26 @@ SCENARIO("SBML: create new model, import geometry from image", "[core][sbml]") {
       REQUIRE(s.getCompartmentImage().pixel(0, 0) == col);
     }
   }
+}
+
+SCENARIO("SBML: import uint8 sampled field", "[core][sbml]") {
+  sbml::SbmlDocWrapper s;
+  QFile f(":/test/models/very-simple-model-uint8.xml");
+  f.open(QIODevice::ReadOnly);
+  s.importSBMLString(f.readAll().toStdString());
+  const auto &img = s.getCompartmentImage();
+  REQUIRE(img.colorCount() == 3);
+  REQUIRE(s.getCompartmentColour("c1") == qRgb(127, 127, 127));
+  REQUIRE(s.getCompartmentColour("c2") == qRgb(0, 0, 0));
+  REQUIRE(s.getCompartmentColour("c3") == qRgb(255, 255, 255));
+  // undefined compartment sizes -> defaulted to 1
+  REQUIRE(s.getCompartmentSize("c1") == dbl_approx(1.0));
+  REQUIRE(s.getCompartmentSize("c2") == dbl_approx(1.0));
+  REQUIRE(s.getCompartmentSize("c3") == dbl_approx(1.0));
+  // species A_c1 has initialAmount 11 -> converted to concentration
+  REQUIRE(s.getInitialConcentration("A_c1") == dbl_approx(11.0));
+  // species A_c2 has no initialAmount or initialConcentration -> defaulted to 0
+  REQUIRE(s.getInitialConcentration("A_c2") == dbl_approx(0.0));
 }
 
 SCENARIO("SBML: ABtoC.xml", "[core][sbml]") {
