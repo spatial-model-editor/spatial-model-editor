@@ -3,14 +3,18 @@ os: linux
 dist: xenial
 language: cpp
 
-# only build master branch & version tags (and pull requests), i.e. don't build pr branches
+# untagged master branch commits (and PRs to master) are built, no releases
+# version tags on master, e.g "1.3.24" result in additional build with github binary releases & pypi python wheel releases
+# "latest" tag on master results in github binary release, overwriting any existing files
 branches:
   only:
     - master
+    - latest
     - /[0-9]+\.[0-9]+\.[0-9]+/
 
 env:
   global:
+    # python wheel building can be disabled to speed up CI when working on a PR
     - BUILD_PYTHON_WHEELS: false
     # pypi TWINE_PASSWORD
     - secure: "GFBxgbwP75qb0QW3jFO3e3fbfFLpYue+kUZGm3ArNZ9ExeXPGU3fxfxiBolEPnnPK98VlZZ8R0WBQptvWnaBN0tamt5r7OCXljQdpNgRF04MMa1gtbAEnuYjd6dHQ5CbdiEKxK4MnF28jJ+0wnw35E7YPGq357XWKwGFoG0HT9UenFd7HRbzsM0WmO7sog8bZYahYU+nyIDu6AVGlsc1b4XpVEu/pcuY2PexzYpV4wv+qVprRIeTwi2aFb4bmr3XcPZtyps3eiExLISHmz3mAuHIiNEt3wQA7Kjzsz93lm6DlGi3LSEXugfomGzg3oyHQC8oKKky/D6hHqnc9Jfow4Epj3aHvE4LP00TxDiyrjqvVGeCHa/RL/WIGJ/zZA4W7QTr2wvDOhw5EOuSmIW42tmOsOV4Zo/wr5d9A0r0VUfHhrsi1QUHmFFgTJXeTDyHYC32mvXy8EuaxLRFLBUVKE3gPfaYUgRafvx1Kn7H9WUmrpA7JAj2caMYD6UtKly1J6BFyTpPFlGgk3yxzVYgbeToOOrabQzGzYBuaxz6aysbyPra+rYF5SrJ/Dp4TPjfoE/1IIjmrbVpYEQGdfojnxxN6xnW7woPgq8IUDStw7iR83xyluWEtn1i1KlzRA8NMNdBHxgFWQ9rpE/DZikeJ8yb0FoEleMRjaE6G4C33rc="
@@ -163,7 +167,7 @@ jobs:
     # linux python wheels release build: custom manylinux2010 docker image #
     ########################################################################
     - name: "linux python wheels"
-      if: env(BUILD_PYTHON_WHEELS) = true
+      if: (env(BUILD_PYTHON_WHEELS) = true) AND (tag != "latest")
       os: linux
       language: python
       python: 3.8
@@ -187,7 +191,7 @@ jobs:
     # macOS python wheels release build: xcode 10.3, macOS 10.14 #
     ##############################################################
     - name: "macOS python wheels"
-      if: env(BUILD_PYTHON_WHEELS) = true
+      if: (env(BUILD_PYTHON_WHEELS) = true) AND (tag != "latest")
       os: osx
       osx_image: xcode11.3
       language: cpp
@@ -221,7 +225,7 @@ jobs:
     # windows python wheels release build: mingw-w64 gcc 9 #
     ########################################################
     - name: "windows python wheels"
-      if: env(BUILD_PYTHON_WHEELS) = true
+      if: (env(BUILD_PYTHON_WHEELS) = true) AND (tag != "latest")
       os: windows
       # get up to date mingw-w64-x86_64 gcc, make, cmake from msys2
       before_install:
@@ -275,6 +279,7 @@ jobs:
     # linux code quality build: cmake / clang 9 -> sonarcloud.io, codecov.io
     ########################################################################
     - name: "static analysis / code coverage"
+      if: tag != "latest"
       dist: xenial
       language: cpp
       compiler: clang
@@ -338,10 +343,12 @@ jobs:
         # core unit tests
         - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "[core]" 2>&1 | tail -n 100
         - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
+        - $COV gcov -p src/core/CMakeFiles/core.dir/*/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
         - mv *#spatial-model-editor#src#core*.gcov *#spatial-model-editor#src#gui*.gcov gcov/
         - rm -f *.gcov src/core/CMakeFiles/core.dir/*.gcda
+        - rm -f *.gcov src/core/CMakeFiles/core.dir/*/*.gcda
         - rm -f *.gcov src/gui/CMakeFiles/gui.dir/*.gcda
         - rm -f *.gcov src/gui/CMakeFiles/gui.dir/*/*.gcda
         # upload coverage report to codecov.io
@@ -351,11 +358,13 @@ jobs:
         - rm gcov/*
         - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "~[mainwindow][gui]" 2>&1 | tail -n 100
         - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
+        - $COV gcov -p src/core/CMakeFiles/core.dir/*/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
         - mv *#spatial-model-editor#src#core*.gcov *#spatial-model-editor#src#gui*.gcov gcov/
         - rm *.gcov
         - rm -f *.gcov src/core/CMakeFiles/core.dir/*.gcda
+        - rm -f *.gcov src/core/CMakeFiles/core.dir/*/*.gcda
         - rm -f *.gcov src/gui/CMakeFiles/gui.dir/*.gcda
         - rm -f *.gcov src/gui/CMakeFiles/gui.dir/*/*.gcda
         # upload coverage report to codecov.io
@@ -365,11 +374,13 @@ jobs:
         - rm gcov/*
         - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "[mainwindow][gui]" 2>&1 | tail -n 100
         - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
+        - $COV gcov -p src/core/CMakeFiles/core.dir/*/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
         - mv *#spatial-model-editor#src#core*.gcov *#spatial-model-editor#src#gui*.gcov gcov/
         - rm *.gcov
         - rm -f *.gcov src/core/CMakeFiles/core.dir/*.gcda
+        - rm -f *.gcov src/core/CMakeFiles/core.dir/*/*.gcda
         - rm -f *.gcov src/gui/CMakeFiles/gui.dir/*.gcda
         - rm -f *.gcov src/gui/CMakeFiles/gui.dir/*/*.gcda
         # upload coverage report to codecov.io
@@ -380,10 +391,12 @@ jobs:
         - cd sme
         - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -v -s ../../test
         - $COV gcov -p ../src/core/CMakeFiles/core.dir/*.gcno > /dev/null
+        - $COV gcov -p ../src/core/CMakeFiles/core.dir/*/*.gcno > /dev/null
         - $COV gcov -p CMakeFiles/sme.dir/*.gcno > /dev/null
         - mv *#spatial-model-editor#src#core*.gcov *#spatial-model-editor#sme*.gcov ../gcov/
         - rm *.gcov
         - rm -f *.gcov ../src/core/CMakeFiles/core.dir/*.gcda
+        - rm -f *.gcov ../src/core/CMakeFiles/core.dir/*/*.gcda
         - rm -f *.gcov ../src/gui/CMakeFiles/gui.dir/*.gcda
         - rm -f *.gcov ../src/gui/CMakeFiles/gui.dir/*/*.gcda
         - rm -f *.gcov CMakeFiles/sme.dir/*/*.gcda
@@ -398,6 +411,7 @@ jobs:
         - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -s ../../test
         - cd ..
         - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
+        - $COV gcov -p src/core/CMakeFiles/core.dir/*/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
         - $COV gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null
@@ -408,13 +422,13 @@ jobs:
         - sonar-scanner -Dsonar.login=$SONAR_LOGIN
 
 before_script:
-  # install pre-compiled Qt5 binaries & static libraries to /usr/local/qt5-static
+  # install pre-compiled Qt5 binaries & static libraries
   - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"
   - sudo tar xf qt5-static-$TRAVIS_OS_NAME.tgz -C /
-  # download pre-compiled static libSBML (and other) libraries to /opt/libs
+  # download pre-compiled static libSBML (and other) libraries
   - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
   - sudo tar xf libsbml-static-$TRAVIS_OS_NAME.tgz -C /
-  # download pre-compiled dunecopasi libraries to /opt/libs/dune
+  # download pre-compiled static dunecopasi libraries
   - wget "https://github.com/lkeegan/dune-copasi-static/releases/latest/download/dune-copasi-static-$TRAVIS_OS_NAME.tgz"
   - sudo tar xf dune-copasi-static-$TRAVIS_OS_NAME.tgz -C /opt/libs
   - ls /opt/libs
@@ -423,7 +437,7 @@ notifications:
   email: false
 
 deploy:
-  # if build is tagged, upload executables to github release
+  # if build is tagged and DEPLOY_FILE_GUI var is set, upload executables to github release
   provider: releases
   token:
     secure: E0WtptZea2n40eN+FBYZ2XYv/pjKUjVFZavl8BTVYhidzXYuT/DvhoehPVauJRy/t5QLMtmyd5ww9dhYkIcNcpAc1INrUlYG274D8xgXwbgsftmFbMqdrKR9f/qkynP0r6LCd1p0Tuhxxf37OcTYVEOjbvV+KsTzpWHtS9AqZGvMfv/rpI4r/Zu/LfGBs2T7Rr8Mlfy5YBI2L7lGka3ziTIic01pKDfjHJQ2xD2N366mEqcpB0vjF8c9b+qIUbQ8g8ybLoMfKM6ZSvcpz2NmLQK8l8gzzTN/k1PI2DJxmzi+9G031RXLAXvbR8I8NEQlZfsicepHk0m13EI7x5/TIGaa2ngSgX1W7oAL0IAkJFpcWcN5RQOgowCBAB/UnHCX8EgnBAiD8eTlc4DUC2WY84Dr3EcdhLg0bEX/Ky4mDAxt0QgABG0hEU3kE6USsUvp7IZmnCEdu8e+F/HRmvSUqECI9FvjmpHdBHwIv6anVA2pndN/ZGn4+4BWbo6IwycAh0FPAnvvs6guxnOqQW/eMRgBI3y4grzEYP/bPzlL1W6q42r6fwvh45LtcgC+joAoJCL3I51QcZ1joMY/OShSaKi3MnokImmb/GPRvebe3hDGGSsEAarrmIRb0zCMYDMdHzA+pqeojGZf6SCfIculmeE1MO2t/DqumxQRxTGx+8k=

@@ -1,6 +1,9 @@
 #include <QDir>
 #include <QImage>
 #include <QRgb>
+#include <list>
+#include <set>
+#include <vector>
 
 #include "catch_wrapper.hpp"
 #include "qt_test_utils.hpp"
@@ -149,6 +152,64 @@ SCENARIO("Utils", "[core][utils]") {
     REQUIRE(qpi.getIndex(v[0]).has_value() == true);
     REQUIRE(qpi.getIndex(v[0]).value() == 0);
     REQUIRE(qpi.getPoints().size() == v.size());
+  }
+  GIVEN("SmallSet of int") {
+    utils::SmallStackSet<int, 1> ss;
+    REQUIRE(ss.max_size() == 1);
+    REQUIRE(ss.size() == 0);
+    ss.insert(12);
+    REQUIRE(ss.size() == 1);
+    REQUIRE(ss[0] == 12);
+    REQUIRE(*ss.cbegin() == 12);
+    REQUIRE(ss.contains(12) == true);
+    REQUIRE(ss.contains(10) == false);
+    // insert is a no-op once set reaches max_size
+    ss.insert(10);
+    REQUIRE(ss.size() == 1);
+    REQUIRE(ss[0] == 12);
+    REQUIRE(ss.contains(12) == true);
+    REQUIRE(ss.contains(10) == false);
+    // erase non-existent element is also a no-op
+    ss.erase(3);
+    REQUIRE(ss.size() == 1);
+    REQUIRE(ss.contains(12) == true);
+    ss.erase(12);
+    REQUIRE(ss.size() == 0);
+    REQUIRE(ss.contains(12) == false);
+    // can initialise with single value
+    ss = utils::SmallStackSet<int, 1>(3);
+    REQUIRE(ss.size() == 1);
+    REQUIRE(ss.contains(3) == true);
+  }
+  GIVEN("SmallSet of size_t") {
+    utils::SmallStackSet<std::size_t, 16> ss({1, 2, 3, 4});
+    REQUIRE(ss.max_size() == 16);
+    REQUIRE(ss.size() == 4);
+    REQUIRE(ss.contains(1) == true);
+    REQUIRE(ss.contains(2) == true);
+    REQUIRE(ss.contains(3) == true);
+    REQUIRE(ss.contains(4) == true);
+    REQUIRE(ss.contains(5) == false);
+    REQUIRE(ss.contains_any_of(std::vector<int>{5, 7}) == false);
+    REQUIRE(ss.contains_any_of(std::vector<int>{5, 7, 2}) == true);
+    REQUIRE(ss.contains_any_of(std::vector<int>{1, 2, 3}) == true);
+    REQUIRE(ss.contains_any_of(std::list<int>{5, 7}) == false);
+    REQUIRE(ss.contains_any_of(std::list<int>{5, 7, 2}) == true);
+    REQUIRE(ss.contains_any_of(std::list<int>{1, 2, 3}) == true);
+    ss.erase(2);
+    REQUIRE(ss.size() == 3);
+    REQUIRE(ss.contains(1) == true);
+    REQUIRE(ss.contains(2) == false);
+    REQUIRE(ss.contains(3) == true);
+    REQUIRE(ss.contains(4) == true);
+    REQUIRE(ss.contains_any_of(std::set<std::size_t>{5, 7, 2}) == false);
+    REQUIRE(ss.contains_any_of(std::set<std::size_t>{5, 7, 2, 1}) == true);
+    ss.erase(1);
+    REQUIRE(ss.size() == 2);
+    ss.clear();
+    REQUIRE(ss.size() == 0);
+    REQUIRE(ss.contains(1) == false);
+    REQUIRE(ss.contains_any_of(std::vector<int>{1, 2, 3}) == false);
   }
 }
 

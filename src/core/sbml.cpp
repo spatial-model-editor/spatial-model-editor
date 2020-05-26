@@ -1339,12 +1339,12 @@ void SbmlDocWrapper::setCompartmentColour(const QString &compartmentID,
 }
 
 std::vector<QRgb> SbmlDocWrapper::getCompartmentColours() const {
-  std::vector<QRgb> c;
-  for (unsigned int i = 0; i < model->getNumCompartments(); ++i) {
-    const std::string &compID = model->getCompartment(i)->getId();
-    c.push_back(getCompartmentColour(compID.c_str()));
+  std::vector<QRgb> colours;
+  colours.reserve(static_cast<std::size_t>(compartments.size()));
+  for (const auto &compartment : compartments) {
+    colours.push_back(getCompartmentColour(compartment));
   }
-  return c;
+  return colours;
 }
 
 void SbmlDocWrapper::updateMesh() {

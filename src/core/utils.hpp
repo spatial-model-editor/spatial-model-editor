@@ -14,6 +14,9 @@
 //     - returns std::optional with index if found
 //  - QPointUniqueIndexer class:
 //     - as above but removes duplicated QPoints first
+//  - SmallMap: simple insert-only map for small number of small types
+//  - SmallStackSet: simple fast non-allocating set implementation for a small
+//  number of small (i.e. pass by copy) types, with hard limit on size
 
 #pragma once
 
@@ -23,6 +26,7 @@
 #include <QString>
 #include <QStringList>
 #include <algorithm>
+#include <initializer_list>
 #include <iomanip>
 #include <iterator>
 #include <optional>
@@ -33,8 +37,8 @@ namespace utils {
 
 template <typename Container>
 typename Container::value_type sum(const Container &c) {
-  return (
-      std::accumulate(cbegin(c), cend(c), typename Container::value_type{0}));
+  return (std::accumulate(std::cbegin(c), std::cend(c),
+                          typename Container::value_type{0}));
 }
 
 template <typename Container>
@@ -44,18 +48,18 @@ typename Container::value_type average(const Container &c) {
 
 template <typename Container>
 typename Container::value_type min(const Container &c) {
-  return *std::min_element(cbegin(c), cend(c));
+  return *std::min_element(std::cbegin(c), std::cend(c));
 }
 
 template <typename Container>
 typename Container::value_type max(const Container &c) {
-  return *std::max_element(cbegin(c), cend(c));
+  return *std::max_element(std::cbegin(c), std::cend(c));
 }
 
 template <typename Container>
 std::pair<typename Container::value_type, typename Container::value_type>
 minmax(const Container &c) {
-  auto p = std::minmax_element(cbegin(c), cend(c));
+  auto p = std::minmax_element(std::cbegin(c), std::cend(c));
   return {*p.first, *p.second};
 }
 
@@ -155,4 +159,88 @@ class QPointUniqueIndexer {
   std::vector<QPoint> getPoints() const;
 };
 
+template <typename K, typename V>
+class SmallMap {
+ private:
+  std::vector<K> keys;
+  std::vector<V> values;
+
+ public:
+  void insert(K key, V value) noexcept {
+    keys.push_back(key);
+    values.push_back(value);
+  }
+  std::optional<V> operator[](K key) const noexcept {
+    for (std::size_t i = 0; i < keys.size(); ++i) {
+      if (keys[i] == key) {
+        return values[i];
+      }
+    }
+    return {};
+  }
+  explicit SmallMap(std::size_t size) {
+    keys.reserve(size);
+    values.reserve(size);
+  }
+};
+
+// set class for a fixed maximum number of small (i.e. pass by value) types
+// no heap allocations, elements stored in std::array,
+// insert/erase/find operations involve linear traversal of elements i.e. O(N)
+// if the set is full then insert just becomes a no-op
+template <typename T, std::size_t MaxSize>
+class SmallStackSet {
+ private:
+  using container = std::array<T, MaxSize>;
+  using const_iterator = typename container::const_iterator;
+  container values;
+  std::size_t n = 0;
+
+ public:
+  using value_type = T;
+  void clear() noexcept { n = 0; }
+  void insert(T v) {
+    if (n == MaxSize || contains(v)) {
+      return;
+    }
+    values[n] = v;
+    ++n;
+  }
+  void erase(T v) {
+    for (std::size_t i = 0; i < n; ++i) {
+      if (values[i] == v) {
+        --n;
+        values[i] = values[n];
+        return;
+      }
+    }
+  }
+  bool contains(T v) const {
+    for (std::size_t i = 0; i < n; ++i) {
+      if (values[i] == v) {
+        return true;
+      }
+    }
+    return false;
+  }
+  template <typename Cont>
+  bool contains_any_of(const Cont &cont) const {
+    return std::any_of(std::cbegin(cont), std::cend(cont),
+                       [this](T v) { return contains(v); });
+  }
+  T operator[](std::size_t i) const { return values[i]; }
+  const_iterator cbegin() const noexcept { return values.cbegin(); }
+  const_iterator cend() const noexcept { return values.cbegin() + n; }
+  const_iterator begin() const noexcept { return cbegin(); }
+  const_iterator end() const noexcept { return cend(); }
+  std::size_t size() const { return n; }
+  std::size_t max_size() const { return MaxSize; }
+  SmallStackSet() = default;
+  explicit SmallStackSet(T v) { insert(v); }
+  explicit SmallStackSet(std::initializer_list<T> vals) {
+    for (T v : vals) {
+      insert(v);
+    }
+  }
+};
 }  // namespace utils

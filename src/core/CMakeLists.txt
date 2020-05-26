@@ -1,5 +1,7 @@
 add_library(core STATIC resources/resources.qrc)
 
+add_subdirectory(mesh)
+
 # set Logger level
 
 target_compile_definitions(
@@ -85,18 +87,15 @@ find_package(spdlog REQUIRED)
 
 target_sources(core
                PRIVATE
-               boundary.cpp
                duneini.cpp
                dunesim.cpp
                geometry.cpp
-               mesh.cpp
                pde.cpp
                pixelsim.cpp
                sbml.cpp
                simulate.cpp
                symbolic.cpp
                tiff.cpp
-               triangulate.cpp
                units.cpp
                utils.cpp
                ${PROJECT_BINARY_DIR}/src/core/version.cpp)
@@ -104,18 +103,15 @@ target_sources(core
 target_sources(core
                PRIVATE
                basesim.hpp
-               boundary.hpp
                duneini.hpp
                dunesim.hpp
                geometry.hpp
-               mesh.hpp
                pde.hpp
                pixelsim.hpp
                sbml.hpp
                simulate.hpp
                symbolic.hpp
                tiff.hpp
-               triangulate.hpp
                units.hpp
                utils.hpp
                version.hpp)
