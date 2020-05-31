@@ -14,11 +14,8 @@
 TabGeometry::TabGeometry(sbml::SbmlDocWrapper &doc,
                          QLabelMouseTracker *mouseTracker, QLabel *statusBarMsg,
                          QWidget *parent)
-    : QWidget(parent),
-      ui{std::make_unique<Ui::TabGeometry>()},
-      sbmlDoc(doc),
-      lblGeometry(mouseTracker),
-      statusBarPermanentMessage(statusBarMsg) {
+    : QWidget(parent), ui{std::make_unique<Ui::TabGeometry>()}, sbmlDoc(doc),
+      lblGeometry(mouseTracker), statusBarPermanentMessage(statusBarMsg) {
   ui->setupUi(this);
   ui->tabCompartmentGeometry->setCurrentIndex(0);
 
@@ -95,16 +92,18 @@ void TabGeometry::loadModelData(const QString &selection) {
     ui->btnChangeCompartment->setEnabled(true);
   }
   lblGeometry->setImage(sbmlDoc.getCompartmentImage());
-  enableTabs(sbmlDoc.hasValidGeometry);
+  enableTabs();
   selectMatchingOrFirstItem(ui->listCompartments, selection);
   // ui->lblGeometryStatus->setText("Compartment Geometry:");
 }
 
-void TabGeometry::enableTabs(bool enable) {
+void TabGeometry::enableTabs() {
+  bool enableBoundaries = sbmlDoc.hasValidGeometry;
+  bool enableMesh = sbmlDoc.mesh != nullptr && sbmlDoc.mesh->isValid();
   auto *tab = ui->tabCompartmentGeometry;
-  for (int i = 1; i < tab->count(); ++i) {
-    tab->setTabEnabled(i, enable);
-  }
+  tab->setTabEnabled(1, enableBoundaries);
+  tab->setTabEnabled(2, enableBoundaries);
+  tab->setTabEnabled(3, enableMesh);
 }
 
 void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
@@ -124,10 +123,9 @@ void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
     }
     // update display by simulating user click on listCompartments
     listCompartments_currentRowChanged(ui->listCompartments->currentRow());
-    enableTabs();
     waitingForCompartmentChoice = false;
     statusBarPermanentMessage->clear();
-    enableTabs(sbmlDoc.hasValidGeometry);
+    enableTabs();
     emit modelGeometryChanged();
   } else {
     // display compartment the user just clicked on
@@ -148,7 +146,8 @@ void TabGeometry::btnAddCompartment_clicked() {
   if (ok && !compartmentName.isEmpty()) {
     QString newCompartmentName = sbmlDoc.addCompartment(compartmentName);
     ui->tabCompartmentGeometry->setCurrentIndex(0);
-    enableTabs(false);
+    sbmlDoc.hasValidGeometry = false;
+    enableTabs();
     loadModelData(newCompartmentName);
     emit modelGeometryChanged();
   }
@@ -170,7 +169,8 @@ void TabGeometry::btnRemoveCompartment_clicked() {
             if (result == QMessageBox::Yes) {
               sbmlDoc.removeCompartment(compartmentId);
               ui->tabCompartmentGeometry->setCurrentIndex(0);
-              enableTabs(false);
+              sbmlDoc.hasValidGeometry = false;
+              enableTabs();
               loadModelData();
               emit modelGeometryChanged();
             }

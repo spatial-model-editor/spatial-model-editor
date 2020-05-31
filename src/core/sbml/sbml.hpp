@@ -78,11 +78,6 @@ class SbmlDocWrapper {
  private:
   // the SBML document
   std::unique_ptr<libsbml::SBMLDocument> doc;
-  // names of additional custom annotations that we add
-  // to the ParametricGeometry object
-  inline static const std::string annotationURI =
-      "https://github.com/lkeegan/spatial-model-editor";
-  inline static const std::string annotationPrefix = "spatialModelEditor";
 
   // some useful pointers
   libsbml::Model *model = nullptr;
@@ -156,8 +151,6 @@ class SbmlDocWrapper {
   // update SBML doc with mesh
   libsbml::ParametricObject *getParametricObject(
       const std::string &compartmentID) const;
-  void removeMeshParamsAnnotation();
-  void writeMeshParamsAnnotation(libsbml::ParametricGeometry *parageom);
   void writeGeometryMeshToSBML();
   void writeGeometryImageToSBML();
 
@@ -166,16 +159,6 @@ class SbmlDocWrapper {
 
   libsbml::UnitDefinition *getOrCreateUnitDef(const std::string &Id,
                                               const std::string &defaultId);
-  // return supplied math expression as string with any Function calls inlined
-  // e.g. given mathExpression = "z*f(x,y)"
-  // where the SBML model contains a function "f(a,b) = a*b-2"
-  // it returns "z*(x*y-2)"
-  std::string inlineFunctions(const std::string &mathExpression) const;
-
-  // return supplied math expression as string with any Assignment rules
-  // inlined
-  std::string inlineAssignments(const std::string &mathExpression) const;
-
   double pixelWidth = 1.0;
   QPointF physicalOrigin = QPointF(0, 0);
   QSizeF physicalSize = QSizeF(0, 0);
@@ -239,7 +222,6 @@ class SbmlDocWrapper {
   const QImage &getCompartmentImage() const;
   QString addCompartment(const QString &compartmentName);
   void removeCompartment(const QString &compartmentID);
-
   double getCompartmentSize(const QString &compartmentID) const;
   SpeciesGeometry getSpeciesGeometry(const QString &speciesID) const;
   QString getCompartmentSizeUnits(const QString &compartmentID) const;

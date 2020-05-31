@@ -23,11 +23,12 @@ struct FpIndices {
 };
 
 class Boundary {
- private:
+private:
   static constexpr std::size_t nullIndex =
       std::numeric_limits<std::size_t>::max();
   bool loop;
   bool membrane;
+  bool valid;
   std::string membraneID;
   LineSimplifier lineSimplifier;
   std::size_t maxPoints;
@@ -41,33 +42,34 @@ class Boundary {
   FpIndices outerFpIndices = {nullIndex, nullIndex};
   double membraneWidth = 1;
   void constructMembraneBoundarySegment(std::size_t index,
-                                        const QPointF& normal);
+                                        const QPointF &normal);
   void constructMembraneBoundaries();
 
- public:
+public:
   bool isLoop() const;
   bool isMembrane() const;
-  const std::vector<QPoint>& getPoints() const;
-  const std::vector<QPointF>& getInnerPoints() const;
-  void setInnerStartPoint(const QPointF& point, std::size_t index);
-  void setInnerEndPoint(const QPointF& point, std::size_t index);
-  const std::vector<QPointF>& getOuterPoints() const;
-  void setOuterStartPoint(const QPointF& point, std::size_t index);
-  void setOuterEndPoint(const QPointF& point, std::size_t index);
-  const FpIndices& getFpIndices() const;
-  void setFpIndices(const FpIndices& indices);
-  const FpIndices& getInnerFpIndices() const;
-  const FpIndices& getOuterFpIndices() const;
+  bool isValid() const;
+  const std::vector<QPoint> &getPoints() const;
+  const std::vector<QPointF> &getInnerPoints() const;
+  void setInnerStartPoint(const QPointF &point, std::size_t index);
+  void setInnerEndPoint(const QPointF &point, std::size_t index);
+  const std::vector<QPointF> &getOuterPoints() const;
+  void setOuterStartPoint(const QPointF &point, std::size_t index);
+  void setOuterEndPoint(const QPointF &point, std::size_t index);
+  const FpIndices &getFpIndices() const;
+  void setFpIndices(const FpIndices &indices);
+  const FpIndices &getInnerFpIndices() const;
+  const FpIndices &getOuterFpIndices() const;
   std::size_t getMaxPoints() const;
   void setMaxPoints(std::size_t maxPoints);
   std::size_t setMaxPoints();
   double getMembraneWidth() const;
   void setMembraneWidth(double newMembraneWidth);
-  const std::string& getMembraneId() const;
-  explicit Boundary(const std::vector<QPoint>& boundaryPoints,
+  const std::string &getMembraneId() const;
+  explicit Boundary(const std::vector<QPoint> &boundaryPoints,
                     bool isClosedLoop = false,
                     bool isMembraneCompartment = false,
-                    const std::string& membraneName = {});
+                    const std::string &membraneName = {});
 };
 
-}  // namespace mesh
+} // namespace mesh

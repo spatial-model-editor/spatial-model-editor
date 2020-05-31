@@ -6,6 +6,7 @@
 #include <tbb/task_scheduler_init.h>
 #endif
 #include <array>
+#include <utility>
 
 #include "geometry.hpp"
 #include "logger.hpp"
@@ -19,7 +20,7 @@ ReacEval::ReacEval(const sbml::SbmlDocWrapper &doc,
                    const std::vector<std::string> &speciesIDs,
                    const std::vector<std::string> &reactionIDs,
                    const std::vector<std::string> &reactionScaleFactors)
-    : result(speciesIDs.size(), 0.0), nSpecies(speciesIDs.size()) {
+    : result(speciesIDs.size(), 0.0) {
   // construct reaction expressions and stoich matrix
   pde::PDE pde(&doc, speciesIDs, reactionIDs, {}, reactionScaleFactors);
   // compile all expressions with symengine
@@ -49,8 +50,9 @@ void SimCompartment::spatiallyAverageDcdt() {
 
 SimCompartment::SimCompartment(const sbml::SbmlDocWrapper &doc,
                                const geometry::Compartment &compartment,
-                               const std::vector<std::string> &sIds)
-    : comp(compartment), compartmentId(compartment.getId()), speciesIds(sIds) {
+                               std::vector<std::string> sIds)
+    : comp(compartment), compartmentId(compartment.getId()),
+      speciesIds(std::move(sIds)) {
   // get species in compartment
   SPDLOG_DEBUG("compartment: {}", compartmentId);
   std::vector<const geometry::Field *> fields;
@@ -94,8 +96,9 @@ void SimCompartment::evaluateDiffusionOperator() {
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
   tbb::parallel_for(
       std::size_t{0}, np,
-      [ns, &dcdt = dcdt, &diffConstants = diffConstants, &conc = conc,
-       &comp = comp](std::size_t i) {
+      [ns, &dcdt = dcdt, &diffConstants = std::as_const(diffConstants),
+       &conc = std::as_const(conc),
+       &comp = std::as_const(comp)](std::size_t i) {
 #else
   for (std::size_t i = 0; i < np; ++i) {
 #endif
@@ -122,7 +125,8 @@ void SimCompartment::evaluateReactions() {
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
   tbb::parallel_for(
       std::size_t{0}, N, ns,
-      [&reacEval = reacEval, &conc = conc, &dcdt = dcdt](std::size_t index) {
+      [&reacEval = std::as_const(reacEval), &conc = std::as_const(conc),
+       &dcdt = dcdt](std::size_t index) {
 #else
   for (std::size_t index = 0; index < N; index += ns) {
 #endif
@@ -191,8 +195,9 @@ const std::vector<double> &SimCompartment::getConcentrations() const {
   return conc;
 }
 
-double SimCompartment::getLowerOrderConcentration(
-    std::size_t speciesIndex, std::size_t pixelIndex) const {
+double
+SimCompartment::getLowerOrderConcentration(std::size_t speciesIndex,
+                                           std::size_t pixelIndex) const {
   if (s2.empty()) {
     return 0;
   }
@@ -450,7 +455,7 @@ PixelSim::PixelSim(
                                  simCompartments.back().getMaxStableTimestep());
   }
   // add membranes
-  for (auto &membrane : doc.membraneVec) {
+  for (const auto &membrane : doc.membraneVec) {
     if (doc.reactions.find(membrane.membraneID.c_str()) !=
         doc.reactions.cend()) {
       // look for the two membrane compartments in simCompartments
@@ -529,7 +534,8 @@ std::size_t PixelSim::run(double time) {
   std::size_t steps = 0;
   discardedSteps = 0;
   // do timesteps until we reach t
-  while (tNow + time * 1e-12 < time) {
+  constexpr double relativeTolerance = 1e-12;
+  while (tNow + time * relativeTolerance < time) {
     double maxDt = std::min(maxTimestep, time - tNow);
     if (integratorOrder > 1) {
       tNow += doRKAdaptive(maxDt);
@@ -547,8 +553,8 @@ std::size_t PixelSim::run(double time) {
   return steps;
 }
 
-const std::vector<double> &PixelSim::getConcentrations(
-    std::size_t compartmentIndex) const {
+const std::vector<double> &
+PixelSim::getConcentrations(std::size_t compartmentIndex) const {
   return simCompartments[compartmentIndex].getConcentrations();
 }
 
@@ -559,4 +565,4 @@ double PixelSim::getLowerOrderConcentration(std::size_t compartmentIndex,
       speciesIndex, pixelIndex);
 }
 
-}  // namespace sim
+} // namespace sim

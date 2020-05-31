@@ -154,36 +154,36 @@ void MainWindow::tabMain_currentChanged(int index) {
   SPDLOG_DEBUG("Tab changed to {} [{}]", index,
                ui->tabMain->tabText(index).toStdString());
   switch (index) {
-    case TabIndex::GEOMETRY:
-      tabGeometry->loadModelData();
-      break;
-    case TabIndex::MEMBRANES:
-      tabMembranes->loadModelData();
-      break;
-    case TabIndex::SPECIES:
-      tabSpecies->loadModelData();
-      break;
-    case TabIndex::REACTIONS:
-      tabReactions->loadModelData();
-      break;
-    case TabIndex::FUNCTIONS:
-      tabFunctions->loadModelData();
-      break;
-    case TabIndex::SIMULATE:
-      tabSimulate->loadModelData();
-      break;
-    case TabIndex::SBML:
-      ui->txtSBML->setText(sbmlDoc.getXml());
-      break;
-    case TabIndex::DUNE:
-      ui->txtDUNE->setText(dune::DuneConverter(sbmlDoc).getIniFile());
-      break;
-    case TabIndex::GMSH:
-      ui->txtGMSH->setText(sbmlDoc.mesh == nullptr ? ""
-                                                   : sbmlDoc.mesh->getGMSH());
-      break;
-    default:
-      SPDLOG_ERROR("Tab index {} not valid", index);
+  case TabIndex::GEOMETRY:
+    tabGeometry->loadModelData();
+    break;
+  case TabIndex::MEMBRANES:
+    tabMembranes->loadModelData();
+    break;
+  case TabIndex::SPECIES:
+    tabSpecies->loadModelData();
+    break;
+  case TabIndex::REACTIONS:
+    tabReactions->loadModelData();
+    break;
+  case TabIndex::FUNCTIONS:
+    tabFunctions->loadModelData();
+    break;
+  case TabIndex::SIMULATE:
+    tabSimulate->loadModelData();
+    break;
+  case TabIndex::SBML:
+    ui->txtSBML->setText(sbmlDoc.getXml());
+    break;
+  case TabIndex::DUNE:
+    ui->txtDUNE->setText(dune::DuneConverter(sbmlDoc).getIniFile());
+    break;
+  case TabIndex::GMSH:
+    ui->txtGMSH->setText(sbmlDoc.mesh == nullptr ? ""
+                                                 : sbmlDoc.mesh->getGMSH());
+    break;
+  default:
+    SPDLOG_ERROR("Tab index {} not valid", index);
   }
 }
 
@@ -211,7 +211,7 @@ void MainWindow::enableTabs() {
   for (int i = 1; i < ui->tabMain->count(); ++i) {
     ui->tabMain->setTabEnabled(i, enable);
   }
-  tabGeometry->enableTabs(enable);
+  tabGeometry->enableTabs();
 }
 
 void MainWindow::action_New_triggered() {

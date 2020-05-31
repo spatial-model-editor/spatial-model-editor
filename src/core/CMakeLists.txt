@@ -1,6 +1,8 @@
 add_library(core STATIC resources/resources.qrc)
 
 add_subdirectory(mesh)
+add_subdirectory(sbml)
+add_subdirectory(simulate)
 
 # set Logger level
 
@@ -9,13 +11,6 @@ target_compile_definitions(
   SPDLOG_ACTIVE_LEVEL=$<$<CONFIG:Debug>:SPDLOG_LEVEL_TRACE>$<$<CONFIG:Release>:SPDLOG_LEVEL_INFO>
   ${SME_EXTRA_CORE_DEFS}
   )
-
-# use TBB
-if(WITH_TBB)
-  find_package(tbb REQUIRED)
-  target_compile_definitions(core PUBLIC SPATIAL_MODEL_EDITOR_USE_TBB)
-  target_link_libraries(core PUBLIC tbb::tbb)
-endif()
 
 # set Compile options and warnings
 
@@ -44,7 +39,6 @@ target_compile_options(core
                        PUBLIC $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:Clang>>:-shared-libasan>)
 
 # find SymEngine and check it is compiled with LLVM enabled
-
 find_package(SymEngine CONFIG REQUIRED)
 message(STATUS "Testing SymEngine LLVM support")
 try_compile(SYMENGINE_LLVM "${CMAKE_CURRENT_BINARY_DIR}/cxx"
@@ -64,7 +58,6 @@ target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 target_include_directories(core PUBLIC .)
 
 # find libSBML and check it is compiled with the spatial extension enabled
-
 find_package(sbml-static REQUIRED)
 message(STATUS "Testing libSBML spatial extension support")
 try_compile(SBML_SPATIAL "${CMAKE_CURRENT_BINARY_DIR}/cxx"
@@ -80,6 +73,13 @@ else()
     )
 endif()
 
+# use TBB
+if(WITH_TBB)
+  find_package(tbb REQUIRED)
+  target_compile_definitions(core PUBLIC SPATIAL_MODEL_EDITOR_USE_TBB)
+  target_link_libraries(core PUBLIC tbb::tbb)
+endif()
+
 find_package(dunecopasi REQUIRED)
 find_package(TIFF REQUIRED)
 find_package(muparser REQUIRED)
@@ -88,33 +88,13 @@ find_package(spdlog REQUIRED)
 target_sources(core
                PRIVATE
                duneini.cpp
-               dunesim.cpp
                geometry.cpp
                pde.cpp
-               pixelsim.cpp
-               sbml.cpp
-               simulate.cpp
                symbolic.cpp
                tiff.cpp
                units.cpp
                utils.cpp
                ${PROJECT_BINARY_DIR}/src/core/version.cpp)
-
-target_sources(core
-               PRIVATE
-               basesim.hpp
-               duneini.hpp
-               dunesim.hpp
-               geometry.hpp
-               pde.hpp
-               pixelsim.hpp
-               sbml.hpp
-               simulate.hpp
-               symbolic.hpp
-               tiff.hpp
-               units.hpp
-               utils.hpp
-               version.hpp)
 
 configure_file("${PROJECT_SOURCE_DIR}/src/core/version.cpp.in"
                "${PROJECT_BINARY_DIR}/src/core/version.cpp")

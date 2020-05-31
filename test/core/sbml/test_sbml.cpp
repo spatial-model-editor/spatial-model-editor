@@ -14,8 +14,7 @@
 
 // avoid using std::to_string because of "multiple definition of vsnprintf"
 // mingw issue on windows
-template <typename T>
-static std::string toString(const T &x) {
+template <typename T> static std::string toString(const T &x) {
   std::ostringstream ss;
   ss << x;
   return ss.str();
@@ -277,9 +276,8 @@ SCENARIO("SBML: import SBML level 2 document", "[core][sbml]") {
       REQUIRE(r.expression == "5 * spec0c0 / compartment0");
     }
     WHEN("exportSBMLFile called") {
-      THEN(
-          "exported file is a SBML level (3,2) document with spatial "
-          "extension enabled & required") {
+      THEN("exported file is a SBML level (3,2) document with spatial "
+           "extension enabled & required") {
         s.exportSBMLFile("export.xml");
         std::unique_ptr<libsbml::SBMLDocument> doc(
             libsbml::readSBMLFromFile("export.xml"));
@@ -365,9 +363,9 @@ SCENARIO("SBML: import uint8 sampled field", "[core][sbml]") {
   s.importSBMLString(f.readAll().toStdString());
   const auto &img = s.getCompartmentImage();
   REQUIRE(img.colorCount() == 3);
-  REQUIRE(s.getCompartmentColour("c1") == qRgb(127, 127, 127));
-  REQUIRE(s.getCompartmentColour("c2") == qRgb(0, 0, 0));
-  REQUIRE(s.getCompartmentColour("c3") == qRgb(255, 255, 255));
+  REQUIRE(s.getCompartmentColour("c1") == utils::indexedColours()[0].rgb());
+  REQUIRE(s.getCompartmentColour("c2") == utils::indexedColours()[1].rgb());
+  REQUIRE(s.getCompartmentColour("c3") == utils::indexedColours()[2].rgb());
   // undefined compartment sizes -> defaulted to 1
   REQUIRE(s.getCompartmentSize("c1") == dbl_approx(1.0));
   REQUIRE(s.getCompartmentSize("c2") == dbl_approx(1.0));

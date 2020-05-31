@@ -18,19 +18,18 @@ class SbmlDocWrapper;
 namespace geometry {
 class Compartment;
 class Membrane;
-}  // namespace geometry
+} // namespace geometry
 
 namespace sim {
 
 class ReacEval {
- private:
+private:
   // symengine reaction expression
   symbolic::Symbolic sym;
   // vector of result of evaluating reactions
   std::vector<double> result;
 
- public:
-  std::size_t nSpecies = 0;
+public:
   ReacEval() = default;
   ReacEval(const sbml::SbmlDocWrapper &doc,
            const std::vector<std::string> &speciesID,
@@ -40,7 +39,7 @@ class ReacEval {
 };
 
 class SimCompartment {
- private:
+private:
   ReacEval reacEval;
   // species concentrations & corresponding dcdt values
   // ordering: ix, species
@@ -56,10 +55,10 @@ class SimCompartment {
   std::vector<std::size_t> nonSpatialSpeciesIndices;
   double maxStableTimestep = std::numeric_limits<double>::max();
 
- public:
+public:
   explicit SimCompartment(const sbml::SbmlDocWrapper &doc,
                           const geometry::Compartment &compartment,
-                          const std::vector<std::string> &sIds);
+                          std::vector<std::string> sIds);
   // dcdt = result of applying diffusion operator to conc
   void evaluateDiffusionOperator();
   // dcdt += result of applying reaction expressions to conc
@@ -83,13 +82,13 @@ class SimCompartment {
 };
 
 class SimMembrane {
- private:
+private:
   ReacEval reacEval;
   const geometry::Membrane &membrane;
   SimCompartment *compA;
   SimCompartment *compB;
 
- public:
+public:
   SimMembrane(const sbml::SbmlDocWrapper &doc,
               const geometry::Membrane &membrane_ptr, SimCompartment *simCompA,
               SimCompartment *simCompB);
@@ -97,7 +96,7 @@ class SimMembrane {
 };
 
 class PixelSim : public BaseSim {
- private:
+private:
   std::vector<SimCompartment> simCompartments;
   std::vector<SimMembrane> simMembranes;
   const sbml::SbmlDocWrapper &doc;
@@ -118,7 +117,7 @@ class PixelSim : public BaseSim {
   double epsilon = 1e-14;
   std::size_t numMaxThreads = 1;
 
- public:
+public:
   explicit PixelSim(
       const sbml::SbmlDocWrapper &sbmlDoc,
       const std::vector<std::string> &compartmentIds,
@@ -134,11 +133,11 @@ class PixelSim : public BaseSim {
   virtual void setMaxThreads(std::size_t maxThreads) override;
   virtual std::size_t getMaxThreads() const override;
   std::size_t run(double time) override;
-  const std::vector<double> &getConcentrations(
-      std::size_t compartmentIndex) const override;
+  const std::vector<double> &
+  getConcentrations(std::size_t compartmentIndex) const override;
   double getLowerOrderConcentration(std::size_t compartmentIndex,
                                     std::size_t speciesIndex,
                                     std::size_t pixelIndex) const override;
 };
 
-}  // namespace sim
+} // namespace sim
