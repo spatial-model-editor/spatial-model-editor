@@ -3,7 +3,7 @@
 #include <QDialog>
 #include <memory>
 
-#include "sbml.hpp"
+#include "model.hpp"
 #include "utils.hpp"
 
 namespace Ui {
@@ -19,8 +19,8 @@ class DialogAnalytic : public QDialog {
 
  public:
   explicit DialogAnalytic(const QString& analyticExpression,
-                          const sbml::SpeciesGeometry& speciesGeometry,
-                          const std::vector<sbml::IdNameValue>& constants = {},
+                          const model::SpeciesGeometry& speciesGeometry,
+                          const std::vector<model::IdNameValue>& constants = {},
                           QWidget* parent = nullptr);
   ~DialogAnalytic();
   const std::string& getExpression() const;

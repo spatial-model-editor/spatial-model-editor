@@ -7,7 +7,7 @@
 
 namespace sme {
 
-void pybindModule(pybind11::module& m) {
+void pybindModule(pybind11::module &m) {
   m.doc() = R"(
           Spatial Model Editor
 
@@ -27,14 +27,8 @@ void pybindModule(pybind11::module& m) {
   m.attr("__version__") = SPATIAL_MODEL_EDITOR_VERSION;
 }
 
-Model openSbmlFile(const std::string& filename) {
-  Model m(filename);
-  return m;
-}
+Model openSbmlFile(const std::string &filename) { return Model(filename); }
 
-Model openExampleModel() {
-  Model m(":/models/very-simple-model.xml");
-  return m;
-}
+Model openExampleModel() { return Model(":/models/very-simple-model.xml"); }
 
-}  // namespace sme
+} // namespace sme

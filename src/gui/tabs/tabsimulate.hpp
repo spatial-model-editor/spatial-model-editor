@@ -15,15 +15,15 @@ class QCPAbstractPlottable;
 class QCPItemStraightLine;
 class QCPTextElement;
 class QLabelMouseTracker;
-namespace sbml {
-class SbmlDocWrapper;
+namespace model {
+class Model;
 }
 
 class TabSimulate : public QWidget {
   Q_OBJECT
 
  public:
-  explicit TabSimulate(sbml::SbmlDocWrapper &doc,
+  explicit TabSimulate(model::Model &doc,
                        QLabelMouseTracker *mouseTracker,
                        QWidget *parent = nullptr);
   ~TabSimulate();
@@ -38,7 +38,7 @@ class TabSimulate : public QWidget {
 
  private:
   std::unique_ptr<Ui::TabSimulate> ui;
-  sbml::SbmlDocWrapper &sbmlDoc;
+  model::Model &sbmlDoc;
   QLabelMouseTracker *lblGeometry;
   QCustomPlot *pltPlot;
   QCPTextElement *pltTitle;

@@ -2,8 +2,8 @@
 
 #include <string>
 
-namespace sbml {
-class SbmlDocWrapper;
+namespace model {
+class Model;
 }
 
 namespace pybind11 {
@@ -16,12 +16,12 @@ void pybindReactionParameter(const pybind11::module& m);
 
 class ReactionParameter {
  private:
-  sbml::SbmlDocWrapper* s;
+  model::Model* s;
   const std::string reacId;
   const std::string paramId;
 
  public:
-  explicit ReactionParameter(sbml::SbmlDocWrapper* sbmlDocWrapper,
+  explicit ReactionParameter(model::Model* sbmlDocWrapper,
                              const std::string& reactionId,
                              const std::string& parameterId);
   void setName(const std::string& name);

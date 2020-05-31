@@ -3,9 +3,8 @@
 #include "logger.hpp"
 #include "ui_dialogunits.h"
 
-DialogUnits::DialogUnits(const units::ModelUnits& modelUnits, QWidget* parent)
-    : QDialog(parent),
-      ui{std::make_unique<Ui::DialogUnits>()},
+DialogUnits::DialogUnits(const model::ModelUnits &modelUnits, QWidget *parent)
+    : QDialog(parent), ui{std::make_unique<Ui::DialogUnits>()},
       units(modelUnits) {
   ui->setupUi(this);
 
@@ -22,16 +21,16 @@ DialogUnits::DialogUnits(const units::ModelUnits& modelUnits, QWidget* parent)
   connect(ui->cmbAmount, qOverload<int>(&QComboBox::currentIndexChanged), this,
           &DialogUnits::cmbAmount_currentIndexChanged);
 
-  for (const auto& u : units.getTimeUnits()) {
+  for (const auto &u : units.getTimeUnits()) {
     ui->cmbTime->addItem(u.symbol);
   }
-  for (const auto& u : units.getLengthUnits()) {
+  for (const auto &u : units.getLengthUnits()) {
     ui->cmbLength->addItem(u.symbol);
   }
-  for (const auto& u : units.getVolumeUnits()) {
+  for (const auto &u : units.getVolumeUnits()) {
     ui->cmbVolume->addItem(u.symbol);
   }
-  for (const auto& u : units.getAmountUnits()) {
+  for (const auto &u : units.getAmountUnits()) {
     ui->cmbAmount->addItem(u.symbol);
   }
 
@@ -59,7 +58,7 @@ int DialogUnits::getAmountUnitIndex() const {
   return ui->cmbAmount->currentIndex();
 }
 
-static QString baseUnitString(const units::Unit& unit) {
+static QString baseUnitString(const model::Unit &unit) {
   QString s;
   if (unit.exponent != 1) {
     s = "(";
@@ -82,25 +81,25 @@ static QString baseUnitString(const units::Unit& unit) {
 }
 
 void DialogUnits::cmbTime_currentIndexChanged(int index) {
-  const auto& unit = units.getTimeUnits().at(index);
+  const auto &unit = units.getTimeUnits().at(index);
   ui->lblTime->setText(unit.name);
   ui->lblSITime->setText(baseUnitString(unit));
 }
 
 void DialogUnits::cmbLength_currentIndexChanged(int index) {
-  const auto& unit = units.getLengthUnits().at(index);
+  const auto &unit = units.getLengthUnits().at(index);
   ui->lblLength->setText(unit.name);
   ui->lblSILength->setText(baseUnitString(unit));
 }
 
 void DialogUnits::cmbVolume_currentIndexChanged(int index) {
-  const auto& unit = units.getVolumeUnits().at(index);
+  const auto &unit = units.getVolumeUnits().at(index);
   ui->lblVolume->setText(unit.name);
   ui->lblSIVolume->setText(baseUnitString(unit));
 }
 
 void DialogUnits::cmbAmount_currentIndexChanged(int index) {
-  const auto& unit = units.getAmountUnits().at(index);
+  const auto &unit = units.getAmountUnits().at(index);
   ui->lblAmount->setText(unit.name);
   ui->lblSIAmount->setText(baseUnitString(unit));
 }

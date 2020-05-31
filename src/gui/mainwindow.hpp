@@ -3,11 +3,11 @@
 #include <QMainWindow>
 #include <memory>
 
-#include "sbml.hpp"
+#include "model.hpp"
+
 class QLabel;
 class TabFunctions;
 class TabGeometry;
-class TabMembranes;
 class TabReactions;
 class TabSimulate;
 class TabSpecies;
@@ -26,7 +26,7 @@ class MainWindow : public QMainWindow {
  private:
   std::unique_ptr<Ui::MainWindow> ui;
   QLabel *statusBarPermanentMessage;
-  sbml::SbmlDocWrapper sbmlDoc;
+  model::Model sbmlDoc;
 
   void setupConnections();
 
@@ -40,7 +40,6 @@ class MainWindow : public QMainWindow {
 
   void tabMain_currentChanged(int index);
   TabGeometry *tabGeometry;
-  TabMembranes *tabMembranes;
   TabSpecies *tabSpecies;
   TabReactions *tabReactions;
   TabFunctions *tabFunctions;
@@ -58,6 +57,7 @@ class MainWindow : public QMainWindow {
   void actionExport_Dune_ini_file_triggered();
 
   // Import menu actions
+  void actionGeometry_from_model_triggered();
   void actionGeometry_from_image_triggered();
   void menuExample_geometry_image_triggered(const QAction *action);
 

@@ -11,13 +11,15 @@
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "mesh.hpp"
+#include "model.hpp"
 #include "qlabelmousetracker.hpp"
-#include "sbml.hpp"
 #include "ui_tabsimulate.h"
 
-TabSimulate::TabSimulate(sbml::SbmlDocWrapper &doc,
-                         QLabelMouseTracker *mouseTracker, QWidget *parent)
-    : QWidget(parent), ui{std::make_unique<Ui::TabSimulate>()}, sbmlDoc(doc),
+TabSimulate::TabSimulate(model::Model &doc, QLabelMouseTracker *mouseTracker,
+                         QWidget *parent)
+    : QWidget(parent),
+      ui{std::make_unique<Ui::TabSimulate>()},
+      sbmlDoc(doc),
       lblGeometry(mouseTracker) {
   ui->setupUi(this);
   pltPlot = new QCustomPlot(this);
@@ -60,14 +62,15 @@ TabSimulate::~TabSimulate() = default;
 
 void TabSimulate::loadModelData() {
   reset();
-  if (!(sbmlDoc.isValid && sbmlDoc.hasValidGeometry)) {
+  if (!(sbmlDoc.getIsValid() && sbmlDoc.getGeometry().getIsValid())) {
     ui->hslideTime->setEnabled(false);
     ui->btnSimulate->setEnabled(false);
     return;
   }
   sim.reset();
   if (simType == simulate::SimulatorType::DUNE &&
-      (sbmlDoc.mesh == nullptr || !sbmlDoc.mesh->isValid())) {
+      (sbmlDoc.getGeometry().getMesh() == nullptr ||
+       !sbmlDoc.getGeometry().getMesh()->isValid())) {
     ui->btnSimulate->setEnabled(false);
     auto msgbox = newYesNoMessageBox(
         "Invalid mesh",
@@ -93,27 +96,29 @@ void TabSimulate::loadModelData() {
   speciesVisible.clear();
   compartmentNames.clear();
   for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
-    compartmentNames.push_back(sbmlDoc.compartmentNames[static_cast<int>(ic)]);
+    compartmentNames.push_back(
+        sbmlDoc.getCompartments().getNames()[static_cast<int>(ic)]);
     auto &names = speciesNames.emplace_back();
     for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
-      names.push_back(
-          sbmlDoc.getSpeciesName(sim->getSpeciesIds(ic)[is].c_str()));
+      names.push_back(sbmlDoc.getSpecies().getName(
+          sim->getSpeciesIds(ic)[is].c_str()));
       speciesVisible.push_back(true);
     }
   }
   // setup plot
   pltPlot->clearGraphs();
   pltPlot->xAxis->setLabel(
-      QString("time (%1)").arg(sbmlDoc.getModelUnits().getTime().symbol));
+      QString("time (%1)").arg(sbmlDoc.getUnits().getTime().symbol));
   pltPlot->yAxis->setLabel(
       QString("concentration (%1)")
-          .arg(sbmlDoc.getModelUnits().getConcentration()));
+          .arg(sbmlDoc.getUnits().getConcentration()));
   pltPlot->xAxis->setRange(0, ui->txtSimLength->text().toDouble());
   // graphs
   for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
     for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
       QColor col = sim->getSpeciesColors(ic)[is];
-      QString name = sbmlDoc.getSpeciesName(sim->getSpeciesIds(ic)[is].c_str());
+      QString name =
+          sbmlDoc.getSpecies().getName(sim->getSpeciesIds(ic)[is].c_str());
       // avg
       auto *av = pltPlot->addGraph();
       av->setPen(col);
@@ -393,6 +398,6 @@ void TabSimulate::hslideTime_valueChanged(int value) {
     ui->lblCurrentTime->setText(
         QString("%1%2")
             .arg(time[value])
-            .arg(sbmlDoc.getModelUnits().getTime().symbol));
+            .arg(sbmlDoc.getUnits().getTime().symbol));
   }
 }

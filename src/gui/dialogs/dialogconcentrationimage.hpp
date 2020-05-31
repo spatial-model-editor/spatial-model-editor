@@ -3,7 +3,7 @@
 #include <QDialog>
 #include <memory>
 
-#include "sbml.hpp"
+#include "model.hpp"
 #include "utils.hpp"
 
 namespace Ui {
@@ -20,7 +20,7 @@ class DialogConcentrationImage : public QDialog {
  public:
   explicit DialogConcentrationImage(
       const std::vector<double>& concentrationArray,
-      const sbml::SpeciesGeometry& speciesGeometry, QWidget* parent = nullptr);
+      const model::SpeciesGeometry& speciesGeometry, QWidget* parent = nullptr);
   ~DialogConcentrationImage();
   std::vector<double> getConcentrationArray() const;
 

@@ -6,8 +6,8 @@
 
 #include "sme_reactionparameter.hpp"
 
-namespace sbml {
-class SbmlDocWrapper;
+namespace model {
+class Model;
 }
 
 namespace pybind11 {
@@ -20,12 +20,12 @@ void pybindReaction(const pybind11::module& m);
 
 class Reaction {
  private:
-  sbml::SbmlDocWrapper* s;
+  model::Model* s;
   std::string id;
   std::vector<ReactionParameter> parameters;
 
  public:
-  explicit Reaction(sbml::SbmlDocWrapper* sbmlDocWrapper,
+  explicit Reaction(model::Model* sbmlDocWrapper,
                     const std::string& sId);
   const std::string& getId() const;
   void setName(const std::string& name);

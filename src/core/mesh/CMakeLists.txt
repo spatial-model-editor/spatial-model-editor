@@ -1,10 +1,7 @@
-target_sources(core
-               PRIVATE
-               boundary.cpp
-               boundary_pixels.cpp
-               image_boundaries.cpp
-               line_simplifier.cpp 
-               mesh.cpp
-               triangulate.cpp)
-
-target_include_directories(core PUBLIC .)
+add_subdirectory(ext/triangle)
+target_include_directories(core PUBLIC inc)
+target_include_directories(core PRIVATE src)
+target_include_directories(core_tests PUBLIC inc src)
+target_link_libraries(core PRIVATE triangle)
+target_link_libraries(core_tests PUBLIC triangle)
+add_subdirectory(src)

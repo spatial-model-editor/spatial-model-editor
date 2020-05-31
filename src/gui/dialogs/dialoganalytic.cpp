@@ -4,23 +4,21 @@
 #include <QPushButton>
 
 #include "logger.hpp"
+#include "model_units.hpp"
 #include "ui_dialoganalytic.h"
-#include "units.hpp"
 
-DialogAnalytic::DialogAnalytic(const QString& analyticExpression,
-                               const sbml::SpeciesGeometry& speciesGeometry,
-                               const std::vector<sbml::IdNameValue>& constants,
-                               QWidget* parent)
-    : QDialog(parent),
-      ui{std::make_unique<Ui::DialogAnalytic>()},
+DialogAnalytic::DialogAnalytic(const QString &analyticExpression,
+                               const model::SpeciesGeometry &speciesGeometry,
+                               const std::vector<model::IdNameValue> &constants,
+                               QWidget *parent)
+    : QDialog(parent), ui{std::make_unique<Ui::DialogAnalytic>()},
       points(speciesGeometry.compartmentPoints),
-      width(speciesGeometry.pixelWidth),
-      origin(speciesGeometry.physicalOrigin),
+      width(speciesGeometry.pixelWidth), origin(speciesGeometry.physicalOrigin),
       qpi(speciesGeometry.compartmentImageSize,
           speciesGeometry.compartmentPoints) {
   ui->setupUi(this);
 
-  const auto& units = speciesGeometry.modelUnits;
+  const auto &units = speciesGeometry.modelUnits;
   lengthUnit = units.getLength().symbol;
   concentrationUnit = QString("%1/%2")
                           .arg(units.getAmount().symbol)
@@ -35,7 +33,7 @@ DialogAnalytic::DialogAnalytic(const QString& analyticExpression,
   vars.push_back(0);
   vars.push_back(0);
   // add any supplied constants
-  for (const auto& [id, name, value] : constants) {
+  for (const auto &[id, name, value] : constants) {
     ui->txtExpression->addVariable(id, name);
     vars.push_back(value);
   }
@@ -64,13 +62,13 @@ DialogAnalytic::DialogAnalytic(const QString& analyticExpression,
 
 DialogAnalytic::~DialogAnalytic() = default;
 
-const std::string& DialogAnalytic::getExpression() const {
+const std::string &DialogAnalytic::getExpression() const {
   return variableExpression;
 }
 
 bool DialogAnalytic::isExpressionValid() const { return expressionIsValid; }
 
-QPointF DialogAnalytic::physicalPoint(const QPoint& pixelPoint) const {
+QPointF DialogAnalytic::physicalPoint(const QPoint &pixelPoint) const {
   // position in pixels (with (0,0) in top-left of image)
   // rescale to physical x,y point (with (0,0) in bottom-left)
   QPointF physical;
@@ -80,8 +78,8 @@ QPointF DialogAnalytic::physicalPoint(const QPoint& pixelPoint) const {
   return physical;
 }
 
-void DialogAnalytic::txtExpression_mathChanged(const QString& math, bool valid,
-                                               const QString& errorMessage) {
+void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
+                                               const QString &errorMessage) {
   SPDLOG_DEBUG("math {}", math.toStdString());
   SPDLOG_DEBUG("  - is valid: {}", valid);
   SPDLOG_DEBUG("  - error: {}", errorMessage.toStdString());

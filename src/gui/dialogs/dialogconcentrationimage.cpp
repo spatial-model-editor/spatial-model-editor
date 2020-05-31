@@ -8,17 +8,15 @@
 
 #include "guiutils.hpp"
 #include "logger.hpp"
+#include "model_units.hpp"
 #include "ui_dialogconcentrationimage.h"
-#include "units.hpp"
 
 DialogConcentrationImage::DialogConcentrationImage(
-    const std::vector<double>& concentrationArray,
-    const sbml::SpeciesGeometry& speciesGeometry, QWidget* parent)
-    : QDialog(parent),
-      ui{std::make_unique<Ui::DialogConcentrationImage>()},
+    const std::vector<double> &concentrationArray,
+    const model::SpeciesGeometry &speciesGeometry, QWidget *parent)
+    : QDialog(parent), ui{std::make_unique<Ui::DialogConcentrationImage>()},
       points(speciesGeometry.compartmentPoints),
-      width(speciesGeometry.pixelWidth),
-      origin(speciesGeometry.physicalOrigin),
+      width(speciesGeometry.pixelWidth), origin(speciesGeometry.physicalOrigin),
       qpi(speciesGeometry.compartmentImageSize,
           speciesGeometry.compartmentPoints) {
   ui->setupUi(this);
@@ -30,7 +28,7 @@ DialogConcentrationImage::DialogConcentrationImage(
   ui->lblMinConcColour->setPixmap(QPixmap::fromImage(colourMinConc));
   ui->lblMaxConcColour->setPixmap(QPixmap::fromImage(colourMaxConc));
 
-  const auto& units = speciesGeometry.modelUnits;
+  const auto &units = speciesGeometry.modelUnits;
   lengthUnit = units.getLength().symbol;
   concentrationUnit = QString("%1/%2")
                           .arg(units.getAmount().symbol)
@@ -42,9 +40,8 @@ DialogConcentrationImage::DialogConcentrationImage(
   img.fill(0);
 
   if (concentrationArray.empty()) {
-    SPDLOG_DEBUG(
-        "empty initial concentrationArray - "
-        "setting concentration to zero everywhere");
+    SPDLOG_DEBUG("empty initial concentrationArray - "
+                 "setting concentration to zero everywhere");
     importConcentrationArray(std::vector<double>(
         static_cast<std::size_t>(img.width() * img.height()), 0.0));
   } else {
@@ -86,14 +83,14 @@ std::vector<double> DialogConcentrationImage::getConcentrationArray() const {
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
   std::vector<double> arr(static_cast<std::size_t>(size), 0.0);
   for (std::size_t i = 0; i < concentration.size(); ++i) {
-    const auto& point = points[i];
+    const auto &point = points[i];
     arr[pointToConcentrationArrayIndex(point)] = concentration[i];
   }
   return arr;
 }
 
-QPointF DialogConcentrationImage::physicalPoint(
-    const QPoint& pixelPoint) const {
+QPointF
+DialogConcentrationImage::physicalPoint(const QPoint &pixelPoint) const {
   // position in pixels (with (0,0) in top-left of image)
   // rescale to physical x,y point (with (0,0) in bottom-left)
   QPointF physical;
@@ -104,7 +101,7 @@ QPointF DialogConcentrationImage::physicalPoint(
 }
 
 std::size_t DialogConcentrationImage::pointToConcentrationArrayIndex(
-    const QPoint& point) const {
+    const QPoint &point) const {
   // NOTE: order of concentration array is [ (x=0,y=0), (x=1,y=0), ... ]
   // NOTE: (0,0) point is at bottom-left
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
@@ -113,7 +110,7 @@ std::size_t DialogConcentrationImage::pointToConcentrationArrayIndex(
 }
 
 void DialogConcentrationImage::importConcentrationArray(
-    const std::vector<double>& concentrationArray) {
+    const std::vector<double> &concentrationArray) {
   int compImagePixels = img.width() * img.height();
   if (static_cast<int>(concentrationArray.size()) != compImagePixels) {
     SPDLOG_ERROR("mismatch between array size {} and compartment pixels {}",
@@ -125,14 +122,14 @@ void DialogConcentrationImage::importConcentrationArray(
   concentration.reserve(points.size());
   std::transform(points.cbegin(), points.cend(),
                  std::back_inserter(concentration),
-                 [this, &concentrationArray](const auto& p) {
+                 [this, &concentrationArray](const auto &p) {
                    return concentrationArray[pointToConcentrationArrayIndex(p)];
                  });
   updateImageFromConcentration();
 }
 
 void DialogConcentrationImage::importConcentrationImage(
-    const QImage& concentrationImage) {
+    const QImage &concentrationImage) {
   QImage concImg = concentrationImage;
   if (concImg.size() != img.size()) {
     SPDLOG_WARN(
@@ -145,7 +142,7 @@ void DialogConcentrationImage::importConcentrationImage(
   concentration.clear();
   concentration.reserve(points.size());
   std::transform(points.cbegin(), points.cend(),
-                 std::back_inserter(concentration), [&concImg](const auto& p) {
+                 std::back_inserter(concentration), [&concImg](const auto &p) {
                    return static_cast<double>(concImg.pixel(p));
                  });
   rescaleConcentration(0, 1);
@@ -156,7 +153,7 @@ const static QString dblToString(double x) {
   return QString::number(x, 'g', 14);
 }
 
-static std::pair<double, double> getMinMax(const std::vector<double>& vec) {
+static std::pair<double, double> getMinMax(const std::vector<double> &vec) {
   auto [iterMin, iterMax] = std::minmax_element(vec.cbegin(), vec.cend());
   double min = *iterMin;
   double max = *iterMax;
@@ -187,16 +184,14 @@ void DialogConcentrationImage::rescaleConcentration(double newMin,
                                                     double newMax) {
   SPDLOG_INFO("linearly rescaling concentration");
   if (newMin < 0) {
-    SPDLOG_WARN(
-        "Min concentration cannot be smaller than zero: "
-        "setting it to zero");
+    SPDLOG_WARN("Min concentration cannot be smaller than zero: "
+                "setting it to zero");
     newMin = 0;
   }
   ui->txtMinConc->setText(dblToString(newMin));
   if (newMax <= newMin) {
-    SPDLOG_WARN(
-        "Max concentration cannot be smaller than Min concentration: "
-        "setting it equal to Min concentration + 1");
+    SPDLOG_WARN("Max concentration cannot be smaller than Min concentration: "
+                "setting it equal to Min concentration + 1");
     newMax = newMin + 1;
   }
   ui->txtMaxConc->setText(dblToString(newMax));
@@ -212,7 +207,7 @@ void DialogConcentrationImage::rescaleConcentration(double newMin,
       });
 }
 
-void DialogConcentrationImage::gaussianFilter(const QPoint& direction,
+void DialogConcentrationImage::gaussianFilter(const QPoint &direction,
                                               double sigma) {
   // 1-d gaussian filter
   constexpr double norm = 0.3989422804;
@@ -226,7 +221,7 @@ void DialogConcentrationImage::gaussianFilter(const QPoint& direction,
                gaussianWeights.size() - 1, sigma);
   auto arr = getConcentrationArray();
   std::size_t concIndex = 0;
-  for (const auto& p : points) {
+  for (const auto &p : points) {
     concentration[concIndex] *= gaussianWeights[0];
     auto i = pointToConcentrationArrayIndex(p);
     auto iUp = i;
@@ -293,7 +288,7 @@ void DialogConcentrationImage::btnExportImage_clicked() {
 }
 
 void DialogConcentrationImage::cmbExampleImages_currentTextChanged(
-    const QString& text) {
+    const QString &text) {
   if (ui->cmbExampleImages->currentIndex() != 0) {
     SPDLOG_DEBUG("import {}", text.toStdString());
     QImage concImg(QString(":/concentration/%1.png").arg(text));

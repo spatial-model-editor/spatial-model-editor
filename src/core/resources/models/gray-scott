@@ -443,7 +443,7 @@ xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
       <StateTemplateVariable objectReference="ModelValue_1"/>
     </StateTemplate>
     <InitialState type="initialState">
-      0 6.0221408570000002e+20 6.0221408570000002e+20 6.0221408570000002e+20 1 0.040000000000000001 0.059999999999999998 
+      0 6.0221408570000002e+20 6.0221408570000002e+20 6.0221408570000002e+20 1 0.040000000000000001 0.059999999999999998
     </InitialState>
   </Model>
   <ListOfTasks>
@@ -510,7 +510,7 @@ xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
       <Problem>
         <Parameter name="Subtask" type="cn" value="CN=Root,Vector=TaskList[Steady-State]"/>
         <ParameterText name="ObjectiveExpression" type="expression">
-          
+
         </ParameterText>
         <Parameter name="Maximize" type="bool" value="0"/>
         <Parameter name="Randomize Start Values" type="bool" value="0"/>
@@ -650,7 +650,7 @@ xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
         <Parameter name="DelayOutputUntilConvergence" type="bool" value="0"/>
         <Parameter name="OutputConvergenceTolerance" type="float" value="9.9999999999999995e-07"/>
         <ParameterText name="TriggerExpression" type="expression">
-          
+
         </ParameterText>
         <Parameter name="SingleVariable" type="cn" value=""/>
       </Problem>

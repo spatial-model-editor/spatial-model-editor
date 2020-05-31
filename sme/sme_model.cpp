@@ -13,7 +13,7 @@
 #include "sme_model.hpp"
 
 static std::vector<std::vector<std::vector<int>>> qImageToVec(
-    const QImage& img) {
+    const QImage &img) {
   std::size_t h = static_cast<std::size_t>(img.height());
   std::size_t w = static_cast<std::size_t>(img.width());
   std::vector<std::vector<std::vector<int>>> v(
@@ -31,9 +31,9 @@ static std::vector<std::vector<std::vector<int>>> qImageToVec(
 
 namespace sme {
 
-void pybindModel(const pybind11::module& m) {
+void pybindModel(const pybind11::module &m) {
   pybind11::class_<sme::Model>(m, "Model")
-      .def(pybind11::init<const std::string&>(), pybind11::arg("filename"))
+      .def(pybind11::init<const std::string &>(), pybind11::arg("filename"))
       .def("export_sbml_file", &sme::Model::exportSbmlFile,
            pybind11::arg("filename"))
       .def("simulate", &sme::Model::simulate, pybind11::arg("simulation_time"),
@@ -48,41 +48,44 @@ void pybindModel(const pybind11::module& m) {
       .def_property_readonly("compartments", &sme::Model::getCompartments,
                              "The compartments in this model")
       .def("__repr__",
-           [](const sme::Model& a) {
+           [](const sme::Model &a) {
              return fmt::format("<sme.Model named '{}'>", a.getName());
            })
       .def("__str__", &sme::Model::getStr);
 }
 
-void Model::importSbmlFile(const std::string& filename) {
-  s = std::make_unique<sbml::SbmlDocWrapper>();
+void Model::importSbmlFile(const std::string &filename) {
   QFile f(filename.c_str());
   if (f.open(QIODevice::ReadOnly)) {
+    s = std::make_unique<model::Model>();
     s->importSBMLString(f.readAll().toStdString());
   } else {
     throw std::invalid_argument("Failed to open file: " + filename);
   }
   compartments.clear();
-  compartments.reserve(static_cast<std::size_t>(s->compartments.size()));
-  for (const auto& compartmentId : s->compartments) {
+  compartments.reserve(
+      static_cast<std::size_t>(s->getCompartments().getIds().size()));
+  for (const auto &compartmentId : s->getCompartments().getIds()) {
     compartments.emplace_back(s.get(), compartmentId.toStdString());
   }
 }
 
-Model::Model(const std::string& filename) {
+Model::Model(const std::string &filename) {
+#if SPDLOG_ACTIVE_LEVEL > SPDLOG_LEVEL_TRACE
   // disable logging
   spdlog::set_level(spdlog::level::off);
+#endif
   importSbmlFile(filename);
 }
 
-void Model::exportSbmlFile(const std::string& filename) const {
+void Model::exportSbmlFile(const std::string &filename) {
   s->exportSBMLFile(filename);
 }
 
 void Model::simulate(double simulationTime, double imageInterval,
                      std::size_t maxThreads) {
   sim = std::make_unique<simulate::Simulation>(
-      *s.get(), simulate::SimulatorType::Pixel, 2);
+      *(s.get()), simulate::SimulatorType::Pixel, 2);
   auto options = sim->getIntegratorOptions();
   options.order = 2;
   options.maxTimestep = std::numeric_limits<double>::max();
@@ -106,14 +109,14 @@ std::vector<std::vector<std::vector<int>>> Model::concentrationImage(
 }
 
 std::vector<std::vector<std::vector<int>>> Model::compartmentImage() const {
-  return qImageToVec(s->getCompartmentImage());
+  return qImageToVec(s->getGeometry().getImage());
 }
 
-void Model::setName(const std::string& name) { s->setName(name.c_str()); }
+void Model::setName(const std::string &name) { s->setName(name.c_str()); }
 
 std::string Model::getName() const { return s->getName().toStdString(); }
 
-std::map<std::string, Compartment*> Model::getCompartments() {
+std::map<std::string, Compartment *> Model::getCompartments() {
   return vecToNamePtrMap(compartments);
 }
 

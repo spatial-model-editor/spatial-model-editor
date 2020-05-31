@@ -1,9 +1,0 @@
-target_sources(tests
-               PRIVATE
-               test_dialoganalytic.cpp
-               test_dialogconcentrationimage.cpp
-               test_dialogdisplayoptions.cpp
-               test_dialogimagesize.cpp
-               test_dialogimageslice.cpp
-               test_dialogintegratoroptions.cpp
-               test_dialogunits.cpp)

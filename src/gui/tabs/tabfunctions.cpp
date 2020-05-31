@@ -5,10 +5,10 @@
 
 #include "guiutils.hpp"
 #include "logger.hpp"
-#include "sbml.hpp"
+#include "model.hpp"
 #include "ui_tabfunctions.h"
 
-TabFunctions::TabFunctions(sbml::SbmlDocWrapper &doc, QWidget *parent)
+TabFunctions::TabFunctions(model::Model &doc, QWidget *parent)
     : QWidget(parent), ui{std::make_unique<Ui::TabFunctions>()}, sbmlDoc(doc) {
   ui->setupUi(this);
   connect(ui->listFunctions, &QListWidget::currentRowChanged, this,
@@ -42,8 +42,8 @@ void TabFunctions::loadModelData(const QString &selection) {
   auto *list = ui->listFunctions;
   list->clear();
   ui->btnRemoveFunctionParam->setEnabled(false);
-  for (const auto &funcID : sbmlDoc.functions) {
-    list->addItem(sbmlDoc.getFunctionDefinition(funcID).name.c_str());
+  for (const auto &funcID : sbmlDoc.getFunctions().getIds()) {
+    list->addItem(sbmlDoc.getFunctions().getDefinition(funcID).name.c_str());
   }
   selectMatchingOrFirstItem(list, selection);
   bool enable = list->count() > 0;
@@ -58,15 +58,15 @@ void TabFunctions::listFunctions_currentRowChanged(int row) {
   ui->txtFunctionDef->clear();
   ui->lblFunctionDefStatus->clear();
   ui->btnSaveFunctionChanges->setEnabled(false);
-  if ((row < 0) || (row > sbmlDoc.functions.size() - 1)) {
+  if ((row < 0) || (row > sbmlDoc.getFunctions().getIds().size() - 1)) {
     ui->btnAddFunctionParam->setEnabled(false);
     ui->btnRemoveFunctionParam->setEnabled(false);
     ui->btnRemoveFunction->setEnabled(false);
     return;
   }
-  auto funcId = sbmlDoc.functions.at(row);
+  auto funcId = sbmlDoc.getFunctions().getIds()[row];
   SPDLOG_DEBUG("Function {} selected", funcId.toStdString());
-  auto func = sbmlDoc.getFunctionDefinition(funcId);
+  auto func = sbmlDoc.getFunctions().getDefinition(funcId);
   ui->txtFunctionName->setText(func.name.c_str());
   ui->txtFunctionDef->setVariables(func.arguments);
   for (const auto &argument : func.arguments) {
@@ -88,14 +88,14 @@ void TabFunctions::btnAddFunction_clicked() {
   auto functionName = QInputDialog::getText(
       this, "Add function", "New function name:", QLineEdit::Normal, {}, &ok);
   if (ok) {
-    sbmlDoc.addFunction(functionName);
+    sbmlDoc.getFunctions().add(functionName);
     loadModelData(functionName);
   }
 }
 
 void TabFunctions::btnRemoveFunction_clicked() {
   int row = ui->listFunctions->currentRow();
-  if ((row < 0) || (row > sbmlDoc.functions.size() - 1)) {
+  if ((row < 0) || (row > sbmlDoc.getFunctions().getIds().size() - 1)) {
     return;
   }
   auto msgbox =
@@ -106,9 +106,9 @@ void TabFunctions::btnRemoveFunction_clicked() {
   connect(msgbox, &QMessageBox::finished, this,
           [&s = sbmlDoc, row, this](int result) {
             if (result == QMessageBox::Yes) {
-              auto funcId = s.functions.at(row);
+              auto funcId = s.getFunctions().getIds()[row];
               SPDLOG_INFO("Removing function {}", funcId.toStdString());
-              s.removeFunction(funcId);
+              s.getFunctions().remove(funcId);
               this->loadModelData();
             }
           });
@@ -174,7 +174,8 @@ void TabFunctions::btnSaveFunctionChanges_clicked() {
     return;
   }
   int row = ui->listFunctions->currentRow();
-  auto func = sbmlDoc.getFunctionDefinition(sbmlDoc.functions.at(row));
+  auto func = sbmlDoc.getFunctions().getDefinition(
+      sbmlDoc.getFunctions().getIds()[row]);
   SPDLOG_INFO("Updating function {}", func.id);
   func.name = ui->txtFunctionName->text().toStdString();
   SPDLOG_INFO("  - name: {}", func.name);
@@ -188,6 +189,6 @@ void TabFunctions::btnSaveFunctionChanges_clicked() {
   }
   func.expression = ui->txtFunctionDef->getMath().toStdString();
   SPDLOG_INFO("  - expression: {}", func.expression);
-  sbmlDoc.setFunctionDefinition(func);
+  sbmlDoc.getFunctions().setDefinition(func);
   loadModelData(func.name.c_str());
 }

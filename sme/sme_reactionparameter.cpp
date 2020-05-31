@@ -3,7 +3,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "sbml.hpp"
+#include "model.hpp"
 #include "sme_common.hpp"
 
 namespace sme {
@@ -24,53 +24,28 @@ void pybindReactionParameter(const pybind11::module& m) {
       .def("__str__", &sme::ReactionParameter::getStr);
 }
 
-ReactionParameter::ReactionParameter(sbml::SbmlDocWrapper* sbmlDocWrapper,
+ReactionParameter::ReactionParameter(model::Model* sbmlDocWrapper,
                                      const std::string& reactionId,
                                      const std::string& parameterId)
     : s(sbmlDocWrapper), reacId(reactionId), paramId(parameterId) {}
 
 void ReactionParameter::setName(const std::string& name) {
-  auto r = s->getReaction(reacId.c_str());
-  if (auto iter =
-          std::find_if(r.constants.begin(), r.constants.end(),
-                       [&id = paramId](const auto& c) { return c.id == id; });
-      iter != r.constants.end()) {
-    iter->name = name;
-    s->setReaction(r);
-  }
+  s->getReactions().setParameterName(reacId.c_str(), paramId.c_str(),
+                                     name.c_str());
 }
 
 std::string ReactionParameter::getName() const {
-  auto r = s->getReaction(reacId.c_str());
-  if (auto iter =
-          std::find_if(r.constants.cbegin(), r.constants.cend(),
-                       [&id = paramId](const auto& c) { return c.id == id; });
-      iter != r.constants.cend()) {
-    return iter->name;
-  }
-  return {};
+  return s->getReactions()
+      .getParameterName(reacId.c_str(), paramId.c_str())
+      .toStdString();
 }
 
 void ReactionParameter::setValue(double value) {
-  auto r = s->getReaction(reacId.c_str());
-  if (auto iter =
-          std::find_if(r.constants.begin(), r.constants.end(),
-                       [&id = paramId](const auto& c) { return c.id == id; });
-      iter != r.constants.end()) {
-    iter->value = value;
-    s->setReaction(r);
-  }
+  s->getReactions().setParameterValue(reacId.c_str(), paramId.c_str(), value);
 }
 
 double ReactionParameter::getValue() const {
-  auto r = s->getReaction(reacId.c_str());
-  if (auto iter =
-          std::find_if(r.constants.cbegin(), r.constants.cend(),
-                       [&id = paramId](const auto& c) { return c.id == id; });
-      iter != r.constants.cend()) {
-    return iter->value;
-  }
-  return {};
+  return s->getReactions().getParameterValue(reacId.c_str(), paramId.c_str());
 }
 
 std::string ReactionParameter::getStr() const {

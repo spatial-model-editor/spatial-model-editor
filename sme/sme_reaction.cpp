@@ -3,7 +3,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "sbml.hpp"
+#include "model.hpp"
 #include "sme_common.hpp"
 
 namespace sme {
@@ -21,25 +21,23 @@ void pybindReaction(const pybind11::module& m) {
       .def("__str__", &sme::Reaction::getStr);
 }
 
-Reaction::Reaction(sbml::SbmlDocWrapper* sbmlDocWrapper, const std::string& sId)
+Reaction::Reaction(model::Model* sbmlDocWrapper, const std::string& sId)
     : s(sbmlDocWrapper), id(sId) {
-  auto r = s->getReaction(id.c_str());
-  parameters.reserve(static_cast<std::size_t>(r.constants.size()));
-  for (const auto& c : r.constants) {
-    parameters.emplace_back(s, id, c.id);
+  const auto& paramIds = s->getReactions().getParameterIds(id.c_str());
+  parameters.reserve(static_cast<std::size_t>(paramIds.size()));
+  for (const auto& paramId : paramIds) {
+    parameters.emplace_back(s, id, paramId.toStdString());
   }
 }
 
 const std::string& Reaction::getId() const { return id; }
 
 void Reaction::setName(const std::string& name) {
-  auto r = s->getReaction(id.c_str());
-  r.name = name;
-  s->setReaction(r);
+  s->getReactions().setName(id.c_str(), name.c_str());
 }
 
 std::string Reaction::getName() const {
-  return s->getReactionName(id.c_str()).toStdString();
+  return s->getReactions().getName(id.c_str()).toStdString();
 }
 
 std::map<std::string, ReactionParameter*> Reaction::getParameters() {
