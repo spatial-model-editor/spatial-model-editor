@@ -9,8 +9,8 @@ class QLabel;
 class QListWidgetItem;
 class QLabelMouseTracker;
 
-namespace sbml {
-class SbmlDocWrapper;
+namespace model {
+class Model;
 }
 
 namespace Ui {
@@ -21,7 +21,7 @@ class TabGeometry : public QWidget {
   Q_OBJECT
 
 public:
-  explicit TabGeometry(sbml::SbmlDocWrapper &doc,
+  explicit TabGeometry(model::Model &doc,
                        QLabelMouseTracker *mouseTracker, QLabel *statusBarMsg,
                        QWidget *parent = nullptr);
   ~TabGeometry();
@@ -34,7 +34,7 @@ signals:
 
 private:
   std::unique_ptr<Ui::TabGeometry> ui;
-  sbml::SbmlDocWrapper &sbmlDoc;
+  model::Model &sbmlDoc;
   QLabelMouseTracker *lblGeometry;
   QLabel *statusBarPermanentMessage;
   bool waitingForCompartmentChoice = false;
@@ -53,6 +53,7 @@ private:
   void lblCompMesh_mouseClicked(QRgb col, QPoint point);
   void spinMaxTriangleArea_valueChanged(int value);
   void generateMesh(int value = 0);
-  void listCompartments_currentRowChanged(int currentRow);
+  void listCompartments_itemSelectionChanged();
   void listCompartments_itemDoubleClicked(QListWidgetItem *item);
+  void listMembranes_itemSelectionChanged();
 };

@@ -164,22 +164,6 @@
            </property>
           </widget>
          </item>
-         <item row="6" column="1">
-          <widget class="QPushButton" name="btnSaveReactionChanges">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Save changes</string>
-           </property>
-          </widget>
-         </item>
          <item row="4" column="3">
           <spacer name="horizontalSpacer_2">
            <property name="orientation">
@@ -239,7 +223,51 @@
            </property>
           </widget>
          </item>
-         <item row="6" column="2" colspan="2">
+         <item row="1" column="0">
+          <widget class="QLabel" name="lblReactionLocationLabel">
+           <property name="text">
+            <string>Location:</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1" colspan="3">
+          <widget class="QTableWidget" name="listReactionParams">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="cornerButtonEnabled">
+            <bool>true</bool>
+           </property>
+           <attribute name="horizontalHeaderStretchLastSection">
+            <bool>true</bool>
+           </attribute>
+           <attribute name="verticalHeaderVisible">
+            <bool>false</bool>
+           </attribute>
+           <column>
+            <property name="text">
+             <string>Name</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Value</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Units</string>
+            </property>
+           </column>
+          </widget>
+         </item>
+         <item row="6" column="1" colspan="3">
           <widget class="QLabel" name="lblReactionRateStatus">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -376,50 +404,6 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="lblReactionLocationLabel">
-           <property name="text">
-            <string>Location:</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1" colspan="3">
-          <widget class="QTableWidget" name="listReactionParams">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="cornerButtonEnabled">
-            <bool>true</bool>
-           </property>
-           <attribute name="horizontalHeaderStretchLastSection">
-            <bool>true</bool>
-           </attribute>
-           <attribute name="verticalHeaderVisible">
-            <bool>false</bool>
-           </attribute>
-           <column>
-            <property name="text">
-             <string>Name</string>
-            </property>
-           </column>
-           <column>
-            <property name="text">
-             <string>Value</string>
-            </property>
-           </column>
-           <column>
-            <property name="text">
-             <string>Units</string>
-            </property>
-           </column>
-          </widget>
-         </item>
         </layout>
        </item>
       </layout>
@@ -435,6 +419,18 @@
    <header>qplaintextmathedit.hpp</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>listReactions</tabstop>
+  <tabstop>btnAddReaction</tabstop>
+  <tabstop>btnRemoveReaction</tabstop>
+  <tabstop>txtReactionName</tabstop>
+  <tabstop>cmbReactionLocation</tabstop>
+  <tabstop>listReactionSpecies</tabstop>
+  <tabstop>listReactionParams</tabstop>
+  <tabstop>btnAddReactionParam</tabstop>
+  <tabstop>btnRemoveReactionParam</tabstop>
+  <tabstop>txtReactionRate</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

@@ -16,7 +16,7 @@ Once it is installed, you should be able to import the module
 .. code-block:: python
 
     $ python
-    Python 3.8.2 (default, Mar  5 2020, 21:13:34) 
+    Python 3.8.2 (default, Mar  5 2020, 21:13:34)
     [GCC 9.2.1 20191008] on linux
     Type "help", "copyright", "credits" or "license" for more information.
     >>> import sme

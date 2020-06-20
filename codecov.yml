@@ -6,3 +6,6 @@ coverage:
     patch:
       default:
         target: 80
+ignore:
+  - "**/*_t.cpp"  # tests code
+  - "**/ext/**/*" # external library code

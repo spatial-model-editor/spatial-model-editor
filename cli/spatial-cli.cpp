@@ -4,7 +4,7 @@
 #include <limits>
 
 #include "logger.hpp"
-#include "sbml.hpp"
+#include "model.hpp"
 #include "simulate.hpp"
 #include "version.hpp"
 
@@ -78,7 +78,7 @@ static void doSimulation(const Params &params) {
   spdlog::set_level(spdlog::level::off);
 
   // import model
-  sbml::SbmlDocWrapper s;
+  model::Model s;
   QFile f(params.filename.c_str());
   if (f.open(QIODevice::ReadOnly)) {
     s.importSBMLString(f.readAll().toStdString());
@@ -87,7 +87,7 @@ static void doSimulation(const Params &params) {
                params.filename);
     exit(1);
   }
-  if (!s.isValid || !s.hasValidGeometry) {
+  if (!s.getIsValid() || !s.getGeometry().getIsValid()) {
     fmt::print("\n\nError: invalid model '{}'\n\n", params.filename);
     exit(1);
   }

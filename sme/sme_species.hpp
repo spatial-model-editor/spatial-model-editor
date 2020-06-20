@@ -2,8 +2,8 @@
 
 #include <string>
 
-namespace sbml {
-class SbmlDocWrapper;
+namespace model {
+class Model;
 }
 
 namespace pybind11 {
@@ -16,11 +16,11 @@ void pybindSpecies(const pybind11::module& m);
 
 class Species {
  private:
-  sbml::SbmlDocWrapper* s;
+  model::Model* s;
   std::string id;
 
  public:
-  explicit Species(sbml::SbmlDocWrapper* sbmlDocWrapper,
+  explicit Species(model::Model* sbmlDocWrapper,
                    const std::string& sId);
   const std::string& getId() const;
   void setName(const std::string& name);

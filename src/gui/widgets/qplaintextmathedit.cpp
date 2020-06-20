@@ -10,30 +10,30 @@
 
 bool QPlainTextMathEdit::mathIsValid() const { return expressionIsValid; }
 
-const QString& QPlainTextMathEdit::getMath() const {
+const QString &QPlainTextMathEdit::getMath() const {
   return currentDisplayMath;
 }
 
-const std::string& QPlainTextMathEdit::getVariableMath() const {
+const std::string &QPlainTextMathEdit::getVariableMath() const {
   return currentVariableMath;
 }
 
-void QPlainTextMathEdit::importVariableMath(const std::string& expr) {
+void QPlainTextMathEdit::importVariableMath(const std::string &expr) {
   setPlainText(variablesToDisplayNames(expr).c_str());
 }
 
 void QPlainTextMathEdit::compileMath() { sym.compile(); }
 
-double QPlainTextMathEdit::evaluateMath(const std::vector<double>& variables) {
+double QPlainTextMathEdit::evaluateMath(const std::vector<double> &variables) {
   sym.eval(result, variables);
   return result[0];
 }
 
-const QString& QPlainTextMathEdit::getErrorMessage() const {
+const QString &QPlainTextMathEdit::getErrorMessage() const {
   return currentErrorMessage;
 }
 
-const std::vector<std::string>& QPlainTextMathEdit::getVariables() const {
+const std::vector<std::string> &QPlainTextMathEdit::getVariables() const {
   return vars;
 }
 
@@ -44,15 +44,15 @@ void QPlainTextMathEdit::clearVariables() {
 }
 
 void QPlainTextMathEdit::setVariables(
-    const std::vector<std::string>& variables) {
+    const std::vector<std::string> &variables) {
   clearVariables();
-  for (const auto& v : variables) {
+  for (const auto &v : variables) {
     addVariable(v, v);
   }
   qPlainTextEdit_textChanged();
 }
 
-static bool isValidSymbol(const std::string& name) {
+static bool isValidSymbol(const std::string &name) {
   // first char must be a letter or underscore
   if (auto c = name.front();
       !(std::isalpha(c, std::locale::classic()) || c == '_')) {
@@ -67,13 +67,15 @@ static bool isValidSymbol(const std::string& name) {
   return true;
 }
 
-void QPlainTextMathEdit::addVariable(const std::string& variable,
-                                     const std::string& displayName) {
+void QPlainTextMathEdit::addVariable(const std::string &variable,
+                                     const std::string &displayName) {
+  SPDLOG_TRACE("adding var: {}", variable);
   vars.push_back(variable);
   auto name = displayName;
   if (displayName.empty()) {
     name = variable;
   }
+  SPDLOG_TRACE("  -> display name {}", name);
   mapDisplayNamesToVars[name] = variable;
   if (isValidSymbol(name)) {
     mapVarsToDisplayNames[variable] = name;
@@ -83,7 +85,7 @@ void QPlainTextMathEdit::addVariable(const std::string& variable,
   qPlainTextEdit_textChanged();
 }
 
-void QPlainTextMathEdit::removeVariable(const std::string& variable) {
+void QPlainTextMathEdit::removeVariable(const std::string &variable) {
   vars.erase(std::remove(vars.begin(), vars.end(), variable), vars.end());
   if (auto iter = mapVarsToDisplayNames.find(variable);
       iter != mapVarsToDisplayNames.cend()) {
@@ -102,7 +104,7 @@ void QPlainTextMathEdit::removeVariable(const std::string& variable) {
   qPlainTextEdit_textChanged();
 }
 
-QPlainTextMathEdit::QPlainTextMathEdit(QWidget* parent)
+QPlainTextMathEdit::QPlainTextMathEdit(QWidget *parent)
     : QPlainTextEdit(parent) {
   connect(this, &QPlainTextEdit::textChanged, this,
           &QPlainTextMathEdit::qPlainTextEdit_textChanged);
@@ -115,10 +117,14 @@ QPlainTextMathEdit::QPlainTextMathEdit(QWidget* parent)
 // - look-up variable in map and replace it with result
 // - if map contents are not a valid symbol, wrap it in quotes
 // - if variable not found in map, return instead a QString error message
-static std::pair<std::string, QString> substitute(
-    const std::string& expr, const std::map<std::string, std::string>& map,
-    const std::string& delimeters = "()-^*/+, ") {
+static std::pair<std::string, QString>
+substitute(const std::string &expr,
+           const std::map<std::string, std::string> &map,
+           const std::string &delimeters = "()-^*/+, ") {
   SPDLOG_DEBUG("expr: {}", expr);
+  if (expr.empty()) {
+    return {};
+  }
   std::string out;
   out.reserve(expr.size());
   // skip over any initial delimeters
@@ -159,20 +165,23 @@ static std::pair<std::string, QString> substitute(
   return {out, {}};
 }
 
-std::string QPlainTextMathEdit::variablesToDisplayNames(
-    const std::string& expr) const {
-  const auto& map = mapVarsToDisplayNames;
+std::string
+QPlainTextMathEdit::variablesToDisplayNames(const std::string &expr) const {
+  const auto &map = mapVarsToDisplayNames;
   if (map.empty()) {
     return expr;
   }
   return substitute(expr, map).first;
 }
 
-std::pair<std::string, QString> QPlainTextMathEdit::displayNamesToVariables(
-    const std::string& expr) const {
+std::pair<std::string, QString>
+QPlainTextMathEdit::displayNamesToVariables(const std::string &expr) const {
+  if (expr.empty()) {
+    return {};
+  }
   std::string out;
   const char quoteChar = '"';
-  const auto& map = mapDisplayNamesToVars;
+  const auto &map = mapDisplayNamesToVars;
   if (map.empty()) {
     return {expr, ""};
   }
@@ -239,6 +248,9 @@ void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
     // check for illegal chars
     currentErrorMessage = QString("Illegal character: %1").arg(newExpr[i]);
   }
+  if (newExpr.empty() && currentErrorMessage.isEmpty()) {
+    currentErrorMessage = QString("Empty expression");
+  }
   if (currentErrorMessage.isEmpty()) {
     try {
       // parse (but don't compile) symbolic expression
@@ -248,7 +260,7 @@ void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
       currentErrorMessage = "";
       currentVariableMath = sym.simplify();
       currentDisplayMath = variablesToDisplayNames(currentVariableMath).c_str();
-    } catch (const SymEngine::SymEngineException& e) {
+    } catch (const SymEngine::SymEngineException &e) {
       // if SymEngine failed to parse, capture error message
       currentErrorMessage = e.what();
     }
@@ -256,7 +268,7 @@ void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
   emit mathChanged(currentDisplayMath, expressionIsValid, currentErrorMessage);
 }
 
-static std::pair<int, bool> getClosingBracket(const QString& expr, int pos,
+static std::pair<int, bool> getClosingBracket(const QString &expr, int pos,
                                               int sign) {
   int len = 0;
   int count = sign;
@@ -287,13 +299,13 @@ void QPlainTextMathEdit::qPlainTextEdit_cursorPositionChanged() {
   int i = s.cursor.position();
   if (expr[i] == '(') {
     auto [len, valid] = getClosingBracket(expr, i, +1);
-    const auto& col = valid ? colourValid : colourInvalid;
+    const auto &col = valid ? colourValid : colourInvalid;
     s.cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor,
                           len);
     s.format.setBackground(QBrush(col));
   } else if (i > 0 && expr[i - 1] == ')') {
     auto [len, valid] = getClosingBracket(expr, i - 1, -1);
-    const auto& col = valid ? colourValid : colourInvalid;
+    const auto &col = valid ? colourValid : colourInvalid;
     s.cursor.movePosition(QTextCursor::PreviousCharacter,
                           QTextCursor::KeepAnchor, len);
     s.format.setBackground(QBrush(col));

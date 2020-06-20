@@ -5,7 +5,7 @@
 #include <locale>
 
 #include "logger.hpp"
-#include "sbml.hpp"
+#include "model.hpp"
 #include "simulate.hpp"
 #include "version.hpp"
 
@@ -95,7 +95,7 @@ static void printFixedTimestepPixel(const PixelParams &params) {
                     0.001,   0.0005,   0.00025,   0.0001,  0.00005, 0.000025,
                     0.00001, 0.000005, 0.0000025, 0.000001}) {
     // import model
-    sbml::SbmlDocWrapper s;
+    model::Model s;
     QFile f(QString(":/models/%1.xml").arg(params.models[0]));
     f.open(QIODevice::ReadOnly);
     s.importSBMLString(f.readAll().toStdString());

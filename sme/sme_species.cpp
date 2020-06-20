@@ -3,7 +3,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include "sbml.hpp"
+#include "model.hpp"
 #include "sme_common.hpp"
 
 namespace sme {
@@ -22,25 +22,25 @@ void pybindSpecies(const pybind11::module& m) {
       .def("__str__", &sme::Species::getStr);
 }
 
-Species::Species(sbml::SbmlDocWrapper* sbmlDocWrapper, const std::string& sId)
+Species::Species(model::Model* sbmlDocWrapper, const std::string& sId)
     : s(sbmlDocWrapper), id(sId) {}
 
 const std::string& Species::getId() const { return id; }
 
 void Species::setName(const std::string& name) {
-  s->setSpeciesName(id.c_str(), name.c_str());
+  s->getSpecies().setName(id.c_str(), name.c_str());
 }
 
 std::string Species::getName() const {
-  return s->getSpeciesName(id.c_str()).toStdString();
+  return s->getSpecies().getName(id.c_str()).toStdString();
 }
 
 void Species::setDiffusionConstant(double diffusionConstant) {
-  s->setDiffusionConstant(id.c_str(), diffusionConstant);
+  s->getSpecies().setDiffusionConstant(id.c_str(), diffusionConstant);
 }
 
 double Species::getDiffusionConstant() const {
-  return s->getDiffusionConstant(id.c_str());
+  return s->getSpecies().getDiffusionConstant(id.c_str());
 }
 
 std::string Species::getStr() const {

@@ -4,20 +4,17 @@
 
 static QString dblToString(double val) { return QString::number(val, 'g', 14); }
 
-DialogImageSize::DialogImageSize(const QImage& image, double pixelWidth,
-                                 const units::ModelUnits& modelUnits,
-                                 QWidget* parent)
-    : QDialog(parent),
-      ui{std::make_unique<Ui::DialogImageSize>()},
-      img(image),
-      pixelModelUnits(pixelWidth),
-      units(modelUnits) {
+DialogImageSize::DialogImageSize(const QImage &image, double pixelWidth,
+                                 const model::ModelUnits &modelUnits,
+                                 QWidget *parent)
+    : QDialog(parent), ui{std::make_unique<Ui::DialogImageSize>()}, img(image),
+      pixelModelUnits(pixelWidth), units(modelUnits) {
   ui->setupUi(this);
 
   ui->lblImage->setImage(img);
 
-  for (auto* cmb : {ui->cmbUnitsWidth, ui->cmbUnitsHeight}) {
-    for (const auto& u : units.getLengthUnits()) {
+  for (auto *cmb : {ui->cmbUnitsWidth, ui->cmbUnitsHeight}) {
+    for (const auto &u : units.getLengthUnits()) {
       cmb->addItem(u.symbol);
     }
     cmb->setCurrentIndex(units.getLengthIndex());
@@ -63,7 +60,7 @@ void DialogImageSize::updateAll() {
   double h = static_cast<double>(img.height()) * pixelLocalUnits;
   ui->txtImageHeight->setText(dblToString(h));
   // calculate pixel width in model units
-  pixelModelUnits = units::rescale(
+  pixelModelUnits = model::rescale(
       pixelLocalUnits,
       units.getLengthUnits().at(ui->cmbUnitsWidth->currentIndex()),
       units.getLength());

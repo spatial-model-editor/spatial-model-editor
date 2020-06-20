@@ -11,8 +11,8 @@ namespace Ui {
 class TabSpecies;
 }
 
-namespace sbml {
-class SbmlDocWrapper;
+namespace model {
+class Model;
 }
 
 class QLabelMouseTracker;
@@ -21,7 +21,7 @@ class TabSpecies : public QWidget {
   Q_OBJECT
 
  public:
-  explicit TabSpecies(sbml::SbmlDocWrapper &doc,
+  explicit TabSpecies(model::Model &doc,
                       QLabelMouseTracker *mouseTracker,
                       QWidget *parent = nullptr);
   ~TabSpecies();
@@ -29,7 +29,7 @@ class TabSpecies : public QWidget {
 
  private:
   std::unique_ptr<Ui::TabSpecies> ui;
-  sbml::SbmlDocWrapper &sbmlDoc;
+  model::Model &sbmlDoc;
   QLabelMouseTracker *lblGeometry;
   QPixmap lblSpeciesColourPixmap = QPixmap(1, 1);
   QString currentSpeciesId;

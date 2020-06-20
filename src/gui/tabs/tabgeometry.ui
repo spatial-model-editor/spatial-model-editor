@@ -24,10 +24,13 @@
      </property>
      <widget class="QWidget" name="verticalLayoutWidget">
       <layout class="QGridLayout" name="gridLayout">
-       <item row="2" column="0">
-        <widget class="QPushButton" name="btnAddCompartment">
-         <property name="text">
-          <string>Add</string>
+       <item row="4" column="0" colspan="2">
+        <widget class="QListWidget" name="listMembranes">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
         </widget>
        </item>
@@ -38,6 +41,13 @@
          </property>
          <property name="text">
           <string>Remove</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QPushButton" name="btnAddCompartment">
+         <property name="text">
+          <string>Add</string>
          </property>
         </widget>
        </item>
@@ -75,17 +85,27 @@
            <bold>true</bold>
           </font>
          </property>
-         <property name="autoFillBackground">
-          <bool>true</bool>
-         </property>
          <property name="text">
           <string>Compartments:</string>
          </property>
-         <property name="scaledContents">
-          <bool>false</bool>
+        </widget>
+       </item>
+       <item row="3" column="0" colspan="2">
+        <widget class="QLabel" name="lblMembranes">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
-         <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         <property name="font">
+          <font>
+           <weight>75</weight>
+           <bold>true</bold>
+          </font>
+         </property>
+         <property name="text">
+          <string>Membranes:</string>
          </property>
         </widget>
        </item>

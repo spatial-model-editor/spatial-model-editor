@@ -7,8 +7,8 @@
 #include "sme_reaction.hpp"
 #include "sme_species.hpp"
 
-namespace sbml {
-class SbmlDocWrapper;
+namespace model {
+class Model;
 }
 
 namespace pybind11 {
@@ -21,13 +21,13 @@ void pybindCompartment(const pybind11::module& m);
 
 class Compartment {
  private:
-  sbml::SbmlDocWrapper* s;
+  model::Model* s;
   std::string id;
   std::vector<Species> species;
   std::vector<Reaction> reactions;
 
  public:
-  explicit Compartment(sbml::SbmlDocWrapper* sbmlDocWrapper,
+  explicit Compartment(model::Model* sbmlDocWrapper,
                        const std::string& sId);
   const std::string& getId() const;
   void setName(const std::string& name);

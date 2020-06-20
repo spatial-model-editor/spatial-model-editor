@@ -8,60 +8,43 @@
 #include "dialogconcentrationimage.hpp"
 #include "guiutils.hpp"
 #include "logger.hpp"
+#include "model.hpp"
 #include "qlabelmousetracker.hpp"
-#include "sbml.hpp"
 #include "ui_tabspecies.h"
 
-TabSpecies::TabSpecies(sbml::SbmlDocWrapper &doc,
-                       QLabelMouseTracker *mouseTracker, QWidget *parent)
-    : QWidget(parent),
-      ui{std::make_unique<Ui::TabSpecies>()},
-      sbmlDoc(doc),
+TabSpecies::TabSpecies(model::Model &doc, QLabelMouseTracker *mouseTracker,
+                       QWidget *parent)
+    : QWidget(parent), ui{std::make_unique<Ui::TabSpecies>()}, sbmlDoc(doc),
       lblGeometry(mouseTracker) {
   ui->setupUi(this);
-
   connect(ui->listSpecies, &QTreeWidget::currentItemChanged, this,
           &TabSpecies::listSpecies_currentItemChanged);
-
   connect(ui->btnAddSpecies, &QPushButton::clicked, this,
           &TabSpecies::btnAddSpecies_clicked);
-
   connect(ui->btnRemoveSpecies, &QPushButton::clicked, this,
           &TabSpecies::btnRemoveSpecies_clicked);
-
   connect(ui->txtSpeciesName, &QLineEdit::editingFinished, this,
           &TabSpecies::txtSpeciesName_editingFinished);
-
   connect(ui->cmbSpeciesCompartment, qOverload<int>(&QComboBox::activated),
           this, &TabSpecies::cmbSpeciesCompartment_activated);
-
   connect(ui->chkSpeciesIsSpatial, &QCheckBox::toggled, this,
           &TabSpecies::chkSpeciesIsSpatial_toggled);
-
   connect(ui->chkSpeciesIsConstant, &QCheckBox::toggled, this,
           &TabSpecies::chkSpeciesIsConstant_toggled);
-
   connect(ui->radInitialConcentrationUniform, &QRadioButton::toggled, this,
           &TabSpecies::radInitialConcentration_toggled);
-
   connect(ui->txtInitialConcentration, &QLineEdit::editingFinished, this,
           &TabSpecies::txtInitialConcentration_editingFinished);
-
   connect(ui->radInitialConcentrationImage, &QRadioButton::toggled, this,
           &TabSpecies::radInitialConcentration_toggled);
-
   connect(ui->radInitialConcentrationAnalytic, &QRadioButton::toggled, this,
           &TabSpecies::radInitialConcentration_toggled);
-
   connect(ui->btnEditAnalyticConcentration, &QPushButton::clicked, this,
           &TabSpecies::btnEditAnalyticConcentration_clicked);
-
   connect(ui->btnEditImageConcentration, &QPushButton::clicked, this,
           &TabSpecies::btnEditImageConcentration_clicked);
-
   connect(ui->txtDiffusionConstant, &QLineEdit::editingFinished, this,
           &TabSpecies::txtDiffusionConstant_editingFinished);
-
   connect(ui->btnChangeSpeciesColour, &QPushButton::clicked, this,
           &TabSpecies::btnChangeSpeciesColour_clicked);
 }
@@ -74,17 +57,16 @@ void TabSpecies::loadModelData(const QString &selection) {
   auto *ls = ui->listSpecies;
   ls->clear();
   ui->cmbSpeciesCompartment->clear();
-  for (int iComp = 0; iComp < sbmlDoc.compartments.size(); ++iComp) {
+  for (const auto &compId : sbmlDoc.getCompartments().getIds()) {
     // add compartments as top level items
-    QString compName = sbmlDoc.compartmentNames[iComp];
+    QString compName = sbmlDoc.getCompartments().getName(compId);
     QTreeWidgetItem *comp = new QTreeWidgetItem(ls, {compName});
     // also add to species compartment combo box
     ui->cmbSpeciesCompartment->addItem(compName);
     ls->addTopLevelItem(comp);
-    for (const auto &s : sbmlDoc.species.at(sbmlDoc.compartments[iComp])) {
+    for (const auto &speciesName : sbmlDoc.getSpecies().getNames(compId)) {
       // add each species as child of compartment
-      comp->addChild(
-          new QTreeWidgetItem(comp, QStringList({sbmlDoc.getSpeciesName(s)})));
+      comp->addChild(new QTreeWidgetItem(comp, QStringList({speciesName})));
     }
   }
   ls->expandAll();
@@ -115,27 +97,25 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
     enableWidgets(false);
     return;
   }
-
   SPDLOG_DEBUG("item {} / {} selected",
                current->parent()->text(0).toStdString(),
                current->text(0).toStdString());
   enableWidgets(true);
   int compartmentIndex =
       ui->listSpecies->indexOfTopLevelItem(current->parent());
-  QString compartmentID = sbmlDoc.compartments.at(compartmentIndex);
+  QString compartmentID = sbmlDoc.getCompartments().getIds()[compartmentIndex];
   int speciesIndex = current->parent()->indexOfChild(current);
-  QString speciesID = sbmlDoc.species.at(compartmentID).at(speciesIndex);
-  currentSpeciesId = speciesID;
+  currentSpeciesId = sbmlDoc.getSpecies().getIds(compartmentID)[speciesIndex];
   SPDLOG_DEBUG("  - species index {}", speciesIndex);
-  SPDLOG_DEBUG("  - species Id {}", speciesID.toStdString());
+  SPDLOG_DEBUG("  - species Id {}", currentSpeciesId.toStdString());
   SPDLOG_DEBUG("  - compartment index {}", compartmentIndex);
   SPDLOG_DEBUG("  - compartment Id {}", compartmentID.toStdString());
   // display species information
-  const auto &field = sbmlDoc.mapSpeciesIdToField.at(speciesID);
+  const auto *field = sbmlDoc.getSpecies().getField(currentSpeciesId);
   ui->txtSpeciesName->setText(current->text(0));
   ui->cmbSpeciesCompartment->setCurrentIndex(compartmentIndex);
   // spatial
-  bool isSpatial = field.isSpatial;
+  bool isSpatial = field->getIsSpatial();
   ui->chkSpeciesIsSpatial->setChecked(isSpatial);
   ui->txtDiffusionConstant->setEnabled(isSpatial);
   ui->radInitialConcentrationAnalytic->setEnabled(isSpatial);
@@ -143,7 +123,7 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
   ui->radInitialConcentrationImage->setEnabled(isSpatial);
   ui->btnEditImageConcentration->setEnabled(isSpatial);
   // constant
-  bool isConstant = sbmlDoc.getIsSpeciesConstant(speciesID.toStdString());
+  bool isConstant = sbmlDoc.getSpecies().getIsConstant(currentSpeciesId);
   ui->chkSpeciesIsConstant->setChecked(isConstant);
   if (isConstant) {
     ui->txtDiffusionConstant->setEnabled(false);
@@ -154,18 +134,18 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
   ui->lblInitialConcentrationUnits->setText("");
   // lblGeometryStatus->setText(
   //    QString("Species '%1' concentration:").arg(current->text(0)));
-  lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
-  if (field.isUniformConcentration) {
+  lblGeometry->setImage(
+      sbmlDoc.getSpecies().getConcentrationImage(currentSpeciesId));
+  if (field->getIsUniformConcentration()) {
     // scalar
-    ui->txtInitialConcentration->setText(
-        QString::number(sbmlDoc.getInitialConcentration(speciesID)));
+    ui->txtInitialConcentration->setText(QString::number(
+        sbmlDoc.getSpecies().getInitialConcentration(currentSpeciesId)));
     ui->lblInitialConcentrationUnits->setText(
-        sbmlDoc.getModelUnits().getConcentration());
+        sbmlDoc.getUnits().getConcentration());
     ui->radInitialConcentrationUniform->setChecked(true);
-  } else if (!sbmlDoc
-                  .getSpeciesSampledFieldInitialAssignment(
-                      speciesID.toStdString())
-                  .empty()) {
+  } else if (!sbmlDoc.getSpecies()
+                  .getSampledFieldInitialAssignment(currentSpeciesId)
+                  .isEmpty()) {
     // image
     ui->radInitialConcentrationImage->setChecked(true);
   } else {
@@ -175,13 +155,12 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
   radInitialConcentration_toggled();
   // diffusion constant
   if (ui->txtDiffusionConstant->isEnabled()) {
-    ui->txtDiffusionConstant->setText(
-        QString::number(sbmlDoc.getDiffusionConstant(speciesID)));
-    ui->lblDiffusionConstantUnits->setText(
-        sbmlDoc.getModelUnits().getDiffusion());
+    ui->txtDiffusionConstant->setText(QString::number(
+        sbmlDoc.getSpecies().getDiffusionConstant(currentSpeciesId)));
+    ui->lblDiffusionConstantUnits->setText(sbmlDoc.getUnits().getDiffusion());
   }
   // colour
-  lblSpeciesColourPixmap.fill(sbmlDoc.getSpeciesColour(speciesID));
+  lblSpeciesColourPixmap.fill(sbmlDoc.getSpecies().getColour(currentSpeciesId));
   ui->lblSpeciesColour->setPixmap(lblSpeciesColourPixmap);
   ui->lblSpeciesColour->setText("");
 }
@@ -193,12 +172,12 @@ void TabSpecies::btnAddSpecies_clicked() {
     auto *parent = item->parent() != nullptr ? item->parent() : item;
     compartmentIndex = ui->listSpecies->indexOfTopLevelItem(parent);
   }
-  QString compartmentID = sbmlDoc.compartments.at(compartmentIndex);
+  QString compartmentID = sbmlDoc.getCompartments().getIds()[compartmentIndex];
   bool ok;
   auto speciesName = QInputDialog::getText(
       this, "Add species", "New species name:", QLineEdit::Normal, {}, &ok);
   if (ok && !speciesName.isEmpty()) {
-    auto newName = sbmlDoc.addSpecies(speciesName, compartmentID);
+    auto newName = sbmlDoc.getSpecies().add(speciesName, compartmentID);
     loadModelData(newName);
   }
 }
@@ -209,9 +188,11 @@ void TabSpecies::btnRemoveSpecies_clicked() {
     SPDLOG_DEBUG("item {} / {} selected", item->parent()->text(0).toStdString(),
                  item->text(0).toStdString());
     int compartmentIndex = ui->listSpecies->indexOfTopLevelItem(item->parent());
-    QString compartmentID = sbmlDoc.compartments.at(compartmentIndex);
+    QString compartmentID =
+        sbmlDoc.getCompartments().getIds()[compartmentIndex];
     int speciesIndex = item->parent()->indexOfChild(item);
-    QString speciesID = sbmlDoc.species.at(compartmentID).at(speciesIndex);
+    QString speciesID =
+        sbmlDoc.getSpecies().getIds(compartmentID)[speciesIndex];
     auto msgbox = newYesNoMessageBox(
         "Remove species?",
         QString("Remove species '%1' from the model?").arg(item->text(0)),
@@ -219,7 +200,7 @@ void TabSpecies::btnRemoveSpecies_clicked() {
     connect(msgbox, &QMessageBox::finished, this,
             [speciesID, this](int result) {
               if (result == QMessageBox::Yes) {
-                sbmlDoc.removeSpecies(speciesID);
+                sbmlDoc.getSpecies().remove(speciesID);
                 loadModelData();
               }
             });
@@ -229,40 +210,42 @@ void TabSpecies::btnRemoveSpecies_clicked() {
 
 void TabSpecies::txtSpeciesName_editingFinished() {
   const QString &name = ui->txtSpeciesName->text();
-  if (name == sbmlDoc.getSpeciesName(currentSpeciesId)) {
+  if (name == sbmlDoc.getSpecies().getName(currentSpeciesId)) {
     return;
   }
-  QString newName = sbmlDoc.setSpeciesName(currentSpeciesId, name);
+  QString newName = sbmlDoc.getSpecies().setName(currentSpeciesId, name);
   ui->txtSpeciesName->setText(newName);
   loadModelData(newName);
 }
 
 void TabSpecies::cmbSpeciesCompartment_activated(int index) {
-  const auto &currentComp = sbmlDoc.getSpeciesCompartment(currentSpeciesId);
-  if (sbmlDoc.compartments[index] != currentComp) {
-    sbmlDoc.setSpeciesCompartment(currentSpeciesId,
-                                  sbmlDoc.compartments[index]);
-    loadModelData(sbmlDoc.getSpeciesName(currentSpeciesId));
+  const auto &currentComp =
+      sbmlDoc.getSpecies().getCompartment(currentSpeciesId);
+  if (sbmlDoc.getCompartments().getIds()[index] != currentComp) {
+    sbmlDoc.getSpecies().setCompartment(
+        currentSpeciesId, sbmlDoc.getCompartments().getIds()[index]);
+    loadModelData(sbmlDoc.getSpecies().getName(currentSpeciesId));
   }
 }
 
 void TabSpecies::chkSpeciesIsSpatial_toggled(bool enabled) {
   // if new value differs from previous one - update model
-  if (sbmlDoc.getIsSpatial(currentSpeciesId) != enabled) {
+  if (sbmlDoc.getSpecies().getIsSpatial(currentSpeciesId) != enabled) {
     SPDLOG_INFO("setting species {} isSpatial: {}",
                 currentSpeciesId.toStdString(), enabled);
-    sbmlDoc.setIsSpatial(currentSpeciesId, enabled);
+    sbmlDoc.getSpecies().setIsSpatial(currentSpeciesId, enabled);
     // update displayed info for this species
     txtInitialConcentration_editingFinished();
   }
 }
 
 void TabSpecies::chkSpeciesIsConstant_toggled(bool enabled) {
-  const auto &speciesID = currentSpeciesId.toStdString();
+  const auto &speciesID = currentSpeciesId;
   // if new value differs from previous one - update model
-  if (sbmlDoc.getIsSpeciesConstant(speciesID) != enabled) {
-    SPDLOG_INFO("setting species {} isConstant: {}", speciesID, enabled);
-    sbmlDoc.setIsSpeciesConstant(speciesID, enabled);
+  if (sbmlDoc.getSpecies().getIsConstant(speciesID) != enabled) {
+    SPDLOG_INFO("setting species {} isConstant: {}", speciesID.toStdString(),
+                enabled);
+    sbmlDoc.getSpecies().setIsConstant(speciesID, enabled);
     // update displayed info for this species
     txtInitialConcentration_editingFinished();
   }
@@ -286,62 +269,61 @@ void TabSpecies::radInitialConcentration_toggled() {
 
 void TabSpecies::txtInitialConcentration_editingFinished() {
   double initConc = ui->txtInitialConcentration->text().toDouble();
-  const auto &speciesID = currentSpeciesId;
   SPDLOG_INFO("setting initial concentration of Species {} to {}",
-              speciesID.toStdString(), initConc);
-  sbmlDoc.setInitialConcentration(speciesID, initConc);
+              currentSpeciesId.toStdString(), initConc);
+  sbmlDoc.getSpecies().setInitialConcentration(currentSpeciesId, initConc);
   // update displayed info for this species
   listSpecies_currentItemChanged(ui->listSpecies->currentItem(), nullptr);
 }
 
 void TabSpecies::btnEditAnalyticConcentration_clicked() {
-  const auto &speciesID = currentSpeciesId;
   SPDLOG_DEBUG("editing analytic initial concentration of species {}...",
-               speciesID.toStdString());
-  DialogAnalytic dialog(sbmlDoc.getAnalyticConcentration(speciesID),
-                        sbmlDoc.getSpeciesGeometry(speciesID),
-                        sbmlDoc.getGlobalConstants());
+               currentSpeciesId.toStdString());
+  DialogAnalytic dialog(
+      sbmlDoc.getSpecies().getAnalyticConcentration(currentSpeciesId),
+      sbmlDoc.getSpeciesGeometry(currentSpeciesId),
+      sbmlDoc.getParameters().getGlobalConstants());
   if (dialog.exec() == QDialog::Accepted) {
     const std::string &expr = dialog.getExpression();
     SPDLOG_DEBUG("  - set expr: {}", expr);
-    sbmlDoc.setAnalyticConcentration(speciesID, expr.c_str());
-    lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
+    sbmlDoc.getSpecies().setAnalyticConcentration(currentSpeciesId,
+                                                  expr.c_str());
+    lblGeometry->setImage(
+        sbmlDoc.getSpecies().getConcentrationImage(currentSpeciesId));
   }
 }
 
 void TabSpecies::btnEditImageConcentration_clicked() {
-  const auto &speciesID = currentSpeciesId;
   SPDLOG_DEBUG("editing initial concentration image for species {}...",
-               speciesID.toStdString());
+               currentSpeciesId.toStdString());
   DialogConcentrationImage dialog(
-      sbmlDoc.getSampledFieldConcentration(speciesID),
-      sbmlDoc.getSpeciesGeometry(speciesID));
+      sbmlDoc.getSpecies().getSampledFieldConcentration(currentSpeciesId),
+      sbmlDoc.getSpeciesGeometry(currentSpeciesId));
   if (dialog.exec() == QDialog::Accepted) {
     SPDLOG_DEBUG("  - setting new sampled field concentration array");
-    sbmlDoc.setSampledFieldConcentration(speciesID,
-                                         dialog.getConcentrationArray());
-    lblGeometry->setImage(sbmlDoc.getConcentrationImage(speciesID));
+    sbmlDoc.getSpecies().setSampledFieldConcentration(
+        currentSpeciesId, dialog.getConcentrationArray());
+    lblGeometry->setImage(
+        sbmlDoc.getSpecies().getConcentrationImage(currentSpeciesId));
   }
 }
 
 void TabSpecies::txtDiffusionConstant_editingFinished() {
   double diffConst = ui->txtDiffusionConstant->text().toDouble();
-  const auto &speciesID = currentSpeciesId;
   SPDLOG_INFO("setting Diffusion Constant of Species {} to {}",
-              speciesID.toStdString(), diffConst);
-  sbmlDoc.setDiffusionConstant(speciesID, diffConst);
+              currentSpeciesId.toStdString(), diffConst);
+  sbmlDoc.getSpecies().setDiffusionConstant(currentSpeciesId, diffConst);
 }
 
 void TabSpecies::btnChangeSpeciesColour_clicked() {
-  const auto &speciesID = currentSpeciesId;
   SPDLOG_DEBUG("waiting for new colour for species {} from user...",
-               speciesID.toStdString());
-  QColor newCol = QColorDialog::getColor(sbmlDoc.getSpeciesColour(speciesID),
-                                         this, "Choose new species colour",
-                                         QColorDialog::DontUseNativeDialog);
+               currentSpeciesId.toStdString());
+  QColor newCol = QColorDialog::getColor(
+      sbmlDoc.getSpecies().getColour(currentSpeciesId), this,
+      "Choose new species colour", QColorDialog::DontUseNativeDialog);
   if (newCol.isValid()) {
-    SPDLOG_DEBUG("  - set new colour to {:x}", newCol.rgba());
-    sbmlDoc.setSpeciesColour(speciesID, newCol);
+    SPDLOG_DEBUG("  - set new colour to {:x}", newCol.rgb());
+    sbmlDoc.getSpecies().setColour(currentSpeciesId, newCol.rgb());
     listSpecies_currentItemChanged(ui->listSpecies->currentItem(), nullptr);
   }
 }

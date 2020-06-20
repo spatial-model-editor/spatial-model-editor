@@ -9,21 +9,21 @@ namespace Ui {
 class TabFunctions;
 }
 
-namespace sbml {
-class SbmlDocWrapper;
+namespace model {
+class Model;
 }
 
 class TabFunctions : public QWidget {
   Q_OBJECT
 
  public:
-  explicit TabFunctions(sbml::SbmlDocWrapper &doc, QWidget *parent = nullptr);
+  explicit TabFunctions(model::Model &doc, QWidget *parent = nullptr);
   ~TabFunctions();
   void loadModelData(const QString &selection = {});
 
  private:
   std::unique_ptr<Ui::TabFunctions> ui;
-  sbml::SbmlDocWrapper &sbmlDoc;
+  model::Model &sbmlDoc;
   void listFunctions_currentRowChanged(int row);
   void btnAddFunction_clicked();
   void btnRemoveFunction_clicked();

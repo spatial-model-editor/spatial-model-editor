@@ -27,3 +27,8 @@ std::ostream& operator<<(std::ostream& os, QSizeF const& value) {
   os << '(' << value.width() << ',' << value.height() << ')';
   return os;
 }
+std::ostream& operator<<(std::ostream& os,
+                         std::pair<QPoint, QPoint> const& value) {
+  os << '{' << value.first << ',' << value.second << '}';
+  return os;
+}

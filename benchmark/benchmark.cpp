@@ -6,7 +6,7 @@
 #include <locale>
 
 #include "logger.hpp"
-#include "sbml.hpp"
+#include "model.hpp"
 #include "simulate.hpp"
 #include "version.hpp"
 
@@ -136,7 +136,7 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
     fmt::print("# ms/timestep\ttimesteps\tmodel\n");
     for (const auto &model : params.models) {
       // import model
-      sbml::SbmlDocWrapper s;
+      model::Model s;
       QFile f(QString(":/models/%1.xml").arg(model));
       f.open(QIODevice::ReadOnly);
       s.importSBMLString(f.readAll().toStdString());

@@ -90,17 +90,6 @@
         </attribute>
         <layout class="QHBoxLayout" name="horizontalLayout_5"/>
        </widget>
-       <widget class="QWidget" name="tabMembranes">
-        <property name="whatsThis">
-         <string>&lt;h4&gt;Membranes tab&lt;/h4&gt;
-&lt;p&gt;In the Membranes tab you can see all the membranes in the model, highlighted in green.&lt;/p&gt;
-&lt;p&gt;A membrane is the region where two adjacent compartments touch, and it is where reactions that involve species from both compartments will take place.&lt;/p&gt;</string>
-        </property>
-        <attribute name="title">
-         <string>Membranes</string>
-        </attribute>
-        <layout class="QHBoxLayout" name="horizontalLayout_10"/>
-       </widget>
        <widget class="QWidget" name="tabSpecies">
         <property name="whatsThis">
          <string>&lt;h4&gt;Species tab&lt;/h4&gt;
@@ -283,6 +272,7 @@
      <addaction name="action_single_pixels_3x1"/>
      <addaction name="action_four_compartments_150x100"/>
     </widget>
+    <addaction name="actionGeometry_from_model"/>
     <addaction name="actionGeometry_from_image"/>
     <addaction name="menuExample_geometry_image"/>
    </widget>
@@ -504,6 +494,14 @@
   <action name="actionMax_cpu_threads">
    <property name="text">
     <string>&amp;Max cpu threads...</string>
+   </property>
+  </action>
+  <action name="actionGeometry_from_model">
+   <property name="text">
+    <string>Geometry from model</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+G</string>
    </property>
   </action>
   <actiongroup name="actionGroupSimType">
