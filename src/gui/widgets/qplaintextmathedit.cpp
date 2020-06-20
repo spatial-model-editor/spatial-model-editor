@@ -1,12 +1,19 @@
 #include "qplaintextmathedit.hpp"
 
-#include <symengine/symengine_exception.h>
-
 #include <QString>
 #include <algorithm>
+#include <limits>
 #include <locale>
 
 #include "logger.hpp"
+#include "model_math.hpp"
+
+void QPlainTextMathEdit::enableLibSbmlBackend(model::ModelMath *math) {
+  modelMath = math;
+  useLibSbmlBackend = true;
+  allowImplicitNames = true;
+  allowIllegalChars = true;
+}
 
 bool QPlainTextMathEdit::mathIsValid() const { return expressionIsValid; }
 
@@ -22,11 +29,40 @@ void QPlainTextMathEdit::importVariableMath(const std::string &expr) {
   setPlainText(variablesToDisplayNames(expr).c_str());
 }
 
-void QPlainTextMathEdit::compileMath() { sym.compile(); }
+void QPlainTextMathEdit::compileMath() {
+  if (useLibSbmlBackend) {
+    return;
+  }
+  sym.compile();
+}
 
 double QPlainTextMathEdit::evaluateMath(const std::vector<double> &variables) {
+  if (useLibSbmlBackend) {
+    if (variables.empty()) {
+      return modelMath->eval();
+    } else {
+      SPDLOG_ERROR(
+          "Wrong interace: use map interface when using libSBML backend");
+      return std::numeric_limits<double>::quiet_NaN();
+    }
+  }
   sym.eval(result, variables);
   return result[0];
+}
+
+double QPlainTextMathEdit::evaluateMath(
+    const std::map<const std::string, std::pair<double, bool>> &variables) {
+  if (!useLibSbmlBackend) {
+    SPDLOG_WARN(
+        "for better performance use vector interface when not using "
+        "libSBML backend");
+    std::vector<double> values(vars.size(), 0);
+    for (std::size_t i = 0; i < vars.size(); ++i) {
+      values[i] = variables.at(vars[i]).first;
+    }
+    return evaluateMath(values);
+  }
+  return modelMath->eval(variables);
 }
 
 const QString &QPlainTextMathEdit::getErrorMessage() const {
@@ -117,10 +153,9 @@ QPlainTextMathEdit::QPlainTextMathEdit(QWidget *parent)
 // - look-up variable in map and replace it with result
 // - if map contents are not a valid symbol, wrap it in quotes
 // - if variable not found in map, return instead a QString error message
-static std::pair<std::string, QString>
-substitute(const std::string &expr,
-           const std::map<std::string, std::string> &map,
-           const std::string &delimeters = "()-^*/+, ") {
+static std::pair<std::string, QString> substitute(
+    const std::string &expr, const std::map<std::string, std::string> &map,
+    bool allowImplicitNames, const std::string &delimeters = "()-^*/+, ") {
   SPDLOG_DEBUG("expr: {}", expr);
   if (expr.empty()) {
     return {};
@@ -143,12 +178,11 @@ substitute(const std::string &expr,
       out.append(iter->second);
     } else {
       // if not found, check if it is a number, if so append it and continue
-      bool ok;
-      QString(var.c_str()).toDouble(&ok);
-      if (ok) {
+      bool isValidDouble;
+      QString(var.c_str()).toDouble(&isValidDouble);
+      if (allowImplicitNames || isValidDouble) {
         out.append(var);
       } else {
-        // not found and not a number: return error message
         SPDLOG_DEBUG("    -> not found");
         return {out, QString("name '%1' not found").arg(var.c_str())};
       }
@@ -165,17 +199,17 @@ substitute(const std::string &expr,
   return {out, {}};
 }
 
-std::string
-QPlainTextMathEdit::variablesToDisplayNames(const std::string &expr) const {
+std::string QPlainTextMathEdit::variablesToDisplayNames(
+    const std::string &expr) const {
   const auto &map = mapVarsToDisplayNames;
   if (map.empty()) {
     return expr;
   }
-  return substitute(expr, map).first;
+  return substitute(expr, map, allowImplicitNames).first;
 }
 
-std::pair<std::string, QString>
-QPlainTextMathEdit::displayNamesToVariables(const std::string &expr) const {
+std::pair<std::string, QString> QPlainTextMathEdit::displayNamesToVariables(
+    const std::string &expr) const {
   if (expr.empty()) {
     return {};
   }
@@ -189,7 +223,7 @@ QPlainTextMathEdit::displayNamesToVariables(const std::string &expr) const {
   auto start = expr.find(quoteChar);
   if (start > 0) {
     // substitute any text before opening quote
-    auto subs = substitute(expr.substr(0, start), map);
+    auto subs = substitute(expr.substr(0, start), map, allowImplicitNames);
     if (subs.second.isEmpty()) {
       out.append(subs.first);
     } else {
@@ -210,6 +244,8 @@ QPlainTextMathEdit::displayNamesToVariables(const std::string &expr) const {
     SPDLOG_TRACE("  - name {} (chars {}-{})", name, start, end);
     if (auto iter = map.find(name); iter != map.cend()) {
       out.append(iter->second);
+    } else if (allowImplicitNames) {
+      out.append(name);
     } else {
       SPDLOG_DEBUG("  - name {} not found", name);
       return {out, QString("name '%1' not found").arg(name.c_str())};
@@ -221,7 +257,8 @@ QPlainTextMathEdit::displayNamesToVariables(const std::string &expr) const {
     start = expr.find(quoteChar, end);
     if (start > end) {
       // substitute any text before next "
-      auto subs = substitute(expr.substr(end, start - end), map);
+      auto subs =
+          substitute(expr.substr(end, start - end), map, allowImplicitNames);
       if (subs.second.isEmpty()) {
         out.append(subs.first);
       } else {
@@ -244,25 +281,43 @@ void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
   if (!errorMessage.isEmpty()) {
     currentErrorMessage = errorMessage;
   }
-  if (auto i = newExpr.find_first_of(illegalChars); i != std::string::npos) {
+  if (!allowIllegalChars) {
     // check for illegal chars
-    currentErrorMessage = QString("Illegal character: %1").arg(newExpr[i]);
+    if (auto i = newExpr.find_first_of(illegalChars); i != std::string::npos) {
+      currentErrorMessage = QString("Illegal character: %1").arg(newExpr[i]);
+    }
   }
   if (newExpr.empty() && currentErrorMessage.isEmpty()) {
     currentErrorMessage = QString("Empty expression");
   }
   if (currentErrorMessage.isEmpty()) {
-    try {
-      // parse (but don't compile) symbolic expression
-      SPDLOG_DEBUG("parsing {}", newExpr);
+    // parse (but don't compile) symbolic expression
+    if (useLibSbmlBackend) {
+      SPDLOG_DEBUG("parsing '{}' with libSBML backend", newExpr);
+      modelMath->parse(newExpr);
+      if (modelMath->isValid()) {
+        expressionIsValid = true;
+        currentErrorMessage = "";
+        currentVariableMath = newExpr;
+        currentDisplayMath =
+            variablesToDisplayNames(currentVariableMath).c_str();
+      } else {
+        // if SymEngine failed to parse, capture error message
+        currentErrorMessage = modelMath->getErrorMessage().c_str();
+      }
+    } else {
+      SPDLOG_DEBUG("parsing '{}' with SymEngine backend", newExpr);
       sym = symbolic::Symbolic(newExpr, vars, {}, false);
-      expressionIsValid = true;
-      currentErrorMessage = "";
-      currentVariableMath = sym.simplify();
-      currentDisplayMath = variablesToDisplayNames(currentVariableMath).c_str();
-    } catch (const SymEngine::SymEngineException &e) {
-      // if SymEngine failed to parse, capture error message
-      currentErrorMessage = e.what();
+      if (sym.isValid()) {
+        expressionIsValid = true;
+        currentErrorMessage = "";
+        currentVariableMath = sym.simplify();
+        currentDisplayMath =
+            variablesToDisplayNames(currentVariableMath).c_str();
+      } else {
+        // if SymEngine failed to parse, capture error message
+        currentErrorMessage = sym.getErrorMessage().c_str();
+      }
     }
   }
   emit mathChanged(currentDisplayMath, expressionIsValid, currentErrorMessage);

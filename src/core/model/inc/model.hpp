@@ -15,6 +15,7 @@
 #include "model_compartments.hpp"
 #include "model_functions.hpp"
 #include "model_geometry.hpp"
+#include "model_math.hpp"
 #include "model_membranes.hpp"
 #include "model_parameters.hpp"
 #include "model_reactions.hpp"
@@ -41,8 +42,6 @@ class Mesh;
 
 namespace model {
 
-class Model;
-
 struct SpeciesGeometry {
   QSize compartmentImageSize;
   const std::vector<QPoint> &compartmentPoints;
@@ -65,6 +64,7 @@ private:
   ModelFunctions modelFunctions;
   ModelParameters modelParameters;
   ModelUnits modelUnits;
+  ModelMath modelMath;
 
   void initModelData();
 
@@ -91,6 +91,8 @@ public:
   const ModelParameters &getParameters() const;
   ModelUnits &getUnits();
   const ModelUnits &getUnits() const;
+  ModelMath &getMath();
+  const ModelMath &getMath() const;
 
   explicit Model();
   Model(Model &&) noexcept = default;
@@ -112,5 +114,4 @@ public:
 
   std::string getRateRule(const std::string &speciesID) const;
 };
-
 } // namespace model

@@ -29,10 +29,9 @@ static QStringList importIds(const libsbml::Model *model) {
     ids.push_back(spec->getId().c_str());
     if (spec->isSetHasOnlySubstanceUnits() &&
         spec->getHasOnlySubstanceUnits()) {
-      SPDLOG_WARN(
-          "Species {} hasOnlySubstanceUnits=true : meaning unclear in "
-          "spatial PDE context, for now we just ignore this",
-          spec->getId());
+      SPDLOG_WARN("Species {} hasOnlySubstanceUnits=true : meaning unclear in "
+                  "spatial PDE context, for now we just ignore this",
+                  spec->getId());
     }
   }
   return ids;
@@ -138,32 +137,36 @@ void ModelSpecies::setFieldConcAnalytic(geometry::Field &field,
   auto inlinedExpr = inlineFunctions(expr, sbmlModel);
   inlinedExpr = inlineAssignments(inlinedExpr, sbmlModel);
   SPDLOG_INFO("  - inlined expr: {}", inlinedExpr);
-  std::vector<std::pair<std::string, double>> constants;
-  for (const auto &[id, name, value] : modelParameters->getGlobalConstants()) {
-    constants.push_back({id, value});
+  std::map<const std::string, std::pair<double, bool>> sbmlVars;
+  // todo: x,y should not be hard-coded, user should set them and they should be
+  // written/read to/from SBML model
+  sbmlVars["x"] = {0, false};
+  sbmlVars["y"] = {0, false};
+  auto astExpr = mathStringToAST(inlinedExpr.c_str());
+  SPDLOG_TRACE("  - parsed expr: {}", mathASTtoString(astExpr.get()));
+  if (astExpr == nullptr) {
+    SPDLOG_ERROR("Failed to parse expression '{}'", inlinedExpr);
+    return;
   }
-  symbolic::Symbolic sym(inlinedExpr, {"x", "y"}, constants);
-  SPDLOG_INFO("  - parsed expr: {}", sym.simplify());
-  auto result = std::vector<double>(1, 0);
-  auto vars = std::vector<double>(2, 0);
+  const auto &origin = modelGeometry->getPhysicalOrigin();
+  double pixelWidth = modelGeometry->getPixelWidth();
   for (std::size_t i = 0; i < field.getCompartment()->nPixels(); ++i) {
     // position in pixels (with (0,0) in top-left of image):
     const auto &point = field.getCompartment()->getPixel(i);
     // rescale to physical x,y point (with (0,0) in bottom-left):
-    const auto &origin = modelGeometry->getPhysicalOrigin();
-    double pixelWidth = modelGeometry->getPixelWidth();
-    vars[0] = origin.x() + pixelWidth * static_cast<double>(point.x());
+    sbmlVars["x"].first =
+        origin.x() + pixelWidth * static_cast<double>(point.x());
     int y =
         field.getCompartment()->getCompartmentImage().height() - 1 - point.y();
-    vars[1] = origin.y() + pixelWidth * static_cast<double>(y);
-    sym.eval(result, vars);
-    field.getConcentration()[i] = result[0];
+    sbmlVars["y"].first = origin.y() + pixelWidth * static_cast<double>(y);
+    double conc = evaluateMathAST(astExpr.get(), sbmlVars, sbmlModel);
+    field.setConcentration(i, conc);
   }
   field.setIsUniformConcentration(false);
 }
 
-std::vector<double> ModelSpecies::getSampledFieldConcentrationFromSBML(
-    const QString &id) const {
+std::vector<double>
+ModelSpecies::getSampledFieldConcentrationFromSBML(const QString &id) const {
   std::vector<double> array;
   std::string sampledFieldID =
       getSampledFieldInitialAssignment(id).toStdString();
@@ -176,8 +179,9 @@ std::vector<double> ModelSpecies::getSampledFieldConcentrationFromSBML(
   return array;
 }
 
-static libsbml::Parameter *getOrCreateDiffusionConstantParameter(
-    libsbml::Model *model, const QString &speciesId) {
+static libsbml::Parameter *
+getOrCreateDiffusionConstantParameter(libsbml::Model *model,
+                                      const QString &speciesId) {
   libsbml::Parameter *param = nullptr;
   // look for existing diffusion constant parameter
   for (unsigned i = 0; i < model->getNumParameters(); ++i) {
@@ -220,15 +224,11 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
                            const ModelGeometry *geometry,
                            const ModelParameters *parameters,
                            ModelReactions *reactions)
-    : ids{importIds(model)},
-      names{importNamesAndMakeUnique(model)},
+    : ids{importIds(model)}, names{importNamesAndMakeUnique(model)},
       compartmentIds{importCompartmentIds(model)},
-      colours{importColours(model)},
-      sbmlModel{model},
-      modelCompartments{compartments},
-      modelGeometry{geometry},
-      modelParameters{parameters},
-      modelReactions{reactions} {
+      colours{importColours(model)}, sbmlModel{model},
+      modelCompartments{compartments}, modelGeometry{geometry},
+      modelParameters{parameters}, modelReactions{reactions} {
   makeInitialConcentrationsValid(model);
   for (int i = 0; i < ids.size(); ++i) {
     const auto &id = ids[i];
@@ -484,7 +484,7 @@ QString ModelSpecies::getAnalyticConcentration(const QString &id) const {
   }
   const auto *asgn = sbmlModel->getInitialAssignmentBySymbol(id.toStdString());
   if (asgn != nullptr) {
-    return ASTtoString(asgn->getMath()).c_str();
+    return mathASTtoString(asgn->getMath()).c_str();
   }
   return {};
 }
@@ -540,8 +540,8 @@ void ModelSpecies::setSampledFieldConcentration(
   fields[static_cast<std::size_t>(i)].importConcentration(concentrationArray);
 }
 
-std::vector<double> ModelSpecies::getSampledFieldConcentration(
-    const QString &id) const {
+std::vector<double>
+ModelSpecies::getSampledFieldConcentration(const QString &id) const {
   auto i = ids.indexOf(id);
   return fields[static_cast<std::size_t>(i)].getConcentrationImageArray();
 }
@@ -603,8 +603,8 @@ void ModelSpecies::removeInitialAssignments() {
   }
 }
 
-QString ModelSpecies::getSampledFieldInitialAssignment(
-    const QString &id) const {
+QString
+ModelSpecies::getSampledFieldInitialAssignment(const QString &id) const {
   // look for existing initialAssignment to a sampledField
   if (const auto *asgn =
           sbmlModel->getInitialAssignmentBySymbol(id.toStdString());
@@ -649,4 +649,4 @@ const geometry::Field *ModelSpecies::getField(const QString &id) const {
   return &fields[static_cast<std::size_t>(i)];
 }
 
-}  // namespace model
+} // namespace model

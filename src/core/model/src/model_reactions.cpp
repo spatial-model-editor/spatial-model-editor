@@ -58,8 +58,9 @@ static QVector<QStringList> importParameterIds(const libsbml::Model *model) {
   return paramIds;
 }
 
-static void makeReactionSpatial(
-    libsbml::Reaction *reac, const std::vector<geometry::Membrane> &membranes) {
+static void
+makeReactionSpatial(libsbml::Reaction *reac,
+                    const std::vector<geometry::Membrane> &membranes) {
   const auto *model = reac->getModel();
   utils::SmallStackSet<std::string, 3> compSet;
   if (reac->isSetCompartment()) {
@@ -94,7 +95,7 @@ static void makeReactionSpatial(
     SPDLOG_INFO("  - original rate units: d[amount]/dt");
     SPDLOG_INFO("  -> want spatial compartment reaction: d[concentration]/dt");
     SPDLOG_INFO("  -> dividing rate by compartment size");
-    auto expr = ASTtoString(kin->getMath());
+    auto expr = mathASTtoString(kin->getMath());
     SPDLOG_INFO("  - {}", expr);
     auto newExpr = symbolic::divide(expr, compSet[0]);
     SPDLOG_INFO("  --> {}", newExpr);
@@ -103,7 +104,7 @@ static void makeReactionSpatial(
     if (argAST != nullptr) {
       reac->getKineticLaw()->setMath(argAST.get());
       SPDLOG_INFO("  - new math: {}",
-                  ASTtoString(reac->getKineticLaw()->getMath()));
+                  mathASTtoString(reac->getKineticLaw()->getMath()));
     } else {
       SPDLOG_ERROR("  - libSBML failed to parse expression");
     }
@@ -132,8 +133,9 @@ static void makeReactionSpatial(
   }
 }
 
-static void makeReactionsSpatial(
-    libsbml::Model *model, const std::vector<geometry::Membrane> &membranes) {
+static void
+makeReactionsSpatial(libsbml::Model *model,
+                     const std::vector<geometry::Membrane> &membranes) {
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
     auto *reac = model->getReaction(i);
     reac->setFast(false);
@@ -174,10 +176,8 @@ ModelReactions::ModelReactions() = default;
 
 ModelReactions::ModelReactions(libsbml::Model *model,
                                const std::vector<geometry::Membrane> &membranes)
-    : ids{importIds(model)},
-      names{importNamesAndMakeUnique(model)},
-      parameterIds{importParameterIds(model)},
-      sbmlModel{model} {
+    : ids{importIds(model)}, names{importNamesAndMakeUnique(model)},
+      parameterIds{importParameterIds(model)}, sbmlModel{model} {
   makeReactionsSpatial(model, membranes);
 }
 
@@ -461,4 +461,4 @@ void ModelReactions::removeParameter(const QString &reactionId,
                 rmParam->getId(), reac->getId());
   }
 }
-}  // namespace model
+} // namespace model

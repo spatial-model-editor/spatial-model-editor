@@ -23,8 +23,10 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
   }
   GIVEN("3*x + 7*x: one var, no constants") {
     std::string expr = "3*x + 7 * x";
-    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {}, {}), "Unknown symbol: x");
-    symbolic::Symbolic sym(expr, {"x"}, {});
+    auto sym = symbolic::Symbolic(expr, {}, {});
+    REQUIRE(!sym.isValid());
+    REQUIRE(sym.getErrorMessage() == "Unknown symbol: x");
+    sym = symbolic::Symbolic(expr, {"x"}, {});
     CAPTURE(expr);
     REQUIRE(sym.simplify() == "10*x");
     REQUIRE(sym.diff("x") == "10");
@@ -83,10 +85,10 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
   }
   GIVEN("3*x + 4/y - 1.0*x + 0.2*x*y - 0.1: two vars, no constants") {
     std::string expr = "3*x + 4/y - 1.0*x + 0.2*x*y - 0.1";
-    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {"x"}, {}),
-                        "Unknown symbol: y");
-    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {"y"}, {}),
-                        "Unknown symbol: x");
+    REQUIRE(symbolic::Symbolic(expr, {"x"}, {}).getErrorMessage() ==
+            "Unknown symbol: y");
+    REQUIRE(symbolic::Symbolic(expr, {"y"}, {}).getErrorMessage() ==
+            "Unknown symbol: x");
     symbolic::Symbolic sym(expr, {"x", "y", "z"}, {});
     CAPTURE(expr);
     REQUIRE(sym.simplify() == "-0.1 + 2.0*x + 0.2*x*y + 4*y^(-1)");
@@ -105,12 +107,12 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
   GIVEN("two expressions, three vars, no constants") {
     std::vector<std::string> expr = {"3*x + 4/y - 1.0*x + 0.2*x*y - 0.1",
                                      "z - cos(x)*sin(y) - x*y"};
-    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {"z", "x"}, {}),
-                        "Unknown symbol: y");
-    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {"x", "y"}, {}),
-                        "Unknown symbol: z");
-    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {"z", "y"}, {}),
-                        "Unknown symbol: x");
+    REQUIRE(symbolic::Symbolic(expr, {"z", "x"}, {}).getErrorMessage() ==
+            "Unknown symbol: y");
+    REQUIRE(symbolic::Symbolic(expr, {"x", "y"}, {}).getErrorMessage() ==
+            "Unknown symbol: z");
+    REQUIRE(symbolic::Symbolic(expr, {"z", "y"}, {}).getErrorMessage() ==
+            "Unknown symbol: x");
     symbolic::Symbolic sym(expr, {"x", "y", "z"}, {});
     CAPTURE(expr);
     REQUIRE(sym.simplify(0) == "-0.1 + 2.0*x + 0.2*x*y + 4*y^(-1)");
@@ -135,7 +137,8 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
   }
   GIVEN("e^(4*x): print exponential function") {
     std::string expr = "e^(4*x)";
-    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {}, {}), "Unknown symbol: x");
+    REQUIRE(symbolic::Symbolic(expr, {}, {}).getErrorMessage() ==
+            "Unknown symbol: x");
     symbolic::Symbolic sym(expr, {"x"}, {});
     CAPTURE(expr);
     REQUIRE(sym.simplify() == "exp(4*x)");
@@ -165,10 +168,10 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     constants.push_back({"n", -23});
     constants.push_back({"Unused", -99});
     std::string expr = "3*x + alpha*x - a*n*x";
-    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {}, constants),
-                        "Unknown symbol: x");
-    REQUIRE_THROWS_WITH(symbolic::Symbolic(expr, {"x"}, {{"a", 1}, {"n", 2}}),
-                        "Unknown symbol: alpha");
+    REQUIRE(symbolic::Symbolic(expr, {}, constants).getErrorMessage() ==
+            "Unknown symbol: x");
+    REQUIRE(symbolic::Symbolic(expr, {"x"}, {{"a", 1}, {"n", 2}})
+                .getErrorMessage() == "Unknown symbol: alpha");
     symbolic::Symbolic sym(expr, {"x", "y"}, constants);
     CAPTURE(expr);
     REQUIRE(sym.simplify() == "21.90000000023*x");

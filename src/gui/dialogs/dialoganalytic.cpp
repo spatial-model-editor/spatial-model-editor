@@ -9,14 +9,14 @@
 
 DialogAnalytic::DialogAnalytic(const QString &analyticExpression,
                                const model::SpeciesGeometry &speciesGeometry,
-                               const std::vector<model::IdNameValue> &constants,
-                               QWidget *parent)
+                               model::ModelMath &modelMath, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogAnalytic>()},
       points(speciesGeometry.compartmentPoints),
       width(speciesGeometry.pixelWidth), origin(speciesGeometry.physicalOrigin),
       qpi(speciesGeometry.compartmentImageSize,
           speciesGeometry.compartmentPoints) {
   ui->setupUi(this);
+  ui->txtExpression->enableLibSbmlBackend(&modelMath);
 
   const auto &units = speciesGeometry.modelUnits;
   lengthUnit = units.getLength().symbol;
@@ -28,22 +28,10 @@ DialogAnalytic::DialogAnalytic(const QString &analyticExpression,
   img.fill(0);
   concentration.resize(points.size(), 0.0);
   // add x,y variables
+  // todo: don't hard code these, instead read them from model
   ui->txtExpression->setVariables({"x", "y"});
-  vars.clear();
-  vars.push_back(0);
-  vars.push_back(0);
-  // add any supplied constants
-  for (const auto &[id, name, value] : constants) {
-    ui->txtExpression->addVariable(id, name);
-    vars.push_back(value);
-  }
-  // add built-in functions
-  // todo: check if these need to be treated differently wrt substitution
-  // in symengine evaluation, or if they will be automatically treated as
-  // functions...?
-  for (auto f : {"sin", "cos", "exp", "log", "ln", "pow", "sqrt"}) {
-    ui->txtExpression->addVariable(f, f);
-  }
+  sbmlVars["x"] = {0, false};
+  sbmlVars["y"] = {0, false};
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogAnalytic::accept);
@@ -97,12 +85,23 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
     return;
   }
   // calculate concentration
-  ui->txtExpression->compileMath();
   for (std::size_t i = 0; i < points.size(); ++i) {
     auto physical = physicalPoint(points[i]);
-    vars[0] = physical.x();
-    vars[1] = physical.y();
-    concentration[i] = ui->txtExpression->evaluateMath(vars);
+    sbmlVars["x"].first = physical.x();
+    sbmlVars["y"].first = physical.y();
+    concentration[i] = ui->txtExpression->evaluateMath(sbmlVars);
+  }
+  if (std::find_if(concentration.cbegin(), concentration.cend(), [](auto c) {
+        return std::isnan(c);
+      }) != concentration.cend()) {
+    // if concentration contains NaN, show error message
+    ui->lblExpressionStatus->setText(
+        "concentration contains NaN (Not a Number)");
+    ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+    ui->btnExportImage->setEnabled(false);
+    img.fill(0);
+    ui->lblImage->setImage(img);
+    return;
   }
   if (*std::min_element(concentration.cbegin(), concentration.cend()) < 0) {
     // if concentration contains negative values, show error message

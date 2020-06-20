@@ -59,12 +59,13 @@ static std::string toString(const SymEngine::RCP<const SymEngine::Basic> &e) {
   return SymEngine::muPrinter().apply(e);
 }
 
-class Symbolic::SymEngineImpl {
-public:
+struct Symbolic::SymEngineImpl {
   SymEngine::vec_basic expr;
   SymEngine::vec_basic varVec;
   SymEngine::LLVMDoubleVisitor lambdaLLVM;
   std::map<std::string, SymEngine::RCP<const SymEngine::Symbol>> symbols;
+  bool valid;
+  std::string errorMessage;
   void init(const std::vector<std::string> &expressions,
             const std::vector<std::string> &variables,
             const std::vector<std::pair<std::string, double>> &constants);
@@ -77,6 +78,7 @@ void Symbolic::SymEngineImpl::init(
     const std::vector<std::string> &variables,
     const std::vector<std::pair<std::string, double>> &constants) {
   SPDLOG_DEBUG("parsing {} expressions", expressions.size());
+  valid = true;
   for (const auto &v : variables) {
     SPDLOG_DEBUG("  - variable {}", v);
     symbols[v] = SymEngine::symbol(v);
@@ -94,7 +96,16 @@ void Symbolic::SymEngineImpl::init(
   for (const auto &expression : expressions) {
     SPDLOG_DEBUG("expr {}", expression);
     // parse expression & substitute all supplied numeric constants
-    expr.push_back(parser.parse(expression)->subs(d));
+    try {
+      expr.push_back(parser.parse(expression)->subs(d));
+    } catch (const SymEngine::SymEngineException &e) {
+      // if SymEngine failed to parse, capture error message
+      SPDLOG_WARN("{}", e.what());
+      valid = false;
+      errorMessage = e.what();
+      std::locale::global(userLocale);
+      return;
+    }
     SPDLOG_DEBUG("  --> {}", toString(expr.back()));
     // check that all remaining symbols are in the variables vector
     auto fs = SymEngine::free_symbols(*expr.back());
@@ -104,7 +115,10 @@ void Symbolic::SymEngineImpl::init(
                                                toString(s)) == v.cend();
                             });
         iter != fs.cend()) {
-      throw SymEngine::SymEngineException("Unknown symbol: " + toString(*iter));
+      valid = false;
+      errorMessage = "Unknown symbol: " + toString(*iter);
+      std::locale::global(userLocale);
+      return;
     }
   }
   std::locale::global(userLocale);
@@ -163,7 +177,7 @@ Symbolic::Symbolic(const std::vector<std::string> &expressions,
                    bool compile)
     : pSymEngineImpl{std::make_unique<SymEngineImpl>()} {
   pSymEngineImpl->init(expressions, variables, constants);
-  if (compile) {
+  if (compile && pSymEngineImpl->valid) {
     pSymEngineImpl->compile();
   }
 }
@@ -197,6 +211,12 @@ void Symbolic::eval(std::vector<double> &results,
 
 void Symbolic::eval(double *results, const double *vars) const {
   pSymEngineImpl->lambdaLLVM.call(results, vars);
+}
+
+bool Symbolic::isValid() const { return pSymEngineImpl->valid; }
+
+const std::string &Symbolic::getErrorMessage() const {
+  return pSymEngineImpl->errorMessage;
 }
 
 } // namespace symbolic

@@ -22,7 +22,7 @@ const char *getLLVMVersion();
 
 class Symbolic {
 private:
-  class SymEngineImpl;
+  struct SymEngineImpl;
   std::unique_ptr<SymEngineImpl> pSymEngineImpl;
 
 public:
@@ -57,6 +57,8 @@ public:
   void eval(std::vector<double> &results,
             const std::vector<double> &vars = {}) const;
   void eval(double *results, const double *vars) const;
+  bool isValid() const;
+  const std::string &getErrorMessage() const;
 };
 
 } // namespace symbolic

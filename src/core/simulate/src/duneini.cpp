@@ -172,30 +172,20 @@ DuneConverter::DuneConverter(const model::Model &SbmlDoc, double dt,
         QString duneName = duneSpeciesNames.at(i).c_str();
         double initConc = doc.getSpecies().getInitialConcentration(name);
         QString expr = doc.getSpecies().getAnalyticConcentration(name);
-        QString sampledField =
-            doc.getSpecies().getSampledFieldInitialAssignment(name);
-        if (!sampledField.isEmpty()) {
-          // if there is a sampledField then make a TIFF
-          auto sampledFieldFile = QString("%1.tif").arg(sampledField);
-          const auto *f = doc.getSpecies().getField(name);
+        if (const auto *f = doc.getSpecies().getField(name);
+            !f->getIsUniformConcentration()) {
+          // if there is a non-uniform initial condition then make a TIFF
+          auto sampledFieldName =
+              QString("%1_initialConcentration").arg(duneName);
+          auto sampledFieldFile = QString("%1.tif").arg(sampledFieldName);
           double max = utils::writeTIFF(
               sampledFieldFile.toStdString(),
               f->getCompartment()->getCompartmentImage().size(),
               f->getConcentration(), f->getCompartment()->getPixels(),
               doc.getGeometry().getPixelWidth());
-          tiffs.push_back(sampledField);
+          tiffs.push_back(sampledFieldName);
           ini.addValue(duneName,
-                       QString("%2*%3(x,y)").arg(max).arg(sampledField));
-        } else if (!expr.isEmpty()) {
-          // otherwise, initialAssignments take precedence:
-          std::string e = doc.inlineExpr(expr.toStdString());
-          std::vector<std::pair<std::string, double>> constants;
-          for (const auto &[id, n, value] :
-               doc.getParameters().getGlobalConstants()) {
-            constants.push_back({id, value});
-          }
-          symbolic::Symbolic sym(e, {"x", "y"}, constants);
-          ini.addValue(duneName, sym.simplify().c_str());
+                       QString("%2*%3(x,y)").arg(max).arg(sampledFieldName));
         } else {
           // otherwise just use initialConcentration value
           ini.addValue(duneName, initConc, doublePrecision);

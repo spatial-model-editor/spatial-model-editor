@@ -14,8 +14,10 @@ SCENARIO("DialogAnalytic",
     doc.importSBMLString(f.readAll().toStdString());
     auto compartmentPoints = std::vector<QPoint>{
         QPoint(5, 5), QPoint(5, 6), QPoint(5, 7), QPoint(6, 6), QPoint(6, 7)};
-    DialogAnalytic dia("x", {QSize(10, 10), compartmentPoints,
-                             QPointF(0.0, 0.0), 1, doc.getUnits()});
+    DialogAnalytic dia("x",
+                       {QSize(10, 10), compartmentPoints, QPointF(0.0, 0.0), 1,
+                        doc.getUnits()},
+                       doc.getMath());
     REQUIRE(dia.getExpression() == "x");
     ModalWidgetTimer mwt;
     WHEN("valid expr: 10") {
@@ -25,22 +27,30 @@ SCENARIO("DialogAnalytic",
       REQUIRE(dia.isExpressionValid() == true);
       REQUIRE(dia.getExpression() == "10");
     }
-    WHEN("invalid expr: (") {
+    WHEN("invalid syntax: (") {
       mwt.addUserAction({"Delete", "(", "Left"});
       mwt.start();
       dia.exec();
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
-    WHEN("illegal char: &") {
+    WHEN("illegal syntax: &") {
       mwt.addUserAction({"Delete", "&"});
       mwt.start();
       dia.exec();
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
-    WHEN("invalid expr: q") {
+    WHEN("unknown variable: q") {
       mwt.addUserAction({"Delete", "q"});
+      mwt.start();
+      dia.exec();
+      REQUIRE(dia.isExpressionValid() == false);
+      REQUIRE(dia.getExpression().empty() == true);
+    }
+    WHEN("unknown function: sillyfunc") {
+      mwt.addUserAction({"Delete", "s", "i", "l", "l", "y", "f", "u", "n", "c",
+                         "(", "x", ")"});
       mwt.start();
       dia.exec();
       REQUIRE(dia.isExpressionValid() == false);
@@ -82,7 +92,7 @@ SCENARIO("DialogAnalytic",
     QFile f(":/models/ABtoC.xml");
     f.open(QIODevice::ReadOnly);
     doc.importSBMLString(f.readAll().toStdString());
-    DialogAnalytic dia("x", doc.getSpeciesGeometry("B"));
+    DialogAnalytic dia("x", doc.getSpeciesGeometry("B"), doc.getMath());
     REQUIRE(dia.getExpression() == "x");
     ModalWidgetTimer mwt;
     WHEN("valid expr: 10") {
