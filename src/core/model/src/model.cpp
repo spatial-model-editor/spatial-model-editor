@@ -1,14 +1,5 @@
 #include "model.hpp"
 
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
-
-#include <algorithm>
-#include <stdexcept>
-#include <utility>
-
 #include "id.hpp"
 #include "logger.hpp"
 #include "math.hpp"
@@ -16,6 +7,14 @@
 #include "utils.hpp"
 #include "validation.hpp"
 #include "xml_annotation.hpp"
+#include <algorithm>
+#include <sbml/SBMLTransforms.h>
+#include <sbml/SBMLTypes.h>
+#include <sbml/extension/SBMLDocumentPlugin.h>
+#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
+#include <sbml/packages/spatial/extension/SpatialExtension.h>
+#include <stdexcept>
+#include <utility>
 
 namespace model {
 
@@ -56,6 +55,7 @@ void Model::initModelData() {
     return;
   }
   auto *model = doc->getModel();
+  modelMath = ModelMath(model);
   modelParameters = ModelParameters(model);
   modelFunctions = ModelFunctions(model);
   modelMembranes.clear();
@@ -143,6 +143,10 @@ ModelUnits &Model::getUnits() { return modelUnits; }
 
 const ModelUnits &Model::getUnits() const { return modelUnits; }
 
+ModelMath &Model::getMath() { return modelMath; }
+
+const ModelMath &Model::getMath() const { return modelMath; }
+
 void Model::clear() {
   doc.reset();
   isValid = false;
@@ -155,6 +159,7 @@ void Model::clear() {
   modelFunctions = ModelFunctions{};
   modelParameters = ModelParameters{};
   modelUnits = ModelUnits{};
+  modelMath = ModelMath{};
 }
 
 SpeciesGeometry Model::getSpeciesGeometry(const QString &speciesID) const {

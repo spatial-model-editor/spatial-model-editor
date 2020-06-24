@@ -59,6 +59,7 @@ add_custom_target(
           coverage/cov.info
   COMMAND lcov -l coverage/cov.info
   COMMAND genhtml -q coverage/cov.info -o coverage
+  COMMAND xdg-open coverage/index.html
   WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
   COMMENT "Generating coverage report in coverage/index.html"
   VERBATIM)

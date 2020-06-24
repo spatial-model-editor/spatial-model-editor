@@ -93,7 +93,7 @@ public:
   void setDiffusionConstant(double diffConst);
   const Compartment *getCompartment() const;
   const std::vector<double> &getConcentration() const;
-  std::vector<double> &getConcentration();
+  void setConcentration(std::size_t index, double concentration);
 
   void setUniformConcentration(double concentration);
   void importConcentration(const std::vector<double> &sbmlConcentrationArray);

@@ -345,4 +345,5 @@ bool ModelGeometry::getHasImage() const { return hasImage; }
 void ModelGeometry::writeGeometryToSBML() const {
   writeGeometryMeshToSBML(sbmlModel, mesh.get(), *modelCompartments);
 }
+
 } // namespace model

@@ -198,9 +198,13 @@ static std::size_t getColourIndex(QRgb col, const QImage &img) {
 static std::vector<std::size_t> getColourIndexToCompartmentIndex(
     const std::vector<QRgb> &compartmentColours, const QImage &img) {
   auto nImgColours = static_cast<std::size_t>(img.colorCount());
-  SPDLOG_TRACE("{}-colour image", nImgColours);
+  SPDLOG_TRACE("{}-colour image:", nImgColours);
   for (int i = 0; i < img.colorCount(); ++i) {
     SPDLOG_TRACE("  - {:x}", img.color(i));
+  }
+  SPDLOG_TRACE("{} compartment colours:", compartmentColours.size());
+  for (auto c : compartmentColours) {
+    SPDLOG_TRACE("  - {:x}", c);
   }
   std::vector<std::size_t> vec(nImgColours, nullIndex);
   std::size_t compIndex = 0;
@@ -208,10 +212,11 @@ static std::vector<std::size_t> getColourIndexToCompartmentIndex(
     auto colIndex = getColourIndex(compColour, img);
     if (colIndex == nullIndex) {
       SPDLOG_ERROR("compColour {:x} gave null index in image", compColour);
+    } else {
+      vec[colIndex] = compIndex;
+      SPDLOG_TRACE("comp[{}] : colour {:x}, index {}", compIndex, compColour,
+                   colIndex);
     }
-    vec[colIndex] = compIndex;
-    SPDLOG_TRACE("comp[{}] : colour {:x}, index {}", compIndex, compColour,
-                 colIndex);
     ++compIndex;
   }
   return vec;

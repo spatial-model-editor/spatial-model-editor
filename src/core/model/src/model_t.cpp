@@ -14,8 +14,7 @@
 
 // avoid using std::to_string because of "multiple definition of vsnprintf"
 // mingw issue on windows
-template <typename T>
-static std::string toString(const T &x) {
+template <typename T> static std::string toString(const T &x) {
   std::ostringstream ss;
   ss << x;
   return ss.str();
@@ -300,9 +299,8 @@ SCENARIO("SBML: import SBML level 2 document",
       REQUIRE(reacs.getRateExpression("reac1") == "5 * spec0c0 / compartment0");
     }
     WHEN("exportSBMLFile called") {
-      THEN(
-          "exported file is a SBML level (3,2) document with spatial "
-          "extension enabled & required") {
+      THEN("exported file is a SBML level (3,2) document with spatial "
+           "extension enabled & required") {
         s.exportSBMLFile("export.xml");
         std::unique_ptr<libsbml::SBMLDocument> doc(
             libsbml::readSBMLFromFile("export.xml"));
@@ -696,101 +694,6 @@ SCENARIO("SBML: very-simple-model.xml",
       s.getReactions().remove("A_B_conversion");
       REQUIRE(s.getReactions().getIds("c1").size() == 0);
     }
-  }
-}
-
-SCENARIO("SBML: yeast-glycolysis.xml",
-         "[core/model/model][core/model][core][model][inlining]") {
-  std::unique_ptr<libsbml::SBMLDocument> doc(
-      libsbml::readSBMLFromString(sbml_test_data::yeast_glycolysis().xml));
-  // write SBML document to file
-  libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-
-  model::Model s;
-  s.importSBMLFile("tmp.xml");
-  GIVEN("SBML document") {
-    WHEN("importSBMLFile called") {
-      THEN("find compartments") {
-        REQUIRE(s.getCompartments().getIds().size() == 1);
-        REQUIRE(s.getCompartments().getIds()[0] == "compartment");
-      }
-      THEN("find species") {
-        REQUIRE(s.getSpecies().getIds("compartment").size() == 25);
-      }
-      THEN("find functions") {
-        REQUIRE(s.getFunctions().getIds().size() == 17);
-        REQUIRE(s.getFunctions().getIds()[0] == "HK_kinetics");
-        auto f = s.getFunctions().getDefinition("HK_kinetics");
-        REQUIRE(f.id == "HK_kinetics");
-        REQUIRE(f.name == "HK kinetics");
-        REQUIRE(f.arguments.size() == 10);
-        REQUIRE(f.arguments[0] == "A");
-        REQUIRE(f.arguments[1] == "B");
-        REQUIRE(f.arguments[2] == "P");
-        REQUIRE(f.arguments[3] == "Q");
-        REQUIRE(f.expression ==
-                "Vmax * (A * B / (Kglc * Katp) - P * Q / (Kglc * Katp * Keq)) "
-                "/ ((1 + A / Kglc + P / Kg6p) * (1 + B / Katp + Q / Kadp))");
-        auto emptyF = s.getFunctions().getDefinition("non_existent_function");
-        REQUIRE(emptyF.id.empty() == true);
-        REQUIRE(emptyF.name.empty() == true);
-        REQUIRE(emptyF.arguments.empty() == true);
-        REQUIRE(emptyF.expression.empty() == true);
-      }
-    }
-  }
-  GIVEN("inline fn: Glycogen_synthesis_kinetics") {
-    std::string expr = "Glycogen_synthesis_kinetics(abc)";
-    std::string inlined = "(abc)";
-    REQUIRE(s.inlineExpr(expr) == inlined);
-  }
-  GIVEN("inline fn: ATPase_0") {
-    std::string expr = "ATPase_0( a,b)";
-    std::string inlined = "(b * a)";
-    REQUIRE(s.inlineExpr(expr) == inlined);
-  }
-  GIVEN("inline fn: PDC_kinetics") {
-    std::string expr = "PDC_kinetics(a,V,k,n)";
-    std::string inlined = "(V * (a / k)^n / (1 + (a / k)^n))";
-    REQUIRE(s.inlineExpr(expr) == inlined);
-  }
-  GIVEN("edit function: PDC_kinetics") {
-    auto f = s.getFunctions().getDefinition("PDC_kinetics");
-    REQUIRE(f.arguments.size() == 4);
-    REQUIRE(f.arguments[0] == "A");
-    REQUIRE(f.arguments[1] == "Vmax");
-    REQUIRE(f.arguments[2] == "Kpyr");
-    REQUIRE(f.arguments[3] == "nH");
-    f.arguments.push_back("x");
-    f.name = "newName!";
-    f.expression = "(V*(x/k)^n/(1+(a/k)^n))";
-    s.getFunctions().setDefinition(f);
-    auto newF = s.getFunctions().getDefinition("PDC_kinetics");
-    REQUIRE(newF.name == "newName!");
-    REQUIRE(newF.arguments.size() == 5);
-    REQUIRE(newF.arguments[0] == "A");
-    REQUIRE(newF.arguments[1] == "Vmax");
-    REQUIRE(newF.arguments[2] == "Kpyr");
-    REQUIRE(newF.arguments[3] == "nH");
-    REQUIRE(newF.arguments[4] == "x");
-    REQUIRE(newF.expression == "V * (x / k)^n / (1 + (a / k)^n)");
-    std::string expr = "PDC_kinetics(a,V,k,n,Q)";
-    std::string inlined = "(V * (Q / k)^n / (1 + (a / k)^n))";
-    REQUIRE(s.inlineExpr(expr) == inlined);
-    s.getFunctions().remove("PDC_kinetics");
-    REQUIRE(s.getFunctions().getDefinition("PDC_kinetics").name.empty());
-    // removing a non-existent function is no-op
-    REQUIRE(s.getFunctions().getIds().size() == 16);
-    REQUIRE_NOTHROW(s.getFunctions().remove("I don't exist"));
-    REQUIRE(s.getFunctions().getIds().size() == 16);
-  }
-  GIVEN("add function") {
-    s.getFunctions().add("func N~!me");
-    auto f = s.getFunctions().getDefinition("func_Nme");
-    REQUIRE(f.id == "func_Nme");
-    REQUIRE(f.name == "func N~!me");
-    REQUIRE(f.arguments.empty() == true);
-    REQUIRE(f.expression == "0");
   }
 }
 

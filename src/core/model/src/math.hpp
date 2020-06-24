@@ -2,7 +2,12 @@
 
 #pragma once
 
+#include <map>
+#include <memory>
 #include <string>
+#include <utility>
+
+#include <sbml/SBMLTypes.h>
 
 namespace libsbml {
 class Model;
@@ -14,14 +19,36 @@ namespace model {
 // return supplied math expression as string with any Function calls and/or
 // Assignment rules inlined e.g. given mathExpression = "z*f(x,y)" where the
 // SBML model contains a function "f(a,b) = a*b-2" it returns "z*(x*y-2)"
+// todo: replace with libSBML equivalent
 std::string inlineFunctions(const std::string &mathExpression,
                             const libsbml::Model *model);
 
 // return supplied math expression as string with any Assignment rules
 // inlined
+// todo: replace with libSBML equivalent
 std::string inlineAssignments(const std::string &mathExpression,
                               const libsbml::Model *model);
 
-std::string ASTtoString(const libsbml::ASTNode *node);
+std::string mathASTtoString(const libsbml::ASTNode *node);
 
-} // namespace sbml
+std::unique_ptr<libsbml::ASTNode>
+mathStringToAST(const std::string &mathExpression,
+                const libsbml::Model *model = nullptr);
+
+std::string getUnknownFunctionName(const libsbml::ASTNode *node,
+                                   const libsbml::Model *model);
+
+std::string getUnknownVariableName(const libsbml::ASTNode *node,
+                                   const libsbml::Model *model);
+
+double evaluateMathAST(
+    const libsbml::ASTNode *node,
+    const std::map<const std::string, std::pair<double, bool>> &vars = {},
+    const libsbml::Model *model = nullptr);
+
+double evaluateMathString(
+    const std::string &mathExpression,
+    const std::map<const std::string, std::pair<double, bool>> &vars = {},
+    const libsbml::Model *model = nullptr);
+
+} // namespace model

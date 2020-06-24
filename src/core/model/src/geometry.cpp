@@ -147,7 +147,9 @@ const Compartment *Field::getCompartment() const { return comp; }
 
 const std::vector<double> &Field::getConcentration() const { return conc; }
 
-std::vector<double> &Field::getConcentration() { return conc; }
+void Field::setConcentration(std::size_t index, double concentration) {
+  conc[index] = concentration;
+}
 
 void Field::importConcentration(
     const std::vector<double> &sbmlConcentrationArray) {

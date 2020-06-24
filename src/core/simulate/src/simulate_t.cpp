@@ -359,7 +359,7 @@ SCENARIO(
     double dt = std::numeric_limits<double>::max();
     if (simType == simulate::SimulatorType::DUNE) {
       initialRelativeError = 0.05;
-      evolvedRelativeError = 0.2;
+      evolvedRelativeError = 0.5;
       simRelErr = std::numeric_limits<double>::max();
       dt = 1.0;
     }
@@ -492,8 +492,8 @@ SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
     sim2.doTimestep(time);
     auto conc = sim2.getConc(sim.getTimePoints().size() - 1, 0, 0);
     for (std::size_t i = 0; i < conc.size(); ++i) {
-      maxRelDiff = std::max(maxRelDiff, (conc[i] - c4_accurate[i]) /
-                                            (c4_accurate[i] + eps));
+      maxRelDiff = std::max(
+          maxRelDiff, (conc[i] - c4_accurate[i]) / (c4_accurate[i] + eps));
     }
     CAPTURE(order);
     REQUIRE(maxRelDiff < relErr);

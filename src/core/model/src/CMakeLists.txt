@@ -9,6 +9,7 @@ target_sources(
           model_compartments.cpp
           model_functions.cpp
           model_geometry.cpp
+          model_math.cpp
           model_membranes.cpp
           model_membranes_util.cpp
           model_parameters.cpp
@@ -23,6 +24,8 @@ target_sources(
   core_tests
   PUBLIC geometry_t.cpp
          model_t.cpp
+         model_functions_t.cpp
+         model_math_t.cpp
          model_membranes_t.cpp
          model_membranes_util_t.cpp
          model_units_t.cpp)
