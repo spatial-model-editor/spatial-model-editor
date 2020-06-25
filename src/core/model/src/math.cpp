@@ -46,7 +46,11 @@ std::string inlineFunctions(const std::string &mathExpression,
       // wrap function body in parentheses
       std::string pre_expr = expr.substr(0, fn_loc);
       std::string post_expr = expr.substr(loc);
-      expr = pre_expr + "(" + funcBodyString + ")" + post_expr;
+      expr = pre_expr;
+      expr.append("(");
+      expr.append(funcBodyString);
+      expr.append(")");
+      expr.append(post_expr);
       // go to end of inlined function body in expr
       loc = fn_loc + funcBodyString.size() + 2;
       SPDLOG_DEBUG("  - new expr = {}", expr);
@@ -86,7 +90,11 @@ std::string inlineAssignments(const std::string &mathExpression,
         if (end != std::string::npos) {
           post_expr = expr.substr(end);
         }
-        expr = pre_expr + "(" + assignmentBody + ")" + post_expr;
+        expr = pre_expr;
+        expr.append("(");
+        expr.append(assignmentBody);
+        expr.append(")");
+        expr.append(post_expr);
         SPDLOG_DEBUG("  - new expr = {}", expr);
         // go to end of inlined assignment body in expr
         end = start + assignmentBody.size() + 2;
@@ -126,7 +134,7 @@ findUnknownName(const libsbml::ASTNode *node, libsbml::ASTNodeType_t nodeType,
     return node;
   }
   for (unsigned int i = 0; i < node->getNumChildren(); ++i) {
-    if (auto *unknown = findUnknownName(node->getChild(i), nodeType, names);
+    if (const auto *unknown = findUnknownName(node->getChild(i), nodeType, names);
         unknown != nullptr) {
       return unknown;
     }
@@ -144,7 +152,7 @@ std::string getUnknownFunctionName(const libsbml::ASTNode *node,
       functions.push_back(model->getFunctionDefinition(i)->getId());
     }
   }
-  auto *unknown = findUnknownName(node, libsbml::AST_FUNCTION, functions);
+  const auto *unknown = findUnknownName(node, libsbml::AST_FUNCTION, functions);
   if (unknown == nullptr) {
     return {};
   }
@@ -165,7 +173,7 @@ std::string getUnknownVariableName(const libsbml::ASTNode *node,
       ids.push_back(model->getCompartment(i)->getId());
     }
   }
-  auto *unknown = findUnknownName(node, libsbml::AST_NAME, ids);
+  const auto *unknown = findUnknownName(node, libsbml::AST_NAME, ids);
   if (unknown == nullptr) {
     return {};
   }

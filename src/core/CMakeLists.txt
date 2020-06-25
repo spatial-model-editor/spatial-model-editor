@@ -62,6 +62,12 @@ target_compile_definitions(
     SPDLOG_ACTIVE_LEVEL=$<$<CONFIG:Debug>:SPDLOG_LEVEL_TRACE>$<$<CONFIG:Release>:SPDLOG_LEVEL_INFO>
 )
 
+add_subdirectory(resources)
+add_subdirectory(common)
+add_subdirectory(mesh)
+add_subdirectory(model)
+add_subdirectory(simulate)
+
 target_link_libraries(
   core
   PRIVATE TIFF::TIFF
@@ -76,12 +82,6 @@ target_link_libraries(
          Qt5::Core
          resources
          ${SME_EXTRA_CORE_LIBS})
-
-add_subdirectory(resources)
-add_subdirectory(common)
-add_subdirectory(mesh)
-add_subdirectory(model)
-add_subdirectory(simulate)
 
 target_compile_definitions(core PUBLIC ${SME_EXTRA_CORE_DEFS})
 target_link_libraries(core_tests PUBLIC core testlib)

@@ -8,6 +8,7 @@ target_sources(
   PRIVATE sme_compartment.cpp
           sme_model.cpp
           sme_module.cpp
+          sme_parameter.cpp
           sme_reaction.cpp
           sme_reactionparameter.cpp
           sme_species.cpp)

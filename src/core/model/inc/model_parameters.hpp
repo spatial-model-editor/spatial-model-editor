@@ -11,15 +11,19 @@
 namespace libsbml {
 class Model;
 class Species;
-}  // namespace libsbml
+} // namespace libsbml
 
 namespace model {
 
 class ModelSpecies;
 
-struct IdNameValue {
+struct IdName {
   std::string id;
   std::string name;
+};
+
+struct IdValue {
+  std::string id;
   double value;
 };
 
@@ -30,14 +34,25 @@ struct IdNameExpr {
 };
 
 class ModelParameters {
- public:
+public:
+  QStringList ids;
+  QStringList names;
   libsbml::Model *sbmlModel = nullptr;
 
- public:
+public:
   ModelParameters();
   explicit ModelParameters(libsbml::Model *model);
-  std::vector<IdNameValue> getGlobalConstants() const;
+  const QStringList &getIds() const;
+  const QStringList &getNames() const;
+  QString setName(const QString &id, const QString &name);
+  QString getName(const QString &id) const;
+  void setExpression(const QString &id, const QString &expr);
+  QString getExpression(const QString &id) const;
+  QString add(const QString &name);
+  void remove(const QString &id);
+  std::vector<IdName> getSymbols() const;
+  std::vector<IdValue> getGlobalConstants() const;
   std::vector<IdNameExpr> getNonConstantParameters() const;
 };
 
-}  // namespace sbml
+} // namespace model

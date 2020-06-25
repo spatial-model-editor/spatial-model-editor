@@ -29,7 +29,7 @@ Simulation::Simulation(const model::Model &sbmlDoc, SimulatorType simType,
       }
     }
     if (!sIds.empty()) {
-      maxConcWholeSimulation.push_back(std::vector<double>(sIds.size(), 0.0));
+      maxConcWholeSimulation.emplace_back(sIds.size(), 0.0);
       auto sIndices = std::vector<std::size_t>(sIds.size());
       std::iota(sIndices.begin(), sIndices.end(), 0);
       compartmentIds.push_back(compartmentId.toStdString());
@@ -93,7 +93,7 @@ calculateAvgMinMax(const std::vector<double> &concs, std::size_t nSpecies) {
     }
   }
   for (auto &a : avgMinMax) {
-    a.avg /= static_cast<double>(concs.size() / nSpecies);
+    a.avg /= static_cast<double>(concs.size()) / static_cast<double>(nSpecies);
   }
   return avgMinMax;
 }
@@ -206,7 +206,8 @@ QImage Simulation::getConcImage(
     } else {
       for (std::size_t is : (*speciesIndices)[compIndex]) {
         double m = avgMinMax[timeIndex][compIndex][is].max;
-        maxConcs[is] = m > 1e-30 ? m : 1.0;
+        constexpr double minimumNonzeroConc{1e-30};
+        maxConcs[is] = m > minimumNonzeroConc ? m : 1.0;
       }
     }
     for (std::size_t ix = 0; ix < pixels.size(); ++ix) {

@@ -1,6 +1,7 @@
 #include "mesh.hpp"
 
 #include <QPainter>
+#include <utility>
 
 #include "image_boundaries.hpp"
 #include "logger.hpp"
@@ -18,8 +19,8 @@ Mesh::Mesh() = default;
 
 Mesh::Mesh(
     const QImage &image, const std::vector<QPointF> &interiorPoints,
-    const std::vector<std::size_t> &maxPoints,
-    const std::vector<std::size_t> &maxTriangleArea,
+    std::vector<std::size_t> maxPoints,
+    std::vector<std::size_t> maxTriangleArea,
     const std::vector<std::pair<std::string, ColourPair>> &membraneColourPairs,
     const std::vector<double> &membraneWidths, double pixelWidth,
     const QPointF &originPoint, const std::vector<QRgb> &compartmentColours)
@@ -27,8 +28,8 @@ Mesh::Mesh(
       origin(originPoint),
       pixel(pixelWidth),
       compartmentInteriorPoints(interiorPoints),
-      boundaryMaxPoints(maxPoints),
-      compartmentMaxTriangleArea(maxTriangleArea),
+      boundaryMaxPoints(std::move(maxPoints)),
+      compartmentMaxTriangleArea(std::move(maxTriangleArea)),
       imageBoundaries{std::make_unique<ImageBoundaries>(
           image, compartmentColours, membraneColourPairs)} {
   const auto &boundaries = imageBoundaries->getBoundaries();
@@ -83,7 +84,7 @@ Mesh::Mesh(const std::vector<double> &inputVertices,
   vertices.clear();
   vertices.reserve(nV);
   for (std::size_t i = 0; i < nV; ++i) {
-    vertices.push_back(QPointF(inputVertices[2 * i], inputVertices[2 * i + 1]));
+    vertices.emplace_back(inputVertices[2 * i], inputVertices[2 * i + 1]);
   }
   // import triangles: supplies as list of ints, three for each triangle
   nTriangles = 0;
@@ -142,7 +143,7 @@ std::size_t Mesh::getBoundaryMaxPoints(std::size_t boundaryIndex) const {
 }
 
 std::vector<std::size_t> Mesh::getBoundaryMaxPoints() const {
-  auto &boundaries = imageBoundaries->getBoundaries();
+  const auto &boundaries = imageBoundaries->getBoundaries();
   std::vector<std::size_t> v(boundaries.size());
   std::transform(boundaries.cbegin(), boundaries.cend(), v.begin(),
                  [](const auto &b) { return b.getMaxPoints(); });
@@ -166,7 +167,7 @@ double Mesh::getBoundaryWidth(std::size_t boundaryIndex) const {
 }
 
 std::vector<double> Mesh::getBoundaryWidths() const {
-  auto &boundaries = imageBoundaries->getBoundaries();
+  const auto &boundaries = imageBoundaries->getBoundaries();
   std::vector<double> v(boundaries.size(), 0.0);
   std::transform(boundaries.cbegin(), boundaries.cend(), v.begin(),
                  [](const auto &b) { return b.getMembraneWidth(); });
@@ -174,7 +175,7 @@ std::vector<double> Mesh::getBoundaryWidths() const {
 }
 
 double Mesh::getMembraneWidth(const std::string &membraneID) const {
-  auto &boundaries = imageBoundaries->getBoundaries();
+  const auto &boundaries = imageBoundaries->getBoundaries();
   auto iter = std::find_if(boundaries.cbegin(), boundaries.cend(),
                            [membraneID](const Boundary &b) {
                              return b.getMembraneId() == membraneID;
@@ -252,7 +253,7 @@ static TriangulateBoundaries constructTriangulateBoundaries(
   // first add fixed points
   for (const auto &fp : imageBoundaries->getFixedPoints()) {
     SPDLOG_TRACE("- fp ({},{})", fp.point.x(), fp.point.y());
-    tid.boundaryPoints.push_back(fp.point);
+    tid.boundaryPoints.emplace_back(fp.point);
   }
 
   // for each segment in each boundary line, add the QPoints if not already
@@ -266,29 +267,29 @@ static TriangulateBoundaries constructTriangulateBoundaries(
     auto &segments = tid.boundaries.emplace_back();
     // do first segment
     if (boundary.isLoop()) {
-      tid.boundaryPoints.push_back(points[0]);
+      tid.boundaryPoints.emplace_back(points[0]);
       ++currentIndex;
-      tid.boundaryPoints.push_back(points[1]);
+      tid.boundaryPoints.emplace_back(points[1]);
       ++currentIndex;
       segments.push_back({currentIndex - 1, currentIndex});
     } else if (points.size() == 2) {
       segments.push_back({boundary.getFpIndices().startPoint,
                           boundary.getFpIndices().endPoint});
     } else {
-      tid.boundaryPoints.push_back(points[1]);
+      tid.boundaryPoints.emplace_back(points[1]);
       ++currentIndex;
       segments.push_back({boundary.getFpIndices().startPoint, currentIndex});
     }
     // do intermediate segments
     for (std::size_t j = 2; j < points.size() - 1; ++j) {
-      tid.boundaryPoints.push_back(points[j]);
+      tid.boundaryPoints.emplace_back(points[j]);
       ++currentIndex;
       segments.push_back({currentIndex - 1, currentIndex});
     }
     // do last segment
     if (boundary.isLoop()) {
       ++currentIndex;
-      tid.boundaryPoints.push_back(points.back());
+      tid.boundaryPoints.emplace_back(points.back());
       segments.push_back({currentIndex - 1, currentIndex});
       // for loops: also connect last point to first point
       segments.push_back({currentIndex, segments.front().start});

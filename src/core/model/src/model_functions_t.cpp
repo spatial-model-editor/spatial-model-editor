@@ -52,7 +52,8 @@ SCENARIO("SBML functions",
       REQUIRE(funcs.getArguments("PDC_kinetics")[1] == "Vmax");
       REQUIRE(funcs.getArguments("PDC_kinetics")[2] == "Kpyr");
       REQUIRE(funcs.getArguments("PDC_kinetics")[3] == "nH");
-      funcs.addArgument("PDC_kinetics", "x");
+      auto arg = funcs.addArgument("PDC_kinetics", "x");
+      REQUIRE(arg == "x");
       funcs.setName("PDC_kinetics", "newName!");
       funcs.setExpression("PDC_kinetics", "(V*(x/k)^n/(1+(a/k)^n))");
       REQUIRE(funcs.getName("PDC_kinetics") == "newName!");

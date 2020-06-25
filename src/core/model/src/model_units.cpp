@@ -40,7 +40,6 @@ static void setSBMLUnitDef(libsbml::UnitDefinition *unitdef, const Unit &u) {
   unit->setMultiplier(u.multiplier);
   unit->setScale(u.scale);
   unit->setExponent(u.exponent);
-  return;
 }
 
 static std::optional<int> getUnitIndex(libsbml::Model *model,
@@ -67,8 +66,9 @@ static std::optional<int> getUnitIndex(libsbml::Model *model,
   SPDLOG_INFO("  = ({} * 1e{} {})^{}", multiplier, scale, kind, exponent);
   for (int i = 0; i < units.size(); ++i) {
     const auto &u = units.at(i);
+    constexpr double maxRelativeDiff{1e-10};
     if (u.kind.toStdString() == kind &&
-        std::fabs((u.multiplier - multiplier) / multiplier) < 1e-10 &&
+        std::fabs((u.multiplier - multiplier) / multiplier) < maxRelativeDiff &&
         u.exponent == exponent && u.scale == scale) {
       SPDLOG_INFO("  -> {}", u.name.toStdString());
       return i;

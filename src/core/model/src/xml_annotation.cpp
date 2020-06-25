@@ -20,8 +20,8 @@ static const std::string annotationNameColour{"colour"};
 
 namespace model {
 
-static const libsbml::XMLNode *getAnnotation(
-    const libsbml::SBase *parent, const std::string &annotationName) {
+static const libsbml::XMLNode *
+getAnnotation(const libsbml::SBase *parent, const std::string &annotationName) {
   if (parent == nullptr || !parent->isSetAnnotation()) {
     return nullptr;
   }
@@ -82,10 +82,11 @@ void addMeshParamsAnnotation(libsbml::ParametricGeometry *pg,
   SPDLOG_INFO("appending annotation: {}", xml);
 }
 
-std::optional<MeshParamsAnnotationData> getMeshParamsAnnotationData(
-    const libsbml::ParametricGeometry *pg) {
+std::optional<MeshParamsAnnotationData>
+getMeshParamsAnnotationData(const libsbml::ParametricGeometry *pg) {
   std::optional<MeshParamsAnnotationData> dat = {};
-  if (auto *node = getAnnotation(pg, annotationNameMesh); node != nullptr) {
+  if (const auto *node = getAnnotation(pg, annotationNameMesh);
+      node != nullptr) {
     auto &d = dat.emplace();
     d.maxPoints = utils::stringToVector<std::size_t>(
         node->getAttrValue("maxBoundaryPoints", annotationURI));
@@ -123,9 +124,9 @@ void addSpeciesColourAnnotation(libsbml::Species *species, QRgb colour) {
   SPDLOG_INFO("  - appending annotation: {}", xml);
 }
 
-std::optional<QRgb> getSpeciesColourAnnotation(
-    const libsbml::Species *species) {
-  if (auto *node = getAnnotation(species, annotationNameColour);
+std::optional<QRgb>
+getSpeciesColourAnnotation(const libsbml::Species *species) {
+  if (const auto *node = getAnnotation(species, annotationNameColour);
       node != nullptr) {
     auto colour = utils::stringToVector<QRgb>(
         node->getAttrValue("colour", annotationURI))[0];
@@ -136,4 +137,4 @@ std::optional<QRgb> getSpeciesColourAnnotation(
   return {};
 }
 
-}  // namespace sbml
+} // namespace model

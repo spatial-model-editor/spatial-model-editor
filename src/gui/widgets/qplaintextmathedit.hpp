@@ -39,12 +39,18 @@ public:
   void addVariable(const std::string &variable,
                    const std::string &displayName = {});
   void removeVariable(const std::string &variable);
+  void clearFunctions();
+  void addDefaultFunctions();
+  void addFunction(const std::string &function,
+                   const std::string &displayName = {});
+  void removeFunction(const std::string &function);
 
 signals:
   void mathChanged(const QString &math, bool valid,
                    const QString &errorMessage);
 
 private:
+  using stringStringMap = std::map<std::string, std::string>;
   model::ModelMath *modelMath{nullptr};
   bool useLibSbmlBackend{false};
   bool allowImplicitNames{false};
@@ -53,10 +59,12 @@ private:
   std::vector<double> result{0.0};
   const QColor colourValid = QColor(200, 255, 200);
   const QColor colourInvalid = QColor(255, 150, 150);
-  const char *illegalChars = "%@&!";
+  const char *const illegalChars = "%@&!";
   std::vector<std::string> vars;
-  std::map<std::string, std::string> mapVarsToDisplayNames;
-  std::map<std::string, std::string> mapDisplayNamesToVars;
+  stringStringMap mapVarsToDisplayNames;
+  stringStringMap mapDisplayNamesToVars;
+  stringStringMap mapFuncsToDisplayNames;
+  stringStringMap mapDisplayNamesToFuncs;
   QString currentDisplayMath;
   std::string currentVariableMath;
   QString currentErrorMessage;

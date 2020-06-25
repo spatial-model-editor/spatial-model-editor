@@ -26,7 +26,7 @@ private:
 public:
   Compartment() = default;
   // create compartment geometry from all pixels in `img` of colour `col`
-  Compartment(const std::string &compId, const QImage &img, QRgb col);
+  Compartment(std::string compId, const QImage &img, QRgb col);
   const std::string &getId() const;
   QRgb getColour() const;
   double getPixelWidth() const;
@@ -56,7 +56,7 @@ private:
 
 public:
   Membrane() = default;
-  Membrane(const std::string &membraneId, const Compartment *A,
+  Membrane(std::string membraneId, const Compartment *A,
            const Compartment *B,
            const std::vector<std::pair<QPoint, QPoint>> *membranePairs);
   const std::string &getId() const;
@@ -80,7 +80,7 @@ private:
 
 public:
   Field() = default;
-  Field(const Compartment *compartment, const std::string &specID,
+  Field(const Compartment *compartment, std::string specID,
         double diffConst = 1.0, QRgb col = qRgb(255, 0, 0));
   const std::string &getId() const;
   QRgb getColour() const;

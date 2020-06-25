@@ -57,6 +57,8 @@ ModelFunctions::ModelFunctions(libsbml::Model *model)
 
 const QStringList &ModelFunctions::getIds() const { return ids; }
 
+const QStringList &ModelFunctions::getNames() const { return names; }
+
 QString ModelFunctions::setName(const QString &id, const QString &name) {
   auto i = ids.indexOf(id);
   if (i < 0) {
@@ -70,9 +72,9 @@ QString ModelFunctions::setName(const QString &id, const QString &name) {
   names[i] = uniqueName;
   std::string sId{id.toStdString()};
   std::string sName{uniqueName.toStdString()};
-  auto *reac = sbmlModel->getFunctionDefinition(sId);
+  auto *func = sbmlModel->getFunctionDefinition(sId);
   SPDLOG_INFO("sId '{}' : name -> '{}'", sId, sName);
-  reac->setName(sName);
+  func->setName(sName);
   return uniqueName;
 }
 
@@ -93,7 +95,8 @@ void ModelFunctions::setExpression(const QString &id,
     lambdaAST->addChild(func->getMath()->getChild(i)->deepCopy());
   }
   std::string expr = expression.toStdString();
-  auto bodyAST = libsbml::SBML_parseL3FormulaWithModel(expr.c_str(), sbmlModel);
+  auto *bodyAST =
+      libsbml::SBML_parseL3FormulaWithModel(expr.c_str(), sbmlModel);
   if (bodyAST == nullptr) {
     SPDLOG_ERROR("  - libSBML failed to parse expression");
     return;
@@ -111,16 +114,42 @@ QString ModelFunctions::getExpression(const QString &id) const {
   return mathASTtoString(func->getBody()).c_str();
 }
 
-static libsbml::ASTNode *newLambdaBvar(const std::string &variableName) {
+QStringList ModelFunctions::getArguments(const QString &id) const {
+  QStringList args;
+  const auto *func = sbmlModel->getFunctionDefinition(id.toStdString());
+  args.reserve(static_cast<int>(func->getNumArguments()));
+  for (unsigned i = 0; i < func->getNumArguments(); ++i) {
+    args.push_back(func->getMath()->getChild(i)->getName());
+  }
+  return args;
+}
+
+static libsbml::ASTNode *newLambdaBvar(const std::string &name) {
   libsbml::ASTNode *n = new libsbml::ASTNode(libsbml::ASTNodeType_t::AST_NAME);
   n->setBvar();
-  n->setName(variableName.c_str());
+  n->setName(name.c_str());
   return n;
 }
 
-void ModelFunctions::addArgument(const QString &functionId,
-                                 const QString &argumentId) {
-  std::string argId = argumentId.toStdString();
+static std::string makeValidArgumentName(const std::string &name) {
+  std::string s;
+  // first char must be a letter or underscore
+  if (auto c = name.front();
+      !(std::isalpha(c, std::locale::classic()) || c == '_')) {
+    s.append("_");
+  }
+  // other chars must be letters, numbers or underscores
+  for (const auto c : name) {
+    if (std::isalnum(c, std::locale::classic()) || c == '_') {
+      s += c;
+    }
+  }
+  return s;
+}
+
+QString ModelFunctions::addArgument(const QString &functionId,
+                                    const QString &argumentId) {
+  std::string argId{makeValidArgumentName(argumentId.toStdString())};
   auto lambdaAST =
       std::make_unique<libsbml::ASTNode>(libsbml::ASTNodeType_t::AST_LAMBDA);
   auto *func = sbmlModel->getFunctionDefinition(functionId.toStdString());
@@ -133,19 +162,20 @@ void ModelFunctions::addArgument(const QString &functionId,
   SPDLOG_TRACE("  + {}", argId);
   lambdaAST->addChild(func->getBody()->deepCopy());
   func->setMath(lambdaAST.get());
+  return argId.c_str();
 }
 
 void ModelFunctions::removeArgument(const QString &functionId,
                                     const QString &argumentId) {
-  std::string argName = argumentId.toStdString();
-  SPDLOG_TRACE("Removing argument '{}' from function '{}'", argName,
+  std::string argId = argumentId.toStdString();
+  SPDLOG_TRACE("Removing argument '{}' from function '{}'", argId,
                functionId.toStdString());
   auto lambdaAST =
       std::make_unique<libsbml::ASTNode>(libsbml::ASTNodeType_t::AST_LAMBDA);
   auto *func = sbmlModel->getFunctionDefinition(functionId.toStdString());
   for (unsigned i = 0; i < func->getNumArguments(); ++i) {
     if (const auto *child = func->getMath()->getChild(i);
-        child->getName() != argName) {
+        child->getName() != argId) {
       SPDLOG_TRACE("  + {}", child->getName());
       lambdaAST->addChild(child->deepCopy());
     }
@@ -154,31 +184,21 @@ void ModelFunctions::removeArgument(const QString &functionId,
   func->setMath(lambdaAST.get());
 }
 
-QStringList ModelFunctions::getArguments(const QString &id) const {
-  QStringList args;
-  const auto *func = sbmlModel->getFunctionDefinition(id.toStdString());
-  args.reserve(static_cast<int>(func->getNumArguments()));
-  for (unsigned i = 0; i < func->getNumArguments(); ++i) {
-    args.push_back(func->getMath()->getChild(i)->getName());
-  }
-  return args;
-}
-
-void ModelFunctions::add(const QString &functionName) {
-  auto functionId = nameToUniqueSId(functionName, sbmlModel).toStdString();
+void ModelFunctions::add(const QString &name) {
+  auto id = nameToUniqueSId(name, sbmlModel).toStdString();
   SPDLOG_INFO("Adding function");
-  SPDLOG_INFO("  - Id: {}", functionId);
-  SPDLOG_INFO("  - Name: {}", functionName.toStdString());
+  SPDLOG_INFO("  - Id: {}", id);
+  SPDLOG_INFO("  - Name: {}", name.toStdString());
   auto *func = sbmlModel->createFunctionDefinition();
   auto lambdaAST =
       std::make_unique<libsbml::ASTNode>(libsbml::ASTNodeType_t::AST_LAMBDA);
   lambdaAST->addChild(libsbml::SBML_parseL3Formula("0"));
   SPDLOG_DEBUG("  - AST: {}", mathASTtoString(lambdaAST.get()));
-  func->setId(functionId);
-  func->setName(functionName.toStdString());
+  func->setId(id);
+  func->setName(name.toStdString());
   func->setMath(lambdaAST.get());
-  ids.push_back(functionId.c_str());
-  names.push_back(functionName);
+  ids.push_back(id.c_str());
+  names.push_back(name);
 }
 
 void ModelFunctions::remove(const QString &id) {

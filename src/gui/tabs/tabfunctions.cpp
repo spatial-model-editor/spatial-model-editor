@@ -1,34 +1,29 @@
 #include "tabfunctions.hpp"
 
+#include <QInputDialog>
+#include <QMessageBox>
+
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "model.hpp"
 #include "ui_tabfunctions.h"
 #include "utils.hpp"
-#include <QInputDialog>
-#include <QMessageBox>
 
 TabFunctions::TabFunctions(model::Model &doc, QWidget *parent)
     : QWidget(parent), ui{std::make_unique<Ui::TabFunctions>()}, sbmlDoc(doc) {
   ui->setupUi(this);
   connect(ui->listFunctions, &QListWidget::currentRowChanged, this,
           &TabFunctions::listFunctions_currentRowChanged);
-
   connect(ui->btnAddFunction, &QPushButton::clicked, this,
           &TabFunctions::btnAddFunction_clicked);
-
   connect(ui->btnRemoveFunction, &QPushButton::clicked, this,
           &TabFunctions::btnRemoveFunction_clicked);
-
   connect(ui->listFunctionParams, &QListWidget::currentRowChanged, this,
           &TabFunctions::listFunctionParams_currentRowChanged);
-
   connect(ui->btnAddFunctionParam, &QPushButton::clicked, this,
           &TabFunctions::btnAddFunctionParam_clicked);
-
   connect(ui->btnRemoveFunctionParam, &QPushButton::clicked, this,
           &TabFunctions::btnRemoveFunctionParam_clicked);
-
   connect(ui->txtFunctionDef, &QPlainTextMathEdit::mathChanged, this,
           &TabFunctions::txtFunctionDef_mathChanged);
 }
@@ -39,9 +34,7 @@ void TabFunctions::loadModelData(const QString &selection) {
   auto *list = ui->listFunctions;
   list->clear();
   ui->btnRemoveFunctionParam->setEnabled(false);
-  for (const auto &id : sbmlDoc.getFunctions().getIds()) {
-    list->addItem(sbmlDoc.getFunctions().getName(id));
-  }
+  list->addItems(sbmlDoc.getFunctions().getNames());
   selectMatchingOrFirstItem(list, selection);
   bool enable = list->count() > 0;
   ui->txtFunctionName->setEnabled(enable);
@@ -122,12 +115,11 @@ void TabFunctions::btnAddFunctionParam_clicked() {
                             "New parameter name:", QLineEdit::Normal, {}, &ok);
   if (ok && !param.isEmpty()) {
     SPDLOG_INFO("Adding parameter {}", param.toStdString());
-    SPDLOG_INFO("- todo: check valid alphanumeric variable name");
-    ui->listFunctionParams->addItem(param);
+    auto id = sbmlDoc.getFunctions().getIds()[ui->listFunctions->currentRow()];
+    auto argId = sbmlDoc.getFunctions().addArgument(id, param);
+    ui->listFunctionParams->addItem(argId);
     ui->txtFunctionDef->addVariable(param.toStdString());
     ui->listFunctionParams->setCurrentRow(ui->listFunctionParams->count() - 1);
-    auto id = sbmlDoc.getFunctions().getIds()[ui->listFunctions->currentRow()];
-    sbmlDoc.getFunctions().addArgument(id, param);
   }
 }
 

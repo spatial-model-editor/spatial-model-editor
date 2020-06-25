@@ -1,6 +1,7 @@
 #include "pde.hpp"
 
 #include <optional>
+#include <utility>
 
 #include "logger.hpp"
 #include "model.hpp"
@@ -17,17 +18,15 @@ PDE::PDE(const model::Model *doc_ptr,
     : species(speciesIDs) {
   if (!relabelledSpeciesIDs.empty() &&
       relabelledSpeciesIDs.size() != speciesIDs.size()) {
-    SPDLOG_WARN(
-        "Ignoring relabelledSpecies:"
-        "size {} does not match number of species {}",
-        relabelledSpeciesIDs.size(), speciesIDs.size());
+    SPDLOG_WARN("Ignoring relabelledSpecies:"
+                "size {} does not match number of species {}",
+                relabelledSpeciesIDs.size(), speciesIDs.size());
   }
   if (!reactionScaleFactors.empty() &&
       reactionScaleFactors.size() != reactionIDs.size()) {
-    SPDLOG_WARN(
-        "Ignoring reactionScaleFactors:"
-        "size {} does not match number of reactions {}",
-        reactionScaleFactors.size(), reactionIDs.size());
+    SPDLOG_WARN("Ignoring reactionScaleFactors:"
+                "size {} does not match number of reactions {}",
+                reactionScaleFactors.size(), reactionIDs.size());
   }
   // construct reaction expressions and stoich matrix
   Reaction reactions(doc_ptr, speciesIDs, reactionIDs);
@@ -63,7 +62,7 @@ PDE::PDE(const model::Model *doc_ptr,
     // parse expression with symengine to simplify
     symbolic::Symbolic sym(r.toStdString(), speciesIDs, {}, false);
     // if provided, relabel species with relabelledSpeciesIDs
-    auto *outputSpecies = &speciesIDs;
+    const auto *outputSpecies = &speciesIDs;
     if (relabelledSpeciesIDs.size() == speciesIDs.size()) {
       sym.relabel(relabelledSpeciesIDs);
       outputSpecies = &relabelledSpeciesIDs;
@@ -81,9 +80,9 @@ const std::vector<std::vector<std::string>> &PDE::getJacobian() const {
 }
 
 // return index of species if in the species vector, and reactive
-static std::optional<std::size_t> getSpeciesIndex(
-    const model::Model *doc, const std::string &speciesID,
-    const std::vector<std::string> &speciesIDs) {
+static std::optional<std::size_t>
+getSpeciesIndex(const model::Model *doc, const std::string &speciesID,
+                const std::vector<std::string> &speciesIDs) {
   if (auto it = std::find(speciesIDs.cbegin(), speciesIDs.cend(), speciesID);
       it != speciesIDs.cend() &&
       doc->getSpecies().isReactive(speciesID.c_str())) {
@@ -92,8 +91,9 @@ static std::optional<std::size_t> getSpeciesIndex(
   return {};
 }
 
-std::vector<double> Reaction::getStoichMatrixRow(
-    const model::Model *doc, const std::string &reacId) const {
+std::vector<double>
+Reaction::getStoichMatrixRow(const model::Model *doc,
+                             const std::string &reacId) const {
   std::vector<double> matrixRow(speciesIDs.size(), 0);
   bool isReaction = false;
   for (const auto &speciesID : speciesIDs) {
@@ -130,15 +130,14 @@ const std::vector<std::string> &Reaction::getSpeciesIDs() const {
   return speciesIDs;
 }
 
-const std::vector<std::pair<std::string, double>> &Reaction::getConstants(
-    std::size_t reactionIndex) const {
+const std::vector<std::pair<std::string, double>> &
+Reaction::getConstants(std::size_t reactionIndex) const {
   return constants.at(reactionIndex);
 }
 
-Reaction::Reaction(const model::Model *doc,
-                   const std::vector<std::string> &species,
+Reaction::Reaction(const model::Model *doc, std::vector<std::string> species,
                    const std::vector<std::string> &reactionIDs)
-    : speciesIDs(species) {
+    : speciesIDs(std::move(species)) {
   // RateRule is f(...) for a species s: ds/dt = f(...)
   // Species which have a raterule cannot be created or destroyed in any kinetic
   // reactions
@@ -152,7 +151,7 @@ Reaction::Reaction(const model::Model *doc,
       M.push_back(Mrow);
       expressions.push_back(ruleExpr);
       constants.emplace_back();
-      for (const auto &[id, name, value] :
+      for (const auto &[id, value] :
            doc->getParameters().getGlobalConstants()) {
         constants.back().push_back({id, value});
       }
@@ -173,7 +172,7 @@ Reaction::Reaction(const model::Model *doc,
 
       // get local parameters, append to global constants
       constants.emplace_back();
-      for (const auto &[id, name, value] :
+      for (const auto &[id, value] :
            doc->getParameters().getGlobalConstants()) {
         constants.back().push_back({id, value});
       }
@@ -185,9 +184,8 @@ Reaction::Reaction(const model::Model *doc,
       }
 
       // construct expression and add to reactions
-      auto inlinedExpr = doc->inlineExpr(doc->getReactions()
-                                             .getRateExpression(reacID.c_str())
-                                             .toStdString());
+      auto inlinedExpr = doc->inlineExpr(
+          doc->getReactions().getRateExpression(reacID.c_str()).toStdString());
       expressions.push_back(inlinedExpr);
       SPDLOG_INFO("adding reaction {}", reacID);
       SPDLOG_INFO("  - stoichiometric matrix row: {}",
@@ -197,4 +195,4 @@ Reaction::Reaction(const model::Model *doc,
   }
 }
 
-}  // namespace pde
+} // namespace pde

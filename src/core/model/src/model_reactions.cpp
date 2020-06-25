@@ -317,12 +317,12 @@ void ModelReactions::setSpeciesStoichiometry(const QString &id,
   if (std::unique_ptr<libsbml::SpeciesReference> rmProduct(
           reac->removeProduct(sId));
       rmProduct != nullptr) {
-    SPDLOG_TRACE("  - removed Product '{}'", rmProduct->getElementName());
+    SPDLOG_TRACE("  - removed Product '{}'", rmProduct->getSpecies());
   }
   if (std::unique_ptr<libsbml::SpeciesReference> rmReactant(
           reac->removeReactant(sId));
       rmReactant != nullptr) {
-    SPDLOG_TRACE("  - removed Reactant '{}'", rmReactant->getElementName());
+    SPDLOG_TRACE("  - removed Reactant '{}'", rmReactant->getSpecies());
   }
   if (stoichiometry > 0) {
     reac->addProduct(spec, static_cast<double>(stoichiometry));

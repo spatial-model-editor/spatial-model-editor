@@ -24,15 +24,16 @@ public:
   ModelFunctions();
   explicit ModelFunctions(libsbml::Model *model);
   const QStringList &getIds() const;
+  const QStringList &getNames() const;
   QString setName(const QString &id, const QString &name);
   QString getName(const QString &id) const;
-  void setExpression(const QString &id, const QString &name);
+  void setExpression(const QString &id, const QString &expression);
   QString getExpression(const QString &id) const;
-  void addArgument(const QString &functionId, const QString &argumentId);
-  void removeArgument(const QString &functionId, const QString &argumentId);
   QStringList getArguments(const QString &id) const;
-  void add(const QString &functionName);
-  void remove(const QString &functionID);
+  QString addArgument(const QString &functionId, const QString &argumentId);
+  void removeArgument(const QString &functionId, const QString &argumentId);
+  void add(const QString &name);
+  void remove(const QString &id);
 };
 
 } // namespace model

@@ -12,6 +12,7 @@ PYBIND11_MODULE(sme, m) {
   sme::pybindModel(m);
   sme::pybindCompartment(m);
   sme::pybindSpecies(m);
+  sme::pybindParameter(m);
   sme::pybindReaction(m);
   sme::pybindReactionParameter(m);
 }

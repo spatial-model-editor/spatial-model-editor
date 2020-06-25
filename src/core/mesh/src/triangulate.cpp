@@ -361,22 +361,22 @@ static void replaceFPIndices(TriangulateBoundaries &newTid,
 }
 
 TriangulateBoundaries
-Triangulate::addMembranes(const TriangulateBoundaries &tid,
+Triangulate::addMembranes(const TriangulateBoundaries &tb,
                           const TriangulateFixedPoints &tfp) {
-  TriangulateBoundaries newTid = addSteinerPoints(tid);
+  TriangulateBoundaries newTid = addSteinerPoints(tb);
   // maintain copy of these points for calculating normal unit vectors
   auto originalPoints = newTid.boundaryPoints;
   // ensure it has space for the new FPs
   originalPoints.insert(originalPoints.end(), tfp.newFPs.size() - tfp.nFPs, {});
   auto newFPindex = replaceFPs(newTid, tfp);
-  replaceFPIndices(newTid, originalPoints, tid, newFPindex);
+  replaceFPIndices(newTid, originalPoints, tb, newFPindex);
   // for each membrane segment
   //  - move existing non-FP segments in perpendicular direction to form inner
   //  boundary
   //  - add outer boundary points shifted in opposite direction to inner points
   //  - add outer membrane segment
   //  - add rectangle segment connecting inner and outer membrane segments
-  for (const auto &b : tid.boundaryProperties) {
+  for (const auto &b : tb.boundaryProperties) {
     if (const auto &membrane = b; b.isMembrane) {
       auto &outer = newTid.boundaries.emplace_back();
       auto &inner = newTid.boundaries[membrane.boundaryIndex];
@@ -519,7 +519,7 @@ void Triangulate::triangulateCompartments(
   // call Triangle library with additional flags:
   //  - YY: disallow creation of Steiner points on segments
   //        (allowing these would invalidate the rectangle membrane indices)
-  const auto triangleFlagsNoSteiner =
+  const auto *const triangleFlagsNoSteiner =
       std::string(triangleFlags).append("YY").c_str();
   triangle::triangulate(triangleFlagsNoSteiner, &in, &out, nullptr);
   if (appendUnassignedTriangleCentroids(out, holes)) {

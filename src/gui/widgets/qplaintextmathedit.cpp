@@ -53,9 +53,8 @@ double QPlainTextMathEdit::evaluateMath(const std::vector<double> &variables) {
 double QPlainTextMathEdit::evaluateMath(
     const std::map<const std::string, std::pair<double, bool>> &variables) {
   if (!useLibSbmlBackend) {
-    SPDLOG_WARN(
-        "for better performance use vector interface when not using "
-        "libSBML backend");
+    SPDLOG_WARN("for better performance use vector interface when not using "
+                "libSBML backend");
     std::vector<double> values(vars.size(), 0);
     for (std::size_t i = 0; i < vars.size(); ++i) {
       values[i] = variables.at(vars[i]).first;
@@ -77,6 +76,7 @@ void QPlainTextMathEdit::clearVariables() {
   vars.clear();
   mapDisplayNamesToVars.clear();
   mapVarsToDisplayNames.clear();
+  qPlainTextEdit_textChanged();
 }
 
 void QPlainTextMathEdit::setVariables(
@@ -125,37 +125,86 @@ void QPlainTextMathEdit::removeVariable(const std::string &variable) {
   vars.erase(std::remove(vars.begin(), vars.end(), variable), vars.end());
   if (auto iter = mapVarsToDisplayNames.find(variable);
       iter != mapVarsToDisplayNames.cend()) {
-    SPDLOG_TRACE("removing var: {}", variable);
-    auto displayName = iter->second;
-    std::size_t nQuoteChars = 0;
+    SPDLOG_TRACE("removing variable: {}", variable);
+    std::string displayName = iter->second;
     // remove quotes if present
     if (displayName.front() == '"' && displayName.back() == '"') {
-      nQuoteChars = 1;
+      displayName = displayName.substr(1, displayName.size() - 2);
     }
     SPDLOG_TRACE("  -> display name {}", displayName);
-    mapDisplayNamesToVars.erase(
-        displayName.substr(nQuoteChars, displayName.size() - 2 * nQuoteChars));
+    mapDisplayNamesToVars.erase(displayName);
     mapVarsToDisplayNames.erase(iter);
+  }
+  qPlainTextEdit_textChanged();
+}
+
+void QPlainTextMathEdit::clearFunctions() {
+  mapFuncsToDisplayNames.clear();
+  mapDisplayNamesToFuncs.clear();
+  qPlainTextEdit_textChanged();
+}
+
+void QPlainTextMathEdit::addDefaultFunctions() {
+  clearFunctions();
+  for (const auto &f :
+       {"sin", "cos", "tan", "exp", "log", "ln", "pow", "sqrt"}) {
+    addFunction(f);
+  }
+  qPlainTextEdit_textChanged();
+}
+
+void QPlainTextMathEdit::addFunction(const std::string &function,
+                                     const std::string &displayName) {
+  SPDLOG_TRACE("adding function: {}", function);
+  auto name = displayName;
+  if (displayName.empty()) {
+    name = function;
+  }
+  SPDLOG_TRACE("  -> display name {}", name);
+  mapDisplayNamesToFuncs[name] = function;
+  if (isValidSymbol(name)) {
+    mapFuncsToDisplayNames[function] = name;
+  } else {
+    mapFuncsToDisplayNames[function] = "\"" + name + "\"";
+  }
+  qPlainTextEdit_textChanged();
+}
+
+void QPlainTextMathEdit::removeFunction(const std::string &function) {
+  if (auto iter = mapFuncsToDisplayNames.find(function);
+      iter != mapFuncsToDisplayNames.cend()) {
+    SPDLOG_TRACE("removing function: {}", function);
+    std::string displayName = iter->second;
+    // remove quotes if present
+    if (displayName.front() == '"' && displayName.back() == '"') {
+      displayName = displayName.substr(1, displayName.size() - 2);
+    }
+    SPDLOG_TRACE("  -> display name {}", displayName);
+    mapDisplayNamesToFuncs.erase(displayName);
+    mapFuncsToDisplayNames.erase(iter);
   }
   qPlainTextEdit_textChanged();
 }
 
 QPlainTextMathEdit::QPlainTextMathEdit(QWidget *parent)
     : QPlainTextEdit(parent) {
+  addDefaultFunctions();
   connect(this, &QPlainTextEdit::textChanged, this,
           &QPlainTextMathEdit::qPlainTextEdit_textChanged);
   connect(this, &QPlainTextEdit::cursorPositionChanged, this,
           &QPlainTextMathEdit::qPlainTextEdit_cursorPositionChanged);
 }
 
-// - iterate through each variable in expr
-// - a variable is any text with a delimeter char before and after it
-// - look-up variable in map and replace it with result
-// - if map contents are not a valid symbol, wrap it in quotes
-// - if variable not found in map, return instead a QString error message
+// - iterate through each symbol in expr
+// - a symbol is any text with a delimeter char before and after it
+// - a function is a symbol that is directly followed by "("
+// - note: special case of scientific notation number e.g. 1e-3
+// - look-up symbol in map and replace it with result
+// - if not found in map and allowImplicitNames=false, return error message
 static std::pair<std::string, QString> substitute(
-    const std::string &expr, const std::map<std::string, std::string> &map,
-    bool allowImplicitNames, const std::string &delimeters = "()-^*/+, ") {
+    const std::string &expr, const std::map<std::string, std::string> &varMap,
+    const std::map<std::string, std::string> &funcMap, bool allowImplicitNames,
+    const std::string &delimeters = "()-^*/+, ") {
   SPDLOG_DEBUG("expr: {}", expr);
   if (expr.empty()) {
     return {};
@@ -169,22 +218,43 @@ static std::pair<std::string, QString> substitute(
   while (start != std::string::npos) {
     // find next delimeter
     auto end = expr.find_first_of(delimeters, start);
-    // extract variable
+    if (std::isdigit(expr[start], std::locale::classic()) &&
+        end < expr.size() && expr[end - 1] == 'e' &&
+        (expr[end] == '-' || expr[end] == '+')) {
+      // if symbol starts with a numerical digit, and ends with "e-" or "e+", we
+      // have the first half of a number in scientific notation, so carry on to
+      // next delimeter to get the rest of the number
+      end = expr.find_first_of(delimeters, end + 1);
+    }
     std::string var = expr.substr(start, end - start);
     SPDLOG_DEBUG("  - var {}", var);
-    if (auto iter = map.find(var); iter != map.cend()) {
-      // replace variable with map result
-      SPDLOG_DEBUG("    -> {} ", iter->second);
-      out.append(iter->second);
-    } else {
-      // if not found, check if it is a number, if so append it and continue
-      bool isValidDouble;
-      QString(var.c_str()).toDouble(&isValidDouble);
-      if (allowImplicitNames || isValidDouble) {
+    if (end < expr.size() && expr[end] == '(') {
+      // function
+      if (auto iter = funcMap.find(var); iter != funcMap.cend()) {
+        SPDLOG_DEBUG("    -> {} ", iter->second);
+        out.append(iter->second);
+      } else if (allowImplicitNames) {
         out.append(var);
       } else {
-        SPDLOG_DEBUG("    -> not found");
-        return {out, QString("name '%1' not found").arg(var.c_str())};
+        SPDLOG_DEBUG("    -> function not found");
+        return {out, QString("function '%1' not found").arg(var.c_str())};
+      }
+    } else {
+      // variable
+      if (auto iter = varMap.find(var); iter != varMap.cend()) {
+        // replace variable with map result
+        SPDLOG_DEBUG("    -> {} ", iter->second);
+        out.append(iter->second);
+      } else {
+        // if not found, check if it is a number, if so append it and continue
+        bool isValidDouble;
+        QString(var.c_str()).toDouble(&isValidDouble);
+        if (allowImplicitNames || isValidDouble) {
+          out.append(var);
+        } else {
+          SPDLOG_DEBUG("    -> variable not found");
+          return {out, QString("variable '%1' not found").arg(var.c_str())};
+        }
       }
     }
     if (end == std::string::npos) {
@@ -199,31 +269,34 @@ static std::pair<std::string, QString> substitute(
   return {out, {}};
 }
 
-std::string QPlainTextMathEdit::variablesToDisplayNames(
-    const std::string &expr) const {
-  const auto &map = mapVarsToDisplayNames;
-  if (map.empty()) {
+std::string
+QPlainTextMathEdit::variablesToDisplayNames(const std::string &expr) const {
+  const auto &varMap = mapVarsToDisplayNames;
+  const auto &funcMap = mapFuncsToDisplayNames;
+  if (varMap.empty() && funcMap.empty()) {
     return expr;
   }
-  return substitute(expr, map, allowImplicitNames).first;
+  return substitute(expr, varMap, funcMap, allowImplicitNames).first;
 }
 
-std::pair<std::string, QString> QPlainTextMathEdit::displayNamesToVariables(
-    const std::string &expr) const {
+std::pair<std::string, QString>
+QPlainTextMathEdit::displayNamesToVariables(const std::string &expr) const {
   if (expr.empty()) {
     return {};
   }
   std::string out;
   const char quoteChar = '"';
-  const auto &map = mapDisplayNamesToVars;
-  if (map.empty()) {
+  const auto &varMap = mapDisplayNamesToVars;
+  const auto &funcMap = mapDisplayNamesToFuncs;
+  if (varMap.empty()) {
     return {expr, ""};
   }
   // find first quote char
   auto start = expr.find(quoteChar);
   if (start > 0) {
     // substitute any text before opening quote
-    auto subs = substitute(expr.substr(0, start), map, allowImplicitNames);
+    auto subs =
+        substitute(expr.substr(0, start), varMap, funcMap, allowImplicitNames);
     if (subs.second.isEmpty()) {
       out.append(subs.first);
     } else {
@@ -239,11 +312,13 @@ std::pair<std::string, QString> QPlainTextMathEdit::displayNamesToVariables(
       SPDLOG_DEBUG("  - no closing quote");
       return {out, "no closing quote"};
     }
-    // extract name & replace with variable if found
+    // extract name & replace with variable or function if found
     std::string name = expr.substr(start, end - start);
     SPDLOG_TRACE("  - name {} (chars {}-{})", name, start, end);
-    if (auto iter = map.find(name); iter != map.cend()) {
-      out.append(iter->second);
+    if (auto varIter = varMap.find(name); varIter != varMap.cend()) {
+      out.append(varIter->second);
+    } else if (auto funcIter = funcMap.find(name); funcIter != funcMap.cend()) {
+      out.append(funcIter->second);
     } else if (allowImplicitNames) {
       out.append(name);
     } else {
@@ -257,8 +332,8 @@ std::pair<std::string, QString> QPlainTextMathEdit::displayNamesToVariables(
     start = expr.find(quoteChar, end);
     if (start > end) {
       // substitute any text before next "
-      auto subs =
-          substitute(expr.substr(end, start - end), map, allowImplicitNames);
+      auto subs = substitute(expr.substr(end, start - end), varMap, funcMap,
+                             allowImplicitNames);
       if (subs.second.isEmpty()) {
         out.append(subs.first);
       } else {
@@ -303,6 +378,7 @@ void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
             variablesToDisplayNames(currentVariableMath).c_str();
       } else {
         // if SymEngine failed to parse, capture error message
+        SPDLOG_DEBUG("  -> {}", modelMath->getErrorMessage().c_str());
         currentErrorMessage = modelMath->getErrorMessage().c_str();
       }
     } else {
@@ -352,7 +428,7 @@ void QPlainTextMathEdit::qPlainTextEdit_cursorPositionChanged() {
   auto expr = toPlainText();
   QTextEdit::ExtraSelection s{textCursor(), {}};
   int i = s.cursor.position();
-  if (expr[i] == '(') {
+  if (i < expr.size() && expr[i] == '(') {
     auto [len, valid] = getClosingBracket(expr, i, +1);
     const auto &col = valid ? colourValid : colourInvalid;
     s.cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor,

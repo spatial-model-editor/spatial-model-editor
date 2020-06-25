@@ -8,6 +8,7 @@
 class QLabel;
 class TabFunctions;
 class TabGeometry;
+class TabParameters;
 class TabReactions;
 class TabSimulate;
 class TabSpecies;
@@ -19,11 +20,11 @@ class MainWindow;
 class MainWindow : public QMainWindow {
   Q_OBJECT
 
- public:
+public:
   explicit MainWindow(const QString &filename = {}, QWidget *parent = nullptr);
   ~MainWindow();
 
- private:
+private:
   std::unique_ptr<Ui::MainWindow> ui;
   QLabel *statusBarPermanentMessage;
   model::Model sbmlDoc;
@@ -43,6 +44,7 @@ class MainWindow : public QMainWindow {
   TabSpecies *tabSpecies;
   TabReactions *tabReactions;
   TabFunctions *tabFunctions;
+  TabParameters *tabParameters;
   TabSimulate *tabSimulate;
 
   void validateSBMLDoc(const QString &filename = {});

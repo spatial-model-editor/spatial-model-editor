@@ -15,7 +15,7 @@ branches:
 env:
   global:
     # python wheel building can be disabled to speed up CI when working on a PR
-    - BUILD_PYTHON_WHEELS: false
+    - BUILD_PYTHON_WHEELS: true
     # pypi TWINE_PASSWORD
     - secure: "GFBxgbwP75qb0QW3jFO3e3fbfFLpYue+kUZGm3ArNZ9ExeXPGU3fxfxiBolEPnnPK98VlZZ8R0WBQptvWnaBN0tamt5r7OCXljQdpNgRF04MMa1gtbAEnuYjd6dHQ5CbdiEKxK4MnF28jJ+0wnw35E7YPGq357XWKwGFoG0HT9UenFd7HRbzsM0WmO7sog8bZYahYU+nyIDu6AVGlsc1b4XpVEu/pcuY2PexzYpV4wv+qVprRIeTwi2aFb4bmr3XcPZtyps3eiExLISHmz3mAuHIiNEt3wQA7Kjzsz93lm6DlGi3LSEXugfomGzg3oyHQC8oKKky/D6hHqnc9Jfow4Epj3aHvE4LP00TxDiyrjqvVGeCHa/RL/WIGJ/zZA4W7QTr2wvDOhw5EOuSmIW42tmOsOV4Zo/wr5d9A0r0VUfHhrsi1QUHmFFgTJXeTDyHYC32mvXy8EuaxLRFLBUVKE3gPfaYUgRafvx1Kn7H9WUmrpA7JAj2caMYD6UtKly1J6BFyTpPFlGgk3yxzVYgbeToOOrabQzGzYBuaxz6aysbyPra+rYF5SrJ/Dp4TPjfoE/1IIjmrbVpYEQGdfojnxxN6xnW7woPgq8IUDStw7iR83xyluWEtn1i1KlzRA8NMNdBHxgFWQ9rpE/DZikeJ8yb0FoEleMRjaE6G4C33rc="
 
@@ -173,7 +173,7 @@ jobs:
       python: 3.8
       services:
         - docker
-      env: DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.03.18.a
+      env: DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.06.27.a
       install:
         - docker pull $DOCKER_IMAGE
       before_script:
@@ -210,7 +210,7 @@ jobs:
         - CIBW_BUILD_VERBOSITY=0
         - CCACHE_BASEDIR=/private
       install:
-        - python3 -m pip install cibuildwheel==1.4.2
+        - python3 -m pip install cibuildwheel==1.5.1
       script:
         - ccache -s
         - export CMAKE_CXX_COMPILER_LAUNCHER="ccache"
@@ -242,9 +242,9 @@ jobs:
       install:
         - choco install python --version=2.7.11 --force --no-progress -y
         - choco install python --version=3.5.4.20200110 --force --no-progress -y
-        - choco install python --version=3.6.8.20200110 --force --no-progress -y
+        - choco install python --version=3.6.8 --force --no-progress -y
         - choco install python --version=3.7.7 --force --no-progress -y
-        - choco install python --version=3.8.3 --force --no-progress -y
+        - choco install python --version=3.8.2 --force --no-progress -y
         # 32-bit pypy
         # - choco install python.pypy --version=7.1.0 --force --no-progress -y
         # - choco install pypy3 --version=7.1.0 --force --no-progress -y
@@ -270,7 +270,6 @@ jobs:
         - export TWINE_USERNAME="__token__"
         - /c/Python38/python.exe -m pip install --upgrade twine
         - if [ -n "${TRAVIS_TAG}" ]; then /c/Python38/python.exe -m twine upload --verbose --non-interactive --skip-existing dist/* ; fi
-
       cache:
         directories:
           - /C/tools/msys64/mingw64

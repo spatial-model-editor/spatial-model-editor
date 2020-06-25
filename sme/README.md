@@ -26,13 +26,13 @@ Supported platforms and python versions:
 
   - CPython: 2.7, 3.5, 3.6, 3.7, 3.8
 
-  - PyPy: 2.7 (4.1, 7.3), 3.6 (7.1, 7.2, 7.3)
+  - PyPy: 2.7, 3.6
 
 - macOS 10.14+
 
   - CPython: 3.5, 3.6, 3.7, 3.8
 
-  - PyPy: 2.6 (7.3), 3.6 (7.3)
+  - PyPy: 2.7, 3.6
 
 - windows 64-bit
 
