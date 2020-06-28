@@ -33,13 +33,14 @@ static QPointF makePoint(double radius, double angle, const QPointF &x0) {
 static std::vector<QPoint> getBPNeighboursOfFP(const QPoint &fp,
                                                const BoundaryPixels &bbg) {
   std::vector<QPoint> neighbours;
-  neighbours.reserve(8);
+  constexpr std::size_t defaultSize{8};
+  neighbours.reserve(defaultSize);
   constexpr std::array<QPoint, 4> nnp = {QPoint(1, 0), QPoint(-1, 0),
                                          QPoint(0, 1), QPoint(0, -1)};
   SPDLOG_TRACE("FP ({},{})", fp.x(), fp.y());
   // fill queue with all pixels in this FP
   std::vector<QPoint> queue;
-  queue.reserve(8);
+  queue.reserve(defaultSize);
   queue.push_back(fp);
   std::size_t queueIndex = 0;
   while (queueIndex < queue.size()) {
@@ -93,7 +94,7 @@ static std::optional<QPoint> getAnyBoundaryPoint(const BoundaryPixels &bbg) {
   return {};
 }
 
-bool ImageBoundaries::fpHasMembrane(const FixedPoint &fp) const {
+static bool fpHasMembrane(const FixedPoint &fp) {
   return std::any_of(fp.lines.cbegin(), fp.lines.cend(),
                      [](const auto &line) { return line.isMembrane; });
 }
@@ -382,4 +383,4 @@ void ImageBoundaries::setMembraneWidth(std::size_t boundaryIndex,
   }
 }
 
-}  // namespace mesh
+} // namespace mesh

@@ -84,6 +84,24 @@ class TestSpecies(unittest.TestCase):
         self.assertEqual(m.compartments["Cell"].species["New A!"].name, "New A!")
 
 
+class TestParameter(unittest.TestCase):
+    def test_parameter(self):
+        m = sme.open_example_model()
+        p = m.parameters["param"]
+        self.assertEqual(repr(p), "<sme.Parameter named 'param'>")
+        self.assertEqual(str(p)[0:33], "<sme.Parameter>\n  - name: 'param'")
+        self.assertEqual(p.name, "param")
+        self.assertEqual(p.value, "1")
+        p.name = "New param"
+        p.value = "0.8765"
+        self.assertEqual(repr(p), "<sme.Parameter named 'New param'>")
+        self.assertEqual(str(p)[0:37], "<sme.Parameter>\n  - name: 'New param'")
+        self.assertEqual(p.name, "New param")
+        self.assertEqual(p.value, "0.8765")
+        self.assertRaises(KeyError, lambda: m.parameters["param"])
+        self.assertEqual(m.parameters["New param"].name, "New param")
+
+
 class TestReaction(unittest.TestCase):
     def test_reaction(self):
         m = sme.open_example_model()

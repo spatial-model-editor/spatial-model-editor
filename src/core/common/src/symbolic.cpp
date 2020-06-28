@@ -60,12 +60,12 @@ static std::string toString(const SymEngine::RCP<const SymEngine::Basic> &e) {
 }
 
 struct Symbolic::SymEngineImpl {
-  SymEngine::vec_basic expr;
-  SymEngine::vec_basic varVec;
-  SymEngine::LLVMDoubleVisitor lambdaLLVM;
-  std::map<std::string, SymEngine::RCP<const SymEngine::Symbol>> symbols;
-  bool valid;
-  std::string errorMessage;
+  SymEngine::vec_basic expr{};
+  SymEngine::vec_basic varVec{};
+  SymEngine::LLVMDoubleVisitor lambdaLLVM{};
+  std::map<std::string, SymEngine::RCP<const SymEngine::Symbol>> symbols{};
+  bool valid{false};
+  std::string errorMessage{};
   void init(const std::vector<std::string> &expressions,
             const std::vector<std::string> &variables,
             const std::vector<std::pair<std::string, double>> &constants);

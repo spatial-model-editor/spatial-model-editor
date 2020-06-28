@@ -55,20 +55,20 @@ struct TriangulateFixedPoints {
 };
 
 class Triangulate {
- private:
+private:
   std::vector<QPointF> points;
   std::vector<std::vector<TriangleIndex>> triangleIndices;
   std::vector<std::vector<RectangleIndex>> rectangleIndices;
-  TriangulateBoundaries addMembranes(const TriangulateBoundaries& boundaries,
-                                     const TriangulateFixedPoints& fixedPoints);
-  void triangulateCompartments(const TriangulateBoundaries& boundaries);
+  TriangulateBoundaries addMembranes(const TriangulateBoundaries &tv,
+                                     const TriangulateFixedPoints &tfp);
+  void triangulateCompartments(const TriangulateBoundaries &boundaries);
 
- public:
-  explicit Triangulate(const TriangulateBoundaries& boundaries,
-                       const TriangulateFixedPoints& fixedPoints = {});
-  const std::vector<QPointF>& getPoints() const;
-  const std::vector<std::vector<TriangleIndex>>& getTriangleIndices() const;
-  const std::vector<std::vector<RectangleIndex>>& getRectangleIndices() const;
+public:
+  explicit Triangulate(const TriangulateBoundaries &boundaries,
+                       const TriangulateFixedPoints &fixedPoints = {});
+  const std::vector<QPointF> &getPoints() const;
+  const std::vector<std::vector<TriangleIndex>> &getTriangleIndices() const;
+  const std::vector<std::vector<RectangleIndex>> &getRectangleIndices() const;
 };
 
-}  // namespace mesh
+} // namespace mesh

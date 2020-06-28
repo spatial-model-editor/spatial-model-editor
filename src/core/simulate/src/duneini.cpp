@@ -290,7 +290,7 @@ DuneConverter::DuneConverter(const model::Model &SbmlDoc, double dt,
             !reacsInCompartment.isEmpty()) {
           for (const auto &r : reacsInCompartment) {
             reacs.push_back(r.toStdString());
-            reacScaleFactors.push_back("1");
+            reacScaleFactors.emplace_back("1");
           }
         }
       }

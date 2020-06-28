@@ -20,6 +20,7 @@
 #include "model.hpp"
 #include "tabfunctions.hpp"
 #include "tabgeometry.hpp"
+#include "tabparameters.hpp"
 #include "tabreactions.hpp"
 #include "tabsimulate.hpp"
 #include "tabspecies.hpp"
@@ -47,6 +48,9 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
 
   tabFunctions = new TabFunctions(sbmlDoc, ui->tabFunctions);
   ui->tabFunctions->layout()->addWidget(tabFunctions);
+
+  tabParameters = new TabParameters(sbmlDoc, ui->tabParameters);
+  ui->tabParameters->layout()->addWidget(tabParameters);
 
   tabSimulate = new TabSimulate(sbmlDoc, ui->lblGeometry, ui->tabSimulate);
   ui->tabSimulate->layout()->addWidget(tabSimulate);
@@ -143,10 +147,11 @@ void MainWindow::tabMain_currentChanged(int index) {
     SPECIES = 1,
     REACTIONS = 2,
     FUNCTIONS = 3,
-    SIMULATE = 4,
-    SBML = 5,
-    DUNE = 6,
-    GMSH = 7
+    PARAMETERS = 4,
+    SIMULATE = 5,
+    SBML = 6,
+    DUNE = 7,
+    GMSH = 8
   };
   ui->tabMain->setWhatsThis(ui->tabMain->tabWhatsThis(index));
   SPDLOG_DEBUG("Tab changed to {} [{}]", index,
@@ -163,6 +168,9 @@ void MainWindow::tabMain_currentChanged(int index) {
     break;
   case TabIndex::FUNCTIONS:
     tabFunctions->loadModelData();
+    break;
+  case TabIndex::PARAMETERS:
+    tabParameters->loadModelData();
     break;
   case TabIndex::SIMULATE:
     tabSimulate->loadModelData();

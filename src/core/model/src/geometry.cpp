@@ -1,13 +1,16 @@
 #include "geometry.hpp"
 
+#include <utility>
+
 #include "logger.hpp"
 #include "utils.hpp"
 
 namespace geometry {
 
-Compartment::Compartment(const std::string &compId, const QImage &img, QRgb col)
-    : compartmentId{compId}, colour{col}, image{img.size(),
-                                                QImage::Format_Mono} {
+Compartment::Compartment(std::string compId, const QImage &img, QRgb col)
+    : compartmentId{std::move(compId)}, colour{col}, image{
+                                                         img.size(),
+                                                         QImage::Format_Mono} {
   image.setColor(0, qRgba(0, 0, 0, 0));
   image.setColor(1, col);
   image.fill(0);
@@ -59,10 +62,10 @@ void Compartment::setPixelWidth(double width) { pixelWidth = width; }
 
 const QImage &Compartment::getCompartmentImage() const { return image; }
 
-Membrane::Membrane(const std::string &membraneId, const Compartment *A,
+Membrane::Membrane(std::string membraneId, const Compartment *A,
                    const Compartment *B,
                    const std::vector<std::pair<QPoint, QPoint>> *membranePairs)
-    : id{membraneId}, compA{A}, compB{B},
+    : id{std::move(membraneId)}, compA{A}, compB{B},
       image{A->getCompartmentImage().size(),
             QImage::Format_ARGB32_Premultiplied},
       pointPairs{membranePairs} {
@@ -85,7 +88,7 @@ Membrane::Membrane(const std::string &membraneId, const Compartment *A,
   for (const auto &[pA, pB] : *membranePairs) {
     auto iA = Aindexer.getIndex(pA);
     auto iB = Bindexer.getIndex(pB);
-    indexPair.push_back({iA.value(), iB.value()});
+    indexPair.emplace_back(iA.value(), iB.value());
   }
   image.fill(qRgba(0, 0, 0, 0));
   for (const auto &[pA, pB] : *pointPairs) {
@@ -113,9 +116,9 @@ Membrane::getIndexPairs() const {
 
 const QImage &Membrane::getImage() const { return image; }
 
-Field::Field(const Compartment *compartment, const std::string &specID,
+Field::Field(const Compartment *compartment, std::string specID,
              double diffConst, QRgb col)
-    : id(specID), comp(compartment), diffusionConstant(diffConst), colour(col),
+    : id(std::move(specID)), comp(compartment), diffusionConstant(diffConst), colour(col),
       conc(compartment->nPixels(), 0.0) {
   SPDLOG_INFO("speciesID: {}", id);
   SPDLOG_INFO("compartmentID: {}", comp->getId());
@@ -190,7 +193,8 @@ QImage Field::getConcentrationImage() const {
   img.fill(qRgba(0, 0, 0, 0));
   // for now rescale conc to [0,1] to multiply species colour
   double cmax = *std::max_element(conc.cbegin(), conc.cend());
-  if (cmax < 1e-15) {
+  constexpr double concMinNonZeroThreshold{1e-15};
+  if (cmax < concMinNonZeroThreshold) {
     cmax = 1.0;
   }
   for (std::size_t i = 0; i < comp->nPixels(); ++i) {

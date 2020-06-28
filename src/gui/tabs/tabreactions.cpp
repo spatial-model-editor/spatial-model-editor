@@ -170,16 +170,10 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
   ui->txtReactionName->setText(sbmlDoc.getReactions().getName(currentReacId));
   ui->cmbReactionLocation->setCurrentIndex(locationIndex);
   // reset variables to only built-in functions
-  ui->txtReactionRate->setVariables(
-      {"sin", "cos", "exp", "log", "ln", "pow", "sqrt"});
-  // get model global parameters
-  for (const auto &[id, name, value] :
-       sbmlDoc.getParameters().getGlobalConstants()) {
-    ui->txtReactionRate->addVariable(id, name);
-  }
-  // get non-constant parameters that are replaced by assignment rules
-  for (const auto &[id, name, expr] :
-       sbmlDoc.getParameters().getNonConstantParameters()) {
+  ui->txtReactionRate->clearFunctions();
+  ui->txtReactionRate->addDefaultFunctions();
+  // add model parameters
+  for (const auto &[id, name] : sbmlDoc.getParameters().getSymbols()) {
     ui->txtReactionRate->addVariable(id, name);
   }
   // add any reaction localParameters
@@ -191,7 +185,7 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
   }
   // add model functions
   for (const auto &functionId : sbmlDoc.getFunctions().getIds()) {
-    ui->txtReactionRate->addVariable(
+    ui->txtReactionRate->addFunction(
         functionId.toStdString(),
         sbmlDoc.getFunctions().getName(functionId).toStdString());
   }

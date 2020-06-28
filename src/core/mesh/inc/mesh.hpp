@@ -34,16 +34,16 @@ class Mesh {
   // input data
   QImage img;
   QPointF origin;
-  double pixel;
+  double pixel{};
   std::vector<QPointF> compartmentInteriorPoints;
   std::vector<std::size_t> boundaryMaxPoints;
   std::vector<std::size_t> compartmentMaxTriangleArea;
   // generated data
   std::unique_ptr<ImageBoundaries> imageBoundaries;
   std::vector<QPointF> vertices;
-  std::size_t nTriangles;
+  std::size_t nTriangles{};
   std::vector<std::vector<QTriangleF>> triangles;
-  std::size_t nRectangles;
+  std::size_t nRectangles{};
   std::vector<std::vector<QRectangleF>> rectangles;
   std::vector<std::vector<TriangleIndex>> triangleIndices;
   std::vector<std::vector<RectangleIndex>> rectangleIndices;
@@ -56,8 +56,8 @@ class Mesh {
   // constructor to generate mesh from supplied image
   explicit Mesh(const QImage &image,
                 const std::vector<QPointF> &interiorPoints = {},
-                const std::vector<std::size_t> &maxPoints = {},
-                const std::vector<std::size_t> &maxTriangleArea = {},
+                std::vector<std::size_t> maxPoints = {},
+                std::vector<std::size_t> maxTriangleArea = {},
                 const std::vector<std::pair<std::string, ColourPair>>
                     &membraneColourPairs = {},
                 const std::vector<double> &membraneWidths = {},

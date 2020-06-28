@@ -12,8 +12,8 @@
 #include "sme_common.hpp"
 #include "sme_model.hpp"
 
-static std::vector<std::vector<std::vector<int>>> qImageToVec(
-    const QImage &img) {
+static std::vector<std::vector<std::vector<int>>>
+qImageToVec(const QImage &img) {
   std::size_t h = static_cast<std::size_t>(img.height());
   std::size_t w = static_cast<std::size_t>(img.width());
   std::vector<std::vector<std::vector<int>>> v(
@@ -47,6 +47,8 @@ void pybindModel(const pybind11::module &m) {
                     "The name of this model")
       .def_property_readonly("compartments", &sme::Model::getCompartments,
                              "The compartments in this model")
+      .def_property_readonly("parameters", &sme::Model::getParameters,
+                             "The parameters in this model")
       .def("__repr__",
            [](const sme::Model &a) {
              return fmt::format("<sme.Model named '{}'>", a.getName());
@@ -67,6 +69,12 @@ void Model::importSbmlFile(const std::string &filename) {
       static_cast<std::size_t>(s->getCompartments().getIds().size()));
   for (const auto &compartmentId : s->getCompartments().getIds()) {
     compartments.emplace_back(s.get(), compartmentId.toStdString());
+  }
+  parameters.clear();
+  parameters.reserve(
+      static_cast<std::size_t>(s->getParameters().getIds().size()));
+  for (const auto &paramId : s->getParameters().getIds()) {
+    parameters.emplace_back(s.get(), paramId.toStdString());
   }
 }
 
@@ -102,8 +110,8 @@ std::vector<double> Model::simulationTimePoints() const {
   return sim->getTimePoints();
 }
 
-std::vector<std::vector<std::vector<int>>> Model::concentrationImage(
-    std::size_t timePointIndex) const {
+std::vector<std::vector<std::vector<int>>>
+Model::concentrationImage(std::size_t timePointIndex) const {
   auto img = sim->getConcImage(timePointIndex, {}, true);
   return qImageToVec(img);
 }
@@ -120,6 +128,10 @@ std::map<std::string, Compartment *> Model::getCompartments() {
   return vecToNamePtrMap(compartments);
 }
 
+std::map<std::string, Parameter *> Model::getParameters() {
+  return vecToNamePtrMap(parameters);
+}
+
 std::string Model::getStr() const {
   std::string str("<sme.Model>\n");
   str.append(fmt::format("  - name: '{}'\n", getName()));
@@ -127,4 +139,4 @@ std::string Model::getStr() const {
   return str;
 }
 
-}  // namespace sme
+} // namespace sme

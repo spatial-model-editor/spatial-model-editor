@@ -112,7 +112,7 @@ QString ModelCompartments::add(const QString &name) {
   ids.push_back(id);
   names.push_back(newName);
   colours.push_back(0);
-  compartments.push_back({});
+  compartments.emplace_back();
   createDefaultCompartmentGeometryIfMissing(sbmlModel);
   modelGeometry->checkIfGeometryIsValid();
   modelMembranes->updateCompartments(compartments);
@@ -124,7 +124,7 @@ static void removeCompartmentFromSBML(libsbml::Model *model,
                                       const std::string &sId) {
   auto *comp = model->getCompartment(sId);
   // find and remove any spatial SBML stuff related to compartment
-  auto *scp = static_cast<const libsbml::SpatialCompartmentPlugin *>(
+  const auto *scp = static_cast<const libsbml::SpatialCompartmentPlugin *>(
       comp->getPlugin("spatial"));
   if (scp->isSetCompartmentMapping()) {
     std::string domainTypeId = scp->getCompartmentMapping()->getDomainType();
@@ -177,7 +177,7 @@ bool ModelCompartments::remove(const QString &id) {
   using diffType = decltype(compartments)::difference_type;
   compartments.erase(compartments.begin() + static_cast<diffType>(i));
   removeCompartmentFromSBML(sbmlModel, id.toStdString());
-  for (auto s : modelSpecies->getIds(id)) {
+  for (const auto& s : modelSpecies->getIds(id)) {
     modelSpecies->remove(s);
   }
   // todo: update reactions

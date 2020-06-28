@@ -192,8 +192,9 @@ QImage TiffReader::getImage(std::size_t i) const {
     for (int x = 0; x < image.width(); ++x) {
       // rescale pixel values from [0, max] to [0,255]
       double unitNormValue = row[static_cast<std::size_t>(x)] / maxVal;
+      unsigned int mask8bit{0x0000ff};
       unsigned int val8 =
-          0x0000ff & static_cast<unsigned int>(255 * unitNormValue);
+          mask8bit & static_cast<unsigned int>(255 * unitNormValue);
       unsigned int rgb = 0xff000000 | val8 | (val8 << 8) | (val8 << 16);
       image.setPixel(x, y, rgb);
     }

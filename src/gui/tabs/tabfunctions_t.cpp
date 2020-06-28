@@ -70,11 +70,11 @@ SCENARIO("Functions Tab", "[gui/tabs/functions][gui/tabs][gui][functions]") {
     sendMouseClick(btnAddFunctionParam);
     REQUIRE(listFunctionParams->count() == 2);
     REQUIRE(listFunctionParams->item(0)->text().toStdString() == "y");
-    REQUIRE(listFunctionParams->item(1)->text().toStdString() == "qq QA");
+    REQUIRE(listFunctionParams->item(1)->text().toStdString() == "qqQA");
     REQUIRE(btnRemoveFunctionParam->isEnabled() == true);
     REQUIRE(model.getFunctions().getArguments("func_1").size() == 2);
     REQUIRE(model.getFunctions().getArguments("func_1")[0] == "y");
-    REQUIRE(model.getFunctions().getArguments("func_1")[1] == "qq QA");
+    REQUIRE(model.getFunctions().getArguments("func_1")[1] == "qqQA");
 
     // click remove param, then press escape at confirmation dialog to cancel
     sendMouseClick(btnRemoveFunctionParam);
@@ -82,7 +82,7 @@ SCENARIO("Functions Tab", "[gui/tabs/functions][gui/tabs][gui][functions]") {
     REQUIRE(listFunctionParams->count() == 2);
     REQUIRE(model.getFunctions().getArguments("func_1").size() == 2);
     REQUIRE(model.getFunctions().getArguments("func_1")[0] == "y");
-    REQUIRE(model.getFunctions().getArguments("func_1")[1] == "qq QA");
+    REQUIRE(model.getFunctions().getArguments("func_1")[1] == "qqQA");
 
     // this time press spacebar to press default 'yes' button to confirm
     sendMouseClick(btnRemoveFunctionParam);

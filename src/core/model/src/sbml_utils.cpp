@@ -7,8 +7,8 @@
 
 #include "logger.hpp"
 
-libsbml::SampledFieldGeometry *getSampledFieldGeometry(
-    libsbml::Geometry *geom) {
+libsbml::SampledFieldGeometry *
+getSampledFieldGeometry(libsbml::Geometry *geom) {
   for (unsigned i = 0; i < geom->getNumGeometryDefinitions(); ++i) {
     auto *def = geom->getGeometryDefinition(i);
     if (def->getIsActive() && def->isSampledFieldGeometry()) {
@@ -102,7 +102,7 @@ unsigned int getNumSpatialDimensions(const libsbml::Model *model) {
         "compartment exists with more dimensions than number of coordinates");
   }
   return maxCompDim;
-};
+}
 
 static std::string getCompartmentIdFromDomainId(const libsbml::Model *model,
                                                 const std::string &domainId) {
@@ -144,8 +144,9 @@ std::string getDomainIdFromCompartmentId(const libsbml::Model *model,
   return domain->getId();
 }
 
-std::optional<std::pair<std::string, std::string>> getAdjacentCompartments(
-    const libsbml::Model *model, const std::string &compartmentId) {
+std::optional<std::pair<std::string, std::string>>
+getAdjacentCompartments(const libsbml::Model *model,
+                        const std::string &compartmentId) {
   auto domainId = getDomainIdFromCompartmentId(model, compartmentId);
   const auto *geom = getOrCreateGeometry(model);
   std::vector<std::string> adjacentDomains;

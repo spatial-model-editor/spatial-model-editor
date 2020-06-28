@@ -14,8 +14,8 @@
 
 namespace model {
 
-libsbml::SampledFieldGeometry *getOrCreateSampledFieldGeometry(
-    libsbml::Geometry *geom) {
+libsbml::SampledFieldGeometry *
+getOrCreateSampledFieldGeometry(libsbml::Geometry *geom) {
   auto *sfgeom = getSampledFieldGeometry(geom);
   if (sfgeom == nullptr) {
     sfgeom = geom->createSampledFieldGeometry();
@@ -121,8 +121,9 @@ static std::vector<QRgb> setImagePixelsNative(
 }
 
 template <typename T>
-static std::vector<bool> getMatchingSampledValues(
-    const std::vector<T> &values, const libsbml::SampledVolume *sfvol) {
+static std::vector<bool>
+getMatchingSampledValues(const std::vector<T> &values,
+                         const libsbml::SampledVolume *sfvol) {
   std::vector<bool> matches(values.size(), false);
   if (sfvol->isSetSampledValue()) {
     T sv = static_cast<T>(sfvol->getSampledValue());
@@ -157,7 +158,7 @@ static void setMatchingPixelsToColour(QImage &img,
 template <typename T>
 static std::vector<QRgb> setImagePixels(
     QImage &img, const libsbml::SampledField *sampledField,
-    const std::vector<const libsbml::SampledVolume *> sampledVolumes) {
+    const std::vector<const libsbml::SampledVolume *> &sampledVolumes) {
   std::vector<QRgb> colours(sampledVolumes.size(), 0);
   img.fill(qRgb(0, 0, 0));
   auto values = utils::stringToVector<T>(sampledField->getSamples());
@@ -274,4 +275,4 @@ void exportSampledFieldGeometry(libsbml::Geometry *geom,
               sf->getSamplesLength());
 }
 
-}  // namespace sbml
+} // namespace model

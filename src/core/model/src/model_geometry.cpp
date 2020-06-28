@@ -170,7 +170,9 @@ void ModelGeometry::importSampledFieldGeometry(libsbml::Model *model) {
   double xPixelSize = physicalSize.width() / xPixels;
   double yPixels = static_cast<double>(image.height());
   double yPixelSize = physicalSize.height() / yPixels;
-  if (std::abs((xPixelSize - yPixelSize) / xPixelSize) > 1e-12) {
+  constexpr double maxRelativeDifference{1e-12};
+  if (std::abs((xPixelSize - yPixelSize) / xPixelSize) >
+      maxRelativeDifference) {
     SPDLOG_WARN("Pixels are not square: {} x {}", xPixelSize, yPixelSize);
   }
   pixelWidth = xPixelSize;

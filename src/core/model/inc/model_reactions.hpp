@@ -11,7 +11,7 @@
 namespace libsbml {
 class Model;
 class Species;
-}  // namespace libsbml
+} // namespace libsbml
 
 namespace geometry {
 class Membrane;
@@ -20,13 +20,13 @@ class Membrane;
 namespace model {
 
 class ModelReactions {
- private:
+private:
   QStringList ids;
   QStringList names;
   QVector<QStringList> parameterIds;
   libsbml::Model *sbmlModel = nullptr;
 
- public:
+public:
   ModelReactions();
   explicit ModelReactions(libsbml::Model *model,
                           const std::vector<geometry::Membrane> &membranes);
@@ -56,7 +56,7 @@ class ModelReactions {
                            const QString &parameterId) const;
   QString addParameter(const QString &reactionId, const QString &name,
                        double value);
-  void removeParameter(const QString &reactionId, const QString &name);
+  void removeParameter(const QString &reactionId, const QString &id);
 };
 
-}  // namespace sbml
+} // namespace model

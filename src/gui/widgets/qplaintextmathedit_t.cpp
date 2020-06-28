@@ -4,9 +4,8 @@
 #include "qplaintextmathedit.hpp"
 #include "qt_test_utils.hpp"
 
-SCENARIO("QPlainTextMathEdit",
-         "[gui/widgets/qplaintextmathedit][gui/"
-         "widgets][gui][qplaintextmathedit][symbolic]") {
+SCENARIO("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
+                               "widgets][gui][qplaintextmathedit][symbolic]") {
   QPlainTextMathEdit mathEdit;
   struct Signal {
     QString math;
@@ -21,7 +20,7 @@ SCENARIO("QPlainTextMathEdit",
       });
   REQUIRE(mathEdit.getMath() == "");
   REQUIRE(mathEdit.mathIsValid() == false);
-  REQUIRE(mathEdit.getErrorMessage() == "");
+  REQUIRE(mathEdit.getErrorMessage() == "Empty expression");
   WHEN("SymEngine backend") {
     GIVEN("expression and/or variables") {
       mathEdit.show();
@@ -77,7 +76,7 @@ SCENARIO("QPlainTextMathEdit",
       mathEdit.removeVariable("x");
       REQUIRE(mathEdit.getMath() == "");
       REQUIRE(mathEdit.mathIsValid() == false);
-      REQUIRE(mathEdit.getErrorMessage() == "name 'x' not found");
+      REQUIRE(mathEdit.getErrorMessage() == "variable 'x' not found");
       REQUIRE(signal.math == mathEdit.getMath());
       REQUIRE(signal.valid == mathEdit.mathIsValid());
       REQUIRE(signal.error == mathEdit.getErrorMessage());
@@ -86,7 +85,7 @@ SCENARIO("QPlainTextMathEdit",
       sendKeyEvents(&mathEdit, {"&"});
       REQUIRE(mathEdit.getMath() == "");
       REQUIRE(mathEdit.mathIsValid() == false);
-      REQUIRE(mathEdit.getErrorMessage() == "name 'x&' not found");
+      REQUIRE(mathEdit.getErrorMessage() == "variable 'x&' not found");
       REQUIRE(signal.math == mathEdit.getMath());
       REQUIRE(signal.valid == mathEdit.mathIsValid());
       REQUIRE(signal.error == mathEdit.getErrorMessage());
@@ -95,7 +94,7 @@ SCENARIO("QPlainTextMathEdit",
       sendKeyEvents(&mathEdit, {"Backspace", "!"});
       REQUIRE(mathEdit.getMath() == "");
       REQUIRE(mathEdit.mathIsValid() == false);
-      REQUIRE(mathEdit.getErrorMessage() == "name 'x!' not found");
+      REQUIRE(mathEdit.getErrorMessage() == "variable 'x!' not found");
       REQUIRE(signal.math == mathEdit.getMath());
       REQUIRE(signal.valid == mathEdit.mathIsValid());
       REQUIRE(signal.error == mathEdit.getErrorMessage());
@@ -111,6 +110,37 @@ SCENARIO("QPlainTextMathEdit",
       REQUIRE(signal.error == mathEdit.getErrorMessage());
       mathEdit.compileMath();
       REQUIRE(mathEdit.evaluateMath() == dbl_approx(22.0));
+    }
+    GIVEN("scientific notation numbers") {
+      mathEdit.show();
+      // "-3e-12"
+      sendKeyEvents(&mathEdit, {"-", "3", "e", "-", "1", "2"});
+      REQUIRE(mathEdit.getMath() == "-3e-12");
+      REQUIRE(mathEdit.mathIsValid() == true);
+      REQUIRE(mathEdit.getErrorMessage() == "");
+      REQUIRE(signal.math == mathEdit.getMath());
+      REQUIRE(signal.valid == mathEdit.mathIsValid());
+      REQUIRE(signal.error == mathEdit.getErrorMessage());
+      mathEdit.compileMath();
+      REQUIRE(mathEdit.evaluateMath() == dbl_approx(-3e-12));
+      // "-3e-12+"
+      sendKeyEvents(&mathEdit, {"+"});
+      REQUIRE(mathEdit.getMath() == "");
+      REQUIRE(mathEdit.mathIsValid() == false);
+      REQUIRE(mathEdit.getErrorMessage() == "syntax error");
+      REQUIRE(signal.math == mathEdit.getMath());
+      REQUIRE(signal.valid == mathEdit.mathIsValid());
+      REQUIRE(signal.error == mathEdit.getErrorMessage());
+      // "-3e-12+1"
+      sendKeyEvents(&mathEdit, {"1"});
+      REQUIRE(mathEdit.getMath() == "0.999999999997");
+      REQUIRE(mathEdit.mathIsValid() == true);
+      REQUIRE(mathEdit.getErrorMessage() == "");
+      REQUIRE(signal.math == mathEdit.getMath());
+      REQUIRE(signal.valid == mathEdit.mathIsValid());
+      REQUIRE(signal.error == mathEdit.getErrorMessage());
+      mathEdit.compileMath();
+      REQUIRE(mathEdit.evaluateMath() == dbl_approx(1 - 3e-12));
     }
     GIVEN("expression with variables") {
       mathEdit.show();
@@ -155,8 +185,8 @@ SCENARIO("QPlainTextMathEdit",
               dbl_approx(2.0));
       REQUIRE(mathEdit.evaluateMath(std::vector<double>{1.0, 1.0}) ==
               dbl_approx(3.0));
-      // using libSBML map interface works but gives logger warning about
-      // inefficiency
+      // using libSBML map interface for variable values works but gives logger
+      // warning about inefficiency
       std::map<const std::string, std::pair<double, bool>> vars;
       vars["x"] = {1.0, false};
       vars["y"] = {1.0, false};
@@ -174,7 +204,7 @@ SCENARIO("QPlainTextMathEdit",
       REQUIRE(mathEdit.getErrorMessage() == "Unknown symbol: X");
       mathEdit.addVariable("x", "X");
       REQUIRE(mathEdit.mathIsValid() == false);
-      REQUIRE(mathEdit.getErrorMessage() == "name 'y_var' not found");
+      REQUIRE(mathEdit.getErrorMessage() == "variable 'y_var' not found");
       mathEdit.addVariable("y", "y_var");
       REQUIRE(mathEdit.getVariables().size() == 2);
       REQUIRE(mathEdit.mathIsValid() == true);
@@ -187,7 +217,7 @@ SCENARIO("QPlainTextMathEdit",
       REQUIRE(mathEdit.getVariableMath() == "4*x + y");
       mathEdit.removeVariable("y");
       REQUIRE(mathEdit.mathIsValid() == false);
-      REQUIRE(mathEdit.getErrorMessage() == "name 'y_var' not found");
+      REQUIRE(mathEdit.getErrorMessage() == "variable 'y_var' not found");
       mathEdit.removeVariable("x");
       REQUIRE(mathEdit.getVariableMath().empty() == true);
       REQUIRE(mathEdit.mathIsValid() == false);
@@ -215,16 +245,16 @@ SCENARIO("QPlainTextMathEdit",
       REQUIRE(mathEdit.getVariables().empty() == true);
       mathEdit.addVariable("x", "X");
       REQUIRE(mathEdit.getVariables().size() == 1);
-      // "cos(X)"
-      sendKeyEvents(&mathEdit, {"c", "o", "s", "(", "X", ")"});
+      // "cse(X)"
+      sendKeyEvents(&mathEdit, {"c", "s", "e", "(", "X", ")"});
       REQUIRE(signal.math == "");
       REQUIRE(mathEdit.getVariableMath().empty() == true);
-      REQUIRE(mathEdit.getErrorMessage() == "name 'cos' not found");
+      REQUIRE(mathEdit.getErrorMessage() == "function 'cse' not found");
       REQUIRE(mathEdit.mathIsValid() == false);
-      mathEdit.addVariable("cos");
-      REQUIRE(mathEdit.getVariables().size() == 2);
-      REQUIRE(signal.math == "cos(X)");
-      REQUIRE(mathEdit.getVariableMath() == "cos(x)");
+      mathEdit.addFunction("cse");
+      REQUIRE(mathEdit.getVariables().size() == 1);
+      REQUIRE(signal.math == "cse(X)");
+      REQUIRE(mathEdit.getVariableMath() == "cse(x)");
       REQUIRE(mathEdit.getErrorMessage() == "");
       REQUIRE(mathEdit.mathIsValid() == true);
     }

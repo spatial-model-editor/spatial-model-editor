@@ -5,8 +5,8 @@
 #include "image_boundaries.hpp"
 
 // note: only valid for vectors of unique values
-static bool isCyclicPermutation(const std::vector<QPoint>& v1,
-                                const std::vector<QPoint>& v2) {
+static bool isCyclicPermutation(const std::vector<QPoint> &v1,
+                                const std::vector<QPoint> &v2) {
   if (v1.size() != v2.size()) {
     // different size cannot be permutations
     return false;
@@ -55,7 +55,7 @@ SCENARIO("Image Boundaries",
     mesh::ImageBoundaries ib(img, compartmentColours);
 
     // check boundaries
-    const auto& boundaries = ib.getBoundaries();
+    const auto &boundaries = ib.getBoundaries();
     REQUIRE(boundaries.size() == 1);
     REQUIRE(boundaries[0].isLoop());
     REQUIRE(isCyclicPermutation(boundaries[0].getPoints(), imgBoundary));
@@ -78,15 +78,15 @@ SCENARIO("Image Boundaries",
     mesh::ImageBoundaries ib(img, compartmentColours, membranes);
 
     // check boundaries
-    const auto& boundaries = ib.getBoundaries();
-    const auto& fp = ib.getFixedPoints();
+    const auto &boundaries = ib.getBoundaries();
+    const auto &fp = ib.getFixedPoints();
     REQUIRE(boundaries.size() == 3);
     REQUIRE(fp.size() == 2);
     REQUIRE(fp[0].point == QPoint(11, 31));
     REQUIRE(fp[1].point == QPoint(11, 0));
-    const auto& bLeft = boundaries[0];
-    const auto& bMembrane = boundaries[1];
-    const auto& bRight = boundaries[2];
+    const auto &bLeft = boundaries[0];
+    const auto &bMembrane = boundaries[1];
+    const auto &bRight = boundaries[2];
     REQUIRE(bLeft.isLoop() == false);
     REQUIRE(bLeft.isMembrane() == false);
     REQUIRE(bLeft.getFpIndices().startPoint == 0);

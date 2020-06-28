@@ -58,7 +58,7 @@ public:
   const std::vector<std::pair<std::string, double>> &
   getConstants(std::size_t reactionIndex) const;
   Reaction(const model::Model *doc,
-           const std::vector<std::string> &species,
+           std::vector<std::string> species,
            const std::vector<std::string> &reactionIDs);
 };
 

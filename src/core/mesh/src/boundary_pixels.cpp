@@ -250,8 +250,8 @@ class PixelCompartments {
       }
     }
   }
-  std::size_t compartmentIndex() const { return set[0]; }
-  std::size_t firstNeighbourIndex() const { return set[1]; }
+  [[nodiscard]] std::size_t compartmentIndex() const { return set[0]; }
+  [[nodiscard]] std::size_t firstNeighbourIndex() const { return set[1]; }
   std::size_t membraneIndex() const {
     auto otherIndex = firstNeighbourIndex();
     if (otherIndex == nullIndex) {
@@ -259,8 +259,8 @@ class PixelCompartments {
     }
     return compartmentIndex() + nCompartments * otherIndex;
   }
-  std::size_t neighbourCount() const { return set.size() - 1; }
-  const QPoint &getMeshPoint() const { return meshPoint; }
+  [[nodiscard]] std::size_t neighbourCount() const { return set.size() - 1; }
+  [[nodiscard]] const QPoint &getMeshPoint() const { return meshPoint; }
   explicit PixelCompartments(const std::vector<QRgb> &compartmentColours,
                              const QImage &inputImage)
       : img{inputImage.convertToFormat(QImage::Format_Indexed8)},

@@ -142,7 +142,7 @@ void ModelSpecies::setFieldConcAnalytic(geometry::Field &field,
   // written/read to/from SBML model
   sbmlVars["x"] = {0, false};
   sbmlVars["y"] = {0, false};
-  auto astExpr = mathStringToAST(inlinedExpr.c_str());
+  auto astExpr = mathStringToAST(inlinedExpr);
   SPDLOG_TRACE("  - parsed expr: {}", mathASTtoString(astExpr.get()));
   if (astExpr == nullptr) {
     SPDLOG_ERROR("Failed to parse expression '{}'", inlinedExpr);
@@ -186,7 +186,7 @@ getOrCreateDiffusionConstantParameter(libsbml::Model *model,
   // look for existing diffusion constant parameter
   for (unsigned i = 0; i < model->getNumParameters(); ++i) {
     auto *par = model->getParameter(i);
-    if (auto *spp = dynamic_cast<const libsbml::SpatialParameterPlugin *>(
+    if (const auto *spp = dynamic_cast<const libsbml::SpatialParameterPlugin *>(
             par->getPlugin("spatial"));
         (spp != nullptr) && spp->isSetDiffusionCoefficient() &&
         (spp->getDiffusionCoefficient()->getVariable() ==
@@ -246,7 +246,7 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
       setFieldConcAnalytic(fields[static_cast<std::size_t>(i)],
                            expr.toStdString());
     }
-    auto *ssp = static_cast<const libsbml::SpatialSpeciesPlugin *>(
+    const auto *ssp = static_cast<const libsbml::SpatialSpeciesPlugin *>(
         spec->getPlugin("spatial"));
     field.setIsSpatial(ssp->getIsSpatial());
     const auto *param = getOrCreateDiffusionConstantParameter(sbmlModel, id);

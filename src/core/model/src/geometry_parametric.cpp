@@ -32,8 +32,9 @@ libsbml::ParametricGeometry *getParametricGeometry(libsbml::Geometry *geom) {
   return nullptr;
 }
 
-libsbml::ParametricObject *getOrCreateParametricObject(
-    libsbml::Model *model, const std::string &compartmentID) {
+libsbml::ParametricObject *
+getOrCreateParametricObject(libsbml::Model *model,
+                            const std::string &compartmentID) {
   auto *geom = getOrCreateGeometry(model);
   auto *comp = model->getCompartment(compartmentID);
   auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
@@ -56,9 +57,9 @@ libsbml::ParametricObject *getOrCreateParametricObject(
   return paraObj;
 }
 
-std::vector<QPointF> getInteriorPixelPoints(
-    const ModelGeometry *modelGeometry,
-    const ModelCompartments *modelCompartments) {
+std::vector<QPointF>
+getInteriorPixelPoints(const ModelGeometry *modelGeometry,
+                       const ModelCompartments *modelCompartments) {
   // get interiorPoints in terms of physical location
   // & convert them to integer pixel points
   // if any interior points are missing: return an empty vector
@@ -83,10 +84,11 @@ std::vector<QPointF> getInteriorPixelPoints(
   return interiorPoints;
 }
 
-std::unique_ptr<mesh::Mesh> importParametricGeometryFromSBML(
-    libsbml::Model *model, const ModelGeometry *modelGeometry,
-    const ModelCompartments *modelCompartments,
-    const ModelMembranes *modelMembranes) {
+std::unique_ptr<mesh::Mesh>
+importParametricGeometryFromSBML(libsbml::Model *model,
+                                 const ModelGeometry *modelGeometry,
+                                 const ModelCompartments *modelCompartments,
+                                 const ModelMembranes *modelMembranes) {
   auto *geom = getOrCreateGeometry(model);
   auto *parageom = getParametricGeometry(geom);
   if (parageom == nullptr) {
@@ -194,6 +196,6 @@ void writeGeometryMeshToSBML(libsbml::Model *model, const mesh::Mesh *mesh,
     po->setPointIndex(triangleInts.data(), triangleInts.size());
     SPDLOG_INFO("    - added {} uints ({} triangles)", size, size / 2);
   }
-  return;
 }
-}  // namespace model
+
+} // namespace model

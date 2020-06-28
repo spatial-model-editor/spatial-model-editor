@@ -1,5 +1,7 @@
 #include "boundary.hpp"
 
+#include <utility>
+
 #include "boundary_pixels.hpp"
 #include "line_simplifier.hpp"
 #include "logger.hpp"
@@ -8,8 +10,8 @@ namespace mesh {
 
 static QPointF getNormalUnitVector(const QPoint &p0, const QPoint &pNext) {
   QPointF normal;
-  double dx = static_cast<double>(pNext.x() - p0.x());
-  double dy = static_cast<double>(pNext.y() - p0.y());
+  auto dx = static_cast<double>(pNext.x() - p0.x());
+  auto dy = static_cast<double>(pNext.y() - p0.y());
   double norm = std::hypot(dx, dy);
   normal = QPointF(-dy / norm, dx / norm);
   return normal;
@@ -129,9 +131,9 @@ void Boundary::setMembraneWidth(double newMembraneWidth) {
 const std::string &Boundary::getMembraneId() const { return membraneID; }
 
 Boundary::Boundary(const std::vector<QPoint> &boundaryPoints, bool isClosedLoop,
-                   bool isMembraneCompartment, const std::string &membraneName)
+                   bool isMembraneCompartment, std::string membraneName)
     : loop{isClosedLoop}, membrane{isMembraneCompartment},
-      membraneID(membraneName), lineSimplifier(boundaryPoints, isClosedLoop) {
+      membraneID(std::move(membraneName)), lineSimplifier(boundaryPoints, isClosedLoop) {
   valid = lineSimplifier.isValid();
   if (!valid) {
     return;
