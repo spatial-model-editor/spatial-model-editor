@@ -137,7 +137,7 @@ jobs:
             $msys2 pacman -S --noconfirm --needed mingw-w64-x86_64-gcc mingw-w64-x86_64-make mingw-w64-x86_64-cmake
           fi
       install:
-        - choco install python --version=3.7.7 --force --no-progress -y
+        - choco install python --version=3.8.2 --force --no-progress -y
       before_script:
         # download pre-compiled Qt5 static libraries
         - mkdir /c/libs
@@ -154,8 +154,15 @@ jobs:
         - cp ci/windows-gui.bat .
       script:
         - cmd "/C windows-gui.bat"
+        - ls build/sme/*
+        - ls build/sme/*/*
+        - ls build/sme/*/*/*
+        - cat build/sme/CMakeFiles/sme.dir/link.txt
+        - cat build/sme/CMakeFiles/sme.dir/linklibs.rsp
+        - cat build/sme/CMakeFiles/sme.dir/objects1.rsp
         - ls build/*/*.exe
         - tail build/tests.txt
+        - head -n 2000 sme_obj.txt
         - cd build/src
         - cp ../cli/spatial-cli.exe .
         - ls
