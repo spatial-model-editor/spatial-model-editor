@@ -15,7 +15,7 @@ branches:
 env:
   global:
     # python wheel building can be disabled to speed up CI when working on a PR
-    - BUILD_PYTHON_WHEELS: true
+    - BUILD_PYTHON_WHEELS: false
     # pypi TWINE_PASSWORD
     - secure: "GFBxgbwP75qb0QW3jFO3e3fbfFLpYue+kUZGm3ArNZ9ExeXPGU3fxfxiBolEPnnPK98VlZZ8R0WBQptvWnaBN0tamt5r7OCXljQdpNgRF04MMa1gtbAEnuYjd6dHQ5CbdiEKxK4MnF28jJ+0wnw35E7YPGq357XWKwGFoG0HT9UenFd7HRbzsM0WmO7sog8bZYahYU+nyIDu6AVGlsc1b4XpVEu/pcuY2PexzYpV4wv+qVprRIeTwi2aFb4bmr3XcPZtyps3eiExLISHmz3mAuHIiNEt3wQA7Kjzsz93lm6DlGi3LSEXugfomGzg3oyHQC8oKKky/D6hHqnc9Jfow4Epj3aHvE4LP00TxDiyrjqvVGeCHa/RL/WIGJ/zZA4W7QTr2wvDOhw5EOuSmIW42tmOsOV4Zo/wr5d9A0r0VUfHhrsi1QUHmFFgTJXeTDyHYC32mvXy8EuaxLRFLBUVKE3gPfaYUgRafvx1Kn7H9WUmrpA7JAj2caMYD6UtKly1J6BFyTpPFlGgk3yxzVYgbeToOOrabQzGzYBuaxz6aysbyPra+rYF5SrJ/Dp4TPjfoE/1IIjmrbVpYEQGdfojnxxN6xnW7woPgq8IUDStw7iR83xyluWEtn1i1KlzRA8NMNdBHxgFWQ9rpE/DZikeJ8yb0FoEleMRjaE6G4C33rc="
 
@@ -343,10 +343,9 @@ jobs:
         # core unit core_tests
         - lcov -q -z -d .
         - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "[core]" 2>&1 | tail -n 100
-        - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
-        - $COV gcov -p src/core/CMakeFiles/core.dir/*/*.gcno > /dev/null
-        - $COV gcov -p src/core/CMakeFiles/core.dir/*/*/*.gcno > /dev/null
-        - mv *#spatial-model-editor#src#core*.gcov gcov/
+        - $COV gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
+        - $COV gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
+        - mv *#src#core*.gcov gcov/
         - rm -f *.gcov
         # upload coverage report to codecov.io
         - bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F core
@@ -355,12 +354,11 @@ jobs:
         - rm -f gcov/*
         - lcov -q -z -d .
         - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "~[mainwindow][gui]" 2>&1 | tail -n 100
-        - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
-        - $COV gcov -p src/core/CMakeFiles/core.dir/*/*.gcno > /dev/null
-        - $COV gcov -p src/core/CMakeFiles/core.dir/*/*/*.gcno > /dev/null
+        - $COV gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
+        - $COV gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
-        - mv *#spatial-model-editor#src#core*.gcov *#spatial-model-editor#src#gui*.gcov gcov/
+        - mv *#src#core*.gcov *#src#gui*.gcov gcov/
         - rm -f *.gcov
         # upload coverage report to codecov.io
         - bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F gui
@@ -369,12 +367,11 @@ jobs:
         - rm -f gcov/*
         - lcov -q -z -d .
         - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "[mainwindow][gui]" 2>&1 | tail -n 100
-        - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
-        - $COV gcov -p src/core/CMakeFiles/core.dir/*/*.gcno > /dev/null
-        - $COV gcov -p src/core/CMakeFiles/core.dir/*/*/*.gcno > /dev/null
+        - $COV gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
+        - $COV gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
-        - mv *#spatial-model-editor#src#core*.gcov *#spatial-model-editor#src#gui*.gcov gcov/
+        - mv *#src#core*.gcov *#src#gui*.gcov gcov/
         - rm -f *.gcov
         # upload coverage report to codecov.io
         - bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F mainwindow
@@ -384,13 +381,11 @@ jobs:
         - lcov -q -z -d .
         - cd sme
         - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -v -s ../../test 2>&1 | tail -n 100
-        - $COV gcov -p ../src/core/CMakeFiles/core.dir/*.gcno > /dev/null
-        - $COV gcov -p ../src/core/CMakeFiles/core.dir/*/*.gcno > /dev/null
-        - $COV gcov -p ../src/core/CMakeFiles/core.dir/*/*/*.gcno > /dev/null
-        - $COV gcov -p CMakeFiles/sme.dir/*.gcno > /dev/null
-        - mv *#spatial-model-editor#src#core*.gcov *#spatial-model-editor#sme*.gcov ../gcov/
-        - rm *.gcov
         - cd ..
+        - $COV gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
+        - $COV gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null
+        - mv *#src#core*.gcov *#sme*.gcov gcov/
+        - rm *.gcov
         # upload coverage report to codecov.io
         - bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F sme
 
@@ -398,17 +393,20 @@ jobs:
         - rm -f gcov/*
         - lcov -q -z -d .
         - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as 2>&1 | tail -n 100
+        - $COV gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
+        - $COV gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
+        - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
+        - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
+        - mv *#src#core*.gcov *#src#gui*.gcov gcov/
+        - rm -f *.gcov
+        # run python tests, but only copy gcov data for sme files: don't want to overwrite core data from above main test run
+        - lcov -q -z -d .
         - cd sme
         - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -s ../../test 2>&1 | tail -n 100
         - cd ..
-        - $COV gcov -p src/core/CMakeFiles/core.dir/*.gcno > /dev/null
-        - $COV gcov -p src/core/CMakeFiles/core.dir/*/*.gcno > /dev/null
-        - $COV gcov -p src/core/CMakeFiles/core.dir/*/*/*.gcno > /dev/null
-        - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
-        - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
         - $COV gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null
-        - mv *#spatial-model-editor#src#core*.gcov *#spatial-model-editor#src#gui*.gcov *#spatial-model-editor#sme*.gcov gcov/
-        - rm *.gcov
+        - mv *#sme*.gcov gcov/
+        - rm -f *.gcov
 
         - cd ..
         # upload to sonar-scanner

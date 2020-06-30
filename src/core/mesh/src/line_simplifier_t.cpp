@@ -4,15 +4,42 @@
 #include "line_simplifier.hpp"
 
 SCENARIO("Simplify Lines",
-         "[core/mesh/line_simplifier][core/mesh][line_simplifier]") {
+         "[core/mesh/line_simplifier][core/mesh][core][line_simplifier]") {
+  GIVEN("Invalid points") {
+    std::vector<QPoint> points;
+    // 0 points
+    mesh::LineSimplifier ls(points, true);
+    REQUIRE(ls.isValid() == false);
+    ls = mesh::LineSimplifier(points, false);
+    REQUIRE(ls.isValid() == false);
+    // 1 point
+    points.emplace_back(0, 0);
+    ls = mesh::LineSimplifier(points, true);
+    REQUIRE(ls.isValid() == false);
+    ls = mesh::LineSimplifier(points, false);
+    REQUIRE(ls.isValid() == false);
+    // 2 point loop
+    points.emplace_back(0, 1);
+    ls = mesh::LineSimplifier(points, true);
+    REQUIRE(ls.isValid() == false);
+    // 2 point non-loop is valid however
+    ls = mesh::LineSimplifier(points, false);
+    REQUIRE(ls.isValid() == true);
+    // 3 points
+    points.emplace_back(1, 1);
+    ls = mesh::LineSimplifier(points, true);
+    REQUIRE(ls.isValid() == true);
+    ls = mesh::LineSimplifier(points, false);
+    REQUIRE(ls.isValid() == true);
+  }
   GIVEN("Loop") {
     // 9 point loop with 2 degenerate points
     std::vector<QPoint> points;
     points.emplace_back(0, 0);
-    points.emplace_back(1, 0);  // degenerate horizontal
+    points.emplace_back(1, 0); // degenerate horizontal
     points.emplace_back(2, 0);
     points.emplace_back(3, 1);
-    points.emplace_back(2, 2);  // degenerate diagonal
+    points.emplace_back(2, 2); // degenerate diagonal
     points.emplace_back(1, 3);
     points.emplace_back(0, 3);
     points.emplace_back(-1, 2);
@@ -102,7 +129,7 @@ SCENARIO("Simplify Lines",
     // 8 point line with 1 degenerate point
     std::vector<QPoint> points;
     points.emplace_back(0, 0);
-    points.emplace_back(1, 0);  // degenerate horizontal
+    points.emplace_back(1, 0); // degenerate horizontal
     points.emplace_back(2, 0);
     points.emplace_back(3, 1);
     points.emplace_back(4, 1);

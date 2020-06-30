@@ -211,13 +211,20 @@ bool LineSimplifier::isValid() const { return valid; }
 
 LineSimplifier::LineSimplifier(const std::vector<QPoint> &points,
                                bool isClosedLoop)
-    : vertices{removeDegenerateVertices(points, isClosedLoop)},
-      minNumPoints{isClosedLoop ? std::size_t{3} : std::size_t{2}} {
+    : minNumPoints{isClosedLoop ? std::size_t{3} : std::size_t{2}} {
   SPDLOG_DEBUG("Simplifying {} point line - isLoop: {}", points.size(),
                isClosedLoop);
+  if (points.size() < minNumPoints) {
+    SPDLOG_DEBUG("  -> invalid: not enough points");
+    valid = false;
+    return;
+  }
+  vertices = removeDegenerateVertices(points, isClosedLoop);
   SPDLOG_DEBUG("  - {} non-degenerate points", vertices.size());
   if (vertices.size() < minNumPoints) {
+    SPDLOG_DEBUG("  -> invalid: not enough non-degenerate points");
     valid = false;
+    return;
   }
   priorities = getPriorities(vertices, isClosedLoop);
 }

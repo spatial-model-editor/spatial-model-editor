@@ -10,8 +10,8 @@
 
 namespace mesh {
 
-QPointF Mesh::pixelPointToPhysicalPoint(
-    const QPointF &pixelPoint) const noexcept {
+QPointF
+Mesh::pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept {
   return pixelPoint * pixel + origin;
 }
 
@@ -24,9 +24,7 @@ Mesh::Mesh(
     const std::vector<std::pair<std::string, ColourPair>> &membraneColourPairs,
     const std::vector<double> &membraneWidths, double pixelWidth,
     const QPointF &originPoint, const std::vector<QRgb> &compartmentColours)
-    : img(image),
-      origin(originPoint),
-      pixel(pixelWidth),
+    : img(image), origin(originPoint), pixel(pixelWidth),
       compartmentInteriorPoints(interiorPoints),
       boundaryMaxPoints(std::move(maxPoints)),
       compartmentMaxTriangleArea(std::move(maxTriangleArea)),
@@ -41,10 +39,9 @@ Mesh::Mesh(
   }
   if (boundaryMaxPoints.size() != boundaries.size()) {
     // if boundary points not correctly specified use automatic values instead
-    SPDLOG_INFO(
-        "boundaryMaxPoints has size {}, but there are {} boundaries - "
-        "using automatic values",
-        boundaryMaxPoints.size(), boundaries.size());
+    SPDLOG_INFO("boundaryMaxPoints has size {}, but there are {} boundaries - "
+                "using automatic values",
+                boundaryMaxPoints.size(), boundaries.size());
     boundaryMaxPoints = imageBoundaries->setAutoMaxPoints();
   } else {
     imageBoundaries->setMaxPoints(boundaryMaxPoints);
@@ -199,8 +196,8 @@ void Mesh::setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
   constructMesh();
 }
 
-std::size_t Mesh::getCompartmentMaxTriangleArea(
-    std::size_t compartmentIndex) const {
+std::size_t
+Mesh::getCompartmentMaxTriangleArea(std::size_t compartmentIndex) const {
   return compartmentMaxTriangleArea.at(compartmentIndex);
 }
 
@@ -241,8 +238,8 @@ const std::vector<std::vector<QTriangleF>> &Mesh::getTriangles() const {
   return triangles;
 }
 
-static TriangulateBoundaries constructTriangulateBoundaries(
-    const ImageBoundaries *imageBoundaries) {
+static TriangulateBoundaries
+constructTriangulateBoundaries(const ImageBoundaries *imageBoundaries) {
   TriangulateBoundaries tid;
   const auto &boundaries = imageBoundaries->getBoundaries();
   std::size_t nPointsUpperBound = 0;
@@ -320,8 +317,8 @@ static TriangulateBoundaries constructTriangulateBoundaries(
   return tid;
 }
 
-static TriangulateFixedPoints constructTriangulateFixedPoints(
-    const ImageBoundaries *imageBoundaries) {
+static TriangulateFixedPoints
+constructTriangulateFixedPoints(const ImageBoundaries *imageBoundaries) {
   TriangulateFixedPoints tfp;
   tfp.nFPs = imageBoundaries->getFixedPoints().size();
   tfp.newFPs = imageBoundaries->getNewFixedPoints();
@@ -382,8 +379,9 @@ const QImage &Mesh::getBoundaryPixelsImage() const {
   return imageBoundaries->getBoundaryPixelsImage();
 }
 
-std::pair<QImage, QImage> Mesh::getBoundariesImages(
-    const QSize &size, std::size_t boldBoundaryIndex) const {
+std::pair<QImage, QImage>
+Mesh::getBoundariesImages(const QSize &size,
+                          std::size_t boldBoundaryIndex) const {
   constexpr int defaultPenSize = 2;
   constexpr int boldPenSize = 5;
   constexpr int maskPenSize = 15;
@@ -452,8 +450,8 @@ std::pair<QImage, QImage> Mesh::getBoundariesImages(
                         maskImage.mirrored(false, true));
 }
 
-std::pair<QImage, QImage> Mesh::getMeshImages(
-    const QSize &size, std::size_t compartmentIndex) const {
+std::pair<QImage, QImage>
+Mesh::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
   std::pair<QImage, QImage> imgPair;
   auto &[meshImage, maskImage] = imgPair;
   double scaleFactor = getScaleFactor(img, size);
@@ -592,4 +590,4 @@ QString Mesh::getGMSH(const std::unordered_set<int> &gmshCompIndices) const {
   return msh;
 }
 
-}  // namespace mesh
+} // namespace mesh
