@@ -185,8 +185,11 @@ void ModelGeometry::importSampledFieldGeometry(libsbml::Model *model) {
 }
 
 void ModelGeometry::importParametricGeometry(libsbml::Model *model) {
-  mesh = importParametricGeometryFromSBML(model, this, modelCompartments,
-                                          modelMembranes);
+  auto importedMesh = importParametricGeometryFromSBML(
+      model, this, modelCompartments, modelMembranes);
+  if (importedMesh != nullptr) {
+    mesh = std::move(importedMesh);
+  }
 }
 
 void ModelGeometry::importSampledFieldGeometry(const QString &filename) {

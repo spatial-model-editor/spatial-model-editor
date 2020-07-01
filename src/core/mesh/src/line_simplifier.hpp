@@ -19,9 +19,9 @@ struct LineError {
 
 class LineSimplifier {
 private:
-  std::vector<QPoint> vertices;
+  std::vector<QPoint> vertices{};
   std::size_t minNumPoints;
-  std::vector<std::size_t> priorities;
+  std::vector<std::size_t> priorities{};
   LineError getLineError(const std::vector<QPoint> &line) const;
   bool valid{true};
 

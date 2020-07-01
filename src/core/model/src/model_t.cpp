@@ -381,7 +381,8 @@ SCENARIO("SBML: create new model, import geometry from image",
   }
 }
 
-SCENARIO("SBML: import uint8 sampled field", "[core][model]") {
+SCENARIO("SBML: import uint8 sampled field",
+         "[core/model/model][core/model][core][model]") {
   model::Model s;
   QFile f(":/test/models/very-simple-model-uint8.xml");
   f.open(QIODevice::ReadOnly);

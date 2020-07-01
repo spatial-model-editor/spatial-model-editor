@@ -5,7 +5,7 @@
 #include "mesh.hpp"
 #include "utils.hpp"
 
-SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][mesh]") {
+SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
   GIVEN("empty image") {
     QImage img(24, 32, QImage::Format_RGB32);
     QRgb col = QColor(0, 0, 0).rgb();
@@ -24,11 +24,11 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][mesh]") {
     REQUIRE(mesh.getNumBoundaries() == 1);
 
     // check output vertices
-    const auto& vertices = mesh.getVertices();
+    const auto &vertices = mesh.getVertices();
     REQUIRE(vertices.size() == 2 * 4);
 
     // check triangles
-    const auto& triangles = mesh.getTriangles();
+    const auto &triangles = mesh.getTriangles();
     REQUIRE(triangles.size() == 1);
     REQUIRE(triangles[0].size() == 2);
     REQUIRE(triangles[0][0] ==
@@ -135,7 +135,7 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][mesh]") {
     correctBoundary.emplace_back(5, 7);
     correctBoundary.emplace_back(4, 6);
     QRgb col = QColor(123, 123, 123).rgb();
-    for (const auto& p : correctBoundary) {
+    for (const auto &p : correctBoundary) {
       img.setPixel(p, col);
     }
     // fill in internal compartment pixels

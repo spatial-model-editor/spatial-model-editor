@@ -5,7 +5,7 @@
 #include "boundary.hpp"
 #include "catch_wrapper.hpp"
 
-SCENARIO("Boundary", "[core/mesh/boundary][core/mesh][boundary]") {
+SCENARIO("Boundary", "[core/mesh/boundary][core/mesh][core][boundary]") {
   GIVEN("Loop") {
     // points that make up the loop
     std::vector<QPoint> points{{0, 0}, {2, 0},  {3, 1}, {1, 3},
