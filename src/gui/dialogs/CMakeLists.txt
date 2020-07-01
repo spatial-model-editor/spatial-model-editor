@@ -3,6 +3,7 @@ target_sources(
   PRIVATE dialogabout.cpp
           dialoganalytic.cpp
           dialogconcentrationimage.cpp
+          dialogcoordinates.cpp
           dialogdisplayoptions.cpp
           dialogimagesize.cpp
           dialogimageslice.cpp
@@ -15,6 +16,7 @@ target_sources(
   PUBLIC dialogabout_t.cpp
          dialoganalytic_t.cpp
          dialogconcentrationimage_t.cpp
+         dialogcoordinates_t.cpp
          dialogdisplayoptions_t.cpp
          dialogimagesize_t.cpp
          dialogimageslice_t.cpp

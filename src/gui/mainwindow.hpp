@@ -29,6 +29,7 @@ private:
   QLabel *statusBarPermanentMessage;
   model::Model sbmlDoc;
 
+  void setupTabs();
   void setupConnections();
 
   // check if SBML model and geometry image are both valid
@@ -66,6 +67,7 @@ private:
   // Tools menu actions
   void actionSet_model_units_triggered();
   void actionSet_image_size_triggered();
+  void actionSet_spatial_coordinates_triggered();
 
   // Advanced menu actions
   void actionIntegrator_options_triggered();

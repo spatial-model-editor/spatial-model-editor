@@ -17,7 +17,8 @@ SCENARIO("DialogAnalytic",
     DialogAnalytic dia("x",
                        {QSize(10, 10), compartmentPoints, QPointF(0.0, 0.0), 1,
                         doc.getUnits()},
-                       doc.getMath());
+                       doc.getMath(),
+                       doc.getParameters().getSpatialCoordinates());
     REQUIRE(dia.getExpression() == "x");
     ModalWidgetTimer mwt;
     WHEN("valid expr: 10") {
@@ -92,7 +93,8 @@ SCENARIO("DialogAnalytic",
     QFile f(":/models/ABtoC.xml");
     f.open(QIODevice::ReadOnly);
     doc.importSBMLString(f.readAll().toStdString());
-    DialogAnalytic dia("x", doc.getSpeciesGeometry("B"), doc.getMath());
+    DialogAnalytic dia("x", doc.getSpeciesGeometry("B"), doc.getMath(),
+                       doc.getParameters().getSpatialCoordinates());
     REQUIRE(dia.getExpression() == "x");
     ModalWidgetTimer mwt;
     WHEN("valid expr: 10") {

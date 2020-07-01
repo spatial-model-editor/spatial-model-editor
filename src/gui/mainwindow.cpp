@@ -10,6 +10,7 @@
 #include <QWhatsThis>
 
 #include "dialogabout.hpp"
+#include "dialogcoordinates.hpp"
 #include "dialogimagesize.hpp"
 #include "dialogintegratoroptions.hpp"
 #include "dialogunits.hpp"
@@ -36,6 +37,22 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
   statusBarPermanentMessage = new QLabel(QString(), this);
   ui->statusBar->addWidget(statusBarPermanentMessage);
 
+  setupTabs();
+  setupConnections();
+
+  // set initial splitter position: 1/4 for image, 3/4 for tabs
+  ui->splitter->setSizes({1000, 3000});
+
+  if (!filename.isEmpty()) {
+    openSBMLFile(filename);
+  } else {
+    validateSBMLDoc();
+  }
+}
+
+MainWindow::~MainWindow() = default;
+
+void MainWindow::setupTabs() {
   tabGeometry = new TabGeometry(sbmlDoc, ui->lblGeometry,
                                 statusBarPermanentMessage, ui->tabReactions);
   ui->tabGeometry->layout()->addWidget(tabGeometry);
@@ -54,20 +71,7 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
 
   tabSimulate = new TabSimulate(sbmlDoc, ui->lblGeometry, ui->tabSimulate);
   ui->tabSimulate->layout()->addWidget(tabSimulate);
-
-  setupConnections();
-
-  // set initial splitter position: 1/4 for image, 3/4 for tabs
-  ui->splitter->setSizes({1000, 3000});
-
-  if (!filename.isEmpty()) {
-    openSBMLFile(filename);
-  } else {
-    validateSBMLDoc();
-  }
 }
-
-MainWindow::~MainWindow() = default;
 
 void MainWindow::setupConnections() {
   // menu actions
@@ -103,6 +107,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->actionSet_image_size, &QAction::triggered, this,
           &MainWindow::actionSet_image_size_triggered);
+
+  connect(ui->actionSet_spatial_coordinates, &QAction::triggered, this,
+          &MainWindow::actionSet_spatial_coordinates_triggered);
 
   connect(ui->actionIntegrator_options, &QAction::triggered, this,
           &MainWindow::actionIntegrator_options_triggered);
@@ -366,7 +373,6 @@ void MainWindow::actionSet_model_units_triggered() {
     sbmlDoc.getGeometry().setPixelWidth(model::rescale(
         oldPixelWidth, oldLengthUnit, sbmlDoc.getUnits().getLength()));
   }
-  return;
 }
 
 void MainWindow::actionSet_image_size_triggered() {
@@ -380,6 +386,20 @@ void MainWindow::actionSet_image_size_triggered() {
     double pixelWidth = dialog.getPixelWidth();
     SPDLOG_INFO("Set new pixel width = {}", pixelWidth);
     sbmlDoc.getGeometry().setPixelWidth(pixelWidth);
+  }
+}
+
+void MainWindow::actionSet_spatial_coordinates_triggered() {
+  if (!isValidModel()) {
+    return;
+  }
+  auto &params = sbmlDoc.getParameters();
+  auto coords = params.getSpatialCoordinates();
+  DialogCoordinates dialog(coords.x.name.c_str(), coords.y.name.c_str());
+  if (dialog.exec() == QDialog::Accepted) {
+    coords.x.name = dialog.getXName().toStdString();
+    coords.y.name = dialog.getYName().toStdString();
+    params.setSpatialCoordinates(std::move(coords));
   }
 }
 

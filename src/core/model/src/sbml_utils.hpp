@@ -1,5 +1,8 @@
 #pragma once
 
+#include <sbml/SBMLTypes.h>
+#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
+
 #include <optional>
 #include <string>
 #include <utility>
@@ -9,10 +12,11 @@ class Geometry;
 class Model;
 class SampledFieldGeometry;
 class Species;
-}  // namespace libsbml
+class Parameter;
+} // namespace libsbml
 
 libsbml::SampledFieldGeometry *getSampledFieldGeometry(libsbml::Geometry *geom);
-const libsbml::Geometry *getOrCreateGeometry(const libsbml::Model *model);
+const libsbml::Geometry *getGeometry(const libsbml::Model *model);
 libsbml::Geometry *getOrCreateGeometry(libsbml::Model *model);
 void createDefaultCompartmentGeometryIfMissing(libsbml::Model *model);
 
@@ -21,7 +25,11 @@ unsigned int getNumSpatialDimensions(const libsbml::Model *model);
 std::string getDomainIdFromCompartmentId(const libsbml::Model *model,
                                          const std::string &compartmentId);
 
-std::optional<std::pair<std::string, std::string>> getAdjacentCompartments(
-    const libsbml::Model *model, const std::string &compartmentId);
+std::optional<std::pair<std::string, std::string>>
+getAdjacentCompartments(const libsbml::Model *model,
+                        const std::string &compartmentId);
 
 bool getIsSpeciesConstant(const libsbml::Species *spec);
+
+libsbml::Parameter *getSpatialCoordinateParam(libsbml::Model *model,
+                                              libsbml::CoordinateKind_t kind);

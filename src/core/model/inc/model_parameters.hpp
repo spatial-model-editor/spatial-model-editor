@@ -22,6 +22,11 @@ struct IdName {
   std::string name;
 };
 
+struct SpatialCoordinates {
+  IdName x;
+  IdName y;
+};
+
 struct IdValue {
   std::string id;
   double value;
@@ -34,9 +39,10 @@ struct IdNameExpr {
 };
 
 class ModelParameters {
-public:
+private:
   QStringList ids;
   QStringList names;
+  SpatialCoordinates spatialCoordinates;
   libsbml::Model *sbmlModel = nullptr;
 
 public:
@@ -50,6 +56,8 @@ public:
   QString getExpression(const QString &id) const;
   QString add(const QString &name);
   void remove(const QString &id);
+  const SpatialCoordinates &getSpatialCoordinates() const;
+  void setSpatialCoordinates(SpatialCoordinates coords);
   std::vector<IdName> getSymbols() const;
   std::vector<IdValue> getGlobalConstants() const;
   std::vector<IdNameExpr> getNonConstantParameters() const;
