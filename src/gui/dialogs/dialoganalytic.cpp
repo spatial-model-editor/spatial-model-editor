@@ -4,13 +4,16 @@
 #include <QPushButton>
 
 #include "logger.hpp"
+#include "model_parameters.hpp"
 #include "model_units.hpp"
 #include "ui_dialoganalytic.h"
 
-DialogAnalytic::DialogAnalytic(const QString &analyticExpression,
-                               const model::SpeciesGeometry &speciesGeometry,
-                               model::ModelMath &modelMath, QWidget *parent)
+DialogAnalytic::DialogAnalytic(
+    const QString &analyticExpression,
+    const model::SpeciesGeometry &speciesGeometry, model::ModelMath &modelMath,
+    const model::SpatialCoordinates &spatialCoordinates, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogAnalytic>()},
+      xId{spatialCoordinates.x.id}, yId{spatialCoordinates.y.id},
       points(speciesGeometry.compartmentPoints),
       width(speciesGeometry.pixelWidth), origin(speciesGeometry.physicalOrigin),
       qpi(speciesGeometry.compartmentImageSize,
@@ -28,10 +31,10 @@ DialogAnalytic::DialogAnalytic(const QString &analyticExpression,
   img.fill(0);
   concentration.resize(points.size(), 0.0);
   // add x,y variables
-  // todo: don't hard code these, instead read them from model
-  ui->txtExpression->setVariables({"x", "y"});
-  sbmlVars["x"] = {0, false};
-  sbmlVars["y"] = {0, false};
+  ui->txtExpression->addVariable(xId, spatialCoordinates.x.name);
+  ui->txtExpression->addVariable(yId, spatialCoordinates.y.name);
+  sbmlVars[xId] = {0, false};
+  sbmlVars[yId] = {0, false};
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogAnalytic::accept);
@@ -87,8 +90,8 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
   // calculate concentration
   for (std::size_t i = 0; i < points.size(); ++i) {
     auto physical = physicalPoint(points[i]);
-    sbmlVars["x"].first = physical.x();
-    sbmlVars["y"].first = physical.y();
+    sbmlVars[xId].first = physical.x();
+    sbmlVars[yId].first = physical.y();
     concentration[i] = ui->txtExpression->evaluateMath(sbmlVars);
   }
   if (std::find_if(concentration.cbegin(), concentration.cend(), [](auto c) {
@@ -155,7 +158,7 @@ void DialogAnalytic::btnExportImage_clicked() {
   if (filename.right(4) != ".png") {
     filename.append(".png");
   }
-  SPDLOG_DEBUG("exporting concentration iage to file {}",
+  SPDLOG_DEBUG("exporting concentration image to file {}",
                filename.toStdString());
   img.save(filename);
 }

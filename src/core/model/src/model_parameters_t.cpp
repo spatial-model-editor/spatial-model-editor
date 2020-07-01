@@ -20,6 +20,29 @@ SCENARIO("SBML parameters",
     auto &params = s.getParameters();
     REQUIRE(params.getIds().size() == 0);
     REQUIRE(params.getNames().size() == 0);
+    // default geometry spatial coordinates:
+    const auto &coords = params.getSpatialCoordinates();
+    REQUIRE(coords.x.id == "x");
+    REQUIRE(coords.x.name == "x");
+    REQUIRE(coords.y.id == "y");
+    REQUIRE(coords.y.name == "y");
+    WHEN("change spatial coords") {
+      auto newC = coords;
+      newC.x.name = "x name";
+      newC.y.name = "yY";
+      params.setSpatialCoordinates(std::move(newC));
+      REQUIRE(coords.x.id == "x");
+      REQUIRE(coords.x.name == "x name");
+      REQUIRE(coords.y.id == "y");
+      REQUIRE(coords.y.name == "yY");
+      std::string xml = s.getXml().toStdString();
+      std::unique_ptr<libsbml::SBMLDocument> doc2{
+          libsbml::readSBMLFromString(xml.c_str())};
+      const auto *param = doc2->getModel()->getParameter("x");
+      REQUIRE(param->getName() == "x name");
+      param = doc2->getModel()->getParameter("y");
+      REQUIRE(param->getName() == "yY");
+    }
     WHEN("add double parameter") {
       params.add("p1");
       REQUIRE(params.getIds().size() == 1);

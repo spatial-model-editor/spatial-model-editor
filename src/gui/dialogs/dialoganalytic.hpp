@@ -17,6 +17,10 @@ namespace units {
 class ModelUnits;
 }
 
+namespace Model {
+struct SpatialCoordinates;
+}
+
 class DialogAnalytic : public QDialog {
   Q_OBJECT
 
@@ -24,6 +28,7 @@ public:
   explicit DialogAnalytic(const QString &analyticExpression,
                           const model::SpeciesGeometry &speciesGeometry,
                           model::ModelMath &modelMath,
+                          const model::SpatialCoordinates &spatialCoordinates,
                           QWidget *parent = nullptr);
   ~DialogAnalytic();
   const std::string &getExpression() const;
@@ -32,7 +37,8 @@ public:
 private:
   std::unique_ptr<Ui::DialogAnalytic> ui;
   std::map<const std::string, std::pair<double, bool>> sbmlVars;
-
+  std::string xId{};
+  std::string yId{};
   // user supplied data
   const std::vector<QPoint> &points;
   double width;

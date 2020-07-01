@@ -64,11 +64,57 @@ static QStringList importNamesAndMakeUnique(const QStringList &ids,
   return names;
 }
 
+static libsbml::Parameter *
+createSpatialCoordParam(const QString &name, libsbml::CoordinateKind_t kind,
+                        libsbml::Model *model) {
+  auto *geom = getOrCreateGeometry(model);
+  const auto *coord = geom->getCoordinateComponentByKind(kind);
+  auto *param = model->createParameter();
+  param->setId(nameToUniqueSId(name, model).toStdString());
+  param->setName(param->getId());
+  param->setUnits(model->getLengthUnits());
+  param->setConstant(true);
+  param->setValue(0);
+  auto *ssr = static_cast<libsbml::SpatialParameterPlugin *>(
+                  param->getPlugin("spatial"))
+                  ->createSpatialSymbolReference();
+  ssr->setSpatialRef(coord->getId());
+  SPDLOG_INFO("  - creating Parameter: {}", param->getId());
+  SPDLOG_INFO("  - name: {}", param->getName());
+  SPDLOG_INFO("  - spatialSymbolReference: {}", ssr->getSpatialRef());
+  return param;
+}
+
+static SpatialCoordinates importSpatialCoordinates(libsbml::Model *model) {
+  SpatialCoordinates s;
+  const auto *xparam = getSpatialCoordinateParam(
+      model, libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
+  if (xparam == nullptr) {
+    SPDLOG_WARN("No x-coord parameter found - creating");
+    xparam = createSpatialCoordParam(
+        "x", libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X,
+        model);
+  }
+  s.x.id = xparam->getId();
+  s.x.name = xparam->getName();
+  const auto *yparam = getSpatialCoordinateParam(
+      model, libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
+  if (yparam == nullptr) {
+    SPDLOG_WARN("No y-coord parameter found - creating");
+    yparam = createSpatialCoordParam(
+        "y", libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y,
+        model);
+  }
+  s.y.id = yparam->getId();
+  s.y.name = yparam->getName();
+  return s;
+}
+
 ModelParameters::ModelParameters() = default;
 
 ModelParameters::ModelParameters(libsbml::Model *model)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(ids, model)},
-      sbmlModel{model} {}
+      spatialCoordinates{importSpatialCoordinates(model)}, sbmlModel{model} {}
 
 const QStringList &ModelParameters::getIds() const { return ids; }
 
@@ -206,6 +252,32 @@ void ModelParameters::remove(const QString &id) {
   names.removeAt(i);
 }
 
+const SpatialCoordinates &ModelParameters::getSpatialCoordinates() const {
+  return spatialCoordinates;
+}
+
+void ModelParameters::setSpatialCoordinates(SpatialCoordinates coords) {
+  spatialCoordinates = std::move(coords);
+  auto *x = sbmlModel->getParameter(spatialCoordinates.x.id);
+  if (x == nullptr) {
+    SPDLOG_ERROR("x-coordinate parameter '{}' not found in model",
+                 spatialCoordinates.x.id);
+    return;
+  }
+  x->setName(spatialCoordinates.x.name);
+  SPDLOG_INFO("Setting x-coord parameter '{}' name to '{}'", x->getId(),
+              x->getName());
+  auto *y = sbmlModel->getParameter(spatialCoordinates.y.id);
+  if (y == nullptr) {
+    SPDLOG_ERROR("y-coordinate parameter '{}' not found in model",
+                 spatialCoordinates.y.id);
+    return;
+  }
+  y->setName(spatialCoordinates.y.name);
+  SPDLOG_INFO("Setting y-coord parameter '{}' name to '{}'", y->getId(),
+              y->getName());
+}
+
 std::vector<IdName> ModelParameters::getSymbols() const {
   std::vector<IdName> symbols;
   for (int i = 0; i < ids.size(); ++i) {
@@ -215,7 +287,34 @@ std::vector<IdName> ModelParameters::getSymbols() const {
     const auto *spec = sbmlModel->getSpecies(i);
     symbols.push_back({spec->getId(), spec->getName()});
   }
+  symbols.push_back({spatialCoordinates.x.id, spatialCoordinates.x.name});
+  symbols.push_back({spatialCoordinates.y.id, spatialCoordinates.y.name});
   return symbols;
+}
+
+static bool isConstantParameter(const libsbml::Parameter *param) {
+  const auto *model = param->getModel();
+  if (model->getAssignmentRule(param->getId()) != nullptr) {
+    // not constant if replaced by an assignment rule
+    return false;
+  }
+  // otherwise constant - unless it refers to a spatial coordinate componet
+  const auto *geom = getGeometry(model);
+  if (geom == nullptr) {
+    return true;
+  }
+  if (const auto *spp = static_cast<const libsbml::SpatialParameterPlugin *>(
+          param->getPlugin("spatial"));
+      spp != nullptr && spp->isSpatialParameter() &&
+      spp->isSetSpatialSymbolReference()) {
+    const auto &id = spp->getSpatialSymbolReference()->getSpatialRef();
+    for (unsigned i = 0; i < geom->getNumCoordinateComponents(); ++i) {
+      if (geom->getCoordinateComponent(i)->getId() == id) {
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 std::vector<IdValue> ModelParameters::getGlobalConstants() const {
@@ -233,14 +332,9 @@ std::vector<IdValue> ModelParameters::getGlobalConstants() const {
   // add any parameters (that are not replaced by an AssignmentRule)
   for (unsigned k = 0; k < sbmlModel->getNumParameters(); ++k) {
     const auto *param = sbmlModel->getParameter(k);
-    if (sbmlModel->getAssignmentRule(param->getId()) == nullptr) {
+    if (isConstantParameter(param)) {
       SPDLOG_TRACE("parameter {} = {}", param->getId(), param->getValue());
-      if (!(param->getId() == "x" || param->getId() == "y")) {
-        // remove x and y if present, as these are not really parameters
-        // (we want them to remain as variables to be parsed by symbolic
-        // parser) todo: check if this can be done in a better way
-        constants.push_back({param->getId(), param->getValue()});
-      }
+      constants.push_back({param->getId(), param->getValue()});
     }
   }
   // also get compartment volumes (the compartmentID may be used in the

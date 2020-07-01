@@ -295,6 +295,7 @@
     </widget>
     <addaction name="actionSet_model_units"/>
     <addaction name="actionSet_image_size"/>
+    <addaction name="actionSet_spatial_coordinates"/>
     <addaction name="menuSimulation_type"/>
    </widget>
    <widget class="QMenu" name="menu_Advanced">
@@ -508,6 +509,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+G</string>
+   </property>
+  </action>
+  <action name="actionSet_spatial_coordinates">
+   <property name="text">
+    <string>Set &amp;spatial coordinates</string>
    </property>
   </action>
   <actiongroup name="actionGroupSimType">

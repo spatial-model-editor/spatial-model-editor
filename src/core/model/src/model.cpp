@@ -56,7 +56,6 @@ void Model::initModelData() {
   }
   auto *model = doc->getModel();
   modelMath = ModelMath(model);
-  modelParameters = ModelParameters(model);
   modelFunctions = ModelFunctions(model);
   modelMembranes.clear();
   // todo: reduce these cyclic dependencies: currently order of initialization
@@ -66,6 +65,7 @@ void Model::initModelData() {
   modelGeometry = ModelGeometry(model, &modelCompartments, &modelMembranes);
   modelGeometry.importSampledFieldGeometry(model);
   modelGeometry.importParametricGeometry(model);
+  modelParameters = ModelParameters(model);
   modelSpecies = ModelSpecies(model, &modelCompartments, &modelGeometry,
                               &modelParameters, &modelReactions);
   modelReactions = ModelReactions(model, modelMembranes.getMembranes());
