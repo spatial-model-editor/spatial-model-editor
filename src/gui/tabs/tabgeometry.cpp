@@ -334,6 +334,7 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
   const QString &compID = sbmlDoc.getCompartments().getIds()[currentRow];
   ui->listMembranes->clearSelection();
   ui->btnRemoveCompartment->setEnabled(true);
+  ui->btnChangeCompartment->setEnabled(true);
   SPDLOG_DEBUG("row {} selected", currentRow);
   SPDLOG_DEBUG("  - Compartment Name: {}",
                ui->listCompartments->currentItem()->text().toStdString());

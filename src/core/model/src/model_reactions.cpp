@@ -11,7 +11,7 @@
 #include "geometry.hpp"
 #include "id.hpp"
 #include "logger.hpp"
-#include "math.hpp"
+#include "sbml_math.hpp"
 #include "symbolic.hpp"
 #include "utils.hpp"
 #include "xml_annotation.hpp"

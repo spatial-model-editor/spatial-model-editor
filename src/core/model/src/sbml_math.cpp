@@ -1,4 +1,4 @@
-#include "math.hpp"
+#include "sbml_math.hpp"
 
 #include <memory>
 

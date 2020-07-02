@@ -1,9 +1,11 @@
+// Utilities for working with SBML
+
 #pragma once
 
+#include "sbml_utils.hpp"
+#include <optional>
 #include <sbml/SBMLTypes.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-
-#include <optional>
 #include <string>
 #include <utility>
 

@@ -332,27 +332,27 @@ static void replaceFPIndices(TriangulateBoundaries &newTid,
   for (const auto &b : tid.boundaryProperties) {
     if (!b.isLoop) {
       auto i = b.boundaryIndex;
-      auto oldStart = tid.boundaries[i].front().start;
-      auto oldEnd = tid.boundaries[i].back().end;
-      auto &newStart = newTid.boundaries[i].front().start;
-      auto &newEnd = newTid.boundaries[i].back().end;
+      auto oldStart = tid.boundaries.at(i).front().start;
+      auto oldEnd = tid.boundaries.at(i).back().end;
+      auto &newStart = newTid.boundaries.at(i).front().start;
+      auto &newEnd = newTid.boundaries.at(i).back().end;
       SPDLOG_TRACE("boundary[{}]: ", i);
       SPDLOG_TRACE("  - start FP was [{}] ({}, {})", oldStart,
-                   tid.boundaryPoints[oldStart].x(),
-                   tid.boundaryPoints[oldStart].y());
-      newStart = newFPindex[b.innerFPIndices.front()];
-      originalPoints[newStart] = tid.boundaryPoints[oldStart];
+                   tid.boundaryPoints.at(oldStart).x(),
+                   tid.boundaryPoints.at(oldStart).y());
+      newStart = newFPindex.at(b.innerFPIndices.front());
+      originalPoints.at(newStart) = tid.boundaryPoints.at(oldStart);
       SPDLOG_TRACE("    -> now [{}] ({}, {})", newStart,
-                   newTid.boundaryPoints[newStart].x(),
-                   newTid.boundaryPoints[newStart].y());
+                   newTid.boundaryPoints.at(newStart).x(),
+                   newTid.boundaryPoints.at(newStart).y());
       SPDLOG_TRACE("  - end FP was [{}] ({}, {})", oldEnd,
-                   tid.boundaryPoints[oldEnd].x(),
-                   tid.boundaryPoints[oldEnd].y());
-      newEnd = newFPindex[b.innerFPIndices.back()];
-      originalPoints[newEnd] = tid.boundaryPoints[oldEnd];
+                   tid.boundaryPoints.at(oldEnd).x(),
+                   tid.boundaryPoints.at(oldEnd).y());
+      newEnd = newFPindex.at(b.innerFPIndices.back());
+      originalPoints.at(newEnd) = tid.boundaryPoints.at(oldEnd);
       SPDLOG_TRACE("    -> now [{}] ({}, {})", newEnd,
-                   newTid.boundaryPoints[newEnd].x(),
-                   newTid.boundaryPoints[newEnd].y());
+                   newTid.boundaryPoints.at(newEnd).x(),
+                   newTid.boundaryPoints.at(newEnd).y());
     }
   }
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE

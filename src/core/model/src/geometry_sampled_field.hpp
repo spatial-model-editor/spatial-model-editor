@@ -1,6 +1,5 @@
 // SBML SampledFieldGeometry
-//   - import geometry from SBML sampled field geometry
-//   -
+//   - import/export geometry to/from SBML sampled field geometry
 
 #pragma once
 
@@ -29,4 +28,4 @@ GeometrySampledField importGeometryFromSampledField(libsbml::Geometry *geom);
 void exportSampledFieldGeometry(libsbml::Geometry *geom,
                                 const QImage &compartmentImage);
 
-} // namespace sbml
+} // namespace model

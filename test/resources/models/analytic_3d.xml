@@ -1,0 +1,438 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core"
+      xmlns:spatial="http://www.sbml.org/sbml/level3/version1/spatial/version1"
+      level="3" version="1" spatial:required="true">
+  <model id="analytic_3d">
+    <listOfUnitDefinitions>
+      <unitDefinition id="molecules">
+        <listOfUnits>
+          <unit kind="item" exponent="1" scale="0" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="uM_um3_molecules_1">
+        <listOfUnits>
+          <unit kind="item" exponent="-1" scale="0" multiplier="1"/>
+          <unit kind="dimensionless" exponent="1" scale="0" multiplier="1e-21"/>
+          <unit kind="mole" exponent="1" scale="0" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="um3">
+        <listOfUnits>
+          <unit kind="metre" exponent="3" scale="0" multiplier="1e-06"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="um2">
+        <listOfUnits>
+          <unit kind="metre" exponent="2" scale="0" multiplier="1e-06"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="um">
+        <listOfUnits>
+          <unit kind="metre" exponent="1" scale="0" multiplier="1e-06"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="pA_um_2">
+        <listOfUnits>
+          <unit kind="metre" exponent="2" scale="0" multiplier="1"/>
+          <unit kind="dimensionless" exponent="1" scale="0" multiplier="1"/>
+          <unit kind="ampere" exponent="1" scale="0" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+    </listOfUnitDefinitions>
+    <listOfCompartments>
+      <compartment id="Extracellular" spatialDimensions="3" constant="true">
+        <spatial:compartmentMapping spatial:id="ExtracellularExtracellular"
+                 spatial:domainType="Extracellular" spatial:unitSize="1"/>
+      </compartment>
+      <compartment id="Cytosol" spatialDimensions="3" constant="true">
+        <spatial:compartmentMapping spatial:id="CytosolCytosol"
+                 spatial:domainType="Cytosol" spatial:unitSize="1"/>
+      </compartment>
+      <compartment id="Nucleus" spatialDimensions="3" constant="true">
+        <spatial:compartmentMapping spatial:id="NucleusNucleus"
+                 spatial:domainType="Nucleus" spatial:unitSize="1"/>
+      </compartment>
+      <compartment id="Nucleus_Cytosol_membrane" spatialDimensions="2" constant="true">
+        <spatial:compartmentMapping spatial:id="Nucleus_Cytosol_membraneNucleus_Cytosol_membrane"
+                 spatial:domainType="Nucleus_Cytosol_membrane" spatial:unitSize="1"/>
+      </compartment>
+      <compartment id="Cytosol_Extracellular_membrane" spatialDimensions="2" constant="true">
+        <spatial:compartmentMapping spatial:id="Cytosol_Extracellular_membraneCytosol_Extracellular_membrane"
+                 spatial:domainType="Cytosol_Extracellular_membrane" spatial:unitSize="1"/>
+      </compartment>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="s1_nuc" compartment="Nucleus" initialConcentration="0"
+               substanceUnits="molecules" hasOnlySubstanceUnits="false"
+               boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
+      <species id="s1_cyt" compartment="Cytosol" initialConcentration="100"
+               substanceUnits="molecules" hasOnlySubstanceUnits="false"
+               boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
+      <species id="s2_nuc" compartment="Nucleus" initialConcentration="5"
+               substanceUnits="molecules" hasOnlySubstanceUnits="false"
+               boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
+      <species id="s1_EC" compartment="Extracellular" initialConcentration="0"
+               substanceUnits="molecules" hasOnlySubstanceUnits="false"
+               boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
+    </listOfSpecies>
+    <listOfParameters>
+      <parameter id="x" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="x"/>
+      </parameter>
+      <parameter id="y" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="y"/>
+      </parameter>
+      <parameter id="z" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="z"/>
+      </parameter>
+      <parameter id="s1_nuc_BC_Xm" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_nuc"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Xmin"/>
+      </parameter>
+      <parameter id="s1_nuc_BC_Xp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_nuc"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Xmax"/>
+      </parameter>
+      <parameter id="s1_nuc_BC_Ym" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_nuc"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Ymin"/>
+      </parameter>
+      <parameter id="s1_nuc_BC_Yp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_nuc"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Ymax"/>
+      </parameter>
+      <parameter id="s1_nuc_BC_Zm" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_nuc"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Zmax"/>
+      </parameter>
+      <parameter id="s1_nuc_BC_Zp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_nuc"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Zmin"/>
+      </parameter>
+      <parameter id="s1_nuc_BC_Nucleus" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_nuc"
+                 spatial:type="Dirichlet" spatial:boundaryDomainType="Nucleus"/>
+      </parameter>
+      <parameter id="s1_cyt_BC_Xm" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_cyt"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Xmin"/>
+      </parameter>
+      <parameter id="s1_cyt_BC_Xp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_cyt"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Xmax"/>
+      </parameter>
+      <parameter id="s1_cyt_BC_Ym" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_cyt"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Ymin"/>
+      </parameter>
+      <parameter id="s1_cyt_BC_Yp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_cyt"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Ymax"/>
+      </parameter>
+      <parameter id="s1_cyt_BC_Zm" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_cyt"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Zmax"/>
+      </parameter>
+      <parameter id="s1_cyt_BC_Zp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_cyt"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Zmin"/>
+      </parameter>
+      <parameter id="s1_cyt_BC_Cytosol" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_cyt"
+                 spatial:type="Dirichlet" spatial:boundaryDomainType="Cytosol"/>
+      </parameter>
+      <parameter id="s1_EC_BC_Xm" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_EC"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Xmin"/>
+      </parameter>
+      <parameter id="s1_EC_BC_Xp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_EC"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Xmax"/>
+      </parameter>
+      <parameter id="s1_EC_BC_Ym" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_EC"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Ymin"/>
+      </parameter>
+      <parameter id="s1_EC_BC_Yp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_EC"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Ymax"/>
+      </parameter>
+      <parameter id="s1_EC_BC_Zm" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_EC"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Zmax"/>
+      </parameter>
+      <parameter id="s1_EC_BC_Zp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_EC"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Zmin"/>
+      </parameter>
+      <parameter id="s1_EC_BC_Extracellular" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s1_EC"
+                 spatial:type="Dirichlet" spatial:boundaryDomainType="Extracellular"/>
+      </parameter>
+      <parameter id="s2_nuc_BC_Xm" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s2_nuc"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Xmin"/>
+      </parameter>
+      <parameter id="s2_nuc_BC_Xp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s2_nuc"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Xmax"/>
+      </parameter>
+      <parameter id="s2_nuc_BC_Ym" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s2_nuc"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Ymin"/>
+      </parameter>
+      <parameter id="s2_nuc_BC_Yp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s2_nuc"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Ymax"/>
+      </parameter>
+      <parameter id="s2_nuc_BC_Zm" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s2_nuc"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Zmax"/>
+      </parameter>
+      <parameter id="s2_nuc_BC_Zp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s2_nuc"
+                 spatial:type="Dirichlet" spatial:coordinateBoundary="Zmin"/>
+      </parameter>
+      <parameter id="s2_nuc_BC_Nucleus" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="s2_nuc"
+                 spatial:type="Dirichlet" spatial:boundaryDomainType="Nucleus"/>
+      </parameter>
+      <parameter id="s1_nuc_diff" value="0.1" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="s1_nuc"
+                 spatial:type="isotropic"/>
+      </parameter>
+      <parameter id="s1_cyt_diff" value="0.1" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="s1_cyt"
+                 spatial:type="isotropic"/>
+      </parameter>
+      <parameter id="s1_EC_diff" value="0.1" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="s1_EC"
+                 spatial:type="isotropic"/>
+      </parameter>
+      <parameter id="s2_nuc_diff" value="0.1" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="s2_nuc"
+                 spatial:type="isotropic"/>
+      </parameter>
+    </listOfParameters>
+    <listOfRules>
+      <assignmentRule metaid="CDMT00006" variable="s2_nuc">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <ci> x </ci>
+        </math>
+      </assignmentRule>
+    </listOfRules>
+    <listOfReactions>
+      <reaction id="flux1" name="flux1" reversible="true" fast="false"
+                spatial:isLocal="true" compartment="Nucleus_Cytosol_membrane">
+        <listOfReactants>
+          <speciesReference species="s1_cyt" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="s1_nuc" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <cn> 0.5 </cn>
+              <ci> s1_cyt </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="flux2" name="flux2" reversible="true" fast="false"
+                spatial:isLocal="true" compartment="Cytosol_Extracellular_membrane">
+        <listOfReactants>
+          <speciesReference species="s1_cyt" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="s1_EC" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <cn> 0.5 </cn>
+              <ci> s1_cyt </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+    </listOfReactions>
+    <spatial:geometry spatial:coordinateSystem="cartesian">
+      <spatial:listOfCoordinateComponents>
+        <spatial:coordinateComponent spatial:id="x" spatial:type="cartesianX" spatial:unit="um">
+          <spatial:boundaryMin spatial:id="Xmin" spatial:value="-10"/>
+          <spatial:boundaryMax spatial:id="Xmax" spatial:value="10"/>
+        </spatial:coordinateComponent>
+        <spatial:coordinateComponent spatial:id="y" spatial:type="cartesianY" spatial:unit="um">
+          <spatial:boundaryMin spatial:id="Ymin" spatial:value="-10"/>
+          <spatial:boundaryMax spatial:id="Ymax" spatial:value="10"/>
+        </spatial:coordinateComponent>
+        <spatial:coordinateComponent spatial:id="z" spatial:type="cartesianZ" spatial:unit="um">
+          <spatial:boundaryMin spatial:id="Zmin" spatial:value="-10"/>
+          <spatial:boundaryMax spatial:id="Zmax" spatial:value="10"/>
+        </spatial:coordinateComponent>
+      </spatial:listOfCoordinateComponents>
+      <spatial:listOfDomainTypes>
+        <spatial:domainType spatial:id="Extracellular" spatial:spatialDimensions="3"/>
+        <spatial:domainType spatial:id="Cytosol" spatial:spatialDimensions="3"/>
+        <spatial:domainType spatial:id="Nucleus" spatial:spatialDimensions="3"/>
+        <spatial:domainType spatial:id="Nucleus_Cytosol_membrane"
+                 spatial:spatialDimensions="2"/>
+        <spatial:domainType spatial:id="Cytosol_Extracellular_membrane"
+                 spatial:spatialDimensions="2"/>
+      </spatial:listOfDomainTypes>
+      <spatial:listOfDomains>
+        <spatial:domain spatial:id="Nucleus_Cytosol_membrane0"
+                 spatial:domainType="Nucleus_Cytosol_membrane"/>
+        <spatial:domain spatial:id="Cytosol_Extracellular_membrane0"
+                 spatial:domainType="Cytosol_Extracellular_membrane"/>
+        <spatial:domain spatial:id="Extracellular0" spatial:domainType="Extracellular">
+          <spatial:listOfInteriorPoints>
+            <spatial:interiorPoint spatial:coord1="0" spatial:coord2="0"
+                     spatial:coord3="0"/>
+          </spatial:listOfInteriorPoints>
+        </spatial:domain>
+        <spatial:domain spatial:id="Cytosol0" spatial:domainType="Cytosol">
+          <spatial:listOfInteriorPoints>
+            <spatial:interiorPoint spatial:coord1="2.4" spatial:coord2="2.4"
+                     spatial:coord3="0.5"/>
+          </spatial:listOfInteriorPoints>
+        </spatial:domain>
+        <spatial:domain spatial:id="Nucleus0" spatial:domainType="Nucleus">
+          <spatial:listOfInteriorPoints>
+            <spatial:interiorPoint spatial:coord1="4.8" spatial:coord2="4.8"
+                     spatial:coord3="0.5"/>
+          </spatial:listOfInteriorPoints>
+        </spatial:domain>
+      </spatial:listOfDomains>
+      <spatial:listOfAdjacentDomains>
+        <spatial:adjacentDomains spatial:id="Extracellular0__Cytosol_Extracellular_membrane0"
+                 spatial:domain1="Extracellular0"
+                 spatial:domain2="Cytosol_Extracellular_membrane0"/>
+        <spatial:adjacentDomains spatial:id="Cytosol_Extracellular_membrane0__Cytosol0"
+                 spatial:domain1="Cytosol_Extracellular_membrane0"
+                 spatial:domain2="Cytosol0"/>
+        <spatial:adjacentDomains spatial:id="Cytosol0__Nucleus_Cytosol_membrane0"
+                 spatial:domain1="Cytosol0" spatial:domain2="Nucleus_Cytosol_membrane0"/>
+        <spatial:adjacentDomains spatial:id="Nucleus_Cytosol_membrane0__Nucleus0"
+                 spatial:domain1="Nucleus_Cytosol_membrane0" spatial:domain2="Nucleus0"/>
+      </spatial:listOfAdjacentDomains>
+      <spatial:listOfGeometryDefinitions>
+        <spatial:analyticGeometry spatial:id="spatial3d_spheres" spatial:isActive="true">
+          <spatial:listOfAnalyticVolumes>
+            <spatial:analyticVolume spatial:id="Nucleus1" spatial:functionType="layered"
+                     spatial:ordinal="2" spatial:domainType="Nucleus">
+              <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <apply>
+                  <lt/>
+                  <apply>
+                    <plus/>
+                    <apply>
+                      <times/>
+                      <cn type="integer"> 8 </cn>
+                      <apply>
+                        <power/>
+                        <apply>
+                          <minus/>
+                          <ci> x </ci>
+                          <cn type="integer"> 1 </cn>
+                        </apply>
+                        <cn type="integer"> 2 </cn>
+                      </apply>
+                    </apply>
+                    <apply>
+                      <times/>
+                      <cn type="integer"> 8 </cn>
+                      <apply>
+                        <power/>
+                        <apply>
+                          <minus/>
+                          <ci> y </ci>
+                          <cn type="integer"> 1 </cn>
+                        </apply>
+                        <cn type="integer"> 2 </cn>
+                      </apply>
+                    </apply>
+                    <apply>
+                      <times/>
+                      <cn type="integer"> 8 </cn>
+                      <apply>
+                        <power/>
+                        <apply>
+                          <minus/>
+                          <ci> z </ci>
+                          <cn type="integer"> 1 </cn>
+                        </apply>
+                        <cn type="integer"> 2 </cn>
+                      </apply>
+                    </apply>
+                  </apply>
+                  <cn type="integer"> 32 </cn>
+                </apply>
+              </math>
+            </spatial:analyticVolume>
+            <spatial:analyticVolume spatial:id="Cytosol1" spatial:functionType="layered"
+                     spatial:ordinal="1" spatial:domainType="Cytosol">
+              <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <apply>
+                  <lt/>
+                  <apply>
+                    <plus/>
+                    <apply>
+                      <times/>
+                      <cn type="integer"> 16 </cn>
+                      <apply>
+                        <power/>
+                        <apply>
+                          <minus/>
+                          <ci> x </ci>
+                          <cn type="integer"> 1 </cn>
+                        </apply>
+                        <cn type="integer"> 2 </cn>
+                      </apply>
+                    </apply>
+                    <apply>
+                      <times/>
+                      <cn type="integer"> 16 </cn>
+                      <apply>
+                        <power/>
+                        <apply>
+                          <minus/>
+                          <ci> y </ci>
+                          <cn type="integer"> 1 </cn>
+                        </apply>
+                        <cn type="integer"> 2 </cn>
+                      </apply>
+                    </apply>
+                    <apply>
+                      <times/>
+                      <cn type="integer"> 16 </cn>
+                      <apply>
+                        <power/>
+                        <apply>
+                          <minus/>
+                          <ci> z </ci>
+                          <cn type="integer"> 1 </cn>
+                        </apply>
+                        <cn type="integer"> 2 </cn>
+                      </apply>
+                    </apply>
+                  </apply>
+                  <cn type="integer"> 512 </cn>
+                </apply>
+              </math>
+            </spatial:analyticVolume>
+            <spatial:analyticVolume spatial:id="EC1" spatial:functionType="layered"
+                     spatial:ordinal="0" spatial:domainType="Extracellular">
+              <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <true/>
+              </math>
+            </spatial:analyticVolume>
+          </spatial:listOfAnalyticVolumes>
+        </spatial:analyticGeometry>
+      </spatial:listOfGeometryDefinitions>
+    </spatial:geometry>
+  </model>
+</sbml>

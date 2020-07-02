@@ -2,8 +2,8 @@
 
 #include "id.hpp"
 #include "logger.hpp"
-#include "math.hpp"
 #include "mesh.hpp"
+#include "sbml_math.hpp"
 #include "utils.hpp"
 #include "validation.hpp"
 #include "xml_annotation.hpp"

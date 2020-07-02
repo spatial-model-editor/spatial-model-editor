@@ -59,7 +59,7 @@ target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 target_compile_definitions(
   core
   PUBLIC
-    SPDLOG_ACTIVE_LEVEL=$<$<CONFIG:Debug>:SPDLOG_LEVEL_TRACE>$<$<CONFIG:Release>:SPDLOG_LEVEL_INFO>
+    SPDLOG_ACTIVE_LEVEL=$<$<CONFIG:Debug>:SPDLOG_LEVEL_DEBUG>$<$<CONFIG:Release>:SPDLOG_LEVEL_INFO>
 )
 
 add_subdirectory(resources)

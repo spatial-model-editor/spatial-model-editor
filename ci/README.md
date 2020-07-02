@@ -56,16 +56,15 @@
 
 - we also provide a `latest` Github release for beta testing / live-at-head users
 
-- to update them, move `latest` tag on master
-
-- travis builds will generate new binaries and update the `latest` Github release
+- to update this release to the current commit on master, move the `latest` tag:
 
 ```
-# to move latest tag to current commit
 git push origin :refs/tags/latest
 git tag -f latest
 git push origin latest
 ```
+
+- this will trigger travis builds that update the `latest` Github release binaries
 
 ## Dependencies
 

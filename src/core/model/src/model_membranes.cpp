@@ -151,10 +151,12 @@ void ModelMembranes::importMembraneIdsAndNames(const libsbml::Model *model) {
             auto mIndex = ids.indexOf(m.getId().c_str());
             SPDLOG_TRACE("Found membrane[{}] '' in SBML document", mIndex, mId);
             m.setId(mId);
-            ids[mIndex] = QString::fromStdString(m.getId());
-            names[mIndex] = QString::fromStdString(comp->getName());
             SPDLOG_TRACE("  id -> '{}'", mId);
-            SPDLOG_TRACE("  name -> '{}'", comp->getName());
+            ids[mIndex] = QString::fromStdString(m.getId());
+            if (!comp->getName().empty()) {
+              SPDLOG_TRACE("  name -> '{}'", comp->getName());
+              names[mIndex] = QString::fromStdString(comp->getName());
+            }
           }
         }
       }
