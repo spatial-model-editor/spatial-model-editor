@@ -1,6 +1,6 @@
 #include "model_math.hpp"
 
-#include "math.hpp"
+#include "sbml_math.hpp"
 #include <memory>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>

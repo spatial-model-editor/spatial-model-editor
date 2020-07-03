@@ -1,10 +1,10 @@
 target_sources(
   core
   PRIVATE geometry.cpp
+          geometry_analytic.cpp
           geometry_parametric.cpp
           geometry_sampled_field.cpp
           id.cpp
-          math.cpp
           model.cpp
           model_compartments.cpp
           model_functions.cpp
@@ -16,6 +16,7 @@ target_sources(
           model_reactions.cpp
           model_species.cpp
           model_units.cpp
+          sbml_math.cpp
           sbml_utils.cpp
           validation.cpp
           xml_annotation.cpp)
@@ -23,6 +24,7 @@ target_sources(
 target_sources(
   core_tests
   PUBLIC geometry_t.cpp
+         geometry_analytic_t.cpp
          model_t.cpp
          model_functions_t.cpp
          model_math_t.cpp

@@ -189,7 +189,11 @@ bool getIsSpeciesConstant(const libsbml::Species *spec) {
 libsbml::Parameter *getSpatialCoordinateParam(libsbml::Model *model,
                                               libsbml::CoordinateKind_t kind) {
   auto *geom = getOrCreateGeometry(model);
+  // todo: check if getCoordinateComponentByKind can be made const in libSBML
   const auto *coord = geom->getCoordinateComponentByKind(kind);
+  if (coord == nullptr) {
+    return nullptr;
+  }
   for (unsigned int i = 0; i < model->getNumParameters(); ++i) {
     auto *param = model->getParameter(i);
     if (const auto *spp = static_cast<const libsbml::SpatialParameterPlugin *>(

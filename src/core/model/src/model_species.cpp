@@ -10,11 +10,11 @@
 
 #include "id.hpp"
 #include "logger.hpp"
-#include "math.hpp"
 #include "model_compartments.hpp"
 #include "model_geometry.hpp"
 #include "model_parameters.hpp"
 #include "model_reactions.hpp"
+#include "sbml_math.hpp"
 #include "sbml_utils.hpp"
 #include "symbolic.hpp"
 #include "utils.hpp"

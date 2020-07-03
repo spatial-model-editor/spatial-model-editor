@@ -10,7 +10,6 @@
 #include <memory>
 
 #include "logger.hpp"
-#include "math.hpp"
 
 namespace model {
 
@@ -56,4 +55,4 @@ QString makeUnique(const QString &name, const QStringList &names,
   return uniqueName;
 }
 
-}  // namespace sbml
+} // namespace model

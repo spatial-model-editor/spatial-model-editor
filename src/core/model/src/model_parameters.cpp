@@ -10,10 +10,8 @@
 
 #include "id.hpp"
 #include "logger.hpp"
-#include "math.hpp"
-#include "model_species.hpp"
+#include "sbml_math.hpp"
 #include "sbml_utils.hpp"
-#include "xml_annotation.hpp"
 
 namespace model {
 

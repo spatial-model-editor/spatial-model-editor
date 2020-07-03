@@ -7,6 +7,7 @@
 
 #include <memory>
 
+#include "geometry_analytic.hpp"
 #include "geometry_parametric.hpp"
 #include "geometry_sampled_field.hpp"
 #include "logger.hpp"
@@ -56,7 +57,6 @@ bool ModelGeometry::importDimensions(libsbml::Model *model) {
 }
 
 void ModelGeometry::writeDefaultGeometryToSBML() {
-  // todo: check if this removes any existing geometry
   SPDLOG_INFO("Creating new 2d SBML model geometry");
   numDimensions = 2;
   auto *spatial = static_cast<libsbml::SpatialModelPlugin *>(
@@ -152,30 +152,40 @@ ModelGeometry::ModelGeometry(libsbml::Model *model,
   }
 }
 
-void ModelGeometry::importSampledFieldGeometry(libsbml::Model *model) {
-  importDimensions(model);
-  auto *geom = getOrCreateGeometry(model);
-  auto gsf = importGeometryFromSampledField(geom);
-  if (gsf.image.isNull()) {
-    SPDLOG_INFO("No Sampled Field Geometry found");
-    return;
-  }
-  SPDLOG_INFO("  - found {}x{} geometry image", gsf.image.width(),
-              gsf.image.height());
-  image = gsf.image.convertToFormat(QImage::Format_Indexed8);
-  hasImage = true;
-
+static double calculatePixelWidth(const QSize &imageSize,
+                                  const QSizeF &physicalSize) {
   // calculate pixel size from image dimensions
-  double xPixels = static_cast<double>(image.width());
+  double xPixels = static_cast<double>(imageSize.width());
   double xPixelSize = physicalSize.width() / xPixels;
-  double yPixels = static_cast<double>(image.height());
+  double yPixels = static_cast<double>(imageSize.height());
   double yPixelSize = physicalSize.height() / yPixels;
   constexpr double maxRelativeDifference{1e-12};
   if (std::abs((xPixelSize - yPixelSize) / xPixelSize) >
       maxRelativeDifference) {
     SPDLOG_WARN("Pixels are not square: {} x {}", xPixelSize, yPixelSize);
   }
-  pixelWidth = xPixelSize;
+  return xPixelSize;
+}
+
+void ModelGeometry::importSampledFieldGeometry(libsbml::Model *model) {
+  importDimensions(model);
+  auto *geom = getOrCreateGeometry(model);
+  auto gsf = importGeometryFromSampledField(geom);
+  if (gsf.image.isNull()) {
+    SPDLOG_INFO(
+        "No Sampled Field Geometry found - looking for Analytic Geometry...");
+    gsf =
+        importGeometryFromAnalyticGeometry(model, physicalOrigin, physicalSize);
+    if (gsf.image.isNull()) {
+      SPDLOG_INFO("No Analytic Geometry found");
+      return;
+    }
+  }
+  SPDLOG_INFO("  - found {}x{} geometry image", gsf.image.width(),
+              gsf.image.height());
+  image = gsf.image.convertToFormat(QImage::Format_Indexed8);
+  hasImage = true;
+  pixelWidth = calculatePixelWidth(image.size(), physicalSize);
   modelMembranes->updateCompartmentImage(image);
   for (const auto &[id, colour] : gsf.compartmentIdColourPairs) {
     SPDLOG_INFO("setting compartment {} colour to {:x}", id, colour);

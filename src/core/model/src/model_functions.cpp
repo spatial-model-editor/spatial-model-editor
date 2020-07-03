@@ -10,7 +10,7 @@
 
 #include "id.hpp"
 #include "logger.hpp"
-#include "math.hpp"
+#include "sbml_math.hpp"
 
 namespace model {
 

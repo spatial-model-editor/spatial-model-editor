@@ -180,8 +180,9 @@ double Mesh::getMembraneWidth(const std::string &membraneID) const {
   if (iter != boundaries.cend()) {
     return iter->getMembraneWidth();
   }
-  SPDLOG_WARN("Boundary for Membrane {} not found", membraneID);
-  return 0;
+  SPDLOG_ERROR("Boundary for Membrane {} not found", membraneID);
+  SPDLOG_ERROR("  -> using default width 1");
+  return 1;
 }
 
 void Mesh::setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
