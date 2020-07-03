@@ -32,7 +32,7 @@ using PixelLocalPair = std::pair<std::size_t, std::array<double, 2>>;
 class DuneImpl;
 
 class DuneSim : public BaseSim {
- private:
+private:
   // Dune objects via pimpl to hide DUNE headers
   std::unique_ptr<DuneImpl> pDuneImpl;
   std::vector<std::string> compartmentDuneNames;
@@ -41,6 +41,7 @@ class DuneSim : public BaseSim {
   // dimensions of model
   QSize geometryImageSize;
   double pixelSize;
+  QPointF pixelOrigin;
   // map from pixel QPoint to ix index for each compartment
   std::vector<utils::QPointIndexer> compartmentPointIndex;
   std::vector<const geometry::Compartment *> compartmentGeometry;
@@ -60,7 +61,7 @@ class DuneSim : public BaseSim {
   std::string currentErrorMessage;
   std::size_t integratorOrder = 1;
 
- public:
+public:
   explicit DuneSim(
       const model::Model &sbmlDoc,
       const std::vector<std::string> &compartmentIds,
@@ -76,9 +77,9 @@ class DuneSim : public BaseSim {
   virtual void setMaxThreads([[maybe_unused]] std::size_t maxThreads) override;
   virtual std::size_t getMaxThreads() const override;
   std::size_t run(double time) override;
-  const std::vector<double> &getConcentrations(
-      std::size_t compartmentIndex) const override;
+  const std::vector<double> &
+  getConcentrations(std::size_t compartmentIndex) const override;
   virtual std::string errorMessage() const override;
 };
 
-}  // namespace sim
+} // namespace sim
