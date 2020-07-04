@@ -263,7 +263,8 @@ void DuneSim::initSpeciesIndices() {
 }
 
 static std::pair<QPoint, QPoint> getBoundingBox(const QTriangleF &t,
-                                                double scale) {
+                                                double pixelSize,
+                                                const QPointF &pixelOrigin) {
   // get triangle bounding box in physical units
   QPointF fmin(t[0].x(), t[0].y());
   QPointF fmax = fmin;
@@ -274,11 +275,13 @@ static std::pair<QPoint, QPoint> getBoundingBox(const QTriangleF &t,
     fmax.setY(std::max(fmax.y(), t[i].y()));
   }
   // convert physical points to pixel locations
+  fmin -= pixelOrigin;
+  fmin /= pixelSize;
+  fmax -= pixelOrigin;
+  fmax /= pixelSize;
   return std::make_pair<QPoint, QPoint>(
-      QPoint(static_cast<int>(fmin.x() / scale),
-             static_cast<int>(fmin.y() / scale)),
-      QPoint(static_cast<int>(fmax.x() / scale),
-             static_cast<int>(fmax.y() / scale)));
+      QPoint(static_cast<int>(fmin.x()), static_cast<int>(fmin.y())),
+      QPoint(static_cast<int>(fmax.x()), static_cast<int>(fmax.y())));
 }
 
 static std::size_t getIxValidNeighbour(std::size_t ix,
@@ -325,19 +328,15 @@ void DuneSim::updatePixels() {
       QPointF c0(geo.corner(0)[0], geo.corner(0)[1]);
       QPointF c1(geo.corner(1)[0], geo.corner(1)[1]);
       QPointF c2(geo.corner(2)[0], geo.corner(2)[1]);
-      auto [pMin, pMax] = getBoundingBox({{c0, c1, c2}}, pixelSize);
-      // note: mesh points constructed at pixel points (i.e. bottom left
-      // corner of pixel) so here we also evaluate at this point
-
-      // todo: consider having mesh points in centre of pixel, and then also
-      // evaluate the dune grid functions in the centre
+      auto [pMin, pMax] =
+          getBoundingBox({{c0, c1, c2}}, pixelSize, pixelOrigin);
       SPDLOG_TRACE("  - bounding box ({},{}) - ({},{})", pMin.x(), pMin.y(),
                    pMax.x(), pMax.y());
       for (int x = pMin.x(); x < pMax.x() + 1; ++x) {
         for (int y = pMin.y(); y < pMax.y() + 1; ++y) {
-          auto localPoint =
-              e.geometry().local({static_cast<double>(x) * pixelSize,
-                                  static_cast<double>(y) * pixelSize});
+          auto localPoint = e.geometry().local(
+              {static_cast<double>(x) * pixelSize + pixelOrigin.x(),
+               static_cast<double>(y) * pixelSize + pixelOrigin.y()});
           // note: qpi/QImage has (0,0) in top-left corner:
           QPoint pix = QPoint(x, geometryImageSize.height() - 1 - y);
           if (auto ix = qpi.getIndex(pix);
@@ -371,8 +370,10 @@ DuneSim::DuneSim(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
     const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
     std::size_t order)
-    : geometryImageSize(sbmlDoc.getGeometry().getImage().size()),
-      pixelSize(sbmlDoc.getGeometry().getPixelWidth()), integratorOrder(order) {
+    : geometryImageSize{sbmlDoc.getGeometry().getImage().size()},
+      pixelSize{sbmlDoc.getGeometry().getPixelWidth()},
+      pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()}, integratorOrder{
+                                                                  order} {
   dune::DuneConverter dc(sbmlDoc, 1e-6);
   // export gmsh file `grid.msh` in the same dir
   QFile f2("grid.msh");
