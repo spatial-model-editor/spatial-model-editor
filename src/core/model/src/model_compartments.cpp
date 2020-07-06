@@ -177,7 +177,7 @@ bool ModelCompartments::remove(const QString &id) {
   using diffType = decltype(compartments)::difference_type;
   compartments.erase(compartments.begin() + static_cast<diffType>(i));
   removeCompartmentFromSBML(sbmlModel, id.toStdString());
-  for (const auto& s : modelSpecies->getIds(id)) {
+  for (const auto &s : modelSpecies->getIds(id)) {
     modelSpecies->remove(s);
   }
   // todo: update reactions
@@ -327,6 +327,11 @@ QString ModelCompartments::getIdFromColour(QRgb colour) const {
     return {};
   }
   return ids[i];
+}
+
+const std::vector<geometry::Compartment> &ModelCompartments::getCompartments()
+    const {
+  return compartments;
 }
 
 geometry::Compartment *ModelCompartments::getCompartment(const QString &id) {

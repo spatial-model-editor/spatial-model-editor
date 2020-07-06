@@ -15,12 +15,12 @@ class Model;
 namespace model {
 
 class ModelFunctions {
-private:
+ private:
   QStringList ids;
   QStringList names;
   libsbml::Model *sbmlModel = nullptr;
 
-public:
+ public:
   ModelFunctions();
   explicit ModelFunctions(libsbml::Model *model);
   const QStringList &getIds() const;
@@ -32,8 +32,8 @@ public:
   QStringList getArguments(const QString &id) const;
   QString addArgument(const QString &functionId, const QString &argumentId);
   void removeArgument(const QString &functionId, const QString &argumentId);
-  void add(const QString &name);
+  QString add(const QString &name);
   void remove(const QString &id);
 };
 
-} // namespace model
+}  // namespace model

@@ -16,14 +16,16 @@ class Model;
 class TabFunctions : public QWidget {
   Q_OBJECT
 
-public:
-  explicit TabFunctions(model::Model &doc, QWidget *parent = nullptr);
+ public:
+  explicit TabFunctions(model::Model &model, QWidget *parent = nullptr);
   ~TabFunctions();
   void loadModelData(const QString &selection = {});
 
-private:
+ private:
   std::unique_ptr<Ui::TabFunctions> ui;
-  model::Model &sbmlDoc;
+  model::Model &model;
+  QString currentFunctionId{};
+  void clearDisplay();
   void listFunctions_currentRowChanged(int row);
   void btnAddFunction_clicked();
   void btnRemoveFunction_clicked();

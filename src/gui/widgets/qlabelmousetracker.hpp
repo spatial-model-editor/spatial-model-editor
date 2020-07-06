@@ -51,6 +51,6 @@ class QLabelMouseTracker : public QLabel {
   QPixmap pixmap;
   QImage maskImage;
   QPoint currentPixel;
-  QRgb colour;
-  int maskIndex;
+  QRgb colour{};
+  int maskIndex{};
 };

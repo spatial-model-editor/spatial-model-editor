@@ -9,8 +9,8 @@
 #include "ui_tabfunctions.h"
 #include "utils.hpp"
 
-TabFunctions::TabFunctions(model::Model &doc, QWidget *parent)
-    : QWidget(parent), ui{std::make_unique<Ui::TabFunctions>()}, sbmlDoc(doc) {
+TabFunctions::TabFunctions(model::Model &model, QWidget *parent)
+    : QWidget{parent}, ui{std::make_unique<Ui::TabFunctions>()}, model{model} {
   ui->setupUi(this);
   connect(ui->listFunctions, &QListWidget::currentRowChanged, this,
           &TabFunctions::listFunctions_currentRowChanged);
@@ -30,31 +30,36 @@ TabFunctions::TabFunctions(model::Model &doc, QWidget *parent)
 
 TabFunctions::~TabFunctions() = default;
 
-void TabFunctions::loadModelData(const QString &selection) {
-  auto *list = ui->listFunctions;
-  list->clear();
+void TabFunctions::clearDisplay() {
+  currentFunctionId.clear();
+  ui->txtFunctionName->clear();
+  ui->listFunctionParams->clear();
+  ui->txtFunctionDef->clear();
+  ui->lblFunctionDefStatus->clear();
+  ui->btnAddFunctionParam->setEnabled(false);
   ui->btnRemoveFunctionParam->setEnabled(false);
-  list->addItems(sbmlDoc.getFunctions().getNames());
-  selectMatchingOrFirstItem(list, selection);
-  bool enable = list->count() > 0;
+  ui->btnRemoveFunction->setEnabled(false);
+}
+
+void TabFunctions::loadModelData(const QString &selection) {
+  clearDisplay();
+  ui->listFunctions->clear();
+  ui->listFunctions->addItems(model.getFunctions().getNames());
+  selectMatchingOrFirstItem(ui->listFunctions, selection);
+  bool enable = ui->listFunctions->count() > 0;
   ui->txtFunctionName->setEnabled(enable);
   ui->listFunctionParams->setEnabled(enable);
   ui->txtFunctionDef->setEnabled(enable);
 }
 
 void TabFunctions::listFunctions_currentRowChanged(int row) {
-  ui->txtFunctionName->clear();
-  ui->listFunctionParams->clear();
-  ui->txtFunctionDef->clear();
-  ui->lblFunctionDefStatus->clear();
-  if ((row < 0) || (row > sbmlDoc.getFunctions().getIds().size() - 1)) {
-    ui->btnAddFunctionParam->setEnabled(false);
-    ui->btnRemoveFunctionParam->setEnabled(false);
-    ui->btnRemoveFunction->setEnabled(false);
+  clearDisplay();
+  if ((row < 0) || (row > model.getFunctions().getIds().size() - 1)) {
     return;
   }
-  const auto &funcs = sbmlDoc.getFunctions();
+  const auto &funcs = model.getFunctions();
   auto id = funcs.getIds()[row];
+  currentFunctionId = id;
   SPDLOG_DEBUG("Function {} selected", id.toStdString());
   ui->txtFunctionName->setText(funcs.getName(id));
   auto args = funcs.getArguments(id);
@@ -72,18 +77,17 @@ void TabFunctions::listFunctions_currentRowChanged(int row) {
 }
 
 void TabFunctions::btnAddFunction_clicked() {
-  bool ok;
+  bool ok{false};
   auto functionName = QInputDialog::getText(
       this, "Add function", "New function name:", QLineEdit::Normal, {}, &ok);
-  if (ok) {
-    sbmlDoc.getFunctions().add(functionName);
-    loadModelData(functionName);
+  if (ok && !functionName.isEmpty()) {
+    auto newFunctionName = model.getFunctions().add(functionName);
+    loadModelData(newFunctionName);
   }
 }
 
 void TabFunctions::btnRemoveFunction_clicked() {
-  int row = ui->listFunctions->currentRow();
-  if ((row < 0) || (row > sbmlDoc.getFunctions().getIds().size() - 1)) {
+  if (currentFunctionId.isEmpty()) {
     return;
   }
   auto msgbox =
@@ -91,15 +95,13 @@ void TabFunctions::btnRemoveFunction_clicked() {
                          QString("Remove function '%1' from the model?")
                              .arg(ui->listFunctions->currentItem()->text()),
                          this);
-  connect(msgbox, &QMessageBox::finished, this,
-          [&s = sbmlDoc, row, this](int result) {
-            if (result == QMessageBox::Yes) {
-              auto funcId = s.getFunctions().getIds()[row];
-              SPDLOG_INFO("Removing function {}", funcId.toStdString());
-              s.getFunctions().remove(funcId);
-              this->loadModelData();
-            }
-          });
+  connect(msgbox, &QMessageBox::finished, this, [this](int result) {
+    if (result == QMessageBox::Yes) {
+      SPDLOG_INFO("Removing function {}", currentFunctionId.toStdString());
+      model.getFunctions().remove(currentFunctionId);
+      this->loadModelData();
+    }
+  });
   msgbox->open();
 }
 
@@ -109,14 +111,13 @@ void TabFunctions::listFunctionParams_currentRowChanged(int row) {
 }
 
 void TabFunctions::btnAddFunctionParam_clicked() {
-  bool ok;
+  bool ok{false};
   auto param =
       QInputDialog::getText(this, "Add function parameter",
                             "New parameter name:", QLineEdit::Normal, {}, &ok);
   if (ok && !param.isEmpty()) {
     SPDLOG_INFO("Adding parameter {}", param.toStdString());
-    auto id = sbmlDoc.getFunctions().getIds()[ui->listFunctions->currentRow()];
-    auto argId = sbmlDoc.getFunctions().addArgument(id, param);
+    auto argId = model.getFunctions().addArgument(currentFunctionId, param);
     ui->listFunctionParams->addItem(argId);
     ui->txtFunctionDef->addVariable(param.toStdString());
     ui->listFunctionParams->setCurrentRow(ui->listFunctionParams->count() - 1);
@@ -136,12 +137,10 @@ void TabFunctions::btnRemoveFunctionParam_clicked() {
       this);
   connect(msgbox, &QMessageBox::finished, this, [item, this](int result) {
     if (result == QMessageBox::Yes) {
-      auto p = item->text().toStdString();
-      SPDLOG_INFO("Removing parameter {}", p);
-      ui->txtFunctionDef->removeVariable(p);
-      auto id =
-          sbmlDoc.getFunctions().getIds()[ui->listFunctions->currentRow()];
-      sbmlDoc.getFunctions().removeArgument(id, item->text());
+      auto paramId = item->text().toStdString();
+      SPDLOG_INFO("Removing parameter {}", paramId);
+      ui->txtFunctionDef->removeVariable(paramId);
+      model.getFunctions().removeArgument(currentFunctionId, item->text());
       delete item;
     }
   });
@@ -150,13 +149,12 @@ void TabFunctions::btnRemoveFunctionParam_clicked() {
 
 void TabFunctions::txtFunctionDef_mathChanged(const QString &math, bool valid,
                                               const QString &errorMessage) {
-  if (valid) {
-    SPDLOG_INFO("new math: {}", math.toStdString());
-    ui->lblFunctionDefStatus->setText("");
-    auto id = sbmlDoc.getFunctions().getIds()[ui->listFunctions->currentRow()];
-    sbmlDoc.getFunctions().setExpression(id, math);
-  } else {
+  if (!valid) {
     SPDLOG_INFO("math err: {}", errorMessage.toStdString());
     ui->lblFunctionDefStatus->setText(errorMessage);
+    return;
   }
+  SPDLOG_INFO("new math: {}", math.toStdString());
+  ui->lblFunctionDefStatus->setText("");
+  model.getFunctions().setExpression(currentFunctionId, math);
 }
