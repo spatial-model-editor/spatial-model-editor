@@ -1,15 +1,16 @@
 #include "tabparameters.hpp"
 
+#include <QInputDialog>
+#include <QMessageBox>
+
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "model.hpp"
 #include "ui_tabparameters.h"
 #include "utils.hpp"
-#include <QInputDialog>
-#include <QMessageBox>
 
-TabParameters::TabParameters(model::Model &doc, QWidget *parent)
-    : QWidget(parent), ui{std::make_unique<Ui::TabParameters>()}, sbmlDoc(doc) {
+TabParameters::TabParameters(model::Model &model, QWidget *parent)
+    : QWidget{parent}, ui{std::make_unique<Ui::TabParameters>()}, model{model} {
   ui->setupUi(this);
   connect(ui->listParameters, &QListWidget::currentRowChanged, this,
           &TabParameters::listParameters_currentRowChanged);
@@ -26,62 +27,64 @@ TabParameters::TabParameters(model::Model &doc, QWidget *parent)
 TabParameters::~TabParameters() = default;
 
 void TabParameters::loadModelData(const QString &selection) {
-  auto *list = ui->listParameters;
-  list->clear();
+  currentParameterId.clear();
+  ui->listParameters->clear();
   ui->txtExpression->clearVariables();
   ui->txtExpression->clearFunctions();
   ui->txtExpression->addDefaultFunctions();
-  for (const auto &[id, name] : sbmlDoc.getParameters().getSymbols()) {
+  for (const auto &[id, name] : model.getParameters().getSymbols()) {
     ui->txtExpression->addVariable(id, name);
   }
-  for (const auto &id : sbmlDoc.getFunctions().getIds()) {
-    auto name = sbmlDoc.getFunctions().getName(id);
+  for (const auto &id : model.getFunctions().getIds()) {
+    auto name = model.getFunctions().getName(id);
     ui->txtExpression->addFunction(id.toStdString(), name.toStdString());
   }
-  for (const auto &id : sbmlDoc.getParameters().getIds()) {
-    auto name = sbmlDoc.getParameters().getName(id);
-    list->addItem(name);
+  for (const auto &id : model.getParameters().getIds()) {
+    auto name = model.getParameters().getName(id);
+    ui->listParameters->addItem(name);
   }
   ui->lblExpressionStatus->clear();
-  selectMatchingOrFirstItem(list, selection);
-  bool enable = list->count() > 0;
+  selectMatchingOrFirstItem(ui->listParameters, selection);
+  bool enable = ui->listParameters->count() > 0;
   ui->txtParameterName->setEnabled(enable);
   ui->txtExpression->setEnabled(enable);
 }
 
 void TabParameters::listParameters_currentRowChanged(int row) {
+  currentParameterId.clear();
   ui->txtParameterName->clear();
   ui->txtExpression->clear();
   ui->lblExpressionStatus->clear();
-  if ((row < 0) || (row > sbmlDoc.getParameters().getIds().size() - 1)) {
-    ui->txtParameterName->setEnabled(false);
-    ui->txtExpression->setEnabled(false);
-    ui->btnRemoveParameter->setEnabled(false);
+  ui->txtParameterName->setEnabled(false);
+  ui->txtExpression->setEnabled(false);
+  ui->btnRemoveParameter->setEnabled(false);
+  if ((row < 0) || (row > model.getParameters().getIds().size() - 1)) {
     return;
   }
-  const auto &params = sbmlDoc.getParameters();
-  auto id = params.getIds()[row];
-  SPDLOG_DEBUG("Parameter {} selected", id.toStdString());
-  ui->txtParameterName->setText(params.getName(id));
-  ui->txtExpression->importVariableMath(params.getExpression(id).toStdString());
+  const auto &params = model.getParameters();
+  currentParameterId = params.getIds()[row];
+  SPDLOG_DEBUG("Parameter {} selected", currentParameterId.toStdString());
+  ui->txtParameterName->setText(params.getName(currentParameterId));
+  ui->txtExpression->importVariableMath(
+      params.getExpression(currentParameterId).toStdString());
   ui->txtParameterName->setEnabled(true);
   ui->txtExpression->setEnabled(true);
   ui->btnRemoveParameter->setEnabled(true);
 }
 
 void TabParameters::btnAddParameter_clicked() {
-  bool ok;
+  bool ok{false};
   auto paramName = QInputDialog::getText(
       this, "Add parameter", "New parameter name:", QLineEdit::Normal, {}, &ok);
-  if (ok) {
-    sbmlDoc.getParameters().add(paramName);
-    loadModelData(paramName);
+  if (ok && !paramName.isEmpty()) {
+    auto newParamName = model.getParameters().add(paramName);
+    loadModelData(newParamName);
   }
 }
 
 void TabParameters::btnRemoveParameter_clicked() {
   int row = ui->listParameters->currentRow();
-  if ((row < 0) || (row > sbmlDoc.getParameters().getIds().size() - 1)) {
+  if ((row < 0) || (row > model.getParameters().getIds().size() - 1)) {
     return;
   }
   auto msgbox =
@@ -89,25 +92,22 @@ void TabParameters::btnRemoveParameter_clicked() {
                          QString("Remove parameter '%1' from the model?")
                              .arg(ui->listParameters->currentItem()->text()),
                          this);
-  connect(msgbox, &QMessageBox::finished, this,
-          [&s = sbmlDoc, row, this](int result) {
-            if (result == QMessageBox::Yes) {
-              auto paramId = s.getParameters().getIds()[row];
-              SPDLOG_INFO("Removing parameter {}", paramId.toStdString());
-              s.getParameters().remove(paramId);
-              this->loadModelData();
-            }
-          });
+  connect(msgbox, &QMessageBox::finished, this, [this](int result) {
+    if (result == QMessageBox::Yes) {
+      SPDLOG_INFO("Removing parameter {}", currentParameterId.toStdString());
+      model.getParameters().remove(currentParameterId);
+      loadModelData();
+    }
+  });
   msgbox->open();
 }
 
 void TabParameters::txtParameterName_editingFinished() {
   const QString &name = ui->txtParameterName->text();
-  auto id = sbmlDoc.getParameters().getIds()[ui->listParameters->currentRow()];
-  if (name == sbmlDoc.getSpecies().getName(id)) {
+  if (name == model.getSpecies().getName(currentParameterId)) {
     return;
   }
-  QString newName = sbmlDoc.getParameters().setName(id, name);
+  auto newName = model.getParameters().setName(currentParameterId, name);
   ui->txtParameterName->setText(newName);
   loadModelData(newName);
 }
@@ -125,6 +125,5 @@ void TabParameters::txtExpression_mathChanged(const QString &math, bool valid,
   }
   SPDLOG_INFO("new math: {}", math.toStdString());
   ui->lblExpressionStatus->setText("");
-  auto id = sbmlDoc.getParameters().getIds()[ui->listParameters->currentRow()];
-  sbmlDoc.getParameters().setExpression(id, math);
+  model.getParameters().setExpression(currentParameterId, math);
 }

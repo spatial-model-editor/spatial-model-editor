@@ -38,13 +38,12 @@ void QPlainTextMathEdit::compileMath() {
 
 double QPlainTextMathEdit::evaluateMath(const std::vector<double> &variables) {
   if (useLibSbmlBackend) {
-    if (variables.empty()) {
-      return modelMath->eval();
-    } else {
+    if (!variables.empty()) {
       SPDLOG_ERROR(
           "Wrong interace: use map interface when using libSBML backend");
       return std::numeric_limits<double>::quiet_NaN();
     }
+    return modelMath->eval();
   }
   sym.eval(result, variables);
   return result[0];
@@ -53,8 +52,9 @@ double QPlainTextMathEdit::evaluateMath(const std::vector<double> &variables) {
 double QPlainTextMathEdit::evaluateMath(
     const std::map<const std::string, std::pair<double, bool>> &variables) {
   if (!useLibSbmlBackend) {
-    SPDLOG_WARN("for better performance use vector interface when not using "
-                "libSBML backend");
+    SPDLOG_WARN(
+        "for better performance use vector interface when not using "
+        "libSBML backend");
     std::vector<double> values(vars.size(), 0);
     for (std::size_t i = 0; i < vars.size(); ++i) {
       values[i] = variables.at(vars[i]).first;
@@ -247,7 +247,7 @@ static std::pair<std::string, QString> substitute(
         out.append(iter->second);
       } else {
         // if not found, check if it is a number, if so append it and continue
-        bool isValidDouble;
+        bool isValidDouble{false};
         QString(var.c_str()).toDouble(&isValidDouble);
         if (allowImplicitNames || isValidDouble) {
           out.append(var);
@@ -269,8 +269,8 @@ static std::pair<std::string, QString> substitute(
   return {out, {}};
 }
 
-std::string
-QPlainTextMathEdit::variablesToDisplayNames(const std::string &expr) const {
+std::string QPlainTextMathEdit::variablesToDisplayNames(
+    const std::string &expr) const {
   const auto &varMap = mapVarsToDisplayNames;
   const auto &funcMap = mapFuncsToDisplayNames;
   if (varMap.empty() && funcMap.empty()) {
@@ -279,8 +279,8 @@ QPlainTextMathEdit::variablesToDisplayNames(const std::string &expr) const {
   return substitute(expr, varMap, funcMap, allowImplicitNames).first;
 }
 
-std::pair<std::string, QString>
-QPlainTextMathEdit::displayNamesToVariables(const std::string &expr) const {
+std::pair<std::string, QString> QPlainTextMathEdit::displayNamesToVariables(
+    const std::string &expr) const {
   if (expr.empty()) {
     return {};
   }

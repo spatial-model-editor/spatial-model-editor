@@ -5,4 +5,4 @@
 [submodule "ext/Catch2"]
 	path = ext/Catch2
 	url = https://github.com/catchorg/Catch2
-	branch = v2.12.2
+	branch = v2.12.4

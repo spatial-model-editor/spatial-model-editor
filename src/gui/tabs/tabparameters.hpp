@@ -16,14 +16,15 @@ class Model;
 class TabParameters : public QWidget {
   Q_OBJECT
 
-public:
-  explicit TabParameters(model::Model &doc, QWidget *parent = nullptr);
+ public:
+  explicit TabParameters(model::Model &model, QWidget *parent = nullptr);
   ~TabParameters();
   void loadModelData(const QString &selection = {});
 
-private:
+ private:
   std::unique_ptr<Ui::TabParameters> ui;
-  model::Model &sbmlDoc;
+  model::Model &model;
+  QString currentParameterId{};
   void listParameters_currentRowChanged(int row);
   void btnAddParameter_clicked();
   void btnRemoveParameter_clicked();

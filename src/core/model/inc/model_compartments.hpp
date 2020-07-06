@@ -46,9 +46,10 @@ class ModelCompartments {
   void setColour(const QString &id, QRgb colour);
   QRgb getColour(const QString &id) const;
   QString getIdFromColour(QRgb colour) const;
+  const std::vector<geometry::Compartment> &getCompartments() const;
   geometry::Compartment *getCompartment(const QString &id);
   const geometry::Compartment *getCompartment(const QString &id) const;
   void clear();
 };
 
-}  // namespace sbml
+}  // namespace model

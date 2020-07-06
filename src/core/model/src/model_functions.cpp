@@ -52,7 +52,8 @@ static QStringList importNamesAndMakeUnique(libsbml::Model *model) {
 ModelFunctions::ModelFunctions() = default;
 
 ModelFunctions::ModelFunctions(libsbml::Model *model)
-    : ids{importIds(model)}, names{importNamesAndMakeUnique(model)},
+    : ids{importIds(model)},
+      names{importNamesAndMakeUnique(model)},
       sbmlModel{model} {}
 
 const QStringList &ModelFunctions::getIds() const { return ids; }
@@ -131,7 +132,8 @@ static libsbml::ASTNode *newLambdaBvar(const std::string &name) {
   return n;
 }
 
-static std::string makeValidArgumentName(const std::string &name) {
+static std::string makeValidArgumentName(
+    const std::string &name, const libsbml::FunctionDefinition *func) {
   std::string s;
   // first char must be a letter or underscore
   if (auto c = name.front();
@@ -144,15 +146,19 @@ static std::string makeValidArgumentName(const std::string &name) {
       s += c;
     }
   }
+  // ensure argument name is unique within this function definition
+  while (func->getArgument(s) != nullptr) {
+    s += "_";
+  }
   return s;
 }
 
 QString ModelFunctions::addArgument(const QString &functionId,
                                     const QString &argumentId) {
-  std::string argId{makeValidArgumentName(argumentId.toStdString())};
+  auto *func = sbmlModel->getFunctionDefinition(functionId.toStdString());
+  std::string argId{makeValidArgumentName(argumentId.toStdString(), func)};
   auto lambdaAST =
       std::make_unique<libsbml::ASTNode>(libsbml::ASTNodeType_t::AST_LAMBDA);
-  auto *func = sbmlModel->getFunctionDefinition(functionId.toStdString());
   for (unsigned i = 0; i < func->getNumArguments(); ++i) {
     const auto *child = func->getMath()->getChild(i);
     SPDLOG_TRACE("  + {}", child->getName());
@@ -184,21 +190,23 @@ void ModelFunctions::removeArgument(const QString &functionId,
   func->setMath(lambdaAST.get());
 }
 
-void ModelFunctions::add(const QString &name) {
-  auto id = nameToUniqueSId(name, sbmlModel).toStdString();
+QString ModelFunctions::add(const QString &name) {
+  auto uniqueName = makeUnique(name, names);
+  auto id = nameToUniqueSId(uniqueName, sbmlModel).toStdString();
   SPDLOG_INFO("Adding function");
   SPDLOG_INFO("  - Id: {}", id);
-  SPDLOG_INFO("  - Name: {}", name.toStdString());
+  SPDLOG_INFO("  - Name: {}", uniqueName.toStdString());
   auto *func = sbmlModel->createFunctionDefinition();
   auto lambdaAST =
       std::make_unique<libsbml::ASTNode>(libsbml::ASTNodeType_t::AST_LAMBDA);
   lambdaAST->addChild(libsbml::SBML_parseL3Formula("0"));
   SPDLOG_DEBUG("  - AST: {}", mathASTtoString(lambdaAST.get()));
   func->setId(id);
-  func->setName(name.toStdString());
+  func->setName(uniqueName.toStdString());
   func->setMath(lambdaAST.get());
   ids.push_back(id.c_str());
-  names.push_back(name);
+  names.push_back(uniqueName);
+  return uniqueName;
 }
 
 void ModelFunctions::remove(const QString &id) {
@@ -216,4 +224,4 @@ void ModelFunctions::remove(const QString &id) {
   names.removeAt(i);
 }
 
-} // namespace model
+}  // namespace model

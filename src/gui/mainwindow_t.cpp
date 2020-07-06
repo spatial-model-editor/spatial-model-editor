@@ -19,15 +19,16 @@ static void openBuiltInModel(MainWindow &w, const QString &shortcutKey = "V") {
   sendKeyEvents(menuOpen_example_SBML_file, {shortcutKey});
 }
 
-SCENARIO("Mainwindow: ", "[gui/mainwindow][gui][mainwindow]") {
-  GIVEN("open non-existent file") {
+TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
+  SECTION("non-existent file") {
     ModalWidgetTimer mwt;
     mwt.addUserAction({"Esc"});
     mwt.start();
     MainWindow w("dontexist.xml");
     w.show();
+    REQUIRE(mwt.getResult() == "Failed to load file dontexist.xml");
   }
-  GIVEN("shortcut keys") {
+  SECTION("shortcut keys") {
     MainWindow w;
     auto *menu_Tools = w.findChild<QMenu *>("menu_Tools");
     auto *menuSimulation_type = w.findChild<QMenu *>("menuSimulation_type");
@@ -38,58 +39,57 @@ SCENARIO("Mainwindow: ", "[gui/mainwindow][gui][mainwindow]") {
     w.show();
     waitFor(&w);
     ModalWidgetTimer mwt;
-    WHEN("user presses F8") {
-      THEN("open About dialog box") {
-        mwt.start();
-        sendKeyEvents(&w, {"F8"});
-      }
+    SECTION("F8") {
+      mwt.start();
+      sendKeyEvents(&w, {"F8"});
+      REQUIRE(mwt.getResult() == "About Spatial Model Editor");
     }
-    WHEN("user presses F9") {
-      THEN("open About Qt dialog box") {
-        mwt.start();
-        sendKeyEvents(&w, {"F9"});
-        QString correctText = "<h3>About Qt</h3>";
-        CAPTURE(mwt.getResult());
-        REQUIRE(mwt.getResult().left(correctText.size()) == correctText);
-      }
+    SECTION("F9") {
+      mwt.start();
+      sendKeyEvents(&w, {"F9"});
+      QString correctText = "<h3>About Qt</h3>";
+      CAPTURE(mwt.getResult());
+      REQUIRE(mwt.getResult().left(correctText.size()) == correctText);
     }
-    WHEN("user presses ctrl+n") {
-      THEN("ask for name of new model") {
-        mwt.addUserAction({"Esc"});
-        mwt.start();
-        sendKeyEvents(&w, {"Ctrl+N"});
-        REQUIRE(w.windowTitle().right(20) == "[untitled-model.xml]");
-        mwt.addUserAction({"n", "e", "w"});
-        mwt.start();
-        sendKeyEvents(&w, {"Ctrl+N"});
-        REQUIRE(w.windowTitle().right(9) == "[new.xml]");
-      }
+    SECTION("Ctrl+N") {
+      // ctrl+n to create new model, then escape to cancel
+      QString oldTitle{w.windowTitle()};
+      mwt.addUserAction({"Esc"});
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+N"});
+      REQUIRE(mwt.getResult() == "Create new model");
+      REQUIRE(w.windowTitle() == oldTitle);
+      // ctrl+n to create new model with name "new"
+      mwt.addUserAction({"n", "e", "w"});
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+N"});
+      REQUIRE(mwt.getResult() == "Create new model");
+      REQUIRE(w.windowTitle().right(9) == "[new.xml]");
     }
-    WHEN("user presses ctrl+o") {
-      THEN("open AcceptOpen FileDialog") {
-        mwt.addUserAction({"Esc"});
-        mwt.start();
-        sendKeyEvents(&w, {"Ctrl+O"});
-        REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
-      }
+    SECTION("Ctrl+O") {
+      // ctrl+o to open model, then escape to cancel
+      mwt.addUserAction({"Esc"});
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+O"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
     }
-    WHEN("user presses ctrl+s (SBML model but no geometry loaded)") {
-      THEN("offer to import a geometry image") {
+    SECTION("user presses ctrl+s (SBML model but no geometry loaded)") {
+      SECTION("offer to import a geometry image") {
         sendKeyEvents(&w, {"Ctrl+S"});
         // press no when asked to import image
         auto title = sendKeyEventsToNextQDialog({"Esc"});
         REQUIRE(title == "No compartment geometry image");
       }
     }
-    WHEN("user presses ctrl+s (with valid SBML model)") {
+    SECTION("user presses ctrl+s (with valid SBML model)") {
       openBuiltInModel(w, "V");
-      THEN("cancel") {
+      SECTION("cancel") {
         mwt.addUserAction(QStringList{"Escape"});
         mwt.start();
         sendKeyEvents(&w, {"Ctrl+S"});
         REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
       }
-      THEN("save xml file") {
+      SECTION("save xml file") {
         mwt.addUserAction({"w", "q", "z"});
         mwt.start();
         sendKeyEvents(&w, {"Ctrl+S"});
@@ -100,23 +100,23 @@ SCENARIO("Mainwindow: ", "[gui/mainwindow][gui][mainwindow]") {
         REQUIRE(line == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
       }
     }
-    WHEN("user presses ctrl+d (SBML model but no geometry loaded)") {
-      THEN("offer to import a geometry image") {
+    SECTION("user presses ctrl+d (SBML model but no geometry loaded)") {
+      SECTION("offer to import a geometry image") {
         sendKeyEvents(&w, {"Ctrl+D"});
         // press no when asked to import image
         auto title = sendKeyEventsToNextQDialog({"Esc"});
         REQUIRE(title == "No compartment geometry image");
       }
     }
-    WHEN("user presses ctrl+d (with valid SBML model)") {
-      THEN("cancel") {
+    SECTION("user presses ctrl+d (with valid SBML model)") {
+      SECTION("cancel") {
         openBuiltInModel(w, "A");
         mwt.addUserAction(QStringList{"Escape"});
         mwt.start();
         sendKeyEvents(&w, {"Ctrl+D"});
         REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
       }
-      THEN("save dune ini file") {
+      SECTION("save dune ini file") {
         openBuiltInModel(w, "A");
         mwt.addUserAction({"w", "q", "z"});
         mwt.start();
@@ -128,8 +128,8 @@ SCENARIO("Mainwindow: ", "[gui/mainwindow][gui][mainwindow]") {
         REQUIRE(line == "[grid]\n");
       }
     }
-    WHEN("user presses ctrl+I to import image (default empty SBML model)") {
-      THEN("offer to import SBML model") {
+    SECTION("user presses ctrl+I to import image (default empty SBML model)") {
+      SECTION("offer to import SBML model") {
         // escape on SBML file open dialog
         mwt.addUserAction({"Esc"}, false);
         mwt.start();
@@ -137,66 +137,62 @@ SCENARIO("Mainwindow: ", "[gui/mainwindow][gui][mainwindow]") {
         REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
       }
     }
-    WHEN("user presses ctrl+tab (default SBML model loaded)") {
-      THEN("remain on Geometry tab: all others disabled") {
-        REQUIRE(tabMain->currentIndex() == 0);
-        sendKeyEvents(tabMain, {"Ctrl+Tab"});
-        REQUIRE(tabMain->currentIndex() == 0);
-      }
+    SECTION("ctrl+tab (default SBML model loaded)") {
+      // remain on Geometry tab: all others disabled
+      REQUIRE(tabMain->currentIndex() == 0);
+      sendKeyEvents(tabMain, {"Ctrl+Tab"});
+      REQUIRE(tabMain->currentIndex() == 0);
     }
-    WHEN("user presses ctrl+shift+tab (default SBML model loaded)") {
-      THEN("remain on Geometry tab: all others disabled") {
-        REQUIRE(tabMain->currentIndex() == 0);
-        sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
-        REQUIRE(tabMain->currentIndex() == 0);
-      }
+    SECTION("ctrl+shift+tab (default SBML model loaded)") {
+      // remain on Geometry tab: all others disabled"
+      REQUIRE(tabMain->currentIndex() == 0);
+      sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
+      REQUIRE(tabMain->currentIndex() == 0);
     }
-    WHEN("user presses ctrl+tab with valid model loaded") {
-      THEN("cycle through tabs") {
-        openBuiltInModel(w, "V");
-        REQUIRE(tabMain->currentIndex() == 0);
-        sendKeyEvents(tabMain, {"Ctrl+Tab"});
-        REQUIRE(tabMain->currentIndex() == 1);
-        sendKeyEvents(tabMain, {"Ctrl+Tab"});
-        REQUIRE(tabMain->currentIndex() == 2);
-        sendKeyEvents(tabMain, {"Ctrl+Tab"});
-        REQUIRE(tabMain->currentIndex() == 3);
-        sendKeyEvents(tabMain, {"Ctrl+Tab"});
-        REQUIRE(tabMain->currentIndex() == 4);
-        sendKeyEvents(tabMain, {"Ctrl+Tab"});
-        REQUIRE(tabMain->currentIndex() == 5);
-        sendKeyEvents(tabMain, {"Ctrl+Tab"});
-        REQUIRE(tabMain->currentIndex() == 6);
-        sendKeyEvents(tabMain, {"Ctrl+Tab"});
-        REQUIRE(tabMain->currentIndex() == 7);
-        sendKeyEvents(tabMain, {"Ctrl+Tab"});
-        REQUIRE(tabMain->currentIndex() == 8);
-        sendKeyEvents(tabMain, {"Ctrl+Tab"});
-        REQUIRE(tabMain->currentIndex() == 0);
-        sendKeyEvents(tabMain, {"Ctrl+Tab"});
-        REQUIRE(tabMain->currentIndex() == 1);
-        sendKeyEvents(tabMain, {"Ctrl+Tab"});
-        REQUIRE(tabMain->currentIndex() == 2);
-        sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
-        REQUIRE(tabMain->currentIndex() == 1);
-        sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
-        REQUIRE(tabMain->currentIndex() == 0);
-        sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
-        REQUIRE(tabMain->currentIndex() == 8);
-      }
+    SECTION("ctrl+tab with valid model loaded") {
+      openBuiltInModel(w, "V");
+      REQUIRE(tabMain->currentIndex() == 0);
+      sendKeyEvents(tabMain, {"Ctrl+Tab"});
+      REQUIRE(tabMain->currentIndex() == 1);
+      sendKeyEvents(tabMain, {"Ctrl+Tab"});
+      REQUIRE(tabMain->currentIndex() == 2);
+      sendKeyEvents(tabMain, {"Ctrl+Tab"});
+      REQUIRE(tabMain->currentIndex() == 3);
+      sendKeyEvents(tabMain, {"Ctrl+Tab"});
+      REQUIRE(tabMain->currentIndex() == 4);
+      sendKeyEvents(tabMain, {"Ctrl+Tab"});
+      REQUIRE(tabMain->currentIndex() == 5);
+      sendKeyEvents(tabMain, {"Ctrl+Tab"});
+      REQUIRE(tabMain->currentIndex() == 6);
+      sendKeyEvents(tabMain, {"Ctrl+Tab"});
+      REQUIRE(tabMain->currentIndex() == 7);
+      sendKeyEvents(tabMain, {"Ctrl+Tab"});
+      REQUIRE(tabMain->currentIndex() == 8);
+      sendKeyEvents(tabMain, {"Ctrl+Tab"});
+      REQUIRE(tabMain->currentIndex() == 0);
+      sendKeyEvents(tabMain, {"Ctrl+Tab"});
+      REQUIRE(tabMain->currentIndex() == 1);
+      sendKeyEvents(tabMain, {"Ctrl+Tab"});
+      REQUIRE(tabMain->currentIndex() == 2);
+      sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
+      REQUIRE(tabMain->currentIndex() == 1);
+      sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
+      REQUIRE(tabMain->currentIndex() == 0);
+      sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
+      REQUIRE(tabMain->currentIndex() == 8);
     }
-    WHEN("menu: Tools->Set model units (default SBML model)") {
-      THEN("offer to import SBML model") {
+    SECTION("menu: Tools->Set model units (default SBML model)") {
+      SECTION("offer to import SBML model") {
+        // press esc to close dialog
         mwt.addUserAction({"Esc"}, false);
         mwt.start();
         sendKeyEvents(&w, {"Alt+T"});
         sendKeyEvents(menu_Tools, {"U"});
-        // press esc to close dialog
-        REQUIRE(mwt.getResult() == "");
+        REQUIRE(mwt.getResult() == "Set Model Units");
       }
     }
-    WHEN("menu: Tools->Set image size (default SBML model, no image)") {
-      THEN("offer to import geometry image") {
+    SECTION("menu: Tools->Set image size (default SBML model, no image)") {
+      SECTION("offer to import geometry image") {
         sendKeyEvents(&w, {"Alt+T"});
         sendKeyEvents(menu_Tools, {"I"});
         // press no when asked to import image
@@ -204,7 +200,7 @@ SCENARIO("Mainwindow: ", "[gui/mainwindow][gui][mainwindow]") {
         REQUIRE(title == "No compartment geometry image");
       }
     }
-    WHEN("menu: Tools->Set simulation type") {
+    SECTION("menu: Tools->Set simulation type") {
       REQUIRE(actionSimTypeDUNE->isChecked() == true);
       REQUIRE(actionSimTypePixel->isChecked() == false);
       sendKeyEvents(&w, {"Alt+T"});
@@ -218,24 +214,24 @@ SCENARIO("Mainwindow: ", "[gui/mainwindow][gui][mainwindow]") {
       REQUIRE(actionSimTypeDUNE->isChecked() == true);
       REQUIRE(actionSimTypePixel->isChecked() == false);
     }
-    WHEN("menu: Advanced->Max cpu threads... ") {
-      THEN("cancel") {
+    SECTION("menu: Advanced->Max cpu threads... ") {
+      SECTION("cancel") {
         mwt.addUserAction({"Esc"});
         mwt.start();
-        sendKeyEvents(&w, {"Alt+A "});
+        sendKeyEvents(&w, {"Alt+A"});
         sendKeyEvents(menu_Advanced, {"M"});
-        REQUIRE(mwt.getResult() == "");
+        REQUIRE(mwt.getResult() == "Set max cpu threads");
       }
-      THEN("enter a value") {
+      SECTION("enter a value") {
         mwt.addUserAction({"7"});
         mwt.start();
-        sendKeyEvents(&w, {"Alt+A "});
+        sendKeyEvents(&w, {"Alt+A"});
         sendKeyEvents(menu_Advanced, {"M"});
-        REQUIRE(mwt.getResult() == "");
+        REQUIRE(mwt.getResult() == "Set max cpu threads");
       }
     }
   }
-  GIVEN("built-in SBML model, change units") {
+  SECTION("built-in SBML model, change units") {
     MainWindow w;
     w.show();
     waitFor(&w);

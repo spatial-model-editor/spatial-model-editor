@@ -11,9 +11,10 @@ QLabelMouseTracker::QLabelMouseTracker(QWidget *parent) : QLabel(parent) {
 
 void QLabelMouseTracker::setImage(const QImage &img) {
   image = img;
+  constexpr int minImageWidth{100};
   // on loading new image, set a minimum size for the widget
-  if (this->width() < 100) {
-    this->resize(100, 100);
+  if (this->width() < minImageWidth) {
+    this->resize(minImageWidth, minImageWidth);
   }
   resizeImage(this->size());
 }

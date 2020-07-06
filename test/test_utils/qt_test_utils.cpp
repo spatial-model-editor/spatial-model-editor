@@ -90,19 +90,17 @@ void sendMouseClick(QWidget *widget, const QPoint &location) {
 }
 
 void ModalWidgetTimer::getText(QWidget *widget) {
-  // check if widget is a QFileDialog
-  QString result;
-  auto *p = qobject_cast<QFileDialog *>(widget);
-  if (p != nullptr) {
+  QString result{widget->windowTitle()};
+  if (auto *p = qobject_cast<QFileDialog *>(widget); p != nullptr) {
+    // if widget is a QFileDialog store AcceptMode as result
     if (p->acceptMode() == QFileDialog::AcceptOpen) {
       result = "QFileDialog::AcceptOpen";
     } else if (p->acceptMode() == QFileDialog::AcceptSave) {
       result = "QFileDialog::AcceptSave";
     }
   }
-  // check if widget is a QMessageBox
-  auto *msgBox = qobject_cast<QMessageBox *>(widget);
-  if (msgBox != nullptr) {
+  if (auto *msgBox = qobject_cast<QMessageBox *>(widget); msgBox != nullptr) {
+    // if widget is a QMessageBox store text as result
     result = msgBox->text();
   }
   results.push_back(result);
