@@ -420,8 +420,7 @@ SCENARIO("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
       }
       THEN("find species geometry") {
         auto g = s.getSpeciesGeometry("A");
-        REQUIRE(g.modelUnits.getAmount().symbol ==
-                s.getUnits().getAmount().symbol);
+        REQUIRE(g.modelUnits.getAmount().name == s.getUnits().getAmount().name);
         REQUIRE(g.pixelWidth == dbl_approx(1.0));
         REQUIRE(g.physicalOrigin.x() == dbl_approx(0.0));
         REQUIRE(g.physicalOrigin.y() == dbl_approx(0.0));

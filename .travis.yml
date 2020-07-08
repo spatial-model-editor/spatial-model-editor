@@ -15,7 +15,7 @@ branches:
 env:
   global:
     # python wheel building can be disabled to speed up CI when working on a PR
-    - BUILD_PYTHON_WHEELS: false
+    - BUILD_PYTHON_WHEELS: true
     # pypi TWINE_PASSWORD
     - secure: "GFBxgbwP75qb0QW3jFO3e3fbfFLpYue+kUZGm3ArNZ9ExeXPGU3fxfxiBolEPnnPK98VlZZ8R0WBQptvWnaBN0tamt5r7OCXljQdpNgRF04MMa1gtbAEnuYjd6dHQ5CbdiEKxK4MnF28jJ+0wnw35E7YPGq357XWKwGFoG0HT9UenFd7HRbzsM0WmO7sog8bZYahYU+nyIDu6AVGlsc1b4XpVEu/pcuY2PexzYpV4wv+qVprRIeTwi2aFb4bmr3XcPZtyps3eiExLISHmz3mAuHIiNEt3wQA7Kjzsz93lm6DlGi3LSEXugfomGzg3oyHQC8oKKky/D6hHqnc9Jfow4Epj3aHvE4LP00TxDiyrjqvVGeCHa/RL/WIGJ/zZA4W7QTr2wvDOhw5EOuSmIW42tmOsOV4Zo/wr5d9A0r0VUfHhrsi1QUHmFFgTJXeTDyHYC32mvXy8EuaxLRFLBUVKE3gPfaYUgRafvx1Kn7H9WUmrpA7JAj2caMYD6UtKly1J6BFyTpPFlGgk3yxzVYgbeToOOrabQzGzYBuaxz6aysbyPra+rYF5SrJ/Dp4TPjfoE/1IIjmrbVpYEQGdfojnxxN6xnW7woPgq8IUDStw7iR83xyluWEtn1i1KlzRA8NMNdBHxgFWQ9rpE/DZikeJ8yb0FoEleMRjaE6G4C33rc="
 
@@ -78,11 +78,11 @@ jobs:
         - ldd spatial-model-editor
         - ldd spatial-cli
     ########################################################
-    # macOS GUI/CLI release build: xcode 10.3, macOS 10.14 #
+    # macOS GUI/CLI release build: xcode 11.3, macOS 10.14 #
     ########################################################
     - name: "macOS GUI/CLI"
       os: osx
-      osx_image: xcode10.3
+      osx_image: xcode11.3
       language: cpp
       compiler: clang
       env:
@@ -195,7 +195,7 @@ jobs:
         - export TWINE_USERNAME="__token__"
         - if [ -n "${TRAVIS_TAG}" ]; then python -m twine upload --verbose --non-interactive --skip-existing dist/* ; fi
     ##############################################################
-    # macOS python wheels release build: xcode 10.3, macOS 10.14 #
+    # macOS python wheels release build: xcode 11.3, macOS 10.14 #
     ##############################################################
     - name: "macOS python wheels"
       if: (env(BUILD_PYTHON_WHEELS) = true) AND (tag != "latest")

@@ -55,6 +55,7 @@ void Model::initModelData() {
     return;
   }
   auto *model = doc->getModel();
+  modelUnits = ModelUnits(model);
   modelMath = ModelMath(model);
   modelFunctions = ModelFunctions(model);
   modelMembranes.clear();
@@ -69,7 +70,6 @@ void Model::initModelData() {
   modelSpecies = ModelSpecies(model, &modelCompartments, &modelGeometry,
                               &modelParameters, &modelReactions);
   modelReactions = ModelReactions(model, modelMembranes.getMembranes());
-  modelUnits = ModelUnits(model);
 }
 
 bool Model::getIsValid() const { return isValid; }

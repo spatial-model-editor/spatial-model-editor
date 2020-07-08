@@ -87,7 +87,7 @@ with open(path.join(sme_directory, "README.md")) as f:
 
 setup(
     name="sme",
-    version="0.8.8",
+    version="0.8.9",
     author="Liam Keegan",
     author_email="liam@keegan.ch",
     description="Spatial Model Editor python bindings",

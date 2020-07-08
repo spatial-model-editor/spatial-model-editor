@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>319</width>
-    <height>236</height>
+    <width>718</width>
+    <height>279</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -25,39 +25,46 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="2" column="4">
-      <widget class="QLabel" name="lblTime">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
+     <item row="4" column="2">
+      <widget class="QComboBox" name="cmbVolume"/>
      </item>
-     <item row="3" column="6">
-      <widget class="QLabel" name="lblSILength">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0" colspan="7">
-      <widget class="Line" name="line_2">
+     <item row="2" column="3" rowspan="4">
+      <widget class="Line" name="line_6">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Vertical</enum>
        </property>
       </widget>
      </item>
-     <item row="0" column="2">
-      <widget class="QLabel" name="lblLabelUnits">
+     <item row="2" column="2">
+      <widget class="QComboBox" name="cmbTime"/>
+     </item>
+     <item row="4" column="6">
+      <widget class="QPushButton" name="btnEditVolume">
        <property name="text">
-        <string>Symbol</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
+        <string>edit...</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="2">
-      <widget class="QComboBox" name="cmbLength"/>
+     <item row="0" column="5">
+      <widget class="Line" name="line_9">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="Line" name="line_7">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="6">
+      <widget class="QPushButton" name="btnEditAmount">
+       <property name="text">
+        <string>edit...</string>
+       </property>
+      </widget>
      </item>
      <item row="5" column="0">
       <widget class="QLabel" name="lblLabelAmount">
@@ -69,8 +76,15 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="4">
-      <widget class="QLabel" name="lblLabelName">
+     <item row="2" column="5" rowspan="4">
+      <widget class="Line" name="line_10">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QLabel" name="lblLabelUnits">
        <property name="text">
         <string>Name</string>
        </property>
@@ -79,39 +93,8 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="4">
-      <widget class="QLabel" name="lblLength">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="4">
-      <widget class="QLabel" name="lblAmount">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="3">
-      <widget class="Line" name="line_7">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="lblLabelLength">
-       <property name="text">
-        <string>Length:</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="6">
-      <widget class="QLabel" name="lblSITime">
+     <item row="4" column="4">
+      <widget class="QLabel" name="lblSIVolume">
        <property name="text">
         <string/>
        </property>
@@ -120,6 +103,20 @@
      <item row="5" column="2">
       <widget class="QComboBox" name="cmbAmount"/>
      </item>
+     <item row="3" column="6">
+      <widget class="QPushButton" name="btnEditLength">
+       <property name="text">
+        <string>edit...</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="4">
+      <widget class="QLabel" name="lblSIAmount">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
      <item row="4" column="0">
       <widget class="QLabel" name="lblLabelVolume">
        <property name="text">
@@ -127,64 +124,6 @@
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="6">
-      <widget class="QLabel" name="lblSIAmount">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0" colspan="7">
-      <widget class="Line" name="line_4">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="2">
-      <widget class="QComboBox" name="cmbVolume"/>
-     </item>
-     <item row="2" column="2">
-      <widget class="QComboBox" name="cmbTime"/>
-     </item>
-     <item row="0" column="6">
-      <widget class="QLabel" name="lblLabelSIEquivalent">
-       <property name="text">
-        <string>Base units</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1" rowspan="4">
-      <widget class="Line" name="line_5">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="3" rowspan="4">
-      <widget class="Line" name="line_6">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="5" rowspan="4">
-      <widget class="Line" name="line">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="6">
-      <widget class="QLabel" name="lblSIVolume">
-       <property name="text">
-        <string/>
        </property>
       </widget>
      </item>
@@ -205,15 +144,66 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="4">
-      <widget class="QLabel" name="lblVolume">
+     <item row="1" column="0" colspan="7">
+      <widget class="Line" name="line_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="lblLabelLength">
+       <property name="text">
+        <string>Length:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="2">
+      <widget class="QComboBox" name="cmbLength"/>
+     </item>
+     <item row="2" column="6">
+      <widget class="QPushButton" name="btnEditTime">
+       <property name="text">
+        <string>edit...</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="4">
+      <widget class="QLabel" name="lblSITime">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="0" column="5">
-      <widget class="Line" name="line_3">
+     <item row="6" column="0" colspan="7">
+      <widget class="Line" name="line_4">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="4">
+      <widget class="QLabel" name="lblLabelSIEquivalent">
+       <property name="text">
+        <string>Equivalent base units</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="4">
+      <widget class="QLabel" name="lblSILength">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1" rowspan="4">
+      <widget class="Line" name="line_5">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
@@ -238,6 +228,10 @@
   <tabstop>cmbLength</tabstop>
   <tabstop>cmbVolume</tabstop>
   <tabstop>cmbAmount</tabstop>
+  <tabstop>btnEditTime</tabstop>
+  <tabstop>btnEditLength</tabstop>
+  <tabstop>btnEditVolume</tabstop>
+  <tabstop>btnEditAmount</tabstop>
  </tabstops>
  <resources/>
  <connections/>

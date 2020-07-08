@@ -22,10 +22,9 @@ DialogAnalytic::DialogAnalytic(
   ui->txtExpression->enableLibSbmlBackend(&modelMath);
 
   const auto &units = speciesGeometry.modelUnits;
-  lengthUnit = units.getLength().symbol;
-  concentrationUnit = QString("%1/%2")
-                          .arg(units.getAmount().symbol)
-                          .arg(units.getVolume().symbol);
+  lengthUnit = units.getLength().name;
+  concentrationUnit =
+      QString("%1/%2").arg(units.getAmount().name).arg(units.getVolume().name);
   img = QImage(speciesGeometry.compartmentImageSize,
                QImage::Format_ARGB32_Premultiplied);
   img.fill(0);

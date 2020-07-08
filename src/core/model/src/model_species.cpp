@@ -137,11 +137,15 @@ void ModelSpecies::setFieldConcAnalytic(geometry::Field &field,
   auto inlinedExpr = inlineFunctions(expr, sbmlModel);
   inlinedExpr = inlineAssignments(inlinedExpr, sbmlModel);
   SPDLOG_INFO("  - inlined expr: {}", inlinedExpr);
+  std::string xId{modelParameters->getSpatialCoordinates().x.id};
+  std::string yId{modelParameters->getSpatialCoordinates().y.id};
   std::map<const std::string, std::pair<double, bool>> sbmlVars;
-  // todo: x,y should not be hard-coded, user should set them and they should be
-  // written/read to/from SBML model
-  sbmlVars["x"] = {0, false};
-  sbmlVars["y"] = {0, false};
+  auto &xCoordPair = sbmlVars[xId];
+  xCoordPair = {0, false};
+  double &xCoord = xCoordPair.first;
+  auto &yCoordPair = sbmlVars[yId];
+  yCoordPair = {0, false};
+  double &yCoord = yCoordPair.first;
   auto astExpr = mathStringToAST(inlinedExpr);
   SPDLOG_TRACE("  - parsed expr: {}", mathASTtoString(astExpr.get()));
   if (astExpr == nullptr) {
@@ -150,15 +154,14 @@ void ModelSpecies::setFieldConcAnalytic(geometry::Field &field,
   }
   const auto &origin = modelGeometry->getPhysicalOrigin();
   double pixelWidth = modelGeometry->getPixelWidth();
+  int imgHeight = field.getCompartment()->getCompartmentImage().height();
   for (std::size_t i = 0; i < field.getCompartment()->nPixels(); ++i) {
     // position in pixels (with (0,0) in top-left of image):
     const auto &point = field.getCompartment()->getPixel(i);
     // rescale to physical x,y point (with (0,0) in bottom-left):
-    sbmlVars["x"].first =
-        origin.x() + pixelWidth * static_cast<double>(point.x());
-    int y =
-        field.getCompartment()->getCompartmentImage().height() - 1 - point.y();
-    sbmlVars["y"].first = origin.y() + pixelWidth * static_cast<double>(y);
+    xCoord = origin.x() + pixelWidth * static_cast<double>(point.x());
+    int y = imgHeight - 1 - point.y();
+    yCoord = origin.y() + pixelWidth * static_cast<double>(y);
     double conc = evaluateMathAST(astExpr.get(), sbmlVars, sbmlModel);
     field.setConcentration(i, conc);
   }
@@ -179,41 +182,77 @@ ModelSpecies::getSampledFieldConcentrationFromSBML(const QString &id) const {
   return array;
 }
 
+static std::string getOrCreateDiffusionConstantUnit(libsbml::Model *model) {
+  auto *l = model->getUnitDefinition(model->getLengthUnits());
+  auto *t = model->getUnitDefinition(model->getTimeUnits());
+  std::unique_ptr<libsbml::UnitDefinition> l2{
+      libsbml::UnitDefinition::combine(l, l)};
+  std::unique_ptr<libsbml::UnitDefinition> coeffUnits{
+      libsbml::UnitDefinition::divide(l2.get(), t)};
+  for (unsigned i = 0; i < model->getNumUnitDefinitions(); ++i) {
+    if (const auto *unitDef = model->getUnitDefinition(i);
+        libsbml::UnitDefinition::areEquivalent(coeffUnits.get(), unitDef)) {
+      SPDLOG_INFO("Found existing Diffusion Coefficient unit");
+      SPDLOG_INFO("  - {}", unitDef->getId());
+      SPDLOG_INFO("  - {}", libsbml::UnitDefinition::printUnits(unitDef, true));
+      return unitDef->getId();
+    }
+  }
+  SPDLOG_INFO("Creating Diffusion Coefficient units");
+  std::string newId{"diffusion_constant_units"};
+  // ensure it is unique among unitdef Ids
+  // note: they are in a different namespace to other SBML objects
+  while (model->getUnitDefinition(newId) != nullptr) {
+    newId.append("_");
+    SPDLOG_DEBUG("  -> {}", newId);
+  }
+  SPDLOG_DEBUG("creating UnitDefinition {}", newId);
+  coeffUnits->setId(newId);
+  coeffUnits->setName(newId);
+  SPDLOG_INFO("  - {}", coeffUnits->getId());
+  SPDLOG_INFO("  - {}",
+              libsbml::UnitDefinition::printUnits(coeffUnits.get(), true));
+  model->addUnitDefinition(coeffUnits.get());
+  return newId;
+}
+
 static libsbml::Parameter *
 getOrCreateDiffusionConstantParameter(libsbml::Model *model,
                                       const QString &speciesId) {
-  libsbml::Parameter *param = nullptr;
+  std::string units = getOrCreateDiffusionConstantUnit(model);
   // look for existing diffusion constant parameter
   for (unsigned i = 0; i < model->getNumParameters(); ++i) {
-    auto *par = model->getParameter(i);
-    if (const auto *spp = dynamic_cast<const libsbml::SpatialParameterPlugin *>(
-            par->getPlugin("spatial"));
+    auto *param = model->getParameter(i);
+    if (auto *spp = dynamic_cast<libsbml::SpatialParameterPlugin *>(
+            param->getPlugin("spatial"));
         (spp != nullptr) && spp->isSetDiffusionCoefficient() &&
         (spp->getDiffusionCoefficient()->getVariable() ==
          speciesId.toStdString())) {
-      param = par;
       SPDLOG_INFO("  - found existing diffusion constant: {}", param->getId());
+      param->setConstant(true);
+      param->setUnits(units);
+      spp->getDiffusionCoefficient()->setType(
+          libsbml::DiffusionKind_t::SPATIAL_DIFFUSIONKIND_ISOTROPIC);
+      return param;
     }
   }
-  if (param == nullptr) {
-    // create new diffusion constant parameter
-    param = model->createParameter();
-    param->setConstant(true);
-    std::string id = speciesId.toStdString() + "_diffusionConstant";
-    while (!isSIdAvailable(id, model)) {
-      id.append("_");
-    }
-    param->setId(id);
-    auto *pplugin = static_cast<libsbml::SpatialParameterPlugin *>(
-        param->getPlugin("spatial"));
-    auto *diffCoeff = pplugin->createDiffusionCoefficient();
-    diffCoeff->setVariable(speciesId.toStdString());
-    diffCoeff->setType(
-        libsbml::DiffusionKind_t::SPATIAL_DIFFUSIONKIND_ISOTROPIC);
-    param->setValue(1.0);
-    SPDLOG_INFO("  - created new diffusion constant: {} = {}", param->getId(),
-                param->getValue());
+  // otherwise create and return new diffusion constant parameter
+  auto *param = model->createParameter();
+  std::string id = speciesId.toStdString() + "_diffusionConstant";
+  while (!isSIdAvailable(id, model)) {
+    id.append("_");
   }
+  param->setId(id);
+  auto *spp = dynamic_cast<libsbml::SpatialParameterPlugin *>(
+      param->getPlugin("spatial"));
+  auto *diffCoeff = spp->createDiffusionCoefficient();
+  param->setConstant(true);
+  diffCoeff->setVariable(speciesId.toStdString());
+  diffCoeff->setType(libsbml::DiffusionKind_t::SPATIAL_DIFFUSIONKIND_ISOTROPIC);
+  param->setValue(1.0);
+  param->setUnits(units);
+  SPDLOG_INFO("  - created new diffusion constant: {} = {}", param->getId(),
+              param->getValue());
   return param;
 }
 

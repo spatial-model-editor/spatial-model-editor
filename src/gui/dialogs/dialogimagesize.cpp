@@ -15,7 +15,7 @@ DialogImageSize::DialogImageSize(const QImage &image, double pixelWidth,
 
   for (auto *cmb : {ui->cmbUnitsWidth, ui->cmbUnitsHeight}) {
     for (const auto &u : units.getLengthUnits()) {
-      cmb->addItem(u.symbol);
+      cmb->addItem(u.name);
     }
     cmb->setCurrentIndex(units.getLengthIndex());
   }
