@@ -5,6 +5,7 @@ target_sources(
           dialogconcentrationimage.cpp
           dialogcoordinates.cpp
           dialogdisplayoptions.cpp
+          dialogeditunit.cpp
           dialogimagesize.cpp
           dialogimageslice.cpp
           dialogintegratoroptions.cpp
@@ -18,6 +19,7 @@ target_sources(
          dialogconcentrationimage_t.cpp
          dialogcoordinates_t.cpp
          dialogdisplayoptions_t.cpp
+         dialogeditunit_t.cpp
          dialogimagesize_t.cpp
          dialogimageslice_t.cpp
          dialogintegratoroptions_t.cpp

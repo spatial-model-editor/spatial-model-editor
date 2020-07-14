@@ -10,8 +10,8 @@
 #include "tiff.hpp"
 #include "utils.hpp"
 
-static std::vector<std::string> makeValidDuneSpeciesNames(
-    const std::vector<std::string> &names) {
+static std::vector<std::string>
+makeValidDuneSpeciesNames(const std::vector<std::string> &names) {
   std::vector<std::string> duneNames = names;
   // muparser reserved words, taken from:
   // https://beltoforion.de/article.php?a=muparser&p=features
@@ -306,7 +306,7 @@ DuneConverter::DuneConverter(const model::Model &SbmlDoc, double dt,
               membraneID.toStdString());
           double scaleFactor = width * lengthCubedToVolFactor;
           SPDLOG_INFO("  - membrane width = {} {}", width,
-                      lengthUnit.symbol.toStdString());
+                      lengthUnit.name.toStdString());
           SPDLOG_INFO("  - [length]^3/[vol] = {}", lengthCubedToVolFactor);
           SPDLOG_INFO("  - dividing flux by {}", scaleFactor);
           reacScaleFactors.push_back(
@@ -374,4 +374,4 @@ bool DuneConverter::hasIndependentCompartments() const {
   return independentCompartments;
 }
 
-}  // namespace dune
+} // namespace dune

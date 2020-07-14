@@ -17,9 +17,7 @@
 
 TabSimulate::TabSimulate(model::Model &doc, QLabelMouseTracker *mouseTracker,
                          QWidget *parent)
-    : QWidget(parent),
-      ui{std::make_unique<Ui::TabSimulate>()},
-      sbmlDoc(doc),
+    : QWidget(parent), ui{std::make_unique<Ui::TabSimulate>()}, sbmlDoc(doc),
       lblGeometry(mouseTracker) {
   ui->setupUi(this);
   pltPlot = new QCustomPlot(this);
@@ -100,18 +98,17 @@ void TabSimulate::loadModelData() {
         sbmlDoc.getCompartments().getNames()[static_cast<int>(ic)]);
     auto &names = speciesNames.emplace_back();
     for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
-      names.push_back(sbmlDoc.getSpecies().getName(
-          sim->getSpeciesIds(ic)[is].c_str()));
+      names.push_back(
+          sbmlDoc.getSpecies().getName(sim->getSpeciesIds(ic)[is].c_str()));
       speciesVisible.push_back(true);
     }
   }
   // setup plot
   pltPlot->clearGraphs();
   pltPlot->xAxis->setLabel(
-      QString("time (%1)").arg(sbmlDoc.getUnits().getTime().symbol));
+      QString("time (%1)").arg(sbmlDoc.getUnits().getTime().name));
   pltPlot->yAxis->setLabel(
-      QString("concentration (%1)")
-          .arg(sbmlDoc.getUnits().getConcentration()));
+      QString("concentration (%1)").arg(sbmlDoc.getUnits().getConcentration()));
   pltPlot->xAxis->setRange(0, ui->txtSimLength->text().toDouble());
   // graphs
   for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
@@ -395,9 +392,8 @@ void TabSimulate::hslideTime_valueChanged(int value) {
       pltPlot->rescaleAxes(true);
     }
     pltPlot->replot();
-    ui->lblCurrentTime->setText(
-        QString("%1%2")
-            .arg(time[value])
-            .arg(sbmlDoc.getUnits().getTime().symbol));
+    ui->lblCurrentTime->setText(QString("%1%2")
+                                    .arg(time[value])
+                                    .arg(sbmlDoc.getUnits().getTime().name));
   }
 }

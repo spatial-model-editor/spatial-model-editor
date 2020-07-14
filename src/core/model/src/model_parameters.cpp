@@ -85,7 +85,7 @@ createSpatialCoordParam(const QString &name, libsbml::CoordinateKind_t kind,
 
 static SpatialCoordinates importSpatialCoordinates(libsbml::Model *model) {
   SpatialCoordinates s;
-  const auto *xparam = getSpatialCoordinateParam(
+  auto *xparam = getSpatialCoordinateParam(
       model, libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
   if (xparam == nullptr) {
     SPDLOG_WARN("No x-coord parameter found - creating");
@@ -93,9 +93,11 @@ static SpatialCoordinates importSpatialCoordinates(libsbml::Model *model) {
         "x", libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X,
         model);
   }
+  xparam->setUnits(model->getLengthUnits());
+  xparam->setValue(0);
   s.x.id = xparam->getId();
   s.x.name = xparam->getName();
-  const auto *yparam = getSpatialCoordinateParam(
+  auto *yparam = getSpatialCoordinateParam(
       model, libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
   if (yparam == nullptr) {
     SPDLOG_WARN("No y-coord parameter found - creating");
@@ -103,6 +105,8 @@ static SpatialCoordinates importSpatialCoordinates(libsbml::Model *model) {
         "y", libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y,
         model);
   }
+  yparam->setUnits(model->getLengthUnits());
+  yparam->setValue(0);
   s.y.id = yparam->getId();
   s.y.name = yparam->getName();
   return s;
@@ -284,6 +288,10 @@ std::vector<IdName> ModelParameters::getSymbols() const {
   for (unsigned i = 0; i < sbmlModel->getNumSpecies(); ++i) {
     const auto *spec = sbmlModel->getSpecies(i);
     symbols.push_back({spec->getId(), spec->getName()});
+  }
+  for (unsigned i = 0; i < sbmlModel->getNumCompartments(); ++i) {
+    const auto *comp = sbmlModel->getCompartment(i);
+    symbols.push_back({comp->getId(), comp->getName()});
   }
   symbols.push_back({spatialCoordinates.x.id, spatialCoordinates.x.name});
   symbols.push_back({spatialCoordinates.y.id, spatialCoordinates.y.name});

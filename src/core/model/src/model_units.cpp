@@ -8,6 +8,35 @@
 
 namespace model {
 
+bool operator==(const Unit &a, const Unit &b) {
+  constexpr double maxMultiplierRelativeDiff{1e-10};
+  return a.kind == b.kind && a.exponent == b.exponent && a.scale == b.scale &&
+         std::fabs((a.multiplier - b.multiplier) / a.multiplier) <
+             maxMultiplierRelativeDiff;
+}
+
+QString unitInBaseUnits(const Unit &unit) {
+  QString s;
+  if (unit.exponent != 1) {
+    s = "(";
+  }
+  if (unit.multiplier != 1.0) {
+    s.append(QString::number(unit.multiplier, 'g', 14));
+    s.append(" ");
+    if (unit.scale != 0) {
+      s.append("* ");
+    }
+  }
+  if (unit.scale != 0) {
+    s.append(QString("10^(%1) ").arg(unit.scale));
+  }
+  s.append(unit.kind);
+  if (unit.exponent != 1) {
+    s.append(QString(")^%1").arg(unit.exponent));
+  }
+  return s;
+}
+
 static libsbml::UnitDefinition *
 getOrCreateUnitDef(libsbml::Model *model, const std::string &Id,
                    const std::string &defaultId) {
@@ -42,40 +71,46 @@ static void setSBMLUnitDef(libsbml::UnitDefinition *unitdef, const Unit &u) {
   unit->setExponent(u.exponent);
 }
 
-static std::optional<int> getUnitIndex(libsbml::Model *model,
-                                       const std::string &id,
-                                       const QVector<Unit> &units) {
-  if (model == nullptr) {
-    return {};
-  }
+static int getOrAddUnitIndex(libsbml::Model *model, const std::string &id,
+                             QVector<Unit> &units, int defaultIndex) {
   SPDLOG_INFO("SId: {}", id);
-  // by default assume id is a SBML base unit
-  std::string kind = id;
-  double multiplier = 1.0;
-  int exponent = 1;
-  int scale = 0;
-  const auto *unitdef = model->getUnitDefinition(id);
-  if (unitdef != nullptr && unitdef->getNumUnits() == 1) {
-    // if id is a UnitDefinition, then get unit kind & scaling factors
+  Unit u;
+  if (libsbml::UnitKind_isValidUnitKindString(id.c_str(), model->getLevel(),
+                                              model->getVersion())) {
+    // check if id is a SBML base unit
+    u.kind = id.c_str();
+    u.multiplier = 1.0;
+    u.exponent = 1;
+    u.scale = 0;
+  } else if (auto *unitdef = model->getUnitDefinition(id);
+             unitdef != nullptr && unitdef->getNumUnits() == 1) {
+    // if it is a UnitDef with a single unit, import it
+    if (unitdef->getName().empty()) {
+      unitdef->setName(unitdef->getId());
+    }
+    u.name = unitdef->getName().c_str();
     const auto *unit = unitdef->getUnit(0);
-    kind = libsbml::UnitKind_toString(unit->getKind());
-    multiplier = unit->getMultiplier();
-    exponent = unit->getExponent();
-    scale = unit->getScale();
+    u.kind = libsbml::UnitKind_toString(unit->getKind());
+    u.multiplier = unit->getMultiplier();
+    u.exponent = unit->getExponent();
+    u.scale = unit->getScale();
+  } else {
+    SPDLOG_INFO("  -> failed to import unit, using default");
+    return defaultIndex;
   }
-  SPDLOG_INFO("  = ({} * 1e{} {})^{}", multiplier, scale, kind, exponent);
+  SPDLOG_INFO("  = {}", unitInBaseUnits(u).toStdString());
+  // look for an existing equivalent unit in the model
   for (int i = 0; i < units.size(); ++i) {
-    const auto &u = units.at(i);
-    constexpr double maxRelativeDiff{1e-10};
-    if (u.kind.toStdString() == kind &&
-        std::fabs((u.multiplier - multiplier) / multiplier) < maxRelativeDiff &&
-        u.exponent == exponent && u.scale == scale) {
-      SPDLOG_INFO("  -> {}", u.name.toStdString());
+    if (units[i] == u) {
+      SPDLOG_INFO("  -> equivalent existing unit '{}'",
+                  units[i].name.toStdString());
       return i;
     }
   }
-  SPDLOG_WARN("  -> matching unit not found");
-  return {};
+  // otherwise add imported unit to model & return its index
+  units.push_back(std::move(u));
+  SPDLOG_INFO("  -> creating new unit '{}'", units.back().name.toStdString());
+  return units.size() - 1;
 }
 
 UnitVector::UnitVector(const QVector<Unit> &unitsVec, int defaultIndex)
@@ -85,29 +120,31 @@ const Unit &UnitVector::get() const { return units.at(index); }
 
 const QVector<Unit> &UnitVector::getUnits() const { return units; }
 
+QVector<Unit> &UnitVector::getUnits() { return units; }
+
 int UnitVector::getIndex() const { return index; }
 
 void UnitVector::setIndex(int newIndex) { index = newIndex; }
 
 void ModelUnits::updateConcentration() {
-  concentration =
-      QString("%1/%2").arg(getAmount().symbol).arg(getVolume().symbol);
+  concentration = QString("%1/%2").arg(getAmount().name).arg(getVolume().name);
 }
 
 void ModelUnits::updateDiffusion() {
-  diffusion = QString("%1^2/%2").arg(getLength().symbol).arg(getTime().symbol);
+  diffusion = QString("%1^2/%2").arg(getLength().name).arg(getTime().name);
 }
 
 ModelUnits::ModelUnits(libsbml::Model *model) : sbmlModel{model} {
-  setTimeIndex(getUnitIndex(model, model->getTimeUnits(), time.getUnits())
-                   .value_or(time.getIndex()));
-  setLengthIndex(getUnitIndex(model, model->getLengthUnits(), length.getUnits())
-                     .value_or(length.getIndex()));
-  setVolumeIndex(getUnitIndex(model, model->getVolumeUnits(), volume.getUnits())
-                     .value_or(volume.getIndex()));
-  setAmountIndex(
-      getUnitIndex(model, model->getSubstanceUnits(), amount.getUnits())
-          .value_or(amount.getIndex()));
+  if (model != nullptr) {
+    setTimeIndex(getOrAddUnitIndex(model, model->getTimeUnits(),
+                                   time.getUnits(), time.getIndex()));
+    setLengthIndex(getOrAddUnitIndex(model, model->getLengthUnits(),
+                                     length.getUnits(), length.getIndex()));
+    setVolumeIndex(getOrAddUnitIndex(model, model->getVolumeUnits(),
+                                     volume.getUnits(), volume.getIndex()));
+    setAmountIndex(getOrAddUnitIndex(model, model->getSubstanceUnits(),
+                                     amount.getUnits(), amount.getIndex()));
+  }
   updateConcentration();
   updateDiffusion();
 }
@@ -119,6 +156,8 @@ int ModelUnits::getTimeIndex() const { return time.getIndex(); }
 const QVector<Unit> &ModelUnits::getTimeUnits() const {
   return time.getUnits();
 }
+
+QVector<Unit> &ModelUnits::getTimeUnits() { return time.getUnits(); }
 
 void ModelUnits::setTimeIndex(int index) {
   time.setIndex(index);
@@ -139,6 +178,8 @@ const QVector<Unit> &ModelUnits::getLengthUnits() const {
   return length.getUnits();
 }
 
+QVector<Unit> &ModelUnits::getLengthUnits() { return length.getUnits(); }
+
 void ModelUnits::setLengthIndex(int index) {
   length.setIndex(index);
   if (sbmlModel != nullptr) {
@@ -151,7 +192,7 @@ void ModelUnits::setLengthIndex(int index) {
     auto *areaUnitDef = getOrCreateUnitDef(sbmlModel, sbmlModel->getAreaUnits(),
                                            "unit_of_area");
     Unit u = getLength();
-    u.name.append(" squared");
+    u.name.append("_squared");
     u.exponent *= 2;
     sbmlModel->setAreaUnits(areaUnitDef->getId());
     setSBMLUnitDef(areaUnitDef, u);
@@ -166,6 +207,8 @@ int ModelUnits::getVolumeIndex() const { return volume.getIndex(); }
 const QVector<Unit> &ModelUnits::getVolumeUnits() const {
   return volume.getUnits();
 }
+
+QVector<Unit> &ModelUnits::getVolumeUnits() { return volume.getUnits(); }
 
 void ModelUnits::setVolumeIndex(int index) {
   volume.setIndex(index);
@@ -185,6 +228,8 @@ int ModelUnits::getAmountIndex() const { return amount.getIndex(); }
 const QVector<Unit> &ModelUnits::getAmountUnits() const {
   return amount.getUnits();
 }
+
+QVector<Unit> &ModelUnits::getAmountUnits() { return amount.getUnits(); }
 
 void ModelUnits::setAmountIndex(int index) {
   amount.setIndex(index);

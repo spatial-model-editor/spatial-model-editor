@@ -42,6 +42,7 @@ bool ModelGeometry::importDimensions(libsbml::Model *model) {
     SPDLOG_ERROR("No y-coordinate found in SBML model");
     return false;
   }
+
   // import xy coordinates
   double xmin = xcoord->getBoundaryMin()->getValue();
   double xmax = xcoord->getBoundaryMax()->getValue();

@@ -429,10 +429,10 @@ double PixelSim::doRKAdaptive(double dtMax) {
     double errFactor = std::min(errMax.abs / err.abs, errMax.rel / err.rel);
     errFactor = std::pow(errFactor, 1.0 / static_cast<double>(integratorOrder));
     nextTimestep = std::min(0.95 * dt * errFactor, dtMax);
-    SPDLOG_DEBUG("dt = {} gave rel err = {}, abs err = {} -> new dt = {}", dt,
+    SPDLOG_TRACE("dt = {} gave rel err = {}, abs err = {} -> new dt = {}", dt,
                  err.rel, err.abs, nextTimestep);
     if (err.abs > errMax.abs || err.rel > errMax.rel) {
-      SPDLOG_DEBUG("discarding step");
+      SPDLOG_TRACE("discarding step");
       ++discardedSteps;
       for (auto &sim : simCompartments) {
         sim.undoRKStep();

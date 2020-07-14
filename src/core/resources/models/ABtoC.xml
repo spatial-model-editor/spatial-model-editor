@@ -9,29 +9,35 @@
           <unit kind="second" exponent="-1" scale="0" multiplier="1"/>
         </listOfUnits>
       </unitDefinition>
-      <unitDefinition id="area" name="metre squared">
+      <unitDefinition id="area" name="m_squared">
         <listOfUnits>
           <unit kind="metre" exponent="2" scale="0" multiplier="1"/>
         </listOfUnits>
       </unitDefinition>
-      <unitDefinition id="unit_of_time" name="second">
+      <unitDefinition id="unit_of_time" name="s">
         <listOfUnits>
           <unit kind="second" exponent="1" scale="0" multiplier="1"/>
         </listOfUnits>
       </unitDefinition>
-      <unitDefinition id="unit_of_length" name="metre">
+      <unitDefinition id="unit_of_length" name="m">
         <listOfUnits>
           <unit kind="metre" exponent="1" scale="0" multiplier="1"/>
         </listOfUnits>
       </unitDefinition>
-      <unitDefinition id="unit_of_volume" name="litre">
+      <unitDefinition id="unit_of_volume" name="L">
         <listOfUnits>
           <unit kind="litre" exponent="1" scale="0" multiplier="1"/>
         </listOfUnits>
       </unitDefinition>
-      <unitDefinition id="units_of_substance" name="mole">
+      <unitDefinition id="units_of_substance" name="mol">
         <listOfUnits>
           <unit kind="mole" exponent="1" scale="0" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="diffusion_constant_units" name="diffusion_constant_units">
+        <listOfUnits>
+          <unit kind="metre" exponent="2" scale="0" multiplier="1"/>
+          <unit kind="second" exponent="-1" scale="0" multiplier="1"/>
         </listOfUnits>
       </unitDefinition>
     </listOfUnitDefinitions>
@@ -58,19 +64,19 @@
       </species>
     </listOfSpecies>
     <listOfParameters>
-      <parameter id="B_diffusionConstant" value="0.4" constant="true">
+      <parameter id="B_diffusionConstant" value="0.4" units="diffusion_constant_units" constant="true">
         <spatial:diffusionCoefficient spatial:variable="B" spatial:type="isotropic"/>
       </parameter>
-      <parameter id="A_diffusionConstant" value="0.4" constant="true">
+      <parameter id="A_diffusionConstant" value="0.4" units="diffusion_constant_units" constant="true">
         <spatial:diffusionCoefficient spatial:variable="A" spatial:type="isotropic"/>
       </parameter>
-      <parameter id="C_diffusionConstant" value="25" constant="true">
+      <parameter id="C_diffusionConstant" value="25" units="diffusion_constant_units" constant="true">
         <spatial:diffusionCoefficient spatial:variable="C" spatial:type="isotropic"/>
       </parameter>
-      <parameter id="x" constant="false">
+      <parameter id="x" name="x" value="0" units="unit_of_length" constant="false">
         <spatial:spatialSymbolReference spatial:spatialRef="xCoord"/>
       </parameter>
-      <parameter id="y" constant="false">
+      <parameter id="y" name="y" value="0" units="unit_of_length" constant="false">
         <spatial:spatialSymbolReference spatial:spatialRef="yCoord"/>
       </parameter>
       <parameter id="A_initialConcentration_" units="units_of_substance" constant="true">

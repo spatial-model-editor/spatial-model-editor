@@ -29,10 +29,9 @@ DialogConcentrationImage::DialogConcentrationImage(
   ui->lblMaxConcColour->setPixmap(QPixmap::fromImage(colourMaxConc));
 
   const auto &units = speciesGeometry.modelUnits;
-  lengthUnit = units.getLength().symbol;
-  concentrationUnit = QString("%1/%2")
-                          .arg(units.getAmount().symbol)
-                          .arg(units.getVolume().symbol);
+  lengthUnit = units.getLength().name;
+  concentrationUnit =
+      QString("%1/%2").arg(units.getAmount().name).arg(units.getVolume().name);
   ui->lblMinConcUnits->setText(concentrationUnit);
   ui->lblMaxConcUnits->setText(concentrationUnit);
   img = QImage(speciesGeometry.compartmentImageSize,

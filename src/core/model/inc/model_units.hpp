@@ -12,16 +12,17 @@ class Model;
 namespace model {
 
 struct Unit {
-  // UI display name
   QString name;
-  // UI display symbol
-  QString symbol;
-  // SBML unit definition: name == (multiplier * 10^scale * kind)^exponent
+  // SBML unit definition: (multiplier * 10^scale * kind)^exponent
   QString kind;
   int scale{0};
   int exponent{1};
   double multiplier{1.0};
 };
+
+bool operator==(const Unit &, const Unit &);
+
+QString unitInBaseUnits(const Unit &unit);
 
 class UnitVector {
 private:
@@ -32,36 +33,36 @@ public:
   explicit UnitVector(const QVector<Unit> &unitsVec = {}, int defaultIndex = 0);
   const Unit &get() const;
   const QVector<Unit> &getUnits() const;
+  QVector<Unit> &getUnits();
   int getIndex() const;
   void setIndex(int newIndex);
 };
 
 class ModelUnits {
 private:
-  UnitVector time{{{"hour", "h", "second", 0, 1, 3600},
-                   {"minute", "m", "second", 0, 1, 60},
-                   {"second", "s", "second", 0},
-                   {"millisecond", "ms", "second", -3},
-                   {"microsecond", "us", "second", -6}},
+  UnitVector time{{{"hour", "second", 0, 1, 3600},
+                   {"min", "second", 0, 1, 60},
+                   {"s", "second", 0},
+                   {"ms", "second", -3},
+                   {"us", "second", -6}},
                   2};
-  UnitVector length{{{"metre", "m", "metre", 0},
-                     {"decimetre", "dm", "metre", -1},
-                     {"centimetre", "cm", "metre", -2},
-                     {"millimetre", "mm", "metre", -3},
-                     {"micrometre", "um", "metre", -6},
-                     {"nanometre", "nm", "metre", -9}},
+  UnitVector length{{{"m", "metre", 0},
+                     {"dm", "metre", -1},
+                     {"cm", "metre", -2},
+                     {"mm", "metre", -3},
+                     {"um", "metre", -6},
+                     {"nm", "metre", -9}},
                     2};
-  UnitVector volume{{{"litre", "L", "litre", 0},
-                     {"decilitre", "dL", "litre", -1},
-                     {"centilitre", "cL", "litre", -2},
-                     {"millilitre", "mL", "litre", -3},
-                     {"cubic metre", "m^3", "metre", 0, 3},
-                     {"cubic decimetre", "dm^3", "metre", -1, 3},
-                     {"cubic centimetre", "cm^3", "metre", -2, 3},
-                     {"cubic millimetre", "mm^3", "metre", -3, 3}},
+  UnitVector volume{{{"L", "litre", 0},
+                     {"dL", "litre", -1},
+                     {"cL", "litre", -2},
+                     {"mL", "litre", -3},
+                     {"m3", "metre", 0, 3},
+                     {"dm3", "metre", -1, 3},
+                     {"cm3", "metre", -2, 3},
+                     {"mm3", "metre", -3, 3}},
                     3};
-  UnitVector amount{
-      {{"mole", "mol", "mole", 0}, {"millimole", "mmol", "mole", -3}}, 1};
+  UnitVector amount{{{"mol", "mole", 0}, {"mmol", "mole", -3}}, 1};
   QString concentration;
   QString diffusion;
   libsbml::Model *sbmlModel;
@@ -73,18 +74,22 @@ public:
   const Unit &getTime() const;
   int getTimeIndex() const;
   const QVector<Unit> &getTimeUnits() const;
+  QVector<Unit> &getTimeUnits();
   void setTimeIndex(int index);
   const Unit &getLength() const;
   int getLengthIndex() const;
   const QVector<Unit> &getLengthUnits() const;
+  QVector<Unit> &getLengthUnits();
   void setLengthIndex(int index);
   const Unit &getVolume() const;
   int getVolumeIndex() const;
   const QVector<Unit> &getVolumeUnits() const;
+  QVector<Unit> &getVolumeUnits();
   void setVolumeIndex(int index);
   const Unit &getAmount() const;
   int getAmountIndex() const;
   const QVector<Unit> &getAmountUnits() const;
+  QVector<Unit> &getAmountUnits();
   void setAmountIndex(int index);
   const QString &getConcentration() const;
   const QString &getDiffusion() const;
