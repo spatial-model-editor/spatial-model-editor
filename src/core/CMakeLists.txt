@@ -6,6 +6,7 @@ find_package(
   SymEngine
   CONFIG
   REQUIRED)
+message(STATUS "Found SymEngine library: ")
 message(STATUS "Testing SymEngine LLVM support")
 try_compile(
   SYMENGINE_LLVM
@@ -21,6 +22,7 @@ else()
     WARNING
       "Supplied SymEngine library does not appear to be compiled with LLVM support"
   )
+  message(WARNING "${SYMENGINE_LLVM_ERROR_LOG}")
 endif()
 
 # find libSBML and check it is compiled with the spatial extension enabled
@@ -39,6 +41,7 @@ else()
     WARNING
       "Supplied libSBML library does not appear to be compiled with spatial extension support"
   )
+  message(WARNING "${SBML_SPATIAL_ERROR_LOG}")
 endif()
 
 find_package(spdlog REQUIRED)

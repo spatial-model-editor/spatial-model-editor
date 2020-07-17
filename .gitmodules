@@ -1,6 +1,6 @@
 [submodule "ext/pybind11"]
 	path = ext/pybind11
-	url = git://github.com/pybind/pybind11.git
+	url = git://github.com/lkeegan/pybind11
 [submodule "ext/Catch2"]
 	path = ext/Catch2
 	url = https://github.com/catchorg/Catch2
