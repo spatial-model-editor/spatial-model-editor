@@ -294,12 +294,14 @@ constructTriangulateBoundaries(const ImageBoundaries *imageBoundaries) {
     } else if (points.size() > 2) {
       segments.push_back({currentIndex, boundary.getFpIndices().endPoint});
     }
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
     for (const auto &seg : segments) {
       SPDLOG_TRACE(
           "- seg {}->{} | ({},{})->({},{})", seg.start, seg.end,
           tid.boundaryPoints[seg.start].x(), tid.boundaryPoints[seg.start].y(),
           tid.boundaryPoints[seg.end].x(), tid.boundaryPoints[seg.end].y());
     }
+#endif
   }
 
   // boundary index and width for each membrane

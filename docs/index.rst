@@ -21,6 +21,7 @@ Spatial Model Editor Documentation
    reference/maths
    reference/units
    reference/dune
+   reference/mesh
    reference/pixel
    reference/source-code
 

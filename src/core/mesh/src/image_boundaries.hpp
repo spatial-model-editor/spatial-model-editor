@@ -8,24 +8,9 @@
 #include <vector>
 
 #include "boundary.hpp"
+#include "mesh_types.hpp"
 
 namespace mesh {
-
-using QTriangleF = std::array<QPointF, 3>;
-using ColourPair = std::pair<QRgb, QRgb>;
-
-struct FPBoundaryLine {
-  std::size_t boundaryIndex;
-  bool startsFromFP;
-  bool isMembrane;
-  QPoint nearestPoint;
-  double angle;
-};
-
-struct FixedPoint {
-  QPoint point;
-  std::vector<FPBoundaryLine> lines;
-};
 
 class ImageBoundaries {
 private:
@@ -38,6 +23,10 @@ private:
   std::vector<double> getMidpointAngles(const FixedPoint &fp) const;
   void expandFP(FixedPoint &fp);
   void expandFPs();
+  void constructLines(const QImage &img,
+                      const std::vector<QRgb> &compartmentColours,
+                      const std::vector<std::pair<std::string, ColourPair>>
+                          &membraneColourPairs);
 
 public:
   ImageBoundaries();

@@ -83,7 +83,7 @@ SCENARIO("Image Boundaries",
     REQUIRE(boundaries.size() == 3);
     REQUIRE(fp.size() == 2);
     REQUIRE(fp[0].point == QPoint(11, 31));
-    REQUIRE(fp[1].point == QPoint(11, 0));
+    REQUIRE(fp[1].point == QPoint(10, 0));
     const auto &bLeft = boundaries[0];
     const auto &bMembrane = boundaries[1];
     const auto &bRight = boundaries[2];
@@ -95,16 +95,16 @@ SCENARIO("Image Boundaries",
     REQUIRE(bMembrane.isLoop() == false);
     REQUIRE(bMembrane.isMembrane() == true);
     REQUIRE(bMembrane.getMembraneId() == "membrane");
-    REQUIRE(bMembrane.getFpIndices().startPoint == 0);
-    REQUIRE(bMembrane.getFpIndices().endPoint == 1);
-    REQUIRE(bMembrane.getPoints().size() == 2);
+    REQUIRE(bMembrane.getFpIndices().startPoint == 1);
+    REQUIRE(bMembrane.getFpIndices().endPoint == 0);
+    REQUIRE(bMembrane.getPoints().size() == 3);
     REQUIRE(bRight.isLoop() == false);
     REQUIRE(bRight.isMembrane() == false);
-    REQUIRE(bRight.getFpIndices().startPoint == 0);
-    REQUIRE(bRight.getFpIndices().endPoint == 1);
+    REQUIRE(bRight.getFpIndices().startPoint == 1);
+    REQUIRE(bRight.getFpIndices().endPoint == 0);
     REQUIRE(bRight.getPoints().size() == 4);
     // automatic determination of sensible number of points for each boundary
-    std::vector<std::size_t> autoMaxPoints = {4, 2, 4};
+    std::vector<std::size_t> autoMaxPoints = {4, 3, 4};
     REQUIRE(ib.setAutoMaxPoints() == autoMaxPoints);
   }
 }

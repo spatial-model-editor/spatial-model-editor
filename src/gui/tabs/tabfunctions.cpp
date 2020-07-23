@@ -9,8 +9,8 @@
 #include "ui_tabfunctions.h"
 #include "utils.hpp"
 
-TabFunctions::TabFunctions(model::Model &model, QWidget *parent)
-    : QWidget{parent}, ui{std::make_unique<Ui::TabFunctions>()}, model{model} {
+TabFunctions::TabFunctions(model::Model &m, QWidget *parent)
+    : QWidget{parent}, ui{std::make_unique<Ui::TabFunctions>()}, model{m} {
   ui->setupUi(this);
   connect(ui->listFunctions, &QListWidget::currentRowChanged, this,
           &TabFunctions::listFunctions_currentRowChanged);

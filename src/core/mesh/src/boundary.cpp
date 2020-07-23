@@ -1,10 +1,7 @@
 #include "boundary.hpp"
-
-#include <utility>
-
-#include "boundary_pixels.hpp"
 #include "line_simplifier.hpp"
 #include "logger.hpp"
+#include <utility>
 
 namespace mesh {
 
@@ -133,7 +130,8 @@ const std::string &Boundary::getMembraneId() const { return membraneID; }
 Boundary::Boundary(const std::vector<QPoint> &boundaryPoints, bool isClosedLoop,
                    bool isMembraneCompartment, std::string membraneName)
     : loop{isClosedLoop}, membrane{isMembraneCompartment},
-      membraneID(std::move(membraneName)), lineSimplifier(boundaryPoints, isClosedLoop) {
+      membraneID(std::move(membraneName)),
+      lineSimplifier(boundaryPoints, isClosedLoop) {
   valid = lineSimplifier.isValid();
   if (!valid) {
     return;

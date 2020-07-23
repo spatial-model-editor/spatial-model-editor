@@ -1,7 +1,7 @@
 target_sources(
   core
   PRIVATE boundary.cpp
-          boundary_pixels.cpp
+          contours.cpp
           image_boundaries.cpp
           line_simplifier.cpp
           mesh.cpp
@@ -10,8 +10,8 @@ target_sources(
   core_tests
   PUBLIC boundary.cpp
          boundary_t.cpp
-         boundary_pixels.cpp
-         boundary_pixels_t.cpp
+         contours.cpp
+         contours_t.cpp
          image_boundaries.cpp
          image_boundaries_t.cpp
          line_simplifier.cpp

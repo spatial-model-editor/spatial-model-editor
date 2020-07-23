@@ -1,7 +1,7 @@
 Command Line Interface
 ======================
 
-A (currently very minimal) Command Line Interface (CLI) is also provided.
+A Command Line Interface (CLI) is also provided for running long simulations.
 
 Precompiled binaries for linux/macOS/windows can be downloaded from https://github.com/lkeegan/spatial-model-editor/releases
 

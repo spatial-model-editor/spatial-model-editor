@@ -32,9 +32,12 @@ static void setSegmentList(triangle::triangulateio &in,
   in.segmentlist = nullptr;
   free(in.segmentmarkerlist);
   in.segmentmarkerlist = nullptr;
-  std::size_t nSegments = 0;
+  std::size_t nSegments{0};
   for (const auto &boundarySegments : boundaries) {
     nSegments += boundarySegments.size();
+  }
+  if (nSegments == 0) {
+    return;
   }
   in.segmentlist = static_cast<int *>(malloc(2 * nSegments * sizeof(int)));
   in.numberofsegments = static_cast<int>(nSegments);
@@ -145,9 +148,11 @@ static void orderSegmentsInPlace(BoundarySegments &segments,
   for (std::size_t i = 1; i < segments.size(); ++i) {
     swapSegment(segments, i, segments[i - 1].end);
   }
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
   for (const auto &s : segments) {
     SPDLOG_TRACE("- ({}, {})", s.start, s.end);
   }
+#endif
   return;
 }
 
@@ -174,6 +179,7 @@ static QPointF getAvgNormalUnitVector(const BoundarySegment &seg,
   return n;
 }
 
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
 static QRectF getBoundingRectangle(const std::vector<QPointF> &points) {
   QRectF r;
   double minX = std::numeric_limits<double>::max();
@@ -224,6 +230,7 @@ static void debugDrawPointsAndBoundaries(const TriangulateBoundaries &tid,
   painter.end();
   img.mirrored(false, true).save(filename);
 }
+#endif
 
 // http://www.cs.cmu.edu/~quake/triangle.switch.html
 //  - Q: no printf output

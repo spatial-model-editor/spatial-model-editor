@@ -11,16 +11,9 @@
 #include <vector>
 
 #include "line_simplifier.hpp"
+#include "mesh_types.hpp"
 
 namespace mesh {
-
-using QTriangleF = std::array<QPointF, 3>;
-using ColourPair = std::pair<QRgb, QRgb>;
-
-struct FpIndices {
-  std::size_t startPoint;
-  std::size_t endPoint;
-};
 
 class Boundary {
 private:
