@@ -3,9 +3,9 @@ os: linux
 dist: xenial
 language: cpp
 
-# untagged master branch commits (and PRs to master) are built, no releases
-# version tags on master, e.g "1.3.24" result in additional build with github binary releases & pypi python wheel releases
-# "latest" tag on master results in github binary release, overwriting any existing files
+# untagged master branch commits (and PRs to master) are built and tested
+# version tags on master, e.g "1.3.24" result in an additional build with github binary releases & pypi python wheel releases
+# "latest" tag on master results in github binary release (no pypi), overwriting any existing files
 branches:
   only:
     - master
@@ -14,10 +14,12 @@ branches:
 
 env:
   global:
-    # python wheel building can be disabled to speed up CI when working on a PR
-    - BUILD_PYTHON_WHEELS: true
+    # python wheel building can (and should) be disabled to speed up CI when working on a PR
+    - BUILD_PYTHON_WHEELS=true
+    - MSYS_URL='https://github.com/msys2/msys2-installer/releases/download/2020-07-20/msys2-base-x86_64-20200720.sfx.exe'
+    - CIBUILDWHEEL_VERSION=1.5.4
     # pypi TWINE_PASSWORD
-    - secure: "GFBxgbwP75qb0QW3jFO3e3fbfFLpYue+kUZGm3ArNZ9ExeXPGU3fxfxiBolEPnnPK98VlZZ8R0WBQptvWnaBN0tamt5r7OCXljQdpNgRF04MMa1gtbAEnuYjd6dHQ5CbdiEKxK4MnF28jJ+0wnw35E7YPGq357XWKwGFoG0HT9UenFd7HRbzsM0WmO7sog8bZYahYU+nyIDu6AVGlsc1b4XpVEu/pcuY2PexzYpV4wv+qVprRIeTwi2aFb4bmr3XcPZtyps3eiExLISHmz3mAuHIiNEt3wQA7Kjzsz93lm6DlGi3LSEXugfomGzg3oyHQC8oKKky/D6hHqnc9Jfow4Epj3aHvE4LP00TxDiyrjqvVGeCHa/RL/WIGJ/zZA4W7QTr2wvDOhw5EOuSmIW42tmOsOV4Zo/wr5d9A0r0VUfHhrsi1QUHmFFgTJXeTDyHYC32mvXy8EuaxLRFLBUVKE3gPfaYUgRafvx1Kn7H9WUmrpA7JAj2caMYD6UtKly1J6BFyTpPFlGgk3yxzVYgbeToOOrabQzGzYBuaxz6aysbyPra+rYF5SrJ/Dp4TPjfoE/1IIjmrbVpYEQGdfojnxxN6xnW7woPgq8IUDStw7iR83xyluWEtn1i1KlzRA8NMNdBHxgFWQ9rpE/DZikeJ8yb0FoEleMRjaE6G4C33rc="
+    - secure: GFBxgbwP75qb0QW3jFO3e3fbfFLpYue+kUZGm3ArNZ9ExeXPGU3fxfxiBolEPnnPK98VlZZ8R0WBQptvWnaBN0tamt5r7OCXljQdpNgRF04MMa1gtbAEnuYjd6dHQ5CbdiEKxK4MnF28jJ+0wnw35E7YPGq357XWKwGFoG0HT9UenFd7HRbzsM0WmO7sog8bZYahYU+nyIDu6AVGlsc1b4XpVEu/pcuY2PexzYpV4wv+qVprRIeTwi2aFb4bmr3XcPZtyps3eiExLISHmz3mAuHIiNEt3wQA7Kjzsz93lm6DlGi3LSEXugfomGzg3oyHQC8oKKky/D6hHqnc9Jfow4Epj3aHvE4LP00TxDiyrjqvVGeCHa/RL/WIGJ/zZA4W7QTr2wvDOhw5EOuSmIW42tmOsOV4Zo/wr5d9A0r0VUfHhrsi1QUHmFFgTJXeTDyHYC32mvXy8EuaxLRFLBUVKE3gPfaYUgRafvx1Kn7H9WUmrpA7JAj2caMYD6UtKly1J6BFyTpPFlGgk3yxzVYgbeToOOrabQzGzYBuaxz6aysbyPra+rYF5SrJ/Dp4TPjfoE/1IIjmrbVpYEQGdfojnxxN6xnW7woPgq8IUDStw7iR83xyluWEtn1i1KlzRA8NMNdBHxgFWQ9rpE/DZikeJ8yb0FoEleMRjaE6G4C33rc=
 
 jobs:
   include:
@@ -31,6 +33,8 @@ jobs:
       env:
         - DEPLOY_FILE_GUI="spatial-model-editor"
         - DEPLOY_FILE_CLI="spatial-cli"
+        - STATIC_LIBS_OS="linux"
+        - SUDOCMD='sudo'
       addons:
         apt:
           sources:
@@ -42,9 +46,30 @@ jobs:
           packages:
             - cmake
             - g++-9
-            - libxkbcommon-dev
             - jwm
             - python3-pip
+            - libfontconfig1-dev
+            - libfreetype6-dev
+            - libx11-dev
+            - libx11-xcb-dev
+            - libxext-dev
+            - libxfixes-dev
+            - libxi-dev
+            - libxrender-dev
+            - libxcb1-dev
+            - libxcb-glx0-dev
+            - libxcb-keysyms1-dev
+            - libxcb-image0-dev
+            - libxcb-shm0-dev
+            - libxcb-icccm4-dev
+            - libxcb-sync-dev
+            - libxcb-xfixes0-dev
+            - libxcb-shape0-dev
+            - libxcb-randr0-dev
+            - libxcb-render-util0-dev
+            - libxkbcommon-dev
+            - libxkbcommon-x11-dev
+            - libxcb-xinerama0-dev
       services: xvfb
       install:
         - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 100
@@ -62,7 +87,7 @@ jobs:
         - export SME_EXTRA_EXE_LIBS="-static-libgcc;-static-libstdc++"
         - mkdir build
         - cd build
-        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/local/qt5-static;/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS
+        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS
         - make -j2 VERBOSE=1
         # run c++ tests
         - ./test/tests -as 2>&1 | tail -n 100
@@ -72,7 +97,7 @@ jobs:
         - cd ..
         # run benchmarks (~1 sec per benchmark, ~20secs total)
         - time ./benchmark/benchmark 1
-        # check dependencies of resulting executable
+        # check dependencies of resulting executables
         - cd src
         - cp ../cli/spatial-cli .
         - ldd spatial-model-editor
@@ -86,16 +111,18 @@ jobs:
       language: cpp
       compiler: clang
       env:
+        - STATIC_LIBS_OS="osx"
         - DEPLOY_FILE_GUI="spatial-model-editor.dmg"
         - DEPLOY_FILE_CLI="spatial-cli.dmg"
+        - SUDOCMD='sudo'
       install:
         - python3 -m pip install --user nose
       script:
         - mkdir build
         - cd build
-        - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/usr/local/qt5-static;/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/local/bin/python3
+        - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/local/bin/python3
         - make -j2 VERBOSE=1
-        # run c++ tests
+        # run non-gui c++ tests
         - ./test/tests -as "~[gui]" 2>&1 | tail -n 100
         # run python tests
         - cd sme
@@ -103,7 +130,7 @@ jobs:
         - cd ..
         # run benchmarks (~1 sec per benchmark, ~20secs total)
         - time ./benchmark/benchmark 1
-        # check dependencies of resulting executable
+        # check dependencies of resulting executables
         - otool -L src/spatial-model-editor
         - otool -L cli/spatial-cli
 
@@ -114,62 +141,38 @@ jobs:
         - mkdir spatial-cli
         - cp cli/spatial-cli spatial-cli/.
         - hdiutil create spatial-cli -fs HFS+ -srcfolder spatial-cli
-        - ls
-    ##################################################
-    # windows GUI/CLI release build: mingw-w64 gcc 9 #
-    ##################################################
-    - name: "windows GUI/CLI"
+    ##########################################################
+    # windows 64-bit GUI/CLI release build: mingw-w64 gcc 10 #
+    ##########################################################
+    - name: "windows GUI/CLI (64-bit)"
       os: windows
       env:
+        - STATIC_LIBS_OS="win64"
         - DEPLOY_FILE_GUI="spatial-model-editor.exe"
         - DEPLOY_FILE_CLI="spatial-cli.exe"
-      # get up to date mingw-w64-x86_64 gcc, make, cmake from msys2
-      before_install:
-        - |
-          if [ ! -f "C:/tools/msys64/mingw64/bin/g++.exe" ]; then
-            rm -rf C:/tools/msys64
-            choco upgrade --no-progress -y msys2
-            export msys2='cmd //C RefreshEnv.cmd '
-            export msys2+='& set MSYS=winsymlinks:nativestrict '
-            export msys2+='& C:\\tools\\msys64\\msys2_shell.cmd -defterm -no-start'
-            export msys2+=" -msys2 -c "\"\$@"\" --"
-            $msys2 pacman -Syuu --noconfirm pacman
-            $msys2 pacman -S --noconfirm --needed mingw-w64-x86_64-gcc mingw-w64-x86_64-make mingw-w64-x86_64-cmake
-          fi
+        - SUDOCMD=''
+      cache:
+        directories:
+          - $HOME/.ccache
       install:
+        # https://www.msys2.org/docs/ci/
+        - wget $MSYS_URL -O msys2.exe
+        - ./msys2.exe -y -oC:\\
+        - export MSYS_SHELL='cmd //C RefreshEnv.cmd & set MSYS=winsymlinks:nativestrict & C:\\msys64\\msys2_shell.cmd -defterm -no-start -here -msys -l'
+        - $MSYS_SHELL -c ' '
+        - $MSYS_SHELL -c 'pacman --noconfirm -Syuu'
+        - $MSYS_SHELL -c 'pacman --noconfirm -Syuu'
+        - $MSYS_SHELL -c "pacman --noconfirm -Syuu mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache make"
+        - export BUILD_SHELL='cmd //C RefreshEnv.cmd & set MSYS=winsymlinks:nativestrict & C:\\msys64\\msys2_shell.cmd -defterm -no-start -here -mingw64 -l'
+        - taskkill //IM gpg-agent.exe //F  # https://travis-ci.community/t/4967
+        - taskkill //IM dirmngr.exe //F  # similar to above
         - choco install python --version=3.8.2 --force --no-progress -y
-      before_script:
-        # download pre-compiled Qt5 static libraries
-        - mkdir /c/libs
-        - cd /c/libs
-        - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-win32.zip"
-        - unzip qt5-static-win32.zip
-        # download pre-compiled static libSBML (and other) libraries
-        - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.zip"
-        - unzip libsbml-static-$TRAVIS_OS_NAME.zip
-        # download pre-compiled dunecopasi libraries
-        - wget "https://github.com/lkeegan/dune-copasi-static/releases/latest/download/dune-copasi-static-$TRAVIS_OS_NAME.zip"
-        - unzip dune-copasi-static-$TRAVIS_OS_NAME.zip
-        - cd $TRAVIS_BUILD_DIR
-        - cp ci/windows-gui.bat .
       script:
-        - cmd "/C windows-gui.bat"
-        - ls build/sme/*
-        - ls build/sme/*/*
-        - ls build/sme/*/*/*
-        - cat build/sme/CMakeFiles/sme.dir/link.txt
-        - cat build/sme/CMakeFiles/sme.dir/linklibs.rsp
-        - cat build/sme/CMakeFiles/sme.dir/objects1.rsp
+        - $BUILD_SHELL ci/windows-gui.sh
         - ls build/*/*.exe
-        - tail build/tests.txt
-        - head -n 2000 sme_obj.txt
         - cd build/src
         - cp ../cli/spatial-cli.exe .
         - ls
-      cache:
-        directories:
-          - /C/tools/msys64/mingw64
-        timeout: 5
     ########################################################################
     # linux python wheels release build: custom manylinux2010 docker image #
     ########################################################################
@@ -180,7 +183,8 @@ jobs:
       python: 3.8
       services:
         - docker
-      env: DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.06.27.a
+      env:
+        - DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.07.16.a
       install:
         - docker pull $DOCKER_IMAGE
       before_script:
@@ -209,78 +213,99 @@ jobs:
             - ccache
 #          update: true
       env:
+        - STATIC_LIBS_OS="osx"
+        - SUDOCMD='sudo'
         # c++17 requirements means we can only create osx10_14 wheels
         - MACOSX_DEPLOYMENT_TARGET=10.14
         # python 2.7 headers not compatible with c++17: use of 'register' causes clang compile error
         - CIBW_SKIP=cp27-macosx_x86_64
         - CIBW_TEST_COMMAND="python -m unittest discover -v -s {project}/test"
-        - CIBW_BUILD_VERBOSITY=0
+        - CIBW_BUILD_VERBOSITY=3
         - CCACHE_BASEDIR=/private
       install:
-        - python3 -m pip install cibuildwheel==1.5.1
+        - python3 -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
       script:
         - ccache -s
         - export CMAKE_CXX_COMPILER_LAUNCHER="ccache"
-        - export CMAKE_PREFIX_PATH="/usr/local/qt5-static;/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune"
+        - export CMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune"
         - python3 -m cibuildwheel --output-dir dist
         - ccache -s
         - ls dist
         - export TWINE_USERNAME="__token__"
         - python3 -m pip install twine
         - if [ -n "${TRAVIS_TAG}" ]; then python3 -m twine upload --verbose --non-interactive --skip-existing dist/* ; fi
-    ########################################################
-    # windows python wheels release build: mingw-w64 gcc 9 #
-    ########################################################
-    - name: "windows python wheels"
+    #####################################################################
+    # windows 32-bit python wheels release build: mingw-w64-i686-gcc 10 #
+    #####################################################################
+    - name: "windows 32-bit python wheels"
       if: (env(BUILD_PYTHON_WHEELS) = true) AND (tag != "latest")
       os: windows
-      # get up to date mingw-w64-x86_64 gcc, make, cmake from msys2
-      before_install:
-        - |
-          if [ ! -f "C:/tools/msys64/mingw64/bin/g++.exe" ]; then
-            rm -rf C:/tools/msys64
-            choco upgrade --no-progress -y msys2
-            export msys2='cmd //C RefreshEnv.cmd '
-            export msys2+='& set MSYS=winsymlinks:nativestrict '
-            export msys2+='& C:\\tools\\msys64\\msys2_shell.cmd -defterm -no-start'
-            export msys2+=" -msys2 -c "\"\$@"\" --"
-            $msys2 pacman --sync --noconfirm --needed mingw-w64-x86_64-gcc mingw-w64-x86_64-make mingw-w64-x86_64-cmake
-          fi
+      env:
+        - STATIC_LIBS_OS="win32"
+        - SUDOCMD=''
+      cache:
+        directories:
+          - $HOME/.ccache
       install:
-        - choco install python --version=2.7.11 --force --no-progress -y
-        - choco install python --version=3.5.4.20200110 --force --no-progress -y
-        - choco install python --version=3.6.8 --force --no-progress -y
-        - choco install python --version=3.7.7 --force --no-progress -y
+        # https://www.msys2.org/docs/ci/
+        - wget $MSYS_URL -O msys2.exe
+        - ./msys2.exe -y -oC:\\
+        - export MSYS_SHELL='cmd //C RefreshEnv.cmd & set MSYS=winsymlinks:nativestrict & C:\\msys64\\msys2_shell.cmd -defterm -no-start -here -msys -lc'
+        - $MSYS_SHELL ' '
+        - $MSYS_SHELL 'pacman --noconfirm -Syuu'
+        - $MSYS_SHELL 'pacman --noconfirm -Syuu'
+        - $MSYS_SHELL "pacman --noconfirm -Syuu mingw-w64-i686-gcc mingw-w64-i686-cmake mingw-w64-i686-ccache make"
+        - export BUILD_SHELL='cmd //C RefreshEnv.cmd & set MSYS=winsymlinks:nativestrict & C:\\msys64\\msys2_shell.cmd -defterm -no-start -here -mingw32 -l'
+        - taskkill //IM gpg-agent.exe //F  # https://travis-ci.community/t/4967
+        - taskkill //IM dirmngr.exe //F  # similar to above
         - choco install python --version=3.8.2 --force --no-progress -y
-        # 32-bit pypy
-        # - choco install python.pypy --version=7.1.0 --force --no-progress -y
-        # - choco install pypy3 --version=7.1.0 --force --no-progress -y
-        # - ls /c/ProgramData/chocolatey/lib/python.pypy/tools/*
-        # - ls /c/ProgramData/chocolatey/lib/pypy3/tools/*
-      before_script:
-        # download pre-compiled Qt5 static libraries
-        - mkdir /c/libs
-        - cd /c/libs
-        - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-win32.zip"
-        - unzip qt5-static-win32.zip
-        # download pre-compiled static libSBML (and other) libraries
-        - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.zip"
-        - unzip libsbml-static-$TRAVIS_OS_NAME.zip
-        # download pre-compiled dunecopasi libraries
-        - wget "https://github.com/lkeegan/dune-copasi-static/releases/latest/download/dune-copasi-static-$TRAVIS_OS_NAME.zip"
-        - unzip dune-copasi-static-$TRAVIS_OS_NAME.zip
-        - cd $TRAVIS_BUILD_DIR
-        - cp ci/windows-wheels.bat .
+        - /c/Python38/python.exe -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
+        - echo 'CIBW_BUILD="*-win32"' > source.sh
       script:
-        - cmd "/C windows-wheels.bat"
+        - $BUILD_SHELL ci/windows-wheels.sh
         - ls dist
         - export TWINE_USERNAME="__token__"
         - /c/Python38/python.exe -m pip install --upgrade twine
         - if [ -n "${TRAVIS_TAG}" ]; then /c/Python38/python.exe -m twine upload --verbose --non-interactive --skip-existing dist/* ; fi
+    #######################################################################
+    # windows 64-bit python wheels release build: mingw-w64-x86_64-gcc 10 #
+    #######################################################################
+    - name: "windows 64-bit python wheels"
+      if: (env(BUILD_PYTHON_WHEELS) = true) AND (tag != "latest")
+      os: windows
+      env:
+        - STATIC_LIBS_OS="win64"
+        - SUDOCMD=''
       cache:
         directories:
-          - /C/tools/msys64/mingw64
-        timeout: 5
+          - $HOME/.ccache
+      install:
+        - wget $MSYS_URL -O msys2.exe
+        - ./msys2.exe -y -oC:\\
+        - export MSYS_SHELL='cmd //C RefreshEnv.cmd & set MSYS=winsymlinks:nativestrict & C:\\msys64\\msys2_shell.cmd -defterm -no-start -here -msys -l'
+        - $MSYS_SHELL -c ' '
+        - $MSYS_SHELL -c 'pacman --noconfirm -Syuu'
+        - $MSYS_SHELL -c 'pacman --noconfirm -Syuu'
+        - $MSYS_SHELL -c "pacman --noconfirm -Syuu mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache make"
+        - export BUILD_SHELL='cmd //C RefreshEnv.cmd & set MSYS=winsymlinks:nativestrict & C:\\msys64\\msys2_shell.cmd -defterm -no-start -here -mingw64 -l'
+        - taskkill //IM gpg-agent.exe //F  # https://travis-ci.community/t/4967
+        - taskkill //IM dirmngr.exe //F  # similar to above
+        - choco install python --version=3.8.2 --force --no-progress -y
+        - export PATH=/c/Python38:/c/Python38/Scripts:$PATH
+        - which python
+        - python --version
+        - python -m pip install --upgrade pip
+        - python -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
+        - echo 'CIBW_BUILD="*-win_amd64"' > source.sh
+      script:
+        - $BUILD_SHELL ci/windows-wheels.sh
+        - ls dist
+        - export TWINE_USERNAME="__token__"
+
+        - python -m pip install --upgrade twine
+        - python -m pip install dist/sme-*-cp38-cp38-win_amd64.whl
+        - python -m unittest discover -v
+        - if [ -n "${TRAVIS_TAG}" ]; then /c/Python38/python.exe -m twine upload --verbose --non-interactive --skip-existing dist/* ; fi
     #########################################################################
     # linux code quality build: cmake / clang 10 -> sonarcloud.io, codecov.io
     #########################################################################
@@ -290,8 +315,10 @@ jobs:
       language: cpp
       compiler: clang
       env:
+        - STATIC_LIBS_OS="linux"
+        - SUDOCMD='sudo'
         # SONAR_LOGIN
-        - secure: "Muu56AqHMCZOpCG2d5Byeh6P++9xXKl7otulxdhZCfA1/yTAJM9M67B1ZHo7czEvLKdoVzqCz6aFMnsVvFHUHQDmAtmth/WzdfXZ7OTG7puDIeWRmYqQacpLeF6h9ws3sUr5Bjz9m0guhjbKN/6VIqoyuWLH/J0MwzJN5JKgWitQBeJ15GWjNJN20FLgiYW0vWtQ71dncM6VaLAyH6V/T8jLRNacmCjApAOsS2FuhnSfbL+rY5nRVXPtoy/muwRgpl2Bez8OV6z5nDCaBLxXLgNkC7Y/0OhfzY/t+6wZ4nuDZDJ/4Hn4AyycH1O1ldmfEjw9nHBdqG/0JW2NmvSLojp5NiCUSI1MDmcgqKv6VKdVV2cdn6b7s6YY/8p08pnm+uExHYRkiXPFNeYfoQF3ruYSzFOQXRA+VI3Rg0dMfs4cO+PXCWS/hIAHudG3vaDgOwOnLFaOPjJKGYidmbmu6u4jdvBNFuCkooSYmnO2JCe0LIGgJAwlOEfG51WYD9bewCx+w+NmB+Cow3E4G0DCHomz1XGUhp1DsmjGarU1kDf4PtFLQgLC88h7AQfJtg15mSV6xDcKV+nmuDNS+ifTpQTTSe/w6LqqzcE/EOLaVAtCSe4ACOORW2yBF7DPgUY47ZSkU4iwA7pAOAYDKs37fNHjK8s/TJhM++RZ+21oMME="
+        - secure: Muu56AqHMCZOpCG2d5Byeh6P++9xXKl7otulxdhZCfA1/yTAJM9M67B1ZHo7czEvLKdoVzqCz6aFMnsVvFHUHQDmAtmth/WzdfXZ7OTG7puDIeWRmYqQacpLeF6h9ws3sUr5Bjz9m0guhjbKN/6VIqoyuWLH/J0MwzJN5JKgWitQBeJ15GWjNJN20FLgiYW0vWtQ71dncM6VaLAyH6V/T8jLRNacmCjApAOsS2FuhnSfbL+rY5nRVXPtoy/muwRgpl2Bez8OV6z5nDCaBLxXLgNkC7Y/0OhfzY/t+6wZ4nuDZDJ/4Hn4AyycH1O1ldmfEjw9nHBdqG/0JW2NmvSLojp5NiCUSI1MDmcgqKv6VKdVV2cdn6b7s6YY/8p08pnm+uExHYRkiXPFNeYfoQF3ruYSzFOQXRA+VI3Rg0dMfs4cO+PXCWS/hIAHudG3vaDgOwOnLFaOPjJKGYidmbmu6u4jdvBNFuCkooSYmnO2JCe0LIGgJAwlOEfG51WYD9bewCx+w+NmB+Cow3E4G0DCHomz1XGUhp1DsmjGarU1kDf4PtFLQgLC88h7AQfJtg15mSV6xDcKV+nmuDNS+ifTpQTTSe/w6LqqzcE/EOLaVAtCSe4ACOORW2yBF7DPgUY47ZSkU4iwA7pAOAYDKs37fNHjK8s/TJhM++RZ+21oMME=
       cache:
         ccache: true
         directories:
@@ -319,6 +346,28 @@ jobs:
             - mesa-common-dev
             - libglu1-mesa-dev
             - jwm
+            - libfontconfig1-dev
+            - libfreetype6-dev
+            - libx11-dev
+            - libx11-xcb-dev
+            - libxext-dev
+            - libxfixes-dev
+            - libxi-dev
+            - libxrender-dev
+            - libxcb1-dev
+            - libxcb-glx0-dev
+            - libxcb-keysyms1-dev
+            - libxcb-image0-dev
+            - libxcb-shm0-dev
+            - libxcb-icccm4-dev
+            - libxcb-sync-dev
+            - libxcb-xfixes0-dev
+            - libxcb-shape0-dev
+            - libxcb-randr0-dev
+            - libxcb-render-util0-dev
+            - libxkbcommon-dev
+            - libxkbcommon-x11-dev
+            - libxcb-xinerama0-dev
         sonarcloud:
           organization: "lkeegan-github"
       services: xvfb
@@ -338,7 +387,7 @@ jobs:
         - ccache --zero-stats
         - mkdir build
         - cd build
-        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/usr/local/qt5-static;/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DPYTHON_EXECUTABLE=/usr/bin/python3
+        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/usr/local/qt5-static;/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DPYTHON_EXECUTABLE=/usr/bin/python3
         - build-wrapper-linux-x86-64 --out-dir bw-output make -j2
         - ccache --show-stats
         # run tests
@@ -392,11 +441,11 @@ jobs:
         - $COV gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
         - $COV gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null
         - mv *#src#core*.gcov *#sme*.gcov gcov/
-        - rm *.gcov
+        - rm -f *.gcov
         # upload coverage report to codecov.io
         - bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F sme
 
-        # run all tests again, then gcov again to get full coverage for sonarsource
+        # run all c++ tests again, then gcov again to get full coverage for sonarsource
         - rm -f gcov/*
         - lcov -q -z -d .
         - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as 2>&1 | tail -n 100
@@ -406,7 +455,7 @@ jobs:
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
         - mv *#src#core*.gcov *#src#gui*.gcov gcov/
         - rm -f *.gcov
-        # run python tests, but only copy gcov data for sme files: don't want to overwrite core data from above main test run
+        # also run python tests, but only copy gcov data for sme files: don't want to overwrite coverage info on core from c++ tests
         - lcov -q -z -d .
         - cd sme
         - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -s ../../test 2>&1 | tail -n 100
@@ -420,16 +469,15 @@ jobs:
         - sonar-scanner -Dsonar.login=$SONAR_LOGIN
 
 before_script:
-  # install pre-compiled Qt5 binaries & static libraries
-  - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-$TRAVIS_OS_NAME.tgz"
-  - sudo tar xf qt5-static-$TRAVIS_OS_NAME.tgz -C /
-  # download pre-compiled static libSBML (and other) libraries
-  - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$TRAVIS_OS_NAME.tgz"
-  - sudo tar xf libsbml-static-$TRAVIS_OS_NAME.tgz -C /
-  # download pre-compiled static dunecopasi libraries
-  - wget "https://github.com/lkeegan/dune-copasi-static/releases/latest/download/dune-copasi-static-$TRAVIS_OS_NAME.tgz"
-  - sudo tar xf dune-copasi-static-$TRAVIS_OS_NAME.tgz -C /opt/libs
-  - ls /opt/libs
+  # download pre-compiled Qt5 static libraries
+  - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-$STATIC_LIBS_OS.tgz"
+  - $SUDOCMD tar xf qt5-static-$STATIC_LIBS_OS.tgz -C /
+  # download pre-compiled libSBML (and other) static libraries
+  - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$STATIC_LIBS_OS.tgz"
+  - $SUDOCMD tar xf libsbml-static-$STATIC_LIBS_OS.tgz -C /
+  # download pre-compiled dunecopasi static libraries
+  - wget "https://github.com/lkeegan/dune-copasi-static/releases/latest/download/dune-copasi-static-$STATIC_LIBS_OS.tgz"
+  - $SUDOCMD tar xf dune-copasi-static-$STATIC_LIBS_OS.tgz -C /
 
 notifications:
   email: false
