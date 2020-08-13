@@ -1,17 +1,15 @@
 #include "geometry_analytic.hpp"
 #include "geometry_sampled_field.hpp"
-
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
-
 #include "logger.hpp"
 #include "sbml_math.hpp"
 #include "sbml_utils.hpp"
 #include "utils.hpp"
 #include <QImage>
 #include <memory>
+#include <sbml/SBMLTypes.h>
+#include <sbml/extension/SBMLDocumentPlugin.h>
+#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
+#include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 namespace model {
 

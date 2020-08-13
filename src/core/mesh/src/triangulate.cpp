@@ -1,12 +1,20 @@
 #include "triangulate.hpp"
-
-#include <QImage>
-#include <QPainter>
-#include <optional>
-
 #include "logger.hpp"
 #include "triangle.hpp"
 #include "utils.hpp"
+#include <QImage>
+#include <QPainter>
+#include <QRectF>
+#include <QString>
+#include <cmath>
+#include <initializer_list>
+#include <iterator>
+#include <limits>
+#include <memory>
+#include <numeric>
+#include <stdlib.h>
+#include <string>
+#include <utility>
 
 namespace mesh {
 

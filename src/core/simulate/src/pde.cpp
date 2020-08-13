@@ -1,14 +1,20 @@
 #include "pde.hpp"
-
+#include "logger.hpp"
+#include "model.hpp"
+#include "model_parameters.hpp"
+#include "model_reactions.hpp"
+#include "model_species.hpp"
+#include "symbolic.hpp"
+#include "utils.hpp"
+#include <QList>
+#include <QString>
+#include <QStringList>
+#include <algorithm>
+#include <memory>
 #include <optional>
 #include <utility>
 
-#include "logger.hpp"
-#include "model.hpp"
-#include "symbolic.hpp"
-#include "utils.hpp"
-
-namespace pde {
+namespace simulate {
 
 PDE::PDE(const model::Model *doc_ptr,
          const std::vector<std::string> &speciesIDs,
@@ -41,7 +47,7 @@ PDE::PDE(const model::Model *doc_ptr,
       // get reaction term
       QString expr =
           QString("%1*(%2) ")
-              .arg(QString::number(reactions.getMatrixElement(j, i), 'g', 18),
+              .arg(utils::dblToQStr(reactions.getMatrixElement(j, i)),
                    reactions.getExpression(j).c_str());
       // rescale by supplied reactionScaleFactor
       QString scaleFactor("1");
@@ -195,4 +201,4 @@ Reaction::Reaction(const model::Model *doc, std::vector<std::string> species,
   }
 }
 
-} // namespace pde
+} // namespace simulate

@@ -172,7 +172,7 @@ void writeGeometryMeshToSBML(libsbml::Model *model, const mesh::Mesh *mesh,
   addMeshParamsAnnotation(parageom, mesh);
 
   // write vertices
-  std::vector<double> vertices = mesh->getVertices();
+  std::vector<double> vertices = mesh->getVerticesAsFlatArray();
   auto *sp = parageom->getSpatialPoints();
   int sz = static_cast<int>(vertices.size());
   sp->setArrayData(vertices.data(), vertices.size());
@@ -190,7 +190,7 @@ void writeGeometryMeshToSBML(libsbml::Model *model, const mesh::Mesh *mesh,
     }
     SPDLOG_INFO("    - parametricObject: {}", po->getId());
     std::vector<int> triangleInts =
-        mesh->getTriangleIndices(static_cast<std::size_t>(i));
+        mesh->getTriangleIndicesAsFlatArray(static_cast<std::size_t>(i));
     int size = static_cast<int>(triangleInts.size());
     po->setPointIndexLength(size);
     po->setPointIndex(triangleInts.data(), triangleInts.size());

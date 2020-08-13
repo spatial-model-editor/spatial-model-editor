@@ -62,7 +62,7 @@ class CMakeBuild(build_ext):
         build_args = ["--config", cfg]
 
         cmake_args += ["-DCMAKE_BUILD_TYPE=" + cfg]
-        build_args += ["--", "-j2"]
+        build_args += ["--", "-j1"]
 
         env = os.environ.copy()
         env["CXXFLAGS"] = '{} -DVERSION_INFO=\\"{}\\"'.format(
@@ -89,7 +89,7 @@ with open(path.join(sme_directory, "README.md")) as f:
 
 setup(
     name="sme",
-    version="0.8.10",
+    version="0.9.0",
     author="Liam Keegan",
     author_email="liam@keegan.ch",
     description="Spatial Model Editor python bindings",

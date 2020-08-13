@@ -2,13 +2,15 @@
 
 #pragma once
 
-#include <QApplication>
 #include <QObject>
-#include <QPoint>
+#include <QString>
 #include <QStringList>
 #include <QTimer>
-#include <memory>
+#include <QtCore>
 #include <queue>
+#include <utility>
+
+class QWidget;
 
 // delay in ms to insert between key events
 const int keyDelay = 0;
@@ -47,7 +49,7 @@ void sendMouseClick(QWidget *widget, const QPoint &location = {});
 
 class ModalWidgetTimer : public QObject {
   Q_OBJECT
- public:
+public:
   explicit ModalWidgetTimer(int timerInterval = 100, int timeout = 30000);
   void addUserAction(QStringList &&keySeqStrings = {},
                      bool callAcceptOnDialog = true,
@@ -56,7 +58,7 @@ class ModalWidgetTimer : public QObject {
   void start();
   const QString &getResult(int i = 0) const;
 
- private:
+private:
   struct UserAction {
     explicit UserAction(QStringList &&keys = {}, bool accept = true,
                         ModalWidgetTimer *mwt = nullptr)

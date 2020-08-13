@@ -6,25 +6,25 @@
 
 #include <QImage>
 #include <QString>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <string>
 #include <vector>
 
-namespace geometry {
-class Field;
-}
+class QSize;
+class QPoint;
 
 namespace utils {
 
 using TiffDataType = uint16_t;
 
-double writeTIFF(const std::string& filename, const QSize& imageSize,
-                 const std::vector<double>& conc,
-                 const std::vector<QPoint>& pixels, double pixelWidth);
+double writeTIFF(const std::string &filename, const QSize &imageSize,
+                 const std::vector<double> &conc,
+                 const std::vector<QPoint> &pixels, double pixelWidth);
 
 class TiffReader {
- private:
+private:
   struct TiffImageData {
     std::vector<std::vector<double>> values;
     double maxValue = 0;
@@ -35,11 +35,11 @@ class TiffReader {
   std::vector<TiffImageData> tiffImages;
   QString errorMessage;
 
- public:
-  explicit TiffReader(const std::string& filename);
+public:
+  explicit TiffReader(const std::string &filename);
   std::size_t size() const;
   QImage getImage(std::size_t i = 0) const;
-  const QString& getErrorMessage() const;
+  const QString &getErrorMessage() const;
 };
 
-}  // namespace utils
+} // namespace utils

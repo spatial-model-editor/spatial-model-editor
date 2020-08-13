@@ -9,10 +9,16 @@
 #pragma once
 
 #include "boundary.hpp"
+#include "mesh_types.hpp"
 #include <QImage>
+#include <QRgb>
 #include <array>
-#include <opencv2/imgproc.hpp>
+#include <cstddef>
+#include <opencv2/core/mat.hpp>
+#include <opencv2/core/mat.inl.hpp>
+#include <opencv2/core/types.hpp>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace mesh {

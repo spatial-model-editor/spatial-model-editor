@@ -8,6 +8,11 @@
 #pragma once
 
 #include <QImage>
+#include <QPoint>
+#include <QRgb>
+#include <cstddef>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace geometry {
@@ -56,8 +61,7 @@ private:
 
 public:
   Membrane() = default;
-  Membrane(std::string membraneId, const Compartment *A,
-           const Compartment *B,
+  Membrane(std::string membraneId, const Compartment *A, const Compartment *B,
            const std::vector<std::pair<QPoint, QPoint>> *membranePairs);
   const std::string &getId() const;
   void setId(const std::string &membraneId);

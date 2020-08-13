@@ -2,8 +2,11 @@
 #include "boundary.hpp"
 #include "contours.hpp"
 #include "logger.hpp"
-#include "utils.hpp"
-#include <array>
+#include <QPoint>
+#include <algorithm>
+#include <cmath>
+#include <limits>
+#include <memory>
 
 namespace mesh {
 

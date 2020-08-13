@@ -6,10 +6,14 @@
 
 #pragma once
 
-#include <QImage>
-
 #include "basesim.hpp"
 #include "symbolic.hpp"
+#include <cstddef>
+#include <limits>
+#include <string>
+#include <vector>
+
+class QPoint;
 
 namespace model {
 class Model;
@@ -20,7 +24,7 @@ class Compartment;
 class Membrane;
 } // namespace geometry
 
-namespace sim {
+namespace simulate {
 
 class ReacEval {
 private:
@@ -152,4 +156,4 @@ public:
                                     std::size_t pixelIndex) const override;
 };
 
-} // namespace sim
+} // namespace simulate

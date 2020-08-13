@@ -3,11 +3,13 @@
 //   - see https://www.tandfonline.com/doi/abs/10.1179/000870493786962263
 //   - start with ordered set of points forming a line
 //   - constructs an n-point approximation to line given n
-//   - or chooses n given maximum desired relative or absolute error
+//   - can also choose n given maximum desired relative or absolute error
 
 #pragma once
 
 #include <QPoint>
+#include <cstddef>
+#include <limits>
 #include <vector>
 
 namespace mesh {

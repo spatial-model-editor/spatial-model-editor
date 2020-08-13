@@ -2,7 +2,18 @@
 #include "logger.hpp"
 #include "mesh_types.hpp"
 #include "utils.hpp"
-#include <numeric>
+#include <QColor>
+#include <QPoint>
+#include <QSize>
+#include <algorithm>
+#include <cstddef>
+#include <limits>
+#include <memory>
+#include <opencv2/core/cvdef.h>
+#include <opencv2/core/hal/interface.h>
+#include <opencv2/core/matx.hpp>
+#include <opencv2/imgproc.hpp>
+#include <stdint.h>
 
 namespace mesh {
 

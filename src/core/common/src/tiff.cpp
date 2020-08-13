@@ -1,11 +1,13 @@
 #include "tiff.hpp"
-
-#include <tiffio.h>
-
-#include <QImage>
-
 #include "logger.hpp"
 #include "utils.hpp"
+#include <QPoint>
+#include <QSize>
+#include <algorithm>
+#include <limits>
+#include <memory>
+#include <tiff.h>
+#include <tiffio.h>
 
 namespace utils {
 

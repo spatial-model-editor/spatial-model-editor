@@ -3,8 +3,9 @@
 #pragma once
 
 #include <QPoint>
-#include <vector>
 #include <QRgb>
+#include <array>
+#include <vector>
 
 namespace mesh {
 

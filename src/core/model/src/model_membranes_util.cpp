@@ -2,6 +2,7 @@
 #include "logger.hpp"
 #include <QImage>
 #include <QPoint>
+#include <limits>
 #include <memory>
 #include <stdexcept>
 

@@ -1,12 +1,20 @@
 #include "mesh.hpp"
-
-#include <QPainter>
-#include <utility>
-
+#include "boundary.hpp"
 #include "image_boundaries.hpp"
 #include "logger.hpp"
+#include "mesh_types.hpp"
 #include "triangulate.hpp"
 #include "utils.hpp"
+#include <QColor>
+#include <QGradient>
+#include <QPainter>
+#include <QPen>
+#include <QPoint>
+#include <QSize>
+#include <QtCore>
+#include <algorithm>
+#include <exception>
+#include <utility>
 
 namespace mesh {
 
@@ -211,7 +219,7 @@ void Mesh::setPhysicalGeometry(double pixelWidth, const QPointF &originPoint) {
   origin = originPoint;
 }
 
-std::vector<double> Mesh::getVertices() const {
+std::vector<double> Mesh::getVerticesAsFlatArray() const {
   // convert from pixels to physical coordinates
   std::vector<double> v;
   v.reserve(vertices.size() * 2);
@@ -223,7 +231,8 @@ std::vector<double> Mesh::getVertices() const {
   return v;
 }
 
-std::vector<int> Mesh::getTriangleIndices(std::size_t compartmentIndex) const {
+std::vector<int>
+Mesh::getTriangleIndicesAsFlatArray(std::size_t compartmentIndex) const {
   std::vector<int> out;
   const auto &indices = triangleIndices[compartmentIndex];
   out.reserve(indices.size() * 3);
@@ -235,8 +244,18 @@ std::vector<int> Mesh::getTriangleIndices(std::size_t compartmentIndex) const {
   return out;
 }
 
+const std::vector<std::vector<TriangleIndex>> &
+Mesh::getTriangleIndices() const {
+  return triangleIndices;
+}
+
 const std::vector<std::vector<QTriangleF>> &Mesh::getTriangles() const {
   return triangles;
+}
+
+const std::vector<std::vector<RectangleIndex>> &
+Mesh::getRectangleIndices() const {
+  return rectangleIndices;
 }
 
 static TriangulateBoundaries
@@ -524,10 +543,11 @@ QString Mesh::getGMSH(const std::unordered_set<int> &gmshCompIndices) const {
   msh.append("$Nodes\n");
   msh.append(QString("%1\n").arg(vertices.size()));
   for (std::size_t i = 0; i < vertices.size(); ++i) {
+    auto physicalPoint = pixelPointToPhysicalPoint(vertices[i]);
     msh.append(QString("%1 %2 %3 %4\n")
                    .arg(i + 1)
-                   .arg(vertices[i].x() * pixel + origin.x())
-                   .arg(vertices[i].y() * pixel + origin.y())
+                   .arg(utils::dblToQStr(physicalPoint.x()))
+                   .arg(utils::dblToQStr(physicalPoint.y()))
                    .arg(0));
   }
   msh.append("$EndNodes\n");

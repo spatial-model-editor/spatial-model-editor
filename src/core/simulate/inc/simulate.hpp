@@ -3,14 +3,16 @@
 #pragma once
 
 #include <QImage>
+#include <QRgb>
+#include <QSize>
+#include <cstddef>
+#include <limits>
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace model {
 class Model;
-}
-
-namespace sim {
-class BaseSim;
 }
 
 namespace geometry {
@@ -19,6 +21,7 @@ class Compartment;
 
 namespace simulate {
 
+class BaseSim;
 enum class SimulatorType { DUNE, Pixel };
 
 struct AvgMinMax {
@@ -37,7 +40,7 @@ struct IntegratorOptions {
 class Simulation {
 private:
   SimulatorType simulatorType;
-  std::unique_ptr<sim::BaseSim> simulator;
+  std::unique_ptr<BaseSim> simulator;
   std::vector<const geometry::Compartment *> compartments;
   std::vector<std::string> compartmentIds;
   // compartment->species

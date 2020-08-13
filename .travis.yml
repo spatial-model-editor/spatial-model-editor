@@ -15,7 +15,7 @@ branches:
 env:
   global:
     # python wheel building can (and should) be disabled to speed up CI when working on a PR
-    - BUILD_PYTHON_WHEELS=false
+    - BUILD_PYTHON_WHEELS=true
     - MSYS_URL='https://github.com/msys2/msys2-installer/releases/download/2020-07-20/msys2-base-x86_64-20200720.sfx.exe'
     - CIBUILDWHEEL_VERSION=1.5.5
     # pypi TWINE_PASSWORD
@@ -184,7 +184,7 @@ jobs:
       services:
         - docker
       env:
-        - DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.07.16.a
+        - DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.08.19
       install:
         - docker pull $DOCKER_IMAGE
       before_script:
@@ -288,8 +288,8 @@ jobs:
         - $MSYS_SHELL -c 'pacman --noconfirm -Syuu'
         - $MSYS_SHELL -c "pacman --noconfirm -Syuu mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache make"
         - export BUILD_SHELL='cmd //C RefreshEnv.cmd & set MSYS=winsymlinks:nativestrict & C:\\msys64\\msys2_shell.cmd -defterm -no-start -here -mingw64 -l'
-        - taskkill //IM gpg-agent.exe //F  # https://travis-ci.community/t/4967
-        - taskkill //IM dirmngr.exe //F  # similar to above
+        - taskkill //IM gpg-agent.exe //F || echo "task not found" # https://travis-ci.community/t/4967
+        - taskkill //IM dirmngr.exe //F || echo "task not found" # similar to above
         - choco install python --version=3.8.2 --force --no-progress -y
         - export PATH=/c/Python38:/c/Python38/Scripts:$PATH
         - which python

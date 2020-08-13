@@ -9,13 +9,10 @@
 #pragma once
 
 #include <QPointF>
+#include <algorithm>
 #include <array>
-#include <string>
+#include <cstddef>
 #include <vector>
-
-namespace triangle {
-struct triangulateio;
-}
 
 namespace mesh {
 

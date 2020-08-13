@@ -1,27 +1,31 @@
 #include "pixelsim.hpp"
-
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-#include <tbb/global_control.h>
-#include <tbb/parallel_for.h>
-#include <tbb/task_scheduler_init.h>
-#endif
-#include <array>
-#include <utility>
-
 #include "geometry.hpp"
 #include "logger.hpp"
 #include "model.hpp"
 #include "pde.hpp"
 #include "utils.hpp"
+#include <QString>
+#include <QStringList>
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdlib>
+#include <memory>
+#include <utility>
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+#include <tbb/global_control.h>
+#include <tbb/parallel_for.h>
+#include <tbb/task_scheduler_init.h>
+#endif
 
-namespace sim {
+namespace simulate {
 
 ReacEval::ReacEval(const model::Model &doc,
                    const std::vector<std::string> &speciesIDs,
                    const std::vector<std::string> &reactionIDs,
                    const std::vector<std::string> &reactionScaleFactors) {
   // construct reaction expressions and stoich matrix
-  pde::PDE pde(&doc, speciesIDs, reactionIDs, {}, reactionScaleFactors);
+  PDE pde(&doc, speciesIDs, reactionIDs, {}, reactionScaleFactors);
   // compile all expressions with symengine
   sym = symbolic::Symbolic(pde.getRHS(), speciesIDs);
 }
@@ -569,4 +573,4 @@ double PixelSim::getLowerOrderConcentration(std::size_t compartmentIndex,
       speciesIndex, pixelIndex);
 }
 
-} // namespace sim
+} // namespace simulate
