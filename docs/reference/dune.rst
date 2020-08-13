@@ -1,4 +1,4 @@
 dune-copasi simulator
 =====================
 
-This is the default PDE solver, which uses finite element discretization methods and sophisticated integration methods to provides reliable and accurate results. For more information see https://gitlab.dune-project.org/copasi/dune-copasi
+`dune-copasi <https://gitlab.dune-project.org/copasi/dune-copasi>`_ is the default PDE solver, which uses finite element discretization methods and sophisticated integration methods to provides reliable and accurate results. It requires the pixel-based image of the compartments to be converted into a triangular mesh, which is done automatically. The user can then adjust the number of points used for each compartment boundary, and the size of the triangles in each compartment, according to how accurately they want to represent the geometry. Using less points and/or larger triangles will make the simulation faster, but decrease the spatial accuracy. Conversely, using more points and smaller triangles increases the spatial accuracy of the simulation, but will take longer to run.

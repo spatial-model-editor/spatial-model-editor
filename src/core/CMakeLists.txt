@@ -44,6 +44,10 @@ else()
   message(WARNING "${SBML_SPATIAL_ERROR_LOG}")
 endif()
 
+if(WIN32)
+  set(OpenCV_STATIC ON) # temporary hack for windows CI build
+endif()
+find_package(OpenCV REQUIRED COMPONENTS core imgproc)
 find_package(spdlog REQUIRED)
 find_package(TIFF REQUIRED)
 find_package(fmt REQUIRED)
@@ -62,14 +66,8 @@ target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 target_compile_definitions(
   core
   PUBLIC
-    SPDLOG_ACTIVE_LEVEL=$<$<CONFIG:Debug>:SPDLOG_LEVEL_DEBUG>$<$<CONFIG:Release>:SPDLOG_LEVEL_INFO>
+    SPDLOG_ACTIVE_LEVEL=$<$<CONFIG:Debug>:SPDLOG_LEVEL_TRACE>$<$<CONFIG:Release>:SPDLOG_LEVEL_INFO>
 )
-
-add_subdirectory(resources)
-add_subdirectory(common)
-add_subdirectory(mesh)
-add_subdirectory(model)
-add_subdirectory(simulate)
 
 target_link_libraries(
   core
@@ -80,7 +78,9 @@ target_link_libraries(
           muparser::muparser)
 target_link_libraries(
   core
-  PUBLIC spdlog::spdlog
+  PUBLIC opencv_core
+         opencv_imgproc
+         spdlog::spdlog
          Qt5::Gui
          Qt5::Core
          resources
@@ -88,6 +88,12 @@ target_link_libraries(
 
 target_compile_definitions(core PUBLIC ${SME_EXTRA_CORE_DEFS})
 target_link_libraries(core_tests PUBLIC core testlib)
+
+add_subdirectory(resources)
+add_subdirectory(common)
+add_subdirectory(mesh)
+add_subdirectory(model)
+add_subdirectory(simulate)
 
 # set Compile options and warnings
 set_target_properties(core PROPERTIES CXX_STANDARD 17)

@@ -135,6 +135,11 @@ Translate the spatial model to a system of PDEs and simulate it:
     - license: [Apache-2.0](https://github.com/intel/tbb/blob/tbb_2020/LICENSE)
     - using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
 
+  - Open Source Computer Vision Library (OpenCV): <https://github.com/opencv/opencv>
+
+    - license: [BSD](https://github.com/opencv/opencv/blob/master/LICENSE)
+    - using pre-compiled binaries from <https://github.com/lkeegan/libsbml-static>
+
   - pybind11 (for optional python bindings): <https://github.com/pybind/pybind11>
 
     - license: [BSD-style](https://github.com/pybind/pybind11/blob/master/LICENSE)

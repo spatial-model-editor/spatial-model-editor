@@ -45,15 +45,15 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     REQUIRE(msh[2] == "$EndMeshFormat");
     REQUIRE(msh[3] == "$Nodes");
     REQUIRE(msh[4] == "4");
-    REQUIRE(msh[5] == "1 0 0 0");
-    REQUIRE(msh[6] == "2 23 0 0");
-    REQUIRE(msh[7] == "3 23 31 0");
-    REQUIRE(msh[8] == "4 0 31 0");
+    REQUIRE(msh[5] == "1 0 31 0");
+    REQUIRE(msh[6] == "2 0 0 0");
+    REQUIRE(msh[7] == "3 23 0 0");
+    REQUIRE(msh[8] == "4 23 31 0");
     REQUIRE(msh[9] == "$EndNodes");
     REQUIRE(msh[10] == "$Elements");
     REQUIRE(msh[11] == "2");
-    REQUIRE(msh[12] == "1 2 2 1 1 4 1 2");
-    REQUIRE(msh[13] == "2 2 2 1 1 2 3 4");
+    REQUIRE(msh[12] == "1 2 2 1 1 1 2 3");
+    REQUIRE(msh[13] == "2 2 2 1 1 3 4 1");
     REQUIRE(msh[14] == "$EndElements");
 
     // check image output
@@ -149,25 +149,24 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
 
     // check boundaries image
     auto [boundaryImage, maskImage] =
-        mesh.getBoundariesImages(QSize(100, 100), 0);
+        mesh.getBoundariesImages(QSize(100, 100), 1);
     boundaryImage.save("tmp0.png");
     REQUIRE(boundaryImage.width() == 75);
     REQUIRE(boundaryImage.height() == 100);
     auto col0 = utils::indexedColours()[0].rgba();
     auto col1 = utils::indexedColours()[1].rgba();
-    REQUIRE(boundaryImage.pixel(1, 3) == col0);
-    REQUIRE(boundaryImage.pixel(3, 6) == col0);
-    REQUIRE(boundaryImage.pixel(70, 62) == col0);
-    REQUIRE(boundaryImage.pixel(70, 2) == col0);
-    REQUIRE(boundaryImage.pixel(5, 78) == 0);
+    REQUIRE(boundaryImage.pixel(1, 3) == col1);
+    REQUIRE(boundaryImage.pixel(3, 6) == col1);
+    REQUIRE(boundaryImage.pixel(70, 62) == col1);
+    REQUIRE(boundaryImage.pixel(70, 2) == col1);
     REQUIRE(boundaryImage.pixel(17, 80) == 0);
-    REQUIRE(boundaryImage.pixel(26, 80) == col1);
+    REQUIRE(boundaryImage.pixel(8, 81) == col0);
     auto [boundaryImage2, maskImage2] =
-        mesh.getBoundariesImages(QSize(100, 100), 1);
+        mesh.getBoundariesImages(QSize(100, 100), 0);
     boundaryImage2.save("tmp1.png");
-    REQUIRE(boundaryImage2.pixel(1, 3) == col0);
+    REQUIRE(boundaryImage2.pixel(1, 3) == col1);
     REQUIRE(boundaryImage2.pixel(3, 6) == 0);
-    REQUIRE(boundaryImage2.pixel(15, 81) == col1);
-    REQUIRE(boundaryImage2.pixel(26, 80) == col1);
+    REQUIRE(boundaryImage2.pixel(15, 81) == col0);
+    REQUIRE(boundaryImage2.pixel(8, 81) == col0);
   }
 }

@@ -64,9 +64,14 @@ minmax(const Container &c) {
   return {*p.first, *p.second};
 }
 
+template <typename Container>
+std::size_t min_element_index(const Container &c) {
+  return static_cast<std::size_t>(
+      std::distance(c.cbegin(), std::min_element(c.cbegin(), c.cend())));
+}
+
 // https://stackoverflow.com/a/56766138
-template <typename T>
-constexpr auto decltypeStr() {
+template <typename T> constexpr auto decltypeStr() {
   std::string_view name;
   std::string_view prefix;
   std::string_view suffix;
@@ -92,15 +97,13 @@ std::vector<std::string> toStdString(const QStringList &q);
 QStringList toQString(const std::vector<std::string> &v);
 std::vector<QRgb> toStdVec(const QVector<QRgb> &q);
 
-template <typename T>
-std::vector<T> stringToVector(const std::string &str) {
+template <typename T> std::vector<T> stringToVector(const std::string &str) {
   std::istringstream ss(str);
   return std::vector<T>(std::istream_iterator<T>(ss),
                         std::istream_iterator<T>{});
 }
 
-template <typename T>
-std::string vectorToString(const std::vector<T> &vec) {
+template <typename T> std::string vectorToString(const std::vector<T> &vec) {
   std::stringstream ss;
   for (std::size_t i = 0; i < vec.size() - 1; ++i) {
     ss << std::scientific << std::setprecision(17) << vec[i] << " ";
@@ -110,7 +113,7 @@ std::string vectorToString(const std::vector<T> &vec) {
 }
 
 class indexedColours {
- private:
+private:
   const std::vector<QColor> colours{
       {230, 25, 75},  {60, 180, 75},   {255, 225, 25}, {0, 130, 200},
       {245, 130, 48}, {145, 30, 180},  {70, 240, 240}, {240, 50, 230},
@@ -118,27 +121,27 @@ class indexedColours {
       {170, 110, 40}, {255, 250, 200}, {128, 0, 0},    {170, 255, 195},
       {128, 128, 0},  {255, 215, 180}, {0, 0, 128},    {128, 128, 128}};
 
- public:
+public:
   const QColor &operator[](std::size_t i) const;
 };
 
 class QPointFlattener {
- private:
+private:
   QSize box;
 
- public:
+public:
   explicit QPointFlattener(const QSize &boundingBox);
   bool isValid(const QPoint &point) const;
   std::size_t flatten(const QPoint &point) const;
 };
 
 class QPointIndexer {
- private:
+private:
   QPointFlattener flattener;
   std::size_t nPoints = 0;
   std::vector<std::size_t> pointIndex;
 
- public:
+public:
   explicit QPointIndexer(const QSize &boundingBox,
                          const std::vector<QPoint> &qPoints = {});
   void addPoints(const std::vector<QPoint> &qPoints);
@@ -147,13 +150,13 @@ class QPointIndexer {
 };
 
 class QPointUniqueIndexer {
- private:
+private:
   QPointFlattener flattener;
   std::size_t nPoints = 0;
   std::vector<std::size_t> pointIndex;
   std::vector<QPoint> points;
 
- public:
+public:
   explicit QPointUniqueIndexer(const QSize &boundingBox,
                                const std::vector<QPoint> &qPoints = {});
   void addPoints(const std::vector<QPoint> &qPoints);
@@ -161,13 +164,12 @@ class QPointUniqueIndexer {
   std::vector<QPoint> getPoints() const;
 };
 
-template <typename K, typename V>
-class SmallMap {
- private:
+template <typename K, typename V> class SmallMap {
+private:
   std::vector<K> keys;
   std::vector<V> values;
 
- public:
+public:
   void insert(K key, V value) noexcept {
     keys.push_back(key);
     values.push_back(value);
@@ -190,15 +192,14 @@ class SmallMap {
 // no heap allocations, elements stored in std::array,
 // insert/erase/find operations involve linear traversal of elements i.e. O(N)
 // if the set is full then insert just becomes a no-op
-template <typename T, std::size_t MaxSize>
-class SmallStackSet {
- private:
+template <typename T, std::size_t MaxSize> class SmallStackSet {
+private:
   using container = std::array<T, MaxSize>;
   using const_iterator = typename container::const_iterator;
   container values;
   std::size_t n = 0;
 
- public:
+public:
   using value_type = T;
   void clear() noexcept { n = 0; }
   void insert(T v) {
@@ -225,8 +226,7 @@ class SmallStackSet {
     }
     return false;
   }
-  template <typename Cont>
-  bool contains_any_of(const Cont &cont) const {
+  template <typename Cont> bool contains_any_of(const Cont &cont) const {
     return std::any_of(std::cbegin(cont), std::cend(cont),
                        [this](T v) { return contains(v); });
   }
@@ -245,4 +245,19 @@ class SmallStackSet {
     }
   }
 };
-}  // namespace utils
+
+// erase elements [first, last) from v, treating v as cyclic
+template <typename T>
+static void cyclicErase(std::vector<T> &v, std::size_t first,
+                        std::size_t last) {
+  using diff = typename std::vector<T>::difference_type;
+  if (first > last) {
+    v.erase(v.begin() + static_cast<diff>(first), v.end());
+    v.erase(v.begin(), v.begin() + static_cast<diff>(last));
+    return;
+  }
+  v.erase(v.begin() + static_cast<diff>(first),
+          v.begin() + static_cast<diff>(last));
+}
+
+} // namespace utils

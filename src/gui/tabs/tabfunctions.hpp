@@ -16,12 +16,12 @@ class Model;
 class TabFunctions : public QWidget {
   Q_OBJECT
 
- public:
-  explicit TabFunctions(model::Model &model, QWidget *parent = nullptr);
+public:
+  explicit TabFunctions(model::Model &m, QWidget *parent = nullptr);
   ~TabFunctions();
   void loadModelData(const QString &selection = {});
 
- private:
+private:
   std::unique_ptr<Ui::TabFunctions> ui;
   model::Model &model;
   QString currentFunctionId{};

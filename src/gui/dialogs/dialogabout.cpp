@@ -1,5 +1,4 @@
 #include "dialogabout.hpp"
-
 #include <expat.h>
 #include <fmt/core.h>
 #include <gmp.h>
@@ -10,25 +9,25 @@
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
 #include <tbb/tbb_stddef.h>
 #endif
-#include <tiffvers.h>
-
 #include "symbolic.hpp"
 #include "ui_dialogabout.h"
 #include "version.hpp"
+#include <opencv2/opencv.hpp>
+#include <tiffvers.h>
 
-static QString dep(const QString& name, const QString& url,
-                   const QString& version) {
+static QString dep(const QString &name, const QString &url,
+                   const QString &version) {
   return QString("<li><a href=\"%2\">%1</a>: %3</li>").arg(name, url, version);
 }
 
-static QString dep(const QString& name, const QString& url, int major,
+static QString dep(const QString &name, const QString &url, int major,
                    int minor) {
   auto version =
       QString("%1.%2</li>").arg(QString::number(major), QString::number(minor));
   return dep(name, url, version);
 }
 
-static QString dep(const QString& name, const QString& url, int major,
+static QString dep(const QString &name, const QString &url, int major,
                    int minor, int patch) {
   auto version = QString("%1.%2.%3</li>")
                      .arg(QString::number(major), QString::number(minor),
@@ -36,7 +35,7 @@ static QString dep(const QString& name, const QString& url, int major,
   return dep(name, url, version);
 }
 
-DialogAbout::DialogAbout(QWidget* parent)
+DialogAbout::DialogAbout(QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogAbout>()} {
   ui->setupUi(this);
 
@@ -52,7 +51,7 @@ DialogAbout::DialogAbout(QWidget* parent)
   libraries.append(dep("dune-copasi",
                        "https://gitlab.dune-project.org/copasi/dune-copasi", 0,
                        2, 0));
-  libraries.append(dep("libSBML[experimental]",
+  libraries.append(dep("libSBML (development)",
                        "http://sbml.org/Software/libSBML",
                        libsbml::getLibSBMLDottedVersion()));
   libraries.append(dep("Qt", "https://qt.io", QT_VERSION_STR));
@@ -81,6 +80,9 @@ DialogAbout::DialogAbout(QWidget* parent)
   libraries.append(dep("TBB", "https://github.com/intel/tbb", TBB_VERSION_MAJOR,
                        TBB_VERSION_MINOR));
 #endif
+  libraries.append(dep("OpenCV", "https://github.com/opencv/opencv",
+                       CV_MAJOR_VERSION, CV_MINOR_VERSION,
+                       CV_SUBMINOR_VERSION));
   libraries.append("</ul>");
   ui->lblLibraries->setText(libraries);
 }
