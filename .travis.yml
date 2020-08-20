@@ -173,10 +173,35 @@ jobs:
         - cd build/src
         - cp ../cli/spatial-cli.exe .
         - ls
-    ########################################################################
-    # linux python wheels release build: custom manylinux2010 docker image #
-    ########################################################################
-    - name: "linux python wheels"
+    ##########################################################################
+    # manylinux1 python wheels release build: custom manylinux1 docker image #
+    ##########################################################################
+    - name: "manylinux1 python wheels"
+      if: (env(BUILD_PYTHON_WHEELS) = true) AND (tag != "latest")
+      os: linux
+      language: python
+      python: 3.8
+      services:
+        - docker
+      env:
+        - DOCKER_IMAGE=lkeegan/sme_manylinux1_x86_64:2020.08.20
+      install:
+        - docker pull $DOCKER_IMAGE
+      before_script:
+        skip
+      script:
+        - python --version
+        - pip --version
+        - pip install --upgrade pip
+        - pip install --upgrade twine
+        - docker run --rm -v `pwd`:/io -u `id -u`:`id -g` $DOCKER_IMAGE bash /io/ci/linux-wheels.sh
+        - ls dist
+        - export TWINE_USERNAME="__token__"
+        - if [ -n "${TRAVIS_TAG}" ]; then python -m twine upload --verbose --non-interactive --skip-existing dist/* ; fi
+    ################################################################################
+    # manylinux2010 python wheels release build: custom manylinux2010 docker image #
+    ################################################################################
+    - name: "manylinux2010 python wheels"
       if: (env(BUILD_PYTHON_WHEELS) = true) AND (tag != "latest")
       os: linux
       language: python

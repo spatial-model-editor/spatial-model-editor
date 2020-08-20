@@ -10,6 +10,9 @@ TMPDIR=tmpwheelbuildir
 mkdir -p /io/$TMPDIR
 cd /io
 
+# for some reason it doesn't work to set this as an ENV in the Dockerfile:
+export CCACHE_DIR=/tmp/ccache
+
 cmake --version
 gcc --version
 ccache -s
@@ -22,7 +25,7 @@ for PYBIN in $(ls -d /opt/py*/*/bin); do
 	"${PYBIN}/python" --version
 	"${PYBIN}/pip" --version
     # compile wheel
-    time "${PYBIN}/pip" wheel /io/ -w /io/$TMPDIR/wheels/
+    time "${PYBIN}/pip" wheel /io/ -w /io/$TMPDIR/wheels/ -v
     "${PYBIN}/python" /io/setup.py sdist -d /io/dist/
     # install wheel locally & run tests
     rm -rf /io/tmp_python_install
