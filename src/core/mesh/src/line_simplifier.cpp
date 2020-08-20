@@ -1,9 +1,10 @@
 #include "line_simplifier.hpp"
-
-#include <cmath>
-#include <numeric>
-
 #include "logger.hpp"
+#include <algorithm>
+#include <cstdlib>
+#include <iterator>
+#include <memory>
+#include <numeric>
 
 namespace mesh {
 

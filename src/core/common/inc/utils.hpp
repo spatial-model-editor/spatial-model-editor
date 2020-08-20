@@ -22,16 +22,21 @@
 
 #include <QColor>
 #include <QPoint>
+#include <QRgb>
 #include <QSize>
 #include <QString>
 #include <QStringList>
-#include <algorithm>
+#include <QVector>
 #include <array>
 #include <initializer_list>
 #include <iomanip>
 #include <iterator>
+#include <numeric>
 #include <optional>
 #include <sstream>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
 namespace utils {
@@ -95,6 +100,7 @@ template <typename T> constexpr auto decltypeStr() {
 
 std::vector<std::string> toStdString(const QStringList &q);
 QStringList toQString(const std::vector<std::string> &v);
+QString dblToQStr(double x, int precision = 18);
 std::vector<QRgb> toStdVec(const QVector<QRgb> &q);
 
 template <typename T> std::vector<T> stringToVector(const std::string &str) {

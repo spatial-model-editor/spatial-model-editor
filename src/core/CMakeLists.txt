@@ -87,7 +87,11 @@ target_link_libraries(
          ${SME_EXTRA_CORE_LIBS})
 
 target_compile_definitions(core PUBLIC ${SME_EXTRA_CORE_DEFS})
-target_link_libraries(core_tests PUBLIC core testlib)
+target_link_libraries(
+  core_tests
+  PUBLIC core
+         testlib
+         dunecopasi::dunecopasi)
 
 add_subdirectory(resources)
 add_subdirectory(common)

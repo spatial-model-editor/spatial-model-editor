@@ -1,15 +1,13 @@
-#include <sbml/SBMLDocument.h>
-#include <sbml/SBMLReader.h>
-#include <sbml/SBMLWriter.h>
-
-#include <QFile>
-#include <algorithm>
-
 #include "catch_wrapper.hpp"
 #include "model.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
 #include "simulate.hpp"
 #include "utils.hpp"
+#include <QFile>
+#include <algorithm>
+#include <sbml/SBMLDocument.h>
+#include <sbml/SBMLReader.h>
+#include <sbml/SBMLWriter.h>
 
 SCENARIO("Simulate: very_simple_model, single pixel geometry",
          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
@@ -492,8 +490,8 @@ SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
     sim2.doTimestep(time);
     auto conc = sim2.getConc(sim.getTimePoints().size() - 1, 0, 0);
     for (std::size_t i = 0; i < conc.size(); ++i) {
-      maxRelDiff = std::max(
-          maxRelDiff, (conc[i] - c4_accurate[i]) / (c4_accurate[i] + eps));
+      maxRelDiff = std::max(maxRelDiff, (conc[i] - c4_accurate[i]) /
+                                            (c4_accurate[i] + eps));
     }
     CAPTURE(order);
     REQUIRE(maxRelDiff < relErr);

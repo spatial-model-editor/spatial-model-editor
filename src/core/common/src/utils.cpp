@@ -1,5 +1,6 @@
 #include "utils.hpp"
-
+#include <algorithm>
+#include <limits>
 #include <stdexcept>
 
 namespace utils {
@@ -18,6 +19,10 @@ QStringList toQString(const std::vector<std::string> &v) {
   std::transform(v.begin(), v.end(), std::back_inserter(q),
                  [](const std::string &s) { return s.c_str(); });
   return q;
+}
+
+QString dblToQStr(double x, int precision) {
+  return QString::number(x, 'g', precision);
 }
 
 std::vector<QRgb> toStdVec(const QVector<QRgb> &q) {

@@ -1,9 +1,11 @@
 #include "geometry.hpp"
-
-#include <utility>
-
 #include "logger.hpp"
 #include "utils.hpp"
+#include <algorithm>
+#include <initializer_list>
+#include <optional>
+#include <stdexcept>
+#include <utility>
 
 namespace geometry {
 
@@ -118,8 +120,8 @@ const QImage &Membrane::getImage() const { return image; }
 
 Field::Field(const Compartment *compartment, std::string specID,
              double diffConst, QRgb col)
-    : id(std::move(specID)), comp(compartment), diffusionConstant(diffConst), colour(col),
-      conc(compartment->nPixels(), 0.0) {
+    : id(std::move(specID)), comp(compartment), diffusionConstant(diffConst),
+      colour(col), conc(compartment->nPixels(), 0.0) {
   SPDLOG_INFO("speciesID: {}", id);
   SPDLOG_INFO("compartmentID: {}", comp->getId());
 }

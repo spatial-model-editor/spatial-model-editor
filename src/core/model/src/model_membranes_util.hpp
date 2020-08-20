@@ -2,14 +2,18 @@
 
 #pragma once
 
-#include <QColor>
-#include <QImage>
-#include <QStringList>
+#include "geometry.hpp"
+#include <QPoint>
+#include <QRgb>
+#include <QSize>
+#include <QVector>
+#include <algorithm>
+#include <cstddef>
 #include <optional>
-#include <string>
+#include <utility>
 #include <vector>
 
-#include "geometry.hpp"
+class QImage;
 
 namespace libsbml {
 class Model;

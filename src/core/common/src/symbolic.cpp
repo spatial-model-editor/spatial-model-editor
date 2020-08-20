@@ -1,23 +1,24 @@
 #include "symbolic.hpp"
-
+#include "logger.hpp"
+#include <algorithm>
 #include <llvm/Config/llvm-config.h>
+#include <locale>
+#include <sstream>
 #include <symengine/basic.h>
-#include <symengine/eval.h>
-#include <symengine/lambda_double.h>
+#include <symengine/constants.h>
+#include <symengine/dict.h>
 #include <symengine/llvm_double.h>
+#include <symengine/mul.h>
+#include <symengine/number.h>
 #include <symengine/parser.h>
 #include <symengine/parser/parser.h>
 #include <symengine/printers/strprinter.h>
-#include <symengine/subs.h>
+#include <symengine/rational.h>
+#include <symengine/real_double.h>
 #include <symengine/symbol.h>
 #include <symengine/symengine_exception.h>
 #include <symengine/symengine_rcp.h>
 #include <symengine/visitor.h>
-
-#include <locale>
-#include <sstream>
-
-#include "logger.hpp"
 
 namespace SymEngine {
 

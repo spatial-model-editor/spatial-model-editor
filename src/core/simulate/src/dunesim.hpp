@@ -2,16 +2,17 @@
 
 #pragma once
 
-#include <QColor>
-#include <QImage>
-#include <QPointF>
-#include <QSizeF>
-#include <QString>
-#include <array>
-#include <memory>
-
 #include "basesim.hpp"
 #include "utils.hpp"
+#include <QPointF>
+#include <QSize>
+#include <array>
+#include <cstddef>
+#include <limits>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace model {
 class Model;
@@ -25,7 +26,7 @@ namespace dune {
 class DuneConverter;
 }
 
-namespace sim {
+namespace simulate {
 
 using PixelLocalPair = std::pair<std::size_t, std::array<double, 2>>;
 
@@ -82,4 +83,4 @@ public:
   virtual std::string errorMessage() const override;
 };
 
-} // namespace sim
+} // namespace simulate

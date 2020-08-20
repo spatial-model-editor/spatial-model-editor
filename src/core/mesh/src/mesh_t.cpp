@@ -24,7 +24,7 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     REQUIRE(mesh.getNumBoundaries() == 1);
 
     // check output vertices
-    const auto &vertices = mesh.getVertices();
+    const auto &vertices = mesh.getVerticesAsFlatArray();
     REQUIRE(vertices.size() == 2 * 4);
 
     // check triangles
@@ -88,10 +88,10 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     WHEN("max boundary points increased") {
       THEN("boundary unchanged") {
         REQUIRE(mesh.getBoundaryMaxPoints(0) == 4);
-        auto nVertices = mesh.getVertices().size();
+        auto nVertices = mesh.getVerticesAsFlatArray().size();
         mesh.setBoundaryMaxPoints(0, 99);
         REQUIRE(mesh.getBoundaryMaxPoints(0) == 99);
-        REQUIRE(mesh.getVertices().size() == nVertices);
+        REQUIRE(mesh.getVerticesAsFlatArray().size() == nVertices);
       }
     }
     WHEN("max triangle area decreased") {
@@ -100,17 +100,17 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
 
         mesh.setCompartmentMaxTriangleArea(0, 60);
         REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 60);
-        REQUIRE(mesh.getVertices().size() == 2 * 14);
+        REQUIRE(mesh.getVerticesAsFlatArray().size() == 2 * 14);
         REQUIRE(mesh.getTriangles()[0].size() == 18);
 
         mesh.setCompartmentMaxTriangleArea(0, 30);
         REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 30);
-        REQUIRE(mesh.getVertices().size() == 2 * 26);
+        REQUIRE(mesh.getVerticesAsFlatArray().size() == 2 * 26);
         REQUIRE(mesh.getTriangles()[0].size() == 37);
 
         mesh.setCompartmentMaxTriangleArea(0, 12);
         REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 12);
-        REQUIRE(mesh.getVertices().size() == 2 * 54);
+        REQUIRE(mesh.getVerticesAsFlatArray().size() == 2 * 54);
         REQUIRE(mesh.getTriangles()[0].size() == 88);
       }
     }

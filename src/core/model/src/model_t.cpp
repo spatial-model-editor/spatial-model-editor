@@ -706,15 +706,15 @@ SCENARIO("SBML: load model, refine mesh, save",
   REQUIRE(s.getGeometry().getMesh()->getNumBoundaries() == 1);
   REQUIRE(s.getGeometry().getMesh()->getBoundaryMaxPoints(0) == 16);
   auto oldNumTriangleIndices =
-      s.getGeometry().getMesh()->getTriangleIndices(0).size();
+      s.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size();
   // refine boundary and mesh
   s.getGeometry().getMesh()->setCompartmentMaxTriangleArea(0, 32);
   REQUIRE(s.getGeometry().getMesh()->getNumBoundaries() == 1);
-  REQUIRE(s.getGeometry().getMesh()->getTriangleIndices(0).size() >
+  REQUIRE(s.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size() >
           oldNumTriangleIndices);
   auto maxArea = s.getGeometry().getMesh()->getCompartmentMaxTriangleArea(0);
   auto numTriangleIndices =
-      s.getGeometry().getMesh()->getTriangleIndices(0).size();
+      s.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size();
   // save SBML doc
   s.exportSBMLFile("tmp.xml");
 
@@ -724,7 +724,7 @@ SCENARIO("SBML: load model, refine mesh, save",
   REQUIRE(s.getGeometry().getMesh()->getNumBoundaries() == 1);
   REQUIRE(s2.getGeometry().getMesh()->getCompartmentMaxTriangleArea(0) ==
           maxArea);
-  REQUIRE(s2.getGeometry().getMesh()->getTriangleIndices(0).size() ==
+  REQUIRE(s2.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size() ==
           numTriangleIndices);
 }
 
@@ -734,7 +734,7 @@ SCENARIO("SBML: load model, change size of geometry, save",
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
   s.importSBMLString(f.readAll().toStdString());
-  std::vector<double> v = s.getGeometry().getMesh()->getVertices();
+  std::vector<double> v = s.getGeometry().getMesh()->getVerticesAsFlatArray();
   REQUIRE(s.getGeometry().getMesh()->getBoundaryMaxPoints(0) == 16);
   REQUIRE(s.getGeometry().getMesh()->getCompartmentMaxTriangleArea(0) == 40);
   double v0 = v[0];
@@ -744,7 +744,7 @@ SCENARIO("SBML: load model, change size of geometry, save",
   // change size of geometry, but not of compartments
   double a = 0.01;
   s.getGeometry().setPixelWidth(a);
-  v = s.getGeometry().getMesh()->getVertices();
+  v = s.getGeometry().getMesh()->getVerticesAsFlatArray();
   REQUIRE(v[0] == dbl_approx(a * v0));
   REQUIRE(v[1] == dbl_approx(a * v1));
   REQUIRE(v[2] == dbl_approx(a * v2));
@@ -778,12 +778,14 @@ SCENARIO("SBML: Delete mesh annotation, load as read-only mesh",
   s.importSBMLString(xmlChar.get());
 
   REQUIRE(s.getGeometry().getMesh()->isReadOnly() == true);
-  REQUIRE(s.getGeometry().getMesh()->getTriangleIndices(0).size() == 345);
+  REQUIRE(s.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size() ==
+          345);
 
   // changing maxBoundaryPoints or maxTriangleAreas is a no-op:
   s.getGeometry().getMesh()->setBoundaryMaxPoints(0, 99);
   s.getGeometry().getMesh()->setCompartmentMaxTriangleArea(0, 3);
-  REQUIRE(s.getGeometry().getMesh()->getTriangleIndices(0).size() == 345);
+  REQUIRE(s.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size() ==
+          345);
 
   // save SBML doc
   s.exportSBMLFile("tmp.xml");
@@ -791,5 +793,6 @@ SCENARIO("SBML: Delete mesh annotation, load as read-only mesh",
   model::Model s2;
   s2.importSBMLFile("tmp.xml");
   REQUIRE(s2.getGeometry().getMesh()->isReadOnly() == true);
-  REQUIRE(s2.getGeometry().getMesh()->getTriangleIndices(0).size() == 345);
+  REQUIRE(s2.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size() ==
+          345);
 }

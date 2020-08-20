@@ -8,12 +8,18 @@
 #pragma once
 
 #include <QImage>
-#include <QPoint>
 #include <QPointF>
+#include <QRgb>
+#include <QString>
 #include <array>
+#include <cstddef>
 #include <memory>
+#include <string>
 #include <unordered_set>
+#include <utility>
 #include <vector>
+
+class QSize;
 
 namespace mesh {
 
@@ -26,7 +32,7 @@ using ColourPair = std::pair<QRgb, QRgb>;
 class ImageBoundaries;
 
 class Mesh {
- private:
+private:
   static constexpr std::size_t defaultBoundaryMaxPoints = 12;
   static constexpr std::size_t defaultCompartmentMaxTriangleArea = 40;
   bool readOnlyMesh = false;
@@ -51,7 +57,7 @@ class Mesh {
   QPointF pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept;
   void constructMesh();
 
- public:
+public:
   Mesh();
   // constructor to generate mesh from supplied image
   explicit Mesh(const QImage &image,
@@ -89,17 +95,20 @@ class Mesh {
   void setPhysicalGeometry(double pixelWidth,
                            const QPointF &originPoint = QPointF(0, 0));
   // return vertices as an array of doubles for SBML
-  std::vector<double> getVertices() const;
+  std::vector<double> getVerticesAsFlatArray() const;
   // return triangle indices as an array of ints for SBML
-  std::vector<int> getTriangleIndices(std::size_t compartmentIndex) const;
+  std::vector<int>
+  getTriangleIndicesAsFlatArray(std::size_t compartmentIndex) const;
+  const std::vector<std::vector<TriangleIndex>> &getTriangleIndices() const;
   const std::vector<std::vector<QTriangleF>> &getTriangles() const;
+  const std::vector<std::vector<RectangleIndex>> &getRectangleIndices() const;
 
   const QImage &getBoundaryPixelsImage() const;
-  std::pair<QImage, QImage> getBoundariesImages(
-      const QSize &size, std::size_t boldBoundaryIndex) const;
+  std::pair<QImage, QImage>
+  getBoundariesImages(const QSize &size, std::size_t boldBoundaryIndex) const;
   std::pair<QImage, QImage> getMeshImages(const QSize &size,
                                           std::size_t compartmentIndex) const;
   QString getGMSH(const std::unordered_set<int> &gmshCompIndices = {}) const;
 };
 
-}  // namespace mesh
+} // namespace mesh

@@ -7,16 +7,16 @@
 
 #pragma once
 
-#include <map>
+#include <cstddef>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace model {
 class Model;
-struct Reac;
-} // namespace sbml
+}
 
-namespace pde {
+namespace simulate {
 
 class PDE {
 private:
@@ -57,9 +57,8 @@ public:
                           std::size_t reactionIndex) const;
   const std::vector<std::pair<std::string, double>> &
   getConstants(std::size_t reactionIndex) const;
-  Reaction(const model::Model *doc,
-           std::vector<std::string> species,
+  Reaction(const model::Model *doc, std::vector<std::string> species,
            const std::vector<std::string> &reactionIDs);
 };
 
-} // namespace pde
+} // namespace simulate

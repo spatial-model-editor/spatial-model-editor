@@ -2,13 +2,15 @@
 
 #pragma once
 
-#include <QImage>
-#include <QPoint>
-#include <array>
-#include <vector>
-
 #include "boundary.hpp"
 #include "mesh_types.hpp"
+#include <QImage>
+#include <QPointF>
+#include <QRgb>
+#include <cstddef>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace mesh {
 

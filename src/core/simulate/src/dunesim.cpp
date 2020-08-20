@@ -1,216 +1,26 @@
 #include "dunesim.hpp"
-
-#include "duneini.hpp"
-
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#pragma GCC diagnostic ignored "-Wold-style-cast"
-#pragma GCC diagnostic ignored "-Wconversion"
-#pragma GCC diagnostic ignored "-Wsign-conversion"
-#pragma GCC diagnostic ignored "-Wfloat-conversion"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#pragma GCC diagnostic ignored "-Wshadow"
-#pragma GCC diagnostic ignored "-Wpedantic"
-#pragma GCC diagnostic ignored "-Wformat-nonliteral"
-#pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
-#pragma GCC diagnostic ignored "-Wunused-local-typedefs"
-#pragma GCC diagnostic ignored "-Woverloaded-virtual"
-#pragma GCC diagnostic ignored "-Wdouble-promotion"
-#if (__GNUC__ > 6)
-#pragma GCC diagnostic ignored "-Wsubobject-linkage"
-#endif
-#if (__GNUC__ > 8)
-#pragma GCC diagnostic ignored "-Wpessimizing-move"
-#pragma GCC diagnostic ignored "-Wdeprecated-copy"
-#endif
-#endif
-
-#include <dune_config.h>
-
-#include <dune/common/exceptions.hh>
-#include <dune/common/parallel/mpihelper.hh>
-#include <dune/common/parametertree.hh>
-#include <dune/common/parametertreeparser.hh>
-#include <dune/common/shared_ptr.hh>
-#include <dune/copasi/common/enum.hh>
-#include <dune/copasi/grid/mark_stripes.hh>
-#include <dune/copasi/grid/multidomain_gmsh_reader.hh>
-#include <dune/copasi/model/base.hh>
-#include <dune/copasi/model/diffusion_reaction.hh>
-#include <dune/copasi/model/multidomain_diffusion_reaction.hh>
-#include <dune/grid/multidomaingrid.hh>
-#include <dune/grid/uggrid.hh>
-#include <dune/logging/logging.hh>
-#include <dune/logging/loggingstream.hh>
-
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
+#include "dune_headers.hpp"
+#include "duneconverter.hpp"
+#include "dunefunction.hpp"
+#include "dunegrid.hpp"
+#include "dunesim_impl.hpp"
+#include "dunesim_impl_coupled.hpp"
+#include "dunesim_impl_independent.hpp"
+#include "geometry.hpp"
+#include "logger.hpp"
+#include "model.hpp"
+#include "model_compartments.hpp"
+#include "model_geometry.hpp"
+#include "utils.hpp"
 #include <QFile>
 #include <QImage>
 #include <QPainter>
 #include <algorithm>
-#include <locale>
-
-#include "logger.hpp"
-#include "mesh.hpp"
-#include "model.hpp"
-#include "pde.hpp"
-#include "symbolic.hpp"
-#include "tiff.hpp"
-#include "utils.hpp"
+#include <numeric>
 
 using QTriangleF = std::array<QPointF, 3>;
 
-constexpr int DuneDimensions = 2;
-
-using HostGrid = Dune::UGGrid<DuneDimensions>;
-using MDGTraits = Dune::mdgrid::DynamicSubDomainCountTraits<DuneDimensions, 1>;
-using Grid = Dune::mdgrid::MultiDomainGrid<HostGrid, MDGTraits>;
-using Elem = decltype(
-    *(elements(std::declval<Grid::SubDomainGrid::LeafGridView>()).begin()));
-
-namespace sim {
-
-class DuneImpl {
-public:
-  Dune::ParameterTree config;
-  std::shared_ptr<Grid> grid_ptr;
-  std::shared_ptr<HostGrid> host_grid_ptr;
-  explicit DuneImpl(const std::string &iniFile);
-  virtual ~DuneImpl();
-  virtual void run(double time, double maxTimestep) = 0;
-  virtual void updateGridFunctions(std::size_t compartmentIndex,
-                                   std::size_t nSpecies) = 0;
-  virtual double evaluateGridFunction(
-      std::size_t iSpecies, const Elem &e,
-      const Dune::FieldVector<double, 2> &localPoint) const = 0;
-};
-
-DuneImpl::DuneImpl(const std::string &iniFile) {
-  std::stringstream ssIni(iniFile);
-  Dune::ParameterTreeParser::readINITree(ssIni, config);
-
-  // init Dune logging if not already done
-  if (!Dune::Logging::Logging::initialized()) {
-    Dune::Logging::Logging::init(
-        Dune::FakeMPIHelper::getCollectiveCommunication(),
-        config.sub("logging"));
-    if (SPDLOG_ACTIVE_LEVEL >= 2) {
-      // for release builds disable DUNE logging
-      Dune::Logging::Logging::mute();
-    }
-  }
-  // NB: msh file needs to be file for gmshreader
-  // also: gmshreader assumes C locale
-  // todo: generate DUNE mesh directly
-  std::locale userLocale = std::locale::global(std::locale::classic());
-  std::tie(grid_ptr, host_grid_ptr) =
-      Dune::Copasi::MultiDomainGmshReader<Grid>::read("grid.msh", config);
-  std::locale::global(userLocale);
-}
-
-DuneImpl::~DuneImpl() = default;
-
-template <int DuneFEMOrder> class DuneCoupledCompartments : public DuneImpl {
-public:
-  using ModelTraits =
-      Dune::Copasi::ModelMultiDomainP0PkDiffusionReactionTraits<Grid,
-                                                                DuneFEMOrder>;
-  using Model = Dune::Copasi::ModelMultiDomainDiffusionReaction<ModelTraits>;
-  using GF = std::remove_reference_t<decltype(
-      *std::declval<Model>().get_grid_function(0, 0).get())>;
-  std::unique_ptr<Model> model;
-  std::vector<std::shared_ptr<const GF>> gridFunctions;
-  explicit DuneCoupledCompartments(const std::string &iniFile)
-      : DuneImpl(iniFile),
-        model(std::make_unique<Model>(grid_ptr, config.sub("model"))) {
-    SPDLOG_INFO("Order: {}", DuneFEMOrder);
-  }
-  ~DuneCoupledCompartments() override = default;
-  void run(double time, double maxTimestep) override {
-    model->suggest_timestep(maxTimestep);
-    model->end_time() = model->current_time() + time;
-    model->run();
-  }
-  void updateGridFunctions(std::size_t compartmentIndex,
-                           std::size_t nSpecies) override {
-    // get grid function for each species in this compartment
-    gridFunctions.clear();
-    gridFunctions.reserve(nSpecies);
-    for (std::size_t iSpecies = 0; iSpecies < nSpecies; ++iSpecies) {
-      gridFunctions.push_back(
-          model->get_grid_function(compartmentIndex, iSpecies));
-    }
-  }
-  double evaluateGridFunction(
-      std::size_t iSpecies, const Elem &e,
-      const Dune::FieldVector<double, 2> &localPoint) const override {
-    typename GF::Traits::RangeType result;
-    gridFunctions[iSpecies]->evaluate(e, localPoint, result);
-    return result[0];
-  }
-};
-
-template <int DuneFEMOrder>
-class DuneIndependentCompartments : public DuneImpl {
-public:
-  using ModelTraits = Dune::Copasi::ModelPkDiffusionReactionTraits<
-      Grid::SubDomainGrid, Grid::SubDomainGrid::Traits::LeafGridView,
-      DuneFEMOrder>;
-  using Model = Dune::Copasi::ModelDiffusionReaction<ModelTraits>;
-  using GF = std::remove_reference_t<decltype(
-      *std::declval<Model>().get_grid_function(0).get())>;
-  std::vector<std::unique_ptr<Model>> models;
-  std::vector<std::shared_ptr<const GF>> gridFunctions;
-  explicit DuneIndependentCompartments(const std::string &iniFile)
-      : DuneImpl(iniFile) {
-    SPDLOG_INFO("Order: {}", DuneFEMOrder);
-    // construct separate model from ini and grid for each compartment
-    const auto &modelConfig = config.sub("model", true);
-    const auto &dataConfig = modelConfig.sub("data");
-    for (const auto &compartmentName :
-         modelConfig.sub("compartments").getValueKeys()) {
-      int compartmentIndex =
-          modelConfig.sub("compartments").template get<int>(compartmentName);
-      SPDLOG_INFO("{}[{}]", compartmentName, compartmentIndex);
-      auto compartmentConfig = modelConfig.sub(compartmentName, true);
-      for (const auto &key : dataConfig.getValueKeys()) {
-        compartmentConfig["data." + key] = dataConfig[key];
-      }
-      auto compartmentGrid = Dune::stackobject_to_shared_ptr(
-          grid_ptr->subDomain(compartmentIndex));
-      models.push_back(
-          std::make_unique<Model>(compartmentGrid, compartmentConfig));
-    }
-  }
-  ~DuneIndependentCompartments() override = default;
-  void run(double time, double maxTimestep) override {
-    for (const auto &model : models) {
-      model->suggest_timestep(maxTimestep);
-      model->end_time() = model->current_time() + time;
-      model->run();
-    }
-  }
-  void updateGridFunctions(std::size_t compartmentIndex,
-                           std::size_t nSpecies) override {
-    // get grid function for each species in this compartment
-    gridFunctions.clear();
-    gridFunctions.reserve(nSpecies);
-    for (std::size_t iSpecies = 0; iSpecies < nSpecies; ++iSpecies) {
-      gridFunctions.push_back(
-          models[compartmentIndex]->get_grid_function(iSpecies));
-    }
-  }
-  double evaluateGridFunction(
-      std::size_t iSpecies, const Elem &e,
-      const Dune::FieldVector<double, 2> &localPoint) const override {
-    typename GF::Traits::RangeType result;
-    gridFunctions[iSpecies]->evaluate(e, localPoint, result);
-    return result[0];
-  }
-};
+namespace simulate {
 
 void DuneSim::initCompartmentNames() {
   compartmentSpeciesIndex.clear();
@@ -220,8 +30,7 @@ void DuneSim::initCompartmentNames() {
     auto duneCompIndex =
         pDuneImpl->config.sub("model.compartments").get<int>(name);
     SPDLOG_DEBUG("compartment: {} - Dune index {}", name, duneCompIndex);
-    const auto &gv =
-        pDuneImpl->grid_ptr->subDomain(duneCompIndex).leafGridView();
+    const auto &gv = pDuneImpl->grid->subDomain(duneCompIndex).leafGridView();
     if (std::all_of(elements(gv).begin(), elements(gv).end(),
                     [](const auto &e) { return e.type().isTriangle(); })) {
       if (static_cast<std::size_t>(duneCompIndex) != compIndex) {
@@ -313,8 +122,7 @@ void DuneSim::updatePixels() {
        ++compIndex) {
     auto &pixelsComp = pixels.emplace_back();
     const auto &gridview =
-        pDuneImpl->grid_ptr->subDomain(static_cast<int>(compIndex))
-            .leafGridView();
+        pDuneImpl->grid->subDomain(static_cast<int>(compIndex)).leafGridView();
     SPDLOG_TRACE("compartment[{}]: {}", compIndex,
                  compartmentDuneNames[compIndex]);
     const auto &qpi = compartmentPointIndex[compIndex];
@@ -374,50 +182,26 @@ DuneSim::DuneSim(
       pixelSize{sbmlDoc.getGeometry().getPixelWidth()},
       pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()}, integratorOrder{
                                                                   order} {
-  dune::DuneConverter dc(sbmlDoc, 1e-6);
-  // export gmsh file `grid.msh` in the same dir
-  QFile f2("grid.msh");
-  if (f2.open(QIODevice::WriteOnly | QIODevice::Text)) {
-    f2.write(sbmlDoc.getGeometry()
-                 .getMesh()
-                 ->getGMSH(dc.getGMSHCompIndices())
-                 .toUtf8());
-    f2.close();
-  } else {
-    SPDLOG_ERROR("Cannot write to file grid.msh");
+  simulate::DuneConverter dc(sbmlDoc, false, 1e-6);
+  if (integratorOrder != 1) {
+    // for now we only support 1st order FEM
+    // in future could add:
+    //  - 0th order a.k.a. FVM for independent compartment models
+    //  - 2nd order FEM for both types of models
+    SPDLOG_WARN("Invalid order {} requested - using 1st order FEM instead",
+                integratorOrder);
+    integratorOrder = 1;
   }
-
   try {
     if (dc.hasIndependentCompartments()) {
-      if (integratorOrder == 0) {
-        pDuneImpl = std::make_unique<DuneIndependentCompartments<0>>(
-            dc.getIniFile().toStdString());
-      } else if (integratorOrder == 1) {
-        pDuneImpl = std::make_unique<DuneIndependentCompartments<1>>(
-            dc.getIniFile().toStdString());
-      } else if (integratorOrder == 2) {
-        pDuneImpl = std::make_unique<DuneIndependentCompartments<2>>(
-            dc.getIniFile().toStdString());
-      }
+      pDuneImpl = std::make_unique<DuneImplIndependent<1>>(dc);
     } else {
-      if (integratorOrder == 0) {
-        integratorOrder = 1;
-        SPDLOG_WARN(
-            "Zero order / finite volume method not supported for models with "
-            "membranes (inter-compartment reactions). Using 1st order FEM "
-            "instead.");
-      }
-      if (integratorOrder == 1) {
-        pDuneImpl = std::make_unique<DuneCoupledCompartments<1>>(
-            dc.getIniFile().toStdString());
-      } else if (integratorOrder == 2) {
-        pDuneImpl = std::make_unique<DuneCoupledCompartments<2>>(
-            dc.getIniFile().toStdString());
-      }
+      pDuneImpl = std::make_unique<DuneImplCoupled<1>>(dc);
     }
-
+    pDuneImpl->setInitial(dc);
     initCompartmentNames();
     initSpeciesIndices();
+
     for (std::size_t compIndex = 0; compIndex < compartmentIds.size();
          ++compIndex) {
       const auto &compId = compartmentIds[compIndex];
@@ -434,6 +218,7 @@ DuneSim::DuneSim(
       SPDLOG_INFO("  - {} species", nSpecies);
       concentration.emplace_back(nPixels * nSpecies, 0.0);
     }
+
     updatePixels();
     updateSpeciesConcentrations();
   } catch (const Dune::Exception &e) {
@@ -444,10 +229,12 @@ DuneSim::DuneSim(
 DuneSim::~DuneSim() = default;
 
 void DuneSim::setIntegrationOrder(std::size_t order) {
-  SPDLOG_WARN(
-      "Integration order cannot be changed once DUNE simulation is created - "
-      "ignoring request to change order from {} to {}",
-      integratorOrder, order);
+  if (order != integratorOrder) {
+    SPDLOG_WARN(
+        "Integration order cannot be changed once DUNE simulation is created - "
+        "ignoring request to change order from {} to {}",
+        integratorOrder, order);
+  }
 }
 
 std::size_t DuneSim::getIntegrationOrder() const { return integratorOrder; }
@@ -499,7 +286,7 @@ void DuneSim::updateSpeciesConcentrations() {
     std::size_t nSpecies = compartmentSpeciesIndex[iComp].size();
     pDuneImpl->updateGridFunctions(iComp, nSpecies);
     const auto &gridview =
-        pDuneImpl->grid_ptr->subDomain(static_cast<int>(iComp)).leafGridView();
+        pDuneImpl->grid->subDomain(static_cast<int>(iComp)).leafGridView();
     std::size_t iTriangle = 0;
     for (const auto e : elements(gridview)) {
       SPDLOG_TRACE("triangle {} ({})", iTriangle,
@@ -538,4 +325,4 @@ void DuneSim::updateSpeciesConcentrations() {
   }
 }
 
-} // namespace sim
+} // namespace simulate

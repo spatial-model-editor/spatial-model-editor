@@ -4,10 +4,9 @@
 
 #include <map>
 #include <memory>
+#include <sbml/SBMLTypes.h>
 #include <string>
 #include <utility>
-
-#include <sbml/SBMLTypes.h>
 
 namespace libsbml {
 class Model;

@@ -14,7 +14,7 @@
 #include "dialogimagesize.hpp"
 #include "dialogintegratoroptions.hpp"
 #include "dialogunits.hpp"
-#include "duneini.hpp"
+#include "duneconverter.hpp"
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "mesh.hpp"
@@ -186,7 +186,7 @@ void MainWindow::tabMain_currentChanged(int index) {
     ui->txtSBML->setText(sbmlDoc.getXml());
     break;
   case TabIndex::DUNE:
-    ui->txtDUNE->setText(dune::DuneConverter(sbmlDoc).getIniFile());
+    ui->txtDUNE->setText(simulate::DuneConverter(sbmlDoc).getIniFile());
     break;
   case TabIndex::GMSH:
     ui->txtGMSH->setText(sbmlDoc.getGeometry().getMesh() == nullptr
@@ -283,7 +283,7 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
     if (filename.right(4) != ".ini") {
       filename.append(".ini");
     }
-    dune::DuneConverter dc(sbmlDoc);
+    simulate::DuneConverter dc(sbmlDoc, true);
     QFile f(filename);
     if (f.open(QIODevice::ReadWrite | QIODevice::Text)) {
       f.write(dc.getIniFile().toUtf8());

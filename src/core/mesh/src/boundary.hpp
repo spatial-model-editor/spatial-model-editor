@@ -5,13 +5,14 @@
 //   membraneWidth
 
 #pragma once
-#include <QImage>
-#include <QPointF>
-#include <array>
-#include <vector>
-
 #include "line_simplifier.hpp"
 #include "mesh_types.hpp"
+#include <QPoint>
+#include <QPointF>
+#include <cstddef>
+#include <limits>
+#include <string>
+#include <vector>
 
 namespace mesh {
 

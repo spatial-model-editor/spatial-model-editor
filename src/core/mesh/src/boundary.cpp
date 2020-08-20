@@ -1,6 +1,8 @@
 #include "boundary.hpp"
 #include "line_simplifier.hpp"
-#include "logger.hpp"
+#include <algorithm>
+#include <cmath>
+#include <iterator>
 #include <utility>
 
 namespace mesh {

@@ -1,5 +1,4 @@
 #include "simulate.hpp"
-
 #include "dunesim.hpp"
 #include "geometry.hpp"
 #include "logger.hpp"
@@ -8,6 +7,9 @@
 #include "pde.hpp"
 #include "pixelsim.hpp"
 #include "utils.hpp"
+#include <algorithm>
+#include <numeric>
+#include <utility>
 
 namespace simulate {
 
@@ -43,10 +45,10 @@ Simulation::Simulation(const model::Model &sbmlDoc, SimulatorType simType,
   if (simulatorType == SimulatorType::DUNE &&
       sbmlDoc.getGeometry().getMesh() != nullptr &&
       sbmlDoc.getGeometry().getMesh()->isValid()) {
-    simulator = std::make_unique<sim::DuneSim>(
+    simulator = std::make_unique<DuneSim>(
         sbmlDoc, compartmentIds, compartmentSpeciesIds, integratorOrder);
   } else {
-    simulator = std::make_unique<sim::PixelSim>(
+    simulator = std::make_unique<PixelSim>(
         sbmlDoc, compartmentIds, compartmentSpeciesIds, integratorOrder);
   }
   updateConcentrations(0);
