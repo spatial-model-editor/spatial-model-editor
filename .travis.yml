@@ -15,7 +15,7 @@ branches:
 env:
   global:
     # python wheel building can (and should) be disabled to speed up CI when working on a PR
-    - BUILD_PYTHON_WHEELS=true
+    - BUILD_PYTHON_WHEELS=false
     - MSYS_URL='https://github.com/msys2/msys2-installer/releases/download/2020-07-20/msys2-base-x86_64-20200720.sfx.exe'
     - CIBUILDWHEEL_VERSION=1.5.5
     # pypi TWINE_PASSWORD

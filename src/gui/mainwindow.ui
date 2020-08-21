@@ -141,79 +141,6 @@
         </attribute>
         <layout class="QHBoxLayout" name="horizontalLayout_7"/>
        </widget>
-       <widget class="QWidget" name="tabSBML">
-        <property name="whatsThis">
-         <string>&lt;h4&gt;SBML tab&lt;/h4&gt;
-&lt;p&gt;The SBML tab displays the raw xml SBML document that defines the model. Note: currently does not contain any spatial information.&lt;/p&gt;</string>
-        </property>
-        <attribute name="title">
-         <string>SBML</string>
-        </attribute>
-        <layout class="QHBoxLayout" name="horizontalLayout_2">
-         <item>
-          <widget class="QTextBrowser" name="txtSBML">
-           <property name="lineWrapMode">
-            <enum>QTextEdit::NoWrap</enum>
-           </property>
-           <property name="acceptRichText">
-            <bool>false</bool>
-           </property>
-           <property name="textInteractionFlags">
-            <set>Qt::TextSelectableByMouse</set>
-           </property>
-           <property name="openLinks">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-       <widget class="QWidget" name="tabDUNE">
-        <attribute name="title">
-         <string>DUNE</string>
-        </attribute>
-        <layout class="QHBoxLayout" name="horizontalLayout_6">
-         <item>
-          <widget class="QTextBrowser" name="txtDUNE">
-           <property name="lineWrapMode">
-            <enum>QTextEdit::NoWrap</enum>
-           </property>
-           <property name="acceptRichText">
-            <bool>false</bool>
-           </property>
-           <property name="textInteractionFlags">
-            <set>Qt::TextSelectableByMouse</set>
-           </property>
-           <property name="openLinks">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
-       <widget class="QWidget" name="tabGMSH">
-        <attribute name="title">
-         <string>GMSH</string>
-        </attribute>
-        <layout class="QHBoxLayout" name="horizontalLayout_11">
-         <item>
-          <widget class="QTextBrowser" name="txtGMSH">
-           <property name="lineWrapMode">
-            <enum>QTextEdit::NoWrap</enum>
-           </property>
-           <property name="acceptRichText">
-            <bool>false</bool>
-           </property>
-           <property name="textInteractionFlags">
-            <set>Qt::TextSelectableByMouse</set>
-           </property>
-           <property name="openLinks">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </widget>
       </widget>
      </widget>
     </item>
@@ -551,9 +478,6 @@
  </customwidgets>
  <tabstops>
   <tabstop>tabMain</tabstop>
-  <tabstop>txtSBML</tabstop>
-  <tabstop>txtDUNE</tabstop>
-  <tabstop>txtGMSH</tabstop>
  </tabstops>
  <resources/>
  <connections/>
