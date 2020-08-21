@@ -102,29 +102,3 @@ add_subdirectory(simulate)
 # set Compile options and warnings
 set_target_properties(core PROPERTIES CXX_STANDARD 17)
 set_target_properties(core PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-# todo: do these in CI, not here:
-target_link_options(
-  core
-  PUBLIC
-  $<$<CONFIG:Debug>:
-  --coverage
-  -fsanitize=address
-  -fno-omit-frame-pointer>
-  $<$<CXX_COMPILER_ID:Clang>:-fuse-ld=lld>)
-target_compile_options(
-  core
-  PUBLIC $<$<CONFIG:Debug>:--coverage
-         -fsanitize=address
-         -fno-omit-frame-pointer
-         -Wall
-         -Wextra
-         -Wpedantic
-         -Wshadow
-         -Wunused
-         -Wconversion
-         -Wsign-conversion
-         -Wcast-align>)
-target_compile_options(
-  core
-  PUBLIC $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:Clang>>:-shared-libasan>)

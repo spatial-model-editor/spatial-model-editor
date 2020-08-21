@@ -1,5 +1,7 @@
 # require CMake version >= 3.13, and use highest available version
 cmake_minimum_required(VERSION 3.13...3.18)
+# cmake_policy(SET CMP0069 NEW)
+set(CMAKE_POLICY_DEFAULT_CMP0069 NEW)
 message(STATUS "CMake version ${CMAKE_VERSION}")
 
 # version number here is embedded in compiled executable

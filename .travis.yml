@@ -102,6 +102,7 @@ jobs:
         - cp ../cli/spatial-cli .
         - ldd spatial-model-editor
         - ldd spatial-cli
+        - du -sh spatial-model-editor
     ########################################################
     # macOS GUI/CLI release build: xcode 11.3, macOS 10.14 #
     ########################################################
@@ -137,6 +138,7 @@ jobs:
         # for now just distribute dmg of executables:
         - mkdir spatial-model-editor
         - cp src/spatial-model-editor spatial-model-editor/.
+        - du -sh spatial-model-editor/spatial-model-editor
         - hdiutil create spatial-model-editor -fs HFS+ -srcfolder spatial-model-editor
         - mkdir spatial-cli
         - cp cli/spatial-cli spatial-cli/.
@@ -172,6 +174,7 @@ jobs:
         - ls build/*/*.exe
         - cd build/src
         - cp ../cli/spatial-cli.exe .
+        - du -sh spatial-model-editor.exe
         - ls
     ##########################################################################
     # manylinux1 python wheels release build: custom manylinux1 docker image #
@@ -412,7 +415,7 @@ jobs:
         - ccache --zero-stats
         - mkdir build
         - cd build
-        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/usr/local/qt5-static;/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DPYTHON_EXECUTABLE=/usr/bin/python3
+        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/usr/local/qt5-static;/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_FLAGS="--coverage -fsanitize=address -fno-omit-frame-pointer -Wall -Wextra -Wpedantic -Wshadow -Wunused -Wconversion -Wsign-conversion -Wcast-align -shared-libasan" -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld -fsanitize=address -fno-omit-frame-pointer" -DPYTHON_EXECUTABLE=/usr/bin/python3
         - build-wrapper-linux-x86-64 --out-dir bw-output make -j2
         - ccache --show-stats
         # run tests
