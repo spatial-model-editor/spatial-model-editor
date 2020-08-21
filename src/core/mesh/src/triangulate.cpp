@@ -534,15 +534,14 @@ void Triangulate::triangulateCompartments(
   // call Triangle library with additional flags:
   //  - YY: disallow creation of Steiner points on segments
   //        (allowing these would invalidate the rectangle membrane indices)
-  const auto *const triangleFlagsNoSteiner =
-      std::string(triangleFlags).append("YY").c_str();
-  triangle::triangulate(triangleFlagsNoSteiner, &in, &out, nullptr);
+  std::string triangleFlagsNoSteiner = std::string(triangleFlags).append("YY");
+  triangle::triangulate(triangleFlagsNoSteiner.c_str(), &in, &out, nullptr);
   if (appendUnassignedTriangleCentroids(out, holes)) {
     // if there are triangles that are not assigned to a compartment,
     // insert a hole in the middle of each and re-mesh.
     setHoleList(in, holes);
     out.clear();
-    triangle::triangulate(triangleFlagsNoSteiner, &in, &out, nullptr);
+    triangle::triangulate(triangleFlagsNoSteiner.c_str(), &in, &out, nullptr);
   }
   points = getPointsFromTriangulateio(out);
   triangleIndices = getTriangleIndicesFromTriangulateio(out);
