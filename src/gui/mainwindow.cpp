@@ -155,10 +155,7 @@ void MainWindow::tabMain_currentChanged(int index) {
     REACTIONS = 2,
     FUNCTIONS = 3,
     PARAMETERS = 4,
-    SIMULATE = 5,
-    SBML = 6,
-    DUNE = 7,
-    GMSH = 8
+    SIMULATE = 5
   };
   ui->tabMain->setWhatsThis(ui->tabMain->tabWhatsThis(index));
   SPDLOG_DEBUG("Tab changed to {} [{}]", index,
@@ -181,17 +178,6 @@ void MainWindow::tabMain_currentChanged(int index) {
     break;
   case TabIndex::SIMULATE:
     tabSimulate->loadModelData();
-    break;
-  case TabIndex::SBML:
-    ui->txtSBML->setText(sbmlDoc.getXml());
-    break;
-  case TabIndex::DUNE:
-    ui->txtDUNE->setText(simulate::DuneConverter(sbmlDoc).getIniFile());
-    break;
-  case TabIndex::GMSH:
-    ui->txtGMSH->setText(sbmlDoc.getGeometry().getMesh() == nullptr
-                             ? ""
-                             : sbmlDoc.getGeometry().getMesh()->getGMSH());
     break;
   default:
     SPDLOG_ERROR("Tab index {} not valid", index);

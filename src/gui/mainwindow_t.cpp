@@ -163,12 +163,6 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
       sendKeyEvents(tabMain, {"Ctrl+Tab"});
       REQUIRE(tabMain->currentIndex() == 5);
       sendKeyEvents(tabMain, {"Ctrl+Tab"});
-      REQUIRE(tabMain->currentIndex() == 6);
-      sendKeyEvents(tabMain, {"Ctrl+Tab"});
-      REQUIRE(tabMain->currentIndex() == 7);
-      sendKeyEvents(tabMain, {"Ctrl+Tab"});
-      REQUIRE(tabMain->currentIndex() == 8);
-      sendKeyEvents(tabMain, {"Ctrl+Tab"});
       REQUIRE(tabMain->currentIndex() == 0);
       sendKeyEvents(tabMain, {"Ctrl+Tab"});
       REQUIRE(tabMain->currentIndex() == 1);
@@ -179,7 +173,7 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
       sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
       REQUIRE(tabMain->currentIndex() == 0);
       sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
-      REQUIRE(tabMain->currentIndex() == 8);
+      REQUIRE(tabMain->currentIndex() == 5);
     }
     SECTION("menu: Tools->Set model units (default SBML model)") {
       SECTION("offer to import SBML model") {
