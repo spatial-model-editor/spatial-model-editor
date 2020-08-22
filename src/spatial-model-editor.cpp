@@ -1,6 +1,7 @@
 #include <fmt/core.h>
 
 #include <QApplication>
+#include <QIcon>
 #include <QtGui>
 #include <locale>
 
@@ -29,9 +30,9 @@ int main(int argc, char *argv[]) {
   spdlog::set_level(spdlog::level::trace);
 
   QApplication a(argc, argv);
-
+  QApplication::setWindowIcon(QIcon(":/icon64.png"));
   MainWindow w(filename);
   w.show();
 
-  return a.exec();
+  return QApplication::exec();
 }
