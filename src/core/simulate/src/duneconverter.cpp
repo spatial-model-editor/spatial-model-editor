@@ -13,6 +13,8 @@
 #include "pde.hpp"
 #include "tiff.hpp"
 #include "utils.hpp"
+#include <QDir>
+#include <QFile>
 #include <algorithm>
 #include <cstddef>
 #include <memory>
@@ -76,12 +78,15 @@ getIndicesOfSortedVector(const std::vector<T> &unsorted) {
 namespace simulate {
 
 DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
-                             double dt, int doublePrecision)
+                             double dt, const QString &iniFilename,
+                             int doublePrecision)
     : mesh{model.getGeometry().getMesh()},
       x0{model.getGeometry().getPhysicalOrigin().x()},
       y0{model.getGeometry().getPhysicalOrigin().y()},
       a{model.getGeometry().getPixelWidth()},
       w{model.getGeometry().getImage().width()} {
+  QString iniFileDir = QFileInfo(iniFilename).absolutePath();
+
   IniFile ini;
   double begin_time = 0.0;
   double end_time = 0.02;
@@ -174,12 +179,14 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
         if (forExternalUse) {
           if (!f->getIsUniformConcentration()) {
             // for external use: if there is a non-uniform initial condition
-            // then make a TIFF
+            // then make a TIFF & write to same dir as ini file
             auto sampledFieldName =
                 QString("%1_initialConcentration").arg(duneName);
             auto sampledFieldFile = QString("%1.tif").arg(sampledFieldName);
+            auto tiffFilename = QDir(iniFileDir).filePath(sampledFieldFile);
+            SPDLOG_TRACE("Exporting tiff: '{}'", tiffFilename.toStdString());
             double max = utils::writeTIFF(
-                sampledFieldFile.toStdString(),
+                tiffFilename.toStdString(),
                 f->getCompartment()->getCompartmentImage().size(),
                 f->getConcentration(), f->getCompartment()->getPixels(),
                 model.getGeometry().getPixelWidth());
@@ -382,6 +389,25 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
     ini.addValue("default.level", "off");
   }
   iniFile = ini.getText();
+
+  if (forExternalUse) {
+    // export ini file
+    SPDLOG_TRACE("Exporting dune ini file: '{}'", iniFilename.toStdString());
+    if (QFile f(iniFilename); f.open(QIODevice::ReadWrite | QIODevice::Text)) {
+      f.write(iniFile.toUtf8());
+    } else {
+      SPDLOG_ERROR("Failed to export ini file '{}'", iniFilename.toStdString());
+    }
+    // export gmsh file `grid.msh` in the same dir
+    QString gmshFilename = QDir(iniFileDir).filePath("grid.msh");
+    SPDLOG_TRACE("Exporting gmsh file: '{}'", gmshFilename.toStdString());
+    if (QFile f(gmshFilename); f.open(QIODevice::ReadWrite | QIODevice::Text)) {
+      f.write(mesh->getGMSH(gmshCompIndices).toUtf8());
+    } else {
+      SPDLOG_ERROR("Failed to export gmsh file '{}'",
+                   gmshFilename.toStdString());
+    }
+  }
 }
 
 QString DuneConverter::getIniFile() const { return iniFile; }

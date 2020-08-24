@@ -263,28 +263,15 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
     SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
     return;
   }
-  QString filename = QFileDialog::getSaveFileName(this, "Export DUNE ini file",
-                                                  "", "DUNE ini file (*.ini)");
-  if (!filename.isEmpty()) {
-    if (filename.right(4) != ".ini") {
-      filename.append(".ini");
-    }
-    simulate::DuneConverter dc(sbmlDoc, true);
-    QFile f(filename);
-    if (f.open(QIODevice::ReadWrite | QIODevice::Text)) {
-      f.write(dc.getIniFile().toUtf8());
-    }
-    // also export gmsh file `grid.msh` in the same dir
-    QString dir = QFileInfo(filename).absolutePath();
-    QString meshFilename = QDir(dir).filePath("grid.msh");
-    QFile f2(meshFilename);
-    if (f2.open(QIODevice::ReadWrite | QIODevice::Text)) {
-      f2.write(sbmlDoc.getGeometry()
-                   .getMesh()
-                   ->getGMSH(dc.getGMSHCompIndices())
-                   .toUtf8());
-    }
+  QString iniFilename = QFileDialog::getSaveFileName(
+      this, "Export DUNE ini file", "", "DUNE ini file (*.ini)");
+  if (iniFilename.isEmpty()) {
+    return;
   }
+  if (iniFilename.right(4) != ".ini") {
+    iniFilename.append(".ini");
+  }
+  simulate::DuneConverter dc(sbmlDoc, true, 1e-2, iniFilename);
 }
 
 void MainWindow::actionGeometry_from_model_triggered() {

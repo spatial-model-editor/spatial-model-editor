@@ -15,7 +15,7 @@ SCENARIO("DUNE: DuneConverter",
     f.open(QIODevice::ReadOnly);
     s.importSBMLString(f.readAll().toStdString());
 
-    simulate::DuneConverter dc(s, true, 1e-4, 14);
+    simulate::DuneConverter dc(s, true, 1e-4, {}, 14);
     QStringList ini = dc.getIniFile().split("\n");
     auto line = ini.cbegin();
     while (line != ini.cend() && *line != "[model.compartments]") {
