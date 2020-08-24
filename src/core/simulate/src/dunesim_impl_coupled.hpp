@@ -20,10 +20,16 @@ public:
       *std::declval<Model>().get_grid_function(0, 0).get())>;
   std::unique_ptr<Model> model;
   std::vector<std::shared_ptr<const GF>> gridFunctions;
-  explicit DuneImplCoupled(const simulate::DuneConverter &dc)
-      : DuneImpl(dc),
-        model(std::make_unique<Model>(grid, config.sub("model"))) {
+  explicit DuneImplCoupled(const simulate::DuneConverter &dc,
+                           bool writeVTKfiles = false)
+      : DuneImpl(dc) {
     SPDLOG_INFO("Order: {}", DuneFEMOrder);
+    auto stages =
+        Dune::Copasi::BitFlags<Dune::Copasi::ModelSetup::Stages>::all_flags();
+    if (!writeVTKfiles) {
+      stages.reset(Dune::Copasi::ModelSetup::Stages::Writer);
+    }
+    model = std::make_unique<Model>(grid, config.sub("model"), stages);
   }
   ~DuneImplCoupled() override = default;
   void setInitial(const simulate::DuneConverter &dc) override {

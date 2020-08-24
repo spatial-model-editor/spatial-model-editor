@@ -78,14 +78,19 @@ getIndicesOfSortedVector(const std::vector<T> &unsorted) {
 namespace simulate {
 
 DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
-                             double dt, const QString &iniFilename,
+                             double dt, const QString &outputIniFile,
                              int doublePrecision)
     : mesh{model.getGeometry().getMesh()},
       x0{model.getGeometry().getPhysicalOrigin().x()},
       y0{model.getGeometry().getPhysicalOrigin().y()},
       a{model.getGeometry().getPixelWidth()},
       w{model.getGeometry().getImage().width()} {
-  QString iniFileDir = QFileInfo(iniFilename).absolutePath();
+  QString iniFileDir{QDir::currentPath()};
+  QString iniFilename{QDir(iniFileDir).filePath("dune.ini")};
+  if (!outputIniFile.isEmpty()) {
+    iniFileDir = QFileInfo(outputIniFile).absolutePath();
+    iniFilename = outputIniFile;
+  }
 
   IniFile ini;
   double begin_time = 0.0;
@@ -248,10 +253,8 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
       }
 
       // output file
-      if (forExternalUse) {
-        ini.addSection("model", compartmentID, "writer");
-        ini.addValue("file_name", compartmentID);
-      }
+      ini.addSection("model", compartmentID, "writer");
+      ini.addValue("file_name", compartmentID);
     }
   }
 
@@ -364,10 +367,8 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
       }
 
       // output file
-      if (forExternalUse) {
-        ini.addSection("model", membraneID, "writer");
-        ini.addValue("file_name", membraneID);
-      }
+      ini.addSection("model", membraneID, "writer");
+      ini.addValue("file_name", membraneID);
     }
   }
 
@@ -375,7 +376,7 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
   ini.addSection("logging");
   if (forExternalUse) {
     ini.addValue("default.level", "info");
-  } else if (SPDLOG_ACTIVE_LEVEL < 2) {
+  } else if (SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_DEBUG) {
     // for debug GUI builds enable verbose DUNE logging
     ini.addValue("default.level", "trace");
     ini.addSection("logging.backend.model");
@@ -385,7 +386,7 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
     ini.addValue("level", "trace");
     ini.addValue("indent", 4);
   } else {
-    // for release builds disable DUNE logging
+    // for release GUI builds disable DUNE logging
     ini.addValue("default.level", "off");
   }
   iniFile = ini.getText();

@@ -83,10 +83,7 @@ void TabSimulate::loadModelData() {
     msgbox->open();
     return;
   }
-  sim = std::make_unique<simulate::Simulation>(sbmlDoc, simType,
-                                               integratorOptions.order);
-  sim->setIntegratorOptions(integratorOptions);
-  sim->setMaxThreads(numMaxThreads);
+  sim = std::make_unique<simulate::Simulation>(sbmlDoc, simType, simOptions);
   ui->btnSimulate->setEnabled(true);
 
   // setup species names
@@ -165,17 +162,8 @@ void TabSimulate::stopSimulation() {
 void TabSimulate::useDune(bool enable) {
   if (enable) {
     simType = simulate::SimulatorType::DUNE;
-    // reset some sensible default integration options:
-    integratorOptions.order = 1;
-    integratorOptions.maxTimestep = ui->txtSimInterval->text().toDouble() * 0.2;
-    integratorOptions.maxAbsErr = std::numeric_limits<double>::max();
-    integratorOptions.maxRelErr = std::numeric_limits<double>::max();
   } else {
     simType = simulate::SimulatorType::Pixel;
-    integratorOptions.order = 2;
-    integratorOptions.maxTimestep = std::numeric_limits<double>::max();
-    integratorOptions.maxAbsErr = std::numeric_limits<double>::max();
-    integratorOptions.maxRelErr = 0.01;
   }
   loadModelData();
 }
@@ -194,24 +182,12 @@ void TabSimulate::reset() {
   sim.reset();
 }
 
-simulate::IntegratorOptions TabSimulate::getIntegratorOptions() const {
-  return integratorOptions;
-}
+simulate::Options TabSimulate::getOptions() const { return simOptions; }
 
-void TabSimulate::setIntegratorOptions(
-    const simulate::IntegratorOptions &options) {
-  integratorOptions = options;
+void TabSimulate::setOptions(const simulate::Options &options) {
+  simOptions = options;
   loadModelData();
 }
-
-void TabSimulate::setMaxThreads(std::size_t maxThreads) {
-  numMaxThreads = maxThreads;
-  if (sim != nullptr) {
-    sim->setMaxThreads(numMaxThreads);
-  }
-}
-
-std::size_t TabSimulate::getMaxThreads() const { return numMaxThreads; }
 
 void TabSimulate::btnSimulate_clicked() {
   // integration time parameters

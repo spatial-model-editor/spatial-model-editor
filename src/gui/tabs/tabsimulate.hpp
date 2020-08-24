@@ -22,21 +22,20 @@ class Model;
 class TabSimulate : public QWidget {
   Q_OBJECT
 
- public:
-  explicit TabSimulate(model::Model &doc,
-                       QLabelMouseTracker *mouseTracker,
+public:
+  explicit TabSimulate(model::Model &doc, QLabelMouseTracker *mouseTracker,
                        QWidget *parent = nullptr);
   ~TabSimulate();
   void loadModelData();
   void stopSimulation();
   void useDune(bool enable);
   void reset();
-  simulate::IntegratorOptions getIntegratorOptions() const;
-  void setIntegratorOptions(const simulate::IntegratorOptions &options);
+  simulate::Options getOptions() const;
+  void setOptions(const simulate::Options &options);
   void setMaxThreads(std::size_t maxThreads);
   std::size_t getMaxThreads() const;
 
- private:
+private:
   std::unique_ptr<Ui::TabSimulate> ui;
   model::Model &sbmlDoc;
   QLabelMouseTracker *lblGeometry;
@@ -44,7 +43,8 @@ class TabSimulate : public QWidget {
   QCPTextElement *pltTitle;
   QCPItemStraightLine *pltTimeLine;
   std::unique_ptr<simulate::Simulation> sim;
-  simulate::SimulatorType simType = simulate::SimulatorType::DUNE;
+  simulate::SimulatorType simType{simulate::SimulatorType::DUNE};
+  simulate::Options simOptions;
   QVector<double> time;
   QVector<QImage> images;
   QStringList compartmentNames;
@@ -54,8 +54,6 @@ class TabSimulate : public QWidget {
   std::vector<bool> speciesVisible;
   bool plotShowMinMax = true;
   bool isSimulationRunning = false;
-  simulate::IntegratorOptions integratorOptions;
-  std::size_t numMaxThreads = 0;
 
   void btnSimulate_clicked();
   void btnSliceImage_clicked();

@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DialogSimulationOptions</class>
+ <widget class="QDialog" name="DialogSimulationOptions">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>439</width>
+    <height>430</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Simulation Options</string>
+  </property>
+  <property name="whatsThis">
+   <string/>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QTabWidget" name="tabSimulator">
+     <property name="currentIndex">
+      <number>0</number>
+     </property>
+     <widget class="QWidget" name="tabDUNE">
+      <attribute name="title">
+       <string>DUNE</string>
+      </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="txtDuneDt">
+           <property name="statusTip">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="cmbDuneIntegrator">
+           <item>
+            <property name="text">
+             <string>1st order FEM</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lblDuneIntegrator">
+           <property name="text">
+            <string>Integrator</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="lblDuneDt">
+           <property name="text">
+            <string>Max timestep</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0" colspan="2">
+          <spacer name="verticalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="4" column="0" colspan="2">
+          <widget class="QPushButton" name="btnDuneReset">
+           <property name="text">
+            <string>Reset to default values</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="lblOutputFiles">
+           <property name="text">
+            <string>Output files</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QCheckBox" name="chkDuneVTK">
+           <property name="toolTip">
+            <string>Output the simulation results in VTK files, which can be viewed using ParaView</string>
+           </property>
+           <property name="text">
+            <string>VTK (ParaView)</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabPixel">
+      <attribute name="title">
+       <string>Pixel</string>
+      </attribute>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="3" column="0">
+          <widget class="QLabel" name="lblPixelDt">
+           <property name="text">
+            <string>Max timestep</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="txtPixelRelErr">
+           <property name="toolTip">
+            <string>The maximum relative (i.e. normalised by the concentration) error allowed for an integration step</string>
+           </property>
+           <property name="statusTip">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0" colspan="2">
+          <spacer name="verticalSpacer">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="cmbPixelIntegrator">
+           <property name="toolTip">
+            <string>The Runge-Kutta integrator to be used in the simulation</string>
+           </property>
+           <property name="statusTip">
+            <string/>
+           </property>
+           <item>
+            <property name="text">
+             <string>RK1 (Euler)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>RK2(1) (Heun)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>RK3(2) (Shu Osher)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>RK4(3) (3S*)</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="6" column="0" colspan="2">
+          <widget class="QPushButton" name="btnPixelReset">
+           <property name="text">
+            <string>Reset to default values</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="lblPixelRelErr">
+           <property name="text">
+            <string>Max relative local error</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="txtPixelAbsErr">
+           <property name="toolTip">
+            <string>The maximum absolute error allowed for an integration step</string>
+           </property>
+           <property name="statusTip">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lblPixelIntegrator">
+           <property name="text">
+            <string>Integrator</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="lblPixelAbsErr">
+           <property name="text">
+            <string>Max absolute local error</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="txtPixelDt">
+           <property name="toolTip">
+            <string>The maximum timestep that can be used for an integration step</string>
+           </property>
+           <property name="statusTip">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="lblPixelThreads">
+           <property name="text">
+            <string>Max CPU threads</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLineEdit" name="txtPixelThreads">
+           <property name="toolTip">
+            <string>Limit the maximum number of CPU threads used. '0' means use all available threads.</string>
+           </property>
+           <property name="statusTip">
+            <string/>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>tabSimulator</tabstop>
+  <tabstop>cmbDuneIntegrator</tabstop>
+  <tabstop>txtDuneDt</tabstop>
+  <tabstop>chkDuneVTK</tabstop>
+  <tabstop>btnDuneReset</tabstop>
+  <tabstop>cmbPixelIntegrator</tabstop>
+  <tabstop>txtPixelRelErr</tabstop>
+  <tabstop>txtPixelAbsErr</tabstop>
+  <tabstop>txtPixelDt</tabstop>
+  <tabstop>txtPixelThreads</tabstop>
+  <tabstop>btnPixelReset</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

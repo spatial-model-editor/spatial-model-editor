@@ -208,21 +208,12 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
       REQUIRE(actionSimTypeDUNE->isChecked() == true);
       REQUIRE(actionSimTypePixel->isChecked() == false);
     }
-    SECTION("menu: Advanced->Max cpu threads... ") {
-      SECTION("cancel") {
-        mwt.addUserAction({"Esc"});
-        mwt.start();
-        sendKeyEvents(&w, {"Alt+A"});
-        sendKeyEvents(menu_Advanced, {"M"});
-        REQUIRE(mwt.getResult() == "Set max cpu threads");
-      }
-      SECTION("enter a value") {
-        mwt.addUserAction({"7"});
-        mwt.start();
-        sendKeyEvents(&w, {"Alt+A"});
-        sendKeyEvents(menu_Advanced, {"M"});
-        REQUIRE(mwt.getResult() == "Set max cpu threads");
-      }
+    SECTION("menu: Advanced->Simulation options... ") {
+      mwt.addUserAction({"Esc"});
+      mwt.start();
+      sendKeyEvents(&w, {"Alt+A"});
+      sendKeyEvents(menu_Advanced, {"S"});
+      REQUIRE(mwt.getResult() == "Simulation Options");
     }
   }
   SECTION("built-in SBML model, change units") {

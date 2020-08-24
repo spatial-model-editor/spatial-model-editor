@@ -14,7 +14,7 @@ DuneImpl::DuneImpl(const simulate::DuneConverter &dc) {
     Dune::Logging::Logging::init(
         Dune::FakeMPIHelper::getCollectiveCommunication(),
         config.sub("logging"));
-    if (SPDLOG_ACTIVE_LEVEL >= 2) {
+    if (SPDLOG_ACTIVE_LEVEL > SPDLOG_LEVEL_DEBUG) {
       // for release builds disable DUNE logging
       Dune::Logging::Logging::mute();
     }

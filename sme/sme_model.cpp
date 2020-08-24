@@ -2,15 +2,13 @@
 #include <pybind11/pybind11.h>
 
 // other headers
-#include <pybind11/stl.h>
-
-#include <QFile>
-#include <QImage>
-#include <exception>
-
 #include "logger.hpp"
 #include "sme_common.hpp"
 #include "sme_model.hpp"
+#include <QFile>
+#include <QImage>
+#include <exception>
+#include <pybind11/stl.h>
 
 static std::vector<std::vector<std::vector<int>>>
 qImageToVec(const QImage &img) {
@@ -92,15 +90,10 @@ void Model::exportSbmlFile(const std::string &filename) {
 
 void Model::simulate(double simulationTime, double imageInterval,
                      std::size_t maxThreads) {
+  simulate::Options options;
+  options.pixel.maxThreads = maxThreads;
   sim = std::make_unique<simulate::Simulation>(
-      *(s.get()), simulate::SimulatorType::Pixel, 2);
-  auto options = sim->getIntegratorOptions();
-  options.order = 2;
-  options.maxTimestep = std::numeric_limits<double>::max();
-  options.maxAbsErr = std::numeric_limits<double>::max();
-  options.maxRelErr = 0.005;
-  sim->setIntegratorOptions(options);
-  sim->setMaxThreads(maxThreads);
+      *(s.get()), simulate::SimulatorType::Pixel, options);
   while (sim->getTimePoints().back() < simulationTime) {
     sim->doTimestep(imageInterval);
   }

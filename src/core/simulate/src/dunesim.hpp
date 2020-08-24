@@ -3,6 +3,7 @@
 #pragma once
 
 #include "basesim.hpp"
+#include "simulate_options.hpp"
 #include "utils.hpp"
 #include <QPointF>
 #include <QSize>
@@ -34,7 +35,6 @@ class DuneImpl;
 
 class DuneSim : public BaseSim {
 private:
-  // Dune objects via pimpl to hide DUNE headers
   std::unique_ptr<DuneImpl> pDuneImpl;
   std::vector<std::string> compartmentDuneNames;
   // DUNE species index for each species
@@ -57,26 +57,17 @@ private:
   void initSpeciesIndices();
   void updatePixels();
   void updateSpeciesConcentrations();
-  IntegratorError errMax;
-  double maxTimestep = std::numeric_limits<double>::max();
   std::string currentErrorMessage;
-  std::size_t integratorOrder = 1;
+  DuneIntegratorType integrator;
+  double dt;
 
 public:
   explicit DuneSim(
       const model::Model &sbmlDoc,
       const std::vector<std::string> &compartmentIds,
       const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
-      std::size_t order = 1);
+      const DuneOptions &options = {});
   ~DuneSim() override;
-  virtual void setIntegrationOrder(std::size_t order) override;
-  virtual std::size_t getIntegrationOrder() const override;
-  virtual void setIntegratorError(const IntegratorError &err) override;
-  virtual IntegratorError getIntegratorError() const override;
-  virtual void setMaxDt(double maxDt) override;
-  virtual double getMaxDt() const override;
-  virtual void setMaxThreads([[maybe_unused]] std::size_t maxThreads) override;
-  virtual std::size_t getMaxThreads() const override;
   std::size_t run(double time) override;
   const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const override;

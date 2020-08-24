@@ -8,7 +8,7 @@ target_sources(
           dialogeditunit.cpp
           dialogimagesize.cpp
           dialogimageslice.cpp
-          dialogintegratoroptions.cpp
+          dialogsimulationoptions.cpp
           dialogunits.cpp)
 target_include_directories(gui PUBLIC .)
 
@@ -22,5 +22,5 @@ target_sources(
          dialogeditunit_t.cpp
          dialogimagesize_t.cpp
          dialogimageslice_t.cpp
-         dialogintegratoroptions_t.cpp
+         dialogsimulationoptions_t.cpp
          dialogunits_t.cpp)

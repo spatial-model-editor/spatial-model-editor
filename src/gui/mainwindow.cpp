@@ -12,7 +12,7 @@
 #include "dialogabout.hpp"
 #include "dialogcoordinates.hpp"
 #include "dialogimagesize.hpp"
-#include "dialogintegratoroptions.hpp"
+#include "dialogsimulationoptions.hpp"
 #include "dialogunits.hpp"
 #include "duneconverter.hpp"
 #include "guiutils.hpp"
@@ -111,11 +111,8 @@ void MainWindow::setupConnections() {
   connect(ui->actionSet_spatial_coordinates, &QAction::triggered, this,
           &MainWindow::actionSet_spatial_coordinates_triggered);
 
-  connect(ui->actionIntegrator_options, &QAction::triggered, this,
-          &MainWindow::actionIntegrator_options_triggered);
-
-  connect(ui->actionMax_cpu_threads, &QAction::triggered, this,
-          &MainWindow::actionMax_cpu_threads_triggered);
+  connect(ui->actionSimulation_options, &QAction::triggered, this,
+          &MainWindow::actionSimulation_options_triggered);
 
   connect(ui->action_What_s_this, &QAction::triggered, this,
           []() { QWhatsThis::enterWhatsThisMode(); });
@@ -376,24 +373,11 @@ void MainWindow::actionSet_spatial_coordinates_triggered() {
   }
 }
 
-void MainWindow::actionIntegrator_options_triggered() {
-  DialogIntegratorOptions dialog(tabSimulate->getIntegratorOptions());
+void MainWindow::actionSimulation_options_triggered() {
+  DialogSimulationOptions dialog(tabSimulate->getOptions());
   if (dialog.exec() == QDialog::Accepted) {
-    tabSimulate->setIntegratorOptions(dialog.getIntegratorOptions());
+    tabSimulate->setOptions(dialog.getOptions());
     tabMain_currentChanged(ui->tabMain->currentIndex());
-  }
-}
-
-void MainWindow::actionMax_cpu_threads_triggered() {
-  bool ok;
-  auto numThreads = static_cast<std::size_t>(QInputDialog::getInt(
-      this, "Set max cpu threads",
-      "Max cpu threads (0 is the default and means use "
-      "all available threads):",
-      static_cast<int>(tabSimulate->getMaxThreads()), 0, 64, 1, &ok));
-  if (ok) {
-    SPDLOG_DEBUG("setting max threads to {}", numThreads);
-    tabSimulate->setMaxThreads(numThreads);
   }
 }
 

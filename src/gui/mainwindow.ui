@@ -229,8 +229,7 @@
     <property name="title">
      <string>&amp;Advanced</string>
     </property>
-    <addaction name="actionIntegrator_options"/>
-    <addaction name="actionMax_cpu_threads"/>
+    <addaction name="actionSimulation_options"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuImport"/>
@@ -420,14 +419,9 @@
     <string>&amp;single-compartment-diffusion</string>
    </property>
   </action>
-  <action name="actionIntegrator_options">
+  <action name="actionSimulation_options">
    <property name="text">
-    <string>&amp;Integrator options...</string>
-   </property>
-  </action>
-  <action name="actionMax_cpu_threads">
-   <property name="text">
-    <string>&amp;Max cpu threads...</string>
+    <string>&amp;Simulation options...</string>
    </property>
   </action>
   <action name="actionGeometry_from_model">

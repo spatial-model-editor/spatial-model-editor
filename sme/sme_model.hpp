@@ -1,14 +1,12 @@
 #pragma once
-
-#include <map>
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "model.hpp"
 #include "simulate.hpp"
 #include "sme_compartment.hpp"
 #include "sme_parameter.hpp"
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace pybind11 {
 class module;

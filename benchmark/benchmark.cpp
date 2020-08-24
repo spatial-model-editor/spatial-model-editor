@@ -1,14 +1,13 @@
-#include <fmt/core.h>
-
-#include <QElapsedTimer>
-#include <QFile>
-#include <limits>
-#include <locale>
-
 #include "logger.hpp"
 #include "model.hpp"
 #include "simulate.hpp"
 #include "version.hpp"
+#include <QElapsedTimer>
+#include <QFile>
+#include <fmt/core.h>
+#include <limits>
+#include <locale>
+#include <memory>
 
 static std::string toString(const simulate::SimulatorType &s) {
   if (s == simulate::SimulatorType::DUNE) {
@@ -31,15 +30,13 @@ struct BenchmarkParams {
   std::vector<simulate::SimulatorType> simulators{
       simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel};
   double simulator_timestep{1e-3};
-  std::size_t simulator_integration_order = 1;
 };
 
 static void printHelpMessage() {
   BenchmarkParams params;
   fmt::print("\nUsage:\n");
-  fmt::print(
-      "\n./benchmark [seconds_per_benchmark=10] [model=all] "
-      "[simulator=all] [timestep=1e-3] [order=1]\n");
+  fmt::print("\n./benchmark [seconds_per_benchmark=10] [model=all] "
+             "[simulator=all] [timestep=1e-3]\n");
   fmt::print("\nPossible values for model:\n");
   for (const auto &model : params.models) {
     fmt::print("  - {}\n", model);
@@ -89,10 +86,6 @@ static BenchmarkParams parseArgs(int argc, char *argv[]) {
   if (argc > 4) {
     params.simulator_timestep = std::stod(argv[4]);
   }
-  if (argc > 5) {
-    params.simulator_integration_order =
-        static_cast<std::size_t>(std::stoi(argv[5]));
-  }
   fmt::print("\n# Benchmark parameters:\n");
   fmt::print("# seconds_per_benchmark: {}s\n", params.seconds_per_benchmark);
   fmt::print("# models:\n");
@@ -104,7 +97,6 @@ static BenchmarkParams parseArgs(int argc, char *argv[]) {
     fmt::print("#   - {}\n", toString(simulator));
   }
   fmt::print("# timestep: {}s\n", params.simulator_timestep);
-  fmt::print("# order: {}\n", params.simulator_integration_order);
   return params;
 }
 
@@ -130,6 +122,11 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
   std::locale::global(std::locale::classic());
 
   double dt = params.simulator_timestep;
+  simulate::Options options;
+  options.pixel.maxTimestep = dt;
+  options.pixel.maxErr = {std::numeric_limits<double>::max(),
+                          std::numeric_limits<double>::max()};
+  options.dune.dt = dt;
 
   for (auto simulator : params.simulators) {
     fmt::print("\n# {} simulator\n", toString(simulator));
@@ -142,14 +139,7 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
       s.importSBMLString(f.readAll().toStdString());
 
       // setup simulator
-      simulate::Simulation sim(s, simulator);
-      auto options = sim.getIntegratorOptions();
-      options.order = params.simulator_integration_order;
-      options.maxAbsErr = std::numeric_limits<double>::max();
-      options.maxRelErr = std::numeric_limits<double>::max();
-      options.maxTimestep = dt;
-      sim.setIntegratorOptions(options);
-
+      simulate::Simulation sim(s, simulator, options);
       // do a series of simulations
       // increase length of run by a factor of 2 each time
       // stop when a run takes more than half of runtime_seconds_per_model
