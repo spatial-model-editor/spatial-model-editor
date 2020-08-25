@@ -27,10 +27,9 @@ struct PixelParams {
 static void printHelpMessage() {
   PixelParams params;
   fmt::print("\nUsage:\n");
-  fmt::print(
-      "\n./pixel [integration_order=1] [model=brusselator-model] "
-      "[integration_time=10.0] [compartment_index=0] [species_index=0] "
-      "[pixel_index=0]\n");
+  fmt::print("\n./pixel [integration_order=1] [model=brusselator-model] "
+             "[integration_time=10.0] [compartment_index=0] [species_index=0] "
+             "[pixel_index=0]\n");
   fmt::print("\nPossible values for model:\n");
   for (const auto &model : params.models) {
     fmt::print("  - {}\n", model);
@@ -101,26 +100,33 @@ static void printFixedTimestepPixel(const PixelParams &params) {
     s.importSBMLString(f.readAll().toStdString());
 
     // setup simulator
-    simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
-    auto options = sim.getIntegratorOptions();
-    options.order = params.integration_order;
-    options.maxAbsErr = std::numeric_limits<double>::max();
-    options.maxRelErr = std::numeric_limits<double>::max();
-    options.maxTimestep = dt;
-    sim.setIntegratorOptions(options);
+    simulate::Options options;
+    if (params.integration_order == 1) {
+      options.pixel.integrator = simulate::PixelIntegratorType::RK101;
+    } else if (params.integration_order == 2) {
+      options.pixel.integrator = simulate::PixelIntegratorType::RK212;
+    } else if (params.integration_order == 3) {
+      options.pixel.integrator = simulate::PixelIntegratorType::RK323;
+    } else if (params.integration_order == 4) {
+      options.pixel.integrator = simulate::PixelIntegratorType::RK435;
+    }
+    options.pixel.maxErr = {std::numeric_limits<double>::max(),
+                            std::numeric_limits<double>::max()};
+    options.pixel.maxTimestep = dt;
+    simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
 
     QElapsedTimer time;
     long long elapsed_ms = 0;
     time.start();
     std::size_t steps = sim.doTimestep(params.integration_time);
     elapsed_ms = time.elapsed();
-    fmt::print(
-        "{:11.8f}\t{:20.16e}\t{:20.16e}\t{}\t{}\t{}\n", dt,
-        sim.getConc(sim.getTimePoints().size() - 1, params.compartment_index,
-                    params.species_index)[params.pixel_index],
-        sim.getLowerOrderConc(params.compartment_index, params.species_index,
-                              params.pixel_index),
-        elapsed_ms, steps, params.models[0]);
+    fmt::print("{:11.8f}\t{:20.16e}\t{:20.16e}\t{}\t{}\t{}\n", dt,
+               sim.getConc(sim.getTimePoints().size() - 1,
+                           params.compartment_index,
+                           params.species_index)[params.pixel_index],
+               sim.getLowerOrderConc(params.compartment_index,
+                                     params.species_index, params.pixel_index),
+               elapsed_ms, steps, params.models[0]);
   }
 }
 

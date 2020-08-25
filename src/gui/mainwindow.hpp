@@ -70,8 +70,7 @@ private:
   void actionSet_spatial_coordinates_triggered();
 
   // Advanced menu actions
-  void actionIntegrator_options_triggered();
-  void actionMax_cpu_threads_triggered();
+  void actionSimulation_options_triggered();
 
   void dragEnterEvent(QDragEnterEvent *event) override;
   void dropEvent(QDropEvent *event) override;

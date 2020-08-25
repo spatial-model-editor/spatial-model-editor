@@ -1,6 +1,6 @@
 target_sources(
   core
-  PRIVATE basesim.hpp
+  PRIVATE basesim.cpp
           duneconverter.cpp
           dunefunction.cpp
           dunegrid.cpp
@@ -11,6 +11,7 @@ target_sources(
           dunesim_impl_independent.cpp
           pde.cpp
           pixelsim.cpp
+          pixelsim_impl.cpp
           simulate.cpp)
 
 target_sources(

@@ -21,9 +21,15 @@ public:
   std::vector<std::unique_ptr<Model>> models;
   std::vector<std::shared_ptr<const GF>> gridFunctions;
 
-  explicit DuneImplIndependent(const simulate::DuneConverter &dc)
+  explicit DuneImplIndependent(const simulate::DuneConverter &dc,
+                               bool writeVTKfiles = false)
       : DuneImpl(dc) {
     SPDLOG_INFO("Order: {}", DuneFEMOrder);
+    auto stages =
+        Dune::Copasi::BitFlags<Dune::Copasi::ModelSetup::Stages>::all_flags();
+    if (!writeVTKfiles) {
+      stages.reset(Dune::Copasi::ModelSetup::Stages::Writer);
+    }
     // construct separate model from ini and grid for each compartment
     const auto &modelConfig = config.sub("model", true);
     const auto &dataConfig = modelConfig.sub("data");
@@ -39,7 +45,7 @@ public:
       auto compartmentGrid =
           Dune::stackobject_to_shared_ptr(grid->subDomain(compartmentIndex));
       models.push_back(
-          std::make_unique<Model>(compartmentGrid, compartmentConfig));
+          std::make_unique<Model>(compartmentGrid, compartmentConfig, stages));
     }
   }
   ~DuneImplIndependent() override = default;

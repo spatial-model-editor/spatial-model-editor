@@ -79,15 +79,14 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   s.getReactions().setLocation("B_excretion", "c1_c2_membrane");
 
   double dt = 0.134521234;
-  simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
-  auto options = sim.getIntegratorOptions();
-  options.order = 1;
-  options.maxAbsErr = std::numeric_limits<double>::max();
-  options.maxRelErr = std::numeric_limits<double>::max();
-  options.maxTimestep = dt;
-  sim.setIntegratorOptions(options);
-  sim.setMaxThreads(2);
-  REQUIRE(sim.getMaxThreads() == 2);
+  // 1st order RK, fixed timestep simulation
+  simulate::Options options;
+  options.pixel.integrator = simulate::PixelIntegratorType::RK101;
+  options.pixel.maxErr = {std::numeric_limits<double>::max(),
+                          std::numeric_limits<double>::max()};
+  options.pixel.maxTimestep = dt;
+  options.pixel.maxThreads = 2;
+  simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
 
   // check initial concentrations:
   // note: A_c1 is constant, so not part of simulation
@@ -167,16 +166,17 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
     // by conservation: flux of B of into c1 = flux of A from c1 = 0.1
     // all other net fluxes are zero
     double acceptable_error = 1.e-8;
-    options.maxTimestep = 0.20138571;
-    sim.setIntegratorOptions(options);
-    sim.doTimestep(1000);
-    std::size_t it = sim.getTimePoints().size() - 1;
+    options.pixel.maxTimestep = 0.20138571;
+
+    simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
+    sim2.doTimestep(1000);
+    std::size_t it = sim2.getTimePoints().size() - 1;
     double A_c1 = 1.0;
-    double A_c2 = sim.getAvgMinMax(it, 1, 0).avg;
-    double A_c3 = sim.getAvgMinMax(it, 2, 0).avg;
-    double B_c1 = sim.getAvgMinMax(it, 0, 0).avg;
-    double B_c2 = sim.getAvgMinMax(it, 1, 1).avg;
-    double B_c3 = sim.getAvgMinMax(it, 2, 1).avg;
+    double A_c2 = sim2.getAvgMinMax(it, 1, 0).avg;
+    double A_c3 = sim2.getAvgMinMax(it, 2, 0).avg;
+    double B_c1 = sim2.getAvgMinMax(it, 0, 0).avg;
+    double B_c2 = sim2.getAvgMinMax(it, 1, 1).avg;
+    double B_c3 = sim2.getAvgMinMax(it, 2, 1).avg;
 
     // check concentration values
     REQUIRE(A_c1 == Approx(1.0).epsilon(acceptable_error));
@@ -191,21 +191,17 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
 
     // check concentration derivatives
     double eps = 1.e-5;
-    options.maxAbsErr = std::numeric_limits<double>::max();
-    options.maxRelErr = std::numeric_limits<double>::max();
-    options.maxTimestep = eps;
-    sim.setIntegratorOptions(options);
-    sim.doTimestep(eps);
+    sim2.doTimestep(eps);
     ++it;
-    double dA2 = (sim.getAvgMinMax(it, 1, 0).avg - A_c2) / eps;
+    double dA2 = (sim2.getAvgMinMax(it, 1, 0).avg - A_c2) / eps;
     REQUIRE(dA2 == Approx(0).epsilon(acceptable_error));
-    double dA3 = (sim.getAvgMinMax(it, 2, 0).avg - A_c3) / eps;
+    double dA3 = (sim2.getAvgMinMax(it, 2, 0).avg - A_c3) / eps;
     REQUIRE(dA3 == Approx(0).epsilon(acceptable_error));
-    double dB1 = volC1 * (sim.getAvgMinMax(it, 0, 0).avg - B_c1) / eps;
+    double dB1 = volC1 * (sim2.getAvgMinMax(it, 0, 0).avg - B_c1) / eps;
     REQUIRE(dB1 == Approx(1).epsilon(acceptable_error));
-    double dB2 = (sim.getAvgMinMax(it, 1, 1).avg - B_c2) / eps;
+    double dB2 = (sim2.getAvgMinMax(it, 1, 1).avg - B_c2) / eps;
     REQUIRE(dB2 == Approx(0).epsilon(acceptable_error));
-    double dB3 = (sim.getAvgMinMax(it, 2, 1).avg - B_c3) / eps;
+    double dB3 = (sim2.getAvgMinMax(it, 2, 1).avg - B_c3) / eps;
     REQUIRE(dB3 == Approx(0).epsilon(acceptable_error));
   }
 }
@@ -251,10 +247,14 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
   REQUIRE(m1.getCompartmentB()->getId() == "c3");
   REQUIRE(m1.getIndexPairs().size() == 108);
 
-  simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
-  auto options = sim.getIntegratorOptions();
-  options.order = 1;
-  sim.setIntegratorOptions(options);
+  // 1st order RK, fixed timestep simulation
+  simulate::Options options;
+  options.pixel.integrator = simulate::PixelIntegratorType::RK101;
+  options.pixel.maxErr = {std::numeric_limits<double>::max(),
+                          std::numeric_limits<double>::max()};
+  options.pixel.maxTimestep = 0.01;
+  options.pixel.maxThreads = 2;
+  simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
 
   // check initial concentrations:
   // note: A_c1 is constant, so not part of simulation
@@ -265,10 +265,6 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
   REQUIRE(sim.getAvgMinMax(0, 2, 1).avg == dbl_approx(0.0));
 
   WHEN("one Euler steps: diffusion of A into c2") {
-    options.maxAbsErr = std::numeric_limits<double>::max();
-    options.maxRelErr = std::numeric_limits<double>::max();
-    options.maxTimestep = 0.01;
-    sim.setIntegratorOptions(options);
     sim.doTimestep(0.01);
     REQUIRE(sim.getAvgMinMax(1, 0, 0).avg == dbl_approx(0.0));
     REQUIRE(sim.getAvgMinMax(1, 1, 0).avg > 0);
@@ -278,10 +274,6 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
   }
 
   WHEN("many Euler steps: all species non-zero") {
-    options.maxAbsErr = std::numeric_limits<double>::max();
-    options.maxRelErr = std::numeric_limits<double>::max();
-    options.maxTimestep = 0.02;
-    sim.setIntegratorOptions(options);
     sim.doTimestep(1.00);
     REQUIRE(sim.getAvgMinMax(1, 0, 0).avg > 0);
     REQUIRE(sim.getAvgMinMax(1, 1, 0).avg > 0);
@@ -349,28 +341,22 @@ SCENARIO(
     REQUIRE(maxRelErr < epsilon);
   }
 
+  simulate::Options options;
+  options.pixel.maxErr = {std::numeric_limits<double>::max(), 0.01};
+  options.dune.dt = 1.0;
   for (auto simType :
        {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
     double initialRelativeError = 1e-9;
     double evolvedRelativeError = 0.02;
-    double simRelErr = 0.01;
-    double dt = std::numeric_limits<double>::max();
     if (simType == simulate::SimulatorType::DUNE) {
       initialRelativeError = 0.05;
       evolvedRelativeError = 0.5;
-      simRelErr = std::numeric_limits<double>::max();
-      dt = 1.0;
     }
 
     // integrate & compare
-    simulate::Simulation sim(s, simType);
+    simulate::Simulation sim(s, simType, options);
     double t = 10.0;
     for (std::size_t step = 0; step < 2; ++step) {
-      auto options = sim.getIntegratorOptions();
-      options.maxAbsErr = std::numeric_limits<double>::max();
-      options.maxRelErr = simRelErr;
-      options.maxTimestep = dt;
-      sim.setIntegratorOptions(options);
       sim.doTimestep(t);
       for (auto speciesIndex : {std::size_t{0}, std::size_t{1}}) {
         // check total concentration is conserved
@@ -423,24 +409,13 @@ SCENARIO(
         f.open(QIODevice::ReadOnly)) {
       s.importSBMLString(f.readAll().toStdString());
     }
+    simulate::Options options;
+    options.pixel.maxErr = {std::numeric_limits<double>::max(), 0.001};
+    options.pixel.maxThreads = 2;
+    options.dune.dt = 0.5;
     for (auto simulator :
          {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
-      auto sim = simulate::Simulation(s, simulator);
-      double simRelErr = 0.001;
-      double dt = std::numeric_limits<double>::max();
-      if (simulator == simulate::SimulatorType::DUNE) {
-        REQUIRE(sim.getMaxThreads() == 0);
-        // DuneSim ignores setMaxThreads call: always single threaded
-        sim.setMaxThreads(2);
-        REQUIRE(sim.getMaxThreads() == 0);
-        dt = 0.5;
-        simRelErr = std::numeric_limits<double>::max();
-      }
-      auto options = sim.getIntegratorOptions();
-      options.maxAbsErr = std::numeric_limits<double>::max();
-      options.maxRelErr = simRelErr;
-      options.maxTimestep = dt;
-      sim.setIntegratorOptions(options);
+      auto sim = simulate::Simulation(s, simulator, options);
       sim.doTimestep(50.0);
       auto timeIndex = sim.getTimePoints().size() - 1;
       // after many steps in a finite volume, diffusion has reached the limiting
@@ -471,32 +446,32 @@ SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
     s.importSBMLString(f.readAll().toStdString());
   }
   // do accurate simulation
-  simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
-  auto options = sim.getIntegratorOptions();
-  options.order = 4;
-  options.maxAbsErr = std::numeric_limits<double>::max();
-  options.maxRelErr = 1e-6;
-  options.maxTimestep = std::numeric_limits<double>::max();
-  sim.setIntegratorOptions(options);
+  simulate::Options options;
+  options.pixel.maxErr = {std::numeric_limits<double>::max(), 1e-6};
+  options.pixel.maxThreads = 2;
+  options.pixel.integrator = simulate::PixelIntegratorType::RK435;
+  simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
   sim.doTimestep(time);
   auto c4_accurate = sim.getConc(sim.getTimePoints().size() - 1, 0, 0);
   // check lower accuracy & different orders are consistent
-  for (std::size_t order = 2; order < 5; ++order) {
+  for (auto integrator : {simulate::PixelIntegratorType::RK212,
+                          simulate::PixelIntegratorType::RK323,
+                          simulate::PixelIntegratorType::RK435}) {
     double maxRelDiff = 0;
-    simulate::Simulation sim2(s, simulate::SimulatorType::Pixel);
-    options.order = order;
-    options.maxRelErr = relErr;
-    sim2.setIntegratorOptions(options);
+    options.pixel.integrator = integrator;
+    options.pixel.maxErr = {std::numeric_limits<double>::max(), relErr};
+    simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
     sim2.doTimestep(time);
     auto conc = sim2.getConc(sim.getTimePoints().size() - 1, 0, 0);
     for (std::size_t i = 0; i < conc.size(); ++i) {
       maxRelDiff = std::max(maxRelDiff, (conc[i] - c4_accurate[i]) /
                                             (c4_accurate[i] + eps));
     }
-    CAPTURE(order);
+    CAPTURE(integrator);
     REQUIRE(maxRelDiff < relErr);
   }
 }
+
 SCENARIO("DUNE: simulation",
          "[core/simulate/simulate][core/simulate][core][simulate][dune]") {
   GIVEN("ABtoC model") {
@@ -510,10 +485,9 @@ SCENARIO("DUNE: simulation",
     s.getSpecies().setInitialConcentration("B", 1.0);
     s.getSpecies().setInitialConcentration("C", 0.0);
 
-    simulate::Simulation duneSim(s);
-    auto options = duneSim.getIntegratorOptions();
-    options.maxTimestep = 0.01;
-    duneSim.setIntegratorOptions(options);
+    simulate::Options options;
+    options.dune.dt = 0.01;
+    simulate::Simulation duneSim(s, simulate::SimulatorType::DUNE, options);
     REQUIRE(duneSim.getAvgMinMax(0, 0, 0).avg == dbl_approx(1.0));
     REQUIRE(duneSim.getAvgMinMax(0, 0, 1).avg == dbl_approx(1.0));
     REQUIRE(duneSim.getAvgMinMax(0, 0, 2).avg == dbl_approx(0.0));
@@ -531,10 +505,9 @@ SCENARIO("DUNE: simulation",
         f.open(QIODevice::ReadOnly)) {
       s.importSBMLString(f.readAll().toStdString());
     }
-    simulate::Simulation duneSim(s);
-    auto options = duneSim.getIntegratorOptions();
-    options.maxTimestep = 0.01;
-    duneSim.setIntegratorOptions(options);
+    simulate::Options options;
+    options.dune.dt = 0.01;
+    simulate::Simulation duneSim(s, simulate::SimulatorType::DUNE, options);
     duneSim.doTimestep(0.01);
     REQUIRE(duneSim.errorMessage().empty());
   }

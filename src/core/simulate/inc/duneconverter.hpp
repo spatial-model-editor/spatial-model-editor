@@ -20,7 +20,8 @@ namespace simulate {
 class DuneConverter {
 public:
   explicit DuneConverter(const model::Model &model, bool forExternalUse = false,
-                         double dt = 1e-2, const QString& iniFileName={}, int doublePrecision = 18);
+                         double dt = 1e-2, const QString &outputIniFile = {},
+                         int doublePrecision = 18);
   QString getIniFile() const;
   const std::unordered_set<int> &getGMSHCompIndices() const;
   bool hasIndependentCompartments() const;

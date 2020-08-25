@@ -13,19 +13,16 @@
 
 namespace simulate {
 
-Simulation::Simulation(const model::Model &sbmlDoc, SimulatorType simType,
-                       std::size_t integratorOrder)
-    : simulatorType(simType),
-      imageSize(sbmlDoc.getGeometry().getImage().size()) {
+void Simulation::initModel(const model::Model &model) {
   // get compartments with interacting species, name & colour of each species
-  for (const auto &compartmentId : sbmlDoc.getCompartments().getIds()) {
+  for (const auto &compartmentId : model.getCompartments().getIds()) {
     std::vector<std::string> sIds;
     std::vector<QRgb> cols;
     const geometry::Compartment *comp = nullptr;
-    for (const auto &s : sbmlDoc.getSpecies().getIds(compartmentId)) {
-      if (!sbmlDoc.getSpecies().getIsConstant(s)) {
+    for (const auto &s : model.getSpecies().getIds(compartmentId)) {
+      if (!model.getSpecies().getIsConstant(s)) {
         sIds.push_back(s.toStdString());
-        const auto &field = sbmlDoc.getSpecies().getField(s);
+        const auto &field = model.getSpecies().getField(s);
         cols.push_back(field->getColour());
         comp = field->getCompartment();
       }
@@ -41,45 +38,6 @@ Simulation::Simulation(const model::Model &sbmlDoc, SimulatorType simType,
       compartments.push_back(comp);
     }
   }
-  // init simulator
-  if (simulatorType == SimulatorType::DUNE &&
-      sbmlDoc.getGeometry().getMesh() != nullptr &&
-      sbmlDoc.getGeometry().getMesh()->isValid()) {
-    simulator = std::make_unique<DuneSim>(
-        sbmlDoc, compartmentIds, compartmentSpeciesIds, integratorOrder);
-  } else {
-    simulator = std::make_unique<PixelSim>(
-        sbmlDoc, compartmentIds, compartmentSpeciesIds, integratorOrder);
-  }
-  updateConcentrations(0);
-}
-
-Simulation::~Simulation() = default;
-
-IntegratorOptions Simulation::getIntegratorOptions() const {
-  IntegratorOptions options;
-  options.order = simulator->getIntegrationOrder();
-  options.maxRelErr = simulator->getIntegratorError().rel;
-  options.maxAbsErr = simulator->getIntegratorError().abs;
-  options.maxTimestep = simulator->getMaxDt();
-  return options;
-}
-
-void Simulation::setIntegratorOptions(const IntegratorOptions &options) {
-  simulator->setIntegrationOrder(options.order);
-  auto e = simulator->getIntegratorError();
-  e.rel = options.maxRelErr;
-  e.abs = options.maxAbsErr;
-  simulator->setIntegratorError(e);
-  simulator->setMaxDt(options.maxTimestep);
-}
-
-void Simulation::setMaxThreads(std::size_t maxThreads) {
-  simulator->setMaxThreads(maxThreads);
-}
-
-std::size_t Simulation::getMaxThreads() const {
-  return simulator->getMaxThreads();
 }
 
 static std::vector<AvgMinMax>
@@ -100,20 +58,6 @@ calculateAvgMinMax(const std::vector<double> &concs, std::size_t nSpecies) {
   return avgMinMax;
 }
 
-std::size_t Simulation::doTimestep(double time) {
-  SPDLOG_DEBUG("integrating for time {}", time);
-  SPDLOG_DEBUG("  - max rel local err {}", simulator->getIntegratorError().rel);
-  SPDLOG_DEBUG("  - max abs local err {}", simulator->getIntegratorError().abs);
-  SPDLOG_DEBUG("  - max stepsize {}", simulator->getMaxDt());
-  std::size_t steps = simulator->run(time);
-  updateConcentrations(timePoints.back() + time);
-  return steps;
-}
-
-std::string Simulation::errorMessage() const {
-  return simulator->errorMessage();
-}
-
 void Simulation::updateConcentrations(double t) {
   SPDLOG_DEBUG("updating Concentrations at time {}", t);
   timePoints.push_back(t);
@@ -132,6 +76,37 @@ void Simulation::updateConcentrations(double t) {
       maxC[is] = std::max(maxC[is], a.back()[is].max);
     }
   }
+}
+
+Simulation::Simulation(const model::Model &sbmlDoc, SimulatorType simType,
+                       const Options &options)
+    : simulatorType(simType),
+      imageSize(sbmlDoc.getGeometry().getImage().size()) {
+  initModel(sbmlDoc);
+  // init simulator
+  if (simulatorType == SimulatorType::DUNE &&
+      sbmlDoc.getGeometry().getMesh() != nullptr &&
+      sbmlDoc.getGeometry().getMesh()->isValid()) {
+    simulator = std::make_unique<DuneSim>(sbmlDoc, compartmentIds,
+                                          compartmentSpeciesIds, options.dune);
+  } else {
+    simulator = std::make_unique<PixelSim>(
+        sbmlDoc, compartmentIds, compartmentSpeciesIds, options.pixel);
+  }
+  updateConcentrations(0);
+}
+
+Simulation::~Simulation() = default;
+
+std::size_t Simulation::doTimestep(double time) {
+  SPDLOG_DEBUG("integrating for time {}", time);
+  std::size_t steps = simulator->run(time);
+  updateConcentrations(timePoints.back() + time);
+  return steps;
+}
+
+std::string Simulation::errorMessage() const {
+  return simulator->errorMessage();
 }
 
 const std::vector<std::string> &Simulation::getCompartmentIds() const {
@@ -175,8 +150,11 @@ std::vector<double> Simulation::getConc(std::size_t timeIndex,
 double Simulation::getLowerOrderConc(std::size_t compartmentIndex,
                                      std::size_t speciesIndex,
                                      std::size_t pixelIndex) const {
-  return simulator->getLowerOrderConcentration(compartmentIndex, speciesIndex,
-                                               pixelIndex);
+  if (auto *s = dynamic_cast<PixelSim *>(simulator.get()); s != nullptr) {
+    return s->getLowerOrderConcentration(compartmentIndex, speciesIndex,
+                                         pixelIndex);
+  }
+  return 0;
 }
 
 QImage Simulation::getConcImage(

@@ -19,10 +19,9 @@ static std::string toString(const simulate::SimulatorType &s) {
 
 static void printHelpMessage() {
   fmt::print("\nUsage:\n\n");
-  fmt::print(
-      "./spatial-cli sbml-model-file.xml "
-      "[simulator=dune] [simulation_time=100] [image_interval=10] "
-      "[max_cpu_threads=0]\n");
+  fmt::print("./spatial-cli sbml-model-file.xml "
+             "[simulator=dune] [simulation_time=100] [image_interval=10] "
+             "[max_cpu_threads=0]\n");
   fmt::print("\nPossible values for simulator:\n");
   fmt::print("  - DUNE\n");
   fmt::print("  - Pixel\n");
@@ -93,21 +92,13 @@ static void doSimulation(const Params &params) {
   }
 
   // setup simulator options
-  simulate::Simulation sim(s, params.simType, 1);
-  auto options = sim.getIntegratorOptions();
+  simulate::Options options;
   if (params.simType == simulate::SimulatorType::DUNE) {
-    options.order = 1;
-    options.maxTimestep = params.imageInterval * 0.2;
-    options.maxAbsErr = std::numeric_limits<double>::max();
-    options.maxRelErr = std::numeric_limits<double>::max();
+    options.dune.dt = params.imageInterval * 0.2;
   } else {
-    options.order = 2;
-    options.maxTimestep = std::numeric_limits<double>::max();
-    options.maxAbsErr = std::numeric_limits<double>::max();
-    options.maxRelErr = 0.01;
+    options.pixel.maxThreads = params.maxThreads;
   }
-  sim.setIntegratorOptions(options);
-  sim.setMaxThreads(params.maxThreads);
+  simulate::Simulation sim(s, params.simType, options);
 
   fmt::print("# t = {} [img{}.png]\n", sim.getTimePoints().back(),
              sim.getTimePoints().size() - 1);

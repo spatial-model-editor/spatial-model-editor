@@ -177,26 +177,28 @@ void DuneSim::updatePixels() {
 DuneSim::DuneSim(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
     const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
-    std::size_t order)
+    const DuneOptions &options)
     : geometryImageSize{sbmlDoc.getGeometry().getImage().size()},
       pixelSize{sbmlDoc.getGeometry().getPixelWidth()},
-      pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()}, integratorOrder{
-                                                                  order} {
-  simulate::DuneConverter dc(sbmlDoc, false, 1e-6);
-  if (integratorOrder != 1) {
+      pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()},
+      integrator{options.integrator}, dt{options.dt} {
+  simulate::DuneConverter dc(sbmlDoc, false, dt);
+  if (integrator != DuneIntegratorType::FEM1) {
     // for now we only support 1st order FEM
     // in future could add:
     //  - 0th order a.k.a. FVM for independent compartment models
     //  - 2nd order FEM for both types of models
-    SPDLOG_WARN("Invalid order {} requested - using 1st order FEM instead",
-                integratorOrder);
-    integratorOrder = 1;
+    SPDLOG_WARN(
+        "Invalid integrator type requested - using 1st order FEM instead");
+    integrator = DuneIntegratorType::FEM1;
   }
   try {
     if (dc.hasIndependentCompartments()) {
-      pDuneImpl = std::make_unique<DuneImplIndependent<1>>(dc);
+      pDuneImpl =
+          std::make_unique<DuneImplIndependent<1>>(dc, options.writeVTKfiles);
     } else {
-      pDuneImpl = std::make_unique<DuneImplCoupled<1>>(dc);
+      pDuneImpl =
+          std::make_unique<DuneImplCoupled<1>>(dc, options.writeVTKfiles);
     }
     pDuneImpl->setInitial(dc);
     initCompartmentNames();
@@ -228,40 +230,12 @@ DuneSim::DuneSim(
 
 DuneSim::~DuneSim() = default;
 
-void DuneSim::setIntegrationOrder(std::size_t order) {
-  if (order != integratorOrder) {
-    SPDLOG_WARN(
-        "Integration order cannot be changed once DUNE simulation is created - "
-        "ignoring request to change order from {} to {}",
-        integratorOrder, order);
-  }
-}
-
-std::size_t DuneSim::getIntegrationOrder() const { return integratorOrder; }
-
-void DuneSim::setIntegratorError(const IntegratorError &err) { errMax = err; }
-
-IntegratorError DuneSim::getIntegratorError() const { return errMax; }
-
-void DuneSim::setMaxDt(double maxDt) {
-  SPDLOG_INFO("Setting max timestep: {}", maxDt);
-  maxTimestep = maxDt;
-}
-
-double DuneSim::getMaxDt() const { return maxTimestep; }
-
-void DuneSim::setMaxThreads([[maybe_unused]] std::size_t maxThreads) {
-  SPDLOG_INFO("DUNE is single threaded - ignoring");
-}
-
-std::size_t DuneSim::getMaxThreads() const { return 0; }
-
 std::size_t DuneSim::run(double time) {
   if (pDuneImpl == nullptr) {
     return 0;
   }
   try {
-    pDuneImpl->run(time, maxTimestep);
+    pDuneImpl->run(time, dt);
     updateSpeciesConcentrations();
     currentErrorMessage.clear();
   } catch (const Dune::SolverAbort &e) {

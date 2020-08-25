@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "simulate_options.hpp"
 #include <QImage>
 #include <QRgb>
 #include <QSize>
@@ -30,17 +31,12 @@ struct AvgMinMax {
   double max = 0;
 };
 
-struct IntegratorOptions {
-  std::size_t order = 2;
-  double maxRelErr = 0.01;
-  double maxAbsErr = std::numeric_limits<double>::max();
-  double maxTimestep = std::numeric_limits<double>::max();
-};
-
 class Simulation {
 private:
-  SimulatorType simulatorType;
   std::unique_ptr<BaseSim> simulator;
+  SimulatorType simulatorType;
+  DuneOptions duneOptions;
+  PixelOptions pixelOptions;
   std::vector<const geometry::Compartment *> compartments;
   std::vector<std::string> compartmentIds;
   // compartment->species
@@ -55,17 +51,14 @@ private:
   // compartment->species
   std::vector<std::vector<double>> maxConcWholeSimulation;
   QSize imageSize;
+  void initModel(const model::Model &model);
   void updateConcentrations(double t);
 
 public:
   explicit Simulation(const model::Model &sbmlDoc,
                       SimulatorType simType = SimulatorType::DUNE,
-                      std::size_t integratorOrder = 1);
+                      const Options &options = {});
   ~Simulation();
-  IntegratorOptions getIntegratorOptions() const;
-  void setIntegratorOptions(const IntegratorOptions &options);
-  void setMaxThreads(std::size_t maxThreads);
-  std::size_t getMaxThreads() const;
 
   std::size_t doTimestep(double time);
   std::string errorMessage() const;
