@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/">
-	<file>icon64.png</file>
-	<file>icon128.png</file>
+        <file>icon/icon64.png</file>
+        <file>icon/icon128.png</file>
         <file>models/ABtoC.xml</file>
         <file>models/brusselator-model.xml</file>
         <file>models/circadian-clock.xml</file>

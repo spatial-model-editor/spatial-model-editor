@@ -39,7 +39,7 @@ DialogAbout::DialogAbout(QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogAbout>()} {
   ui->setupUi(this);
 
-  ui->lblLogo->setPixmap(QPixmap(":/icon128.png"));
+  ui->lblLogo->setPixmap(QPixmap(":/icon/icon128.png"));
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogAbout::accept);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,

@@ -184,7 +184,10 @@ void MainWindow::tabMain_currentChanged(int index) {
 void MainWindow::validateSBMLDoc(const QString &filename) {
   if (!sbmlDoc.getIsValid()) {
     sbmlDoc.createSBMLFile("untitled-model");
-    if (!filename.isEmpty()) {
+    if (!filename.isEmpty() && filename.left(5) != ("-psn_")) {
+      // MacOS sometimes passes a command line parameter of the form `-psn_0_204850`
+      // to the executable when launched as a GUI app, so in this case we don't
+      // warn the user that we can't open this non-existent file
       QMessageBox::warning(this, "Failed to load file",
                            "Failed to load file " + filename);
     }
