@@ -73,18 +73,16 @@ ModelCompartments::ModelCompartments(libsbml::Model *model,
                                      ModelGeometry *geometry,
                                      ModelMembranes *membranes,
                                      ModelSpecies *species)
-    : ids{importIds(model)},
-      names{importNamesAndMakeUnique(model, ids)},
-      sbmlModel{model},
-      modelGeometry{geometry},
-      modelMembranes{membranes},
+    : ids{importIds(model)}, names{importNamesAndMakeUnique(model, ids)},
+      sbmlModel{model}, modelGeometry{geometry}, modelMembranes{membranes},
       modelSpecies{species} {
   makeSizesValid(model);
   colours = QVector<QRgb>(ids.size(), 0);
   compartments.reserve(static_cast<std::size_t>(ids.size()));
   createDefaultCompartmentGeometryIfMissing(model);
   for (const auto &id : ids) {
-    compartments.push_back({id.toStdString(), {}, 0});
+    compartments.push_back(
+        std::make_unique<geometry::Compartment>(id.toStdString(), QImage{}, 0));
   }
 }
 
@@ -112,12 +110,12 @@ QString ModelCompartments::add(const QString &name) {
   ids.push_back(id);
   names.push_back(newName);
   colours.push_back(0);
-  compartments.emplace_back();
+  compartments.push_back(std::make_unique<geometry::Compartment>());
   createDefaultCompartmentGeometryIfMissing(sbmlModel);
   modelGeometry->checkIfGeometryIsValid();
   modelMembranes->updateCompartments(compartments);
   modelMembranes->updateCompartmentNames(names, sbmlModel);
-  return newName;  // should be id?
+  return newName; // should be id?
 }
 
 static void removeCompartmentFromSBML(libsbml::Model *model,
@@ -214,8 +212,8 @@ QString ModelCompartments::setName(const QString &id, const QString &name) {
   return uniqueName;
 }
 
-std::optional<QPointF> ModelCompartments::getInteriorPoint(
-    const QString &id) const {
+std::optional<QPointF>
+ModelCompartments::getInteriorPoint(const QString &id) const {
   SPDLOG_INFO("compartmentID: {}", id.toStdString());
   const auto *comp = sbmlModel->getCompartment(id.toStdString());
   const auto *scp = static_cast<const libsbml::SpatialCompartmentPlugin *>(
@@ -282,7 +280,8 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   }
   colours[i] = colour;
   compartments[static_cast<std::size_t>(i)] =
-      geometry::Compartment(sId, modelGeometry->getImage(), colour);
+      std::make_unique<geometry::Compartment>(sId, modelGeometry->getImage(),
+                                              colour);
   // set SampledValue (aka colour) of SampledFieldVolume
   auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
       sbmlModel->getCompartment(sId)->getPlugin("spatial"));
@@ -329,8 +328,8 @@ QString ModelCompartments::getIdFromColour(QRgb colour) const {
   return ids[i];
 }
 
-const std::vector<geometry::Compartment> &ModelCompartments::getCompartments()
-    const {
+const std::vector<std::unique_ptr<geometry::Compartment>> &
+ModelCompartments::getCompartments() const {
   return compartments;
 }
 
@@ -339,16 +338,16 @@ geometry::Compartment *ModelCompartments::getCompartment(const QString &id) {
   if (i < 0) {
     return nullptr;
   }
-  return &compartments[static_cast<std::size_t>(i)];
+  return compartments[static_cast<std::size_t>(i)].get();
 }
 
-const geometry::Compartment *ModelCompartments::getCompartment(
-    const QString &id) const {
+const geometry::Compartment *
+ModelCompartments::getCompartment(const QString &id) const {
   auto i = ids.indexOf(id);
   if (i < 0) {
     return nullptr;
   }
-  return &compartments[static_cast<std::size_t>(i)];
+  return compartments[static_cast<std::size_t>(i)].get();
 }
 
 void ModelCompartments::clear() {
@@ -358,4 +357,4 @@ void ModelCompartments::clear() {
   compartments.clear();
 }
 
-}  // namespace model
+} // namespace model

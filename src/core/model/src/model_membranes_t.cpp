@@ -20,9 +20,11 @@ SCENARIO("SBML membranes",
       img.fill(col1);
       img.setPixel(1, 1, col0);
       img = img.convertToFormat(QImage::Format_Indexed8);
-      std::vector<geometry::Compartment> compartments;
-      compartments.emplace_back("c0", img, col0);
-      compartments.emplace_back("c1", img, col1);
+      std::vector<std::unique_ptr<geometry::Compartment>> compartments;
+      compartments.push_back(
+          std::make_unique<geometry::Compartment>("c0", img, col0));
+      compartments.push_back(
+          std::make_unique<geometry::Compartment>("c1", img, col1));
       QStringList names{"c0 name", "c1 name"};
       model::ModelMembranes ms;
       ms.updateCompartmentImage(img);

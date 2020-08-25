@@ -78,13 +78,13 @@ void ModelMembranes::updateCompartmentNames(const QStringList &compartmentNames,
 }
 
 void ModelMembranes::updateCompartments(
-    const std::vector<geometry::Compartment> &compartments) {
+    const std::vector<std::unique_ptr<geometry::Compartment>> &compartments) {
   compIds.clear();
   compIds.reserve(static_cast<int>(compartments.size()));
   for (const auto &compartment : compartments) {
-    compIds.push_back(compartment.getId().c_str());
-    SPDLOG_TRACE("  - {}", compartment.getId());
-    SPDLOG_TRACE("    - {:x}", compartment.getColour());
+    compIds.push_back(compartment->getId().c_str());
+    SPDLOG_TRACE("  - {}", compartment->getId());
+    SPDLOG_TRACE("    - {:x}", compartment->getColour());
   }
   membranes.clear();
   idColourPairs.clear();
@@ -94,8 +94,8 @@ void ModelMembranes::updateCompartments(
   }
   for (std::size_t j = 1; j < compartments.size(); ++j) {
     for (std::size_t i = 0; i < j; ++i) {
-      const auto *compA = &compartments[i];
-      const auto *compB = &compartments[j];
+      const auto *compA = compartments[i].get();
+      const auto *compB = compartments[j].get();
       auto colourA = compA->getColour();
       auto colourB = compB->getColour();
       if (colourA == 0 || colourB == 0) {
