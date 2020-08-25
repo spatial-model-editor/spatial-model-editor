@@ -12,9 +12,7 @@
 
 TabReactions::TabReactions(model::Model &model,
                            QLabelMouseTracker *mouseTracker, QWidget *parent)
-    : QWidget{parent},
-      ui{std::make_unique<Ui::TabReactions>()},
-      model{model},
+    : QWidget{parent}, ui{std::make_unique<Ui::TabReactions>()}, model{model},
       lblGeometry{mouseTracker} {
   ui->setupUi(this);
 
@@ -102,7 +100,7 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
     if (auto numComps = model.getCompartments().getIds().size(); i < numComps) {
       lblGeometry->setImage(model.getCompartments()
                                 .getCompartments()[static_cast<std::size_t>(i)]
-                                .getCompartmentImage());
+                                ->getCompartmentImage());
     } else {
       i -= numComps;
       lblGeometry->setImage(model.getMembranes()

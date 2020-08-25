@@ -6,6 +6,7 @@
 #include <QRgb>
 #include <QStringList>
 #include <QVector>
+#include <memory>
 #include <optional>
 
 #include "geometry.hpp"
@@ -20,17 +21,17 @@ class ModelMembranes;
 class ModelSpecies;
 
 class ModelCompartments {
- private:
+private:
   QStringList ids;
   QStringList names;
   QVector<QRgb> colours;
-  std::vector<geometry::Compartment> compartments;
+  std::vector<std::unique_ptr<geometry::Compartment>> compartments;
   libsbml::Model *sbmlModel = nullptr;
   ModelGeometry *modelGeometry = nullptr;
   ModelMembranes *modelMembranes = nullptr;
   ModelSpecies *modelSpecies = nullptr;
 
- public:
+public:
   ModelCompartments();
   ModelCompartments(libsbml::Model *model, ModelGeometry *geometry,
                     ModelMembranes *membranes, ModelSpecies *species);
@@ -46,10 +47,11 @@ class ModelCompartments {
   void setColour(const QString &id, QRgb colour);
   QRgb getColour(const QString &id) const;
   QString getIdFromColour(QRgb colour) const;
-  const std::vector<geometry::Compartment> &getCompartments() const;
+  const std::vector<std::unique_ptr<geometry::Compartment>> &
+  getCompartments() const;
   geometry::Compartment *getCompartment(const QString &id);
   const geometry::Compartment *getCompartment(const QString &id) const;
   void clear();
 };
 
-}  // namespace model
+} // namespace model

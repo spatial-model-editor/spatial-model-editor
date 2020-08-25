@@ -22,7 +22,7 @@ class ImageMembranePixels;
 using QPointPair = std::pair<QPoint, QPoint>;
 
 class ModelMembranes {
- private:
+private:
   QStringList ids;
   QStringList names;
   QStringList compIds;
@@ -30,19 +30,19 @@ class ModelMembranes {
   std::unique_ptr<ImageMembranePixels> membranePixels;
   std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>> idColourPairs;
 
- public:
+public:
   const QStringList &getIds() const;
   const QStringList &getNames() const;
   QString getName(const QString &id) const;
   const std::vector<geometry::Membrane> &getMembranes() const;
   const geometry::Membrane *getMembrane(const QString &id) const;
-  const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>>
-      &getIdColourPairs() const;
+  const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>> &
+  getIdColourPairs() const;
   void clear();
   void updateCompartmentNames(const QStringList &compartmentNames,
                               const libsbml::Model *model);
   void updateCompartments(
-      const std::vector<geometry::Compartment> &compartments);
+      const std::vector<std::unique_ptr<geometry::Compartment>> &compartments);
   void updateCompartmentImage(const QImage &img);
   void importMembraneIdsAndNames(const libsbml::Model *model);
   void exportToSBML(libsbml::Model *model);
@@ -54,4 +54,4 @@ class ModelMembranes {
   ~ModelMembranes();
 };
 
-}  // namespace model
+} // namespace model
