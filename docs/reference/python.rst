@@ -9,7 +9,7 @@ A Python interface is available, which can be installed with
 
 .. note::
 
-    If your python version or platform is not supported, please file an `issue <https://github.com/lkeegan/spatial-model-editor/issues/new>`_
+    If your python version or platform is not supported, please submit a `feature request <https://github.com/lkeegan/spatial-model-editor/issues/new?assignees=&labels=&template=feature_request.md&title=add%20support%20for%20new%20Python%20platform>`_
 
 Once it is installed, you should be able to import the module
 
