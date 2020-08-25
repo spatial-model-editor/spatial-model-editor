@@ -1,4 +1,4 @@
-<img align="left" width="64" height="64" src="https://raw.githubusercontent.com/lkeegan/spatial-model-editor/logo/src/core/resources/icon64.png" alt="icon">
+<img align="left" width="64" height="64" src="https://raw.githubusercontent.com/lkeegan/spatial-model-editor/master/src/core/resources/icon64.png" alt="icon">
 
 # Spatial Model Editor
 

@@ -21,19 +21,7 @@ Time integration
 
 Time integration is performed using explicit Runge-Kutta integrators. Compared to implicit integrators, they are easier to implement and offer better performance (for the same timestep). However they become unstable if the timestep :math:`h` is made too large, so in practice they can end up being slower than implicit methods for stiff problems, where the timestep is forced to be very small to maintain stability.
 
-These integrators have three sources of error:
-
-* Round-off error due to finite precision
-   * mostly only relevant for high order solvers: not relevant here
-* Truncation error due to finite order of integration scheme
-   * we are generally forced by the diffusion term to make the timestep small to maintain stability
-   * no benefit to having time integration errors significantly smaller than the spatial discretisation errors
-   * so this is also typically not a concern
-* Numerical instability of integrator
-   * a problem when ODEs become stiff, e.g. high rate of diffusion, stiff reaction terms
-   * this is our main concern
-
-Solvers differ in their:
+Integrators differ in their:
 
 * order of truncation error
 * order of embedded error estimate (if any)
@@ -41,22 +29,23 @@ Solvers differ in their:
 * region of stability (can be increased by adding more stages)
 * memory requirements
 
-Implemented solvers:
+Implemented integrators:
 
-* Forwards Euler
+* Euler
    * 1st order solution
    * no error estimate
    * 1 stage
+   * see e.g. https://en.wikipedia.org/wiki/Euler_method
 * Embedded Heun / modified Euler
    * 2nd order solution
    * 1st order error estimate
    * 2 stages
-   * see e.g. eq(2.15) of https://doi.org/10.1016/0021-9991(88)90177-5
+   * see e.g. eq (2.15) of https://doi.org/10.1016/0021-9991(88)90177-5
 * Embedded Shu-Osher
    * 3rd order solution
    * 2nd order error estimate
    * 3 stages
-   * see eq(2.17) of https://doi.org/10.1016/0021-9991(88)90177-5
+   * see eq (2.17) of https://doi.org/10.1016/0021-9991(88)90177-5
 * RK4(3)5[3S*]
    * 4th order solution
    * 3rd order error estimate
@@ -68,22 +57,32 @@ Implemented solvers:
 
    An example of the convergence of the included RK integrators: relative error of the solution at a particular pixel as a function of the stepsize.
 
+These integrators have three sources of error:
+
+* Round-off error due to finite precision
+   * mostly only relevant for high order solvers: not relevant here
+* Truncation error due to finite order of integration scheme
+   * we are generally forced by the diffusion term to make the timestep small to maintain stability
+   * also no benefit from making the time integration errors significantly smaller than the spatial discretisation errors
+   * so this is also typically not a concern
+* Numerical instability of integrator
+   * a problem when ODEs become stiff, e.g. high rate of diffusion, stiff reaction terms
+   * avoiding these instabilities is our main concern
 
 Adaptive timestep
 -----------------
 
-We use the embedded lower order solution to estimate the error, and from this adapt the stepsize during the integration. There are many ways to do this, and some experimentation will be necessary to find settings that are robust, but the current scheme is the following
+We use the embedded lower order solution to estimate the error at each timestep, and use this to adapt the stepsize during the integration:
 
 * RK gives us a pair of :math:`u_{n+1}^{(p)} = u_{n} + \mathcal{O}(h^{p+1})` solutions
-* difference between :math:`p, p-1` solutions gives *local* error of order `\mathcal{O}(p)`
-* to get the relative error we divide this by the *local* concentration
-   * to avoid dividing by zero, we approximate this by :math:`c = ( |c_{n+1}| + |c_{n}| + \epsilon)/2`
-   * i.e. the average of the old and new concentration, plus a (hopefully) small constant
+* difference between :math:`p, p-1` solutions gives local error of order :math:`\mathcal{O}(p)`
+* to get the relative error we divide this by :math:`c = ( |c_{n+1}| + |c_{n}| + \epsilon)/2`
+* we use the average of the old and new concentration, plus a small constant, to avoid dividing by zero
 * we do this for all species, compartments and spatial points, and take the maximum value
-* if the error was larger than the desired value, the step is discarded
+* if this error is larger than the desired value, the whole step is discarded
 * the new timestep is given by :math:`0.98 dt_{old} (err_{desired}/err_{measured})^{1/p}`
-   * where the 0.98 factor is slightly less than 1 since we are neglecting higher order terms
-   * better to have a slightly smaller timestep than to repeat the whole step
+* the 0.98 factor is slightly less than 1 to account for the higher order terms that are neglected here
+* it is better to have a slightly smaller timestep than to have to repeat the whole step
 
 .. figure:: img/embedded.png
    :alt: difference between solutions of different order from embedded schemes
@@ -93,7 +92,7 @@ We use the embedded lower order solution to estimate the error, and from this ad
 Maximum timestep
 ----------------
 
-For the forwards Euler solver, we don't have an estimate of the error, so we can't automatically adjust the stepsize. However, if we ignore the reaction terms, there is an analytic upper bound on the size of timestep that can be used for forwards Euler, above which the system becomes unstable:
+For the Euler method, we don't have an embedded lower order solution from which we can estimate of the error, so we can't automatically adjust the stepsize. However, if we ignore the reaction terms, there is an analytic upper bound on the size of timestep that can be used for Euler, above which the system becomes unstable:
 
 .. math::
 
@@ -104,7 +103,7 @@ So if the user selects a timestep larger than this, the simulator automatically 
 .. figure:: img/runtime.png
    :alt: runtime of the RK integrators
 
-   An example of the runtime of the RK integrators as a function of the relative error on the final solution.
+   An example of the runtime of the RK integrators as a function of the relative error on the final solution. The higher order integrators offer better performance if a very accurate solution is required, but at lower accuracy the lower order integrators are much faster.
 
 Boundary Conditions
 -------------------
