@@ -1,13 +1,12 @@
-#include <sbml/SBMLDocument.h>
-#include <sbml/SBMLReader.h>
-#include <sbml/SBMLWriter.h>
-
-#include <QFile>
-
 #include "catch_wrapper.hpp"
+#include "math_test_utils.hpp"
 #include "model.hpp"
 #include "pde.hpp"
 #include "sbml_test_data/invalid_dune_names.hpp"
+#include <QFile>
+#include <sbml/SBMLDocument.h>
+#include <sbml/SBMLReader.h>
+#include <sbml/SBMLWriter.h>
 
 SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
   GIVEN("ABtoC model") {
@@ -22,7 +21,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     REQUIRE(reac.getSpeciesIDs().size() == speciesIDs.size());
     REQUIRE(reac.getSpeciesIDs() == speciesIDs);
     REQUIRE(reac.size() == 1);
-    REQUIRE(reac.getExpression(0) == "A * B * k1");
+    REQUIRE(symEq(reac.getExpression(0), "A * B * k1"));
     REQUIRE_THROWS(reac.getExpression(1));
     REQUIRE(reac.getConstants(0)[5].first == "comp");
     REQUIRE(reac.getConstants(0)[5].second == dbl_approx(3149.0));
@@ -41,17 +40,17 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     model::Model s;
     s.importSBMLFile("tmp.xml");
     simulate::PDE pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"});
-    REQUIRE(pde.getRHS()[0] == "-0.1*x*dim");
-    REQUIRE(pde.getRHS()[1] == "-0.1*x*dim");
-    REQUIRE(pde.getRHS()[2] == "0.1*x*dim");
-    REQUIRE(pde.getJacobian()[0][0] == "-0.1*x");
-    REQUIRE(pde.getJacobian()[0][1] == "-0.1*dim");
-    REQUIRE(pde.getJacobian()[0][2] == "0");
-    REQUIRE(pde.getJacobian()[0][3] == "0");
-    REQUIRE(pde.getJacobian()[0][4] == "0");
-    REQUIRE(pde.getJacobian()[2][0] == "0.1*x");
-    REQUIRE(pde.getJacobian()[2][1] == "0.1*dim");
-    REQUIRE(pde.getJacobian()[2][2] == "0");
+    REQUIRE(symEq(pde.getRHS()[0], "-0.1*x*dim"));
+    REQUIRE(symEq(pde.getRHS()[1], "-0.1*x*dim"));
+    REQUIRE(symEq(pde.getRHS()[2], "0.1*x*dim"));
+    REQUIRE(symEq(pde.getJacobian()[0][0], "-0.1*x"));
+    REQUIRE(symEq(pde.getJacobian()[0][1], "-0.1*dim"));
+    REQUIRE(symEq(pde.getJacobian()[0][2], "0"));
+    REQUIRE(symEq(pde.getJacobian()[0][3], "0"));
+    REQUIRE(symEq(pde.getJacobian()[0][4], "0"));
+    REQUIRE(symEq(pde.getJacobian()[2][0], "0.1*x"));
+    REQUIRE(symEq(pde.getJacobian()[2][1], "0.1*dim"));
+    REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
   GIVEN("simple model with relabeling of variables") {
     std::unique_ptr<libsbml::SBMLDocument> doc(
@@ -61,17 +60,17 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     s.importSBMLFile("tmp.xml");
     simulate::PDE pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
                       {"dim_", "x__", "x_", "cos__", "cos_"});
-    REQUIRE(pde.getRHS()[0] == "-0.1*x__*dim_");
-    REQUIRE(pde.getRHS()[1] == "-0.1*x__*dim_");
-    REQUIRE(pde.getRHS()[2] == "0.1*x__*dim_");
-    REQUIRE(pde.getJacobian()[0][0] == "-0.1*x__");
-    REQUIRE(pde.getJacobian()[0][1] == "-0.1*dim_");
-    REQUIRE(pde.getJacobian()[0][2] == "0");
-    REQUIRE(pde.getJacobian()[0][3] == "0");
-    REQUIRE(pde.getJacobian()[0][4] == "0");
-    REQUIRE(pde.getJacobian()[2][0] == "0.1*x__");
-    REQUIRE(pde.getJacobian()[2][1] == "0.1*dim_");
-    REQUIRE(pde.getJacobian()[2][2] == "0");
+    REQUIRE(symEq(pde.getRHS()[0], "-0.1*x__*dim_"));
+    REQUIRE(symEq(pde.getRHS()[1], "-0.1*x__*dim_"));
+    REQUIRE(symEq(pde.getRHS()[2], "0.1*x__*dim_"));
+    REQUIRE(symEq(pde.getJacobian()[0][0], "-0.1*x__"));
+    REQUIRE(symEq(pde.getJacobian()[0][1], "-0.1*dim_"));
+    REQUIRE(symEq(pde.getJacobian()[0][2], "0"));
+    REQUIRE(symEq(pde.getJacobian()[0][3], "0"));
+    REQUIRE(symEq(pde.getJacobian()[0][4], "0"));
+    REQUIRE(symEq(pde.getJacobian()[2][0], "0.1*x__"));
+    REQUIRE(symEq(pde.getJacobian()[2][1], "0.1*dim_"));
+    REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
   GIVEN("invalid relabeling of variables") {
     THEN("ignore relabeling") {
@@ -82,17 +81,17 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
       s.importSBMLFile("tmp.xml");
       simulate::PDE pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
                         {"z", "y"});
-      REQUIRE(pde.getRHS()[0] == "-0.1*x*dim");
-      REQUIRE(pde.getRHS()[1] == "-0.1*x*dim");
-      REQUIRE(pde.getRHS()[2] == "0.1*x*dim");
-      REQUIRE(pde.getJacobian()[0][0] == "-0.1*x");
-      REQUIRE(pde.getJacobian()[0][1] == "-0.1*dim");
-      REQUIRE(pde.getJacobian()[0][2] == "0");
-      REQUIRE(pde.getJacobian()[0][3] == "0");
-      REQUIRE(pde.getJacobian()[0][4] == "0");
-      REQUIRE(pde.getJacobian()[2][0] == "0.1*x");
-      REQUIRE(pde.getJacobian()[2][1] == "0.1*dim");
-      REQUIRE(pde.getJacobian()[2][2] == "0");
+      REQUIRE(symEq(pde.getRHS()[0], "-0.1*x*dim"));
+      REQUIRE(symEq(pde.getRHS()[1], "-0.1*x*dim"));
+      REQUIRE(symEq(pde.getRHS()[2], "0.1*x*dim"));
+      REQUIRE(symEq(pde.getJacobian()[0][0], "-0.1*x"));
+      REQUIRE(symEq(pde.getJacobian()[0][1], "-0.1*dim"));
+      REQUIRE(symEq(pde.getJacobian()[0][2], "0"));
+      REQUIRE(symEq(pde.getJacobian()[0][3], "0"));
+      REQUIRE(symEq(pde.getJacobian()[0][4], "0"));
+      REQUIRE(symEq(pde.getJacobian()[2][0], "0.1*x"));
+      REQUIRE(symEq(pde.getJacobian()[2][1], "0.1*dim"));
+      REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
     }
   }
   GIVEN("rescaling of reactions & relabelling of variables") {
@@ -103,17 +102,17 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     s.importSBMLFile("tmp.xml");
     simulate::PDE pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
                       {"dim_", "x__", "x_", "cos__", "cos_"}, {"5"});
-    REQUIRE(pde.getRHS()[0] == "-0.02*x__*dim_");
-    REQUIRE(pde.getRHS()[1] == "-0.02*x__*dim_");
-    REQUIRE(pde.getRHS()[2] == "0.02*x__*dim_");
-    REQUIRE(pde.getJacobian()[0][0] == "-0.02*x__");
-    REQUIRE(pde.getJacobian()[0][1] == "-0.02*dim_");
-    REQUIRE(pde.getJacobian()[0][2] == "0");
-    REQUIRE(pde.getJacobian()[0][3] == "0");
-    REQUIRE(pde.getJacobian()[0][4] == "0");
-    REQUIRE(pde.getJacobian()[2][0] == "0.02*x__");
-    REQUIRE(pde.getJacobian()[2][1] == "0.02*dim_");
-    REQUIRE(pde.getJacobian()[2][2] == "0");
+    REQUIRE(symEq(pde.getRHS()[0], "-0.02*x__*dim_"));
+    REQUIRE(symEq(pde.getRHS()[1], "-0.02*x__*dim_"));
+    REQUIRE(symEq(pde.getRHS()[2], "0.02*x__*dim_"));
+    REQUIRE(symEq(pde.getJacobian()[0][0], "-0.02*x__"));
+    REQUIRE(symEq(pde.getJacobian()[0][1], "-0.02*dim_"));
+    REQUIRE(symEq(pde.getJacobian()[0][2], "0"));
+    REQUIRE(symEq(pde.getJacobian()[0][3], "0"));
+    REQUIRE(symEq(pde.getJacobian()[0][4], "0"));
+    REQUIRE(symEq(pde.getJacobian()[2][0], "0.02*x__"));
+    REQUIRE(symEq(pde.getJacobian()[2][1], "0.02*dim_"));
+    REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
   GIVEN("invalid rescaling of reactions") {
     THEN("ignore rescaling") {
@@ -124,17 +123,17 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
       s.importSBMLFile("tmp.xml");
       simulate::PDE pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"}, {},
                         {"10", "2"});
-      REQUIRE(pde.getRHS()[0] == "-0.1*x*dim");
-      REQUIRE(pde.getRHS()[1] == "-0.1*x*dim");
-      REQUIRE(pde.getRHS()[2] == "0.1*x*dim");
-      REQUIRE(pde.getJacobian()[0][0] == "-0.1*x");
-      REQUIRE(pde.getJacobian()[0][1] == "-0.1*dim");
-      REQUIRE(pde.getJacobian()[0][2] == "0");
-      REQUIRE(pde.getJacobian()[0][3] == "0");
-      REQUIRE(pde.getJacobian()[0][4] == "0");
-      REQUIRE(pde.getJacobian()[2][0] == "0.1*x");
-      REQUIRE(pde.getJacobian()[2][1] == "0.1*dim");
-      REQUIRE(pde.getJacobian()[2][2] == "0");
+      REQUIRE(symEq(pde.getRHS()[0], "-0.1*x*dim"));
+      REQUIRE(symEq(pde.getRHS()[1], "-0.1*x*dim"));
+      REQUIRE(symEq(pde.getRHS()[2], "0.1*x*dim"));
+      REQUIRE(symEq(pde.getJacobian()[0][0], "-0.1*x"));
+      REQUIRE(symEq(pde.getJacobian()[0][1], "-0.1*dim"));
+      REQUIRE(symEq(pde.getJacobian()[0][2], "0"));
+      REQUIRE(symEq(pde.getJacobian()[0][3], "0"));
+      REQUIRE(symEq(pde.getJacobian()[0][4], "0"));
+      REQUIRE(symEq(pde.getJacobian()[2][0], "0.1*x"));
+      REQUIRE(symEq(pde.getJacobian()[2][1], "0.1*dim"));
+      REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
     }
   }
 }
