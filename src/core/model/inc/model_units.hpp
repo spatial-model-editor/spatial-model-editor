@@ -65,9 +65,12 @@ private:
   UnitVector amount{{{"mol", "mole", 0}, {"mmol", "mole", -3}}, 1};
   QString concentration;
   QString diffusion;
+  QString compartmentReaction;
+  QString membraneReaction;
   libsbml::Model *sbmlModel;
   void updateConcentration();
   void updateDiffusion();
+  void updateReactions();
 
 public:
   explicit ModelUnits(libsbml::Model *model = nullptr);
@@ -93,6 +96,8 @@ public:
   void setAmountIndex(int index);
   const QString &getConcentration() const;
   const QString &getDiffusion() const;
+  const QString &getCompartmentReaction() const;
+  const QString &getMembraneReaction() const;
 };
 
 double rescale(double val, const Unit &oldUnit, const Unit &newUnit);

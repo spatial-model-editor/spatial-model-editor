@@ -91,7 +91,7 @@ void DialogUnits::btnEditTime_pressed() {
   DialogEditUnit dialog(u, "Time");
   if (dialog.exec() == QDialog::Accepted) {
     u = dialog.getUnit();
-    SPDLOG_INFO("New unit of time: {} ({})", u.name.toStdString());
+    SPDLOG_INFO("New unit of time: {}", u.name.toStdString());
     SPDLOG_INFO("  = {}", model::unitInBaseUnits(u).toStdString());
     ui->cmbTime->setItemText(i, u.name);
     cmbTime_currentIndexChanged(i);
@@ -104,7 +104,7 @@ void DialogUnits::btnEditLength_pressed() {
   DialogEditUnit dialog(u, "Length");
   if (dialog.exec() == QDialog::Accepted) {
     u = dialog.getUnit();
-    SPDLOG_INFO("New unit of length: {} ({})", u.name.toStdString());
+    SPDLOG_INFO("New unit of length: {}", u.name.toStdString());
     SPDLOG_INFO("  = {}", model::unitInBaseUnits(u).toStdString());
     ui->cmbLength->setItemText(i, u.name);
     cmbLength_currentIndexChanged(i);
@@ -117,7 +117,7 @@ void DialogUnits::btnEditVolume_pressed() {
   DialogEditUnit dialog(u, "Volume");
   if (dialog.exec() == QDialog::Accepted) {
     u = dialog.getUnit();
-    SPDLOG_INFO("New unit of volume: {} ({})", u.name.toStdString());
+    SPDLOG_INFO("New unit of volume: {}", u.name.toStdString());
     SPDLOG_INFO("  = {}", model::unitInBaseUnits(u).toStdString());
     ui->cmbVolume->setItemText(i, u.name);
     cmbVolume_currentIndexChanged(i);
@@ -130,7 +130,7 @@ void DialogUnits::btnEditAmount_pressed() {
   DialogEditUnit dialog(u, "Amount");
   if (dialog.exec() == QDialog::Accepted) {
     u = dialog.getUnit();
-    SPDLOG_INFO("New unit of amount: {} ({})", u.name.toStdString());
+    SPDLOG_INFO("New unit of amount: {}", u.name.toStdString());
     SPDLOG_INFO("  = {}", model::unitInBaseUnits(u).toStdString());
     ui->cmbAmount->setItemText(i, u.name);
     cmbAmount_currentIndexChanged(i);

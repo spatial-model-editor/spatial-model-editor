@@ -10,9 +10,11 @@ To describe a spatial model we need to define the following fundamental units:
 - `length` (e.g. `metre`)
 - `time` (e.g. `second`)
 
-For convenience we also treat volume as a fundamental unit
+Volume is given by `length`^3, but for user convenience we also treat volume as a fundamental unit
 
 - `volume` (e.g. `litre`)
+
+This allows the use of units such as `cm` for length and `mMol/mL` for concentration, instead of the equivalent but less common `mMol/cm^3`.
 
 Derived Units
 -------------
