@@ -93,6 +93,7 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
   ui->listReactionParams->setColumnCount(3);
   ui->listReactionParams->setHorizontalHeaderLabels({"Name", "Value", "Units"});
   ui->txtReactionRate->clear();
+  ui->lblReactionRateUnits->clear();
   ui->lblReactionRateStatus->clear();
   if (current != nullptr && current->parent() == nullptr) {
     // user selected a compartment or membrane: update image
@@ -136,12 +137,15 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
     compartmentId = m.getId().c_str();
     compartments = QStringList{m.getCompartmentA()->getId().c_str(),
                                m.getCompartmentB()->getId().c_str()};
+    ui->lblReactionRateUnits->setText(model.getUnits().getMembraneReaction());
   } else {
     compartmentId = model.getCompartments().getIds()[compartmentIndex];
     compartments = QStringList{compartmentId};
     lblGeometry->setImage(model.getCompartments()
                               .getCompartment(compartmentId)
                               ->getCompartmentImage());
+    ui->lblReactionRateUnits->setText(
+        model.getUnits().getCompartmentReaction());
   }
   int reactionIndex = current->parent()->indexOfChild(current);
   QString reactionId =

@@ -134,6 +134,14 @@ void ModelUnits::updateDiffusion() {
   diffusion = QString("%1^2/%2").arg(getLength().name).arg(getTime().name);
 }
 
+void ModelUnits::updateReactions() {
+  compartmentReaction = QString("%1/%2").arg(concentration).arg(getTime().name);
+  membraneReaction = QString("%1 / %2^2 / %3")
+                         .arg(getAmount().name)
+                         .arg(getLength().name)
+                         .arg(getTime().name);
+}
+
 ModelUnits::ModelUnits(libsbml::Model *model) : sbmlModel{model} {
   if (model != nullptr) {
     setTimeIndex(getOrAddUnitIndex(model, model->getTimeUnits(),
@@ -147,6 +155,7 @@ ModelUnits::ModelUnits(libsbml::Model *model) : sbmlModel{model} {
   }
   updateConcentration();
   updateDiffusion();
+  updateReactions();
 }
 
 const Unit &ModelUnits::getTime() const { return time.get(); }
@@ -168,6 +177,7 @@ void ModelUnits::setTimeIndex(int index) {
     setSBMLUnitDef(timeUnitDef, getTime());
   }
   updateDiffusion();
+  updateReactions();
 }
 
 const Unit &ModelUnits::getLength() const { return length.get(); }
@@ -198,6 +208,7 @@ void ModelUnits::setLengthIndex(int index) {
     setSBMLUnitDef(areaUnitDef, u);
   }
   updateDiffusion();
+  updateReactions();
 }
 
 const Unit &ModelUnits::getVolume() const { return volume.get(); }
@@ -219,6 +230,7 @@ void ModelUnits::setVolumeIndex(int index) {
     setSBMLUnitDef(volumeUnitDef, getVolume());
   }
   updateConcentration();
+  updateReactions();
 }
 
 const Unit &ModelUnits::getAmount() const { return amount.get(); }
@@ -241,11 +253,20 @@ void ModelUnits::setAmountIndex(int index) {
     setSBMLUnitDef(substanceUnitDef, getAmount());
   }
   updateConcentration();
+  updateReactions();
 }
 
 const QString &ModelUnits::getConcentration() const { return concentration; }
 
 const QString &ModelUnits::getDiffusion() const { return diffusion; }
+
+const QString &ModelUnits::getCompartmentReaction() const {
+  return compartmentReaction;
+}
+
+const QString &ModelUnits::getMembraneReaction() const {
+  return membraneReaction;
+}
 
 double rescale(double val, const Unit &oldUnit, const Unit &newUnit) {
   // rescale units, assuming same base unit & same exponent
