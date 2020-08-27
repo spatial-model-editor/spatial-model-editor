@@ -253,7 +253,7 @@ DuneSim::getConcentrations(std::size_t compartmentIndex) const {
   return concentration[compartmentIndex];
 }
 
-std::string DuneSim::errorMessage() const { return currentErrorMessage; }
+const std::string& DuneSim::errorMessage() const { return currentErrorMessage; }
 
 void DuneSim::updateSpeciesConcentrations() {
   for (std::size_t iComp = 0; iComp < compartmentSpeciesIndex.size(); ++iComp) {

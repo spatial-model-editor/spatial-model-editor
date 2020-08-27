@@ -33,14 +33,14 @@ public:
       const std::vector<std::string> &expressions,
       const std::vector<std::string> &variables = {},
       const std::vector<std::pair<std::string, double>> &constants = {},
-      bool compile = true);
+      bool compile = true, bool doCSE = true, unsigned optLevel = 3);
   explicit Symbolic(
       const std::string &expression,
       const std::vector<std::string> &variables = {},
       const std::vector<std::pair<std::string, double>> &constants = {},
-      bool compile = true)
+      bool compile = true, bool doCSE = true, unsigned optLevel = 3)
       : Symbolic(std::vector<std::string>{expression}, variables, constants,
-                 compile) {}
+                 compile, doCSE, optLevel) {}
   Symbolic(Symbolic &&) noexcept;
   Symbolic(const Symbolic &) = delete;
   Symbolic &operator=(Symbolic &&) noexcept;
@@ -48,7 +48,7 @@ public:
   ~Symbolic();
 
   // compile expression (done by default in constructor)
-  void compile();
+  void compile(bool doCSE = true, unsigned optLevel = 3);
   // simplify given expression
   std::string simplify(std::size_t i = 0) const;
   // differentiate given expression wrt a variable

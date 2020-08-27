@@ -32,6 +32,8 @@ private:
   void txtPixelRelErr_editingFinished();
   void txtPixelDt_editingFinished();
   void txtPixelThreads_editingFinished();
+  void chkPixelCSE_stateChanged();
+  void spnPixelOptLevel_valueChanged(int value);
   void resetPixelToDefaults();
   std::unique_ptr<Ui::DialogSimulationOptions> ui;
   simulate::Options opt;

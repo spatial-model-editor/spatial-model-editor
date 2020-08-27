@@ -15,6 +15,7 @@
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
 #include <tbb/global_control.h>
 #include <tbb/parallel_for.h>
+#include <tbb/parallel_reduce.h>
 #include <tbb/task_scheduler_init.h>
 #endif
 
@@ -23,11 +24,12 @@ namespace simulate {
 ReacEval::ReacEval(const model::Model &doc,
                    const std::vector<std::string> &speciesIDs,
                    const std::vector<std::string> &reactionIDs,
-                   const std::vector<std::string> &reactionScaleFactors) {
+                   const std::vector<std::string> &reactionScaleFactors,
+                   bool doCSE, unsigned optLevel) {
   // construct reaction expressions and stoich matrix
   PDE pde(&doc, speciesIDs, reactionIDs, {}, reactionScaleFactors);
   // compile all expressions with symengine
-  sym = symbolic::Symbolic(pde.getRHS(), speciesIDs);
+  sym = symbolic::Symbolic(pde.getRHS(), speciesIDs, {}, true, doCSE, optLevel);
 }
 
 void ReacEval::evaluate(double *output, const double *input) const {
@@ -53,7 +55,8 @@ void SimCompartment::spatiallyAverageDcdt() {
 
 SimCompartment::SimCompartment(const model::Model &doc,
                                const geometry::Compartment *compartment,
-                               std::vector<std::string> sIds)
+                               std::vector<std::string> sIds, bool doCSE,
+                               unsigned optLevel)
     : comp{compartment}, compartmentId{compartment->getId()},
       speciesIds{std::move(sIds)} {
   // get species in compartment
@@ -81,7 +84,7 @@ SimCompartment::SimCompartment(const model::Model &doc,
       !reacsInCompartment.isEmpty()) {
     reactionIDs = utils::toStdString(reacsInCompartment);
   }
-  reacEval = ReacEval(doc, speciesIds, reactionIDs, {});
+  reacEval = ReacEval(doc, speciesIds, reactionIDs, {}, doCSE, optLevel);
   // setup concentrations vector with initial values
   conc.resize(fields.size() * compartment->nPixels());
   dcdt.resize(conc.size(), 0.0);
@@ -143,9 +146,19 @@ void SimCompartment::evaluateReactions() {
 }
 
 void SimCompartment::doForwardsEulerTimestep(double dt) {
-  for (std::size_t i = 0; i < conc.size(); ++i) {
-    conc[i] += dt * dcdt[i];
-  }
+  std::size_t n{conc.size()};
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  tbb::parallel_for(
+      std::size_t{0}, n,
+      [dt, &conc = conc, &dcdt = std::as_const(dcdt)](std::size_t i) {
+#else
+  for (std::size_t i = 0; i < n; ++i) {
+#endif
+        conc[i] += dt * dcdt[i];
+      }
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  );
+#endif
 }
 
 void SimCompartment::doRKInit() {
@@ -155,30 +168,61 @@ void SimCompartment::doRKInit() {
 
 void SimCompartment::doRKSubstep(double dt, double g1, double g2, double g3,
                                  double beta, double delta) {
-  for (std::size_t i = 0; i < conc.size(); ++i) {
-    s2[i] += delta * conc[i];
-    conc[i] = g1 * conc[i] + g2 * s2[i] + g3 * s3[i] + beta * dt * dcdt[i];
-  }
+  std::size_t n{conc.size()};
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  tbb::parallel_for(std::size_t{0}, n,
+                    [&conc = conc, &s2 = s2, &s3 = std::as_const(s3),
+                     &dcdt = std::as_const(dcdt), delta, g1, g2, g3, beta,
+                     dt](std::size_t i) {
+#else
+  for (std::size_t i = 0; i < n; ++i) {
+#endif
+                      s2[i] += delta * conc[i];
+                      conc[i] = g1 * conc[i] + g2 * s2[i] + g3 * s3[i] +
+                                beta * dt * dcdt[i];
+                    }
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  );
+#endif
 }
 
 void SimCompartment::doRKFinalise(double cFactor, double s2Factor,
                                   double s3Factor) {
-  for (std::size_t i = 0; i < conc.size(); ++i) {
-    s2[i] = cFactor * conc[i] + s2Factor * s2[i] + s3Factor * s3[i];
-  }
+  std::size_t n{conc.size()};
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  tbb::parallel_for(
+      std::size_t{0}, n,
+      [&s2 = s2, &conc = std::as_const(conc), &s3 = std::as_const(s3), cFactor,
+       s2Factor, s3Factor](std::size_t i) {
+#else
+  for (std::size_t i = 0; i < n; ++i) {
+#endif
+        s2[i] = cFactor * conc[i] + s2Factor * s2[i] + s3Factor * s3[i];
+      }
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  );
+#endif
 }
 
 void SimCompartment::undoRKStep() {
-  for (std::size_t i = 0; i < conc.size(); ++i) {
-    conc[i] = s3[i];
-  }
+  std::size_t n{conc.size()};
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  tbb::parallel_for(std::size_t{0}, n,
+                    [&conc = conc, &s3 = std::as_const(s3)](std::size_t i) {
+#else
+  for (std::size_t i = 0; i < n; ++i) {
+#endif
+                      conc[i] = s3[i];
+                    }
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  );
+#endif
 }
 
 PixelIntegratorError SimCompartment::calculateRKError(double epsilon) const {
-  PixelIntegratorError err;
-  err.abs = 0.0;
-  err.rel = 0.0;
-  for (std::size_t i = 0; i < conc.size(); ++i) {
+  PixelIntegratorError err{0.0, 0.0};
+  std::size_t n{conc.size()};
+  for (std::size_t i = 0; i < n; ++i) {
     double localErr = std::abs(conc[i] - s2[i]);
     err.abs = std::max(err.abs, localErr);
     // average current and previous concentrations and add a (hopefully) small
@@ -223,7 +267,8 @@ double SimCompartment::getMaxStableTimestep() const {
 
 SimMembrane::SimMembrane(const model::Model &doc,
                          const geometry::Membrane *membrane_ptr,
-                         SimCompartment *simCompA, SimCompartment *simCompB)
+                         SimCompartment *simCompA, SimCompartment *simCompB,
+                         bool doCSE, unsigned optLevel)
     : membrane(membrane_ptr), compA(simCompA), compB(simCompB) {
   if (compA != nullptr &&
       membrane->getCompartmentA()->getId() != compA->getCompartmentId()) {
@@ -269,21 +314,22 @@ SimMembrane::SimMembrane(const model::Model &doc,
   // vector of reaction scale factors to convert flux to concentration
   std::vector<std::string> reactionScaleFactors(reactionID.size(), strFactor);
 
-  reacEval = ReacEval(doc, speciesIds, reactionID, reactionScaleFactors);
+  reacEval = ReacEval(doc, speciesIds, reactionID, reactionScaleFactors, doCSE,
+                      optLevel);
 }
 
 void SimMembrane::evaluateReactions() {
-  std::size_t nSpeciesA = 0;
-  const std::vector<double> *concA = nullptr;
-  std::vector<double> *dcdtA = nullptr;
+  std::size_t nSpeciesA{0};
+  const std::vector<double> *concA{nullptr};
+  std::vector<double> *dcdtA{nullptr};
   if (compA != nullptr) {
     nSpeciesA = compA->getSpeciesIds().size();
     concA = &compA->getConcentrations();
     dcdtA = &compA->getDcdt();
   }
-  std::size_t nSpeciesB = 0;
-  const std::vector<double> *concB = nullptr;
-  std::vector<double> *dcdtB = nullptr;
+  std::size_t nSpeciesB{0};
+  const std::vector<double> *concB{nullptr};
+  std::vector<double> *dcdtB{nullptr};
   if (compB != nullptr) {
     nSpeciesB = compB->getSpeciesIds().size();
     concB = &compB->getConcentrations();

@@ -61,7 +61,7 @@ public:
   ~Simulation();
 
   std::size_t doTimestep(double time);
-  std::string errorMessage() const;
+  const std::string& errorMessage() const;
   const std::vector<std::string> &getCompartmentIds() const;
   const std::vector<std::string> &
   getSpeciesIds(std::size_t compartmentIndex) const;

@@ -39,6 +39,7 @@ private:
   double nextTimestep = 1e-7;
   double epsilon = 1e-14;
   std::size_t numMaxThreads = 1;
+  std::string currentErrorMessage;
 
 public:
   explicit PixelSim(
@@ -53,6 +54,7 @@ public:
   double getLowerOrderConcentration(std::size_t compartmentIndex,
                                     std::size_t speciesIndex,
                                     std::size_t pixelIndex) const;
+  virtual const std::string& errorMessage() const override;
 };
 
 } // namespace simulate

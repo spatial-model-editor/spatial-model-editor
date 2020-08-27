@@ -14,7 +14,6 @@
 #include <utility>
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
 #include <tbb/global_control.h>
-#include <tbb/parallel_for.h>
 #include <tbb/task_scheduler_init.h>
 #endif
 
@@ -156,6 +155,10 @@ double PixelSim::doRKAdaptive(double dtMax) {
     nextTimestep = std::min(0.95 * dt * errFactor, dtMax);
     SPDLOG_TRACE("dt = {} gave rel err = {}, abs err = {} -> new dt = {}", dt,
                  err.rel, err.abs, nextTimestep);
+    if (nextTimestep / dtMax < 1e-20) {
+      currentErrorMessage = "Failed to solve model to required accuracy.";
+      return nextTimestep;
+    }
     if (err.abs > errMax.abs || err.rel > errMax.rel) {
       SPDLOG_TRACE("discarding step");
       ++discardedSteps;
@@ -179,8 +182,8 @@ PixelSim::PixelSim(
     const auto &speciesIds{compartmentSpeciesIds[compIndex]};
     const auto *compartment{doc.getCompartments().getCompartment(
         compartmentIds[compIndex].c_str())};
-    simCompartments.push_back(
-        std::make_unique<SimCompartment>(doc, compartment, speciesIds));
+    simCompartments.push_back(std::make_unique<SimCompartment>(
+        doc, compartment, speciesIds, options.doCSE, options.optLevel));
     maxStableTimestep = std::min(
         maxStableTimestep, simCompartments.back()->getMaxStableTimestep());
   }
@@ -208,15 +211,17 @@ PixelSim::PixelSim(
       if (iterB != simCompartments.cend()) {
         compB = iterB->get();
       }
-      simMembranes.push_back(
-          std::make_unique<SimMembrane>(doc, &membrane, compA, compB));
+      simMembranes.push_back(std::make_unique<SimMembrane>(
+          doc, &membrane, compA, compB, options.doCSE, options.optLevel));
     }
   }
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
   if (numMaxThreads == 0) {
     // 0 means use all available threads
     numMaxThreads = static_cast<std::size_t>(
         tbb::task_scheduler_init::default_num_threads());
   }
+#endif
 }
 
 PixelSim::~PixelSim() = default;
@@ -225,8 +230,10 @@ std::size_t PixelSim::run(double time) {
   SPDLOG_TRACE("  - max rel local err {}", errMax.rel);
   SPDLOG_TRACE("  - max abs local err {}", errMax.abs);
   SPDLOG_TRACE("  - max stepsize {}", maxTimestep);
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
   tbb::global_control control(tbb::global_control::max_allowed_parallelism,
                               numMaxThreads);
+#endif
   double tNow = 0;
   std::size_t steps = 0;
   discardedSteps = 0;
@@ -240,6 +247,9 @@ std::size_t PixelSim::run(double time) {
       tNow += timestep;
     } else {
       tNow += doRKAdaptive(maxDt);
+      if (!currentErrorMessage.empty()) {
+        return steps;
+      }
     }
     ++steps;
   }
@@ -260,6 +270,10 @@ double PixelSim::getLowerOrderConcentration(std::size_t compartmentIndex,
                                             std::size_t pixelIndex) const {
   return simCompartments[compartmentIndex]->getLowerOrderConcentration(
       speciesIndex, pixelIndex);
+}
+
+const std::string &PixelSim::errorMessage() const {
+  return currentErrorMessage;
 }
 
 } // namespace simulate
