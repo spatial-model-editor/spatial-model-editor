@@ -79,6 +79,8 @@ public:
   void spatiallyAverageDcdt();
   void doForwardsEulerTimestep(double dt);
   void doRKInit();
+  void doRK212Substep1(double dt);
+  void doRK212Substep2(double dt);
   void doRKSubstep(double dt, double g1, double g2, double g3, double beta,
                    double delta);
   void doRKFinalise(double cFactor, double s2Factor, double s3Factor);
