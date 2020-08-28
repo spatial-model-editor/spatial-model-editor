@@ -85,10 +85,12 @@ SCENARIO("DUNE: function",
       }
     }
     double avgRelErr{relativeError / n};
-    // note: two potential sources of error
-    //  - TIFF: rescaling & truncating due to 16-bit integer format
-    //  - interpolation(?): maybe occasionally end up with a different pixel for
-    //  the two models due to rounding if point is right on the boundary?
-    REQUIRE(avgRelErr < 0.05);
+    // Note: due to boundary approx in mesh, sometimes the nearest pixel to a
+    // Dune point is in another compartment. In the GUI we correct for this by
+    // using the nearest pixel in the same compartment, but when dune loads a
+    // TIFF it will just use the pixel from the wrong compartment (which will
+    // return zero for the concentration) instead.
+    // Hence the requirement for agreement within 10% on average:
+    REQUIRE(avgRelErr < 0.1);
   }
 }
