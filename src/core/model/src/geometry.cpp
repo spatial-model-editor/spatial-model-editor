@@ -209,13 +209,14 @@ QImage Field::getConcentrationImage() const {
   return img;
 }
 
-std::vector<double> Field::getConcentrationImageArray() const {
+std::vector<double>
+Field::getConcentrationImageArray(double invalidPixelValue) const {
   const auto &img = comp->getCompartmentImage();
   int size = img.width() * img.height();
   // NOTE: order of concentration array is [ (x=0,y=0), (x=1,y=0), ... ]
   // NOTE: (0,0) point is at bottom-left
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
-  std::vector<double> arr(static_cast<std::size_t>(size), 0.0);
+  std::vector<double> arr(static_cast<std::size_t>(size), invalidPixelValue);
   for (std::size_t i = 0; i < comp->nPixels(); ++i) {
     const auto &point = comp->getPixel(i);
     int arrayIndex = point.x() + img.width() * (img.height() - 1 - point.y());

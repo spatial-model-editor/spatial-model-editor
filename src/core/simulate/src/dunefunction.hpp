@@ -8,6 +8,7 @@
 
 #include "duneconverter.hpp"
 #include "logger.hpp"
+#include <QPoint>
 #include <algorithm>
 #include <cstddef>
 #include <dune/pdelab/common/function.hh>
@@ -19,6 +20,35 @@ template <typename F, int n> class FieldVector;
 }
 
 namespace simulate {
+
+static double
+getNearestValidPixelConcentration(int ix, int iy, int w, int h,
+                                  const std::vector<double> &concentration) {
+  std::vector<QPoint> queue;
+  queue.reserve(8);
+  queue.emplace_back(ix, iy);
+  std::size_t queueIndex{0};
+  std::size_t maxAttempts{10 * concentration.size()};
+  for (std::size_t i = 0; i < maxAttempts; ++i) {
+    const auto &p = queue[queueIndex];
+    for (const auto &dp :
+         {QPoint(1, 0), QPoint(-1, 0), QPoint(0, 1), QPoint(0, -1)}) {
+      auto np = p + dp;
+      SPDLOG_TRACE("  - ({},{})", np.x(), np.y());
+      np.rx() = std::clamp(np.x(), 0, w - 1);
+      np.ry() = std::clamp(np.y(), 0, h - 1);
+      std::size_t index{static_cast<std::size_t>(np.x() + w * np.y())};
+      if (double conc = concentration[index]; conc >= 0.0) {
+        return conc;
+      } else {
+        queue.push_back(np);
+      }
+    }
+    ++queueIndex;
+  }
+  SPDLOG_WARN("Failed to find valid nearby pixel to ({},{})", ix, iy);
+  return 0.0;
+}
 
 template <typename GV>
 class GridFunction
@@ -47,9 +77,13 @@ public:
     // get nearest pixel to physical point
     auto ix = std::clamp(static_cast<int>((globalPos[0] - x0) / a), 0, w - 1);
     auto iy = std::clamp(static_cast<int>((globalPos[1] - y0) / a), 0, h - 1);
-    SPDLOG_TRACE("pixel ({},{})", ix, iy);
     result = c[static_cast<std::size_t>(ix + w * iy)];
+    SPDLOG_TRACE("pixel ({},{})", ix, iy);
     SPDLOG_TRACE("conc {}", result);
+    if (result < 0) {
+      result = getNearestValidPixelConcentration(ix, iy, w, h, c);
+      SPDLOG_TRACE("  -> nearest valid conc: {}", result);
+    }
   }
 
 private:

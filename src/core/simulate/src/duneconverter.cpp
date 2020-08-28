@@ -97,6 +97,7 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
   double end_time = 0.02;
   double time_step = dt;
 
+  constexpr double invalidPixelConc{-999.0};
   // grid
   ini.addSection("grid");
   ini.addValue("file", "grid.msh");
@@ -205,7 +206,7 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
         } else {
           ini.addValue(duneName, 0.0, doublePrecision);
           // create array of concentration values
-          concs[indices[i]] = f->getConcentrationImageArray();
+          concs[indices[i]] = f->getConcentrationImageArray(invalidPixelConc);
         }
       }
       concentrations.push_back(std::move(concs));
@@ -298,7 +299,7 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
                      doublePrecision);
         if (!forExternalUse) {
           const auto *f = model.getSpecies().getField(name);
-          concs[indices[i]] = f->getConcentrationImageArray();
+          concs[indices[i]] = f->getConcentrationImageArray(invalidPixelConc);
         }
       }
       concentrations.push_back(std::move(concs));

@@ -102,7 +102,8 @@ public:
   void setUniformConcentration(double concentration);
   void importConcentration(const std::vector<double> &sbmlConcentrationArray);
   QImage getConcentrationImage() const;
-  std::vector<double> getConcentrationImageArray() const;
+  std::vector<double>
+  getConcentrationImageArray(double invalidPixelValue = 0.0) const;
   void setCompartment(const Compartment *comp);
 };
 
