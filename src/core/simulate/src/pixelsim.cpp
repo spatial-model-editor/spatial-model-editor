@@ -46,16 +46,13 @@ void PixelSim::doRK212(double dt) {
   // RK2(1)2: Heun / Modified Euler, with embedded forwards Euler error
   // estimate Shu-Osher form used here taken from eq(2.15) of
   // https://doi.org/10.1016/0021-9991(88)90177-5
-  constexpr std::array<double, 2> g1{0.0, 0.0};
-  constexpr std::array<double, 2> g2{0.0, 0.5};
-  constexpr std::array<double, 2> g3{1.0, 0.5};
-  constexpr std::array<double, 2> beta{1.0, 0.5};
-  constexpr std::array<double, 2> delta{0.0, 1.0};
-  for (std::size_t i = 0; i < 2; ++i) {
-    calculateDcdt();
-    for (auto &sim : simCompartments) {
-      sim->doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
-    }
+  calculateDcdt();
+  for (auto &sim : simCompartments) {
+    sim->doRK212Substep1(dt);
+  }
+  calculateDcdt();
+  for (auto &sim : simCompartments) {
+    sim->doRK212Substep2(dt);
   }
 }
 
@@ -68,6 +65,9 @@ void PixelSim::doRK323(double dt) {
   constexpr std::array<double, 3> g3{0.0, 0.75, 1.0 / 3.0};
   constexpr std::array<double, 3> beta{1.0, 0.25, 2.0 / 3.0};
   constexpr std::array<double, 3> delta{0.0, 0.0, 1.0};
+  for (auto &sim : simCompartments) {
+    sim->doRKInit();
+  }
   for (std::size_t i = 0; i < 3; ++i) {
     calculateDcdt();
     for (auto &sim : simCompartments) {
@@ -100,6 +100,9 @@ void PixelSim::doRK435(double dt) {
                                         -0.655568367959557,
                                         -0.194421504490852};
   double deltaSum = 1.0 / utils::sum(delta);
+  for (auto &sim : simCompartments) {
+    sim->doRKInit();
+  }
   for (std::size_t i = 0; i < 5; ++i) {
     calculateDcdt();
     for (auto &sim : simCompartments) {
@@ -131,9 +134,6 @@ double PixelSim::doRKAdaptive(double dtMax) {
   do {
     // do timestep
     dt = std::min(nextTimestep, dtMax);
-    for (auto &sim : simCompartments) {
-      sim->doRKInit();
-    }
     if (integrator == PixelIntegratorType::RK212) {
       doRK212(dt);
     } else if (integrator == PixelIntegratorType::RK323) {

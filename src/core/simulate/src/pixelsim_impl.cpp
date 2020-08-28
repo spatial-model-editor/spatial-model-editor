@@ -166,6 +166,43 @@ void SimCompartment::doRKInit() {
   s3 = conc;
 }
 
+void SimCompartment::doRK212Substep1(double dt) {
+  std::size_t n{conc.size()};
+  s2.resize(conc.size());
+  s3.resize(conc.size());
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  tbb::parallel_for(
+      std::size_t{0}, n,
+      [&conc = conc, &s3 = s3, &dcdt = std::as_const(dcdt), dt](std::size_t i) {
+#else
+  for (std::size_t i = 0; i < n; ++i) {
+#endif
+        s3[i] = conc[i];
+        conc[i] += dt * dcdt[i];
+      }
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  );
+#endif
+}
+
+void SimCompartment::doRK212Substep2(double dt) {
+  std::size_t n{conc.size()};
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  tbb::parallel_for(std::size_t{0}, n,
+                    [&conc = conc, &s2 = s2, &s3 = std::as_const(s3),
+                     &dcdt = std::as_const(dcdt), dt](std::size_t i) {
+#else
+  for (std::size_t i = 0; i < n; ++i) {
+#endif
+                      s2[i] = conc[i];
+                      conc[i] =
+                          0.5 * s3[i] + 0.5 * conc[i] + 0.5 * dt * dcdt[i];
+                    }
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  );
+#endif
+}
+
 void SimCompartment::doRKSubstep(double dt, double g1, double g2, double g3,
                                  double beta, double delta) {
   std::size_t n{conc.size()};
