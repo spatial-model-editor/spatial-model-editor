@@ -16,6 +16,10 @@ DialogImageSlice::DialogImageSlice(const QVector<QImage>& images,
   ui->lblImage->setAspectRatioMode(Qt::IgnoreAspectRatio);
   ui->lblImage->setTransformationMode(Qt::SmoothTransformation);
 
+  // default: y axis
+  ui->hslideZ->setMaximum(imgs[0].width() - 1);
+  ui->cmbImageVerticalAxis->setCurrentIndex(1);
+
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogImageSlice::saveSlicedImage);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,

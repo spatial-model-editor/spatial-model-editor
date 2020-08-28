@@ -86,6 +86,10 @@ void DialogSimulationOptions::setupConnections() {
           &DialogSimulationOptions::txtPixelDt_editingFinished);
   connect(ui->txtPixelThreads, &QLineEdit::editingFinished, this,
           &DialogSimulationOptions::txtPixelThreads_editingFinished);
+  connect(ui->chkPixelCSE, &QCheckBox::stateChanged, this,
+          &DialogSimulationOptions::chkPixelCSE_stateChanged);
+  connect(ui->spnPixelOptLevel, qOverload<int>(&QSpinBox::valueChanged), this,
+          &DialogSimulationOptions::spnPixelOptLevel_valueChanged);
   connect(ui->btnPixelReset, &QPushButton::clicked, this,
           &DialogSimulationOptions::resetPixelToDefaults);
 }
@@ -115,6 +119,12 @@ void DialogSimulationOptions::loadPixelOpts() {
   ui->txtPixelAbsErr->setText(dblToQString(opt.pixel.maxErr.abs));
   ui->txtPixelDt->setText(dblToQString(opt.pixel.maxTimestep));
   ui->txtPixelThreads->setText(QString("%1").arg(opt.pixel.maxThreads));
+  ui->chkPixelCSE->setChecked(opt.pixel.doCSE);
+  int lvl = static_cast<int>(opt.pixel.optLevel);
+  if (lvl > ui->spnPixelOptLevel->maximum()) {
+    lvl = ui->spnPixelOptLevel->maximum();
+  }
+  ui->spnPixelOptLevel->setValue(lvl);
 }
 
 void DialogSimulationOptions::cmbPixelIntegrator_currentIndexChanged(
@@ -141,6 +151,14 @@ void DialogSimulationOptions::txtPixelThreads_editingFinished() {
   opt.pixel.maxThreads =
       static_cast<std::size_t>(ui->txtPixelThreads->text().toInt());
   loadPixelOpts();
+}
+
+void DialogSimulationOptions::chkPixelCSE_stateChanged() {
+  opt.pixel.doCSE = ui->chkPixelCSE->isChecked();
+}
+
+void DialogSimulationOptions::spnPixelOptLevel_valueChanged(int value) {
+  opt.pixel.optLevel = static_cast<unsigned>(value);
 }
 
 void DialogSimulationOptions::resetPixelToDefaults() {

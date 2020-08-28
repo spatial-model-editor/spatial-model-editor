@@ -27,6 +27,8 @@ struct PixelOptions {
   PixelIntegratorError maxErr;
   double maxTimestep{std::numeric_limits<double>::max()};
   std::size_t maxThreads{0};
+  bool doCSE{true};
+  unsigned optLevel{3};
 };
 
 struct Options {

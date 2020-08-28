@@ -70,7 +70,7 @@ struct Symbolic::SymEngineImpl {
   void init(const std::vector<std::string> &expressions,
             const std::vector<std::string> &variables,
             const std::vector<std::pair<std::string, double>> &constants);
-  void compile();
+  void compile(bool doCSE, unsigned optLevel);
   void relabel(const std::vector<std::string> &newVariables);
 };
 
@@ -125,9 +125,9 @@ void Symbolic::SymEngineImpl::init(
   std::locale::global(userLocale);
 }
 
-void Symbolic::SymEngineImpl::compile() {
+void Symbolic::SymEngineImpl::compile(bool doCSE, unsigned optLevel) {
   SPDLOG_DEBUG("compiling expression");
-  lambdaLLVM.init(varVec, expr, true);
+  lambdaLLVM.init(varVec, expr, doCSE, optLevel);
 }
 
 void Symbolic::SymEngineImpl::relabel(
@@ -175,11 +175,11 @@ Symbolic::Symbolic() = default;
 Symbolic::Symbolic(const std::vector<std::string> &expressions,
                    const std::vector<std::string> &variables,
                    const std::vector<std::pair<std::string, double>> &constants,
-                   bool compile)
+                   bool compile, bool doCSE, unsigned optLevel)
     : pSymEngineImpl{std::make_unique<SymEngineImpl>()} {
   pSymEngineImpl->init(expressions, variables, constants);
   if (compile && pSymEngineImpl->valid) {
-    pSymEngineImpl->compile();
+    pSymEngineImpl->compile(doCSE, optLevel);
   }
 }
 
@@ -189,7 +189,9 @@ Symbolic::Symbolic(Symbolic &&) noexcept = default;
 
 Symbolic &Symbolic::operator=(Symbolic &&) noexcept = default;
 
-void Symbolic::compile() { pSymEngineImpl->compile(); }
+void Symbolic::compile(bool doCSE, unsigned optLevel) {
+  pSymEngineImpl->compile(doCSE, optLevel);
+}
 
 std::string Symbolic::simplify(std::size_t i) const {
   return toString(pSymEngineImpl->expr.at(i));

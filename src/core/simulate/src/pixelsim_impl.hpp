@@ -34,7 +34,8 @@ public:
   ReacEval() = default;
   ReacEval(const model::Model &doc, const std::vector<std::string> &speciesID,
            const std::vector<std::string> &reactionID,
-           const std::vector<std::string> &reactionScaleFactors);
+           const std::vector<std::string> &reactionScaleFactors,
+           bool doCSE = true, unsigned optLevel = 3);
   ReacEval(ReacEval &&) noexcept = default;
   ReacEval(const ReacEval &) = delete;
   ReacEval &operator=(ReacEval &&) noexcept = default;
@@ -63,7 +64,8 @@ private:
 public:
   explicit SimCompartment(const model::Model &doc,
                           const geometry::Compartment *compartment,
-                          std::vector<std::string> sIds);
+                          std::vector<std::string> sIds, bool doCSE = true,
+                          unsigned optLevel = 3);
   SimCompartment(SimCompartment &&) noexcept = default;
   SimCompartment(const SimCompartment &) = delete;
   SimCompartment &operator=(SimCompartment &&) noexcept = default;
@@ -101,7 +103,8 @@ private:
 
 public:
   SimMembrane(const model::Model &doc, const geometry::Membrane *membrane_ptr,
-              SimCompartment *simCompA, SimCompartment *simCompB);
+              SimCompartment *simCompA, SimCompartment *simCompB,
+              bool doCSE = true, unsigned optLevel = 3);
   SimMembrane(SimMembrane &&) noexcept = default;
   SimMembrane(const SimMembrane &) = delete;
   SimMembrane &operator=(SimMembrane &&) noexcept = default;

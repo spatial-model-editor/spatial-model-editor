@@ -24,6 +24,8 @@ SCENARIO(
     REQUIRE(opt.pixel.maxErr.rel == dbl_approx(4e-4));
     REQUIRE(opt.pixel.maxErr.abs == dbl_approx(0.01));
     REQUIRE(opt.pixel.maxTimestep == dbl_approx(0.2));
+    REQUIRE(opt.pixel.doCSE == true);
+    REQUIRE(opt.pixel.optLevel == 3);
     REQUIRE(opt.dune.dt == dbl_approx(0.00123));
     REQUIRE(opt.dune.writeVTKfiles == false);
   }
@@ -43,7 +45,8 @@ SCENARIO(
   }
   WHEN("user changes Pixel values") {
     mwt.addUserAction({"Right", "Tab", "Up", "Up", "Tab", "7", "Tab", "9", "9",
-                       "Tab", "0", ".", "5", "Tab", "4"});
+                       "Tab", "0", ".", "5", "Tab", "4", "Tab", "Space", "Tab",
+                       "1"});
     mwt.start();
     dia.exec();
     auto opt = dia.getOptions();
@@ -52,10 +55,13 @@ SCENARIO(
     REQUIRE(opt.pixel.maxErr.abs == dbl_approx(99));
     REQUIRE(opt.pixel.maxTimestep == dbl_approx(0.5));
     REQUIRE(opt.pixel.maxThreads == 4);
+    REQUIRE(opt.pixel.doCSE == false);
+    REQUIRE(opt.pixel.optLevel == 1);
     REQUIRE(opt.dune.dt == dbl_approx(0.00123));
   }
   WHEN("user resets to pixel defaults") {
-    mwt.addUserAction({"Right", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", " "});
+    mwt.addUserAction(
+        {"Right", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", " "});
     mwt.start();
     dia.exec();
     simulate::PixelOptions defaultOpts{};

@@ -105,7 +105,7 @@ std::size_t Simulation::doTimestep(double time) {
   return steps;
 }
 
-std::string Simulation::errorMessage() const {
+const std::string& Simulation::errorMessage() const {
   return simulator->errorMessage();
 }
 
