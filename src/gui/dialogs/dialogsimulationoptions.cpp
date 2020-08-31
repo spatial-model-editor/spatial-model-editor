@@ -84,8 +84,10 @@ void DialogSimulationOptions::setupConnections() {
           &DialogSimulationOptions::txtPixelRelErr_editingFinished);
   connect(ui->txtPixelDt, &QLineEdit::editingFinished, this,
           &DialogSimulationOptions::txtPixelDt_editingFinished);
-  connect(ui->txtPixelThreads, &QLineEdit::editingFinished, this,
-          &DialogSimulationOptions::txtPixelThreads_editingFinished);
+  connect(ui->chkPixelMultithread, &QCheckBox::stateChanged, this,
+          &DialogSimulationOptions::chkPixelMultithread_stateChanged);
+  connect(ui->spnPixelThreads, qOverload<int>(&QSpinBox::valueChanged), this,
+          &DialogSimulationOptions::spnPixelThreads_valueChanged);
   connect(ui->chkPixelCSE, &QCheckBox::stateChanged, this,
           &DialogSimulationOptions::chkPixelCSE_stateChanged);
   connect(ui->spnPixelOptLevel, qOverload<int>(&QSpinBox::valueChanged), this,
@@ -118,7 +120,23 @@ void DialogSimulationOptions::loadPixelOpts() {
   ui->txtPixelRelErr->setText(dblToQString(opt.pixel.maxErr.rel));
   ui->txtPixelAbsErr->setText(dblToQString(opt.pixel.maxErr.abs));
   ui->txtPixelDt->setText(dblToQString(opt.pixel.maxTimestep));
-  ui->txtPixelThreads->setText(QString("%1").arg(opt.pixel.maxThreads));
+  ui->chkPixelMultithread->setChecked(opt.pixel.enableMultiThreading);
+#ifndef SPATIAL_MODEL_EDITOR_USE_TBB
+  ui->chkPixelMultithread->setChecked(false);
+  ui->chkPixelMultithread->setEnabled(false);
+  ui->txtPixelThreads->setText(1);
+  ui->txtPixelThreads->setEnabled(false);
+#endif
+  if (opt.pixel.enableMultiThreading) {
+    ui->spnPixelThreads->setEnabled(true);
+    int threads = static_cast<int>(opt.pixel.maxThreads);
+    if (threads > ui->spnPixelThreads->maximum()) {
+      threads = 0;
+    }
+    ui->spnPixelThreads->setValue(threads);
+  } else {
+    ui->spnPixelThreads->setEnabled(false);
+  }
   ui->chkPixelCSE->setChecked(opt.pixel.doCSE);
   int lvl = static_cast<int>(opt.pixel.optLevel);
   if (lvl > ui->spnPixelOptLevel->maximum()) {
@@ -147,9 +165,13 @@ void DialogSimulationOptions::txtPixelDt_editingFinished() {
   loadPixelOpts();
 }
 
-void DialogSimulationOptions::txtPixelThreads_editingFinished() {
-  opt.pixel.maxThreads =
-      static_cast<std::size_t>(ui->txtPixelThreads->text().toInt());
+void DialogSimulationOptions::chkPixelMultithread_stateChanged() {
+  opt.pixel.enableMultiThreading = ui->chkPixelMultithread->isChecked();
+  loadPixelOpts();
+}
+
+void DialogSimulationOptions::spnPixelThreads_valueChanged(int value) {
+  opt.pixel.maxThreads = static_cast<std::size_t>(value);
   loadPixelOpts();
 }
 

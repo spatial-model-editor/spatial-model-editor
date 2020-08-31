@@ -22,8 +22,15 @@ namespace simulate {
 void PixelSim::calculateDcdt() {
   // calculate dcd/dt in all compartments
   for (auto &sim : simCompartments) {
-    sim->evaluateReactions();
-    sim->evaluateDiffusionOperator();
+    if (enableMultiThreading) {
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+      sim->evaluateReactions_tbb();
+      sim->evaluateDiffusionOperator_tbb();
+#endif
+    } else {
+      sim->evaluateReactions();
+      sim->evaluateDiffusionOperator();
+    }
   }
   // membrane contribution to dc/dt
   for (auto &sim : simMembranes) {
@@ -38,7 +45,13 @@ void PixelSim::doRK101(double dt) {
   // RK1(0)1: Forwards Euler, no error estimate
   calculateDcdt();
   for (auto &sim : simCompartments) {
-    sim->doForwardsEulerTimestep(dt);
+    if (enableMultiThreading) {
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+      sim->doForwardsEulerTimestep_tbb(dt);
+#endif
+    } else {
+      sim->doForwardsEulerTimestep(dt);
+    }
   }
 }
 
@@ -48,11 +61,23 @@ void PixelSim::doRK212(double dt) {
   // https://doi.org/10.1016/0021-9991(88)90177-5
   calculateDcdt();
   for (auto &sim : simCompartments) {
-    sim->doRK212Substep1(dt);
+    if (enableMultiThreading) {
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+      sim->doRK212Substep1_tbb(dt);
+#endif
+    } else {
+      sim->doRK212Substep1(dt);
+    }
   }
   calculateDcdt();
   for (auto &sim : simCompartments) {
-    sim->doRK212Substep2(dt);
+    if (enableMultiThreading) {
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+      sim->doRK212Substep2_tbb(dt);
+#endif
+    } else {
+      sim->doRK212Substep2(dt);
+    }
   }
 }
 
@@ -69,10 +94,7 @@ void PixelSim::doRK323(double dt) {
     sim->doRKInit();
   }
   for (std::size_t i = 0; i < 3; ++i) {
-    calculateDcdt();
-    for (auto &sim : simCompartments) {
-      sim->doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
-    }
+    doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
   }
   for (auto &sim : simCompartments) {
     sim->doRKFinalise(0.0, 2.0, -1.0);
@@ -104,13 +126,24 @@ void PixelSim::doRK435(double dt) {
     sim->doRKInit();
   }
   for (std::size_t i = 0; i < 5; ++i) {
-    calculateDcdt();
-    for (auto &sim : simCompartments) {
-      sim->doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
-    }
+    doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
   }
   for (auto &sim : simCompartments) {
     sim->doRKFinalise(deltaSum * delta[5], deltaSum, deltaSum * delta[6]);
+  }
+}
+
+void PixelSim::doRKSubstep(double dt, double g1, double g2, double g3,
+                           double beta, double delta) {
+  calculateDcdt();
+  for (auto &sim : simCompartments) {
+    if (enableMultiThreading) {
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+      sim->doRKSubstep_tbb(dt, g1, g2, g3, beta, delta);
+#endif
+    } else {
+      sim->doRKSubstep(dt, g1, g2, g3, beta, delta);
+    }
   }
 }
 
@@ -175,7 +208,9 @@ PixelSim::PixelSim(
     const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
     const PixelOptions &options)
     : doc{sbmlDoc}, integrator{options.integrator}, errMax{options.maxErr},
-      maxTimestep{options.maxTimestep}, numMaxThreads{options.maxThreads} {
+      maxTimestep{options.maxTimestep},
+      enableMultiThreading{options.enableMultiThreading},
+      numMaxThreads{options.maxThreads} {
   // add compartments
   for (std::size_t compIndex = 0; compIndex < compartmentIds.size();
        ++compIndex) {
@@ -220,6 +255,11 @@ PixelSim::PixelSim(
     // 0 means use all available threads
     numMaxThreads = static_cast<std::size_t>(
         tbb::task_scheduler_init::default_num_threads());
+  }
+#else
+  if (enableMultiThreading) {
+    SPDLOG_WARN("Not compiled with TBB support: disabling multithreading");
+    enableMultiThreading = false;
   }
 #endif
 }

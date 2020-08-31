@@ -31,7 +31,8 @@ private:
   void txtPixelAbsErr_editingFinished();
   void txtPixelRelErr_editingFinished();
   void txtPixelDt_editingFinished();
-  void txtPixelThreads_editingFinished();
+  void chkPixelMultithread_stateChanged();
+  void spnPixelThreads_valueChanged(int value);
   void chkPixelCSE_stateChanged();
   void spnPixelOptLevel_valueChanged(int value);
   void resetPixelToDefaults();
