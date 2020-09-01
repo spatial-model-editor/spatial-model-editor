@@ -40,7 +40,7 @@ private:
   double maxTimestep{std::numeric_limits<double>::max()};
   double nextTimestep{1e-7};
   double epsilon{1e-14};
-  bool enableMultiThreading{false};
+  bool useTBB{false};
   std::size_t numMaxThreads{1};
   std::string currentErrorMessage;
 

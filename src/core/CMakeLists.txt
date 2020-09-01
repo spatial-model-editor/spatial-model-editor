@@ -55,10 +55,15 @@ find_package(dunecopasi REQUIRED)
 # dune-logging depends on fmt: temporary hack
 target_link_libraries(dunecopasi::dunecopasi INTERFACE fmt::fmt)
 find_package(muparser REQUIRED)
-if(WITH_TBB)
+if(SME_WITH_TBB)
   find_package(tbb REQUIRED)
-  target_compile_definitions(core PUBLIC SPATIAL_MODEL_EDITOR_USE_TBB)
+  target_compile_definitions(core PUBLIC SPATIAL_MODEL_EDITOR_WITH_TBB)
   target_link_libraries(core PRIVATE tbb::tbb)
+endif()
+if(SME_WITH_OPENMP)
+  find_package(OpenMP REQUIRED)
+  target_compile_definitions(core PUBLIC SPATIAL_MODEL_EDITOR_WITH_OPENMP)
+  target_link_libraries(core PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
 target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
@@ -83,10 +88,10 @@ target_link_libraries(
          spdlog::spdlog
          Qt5::Gui
          Qt5::Core
-         resources
-         ${SME_EXTRA_CORE_LIBS})
+         resources)
 
 target_compile_definitions(core PUBLIC ${SME_EXTRA_CORE_DEFS})
+
 target_link_libraries(
   core_tests
   PUBLIC core

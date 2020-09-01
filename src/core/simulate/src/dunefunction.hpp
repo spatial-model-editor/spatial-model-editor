@@ -21,7 +21,7 @@ template <typename F, int n> class FieldVector;
 
 namespace simulate {
 
-static double
+static inline double
 getNearestValidPixelConcentration(int ix, int iy, int w, int h,
                                   const std::vector<double> &concentration) {
   std::vector<QPoint> queue;

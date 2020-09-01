@@ -12,9 +12,12 @@
 #include <cstdlib>
 #include <memory>
 #include <utility>
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 #include <tbb/global_control.h>
 #include <tbb/task_scheduler_init.h>
+#endif
+#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
+#include <omp.h>
 #endif
 
 namespace simulate {
@@ -22,8 +25,8 @@ namespace simulate {
 void PixelSim::calculateDcdt() {
   // calculate dcd/dt in all compartments
   for (auto &sim : simCompartments) {
-    if (enableMultiThreading) {
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+    if (useTBB) {
+#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
       sim->evaluateReactions_tbb();
       sim->evaluateDiffusionOperator_tbb();
 #endif
@@ -45,8 +48,8 @@ void PixelSim::doRK101(double dt) {
   // RK1(0)1: Forwards Euler, no error estimate
   calculateDcdt();
   for (auto &sim : simCompartments) {
-    if (enableMultiThreading) {
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+    if (useTBB) {
+#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
       sim->doForwardsEulerTimestep_tbb(dt);
 #endif
     } else {
@@ -61,8 +64,8 @@ void PixelSim::doRK212(double dt) {
   // https://doi.org/10.1016/0021-9991(88)90177-5
   calculateDcdt();
   for (auto &sim : simCompartments) {
-    if (enableMultiThreading) {
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+    if (useTBB) {
+#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
       sim->doRK212Substep1_tbb(dt);
 #endif
     } else {
@@ -71,8 +74,8 @@ void PixelSim::doRK212(double dt) {
   }
   calculateDcdt();
   for (auto &sim : simCompartments) {
-    if (enableMultiThreading) {
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+    if (useTBB) {
+#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
       sim->doRK212Substep2_tbb(dt);
 #endif
     } else {
@@ -137,8 +140,8 @@ void PixelSim::doRKSubstep(double dt, double g1, double g2, double g3,
                            double beta, double delta) {
   calculateDcdt();
   for (auto &sim : simCompartments) {
-    if (enableMultiThreading) {
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+    if (useTBB) {
+#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
       sim->doRKSubstep_tbb(dt, g1, g2, g3, beta, delta);
 #endif
     } else {
@@ -208,9 +211,7 @@ PixelSim::PixelSim(
     const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
     const PixelOptions &options)
     : doc{sbmlDoc}, integrator{options.integrator}, errMax{options.maxErr},
-      maxTimestep{options.maxTimestep},
-      enableMultiThreading{options.enableMultiThreading},
-      numMaxThreads{options.maxThreads} {
+      maxTimestep{options.maxTimestep}, numMaxThreads{options.maxThreads} {
   // add compartments
   for (std::size_t compIndex = 0; compIndex < compartmentIds.size();
        ++compIndex) {
@@ -250,16 +251,29 @@ PixelSim::PixelSim(
           doc, &membrane, compA, compB, options.doCSE, options.optLevel));
     }
   }
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
+  if (options.enableMultiThreading) {
+    useTBB = true;
+  }
   if (numMaxThreads == 0) {
     // 0 means use all available threads
     numMaxThreads = static_cast<std::size_t>(
         tbb::task_scheduler_init::default_num_threads());
   }
+#elif defined(SPATIAL_MODEL_EDITOR_WITH_OPENMP)
+  if (!options.enableMultiThreading) {
+    numMaxThreads = 1;
+  }
+  if (auto ompMaxThreads{static_cast<std::size_t>(omp_get_num_procs())};
+      numMaxThreads == 0 || numMaxThreads > ompMaxThreads) {
+    // 0 means use all available threads
+    numMaxThreads = ompMaxThreads;
+  }
+  omp_set_num_threads(static_cast<int>(numMaxThreads));
 #else
-  if (enableMultiThreading) {
-    SPDLOG_WARN("Not compiled with TBB support: disabling multithreading");
-    enableMultiThreading = false;
+  if (options.enableMultiThreading) {
+    SPDLOG_WARN("Multithreading requested but not compiled with TBB or OpenMP "
+                "support: ignoring");
   }
 #endif
 }
@@ -270,7 +284,7 @@ std::size_t PixelSim::run(double time) {
   SPDLOG_TRACE("  - max rel local err {}", errMax.rel);
   SPDLOG_TRACE("  - max abs local err {}", errMax.abs);
   SPDLOG_TRACE("  - max stepsize {}", maxTimestep);
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   tbb::global_control control(tbb::global_control::max_allowed_parallelism,
                               numMaxThreads);
 #endif

@@ -6,7 +6,7 @@
 #include <sbml/common/libsbml-version.h>
 #include <spdlog/version.h>
 #include <symengine/symengine_config.h>
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 #include <tbb/tbb_stddef.h>
 #endif
 #include "symbolic.hpp"
@@ -77,7 +77,7 @@ DialogAbout::DialogAbout(QWidget *parent)
   libraries.append(dep("expat", "https://libexpat.github.io/",
                        XML_MAJOR_VERSION, XML_MINOR_VERSION,
                        XML_MICRO_VERSION));
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   libraries.append(dep("TBB", "https://github.com/intel/tbb", TBB_VERSION_MAJOR,
                        TBB_VERSION_MINOR));
 #endif
