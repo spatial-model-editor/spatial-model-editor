@@ -25,6 +25,13 @@ class Membrane;
 
 namespace simulate {
 
+template <typename Body>
+void serial_for(std::size_t i0, std::size_t n, const Body &body) {
+  for (std::size_t i = i0; i < n; ++i) {
+    body(i);
+  }
+}
+
 class ReacEval {
 private:
   // symengine reaction expression
@@ -56,6 +63,8 @@ private:
   // dimensionless diffusion constants for each species
   std::vector<double> diffConstants;
   const geometry::Compartment *comp;
+  std::size_t nPixels;
+  std::size_t nSpecies;
   std::string compartmentId;
   std::vector<std::string> speciesIds;
   std::vector<std::size_t> nonSpatialSpeciesIndices;
@@ -73,18 +82,53 @@ public:
   ~SimCompartment() = default;
 
   // dcdt = result of applying diffusion operator to conc
+  void evaluateDiffusionOperator(std::size_t begin, std::size_t end);
   void evaluateDiffusionOperator();
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  void evaluateDiffusionOperator_tbb();
+#endif
   // dcdt += result of applying reaction expressions to conc
+  void evaluateReactions(std::size_t begin, std::size_t end);
   void evaluateReactions();
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  void evaluateReactions_tbb();
+#endif
   void spatiallyAverageDcdt();
+  void doForwardsEulerTimestep(double dt, std::size_t begin, std::size_t end);
   void doForwardsEulerTimestep(double dt);
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  void doForwardsEulerTimestep_tbb(double dt);
+#endif
   void doRKInit();
+  void doRK212Substep1(double dt, std::size_t begin, std::size_t end);
   void doRK212Substep1(double dt);
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  void doRK212Substep1_tbb(double dt);
+#endif
+  void doRK212Substep2(double dt, std::size_t begin, std::size_t end);
   void doRK212Substep2(double dt);
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  void doRK212Substep2_tbb(double dt);
+#endif
+  void doRKSubstep(double dt, double g1, double g2, double g3, double beta,
+                   double delta, std::size_t begin, std::size_t end);
   void doRKSubstep(double dt, double g1, double g2, double g3, double beta,
                    double delta);
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  void doRKSubstep_tbb(double dt, double g1, double g2, double g3, double beta,
+                       double delta);
+#endif
+  void doRKFinalise(double cFactor, double s2Factor, double s3Factor,
+                    std::size_t begin, std::size_t end);
   void doRKFinalise(double cFactor, double s2Factor, double s3Factor);
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  void doRKFinalise_tbb(double cFactor, double s2Factor, double s3Factor);
+#endif
+  void undoRKStep(std::size_t begin, std::size_t end);
   void undoRKStep();
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+  void undoRKStep_tbb();
+#endif
   PixelIntegratorError calculateRKError(double epsilon) const;
   const std::string &getCompartmentId() const;
   const std::vector<std::string> &getSpeciesIds() const;

@@ -26,6 +26,7 @@ struct PixelOptions {
   PixelIntegratorType integrator{PixelIntegratorType::RK212};
   PixelIntegratorError maxErr;
   double maxTimestep{std::numeric_limits<double>::max()};
+  bool enableMultiThreading{false};
   std::size_t maxThreads{0};
   bool doCSE{true};
   unsigned optLevel{3};

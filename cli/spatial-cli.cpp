@@ -96,7 +96,11 @@ static void doSimulation(const Params &params) {
   if (params.simType == simulate::SimulatorType::DUNE) {
     options.dune.dt = params.imageInterval * 0.2;
   } else {
+    options.pixel.enableMultiThreading = true;
     options.pixel.maxThreads = params.maxThreads;
+    if (params.maxThreads == 1) {
+      options.pixel.enableMultiThreading = false;
+    }
   }
   simulate::Simulation sim(s, params.simType, options);
 

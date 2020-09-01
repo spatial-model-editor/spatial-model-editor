@@ -15,8 +15,8 @@
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
 #include <tbb/global_control.h>
 #include <tbb/parallel_for.h>
-#include <tbb/parallel_reduce.h>
 #include <tbb/task_scheduler_init.h>
+#include <tbb/tick_count.h>
 #endif
 
 namespace simulate {
@@ -39,8 +39,6 @@ void ReacEval::evaluate(double *output, const double *input) const {
 void SimCompartment::spatiallyAverageDcdt() {
   // for any non-spatial species: spatially average dc/dt:
   // roughly equivalent to infinite rate of diffusion
-  std::size_t nSpecies = speciesIds.size();
-  std::size_t nPixels = comp->nPixels();
   for (std::size_t is : nonSpatialSpeciesIndices) {
     double av = 0;
     for (std::size_t ix = 0; ix < nPixels; ++ix) {
@@ -57,8 +55,8 @@ SimCompartment::SimCompartment(const model::Model &doc,
                                const geometry::Compartment *compartment,
                                std::vector<std::string> sIds, bool doCSE,
                                unsigned optLevel)
-    : comp{compartment}, compartmentId{compartment->getId()},
-      speciesIds{std::move(sIds)} {
+    : comp{compartment}, nPixels{compartment->nPixels()}, nSpecies{sIds.size()},
+      compartmentId{compartment->getId()}, speciesIds{std::move(sIds)} {
   // get species in compartment
   SPDLOG_DEBUG("compartment: {}", compartmentId);
   std::vector<const geometry::Field *> fields;
@@ -86,7 +84,7 @@ SimCompartment::SimCompartment(const model::Model &doc,
   }
   reacEval = ReacEval(doc, speciesIds, reactionIDs, {}, doCSE, optLevel);
   // setup concentrations vector with initial values
-  conc.resize(fields.size() * compartment->nPixels());
+  conc.resize(nSpecies * nPixels);
   dcdt.resize(conc.size(), 0.0);
   auto concIter = conc.begin();
   for (std::size_t ix = 0; ix < compartment->nPixels(); ++ix) {
@@ -98,163 +96,191 @@ SimCompartment::SimCompartment(const model::Model &doc,
   assert(concIter == conc.end());
 }
 
-void SimCompartment::evaluateDiffusionOperator() {
-  std::size_t ns = speciesIds.size();
-  std::size_t np = comp->nPixels();
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  tbb::parallel_for(
-      std::size_t{0}, np,
-      [ns, &dcdt = dcdt, &diffConstants = std::as_const(diffConstants),
-       &conc = std::as_const(conc),
-       &comp = std::as_const(comp)](std::size_t i) {
-#else
-  for (std::size_t i = 0; i < np; ++i) {
-#endif
-        std::size_t ix = i * ns;
-        std::size_t ix_upx = comp->up_x(i) * ns;
-        std::size_t ix_dnx = comp->dn_x(i) * ns;
-        std::size_t ix_upy = comp->up_y(i) * ns;
-        std::size_t ix_dny = comp->dn_y(i) * ns;
-        for (std::size_t is = 0; is < ns; ++is) {
-          dcdt[ix + is] +=
-              diffConstants[is] *
-              (conc[ix_upx + is] + conc[ix_dnx + is] + conc[ix_upy + is] +
-               conc[ix_dny + is] - 4.0 * conc[ix + is]);
-        }
-      }
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  );
-#endif
+void SimCompartment::evaluateDiffusionOperator(std::size_t begin,
+                                               std::size_t end) {
+  for (std::size_t i = begin; i < end; ++i) {
+    std::size_t ix = i * nSpecies;
+    std::size_t ix_upx = comp->up_x(i) * nSpecies;
+    std::size_t ix_dnx = comp->dn_x(i) * nSpecies;
+    std::size_t ix_upy = comp->up_y(i) * nSpecies;
+    std::size_t ix_dny = comp->dn_y(i) * nSpecies;
+    for (std::size_t is = 0; is < nSpecies; ++is) {
+      dcdt[ix + is] +=
+          diffConstants[is] *
+          (conc[ix_upx + is] + conc[ix_dnx + is] + conc[ix_upy + is] +
+           conc[ix_dny + is] - 4.0 * conc[ix + is]);
+    }
+  }
 }
 
-void SimCompartment::evaluateReactions() {
-  std::size_t ns = speciesIds.size();
-  std::size_t N = ns * comp->nPixels();
+void SimCompartment::evaluateDiffusionOperator() {
+  evaluateDiffusionOperator(0, nPixels);
+}
+
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  tbb::parallel_for(
-      std::size_t{0}, N, ns,
-      [&reacEval = std::as_const(reacEval), &conc = std::as_const(conc),
-       &dcdt = dcdt](std::size_t index) {
-#else
-  for (std::size_t index = 0; index < N; index += ns) {
+void SimCompartment::evaluateDiffusionOperator_tbb() {
+  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, nPixels),
+                    [this](const tbb::blocked_range<std::size_t> &r) {
+                      evaluateDiffusionOperator(r.begin(), r.end());
+                    });
+}
 #endif
-        reacEval.evaluate(dcdt.data() + index, conc.data() + index);
-      }
+
+void SimCompartment::evaluateReactions(std::size_t begin, std::size_t end) {
+  for (std::size_t i = begin; i < end; ++i) {
+    reacEval.evaluate(dcdt.data() + i * nSpecies, conc.data() + i * nSpecies);
+  }
+}
+
+void SimCompartment::evaluateReactions() { evaluateReactions(0, nPixels); }
+
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  );
+void SimCompartment::evaluateReactions_tbb() {
+  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, nPixels),
+                    [this](const tbb::blocked_range<std::size_t> &r) {
+                      evaluateReactions(r.begin(), r.end());
+                    });
+}
 #endif
+
+void SimCompartment::doForwardsEulerTimestep(double dt, std::size_t begin,
+                                             std::size_t end) {
+  for (std::size_t i = begin; i < end; ++i) {
+    conc[i] += dt * dcdt[i];
+  }
 }
 
 void SimCompartment::doForwardsEulerTimestep(double dt) {
-  std::size_t n{conc.size()};
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  tbb::parallel_for(
-      std::size_t{0}, n,
-      [dt, &conc = conc, &dcdt = std::as_const(dcdt)](std::size_t i) {
-#else
-  for (std::size_t i = 0; i < n; ++i) {
-#endif
-        conc[i] += dt * dcdt[i];
-      }
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  );
-#endif
+  doForwardsEulerTimestep(dt, 0, conc.size());
 }
+
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+void SimCompartment::doForwardsEulerTimestep_tbb(double dt) {
+  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, conc.size()),
+                    [this, dt](const tbb::blocked_range<std::size_t> &r) {
+                      doForwardsEulerTimestep(dt, r.begin(), r.end());
+                    });
+}
+#endif
 
 void SimCompartment::doRKInit() {
   s2.assign(conc.size(), 0.0);
   s3 = conc;
 }
 
+void SimCompartment::doRK212Substep1(double dt, std::size_t begin,
+                                     std::size_t end) {
+  for (std::size_t i = begin; i < end; ++i) {
+    s3[i] = conc[i];
+    conc[i] += dt * dcdt[i];
+  }
+}
+
 void SimCompartment::doRK212Substep1(double dt) {
-  std::size_t n{conc.size()};
   s2.resize(conc.size());
   s3.resize(conc.size());
+  doRK212Substep1(dt, 0, conc.size());
+}
+
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  tbb::parallel_for(
-      std::size_t{0}, n,
-      [&conc = conc, &s3 = s3, &dcdt = std::as_const(dcdt), dt](std::size_t i) {
-#else
-  for (std::size_t i = 0; i < n; ++i) {
+void SimCompartment::doRK212Substep1_tbb(double dt) {
+  s2.resize(conc.size());
+  s3.resize(conc.size());
+  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, conc.size()),
+                    [this, dt](const tbb::blocked_range<std::size_t> &r) {
+                      doRK212Substep1(dt, r.begin(), r.end());
+                    });
+}
 #endif
-        s3[i] = conc[i];
-        conc[i] += dt * dcdt[i];
-      }
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  );
-#endif
+
+void SimCompartment::doRK212Substep2(double dt, std::size_t begin,
+                                     std::size_t end) {
+  for (std::size_t i = begin; i < end; ++i) {
+    s2[i] = conc[i];
+    conc[i] = 0.5 * s3[i] + 0.5 * conc[i] + 0.5 * dt * dcdt[i];
+  }
 }
 
 void SimCompartment::doRK212Substep2(double dt) {
-  std::size_t n{conc.size()};
+  doRK212Substep2(dt, 0, conc.size());
+}
+
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  tbb::parallel_for(std::size_t{0}, n,
-                    [&conc = conc, &s2 = s2, &s3 = std::as_const(s3),
-                     &dcdt = std::as_const(dcdt), dt](std::size_t i) {
-#else
-  for (std::size_t i = 0; i < n; ++i) {
+void SimCompartment::doRK212Substep2_tbb(double dt) {
+  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, conc.size()),
+                    [this, dt](const tbb::blocked_range<std::size_t> &r) {
+                      doRK212Substep2(dt, r.begin(), r.end());
+                    });
+}
 #endif
-                      s2[i] = conc[i];
-                      conc[i] =
-                          0.5 * s3[i] + 0.5 * conc[i] + 0.5 * dt * dcdt[i];
-                    }
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  );
-#endif
+
+void SimCompartment::doRKSubstep(double dt, double g1, double g2, double g3,
+                                 double beta, double delta, std::size_t begin,
+                                 std::size_t end) {
+  for (std::size_t i = begin; i < end; ++i) {
+    s2[i] += delta * conc[i];
+    conc[i] = g1 * conc[i] + g2 * s2[i] + g3 * s3[i] + beta * dt * dcdt[i];
+  }
 }
 
 void SimCompartment::doRKSubstep(double dt, double g1, double g2, double g3,
                                  double beta, double delta) {
-  std::size_t n{conc.size()};
+  doRKSubstep(dt, g1, g2, g3, beta, delta, 0, conc.size());
+}
+
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  tbb::parallel_for(std::size_t{0}, n,
-                    [&conc = conc, &s2 = s2, &s3 = std::as_const(s3),
-                     &dcdt = std::as_const(dcdt), delta, g1, g2, g3, beta,
-                     dt](std::size_t i) {
-#else
-  for (std::size_t i = 0; i < n; ++i) {
+void SimCompartment::doRKSubstep_tbb(double dt, double g1, double g2, double g3,
+                                     double beta, double delta) {
+  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, conc.size()),
+                    [this, dt, g1, g2, g3, beta,
+                     delta](const tbb::blocked_range<std::size_t> &r) {
+                      doRKSubstep(dt, g1, g2, g3, beta, delta, r.begin(),
+                                  r.end());
+                    });
+}
 #endif
-                      s2[i] += delta * conc[i];
-                      conc[i] = g1 * conc[i] + g2 * s2[i] + g3 * s3[i] +
-                                beta * dt * dcdt[i];
-                    }
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  );
-#endif
+
+void SimCompartment::doRKFinalise(double cFactor, double s2Factor,
+                                  double s3Factor, std::size_t begin,
+                                  std::size_t end) {
+  for (std::size_t i = begin; i < end; ++i) {
+    s2[i] = cFactor * conc[i] + s2Factor * s2[i] + s3Factor * s3[i];
+  }
 }
 
 void SimCompartment::doRKFinalise(double cFactor, double s2Factor,
                                   double s3Factor) {
-  std::size_t n{conc.size()};
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  tbb::parallel_for(
-      std::size_t{0}, n,
-      [&s2 = s2, &conc = std::as_const(conc), &s3 = std::as_const(s3), cFactor,
-       s2Factor, s3Factor](std::size_t i) {
-#else
-  for (std::size_t i = 0; i < n; ++i) {
-#endif
-        s2[i] = cFactor * conc[i] + s2Factor * s2[i] + s3Factor * s3[i];
-      }
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  );
-#endif
+  doRKFinalise(cFactor, s2Factor, s3Factor, 0, conc.size());
 }
 
-void SimCompartment::undoRKStep() {
-  std::size_t n{conc.size()};
 #ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  tbb::parallel_for(std::size_t{0}, n,
-                    [&conc = conc, &s3 = std::as_const(s3)](std::size_t i) {
-#else
-  for (std::size_t i = 0; i < n; ++i) {
-#endif
-                      conc[i] = s3[i];
-                    }
-#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
-  );
-#endif
+void SimCompartment::doRKFinalise_tbb(double cFactor, double s2Factor,
+                                      double s3Factor) {
+  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, conc.size()),
+                    [this, cFactor, s2Factor,
+                     s3Factor](const tbb::blocked_range<std::size_t> &r) {
+                      doRKFinalise(cFactor, s2Factor, s3Factor, r.begin(),
+                                   r.end());
+                    });
 }
+#endif
+
+void SimCompartment::undoRKStep(std::size_t begin, std::size_t end) {
+  for (std::size_t i = begin; i < end; ++i) {
+    conc[i] = s3[i];
+  }
+}
+
+void SimCompartment::undoRKStep() { undoRKStep(0, conc.size()); }
+
+#ifdef SPATIAL_MODEL_EDITOR_USE_TBB
+void SimCompartment::undoRKStep_tbb() {
+  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, conc.size()),
+                    [this](const tbb::blocked_range<std::size_t> &r) {
+                      undoRKStep(r.begin(), r.end());
+                    });
+}
+#endif
 
 PixelIntegratorError SimCompartment::calculateRKError(double epsilon) const {
   PixelIntegratorError err{0.0, 0.0};
@@ -288,7 +314,6 @@ SimCompartment::getLowerOrderConcentration(std::size_t speciesIndex,
   if (s2.empty()) {
     return 0;
   }
-  std::size_t nSpecies = speciesIds.size();
   return s2[pixelIndex * nSpecies + speciesIndex];
 }
 

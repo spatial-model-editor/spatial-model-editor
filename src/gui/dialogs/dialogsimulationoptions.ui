@@ -125,7 +125,7 @@
       <layout class="QHBoxLayout" name="horizontalLayout_2">
        <item>
         <layout class="QGridLayout" name="gridLayout">
-         <item row="4" column="0">
+         <item row="5" column="0">
           <widget class="QLabel" name="lblPixelThreads">
            <property name="text">
             <string>Max CPU threads</string>
@@ -135,7 +135,14 @@
            </property>
           </widget>
          </item>
-         <item row="7" column="0" colspan="2">
+         <item row="7" column="0">
+          <widget class="QLabel" name="lblPixelCompilerOpt">
+           <property name="text">
+            <string>Compiler optimization level</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="0" colspan="2">
           <spacer name="verticalSpacer">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -148,13 +155,20 @@
            </property>
           </spacer>
          </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="lblPixelIntegrator">
+         <item row="2" column="0">
+          <widget class="QLabel" name="lblPixelAbsErr">
            <property name="text">
-            <string>Integrator</string>
+            <string>Max absolute local error</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="9" column="0" colspan="2">
+          <widget class="QPushButton" name="btnPixelReset">
+           <property name="text">
+            <string>Reset to default values</string>
            </property>
           </widget>
          </item>
@@ -168,33 +182,13 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="lblPixelDt">
+         <item row="1" column="0">
+          <widget class="QLabel" name="lblPixelRelErr">
            <property name="text">
-            <string>Max timestep</string>
+            <string>Max relative local error</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="lblPixelAbsErr">
-           <property name="text">
-            <string>Max absolute local error</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QLineEdit" name="txtPixelAbsErr">
-           <property name="toolTip">
-            <string>The maximum absolute error allowed for an integration step</string>
-           </property>
-           <property name="statusTip">
-            <string/>
            </property>
           </widget>
          </item>
@@ -228,20 +222,56 @@
            </item>
           </widget>
          </item>
-         <item row="8" column="0" colspan="2">
-          <widget class="QPushButton" name="btnPixelReset">
+         <item row="6" column="1">
+          <widget class="QCheckBox" name="chkPixelCSE">
+           <property name="toolTip">
+            <string>Extract common subexpressions symbolically before compiling reaction terms</string>
+           </property>
            <property name="text">
-            <string>Reset to default values</string>
+            <string>Common Subexpression Elimination</string>
            </property>
           </widget>
          </item>
-         <item row="5" column="0">
+         <item row="7" column="1">
+          <widget class="QSpinBox" name="spnPixelOptLevel">
+           <property name="toolTip">
+            <string>Higher levels do more compiler optimization passes</string>
+           </property>
+           <property name="maximum">
+            <number>3</number>
+           </property>
+           <property name="value">
+            <number>0</number>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
           <widget class="QLabel" name="lblPixelSymbolicOpt">
            <property name="text">
             <string>Symbolic optimization</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="lblPixelDt">
+           <property name="text">
+            <string>Max timestep</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="txtPixelAbsErr">
+           <property name="toolTip">
+            <string>The maximum absolute error allowed for an integration step</string>
+           </property>
+           <property name="statusTip">
+            <string/>
            </property>
           </widget>
          </item>
@@ -255,20 +285,30 @@
            </property>
           </widget>
          </item>
-         <item row="4" column="1">
-          <widget class="QLineEdit" name="txtPixelThreads">
-           <property name="toolTip">
-            <string>Limit the maximum number of CPU threads used. '0' means use all available threads.</string>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lblPixelIntegrator">
+           <property name="text">
+            <string>Integrator</string>
            </property>
-           <property name="statusTip">
-            <string/>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="lblPixelRelErr">
+         <item row="4" column="1">
+          <widget class="QCheckBox" name="chkPixelMultithread">
+           <property name="toolTip">
+            <string>Using multiple CPU threads can improve performance for large models, but for small models it may reduce performance.</string>
+           </property>
            <property name="text">
-            <string>Max relative local error</string>
+            <string>Enable multithreading</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="lblPixelMultithread">
+           <property name="text">
+            <string>Multithreading</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -276,32 +316,15 @@
           </widget>
          </item>
          <item row="5" column="1">
-          <widget class="QCheckBox" name="chkPixelCSE">
+          <widget class="QSpinBox" name="spnPixelThreads">
            <property name="toolTip">
-            <string>Extract common subexpressions symbolically before compiling reaction terms</string>
+            <string>Limit the maximum number of CPU threads used</string>
            </property>
-           <property name="text">
-            <string>Common Subexpression Elimination</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="0">
-          <widget class="QLabel" name="lblPixelCompilerOpt">
-           <property name="text">
-            <string>Compiler optimization level</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="1">
-          <widget class="QSpinBox" name="spnPixelOptLevel">
-           <property name="toolTip">
-            <string>Higher levels do more compiler optimization passes</string>
+           <property name="specialValueText">
+            <string>unlimited</string>
            </property>
            <property name="maximum">
-            <number>3</number>
-           </property>
-           <property name="value">
-            <number>0</number>
+            <number>128</number>
            </property>
           </widget>
          </item>
@@ -333,7 +356,8 @@
   <tabstop>txtPixelRelErr</tabstop>
   <tabstop>txtPixelAbsErr</tabstop>
   <tabstop>txtPixelDt</tabstop>
-  <tabstop>txtPixelThreads</tabstop>
+  <tabstop>chkPixelMultithread</tabstop>
+  <tabstop>spnPixelThreads</tabstop>
   <tabstop>chkPixelCSE</tabstop>
   <tabstop>spnPixelOptLevel</tabstop>
   <tabstop>btnPixelReset</tabstop>

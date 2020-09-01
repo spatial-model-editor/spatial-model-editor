@@ -79,12 +79,13 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   s.getReactions().setLocation("B_excretion", "c1_c2_membrane");
 
   double dt = 0.134521234;
-  // 1st order RK, fixed timestep simulation
+  // 1st order RK, multi-threaded fixed timestep simulation
   simulate::Options options;
   options.pixel.integrator = simulate::PixelIntegratorType::RK101;
   options.pixel.maxErr = {std::numeric_limits<double>::max(),
                           std::numeric_limits<double>::max()};
   options.pixel.maxTimestep = dt;
+  options.pixel.enableMultiThreading = true;
   options.pixel.maxThreads = 2;
   simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
 
@@ -253,7 +254,8 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
   options.pixel.maxErr = {std::numeric_limits<double>::max(),
                           std::numeric_limits<double>::max()};
   options.pixel.maxTimestep = 0.01;
-  options.pixel.maxThreads = 2;
+  options.pixel.enableMultiThreading = false;
+  options.pixel.maxThreads = 1;
   simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
 
   // check initial concentrations:
@@ -454,21 +456,25 @@ SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
   sim.doTimestep(time);
   auto c4_accurate = sim.getConc(sim.getTimePoints().size() - 1, 0, 0);
   // check lower accuracy & different orders are consistent
-  for (auto integrator : {simulate::PixelIntegratorType::RK212,
-                          simulate::PixelIntegratorType::RK323,
-                          simulate::PixelIntegratorType::RK435}) {
-    double maxRelDiff = 0;
-    options.pixel.integrator = integrator;
-    options.pixel.maxErr = {std::numeric_limits<double>::max(), relErr};
-    simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
-    sim2.doTimestep(time);
-    auto conc = sim2.getConc(sim.getTimePoints().size() - 1, 0, 0);
-    for (std::size_t i = 0; i < conc.size(); ++i) {
-      maxRelDiff = std::max(maxRelDiff, (conc[i] - c4_accurate[i]) /
-                                            (c4_accurate[i] + eps));
+  for (bool multithreaded : {false, true}) {
+    for (auto integrator : {simulate::PixelIntegratorType::RK212,
+                            simulate::PixelIntegratorType::RK323,
+                            simulate::PixelIntegratorType::RK435}) {
+      double maxRelDiff = 0;
+      options.pixel.integrator = integrator;
+      options.pixel.enableMultiThreading = multithreaded;
+      options.pixel.maxErr = {std::numeric_limits<double>::max(), relErr};
+      simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
+      sim2.doTimestep(time);
+      auto conc = sim2.getConc(sim.getTimePoints().size() - 1, 0, 0);
+      for (std::size_t i = 0; i < conc.size(); ++i) {
+        maxRelDiff = std::max(maxRelDiff, (conc[i] - c4_accurate[i]) /
+                                              (c4_accurate[i] + eps));
+      }
+      CAPTURE(multithreaded);
+      CAPTURE(integrator);
+      REQUIRE(maxRelDiff < relErr);
     }
-    CAPTURE(integrator);
-    REQUIRE(maxRelDiff < relErr);
   }
 }
 

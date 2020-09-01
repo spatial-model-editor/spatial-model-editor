@@ -30,15 +30,18 @@ private:
   void doRK212(double dt);
   void doRK323(double dt);
   void doRK435(double dt);
+  void doRKSubstep(double dt, double g1, double g2, double g3, double beta,
+                   double delta);
   double doRKAdaptive(double dtMax);
   double doTimestep(double dt, double dtMax);
-  std::size_t discardedSteps = 0;
+  std::size_t discardedSteps{0};
   PixelIntegratorType integrator;
   PixelIntegratorError errMax;
-  double maxTimestep = std::numeric_limits<double>::max();
-  double nextTimestep = 1e-7;
-  double epsilon = 1e-14;
-  std::size_t numMaxThreads = 1;
+  double maxTimestep{std::numeric_limits<double>::max()};
+  double nextTimestep{1e-7};
+  double epsilon{1e-14};
+  bool enableMultiThreading{false};
+  std::size_t numMaxThreads{1};
   std::string currentErrorMessage;
 
 public:
@@ -54,7 +57,7 @@ public:
   double getLowerOrderConcentration(std::size_t compartmentIndex,
                                     std::size_t speciesIndex,
                                     std::size_t pixelIndex) const;
-  virtual const std::string& errorMessage() const override;
+  virtual const std::string &errorMessage() const override;
 };
 
 } // namespace simulate
