@@ -48,7 +48,7 @@ SCENARIO(
   WHEN("user changes Pixel values") {
     mwt.addUserAction({"Right", "Tab", "Up",  "Up",  "Tab",   "7",   "Tab",
                        "9",     "9",   "Tab", "0",   ".",     "5",   "Tab",
-                       "Space", "Tab", "4",   "Tab", "Space", "Tab", "1"});
+                       "Space", "Tab", "1",   "Tab", "Space", "Tab", "1"});
     mwt.start();
     dia.exec();
     auto opt = dia.getOptions();
@@ -57,7 +57,7 @@ SCENARIO(
     REQUIRE(opt.pixel.maxErr.abs == dbl_approx(99));
     REQUIRE(opt.pixel.maxTimestep == dbl_approx(0.5));
     REQUIRE(opt.pixel.enableMultiThreading == true);
-    REQUIRE(opt.pixel.maxThreads == 4);
+    REQUIRE(opt.pixel.maxThreads == 1);
     REQUIRE(opt.pixel.doCSE == false);
     REQUIRE(opt.pixel.optLevel == 1);
     REQUIRE(opt.dune.dt == dbl_approx(0.00123));

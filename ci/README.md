@@ -1,58 +1,14 @@
 # CI notes
 
-## Pull requests
-
-- Pull requests are built and tested on travis: <https://travis-ci.org/lkeegan/spatial-model-editor>
-
-- Static analysis: <https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor>
-
-- Test coverage: <https://codecov.io/gh/lkeegan/spatial-model-editor>
-
-- Both need to pass before a pull request can be merged
-
-## pre-commit hooks
-
-- Pre-commit hooks to check code formatting are available
-
-- They are optional, i.e. their use is not (yet) enforced by CI
-
-- To use them, first install pre-commit:
-
-  - `pip install pre-commit`
-
-- Then in the directory where you cloned this repo run:
-
-  - `pre-commit install`
-
-- Every subsquent git commit will check for (and fix)
-
-  - trailing whitespace
-
-  - end of file newline
-
-  - yaml errors
-
-- and run these tools:
-
-  - cmake-format
-
-  - black
-
-  - markdownlint
-
-## Deploy new version
+## To release a new version
 
 - tag a commit on master with the version number `x.y.z`
 
-- travis builds will generate new Github & PyPI releases
+- [travis](https://travis-ci.org/lkeegan/spatial-model-editor) builds will generate new [Github](https://github.com/lkeegan/spatial-model-editor/releases) & [PyPI](https://pypi.org/project/sme/) releases
 
-- <https://github.com/lkeegan/spatial-model-editor/releases>
+- [readthedocs](https://spatial-model-editor.readthedocs.io) documentation will be updated
 
-- <https://pypi.org/project/sme/>
-
-- documentation is also updated: <https://spatial-model-editor.readthedocs.io>
-
-## Update latest binaries
+## To update the "latest" binaries
 
 - we also provide a `latest` Github release for beta testing / live-at-head users
 
@@ -79,3 +35,9 @@ git push origin latest
   - <https://github.com/lkeegan/qt5-static>
 
   - <https://github.com/lkeegan/llvm-static>
+
+- the linux Python Wheel builds use these custom docker containers:
+
+  - <https://github.com/lkeegan/sme_manylinux1_x86_64>
+
+  - <https://github.com/lkeegan/sme_manylinux2010_x86_64>
