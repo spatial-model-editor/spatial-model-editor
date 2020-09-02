@@ -5,7 +5,7 @@ message(STATUS "CMake version ${CMAKE_VERSION}")
 # version number here is embedded in compiled executable
 project(
   SpatialModelEditor
-  VERSION 0.9.0
+  VERSION 0.9.1
   DESCRIPTION "Spatial Model Editor"
   LANGUAGES CXX)
 
@@ -39,15 +39,11 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
-# hack to add missing windows libs by hand
-set(SME_EXTRA_CORE_LIBS
-    ""
-    CACHE STRING "Optional additional core libs")
-message(STATUS "SME_EXTRA_CORE_LIBS: ${SME_EXTRA_CORE_LIBS}")
 set(SME_EXTRA_EXE_LIBS
     ""
     CACHE STRING "Optional additional exe libs")
 message(STATUS "SME_EXTRA_EXE_LIBS: ${SME_EXTRA_EXE_LIBS}")
+
 set(SME_EXTRA_CORE_DEFS
     ""
     CACHE STRING "Optional additional defines for core")
@@ -60,9 +56,18 @@ if(BUILD_TESTING)
 endif()
 
 # compile spatial model editor
-set(WITH_TBB
-    yes
+set(SME_WITH_TBB
+    no
     CACHE BOOL "Build with TBB support (multithreading)")
+set(SME_WITH_OPENMP
+    no
+    CACHE BOOL "Build with OpenMP support (multithreading)")
+if(SME_WITH_TBB AND SME_WITH_OPENMP)
+  message(
+    FATAL_ERROR
+      "Please choose either TBB (-DSME_WITH_TBB=ON) or OpenMP (-DSME_WITH_OPENMP=ON) for multithreading. Using both together is not supported."
+  )
+endif()
 add_subdirectory(src)
 
 # compile spatial cli

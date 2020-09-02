@@ -15,7 +15,7 @@ branches:
 env:
   global:
     # python wheel building can (and should) be disabled to speed up CI when working on a PR
-    - BUILD_PYTHON_WHEELS=false
+    - BUILD_PYTHON_WHEELS=true
     - MSYS_URL='https://github.com/msys2/msys2-installer/releases/download/2020-07-20/msys2-base-x86_64-20200720.sfx.exe'
     - CIBUILDWHEEL_VERSION=1.5.5
     # pypi TWINE_PASSWORD
@@ -87,7 +87,7 @@ jobs:
         - export SME_EXTRA_EXE_LIBS="-static-libgcc;-static-libstdc++"
         - mkdir build
         - cd build
-        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS
+        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_WITH_TBB=ON
         - make -j2 VERBOSE=1
         # run c++ tests
         - ./test/tests -as 2>&1 | tail -n 100
@@ -120,7 +120,7 @@ jobs:
       script:
         - mkdir build
         - cd build
-        - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/local/bin/python3
+        - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/local/bin/python3 -DSME_WITH_TBB=ON
         - make -j2 VERBOSE=1
         # run non-gui c++ tests
         - ./test/tests -as "~[gui]" 2>&1 | tail -n 100
@@ -184,7 +184,7 @@ jobs:
       services:
         - docker
       env:
-        - DOCKER_IMAGE=lkeegan/sme_manylinux1_x86_64:2020.08.20
+        - DOCKER_IMAGE=lkeegan/sme_manylinux1_x86_64:2020.09.01
       install:
         - docker pull $DOCKER_IMAGE
       before_script:
@@ -209,7 +209,7 @@ jobs:
       services:
         - docker
       env:
-        - DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.08.19
+        - DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.09.01
       install:
         - docker pull $DOCKER_IMAGE
       before_script:
@@ -412,7 +412,7 @@ jobs:
         - ccache --zero-stats
         - mkdir build
         - cd build
-        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/usr/local/qt5-static;/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DPYTHON_EXECUTABLE=/usr/bin/python3
+        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/usr/local/qt5-static;/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DPYTHON_EXECUTABLE=/usr/bin/python3 -DSME_WITH_TBB=ON
         - build-wrapper-linux-x86-64 --out-dir bw-output make -j2
         - ccache --show-stats
         # run tests

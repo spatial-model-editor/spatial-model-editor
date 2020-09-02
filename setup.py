@@ -47,7 +47,6 @@ class CMakeBuild(build_ext):
         ]
         for e in [
             "CMAKE_PREFIX_PATH",
-            "SME_EXTRA_CORE_LIBS",
             "SME_EXTRA_CORE_DEFS",
             "SME_EXTRA_EXE_LIBS",
             "PYTHON_LIBRARY",
@@ -89,7 +88,7 @@ with open(path.join(sme_directory, "README.md")) as f:
 
 setup(
     name="sme",
-    version="0.9.0",
+    version="0.9.1",
     author="Liam Keegan",
     author_email="liam@keegan.ch",
     description="Spatial Model Editor python bindings",
