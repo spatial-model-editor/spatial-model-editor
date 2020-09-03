@@ -27,6 +27,7 @@ target_sources(
          geometry_analytic_t.cpp
          model_t.cpp
          model_functions_t.cpp
+         model_geometry_t.cpp
          model_math_t.cpp
          model_membranes_t.cpp
          model_membranes_util_t.cpp

@@ -1,16 +1,14 @@
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
-
-#include <QFile>
-
 #include "catch_wrapper.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
 #include "sbml_test_data/yeast_glycolysis.hpp"
 #include "utils.hpp"
+#include <QFile>
+#include <sbml/SBMLTypes.h>
+#include <sbml/extension/SBMLDocumentPlugin.h>
+#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
+#include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 // avoid using std::to_string because of "multiple definition of vsnprintf"
 // mingw issue on windows
