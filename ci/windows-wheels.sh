@@ -9,7 +9,7 @@ export CMAKE_PREFIX_PATH="C:/libs;C:/libs/CMake;C:/libs/lib/cmake;C:/libs/dune"
 export SME_EXTRA_EXE_LIBS="-static;-static-libgcc;-static-libstdc++"
 export SME_EXTRA_CORE_DEFS="_hypot=hypot"
 export CMAKE_CXX_COMPILER_LAUNCHER=ccache
-export CCACHE_LOGFILE="C:/log.txt"
+#export CCACHE_LOGFILE="C:/log.txt"
 export CCACHE_NOHASHDIR="true"
 export CIBW_BUILD_VERBOSITY=3
 export CIBW_BUILD="$CIBW_BUILD"
@@ -29,4 +29,4 @@ python -m cibuildwheel --output-dir dist
 
 ccache -s
 
-tail -n 1500 /c/log.txt
+# tail -n 1500 /c/log.txt

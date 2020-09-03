@@ -15,7 +15,7 @@ branches:
 env:
   global:
     # python wheel building can (and should) be disabled to speed up CI when working on a PR
-    - BUILD_PYTHON_WHEELS=true
+    - BUILD_PYTHON_WHEELS=false
     - MSYS_URL='https://github.com/msys2/msys2-installer/releases/download/2020-07-20/msys2-base-x86_64-20200720.sfx.exe'
     - CIBUILDWHEEL_VERSION=1.5.5
     # pypi TWINE_PASSWORD
@@ -90,7 +90,8 @@ jobs:
         - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_WITH_TBB=ON
         - make -j2 VERBOSE=1
         # run c++ tests
-        - ./test/tests -as 2>&1 | tail -n 100
+        - ./test/tests -as > tests.txt 2>&1
+        - tail -n 100 tests.txt
         # run python tests
         - cd sme
         - python3 -m nose ../.. -v
@@ -123,7 +124,8 @@ jobs:
         - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/local/bin/python3 -DSME_WITH_TBB=ON
         - make -j2 VERBOSE=1
         # run non-gui c++ tests
-        - ./test/tests -as "~[gui]" 2>&1 | tail -n 100
+        - ./test/tests -as "~[gui]" > tests.txt 2>&1
+        - tail -n 100 tests.txt
         # run python tests
         - cd sme
         - python3 -m nose ../.. -v
@@ -423,7 +425,8 @@ jobs:
         - mkdir gcov
         # core unit core_tests
         - lcov -q -z -d .
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "[core]" 2>&1 | tail -n 100
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "[core]" > core.txt 2>&1
+        - tail -n 100 core.txt
         - $COV gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
         - $COV gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
         - mv *#src#core*.gcov gcov/
@@ -434,7 +437,8 @@ jobs:
         # gui unit tests
         - rm -f gcov/*
         - lcov -q -z -d .
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "~[mainwindow][gui]" 2>&1 | tail -n 100
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "~[mainwindow][gui]" > gui.txt 2>&1
+        - tail -n 100 gui.txt
         - $COV gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
         - $COV gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
@@ -447,7 +451,8 @@ jobs:
         # mainwindow unit tests
         - rm -f gcov/*
         - lcov -q -z -d .
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "[mainwindow][gui]" 2>&1 | tail -n 100
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "[mainwindow][gui]" > gui-mainwindow.txt 2>&1
+        - tail -n 100 gui-mainwindow.txt
         - $COV gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
         - $COV gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
@@ -461,7 +466,8 @@ jobs:
         - rm -f gcov/*
         - lcov -q -z -d .
         - cd sme
-        - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -v -s ../../test 2>&1 | tail -n 100
+        - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -v -s ../../test > sme.txt 2>&1
+        - tail -n 100 sme.txt
         - cd ..
         - $COV gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
         - $COV gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null
@@ -473,7 +479,8 @@ jobs:
         # run all c++ tests again, then gcov again to get full coverage for sonarsource
         - rm -f gcov/*
         - lcov -q -z -d .
-        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as 2>&1 | tail -n 100
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as > tests.txt 2>&1
+        - tail -n 100 tests.txt
         - $COV gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
         - $COV gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
@@ -483,7 +490,8 @@ jobs:
         # also run python tests, but only copy gcov data for sme files: don't want to overwrite coverage info on core from c++ tests
         - lcov -q -z -d .
         - cd sme
-        - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -s ../../test 2>&1 | tail -n 100
+        - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -s ../../test > sme.txt 2>&1
+        - tail -n 100 sme.txt
         - cd ..
         - $COV gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null
         - mv *#sme*.gcov gcov/
