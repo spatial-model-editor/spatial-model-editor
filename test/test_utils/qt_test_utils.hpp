@@ -10,8 +10,6 @@
 #include <queue>
 #include <utility>
 
-class QWidget;
-
 // delay in ms to insert between key events
 const int keyDelay = 0;
 // delay in ms to insert between mouse events
@@ -27,9 +25,21 @@ void sendKeyEvents(QObject *object, const QStringList &keySeqStrings,
 QString sendKeyEventsToNextQDialog(const QStringList &keySeqStrings,
                                    bool sendReleaseEvents = true);
 
-void sendMouseMove(QWidget *widget, const QPoint &location = {});
+void sendMouseMove(QWidget *widget, const QPoint &pos = {},
+                   Qt::MouseButton button = Qt::MouseButton::NoButton);
 
-void sendMouseClick(QWidget *widget, const QPoint &location = {});
+void sendMousePress(QWidget *widget, const QPoint &pos = {},
+                    Qt::MouseButton button = Qt::MouseButton::NoButton);
+
+void sendMouseRelease(QWidget *widget, const QPoint &pos = {},
+                      Qt::MouseButton button = Qt::MouseButton::NoButton);
+
+void sendMouseClick(QWidget *widget, const QPoint &pos = {},
+                    Qt::MouseButton button = Qt::MouseButton::LeftButton);
+
+void sendMouseDrag(QWidget *widget, const QPoint &startPos,
+                   const QPoint &endPos,
+                   Qt::MouseButton button = Qt::MouseButton::LeftButton);
 
 // timer class that repeatedly checks for an active modal widget
 // (a modal widget blocks execution pending user input, e.g. a message box)

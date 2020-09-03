@@ -7,24 +7,34 @@ namespace Ui {
 class DialogImageSlice;
 }
 
+enum class SliceType { Horizontal, Vertical, Custom };
+
 class DialogImageSlice : public QDialog {
   Q_OBJECT
 
- public:
-  explicit DialogImageSlice(const QVector<QImage>& images,
-                            const QVector<double>& timepoints,
-                            QWidget* parent = nullptr);
+public:
+  explicit DialogImageSlice(const QImage &geometryImage,
+                            const QVector<QImage> &images,
+                            const QVector<double> &timepoints,
+                            QWidget *parent = nullptr);
   ~DialogImageSlice();
   QImage getSlicedImage() const;
 
- private:
-  std::unique_ptr<Ui::DialogImageSlice> ui;
-  const QVector<QImage>& imgs;
-  const QVector<double>& time;
+private:
+  const std::unique_ptr<Ui::DialogImageSlice> ui;
+  const QVector<QImage> &imgs;
+  const QVector<double> &time;
   QImage slice;
-  void hslideTime_valueChanged(int value);
-  void sliceAtX(int x);
-  void sliceAtY(int y);
-  void lblImage_mouseOver(const QPoint& point);
+  SliceType sliceType;
+  int horizontal;
+  int vertical;
+  QPoint startPoint{0, 0};
+  QPoint endPoint{0, 0};
+  void updateSlicedImage();
   void saveSlicedImage();
+  void cmbSliceType_activated(int index);
+  void lblSlice_mouseDown(QPoint point);
+  void lblSlice_sliceDrawn(QPoint start, QPoint end);
+  void lblSlice_mouseWheelEvent(int delta);
+  void lblImage_mouseOver(const QPoint &point);
 };

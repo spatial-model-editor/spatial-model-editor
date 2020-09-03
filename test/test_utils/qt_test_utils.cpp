@@ -1,5 +1,4 @@
 #include "qt_test_utils.hpp"
-
 #include <QApplication>
 #include <QDebug>
 #include <QDialog>
@@ -76,17 +75,39 @@ QString sendKeyEventsToNextQDialog(const QStringList &keySeqStrings,
   return title;
 }
 
-void sendMouseMove(QWidget *widget, const QPoint &location) {
-  QApplication::processEvents();
-  QTest::mouseMove(widget->windowHandle(), location, mouseDelay);
+void sendMouseMove(QWidget *widget, const QPoint &pos, Qt::MouseButton button) {
+  // workaround for QTest::mouseMove() bug
+  // https://bugreports.qt.io/browse/QTBUG-5232
+  wait(mouseDelay);
+  auto ev = new QMouseEvent(QEvent::MouseMove, pos, button, button, {});
+  QApplication::postEvent(widget, ev);
   QApplication::processEvents();
 }
 
-void sendMouseClick(QWidget *widget, const QPoint &location) {
-  QApplication::processEvents();
-  QTest::mouseClick(widget, Qt::LeftButton, Qt::KeyboardModifiers(), location,
-                    mouseDelay);
-  QApplication::processEvents();
+void sendMousePress(QWidget *widget, const QPoint &pos,
+                    Qt::MouseButton button) {
+  QTest::mousePress(widget, button, {}, pos, mouseDelay);
+}
+
+void sendMouseRelease(QWidget *widget, const QPoint &pos,
+                      Qt::MouseButton button) {
+  QTest::mouseRelease(widget, button, {}, pos, mouseDelay);
+}
+
+void sendMouseClick(QWidget *widget, const QPoint &pos,
+                    Qt::MouseButton button) {
+  QTest::mouseClick(widget, button, {}, pos, mouseDelay);
+}
+
+void sendMouseDrag(QWidget *widget, const QPoint &start, const QPoint &end,
+                   Qt::MouseButton button) {
+  sendMousePress(widget, start, button);
+  QPoint dir{end - start};
+  int len{std::max(std::abs(dir.x()), std::abs(dir.y()))};
+  for (int i{0}; i < len; ++i) {
+    sendMouseMove(widget, start + (i * dir) / len, button);
+  }
+  sendMouseRelease(widget, end, button);
 }
 
 void ModalWidgetTimer::getText(QWidget *widget) {

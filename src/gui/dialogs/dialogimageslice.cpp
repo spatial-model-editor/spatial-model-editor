@@ -1,98 +1,76 @@
 #include "dialogimageslice.hpp"
-
-#include <QFileDialog>
-
+#include "logger.hpp"
 #include "ui_dialogimageslice.h"
+#include <QFileDialog>
+#include <algorithm>
 
-DialogImageSlice::DialogImageSlice(const QVector<QImage>& images,
-                                   const QVector<double>& timepoints,
-                                   QWidget* parent)
-    : QDialog(parent),
-      ui{std::make_unique<Ui::DialogImageSlice>()},
-      imgs(images),
-      time(timepoints) {
+DialogImageSlice::DialogImageSlice(const QImage &geometryImage,
+                                   const QVector<QImage> &images,
+                                   const QVector<double> &timepoints,
+                                   QWidget *parent)
+    : QDialog(parent), ui{std::make_unique<Ui::DialogImageSlice>()},
+      imgs{images}, time{timepoints}, startPoint{0, geometryImage.height() - 1},
+      endPoint{geometryImage.width() - 1, 0} {
   ui->setupUi(this);
-  // do smooth interpolation & ignore aspect ratio
+
   ui->lblImage->setAspectRatioMode(Qt::IgnoreAspectRatio);
   ui->lblImage->setTransformationMode(Qt::SmoothTransformation);
-
-  // default: y axis
-  ui->hslideZ->setMaximum(imgs[0].width() - 1);
-  ui->cmbImageVerticalAxis->setCurrentIndex(1);
+  ui->lblSlice->setImage(geometryImage);
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogImageSlice::saveSlicedImage);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogImageSlice::reject);
-  connect(ui->cmbImageVerticalAxis, qOverload<int>(&QComboBox::activated), this,
-          [this](int index) {
-            if (index == 0) {
-              ui->hslideZ->setMaximum(imgs[0].height() - 1);
+  connect(ui->cmbSliceType, qOverload<int>(&QComboBox::activated), this,
+          &DialogImageSlice::cmbSliceType_activated);
+  connect(ui->chkAspectRatio, &QCheckBox::clicked, this,
+          [lbl = ui->lblImage](bool checked) {
+            if (checked) {
+              lbl->setAspectRatioMode(Qt::KeepAspectRatio);
             } else {
-              ui->hslideZ->setMaximum(imgs[0].width() - 1);
-            };
-            ui->hslideZ->setValue(0);
+              lbl->setAspectRatioMode(Qt::IgnoreAspectRatio);
+            }
           });
-  connect(ui->hslideZ, &QSlider::valueChanged, this,
-          &DialogImageSlice::hslideTime_valueChanged);
+  connect(ui->chkSmoothInterpolation, &QCheckBox::clicked, this,
+          [lbl = ui->lblImage](bool checked) {
+            if (checked) {
+              lbl->setTransformationMode(Qt::SmoothTransformation);
+            } else {
+              lbl->setTransformationMode(Qt::FastTransformation);
+            }
+          });
+  connect(ui->lblSlice, &QLabelSlice::mouseDown, this,
+          &DialogImageSlice::lblSlice_mouseDown);
+  connect(ui->lblSlice, &QLabelSlice::sliceDrawn, this,
+          &DialogImageSlice::lblSlice_sliceDrawn);
+  connect(ui->lblSlice, &QLabelSlice::mouseWheelEvent, this,
+          &DialogImageSlice::lblSlice_mouseWheelEvent);
   connect(ui->lblImage, &QLabelMouseTracker::mouseOver, this,
           &DialogImageSlice::lblImage_mouseOver);
-  ui->hslideZ->setValue(ui->hslideZ->maximum() / 2);
+
+  // initial slice type: vertical
+  ui->cmbSliceType->setCurrentIndex(1);
+  cmbSliceType_activated(ui->cmbSliceType->currentIndex());
 }
 
 DialogImageSlice::~DialogImageSlice() = default;
 
 QImage DialogImageSlice::getSlicedImage() const { return slice; }
 
-void DialogImageSlice::hslideTime_valueChanged(int value) {
-  if (ui->cmbImageVerticalAxis->currentIndex() == 0) {
-    sliceAtY(value);
-    ui->lblZLabel->setText(QString("y = %1").arg(value));
-  } else {
-    sliceAtX(value);
-    ui->lblZLabel->setText(QString("x = %1").arg(value));
-  }
-}
-
-void DialogImageSlice::sliceAtX(int x) {
-  slice = QImage(time.size(), imgs[0].height(),
-                 QImage::Format_ARGB32_Premultiplied);
+void DialogImageSlice::updateSlicedImage() {
+  const auto &pixels = ui->lblSlice->getSlicePixels();
+  int np{static_cast<int>(pixels.size())};
+  slice = QImage(time.size(), np, QImage::Format_ARGB32_Premultiplied);
   int t = 0;
-  for (const auto& img : imgs) {
-    for (int y = 0; y < img.height(); ++y) {
-      slice.setPixel(t, y, img.pixel(x, y));
+  for (const auto &img : imgs) {
+    int y = np - 1;
+    for (const auto &pixel : pixels) {
+      slice.setPixel(t, y, img.pixel(pixel));
+      --y;
     }
     ++t;
   }
   ui->lblImage->setImage(slice);
-}
-
-void DialogImageSlice::sliceAtY(int y) {
-  slice =
-      QImage(time.size(), imgs[0].width(), QImage::Format_ARGB32_Premultiplied);
-  int t = 0;
-  for (const auto& img : imgs) {
-    for (int x = 0; x < img.width(); ++x) {
-      slice.setPixel(t, slice.height() - 1 - x, img.pixel(x, y));
-    }
-    ++t;
-  }
-  ui->lblImage->setImage(slice);
-}
-
-void DialogImageSlice::lblImage_mouseOver(const QPoint& point) {
-  int x;
-  int y;
-  double t = time[point.x()];
-  if (ui->cmbImageVerticalAxis->currentIndex() == 0) {
-    y = ui->hslideZ->value();
-    x = slice.height() - 1 - point.y();
-  } else {
-    x = ui->hslideZ->value();
-    y = slice.height() - 1 - point.y();
-  }
-  ui->lblMouseLocation->setText(
-      QString("Mouse location: (x=%1, y=%2, t=%3)").arg(x).arg(y).arg(t));
 }
 
 void DialogImageSlice::saveSlicedImage() {
@@ -105,4 +83,56 @@ void DialogImageSlice::saveSlicedImage() {
     filename.append(".png");
   }
   getSlicedImage().save(filename);
+}
+
+void DialogImageSlice::cmbSliceType_activated(int index) {
+  if (index == 2) {
+    sliceType = SliceType::Custom;
+    lblSlice_sliceDrawn(startPoint, endPoint);
+    return;
+  }
+  if (index == 0) {
+    sliceType = SliceType::Horizontal;
+  } else if (index == 1) {
+    sliceType = SliceType::Vertical;
+  }
+  lblSlice_mouseDown(QPoint(imgs[0].width() / 2, imgs[0].height() / 2));
+}
+
+void DialogImageSlice::lblSlice_mouseDown(QPoint point) {
+  if (sliceType == SliceType::Horizontal) {
+    horizontal = point.y();
+    ui->lblSlice->setHorizontalSlice(horizontal);
+    updateSlicedImage();
+  } else if (sliceType == SliceType::Vertical) {
+    vertical = point.x();
+    ui->lblSlice->setVerticalSlice(vertical);
+    updateSlicedImage();
+  }
+}
+
+void DialogImageSlice::lblSlice_sliceDrawn(QPoint start, QPoint end) {
+  if (sliceType == SliceType::Custom) {
+    startPoint = start;
+    endPoint = end;
+    ui->lblSlice->setSlice(startPoint, endPoint);
+    updateSlicedImage();
+  }
+}
+
+void DialogImageSlice::lblSlice_mouseWheelEvent(int delta) {
+  int dp = delta / std::abs(delta);
+  QPoint p(std::clamp(horizontal + dp, 0, imgs[0].height() - 1),
+           std::clamp(vertical + dp, 0, imgs[0].width() - 1));
+  lblSlice_mouseDown(p);
+}
+
+void DialogImageSlice::lblImage_mouseOver(const QPoint &point) {
+  double t = time[point.x()];
+  std::size_t i = static_cast<std::size_t>(slice.height() - 1 - point.y());
+  const auto &p = ui->lblSlice->getSlicePixels()[i];
+  ui->lblMouseLocation->setText(QString("Mouse location: (x=%1, y=%2, t=%3)")
+                                    .arg(p.x())
+                                    .arg(p.y())
+                                    .arg(t));
 }

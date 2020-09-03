@@ -5,6 +5,8 @@
 #include "qt_test_utils.hpp"
 #include "simulate.hpp"
 
+#if defined(SPATIAL_MODEL_EDITOR_WITH_TBB) ||                                  \
+    defined(SPATIAL_MODEL_EDITOR_WITH_OPENMP)
 SCENARIO(
     "DialogSimulationOptions",
     "[gui/dialogs/simulationoptions][gui/dialogs][gui][simulationoptions]") {
@@ -19,6 +21,10 @@ SCENARIO(
   options.pixel.integrator = simulate::PixelIntegratorType::RK435;
   options.pixel.maxErr = {0.01, 4e-4};
   options.pixel.maxTimestep = 0.2;
+  options.pixel.enableMultiThreading = false;
+  options.pixel.maxThreads = 0;
+  options.pixel.doCSE = true;
+  options.pixel.optLevel = 3;
   DialogSimulationOptions dia(options);
   ModalWidgetTimer mwt;
   WHEN("user does nothing: unchanged") {
@@ -43,7 +49,10 @@ SCENARIO(
     REQUIRE(opt.pixel.optLevel == 3);
   }
   WHEN("user changes Dune values") {
-    mwt.addUserAction({"Tab", "Tab", "Down", "Down", "9", "Tab", ".", "4", "Tab", "1", "e", "-", "1", "2", "Tab", "9", "Tab", "1", ".", "2", "Tab", "0", ".", "7", "Tab", " "});
+    mwt.addUserAction({"Tab", "Tab", "Down", "Down", "9", "Tab", ".",
+                       "4",   "Tab", "1",    "e",    "-", "1",   "2",
+                       "Tab", "9",   "Tab",  "1",    ".", "2",   "Tab",
+                       "0",   ".",   "7",    "Tab",  " "});
     mwt.start();
     dia.exec();
     auto opt = dia.getOptions();
@@ -101,3 +110,4 @@ SCENARIO(
     REQUIRE(opt.pixel.maxThreads == defaultOpts.maxThreads);
   }
 }
+#endif

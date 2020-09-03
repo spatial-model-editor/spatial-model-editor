@@ -269,9 +269,9 @@ void TabSimulate::btnSimulate_clicked() {
 }
 
 void TabSimulate::btnSliceImage_clicked() {
-  DialogImageSlice dialog(images, time);
+  DialogImageSlice dialog(sbmlDoc.getGeometry().getImage(), images, time);
   if (dialog.exec() == QDialog::Accepted) {
-    SPDLOG_DEBUG("do something");
+    SPDLOG_DEBUG("todo: save current slice settings");
   }
 }
 
