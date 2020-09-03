@@ -144,7 +144,7 @@ makeReactionsSpatial(libsbml::Model *model,
     }
     auto *srp = static_cast<libsbml::SpatialReactionPlugin *>(
         reac->getPlugin("spatial"));
-    if (srp == nullptr || !srp->isSetIsLocal() || !srp->getIsLocal()) {
+    if (srp != nullptr && !(srp->isSetIsLocal() && srp->getIsLocal())) {
       SPDLOG_INFO("Setting isLocal=true for reaction {}", reac->getId());
       srp->setIsLocal(true);
       makeReactionSpatial(reac, membranes);
@@ -408,6 +408,7 @@ QString ModelReactions::getParameterName(const QString &reactionId,
   if (param == nullptr) {
     SPDLOG_ERROR("Parameter '{}' not found in reaction '{}'",
                  parameterId.toStdString(), reactionId.toStdString());
+    return {};
   }
   return param->getName().c_str();
 }

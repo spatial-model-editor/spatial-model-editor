@@ -231,18 +231,23 @@ void ModelGeometry::checkIfGeometryIsValid() {
 }
 
 void ModelGeometry::clear() {
+  mesh.reset();
+  hasImage = false;
+  isValid = false;
+  image = {};
   auto *model = sbmlModel;
-  auto *geom = getOrCreateGeometry(model);
+  if (model == nullptr) {
+    return;
+  }
   // remove any SBML geometry-related stuff
+  auto *geom = getOrCreateGeometry(model);
   removeMeshParamsAnnotation(getParametricGeometry(geom));
-  if (model != nullptr) {
-    for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
-      auto *comp = model->getCompartment(i);
-      auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
-          comp->getPlugin("spatial"));
-      if (scp != nullptr && scp->isSetCompartmentMapping()) {
-        scp->unsetCompartmentMapping();
-      }
+  for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
+    auto *comp = model->getCompartment(i);
+    auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
+        comp->getPlugin("spatial"));
+    if (scp != nullptr && scp->isSetCompartmentMapping()) {
+      scp->unsetCompartmentMapping();
     }
   }
   auto *spatial = static_cast<libsbml::SpatialModelPlugin *>(
@@ -267,10 +272,6 @@ void ModelGeometry::clear() {
       SPDLOG_INFO("removing SampledField {}", sf->getId());
     }
   }
-  // clear geometry-related data
-  mesh.reset();
-  hasImage = false;
-  isValid = false;
 }
 
 int ModelGeometry::getNumDimensions() const { return numDimensions; }
