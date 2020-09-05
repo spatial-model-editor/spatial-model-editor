@@ -50,7 +50,7 @@ SCENARIO("DUNE: function",
     auto stages =
         Dune::Copasi::BitFlags<Dune::Copasi::ModelSetup::Stages>::all_flags();
     stages.reset(Dune::Copasi::ModelSetup::Stages::Writer);
-    simulate::DuneConverter dc(m, false, 1e-6);
+    simulate::DuneConverter dc(m, false);
     auto [grid, hostGrid] = simulate::makeDuneGrid<HostGrid, MDGTraits>(
         *m.getGeometry().getMesh(), dc.getGMSHCompIndices());
     auto config = getConfig(dc);
@@ -58,7 +58,7 @@ SCENARIO("DUNE: function",
     model.set_initial(simulate::makeModelDuneFunctions<Grid::LeafGridView>(dc));
 
     // create model using TIFF files for initial conditions
-    simulate::DuneConverter dcTiff(m, true, 1e-6);
+    simulate::DuneConverter dcTiff(m, true);
     auto configTiff = getConfig(dcTiff);
     Model modelTiff(grid, configTiff.sub("model"));
 

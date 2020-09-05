@@ -346,6 +346,8 @@ SCENARIO(
   simulate::Options options;
   options.pixel.maxErr = {std::numeric_limits<double>::max(), 0.01};
   options.dune.dt = 1.0;
+  options.dune.maxDt = 1.0;
+  options.dune.minDt = 0.5;
   for (auto simType :
        {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
     double initialRelativeError = 1e-9;
@@ -493,11 +495,15 @@ SCENARIO("DUNE: simulation",
 
     simulate::Options options;
     options.dune.dt = 0.01;
+    options.dune.maxDt = 0.01;
+    options.dune.minDt = 0.005;
+    options.dune.integrator = "alexander_2";
     simulate::Simulation duneSim(s, simulate::SimulatorType::DUNE, options);
     REQUIRE(duneSim.getAvgMinMax(0, 0, 0).avg == dbl_approx(1.0));
     REQUIRE(duneSim.getAvgMinMax(0, 0, 1).avg == dbl_approx(1.0));
     REQUIRE(duneSim.getAvgMinMax(0, 0, 2).avg == dbl_approx(0.0));
     duneSim.doTimestep(0.05);
+    CAPTURE(duneSim.getTimePoints().size());
     auto timeIndex = duneSim.getTimePoints().size() - 1;
     auto imgConc = duneSim.getConcImage(timeIndex);
     REQUIRE(std::abs(duneSim.getAvgMinMax(timeIndex, 0, 0).avg - 0.995) < 1e-4);

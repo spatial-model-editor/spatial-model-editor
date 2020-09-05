@@ -122,7 +122,7 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
         mwt.start();
         sendKeyEvents(&w, {"Ctrl+D"});
         REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
-        QFile file("wqz.ini");
+        QFile file("wqz_comp.ini");
         REQUIRE(file.open(QIODevice::ReadOnly | QIODevice::Text));
         auto line = file.readLine().toStdString();
         REQUIRE(line == "[grid]\n");

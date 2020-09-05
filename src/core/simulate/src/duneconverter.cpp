@@ -11,6 +11,7 @@
 #include "model_species.hpp"
 #include "model_units.hpp"
 #include "pde.hpp"
+#include "simulate_options.hpp"
 #include "tiff.hpp"
 #include "utils.hpp"
 #include <QDir>
@@ -63,6 +64,19 @@ static bool compartmentContainsNonConstantSpecies(const model::Model &model,
   });
 }
 
+static bool modelHasIndependentCompartments(const model::Model &model) {
+  for (const auto &mem : model.getMembranes().getMembranes()) {
+    QString compA = mem.getCompartmentA()->getId().c_str();
+    QString compB = mem.getCompartmentB()->getId().c_str();
+    if (compartmentContainsNonConstantSpecies(model, compA) ||
+        compartmentContainsNonConstantSpecies(model, compB)) {
+      // membrane with non-constant species -> coupled compartments
+      return false;
+    }
+  }
+  return true;
+}
+
 template <typename T>
 static std::vector<std::size_t>
 getIndicesOfSortedVector(const std::vector<T> &unsorted) {
@@ -77,41 +91,103 @@ getIndicesOfSortedVector(const std::vector<T> &unsorted) {
 
 namespace simulate {
 
+static void addGrid(IniFile &ini) {
+  ini.addSection("grid");
+  ini.addValue("file", "grid.msh");
+  ini.addValue("initial_level", 0);
+}
+
+static void addModel(IniFile &ini) {
+  ini.addSection("model");
+  ini.addValue("order", 1);
+}
+
+static void addTimeStepping(IniFile &ini,
+                            const simulate::DuneOptions &duneOptions,
+                            int doublePrecision) {
+  ini.addSection("model", "time_stepping");
+  ini.addValue("rk_method", duneOptions.integrator.c_str());
+  ini.addValue("begin", 0.0, doublePrecision);
+  ini.addValue("end", 100.0, doublePrecision);
+  ini.addValue("initial_step", duneOptions.dt, doublePrecision);
+  ini.addValue("min_step", duneOptions.minDt, doublePrecision);
+  ini.addValue("max_step", duneOptions.maxDt, doublePrecision);
+  ini.addValue("decrease_factor", duneOptions.decrease, doublePrecision);
+  ini.addValue("increase_factor", duneOptions.increase, doublePrecision);
+}
+
+static void addLogging(IniFile &ini, bool forExternalUse) {
+  ini.addSection("logging.sinks.stdout");
+  ini.addValue("level", "trace");
+  ini.addSection("logging.default");
+  if (forExternalUse) {
+    ini.addValue("level", "info");
+    ini.addValue("sinks", "stdout");
+  } else if (SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_DEBUG) {
+    // for debug GUI builds enable verbose DUNE logging
+    ini.addValue("level", "trace");
+    ini.addValue("sinks", "stdout");
+  } else {
+    // for release GUI builds disable DUNE logging
+    ini.addValue("level", "off");
+    ini.addValue("sinks", "stdout");
+  }
+}
+
+static void addWriter(IniFile &ini) {
+  ini.addSection("model", "writer");
+  ini.addValue("file_path", "vtk");
+}
+
 DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
-                             double dt, const QString &outputIniFile,
-                             int doublePrecision)
+                             const simulate::DuneOptions &duneOptions,
+                             const QString &outputIniFile, int doublePrecision)
     : mesh{model.getGeometry().getMesh()},
       x0{model.getGeometry().getPhysicalOrigin().x()},
       y0{model.getGeometry().getPhysicalOrigin().y()},
       a{model.getGeometry().getPixelWidth()},
       w{model.getGeometry().getImage().width()} {
+
+  independentCompartments = modelHasIndependentCompartments(model);
+
   QString iniFileDir{QDir::currentPath()};
-  QString iniFilename{QDir(iniFileDir).filePath("dune.ini")};
+  std::vector<QString> iniFilenames;
+  QString baseIniFile{"dune"};
   if (!outputIniFile.isEmpty()) {
     iniFileDir = QFileInfo(outputIniFile).absolutePath();
-    iniFilename = outputIniFile;
+    baseIniFile = outputIniFile;
+    if (baseIniFile.right(4) == ".ini") {
+      baseIniFile.chop(4);
+    }
   }
 
-  IniFile ini;
-  double begin_time = 0.0;
-  double end_time = 0.02;
-  double time_step = dt;
-
   constexpr double invalidPixelConc{-999.0};
-  // grid
-  ini.addSection("grid");
-  ini.addValue("file", "grid.msh");
-  ini.addValue("initial_level", 0);
+  IniFile iniCommon;
+  addGrid(iniCommon);
+  addModel(iniCommon);
+  addTimeStepping(iniCommon, duneOptions, doublePrecision);
+  addLogging(iniCommon, forExternalUse);
+  addWriter(iniCommon);
 
-  // simulation
-  ini.addSection("model");
-  ini.addValue("begin_time", begin_time, doublePrecision);
-  ini.addValue("end_time", end_time, doublePrecision);
-  ini.addValue("time_step", time_step, doublePrecision);
-  ini.addValue("order", 1);
+  std::vector<IniFile> inis;
+  if (independentCompartments) {
+    // create independent ini file for each compartment
+    for (const auto &name : model.getCompartments().getNames()) {
+      auto fname{QString("%1_%2.ini").arg(baseIniFile).arg(name)};
+      iniFilenames.push_back(QDir(iniFileDir).filePath(fname));
+      inis.push_back(iniCommon);
+    }
+  } else {
+    // single ini file for model
+    auto fname{QString("%1.ini").arg(baseIniFile)};
+    iniFilenames.push_back(QDir(iniFileDir).filePath(fname));
+    inis.push_back(iniCommon);
+  }
 
   // list of compartments with corresponding gmsh surface index - 1
-  ini.addSection("model.compartments");
+  if (!independentCompartments) {
+    inis[0].addSection("model.compartments");
+  }
   gmshCompIndices.clear();
   int gmshCompIndex = 1;
   int duneCompIndex = 0;
@@ -119,29 +195,38 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
     SPDLOG_TRACE("compartment {}", comp.toStdString());
     // skip compartments which contain no non-constant species
     if (compartmentContainsNonConstantSpecies(model, comp)) {
-      ini.addValue(comp, duneCompIndex);
-      SPDLOG_TRACE("  -> added with index {}", duneCompIndex);
+      if (independentCompartments) {
+        inis[static_cast<std::size_t>(duneCompIndex)].addSection(
+            "model.compartments");
+        inis[static_cast<std::size_t>(duneCompIndex)].addValue(comp, 0);
+        SPDLOG_TRACE("  -> added to independent model {}", duneCompIndex);
+      } else {
+        inis[0].addValue(comp, duneCompIndex);
+        SPDLOG_TRACE("  -> added with index {}", duneCompIndex);
+      }
       gmshCompIndices.insert(gmshCompIndex);
       ++duneCompIndex;
     }
     ++gmshCompIndex;
   }
-  for (const auto &mem : model.getMembranes().getMembranes()) {
-    QString compA = mem.getCompartmentA()->getId().c_str();
-    QString compB = mem.getCompartmentB()->getId().c_str();
-    // only add membranes which contain non-constant species
-    if (compartmentContainsNonConstantSpecies(model, compA) ||
-        compartmentContainsNonConstantSpecies(model, compB)) {
-      ini.addValue(mem.getId().c_str(), duneCompIndex);
-      SPDLOG_TRACE("membrane {} added with index {}", mem.getId(),
-                   duneCompIndex);
-      gmshCompIndices.insert(gmshCompIndex);
-      ++duneCompIndex;
-      independentCompartments = false;
+  if (!independentCompartments) {
+    for (const auto &mem : model.getMembranes().getMembranes()) {
+      QString compA = mem.getCompartmentA()->getId().c_str();
+      QString compB = mem.getCompartmentB()->getId().c_str();
+      // only add membranes which contain non-constant species
+      if (compartmentContainsNonConstantSpecies(model, compA) ||
+          compartmentContainsNonConstantSpecies(model, compB)) {
+        inis[0].addValue(mem.getId().c_str(), duneCompIndex);
+        SPDLOG_TRACE("membrane {} added with index {}", mem.getId(),
+                     duneCompIndex);
+        gmshCompIndices.insert(gmshCompIndex);
+        ++duneCompIndex;
+      }
+      ++gmshCompIndex;
     }
-    ++gmshCompIndex;
   }
 
+  std::size_t modelIndex{0};
   // for each compartment
   for (const auto &compartmentID : model.getCompartments().getIds()) {
     SPDLOG_TRACE("compartment {}", compartmentID.toStdString());
@@ -153,21 +238,10 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
       }
     }
     if (!nonConstantSpecies.empty()) {
-      ini.addSection("model", compartmentID);
-      ini.addValue("begin_time", begin_time, doublePrecision);
-      ini.addValue("end_time", end_time, doublePrecision);
-      ini.addValue("time_step", time_step, doublePrecision);
-
       auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
       for (std::size_t is = 0; is < duneSpeciesNames.size(); ++is) {
         SPDLOG_TRACE("  - species '{}' -> '{}'", nonConstantSpecies.at(is),
                      duneSpeciesNames.at(is));
-      }
-
-      // operator splitting indexing: all set to zero for now...
-      ini.addSection("model", compartmentID, "operator");
-      for (const auto &speciesID : duneSpeciesNames) {
-        ini.addValue(speciesID.c_str(), 0);
       }
 
       // initial concentrations
@@ -175,7 +249,7 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
                                              std::vector<double>{});
       auto indices = getIndicesOfSortedVector(duneSpeciesNames);
       std::vector<QString> tiffs;
-      ini.addSection("model", compartmentID, "initial");
+      inis[modelIndex].addSection("model", compartmentID, "initial");
       for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
         QString name = nonConstantSpecies.at(i).c_str();
         QString duneName = duneSpeciesNames.at(i).c_str();
@@ -197,28 +271,28 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
                 f->getConcentration(), f->getCompartment()->getPixels(),
                 model.getGeometry().getPixelWidth());
             tiffs.push_back(sampledFieldName);
-            ini.addValue(duneName,
-                         QString("%2*%3(x,y)").arg(max).arg(sampledFieldName));
+            inis[modelIndex].addValue(
+                duneName, QString("%2*%3(x,y)").arg(max).arg(sampledFieldName));
           } else {
             // otherwise just use initialConcentration value
-            ini.addValue(duneName, initConc, doublePrecision);
+            inis[modelIndex].addValue(duneName, initConc, doublePrecision);
           }
         } else {
-          ini.addValue(duneName, 0.0, doublePrecision);
+          inis[modelIndex].addValue(duneName, 0.0, doublePrecision);
           // create array of concentration values
           concs[indices[i]] = f->getConcentrationImageArray(invalidPixelConc);
         }
       }
       concentrations.push_back(std::move(concs));
       if (forExternalUse && !tiffs.empty()) {
-        ini.addSection("model", "data");
+        inis[modelIndex].addSection("model", "data");
         for (const auto &tiff : tiffs) {
-          ini.addValue(tiff, tiff + QString(".tif"));
+          inis[modelIndex].addValue(tiff, tiff + QString(".tif"));
         }
       }
 
       // reactions
-      ini.addSection("model", compartmentID, "reaction");
+      inis[modelIndex].addSection("model", compartmentID, "reaction");
       std::size_t nSpecies = nonConstantSpecies.size();
 
       std::vector<std::string> reacs;
@@ -228,38 +302,38 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
       }
       PDE pde(&model, nonConstantSpecies, reacs, duneSpeciesNames);
       for (std::size_t i = 0; i < nSpecies; ++i) {
-        ini.addValue(duneSpeciesNames.at(i).c_str(),
-                     pde.getRHS().at(i).c_str());
+        inis[modelIndex].addValue(duneSpeciesNames.at(i).c_str(),
+                                  pde.getRHS().at(i).c_str());
       }
 
       // reaction term jacobian
-      ini.addSection("model", compartmentID, "reaction.jacobian");
+      inis[modelIndex].addSection("model", compartmentID, "reaction.jacobian");
       for (std::size_t i = 0; i < nSpecies; ++i) {
         for (std::size_t j = 0; j < nSpecies; ++j) {
           QString lhs = QString("d%1__d%2")
                             .arg(duneSpeciesNames.at(i).c_str(),
                                  duneSpeciesNames.at(j).c_str());
           QString rhs = pde.getJacobian().at(i).at(j).c_str();
-          ini.addValue(lhs, rhs);
+          inis[modelIndex].addValue(lhs, rhs);
         }
       }
 
       // diffusion coefficients
-      ini.addSection("model", compartmentID, "diffusion");
+      inis[modelIndex].addSection("model", compartmentID, "diffusion");
       for (std::size_t i = 0; i < nSpecies; ++i) {
-        ini.addValue(duneSpeciesNames.at(i).c_str(),
-                     model.getSpecies().getDiffusionConstant(
-                         nonConstantSpecies[i].c_str()),
-                     doublePrecision);
+        inis[modelIndex].addValue(duneSpeciesNames.at(i).c_str(),
+                                  model.getSpecies().getDiffusionConstant(
+                                      nonConstantSpecies[i].c_str()),
+                                  doublePrecision);
       }
-
-      // output file
-      ini.addSection("model", compartmentID, "writer");
-      ini.addValue("file_name", compartmentID);
+    }
+    if (independentCompartments) {
+      ++modelIndex;
     }
   }
 
   // for each membrane do the same
+  modelIndex = 0;
   for (const auto &membrane : model.getMembranes().getMembranes()) {
     QString membraneID = membrane.getId().c_str();
     // remove any constant species from the list of species
@@ -274,29 +348,18 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
       }
     }
     if (!nonConstantSpecies.empty()) {
-      ini.addSection("model", membraneID);
-      ini.addValue("begin_time", begin_time, doublePrecision);
-      ini.addValue("end_time", end_time, doublePrecision);
-      ini.addValue("time_step", time_step, doublePrecision);
-
       auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
-
-      // operator splitting indexing: all set to zero for now...
-      ini.addSection("model", membraneID, "operator");
-      for (const auto &speciesID : duneSpeciesNames) {
-        ini.addValue(speciesID.c_str(), 0);
-      }
 
       // initial concentrations
       std::vector<std::vector<double>> concs(duneSpeciesNames.size(),
                                              std::vector<double>{});
       auto indices = getIndicesOfSortedVector(duneSpeciesNames);
-      ini.addSection("model", membraneID, "initial");
+      inis[modelIndex].addSection("model", membraneID, "initial");
       for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
         QString name = nonConstantSpecies.at(i).c_str();
-        ini.addValue(duneSpeciesNames.at(i).c_str(),
-                     model.getSpecies().getInitialConcentration(name),
-                     doublePrecision);
+        inis[modelIndex].addValue(
+            duneSpeciesNames.at(i).c_str(),
+            model.getSpecies().getInitialConcentration(name), doublePrecision);
         if (!forExternalUse) {
           const auto *f = model.getSpecies().getField(name);
           concs[indices[i]] = f->getConcentrationImageArray(invalidPixelConc);
@@ -307,7 +370,7 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
       // reactions: want reactions for both neighbouring compartments
       // as well as membrane reactions (that involve species from both
       // compartments in the same reaction)
-      ini.addSection("model", membraneID, "reaction");
+      inis[modelIndex].addSection("model", membraneID, "reaction");
       std::size_t nSpecies = nonConstantSpecies.size();
 
       std::vector<std::string> reacs;
@@ -344,61 +407,48 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
       PDE pde(&model, nonConstantSpecies, reacs, duneSpeciesNames,
               reacScaleFactors);
       for (std::size_t i = 0; i < nSpecies; ++i) {
-        ini.addValue(duneSpeciesNames.at(i).c_str(),
-                     pde.getRHS().at(i).c_str());
+        inis[modelIndex].addValue(duneSpeciesNames.at(i).c_str(),
+                                  pde.getRHS().at(i).c_str());
       }
 
       // reaction term jacobian
-      ini.addSection("model", membraneID, "reaction.jacobian");
+      inis[modelIndex].addSection("model", membraneID, "reaction.jacobian");
       for (std::size_t i = 0; i < nSpecies; ++i) {
         for (std::size_t j = 0; j < nSpecies; ++j) {
           QString lhs = QString("d%1__d%2")
                             .arg(duneSpeciesNames.at(i).c_str(),
                                  duneSpeciesNames.at(j).c_str());
           QString rhs = pde.getJacobian().at(i).at(j).c_str();
-          ini.addValue(lhs, rhs);
+          inis[modelIndex].addValue(lhs, rhs);
         }
       }
 
       // diffusion coefficients
-      ini.addSection("model", membraneID, "diffusion");
+      inis[modelIndex].addSection("model", membraneID, "diffusion");
       for (std::size_t i = 0; i < nSpecies; ++i) {
         // NOTE: setting diffusion to zero for now within membranes
-        ini.addValue(duneSpeciesNames.at(i).c_str(), 0, doublePrecision);
+        inis[modelIndex].addValue(duneSpeciesNames.at(i).c_str(), 0,
+                                  doublePrecision);
       }
-
-      // output file
-      ini.addSection("model", membraneID, "writer");
-      ini.addValue("file_name", membraneID);
     }
   }
 
-  // logger settings
-  ini.addSection("logging");
-  if (forExternalUse) {
-    ini.addValue("default.level", "info");
-  } else if (SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_DEBUG) {
-    // for debug GUI builds enable verbose DUNE logging
-    ini.addValue("default.level", "trace");
-    ini.addSection("logging.backend.model");
-    ini.addValue("level", "trace");
-    ini.addValue("indent", 2);
-    ini.addSection("logging.backend.solver");
-    ini.addValue("level", "trace");
-    ini.addValue("indent", 4);
-  } else {
-    // for release GUI builds disable DUNE logging
-    ini.addValue("default.level", "off");
+  for (const auto &ini : inis) {
+    iniFiles.push_back(ini.getText());
   }
-  iniFile = ini.getText();
 
   if (forExternalUse) {
-    // export ini file
-    SPDLOG_TRACE("Exporting dune ini file: '{}'", iniFilename.toStdString());
-    if (QFile f(iniFilename); f.open(QIODevice::ReadWrite | QIODevice::Text)) {
-      f.write(iniFile.toUtf8());
-    } else {
-      SPDLOG_ERROR("Failed to export ini file '{}'", iniFilename.toStdString());
+    // export ini files
+    for (std::size_t i = 0; i < iniFiles.size(); ++i) {
+      SPDLOG_TRACE("Exporting dune ini file: '{}'",
+                   iniFilenames[i].toStdString());
+      if (QFile f(iniFilenames[i]);
+          f.open(QIODevice::ReadWrite | QIODevice::Text)) {
+        f.write(iniFiles[i].toUtf8());
+      } else {
+        SPDLOG_ERROR("Failed to export ini file '{}'",
+                     iniFilenames[i].toStdString());
+      }
     }
     // export gmsh file `grid.msh` in the same dir
     QString gmshFilename = QDir(iniFileDir).filePath("grid.msh");
@@ -412,7 +462,13 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
   }
 }
 
-QString DuneConverter::getIniFile() const { return iniFile; }
+QString DuneConverter::getIniFile(std::size_t compartmentIndex) const {
+  return iniFiles[compartmentIndex];
+}
+
+const std::vector<QString> &DuneConverter::getIniFiles() const {
+  return iniFiles;
+}
 
 const std::unordered_set<int> &DuneConverter::getGMSHCompIndices() const {
   return gmshCompIndices;

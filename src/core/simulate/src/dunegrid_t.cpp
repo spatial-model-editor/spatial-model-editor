@@ -35,7 +35,7 @@ SCENARIO("DUNE: grid",
         f.open(QIODevice::ReadOnly)) {
       m.importSBMLString(f.readAll().toStdString());
     }
-    simulate::DuneConverter dc(m, false, 1e-6);
+    simulate::DuneConverter dc(m, false);
     const auto *mesh = m.getGeometry().getMesh();
     const auto &compIndices = dc.getGMSHCompIndices();
 
@@ -57,7 +57,7 @@ SCENARIO("DUNE: grid",
     }
     Dune::Logging::Logging::mute();
     auto [gmshGrid, gmshHostGrid] =
-        Dune::Copasi::MultiDomainGmshReader<Grid>::read("grid.msh", {});
+        Dune::Copasi::MultiDomainGmshReader<Grid>::read("grid.msh");
     std::locale::global(userLocale);
 
     // compare grids

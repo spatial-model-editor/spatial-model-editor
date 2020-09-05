@@ -4,14 +4,20 @@
 
 #include <cstddef>
 #include <limits>
+#include <string>
 
 namespace simulate {
 
-enum class DuneIntegratorType { FEM1 };
+enum class DuneDiscretizationType { FEM1 };
 
 struct DuneOptions {
-  DuneIntegratorType integrator{DuneIntegratorType::FEM1};
-  double dt{0.01};
+  DuneDiscretizationType discretization{DuneDiscretizationType::FEM1};
+  std::string integrator{"alexander_2"};
+  double dt{1e-1};
+  double minDt{1e-10};
+  double maxDt{1e4};
+  double increase{1.5};
+  double decrease{0.5};
   bool writeVTKfiles{false};
 };
 

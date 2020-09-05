@@ -23,3 +23,39 @@ QString makeUnique(const QString &name, const QStringList &names,
                    const QString &postfix = "_");
 
 }  // namespace sbml
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//

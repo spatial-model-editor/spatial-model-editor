@@ -215,10 +215,8 @@ void TabSimulate::btnSimulate_clicked() {
       isSimulationRunning = false;
       QMessageBox::warning(
           this, "Simulation Failed",
-          QString(
-              "Simulation failed - a smaller Max timestep "
-              "might help.\n\nGo to the \"Advanced\" menu and click on "
-              "\"Integrator Options...\" to adjust it.\n\nError message: %1")
+          QString("Simulation failed - changing the Simulation options in the "
+                  "\"Advanced\" menu might help.\n\nError message: %1")
               .arg(sim->errorMessage().c_str()));
     }
     QApplication::processEvents();

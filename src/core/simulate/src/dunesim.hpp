@@ -58,20 +58,19 @@ private:
   void updatePixels();
   void updateSpeciesConcentrations();
   std::string currentErrorMessage;
-  DuneIntegratorType integrator;
-  double dt;
+  DuneOptions options;
 
 public:
   explicit DuneSim(
       const model::Model &sbmlDoc,
       const std::vector<std::string> &compartmentIds,
       const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
-      const DuneOptions &options = {});
+      const DuneOptions &duneOptions = {});
   ~DuneSim() override;
   std::size_t run(double time) override;
   const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const override;
-  virtual const std::string& errorMessage() const override;
+  virtual const std::string &errorMessage() const override;
 };
 
 } // namespace simulate

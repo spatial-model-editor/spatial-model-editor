@@ -6,7 +6,9 @@
 #include "duneconverter.hpp"
 #include "dunefunction.hpp"
 #include "dunesim_impl.hpp"
+#include "simulate_options.hpp"
 #include <memory>
+#include <type_traits>
 
 namespace simulate {
 
@@ -20,25 +22,37 @@ public:
       *std::declval<Model>().get_grid_function(0, 0).get())>;
   std::unique_ptr<Model> model;
   std::vector<std::shared_ptr<const GF>> gridFunctions;
-  explicit DuneImplCoupled(const simulate::DuneConverter &dc,
-                           bool writeVTKfiles = false)
+  double t0{0.0};
+  double dt{1e-3};
+  std::string vtkFilename{};
+  explicit DuneImplCoupled(const DuneConverter &dc, const DuneOptions &options)
       : DuneImpl(dc) {
     SPDLOG_INFO("Order: {}", DuneFEMOrder);
     auto stages =
         Dune::Copasi::BitFlags<Dune::Copasi::ModelSetup::Stages>::all_flags();
-    if (!writeVTKfiles) {
+    if (options.writeVTKfiles) {
+      vtkFilename =
+          configs[0].sub("model").template get<std::string>("writer.file_path");
+    } else {
       stages.reset(Dune::Copasi::ModelSetup::Stages::Writer);
     }
-    model = std::make_unique<Model>(grid, config.sub("model"), stages);
+    model = std::make_unique<Model>(grid, configs[0].sub("model"), stages);
+    dt = configs[0].sub("model.time_stepping").template get<double>("initial_step");
   }
   ~DuneImplCoupled() override = default;
-  void setInitial(const simulate::DuneConverter &dc) override {
+  void setInitial(const DuneConverter &dc) override {
     model->set_initial(makeModelDuneFunctions<GridView>(dc));
   }
-  void run(double time, double maxTimestep) override {
-    model->suggest_timestep(maxTimestep);
-    model->end_time() = model->current_time() + time;
-    model->run();
+  void run(double time) override {
+    auto write_output = [&f=vtkFilename](const auto &state) {
+      if (!f.empty()) {
+        state.write(f, true);
+      }
+    };
+    auto stepper{Dune::Copasi::make_default_stepper(
+        configs[0].sub("model.time_stepping"))};
+    stepper.evolve(*model.get(), dt, t0 + time, write_output);
+    t0 += time;
   }
   void updateGridFunctions(std::size_t compartmentIndex,
                            std::size_t nSpecies) override {

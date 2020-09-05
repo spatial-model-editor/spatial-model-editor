@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "simulate_options.hpp"
 #include <QString>
 #include <unordered_set>
 #include <vector>
@@ -20,9 +21,11 @@ namespace simulate {
 class DuneConverter {
 public:
   explicit DuneConverter(const model::Model &model, bool forExternalUse = false,
-                         double dt = 1e-2, const QString &outputIniFile = {},
+                         const simulate::DuneOptions &duneOptions = {},
+                         const QString &outputIniFile = {},
                          int doublePrecision = 18);
-  QString getIniFile() const;
+  QString getIniFile(std::size_t compartmentIndex = 0) const;
+  const std::vector<QString> &getIniFiles() const;
   const std::unordered_set<int> &getGMSHCompIndices() const;
   bool hasIndependentCompartments() const;
   const mesh::Mesh *getMesh() const;
@@ -34,7 +37,7 @@ public:
   int getImageWidth() const;
 
 private:
-  QString iniFile;
+  std::vector<QString> iniFiles;
   std::unordered_set<int> gmshCompIndices;
   bool independentCompartments{true};
   const mesh::Mesh *mesh;

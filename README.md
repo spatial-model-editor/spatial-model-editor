@@ -41,7 +41,7 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [Qt5](https://www.qt.io/) - license: [LGPL](https://doc.qt.io/qt-5/lgpl.html)
 
-- [QCustomPlot](https://www.qcustomplot.com) - license: GPL
+- [QCustomPlot](https://www.qcustomplot.com) - license: [GPL](https://www.gnu.org/licenses/gpl-3.0.html)
 
 - [spdlog](https://github.com/gabime/spdlog) - license: [MIT](https://github.com/gabime/spdlog/blob/v1.x/LICENSE)
 
@@ -49,9 +49,9 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [SymEngine](https://github.com/symengine/symengine) - license: [MIT](https://github.com/symengine/symengine/blob/master/LICENSE)
 
-- [LLVM Core](https://llvm.org/) - license: University of Illinois/NCSA Open Source License
+- [LLVM Core](https://llvm.org/) - license: [Apache 2.0 License with LLVM exceptions](https://llvm.org/docs/DeveloperPolicy.html#copyright-license-and-patents)
 
-- [GNU Multiple Precision Arithmetic Library](https://gmplib.org/) - license: LGPL
+- [GNU Multiple Precision Arithmetic Library](https://gmplib.org/) - license: [LGPL](https://www.gnu.org/licenses/lgpl-3.0.html)
 
 - [Triangle](http://www.cs.cmu.edu/~quake/triangle.html) - license: "Private, research, and institutional use is free."
 
