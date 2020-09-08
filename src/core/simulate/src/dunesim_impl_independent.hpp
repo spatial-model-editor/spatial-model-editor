@@ -6,7 +6,9 @@
 #include "duneconverter.hpp"
 #include "dunefunction.hpp"
 #include "dunesim_impl.hpp"
+#include "simulate_options.hpp"
 #include <memory>
+#include <type_traits>
 
 namespace simulate {
 
@@ -20,46 +22,55 @@ public:
       *std::declval<Model>().get_grid_function(0).get())>;
   std::vector<std::unique_ptr<Model>> models;
   std::vector<std::shared_ptr<const GF>> gridFunctions;
-
-  explicit DuneImplIndependent(const simulate::DuneConverter &dc,
-                               bool writeVTKfiles = false)
+  double t0{0.0};
+  std::vector<double> dts;
+  std::string vtkFilename{};
+  explicit DuneImplIndependent(const DuneConverter &dc,
+                               const DuneOptions &options)
       : DuneImpl(dc) {
     SPDLOG_INFO("Order: {}", DuneFEMOrder);
     auto stages =
         Dune::Copasi::BitFlags<Dune::Copasi::ModelSetup::Stages>::all_flags();
-    if (!writeVTKfiles) {
+    if (options.writeVTKfiles) {
+      vtkFilename =
+          configs[0].sub("model").template get<std::string>("writer.file_path");
+      //    todo: should this be a different filename for each model?
+    } else {
       stages.reset(Dune::Copasi::ModelSetup::Stages::Writer);
     }
-    // construct separate model from ini and grid for each compartment
-    const auto &modelConfig = config.sub("model", true);
-    const auto &dataConfig = modelConfig.sub("data");
-    for (const auto &compartmentName :
-         modelConfig.sub("compartments").getValueKeys()) {
-      int compartmentIndex =
-          modelConfig.sub("compartments").template get<int>(compartmentName);
-      SPDLOG_INFO("{}[{}]", compartmentName, compartmentIndex);
-      auto compartmentConfig = modelConfig.sub(compartmentName, true);
-      for (const auto &key : dataConfig.getValueKeys()) {
-        compartmentConfig["data." + key] = dataConfig[key];
-      }
-      auto compartmentGrid =
-          Dune::stackobject_to_shared_ptr(grid->subDomain(compartmentIndex));
-      models.push_back(
-          std::make_unique<Model>(compartmentGrid, compartmentConfig, stages));
+
+    for (std::size_t compartmentIndex = 0;
+         compartmentIndex < dc.getIniFiles().size(); ++compartmentIndex) {
+      SPDLOG_INFO("compartment {}", compartmentIndex);
+      auto compartmentGrid = Dune::stackobject_to_shared_ptr(
+          grid->subDomain(static_cast<int>(compartmentIndex)));
+      models.push_back(std::make_unique<Model>(
+          compartmentGrid, configs[compartmentIndex].sub("model"), stages));
+      dts.push_back(configs[compartmentIndex]
+                        .sub("model.time_stepping")
+                        .template get<double>("initial_step"));
     }
   }
   ~DuneImplIndependent() override = default;
-  void setInitial(const simulate::DuneConverter &dc) override {
+  void setInitial(const DuneConverter &dc) override {
     for (std::size_t i = 0; i < dc.getConcentrations().size(); ++i) {
       models[i]->set_initial(makeCompartmentDuneFunctions<SubGridView>(dc, i));
     }
   }
-  void run(double time, double maxTimestep) override {
-    for (const auto &model : models) {
-      model->suggest_timestep(maxTimestep);
-      model->end_time() = model->current_time() + time;
-      model->run();
+  void run(double time) override {
+    auto write_output = [&f=vtkFilename](const auto &state) {
+      if (!f.empty()) {
+        state.write(f, true);
+      }
+    };
+    auto stepper{Dune::Copasi::make_default_stepper(
+        configs[0].sub("model.time_stepping"))};
+    for (std::size_t i = 0; i < models.size(); ++i) {
+      auto *model = models[i].get();
+      double &dt = dts[i];
+      stepper.evolve(*model, dt, t0 + time, write_output);
     }
+    t0 += time;
   }
   void updateGridFunctions(std::size_t compartmentIndex,
                            std::size_t nSpecies) override {

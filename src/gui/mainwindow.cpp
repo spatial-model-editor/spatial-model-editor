@@ -268,7 +268,8 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
   if (iniFilename.right(4) != ".ini") {
     iniFilename.append(".ini");
   }
-  simulate::DuneConverter dc(sbmlDoc, true, 1e-2, iniFilename);
+  simulate::DuneConverter dc(sbmlDoc, true, tabSimulate->getOptions().dune,
+                             iniFilename);
 }
 
 void MainWindow::actionGeometry_from_model_triggered() {

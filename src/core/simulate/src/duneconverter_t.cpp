@@ -15,8 +15,8 @@ SCENARIO("DUNE: DuneConverter",
     QFile f(":/models/ABtoC.xml");
     f.open(QIODevice::ReadOnly);
     s.importSBMLString(f.readAll().toStdString());
-
-    simulate::DuneConverter dc(s, true, 1e-4, {}, 14);
+    simulate::DuneOptions opt;
+    simulate::DuneConverter dc(s, true, opt, {}, 14);
     QStringList ini = dc.getIniFile().split("\n");
     auto line = ini.cbegin();
     while (line != ini.cend() && *line != "[model.compartments]") {
@@ -24,16 +24,6 @@ SCENARIO("DUNE: DuneConverter",
     }
     REQUIRE(*line++ == "[model.compartments]");
     REQUIRE(*line++ == "comp = 0");
-    REQUIRE(*line++ == "");
-    REQUIRE(*line++ == "[model.comp]");
-    REQUIRE((*line++).left(10) == "begin_time");
-    REQUIRE((*line++).left(8) == "end_time");
-    REQUIRE((*line++).left(9) == "time_step");
-    REQUIRE(*line++ == "");
-    REQUIRE(*line++ == "[model.comp.operator]");
-    REQUIRE(*line++ == "A = 0");
-    REQUIRE(*line++ == "B = 0");
-    REQUIRE(*line++ == "C = 0");
     REQUIRE(*line++ == "");
     REQUIRE(*line++ == "[model.comp.initial]");
     REQUIRE(*line++ == "A = 1*A_initialConcentration(x,y)");
@@ -64,9 +54,6 @@ SCENARIO("DUNE: DuneConverter",
     REQUIRE(*line++ == "A = 0.4");
     REQUIRE(*line++ == "B = 0.4");
     REQUIRE(*line++ == "C = 25");
-    REQUIRE(*line++ == "");
-    REQUIRE(*line++ == "[model.comp.writer]");
-    REQUIRE((*line++).left(9) == "file_name");
   }
   GIVEN("brusselator model") {
     model::Model s;

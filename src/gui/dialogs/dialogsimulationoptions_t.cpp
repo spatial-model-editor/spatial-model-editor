@@ -9,10 +9,16 @@ SCENARIO(
     "DialogSimulationOptions",
     "[gui/dialogs/simulationoptions][gui/dialogs][gui][simulationoptions]") {
   simulate::Options options;
+  options.dune.integrator = "explicit_euler";
+  options.dune.dt = 0.123;
+  options.dune.minDt = 1e-5;
+  options.dune.maxDt = 2;
+  options.dune.increase = 1.11;
+  options.dune.decrease = 0.77;
+  options.dune.writeVTKfiles = true;
   options.pixel.integrator = simulate::PixelIntegratorType::RK435;
   options.pixel.maxErr = {0.01, 4e-4};
   options.pixel.maxTimestep = 0.2;
-  options.dune.dt = 0.00123;
   DialogSimulationOptions dia(options);
   ModalWidgetTimer mwt;
   WHEN("user does nothing: unchanged") {
@@ -20,6 +26,13 @@ SCENARIO(
     mwt.start();
     dia.exec();
     auto opt = dia.getOptions();
+    REQUIRE(options.dune.integrator == "explicit_euler");
+    REQUIRE(options.dune.dt == dbl_approx(0.123));
+    REQUIRE(options.dune.minDt == dbl_approx(1e-5));
+    REQUIRE(options.dune.maxDt == dbl_approx(2));
+    REQUIRE(options.dune.increase == dbl_approx(1.11));
+    REQUIRE(options.dune.decrease == dbl_approx(0.77));
+    REQUIRE(options.dune.writeVTKfiles == true);
     REQUIRE(opt.pixel.integrator == simulate::PixelIntegratorType::RK435);
     REQUIRE(opt.pixel.maxErr.rel == dbl_approx(4e-4));
     REQUIRE(opt.pixel.maxErr.abs == dbl_approx(0.01));
@@ -28,22 +41,34 @@ SCENARIO(
     REQUIRE(opt.pixel.maxThreads == 0);
     REQUIRE(opt.pixel.doCSE == true);
     REQUIRE(opt.pixel.optLevel == 3);
-    REQUIRE(opt.dune.dt == dbl_approx(0.00123));
+  }
+  WHEN("user changes Dune values") {
+    mwt.addUserAction({"Tab", "Tab", "Down", "Down", "9", "Tab", ".", "4", "Tab", "1", "e", "-", "1", "2", "Tab", "9", "Tab", "1", ".", "2", "Tab", "0", ".", "7", "Tab", " "});
+    mwt.start();
+    dia.exec();
+    auto opt = dia.getOptions();
+    REQUIRE(opt.dune.integrator == "heun");
+    REQUIRE(opt.dune.dt == dbl_approx(0.4));
+    REQUIRE(opt.dune.minDt == dbl_approx(1e-12));
+    REQUIRE(opt.dune.maxDt == dbl_approx(9));
+    REQUIRE(opt.dune.increase == 1.2);
+    REQUIRE(opt.dune.decrease == 0.7);
     REQUIRE(opt.dune.writeVTKfiles == false);
   }
-  WHEN("user changes Dune dt") {
-    mwt.addUserAction({"Tab", "Tab", "9"});
+  WHEN("user resets to Dune defaults") {
+    mwt.addUserAction(
+        {"Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", " "});
     mwt.start();
     dia.exec();
+    simulate::DuneOptions defaultOpts{};
     auto opt = dia.getOptions();
-    REQUIRE(opt.dune.dt == dbl_approx(9));
-  }
-  WHEN("user changes Dune writeVTK") {
-    mwt.addUserAction({"Tab", "Tab", "Tab", "Space"});
-    mwt.start();
-    dia.exec();
-    auto opt = dia.getOptions();
-    REQUIRE(opt.dune.writeVTKfiles == true);
+    REQUIRE(opt.dune.integrator == defaultOpts.integrator);
+    REQUIRE(opt.dune.dt == dbl_approx(defaultOpts.dt));
+    REQUIRE(opt.dune.minDt == dbl_approx(defaultOpts.minDt));
+    REQUIRE(opt.dune.maxDt == dbl_approx(defaultOpts.maxDt));
+    REQUIRE(opt.dune.increase == defaultOpts.increase);
+    REQUIRE(opt.dune.decrease == defaultOpts.decrease);
+    REQUIRE(opt.dune.writeVTKfiles == defaultOpts.writeVTKfiles);
   }
   WHEN("user changes Pixel values") {
     mwt.addUserAction({"Right", "Tab", "Up",  "Up",  "Tab",   "7",   "Tab",
@@ -60,7 +85,6 @@ SCENARIO(
     REQUIRE(opt.pixel.maxThreads == 1);
     REQUIRE(opt.pixel.doCSE == false);
     REQUIRE(opt.pixel.optLevel == 1);
-    REQUIRE(opt.dune.dt == dbl_approx(0.00123));
   }
   WHEN("user resets to pixel defaults") {
     mwt.addUserAction(

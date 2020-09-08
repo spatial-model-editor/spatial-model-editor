@@ -33,7 +33,7 @@ static int toIndex(simulate::PixelIntegratorType integrator) {
   }
 }
 
-static simulate::PixelIntegratorType toEnum(int index) {
+static simulate::PixelIntegratorType toPixelIntegratorEnum(int index) {
   switch (index) {
   case 0:
     return simulate::PixelIntegratorType::RK101;
@@ -74,8 +74,19 @@ void DialogSimulationOptions::setupConnections() {
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogSimulationOptions::reject);
   // Dune tab
+  connect(ui->cmbDuneIntegrator,
+          qOverload<int>(&QComboBox::currentIndexChanged), this,
+          &DialogSimulationOptions::cmbDuneIntegrator_currentIndexChanged);
   connect(ui->txtDuneDt, &QLineEdit::editingFinished, this,
           &DialogSimulationOptions::txtDuneDt_editingFinished);
+  connect(ui->txtDuneMinDt, &QLineEdit::editingFinished, this,
+          &DialogSimulationOptions::txtDuneMinDt_editingFinished);
+  connect(ui->txtDuneMaxDt, &QLineEdit::editingFinished, this,
+          &DialogSimulationOptions::txtDuneMaxDt_editingFinished);
+  connect(ui->txtDuneIncrease, &QLineEdit::editingFinished, this,
+          &DialogSimulationOptions::txtDuneIncrease_editingFinished);
+  connect(ui->txtDuneDecrease, &QLineEdit::editingFinished, this,
+          &DialogSimulationOptions::txtDuneDecrease_editingFinished);
   connect(ui->chkDuneVTK, &QCheckBox::stateChanged, this,
           &DialogSimulationOptions::chkDuneVTK_stateChanged);
   connect(ui->btnDuneReset, &QPushButton::clicked, this,
@@ -103,12 +114,49 @@ void DialogSimulationOptions::setupConnections() {
 }
 
 void DialogSimulationOptions::loadDuneOpts() {
+  int i = ui->cmbDuneIntegrator->findText(opt.dune.integrator.c_str());
+  if (i >= 0 && i < ui->cmbDuneIntegrator->count()) {
+    ui->cmbDuneIntegrator->setCurrentIndex(i);
+  } else {
+    ui->cmbDuneIntegrator->setCurrentIndex(0);
+    SPDLOG_WARN("Invalid integrator '{}' - using '{}' instead",
+                opt.dune.integrator,
+                ui->cmbDuneIntegrator->currentText().toStdString());
+  }
   ui->txtDuneDt->setText(dblToQString(opt.dune.dt));
+  ui->txtDuneMinDt->setText(dblToQString(opt.dune.minDt));
+  ui->txtDuneMaxDt->setText(dblToQString(opt.dune.maxDt));
+  ui->txtDuneIncrease->setText(dblToQString(opt.dune.increase));
+  ui->txtDuneDecrease->setText(dblToQString(opt.dune.decrease));
   ui->chkDuneVTK->setChecked(opt.dune.writeVTKfiles);
+}
+
+void DialogSimulationOptions::cmbDuneIntegrator_currentIndexChanged(int index) {
+  opt.dune.integrator = ui->cmbDuneIntegrator->currentText().toStdString();
 }
 
 void DialogSimulationOptions::txtDuneDt_editingFinished() {
   opt.dune.dt = ui->txtDuneDt->text().toDouble();
+  loadDuneOpts();
+}
+
+void DialogSimulationOptions::txtDuneMinDt_editingFinished() {
+  opt.dune.minDt = ui->txtDuneMinDt->text().toDouble();
+  loadDuneOpts();
+}
+
+void DialogSimulationOptions::txtDuneMaxDt_editingFinished() {
+  opt.dune.maxDt = ui->txtDuneMaxDt->text().toDouble();
+  loadDuneOpts();
+}
+
+void DialogSimulationOptions::txtDuneIncrease_editingFinished() {
+  opt.dune.increase = ui->txtDuneIncrease->text().toDouble();
+  loadDuneOpts();
+}
+
+void DialogSimulationOptions::txtDuneDecrease_editingFinished() {
+  opt.dune.decrease = ui->txtDuneDecrease->text().toDouble();
   loadDuneOpts();
 }
 
@@ -158,7 +206,7 @@ void DialogSimulationOptions::loadPixelOpts() {
 
 void DialogSimulationOptions::cmbPixelIntegrator_currentIndexChanged(
     int index) {
-  opt.pixel.integrator = toEnum(index);
+  opt.pixel.integrator = toPixelIntegratorEnum(index);
 }
 
 void DialogSimulationOptions::txtPixelAbsErr_editingFinished() {

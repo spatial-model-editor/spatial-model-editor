@@ -25,21 +25,18 @@ namespace simulate {
 void DuneSim::initCompartmentNames() {
   compartmentSpeciesIndex.clear();
   std::size_t compIndex = 0;
-  for (const auto &name :
-       pDuneImpl->config.sub("model.compartments").getValueKeys()) {
-    auto duneCompIndex =
-        pDuneImpl->config.sub("model.compartments").get<int>(name);
+  auto names = pDuneImpl->configs[0].sub("model.compartments").getValueKeys();
+  for (std::size_t i = 1; i < pDuneImpl->configs.size(); ++i) {
+    // if we have multiple configs each has a single compartment
+    names.push_back(
+        pDuneImpl->configs[i].sub("model.compartments").getValueKeys().front());
+  }
+  int duneCompIndex{0};
+  for (const auto &name : names) {
     SPDLOG_DEBUG("compartment: {} - Dune index {}", name, duneCompIndex);
     const auto &gv = pDuneImpl->grid->subDomain(duneCompIndex).leafGridView();
     if (std::all_of(elements(gv).begin(), elements(gv).end(),
                     [](const auto &e) { return e.type().isTriangle(); })) {
-      if (static_cast<std::size_t>(duneCompIndex) != compIndex) {
-        SPDLOG_ERROR(
-            "Dune compartment indices must match order: comp {} has DUNE "
-            "index "
-            "{}",
-            compIndex, duneCompIndex);
-      }
       SPDLOG_DEBUG("  -> compartment of triangles: adding");
       compartmentSpeciesIndex.emplace_back();
       compartmentDuneNames.push_back(name);
@@ -47,6 +44,7 @@ void DuneSim::initCompartmentNames() {
     } else {
       SPDLOG_DEBUG("  -> not a compartment of triangles: ignoring");
     }
+    ++duneCompIndex;
   }
 }
 
@@ -55,8 +53,13 @@ void DuneSim::initSpeciesIndices() {
   for (std::size_t iComp = 0; iComp < nComps; ++iComp) {
     const auto &compName = compartmentDuneNames[iComp];
     SPDLOG_DEBUG("compartment[{}]: {}", iComp, compName);
-    auto duneNames =
-        pDuneImpl->config.sub("model." + compName + ".initial").getValueKeys();
+    std::size_t iModel{iComp};
+    if (pDuneImpl->configs.size() == 1) {
+      iModel = 0;
+    }
+    auto duneNames = pDuneImpl->configs[iModel]
+                         .sub("model." + compName + ".initial")
+                         .getValueKeys();
     // create {0, 1, 2, ...} initial species indices
     auto &indices = compartmentSpeciesIndex[iComp];
     indices.resize(duneNames.size());
@@ -177,28 +180,26 @@ void DuneSim::updatePixels() {
 DuneSim::DuneSim(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
     const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
-    const DuneOptions &options)
+    const DuneOptions &duneOptions)
     : geometryImageSize{sbmlDoc.getGeometry().getImage().size()},
       pixelSize{sbmlDoc.getGeometry().getPixelWidth()},
-      pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()},
-      integrator{options.integrator}, dt{options.dt} {
-  simulate::DuneConverter dc(sbmlDoc, false, dt);
-  if (integrator != DuneIntegratorType::FEM1) {
+      pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()}, options{
+                                                                  duneOptions} {
+  simulate::DuneConverter dc(sbmlDoc, false, duneOptions);
+  if (options.discretization != DuneDiscretizationType::FEM1) {
     // for now we only support 1st order FEM
     // in future could add:
     //  - 0th order a.k.a. FVM for independent compartment models
     //  - 2nd order FEM for both types of models
     SPDLOG_WARN(
         "Invalid integrator type requested - using 1st order FEM instead");
-    integrator = DuneIntegratorType::FEM1;
+    options.discretization = DuneDiscretizationType::FEM1;
   }
   try {
     if (dc.hasIndependentCompartments()) {
-      pDuneImpl =
-          std::make_unique<DuneImplIndependent<1>>(dc, options.writeVTKfiles);
+      pDuneImpl = std::make_unique<DuneImplIndependent<1>>(dc, options);
     } else {
-      pDuneImpl =
-          std::make_unique<DuneImplCoupled<1>>(dc, options.writeVTKfiles);
+      pDuneImpl = std::make_unique<DuneImplCoupled<1>>(dc, options);
     }
     pDuneImpl->setInitial(dc);
     initCompartmentNames();
@@ -225,6 +226,7 @@ DuneSim::DuneSim(
     updateSpeciesConcentrations();
   } catch (const Dune::Exception &e) {
     currentErrorMessage = e.what();
+    SPDLOG_ERROR("{}", currentErrorMessage);
   }
 }
 
@@ -235,15 +237,12 @@ std::size_t DuneSim::run(double time) {
     return 0;
   }
   try {
-    pDuneImpl->run(time, dt);
+    pDuneImpl->run(time);
     updateSpeciesConcentrations();
     currentErrorMessage.clear();
-  } catch (const Dune::SolverAbort &e) {
+  } catch (const Dune::Exception &e) {
     currentErrorMessage = e.what();
-  } catch (const Dune::PDELab::NewtonLinearSolverError &e) {
-    currentErrorMessage = e.what();
-  } catch (const Dune::PDELab::NewtonLineSearchError &e) {
-    currentErrorMessage = e.what();
+    SPDLOG_ERROR("{}", currentErrorMessage);
   }
   return 0;
 }
@@ -253,7 +252,7 @@ DuneSim::getConcentrations(std::size_t compartmentIndex) const {
   return concentration[compartmentIndex];
 }
 
-const std::string& DuneSim::errorMessage() const { return currentErrorMessage; }
+const std::string &DuneSim::errorMessage() const { return currentErrorMessage; }
 
 void DuneSim::updateSpeciesConcentrations() {
   for (std::size_t iComp = 0; iComp < compartmentSpeciesIndex.size(); ++iComp) {

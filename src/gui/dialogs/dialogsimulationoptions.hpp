@@ -23,7 +23,12 @@ public:
 private:
   void setupConnections();
   void loadDuneOpts();
+  void cmbDuneIntegrator_currentIndexChanged(int index);
   void txtDuneDt_editingFinished();
+  void txtDuneMinDt_editingFinished();
+  void txtDuneMaxDt_editingFinished();
+  void txtDuneIncrease_editingFinished();
+  void txtDuneDecrease_editingFinished();
   void chkDuneVTK_stateChanged();
   void resetDuneToDefaults();
   void loadPixelOpts();

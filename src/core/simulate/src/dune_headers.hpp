@@ -34,6 +34,7 @@
 #include <dune/common/parametertreeparser.hh>
 #include <dune/common/shared_ptr.hh>
 #include <dune/copasi/common/enum.hh>
+#include <dune/copasi/common/stepper.hh>
 #include <dune/copasi/grid/mark_stripes.hh>
 #include <dune/copasi/model/base.hh>
 #include <dune/copasi/model/diffusion_reaction.cc>
@@ -43,7 +44,6 @@
 #include <dune/grid/multidomaingrid.hh>
 #include <dune/grid/uggrid.hh>
 #include <dune/logging/logging.hh>
-#include <dune/logging/loggingstream.hh>
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop

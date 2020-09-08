@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>625</width>
-    <height>429</height>
+    <width>626</width>
+    <height>529</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -38,15 +38,69 @@
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <layout class="QGridLayout" name="gridLayout_2">
-         <item row="1" column="1">
-          <widget class="QLineEdit" name="txtDuneDt">
-           <property name="statusTip">
-            <string/>
+         <item row="5" column="1">
+          <widget class="QLineEdit" name="txtDuneIncrease">
+           <property name="toolTip">
+            <string>The factor by which the timestep is increased after a successful integration step</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="txtDuneMinDt">
+           <property name="toolTip">
+            <string>The minimum allowed timestep</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
           <widget class="QComboBox" name="cmbDuneIntegrator">
+           <property name="toolTip">
+            <string>The Runge Kutta integrator to use</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>explicit_euler</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>implicit_euler</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>heun</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>fractional_step_theta</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>alexander_2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>shu_3</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>alexander_3</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>runge_kutta_4</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="cmbDuneDiscretization">
            <item>
             <property name="text">
              <string>1st order FEM</string>
@@ -54,7 +108,17 @@
            </item>
           </widget>
          </item>
-         <item row="0" column="0">
+         <item row="3" column="0">
+          <widget class="QLabel" name="lblDuneMinDt">
+           <property name="text">
+            <string>Min timestep</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
           <widget class="QLabel" name="lblDuneIntegrator">
            <property name="text">
             <string>Integrator</string>
@@ -64,8 +128,8 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="lblDuneDt">
+         <item row="4" column="0">
+          <widget class="QLabel" name="lblDuneMaxDt">
            <property name="text">
             <string>Max timestep</string>
            </property>
@@ -74,7 +138,24 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="0" colspan="2">
+         <item row="9" column="0" colspan="2">
+          <widget class="QPushButton" name="btnDuneReset">
+           <property name="text">
+            <string>Reset to default values</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="1">
+          <widget class="QCheckBox" name="chkDuneVTK">
+           <property name="toolTip">
+            <string>Output the simulation results in VTK files, which can be viewed using ParaView</string>
+           </property>
+           <property name="text">
+            <string>VTK (ParaView)</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="0" colspan="2">
           <spacer name="verticalSpacer_2">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -87,14 +168,51 @@
            </property>
           </spacer>
          </item>
-         <item row="4" column="0" colspan="2">
-          <widget class="QPushButton" name="btnDuneReset">
+         <item row="6" column="0">
+          <widget class="QLabel" name="lblDuneDecrease">
            <property name="text">
-            <string>Reset to default values</string>
+            <string>Decrease factor</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
+         <item row="6" column="1">
+          <widget class="QLineEdit" name="txtDuneDecrease">
+           <property name="toolTip">
+            <string>The factor by which the timestep is decreased after an unsuccessful integration step</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="lblDuneIncrease">
+           <property name="text">
+            <string>Increase factor</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lblDuneDiscretization">
+           <property name="text">
+            <string>Discretization</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLineEdit" name="txtDuneMaxDt">
+           <property name="toolTip">
+            <string>The maximum allowed timestep</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="0">
           <widget class="QLabel" name="lblOutputFiles">
            <property name="text">
             <string>Output files</string>
@@ -104,13 +222,20 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="1">
-          <widget class="QCheckBox" name="chkDuneVTK">
-           <property name="toolTip">
-            <string>Output the simulation results in VTK files, which can be viewed using ParaView</string>
-           </property>
+         <item row="2" column="0">
+          <widget class="QLabel" name="lblDuneDt">
            <property name="text">
-            <string>VTK (ParaView)</string>
+            <string>Initial timestep</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="txtDuneDt">
+           <property name="toolTip">
+            <string>The initial timestep to use at the start of the simulation</string>
            </property>
           </widget>
          </item>
@@ -177,9 +302,6 @@
            <property name="toolTip">
             <string>The maximum timestep that can be used for an integration step</string>
            </property>
-           <property name="statusTip">
-            <string/>
-           </property>
           </widget>
          </item>
          <item row="1" column="0">
@@ -196,9 +318,6 @@
           <widget class="QComboBox" name="cmbPixelIntegrator">
            <property name="toolTip">
             <string>The Runge-Kutta integrator to be used in the simulation</string>
-           </property>
-           <property name="statusTip">
-            <string/>
            </property>
            <item>
             <property name="text">
@@ -270,18 +389,12 @@
            <property name="toolTip">
             <string>The maximum absolute error allowed for an integration step</string>
            </property>
-           <property name="statusTip">
-            <string/>
-           </property>
           </widget>
          </item>
          <item row="1" column="1">
           <widget class="QLineEdit" name="txtPixelRelErr">
            <property name="toolTip">
             <string>The maximum relative (i.e. normalised by the concentration) error allowed for an integration step</string>
-           </property>
-           <property name="statusTip">
-            <string/>
            </property>
           </widget>
          </item>
@@ -348,8 +461,13 @@
  </widget>
  <tabstops>
   <tabstop>tabSimulator</tabstop>
+  <tabstop>cmbDuneDiscretization</tabstop>
   <tabstop>cmbDuneIntegrator</tabstop>
   <tabstop>txtDuneDt</tabstop>
+  <tabstop>txtDuneMinDt</tabstop>
+  <tabstop>txtDuneMaxDt</tabstop>
+  <tabstop>txtDuneIncrease</tabstop>
+  <tabstop>txtDuneDecrease</tabstop>
   <tabstop>chkDuneVTK</tabstop>
   <tabstop>btnDuneReset</tabstop>
   <tabstop>cmbPixelIntegrator</tabstop>

@@ -21,12 +21,12 @@ public:
   using SubGrid = Grid::SubDomainGrid;
   using SubGridView = SubGrid::LeafGridView;
   using Elem = decltype(*(elements(std::declval<SubGridView>()).begin()));
-  Dune::ParameterTree config;
+  std::vector<Dune::ParameterTree> configs;
   std::shared_ptr<Grid> grid;
   explicit DuneImpl(const simulate::DuneConverter &dc);
   virtual ~DuneImpl();
   virtual void setInitial(const simulate::DuneConverter &dc) = 0;
-  virtual void run(double time, double maxTimestep) = 0;
+  virtual void run(double time) = 0;
   virtual void updateGridFunctions(std::size_t compartmentIndex,
                                    std::size_t nSpecies) = 0;
   virtual double evaluateGridFunction(

@@ -6,14 +6,16 @@
 namespace simulate {
 
 DuneImpl::DuneImpl(const simulate::DuneConverter &dc) {
-  std::stringstream ssIni(dc.getIniFile().toStdString());
-  Dune::ParameterTreeParser::readINITree(ssIni, config);
-
+  for (const auto &ini : dc.getIniFiles()) {
+    std::stringstream ssIni(ini.toStdString());
+    auto &config = configs.emplace_back();
+    Dune::ParameterTreeParser::readINITree(ssIni, config);
+  }
   // init Dune logging if not already done
   if (!Dune::Logging::Logging::initialized()) {
     Dune::Logging::Logging::init(
         Dune::FakeMPIHelper::getCollectiveCommunication(),
-        config.sub("logging"));
+        configs[0].sub("logging"));
     if (SPDLOG_ACTIVE_LEVEL > SPDLOG_LEVEL_DEBUG) {
       // for release builds disable DUNE logging
       Dune::Logging::Logging::mute();
