@@ -7,6 +7,7 @@
 SCENARIO("DialogImageSlice",
          "[gui/dialogs/imageslice][gui/dialogs][gui][imageslice]") {
   GIVEN("5 100x50 images") {
+    QImage imgGeometry(100, 50, QImage::Format_ARGB32_Premultiplied);
     QVector<QImage> imgs(5,
                          QImage(100, 50, QImage::Format_ARGB32_Premultiplied));
     QRgb col1 = 0xffa34f6c;
@@ -16,11 +17,10 @@ SCENARIO("DialogImageSlice",
     }
     imgs[3].fill(col2);
     QVector<double> time{0, 1, 2, 3, 4};
-    DialogImageSlice dia(imgs, time);
+    DialogImageSlice dia(imgGeometry, imgs, time);
     ModalWidgetTimer mwt;
-    WHEN("user does nothing") {
+    WHEN("user does nothing: default vertical slice") {
       QImage slice = dia.getSlicedImage();
-      // default: y vs t
       REQUIRE(slice.width() == imgs.size());
       REQUIRE(slice.height() == imgs[0].height());
       REQUIRE(slice.pixel(1, 35) == col1);
@@ -28,14 +28,25 @@ SCENARIO("DialogImageSlice",
       REQUIRE(slice.pixel(3, 12) == col2);
       REQUIRE(slice.pixel(4, 0) == col1);
     }
-    WHEN("user sets image vertical axis to x") {
+    WHEN("user sets slice to horizontal") {
       mwt.addUserAction({"Up"});
       mwt.start();
       dia.exec();
       QImage slice = dia.getSlicedImage();
-      // x vs t
       REQUIRE(slice.width() == imgs.size());
       REQUIRE(slice.height() == imgs[0].width());
+      REQUIRE(slice.pixel(1, 75) == col1);
+      REQUIRE(slice.pixel(2, 28) == col1);
+      REQUIRE(slice.pixel(3, 99) == col2);
+      REQUIRE(slice.pixel(4, 0) == col1);
+    }
+    WHEN("user sets slice to custom: default is diagonal") {
+      mwt.addUserAction({"Down"});
+      mwt.start();
+      dia.exec();
+      QImage slice = dia.getSlicedImage();
+      REQUIRE(slice.width() == imgs.size());
+      REQUIRE(slice.height() == std::max(imgs[0].height(), imgs[0].width()));
       REQUIRE(slice.pixel(1, 75) == col1);
       REQUIRE(slice.pixel(2, 28) == col1);
       REQUIRE(slice.pixel(3, 99) == col2);

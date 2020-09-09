@@ -1,4 +1,4 @@
-// QLabelMouseTracker
+// QLabelSlice
 //  - a modified QLabel
 //  - displays (and rescales without interpolation) an image,
 //  - tracks the mouse location in terms of the pixels of the original image
@@ -10,29 +10,25 @@
 
 #include <QLabel>
 #include <QMouseEvent>
+#include <vector>
 
-class QLabelMouseTracker : public QLabel {
+class QLabelSlice : public QLabel {
   Q_OBJECT
 public:
-  explicit QLabelMouseTracker(QWidget *parent = nullptr);
-  // QImage used for pixel location and colour
+  explicit QLabelSlice(QWidget *parent = nullptr);
   void setImage(const QImage &img);
   const QImage &getImage() const;
-  // QImage mask used to translate pixel location to index
-  void setMaskImage(const QImage &img);
-  const QImage &getMaskImage() const;
-  void setImages(const std::pair<QImage, QImage> &imgPair);
-  // colour of pixel at last mouse click position
-  const QRgb &getColour() const;
-  // value of mask index at last mouse click position
-  int getMaskIndex() const;
   void setAspectRatioMode(Qt::AspectRatioMode aspectRatioMode);
   void setTransformationMode(Qt::TransformationMode transformationMode);
+  void setSlice(const QPoint &start, const QPoint &end);
+  const std::vector<QPoint> &getSlicePixels() const;
+  void setHorizontalSlice(int y);
+  void setVerticalSlice(int x);
 
 signals:
-  void mouseClicked(QRgb col, QPoint point);
-  void mouseOver(QPoint point);
-  void mouseWheelEvent(QWheelEvent *ev);
+  void sliceDrawn(QPoint start, QPoint end);
+  void mouseDown(QPoint point);
+  void mouseWheelEvent(int delta);
 
 protected:
   void mousePressEvent(QMouseEvent *ev) override;
@@ -43,16 +39,16 @@ protected:
   void resizeEvent(QResizeEvent *ev) override;
 
 private:
+  std::vector<QPoint> slicePixels;
+  QImage imgOriginal;
+  QImage imgSliced;
+  QPixmap pixmap;
+  QPoint startPixel;
+  QPoint currentPixel;
   Qt::AspectRatioMode aspectRatioMode = Qt::KeepAspectRatio;
   Qt::TransformationMode transformationMode = Qt::FastTransformation;
-  // (x,y) location of current pixel
-  bool setCurrentPixel(const QMouseEvent *ev);
+  bool mouseIsDown{false};
+  bool setPixel(const QMouseEvent *ev, QPoint &pixel);
+  void fadeOriginalImage();
   void resizeImage(const QSize &size);
-  QImage image;
-  // Pixmap used to display scaled version of image
-  QPixmap pixmap;
-  QImage maskImage;
-  QPoint currentPixel;
-  QRgb colour{};
-  int maskIndex{};
 };

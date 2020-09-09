@@ -186,7 +186,7 @@ jobs:
       services:
         - docker
       env:
-        - DOCKER_IMAGE=lkeegan/sme_manylinux1_x86_64:2020.09.01
+        - DOCKER_IMAGE=lkeegan/sme_manylinux1_x86_64:2020.09.08
       install:
         - docker pull $DOCKER_IMAGE
       before_script:
@@ -211,7 +211,7 @@ jobs:
       services:
         - docker
       env:
-        - DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.09.01
+        - DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.09.08
       install:
         - docker pull $DOCKER_IMAGE
       before_script:
@@ -328,7 +328,6 @@ jobs:
         - $BUILD_SHELL ci/windows-wheels.sh
         - ls dist
         - export TWINE_USERNAME="__token__"
-
         - python -m pip install --upgrade twine
         - python -m pip install dist/sme-*-cp38-cp38-win_amd64.whl
         - python -m unittest discover -v

@@ -1,10 +1,9 @@
-#include <QApplication>
-#include <QDebug>
-
 #include "catch_wrapper.hpp"
 #include "logger.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
+#include <QApplication>
+#include <QDebug>
 
 SCENARIO(
     "QLabelMouseTracker",

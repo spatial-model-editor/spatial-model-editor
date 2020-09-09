@@ -34,12 +34,6 @@ const QRgb &QLabelMouseTracker::getColour() const { return colour; }
 
 int QLabelMouseTracker::getMaskIndex() const { return maskIndex; }
 
-void QLabelMouseTracker::mouseMoveEvent(QMouseEvent *ev) {
-  if (setCurrentPixel(ev)) {
-    emit mouseOver(currentPixel);
-  }
-}
-
 void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
   if (ev->buttons() != Qt::NoButton) {
     if (setCurrentPixel(ev)) {
@@ -55,19 +49,32 @@ void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
   }
 }
 
-void QLabelMouseTracker::resizeEvent(QResizeEvent *event) {
-  if (event->oldSize() != event->size()) {
-    resizeImage(event->size());
+void QLabelMouseTracker::mouseMoveEvent(QMouseEvent *ev) {
+  if (setCurrentPixel(ev)) {
+    emit mouseOver(currentPixel);
   }
+}
+
+void QLabelMouseTracker::mouseReleaseEvent(QMouseEvent *ev) { ev->accept(); }
+
+void QLabelMouseTracker::mouseDoubleClickEvent(QMouseEvent *ev) {
+  ev->accept();
 }
 
 void QLabelMouseTracker::wheelEvent(QWheelEvent *ev) {
   emit mouseWheelEvent(ev);
 }
 
+void QLabelMouseTracker::resizeEvent(QResizeEvent *event) {
+  if (event->oldSize() != event->size()) {
+    resizeImage(event->size());
+  }
+}
+
 bool QLabelMouseTracker::setCurrentPixel(const QMouseEvent *ev) {
   if (image.isNull() || pixmap.isNull() || (ev->pos().x() >= pixmap.width()) ||
-      (ev->pos().y() >= pixmap.height())) {
+      (ev->pos().y() >= pixmap.height()) || ev->pos().x() < 0 ||
+      ev->pos().y() < 0) {
     return false;
   }
   currentPixel.setX((image.width() * ev->pos().x()) / pixmap.width());
@@ -91,7 +98,10 @@ void QLabelMouseTracker::resizeImage(const QSize &size) {
 
 void QLabelMouseTracker::setAspectRatioMode(Qt::AspectRatioMode mode) {
   aspectRatioMode = mode;
+  resizeImage(size());
 }
+
 void QLabelMouseTracker::setTransformationMode(Qt::TransformationMode mode) {
   transformationMode = mode;
+  resizeImage(size());
 }
