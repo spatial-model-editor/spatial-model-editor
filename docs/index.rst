@@ -16,13 +16,13 @@ Spatial Model Editor Documentation
    :maxdepth: 2
    :caption: Reference documentation
 
-   reference/cli
+   reference/dune
+   reference/pixel
+   reference/mesh
    reference/python
+   reference/cli
    reference/maths
    reference/units
-   reference/dune
-   reference/mesh
-   reference/pixel
    reference/source-code
 
 .. toctree::

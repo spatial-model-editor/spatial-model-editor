@@ -15,11 +15,11 @@ A GUI editor to create and edit 2d spatial SBML models of bio-chemical reactions
 
 To get started, download and run the GUI for your operating system
 
-- [![linux](docs/quickstart/img/icon-linux.png) linux](../../releases/latest/download/spatial-model-editor)
+- [![linux](docs/img/icon-linux.png) linux](../../releases/latest/download/spatial-model-editor)
 
-- [![macOS](docs/quickstart/img/icon-osx.png) macOS](../../releases/latest/download/spatial-model-editor.dmg)
+- [![macOS](docs/img/icon-osx.png) macOS](../../releases/latest/download/spatial-model-editor.dmg)
 
-- [![linux](docs/quickstart/img/icon-windows.png) windows](../../releases/latest/download/spatial-model-editor.exe)
+- [![linux](docs/img/icon-windows.png) windows](../../releases/latest/download/spatial-model-editor.exe)
 
 Or take a look at the [documentation](https://spatial-model-editor.readthedocs.io/)
 
@@ -27,7 +27,7 @@ Or take a look at the [documentation](https://spatial-model-editor.readthedocs.i
 
 ## Contributing
 
-[Bug reports](https://github.com/lkeegan/spatial-model-editor/issues/new?assignees=&labels=&template=bug_report.md) and [feature requests](https://github.com/lkeegan/spatial-model-editor/issues/new?assignees=&labels=&template=feature_request.md) are very welcome, as are fixes or improvements to the [documentation](https://spatial-model-editor.readthedocs.io/) (click the 'Edit on GitHub' button in the top right).
+[Bug reports](https://github.com/lkeegan/spatial-model-editor/issues/new?assignees=&labels=&template=bug_report.md) and [feature requests](https://github.com/lkeegan/spatial-model-editor/issues/new?assignees=&labels=&template=feature_request.md) are very welcome, as are fixes or improvements to the [documentation](https://spatial-model-editor.readthedocs.io/) (to edit a page in the documentation, click the 'Edit on GitHub' button in the top right).
 
 If you are interesting in contributing code, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
@@ -63,7 +63,7 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [Threading Building Blocks](https://github.com/intel/tbb) - license: [Apache-2.0](https://github.com/intel/tbb/blob/tbb_2020/LICENSE)
 
-- [Open Source Computer Vision Library](https://github.com/opencv/opencv) - license: [BSD](https://github.com/opencv/opencv/blob/master/LICENSE)
+- [Open Source Computer Vision Library](https://github.com/opencv/opencv) - license: [Apache-2.0](https://github.com/opencv/opencv/blob/master/LICENSE)
 
 - [pybind11](https://github.com/pybind/pybind11) - license: [BSD-style](https://github.com/pybind/pybind11/blob/master/LICENSE)
 

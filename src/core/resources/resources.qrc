@@ -10,7 +10,6 @@
         <file>models/single-compartment-diffusion.xml</file>
         <file>models/small-single-compartment-diffusion.xml</file>
         <file>models/very-simple-model.xml</file>
-        <file>geometry/empty-donut-100x100.png</file>
         <file>geometry/filled-donut-100x100.png</file>
         <file>geometry/single-liver-cell-180x140.png</file>
         <file>geometry/one-blob-100x100.png</file>

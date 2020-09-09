@@ -1,7 +1,52 @@
 Pixel simulator
 ===============
 
-This is an alternative PDE solver which uses the simple `FTCS <https://en.wikipedia.org/wiki/FTCS_scheme>`_ method to provide quick but potentially unreliable results.
+Pixel is an alternative PDE solver which uses the simple `FTCS <https://en.wikipedia.org/wiki/FTCS_scheme>`_ method to solve the PDE using the pixels of the geometry image as the grid.
+
+Simulation options
+------------------
+
+The default settings should work well in most cases, but if desired they can be adjusted by going to `Advanced->Simulation options`
+
+.. figure:: img/pixel_options.png
+   :alt: Pixel simulation options
+
+   The simulation options that can be used to fine tune-the Pixel solver.
+
+* Integrator
+   * the explicit Runge-Kutta integration scheme used for time integration
+   * default: 2nd order Heun scheme, with embedded 1st order error estimate
+   * a higher order scheme may be more efficient if the maximum allowed error is very small
+   * see the :ref:`time-integration` section for more information on the integrators
+* Max relative local error
+   * the maximum relative error allowed on the concentration of any species at any pixel
+   * default: 0.005
+   * local means the estimated error for a single timestep, at a single point
+   * relative means each error estimate is divided by the species concentration
+   * making this number smaller makes the simulation more accurate, but slower
+* Max absolute local error
+   * the maximum error allowed on the concentration of any species at any pixel
+   * default: infinite
+   * local means the estimated error for a single timestep, at a single point
+   * absolute means the error estimate is not normalised by the species concentration
+   * making this number smaller makes the simulation more accurate, but slower
+* Max timestep
+   * the maximum allowed timestep
+   * default: infinite
+* Multithreading
+   * if enabled, multiple CPU threads can be used
+   * default: disabled
+   * enabling this can make simulations of large models run faster
+   * however it can also make small models run slower
+* Max CPU threads
+   * limit the maximum number of CPU threads to be used
+   * default: unlimited
+* Symbolic optimization
+   * factor out common subexpressions when constructing the reaction terms
+   * default: enabled
+* Compiler optimization level
+   * how much optimization is done when compiling the reaction terms
+   * default: 3
 
 Spatial discretization
 ----------------------
@@ -15,6 +60,8 @@ The Laplacian is approximated on this grid using a central difference scheme
    \left( \frac{\partial^2}{\partial x^2} + \frac{\partial^2}{\partial y^2} \right) c_{i,j} = \left[ c_{i+1,j} + c_{i,j+1} - 4 c_{i,j} + c_{i-1,j} + c_{i,j-1} \right] / a^2 + \mathcal{O}(a^2)
 
 which has :math:`\mathcal{O}(a^2)` discretisation errors. Inserting this approximation into the reaction-diffusion equation converts the PDE into a system of coupled ODEs.
+
+.. _time-integration:
 
 Time integration
 ----------------
