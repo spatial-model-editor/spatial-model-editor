@@ -79,18 +79,6 @@ getContours(const QImage &img, const std::vector<QRgb> &compartmentColours) {
       contours.push_back(std::move(compContour));
     }
   }
-#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-  cv::Mat cvContoursImage = cv::Mat::zeros(img.height(), img.width(), CV_8UC3);
-  for (size_t i = 0; i < contours.size(); i++) {
-    auto c = utils::indexedColours()[i].rgb();
-    cv::Scalar color = cv::Scalar(qRed(c), qGreen(c), qBlue(c));
-    cv::polylines(cvContoursImage, contours[i], false, color);
-  }
-  auto qImg =
-      QImage(cvContoursImage.data, cvContoursImage.cols, cvContoursImage.rows,
-             static_cast<int>(cvContoursImage.step), QImage::Format_RGB888);
-  qImg.save("contours_original.png");
-#endif
   return contours;
 }
 
@@ -385,6 +373,44 @@ static std::size_t getOrInsertFPIndex(const QPoint &p,
   return fps.size() - 1;
 }
 
+static void saveContoursImageForDebugging(
+    const std::string &filename, const QSize &imgSize,
+    const std::vector<std::vector<cv::Point>> &lines = {},
+    const std::vector<Boundary> &boundaries = {}) {
+  cv::Mat cvLinesImage =
+      cv::Mat::zeros(imgSize.height(), imgSize.width(), CV_8UC3);
+  for (size_t i = 0; i < boundaries.size(); i++) {
+    auto c = utils::indexedColours()[i].rgb();
+    cv::Scalar color = cv::Scalar(qRed(c), qGreen(c), qBlue(c));
+    std::vector<cv::Point> cvLine;
+    cvLine.reserve(boundaries[i].getPoints().size());
+    for (const auto &p : boundaries[i].getPoints()) {
+      cvLine.push_back({p.x(), imgSize.height() - 1 - p.y()});
+    }
+    cv::polylines(cvLinesImage, cvLine, true, color);
+  }
+  for (size_t i = 0; i < lines.size(); i++) {
+    auto c = utils::indexedColours()[i + boundaries.size()].rgb();
+    cv::Scalar color = cv::Scalar(qRed(c), qGreen(c), qBlue(c));
+    cv::polylines(cvLinesImage, lines[i], false, color);
+  }
+  auto qImg =
+      QImage(cvLinesImage.data, cvLinesImage.cols, cvLinesImage.rows,
+             static_cast<int>(cvLinesImage.step), QImage::Format_RGB888);
+  qImg.save(filename.c_str());
+}
+
+static void
+saveContoursImageForDebugging(const std::string &filename, const QSize &imgSize,
+                              const std::vector<ContourLine> &contourLines,
+                              const std::vector<Boundary> &boundaries = {}) {
+  std::vector<std::vector<cv::Point>> lines;
+  for (const auto &cl : contourLines) {
+    lines.push_back(cl.points);
+  }
+  saveContoursImageForDebugging(filename, imgSize, lines, boundaries);
+}
+
 Contours::Contours(
     const QImage &img, const std::vector<QRgb> &compartmentColours,
     const std::vector<std::pair<std::string, ColourPair>> &membraneColourPairs)
@@ -392,19 +418,32 @@ Contours::Contours(
 
   boundaryPixelsImage.fill(qRgba(0, 0, 0, 0));
   auto contours = getContours(img, compartmentColours);
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+  saveContoursImageForDebugging("contours_original.png", img.size(), contours);
+#endif
 
   boundaries = extractClosedLoopBoundaries(img, membraneColourPairs, contours,
                                            boundaryPixelsImage);
   SPDLOG_DEBUG("Number of closed loops: {}", boundaries.size());
-#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-  boundaryPixelsImage.save("contours_closed_loops.png");
-#endif
 
   auto lines = extractLinesFromContours(img, contours);
   SPDLOG_DEBUG("Number of lines: {}", lines.size());
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+  saveContoursImageForDebugging("contours_split_lines.png", img.size(), lines,
+                                boundaries);
+#endif
+
   removeAdjacentMembraneLines(lines, img, membraneColourPairs);
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+  saveContoursImageForDebugging("contours_remove_adjacent.png", img.size(),
+                                lines, boundaries);
+#endif
   cv::Mat cvImg(img.height(), img.width(), CV_32SC1, cv::Scalar(0));
   mergeEndPointTriplets(lines, cvImg);
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+  saveContoursImageForDebugging("contours_merge_endpoints.png", img.size(),
+                                lines, boundaries);
+#endif
 
   // add lines to contours image
   for (size_t i = 0; i < lines.size(); i++) {
@@ -413,9 +452,6 @@ Contours::Contours(
       boundaryPixelsImage.setPixel(p.x, p.y, c);
     }
   }
-#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-  boundaryPixelsImage.save("contours_closed_loops_and_lines.png");
-#endif
 
   // index fixed points, create membrane boundaries with fixed point info
   for (const auto &line : lines) {

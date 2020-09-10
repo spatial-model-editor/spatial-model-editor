@@ -198,7 +198,6 @@
      <addaction name="action_circle_100x100"/>
      <addaction name="action_one_blob_100x100"/>
      <addaction name="action_two_blobs_100x100"/>
-     <addaction name="action_empty_donut_100x100"/>
      <addaction name="action_filled_donut_100x100_bmp"/>
      <addaction name="action_concave_cell_nucleus_100x100"/>
      <addaction name="action_liver_300x100"/>
@@ -321,11 +320,6 @@
   <action name="action_very_simple_model">
    <property name="text">
     <string>&amp;very-simple-model</string>
-   </property>
-  </action>
-  <action name="action_empty_donut_100x100">
-   <property name="text">
-    <string>&amp;empty-donut-100x100</string>
    </property>
   </action>
   <action name="action_filled_donut_100x100_bmp">

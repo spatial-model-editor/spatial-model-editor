@@ -211,7 +211,7 @@ static QRectF getBoundingRectangle(const std::vector<QPointF> &points) {
 
 static void debugDrawPointsAndBoundaries(const TriangulateBoundaries &tid,
                                          const QString &filename) {
-  QImage img(800, 600, QImage::Format_ARGB32_Premultiplied);
+  QImage img(800, 800, QImage::Format_ARGB32_Premultiplied);
   img.fill(0);
   QPainter painter(&img);
   const auto &bp = tid.boundaryPoints;
@@ -261,7 +261,7 @@ addSteinerPoints(const TriangulateBoundaries &tid) {
     boundary.clear();
   }
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-  debugDrawPointsAndBoundaries(tid, "preSteiner.png");
+  debugDrawPointsAndBoundaries(tid, "lines_simplify.png");
 #endif
   auto in = toTriangulateio(tid);
   triangle::triangulateio out;
@@ -307,7 +307,7 @@ addSteinerPoints(const TriangulateBoundaries &tid) {
     SPDLOG_DEBUG("  - {} segment boundary", s.size());
   }
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-  debugDrawPointsAndBoundaries(newTid, "postSteiner.png");
+  debugDrawPointsAndBoundaries(newTid, "lines_add_steiner.png");
 #endif
   return newTid;
 }
@@ -371,7 +371,7 @@ static void replaceFPIndices(TriangulateBoundaries &newTid,
     }
   }
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-  debugDrawPointsAndBoundaries(newTid, "fixedPoints.png");
+  debugDrawPointsAndBoundaries(newTid, "lines_split_endpoints.png");
 #endif
 }
 
@@ -457,7 +457,7 @@ Triangulate::addMembranes(const TriangulateBoundaries &tb,
                  s.back().end);
   }
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-  debugDrawPointsAndBoundaries(newTid, "membranes.png");
+  debugDrawPointsAndBoundaries(newTid, "lines_add_membranes.png");
 #endif
   return newTid;
 }
