@@ -172,10 +172,14 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
   std::vector<IniFile> inis;
   if (independentCompartments) {
     // create independent ini file for each compartment
-    for (const auto &name : model.getCompartments().getNames()) {
-      auto fname{QString("%1_%2.ini").arg(baseIniFile).arg(name)};
-      iniFilenames.push_back(QDir(iniFileDir).filePath(fname));
-      inis.push_back(iniCommon);
+    for (const auto &comp : model.getCompartments().getIds()) {
+      // skip compartments which contain no non-constant species
+      if (compartmentContainsNonConstantSpecies(model, comp)) {
+        const auto &name = model.getCompartments().getName(comp);
+        auto fname{QString("%1_%2.ini").arg(baseIniFile).arg(name)};
+        iniFilenames.push_back(QDir(iniFileDir).filePath(fname));
+        inis.push_back(iniCommon);
+      }
     }
   } else {
     // single ini file for model

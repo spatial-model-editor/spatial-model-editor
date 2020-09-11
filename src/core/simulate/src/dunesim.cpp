@@ -195,6 +195,12 @@ DuneSim::DuneSim(
         "Invalid integrator type requested - using 1st order FEM instead");
     options.discretization = DuneDiscretizationType::FEM1;
   }
+  if (dc.getIniFiles().empty()) {
+    currentErrorMessage =
+        "Nothing to simulate: no non-constant species in model";
+    SPDLOG_WARN("{}", currentErrorMessage);
+    return;
+  }
   try {
     if (dc.hasIndependentCompartments()) {
       pDuneImpl = std::make_unique<DuneImplIndependent<1>>(dc, options);
