@@ -281,7 +281,9 @@ static void connectNewEndPoint(std::vector<cv::Point> &points,
     std::reverse(points.begin(), points.end());
   }
   SPDLOG_TRACE("old end point ({},{})", points.back().x, points.back().y);
-  points.pop_back();
+  if (points.size() > 1) {
+    points.pop_back();
+  }
   SPDLOG_TRACE("connect ({},{}) to ({},{})", points.back().x, points.back().y,
                newPoint.x, newPoint.y);
   cv::LineIterator li(cvImg, points.back(), newPoint);

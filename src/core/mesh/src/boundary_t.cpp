@@ -91,18 +91,18 @@ SCENARIO("Boundary", "[core/mesh/boundary][core/mesh][core][boundary]") {
       REQUIRE(boundary.getMaxPoints() == 999);
       REQUIRE(boundary.getPoints() == points);
       // use 3 points for boundary
-      boundary.setMaxPoints(3);
-      REQUIRE(boundary.getMaxPoints() == 3);
-      REQUIRE(boundary.getPoints() == p3);
+      boundary.setMaxPoints(4);
+      REQUIRE(boundary.getMaxPoints() == 4);
+      REQUIRE(boundary.getPoints() == p4);
       // automatically determine number of points
       auto nPoints = boundary.setMaxPoints();
       REQUIRE(boundary.getMaxPoints() == nPoints);
-      REQUIRE(nPoints == 4);
-      REQUIRE(boundary.getPoints() == p4);
+      REQUIRE(nPoints == 3);
+      REQUIRE(boundary.getPoints() == p3);
       // non-membrane inner points are just QPointF versions of QPoint points
       const auto &inner = boundary.getInnerPoints();
       for (std::size_t i = 0; i < inner.size(); ++i) {
-        QPointF diff = inner[i] - p4[i];
+        QPointF diff = inner[i] - p3[i];
         REQUIRE(dbl_approx(diff.manhattanLength()) == 0);
       }
       // non-membrane boundaries don't have outer points
@@ -137,14 +137,14 @@ SCENARIO("Boundary", "[core/mesh/boundary][core/mesh][core][boundary]") {
       REQUIRE(boundary.getMaxPoints() == 999);
       REQUIRE(boundary.getPoints() == points);
       // use 3 points for boundary
-      boundary.setMaxPoints(3);
-      REQUIRE(boundary.getMaxPoints() == 3);
-      REQUIRE(boundary.getPoints() == p3);
+      boundary.setMaxPoints(4);
+      REQUIRE(boundary.getMaxPoints() == 4);
+      REQUIRE(boundary.getPoints() == p4);
       // automatically determine number of points
       auto nPoints = boundary.setMaxPoints();
       REQUIRE(boundary.getMaxPoints() == nPoints);
-      REQUIRE(nPoints == 4);
-      REQUIRE(boundary.getPoints() == p4);
+      REQUIRE(nPoints == 3);
+      REQUIRE(boundary.getPoints() == p3);
       // matching inner/outer points separated by membrane width
       const auto &inner = boundary.getInnerPoints();
       const auto &outer = boundary.getOuterPoints();

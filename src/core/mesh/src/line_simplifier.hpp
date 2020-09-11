@@ -29,7 +29,7 @@ private:
 
 public:
   void getSimplifiedLine(std::vector<QPoint> &line,
-                         const LineError &allowedError = {1.0, 0.2}) const;
+                         const LineError &allowedError = {2.0, 0.4}) const;
   void getSimplifiedLine(std::vector<QPoint> &line, std::size_t nPoints) const;
   std::size_t maxPoints() const;
   bool isValid() const;

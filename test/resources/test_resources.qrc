@@ -6,5 +6,25 @@
         <file>models/analytic_2d.xml</file>
         <file>models/analytic_3d.xml</file>
         <file>models/weird-units.xml</file>
+        <file>geometry/gt1.png</file>
+        <file>geometry/gt2.png</file>
+        <file>geometry/gt3.png</file>
+        <file>geometry/gt4.png</file>
+        <file>geometry/gt5.png</file>
+        <file>geometry/gt6.png</file>
+        <file>geometry/gt7.png</file>
+        <file>geometry/gt8.png</file>
+        <file>geometry/gt9.png</file>
+        <file>geometry/gt10.png</file>
+        <file>geometry/gt11.png</file>
+        <file>geometry/gt12.png</file>
+        <file>geometry/gt13.png</file>
+        <file>geometry/gt14.png</file>
+        <file>geometry/gt15.png</file>
+        <file>geometry/gt16.png</file>
+        <file>geometry/gt17.png</file>
+        <file>geometry/gt18.png</file>
+        <file>geometry/gt19.png</file>
+        <file>geometry/gt20.png</file>
     </qresource>
 </RCC>

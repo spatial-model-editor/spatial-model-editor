@@ -159,4 +159,130 @@ SCENARIO("Contours", "[core/mesh/contours][core/mesh][core][contours]") {
     p = QPoint(49, 41);
     REQUIRE(imgPixels.pixel(p) == utils::indexedColours()[3].rgb());
   }
+  GIVEN("single cell not too close to boundary") {
+    QStringList filenames{"gt3.png",  "gt11.png", "gt12.png", "gt13.png",
+                          "gt18.png", "gt19.png", "gt20.png"};
+    for (const auto &filename : filenames) {
+      CAPTURE(filename.toStdString());
+      QImage img(QString(":/test/geometry/%1").arg(filename));
+
+      // single compartment: black (outer)
+      // inner and outer loop boundaries
+      mesh::Contours cBlack(img, {qRgb(0, 0, 0)}, {});
+      REQUIRE(cBlack.getBoundaries().size() == 2);
+      REQUIRE(cBlack.getFixedPoints().empty());
+      for (const auto &b : cBlack.getBoundaries()) {
+        REQUIRE(b.isValid());
+        REQUIRE(b.isLoop());
+        REQUIRE(!b.isMembrane());
+      }
+
+      // single compartment: white (inner)
+      // single outer loop boundary
+      mesh::Contours cWhite(img, {qRgb(255, 255, 255)}, {});
+      REQUIRE(cWhite.getBoundaries().size() == 1);
+      REQUIRE(cWhite.getFixedPoints().empty());
+      const auto &bWhite = cWhite.getBoundaries()[0];
+      REQUIRE(bWhite.isValid());
+      REQUIRE(bWhite.isLoop());
+      REQUIRE(!bWhite.isMembrane());
+
+      // two compartments: black and white
+      // outer loop boundary, inner membrane loop boundary
+      QRgb col0 = qRgb(0, 0, 0);
+      QRgb col1 = qRgb(255, 255, 255);
+      std::vector<QRgb> compartments{{col0, col1}};
+      std::vector<std::pair<std::string, mesh::ColourPair>> membranes{
+          {"outside-cell", {col0, col1}}};
+      mesh::Contours c(img, compartments, membranes);
+      REQUIRE(c.getBoundaries().size() == 2);
+      REQUIRE(c.getFixedPoints().empty());
+      const auto &b0 = c.getBoundaries()[0];
+      REQUIRE(b0.isValid());
+      REQUIRE(b0.isLoop());
+      REQUIRE(b0.isMembrane());
+      const auto &b1 = c.getBoundaries()[1];
+      REQUIRE(b1.isValid());
+      REQUIRE(b1.isLoop());
+      REQUIRE(!b1.isMembrane());
+    }
+  }
+  GIVEN("single cell with single boundary touching edge of image") {
+    QStringList filenames{"gt1.png", "gt5.png", "gt9.png", "gt16.png"};
+    for (const auto &filename : filenames) {
+      CAPTURE(filename.toStdString());
+      QImage img(QString(":/test/geometry/%1").arg(filename));
+
+      // single compartment: black (outer)
+      // single outer loop boundary
+      mesh::Contours cBlack(img, {qRgb(0, 0, 0)}, {});
+      REQUIRE(cBlack.getBoundaries().size() == 1);
+      REQUIRE(cBlack.getFixedPoints().empty());
+      for (const auto &b : cBlack.getBoundaries()) {
+        REQUIRE(b.isValid());
+        REQUIRE(b.isLoop());
+        REQUIRE(!b.isMembrane());
+      }
+
+      // single compartment: white (inner)
+      // single outer loop boundary
+      mesh::Contours cWhite(img, {qRgb(255, 255, 255)}, {});
+      REQUIRE(cWhite.getBoundaries().size() == 1);
+      REQUIRE(cWhite.getFixedPoints().empty());
+      const auto &bWhite = cWhite.getBoundaries()[0];
+      REQUIRE(bWhite.isValid());
+      REQUIRE(bWhite.isLoop());
+      REQUIRE(!bWhite.isMembrane());
+
+      // two compartments: black and white
+      // three non-loop boundary lines, of which one membrane
+      QRgb col0 = qRgb(0, 0, 0);
+      QRgb col1 = qRgb(255, 255, 255);
+      std::vector<QRgb> compartments{{col0, col1}};
+      std::vector<std::pair<std::string, mesh::ColourPair>> membranes{
+          {"outside-cell", {col0, col1}}};
+      mesh::Contours c(img, compartments, membranes);
+      REQUIRE(c.getBoundaries().size() == 3);
+      REQUIRE(c.getFixedPoints().size() == 2);
+      const auto &b0 = c.getBoundaries()[0];
+      REQUIRE(b0.isValid());
+      REQUIRE(!b0.isLoop());
+      REQUIRE(!b0.isMembrane());
+      const auto &b1 = c.getBoundaries()[1];
+      REQUIRE(b1.isValid());
+      REQUIRE(!b1.isLoop());
+      REQUIRE(b1.isMembrane());
+      const auto &b2 = c.getBoundaries()[2];
+      REQUIRE(b2.isValid());
+      REQUIRE(!b2.isLoop());
+      REQUIRE(!b2.isMembrane());
+    }
+  }
+  GIVEN("a variety of geometry images: don't crash") {
+    for (int i = 1; i < 21; ++i) {
+      QString filename(QString(":/test/geometry/gt%1").arg(i));
+      CAPTURE(filename.toStdString());
+      QImage img(filename);
+
+      // single compartment: black (outer)
+      // single outer loop boundary
+      mesh::Contours cBlack(img, {qRgb(0, 0, 0)}, {});
+      REQUIRE_NOTHROW(cBlack.getBoundaries());
+
+      // single compartment: white (inner)
+      // single outer loop boundary
+      mesh::Contours cWhite(img, {qRgb(255, 255, 255)}, {});
+      REQUIRE_NOTHROW(cWhite.getBoundaries());
+
+      // two compartments: black and white
+      // three non-loop boundary lines, of which one membrane
+      QRgb col0 = qRgb(0, 0, 0);
+      QRgb col1 = qRgb(255, 255, 255);
+      std::vector<QRgb> compartments{{col0, col1}};
+      std::vector<std::pair<std::string, mesh::ColourPair>> membranes{
+          {"outside-cell", {col0, col1}}};
+      mesh::Contours c(img, compartments, membranes);
+      REQUIRE_NOTHROW(c.getBoundaries());
+    }
+  }
 }
