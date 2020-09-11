@@ -20,5 +20,6 @@ target_sources(
          dunefunction_t.cpp
          dunegrid_t.cpp
          duneini_t.cpp
+         dunesim_t.cpp
          pde_t.cpp
          simulate_t.cpp)

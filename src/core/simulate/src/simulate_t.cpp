@@ -523,25 +523,4 @@ SCENARIO("DUNE: simulation",
     duneSim.doTimestep(0.01);
     REQUIRE(duneSim.errorMessage().empty());
   }
-  /*
-  // too slow in debug mode:
-  GIVEN("brusselator-model, too large timestep") {
-    sbml::SbmlDocWrapper s;
-    if (QFile f(":/models/brusselator-model.xml");
-        f.open(QIODevice::ReadOnly)) {
-      s.importSBMLString(f.readAll().toStdString());
-    }
-    for (auto order : {std::size_t{1}, std::size_t{2}}) {
-      simulate::Simulation duneSim(s, simulate::SimulatorType::DUNE, order);
-      auto options = duneSim.getIntegratorOptions();
-      options.maxTimestep = 50.0;
-      duneSim.setIntegratorOptions(options);
-      // DUNE simulation will fail, but Simulation wrapper should catch
-      // exception...
-      REQUIRE_NOTHROW(duneSim.doTimestep(500.0));
-      // and put the error message here:
-      REQUIRE(!duneSim.errorMessage().empty());
-    }
-  }
-  */
 }
