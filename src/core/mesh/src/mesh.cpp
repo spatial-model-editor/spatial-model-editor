@@ -26,7 +26,8 @@ Mesh::pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept {
 Mesh::Mesh() = default;
 
 Mesh::Mesh(
-    const QImage &image, const std::vector<QPointF> &interiorPoints,
+    const QImage &image,
+    const std::vector<std::vector<QPointF>> &interiorPoints,
     std::vector<std::size_t> maxPoints,
     std::vector<std::size_t> maxTriangleArea,
     const std::vector<std::pair<std::string, ColourPair>> &membraneColourPairs,
@@ -81,7 +82,7 @@ Mesh::Mesh(
 
 Mesh::Mesh(const std::vector<double> &inputVertices,
            const std::vector<std::vector<int>> &inputTriangleIndices,
-           const std::vector<QPointF> &interiorPoints)
+           const std::vector<std::vector<QPointF>> &interiorPoints)
     : readOnlyMesh(true), compartmentInteriorPoints(interiorPoints) {
   // we don't have the original image, so no boundary info: read only mesh
   // import vertices: supplied as list of doubles, two for each vertex
@@ -331,6 +332,7 @@ constructTriangulateBoundaries(const ImageBoundaries *imageBoundaries) {
     bp.width = b.getMembraneWidth();
     bp.isLoop = b.isLoop();
     bp.isMembrane = b.isMembrane();
+    bp.membraneIndex = b.getMembraneIndex();
     bp.innerFPIndices = {b.getInnerFpIndices().startPoint,
                          b.getInnerFpIndices().endPoint};
     bp.outerFPIndices = {b.getOuterFpIndices().startPoint,
@@ -368,6 +370,7 @@ void Mesh::constructMesh() {
   for (const auto &compartmentTriangleIndices : triangleIndices) {
     nTriangles += compartmentTriangleIndices.size();
     auto &compTriangles = triangles.emplace_back();
+    SPDLOG_TRACE("  - adding triangle compartment");
     for (const auto &t : compartmentTriangleIndices) {
       compTriangles.push_back(
           {{vertices[t[0]], vertices[t[1]], vertices[t[2]]}});
@@ -380,6 +383,7 @@ void Mesh::constructMesh() {
   for (const auto &membraneRectangleIndices : rectangleIndices) {
     nRectangles += membraneRectangleIndices.size();
     auto &membRectangles = rectangles.emplace_back();
+    SPDLOG_TRACE("  - adding rectangle compartment");
     for (const auto &r : membraneRectangleIndices) {
       membRectangles.push_back(
           {{vertices[r[0]], vertices[r[1]], vertices[r[2]], vertices[r[3]]}});
@@ -509,17 +513,31 @@ Mesh::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
       pMask.drawConvexPolygon(points.data(), 3);
     }
   }
-  pMask.end();
   // draw any membrane rectangles
   p.setPen(QPen(Qt::gray, 1));
   p.setBrush({});
-  for (const auto &membraneRectangles : rectangles) {
-    for (const auto &r : membraneRectangles) {
-      p.drawLine(r[0] * scaleFactor, r[3] * scaleFactor);
+  for (std::size_t k = 0; k < rectangles.size(); ++k) {
+    if (k + triangles.size() == compartmentIndex) {
+      // fill rectangles in chosen compartment & outline with bold lines
+      p.setPen(QPen(Qt::black, 2));
+      p.setBrush(QBrush(QColor(235, 235, 255)));
+    } else {
+      // outline all other rectangles with gray lines
+      p.setPen(QPen(Qt::gray, 1));
+      p.setBrush({});
     }
-    p.drawLine(membraneRectangles.back()[1] * scaleFactor,
-               membraneRectangles.back()[2] * scaleFactor);
+    pMask.setBrush(
+        QBrush(QColor(0, 0, static_cast<int>(k + triangles.size()))));
+    for (const auto &r : rectangles[k]) {
+      std::array<QPointF, 4> points;
+      for (std::size_t i = 0; i < 4; ++i) {
+        points[i] = r[i] * scaleFactor;
+      }
+      p.drawConvexPolygon(points.data(), 4);
+      pMask.drawConvexPolygon(points.data(), 4);
+    }
   }
+  pMask.end();
   // draw vertices
   p.setPen(QPen(Qt::red, 3));
   for (const auto &v : vertices) {
@@ -558,6 +576,8 @@ QString Mesh::getGMSH(const std::unordered_set<int> &gmshCompIndices) const {
     if (gmshCompIndices.empty() ||
         gmshCompIndices.find(static_cast<int>(compartmentIndex)) !=
             gmshCompIndices.cend()) {
+      SPDLOG_TRACE("Adding compartment of triangles, index: {}",
+                   compartmentIndex);
       nElem += comp.size();
     }
     compartmentIndex++;
@@ -566,6 +586,8 @@ QString Mesh::getGMSH(const std::unordered_set<int> &gmshCompIndices) const {
     if (gmshCompIndices.empty() ||
         gmshCompIndices.find(static_cast<int>(compartmentIndex)) !=
             gmshCompIndices.cend()) {
+      SPDLOG_TRACE("Adding compartment of rectangles, index: {}",
+                   compartmentIndex);
       nElem += memb.size();
     }
     compartmentIndex++;
@@ -578,6 +600,8 @@ QString Mesh::getGMSH(const std::unordered_set<int> &gmshCompIndices) const {
     if (gmshCompIndices.empty() ||
         gmshCompIndices.find(static_cast<int>(compartmentIndex)) !=
             gmshCompIndices.cend()) {
+      SPDLOG_TRACE("Writing triangles for compartment index: {}",
+                   compartmentIndex);
       for (const auto &t : comp) {
         msh.append(QString("%1 2 2 %2 %2 %3 %4 %5\n")
                        .arg(elementIndex)
@@ -595,6 +619,8 @@ QString Mesh::getGMSH(const std::unordered_set<int> &gmshCompIndices) const {
     if (gmshCompIndices.empty() ||
         gmshCompIndices.find(static_cast<int>(compartmentIndex)) !=
             gmshCompIndices.cend()) {
+      SPDLOG_TRACE("Writing rectangles for compartment index: {}",
+                   compartmentIndex);
       for (const auto &r : memb) {
         msh.append(QString("%1 3 2 %2 %2 %3 %4 %5 %6\n")
                        .arg(elementIndex)

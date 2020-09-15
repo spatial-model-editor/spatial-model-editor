@@ -122,7 +122,6 @@ void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
       const auto &compartmentID = sbmlDoc.getCompartments().getIds().at(
           ui->listCompartments->currentRow());
       sbmlDoc.getCompartments().setColour(compartmentID, col);
-      sbmlDoc.getCompartments().setInteriorPoint(compartmentID, point);
       ui->tabCompartmentGeometry->setCurrentIndex(0);
       ui->listMembranes->clear();
       ui->listMembranes->addItems(sbmlDoc.getMembranes().getNames());
@@ -306,11 +305,17 @@ void TabGeometry::lblCompMesh_mouseClicked(QRgb col, QPoint point) {
   Q_UNUSED(col);
   Q_UNUSED(point);
   auto index = ui->lblCompMesh->getMaskIndex();
-  if (index < ui->listCompartments->count() &&
-      index != ui->listCompartments->currentRow()) {
+  SPDLOG_TRACE("Point ({},{}), Mask index {}", point.x(), point.y(), index);
+  auto membraneIndex = static_cast<int>(index) - ui->listCompartments->count();
+  if (index >= 0 && index < ui->listCompartments->count()) {
     ui->listCompartments->setCurrentRow(index);
     ui->spinMaxTriangleArea->setFocus();
     ui->spinMaxTriangleArea->selectAll();
+    return;
+  }
+  if (membraneIndex >= 0 && membraneIndex < ui->listMembranes->count()) {
+    ui->listMembranes->setCurrentRow(membraneIndex);
+    return;
   }
 }
 
@@ -407,4 +412,7 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
   //    ui->lblMembraneLength->setText(QString::number(length, 'g', 13));
   //    ui->lblMembraneLengthUnits->setText(
   //        sbmlDoc.getModelUnits().getLength().symbol);
+  ui->lblCompMesh->setImages(sbmlDoc.getGeometry().getMesh()->getMeshImages(
+      ui->lblCompMesh->size(),
+      static_cast<std::size_t>(currentRow + ui->listCompartments->count())));
 }

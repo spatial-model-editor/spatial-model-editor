@@ -1,12 +1,4 @@
 #include "model_compartments.hpp"
-
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
-
-#include <string>
-
 #include "geometry_sampled_field.hpp"
 #include "id.hpp"
 #include "logger.hpp"
@@ -14,6 +6,12 @@
 #include "model_membranes.hpp"
 #include "model_species.hpp"
 #include "sbml_utils.hpp"
+#include <optional>
+#include <sbml/SBMLTypes.h>
+#include <sbml/extension/SBMLDocumentPlugin.h>
+#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
+#include <sbml/packages/spatial/extension/SpatialExtension.h>
+#include <string>
 
 namespace model {
 
@@ -212,8 +210,8 @@ QString ModelCompartments::setName(const QString &id, const QString &name) {
   return uniqueName;
 }
 
-std::optional<QPointF>
-ModelCompartments::getInteriorPoint(const QString &id) const {
+std::optional<std::vector<QPointF>>
+ModelCompartments::getInteriorPoints(const QString &id) const {
   SPDLOG_INFO("compartmentID: {}", id.toStdString());
   const auto *comp = sbmlModel->getCompartment(id.toStdString());
   const auto *scp = static_cast<const libsbml::SpatialCompartmentPlugin *>(
@@ -232,16 +230,157 @@ ModelCompartments::getInteriorPoint(const QString &id) const {
     SPDLOG_INFO("  - no interior point found");
     return {};
   }
-  const auto *interiorPoint = domain->getInteriorPoint(0);
-  QPointF point(interiorPoint->getCoord1(), interiorPoint->getCoord2());
-  SPDLOG_INFO("  - interior point ({},{})", point.x(), point.y());
-  return point;
+  std::vector<QPointF> points;
+  for (unsigned i = 0; i < domain->getNumInteriorPoints(); ++i) {
+    const auto *interiorPoint = domain->getInteriorPoint(i);
+    points.emplace_back(interiorPoint->getCoord1(), interiorPoint->getCoord2());
+    SPDLOG_INFO("  - interior point ({},{})", points.back().x(),
+                points.back().y());
+  }
+  return points;
 }
 
-void ModelCompartments::setInteriorPoint(const QString &id,
-                                         const QPointF &point) {
+static QImage makeMonoMask(const QImage &img, QRgb col) {
+  QImage mask{img.size(), QImage::Format_Mono};
+  mask.fill(0);
+  for (int x = 0; x < img.width(); ++x) {
+    for (int y = 0; y < img.height(); ++y) {
+      if (img.pixel(x, y) == col) {
+        mask.setPixel(x, y, 1);
+      }
+    }
+  }
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+  mask.save(QString("CompartmentMask-%1.png").arg(col));
+#endif
+  return mask;
+}
+
+static std::optional<QPoint> findPixel(const QImage &img) {
+  for (int x = 0; x < img.width(); ++x) {
+    for (int y = 0; y < img.height(); ++y) {
+      if (img.pixelIndex(x, y) == 1) {
+        return QPoint{x, y};
+      }
+    }
+  }
+  return {};
+}
+
+static QImage findConnectedPixels(const QImage &img, const QPoint &pixel,
+                                  std::vector<QPoint> &pixels) {
+  QImage connectedImg{img.size(), QImage::Format_Mono};
+  connectedImg.fill(0);
+  connectedImg.setPixel(pixel, 1);
+  pixels.clear();
+  pixels.emplace_back(pixel);
+  std::size_t queueIndex{0};
+  while (queueIndex < pixels.size()) {
+    const auto &p = pixels[queueIndex];
+    for (const auto &dp :
+         {QPoint(1, 0), QPoint(-1, 0), QPoint(0, 1), QPoint(0, -1)}) {
+      auto np = p + dp;
+      if (img.valid(np) && img.pixelIndex(np) == 1 &&
+          connectedImg.pixelIndex(np) == 0) {
+        connectedImg.setPixel(np, 1);
+        pixels.push_back(np);
+      }
+    }
+    ++queueIndex;
+  }
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+  connectedImg.save(QString("CompartmentConnectedTo-%1-%2.png")
+                        .arg(pixel.x())
+                        .arg(pixel.y()));
+#endif
+  return connectedImg;
+}
+
+static bool isOutsideBoundary(const QImage &img, const QPoint &pixel) {
+  return !img.valid(pixel) || (img.pixelIndex(pixel) == 0);
+}
+
+static int spiralPixelsToBoundary(const QImage &img, const QPoint &pixel) {
+  int count{0};
+  if (isOutsideBoundary(img, pixel)) {
+    return 0;
+  }
+  QPoint p{pixel};
+  int maxLen{std::max(img.width(), img.height())};
+  int direction{1};
+  for (int len = 1; len < maxLen; ++len) {
+    for (int i = 0; i < len; ++i) {
+      p.ry() += direction;
+      ++count;
+      if (isOutsideBoundary(img, p)) {
+        return count;
+      }
+    }
+    for (int i = 0; i < len; ++i) {
+      p.rx() += direction;
+      ++count;
+      if (isOutsideBoundary(img, p)) {
+        return count;
+      }
+    }
+    direction *= -1;
+  }
+  return count;
+}
+
+static QPointF findBestInteriorPoint(const QImage &img,
+                                     const std::vector<QPoint> &pixels) {
+  int maxSpiralDistance{0};
+  QPoint bestPoint;
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+  QImage heatmap(img.size(), QImage::Format_ARGB32);
+  heatmap.fill(0);
+#endif
+  for (const auto &pixel : pixels) {
+    auto c = spiralPixelsToBoundary(img, pixel);
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+    int green = (2 * 255 * c) / static_cast<int>(pixels.size());
+    green = green > 255 ? 255 : green;
+    heatmap.setPixel(pixel, qRgb(0, green, 0));
+#endif
+    if (c > maxSpiralDistance) {
+      maxSpiralDistance = c;
+      bestPoint = pixel;
+    }
+  }
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+  heatmap.setPixel(bestPoint, qRgb(255, 0, 0));
+  heatmap.save(QString("CompartmentInteriorPoints-%1-%2.png")
+                   .arg(bestPoint.x())
+                   .arg(bestPoint.y()));
+#endif
+  return {static_cast<double>(bestPoint.x() + 0.5),
+          static_cast<double>(bestPoint.y() + 0.5)};
+}
+
+static std::vector<QPointF> findAllInteriorPoints(const QImage &img, QRgb col) {
+  std::vector<QPointF> interiorPoints;
+  std::vector<QPoint> pixels;
+  pixels.reserve(static_cast<std::size_t>(img.width() * img.height()));
+  auto mask = makeMonoMask(img, col);
+  auto pix = findPixel(mask);
+  while (pix.has_value()) {
+    // find all connnected pixels of same colour
+    auto connectedImg = findConnectedPixels(mask, pix.value(), pixels);
+    // find an interior point that is maximally distant from boundary
+    interiorPoints.push_back(findBestInteriorPoint(connectedImg, pixels));
+    // remove these connected pixels from image mask
+    for (const auto &p : pixels) {
+      mask.setPixel(p, 0);
+    }
+    pix = findPixel(mask);
+  }
+  return interiorPoints;
+}
+
+void ModelCompartments::setInteriorPoints(const QString &id,
+                                          const std::vector<QPointF> &points) {
   SPDLOG_INFO("compartmentID: {}", id.toStdString());
-  SPDLOG_INFO("  - setting interior pixel point ({},{})", point.x(), point.y());
   auto *comp = sbmlModel->getCompartment(id.toStdString());
   auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
       comp->getPlugin("spatial"));
@@ -250,19 +389,25 @@ void ModelCompartments::setInteriorPoint(const QString &id,
   auto *geom = getOrCreateGeometry(sbmlModel);
   auto *domain = geom->getDomainByDomainType(domainType);
   SPDLOG_INFO("  - domain: {}", domain->getId());
-  auto *interiorPoint = domain->getInteriorPoint(0);
-  if (interiorPoint == nullptr) {
-    SPDLOG_INFO("  - creating new interior point");
-    interiorPoint = domain->createInteriorPoint();
+  while (domain->getNumInteriorPoints() > 0) {
+    std::unique_ptr<libsbml::InteriorPoint> ip{domain->removeInteriorPoint(0)};
+    SPDLOG_INFO("  - removing interior point ({},{})", ip->getCoord1(),
+                ip->getCoord2());
   }
-  // convert from QPoint with (0,0) in top-left to (0,0) in bottom-left
-  // and to physical units with pixelWidth and origin
-  const auto &origin = modelGeometry->getPhysicalOrigin();
-  auto pixelWidth = modelGeometry->getPixelWidth();
-  interiorPoint->setCoord1(origin.x() + pixelWidth * point.x());
-  interiorPoint->setCoord2(
-      origin.y() +
-      pixelWidth * (modelGeometry->getImage().height() - 1 - point.y()));
+  const auto &origin{modelGeometry->getPhysicalOrigin()};
+  auto pixelWidth{modelGeometry->getPixelWidth()};
+  auto height{modelGeometry->getImage().height()};
+  for (const auto &point : points) {
+    SPDLOG_INFO("  - creating new interior point");
+    SPDLOG_INFO("    - pixel point: ({},{})", point.x(), point.y());
+    auto *ip = domain->createInteriorPoint();
+    // convert from QPoint with (0,0) in top-left to (0,0) in bottom-left
+    // and to physical units with pixelWidth and origin
+    ip->setCoord1(origin.x() + pixelWidth * point.x());
+    ip->setCoord2(origin.y() + pixelWidth * (height - 1 - point.y()));
+    SPDLOG_INFO("    - physical point: ({},{})", ip->getCoord1(),
+                ip->getCoord2());
+  }
   modelGeometry->checkIfGeometryIsValid();
 }
 
@@ -307,6 +452,9 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   modelSpecies->updateCompartmentGeometry(id);
   modelMembranes->updateCompartments(compartments);
   modelMembranes->updateCompartmentNames(names, sbmlModel);
+  auto interiorPoints =
+      findAllInteriorPoints(modelGeometry->getImage(), colour);
+  setInteriorPoints(id, interiorPoints);
   modelGeometry->checkIfGeometryIsValid();
 
   // todo: update reactions?

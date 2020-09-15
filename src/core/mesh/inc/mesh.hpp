@@ -41,7 +41,7 @@ private:
   QImage img;
   QPointF origin;
   double pixel{};
-  std::vector<QPointF> compartmentInteriorPoints;
+  std::vector<std::vector<QPointF>> compartmentInteriorPoints;
   std::vector<std::size_t> boundaryMaxPoints;
   std::vector<std::size_t> compartmentMaxTriangleArea;
   // generated data
@@ -61,7 +61,7 @@ public:
   Mesh();
   // constructor to generate mesh from supplied image
   explicit Mesh(const QImage &image,
-                const std::vector<QPointF> &interiorPoints = {},
+                const std::vector<std::vector<QPointF>> &interiorPoints = {},
                 std::vector<std::size_t> maxPoints = {},
                 std::vector<std::size_t> maxTriangleArea = {},
                 const std::vector<std::pair<std::string, ColourPair>>
@@ -73,7 +73,7 @@ public:
   // constructor to load existing vertices&trianges without original image
   Mesh(const std::vector<double> &inputVertices,
        const std::vector<std::vector<int>> &inputTriangleIndices,
-       const std::vector<QPointF> &interiorPoints);
+       const std::vector<std::vector<QPointF>> &interiorPoints);
   ~Mesh();
   // if mesh not constructed from image, but supplied as vertices&trianges,
   // we cannot alter boundary or triangle area easily, so treat as read-only

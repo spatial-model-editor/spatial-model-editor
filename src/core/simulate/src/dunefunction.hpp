@@ -22,29 +22,35 @@ template <typename F, int n> class FieldVector;
 namespace simulate {
 
 static inline double
+getConcIfValidIndex(int x, int y, int w, int h,
+                    const std::vector<double> &concentration) {
+  if (x >= 0 && x < w && y >= 0 && y < h) {
+    return concentration[static_cast<std::size_t>(x + w * y)];
+  }
+  return -99.9;
+}
+
+static inline double
 getNearestValidPixelConcentration(int ix, int iy, int w, int h,
                                   const std::vector<double> &concentration) {
-  std::vector<QPoint> queue;
-  queue.reserve(8);
-  queue.emplace_back(ix, iy);
-  std::size_t queueIndex{0};
-  std::size_t maxAttempts{10 * concentration.size()};
-  for (std::size_t i = 0; i < maxAttempts; ++i) {
-    const auto &p = queue[queueIndex];
-    for (const auto &dp :
-         {QPoint(1, 0), QPoint(-1, 0), QPoint(0, 1), QPoint(0, -1)}) {
-      auto np = p + dp;
-      SPDLOG_TRACE("  - ({},{})", np.x(), np.y());
-      np.rx() = std::clamp(np.x(), 0, w - 1);
-      np.ry() = std::clamp(np.y(), 0, h - 1);
-      std::size_t index{static_cast<std::size_t>(np.x() + w * np.y())};
-      if (double conc = concentration[index]; conc >= 0.0) {
-        return conc;
-      } else {
-        queue.push_back(np);
+  int x{ix};
+  int y{iy};
+  int maxLen{std::max(w, h)};
+  int direction{1};
+  for (int len = 1; len < maxLen; ++len) {
+    for (int i = 0; i < len; ++i) {
+      y += direction;
+      if (auto c = getConcIfValidIndex(x, y, w, h, concentration); c >= 0.0) {
+        return c;
       }
     }
-    ++queueIndex;
+    for (int i = 0; i < len; ++i) {
+      x += direction;
+      if (auto c = getConcIfValidIndex(x, y, w, h, concentration); c >= 0.0) {
+        return c;
+      }
+    }
+    direction *= -1;
   }
   SPDLOG_WARN("Failed to find valid nearby pixel to ({},{})", ix, iy);
   return 0.0;

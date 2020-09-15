@@ -7,6 +7,7 @@
         <file>models/circadian-clock.xml</file>
         <file>models/gray-scott.xml</file>
         <file>models/liver-simplified.xml</file>
+        <file>models/liver-cells.xml</file>
         <file>models/single-compartment-diffusion.xml</file>
         <file>models/small-single-compartment-diffusion.xml</file>
         <file>models/very-simple-model.xml</file>
@@ -16,6 +17,7 @@
         <file>geometry/single-pixels-3x1.png</file>
         <file>geometry/two-blobs-100x100.png</file>
         <file>geometry/four-compartments-150x100.png</file>
+        <file>geometry/liver-cells-200x100.png</file>
         <file>concentration/one-blob-100x100.png</file>
         <file>concentration/two-blobs-100x100.png</file>
         <file>concentration/three-blobs-100x100.png</file>

@@ -168,6 +168,7 @@
      <addaction name="actionbrusselator_model"/>
      <addaction name="actioncircadian_clock"/>
      <addaction name="actionliver_simplified"/>
+     <addaction name="action_liver_cells"/>
      <addaction name="action_gray_scott"/>
      <addaction name="action_single_compartment_diffusion"/>
     </widget>
@@ -201,6 +202,7 @@
      <addaction name="action_filled_donut_100x100_bmp"/>
      <addaction name="action_concave_cell_nucleus_100x100"/>
      <addaction name="action_liver_300x100"/>
+     <addaction name="action_liver_cells_200x100"/>
      <addaction name="action_single_pixels_3x1"/>
      <addaction name="action_four_compartments_150x100"/>
     </widget>
@@ -429,6 +431,16 @@
   <action name="actionSet_spatial_coordinates">
    <property name="text">
     <string>Set &amp;spatial coordinates</string>
+   </property>
+  </action>
+  <action name="action_liver_cells_200x100">
+   <property name="text">
+    <string>&amp;liver-cells-200x100</string>
+   </property>
+  </action>
+  <action name="action_liver_cells">
+   <property name="text">
+    <string>&amp;liver-cells</string>
    </property>
   </action>
   <actiongroup name="actionGroupSimType">

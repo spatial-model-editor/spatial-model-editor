@@ -57,29 +57,31 @@ getOrCreateParametricObject(libsbml::Model *model,
   return paraObj;
 }
 
-std::vector<QPointF>
+std::vector<std::vector<QPointF>>
 getInteriorPixelPoints(const ModelGeometry *modelGeometry,
                        const ModelCompartments *modelCompartments) {
   // get interiorPoints in terms of physical location
   // & convert them to integer pixel points
   // if any interior points are missing: return an empty vector
-  std::vector<QPointF> interiorPoints;
+  std::vector<std::vector<QPointF>> interiorPoints;
   for (const auto &compartmentId : modelCompartments->getIds()) {
-    SPDLOG_DEBUG("Found interior point:");
-    auto interiorFloatPhysical =
-        modelCompartments->getInteriorPoint(compartmentId);
-    if (!interiorFloatPhysical) {
+    auto interiorFloatsPhysical =
+        modelCompartments->getInteriorPoints(compartmentId);
+    if (!interiorFloatsPhysical) {
       return {};
     }
-    SPDLOG_DEBUG("  - physical location: ({},{})",
-                 interiorFloatPhysical.value().x(),
-                 interiorFloatPhysical.value().y());
-    QPointF interiorFloatPixel =
-        (interiorFloatPhysical.value() - modelGeometry->getPhysicalOrigin()) /
-        modelGeometry->getPixelWidth();
-    SPDLOG_DEBUG("  - pixel location: ({},{})", interiorFloatPixel.x(),
-                 interiorFloatPixel.y());
-    interiorPoints.push_back(interiorFloatPixel);
+    SPDLOG_DEBUG("Found interior point:");
+    auto &compartmentPoints = interiorPoints.emplace_back();
+    for (const auto &floatPhysical : interiorFloatsPhysical.value()) {
+      SPDLOG_DEBUG("  - physical location: ({},{})", floatPhysical.x(),
+                   floatPhysical.y());
+      QPointF interiorFloatPixel =
+          (floatPhysical - modelGeometry->getPhysicalOrigin()) /
+          modelGeometry->getPixelWidth();
+      SPDLOG_DEBUG("  - pixel location: ({},{})", interiorFloatPixel.x(),
+                   interiorFloatPixel.y());
+      compartmentPoints.push_back(interiorFloatPixel);
+    }
   }
   return interiorPoints;
 }
