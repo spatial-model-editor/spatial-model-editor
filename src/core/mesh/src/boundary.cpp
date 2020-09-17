@@ -129,10 +129,13 @@ void Boundary::setMembraneWidth(double newMembraneWidth) {
 
 const std::string &Boundary::getMembraneId() const { return membraneID; }
 
+std::size_t Boundary::getMembraneIndex() const { return membraneIndex; }
+
 Boundary::Boundary(const std::vector<QPoint> &boundaryPoints, bool isClosedLoop,
-                   bool isMembraneCompartment, std::string membraneName)
+                   bool isMembraneCompartment, std::string membraneName,
+                   std::size_t membraneIndex)
     : loop{isClosedLoop}, membrane{isMembraneCompartment},
-      membraneID(std::move(membraneName)),
+      membraneID(std::move(membraneName)), membraneIndex{membraneIndex},
       lineSimplifier(boundaryPoints, isClosedLoop) {
   valid = lineSimplifier.isValid();
   if (!valid) {

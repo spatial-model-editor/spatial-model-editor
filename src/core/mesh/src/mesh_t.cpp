@@ -17,8 +17,8 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     imgBoundary.emplace_back(img.width() - 1, img.height() - 1);
     imgBoundary.emplace_back(img.width() - 1, 0);
 
-    mesh::Mesh mesh(img, {QPointF(8, 8)}, {}, {999}, {}, {}, 1.0, QPointF(0, 0),
-                    std::vector<QRgb>{col});
+    mesh::Mesh mesh(img, {{QPointF(8, 8)}}, {}, {999}, {}, {}, 1.0,
+                    QPointF(0, 0), std::vector<QRgb>{col});
 
     // check boundaries
     REQUIRE(mesh.getNumBoundaries() == 1);
@@ -144,8 +144,8 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     // flip y-axis to match (0,0) == bottom-left of meshing output
     img = img.mirrored(false, true);
 
-    mesh::Mesh mesh(img, {QPointF(6, 6)}, {}, {999}, {}, {}, 1.0, QPointF(0, 0),
-                    std::vector<QRgb>{bgcol, col});
+    mesh::Mesh mesh(img, {{QPointF(6, 6)}}, {}, {999}, {}, {}, 1.0,
+                    QPointF(0, 0), std::vector<QRgb>{bgcol, col});
 
     // check boundaries image
     auto [boundaryImage, maskImage] =

@@ -74,23 +74,29 @@ static void setRegionList(triangle::triangulateio &in,
   // 0 is then used for triangles that are not part of a compartment
   free(in.regionlist);
   in.regionlist = nullptr;
-  if (!compartments.empty()) {
-    in.regionlist =
-        static_cast<double *>(malloc(4 * compartments.size() * sizeof(double)));
-    in.numberofregions = static_cast<int>(compartments.size());
-    double *r = in.regionlist;
-    int i = 1;
-    for (const auto &compartment : compartments) {
-      *r = static_cast<double>(compartment.interiorPoint.x());
+  if (compartments.empty()) {
+    return;
+  }
+  std::size_t nRegions{0};
+  for (const auto &compartment : compartments) {
+    nRegions += compartment.interiorPoints.size();
+  }
+  in.regionlist = static_cast<double *>(malloc(4 * nRegions * sizeof(double)));
+  in.numberofregions = static_cast<int>(nRegions);
+  double *r = in.regionlist;
+  int i = 1;
+  for (const auto &compartment : compartments) {
+    for (const auto &point : compartment.interiorPoints) {
+      *r = static_cast<double>(point.x());
       ++r;
-      *r = static_cast<double>(compartment.interiorPoint.y());
+      *r = static_cast<double>(point.y());
       ++r;
       *r = static_cast<double>(i); // compartment index + 1
       ++r;
       *r = compartment.maxTriangleArea;
       ++r;
-      ++i;
     }
+    ++i;
   }
 }
 
@@ -385,6 +391,13 @@ Triangulate::addMembranes(const TriangulateBoundaries &tb,
   originalPoints.insert(originalPoints.end(), tfp.newFPs.size() - tfp.nFPs, {});
   auto newFPindex = replaceFPs(newTid, tfp);
   replaceFPIndices(newTid, originalPoints, tb, newFPindex);
+  std::size_t numMembranes{0};
+  for (const auto &b : tb.boundaryProperties) {
+    if (b.isMembrane) {
+      numMembranes = std::max(numMembranes, b.membraneIndex + 1);
+    }
+  }
+  rectangleIndices = std::vector<std::vector<RectangleIndex>>(numMembranes);
   // for each membrane segment
   //  - move existing non-FP segments in perpendicular direction to form inner
   //  boundary
@@ -399,7 +412,7 @@ Triangulate::addMembranes(const TriangulateBoundaries &tb,
       SPDLOG_DEBUG(
           "  - adding outer membrane around {}-point boundary[{}], width {}",
           inner.size(), membrane.boundaryIndex, membrane.width);
-      auto &rect = rectangleIndices.emplace_back();
+      auto &rect = rectangleIndices[b.membraneIndex];
       // move first inner point and add first outer point
       if (membrane.isLoop) {
         auto n =
@@ -484,6 +497,11 @@ getTriangleIndicesFromTriangulateio(const triangle::triangulateio &io) {
     auto t2 = static_cast<std::size_t>(io.trianglelist[i * 3 + 2]);
     auto compIndex = static_cast<std::size_t>(io.triangleattributelist[i]) - 1;
     triangleIndices[compIndex].push_back({{t0, t1, t2}});
+  }
+  while (triangleIndices.back().empty()) {
+    // numberofregions may be larger than the actual number of compartments
+    // if multiple regions have the same compartment index
+    triangleIndices.pop_back();
   }
   return triangleIndices;
 }

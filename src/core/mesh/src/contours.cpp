@@ -41,6 +41,19 @@ getMembraneName(const cv::Point &p1, const cv::Point &p2, const QImage &img,
   return getMembraneName(col1, col2, membraneColourPairs);
 }
 
+static std::size_t
+getMembraneIndex(const std::string &id,
+                 const std::vector<std::pair<std::string, ColourPair>>
+                     &membraneColourPairs) {
+  for (std::size_t i = 0; i < membraneColourPairs.size(); ++i) {
+    if (id == membraneColourPairs[i].first) {
+      return i;
+    }
+  }
+  SPDLOG_WARN("Membrane '{}' not found", id);
+  return 0;
+}
+
 static std::vector<QPoint>
 toQPointsInvertYAxis(const std::vector<cv::Point> &points, int height) {
   std::vector<QPoint> v;
@@ -146,7 +159,10 @@ static std::vector<Boundary> extractClosedLoopBoundaries(
         }
         auto points = toQPointsInvertYAxis(contour, img.height());
         contour.clear();
-        auto boundary = Boundary(points, isLoop, isMembrane, membraneName);
+        auto membraneIndex =
+            getMembraneIndex(membraneName, membraneColourPairs);
+        auto boundary =
+            Boundary(points, isLoop, isMembrane, membraneName, membraneIndex);
         if (boundary.isValid()) {
           boundaries.push_back(std::move(boundary));
         } else {
@@ -167,6 +183,7 @@ struct ContourLine {
   std::size_t contourIndex;
   std::size_t adjacentContourIndex;
   std::string membraneName;
+  std::size_t membraneIndex;
 };
 } // namespace
 
@@ -264,6 +281,8 @@ static void removeAdjacentMembraneLines(
         line.membraneName =
             getMembraneName(line.points[0], lines[closestLine].points[0], img,
                             membraneColourPairs);
+        line.membraneIndex =
+            getMembraneIndex(line.membraneName, membraneColourPairs);
         SPDLOG_TRACE("  - membrane name '{}'", line.membraneName);
         SPDLOG_TRACE("  -> removing adjacent line {}", closestLine);
         lines.erase(lines.begin() +
@@ -468,8 +487,8 @@ Contours::Contours(
     endLine.boundaryIndex = boundaries.size();
     endLine.startsFromFP = false;
     endLine.isMembrane = !line.membraneName.empty();
-    auto boundary =
-        Boundary(points, false, !line.membraneName.empty(), line.membraneName);
+    auto boundary = Boundary(points, false, !line.membraneName.empty(),
+                             line.membraneName, line.membraneIndex);
     boundary.setFpIndices({startFPIndex, endFPIndex});
     if (boundary.isValid()) {
       boundaries.push_back(std::move(boundary));

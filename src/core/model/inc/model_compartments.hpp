@@ -42,8 +42,9 @@ public:
   bool remove(const QString &id);
   QString getName(const QString &id) const;
   QString setName(const QString &id, const QString &name);
-  std::optional<QPointF> getInteriorPoint(const QString &id) const;
-  void setInteriorPoint(const QString &id, const QPointF &point);
+  std::optional<std::vector<QPointF>>
+  getInteriorPoints(const QString &id) const;
+  void setInteriorPoints(const QString &id, const std::vector<QPointF> &points);
   void setColour(const QString &id, QRgb colour);
   QRgb getColour(const QString &id) const;
   QString getIdFromColour(QRgb colour) const;

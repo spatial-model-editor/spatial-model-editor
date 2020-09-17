@@ -24,6 +24,7 @@ private:
   bool membrane;
   bool valid;
   std::string membraneID;
+  std::size_t membraneIndex;
   LineSimplifier lineSimplifier;
   std::size_t maxPoints{};
   // approx to boundary lines using at most maxPoints
@@ -60,10 +61,12 @@ public:
   double getMembraneWidth() const;
   void setMembraneWidth(double newMembraneWidth);
   const std::string &getMembraneId() const;
+  std::size_t getMembraneIndex() const;
   explicit Boundary(const std::vector<QPoint> &boundaryPoints,
                     bool isClosedLoop = false,
                     bool isMembraneCompartment = false,
-                    std::string membraneName = {});
+                    std::string membraneName = {},
+                    std::size_t membraneIndex = 0);
 };
 
 } // namespace mesh

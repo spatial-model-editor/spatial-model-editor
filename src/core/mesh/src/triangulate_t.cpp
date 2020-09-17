@@ -10,9 +10,9 @@ static double triangleArea(const QPointF &a, const QPointF &b,
                         b.x() * a.y() - c.x() * b.y() - a.x() * c.y());
 }
 
-static double maxTriangleArea(
-    const std::vector<QPointF> &points,
-    const std::vector<mesh::TriangleIndex> &triangles) {
+static double
+maxTriangleArea(const std::vector<QPointF> &points,
+                const std::vector<mesh::TriangleIndex> &triangles) {
   double maxArea = 0;
   for (const auto &t : triangles) {
     double area = triangleArea(points[t[0]], points[t[1]], points[t[2]]);
@@ -28,7 +28,7 @@ SCENARIO("Triangulate",
     tb.boundaryPoints = {{0, 0}, {10, 0}, {10, 10}, {0, 10}};
     tb.boundaries = {{{0, 1}, {1, 2}, {2, 3}, {3, 0}}};
     auto &comp = tb.compartments.emplace_back();
-    comp.interiorPoint = {5.0, 5.0};
+    comp.interiorPoints = {{5.0, 5.0}};
     auto &bp = tb.boundaryProperties.emplace_back();
     bp.isLoop = true;
     bp.isMembrane = false;
@@ -71,14 +71,14 @@ SCENARIO("Triangulate",
                      {{4, 5}, {5, 6}, {6, 7}, {7, 4}}};
     // outer compartment
     auto &compOuter = tb.compartments.emplace_back();
-    compOuter.interiorPoint = {1.0, 1.0};
+    compOuter.interiorPoints = {{1.0, 1.0}};
     auto &bpOuter = tb.boundaryProperties.emplace_back();
     bpOuter.isLoop = true;
     bpOuter.isMembrane = false;
     bpOuter.boundaryIndex = 0;
     // inner compartment
     auto &compInner = tb.compartments.emplace_back();
-    compInner.interiorPoint = {5.0, 5.0};
+    compInner.interiorPoints = {{5.0, 5.0}};
     auto &bpInner = tb.boundaryProperties.emplace_back();
     bpInner.isLoop = true;
     bpInner.isMembrane = true;
@@ -119,7 +119,7 @@ SCENARIO("Triangulate",
     tb.boundaries.push_back({{0, 1}});
     // left compartment
     auto &compLeft = tb.compartments.emplace_back();
-    compLeft.interiorPoint = {5.0, 5.0};
+    compLeft.interiorPoints = {{5.0, 5.0}};
     auto &bpLeft = tb.boundaryProperties.emplace_back();
     bpLeft.isLoop = false;
     bpLeft.isMembrane = false;
@@ -127,7 +127,7 @@ SCENARIO("Triangulate",
     bpLeft.innerFPIndices = {0, 1};
     // right compartment
     auto &compRight = tb.compartments.emplace_back();
-    compRight.interiorPoint = {15.0, 5.0};
+    compRight.interiorPoints = {{15.0, 5.0}};
     auto &bpRight = tb.boundaryProperties.emplace_back();
     bpRight.isLoop = false;
     bpRight.isMembrane = false;

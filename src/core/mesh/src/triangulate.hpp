@@ -1,7 +1,7 @@
 // Wrapper around Triangle meshing library
 //   - https://www.cs.cmu.edu/~quake/triangle.html
 //   - takes a set of boundary points & segments connecting them
-//   - also an interior point for each compartment
+//   - also a set of interior points for each compartment
 //   - generates mesh with triangles labelled according to compartment
 //   - replaces triangles not assigned a compartment with holes and re-meshes
 //   - provides resulting vertices & triangles
@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <string>
 #include <vector>
 
 namespace mesh {
@@ -26,7 +27,7 @@ using TriangleIndex = std::array<std::size_t, 3>;
 using RectangleIndex = std::array<std::size_t, 4>;
 
 struct Compartment {
-  QPointF interiorPoint;
+  std::vector<QPointF> interiorPoints;
   double maxTriangleArea;
 };
 
@@ -35,6 +36,7 @@ struct BoundaryProperties {
   double width;
   bool isLoop;
   bool isMembrane;
+  std::size_t membraneIndex;
   std::array<std::size_t, 2> innerFPIndices;
   std::array<std::size_t, 2> outerFPIndices;
 };
