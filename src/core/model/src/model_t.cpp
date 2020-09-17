@@ -28,6 +28,7 @@ static void createSBMLlvl2doc(const std::string &filename) {
     auto *comp = model->createCompartment();
     comp->setId("compartment" + toString(i));
     comp->setSize(1e-10 * i);
+    comp->setSpatialDimensions(static_cast<unsigned int>(3));
   }
   // create 2 species inside first compartment with initialConcentration set
   for (int i = 0; i < 2; ++i) {
@@ -74,7 +75,9 @@ SCENARIO("SBML: import SBML doc without geometry",
     REQUIRE(model != nullptr);
     REQUIRE(model->getLevel() == 3);
     REQUIRE(model->getVersion() == 2);
-
+    for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
+      REQUIRE(model->getCompartment(i)->getSpatialDimensions() == 2);
+    }
     REQUIRE(doc->isPackageEnabled("spatial") == true);
     auto *plugin = dynamic_cast<libsbml::SpatialModelPlugin *>(
         model->getPlugin("spatial"));

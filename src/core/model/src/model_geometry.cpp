@@ -68,6 +68,10 @@ void ModelGeometry::writeDefaultGeometryToSBML() {
   for (int i = 0; i < numDimensions; ++i) {
     geom->createCoordinateComponent();
   }
+  for (unsigned i = 0; i < sbmlModel->getNumCompartments(); ++i) {
+    auto *comp = sbmlModel->getCompartment(i);
+    comp->setSpatialDimensions(static_cast<unsigned int>(numDimensions));
+  }
 
   // set-up xy coordinates
   auto *coordX = geom->getCoordinateComponent(0);
