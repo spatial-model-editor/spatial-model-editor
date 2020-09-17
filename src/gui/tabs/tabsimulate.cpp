@@ -1,12 +1,6 @@
 #include "tabsimulate.hpp"
-
-#include <qcustomplot.h>
-
-#include <QElapsedTimer>
-#include <QMessageBox>
-#include <algorithm>
-
 #include "dialogdisplayoptions.hpp"
+#include "dialogimagesave.hpp"
 #include "dialogimageslice.hpp"
 #include "guiutils.hpp"
 #include "logger.hpp"
@@ -14,6 +8,10 @@
 #include "model.hpp"
 #include "qlabelmousetracker.hpp"
 #include "ui_tabsimulate.h"
+#include <QElapsedTimer>
+#include <QMessageBox>
+#include <algorithm>
+#include <qcustomplot.h>
 
 TabSimulate::TabSimulate(model::Model &doc, QLabelMouseTracker *mouseTracker,
                          QWidget *parent)
@@ -276,15 +274,10 @@ void TabSimulate::btnSliceImage_clicked() {
 }
 
 void TabSimulate::btnSaveImage_clicked() {
-  QString filename = QFileDialog::getSaveFileName(
-      this, "Save concentration image", "", "PNG (*.png)");
-  if (filename.isEmpty()) {
-    return;
+  DialogImageSave dialog(images, time, ui->hslideTime->value());
+  if (dialog.exec() == QDialog::Accepted) {
+    SPDLOG_DEBUG("todo: save current save image settings");
   }
-  if (filename.right(4) != ".png") {
-    filename.append(".png");
-  }
-  lblGeometry->getImage().save(filename);
 }
 
 void TabSimulate::updateSpeciesToDraw() {

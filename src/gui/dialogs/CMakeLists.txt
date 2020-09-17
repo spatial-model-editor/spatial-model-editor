@@ -6,6 +6,7 @@ target_sources(
           dialogcoordinates.cpp
           dialogdisplayoptions.cpp
           dialogeditunit.cpp
+          dialogimagesave.cpp
           dialogimagesize.cpp
           dialogimageslice.cpp
           dialogsimulationoptions.cpp
@@ -20,6 +21,7 @@ target_sources(
          dialogcoordinates_t.cpp
          dialogdisplayoptions_t.cpp
          dialogeditunit_t.cpp
+         dialogimagesave_t.cpp
          dialogimagesize_t.cpp
          dialogimageslice_t.cpp
          dialogsimulationoptions_t.cpp

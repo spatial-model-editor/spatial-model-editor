@@ -87,14 +87,5 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   mwt.addUserAction({"Esc"});
   mwt.start();
   sendMouseClick(btnSaveImage);
-  REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
-
-  // click save image & save x1.png
-  mwt.addUserAction({"x", "1"});
-  mwt.start();
-  sendMouseClick(btnSaveImage);
-  REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
-  QImage img("x1.png");
-  REQUIRE(img.width() == 100);
-  REQUIRE(img.height() == 100);
+  REQUIRE(mwt.getResult() == "Save Simulation Images");
 }
