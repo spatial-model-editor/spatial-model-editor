@@ -66,13 +66,19 @@ void TabFunctions::listFunctions_currentRowChanged(int row) {
   ui->txtFunctionName->setText(funcs.getName(id));
   auto args = funcs.getArguments(id);
   ui->txtFunctionDef->setVariables(utils::toStdString(args));
+  // add model functions
+  for (const auto &functionId : model.getFunctions().getIds()) {
+    ui->txtFunctionDef->addFunction(
+        functionId.toStdString(),
+        model.getFunctions().getName(functionId).toStdString());
+  }
   ui->listFunctionParams->addItems(args);
   if (!args.isEmpty()) {
     ui->listFunctionParams->setCurrentRow(0);
   } else {
     ui->btnRemoveFunctionParam->setEnabled(false);
   }
-  ui->txtFunctionDef->setPlainText(funcs.getExpression(id));
+  ui->txtFunctionDef->importVariableMath(funcs.getExpression(id).toStdString());
   ui->btnAddFunctionParam->setEnabled(true);
   ui->btnRemoveFunctionParam->setEnabled(!args.isEmpty());
   ui->btnRemoveFunction->setEnabled(true);
@@ -168,5 +174,6 @@ void TabFunctions::txtFunctionDef_mathChanged(const QString &math, bool valid,
   }
   SPDLOG_INFO("new math: {}", math.toStdString());
   ui->lblFunctionDefStatus->setText("");
-  model.getFunctions().setExpression(currentFunctionId, math);
+  model.getFunctions().setExpression(
+      currentFunctionId, ui->txtFunctionDef->getVariableMath().c_str());
 }
