@@ -29,6 +29,7 @@ private:
   void listFunctions_currentRowChanged(int row);
   void btnAddFunction_clicked();
   void btnRemoveFunction_clicked();
+  void txtFunctionName_editingFinished();
   void listFunctionParams_currentRowChanged(int row);
   void btnAddFunctionParam_clicked();
   void btnRemoveFunctionParam_clicked();

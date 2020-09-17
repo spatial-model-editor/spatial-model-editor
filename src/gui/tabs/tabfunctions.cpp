@@ -18,6 +18,8 @@ TabFunctions::TabFunctions(model::Model &m, QWidget *parent)
           &TabFunctions::btnAddFunction_clicked);
   connect(ui->btnRemoveFunction, &QPushButton::clicked, this,
           &TabFunctions::btnRemoveFunction_clicked);
+  connect(ui->txtFunctionName, &QLineEdit::editingFinished, this,
+          &TabFunctions::txtFunctionName_editingFinished);
   connect(ui->listFunctionParams, &QListWidget::currentRowChanged, this,
           &TabFunctions::listFunctionParams_currentRowChanged);
   connect(ui->btnAddFunctionParam, &QPushButton::clicked, this,
@@ -103,6 +105,16 @@ void TabFunctions::btnRemoveFunction_clicked() {
     }
   });
   msgbox->open();
+}
+
+void TabFunctions::txtFunctionName_editingFinished() {
+  const QString &name = ui->txtFunctionName->text();
+  if (name == model.getSpecies().getName(currentFunctionId)) {
+    return;
+  }
+  auto newName = model.getFunctions().setName(currentFunctionId, name);
+  ui->txtFunctionName->setText(newName);
+  loadModelData(newName);
 }
 
 void TabFunctions::listFunctionParams_currentRowChanged(int row) {

@@ -192,6 +192,12 @@ TEST_CASE("Functions Tab", "[gui/tabs/functions][gui/tabs][gui][functions]") {
     REQUIRE(model.getFunctions().getIds().size() == 1);
     REQUIRE(model.getFunctions().getIds()[0] == "func_1");
 
+    // change function name
+    sendKeyEvents(txtFunctionName, {"X", " ", "a", "Enter"});
+    REQUIRE(model.getFunctions().getNames().size() == 1);
+    REQUIRE(model.getFunctions().getNames()[0] == "func 1X a");
+    REQUIRE(txtFunctionName->text() == "func 1X a");
+
     // click remove function, and confirm
     sendMouseClick(btnRemoveFunction);
     sendKeyEventsToNextQDialog({"Enter"});
