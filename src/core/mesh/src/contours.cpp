@@ -41,7 +41,7 @@ getMembraneName(const cv::Point &p1, const cv::Point &p2, const QImage &img,
   return getMembraneName(col1, col2, membraneColourPairs);
 }
 
-static std::size_t
+static std::optional<std::size_t>
 getMembraneIndex(const std::string &id,
                  const std::vector<std::pair<std::string, ColourPair>>
                      &membraneColourPairs) {
@@ -51,7 +51,7 @@ getMembraneIndex(const std::string &id,
     }
   }
   SPDLOG_WARN("Membrane '{}' not found", id);
-  return 0;
+  return {};
 }
 
 static std::vector<QPoint>
@@ -160,7 +160,7 @@ static std::vector<Boundary> extractClosedLoopBoundaries(
         auto points = toQPointsInvertYAxis(contour, img.height());
         contour.clear();
         auto membraneIndex =
-            getMembraneIndex(membraneName, membraneColourPairs);
+            getMembraneIndex(membraneName, membraneColourPairs).value_or(0);
         auto boundary =
             Boundary(points, isLoop, isMembrane, membraneName, membraneIndex);
         if (boundary.isValid()) {
@@ -282,7 +282,8 @@ static void removeAdjacentMembraneLines(
             getMembraneName(line.points[0], lines[closestLine].points[0], img,
                             membraneColourPairs);
         line.membraneIndex =
-            getMembraneIndex(line.membraneName, membraneColourPairs);
+            getMembraneIndex(line.membraneName, membraneColourPairs)
+                .value_or(0);
         SPDLOG_TRACE("  - membrane name '{}'", line.membraneName);
         SPDLOG_TRACE("  -> removing adjacent line {}", closestLine);
         lines.erase(lines.begin() +

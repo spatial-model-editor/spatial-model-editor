@@ -17,6 +17,7 @@
 #include <opencv2/core/mat.hpp>
 #include <opencv2/core/mat.inl.hpp>
 #include <opencv2/core/types.hpp>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
