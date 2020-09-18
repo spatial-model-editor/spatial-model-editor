@@ -93,7 +93,9 @@ Simulation::Simulation(const model::Model &sbmlDoc, SimulatorType simType,
     simulator = std::make_unique<PixelSim>(
         sbmlDoc, compartmentIds, compartmentSpeciesIds, options.pixel);
   }
-  updateConcentrations(0);
+  if (simulator->errorMessage().empty()) {
+    updateConcentrations(0);
+  }
 }
 
 Simulation::~Simulation() = default;
@@ -105,7 +107,7 @@ std::size_t Simulation::doTimestep(double time) {
   return steps;
 }
 
-const std::string& Simulation::errorMessage() const {
+const std::string &Simulation::errorMessage() const {
   return simulator->errorMessage();
 }
 

@@ -212,70 +212,78 @@ PixelSim::PixelSim(
     const PixelOptions &options)
     : doc{sbmlDoc}, integrator{options.integrator}, errMax{options.maxErr},
       maxTimestep{options.maxTimestep}, numMaxThreads{options.maxThreads} {
-  // add compartments
-  for (std::size_t compIndex = 0; compIndex < compartmentIds.size();
-       ++compIndex) {
-    const auto &speciesIds{compartmentSpeciesIds[compIndex]};
-    const auto *compartment{doc.getCompartments().getCompartment(
-        compartmentIds[compIndex].c_str())};
-    simCompartments.push_back(std::make_unique<SimCompartment>(
-        doc, compartment, speciesIds, options.doCSE, options.optLevel));
-    maxStableTimestep = std::min(
-        maxStableTimestep, simCompartments.back()->getMaxStableTimestep());
-  }
-  // add membranes
-  for (const auto &membrane : doc.getMembranes().getMembranes()) {
-    if (auto reacsInMembrane =
-            doc.getReactions().getIds(membrane.getId().c_str());
-        !reacsInMembrane.isEmpty()) {
-      // look for the two membrane compartments in simCompartments
-      std::string compIdA = membrane.getCompartmentA()->getId();
-      std::string compIdB = membrane.getCompartmentB()->getId();
-      auto iterA = std::find_if(simCompartments.begin(), simCompartments.end(),
-                                [&compIdA](const auto &c) {
-                                  return c->getCompartmentId() == compIdA;
-                                });
-      auto iterB = std::find_if(simCompartments.begin(), simCompartments.end(),
-                                [&compIdB](const auto &c) {
-                                  return c->getCompartmentId() == compIdB;
-                                });
-      SimCompartment *compA{nullptr};
-      if (iterA != simCompartments.cend()) {
-        compA = iterA->get();
-      }
-      SimCompartment *compB{nullptr};
-      if (iterB != simCompartments.cend()) {
-        compB = iterB->get();
-      }
-      simMembranes.push_back(std::make_unique<SimMembrane>(
-          doc, &membrane, compA, compB, options.doCSE, options.optLevel));
+  try {
+    // add compartments
+    for (std::size_t compIndex = 0; compIndex < compartmentIds.size();
+         ++compIndex) {
+      const auto &speciesIds{compartmentSpeciesIds[compIndex]};
+      const auto *compartment{doc.getCompartments().getCompartment(
+          compartmentIds[compIndex].c_str())};
+      simCompartments.push_back(std::make_unique<SimCompartment>(
+          doc, compartment, speciesIds, options.doCSE, options.optLevel));
+      maxStableTimestep = std::min(
+          maxStableTimestep, simCompartments.back()->getMaxStableTimestep());
     }
-  }
+    // add membranes
+    for (const auto &membrane : doc.getMembranes().getMembranes()) {
+      if (auto reacsInMembrane =
+              doc.getReactions().getIds(membrane.getId().c_str());
+          !reacsInMembrane.isEmpty()) {
+        // look for the two membrane compartments in simCompartments
+        std::string compIdA = membrane.getCompartmentA()->getId();
+        std::string compIdB = membrane.getCompartmentB()->getId();
+        auto iterA =
+            std::find_if(simCompartments.begin(), simCompartments.end(),
+                         [&compIdA](const auto &c) {
+                           return c->getCompartmentId() == compIdA;
+                         });
+        auto iterB =
+            std::find_if(simCompartments.begin(), simCompartments.end(),
+                         [&compIdB](const auto &c) {
+                           return c->getCompartmentId() == compIdB;
+                         });
+        SimCompartment *compA{nullptr};
+        if (iterA != simCompartments.cend()) {
+          compA = iterA->get();
+        }
+        SimCompartment *compB{nullptr};
+        if (iterB != simCompartments.cend()) {
+          compB = iterB->get();
+        }
+        simMembranes.push_back(std::make_unique<SimMembrane>(
+            doc, &membrane, compA, compB, options.doCSE, options.optLevel));
+      }
+    }
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
-  if (options.enableMultiThreading) {
-    useTBB = true;
-  }
-  if (numMaxThreads == 0) {
-    // 0 means use all available threads
-    numMaxThreads = static_cast<std::size_t>(
-        tbb::task_scheduler_init::default_num_threads());
-  }
+    if (options.enableMultiThreading) {
+      useTBB = true;
+    }
+    if (numMaxThreads == 0) {
+      // 0 means use all available threads
+      numMaxThreads = static_cast<std::size_t>(
+          tbb::task_scheduler_init::default_num_threads());
+    }
 #elif defined(SPATIAL_MODEL_EDITOR_WITH_OPENMP)
-  if (!options.enableMultiThreading) {
-    numMaxThreads = 1;
-  }
-  if (auto ompMaxThreads{static_cast<std::size_t>(omp_get_num_procs())};
-      numMaxThreads == 0 || numMaxThreads > ompMaxThreads) {
-    // 0 means use all available threads
-    numMaxThreads = ompMaxThreads;
-  }
-  omp_set_num_threads(static_cast<int>(numMaxThreads));
+    if (!options.enableMultiThreading) {
+      numMaxThreads = 1;
+    }
+    if (auto ompMaxThreads{static_cast<std::size_t>(omp_get_num_procs())};
+        numMaxThreads == 0 || numMaxThreads > ompMaxThreads) {
+      // 0 means use all available threads
+      numMaxThreads = ompMaxThreads;
+    }
+    omp_set_num_threads(static_cast<int>(numMaxThreads));
 #else
-  if (options.enableMultiThreading) {
-    SPDLOG_WARN("Multithreading requested but not compiled with TBB or OpenMP "
-                "support: ignoring");
-  }
+    if (options.enableMultiThreading) {
+      SPDLOG_WARN(
+          "Multithreading requested but not compiled with TBB or OpenMP "
+          "support: ignoring");
+    }
 #endif
+  } catch (const std::runtime_error &e) {
+    SPDLOG_ERROR("runtime_error: {}", e.what());
+    currentErrorMessage = e.what();
+  }
 }
 
 PixelSim::~PixelSim() = default;
