@@ -198,7 +198,6 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     sym.eval(res, {0.1});
     REQUIRE(res[0] == dbl_approx(6.1324));
   }
-
   GIVEN("relabel one expression with two vars") {
     std::string expr = "3*x + 12*sin(y)";
     symbolic::Symbolic sym(expr, {"x", "y"});
@@ -221,6 +220,27 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(sym.simplify() == expr);
     sym.relabel({"a", "b", "c"});
     REQUIRE(sym.simplify() == expr);
+  }
+  GIVEN("unknown function") {
+    std::string expr = "abcd(y)";
+    symbolic::Symbolic sym(expr, {"y"});
+    REQUIRE(!sym.isValid());
+    REQUIRE(sym.getErrorMessage() == "Unknown function: abcd(y)");
+    CAPTURE(expr);
+  }
+  GIVEN("unknown functions") {
+    std::string expr = "abcd(y) + unknown_function(y)";
+    symbolic::Symbolic sym(expr, {"y"});
+    REQUIRE(!sym.isValid());
+    REQUIRE(sym.getErrorMessage() == "Unknown function: abcd(y)");
+    CAPTURE(expr);
+  }
+  GIVEN("functions calling unknown functions") {
+    std::string expr = "pow(2*y + cos(abcd(y)), 2)";
+    symbolic::Symbolic sym(expr, {"y"});
+    REQUIRE(!sym.isValid());
+    REQUIRE(sym.getErrorMessage() == "Unknown function: abcd(y)");
+    CAPTURE(expr);
   }
   GIVEN("divide expression with number") {
     REQUIRE(symbolic::divide("x", "1.3") == "x/1.3");

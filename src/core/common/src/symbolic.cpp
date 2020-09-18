@@ -121,6 +121,13 @@ void Symbolic::SymEngineImpl::init(
       std::locale::global(userLocale);
       return;
     }
+    auto fn = SymEngine::function_symbols(*expr.back());
+    if(!fn.empty()){
+      valid = false;
+      errorMessage = "Unknown function: " + toString(*fn.begin());
+      std::locale::global(userLocale);
+      return;
+    }
   }
   std::locale::global(userLocale);
 }
