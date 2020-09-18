@@ -52,8 +52,7 @@ static QStringList importNamesAndMakeUnique(libsbml::Model *model) {
 ModelFunctions::ModelFunctions() = default;
 
 ModelFunctions::ModelFunctions(libsbml::Model *model)
-    : ids{importIds(model)},
-      names{importNamesAndMakeUnique(model)},
+    : ids{importIds(model)}, names{importNamesAndMakeUnique(model)},
       sbmlModel{model} {}
 
 const QStringList &ModelFunctions::getIds() const { return ids; }
@@ -96,6 +95,7 @@ void ModelFunctions::setExpression(const QString &id,
     lambdaAST->addChild(func->getMath()->getChild(i)->deepCopy());
   }
   std::string expr = expression.toStdString();
+  SPDLOG_INFO("{}", expr);
   auto *bodyAST =
       libsbml::SBML_parseL3FormulaWithModel(expr.c_str(), sbmlModel);
   if (bodyAST == nullptr) {
@@ -132,8 +132,9 @@ static libsbml::ASTNode *newLambdaBvar(const std::string &name) {
   return n;
 }
 
-static std::string makeValidArgumentName(
-    const std::string &name, const libsbml::FunctionDefinition *func) {
+static std::string
+makeValidArgumentName(const std::string &name,
+                      const libsbml::FunctionDefinition *func) {
   std::string s;
   // first char must be a letter or underscore
   if (auto c = name.front();
@@ -224,4 +225,4 @@ void ModelFunctions::remove(const QString &id) {
   names.removeAt(i);
 }
 
-}  // namespace model
+} // namespace model
