@@ -29,7 +29,8 @@ ReacEval::ReacEval(const model::Model &doc,
   // construct reaction expressions and stoich matrix
   PDE pde(&doc, speciesIDs, reactionIDs, {}, reactionScaleFactors);
   // compile all expressions with symengine
-  sym = symbolic::Symbolic(pde.getRHS(), speciesIDs, {}, true, doCSE, optLevel);
+  sym = symbolic::Symbolic(pde.getRHS(), speciesIDs, {}, {}, true, doCSE,
+                           optLevel);
 }
 
 void ReacEval::evaluate(double *output, const double *input) const {

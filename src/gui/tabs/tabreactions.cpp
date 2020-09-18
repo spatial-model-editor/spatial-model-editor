@@ -160,8 +160,7 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
   ui->txtReactionName->setText(model.getReactions().getName(currentReacId));
   ui->cmbReactionLocation->setCurrentIndex(locationIndex);
   // reset variables to only built-in functions
-  ui->txtReactionRate->clearFunctions();
-  ui->txtReactionRate->addDefaultFunctions();
+  ui->txtReactionRate->resetToDefaultFunctions();
   // add model parameters
   for (const auto &[id, name] : model.getParameters().getSymbols()) {
     ui->txtReactionRate->addVariable(id, name);
@@ -173,10 +172,8 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
         model.getReactions().getParameterName(currentReacId, id).toStdString());
   }
   // add model functions
-  for (const auto &functionId : model.getFunctions().getIds()) {
-    ui->txtReactionRate->addFunction(
-        functionId.toStdString(),
-        model.getFunctions().getName(functionId).toStdString());
+  for (const auto &function : model.getFunctions().getSymbolicFunctions()) {
+    ui->txtReactionRate->addFunction(function);
   }
   // species stoich
   for (const auto &compID : compartments) {

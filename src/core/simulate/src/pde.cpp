@@ -57,16 +57,18 @@ PDE::PDE(const model::Model *doc_ptr,
       expr = QString("((%1)/%2) ").arg(expr, scaleFactor);
       SPDLOG_DEBUG("Species {} Reaction {} = {}", speciesIDs.at(i), j,
                    expr.toStdString());
-      // parse and inline constants
+      // parse and inline constants & function calls
       symbolic::Symbolic sym(expr.toStdString(), reactions.getSpeciesIDs(),
-                             reactions.getConstants(j), false);
+                             reactions.getConstants(j),
+                             doc_ptr->getFunctions().getSymbolicFunctions(),
+                             false);
       // add term to rhs
-      r.append(QString(" + (%1)").arg(sym.simplify().c_str()));
+      r.append(QString(" + (%1)").arg(sym.inlinedExpr().c_str()));
     }
     // reparse full rhs to simplify
     SPDLOG_DEBUG("Species {} Reparsing all reaction terms", speciesIDs.at(i));
     // parse expression with symengine to simplify
-    symbolic::Symbolic sym(r.toStdString(), speciesIDs, {}, false);
+    symbolic::Symbolic sym(r.toStdString(), speciesIDs, {}, {}, false);
     // if provided, relabel species with relabelledSpeciesIDs
     const auto *outputSpecies = &speciesIDs;
     if (relabelledSpeciesIDs.size() == speciesIDs.size()) {
@@ -76,7 +78,7 @@ PDE::PDE(const model::Model *doc_ptr,
     for (const auto &s : *outputSpecies) {
       jacobian.back().push_back(sym.diff(s));
     }
-    rhs.push_back(sym.simplify());
+    rhs.push_back(sym.inlinedExpr());
   }
 }
 

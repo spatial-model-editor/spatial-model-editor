@@ -65,12 +65,12 @@ void TabFunctions::listFunctions_currentRowChanged(int row) {
   SPDLOG_DEBUG("Function {} selected", id.toStdString());
   ui->txtFunctionName->setText(funcs.getName(id));
   auto args = funcs.getArguments(id);
+  // reset variables to only built-in functions
+  ui->txtFunctionDef->resetToDefaultFunctions();
   ui->txtFunctionDef->setVariables(utils::toStdString(args));
   // add model functions
-  for (const auto &functionId : model.getFunctions().getIds()) {
-    ui->txtFunctionDef->addFunction(
-        functionId.toStdString(),
-        model.getFunctions().getName(functionId).toStdString());
+  for (const auto &function : model.getFunctions().getSymbolicFunctions()) {
+    ui->txtFunctionDef->addFunction(function);
   }
   ui->listFunctionParams->addItems(args);
   if (!args.isEmpty()) {

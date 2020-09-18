@@ -1,34 +1,27 @@
 #include "catch_wrapper.hpp"
+#include "math_test_utils.hpp"
 #include "symbolic.hpp"
 
 SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
   GIVEN("5+5: no vars, no constants") {
-    // mathematical expression as string
     std::string expr = "5+5";
-    // names of variables in expression
-    std::vector<std::string> vars = {};
-    // names and values of constants in expression
-    std::vector<std::pair<std::string, double>> constants = {};
-    // parse expression
-    symbolic::Symbolic sym(expr, vars, constants);
-    // ouput these variables as part of the test
+    symbolic::Symbolic sym(expr);
     CAPTURE(expr);
-    CAPTURE(vars);
-    CAPTURE(constants);
-    // simplify expression
-    REQUIRE(sym.simplify() == "10");
+    REQUIRE(sym.expr() == "10");
+    REQUIRE(sym.inlinedExpr() == "10");
     std::vector<double> res(1, 0);
     sym.eval(res);
     REQUIRE(res[0] == dbl_approx(10));
   }
   GIVEN("3*x + 7*x: one var, no constants") {
     std::string expr = "3*x + 7 * x";
-    auto sym = symbolic::Symbolic(expr, {}, {});
+    auto sym = symbolic::Symbolic(expr);
     REQUIRE(!sym.isValid());
     REQUIRE(sym.getErrorMessage() == "Unknown symbol: x");
-    sym = symbolic::Symbolic(expr, {"x"}, {});
+    sym = symbolic::Symbolic(expr, {"x"});
     CAPTURE(expr);
-    REQUIRE(sym.simplify() == "10*x");
+    REQUIRE(sym.expr() == "10*x");
+    REQUIRE(sym.inlinedExpr() == "10*x");
     REQUIRE(sym.diff("x") == "10");
     std::vector<double> res(1, 0);
     sym.eval(res, {0.2});
@@ -40,8 +33,10 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     std::vector<std::string> expr{"3*x + 7 * x", "4*x - 3"};
     symbolic::Symbolic sym(expr, {"x"}, {});
     CAPTURE(expr);
-    REQUIRE(sym.simplify() == "10*x");
-    REQUIRE(sym.diff("x") == "10");
+    REQUIRE(sym.inlinedExpr(0) == "10*x");
+    REQUIRE(symEq(sym.inlinedExpr(1), "4*x - 3"));
+    REQUIRE(sym.diff("x", 0) == "10");
+    REQUIRE(sym.diff("x", 1) == "4");
     std::vector<double> res(2, 0);
     sym.eval(res, {0.2});
     REQUIRE(res[0] == dbl_approx(2));
@@ -54,7 +49,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     std::string expr = "1.324 * x + 2*3";
     symbolic::Symbolic sym(expr, {"x"}, {});
     CAPTURE(expr);
-    REQUIRE(sym.simplify() == "6 + 1.324*x");
+    REQUIRE(symEq(sym.inlinedExpr(), "6 + 1.324*x"));
     REQUIRE(sym.diff("x") == "1.324");
     std::vector<double> res(1, 0);
     sym.eval(res, {0.1});
@@ -64,7 +59,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     std::string expr = "0.324 * x + 2*3";
     symbolic::Symbolic sym(expr, {"x"}, {});
     CAPTURE(expr);
-    REQUIRE(sym.simplify() == "6 + 0.324*x");
+    REQUIRE(symEq(sym.inlinedExpr(), "6 + 0.324*x"));
     REQUIRE(sym.diff("x") == "0.324");
     std::vector<double> res(1, 0);
     sym.eval(res, {0.1});
@@ -74,8 +69,8 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     std::string expr = "3*x + 4/x - 1.0*x + 0.2*x*x - 0.1";
     symbolic::Symbolic sym(expr, {"x"}, {});
     CAPTURE(expr);
-    REQUIRE(sym.simplify() == "-0.1 + 2.0*x + 4*x^(-1) + 0.2*x^2");
-    REQUIRE(sym.diff("x") == "2.0 + 0.4*x - 4*x^(-2)");
+    REQUIRE(symEq(sym.inlinedExpr(), "-0.1 + 2.0*x + 4*x^(-1) + 0.2*x^2"));
+    REQUIRE(symEq(sym.diff("x"), "2.0 + 0.4*x - 4*x^(-2)"));
     std::vector<double> res(1, 0);
     for (auto x : std::vector<double>{-0.1, 0, 0.9, 23e-17, 4.88e11, 7e32}) {
       sym.eval(res, {x});
@@ -91,9 +86,9 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
             "Unknown symbol: x");
     symbolic::Symbolic sym(expr, {"x", "y", "z"}, {});
     CAPTURE(expr);
-    REQUIRE(sym.simplify() == "-0.1 + 2.0*x + 0.2*x*y + 4*y^(-1)");
-    REQUIRE(sym.diff("x") == "2.0 + 0.2*y");
-    REQUIRE(sym.diff("y") == "0.2*x - 4*y^(-2)");
+    REQUIRE(symEq(sym.inlinedExpr(), "-0.1 + 2.0*x + 0.2*x*y + 4*y^(-1)"));
+    REQUIRE(symEq(sym.diff("x"), "2.0 + 0.2*y"));
+    REQUIRE(symEq(sym.diff("y"), "0.2*x - 4*y^(-2)"));
     REQUIRE(sym.diff("z") == "0");
     std::vector<double> res(1, 0);
     for (auto x : std::vector<double>{-0.1, 0, 0.9, 23e-17, 4.88e11, 7e32}) {
@@ -115,13 +110,13 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
             "Unknown symbol: x");
     symbolic::Symbolic sym(expr, {"x", "y", "z"}, {});
     CAPTURE(expr);
-    REQUIRE(sym.simplify(0) == "-0.1 + 2.0*x + 0.2*x*y + 4*y^(-1)");
-    REQUIRE(sym.simplify(1) == "z - x*y - sin(y)*cos(x)");
-    REQUIRE(sym.diff("x", 0) == "2.0 + 0.2*y");
-    REQUIRE(sym.diff("y", 0) == "0.2*x - 4*y^(-2)");
+    REQUIRE(symEq(sym.inlinedExpr(0), "-0.1 + 2.0*x + 0.2*x*y + 4*y^(-1)"));
+    REQUIRE(symEq(sym.inlinedExpr(1), "z - x*y - sin(y)*cos(x)"));
+    REQUIRE(symEq(sym.diff("x", 0), "2.0 + 0.2*y"));
+    REQUIRE(symEq(sym.diff("y", 0), "0.2*x - 4*y^(-2)"));
     REQUIRE(sym.diff("z", 0) == "0");
-    REQUIRE(sym.diff("x", 1) == "-y + sin(y)*sin(x)");
-    REQUIRE(sym.diff("y", 1) == "-x - cos(y)*cos(x)");
+    REQUIRE(symEq(sym.diff("x", 1), "-y + sin(y)*sin(x)"));
+    REQUIRE(symEq(sym.diff("y", 1), "-x - cos(y)*cos(x)"));
     REQUIRE(sym.diff("z", 1) == "1");
     std::vector<double> res(2, 0);
     for (auto x : std::vector<double>{-0.1, 0, 0.69, 23e-7, 4.188e5}) {
@@ -141,7 +136,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
             "Unknown symbol: x");
     symbolic::Symbolic sym(expr, {"x"}, {});
     CAPTURE(expr);
-    REQUIRE(sym.simplify() == "exp(4*x)");
+    REQUIRE(sym.inlinedExpr() == "exp(4*x)");
     REQUIRE(sym.diff("x") == "4*exp(4*x)");
     std::vector<double> res(1, 0);
     for (auto x : std::vector<double>{-0.1, 0, 0.9, 23e-17, 4.88e11, 7e32}) {
@@ -153,7 +148,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     std::string expr = "x^(3/2)";
     symbolic::Symbolic sym(expr, {"x"}, {});
     CAPTURE(expr);
-    REQUIRE(sym.simplify() == "x^(3/2)");
+    REQUIRE(sym.inlinedExpr() == "x^(3/2)");
     REQUIRE(sym.diff("x") == "(3/2)*sqrt(x)");
     std::vector<double> res(1, 0);
     for (auto x : std::vector<double>{0.1, 0, 0.9, 23e-17, 4.88e11, 7e32}) {
@@ -174,7 +169,8 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
                 .getErrorMessage() == "Unknown symbol: alpha");
     symbolic::Symbolic sym(expr, {"x", "y"}, constants);
     CAPTURE(expr);
-    REQUIRE(sym.simplify() == "21.90000000023*x");
+    REQUIRE(symEq(sym.expr(), "3*x + x*alpha - a*n*x"));
+    REQUIRE(sym.inlinedExpr() == "21.90000000023*x");
     REQUIRE(sym.diff("x") == "21.90000000023");
     REQUIRE(sym.diff("y") == "0");
     std::vector<double> res(1, 0);
@@ -186,9 +182,9 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
   }
   GIVEN("expression: parse without compiling, then compile") {
     std::string expr = "1.324 * x + 2*3";
-    symbolic::Symbolic sym(expr, {"x"}, {}, false);
+    symbolic::Symbolic sym(expr, {"x"}, {}, {}, false);
     CAPTURE(expr);
-    REQUIRE(sym.simplify() == "6 + 1.324*x");
+    REQUIRE(sym.inlinedExpr() == "6 + 1.324*x");
     REQUIRE(sym.diff("x") == "1.324");
     std::vector<double> res(1, 0.0);
     sym.compile();
@@ -198,7 +194,6 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     sym.eval(res, {0.1});
     REQUIRE(res[0] == dbl_approx(6.1324));
   }
-
   GIVEN("relabel one expression with two vars") {
     std::string expr = "3*x + 12*sin(y)";
     symbolic::Symbolic sym(expr, {"x", "y"});
@@ -206,7 +201,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(sym.diff("x") == "3");
     REQUIRE(sym.diff("y") == "12*cos(y)");
     sym.relabel({"newX", "newY"});
-    REQUIRE(sym.simplify() == "3*newX + 12*sin(newY)");
+    REQUIRE(sym.inlinedExpr() == "3*newX + 12*sin(newY)");
     REQUIRE(sym.diff("newX") == "3");
     REQUIRE(sym.diff("newY") == "12*cos(newY)");
   }
@@ -214,13 +209,118 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     std::string expr = "3*x + 12*sin(y)";
     symbolic::Symbolic sym(expr, {"x", "y"});
     CAPTURE(expr);
-    REQUIRE(sym.simplify() == expr);
+    REQUIRE(sym.inlinedExpr() == expr);
     REQUIRE(sym.diff("x") == "3");
     REQUIRE(sym.diff("y") == "12*cos(y)");
     sym.relabel({"a"});
-    REQUIRE(sym.simplify() == expr);
+    REQUIRE(sym.inlinedExpr() == expr);
     sym.relabel({"a", "b", "c"});
-    REQUIRE(sym.simplify() == expr);
+    REQUIRE(sym.inlinedExpr() == expr);
+  }
+  GIVEN("unknown function") {
+    std::string expr = "abcd(y)";
+    symbolic::Symbolic sym(expr, {"y"});
+    REQUIRE(!sym.isValid());
+    REQUIRE(sym.getErrorMessage() == "Unknown function: abcd(y)");
+    CAPTURE(expr);
+  }
+  GIVEN("unknown functions") {
+    std::string expr = "abcd(y) + unknown_function(y)";
+    symbolic::Symbolic sym(expr, {"y"});
+    REQUIRE(!sym.isValid());
+    REQUIRE(sym.getErrorMessage() == "Unknown function: abcd(y)");
+    CAPTURE(expr);
+  }
+  GIVEN("functions calling unknown functions") {
+    std::string expr = "pow(2*y + cos(abcd(y)), 2)";
+    symbolic::Symbolic sym(expr, {"y"});
+    REQUIRE(!sym.isValid());
+    REQUIRE(sym.getErrorMessage() == "Unknown function: abcd(y)");
+    CAPTURE(expr);
+  }
+  GIVEN("some user-defined functions") {
+    symbolic::Function f1;
+    f1.id = "f1";
+    f1.name = "my func";
+    f1.args = {"x"};
+    f1.body = "2*x";
+    symbolic::Function f2;
+    f2.id = "f2";
+    f2.name = "func2";
+    f2.args = {"x", "y"};
+    f2.body = "2*x*y";
+    symbolic::Function g2;
+    g2.id = "g2";
+    g2.name = "g2";
+    g2.args = {"a", "b"};
+    g2.body = "1/a/b";
+    WHEN("1-arg func") {
+      std::string expr{"2*f1(z)"};
+      symbolic::Symbolic sym(expr, {"z"}, {}, {f1});
+      REQUIRE(sym.isValid());
+      REQUIRE(sym.getErrorMessage().empty());
+      REQUIRE(sym.expr() == "2*f1(z)");
+      REQUIRE(sym.inlinedExpr() == "4*z");
+      CAPTURE(expr);
+    }
+    WHEN("1-arg func called with two arguments") {
+      std::string expr{"2*f1(x, y)"};
+      symbolic::Symbolic sym(expr, {"x", "y"}, {}, {f1});
+      REQUIRE(!sym.isValid());
+      REQUIRE(sym.getErrorMessage() ==
+              "Function 'my func' requires 1 argument(s), found 2");
+      CAPTURE(expr);
+    }
+    WHEN("2-arg func called with one argument") {
+      std::string expr{"2*f2(a)"};
+      symbolic::Symbolic sym(expr, {"a"}, {}, {f2});
+      REQUIRE(!sym.isValid());
+      REQUIRE(sym.getErrorMessage() ==
+              "Function 'func2' requires 2 argument(s), found 1");
+      CAPTURE(expr);
+    }
+    WHEN("1-arg func calls itself") {
+      std::string expr = "f1(2+f1(f1(2*f1(z))))";
+      symbolic::Symbolic sym(expr, {"z"}, {}, {f1});
+      CAPTURE(sym.getErrorMessage());
+      REQUIRE(sym.isValid());
+      REQUIRE(sym.getErrorMessage().empty());
+      REQUIRE(symEq(sym.inlinedExpr(), "2*(2 + 16*z)"));
+      CAPTURE(expr);
+    }
+    WHEN("1-arg func calls 2-arg func") {
+      std::string expr = "f1(1+f2(alpha, beta))";
+      symbolic::Symbolic sym(expr, {"alpha", "beta"}, {}, {f1, f2});
+      CAPTURE(sym.getErrorMessage());
+      REQUIRE(sym.isValid());
+      REQUIRE(sym.getErrorMessage().empty());
+      REQUIRE(symEq(sym.inlinedExpr(), "2*(1+2*alpha*beta)"));
+      CAPTURE(expr);
+    }
+    WHEN("2-arg func calls 2-arg func") {
+      std::string expr =
+          "f2(x, alpha)*f2(beta, y)*g2(f2(x, y), f2(alpha, beta))";
+      symbolic::Symbolic sym(expr, {"alpha", "beta", "x", "y"}, {},
+                             {f1, f2, g2});
+      CAPTURE(sym.getErrorMessage());
+      REQUIRE(sym.isValid());
+      REQUIRE(sym.getErrorMessage().empty());
+      REQUIRE(symEq(sym.inlinedExpr(), "1"));
+      CAPTURE(expr);
+    }
+  }
+  GIVEN("single recursive function call") {
+    symbolic::Function f1;
+    f1.id = "f1";
+    f1.name = "my func";
+    f1.args = {"x"};
+    f1.body = "1+f1(x)";
+    std::string expr{"f1(a)"};
+    symbolic::Symbolic sym(expr, {"a"}, {}, {f1});
+    CAPTURE(sym.getErrorMessage());
+    REQUIRE(!sym.isValid());
+    REQUIRE(sym.getErrorMessage() == "Recursive function calls not supported");
+    CAPTURE(expr);
   }
   GIVEN("divide expression with number") {
     REQUIRE(symbolic::divide("x", "1.3") == "x/1.3");

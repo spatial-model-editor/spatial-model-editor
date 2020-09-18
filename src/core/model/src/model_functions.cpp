@@ -225,4 +225,24 @@ void ModelFunctions::remove(const QString &id) {
   names.removeAt(i);
 }
 
+std::vector<symbolic::Function> ModelFunctions::getSymbolicFunctions() const {
+  std::vector<symbolic::Function> fns;
+  fns.reserve(static_cast<std::size_t>(ids.size()));
+  for (const auto &id : ids) {
+    auto &fn = fns.emplace_back();
+    fn.id = id.toStdString();
+    SPDLOG_DEBUG("id: {}", fn.id);
+    fn.name = getName(id).toStdString();
+    SPDLOG_DEBUG("  - name: {}", fn.name);
+    auto args = getArguments(id);
+    for (const auto &arg : args) {
+      fn.args.push_back(arg.toStdString());
+      SPDLOG_DEBUG("  - arg: {}", fn.args.back());
+    }
+    fn.body = getExpression(id).toStdString();
+    SPDLOG_DEBUG("  - body: {}", fn.body);
+  }
+  return fns;
+}
+
 } // namespace model
