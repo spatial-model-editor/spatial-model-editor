@@ -82,6 +82,15 @@ void TabSimulate::loadModelData() {
     return;
   }
   sim = std::make_unique<simulate::Simulation>(sbmlDoc, simType, simOptions);
+  if (!sim->errorMessage().empty()) {
+    QMessageBox::warning(
+        this, "Simulation Setup Failed",
+        QString("Simulation setup failed.\n\nError message: %1")
+            .arg(sim->errorMessage().c_str()));
+    ui->btnSimulate->setEnabled(false);
+    return;
+  }
+
   ui->btnSimulate->setEnabled(true);
 
   // setup species names
