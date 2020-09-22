@@ -35,8 +35,10 @@ SCENARIO("Model geometry",
     model::ModelMembranes mMembranes;
     model::ModelGeometry mGeometry;
     model::ModelSpecies mSpecies;
-    mCompartments = model::ModelCompartments(doc->getModel(), &mGeometry,
-                                             &mMembranes, &mSpecies);
+    model::ModelReactions mReactions(doc->getModel(),
+                                     mMembranes.getMembranes());
+    mCompartments = model::ModelCompartments(
+        doc->getModel(), &mGeometry, &mMembranes, &mSpecies, &mReactions);
     mGeometry =
         model::ModelGeometry(doc->getModel(), &mCompartments, &mMembranes);
     auto &m = mGeometry;
@@ -47,8 +49,6 @@ SCENARIO("Model geometry",
 
     mGeometry.importSampledFieldGeometry(doc->getModel());
     model::ModelParameters mParameters(doc->getModel());
-    model::ModelReactions mReactions(doc->getModel(),
-                                     mMembranes.getMembranes());
     mSpecies = model::ModelSpecies(doc->getModel(), &mCompartments, &mGeometry,
                                    &mParameters, &mReactions);
     REQUIRE(m.getIsValid() == true);

@@ -19,6 +19,7 @@ namespace model {
 class ModelGeometry;
 class ModelMembranes;
 class ModelSpecies;
+class ModelReactions;
 
 class ModelCompartments {
 private:
@@ -30,11 +31,13 @@ private:
   ModelGeometry *modelGeometry = nullptr;
   ModelMembranes *modelMembranes = nullptr;
   ModelSpecies *modelSpecies = nullptr;
+  ModelReactions *modelReactions = nullptr;
 
 public:
   ModelCompartments();
   ModelCompartments(libsbml::Model *model, ModelGeometry *geometry,
-                    ModelMembranes *membranes, ModelSpecies *species);
+                    ModelMembranes *membranes, ModelSpecies *species,
+                    ModelReactions *reactions);
   const QStringList &getIds() const;
   const QStringList &getNames() const;
   const QVector<QRgb> &getColours() const;

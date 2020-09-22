@@ -58,7 +58,7 @@ static QVector<QStringList> importParameterIds(const libsbml::Model *model) {
   return paramIds;
 }
 
-static void
+static bool
 makeReactionSpatial(libsbml::Reaction *reac,
                     const std::vector<geometry::Membrane> &membranes) {
   const auto *model = reac->getModel();
@@ -81,16 +81,16 @@ makeReactionSpatial(libsbml::Reaction *reac,
     const auto &compId = model->getSpecies(sId)->getCompartment();
     compSet.insert(compId);
   }
-  if (!reac->isSetCompartment()) {
-    SPDLOG_INFO("Reaction compartment not set: using species location '{}'",
-                compSet[0]);
-    reac->setCompartment(compSet[0]);
-  }
   const auto *kin = reac->getKineticLaw();
   if (kin == nullptr) {
     kin = reac->createKineticLaw();
   }
   if (compSet.size() == 1) {
+    if (!reac->isSetCompartment()) {
+      SPDLOG_INFO("Reaction compartment not set: using species location '{}'",
+                  compSet[0]);
+      reac->setCompartment(compSet[0]);
+    }
     SPDLOG_INFO("Reaction involves species from a single compartment");
     SPDLOG_INFO("  - original rate units: d[amount]/dt");
     SPDLOG_INFO("  -> want spatial compartment reaction: d[concentration]/dt");
@@ -108,6 +108,7 @@ makeReactionSpatial(libsbml::Reaction *reac,
     } else {
       SPDLOG_ERROR("  - libSBML failed to parse expression");
     }
+    return true;
   } else if (compSet.size() == 2) {
     SPDLOG_INFO("Reaction involves species from two compartments:");
     SPDLOG_INFO("  - '{}'", compSet[0]);
@@ -124,32 +125,16 @@ makeReactionSpatial(libsbml::Reaction *reac,
         SPDLOG_INFO("  -> setting reaction location to Membrane '{}'",
                     membrane.getId());
         reac->setCompartment(membrane.getId());
+        return true;
       }
     }
+    return false;
   } else {
     SPDLOG_WARN(
         "Reaction involves species from {} compartments - not supported",
         compSet.size());
   }
-}
-
-static void
-makeReactionsSpatial(libsbml::Model *model,
-                     const std::vector<geometry::Membrane> &membranes) {
-  for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
-    auto *reac = model->getReaction(i);
-    reac->setFast(false);
-    if (const auto *kin = reac->getKineticLaw(); kin == nullptr) {
-      kin = reac->createKineticLaw();
-    }
-    auto *srp = static_cast<libsbml::SpatialReactionPlugin *>(
-        reac->getPlugin("spatial"));
-    if (srp != nullptr && !(srp->isSetIsLocal() && srp->getIsLocal())) {
-      SPDLOG_INFO("Setting isLocal=true for reaction {}", reac->getId());
-      srp->setIsLocal(true);
-      makeReactionSpatial(reac, membranes);
-    }
-  }
+  return false;
 }
 
 static bool reactionInvolvesSpecies(const libsbml::Reaction *reac,
@@ -178,7 +163,29 @@ ModelReactions::ModelReactions(libsbml::Model *model,
                                const std::vector<geometry::Membrane> &membranes)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(model)},
       parameterIds{importParameterIds(model)}, sbmlModel{model} {
-  makeReactionsSpatial(model, membranes);
+  makeReactionsSpatial(membranes);
+}
+
+void ModelReactions::makeReactionsSpatial(
+    const std::vector<geometry::Membrane> &membranes) {
+  if (sbmlModel == nullptr) {
+    return;
+  }
+  for (unsigned int i = 0; i < sbmlModel->getNumReactions(); ++i) {
+    auto *reac = sbmlModel->getReaction(i);
+    reac->setFast(false);
+    if (const auto *kin = reac->getKineticLaw(); kin == nullptr) {
+      kin = reac->createKineticLaw();
+    }
+    auto *srp = static_cast<libsbml::SpatialReactionPlugin *>(
+        reac->getPlugin("spatial"));
+    if (srp != nullptr && !(srp->isSetIsLocal() && srp->getIsLocal())) {
+      if (makeReactionSpatial(reac, membranes)) {
+        SPDLOG_INFO("Setting isLocal=true for reaction {}", reac->getId());
+        srp->setIsLocal(true);
+      }
+    }
+  }
 }
 
 QStringList ModelReactions::getIds(const QString &locationId) const {

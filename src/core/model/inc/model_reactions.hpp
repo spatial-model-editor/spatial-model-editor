@@ -30,6 +30,7 @@ public:
   ModelReactions();
   explicit ModelReactions(libsbml::Model *model,
                           const std::vector<geometry::Membrane> &membranes);
+  void makeReactionsSpatial(const std::vector<geometry::Membrane> &membranes);
   QStringList getIds(const QString &locationId) const;
   QString add(const QString &name, const QString &locationId,
               const QString &rateExpression = "1");

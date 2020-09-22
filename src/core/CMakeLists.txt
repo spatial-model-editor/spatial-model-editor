@@ -9,8 +9,7 @@ find_package(
 message(STATUS "Found SymEngine library: ")
 message(STATUS "Testing SymEngine LLVM support")
 try_compile(
-  SYMENGINE_LLVM
-  "${CMAKE_CURRENT_BINARY_DIR}/cxx"
+  SYMENGINE_LLVM "${CMAKE_CURRENT_BINARY_DIR}/cxx"
   "${CMAKE_SOURCE_DIR}/cmake/checkSymEngineLLVM.cpp"
   CMAKE_FLAGS -DINCLUDE_DIRECTORIES=${SYMENGINE_INCLUDE_DIRS}
   LINK_LIBRARIES ${SYMENGINE_LIBRARIES}
@@ -29,8 +28,7 @@ endif()
 find_package(sbml-static REQUIRED)
 message(STATUS "Testing libSBML spatial extension support")
 try_compile(
-  SBML_SPATIAL
-  "${CMAKE_CURRENT_BINARY_DIR}/cxx"
+  SBML_SPATIAL "${CMAKE_CURRENT_BINARY_DIR}/cxx"
   "${CMAKE_SOURCE_DIR}/cmake/checkSpatialSBML.cpp"
   LINK_LIBRARIES sbml-static
   OUTPUT_VARIABLE SBML_SPATIAL_ERROR_LOG)
@@ -54,6 +52,18 @@ find_package(fmt REQUIRED)
 find_package(dunecopasi REQUIRED)
 # dune-logging depends on fmt: temporary hack
 target_link_libraries(dunecopasi::dunecopasi INTERFACE fmt::fmt)
+# dune-copasi may use fallback filesystem implementation
+set(SME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM
+    no
+    CACHE
+      BOOL
+      "enable if dune-copasi is built using fallback filesystem implementation")
+if(SME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM)
+  message(STATUS "using DUNE_COPASI_USE_FALLBACK_FILESYSTEM")
+  target_compile_definitions(dunecopasi::dunecopasi
+                             INTERFACE DUNE_COPASI_USE_FALLBACK_FILESYSTEM)
+endif()
+
 find_package(muparser REQUIRED)
 if(SME_WITH_TBB)
   find_package(tbb REQUIRED)

@@ -4,6 +4,7 @@
 #include "logger.hpp"
 #include "model_geometry.hpp"
 #include "model_membranes.hpp"
+#include "model_reactions.hpp"
 #include "model_species.hpp"
 #include "sbml_utils.hpp"
 #include <optional>
@@ -70,10 +71,11 @@ ModelCompartments::ModelCompartments() = default;
 ModelCompartments::ModelCompartments(libsbml::Model *model,
                                      ModelGeometry *geometry,
                                      ModelMembranes *membranes,
-                                     ModelSpecies *species)
+                                     ModelSpecies *species,
+                                     ModelReactions *reactions)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(model, ids)},
       sbmlModel{model}, modelGeometry{geometry}, modelMembranes{membranes},
-      modelSpecies{species} {
+      modelSpecies{species}, modelReactions{reactions} {
   makeSizesValid(model);
   colours = QVector<QRgb>(ids.size(), 0);
   compartments.reserve(static_cast<std::size_t>(ids.size()));
@@ -456,8 +458,7 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
       findAllInteriorPoints(modelGeometry->getImage(), colour);
   setInteriorPoints(id, interiorPoints);
   modelGeometry->checkIfGeometryIsValid();
-
-  // todo: update reactions?
+  modelReactions->makeReactionsSpatial(modelMembranes->getMembranes());
 }
 
 QRgb ModelCompartments::getColour(const QString &id) const {
