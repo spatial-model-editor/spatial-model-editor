@@ -22,9 +22,17 @@ std::string divide(const std::string &expr, const std::string &var);
 
 const char *getLLVMVersion();
 
+struct Function {
+  std::string id;
+  std::string name;
+  std::vector<std::string> args;
+  std::string body;
+};
+
 class Symbolic {
 private:
   struct SymEngineImpl;
+  struct SymEngineFunc;
   std::unique_ptr<SymEngineImpl> pSymEngineImpl;
 
 public:
@@ -33,29 +41,27 @@ public:
       const std::vector<std::string> &expressions,
       const std::vector<std::string> &variables = {},
       const std::vector<std::pair<std::string, double>> &constants = {},
-      bool compile = true, bool doCSE = true, unsigned optLevel = 3);
+      const std::vector<Function> &functions = {}, bool compile = true,
+      bool doCSE = true, unsigned optLevel = 3);
   explicit Symbolic(
       const std::string &expression,
       const std::vector<std::string> &variables = {},
       const std::vector<std::pair<std::string, double>> &constants = {},
-      bool compile = true, bool doCSE = true, unsigned optLevel = 3)
+      const std::vector<Function> &functions = {}, bool compile = true,
+      bool doCSE = true, unsigned optLevel = 3)
       : Symbolic(std::vector<std::string>{expression}, variables, constants,
-                 compile, doCSE, optLevel) {}
+                 functions, compile, doCSE, optLevel) {}
   Symbolic(Symbolic &&) noexcept;
   Symbolic(const Symbolic &) = delete;
   Symbolic &operator=(Symbolic &&) noexcept;
   Symbolic &operator=(const Symbolic &) = delete;
   ~Symbolic();
 
-  // compile expression (done by default in constructor)
   void compile(bool doCSE = true, unsigned optLevel = 3);
-  // simplify given expression
-  std::string simplify(std::size_t i = 0) const;
-  // differentiate given expression wrt a variable
+  std::string expr(std::size_t i = 0) const;
+  std::string inlinedExpr(std::size_t i = 0) const;
   std::string diff(const std::string &var, std::size_t i = 0) const;
-  // relabel variables
   void relabel(const std::vector<std::string> &newVariables);
-  // evaluate compiled expressions
   void eval(std::vector<double> &results,
             const std::vector<double> &vars = {}) const;
   void eval(double *results, const double *vars) const;

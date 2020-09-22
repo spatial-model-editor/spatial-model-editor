@@ -7,9 +7,8 @@
 
 #pragma once
 
-#include <QPlainTextEdit>
-
 #include "symbolic.hpp"
+#include <QPlainTextEdit>
 
 namespace libsbml {
 class Model;
@@ -40,10 +39,10 @@ public:
                    const std::string &displayName = {});
   void removeVariable(const std::string &variable);
   void clearFunctions();
-  void addDefaultFunctions();
-  void addFunction(const std::string &function,
-                   const std::string &displayName = {});
-  void removeFunction(const std::string &function);
+  void resetToDefaultFunctions();
+  void addIntrinsicFunction(const std::string &functionId);
+  void addFunction(const symbolic::Function &function);
+  void removeFunction(const std::string &functionId);
 
 signals:
   void mathChanged(const QString &math, bool valid,
@@ -61,6 +60,7 @@ private:
   const QColor colourInvalid = QColor(255, 150, 150);
   const char *const illegalChars = "%@&!";
   std::vector<std::string> vars;
+  std::vector<symbolic::Function> functions;
   stringStringMap mapVarsToDisplayNames;
   stringStringMap mapDisplayNamesToVars;
   stringStringMap mapFuncsToDisplayNames;

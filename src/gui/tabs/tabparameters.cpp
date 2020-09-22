@@ -30,14 +30,12 @@ void TabParameters::loadModelData(const QString &selection) {
   currentParameterId.clear();
   ui->listParameters->clear();
   ui->txtExpression->clearVariables();
-  ui->txtExpression->clearFunctions();
-  ui->txtExpression->addDefaultFunctions();
+  ui->txtExpression->resetToDefaultFunctions();
   for (const auto &[id, name] : model.getParameters().getSymbols()) {
     ui->txtExpression->addVariable(id, name);
   }
-  for (const auto &id : model.getFunctions().getIds()) {
-    auto name = model.getFunctions().getName(id);
-    ui->txtExpression->addFunction(id.toStdString(), name.toStdString());
+  for (const auto &function : model.getFunctions().getSymbolicFunctions()) {
+    ui->txtExpression->addFunction(function);
   }
   for (const auto &id : model.getParameters().getIds()) {
     auto name = model.getParameters().getName(id);

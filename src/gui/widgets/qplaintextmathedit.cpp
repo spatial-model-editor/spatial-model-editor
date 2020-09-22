@@ -52,9 +52,8 @@ double QPlainTextMathEdit::evaluateMath(const std::vector<double> &variables) {
 double QPlainTextMathEdit::evaluateMath(
     const std::map<const std::string, std::pair<double, bool>> &variables) {
   if (!useLibSbmlBackend) {
-    SPDLOG_WARN(
-        "for better performance use vector interface when not using "
-        "libSBML backend");
+    SPDLOG_WARN("for better performance use vector interface when not using "
+                "libSBML backend");
     std::vector<double> values(vars.size(), 0);
     for (std::size_t i = 0; i < vars.size(); ++i) {
       values[i] = variables.at(vars[i]).first;
@@ -141,39 +140,46 @@ void QPlainTextMathEdit::removeVariable(const std::string &variable) {
 void QPlainTextMathEdit::clearFunctions() {
   mapFuncsToDisplayNames.clear();
   mapDisplayNamesToFuncs.clear();
+  functions.clear();
   qPlainTextEdit_textChanged();
 }
 
-void QPlainTextMathEdit::addDefaultFunctions() {
+void QPlainTextMathEdit::resetToDefaultFunctions() {
   clearFunctions();
   for (const auto &f :
        {"sin", "cos", "tan", "exp", "log", "ln", "pow", "sqrt"}) {
-    addFunction(f);
+    addIntrinsicFunction(f);
   }
   qPlainTextEdit_textChanged();
 }
 
-void QPlainTextMathEdit::addFunction(const std::string &function,
-                                     const std::string &displayName) {
-  SPDLOG_TRACE("adding function: {}", function);
-  auto name = displayName;
-  if (displayName.empty()) {
-    name = function;
+void QPlainTextMathEdit::addIntrinsicFunction(const std::string &functionId) {
+  SPDLOG_TRACE("adding intrinsic function: {}", functionId);
+  if (!isValidSymbol(functionId)) {
+    SPDLOG_WARN("invalid intrinsic function id: '{}' - ignoring", functionId);
+    return;
   }
-  SPDLOG_TRACE("  -> display name {}", name);
-  mapDisplayNamesToFuncs[name] = function;
-  if (isValidSymbol(name)) {
-    mapFuncsToDisplayNames[function] = name;
+  mapDisplayNamesToFuncs[functionId] = functionId;
+  mapFuncsToDisplayNames[functionId] = functionId;
+}
+
+void QPlainTextMathEdit::addFunction(const symbolic::Function &function) {
+  SPDLOG_TRACE("adding function: {}", function.id);
+  functions.push_back(function);
+  SPDLOG_TRACE("  -> display name {}", function.name);
+  mapDisplayNamesToFuncs[function.name] = function.id;
+  if (isValidSymbol(function.name)) {
+    mapFuncsToDisplayNames[function.id] = function.name;
   } else {
-    mapFuncsToDisplayNames[function] = "\"" + name + "\"";
+    mapFuncsToDisplayNames[function.id] = "\"" + function.name + "\"";
   }
   qPlainTextEdit_textChanged();
 }
 
-void QPlainTextMathEdit::removeFunction(const std::string &function) {
-  if (auto iter = mapFuncsToDisplayNames.find(function);
+void QPlainTextMathEdit::removeFunction(const std::string &functionId) {
+  if (auto iter = mapFuncsToDisplayNames.find(functionId);
       iter != mapFuncsToDisplayNames.cend()) {
-    SPDLOG_TRACE("removing function: {}", function);
+    SPDLOG_TRACE("removing function: {}", functionId);
     std::string displayName = iter->second;
     // remove quotes if present
     if (displayName.front() == '"' && displayName.back() == '"') {
@@ -183,12 +189,17 @@ void QPlainTextMathEdit::removeFunction(const std::string &function) {
     mapDisplayNamesToFuncs.erase(displayName);
     mapFuncsToDisplayNames.erase(iter);
   }
+  functions.erase(std::remove_if(functions.begin(), functions.end(),
+                                 [&functionId](const auto &f) {
+                                   return f.id == functionId;
+                                 }),
+                  functions.end());
   qPlainTextEdit_textChanged();
 }
 
 QPlainTextMathEdit::QPlainTextMathEdit(QWidget *parent)
     : QPlainTextEdit(parent) {
-  addDefaultFunctions();
+  resetToDefaultFunctions();
   connect(this, &QPlainTextEdit::textChanged, this,
           &QPlainTextMathEdit::qPlainTextEdit_textChanged);
   connect(this, &QPlainTextEdit::cursorPositionChanged, this,
@@ -221,9 +232,9 @@ static std::pair<std::string, QString> substitute(
     if (std::isdigit(expr[start], std::locale::classic()) &&
         end < expr.size() && expr[end - 1] == 'e' &&
         (expr[end] == '-' || expr[end] == '+')) {
-      // if symbol starts with a numerical digit, and ends with "e-" or "e+", we
-      // have the first half of a number in scientific notation, so carry on to
-      // next delimeter to get the rest of the number
+      // if symbol starts with a numerical digit, and ends with "e-" or "e+",
+      // we have the first half of a number in scientific notation, so carry
+      // on to next delimeter to get the rest of the number
       end = expr.find_first_of(delimeters, end + 1);
     }
     std::string var = expr.substr(start, end - start);
@@ -269,8 +280,8 @@ static std::pair<std::string, QString> substitute(
   return {out, {}};
 }
 
-std::string QPlainTextMathEdit::variablesToDisplayNames(
-    const std::string &expr) const {
+std::string
+QPlainTextMathEdit::variablesToDisplayNames(const std::string &expr) const {
   const auto &varMap = mapVarsToDisplayNames;
   const auto &funcMap = mapFuncsToDisplayNames;
   if (varMap.empty() && funcMap.empty()) {
@@ -279,8 +290,8 @@ std::string QPlainTextMathEdit::variablesToDisplayNames(
   return substitute(expr, varMap, funcMap, allowImplicitNames).first;
 }
 
-std::pair<std::string, QString> QPlainTextMathEdit::displayNamesToVariables(
-    const std::string &expr) const {
+std::pair<std::string, QString>
+QPlainTextMathEdit::displayNamesToVariables(const std::string &expr) const {
   if (expr.empty()) {
     return {};
   }
@@ -383,11 +394,11 @@ void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
       }
     } else {
       SPDLOG_DEBUG("parsing '{}' with SymEngine backend", newExpr);
-      sym = symbolic::Symbolic(newExpr, vars, {}, false);
+      sym = symbolic::Symbolic(newExpr, vars, {}, functions, false);
       if (sym.isValid()) {
         expressionIsValid = true;
         currentErrorMessage = "";
-        currentVariableMath = sym.simplify();
+        currentVariableMath = sym.expr();
         currentDisplayMath =
             variablesToDisplayNames(currentVariableMath).c_str();
       } else {

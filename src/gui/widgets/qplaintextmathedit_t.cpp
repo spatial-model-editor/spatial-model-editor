@@ -251,7 +251,12 @@ SCENARIO("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
       REQUIRE(mathEdit.getVariableMath().empty() == true);
       REQUIRE(mathEdit.getErrorMessage() == "function 'cse' not found");
       REQUIRE(mathEdit.mathIsValid() == false);
-      mathEdit.addFunction("cse");
+      symbolic::Function f;
+      f.id = "cse";
+      f.name = "cse";
+      f.args = {"z"};
+      f.body = "cos(z)";
+      mathEdit.addFunction(f);
       REQUIRE(mathEdit.getVariables().size() == 1);
       REQUIRE(signal.math == "cse(X)");
       REQUIRE(mathEdit.getVariableMath() == "cse(x)");

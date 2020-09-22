@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "symbolic.hpp"
 #include <QColor>
 #include <QStringList>
 #include <map>
@@ -15,12 +16,12 @@ class Model;
 namespace model {
 
 class ModelFunctions {
- private:
+private:
   QStringList ids;
   QStringList names;
   libsbml::Model *sbmlModel = nullptr;
 
- public:
+public:
   ModelFunctions();
   explicit ModelFunctions(libsbml::Model *model);
   const QStringList &getIds() const;
@@ -34,6 +35,7 @@ class ModelFunctions {
   void removeArgument(const QString &functionId, const QString &argumentId);
   QString add(const QString &name);
   void remove(const QString &id);
+  std::vector<symbolic::Function> getSymbolicFunctions() const;
 };
 
-}  // namespace model
+} // namespace model
