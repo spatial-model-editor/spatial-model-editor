@@ -229,6 +229,7 @@ QString ModelParameters::add(const QString &name) {
   auto *param = sbmlModel->createParameter();
   param->setId(paramId);
   param->setName(paramName);
+  param->setConstant(true);
   param->setValue(0);
   ids.push_back(paramId.c_str());
   names.push_back(uniqueName);

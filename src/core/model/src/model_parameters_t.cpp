@@ -54,12 +54,20 @@ SCENARIO("SBML parameters",
       REQUIRE(params.getNames().size() == 1);
       REQUIRE(params.getNames()[0] == "new Name");
       REQUIRE(params.getName("p1") == "new Name");
-      // set value
-      params.setExpression("p1", "1.4");
+      // default param is constant with value zero
       std::string xml = s.getXml().toStdString();
       std::unique_ptr<libsbml::SBMLDocument> doc2{
           libsbml::readSBMLFromString(xml.c_str())};
       const auto *param = doc2->getModel()->getParameter("p1");
+      REQUIRE(param->isSetValue() == true);
+      REQUIRE(param->isSetConstant() == true);
+      REQUIRE(param->getConstant() == true);
+      REQUIRE(param->getValue() == dbl_approx(0));
+      // set value
+      params.setExpression("p1", "1.4");
+      xml = s.getXml().toStdString();
+      doc2.reset(libsbml::readSBMLFromString(xml.c_str()));
+      param = doc2->getModel()->getParameter("p1");
       REQUIRE(param->isSetValue() == true);
       REQUIRE(param->isSetConstant() == true);
       REQUIRE(param->getConstant() == true);
