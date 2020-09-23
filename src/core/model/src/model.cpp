@@ -61,8 +61,8 @@ void Model::initModelData() {
   modelMembranes.clear();
   // todo: reduce these cyclic dependencies: currently order of initialization
   // matters, should be possible to reduce coupling here
-  modelCompartments =
-      ModelCompartments(model, &modelGeometry, &modelMembranes, &modelSpecies);
+  modelCompartments = ModelCompartments(model, &modelGeometry, &modelMembranes,
+                                        &modelSpecies, &modelReactions);
   modelGeometry = ModelGeometry(model, &modelCompartments, &modelMembranes);
   modelGeometry.importSampledFieldGeometry(model);
   modelGeometry.importParametricGeometry(model);

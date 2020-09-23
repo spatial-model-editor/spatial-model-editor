@@ -48,10 +48,4 @@ if(dunecopasi_FOUND
               ENABLE_UG=1
               MUPARSER_STATIC
               UG_USE_NEW_DIMENSION_DEFINES)
-
-  if(APPLE)
-    target_compile_definitions(dunecopasi::dunecopasi
-                               INTERFACE DUNE_COPASI_USE_FALLBACK_FILESYSTEM)
-  endif()
-
 endif()
