@@ -4,3 +4,6 @@
 [submodule "ext/Catch2"]
 	path = ext/Catch2
 	url = https://github.com/catchorg/Catch2
+[submodule "ext/CLI11"]
+	path = ext/CLI11
+	url = git://github.com/CLIUtils/CLI11.git

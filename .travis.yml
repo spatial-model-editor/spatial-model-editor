@@ -15,7 +15,7 @@ branches:
 env:
   global:
     # python wheel building can (and should) be disabled to speed up CI when working on a PR
-    - BUILD_PYTHON_WHEELS=true
+    - BUILD_PYTHON_WHEELS=false
     - MSYS_URL='https://github.com/msys2/msys2-installer/releases/download/2020-09-03/msys2-base-x86_64-20200903.sfx.exe'
     - CIBUILDWHEEL_VERSION=1.6.1
     # pypi TWINE_PASSWORD
@@ -462,6 +462,20 @@ jobs:
         # upload coverage report to codecov.io
         - bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F mainwindow
 
+        # cli unit tests
+        - rm -f gcov/*
+        - lcov -q -z -d .
+        - LSAN_OPTIONS=suppressions=suppr.txt:exitcode=0 ./test/tests -as "[cli]" > cli.txt 2>&1
+        - tail -n 100 cli.txt
+        - $COV gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
+        - $COV gcov -p cli/CMakeFiles/cli.dir/src/*.gcno > /dev/null
+        - $COV gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
+        - $COV gcov -p test/CMakeFiles/tests.dir/__/cli/src/*.gcno > /dev/null
+        - mv *#src#core*.gcov *#cli*.gcov gcov/
+        - rm -f *.gcov
+        # upload coverage report to codecov.io
+        - bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F cli
+
         # python tests
         - rm -f gcov/*
         - lcov -q -z -d .
@@ -485,7 +499,9 @@ jobs:
         - $COV gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
         - $COV gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
-        - mv *#src#core*.gcov *#src#gui*.gcov gcov/
+        - $COV gcov -p cli/CMakeFiles/cli.dir/src/*.gcno > /dev/null
+        - $COV gcov -p test/CMakeFiles/tests.dir/__/cli/src/*.gcno > /dev/null
+        - mv *#src#core*.gcov *#src#gui*.gcov *#cli*.gcov gcov/
         - rm -f *.gcov
         # also run python tests, but only copy gcov data for sme files: don't want to overwrite coverage info on core from c++ tests
         - lcov -q -z -d .
