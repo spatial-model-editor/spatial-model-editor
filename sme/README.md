@@ -24,22 +24,22 @@ Supported platforms and python versions:
 
 - linux
 
-  - CPython: 2.7, 3.5, 3.6, 3.7, 3.8
+  - CPython: 2.7, 3.5, 3.6, 3.7, 3.8, 3.9
 
   - PyPy: 2.7, 3.6
 
 - macOS 10.14+
 
-  - CPython: 3.5, 3.6, 3.7, 3.8
+  - CPython: 3.5, 3.6, 3.7, 3.8, 3.9
 
   - PyPy: 2.7, 3.6
 
 - windows 64-bit
 
-  - CPython: 3.5, 3.6, 3.7, 3.8
+  - CPython: 3.5, 3.6, 3.7, 3.8, 3.9
 
 - windows 32-bit
 
-  - CPython: 3.5, 3.6, 3.7, 3.8
+  - CPython: 3.5, 3.6, 3.7, 3.8, 3.9
 
   - PyPy: 3.6

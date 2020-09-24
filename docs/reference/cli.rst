@@ -23,23 +23,44 @@ It can be used to simulate an existing model and save the resulting images:
 
 .. code-block:: bash
 
-    ./spatial-cli filename [simulator] [simulation_time] [image_interval] [max_cpu_threads]
+    ./spatial-cli filename.xml
 
 Command line parameters
 -----------------------
 
-* ``filename``
-   * the SBML file containing the model to be simulated
-* ``simulator``
-   * this can be ``dune`` or ``pixel``
-   * default: ``dune``
-* ``simulation_time``
-   * the total length of the simulation (in model units of time)
-   * default: ``100``
-* ``image_interval``
-   * the interval (in model units of time) at which concentration images should be saved
-   * default: ``10``
-* ``max_cpu_threads``
-   * the maximum number of cpu threads that should be used
-   * default: ``0`` (which means unlimitied / use all available threads)
-   * note: this parameter only applies to the ``pixel`` simulator
+.. code-block:: bash
+
+   Spatial Model Editor CLI v0.9.2
+   Usage: ./spatial-cli [OPTIONS] file
+
+   Positionals:
+     file TEXT:FILE REQUIRED     The spatial SBML model to simulate
+
+   Options:
+     -h,--help                   Print this help message and exit
+     -c,--config                 Read an ini file containing simulation options
+     -t,--time FLOAT:POSITIVE=100
+                                 The simulation time (in model units of time)
+     -i,--image-interval FLOAT:POSITIVE=1
+                                 The interval between saving images (in model units of time)
+     -s,--simulator ENUM:value in {dune->0,pixel->1} OR {0,1}=0
+                                 The simulator to use: dune or pixel
+     -n,--nthreads UINT:NONNEGATIVE=0
+                                 The maximum number of CPU threads to use (0 means unlimited)
+     -v,--version                Display the version number and exit
+     -d,--dump-config            Dump the default config ini file and exit
+
+Using a config file
+-------------------
+
+To create an ini file with the default options
+
+.. code-block:: bash
+
+    ./spatial-cli -d > config.ini
+
+You can then edit this file as desired, and use it when running a simulation
+
+.. code-block:: bash
+
+    ./spatial-cli filename.xml -c config.ini

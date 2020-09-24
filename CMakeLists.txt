@@ -75,6 +75,7 @@ set(BUILD_CLI
     yes
     CACHE BOOL "Build command-line version")
 if(BUILD_CLI)
+  add_subdirectory(ext/CLI11)
   add_subdirectory(cli)
 endif()
 
