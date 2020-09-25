@@ -19,6 +19,10 @@ SCENARIO("DUNE: DuneConverter",
     simulate::DuneConverter dc(s, true, opt, {}, 14);
     QStringList ini = dc.getIniFile().split("\n");
     auto line = ini.cbegin();
+    REQUIRE(*line++ == "[grid]");
+    REQUIRE(*line++ == "file = grid.msh");
+    REQUIRE(*line++ == "initial_level = 0");
+    REQUIRE(*line++ == "dimension = 2");
     while (line != ini.cend() && *line != "[model.compartments]") {
       ++line;
     }
