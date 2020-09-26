@@ -95,6 +95,7 @@ static void addGrid(IniFile &ini) {
   ini.addSection("grid");
   ini.addValue("file", "grid.msh");
   ini.addValue("initial_level", 0);
+  ini.addValue("dimension", 2);
 }
 
 static void addModel(IniFile &ini) {
