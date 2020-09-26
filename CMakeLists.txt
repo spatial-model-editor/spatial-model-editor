@@ -5,7 +5,7 @@ message(STATUS "CMake version ${CMAKE_VERSION}")
 # version number here is embedded in compiled executable
 project(
   SpatialModelEditor
-  VERSION 0.9.2
+  VERSION 0.9.3
   DESCRIPTION "Spatial Model Editor"
   LANGUAGES CXX)
 

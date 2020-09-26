@@ -7,13 +7,15 @@
 
 sme is a python interface to the [Spatial Model Editor](https://github.com/lkeegan/spatial-model-editor).
 
+It can be used to modify parameters in a model and to simulate a model.
+
 It can be installed from [PyPI](https://pypi.org/project/sme/) using pip:
 
 ```
 pip install sme
 ```
 
-Or you can [try it out][1] online using Google Colab
+You can also [try it out][1] online without installing anything using Google Colab
 (click on `Runtime -> Run all` or press `Ctrl+F9` to get started)
 
 [1]: https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb
@@ -26,7 +28,7 @@ Supported platforms and python versions:
 
   - CPython: 2.7, 3.5, 3.6, 3.7, 3.8, 3.9
 
-  - PyPy: 2.7, 3.6
+  - PyPy: 2.7, 3.6, 3.7
 
 - macOS 10.14+
 

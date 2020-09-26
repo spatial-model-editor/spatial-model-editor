@@ -1,11 +1,10 @@
 #pragma once
 
+#include "sme_reaction.hpp"
+#include "sme_species.hpp"
 #include <map>
 #include <string>
 #include <vector>
-
-#include "sme_reaction.hpp"
-#include "sme_species.hpp"
 
 namespace model {
 class Model;
@@ -17,24 +16,22 @@ class module;
 
 namespace sme {
 
-void pybindCompartment(const pybind11::module& m);
+void pybindCompartment(const pybind11::module &m);
 
 class Compartment {
- private:
-  model::Model* s;
+private:
+  model::Model *s;
   std::string id;
-  std::vector<Species> species;
-  std::vector<Reaction> reactions;
 
- public:
-  explicit Compartment(model::Model* sbmlDocWrapper,
-                       const std::string& sId);
-  const std::string& getId() const;
-  void setName(const std::string& name);
+public:
+  explicit Compartment(model::Model *sbmlDocWrapper, const std::string &sId);
   std::string getName() const;
-  std::map<std::string, Species*> getSpecies();
-  std::map<std::string, Reaction*> getReactions();
+  void setName(const std::string &name);
+  std::vector<Species> species;
+  const Species &getSpecies(const std::string &name) const;
+  std::vector<Reaction> reactions;
+  const Reaction &getReaction(const std::string &name) const;
   std::string getStr() const;
 };
 
-}  // namespace sme
+} // namespace sme

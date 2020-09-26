@@ -33,6 +33,10 @@ void Simulation::initModel(const model::Model &model) {
       std::iota(sIndices.begin(), sIndices.end(), 0);
       compartmentIds.push_back(compartmentId.toStdString());
       compartmentSpeciesIds.push_back(std::move(sIds));
+      auto &names = compartmentSpeciesNames.emplace_back();
+      for (const auto &id : compartmentSpeciesIds.back()) {
+        names.push_back(model.getSpecies().getName(id.c_str()).toStdString());
+      }
       compartmentSpeciesIndices.push_back(std::move(sIndices));
       compartmentSpeciesColors.push_back(std::move(cols));
       compartments.push_back(comp);
@@ -212,4 +216,41 @@ QImage Simulation::getConcImage(
   }
   return img;
 }
+
+std::map<std::string, std::vector<std::vector<double>>>
+Simulation::getPyConcs(std::size_t timeIndex) const {
+  using PyConc = std::vector<std::vector<double>>;
+  std::map<std::string, PyConc> pyConcs;
+  PyConc zeros = PyConc(
+      static_cast<std::size_t>(imageSize.height()),
+      std::vector<double>(static_cast<std::size_t>(imageSize.width()), 0.0));
+  // start with zero concentration everywhere for all species
+  std::vector<std::vector<PyConc>> vecPyConcs;
+  vecPyConcs.reserve(compartmentSpeciesIds.size());
+  for (const auto &speciesIds : compartmentSpeciesIds) {
+    vecPyConcs.emplace_back(speciesIds.size(), zeros);
+  }
+  // insert concentration for each pixel & species
+  for (std::size_t ci = 0; ci < compartmentSpeciesIds.size(); ++ci) {
+    const auto &pixels = compartments[ci]->getPixels();
+    const auto &conc = concentration[timeIndex][ci];
+    std::size_t nSpecies = compartmentSpeciesIds[ci].size();
+    for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
+      const QPoint &p = pixels[ix];
+      auto x = static_cast<std::size_t>(p.x());
+      auto y = static_cast<std::size_t>(p.y());
+      for (std::size_t is : compartmentSpeciesIndices[ci]) {
+        vecPyConcs[ci][is][y][x] = conc[ix * nSpecies + is];
+      }
+    }
+  }
+  // construct map from species name to PyConc
+  for (std::size_t ci = 0; ci < compartmentSpeciesIds.size(); ++ci) {
+    for (std::size_t is : compartmentSpeciesIndices[ci]) {
+      pyConcs[compartmentSpeciesNames[ci][is]] = std::move(vecPyConcs[ci][is]);
+    }
+  }
+  return pyConcs;
+}
+
 } // namespace simulate
