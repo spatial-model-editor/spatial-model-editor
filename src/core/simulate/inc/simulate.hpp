@@ -81,7 +81,8 @@ public:
   QImage
   getConcImage(std::size_t timeIndex,
                const std::vector<std::vector<std::size_t>> &speciesToDraw = {},
-               bool normaliseOverWholeSim = false) const;
+               bool normaliseOverAllTimepoints = false,
+               bool normaliseOverAllSpecies = false) const;
   // map from name to vec<vec<double>> species concentration for python bindings
   std::map<std::string, std::vector<std::vector<double>>>
   getPyConcs(std::size_t timeIndex) const;

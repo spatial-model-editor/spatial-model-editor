@@ -50,10 +50,11 @@ private:
   QStringList compartmentNames;
   std::vector<QStringList> speciesNames;
   std::vector<std::vector<std::size_t>> compartmentSpeciesToDraw;
-  bool normaliseImageIntensityOverWholeSimulation = true;
+  bool normaliseImageIntensityOverAllTimepoints{true};
+  bool normaliseImageIntensityOverAllSpecies{true};
   std::vector<bool> speciesVisible;
-  bool plotShowMinMax = true;
-  bool isSimulationRunning = false;
+  bool plotShowMinMax{true};
+  bool isSimulationRunning{false};
 
   void btnSimulate_clicked();
   void btnSliceImage_clicked();
