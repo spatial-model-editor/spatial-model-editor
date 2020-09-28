@@ -8,7 +8,7 @@
 
 namespace sme {
 
-void pybindReactionParameter(const pybind11::module& m) {
+void pybindReactionParameter(const pybind11::module &m) {
   pybind11::class_<sme::ReactionParameter>(m, "ReactionParameter")
       .def_property("name", &sme::ReactionParameter::getName,
                     &sme::ReactionParameter::setName,
@@ -17,22 +17,17 @@ void pybindReactionParameter(const pybind11::module& m) {
                     &sme::ReactionParameter::setValue,
                     "The value of this reaction parameter")
       .def("__repr__",
-           [](const sme::ReactionParameter& a) {
+           [](const sme::ReactionParameter &a) {
              return fmt::format("<sme.ReactionParameter named '{}'>",
                                 a.getName());
            })
       .def("__str__", &sme::ReactionParameter::getStr);
 }
 
-ReactionParameter::ReactionParameter(model::Model* sbmlDocWrapper,
-                                     const std::string& reactionId,
-                                     const std::string& parameterId)
+ReactionParameter::ReactionParameter(model::Model *sbmlDocWrapper,
+                                     const std::string &reactionId,
+                                     const std::string &parameterId)
     : s(sbmlDocWrapper), reacId(reactionId), paramId(parameterId) {}
-
-void ReactionParameter::setName(const std::string& name) {
-  s->getReactions().setParameterName(reacId.c_str(), paramId.c_str(),
-                                     name.c_str());
-}
 
 std::string ReactionParameter::getName() const {
   return s->getReactions()
@@ -40,12 +35,17 @@ std::string ReactionParameter::getName() const {
       .toStdString();
 }
 
-void ReactionParameter::setValue(double value) {
-  s->getReactions().setParameterValue(reacId.c_str(), paramId.c_str(), value);
+void ReactionParameter::setName(const std::string &name) {
+  s->getReactions().setParameterName(reacId.c_str(), paramId.c_str(),
+                                     name.c_str());
 }
 
 double ReactionParameter::getValue() const {
   return s->getReactions().getParameterValue(reacId.c_str(), paramId.c_str());
+}
+
+void ReactionParameter::setValue(double value) {
+  s->getReactions().setParameterValue(reacId.c_str(), paramId.c_str(), value);
 }
 
 std::string ReactionParameter::getStr() const {
@@ -55,4 +55,4 @@ std::string ReactionParameter::getStr() const {
   return str;
 }
 
-}  // namespace sme
+} // namespace sme

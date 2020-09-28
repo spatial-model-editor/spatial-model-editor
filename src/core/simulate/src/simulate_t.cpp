@@ -524,3 +524,20 @@ SCENARIO("DUNE: simulation",
     REQUIRE(duneSim.errorMessage().empty());
   }
 }
+
+SCENARIO("PyConc",
+         "[core/simulate/simulate][core/simulate][core][simulate][python]") {
+  GIVEN("ABtoC model") {
+    model::Model s;
+    if (QFile f(":/models/ABtoC.xml"); f.open(QIODevice::ReadOnly)) {
+      s.importSBMLString(f.readAll().toStdString());
+    }
+    simulate::Simulation sim(s);
+    auto pyConcs = sim.getPyConcs(0);
+    REQUIRE(pyConcs.size() == 3);
+    const auto &cA = pyConcs["A"];
+    REQUIRE(cA.size() == 100);
+    REQUIRE(cA[0].size() == 100);
+    REQUIRE(cA[0][0] == dbl_approx(0.0));
+  }
+}

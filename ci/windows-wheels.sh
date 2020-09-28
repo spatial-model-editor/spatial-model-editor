@@ -25,8 +25,13 @@ which python
 python --version
 ccache -s
 
+df -h
+rm -rf /c/Users/travis/AppData/Local/Temp/*
+df -h
+
 python -m cibuildwheel --output-dir dist
 
+df -h
 ccache -s
 
 # tail -n 1500 /c/log.txt

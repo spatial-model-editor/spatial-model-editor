@@ -14,12 +14,14 @@ target_link_libraries(sme PRIVATE core ${SME_EXTRA_EXE_LIBS})
 target_sources(
   sme
   PRIVATE sme.cpp
+          sme_common.cpp
           sme_compartment.cpp
           sme_model.cpp
           sme_module.cpp
           sme_parameter.cpp
           sme_reaction.cpp
           sme_reactionparameter.cpp
+          sme_simulationresult.cpp
           sme_species.cpp)
 
 set_target_properties(sme PROPERTIES CXX_STANDARD 17)

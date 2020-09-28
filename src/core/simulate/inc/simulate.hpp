@@ -8,6 +8,7 @@
 #include <QSize>
 #include <cstddef>
 #include <limits>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -41,6 +42,7 @@ private:
   std::vector<std::string> compartmentIds;
   // compartment->species
   std::vector<std::vector<std::string>> compartmentSpeciesIds;
+  std::vector<std::vector<std::string>> compartmentSpeciesNames;
   std::vector<std::vector<std::size_t>> compartmentSpeciesIndices;
   std::vector<std::vector<QRgb>> compartmentSpeciesColors;
   std::vector<double> timePoints;
@@ -61,7 +63,7 @@ public:
   ~Simulation();
 
   std::size_t doTimestep(double time);
-  const std::string& errorMessage() const;
+  const std::string &errorMessage() const;
   const std::vector<std::string> &getCompartmentIds() const;
   const std::vector<std::string> &
   getSpeciesIds(std::size_t compartmentIndex) const;
@@ -80,6 +82,9 @@ public:
   getConcImage(std::size_t timeIndex,
                const std::vector<std::vector<std::size_t>> &speciesToDraw = {},
                bool normaliseOverWholeSim = false) const;
+  // map from name to vec<vec<double>> species concentration for python bindings
+  std::map<std::string, std::vector<std::vector<double>>>
+  getPyConcs(std::size_t timeIndex) const;
 };
 
 } // namespace simulate

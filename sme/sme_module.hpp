@@ -7,9 +7,9 @@ class module;
 
 namespace sme {
 
-void pybindModule(pybind11::module& m);
+void pybindModule(pybind11::module &m);
 
-Model openSbmlFile(const std::string& filename);
+Model openSbmlFile(const std::string &filename);
 Model openExampleModel();
 
-}  // namespace sme
+} // namespace sme

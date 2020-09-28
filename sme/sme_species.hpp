@@ -12,22 +12,20 @@ class module;
 
 namespace sme {
 
-void pybindSpecies(const pybind11::module& m);
+void pybindSpecies(const pybind11::module &m);
 
 class Species {
- private:
-  model::Model* s;
+private:
+  model::Model *s;
   std::string id;
 
- public:
-  explicit Species(model::Model* sbmlDocWrapper,
-                   const std::string& sId);
-  const std::string& getId() const;
-  void setName(const std::string& name);
+public:
+  explicit Species(model::Model *sbmlDocWrapper, const std::string &sId);
   std::string getName() const;
-  void setDiffusionConstant(double diffusionConstant);
+  void setName(const std::string &name);
   double getDiffusionConstant() const;
+  void setDiffusionConstant(double diffusionConstant);
   std::string getStr() const;
 };
 
-}  // namespace sme
+} // namespace sme
