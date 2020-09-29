@@ -10,18 +10,21 @@ class DialogDisplayOptions;
 class DialogDisplayOptions : public QDialog {
   Q_OBJECT
 
- public:
-  explicit DialogDisplayOptions(const QStringList& compartmentNames,
-                                const std::vector<QStringList>& speciesNames,
-                                const std::vector<bool>& showSpecies,
-                                bool showMinMax, int normalisation,
-                                QWidget* parent = nullptr);
+public:
+  explicit DialogDisplayOptions(const QStringList &compartmentNames,
+                                const std::vector<QStringList> &speciesNames,
+                                const std::vector<bool> &showSpecies,
+                                bool showMinMax,
+                                bool normaliseOverAllTimepoints,
+                                bool normaliseOverAllSpecies,
+                                QWidget *parent = nullptr);
   ~DialogDisplayOptions();
   std::vector<bool> getShowSpecies() const;
   bool getShowMinMax() const;
-  int getNormalisationType() const;
+  bool getNormaliseOverAllTimepoints() const;
+  bool getNormaliseOverAllSpecies() const;
 
- private:
+private:
   std::unique_ptr<Ui::DialogDisplayOptions> ui;
   std::size_t nSpecies;
 };

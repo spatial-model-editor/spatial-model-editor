@@ -166,7 +166,7 @@ double Simulation::getLowerOrderConc(std::size_t compartmentIndex,
 QImage Simulation::getConcImage(
     std::size_t timeIndex,
     const std::vector<std::vector<std::size_t>> &speciesToDraw,
-    bool normaliseOverWholeSim) const {
+    bool normaliseOverAllTimepoints, bool normaliseOverAllSpecies) const {
   if (compartments.empty()) {
     return QImage();
   }
@@ -187,7 +187,7 @@ QImage Simulation::getConcImage(
     // max value of each species = max colour intensity
     // (with lower bound, so constant zero is still zero)
     std::vector<double> maxConcs(compartmentSpeciesIds[compIndex].size(), 1.0);
-    if (normaliseOverWholeSim) {
+    if (normaliseOverAllTimepoints) {
       maxConcs = maxConcWholeSimulation[compIndex];
     } else {
       for (std::size_t is : (*speciesIndices)[compIndex]) {
@@ -195,6 +195,10 @@ QImage Simulation::getConcImage(
         constexpr double minimumNonzeroConc{1e-30};
         maxConcs[is] = m > minimumNonzeroConc ? m : 1.0;
       }
+    }
+    if (normaliseOverAllSpecies) {
+      double maxConc{utils::max(maxConcs)};
+      std::fill(maxConcs.begin(), maxConcs.end(), maxConc);
     }
     for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
       const QPoint &p = pixels[ix];

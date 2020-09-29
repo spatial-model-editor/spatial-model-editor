@@ -182,7 +182,7 @@ void TabSimulate::reset() {
   ui->hslideTime->setMaximum(0);
   images.clear();
   time.clear();
-  normaliseImageIntensityOverWholeSimulation = true;
+  normaliseImageIntensityOverAllTimepoints = true;
   // Note: this reset is required to delete all current DUNE objects *before*
   // creating a new one, otherwise the new ones make use of the existing ones,
   // and once they are deleted it dereferences a nullptr and segfaults...
@@ -326,21 +326,24 @@ void TabSimulate::updatePlotAndImages() {
   updateSpeciesToDraw();
   // update images
   for (int iTime = 0; iTime < time.size(); ++iTime) {
-    images[iTime] = sim->getConcImage(
-        static_cast<std::size_t>(iTime), compartmentSpeciesToDraw,
-        normaliseImageIntensityOverWholeSimulation);
+    images[iTime] = sim->getConcImage(static_cast<std::size_t>(iTime),
+                                      compartmentSpeciesToDraw,
+                                      normaliseImageIntensityOverAllTimepoints,
+                                      normaliseImageIntensityOverAllSpecies);
   }
 }
 
 void TabSimulate::btnDisplayOptions_clicked() {
-  int norm = normaliseImageIntensityOverWholeSimulation ? 1 : 0;
   DialogDisplayOptions dialog(compartmentNames, speciesNames, speciesVisible,
-                              plotShowMinMax, norm);
+                              plotShowMinMax,
+                              normaliseImageIntensityOverAllTimepoints,
+                              normaliseImageIntensityOverAllSpecies);
   if (dialog.exec() == QDialog::Accepted) {
     plotShowMinMax = dialog.getShowMinMax();
     speciesVisible = dialog.getShowSpecies();
-    normaliseImageIntensityOverWholeSimulation =
-        dialog.getNormalisationType() == 1;
+    normaliseImageIntensityOverAllTimepoints =
+        dialog.getNormaliseOverAllTimepoints();
+    normaliseImageIntensityOverAllSpecies = dialog.getNormaliseOverAllSpecies();
     updatePlotAndImages();
     hslideTime_valueChanged(ui->hslideTime->value());
   }
