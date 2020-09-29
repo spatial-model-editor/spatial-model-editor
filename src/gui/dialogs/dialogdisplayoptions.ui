@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>499</width>
-    <height>585</height>
+    <width>584</width>
+    <height>633</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,7 +17,7 @@
    <bool>true</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="3" column="0">
+   <item row="6" column="0">
     <widget class="QComboBox" name="cmbNormaliseOverAllSpecies">
      <item>
       <property name="text">
@@ -31,7 +31,66 @@
      </item>
     </widget>
    </item>
+   <item row="0" column="0" colspan="3">
+    <widget class="QTreeWidget" name="listSpecies">
+     <property name="toolTip">
+      <string>Select which species should be displayed in the plot and the concentration images</string>
+     </property>
+     <column>
+      <property name="text">
+       <string>Species to display</string>
+      </property>
+     </column>
+    </widget>
+   </item>
    <item row="3" column="1">
+    <widget class="QPushButton" name="btnEditObservable">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>&amp;Edit</string>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="0" colspan="3">
+    <widget class="QCheckBox" name="chkShowMinMaxRanges">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>&amp;Show min/max species concentration ranges on plot</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="0">
+    <widget class="QPushButton" name="btnAddObservable">
+     <property name="text">
+      <string>&amp;Add</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="2">
+    <widget class="QPushButton" name="btnRemoveObservable">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>&amp;Remove</string>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="3">
+    <widget class="QLabel" name="lblNormalise">
+     <property name="text">
+      <string>Normalise concentration image colour intensity to:</string>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="1" colspan="2">
     <widget class="QComboBox" name="cmbNormaliseOverAllTimepoints">
      <item>
       <property name="text">
@@ -45,36 +104,26 @@
      </item>
     </widget>
    </item>
-   <item row="0" column="0" colspan="2">
-    <widget class="QTreeWidget" name="listSpecies">
+   <item row="2" column="0" colspan="3">
+    <widget class="QTreeWidget" name="listObservables">
+     <property name="toolTip">
+      <string>Add custom observables to display in the plot, which can be functions of the species and of time (t)</string>
+     </property>
      <column>
       <property name="text">
-       <string>Species to display</string>
+       <string>Custom observables</string>
       </property>
      </column>
     </widget>
    </item>
-   <item row="1" column="0" colspan="2">
-    <widget class="QCheckBox" name="chkShowMinMaxRanges">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="text">
-      <string>Show min/max ranges on plot</string>
+   <item row="4" column="0" colspan="3">
+    <widget class="Line" name="line">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
-   <item row="2" column="0" colspan="2">
-    <widget class="QLabel" name="lblNormalise">
-     <property name="text">
-      <string>Normalise concentration image colour intensity to:</string>
-     </property>
-    </widget>
-   </item>
-   <item row="4" column="0" colspan="2">
+   <item row="7" column="0" colspan="3">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -89,6 +138,10 @@
  <tabstops>
   <tabstop>listSpecies</tabstop>
   <tabstop>chkShowMinMaxRanges</tabstop>
+  <tabstop>listObservables</tabstop>
+  <tabstop>btnAddObservable</tabstop>
+  <tabstop>btnEditObservable</tabstop>
+  <tabstop>btnRemoveObservable</tabstop>
   <tabstop>cmbNormaliseOverAllSpecies</tabstop>
   <tabstop>cmbNormaliseOverAllTimepoints</tabstop>
  </tabstops>

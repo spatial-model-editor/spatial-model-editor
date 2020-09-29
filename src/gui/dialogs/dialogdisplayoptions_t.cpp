@@ -1,20 +1,20 @@
+#include "catch_wrapper.hpp"
+#include "dialogdisplayoptions.hpp"
+#include "plotwrapper.hpp"
+#include "qt_test_utils.hpp"
 #include <QFile>
 #include <QStringList>
 
-#include "catch_wrapper.hpp"
-#include "dialogdisplayoptions.hpp"
-#include "qt_test_utils.hpp"
-
 SCENARIO("DialogDisplayOptions",
          "[gui/dialogs/displayoptions][gui/dialogs][gui][displayoptions]") {
-  GIVEN("Existing options") {
+  GIVEN("Existing options, no observables") {
     QStringList compartments{"c1", "c2"};
     std::vector<QStringList> species;
     species.push_back({"s1_c1", "s2_c1"});
     species.push_back({"s1_c2", "s2_c2", "s3_c2"});
     std::vector<bool> showSpecies{true, false, false, true, false};
     DialogDisplayOptions dia(compartments, species, showSpecies, false, false,
-                             false);
+                             false, {});
     ModalWidgetTimer mwt;
     WHEN("user does nothing") {
       REQUIRE(dia.getShowSpecies() == showSpecies);
@@ -78,21 +78,21 @@ SCENARIO("DialogDisplayOptions",
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
     WHEN("user changes timepoint normalisation") {
-      mwt.addUserAction({"Tab", "Tab", "Down"});
+      mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Down"});
       mwt.start();
       dia.exec();
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == true);
     }
     WHEN("user changes species normalisation") {
-      mwt.addUserAction({"Tab", "Tab", "Tab", "Down"});
+      mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Down"});
       mwt.start();
       dia.exec();
       REQUIRE(dia.getNormaliseOverAllTimepoints() == true);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
     WHEN("user changes both normalisations") {
-      mwt.addUserAction({"Tab", "Tab", "Down", "Tab", "Down"});
+      mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Down", "Tab", "Down"});
       mwt.start();
       dia.exec();
       REQUIRE(dia.getNormaliseOverAllTimepoints() == true);
@@ -116,6 +116,78 @@ SCENARIO("DialogDisplayOptions",
       REQUIRE(dia.getShowSpecies() == showSpecies);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
+    }
+  }
+  GIVEN("Existing options, existing observables") {
+    QStringList compartments{"c1", "c2"};
+    std::vector<QStringList> species;
+    species.push_back({"s1_c1", "s2_c1"});
+    species.push_back({"s1_c2", "s2_c2", "s3_c2"});
+    std::vector<bool> showSpecies{true, false, false, true, false};
+    std::vector<PlotWrapperObservable> observables;
+    observables.push_back({"1", "1", true});
+    observables.push_back({"s1_c1*2", "s1_c1*2", true});
+    DialogDisplayOptions dia(compartments, species, showSpecies, false, false,
+                             false, observables);
+    ModalWidgetTimer mwt;
+    WHEN("user does nothing") {
+      REQUIRE(dia.getShowSpecies() == showSpecies);
+      REQUIRE(dia.getShowMinMax() == false);
+      REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
+      REQUIRE(dia.getNormaliseOverAllSpecies() == false);
+      REQUIRE(dia.getObservables().size() == 2);
+      REQUIRE(dia.getObservables()[0].visible == true);
+      REQUIRE(dia.getObservables()[1].visible == true);
+    }
+    WHEN("user hides first observable") {
+      mwt.addUserAction({"Tab", "Tab", "Space"});
+      mwt.start();
+      dia.exec();
+      REQUIRE(dia.getObservables().size() == 2);
+      REQUIRE(dia.getObservables()[0].visible == false);
+      REQUIRE(dia.getObservables()[1].visible == true);
+    }
+    WHEN("user hides both observables") {
+      mwt.addUserAction({"Tab", "Tab", "Space", "Down", "Space"});
+      mwt.start();
+      dia.exec();
+      REQUIRE(dia.getObservables().size() == 2);
+      REQUIRE(dia.getObservables()[0].visible == false);
+      REQUIRE(dia.getObservables()[1].visible == false);
+    }
+    WHEN("user adds new observable") {
+      ModalWidgetTimer mwt2;
+      mwt2.addUserAction({"1", "+", "2"});
+      mwt.addUserAction({"Tab", "Tab", "Tab", "Space"}, true, &mwt2);
+      mwt.start();
+      dia.exec();
+      REQUIRE(dia.getObservables().size() == 3);
+      REQUIRE(dia.getObservables()[2].name == "1+2");
+      REQUIRE(dia.getObservables()[2].expression == "1+2");
+      REQUIRE(dia.getObservables()[2].visible == true);
+    }
+    WHEN("user edits observable") {
+      ModalWidgetTimer mwt2;
+      mwt2.addUserAction({"Right", "-", "2"});
+      mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Space"}, true, &mwt2);
+      mwt.start();
+      dia.exec();
+      REQUIRE(dia.getObservables().size() == 2);
+      REQUIRE(dia.getObservables()[0].name == "1-2");
+      REQUIRE(dia.getObservables()[0].expression == "1-2");
+      REQUIRE(dia.getObservables()[0].visible == true);
+      REQUIRE(dia.getObservables()[1].name == "s1_c1*2");
+      REQUIRE(dia.getObservables()[1].expression == "s1_c1*2");
+      REQUIRE(dia.getObservables()[1].visible == true);
+    }
+    WHEN("user removes observable") {
+      mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Space"});
+      mwt.start();
+      dia.exec();
+      REQUIRE(dia.getObservables().size() == 1);
+      REQUIRE(dia.getObservables()[0].name == "s1_c1*2");
+      REQUIRE(dia.getObservables()[0].expression == "s1_c1*2");
+      REQUIRE(dia.getObservables()[0].visible == true);
     }
   }
 }

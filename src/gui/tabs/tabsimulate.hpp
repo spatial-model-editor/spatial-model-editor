@@ -1,11 +1,10 @@
 // TabSimulate
 
 #pragma once
-
+#include "plotwrapper.hpp"
+#include "simulate.hpp"
 #include <QWidget>
 #include <memory>
-
-#include "simulate.hpp"
 
 namespace Ui {
 class TabSimulate;
@@ -18,6 +17,7 @@ class QLabelMouseTracker;
 namespace model {
 class Model;
 }
+class PlotWrapper;
 
 class TabSimulate : public QWidget {
   Q_OBJECT
@@ -32,16 +32,12 @@ public:
   void reset();
   simulate::Options getOptions() const;
   void setOptions(const simulate::Options &options);
-  void setMaxThreads(std::size_t maxThreads);
-  std::size_t getMaxThreads() const;
 
 private:
   std::unique_ptr<Ui::TabSimulate> ui;
   model::Model &sbmlDoc;
   QLabelMouseTracker *lblGeometry;
-  QCustomPlot *pltPlot;
-  QCPTextElement *pltTitle;
-  QCPItemStraightLine *pltTimeLine;
+  std::unique_ptr<PlotWrapper> plt;
   std::unique_ptr<simulate::Simulation> sim;
   simulate::SimulatorType simType{simulate::SimulatorType::DUNE};
   simulate::Options simOptions;
@@ -53,6 +49,8 @@ private:
   bool normaliseImageIntensityOverAllTimepoints{true};
   bool normaliseImageIntensityOverAllSpecies{true};
   std::vector<bool> speciesVisible;
+  std::vector<PlotWrapperObservable> observables;
+  std::vector<bool> obsVisible;
   bool plotShowMinMax{true};
   bool isSimulationRunning{false};
 
