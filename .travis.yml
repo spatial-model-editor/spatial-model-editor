@@ -218,6 +218,8 @@ jobs:
         - DEPLOY_FILE_CLI="spatial-cli"
         - STATIC_LIBS_OS="linux"
         - SUDOCMD='sudo'
+      cache:
+        ccache: true
       addons:
         apt:
           sources:
@@ -270,8 +272,10 @@ jobs:
         - export SME_EXTRA_EXE_LIBS="-static-libgcc;-static-libstdc++"
         - mkdir build
         - cd build
-        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_WITH_TBB=ON
+        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_WITH_TBB=ON
+        - ccache --zero-stats
         - make -j2 VERBOSE=1
+        - ccache --show-stats
         # run c++ tests
         - ./test/tests -as > tests.txt 2>&1
         - tail -n 100 tests.txt
@@ -299,13 +303,21 @@ jobs:
         - DEPLOY_FILE_GUI="spatial-model-editor.dmg"
         - DEPLOY_FILE_CLI="spatial-cli.dmg"
         - SUDOCMD='sudo'
+      addons:
+        homebrew:
+          packages:
+            - ccache
+      cache:
+        ccache: true
       install:
         - python3 -m pip install --user nose
       script:
         - mkdir build
         - cd build
-        - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/local/bin/python3 -DSME_WITH_TBB=ON -DSME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM=ON
+        - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/local/bin/python3 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSME_WITH_TBB=ON -DSME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM=ON
+        - ccache --zero-stats
         - make -j2 VERBOSE=1
+        - ccache --show-stats
         # run non-gui c++ tests
         - ./test/tests -as "~[gui]" > tests.txt 2>&1
         - tail -n 100 tests.txt
@@ -421,7 +433,6 @@ jobs:
         homebrew:
           packages:
             - ccache
-#          update: true
       env:
         - STATIC_LIBS_OS="osx"
         - SUDOCMD='sudo'

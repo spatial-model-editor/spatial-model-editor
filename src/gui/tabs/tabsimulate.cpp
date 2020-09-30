@@ -8,37 +8,25 @@
 #include "model.hpp"
 #include "qlabelmousetracker.hpp"
 #include "ui_tabsimulate.h"
+#include "utils.hpp"
 #include <QElapsedTimer>
 #include <QMessageBox>
 #include <algorithm>
-#include <qcustomplot.h>
 
 TabSimulate::TabSimulate(model::Model &doc, QLabelMouseTracker *mouseTracker,
                          QWidget *parent)
     : QWidget(parent), ui{std::make_unique<Ui::TabSimulate>()}, sbmlDoc(doc),
-      lblGeometry(mouseTracker) {
+      lblGeometry(mouseTracker), plt{std::make_unique<PlotWrapper>(
+                                     "Average Concentration", this)} {
   ui->setupUi(this);
-  pltPlot = new QCustomPlot(this);
-  pltTitle = new QCPTextElement(
-      pltPlot, "Average Concentration",
-      QFont(font().family(), font().pointSize() + 4, QFont::Bold));
-  pltPlot->setInteraction(QCP::iRangeDrag, true);
-  pltPlot->setInteraction(QCP::iRangeZoom, true);
-  pltPlot->setInteraction(QCP::iSelectPlottables, false);
-  pltPlot->legend->setVisible(true);
-  pltTimeLine = new QCPItemStraightLine(pltPlot);
-  pltTimeLine->setVisible(false);
-  pltPlot->setObjectName(QString::fromUtf8("pltPlot"));
-  pltPlot->plotLayout()->insertRow(0);
-  pltPlot->plotLayout()->addElement(0, 0, pltTitle);
-
-  ui->gridSimulate->addWidget(pltPlot, 1, 0, 1, 8);
+  ui->gridSimulate->addWidget(plt->plot, 1, 0, 1, 8);
 
   connect(ui->btnSimulate, &QPushButton::clicked, this,
           &TabSimulate::btnSimulate_clicked);
   connect(ui->btnResetSimulation, &QPushButton::clicked, this,
           &TabSimulate::loadModelData);
-  connect(pltPlot, &QCustomPlot::mousePress, this, &TabSimulate::graphClicked);
+  connect(plt->plot, &QCustomPlot::mousePress, this,
+          &TabSimulate::graphClicked);
   connect(ui->hslideTime, &QSlider::valueChanged, this,
           &TabSimulate::hslideTime_valueChanged);
   connect(ui->btnStopSimulation, &QPushButton::clicked, this,
@@ -63,7 +51,6 @@ void TabSimulate::loadModelData() {
     ui->btnSimulate->setEnabled(false);
     return;
   }
-  sim.reset();
   if (simType == simulate::SimulatorType::DUNE &&
       (sbmlDoc.getGeometry().getMesh() == nullptr ||
        !sbmlDoc.getGeometry().getMesh()->isValid())) {
@@ -108,35 +95,18 @@ void TabSimulate::loadModelData() {
     }
   }
   // setup plot
-  pltPlot->clearGraphs();
-  pltPlot->xAxis->setLabel(
+  plt->plot->xAxis->setLabel(
       QString("time (%1)").arg(sbmlDoc.getUnits().getTime().name));
-  pltPlot->yAxis->setLabel(
+  plt->plot->yAxis->setLabel(
       QString("concentration (%1)").arg(sbmlDoc.getUnits().getConcentration()));
-  pltPlot->xAxis->setRange(0, ui->txtSimLength->text().toDouble());
-  // graphs
+  plt->plot->xAxis->setRange(0, ui->txtSimLength->text().toDouble());
+  // add lines
   for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
     for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
       QColor col = sim->getSpeciesColors(ic)[is];
       QString name =
           sbmlDoc.getSpecies().getName(sim->getSpeciesIds(ic)[is].c_str());
-      // avg
-      auto *av = pltPlot->addGraph();
-      av->setPen(col);
-      av->setName(QString("%1 (average)").arg(name));
-      av->setScatterStyle(
-          QCPScatterStyle(QCPScatterStyle::ScatterShape::ssDisc));
-      // min
-      auto *min = pltPlot->addGraph();
-      col.setAlpha(30);
-      min->setPen(col);
-      min->setBrush(QBrush(col));
-      min->setName(QString("%1 (min/max range)").arg(name));
-      // max
-      auto *max = pltPlot->addGraph();
-      max->setPen(col);
-      min->setChannelFillGraph(max);
-      pltPlot->legend->removeItem(pltPlot->legend->itemCount() - 1);
+      plt->addAvMinMaxLine(name, col);
     }
   }
 
@@ -146,9 +116,7 @@ void TabSimulate::loadModelData() {
   for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
     for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
       auto conc = sim->getAvgMinMax(0, ic, is);
-      pltPlot->graph(3 * speciesIndex)->setData({0}, {conc.avg}, true);
-      pltPlot->graph(3 * speciesIndex + 1)->setData({0}, {conc.min}, true);
-      pltPlot->graph(3 * speciesIndex + 2)->setData({0}, {conc.max}, true);
+      plt->addAvMinMaxPoint(speciesIndex, 0.0, conc.avg, conc.min, conc.max);
       ++speciesIndex;
     }
   }
@@ -176,13 +144,13 @@ void TabSimulate::useDune(bool enable) {
 }
 
 void TabSimulate::reset() {
-  pltPlot->clearGraphs();
-  pltPlot->replot();
+  plt->clear();
   ui->hslideTime->setMinimum(0);
   ui->hslideTime->setMaximum(0);
   images.clear();
   time.clear();
   normaliseImageIntensityOverAllTimepoints = true;
+  normaliseImageIntensityOverAllSpecies = true;
   // Note: this reset is required to delete all current DUNE objects *before*
   // creating a new one, otherwise the new ones make use of the existing ones,
   // and once they are deleted it dereferences a nullptr and segfaults...
@@ -238,29 +206,22 @@ void TabSimulate::btnSimulate_clicked() {
       for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
         auto conc = sim->getAvgMinMax(static_cast<std::size_t>(time.size() - 1),
                                       ic, is);
-        pltPlot->graph(3 * speciesIndex)
-            ->addData({time.back()}, {conc.avg}, true);
-        pltPlot->graph(3 * speciesIndex + 1)
-            ->addData({time.back()}, {conc.min}, true);
-        pltPlot->graph(3 * speciesIndex + 2)
-            ->addData({time.back()}, {conc.max}, true);
+        plt->addAvMinMaxPoint(speciesIndex, time.back(), conc.avg, conc.min,
+                              conc.max);
         ++speciesIndex;
       }
     }
     lblGeometry->setImage(images.back());
     // rescale & replot plot
     if (plotDueForRefresh) {
-      pltPlot->rescaleAxes(true);
-      pltPlot->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
+      plt->plot->rescaleAxes(true);
+      plt->plot->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
       plotDueForRefresh = false;
     }
   }
   plotRefreshTimer.stop();
 
-  // add vertical at current time point
-  pltTimeLine->setVisible(true);
-  pltTimeLine->point1->setCoords(time.back(), 0);
-  pltTimeLine->point2->setCoords(time.back(), 1);
+  plt->setVerticalLine(time.back());
 
   updatePlotAndImages();
 
@@ -305,24 +266,14 @@ void TabSimulate::updateSpeciesToDraw() {
 }
 
 void TabSimulate::updatePlotAndImages() {
-  // update plot
-  int iSpecies = 0;
-  pltPlot->legend->clearItems();
-  for (bool visible : speciesVisible) {
-    bool minMaxVisible = visible && plotShowMinMax;
-    pltPlot->graph(3 * iSpecies)->setVisible(visible);
-    if (visible) {
-      pltPlot->graph(3 * iSpecies)->addToLegend();
-    }
-    pltPlot->graph(3 * iSpecies + 1)->setVisible(minMaxVisible);
-    pltPlot->graph(3 * iSpecies + 2)->setVisible(minMaxVisible);
-    if (minMaxVisible) {
-      pltPlot->graph(3 * iSpecies + 1)->addToLegend();
-    }
-    ++iSpecies;
+
+  plt->clearObservableLines();
+  std::size_t colorIndex{speciesVisible.size()};
+  for (const auto &obs : observables) {
+    plt->addObservableLine(obs, utils::indexedColours()[colorIndex]);
+    ++colorIndex;
   }
-  pltPlot->rescaleAxes(true);
-  pltPlot->replot();
+  plt->update(speciesVisible, plotShowMinMax);
   updateSpeciesToDraw();
   // update images
   for (int iTime = 0; iTime < time.size(); ++iTime) {
@@ -334,45 +285,40 @@ void TabSimulate::updatePlotAndImages() {
 }
 
 void TabSimulate::btnDisplayOptions_clicked() {
-  DialogDisplayOptions dialog(compartmentNames, speciesNames, speciesVisible,
-                              plotShowMinMax,
-                              normaliseImageIntensityOverAllTimepoints,
-                              normaliseImageIntensityOverAllSpecies);
+  DialogDisplayOptions dialog(
+      compartmentNames, speciesNames, speciesVisible, plotShowMinMax,
+      normaliseImageIntensityOverAllTimepoints,
+      normaliseImageIntensityOverAllSpecies, observables);
   if (dialog.exec() == QDialog::Accepted) {
     plotShowMinMax = dialog.getShowMinMax();
     speciesVisible = dialog.getShowSpecies();
     normaliseImageIntensityOverAllTimepoints =
         dialog.getNormaliseOverAllTimepoints();
     normaliseImageIntensityOverAllSpecies = dialog.getNormaliseOverAllSpecies();
+    observables = dialog.getObservables();
     updatePlotAndImages();
     hslideTime_valueChanged(ui->hslideTime->value());
   }
 }
 
 void TabSimulate::graphClicked(const QMouseEvent *event) {
-  if (pltPlot->graphCount() == 0) {
+  if (plt->plot->graphCount() == 0) {
     return;
   }
-  double key;
-  double val;
-  pltPlot->graph(0)->pixelsToCoords(static_cast<double>(event->x()),
-                                    static_cast<double>(event->y()), key, val);
-  int max = ui->hslideTime->maximum();
-  int nearest = static_cast<int>(0.5 + max * key / time.back());
-  ui->hslideTime->setValue(std::clamp(nearest, 0, max));
+  double t = plt->xValue(event);
+  int maxTimeIndex = ui->hslideTime->maximum();
+  auto nearestTimeIndex =
+      static_cast<int>(0.5 + maxTimeIndex * t / time.back());
+  ui->hslideTime->setValue(std::clamp(nearestTimeIndex, 0, maxTimeIndex));
 }
 
 void TabSimulate::hslideTime_valueChanged(int value) {
-  if (images.size() > value) {
-    lblGeometry->setImage(images[value]);
-    pltTimeLine->point1->setCoords(time[value], 0);
-    pltTimeLine->point2->setCoords(time[value], 1);
-    if (!pltPlot->xAxis->range().contains(time[value])) {
-      pltPlot->rescaleAxes(true);
-    }
-    pltPlot->replot();
-    ui->lblCurrentTime->setText(QString("%1%2")
-                                    .arg(time[value])
-                                    .arg(sbmlDoc.getUnits().getTime().name));
+  if (images.size() <= value) {
+    return;
   }
+  lblGeometry->setImage(images[value]);
+  plt->setVerticalLine(time[value]);
+  plt->plot->replot();
+  ui->lblCurrentTime->setText(
+      QString("%1%2").arg(time[value]).arg(sbmlDoc.getUnits().getTime().name));
 }
