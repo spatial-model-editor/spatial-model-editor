@@ -56,7 +56,7 @@ private:
 
   void btnSimulate_clicked();
   void btnSliceImage_clicked();
-  void btnSaveImage_clicked();
+  void btnExport_clicked();
   void updateSpeciesToDraw();
   void updatePlotAndImages();
   void btnDisplayOptions_clicked();

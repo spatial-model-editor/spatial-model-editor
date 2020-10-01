@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DialogImageSave</class>
- <widget class="QDialog" name="DialogImageSave">
+ <class>DialogExport</class>
+ <widget class="QDialog" name="DialogExport">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>357</width>
-    <height>147</height>
+    <width>527</width>
+    <height>282</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Save Simulation Images</string>
+   <string>Export simulation results</string>
   </property>
   <property name="modal">
    <bool>true</bool>
@@ -25,7 +25,7 @@
      <item row="1" column="0">
       <widget class="QRadioButton" name="radSingleTimepoint">
        <property name="text">
-        <string>&amp;Single timepoint</string>
+        <string>Concentration image: &amp;single timepoint</string>
        </property>
        <property name="checked">
         <bool>true</bool>
@@ -35,7 +35,14 @@
      <item row="2" column="0">
       <widget class="QRadioButton" name="radAllTimepoints">
        <property name="text">
-        <string>&amp;All timepoints</string>
+        <string>Concentration images : &amp;all timepoints</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QRadioButton" name="radCSV">
+       <property name="text">
+        <string>CSV text file</string>
        </property>
       </widget>
      </item>

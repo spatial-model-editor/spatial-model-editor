@@ -25,7 +25,7 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   auto *btnSimulate = tab.findChild<QPushButton *>("btnSimulate");
   auto *btnResetSimulation = tab.findChild<QPushButton *>("btnResetSimulation");
   auto *hslideTime = tab.findChild<QSlider *>("hslideTime");
-  auto *btnSaveImage = tab.findChild<QPushButton *>("btnSaveImage");
+  auto *btnExport = tab.findChild<QPushButton *>("btnExport");
   auto *btnDisplayOptions = tab.findChild<QPushButton *>("btnDisplayOptions");
 
   if (QFile f(":/models/ABtoC.xml"); f.open(QIODevice::ReadOnly)) {
@@ -68,6 +68,6 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   // click save image & cancel
   mwt.addUserAction({"Esc"});
   mwt.start();
-  sendMouseClick(btnSaveImage);
-  REQUIRE(mwt.getResult() == "Save Simulation Images");
+  sendMouseClick(btnExport);
+  REQUIRE(mwt.getResult() == "Export simulation results");
 }

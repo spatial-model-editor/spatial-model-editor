@@ -26,12 +26,6 @@ namespace simulate {
 class BaseSim;
 enum class SimulatorType { DUNE, Pixel };
 
-struct AvgMinMax {
-  double avg = 0;
-  double min = std::numeric_limits<double>::max();
-  double max = 0;
-};
-
 class Simulation {
 private:
   std::unique_ptr<BaseSim> simulator;
