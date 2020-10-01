@@ -447,8 +447,8 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
     for (std::size_t i = 0; i < iniFiles.size(); ++i) {
       SPDLOG_TRACE("Exporting dune ini file: '{}'",
                    iniFilenames[i].toStdString());
-      if (QFile f(iniFilenames[i]);
-          f.open(QIODevice::ReadWrite | QIODevice::Text)) {
+      if (QFile f(iniFilenames[i]); f.open(
+              QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text)) {
         f.write(iniFiles[i].toUtf8());
       } else {
         SPDLOG_ERROR("Failed to export ini file '{}'",
@@ -458,7 +458,8 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
     // export gmsh file `grid.msh` in the same dir
     QString gmshFilename = QDir(iniFileDir).filePath("grid.msh");
     SPDLOG_TRACE("Exporting gmsh file: '{}'", gmshFilename.toStdString());
-    if (QFile f(gmshFilename); f.open(QIODevice::ReadWrite | QIODevice::Text)) {
+    if (QFile f(gmshFilename);
+        f.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text)) {
       f.write(mesh->getGMSH(gmshCompIndices).toUtf8());
     } else {
       SPDLOG_ERROR("Failed to export gmsh file '{}'",
