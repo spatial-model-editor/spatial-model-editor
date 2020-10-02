@@ -46,12 +46,15 @@ void PlotWrapper::addAvMinMaxLine(const QString &name, QColor col) {
   concs.emplace_back();
 }
 
-void PlotWrapper::addAvMinMaxPoint(int lineIndex, double time, double avg,
-                                   double min, double max) {
-  plot->graph(3 * lineIndex)->addData({time}, {avg}, true);
-  plot->graph(3 * lineIndex + 1)->addData({time}, {min}, true);
-  plot->graph(3 * lineIndex + 2)->addData({time}, {max}, true);
-  concs[static_cast<std::size_t>(lineIndex)].push_back(avg);
+void PlotWrapper::addAvMinMaxPoint(int lineIndex, double time,
+                                   const simulate::AvgMinMax &concentration) {
+  plot->graph(3 * lineIndex)->addData({time}, {concentration.avg}, true);
+  plot->graph(3 * lineIndex + 1)->addData({time}, {concentration.min}, true);
+  plot->graph(3 * lineIndex + 2)->addData({time}, {concentration.max}, true);
+  concs[static_cast<std::size_t>(lineIndex)].push_back(concentration);
+  if (plot->graph(0)->dataCount() > times.size()) {
+    times.push_back(time);
+  }
 }
 
 void PlotWrapper::addObservableLine(
@@ -74,17 +77,13 @@ void PlotWrapper::addObservableLine(
   p->setPen(col);
   p->setName(plotWrapperObservable.name);
   p->setScatterStyle(QCPScatterStyle(QCPScatterStyle::ScatterShape::ssDisc));
-  QVector<double> times;
-  for (const auto &d : *(plot->graph(0)->data().get())) {
-    times.push_back(d.key);
-  }
   QVector<double> obs;
   obs.reserve(static_cast<int>(concs.size()));
   double res;
   std::vector<double> c(concs.size() + 1, 0.0);
   for (std::size_t it = 0; it < static_cast<std::size_t>(times.size()); ++it) {
     for (std::size_t ic = 0; ic < species.size(); ++ic) {
-      c[ic] = concs[ic][it];
+      c[ic] = concs[ic][it].avg;
     }
     c.back() = times[static_cast<int>(it)];
     sym.eval(&res, c.data());
@@ -153,6 +152,7 @@ void PlotWrapper::clear() {
   observables.clear();
   species.clear();
   concs.clear();
+  times.clear();
 }
 
 double PlotWrapper::xValue(const QMouseEvent *event) const {
@@ -162,4 +162,38 @@ double PlotWrapper::xValue(const QMouseEvent *event) const {
   double val;
   plot->graph(0)->pixelsToCoords(x, y, key, val);
   return key;
+}
+
+const QVector<double> &PlotWrapper::getTimepoints() const { return times; }
+
+static QString makeCSVHeader(const std::vector<std::string> &species) {
+  QString csv;
+  if (species.empty()) {
+    return {};
+  }
+  std::string header("time, ");
+  for (const auto &spec : species) {
+    header.append(fmt::format("{0} (avg), {0} (min), {0} (max), ", spec));
+  }
+  csv.append(header.c_str());
+  csv.chop(2);
+  csv.append("\n");
+  return csv;
+}
+
+QString PlotWrapper::getDataAsCSV() const {
+  auto csv{makeCSVHeader(species)};
+  for (std::size_t it = 0; it < static_cast<std::size_t>(times.size()); ++it) {
+    double t = times[static_cast<int>(it)];
+    std::string row{fmt::format("{:.14e}, ", t)};
+    for (std::size_t ic = 0; ic < species.size(); ++ic) {
+      const auto &c = concs[ic][it];
+      row.append(
+          fmt::format("{:.14e}, {:.14e}, {:.14e}, ", c.avg, c.min, c.max));
+    }
+    csv.append(row.c_str());
+    csv.chop(2);
+    csv.append("\n");
+  }
+  return csv;
 }

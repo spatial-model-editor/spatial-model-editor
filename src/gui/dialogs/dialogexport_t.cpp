@@ -1,10 +1,10 @@
 #include "catch_wrapper.hpp"
-#include "dialogimagesave.hpp"
+#include "dialogexport.hpp"
+#include "plotwrapper.hpp"
 #include "qt_test_utils.hpp"
 #include <QFile>
 
-SCENARIO("DialogImageSave",
-         "[gui/dialogs/imagesave][gui/dialogs][gui][imagesave]") {
+SCENARIO("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
   GIVEN("5 100x50 images") {
     QImage imgGeometry(100, 50, QImage::Format_ARGB32_Premultiplied);
     QVector<QImage> imgs(5,
@@ -19,8 +19,15 @@ SCENARIO("DialogImageSave",
     imgs[2].fill(col2);
     imgs[3].fill(col3);
     imgs[4].fill(col4);
-    QVector<double> time{0, 1, 2, 3, 4};
-    DialogImageSave dia(imgs, time, 2);
+    QWidget plotParent;
+    PlotWrapper plot("title", &plotParent);
+    plot.addAvMinMaxLine("l1", QColor(12, 12, 12));
+    plot.addAvMinMaxPoint(0, 0.0, {1.0, 0.99, 1.11});
+    plot.addAvMinMaxPoint(0, 1.0, {1.0, 1.0, 1.0});
+    plot.addAvMinMaxPoint(0, 2.0, {1.0, 1.0, 1.0});
+    plot.addAvMinMaxPoint(0, 3.0, {1.0, 1.0, 1.0});
+    plot.addAvMinMaxPoint(0, 4.0, {1.0, 1.0, 1.0});
+    DialogExport dia(imgs, &plot, 2);
     ModalWidgetTimer mwt;
     WHEN("user clicks save image, then cancel") {
       ModalWidgetTimer mwt2;
@@ -74,6 +81,25 @@ SCENARIO("DialogImageSave",
       QImage img4("img4.png");
       REQUIRE(img4.size() == imgs[4].size());
       REQUIRE(img4.pixel(0, 0) == col4);
+    }
+    WHEN("user clicks on csv, types xyz, then enter") {
+      ModalWidgetTimer mwt2;
+      mwt.addUserAction({"Down", "Down", "Enter"}, true, &mwt2);
+      mwt2.addUserAction({"x", "y", "z"});
+      mwt.start();
+      dia.exec();
+      REQUIRE(mwt2.getResult() == "QFileDialog::AcceptSave");
+      QFile f("xyz.txt");
+      f.open(QIODevice::ReadOnly | QIODevice::Text);
+      QTextStream in(&f);
+      QStringList lines;
+      while (!in.atEnd()) {
+        lines.push_back(in.readLine());
+      }
+      REQUIRE(lines.size() == 6);
+      REQUIRE(lines[0] == "time, l1 (avg), l1 (min), l1 (max)");
+      REQUIRE(lines[1] == "0.00000000000000e+00, 1.00000000000000e+00, "
+                          "9.90000000000000e-01, 1.11000000000000e+00");
     }
   }
 }

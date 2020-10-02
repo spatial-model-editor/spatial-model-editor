@@ -1,6 +1,6 @@
 #include "tabsimulate.hpp"
 #include "dialogdisplayoptions.hpp"
-#include "dialogimagesave.hpp"
+#include "dialogexport.hpp"
 #include "dialogimageslice.hpp"
 #include "guiutils.hpp"
 #include "logger.hpp"
@@ -33,8 +33,8 @@ TabSimulate::TabSimulate(model::Model &doc, QLabelMouseTracker *mouseTracker,
           &TabSimulate::stopSimulation);
   connect(ui->btnSliceImage, &QPushButton::clicked, this,
           &TabSimulate::btnSliceImage_clicked);
-  connect(ui->btnSaveImage, &QPushButton::clicked, this,
-          &TabSimulate::btnSaveImage_clicked);
+  connect(ui->btnExport, &QPushButton::clicked, this,
+          &TabSimulate::btnExport_clicked);
   connect(ui->btnDisplayOptions, &QPushButton::clicked, this,
           &TabSimulate::btnDisplayOptions_clicked);
 
@@ -116,7 +116,7 @@ void TabSimulate::loadModelData() {
   for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
     for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
       auto conc = sim->getAvgMinMax(0, ic, is);
-      plt->addAvMinMaxPoint(speciesIndex, 0.0, conc.avg, conc.min, conc.max);
+      plt->addAvMinMaxPoint(speciesIndex, 0.0, conc);
       ++speciesIndex;
     }
   }
@@ -206,8 +206,7 @@ void TabSimulate::btnSimulate_clicked() {
       for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
         auto conc = sim->getAvgMinMax(static_cast<std::size_t>(time.size() - 1),
                                       ic, is);
-        plt->addAvMinMaxPoint(speciesIndex, time.back(), conc.avg, conc.min,
-                              conc.max);
+        plt->addAvMinMaxPoint(speciesIndex, time.back(), conc);
         ++speciesIndex;
       }
     }
@@ -243,10 +242,10 @@ void TabSimulate::btnSliceImage_clicked() {
   }
 }
 
-void TabSimulate::btnSaveImage_clicked() {
-  DialogImageSave dialog(images, time, ui->hslideTime->value());
+void TabSimulate::btnExport_clicked() {
+  DialogExport dialog(images, plt.get(), ui->hslideTime->value());
   if (dialog.exec() == QDialog::Accepted) {
-    SPDLOG_DEBUG("todo: save current save image settings");
+    SPDLOG_DEBUG("todo: save current export settings");
   }
 }
 

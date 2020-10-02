@@ -24,13 +24,13 @@ SCENARIO("PlotWrapper",
   }
 
   // add two data points
-  p.addAvMinMaxPoint(0, 0.0, 1.0, 0.95, 1.05);
-  p.addAvMinMaxPoint(1, 0.0, 1.0, 0.95, 1.05);
+  p.addAvMinMaxPoint(0, 0.0, {1.0, 0.95, 1.05});
+  p.addAvMinMaxPoint(1, 0.0, {2.0, 1.95, 2.05});
   for (int i = 0; i < 6; ++i) {
     REQUIRE(p.plot->graph(i)->dataCount() == 1);
   }
-  p.addAvMinMaxPoint(0, 1.0, 1.1, 0.99, 1.15);
-  p.addAvMinMaxPoint(1, 1.0, 0.9, 0.85, 1.01);
+  p.addAvMinMaxPoint(0, 1.0, {1.1, 0.99, 1.15});
+  p.addAvMinMaxPoint(1, 1.0, {0.9, 0.85, 1.01});
   for (int i = 0; i < 6; ++i) {
     REQUIRE(p.plot->graph(i)->dataCount() == 2);
   }
@@ -79,6 +79,25 @@ SCENARIO("PlotWrapper",
     REQUIRE(p.plot->graph(i)->visible() == true);
   }
 
+  // get timepoints
+  auto times = p.getTimepoints();
+  REQUIRE(times.size() == 2);
+
+  // export CSV
+  auto csv = p.getDataAsCSV().split("\n");
+  REQUIRE(csv.size() == 4);
+  REQUIRE(csv[0] ==
+          "time, s1 (avg), s1 (min), s1 (max), s2 (avg), s2 (min), s2 (max)");
+  REQUIRE(csv[1] ==
+          "0.00000000000000e+00, 1.00000000000000e+00, 9.50000000000000e-01, "
+          "1.05000000000000e+00, 2.00000000000000e+00, 1.95000000000000e+00, "
+          "2.05000000000000e+00");
+  REQUIRE(csv[2] ==
+          "1.00000000000000e+00, 1.10000000000000e+00, 9.90000000000000e-01, "
+          "1.15000000000000e+00, 9.00000000000000e-01, 8.50000000000000e-01, "
+          "1.01000000000000e+00");
+  REQUIRE(csv[3] == "");
+
   // reset custom observables
   p.clearObservableLines();
   REQUIRE(p.plot->graphCount() == 6);
@@ -86,4 +105,5 @@ SCENARIO("PlotWrapper",
   // reset everything
   p.clear();
   REQUIRE(p.plot->graphCount() == 0);
+  REQUIRE(p.getTimepoints().size() == 0);
 }

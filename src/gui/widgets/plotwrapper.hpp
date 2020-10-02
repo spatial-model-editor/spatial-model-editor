@@ -1,4 +1,5 @@
 #pragma once
+#include "simulate_options.hpp"
 #include <qcustomplot.h>
 
 class QWidget;
@@ -15,14 +16,15 @@ private:
   QCPTextElement *title;
   std::vector<std::string> species;
   std::vector<PlotWrapperObservable> observables;
-  std::vector<std::vector<double>> concs;
+  std::vector<std::vector<simulate::AvgMinMax>> concs;
+  QVector<double> times;
 
 public:
   QCustomPlot *plot;
   explicit PlotWrapper(const QString &plotTitle, QWidget *parent = nullptr);
   void addAvMinMaxLine(const QString &name, QColor col);
-  void addAvMinMaxPoint(int lineIndex, double time, double avg, double min,
-                        double max);
+  void addAvMinMaxPoint(int lineIndex, double time,
+                        const simulate::AvgMinMax &concentration);
   void addObservableLine(const PlotWrapperObservable &plotWrapperObservable,
                          QColor col);
   void clearObservableLines();
@@ -30,4 +32,6 @@ public:
   void update(const std::vector<bool> &speciesVisible, bool showMinMax);
   void clear();
   double xValue(const QMouseEvent *event) const;
+  const QVector<double> &getTimepoints() const;
+  QString getDataAsCSV() const;
 };

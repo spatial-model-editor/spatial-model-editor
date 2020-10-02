@@ -43,4 +43,10 @@ struct Options {
   PixelOptions pixel;
 };
 
+struct AvgMinMax {
+  double avg = 0;
+  double min = std::numeric_limits<double>::max();
+  double max = 0;
+};
+
 } // namespace simulate
