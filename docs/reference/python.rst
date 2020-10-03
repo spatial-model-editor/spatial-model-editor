@@ -17,7 +17,7 @@ Once it is installed, you should be able to import the ``sme`` module and load t
   :emphasize-lines: 5
 
     $ python
-    Python 3.8.5 (default, Aug 13 2020, 08:28:54)
+    Python 3.8.6 (default, Sep 28 2020, 09:32:50)
     [GCC 10.0.1 20200416 (experimental) [master revision 3c3f12e2a76:dcee354ce56:44 on linux
     Type "help", "copyright", "credits" or "license" for more information.
     >>> import sme
@@ -34,4 +34,6 @@ Once it is installed, you should be able to import the ``sme`` module and load t
 
     There is an online `colab notebook <https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb>`_ where you can try it out in your browser without installing anything on your computer.
 
-As shown in the `getting started notebook <https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb>`_, ``sme`` allows you to import an existing model, change the value of parameters in the model, simulate the model and produce images of the species concentrations from the simulation. To get help on an object, its methods and properties, use the help function, e.g. ``help(sme.Model)``.
+As shown in the `getting started notebook <https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb>`_, ``sme`` allows you to import an existing model, change the value of parameters in the model, simulate the model and produce images of the species concentrations from the simulation.
+
+To get help on an object, its methods and properties, use the help function, e.g. ``help(sme.Model)``.
