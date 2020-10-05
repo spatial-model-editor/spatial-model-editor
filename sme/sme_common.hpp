@@ -9,11 +9,12 @@
 
 namespace sme {
 
-using PyImage = std::vector<std::vector<std::vector<int>>>;
+using PyImageRgb = std::vector<std::vector<std::vector<int>>>;
+using PyImageMask = std::vector<std::vector<bool>>;
 using PyConc = std::vector<std::vector<double>>;
 
-PyImage toPyImage(const QImage &img);
-
+PyImageRgb toPyImageRgb(const QImage &img);
+PyImageMask toPyImageMask(const QImage &img);
 PyConc toPyConc();
 
 template <typename T> std::string vecToNames(const std::vector<T> &vec) {

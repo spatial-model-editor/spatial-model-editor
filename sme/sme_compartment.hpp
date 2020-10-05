@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sme_common.hpp"
 #include "sme_reaction.hpp"
 #include "sme_species.hpp"
 #include <map>
@@ -31,6 +32,7 @@ public:
   const Species &getSpecies(const std::string &name) const;
   std::vector<Reaction> reactions;
   const Reaction &getReaction(const std::string &name) const;
+  PyImageMask geometryMask;
   std::string getStr() const;
 };
 
