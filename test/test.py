@@ -17,10 +17,11 @@ class TestModel(unittest.TestCase):
         self.assertEqual(repr(m), "<sme.Model named 'Very Simple Model'>")
         self.assertEqual(
             str(m),
-            "<sme.Model>\n  - name: 'Very Simple Model'\n  - compartments:\n     - Outside\n     - Cell\n     - Nucleus",
+            "<sme.Model>\n  - name: 'Very Simple Model'\n  - compartments:\n     - Outside\n     - Cell\n     - Nucleus\n  - membranes:\n     - Outside <-> Cell\n     - Cell <-> Nucleus",
         )
         self.assertEqual(m.name, "Very Simple Model")
         self.assertEqual(len(m.compartments), 3)
+        self.assertEqual(len(m.membranes), 2)
         m.name = "Model !"
         self.assertEqual(m.name, "Model !")
 
@@ -31,6 +32,7 @@ class TestModel(unittest.TestCase):
         m.export_sbml_file("tmp.xml")
         m2 = sme.open_sbml_file("tmp.xml")
         self.assertEqual(m2.name, "Mod")
+        self.assertEqual(len(m2.membranes), 2)
         self.assertEqual(len(m2.compartments), 3)
         self.assertEqual(m2.compartment("C").name, "C")
         self.assertEqual(m2.compartment("Nucleus").name, "Nucleus")
@@ -86,6 +88,21 @@ class TestCompartment(unittest.TestCase):
         self.assertEqual(img[0][0], False)
         self.assertEqual(img[30][30], True)
         self.assertEqual(img[50][50], False)
+
+
+class TestMembrane(unittest.TestCase):
+    def test_membrane(self):
+        m = sme.open_example_model()
+        self.assertEqual(len(m.membranes), 2)
+        self.assertRaises(ValueError, lambda: m.membrane("X"))
+        mem = m.membrane("Outside <-> Cell")
+        self.assertEqual(repr(mem), "<sme.Membrane named 'Outside <-> Cell'>")
+        self.assertEqual(str(mem)[0:43], "<sme.Membrane>\n  - name: 'Outside <-> Cell'")
+        self.assertEqual(mem.name, "Outside <-> Cell")
+        self.assertEqual(len(mem.reactions), 2)
+        self.assertRaises(ValueError, lambda: mem.reaction("X"))
+        r = mem.reaction("A uptake from outside")
+        self.assertEqual(r.name, "A uptake from outside")
 
 
 class TestSpecies(unittest.TestCase):

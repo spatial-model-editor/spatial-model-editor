@@ -3,6 +3,7 @@
 #include "simulate.hpp"
 #include "sme_common.hpp"
 #include "sme_compartment.hpp"
+#include "sme_membrane.hpp"
 #include "sme_parameter.hpp"
 #include "sme_simulationresult.hpp"
 #include <memory>
@@ -30,6 +31,8 @@ public:
   void exportSbmlFile(const std::string &filename);
   std::vector<Compartment> compartments;
   const Compartment &getCompartment(const std::string &name) const;
+  std::vector<Membrane> membranes;
+  const Membrane &getMembrane(const std::string &name) const;
   std::vector<Parameter> parameters;
   const Parameter &getParameter(const std::string &name) const;
   PyImageRgb compartmentImage;

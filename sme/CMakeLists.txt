@@ -16,6 +16,7 @@ target_sources(
   PRIVATE sme.cpp
           sme_common.cpp
           sme_compartment.cpp
+          sme_membrane.cpp
           sme_model.cpp
           sme_module.cpp
           sme_parameter.cpp

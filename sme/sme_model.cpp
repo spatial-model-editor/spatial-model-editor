@@ -22,6 +22,9 @@ void pybindModel(const pybind11::module &m) {
       .def_readonly("compartments", &sme::Model::compartments,
                     "The compartments in this model")
       .def("compartment", &sme::Model::getCompartment, pybind11::arg("name"))
+      .def_readonly("membranes", &sme::Model::membranes,
+                    "The membranes in this model")
+      .def("membrane", &sme::Model::getMembrane, pybind11::arg("name"))
       .def_readonly("parameters", &sme::Model::parameters,
                     "The parameters in this model")
       .def("parameter", &sme::Model::getParameter, pybind11::arg("name"))
@@ -48,6 +51,12 @@ void Model::importSbmlFile(const std::string &filename) {
       static_cast<std::size_t>(s->getCompartments().getIds().size()));
   for (const auto &compartmentId : s->getCompartments().getIds()) {
     compartments.emplace_back(s.get(), compartmentId.toStdString());
+  }
+  membranes.clear();
+  membranes.reserve(
+      static_cast<std::size_t>(s->getMembranes().getIds().size()));
+  for (const auto &membraneId : s->getMembranes().getIds()) {
+    membranes.emplace_back(s.get(), membraneId.toStdString());
   }
   parameters.clear();
   parameters.reserve(
@@ -76,6 +85,10 @@ void Model::exportSbmlFile(const std::string &filename) {
 
 const Compartment &Model::getCompartment(const std::string &name) const {
   return findElem(compartments, name, "Compartment");
+}
+
+const Membrane &Model::getMembrane(const std::string &name) const {
+  return findElem(membranes, name, "Membrane");
 }
 
 const Parameter &Model::getParameter(const std::string &name) const {
@@ -113,7 +126,8 @@ std::vector<SimulationResult> Model::simulate(double simulationTime,
 std::string Model::getStr() const {
   std::string str("<sme.Model>\n");
   str.append(fmt::format("  - name: '{}'\n", getName()));
-  str.append(fmt::format("  - compartments:{}", vecToNames(compartments)));
+  str.append(fmt::format("  - compartments:{}\n", vecToNames(compartments)));
+  str.append(fmt::format("  - membranes:{}", vecToNames(membranes)));
   return str;
 }
 
