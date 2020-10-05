@@ -21,6 +21,7 @@ void pybindCompartment(const pybind11::module &m) {
       .def_readonly("reactions", &sme::Compartment::reactions,
                     "The reactions in this compartment")
       .def("reaction", &sme::Compartment::getReaction, pybind11::arg("name"))
+      .def_readonly("geometry_mask", &sme::Compartment::geometryMask)
       .def("__repr__",
            [](const sme::Compartment &a) {
              return fmt::format("<sme.Compartment named '{}'>", a.getName());
@@ -40,6 +41,8 @@ Compartment::Compartment(model::Model *sbmlDocWrapper, const std::string &sId)
       reactions.emplace_back(s, reac.toStdString());
     }
   }
+  geometryMask = toPyImageMask(
+      s->getCompartments().getCompartment(id.c_str())->getCompartmentImage());
 }
 
 std::string Compartment::getName() const {

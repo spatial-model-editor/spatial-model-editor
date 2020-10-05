@@ -65,6 +65,9 @@ class TestCompartment(unittest.TestCase):
         self.assertEqual(len(img), 100)
         self.assertEqual(len(img[0]), 100)
         self.assertEqual(len(img[0][0]), 3)
+        self.assertEqual(img[0][0], [0, 2, 0])  # outside
+        self.assertEqual(img[30][30], [144, 97, 193])  # Cell
+        self.assertEqual(img[50][50], [197, 133, 96])  # Nucleus
 
     def test_compartment(self):
         m = sme.open_example_model()
@@ -77,6 +80,12 @@ class TestCompartment(unittest.TestCase):
         self.assertEqual(c.name, "NewCell")
         self.assertEqual(m.compartment("NewCell").name, "NewCell")
         self.assertRaises(ValueError, lambda: m.compartment("Cell"))
+        img = c.geometry_mask
+        self.assertEqual(len(img), 100)
+        self.assertEqual(len(img[0]), 100)
+        self.assertEqual(img[0][0], False)
+        self.assertEqual(img[30][30], True)
+        self.assertEqual(img[50][50], False)
 
 
 class TestSpecies(unittest.TestCase):

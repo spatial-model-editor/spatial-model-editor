@@ -32,7 +32,7 @@ public:
   const Compartment &getCompartment(const std::string &name) const;
   std::vector<Parameter> parameters;
   const Parameter &getParameter(const std::string &name) const;
-  PyImage compartmentImage;
+  PyImageRgb compartmentImage;
   std::vector<SimulationResult> simulate(double simulationTime,
                                          double imageInterval);
   std::string getStr() const;

@@ -55,7 +55,7 @@ void Model::importSbmlFile(const std::string &filename) {
   for (const auto &paramId : s->getParameters().getIds()) {
     parameters.emplace_back(s.get(), paramId.toStdString());
   }
-  compartmentImage = toPyImage(s->getGeometry().getImage());
+  compartmentImage = toPyImageRgb(s->getGeometry().getImage());
 }
 
 Model::Model(const std::string &filename) {
@@ -86,7 +86,7 @@ static SimulationResult getSimulationResult(const simulate::Simulation *sim) {
   SimulationResult result;
   std::size_t i = sim->getTimePoints().size() - 1;
   result.timePoint = sim->getTimePoints()[i];
-  result.concentrationImage = toPyImage(sim->getConcImage(i, {}, true));
+  result.concentrationImage = toPyImageRgb(sim->getConcImage(i, {}, true));
   result.speciesConcentration = sim->getPyConcs(i);
   return result;
 }
@@ -102,6 +102,9 @@ std::vector<SimulationResult> Model::simulate(double simulationTime,
   results.push_back(getSimulationResult(sim.get()));
   while (sim->getTimePoints().back() < simulationTime) {
     sim->doTimestep(imageInterval);
+    if (const auto &e = sim->errorMessage(); !e.empty()) {
+      throw std::runtime_error(fmt::format("Error during simulation: {}", e));
+    }
     results.push_back(getSimulationResult(sim.get()));
   }
   return results;
