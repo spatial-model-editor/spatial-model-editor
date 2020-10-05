@@ -1,10 +1,11 @@
-#include "sme_reaction.hpp"
-
+// Python.h (included by pybind11.h) must come first:
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
+// other headers
 #include "model.hpp"
 #include "sme_common.hpp"
+#include "sme_reaction.hpp"
+#include <pybind11/stl.h>
 
 namespace sme {
 

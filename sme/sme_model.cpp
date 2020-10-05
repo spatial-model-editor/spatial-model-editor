@@ -5,9 +5,9 @@
 #include "logger.hpp"
 #include "sme_common.hpp"
 #include "sme_model.hpp"
+#include <QElapsedTimer>
 #include <QFile>
 #include <QImage>
-#include <exception>
 #include <pybind11/stl.h>
 
 namespace sme {
@@ -30,7 +30,8 @@ void pybindModel(const pybind11::module &m) {
       .def("parameter", &sme::Model::getParameter, pybind11::arg("name"))
       .def_readonly("compartment_image", &sme::Model::compartmentImage)
       .def("simulate", &sme::Model::simulate, pybind11::arg("simulation_time"),
-           pybind11::arg("image_interval"))
+           pybind11::arg("image_interval"),
+           pybind11::arg("timeout_seconds") = 86400)
       .def("__repr__",
            [](const sme::Model &a) {
              return fmt::format("<sme.Model named '{}'>", a.getName());
@@ -44,7 +45,7 @@ void Model::importSbmlFile(const std::string &filename) {
     s = std::make_unique<model::Model>();
     s->importSBMLString(f.readAll().toStdString());
   } else {
-    throw std::invalid_argument("Failed to open file: " + filename);
+    throw SmeInvalidArgument("Failed to open file: " + filename);
   }
   compartments.clear();
   compartments.reserve(
@@ -105,18 +106,25 @@ static SimulationResult getSimulationResult(const simulate::Simulation *sim) {
 }
 
 std::vector<SimulationResult> Model::simulate(double simulationTime,
-                                              double imageInterval) {
+                                              double imageInterval,
+                                              int timeoutSeconds) {
+  QElapsedTimer simulationRuntimeTimer;
+  simulationRuntimeTimer.start();
   std::vector<SimulationResult> results;
   sim = std::make_unique<simulate::Simulation>(*(s.get()),
                                                simulate::SimulatorType::Pixel);
   if (const auto &e = sim->errorMessage(); !e.empty()) {
-    throw std::runtime_error(fmt::format("Error in simulation setup: {}", e));
+    throw SmeRuntimeError(fmt::format("Error in simulation setup: {}", e));
   }
   results.push_back(getSimulationResult(sim.get()));
   while (sim->getTimePoints().back() < simulationTime) {
     sim->doTimestep(imageInterval);
     if (const auto &e = sim->errorMessage(); !e.empty()) {
-      throw std::runtime_error(fmt::format("Error during simulation: {}", e));
+      throw SmeRuntimeError(fmt::format("Error during simulation: {}", e));
+    }
+    if (auto secs = static_cast<int>(simulationRuntimeTimer.elapsed() / 1000);
+        secs > timeoutSeconds) {
+      throw SmeRuntimeError(fmt::format("Simulation timeout: {}s", secs));
     }
     results.push_back(getSimulationResult(sim.get()));
   }

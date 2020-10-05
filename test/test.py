@@ -9,7 +9,7 @@ class TestModule(unittest.TestCase):
 
 class TestModel(unittest.TestCase):
     def test_load_open_sbml_file(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(sme.InvalidArgument):
             sme.open_sbml_file("idontexist.xml")
 
     def test_open_example_model(self):
@@ -36,7 +36,7 @@ class TestModel(unittest.TestCase):
         self.assertEqual(len(m2.compartments), 3)
         self.assertEqual(m2.compartment("C").name, "C")
         self.assertEqual(m2.compartment("Nucleus").name, "Nucleus")
-        self.assertRaises(ValueError, lambda: m2.compartment("Cell"))
+        self.assertRaises(sme.InvalidArgument, lambda: m2.compartment("Cell"))
 
     def test_simulate(self):
         m = sme.open_example_model()
@@ -58,6 +58,9 @@ class TestModel(unittest.TestCase):
         self.assertEqual(len(conc), 100)
         self.assertEqual(len(conc[0]), 100)
         self.assertEqual(conc[0][0], 0.0)
+        # set timeout to 1 second: simulation throws on timeout
+        with self.assertRaises(sme.RuntimeError):
+            m.simulate(10000, 0.01, 1)
 
 
 class TestCompartment(unittest.TestCase):
@@ -81,7 +84,7 @@ class TestCompartment(unittest.TestCase):
         c.name = "NewCell"
         self.assertEqual(c.name, "NewCell")
         self.assertEqual(m.compartment("NewCell").name, "NewCell")
-        self.assertRaises(ValueError, lambda: m.compartment("Cell"))
+        self.assertRaises(sme.InvalidArgument, lambda: m.compartment("Cell"))
         img = c.geometry_mask
         self.assertEqual(len(img), 100)
         self.assertEqual(len(img[0]), 100)
@@ -94,13 +97,13 @@ class TestMembrane(unittest.TestCase):
     def test_membrane(self):
         m = sme.open_example_model()
         self.assertEqual(len(m.membranes), 2)
-        self.assertRaises(ValueError, lambda: m.membrane("X"))
+        self.assertRaises(sme.InvalidArgument, lambda: m.membrane("X"))
         mem = m.membrane("Outside <-> Cell")
         self.assertEqual(repr(mem), "<sme.Membrane named 'Outside <-> Cell'>")
         self.assertEqual(str(mem)[0:43], "<sme.Membrane>\n  - name: 'Outside <-> Cell'")
         self.assertEqual(mem.name, "Outside <-> Cell")
         self.assertEqual(len(mem.reactions), 2)
-        self.assertRaises(ValueError, lambda: mem.reaction("X"))
+        self.assertRaises(sme.InvalidArgument, lambda: mem.reaction("X"))
         r = mem.reaction("A uptake from outside")
         self.assertEqual(r.name, "A uptake from outside")
 
@@ -139,7 +142,7 @@ class TestParameter(unittest.TestCase):
         self.assertEqual(p.name, "New param")
         self.assertEqual(p.value, "0.8765")
         self.assertEqual(len(m.parameters), 1)
-        self.assertRaises(ValueError, lambda: m.parameter("param"))
+        self.assertRaises(sme.InvalidArgument, lambda: m.parameter("param"))
         self.assertEqual(m.parameter("New param").name, "New param")
 
 
@@ -180,7 +183,7 @@ class TestReactionParameter(unittest.TestCase):
         self.assertEqual(k.value, 0.8765)
         r2 = m.compartment("Nucleus").reaction("A to B conversion")
         self.assertEqual(len(r2.parameters), 1)
-        self.assertRaises(ValueError, lambda: r2.parameter("k1"))
+        self.assertRaises(sme.InvalidArgument, lambda: r2.parameter("k1"))
         self.assertEqual(r2.parameter("New k").name, "New k")
 
 
