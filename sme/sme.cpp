@@ -3,6 +3,7 @@
 
 // other headers
 #include "sme_compartment.hpp"
+#include "sme_membrane.hpp"
 #include "sme_model.hpp"
 #include "sme_module.hpp"
 #include "sme_simulationresult.hpp"
@@ -14,6 +15,7 @@ PYBIND11_MODULE(sme, m) {
   sme::pybindModule(m);
   sme::pybindModel(m);
   sme::pybindCompartment(m);
+  sme::pybindMembrane(m);
   sme::pybindSpecies(m);
   sme::pybindParameter(m);
   sme::pybindReaction(m);
