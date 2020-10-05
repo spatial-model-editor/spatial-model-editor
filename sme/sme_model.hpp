@@ -37,7 +37,8 @@ public:
   const Parameter &getParameter(const std::string &name) const;
   PyImageRgb compartmentImage;
   std::vector<SimulationResult> simulate(double simulationTime,
-                                         double imageInterval);
+                                         double imageInterval,
+                                         int timeoutSeconds = 86400);
   std::string getStr() const;
 };
 

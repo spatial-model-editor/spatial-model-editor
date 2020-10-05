@@ -6,7 +6,6 @@
 #include "model.hpp"
 #include "sme_common.hpp"
 #include "sme_compartment.hpp"
-#include <exception>
 #include <pybind11/stl.h>
 
 namespace sme {

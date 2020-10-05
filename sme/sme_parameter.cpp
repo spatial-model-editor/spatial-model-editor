@@ -1,12 +1,12 @@
-#include "sme_parameter.hpp"
-
+// Python.h (included by pybind11.h) must come first:
 #include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 
-#include <utility>
-
+// other headers
 #include "model.hpp"
 #include "sme_common.hpp"
+#include "sme_parameter.hpp"
+#include <pybind11/stl.h>
+#include <utility>
 
 namespace sme {
 
