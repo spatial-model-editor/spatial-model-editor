@@ -1,14 +1,14 @@
-<img align="left" width="64" height="64" src="https://raw.githubusercontent.com/lkeegan/spatial-model-editor/master/src/core/resources/icon64.png" alt="icon">
+<img align="left" width="64" height="64" src="https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/master/src/core/resources/icon64.png" alt="icon">
 
 # Spatial Model Editor
 
-[![github releases](https://img.shields.io/github/v/release/lkeegan/spatial-model-editor?sort=semver)](https://github.com/lkeegan/spatial-model-editor/releases)
+[![github releases](https://img.shields.io/github/v/release/spatial-model-editor/spatial-model-editor?sort=semver)](https://github.com/spatial-model-editor/spatial-model-editor/releases)
 [![pypi releases](https://img.shields.io/pypi/v/sme.svg)](https://pypi.org/project/sme)
-[![open in colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb)
-[![documentation](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/en/latest/)
-[![build status](https://travis-ci.org/lkeegan/spatial-model-editor.svg?branch=master)](https://travis-ci.org/lkeegan/spatial-model-editor)
-[![codecov](https://codecov.io/gh/lkeegan/spatial-model-editor/branch/master/graph/badge.svg)](https://codecov.io/gh/lkeegan/spatial-model-editor)
-[![sonarcloud quality gate status](https://sonarcloud.io/api/project_badges/measure?project=lkeegan_spatial-model-editor&metric=alert_status)](https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor)
+[![open in colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb)
+[![documentation](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/)
+[![build status](https://travis-ci.org/spatial-model-editor/spatial-model-editor.svg?branch=master)](https://travis-ci.org/spatial-model-editor/spatial-model-editor)
+[![codecov](https://codecov.io/gh/spatial-model-editor/spatial-model-editor/branch/master/graph/badge.svg)](https://codecov.io/gh/spatial-model-editor/spatial-model-editor)
+[![sonarcloud quality gate status](https://sonarcloud.io/api/project_badges/measure?project=spatial-model-editor_spatial-model-editor&metric=alert_status)](https://sonarcloud.io/dashboard?id=spatial-model-editor_spatial-model-editor)
 
 A GUI editor to create and edit 2d spatial SBML models of bio-chemical reactions and simulate them using the
 [dune-copasi](https://dune-copasi.netlify.app/) solver for reaction-diffusion systems.
@@ -27,7 +27,7 @@ Or take a look at the [documentation](https://spatial-model-editor.readthedocs.i
 
 ## Contributing
 
-[Bug reports](https://github.com/lkeegan/spatial-model-editor/issues/new?assignees=&labels=&template=bug_report.md) and [feature requests](https://github.com/lkeegan/spatial-model-editor/issues/new?assignees=&labels=&template=feature_request.md) are very welcome, as are fixes or improvements to the [documentation](https://spatial-model-editor.readthedocs.io/) (to edit a page in the documentation, click the 'Edit on GitHub' button in the top right).
+[Bug reports](https://github.com/spatial-model-editor/spatial-model-editor/issues/new?assignees=&labels=&template=bug_report.md) and [feature requests](https://github.com/spatial-model-editor/spatial-model-editor/issues/new?assignees=&labels=&template=feature_request.md) are very welcome, as are fixes or improvements to the [documentation](https://spatial-model-editor.readthedocs.io/) (to edit a page in the documentation, click the 'Edit on GitHub' button in the top right).
 
 If you are interesting in contributing code, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 

@@ -97,9 +97,9 @@ setup(
     long_description_content_type="text/markdown",
     url="https://spatial-model-editor.readthedocs.io/",
     project_urls={
-        "Github": "https://github.com/lkeegan/spatial-model-editor",
-        "Issues": "https://github.com/lkeegan/spatial-model-editor/issues",
-        "Try it online": "https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb",
+        "Github": "https://github.com/spatial-model-editor/spatial-model-editor",
+        "Issues": "https://github.com/spatial-model-editor/spatial-model-editor/issues",
+        "Try it online": "https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb",
     },
     classifiers=[
         "Topic :: Scientific/Engineering :: Bio-Informatics",

@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
       return 0;
     } else if ((arg == "-h") || (arg == "--help")) {
       fmt::print("Spatial Model Editor {}\n", SPATIAL_MODEL_EDITOR_VERSION);
-      fmt::print("https://www.github.com/lkeegan/spatial-model-editor\n");
+      fmt::print("https://spatial-model-editor.readthedocs.io\n");
       return 0;
     } else {
       filename = argv[1];

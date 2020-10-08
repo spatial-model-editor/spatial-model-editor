@@ -3,18 +3,18 @@ Command Line Interface
 
 A Command Line Interface (CLI) is also provided for running long simulations:
 
-*  |icon-linux|_ `linux <https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-cli>`_
-*  |icon-osx|_ `macOS <https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-cli.dmg>`_
-*  |icon-windows|_ `windows <https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-cli.exe>`_
+*  |icon-linux|_ `linux <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli>`_
+*  |icon-osx|_ `macOS <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli.dmg>`_
+*  |icon-windows|_ `windows <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli.exe>`_
 
 .. |icon-linux| image:: ../img/icon-linux.png
-.. _icon-linux: https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-cli
+.. _icon-linux: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli
 
 .. |icon-osx| image:: ../img/icon-osx.png
-.. _icon-osx: https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-cli.dmg
+.. _icon-osx: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli.dmg
 
 .. |icon-windows| image:: ../img/icon-windows.png
-.. _icon-windows: https://github.com/lkeegan/spatial-model-editor/releases/latest/download/spatial-cli.exe
+.. _icon-windows: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli.exe
 
 Use
 ---

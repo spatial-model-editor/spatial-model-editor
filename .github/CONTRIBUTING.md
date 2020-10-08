@@ -3,7 +3,7 @@
 ## Getting started
 
 ```
-git clone --recursive https://github.com/lkeegan/spatial-model-editor.git
+git clone --recursive https://github.com/spatial-model-editor/spatial-model-editor.git
 cd spatial-model-editor
 mkdir build
 cd build
@@ -19,17 +19,17 @@ Note: there are many dependencies, some of which are currently not very convenie
 
 - each component `X` has a `X.hpp`, `X.cpp` and `X_t.cpp`, where the latter contains the tests
 
-- follow [sonarcloud](https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor) static analysis suggestions where possible
+- follow [sonarcloud](https://sonarcloud.io/dashboard?id=spatial-model-editor_spatial-model-editor) static analysis suggestions where possible
 
 - avoid platform-dependent code: we support linux / macOS / windows
 
 ## Pull requests
 
-- pull requests are built and tested on [travis](https://travis-ci.org/lkeegan/spatial-model-editor)
+- pull requests are built and tested on [travis](https://travis-ci.org/spatial-model-editor/spatial-model-editor)
 
-- static analysis report from [sonarcloud](https://sonarcloud.io/dashboard?id=lkeegan_spatial-model-editor)
+- static analysis report from [sonarcloud](https://sonarcloud.io/dashboard?id=spatial-model-editor_spatial-model-editor)
 
-- test coverage report from [codecov](https://codecov.io/gh/lkeegan/spatial-model-editor)
+- test coverage report from [codecov](https://codecov.io/gh/spatial-model-editor/spatial-model-editor)
 
 - documentation will also be built, see [docs/README](../docs/README.md) for more information
 

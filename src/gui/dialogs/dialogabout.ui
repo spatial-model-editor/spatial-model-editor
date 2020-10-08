@@ -85,7 +85,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>&lt;p&gt;Source code: &lt;a href=&quot;https://github.com/lkeegan/spatial-model-editor&quot;&gt;github.com/lkeegan/spatial-model-editor&lt;/a&gt;&lt;/p&gt;</string>
+        <string>&lt;p&gt;Source code: &lt;a href=&quot;https://github.com/spatial-model-editor/spatial-model-editor&quot;&gt;github.com/spatial-model-editor/spatial-model-editor&lt;/a&gt;&lt;/p&gt;</string>
        </property>
        <property name="openExternalLinks">
         <bool>true</bool>

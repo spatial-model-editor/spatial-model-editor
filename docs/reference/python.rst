@@ -9,7 +9,7 @@ A Python interface is available, which can be installed from `PyPI <https://pypi
 
 .. note::
 
-    If your python version or platform is not supported, please submit a `feature request <https://github.com/lkeegan/spatial-model-editor/issues/new?assignees=&labels=&template=feature_request.md&title=add%20support%20for%20new%20Python%20platform>`_
+    If your python version or platform is not supported, please submit a `feature request <https://github.com/spatial-model-editor/spatial-model-editor/issues/new?assignees=&labels=&template=feature_request.md&title=add%20support%20for%20new%20Python%20platform>`_
 
 Once it is installed, you should be able to import the ``sme`` module and load the built-in example model:
 
@@ -32,8 +32,8 @@ Once it is installed, you should be able to import the ``sme`` module and load t
 
 .. tip ::
 
-    There is an online `colab notebook <https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb>`_ where you can try it out in your browser without installing anything on your computer.
+    There is an online `colab notebook <https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb>`_ where you can try it out in your browser without installing anything on your computer.
 
-As shown in the `getting started notebook <https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb>`_, ``sme`` allows you to import an existing model, change the value of parameters in the model, simulate the model and produce images of the species concentrations from the simulation.
+As shown in the `getting started notebook <https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb>`_, ``sme`` allows you to import an existing model, change the value of parameters in the model, simulate the model and produce images of the species concentrations from the simulation.
 
 To get help on an object, its methods and properties, use the help function, e.g. ``help(sme.Model)``.

@@ -4,7 +4,7 @@
 
 - tag a commit on master with the version number `x.y.z`
 
-- [travis](https://travis-ci.org/lkeegan/spatial-model-editor) builds will generate new [Github](https://github.com/lkeegan/spatial-model-editor/releases) & [PyPI](https://pypi.org/project/sme/) releases
+- [travis](https://travis-ci.org/spatial-model-editor/spatial-model-editor) builds will generate new [Github](https://github.com/spatial-model-editor/spatial-model-editor/releases) & [PyPI](https://pypi.org/project/sme/) releases
 
 - [readthedocs](https://spatial-model-editor.readthedocs.io) documentation will be updated
 
@@ -28,16 +28,17 @@ git push origin latest
 
 - these are provided as binary releases from these repos:
 
-  - <https://github.com/lkeegan/dune-copasi-static>
+  - <https://github.com/spatial-model-editor/sme_deps_common>
 
-  - <https://github.com/lkeegan/libsbml-static>
+      - this repo in turn includes: <https://github.com/spatial-model-editor/sme_deps_llvm>
 
-  - <https://github.com/lkeegan/qt5-static>
+  - <https://github.com/spatial-model-editor/sme_deps_dune>
 
-  - <https://github.com/lkeegan/llvm-static>
+  - <https://github.com/spatial-model-editor/sme_deps_qt5>
+
 
 - the linux Python Wheel builds use these custom docker containers:
 
-  - <https://github.com/lkeegan/sme_manylinux1_x86_64>
+  - <https://github.com/spatial-model-editor/sme_manylinux1_x86_64>
 
-  - <https://github.com/lkeegan/sme_manylinux2010_x86_64>
+  - <https://github.com/spatial-model-editor/sme_manylinux2010_x86_64>

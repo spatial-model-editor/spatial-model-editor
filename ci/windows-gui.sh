@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export CMAKE_PREFIX_PATH="C:/libs;C:/libs/CMake;C:/libs/lib/cmake;C:/libs/dune"
+export CMAKE_PREFIX_PATH="C:/smelibs;C:/smelibs/CMake;C:/smelibs/lib/cmake;C:/smelibs/dune"
 export SME_EXTRA_EXE_LIBS="-static;-static-libgcc;-static-libstdc++"
 export CMAKE_GENERATOR="Unix Makefiles"
 export SME_EXTRA_CORE_DEFS="_hypot=hypot"
