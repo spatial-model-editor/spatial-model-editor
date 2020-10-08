@@ -1,7 +1,6 @@
-#include <QPoint>
-
 #include "catch_wrapper.hpp"
 #include "line_simplifier.hpp"
+#include <QPoint>
 
 SCENARIO("Simplify Lines",
          "[core/mesh/line_simplifier][core/mesh][core][line_simplifier]") {

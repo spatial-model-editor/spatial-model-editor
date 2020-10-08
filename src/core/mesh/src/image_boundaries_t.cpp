@@ -1,8 +1,7 @@
-#include <QImage>
-#include <QPoint>
-
 #include "catch_wrapper.hpp"
 #include "image_boundaries.hpp"
+#include <QImage>
+#include <QPoint>
 
 // note: only valid for vectors of unique values
 static bool isCyclicPermutation(const std::vector<QPoint> &v1,

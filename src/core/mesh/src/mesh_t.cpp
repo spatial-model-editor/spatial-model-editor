@@ -1,9 +1,8 @@
-#include <QImage>
-#include <QPoint>
-
 #include "catch_wrapper.hpp"
 #include "mesh.hpp"
 #include "utils.hpp"
+#include <QImage>
+#include <QPoint>
 
 SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
   GIVEN("empty image") {

@@ -1,9 +1,8 @@
-#include <QImage>
-#include <QPoint>
-
 #include "catch_wrapper.hpp"
 #include "contours.hpp"
 #include "utils.hpp"
+#include <QImage>
+#include <QPoint>
 
 SCENARIO("Contours", "[core/mesh/contours][core/mesh][core][contours]") {
   GIVEN("empty image") {

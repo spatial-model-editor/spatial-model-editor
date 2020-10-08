@@ -5,6 +5,7 @@
 #include "utils.hpp"
 #include <QFile>
 #include <algorithm>
+#include <cmath>
 #include <sbml/SBMLDocument.h>
 #include <sbml/SBMLReader.h>
 #include <sbml/SBMLWriter.h>
@@ -180,30 +181,30 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
     double B_c3 = sim2.getAvgMinMax(it, 2, 1).avg;
 
     // check concentration values
-    REQUIRE(A_c1 == Approx(1.0).epsilon(acceptable_error));
-    REQUIRE(
-        A_c2 ==
-        Approx(0.5 * A_c1 * (0.06 + 0.10) / 0.06).epsilon(acceptable_error));
-    REQUIRE(A_c3 == Approx(A_c2 - A_c1).epsilon(acceptable_error));
+    REQUIRE(A_c1 == Catch::Approx(1.0).epsilon(acceptable_error));
+    REQUIRE(A_c2 == Catch::Approx(0.5 * A_c1 * (0.06 + 0.10) / 0.06)
+                        .epsilon(acceptable_error));
+    REQUIRE(A_c3 == Catch::Approx(A_c2 - A_c1).epsilon(acceptable_error));
     // B_c1 "steady state" solution is linear growth
-    REQUIRE(B_c3 ==
-            Approx((0.06 / 0.10) * A_c3 / 0.2).epsilon(acceptable_error));
-    REQUIRE(B_c2 == Approx(B_c3 / 2.0).epsilon(acceptable_error));
+    REQUIRE(
+        B_c3 ==
+        Catch::Approx((0.06 / 0.10) * A_c3 / 0.2).epsilon(acceptable_error));
+    REQUIRE(B_c2 == Catch::Approx(B_c3 / 2.0).epsilon(acceptable_error));
 
     // check concentration derivatives
     double eps = 1.e-5;
     sim2.doTimestep(eps);
     ++it;
     double dA2 = (sim2.getAvgMinMax(it, 1, 0).avg - A_c2) / eps;
-    REQUIRE(dA2 == Approx(0).epsilon(acceptable_error));
+    REQUIRE(dA2 == Catch::Approx(0).epsilon(acceptable_error));
     double dA3 = (sim2.getAvgMinMax(it, 2, 0).avg - A_c3) / eps;
-    REQUIRE(dA3 == Approx(0).epsilon(acceptable_error));
+    REQUIRE(dA3 == Catch::Approx(0).epsilon(acceptable_error));
     double dB1 = volC1 * (sim2.getAvgMinMax(it, 0, 0).avg - B_c1) / eps;
-    REQUIRE(dB1 == Approx(1).epsilon(acceptable_error));
+    REQUIRE(dB1 == Catch::Approx(1).epsilon(acceptable_error));
     double dB2 = (sim2.getAvgMinMax(it, 1, 1).avg - B_c2) / eps;
-    REQUIRE(dB2 == Approx(0).epsilon(acceptable_error));
+    REQUIRE(dB2 == Catch::Approx(0).epsilon(acceptable_error));
     double dB3 = (sim2.getAvgMinMax(it, 2, 1).avg - B_c3) / eps;
-    REQUIRE(dB3 == Approx(0).epsilon(acceptable_error));
+    REQUIRE(dB3 == Catch::Approx(0).epsilon(acceptable_error));
   }
 }
 

@@ -1,9 +1,9 @@
 #define CATCH_CONFIG_RUNNER
-#include <QApplication>
-#include <locale>
-
 #include "catch_wrapper.hpp"
 #include "logger.hpp"
+#include <QApplication>
+#include <catch2/catch_session.hpp>
+#include <locale>
 
 int main(int argc, char *argv[]) {
   Catch::StringMaker<double>::precision = 25;

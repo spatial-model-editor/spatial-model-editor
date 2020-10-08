@@ -1,6 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "math_test_utils.hpp"
 #include "symbolic.hpp"
+#include <cmath>
 
 SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
   GIVEN("5+5: no vars, no constants") {

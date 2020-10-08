@@ -253,10 +253,10 @@ SCENARIO(
         dia.exec();
         auto a = dia.getConcentrationArray();
         // points inside array are smoothed
-        REQUIRE(a[6] == Approx(0.0605124));
-        REQUIRE(a[3] == Approx(0.7482450));
-        REQUIRE(a[0] == Approx(0.4349422));
-        REQUIRE(a[7] == Approx(0.1930087));
+        REQUIRE(a[6] == Catch::Approx(0.0605124));
+        REQUIRE(a[3] == Catch::Approx(0.7482450));
+        REQUIRE(a[0] == Catch::Approx(0.4349422));
+        REQUIRE(a[7] == Catch::Approx(0.1930087));
         // points outside array should remain zero
         for (auto i : outsideArrayIndices) {
           REQUIRE(a[i] == dbl_approx(0.0));
@@ -272,10 +272,10 @@ SCENARIO(
       mwt.start();
       dia.exec();
       auto a = dia.getConcentrationArray();
-      REQUIRE(a[6] == Approx(1.0));
-      REQUIRE(a[3] == Approx(0.0));
-      REQUIRE(a[0] == Approx(0.0));
-      REQUIRE(a[7] == Approx(1.0 / 11.0));
+      REQUIRE(a[6] == Catch::Approx(1.0));
+      REQUIRE(a[3] == Catch::Approx(0.0));
+      REQUIRE(a[0] == Catch::Approx(0.0));
+      REQUIRE(a[7] == Catch::Approx(1.0 / 11.0));
       for (auto i : outsideArrayIndices) {
         REQUIRE(a[i] == dbl_approx(0.0));
       }

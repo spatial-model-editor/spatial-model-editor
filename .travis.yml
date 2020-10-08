@@ -15,7 +15,7 @@ branches:
 env:
   global:
     # python wheel building can (and should) be disabled to speed up CI when working on a PR
-    - BUILD_PYTHON_WHEELS=true
+    - BUILD_PYTHON_WHEELS=false
     - MSYS_URL='https://github.com/msys2/msys2-installer/releases/download/2020-09-03/msys2-base-x86_64-20200903.sfx.exe'
     - CIBUILDWHEEL_VERSION=1.6.1
     # pypi TWINE_PASSWORD
@@ -381,7 +381,7 @@ jobs:
       services:
         - docker
       env:
-        - DOCKER_IMAGE=lkeegan/sme_manylinux1_x86_64:2020.09.28
+        - DOCKER_IMAGE=lkeegan/sme_manylinux1_x86_64:2020.10.06
       install:
         - docker pull $DOCKER_IMAGE
       before_script:
@@ -406,7 +406,7 @@ jobs:
       services:
         - docker
       env:
-        - DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.09.28
+        - DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.10.06
       install:
         - docker pull $DOCKER_IMAGE
       before_script:
