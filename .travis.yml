@@ -34,8 +34,6 @@ jobs:
       env:
         - STATIC_LIBS_OS="linux"
         - SUDOCMD='sudo'
-        # SONAR_LOGIN
-        - secure: Muu56AqHMCZOpCG2d5Byeh6P++9xXKl7otulxdhZCfA1/yTAJM9M67B1ZHo7czEvLKdoVzqCz6aFMnsVvFHUHQDmAtmth/WzdfXZ7OTG7puDIeWRmYqQacpLeF6h9ws3sUr5Bjz9m0guhjbKN/6VIqoyuWLH/J0MwzJN5JKgWitQBeJ15GWjNJN20FLgiYW0vWtQ71dncM6VaLAyH6V/T8jLRNacmCjApAOsS2FuhnSfbL+rY5nRVXPtoy/muwRgpl2Bez8OV6z5nDCaBLxXLgNkC7Y/0OhfzY/t+6wZ4nuDZDJ/4Hn4AyycH1O1ldmfEjw9nHBdqG/0JW2NmvSLojp5NiCUSI1MDmcgqKv6VKdVV2cdn6b7s6YY/8p08pnm+uExHYRkiXPFNeYfoQF3ruYSzFOQXRA+VI3Rg0dMfs4cO+PXCWS/hIAHudG3vaDgOwOnLFaOPjJKGYidmbmu6u4jdvBNFuCkooSYmnO2JCe0LIGgJAwlOEfG51WYD9bewCx+w+NmB+Cow3E4G0DCHomz1XGUhp1DsmjGarU1kDf4PtFLQgLC88h7AQfJtg15mSV6xDcKV+nmuDNS+ifTpQTTSe/w6LqqzcE/EOLaVAtCSe4ACOORW2yBF7DPgUY47ZSkU4iwA7pAOAYDKs37fNHjK8s/TJhM++RZ+21oMME=
       cache:
         ccache: true
         directories:
@@ -86,7 +84,9 @@ jobs:
             - libxkbcommon-x11-dev
             - libxcb-xinerama0-dev
         sonarcloud:
-          organization: "lkeegan-github"
+          organization: "spatial-model-editor"
+          token:
+            secure: "H7FoFIJxNuYH5+Qw22Tqi6C1GrGnMZHcrbitIWYHS5YXeGflFa8PRtRGUukYNmgU3FCi7aGpttFksIQn6f/D5IZfL5H1aCMCZkHCEIAgf/O55yBZXvDU6qjMeFk5l0wPwToD6P2zpRt3Kv78H/BW1M2Khz42vhJIMV064bBQ10qWPHMlfOKHcIIow6g6ZqnYci7kk4XryC2VD7b8djrDedKvCkZNfPDva/xDRtTxHqI5hpRK/e5eEgZsRT8Ua+/KoHNrocIJflyI8sVglOa6wqdpozitObqwE6av9qbFs53fWrtMBjhIDCcSZp8ijJ9PplCPxMKmxJAZujnwoiHYr/MwV9Qy7eReS8b/1/Mm/pHAz8o7pB/axLTZNwwnvdGQIfIRsZJ09S0VaC60wHdHNVBgWQw/rehwvrSeVBSxDfWsHUENPj97PNgOR/l2rDZt2avTf5JpPhLPjzTnVILev+CfB01m5Blok3spFgstu5141QxUOMz6Sjybk5RRisjp6zJyKSqUIo3qfe5cw3vDBaCVFmCAOVtRlxhOMpSn9SMg3NY83s6jXILk6mb2sY5qw/3WEd4La3IpPCfmbocizVYsLebb5xYkDndBObZIJEyRx2RWU9vVaVCQSnhn1CWxsfq6Gj6aKqbY5n7WnTmUfkjBAAQb/ghcXx6WZ2N4pT4="
       services: xvfb
       git:
         depth: false
@@ -104,7 +104,7 @@ jobs:
         - ccache --zero-stats
         - mkdir build
         - cd build
-        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/usr/local/qt5-static;/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DPYTHON_EXECUTABLE=/usr/bin/python3 -DSME_WITH_TBB=ON
+        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DPYTHON_EXECUTABLE=/usr/bin/python3 -DSME_WITH_TBB=ON
         - build-wrapper-linux-x86-64 --out-dir bw-output make -j2
         - ccache --show-stats
         # run tests
@@ -272,7 +272,7 @@ jobs:
         - export SME_EXTRA_EXE_LIBS="-static-libgcc;-static-libstdc++"
         - mkdir build
         - cd build
-        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_WITH_TBB=ON
+        - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_WITH_TBB=ON
         - ccache --zero-stats
         - make -j2 VERBOSE=1
         - ccache --show-stats
@@ -314,7 +314,7 @@ jobs:
       script:
         - mkdir build
         - cd build
-        - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune" -DPYTHON_EXECUTABLE=/usr/local/bin/python3 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSME_WITH_TBB=ON -DSME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM=ON
+        - cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune" -DPYTHON_EXECUTABLE=/usr/local/bin/python3 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSME_WITH_TBB=ON -DSME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM=ON
         - ccache --zero-stats
         - make -j2 VERBOSE=1
         - ccache --show-stats
@@ -449,7 +449,7 @@ jobs:
         - ccache -s
         - export CMAKE_CXX_COMPILER_LAUNCHER="ccache"
         - export SME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM="on"
-        - export CMAKE_PREFIX_PATH="/opt/libs;/opt/libs/lib/cmake;/opt/libs/dune"
+        - export CMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune"
         - python3 -m cibuildwheel --output-dir dist
         - ccache -s
         - ls dist
@@ -530,14 +530,14 @@ jobs:
 
 before_script:
   # download pre-compiled Qt5 static libraries
-  - wget "https://github.com/lkeegan/qt5-static/releases/latest/download/qt5-static-$STATIC_LIBS_OS.tgz"
-  - $SUDOCMD tar xf qt5-static-$STATIC_LIBS_OS.tgz -C /
+  - wget "https://github.com/spatial-model-editor/sme_deps_qt5/releases/latest/download/sme_deps_qt5_$STATIC_LIBS_OS.tgz"
+  - $SUDOCMD tar xf sme_deps_qt5_$STATIC_LIBS_OS.tgz -C /
   # download pre-compiled libSBML (and other) static libraries
-  - wget "https://github.com/lkeegan/libsbml-static/releases/latest/download/libsbml-static-$STATIC_LIBS_OS.tgz"
-  - $SUDOCMD tar xf libsbml-static-$STATIC_LIBS_OS.tgz -C /
+  - wget "https://github.com/spatial-model-editor/sme_deps_common/releases/latest/download/sme_deps_common_$STATIC_LIBS_OS.tgz"
+  - $SUDOCMD tar xf sme_deps_common_$STATIC_LIBS_OS.tgz -C /
   # download pre-compiled dunecopasi static libraries
-  - wget "https://github.com/lkeegan/dune-copasi-static/releases/latest/download/dune-copasi-static-$STATIC_LIBS_OS.tgz"
-  - $SUDOCMD tar xf dune-copasi-static-$STATIC_LIBS_OS.tgz -C /
+  - wget "https://github.com/spatial-model-editor/sme_deps_dune/releases/latest/download/sme_deps_dune_$STATIC_LIBS_OS.tgz"
+  - $SUDOCMD tar xf sme_deps_dune_$STATIC_LIBS_OS.tgz -C /
 
 notifications:
   email: false
@@ -554,7 +554,7 @@ deploy:
   overwrite: true
   edge: true
   on:
-    repo: lkeegan/spatial-model-editor
+    repo: spatial-model-editor/spatial-model-editor
     tags: true
     all_branches: true
     condition: $DEPLOY_FILE_GUI != ""

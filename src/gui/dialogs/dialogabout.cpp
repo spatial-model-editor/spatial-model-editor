@@ -70,8 +70,8 @@ DialogAbout::DialogAbout(QWidget *parent)
                        __GNU_MP_VERSION_MINOR, __GNU_MP_VERSION_PATCHLEVEL));
   libraries.append(
       dep("Triangle", "http://www.cs.cmu.edu/~quake/triangle.html", "1.6"));
-  libraries.append(
-      dep("muParser", "https://github.com/beltoforion/muparser", MUP_VERSION));
+  libraries.append(dep("muParser", "https://github.com/beltoforion/muparser",
+                       mu::ParserVersion.c_str()));
   libraries.append(dep("libTIFF", "http://www.libtiff.org/",
                        QString(TIFFLIB_VERSION_STR).left(23).right(6)));
   libraries.append(dep("expat", "https://libexpat.github.io/",
