@@ -2,20 +2,40 @@
 #include <pybind11/pybind11.h>
 
 // other headers
+#include <pybind11/stl.h>
+
 #include "model.hpp"
 #include "sme_common.hpp"
 #include "sme_membrane.hpp"
-#include <pybind11/stl.h>
 
 namespace sme {
 
 void pybindMembrane(const pybind11::module &m) {
-  pybind11::class_<sme::Membrane>(m, "Membrane")
+  pybind11::class_<sme::Membrane>(m, "Membrane",
+                                  R"(
+                                  a membrane where two compartments meet
+                                  )")
       .def_property_readonly("name", &sme::Membrane::getName,
-                    "The name of this membrane")
+                             R"(
+                             str: the name of this membrane
+                             )")
       .def_readonly("reactions", &sme::Membrane::reactions,
-                    "The reactions in this membrane")
-      .def("reaction", &sme::Membrane::getReaction, pybind11::arg("name"))
+                    R"(
+                    list of Reaction: the reactions in this compartment
+                    )")
+      .def("reaction", &sme::Membrane::getReaction, pybind11::arg("name"),
+           R"(
+           Returns the reaction with the given name.
+
+           Args:
+               name (str): The name of the reaction
+
+           Returns:
+               Reaction: the reaction if found.
+
+           Raises:
+               InvalidArgument: if no reaction was found with this name
+           )")
       .def("__repr__",
            [](const sme::Membrane &a) {
              return fmt::format("<sme.Membrane named '{}'>", a.getName());
@@ -48,3 +68,17 @@ std::string Membrane::getStr() const {
 }
 
 } // namespace sme
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//

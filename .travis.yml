@@ -381,7 +381,7 @@ jobs:
       services:
         - docker
       env:
-        - DOCKER_IMAGE=lkeegan/sme_manylinux1_x86_64:2020.10.06
+        - DOCKER_IMAGE=lkeegan/sme_manylinux1_x86_64:2020.10.12
       install:
         - docker pull $DOCKER_IMAGE
       before_script:
@@ -406,7 +406,7 @@ jobs:
       services:
         - docker
       env:
-        - DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.10.06
+        - DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.10.12
       install:
         - docker pull $DOCKER_IMAGE
       before_script:

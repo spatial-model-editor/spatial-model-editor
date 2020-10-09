@@ -2,25 +2,67 @@
 #include <pybind11/pybind11.h>
 
 // other headers
+#include <pybind11/stl.h>
+
 #include "logger.hpp"
 #include "model.hpp"
 #include "sme_common.hpp"
 #include "sme_compartment.hpp"
-#include <pybind11/stl.h>
 
 namespace sme {
 
 void pybindCompartment(const pybind11::module &m) {
-  pybind11::class_<sme::Compartment>(m, "Compartment")
+  pybind11::class_<sme::Compartment>(m, "Compartment",
+                                     R"(
+                                     a compartment where species live
+                                     )")
       .def_property("name", &sme::Compartment::getName,
-                    &sme::Compartment::setName, "The name of this compartment")
+                    &sme::Compartment::setName,
+                    R"(
+                    str: the name of this compartment
+                    )")
       .def_readonly("species", &sme::Compartment::species,
-                    "The species in this compartment")
-      .def("specie", &sme::Compartment::getSpecies, pybind11::arg("name"))
+                    R"(
+                    list of Species: the species in this compartment
+                    )")
+      .def("specie", &sme::Compartment::getSpecies, pybind11::arg("name"),
+           R"(
+           Returns the species with the given name.
+
+           Args:
+               name (str): The name of the species
+
+           Returns:
+               Species: the species if found.
+
+           Raises:
+               InvalidArgument: if no species was found with this name
+           )")
       .def_readonly("reactions", &sme::Compartment::reactions,
-                    "The reactions in this compartment")
-      .def("reaction", &sme::Compartment::getReaction, pybind11::arg("name"))
-      .def_readonly("geometry_mask", &sme::Compartment::geometryMask)
+                    R"(
+                    list of Reaction: the reactions in this compartment
+                    )")
+      .def("reaction", &sme::Compartment::getReaction, pybind11::arg("name"),
+           R"(
+           Returns the reaction with the given name.
+
+           Args:
+               name (str): The name of the reaction
+
+           Returns:
+               Reaction: the reaction if found.
+
+           Raises:
+               InvalidArgument: if no reaction was found with this name
+           )")
+      .def_readonly("geometry_mask", &sme::Compartment::geometryMask,
+                    R"(
+                    list of list of bool: 2d pixel mask of the compartment geometry
+
+                    The mask is a list of list of bool, where
+                    ``geometry_mask[y][x] = True``
+                    if the pixel at point (x,y) is part of this compartment
+                    )")
       .def("__repr__",
            [](const sme::Compartment &a) {
              return fmt::format("<sme.Compartment named '{}'>", a.getName());
@@ -68,3 +110,17 @@ std::string Compartment::getStr() const {
 }
 
 } // namespace sme
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//

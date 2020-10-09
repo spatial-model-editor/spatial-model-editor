@@ -13,25 +13,95 @@
 namespace sme {
 
 void pybindModel(const pybind11::module &m) {
-  pybind11::class_<sme::Model>(m, "Model")
+  pybind11::class_<sme::Model>(m, "Model",
+                               R"(
+                               the spatial model
+                               )")
       .def(pybind11::init<const std::string &>(), pybind11::arg("filename"))
       .def_property("name", &sme::Model::getName, &sme::Model::setName,
-                    "The name of this model")
+                    R"(
+                    str: the name of this model
+                    )")
       .def("export_sbml_file", &sme::Model::exportSbmlFile,
-           pybind11::arg("filename"))
+           pybind11::arg("filename"),
+           R"(
+           exports the model as a spatial SBML file
+
+           Args:
+               filename (str): the name of the file to create
+           )")
       .def_readonly("compartments", &sme::Model::compartments,
-                    "The compartments in this model")
-      .def("compartment", &sme::Model::getCompartment, pybind11::arg("name"))
+                    R"(
+                    list of Compartment: the compartments in this model
+                    )")
+      .def("compartment", &sme::Model::getCompartment, pybind11::arg("name"),
+           R"(
+           returns the compartment with the given name
+
+           Args:
+               name (str): The name of the compartment
+
+           Returns:
+               Compartment: the compartment if found.
+
+           Raises:
+               InvalidArgument: if no compartment was found with this name
+           )")
       .def_readonly("membranes", &sme::Model::membranes,
-                    "The membranes in this model")
-      .def("membrane", &sme::Model::getMembrane, pybind11::arg("name"))
+                    R"(
+                    list of Membrane: the membranes in this model
+                    )")
+      .def("membrane", &sme::Model::getMembrane, pybind11::arg("name"),
+           R"(
+           returns the membrane with the given name.
+
+           Args:
+               name (str): The name of the membrane
+
+           Returns:
+               Membrane: the membrane if found.
+
+           Raises:
+               InvalidArgument: if no membrane was found with this name
+           )")
       .def_readonly("parameters", &sme::Model::parameters,
-                    "The parameters in this model")
-      .def("parameter", &sme::Model::getParameter, pybind11::arg("name"))
-      .def_readonly("compartment_image", &sme::Model::compartmentImage)
+                    R"(
+                    list of Parameter: the parameters in this model
+                    )")
+      .def("parameter", &sme::Model::getParameter, pybind11::arg("name"),
+           R"(
+           returns the parameter with the given name.
+
+           Args:
+               name (str): The name of the parameter
+
+           Returns:
+               Parameter: the parameter if found
+
+           Raises:
+               InvalidArgument: if no parameter was found with this name
+           )")
+      .def_readonly("compartment_image", &sme::Model::compartmentImage,
+                    R"(
+                        list of list of list of int: an image of the compartments in this model
+                    )")
       .def("simulate", &sme::Model::simulate, pybind11::arg("simulation_time"),
            pybind11::arg("image_interval"),
-           pybind11::arg("timeout_seconds") = 86400)
+           pybind11::arg("timeout_seconds") = 86400,
+           R"(
+           returns the results of the simulation.
+
+           Args:
+               simulation_time (float): The length of the simulation in model units of time
+               image_interval (float): The interval between images in model units of time
+               timeout_seconds (int): The maximum time in seconds that the simulation can run for
+
+           Returns:
+               SimulationResult: the results of the simulation
+
+           Raises:
+               RuntimeError: if the simulation times out or fails
+           )")
       .def("__repr__",
            [](const sme::Model &a) {
              return fmt::format("<sme.Model named '{}'>", a.getName());
@@ -140,3 +210,17 @@ std::string Model::getStr() const {
 }
 
 } // namespace sme
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//

@@ -8,15 +8,30 @@
 namespace sme {
 
 void pybindSimulationResult(const pybind11::module &m) {
-  pybind11::class_<sme::SimulationResult>(m, "SimulationResult")
+  pybind11::class_<sme::SimulationResult>(m, "SimulationResult",
+                                          R"(
+                                          results at a single timepoint of a simulation
+                                          )")
       .def_readonly("time_point", &sme::SimulationResult::timePoint,
-                    "The timepoint these simulation results are from")
+                    R"(
+                    float: the timepoint these simulation results are from
+                    )")
       .def_readonly("concentration_image",
                     &sme::SimulationResult::concentrationImage,
-                    "An image of the species concentrations at this timepoint")
+                    R"(
+                    list of list of list of int: an image of the species concentrations at this timepoint
+
+                    a triplet of red, green, blue values for each pixel in the image
+                    concentration_image[y][x] = [r, g, b]
+                    )")
       .def_readonly("species_concentration",
                     &sme::SimulationResult::speciesConcentration,
-                    "A dict of the species concentrations at this timepoint")
+                    R"(
+                    dict: the species concentrations of each species at this timepoint
+
+                    for each species, the concentrations are provided as a
+                    list of list of float, where concentration[y][x] is the concentration at the point (x,y)
+                    )")
       .def("__repr__",
            [](const sme::SimulationResult &a) {
              return fmt::format("<sme.SimulationResult from timepoint {}>",
@@ -34,3 +49,15 @@ std::string SimulationResult::getStr() const {
 }
 
 } // namespace sme
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
