@@ -1,9 +1,8 @@
+#include "boundary.hpp"
+#include "catch_wrapper.hpp"
 #include <QImage>
 #include <QPoint>
 #include <cmath>
-
-#include "boundary.hpp"
-#include "catch_wrapper.hpp"
 
 SCENARIO("Boundary", "[core/mesh/boundary][core/mesh][core][boundary]") {
   GIVEN("Loop") {

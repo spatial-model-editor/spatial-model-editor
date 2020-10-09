@@ -1,9 +1,9 @@
-#include <QFile>
-#include <QImage>
-
 #include "catch_wrapper.hpp"
 #include "model.hpp"
 #include "model_math.hpp"
+#include <QFile>
+#include <QImage>
+#include <cmath>
 
 SCENARIO("SBML math", "[core/model/math][core/model][core][model][math]") {
   GIVEN("No SBML model, valid expressions") {

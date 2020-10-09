@@ -1,8 +1,8 @@
-#include <QImage>
-#include <QPoint>
-
 #include "catch_wrapper.hpp"
 #include "triangulate.hpp"
+#include <QImage>
+#include <QPoint>
+#include <cmath>
 
 static double triangleArea(const QPointF &a, const QPointF &b,
                            const QPointF &c) {

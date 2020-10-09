@@ -5,6 +5,7 @@
 #include "dunegrid.hpp"
 #include "model.hpp"
 #include <QFile>
+#include <cmath>
 #include <locale>
 
 constexpr int DuneDimensions = 2;

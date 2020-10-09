@@ -12,7 +12,7 @@ project(
 list(
   APPEND
   CMAKE_MODULE_PATH
-  "${PROJECT_SOURCE_DIR}/cmake;${PROJECT_SOURCE_DIR}/ext/Catch2/contrib")
+  "${PROJECT_SOURCE_DIR}/cmake")
 
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
@@ -50,9 +50,9 @@ set(SME_EXTRA_CORE_DEFS
 message(STATUS "SME_EXTRA_CORE_DEFS: ${SME_EXTRA_CORE_DEFS}")
 
 include(CTest)
-include(Catch)
 if(BUILD_TESTING)
-  add_subdirectory(ext/Catch2)
+  find_package(Catch2 REQUIRED)
+  include(Catch)
 endif()
 
 # compile spatial model editor

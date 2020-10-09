@@ -51,7 +51,7 @@ DialogAbout::DialogAbout(QWidget *parent)
   QString libraries("<p>Included libraries:</p><ul>");
   libraries.append(dep("dune-copasi",
                        "https://gitlab.dune-project.org/copasi/dune-copasi", 0,
-                       2, 0));
+                       3, 0));
   libraries.append(dep("libSBML (development)",
                        "http://sbml.org/Software/libSBML",
                        libsbml::getLibSBMLDottedVersion()));
