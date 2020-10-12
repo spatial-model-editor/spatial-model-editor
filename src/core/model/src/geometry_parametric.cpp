@@ -1,13 +1,4 @@
 #include "geometry_parametric.hpp"
-
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
-
-#include <QImage>
-#include <memory>
-
 #include "logger.hpp"
 #include "mesh.hpp"
 #include "model_compartments.hpp"
@@ -16,8 +7,28 @@
 #include "sbml_utils.hpp"
 #include "utils.hpp"
 #include "xml_annotation.hpp"
+#include <QImage>
+#include <memory>
+#include <sbml/SBMLTypes.h>
+#include <sbml/extension/SBMLDocumentPlugin.h>
+#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
+#include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 namespace model {
+
+const libsbml::ParametricGeometry *
+getParametricGeometry(const libsbml::Geometry *geom) {
+  if (geom == nullptr) {
+    return nullptr;
+  }
+  for (unsigned i = 0; i < geom->getNumGeometryDefinitions(); ++i) {
+    if (auto *def = geom->getGeometryDefinition(i);
+        def->getIsActive() && def->isParametricGeometry()) {
+      return static_cast<const libsbml::ParametricGeometry *>(def);
+    }
+  }
+  return nullptr;
+}
 
 libsbml::ParametricGeometry *getParametricGeometry(libsbml::Geometry *geom) {
   if (geom == nullptr) {
@@ -32,11 +43,37 @@ libsbml::ParametricGeometry *getParametricGeometry(libsbml::Geometry *geom) {
   return nullptr;
 }
 
+const libsbml::ParametricObject *
+getParametricObject(const libsbml::Model *model,
+                    const std::string &compartmentID) {
+  auto *geom = getGeometry(model);
+  if (geom == nullptr) {
+    return nullptr;
+  }
+  auto *comp = model->getCompartment(compartmentID);
+  if (comp == nullptr) {
+    return nullptr;
+  }
+  auto *scp = static_cast<const libsbml::SpatialCompartmentPlugin *>(
+      comp->getPlugin("spatial"));
+  const std::string domainTypeID =
+      scp->getCompartmentMapping()->getDomainType();
+  const auto *parageom = getParametricGeometry(geom);
+  const auto *paraObj = parageom->getParametricObjectByDomainType(domainTypeID);
+  return paraObj;
+}
+
 libsbml::ParametricObject *
 getOrCreateParametricObject(libsbml::Model *model,
                             const std::string &compartmentID) {
   auto *geom = getOrCreateGeometry(model);
+  if (geom == nullptr) {
+    return nullptr;
+  }
   auto *comp = model->getCompartment(compartmentID);
+  if (comp == nullptr) {
+    return nullptr;
+  }
   auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
       comp->getPlugin("spatial"));
   const std::string domainTypeID =
@@ -87,11 +124,11 @@ getInteriorPixelPoints(const ModelGeometry *modelGeometry,
 }
 
 std::unique_ptr<mesh::Mesh>
-importParametricGeometryFromSBML(libsbml::Model *model,
+importParametricGeometryFromSBML(const libsbml::Model *model,
                                  const ModelGeometry *modelGeometry,
                                  const ModelCompartments *modelCompartments,
                                  const ModelMembranes *modelMembranes) {
-  auto *geom = getOrCreateGeometry(model);
+  auto *geom = getGeometry(model);
   auto *parageom = getParametricGeometry(geom);
   if (parageom == nullptr) {
     SPDLOG_WARN("Failed to load Parametric Field geometry");
@@ -124,8 +161,7 @@ importParametricGeometryFromSBML(libsbml::Model *model,
   // import triangles for each compartment
   std::vector<std::vector<int>> triangles;
   for (const auto &compartmentID : modelCompartments->getIds()) {
-    const auto *po =
-        getOrCreateParametricObject(model, compartmentID.toStdString());
+    const auto *po = getParametricObject(model, compartmentID.toStdString());
     auto nPoints = static_cast<std::size_t>(po->getPointIndexLength());
     SPDLOG_INFO("  - compartment {}: found {} triangles",
                 compartmentID.toStdString(), nPoints / 3);

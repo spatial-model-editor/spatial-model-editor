@@ -20,8 +20,8 @@
 
 namespace model {
 
-bool ModelGeometry::importDimensions(libsbml::Model *model) {
-  auto *geom = getOrCreateGeometry(model);
+bool ModelGeometry::importDimensions(const libsbml::Model *model) {
+  const auto *geom = getGeometry(model);
   if (geom == nullptr) {
     return false;
   }
@@ -54,6 +54,7 @@ bool ModelGeometry::importDimensions(libsbml::Model *model) {
   SPDLOG_INFO("  -> origin [{},{}]", physicalOrigin.x(), physicalOrigin.y());
   physicalSize = QSizeF(xmax - xmin, ymax - ymin);
   SPDLOG_INFO("  -> size [{},{}]", physicalSize.width(), physicalSize.height());
+
   return true;
 }
 
@@ -172,10 +173,9 @@ static double calculatePixelWidth(const QSize &imageSize,
   return xPixelSize;
 }
 
-void ModelGeometry::importSampledFieldGeometry(libsbml::Model *model) {
+void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   importDimensions(model);
-  auto *geom = getOrCreateGeometry(model);
-  auto gsf = importGeometryFromSampledField(geom);
+  auto gsf = importGeometryFromSampledField(getGeometry(model));
   if (gsf.image.isNull()) {
     SPDLOG_INFO(
         "No Sampled Field Geometry found - looking for Analytic Geometry...");
@@ -191,15 +191,17 @@ void ModelGeometry::importSampledFieldGeometry(libsbml::Model *model) {
   image = gsf.image.convertToFormat(QImage::Format_Indexed8);
   hasImage = true;
   pixelWidth = calculatePixelWidth(image.size(), physicalSize);
+  setPixelWidth(pixelWidth);
   modelMembranes->updateCompartmentImage(image);
   for (const auto &[id, colour] : gsf.compartmentIdColourPairs) {
     SPDLOG_INFO("setting compartment {} colour to {:x}", id, colour);
     modelCompartments->setColour(id.c_str(), colour);
   }
+  auto *geom = getOrCreateGeometry(sbmlModel);
   exportSampledFieldGeometry(geom, image);
 }
 
-void ModelGeometry::importParametricGeometry(libsbml::Model *model) {
+void ModelGeometry::importParametricGeometry(const libsbml::Model *model) {
   auto importedMesh = importParametricGeometryFromSBML(
       model, this, modelCompartments, modelMembranes);
   if (importedMesh != nullptr) {

@@ -26,7 +26,14 @@ class ModelCompartments;
 class ModelGeometry;
 class ModelMembranes;
 
+const libsbml::ParametricGeometry *
+getParametricGeometry(const libsbml::Geometry *geom);
+
 libsbml::ParametricGeometry *getParametricGeometry(libsbml::Geometry *geom);
+
+const libsbml::ParametricObject *
+getParametricObject(const libsbml::Model *model,
+                    const std::string &compartmentID);
 
 libsbml::ParametricObject *
 getOrCreateParametricObject(libsbml::Model *model,
@@ -37,7 +44,7 @@ getInteriorPixelPoints(const ModelGeometry *modelGeometry,
                        const ModelCompartments *modelCompartments);
 
 std::unique_ptr<mesh::Mesh>
-importParametricGeometryFromSBML(libsbml::Model *model,
+importParametricGeometryFromSBML(const libsbml::Model *model,
                                  const ModelGeometry *modelGeometry,
                                  const ModelCompartments *modelCompartments,
                                  const ModelMembranes *modelMembranes);

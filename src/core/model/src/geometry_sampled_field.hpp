@@ -23,7 +23,8 @@ struct GeometrySampledField {
 libsbml::SampledFieldGeometry *
 getOrCreateSampledFieldGeometry(libsbml::Geometry *geom);
 
-GeometrySampledField importGeometryFromSampledField(libsbml::Geometry *geom);
+GeometrySampledField
+importGeometryFromSampledField(const libsbml::Geometry *geom);
 
 void exportSampledFieldGeometry(libsbml::Geometry *geom,
                                 const QImage &compartmentImage);
