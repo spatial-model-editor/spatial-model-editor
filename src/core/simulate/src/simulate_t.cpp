@@ -526,6 +526,75 @@ SCENARIO("DUNE: simulation",
   }
 }
 
+SCENARIO("getConcImage",
+         "[core/simulate/simulate][core/simulate][core][simulate][QQ]") {
+  GIVEN("very-simple-model") {
+    model::Model s;
+    if (QFile f(":/models/very-simple-model.xml");
+        f.open(QIODevice::ReadOnly)) {
+      s.importSBMLString(f.readAll().toStdString());
+    }
+    simulate::Options options;
+    simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
+    sim.doTimestep(0.5);
+    sim.doTimestep(0.5);
+    REQUIRE(sim.errorMessage().empty());
+
+    // draw no species, any normalisation
+    for (auto allTime : {true, false}) {
+      for (auto allSpecies : {true, false}) {
+        auto img0{sim.getConcImage(1, {{}, {}, {}}, allTime, allSpecies)};
+        img0.save("concImg0.png");
+        REQUIRE(img0.pixel(48, 43) == qRgb(0, 0, 0));
+        REQUIRE(img0.pixel(49, 43) == qRgb(0, 0, 0));
+        REQUIRE(img0.pixel(33, 8) == qRgb(0, 0, 0));
+      }
+    }
+
+    // draw B_out species only
+    for (auto allSpecies : {true, false}) {
+      // this timepoint
+      auto img1a{sim.getConcImage(1, {{0}, {}, {}}, false, allSpecies)};
+      img1a.save("concImg1a.png");
+      REQUIRE(img1a.pixel(48, 43) == qRgb(0, 0, 0));
+      REQUIRE(img1a.pixel(49, 43) == qRgb(0, 0, 0));
+      REQUIRE(img1a.pixel(33, 8) == qRgb(0, 0, 0));
+      REQUIRE(img1a.pixel(59, 33) == qRgb(145, 30, 180));
+
+      // all timepoints
+      auto img1b{sim.getConcImage(1, {{0}, {}, {}}, true, allSpecies)};
+      img1b.save("concImg1b.png");
+      REQUIRE(img1b.pixel(48, 43) == qRgb(0, 0, 0));
+      REQUIRE(img1b.pixel(49, 43) == qRgb(0, 0, 0));
+      REQUIRE(img1b.pixel(33, 8) == qRgb(0, 0, 0));
+      REQUIRE(img1b.pixel(33, 8) == qRgb(0, 0, 0));
+    }
+
+    // draw all species, normalise to max of each species, at this timepoint
+    auto img1{sim.getConcImage(1, {}, false, false)};
+    img1.save("concImg1.png");
+    REQUIRE(img1.pixel(48, 43) == qRgb(255, 255, 225));
+    REQUIRE(img1.pixel(49, 43) == qRgb(245, 130, 48));
+    REQUIRE(img1.pixel(33, 8) == qRgb(47, 142, 59));
+
+    // draw all species, normalise to max of all species, at this timepoint
+    auto img3{sim.getConcImage(1, {}, false, true)};
+    img3.save("concImg3.png");
+    REQUIRE(img3.pixel(48, 43) == qRgb(0, 0, 0));
+    REQUIRE(img3.pixel(49, 43) == qRgb(0, 0, 0));
+    REQUIRE(img3.pixel(33, 8) == qRgb(47, 142, 59));
+
+    // draw all species, normalise to max of each/all species, at all timepoints
+    for (auto allSpecies : {true, false}) {
+      auto img2{sim.getConcImage(1, {}, true, allSpecies)};
+      img2.save("concImg2.png");
+      REQUIRE(img2.pixel(48, 43) == qRgb(0, 0, 0));
+      REQUIRE(img2.pixel(49, 43) == qRgb(0, 0, 0));
+      REQUIRE(img2.pixel(33, 8) == qRgb(31, 93, 39));
+    }
+  }
+}
+
 SCENARIO("PyConc",
          "[core/simulate/simulate][core/simulate][core][simulate][python]") {
   GIVEN("ABtoC model") {
