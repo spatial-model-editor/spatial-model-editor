@@ -330,6 +330,7 @@ void TabGeometry::spinMaxTriangleArea_valueChanged(int value) {
 
 void TabGeometry::listCompartments_itemSelectionChanged() {
   ui->txtCompartmentName->clear();
+  ui->lblCompSize->clear();
   int currentRow = ui->listCompartments->currentRow();
   if (currentRow < 0 ||
       currentRow >= sbmlDoc.getCompartments().getIds().size()) {
@@ -364,17 +365,25 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
     ui->lblCompMesh->setText("none");
   } else {
     // update colour box
-    lblCompartmentColourPixmap.fill(QColor::fromRgb(col));
-    ui->lblCompartmentColour->setPixmap(lblCompartmentColourPixmap);
+    QImage img(1, 1, QImage::Format_RGB32);
+    img.setPixel(0, 0, col);
+    ui->lblCompartmentColour->setPixmap(QPixmap::fromImage(img));
     ui->lblCompartmentColour->setText("");
     // update image of compartment
-    ui->lblCompShape->setImage(sbmlDoc.getCompartments()
-                                   .getCompartment(compID)
-                                   ->getCompartmentImage());
+    const auto *comp = sbmlDoc.getCompartments().getCompartment(compID);
+    ui->lblCompShape->setImage(comp->getCompartmentImage());
     ui->lblCompShape->setText("");
     // update mesh or boundary image if tab is currently visible
     tabCompartmentGeometry_currentChanged(
         ui->tabCompartmentGeometry->currentIndex());
+    // update compartment size
+    auto nPixels = comp->nPixels();
+    double area = static_cast<double>(nPixels) *
+                  std::pow(sbmlDoc.getGeometry().getPixelWidth(), 2);
+    ui->lblCompSize->setText(QString("Area: %1 %2^2 (%3 pixels)")
+                                 .arg(QString::number(area, 'g', 13))
+                                 .arg(sbmlDoc.getUnits().getLength().name)
+                                 .arg(nPixels));
   }
 }
 
@@ -402,16 +411,24 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
   SPDLOG_DEBUG("  - Membrane Name: {}",
                ui->listMembranes->currentItem()->text().toStdString());
   SPDLOG_DEBUG("  - Membrane Id: {}", membraneID.toStdString());
+  ui->txtCompartmentName->setText(ui->listMembranes->currentItem()->text());
   // update image
   const auto *m = sbmlDoc.getMembranes().getMembrane(membraneID);
   ui->lblCompShape->setImage(m->getImage());
   auto nPixels = m->getIndexPairs().size();
+  // update colour box
+  QImage img(1, 2, QImage::Format_RGB32);
+  img.setPixel(0, 0, m->getCompartmentA()->getColour());
+  img.setPixel(0, 1, m->getCompartmentB()->getColour());
+  ui->lblCompartmentColour->setPixmap(QPixmap::fromImage(img));
+  ui->lblCompartmentColour->setText("");
   // update membrane length
   double length =
       static_cast<double>(nPixels) * sbmlDoc.getGeometry().getPixelWidth();
-  //    ui->lblMembraneLength->setText(QString::number(length, 'g', 13));
-  //    ui->lblMembraneLengthUnits->setText(
-  //        sbmlDoc.getModelUnits().getLength().symbol);
+  ui->lblCompSize->setText(QString("Length: %1 %2 (%3 pixels)")
+                               .arg(QString::number(length, 'g', 13))
+                               .arg(sbmlDoc.getUnits().getLength().name)
+                               .arg(nPixels));
   ui->lblCompMesh->setImages(sbmlDoc.getGeometry().getMesh()->getMeshImages(
       ui->lblCompMesh->size(),
       static_cast<std::size_t>(currentRow + ui->listCompartments->count())));

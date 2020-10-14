@@ -21,9 +21,8 @@ class TabGeometry : public QWidget {
   Q_OBJECT
 
 public:
-  explicit TabGeometry(model::Model &doc,
-                       QLabelMouseTracker *mouseTracker, QLabel *statusBarMsg,
-                       QWidget *parent = nullptr);
+  explicit TabGeometry(model::Model &doc, QLabelMouseTracker *mouseTracker,
+                       QLabel *statusBarMsg, QWidget *parent = nullptr);
   ~TabGeometry();
   void loadModelData(const QString &selection = {});
   void enableTabs();
@@ -38,7 +37,6 @@ private:
   QLabelMouseTracker *lblGeometry;
   QLabel *statusBarPermanentMessage;
   bool waitingForCompartmentChoice = false;
-  QPixmap lblCompartmentColourPixmap = QPixmap(1, 1);
 
   void lblGeometry_mouseClicked(QRgb col, QPoint point);
   void btnAddCompartment_clicked();
