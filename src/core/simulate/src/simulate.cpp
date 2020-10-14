@@ -8,6 +8,7 @@
 #include "pixelsim.hpp"
 #include "utils.hpp"
 #include <algorithm>
+#include <limits>
 #include <numeric>
 #include <utility>
 
@@ -170,44 +171,58 @@ QImage Simulation::getConcImage(
   if (compartments.empty()) {
     return QImage();
   }
+  constexpr double minimumNonzeroConc{100.0 *
+                                      std::numeric_limits<double>::min()};
   const auto *speciesIndices = &speciesToDraw;
   // default to drawing all species if not specified
   if (speciesToDraw.empty()) {
     speciesIndices = &compartmentSpeciesIndices;
   }
+  // calculate normalisation for each species
+  auto maxConcs = maxConcWholeSimulation;
+  if (!normaliseOverAllTimepoints) {
+    // get max for each species at this timepoint
+    for (std::size_t ic = 0; ic < compartments.size(); ++ic) {
+      for (std::size_t is : (*speciesIndices)[ic]) {
+        maxConcs[ic][is] = avgMinMax[timeIndex][ic][is].max;
+      }
+    }
+  }
+  if (normaliseOverAllSpecies) {
+    // normalise over max of all visible species
+    double maxC{minimumNonzeroConc};
+    for (std::size_t ic = 0; ic < compartments.size(); ++ic) {
+      for (std::size_t is : (*speciesIndices)[ic]) {
+        maxC = std::max(maxC, maxConcs[ic][is]);
+      }
+    }
+    for (auto &c : maxConcs) {
+      std::fill(c.begin(), c.end(), maxC);
+    }
+  }
+  // apply minimum (avoid dividing by zero)
+  for (std::size_t ic = 0; ic < compartments.size(); ++ic) {
+    for (std::size_t is : (*speciesIndices)[ic]) {
+      if (maxConcs[ic][is] < minimumNonzeroConc) {
+        maxConcs[ic][is] = minimumNonzeroConc;
+      }
+    }
+  }
   QImage img(imageSize, QImage::Format_ARGB32_Premultiplied);
   img.fill(qRgba(0, 0, 0, 0));
   // iterate over compartments
-  for (std::size_t compIndex = 0; compIndex < compartments.size();
-       ++compIndex) {
-    const auto &pixels = compartments[compIndex]->getPixels();
-    const auto &conc = concentration[timeIndex][compIndex];
-    std::size_t nSpecies = compartmentSpeciesIds[compIndex].size();
-    // normalise species concentration:
-    // max value of each species = max colour intensity
-    // (with lower bound, so constant zero is still zero)
-    std::vector<double> maxConcs(compartmentSpeciesIds[compIndex].size(), 1.0);
-    if (normaliseOverAllTimepoints) {
-      maxConcs = maxConcWholeSimulation[compIndex];
-    } else {
-      for (std::size_t is : (*speciesIndices)[compIndex]) {
-        double m = avgMinMax[timeIndex][compIndex][is].max;
-        constexpr double minimumNonzeroConc{1e-30};
-        maxConcs[is] = m > minimumNonzeroConc ? m : 1.0;
-      }
-    }
-    if (normaliseOverAllSpecies) {
-      double maxConc{utils::max(maxConcs)};
-      std::fill(maxConcs.begin(), maxConcs.end(), maxConc);
-    }
+  for (std::size_t ic = 0; ic < compartments.size(); ++ic) {
+    const auto &pixels = compartments[ic]->getPixels();
+    const auto &conc = concentration[timeIndex][ic];
+    std::size_t nSpecies = compartmentSpeciesIds[ic].size();
     for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
       const QPoint &p = pixels[ix];
       int r = 0;
       int g = 0;
       int b = 0;
-      for (std::size_t is : (*speciesIndices)[compIndex]) {
-        double c = conc[ix * nSpecies + is] / maxConcs[is];
-        const auto &col = compartmentSpeciesColors[compIndex][is];
+      for (std::size_t is : (*speciesIndices)[ic]) {
+        double c = conc[ix * nSpecies + is] / maxConcs[ic][is];
+        const auto &col = compartmentSpeciesColors[ic][is];
         r += static_cast<int>(qRed(col) * c);
         g += static_cast<int>(qGreen(col) * c);
         b += static_cast<int>(qBlue(col) * c);

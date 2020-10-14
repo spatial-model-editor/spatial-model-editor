@@ -149,7 +149,7 @@ void ModelMembranes::importMembraneIdsAndNames(const libsbml::Model *model) {
           const auto &compB = m.getCompartmentB()->getId();
           if ((compA == c1 && compB == c2) || (compA == c2 && compB == c1)) {
             auto mIndex = ids.indexOf(m.getId().c_str());
-            SPDLOG_TRACE("Found membrane[{}] '' in SBML document", mIndex, mId);
+            SPDLOG_TRACE("Found membrane[{}] '{}' in SBML document", mIndex, mId);
             m.setId(mId);
             SPDLOG_TRACE("  id -> '{}'", mId);
             ids[mIndex] = QString::fromStdString(m.getId());

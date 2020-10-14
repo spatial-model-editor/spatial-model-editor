@@ -161,6 +161,7 @@ static std::vector<Boundary> extractClosedLoopBoundaries(
         contour.clear();
         auto membraneIndex =
             getMembraneIndex(membraneName, membraneColourPairs).value_or(0);
+        SPDLOG_TRACE("  - membrane index '{}'", membraneIndex);
         auto boundary =
             Boundary(points, isLoop, isMembrane, membraneName, membraneIndex);
         if (boundary.isValid()) {
