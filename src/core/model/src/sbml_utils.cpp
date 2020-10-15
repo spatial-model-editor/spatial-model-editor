@@ -5,6 +5,17 @@
 
 #include "logger.hpp"
 
+const libsbml::SampledFieldGeometry *
+getSampledFieldGeometry(const libsbml::Geometry *geom) {
+  for (unsigned i = 0; i < geom->getNumGeometryDefinitions(); ++i) {
+    auto *def = geom->getGeometryDefinition(i);
+    if (def->getIsActive() && def->isSampledFieldGeometry()) {
+      return static_cast<const libsbml::SampledFieldGeometry *>(def);
+    }
+  }
+  return nullptr;
+}
+
 libsbml::SampledFieldGeometry *
 getSampledFieldGeometry(libsbml::Geometry *geom) {
   for (unsigned i = 0; i < geom->getNumGeometryDefinitions(); ++i) {
@@ -186,10 +197,13 @@ bool getIsSpeciesConstant(const libsbml::Species *spec) {
   return false;
 }
 
-libsbml::Parameter *getSpatialCoordinateParam(libsbml::Model *model,
-                                              libsbml::CoordinateKind_t kind) {
-  auto *geom = getOrCreateGeometry(model);
-  // todo: check if getCoordinateComponentByKind can be made const in libSBML
+const libsbml::Parameter *
+getSpatialCoordinateParam(const libsbml::Model *model,
+                          libsbml::CoordinateKind_t kind) {
+  auto *geom = getGeometry(model);
+  if (geom == nullptr) {
+    return nullptr;
+  }
   const auto *coord = geom->getCoordinateComponentByKind(kind);
   if (coord == nullptr) {
     return nullptr;
@@ -205,12 +219,14 @@ libsbml::Parameter *getSpatialCoordinateParam(libsbml::Model *model,
                   param->getName());
       SPDLOG_INFO("  -> spatialSymbolRef to '{}'",
                   libsbml::CoordinateKind_toString(kind));
-      if (param->getName().empty()) {
-        SPDLOG_INFO("  - using Id as Name");
-        param->setName(param->getId());
-      }
       return param;
     }
   }
   return nullptr;
+}
+
+libsbml::Parameter *getSpatialCoordinateParam(libsbml::Model *model,
+                                              libsbml::CoordinateKind_t kind) {
+  return const_cast<libsbml::Parameter *>(getSpatialCoordinateParam(
+      const_cast<const libsbml::Model *>(model), kind));
 }

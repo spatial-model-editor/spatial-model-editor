@@ -75,76 +75,9 @@ static QPointF toPhysicalPoint(int ix, int iy, const QSize &imgSize,
   return p;
 }
 
-static QPoint getMatchingColourPixel(const QImage &image, QRgb col) {
-  QPoint p;
-  for (int ix = 0; ix < image.width(); ++ix) {
-    for (int iy = 0; iy < image.height(); ++iy) {
-      if (image.pixel(ix, iy) == col) {
-        p = QPoint(ix, iy);
-      }
-    }
-  }
-  return p;
-}
-
-static void improvePixelY(QPoint &p, const QImage &image) {
-  SPDLOG_TRACE("({},{})", p.x(), p.y());
-  QRgb col = image.pixel(p);
-  // go as far as possible in each direction without changing colour
-  int yp = 0;
-  while (p.y() + yp < image.height() && image.pixel(p.x(), p.y() + yp) == col) {
-    ++yp;
-  }
-  int ym = 0;
-  while (p.y() - ym >= 0 && image.pixel(p.x(), p.y() - ym) == col) {
-    ++ym;
-  }
-  // move to midpoint along this axis
-  p.ry() += (yp - ym) / 2;
-  SPDLOG_TRACE("  -> ({},{})", p.x(), p.y());
-}
-
-static void improvePixelX(QPoint &p, const QImage &image) {
-  SPDLOG_TRACE("({},{})", p.x(), p.y());
-  // go as far as possible in each direction without changing colour
-  QRgb col = image.pixel(p);
-  int xp = 0;
-  while (p.x() + xp < image.width() && image.pixel(p.x() + xp, p.y()) == col) {
-    ++xp;
-  }
-  int xm = 0;
-  while (p.x() - xm >= 0 && image.pixel(p.x() - xm, p.y()) == col) {
-    ++xm;
-  }
-  // move to midpoint along this axis
-  p.rx() += (xp - xm) / 2;
-  SPDLOG_TRACE("  -> ({},{})", p.x(), p.y());
-}
-
-static QPoint findInteriorPixel(const QImage &image, QRgb col) {
-  auto p = getMatchingColourPixel(image, col);
-  improvePixelX(p, image);
-  improvePixelY(p, image);
-  return p;
-}
-
-void setInteriorPoint(libsbml::Model *model, const std::string &domainType,
-                      const QPointF &point) {
-  auto *geom = getOrCreateGeometry(model);
-  auto *domain = geom->getDomainByDomainType(domainType);
-  SPDLOG_INFO("  - domain: {}", domain->getId());
-  auto *interiorPoint = domain->getInteriorPoint(0);
-  if (interiorPoint == nullptr) {
-    SPDLOG_INFO("  - creating new interior point");
-    interiorPoint = domain->createInteriorPoint();
-  }
-  interiorPoint->setCoord1(point.x());
-  interiorPoint->setCoord2(point.y());
-}
-
-GeometrySampledField importGeometryFromAnalyticGeometry(libsbml::Model *model,
-                                                        const QPointF &origin,
-                                                        const QSizeF &size) {
+GeometrySampledField
+importGeometryFromAnalyticGeometry(const libsbml::Model *model,
+                                   const QPointF &origin, const QSizeF &size) {
   GeometrySampledField gsf;
   QRgb nullColour{qRgb(0, 0, 0)};
   QSize imageSize(200, 200);
@@ -219,13 +152,6 @@ GeometrySampledField importGeometryFromAnalyticGeometry(libsbml::Model *model,
     SPDLOG_INFO("  - Pixels: {}", nPixels);
     if (nPixels > 0) {
       gsf.compartmentIdColourPairs.push_back({comp->getId(), col});
-      auto interiorPixel = findInteriorPixel(gsf.image, col);
-      auto interiorPoint = toPhysicalPoint(
-          interiorPixel.x(), gsf.image.height() - 1 - interiorPixel.y(),
-          gsf.image.size(), origin, size);
-      SPDLOG_INFO("  - Interior point: ({},{})", interiorPoint.x(),
-                  interiorPoint.y());
-      setInteriorPoint(model, analyticVol->getDomainType(), interiorPoint);
     }
   }
   return gsf;

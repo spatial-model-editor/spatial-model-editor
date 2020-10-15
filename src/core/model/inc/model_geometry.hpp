@@ -25,7 +25,7 @@ class ModelCompartments;
 class ModelMembranes;
 
 class ModelGeometry {
- private:
+private:
   double pixelWidth{1.0};
   QPointF physicalOrigin{QPointF(0, 0)};
   QSizeF physicalSize{QSizeF(0, 0)};
@@ -37,16 +37,16 @@ class ModelGeometry {
   libsbml::Model *sbmlModel{nullptr};
   ModelCompartments *modelCompartments{nullptr};
   ModelMembranes *modelMembranes{nullptr};
-  bool importDimensions(libsbml::Model *model);
+  bool importDimensions(const libsbml::Model *model);
   void writeDefaultGeometryToSBML();
   void updateMesh();
 
- public:
+public:
   ModelGeometry();
   explicit ModelGeometry(libsbml::Model *model, ModelCompartments *compartments,
                          ModelMembranes *membranes);
-  void importSampledFieldGeometry(libsbml::Model *model);
-  void importParametricGeometry(libsbml::Model *model);
+  void importSampledFieldGeometry(const libsbml::Model *model);
+  void importParametricGeometry(const libsbml::Model *model);
   void importSampledFieldGeometry(const QString &filename);
   void importGeometryFromImage(const QImage &img);
   void checkIfGeometryIsValid();
@@ -63,4 +63,4 @@ class ModelGeometry {
   void writeGeometryToSBML() const;
 };
 
-}  // namespace model
+} // namespace model

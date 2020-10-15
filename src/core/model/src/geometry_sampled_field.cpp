@@ -198,7 +198,8 @@ static std::vector<std::pair<std::string, QRgb>> getCompartmentIdAndColours(
   return compartmentIdAndColours;
 }
 
-GeometrySampledField importGeometryFromSampledField(libsbml::Geometry *geom) {
+GeometrySampledField
+importGeometryFromSampledField(const libsbml::Geometry *geom) {
   GeometrySampledField gsf;
   if (geom == nullptr) {
     return gsf;

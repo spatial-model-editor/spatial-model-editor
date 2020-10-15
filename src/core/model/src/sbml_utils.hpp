@@ -17,6 +17,8 @@ class Species;
 class Parameter;
 } // namespace libsbml
 
+const libsbml::SampledFieldGeometry *
+getSampledFieldGeometry(const libsbml::Geometry *geom);
 libsbml::SampledFieldGeometry *getSampledFieldGeometry(libsbml::Geometry *geom);
 const libsbml::Geometry *getGeometry(const libsbml::Model *model);
 libsbml::Geometry *getOrCreateGeometry(libsbml::Model *model);
@@ -32,6 +34,10 @@ getAdjacentCompartments(const libsbml::Model *model,
                         const std::string &compartmentId);
 
 bool getIsSpeciesConstant(const libsbml::Species *spec);
+
+const libsbml::Parameter *
+getSpatialCoordinateParam(const libsbml::Model *model,
+                          libsbml::CoordinateKind_t kind);
 
 libsbml::Parameter *getSpatialCoordinateParam(libsbml::Model *model,
                                               libsbml::CoordinateKind_t kind);

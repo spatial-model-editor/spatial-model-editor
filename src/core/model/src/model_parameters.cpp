@@ -93,6 +93,10 @@ static SpatialCoordinates importSpatialCoordinates(libsbml::Model *model) {
         "x", libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X,
         model);
   }
+  if (xparam->getName().empty()) {
+    SPDLOG_INFO("  - using Id as Name");
+    xparam->setName(xparam->getId());
+  }
   xparam->setUnits(model->getLengthUnits());
   xparam->setValue(0);
   s.x.id = xparam->getId();
@@ -104,6 +108,10 @@ static SpatialCoordinates importSpatialCoordinates(libsbml::Model *model) {
     yparam = createSpatialCoordParam(
         "y", libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y,
         model);
+  }
+  if (yparam->getName().empty()) {
+    SPDLOG_INFO("  - using Id as Name");
+    yparam->setName(yparam->getId());
   }
   yparam->setUnits(model->getLengthUnits());
   yparam->setValue(0);

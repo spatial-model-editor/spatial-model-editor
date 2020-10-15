@@ -14,8 +14,8 @@ namespace model {
 
 struct GeometrySampledField;
 
-GeometrySampledField importGeometryFromAnalyticGeometry(libsbml::Model *model,
-                                                        const QPointF &origin,
-                                                        const QSizeF &size);
+GeometrySampledField
+importGeometryFromAnalyticGeometry(const libsbml::Model *model,
+                                   const QPointF &origin, const QSizeF &size);
 
 } // namespace model
