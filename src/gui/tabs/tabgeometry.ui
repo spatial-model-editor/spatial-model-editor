@@ -124,6 +124,75 @@
       <layout class="QVBoxLayout" name="verticalLayout_2">
        <item>
         <layout class="QGridLayout" name="gridCompartmentSettings">
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="txtCompartmentName">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>The size of the compartment</string>
+           </property>
+           <property name="statusTip">
+            <string>The size of the compartment</string>
+           </property>
+           <property name="whatsThis">
+            <string>The size of the compartment</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="lblCompColourLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Colour:</string>
+           </property>
+           <property name="scaledContents">
+            <bool>false</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lblCompartmentNameLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>The size of the compartment</string>
+           </property>
+           <property name="statusTip">
+            <string>The size of the compartment</string>
+           </property>
+           <property name="whatsThis">
+            <string>The size of the compartment</string>
+           </property>
+           <property name="text">
+            <string>Name:</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
          <item row="0" column="3">
           <widget class="QLabel" name="lblCompartmentColour">
            <property name="sizePolicy">
@@ -163,75 +232,13 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="lblCompartmentNameLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="toolTip">
-            <string>The size of the compartment</string>
-           </property>
-           <property name="statusTip">
-            <string>The size of the compartment</string>
-           </property>
-           <property name="whatsThis">
-            <string>The size of the compartment</string>
-           </property>
+         <item row="0" column="4">
+          <widget class="QLabel" name="lblCompSize">
            <property name="text">
-            <string>Name:</string>
+            <string>Volume/Area:</string>
            </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QLabel" name="lblCompColourLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="font">
-            <font>
-             <weight>50</weight>
-             <bold>false</bold>
-            </font>
-           </property>
-           <property name="autoFillBackground">
-            <bool>true</bool>
-           </property>
-           <property name="text">
-            <string>Colour:</string>
-           </property>
-           <property name="scaledContents">
-            <bool>false</bool>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLineEdit" name="txtCompartmentName">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="toolTip">
-            <string>The size of the compartment</string>
-           </property>
-           <property name="statusTip">
-            <string>The size of the compartment</string>
-           </property>
-           <property name="whatsThis">
-            <string>The size of the compartment</string>
+           <property name="textInteractionFlags">
+            <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
            </property>
           </widget>
          </item>
@@ -523,6 +530,19 @@
    <header>qlabelmousetracker.hpp</header>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>listCompartments</tabstop>
+  <tabstop>btnAddCompartment</tabstop>
+  <tabstop>btnRemoveCompartment</tabstop>
+  <tabstop>listMembranes</tabstop>
+  <tabstop>txtCompartmentName</tabstop>
+  <tabstop>tabCompartmentGeometry</tabstop>
+  <tabstop>btnChangeCompartment</tabstop>
+  <tabstop>spinBoundaryIndex</tabstop>
+  <tabstop>spinMaxBoundaryPoints</tabstop>
+  <tabstop>spinBoundaryWidth</tabstop>
+  <tabstop>spinMaxTriangleArea</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
