@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "geometry.hpp"
 #include <QColor>
 #include <QStringList>
 #include <map>
@@ -12,10 +13,6 @@ namespace libsbml {
 class Model;
 class Species;
 } // namespace libsbml
-
-namespace geometry {
-class Membrane;
-}
 
 namespace model {
 
