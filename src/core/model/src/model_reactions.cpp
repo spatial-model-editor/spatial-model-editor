@@ -237,6 +237,7 @@ void ModelReactions::remove(const QString &id) {
   }
   ids.removeAt(i);
   names.removeAt(i);
+  parameterIds.removeAt(i);
 }
 
 void ModelReactions::removeAllInvolvingSpecies(const QString &speciesId) {
