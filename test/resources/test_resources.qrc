@@ -26,5 +26,6 @@
         <file>geometry/gt18.png</file>
         <file>geometry/gt19.png</file>
         <file>geometry/gt20.png</file>
+        <file>geometry/potato_alpha_channel.png</file>
     </qresource>
 </RCC>
