@@ -10,12 +10,19 @@
 namespace sme {
 
 void pybindSpecies(const pybind11::module &m) {
-  pybind11::class_<sme::Species>(m, "Species")
+  pybind11::class_<sme::Species>(m, "Species",
+                                 R"(
+                                 a species that lives in a compartment
+                                 )")
       .def_property("name", &sme::Species::getName, &sme::Species::setName,
-                    "The name of this species")
+                    R"(
+                    str: the name of this species
+                    )")
       .def_property("diffusion_constant", &sme::Species::getDiffusionConstant,
                     &sme::Species::setDiffusionConstant,
-                    "The diffusion constant of this species")
+                    R"(
+                    float: the diffusion constant of this species
+                    )")
       .def("__repr__",
            [](const sme::Species &a) {
              return fmt::format("<sme.Species named '{}'>", a.getName());
@@ -51,3 +58,17 @@ std::string Species::getStr() const {
 }
 
 } // namespace sme
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//

@@ -10,13 +10,20 @@
 namespace sme {
 
 void pybindReactionParameter(const pybind11::module &m) {
-  pybind11::class_<sme::ReactionParameter>(m, "ReactionParameter")
+  pybind11::class_<sme::ReactionParameter>(m, "ReactionParameter",
+                                           R"(
+                                           a parameter of a reaction
+                                           )")
       .def_property("name", &sme::ReactionParameter::getName,
                     &sme::ReactionParameter::setName,
-                    "The name of this reaction parameter")
+                    R"(
+                    str: the name of this reaction parameter
+                    )")
       .def_property("value", &sme::ReactionParameter::getValue,
                     &sme::ReactionParameter::setValue,
-                    "The value of this reaction parameter")
+                    R"(
+                    float: the value of this reaction parameter
+                    )")
       .def("__repr__",
            [](const sme::ReactionParameter &a) {
              return fmt::format("<sme.ReactionParameter named '{}'>",
@@ -57,3 +64,21 @@ std::string ReactionParameter::getStr() const {
 }
 
 } // namespace sme
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
