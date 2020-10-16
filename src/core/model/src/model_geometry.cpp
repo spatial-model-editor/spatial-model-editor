@@ -219,7 +219,15 @@ void ModelGeometry::importGeometryFromImage(const QImage &img) {
   for (const auto &id : modelCompartments->getIds()) {
     modelCompartments->setColour(id, 0);
   }
-  image = img.convertToFormat(QImage::Format_Indexed8);
+  constexpr auto flagNoDither = Qt::AvoidDither | Qt::ThresholdDither |
+                                Qt::ThresholdAlphaDither |
+                                Qt::NoOpaqueDetection;
+  auto imgNoAlpha = img;
+  if (img.hasAlphaChannel()) {
+    SPDLOG_WARN("ignoring alpha channel");
+    imgNoAlpha = img.convertToFormat(QImage::Format_RGB32, flagNoDither);
+  }
+  image = imgNoAlpha.convertToFormat(QImage::Format_Indexed8, flagNoDither);
   modelMembranes->updateCompartmentImage(image);
   auto *geom = getOrCreateGeometry(sbmlModel);
   exportSampledFieldGeometry(geom, image);
