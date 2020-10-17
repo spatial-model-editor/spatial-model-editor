@@ -27,7 +27,7 @@ ReacEval::ReacEval(const model::Model &doc,
                    const std::vector<std::string> &reactionScaleFactors,
                    bool doCSE, unsigned optLevel) {
   // construct reaction expressions and stoich matrix
-  PDE pde(&doc, speciesIDs, reactionIDs, {}, reactionScaleFactors);
+  Pde pde(&doc, speciesIDs, reactionIDs, {}, reactionScaleFactors);
   // compile all expressions with symengine
   sym = symbolic::Symbolic(pde.getRHS(), speciesIDs, {}, {}, true, doCSE,
                            optLevel);

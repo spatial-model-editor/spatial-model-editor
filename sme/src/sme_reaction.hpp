@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sme_reactionparameter.hpp"
+#include <pybind11/pybind11.h>
 #include <string>
 #include <vector>
 
@@ -8,13 +9,9 @@ namespace model {
 class Model;
 }
 
-namespace pybind11 {
-class module;
-}
-
 namespace sme {
 
-void pybindReaction(const pybind11::module &m);
+void pybindReaction(pybind11::module &m);
 
 class Reaction {
 private:
@@ -22,6 +19,7 @@ private:
   std::string id;
 
 public:
+  Reaction() = default;
   explicit Reaction(model::Model *sbmlDocWrapper, const std::string &sId);
   std::string getName() const;
   void setName(const std::string &name);
@@ -31,3 +29,5 @@ public:
 };
 
 } // namespace sme
+
+PYBIND11_MAKE_OPAQUE(std::vector<sme::Reaction>);

@@ -4,6 +4,7 @@
 #include "sme_reaction.hpp"
 #include "sme_species.hpp"
 #include <map>
+#include <pybind11/pybind11.h>
 #include <string>
 #include <vector>
 
@@ -11,13 +12,9 @@ namespace model {
 class Model;
 }
 
-namespace pybind11 {
-class module;
-}
-
 namespace sme {
 
-void pybindMembrane(const pybind11::module &m);
+void pybindMembrane(pybind11::module &m);
 
 class Membrane {
 private:
@@ -25,6 +22,7 @@ private:
   std::string id;
 
 public:
+  Membrane() = default;
   explicit Membrane(model::Model *sbmlDocWrapper, const std::string &sId);
   std::string getName() const;
   std::vector<Reaction> reactions;
@@ -33,3 +31,5 @@ public:
 };
 
 } // namespace sme
+
+PYBIND11_MAKE_OPAQUE(std::vector<sme::Membrane>);

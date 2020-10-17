@@ -29,15 +29,24 @@ master_doc = "index"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.napoleon",
-    "sphinx.ext.autosummary",
+    "nbsphinx",
     "sphinx_rtd_theme",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
+    "sphinx.ext.mathjax",
+    "sphinx.ext.napoleon",
 ]
 
 autoclass_content = "class"
 
 autosummary_generate = True
+
+nbsphinx_prolog = """
+|colab-icon|_ `Interactive online version <https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/docs/{{ env.doc2path(env.docname, base=None) }}>`_
+
+.. |colab-icon| image:: https://colab.research.google.com/assets/colab-badge.svg
+.. _colab-icon: https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/docs/{{ env.doc2path(env.docname, base=None) }}
+"""
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

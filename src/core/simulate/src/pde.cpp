@@ -16,7 +16,7 @@
 
 namespace simulate {
 
-PDE::PDE(const model::Model *doc_ptr,
+Pde::Pde(const model::Model *doc_ptr,
          const std::vector<std::string> &speciesIDs,
          const std::vector<std::string> &reactionIDs,
          const std::vector<std::string> &relabelledSpeciesIDs,
@@ -62,6 +62,9 @@ PDE::PDE(const model::Model *doc_ptr,
                              reactions.getConstants(j),
                              doc_ptr->getFunctions().getSymbolicFunctions(),
                              false);
+      if (!sym.isValid()) {
+        throw PdeError(sym.getErrorMessage());
+      }
       // add term to rhs
       r.append(QString(" + (%1)").arg(sym.inlinedExpr().c_str()));
     }
@@ -82,8 +85,8 @@ PDE::PDE(const model::Model *doc_ptr,
   }
 }
 
-const std::vector<std::string> &PDE::getRHS() const { return rhs; }
-const std::vector<std::vector<std::string>> &PDE::getJacobian() const {
+const std::vector<std::string> &Pde::getRHS() const { return rhs; }
+const std::vector<std::vector<std::string>> &Pde::getJacobian() const {
   return jacobian;
 }
 

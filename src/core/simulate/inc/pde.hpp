@@ -8,6 +8,7 @@
 #pragma once
 
 #include <cstddef>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -18,14 +19,19 @@ class Model;
 
 namespace simulate {
 
-class PDE {
+class PdeError : public std::runtime_error {
+public:
+  explicit PdeError(const std::string &message) : std::runtime_error(message) {}
+};
+
+class Pde {
 private:
   std::vector<std::string> species;
   std::vector<std::string> rhs;
   std::vector<std::vector<std::string>> jacobian;
 
 public:
-  explicit PDE(const model::Model *doc_ptr,
+  explicit Pde(const model::Model *doc_ptr,
                const std::vector<std::string> &speciesIDs,
                const std::vector<std::string> &reactionIDs,
                const std::vector<std::string> &relabelledSpeciesIDs = {},

@@ -305,7 +305,7 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
           !reacsInCompartment.isEmpty()) {
         reacs = utils::toStdString(reacsInCompartment);
       }
-      PDE pde(&model, nonConstantSpecies, reacs, duneSpeciesNames);
+      Pde pde(&model, nonConstantSpecies, reacs, duneSpeciesNames);
       for (std::size_t i = 0; i < nSpecies; ++i) {
         inis[modelIndex].addValue(duneSpeciesNames.at(i).c_str(),
                                   pde.getRHS().at(i).c_str());
@@ -409,7 +409,7 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
           reacs.push_back(r.toStdString());
         }
       }
-      PDE pde(&model, nonConstantSpecies, reacs, duneSpeciesNames,
+      Pde pde(&model, nonConstantSpecies, reacs, duneSpeciesNames,
               reacScaleFactors);
       for (std::size_t i = 0; i < nSpecies; ++i) {
         inis[modelIndex].addValue(duneSpeciesNames.at(i).c_str(),

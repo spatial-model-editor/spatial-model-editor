@@ -1,9 +1,7 @@
 #pragma once
-#include "sme_model.hpp"
 
-namespace pybind11 {
-class module;
-}
+#include "sme_model.hpp"
+#include <pybind11/pybind11.h>
 
 namespace sme {
 

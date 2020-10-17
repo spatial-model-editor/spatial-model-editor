@@ -39,7 +39,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
     model::Model s;
     s.importSBMLFile("tmp.xml");
-    simulate::PDE pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"});
+    simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"});
     REQUIRE(symEq(pde.getRHS()[0], "-0.1*x*dim"));
     REQUIRE(symEq(pde.getRHS()[1], "-0.1*x*dim"));
     REQUIRE(symEq(pde.getRHS()[2], "0.1*x*dim"));
@@ -58,7 +58,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
     model::Model s;
     s.importSBMLFile("tmp.xml");
-    simulate::PDE pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
+    simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
                       {"dim_", "x__", "x_", "cos__", "cos_"});
     REQUIRE(symEq(pde.getRHS()[0], "-0.1*x__*dim_"));
     REQUIRE(symEq(pde.getRHS()[1], "-0.1*x__*dim_"));
@@ -79,7 +79,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
       libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
       model::Model s;
       s.importSBMLFile("tmp.xml");
-      simulate::PDE pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
+      simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
                         {"z", "y"});
       REQUIRE(symEq(pde.getRHS()[0], "-0.1*x*dim"));
       REQUIRE(symEq(pde.getRHS()[1], "-0.1*x*dim"));
@@ -100,7 +100,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
     model::Model s;
     s.importSBMLFile("tmp.xml");
-    simulate::PDE pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
+    simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
                       {"dim_", "x__", "x_", "cos__", "cos_"}, {"5"});
     REQUIRE(symEq(pde.getRHS()[0], "-0.02*x__*dim_"));
     REQUIRE(symEq(pde.getRHS()[1], "-0.02*x__*dim_"));
@@ -121,7 +121,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
       libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
       model::Model s;
       s.importSBMLFile("tmp.xml");
-      simulate::PDE pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"}, {},
+      simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"}, {},
                         {"10", "2"});
       REQUIRE(symEq(pde.getRHS()[0], "-0.1*x*dim"));
       REQUIRE(symEq(pde.getRHS()[1], "-0.1*x*dim"));

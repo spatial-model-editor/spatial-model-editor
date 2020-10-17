@@ -1,40 +1,42 @@
-// Python.h (included by pybind11.h) must come first:
+// Python.h (included by pybind11.h) must come first
+// https://docs.python.org/3.2/c-api/intro.html#include-files
 #include <pybind11/pybind11.h>
-
-// other headers
-#include <pybind11/stl.h>
-
-#include <utility>
 
 #include "model.hpp"
 #include "sme_common.hpp"
 #include "sme_parameter.hpp"
+#include <pybind11/stl_bind.h>
+#include <utility>
 
 namespace sme {
 
-void pybindParameter(const pybind11::module &m) {
-  pybind11::class_<sme::Parameter>(m, "Parameter",
-                                   R"(
-                                   a parameter of the model
-                                   )")
-      .def_property("name", &sme::Parameter::getName, &sme::Parameter::setName,
+void pybindParameter(pybind11::module &m) {
+
+  pybind11::bind_vector<std::vector<Parameter>>(m, "ParameterList",
+                                                R"(
+                                                a list of parameters
+                                                )");
+
+  pybind11::class_<Parameter>(m, "Parameter",
+                              R"(
+                              a parameter of the model
+                              )")
+      .def_property("name", &Parameter::getName, &sme::Parameter::setName,
                     R"(
                     str: the name of this parameter
                     )")
-      .def_property("value", &sme::Parameter::getValue,
-                    &sme::Parameter::setValue,
+      .def_property("value", &Parameter::getValue, &Parameter::setValue,
                     R"(
                     str: the mathematical expression for this reaction parameter
                     )")
       .def("__repr__",
-           [](const sme::Parameter &a) {
+           [](const Parameter &a) {
              return fmt::format("<sme.Parameter named '{}'>", a.getName());
            })
-      .def("__str__", &sme::Parameter::getStr);
+      .def("__str__", &Parameter::getStr);
 }
-
-Parameter::Parameter(model::Model *sbmlDocWrapper, std::string sId)
-    : s(sbmlDocWrapper), id(std::move(sId)) {}
+Parameter::Parameter(model::Model *sbmlDocWrapper, const std::string &sId)
+    : s(sbmlDocWrapper), id(sId) {}
 
 void Parameter::setName(const std::string &name) {
   s->getParameters().setName(id.c_str(), name.c_str());
@@ -60,6 +62,18 @@ std::string Parameter::getStr() const {
 }
 
 } // namespace sme
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
 
 //
 

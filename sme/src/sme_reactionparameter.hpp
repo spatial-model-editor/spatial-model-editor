@@ -1,26 +1,24 @@
 #pragma once
 
+#include <pybind11/pybind11.h>
 #include <string>
 
 namespace model {
 class Model;
 }
 
-namespace pybind11 {
-class module;
-}
-
 namespace sme {
 
-void pybindReactionParameter(const pybind11::module &m);
+void pybindReactionParameter(pybind11::module &m);
 
 class ReactionParameter {
 private:
   model::Model *s;
-  const std::string reacId;
-  const std::string paramId;
+  std::string reacId;
+  std::string paramId;
 
 public:
+  ReactionParameter() = default;
   explicit ReactionParameter(model::Model *sbmlDocWrapper,
                              const std::string &reactionId,
                              const std::string &parameterId);
@@ -32,3 +30,5 @@ public:
 };
 
 } // namespace sme
+
+PYBIND11_MAKE_OPAQUE(std::vector<sme::ReactionParameter>);

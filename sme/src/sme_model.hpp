@@ -1,4 +1,5 @@
 #pragma once
+
 #include "model.hpp"
 #include "simulate.hpp"
 #include "sme_common.hpp"
@@ -7,16 +8,13 @@
 #include "sme_parameter.hpp"
 #include "sme_simulationresult.hpp"
 #include <memory>
+#include <pybind11/pybind11.h>
 #include <string>
 #include <vector>
 
-namespace pybind11 {
-class module;
-}
-
 namespace sme {
 
-void pybindModel(const pybind11::module &m);
+void pybindModel(pybind11::module &m);
 
 class Model {
 private:
