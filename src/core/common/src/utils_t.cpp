@@ -59,6 +59,12 @@ SCENARIO("Utils", "[core/common/utils][core/common][core][utils]") {
       REQUIRE(v2s == s);
       REQUIRE(utils::stringToVector<int>(v2s) == v);
     }
+    WHEN("type: int, empty") {
+      auto v2s = utils::vectorToString(std::vector<int>{});
+      auto s2v = utils::stringToVector<int>("");
+      REQUIRE(v2s == "");
+      REQUIRE(s2v == std::vector<int>{});
+    }
     WHEN("type: QRgba") {
       std::vector<QRgb> v{0xffffffff, 0x00ffffff, 123, 8435122, 0xfffffffe, 0};
       std::string s("4294967295 16777215 123 8435122 4294967294 0");
@@ -74,6 +80,16 @@ SCENARIO("Utils", "[core/common/utils][core/common][core][utils]") {
       auto v2s = utils::vectorToString(v);
       REQUIRE(utils::stringToVector<double>(v2s) == v);
     }
+  }
+  GIVEN("int <-> bool") {
+    std::vector<bool> vb{true, true, false, true, false};
+    std::vector<int> vi{1, 1, 0, 1, 0};
+    auto vb2i = utils::toInt(vb);
+    auto vi2b = utils::toBool(vi);
+    REQUIRE(vb2i == vi);
+    REQUIRE(vi2b == vb);
+    REQUIRE(utils::toBool(vb2i) == vb);
+    REQUIRE(utils::toInt(vi2b) == vi);
   }
   GIVEN("QPointIndexer") {
     QSize size(20, 16);

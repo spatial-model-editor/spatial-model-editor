@@ -103,6 +103,9 @@ QStringList toQString(const std::vector<std::string> &v);
 QString dblToQStr(double x, int precision = 18);
 std::vector<QRgb> toStdVec(const QVector<QRgb> &q);
 
+std::vector<bool> toBool(const std::vector<int> &v);
+std::vector<int> toInt(const std::vector<bool> &v);
+
 template <typename T> std::vector<T> stringToVector(const std::string &str) {
   std::istringstream ss(str);
   return std::vector<T>(std::istream_iterator<T>(ss),
@@ -110,6 +113,9 @@ template <typename T> std::vector<T> stringToVector(const std::string &str) {
 }
 
 template <typename T> std::string vectorToString(const std::vector<T> &vec) {
+  if (vec.empty()) {
+    return {};
+  }
   std::stringstream ss;
   for (std::size_t i = 0; i < vec.size() - 1; ++i) {
     ss << std::scientific << std::setprecision(17) << vec[i] << " ";

@@ -6,13 +6,8 @@
 
 #pragma once
 
-#include <QColor>
-#include <QImage>
-#include <QStringList>
-#include <memory>
-#include <optional>
-
 #include "model_compartments.hpp"
+#include "model_display_options.hpp"
 #include "model_functions.hpp"
 #include "model_geometry.hpp"
 #include "model_math.hpp"
@@ -21,6 +16,11 @@
 #include "model_reactions.hpp"
 #include "model_species.hpp"
 #include "model_units.hpp"
+#include <QColor>
+#include <QImage>
+#include <QStringList>
+#include <memory>
+#include <optional>
 
 // SBML forward declarations
 namespace libsbml {
@@ -113,5 +113,8 @@ public:
   std::string inlineExpr(const std::string &mathExpression) const;
 
   std::string getRateRule(const std::string &speciesID) const;
+
+  DisplayOptions getDisplayOptions() const;
+  void setDisplayOptions(const DisplayOptions &displayOptions);
 };
 } // namespace model

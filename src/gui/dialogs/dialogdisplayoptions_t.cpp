@@ -12,12 +12,15 @@ SCENARIO("DialogDisplayOptions",
     std::vector<QStringList> species;
     species.push_back({"s1_c1", "s2_c1"});
     species.push_back({"s1_c2", "s2_c2", "s3_c2"});
-    std::vector<bool> showSpecies{true, false, false, true, false};
-    DialogDisplayOptions dia(compartments, species, showSpecies, false, false,
-                             false, {});
+    model::DisplayOptions opts;
+    opts.showSpecies = {true, false, false, true, false};
+    opts.showMinMax = false;
+    opts.normaliseOverAllTimepoints = false;
+    opts.normaliseOverAllSpecies = false;
+    DialogDisplayOptions dia(compartments, species, opts, {});
     ModalWidgetTimer mwt;
     WHEN("user does nothing") {
-      REQUIRE(dia.getShowSpecies() == showSpecies);
+      REQUIRE(dia.getShowSpecies() == opts.showSpecies);
       REQUIRE(dia.getShowMinMax() == false);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
@@ -26,9 +29,9 @@ SCENARIO("DialogDisplayOptions",
       mwt.addUserAction({"Space"});
       mwt.start();
       dia.exec();
-      showSpecies[0] = true;
-      showSpecies[1] = true;
-      REQUIRE(dia.getShowSpecies() == showSpecies);
+      opts.showSpecies[0] = true;
+      opts.showSpecies[1] = true;
+      REQUIRE(dia.getShowSpecies() == opts.showSpecies);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
@@ -38,9 +41,9 @@ SCENARIO("DialogDisplayOptions",
       mwt.addUserAction({"Space", "Space"});
       mwt.start();
       dia.exec();
-      showSpecies[0] = false;
-      showSpecies[1] = false;
-      REQUIRE(dia.getShowSpecies() == showSpecies);
+      opts.showSpecies[0] = false;
+      opts.showSpecies[1] = false;
+      REQUIRE(dia.getShowSpecies() == opts.showSpecies);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
@@ -48,8 +51,8 @@ SCENARIO("DialogDisplayOptions",
       mwt.addUserAction({"Down", "Space"});
       mwt.start();
       dia.exec();
-      showSpecies[0] = false;
-      REQUIRE(dia.getShowSpecies() == showSpecies);
+      opts.showSpecies[0] = false;
+      REQUIRE(dia.getShowSpecies() == opts.showSpecies);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
@@ -57,7 +60,7 @@ SCENARIO("DialogDisplayOptions",
       mwt.addUserAction({"Down", "Space", "Space"});
       mwt.start();
       dia.exec();
-      REQUIRE(dia.getShowSpecies() == showSpecies);
+      REQUIRE(dia.getShowSpecies() == opts.showSpecies);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
@@ -102,8 +105,8 @@ SCENARIO("DialogDisplayOptions",
       mwt.addUserAction({"Space", "Down", "Down", "Down", "Space"});
       mwt.start();
       dia.exec();
-      showSpecies = {true, true, true, true, true};
-      REQUIRE(dia.getShowSpecies() == showSpecies);
+      opts.showSpecies = {true, true, true, true, true};
+      REQUIRE(dia.getShowSpecies() == opts.showSpecies);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
@@ -112,8 +115,8 @@ SCENARIO("DialogDisplayOptions",
           {"Space", "Space", "Down", "Down", "Down", "Space", "Space"});
       mwt.start();
       dia.exec();
-      showSpecies = {false, false, false, false, false};
-      REQUIRE(dia.getShowSpecies() == showSpecies);
+      opts.showSpecies = {false, false, false, false, false};
+      REQUIRE(dia.getShowSpecies() == opts.showSpecies);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
@@ -123,15 +126,18 @@ SCENARIO("DialogDisplayOptions",
     std::vector<QStringList> species;
     species.push_back({"s1_c1", "s2_c1"});
     species.push_back({"s1_c2", "s2_c2", "s3_c2"});
-    std::vector<bool> showSpecies{true, false, false, true, false};
+    model::DisplayOptions opts;
+    opts.showSpecies = {true, false, false, true, false};
+    opts.showMinMax = false;
+    opts.normaliseOverAllTimepoints = false;
+    opts.normaliseOverAllSpecies = false;
     std::vector<PlotWrapperObservable> observables;
     observables.push_back({"1", "1", true});
     observables.push_back({"s1_c1*2", "s1_c1*2", true});
-    DialogDisplayOptions dia(compartments, species, showSpecies, false, false,
-                             false, observables);
+    DialogDisplayOptions dia(compartments, species, opts, observables);
     ModalWidgetTimer mwt;
     WHEN("user does nothing") {
-      REQUIRE(dia.getShowSpecies() == showSpecies);
+      REQUIRE(dia.getShowSpecies() == opts.showSpecies);
       REQUIRE(dia.getShowMinMax() == false);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);

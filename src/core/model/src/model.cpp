@@ -1,5 +1,4 @@
 #include "model.hpp"
-
 #include "id.hpp"
 #include "logger.hpp"
 #include "mesh.hpp"
@@ -184,6 +183,15 @@ std::string Model::getRateRule(const std::string &speciesID) const {
     return inlineExpr(rule->getFormula());
   }
   return {};
+}
+
+DisplayOptions Model::getDisplayOptions() const {
+  return getDisplayOptionsAnnotation(doc->getModel())
+      .value_or(DisplayOptions{});
+}
+
+void Model::setDisplayOptions(const DisplayOptions &displayOptions) {
+  addDisplayOptionsAnnotation(doc->getModel(), displayOptions);
 }
 
 } // namespace model

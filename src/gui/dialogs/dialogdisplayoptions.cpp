@@ -28,17 +28,17 @@ static bool indexToBool(int value) {
 DialogDisplayOptions::DialogDisplayOptions(
     const QStringList &compartmentNames,
     const std::vector<QStringList> &speciesNames,
-    const std::vector<bool> &showSpecies, bool showMinMax,
-    bool normaliseOverAllTimepoints, bool normaliseOverAllSpecies,
+    const model::DisplayOptions &displayOptions,
     const std::vector<PlotWrapperObservable> &plotWrapperObservables,
     QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogDisplayOptions>()},
-      nSpecies(showSpecies.size()), observables(plotWrapperObservables) {
+      nSpecies(displayOptions.showSpecies.size()),
+      observables(plotWrapperObservables) {
   ui->setupUi(this);
 
   auto *ls = ui->listSpecies;
   ls->clear();
-  auto iterChecked = showSpecies.cbegin();
+  auto iterChecked = displayOptions.showSpecies.cbegin();
   for (int iComp = 0; iComp < compartmentNames.size(); ++iComp) {
     auto *comp = new QTreeWidgetItem(ls, {compartmentNames[iComp]});
     comp->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable |
@@ -55,7 +55,7 @@ DialogDisplayOptions::DialogDisplayOptions(
     }
   }
   ls->expandAll();
-  ui->chkShowMinMaxRanges->setChecked(showMinMax);
+  ui->chkShowMinMaxRanges->setChecked(displayOptions.showMinMax);
   for (const auto &observable : observables) {
     auto *obs =
         new QTreeWidgetItem(ui->listObservables, {observable.expression});
@@ -65,9 +65,9 @@ DialogDisplayOptions::DialogDisplayOptions(
     ui->listObservables->addTopLevelItem(obs);
   }
   ui->cmbNormaliseOverAllTimepoints->setCurrentIndex(
-      boolToIndex(normaliseOverAllTimepoints));
+      boolToIndex(displayOptions.normaliseOverAllTimepoints));
   ui->cmbNormaliseOverAllSpecies->setCurrentIndex(
-      boolToIndex(normaliseOverAllSpecies));
+      boolToIndex(displayOptions.normaliseOverAllSpecies));
 
   connect(ui->listObservables, &QTreeWidget::currentItemChanged, this,
           &DialogDisplayOptions::listObservables_currentItemChanged);

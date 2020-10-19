@@ -1,5 +1,4 @@
 #include "tabsimulate.hpp"
-#include "dialogdisplayoptions.hpp"
 #include "dialogexport.hpp"
 #include "dialogimageslice.hpp"
 #include "guiutils.hpp"
@@ -82,7 +81,6 @@ void TabSimulate::loadModelData() {
 
   // setup species names
   speciesNames.clear();
-  speciesVisible.clear();
   compartmentNames.clear();
   for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
     compartmentNames.push_back(
@@ -91,7 +89,6 @@ void TabSimulate::loadModelData() {
     for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
       names.push_back(
           sbmlDoc.getSpecies().getName(sim->getSpeciesIds(ic)[is].c_str()));
-      speciesVisible.push_back(true);
     }
   }
   // setup plot
@@ -120,7 +117,14 @@ void TabSimulate::loadModelData() {
       ++speciesIndex;
     }
   }
-  speciesVisible.resize(static_cast<std::size_t>(speciesIndex), true);
+  displayOptions = sbmlDoc.getDisplayOptions();
+  if (auto ns{static_cast<std::size_t>(speciesIndex)};
+      ns != displayOptions.showSpecies.size()) {
+    // show species count doesn't match actual number of species
+    // user probably added/removed species to model
+    // just set all species visible in this case
+    displayOptions.showSpecies.resize(ns, true);
+  }
   updateSpeciesToDraw();
 
   images.push_back(sim->getConcImage(0));
@@ -149,8 +153,6 @@ void TabSimulate::reset() {
   ui->hslideTime->setMaximum(0);
   images.clear();
   time.clear();
-  normaliseImageIntensityOverAllTimepoints = true;
-  normaliseImageIntensityOverAllSpecies = true;
   // Note: this reset is required to delete all current DUNE objects *before*
   // creating a new one, otherwise the new ones make use of the existing ones,
   // and once they are deleted it dereferences a nullptr and segfaults...
@@ -256,7 +258,7 @@ void TabSimulate::updateSpeciesToDraw() {
     auto &speciesToDraw = compartmentSpeciesToDraw.emplace_back();
     for (std::size_t i = 0; i < static_cast<std::size_t>(compSpecies.size());
          ++i) {
-      if (speciesVisible[speciesIndex]) {
+      if (displayOptions.showSpecies[speciesIndex]) {
         speciesToDraw.push_back(i);
       }
       ++speciesIndex;
@@ -267,34 +269,34 @@ void TabSimulate::updateSpeciesToDraw() {
 void TabSimulate::updatePlotAndImages() {
 
   plt->clearObservableLines();
-  std::size_t colorIndex{speciesVisible.size()};
+  std::size_t colorIndex{displayOptions.showSpecies.size()};
   for (const auto &obs : observables) {
     plt->addObservableLine(obs, utils::indexedColours()[colorIndex]);
     ++colorIndex;
   }
-  plt->update(speciesVisible, plotShowMinMax);
+  plt->update(displayOptions.showSpecies, displayOptions.showMinMax);
   updateSpeciesToDraw();
   // update images
   for (int iTime = 0; iTime < time.size(); ++iTime) {
     images[iTime] = sim->getConcImage(static_cast<std::size_t>(iTime),
                                       compartmentSpeciesToDraw,
-                                      normaliseImageIntensityOverAllTimepoints,
-                                      normaliseImageIntensityOverAllSpecies);
+                                      displayOptions.normaliseOverAllTimepoints,
+                                      displayOptions.normaliseOverAllSpecies);
   }
 }
 
 void TabSimulate::btnDisplayOptions_clicked() {
-  DialogDisplayOptions dialog(
-      compartmentNames, speciesNames, speciesVisible, plotShowMinMax,
-      normaliseImageIntensityOverAllTimepoints,
-      normaliseImageIntensityOverAllSpecies, observables);
+  DialogDisplayOptions dialog(compartmentNames, speciesNames, displayOptions,
+                              observables);
   if (dialog.exec() == QDialog::Accepted) {
-    plotShowMinMax = dialog.getShowMinMax();
-    speciesVisible = dialog.getShowSpecies();
-    normaliseImageIntensityOverAllTimepoints =
+    displayOptions.showMinMax = dialog.getShowMinMax();
+    displayOptions.showSpecies = dialog.getShowSpecies();
+    displayOptions.normaliseOverAllTimepoints =
         dialog.getNormaliseOverAllTimepoints();
-    normaliseImageIntensityOverAllSpecies = dialog.getNormaliseOverAllSpecies();
+    displayOptions.normaliseOverAllSpecies =
+        dialog.getNormaliseOverAllSpecies();
     observables = dialog.getObservables();
+    sbmlDoc.setDisplayOptions(displayOptions);
     updatePlotAndImages();
     hslideTime_valueChanged(ui->hslideTime->value());
   }
