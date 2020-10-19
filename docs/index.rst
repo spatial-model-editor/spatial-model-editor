@@ -14,12 +14,19 @@ Spatial Model Editor Documentation
 
 .. toctree::
    :maxdepth: 2
+   :caption: Python interface
+
+   sme/sme
+   sme/notebooks
+   sme/api
+
+.. toctree::
+   :maxdepth: 2
    :caption: Reference documentation
 
    reference/dune
    reference/pixel
    reference/mesh
-   reference/python
    reference/cli
    reference/maths
    reference/units

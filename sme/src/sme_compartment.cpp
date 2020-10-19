@@ -1,31 +1,32 @@
-// Python.h (included by pybind11.h) must come first:
+// Python.h (included by pybind11.h) must come first
+// https://docs.python.org/3.2/c-api/intro.html#include-files
 #include <pybind11/pybind11.h>
-
-// other headers
-#include <pybind11/stl.h>
 
 #include "logger.hpp"
 #include "model.hpp"
-#include "sme_common.hpp"
 #include "sme_compartment.hpp"
+#include <pybind11/stl_bind.h>
 
 namespace sme {
 
-void pybindCompartment(const pybind11::module &m) {
-  pybind11::class_<sme::Compartment>(m, "Compartment",
-                                     R"(
-                                     a compartment where species live
-                                     )")
-      .def_property("name", &sme::Compartment::getName,
-                    &sme::Compartment::setName,
+void pybindCompartment(pybind11::module &m) {
+  pybind11::bind_vector<std::vector<Compartment>>(m, "CompartmentList",
+                                                  R"(
+                                                  a list of compartments
+                                                  )");
+  pybind11::class_<Compartment>(m, "Compartment",
+                                R"(
+                                a compartment where species live
+                                )")
+      .def_property("name", &Compartment::getName, &Compartment::setName,
                     R"(
                     str: the name of this compartment
                     )")
-      .def_readonly("species", &sme::Compartment::species,
+      .def_readonly("species", &Compartment::species,
                     R"(
-                    list of Species: the species in this compartment
+                    SpeciesList: the species in this compartment
                     )")
-      .def("specie", &sme::Compartment::getSpecies, pybind11::arg("name"),
+      .def("specie", &Compartment::getSpecies, pybind11::arg("name"),
            R"(
            Returns the species with the given name.
 
@@ -38,11 +39,11 @@ void pybindCompartment(const pybind11::module &m) {
            Raises:
                InvalidArgument: if no species was found with this name
            )")
-      .def_readonly("reactions", &sme::Compartment::reactions,
+      .def_readonly("reactions", &Compartment::reactions,
                     R"(
-                    list of Reaction: the reactions in this compartment
+                    ReactionList: the reactions in this compartment
                     )")
-      .def("reaction", &sme::Compartment::getReaction, pybind11::arg("name"),
+      .def("reaction", &Compartment::getReaction, pybind11::arg("name"),
            R"(
            Returns the reaction with the given name.
 
@@ -55,7 +56,7 @@ void pybindCompartment(const pybind11::module &m) {
            Raises:
                InvalidArgument: if no reaction was found with this name
            )")
-      .def_readonly("geometry_mask", &sme::Compartment::geometryMask,
+      .def_readonly("geometry_mask", &Compartment::geometryMask,
                     R"(
                     list of list of bool: 2d pixel mask of the compartment geometry
 
@@ -64,10 +65,10 @@ void pybindCompartment(const pybind11::module &m) {
                     if the pixel at point (x,y) is part of this compartment
                     )")
       .def("__repr__",
-           [](const sme::Compartment &a) {
+           [](const Compartment &a) {
              return fmt::format("<sme.Compartment named '{}'>", a.getName());
            })
-      .def("__str__", &sme::Compartment::getStr);
+      .def("__str__", &Compartment::getStr);
 }
 
 Compartment::Compartment(model::Model *sbmlDocWrapper, const std::string &sId)
@@ -77,7 +78,7 @@ Compartment::Compartment(model::Model *sbmlDocWrapper, const std::string &sId)
   for (const auto &spec : compSpecies) {
     species.emplace_back(s, spec.toStdString());
   }
-  if (auto reacs = s->getReactions().getIds(sId.c_str()); !reacs.isEmpty()) {
+  if (auto reacs = s->getReactions().getIds(id.c_str()); !reacs.isEmpty()) {
     for (const auto &reac : reacs) {
       reactions.emplace_back(s, reac.toStdString());
     }
@@ -110,6 +111,18 @@ std::string Compartment::getStr() const {
 }
 
 } // namespace sme
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
 
 //
 

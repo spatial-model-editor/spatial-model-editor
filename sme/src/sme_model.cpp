@@ -1,18 +1,17 @@
-// Python.h (included by pybind11.h) must come first:
+// Python.h (included by pybind11.h) must come first
+// https://docs.python.org/3.2/c-api/intro.html#include-files
 #include <pybind11/pybind11.h>
 
-// other headers
 #include "logger.hpp"
 #include "sme_common.hpp"
 #include "sme_model.hpp"
 #include <QElapsedTimer>
 #include <QFile>
 #include <QImage>
-#include <pybind11/stl.h>
 
 namespace sme {
 
-void pybindModel(const pybind11::module &m) {
+void pybindModel(pybind11::module &m) {
   pybind11::class_<sme::Model>(m, "Model",
                                R"(
                                the spatial model
@@ -32,7 +31,7 @@ void pybindModel(const pybind11::module &m) {
            )")
       .def_readonly("compartments", &sme::Model::compartments,
                     R"(
-                    list of Compartment: the compartments in this model
+                    CompartmentList: the compartments in this model
                     )")
       .def("compartment", &sme::Model::getCompartment, pybind11::arg("name"),
            R"(
@@ -49,7 +48,7 @@ void pybindModel(const pybind11::module &m) {
            )")
       .def_readonly("membranes", &sme::Model::membranes,
                     R"(
-                    list of Membrane: the membranes in this model
+                    MembraneList: the membranes in this model
                     )")
       .def("membrane", &sme::Model::getMembrane, pybind11::arg("name"),
            R"(
@@ -66,7 +65,7 @@ void pybindModel(const pybind11::module &m) {
            )")
       .def_readonly("parameters", &sme::Model::parameters,
                     R"(
-                    list of Parameter: the parameters in this model
+                    ParameterList: the parameters in this model
                     )")
       .def("parameter", &sme::Model::getParameter, pybind11::arg("name"),
            R"(
@@ -83,7 +82,7 @@ void pybindModel(const pybind11::module &m) {
            )")
       .def_readonly("compartment_image", &sme::Model::compartmentImage,
                     R"(
-                        list of list of list of int: an image of the compartments in this model
+                    list of list of list of int: an image of the compartments in this model
                     )")
       .def("simulate", &sme::Model::simulate, pybind11::arg("simulation_time"),
            pybind11::arg("image_interval"),
@@ -97,7 +96,7 @@ void pybindModel(const pybind11::module &m) {
                timeout_seconds (int): The maximum time in seconds that the simulation can run for
 
            Returns:
-               SimulationResult: the results of the simulation
+               SimulationResultList: the results of the simulation
 
            Raises:
                RuntimeError: if the simulation times out or fails
@@ -141,7 +140,7 @@ void Model::importSbmlFile(const std::string &filename) {
 Model::Model(const std::string &filename) {
 #if SPDLOG_ACTIVE_LEVEL > SPDLOG_LEVEL_TRACE
   // disable logging
-  spdlog::set_level(spdlog::level::off);
+  spdlog::set_level(spdlog::level::critical);
 #endif
   importSbmlFile(filename);
 }
@@ -210,6 +209,18 @@ std::string Model::getStr() const {
 }
 
 } // namespace sme
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
 
 //
 

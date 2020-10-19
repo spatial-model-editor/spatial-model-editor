@@ -1,33 +1,39 @@
-// Python.h (included by pybind11.h) must come first:
+// Python.h (included by pybind11.h) must come first
+// https://docs.python.org/3.2/c-api/intro.html#include-files
 #include <pybind11/pybind11.h>
 
-// other headers
 #include "model.hpp"
 #include "sme_common.hpp"
 #include "sme_species.hpp"
-#include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
 
 namespace sme {
 
-void pybindSpecies(const pybind11::module &m) {
-  pybind11::class_<sme::Species>(m, "Species",
-                                 R"(
-                                 a species that lives in a compartment
-                                 )")
-      .def_property("name", &sme::Species::getName, &sme::Species::setName,
+void pybindSpecies(pybind11::module &m) {
+
+  pybind11::bind_vector<std::vector<Species>>(m, "SpeciesList",
+                                              R"(
+                                              a list of species
+                                              )");
+
+  pybind11::class_<Species>(m, "Species",
+                            R"(
+                            a species that lives in a compartment
+                            )")
+      .def_property("name", &Species::getName, &Species::setName,
                     R"(
                     str: the name of this species
                     )")
-      .def_property("diffusion_constant", &sme::Species::getDiffusionConstant,
-                    &sme::Species::setDiffusionConstant,
+      .def_property("diffusion_constant", &Species::getDiffusionConstant,
+                    &Species::setDiffusionConstant,
                     R"(
                     float: the diffusion constant of this species
                     )")
       .def("__repr__",
-           [](const sme::Species &a) {
+           [](const Species &a) {
              return fmt::format("<sme.Species named '{}'>", a.getName());
            })
-      .def("__str__", &sme::Species::getStr);
+      .def("__str__", &Species::getStr);
 }
 
 Species::Species(model::Model *sbmlDocWrapper, const std::string &sId)
@@ -58,6 +64,18 @@ std::string Species::getStr() const {
 }
 
 } // namespace sme
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
 
 //
 

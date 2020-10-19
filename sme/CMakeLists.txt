@@ -11,19 +11,10 @@ endif()
 
 target_link_libraries(sme PRIVATE core ${SME_EXTRA_EXE_LIBS})
 
-target_sources(
-  sme
-  PRIVATE sme.cpp
-          sme_common.cpp
-          sme_compartment.cpp
-          sme_membrane.cpp
-          sme_model.cpp
-          sme_module.cpp
-          sme_parameter.cpp
-          sme_reaction.cpp
-          sme_reactionparameter.cpp
-          sme_simulationresult.cpp
-          sme_species.cpp)
+target_sources(sme PRIVATE sme.cpp)
+
+target_include_directories(sme PRIVATE src)
+add_subdirectory(src)
 
 set_target_properties(sme PROPERTIES CXX_STANDARD 17)
 set_target_properties(sme PROPERTIES POSITION_INDEPENDENT_CODE ON)

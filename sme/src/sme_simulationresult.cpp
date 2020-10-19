@@ -1,23 +1,29 @@
-// Python.h (included by pybind11.h) must come first:
+// Python.h (included by pybind11.h) must come first
+// https://docs.python.org/3.2/c-api/intro.html#include-files
 #include <pybind11/pybind11.h>
 
-// other headers
 #include "sme_simulationresult.hpp"
-#include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
 
 namespace sme {
 
-void pybindSimulationResult(const pybind11::module &m) {
-  pybind11::class_<sme::SimulationResult>(m, "SimulationResult",
-                                          R"(
-                                          results at a single timepoint of a simulation
-                                          )")
-      .def_readonly("time_point", &sme::SimulationResult::timePoint,
+void pybindSimulationResult(pybind11::module &m) {
+  pybind11::bind_vector<std::vector<sme::SimulationResult>>(
+      m, "SimulationResultList",
+      R"(
+      a list of simulation results
+      )");
+
+  pybind11::class_<SimulationResult>(m, "SimulationResult",
+                                     R"(
+                                     results at a single timepoint of a simulation
+                                     )")
+      .def_readonly("time_point", &SimulationResult::timePoint,
                     R"(
                     float: the timepoint these simulation results are from
                     )")
       .def_readonly("concentration_image",
-                    &sme::SimulationResult::concentrationImage,
+                    &SimulationResult::concentrationImage,
                     R"(
                     list of list of list of int: an image of the species concentrations at this timepoint
 
@@ -25,7 +31,7 @@ void pybindSimulationResult(const pybind11::module &m) {
                     concentration_image[y][x] = [r, g, b]
                     )")
       .def_readonly("species_concentration",
-                    &sme::SimulationResult::speciesConcentration,
+                    &SimulationResult::speciesConcentration,
                     R"(
                     dict: the species concentrations of each species at this timepoint
 
@@ -33,11 +39,11 @@ void pybindSimulationResult(const pybind11::module &m) {
                     list of list of float, where concentration[y][x] is the concentration at the point (x,y)
                     )")
       .def("__repr__",
-           [](const sme::SimulationResult &a) {
+           [](const SimulationResult &a) {
              return fmt::format("<sme.SimulationResult from timepoint {}>",
                                 a.timePoint);
            })
-      .def("__str__", &sme::SimulationResult::getStr);
+      .def("__str__", &SimulationResult::getStr);
 }
 
 std::string SimulationResult::getStr() const {
@@ -49,6 +55,30 @@ std::string SimulationResult::getStr() const {
 }
 
 } // namespace sme
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
 
 //
 

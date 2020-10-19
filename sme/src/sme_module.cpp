@@ -1,8 +1,7 @@
-// Python.h (included by pybind11.h) must come first:
+// Python.h (included by pybind11.h) must come first
+// https://docs.python.org/3.2/c-api/intro.html#include-files
 #include <pybind11/pybind11.h>
 
-// other headers
-#include "sme_common.hpp"
 #include "sme_module.hpp"
 #include "version.hpp"
 
@@ -10,13 +9,13 @@ namespace sme {
 
 void pybindModule(pybind11::module &m) {
   m.doc() = R"(
-              Spatial Model Editor Python interface
+            Spatial Model Editor Python interface
 
-              Python bindings to a subset of the functionality
-              available in the full GUI Spatial Model Editor
+            Python bindings to a subset of the functionality
+            available in the full GUI Spatial Model Editor
 
-              https://spatial-model-editor.readthedocs.io/
-              )";
+            https://spatial-model-editor.readthedocs.io/
+            )";
   m.def("open_sbml_file", openSbmlFile, pybind11::arg("filename"),
         R"(
         opens an SBML file containing a spatial model
@@ -35,8 +34,6 @@ void pybindModule(pybind11::module &m) {
             Model: the example spatial model
         )");
   m.attr("__version__") = SPATIAL_MODEL_EDITOR_VERSION;
-  pybind11::register_exception<SmeRuntimeError>(m, "RuntimeError");
-  pybind11::register_exception<SmeInvalidArgument>(m, "InvalidArgument");
 }
 
 Model openSbmlFile(const std::string &filename) { return Model(filename); }
@@ -44,6 +41,18 @@ Model openSbmlFile(const std::string &filename) { return Model(filename); }
 Model openExampleModel() { return Model(":/models/very-simple-model.xml"); }
 
 } // namespace sme
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
 
 //
 

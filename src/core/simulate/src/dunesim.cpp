@@ -185,23 +185,23 @@ DuneSim::DuneSim(
       pixelSize{sbmlDoc.getGeometry().getPixelWidth()},
       pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()}, options{
                                                                   duneOptions} {
-  simulate::DuneConverter dc(sbmlDoc, false, duneOptions);
-  if (options.discretization != DuneDiscretizationType::FEM1) {
-    // for now we only support 1st order FEM
-    // in future could add:
-    //  - 0th order a.k.a. FVM for independent compartment models
-    //  - 2nd order FEM for both types of models
-    SPDLOG_WARN(
-        "Invalid integrator type requested - using 1st order FEM instead");
-    options.discretization = DuneDiscretizationType::FEM1;
-  }
-  if (dc.getIniFiles().empty()) {
-    currentErrorMessage =
-        "Nothing to simulate: no non-constant species in model";
-    SPDLOG_WARN("{}", currentErrorMessage);
-    return;
-  }
   try {
+    simulate::DuneConverter dc(sbmlDoc, false, duneOptions);
+    if (options.discretization != DuneDiscretizationType::FEM1) {
+      // for now we only support 1st order FEM
+      // in future could add:
+      //  - 0th order a.k.a. FVM for independent compartment models
+      //  - 2nd order FEM for both types of models
+      SPDLOG_WARN(
+          "Invalid integrator type requested - using 1st order FEM instead");
+      options.discretization = DuneDiscretizationType::FEM1;
+    }
+    if (dc.getIniFiles().empty()) {
+      currentErrorMessage =
+          "Nothing to simulate: no non-constant species in model";
+      SPDLOG_WARN("{}", currentErrorMessage);
+      return;
+    }
     if (dc.hasIndependentCompartments()) {
       pDuneImpl = std::make_unique<DuneImplIndependent<1>>(dc, options);
     } else {
@@ -233,6 +233,9 @@ DuneSim::DuneSim(
   } catch (const Dune::Exception &e) {
     currentErrorMessage = e.what();
     SPDLOG_ERROR("{}", currentErrorMessage);
+  } catch (const std::runtime_error &e) {
+    SPDLOG_ERROR("runtime_error: {}", e.what());
+    currentErrorMessage = e.what();
   }
 }
 

@@ -1,37 +1,42 @@
-// Python.h (included by pybind11.h) must come first:
+// Python.h (included by pybind11.h) must come first
+// https://docs.python.org/3.2/c-api/intro.html#include-files
 #include <pybind11/pybind11.h>
 
-// other headers
 #include "model.hpp"
 #include "sme_common.hpp"
 #include "sme_reactionparameter.hpp"
-#include <pybind11/stl.h>
+#include <pybind11/stl_bind.h>
 
 namespace sme {
 
-void pybindReactionParameter(const pybind11::module &m) {
-  pybind11::class_<sme::ReactionParameter>(m, "ReactionParameter",
-                                           R"(
-                                           a parameter of a reaction
-                                           )")
-      .def_property("name", &sme::ReactionParameter::getName,
-                    &sme::ReactionParameter::setName,
+void pybindReactionParameter(pybind11::module &m) {
+  pybind11::bind_vector<std::vector<sme::ReactionParameter>>(
+      m, "ReactionParameterList",
+      R"(
+      a list of reaction parameters
+      )");
+
+  pybind11::class_<ReactionParameter>(m, "ReactionParameter",
+                                      R"(
+                                      a parameter of a reaction
+                                      )")
+      .def_property("name", &ReactionParameter::getName,
+                    &ReactionParameter::setName,
                     R"(
                     str: the name of this reaction parameter
                     )")
-      .def_property("value", &sme::ReactionParameter::getValue,
-                    &sme::ReactionParameter::setValue,
+      .def_property("value", &ReactionParameter::getValue,
+                    &ReactionParameter::setValue,
                     R"(
                     float: the value of this reaction parameter
                     )")
       .def("__repr__",
-           [](const sme::ReactionParameter &a) {
+           [](const ReactionParameter &a) {
              return fmt::format("<sme.ReactionParameter named '{}'>",
                                 a.getName());
            })
-      .def("__str__", &sme::ReactionParameter::getStr);
+      .def("__str__", &ReactionParameter::getStr);
 }
-
 ReactionParameter::ReactionParameter(model::Model *sbmlDocWrapper,
                                      const std::string &reactionId,
                                      const std::string &parameterId)
@@ -64,6 +69,18 @@ std::string ReactionParameter::getStr() const {
 }
 
 } // namespace sme
+
+//
+
+//
+
+//
+
+//
+
+//
+
+//
 
 //
 

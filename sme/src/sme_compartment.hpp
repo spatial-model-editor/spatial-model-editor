@@ -3,7 +3,7 @@
 #include "sme_common.hpp"
 #include "sme_reaction.hpp"
 #include "sme_species.hpp"
-#include <map>
+#include <pybind11/pybind11.h>
 #include <string>
 #include <vector>
 
@@ -11,13 +11,9 @@ namespace model {
 class Model;
 }
 
-namespace pybind11 {
-class module;
-}
-
 namespace sme {
 
-void pybindCompartment(const pybind11::module &m);
+void pybindCompartment(pybind11::module &m);
 
 class Compartment {
 private:
@@ -25,6 +21,7 @@ private:
   std::string id;
 
 public:
+  Compartment() = default;
   explicit Compartment(model::Model *sbmlDocWrapper, const std::string &sId);
   std::string getName() const;
   void setName(const std::string &name);
@@ -37,3 +34,5 @@ public:
 };
 
 } // namespace sme
+
+PYBIND11_MAKE_OPAQUE(std::vector<sme::Compartment>);

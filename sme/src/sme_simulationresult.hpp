@@ -3,16 +3,13 @@
 #include "sme_common.hpp"
 #include <map>
 #include <memory>
+#include <pybind11/pybind11.h>
 #include <string>
 #include <vector>
 
-namespace pybind11 {
-class module;
-}
-
 namespace sme {
 
-void pybindSimulationResult(const pybind11::module &m);
+void pybindSimulationResult(pybind11::module &m);
 
 struct SimulationResult {
   double timePoint{0.0};
@@ -22,3 +19,5 @@ struct SimulationResult {
 };
 
 } // namespace sme
+
+PYBIND11_MAKE_OPAQUE(std::vector<sme::SimulationResult>);
