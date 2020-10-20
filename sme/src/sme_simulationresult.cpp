@@ -3,17 +3,11 @@
 #include <pybind11/pybind11.h>
 
 #include "sme_simulationresult.hpp"
-#include <pybind11/stl_bind.h>
 
 namespace sme {
 
 void pybindSimulationResult(pybind11::module &m) {
-  pybind11::bind_vector<std::vector<sme::SimulationResult>>(
-      m, "SimulationResultList",
-      R"(
-      a list of simulation results
-      )");
-
+  sme::bindList<SimulationResult>(m, "SimulationResult");
   pybind11::class_<SimulationResult>(m, "SimulationResult",
                                      R"(
                                      results at a single timepoint of a simulation
@@ -53,6 +47,8 @@ std::string SimulationResult::getStr() const {
       fmt::format("  - number of species: {}\n", speciesConcentration.size()));
   return str;
 }
+
+std::string SimulationResult::getName() const { return {}; }
 
 } // namespace sme
 

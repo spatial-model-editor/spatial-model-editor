@@ -4,16 +4,13 @@
 
 #include "logger.hpp"
 #include "model.hpp"
+#include "sme_common.hpp"
 #include "sme_compartment.hpp"
-#include <pybind11/stl_bind.h>
 
 namespace sme {
 
 void pybindCompartment(pybind11::module &m) {
-  pybind11::bind_vector<std::vector<Compartment>>(m, "CompartmentList",
-                                                  R"(
-                                                  a list of compartments
-                                                  )");
+  sme::bindList<Compartment>(m, "Compartment");
   pybind11::class_<Compartment>(m, "Compartment",
                                 R"(
                                 a compartment where species live
@@ -26,36 +23,10 @@ void pybindCompartment(pybind11::module &m) {
                     R"(
                     SpeciesList: the species in this compartment
                     )")
-      .def("specie", &Compartment::getSpecies, pybind11::arg("name"),
-           R"(
-           Returns the species with the given name.
-
-           Args:
-               name (str): The name of the species
-
-           Returns:
-               Species: the species if found.
-
-           Raises:
-               InvalidArgument: if no species was found with this name
-           )")
       .def_readonly("reactions", &Compartment::reactions,
                     R"(
                     ReactionList: the reactions in this compartment
                     )")
-      .def("reaction", &Compartment::getReaction, pybind11::arg("name"),
-           R"(
-           Returns the reaction with the given name.
-
-           Args:
-               name (str): The name of the reaction
-
-           Returns:
-               Reaction: the reaction if found.
-
-           Raises:
-               InvalidArgument: if no reaction was found with this name
-           )")
       .def_readonly("geometry_mask", &Compartment::geometryMask,
                     R"(
                     list of list of bool: 2d pixel mask of the compartment geometry
@@ -93,14 +64,6 @@ std::string Compartment::getName() const {
 
 void Compartment::setName(const std::string &name) {
   s->getCompartments().setName(id.c_str(), name.c_str());
-}
-
-const Species &Compartment::getSpecies(const std::string &name) const {
-  return findElem(species, name, "Species");
-}
-
-const Reaction &Compartment::getReaction(const std::string &name) const {
-  return findElem(reactions, name, "Reaction");
 }
 
 std::string Compartment::getStr() const {

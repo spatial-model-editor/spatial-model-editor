@@ -28,11 +28,8 @@ public:
   void setName(const std::string &name);
   void exportSbmlFile(const std::string &filename);
   std::vector<Compartment> compartments;
-  const Compartment &getCompartment(const std::string &name) const;
   std::vector<Membrane> membranes;
-  const Membrane &getMembrane(const std::string &name) const;
   std::vector<Parameter> parameters;
-  const Parameter &getParameter(const std::string &name) const;
   PyImageRgb compartmentImage;
   std::vector<SimulationResult> simulate(double simulationTime,
                                          double imageInterval,

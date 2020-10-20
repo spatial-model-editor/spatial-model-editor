@@ -5,17 +5,11 @@
 #include "model.hpp"
 #include "sme_common.hpp"
 #include "sme_reactionparameter.hpp"
-#include <pybind11/stl_bind.h>
 
 namespace sme {
 
 void pybindReactionParameter(pybind11::module &m) {
-  pybind11::bind_vector<std::vector<sme::ReactionParameter>>(
-      m, "ReactionParameterList",
-      R"(
-      a list of reaction parameters
-      )");
-
+  sme::bindList<ReactionParameter>(m, "ReactionParameter");
   pybind11::class_<ReactionParameter>(m, "ReactionParameter",
                                       R"(
                                       a parameter of a reaction
@@ -37,6 +31,7 @@ void pybindReactionParameter(pybind11::module &m) {
            })
       .def("__str__", &ReactionParameter::getStr);
 }
+
 ReactionParameter::ReactionParameter(model::Model *sbmlDocWrapper,
                                      const std::string &reactionId,
                                      const std::string &parameterId)

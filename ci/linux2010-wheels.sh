@@ -30,7 +30,7 @@ for PYBIN in $(ls -d /opt/pypy/*/bin); do
     # install wheel locally & run tests
     rm -rf /io/tmp_python_install
     "${PYBIN}/pip" install --target=/io/tmp_python_install --no-index --find-links=/io/$TMPDIR/wheels/ sme
-    PYTHONPATH=/io/tmp_python_install "${PYBIN}/python" -m unittest discover -v
+    PYTHONPATH=/io/tmp_python_install "${PYBIN}/python" -m unittest discover -s sme/test -v
 done
 
 # Check and rename wheels

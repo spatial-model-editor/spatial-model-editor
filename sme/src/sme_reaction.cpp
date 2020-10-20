@@ -5,16 +5,11 @@
 #include "model.hpp"
 #include "sme_common.hpp"
 #include "sme_reaction.hpp"
-#include <pybind11/stl_bind.h>
 
 namespace sme {
 
 void pybindReaction(pybind11::module &m) {
-  pybind11::bind_vector<std::vector<Reaction>>(m, "ReactionList",
-                                               R"(
-                                               a list of reactions
-                                               )");
-
+  sme::bindList<Reaction>(m, "Reaction");
   pybind11::class_<Reaction>(m, "Reaction",
                              R"(
                              a reaction between species
@@ -27,19 +22,6 @@ void pybindReaction(pybind11::module &m) {
                     R"(
                     ReactionParameterList: the parameters of this reaction
                     )")
-      .def("parameter", &Reaction::getParameter, pybind11::arg("name"),
-           R"(
-           Returns the reaction parameter with the given name.
-
-           Args:
-               name (str): The name of the reaction parameter
-
-           Returns:
-               ReactionParameter: the reaction parameter if found.
-
-           Raises:
-               InvalidArgument: if no reaction parameter was found with this name
-           )")
       .def("__repr__",
            [](const Reaction &a) {
              return fmt::format("<sme.Reaction named '{}'>", a.getName());
@@ -62,10 +44,6 @@ std::string Reaction::getName() const {
 
 void Reaction::setName(const std::string &name) {
   s->getReactions().setName(id.c_str(), name.c_str());
-}
-
-const ReactionParameter &Reaction::getParameter(const std::string &name) const {
-  return findElem(parameters, name, "ReactionParameter");
 }
 
 std::string Reaction::getStr() const {

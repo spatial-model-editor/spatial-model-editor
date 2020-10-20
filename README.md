@@ -4,7 +4,7 @@
 
 [![github releases](https://img.shields.io/github/v/release/spatial-model-editor/spatial-model-editor?sort=semver)](https://github.com/spatial-model-editor/spatial-model-editor/releases)
 [![pypi releases](https://img.shields.io/pypi/v/sme.svg)](https://pypi.org/project/sme)
-[![open in colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/sme/sme_getting_started.ipynb)
+[![open in colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/sme/notebooks/getting_started.ipynb)
 [![documentation](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/)
 [![build status](https://travis-ci.org/spatial-model-editor/spatial-model-editor.svg?branch=master)](https://travis-ci.org/spatial-model-editor/spatial-model-editor)
 [![codecov](https://codecov.io/gh/spatial-model-editor/spatial-model-editor/branch/master/graph/badge.svg)](https://codecov.io/gh/spatial-model-editor/spatial-model-editor)

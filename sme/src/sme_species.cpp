@@ -5,17 +5,11 @@
 #include "model.hpp"
 #include "sme_common.hpp"
 #include "sme_species.hpp"
-#include <pybind11/stl_bind.h>
 
 namespace sme {
 
 void pybindSpecies(pybind11::module &m) {
-
-  pybind11::bind_vector<std::vector<Species>>(m, "SpeciesList",
-                                              R"(
-                                              a list of species
-                                              )");
-
+  sme::bindList<Species>(m, "Species");
   pybind11::class_<Species>(m, "Species",
                             R"(
                             a species that lives in a compartment

@@ -3,7 +3,6 @@
 #include "sme_common.hpp"
 #include "sme_reaction.hpp"
 #include "sme_species.hpp"
-#include <map>
 #include <pybind11/pybind11.h>
 #include <string>
 #include <vector>
@@ -26,7 +25,6 @@ public:
   explicit Membrane(model::Model *sbmlDocWrapper, const std::string &sId);
   std::string getName() const;
   std::vector<Reaction> reactions;
-  const Reaction &getReaction(const std::string &name) const;
   std::string getStr() const;
 };
 

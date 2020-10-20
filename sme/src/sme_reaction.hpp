@@ -24,7 +24,6 @@ public:
   std::string getName() const;
   void setName(const std::string &name);
   std::vector<ReactionParameter> parameters;
-  const ReactionParameter &getParameter(const std::string &name) const;
   std::string getStr() const;
 };
 
