@@ -170,7 +170,7 @@ jobs:
         - rm -f gcov/*
         - lcov -q -z -d .
         - cd sme
-        - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -v -s ../../test > sme.txt 2>&1
+        - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -v -s ../../sme/test > sme.txt 2>&1
         - tail -n 100 sme.txt
         - cd ..
         - $COV gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
@@ -197,7 +197,7 @@ jobs:
         # also run python tests, but only copy gcov data for sme files: don't want to overwrite coverage info on core from c++ tests
         - lcov -q -z -d .
         - cd sme
-        - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -s ../../test > sme.txt 2>&1
+        - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -s ../../sme/test > sme.txt 2>&1
         - tail -n 100 sme.txt
         - cd ..
         - $COV gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null
@@ -269,7 +269,6 @@ jobs:
         - which python3
         - whereis python3
         - python3-config --includes
-        - python3 -m pip install nose
       script:
         - export SME_EXTRA_EXE_LIBS="-static-libgcc;-static-libstdc++"
         - mkdir build
@@ -283,7 +282,8 @@ jobs:
         - tail -n 100 tests.txt
         # run python tests
         - cd sme
-        - python3 -m nose ../.. -v
+        - python3 -m unittest discover -s ../../sme/test -v
+        - PYTHONPATH=`pwd` python3 ../../sme/test/sme_doctest.py -v
         - cd ..
         # run benchmarks (~1 sec per benchmark, ~20secs total)
         - time ./benchmark/benchmark 1
@@ -311,8 +311,6 @@ jobs:
             - ccache
       cache:
         ccache: true
-      install:
-        - python3 -m pip install --user nose
       script:
         - mkdir build
         - cd build
@@ -325,7 +323,8 @@ jobs:
         - tail -n 100 tests.txt
         # run python tests
         - cd sme
-        - python3 -m nose ../.. -v
+        - python3 -m unittest discover -s ../../sme/test -v
+        - PYTHONPATH=`pwd` python3 ../../sme/test/sme_doctest.py -v
         - cd ..
         # run benchmarks (~1 sec per benchmark, ~20secs total)
         - time ./benchmark/benchmark 1
@@ -442,7 +441,7 @@ jobs:
         - MACOSX_DEPLOYMENT_TARGET=10.14
         # python 2.7 headers not compatible with c++17: use of 'register' causes clang compile error
         - CIBW_SKIP=cp27-macosx_x86_64
-        - CIBW_TEST_COMMAND="python -m unittest discover -v -s {project}/test"
+        - CIBW_TEST_COMMAND="python -m unittest discover -v -s {project}/sme/test"
         - CIBW_BUILD_VERBOSITY=3
         - CCACHE_BASEDIR=/private
       install:
@@ -485,6 +484,7 @@ jobs:
         - choco install python --version=3.8.2 --force --no-progress -y
         - /c/Python38/python.exe -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
         - echo 'CIBW_BUILD="*-win32"' > source.sh
+        - echo 'CIBW_TEST_COMMAND="python -m unittest discover -v -s {project}/sme/test"' >> source.sh
       script:
         - $BUILD_SHELL ci/windows-wheels.sh
         - ls dist
@@ -521,13 +521,14 @@ jobs:
         - python -m pip install --upgrade pip
         - python -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
         - echo 'CIBW_BUILD="*-win_amd64"' > source.sh
+        - echo 'CIBW_TEST_COMMAND=""' >> source.sh
       script:
         - $BUILD_SHELL ci/windows-wheels.sh
         - ls dist
         - export TWINE_USERNAME="__token__"
         - python -m pip install --upgrade twine
         - python -m pip install dist/sme-*-cp38-cp38-win_amd64.whl
-        - python -m unittest discover -v
+        - python -m unittest discover -v -s sme/test
         - if [ -n "${TRAVIS_TAG}" ]; then /c/Python38/python.exe -m twine upload --verbose --non-interactive --skip-existing dist/* ; fi
 
 before_script:

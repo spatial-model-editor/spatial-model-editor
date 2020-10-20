@@ -26,9 +26,7 @@ public:
   std::string getName() const;
   void setName(const std::string &name);
   std::vector<Species> species;
-  const Species &getSpecies(const std::string &name) const;
   std::vector<Reaction> reactions;
-  const Reaction &getReaction(const std::string &name) const;
   PyImageMask geometryMask;
   std::string getStr() const;
 };

@@ -5,16 +5,11 @@
 #include "model.hpp"
 #include "sme_common.hpp"
 #include "sme_membrane.hpp"
-#include <pybind11/stl_bind.h>
 
 namespace sme {
 
 void pybindMembrane(pybind11::module &m) {
-  pybind11::bind_vector<std::vector<Membrane>>(m, "MembraneList",
-                                               R"(
-                                               a list of membranes
-                                               )");
-
+  sme::bindList<Membrane>(m, "Membrane");
   pybind11::class_<Membrane>(m, "Membrane",
                              R"(
                              a membrane where two compartments meet
@@ -27,19 +22,6 @@ void pybindMembrane(pybind11::module &m) {
                     R"(
                     ReactionList: the reactions in this membrane
                     )")
-      .def("reaction", &Membrane::getReaction, pybind11::arg("name"),
-           R"(
-           Returns the reaction with the given name.
-
-           Args:
-               name (str): The name of the reaction
-
-           Returns:
-               Reaction: the reaction if found.
-
-           Raises:
-               InvalidArgument: if no reaction was found with this name
-           )")
       .def("__repr__",
            [](const Membrane &a) {
              return fmt::format("<sme.Membrane named '{}'>", a.getName());
@@ -58,10 +40,6 @@ Membrane::Membrane(model::Model *sbmlDocWrapper, const std::string &sId)
 
 std::string Membrane::getName() const {
   return s->getMembranes().getName(id.c_str()).toStdString();
-}
-
-const Reaction &Membrane::getReaction(const std::string &name) const {
-  return findElem(reactions, name, "Reaction");
 }
 
 std::string Membrane::getStr() const {

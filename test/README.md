@@ -28,8 +28,14 @@ Note: currently the GUI tests are only intended for use on linux, and the mouse 
 
 ## Python tests
 
-The python tests are in [test.py](test.py), and can be ran from the root directory of the repo with
+The python tests are in [../sme/test](../sme/test), and can be ran from this directory with
 
 ```
 python -m unittest -v
+```
+
+The Docstrings also contain example code snippets along with the expected output in doctest format, which can be tested with
+
+```
+python sme_doctest.py -v
 ```

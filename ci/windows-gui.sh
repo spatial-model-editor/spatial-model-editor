@@ -36,4 +36,4 @@ tail -n 100 tests.txt
 cd ..
 mv build/sme/sme.cp38-win_amd64.pyd .
 
-python -m unittest discover -v
+python -m unittest discover -s sme/test -v

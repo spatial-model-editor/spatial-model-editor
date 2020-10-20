@@ -5,18 +5,12 @@
 #include "model.hpp"
 #include "sme_common.hpp"
 #include "sme_parameter.hpp"
-#include <pybind11/stl_bind.h>
 #include <utility>
 
 namespace sme {
 
 void pybindParameter(pybind11::module &m) {
-
-  pybind11::bind_vector<std::vector<Parameter>>(m, "ParameterList",
-                                                R"(
-                                                a list of parameters
-                                                )");
-
+  sme::bindList<Parameter>(m, "Parameter");
   pybind11::class_<Parameter>(m, "Parameter",
                               R"(
                               a parameter of the model

@@ -16,6 +16,7 @@ struct SimulationResult {
   PyImageRgb concentrationImage;
   std::map<std::string, PyConc> speciesConcentration;
   std::string getStr() const;
+  std::string getName() const;
 };
 
 } // namespace sme

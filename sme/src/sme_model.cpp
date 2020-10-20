@@ -30,56 +30,93 @@ void pybindModel(pybind11::module &m) {
                filename (str): the name of the file to create
            )")
       .def_readonly("compartments", &sme::Model::compartments,
+                    pybind11::return_value_policy::reference_internal,
                     R"(
                     CompartmentList: the compartments in this model
-                    )")
-      .def("compartment", &sme::Model::getCompartment, pybind11::arg("name"),
-           R"(
-           returns the compartment with the given name
 
-           Args:
-               name (str): The name of the compartment
+                    a list of :class:`Compartment` that can be iterated over,
+                    or indexed into by name or position in the list.
 
-           Returns:
-               Compartment: the compartment if found.
+                    Examples:
+                        the list of compartments can be iterated over:
 
-           Raises:
-               InvalidArgument: if no compartment was found with this name
+                        >>> import sme
+                        >>> model = sme.open_example_model()
+                        >>> for compartment in model.compartments:
+                        ...     print(compartment.name)
+                        Outside
+                        Cell
+                        Nucleus
+
+                        or a compartment can be found using its name:
+
+                        >>> cell = model.compartments["Cell"]
+                        >>> print(cell.name)
+                        Cell
+
+                        or indexed by its position in the list:
+
+                        >>> last_compartment = model.compartments[-1]
+                        >>> print(last_compartment.name)
+                        Nucleus
            )")
       .def_readonly("membranes", &sme::Model::membranes,
                     R"(
                     MembraneList: the membranes in this model
+
+                    a list of :class:`Membrane` that can be iterated over,
+                    or indexed into by name or position in the list.
+
+                    Examples:
+                        the list of membranes can be iterated over:
+
+                        >>> import sme
+                        >>> model = sme.open_example_model()
+                        >>> for membrane in model.membranes:
+                        ...     print(membrane.name)
+                        Outside <-> Cell
+                        Cell <-> Nucleus
+
+                        or a membrane can be found using its name:
+
+                        >>> outer = model.membranes["Outside <-> Cell"]
+                        >>> print(outer.name)
+                        Outside <-> Cell
+
+                        or indexed by its position in the list:
+
+                        >>> last_membrane = model.membranes[-1]
+                        >>> print(last_membrane.name)
+                        Cell <-> Nucleus
                     )")
-      .def("membrane", &sme::Model::getMembrane, pybind11::arg("name"),
-           R"(
-           returns the membrane with the given name.
-
-           Args:
-               name (str): The name of the membrane
-
-           Returns:
-               Membrane: the membrane if found.
-
-           Raises:
-               InvalidArgument: if no membrane was found with this name
-           )")
       .def_readonly("parameters", &sme::Model::parameters,
                     R"(
                     ParameterList: the parameters in this model
+
+                    a list of :class:`Parameter` that can be iterated over,
+                    or indexed into by name or position in the list.
+
+                    Examples:
+                        the list of parameters can be iterated over:
+
+                        >>> import sme
+                        >>> model = sme.open_example_model()
+                        >>> for parameter in model.parameters:
+                        ...     print(parameter.name)
+                        param
+
+                        or a parameter can be found using its name:
+
+                        >>> p = model.parameters["param"]
+                        >>> print(p.name)
+                        param
+
+                        or indexed by its position in the list:
+
+                        >>> last_param = model.parameters[-1]
+                        >>> print(last_param.name)
+                        param
                     )")
-      .def("parameter", &sme::Model::getParameter, pybind11::arg("name"),
-           R"(
-           returns the parameter with the given name.
-
-           Args:
-               name (str): The name of the parameter
-
-           Returns:
-               Parameter: the parameter if found
-
-           Raises:
-               InvalidArgument: if no parameter was found with this name
-           )")
       .def_readonly("compartment_image", &sme::Model::compartmentImage,
                     R"(
                     list of list of list of int: an image of the compartments in this model
@@ -151,18 +188,6 @@ void Model::setName(const std::string &name) { s->setName(name.c_str()); }
 
 void Model::exportSbmlFile(const std::string &filename) {
   s->exportSBMLFile(filename);
-}
-
-const Compartment &Model::getCompartment(const std::string &name) const {
-  return findElem(compartments, name, "Compartment");
-}
-
-const Membrane &Model::getMembrane(const std::string &name) const {
-  return findElem(membranes, name, "Membrane");
-}
-
-const Parameter &Model::getParameter(const std::string &name) const {
-  return findElem(parameters, name, "Parameter");
 }
 
 static SimulationResult getSimulationResult(const simulate::Simulation *sim) {
