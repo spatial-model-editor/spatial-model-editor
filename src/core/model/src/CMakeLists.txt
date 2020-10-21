@@ -33,4 +33,5 @@ target_sources(
          model_membranes_util_t.cpp
          model_parameters_t.cpp
          model_reactions_t.cpp
+         model_species_t.cpp
          model_units_t.cpp)
