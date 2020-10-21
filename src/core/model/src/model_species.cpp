@@ -330,12 +330,16 @@ QString ModelSpecies::add(const QString &name, const QString &compartmentId) {
 }
 
 void ModelSpecies::remove(const QString &id) {
-  auto i = ids.indexOf(id);
   std::string sId = id.toStdString();
   SPDLOG_INFO("Removing species {}", sId);
+  auto i = ids.indexOf(id);
+  if (i < 0) {
+    SPDLOG_WARN("  - species {} not found in ids", sId);
+    return;
+  }
   std::unique_ptr<libsbml::Species> spec(sbmlModel->removeSpecies(sId));
   if (spec == nullptr) {
-    SPDLOG_WARN("  - species {} not found", sId);
+    SPDLOG_WARN("  - species {} not found in sbml model", sId);
     return;
   }
   // remove species from species list
@@ -343,6 +347,8 @@ void ModelSpecies::remove(const QString &id) {
   names.removeAt(i);
   compartmentIds.removeAt(i);
   removeInitialAssignment(id);
+  fields.erase(fields.begin() +
+               static_cast<decltype(fields)::difference_type>(i));
   modelReactions->removeAllInvolvingSpecies(id);
   SPDLOG_INFO("  - species {} removed", spec->getId());
 }
