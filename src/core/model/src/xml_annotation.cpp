@@ -1,22 +1,20 @@
 #include "xml_annotation.hpp"
-
+#include "logger.hpp"
+#include "mesh.hpp"
+#include "utils.hpp"
 #include <fmt/core.h>
+#include <memory>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
-
-#include <memory>
-
-#include "logger.hpp"
-#include "mesh.hpp"
-#include "utils.hpp"
 
 static const std::string annotationURI{
     "https://github.com/lkeegan/spatial-model-editor"};
 static const std::string annotationPrefix{"spatialModelEditor"};
 static const std::string annotationNameMesh{"mesh"};
 static const std::string annotationNameColour{"colour"};
+static const std::string annotationNameDisplayOptions{"displayOptions"};
 
 namespace model {
 
@@ -65,7 +63,7 @@ void addMeshParamsAnnotation(libsbml::ParametricGeometry *pg,
     return;
   }
   // if there is already an annotation set by us, remove it
-  removeAnnotation(pg, annotationNameMesh);
+  removeMeshParamsAnnotation(pg);
   // append annotation with mesh info
   auto xml = fmt::format(
       "<{prefix}:{name} xmlns:{prefix}=\"{uri}\" "
@@ -112,7 +110,7 @@ void addSpeciesColourAnnotation(libsbml::Species *species, QRgb colour) {
     return;
   }
   // if there is already an annotation set by us, remove it
-  removeAnnotation(species, annotationNameColour);
+  removeSpeciesColourAnnotation(species);
   // append annotation with colour
   auto xml = fmt::format(
       "<{prefix}:{name} xmlns:{prefix}=\"{uri}\" "
@@ -135,6 +133,64 @@ getSpeciesColourAnnotation(const libsbml::Species *species) {
     return colour;
   }
   return {};
+}
+
+void removeDisplayOptionsAnnotation(libsbml::Model *model) {
+  removeAnnotation(model, annotationNameDisplayOptions);
+}
+
+void addDisplayOptionsAnnotation(libsbml::Model *model,
+                                 const DisplayOptions &displayOptions) {
+  if (model == nullptr) {
+    return;
+  }
+  // if there is already an annotation set by us, remove it
+  removeDisplayOptionsAnnotation(model);
+  // append annotation with mesh info
+  auto xml = fmt::format(
+      "<{prefix}:{name} xmlns:{prefix}=\"{uri}\" "
+      "{prefix}:showMinMax=\"{showMinMax}\" "
+      "{prefix}:normaliseOverAllTimepoints=\"{normaliseOverAllTimepoints}\" "
+      "{prefix}:normaliseOverAllSpecies=\"{normaliseOverAllSpecies}\" "
+      "{prefix}:showSpecies=\"{showSpecies}\" />",
+      fmt::arg("prefix", annotationPrefix), fmt::arg("uri", annotationURI),
+      fmt::arg("name", annotationNameDisplayOptions),
+      fmt::arg("showMinMax", static_cast<int>(displayOptions.showMinMax)),
+      fmt::arg("normaliseOverAllTimepoints",
+               static_cast<int>(displayOptions.normaliseOverAllTimepoints)),
+      fmt::arg("normaliseOverAllSpecies",
+               static_cast<int>(displayOptions.normaliseOverAllSpecies)),
+      fmt::arg("showSpecies", utils::vectorToString(
+                                  utils::toInt(displayOptions.showSpecies))));
+  model->appendAnnotation(xml);
+  SPDLOG_INFO("appending annotation: {}", xml);
+}
+
+std::optional<DisplayOptions>
+getDisplayOptionsAnnotation(const libsbml::Model *model) {
+  std::optional<DisplayOptions> opts = {};
+  if (const auto *node = getAnnotation(model, annotationNameDisplayOptions);
+      node != nullptr) {
+    opts = DisplayOptions{};
+    opts->normaliseOverAllTimepoints =
+        static_cast<bool>(utils::stringToVector<int>(node->getAttrValue(
+            "normaliseOverAllTimepoints", annotationURI))[0]);
+    SPDLOG_INFO("  - normaliseOverAllTimepoints: {}",
+                opts->normaliseOverAllTimepoints);
+    opts->normaliseOverAllSpecies =
+        static_cast<bool>(utils::stringToVector<int>(
+            node->getAttrValue("normaliseOverAllSpecies", annotationURI))[0]);
+    SPDLOG_INFO("  - normaliseOverAllSpecies: {}",
+                opts->normaliseOverAllSpecies);
+    opts->showMinMax = static_cast<bool>(utils::stringToVector<int>(
+        node->getAttrValue("showMinMax", annotationURI))[0]);
+    SPDLOG_INFO("  - showMinMax: {}", opts->showMinMax);
+    opts->showSpecies = utils::toBool(utils::stringToVector<int>(
+        node->getAttrValue("showSpecies", annotationURI)));
+    SPDLOG_INFO("  - showSpecies: {}",
+                utils::vectorToString(utils::toInt(opts->showSpecies)));
+  }
+  return opts;
 }
 
 } // namespace model

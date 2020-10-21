@@ -1,6 +1,7 @@
 // TabSimulate
 
 #pragma once
+#include "dialogdisplayoptions.hpp"
 #include "plotwrapper.hpp"
 #include "simulate.hpp"
 #include <QWidget>
@@ -41,17 +42,14 @@ private:
   std::unique_ptr<simulate::Simulation> sim;
   simulate::SimulatorType simType{simulate::SimulatorType::DUNE};
   simulate::Options simOptions;
+  model::DisplayOptions displayOptions;
   QVector<double> time;
   QVector<QImage> images;
   QStringList compartmentNames;
   std::vector<QStringList> speciesNames;
   std::vector<std::vector<std::size_t>> compartmentSpeciesToDraw;
-  bool normaliseImageIntensityOverAllTimepoints{true};
-  bool normaliseImageIntensityOverAllSpecies{true};
-  std::vector<bool> speciesVisible;
   std::vector<PlotWrapperObservable> observables;
   std::vector<bool> obsVisible;
-  bool plotShowMinMax{true};
   bool isSimulationRunning{false};
 
   void btnSimulate_clicked();

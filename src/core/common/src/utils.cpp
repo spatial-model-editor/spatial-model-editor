@@ -34,6 +34,28 @@ std::vector<QRgb> toStdVec(const QVector<QRgb> &q) {
   return v;
 }
 
+std::vector<bool> toBool(const std::vector<int> &v) {
+  std::vector<bool> r;
+  r.reserve(v.size());
+  for (auto i : v) {
+    r.push_back(i == 1);
+  }
+  return r;
+}
+
+std::vector<int> toInt(const std::vector<bool> &v) {
+  std::vector<int> r;
+  r.reserve(v.size());
+  for (auto b : v) {
+    if (b) {
+      r.push_back(1);
+    } else {
+      r.push_back(0);
+    }
+  }
+  return r;
+}
+
 const std::vector<QColor> indexedColours::colours = std::vector<QColor>{
     {230, 25, 75},  {60, 180, 75},   {255, 225, 25}, {0, 130, 200},
     {245, 130, 48}, {145, 30, 180},  {70, 240, 240}, {240, 50, 230},

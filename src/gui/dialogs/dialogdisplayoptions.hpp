@@ -1,5 +1,6 @@
 #pragma once
 
+#include "model_display_options.hpp"
 #include <QDialog>
 #include <memory>
 
@@ -17,8 +18,7 @@ public:
   explicit DialogDisplayOptions(
       const QStringList &compartmentNames,
       const std::vector<QStringList> &speciesNames,
-      const std::vector<bool> &showSpecies, bool showMinMax,
-      bool normaliseOverAllTimepoints, bool normaliseOverAllSpecies,
+      const model::DisplayOptions &displayOptions,
       const std::vector<PlotWrapperObservable> &plotWrapperObservables,
       QWidget *parent = nullptr);
   ~DialogDisplayOptions();
