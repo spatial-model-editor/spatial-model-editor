@@ -3,6 +3,7 @@ matplotlib
 nbsphinx
 numpy
 pandoc
-sme
+https://github.com/spatial-model-editor/sme_deps_llvm/releases/download/11.0.0/sme-1.0.3-cp37-cp37m-linux_x86_64.whl
+#sme
 sphinx>3
 sphinx_rtd_theme
