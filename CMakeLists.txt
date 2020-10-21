@@ -84,7 +84,6 @@ set(BUILD_PYTHON_LIBRARY
     yes
     CACHE BOOL "Build python library")
 if(BUILD_PYTHON_LIBRARY)
-  set(PYBIND11_CPP_STANDARD -std=c++17)
   add_subdirectory(ext/pybind11)
   add_subdirectory(sme)
 endif()

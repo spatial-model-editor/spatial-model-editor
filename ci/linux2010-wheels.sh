@@ -17,10 +17,7 @@ cmake --version
 gcc --version
 ccache -s
 
-export SME_EXTRA_EXE_LIBS="-static-libgcc;-static-libstdc++"
-
-# Compile wheels (pypy only until https://github.com/spatial-model-editor/spatial-model-editor/issues/333 is resolved)
-for PYBIN in $(ls -d /opt/pypy/*/bin); do
+for PYBIN in $(ls -d /opt/py*/*/bin); do
     echo $PYBIN
 	"${PYBIN}/python" --version
 	"${PYBIN}/pip" --version

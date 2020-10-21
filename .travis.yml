@@ -15,7 +15,7 @@ branches:
 env:
   global:
     # python wheel building can (and should) be disabled to speed up CI when working on a PR
-    - BUILD_PYTHON_WHEELS=false
+    - BUILD_PYTHON_WHEELS=true
     - MSYS_URL='https://github.com/msys2/msys2-installer/releases/download/2020-09-03/msys2-base-x86_64-20200903.sfx.exe'
     - CIBUILDWHEEL_VERSION=1.6.3
     # pypi TWINE_PASSWORD
@@ -170,7 +170,7 @@ jobs:
         - rm -f gcov/*
         - lcov -q -z -d .
         - cd sme
-        - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -v -s ../../sme/test > sme.txt 2>&1
+        - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) PYTHONMALLOC=malloc python3 -m unittest discover -v -s ../../sme/test > sme.txt 2>&1
         - tail -n 100 sme.txt
         - cd ..
         - $COV gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
@@ -197,7 +197,7 @@ jobs:
         # also run python tests, but only copy gcov data for sme files: don't want to overwrite coverage info on core from c++ tests
         - lcov -q -z -d .
         - cd sme
-        - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) python3 -m unittest discover -s ../../sme/test > sme.txt 2>&1
+        - LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$($CC -print-file-name=libclang_rt.asan-x86_64.so) PYTHONMALLOC=malloc python3 -m unittest discover -s ../../sme/test > sme.txt 2>&1
         - tail -n 100 sme.txt
         - cd ..
         - $COV gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null
@@ -371,31 +371,6 @@ jobs:
         - cd build/src
         - cp ../cli/spatial-cli.exe .
         - ls
-    ##########################################################################
-    # manylinux1 python wheels release build: custom manylinux1 docker image #
-    ##########################################################################
-    - name: "manylinux1 python wheels"
-      if: (env(BUILD_PYTHON_WHEELS) = true) AND (tag != "latest")
-      os: linux
-      language: python
-      python: 3.8
-      services:
-        - docker
-      env:
-        - DOCKER_IMAGE=lkeegan/sme_manylinux1_x86_64:2020.10.19
-      install:
-        - docker pull $DOCKER_IMAGE
-      before_script:
-        skip
-      script:
-        - python --version
-        - pip --version
-        - pip install --upgrade pip
-        - pip install --upgrade twine
-        - docker run --rm -v `pwd`:/io -u `id -u`:`id -g` $DOCKER_IMAGE bash /io/ci/linux1-wheels.sh
-        - ls dist
-        - export TWINE_USERNAME="__token__"
-        - if [ -n "${TRAVIS_TAG}" ]; then python -m twine upload --verbose --non-interactive --skip-existing dist/* ; fi
     ################################################################################
     # manylinux2010 python wheels release build: custom manylinux2010 docker image #
     ################################################################################
@@ -407,7 +382,7 @@ jobs:
       services:
         - docker
       env:
-        - DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.10.19
+        - DOCKER_IMAGE=lkeegan/sme_manylinux2010_x86_64:2020.10.21
       install:
         - docker pull $DOCKER_IMAGE
       before_script:

@@ -20,7 +20,7 @@ You can also [try it out][1] online without installing anything using Google Col
 
 [1]: https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/sme/notebooks/getting_started.ipynb
 
-Documentation: <https://spatial-model-editor.readthedocs.io/en/stable/reference/python.html>
+Documentation: <https://spatial-model-editor.readthedocs.io/en/stable/reference/sme/sme.html>
 
 Supported platforms and python versions:
 
