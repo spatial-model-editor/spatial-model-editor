@@ -188,10 +188,9 @@ bool getIsSpeciesConstant(const libsbml::Species *spec) {
     //  - cannot be altered by Reactions or by RateRules
     return true;
   }
-  if ((spec->isSetBoundaryCondition() && spec->getBoundaryCondition()) &&
-      spec->getModel()->getRateRule(spec->getId()) == nullptr) {
+  if (spec->isSetBoundaryCondition() && spec->getBoundaryCondition()) {
     // `BoundaryCondition` species is a constant:
-    //   - unless it is altered by a RateRule
+      //  - cannot be altered by Reactions or by RateRules
     return true;
   }
   return false;

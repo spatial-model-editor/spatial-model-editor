@@ -112,8 +112,6 @@ public:
 
   std::string inlineExpr(const std::string &mathExpression) const;
 
-  std::string getRateRule(const std::string &speciesID) const;
-
   DisplayOptions getDisplayOptions() const;
   void setDisplayOptions(const DisplayOptions &displayOptions);
 };

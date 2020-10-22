@@ -149,28 +149,6 @@ Reaction::getConstants(std::size_t reactionIndex) const {
 Reaction::Reaction(const model::Model *doc, std::vector<std::string> species,
                    const std::vector<std::string> &reactionIDs)
     : speciesIDs(std::move(species)) {
-  // RateRule is f(...) for a species s: ds/dt = f(...)
-  // Species which have a raterule cannot be created or destroyed in any kinetic
-  // reactions
-  // todo: not currently valid if raterule involves species in multiple
-  // compartments
-  for (std::size_t sIndex = 0; sIndex < speciesIDs.size(); ++sIndex) {
-    auto ruleExpr = doc->getRateRule(speciesIDs[sIndex]);
-    if (!ruleExpr.empty()) {
-      std::vector<double> Mrow(speciesIDs.size(), 0);
-      Mrow[sIndex] = 1.0;
-      M.push_back(Mrow);
-      expressions.push_back(ruleExpr);
-      constants.emplace_back();
-      for (const auto &[id, value] :
-           doc->getParameters().getGlobalConstants()) {
-        constants.back().push_back({id, value});
-      }
-      SPDLOG_INFO("adding rate rule for species {}", speciesIDs[sIndex]);
-      SPDLOG_INFO("  - expr: {}", ruleExpr);
-    }
-  }
-
   // process each reaction
   for (const auto &reacID : reactionIDs) {
     // construct row of stoichiometric coefficients for each
