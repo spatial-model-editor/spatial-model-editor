@@ -146,12 +146,17 @@ void pybindModel(pybind11::module &m) {
 }
 
 void Model::importSbmlFile(const std::string &filename) {
-  QFile f(filename.c_str());
-  if (f.open(QIODevice::ReadOnly)) {
-    s = std::make_unique<model::Model>();
-    s->importSBMLString(f.readAll().toStdString());
+  std::string xml;
+  if (QFile f(filename.c_str());
+      f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    xml = f.readAll().toStdString();
   } else {
     throw SmeInvalidArgument("Failed to open file: " + filename);
+  }
+  s = std::make_unique<model::Model>();
+  s->importSBMLString(xml);
+  if (!s->getIsValid()) {
+    throw SmeInvalidArgument("Failed to import SBML from file: " + filename);
   }
   compartments.clear();
   compartments.reserve(
