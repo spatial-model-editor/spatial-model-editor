@@ -91,6 +91,18 @@ jobs:
       git:
         depth: false
       install:
+        # install recent ccache
+        - wget https://github.com/ccache/ccache/releases/download/v4.0/ccache-4.0.tar.gz
+        - tar xf ccache-4.0.tar.gz
+        - cd ccache-4.0
+        - mkdir build
+        - cd build
+        - cmake .. -DZSTD_FROM_INTERNET=ON -DENABLE_TESTING=OFF -DCMAKE_BUILD_TYPE=Release
+        - make -j2
+        - sudo make install
+        - ccache --version
+        - cd ../..
+
         - eval "CC=clang-10 && CXX=clang++-10 && COV=llvm-cov-10"
         - /usr/bin/cmake --version
         - $CC --version
