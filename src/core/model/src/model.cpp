@@ -177,14 +177,6 @@ std::string Model::inlineExpr(const std::string &mathExpression) const {
   return inlined;
 }
 
-std::string Model::getRateRule(const std::string &speciesID) const {
-  const auto *rule = doc->getModel()->getRateRule(speciesID);
-  if (rule != nullptr) {
-    return inlineExpr(rule->getFormula());
-  }
-  return {};
-}
-
 DisplayOptions Model::getDisplayOptions() const {
   return getDisplayOptionsAnnotation(doc->getModel())
       .value_or(DisplayOptions{});

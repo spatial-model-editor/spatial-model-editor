@@ -15,7 +15,7 @@ branches:
 env:
   global:
     # python wheel building can (and should) be disabled to speed up CI when working on a PR
-    - BUILD_PYTHON_WHEELS=true
+    - BUILD_PYTHON_WHEELS=false
     - MSYS_URL='https://github.com/msys2/msys2-installer/releases/download/2020-09-03/msys2-base-x86_64-20200903.sfx.exe'
     - CIBUILDWHEEL_VERSION=1.6.3
     # pypi TWINE_PASSWORD
@@ -99,6 +99,7 @@ jobs:
         # start a window manager so the Qt GUI tests can have their focus set
         - "jwm &"
         - sleep 1
+        - export CCACHE_LOGFILE="/tmp/cclog.txt"
       script:
         # build tests & compile executable using sonar-source build wrapper
         - ccache --zero-stats
@@ -107,6 +108,7 @@ jobs:
         - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DPYTHON_EXECUTABLE=/usr/bin/python3 -DSME_WITH_TBB=ON
         - build-wrapper-linux-x86-64 --out-dir bw-output make -j2
         - ccache --show-stats
+        - tail -n 2500 /tmp/cclog.txt
         # run tests
         # make list of "leaks" from system libraries that LeakSanitizer should ignore
         - echo "leak:libfontconfig.so" > suppr.txt
