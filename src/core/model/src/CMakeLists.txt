@@ -25,7 +25,9 @@ target_sources(
   core_tests
   PUBLIC geometry_t.cpp
          geometry_analytic_t.cpp
+         id_t.cpp
          model_t.cpp
+         model_compartments_t.cpp
          model_functions_t.cpp
          model_geometry_t.cpp
          model_math_t.cpp
