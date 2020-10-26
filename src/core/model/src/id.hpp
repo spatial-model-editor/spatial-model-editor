@@ -9,7 +9,7 @@
 namespace libsbml {
 class Model;
 class Geometry;
-}  // namespace libsbml
+} // namespace libsbml
 
 namespace model {
 
@@ -22,40 +22,4 @@ QString nameToUniqueSId(const QString &name, libsbml::Model *model);
 QString makeUnique(const QString &name, const QStringList &names,
                    const QString &postfix = "_");
 
-}  // namespace sbml
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
+} // namespace model

@@ -178,7 +178,6 @@ bool ModelCompartments::remove(const QString &id) {
   for (const auto &s : modelSpecies->getIds(id)) {
     modelSpecies->remove(s);
   }
-  // todo: update reactions
   modelMembranes->updateCompartments(compartments);
   modelMembranes->updateCompartmentNames(names, sbmlModel);
   modelGeometry->checkIfGeometryIsValid();

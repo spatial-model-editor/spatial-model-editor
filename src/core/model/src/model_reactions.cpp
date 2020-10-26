@@ -384,12 +384,22 @@ static libsbml::LocalParameter *getLocalParameter(libsbml::Model *model,
                                                   const QString &reactionId,
                                                   const QString &parameterId) {
   auto *reac = model->getReaction(reactionId.toStdString());
+  if (reac == nullptr) {
+    return nullptr;
+  }
   auto *kin = reac->getKineticLaw();
+  if (kin == nullptr) {
+    return nullptr;
+  }
   return kin->getLocalParameter(parameterId.toStdString());
 }
 
 QStringList ModelReactions::getParameterIds(const QString &id) const {
   auto i = ids.indexOf(id);
+  if (i < 0) {
+    SPDLOG_ERROR("Reaction '{}' not found", id.toStdString());
+    return {};
+  }
   return parameterIds[i];
 }
 
@@ -431,6 +441,11 @@ void ModelReactions::setParameterValue(const QString &reactionId,
 double ModelReactions::getParameterValue(const QString &reactionId,
                                          const QString &parameterId) const {
   const auto *param = getLocalParameter(sbmlModel, reactionId, parameterId);
+  if (param == nullptr) {
+    SPDLOG_ERROR("Parameter '{}' not found in reaction '{}'",
+                 parameterId.toStdString(), reactionId.toStdString());
+    return 0;
+  }
   return param->getValue();
 }
 

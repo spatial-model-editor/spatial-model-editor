@@ -50,7 +50,10 @@ jobs:
               key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
             # gcc-9
             - sourceline: 'ppa:ubuntu-toolchain-r/test'
+            # ccache 4.0
+            - sourceline: 'ppa:lkeegan/travis'
           packages:
+            - ccache
             - cmake
             - clang-10
             - lcov
@@ -96,10 +99,10 @@ jobs:
         - $CC --version
         - $CXX --version
         - $COV --version
+        - ccache --version
         # start a window manager so the Qt GUI tests can have their focus set
         - "jwm &"
         - sleep 1
-        - export CCACHE_LOGFILE="/tmp/cclog.txt"
       script:
         # build tests & compile executable using sonar-source build wrapper
         - ccache --zero-stats
@@ -108,7 +111,6 @@ jobs:
         - /usr/bin/cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DPYTHON_EXECUTABLE=/usr/bin/python3 -DSME_WITH_TBB=ON
         - build-wrapper-linux-x86-64 --out-dir bw-output make -j2
         - ccache --show-stats
-        - tail -n 2500 /tmp/cclog.txt
         # run tests
         # make list of "leaks" from system libraries that LeakSanitizer should ignore
         - echo "leak:libfontconfig.so" > suppr.txt

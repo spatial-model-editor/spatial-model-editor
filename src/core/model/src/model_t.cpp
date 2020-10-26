@@ -468,8 +468,8 @@ SCENARIO("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
       s.getSpecies().add(" !Wq", "newComp_");
       REQUIRE(s.getSpecies().getIds("newComp_").size() == 2);
       REQUIRE(s.getSpecies().getIds("newComp_")[0] == "q");
-      REQUIRE(s.getSpecies().getIds("newComp_")[1] == "__Wq");
-      REQUIRE(s.getSpecies().getName("__Wq") == " !Wq");
+      REQUIRE(s.getSpecies().getIds("newComp_")[1] == "_Wq");
+      REQUIRE(s.getSpecies().getName("_Wq") == " !Wq");
       // removing a compartment also removes the species in it, and any
       // reactions involving them
       REQUIRE(s.getReactions().getIds("comp").size() == 1);

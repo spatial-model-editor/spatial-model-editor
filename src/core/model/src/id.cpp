@@ -1,15 +1,12 @@
 #include "id.hpp"
-
+#include "logger.hpp"
+#include <QString>
+#include <QStringList>
+#include <memory>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
-
-#include <QString>
-#include <QStringList>
-#include <memory>
-
-#include "logger.hpp"
 
 namespace model {
 
@@ -34,7 +31,7 @@ QString nameToUniqueSId(const QString &name, libsbml::Model *model) {
     }
   }
   // first char must be a letter or underscore
-  if (!std::isalpha(id.front(), std::locale::classic())) {
+  if (!std::isalpha(id.front(), std::locale::classic()) && id.front() != '_') {
     id = "_" + id;
   }
   SPDLOG_DEBUG("  -> '{}'", id);
