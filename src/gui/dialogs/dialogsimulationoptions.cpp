@@ -89,6 +89,10 @@ void DialogSimulationOptions::setupConnections() {
           &DialogSimulationOptions::txtDuneDecrease_editingFinished);
   connect(ui->chkDuneVTK, &QCheckBox::stateChanged, this,
           &DialogSimulationOptions::chkDuneVTK_stateChanged);
+  connect(ui->txtDuneNewtonRel, &QLineEdit::editingFinished, this,
+          &DialogSimulationOptions::txtDuneNewtonRel_editingFinished);
+  connect(ui->txtDuneNewtonAbs, &QLineEdit::editingFinished, this,
+          &DialogSimulationOptions::txtDuneNewtonAbs_editingFinished);
   connect(ui->btnDuneReset, &QPushButton::clicked, this,
           &DialogSimulationOptions::resetDuneToDefaults);
   // Pixel tab
@@ -129,6 +133,8 @@ void DialogSimulationOptions::loadDuneOpts() {
   ui->txtDuneIncrease->setText(dblToQString(opt.dune.increase));
   ui->txtDuneDecrease->setText(dblToQString(opt.dune.decrease));
   ui->chkDuneVTK->setChecked(opt.dune.writeVTKfiles);
+  ui->txtDuneNewtonRel->setText(dblToQString(opt.dune.newtonRelErr));
+  ui->txtDuneNewtonAbs->setText(dblToQString(opt.dune.newtonAbsErr));
 }
 
 void DialogSimulationOptions::cmbDuneIntegrator_currentIndexChanged(int index) {
@@ -162,6 +168,16 @@ void DialogSimulationOptions::txtDuneDecrease_editingFinished() {
 
 void DialogSimulationOptions::chkDuneVTK_stateChanged() {
   opt.dune.writeVTKfiles = ui->chkDuneVTK->isChecked();
+}
+
+void DialogSimulationOptions::txtDuneNewtonRel_editingFinished() {
+  opt.dune.newtonRelErr = ui->txtDuneNewtonRel->text().toDouble();
+  loadDuneOpts();
+}
+
+void DialogSimulationOptions::txtDuneNewtonAbs_editingFinished() {
+  opt.dune.newtonAbsErr = ui->txtDuneNewtonAbs->text().toDouble();
+  loadDuneOpts();
 }
 
 void DialogSimulationOptions::resetDuneToDefaults() {

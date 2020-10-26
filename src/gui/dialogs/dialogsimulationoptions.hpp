@@ -30,6 +30,8 @@ private:
   void txtDuneIncrease_editingFinished();
   void txtDuneDecrease_editingFinished();
   void chkDuneVTK_stateChanged();
+  void txtDuneNewtonRel_editingFinished();
+  void txtDuneNewtonAbs_editingFinished();
   void resetDuneToDefaults();
   void loadPixelOpts();
   void cmbPixelIntegrator_currentIndexChanged(int index);
