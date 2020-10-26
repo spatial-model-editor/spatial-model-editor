@@ -18,6 +18,8 @@ SCENARIO(
   options.dune.increase = 1.11;
   options.dune.decrease = 0.77;
   options.dune.writeVTKfiles = true;
+  options.dune.newtonRelErr = 4e-4;
+  options.dune.newtonAbsErr = 9e-9;
   options.pixel.integrator = simulate::PixelIntegratorType::RK435;
   options.pixel.maxErr = {0.01, 4e-4};
   options.pixel.maxTimestep = 0.2;
@@ -39,6 +41,8 @@ SCENARIO(
     REQUIRE(options.dune.increase == dbl_approx(1.11));
     REQUIRE(options.dune.decrease == dbl_approx(0.77));
     REQUIRE(options.dune.writeVTKfiles == true);
+    REQUIRE(options.dune.newtonRelErr == dbl_approx(4e-4));
+    REQUIRE(options.dune.newtonAbsErr == dbl_approx(9e-9));
     REQUIRE(opt.pixel.integrator == simulate::PixelIntegratorType::RK435);
     REQUIRE(opt.pixel.maxErr.rel == dbl_approx(4e-4));
     REQUIRE(opt.pixel.maxErr.abs == dbl_approx(0.01));
@@ -52,7 +56,8 @@ SCENARIO(
     mwt.addUserAction({"Tab", "Tab", "Down", "Down", "9", "Tab", ".",
                        "4",   "Tab", "1",    "e",    "-", "1",   "2",
                        "Tab", "9",   "Tab",  "1",    ".", "2",   "Tab",
-                       "0",   ".",   "7",    "Tab",  " "});
+                       "0",   ".",   "7",    "Tab",  " ", "Tab", "1",
+                       "e",   "-",   "7",    "Tab",  "0"});
     mwt.start();
     dia.exec();
     auto opt = dia.getOptions();
@@ -63,10 +68,12 @@ SCENARIO(
     REQUIRE(opt.dune.increase == 1.2);
     REQUIRE(opt.dune.decrease == 0.7);
     REQUIRE(opt.dune.writeVTKfiles == false);
+    REQUIRE(opt.dune.newtonRelErr == dbl_approx(1e-7));
+    REQUIRE(opt.dune.newtonAbsErr == dbl_approx(0));
   }
   WHEN("user resets to Dune defaults") {
-    mwt.addUserAction(
-        {"Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", " "});
+    mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab",
+                       "Tab", "Tab", "Tab", " "});
     mwt.start();
     dia.exec();
     simulate::DuneOptions defaultOpts{};

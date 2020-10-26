@@ -19,6 +19,8 @@ struct DuneOptions {
   double increase{1.5};
   double decrease{0.5};
   bool writeVTKfiles{false};
+  double newtonRelErr{1e-8};
+  double newtonAbsErr{1e-12};
 };
 
 enum class PixelIntegratorType { RK101, RK212, RK323, RK435 };

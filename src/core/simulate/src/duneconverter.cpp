@@ -115,6 +115,21 @@ static void addTimeStepping(IniFile &ini,
   ini.addValue("max_step", duneOptions.maxDt, doublePrecision);
   ini.addValue("decrease_factor", duneOptions.decrease, doublePrecision);
   ini.addValue("increase_factor", duneOptions.increase, doublePrecision);
+
+  ini.addSection("model", "time_stepping", "newton");
+  ini.addValue("reduction", duneOptions.newtonRelErr, doublePrecision);
+  ini.addValue("min_linear_reduction", 1e-3, doublePrecision);
+  ini.addValue("fixed_linear_reduction", "false");
+  ini.addValue("max_iterations", 40);
+  ini.addValue("absolute_limit", duneOptions.newtonAbsErr, doublePrecision);
+  ini.addValue("reassemble_threshold", 0.0, doublePrecision);
+  ini.addValue("keep_matrix", "true");
+  ini.addValue("force_iteration", "false");
+
+  ini.addSection("model", "time_stepping", "newton.linear_search");
+  ini.addValue("strategy", "hackbuschReusken");
+  ini.addValue("max_iterations", 10);
+  ini.addValue("damping_factor", 0.5, doublePrecision);
 }
 
 static void addLogging(IniFile &ini, bool forExternalUse) {
