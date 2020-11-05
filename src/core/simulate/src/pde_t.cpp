@@ -100,8 +100,11 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
     model::Model s;
     s.importSBMLFile("tmp.xml");
+    simulate::PdeScaleFactors scaleFactors;
+    scaleFactors.reaction = 0.2;
+    scaleFactors.species = 1.0;
     simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
-                      {"dim_", "x__", "x_", "cos__", "cos_"}, {"5"});
+                      {"dim_", "x__", "x_", "cos__", "cos_"}, scaleFactors);
     REQUIRE(symEq(pde.getRHS()[0], "-0.02*x__*dim_"));
     REQUIRE(symEq(pde.getRHS()[1], "-0.02*x__*dim_"));
     REQUIRE(symEq(pde.getRHS()[2], "0.02*x__*dim_"));
@@ -114,26 +117,28 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     REQUIRE(symEq(pde.getJacobian()[2][1], "0.02*dim_"));
     REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
-  GIVEN("invalid rescaling of reactions") {
-    THEN("ignore rescaling") {
-      std::unique_ptr<libsbml::SBMLDocument> doc(libsbml::readSBMLFromString(
-          sbml_test_data::invalid_dune_names().xml));
-      libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-      model::Model s;
-      s.importSBMLFile("tmp.xml");
-      simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"}, {},
-                        {"10", "2"});
-      REQUIRE(symEq(pde.getRHS()[0], "-0.1*x*dim"));
-      REQUIRE(symEq(pde.getRHS()[1], "-0.1*x*dim"));
-      REQUIRE(symEq(pde.getRHS()[2], "0.1*x*dim"));
-      REQUIRE(symEq(pde.getJacobian()[0][0], "-0.1*x"));
-      REQUIRE(symEq(pde.getJacobian()[0][1], "-0.1*dim"));
-      REQUIRE(symEq(pde.getJacobian()[0][2], "0"));
-      REQUIRE(symEq(pde.getJacobian()[0][3], "0"));
-      REQUIRE(symEq(pde.getJacobian()[0][4], "0"));
-      REQUIRE(symEq(pde.getJacobian()[2][0], "0.1*x"));
-      REQUIRE(symEq(pde.getJacobian()[2][1], "0.1*dim"));
-      REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
-    }
+  GIVEN("rescaling of species & reactions") {
+    std::unique_ptr<libsbml::SBMLDocument> doc(
+        libsbml::readSBMLFromString(sbml_test_data::invalid_dune_names().xml));
+    libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
+    model::Model s;
+    s.importSBMLFile("tmp.xml");
+    simulate::PdeScaleFactors scaleFactors;
+    scaleFactors.reaction = 0.27;
+    scaleFactors.species = 10.0;
+
+    simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"}, {},
+                      scaleFactors);
+    REQUIRE(symEq(pde.getRHS()[0], "-2.7*x*dim"));
+    REQUIRE(symEq(pde.getRHS()[1], "-2.7*x*dim"));
+    REQUIRE(symEq(pde.getRHS()[2], "2.7*x*dim"));
+    REQUIRE(symEq(pde.getJacobian()[0][0], "-2.7*x"));
+    REQUIRE(symEq(pde.getJacobian()[0][1], "-2.7*dim"));
+    REQUIRE(symEq(pde.getJacobian()[0][2], "0"));
+    REQUIRE(symEq(pde.getJacobian()[0][3], "0"));
+    REQUIRE(symEq(pde.getJacobian()[0][4], "0"));
+    REQUIRE(symEq(pde.getJacobian()[2][0], "2.7*x"));
+    REQUIRE(symEq(pde.getJacobian()[2][1], "2.7*dim"));
+    REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
 }

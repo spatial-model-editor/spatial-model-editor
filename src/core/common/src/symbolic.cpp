@@ -82,6 +82,7 @@ struct Symbolic::SymEngineImpl {
             const std::vector<Function> &functions);
   void compile(bool doCSE, unsigned optLevel);
   void relabel(const std::vector<std::string> &newVariables);
+  void rescale(double factor);
 };
 
 void Symbolic::SymEngineImpl::init(
@@ -245,6 +246,25 @@ void Symbolic::SymEngineImpl::relabel(
   std::swap(symbols, newSymbols);
 }
 
+void Symbolic::SymEngineImpl::rescale(double factor) {
+  SymEngine::map_basic_basic d;
+  auto f = SymEngine::number(factor);
+  for (const auto &v : varVec) {
+    d[v] = SymEngine::mul(v, f);
+  }
+  for (auto &e : exprInlined) {
+    SPDLOG_DEBUG("exprInlined '{}'", toString(e));
+    e = e->subs(d);
+    SPDLOG_DEBUG("  -> '{}'", toString(e));
+  }
+  for (auto &e : exprOriginal) {
+    SPDLOG_DEBUG("exprOriginal '{}'", toString(e));
+    e = e->subs(d);
+    SPDLOG_DEBUG("  -> '{}'", toString(e));
+  }
+  compile(true, 3);
+}
+
 std::string divide(const std::string &expr, const std::string &var) {
   std::locale userLocale = std::locale::global(std::locale::classic());
   std::string result = SymEngine::muPrinter().apply(
@@ -296,6 +316,8 @@ std::string Symbolic::diff(const std::string &var, std::size_t i) const {
 void Symbolic::relabel(const std::vector<std::string> &newVariables) {
   pSymEngineImpl->relabel(newVariables);
 }
+
+void Symbolic::rescale(double factor) { pSymEngineImpl->rescale(factor); }
 
 void Symbolic::eval(std::vector<double> &results,
                     const std::vector<double> &vars) const {

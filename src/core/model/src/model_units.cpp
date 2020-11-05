@@ -269,28 +269,36 @@ const QString &ModelUnits::getMembraneReaction() const {
 }
 
 double rescale(double val, const Unit &oldUnit, const Unit &newUnit) {
-  // rescale units, assuming same base unit & same exponent
+  // rescale units, assuming same base unit & unit exponent
   // e.g. m -> cm, or mol -> mmol
   return (oldUnit.multiplier / newUnit.multiplier) *
          std::pow(10, oldUnit.scale - newUnit.scale) * val;
 }
 
-// convert pixel width to pixel volume (with unit length in third dimension)
-double pixelWidthToVolume(double width, const Unit &lengthUnit,
-                          const Unit &volumeUnit) {
-  // assume base unit of length is always metre
-  // length^3 unit in m^3:
-  double l3 = std::pow(lengthUnit.multiplier * std::pow(10, lengthUnit.scale),
-                       3 * lengthUnit.exponent);
-  // volume unit in base volume unit:
-  double v = std::pow(volumeUnit.multiplier * std::pow(10, volumeUnit.scale),
-                      volumeUnit.exponent);
-  // if base volume unit is litre, not m^3, need to should convert l3 from m^3
-  // to litre, i.e. multiply by 1e3
-  if (volumeUnit.kind == "litre") {
-    l3 *= 1000;
+static double getV(const Unit &volumeUnit) {
+  if (volumeUnit.kind == "metre") {
+    return std::pow(volumeUnit.multiplier * std::pow(10, volumeUnit.scale),
+                    volumeUnit.exponent);
+  } else if (volumeUnit.kind == "litre") {
+    // 1 L = 1e-3 m^3 --> subtract 3 from scale:
+    return volumeUnit.multiplier * std::pow(10, volumeUnit.scale - 3);
   }
-  return width * width * l3 / v;
+  SPDLOG_WARN("unsupported Volume base unit: '{}'",
+              volumeUnit.kind.toStdString());
+  return 1;
+}
+
+static double getL3(const Unit &lengthUnit) {
+  if (lengthUnit.kind == "metre") {
+    return std::pow(lengthUnit.multiplier * std::pow(10, lengthUnit.scale), 3);
+  }
+  SPDLOG_WARN("unsupported Length base unit: '{}'",
+              lengthUnit.kind.toStdString());
+  return 1;
+}
+
+double getVolOverL3(const Unit &lengthUnit, const Unit &volumeUnit) {
+  return getV(volumeUnit) / getL3(lengthUnit);
 }
 
 } // namespace model

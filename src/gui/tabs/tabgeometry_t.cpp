@@ -51,10 +51,6 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
   auto *spinMaxBoundaryPoints =
       tab.findChild<QSpinBox *>("spinMaxBoundaryPoints");
   REQUIRE(spinMaxBoundaryPoints != nullptr);
-  auto *spinBoundaryWidth =
-      tab.findChild<QDoubleSpinBox *>("spinBoundaryWidth");
-  REQUIRE(spinBoundaryWidth != nullptr);
-  // auto *lblCompMesh = tab.findChild<QLabelMouseTracker *>("lblCompMesh");
   auto *spinMaxTriangleArea = tab.findChild<QSpinBox *>("spinMaxTriangleArea");
   REQUIRE(spinMaxTriangleArea != nullptr);
   WHEN("very-simple-model loaded") {
@@ -119,8 +115,6 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       sendKeyEvents(spinMaxBoundaryPoints, {"Up"});
       sendKeyEvents(spinBoundaryIndex, {"Up"});
       sendKeyEvents(spinMaxBoundaryPoints, {"Down"});
-      sendKeyEvents(spinBoundaryWidth, {"Down"});
-      sendKeyEvents(spinBoundaryWidth, {"Down"});
       sendKeyEvents(spinBoundaryIndex, {"Up"});
 
       // mesh tab

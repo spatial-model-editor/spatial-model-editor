@@ -1,4 +1,5 @@
 #include "catch_wrapper.hpp"
+#include "mesh.hpp"
 #include "model.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
 #include "simulate.hpp"
@@ -286,6 +287,283 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
   }
 }
 
+static void rescaleMembraneReacRates(model::Model &s, double factor) {
+  for (const auto &memId : s.getMembranes().getIds()) {
+    for (const auto &reacId : s.getReactions().getIds(memId)) {
+      for (const auto &paramId : s.getReactions().getParameterIds(reacId)) {
+        double v{s.getReactions().getParameterValue(reacId, paramId)};
+        s.getReactions().setParameterValue(reacId, paramId, v * factor);
+      }
+    }
+  }
+}
+
+SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
+         "[core/simulate/simulate][core/simulate][core][simulate]") {
+  double epsilon{1e-8};
+  double margin{1e-13};
+  // import model
+  model::Model s1;
+  QFile f(":/models/very-simple-model.xml");
+  f.open(QIODevice::ReadOnly);
+  std::string str{f.readAll().toStdString()};
+  s1.importSBMLString(str);
+  // 1st order RK, fixed timestep simulation
+  // pixel width: 1
+  // length unit: m
+  // volume unit: L
+  // alpha = length^3/volume = 1e3
+  REQUIRE(s1.getGeometry().getPixelWidth() == dbl_approx(1.0));
+  REQUIRE(s1.getUnits().getLength().name == "m");
+  REQUIRE(s1.getUnits().getVolume().name == "L");
+  simulate::Options options;
+  options.pixel.integrator = simulate::PixelIntegratorType::RK101;
+  options.pixel.maxErr = {std::numeric_limits<double>::max(),
+                          std::numeric_limits<double>::max()};
+  options.pixel.maxTimestep = 0.01;
+  options.pixel.enableMultiThreading = false;
+  options.pixel.maxThreads = 1;
+  simulate::Simulation sim(s1, simulate::SimulatorType::Pixel, options);
+  sim.doTimestep(0.20);
+  REQUIRE(sim.getTimePoints().size() == 2);
+
+  // 3x pixel width
+  {
+    model::Model s;
+    s.importSBMLString(str);
+    s.getGeometry().setPixelWidth(3.0);
+    REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(3.0));
+    // pixel width -> 3x larger
+    // units, concentrations & reaction rates unchanged
+    // but membrane flux per pixel -> 9x larger
+    // while volume of pixel -> 27x larger
+    // so net conc change from membrane flux in pixel -> 9x/27x = 1/3
+    // multiply membrane rate by 3 to compensate for this
+    rescaleMembraneReacRates(s, 3.0);
+    simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
+    sim2.doTimestep(0.20);
+    REQUIRE(sim2.getTimePoints().size() == 2);
+    REQUIRE(sim2.errorMessage().empty());
+    for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
+      for (auto iSpec : {std::size_t(0), std::size_t(1)}) {
+        if (!(iComp == 0 && iSpec == 1)) {
+          REQUIRE(sim2.getAvgMinMax(1, iComp, iSpec).avg ==
+                  Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).avg)
+                      .epsilon(epsilon)
+                      .margin(margin));
+        }
+      }
+    }
+  }
+  // 0.27* pixel width
+  {
+    model::Model s;
+    s.importSBMLString(str);
+    s.getGeometry().setPixelWidth(0.27);
+    REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(0.27));
+    // as above
+    rescaleMembraneReacRates(s, 0.27);
+    simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
+    sim2.doTimestep(0.20);
+    REQUIRE(sim2.errorMessage().empty());
+    REQUIRE(sim2.getTimePoints().size() == 2);
+    for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
+      for (auto iSpec : {std::size_t(0), std::size_t(1)}) {
+        if (!(iComp == 0 && iSpec == 1)) {
+          REQUIRE(sim2.getAvgMinMax(1, iComp, iSpec).avg ==
+                  Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).avg)
+                      .epsilon(epsilon)
+                      .margin(margin));
+        }
+      }
+    }
+  }
+}
+
+SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
+         "[core/simulate/simulate][core/simulate][core][simulate]") {
+  for (auto simulatorType :
+       {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
+    double epsilon{1e-8};
+    double margin{1e-13};
+    if (simulatorType == simulate::SimulatorType::DUNE) {
+      epsilon = 1e-7;
+    }
+    // import model
+    model::Model s1;
+    QFile f(":/models/very-simple-model.xml");
+    f.open(QIODevice::ReadOnly);
+    std::string str{f.readAll().toStdString()};
+    s1.importSBMLString(str);
+    // 1st order RK, fixed timestep simulation
+    // pixel width: 1
+    // length unit: m
+    // volume unit: L
+    // alpha = length^3/volume = 1e3
+    REQUIRE(s1.getGeometry().getPixelWidth() == dbl_approx(1.0));
+    REQUIRE(s1.getUnits().getLength().name == "m");
+    REQUIRE(s1.getUnits().getVolume().name == "L");
+    simulate::Options options;
+    options.pixel.integrator = simulate::PixelIntegratorType::RK101;
+    options.pixel.maxErr = {std::numeric_limits<double>::max(),
+                            std::numeric_limits<double>::max()};
+    options.pixel.maxTimestep = 0.01;
+    options.pixel.enableMultiThreading = false;
+    options.pixel.maxThreads = 1;
+    options.dune.dt = 0.01;
+    options.dune.minDt = 0.001;
+    options.dune.maxDt = 0.011;
+    CAPTURE(simulatorType);
+    simulate::Simulation sim(s1, simulatorType, options);
+    sim.doTimestep(0.20);
+    REQUIRE(sim.getTimePoints().size() == 2);
+
+    // Length unit -> 10x smaller
+    {
+      model::Model s;
+      s.importSBMLString(str);
+      s.getUnits().setLengthIndex(1);
+      // concentrations & compartment reaction rates unaffected by length units
+      // membrane reaction in units of [amount]/[length]^3 is the same
+      // but since [volume] is unchanged and [length] is 10x smaller,
+      // the concentration in [amount]/[volume] is 1000x larger
+      // divide membrane reaction rate by 1000 to compensate for this
+      rescaleMembraneReacRates(s, 1e-3);
+      s.getUnits().setLengthIndex(1);
+      REQUIRE(s.getUnits().getLength().name == "dm");
+      simulate::Simulation sim2(s, simulatorType, options);
+      sim2.doTimestep(0.20);
+      REQUIRE(sim2.getTimePoints().size() == 2);
+      REQUIRE(sim2.errorMessage().empty());
+      for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
+        for (auto iSpec : {std::size_t(0), std::size_t(1)}) {
+          if (!(iComp == 0 && iSpec == 1)) {
+            REQUIRE(sim2.getAvgMinMax(1, iComp, iSpec).avg ==
+                    Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).avg)
+                        .epsilon(epsilon)
+                        .margin(margin));
+          }
+        }
+      }
+    }
+
+    // Length unit -> 100x smaller
+    {
+      // as above
+      model::Model s;
+      s.importSBMLString(str);
+      rescaleMembraneReacRates(s, 1e-6);
+      s.getUnits().setLengthIndex(2);
+      REQUIRE(s.getUnits().getLength().name == "cm");
+      simulate::Simulation sim2(s, simulatorType, options);
+      sim2.doTimestep(0.20);
+      REQUIRE(sim2.getTimePoints().size() == 2);
+      REQUIRE(sim2.errorMessage().empty());
+      for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
+        for (auto iSpec : {std::size_t(0), std::size_t(1)}) {
+          if (!(iComp == 0 && iSpec == 1)) {
+            REQUIRE(sim2.getAvgMinMax(1, iComp, iSpec).avg ==
+                    Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).avg)
+                        .epsilon(epsilon)
+                        .margin(margin));
+          }
+        }
+      }
+    }
+    // Volume unit -> 10x smaller
+    {
+      // concentration values unchanged, but [volume] 10x smaller
+      // i.e. concentrations are 10x higher in [amount]/[length]^3 units
+      // so membrane rates need to be 10x higher to compensate
+      model::Model s;
+      s.importSBMLString(str);
+      rescaleMembraneReacRates(s, 10);
+      s.getUnits().setVolumeIndex(1);
+      REQUIRE(s.getUnits().getVolume().name == "dL");
+      simulate::Simulation sim2(s, simulatorType, options);
+      sim2.doTimestep(0.20);
+      REQUIRE(sim2.getTimePoints().size() == 2);
+      REQUIRE(sim2.errorMessage().empty());
+      for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
+        for (auto iSpec : {std::size_t(0), std::size_t(1)}) {
+          if (!(iComp == 0 && iSpec == 1)) {
+            REQUIRE(sim2.getAvgMinMax(1, iComp, iSpec).avg ==
+                    Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).avg)
+                        .epsilon(epsilon)
+                        .margin(margin));
+          }
+        }
+      }
+    }
+    // Volume unit -> 1000x smaller
+    {
+      // as above
+      model::Model s;
+      s.importSBMLString(str);
+      rescaleMembraneReacRates(s, 1000);
+      s.getUnits().setVolumeIndex(3);
+      REQUIRE(s.getUnits().getVolume().name == "mL");
+      simulate::Simulation sim2(s, simulatorType, options);
+      sim2.doTimestep(0.20);
+      REQUIRE(sim2.getTimePoints().size() == 2);
+      REQUIRE(sim2.errorMessage().empty());
+      for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
+        for (auto iSpec : {std::size_t(0), std::size_t(1)}) {
+          if (!(iComp == 0 && iSpec == 1)) {
+            REQUIRE(sim2.getAvgMinMax(1, iComp, iSpec).avg ==
+                    Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).avg)
+                        .epsilon(epsilon)
+                        .margin(margin));
+          }
+        }
+      }
+    }
+    // Volume unit -> 1000x larger (L -> m^3)
+    {
+      model::Model s;
+      s.importSBMLString(str);
+      rescaleMembraneReacRates(s, 1e-3);
+      s.getUnits().setVolumeIndex(4);
+      REQUIRE(s.getUnits().getVolume().name == "m3");
+      simulate::Simulation sim2(s, simulatorType, options);
+      sim2.doTimestep(0.20);
+      REQUIRE(sim2.getTimePoints().size() == 2);
+      REQUIRE(sim2.errorMessage().empty());
+      for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
+        for (auto iSpec : {std::size_t(0), std::size_t(1)}) {
+          if (!(iComp == 0 && iSpec == 1)) {
+            REQUIRE(sim2.getAvgMinMax(1, iComp, iSpec).avg ==
+                    Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).avg)
+                        .epsilon(epsilon)
+                        .margin(margin));
+          }
+        }
+      }
+    }
+    // Volume unit equivalent (L -> dm^3)
+    {
+      model::Model s;
+      s.importSBMLString(str);
+      s.getUnits().setVolumeIndex(5);
+      REQUIRE(s.getUnits().getVolume().name == "dm3");
+      simulate::Simulation sim2(s, simulatorType, options);
+      sim2.doTimestep(0.20);
+      REQUIRE(sim2.getTimePoints().size() == 2);
+      REQUIRE(sim2.errorMessage().empty());
+      for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
+        for (auto iSpec : {std::size_t(0), std::size_t(1)}) {
+          if (!(iComp == 0 && iSpec == 1)) {
+            REQUIRE(sim2.getAvgMinMax(1, iComp, iSpec).avg ==
+                    Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).avg)
+                        .epsilon(epsilon)
+                        .margin(margin));
+          }
+        }
+      }
+    }
+  }
+}
+
 // return r2 distance from origin of point
 static double r2(const QPoint &p) {
   // nb: flip y axis since qpoint has y=0 at top
@@ -300,7 +578,7 @@ static double analytic(const QPoint &p, double t, double D, double t0) {
 
 SCENARIO(
     "Simulate: single-compartment-diffusion, circular geometry",
-    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
+    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel][Q]") {
   // see docs/tests/diffusion.rst for analytic expressions used here
   // NB central point of initial distribution: (48,99-48) <-> ix=1577
 
@@ -351,11 +629,17 @@ SCENARIO(
   options.dune.minDt = 0.5;
   for (auto simType :
        {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
-    double initialRelativeError = 1e-9;
-    double evolvedRelativeError = 0.02;
+    // relative error on integral of initial concentration over all pixels:
+    double initialRelativeError{1e-9};
+    // largest relative error of any pixel after simulation:
+    double evolvedMaxRelativeError{0.02};
+    // average of relative errors of all pixels after simulation:
+    double evolvedAvgRelativeError{0.003};
     if (simType == simulate::SimulatorType::DUNE) {
-      initialRelativeError = 0.05;
-      evolvedRelativeError = 0.5;
+      // increase allowed error for dune simulation
+      initialRelativeError = 0.01;
+      evolvedMaxRelativeError = 0.3;
+      evolvedAvgRelativeError = 0.1;
     }
 
     // integrate & compare
@@ -385,7 +669,9 @@ SCENARIO(
     for (auto speciesIndex : {std::size_t{0}, std::size_t{1}}) {
       double t0 = sigma2 / 4.0 / D[speciesIndex];
       auto conc = sim.getConc(timeIndex, 0, speciesIndex);
-      double maxRelErr = 0;
+      double maxRelErr{0};
+      double avgRelErr{0};
+      std::size_t count{0};
       for (std::size_t i = 0; i < slow->getCompartment()->nPixels(); ++i) {
         const auto &p = slow->getCompartment()->getPixel(i);
         // only check part within a radius of 16 units from centre to avoid
@@ -393,12 +679,16 @@ SCENARIO(
         if (r2(p) < 16 * 16) {
           double c_analytic = analytic(p, t, D[speciesIndex], t0);
           double relErr = std::abs(conc[i] - c_analytic) / c_analytic;
+          avgRelErr += relErr;
+          ++count;
           maxRelErr = std::max(maxRelErr, relErr);
         }
       }
+      avgRelErr /= static_cast<double>(count);
       CAPTURE(simType);
       CAPTURE(t);
-      REQUIRE(maxRelErr < evolvedRelativeError);
+      REQUIRE(maxRelErr < evolvedMaxRelativeError);
+      REQUIRE(avgRelErr < evolvedAvgRelativeError);
     }
   }
 }
@@ -442,9 +732,9 @@ SCENARIO(
 
 SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
-  double eps = 1e-20;
-  double time = 30.0;
-  double relErr = 0.01;
+  double eps{1e-20};
+  double time{30.0};
+  double maxAllowedRelErr{0.01};
   // import model
   model::Model s;
   if (QFile f(":/models/brusselator-model.xml"); f.open(QIODevice::ReadOnly)) {
@@ -466,7 +756,8 @@ SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
       double maxRelDiff = 0;
       options.pixel.integrator = integrator;
       options.pixel.enableMultiThreading = multithreaded;
-      options.pixel.maxErr = {std::numeric_limits<double>::max(), relErr};
+      options.pixel.maxErr = {std::numeric_limits<double>::max(),
+                              maxAllowedRelErr};
       simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
       sim2.doTimestep(time);
       auto conc = sim2.getConc(sim.getTimePoints().size() - 1, 0, 0);
@@ -476,7 +767,7 @@ SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
       }
       CAPTURE(multithreaded);
       CAPTURE(integrator);
-      REQUIRE(maxRelDiff < relErr);
+      REQUIRE(maxRelDiff < maxAllowedRelErr);
     }
   }
 }
@@ -527,7 +818,7 @@ SCENARIO("DUNE: simulation",
 }
 
 SCENARIO("getConcImage",
-         "[core/simulate/simulate][core/simulate][core][simulate][QQ]") {
+         "[core/simulate/simulate][core/simulate][core][simulate]") {
   GIVEN("very-simple-model") {
     model::Model s;
     if (QFile f(":/models/very-simple-model.xml");

@@ -1,4 +1,4 @@
-find_library(dunecopasi_LIBRARY dune_copasi_md_lib_fv_cg)
+find_library(dunecopasi_LIBRARY dune_copasi_md_lib_cg)
 find_path(dunecopasi_INCLUDE_DIR dune/logging.hh)
 mark_as_advanced(dunecopasi_INCLUDE_DIR dunecopasi_LIBRARY)
 
@@ -20,7 +20,6 @@ if(dunecopasi_FOUND
   foreach(
     DUNE_COPASI_DEPENDENCY
     dune_copasi_sd_lib_cg
-    dune_copasi_sd_lib_fv
     dune_copasi_lib
     dune-logging
     dunepdelab

@@ -33,12 +33,9 @@ struct Compartment {
 
 struct BoundaryProperties {
   std::size_t boundaryIndex;
-  double width;
   bool isLoop;
   bool isMembrane;
   std::size_t membraneIndex;
-  std::array<std::size_t, 2> innerFPIndices;
-  std::array<std::size_t, 2> outerFPIndices;
 };
 
 struct TriangulateBoundaries {
@@ -48,26 +45,16 @@ struct TriangulateBoundaries {
   std::vector<BoundaryProperties> boundaryProperties;
 };
 
-struct TriangulateFixedPoints {
-  std::size_t nFPs = 0;
-  std::vector<QPointF> newFPs = {};
-};
-
 class Triangulate {
 private:
   std::vector<QPointF> points;
   std::vector<std::vector<TriangleIndex>> triangleIndices;
-  std::vector<std::vector<RectangleIndex>> rectangleIndices;
-  TriangulateBoundaries addMembranes(const TriangulateBoundaries &tv,
-                                     const TriangulateFixedPoints &tfp);
   void triangulateCompartments(const TriangulateBoundaries &boundaries);
 
 public:
-  explicit Triangulate(const TriangulateBoundaries &boundaries,
-                       const TriangulateFixedPoints &fixedPoints = {});
+  explicit Triangulate(const TriangulateBoundaries &boundaries);
   const std::vector<QPointF> &getPoints() const;
   const std::vector<std::vector<TriangleIndex>> &getTriangleIndices() const;
-  const std::vector<std::vector<RectangleIndex>> &getRectangleIndices() const;
 };
 
 } // namespace mesh

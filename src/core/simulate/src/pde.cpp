@@ -20,7 +20,7 @@ Pde::Pde(const model::Model *doc_ptr,
          const std::vector<std::string> &speciesIDs,
          const std::vector<std::string> &reactionIDs,
          const std::vector<std::string> &relabelledSpeciesIDs,
-         const std::vector<std::string> &reactionScaleFactors)
+         const PdeScaleFactors &pdeScaleFactors)
     : species(speciesIDs) {
   if (!relabelledSpeciesIDs.empty() &&
       relabelledSpeciesIDs.size() != speciesIDs.size()) {
@@ -28,12 +28,8 @@ Pde::Pde(const model::Model *doc_ptr,
                 "size {} does not match number of species {}",
                 relabelledSpeciesIDs.size(), speciesIDs.size());
   }
-  if (!reactionScaleFactors.empty() &&
-      reactionScaleFactors.size() != reactionIDs.size()) {
-    SPDLOG_WARN("Ignoring reactionScaleFactors:"
-                "size {} does not match number of reactions {}",
-                reactionScaleFactors.size(), reactionIDs.size());
-  }
+  SPDLOG_INFO("Species rescaled by factor: {}", pdeScaleFactors.species);
+  SPDLOG_INFO("Reactions rescaled by factor: {}", pdeScaleFactors.reaction);
   // construct reaction expressions and stoich matrix
   Reaction reactions(doc_ptr, speciesIDs, reactionIDs);
 
@@ -50,11 +46,8 @@ Pde::Pde(const model::Model *doc_ptr,
               .arg(utils::dblToQStr(reactions.getMatrixElement(j, i)),
                    reactions.getExpression(j).c_str());
       // rescale by supplied reactionScaleFactor
-      QString scaleFactor("1");
-      if (reactionScaleFactors.size() == reactionIDs.size()) {
-        scaleFactor = reactionScaleFactors[j].c_str();
-      }
-      expr = QString("((%1)/%2) ").arg(expr, scaleFactor);
+      auto str = fmt::format("{}", pdeScaleFactors.reaction);
+      expr = QString("((%1)*(%2)) ").arg(expr, str.c_str());
       SPDLOG_DEBUG("Species {} Reaction {} = {}", speciesIDs.at(i), j,
                    expr.toStdString());
       // parse and inline constants & function calls
@@ -72,6 +65,8 @@ Pde::Pde(const model::Model *doc_ptr,
     SPDLOG_DEBUG("Species {} Reparsing all reaction terms", speciesIDs.at(i));
     // parse expression with symengine to simplify
     symbolic::Symbolic sym(r.toStdString(), speciesIDs, {}, {}, false);
+    // rescale species
+    sym.rescale(pdeScaleFactors.species);
     // if provided, relabel species with relabelledSpeciesIDs
     const auto *outputSpecies = &speciesIDs;
     if (relabelledSpeciesIDs.size() == speciesIDs.size()) {
@@ -109,8 +104,9 @@ Reaction::getStoichMatrixRow(const model::Model *doc,
   bool isReaction = false;
   for (const auto &speciesID : speciesIDs) {
     auto speciesName = doc->getSpecies().getName(speciesID.c_str());
-    auto stoichCoeff = doc->getReactions().getSpeciesStoichiometry(
-        reacId.c_str(), speciesID.c_str());
+    double stoichCoeff =
+        static_cast<double>(doc->getReactions().getSpeciesStoichiometry(
+            reacId.c_str(), speciesID.c_str()));
     SPDLOG_DEBUG("product '{}'", speciesID);
     auto speciesIndex = getSpeciesIndex(doc, speciesID, speciesIDs);
     if (speciesIndex) {
@@ -155,8 +151,9 @@ Reaction::Reaction(const model::Model *doc, std::vector<std::string> species,
     // species produced and consumed by this reaction
     auto row = getStoichMatrixRow(doc, reacID);
     if (!row.empty()) {
-      // if matrix row is non-zero, i.e. reaction does something, then insert
-      // it into the M matrix, and construct the corresponding reaction term
+      // if matrix row is non-zero, i.e. reaction does something, then
+      // insert it into the M matrix, and construct the corresponding
+      // reaction term
       M.push_back(row);
 
       // get local parameters, append to global constants

@@ -140,7 +140,7 @@ void ModelGeometry::updateMesh() {
   mesh = std::make_unique<mesh::Mesh>(
       image, interiorPoints, std::vector<std::size_t>{},
       std::vector<std::size_t>{}, modelMembranes->getIdColourPairs(),
-      std::vector<double>{}, pixelWidth, physicalOrigin,
+      pixelWidth, physicalOrigin,
       utils::toStdVec(modelCompartments->getColours()));
 }
 

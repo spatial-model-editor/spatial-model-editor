@@ -34,16 +34,6 @@ static void insertTriangle(const std::array<std::size_t, 3> &t,
 }
 
 template <typename HostGrid>
-static void insertRectangle(const std::array<std::size_t, 4> &r,
-                            Dune::GridFactory<HostGrid> &factory) {
-  // https://www.dune-project.org/doxygen/2.7.0/group__GeometryReferenceElements.html
-  factory.insertElement(
-      Dune::GeometryTypes::quadrilateral,
-      {static_cast<unsigned int>(r[0]), static_cast<unsigned int>(r[1]),
-       static_cast<unsigned int>(r[3]), static_cast<unsigned int>(r[2])});
-}
-
-template <typename HostGrid>
 static std::pair<std::vector<std::size_t>, std::shared_ptr<HostGrid>>
 makeHostGrid(const mesh::Mesh &mesh,
              const std::unordered_set<int> &compartmentIndicies) {
@@ -61,16 +51,6 @@ makeHostGrid(const mesh::Mesh &mesh,
       numElements.push_back(triangles.size());
       for (const auto &triangle : triangles) {
         insertTriangle(triangle, factory);
-      }
-    }
-    ++compIndex;
-  }
-  // add membrane compartments containing rectangular elements
-  for (const auto &rectangles : mesh.getRectangleIndices()) {
-    if (useCompartment(compIndex, compartmentIndicies)) {
-      numElements.push_back(rectangles.size());
-      for (const auto &r : rectangles) {
-        insertRectangle(r, factory);
       }
     }
     ++compIndex;

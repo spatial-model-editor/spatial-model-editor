@@ -50,10 +50,6 @@ TabGeometry::TabGeometry(model::Model &doc, QLabelMouseTracker *mouseTracker,
   connect(ui->spinMaxBoundaryPoints, qOverload<int>(&QSpinBox::valueChanged),
           this, &TabGeometry::spinMaxBoundaryPoints_valueChanged);
 
-  connect(ui->spinBoundaryWidth,
-          qOverload<double>(&QDoubleSpinBox::valueChanged), this,
-          &TabGeometry::spinBoundaryWidth_valueChanged);
-
   connect(ui->lblCompMesh, &QLabelMouseTracker::mouseClicked, this,
           &TabGeometry::lblCompMesh_mouseClicked);
 
@@ -234,13 +230,11 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
     auto size = sbmlDoc.getGeometry().getMesh()->getNumBoundaries();
     if (size == 0) {
       ui->spinBoundaryIndex->setEnabled(false);
-      ui->spinBoundaryWidth->setEnabled(false);
       ui->spinMaxBoundaryPoints->setEnabled(false);
       return;
     }
     ui->spinBoundaryIndex->setMaximum(static_cast<int>(size) - 1);
     ui->spinBoundaryIndex->setEnabled(true);
-    ui->spinBoundaryWidth->setEnabled(true);
     ui->spinMaxBoundaryPoints->setEnabled(true);
     spinBoundaryIndex_valueChanged(ui->spinBoundaryIndex->value());
     return;
@@ -273,13 +267,6 @@ void TabGeometry::spinBoundaryIndex_valueChanged(int value) {
   ui->lblCompBoundary->setImages(
       sbmlDoc.getGeometry().getMesh()->getBoundariesImages(size,
                                                            boundaryIndex));
-  if (sbmlDoc.getGeometry().getMesh()->isMembrane(boundaryIndex)) {
-    ui->spinBoundaryWidth->setEnabled(true);
-    ui->spinBoundaryWidth->setValue(
-        sbmlDoc.getGeometry().getMesh()->getBoundaryWidth(boundaryIndex));
-  } else {
-    ui->spinBoundaryWidth->setEnabled(false);
-  }
 }
 
 void TabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
@@ -287,15 +274,6 @@ void TabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
   auto boundaryIndex = static_cast<std::size_t>(ui->spinBoundaryIndex->value());
   sbmlDoc.getGeometry().getMesh()->setBoundaryMaxPoints(
       boundaryIndex, static_cast<size_t>(value));
-  ui->lblCompBoundary->setImages(
-      sbmlDoc.getGeometry().getMesh()->getBoundariesImages(size,
-                                                           boundaryIndex));
-}
-
-void TabGeometry::spinBoundaryWidth_valueChanged(double value) {
-  const auto &size = ui->lblCompBoundary->size();
-  auto boundaryIndex = static_cast<std::size_t>(ui->spinBoundaryIndex->value());
-  sbmlDoc.getGeometry().getMesh()->setBoundaryWidth(boundaryIndex, value);
   ui->lblCompBoundary->setImages(
       sbmlDoc.getGeometry().getMesh()->getBoundariesImages(size,
                                                            boundaryIndex));

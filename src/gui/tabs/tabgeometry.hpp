@@ -47,7 +47,6 @@ private:
   void lblCompBoundary_mouseClicked(QRgb col, QPoint point);
   void spinBoundaryIndex_valueChanged(int value);
   void spinMaxBoundaryPoints_valueChanged(int value);
-  void spinBoundaryWidth_valueChanged(double value);
   void lblCompMesh_mouseClicked(QRgb col, QPoint point);
   void spinMaxTriangleArea_valueChanged(int value);
   void generateMesh(int value = 0);

@@ -186,6 +186,10 @@ DuneSim::DuneSim(
       pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()}, options{
                                                                   duneOptions} {
   try {
+    const auto &lengthUnit = sbmlDoc.getUnits().getLength();
+    const auto &volumeUnit = sbmlDoc.getUnits().getVolume();
+    volOverL3 = model::getVolOverL3(lengthUnit, volumeUnit);
+
     simulate::DuneConverter dc(sbmlDoc, false, duneOptions);
     if (options.discretization != DuneDiscretizationType::FEM1) {
       // for now we only support 1st order FEM
@@ -286,6 +290,8 @@ void DuneSim::updateSpeciesConcentrations() {
               compartmentSpeciesIndex[iComp][iSpecies];
           double result =
               pDuneImpl->evaluateGridFunction(iSpecies, e, localPoint);
+          // convert result from Amount / Length^3 to Amount / Volume
+          result *= volOverL3;
           SPDLOG_TRACE("    - species[{}] = {}", iSpecies, result);
           // replace negative values with zero
           concentration[iComp][ix * nSpecies + externalSpeciesIndex] =

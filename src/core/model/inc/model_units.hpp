@@ -102,8 +102,6 @@ public:
 
 double rescale(double val, const Unit &oldUnit, const Unit &newUnit);
 
-// convert pixel width to pixel volume (with unit length in third dimension)
-double pixelWidthToVolume(double width, const Unit &lengthUnit,
-                          const Unit &volumeUnit);
+double getVolOverL3(const Unit &lengthUnit, const Unit &volumeUnit);
 
 } // namespace model

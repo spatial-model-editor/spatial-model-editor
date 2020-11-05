@@ -100,19 +100,6 @@ static BenchmarkParams parseArgs(int argc, char *argv[]) {
   return params;
 }
 
-static void printCpuBenchmark() {
-  QElapsedTimer time;
-  constexpr std::size_t iter = 67108864;
-  double x = 399912349.2346234;
-  time.start();
-  for (std::size_t i = 0; i < iter; ++i) {
-    x = sqrt(x);
-  }
-  auto elapsed = time.elapsed();
-  double khz = static_cast<double>(iter) / static_cast<double>(elapsed);
-  fmt::print("# CPU benchmark: sqrt frequency {:.3f} GHz\n", 1e-6 * khz);
-}
-
 static void printSimulatorBenchmarks(const BenchmarkParams &params) {
   // resources contain example models
   Q_INIT_RESOURCE(resources);
@@ -121,12 +108,21 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
   // symengine assumes C locale
   std::locale::global(std::locale::classic());
 
+  // fixed step size simulations
   double dt = params.simulator_timestep;
   simulate::Options options;
   options.pixel.maxTimestep = dt;
   options.pixel.maxErr = {std::numeric_limits<double>::max(),
                           std::numeric_limits<double>::max()};
   options.dune.dt = dt;
+  options.dune.decrease = 0.5;
+  options.dune.increase = 1.5;
+  options.dune.maxDt = dt;
+  options.dune.minDt = 0;
+  // note: this is currently *not* a fixed timestep setup
+  // should set mindDt = dt once this issue is fixed:
+  // https://gitlab.dune-project.org/copasi/dune-copasi/-/issues/46
+  // and then ensure dt is small enough that no step fails
 
   for (auto simulator : params.simulators) {
     fmt::print("\n# {} simulator\n", toString(simulator));
@@ -153,6 +149,10 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
         ++ln2iter;
         time.start();
         sim.doTimestep(iter * dt);
+        if(!sim.errorMessage().empty()){
+            fmt::print("Simulation error: {}\n", sim.errorMessage());
+            exit(1);
+        }
         elapsed_ms = time.elapsed();
       }
       double ms = static_cast<double>(elapsed_ms) / static_cast<double>(iter);
@@ -165,6 +165,5 @@ int main(int argc, char *argv[]) {
   fmt::print("# Spatial Model Editor v{}\n", SPATIAL_MODEL_EDITOR_VERSION);
   fmt::print("# Simulator benchmark code\n");
   auto benchmarkParams = parseArgs(argc, argv);
-  printCpuBenchmark();
   printSimulatorBenchmarks(benchmarkParams);
 }

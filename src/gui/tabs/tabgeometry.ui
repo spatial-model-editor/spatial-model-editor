@@ -352,29 +352,13 @@
           <layout class="QHBoxLayout" name="horizontalLayout_12">
            <item>
             <layout class="QGridLayout" name="gridLayout_3">
-             <item row="1" column="2">
-              <widget class="QLabel" name="lblMaxBoundaryPointsLabel">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="spinBoundaryIndex">
+               <property name="wrapping">
+                <bool>true</bool>
                </property>
-               <property name="text">
-                <string>Max points:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="5">
-              <widget class="QLabel" name="lblBoundaryWidthLabel">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Width:</string>
+               <property name="maximum">
+                <number>0</number>
                </property>
               </widget>
              </item>
@@ -391,16 +375,6 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="1">
-              <widget class="QSpinBox" name="spinBoundaryIndex">
-               <property name="wrapping">
-                <bool>true</bool>
-               </property>
-               <property name="maximum">
-                <number>0</number>
-               </property>
-              </widget>
-             </item>
              <item row="1" column="3" colspan="2">
               <widget class="QSpinBox" name="spinMaxBoundaryPoints">
                <property name="minimum">
@@ -411,29 +385,20 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="6">
-              <widget class="QDoubleSpinBox" name="spinBoundaryWidth">
-               <property name="decimals">
-                <number>2</number>
+             <item row="1" column="2">
+              <widget class="QLabel" name="lblMaxBoundaryPointsLabel">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
                </property>
-               <property name="minimum">
-                <double>0.010000000000000</double>
-               </property>
-               <property name="maximum">
-                <double>20.000000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.100000000000000</double>
-               </property>
-               <property name="stepType">
-                <enum>QAbstractSpinBox::DefaultStepType</enum>
-               </property>
-               <property name="value">
-                <double>1.000000000000000</double>
+               <property name="text">
+                <string>Max points:</string>
                </property>
               </widget>
              </item>
-             <item row="0" column="0" colspan="7">
+             <item row="0" column="0" colspan="5">
               <widget class="QLabelMouseTracker" name="lblCompBoundary" native="true">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -540,7 +505,6 @@
   <tabstop>btnChangeCompartment</tabstop>
   <tabstop>spinBoundaryIndex</tabstop>
   <tabstop>spinMaxBoundaryPoints</tabstop>
-  <tabstop>spinBoundaryWidth</tabstop>
   <tabstop>spinMaxTriangleArea</tabstop>
  </tabstops>
  <resources/>

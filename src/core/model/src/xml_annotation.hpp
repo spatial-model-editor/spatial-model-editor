@@ -23,7 +23,6 @@ namespace model {
 struct MeshParamsAnnotationData {
   std::vector<std::size_t> maxPoints;
   std::vector<std::size_t> maxAreas;
-  std::vector<double> membraneWidths;
 };
 
 void removeMeshParamsAnnotation(libsbml::ParametricGeometry *pg);

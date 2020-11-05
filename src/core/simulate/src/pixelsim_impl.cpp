@@ -24,10 +24,11 @@ namespace simulate {
 ReacEval::ReacEval(const model::Model &doc,
                    const std::vector<std::string> &speciesIDs,
                    const std::vector<std::string> &reactionIDs,
-                   const std::vector<std::string> &reactionScaleFactors,
-                   bool doCSE, unsigned optLevel) {
+                   double reactionScaleFactor, bool doCSE, unsigned optLevel) {
   // construct reaction expressions and stoich matrix
-  Pde pde(&doc, speciesIDs, reactionIDs, {}, reactionScaleFactors);
+  PdeScaleFactors pdeScaleFactors;
+  pdeScaleFactors.reaction = reactionScaleFactor;
+  Pde pde(&doc, speciesIDs, reactionIDs, {}, pdeScaleFactors);
   // compile all expressions with symengine
   sym = symbolic::Symbolic(pde.getRHS(), speciesIDs, {}, {}, true, doCSE,
                            optLevel);
@@ -83,7 +84,7 @@ SimCompartment::SimCompartment(const model::Model &doc,
       !reacsInCompartment.isEmpty()) {
     reactionIDs = utils::toStdString(reacsInCompartment);
   }
-  reacEval = ReacEval(doc, speciesIds, reactionIDs, {}, doCSE, optLevel);
+  reacEval = ReacEval(doc, speciesIds, reactionIDs, 1.0, doCSE, optLevel);
   // setup concentrations vector with initial values
   conc.resize(nSpecies * nPixels);
   dcdt.resize(conc.size(), 0.0);
@@ -372,21 +373,16 @@ SimMembrane::SimMembrane(const model::Model &doc,
   // then length^3 to volume to give concentration
   const auto &lengthUnit = doc.getUnits().getLength();
   const auto &volumeUnit = doc.getUnits().getVolume();
-  double lengthCubedToVolFactor =
-      model::pixelWidthToVolume(1.0, lengthUnit, volumeUnit);
-  std::string strFactor =
-      QString::number(lengthCubedToVolFactor, 'g', 17).toStdString();
-  SPDLOG_INFO("  - [length]^3/[vol] = {}", lengthCubedToVolFactor);
-  SPDLOG_INFO("  - dividing flux by {}", strFactor);
-
+  double volOverL3 = model::getVolOverL3(lengthUnit, volumeUnit);
+  double pixelWidth{doc.getGeometry().getPixelWidth()};
+  SPDLOG_INFO("  - [vol]/[length]^3 = {}", volOverL3);
+  SPDLOG_INFO("  - pixel width = {}", pixelWidth);
+  SPDLOG_INFO("  - multiplying reaction by '{}'", volOverL3 / pixelWidth);
   // make vector of reaction IDs from membrane
   std::vector<std::string> reactionID =
       utils::toStdString(doc.getReactions().getIds(membrane->getId().c_str()));
-  // vector of reaction scale factors to convert flux to concentration
-  std::vector<std::string> reactionScaleFactors(reactionID.size(), strFactor);
-
-  reacEval = ReacEval(doc, speciesIds, reactionID, reactionScaleFactors, doCSE,
-                      optLevel);
+  reacEval = ReacEval(doc, speciesIds, reactionID, volOverL3 / pixelWidth,
+                      doCSE, optLevel);
 }
 
 void SimMembrane::evaluateReactions() {
