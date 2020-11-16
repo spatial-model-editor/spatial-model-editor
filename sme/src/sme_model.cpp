@@ -217,7 +217,7 @@ std::vector<SimulationResult> Model::simulate(double simulationTime,
   }
   results.push_back(getSimulationResult(sim.get()));
   while (sim->getTimePoints().back() < simulationTime) {
-    sim->doTimestep(imageInterval);
+    sim->doTimesteps(imageInterval);
     if (const auto &e = sim->errorMessage(); !e.empty()) {
       throw SmeRuntimeError(fmt::format("Error during simulation: {}", e));
     }

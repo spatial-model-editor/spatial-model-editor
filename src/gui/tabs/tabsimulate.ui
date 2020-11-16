@@ -37,13 +37,6 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="6">
-      <widget class="QPushButton" name="btnStopSimulation">
-       <property name="text">
-        <string>Stop</string>
-       </property>
-      </widget>
-     </item>
      <item row="2" column="0">
       <widget class="QLabel" name="lblCurrentTime">
        <property name="text">
@@ -68,16 +61,6 @@
       <widget class="QLabel" name="lblSimLength">
        <property name="text">
         <string>Simulation length:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="5">
-      <widget class="QPushButton" name="btnSimulate">
-       <property name="whatsThis">
-        <string>Run a simulation of the specified length, using the timestep 'dt' for the numerical integration</string>
-       </property>
-       <property name="text">
-        <string>Simulate</string>
        </property>
       </widget>
      </item>
@@ -127,10 +110,30 @@
        </property>
       </widget>
      </item>
+     <item row="0" column="5" colspan="2">
+      <widget class="QPushButton" name="btnSimulate">
+       <property name="whatsThis">
+        <string>Run a simulation of the specified length, using the timestep 'dt' for the numerical integration</string>
+       </property>
+       <property name="text">
+        <string>Simulate</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>txtSimLength</tabstop>
+  <tabstop>txtSimInterval</tabstop>
+  <tabstop>btnSimulate</tabstop>
+  <tabstop>btnResetSimulation</tabstop>
+  <tabstop>hslideTime</tabstop>
+  <tabstop>btnSliceImage</tabstop>
+  <tabstop>btnExport</tabstop>
+  <tabstop>btnDisplayOptions</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

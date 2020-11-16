@@ -314,6 +314,10 @@ std::size_t PixelSim::run(double time) {
       }
     }
     ++steps;
+    if (stopRequested.load(std::memory_order_relaxed)) {
+      SPDLOG_DEBUG("Stopping simulation early");
+      return steps;
+    }
   }
   SPDLOG_DEBUG("t={} integrated using {} steps ({:3.1f}% discarded)", time,
                steps + discardedSteps,
@@ -336,6 +340,10 @@ double PixelSim::getLowerOrderConcentration(std::size_t compartmentIndex,
 
 const std::string &PixelSim::errorMessage() const {
   return currentErrorMessage;
+}
+
+void PixelSim::requestStop() {
+  stopRequested.store(true, std::memory_order_relaxed);
 }
 
 } // namespace simulate

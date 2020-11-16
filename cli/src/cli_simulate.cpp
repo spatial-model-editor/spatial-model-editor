@@ -42,7 +42,7 @@ bool doSimulation(const Params &params) {
   fmt::print("# t = {} [img{}.png]\n", sim.getTimePoints().back(),
              sim.getTimePoints().size() - 1);
   while (sim.getTimePoints().back() < params.simulationTime) {
-    sim.doTimestep(params.imageInterval);
+    sim.doTimesteps(params.imageInterval);
     if (const auto &e = sim.errorMessage(); !e.empty()) {
       fmt::print("\n\nError during simulation: {}\n\n", e);
       return false;

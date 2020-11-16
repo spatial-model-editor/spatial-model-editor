@@ -148,10 +148,10 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
         iter += iter;
         ++ln2iter;
         time.start();
-        sim.doTimestep(iter * dt);
-        if(!sim.errorMessage().empty()){
-            fmt::print("Simulation error: {}\n", sim.errorMessage());
-            exit(1);
+        sim.doTimesteps(iter * dt);
+        if (!sim.errorMessage().empty()) {
+          fmt::print("Simulation error: {}\n", sim.errorMessage());
+          exit(1);
         }
         elapsed_ms = time.elapsed();
       }

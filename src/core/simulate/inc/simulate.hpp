@@ -6,6 +6,7 @@
 #include <QImage>
 #include <QRgb>
 #include <QSize>
+#include <atomic>
 #include <cstddef>
 #include <limits>
 #include <map>
@@ -47,6 +48,9 @@ private:
   // compartment->species
   std::vector<std::vector<double>> maxConcWholeSimulation;
   QSize imageSize;
+  std::atomic<bool> isRunning{false};
+  std::atomic<bool> stopRequested{false};
+  std::atomic<std::size_t> nCompletedTimesteps{0};
   void initModel(const model::Model &model);
   void updateConcentrations(double t);
 
@@ -56,7 +60,7 @@ public:
                       const Options &options = {});
   ~Simulation();
 
-  std::size_t doTimestep(double time);
+  std::size_t doTimesteps(double time, std::size_t nSteps = 1);
   const std::string &errorMessage() const;
   const std::vector<std::string> &getCompartmentIds() const;
   const std::vector<std::string> &
@@ -80,6 +84,10 @@ public:
   // map from name to vec<vec<double>> species concentration for python bindings
   std::map<std::string, std::vector<std::vector<double>>>
   getPyConcs(std::size_t timeIndex) const;
+  std::size_t getNCompletedTimesteps() const;
+  bool getIsRunning() const;
+  bool getIsStopping() const;
+  void requestStop();
 };
 
 } // namespace simulate

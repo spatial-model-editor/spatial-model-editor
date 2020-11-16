@@ -43,22 +43,42 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   sendKeyEvents(txtSimDt, {"End", "Backspace", "Backspace", "Backspace",
                            "Backspace", "0", ".", "1"});
   sendMouseClick(btnSimulate);
+  REQUIRE(btnSimulate->isEnabled() == false);
+  // simulation happens asynchronously - wait until finished
+  while(!btnSimulate->isEnabled()){
+    wait(100);
+  }
+  REQUIRE(btnSimulate->isEnabled() == true);
   REQUIRE(hslideTime->isEnabled() == true);
-  REQUIRE(hslideTime->maximum() == 2);
   REQUIRE(hslideTime->minimum() == 0);
 
   sendMouseClick(btnResetSimulation);
   REQUIRE(hslideTime->isEnabled() == true);
+  REQUIRE(btnSimulate->isEnabled() == true);
 
   // repeat simulation using Pixel simulator
   tab.useDune(false);
   sendMouseClick(btnSimulate);
+  REQUIRE(btnSimulate->isEnabled() == false);
+  while(!btnSimulate->isEnabled()){
+    wait(100);
+  }
   REQUIRE(hslideTime->isEnabled() == true);
   REQUIRE(hslideTime->maximum() == 2);
   REQUIRE(hslideTime->minimum() == 0);
 
   sendMouseClick(btnResetSimulation);
   REQUIRE(hslideTime->isEnabled() == true);
+
+  // repeat sim but click cancel straight away
+  // cancel simulation early
+  mwt.addUserAction({"Escape"});
+  mwt.start();
+  sendMouseClick(btnSimulate);
+  // wait until simulation stops
+  while(!btnSimulate->isEnabled()){
+    wait(100);
+  }
 
   // hide all species
   mwt.addUserAction({"Space"});

@@ -32,7 +32,7 @@ namespace SymEngine {
 #endif
 class muPrinter : public StrPrinter {
 protected:
-  virtual void _print_pow(std::ostringstream &o, const RCP<const Basic> &a,
+  void _print_pow(std::ostringstream &o, const RCP<const Basic> &a,
                           const RCP<const Basic> &b) override;
 };
 #ifdef __GNUC__

@@ -2,11 +2,13 @@
 #include "mesh.hpp"
 #include "model.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
+#include "qt_test_utils.hpp"
 #include "simulate.hpp"
 #include "utils.hpp"
 #include <QFile>
 #include <algorithm>
 #include <cmath>
+#include <future>
 #include <sbml/SBMLDocument.h>
 #include <sbml/SBMLReader.h>
 #include <sbml/SBMLWriter.h>
@@ -108,7 +110,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
 
   double volC1 = 10.0;
   WHEN("single Euler step") {
-    auto steps = sim.doTimestep(dt);
+    auto steps = sim.doTimesteps(dt);
     REQUIRE(steps == 1);
     std::size_t it = 1;
     // B_c1 = 0
@@ -124,10 +126,10 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   }
 
   WHEN("two Euler steps") {
-    auto steps = sim.doTimestep(dt);
+    auto steps = sim.doTimesteps(dt);
     REQUIRE(steps == 1);
     double A_c2 = sim.getAvgMinMax(1, 1, 0).avg;
-    steps = sim.doTimestep(dt);
+    steps = sim.doTimesteps(dt);
     REQUIRE(steps == 1);
     std::size_t it = 2;
     // B_c1 = 0
@@ -144,11 +146,11 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   }
 
   WHEN("three Euler steps") {
-    sim.doTimestep(dt);
-    sim.doTimestep(dt);
+    sim.doTimesteps(dt);
+    sim.doTimesteps(dt);
     double A_c2 = sim.getAvgMinMax(2, 1, 0).avg;
     double A_c3 = sim.getAvgMinMax(2, 2, 0).avg;
-    sim.doTimestep(dt);
+    sim.doTimesteps(dt);
     std::size_t it = 3;
     // B_c1 = 0
     REQUIRE(sim.getAvgMinMax(it, 0, 0).avg == dbl_approx(0.0));
@@ -172,7 +174,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
     options.pixel.maxTimestep = 0.20138571;
 
     simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
-    sim2.doTimestep(1000);
+    sim2.doTimesteps(1000);
     std::size_t it = sim2.getTimePoints().size() - 1;
     double A_c1 = 1.0;
     double A_c2 = sim2.getAvgMinMax(it, 1, 0).avg;
@@ -194,7 +196,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
 
     // check concentration derivatives
     double eps = 1.e-5;
-    sim2.doTimestep(eps);
+    sim2.doTimesteps(eps);
     ++it;
     double dA2 = (sim2.getAvgMinMax(it, 1, 0).avg - A_c2) / eps;
     REQUIRE(dA2 == Catch::Approx(0).epsilon(acceptable_error));
@@ -269,7 +271,7 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
   REQUIRE(sim.getAvgMinMax(0, 2, 1).avg == dbl_approx(0.0));
 
   WHEN("one Euler steps: diffusion of A into c2") {
-    sim.doTimestep(0.01);
+    sim.doTimesteps(0.01);
     REQUIRE(sim.getAvgMinMax(1, 0, 0).avg == dbl_approx(0.0));
     REQUIRE(sim.getAvgMinMax(1, 1, 0).avg > 0);
     REQUIRE(sim.getAvgMinMax(1, 1, 1).avg == dbl_approx(0.0));
@@ -278,7 +280,7 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
   }
 
   WHEN("many Euler steps: all species non-zero") {
-    sim.doTimestep(1.00);
+    sim.doTimesteps(1.00);
     REQUIRE(sim.getAvgMinMax(1, 0, 0).avg > 0);
     REQUIRE(sim.getAvgMinMax(1, 1, 0).avg > 0);
     REQUIRE(sim.getAvgMinMax(1, 1, 1).avg > 0);
@@ -324,7 +326,7 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
   options.pixel.enableMultiThreading = false;
   options.pixel.maxThreads = 1;
   simulate::Simulation sim(s1, simulate::SimulatorType::Pixel, options);
-  sim.doTimestep(0.20);
+  sim.doTimesteps(0.20);
   REQUIRE(sim.getTimePoints().size() == 2);
 
   // 3x pixel width
@@ -341,7 +343,7 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
     // multiply membrane rate by 3 to compensate for this
     rescaleMembraneReacRates(s, 3.0);
     simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
-    sim2.doTimestep(0.20);
+    sim2.doTimesteps(0.20);
     REQUIRE(sim2.getTimePoints().size() == 2);
     REQUIRE(sim2.errorMessage().empty());
     for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
@@ -364,7 +366,7 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
     // as above
     rescaleMembraneReacRates(s, 0.27);
     simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
-    sim2.doTimestep(0.20);
+    sim2.doTimesteps(0.20);
     REQUIRE(sim2.errorMessage().empty());
     REQUIRE(sim2.getTimePoints().size() == 2);
     for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
@@ -415,7 +417,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     options.dune.maxDt = 0.011;
     CAPTURE(simulatorType);
     simulate::Simulation sim(s1, simulatorType, options);
-    sim.doTimestep(0.20);
+    sim.doTimesteps(0.20);
     REQUIRE(sim.getTimePoints().size() == 2);
 
     // Length unit -> 10x smaller
@@ -432,7 +434,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       s.getUnits().setLengthIndex(1);
       REQUIRE(s.getUnits().getLength().name == "dm");
       simulate::Simulation sim2(s, simulatorType, options);
-      sim2.doTimestep(0.20);
+      sim2.doTimesteps(0.20);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
       for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
@@ -456,7 +458,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       s.getUnits().setLengthIndex(2);
       REQUIRE(s.getUnits().getLength().name == "cm");
       simulate::Simulation sim2(s, simulatorType, options);
-      sim2.doTimestep(0.20);
+      sim2.doTimesteps(0.20);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
       for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
@@ -481,7 +483,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       s.getUnits().setVolumeIndex(1);
       REQUIRE(s.getUnits().getVolume().name == "dL");
       simulate::Simulation sim2(s, simulatorType, options);
-      sim2.doTimestep(0.20);
+      sim2.doTimesteps(0.20);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
       for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
@@ -504,7 +506,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       s.getUnits().setVolumeIndex(3);
       REQUIRE(s.getUnits().getVolume().name == "mL");
       simulate::Simulation sim2(s, simulatorType, options);
-      sim2.doTimestep(0.20);
+      sim2.doTimesteps(0.20);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
       for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
@@ -526,7 +528,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       s.getUnits().setVolumeIndex(4);
       REQUIRE(s.getUnits().getVolume().name == "m3");
       simulate::Simulation sim2(s, simulatorType, options);
-      sim2.doTimestep(0.20);
+      sim2.doTimesteps(0.20);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
       for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
@@ -547,7 +549,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       s.getUnits().setVolumeIndex(5);
       REQUIRE(s.getUnits().getVolume().name == "dm3");
       simulate::Simulation sim2(s, simulatorType, options);
-      sim2.doTimestep(0.20);
+      sim2.doTimesteps(0.20);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
       for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
@@ -646,7 +648,7 @@ SCENARIO(
     simulate::Simulation sim(s, simType, options);
     double t = 10.0;
     for (std::size_t step = 0; step < 2; ++step) {
-      sim.doTimestep(t);
+      sim.doTimesteps(t);
       for (auto speciesIndex : {std::size_t{0}, std::size_t{1}}) {
         // check total concentration is conserved
         auto c = sim.getConc(step + 1, 0, speciesIndex);
@@ -711,7 +713,18 @@ SCENARIO(
     for (auto simulator :
          {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
       auto sim = simulate::Simulation(s, simulator, options);
-      sim.doTimestep(50.0);
+      REQUIRE(sim.getIsRunning() == false);
+      REQUIRE(sim.getIsStopping() == false);
+      REQUIRE(sim.getNCompletedTimesteps() == 1);
+      // run simulation in another thread
+      auto simSteps =
+          std::async(std::launch::async, &simulate::Simulation::doTimesteps,
+                     &sim, 50.0, 1);
+      // this .get() blocks until simulation is finished
+      REQUIRE(simSteps.get() >= 0);
+      REQUIRE(sim.getIsRunning() == false);
+      REQUIRE(sim.getIsStopping() == false);
+      REQUIRE(sim.getNCompletedTimesteps() == 2);
       auto timeIndex = sim.getTimePoints().size() - 1;
       // after many steps in a finite volume, diffusion has reached the limiting
       // case of a uniform distribution
@@ -746,7 +759,7 @@ SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
   options.pixel.maxThreads = 2;
   options.pixel.integrator = simulate::PixelIntegratorType::RK435;
   simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
-  sim.doTimestep(time);
+  sim.doTimesteps(time);
   auto c4_accurate = sim.getConc(sim.getTimePoints().size() - 1, 0, 0);
   // check lower accuracy & different orders are consistent
   for (bool multithreaded : {false, true}) {
@@ -759,7 +772,7 @@ SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
       options.pixel.maxErr = {std::numeric_limits<double>::max(),
                               maxAllowedRelErr};
       simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
-      sim2.doTimestep(time);
+      sim2.doTimesteps(time);
       auto conc = sim2.getConc(sim.getTimePoints().size() - 1, 0, 0);
       for (std::size_t i = 0; i < conc.size(); ++i) {
         maxRelDiff = std::max(maxRelDiff, (conc[i] - c4_accurate[i]) /
@@ -794,7 +807,7 @@ SCENARIO("DUNE: simulation",
     REQUIRE(duneSim.getAvgMinMax(0, 0, 0).avg == dbl_approx(1.0));
     REQUIRE(duneSim.getAvgMinMax(0, 0, 1).avg == dbl_approx(1.0));
     REQUIRE(duneSim.getAvgMinMax(0, 0, 2).avg == dbl_approx(0.0));
-    duneSim.doTimestep(0.05);
+    duneSim.doTimesteps(0.05);
     CAPTURE(duneSim.getTimePoints().size());
     auto timeIndex = duneSim.getTimePoints().size() - 1;
     auto imgConc = duneSim.getConcImage(timeIndex);
@@ -812,7 +825,7 @@ SCENARIO("DUNE: simulation",
     simulate::Options options;
     options.dune.dt = 0.01;
     simulate::Simulation duneSim(s, simulate::SimulatorType::DUNE, options);
-    duneSim.doTimestep(0.01);
+    duneSim.doTimesteps(0.01);
     REQUIRE(duneSim.errorMessage().empty());
   }
 }
@@ -827,8 +840,8 @@ SCENARIO("getConcImage",
     }
     simulate::Options options;
     simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
-    sim.doTimestep(0.5);
-    sim.doTimestep(0.5);
+    sim.doTimesteps(0.5);
+    sim.doTimesteps(0.5);
     REQUIRE(sim.errorMessage().empty());
 
     // draw no species, any normalisation

@@ -8,9 +8,10 @@
 #include "qlabelmousetracker.hpp"
 #include "ui_tabsimulate.h"
 #include "utils.hpp"
-#include <QElapsedTimer>
 #include <QMessageBox>
+#include <QProgressDialog>
 #include <algorithm>
+#include <future>
 
 TabSimulate::TabSimulate(model::Model &doc, QLabelMouseTracker *mouseTracker,
                          QWidget *parent)
@@ -20,6 +21,12 @@ TabSimulate::TabSimulate(model::Model &doc, QLabelMouseTracker *mouseTracker,
   ui->setupUi(this);
   ui->gridSimulate->addWidget(plt->plot, 1, 0, 1, 8);
 
+  progressDialog =
+      new QProgressDialog("Simulating model...", "Stop simulation", 0, 1, this);
+  progressDialog->reset();
+  connect(progressDialog, &QProgressDialog::canceled, this,
+          &TabSimulate::stopSimulation);
+
   connect(ui->btnSimulate, &QPushButton::clicked, this,
           &TabSimulate::btnSimulate_clicked);
   connect(ui->btnResetSimulation, &QPushButton::clicked, this,
@@ -28,8 +35,6 @@ TabSimulate::TabSimulate(model::Model &doc, QLabelMouseTracker *mouseTracker,
           &TabSimulate::graphClicked);
   connect(ui->hslideTime, &QSlider::valueChanged, this,
           &TabSimulate::hslideTime_valueChanged);
-  connect(ui->btnStopSimulation, &QPushButton::clicked, this,
-          &TabSimulate::stopSimulation);
   connect(ui->btnSliceImage, &QPushButton::clicked, this,
           &TabSimulate::btnSliceImage_clicked);
   connect(ui->btnExport, &QPushButton::clicked, this,
@@ -37,13 +42,24 @@ TabSimulate::TabSimulate(model::Model &doc, QLabelMouseTracker *mouseTracker,
   connect(ui->btnDisplayOptions, &QPushButton::clicked, this,
           &TabSimulate::btnDisplayOptions_clicked);
 
+  // timer to call updatePlotAndImages every second
+  plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
+  constexpr int plotMsRefreshInterval = 1000;
+  plotRefreshTimer.setInterval(plotMsRefreshInterval);
+  connect(&plotRefreshTimer, &QTimer::timeout, this,
+          &TabSimulate::updatePlotAndImages);
+
   useDune(true);
   ui->hslideTime->setEnabled(false);
+  ui->btnResetSimulation->setEnabled(false);
 }
 
 TabSimulate::~TabSimulate() = default;
 
 void TabSimulate::loadModelData() {
+  if (sim != nullptr && sim->getIsRunning()) {
+    return;
+  }
   reset();
   if (!(sbmlDoc.getIsValid() && sbmlDoc.getGeometry().getIsValid())) {
     ui->hslideTime->setEnabled(false);
@@ -78,6 +94,7 @@ void TabSimulate::loadModelData() {
   }
 
   ui->btnSimulate->setEnabled(true);
+  ui->btnResetSimulation->setEnabled(false);
 
   // setup species names
   speciesNames.clear();
@@ -86,9 +103,8 @@ void TabSimulate::loadModelData() {
     compartmentNames.push_back(
         sbmlDoc.getCompartments().getNames()[static_cast<int>(ic)]);
     auto &names = speciesNames.emplace_back();
-    for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
-      names.push_back(
-          sbmlDoc.getSpecies().getName(sim->getSpeciesIds(ic)[is].c_str()));
+    for (const auto &sId : sim->getSpeciesIds(ic)) {
+      names.push_back(sbmlDoc.getSpecies().getName(sId.c_str()));
     }
   }
   // setup plot
@@ -134,8 +150,8 @@ void TabSimulate::loadModelData() {
 }
 
 void TabSimulate::stopSimulation() {
-  SPDLOG_INFO("Simulation cancelled by user");
-  isSimulationRunning = false;
+  SPDLOG_INFO("Simulation stop requested by user");
+  sim->requestStop();
 }
 
 void TabSimulate::useDune(bool enable) {
@@ -148,6 +164,11 @@ void TabSimulate::useDune(bool enable) {
 }
 
 void TabSimulate::reset() {
+  if (sim != nullptr && sim->getIsRunning()) {
+    // stop any existing running simulation
+    sim->requestStop();
+    simSteps.wait();
+  }
   plt->clear();
   ui->hslideTime->setMinimum(0);
   ui->hslideTime->setMaximum(0);
@@ -167,74 +188,24 @@ void TabSimulate::setOptions(const simulate::Options &options) {
 }
 
 void TabSimulate::btnSimulate_clicked() {
+  // display modal progress dialog box
+  progressDialog->setWindowModality(Qt::WindowModal);
+  progressDialog->setValue(time.size() - 1);
+  progressDialog->show();
+  ui->btnSimulate->setEnabled(false);
+  ui->btnResetSimulation->setEnabled(false);
   // integration time parameters
   double dtImage = ui->txtSimInterval->text().toDouble();
   int n_images =
       static_cast<int>(ui->txtSimLength->text().toDouble() / dtImage);
+  progressDialog->setMaximum(time.size() - 1 + n_images);
 
-  QElapsedTimer simulationRuntimeTimer;
-  simulationRuntimeTimer.start();
-  isSimulationRunning = true;
   this->setCursor(Qt::WaitCursor);
-  QApplication::processEvents();
-  QTimer plotRefreshTimer;
-  plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
-  constexpr int plotMsRefreshInterval = 1000;
-  plotRefreshTimer.setInterval(plotMsRefreshInterval);
-  bool plotDueForRefresh = true;
-  connect(&plotRefreshTimer, &QTimer::timeout, this,
-          [&plotDueForRefresh]() { plotDueForRefresh = true; });
+  // start simulation in a new thread
+  simSteps = std::async(std::launch::async, &simulate::Simulation::doTimesteps,
+                        sim.get(), dtImage, n_images);
+  // start timer to periodically update simulation results
   plotRefreshTimer.start();
-  // integrate Model
-  for (int i_image = 0; i_image < n_images; ++i_image) {
-    sim->doTimestep(dtImage);
-    if (!sim->errorMessage().empty()) {
-      isSimulationRunning = false;
-      QMessageBox::warning(
-          this, "Simulation Failed",
-          QString("Simulation failed - changing the Simulation options in the "
-                  "\"Advanced\" menu might help.\n\nError message: %1")
-              .arg(sim->errorMessage().c_str()));
-    }
-    QApplication::processEvents();
-    if (!isSimulationRunning) {
-      break;
-    }
-    images.push_back(sim->getConcImage(sim->getTimePoints().size() - 1,
-                                       compartmentSpeciesToDraw));
-    time.push_back(time.back() + dtImage);
-    int speciesIndex = 0;
-    for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
-      for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
-        auto conc = sim->getAvgMinMax(static_cast<std::size_t>(time.size() - 1),
-                                      ic, is);
-        plt->addAvMinMaxPoint(speciesIndex, time.back(), conc);
-        ++speciesIndex;
-      }
-    }
-    lblGeometry->setImage(images.back());
-    // rescale & replot plot
-    if (plotDueForRefresh) {
-      plt->plot->rescaleAxes(true);
-      plt->plot->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
-      plotDueForRefresh = false;
-    }
-  }
-  plotRefreshTimer.stop();
-
-  plt->setVerticalLine(time.back());
-
-  updatePlotAndImages();
-
-  // enable slider to choose time to display
-  ui->hslideTime->setEnabled(true);
-  ui->hslideTime->setMinimum(0);
-  ui->hslideTime->setMaximum(time.size() - 1);
-  ui->hslideTime->setValue(time.size() - 1);
-
-  SPDLOG_INFO("simulation run-time: {}s",
-              static_cast<double>(simulationRuntimeTimer.elapsed()) / 1000.0);
-  this->setCursor(Qt::ArrowCursor);
 }
 
 void TabSimulate::btnSliceImage_clicked() {
@@ -267,21 +238,73 @@ void TabSimulate::updateSpeciesToDraw() {
 }
 
 void TabSimulate::updatePlotAndImages() {
-
-  plt->clearObservableLines();
-  std::size_t colorIndex{displayOptions.showSpecies.size()};
-  for (const auto &obs : observables) {
-    plt->addObservableLine(obs, utils::indexedColours()[colorIndex]);
-    ++colorIndex;
+  if (sim == nullptr) {
+    return;
   }
-  plt->update(displayOptions.showSpecies, displayOptions.showMinMax);
-  updateSpeciesToDraw();
-  // update images
-  for (int iTime = 0; iTime < time.size(); ++iTime) {
-    images[iTime] = sim->getConcImage(static_cast<std::size_t>(iTime),
-                                      compartmentSpeciesToDraw,
-                                      displayOptions.normaliseOverAllTimepoints,
-                                      displayOptions.normaliseOverAllSpecies);
+  std::size_t n0{static_cast<std::size_t>(time.size())};
+  std::size_t n{sim->getNCompletedTimesteps()};
+  if (!sim->getIsStopping()) {
+    progressDialog->setValue(static_cast<int>(n0));
+  }
+  for (std::size_t i = n0; i < n; ++i) {
+    SPDLOG_DEBUG("adding timepoint {}", i);
+    // process new results
+    images.push_back(sim->getConcImage(i, compartmentSpeciesToDraw));
+    time.push_back(sim->getTimePoints()[i]);
+    int speciesIndex = 0;
+    for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
+      for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
+        auto avgMinMax = sim->getAvgMinMax(i, ic, is);
+        plt->addAvMinMaxPoint(speciesIndex, time.back(), avgMinMax);
+        ++speciesIndex;
+      }
+    }
+    lblGeometry->setImage(images.back());
+    plt->plot->rescaleAxes(true);
+    plt->plot->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
+  }
+
+  if (!sim->getIsRunning()) {
+    SPDLOG_DEBUG("simulation finished");
+
+    // simulation finished..
+    progressDialog->reset();
+    plotRefreshTimer.stop();
+    this->setCursor(Qt::ArrowCursor);
+    ui->btnSimulate->setEnabled(true);
+    ui->btnResetSimulation->setEnabled(true);
+    // ..but failed
+    if (!sim->errorMessage().empty()) {
+      QMessageBox::warning(
+          this, "Simulation Failed",
+          QString("Simulation failed - changing the Simulation options in the "
+                  "\"Advanced\" menu might help.\n\nError message: %1")
+              .arg(sim->errorMessage().c_str()));
+      return;
+    }
+    // .. and succeeded
+    // add custom observables to plot
+    plt->clearObservableLines();
+    std::size_t colorIndex{displayOptions.showSpecies.size()};
+    for (const auto &obs : observables) {
+      plt->addObservableLine(obs, utils::indexedColours()[colorIndex]);
+      ++colorIndex;
+    }
+    plt->update(displayOptions.showSpecies, displayOptions.showMinMax);
+    updateSpeciesToDraw();
+    // update all images
+    for (int iTime = 0; iTime < time.size(); ++iTime) {
+      images[iTime] = sim->getConcImage(
+          static_cast<std::size_t>(iTime), compartmentSpeciesToDraw,
+          displayOptions.normaliseOverAllTimepoints,
+          displayOptions.normaliseOverAllSpecies);
+    }
+    plt->setVerticalLine(time.back());
+    // enable slider to choose time to display
+    ui->hslideTime->setEnabled(true);
+    ui->hslideTime->setMinimum(0);
+    ui->hslideTime->setMaximum(time.size() - 1);
+    ui->hslideTime->setValue(time.size() - 1);
   }
 }
 
