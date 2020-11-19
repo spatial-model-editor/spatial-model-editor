@@ -16,8 +16,8 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     imgBoundary.emplace_back(img.width() - 1, img.height() - 1);
     imgBoundary.emplace_back(img.width() - 1, 0);
 
-    mesh::Mesh mesh(img, {{QPointF(8, 8)}}, {}, {999}, {}, {}, 1.0,
-                    QPointF(0, 0), std::vector<QRgb>{col});
+    mesh::Mesh mesh(img, {{QPointF(8, 8)}}, {}, {999}, {}, 1.0, QPointF(0, 0),
+                    std::vector<QRgb>{col});
 
     // check boundaries
     REQUIRE(mesh.getNumBoundaries() == 1);
@@ -96,21 +96,42 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     WHEN("max triangle area decreased") {
       THEN("more vertices & triangles") {
         REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 999);
+        std::size_t oldNTriangles{mesh.getTriangles()[0].size()};
+        std::size_t oldNVertices{mesh.getVerticesAsFlatArray().size() / 2};
 
         mesh.setCompartmentMaxTriangleArea(0, 60);
+        std::size_t newNTriangles{mesh.getTriangles()[0].size()};
+        std::size_t newNVertices{mesh.getVerticesAsFlatArray().size() / 2};
         REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 60);
-        REQUIRE(mesh.getVerticesAsFlatArray().size() == 2 * 14);
-        REQUIRE(mesh.getTriangles()[0].size() == 18);
+        REQUIRE(newNTriangles > oldNTriangles);
+        REQUIRE(newNVertices > oldNVertices);
 
+        std::swap(oldNTriangles, newNTriangles);
+        std::swap(oldNVertices, newNVertices);
         mesh.setCompartmentMaxTriangleArea(0, 30);
+        newNTriangles = mesh.getTriangles()[0].size();
+        newNVertices = mesh.getVerticesAsFlatArray().size() / 2;
         REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 30);
-        REQUIRE(mesh.getVerticesAsFlatArray().size() == 2 * 26);
-        REQUIRE(mesh.getTriangles()[0].size() == 37);
+        REQUIRE(newNTriangles > oldNTriangles);
+        REQUIRE(newNVertices > oldNVertices);
 
+        std::swap(oldNTriangles, newNTriangles);
+        std::swap(oldNVertices, newNVertices);
         mesh.setCompartmentMaxTriangleArea(0, 12);
+        newNTriangles = mesh.getTriangles()[0].size();
+        newNVertices = mesh.getVerticesAsFlatArray().size() / 2;
         REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 12);
-        REQUIRE(mesh.getVerticesAsFlatArray().size() == 2 * 54);
-        REQUIRE(mesh.getTriangles()[0].size() == 88);
+        REQUIRE(newNTriangles > oldNTriangles);
+        REQUIRE(newNVertices > oldNVertices);
+
+        std::swap(oldNTriangles, newNTriangles);
+        std::swap(oldNVertices, newNVertices);
+        mesh.setCompartmentMaxTriangleArea(0, 2);
+        newNTriangles = mesh.getTriangles()[0].size();
+        newNVertices = mesh.getVerticesAsFlatArray().size() / 2;
+        REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 2);
+        REQUIRE(newNTriangles > oldNTriangles);
+        REQUIRE(newNVertices > oldNVertices);
       }
     }
   }
@@ -143,8 +164,8 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     // flip y-axis to match (0,0) == bottom-left of meshing output
     img = img.mirrored(false, true);
 
-    mesh::Mesh mesh(img, {{QPointF(6, 6)}}, {}, {999}, {}, {}, 1.0,
-                    QPointF(0, 0), std::vector<QRgb>{bgcol, col});
+    mesh::Mesh mesh(img, {{QPointF(6, 6)}}, {}, {999}, {}, 1.0, QPointF(0, 0),
+                    std::vector<QRgb>{bgcol, col});
 
     // check boundaries image
     auto [boundaryImage, maskImage] =
@@ -159,7 +180,13 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     REQUIRE(boundaryImage.pixel(70, 62) == col1);
     REQUIRE(boundaryImage.pixel(70, 2) == col1);
     REQUIRE(boundaryImage.pixel(17, 80) == 0);
-    REQUIRE(boundaryImage.pixel(8, 81) == col0);
+    // anti-aliasing means pixel may not have exactly the expected color:
+    REQUIRE(qRed(boundaryImage.pixel(8, 81)) ==
+            Catch::Approx(qRed(col0)).margin(10));
+    REQUIRE(qGreen(boundaryImage.pixel(8, 81)) ==
+            Catch::Approx(qGreen(col0)).margin(10));
+    REQUIRE(qBlue(boundaryImage.pixel(8, 81)) ==
+            Catch::Approx(qBlue(col0)).margin(10));
     auto [boundaryImage2, maskImage2] =
         mesh.getBoundariesImages(QSize(100, 100), 0);
     boundaryImage2.save("tmp1.png");

@@ -13,6 +13,9 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     std::vector<double> res(1, 0);
     sym.eval(res);
     REQUIRE(res[0] == dbl_approx(10));
+    sym.rescale(1.0);
+    sym.eval(res);
+    REQUIRE(res[0] == dbl_approx(10));
   }
   GIVEN("3*x + 7*x: one var, no constants") {
     std::string expr = "3*x + 7 * x";
@@ -29,6 +32,9 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(res[0] == dbl_approx(2));
     sym.eval(res, {-1e-22});
     REQUIRE(res[0] == dbl_approx(-1e-21));
+    sym.rescale(2.0); // multiply all vars by 2
+    sym.eval(res, {0.2});
+    REQUIRE(res[0] == dbl_approx(4));
   }
   GIVEN("3*x + 7*x, 4*x - 3: two expressions, one var, no constants") {
     std::vector<std::string> expr{"3*x + 7 * x", "4*x - 3"};
@@ -45,6 +51,18 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     sym.eval(res, {-1e-22});
     REQUIRE(res[0] == dbl_approx(-1e-21));
     REQUIRE(res[1] == dbl_approx(-4e-22 - 3));
+    sym.rescale(2.0); // multiply all vars by 2
+    sym.eval(res, {0.2});
+    REQUIRE(res[0] == dbl_approx(4));
+    REQUIRE(res[1] == dbl_approx(-1.4));
+    sym.rescale(0.25); // multiply all vars by 0.25
+    sym.eval(res, {0.2});
+    REQUIRE(res[0] == dbl_approx(1));
+    REQUIRE(res[1] == dbl_approx(-2.6));
+    sym.rescale(0); // multiply all vars by 0
+    sym.eval(res, {0.93252});
+    REQUIRE(res[0] == dbl_approx(0));
+    REQUIRE(res[1] == dbl_approx(-3));
   }
   GIVEN("1.324*x + 2*3: one var, no constants") {
     std::string expr = "1.324 * x + 2*3";

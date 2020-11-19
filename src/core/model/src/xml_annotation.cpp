@@ -68,14 +68,12 @@ void addMeshParamsAnnotation(libsbml::ParametricGeometry *pg,
   auto xml = fmt::format(
       "<{prefix}:{name} xmlns:{prefix}=\"{uri}\" "
       "{prefix}:maxBoundaryPoints=\"{points}\" "
-      "{prefix}:maxTriangleAreas=\"{areas}\" "
-      "{prefix}:membraneWidths=\"{widths}\" />",
+      "{prefix}:maxTriangleAreas=\"{areas}\" />",
       fmt::arg("prefix", annotationPrefix), fmt::arg("uri", annotationURI),
       fmt::arg("name", annotationNameMesh),
       fmt::arg("points", utils::vectorToString(mesh->getBoundaryMaxPoints())),
       fmt::arg("areas",
-               utils::vectorToString(mesh->getCompartmentMaxTriangleArea())),
-      fmt::arg("widths", utils::vectorToString(mesh->getBoundaryWidths())));
+               utils::vectorToString(mesh->getCompartmentMaxTriangleArea())));
   pg->appendAnnotation(xml);
   SPDLOG_INFO("appending annotation: {}", xml);
 }
@@ -93,10 +91,6 @@ getMeshParamsAnnotationData(const libsbml::ParametricGeometry *pg) {
     d.maxAreas = utils::stringToVector<std::size_t>(
         node->getAttrValue("maxTriangleAreas", annotationURI));
     SPDLOG_INFO("  - maxTriangleAreas: {}", utils::vectorToString(d.maxAreas));
-    d.membraneWidths = utils::stringToVector<double>(
-        node->getAttrValue("membraneWidths", annotationURI));
-    SPDLOG_INFO("  - membraneWidths: {}",
-                utils::vectorToString(d.membraneWidths));
   }
   return dat;
 }

@@ -12,8 +12,11 @@ bool symEq(const QString &exprA, const QString &exprB) {
   for (int i = 0; i < a.size(); ++i) {
     auto lhs{parser.parse(a[i].toStdString())};
     auto rhs{parser.parse(b[i].toStdString())};
-    std::cout << *lhs << " == " << *rhs << std::endl;
-    if (!SymEngine::eq(*lhs, *rhs)) {
+    if (lhs->__str__() != rhs->__str__()) {
+      std::cout << *lhs << " != " << *rhs << std::endl;
+      std::cout << a[i].toStdString() << " != " << b[i].toStdString()
+                << std::endl;
+      std::cout << "difference = " << *(SymEngine::sub(lhs, rhs)) << std::endl;
       return false;
     }
   }

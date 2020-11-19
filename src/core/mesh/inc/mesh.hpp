@@ -24,9 +24,7 @@ class QSize;
 namespace mesh {
 
 using QTriangleF = std::array<QPointF, 3>;
-using QRectangleF = std::array<QPointF, 4>;
 using TriangleIndex = std::array<std::size_t, 3>;
-using RectangleIndex = std::array<std::size_t, 4>;
 using ColourPair = std::pair<QRgb, QRgb>;
 
 class ImageBoundaries;
@@ -49,10 +47,7 @@ private:
   std::vector<QPointF> vertices;
   std::size_t nTriangles{};
   std::vector<std::vector<QTriangleF>> triangles;
-  std::size_t nRectangles{};
-  std::vector<std::vector<QRectangleF>> rectangles;
   std::vector<std::vector<TriangleIndex>> triangleIndices;
-  std::vector<std::vector<RectangleIndex>> rectangleIndices;
   // convert point in pixel units to point in physical units
   QPointF pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept;
   void constructMesh();
@@ -66,7 +61,6 @@ public:
                 std::vector<std::size_t> maxTriangleArea = {},
                 const std::vector<std::pair<std::string, ColourPair>>
                     &membraneColourPairs = {},
-                const std::vector<double> &membraneWidths = {},
                 double pixelWidth = 1.0,
                 const QPointF &originPoint = QPointF(0, 0),
                 const std::vector<QRgb> &compartmentColours = {});
@@ -83,10 +77,6 @@ public:
   bool isMembrane(std::size_t boundaryIndex) const;
   void setBoundaryMaxPoints(std::size_t boundaryIndex, std::size_t maxPoints);
   std::size_t getBoundaryMaxPoints(std::size_t boundaryIndex) const;
-  void setBoundaryWidth(std::size_t boundaryIndex, double width);
-  double getBoundaryWidth(std::size_t boundaryIndex) const;
-  std::vector<double> getBoundaryWidths() const;
-  double getMembraneWidth(const std::string &membraneID) const;
   std::vector<std::size_t> getBoundaryMaxPoints() const;
   void setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
                                      std::size_t maxTriangleArea);
@@ -101,7 +91,6 @@ public:
   getTriangleIndicesAsFlatArray(std::size_t compartmentIndex) const;
   const std::vector<std::vector<TriangleIndex>> &getTriangleIndices() const;
   const std::vector<std::vector<QTriangleF>> &getTriangles() const;
-  const std::vector<std::vector<RectangleIndex>> &getRectangleIndices() const;
 
   const QImage &getBoundaryPixelsImage() const;
   std::pair<QImage, QImage>

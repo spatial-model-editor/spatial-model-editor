@@ -1,7 +1,8 @@
 add_executable(tests main.cpp)
 target_link_libraries(
   tests
-  PRIVATE core_tests
+  PRIVATE ${SME_EXTRA_EXE_LIBS}
+          core_tests
           gui_tests
           cli_tests)
 

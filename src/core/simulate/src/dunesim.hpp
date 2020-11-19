@@ -59,6 +59,7 @@ private:
   void updateSpeciesConcentrations();
   std::string currentErrorMessage;
   DuneOptions options;
+  double volOverL3;
 
 public:
   explicit DuneSim(

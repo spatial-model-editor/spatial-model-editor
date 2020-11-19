@@ -1,15 +1,10 @@
 #include "duneconverter.hpp"
+#include "duneconverter_impl.hpp"
 #include "duneini.hpp"
 #include "geometry.hpp"
 #include "logger.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
-#include "model_compartments.hpp"
-#include "model_geometry.hpp"
-#include "model_membranes.hpp"
-#include "model_reactions.hpp"
-#include "model_species.hpp"
-#include "model_units.hpp"
 #include "pde.hpp"
 #include "simulate_options.hpp"
 #include "tiff.hpp"
@@ -22,72 +17,6 @@
 #include <numeric>
 #include <string>
 #include <utility>
-
-static std::vector<std::string>
-makeValidDuneSpeciesNames(const std::vector<std::string> &names) {
-  std::vector<std::string> duneNames = names;
-  // muparser reserved words, taken from:
-  // https://beltoforion.de/article.php?a=muparser&p=features
-  std::vector<std::string> reservedNames{
-      {"sin",  "cos",  "tan",   "asin",  "acos",  "atan", "sinh",
-       "cosh", "tanh", "asinh", "acosh", "atanh", "log2", "log10",
-       "log",  "ln",   "exp",   "sqrt",  "sign",  "rint", "abs",
-       "min",  "max",  "sum",   "avg"}};
-  // dune-copasi reserved words:
-  reservedNames.insert(reservedNames.end(), {"x", "y", "t", "pi", "dim"});
-  for (auto &name : duneNames) {
-    SPDLOG_TRACE("name {}", name);
-    std::string duneName = name;
-    name = "";
-    // if species name clashes with a reserved name, append an underscore
-    if (std::find(reservedNames.cbegin(), reservedNames.cend(), duneName) !=
-        reservedNames.cend()) {
-      duneName.append("_");
-    }
-    // if species name clashes with another species name,
-    // append another underscore
-    while (std::find(duneNames.cbegin(), duneNames.cend(), duneName) !=
-           duneNames.cend()) {
-      duneName.append("_");
-    }
-    name = duneName;
-    SPDLOG_TRACE("  -> {}", name);
-  }
-  return duneNames;
-}
-
-static bool compartmentContainsNonConstantSpecies(const model::Model &model,
-                                                  const QString &compID) {
-  const auto &specs = model.getSpecies().getIds(compID);
-  return std::any_of(specs.cbegin(), specs.cend(), [m = &model](const auto &s) {
-    return !m->getSpecies().getIsConstant(s);
-  });
-}
-
-static bool modelHasIndependentCompartments(const model::Model &model) {
-  for (const auto &mem : model.getMembranes().getMembranes()) {
-    QString compA = mem.getCompartmentA()->getId().c_str();
-    QString compB = mem.getCompartmentB()->getId().c_str();
-    if (compartmentContainsNonConstantSpecies(model, compA) ||
-        compartmentContainsNonConstantSpecies(model, compB)) {
-      // membrane with non-constant species -> coupled compartments
-      return false;
-    }
-  }
-  return true;
-}
-
-template <typename T>
-static std::vector<std::size_t>
-getIndicesOfSortedVector(const std::vector<T> &unsorted) {
-  std::vector<std::size_t> indices(unsorted.size(), 0);
-  std::iota(indices.begin(), indices.end(), 0);
-  std::sort(indices.begin(), indices.end(),
-            [&unsorted = unsorted](std::size_t i1, std::size_t i2) {
-              return unsorted[i1] < unsorted[i2];
-            });
-  return indices;
-}
 
 namespace simulate {
 
@@ -155,6 +84,178 @@ static void addWriter(IniFile &ini) {
   ini.addValue("file_path", "vtk");
 }
 
+static void
+addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
+               bool forExternalUse, const QString &iniFileDir,
+               std::vector<std::vector<std::vector<double>>> &concentrations,
+               const QString &compartmentId) {
+  constexpr double invalidPixelConc{-999.0};
+  const auto &lengthUnit = model.getUnits().getLength();
+  const auto &volumeUnit = model.getUnits().getVolume();
+  double volOverL3{model::getVolOverL3(lengthUnit, volumeUnit)};
+
+  SPDLOG_TRACE("compartment {}", compartmentId.toStdString());
+  auto nonConstantSpecies = getNonConstantSpecies(model, compartmentId);
+  if (nonConstantSpecies.empty()) {
+    return;
+  }
+  auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
+  for (std::size_t is = 0; is < duneSpeciesNames.size(); ++is) {
+    SPDLOG_TRACE("  - species '{}' -> '{}'", nonConstantSpecies[is],
+                 duneSpeciesNames[is]);
+  }
+
+  // initial concentrations
+  auto &concs = concentrations.emplace_back(duneSpeciesNames.size(),
+                                            std::vector<double>{});
+  auto indices = utils::getIndicesOfSortedVector(duneSpeciesNames);
+  std::vector<QString> tiffs;
+  ini.addSection("model", compartmentId, "initial");
+  for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
+    QString name{nonConstantSpecies[i].c_str()};
+    QString duneName{duneSpeciesNames[i].c_str()};
+    double initConc = model.getSpecies().getInitialConcentration(name);
+    // convert A/V to A/L^3
+    initConc /= volOverL3;
+    const auto *f = model.getSpecies().getField(name);
+    if (forExternalUse) {
+      if (!f->getIsUniformConcentration()) {
+        // for external use: if there is a non-uniform initial condition
+        // then make a TIFF & write to same dir as ini file
+        auto sampledFieldName =
+            QString("%1_initialConcentration").arg(duneName);
+        auto sampledFieldFile = QString("%1.tif").arg(sampledFieldName);
+        auto tiffFilename = QDir(iniFileDir).filePath(sampledFieldFile);
+        SPDLOG_TRACE("Exporting tiff: '{}'", tiffFilename.toStdString());
+        auto conc = f->getConcentration();
+        for (auto &c : conc) {
+          // convert A/V to A/L^3
+          c /= volOverL3;
+        }
+        double max =
+            utils::writeTIFF(tiffFilename.toStdString(),
+                             f->getCompartment()->getCompartmentImage().size(),
+                             conc, f->getCompartment()->getPixels(),
+                             model.getGeometry().getPixelWidth());
+        tiffs.push_back(sampledFieldName);
+        ini.addValue(duneName,
+                     QString("%1*%2(x,y)").arg(max).arg(sampledFieldName));
+      } else {
+        // otherwise just use initialConcentration value
+        ini.addValue(duneName, initConc, doublePrecision);
+      }
+    } else {
+      ini.addValue(duneName, 0.0, doublePrecision);
+      // create array of concentration values
+      concs[indices[i]] = f->getConcentrationImageArray(invalidPixelConc);
+      for (auto &c : concs[indices[i]]) {
+        // convert A/V to A/L^3
+        c /= volOverL3;
+      }
+    }
+  }
+  if (forExternalUse && !tiffs.empty()) {
+    ini.addSection("model", "data");
+    for (const auto &tiff : tiffs) {
+      ini.addValue(tiff, tiff + QString(".tif"));
+    }
+  }
+
+  // reactions
+  ini.addSection("model", compartmentId, "reaction");
+  std::size_t nSpecies{nonConstantSpecies.size()};
+
+  auto reacs = utils::toStdString(model.getReactions().getIds(compartmentId));
+  PdeScaleFactors scaleFactors;
+  scaleFactors.species = volOverL3;
+  scaleFactors.reaction = 1.0 / volOverL3;
+  SPDLOG_INFO("  - multiplying species by [vol]/[length]^3 = {}",
+              scaleFactors.species);
+  SPDLOG_INFO("  - multiplying reactions by [length]^3/[vol] = {}",
+              scaleFactors.reaction);
+
+  Pde pde(&model, nonConstantSpecies, reacs, duneSpeciesNames, scaleFactors);
+  for (std::size_t i = 0; i < nSpecies; ++i) {
+    ini.addValue(duneSpeciesNames[i].c_str(), pde.getRHS()[i].c_str());
+  }
+
+  // reaction term jacobian
+  ini.addSection("model", compartmentId, "reaction.jacobian");
+  for (std::size_t i = 0; i < nSpecies; ++i) {
+    for (std::size_t j = 0; j < nSpecies; ++j) {
+      QString lhs =
+          QString("d%1__d%2")
+              .arg(duneSpeciesNames[i].c_str(), duneSpeciesNames[j].c_str());
+      QString rhs = pde.getJacobian()[i][j].c_str();
+      ini.addValue(lhs, rhs);
+    }
+  }
+
+  // diffusion coefficients
+  ini.addSection("model", compartmentId, "diffusion");
+  for (std::size_t i = 0; i < nSpecies; ++i) {
+    QString sId{nonConstantSpecies[i].c_str()};
+    double diffConst{model.getSpecies().getDiffusionConstant(sId)};
+    ini.addValue(duneSpeciesNames[i].c_str(), diffConst, doublePrecision);
+  }
+
+  // membrane flux terms
+  for (const auto &membrane : model.getMembranes().getMembranes()) {
+    auto cA = membrane.getCompartmentA()->getId().c_str();
+    auto cB = membrane.getCompartmentB()->getId().c_str();
+    QString otherCompId;
+    if (cA == compartmentId) {
+      otherCompId = cB;
+    } else if (cB == compartmentId) {
+      otherCompId = cA;
+    }
+    if (!otherCompId.isEmpty()) {
+      ini.addSection("model", compartmentId, "boundary", otherCompId,
+                     "outflow");
+      QString membraneID = membrane.getId().c_str();
+      auto mReacs = utils::toStdString(model.getReactions().getIds(membraneID));
+      auto nonConstantSpeciesOther = getNonConstantSpecies(model, otherCompId);
+      auto duneSpeciesNamesOther =
+          makeValidDuneSpeciesNames(nonConstantSpeciesOther);
+
+      auto mSpecies = nonConstantSpecies;
+      for (const auto &s : nonConstantSpeciesOther) {
+        mSpecies.push_back(s);
+      }
+      auto mDuneSpecies = duneSpeciesNames;
+      for (auto &s : mDuneSpecies) {
+        s.append("_i");
+      }
+      for (const auto &s : duneSpeciesNamesOther) {
+        mDuneSpecies.push_back(s + "_o");
+      }
+      PdeScaleFactors mScaleFactors;
+      mScaleFactors.species = volOverL3;
+      mScaleFactors.reaction = -1.0;
+      SPDLOG_INFO("  - multiplying species by [vol]/[length]^3 = {}",
+                  mScaleFactors.species);
+
+      Pde pdeBcs(&model, mSpecies, mReacs, mDuneSpecies, mScaleFactors);
+      for (std::size_t i = 0; i < nSpecies; ++i) {
+        ini.addValue(duneSpeciesNames[i].c_str(), pdeBcs.getRHS()[i].c_str());
+      }
+
+      // reaction term jacobian
+      ini.addSection("model", compartmentId, "boundary", otherCompId, "outflow",
+                     "jacobian");
+      for (std::size_t i = 0; i < nSpecies; ++i) {
+        for (std::size_t j = 0; j < mDuneSpecies.size(); ++j) {
+          QString lhs =
+              QString("d%1__d%2")
+                  .arg(duneSpeciesNames[i].c_str(), mDuneSpecies[j].c_str());
+          QString rhs = pdeBcs.getJacobian()[i][j].c_str();
+          ini.addValue(lhs, rhs);
+        }
+      }
+    }
+  }
+}
+
 DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
                              const simulate::DuneOptions &duneOptions,
                              const QString &outputIniFile, int doublePrecision)
@@ -177,7 +278,6 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
     }
   }
 
-  constexpr double invalidPixelConc{-999.0};
   IniFile iniCommon;
   addGrid(iniCommon);
   addModel(iniCommon);
@@ -229,227 +329,14 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
     }
     ++gmshCompIndex;
   }
-  if (!independentCompartments) {
-    for (const auto &mem : model.getMembranes().getMembranes()) {
-      QString compA = mem.getCompartmentA()->getId().c_str();
-      QString compB = mem.getCompartmentB()->getId().c_str();
-      // only add membranes which contain non-constant species
-      if (compartmentContainsNonConstantSpecies(model, compA) ||
-          compartmentContainsNonConstantSpecies(model, compB)) {
-        inis[0].addValue(mem.getId().c_str(), duneCompIndex);
-        SPDLOG_TRACE("membrane {} added with index {}", mem.getId(),
-                     duneCompIndex);
-        gmshCompIndices.insert(gmshCompIndex);
-        ++duneCompIndex;
-      }
-      ++gmshCompIndex;
-    }
-  }
 
   std::size_t modelIndex{0};
   // for each compartment
-  for (const auto &compartmentID : model.getCompartments().getIds()) {
-    SPDLOG_TRACE("compartment {}", compartmentID.toStdString());
-    // remove any constant species from the list of species
-    std::vector<std::string> nonConstantSpecies;
-    for (const auto &s : model.getSpecies().getIds(compartmentID)) {
-      if (!model.getSpecies().getIsConstant(s)) {
-        nonConstantSpecies.push_back(s.toStdString());
-      }
-    }
-    if (!nonConstantSpecies.empty()) {
-      auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
-      for (std::size_t is = 0; is < duneSpeciesNames.size(); ++is) {
-        SPDLOG_TRACE("  - species '{}' -> '{}'", nonConstantSpecies.at(is),
-                     duneSpeciesNames.at(is));
-      }
-
-      // initial concentrations
-      std::vector<std::vector<double>> concs(duneSpeciesNames.size(),
-                                             std::vector<double>{});
-      auto indices = getIndicesOfSortedVector(duneSpeciesNames);
-      std::vector<QString> tiffs;
-      inis[modelIndex].addSection("model", compartmentID, "initial");
-      for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
-        QString name = nonConstantSpecies.at(i).c_str();
-        QString duneName = duneSpeciesNames.at(i).c_str();
-        double initConc = model.getSpecies().getInitialConcentration(name);
-        QString expr = model.getSpecies().getAnalyticConcentration(name);
-        const auto *f = model.getSpecies().getField(name);
-        if (forExternalUse) {
-          if (!f->getIsUniformConcentration()) {
-            // for external use: if there is a non-uniform initial condition
-            // then make a TIFF & write to same dir as ini file
-            auto sampledFieldName =
-                QString("%1_initialConcentration").arg(duneName);
-            auto sampledFieldFile = QString("%1.tif").arg(sampledFieldName);
-            auto tiffFilename = QDir(iniFileDir).filePath(sampledFieldFile);
-            SPDLOG_TRACE("Exporting tiff: '{}'", tiffFilename.toStdString());
-            double max = utils::writeTIFF(
-                tiffFilename.toStdString(),
-                f->getCompartment()->getCompartmentImage().size(),
-                f->getConcentration(), f->getCompartment()->getPixels(),
-                model.getGeometry().getPixelWidth());
-            tiffs.push_back(sampledFieldName);
-            inis[modelIndex].addValue(
-                duneName, QString("%2*%3(x,y)").arg(max).arg(sampledFieldName));
-          } else {
-            // otherwise just use initialConcentration value
-            inis[modelIndex].addValue(duneName, initConc, doublePrecision);
-          }
-        } else {
-          inis[modelIndex].addValue(duneName, 0.0, doublePrecision);
-          // create array of concentration values
-          concs[indices[i]] = f->getConcentrationImageArray(invalidPixelConc);
-        }
-      }
-      concentrations.push_back(std::move(concs));
-      if (forExternalUse && !tiffs.empty()) {
-        inis[modelIndex].addSection("model", "data");
-        for (const auto &tiff : tiffs) {
-          inis[modelIndex].addValue(tiff, tiff + QString(".tif"));
-        }
-      }
-
-      // reactions
-      inis[modelIndex].addSection("model", compartmentID, "reaction");
-      std::size_t nSpecies = nonConstantSpecies.size();
-
-      std::vector<std::string> reacs;
-      if (auto reacsInCompartment = model.getReactions().getIds(compartmentID);
-          !reacsInCompartment.isEmpty()) {
-        reacs = utils::toStdString(reacsInCompartment);
-      }
-      Pde pde(&model, nonConstantSpecies, reacs, duneSpeciesNames);
-      for (std::size_t i = 0; i < nSpecies; ++i) {
-        inis[modelIndex].addValue(duneSpeciesNames.at(i).c_str(),
-                                  pde.getRHS().at(i).c_str());
-      }
-
-      // reaction term jacobian
-      inis[modelIndex].addSection("model", compartmentID, "reaction.jacobian");
-      for (std::size_t i = 0; i < nSpecies; ++i) {
-        for (std::size_t j = 0; j < nSpecies; ++j) {
-          QString lhs = QString("d%1__d%2")
-                            .arg(duneSpeciesNames.at(i).c_str(),
-                                 duneSpeciesNames.at(j).c_str());
-          QString rhs = pde.getJacobian().at(i).at(j).c_str();
-          inis[modelIndex].addValue(lhs, rhs);
-        }
-      }
-
-      // diffusion coefficients
-      inis[modelIndex].addSection("model", compartmentID, "diffusion");
-      for (std::size_t i = 0; i < nSpecies; ++i) {
-        inis[modelIndex].addValue(duneSpeciesNames.at(i).c_str(),
-                                  model.getSpecies().getDiffusionConstant(
-                                      nonConstantSpecies[i].c_str()),
-                                  doublePrecision);
-      }
-    }
+  for (const auto &compId : model.getCompartments().getIds()) {
+    addCompartment(inis[modelIndex], model, doublePrecision, forExternalUse,
+                   iniFileDir, concentrations, compId);
     if (independentCompartments) {
       ++modelIndex;
-    }
-  }
-
-  // for each membrane do the same
-  modelIndex = 0;
-  for (const auto &membrane : model.getMembranes().getMembranes()) {
-    QString membraneID = membrane.getId().c_str();
-    // remove any constant species from the list of species
-    std::vector<std::string> nonConstantSpecies;
-    QString compA = membrane.getCompartmentA()->getId().c_str();
-    QString compB = membrane.getCompartmentB()->getId().c_str();
-    for (const auto &comp : {compA, compB}) {
-      for (const auto &s : model.getSpecies().getIds(comp)) {
-        if (!model.getSpecies().getIsConstant(s)) {
-          nonConstantSpecies.push_back(s.toStdString());
-        }
-      }
-    }
-    if (!nonConstantSpecies.empty()) {
-      auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
-
-      // initial concentrations
-      std::vector<std::vector<double>> concs(duneSpeciesNames.size(),
-                                             std::vector<double>{});
-      auto indices = getIndicesOfSortedVector(duneSpeciesNames);
-      inis[modelIndex].addSection("model", membraneID, "initial");
-      for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
-        QString name = nonConstantSpecies.at(i).c_str();
-        inis[modelIndex].addValue(
-            duneSpeciesNames.at(i).c_str(),
-            model.getSpecies().getInitialConcentration(name), doublePrecision);
-        if (!forExternalUse) {
-          const auto *f = model.getSpecies().getField(name);
-          concs[indices[i]] = f->getConcentrationImageArray(invalidPixelConc);
-        }
-      }
-      concentrations.push_back(std::move(concs));
-
-      // reactions: want reactions for both neighbouring compartments
-      // as well as membrane reactions (that involve species from both
-      // compartments in the same reaction)
-      inis[modelIndex].addSection("model", membraneID, "reaction");
-      std::size_t nSpecies = nonConstantSpecies.size();
-
-      std::vector<std::string> reacs;
-      std::vector<std::string> reacScaleFactors;
-      for (const auto &comp : {compA, compB}) {
-        if (auto reacsInCompartment = model.getReactions().getIds(comp);
-            !reacsInCompartment.isEmpty()) {
-          for (const auto &r : reacsInCompartment) {
-            reacs.push_back(r.toStdString());
-            reacScaleFactors.emplace_back("1");
-          }
-        }
-      }
-      // divide membrane reaction rates by width of membrane
-      if (auto reacsInCompartment = model.getReactions().getIds(membraneID);
-          !reacsInCompartment.isEmpty()) {
-        const auto &lengthUnit = model.getUnits().getLength();
-        const auto &volumeUnit = model.getUnits().getVolume();
-        for (const auto &r : reacsInCompartment) {
-          double lengthCubedToVolFactor =
-              model::pixelWidthToVolume(1.0, lengthUnit, volumeUnit);
-          double width = model.getGeometry().getMesh()->getMembraneWidth(
-              membraneID.toStdString());
-          double scaleFactor = width * lengthCubedToVolFactor;
-          SPDLOG_INFO("  - membrane width = {} {}", width,
-                      lengthUnit.name.toStdString());
-          SPDLOG_INFO("  - [length]^3/[vol] = {}", lengthCubedToVolFactor);
-          SPDLOG_INFO("  - dividing flux by {}", scaleFactor);
-          reacScaleFactors.push_back(
-              utils::dblToQStr(scaleFactor).toStdString());
-          reacs.push_back(r.toStdString());
-        }
-      }
-      Pde pde(&model, nonConstantSpecies, reacs, duneSpeciesNames,
-              reacScaleFactors);
-      for (std::size_t i = 0; i < nSpecies; ++i) {
-        inis[modelIndex].addValue(duneSpeciesNames.at(i).c_str(),
-                                  pde.getRHS().at(i).c_str());
-      }
-
-      // reaction term jacobian
-      inis[modelIndex].addSection("model", membraneID, "reaction.jacobian");
-      for (std::size_t i = 0; i < nSpecies; ++i) {
-        for (std::size_t j = 0; j < nSpecies; ++j) {
-          QString lhs = QString("d%1__d%2")
-                            .arg(duneSpeciesNames.at(i).c_str(),
-                                 duneSpeciesNames.at(j).c_str());
-          QString rhs = pde.getJacobian().at(i).at(j).c_str();
-          inis[modelIndex].addValue(lhs, rhs);
-        }
-      }
-
-      // diffusion coefficients
-      inis[modelIndex].addSection("model", membraneID, "diffusion");
-      for (std::size_t i = 0; i < nSpecies; ++i) {
-        // NOTE: setting diffusion to zero for now within membranes
-        inis[modelIndex].addValue(duneSpeciesNames.at(i).c_str(), 0,
-                                  doublePrecision);
-      }
     }
   }
 

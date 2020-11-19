@@ -1,6 +1,10 @@
 // Partial Differential Equation (PDE) class
 //  - construct PDE for given compartment or membrane
-//  - PDE equation + Jacobian for each species as infix strings
+//  - constructs PDE reaction terms:
+//  R(speciesScaleFactor*species_vector)*reactionScaleFactor
+//  - also Jacobian of reaction terms for each species
+//  - factor to rescale species
+//  - factor to rescale reaction
 // Reaction class
 //  - construct matrix of stoich coefficients and reaction terms as strings
 //  - along with a map of constants
@@ -24,6 +28,11 @@ public:
   explicit PdeError(const std::string &message) : std::runtime_error(message) {}
 };
 
+struct PdeScaleFactors {
+  double species{1.0};
+  double reaction{1.0};
+};
+
 class Pde {
 private:
   std::vector<std::string> species;
@@ -35,7 +44,7 @@ public:
                const std::vector<std::string> &speciesIDs,
                const std::vector<std::string> &reactionIDs,
                const std::vector<std::string> &relabelledSpeciesIDs = {},
-               const std::vector<std::string> &reactionScaleFactors = {});
+               const PdeScaleFactors &pdeScaleFactors = {});
   const std::vector<std::string> &getRHS() const;
   const std::vector<std::vector<std::string>> &getJacobian() const;
 };

@@ -6,7 +6,7 @@ if(WIN32)
   set_target_properties(sme PROPERTIES PREFIX "${PYTHON_MODULE_PREFIX}"
                                        SUFFIX "${PYTHON_MODULE_EXTENSION}")
 else()
-  pybind11_add_module(sme SYSTEM)
+  pybind11_add_module(sme MODULE)
 endif()
 
 target_link_libraries(sme PRIVATE core ${SME_EXTRA_EXE_LIBS})

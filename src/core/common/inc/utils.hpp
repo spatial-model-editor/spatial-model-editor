@@ -124,6 +124,18 @@ template <typename T> std::string vectorToString(const std::vector<T> &vec) {
   return ss.str();
 }
 
+template <typename T>
+static std::vector<std::size_t>
+getIndicesOfSortedVector(const std::vector<T> &unsorted) {
+  std::vector<std::size_t> indices(unsorted.size(), 0);
+  std::iota(indices.begin(), indices.end(), 0);
+  std::sort(indices.begin(), indices.end(),
+            [&unsorted = unsorted](std::size_t i1, std::size_t i2) {
+              return unsorted[i1] < unsorted[i2];
+            });
+  return indices;
+}
+
 class indexedColours {
 private:
   const static std::vector<QColor> colours;

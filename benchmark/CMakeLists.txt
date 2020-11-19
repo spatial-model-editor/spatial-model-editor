@@ -1,6 +1,6 @@
 add_executable(benchmark benchmark.cpp)
 target_compile_features(benchmark PRIVATE cxx_std_17)
-target_link_libraries(benchmark PRIVATE core)
+target_link_libraries(benchmark PRIVATE ${SME_EXTRA_EXE_LIBS} core)
 qt5_import_plugins(
   benchmark
   EXCLUDE_BY_TYPE
@@ -14,7 +14,7 @@ qt5_import_plugins(
 
 add_executable(pixel pixel.cpp)
 target_compile_features(pixel PRIVATE cxx_std_17)
-target_link_libraries(pixel PRIVATE core)
+target_link_libraries(pixel PRIVATE ${SME_EXTRA_EXE_LIBS} core)
 qt5_import_plugins(
   pixel
   EXCLUDE_BY_TYPE

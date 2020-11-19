@@ -2,6 +2,7 @@ target_sources(
   core
   PRIVATE basesim.cpp
           duneconverter.cpp
+          duneconverter_impl.cpp
           dunefunction.cpp
           dunegrid.cpp
           duneini.cpp
@@ -17,6 +18,7 @@ target_sources(
 target_sources(
   core_tests
   PUBLIC duneconverter_t.cpp
+         duneconverter_impl_t.cpp
          dunefunction_t.cpp
          dunegrid_t.cpp
          duneini_t.cpp

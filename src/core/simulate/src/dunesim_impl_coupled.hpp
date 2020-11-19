@@ -15,11 +15,11 @@ namespace simulate {
 template <int DuneFEMOrder> class DuneImplCoupled : public DuneImpl {
 public:
   using ModelTraits =
-      Dune::Copasi::ModelMultiDomainP0PkDiffusionReactionTraits<Grid,
-                                                                DuneFEMOrder>;
+      Dune::Copasi::ModelMultiDomainPkDiffusionReactionTraits<Grid,
+                                                              DuneFEMOrder>;
   using Model = Dune::Copasi::ModelMultiDomainDiffusionReaction<ModelTraits>;
-  using GF = std::remove_reference_t<decltype(
-      *std::declval<Model>().get_grid_function(0, 0).get())>;
+  using GF = std::remove_reference_t<
+      decltype(*std::declval<Model>().get_grid_function(0, 0).get())>;
   std::unique_ptr<Model> model;
   std::vector<std::shared_ptr<const GF>> gridFunctions;
   double t0{0.0};
@@ -37,14 +37,16 @@ public:
       stages.reset(Dune::Copasi::ModelSetup::Stages::Writer);
     }
     model = std::make_unique<Model>(grid, configs[0].sub("model"), stages);
-    dt = configs[0].sub("model.time_stepping").template get<double>("initial_step");
+    dt = configs[0]
+             .sub("model.time_stepping")
+             .template get<double>("initial_step");
   }
   ~DuneImplCoupled() override = default;
   void setInitial(const DuneConverter &dc) override {
     model->set_initial(makeModelDuneFunctions<GridView>(dc));
   }
   void run(double time) override {
-    auto write_output = [&f=vtkFilename](const auto &state) {
+    auto write_output = [&f = vtkFilename](const auto &state) {
       if (!f.empty()) {
         state.write(f, true);
       }

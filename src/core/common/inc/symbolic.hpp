@@ -62,6 +62,7 @@ public:
   std::string inlinedExpr(std::size_t i = 0) const;
   std::string diff(const std::string &var, std::size_t i = 0) const;
   void relabel(const std::vector<std::string> &newVariables);
+  void rescale(double factor);
   void eval(std::vector<double> &results,
             const std::vector<double> &vars = {}) const;
   void eval(double *results, const double *vars) const;

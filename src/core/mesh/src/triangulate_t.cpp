@@ -40,7 +40,6 @@ SCENARIO("Triangulate",
       REQUIRE(tri.getPoints().size() == 4);
       REQUIRE(tri.getTriangleIndices().size() == 1);
       REQUIRE(tri.getTriangleIndices()[0].size() == 2);
-      REQUIRE(tri.getRectangleIndices().empty() == true);
     }
     WHEN("max area specified") {
       tb.compartments[0].maxTriangleArea = 8;
@@ -48,7 +47,6 @@ SCENARIO("Triangulate",
       REQUIRE(tri.getPoints().size() > 4);
       REQUIRE(tri.getTriangleIndices().size() == 1);
       REQUIRE(tri.getTriangleIndices()[0].size() > 2);
-      REQUIRE(tri.getRectangleIndices().empty() == true);
       REQUIRE(maxTriangleArea(tri.getPoints(), tri.getTriangleIndices()[0]) <=
               tb.compartments[0].maxTriangleArea);
       // reduce max triangle area: more points & triangles
@@ -58,7 +56,6 @@ SCENARIO("Triangulate",
       REQUIRE(tri2.getTriangleIndices().size() == 1);
       REQUIRE(tri2.getTriangleIndices()[0].size() >
               tri.getTriangleIndices()[0].size());
-      REQUIRE(tri2.getRectangleIndices().empty() == true);
       REQUIRE(maxTriangleArea(tri2.getPoints(), tri2.getTriangleIndices()[0]) <=
               tb.compartments[0].maxTriangleArea);
     }
@@ -83,20 +80,18 @@ SCENARIO("Triangulate",
     bpInner.isLoop = true;
     bpInner.isMembrane = true;
     bpInner.boundaryIndex = 1;
-    bpInner.width = 0.8;
     WHEN("no max area specified") {
       tb.compartments[0].maxTriangleArea = 999;
       tb.compartments[1].maxTriangleArea = 999;
       mesh::Triangulate tri(tb);
       // minimal triangulation:
-      // original 8 points + one Steiner point for each outer segment
-      REQUIRE(tri.getPoints().size() == 12);
+      // original 8 points
+      REQUIRE(tri.getPoints().size() == 8);
       REQUIRE(tri.getTriangleIndices().size() == 2);
       // outer compartment: each quadrilateral -> two triangles
       REQUIRE(tri.getTriangleIndices()[0].size() == 8);
       // inner compartment: square -> two triangles
       REQUIRE(tri.getTriangleIndices()[1].size() == 2);
-      REQUIRE(tri.getRectangleIndices().size() == 1);
     }
     WHEN("max area specified") {
       tb.compartments[0].maxTriangleArea = 5;
@@ -124,7 +119,6 @@ SCENARIO("Triangulate",
     bpLeft.isLoop = false;
     bpLeft.isMembrane = false;
     bpLeft.boundaryIndex = 0;
-    bpLeft.innerFPIndices = {0, 1};
     // right compartment
     auto &compRight = tb.compartments.emplace_back();
     compRight.interiorPoints = {{15.0, 5.0}};
@@ -132,38 +126,28 @@ SCENARIO("Triangulate",
     bpRight.isLoop = false;
     bpRight.isMembrane = false;
     bpRight.boundaryIndex = 1;
-    bpRight.innerFPIndices = {2, 3};
     // membrane
     auto &bpMembrane = tb.boundaryProperties.emplace_back();
     bpMembrane.isLoop = false;
     bpMembrane.isMembrane = true;
     bpMembrane.boundaryIndex = 2;
-    bpMembrane.width = 0.66;
-    bpMembrane.innerFPIndices = {2, 3};
-    bpMembrane.outerFPIndices = {0, 1};
     // fixed points
-    mesh::TriangulateFixedPoints tfp;
-    tfp.nFPs = 2;
-    tfp.newFPs = {{9.5, 0.5}, {9.5, 9.5}, {10.5, 0.5}, {10.5, 9.5}};
     WHEN("no max area specified") {
       tb.compartments[0].maxTriangleArea = 999;
       tb.compartments[1].maxTriangleArea = 999;
-      mesh::Triangulate tri(tb, tfp);
+      mesh::Triangulate tri(tb);
       // minimal triangulation:
       // original points
-      REQUIRE(tri.getPoints().size() == 8);
+      REQUIRE(tri.getPoints().size() == 6);
       REQUIRE(tri.getTriangleIndices().size() == 2);
       // each compartment: quadrilateral -> two triangles
       REQUIRE(tri.getTriangleIndices()[0].size() == 2);
       REQUIRE(tri.getTriangleIndices()[1].size() == 2);
-      REQUIRE(tri.getRectangleIndices().size() == 1);
-      // single rectangle for membrane
-      REQUIRE(tri.getRectangleIndices()[0].size() == 1);
     }
     WHEN("max area specified") {
       tb.compartments[0].maxTriangleArea = 4;
       tb.compartments[1].maxTriangleArea = 3;
-      mesh::Triangulate tri(tb, tfp);
+      mesh::Triangulate tri(tb);
       REQUIRE(tri.getTriangleIndices().size() == 2);
       REQUIRE(maxTriangleArea(tri.getPoints(), tri.getTriangleIndices()[0]) <=
               tb.compartments[0].maxTriangleArea);
