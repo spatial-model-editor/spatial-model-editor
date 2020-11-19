@@ -512,13 +512,13 @@ jobs:
 
 before_script:
   # download pre-compiled Qt5 static libraries
-  - wget "https://github.com/spatial-model-editor/sme_deps_qt5/releases/latest/download/sme_deps_qt5_$STATIC_LIBS_OS.tgz"
+  - wget "https://github.com/spatial-model-editor/sme_deps_qt5/releases/download/sme-5.15.1/sme_deps_qt5_$STATIC_LIBS_OS.tgz"
   - $SUDOCMD tar xf sme_deps_qt5_$STATIC_LIBS_OS.tgz -C /
   # download pre-compiled libSBML (and other) static libraries
-  - wget "https://github.com/spatial-model-editor/sme_deps_common/releases/latest/download/sme_deps_common_$STATIC_LIBS_OS.tgz"
+  - wget "https://github.com/spatial-model-editor/sme_deps_common/releases/download/gmp6.2.0/sme_deps_common_$STATIC_LIBS_OS.tgz"
   - $SUDOCMD tar xf sme_deps_common_$STATIC_LIBS_OS.tgz -C /
   # download pre-compiled dunecopasi static libraries
-  - wget "https://github.com/spatial-model-editor/sme_deps_dune/releases/latest/download/sme_deps_dune_$STATIC_LIBS_OS.tgz"
+  - wget "https://github.com/spatial-model-editor/sme_deps_dune/releases/download/newton/sme_deps_dune_$STATIC_LIBS_OS.tgz"
   - $SUDOCMD tar xf sme_deps_dune_$STATIC_LIBS_OS.tgz -C /
 
 notifications:
