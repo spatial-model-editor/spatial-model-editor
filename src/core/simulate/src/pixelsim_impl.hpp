@@ -26,13 +26,6 @@ class Membrane;
 
 namespace simulate {
 
-template <typename Body>
-void serial_for(std::size_t i0, std::size_t n, const Body &body) {
-  for (std::size_t i = i0; i < n; ++i) {
-    body(i);
-  }
-}
-
 class ReacEval {
 private:
   // symengine reaction expression

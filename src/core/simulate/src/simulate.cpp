@@ -100,15 +100,32 @@ Simulation::Simulation(const model::Model &sbmlDoc, SimulatorType simType,
   }
   if (simulator->errorMessage().empty()) {
     updateConcentrations(0);
+    ++nCompletedTimesteps;
   }
 }
 
 Simulation::~Simulation() = default;
 
-std::size_t Simulation::doTimestep(double time) {
-  SPDLOG_DEBUG("integrating for time {}", time);
-  std::size_t steps = simulator->run(time);
-  updateConcentrations(timePoints.back() + time);
+std::size_t Simulation::doTimesteps(double time, std::size_t nSteps) {
+  SPDLOG_DEBUG("integrating for {} timesteps of length {}", nSteps, time);
+  // ensure there is enough space that push_back won't cause a reallocation
+  timePoints.reserve(timePoints.size() + nSteps);
+  concentration.reserve(concentration.size() + nSteps);
+  avgMinMax.reserve(avgMinMax.size() + nSteps);
+  stopRequested.store(false);
+  isRunning.store(true);
+  std::size_t steps{0};
+  for (std::size_t iStep = 0; iStep < nSteps; ++iStep) {
+    steps += simulator->run(time);
+    if (!simulator->errorMessage().empty() ||
+        stopRequested.load(std::memory_order_relaxed)) {
+      isRunning.store(false);
+      return steps;
+    }
+    updateConcentrations(timePoints.back() + time);
+    ++nCompletedTimesteps;
+  }
+  isRunning.store(false);
   return steps;
 }
 
@@ -270,6 +287,23 @@ Simulation::getPyConcs(std::size_t timeIndex) const {
     }
   }
   return pyConcs;
+}
+
+std::size_t Simulation::getNCompletedTimesteps() const {
+  return nCompletedTimesteps;
+}
+
+bool Simulation::getIsRunning() const {
+  return isRunning.load(std::memory_order_relaxed);
+}
+
+bool Simulation::getIsStopping() const {
+  return stopRequested.load(std::memory_order_relaxed);
+}
+
+void Simulation::requestStop() {
+  stopRequested.store(true);
+  simulator->requestStop();
 }
 
 } // namespace simulate

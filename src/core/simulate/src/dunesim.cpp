@@ -267,6 +267,10 @@ DuneSim::getConcentrations(std::size_t compartmentIndex) const {
 
 const std::string &DuneSim::errorMessage() const { return currentErrorMessage; }
 
+void DuneSim::requestStop() {
+  SPDLOG_DEBUG("Not implemented - ignoring request");
+}
+
 void DuneSim::updateSpeciesConcentrations() {
   for (std::size_t iComp = 0; iComp < compartmentSpeciesIndex.size(); ++iComp) {
     std::size_t nSpecies = compartmentSpeciesIndex[iComp].size();

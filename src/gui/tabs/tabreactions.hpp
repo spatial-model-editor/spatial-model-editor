@@ -20,13 +20,13 @@ class QTreeWidgetItem;
 class TabReactions : public QWidget {
   Q_OBJECT
 
- public:
+public:
   explicit TabReactions(model::Model &model, QLabelMouseTracker *mouseTracker,
                         QWidget *parent = nullptr);
   ~TabReactions();
   void loadModelData(const QString &selection = {});
 
- private:
+private:
   std::unique_ptr<Ui::TabReactions> ui;
   model::Model &model;
   QLabelMouseTracker *lblGeometry;

@@ -118,7 +118,7 @@ static void printFixedTimestepPixel(const PixelParams &params) {
     QElapsedTimer time;
     long long elapsed_ms = 0;
     time.start();
-    std::size_t steps = sim.doTimestep(params.integration_time);
+    std::size_t steps = sim.doTimesteps(params.integration_time);
     elapsed_ms = time.elapsed();
     fmt::print("{:11.8f}\t{:20.16e}\t{:20.16e}\t{}\t{}\t{}\n", dt,
                sim.getConc(sim.getTimePoints().size() - 1,

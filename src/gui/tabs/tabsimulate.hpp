@@ -5,6 +5,7 @@
 #include "plotwrapper.hpp"
 #include "simulate.hpp"
 #include <QWidget>
+#include <future>
 #include <memory>
 
 namespace Ui {
@@ -26,12 +27,12 @@ class TabSimulate : public QWidget {
 public:
   explicit TabSimulate(model::Model &doc, QLabelMouseTracker *mouseTracker,
                        QWidget *parent = nullptr);
-  ~TabSimulate();
+  ~TabSimulate() override;
   void loadModelData();
   void stopSimulation();
   void useDune(bool enable);
   void reset();
-  simulate::Options getOptions() const;
+  [[nodiscard]] simulate::Options getOptions() const;
   void setOptions(const simulate::Options &options);
 
 private:
@@ -50,7 +51,9 @@ private:
   std::vector<std::vector<std::size_t>> compartmentSpeciesToDraw;
   std::vector<PlotWrapperObservable> observables;
   std::vector<bool> obsVisible;
-  bool isSimulationRunning{false};
+  std::future<std::size_t> simSteps;
+  QTimer plotRefreshTimer;
+  QProgressDialog *progressDialog;
 
   void btnSimulate_clicked();
   void btnSliceImage_clicked();

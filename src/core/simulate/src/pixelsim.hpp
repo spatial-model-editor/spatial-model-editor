@@ -4,6 +4,7 @@
 
 #include "basesim.hpp"
 #include "simulate_options.hpp"
+#include <atomic>
 #include <cstddef>
 #include <limits>
 #include <memory>
@@ -43,6 +44,7 @@ private:
   bool useTBB{false};
   std::size_t numMaxThreads{1};
   std::string currentErrorMessage;
+  std::atomic<bool> stopRequested{false};
 
 public:
   explicit PixelSim(
@@ -58,6 +60,7 @@ public:
                                     std::size_t speciesIndex,
                                     std::size_t pixelIndex) const;
   virtual const std::string &errorMessage() const override;
+  virtual void requestStop() override;
 };
 
 } // namespace simulate
