@@ -358,7 +358,7 @@ jobs:
           - $HOME/.ccache
       install:
         # https://www.msys2.org/docs/ci/
-        - wget $MSYS_URL -O msys2.exe
+        - travis_retry wget $MSYS_URL -O msys2.exe
         - ./msys2.exe -y -oC:\\
         - export MSYS_SHELL='cmd //C RefreshEnv.cmd & set MSYS=winsymlinks:nativestrict & C:\\msys64\\msys2_shell.cmd -defterm -no-start -here -msys -l'
         - $MSYS_SHELL -c ' '
@@ -450,7 +450,7 @@ jobs:
           - $HOME/.ccache
       install:
         # https://www.msys2.org/docs/ci/
-        - wget $MSYS_URL -O msys2.exe
+        - travis_retry wget $MSYS_URL -O msys2.exe
         - ./msys2.exe -y -oC:\\
         - export MSYS_SHELL='cmd //C RefreshEnv.cmd & set MSYS=winsymlinks:nativestrict & C:\\msys64\\msys2_shell.cmd -defterm -no-start -here -msys -lc'
         - $MSYS_SHELL ' '
@@ -483,7 +483,7 @@ jobs:
         directories:
           - $HOME/.ccache
       install:
-        - wget $MSYS_URL -O msys2.exe
+        - travis_retry wget $MSYS_URL -O msys2.exe
         - ./msys2.exe -y -oC:\\
         - export MSYS_SHELL='cmd //C RefreshEnv.cmd & set MSYS=winsymlinks:nativestrict & C:\\msys64\\msys2_shell.cmd -defterm -no-start -here -msys -l'
         - $MSYS_SHELL -c ' '
@@ -512,13 +512,13 @@ jobs:
 
 before_script:
   # download pre-compiled Qt5 static libraries
-  - wget "https://github.com/spatial-model-editor/sme_deps_qt5/releases/latest/download/sme_deps_qt5_$STATIC_LIBS_OS.tgz"
+  - travis_retry wget "https://github.com/spatial-model-editor/sme_deps_qt5/releases/latest/download/sme_deps_qt5_$STATIC_LIBS_OS.tgz"
   - $SUDOCMD tar xf sme_deps_qt5_$STATIC_LIBS_OS.tgz -C /
   # download pre-compiled libSBML (and other) static libraries
-  - wget "https://github.com/spatial-model-editor/sme_deps_common/releases/latest/download/sme_deps_common_$STATIC_LIBS_OS.tgz"
+  - travis_retry wget "https://github.com/spatial-model-editor/sme_deps_common/releases/latest/download/sme_deps_common_$STATIC_LIBS_OS.tgz"
   - $SUDOCMD tar xf sme_deps_common_$STATIC_LIBS_OS.tgz -C /
   # download pre-compiled dunecopasi static libraries
-  - wget "https://github.com/spatial-model-editor/sme_deps_dune/releases/latest/download/sme_deps_dune_$STATIC_LIBS_OS.tgz"
+  - travis_retry wget "https://github.com/spatial-model-editor/sme_deps_dune/releases/latest/download/sme_deps_dune_$STATIC_LIBS_OS.tgz"
   - $SUDOCMD tar xf sme_deps_dune_$STATIC_LIBS_OS.tgz -C /
 
 notifications:
