@@ -485,4 +485,16 @@ void ModelReactions::removeParameter(const QString &reactionId,
                 rmParam->getId(), reac->getId());
   }
 }
+
+bool ModelReactions::dependOnVariable(const QString &variableId) const {
+  auto v{variableId.toStdString()};
+  for (const auto &id : ids) {
+    auto e{getRateExpression(id).toStdString()};
+    if(symbolic::contains(e, v)){
+      return true;
+    }
+  }
+  return false;
+}
+
 } // namespace model

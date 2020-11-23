@@ -35,6 +35,9 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     sym.rescale(2.0); // multiply all vars by 2
     sym.eval(res, {0.2});
     REQUIRE(res[0] == dbl_approx(4));
+    sym.rescale(2.0, {"x", "y"}); // multiply all vars except x or y by 2
+    sym.eval(res, {0.2});
+    REQUIRE(res[0] == dbl_approx(4));
   }
   GIVEN("3*x + 7*x, 4*x - 3: two expressions, one var, no constants") {
     std::vector<std::string> expr{"3*x + 7 * x", "4*x - 3"};
@@ -371,5 +374,16 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
             "2*another_unknown(q) + unknown1(unknown2(x))");
     REQUIRE(symbolic::divide("unknown1(unknown2(z))", "x") ==
             "unknown1(unknown2(z))/x");
+  }
+  GIVEN("check if expression contains symbol") {
+    REQUIRE(symbolic::contains("x", "x") == true);
+    REQUIRE(symbolic::contains("1", "x") == false);
+    REQUIRE(symbolic::contains("y+x^2", "x") == true);
+    REQUIRE(symbolic::contains("y+x^2", "y") == true);
+    REQUIRE(symbolic::contains("y+x^2", "z") == false);
+    REQUIRE(symbolic::contains("x*unknown(z)", "x") == true);
+    REQUIRE(symbolic::contains("z*unknown(x)", "x") == true);
+    REQUIRE(symbolic::contains("z*unknown(y)", "x") == false);
+    REQUIRE(symbolic::contains("(cos(symbol))^2+3", "symbol") == true);
   }
 }

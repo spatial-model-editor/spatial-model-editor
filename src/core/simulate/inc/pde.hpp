@@ -44,7 +44,9 @@ public:
                const std::vector<std::string> &speciesIDs,
                const std::vector<std::string> &reactionIDs,
                const std::vector<std::string> &relabelledSpeciesIDs = {},
-               const PdeScaleFactors &pdeScaleFactors = {});
+               const PdeScaleFactors &pdeScaleFactors = {},
+               const std::vector<std::string> &extraVariables = {},
+               const std::vector<std::string> &relabelledExtraVariables = {});
   const std::vector<std::string> &getRHS() const;
   const std::vector<std::vector<std::string>> &getJacobian() const;
 };

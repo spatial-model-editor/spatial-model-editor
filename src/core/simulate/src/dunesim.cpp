@@ -215,9 +215,8 @@ DuneSim::DuneSim(
     initCompartmentNames();
     initSpeciesIndices();
 
-    for (std::size_t compIndex = 0; compIndex < compartmentIds.size();
-         ++compIndex) {
-      const auto &compId = compartmentIds[compIndex];
+    for (std::size_t ci = 0; ci < compartmentIds.size(); ++ci) {
+      const auto &compId = compartmentIds[ci];
       SPDLOG_INFO("compartmentId: {}", compId);
       const auto *comp =
           sbmlDoc.getCompartments().getCompartment(compId.c_str());
@@ -227,7 +226,7 @@ DuneSim::DuneSim(
       auto nPixels = comp->getPixels().size();
       SPDLOG_INFO("  - {} pixels", nPixels);
       // todo: don't allocate wasted space for constant species here
-      auto nSpecies = compartmentSpeciesIds[compIndex].size();
+      auto nSpecies = compartmentSpeciesIds[ci].size();
       SPDLOG_INFO("  - {} species", nSpecies);
       concentration.emplace_back(nPixels * nSpecies, 0.0);
     }
@@ -263,6 +262,10 @@ std::size_t DuneSim::run(double time) {
 const std::vector<double> &
 DuneSim::getConcentrations(std::size_t compartmentIndex) const {
   return concentration[compartmentIndex];
+}
+
+std::size_t DuneSim::getConcentrationPadding() const {
+  return 0;
 }
 
 const std::string &DuneSim::errorMessage() const { return currentErrorMessage; }

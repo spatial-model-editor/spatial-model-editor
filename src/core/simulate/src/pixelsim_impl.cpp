@@ -24,14 +24,35 @@ namespace simulate {
 ReacEval::ReacEval(const model::Model &doc,
                    const std::vector<std::string> &speciesIDs,
                    const std::vector<std::string> &reactionIDs,
-                   double reactionScaleFactor, bool doCSE, unsigned optLevel) {
+                   double reactionScaleFactor, bool doCSE, unsigned optLevel,
+                   bool timeDependent, bool spaceDependent) {
   // construct reaction expressions and stoich matrix
   PdeScaleFactors pdeScaleFactors;
   pdeScaleFactors.reaction = reactionScaleFactor;
-  Pde pde(&doc, speciesIDs, reactionIDs, {}, pdeScaleFactors);
+  std::vector<std::string> extraVars{};
+  if (timeDependent) {
+    SPDLOG_TRACE("model reactions depend on time");
+    extraVars.push_back("time");
+  }
+  if (spaceDependent) {
+    SPDLOG_TRACE("model reactions depend on space");
+    extraVars.push_back(doc.getParameters().getSpatialCoordinates().x.id);
+    extraVars.push_back(doc.getParameters().getSpatialCoordinates().y.id);
+  }
+  Pde pde(&doc, speciesIDs, reactionIDs, {}, pdeScaleFactors, extraVars);
+  // add dt/dt = 1 reaction term, and t,x,y "species"
+  auto sIds{speciesIDs};
+  sIds.insert(sIds.end(), extraVars.cbegin(), extraVars.cend());
+  auto rhs{pde.getRHS()};
+  if (timeDependent) {
+    rhs.push_back("1"); // dt/dt = 1
+  }
+  if (spaceDependent) {
+    rhs.push_back("0"); // dx/dt = 0
+    rhs.push_back("0"); // dy/dt = 0
+  }
   // compile all expressions with symengine
-  sym = symbolic::Symbolic(pde.getRHS(), speciesIDs, {}, {}, true, doCSE,
-                           optLevel);
+  sym = symbolic::Symbolic(rhs, sIds, {}, {}, true, doCSE, optLevel);
 }
 
 void ReacEval::evaluate(double *output, const double *input) const {
@@ -56,7 +77,8 @@ void SimCompartment::spatiallyAverageDcdt() {
 SimCompartment::SimCompartment(const model::Model &doc,
                                const geometry::Compartment *compartment,
                                std::vector<std::string> sIds, bool doCSE,
-                               unsigned optLevel)
+                               unsigned optLevel, bool timeDependent,
+                               bool spaceDependent)
     : comp{compartment}, nPixels{compartment->nPixels()}, nSpecies{sIds.size()},
       compartmentId{compartment->getId()}, speciesIds{std::move(sIds)} {
   // get species in compartment
@@ -84,14 +106,42 @@ SimCompartment::SimCompartment(const model::Model &doc,
       !reacsInCompartment.isEmpty()) {
     reactionIDs = utils::toStdString(reacsInCompartment);
   }
-  reacEval = ReacEval(doc, speciesIds, reactionIDs, 1.0, doCSE, optLevel);
+  reacEval = ReacEval(doc, speciesIds, reactionIDs, 1.0, doCSE, optLevel,
+                      timeDependent, spaceDependent);
+  if (timeDependent) {
+    speciesIds.push_back("time");
+    diffConstants.push_back(0);
+    ++nSpecies;
+  }
+  if (spaceDependent) {
+    speciesIds.push_back(doc.getParameters().getSpatialCoordinates().x.id);
+    diffConstants.push_back(0);
+    speciesIds.push_back(doc.getParameters().getSpatialCoordinates().y.id);
+    diffConstants.push_back(0);
+    nSpecies += 2;
+  }
   // setup concentrations vector with initial values
   conc.resize(nSpecies * nPixels);
   dcdt.resize(conc.size(), 0.0);
+  double width{doc.getGeometry().getPixelWidth()};
+  auto origin{doc.getGeometry().getPhysicalOrigin()};
   auto concIter = conc.begin();
   for (std::size_t ix = 0; ix < compartment->nPixels(); ++ix) {
     for (const auto *field : fields) {
       *concIter = field->getConcentration()[ix];
+      ++concIter;
+    }
+    if (timeDependent) {
+      *concIter = 0; // t
+      ++concIter;
+    }
+    if (spaceDependent) {
+      auto pixel{compartment->getPixel(ix)};
+      // pixels have y=0 in top-left, convert to bottom-left:
+      pixel.ry() = compartment->getCompartmentImage().height() - 1 - pixel.y();
+      *concIter = origin.x() + static_cast<double>(pixel.x()) * width; // x
+      ++concIter;
+      *concIter = origin.y() + static_cast<double>(pixel.y()) * width; // y
       ++concIter;
     }
   }
@@ -340,8 +390,15 @@ double SimCompartment::getMaxStableTimestep() const {
 SimMembrane::SimMembrane(const model::Model &doc,
                          const geometry::Membrane *membrane_ptr,
                          SimCompartment *simCompA, SimCompartment *simCompB,
-                         bool doCSE, unsigned optLevel)
+                         bool doCSE, unsigned optLevel, bool timeDependent,
+                         bool spaceDependent)
     : membrane(membrane_ptr), compA(simCompA), compB(simCompB) {
+  if (timeDependent) {
+    ++nExtraVars;
+  }
+  if (spaceDependent) {
+    nExtraVars += 2;
+  }
   if (compA != nullptr &&
       membrane->getCompartmentA()->getId() != compA->getCompartmentId()) {
     SPDLOG_ERROR("compA '{}' doesn't match simCompA '{}'",
@@ -362,10 +419,14 @@ SimMembrane::SimMembrane(const model::Model &doc,
 
   // make vector of species from compartments A and B
   std::vector<std::string> speciesIds;
-  for (const auto *c : {compA, compB}) {
-    if (c != nullptr) {
-      speciesIds.insert(speciesIds.end(), c->getSpeciesIds().cbegin(),
-                        c->getSpeciesIds().cend());
+  if (compA != nullptr) {
+    for (std::size_t i = 0; i < compA->getSpeciesIds().size() - nExtraVars; ++i) {
+      speciesIds.push_back(compA->getSpeciesIds()[i]);
+    }
+  }
+  if (compB != nullptr) {
+    for (std::size_t i = 0; i < compB->getSpeciesIds().size() - nExtraVars; ++i) {
+      speciesIds.push_back(compB->getSpeciesIds()[i]);
     }
   }
 
@@ -382,7 +443,7 @@ SimMembrane::SimMembrane(const model::Model &doc,
   std::vector<std::string> reactionID =
       utils::toStdString(doc.getReactions().getIds(membrane->getId().c_str()));
   reacEval = ReacEval(doc, speciesIds, reactionID, volOverL3 / pixelWidth,
-                      doCSE, optLevel);
+                      doCSE, optLevel, timeDependent, spaceDependent);
 }
 
 void SimMembrane::evaluateReactions() {
@@ -390,7 +451,7 @@ void SimMembrane::evaluateReactions() {
   const std::vector<double> *concA{nullptr};
   std::vector<double> *dcdtA{nullptr};
   if (compA != nullptr) {
-    nSpeciesA = compA->getSpeciesIds().size();
+    nSpeciesA = compA->getSpeciesIds().size() - nExtraVars;
     concA = &compA->getConcentrations();
     dcdtA = &compA->getDcdt();
   }
@@ -398,19 +459,23 @@ void SimMembrane::evaluateReactions() {
   const std::vector<double> *concB{nullptr};
   std::vector<double> *dcdtB{nullptr};
   if (compB != nullptr) {
-    nSpeciesB = compB->getSpeciesIds().size();
+    nSpeciesB = compB->getSpeciesIds().size() - nExtraVars;
     concB = &compB->getConcentrations();
     dcdtB = &compB->getDcdt();
   }
-  std::vector<double> species(nSpeciesA + nSpeciesB, 0);
-  std::vector<double> result(nSpeciesA + nSpeciesB, 0);
+  std::vector<double> species(nSpeciesA + nSpeciesB + nExtraVars, 0);
+  std::vector<double> result(nSpeciesA + nSpeciesB + nExtraVars, 0);
   for (const auto &[ixA, ixB] : membrane->getIndexPairs()) {
-    // populate species concentrations: first A, then B
+    // populate species concentrations: first A, then B, then t,x,y
     if (concA != nullptr) {
-      std::copy_n(&((*concA)[ixA * nSpeciesA]), nSpeciesA, &species[0]);
+      std::copy_n(&((*concA)[ixA * (nSpeciesA + nExtraVars)]), nSpeciesA, &species[0]);
     }
     if (concB != nullptr) {
-      std::copy_n(&((*concB)[ixB * nSpeciesB]), nSpeciesB, &species[nSpeciesA]);
+      std::copy_n(&((*concB)[ixB * (nSpeciesB + nExtraVars)]), nSpeciesB + nExtraVars,
+                  &species[nSpeciesA]);
+    } else if (concA != nullptr) {
+      std::copy_n(&((*concA)[ixA * (nSpeciesA + nExtraVars) + nSpeciesA]), nExtraVars,
+                  &species[nSpeciesA]);
     }
 
     // evaluate reaction terms
@@ -418,10 +483,10 @@ void SimMembrane::evaluateReactions() {
 
     // add results to dc/dt: first A, then B
     for (std::size_t is = 0; is < nSpeciesA; ++is) {
-      (*dcdtA)[ixA * nSpeciesA + is] += result[is];
+      (*dcdtA)[ixA * (nSpeciesA + nExtraVars) + is] += result[is];
     }
     for (std::size_t is = 0; is < nSpeciesB; ++is) {
-      (*dcdtB)[ixB * nSpeciesB + is] += result[is + nSpeciesA];
+      (*dcdtB)[ixB * (nSpeciesB + nExtraVars) + is] += result[is + nSpeciesA];
     }
   }
 }

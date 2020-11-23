@@ -55,6 +55,7 @@ public:
   QString addParameter(const QString &reactionId, const QString &name,
                        double value);
   void removeParameter(const QString &reactionId, const QString &id);
+  bool dependOnVariable(const QString& variableId) const;
 };
 
 } // namespace model

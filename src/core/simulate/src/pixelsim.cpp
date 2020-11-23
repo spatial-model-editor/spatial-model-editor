@@ -213,6 +213,18 @@ PixelSim::PixelSim(
     : doc{sbmlDoc}, integrator{options.integrator}, errMax{options.maxErr},
       maxTimestep{options.maxTimestep}, numMaxThreads{options.maxThreads} {
   try {
+    // check if reactions explicitly depend on time or space
+    auto xId{doc.getParameters().getSpatialCoordinates().x.id};
+    auto yId{doc.getParameters().getSpatialCoordinates().y.id};
+    bool timeDependent{doc.getReactions().dependOnVariable("time")};
+    if (timeDependent) {
+      ++nExtraVars;
+    }
+    bool spaceDependent{doc.getReactions().dependOnVariable(xId.c_str()) ||
+                        doc.getReactions().dependOnVariable(yId.c_str())};
+    if (spaceDependent) {
+      nExtraVars += 2;
+    }
     // add compartments
     for (std::size_t compIndex = 0; compIndex < compartmentIds.size();
          ++compIndex) {
@@ -220,7 +232,8 @@ PixelSim::PixelSim(
       const auto *compartment{doc.getCompartments().getCompartment(
           compartmentIds[compIndex].c_str())};
       simCompartments.push_back(std::make_unique<SimCompartment>(
-          doc, compartment, speciesIds, options.doCSE, options.optLevel));
+          doc, compartment, speciesIds, options.doCSE, options.optLevel,
+          timeDependent, spaceDependent));
       maxStableTimestep = std::min(
           maxStableTimestep, simCompartments.back()->getMaxStableTimestep());
     }
@@ -251,7 +264,8 @@ PixelSim::PixelSim(
           compB = iterB->get();
         }
         simMembranes.push_back(std::make_unique<SimMembrane>(
-            doc, &membrane, compA, compB, options.doCSE, options.optLevel));
+            doc, &membrane, compA, compB, options.doCSE, options.optLevel,
+            timeDependent, spaceDependent));
       }
     }
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
@@ -330,6 +344,8 @@ const std::vector<double> &
 PixelSim::getConcentrations(std::size_t compartmentIndex) const {
   return simCompartments[compartmentIndex]->getConcentrations();
 }
+
+std::size_t PixelSim::getConcentrationPadding() const { return nExtraVars; }
 
 double PixelSim::getLowerOrderConcentration(std::size_t compartmentIndex,
                                             std::size_t speciesIndex,

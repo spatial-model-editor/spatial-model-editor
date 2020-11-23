@@ -46,19 +46,21 @@ void Simulation::initModel(const model::Model &model) {
 }
 
 static std::vector<AvgMinMax>
-calculateAvgMinMax(const std::vector<double> &concs, std::size_t nSpecies) {
+calculateAvgMinMax(const std::vector<double> &concs, std::size_t nSpecies, std::size_t concPadding) {
   std::vector<AvgMinMax> avgMinMax(nSpecies);
-  for (std::size_t ix = 0; ix < concs.size() / nSpecies; ++ix) {
+  std::size_t stride{nSpecies + concPadding};
+  for (std::size_t ix = 0; ix < concs.size() / stride; ++ix) {
     for (std::size_t is = 0; is < nSpecies; ++is) {
       auto &a = avgMinMax[is];
-      double c = concs[ix * nSpecies + is];
+      double c = concs[ix * stride + is];
       a.avg += c;
       a.max = std::max(a.max, c);
       a.min = std::min(a.min, c);
     }
   }
   for (auto &a : avgMinMax) {
-    a.avg /= static_cast<double>(concs.size()) / static_cast<double>(nSpecies);
+    a.avg /=
+        static_cast<double>(concs.size()) / static_cast<double>(stride);
   }
   return avgMinMax;
 }
@@ -75,7 +77,7 @@ void Simulation::updateConcentrations(double t) {
     std::size_t nSpecies = compartmentSpeciesIds[compIndex].size();
     const auto &compConcs = simulator->getConcentrations(compIndex);
     c.push_back(compConcs);
-    a.push_back(calculateAvgMinMax(compConcs, nSpecies));
+    a.push_back(calculateAvgMinMax(compConcs, nSpecies, concPadding));
     auto &maxC = maxConcWholeSimulation[compIndex];
     for (std::size_t is = 0; is < nSpecies; ++is) {
       maxC[is] = std::max(maxC[is], a.back()[is].max);
@@ -99,6 +101,7 @@ Simulation::Simulation(const model::Model &sbmlDoc, SimulatorType simType,
         sbmlDoc, compartmentIds, compartmentSpeciesIds, options.pixel);
   }
   if (simulator->errorMessage().empty()) {
+    concPadding = simulator->getConcentrationPadding();
     updateConcentrations(0);
     ++nCompletedTimesteps;
   }
@@ -165,8 +168,9 @@ std::vector<double> Simulation::getConc(std::size_t timeIndex,
   std::size_t nPixels = compartments[compartmentIndex]->nPixels();
   std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
   c.reserve(nPixels);
+  std::size_t stride{nSpecies + concPadding};
   for (std::size_t ix = 0; ix < nPixels; ++ix) {
-    c.push_back(compConc[ix * nSpecies + speciesIndex]);
+    c.push_back(compConc[ix * stride + speciesIndex]);
   }
   return c;
 }
@@ -232,13 +236,14 @@ QImage Simulation::getConcImage(
     const auto &pixels = compartments[ic]->getPixels();
     const auto &conc = concentration[timeIndex][ic];
     std::size_t nSpecies = compartmentSpeciesIds[ic].size();
+    std::size_t stride{nSpecies + concPadding};
     for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
       const QPoint &p = pixels[ix];
       int r = 0;
       int g = 0;
       int b = 0;
       for (std::size_t is : (*speciesIndices)[ic]) {
-        double c = conc[ix * nSpecies + is] / maxConcs[ic][is];
+        double c = conc[ix * stride + is] / maxConcs[ic][is];
         const auto &col = compartmentSpeciesColors[ic][is];
         r += static_cast<int>(qRed(col) * c);
         g += static_cast<int>(qGreen(col) * c);
@@ -271,12 +276,13 @@ Simulation::getPyConcs(std::size_t timeIndex) const {
     const auto &pixels = compartments[ci]->getPixels();
     const auto &conc = concentration[timeIndex][ci];
     std::size_t nSpecies = compartmentSpeciesIds[ci].size();
+    std::size_t stride{nSpecies + concPadding};
     for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
       const QPoint &p = pixels[ix];
       auto x = static_cast<std::size_t>(p.x());
       auto y = static_cast<std::size_t>(p.y());
       for (std::size_t is : compartmentSpeciesIndices[ci]) {
-        vecPyConcs[ci][is][y][x] = conc[ix * nSpecies + is];
+        vecPyConcs[ci][is][y][x] = conc[ix * stride + is];
       }
     }
   }

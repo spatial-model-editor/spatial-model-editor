@@ -33,7 +33,7 @@ namespace SymEngine {
 class muPrinter : public StrPrinter {
 protected:
   void _print_pow(std::ostringstream &o, const RCP<const Basic> &a,
-                          const RCP<const Basic> &b) override;
+                  const RCP<const Basic> &b) override;
 };
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
@@ -75,6 +75,7 @@ struct Symbolic::SymEngineImpl {
   SymEngine::LLVMDoubleVisitor lambdaLLVM{};
   std::map<std::string, SymEngine::RCP<const SymEngine::Symbol>> symbols{};
   bool valid{false};
+  bool compiled{false};
   std::string errorMessage{};
   void init(const std::vector<std::string> &expressions,
             const std::vector<std::string> &variables,
@@ -82,7 +83,7 @@ struct Symbolic::SymEngineImpl {
             const std::vector<Function> &functions);
   void compile(bool doCSE, unsigned optLevel);
   void relabel(const std::vector<std::string> &newVariables);
-  void rescale(double factor);
+  void rescale(double factor, const std::vector<std::string> &exclusions = {});
 };
 
 void Symbolic::SymEngineImpl::init(
@@ -92,6 +93,7 @@ void Symbolic::SymEngineImpl::init(
     const std::vector<Function> &functions) {
   SPDLOG_DEBUG("parsing {} expressions", expressions.size());
   valid = true;
+  compiled = false;
   for (const auto &v : variables) {
     SPDLOG_DEBUG("  - variable {}", v);
     symbols[v] = SymEngine::symbol(v);
@@ -121,6 +123,8 @@ void Symbolic::SymEngineImpl::init(
     SymEngine::map_basic_basic fns;
     SPDLOG_DEBUG("expr {}", expression);
     // parse expression & substitute all supplied functions & numeric constants
+    // todo: clean this up - see
+    // https://github.com/symengine/symengine/issues/1689
     try {
       int remainingAllowedReplaceLoops{1024};
       auto e = parser.parse(expression);
@@ -207,8 +211,17 @@ void Symbolic::SymEngineImpl::init(
 }
 
 void Symbolic::SymEngineImpl::compile(bool doCSE, unsigned optLevel) {
-  SPDLOG_DEBUG("compiling expression");
+  SPDLOG_DEBUG("compiling expression:");
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+  if (varVec.size() == exprInlined.size()) {
+    for (std::size_t i = 0; i < varVec.size(); ++i) {
+      SPDLOG_TRACE("  [{}] <- {}", toString(varVec[i]),
+                   toString(exprInlined[i]));
+    }
+  }
+#endif
   lambdaLLVM.init(varVec, exprInlined, doCSE, optLevel);
+  compiled = true;
 }
 
 void Symbolic::SymEngineImpl::relabel(
@@ -244,13 +257,22 @@ void Symbolic::SymEngineImpl::relabel(
   // replace old variables with new variables in vector & map
   std::swap(varVec, newVarVec);
   std::swap(symbols, newSymbols);
+  if (compiled) {
+    compile(true, 3);
+  }
 }
 
-void Symbolic::SymEngineImpl::rescale(double factor) {
+void Symbolic::SymEngineImpl::rescale(
+    double factor, const std::vector<std::string> &exclusions) {
   SymEngine::map_basic_basic d;
   auto f = SymEngine::number(factor);
   for (const auto &v : varVec) {
-    d[v] = SymEngine::mul(v, f);
+    if (std::find(exclusions.cbegin(), exclusions.cend(), toString(v)) !=
+        exclusions.cend()) {
+      d[v] = v;
+    } else {
+      d[v] = SymEngine::mul(v, f);
+    }
   }
   for (auto &e : exprInlined) {
     SPDLOG_DEBUG("exprInlined '{}'", toString(e));
@@ -262,7 +284,9 @@ void Symbolic::SymEngineImpl::rescale(double factor) {
     e = e->subs(d);
     SPDLOG_DEBUG("  -> '{}'", toString(e));
   }
-  compile(true, 3);
+  if (compiled) {
+    compile(true, 3);
+  }
 }
 
 std::string divide(const std::string &expr, const std::string &var) {
@@ -271,6 +295,15 @@ std::string divide(const std::string &expr, const std::string &var) {
       SymEngine::div(SymEngine::parse(expr), SymEngine::symbol(var)));
   std::locale::global(userLocale);
   return result;
+}
+
+bool contains(const std::string &expr, const std::string &var) {
+  std::locale userLocale = std::locale::global(std::locale::classic());
+  auto e{SymEngine::parse(expr)};
+  auto v{SymEngine::symbol(var)};
+  auto fs = SymEngine::free_symbols(*e);
+  std::locale::global(userLocale);
+  return fs.find(v) != fs.cend();
 }
 
 const char *getLLVMVersion() { return LLVM_VERSION_STRING; }
@@ -317,7 +350,10 @@ void Symbolic::relabel(const std::vector<std::string> &newVariables) {
   pSymEngineImpl->relabel(newVariables);
 }
 
-void Symbolic::rescale(double factor) { pSymEngineImpl->rescale(factor); }
+void Symbolic::rescale(double factor,
+                       const std::vector<std::string> &exclusions) {
+  pSymEngineImpl->rescale(factor, exclusions);
+}
 
 void Symbolic::eval(std::vector<double> &results,
                     const std::vector<double> &vars) const {
@@ -329,6 +365,8 @@ void Symbolic::eval(double *results, const double *vars) const {
 }
 
 bool Symbolic::isValid() const { return pSymEngineImpl->valid; }
+
+bool Symbolic::isCompiled() const { return pSymEngineImpl->compiled; }
 
 const std::string &Symbolic::getErrorMessage() const {
   return pSymEngineImpl->errorMessage;

@@ -93,6 +93,10 @@ addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
   const auto &lengthUnit = model.getUnits().getLength();
   const auto &volumeUnit = model.getUnits().getVolume();
   double volOverL3{model::getVolOverL3(lengthUnit, volumeUnit)};
+  std::vector<std::string> extraReactionVars{
+      "time", model.getParameters().getSpatialCoordinates().x.id,
+      model.getParameters().getSpatialCoordinates().y.id};
+  std::vector<std::string> relabelledExtraReactionVars{"t", "x", "y"};
 
   SPDLOG_TRACE("compartment {}", compartmentId.toStdString());
   auto nonConstantSpecies = getNonConstantSpecies(model, compartmentId);
@@ -174,7 +178,8 @@ addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
   SPDLOG_INFO("  - multiplying reactions by [length]^3/[vol] = {}",
               scaleFactors.reaction);
 
-  Pde pde(&model, nonConstantSpecies, reacs, duneSpeciesNames, scaleFactors);
+  Pde pde(&model, nonConstantSpecies, reacs, duneSpeciesNames, scaleFactors,
+          extraReactionVars, relabelledExtraReactionVars);
   for (std::size_t i = 0; i < nSpecies; ++i) {
     ini.addValue(duneSpeciesNames[i].c_str(), pde.getRHS()[i].c_str());
   }
@@ -235,7 +240,8 @@ addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
       SPDLOG_INFO("  - multiplying species by [vol]/[length]^3 = {}",
                   mScaleFactors.species);
 
-      Pde pdeBcs(&model, mSpecies, mReacs, mDuneSpecies, mScaleFactors);
+      Pde pdeBcs(&model, mSpecies, mReacs, mDuneSpecies, mScaleFactors,
+                 extraReactionVars, relabelledExtraReactionVars);
       for (std::size_t i = 0; i < nSpecies; ++i) {
         ini.addValue(duneSpeciesNames[i].c_str(), pdeBcs.getRHS()[i].c_str());
       }
