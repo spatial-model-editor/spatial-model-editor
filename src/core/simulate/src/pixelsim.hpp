@@ -45,6 +45,7 @@ private:
   std::size_t numMaxThreads{1};
   std::string currentErrorMessage;
   std::atomic<bool> stopRequested{false};
+  std::size_t nExtraVars{0};
 
 public:
   explicit PixelSim(
@@ -56,6 +57,7 @@ public:
   std::size_t run(double time) override;
   const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const override;
+  std::size_t getConcentrationPadding() const override;
   double getLowerOrderConcentration(std::size_t compartmentIndex,
                                     std::size_t speciesIndex,
                                     std::size_t pixelIndex) const;

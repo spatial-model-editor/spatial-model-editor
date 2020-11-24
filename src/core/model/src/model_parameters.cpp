@@ -304,6 +304,7 @@ std::vector<IdName> ModelParameters::getSymbols() const {
   }
   symbols.push_back({spatialCoordinates.x.id, spatialCoordinates.x.name});
   symbols.push_back({spatialCoordinates.y.id, spatialCoordinates.y.name});
+  symbols.push_back({"time", "t"});
   return symbols;
 }
 
@@ -313,7 +314,7 @@ static bool isConstantParameter(const libsbml::Parameter *param) {
     // not constant if replaced by an assignment rule
     return false;
   }
-  // otherwise constant - unless it refers to a spatial coordinate componet
+  // otherwise constant - unless it refers to a spatial coordinate component
   const auto *geom = getGeometry(model);
   if (geom == nullptr) {
     return true;

@@ -51,6 +51,7 @@ private:
   std::atomic<bool> isRunning{false};
   std::atomic<bool> stopRequested{false};
   std::atomic<std::size_t> nCompletedTimesteps{0};
+  std::size_t concPadding{0};
   void initModel(const model::Model &model);
   void updateConcentrations(double t);
 

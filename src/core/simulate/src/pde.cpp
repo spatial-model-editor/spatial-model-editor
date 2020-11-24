@@ -20,13 +20,24 @@ Pde::Pde(const model::Model *doc_ptr,
          const std::vector<std::string> &speciesIDs,
          const std::vector<std::string> &reactionIDs,
          const std::vector<std::string> &relabelledSpeciesIDs,
-         const PdeScaleFactors &pdeScaleFactors)
+         const PdeScaleFactors &pdeScaleFactors,
+         const std::vector<std::string> &extraVariables,
+         const std::vector<std::string> &relabelledExtraVariables)
     : species(speciesIDs) {
-  if (!relabelledSpeciesIDs.empty() &&
-      relabelledSpeciesIDs.size() != speciesIDs.size()) {
-    SPDLOG_WARN("Ignoring relabelledSpecies:"
+  bool relabel{!relabelledSpeciesIDs.empty() ||
+               !relabelledExtraVariables.empty()};
+  if (relabel && relabelledSpeciesIDs.size() != speciesIDs.size()) {
+    SPDLOG_WARN("Ignoring relabelling: relabelledSpecies "
                 "size {} does not match number of species {}",
                 relabelledSpeciesIDs.size(), speciesIDs.size());
+    relabel = false;
+  }
+  if (relabel &&
+      relabelledExtraVariables.size() != extraVariables.size()) {
+    SPDLOG_WARN("Ignoring relabelling: relabelledExtraVariables "
+                "size {} does not match number of extraVariables {}",
+                relabelledExtraVariables.size(), extraVariables.size());
+    relabel = false;
   }
   SPDLOG_INFO("Species rescaled by factor: {}", pdeScaleFactors.species);
   SPDLOG_INFO("Reactions rescaled by factor: {}", pdeScaleFactors.reaction);
@@ -39,6 +50,8 @@ Pde::Pde(const model::Model *doc_ptr,
   for (std::size_t i = 0; i < speciesIDs.size(); ++i) {
     jacobian.emplace_back();
     QString r("0.0");
+    auto vars{reactions.getSpeciesIDs()};
+    vars.insert(vars.end(), extraVariables.cbegin(), extraVariables.cend());
     for (std::size_t j = 0; j < reactions.size(); ++j) {
       // get reaction term
       QString expr =
@@ -51,10 +64,9 @@ Pde::Pde(const model::Model *doc_ptr,
       SPDLOG_DEBUG("Species {} Reaction {} = {}", speciesIDs.at(i), j,
                    expr.toStdString());
       // parse and inline constants & function calls
-      symbolic::Symbolic sym(expr.toStdString(), reactions.getSpeciesIDs(),
-                             reactions.getConstants(j),
-                             doc_ptr->getFunctions().getSymbolicFunctions(),
-                             false);
+      symbolic::Symbolic sym(
+          expr.toStdString(), vars, reactions.getConstants(j),
+          doc_ptr->getFunctions().getSymbolicFunctions(), false);
       if (!sym.isValid()) {
         throw PdeError(sym.getErrorMessage());
       }
@@ -64,16 +76,20 @@ Pde::Pde(const model::Model *doc_ptr,
     // reparse full rhs to simplify
     SPDLOG_DEBUG("Species {} Reparsing all reaction terms", speciesIDs.at(i));
     // parse expression with symengine to simplify
-    symbolic::Symbolic sym(r.toStdString(), speciesIDs, {}, {}, false);
-    // rescale species
-    sym.rescale(pdeScaleFactors.species);
-    // if provided, relabel species with relabelledSpeciesIDs
-    const auto *outputSpecies = &speciesIDs;
-    if (relabelledSpeciesIDs.size() == speciesIDs.size()) {
-      sym.relabel(relabelledSpeciesIDs);
-      outputSpecies = &relabelledSpeciesIDs;
+    symbolic::Symbolic sym(r.toStdString(), vars, {}, {}, false);
+    // rescale species (but not the extra variables)
+    SPDLOG_DEBUG("rescaling species");
+    sym.rescale(pdeScaleFactors.species, extraVariables);
+    auto outputSpecies = speciesIDs;
+    if (relabel) {
+      SPDLOG_DEBUG("re-labelling species");
+      outputSpecies = relabelledSpeciesIDs;
+      outputSpecies.insert(outputSpecies.end(),
+                           relabelledExtraVariables.cbegin(),
+                           relabelledExtraVariables.cend());
+      sym.relabel(outputSpecies);
     }
-    for (const auto &s : *outputSpecies) {
+    for (const auto &s : outputSpecies) {
       jacobian.back().push_back(sym.diff(s));
     }
     rhs.push_back(sym.inlinedExpr());

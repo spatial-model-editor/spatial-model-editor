@@ -71,6 +71,7 @@ public:
   std::size_t run(double time) override;
   const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const override;
+  std::size_t getConcentrationPadding() const override;
   const std::string &errorMessage() const override;
   void requestStop() override;
 };

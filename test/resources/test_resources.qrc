@@ -6,6 +6,7 @@
         <file>models/analytic_2d.xml</file>
         <file>models/analytic_3d.xml</file>
         <file>models/weird-units.xml</file>
+        <file>models/txy.xml</file>
         <file>geometry/gt1.png</file>
         <file>geometry/gt2.png</file>
         <file>geometry/gt3.png</file>

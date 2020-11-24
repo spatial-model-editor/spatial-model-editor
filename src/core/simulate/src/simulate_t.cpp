@@ -1,8 +1,8 @@
 #include "catch_wrapper.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
-#include "sbml_test_data/very_simple_model.hpp"
 #include "qt_test_utils.hpp"
+#include "sbml_test_data/very_simple_model.hpp"
 #include "simulate.hpp"
 #include "utils.hpp"
 #include <QFile>
@@ -913,5 +913,112 @@ SCENARIO("PyConc",
     REQUIRE(cA.size() == 100);
     REQUIRE(cA[0].size() == 100);
     REQUIRE(cA[0][0] == dbl_approx(0.0));
+  }
+}
+
+SCENARIO("Reactions depend on x, y, t",
+         "[core/simulate/simulate][core/simulate][core][simulate]") {
+  model::Model s;
+  QFile f(":/test/models/txy.xml");
+  f.open(QIODevice::ReadOnly);
+  s.importSBMLString(f.readAll().toStdString());
+  constexpr double eps{1e-20};
+  constexpr double dt{1e-3};
+  simulate::Options options;
+  options.dune.dt = dt;
+  options.pixel.integrator = simulate::PixelIntegratorType::RK101;
+  options.pixel.maxErr = {std::numeric_limits<double>::max(),
+                          std::numeric_limits<double>::max()};
+  options.pixel.maxTimestep = dt;
+  GIVEN("reaction with t-dependence") {
+    // fairly tight tolerance, as solution is spatially uniform, so mesh vs
+    // pixel geometry is not a factor when comparing Pixel and Dune here
+    constexpr double maxAllowedAbsDiff{1e-10};
+    constexpr double maxAllowedRelDiff{1e-7};
+    s.getSpecies().remove("A");
+    s.getSpecies().remove("B");
+    simulate::Simulation simPixel{s, simulate::SimulatorType::Pixel};
+    simPixel.doTimesteps(dt, 1);
+    REQUIRE(simPixel.errorMessage().empty());
+    REQUIRE(simPixel.getNCompletedTimesteps() == 2);
+    simulate::Simulation simDune{s, simulate::SimulatorType::DUNE};
+    simDune.doTimesteps(dt, 1);
+    REQUIRE(simDune.errorMessage().empty());
+    REQUIRE(simDune.getNCompletedTimesteps() == 2);
+    auto p{simPixel.getConc(1, 0, 0)};
+    auto d{simDune.getConc(1, 0, 0)};
+    REQUIRE(p.size() == d.size());
+    double maxAbsDiff{0};
+    double maxRelDiff{0};
+    for (std::size_t i = 0; i < p.size(); ++i) {
+      maxAbsDiff = std::max(maxAbsDiff, std::abs(p[i] - d[i]));
+      maxRelDiff = std::max(maxRelDiff, std::abs(p[i] - d[i]) /
+                                            (std::abs(p[i] + d[i] + eps)));
+    }
+    CAPTURE(maxAbsDiff);
+    CAPTURE(maxRelDiff);
+    REQUIRE(maxAbsDiff < maxAllowedAbsDiff);
+    REQUIRE(maxRelDiff < maxAllowedRelDiff);
+  }
+  GIVEN("reaction with x,y-dependence") {
+    // looser tolerance: mesh distorts results
+    constexpr double maxAllowedAbsDiff{0.002};
+    constexpr double maxAllowedRelDiff{0.03};
+    s.getSpecies().remove("C");
+    simulate::Simulation simPixel{s, simulate::SimulatorType::Pixel};
+    simPixel.doTimesteps(dt, 1);
+    REQUIRE(simPixel.errorMessage().empty());
+    REQUIRE(simPixel.getNCompletedTimesteps() == 2);
+    simulate::Simulation simDune{s, simulate::SimulatorType::DUNE};
+    simDune.doTimesteps(dt, 1);
+    REQUIRE(simDune.errorMessage().empty());
+    REQUIRE(simDune.getNCompletedTimesteps() == 2);
+    for (std::size_t speciesIndex=0; speciesIndex<2; ++speciesIndex) {
+      auto p{simPixel.getConc(1, 0, speciesIndex)};
+      auto d{simDune.getConc(1, 0, speciesIndex)};
+      REQUIRE(p.size() == d.size());
+      double maxAbsDiff{0};
+      double maxRelDiff{0};
+      for (std::size_t i = 0; i < p.size(); ++i) {
+        maxAbsDiff = std::max(maxAbsDiff, std::abs(p[i] - d[i]));
+        maxRelDiff = std::max(maxRelDiff, std::abs(p[i] - d[i]) /
+                                              (std::abs(p[i] + d[i] + eps)));
+      }
+      CAPTURE(speciesIndex);
+      CAPTURE(maxAbsDiff);
+      CAPTURE(maxRelDiff);
+      REQUIRE(maxAbsDiff < maxAllowedAbsDiff);
+      REQUIRE(maxRelDiff < maxAllowedRelDiff);
+    }
+  }
+  GIVEN("reaction with t,x,y-dependence") {
+    // looser tolerance: mesh distorts results
+    constexpr double maxAllowedAbsDiff{0.002};
+    constexpr double maxAllowedRelDiff{0.03};
+    simulate::Simulation simPixel{s, simulate::SimulatorType::Pixel};
+    simPixel.doTimesteps(dt, 1);
+    REQUIRE(simPixel.errorMessage().empty());
+    REQUIRE(simPixel.getNCompletedTimesteps() == 2);
+    simulate::Simulation simDune{s, simulate::SimulatorType::DUNE};
+    simDune.doTimesteps(dt, 1);
+    REQUIRE(simDune.errorMessage().empty());
+    REQUIRE(simDune.getNCompletedTimesteps() == 2);
+    for (std::size_t speciesIndex=0; speciesIndex<3; ++speciesIndex) {
+      auto p{simPixel.getConc(1, 0, speciesIndex)};
+      auto d{simDune.getConc(1, 0, speciesIndex)};
+      REQUIRE(p.size() == d.size());
+      double maxAbsDiff{0};
+      double maxRelDiff{0};
+      for (std::size_t i = 0; i < p.size(); ++i) {
+        maxAbsDiff = std::max(maxAbsDiff, std::abs(p[i] - d[i]));
+        maxRelDiff = std::max(maxRelDiff, std::abs(p[i] - d[i]) /
+                                          (std::abs(p[i] + d[i] + eps)));
+      }
+      CAPTURE(speciesIndex);
+      CAPTURE(maxAbsDiff);
+      CAPTURE(maxRelDiff);
+      REQUIRE(maxAbsDiff < maxAllowedAbsDiff);
+      REQUIRE(maxRelDiff < maxAllowedRelDiff);
+    }
   }
 }
