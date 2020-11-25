@@ -1,4 +1,5 @@
 #include "contours.hpp"
+#include "contour_map.hpp"
 #include "logger.hpp"
 #include "mesh_types.hpp"
 #include "utils.hpp"
@@ -135,7 +136,10 @@ static std::vector<Boundary> extractClosedLoopBoundaries(
           contourMap.getAdjacentContourIndex(contour[0]);
       SPDLOG_TRACE("contour {} : adjacent contour {}", contourIndex,
                    adjacentContourIndex);
-      if (contourMap.hasNeighbourWithThisIndex(contour, adjacentContourIndex)) {
+      if (contourMap.hasNeighbourWithThisIndex(contour, adjacentContourIndex) &&
+          (adjacentContourIndex == nullIndex ||
+           contourMap.hasNeighbourWithThisIndex(contours[adjacentContourIndex],
+                                                contourIndex))) {
         isLoop = true;
         SPDLOG_TRACE("contour {} is a loop", contourIndex);
         SPDLOG_TRACE("  - removing contour {}", contourIndex);
@@ -243,7 +247,7 @@ extractLinesFromContours(const QImage &img,
     lines.push_back(extractLineFromContour(contour, contourMap, true));
     while (contour.size() > 1) {
       // subsequent lines cannot be cyclic, contour no longer a loop
-      // ignore any leftover single pixels - artefacts of splitting
+      // ignore any leftover single pixels - typically artefacts of splitting
       lines.push_back(extractLineFromContour(contour, contourMap));
     }
   }
@@ -319,6 +323,22 @@ static void connectNewEndPoint(std::vector<cv::Point> &points,
   }
 }
 
+static std::vector<cv::Point> drawStraightLine(cv::Point startPoint,
+                                               cv::Point endPoint,
+                                               const cv::Mat &cvImg) {
+  std::vector<cv::Point> points;
+  SPDLOG_TRACE("line from ({},{}) to ({},{})", startPoint.x, startPoint.y,
+               endPoint.x, endPoint.y);
+  cv::LineIterator li(cvImg, startPoint, endPoint);
+  points.reserve(static_cast<std::size_t>(li.count));
+  for (int k = 0; k < li.count; ++k) {
+    SPDLOG_TRACE("  - adding ({},{})", li.pos().x, li.pos().y);
+    points.push_back(li.pos());
+    ++li;
+  }
+  return points;
+}
+
 static std::vector<double>
 getDistanceToOtherPoints(std::size_t i0, const cv::Point &point,
                          const std::vector<ContourLine> &lines,
@@ -332,8 +352,7 @@ getDistanceToOtherPoints(std::size_t i0, const cv::Point &point,
       } else {
         dist[j] = cv::norm(lines[j / 2].points.back() - point);
       }
-      SPDLOG_TRACE("  - line {}, front:{}, dist {}", j / 2, j % 2 == 0,
-                   dist[j]);
+      SPDLOG_WARN("  - line {}, front:{}, dist {}", j / 2, j % 2 == 0, dist[j]);
     }
   }
   return dist;
@@ -341,13 +360,34 @@ getDistanceToOtherPoints(std::size_t i0, const cv::Point &point,
 
 static void mergeEndPointTriplets(std::vector<ContourLine> &lines,
                                   const cv::Mat &cvImg) {
-  // identify & merge endpoints
-  std::vector<bool> endPointIsMerged(2 * lines.size(), false);
-  std::size_t nEndPointsToMerge{2 * lines.size() / 3};
   if (2 * lines.size() % 3 != 0) {
     SPDLOG_WARN("Number of endpoints {} is not a multiple of 3",
                 2 * lines.size());
+    // find contour with end points that are closest to each other
+    //  - most likely candidate for a single pixel line that was valid but
+    //  discarded as an artefact
+    //  - add a line between these two points
+    //  - hope for the best...
+    cv::Point pStart;
+    cv::Point pEnd;
+    double minDist{std::numeric_limits<double>::max()};
+    for (const auto &line : lines) {
+      double d{cv::norm(line.points.front() - line.points.back())};
+      if (d < minDist) {
+        minDist = d;
+        pStart = line.points.front();
+        pEnd = line.points.back();
+      }
+    }
+    ContourLine cl;
+    SPDLOG_WARN("  - adding line from ({},{}) to ({},{})", pStart.x, pStart.y,
+                pEnd.x, pEnd.y);
+    cl.points = drawStraightLine(pStart, pEnd, cvImg);
+    lines.push_back(std::move(cl));
   }
+  // identify & merge endpoints
+  std::vector<bool> endPointIsMerged(2 * lines.size(), false);
+  std::size_t nEndPointsToMerge{2 * lines.size() / 3};
   SPDLOG_TRACE("end point triplets to merge: {}", nEndPointsToMerge);
   for (std::size_t i = 0; i < nEndPointsToMerge; ++i) {
     // find next endpoint to merge
@@ -359,17 +399,17 @@ static void mergeEndPointTriplets(std::vector<ContourLine> &lines,
     if (i0 % 2 != 0) {
       point = lines[i0 / 2].points.back();
     }
-    SPDLOG_TRACE("line {}, end point ({},{}), front: {}", i0 / 2, point.x,
-                 point.y, i0 % 2 == 0);
+    SPDLOG_WARN("line {}, end point ({},{}), front: {}", i0 / 2, point.x,
+                point.y, i0 % 2 == 0);
     auto dist = getDistanceToOtherPoints(i0, point, lines, endPointIsMerged);
     // closest two end points:
     auto i1 = utils::min_element_index(dist);
-    SPDLOG_TRACE("    -> closest point: line {} front: {} (dist: {})", i1 / 2,
-                 i1 % 2 == 0, dist[i1]);
+    SPDLOG_WARN("    -> closest point: line {} front: {} (dist: {})", i1 / 2,
+                i1 % 2 == 0, dist[i1]);
     dist[i1] = std::numeric_limits<double>::max();
     auto i2 = utils::min_element_index(dist);
-    SPDLOG_TRACE("    -> next-closest point: line {} front: {} (dist: {})",
-                 i2 / 2, i2 % 2 == 0, dist[i2]);
+    SPDLOG_WARN("    -> next-closest point: line {} front: {} (dist: {})",
+                i2 / 2, i2 % 2 == 0, dist[i2]);
     connectNewEndPoint(lines[i1 / 2].points, point, i1 % 2 == 0, cvImg);
     connectNewEndPoint(lines[i2 / 2].points, point, i2 % 2 == 0, cvImg);
     endPointIsMerged[i0] = true;
@@ -507,69 +547,5 @@ const QImage &Contours::getBoundaryPixelsImage() const {
 std::vector<FixedPoint> &Contours::getFixedPoints() { return fixedPoints; }
 
 std::vector<Boundary> &Contours::getBoundaries() { return boundaries; }
-
-ContourMap::ContourMap(const QSize &size,
-                       const std::vector<std::vector<cv::Point>> &contours)
-    : indices(size.height() + 2, size.width() + 2, CV_32SC1, cv::Scalar(-1)) {
-  int contourIndex{0};
-  for (const auto &contour : contours) {
-    for (const auto &pixel : contour) {
-      indices.at<int>(pixel.y + 1, pixel.x + 1) = contourIndex;
-    }
-    ++contourIndex;
-  }
-}
-
-std::size_t ContourMap::getContourIndex(const cv::Point &p) const {
-  auto i = indices.at<int>(p.y + 1, p.x + 1);
-  if (i == -1) {
-    return nullIndex;
-  }
-  return static_cast<std::size_t>(i);
-}
-
-// looks for an adjacent pixel that belongs to another contour
-// if found returns contour index, otherwise returns nullIndex
-std::size_t ContourMap::getAdjacentContourIndex(const cv::Point &p) const {
-  auto pci = getContourIndex(p);
-  for (const auto &dp : nn4) {
-    auto pp = p + dp;
-    if (auto nci = getContourIndex(pp); nci != pci && nci != nullIndex) {
-      return nci;
-    }
-  }
-  return nullIndex;
-}
-
-// if given a valid contourIndex:
-//  - returns true if there is an adjacent pixel to p from this contour
-// if given nullIndex as contourIndex:
-//  - returns true if *all* adjacent pixels are not part of another contour
-bool ContourMap::hasNeighbourWithThisIndex(const cv::Point &p,
-                                           std::size_t contourIndex) const {
-  if (contourIndex == nullIndex) {
-    auto pci = getContourIndex(p);
-    return std::all_of(nn4.cbegin(), nn4.cend(),
-                       [&p, pci, this](const auto &dp) {
-                         auto pp = p + dp;
-                         auto i = getContourIndex(pp);
-                         return i == pci || i == nullIndex;
-                       });
-  }
-  return std::any_of(nn4.cbegin(), nn4.cend(),
-                     [&p, contourIndex, this](const auto &dp) {
-                       auto pp = p + dp;
-                       auto i = static_cast<std::size_t>(getContourIndex(pp));
-                       return i == contourIndex;
-                     });
-}
-
-bool ContourMap::hasNeighbourWithThisIndex(const std::vector<cv::Point> &points,
-                                           std::size_t contourIndex) const {
-  return std::all_of(points.cbegin(), points.cend(),
-                     [this, contourIndex](const cv::Point &p) {
-                       return hasNeighbourWithThisIndex(p, contourIndex);
-                     });
-}
 
 } // namespace mesh
