@@ -1,0 +1,52 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  codecov:
+    name: Codecov tests coverage
+    runs-on: ubuntu-16.04
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+    - name: Cache ccache
+      uses: actions/cache@v2
+      with:
+        path: ~/.ccache
+        key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
+        restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
+    - name: Build script
+      run: ./ci/codecov.sh
+
+  sonar:
+    name: Sonar static analysis
+    runs-on: ubuntu-16.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - name: Cache ccache
+        uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
+          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
+      - name: Cache sonar
+        uses: actions/cache@v2
+        with:
+          path: ~/.sonarcache
+          key: sonar-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
+          restore-keys: sonar-${{ github.job }}-${{ runner.os }}-
+      - name: Build script
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./ci/sonar.sh
