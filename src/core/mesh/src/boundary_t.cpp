@@ -15,6 +15,13 @@ SCENARIO("Boundary", "[core/mesh/boundary][core/mesh][core][boundary]") {
         {3, 1},
         {1, 3},
     };
+    // 4-point approximation to loop
+    std::vector<QPoint> p4{
+        {0, 0},
+        {3, 1},
+        {1, 3},
+        {-1, 2},
+    };
     WHEN("Non-membrane") {
       mesh::Boundary boundary(points, true);
       REQUIRE(boundary.isLoop() == true);
@@ -30,8 +37,8 @@ SCENARIO("Boundary", "[core/mesh/boundary][core/mesh][core][boundary]") {
       // automatically determine number of points
       auto nPoints = boundary.setMaxPoints();
       REQUIRE(boundary.getMaxPoints() == nPoints);
-      REQUIRE(nPoints == 3);
-      REQUIRE(boundary.getPoints() == p3);
+      REQUIRE(nPoints == 4);
+      REQUIRE(boundary.getPoints() == p4);
     }
     WHEN("Membrane") {
       mesh::Boundary boundary(points, true, true, "membrane");
@@ -49,8 +56,8 @@ SCENARIO("Boundary", "[core/mesh/boundary][core/mesh][core][boundary]") {
       // automatically determine number of points
       auto nPoints = boundary.setMaxPoints();
       REQUIRE(boundary.getMaxPoints() == nPoints);
-      REQUIRE(nPoints == 3);
-      REQUIRE(boundary.getPoints() == p3);
+      REQUIRE(nPoints == 4);
+      REQUIRE(boundary.getPoints() == p4);
     }
   }
   GIVEN("Non-loop") {

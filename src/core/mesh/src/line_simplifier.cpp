@@ -176,6 +176,43 @@ LineError LineSimplifier::getLineError(const std::vector<QPoint> &line) const {
       ++iv;
     }
   }
+  if (closedLoop) {
+    // do implicit last segment of loop: last point -> first point
+    SPDLOG_TRACE("loop-closing line segment: ({},{})->({},{})", line.back().x(),
+                 line.back().y(), line.front().x(), line.front().y());
+    double lineLength = distance(line.back(), line.front());
+    while (iv < vertices.size()) {
+      // sub-segment from original boundary
+      pixel = vertices[iv];
+      std::size_t ivp{(iv + 1) % vertices.size()};
+      SPDLOG_TRACE("  - original segment ({},{})->({},{})", vertices[iv].x(),
+                   vertices[iv].y(), vertices[ivp].x(), vertices[ivp].y());
+      deltaPixel = vertices[ivp] - pixel;
+      auto numPixelsInSegment =
+          std::max(std::abs(deltaPixel.x()), std::abs(deltaPixel.y()));
+      deltaPixel /= numPixelsInSegment;
+      for (int j = 0; j < numPixelsInSegment; ++j) {
+        // distance of each pixel in original sub-segment from approx boundary
+        double dist =
+            distanceFromLine(line.back(), line.front(), pixel, lineLength);
+        err.total += dist;
+        pixel += deltaPixel;
+        ++totalNumPixels;
+        SPDLOG_TRACE("    - pixel: ({},{}) : {}", pixel.x(), pixel.y(), dist);
+      }
+      ++iv;
+    }
+  }
+  // we should be at the end of both vertices and lines now
+  // but if not, just add the distance of each remaining pixel in vertices from
+  // from the last point in the simplified line to the total error
+  while (iv < vertices.size()) {
+    pixel = vertices[iv];
+    double dist = distance(line.back(), pixel);
+    err.total += dist;
+    SPDLOG_TRACE("    - +pixel: ({},{}) : {}", pixel.x(), pixel.y(), dist);
+    ++iv;
+  }
   err.average = err.total / static_cast<double>(totalNumPixels);
   return err;
 }
@@ -212,22 +249,23 @@ bool LineSimplifier::isValid() const { return valid; }
 
 LineSimplifier::LineSimplifier(const std::vector<QPoint> &points,
                                bool isClosedLoop)
-    : minNumPoints{isClosedLoop ? std::size_t{3} : std::size_t{2}} {
-  SPDLOG_DEBUG("Simplifying {} point line - isLoop: {}", points.size(),
-               isClosedLoop);
+    : minNumPoints{isClosedLoop ? std::size_t{3} : std::size_t{2}},
+      closedLoop{isClosedLoop} {
+  SPDLOG_DEBUG("Simplifying {} point line - is closed loop: {}", points.size(),
+               closedLoop);
   if (points.size() < minNumPoints) {
     SPDLOG_DEBUG("  -> invalid: not enough points");
     valid = false;
     return;
   }
-  vertices = removeDegenerateVertices(points, isClosedLoop);
+  vertices = removeDegenerateVertices(points, closedLoop);
   SPDLOG_DEBUG("  - {} non-degenerate points", vertices.size());
   if (vertices.size() < minNumPoints) {
     SPDLOG_DEBUG("  -> invalid: not enough non-degenerate points");
     valid = false;
     return;
   }
-  priorities = getPriorities(vertices, isClosedLoop);
+  priorities = getPriorities(vertices, closedLoop);
 }
 
 } // namespace mesh

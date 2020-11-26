@@ -215,7 +215,7 @@ getTriangleIndicesFromTriangulateio(const triangle::triangulateio &io) {
     auto compIndex = static_cast<std::size_t>(io.triangleattributelist[i]) - 1;
     triangleIndices[compIndex].push_back({{t0, t1, t2}});
   }
-  while (triangleIndices.back().empty()) {
+  while (!triangleIndices.empty() && triangleIndices.back().empty()) {
     // numberofregions may be larger than the actual number of compartments
     // if multiple regions have the same compartment index
     triangleIndices.pop_back();
