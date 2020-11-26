@@ -1,6 +1,7 @@
 target_sources(
   core
   PRIVATE boundary.cpp
+          contour_map.cpp
           contours.cpp
           image_boundaries.cpp
           line_simplifier.cpp
@@ -10,6 +11,8 @@ target_sources(
   core_tests
   PUBLIC boundary.cpp
          boundary_t.cpp
+         contour_map.cpp
+         contour_map_t.cpp
          contours.cpp
          contours_t.cpp
          image_boundaries.cpp
