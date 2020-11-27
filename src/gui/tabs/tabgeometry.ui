@@ -380,6 +380,9 @@
                <property name="minimum">
                 <number>2</number>
                </property>
+               <property name="maximum">
+                <number>999</number>
+               </property>
                <property name="value">
                 <number>12</number>
                </property>
@@ -466,7 +469,7 @@
              <item row="1" column="1" colspan="2">
               <widget class="QSpinBox" name="spinMaxTriangleArea">
                <property name="minimum">
-                <number>2</number>
+                <number>1</number>
                </property>
                <property name="maximum">
                 <number>9999</number>

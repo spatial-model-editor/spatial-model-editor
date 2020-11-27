@@ -109,7 +109,7 @@ SCENARIO("Simplify Lines",
 
       // allow total deviation of 0.5 pixels
       ls.getSimplifiedLine(line, {0.5, 0});
-      REQUIRE(line.size() == 5);
+      REQUIRE(line.size() == 6);
 
       // allow average deviation of 0.1 pixels
       ls.getSimplifiedLine(line, {0, 0.1});
@@ -117,7 +117,7 @@ SCENARIO("Simplify Lines",
 
       // allow total deviation of 3 pixels
       ls.getSimplifiedLine(line, {3.0, 0});
-      REQUIRE(line.size() == 3);
+      REQUIRE(line.size() == 4);
 
       // allow average deviation of 1 pixel
       ls.getSimplifiedLine(line, {0, 1.0});

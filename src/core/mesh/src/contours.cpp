@@ -352,7 +352,7 @@ getDistanceToOtherPoints(std::size_t i0, const cv::Point &point,
       } else {
         dist[j] = cv::norm(lines[j / 2].points.back() - point);
       }
-      SPDLOG_WARN("  - line {}, front:{}, dist {}", j / 2, j % 2 == 0, dist[j]);
+      SPDLOG_DEBUG("  - line {}, front:{}, dist {}", j / 2, j % 2 == 0, dist[j]);
     }
   }
   return dist;
@@ -380,7 +380,7 @@ static void mergeEndPointTriplets(std::vector<ContourLine> &lines,
       }
     }
     ContourLine cl;
-    SPDLOG_WARN("  - adding line from ({},{}) to ({},{})", pStart.x, pStart.y,
+    SPDLOG_DEBUG("  - adding line from ({},{}) to ({},{})", pStart.x, pStart.y,
                 pEnd.x, pEnd.y);
     cl.points = drawStraightLine(pStart, pEnd, cvImg);
     lines.push_back(std::move(cl));
@@ -399,16 +399,16 @@ static void mergeEndPointTriplets(std::vector<ContourLine> &lines,
     if (i0 % 2 != 0) {
       point = lines[i0 / 2].points.back();
     }
-    SPDLOG_WARN("line {}, end point ({},{}), front: {}", i0 / 2, point.x,
+    SPDLOG_DEBUG("line {}, end point ({},{}), front: {}", i0 / 2, point.x,
                 point.y, i0 % 2 == 0);
     auto dist = getDistanceToOtherPoints(i0, point, lines, endPointIsMerged);
     // closest two end points:
     auto i1 = utils::min_element_index(dist);
-    SPDLOG_WARN("    -> closest point: line {} front: {} (dist: {})", i1 / 2,
+    SPDLOG_DEBUG("    -> closest point: line {} front: {} (dist: {})", i1 / 2,
                 i1 % 2 == 0, dist[i1]);
     dist[i1] = std::numeric_limits<double>::max();
     auto i2 = utils::min_element_index(dist);
-    SPDLOG_WARN("    -> next-closest point: line {} front: {} (dist: {})",
+    SPDLOG_DEBUG("    -> next-closest point: line {} front: {} (dist: {})",
                 i2 / 2, i2 % 2 == 0, dist[i2]);
     connectNewEndPoint(lines[i1 / 2].points, point, i1 % 2 == 0, cvImg);
     connectNewEndPoint(lines[i2 / 2].points, point, i2 % 2 == 0, cvImg);

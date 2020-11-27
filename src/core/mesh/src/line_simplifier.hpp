@@ -26,6 +26,7 @@ private:
   std::vector<std::size_t> priorities{};
   LineError getLineError(const std::vector<QPoint> &line) const;
   bool valid{true};
+  bool closedLoop{false};
 
 public:
   void getSimplifiedLine(std::vector<QPoint> &line,

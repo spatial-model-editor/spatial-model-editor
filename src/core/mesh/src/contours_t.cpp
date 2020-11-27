@@ -257,8 +257,8 @@ SCENARIO("Contours", "[core/mesh/contours][core/mesh][core][contours]") {
       REQUIRE(!b2.isMembrane());
     }
   }
-  GIVEN("two cells with some boundaries touching edge of image") {
-    QStringList filenames{"gt4.png", "gt10.png"};
+  GIVEN("two cells, one touching edge of image") {
+    QStringList filenames{"gt4.png", "gt7.png", "gt10.png"};
     for (const auto &filename : filenames) {
       CAPTURE(filename.toStdString());
       QImage img(QString(":/test/geometry/%1").arg(filename));
@@ -279,7 +279,7 @@ SCENARIO("Contours", "[core/mesh/contours][core/mesh][core][contours]") {
       mesh::Contours cWhite(img, {qRgb(255, 255, 255)}, {});
       REQUIRE(cWhite.getBoundaries().size() == 2);
       REQUIRE(cWhite.getFixedPoints().empty());
-      for(const auto &b : cWhite.getBoundaries()) {
+      for (const auto &b : cWhite.getBoundaries()) {
         REQUIRE(b.isValid());
         REQUIRE(b.isLoop());
         REQUIRE(!b.isMembrane());
@@ -298,13 +298,64 @@ SCENARIO("Contours", "[core/mesh/contours][core/mesh][core][contours]") {
       int nValid{0};
       int nLoops{0};
       int nMembranes{0};
-      for(const auto &b : c.getBoundaries()){
+      for (const auto &b : c.getBoundaries()) {
         nValid += static_cast<int>(b.isValid());
         nLoops += static_cast<int>(b.isLoop());
         nMembranes += static_cast<int>(b.isMembrane());
       }
       REQUIRE(nValid == 4);
       REQUIRE(nLoops == 1);
+      REQUIRE(nMembranes == 2);
+    }
+  }
+  GIVEN("two cells, both touching edge of image") {
+    QStringList filenames{"gt6.png"};
+    for (const auto &filename : filenames) {
+      CAPTURE(filename.toStdString());
+      QImage img(QString(":/test/geometry/%1").arg(filename));
+
+      // single compartment: black (outer)
+      // single loop boundary
+      mesh::Contours cBlack(img, {qRgb(0, 0, 0)}, {});
+      REQUIRE(cBlack.getBoundaries().size() == 1);
+      REQUIRE(cBlack.getFixedPoints().empty());
+      for (const auto &b : cBlack.getBoundaries()) {
+        REQUIRE(b.isValid());
+        REQUIRE(b.isLoop());
+        REQUIRE(!b.isMembrane());
+      }
+
+      // two independent compartments: white (inner)
+      // 2 outer loop boundaries
+      mesh::Contours cWhite(img, {qRgb(255, 255, 255)}, {});
+      REQUIRE(cWhite.getBoundaries().size() == 2);
+      REQUIRE(cWhite.getFixedPoints().empty());
+      for (const auto &b : cWhite.getBoundaries()) {
+        REQUIRE(b.isValid());
+        REQUIRE(b.isLoop());
+        REQUIRE(!b.isMembrane());
+      }
+
+      // 3 compartments: black and white
+      // many non-loop boundary lines, of which 2 membranes
+      QRgb col0 = qRgb(0, 0, 0);
+      QRgb col1 = qRgb(255, 255, 255);
+      std::vector<QRgb> compartments{{col0, col1}};
+      std::vector<std::pair<std::string, mesh::ColourPair>> membranes{
+          {"outside-cell", {col0, col1}}};
+      mesh::Contours c(img, compartments, membranes);
+      REQUIRE(c.getBoundaries().size() >= 6);
+      REQUIRE(c.getFixedPoints().size() >= 4);
+      int nValid{0};
+      int nLoops{0};
+      int nMembranes{0};
+      for (const auto &b : c.getBoundaries()) {
+        nValid += static_cast<int>(b.isValid());
+        nLoops += static_cast<int>(b.isLoop());
+        nMembranes += static_cast<int>(b.isMembrane());
+      }
+      REQUIRE(nValid >= 6);
+      REQUIRE(nLoops == 0);
       REQUIRE(nMembranes == 2);
     }
   }
@@ -330,7 +381,7 @@ SCENARIO("Contours", "[core/mesh/contours][core/mesh][core][contours]") {
       mesh::Contours cWhite(img, {qRgb(255, 255, 255)}, {});
       REQUIRE(cWhite.getBoundaries().size() == 3);
       REQUIRE(cWhite.getFixedPoints().empty());
-      for(const auto &b : cWhite.getBoundaries()) {
+      for (const auto &b : cWhite.getBoundaries()) {
         REQUIRE(b.isValid());
         REQUIRE(b.isLoop());
         REQUIRE(!b.isMembrane());
@@ -349,7 +400,7 @@ SCENARIO("Contours", "[core/mesh/contours][core/mesh][core][contours]") {
       int nValid{0};
       int nLoops{0};
       int nMembranes{0};
-      for(const auto &b : c.getBoundaries()){
+      for (const auto &b : c.getBoundaries()) {
         nValid += static_cast<int>(b.isValid());
         nLoops += static_cast<int>(b.isLoop());
         nMembranes += static_cast<int>(b.isMembrane());
@@ -360,7 +411,8 @@ SCENARIO("Contours", "[core/mesh/contours][core/mesh][core][contours]") {
     }
   }
   GIVEN("difficult images: at least don't crash") {
-    QStringList filenames{"gt2.png", "gt6.png", "gt7.png", "gt8.png", "gt14.png", "gt17.png"};
+    QStringList filenames{"gt2.png", "gt8.png", "gt14.png",
+                          "gt17.png"};
     for (const auto &filename : filenames) {
       CAPTURE(filename.toStdString());
       QImage img(QString(":/test/geometry/%1").arg(filename));
