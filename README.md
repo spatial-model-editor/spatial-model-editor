@@ -6,7 +6,7 @@
 [![pypi releases](https://img.shields.io/pypi/v/sme.svg)](https://pypi.org/project/sme)
 [![open in colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/sme/notebooks/getting_started.ipynb)
 [![documentation](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/)
-[![build status](https://travis-ci.org/spatial-model-editor/spatial-model-editor.svg?branch=master)](https://travis-ci.org/spatial-model-editor/spatial-model-editor)
+![GUI/CLI Release Builds](https://github.com/spatial-model-editor/spatial-model-editor/workflows/GUI/CLI%20Release%20Builds/badge.svg)
 [![codecov](https://codecov.io/gh/spatial-model-editor/spatial-model-editor/branch/master/graph/badge.svg)](https://codecov.io/gh/spatial-model-editor/spatial-model-editor)
 [![sonarcloud quality gate status](https://sonarcloud.io/api/project_badges/measure?project=spatial-model-editor_spatial-model-editor&metric=alert_status)](https://sonarcloud.io/dashboard?id=spatial-model-editor_spatial-model-editor)
 

@@ -9,7 +9,10 @@ mkdir build
 cd build
 cmake ..
 ```
-Note: there are many dependencies, some of which are currently not very convenient to install. For some you may find the pre-compiled static libraries used by the CI builds useful - see [ci/README](../ci/README.md) and [.travis.yml](../.travis.yml) for more details.
+Note: there are many dependencies, some of which are currently not
+very convenient to install.
+For some you may find the pre-compiled static libraries used by
+the CI builds useful - see [ci/README](../ci/README.md) and [.travis.yml](../.travis.yml) for more details.
 
 ## Style guide
 
@@ -62,3 +65,5 @@ Note: there are many dependencies, some of which are currently not very convenie
   - [cmake-format](https://cmake-format.readthedocs.io/)
 
   - [black](https://black.readthedocs.io/)
+
+  - [nbstripout](https://pypi.org/project/nbstripout/)

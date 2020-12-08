@@ -18,7 +18,7 @@
 
   - the readthedocs build can be manually ran again after a new PyPI version is uploaded to update the docs
 
-- open pull requests are also compiled and can be previewed on readthedocs
+- open pull request docs are also compiled and can be previewed on readthedocs
 
 ## Animated screenshots
 

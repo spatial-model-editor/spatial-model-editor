@@ -1,0 +1,94 @@
+name: GUI/CLI Release Builds
+
+on: push
+
+jobs:
+  linux-gui:
+    name: Linux GUI/CLI
+    runs-on: ubuntu-16.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+    - name: Cache ccache
+      uses: actions/cache@v2
+      with:
+        path: ~/.ccache
+        key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
+        restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
+    - name: Build script
+      run: ./ci/linux-gui.sh
+    - uses: actions/upload-artifact@v2
+      with:
+        path: ./artefacts/*
+
+  macos-gui:
+    name: MacOS GUI/CLI
+    runs-on: macos-10.15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - name: Cache ccache
+        uses: actions/cache@v2
+        with:
+          path: /Users/runner/Library/Caches/ccache
+          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
+          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
+      - name: Build script
+        run: ./ci/macos-gui.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./artefacts/*
+
+  win64-gui:
+    name: Windows 64-bit GUI/CLI
+    runs-on: windows-2019
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache make
+      - name: Cache ccache
+        uses: actions/cache@v2
+        with:
+          path: D:\a\_temp\msys\msys64\home\runneradmin\.ccache
+          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
+          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
+      - name: Build script
+        run: ci/windows-gui.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./artefacts/*
+
+  Release:
+    needs: [linux-gui, macos-gui, win64-gui]
+    runs-on: ubuntu-18.04
+    # upload binaries to github release if commit is tagged
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: artifact
+          path: binaries
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: binaries/*
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true

@@ -1,0 +1,153 @@
+name: Python Wheel Builds
+
+on: push
+
+env:
+  CIBUILDWHEEL_VERSION: 1.7.1
+
+jobs:
+  linux-wheel:
+    name: Linux Wheels
+    runs-on: ubuntu-16.04
+    defaults:
+      run:
+        shell: bash
+    env:
+      CIBW_MANYLINUX_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2020.12.03
+      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: spatialmodeleditor/manylinux2010-pypy_x86_64:2020.12.03
+      CIBW_SKIP: '*-manylinux_i686'
+      CIBW_TEST_COMMAND: 'python -m unittest discover -s {project}/sme/test -v'
+      CIBW_BUILD_VERBOSITY: 3
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'true'
+    - uses: actions/setup-python@v2
+      name: Install Python
+      with:
+        python-version: '3.7'
+    - name: Install cibuildwheel
+      run: python -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
+    - name: Build wheels
+      run: python -m cibuildwheel --output-dir wheelhouse
+    - uses: actions/upload-artifact@v2
+      with:
+        path: ./wheelhouse/*.whl
+
+  macos-wheel:
+    name: MacOS Wheels
+    runs-on: macos-10.15
+    defaults:
+      run:
+        shell: bash
+    env:
+      CIBW_ENVIRONMENT: 'MACOSX_DEPLOYMENT_TARGET=10.14 CCACHE_BASEDIR=/private CMAKE_CXX_COMPILER_LAUNCHER="ccache" SME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM="on" CMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune"'
+      CIBW_SKIP: cp27-macosx_x86_64
+      CIBW_TEST_COMMAND: 'python -m unittest discover -v -s {project}/sme/test'
+      CIBW_BUILD_VERBOSITY: 3
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - name: Install ccache
+        run: brew install ccache
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.7'
+      - name: Download static libraries
+        run: sudo ./ci/getlibs.sh osx
+      - name: Install cibuildwheel
+        run: python -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
+      - name: Build wheels
+        run: python -m cibuildwheel --output-dir wheelhouse
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+
+  win64-wheel:
+    name: Windows 64-bit Wheels
+    runs-on: windows-2019
+    defaults:
+      run:
+        shell: msys2 {0}
+    env:
+      CIBW_BUILD: '*-win_amd64'
+      CIBW_ENVIRONMENT: 'SME_EXTRA_CORE_DEFS="_hypot=hypot;MS_WIN64"'
+      CIBW_TEST_COMMAND: 'python -m unittest discover -v -s {project}/sme/test'
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache make
+      - name: Download static libraries
+        run: ./ci/getlibs.sh win64
+      - name: Build wheels
+        run: ./ci/windows-wheels.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+
+  win32-wheel:
+    name: Windows 32-bit Wheels
+    runs-on: windows-2019
+    defaults:
+      run:
+        shell: msys2 {0}
+    env:
+      CIBW_BUILD: '*-win32'
+      CIBW_ENVIRONMENT: 'SME_EXTRA_CORE_DEFS="_hypot=hypot"'
+      CIBW_TEST_COMMAND: 'python -m unittest discover -v -s {project}/sme/test'
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW32
+          update: true
+          install: mingw-w64-i686-gcc mingw-w64-i686-cmake mingw-w64-i686-ccache make
+      - name: Download static libraries
+        run: ./ci/getlibs.sh win32
+      - name: Build wheels
+        run: ./ci/windows-wheels.sh
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ./wheelhouse/*.whl
+
+  sdist:
+    name: Build source distribution
+    runs-on: ubuntu-16.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - uses: actions/setup-python@v2
+        name: Install Python
+        with:
+          python-version: '3.7'
+      - name: Build sdist
+        run: python setup.py sdist
+      - uses: actions/upload-artifact@v2
+        with:
+          path: dist/*.tar.gz
+
+  pypi:
+    name: Upload to PyPI
+    needs: [linux-wheel, macos-wheel, win64-wheel, win32-wheel, sdist]
+    runs-on: ubuntu-18.04
+    # upload pypi wheels if commit is tagged with "1.*"
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/1.')
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: artifact
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.pypi_password }}
