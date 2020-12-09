@@ -35,13 +35,17 @@ cd ..
 time ./benchmark/benchmark 1
 
 # check dependencies of binaries
-otool -L src/spatial-model-editor
+otool -L src/spatial-model-editor.app/Contents/MacOS/spatial-model-editor
 otool -L cli/spatial-cli
 
+# create iconset & copy into app
+mkdir -p src/spatial-model-editor.app/Contents
+mkdir -p src/spatial-model-editor.app/Contents/Resources
+iconutil -c icns -o src/spatial-model-editor.app/Contents/Resources/icon.icns ../src/core/resources/icon.iconset
+
 # make dmg of binaries
-mkdir spatial-model-editor
-cp src/spatial-model-editor spatial-model-editor/.
-hdiutil create spatial-model-editor -fs HFS+ -srcfolder spatial-model-editor
+hdiutil create spatial-model-editor -fs HFS+ -srcfolder src/spatial-model-editor.app
+
 mkdir spatial-cli
 cp cli/spatial-cli spatial-cli/.
 hdiutil create spatial-cli -fs HFS+ -srcfolder spatial-cli
