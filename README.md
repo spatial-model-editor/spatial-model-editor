@@ -23,6 +23,11 @@ To get started, download and run the GUI for your operating system
 
 Or take a look at the [documentation](https://spatial-model-editor.readthedocs.io/)
 
+*Note: on linux some additional system libraries are required that may not be installed by default. To install them:*
+
+*  Ubuntu/Debian: `sudo apt-get install libxcb-xinerama0`
+*  Fedora/RHEL/CentOS: `sudo yum install xcb-util-image xcb-util-keysyms xcb-util-renderutil xcb-util-wm`
+
 ![screenshot](docs/img/mesh.png)
 
 ## Contributing
