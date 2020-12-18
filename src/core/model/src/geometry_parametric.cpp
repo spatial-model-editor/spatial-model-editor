@@ -144,8 +144,8 @@ importParametricGeometryFromSBML(const libsbml::Model *model,
     return std::make_unique<mesh::Mesh>(
         modelGeometry->getImage(),
         getInteriorPixelPoints(modelGeometry, modelCompartments), mp.maxPoints,
-        mp.maxAreas, modelMembranes->getIdColourPairs(),
-        modelGeometry->getPixelWidth(), modelGeometry->getPhysicalOrigin(),
+        mp.maxAreas, modelGeometry->getPixelWidth(),
+        modelGeometry->getPhysicalOrigin(),
         utils::toStdVec(modelCompartments->getColours()));
   }
 

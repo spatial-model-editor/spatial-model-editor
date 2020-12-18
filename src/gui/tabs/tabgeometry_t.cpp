@@ -14,12 +14,12 @@
 #include "tabgeometry.hpp"
 
 SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
-  model::Model sbmlDoc;
+  model::Model model;
   QLabelMouseTracker mouseTracker;
   mouseTracker.show();
   waitFor(&mouseTracker);
   QLabel statusBarMsg;
-  auto tab = TabGeometry(sbmlDoc, &mouseTracker, &statusBarMsg);
+  auto tab = TabGeometry(model, &mouseTracker, &statusBarMsg);
   tab.show();
   waitFor(&tab);
   ModalWidgetTimer mwt;
@@ -42,10 +42,6 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
   REQUIRE(lblCompShape != nullptr);
   auto *lblCompSize = tab.findChild<QLabel *>("lblCompSize");
   REQUIRE(lblCompSize != nullptr);
-  // auto *btnChangeCompartment = tab.findChild<QPushButton
-  // *>("btnChangeCompartment");
-  // auto *lblCompBoundary =
-  //     tab.findChild<QLabelMouseTracker *>("lblCompBoundary");
   auto *spinBoundaryIndex = tab.findChild<QSpinBox *>("spinBoundaryIndex");
   REQUIRE(spinBoundaryIndex != nullptr);
   auto *spinMaxBoundaryPoints =
@@ -56,7 +52,7 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
   WHEN("very-simple-model loaded") {
     if (QFile f(":/models/very-simple-model.xml");
         f.open(QIODevice::ReadOnly)) {
-      sbmlDoc.importSBMLString(f.readAll().toStdString());
+      model.importSBMLString(f.readAll().toStdString());
     }
     tab.loadModelData();
     WHEN("select some stuff") {
@@ -99,15 +95,10 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       REQUIRE(txtCompartmentName->text() == "Nucleus");
       REQUIRE(lblCompShape->getImage().pixel(50, 50) == 0xffc58560);
 
-      // boundary pixels tab
-      tabCompartmentGeometry->setFocus();
-      sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
-      REQUIRE(tabCompartmentGeometry->currentIndex() == 1);
-
       // boundary tab
       tabCompartmentGeometry->setFocus();
       sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
-      REQUIRE(tabCompartmentGeometry->currentIndex() == 2);
+      REQUIRE(tabCompartmentGeometry->currentIndex() == 1);
       spinBoundaryIndex->setFocus();
       sendKeyEvents(spinBoundaryIndex, {"Up"});
       sendKeyEvents(spinMaxBoundaryPoints, {"Up"});
@@ -120,7 +111,7 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       // mesh tab
       tabCompartmentGeometry->setFocus();
       sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
-      REQUIRE(tabCompartmentGeometry->currentIndex() == 3);
+      REQUIRE(tabCompartmentGeometry->currentIndex() == 2);
       sendKeyEvents(spinMaxTriangleArea,
                     {"End", "Backspace", "Backspace", "Backspace", "3"});
 

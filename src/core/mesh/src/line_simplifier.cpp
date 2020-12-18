@@ -23,7 +23,7 @@ static std::vector<int> getTriangleAreas(const std::vector<QPoint> &v,
     return areas;
   }
   if (isLoop) {
-    // first/last points can be removed for loops, so calculate areas
+    // first/last points can only be removed for loops, so calculate areas
     areas.front() = triangleArea(v.back(), v.front(), v[1]);
     areas.back() = triangleArea(v[v.size() - 2], v.back(), v.front());
   }
@@ -243,9 +243,15 @@ void LineSimplifier::getSimplifiedLine(std::vector<QPoint> &line,
   }
 }
 
+const std::vector<QPoint> &LineSimplifier::getAllVertices() const {
+  return vertices;
+}
+
 std::size_t LineSimplifier::maxPoints() const { return vertices.size(); }
 
 bool LineSimplifier::isValid() const { return valid; }
+
+bool LineSimplifier::isLoop() const { return closedLoop; }
 
 LineSimplifier::LineSimplifier(const std::vector<QPoint> &points,
                                bool isClosedLoop)

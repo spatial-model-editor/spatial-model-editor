@@ -11,6 +11,7 @@
 #include <QPointF>
 #include <QRgb>
 #include <QString>
+#include <QSize>
 #include <array>
 #include <cstddef>
 #include <memory>
@@ -19,22 +20,17 @@
 #include <utility>
 #include <vector>
 
-class QSize;
-
 namespace mesh {
 
 using QTriangleF = std::array<QPointF, 3>;
-using TriangleIndex = std::array<std::size_t, 3>;
-using ColourPair = std::pair<QRgb, QRgb>;
+using TriangulateTriangleIndex = std::array<std::size_t, 3>;
 
-class ImageBoundaries;
+class Boundary;
 
 class Mesh {
 private:
-  static constexpr std::size_t defaultBoundaryMaxPoints = 12;
-  static constexpr std::size_t defaultCompartmentMaxTriangleArea = 40;
-  bool readOnlyMesh = false;
-  bool validMesh = true;
+  bool readOnlyMesh{false};
+  bool validMesh{true};
   // input data
   QImage img;
   QPointF origin;
@@ -43,11 +39,11 @@ private:
   std::vector<std::size_t> boundaryMaxPoints;
   std::vector<std::size_t> compartmentMaxTriangleArea;
   // generated data
-  std::unique_ptr<ImageBoundaries> imageBoundaries;
+  std::unique_ptr<std::vector<Boundary>> boundaries;
   std::vector<QPointF> vertices;
   std::size_t nTriangles{};
   std::vector<std::vector<QTriangleF>> triangles;
-  std::vector<std::vector<TriangleIndex>> triangleIndices;
+  std::vector<std::vector<TriangulateTriangleIndex>> triangleIndices;
   // convert point in pixel units to point in physical units
   QPointF pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept;
   void constructMesh();
@@ -59,12 +55,10 @@ public:
                 const std::vector<std::vector<QPointF>> &interiorPoints = {},
                 std::vector<std::size_t> maxPoints = {},
                 std::vector<std::size_t> maxTriangleArea = {},
-                const std::vector<std::pair<std::string, ColourPair>>
-                    &membraneColourPairs = {},
                 double pixelWidth = 1.0,
                 const QPointF &originPoint = QPointF(0, 0),
                 const std::vector<QRgb> &compartmentColours = {});
-  // constructor to load existing vertices&trianges without original image
+  // constructor to load existing vertices & triangles without original image
   Mesh(const std::vector<double> &inputVertices,
        const std::vector<std::vector<int>> &inputTriangleIndices,
        const std::vector<std::vector<QPointF>> &interiorPoints);
@@ -74,7 +68,6 @@ public:
   bool isReadOnly() const;
   bool isValid() const;
   std::size_t getNumBoundaries() const;
-  bool isMembrane(std::size_t boundaryIndex) const;
   void setBoundaryMaxPoints(std::size_t boundaryIndex, std::size_t maxPoints);
   std::size_t getBoundaryMaxPoints(std::size_t boundaryIndex) const;
   std::vector<std::size_t> getBoundaryMaxPoints() const;
@@ -89,10 +82,9 @@ public:
   // return triangle indices as an array of ints for SBML
   std::vector<int>
   getTriangleIndicesAsFlatArray(std::size_t compartmentIndex) const;
-  const std::vector<std::vector<TriangleIndex>> &getTriangleIndices() const;
+  const std::vector<std::vector<TriangulateTriangleIndex>> &getTriangleIndices() const;
   const std::vector<std::vector<QTriangleF>> &getTriangles() const;
 
-  const QImage &getBoundaryPixelsImage() const;
   std::pair<QImage, QImage>
   getBoundariesImages(const QSize &size, std::size_t boldBoundaryIndex) const;
   std::pair<QImage, QImage> getMeshImages(const QSize &size,

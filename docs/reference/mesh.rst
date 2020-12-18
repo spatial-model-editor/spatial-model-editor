@@ -23,7 +23,10 @@ These steps are described in more detail below, starting from this initial geome
 Contour detection
 -----------------
 
-The first step in generating the mesh is to identify the set of contours that make up the boundaries of each compartment. Each contour is a closed loop of connected pixels that makes up a boundary between a compartment and the rest of the model. Each compartment has at least one contour around its outer boundary, and it may also contain inner contours around any holes in the compartment shape.
+The first step in generating the mesh is to identify the set of contours that make up the boundaries of each
+compartment, as well as the boundary between the compartments and the outside.
+Each contour is a closed loop of connected pixels that makes up a boundary between a compartment and the rest of the model.
+Each compartment has at least one contour around its outer boundary, and it may also contain inner contours around any holes in the compartment shape.
 
 The contour tracing is done using the `findContours <https://docs.opencv.org/2.4/modules/imgproc/doc/structural_analysis_and_shape_descriptors.html#findcontours>`_ routine from the `OpenCV <https://opencv.org/>`_ library, which implements the method described in `Suzuki et. al. <https://www.sciencedirect.com/science/article/abs/pii/0734189X85900167>`_. This method returns an ordered set of pixels for each contour. The outer contour traces the outer boundary in the anti-clockwise direction, while the inner contours trace each inner boundary in a clockwise direction.
 

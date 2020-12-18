@@ -331,7 +331,7 @@ static int spiralPixelsToBoundary(const QImage &img, const QPoint &pixel) {
 
 static QPointF findBestInteriorPoint(const QImage &img,
                                      const std::vector<QPoint> &pixels) {
-  int maxSpiralDistance{0};
+  int maxSpiralDistance{-1};
   QPoint bestPoint;
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
   QImage heatmap(img.size(), QImage::Format_ARGB32);
@@ -405,7 +405,7 @@ void ModelCompartments::setInteriorPoints(const QString &id,
     // convert from QPoint with (0,0) in top-left to (0,0) in bottom-left
     // and to physical units with pixelWidth and origin
     ip->setCoord1(origin.x() + pixelWidth * point.x());
-    ip->setCoord2(origin.y() + pixelWidth * (height - 1 - point.y()));
+    ip->setCoord2(origin.y() + pixelWidth * (height - point.y()));
     SPDLOG_INFO("    - physical point: ({},{})", ip->getCoord1(),
                 ip->getCoord2());
   }

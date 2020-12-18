@@ -16,7 +16,6 @@
 #include "model_reactions.hpp"
 #include "sbml_math.hpp"
 #include "sbml_utils.hpp"
-#include "symbolic.hpp"
 #include "utils.hpp"
 #include "xml_annotation.hpp"
 
@@ -159,9 +158,9 @@ void ModelSpecies::setFieldConcAnalytic(geometry::Field &field,
     // position in pixels (with (0,0) in top-left of image):
     const auto &point = field.getCompartment()->getPixel(i);
     // rescale to physical x,y point (with (0,0) in bottom-left):
-    xCoord = origin.x() + pixelWidth * static_cast<double>(point.x());
+    xCoord = origin.x() + pixelWidth * (static_cast<double>(point.x()) + 0.5);
     int y = imgHeight - 1 - point.y();
-    yCoord = origin.y() + pixelWidth * static_cast<double>(y);
+    yCoord = origin.y() + pixelWidth * (static_cast<double>(y) + 0.5);
     double conc = evaluateMathAST(astExpr.get(), sbmlVars, sbmlModel);
     field.setConcentration(i, conc);
   }

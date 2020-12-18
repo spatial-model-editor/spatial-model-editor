@@ -139,8 +139,7 @@ void ModelGeometry::updateMesh() {
   SPDLOG_INFO("Updating mesh interior points");
   mesh = std::make_unique<mesh::Mesh>(
       image, interiorPoints, std::vector<std::size_t>{},
-      std::vector<std::size_t>{}, modelMembranes->getIdColourPairs(),
-      pixelWidth, physicalOrigin,
+      std::vector<std::size_t>{}, pixelWidth, physicalOrigin,
       utils::toStdVec(modelCompartments->getColours()));
 }
 
