@@ -9,27 +9,35 @@ SCENARIO("Simplify Lines",
     // 0 points
     mesh::LineSimplifier ls(points, true);
     REQUIRE(ls.isValid() == false);
+    REQUIRE(ls.isLoop() == true);
     ls = mesh::LineSimplifier(points, false);
     REQUIRE(ls.isValid() == false);
+    REQUIRE(ls.isLoop() == false);
     // 1 point
     points.emplace_back(0, 0);
     ls = mesh::LineSimplifier(points, true);
     REQUIRE(ls.isValid() == false);
+    REQUIRE(ls.isLoop() == true);
     ls = mesh::LineSimplifier(points, false);
     REQUIRE(ls.isValid() == false);
+    REQUIRE(ls.isLoop() == false);
     // 2 point loop
     points.emplace_back(0, 1);
     ls = mesh::LineSimplifier(points, true);
     REQUIRE(ls.isValid() == false);
+    REQUIRE(ls.isLoop() == true);
     // 2 point non-loop is valid however
     ls = mesh::LineSimplifier(points, false);
     REQUIRE(ls.isValid() == true);
+    REQUIRE(ls.isLoop() == false);
     // 3 points
     points.emplace_back(1, 1);
     ls = mesh::LineSimplifier(points, true);
     REQUIRE(ls.isValid() == true);
+    REQUIRE(ls.isLoop() == true);
     ls = mesh::LineSimplifier(points, false);
     REQUIRE(ls.isValid() == true);
+    REQUIRE(ls.isLoop() == false);
   }
   GIVEN("Loop") {
     // 9 point loop with 2 degenerate points
@@ -54,6 +62,7 @@ SCENARIO("Simplify Lines",
 
     mesh::LineSimplifier ls(points, true);
     REQUIRE(ls.maxPoints() == l7.size());
+    REQUIRE(ls.isLoop() == true);
 
     std::vector<QPoint> line;
     line.reserve(7);
@@ -147,6 +156,7 @@ SCENARIO("Simplify Lines",
 
     mesh::LineSimplifier ls(points, false);
     REQUIRE(ls.maxPoints() == l7.size());
+    REQUIRE(ls.isLoop() == false);
 
     std::vector<QPoint> line;
     line.reserve(7);

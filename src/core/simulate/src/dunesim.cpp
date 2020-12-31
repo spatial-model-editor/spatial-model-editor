@@ -146,8 +146,8 @@ void DuneSim::updatePixels() {
       for (int x = pMin.x(); x < pMax.x() + 1; ++x) {
         for (int y = pMin.y(); y < pMax.y() + 1; ++y) {
           auto localPoint = e.geometry().local(
-              {static_cast<double>(x) * pixelSize + pixelOrigin.x(),
-               static_cast<double>(y) * pixelSize + pixelOrigin.y()});
+              {(static_cast<double>(x) + 0.5) * pixelSize + pixelOrigin.x(),
+               (static_cast<double>(y) + 0.5) * pixelSize + pixelOrigin.y()});
           // note: qpi/QImage has (0,0) in top-left corner:
           QPoint pix = QPoint(x, geometryImageSize.height() - 1 - y);
           if (auto ix = qpi.getIndex(pix);
@@ -167,10 +167,10 @@ void DuneSim::updatePixels() {
     auto &missing = missingPixels.emplace_back();
     for (std::size_t ix = 0; ix < ixAssigned.size(); ++ix) {
       if (!ixAssigned[ix]) {
-        SPDLOG_TRACE("pixel {} not in a triangle", ix);
+        SPDLOG_WARN("pixel {} not in a triangle", ix);
         // find a neigbouring valid pixel
         auto ixNeighbour = getIxValidNeighbour(ix, ixAssigned, geom);
-        SPDLOG_TRACE("  -> using concentration from pixel {}", ixNeighbour);
+        SPDLOG_WARN("  -> using concentration from pixel {}", ixNeighbour);
         missing.push_back({ix, ixNeighbour});
       }
     }
@@ -264,9 +264,7 @@ DuneSim::getConcentrations(std::size_t compartmentIndex) const {
   return concentration[compartmentIndex];
 }
 
-std::size_t DuneSim::getConcentrationPadding() const {
-  return 0;
-}
+std::size_t DuneSim::getConcentrationPadding() const { return 0; }
 
 const std::string &DuneSim::errorMessage() const { return currentErrorMessage; }
 

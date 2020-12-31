@@ -41,12 +41,14 @@ getNearestValidPixelConcentration(int ix, int iy, int w, int h,
     for (int i = 0; i < len; ++i) {
       y += direction;
       if (auto c = getConcIfValidIndex(x, y, w, h, concentration); c >= 0.0) {
+        SPDLOG_TRACE("pixel ({},{})", x, y);
         return c;
       }
     }
     for (int i = 0; i < len; ++i) {
       x += direction;
       if (auto c = getConcIfValidIndex(x, y, w, h, concentration); c >= 0.0) {
+        SPDLOG_TRACE("pixel ({},{})", x, y);
         return c;
       }
     }
@@ -87,6 +89,7 @@ public:
     SPDLOG_TRACE("pixel ({},{})", ix, iy);
     SPDLOG_TRACE("conc {}", result);
     if (result < 0) {
+      SPDLOG_WARN("pixel ({},{})", ix, iy);
       result = getNearestValidPixelConcentration(ix, iy, w, h, c);
       SPDLOG_TRACE("  -> nearest valid conc: {}", result);
     }

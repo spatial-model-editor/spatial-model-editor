@@ -2,8 +2,8 @@
 //   - Visvalingam-Whyatt polyline simplification
 //   - see https://www.tandfonline.com/doi/abs/10.1179/000870493786962263
 //   - start with ordered set of points forming a line
-//   - constructs an n-point approximation to line given n
-//   - can also choose n given maximum desired relative or absolute error
+//   - constructs an n-point approximation to the line
+//   - can also choose n given a maximum desired relative or absolute error
 
 #pragma once
 
@@ -21,9 +21,9 @@ struct LineError {
 
 class LineSimplifier {
 private:
-  std::vector<QPoint> vertices{};
+  std::vector<QPoint> vertices;
   std::size_t minNumPoints;
-  std::vector<std::size_t> priorities{};
+  std::vector<std::size_t> priorities;
   LineError getLineError(const std::vector<QPoint> &line) const;
   bool valid{true};
   bool closedLoop{false};
@@ -32,8 +32,10 @@ public:
   void getSimplifiedLine(std::vector<QPoint> &line,
                          const LineError &allowedError = {2.0, 0.4}) const;
   void getSimplifiedLine(std::vector<QPoint> &line, std::size_t nPoints) const;
+  const std::vector<QPoint>&getAllVertices() const;
   std::size_t maxPoints() const;
   bool isValid() const;
+  bool isLoop() const;
   explicit LineSimplifier(const std::vector<QPoint> &points,
                           bool isClosedLoop = false);
 };

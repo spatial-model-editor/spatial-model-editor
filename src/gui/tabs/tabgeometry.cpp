@@ -20,53 +20,38 @@ TabGeometry::TabGeometry(model::Model &doc, QLabelMouseTracker *mouseTracker,
 
   connect(lblGeometry, &QLabelMouseTracker::mouseClicked, this,
           &TabGeometry::lblGeometry_mouseClicked);
-
   connect(ui->btnAddCompartment, &QPushButton::clicked, this,
           &TabGeometry::btnAddCompartment_clicked);
-
   connect(ui->btnRemoveCompartment, &QPushButton::clicked, this,
           &TabGeometry::btnRemoveCompartment_clicked);
-
   connect(ui->btnChangeCompartment, &QPushButton::clicked, this,
           &TabGeometry::btnChangeCompartment_clicked);
-
   connect(ui->txtCompartmentName, &QLineEdit::editingFinished, this,
           &TabGeometry::txtCompartmentName_editingFinished);
-
   connect(ui->tabCompartmentGeometry, &QTabWidget::currentChanged, this,
           &TabGeometry::tabCompartmentGeometry_currentChanged);
-
   connect(ui->lblCompBoundary, &QLabelMouseTracker::mouseClicked, this,
           &TabGeometry::lblCompBoundary_mouseClicked);
-
   connect(ui->lblCompBoundary, &QLabelMouseTracker::mouseWheelEvent, this,
           [this](QWheelEvent *ev) {
             QApplication::sendEvent(ui->spinMaxBoundaryPoints, ev);
           });
-
   connect(ui->spinBoundaryIndex, qOverload<int>(&QSpinBox::valueChanged), this,
           &TabGeometry::spinBoundaryIndex_valueChanged);
-
   connect(ui->spinMaxBoundaryPoints, qOverload<int>(&QSpinBox::valueChanged),
           this, &TabGeometry::spinMaxBoundaryPoints_valueChanged);
-
   connect(ui->lblCompMesh, &QLabelMouseTracker::mouseClicked, this,
           &TabGeometry::lblCompMesh_mouseClicked);
-
   connect(ui->lblCompMesh, &QLabelMouseTracker::mouseWheelEvent, this,
           [this](QWheelEvent *ev) {
             QApplication::sendEvent(ui->spinMaxTriangleArea, ev);
           });
-
   connect(ui->spinMaxTriangleArea, qOverload<int>(&QSpinBox::valueChanged),
           this, &TabGeometry::spinMaxTriangleArea_valueChanged);
-
   connect(ui->listCompartments, &QListWidget::itemSelectionChanged, this,
           &TabGeometry::listCompartments_itemSelectionChanged);
-
   connect(ui->listCompartments, &QListWidget::itemDoubleClicked, this,
           &TabGeometry::listCompartments_itemDoubleClicked);
-
   connect(ui->listMembranes, &QListWidget::itemSelectionChanged, this,
           &TabGeometry::listMembranes_itemSelectionChanged);
 }
@@ -94,7 +79,6 @@ void TabGeometry::loadModelData(const QString &selection) {
   lblGeometry->setImage(sbmlDoc.getGeometry().getImage());
   enableTabs();
   selectMatchingOrFirstItem(ui->listCompartments, selection);
-  // ui->lblGeometryStatus->setText("Compartment Geometry:");
 }
 
 void TabGeometry::enableTabs() {
@@ -215,15 +199,10 @@ void TabGeometry::txtCompartmentName_editingFinished() {
 }
 
 void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
-  enum TabIndex { IMAGE = 0, BOUNDARYPIXELS = 1, BOUNDARIES = 2, MESH = 3 };
+  enum TabIndex { IMAGE = 0, BOUNDARIES = 1, MESH = 2 };
   SPDLOG_DEBUG("Tab changed to {} [{}]", index,
                ui->tabCompartmentGeometry->tabText(index).toStdString());
   if (index == TabIndex::IMAGE) {
-    return;
-  }
-  if (index == TabIndex::BOUNDARYPIXELS) {
-    ui->lblCompBoundaryPixels->setImage(
-        sbmlDoc.getGeometry().getMesh()->getBoundaryPixelsImage());
     return;
   }
   if (index == TabIndex::BOUNDARIES) {

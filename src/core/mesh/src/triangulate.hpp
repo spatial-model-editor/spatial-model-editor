@@ -17,44 +17,34 @@
 
 namespace mesh {
 
-struct BoundarySegment {
+struct TriangulateBoundarySegment {
   std::size_t start;
   std::size_t end;
 };
 
-using BoundarySegments = std::vector<BoundarySegment>;
-using TriangleIndex = std::array<std::size_t, 3>;
-using RectangleIndex = std::array<std::size_t, 4>;
+using TriangulateBoundarySegments = std::vector<TriangulateBoundarySegment>;
+using TriangulateTriangleIndex = std::array<std::size_t, 3>;
 
-struct Compartment {
+struct TriangulateCompartment {
   std::vector<QPointF> interiorPoints;
   double maxTriangleArea;
 };
 
-struct BoundaryProperties {
-  std::size_t boundaryIndex;
-  bool isLoop;
-  bool isMembrane;
-  std::size_t membraneIndex;
-};
-
 struct TriangulateBoundaries {
-  std::vector<QPointF> boundaryPoints;
-  std::vector<BoundarySegments> boundaries;
-  std::vector<Compartment> compartments;
-  std::vector<BoundaryProperties> boundaryProperties;
+  std::vector<QPointF> vertices;
+  std::vector<TriangulateBoundarySegments> boundaries;
+  std::vector<TriangulateCompartment> compartments;
 };
 
 class Triangulate {
 private:
   std::vector<QPointF> points;
-  std::vector<std::vector<TriangleIndex>> triangleIndices;
-  void triangulateCompartments(const TriangulateBoundaries &boundaries);
+  std::vector<std::vector<TriangulateTriangleIndex>> triangleIndices;
 
 public:
   explicit Triangulate(const TriangulateBoundaries &boundaries);
-  const std::vector<QPointF> &getPoints() const;
-  const std::vector<std::vector<TriangleIndex>> &getTriangleIndices() const;
+  [[nodiscard]] const std::vector<QPointF> &getPoints() const;
+  [[nodiscard]] const std::vector<std::vector<TriangulateTriangleIndex>> &getTriangleIndices() const;
 };
 
 } // namespace mesh

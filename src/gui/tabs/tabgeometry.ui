@@ -317,34 +317,6 @@
            </item>
           </layout>
          </widget>
-         <widget class="QWidget" name="tabCompartmentBoundaryPixels">
-          <attribute name="title">
-           <string>Boundary Pixels</string>
-          </attribute>
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
-           <item>
-            <widget class="QLabelMouseTracker" name="lblCompBoundaryPixels" native="true">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="toolTip">
-              <string>The mesh representing the geometry of the compartment</string>
-             </property>
-             <property name="statusTip">
-              <string>The mesh representing the geometry of the compartment</string>
-             </property>
-             <property name="whatsThis">
-              <string>&lt;h4&gt;Compartment Geometry: Mesh&lt;/h4&gt;
-&lt;p&gt;The compartment geometry mesh is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
-&lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
          <widget class="QWidget" name="tabCompartmentBoundary">
           <attribute name="title">
            <string>Boundary Lines</string>

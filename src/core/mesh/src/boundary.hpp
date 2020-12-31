@@ -4,7 +4,8 @@
 
 #pragma once
 #include "line_simplifier.hpp"
-#include "mesh_types.hpp"
+#include <opencv2/core/types.hpp>
+#include <QImage>
 #include <QPoint>
 #include <QPointF>
 #include <cstddef>
@@ -14,39 +15,31 @@
 
 namespace mesh {
 
+struct Contours {
+  std::vector<std::vector<cv::Point>> compartmentEdges;
+  std::vector<std::vector<cv::Point>> domainEdges;
+};
+
 class Boundary {
 private:
-  static constexpr std::size_t nullIndex =
-      std::numeric_limits<std::size_t>::max();
-  bool loop;
-  bool membrane;
-  bool valid;
-  std::string membraneID;
-  std::size_t membraneIndex;
   LineSimplifier lineSimplifier;
   std::size_t maxPoints{};
-  // approx to boundary lines using at most maxPoints
   std::vector<QPoint> points;
-  // indices of fixed points shared by multiple boundaries
-  FpIndices fpIndices = {nullIndex, nullIndex};
 
 public:
   bool isLoop() const;
-  bool isMembrane() const;
   bool isValid() const;
   const std::vector<QPoint> &getPoints() const;
-  const FpIndices &getFpIndices() const;
-  void setFpIndices(const FpIndices &indices);
+  const std::vector<QPoint> &getAllPoints() const;
   std::size_t getMaxPoints() const;
   void setMaxPoints(std::size_t maxPoints);
   std::size_t setMaxPoints();
-  const std::string &getMembraneId() const;
-  std::size_t getMembraneIndex() const;
   explicit Boundary(const std::vector<QPoint> &boundaryPoints,
-                    bool isClosedLoop = false,
-                    bool isMembraneCompartment = false,
-                    const std::string &membraneName = {},
-                    std::size_t membraneIndex = 0);
+                    bool isClosedLoop = false);
 };
+
+std::vector<Boundary>
+constructBoundaries(const QImage &img,
+                    const std::vector<QRgb> &compartmentColours);
 
 } // namespace mesh

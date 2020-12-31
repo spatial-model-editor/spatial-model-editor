@@ -51,7 +51,8 @@ find_package(TIFF REQUIRED)
 find_package(fmt REQUIRED)
 find_package(dunecopasi REQUIRED)
 # dune-logging depends on fmt: temporary hack
-target_link_libraries(dunecopasi::dunecopasi INTERFACE fmt::fmt)
+target_link_libraries(dunecopasi::dunecopasi INTERFACE fmt::fmt
+                                                       "${SME_EXTRA_EXE_LIBS}")
 # dune-copasi may use fallback filesystem implementation
 set(SME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM
     no

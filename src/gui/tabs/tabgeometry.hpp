@@ -49,7 +49,6 @@ private:
   void spinMaxBoundaryPoints_valueChanged(int value);
   void lblCompMesh_mouseClicked(QRgb col, QPoint point);
   void spinMaxTriangleArea_valueChanged(int value);
-  void generateMesh(int value = 0);
   void listCompartments_itemSelectionChanged();
   void listCompartments_itemDoubleClicked(QListWidgetItem *item);
   void listMembranes_itemSelectionChanged();

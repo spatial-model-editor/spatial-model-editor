@@ -43,9 +43,13 @@ SCENARIO("DUNE: function",
     for (const auto &compId : m.getCompartments().getIds()) {
       for (const auto &id : m.getSpecies().getIds(compId)) {
         if (!m.getSpecies().getIsConstant(id)) {
-          m.getSpecies().setAnalyticConcentration(id, "cos(x/5.0)+1.1");
+          m.getSpecies().setAnalyticConcentration(id, "cos(x/14.7)+2.1+sin(y/11.1)");
         }
       }
+    }
+    // use unlimited points for boundary approx: should contain every pixel
+    for(std::size_t i=0; i<m.getGeometry().getMesh()->getNumBoundaries(); ++i){
+      m.getGeometry().getMesh()->setBoundaryMaxPoints(i, 9999);
     }
     // create model using functions for initial conditions
     auto stages =
@@ -91,7 +95,6 @@ SCENARIO("DUNE: function",
     // using the nearest pixel in the same compartment, but when dune loads a
     // TIFF it will just use the pixel from the wrong compartment (which will
     // return zero for the concentration) instead.
-    // Hence the requirement for agreement within 10% on average:
-    REQUIRE(avgRelErr < 0.1);
+    REQUIRE(avgRelErr < 0.5);
   }
 }

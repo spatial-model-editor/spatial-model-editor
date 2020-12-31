@@ -5,15 +5,7 @@
 #include <QImage>
 #include <QPainter>
 #include <QString>
-#include <cmath>
 #include <initializer_list>
-#include <iterator>
-#include <limits>
-#include <memory>
-#include <numeric>
-#include <stdlib.h>
-#include <string>
-#include <utility>
 
 namespace mesh {
 
@@ -33,8 +25,9 @@ static void setPointList(triangle::triangulateio &in,
   }
 }
 
-static void setSegmentList(triangle::triangulateio &in,
-                           const std::vector<BoundarySegments> &boundaries) {
+static void
+setSegmentList(triangle::triangulateio &in,
+               const std::vector<TriangulateBoundarySegments> &boundaries) {
   free(in.segmentlist);
   in.segmentlist = nullptr;
   free(in.segmentmarkerlist);
@@ -50,7 +43,7 @@ static void setSegmentList(triangle::triangulateio &in,
   in.numberofsegments = static_cast<int>(nSegments);
   in.segmentmarkerlist = static_cast<int *>(malloc(nSegments * sizeof(int)));
   int *seg = in.segmentlist;
-  int *segm = in.segmentmarkerlist;
+  int *segmarker = in.segmentmarkerlist;
   // 2-based indexing of boundaries
   // 0 and 1 may be used by triangle library
   int boundaryMarker = 2;
@@ -60,15 +53,16 @@ static void setSegmentList(triangle::triangulateio &in,
       ++seg;
       *seg = static_cast<int>(segment.end);
       ++seg;
-      *segm = boundaryMarker;
-      ++segm;
+      *segmarker = boundaryMarker;
+      ++segmarker;
     }
     ++boundaryMarker;
   }
 }
 
-static void setRegionList(triangle::triangulateio &in,
-                          const std::vector<Compartment> &compartments) {
+static void
+setRegionList(triangle::triangulateio &in,
+              const std::vector<TriangulateCompartment> &compartments) {
   // 1-based indexing of compartments
   // 0 is then used for triangles that are not part of a compartment
   free(in.regionlist);
@@ -120,63 +114,11 @@ static void setHoleList(triangle::triangulateio &in,
 static triangle::triangulateio
 toTriangulateio(const TriangulateBoundaries &tid) {
   triangle::triangulateio io;
-  setPointList(io, tid.boundaryPoints);
+  setPointList(io, tid.vertices);
   setSegmentList(io, tid.boundaries);
   setRegionList(io, tid.compartments);
   return io;
 }
-
-#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-static QRectF getBoundingRectangle(const std::vector<QPointF> &points) {
-  QRectF r;
-  double minX = std::numeric_limits<double>::max();
-  double minY = std::numeric_limits<double>::max();
-  double maxX = std::numeric_limits<double>::min();
-  double maxY = std::numeric_limits<double>::min();
-  for (const auto &p : points) {
-    double x = p.x();
-    double y = p.y();
-    minX = std::min(minX, x);
-    maxX = std::max(maxX, x);
-    minY = std::min(minY, y);
-    maxY = std::max(maxY, y);
-  }
-  r.setLeft(minX);
-  r.setRight(maxX);
-  r.setTop(minY);
-  r.setBottom(maxY);
-  return r;
-}
-
-static void debugDrawPointsAndBoundaries(
-    const std::vector<QPointF> &bp,
-    const std::vector<std::vector<TriangleIndex>> &indices,
-    const QString &filename) {
-  QImage img(800, 800, QImage::Format_ARGB32_Premultiplied);
-  img.fill(0);
-  QPainter painter(&img);
-  auto rect = getBoundingRectangle(bp);
-  auto p0 = rect.topLeft();
-  double scale =
-      std::min(img.width() / rect.width(), img.height() / rect.height());
-  SPDLOG_TRACE("Points:");
-  for (std::size_t i = 0; i < bp.size(); ++i) {
-    painter.drawEllipse(scale * bp[i] + p0, 2, 2);
-    SPDLOG_TRACE("  - [{}] ({},{})", i, bp[i].x(), bp[i].y());
-  }
-  for (std::size_t i = 0; i < indices.size(); ++i) {
-    painter.setPen(QPen(utils::indexedColours()[i], 2));
-    SPDLOG_TRACE("Boundary {}:", i);
-    for (const auto &b : indices[i]) {
-      painter.drawLine(scale * bp[b[0]] + p0, scale * bp[b[1]] + p0);
-      painter.drawLine(scale * bp[b[1]] + p0, scale * bp[b[2]] + p0);
-      painter.drawLine(scale * bp[b[2]] + p0, scale * bp[b[0]] + p0);
-    }
-  }
-  painter.end();
-  img.mirrored(false, true).save(filename);
-}
-#endif
 
 // http://www.cs.cmu.edu/~quake/triangle.switch.html
 //  - Q: no printf output
@@ -204,9 +146,9 @@ getPointsFromTriangulateio(const triangle::triangulateio &io) {
   return points;
 }
 
-static std::vector<std::vector<TriangleIndex>>
+static std::vector<std::vector<TriangulateTriangleIndex>>
 getTriangleIndicesFromTriangulateio(const triangle::triangulateio &io) {
-  std::vector<std::vector<TriangleIndex>> triangleIndices(
+  std::vector<std::vector<TriangulateTriangleIndex>> triangleIndices(
       static_cast<std::size_t>(io.numberofregions));
   for (int i = 0; i < io.numberoftriangles; ++i) {
     auto t0 = static_cast<std::size_t>(io.trianglelist[i * 3]);
@@ -216,7 +158,7 @@ getTriangleIndicesFromTriangulateio(const triangle::triangulateio &io) {
     triangleIndices[compIndex].push_back({{t0, t1, t2}});
   }
   while (!triangleIndices.empty() && triangleIndices.back().empty()) {
-    // numberofregions may be larger than the actual number of compartments
+    // number of regions may be larger than the number of compartments
     // if multiple regions have the same compartment index
     triangleIndices.pop_back();
   }
@@ -250,8 +192,7 @@ static bool appendUnassignedTriangleCentroids(const triangle::triangulateio &io,
   return foundUnassignedTriangles;
 }
 
-void Triangulate::triangulateCompartments(
-    const TriangulateBoundaries &boundaries) {
+Triangulate::Triangulate(const TriangulateBoundaries &boundaries) {
   std::vector<QPointF> holes;
   auto in = toTriangulateio(boundaries);
   setHoleList(in, holes);
@@ -266,18 +207,11 @@ void Triangulate::triangulateCompartments(
   }
   points = getPointsFromTriangulateio(out);
   triangleIndices = getTriangleIndicesFromTriangulateio(out);
-#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-  debugDrawPointsAndBoundaries(points, triangleIndices, "triangulate.png");
-#endif
-}
-
-Triangulate::Triangulate(const TriangulateBoundaries &boundaries) {
-  triangulateCompartments(boundaries);
 }
 
 const std::vector<QPointF> &Triangulate::getPoints() const { return points; }
 
-const std::vector<std::vector<TriangleIndex>> &
+const std::vector<std::vector<TriangulateTriangleIndex>> &
 Triangulate::getTriangleIndices() const {
   return triangleIndices;
 }

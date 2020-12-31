@@ -125,7 +125,7 @@ template <typename T> std::string vectorToString(const std::vector<T> &vec) {
 }
 
 template <typename T>
-static std::vector<std::size_t>
+std::vector<std::size_t>
 getIndicesOfSortedVector(const std::vector<T> &unsorted) {
   std::vector<std::size_t> indices(unsorted.size(), 0);
   std::iota(indices.begin(), indices.end(), 0);
@@ -267,8 +267,7 @@ public:
 
 // erase elements [first, last) from v, treating v as cyclic
 template <typename T>
-static void cyclicErase(std::vector<T> &v, std::size_t first,
-                        std::size_t last) {
+void cyclicErase(std::vector<T> &v, std::size_t first, std::size_t last) {
   using diff = typename std::vector<T>::difference_type;
   if (first > last) {
     v.erase(v.begin() + static_cast<diff>(first), v.end());
@@ -277,6 +276,53 @@ static void cyclicErase(std::vector<T> &v, std::size_t first,
   }
   v.erase(v.begin() + static_cast<diff>(first),
           v.begin() + static_cast<diff>(last));
+}
+
+template <typename T>
+bool isCyclicPermutation(const std::vector<T> &a, const std::vector<T> &b) {
+  if (a.size() != b.size()) {
+    // different length: vectors not equal
+    return false;
+  }
+  if (a.size() == 1) {
+    // deal with single length vectors edge case
+    return a[0] == b[0];
+  }
+  // find an element of b that matches the first element of a
+  std::size_t ib{0};
+  while (ib < b.size() && b[ib] != a.front()) {
+    ++ib;
+  }
+  if (ib == b.size()) {
+    // no element in b matches first element of a: vectors not equal
+    return false;
+  }
+  // b[ib] == a[0]
+  // by default iterate forwards through a & b
+  bool fwd{true};
+  if (a[1] == b[(ib + b.size() - 1) % b.size()]) {
+    // next element of a equal to previous element of b: iterate backwards in b
+    fwd = false;
+  }
+  for (const auto &elem : a) {
+    if (elem != b[ib]) {
+      // matching elements not equal: vectors not equal
+      return false;
+    }
+    if (fwd) {
+      ++ib;
+      if (ib == b.size()) {
+        ib = 0;
+      }
+    } else {
+      if (ib == 0) {
+        ib = b.size();
+      }
+      --ib;
+    }
+  }
+  // all matching elements compare equal
+  return true;
 }
 
 } // namespace utils

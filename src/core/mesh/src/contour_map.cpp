@@ -1,78 +1,56 @@
 #include "contour_map.hpp"
-#include <QColor>
-#include <QPoint>
-#include <QSize>
-#include <algorithm>
-#include <limits>
-#include <opencv2/core/cvdef.h>
-#include <opencv2/core/hal/interface.h>
-#include <opencv2/core/matx.hpp>
-#include <opencv2/imgproc.hpp>
 
 namespace mesh {
 
-ContourMap::ContourMap(const QSize &size,
-                       const std::vector<std::vector<cv::Point>> &contours)
-    : indices(size.height() + 2, size.width() + 2, CV_32SC1, cv::Scalar(-1)) {
+static void addEdge(ContourIndices& contourIndices, int contourIndex){
+  if (contourIndices[0] < 0 || contourIndices[0] == contourIndex) {
+    contourIndices[0] = contourIndex;
+    return;
+  }
+  if (contourIndices[1] < 0 || contourIndices[1] == contourIndex) {
+    contourIndices[1] = contourIndex;
+    return;
+  }
+  if (contourIndices[2] < 0 || contourIndices[2] == contourIndex) {
+    contourIndices[2] = contourIndex;
+    return;
+  }
+  contourIndices[3] = contourIndex;
+}
+
+static void addEdges(std::vector<ContourIndices> &indices,
+                     const std::vector<cv::Point> &points, int contourIndex,
+                     int L) {
+  for (const auto &point : points) {
+    auto idx{static_cast<std::size_t>(point.x + L * point.y)};
+    addEdge(indices[idx], contourIndex);
+  }
+}
+
+ContourMap::ContourMap(const QSize &size, const Contours &contours)
+    : indices(
+          static_cast<std::size_t>((size.height() + 1) * (size.width() + 1)),
+          {-1, -1, -1,-1}),
+      L(size.width() + 1) {
+  // add domain edges, all with the same index
+  auto domainIndex{static_cast<int>(contours.compartmentEdges.size())};
+  for (const auto &edges : contours.domainEdges) {
+    addEdges(indices, edges, domainIndex, L);
+  }
+  // add compartment edges
   int contourIndex{0};
-  for (const auto &contour : contours) {
-    for (const auto &pixel : contour) {
-      indices.at<int>(pixel.y + 1, pixel.x + 1) = contourIndex;
-    }
+  for (const auto &edges : contours.compartmentEdges) {
+    addEdges(indices, edges, contourIndex, L);
     ++contourIndex;
   }
 }
 
-std::size_t ContourMap::getContourIndex(const cv::Point &p) const {
-  auto i = indices.at<int>(p.y + 1, p.x + 1);
-  if (i == -1) {
-    return nullIndex;
-  }
-  return static_cast<std::size_t>(i);
+const ContourIndices &ContourMap::getContourIndices(const cv::Point &p) const {
+  return indices[static_cast<std::size_t>(p.x + L * p.y)];
 }
 
-// looks for an adjacent pixel that belongs to another contour
-// if found returns contour index, otherwise returns nullIndex
-std::size_t ContourMap::getAdjacentContourIndex(const cv::Point &p) const {
-  auto pci = getContourIndex(p);
-  for (const auto &dp : nn4) {
-    auto pp = p + dp;
-    if (auto nci = getContourIndex(pp); nci != pci && nci != nullIndex) {
-      return nci;
-    }
-  }
-  return nullIndex;
-}
-
-// if given a valid contourIndex:
-//  - returns true if there is an adjacent pixel to p from this contour
-// if given nullIndex as contourIndex:
-//  - returns true if *all* adjacent pixels are not part of another contour
-bool ContourMap::hasNeighbourWithThisIndex(const cv::Point &p,
-                                           std::size_t contourIndex) const {
-  if (contourIndex == nullIndex) {
-    auto pci = getContourIndex(p);
-    return std::all_of(nn4.cbegin(), nn4.cend(),
-                       [&p, pci, this](const auto &dp) {
-                         auto pp = p + dp;
-                         auto i = getContourIndex(pp);
-                         return i == pci || i == nullIndex;
-                       });
-  }
-  return std::any_of(nn4.cbegin(), nn4.cend(),
-                     [&p, contourIndex, this](const auto &dp) {
-                       auto pp = p + dp;
-                       auto i = static_cast<std::size_t>(getContourIndex(pp));
-                       return i == contourIndex;
-                     });
-}
-
-bool ContourMap::hasNeighbourWithThisIndex(const std::vector<cv::Point> &points,
-                                           std::size_t contourIndex) const {
-  return std::all_of(points.cbegin(), points.cend(),
-                     [this, contourIndex](const cv::Point &p) {
-                       return hasNeighbourWithThisIndex(p, contourIndex);
-                     });
+bool ContourMap::isFixedPoint(const cv::Point &p) const {
+  return getContourIndices(p)[2] >= 0;
 }
 
 } // namespace mesh

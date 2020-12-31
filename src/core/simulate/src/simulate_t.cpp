@@ -569,7 +569,8 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
 // return r2 distance from origin of point
 static double r2(const QPoint &p) {
   // nb: flip y axis since qpoint has y=0 at top
-  return std::pow(p.x() - 48, 2) + std::pow((99 - p.y()) - 48, 2);
+  // use point at centre of pixel
+  return std::pow(p.x() - 48 + 0.5, 2) + std::pow((99 - p.y()) - 48 + 0.5, 2);
 }
 
 // return analytic prediction for concentration
@@ -639,9 +640,9 @@ SCENARIO(
     double evolvedAvgRelativeError{0.003};
     if (simType == simulate::SimulatorType::DUNE) {
       // increase allowed error for dune simulation
-      initialRelativeError = 0.01;
+      initialRelativeError = 0.02;
       evolvedMaxRelativeError = 0.3;
-      evolvedAvgRelativeError = 0.1;
+      evolvedAvgRelativeError = 0.10;
     }
 
     // integrate & compare
@@ -973,7 +974,7 @@ SCENARIO("Reactions depend on x, y, t",
     simDune.doTimesteps(dt, 1);
     REQUIRE(simDune.errorMessage().empty());
     REQUIRE(simDune.getNCompletedTimesteps() == 2);
-    for (std::size_t speciesIndex=0; speciesIndex<2; ++speciesIndex) {
+    for (std::size_t speciesIndex = 0; speciesIndex < 2; ++speciesIndex) {
       auto p{simPixel.getConc(1, 0, speciesIndex)};
       auto d{simDune.getConc(1, 0, speciesIndex)};
       REQUIRE(p.size() == d.size());
@@ -1003,7 +1004,7 @@ SCENARIO("Reactions depend on x, y, t",
     simDune.doTimesteps(dt, 1);
     REQUIRE(simDune.errorMessage().empty());
     REQUIRE(simDune.getNCompletedTimesteps() == 2);
-    for (std::size_t speciesIndex=0; speciesIndex<3; ++speciesIndex) {
+    for (std::size_t speciesIndex = 0; speciesIndex < 3; ++speciesIndex) {
       auto p{simPixel.getConc(1, 0, speciesIndex)};
       auto d{simDune.getConc(1, 0, speciesIndex)};
       REQUIRE(p.size() == d.size());
@@ -1012,7 +1013,7 @@ SCENARIO("Reactions depend on x, y, t",
       for (std::size_t i = 0; i < p.size(); ++i) {
         maxAbsDiff = std::max(maxAbsDiff, std::abs(p[i] - d[i]));
         maxRelDiff = std::max(maxRelDiff, std::abs(p[i] - d[i]) /
-                                          (std::abs(p[i] + d[i] + eps)));
+                                              (std::abs(p[i] + d[i] + eps)));
       }
       CAPTURE(speciesIndex);
       CAPTURE(maxAbsDiff);
