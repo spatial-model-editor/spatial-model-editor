@@ -581,7 +581,7 @@ static double analytic(const QPoint &p, double t, double D, double t0) {
 
 SCENARIO(
     "Simulate: single-compartment-diffusion, circular geometry",
-    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel][Q]") {
+    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
   // see docs/tests/diffusion.rst for analytic expressions used here
   // NB central point of initial distribution: (48,99-48) <-> ix=1577
 
@@ -1021,5 +1021,46 @@ SCENARIO("Reactions depend on x, y, t",
       REQUIRE(maxAbsDiff < maxAllowedAbsDiff);
       REQUIRE(maxRelDiff < maxAllowedRelDiff);
     }
+  }
+}
+SCENARIO(
+    "membrane reactions",
+    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
+  GIVEN("circle membrane reaction") {
+    model::Model s;
+    if (QFile f(":/test/models/membrane-reaction-circle.xml");
+        f.open(QIODevice::ReadOnly)) {
+      s.importSBMLString(f.readAll().toStdString());
+    }
+    simulate::Options options;
+    simulate::Simulation simDune(s, simulate::SimulatorType::DUNE, options);
+    simulate::Simulation simPixel(s, simulate::SimulatorType::Pixel, options);
+    REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
+    REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
+    simDune.doTimesteps(0.05);
+    simPixel.doTimesteps(0.05);
+    REQUIRE(std::abs(simPixel.getAvgMinMax(1, 1, 0).avg -
+                     simDune.getAvgMinMax(1, 1, 0).avg) /
+                std::abs(simPixel.getAvgMinMax(1, 1, 0).avg +
+                         simDune.getAvgMinMax(1, 1, 0).avg) <
+            0.1);
+    auto p{simPixel.getConc(1, 1, 0)};
+    auto d{simDune.getConc(1, 1, 0)};
+    REQUIRE(p.size() == d.size());
+    double avgAbsDiff{0};
+    double avgRelDiff{0};
+    constexpr double eps{1e-11};
+    double allowedAvgAbsDiff{0.01};
+    double allowedAvgRelDiff{0.40};
+    for (std::size_t i = 0; i < p.size(); ++i) {
+      avgAbsDiff += std::abs(p[i] - d[i]);
+      avgRelDiff += std::abs(p[i] - d[i]) / (std::abs(p[i] + d[i] + eps));
+    }
+    avgAbsDiff /= static_cast<double>(p.size());
+    avgRelDiff /= static_cast<double>(p.size());
+    CAPTURE(avgAbsDiff);
+    CAPTURE(avgRelDiff);
+    REQUIRE(avgAbsDiff < allowedAvgAbsDiff);
+    REQUIRE(avgRelDiff < allowedAvgRelDiff);
   }
 }
