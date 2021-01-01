@@ -2,11 +2,25 @@
 
 ## [latest]
 ### Added
-- user can edit dune-copasi Newton solver parameters
 
 ### Changed
-- rectangular membrane compartments removed from mesh
-  - dune-copasi simulations now faster and more accurate
+
+### Removed
+
+## [1.0.5] - 2021-01-02
+### Added
+- user can edit dune-copasi Newton solver parameters
+- Pixel simulator supports reactions that explicitly depend on t, x, y
+
+### Changed
+- dune-copasi simulations now support membrane flux terms
+  - rectangular membrane compartments no longer required
+  - simpler mesh generation
+  - faster and more accurate simulations
+- improved boundary construction
+  - use pixel edges as boundary edges insted of pixels
+  - shared boundaries and their end points now unambiguously determined
+- improved line simplification
 
 ### Removed
 - inconsistent `RateRule` support in SBML import
