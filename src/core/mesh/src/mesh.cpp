@@ -66,12 +66,7 @@ Mesh::Mesh(const QImage &image,
     SPDLOG_INFO("no max triangle areas specified, using default value: {}",
                 defaultCompartmentMaxTriangleArea);
   }
-  try {
-    constructMesh();
-  } catch (const std::exception &e) {
-    SPDLOG_WARN("constructMesh failed with exception: {}", e.what());
-    validMesh = false;
-  }
+  constructMesh();
 }
 
 Mesh::Mesh(const std::vector<double> &inputVertices,
@@ -293,29 +288,37 @@ constructTriangulateBoundaries(const std::vector<Boundary> &boundaries) {
 }
 
 void Mesh::constructMesh() {
-  auto tid = constructTriangulateBoundaries(*boundaries);
+  try {
+    auto tid = constructTriangulateBoundaries(*boundaries);
 
-  // add interior point & max triangle area for each compartment
-  for (std::size_t i = 0; i < compartmentInteriorPoints.size(); ++i) {
-    tid.compartments.push_back(
-        {compartmentInteriorPoints[i],
-         static_cast<double>(compartmentMaxTriangleArea[i])});
-  }
-  Triangulate triangulate(tid);
-  vertices = triangulate.getPoints();
-  triangleIndices = triangulate.getTriangleIndices();
-
-  // construct triangles for each compartment:
-  nTriangles = 0;
-  triangles.clear();
-  for (const auto &compartmentTriangleIndices : triangleIndices) {
-    nTriangles += compartmentTriangleIndices.size();
-    auto &compTriangles = triangles.emplace_back();
-    SPDLOG_TRACE("  - adding triangle compartment");
-    for (const auto &t : compartmentTriangleIndices) {
-      compTriangles.push_back(
-          {{vertices[t[0]], vertices[t[1]], vertices[t[2]]}});
+    // add interior point & max triangle area for each compartment
+    for (std::size_t i = 0; i < compartmentInteriorPoints.size(); ++i) {
+      tid.compartments.push_back(
+          {compartmentInteriorPoints[i],
+           static_cast<double>(compartmentMaxTriangleArea[i])});
     }
+    Triangulate triangulate(tid);
+    vertices = triangulate.getPoints();
+    triangleIndices = triangulate.getTriangleIndices();
+
+    // construct triangles for each compartment:
+    nTriangles = 0;
+    triangles.clear();
+    for (const auto &compartmentTriangleIndices : triangleIndices) {
+      nTriangles += compartmentTriangleIndices.size();
+      auto &compTriangles = triangles.emplace_back();
+      SPDLOG_TRACE("  - adding triangle compartment");
+      for (const auto &t : compartmentTriangleIndices) {
+        compTriangles.push_back(
+            {{vertices[t[0]], vertices[t[1]], vertices[t[2]]}});
+      }
+    }
+  } catch (const std::exception &e) {
+    SPDLOG_WARN("constructMesh failed with exception: {}", e.what());
+    validMesh = false;
+    vertices.clear();
+    triangleIndices.clear();
+    triangles.clear();
   }
 }
 
