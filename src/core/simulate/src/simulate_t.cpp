@@ -1063,4 +1063,40 @@ SCENARIO(
     REQUIRE(avgAbsDiff < allowedAvgAbsDiff);
     REQUIRE(avgRelDiff < allowedAvgRelDiff);
   }
+  GIVEN("pair of pixels membrane reaction") {
+    model::Model s;
+    QFile f(":/test/models/membrane-reaction-pixels.xml");
+    f.open(QIODevice::ReadOnly);
+    s.importSBMLString(f.readAll().toStdString());
+    simulate::Options options;
+    simulate::Simulation simDune(s, simulate::SimulatorType::DUNE, options);
+    simulate::Simulation simPixel(s, simulate::SimulatorType::Pixel, options);
+    REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
+    REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
+    simDune.doTimesteps(5);
+    simPixel.doTimesteps(5);
+    REQUIRE(std::abs(simPixel.getAvgMinMax(1, 1, 0).avg -
+                     simDune.getAvgMinMax(1, 1, 0).avg) /
+                std::abs(simPixel.getAvgMinMax(1, 1, 0).avg +
+                         simDune.getAvgMinMax(1, 1, 0).avg) <
+            0.005);
+    auto p{simPixel.getConc(1, 1, 0)};
+    auto d{simDune.getConc(1, 1, 0)};
+    REQUIRE(p.size() == d.size());
+    double avgAbsDiff{0};
+    double avgRelDiff{0};
+    constexpr double eps{1e-15};
+    double allowedAvgAbsDiff{0.5};
+    double allowedAvgRelDiff{0.005};
+    for (std::size_t i = 0; i < p.size(); ++i) {
+      avgAbsDiff += std::abs(p[i] - d[i]);
+      avgRelDiff += std::abs(p[i] - d[i]) / (std::abs(p[i] + d[i] + eps));
+    }
+    avgAbsDiff /= static_cast<double>(p.size());
+    avgRelDiff /= static_cast<double>(p.size());
+    CAPTURE(avgAbsDiff);
+    CAPTURE(avgRelDiff);
+    REQUIRE(avgAbsDiff < allowedAvgAbsDiff);
+    REQUIRE(avgRelDiff < allowedAvgRelDiff);
+  }
 }

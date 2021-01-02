@@ -5,6 +5,7 @@
         <file>models/analytic_2d.xml</file>
         <file>models/analytic_3d.xml</file>
         <file>models/membrane-reaction-circle.xml</file>
+        <file>models/membrane-reaction-pixels.xml</file>
         <file>models/txy.xml</file>
         <file>models/very-simple-model-uint8.xml</file>
         <file>models/weird-units.xml</file>
