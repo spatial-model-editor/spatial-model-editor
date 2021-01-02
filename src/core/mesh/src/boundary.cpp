@@ -6,6 +6,7 @@
 #include "utils.hpp"
 #include <algorithm>
 #include <opencv2/imgproc.hpp>
+#include <optional>
 #include <utility>
 
 namespace mesh {
@@ -51,11 +52,13 @@ toQPointsInvertYAxis(const std::vector<cv::Point> &points, int height) {
   return v;
 }
 
-static cv::Mat makeBinaryMask(const QImage &img, const std::vector<QRgb> &cols) {
+static cv::Mat makeBinaryMask(const QImage &img,
+                              const std::vector<QRgb> &cols) {
   cv::Mat m(img.height(), img.width(), CV_8UC1, cv::Scalar(0));
-  for (int x = 0; x < img.width(); ++x) {
-    for (int y = 0; y < img.height(); ++y) {
-      if (std::find(cols.cbegin(), cols.cend(), img.pixel(x, y)) != cols.cend()) {
+  for (int y = 0; y < img.height(); ++y) {
+    for (int x = 0; x < img.width(); ++x) {
+      if (std::find(cols.cbegin(), cols.cend(), img.pixel(x, y)) !=
+          cols.cend()) {
         m.at<uint8_t>(y, x) = 255;
       }
     }
@@ -67,7 +70,57 @@ static cv::Mat makeBinaryMask(const QImage &img, QRgb col) {
   return makeBinaryMask(img, {{col}});
 }
 
-static void extractContoursFromMask(const cv::Mat& mask, std::vector<std::vector<cv::Point>>& edges){
+static std::optional<cv::Point> getNonZeroPixel(const cv::Mat &img) {
+  for (int y = 0; y < img.rows; ++y) {
+    for (int x = 0; x < img.cols; ++x) {
+      if (img.at<uint8_t>(y, x) != 0) {
+        return cv::Point(x, y);
+      }
+    }
+  }
+  return {};
+}
+
+static std::vector<QPointF> getInnerPoints(const cv::Mat &mask) {
+  std::vector<QPointF> interiorPoints;
+  cv::Mat label(mask.size(), CV_16U);
+  constexpr int connectivity{8};
+  int nLabels{cv::connectedComponents(mask, label, connectivity, CV_16U,
+                                      cv::CCL_DEFAULT)};
+  SPDLOG_TRACE("{} blobs", nLabels - 1);
+  auto kernel{cv::getStructuringElement(cv::MorphShapes::MORPH_CROSS, {3, 3})};
+  // skip label 0: background
+  for (int i = 1; i < nLabels; ++i) {
+    cv::Mat blob{label == i};
+    // crop to ROI
+    cv::Mat roi(blob, cv::boundingRect(blob));
+    // get offset to ROI
+    cv::Size size;
+    cv::Point offset;
+    roi.locateROI(size, offset);
+    SPDLOG_TRACE("Blob {}:", i);
+    SPDLOG_ERROR("ROI size: ({},{})", roi.cols, roi.rows);
+    SPDLOG_ERROR("ROI offset: ({},{})", offset.x, offset.y);
+    cv::Point inner{};
+    auto p{getNonZeroPixel(roi)};
+    while (p.has_value()) {
+      inner = p.value();
+      SPDLOG_TRACE("  - ({},{})", inner.x, inner.y);
+      cv::erode(roi, roi, kernel, {-1, -1}, 1, cv::BORDER_CONSTANT, 0);
+      p = getNonZeroPixel(roi);
+    }
+    interiorPoints.push_back(
+        {static_cast<double>(inner.x + offset.x) + 0.5,
+         static_cast<double>(mask.rows - inner.y - offset.y) - 0.5});
+    SPDLOG_ERROR("  - ({},{})", interiorPoints.back().x(),
+                 interiorPoints.back().y());
+  }
+  return interiorPoints;
+}
+
+static void
+extractContoursFromMask(const cv::Mat &mask,
+                        std::vector<std::vector<cv::Point>> &edges) {
   // get contours of compartment as closed loops
   std::vector<std::vector<cv::Point>> compContours;
   // for each contour, last component of hierarchy is index of parent
@@ -83,20 +136,28 @@ static void extractContoursFromMask(const cv::Mat& mask, std::vector<std::vector
     PixelCornerIterator cpi(compContour, outer);
     while (!cpi.done()) {
       edgeContour.push_back(cpi.vertex());
-      SPDLOG_TRACE("    - ({},{})", edgeContour.back().x,
-                  edgeContour.back().y);
+      SPDLOG_TRACE("    - ({},{})", edgeContour.back().x, edgeContour.back().y);
       ++cpi;
     }
   }
 }
 
 static Contours getContours(const QImage &img,
-                const std::vector<QRgb> &compartmentColours) {
+                            const std::vector<QRgb> &compartmentColours,
+                            std::vector<std::vector<QPointF>> *interiorPoints) {
   Contours contours;
+  if (interiorPoints != nullptr) {
+    interiorPoints->clear();
+  }
   for (auto col : compartmentColours) {
     auto binaryMask = makeBinaryMask(img, col);
     SPDLOG_TRACE("comp {:x}", col);
     extractContoursFromMask(binaryMask, contours.compartmentEdges);
+    if (interiorPoints != nullptr) {
+      interiorPoints->push_back(getInnerPoints(binaryMask));
+      SPDLOG_TRACE("({},{})", interiorPoints->back()[0].x(),
+                   interiorPoints->back()[0].y());
+    }
   }
   auto binaryMask = makeBinaryMask(img, compartmentColours);
   SPDLOG_TRACE("domain");
@@ -104,9 +165,8 @@ static Contours getContours(const QImage &img,
   return contours;
 }
 
-static std::vector<Boundary>
-splitContours(const QImage &img,
-              Contours &contours) {
+static std::vector<Boundary> splitContours(const QImage &img,
+                                           Contours &contours) {
   std::vector<Boundary> boundaries;
   std::vector<std::vector<cv::Point>> loops;
   std::vector<std::vector<cv::Point>> lines;
@@ -120,11 +180,11 @@ splitContours(const QImage &img,
     }
     // no FP: closed loop
     if (startPixel == edges.size()) {
-      SPDLOG_WARN("Found loop with {} points", edges.size());
+      SPDLOG_TRACE("Found loop with {} points", edges.size());
       if (std::none_of(loops.cbegin(), loops.cend(), [&edges](const auto &l) {
             return utils::isCyclicPermutation(edges, l);
           })) {
-        SPDLOG_WARN("  - adding loop", edges.size());
+        SPDLOG_TRACE("  - adding loop", edges.size());
         auto points = toQPointsInvertYAxis(edges, img.height() + 1);
         boundaries.emplace_back(points, true);
         loops.push_back(std::move(edges));
@@ -142,12 +202,12 @@ splitContours(const QImage &img,
       for (std::size_t i = 1; i < edges.size(); ++i) {
         line.push_back(edges[i]);
         if (contourMap.isFixedPoint(edges[i])) {
-          SPDLOG_WARN("Finished line with {} points", line.size());
+          SPDLOG_TRACE("Finished line with {} points", line.size());
           if (std::none_of(lines.cbegin(), lines.cend(),
                            [&line](const auto &l) {
                              return utils::isCyclicPermutation(line, l);
                            })) {
-            SPDLOG_WARN("  - adding line", edges.size());
+            SPDLOG_TRACE("  - adding line", edges.size());
             auto points = toQPointsInvertYAxis(line, img.height() + 1);
             boundaries.emplace_back(points, false);
             lines.push_back(std::move(line));
@@ -158,11 +218,11 @@ splitContours(const QImage &img,
         }
       }
       line.push_back(edges.front());
-      SPDLOG_WARN("Finished line with {} points", line.size());
+      SPDLOG_TRACE("Finished line with {} points", line.size());
       if (std::none_of(lines.cbegin(), lines.cend(), [&line](const auto &l) {
             return utils::isCyclicPermutation(line, l);
           })) {
-        SPDLOG_WARN("  - adding line", edges.size());
+        SPDLOG_TRACE("  - adding line", edges.size());
         auto points = toQPointsInvertYAxis(line, img.height() + 1);
         boundaries.emplace_back(points, false);
         lines.push_back(std::move(line));
@@ -174,8 +234,9 @@ splitContours(const QImage &img,
 
 std::vector<Boundary>
 constructBoundaries(const QImage &img,
-                    const std::vector<QRgb> &compartmentColours) {
-  auto edgeContours = getContours(img, compartmentColours);
+                    const std::vector<QRgb> &compartmentColours,
+                    std::vector<std::vector<QPointF>> *interiorPoints) {
+  auto edgeContours = getContours(img, compartmentColours, interiorPoints);
   return splitContours(img, edgeContours);
 }
 

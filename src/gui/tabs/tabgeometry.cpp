@@ -133,7 +133,6 @@ void TabGeometry::btnAddCompartment_clicked() {
   if (ok && !compartmentName.isEmpty()) {
     QString newCompartmentName = sbmlDoc.getCompartments().add(compartmentName);
     ui->tabCompartmentGeometry->setCurrentIndex(0);
-    sbmlDoc.getGeometry().checkIfGeometryIsValid();
     enableTabs();
     loadModelData(newCompartmentName);
     emit modelGeometryChanged();
@@ -157,7 +156,6 @@ void TabGeometry::btnRemoveCompartment_clicked() {
               ui->listCompartments->clearSelection();
               sbmlDoc.getCompartments().remove(compartmentId);
               ui->tabCompartmentGeometry->setCurrentIndex(0);
-              sbmlDoc.getGeometry().checkIfGeometryIsValid();
               enableTabs();
               loadModelData();
               emit modelGeometryChanged();

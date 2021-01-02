@@ -16,8 +16,7 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     imgBoundary.emplace_back(img.width() - 1, img.height() - 1);
     imgBoundary.emplace_back(img.width() - 1, 0);
 
-    mesh::Mesh mesh(img, {{QPointF(8, 8)}}, {}, {999}, 1.0, QPointF(0, 0),
-                    std::vector<QRgb>{col});
+    mesh::Mesh mesh(img, {}, {999}, 1.0, QPointF(0, 0), std::vector<QRgb>{col});
 
     // check boundaries
     REQUIRE(mesh.getNumBoundaries() == 1);
@@ -164,7 +163,7 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     // flip y-axis to match (0,0) == bottom-left of meshing output
     img = img.mirrored(false, true);
 
-    mesh::Mesh mesh(img, {{QPointF(6, 6)}}, {}, {999}, 1.0, QPointF(0, 0),
+    mesh::Mesh mesh(img, {}, {999, 999}, 1.0, QPointF(0, 0),
                     std::vector<QRgb>{bgcol, col});
 
     // check boundaries image
@@ -177,7 +176,7 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     auto col1 = utils::indexedColours()[1].rgba();
     REQUIRE(boundaryImage.pixel(1, 1) == col0);
     REQUIRE(boundaryImage.pixel(4, 5) == col0);
-    REQUIRE(boundaryImage.pixel(72,96) == col0);
+    REQUIRE(boundaryImage.pixel(72, 96) == col0);
     REQUIRE(boundaryImage.pixel(72, 1) == col0);
     REQUIRE(boundaryImage.pixel(22, 76) == 0);
     // anti-aliasing means pixel may not have exactly the expected color:

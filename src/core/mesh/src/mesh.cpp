@@ -23,18 +23,15 @@ Mesh::pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept {
 
 Mesh::Mesh() = default;
 
-Mesh::Mesh(const QImage &image,
-           const std::vector<std::vector<QPointF>> &interiorPoints,
-           std::vector<std::size_t> maxPoints,
+Mesh::Mesh(const QImage &image, std::vector<std::size_t> maxPoints,
            std::vector<std::size_t> maxTriangleArea, double pixelWidth,
            const QPointF &originPoint,
            const std::vector<QRgb> &compartmentColours)
     : img(image), origin(originPoint), pixel(pixelWidth),
-      compartmentInteriorPoints(interiorPoints),
       boundaryMaxPoints(std::move(maxPoints)),
       compartmentMaxTriangleArea(std::move(maxTriangleArea)) {
   boundaries = std::make_unique<std::vector<Boundary>>(
-      constructBoundaries(image, compartmentColours));
+      constructBoundaries(image, compartmentColours, &compartmentInteriorPoints));
   SPDLOG_INFO("found {} boundaries", boundaries->size());
   for (const auto &boundary : *boundaries) {
     SPDLOG_INFO("  - {} points, loop={}", boundary.getPoints().size(),
@@ -58,11 +55,11 @@ Mesh::Mesh(const QImage &image,
     SPDLOG_INFO("  - {} points, loop={}", boundary.getPoints().size(),
                 boundary.isLoop());
   }
-  if (compartmentMaxTriangleArea.empty()) {
-    // if triangle areas not specified use default value
+  if (compartmentMaxTriangleArea.size() != compartmentColours.size()) {
+    // if triangle areas not correctly specified use default value
     constexpr std::size_t defaultCompartmentMaxTriangleArea{40};
     compartmentMaxTriangleArea = std::vector<std::size_t>(
-        interiorPoints.size(), defaultCompartmentMaxTriangleArea);
+        compartmentColours.size(), defaultCompartmentMaxTriangleArea);
     SPDLOG_INFO("no max triangle areas specified, using default value: {}",
                 defaultCompartmentMaxTriangleArea);
   }
@@ -156,6 +153,11 @@ Mesh::getCompartmentMaxTriangleArea(std::size_t compartmentIndex) const {
 
 const std::vector<std::size_t> &Mesh::getCompartmentMaxTriangleArea() const {
   return compartmentMaxTriangleArea;
+}
+
+const std::vector<std::vector<QPointF>> &
+Mesh::getCompartmentInteriorPoints() const {
+  return compartmentInteriorPoints;
 }
 
 void Mesh::setPhysicalGeometry(double pixelWidth, const QPointF &originPoint) {

@@ -39,7 +39,6 @@ private:
   ModelMembranes *modelMembranes{nullptr};
   bool importDimensions(const libsbml::Model *model);
   void writeDefaultGeometryToSBML();
-  void updateMesh();
 
 public:
   ModelGeometry();
@@ -49,7 +48,7 @@ public:
   void importParametricGeometry(const libsbml::Model *model);
   void importSampledFieldGeometry(const QString &filename);
   void importGeometryFromImage(const QImage &img);
-  void checkIfGeometryIsValid();
+  void updateMesh();
   void clear();
   int getNumDimensions() const;
   double getPixelWidth() const;

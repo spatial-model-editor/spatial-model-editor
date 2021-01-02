@@ -126,8 +126,7 @@ getInteriorPixelPoints(const ModelGeometry *modelGeometry,
 std::unique_ptr<mesh::Mesh>
 importParametricGeometryFromSBML(const libsbml::Model *model,
                                  const ModelGeometry *modelGeometry,
-                                 const ModelCompartments *modelCompartments,
-                                 const ModelMembranes *modelMembranes) {
+                                 const ModelCompartments *modelCompartments) {
   auto *geom = getGeometry(model);
   auto *parageom = getParametricGeometry(geom);
   if (parageom == nullptr) {
@@ -142,10 +141,8 @@ importParametricGeometryFromSBML(const libsbml::Model *model,
     // generate Mesh
     SPDLOG_INFO("  - re-generating mesh");
     return std::make_unique<mesh::Mesh>(
-        modelGeometry->getImage(),
-        getInteriorPixelPoints(modelGeometry, modelCompartments), mp.maxPoints,
-        mp.maxAreas, modelGeometry->getPixelWidth(),
-        modelGeometry->getPhysicalOrigin(),
+        modelGeometry->getImage(), mp.maxPoints, mp.maxAreas,
+        modelGeometry->getPixelWidth(), modelGeometry->getPhysicalOrigin(),
         utils::toStdVec(modelCompartments->getColours()));
   }
 
