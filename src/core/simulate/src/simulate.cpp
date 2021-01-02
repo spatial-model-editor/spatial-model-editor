@@ -296,7 +296,7 @@ Simulation::getPyConcs(std::size_t timeIndex) const {
 }
 
 std::size_t Simulation::getNCompletedTimesteps() const {
-  return nCompletedTimesteps;
+  return nCompletedTimesteps.load(std::memory_order_seq_cst);
 }
 
 bool Simulation::getIsRunning() const {
