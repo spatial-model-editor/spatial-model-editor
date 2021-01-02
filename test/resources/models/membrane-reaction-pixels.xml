@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" xmlns:spatial="http://www.sbml.org/sbml/level3/version1/spatial/version1" level="3" version="2" spatial:required="true">
+  <model substanceUnits="unit_of_substance" timeUnits="unit_of_time" volumeUnits="unit_of_volume" areaUnits="unit_of_area" lengthUnits="unit_of_length" extentUnits="unit_of_substance">
+    <listOfUnitDefinitions>
+      <unitDefinition id="unit_of_time" name="s">
+        <listOfUnits>
+          <unit kind="second" exponent="1" scale="0" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="unit_of_length" name="cm">
+        <listOfUnits>
+          <unit kind="metre" exponent="1" scale="-2" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="unit_of_area" name="cm_squared">
+        <listOfUnits>
+          <unit kind="metre" exponent="2" scale="-2" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="unit_of_volume" name="mL">
+        <listOfUnits>
+          <unit kind="litre" exponent="1" scale="-3" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="unit_of_substance" name="mmol">
+        <listOfUnits>
+          <unit kind="mole" exponent="1" scale="-3" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="diffusion_constant_units" name="diffusion_constant_units">
+        <listOfUnits>
+          <unit kind="metre" exponent="2" scale="0" multiplier="0.01"/>
+          <unit kind="second" exponent="-1" scale="0" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+    </listOfUnitDefinitions>
+    <listOfCompartments>
+      <compartment id="circle" name="a" spatialDimensions="2" size="3149" units="unit_of_volume" constant="true">
+        <spatial:compartmentMapping spatial:id="circle_compartmentMapping" spatial:domainType="circle_domainType" spatial:unitSize="1"/>
+      </compartment>
+      <compartment id="outside" name="b" spatialDimensions="2" size="1" constant="true">
+        <spatial:compartmentMapping spatial:id="outside_compartmentMapping" spatial:domainType="outside_domainType" spatial:unitSize="1"/>
+      </compartment>
+      <compartment id="outside_circle_membrane" name="outside &lt;-&gt; circle" spatialDimensions="1" size="1" constant="true">
+        <spatial:compartmentMapping spatial:id="outside_circle_membrane_compartmentMapping" spatial:domainType="outside_circle_membrane_domainType" spatial:unitSize="1"/>
+      </compartment>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="in" name="in" compartment="circle" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true">
+        <annotation>
+          <spatialModelEditor:colour xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:colour="4293269835"/>
+        </annotation>
+      </species>
+      <species id="out" name="out" compartment="outside" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true">
+        <annotation>
+          <spatialModelEditor:colour xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:colour="4282168395"/>
+        </annotation>
+      </species>
+    </listOfSpecies>
+    <listOfParameters>
+      <parameter id="x" name="x" value="0" units="unit_of_length" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="xCoord"/>
+      </parameter>
+      <parameter id="y" name="y" value="0" units="unit_of_length" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="yCoord"/>
+      </parameter>
+      <parameter id="slow_diffusionConstant" value="1" units="diffusion_constant_units" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="slow" spatial:type="isotropic"/>
+      </parameter>
+      <parameter id="fast_diffusionConstant" value="3" units="diffusion_constant_units" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="fast" spatial:type="isotropic"/>
+      </parameter>
+      <parameter id="in_diffusionConstant" value="1" units="diffusion_constant_units" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="in" spatial:type="isotropic"/>
+      </parameter>
+      <parameter id="out_diffusionConstant" value="1" units="diffusion_constant_units" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="out" spatial:type="isotropic"/>
+      </parameter>
+    </listOfParameters>
+    <listOfInitialAssignments/>
+    <listOfReactions>
+      <reaction id="output" name="output" reversible="true" compartment="outside_circle_membrane" spatial:isLocal="true">
+        <listOfProducts>
+          <speciesReference species="out" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <cn type="integer"> 10 </cn>
+          </math>
+        </kineticLaw>
+      </reaction>
+    </listOfReactions>
+    <spatial:geometry spatial:coordinateSystem="cartesian">
+      <spatial:listOfCoordinateComponents>
+        <spatial:coordinateComponent spatial:id="xCoord" spatial:type="cartesianX">
+          <spatial:boundaryMin spatial:id="xBoundaryMin" spatial:value="0"/>
+          <spatial:boundaryMax spatial:id="xBoundaryMax" spatial:value="3"/>
+        </spatial:coordinateComponent>
+        <spatial:coordinateComponent spatial:id="yCoord" spatial:type="cartesianY">
+          <spatial:boundaryMin spatial:id="yBoundaryMin" spatial:value="0"/>
+          <spatial:boundaryMax spatial:id="yBoundaryMax" spatial:value="1"/>
+        </spatial:coordinateComponent>
+      </spatial:listOfCoordinateComponents>
+      <spatial:listOfDomainTypes>
+        <spatial:domainType spatial:id="circle_domainType" spatial:spatialDimensions="2"/>
+        <spatial:domainType spatial:id="outside_domainType" spatial:spatialDimensions="2"/>
+        <spatial:domainType spatial:id="outside_circle_membrane_domainType" spatial:spatialDimensions="1"/>
+      </spatial:listOfDomainTypes>
+      <spatial:listOfDomains>
+        <spatial:domain spatial:id="circle_domain" spatial:domainType="circle_domainType">
+          <spatial:listOfInteriorPoints>
+            <spatial:interiorPoint spatial:coord1="1.5" spatial:coord2="0.5"/>
+          </spatial:listOfInteriorPoints>
+        </spatial:domain>
+        <spatial:domain spatial:id="outside_domain" spatial:domainType="outside_domainType">
+          <spatial:listOfInteriorPoints>
+            <spatial:interiorPoint spatial:coord1="2.5" spatial:coord2="0.5"/>
+          </spatial:listOfInteriorPoints>
+        </spatial:domain>
+        <spatial:domain spatial:id="outside_circle_membrane_domain" spatial:domainType="outside_circle_membrane_domainType"/>
+      </spatial:listOfDomains>
+      <spatial:listOfAdjacentDomains>
+        <spatial:adjacentDomains spatial:id="outside_circle_membrane_adjacentDomainA" spatial:domain1="outside_circle_membrane_domain" spatial:domain2="circle_domain"/>
+        <spatial:adjacentDomains spatial:id="outside_circle_membrane_adjacentDomainB" spatial:domain1="outside_circle_membrane_domain" spatial:domain2="outside_domain"/>
+      </spatial:listOfAdjacentDomains>
+      <spatial:listOfGeometryDefinitions>
+        <spatial:sampledFieldGeometry spatial:id="sampledFieldGeometry" spatial:isActive="true" spatial:sampledField="geometryImage">
+          <spatial:listOfSampledVolumes>
+            <spatial:sampledVolume spatial:id="circle_sampledVolume" spatial:domainType="circle_domainType" spatial:sampledValue="4289374890"/>
+            <spatial:sampledVolume spatial:id="outside_sampledVolume" spatial:domainType="outside_domainType" spatial:sampledValue="4283585106"/>
+          </spatial:listOfSampledVolumes>
+        </spatial:sampledFieldGeometry>
+        <spatial:parametricGeometry spatial:id="parametricGeometry" spatial:isActive="true">
+          <annotation>
+            <spatialModelEditor:mesh xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:maxBoundaryPoints="2 4 4" spatialModelEditor:maxTriangleAreas="40 40"/>
+          </annotation>
+          <spatial:spatialPoints spatial:id="spatialPoints" spatial:compression="uncompressed" spatial:arrayDataLength="12" spatial:dataType="double">2 0 2 1 1 1 1 0 3 0 3 1 </spatial:spatialPoints>
+          <spatial:listOfParametricObjects>
+            <spatial:parametricObject spatial:id="circle_triangles" spatial:polygonType="triangle" spatial:domainType="circle_domainType" spatial:pointIndexLength="6" spatial:compression="uncompressed" spatial:dataType="uint32">3 0 2 2 0 1 </spatial:parametricObject>
+            <spatial:parametricObject spatial:id="outside_triangles" spatial:polygonType="triangle" spatial:domainType="outside_domainType" spatial:pointIndexLength="6" spatial:compression="uncompressed" spatial:dataType="uint32">1 4 5 4 1 0 </spatial:parametricObject>
+          </spatial:listOfParametricObjects>
+        </spatial:parametricGeometry>
+      </spatial:listOfGeometryDefinitions>
+      <spatial:listOfSampledFields>
+        <spatial:sampledField spatial:id="geometryImage" spatial:dataType="uint32" spatial:numSamples1="3" spatial:numSamples2="1" spatial:interpolationType="nearestNeighbor" spatial:compression="uncompressed" spatial:samplesLength="3">4294967295 4289374890 4283585106</spatial:sampledField>
+      </spatial:listOfSampledFields>
+    </spatial:geometry>
+  </model>
+</sbml>
