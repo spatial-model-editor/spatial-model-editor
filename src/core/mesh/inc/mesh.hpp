@@ -52,7 +52,6 @@ public:
   Mesh();
   // constructor to generate mesh from supplied image
   explicit Mesh(const QImage &image,
-                const std::vector<std::vector<QPointF>> &interiorPoints = {},
                 std::vector<std::size_t> maxPoints = {},
                 std::vector<std::size_t> maxTriangleArea = {},
                 double pixelWidth = 1.0,
@@ -75,6 +74,7 @@ public:
                                      std::size_t maxTriangleArea);
   std::size_t getCompartmentMaxTriangleArea(std::size_t compartmentIndex) const;
   const std::vector<std::size_t> &getCompartmentMaxTriangleArea() const;
+  const std::vector<std::vector<QPointF>>& getCompartmentInteriorPoints() const;
   void setPhysicalGeometry(double pixelWidth,
                            const QPointF &originPoint = QPointF(0, 0));
   // return vertices as an array of doubles for SBML

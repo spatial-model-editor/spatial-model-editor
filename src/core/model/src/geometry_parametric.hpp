@@ -46,8 +46,7 @@ getInteriorPixelPoints(const ModelGeometry *modelGeometry,
 std::unique_ptr<mesh::Mesh>
 importParametricGeometryFromSBML(const libsbml::Model *model,
                                  const ModelGeometry *modelGeometry,
-                                 const ModelCompartments *modelCompartments,
-                                 const ModelMembranes *modelMembranes);
+                                 const ModelCompartments *modelCompartments);
 
 void writeGeometryMeshToSBML(libsbml::Model *model, const mesh::Mesh *mesh,
                              const ModelCompartments &modelCompartments);

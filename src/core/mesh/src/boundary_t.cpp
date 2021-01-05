@@ -9,6 +9,7 @@ struct BoundaryTestData {
   std::vector<QRgb> colours;
   std::size_t nBoundaries;
   std::size_t nLoops;
+  std::vector<std::size_t> nInteriorPoints;
 };
 
 struct BoundaryTestImage {
@@ -86,16 +87,24 @@ SCENARIO("constructBoundaries",
     QRgb col = qRgb(0, 0, 0);
     img.fill(col);
     WHEN("no compartment colours") {
-      auto boundaries = mesh::constructBoundaries(img, {});
+      std::vector<std::vector<QPointF>> interiorPoints;
+      auto boundaries = mesh::constructBoundaries(img, {}, &interiorPoints);
       REQUIRE(boundaries.empty());
+      REQUIRE(interiorPoints.empty());
     }
     WHEN("whole image is a compartment") {
-      auto boundaries = mesh::constructBoundaries(img, {col});
+      std::vector<std::vector<QPointF>> interiorPoints;
+      auto boundaries = mesh::constructBoundaries(img, {col}, &interiorPoints);
       std::vector<QPoint> outer{{0, 0},
                                 {img.width(), 0},
                                 {img.width(), img.height()},
                                 {0, img.height()}};
       REQUIRE(boundaries.size() == 1);
+      REQUIRE(interiorPoints.size() == 1);
+      REQUIRE(interiorPoints[0].size() == 1);
+      auto point{interiorPoints.front().front()};
+      REQUIRE(point.x() == dbl_approx(11.5));
+      REQUIRE(point.y() == dbl_approx(20.5));
       const auto &b = boundaries[0];
       REQUIRE(b.isValid());
       REQUIRE(b.isLoop());
@@ -107,10 +116,15 @@ SCENARIO("constructBoundaries",
     QRgb col0 = img.pixel(0, 0);
     QRgb col1 = img.pixel(35, 20);
     QRgb col2 = img.pixel(40, 50);
-    auto boundaries = mesh::constructBoundaries(img, {col0, col1, col2});
+    std::vector<std::vector<QPointF>> interiorPoints;
+    auto boundaries =
+        mesh::constructBoundaries(img, {col0, col1, col2}, &interiorPoints);
 
-    // boundaries
     REQUIRE(boundaries.size() == 3);
+    REQUIRE(interiorPoints.size() == 3);
+    REQUIRE(interiorPoints[0].size() == 1);
+    REQUIRE(interiorPoints[1].size() == 1);
+    REQUIRE(interiorPoints[2].size() == 1);
 
     const auto &b0 = boundaries[0];
     REQUIRE(b0.isValid());
@@ -129,10 +143,15 @@ SCENARIO("constructBoundaries",
     QRgb col0 = img.pixel(0, 0);
     QRgb col1 = img.pixel(33, 33);
     QRgb col2 = img.pixel(66, 66);
-    auto boundaries = mesh::constructBoundaries(img, {col0, col1, col2});
+    std::vector<std::vector<QPointF>> interiorPoints;
+    auto boundaries =
+        mesh::constructBoundaries(img, {col0, col1, col2}, &interiorPoints);
 
-    // boundaries
     REQUIRE(boundaries.size() == 4);
+    REQUIRE(interiorPoints.size() == 3);
+    REQUIRE(interiorPoints[0].size() == 1);
+    REQUIRE(interiorPoints[1].size() == 1);
+    REQUIRE(interiorPoints[2].size() == 1);
 
     const auto &b0 = boundaries[0];
     REQUIRE(b0.isValid());
@@ -159,46 +178,47 @@ SCENARIO("constructBoundaries",
     auto &bt0 = boundaryTestImages.emplace_back();
     bt0.description = "single cell, separated from edges of image";
     bt0.images = {{3, 8, 11, 12, 13, 18, 19, 20}};
-    bt0.boundaries.push_back({{{bg}}, 2, 2});
-    bt0.boundaries.push_back({{{fg}}, 1, 1});
-    bt0.boundaries.push_back({{{bg, fg}}, 2, 2});
+    bt0.boundaries.push_back({{{bg}}, 2, 2, {1}});
+    bt0.boundaries.push_back({{{fg}}, 1, 1, {1}});
+    bt0.boundaries.push_back({{{bg, fg}}, 2, 2, {1, 1}});
 
     auto &bt1 = boundaryTestImages.emplace_back();
     bt1.description = "single cell, one boundary touches edge of image";
     bt1.images = {{1, 5, 9, 16}};
-    bt1.boundaries.push_back({{{bg}}, 1, 1});
-    bt1.boundaries.push_back({{{fg}}, 1, 1});
-    bt1.boundaries.push_back({{{bg, fg}}, 3, 0});
+    bt1.boundaries.push_back({{{bg}}, 1, 1, {1}});
+    bt1.boundaries.push_back({{{fg}}, 1, 1, {1}});
+    bt1.boundaries.push_back({{{bg, fg}}, 3, 0, {1, 1}});
 
     auto &bt2 = boundaryTestImages.emplace_back();
     bt2.description = "two cells, one touching edge of image";
     bt2.images = {{4, 7, 10}};
-    bt2.boundaries.push_back({{{bg}}, 2, 2});
-    bt2.boundaries.push_back({{{fg}}, 2, 2});
-    bt2.boundaries.push_back({{{bg, fg}}, 4, 1});
+    bt2.boundaries.push_back({{{bg}}, 2, 2, {1}});
+    bt2.boundaries.push_back({{{fg}}, 2, 2, {2}});
+    bt2.boundaries.push_back({{{bg, fg}}, 4, 1, {1, 2}});
 
     auto &bt3 = boundaryTestImages.emplace_back();
     bt3.description = "two cells, both touching edge of image";
     bt3.images = {{14}};
-    bt3.boundaries.push_back({{{bg}}, 1, 1});
-    bt3.boundaries.push_back({{{fg}}, 2, 2});
-    bt3.boundaries.push_back({{{bg, fg}}, 6, 0});
+    bt3.boundaries.push_back({{{bg}}, 1, 1, {1}});
+    bt3.boundaries.push_back({{{fg}}, 2, 2, {2}});
+    bt3.boundaries.push_back({{{bg, fg}}, 6, 0, {1, 2}});
 
     auto &bt4 = boundaryTestImages.emplace_back();
     bt4.description =
         "three cells, each with a boundary touching edge of image";
     bt4.images = {{6, 15}};
-    bt4.boundaries.push_back({{{bg}}, 1, 1});
-    bt4.boundaries.push_back({{{fg}}, 3, 3});
-    bt4.boundaries.push_back({{{bg, fg}}, 9, 0});
+    bt4.boundaries.push_back({{{bg}}, 1, 1, {1}});
+    bt4.boundaries.push_back({{{fg}}, 3, 3, {3}});
+    bt4.boundaries.push_back({{{bg, fg}}, 9, 0, {1, 3}});
 
     auto &bt5 = boundaryTestImages.emplace_back();
     bt5.description = "one fg cell, three bg cells";
     bt5.images = {{2, 17}};
-    bt5.boundaries.push_back({{{bg}}, 3, 3});
-    bt5.boundaries.push_back({{{fg}}, 1, 1});
-    bt5.boundaries.push_back({{{bg, fg}}, 9, 0});
+    bt5.boundaries.push_back({{{bg}}, 3, 3, {3}});
+    bt5.boundaries.push_back({{{fg}}, 1, 1, {1}});
+    bt5.boundaries.push_back({{{bg, fg}}, 9, 0, {3, 1}});
 
+    std::vector<std::vector<QPointF>> interiorPoints;
     for (const auto &boundaryTestImage : boundaryTestImages) {
       for (auto imageIndex : boundaryTestImage.images) {
         for (const auto &boundaryData : boundaryTestImage.boundaries) {
@@ -207,9 +227,15 @@ SCENARIO("constructBoundaries",
           CAPTURE(boundaryTestImage.description);
           CAPTURE(filename.toStdString());
           QImage img(filename);
-          auto boundaries =
-              mesh::constructBoundaries(img, boundaryData.colours);
+          auto boundaries = mesh::constructBoundaries(img, boundaryData.colours,
+                                                      &interiorPoints);
           REQUIRE(boundaries.size() == boundaryData.nBoundaries);
+          REQUIRE(interiorPoints.size() == boundaryData.colours.size());
+          for (std::size_t i = 0; i < interiorPoints.size(); ++i) {
+            CAPTURE(i);
+            REQUIRE(interiorPoints[i].size() ==
+                    boundaryData.nInteriorPoints[i]);
+          }
           std::size_t nValid{0};
           std::size_t nLoops{0};
           for (const auto &boundary : boundaries) {

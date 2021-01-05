@@ -315,7 +315,7 @@ SCENARIO("SBML: import SBML level 2 document",
     GIVEN("Compartment Colours") {
       QRgb col1 = 0xffaaaaaa;
       QRgb col2 = 0xff525252;
-      QRgb col3 = 17423;
+      QRgb col3 = 0xffffffff;
       WHEN("compartment colours have been assigned") {
         THEN("can get CompartmentID from colour") {
           REQUIRE(s.getCompartments().getIdFromColour(col1) == "compartment0");

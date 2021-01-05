@@ -125,24 +125,6 @@ void ModelGeometry::writeDefaultGeometryToSBML() {
   createDefaultCompartmentGeometryIfMissing(sbmlModel);
 }
 
-void ModelGeometry::updateMesh() {
-  if (!isValid) {
-    SPDLOG_DEBUG("model does not have valid geometry: skip mesh update");
-    return;
-  }
-  auto interiorPoints = getInteriorPixelPoints(this, modelCompartments);
-  if (interiorPoints.empty()) {
-    SPDLOG_DEBUG(
-        "some compartments are missing interiorPoint: skip mesh update");
-    return;
-  }
-  SPDLOG_INFO("Updating mesh interior points");
-  mesh = std::make_unique<mesh::Mesh>(
-      image, interiorPoints, std::vector<std::size_t>{},
-      std::vector<std::size_t>{}, pixelWidth, physicalOrigin,
-      utils::toStdVec(modelCompartments->getColours()));
-}
-
 ModelGeometry::ModelGeometry() = default;
 
 ModelGeometry::ModelGeometry(libsbml::Model *model,
@@ -202,7 +184,7 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
 
 void ModelGeometry::importParametricGeometry(const libsbml::Model *model) {
   auto importedMesh = importParametricGeometryFromSBML(
-      model, this, modelCompartments, modelMembranes);
+      model, this, modelCompartments);
   if (importedMesh != nullptr) {
     mesh = std::move(importedMesh);
   }
@@ -233,13 +215,22 @@ void ModelGeometry::importGeometryFromImage(const QImage &img) {
   hasImage = true;
 }
 
-void ModelGeometry::checkIfGeometryIsValid() {
+void ModelGeometry::updateMesh() {
   // geometry only valid if all compartments have a colour
   isValid = hasImage && !modelCompartments->getColours().contains(0);
-  if (isValid) {
-    updateMesh();
-  } else {
+  if (!isValid) {
     mesh.reset();
+    return;
+  }
+  const auto &colours{modelCompartments->getColours()};
+  const auto &ids{modelCompartments->getIds()};
+  mesh = std::make_unique<mesh::Mesh>(image, std::vector<std::size_t>{},
+                                      std::vector<std::size_t>{}, pixelWidth,
+                                      physicalOrigin, utils::toStdVec(colours));
+  for (int i = 0; i < ids.size(); ++i) {
+    modelCompartments->setInteriorPoints(
+        ids[i],
+        mesh->getCompartmentInteriorPoints()[static_cast<std::size_t>(i)]);
   }
 }
 

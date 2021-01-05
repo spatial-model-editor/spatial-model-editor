@@ -40,6 +40,6 @@ public:
 
 std::vector<Boundary>
 constructBoundaries(const QImage &img,
-                    const std::vector<QRgb> &compartmentColours);
+                    const std::vector<QRgb> &compartmentColours, std::vector<std::vector<QPointF>>* interiorPoints = nullptr);
 
 } // namespace mesh
