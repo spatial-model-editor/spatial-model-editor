@@ -49,6 +49,14 @@ set(SME_EXTRA_CORE_DEFS
     CACHE STRING "Optional additional defines for core")
 message(STATUS "SME_EXTRA_CORE_DEFS: ${SME_EXTRA_CORE_DEFS}")
 
+# compile benchmarks
+set(BUILD_BENCHMARKS
+    yes
+    CACHE BOOL "Build benchmarks")
+if(BUILD_BENCHMARKS)
+  add_subdirectory(benchmark)
+endif()
+
 include(CTest)
 if(BUILD_TESTING)
   find_package(Catch2 REQUIRED)
@@ -91,12 +99,4 @@ endif()
 # compile tests
 if(BUILD_TESTING)
   add_subdirectory(test)
-endif()
-
-# compile benchmarks
-set(BUILD_BENCHMARKS
-    yes
-    CACHE BOOL "Build benchmarks")
-if(BUILD_BENCHMARKS)
-  add_subdirectory(benchmark)
 endif()

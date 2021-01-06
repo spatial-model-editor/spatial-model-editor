@@ -1,5 +1,6 @@
 #include "boundary.hpp"
 #include "catch_wrapper.hpp"
+#include "interior_point.hpp"
 #include "utils.hpp"
 #include <QImage>
 #include <QPoint>
@@ -87,14 +88,14 @@ SCENARIO("constructBoundaries",
     QRgb col = qRgb(0, 0, 0);
     img.fill(col);
     WHEN("no compartment colours") {
-      std::vector<std::vector<QPointF>> interiorPoints;
-      auto boundaries = mesh::constructBoundaries(img, {}, &interiorPoints);
+      auto interiorPoints{mesh::getInteriorPoints(img, {})};
+      auto boundaries = mesh::constructBoundaries(img, {});
       REQUIRE(boundaries.empty());
       REQUIRE(interiorPoints.empty());
     }
     WHEN("whole image is a compartment") {
-      std::vector<std::vector<QPointF>> interiorPoints;
-      auto boundaries = mesh::constructBoundaries(img, {col}, &interiorPoints);
+      auto interiorPoints{mesh::getInteriorPoints(img, {col})};
+      auto boundaries = mesh::constructBoundaries(img, {col});
       std::vector<QPoint> outer{{0, 0},
                                 {img.width(), 0},
                                 {img.width(), img.height()},
@@ -116,9 +117,8 @@ SCENARIO("constructBoundaries",
     QRgb col0 = img.pixel(0, 0);
     QRgb col1 = img.pixel(35, 20);
     QRgb col2 = img.pixel(40, 50);
-    std::vector<std::vector<QPointF>> interiorPoints;
-    auto boundaries =
-        mesh::constructBoundaries(img, {col0, col1, col2}, &interiorPoints);
+    auto interiorPoints{mesh::getInteriorPoints(img, {col0, col1, col2})};
+    auto boundaries = mesh::constructBoundaries(img, {col0, col1, col2});
 
     REQUIRE(boundaries.size() == 3);
     REQUIRE(interiorPoints.size() == 3);
@@ -143,9 +143,8 @@ SCENARIO("constructBoundaries",
     QRgb col0 = img.pixel(0, 0);
     QRgb col1 = img.pixel(33, 33);
     QRgb col2 = img.pixel(66, 66);
-    std::vector<std::vector<QPointF>> interiorPoints;
-    auto boundaries =
-        mesh::constructBoundaries(img, {col0, col1, col2}, &interiorPoints);
+    auto interiorPoints{mesh::getInteriorPoints(img, {col0, col1, col2})};
+    auto boundaries = mesh::constructBoundaries(img, {col0, col1, col2});
 
     REQUIRE(boundaries.size() == 4);
     REQUIRE(interiorPoints.size() == 3);
@@ -227,8 +226,10 @@ SCENARIO("constructBoundaries",
           CAPTURE(boundaryTestImage.description);
           CAPTURE(filename.toStdString());
           QImage img(filename);
-          auto boundaries = mesh::constructBoundaries(img, boundaryData.colours,
-                                                      &interiorPoints);
+          auto interiorPoints{
+              mesh::getInteriorPoints(img, boundaryData.colours)};
+          auto boundaries =
+              mesh::constructBoundaries(img, boundaryData.colours);
           REQUIRE(boundaries.size() == boundaryData.nBoundaries);
           REQUIRE(interiorPoints.size() == boundaryData.colours.size());
           for (std::size_t i = 0; i < interiorPoints.size(); ++i) {

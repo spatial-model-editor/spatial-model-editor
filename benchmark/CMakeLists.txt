@@ -25,3 +25,11 @@ qt5_import_plugins(
   printsupport
   EXCLUDE_BY_TYPE
   sqldrivers)
+
+find_package(benchmark REQUIRED)
+add_executable(bench bench.cpp)
+target_link_libraries(
+  bench
+  PUBLIC ${SME_EXTRA_EXE_LIBS}
+         core_tests
+         benchmark::benchmark)

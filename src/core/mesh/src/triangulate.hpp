@@ -17,6 +17,8 @@
 
 namespace mesh {
 
+class Boundary;
+
 struct TriangulateBoundarySegment {
   std::size_t start;
   std::size_t end;
@@ -31,6 +33,10 @@ struct TriangulateCompartment {
 };
 
 struct TriangulateBoundaries {
+  TriangulateBoundaries();
+  TriangulateBoundaries(const std::vector<Boundary> &inputBoundaries,
+                        const std::vector<std::vector<QPointF>> &interiorPoints,
+                        const std::vector<std::size_t> &maxTriangleAreas);
   std::vector<QPointF> vertices;
   std::vector<TriangulateBoundarySegments> boundaries;
   std::vector<TriangulateCompartment> compartments;
@@ -44,7 +50,8 @@ private:
 public:
   explicit Triangulate(const TriangulateBoundaries &boundaries);
   [[nodiscard]] const std::vector<QPointF> &getPoints() const;
-  [[nodiscard]] const std::vector<std::vector<TriangulateTriangleIndex>> &getTriangleIndices() const;
+  [[nodiscard]] const std::vector<std::vector<TriangulateTriangleIndex>> &
+  getTriangleIndices() const;
 };
 
 } // namespace mesh

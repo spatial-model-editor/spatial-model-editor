@@ -10,8 +10,8 @@
 #include <QImage>
 #include <QPointF>
 #include <QRgb>
-#include <QString>
 #include <QSize>
+#include <QString>
 #include <array>
 #include <cstddef>
 #include <memory>
@@ -51,8 +51,7 @@ private:
 public:
   Mesh();
   // constructor to generate mesh from supplied image
-  explicit Mesh(const QImage &image,
-                std::vector<std::size_t> maxPoints = {},
+  explicit Mesh(const QImage &image, std::vector<std::size_t> maxPoints = {},
                 std::vector<std::size_t> maxTriangleArea = {},
                 double pixelWidth = 1.0,
                 const QPointF &originPoint = QPointF(0, 0),
@@ -74,7 +73,7 @@ public:
                                      std::size_t maxTriangleArea);
   std::size_t getCompartmentMaxTriangleArea(std::size_t compartmentIndex) const;
   const std::vector<std::size_t> &getCompartmentMaxTriangleArea() const;
-  const std::vector<std::vector<QPointF>>& getCompartmentInteriorPoints() const;
+  const std::vector<std::vector<QPointF>> &getCompartmentInteriorPoints() const;
   void setPhysicalGeometry(double pixelWidth,
                            const QPointF &originPoint = QPointF(0, 0));
   // return vertices as an array of doubles for SBML
@@ -82,7 +81,8 @@ public:
   // return triangle indices as an array of ints for SBML
   std::vector<int>
   getTriangleIndicesAsFlatArray(std::size_t compartmentIndex) const;
-  const std::vector<std::vector<TriangulateTriangleIndex>> &getTriangleIndices() const;
+  const std::vector<std::vector<TriangulateTriangleIndex>> &
+  getTriangleIndices() const;
   const std::vector<std::vector<QTriangleF>> &getTriangles() const;
 
   std::pair<QImage, QImage>
