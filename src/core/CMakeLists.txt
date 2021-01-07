@@ -77,6 +77,8 @@ if(SME_WITH_OPENMP)
   target_link_libraries(core PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
+find_package(benchmark REQUIRED)
+
 target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 # set Logger level
 target_compile_definitions(
