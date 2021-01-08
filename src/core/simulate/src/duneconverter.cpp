@@ -89,7 +89,6 @@ addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
                bool forExternalUse, const QString &iniFileDir,
                std::vector<std::vector<std::vector<double>>> &concentrations,
                const QString &compartmentId) {
-  constexpr double invalidPixelConc{-999.0};
   const auto &lengthUnit = model.getUnits().getLength();
   const auto &volumeUnit = model.getUnits().getVolume();
   double volOverL3{model::getVolOverL3(lengthUnit, volumeUnit)};
@@ -131,7 +130,7 @@ addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
         auto sampledFieldFile = QString("%1.tif").arg(sampledFieldName);
         auto tiffFilename = QDir(iniFileDir).filePath(sampledFieldFile);
         SPDLOG_TRACE("Exporting tiff: '{}'", tiffFilename.toStdString());
-        auto conc = f->getConcentration();
+        auto conc = f->getConcentrationImageArray();
         for (auto &c : conc) {
           // convert A/V to A/L^3
           c /= volOverL3;
@@ -139,8 +138,7 @@ addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
         double max =
             utils::writeTIFF(tiffFilename.toStdString(),
                              f->getCompartment()->getCompartmentImage().size(),
-                             conc, f->getCompartment()->getPixels(),
-                             model.getGeometry().getPixelWidth());
+                             conc, model.getGeometry().getPixelWidth());
         tiffs.push_back(sampledFieldName);
         ini.addValue(duneName,
                      QString("%1*%2(x,y)").arg(max).arg(sampledFieldName));
@@ -151,7 +149,7 @@ addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
     } else {
       ini.addValue(duneName, 0.0, doublePrecision);
       // create array of concentration values
-      concs[indices[i]] = f->getConcentrationImageArray(invalidPixelConc);
+      concs[indices[i]] = f->getConcentrationImageArray();
       for (auto &c : concs[indices[i]]) {
         // convert A/V to A/L^3
         c /= volOverL3;

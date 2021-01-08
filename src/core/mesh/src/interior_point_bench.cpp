@@ -28,5 +28,5 @@ interior_points_boundary_liver_cells_200x100(benchmark::State &state) {
   }
 }
 
-BENCHMARK(interior_points_concave_cell_nucleus_100x100);
-BENCHMARK(interior_points_boundary_liver_cells_200x100);
+BENCHMARK(interior_points_concave_cell_nucleus_100x100)->Unit(benchmark::kMillisecond);
+BENCHMARK(interior_points_boundary_liver_cells_200x100)->Unit(benchmark::kMillisecond);

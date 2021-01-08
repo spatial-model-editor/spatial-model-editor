@@ -3,11 +3,44 @@
 #include "utils.hpp"
 #include <algorithm>
 #include <initializer_list>
+#include <limits>
 #include <optional>
 #include <stdexcept>
 #include <utility>
 
 namespace geometry {
+
+static void fillMissingByDilation(std::vector<std::size_t> &arr, int w, int h,
+                                  std::size_t invalidIndex) {
+  const int maxIter{w + h};
+  for (int iter = 0; iter < maxIter; ++iter) {
+    bool finished{true};
+    for (int y = 0; y < h; ++y) {
+      for (int x = 0; x < w; ++x) {
+        auto i{static_cast<std::size_t>(x + w * y)};
+        if (arr[i] == invalidIndex) {
+          // replace negative pixel with any valid 4-connected neighbour
+          if (x > 0 && arr[i - 1] != invalidIndex) {
+            arr[i] = arr[i - 1];
+          } else if (x + 1 < w && arr[i + 1] != invalidIndex) {
+            arr[i] = arr[i + 1];
+          } else if (y > 0 && arr[i - w] != invalidIndex) {
+              arr[i] = arr[i - w];
+          } else if (y + 1 < h && arr[i + w] != invalidIndex) {
+            arr[i] = arr[i + w];
+          } else {
+            // pixel has no non-negative neighbour: need another iteration
+            finished = false;
+          }
+        }
+      }
+    }
+    if (finished) {
+      return;
+    }
+  }
+  SPDLOG_WARN("Failed to replace all invalid pixels");
+}
 
 Compartment::Compartment(std::string compId, const QImage &img, QRgb col)
     : compartmentId{std::move(compId)}, colour{col}, image{
@@ -16,7 +49,10 @@ Compartment::Compartment(std::string compId, const QImage &img, QRgb col)
   image.setColor(0, qRgba(0, 0, 0, 0));
   image.setColor(1, col);
   image.fill(0);
-  ix.clear();
+  constexpr std::size_t invalidIndex{std::numeric_limits<std::size_t>::max()};
+  arrayPoints.resize(static_cast<std::size_t>(img.width() * img.height()),
+                     invalidIndex);
+  std::size_t ixIndex{0};
   // find pixels in compartment: store image QPoint for each
   for (int x = 0; x < img.width(); ++x) {
     for (int y = 0; y < img.height(); ++y) {
@@ -25,9 +61,14 @@ Compartment::Compartment(std::string compId, const QImage &img, QRgb col)
         QPoint p = QPoint(x, y);
         ix.push_back(p);
         image.setPixel(p, 1);
+        // NOTE: (0,0) point in ix is at bottom-left, want top-left for array
+        arrayPoints[static_cast<std::size_t>(
+            x + img.width() * (img.height() - 1 - y))] = ixIndex++;
       }
     }
   }
+  // for pixels outside compartment, find nearest pixel in compartment
+  fillMissingByDilation(arrayPoints, img.width(), img.height(), invalidIndex);
   utils::QPointIndexer ixIndexer(img.size(), ix);
   // find nearest neighbours of each point
   nn.clear();
@@ -63,6 +104,10 @@ double Compartment::getPixelWidth() const { return pixelWidth; }
 void Compartment::setPixelWidth(double width) { pixelWidth = width; }
 
 const QImage &Compartment::getCompartmentImage() const { return image; }
+
+const std::vector<std::size_t> &Compartment::getArrayPoints() const {
+  return arrayPoints;
+}
 
 Membrane::Membrane(std::string membraneId, const Compartment *A,
                    const Compartment *B,
@@ -209,20 +254,14 @@ QImage Field::getConcentrationImage() const {
   return img;
 }
 
-std::vector<double>
-Field::getConcentrationImageArray(double invalidPixelValue) const {
+std::vector<double> Field::getConcentrationImageArray() const {
+  std::vector<double> a;
   const auto &img = comp->getCompartmentImage();
-  int size = img.width() * img.height();
-  // NOTE: order of concentration array is [ (x=0,y=0), (x=1,y=0), ... ]
-  // NOTE: (0,0) point is at bottom-left
-  // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
-  std::vector<double> arr(static_cast<std::size_t>(size), invalidPixelValue);
-  for (std::size_t i = 0; i < comp->nPixels(); ++i) {
-    const auto &point = comp->getPixel(i);
-    int arrayIndex = point.x() + img.width() * (img.height() - 1 - point.y());
-    arr[static_cast<std::size_t>(arrayIndex)] = conc[i];
+  a.reserve(static_cast<std::size_t>(img.width() * img.height()));
+  for (std::size_t i : comp->getArrayPoints()) {
+    a.push_back(conc[i]);
   }
-  return arr;
+  return a;
 }
 
 void Field::setCompartment(const Compartment *compartment) {

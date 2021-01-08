@@ -25,6 +25,8 @@ private:
   double pixelWidth = 1.0;
   // vector of points that make up compartment
   std::vector<QPoint> ix;
+  // index of corresponding point for each pixel in array
+  std::vector<std::size_t> arrayPoints;
   QRgb colour{0};
   QImage image;
 
@@ -48,6 +50,7 @@ public:
   inline std::size_t dn_y(std::size_t i) const { return nn[4 * i + 3]; }
   // return a QImage of the compartment geometry
   const QImage &getCompartmentImage() const;
+  const std::vector<std::size_t>& getArrayPoints() const;
 };
 
 class Membrane {
@@ -103,7 +106,7 @@ public:
   void importConcentration(const std::vector<double> &sbmlConcentrationArray);
   QImage getConcentrationImage() const;
   std::vector<double>
-  getConcentrationImageArray(double invalidPixelValue = 0.0) const;
+  getConcentrationImageArray() const;
   void setCompartment(const Compartment *comp);
 };
 

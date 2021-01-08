@@ -26,5 +26,5 @@ static void mesh_liver_cells_200x100(benchmark::State &state) {
   }
 }
 
-BENCHMARK(mesh_concave_cell_nucleus_100x100);
-BENCHMARK(mesh_liver_cells_200x100);
+BENCHMARK(mesh_concave_cell_nucleus_100x100)->Unit(benchmark::kMillisecond);
+BENCHMARK(mesh_liver_cells_200x100)->Unit(benchmark::kMillisecond);
