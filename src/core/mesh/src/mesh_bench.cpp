@@ -1,30 +1,32 @@
 #include "mesh.hpp"
-#include <QImage>
-#include <QPointF>
-#include <QRgb>
-#include <benchmark/benchmark.h>
+#include "bench.hpp"
 
-static void mesh_concave_cell_nucleus_100x100(benchmark::State &state) {
-  QImage img(":/geometry/concave-cell-nucleus-100x100.png");
-  QRgb col0 = img.pixel(0, 0);
-  QRgb col1 = img.pixel(35, 20);
-  QRgb col2 = img.pixel(40, 50);
+template <typename T> static void mesh_Mesh(benchmark::State &state) {
+  T data;
   for (auto _ : state) {
-    auto m{
-        mesh::Mesh(img, {}, {10, 10, 10}, 1.0, {0.0, 0.0}, {col0, col1, col2})};
+    auto m{mesh::Mesh(data.img, {}, data.maxTriangleArea, data.pixelWidth, data.origin,
+                      data.colours)};
   }
 }
 
-static void mesh_liver_cells_200x100(benchmark::State &state) {
-  QImage img(":/geometry/liver-cells-200x100.png");
-  QRgb col0 = img.pixel(50, 50);
-  QRgb col1 = img.pixel(40, 20);
-  QRgb col2 = img.pixel(21, 14);
+template <typename T> static void mesh_Mesh_getMeshImages(benchmark::State &state) {
+  T data;
+  QImage img1;
+  QImage img2;
   for (auto _ : state) {
-    auto m{
-        mesh::Mesh(img, {}, {10, 10, 10}, 1.0, {0.0, 0.0}, {col0, col1, col2})};
+    std::tie(img1, img2) = data.mesh.getMeshImages(data.imageSize, 0);
   }
 }
 
-BENCHMARK(mesh_concave_cell_nucleus_100x100)->Unit(benchmark::kMillisecond);
-BENCHMARK(mesh_liver_cells_200x100)->Unit(benchmark::kMillisecond);
+template <typename T> static void mesh_Mesh_getBoundariesImages(benchmark::State &state) {
+  T data;
+  QImage img1;
+  QImage img2;
+  for (auto _ : state) {
+    std::tie(img1, img2) = data.mesh.getBoundariesImages(data.imageSize, 0);
+  }
+}
+
+SME_BENCHMARK(mesh_Mesh);
+SME_BENCHMARK(mesh_Mesh_getMeshImages);
+SME_BENCHMARK(mesh_Mesh_getBoundariesImages);
