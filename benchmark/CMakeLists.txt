@@ -28,6 +28,7 @@ qt5_import_plugins(
 
 find_package(benchmark REQUIRED)
 add_executable(bench bench.cpp)
+target_include_directories(bench PUBLIC .)
 target_link_libraries(
   bench
   PUBLIC ${SME_EXTRA_EXE_LIBS}
