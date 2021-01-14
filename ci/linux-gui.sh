@@ -44,7 +44,7 @@ ccache --show-stats
 
 # run cpp tests
 # skip gui tests as segfaults on github actions
-./test/tests -as > tests.txt 2>&1
+./test/tests -as > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
 # run python tests

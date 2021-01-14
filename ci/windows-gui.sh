@@ -35,7 +35,7 @@ head -n 20 sme_obj.txt
 head -n 1000 sme_obj.txt | grep "DLL Name"
 
 # temporarily exclude simulate tests due to mystery segfault on windows
-./test/tests.exe -as ~[gui]~[core/simulate] > tests.txt 2>&1
+./test/tests.exe -as ~[gui]~[core/simulate] > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
 ./benchmark/benchmark.exe 1

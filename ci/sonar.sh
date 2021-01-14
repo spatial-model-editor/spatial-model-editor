@@ -57,7 +57,7 @@ ccache --show-stats
 # run c++ tests and collect coverage data
 mkdir gcov
 lcov -q -z -d .
-LSAN_OPTIONS=exitcode=0 ./test/tests -as > tests.txt 2>&1
+LSAN_OPTIONS=exitcode=0 ./test/tests -as > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 llvm-cov gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
 llvm-cov gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null

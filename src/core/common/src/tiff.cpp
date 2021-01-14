@@ -16,27 +16,30 @@ constexpr TiffDataType TiffDataTypeMaxValue =
     std::numeric_limits<TiffDataType>::max();
 
 double writeTIFF(const std::string &filename, const QSize &imageSize,
-                 const std::vector<double> &conc,
-                 const std::vector<QPoint> &pixels, double pixelWidth) {
+                 const std::vector<double> &conc, double pixelWidth) {
+  // todo: add ORIGIN to TIFF file!
   SPDLOG_TRACE("found {} concentration values", conc.size());
-  double maxConc = *std::max_element(conc.begin(), conc.end());
+  double maxConc = *std::max_element(conc.cbegin(), conc.cend());
   SPDLOG_TRACE("  - max value: {}", maxConc);
 
   // convert to array of type TiffDataType
   SPDLOG_TRACE("using TIFF data type: {}", decltypeStr<TiffDataType>());
   SPDLOG_TRACE("  - size in bits: {}", TiffDataTypeBits);
   SPDLOG_TRACE("  - max value: {}", TiffDataTypeMaxValue);
-  auto width = static_cast<std::size_t>(imageSize.width());
-  auto height = static_cast<std::size_t>(imageSize.height());
+  const int width{imageSize.width()};
+  const int height{imageSize.height()};
   SPDLOG_TRACE("  - image size {}x{}", width, height);
   auto tifValues = std::vector<std::vector<TiffDataType>>(
       height, std::vector<TiffDataType>(width, 0));
-  double scaleFactor = TiffDataTypeMaxValue / maxConc;
-  for (std::size_t i = 0; i < pixels.size(); ++i) {
-    auto x = static_cast<std::size_t>(pixels[i].x());
-    auto y = static_cast<std::size_t>(pixels[i].y());
-    auto val = static_cast<TiffDataType>(scaleFactor * conc[i]);
-    tifValues[y][x] = val;
+  SPDLOG_TRACE("{}", TiffDataTypeMaxValue);
+  const double scaleFactor{TiffDataTypeMaxValue / maxConc};
+  SPDLOG_TRACE("{}", scaleFactor);
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      auto val = static_cast<TiffDataType>(scaleFactor *
+                                           conc[x + width * (height - 1 - y)]);
+      tifValues[y][x] = val;
+    }
   }
 
   // write to TIFF

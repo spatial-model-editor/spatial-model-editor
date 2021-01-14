@@ -20,8 +20,7 @@ namespace utils {
 using TiffDataType = uint16_t;
 
 double writeTIFF(const std::string &filename, const QSize &imageSize,
-                 const std::vector<double> &conc,
-                 const std::vector<QPoint> &pixels, double pixelWidth);
+                 const std::vector<double> &conc, double pixelWidth);
 
 class TiffReader {
 private:

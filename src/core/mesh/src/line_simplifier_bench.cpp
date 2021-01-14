@@ -33,5 +33,5 @@ static void line_simplifier_liver_cells_200x100(benchmark::State &state) {
   }
 }
 
-BENCHMARK(line_simplifier_concave_cell_nucleus_100x100);
-BENCHMARK(line_simplifier_liver_cells_200x100);
+BENCHMARK(line_simplifier_concave_cell_nucleus_100x100)->Unit(benchmark::kMillisecond);
+BENCHMARK(line_simplifier_liver_cells_200x100)->Unit(benchmark::kMillisecond);

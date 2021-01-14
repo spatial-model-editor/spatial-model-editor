@@ -21,43 +21,6 @@ template <typename F, int n> class FieldVector;
 
 namespace simulate {
 
-static inline double
-getConcIfValidIndex(int x, int y, int w, int h,
-                    const std::vector<double> &concentration) {
-  if (x >= 0 && x < w && y >= 0 && y < h) {
-    return concentration[static_cast<std::size_t>(x + w * y)];
-  }
-  return -99.9;
-}
-
-static inline double
-getNearestValidPixelConcentration(int ix, int iy, int w, int h,
-                                  const std::vector<double> &concentration) {
-  int x{ix};
-  int y{iy};
-  int maxLen{std::max(w, h)};
-  int direction{1};
-  for (int len = 1; len < maxLen; ++len) {
-    for (int i = 0; i < len; ++i) {
-      y += direction;
-      if (auto c = getConcIfValidIndex(x, y, w, h, concentration); c >= 0.0) {
-        SPDLOG_TRACE("pixel ({},{})", x, y);
-        return c;
-      }
-    }
-    for (int i = 0; i < len; ++i) {
-      x += direction;
-      if (auto c = getConcIfValidIndex(x, y, w, h, concentration); c >= 0.0) {
-        SPDLOG_TRACE("pixel ({},{})", x, y);
-        return c;
-      }
-    }
-    direction *= -1;
-  }
-  SPDLOG_WARN("Failed to find valid nearby pixel to ({},{})", ix, iy);
-  return 0.0;
-}
-
 template <typename GV>
 class GridFunction
     : public Dune::PDELab::GridFunctionBase<
@@ -88,11 +51,6 @@ public:
     result = c[static_cast<std::size_t>(ix + w * iy)];
     SPDLOG_TRACE("pixel ({},{})", ix, iy);
     SPDLOG_TRACE("conc {}", result);
-    if (result < 0) {
-      SPDLOG_WARN("pixel ({},{})", ix, iy);
-      result = getNearestValidPixelConcentration(ix, iy, w, h, c);
-      SPDLOG_TRACE("  -> nearest valid conc: {}", result);
-    }
   }
 
 private:

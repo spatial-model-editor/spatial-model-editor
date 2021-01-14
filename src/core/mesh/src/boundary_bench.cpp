@@ -26,5 +26,5 @@ static void boundary_liver_cells_200x100(benchmark::State &state) {
   }
 }
 
-BENCHMARK(boundary_concave_cell_nucleus_100x100);
-BENCHMARK(boundary_liver_cells_200x100);
+BENCHMARK(boundary_concave_cell_nucleus_100x100)->Unit(benchmark::kMillisecond);
+BENCHMARK(boundary_liver_cells_200x100)->Unit(benchmark::kMillisecond);
