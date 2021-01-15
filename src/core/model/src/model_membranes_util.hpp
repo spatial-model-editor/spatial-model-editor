@@ -43,7 +43,6 @@ private:
   std::vector<std::vector<QPointPair>> points;
   OrderedIntPairIndex colourIndexPairIndex;
   QVector<QRgb> colours;
-  std::vector<QPointPair> nullPointsVector = {};
   QSize imageSize{0, 0};
 
 public:
