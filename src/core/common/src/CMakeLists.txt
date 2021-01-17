@@ -7,9 +7,11 @@ target_sources(
           tiff.cpp
           utils.cpp
           ${PROJECT_BINARY_DIR}/src/core/common/src/version.cpp)
-target_sources(
-  core_tests
-  PUBLIC logger_t.cpp
-         symbolic_t.cpp
-         tiff_t.cpp
-         utils_t.cpp)
+if(BUILD_TESTING)
+  target_sources(
+    core_tests
+    PUBLIC logger_t.cpp
+           symbolic_t.cpp
+           tiff_t.cpp
+           utils_t.cpp)
+endif()

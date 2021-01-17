@@ -2,6 +2,8 @@
 
 set -e -x
 
+ls /c/hostedtoolcache/windows/Python
+
 # download static libs
 ./ci/getlibs.sh win64
 
@@ -10,7 +12,7 @@ export SME_EXTRA_EXE_LIBS="-static;-static-libgcc;-static-libstdc++"
 export CMAKE_GENERATOR="Unix Makefiles"
 export SME_EXTRA_CORE_DEFS="_hypot=hypot"
 export CMAKE_CXX_COMPILER_LAUNCHER=ccache
-export PATH="/c/hostedtoolcache/windows/Python/3.8.6/x64:/c/hostedtoolcache/windows/Python/3.8.6/x64/Scripts:$PATH"
+export PATH="/c/hostedtoolcache/windows/Python/3.8.7/x64:/c/hostedtoolcache/windows/Python/3.8.7/x64/Scripts:$PATH"
 
 echo "PATH=$PATH"
 pwd

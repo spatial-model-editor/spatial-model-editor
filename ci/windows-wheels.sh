@@ -2,7 +2,7 @@
 
 set -e -x
 
-export PATH="/c/hostedtoolcache/windows/Python/3.8.6/x64:/c/hostedtoolcache/windows/Python/3.8.6/x64/Scripts::$PATH"
+export PATH="/c/hostedtoolcache/windows/Python/3.8.7/x64:/c/hostedtoolcache/windows/Python/3.8.7/x64/Scripts::$PATH"
 echo "PATH=$PATH"
 
 export CMAKE_GENERATOR="Unix Makefiles"

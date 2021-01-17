@@ -15,15 +15,18 @@ target_sources(
           pixelsim_impl.cpp
           simulate.cpp)
 
-target_sources(
-  core_tests
-  PUBLIC duneconverter_t.cpp
-         duneconverter_impl_t.cpp
-         dunefunction_t.cpp
-         dunegrid_t.cpp
-         duneini_t.cpp
-         dunesim_t.cpp
-         pde_t.cpp
-         simulate_t.cpp)
-
-target_sources(bench PUBLIC duneconverter_bench.cpp simulate_bench.cpp)
+if(BUILD_TESTING)
+  target_sources(
+    core_tests
+    PUBLIC duneconverter_t.cpp
+           duneconverter_impl_t.cpp
+           dunefunction_t.cpp
+           dunegrid_t.cpp
+           duneini_t.cpp
+           dunesim_t.cpp
+           pde_t.cpp
+           simulate_t.cpp)
+endif()
+if(BUILD_BENCHMARKS)
+  target_sources(bench PUBLIC duneconverter_bench.cpp simulate_bench.cpp)
+endif()

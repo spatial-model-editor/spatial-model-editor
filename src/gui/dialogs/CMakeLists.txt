@@ -13,16 +13,18 @@ target_sources(
           dialogunits.cpp)
 target_include_directories(gui PUBLIC .)
 
-target_sources(
-  gui_tests
-  PUBLIC dialogabout_t.cpp
-         dialoganalytic_t.cpp
-         dialogconcentrationimage_t.cpp
-         dialogcoordinates_t.cpp
-         dialogdisplayoptions_t.cpp
-         dialogeditunit_t.cpp
-         dialogexport_t.cpp
-         dialogimagesize_t.cpp
-         dialogimageslice_t.cpp
-         dialogsimulationoptions_t.cpp
-         dialogunits_t.cpp)
+if(BUILD_TESTING)
+  target_sources(
+    gui_tests
+    PUBLIC dialogabout_t.cpp
+           dialoganalytic_t.cpp
+           dialogconcentrationimage_t.cpp
+           dialogcoordinates_t.cpp
+           dialogdisplayoptions_t.cpp
+           dialogeditunit_t.cpp
+           dialogexport_t.cpp
+           dialogimagesize_t.cpp
+           dialogimageslice_t.cpp
+           dialogsimulationoptions_t.cpp
+           dialogunits_t.cpp)
+endif()
