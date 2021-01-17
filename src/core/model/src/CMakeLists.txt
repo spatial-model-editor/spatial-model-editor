@@ -38,4 +38,8 @@ target_sources(
          model_species_t.cpp
          model_units_t.cpp
          xml_annotation_t.cpp)
-target_sources(bench PUBLIC geometry_bench.cpp)
+target_sources(
+  bench
+  PUBLIC geometry_bench.cpp
+         model_bench.cpp
+         model_membranes_util_bench.cpp)

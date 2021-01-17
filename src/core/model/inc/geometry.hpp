@@ -41,7 +41,7 @@ public:
   inline const std::vector<QPoint> &getPixels() const { return ix; }
   inline const QPoint &getPixel(std::size_t i) const { return ix[i]; }
   inline std::size_t nPixels() const { return ix.size(); }
-  // e.g. ix[up_x[i]] is the +x neigbour of point ix[i]
+  // e.g. ix[up_x[i]] is the +x neighbour of point ix[i]
   // a field stores the concentration at point ix[i] at index i
   // zero flux Neumann bcs: outside neighbour of point on boundary is itself
   inline std::size_t up_x(std::size_t i) const { return nn[4 * i]; }
@@ -101,7 +101,6 @@ public:
   const Compartment *getCompartment() const;
   const std::vector<double> &getConcentration() const;
   void setConcentration(std::size_t index, double concentration);
-
   void setUniformConcentration(double concentration);
   void importConcentration(const std::vector<double> &sbmlConcentrationArray);
   QImage getConcentrationImage() const;

@@ -1,4 +1,4 @@
-// SBML document wrapper
+  // SBML document wrapper
 // - uses libSBML to read/write SBML document
 // - provides the contents in Qt containers for display
 // - augments the model with spatial information

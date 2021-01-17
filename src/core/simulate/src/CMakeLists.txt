@@ -25,3 +25,5 @@ target_sources(
          dunesim_t.cpp
          pde_t.cpp
          simulate_t.cpp)
+
+target_sources(bench PUBLIC duneconverter_bench.cpp simulate_bench.cpp)
