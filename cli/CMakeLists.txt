@@ -1,5 +1,4 @@
 add_library(cli STATIC)
-target_include_directories(cli PUBLIC inc)
 target_include_directories(cli PUBLIC src)
 target_link_libraries(
   cli
@@ -7,13 +6,15 @@ target_link_libraries(
          core
          ${SME_EXTRA_EXE_LIBS})
 
-add_library(cli_tests STATIC)
-target_include_directories(cli_tests PUBLIC inc src)
-target_link_libraries(
-  cli_tests
-  PUBLIC CLI11::CLI11
-         cli
-         testlib)
+if(BUILD_TESTING)
+  add_library(cli_tests STATIC)
+  target_include_directories(cli_tests PUBLIC inc src)
+  target_link_libraries(
+    cli_tests
+    PUBLIC CLI11::CLI11
+           cli
+           testlib)
+endif()
 
 add_subdirectory(src)
 

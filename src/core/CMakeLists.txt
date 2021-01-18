@@ -1,5 +1,7 @@
 add_library(core STATIC)
-add_library(core_tests STATIC)
+if(BUILD_TESTING)
+  add_library(core_tests STATIC)
+endif()
 
 # find SymEngine and check it is compiled with LLVM enabled
 find_package(
@@ -77,8 +79,6 @@ if(SME_WITH_OPENMP)
   target_link_libraries(core PRIVATE OpenMP::OpenMP_CXX)
 endif()
 
-find_package(benchmark REQUIRED)
-
 target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 # set Logger level
 target_compile_definitions(
@@ -105,11 +105,16 @@ target_link_libraries(
 
 target_compile_definitions(core PUBLIC ${SME_EXTRA_CORE_DEFS})
 
-target_link_libraries(
-  core_tests
-  PUBLIC core
-         testlib
-         dunecopasi::dunecopasi)
+if(BUILD_TESTING)
+  target_link_libraries(
+    core_tests
+    PUBLIC core
+           testlib
+           dunecopasi::dunecopasi)
+endif()
+if(BUILD_BENCHMARKS)
+  target_link_libraries(bench PUBLIC core)
+endif()
 
 add_subdirectory(resources)
 add_subdirectory(common)

@@ -1,10 +1,10 @@
 add_executable(tests main.cpp)
 target_link_libraries(
   tests
-  PRIVATE ${SME_EXTRA_EXE_LIBS}
-          core_tests
+  PRIVATE core_tests
           gui_tests
-          cli_tests)
+          cli_tests
+          ${SME_EXTRA_EXE_LIBS})
 
 find_package(
   Qt5

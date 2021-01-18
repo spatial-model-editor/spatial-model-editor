@@ -49,7 +49,6 @@ set(SME_EXTRA_CORE_DEFS
     CACHE STRING "Optional additional defines for core")
 message(STATUS "SME_EXTRA_CORE_DEFS: ${SME_EXTRA_CORE_DEFS}")
 
-# compile benchmarks
 set(BUILD_BENCHMARKS
     yes
     CACHE BOOL "Build benchmarks")
@@ -61,6 +60,7 @@ include(CTest)
 if(BUILD_TESTING)
   find_package(Catch2 REQUIRED)
   include(Catch)
+  add_subdirectory(test)
 endif()
 
 # compile spatial model editor
@@ -94,9 +94,4 @@ set(BUILD_PYTHON_LIBRARY
 if(BUILD_PYTHON_LIBRARY)
   add_subdirectory(ext/pybind11)
   add_subdirectory(sme)
-endif()
-
-# compile tests
-if(BUILD_TESTING)
-  add_subdirectory(test)
 endif()
