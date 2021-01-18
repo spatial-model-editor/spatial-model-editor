@@ -7,13 +7,14 @@ target_link_libraries(
          ${SME_EXTRA_EXE_LIBS})
 
 if(BUILD_TESTING)
-  add_library(cli_tests STATIC)
+  add_executable(cli_tests "")
   target_include_directories(cli_tests PUBLIC inc src)
   target_link_libraries(
     cli_tests
     PUBLIC CLI11::CLI11
            cli
            testlib)
+  catch_discover_tests(cli_tests)
 endif()
 
 add_subdirectory(src)

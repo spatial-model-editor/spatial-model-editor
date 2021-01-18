@@ -3,7 +3,6 @@ target_link_libraries(
   tests
   PRIVATE core_tests
           gui_tests
-          cli_tests
           ${SME_EXTRA_EXE_LIBS})
 
 find_package(
