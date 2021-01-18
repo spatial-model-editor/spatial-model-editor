@@ -19,6 +19,8 @@ namespace Dune {
 template <typename F, int n> class FieldVector;
 }
 
+namespace sme {
+
 namespace simulate {
 
 template <typename GV>
@@ -93,3 +95,5 @@ template <class GV> auto makeModelDuneFunctions(const DuneConverter &dc) {
 }
 
 } // namespace simulate
+
+} // namespace sme

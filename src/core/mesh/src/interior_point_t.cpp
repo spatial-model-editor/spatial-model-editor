@@ -3,6 +3,8 @@
 #include <QImage>
 #include <cmath>
 
+using namespace sme;
+
 SCENARIO("InteriorPoint", "[core/mesh/interior_point][core/mesh][core][interior_point]") {
   GIVEN("Single pixel") {
     QImage img(1, 1,QImage::Format_RGB32);

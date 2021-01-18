@@ -10,9 +10,11 @@ namespace Ui {
 class TabReactions;
 }
 
+namespace sme {
 namespace model {
 class Model;
 }
+} // namespace sme
 
 class QLabelMouseTracker;
 class QTreeWidgetItem;
@@ -21,14 +23,14 @@ class TabReactions : public QWidget {
   Q_OBJECT
 
 public:
-  explicit TabReactions(model::Model &model, QLabelMouseTracker *mouseTracker,
+  explicit TabReactions(sme::model::Model &model, QLabelMouseTracker *mouseTracker,
                         QWidget *parent = nullptr);
   ~TabReactions();
   void loadModelData(const QString &selection = {});
 
 private:
   std::unique_ptr<Ui::TabReactions> ui;
-  model::Model &model;
+  sme::model::Model &model;
   QLabelMouseTracker *lblGeometry;
   QString currentReacId;
 

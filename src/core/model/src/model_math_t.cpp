@@ -5,6 +5,8 @@
 #include <QImage>
 #include <cmath>
 
+using namespace sme;
+
 SCENARIO("SBML math", "[core/model/math][core/model][core][model][math]") {
   GIVEN("No SBML model, valid expressions") {
     model::ModelMath math;

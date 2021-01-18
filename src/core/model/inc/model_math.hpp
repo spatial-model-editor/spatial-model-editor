@@ -12,6 +12,8 @@ class Model;
 class ASTNode;
 } // namespace libsbml
 
+namespace sme {
+
 namespace model {
 
 class ModelMath {
@@ -37,3 +39,5 @@ public:
 };
 
 } // namespace model
+
+} // namespace sme

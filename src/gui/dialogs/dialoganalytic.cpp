@@ -1,17 +1,15 @@
 #include "dialoganalytic.hpp"
-
-#include <QFileDialog>
-#include <QPushButton>
-
 #include "logger.hpp"
 #include "model_parameters.hpp"
 #include "model_units.hpp"
 #include "ui_dialoganalytic.h"
+#include <QFileDialog>
+#include <QPushButton>
 
 DialogAnalytic::DialogAnalytic(
     const QString &analyticExpression,
-    const model::SpeciesGeometry &speciesGeometry, model::ModelMath &modelMath,
-    const model::SpatialCoordinates &spatialCoordinates, QWidget *parent)
+    const sme::model::SpeciesGeometry &speciesGeometry, sme::model::ModelMath &modelMath,
+    const sme::model::SpatialCoordinates &spatialCoordinates, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogAnalytic>()},
       xId{spatialCoordinates.x.id}, yId{spatialCoordinates.y.id},
       points(speciesGeometry.compartmentPoints),

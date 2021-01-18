@@ -8,6 +8,8 @@
 #include <opencv2/core/types.hpp>
 #include <vector>
 
+namespace sme {
+
 namespace mesh {
 
 using ContourIndices = std::array<int, 4>;
@@ -19,8 +21,10 @@ private:
 
 public:
   ContourMap(const QSize &size, const Contours &contours);
-  const ContourIndices& getContourIndices(const cv::Point &p) const;
+  const ContourIndices &getContourIndices(const cv::Point &p) const;
   bool isFixedPoint(const cv::Point &p) const;
 };
 
 } // namespace mesh
+
+} // namespace sme

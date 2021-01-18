@@ -9,9 +9,11 @@ class QLabel;
 class QListWidgetItem;
 class QLabelMouseTracker;
 
+namespace sme {
 namespace model {
 class Model;
 }
+} // namespace sme
 
 namespace Ui {
 class TabGeometry;
@@ -21,7 +23,7 @@ class TabGeometry : public QWidget {
   Q_OBJECT
 
 public:
-  explicit TabGeometry(model::Model &doc, QLabelMouseTracker *mouseTracker,
+  explicit TabGeometry(sme::model::Model &doc, QLabelMouseTracker *mouseTracker,
                        QLabel *statusBarMsg, QWidget *parent = nullptr);
   ~TabGeometry();
   void loadModelData(const QString &selection = {});
@@ -33,7 +35,7 @@ signals:
 
 private:
   std::unique_ptr<Ui::TabGeometry> ui;
-  model::Model &sbmlDoc;
+  sme::model::Model &sbmlDoc;
   QLabelMouseTracker *lblGeometry;
   QLabel *statusBarPermanentMessage;
   bool waitingForCompartmentChoice = false;

@@ -8,6 +8,8 @@
 #include <sbml/SBMLReader.h>
 #include <sbml/SBMLWriter.h>
 
+using namespace sme;
+
 SCENARIO("DUNE: DuneConverter",
          "[core/simulate/duneconverter][core/simulate][core][duneconverter]") {
   GIVEN("ABtoC model") {

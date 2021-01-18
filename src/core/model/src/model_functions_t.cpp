@@ -9,6 +9,8 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
+using namespace sme;
+
 SCENARIO("SBML functions",
          "[core/model/functions][core/model][core][model][functions]") {
   GIVEN("SBML: yeast-glycolysis.xml") {

@@ -1,11 +1,10 @@
 #include "dialogimagesize.hpp"
-
 #include "ui_dialogimagesize.h"
 
 static QString dblToString(double val) { return QString::number(val, 'g', 14); }
 
 DialogImageSize::DialogImageSize(const QImage &image, double pixelWidth,
-                                 const model::ModelUnits &modelUnits,
+                                 const sme::model::ModelUnits &modelUnits,
                                  QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogImageSize>()}, img(image),
       pixelModelUnits(pixelWidth), units(modelUnits) {
@@ -60,7 +59,7 @@ void DialogImageSize::updateAll() {
   double h = static_cast<double>(img.height()) * pixelLocalUnits;
   ui->txtImageHeight->setText(dblToString(h));
   // calculate pixel width in model units
-  pixelModelUnits = model::rescale(
+  pixelModelUnits = sme::model::rescale(
       pixelLocalUnits,
       units.getLengthUnits().at(ui->cmbUnitsWidth->currentIndex()),
       units.getLength());

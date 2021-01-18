@@ -9,6 +9,8 @@
 #include <locale>
 #include <memory>
 
+using namespace sme;
+
 static std::string toString(const simulate::SimulatorType &s) {
   if (s == simulate::SimulatorType::DUNE) {
     return "DUNE";
@@ -162,7 +164,7 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
 }
 
 int main(int argc, char *argv[]) {
-  fmt::print("# Spatial Model Editor v{}\n", SPATIAL_MODEL_EDITOR_VERSION);
+  fmt::print("# Spatial Model Editor v{}\n", utils::SPATIAL_MODEL_EDITOR_VERSION);
   fmt::print("# Simulator benchmark code\n");
   auto benchmarkParams = parseArgs(argc, argv);
   printSimulatorBenchmarks(benchmarkParams);

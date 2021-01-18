@@ -1,5 +1,6 @@
 #include "guiutils.hpp"
-
+#include "logger.hpp"
+#include "tiff.hpp"
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QListWidget>
@@ -7,9 +8,6 @@
 #include <QString>
 #include <QTreeWidget>
 #include <QWidget>
-
-#include "logger.hpp"
-#include "tiff.hpp"
 
 QMessageBox *newYesNoMessageBox(const QString &title, const QString &text,
                                 QWidget *parent) {
@@ -71,7 +69,7 @@ QImage getImageFromUser(QWidget *parent, const QString &title) {
   }
   SPDLOG_DEBUG("  - import file {}", filename.toStdString());
   // first try using tiffReader
-  utils::TiffReader tiffReader(filename.toStdString());
+  sme::utils::TiffReader tiffReader(filename.toStdString());
   if (tiffReader.size() == 0) {
     SPDLOG_DEBUG(
         "    -> tiffReader could not read file, trying QImage::load()");

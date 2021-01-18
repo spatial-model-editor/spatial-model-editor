@@ -1,6 +1,8 @@
 #include "bench.hpp"
 #include "model.hpp"
 
+using namespace sme;
+
 template <typename T>
 static void model_Model(benchmark::State &state) {
   T data;

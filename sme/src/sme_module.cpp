@@ -33,7 +33,7 @@ void pybindModule(pybind11::module &m) {
         Returns:
             Model: the example spatial model
         )");
-  m.attr("__version__") = SPATIAL_MODEL_EDITOR_VERSION;
+  m.attr("__version__") = utils::SPATIAL_MODEL_EDITOR_VERSION;
 }
 
 Model openSbmlFile(const std::string &filename) { return Model(filename); }

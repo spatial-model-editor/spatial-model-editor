@@ -14,7 +14,7 @@ DialogExport::DialogExport(const QVector<QImage> &images,
       plot(plotWrapper) {
   ui->setupUi(this);
   for (double t : plotWrapper->getTimepoints()) {
-    ui->cmbTimepoint->addItem(utils::dblToQStr(t, 6));
+    ui->cmbTimepoint->addItem(sme::utils::dblToQStr(t, 6));
   }
   if (timepoint < 0 || timepoint >= ui->cmbTimepoint->count()) {
     timepoint = 0;

@@ -5,7 +5,6 @@
 #include <QPushButton>
 #include <QRadioButton>
 #include <QTreeWidget>
-
 #include "catch_wrapper.hpp"
 #include "model.hpp"
 #include "qlabelmousetracker.hpp"
@@ -13,7 +12,7 @@
 #include "tabspecies.hpp"
 
 SCENARIO("Species Tab", "[gui/tabs/species][gui/tabs][gui][species]") {
-  model::Model sbmlDoc;
+  sme::model::Model sbmlDoc;
   QLabelMouseTracker mouseTracker;
   auto tab = TabSpecies(sbmlDoc, &mouseTracker);
   tab.show();

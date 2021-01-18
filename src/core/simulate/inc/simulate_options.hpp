@@ -6,6 +6,8 @@
 #include <limits>
 #include <string>
 
+namespace sme {
+
 namespace simulate {
 
 enum class DuneDiscretizationType { FEM1 };
@@ -52,3 +54,5 @@ struct AvgMinMax {
 };
 
 } // namespace simulate
+
+} // namespace sme

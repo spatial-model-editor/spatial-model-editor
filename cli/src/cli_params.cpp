@@ -3,6 +3,8 @@
 #include <fmt/core.h>
 #include <map>
 
+namespace sme {
+
 namespace cli {
 
 static void addParams(CLI::App &app, Params &params) {
@@ -33,7 +35,7 @@ static void addCallbacks(CLI::App &app) {
   app.add_flag_callback(
          "-v,--version",
          []() {
-           fmt::print("{}", SPATIAL_MODEL_EDITOR_VERSION);
+           fmt::print("{}", utils::SPATIAL_MODEL_EDITOR_VERSION);
            throw CLI::Success();
          },
          "Display the version number and exit")
@@ -49,15 +51,15 @@ static void addCallbacks(CLI::App &app) {
 }
 
 static void addConfig(CLI::App &app) {
-    app.set_config("-c,--config", "",
-                   "Read an ini file containing simulation options");
-    app.config_formatter(std::make_shared<CLI::ConfigTOML>());
+  app.set_config("-c,--config", "",
+                 "Read an ini file containing simulation options");
+  app.config_formatter(std::make_shared<CLI::ConfigTOML>());
 }
 
 Params setupCLI(CLI::App &app) {
   Params params;
   app.description({fmt::format("Spatial Model Editor CLI v{}",
-                               SPATIAL_MODEL_EDITOR_VERSION)});
+                               utils::SPATIAL_MODEL_EDITOR_VERSION)});
   addParams(app, params);
   addCallbacks(app);
   addConfig(app);
@@ -83,3 +85,5 @@ void printParams(const Params &params) {
 }
 
 } // namespace cli
+
+} // namespace sme

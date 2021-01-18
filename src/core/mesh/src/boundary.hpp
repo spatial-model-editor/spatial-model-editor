@@ -4,14 +4,16 @@
 
 #pragma once
 #include "line_simplifier.hpp"
-#include <opencv2/core/types.hpp>
 #include <QImage>
 #include <QPoint>
 #include <QPointF>
 #include <cstddef>
 #include <limits>
+#include <opencv2/core/types.hpp>
 #include <string>
 #include <vector>
+
+namespace sme {
 
 namespace mesh {
 
@@ -43,3 +45,5 @@ constructBoundaries(const QImage &img,
                     const std::vector<QRgb> &compartmentColours);
 
 } // namespace mesh
+
+} // namespace sme

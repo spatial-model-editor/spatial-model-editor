@@ -15,6 +15,8 @@ class Model;
 class Species;
 } // namespace libsbml
 
+namespace sme {
+
 namespace model {
 class ModelCompartments;
 class ModelGeometry;
@@ -77,4 +79,6 @@ public:
   const geometry::Field *getField(const QString &id) const;
 };
 
-} // namespace sbml
+} // namespace model
+
+} // namespace sme

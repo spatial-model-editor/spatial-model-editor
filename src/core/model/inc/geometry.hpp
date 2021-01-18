@@ -15,6 +15,8 @@
 #include <utility>
 #include <vector>
 
+namespace sme {
+
 namespace geometry {
 
 class Compartment {
@@ -50,7 +52,7 @@ public:
   inline std::size_t dn_y(std::size_t i) const { return nn[4 * i + 3]; }
   // return a QImage of the compartment geometry
   const QImage &getCompartmentImage() const;
-  const std::vector<std::size_t>& getArrayPoints() const;
+  const std::vector<std::size_t> &getArrayPoints() const;
 };
 
 class Membrane {
@@ -104,9 +106,10 @@ public:
   void setUniformConcentration(double concentration);
   void importConcentration(const std::vector<double> &sbmlConcentrationArray);
   QImage getConcentrationImage() const;
-  std::vector<double>
-  getConcentrationImageArray() const;
+  std::vector<double> getConcentrationImageArray() const;
   void setCompartment(const Compartment *comp);
 };
 
 } // namespace geometry
+
+} // namespace sme

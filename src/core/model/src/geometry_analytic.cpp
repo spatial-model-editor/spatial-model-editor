@@ -11,6 +11,8 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
+namespace sme {
+
 namespace model {
 
 static const libsbml::AnalyticGeometry *
@@ -158,3 +160,5 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
 }
 
 } // namespace model
+
+} // namespace sme

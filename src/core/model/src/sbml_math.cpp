@@ -4,6 +4,8 @@
 
 #include "logger.hpp"
 
+namespace sme {
+
 namespace model {
 
 std::string inlineFunctions(const std::string &mathExpression,
@@ -134,7 +136,8 @@ findUnknownName(const libsbml::ASTNode *node, libsbml::ASTNodeType_t nodeType,
     return node;
   }
   for (unsigned int i = 0; i < node->getNumChildren(); ++i) {
-    if (const auto *unknown = findUnknownName(node->getChild(i), nodeType, names);
+    if (const auto *unknown =
+            findUnknownName(node->getChild(i), nodeType, names);
         unknown != nullptr) {
       return unknown;
     }
@@ -198,3 +201,5 @@ double evaluateMathString(
 }
 
 } // namespace model
+
+} // namespace sme

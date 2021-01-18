@@ -2,6 +2,8 @@
 #include "cli_simulate.hpp"
 #include <QFile>
 
+using namespace sme;
+
 SCENARIO("CLI Simulate", "[cli][simulate]") {
   cli::Params params;
   QFile f(":/models/ABtoC.xml");

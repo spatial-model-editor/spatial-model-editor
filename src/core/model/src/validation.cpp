@@ -1,13 +1,12 @@
 #include "validation.hpp"
-
+#include "logger.hpp"
+#include <QString>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-#include <QString>
-
-#include "logger.hpp"
+namespace sme {
 
 namespace model {
 
@@ -66,4 +65,6 @@ bool validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc) {
   return true;
 }
 
-} // namespace sbml
+} // namespace model
+
+} // namespace sme

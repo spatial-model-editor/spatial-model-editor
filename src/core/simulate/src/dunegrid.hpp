@@ -16,6 +16,10 @@
 #include <utility>
 #include <vector>
 
+namespace sme {
+
+namespace simulate {
+
 static inline bool
 useCompartment(std::size_t compIndex,
                const std::unordered_set<int> &compartmentIndicies) {
@@ -90,8 +94,6 @@ static void assignElements(Grid &grid,
   grid->postUpdateSubDomains();
 }
 
-namespace simulate {
-
 template <class HostGrid, class MDGTraits>
 auto makeDuneGrid(const mesh::Mesh &mesh,
                   const std::unordered_set<int> &compartmentIndicies) {
@@ -103,3 +105,5 @@ auto makeDuneGrid(const mesh::Mesh &mesh,
 }
 
 } // namespace simulate
+
+} // namespace sme

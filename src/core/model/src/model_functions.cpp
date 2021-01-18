@@ -1,16 +1,15 @@
 #include "model_functions.hpp"
-
+#include "id.hpp"
+#include "logger.hpp"
+#include "sbml_math.hpp"
+#include <QString>
+#include <memory>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-#include <QString>
-#include <memory>
-
-#include "id.hpp"
-#include "logger.hpp"
-#include "sbml_math.hpp"
+namespace sme {
 
 namespace model {
 
@@ -225,8 +224,8 @@ void ModelFunctions::remove(const QString &id) {
   names.removeAt(i);
 }
 
-std::vector<symbolic::Function> ModelFunctions::getSymbolicFunctions() const {
-  std::vector<symbolic::Function> fns;
+std::vector<utils::Function> ModelFunctions::getSymbolicFunctions() const {
+  std::vector<utils::Function> fns;
   fns.reserve(static_cast<std::size_t>(ids.size()));
   for (const auto &id : ids) {
     auto &fn = fns.emplace_back();
@@ -246,3 +245,5 @@ std::vector<symbolic::Function> ModelFunctions::getSymbolicFunctions() const {
 }
 
 } // namespace model
+
+} // namespace sme

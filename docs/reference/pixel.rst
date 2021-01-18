@@ -123,7 +123,7 @@ We use the embedded lower order solution to estimate the error at each timestep,
 
 * RK gives us a pair of :math:`u_{n+1}^{(p)} = u_{n} + \mathcal{O}(h^{p+1})` solutions
 * difference between :math:`p, p-1` solutions gives local error of order :math:`\mathcal{O}(p)`
-* to get the relative error we divide this by :math:`c = ( |c_{n+1}| + |c_{n}| + \epsilon)/2`
+* to get the relative error we symbolicDivide this by :math:`c = ( |c_{n+1}| + |c_{n}| + \epsilon)/2`
 * we use the average of the old and new concentration, plus a small constant, to avoid dividing by zero
 * we do this for all species, compartments and spatial points, and take the maximum value
 * if this error is larger than the desired value, the whole step is discarded

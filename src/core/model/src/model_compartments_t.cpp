@@ -9,6 +9,8 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
+using namespace sme;
+
 SCENARIO("SBML compartments",
          "[core/model/compartments][core/model][core][model][compartments]") {
   GIVEN("Remove compartment also removes dependents") {

@@ -10,6 +10,8 @@
 #include <memory>
 #include <type_traits>
 
+namespace sme {
+
 namespace simulate {
 
 template <int DuneFEMOrder> class DuneImplCoupled : public DuneImpl {
@@ -76,3 +78,5 @@ public:
 };
 
 } // namespace simulate
+
+} // namespace sme

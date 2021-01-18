@@ -8,7 +8,7 @@
 
 TEST_CASE("DialogEditUnit",
           "[gui/dialogs/editunit][gui/dialogs][gui][editunit][units]") {
-  model::Unit u{"h", "second", 0, 1, 3600};
+  sme::model::Unit u{"h", "second", 0, 1, 3600};
   ModalWidgetTimer mwt;
   DialogEditUnit dia(u);
   auto *lblBaseUnits = dia.findChild<QLabel *>("lblBaseUnits");

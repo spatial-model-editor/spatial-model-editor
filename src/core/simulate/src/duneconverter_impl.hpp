@@ -2,11 +2,13 @@
 
 #pragma once
 
-#include "simulate_options.hpp"
 #include "model.hpp"
+#include "simulate_options.hpp"
 #include <QString>
-#include <vector>
 #include <string>
+#include <vector>
+
+namespace sme {
 
 namespace simulate {
 
@@ -14,11 +16,13 @@ std::vector<std::string>
 makeValidDuneSpeciesNames(const std::vector<std::string> &names);
 
 bool compartmentContainsNonConstantSpecies(const model::Model &model,
-                                                  const QString &compId);
+                                           const QString &compId);
 
 std::vector<std::string> getNonConstantSpecies(const model::Model &model,
-                                                      const QString &compId);
+                                               const QString &compId);
 
 bool modelHasIndependentCompartments(const model::Model &model);
 
-}
+} // namespace simulate
+
+} // namespace sme

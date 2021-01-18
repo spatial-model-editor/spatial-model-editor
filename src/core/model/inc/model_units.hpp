@@ -9,6 +9,8 @@ namespace libsbml {
 class Model;
 }
 
+namespace sme {
+
 namespace model {
 
 struct Unit {
@@ -105,3 +107,5 @@ double rescale(double val, const Unit &oldUnit, const Unit &newUnit);
 double getVolOverL3(const Unit &lengthUnit, const Unit &volumeUnit);
 
 } // namespace model
+
+} // namespace sme

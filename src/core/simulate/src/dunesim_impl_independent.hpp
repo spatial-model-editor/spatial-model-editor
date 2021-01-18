@@ -10,6 +10,8 @@
 #include <memory>
 #include <type_traits>
 
+namespace sme {
+
 namespace simulate {
 
 template <int DuneFEMOrder> class DuneImplIndependent : public DuneImpl {
@@ -18,8 +20,8 @@ public:
       Grid::SubDomainGrid, Grid::SubDomainGrid::Traits::LeafGridView,
       DuneFEMOrder>;
   using Model = Dune::Copasi::ModelDiffusionReaction<ModelTraits>;
-  using GF = std::remove_reference_t<decltype(
-      *std::declval<Model>().get_grid_function(0).get())>;
+  using GF = std::remove_reference_t<
+      decltype(*std::declval<Model>().get_grid_function(0).get())>;
   std::vector<std::unique_ptr<Model>> models;
   std::vector<std::shared_ptr<const GF>> gridFunctions;
   double t0{0.0};
@@ -58,7 +60,7 @@ public:
     }
   }
   void run(double time) override {
-    auto write_output = [&f=vtkFilename](const auto &state) {
+    auto write_output = [&f = vtkFilename](const auto &state) {
       if (!f.empty()) {
         state.write(f, true);
       }
@@ -92,3 +94,5 @@ public:
 };
 
 } // namespace simulate
+
+} // namespace sme

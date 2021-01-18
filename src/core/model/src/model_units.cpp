@@ -6,6 +6,8 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
+namespace sme {
+
 namespace model {
 
 bool operator==(const Unit &a, const Unit &b) {
@@ -302,3 +304,5 @@ double getVolOverL3(const Unit &lengthUnit, const Unit &volumeUnit) {
 }
 
 } // namespace model
+
+} // namespace sme

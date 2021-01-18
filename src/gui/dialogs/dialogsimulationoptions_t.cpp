@@ -1,16 +1,15 @@
-#include <QFile>
-
 #include "catch_wrapper.hpp"
 #include "dialogsimulationoptions.hpp"
 #include "qt_test_utils.hpp"
 #include "simulate.hpp"
+#include <QFile>
 
 #if defined(SPATIAL_MODEL_EDITOR_WITH_TBB) ||                                  \
     defined(SPATIAL_MODEL_EDITOR_WITH_OPENMP)
 SCENARIO(
     "DialogSimulationOptions",
     "[gui/dialogs/simulationoptions][gui/dialogs][gui][simulationoptions]") {
-  simulate::Options options;
+  sme::simulate::Options options;
   options.dune.integrator = "explicit_euler";
   options.dune.dt = 0.123;
   options.dune.minDt = 1e-5;
@@ -20,7 +19,7 @@ SCENARIO(
   options.dune.writeVTKfiles = true;
   options.dune.newtonRelErr = 4e-4;
   options.dune.newtonAbsErr = 9e-9;
-  options.pixel.integrator = simulate::PixelIntegratorType::RK435;
+  options.pixel.integrator = sme::simulate::PixelIntegratorType::RK435;
   options.pixel.maxErr = {0.01, 4e-4};
   options.pixel.maxTimestep = 0.2;
   options.pixel.enableMultiThreading = false;
@@ -43,7 +42,7 @@ SCENARIO(
     REQUIRE(options.dune.writeVTKfiles == true);
     REQUIRE(options.dune.newtonRelErr == dbl_approx(4e-4));
     REQUIRE(options.dune.newtonAbsErr == dbl_approx(9e-9));
-    REQUIRE(opt.pixel.integrator == simulate::PixelIntegratorType::RK435);
+    REQUIRE(opt.pixel.integrator == sme::simulate::PixelIntegratorType::RK435);
     REQUIRE(opt.pixel.maxErr.rel == dbl_approx(4e-4));
     REQUIRE(opt.pixel.maxErr.abs == dbl_approx(0.01));
     REQUIRE(opt.pixel.maxTimestep == dbl_approx(0.2));
@@ -76,7 +75,7 @@ SCENARIO(
                        "Tab", "Tab", "Tab", " "});
     mwt.start();
     dia.exec();
-    simulate::DuneOptions defaultOpts{};
+    sme::simulate::DuneOptions defaultOpts{};
     auto opt = dia.getOptions();
     REQUIRE(opt.dune.integrator == defaultOpts.integrator);
     REQUIRE(opt.dune.dt == dbl_approx(defaultOpts.dt));
@@ -93,7 +92,7 @@ SCENARIO(
     mwt.start();
     dia.exec();
     auto opt = dia.getOptions();
-    REQUIRE(opt.pixel.integrator == simulate::PixelIntegratorType::RK212);
+    REQUIRE(opt.pixel.integrator == sme::simulate::PixelIntegratorType::RK212);
     REQUIRE(opt.pixel.maxErr.rel == dbl_approx(7));
     REQUIRE(opt.pixel.maxErr.abs == dbl_approx(99));
     REQUIRE(opt.pixel.maxTimestep == dbl_approx(0.5));
@@ -107,7 +106,7 @@ SCENARIO(
         {"Right", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", " "});
     mwt.start();
     dia.exec();
-    simulate::PixelOptions defaultOpts{};
+    sme::simulate::PixelOptions defaultOpts{};
     auto opt = dia.getOptions();
     REQUIRE(opt.pixel.integrator == defaultOpts.integrator);
     REQUIRE(opt.pixel.maxErr.rel == dbl_approx(defaultOpts.maxErr.rel));

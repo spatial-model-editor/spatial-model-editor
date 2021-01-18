@@ -2,6 +2,8 @@
 #include "simulate.hpp"
 #include "simulate_options.hpp"
 
+using namespace sme;
+
 template <typename T>
 static void simulate_SimulationDUNE(benchmark::State &state) {
   T data;

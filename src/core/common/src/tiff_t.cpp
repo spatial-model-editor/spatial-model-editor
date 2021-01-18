@@ -9,6 +9,8 @@
 #include "tiff.hpp"
 #include "utils.hpp"
 
+using namespace sme;
+
 SCENARIO("TiffReader", "[core/common/tiff][core/common][core][tiff]") {
   GIVEN("1 16bit grayscale tiff") {
     QFile::remove("tmp.tif");

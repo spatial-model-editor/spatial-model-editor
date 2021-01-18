@@ -1,6 +1,8 @@
 #include "duneini.hpp"
 #include "utils.hpp"
 
+namespace sme {
+
 namespace simulate {
 
 const QString &IniFile::getText() const { return text; }
@@ -54,3 +56,5 @@ void IniFile::addValue(const QString &var, double value, int precision) {
 void IniFile::clear() { text.clear(); }
 
 } // namespace simulate
+
+} // namespace sme

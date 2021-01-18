@@ -2,6 +2,8 @@
 #include "line_simplifier.hpp"
 #include <QPoint>
 
+using namespace sme;
+
 SCENARIO("Simplify Lines",
          "[core/mesh/line_simplifier][core/mesh][core][line_simplifier]") {
   GIVEN("Invalid points") {

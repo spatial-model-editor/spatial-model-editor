@@ -8,6 +8,8 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
+using namespace sme;
+
 SCENARIO("SBML reactions",
          "[core/model/reactions][core/model][core][model][reactions]") {
   GIVEN("ModelReactions") {

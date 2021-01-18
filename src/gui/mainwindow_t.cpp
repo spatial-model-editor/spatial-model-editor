@@ -2,10 +2,8 @@
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
-
 #include <QFile>
 #include <QMenu>
-
 #include "catch_wrapper.hpp"
 #include "mainwindow.hpp"
 #include "qt_test_utils.hpp"

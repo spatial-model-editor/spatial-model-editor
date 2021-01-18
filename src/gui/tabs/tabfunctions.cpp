@@ -1,15 +1,13 @@
 #include "tabfunctions.hpp"
-
 #include <QInputDialog>
 #include <QMessageBox>
-
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "model.hpp"
 #include "ui_tabfunctions.h"
 #include "utils.hpp"
 
-TabFunctions::TabFunctions(model::Model &m, QWidget *parent)
+TabFunctions::TabFunctions(sme::model::Model &m, QWidget *parent)
     : QWidget{parent}, ui{std::make_unique<Ui::TabFunctions>()}, model{m} {
   ui->setupUi(this);
   connect(ui->listFunctions, &QListWidget::currentRowChanged, this,
@@ -67,7 +65,7 @@ void TabFunctions::listFunctions_currentRowChanged(int row) {
   auto args = funcs.getArguments(id);
   // reset variables to only built-in functions
   ui->txtFunctionDef->resetToDefaultFunctions();
-  ui->txtFunctionDef->setVariables(utils::toStdString(args));
+  ui->txtFunctionDef->setVariables(sme::utils::toStdString(args));
   // add model functions
   for (const auto &function : model.getFunctions().getSymbolicFunctions()) {
     ui->txtFunctionDef->addFunction(function);

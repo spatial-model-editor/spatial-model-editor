@@ -3,7 +3,7 @@
 #include "ui_dialogeditunit.h"
 #include <QPushButton>
 
-DialogEditUnit::DialogEditUnit(const model::Unit &unit, const QString &unitType,
+DialogEditUnit::DialogEditUnit(const sme::model::Unit &unit, const QString &unitType,
                                QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogEditUnit>()}, u(unit) {
   ui->setupUi(this);
@@ -33,12 +33,12 @@ DialogEditUnit::DialogEditUnit(const model::Unit &unit, const QString &unitType,
 
 DialogEditUnit::~DialogEditUnit() = default;
 
-const model::Unit &DialogEditUnit::getUnit() const { return u; }
+const sme::model::Unit &DialogEditUnit::getUnit() const { return u; }
 
 void DialogEditUnit::updateLblBaseUnits() {
   if (validScale && validExponent && validMultipler) {
     ui->lblBaseUnits->setText(
-        QString("1 %1 = %2").arg(u.name).arg(model::unitInBaseUnits(u)));
+        QString("1 %1 = %2").arg(u.name).arg(sme::model::unitInBaseUnits(u)));
   }
 }
 

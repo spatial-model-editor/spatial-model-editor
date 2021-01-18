@@ -9,6 +9,8 @@
 #include <tiff.h>
 #include <tiffio.h>
 
+namespace sme {
+
 namespace utils {
 
 constexpr int TiffDataTypeBits = std::numeric_limits<TiffDataType>::digits;
@@ -210,3 +212,5 @@ QImage TiffReader::getImage(std::size_t i) const {
 const QString &TiffReader::getErrorMessage() const { return errorMessage; }
 
 } // namespace utils
+
+} // namespace sme

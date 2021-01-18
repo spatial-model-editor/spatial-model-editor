@@ -1,8 +1,10 @@
 #include "contour_map.hpp"
 
+namespace sme {
+
 namespace mesh {
 
-static void addEdge(ContourIndices& contourIndices, int contourIndex){
+static void addEdge(ContourIndices &contourIndices, int contourIndex) {
   if (contourIndices[0] < 0 || contourIndices[0] == contourIndex) {
     contourIndices[0] = contourIndex;
     return;
@@ -30,7 +32,7 @@ static void addEdges(std::vector<ContourIndices> &indices,
 ContourMap::ContourMap(const QSize &size, const Contours &contours)
     : indices(
           static_cast<std::size_t>((size.height() + 1) * (size.width() + 1)),
-          {-1, -1, -1,-1}),
+          {-1, -1, -1, -1}),
       L(size.width() + 1) {
   // add domain edges, all with the same index
   auto domainIndex{static_cast<int>(contours.compartmentEdges.size())};
@@ -54,3 +56,5 @@ bool ContourMap::isFixedPoint(const cv::Point &p) const {
 }
 
 } // namespace mesh
+
+} // namespace sme

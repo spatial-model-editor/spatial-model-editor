@@ -1,14 +1,13 @@
-#include <QFile>
-
 #include "catch_wrapper.hpp"
 #include "dialoganalytic.hpp"
 #include "model.hpp"
 #include "qt_test_utils.hpp"
+#include <QFile>
 
 SCENARIO("DialogAnalytic",
          "[gui/dialogs/analytic][gui/dialogs][gui][analytic]") {
   GIVEN("10x10 image, small compartment, simple expr") {
-    model::Model doc;
+    sme::model::Model doc;
     QFile f(":/models/ABtoC.xml");
     f.open(QIODevice::ReadOnly);
     doc.importSBMLString(f.readAll().toStdString());
@@ -89,7 +88,7 @@ SCENARIO("DialogAnalytic",
     }
   }
   GIVEN("100x100 image") {
-    model::Model doc;
+    sme::model::Model doc;
     QFile f(":/models/ABtoC.xml");
     f.open(QIODevice::ReadOnly);
     doc.importSBMLString(f.readAll().toStdString());

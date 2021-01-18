@@ -8,6 +8,8 @@
 #include <sbml/SBMLReader.h>
 #include <sbml/SBMLWriter.h>
 
+using namespace sme;
+
 SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
   GIVEN("ABtoC model") {
     model::Model s;

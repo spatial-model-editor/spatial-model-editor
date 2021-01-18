@@ -3,6 +3,8 @@
 #include "simulate.hpp"
 #include <CLI/CLI.hpp>
 
+namespace sme {
+
 namespace cli {
 
 struct Params {
@@ -20,3 +22,5 @@ std::string toString(const simulate::SimulatorType &s);
 void printParams(const Params &params);
 
 } // namespace cli
+
+} // namespace sme

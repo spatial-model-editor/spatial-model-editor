@@ -1,8 +1,7 @@
-#include <QFile>
-
 #include "catch_wrapper.hpp"
 #include "dialogimageslice.hpp"
 #include "qt_test_utils.hpp"
+#include <QFile>
 
 SCENARIO("DialogImageSlice",
          "[gui/dialogs/imageslice][gui/dialogs][gui][imageslice]") {

@@ -16,6 +16,8 @@ namespace libsbml {
 class Model;
 }
 
+namespace sme {
+
 namespace model {
 
 class ImageMembranePixels;
@@ -55,3 +57,5 @@ public:
 };
 
 } // namespace model
+
+} // namespace sme

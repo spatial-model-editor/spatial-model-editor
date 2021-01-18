@@ -16,6 +16,8 @@
 #include "utils.hpp"
 #include "xml_annotation.hpp"
 
+namespace sme {
+
 namespace model {
 
 static QStringList importIds(const libsbml::Model *model) {
@@ -97,7 +99,7 @@ makeReactionSpatial(libsbml::Reaction *reac,
     SPDLOG_INFO("  -> dividing rate by compartment size");
     auto expr = mathASTtoString(kin->getMath());
     SPDLOG_INFO("  - {}", expr);
-    auto newExpr = symbolic::divide(expr, compSet[0]);
+    auto newExpr = utils::symbolicDivide(expr, compSet[0]);
     SPDLOG_INFO("  --> {}", newExpr);
     std::unique_ptr<libsbml::ASTNode> argAST(
         libsbml::SBML_parseL3Formula(newExpr.c_str()));
@@ -490,7 +492,7 @@ bool ModelReactions::dependOnVariable(const QString &variableId) const {
   auto v{variableId.toStdString()};
   for (const auto &id : ids) {
     auto e{getRateExpression(id).toStdString()};
-    if(symbolic::contains(e, v)){
+    if (utils::symbolicContains(e, v)) {
       return true;
     }
   }
@@ -498,3 +500,5 @@ bool ModelReactions::dependOnVariable(const QString &variableId) const {
 }
 
 } // namespace model
+
+} // namespace sme

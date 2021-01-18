@@ -8,6 +8,8 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
+using namespace sme;
+
 SCENARIO("Model id", "[core/model/id][core/model][core][model][id]") {
   GIVEN("ABtoC model") {
     QFile f(":/models/ABtoC.xml");
@@ -15,7 +17,7 @@ SCENARIO("Model id", "[core/model/id][core/model][core][model][id]") {
     std::unique_ptr<libsbml::SBMLDocument> doc(
         libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
     auto *model = doc->getModel();
-    auto *geom = getOrCreateGeometry(model);
+    auto *geom = model::getOrCreateGeometry(model);
 
     // true if sId not already in model (in any namespace)
     REQUIRE(model::isSIdAvailable("boogie", model) == true);

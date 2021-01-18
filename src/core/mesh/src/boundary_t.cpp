@@ -19,6 +19,8 @@ struct BoundaryTestImage {
   std::vector<BoundaryTestData> boundaries;
 };
 
+using namespace sme;
+
 SCENARIO("Boundary", "[core/mesh/boundary][core/mesh][core][boundary]") {
   GIVEN("Loop") {
     // points that make up the loop
@@ -177,47 +179,46 @@ SCENARIO("constructBoundaries",
     auto &bt0 = boundaryTestImages.emplace_back();
     bt0.description = "single cell, separated from edges of image";
     bt0.images = {{3, 8, 11, 12, 13, 18, 19, 20}};
-    bt0.boundaries.push_back({{{bg}}, 2, 2, {1}});
-    bt0.boundaries.push_back({{{fg}}, 1, 1, {1}});
-    bt0.boundaries.push_back({{{bg, fg}}, 2, 2, {1, 1}});
+    bt0.boundaries.push_back({{bg}, 2, 2, {1}});
+    bt0.boundaries.push_back({{fg}, 1, 1, {1}});
+    bt0.boundaries.push_back({{bg, fg}, 2, 2, {1, 1}});
 
     auto &bt1 = boundaryTestImages.emplace_back();
     bt1.description = "single cell, one boundary touches edge of image";
     bt1.images = {{1, 5, 9, 16}};
-    bt1.boundaries.push_back({{{bg}}, 1, 1, {1}});
-    bt1.boundaries.push_back({{{fg}}, 1, 1, {1}});
-    bt1.boundaries.push_back({{{bg, fg}}, 3, 0, {1, 1}});
+    bt1.boundaries.push_back({{bg}, 1, 1, {1}});
+    bt1.boundaries.push_back({{fg}, 1, 1, {1}});
+    bt1.boundaries.push_back({{bg, fg}, 3, 0, {1, 1}});
 
     auto &bt2 = boundaryTestImages.emplace_back();
     bt2.description = "two cells, one touching edge of image";
-    bt2.images = {{4, 7, 10}};
-    bt2.boundaries.push_back({{{bg}}, 2, 2, {1}});
-    bt2.boundaries.push_back({{{fg}}, 2, 2, {2}});
-    bt2.boundaries.push_back({{{bg, fg}}, 4, 1, {1, 2}});
+    bt2.images = {4, 7, 10};
+    bt2.boundaries.push_back({{bg}, 2, 2, {1}});
+    bt2.boundaries.push_back({{fg}, 2, 2, {2}});
+    bt2.boundaries.push_back({{bg, fg}, 4, 1, {1, 2}});
 
     auto &bt3 = boundaryTestImages.emplace_back();
     bt3.description = "two cells, both touching edge of image";
-    bt3.images = {{14}};
-    bt3.boundaries.push_back({{{bg}}, 1, 1, {1}});
-    bt3.boundaries.push_back({{{fg}}, 2, 2, {2}});
-    bt3.boundaries.push_back({{{bg, fg}}, 6, 0, {1, 2}});
+    bt3.images = {14};
+    bt3.boundaries.push_back({{bg}, 1, 1, {1}});
+    bt3.boundaries.push_back({{fg}, 2, 2, {2}});
+    bt3.boundaries.push_back({{bg, fg}, 6, 0, {1, 2}});
 
     auto &bt4 = boundaryTestImages.emplace_back();
     bt4.description =
         "three cells, each with a boundary touching edge of image";
     bt4.images = {{6, 15}};
-    bt4.boundaries.push_back({{{bg}}, 1, 1, {1}});
-    bt4.boundaries.push_back({{{fg}}, 3, 3, {3}});
-    bt4.boundaries.push_back({{{bg, fg}}, 9, 0, {1, 3}});
+    bt4.boundaries.push_back({{bg}, 1, 1, {1}});
+    bt4.boundaries.push_back({{fg}, 3, 3, {3}});
+    bt4.boundaries.push_back({{bg, fg}, 9, 0, {1, 3}});
 
     auto &bt5 = boundaryTestImages.emplace_back();
     bt5.description = "one fg cell, three bg cells";
     bt5.images = {{2, 17}};
-    bt5.boundaries.push_back({{{bg}}, 3, 3, {3}});
-    bt5.boundaries.push_back({{{fg}}, 1, 1, {1}});
-    bt5.boundaries.push_back({{{bg, fg}}, 9, 0, {3, 1}});
+    bt5.boundaries.push_back({{bg}, 3, 3, {3}});
+    bt5.boundaries.push_back({{fg}, 1, 1, {1}});
+    bt5.boundaries.push_back({{bg, fg}, 9, 0, {3, 1}});
 
-    std::vector<std::vector<QPointF>> interiorPoints;
     for (const auto &boundaryTestImage : boundaryTestImages) {
       for (auto imageIndex : boundaryTestImage.images) {
         for (const auto &boundaryData : boundaryTestImage.boundaries) {

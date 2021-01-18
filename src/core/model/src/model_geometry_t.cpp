@@ -12,6 +12,8 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
+using namespace sme;
+
 SCENARIO("Model geometry",
          "[core/model/geometry][core/model][core][model][geometry]") {
   GIVEN("no model") {

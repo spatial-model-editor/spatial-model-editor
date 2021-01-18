@@ -1,6 +1,8 @@
 #include "catch_wrapper.hpp"
 #include "duneini.hpp"
 
+using namespace sme;
+
 SCENARIO("DUNE: ini files",
          "[core/simulate/duneini][core/simulate][core][duneini]") {
   GIVEN("IniFile class") {

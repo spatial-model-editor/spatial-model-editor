@@ -1,12 +1,11 @@
 #include <QFile>
-
 #include "catch_wrapper.hpp"
 #include "dialogunits.hpp"
 #include "model.hpp"
 #include "qt_test_utils.hpp"
 
 SCENARIO("DialogUnits", "[gui/dialogs/units][gui/dialogs][gui][units]") {
-  model::Model doc;
+  sme::model::Model doc;
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
   doc.importSBMLString(f.readAll().toStdString());

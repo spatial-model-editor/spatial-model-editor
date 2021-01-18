@@ -1,6 +1,8 @@
 #include "duneconverter.hpp"
 #include "bench.hpp"
 
+using namespace sme;
+
 template <typename T> static void simulate_DuneConverter(benchmark::State &state) {
   T data;
   std::unique_ptr<simulate::DuneConverter> duneConverter;

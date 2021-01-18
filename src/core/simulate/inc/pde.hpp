@@ -17,6 +17,8 @@
 #include <utility>
 #include <vector>
 
+namespace sme {
+
 namespace model {
 class Model;
 }
@@ -79,3 +81,5 @@ public:
 };
 
 } // namespace simulate
+
+} // namespace sme

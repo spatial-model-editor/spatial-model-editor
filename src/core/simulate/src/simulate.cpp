@@ -12,6 +12,8 @@
 #include <numeric>
 #include <utility>
 
+namespace sme {
+
 namespace simulate {
 
 void Simulation::initModel(const model::Model &model) {
@@ -46,7 +48,8 @@ void Simulation::initModel(const model::Model &model) {
 }
 
 static std::vector<AvgMinMax>
-calculateAvgMinMax(const std::vector<double> &concs, std::size_t nSpecies, std::size_t concPadding) {
+calculateAvgMinMax(const std::vector<double> &concs, std::size_t nSpecies,
+                   std::size_t concPadding) {
   std::vector<AvgMinMax> avgMinMax(nSpecies);
   std::size_t stride{nSpecies + concPadding};
   for (std::size_t ix = 0; ix < concs.size() / stride; ++ix) {
@@ -59,8 +62,7 @@ calculateAvgMinMax(const std::vector<double> &concs, std::size_t nSpecies, std::
     }
   }
   for (auto &a : avgMinMax) {
-    a.avg /=
-        static_cast<double>(concs.size()) / static_cast<double>(stride);
+    a.avg /= static_cast<double>(concs.size()) / static_cast<double>(stride);
   }
   return avgMinMax;
 }
@@ -313,3 +315,5 @@ void Simulation::requestStop() {
 }
 
 } // namespace simulate
+
+} // namespace sme

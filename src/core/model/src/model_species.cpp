@@ -1,13 +1,4 @@
 #include "model_species.hpp"
-
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
-
-#include <QString>
-#include <memory>
-
 #include "id.hpp"
 #include "logger.hpp"
 #include "model_compartments.hpp"
@@ -18,6 +9,14 @@
 #include "sbml_utils.hpp"
 #include "utils.hpp"
 #include "xml_annotation.hpp"
+#include <QString>
+#include <memory>
+#include <sbml/SBMLTypes.h>
+#include <sbml/extension/SBMLDocumentPlugin.h>
+#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
+#include <sbml/packages/spatial/extension/SpatialExtension.h>
+
+namespace sme {
 
 namespace model {
 
@@ -694,3 +693,5 @@ const geometry::Field *ModelSpecies::getField(const QString &id) const {
 }
 
 } // namespace model
+
+} // namespace sme

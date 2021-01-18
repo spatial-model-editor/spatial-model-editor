@@ -15,16 +15,18 @@
 #include <utility>
 #include <vector>
 
+namespace dune {
+class DuneConverter;
+}
+
+namespace sme {
+
 namespace model {
 class Model;
 }
 
 namespace geometry {
 class Compartment;
-}
-
-namespace dune {
-class DuneConverter;
 }
 
 namespace simulate {
@@ -77,3 +79,5 @@ public:
 };
 
 } // namespace simulate
+
+} // namespace sme

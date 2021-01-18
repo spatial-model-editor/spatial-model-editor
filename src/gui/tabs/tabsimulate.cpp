@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <future>
 
-TabSimulate::TabSimulate(model::Model &doc, QLabelMouseTracker *mouseTracker,
+TabSimulate::TabSimulate(sme::model::Model &doc, QLabelMouseTracker *mouseTracker,
                          QWidget *parent)
     : QWidget(parent), ui{std::make_unique<Ui::TabSimulate>()}, sbmlDoc(doc),
       lblGeometry(mouseTracker), plt{std::make_unique<PlotWrapper>(
@@ -66,7 +66,7 @@ void TabSimulate::loadModelData() {
     ui->btnSimulate->setEnabled(false);
     return;
   }
-  if (simType == simulate::SimulatorType::DUNE &&
+  if (simType == sme::simulate::SimulatorType::DUNE &&
       (sbmlDoc.getGeometry().getMesh() == nullptr ||
        !sbmlDoc.getGeometry().getMesh()->isValid())) {
     ui->btnSimulate->setEnabled(false);
@@ -83,7 +83,7 @@ void TabSimulate::loadModelData() {
     msgbox->open();
     return;
   }
-  sim = std::make_unique<simulate::Simulation>(sbmlDoc, simType, simOptions);
+  sim = std::make_unique<sme::simulate::Simulation>(sbmlDoc, simType, simOptions);
   if (!sim->errorMessage().empty()) {
     QMessageBox::warning(
         this, "Simulation Setup Failed",
@@ -156,9 +156,9 @@ void TabSimulate::stopSimulation() {
 
 void TabSimulate::useDune(bool enable) {
   if (enable) {
-    simType = simulate::SimulatorType::DUNE;
+    simType = sme::simulate::SimulatorType::DUNE;
   } else {
-    simType = simulate::SimulatorType::Pixel;
+    simType = sme::simulate::SimulatorType::Pixel;
   }
   loadModelData();
 }
@@ -180,9 +180,9 @@ void TabSimulate::reset() {
   sim.reset();
 }
 
-simulate::Options TabSimulate::getOptions() const { return simOptions; }
+sme::simulate::Options TabSimulate::getOptions() const { return simOptions; }
 
-void TabSimulate::setOptions(const simulate::Options &options) {
+void TabSimulate::setOptions(const sme::simulate::Options &options) {
   simOptions = options;
   loadModelData();
 }
@@ -202,7 +202,7 @@ void TabSimulate::btnSimulate_clicked() {
 
   this->setCursor(Qt::WaitCursor);
   // start simulation in a new thread
-  simSteps = std::async(std::launch::async, &simulate::Simulation::doTimesteps,
+  simSteps = std::async(std::launch::async, &sme::simulate::Simulation::doTimesteps,
                         sim.get(), dtImage, n_images);
   // start timer to periodically update simulation results
   plotRefreshTimer.start();
@@ -287,7 +287,7 @@ void TabSimulate::updatePlotAndImages() {
     plt->clearObservableLines();
     std::size_t colorIndex{displayOptions.showSpecies.size()};
     for (const auto &obs : observables) {
-      plt->addObservableLine(obs, utils::indexedColours()[colorIndex]);
+      plt->addObservableLine(obs, sme::utils::indexedColours()[colorIndex]);
       ++colorIndex;
     }
     plt->update(displayOptions.showSpecies, displayOptions.showMinMax);

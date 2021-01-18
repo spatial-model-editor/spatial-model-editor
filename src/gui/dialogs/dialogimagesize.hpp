@@ -2,7 +2,6 @@
 
 #include <QDialog>
 #include <memory>
-
 #include "model_units.hpp"
 
 namespace Ui {
@@ -14,7 +13,7 @@ class DialogImageSize : public QDialog {
 
 public:
   explicit DialogImageSize(const QImage &image, double pixelWidth,
-                           const model::ModelUnits &modelUnits,
+                           const sme::model::ModelUnits &modelUnits,
                            QWidget *parent = nullptr);
   ~DialogImageSize();
   double getPixelWidth() const;
@@ -24,7 +23,7 @@ private:
   const QImage &img;
   double pixelLocalUnits;
   double pixelModelUnits;
-  const model::ModelUnits &units;
+  const sme::model::ModelUnits &units;
   QString modelUnitSymbol;
 
   void updateAll();

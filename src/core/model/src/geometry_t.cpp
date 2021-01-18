@@ -1,6 +1,8 @@
 #include "catch_wrapper.hpp"
 #include "geometry.hpp"
 
+using namespace sme;
+
 static void testFillMissingByDilation(std::vector<double> &arr, int w, int h) {
   const int maxIter{w + h};
   for (int iter = 0; iter < maxIter; ++iter) {

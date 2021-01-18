@@ -23,6 +23,8 @@
 #include <string>
 #include <utility>
 
+namespace sme {
+
 namespace simulate {
 
 std::vector<std::string>
@@ -95,3 +97,5 @@ bool modelHasIndependentCompartments(const model::Model &model) {
 }
 
 } // namespace simulate
+
+} // namespace sme

@@ -15,6 +15,8 @@
 #include <string>
 #include <vector>
 
+namespace sme {
+
 namespace mesh {
 
 class Boundary;
@@ -55,3 +57,5 @@ public:
 };
 
 } // namespace mesh
+
+} // namespace sme

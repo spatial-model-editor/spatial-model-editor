@@ -1,6 +1,8 @@
 #include "pixel_corner_iterator.hpp"
 #include <algorithm>
 
+namespace sme {
+
 namespace mesh {
 
 static std::size_t getFirstCornerIndex(const std::vector<cv::Point> &points,
@@ -76,3 +78,5 @@ PixelCornerIterator &PixelCornerIterator::operator++() {
 }
 
 } // namespace mesh
+
+} // namespace sme

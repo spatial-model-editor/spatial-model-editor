@@ -16,8 +16,10 @@ class QCPAbstractPlottable;
 class QCPItemStraightLine;
 class QCPTextElement;
 class QLabelMouseTracker;
+namespace sme {
 namespace model {
 class Model;
+}
 }
 class PlotWrapper;
 
@@ -25,25 +27,25 @@ class TabSimulate : public QWidget {
   Q_OBJECT
 
 public:
-  explicit TabSimulate(model::Model &doc, QLabelMouseTracker *mouseTracker,
+  explicit TabSimulate(sme::model::Model &doc, QLabelMouseTracker *mouseTracker,
                        QWidget *parent = nullptr);
   ~TabSimulate() override;
   void loadModelData();
   void stopSimulation();
   void useDune(bool enable);
   void reset();
-  [[nodiscard]] simulate::Options getOptions() const;
-  void setOptions(const simulate::Options &options);
+  [[nodiscard]] sme::simulate::Options getOptions() const;
+  void setOptions(const sme::simulate::Options &options);
 
 private:
   std::unique_ptr<Ui::TabSimulate> ui;
-  model::Model &sbmlDoc;
+  sme::model::Model &sbmlDoc;
   QLabelMouseTracker *lblGeometry;
   std::unique_ptr<PlotWrapper> plt;
-  std::unique_ptr<simulate::Simulation> sim;
-  simulate::SimulatorType simType{simulate::SimulatorType::DUNE};
-  simulate::Options simOptions;
-  model::DisplayOptions displayOptions;
+  std::unique_ptr<sme::simulate::Simulation> sim;
+  sme::simulate::SimulatorType simType{sme::simulate::SimulatorType::DUNE};
+  sme::simulate::Options simOptions;
+  sme::model::DisplayOptions displayOptions;
   QVector<double> time;
   QVector<QImage> images;
   QStringList compartmentNames;

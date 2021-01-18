@@ -9,6 +9,8 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
+using namespace sme;
+
 SCENARIO("SBML species",
          "[core/model/species][core/model][core][model][species]") {
   GIVEN("Remove species also removes dependents") {

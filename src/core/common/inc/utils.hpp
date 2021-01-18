@@ -39,6 +39,8 @@
 #include <utility>
 #include <vector>
 
+namespace sme {
+
 namespace utils {
 
 template <typename Container>
@@ -326,3 +328,5 @@ bool isCyclicPermutation(const std::vector<T> &a, const std::vector<T> &b) {
 }
 
 } // namespace utils
+
+} // namespace sme

@@ -5,6 +5,8 @@
 #include <QFile>
 #include <fmt/core.h>
 
+namespace sme {
+
 namespace cli {
 
 bool doSimulation(const Params &params) {
@@ -57,3 +59,5 @@ bool doSimulation(const Params &params) {
 }
 
 } // namespace cli
+
+} // namespace sme

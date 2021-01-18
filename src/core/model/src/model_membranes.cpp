@@ -1,21 +1,20 @@
 #include "model_membranes.hpp"
-
-#include <fmt/core.h>
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
-
-#include <QImage>
-#include <QPoint>
-#include <QString>
-#include <stdexcept>
-
 #include "logger.hpp"
 #include "model_compartments.hpp"
 #include "model_geometry.hpp"
 #include "model_membranes_util.hpp"
 #include "sbml_utils.hpp"
+#include <QImage>
+#include <QPoint>
+#include <QString>
+#include <fmt/core.h>
+#include <sbml/SBMLTypes.h>
+#include <sbml/extension/SBMLDocumentPlugin.h>
+#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
+#include <sbml/packages/spatial/extension/SpatialExtension.h>
+#include <stdexcept>
+
+namespace sme {
 
 namespace model {
 
@@ -149,7 +148,8 @@ void ModelMembranes::importMembraneIdsAndNames(const libsbml::Model *model) {
           const auto &compB = m.getCompartmentB()->getId();
           if ((compA == c1 && compB == c2) || (compA == c2 && compB == c1)) {
             auto mIndex = ids.indexOf(m.getId().c_str());
-            SPDLOG_TRACE("Found membrane[{}] '{}' in SBML document", mIndex, mId);
+            SPDLOG_TRACE("Found membrane[{}] '{}' in SBML document", mIndex,
+                         mId);
             m.setId(mId);
             SPDLOG_TRACE("  id -> '{}'", mId);
             ids[mIndex] = QString::fromStdString(m.getId());
@@ -246,3 +246,5 @@ ModelMembranes &ModelMembranes::operator=(ModelMembranes &&) noexcept = default;
 ModelMembranes::~ModelMembranes() = default;
 
 } // namespace model
+
+} // namespace sme

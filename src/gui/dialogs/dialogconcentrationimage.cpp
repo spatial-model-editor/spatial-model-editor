@@ -1,19 +1,17 @@
 #include "dialogconcentrationimage.hpp"
-
+#include "guiutils.hpp"
+#include "logger.hpp"
+#include "model_units.hpp"
+#include "ui_dialogconcentrationimage.h"
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QPlainTextEdit>
 #include <QPushButton>
 #include <QToolTip>
 
-#include "guiutils.hpp"
-#include "logger.hpp"
-#include "model_units.hpp"
-#include "ui_dialogconcentrationimage.h"
-
 DialogConcentrationImage::DialogConcentrationImage(
     const std::vector<double> &concentrationArray,
-    const model::SpeciesGeometry &speciesGeometry, QWidget *parent)
+    const sme::model::SpeciesGeometry &speciesGeometry, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogConcentrationImage>()},
       points(speciesGeometry.compartmentPoints),
       width(speciesGeometry.pixelWidth), origin(speciesGeometry.physicalOrigin),

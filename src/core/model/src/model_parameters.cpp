@@ -13,6 +13,8 @@
 #include "sbml_math.hpp"
 #include "sbml_utils.hpp"
 
+namespace sme {
+
 namespace model {
 
 static bool isUserVisibleParameter(const libsbml::Parameter *param) {
@@ -377,3 +379,5 @@ std::vector<IdNameExpr> ModelParameters::getNonConstantParameters() const {
 }
 
 } // namespace model
+
+} // namespace sme

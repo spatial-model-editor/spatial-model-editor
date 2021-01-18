@@ -1,14 +1,13 @@
-#include <QFile>
-
 #include "catch_wrapper.hpp"
 #include "dialogimagesize.hpp"
 #include "model.hpp"
 #include "qt_test_utils.hpp"
+#include <QFile>
 
 SCENARIO("DialogImageSize",
          "[gui/dialogs/imagesize][gui/dialogs][gui][imagesize]") {
   GIVEN("100x50 image, initial pixel size 1") {
-    model::Model doc;
+    sme::model::Model doc;
     QFile f(":/models/ABtoC.xml");
     f.open(QIODevice::ReadOnly);
     doc.importSBMLString(f.readAll().toStdString());

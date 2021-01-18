@@ -14,6 +14,8 @@ class Model;
 class Species;
 } // namespace libsbml
 
+namespace sme {
+
 namespace model {
 
 class ModelReactions {
@@ -55,7 +57,9 @@ public:
   QString addParameter(const QString &reactionId, const QString &name,
                        double value);
   void removeParameter(const QString &reactionId, const QString &id);
-  bool dependOnVariable(const QString& variableId) const;
+  bool dependOnVariable(const QString &variableId) const;
 };
 
 } // namespace model
+
+} // namespace sme

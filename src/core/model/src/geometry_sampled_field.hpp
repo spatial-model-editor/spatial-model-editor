@@ -13,6 +13,8 @@ class Geometry;
 class SampledFieldGeometry;
 } // namespace libsbml
 
+namespace sme {
+
 namespace model {
 
 struct GeometrySampledField {
@@ -30,3 +32,5 @@ void exportSampledFieldGeometry(libsbml::Geometry *geom,
                                 const QImage &compartmentImage);
 
 } // namespace model
+
+} // namespace sme

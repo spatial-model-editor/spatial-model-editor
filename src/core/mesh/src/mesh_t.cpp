@@ -4,6 +4,8 @@
 #include <QImage>
 #include <QPoint>
 
+using namespace sme;
+
 SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
   GIVEN("empty image") {
     QImage img(24, 32, QImage::Format_RGB32);

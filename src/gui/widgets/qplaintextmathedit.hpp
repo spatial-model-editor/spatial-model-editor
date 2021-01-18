@@ -14,15 +14,17 @@ namespace libsbml {
 class Model;
 }
 
+namespace sme {
 namespace model {
 class ModelMath;
 }
+} // namespace sme
 
 class QPlainTextMathEdit : public QPlainTextEdit {
   Q_OBJECT
 public:
   explicit QPlainTextMathEdit(QWidget *parent = nullptr);
-  void enableLibSbmlBackend(model::ModelMath *math);
+  void enableLibSbmlBackend(sme::model::ModelMath *math);
   bool mathIsValid() const;
   const QString &getMath() const;
   const std::string &getVariableMath() const;
@@ -41,7 +43,7 @@ public:
   void clearFunctions();
   void resetToDefaultFunctions();
   void addIntrinsicFunction(const std::string &functionId);
-  void addFunction(const symbolic::Function &function);
+  void addFunction(const sme::utils::Function &function);
   void removeFunction(const std::string &functionId);
 
 signals:
@@ -50,17 +52,17 @@ signals:
 
 private:
   using stringStringMap = std::map<std::string, std::string>;
-  model::ModelMath *modelMath{nullptr};
+  sme::model::ModelMath *modelMath{nullptr};
   bool useLibSbmlBackend{false};
   bool allowImplicitNames{false};
   bool allowIllegalChars{false};
-  symbolic::Symbolic sym;
+  sme::utils::Symbolic sym;
   std::vector<double> result{0.0};
   const QColor colourValid = QColor(200, 255, 200);
   const QColor colourInvalid = QColor(255, 150, 150);
   const char *const illegalChars = "%@&!";
   std::vector<std::string> vars;
-  std::vector<symbolic::Function> functions;
+  std::vector<sme::utils::Function> functions;
   stringStringMap mapVarsToDisplayNames;
   stringStringMap mapDisplayNamesToVars;
   stringStringMap mapFuncsToDisplayNames;

@@ -7,10 +7,13 @@
 #include <QImage>
 #endif
 
+namespace sme {
+
 namespace mesh {
 
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-static void writeDebuggingImageOutput(const cv::Mat &mask, const cv::Mat &blob, const cv::Rect &rect,
+static void writeDebuggingImageOutput(const cv::Mat &mask, const cv::Mat &blob,
+                                      const cv::Rect &rect,
                                       const cv::Point &point,
                                       const QString &name) {
   const int Y{blob.rows};
@@ -85,7 +88,7 @@ static std::vector<QPointF> getInnerPoints(const cv::Mat &mask) {
     auto p{getNonZeroPixel(roi)};
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
     int j{10};
-    writeDebuggingImageOutput(mask, blob, rect, p.value()+offset,
+    writeDebuggingImageOutput(mask, blob, rect, p.value() + offset,
                               QString("blob%1_%2").arg(i).arg(j++));
 #endif
     while (p.has_value()) {
@@ -104,7 +107,7 @@ static std::vector<QPointF> getInnerPoints(const cv::Mat &mask) {
           ++offset.x;
           ++offset.y;
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-          writeDebuggingImageOutput(mask, blob, rect, p.value()+offset,
+          writeDebuggingImageOutput(mask, blob, rect, p.value() + offset,
                                     QString("blob%1_%2.png").arg(i).arg(j++));
 #endif
         }
@@ -131,3 +134,5 @@ getInteriorPoints(const QImage &img, const std::vector<QRgb> &cols) {
 }
 
 } // namespace mesh
+
+} // namespace sme

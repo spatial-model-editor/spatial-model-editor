@@ -1,7 +1,8 @@
 #include <QImage>
-
 #include "catch_wrapper.hpp"
 #include "model_membranes.hpp"
+
+using namespace sme;
 
 SCENARIO("SBML membranes",
          "[core/model/membranes][core/model][core][model][membranes]") {

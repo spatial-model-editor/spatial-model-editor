@@ -1,9 +1,11 @@
 #include "sbml_utils.hpp"
-
+#include "logger.hpp"
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-#include "logger.hpp"
+namespace sme {
+
+namespace model {
 
 const libsbml::SampledFieldGeometry *
 getSampledFieldGeometry(const libsbml::Geometry *geom) {
@@ -190,7 +192,7 @@ bool getIsSpeciesConstant(const libsbml::Species *spec) {
   }
   if (spec->isSetBoundaryCondition() && spec->getBoundaryCondition()) {
     // `BoundaryCondition` species is a constant:
-      //  - cannot be altered by Reactions or by RateRules
+    //  - cannot be altered by Reactions or by RateRules
     return true;
   }
   return false;
@@ -229,3 +231,7 @@ libsbml::Parameter *getSpatialCoordinateParam(libsbml::Model *model,
   return const_cast<libsbml::Parameter *>(getSpatialCoordinateParam(
       const_cast<const libsbml::Model *>(model), kind));
 }
+
+} // namespace model
+
+} // namespace sme
