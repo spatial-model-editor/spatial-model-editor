@@ -2,7 +2,9 @@
 
 #include <vector>
 
-namespace model{
+namespace sme {
+
+namespace model {
 
 struct DisplayOptions {
   std::vector<bool> showSpecies;
@@ -11,4 +13,6 @@ struct DisplayOptions {
   bool normaliseOverAllSpecies{true};
 };
 
-}
+} // namespace model
+
+} // namespace sme

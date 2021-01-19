@@ -12,6 +12,8 @@
 #include "sbml_utils.hpp"
 #include "utils.hpp"
 
+namespace sme {
+
 namespace model {
 
 libsbml::SampledFieldGeometry *
@@ -277,3 +279,5 @@ void exportSampledFieldGeometry(libsbml::Geometry *geom,
 }
 
 } // namespace model
+
+} // namespace sme

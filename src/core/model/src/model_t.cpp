@@ -10,6 +10,8 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
+using namespace sme;
+
 // avoid using std::to_string because of "multiple definition of vsnprintf"
 // mingw issue on windows
 template <typename T> static std::string toString(const T &x) {

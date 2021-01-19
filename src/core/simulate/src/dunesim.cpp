@@ -20,6 +20,8 @@
 
 using QTriangleF = std::array<QPointF, 3>;
 
+namespace sme {
+
 namespace simulate {
 
 void DuneSim::initCompartmentNames() {
@@ -319,3 +321,5 @@ void DuneSim::updateSpeciesConcentrations() {
 }
 
 } // namespace simulate
+
+} // namespace sme

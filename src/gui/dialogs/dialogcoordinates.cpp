@@ -1,5 +1,4 @@
 #include "dialogcoordinates.hpp"
-
 #include "ui_dialogcoordinates.h"
 
 DialogCoordinates::DialogCoordinates(const QString &xName, const QString &yName,

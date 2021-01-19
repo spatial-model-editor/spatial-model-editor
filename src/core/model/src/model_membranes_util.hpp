@@ -19,6 +19,8 @@ namespace libsbml {
 class Model;
 }
 
+namespace sme {
+
 namespace model {
 
 using QPointPair = std::pair<QPoint, QPoint>;
@@ -56,3 +58,5 @@ public:
 };
 
 } // namespace model
+
+} // namespace sme

@@ -1,18 +1,16 @@
-#include <qcustomplot.h>
-
-#include <QFile>
-#include <QLineEdit>
-#include <QPushButton>
-#include <QSlider>
-
 #include "catch_wrapper.hpp"
 #include "model.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
 #include "tabsimulate.hpp"
+#include <QFile>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QSlider>
+#include <qcustomplot.h>
 
 SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
-  model::Model sbmlDoc;
+  sme::model::Model sbmlDoc;
   QLabelMouseTracker mouseTracker;
   auto tab = TabSimulate(sbmlDoc, &mouseTracker);
   tab.show();
@@ -45,7 +43,7 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   sendMouseClick(btnSimulate);
   REQUIRE(btnSimulate->isEnabled() == false);
   // simulation happens asynchronously - wait until finished
-  while(!btnSimulate->isEnabled()){
+  while (!btnSimulate->isEnabled()) {
     wait(100);
   }
   REQUIRE(btnSimulate->isEnabled() == true);
@@ -60,7 +58,7 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   tab.useDune(false);
   sendMouseClick(btnSimulate);
   REQUIRE(btnSimulate->isEnabled() == false);
-  while(!btnSimulate->isEnabled()){
+  while (!btnSimulate->isEnabled()) {
     wait(100);
   }
   REQUIRE(hslideTime->isEnabled() == true);
@@ -76,7 +74,7 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   mwt.start();
   sendMouseClick(btnSimulate);
   // wait until simulation stops
-  while(!btnSimulate->isEnabled()){
+  while (!btnSimulate->isEnabled()) {
     wait(100);
   }
 

@@ -46,7 +46,7 @@ DialogAbout::DialogAbout(QWidget *parent)
           &DialogAbout::reject);
 
   ui->lblAbout->setText(QString("<h3>Spatial Model Editor %1</h3>")
-                            .arg(SPATIAL_MODEL_EDITOR_VERSION));
+                            .arg(sme::utils::SPATIAL_MODEL_EDITOR_VERSION));
 
   QString libraries("<p>Included libraries:</p><ul>");
   libraries.append(dep("dune-copasi",
@@ -65,7 +65,7 @@ DialogAbout::DialogAbout(QWidget *parent)
   libraries.append(dep("SymEngine", "https://github.com/symengine/symengine",
                        SYMENGINE_VERSION));
   libraries.append(
-      dep("LLVM core", "https://llvm.org", symbolic::getLLVMVersion()));
+      dep("LLVM core", "https://llvm.org", sme::utils::getLLVMVersion()));
   libraries.append(dep("GMP", "https://gmplib.org", __GNU_MP_VERSION,
                        __GNU_MP_VERSION_MINOR, __GNU_MP_VERSION_PATCHLEVEL));
   libraries.append(

@@ -18,6 +18,8 @@
 #include "utils.hpp"
 #include "xml_annotation.hpp"
 
+namespace sme {
+
 namespace model {
 
 bool ModelGeometry::importDimensions(const libsbml::Model *model) {
@@ -183,8 +185,8 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
 }
 
 void ModelGeometry::importParametricGeometry(const libsbml::Model *model) {
-  auto importedMesh = importParametricGeometryFromSBML(
-      model, this, modelCompartments);
+  auto importedMesh =
+      importParametricGeometryFromSBML(model, this, modelCompartments);
   if (importedMesh != nullptr) {
     mesh = std::move(importedMesh);
   }
@@ -368,3 +370,5 @@ void ModelGeometry::writeGeometryToSBML() const {
 }
 
 } // namespace model
+
+} // namespace sme

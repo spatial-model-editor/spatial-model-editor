@@ -8,6 +8,8 @@
 #include <QString>
 #include <initializer_list>
 
+namespace sme {
+
 namespace mesh {
 
 static void setPointList(triangle::triangulateio &in,
@@ -315,3 +317,5 @@ Triangulate::getTriangleIndices() const {
 }
 
 } // namespace mesh
+
+} // namespace sme

@@ -13,6 +13,8 @@
 #include <sbml/SBMLReader.h>
 #include <sbml/SBMLWriter.h>
 
+using namespace sme;
+
 SCENARIO("Simulate: very_simple_model, single pixel geometry",
          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
   // import model

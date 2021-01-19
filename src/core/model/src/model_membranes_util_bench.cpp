@@ -1,6 +1,8 @@
 #include "bench.hpp"
 #include "model_membranes_util.hpp"
 
+using namespace sme;
+
 template <typename T>
 static void model_ImageMembranePixels(benchmark::State &state) {
   T data;

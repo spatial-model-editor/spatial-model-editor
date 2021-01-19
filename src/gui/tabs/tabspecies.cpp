@@ -1,9 +1,7 @@
 #include "tabspecies.hpp"
-
 #include <QColorDialog>
 #include <QInputDialog>
 #include <QMessageBox>
-
 #include "dialoganalytic.hpp"
 #include "dialogconcentrationimage.hpp"
 #include "guiutils.hpp"
@@ -12,7 +10,7 @@
 #include "qlabelmousetracker.hpp"
 #include "ui_tabspecies.h"
 
-TabSpecies::TabSpecies(model::Model &doc, QLabelMouseTracker *mouseTracker,
+TabSpecies::TabSpecies(sme::model::Model &doc, QLabelMouseTracker *mouseTracker,
                        QWidget *parent)
     : QWidget(parent), ui{std::make_unique<Ui::TabSpecies>()}, sbmlDoc(doc),
       lblGeometry(mouseTracker) {

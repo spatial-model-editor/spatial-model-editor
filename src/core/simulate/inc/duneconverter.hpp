@@ -8,6 +8,8 @@
 #include <unordered_set>
 #include <vector>
 
+namespace sme {
+
 namespace model {
 class Model;
 }
@@ -49,3 +51,5 @@ private:
 };
 
 } // namespace simulate
+
+} // namespace sme

@@ -28,7 +28,7 @@ static bool indexToBool(int value) {
 DialogDisplayOptions::DialogDisplayOptions(
     const QStringList &compartmentNames,
     const std::vector<QStringList> &speciesNames,
-    const model::DisplayOptions &displayOptions,
+    const sme::model::DisplayOptions &displayOptions,
     const std::vector<PlotWrapperObservable> &plotWrapperObservables,
     QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogDisplayOptions>()},

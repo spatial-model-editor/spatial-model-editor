@@ -14,6 +14,8 @@
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 #include <string>
 
+namespace sme {
+
 namespace model {
 
 static QStringList importIds(const libsbml::Model *model) {
@@ -362,3 +364,5 @@ void ModelCompartments::clear() {
 }
 
 } // namespace model
+
+} // namespace sme

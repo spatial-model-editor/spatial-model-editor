@@ -13,6 +13,8 @@ class Model;
 class ASTNode;
 } // namespace libsbml
 
+namespace sme {
+
 namespace model {
 
 // return supplied math expression as string with any Function calls and/or
@@ -51,3 +53,5 @@ double evaluateMathString(
     const libsbml::Model *model = nullptr);
 
 } // namespace model
+
+} // namespace sme

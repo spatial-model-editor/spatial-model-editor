@@ -10,6 +10,8 @@
 #include <opencv2/imgproc.hpp>
 #include <utility>
 
+namespace sme {
+
 namespace mesh {
 
 bool Boundary::isLoop() const { return lineSimplifier.isLoop(); }
@@ -166,3 +168,5 @@ constructBoundaries(const QImage &img,
 }
 
 } // namespace mesh
+
+} // namespace sme

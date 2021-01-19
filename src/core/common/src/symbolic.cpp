@@ -56,7 +56,9 @@ void muPrinter::_print_pow(std::ostringstream &o, const RCP<const Basic> &a,
 }
 } // namespace SymEngine
 
-namespace symbolic {
+namespace sme {
+
+namespace utils {
 
 static std::string toString(const SymEngine::RCP<const SymEngine::Basic> &e) {
   return SymEngine::muPrinter().apply(e);
@@ -289,7 +291,7 @@ void Symbolic::SymEngineImpl::rescale(
   }
 }
 
-std::string divide(const std::string &expr, const std::string &var) {
+std::string symbolicDivide(const std::string &expr, const std::string &var) {
   std::locale userLocale = std::locale::global(std::locale::classic());
   std::string result = SymEngine::muPrinter().apply(
       SymEngine::div(SymEngine::parse(expr), SymEngine::symbol(var)));
@@ -297,7 +299,7 @@ std::string divide(const std::string &expr, const std::string &var) {
   return result;
 }
 
-bool contains(const std::string &expr, const std::string &var) {
+bool symbolicContains(const std::string &expr, const std::string &var) {
   std::locale userLocale = std::locale::global(std::locale::classic());
   auto e{SymEngine::parse(expr)};
   auto v{SymEngine::symbol(var)};
@@ -372,4 +374,6 @@ const std::string &Symbolic::getErrorMessage() const {
   return pSymEngineImpl->errorMessage;
 }
 
-} // namespace symbolic
+} // namespace utils
+
+} // namespace sme

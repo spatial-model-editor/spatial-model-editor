@@ -15,13 +15,15 @@
 #include <utility>
 #include <vector>
 
-namespace symbolic {
+namespace sme {
 
-// divide given expression by a variable
-std::string divide(const std::string &expr, const std::string &var);
+namespace utils {
+
+// symbolicDivide given expression by a variable
+std::string symbolicDivide(const std::string &expr, const std::string &var);
 
 // check if an expression contains a variable
-bool contains(const std::string &expr, const std::string &var);
+bool symbolicContains(const std::string &expr, const std::string &var);
 
 const char *getLLVMVersion();
 
@@ -74,4 +76,6 @@ public:
   const std::string &getErrorMessage() const;
 };
 
-} // namespace symbolic
+} // namespace utils
+
+} // namespace sme

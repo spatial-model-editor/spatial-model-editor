@@ -19,6 +19,8 @@
 #include <tbb/tick_count.h>
 #endif
 
+namespace sme {
+
 namespace simulate {
 
 ReacEval::ReacEval(const model::Model &doc,
@@ -52,7 +54,7 @@ ReacEval::ReacEval(const model::Model &doc,
     rhs.push_back("0"); // dy/dt = 0
   }
   // compile all expressions with symengine
-  sym = symbolic::Symbolic(rhs, sIds, {}, {}, true, doCSE, optLevel);
+  sym = utils::Symbolic(rhs, sIds, {}, {}, true, doCSE, optLevel);
 }
 
 void ReacEval::evaluate(double *output, const double *input) const {
@@ -420,12 +422,14 @@ SimMembrane::SimMembrane(const model::Model &doc,
   // make vector of species from compartments A and B
   std::vector<std::string> speciesIds;
   if (compA != nullptr) {
-    for (std::size_t i = 0; i < compA->getSpeciesIds().size() - nExtraVars; ++i) {
+    for (std::size_t i = 0; i < compA->getSpeciesIds().size() - nExtraVars;
+         ++i) {
       speciesIds.push_back(compA->getSpeciesIds()[i]);
     }
   }
   if (compB != nullptr) {
-    for (std::size_t i = 0; i < compB->getSpeciesIds().size() - nExtraVars; ++i) {
+    for (std::size_t i = 0; i < compB->getSpeciesIds().size() - nExtraVars;
+         ++i) {
       speciesIds.push_back(compB->getSpeciesIds()[i]);
     }
   }
@@ -468,14 +472,15 @@ void SimMembrane::evaluateReactions() {
   for (const auto &[ixA, ixB] : membrane->getIndexPairs()) {
     // populate species concentrations: first A, then B, then t,x,y
     if (concA != nullptr) {
-      std::copy_n(&((*concA)[ixA * (nSpeciesA + nExtraVars)]), nSpeciesA, &species[0]);
+      std::copy_n(&((*concA)[ixA * (nSpeciesA + nExtraVars)]), nSpeciesA,
+                  &species[0]);
     }
     if (concB != nullptr) {
-      std::copy_n(&((*concB)[ixB * (nSpeciesB + nExtraVars)]), nSpeciesB + nExtraVars,
-                  &species[nSpeciesA]);
+      std::copy_n(&((*concB)[ixB * (nSpeciesB + nExtraVars)]),
+                  nSpeciesB + nExtraVars, &species[nSpeciesA]);
     } else if (concA != nullptr) {
-      std::copy_n(&((*concA)[ixA * (nSpeciesA + nExtraVars) + nSpeciesA]), nExtraVars,
-                  &species[nSpeciesA]);
+      std::copy_n(&((*concA)[ixA * (nSpeciesA + nExtraVars) + nSpeciesA]),
+                  nExtraVars, &species[nSpeciesA]);
     }
 
     // evaluate reaction terms
@@ -492,3 +497,5 @@ void SimMembrane::evaluateReactions() {
 }
 
 } // namespace simulate
+
+} // namespace sme

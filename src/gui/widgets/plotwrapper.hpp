@@ -16,7 +16,7 @@ private:
   QCPTextElement *title;
   std::vector<std::string> species;
   std::vector<PlotWrapperObservable> observables;
-  std::vector<std::vector<simulate::AvgMinMax>> concs;
+  std::vector<std::vector<sme::simulate::AvgMinMax>> concs;
   QVector<double> times;
 
 public:
@@ -24,7 +24,7 @@ public:
   explicit PlotWrapper(const QString &plotTitle, QWidget *parent = nullptr);
   void addAvMinMaxLine(const QString &name, QColor col);
   void addAvMinMaxPoint(int lineIndex, double time,
-                        const simulate::AvgMinMax &concentration);
+                        const sme::simulate::AvgMinMax &concentration);
   void addObservableLine(const PlotWrapperObservable &plotWrapperObservable,
                          QColor col);
   void clearObservableLines();

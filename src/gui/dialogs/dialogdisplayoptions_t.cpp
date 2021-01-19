@@ -12,7 +12,7 @@ SCENARIO("DialogDisplayOptions",
     std::vector<QStringList> species;
     species.push_back({"s1_c1", "s2_c1"});
     species.push_back({"s1_c2", "s2_c2", "s3_c2"});
-    model::DisplayOptions opts;
+    sme::model::DisplayOptions opts;
     opts.showSpecies = {true, false, false, true, false};
     opts.showMinMax = false;
     opts.normaliseOverAllTimepoints = false;
@@ -126,7 +126,7 @@ SCENARIO("DialogDisplayOptions",
     std::vector<QStringList> species;
     species.push_back({"s1_c1", "s2_c1"});
     species.push_back({"s1_c2", "s2_c2", "s3_c2"});
-    model::DisplayOptions opts;
+    sme::model::DisplayOptions opts;
     opts.showSpecies = {true, false, false, true, false};
     opts.showMinMax = false;
     opts.normaliseOverAllTimepoints = false;

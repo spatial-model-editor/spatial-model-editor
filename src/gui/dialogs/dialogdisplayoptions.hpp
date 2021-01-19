@@ -18,7 +18,7 @@ public:
   explicit DialogDisplayOptions(
       const QStringList &compartmentNames,
       const std::vector<QStringList> &speciesNames,
-      const model::DisplayOptions &displayOptions,
+      const sme::model::DisplayOptions &displayOptions,
       const std::vector<PlotWrapperObservable> &plotWrapperObservables,
       QWidget *parent = nullptr);
   ~DialogDisplayOptions();

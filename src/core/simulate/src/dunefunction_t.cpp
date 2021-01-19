@@ -8,6 +8,8 @@
 #include <cmath>
 #include <locale>
 
+using namespace sme;
+
 constexpr int DuneDimensions = 2;
 using HostGrid = Dune::UGGrid<DuneDimensions>;
 using MDGTraits = Dune::mdgrid::DynamicSubDomainCountTraits<DuneDimensions, 1>;

@@ -3,7 +3,7 @@
 #include "logger.hpp"
 #include "ui_dialogunits.h"
 
-DialogUnits::DialogUnits(model::ModelUnits &modelUnits, QWidget *parent)
+DialogUnits::DialogUnits(sme::model::ModelUnits &modelUnits, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogUnits>()},
       units(modelUnits) {
   ui->setupUi(this);
@@ -67,22 +67,22 @@ int DialogUnits::getAmountUnitIndex() const {
 
 void DialogUnits::cmbTime_currentIndexChanged(int index) {
   const auto &unit = units.getTimeUnits().at(index);
-  ui->lblSITime->setText(model::unitInBaseUnits(unit));
+  ui->lblSITime->setText(sme::model::unitInBaseUnits(unit));
 }
 
 void DialogUnits::cmbLength_currentIndexChanged(int index) {
   const auto &unit = units.getLengthUnits().at(index);
-  ui->lblSILength->setText(model::unitInBaseUnits(unit));
+  ui->lblSILength->setText(sme::model::unitInBaseUnits(unit));
 }
 
 void DialogUnits::cmbVolume_currentIndexChanged(int index) {
   const auto &unit = units.getVolumeUnits().at(index);
-  ui->lblSIVolume->setText(model::unitInBaseUnits(unit));
+  ui->lblSIVolume->setText(sme::model::unitInBaseUnits(unit));
 }
 
 void DialogUnits::cmbAmount_currentIndexChanged(int index) {
   const auto &unit = units.getAmountUnits().at(index);
-  ui->lblSIAmount->setText(model::unitInBaseUnits(unit));
+  ui->lblSIAmount->setText(sme::model::unitInBaseUnits(unit));
 }
 
 void DialogUnits::btnEditTime_pressed() {
@@ -92,7 +92,7 @@ void DialogUnits::btnEditTime_pressed() {
   if (dialog.exec() == QDialog::Accepted) {
     u = dialog.getUnit();
     SPDLOG_INFO("New unit of time: {}", u.name.toStdString());
-    SPDLOG_INFO("  = {}", model::unitInBaseUnits(u).toStdString());
+    SPDLOG_INFO("  = {}", sme::model::unitInBaseUnits(u).toStdString());
     ui->cmbTime->setItemText(i, u.name);
     cmbTime_currentIndexChanged(i);
   }
@@ -105,7 +105,7 @@ void DialogUnits::btnEditLength_pressed() {
   if (dialog.exec() == QDialog::Accepted) {
     u = dialog.getUnit();
     SPDLOG_INFO("New unit of length: {}", u.name.toStdString());
-    SPDLOG_INFO("  = {}", model::unitInBaseUnits(u).toStdString());
+    SPDLOG_INFO("  = {}", sme::model::unitInBaseUnits(u).toStdString());
     ui->cmbLength->setItemText(i, u.name);
     cmbLength_currentIndexChanged(i);
   }
@@ -118,7 +118,7 @@ void DialogUnits::btnEditVolume_pressed() {
   if (dialog.exec() == QDialog::Accepted) {
     u = dialog.getUnit();
     SPDLOG_INFO("New unit of volume: {}", u.name.toStdString());
-    SPDLOG_INFO("  = {}", model::unitInBaseUnits(u).toStdString());
+    SPDLOG_INFO("  = {}", sme::model::unitInBaseUnits(u).toStdString());
     ui->cmbVolume->setItemText(i, u.name);
     cmbVolume_currentIndexChanged(i);
   }
@@ -131,7 +131,7 @@ void DialogUnits::btnEditAmount_pressed() {
   if (dialog.exec() == QDialog::Accepted) {
     u = dialog.getUnit();
     SPDLOG_INFO("New unit of amount: {}", u.name.toStdString());
-    SPDLOG_INFO("  = {}", model::unitInBaseUnits(u).toStdString());
+    SPDLOG_INFO("  = {}", sme::model::unitInBaseUnits(u).toStdString());
     ui->cmbAmount->setItemText(i, u.name);
     cmbAmount_currentIndexChanged(i);
   }

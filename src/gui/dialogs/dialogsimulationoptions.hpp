@@ -7,18 +7,14 @@ namespace Ui {
 class DialogSimulationOptions;
 }
 
-namespace simulate {
-struct IntegratorOptions;
-}
-
 class DialogSimulationOptions : public QDialog {
   Q_OBJECT
 
 public:
-  explicit DialogSimulationOptions(const simulate::Options &options,
+  explicit DialogSimulationOptions(const sme::simulate::Options &options,
                                    QWidget *parent = nullptr);
   ~DialogSimulationOptions();
-  const simulate::Options &getOptions() const;
+  const sme::simulate::Options &getOptions() const;
 
 private:
   void setupConnections();
@@ -44,5 +40,5 @@ private:
   void spnPixelOptLevel_valueChanged(int value);
   void resetPixelToDefaults();
   std::unique_ptr<Ui::DialogSimulationOptions> ui;
-  simulate::Options opt;
+  sme::simulate::Options opt;
 };

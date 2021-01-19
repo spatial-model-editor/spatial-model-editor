@@ -1,6 +1,8 @@
 #include "mesh_utils.hpp"
 #include <algorithm>
 
+namespace sme {
+
 namespace mesh {
 
 cv::Mat makeBinaryMask(const QImage &img, const std::vector<QRgb> &cols) {
@@ -17,7 +19,7 @@ cv::Mat makeBinaryMask(const QImage &img, const std::vector<QRgb> &cols) {
 }
 
 cv::Mat makeBinaryMask(const QImage &img, QRgb col) {
-  return makeBinaryMask(img, {{col}});
+  return makeBinaryMask(img, std::vector<QRgb>{col});
 }
 
 std::optional<cv::Point> getNonZeroPixel(const cv::Mat &img) {
@@ -33,4 +35,7 @@ std::optional<cv::Point> getNonZeroPixel(const cv::Mat &img) {
   }
   return {};
 }
+
 } // namespace mesh
+
+} // namespace sme

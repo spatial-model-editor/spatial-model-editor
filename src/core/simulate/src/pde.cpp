@@ -14,6 +14,8 @@
 #include <optional>
 #include <utility>
 
+namespace sme {
+
 namespace simulate {
 
 Pde::Pde(const model::Model *doc_ptr,
@@ -32,8 +34,7 @@ Pde::Pde(const model::Model *doc_ptr,
                 relabelledSpeciesIDs.size(), speciesIDs.size());
     relabel = false;
   }
-  if (relabel &&
-      relabelledExtraVariables.size() != extraVariables.size()) {
+  if (relabel && relabelledExtraVariables.size() != extraVariables.size()) {
     SPDLOG_WARN("Ignoring relabelling: relabelledExtraVariables "
                 "size {} does not match number of extraVariables {}",
                 relabelledExtraVariables.size(), extraVariables.size());
@@ -64,9 +65,9 @@ Pde::Pde(const model::Model *doc_ptr,
       SPDLOG_DEBUG("Species {} Reaction {} = {}", speciesIDs.at(i), j,
                    expr.toStdString());
       // parse and inline constants & function calls
-      symbolic::Symbolic sym(
-          expr.toStdString(), vars, reactions.getConstants(j),
-          doc_ptr->getFunctions().getSymbolicFunctions(), false);
+      utils::Symbolic sym(expr.toStdString(), vars, reactions.getConstants(j),
+                          doc_ptr->getFunctions().getSymbolicFunctions(),
+                          false);
       if (!sym.isValid()) {
         throw PdeError(sym.getErrorMessage());
       }
@@ -76,7 +77,7 @@ Pde::Pde(const model::Model *doc_ptr,
     // reparse full rhs to simplify
     SPDLOG_DEBUG("Species {} Reparsing all reaction terms", speciesIDs.at(i));
     // parse expression with symengine to simplify
-    symbolic::Symbolic sym(r.toStdString(), vars, {}, {}, false);
+    utils::Symbolic sym(r.toStdString(), vars, {}, {}, false);
     // rescale species (but not the extra variables)
     SPDLOG_DEBUG("rescaling species");
     sym.rescale(pdeScaleFactors.species, extraVariables);
@@ -198,3 +199,5 @@ Reaction::Reaction(const model::Model *doc, std::vector<std::string> species,
 }
 
 } // namespace simulate
+
+} // namespace sme

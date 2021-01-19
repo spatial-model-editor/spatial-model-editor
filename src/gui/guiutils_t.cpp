@@ -1,8 +1,7 @@
-#include <QImage>
-
 #include "catch_wrapper.hpp"
 #include "guiutils.hpp"
 #include "qt_test_utils.hpp"
+#include <QImage>
 
 SCENARIO("GUI Utils", "[gui/guiutils][gui]") {
   GIVEN("getImageFromUser") {

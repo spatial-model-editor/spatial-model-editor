@@ -1,15 +1,13 @@
 #include "tabparameters.hpp"
-
 #include <QInputDialog>
 #include <QMessageBox>
-
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "model.hpp"
 #include "ui_tabparameters.h"
 #include "utils.hpp"
 
-TabParameters::TabParameters(model::Model &model, QWidget *parent)
+TabParameters::TabParameters(sme::model::Model &model, QWidget *parent)
     : QWidget{parent}, ui{std::make_unique<Ui::TabParameters>()}, model{model} {
   ui->setupUi(this);
   connect(ui->listParameters, &QListWidget::currentRowChanged, this,

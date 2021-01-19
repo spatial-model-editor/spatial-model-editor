@@ -14,18 +14,18 @@ static QString dblToQString(double x) {
   return QString("%1").arg(x, 0, 'e', 5);
 }
 
-static int toIndex(simulate::PixelIntegratorType integrator) {
+static int toIndex(sme::simulate::PixelIntegratorType integrator) {
   switch (integrator) {
-  case simulate::PixelIntegratorType::RK101:
+  case sme::simulate::PixelIntegratorType::RK101:
     return 0;
     break;
-  case simulate::PixelIntegratorType::RK212:
+  case sme::simulate::PixelIntegratorType::RK212:
     return 1;
     break;
-  case simulate::PixelIntegratorType::RK323:
+  case sme::simulate::PixelIntegratorType::RK323:
     return 2;
     break;
-  case simulate::PixelIntegratorType::RK435:
+  case sme::simulate::PixelIntegratorType::RK435:
     return 3;
     break;
   default:
@@ -33,27 +33,27 @@ static int toIndex(simulate::PixelIntegratorType integrator) {
   }
 }
 
-static simulate::PixelIntegratorType toPixelIntegratorEnum(int index) {
+static sme::simulate::PixelIntegratorType toPixelIntegratorEnum(int index) {
   switch (index) {
   case 0:
-    return simulate::PixelIntegratorType::RK101;
+    return sme::simulate::PixelIntegratorType::RK101;
     break;
   case 1:
-    return simulate::PixelIntegratorType::RK212;
+    return sme::simulate::PixelIntegratorType::RK212;
     break;
   case 2:
-    return simulate::PixelIntegratorType::RK323;
+    return sme::simulate::PixelIntegratorType::RK323;
     break;
   case 3:
-    return simulate::PixelIntegratorType::RK435;
+    return sme::simulate::PixelIntegratorType::RK435;
     break;
   default:
-    return simulate::PixelIntegratorType::RK101;
+    return sme::simulate::PixelIntegratorType::RK101;
   }
 }
 
 DialogSimulationOptions::DialogSimulationOptions(
-    const simulate::Options &options, QWidget *parent)
+    const sme::simulate::Options &options, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogSimulationOptions>()},
       opt{options} {
   ui->setupUi(this);
@@ -64,7 +64,7 @@ DialogSimulationOptions::DialogSimulationOptions(
 
 DialogSimulationOptions::~DialogSimulationOptions() = default;
 
-const simulate::Options &DialogSimulationOptions::getOptions() const {
+const sme::simulate::Options &DialogSimulationOptions::getOptions() const {
   return opt;
 }
 
@@ -181,7 +181,7 @@ void DialogSimulationOptions::txtDuneNewtonAbs_editingFinished() {
 }
 
 void DialogSimulationOptions::resetDuneToDefaults() {
-  opt.dune = simulate::DuneOptions{};
+  opt.dune = sme::simulate::DuneOptions{};
   loadDuneOpts();
 }
 
@@ -259,6 +259,6 @@ void DialogSimulationOptions::spnPixelOptLevel_valueChanged(int value) {
 }
 
 void DialogSimulationOptions::resetPixelToDefaults() {
-  opt.pixel = simulate::PixelOptions{};
+  opt.pixel = sme::simulate::PixelOptions{};
   loadPixelOpts();
 }

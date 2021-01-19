@@ -12,6 +12,8 @@
 #include <limits>
 #include <vector>
 
+namespace sme {
+
 namespace mesh {
 
 struct LineError {
@@ -32,7 +34,7 @@ public:
   void getSimplifiedLine(std::vector<QPoint> &line,
                          const LineError &allowedError = {0.0, 0.4}) const;
   void getSimplifiedLine(std::vector<QPoint> &line, std::size_t nPoints) const;
-  const std::vector<QPoint>&getAllVertices() const;
+  const std::vector<QPoint> &getAllVertices() const;
   std::size_t maxPoints() const;
   bool isValid() const;
   bool isLoop() const;
@@ -41,3 +43,5 @@ public:
 };
 
 } // namespace mesh
+
+} // namespace sme

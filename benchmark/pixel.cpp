@@ -1,13 +1,13 @@
-#include <fmt/core.h>
-
-#include <QElapsedTimer>
-#include <QFile>
-#include <locale>
-
 #include "logger.hpp"
 #include "model.hpp"
 #include "simulate.hpp"
 #include "version.hpp"
+#include <QElapsedTimer>
+#include <QFile>
+#include <fmt/core.h>
+#include <locale>
+
+using namespace sme;
 
 struct PixelParams {
   std::size_t integration_order = 1;
@@ -131,7 +131,8 @@ static void printFixedTimestepPixel(const PixelParams &params) {
 }
 
 int main(int argc, char *argv[]) {
-  fmt::print("# Spatial Model Editor v{}\n", SPATIAL_MODEL_EDITOR_VERSION);
+  fmt::print("# Spatial Model Editor v{}\n",
+             utils::SPATIAL_MODEL_EDITOR_VERSION);
   fmt::print("# Pixel integrator test code\n");
   auto params = parseArgs(argc, argv);
   printFixedTimestepPixel(params);

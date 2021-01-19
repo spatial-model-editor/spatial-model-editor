@@ -5,15 +5,18 @@
 //    - find an interior point for each connected region
 
 #pragma once
-#include <opencv2/core/types.hpp>
 #include <QImage>
 #include <QPointF>
+#include <opencv2/core/types.hpp>
 #include <vector>
+
+namespace sme {
 
 namespace mesh {
 
 std::vector<std::vector<QPointF>>
-getInteriorPoints(const QImage &img,
-                                    const std::vector<QRgb> &cols);
+getInteriorPoints(const QImage &img, const std::vector<QRgb> &cols);
 
 } // namespace mesh
+
+} // namespace sme

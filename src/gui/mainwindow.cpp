@@ -1,5 +1,4 @@
 #include "mainwindow.hpp"
-
 #include <QDesktopServices>
 #include <QErrorMessage>
 #include <QFileDialog>
@@ -8,7 +7,6 @@
 #include <QMimeData>
 #include <QShortcut>
 #include <QWhatsThis>
-
 #include "dialogabout.hpp"
 #include "dialogcoordinates.hpp"
 #include "dialogimagesize.hpp"
@@ -271,7 +269,7 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
   if (iniFilename.right(4) != ".ini") {
     iniFilename.append(".ini");
   }
-  simulate::DuneConverter dc(sbmlDoc, true, tabSimulate->getOptions().dune,
+  sme::simulate::DuneConverter dc(sbmlDoc, true, tabSimulate->getOptions().dune,
                              iniFilename);
 }
 
@@ -335,8 +333,8 @@ void MainWindow::actionSet_model_units_triggered() {
   if (!isValidModel()) {
     return;
   }
-  model::Unit oldLengthUnit = sbmlDoc.getUnits().getLength();
-  double oldPixelWidth = sbmlDoc.getGeometry().getPixelWidth();
+  sme::model::Unit oldLengthUnit{sbmlDoc.getUnits().getLength()};
+  double oldPixelWidth{sbmlDoc.getGeometry().getPixelWidth()};
   DialogUnits dialog(sbmlDoc.getUnits());
   if (dialog.exec() == QDialog::Accepted) {
     sbmlDoc.getUnits().setTimeIndex(dialog.getTimeUnitIndex());
@@ -344,7 +342,7 @@ void MainWindow::actionSet_model_units_triggered() {
     sbmlDoc.getUnits().setVolumeIndex(dialog.getVolumeUnitIndex());
     sbmlDoc.getUnits().setAmountIndex(dialog.getAmountUnitIndex());
     // rescale pixelsize to match new units
-    sbmlDoc.getGeometry().setPixelWidth(model::rescale(
+    sbmlDoc.getGeometry().setPixelWidth(sme::model::rescale(
         oldPixelWidth, oldLengthUnit, sbmlDoc.getUnits().getLength()));
   }
 }

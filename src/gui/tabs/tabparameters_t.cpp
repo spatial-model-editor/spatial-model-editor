@@ -1,3 +1,8 @@
+#include "catch_wrapper.hpp"
+#include "model.hpp"
+#include "qplaintextmathedit.hpp"
+#include "qt_test_utils.hpp"
+#include "tabparameters.hpp"
 #include <QDebug>
 #include <QDialog>
 #include <QFile>
@@ -7,14 +12,8 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 
-#include "catch_wrapper.hpp"
-#include "model.hpp"
-#include "qplaintextmathedit.hpp"
-#include "qt_test_utils.hpp"
-#include "tabparameters.hpp"
-
 SCENARIO("Parameters Tab", "[gui/tabs/parameters][gui/tabs][gui][parameters]") {
-  model::Model model;
+  sme::model::Model model;
   auto tab = TabParameters(model);
   // get pointers to widgets within tab
   auto *listParameters = tab.findChild<QListWidget *>("listParameters");

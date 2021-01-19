@@ -17,11 +17,11 @@ struct ABtoC {
   std::vector<std::size_t> maxTriangleArea{10, 10};
   QPointF origin{0.0, 0.0};
   double pixelWidth{1.0};
-  mesh::Mesh mesh{img, {}, maxTriangleArea, pixelWidth, origin, colours};
+  sme::mesh::Mesh mesh{img, {}, maxTriangleArea, pixelWidth, origin, colours};
   QSize imageSize{100, 100};
-  model::ImageMembranePixels imageMembranePixels{img};
+  sme::model::ImageMembranePixels imageMembranePixels{img};
   std::pair<std::size_t, std::size_t> membraneIndexPair{0, 1};
-  model::Model model;
+  sme::model::Model model;
   std::string xml;
   ABtoC() {
     QFile f(":/models/ABtoC.xml");
@@ -38,11 +38,11 @@ struct VerySimpleModel {
   std::vector<std::size_t> maxTriangleArea{10, 10, 10};
   QPointF origin{0.0, 0.0};
   double pixelWidth{1.0};
-  mesh::Mesh mesh{img, {}, maxTriangleArea, pixelWidth, origin, colours};
+  sme::mesh::Mesh mesh{img, {}, maxTriangleArea, pixelWidth, origin, colours};
   QSize imageSize{300, 300};
-  model::ImageMembranePixels imageMembranePixels{img};
+  sme::model::ImageMembranePixels imageMembranePixels{img};
   std::pair<std::size_t, std::size_t> membraneIndexPair{0, 1};
-  model::Model model;
+  sme::model::Model model;
   std::string xml;
   VerySimpleModel() {
     QFile f(":/models/very-simple-model.xml");
@@ -59,11 +59,11 @@ struct LiverCells {
   std::vector<std::size_t> maxTriangleArea{2, 2, 2};
   QPointF origin{0.0, 0.0};
   double pixelWidth{1.0};
-  mesh::Mesh mesh{img, {}, maxTriangleArea, pixelWidth, origin, colours};
+  sme::mesh::Mesh mesh{img, {}, maxTriangleArea, pixelWidth, origin, colours};
   QSize imageSize{1000, 1000};
-  model::ImageMembranePixels imageMembranePixels{img};
+  sme::model::ImageMembranePixels imageMembranePixels{img};
   std::pair<std::size_t, std::size_t> membraneIndexPair{0, 1};
-  model::Model model;
+  sme::model::Model model;
   std::string xml;
   LiverCells() {
     QFile f(":/models/liver-cells.xml");

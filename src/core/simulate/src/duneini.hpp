@@ -5,6 +5,8 @@
 
 #include <QString>
 
+namespace sme {
+
 namespace simulate {
 
 class IniFile {
@@ -31,3 +33,5 @@ public:
 };
 
 } // namespace simulate
+
+} // namespace sme

@@ -6,6 +6,8 @@
 #include <QFile>
 #include <QImage>
 
+using namespace sme;
+
 SCENARIO("Analytic geometry", "[core/model/geometry_analytic][core/"
                               "model][core][model][geometry_analytic]") {
   GIVEN("SBML model with 2d analytic geometry") {

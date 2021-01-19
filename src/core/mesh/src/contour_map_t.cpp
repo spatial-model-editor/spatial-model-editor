@@ -2,6 +2,8 @@
 #include "contour_map.hpp"
 #include <QSize>
 
+using namespace sme;
+
 SCENARIO("ContourMap",
          "[core/mesh/contour_map][core/mesh][core][contour_map]") {
   GIVEN("two compartment contours, one edge contour") {

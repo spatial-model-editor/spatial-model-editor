@@ -1,6 +1,8 @@
 #include "catch_wrapper.hpp"
 #include "pixel_corner_iterator.hpp"
 
+using namespace sme;
+
 SCENARIO("PixelCornerIterator", "[core/mesh/pixel_corner_iterator][core/"
                                 "mesh][core][pixel_corner_iterator]") {
   GIVEN("single pixel outer contour") {

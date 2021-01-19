@@ -15,6 +15,8 @@
 class QSize;
 class QPoint;
 
+namespace sme {
+
 namespace utils {
 
 using TiffDataType = uint16_t;
@@ -42,3 +44,5 @@ public:
 };
 
 } // namespace utils
+
+} // namespace sme

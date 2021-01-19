@@ -4,6 +4,8 @@
 #include <QPoint>
 #include <cmath>
 
+using namespace sme;
+
 static double triangleArea(const QPointF &a, const QPointF &b,
                            const QPointF &c) {
   return 0.5 * std::abs(a.x() * b.y() + b.x() * c.y() + c.x() * a.y() -

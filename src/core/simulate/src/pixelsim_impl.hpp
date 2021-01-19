@@ -15,6 +15,8 @@
 
 class QPoint;
 
+namespace sme {
+
 namespace model {
 class Model;
 }
@@ -29,7 +31,7 @@ namespace simulate {
 class ReacEval {
 private:
   // symengine reaction expression
-  symbolic::Symbolic sym;
+  utils::Symbolic sym;
 
 public:
   ReacEval() = default;
@@ -147,8 +149,8 @@ private:
 public:
   SimMembrane(const model::Model &doc, const geometry::Membrane *membrane_ptr,
               SimCompartment *simCompA, SimCompartment *simCompB,
-              bool doCSE = true, unsigned optLevel = 3, bool timeDependent = false,
-              bool spaceDependent = false);
+              bool doCSE = true, unsigned optLevel = 3,
+              bool timeDependent = false, bool spaceDependent = false);
   SimMembrane(SimMembrane &&) noexcept = default;
   SimMembrane(const SimMembrane &) = delete;
   SimMembrane &operator=(SimMembrane &&) noexcept = default;
@@ -158,3 +160,5 @@ public:
 };
 
 } // namespace simulate
+
+} // namespace sme

@@ -4,6 +4,8 @@
 #include <opencv2/core/types.hpp>
 #include <vector>
 
+namespace sme {
+
 namespace mesh {
 
 /**
@@ -45,7 +47,8 @@ public:
    * contour tracing, this class iterates around the edge vertices of the pixels
    * to to produce a 4-connected contour of vertices.
    *
-   * @param[in] points 8-connected pixel contour as returned by cv::findContours()
+   * @param[in] points 8-connected pixel contour as returned by
+   * cv::findContours()
    * @param[in] outer true if the contour is an outer contour (has no parent)
    */
   PixelCornerIterator(const std::vector<cv::Point> &points, bool outer);
@@ -64,3 +67,5 @@ public:
 };
 
 } // namespace mesh
+
+} // namespace sme

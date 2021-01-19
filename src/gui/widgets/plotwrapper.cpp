@@ -47,7 +47,7 @@ void PlotWrapper::addAvMinMaxLine(const QString &name, QColor col) {
 }
 
 void PlotWrapper::addAvMinMaxPoint(int lineIndex, double time,
-                                   const simulate::AvgMinMax &concentration) {
+                                   const sme::simulate::AvgMinMax &concentration) {
   plot->graph(3 * lineIndex)->addData({time}, {concentration.avg}, true);
   plot->graph(3 * lineIndex + 1)->addData({time}, {concentration.min}, true);
   plot->graph(3 * lineIndex + 2)->addData({time}, {concentration.max}, true);
@@ -67,7 +67,7 @@ void PlotWrapper::addObservableLine(
   }
   auto vars = species;
   vars.push_back("t");
-  symbolic::Symbolic sym(plotWrapperObservable.expression.toStdString(), vars);
+  sme::utils::Symbolic sym(plotWrapperObservable.expression.toStdString(), vars);
   if (!sym.isValid()) {
     SPDLOG_WARN("Skipping invalid expression: '{}'",
                 plotWrapperObservable.expression.toStdString());

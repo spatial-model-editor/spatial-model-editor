@@ -2,7 +2,6 @@
 
 #include <QMainWindow>
 #include <memory>
-
 #include "model.hpp"
 
 class QLabel;
@@ -27,7 +26,7 @@ public:
 private:
   std::unique_ptr<Ui::MainWindow> ui;
   QLabel *statusBarPermanentMessage;
-  model::Model sbmlDoc;
+  sme::model::Model sbmlDoc;
 
   void setupTabs();
   void setupConnections();

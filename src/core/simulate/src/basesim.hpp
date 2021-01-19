@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+namespace sme {
+
 namespace simulate {
 
 class BaseSim {
@@ -19,3 +21,5 @@ public:
 };
 
 } // namespace simulate
+
+} // namespace sme

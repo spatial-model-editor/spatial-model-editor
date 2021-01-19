@@ -14,6 +14,8 @@ class Species;
 class Model;
 } // namespace libsbml
 
+namespace sme {
+
 namespace mesh {
 class Mesh;
 }
@@ -42,3 +44,5 @@ std::optional<model::DisplayOptions>
 getDisplayOptionsAnnotation(const libsbml::Model *model);
 
 } // namespace model
+
+} // namespace sme

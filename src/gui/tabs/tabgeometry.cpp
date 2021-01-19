@@ -1,18 +1,17 @@
 #include "tabgeometry.hpp"
-
-#include <QInputDialog>
-#include <QMessageBox>
-#include <stdexcept>
-
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
 #include "qlabelmousetracker.hpp"
 #include "ui_tabgeometry.h"
+#include <QInputDialog>
+#include <QMessageBox>
+#include <stdexcept>
 
-TabGeometry::TabGeometry(model::Model &doc, QLabelMouseTracker *mouseTracker,
-                         QLabel *statusBarMsg, QWidget *parent)
+TabGeometry::TabGeometry(sme::model::Model &doc,
+                         QLabelMouseTracker *mouseTracker, QLabel *statusBarMsg,
+                         QWidget *parent)
     : QWidget(parent), ui{std::make_unique<Ui::TabGeometry>()}, sbmlDoc(doc),
       lblGeometry(mouseTracker), statusBarPermanentMessage(statusBarMsg) {
   ui->setupUi(this);

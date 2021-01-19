@@ -1,14 +1,12 @@
 #include "qplaintextmathedit.hpp"
-
 #include <QString>
 #include <algorithm>
 #include <limits>
 #include <locale>
-
 #include "logger.hpp"
 #include "model_math.hpp"
 
-void QPlainTextMathEdit::enableLibSbmlBackend(model::ModelMath *math) {
+void QPlainTextMathEdit::enableLibSbmlBackend(sme::model::ModelMath *math) {
   modelMath = math;
   useLibSbmlBackend = true;
   allowImplicitNames = true;
@@ -163,7 +161,7 @@ void QPlainTextMathEdit::addIntrinsicFunction(const std::string &functionId) {
   mapFuncsToDisplayNames[functionId] = functionId;
 }
 
-void QPlainTextMathEdit::addFunction(const symbolic::Function &function) {
+void QPlainTextMathEdit::addFunction(const sme::utils::Function &function) {
   SPDLOG_TRACE("adding function: {}", function.id);
   functions.push_back(function);
   SPDLOG_TRACE("  -> display name {}", function.name);
@@ -394,7 +392,7 @@ void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
       }
     } else {
       SPDLOG_DEBUG("parsing '{}' with SymEngine backend", newExpr);
-      sym = symbolic::Symbolic(newExpr, vars, {}, functions, false);
+      sym = sme::utils::Symbolic(newExpr, vars, {}, functions, false);
       if (sym.isValid()) {
         expressionIsValid = true;
         currentErrorMessage = "";

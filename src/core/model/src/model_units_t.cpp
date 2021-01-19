@@ -6,6 +6,8 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
+using namespace sme;
+
 TEST_CASE("Units", "[core/model/model_units][core/model][core][model][units]") {
   auto timeUnits = model::UnitVector{{{"hour", "second", 0, 1, 3600},
                                       {"min", "second", 0, 1, 60},

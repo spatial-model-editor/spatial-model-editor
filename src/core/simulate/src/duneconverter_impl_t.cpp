@@ -3,6 +3,8 @@
 #include "model.hpp"
 #include <QFile>
 
+using namespace sme;
+
 SCENARIO("DUNE: DuneConverter impl",
          "[core/simulate/duneconverter][core/simulate][core][duneconverter]") {
   GIVEN("Species Names") {

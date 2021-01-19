@@ -9,21 +9,23 @@ namespace Ui {
 class TabParameters;
 }
 
+namespace sme {
 namespace model {
 class Model;
 }
+} // namespace sme
 
 class TabParameters : public QWidget {
   Q_OBJECT
 
- public:
-  explicit TabParameters(model::Model &model, QWidget *parent = nullptr);
+public:
+  explicit TabParameters(sme::model::Model &model, QWidget *parent = nullptr);
   ~TabParameters();
   void loadModelData(const QString &selection = {});
 
- private:
+private:
   std::unique_ptr<Ui::TabParameters> ui;
-  model::Model &model;
+  sme::model::Model &model;
   QString currentParameterId{};
   void listParameters_currentRowChanged(int row);
   void btnAddParameter_clicked();

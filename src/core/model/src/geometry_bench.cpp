@@ -1,6 +1,8 @@
 #include "bench.hpp"
 #include "geometry.hpp"
 
+using namespace sme;
+
 template <typename T>
 static void geometry_Compartment(benchmark::State &state) {
   T data;

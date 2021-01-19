@@ -7,7 +7,9 @@
 #include <dune/copasi/grid/multidomain_gmsh_reader.hh>
 #include <locale>
 
-constexpr int DuneDimensions = 2;
+using namespace sme;
+
+constexpr int DuneDimensions{2};
 using HostGrid = Dune::UGGrid<DuneDimensions>;
 using MDGTraits = Dune::mdgrid::DynamicSubDomainCountTraits<DuneDimensions, 1>;
 using Grid = Dune::mdgrid::MultiDomainGrid<HostGrid, MDGTraits>;

@@ -15,6 +15,8 @@ namespace libsbml {
 class Model;
 }
 
+namespace sme {
+
 namespace model {
 class ModelGeometry;
 class ModelMembranes;
@@ -59,3 +61,5 @@ public:
 };
 
 } // namespace model
+
+} // namespace sme

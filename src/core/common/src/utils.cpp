@@ -3,6 +3,8 @@
 #include <limits>
 #include <stdexcept>
 
+namespace sme {
+
 namespace utils {
 
 std::vector<std::string> toStdString(const QStringList &q) {
@@ -151,55 +153,9 @@ std::vector<QPoint> QPointUniqueIndexer::getPoints() const { return points; }
 
 } // namespace utils
 
-//
+} // namespace sme
 
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
+// extra lines to work around sonarsource/coverage bug
 
 //
 

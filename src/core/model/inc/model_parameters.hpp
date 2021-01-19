@@ -13,6 +13,8 @@ class Model;
 class Species;
 } // namespace libsbml
 
+namespace sme {
+
 namespace model {
 
 class ModelSpecies;
@@ -64,3 +66,5 @@ public:
 };
 
 } // namespace model
+
+} // namespace sme

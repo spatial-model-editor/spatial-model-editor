@@ -6,6 +6,8 @@
 
 #include "dune_headers.hpp"
 
+namespace sme {
+
 namespace simulate {
 
 class DuneConverter;
@@ -38,3 +40,5 @@ private:
 };
 
 } // namespace simulate
+
+} // namespace sme

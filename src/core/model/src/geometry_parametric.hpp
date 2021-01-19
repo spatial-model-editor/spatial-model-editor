@@ -9,16 +9,18 @@
 #include <string>
 #include <vector>
 
-namespace mesh {
-class Mesh;
-}
-
 namespace libsbml {
 class Model;
 class Geometry;
 class ParametricGeometry;
 class ParametricObject;
 } // namespace libsbml
+
+namespace sme {
+
+namespace mesh {
+class Mesh;
+}
 
 namespace model {
 
@@ -52,3 +54,5 @@ void writeGeometryMeshToSBML(libsbml::Model *model, const mesh::Mesh *mesh,
                              const ModelCompartments &modelCompartments);
 
 } // namespace model
+
+} // namespace sme

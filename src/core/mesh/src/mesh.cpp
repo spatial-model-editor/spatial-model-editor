@@ -1,8 +1,8 @@
 #include "mesh.hpp"
 #include "boundary.hpp"
+#include "interior_point.hpp"
 #include "logger.hpp"
 #include "triangulate.hpp"
-#include "interior_point.hpp"
 #include "utils.hpp"
 #include <QColor>
 #include <QGradient>
@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <exception>
 #include <utility>
+
+namespace sme {
 
 namespace mesh {
 
@@ -203,7 +205,8 @@ const std::vector<std::vector<QTriangleF>> &Mesh::getTriangles() const {
 
 void Mesh::constructMesh() {
   try {
-    auto tid{TriangulateBoundaries(*boundaries, compartmentInteriorPoints, compartmentMaxTriangleArea)};
+    auto tid{TriangulateBoundaries(*boundaries, compartmentInteriorPoints,
+                                   compartmentMaxTriangleArea)};
     Triangulate triangulate(tid);
     vertices = triangulate.getPoints();
     triangleIndices = triangulate.getTriangleIndices();
@@ -405,3 +408,5 @@ QString Mesh::getGMSH(const std::unordered_set<int> &gmshCompIndices) const {
 }
 
 } // namespace mesh
+
+} // namespace sme

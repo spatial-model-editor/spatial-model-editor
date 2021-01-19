@@ -1,6 +1,5 @@
 #include <QFile>
 #include <numeric>
-
 #include "catch_wrapper.hpp"
 #include "dialogconcentrationimage.hpp"
 #include "model.hpp"
@@ -10,7 +9,7 @@ SCENARIO(
     "DialogConcentrationImage",
     "[gui/dialogs/concentrationimage][gui/dialogs][gui][concentrationimage]") {
   GIVEN("3x3 compartment image, 4 pixel compartment") {
-    model::Model doc;
+    sme::model::Model doc;
     QFile f(":/models/ABtoC.xml");
     f.open(QIODevice::ReadOnly);
     doc.importSBMLString(f.readAll().toStdString());
@@ -21,7 +20,7 @@ SCENARIO(
                                                  QPoint(0, 2), QPoint(1, 0)};
     auto compArrayIndices = std::vector<std::size_t>{6, 3, 0, 7};
     auto outsideArrayIndices = std::vector<std::size_t>{1, 2, 4, 5, 8};
-    model::SpeciesGeometry specGeom{sz, compartmentPoints, origin, width,
+    sme::model::SpeciesGeometry specGeom{sz, compartmentPoints, origin, width,
                                     doc.getUnits()};
     ModalWidgetTimer mwt;
 

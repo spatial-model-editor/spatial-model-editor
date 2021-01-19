@@ -17,6 +17,10 @@ class Species;
 class Parameter;
 } // namespace libsbml
 
+namespace sme {
+
+namespace model {
+
 const libsbml::SampledFieldGeometry *
 getSampledFieldGeometry(const libsbml::Geometry *geom);
 libsbml::SampledFieldGeometry *getSampledFieldGeometry(libsbml::Geometry *geom);
@@ -41,3 +45,7 @@ getSpatialCoordinateParam(const libsbml::Model *model,
 
 libsbml::Parameter *getSpatialCoordinateParam(libsbml::Model *model,
                                               libsbml::CoordinateKind_t kind);
+
+} // namespace model
+
+} // namespace sme

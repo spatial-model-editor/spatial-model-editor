@@ -4,6 +4,8 @@
 #include "utils.hpp"
 #include <QFile>
 
+using namespace sme;
+
 SCENARIO("DuneSim: model without species",
          "[core/simulate/dunesim][core/simulate][core][simulate][dunesim]") {
   model::Model m;

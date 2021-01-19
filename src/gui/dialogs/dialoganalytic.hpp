@@ -13,6 +13,7 @@ namespace Ui {
 class DialogAnalytic;
 }
 
+namespace sme {
 namespace units {
 class ModelUnits;
 }
@@ -20,15 +21,16 @@ class ModelUnits;
 namespace Model {
 struct SpatialCoordinates;
 }
+}
 
 class DialogAnalytic : public QDialog {
   Q_OBJECT
 
 public:
   explicit DialogAnalytic(const QString &analyticExpression,
-                          const model::SpeciesGeometry &speciesGeometry,
-                          model::ModelMath &modelMath,
-                          const model::SpatialCoordinates &spatialCoordinates,
+                          const sme::model::SpeciesGeometry &speciesGeometry,
+                          sme::model::ModelMath &modelMath,
+                          const sme::model::SpatialCoordinates &spatialCoordinates,
                           QWidget *parent = nullptr);
   ~DialogAnalytic();
   const std::string &getExpression() const;
@@ -47,7 +49,7 @@ private:
   QString concentrationUnit;
 
   QImage img;
-  utils::QPointIndexer qpi;
+  sme::utils::QPointIndexer qpi;
   std::vector<double> concentration;
   std::string displayExpression;
   std::string variableExpression;

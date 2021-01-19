@@ -1,4 +1,4 @@
-  // SBML document wrapper
+// SBML document wrapper
 // - uses libSBML to read/write SBML document
 // - provides the contents in Qt containers for display
 // - augments the model with spatial information
@@ -39,6 +39,8 @@ class UnitDefinition;
 namespace mesh {
 class Mesh;
 }
+
+namespace sme {
 
 namespace model {
 
@@ -115,4 +117,7 @@ public:
   DisplayOptions getDisplayOptions() const;
   void setDisplayOptions(const DisplayOptions &displayOptions);
 };
+
 } // namespace model
+
+} // namespace sme

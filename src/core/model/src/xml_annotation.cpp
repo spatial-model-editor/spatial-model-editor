@@ -16,6 +16,8 @@ static const std::string annotationNameMesh{"mesh"};
 static const std::string annotationNameColour{"colour"};
 static const std::string annotationNameDisplayOptions{"displayOptions"};
 
+namespace sme {
+
 namespace model {
 
 static const libsbml::XMLNode *
@@ -188,3 +190,5 @@ getDisplayOptionsAnnotation(const libsbml::Model *model) {
 }
 
 } // namespace model
+
+} // namespace sme

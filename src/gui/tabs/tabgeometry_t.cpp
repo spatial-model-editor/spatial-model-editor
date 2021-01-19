@@ -1,3 +1,8 @@
+#include "catch_wrapper.hpp"
+#include "model.hpp"
+#include "qlabelmousetracker.hpp"
+#include "qt_test_utils.hpp"
+#include "tabgeometry.hpp"
 #include <QDoubleSpinBox>
 #include <QFile>
 #include <QLabel>
@@ -7,14 +12,8 @@
 #include <QSpinBox>
 #include <QTabWidget>
 
-#include "catch_wrapper.hpp"
-#include "model.hpp"
-#include "qlabelmousetracker.hpp"
-#include "qt_test_utils.hpp"
-#include "tabgeometry.hpp"
-
 SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
-  model::Model model;
+  sme::model::Model model;
   QLabelMouseTracker mouseTracker;
   mouseTracker.show();
   waitFor(&mouseTracker);

@@ -6,6 +6,8 @@
 #include <memory>
 #include <stdexcept>
 
+namespace sme {
+
 namespace model {
 
 constexpr std::size_t nullIndex = std::numeric_limits<std::size_t>::max();
@@ -120,3 +122,5 @@ const std::vector<QPointPair> *ImageMembranePixels::getPoints(int iA,
 const QSize &ImageMembranePixels::getImageSize() const { return imageSize; }
 
 } // namespace model
+
+} // namespace sme

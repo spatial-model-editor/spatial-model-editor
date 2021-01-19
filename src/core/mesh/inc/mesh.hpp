@@ -20,6 +20,8 @@
 #include <utility>
 #include <vector>
 
+namespace sme {
+
 namespace mesh {
 
 using QTriangleF = std::array<QPointF, 3>;
@@ -93,3 +95,5 @@ public:
 };
 
 } // namespace mesh
+
+} // namespace sme

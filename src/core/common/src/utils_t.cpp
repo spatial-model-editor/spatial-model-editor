@@ -4,11 +4,12 @@
 #include <list>
 #include <set>
 #include <vector>
-
 #include "catch_wrapper.hpp"
 #include "qt_test_utils.hpp"
 #include "tiff.hpp"
 #include "utils.hpp"
+
+using namespace sme;
 
 SCENARIO("Utils", "[core/common/utils][core/common][core][utils]") {
   GIVEN("sum/average of vector of ints") {

@@ -4,6 +4,8 @@
 #include <QPoint>
 #include <cmath>
 
+using namespace sme;
+
 SCENARIO("MeshUtils", "[core/mesh/mesh_utils][core/mesh][core][mesh_utils]") {
   GIVEN("makeBinaryMask: single colour") {
     QImage img(10, 20,QImage::Format_RGB32);

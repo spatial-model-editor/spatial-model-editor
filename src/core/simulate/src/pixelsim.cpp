@@ -20,6 +20,8 @@
 #include <omp.h>
 #endif
 
+namespace sme {
+
 namespace simulate {
 
 void PixelSim::calculateDcdt() {
@@ -363,3 +365,5 @@ void PixelSim::requestStop() {
 }
 
 } // namespace simulate
+
+} // namespace sme

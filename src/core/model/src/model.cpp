@@ -15,6 +15,8 @@
 #include <stdexcept>
 #include <utility>
 
+namespace sme {
+
 namespace model {
 
 Model::Model() = default;
@@ -187,3 +189,5 @@ void Model::setDisplayOptions(const DisplayOptions &displayOptions) {
 }
 
 } // namespace model
+
+} // namespace sme

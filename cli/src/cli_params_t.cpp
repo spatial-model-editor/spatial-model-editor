@@ -1,6 +1,8 @@
 #include "catch_wrapper.hpp"
 #include "cli_params.hpp"
 
+using namespace sme;
+
 SCENARIO("CLI Params", "[cli][params]") {
   REQUIRE(cli::toString(simulate::SimulatorType::DUNE) == "DUNE");
   REQUIRE(cli::toString(simulate::SimulatorType::Pixel) == "Pixel");

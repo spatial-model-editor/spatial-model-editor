@@ -4,7 +4,7 @@
 template <typename T> static void mesh_Mesh(benchmark::State &state) {
   T data;
   for (auto _ : state) {
-    auto m{mesh::Mesh(data.img, {}, data.maxTriangleArea, data.pixelWidth, data.origin,
+    auto m{sme::mesh::Mesh(data.img, {}, data.maxTriangleArea, data.pixelWidth, data.origin,
                       data.colours)};
   }
 }

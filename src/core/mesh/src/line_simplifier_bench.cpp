@@ -5,10 +5,10 @@
 template <typename T> static void mesh_LineSimplifier(benchmark::State &state) {
   T data;
   auto boundaries{
-      mesh::constructBoundaries(data.img, data.colours)};
+      sme::mesh::constructBoundaries(data.img, data.colours)};
   for (auto _ : state) {
     for(const auto& boundary : boundaries) {
-      auto l{mesh::LineSimplifier(boundary.getAllPoints(), boundary.isLoop())};
+      auto l{sme::mesh::LineSimplifier(boundary.getAllPoints(), boundary.isLoop())};
     }
   }
 }

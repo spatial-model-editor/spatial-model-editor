@@ -14,6 +14,8 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
+namespace sme {
+
 namespace model {
 
 const libsbml::ParametricGeometry *
@@ -234,3 +236,5 @@ void writeGeometryMeshToSBML(libsbml::Model *model, const mesh::Mesh *mesh,
 }
 
 } // namespace model
+
+} // namespace sme

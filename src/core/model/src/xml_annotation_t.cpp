@@ -6,6 +6,8 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
+using namespace sme;
+
 SCENARIO("XML Annotations",
          "[core/model/xml_annotation][core/"
          "model][core][model][xml_annotation][xml][annotation]") {

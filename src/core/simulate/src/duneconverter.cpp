@@ -18,6 +18,8 @@
 #include <string>
 #include <utility>
 
+namespace sme {
+
 namespace simulate {
 
 static void addGrid(IniFile &ini) {
@@ -406,3 +408,5 @@ double DuneConverter::getPixelWidth() const { return a; }
 int DuneConverter::getImageWidth() const { return w; }
 
 } // namespace simulate
+
+} // namespace sme

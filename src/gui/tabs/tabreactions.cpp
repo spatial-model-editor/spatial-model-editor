@@ -1,16 +1,14 @@
 #include "tabreactions.hpp"
-
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QSpinBox>
-
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "model.hpp"
 #include "qlabelmousetracker.hpp"
 #include "ui_tabreactions.h"
 
-TabReactions::TabReactions(model::Model &model,
+TabReactions::TabReactions(sme::model::Model &model,
                            QLabelMouseTracker *mouseTracker, QWidget *parent)
     : QWidget{parent}, ui{std::make_unique<Ui::TabReactions>()}, model{model},
       lblGeometry{mouseTracker} {

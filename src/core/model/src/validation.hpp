@@ -6,10 +6,14 @@ namespace libsbml {
 class SBMLDocument;
 }
 
+namespace sme {
+
 namespace model {
 
 void printSBMLDocWarnings(const libsbml::SBMLDocument *doc);
 void printSBMLDocErrors(const libsbml::SBMLDocument *doc);
 bool validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc);
 
-} // namespace sbml
+} // namespace model
+
+} // namespace sme

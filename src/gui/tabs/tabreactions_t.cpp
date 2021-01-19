@@ -1,3 +1,9 @@
+#include "catch_wrapper.hpp"
+#include "model.hpp"
+#include "qlabelmousetracker.hpp"
+#include "qplaintextmathedit.hpp"
+#include "qt_test_utils.hpp"
+#include "tabreactions.hpp"
 #include <QComboBox>
 #include <QFile>
 #include <QLineEdit>
@@ -5,15 +11,8 @@
 #include <QTableWidget>
 #include <QTreeWidget>
 
-#include "catch_wrapper.hpp"
-#include "model.hpp"
-#include "qlabelmousetracker.hpp"
-#include "qplaintextmathedit.hpp"
-#include "qt_test_utils.hpp"
-#include "tabreactions.hpp"
-
 SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
-  model::Model sbmlDoc;
+  sme::model::Model sbmlDoc;
   QLabelMouseTracker mouseTracker;
   auto tab = TabReactions(sbmlDoc, &mouseTracker);
   tab.show();

@@ -30,29 +30,3 @@ PyImageMask toPyImageMask(const QImage &img) {
 }
 
 } // namespace sme
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//

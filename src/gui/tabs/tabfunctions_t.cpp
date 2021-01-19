@@ -1,3 +1,8 @@
+#include "catch_wrapper.hpp"
+#include "model.hpp"
+#include "qplaintextmathedit.hpp"
+#include "qt_test_utils.hpp"
+#include "tabfunctions.hpp"
 #include <QDebug>
 #include <QDialog>
 #include <QFile>
@@ -7,14 +12,8 @@
 #include <QPlainTextEdit>
 #include <QPushButton>
 
-#include "catch_wrapper.hpp"
-#include "model.hpp"
-#include "qplaintextmathedit.hpp"
-#include "qt_test_utils.hpp"
-#include "tabfunctions.hpp"
-
 TEST_CASE("Functions Tab", "[gui/tabs/functions][gui/tabs][gui][functions]") {
-  model::Model model;
+  sme::model::Model model;
   auto tab = TabFunctions(model);
   ModalWidgetTimer mwt;
   // get pointers to widgets within tab
