@@ -23,7 +23,7 @@ class TabReactions : public QWidget {
   Q_OBJECT
 
 public:
-  explicit TabReactions(sme::model::Model &model, QLabelMouseTracker *mouseTracker,
+  explicit TabReactions(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                         QWidget *parent = nullptr);
   ~TabReactions();
   void loadModelData(const QString &selection = {});

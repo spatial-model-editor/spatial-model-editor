@@ -23,14 +23,14 @@ class TabSpecies : public QWidget {
   Q_OBJECT
 
 public:
-  explicit TabSpecies(sme::model::Model &doc, QLabelMouseTracker *mouseTracker,
+  explicit TabSpecies(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                       QWidget *parent = nullptr);
   ~TabSpecies();
   void loadModelData(const QString &selection = {});
 
 private:
   std::unique_ptr<Ui::TabSpecies> ui;
-  sme::model::Model &sbmlDoc;
+  sme::model::Model &model;
   QLabelMouseTracker *lblGeometry;
   QPixmap lblSpeciesColourPixmap = QPixmap(1, 1);
   QString currentSpeciesId;

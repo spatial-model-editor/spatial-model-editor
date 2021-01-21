@@ -7,8 +7,8 @@
 #include "ui_tabparameters.h"
 #include "utils.hpp"
 
-TabParameters::TabParameters(sme::model::Model &model, QWidget *parent)
-    : QWidget{parent}, ui{std::make_unique<Ui::TabParameters>()}, model{model} {
+TabParameters::TabParameters(sme::model::Model &m, QWidget *parent)
+    : QWidget{parent}, ui{std::make_unique<Ui::TabParameters>()}, model{m} {
   ui->setupUi(this);
   connect(ui->listParameters, &QListWidget::currentRowChanged, this,
           &TabParameters::listParameters_currentRowChanged);

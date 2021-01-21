@@ -35,12 +35,12 @@ static void writeDebuggingImageOutput(const cv::Mat &mask, const cv::Mat &blob,
     }
   }
   // ROI box
-  for (int y : {rect.y, rect.y + rect.height}) {
+  for (int y : {rect.y, rect.y + rect.height - 1}) {
     for (int x = rect.x; x < rect.x + rect.width; ++x) {
       img.setPixel(x, y, l);
     }
   }
-  for (int x : {rect.x, rect.x + rect.width}) {
+  for (int x : {rect.x, rect.x + rect.width - 1}) {
     for (int y = rect.y; y < rect.y + rect.height; ++y) {
       img.setPixel(x, y, l);
     }

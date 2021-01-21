@@ -19,7 +19,7 @@ class TabParameters : public QWidget {
   Q_OBJECT
 
 public:
-  explicit TabParameters(sme::model::Model &model, QWidget *parent = nullptr);
+  explicit TabParameters(sme::model::Model &m, QWidget *parent = nullptr);
   ~TabParameters();
   void loadModelData(const QString &selection = {});
 

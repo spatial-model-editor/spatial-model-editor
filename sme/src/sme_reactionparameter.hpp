@@ -31,4 +31,4 @@ public:
 
 } // namespace sme
 
-PYBIND11_MAKE_OPAQUE(std::vector<sme::ReactionParameter>);
+PYBIND11_MAKE_OPAQUE(std::vector<sme::ReactionParameter>)

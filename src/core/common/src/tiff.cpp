@@ -28,16 +28,16 @@ double writeTIFF(const std::string &filename, const QSize &imageSize,
   SPDLOG_TRACE("using TIFF data type: {}", decltypeStr<TiffDataType>());
   SPDLOG_TRACE("  - size in bits: {}", TiffDataTypeBits);
   SPDLOG_TRACE("  - max value: {}", TiffDataTypeMaxValue);
-  const int width{imageSize.width()};
-  const int height{imageSize.height()};
+  const auto width{static_cast<std::size_t>(imageSize.width())};
+  const auto height{static_cast<std::size_t>(imageSize.height())};
   SPDLOG_TRACE("  - image size {}x{}", width, height);
   auto tifValues = std::vector<std::vector<TiffDataType>>(
       height, std::vector<TiffDataType>(width, 0));
   SPDLOG_TRACE("{}", TiffDataTypeMaxValue);
   const double scaleFactor{TiffDataTypeMaxValue / maxConc};
   SPDLOG_TRACE("{}", scaleFactor);
-  for (int y = 0; y < height; ++y) {
-    for (int x = 0; x < width; ++x) {
+  for (std::size_t y = 0; y < height; ++y) {
+    for (std::size_t x = 0; x < width; ++x) {
       auto val = static_cast<TiffDataType>(scaleFactor *
                                            conc[x + width * (height - 1 - y)]);
       tifValues[y][x] = val;

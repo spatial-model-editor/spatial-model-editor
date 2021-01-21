@@ -2,7 +2,8 @@
 
 set -e -x
 
-export PATH="/c/hostedtoolcache/windows/Python/3.8.7/x64:/c/hostedtoolcache/windows/Python/3.8.7/x64/Scripts::$PATH"
+PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.8.*)
+export PATH="$PYDIR/x64:$PYDIR/x64/Scripts:$PATH"
 echo "PATH=$PATH"
 
 export CMAKE_GENERATOR="Unix Makefiles"

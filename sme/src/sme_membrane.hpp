@@ -30,4 +30,4 @@ public:
 
 } // namespace sme
 
-PYBIND11_MAKE_OPAQUE(std::vector<sme::Membrane>);
+PYBIND11_MAKE_OPAQUE(std::vector<sme::Membrane>)

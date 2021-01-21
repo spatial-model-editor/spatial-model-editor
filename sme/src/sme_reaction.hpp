@@ -29,4 +29,4 @@ public:
 
 } // namespace sme
 
-PYBIND11_MAKE_OPAQUE(std::vector<sme::Reaction>);
+PYBIND11_MAKE_OPAQUE(std::vector<sme::Reaction>)

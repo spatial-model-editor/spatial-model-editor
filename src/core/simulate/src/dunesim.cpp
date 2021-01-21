@@ -258,7 +258,7 @@ std::size_t DuneSim::run(double time) {
     currentErrorMessage = e.what();
     SPDLOG_ERROR("{}", currentErrorMessage);
   }
-  return 0;
+  return 1;
 }
 
 const std::vector<double> &

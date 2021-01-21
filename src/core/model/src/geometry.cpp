@@ -26,10 +26,10 @@ static void fillMissingByDilation(std::vector<std::size_t> &arr, int w, int h,
             arr[i] = arr[i - 1];
           } else if (x + 1 < w && arr[i + 1] != invalidIndex) {
             arr[i] = arr[i + 1];
-          } else if (y > 0 && arr[i - w] != invalidIndex) {
-            arr[i] = arr[i - w];
-          } else if (y + 1 < h && arr[i + w] != invalidIndex) {
-            arr[i] = arr[i + w];
+          } else if (y > 0 && arr[i - static_cast<std::size_t>(w)] != invalidIndex) {
+            arr[i] = arr[i - static_cast<std::size_t>(w)];
+          } else if (y + 1 < h && arr[i + static_cast<std::size_t>(w)] != invalidIndex) {
+            arr[i] = arr[i + static_cast<std::size_t>(w)];
           } else {
             // pixel has no non-negative neighbour: need another iteration
             finished = false;

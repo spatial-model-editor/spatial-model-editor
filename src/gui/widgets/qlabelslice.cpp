@@ -1,5 +1,4 @@
 #include "qlabelslice.hpp"
-
 #include "logger.hpp"
 
 QLabelSlice::QLabelSlice(QWidget *parent) : QLabel(parent) {
@@ -10,7 +9,8 @@ QLabelSlice::QLabelSlice(QWidget *parent) : QLabel(parent) {
 
 void QLabelSlice::setImage(const QImage &img) {
   slicePixels.clear();
-  slicePixels.reserve(imgOriginal.width() + imgOriginal.height());
+  slicePixels.reserve(static_cast<std::size_t>(imgOriginal.width()) +
+                      static_cast<std::size_t>(imgOriginal.height()));
   imgOriginal = img.convertToFormat(QImage::Format_RGB32);
   imgSliced = QImage(imgOriginal.size(), QImage::Format_ARGB32);
   fadeOriginalImage();

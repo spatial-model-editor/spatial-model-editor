@@ -27,7 +27,7 @@ class TabSimulate : public QWidget {
   Q_OBJECT
 
 public:
-  explicit TabSimulate(sme::model::Model &doc, QLabelMouseTracker *mouseTracker,
+  explicit TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                        QWidget *parent = nullptr);
   ~TabSimulate() override;
   void loadModelData();
@@ -39,7 +39,7 @@ public:
 
 private:
   std::unique_ptr<Ui::TabSimulate> ui;
-  sme::model::Model &sbmlDoc;
+  sme::model::Model &model;
   QLabelMouseTracker *lblGeometry;
   std::unique_ptr<PlotWrapper> plt;
   std::unique_ptr<sme::simulate::Simulation> sim;

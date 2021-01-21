@@ -28,4 +28,4 @@ public:
 
 } // namespace sme
 
-PYBIND11_MAKE_OPAQUE(std::vector<sme::Species>);
+PYBIND11_MAKE_OPAQUE(std::vector<sme::Species>)
