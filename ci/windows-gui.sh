@@ -2,20 +2,16 @@
 
 set -e -x
 
-ls /c/hostedtoolcache/windows/Python
 PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.8.*)
-echo "PYDIR=$PYDIR"
-# download static libs
-./ci/getlibs.sh win64
+export PATH="$PYDIR/x64:$PYDIR/x64/Scripts:$PATH"
+echo "PATH=$PATH"
 
 export CMAKE_PREFIX_PATH="C:/smelibs;C:/smelibs/CMake;C:/smelibs/lib/cmake;C:/smelibs/dune"
 export SME_EXTRA_EXE_LIBS="-static;-static-libgcc;-static-libstdc++"
 export CMAKE_GENERATOR="Unix Makefiles"
 export SME_EXTRA_CORE_DEFS="_hypot=hypot"
 export CMAKE_CXX_COMPILER_LAUNCHER=ccache
-export PATH="$PYDIR/x64:$PYDIR/x64/Scripts:$PATH"
 
-echo "PATH=$PATH"
 pwd
 which g++
 g++ --version

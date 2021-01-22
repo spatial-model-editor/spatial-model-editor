@@ -19,6 +19,8 @@ jobs:
         path: ~/.ccache
         key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
         restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
+    - name: Get static libs
+      run: sudo ./ci/getlibs.sh linux
     - name: Build script
       run: ./ci/linux-gui.sh
     - uses: actions/upload-artifact@v2
@@ -41,6 +43,8 @@ jobs:
           path: /Users/runner/Library/Caches/ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
+      - name: Get static libs
+        run: sudo ./ci/getlibs.sh osx
       - name: Build script
         run: ./ci/macos-gui.sh
       - uses: actions/upload-artifact@v2
@@ -68,6 +72,8 @@ jobs:
           path: D:\a\_temp\msys\msys64\home\runneradmin\.ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
+      - name: Get static libs
+        run: ./ci/getlibs.sh win64
       - name: Build script
         run: ci/windows-gui.sh
       - uses: actions/upload-artifact@v2
