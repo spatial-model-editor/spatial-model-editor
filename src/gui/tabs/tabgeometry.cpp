@@ -9,10 +9,10 @@
 #include <QMessageBox>
 #include <stdexcept>
 
-TabGeometry::TabGeometry(sme::model::Model &doc,
+TabGeometry::TabGeometry(sme::model::Model &m,
                          QLabelMouseTracker *mouseTracker, QLabel *statusBarMsg,
                          QWidget *parent)
-    : QWidget(parent), ui{std::make_unique<Ui::TabGeometry>()}, sbmlDoc(doc),
+    : QWidget(parent), ui{std::make_unique<Ui::TabGeometry>()}, model(m),
       lblGeometry(mouseTracker), statusBarPermanentMessage(statusBarMsg) {
   ui->setupUi(this);
   ui->tabCompartmentGeometry->setCurrentIndex(0);
@@ -60,14 +60,14 @@ TabGeometry::~TabGeometry() = default;
 void TabGeometry::loadModelData(const QString &selection) {
   ui->tabCompartmentGeometry->setCurrentIndex(0);
   ui->listMembranes->clear();
-  ui->listMembranes->addItems(sbmlDoc.getMembranes().getNames());
+  ui->listMembranes->addItems(model.getMembranes().getNames());
   ui->listCompartments->clear();
   ui->lblCompShape->clear();
   ui->lblCompBoundary->clear();
   ui->lblCompMesh->clear();
   ui->lblCompartmentColour->clear();
   ui->txtCompartmentName->clear();
-  ui->listCompartments->addItems(sbmlDoc.getCompartments().getNames());
+  ui->listCompartments->addItems(model.getCompartments().getNames());
   ui->btnChangeCompartment->setEnabled(false);
   ui->txtCompartmentName->setEnabled(false);
   if (ui->listCompartments->count() > 0) {
@@ -75,15 +75,15 @@ void TabGeometry::loadModelData(const QString &selection) {
     ui->listCompartments->setCurrentRow(0);
     ui->btnChangeCompartment->setEnabled(true);
   }
-  lblGeometry->setImage(sbmlDoc.getGeometry().getImage());
+  lblGeometry->setImage(model.getGeometry().getImage());
   enableTabs();
   selectMatchingOrFirstItem(ui->listCompartments, selection);
 }
 
 void TabGeometry::enableTabs() {
-  bool enableBoundaries = sbmlDoc.getGeometry().getIsValid();
-  bool enableMesh = sbmlDoc.getGeometry().getMesh() != nullptr &&
-                    sbmlDoc.getGeometry().getMesh()->isValid();
+  bool enableBoundaries = model.getGeometry().getIsValid();
+  bool enableMesh = model.getGeometry().getMesh() != nullptr &&
+                    model.getGeometry().getMesh()->isValid();
   auto *tab = ui->tabCompartmentGeometry;
   tab->setTabEnabled(1, enableBoundaries);
   tab->setTabEnabled(2, enableBoundaries);
@@ -98,12 +98,12 @@ void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
     // update compartment geometry (i.e. colour) of selected compartment to
     // the one the user just clicked on
     try {
-      const auto &compartmentID = sbmlDoc.getCompartments().getIds().at(
+      const auto &compartmentID = model.getCompartments().getIds().at(
           ui->listCompartments->currentRow());
-      sbmlDoc.getCompartments().setColour(compartmentID, col);
+      model.getCompartments().setColour(compartmentID, col);
       ui->tabCompartmentGeometry->setCurrentIndex(0);
       ui->listMembranes->clear();
-      ui->listMembranes->addItems(sbmlDoc.getMembranes().getNames());
+      ui->listMembranes->addItems(model.getMembranes().getNames());
     } catch (const std::runtime_error &e) {
       QMessageBox::warning(this, "Mesh generation failed", e.what());
     }
@@ -116,9 +116,9 @@ void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
     return;
   }
   // display compartment the user just clicked on
-  auto compID = sbmlDoc.getCompartments().getIdFromColour(col);
-  for (int i = 0; i < sbmlDoc.getCompartments().getIds().size(); ++i) {
-    if (sbmlDoc.getCompartments().getIds().at(i) == compID) {
+  auto compID = model.getCompartments().getIdFromColour(col);
+  for (int i = 0; i < model.getCompartments().getIds().size(); ++i) {
+    if (model.getCompartments().getIds().at(i) == compID) {
       ui->listCompartments->setCurrentRow(i);
     }
   }
@@ -130,7 +130,7 @@ void TabGeometry::btnAddCompartment_clicked() {
       this, "Add compartment", "New compartment name:", QLineEdit::Normal, {},
       &ok);
   if (ok && !compartmentName.isEmpty()) {
-    QString newCompartmentName = sbmlDoc.getCompartments().add(compartmentName);
+    QString newCompartmentName = model.getCompartments().add(compartmentName);
     ui->tabCompartmentGeometry->setCurrentIndex(0);
     enableTabs();
     loadModelData(newCompartmentName);
@@ -140,11 +140,11 @@ void TabGeometry::btnAddCompartment_clicked() {
 
 void TabGeometry::btnRemoveCompartment_clicked() {
   int index = ui->listCompartments->currentRow();
-  if (index < 0 || index >= sbmlDoc.getCompartments().getIds().size()) {
+  if (index < 0 || index >= model.getCompartments().getIds().size()) {
     return;
   }
   const auto &compartmentName = ui->listCompartments->item(index)->text();
-  const auto &compartmentId = sbmlDoc.getCompartments().getIds()[index];
+  const auto &compartmentId = model.getCompartments().getIds()[index];
   auto msgbox = newYesNoMessageBox(
       "Remove compartment?",
       QString("Remove compartment '%1' from the model?").arg(compartmentName),
@@ -153,7 +153,7 @@ void TabGeometry::btnRemoveCompartment_clicked() {
           [compartmentId, this](int result) {
             if (result == QMessageBox::Yes) {
               ui->listCompartments->clearSelection();
-              sbmlDoc.getCompartments().remove(compartmentId);
+              model.getCompartments().remove(compartmentId);
               ui->tabCompartmentGeometry->setCurrentIndex(0);
               enableTabs();
               loadModelData();
@@ -164,7 +164,7 @@ void TabGeometry::btnRemoveCompartment_clicked() {
 }
 
 void TabGeometry::btnChangeCompartment_clicked() {
-  if (!(sbmlDoc.getIsValid() && sbmlDoc.getGeometry().getHasImage())) {
+  if (!(model.getIsValid() && model.getGeometry().getHasImage())) {
     emit invalidModelOrNoGeometryImage();
     SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
     return;
@@ -179,20 +179,20 @@ void TabGeometry::btnChangeCompartment_clicked() {
 void TabGeometry::txtCompartmentName_editingFinished() {
   int compIndex = ui->listCompartments->currentRow();
   if (compIndex < 0 ||
-      compIndex > sbmlDoc.getCompartments().getIds().size() - 1) {
+      compIndex > model.getCompartments().getIds().size() - 1) {
     return;
   }
   if (ui->txtCompartmentName->text() ==
-      sbmlDoc.getCompartments().getNames()[compIndex]) {
+      model.getCompartments().getNames()[compIndex]) {
     return;
   }
-  const auto &compartmentId = sbmlDoc.getCompartments().getIds().at(compIndex);
-  QString name = sbmlDoc.getCompartments().setName(
+  const auto &compartmentId = model.getCompartments().getIds().at(compIndex);
+  QString name = model.getCompartments().setName(
       compartmentId, ui->txtCompartmentName->text());
   ui->txtCompartmentName->setText(name);
   ui->listCompartments->item(compIndex)->setText(name);
   ui->listMembranes->clear();
-  ui->listMembranes->addItems(sbmlDoc.getMembranes().getNames());
+  ui->listMembranes->addItems(model.getMembranes().getNames());
 }
 
 void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
@@ -203,7 +203,7 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
     return;
   }
   if (index == TabIndex::BOUNDARIES) {
-    auto size = sbmlDoc.getGeometry().getMesh()->getNumBoundaries();
+    auto size = model.getGeometry().getMesh()->getNumBoundaries();
     if (size == 0) {
       ui->spinBoundaryIndex->setEnabled(false);
       ui->spinMaxBoundaryPoints->setEnabled(false);
@@ -219,7 +219,7 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
     auto compIndex =
         static_cast<std::size_t>(ui->listCompartments->currentRow());
     ui->spinMaxTriangleArea->setValue(static_cast<int>(
-        sbmlDoc.getGeometry().getMesh()->getCompartmentMaxTriangleArea(
+        model.getGeometry().getMesh()->getCompartmentMaxTriangleArea(
             compIndex)));
     spinMaxTriangleArea_valueChanged(ui->spinMaxTriangleArea->value());
   }
@@ -239,19 +239,19 @@ void TabGeometry::spinBoundaryIndex_valueChanged(int value) {
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<size_t>(value);
   ui->spinMaxBoundaryPoints->setValue(static_cast<int>(
-      sbmlDoc.getGeometry().getMesh()->getBoundaryMaxPoints(boundaryIndex)));
+      model.getGeometry().getMesh()->getBoundaryMaxPoints(boundaryIndex)));
   ui->lblCompBoundary->setImages(
-      sbmlDoc.getGeometry().getMesh()->getBoundariesImages(size,
+      model.getGeometry().getMesh()->getBoundariesImages(size,
                                                            boundaryIndex));
 }
 
 void TabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<std::size_t>(ui->spinBoundaryIndex->value());
-  sbmlDoc.getGeometry().getMesh()->setBoundaryMaxPoints(
+  model.getGeometry().getMesh()->setBoundaryMaxPoints(
       boundaryIndex, static_cast<size_t>(value));
   ui->lblCompBoundary->setImages(
-      sbmlDoc.getGeometry().getMesh()->getBoundariesImages(size,
+      model.getGeometry().getMesh()->getBoundariesImages(size,
                                                            boundaryIndex));
 }
 
@@ -276,10 +276,10 @@ void TabGeometry::lblCompMesh_mouseClicked(QRgb col, QPoint point) {
 void TabGeometry::spinMaxTriangleArea_valueChanged(int value) {
   const auto &size = ui->lblCompMesh->size();
   auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
-  sbmlDoc.getGeometry().getMesh()->setCompartmentMaxTriangleArea(
+  model.getGeometry().getMesh()->setCompartmentMaxTriangleArea(
       compIndex, static_cast<std::size_t>(value));
   ui->lblCompMesh->setImages(
-      sbmlDoc.getGeometry().getMesh()->getMeshImages(size, compIndex));
+      model.getGeometry().getMesh()->getMeshImages(size, compIndex));
 }
 
 void TabGeometry::listCompartments_itemSelectionChanged() {
@@ -287,11 +287,11 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
   ui->lblCompSize->clear();
   int currentRow = ui->listCompartments->currentRow();
   if (currentRow < 0 ||
-      currentRow >= sbmlDoc.getCompartments().getIds().size()) {
+      currentRow >= model.getCompartments().getIds().size()) {
     ui->btnRemoveCompartment->setEnabled(false);
     return;
   }
-  const QString &compID = sbmlDoc.getCompartments().getIds()[currentRow];
+  const QString &compID = model.getCompartments().getIds()[currentRow];
   ui->listMembranes->clearSelection();
   ui->btnRemoveCompartment->setEnabled(true);
   ui->btnChangeCompartment->setEnabled(true);
@@ -300,8 +300,8 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
                ui->listCompartments->currentItem()->text().toStdString());
   SPDLOG_DEBUG("  - Compartment Id: {}", compID.toStdString());
   ui->txtCompartmentName->setEnabled(true);
-  ui->txtCompartmentName->setText(sbmlDoc.getCompartments().getName(compID));
-  QRgb col = sbmlDoc.getCompartments().getColour(compID);
+  ui->txtCompartmentName->setText(model.getCompartments().getName(compID));
+  QRgb col = model.getCompartments().getColour(compID);
   SPDLOG_DEBUG("  - Compartment colour {:x} ", col);
   if (col == 0) {
     // null (transparent white) RGB colour: compartment does not have
@@ -324,7 +324,7 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
     ui->lblCompartmentColour->setPixmap(QPixmap::fromImage(img));
     ui->lblCompartmentColour->setText("");
     // update image of compartment
-    const auto *comp = sbmlDoc.getCompartments().getCompartment(compID);
+    const auto *comp = model.getCompartments().getCompartment(compID);
     ui->lblCompShape->setImage(comp->getCompartmentImage());
     ui->lblCompShape->setText("");
     // update mesh or boundary image if tab is currently visible
@@ -333,10 +333,10 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
     // update compartment size
     auto nPixels = comp->nPixels();
     double area = static_cast<double>(nPixels) *
-                  std::pow(sbmlDoc.getGeometry().getPixelWidth(), 2);
+                  std::pow(model.getGeometry().getPixelWidth(), 2);
     ui->lblCompSize->setText(QString("Area: %1 %2^2 (%3 pixels)")
                                  .arg(QString::number(area, 'g', 13))
-                                 .arg(sbmlDoc.getUnits().getLength().name)
+                                 .arg(model.getUnits().getLength().name)
                                  .arg(nPixels));
   }
 }
@@ -352,7 +352,7 @@ void TabGeometry::listCompartments_itemDoubleClicked(QListWidgetItem *item) {
 void TabGeometry::listMembranes_itemSelectionChanged() {
   int currentRow = ui->listMembranes->currentRow();
   if (currentRow < 0 ||
-      currentRow >= sbmlDoc.getMembranes().getNames().size()) {
+      currentRow >= model.getMembranes().getNames().size()) {
     return;
   }
   ui->listCompartments->clearSelection();
@@ -360,14 +360,14 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
   ui->txtCompartmentName->clear();
   ui->txtCompartmentName->setEnabled(false);
   ui->btnRemoveCompartment->setEnabled(false);
-  const QString &membraneID = sbmlDoc.getMembranes().getIds()[currentRow];
+  const QString &membraneID = model.getMembranes().getIds()[currentRow];
   SPDLOG_DEBUG("row {} selected", currentRow);
   SPDLOG_DEBUG("  - Membrane Name: {}",
                ui->listMembranes->currentItem()->text().toStdString());
   SPDLOG_DEBUG("  - Membrane Id: {}", membraneID.toStdString());
   ui->txtCompartmentName->setText(ui->listMembranes->currentItem()->text());
   // update image
-  const auto *m = sbmlDoc.getMembranes().getMembrane(membraneID);
+  const auto *m = model.getMembranes().getMembrane(membraneID);
   ui->lblCompShape->setImage(m->getImage());
   auto nPixels = m->getIndexPairs().size();
   // update colour box
@@ -378,12 +378,12 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
   ui->lblCompartmentColour->setText("");
   // update membrane length
   double length =
-      static_cast<double>(nPixels) * sbmlDoc.getGeometry().getPixelWidth();
+      static_cast<double>(nPixels) * model.getGeometry().getPixelWidth();
   ui->lblCompSize->setText(QString("Length: %1 %2 (%3 pixels)")
                                .arg(QString::number(length, 'g', 13))
-                               .arg(sbmlDoc.getUnits().getLength().name)
+                               .arg(model.getUnits().getLength().name)
                                .arg(nPixels));
-  ui->lblCompMesh->setImages(sbmlDoc.getGeometry().getMesh()->getMeshImages(
+  ui->lblCompMesh->setImages(model.getGeometry().getMesh()->getMeshImages(
       ui->lblCompMesh->size(),
       static_cast<std::size_t>(currentRow + ui->listCompartments->count())));
 }

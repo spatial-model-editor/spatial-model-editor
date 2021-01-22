@@ -75,11 +75,11 @@ struct LiverCells {
 
 // Use millisecond as the default time unit
 #define SME_BENCHMARK_TEMPLATE(X, data)                                        \
-  BENCHMARK_TEMPLATE(X, data)->Unit(benchmark::kMillisecond);
+  BENCHMARK_TEMPLATE(X, data)->Unit(benchmark::kMillisecond)
 
 // Given a benchmark function, for each dataset defined above, this macro
 // creates a benchmark with the dataset supplied as a template parameter
 #define SME_BENCHMARK(func)                                                    \
   SME_BENCHMARK_TEMPLATE(func, ABtoC);                                         \
   SME_BENCHMARK_TEMPLATE(func, VerySimpleModel);                               \
-  SME_BENCHMARK_TEMPLATE(func, LiverCells);
+  SME_BENCHMARK_TEMPLATE(func, LiverCells)

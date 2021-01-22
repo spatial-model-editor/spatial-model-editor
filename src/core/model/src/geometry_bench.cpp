@@ -18,7 +18,9 @@ static void geometry_Membrane(benchmark::State &state) {
   geometry::Membrane membrane;
   geometry::Compartment cA("cA", data.img, data.colours[0]);
   geometry::Compartment cB("cB", data.img, data.colours[1]);
-  const auto* pointPairs{data.imageMembranePixels.getPoints(data.membraneIndexPair.first, data.membraneIndexPair.second)};
+  int p1{static_cast<int>(data.membraneIndexPair.first)};
+  int p2{static_cast<int>(data.membraneIndexPair.second)};
+  const auto* pointPairs{data.imageMembranePixels.getPoints(p1, p2)};
   for (auto _ : state) {
     membrane = geometry::Membrane("id", &cA, &cB, pointPairs);
   }

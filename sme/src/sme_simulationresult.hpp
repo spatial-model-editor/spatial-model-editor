@@ -21,4 +21,4 @@ struct SimulationResult {
 
 } // namespace sme
 
-PYBIND11_MAKE_OPAQUE(std::vector<sme::SimulationResult>);
+PYBIND11_MAKE_OPAQUE(std::vector<sme::SimulationResult>)

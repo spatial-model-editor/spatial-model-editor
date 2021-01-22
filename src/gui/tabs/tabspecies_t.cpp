@@ -12,9 +12,9 @@
 #include "tabspecies.hpp"
 
 SCENARIO("Species Tab", "[gui/tabs/species][gui/tabs][gui][species]") {
-  sme::model::Model sbmlDoc;
+  sme::model::Model model;
   QLabelMouseTracker mouseTracker;
-  auto tab = TabSpecies(sbmlDoc, &mouseTracker);
+  auto tab = TabSpecies(model, &mouseTracker);
   tab.show();
   waitFor(&tab);
 
@@ -49,7 +49,7 @@ SCENARIO("Species Tab", "[gui/tabs/species][gui/tabs][gui][species]") {
   WHEN("very-simple-model loaded") {
     if (QFile f(":/models/very-simple-model.xml");
         f.open(QIODevice::ReadOnly)) {
-      sbmlDoc.importSBMLString(f.readAll().toStdString());
+      model.importSBMLString(f.readAll().toStdString());
     }
     tab.loadModelData();
 

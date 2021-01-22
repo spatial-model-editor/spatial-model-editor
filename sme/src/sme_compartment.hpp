@@ -33,4 +33,4 @@ public:
 
 } // namespace sme
 
-PYBIND11_MAKE_OPAQUE(std::vector<sme::Compartment>);
+PYBIND11_MAKE_OPAQUE(std::vector<sme::Compartment>)

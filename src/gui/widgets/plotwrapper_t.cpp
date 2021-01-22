@@ -55,7 +55,7 @@ SCENARIO("PlotWrapper",
   // show all for 1st spec, hide 2nd spec
   p.update({true, false}, true);
   for (int i = 0; i < 6; ++i) {
-    REQUIRE(p.plot->graph(i)->visible() == i < 3);
+    REQUIRE(p.plot->graph(i)->visible() == (i < 3));
   }
   REQUIRE(p.plot->legend->itemCount() == 2);
 
@@ -64,7 +64,7 @@ SCENARIO("PlotWrapper",
   REQUIRE(p.plot->graphCount() == 7);
   REQUIRE(p.plot->graph(6)->name() == "1");
   for (int i = 0; i < 6; ++i) {
-    REQUIRE(p.plot->graph(i)->visible() == i < 3);
+    REQUIRE(p.plot->graph(i)->visible() == (i < 3));
   }
   REQUIRE(p.plot->graph(6)->visible() == true);
   REQUIRE(p.plot->legend->itemCount() == 3);

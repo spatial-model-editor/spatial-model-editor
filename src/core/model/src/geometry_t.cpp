@@ -16,10 +16,10 @@ static void testFillMissingByDilation(std::vector<double> &arr, int w, int h) {
             arr[i] = arr[i - 1];
           } else if (x + 1 < w && arr[i + 1] >= 0) {
             arr[i] = arr[i + 1];
-          } else if (y > 0 && arr[i - w] >= 0) {
-            arr[i] = arr[i - w];
-          } else if (y + 1 < h && arr[i + w] >= 0) {
-            arr[i] = arr[i + w];
+          } else if (y > 0 && arr[i - static_cast<std::size_t>(w)] >= 0) {
+            arr[i] = arr[i - static_cast<std::size_t>(w)];
+          } else if (y + 1 < h && arr[i + static_cast<std::size_t>(w)] >= 0) {
+            arr[i] = arr[i + static_cast<std::size_t>(w)];
           } else {
             // pixel has no non-negative neighbour: need another iteration
             finished = false;
@@ -125,10 +125,10 @@ SCENARIO("Geometry: Compartments and Fields",
     REQUIRE(field.getConcentration()[0] == dbl_approx(3.1));
     REQUIRE(field.getConcentration()[1] == dbl_approx(9.9));
     a = field.getConcentrationImageArray();
-//    REQUIRE(a[21] == dbl_approx(3.1));
-//    REQUIRE(a[20] == dbl_approx(3.1));
-//    REQUIRE(a[15] == dbl_approx(9.9));
-//    REQUIRE(a[14] == dbl_approx(9.9));
+    REQUIRE(a[21] == dbl_approx(3.1));
+    REQUIRE(a[20] == dbl_approx(3.1));
+    REQUIRE(a[15] == dbl_approx(9.9));
+    REQUIRE(a[14] == dbl_approx(9.9));
 
     // conc array size must match image size
     REQUIRE_THROWS(field.importConcentration({1.0, 2.0}));

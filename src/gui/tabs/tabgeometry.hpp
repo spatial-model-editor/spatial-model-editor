@@ -23,7 +23,7 @@ class TabGeometry : public QWidget {
   Q_OBJECT
 
 public:
-  explicit TabGeometry(sme::model::Model &doc, QLabelMouseTracker *mouseTracker,
+  explicit TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                        QLabel *statusBarMsg, QWidget *parent = nullptr);
   ~TabGeometry();
   void loadModelData(const QString &selection = {});
@@ -35,7 +35,7 @@ signals:
 
 private:
   std::unique_ptr<Ui::TabGeometry> ui;
-  sme::model::Model &sbmlDoc;
+  sme::model::Model &model;
   QLabelMouseTracker *lblGeometry;
   QLabel *statusBarPermanentMessage;
   bool waitingForCompartmentChoice = false;

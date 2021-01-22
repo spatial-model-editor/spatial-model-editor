@@ -13,9 +13,9 @@
 #include <algorithm>
 #include <future>
 
-TabSimulate::TabSimulate(sme::model::Model &doc, QLabelMouseTracker *mouseTracker,
+TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                          QWidget *parent)
-    : QWidget(parent), ui{std::make_unique<Ui::TabSimulate>()}, sbmlDoc(doc),
+    : QWidget(parent), ui{std::make_unique<Ui::TabSimulate>()}, model(m),
       lblGeometry(mouseTracker), plt{std::make_unique<PlotWrapper>(
                                      "Average Concentration", this)} {
   ui->setupUi(this);
@@ -61,14 +61,14 @@ void TabSimulate::loadModelData() {
     return;
   }
   reset();
-  if (!(sbmlDoc.getIsValid() && sbmlDoc.getGeometry().getIsValid())) {
+  if (!(model.getIsValid() && model.getGeometry().getIsValid())) {
     ui->hslideTime->setEnabled(false);
     ui->btnSimulate->setEnabled(false);
     return;
   }
   if (simType == sme::simulate::SimulatorType::DUNE &&
-      (sbmlDoc.getGeometry().getMesh() == nullptr ||
-       !sbmlDoc.getGeometry().getMesh()->isValid())) {
+      (model.getGeometry().getMesh() == nullptr ||
+       !model.getGeometry().getMesh()->isValid())) {
     ui->btnSimulate->setEnabled(false);
     auto msgbox = newYesNoMessageBox(
         "Invalid mesh",
@@ -83,7 +83,7 @@ void TabSimulate::loadModelData() {
     msgbox->open();
     return;
   }
-  sim = std::make_unique<sme::simulate::Simulation>(sbmlDoc, simType, simOptions);
+  sim = std::make_unique<sme::simulate::Simulation>(model, simType, simOptions);
   if (!sim->errorMessage().empty()) {
     QMessageBox::warning(
         this, "Simulation Setup Failed",
@@ -101,24 +101,24 @@ void TabSimulate::loadModelData() {
   compartmentNames.clear();
   for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
     compartmentNames.push_back(
-        sbmlDoc.getCompartments().getNames()[static_cast<int>(ic)]);
+        model.getCompartments().getNames()[static_cast<int>(ic)]);
     auto &names = speciesNames.emplace_back();
     for (const auto &sId : sim->getSpeciesIds(ic)) {
-      names.push_back(sbmlDoc.getSpecies().getName(sId.c_str()));
+      names.push_back(model.getSpecies().getName(sId.c_str()));
     }
   }
   // setup plot
   plt->plot->xAxis->setLabel(
-      QString("time (%1)").arg(sbmlDoc.getUnits().getTime().name));
+      QString("time (%1)").arg(model.getUnits().getTime().name));
   plt->plot->yAxis->setLabel(
-      QString("concentration (%1)").arg(sbmlDoc.getUnits().getConcentration()));
+      QString("concentration (%1)").arg(model.getUnits().getConcentration()));
   plt->plot->xAxis->setRange(0, ui->txtSimLength->text().toDouble());
   // add lines
   for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
     for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
       QColor col = sim->getSpeciesColors(ic)[is];
       QString name =
-          sbmlDoc.getSpecies().getName(sim->getSpeciesIds(ic)[is].c_str());
+          model.getSpecies().getName(sim->getSpeciesIds(ic)[is].c_str());
       plt->addAvMinMaxLine(name, col);
     }
   }
@@ -133,7 +133,7 @@ void TabSimulate::loadModelData() {
       ++speciesIndex;
     }
   }
-  displayOptions = sbmlDoc.getDisplayOptions();
+  displayOptions = model.getDisplayOptions();
   if (auto ns{static_cast<std::size_t>(speciesIndex)};
       ns != displayOptions.showSpecies.size()) {
     // show species count doesn't match actual number of species
@@ -209,7 +209,7 @@ void TabSimulate::btnSimulate_clicked() {
 }
 
 void TabSimulate::btnSliceImage_clicked() {
-  DialogImageSlice dialog(sbmlDoc.getGeometry().getImage(), images, time);
+  DialogImageSlice dialog(model.getGeometry().getImage(), images, time);
   if (dialog.exec() == QDialog::Accepted) {
     SPDLOG_DEBUG("todo: save current slice settings");
   }
@@ -319,7 +319,7 @@ void TabSimulate::btnDisplayOptions_clicked() {
     displayOptions.normaliseOverAllSpecies =
         dialog.getNormaliseOverAllSpecies();
     observables = dialog.getObservables();
-    sbmlDoc.setDisplayOptions(displayOptions);
+    model.setDisplayOptions(displayOptions);
     updatePlotAndImages();
     hslideTime_valueChanged(ui->hslideTime->value());
   }
@@ -344,5 +344,5 @@ void TabSimulate::hslideTime_valueChanged(int value) {
   plt->setVerticalLine(time[value]);
   plt->plot->replot();
   ui->lblCurrentTime->setText(
-      QString("%1%2").arg(time[value]).arg(sbmlDoc.getUnits().getTime().name));
+      QString("%1%2").arg(time[value]).arg(model.getUnits().getTime().name));
 }

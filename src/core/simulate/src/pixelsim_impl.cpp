@@ -152,7 +152,9 @@ SimCompartment::SimCompartment(const model::Model &doc,
 
 void SimCompartment::evaluateDiffusionOperator(std::size_t begin,
                                                std::size_t end) {
+#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
 #pragma omp parallel for
+#endif
   for (std::size_t i = begin; i < end; ++i) {
     std::size_t ix = i * nSpecies;
     std::size_t ix_upx = comp->up_x(i) * nSpecies;
@@ -182,7 +184,9 @@ void SimCompartment::evaluateDiffusionOperator_tbb() {
 #endif
 
 void SimCompartment::evaluateReactions(std::size_t begin, std::size_t end) {
+#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
 #pragma omp parallel for
+#endif
   for (std::size_t i = begin; i < end; ++i) {
     reacEval.evaluate(dcdt.data() + i * nSpecies, conc.data() + i * nSpecies);
   }
@@ -201,7 +205,9 @@ void SimCompartment::evaluateReactions_tbb() {
 
 void SimCompartment::doForwardsEulerTimestep(double dt, std::size_t begin,
                                              std::size_t end) {
+#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
 #pragma omp parallel for
+#endif
   for (std::size_t i = begin; i < end; ++i) {
     conc[i] += dt * dcdt[i];
   }
@@ -227,7 +233,9 @@ void SimCompartment::doRKInit() {
 
 void SimCompartment::doRK212Substep1(double dt, std::size_t begin,
                                      std::size_t end) {
+#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
 #pragma omp parallel for
+#endif
   for (std::size_t i = begin; i < end; ++i) {
     s3[i] = conc[i];
     conc[i] += dt * dcdt[i];
@@ -253,7 +261,9 @@ void SimCompartment::doRK212Substep1_tbb(double dt) {
 
 void SimCompartment::doRK212Substep2(double dt, std::size_t begin,
                                      std::size_t end) {
+#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
 #pragma omp parallel for
+#endif
   for (std::size_t i = begin; i < end; ++i) {
     s2[i] = conc[i];
     conc[i] = 0.5 * s3[i] + 0.5 * conc[i] + 0.5 * dt * dcdt[i];
@@ -276,7 +286,9 @@ void SimCompartment::doRK212Substep2_tbb(double dt) {
 void SimCompartment::doRKSubstep(double dt, double g1, double g2, double g3,
                                  double beta, double delta, std::size_t begin,
                                  std::size_t end) {
+#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
 #pragma omp parallel for
+#endif
   for (std::size_t i = begin; i < end; ++i) {
     s2[i] += delta * conc[i];
     conc[i] = g1 * conc[i] + g2 * s2[i] + g3 * s3[i] + beta * dt * dcdt[i];
@@ -303,7 +315,9 @@ void SimCompartment::doRKSubstep_tbb(double dt, double g1, double g2, double g3,
 void SimCompartment::doRKFinalise(double cFactor, double s2Factor,
                                   double s3Factor, std::size_t begin,
                                   std::size_t end) {
+#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
 #pragma omp parallel for
+#endif
   for (std::size_t i = begin; i < end; ++i) {
     s2[i] = cFactor * conc[i] + s2Factor * s2[i] + s3Factor * s3[i];
   }
@@ -327,7 +341,9 @@ void SimCompartment::doRKFinalise_tbb(double cFactor, double s2Factor,
 #endif
 
 void SimCompartment::undoRKStep(std::size_t begin, std::size_t end) {
+#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
 #pragma omp parallel for
+#endif
   for (std::size_t i = begin; i < end; ++i) {
     conc[i] = s3[i];
   }

@@ -16,7 +16,6 @@ using PyConc = std::vector<std::vector<double>>;
 
 PyImageRgb toPyImageRgb(const QImage &img);
 PyImageMask toPyImageMask(const QImage &img);
-PyConc toPyConc();
 
 template <typename T> std::string vecToNames(const std::vector<T> &vec) {
   std::string str;
@@ -29,7 +28,7 @@ template <typename T> std::string vecToNames(const std::vector<T> &vec) {
 template <typename T>
 T &findElem(std::vector<T> &v, typename std::vector<T>::difference_type i) {
   if (i < 0) {
-    i += v.size();
+    i += static_cast<typename std::vector<T>::difference_type>(v.size());
   }
   auto idx{static_cast<std::size_t>(i)};
   if (i < 0 || idx >= v.size()) {

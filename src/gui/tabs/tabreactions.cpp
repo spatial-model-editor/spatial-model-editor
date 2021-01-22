@@ -8,9 +8,9 @@
 #include "qlabelmousetracker.hpp"
 #include "ui_tabreactions.h"
 
-TabReactions::TabReactions(sme::model::Model &model,
+TabReactions::TabReactions(sme::model::Model &m,
                            QLabelMouseTracker *mouseTracker, QWidget *parent)
-    : QWidget{parent}, ui{std::make_unique<Ui::TabReactions>()}, model{model},
+    : QWidget{parent}, ui{std::make_unique<Ui::TabReactions>()}, model{m},
       lblGeometry{mouseTracker} {
   ui->setupUi(this);
 

@@ -723,8 +723,8 @@ SCENARIO(
       auto simSteps =
           std::async(std::launch::async, &simulate::Simulation::doTimesteps,
                      &sim, 50.0, 1);
-      // this .get() blocks until simulation is finished
-      REQUIRE(simSteps.get() >= 0);
+      // this `.get()` blocks until simulation is finished
+      REQUIRE(simSteps.get() >= 1);
       REQUIRE(sim.getIsRunning() == false);
       REQUIRE(sim.getIsStopping() == false);
       REQUIRE(sim.getNCompletedTimesteps() == 2);
