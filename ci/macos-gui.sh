@@ -12,8 +12,6 @@ g++ --version
 python3 --version
 ccache --zero-stats
 
-sudo ./ci/getlibs.sh osx
-
 # do build
 mkdir build
 cd build

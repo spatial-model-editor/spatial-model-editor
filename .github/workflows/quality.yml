@@ -20,6 +20,8 @@ jobs:
         path: ~/.ccache
         key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
         restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
+    - name: Get static libs
+      run: sudo ./ci/getlibs.sh linux
     - name: Build script
       run: ./ci/codecov.sh
 
@@ -43,6 +45,8 @@ jobs:
           path: ~/.sonarcache
           key: sonar-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: sonar-${{ github.job }}-${{ runner.os }}-
+      - name: Get static libs
+        run: sudo ./ci/getlibs.sh linux
       - name: Build script
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

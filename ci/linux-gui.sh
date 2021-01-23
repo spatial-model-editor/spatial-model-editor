@@ -32,9 +32,6 @@ export DISPLAY=:99
 # start a window manager so the Qt GUI tests can have their focus set
 jwm &
 
-# download static libs
-sudo ./ci/getlibs.sh linux
-
 # do build
 mkdir build
 cd build
