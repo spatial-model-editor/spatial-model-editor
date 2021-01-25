@@ -151,3 +151,15 @@ target_compile_options(
 target_compile_options(
   core
   PUBLIC $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:Clang>>:-shared-libasan>)
+
+include(GNUInstallDirs)
+install(
+  TARGETS core
+  EXPORT coreTargets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_BINDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(
+  EXPORT coreTargets
+  NAMESPACE core::
+  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/core)
