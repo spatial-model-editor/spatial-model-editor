@@ -403,7 +403,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     double epsilon{1e-8};
     double margin{1e-13};
     if (simulatorType == simulate::SimulatorType::DUNE) {
-      epsilon = 1e-7;
+      epsilon = 1e-6;
     }
     // import model
     model::Model s1;

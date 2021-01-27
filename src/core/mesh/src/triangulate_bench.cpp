@@ -8,10 +8,8 @@ mesh_TriangulateBoundaries(benchmark::State &state) {
   T data;
   auto interiorPoints{sme::mesh::getInteriorPoints(data.img, data.colours)};
   auto boundaries{sme::mesh::constructBoundaries(data.img, data.colours)};
-  auto tb{
-      sme::mesh::TriangulateBoundaries(boundaries, interiorPoints, data.maxTriangleArea)};
   for (auto _ : state) {
-    auto t{sme::mesh::Triangulate(tb)};
+    auto t{sme::mesh::Triangulate(boundaries, interiorPoints, data.maxTriangleArea)};
   }
 }
 

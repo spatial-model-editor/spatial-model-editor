@@ -11,7 +11,6 @@ export CMAKE_PREFIX_PATH="C:/smelibs;C:/smelibs/CMake;C:/smelibs/lib/cmake;C:/sm
 export SME_EXTRA_EXE_LIBS="-static;-static-libgcc;-static-libstdc++"
 export CMAKE_CXX_COMPILER_LAUNCHER=ccache
 export CCACHE_NOHASHDIR="true"
-export CIBW_BUILD_VERBOSITY=3
 
 pwd
 which g++

@@ -205,9 +205,8 @@ const std::vector<std::vector<QTriangleF>> &Mesh::getTriangles() const {
 
 void Mesh::constructMesh() {
   try {
-    auto tid{TriangulateBoundaries(*boundaries, compartmentInteriorPoints,
-                                   compartmentMaxTriangleArea)};
-    Triangulate triangulate(tid);
+    Triangulate triangulate(*boundaries, compartmentInteriorPoints,
+                            compartmentMaxTriangleArea);
     vertices = triangulate.getPoints();
     triangleIndices = triangulate.getTriangleIndices();
 

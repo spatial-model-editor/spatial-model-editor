@@ -58,7 +58,11 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [GNU Multiple Precision Arithmetic Library](https://gmplib.org/) - license: [LGPL](https://www.gnu.org/licenses/lgpl-3.0.html)
 
-- [Triangle](http://www.cs.cmu.edu/~quake/triangle.html) - license: "Private, research, and institutional use is free."
+- [GNU MPFR](https://www.mpfr.org/) - license: [LGPL](https://www.gnu.org/licenses/lgpl-3.0.html)
+
+- [Computational Geometry Algorithms Library](https://www.cgal.org/) - license: [GPL](https://www.gnu.org/licenses/gpl-3.0.html)
+
+- [Boost](https://www.boost.org/) - license: [boost](https://www.boost.org/users/license.html)
 
 - [muParser](https://github.com/beltoforion/muparser) - license: [MIT](https://github.com/beltoforion/muparser/blob/master/License.txt)
 
@@ -73,3 +77,12 @@ Spatial Model Editor makes use of the following open source libraries:
 - [pybind11](https://github.com/pybind/pybind11) - license: [BSD-style](https://github.com/pybind/pybind11/blob/master/LICENSE)
 
 - [Catch2](https://github.com/catchorg/Catch2) - license: [BSL-1.0](https://github.com/catchorg/Catch2/blob/master/LICENSE.txt)
+
+## Licensing Note
+
+The source code in this repository is released under the MIT license, which is a permissive
+[GPL-compatible](https://www.gnu.org/licenses/gpl-faq.html#WhatDoesCompatMean) license.
+
+The open source libraries that it uses are either also released under a permissive GPL-compatible license, or
+under a GPL license. As described in the [gpl-faq](https://www.gnu.org/licenses/gpl-faq.html#IfLibraryIsGPL),
+this means that the work as a whole is then licensed under the GPL.
