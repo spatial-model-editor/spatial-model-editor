@@ -20,6 +20,9 @@ jobs:
         path: ~/.ccache
         key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
         restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
     - name: Get static libs
       run: sudo ./ci/getlibs.sh linux
     - name: Build script
@@ -45,6 +48,9 @@ jobs:
           path: ~/.sonarcache
           key: sonar-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: sonar-${{ github.job }}-${{ runner.os }}-
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
       - name: Get static libs
         run: sudo ./ci/getlibs.sh linux
       - name: Build script

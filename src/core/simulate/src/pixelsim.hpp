@@ -56,10 +56,11 @@ public:
       const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
       const PixelOptions &pixelOptions = {});
   ~PixelSim() override;
-  std::size_t run(double time) override;
+  std::size_t run(double time, double timeout_ms) override;
   const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const override;
   std::size_t getConcentrationPadding() const override;
+  const std::vector<double> &getDcdt(std::size_t compartmentIndex) const;
   double getLowerOrderConcentration(std::size_t compartmentIndex,
                                     std::size_t speciesIndex,
                                     std::size_t pixelIndex) const;

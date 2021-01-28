@@ -27,10 +27,19 @@ void pybindSimulationResult(pybind11::module &m) {
       .def_readonly("species_concentration",
                     &SimulationResult::speciesConcentration,
                     R"(
-                    dict: the species concentrations of each species at this timepoint
+                    dict: the species concentrations at this timepoint
 
                     for each species, the concentrations are provided as a
-                    list of list of float, where concentration[y][x] is the concentration at the point (x,y)
+                    list of list of float, where species_concentration['A'][y][x]
+                    is the concentration of species 'A" at the point (x,y)
+                    )")
+      .def_readonly("species_dcdt", &SimulationResult::speciesDcdt,
+                    R"(
+                    dict: the rate of change of the species concentrations at this timepoint
+
+                    for each species, the rate of change of the concentrations are provided as a
+                    list of list of float, where species_dcdt['A'][y][x] is the rate of change
+                    of concentration of species 'A' at the point (x,y)
                     )")
       .def("__repr__",
            [](const SimulationResult &a) {

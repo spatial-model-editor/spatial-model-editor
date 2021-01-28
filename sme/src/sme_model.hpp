@@ -33,7 +33,8 @@ public:
   PyImageRgb compartmentImage;
   std::vector<SimulationResult> simulate(double simulationTime,
                                          double imageInterval,
-                                         int timeoutSeconds = 86400);
+                                         int timeoutSeconds = 86400,
+                                         bool throwOnTimeout = true);
   std::string getStr() const;
 };
 

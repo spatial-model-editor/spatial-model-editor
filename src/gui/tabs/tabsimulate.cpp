@@ -202,8 +202,9 @@ void TabSimulate::btnSimulate_clicked() {
 
   this->setCursor(Qt::WaitCursor);
   // start simulation in a new thread
-  simSteps = std::async(std::launch::async, &sme::simulate::Simulation::doTimesteps,
-                        sim.get(), dtImage, n_images);
+  simSteps =
+      std::async(std::launch::async, &sme::simulate::Simulation::doTimesteps,
+                 sim.get(), dtImage, n_images, -1.0);
   // start timer to periodically update simulation results
   plotRefreshTimer.start();
 }
@@ -274,7 +275,8 @@ void TabSimulate::updatePlotAndImages() {
     ui->btnSimulate->setEnabled(true);
     ui->btnResetSimulation->setEnabled(true);
     // ..but failed
-    if (!sim->errorMessage().empty()) {
+    if (const auto &err{sim->errorMessage()};
+        !err.empty() && err != "Simulation stopped early") {
       QMessageBox::warning(
           this, "Simulation Failed",
           QString("Simulation failed - changing the Simulation options in the "

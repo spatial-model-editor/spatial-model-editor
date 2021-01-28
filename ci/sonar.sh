@@ -21,7 +21,7 @@ sudo update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-
 cmake --version
 clang++ --version
 llvm-cov --version
-python3 --version
+python --version
 ccache --version
 
 ccache --zero-stats
@@ -47,7 +47,7 @@ jwm &
 # do build
 mkdir build
 cd build
-CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DPYTHON_EXECUTABLE=/usr/bin/python3 -DSME_WITH_TBB=ON
+CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DSME_WITH_TBB=ON
 build-wrapper-linux-x86-64 --out-dir bw-output make -j2
 ccache --show-stats
 
@@ -67,7 +67,7 @@ rm -f *.gcov
 # also run python tests, but only copy gcov data for sme files: don't want to overwrite coverage info on core from c++ tests
 lcov -q -z -d .
 cd sme
-LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so) PYTHONMALLOC=malloc python3 -m unittest discover -s ../../sme/test > sme.txt 2>&1
+LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so) PYTHONMALLOC=malloc python -m unittest discover -s ../../sme/test > sme.txt 2>&1
 tail -n 100 sme.txt
 cd ..
 llvm-cov gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null

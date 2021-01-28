@@ -4,6 +4,7 @@
 #include "model.hpp"
 #include "pixelsim_impl.hpp"
 #include "utils.hpp"
+#include <QElapsedTimer>
 #include <QString>
 #include <QStringList>
 #include <algorithm>
@@ -304,7 +305,7 @@ PixelSim::PixelSim(
 
 PixelSim::~PixelSim() = default;
 
-std::size_t PixelSim::run(double time) {
+std::size_t PixelSim::run(double time, double timeout_ms) {
   SPDLOG_TRACE("  - max rel local err {}", errMax.rel);
   SPDLOG_TRACE("  - max abs local err {}", errMax.abs);
   SPDLOG_TRACE("  - max stepsize {}", maxTimestep);
@@ -312,6 +313,8 @@ std::size_t PixelSim::run(double time) {
   tbb::global_control control(tbb::global_control::max_allowed_parallelism,
                               numMaxThreads);
 #endif
+  QElapsedTimer timer;
+  timer.start();
   double tNow = 0;
   std::size_t steps = 0;
   discardedSteps = 0;
@@ -330,8 +333,14 @@ std::size_t PixelSim::run(double time) {
       }
     }
     ++steps;
-    if (stopRequested.load(std::memory_order_relaxed)) {
-      SPDLOG_DEBUG("Stopping simulation early");
+    if (timeout_ms >= 0.0 &&
+        static_cast<double>(timer.elapsed()) >= timeout_ms) {
+      SPDLOG_DEBUG("Simulation timeout: requesting stop");
+      requestStop();
+    }
+    if (stopRequested.load()) {
+      currentErrorMessage = "Simulation stopped early";
+      SPDLOG_DEBUG("Simulation timeout or stopped early");
       return steps;
     }
   }
@@ -349,6 +358,11 @@ PixelSim::getConcentrations(std::size_t compartmentIndex) const {
 
 std::size_t PixelSim::getConcentrationPadding() const { return nExtraVars; }
 
+const std::vector<double> &
+PixelSim::getDcdt(std::size_t compartmentIndex) const {
+  return simCompartments[compartmentIndex]->getDcdt();
+}
+
 double PixelSim::getLowerOrderConcentration(std::size_t compartmentIndex,
                                             std::size_t speciesIndex,
                                             std::size_t pixelIndex) const {
@@ -360,9 +374,7 @@ const std::string &PixelSim::errorMessage() const {
   return currentErrorMessage;
 }
 
-void PixelSim::requestStop() {
-  stopRequested.store(true, std::memory_order_relaxed);
-}
+void PixelSim::requestStop() { stopRequested.store(true); }
 
 } // namespace simulate
 

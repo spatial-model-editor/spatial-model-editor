@@ -63,7 +63,8 @@ public:
                       const Options &options = {});
   ~Simulation();
 
-  std::size_t doTimesteps(double time, std::size_t nSteps = 1);
+  std::size_t doTimesteps(double time, std::size_t nSteps = 1,
+                          double timeout_ms = -1.0);
   const std::string &errorMessage() const;
   const std::vector<std::string> &getCompartmentIds() const;
   const std::vector<std::string> &
@@ -76,6 +77,8 @@ public:
   std::vector<double> getConc(std::size_t timeIndex,
                               std::size_t compartmentIndex,
                               std::size_t speciesIndex) const;
+  std::vector<double> getDcdt(std::size_t compartmentIndex,
+                              std::size_t speciesIndex) const;
   double getLowerOrderConc(std::size_t compartmentIndex,
                            std::size_t speciesIndex,
                            std::size_t pixelIndex) const;
@@ -84,8 +87,8 @@ public:
                const std::vector<std::vector<std::size_t>> &speciesToDraw = {},
                bool normaliseOverAllTimepoints = false,
                bool normaliseOverAllSpecies = false) const;
-  // map from name to vec<vec<double>> species concentration for python bindings
-  std::map<std::string, std::vector<std::vector<double>>>
+  // map from name to vec<vec<double>> species conc/dcdt for python bindings
+  std::pair<std::map<std::string, std::vector<std::vector<double>>>,std::map<std::string, std::vector<std::vector<double>>>>
   getPyConcs(std::size_t timeIndex) const;
   std::size_t getNCompletedTimesteps() const;
   bool getIsRunning() const;
