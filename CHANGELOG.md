@@ -7,6 +7,20 @@
 
 ### Removed
 
+## [1.0.6] - 2021-01-29
+### Added
+- python library `sme.Model.simulate`:
+  - simulation results now also contain rate of change of concentrations
+  - option to return partial results instead of throwing on simulation timeout
+
+### Changed
+- more accurate initial concentration interpolation for dune-copasi simulations
+  - applies to both GUI simulations and exported TIFF files for stand-alone dune-copasi simulation
+- improved performance of interior point determination in mesh construction
+
+### Fixed
+- meshing bug where invalid 2-point boundary line could cause crash
+
 ## [1.0.5] - 2021-01-02
 ### Added
 - user can edit dune-copasi Newton solver parameters
@@ -18,7 +32,7 @@
   - simpler mesh generation
   - faster and more accurate simulations
 - improved boundary construction
-  - use pixel edges as boundary edges insted of pixels
+  - use pixel edges as boundary edges instead of pixels
   - shared boundaries and their end points now unambiguously determined
 - improved line simplification
 
