@@ -117,14 +117,19 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
     std::size_t it = 1;
     // B_c1 = 0
     REQUIRE(sim.getAvgMinMax(it, 0, 0).avg == dbl_approx(0.0));
+    REQUIRE(sim.getDcdt(0, 0)[0] == dbl_approx(0.0));
     // A_c2 += k_1 A_c1 dt
     REQUIRE(sim.getAvgMinMax(it, 1, 0).avg == dbl_approx(0.1 * 1.0 * dt));
+    REQUIRE(sim.getDcdt(1, 0)[0] == dbl_approx(0.1));
     // B_c2 = 0
     REQUIRE(sim.getAvgMinMax(it, 1, 1).avg == dbl_approx(0.0));
+    REQUIRE(sim.getDcdt(1, 1)[0] == dbl_approx(0.0));
     // A_c3 = 0
     REQUIRE(sim.getAvgMinMax(it, 2, 0).avg == dbl_approx(0.0));
+    REQUIRE(sim.getDcdt(2, 0)[0] == dbl_approx(0.0));
     // B_c3 = 0
     REQUIRE(sim.getAvgMinMax(it, 2, 1).avg == dbl_approx(0.0));
+    REQUIRE(sim.getDcdt(2, 1)[0] == dbl_approx(0.0));
   }
 
   WHEN("two Euler steps") {
@@ -136,15 +141,20 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
     std::size_t it = 2;
     // B_c1 = 0
     REQUIRE(sim.getAvgMinMax(it, 0, 0).avg == dbl_approx(0.0));
+    REQUIRE(sim.getDcdt(0, 0)[0] == dbl_approx(0.0));
     // A_c2 += k_1 A_c1 dt - k1 * A_c2 * dt
     REQUIRE(sim.getAvgMinMax(it, 1, 0).avg ==
             dbl_approx(A_c2 + 0.1 * dt - A_c2 * 0.1 * dt));
+    REQUIRE(sim.getDcdt(1, 0)[0] == dbl_approx(0.1 - A_c2 * 0.1));
     // B_c2 = 0
     REQUIRE(sim.getAvgMinMax(it, 1, 1).avg == dbl_approx(0.0));
+    REQUIRE(sim.getDcdt(1, 1)[0] == dbl_approx(0.0));
     // A_c3 += k_1 A_c2 dt / c3
     REQUIRE(sim.getAvgMinMax(it, 2, 0).avg == dbl_approx(0.1 * A_c2 * dt));
+    REQUIRE(sim.getDcdt(2, 0)[0] == dbl_approx(0.1 * A_c2));
     // B_c3 = 0
     REQUIRE(sim.getAvgMinMax(it, 2, 1).avg == dbl_approx(0.0));
+    REQUIRE(sim.getDcdt(2, 1)[0] == dbl_approx(0.0));
   }
 
   WHEN("three Euler steps") {
@@ -191,6 +201,8 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
                         .epsilon(acceptable_error));
     REQUIRE(A_c3 == Catch::Approx(A_c2 - A_c1).epsilon(acceptable_error));
     // B_c1 "steady state" solution is linear growth
+    REQUIRE(sim2.getDcdt(0, 0)[0] ==
+            Catch::Approx(0.1).epsilon(acceptable_error));
     REQUIRE(
         B_c3 ==
         Catch::Approx((0.06 / 0.10) * A_c3 / 0.2).epsilon(acceptable_error));
@@ -722,7 +734,7 @@ SCENARIO(
       // run simulation in another thread
       auto simSteps =
           std::async(std::launch::async, &simulate::Simulation::doTimesteps,
-                     &sim, 50.0, 1);
+                     &sim, 50.0, 1, -1.0);
       // this `.get()` blocks until simulation is finished
       REQUIRE(simSteps.get() >= 1);
       REQUIRE(sim.getIsRunning() == false);
@@ -744,6 +756,28 @@ SCENARIO(
       }
     }
   }
+}
+
+SCENARIO("Pixel simulator: timeout",
+         "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
+  // import model
+  model::Model s;
+  if (QFile f(":/models/brusselator-model.xml"); f.open(QIODevice::ReadOnly)) {
+    s.importSBMLString(f.readAll().toStdString());
+  }
+  // simulate 1 very long time step, with 200ms timeout
+  simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
+  REQUIRE(sim.getNCompletedTimesteps() == 1);
+  sim.doTimesteps(1e9, 1, 200.0);
+  // step does not complete:
+  REQUIRE(sim.getNCompletedTimesteps() == 1);
+
+  // simulate many tiny time steps, with 200ms timeout
+  simulate::Simulation sim2(s, simulate::SimulatorType::Pixel);
+  REQUIRE(sim2.getNCompletedTimesteps() == 1);
+  sim2.doTimesteps(1e-12, 100000, 200.0);
+  // some steps complete before timeout:
+  REQUIRE(sim2.getNCompletedTimesteps() > 1);
 }
 
 SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
@@ -910,12 +944,17 @@ SCENARIO("PyConc",
       s.importSBMLString(f.readAll().toStdString());
     }
     simulate::Simulation sim(s);
-    auto pyConcs = sim.getPyConcs(0);
+    auto [pyConcs, pyDcdts] = sim.getPyConcs(0);
     REQUIRE(pyConcs.size() == 3);
     const auto &cA = pyConcs["A"];
     REQUIRE(cA.size() == 100);
     REQUIRE(cA[0].size() == 100);
     REQUIRE(cA[0][0] == dbl_approx(0.0));
+    REQUIRE(pyDcdts.size() == 3);
+    const auto &dA = pyDcdts["A"];
+    REQUIRE(dA.size() == 100);
+    REQUIRE(dA[0].size() == 100);
+    REQUIRE(dA[0][0] == dbl_approx(0.0));
   }
 }
 

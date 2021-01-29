@@ -70,7 +70,7 @@ public:
       const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
       const DuneOptions &duneOptions = {});
   ~DuneSim() override;
-  std::size_t run(double time) override;
+  std::size_t run(double time, double timeout_ms) override;
   const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const override;
   std::size_t getConcentrationPadding() const override;

@@ -124,6 +124,7 @@ void pybindModel(pybind11::module &m) {
       .def("simulate", &sme::Model::simulate, pybind11::arg("simulation_time"),
            pybind11::arg("image_interval"),
            pybind11::arg("timeout_seconds") = 86400,
+           pybind11::arg("throw_on_timeout") = true,
            R"(
            returns the results of the simulation.
 
@@ -200,15 +201,18 @@ static SimulationResult getSimulationResult(const simulate::Simulation *sim) {
   std::size_t i = sim->getTimePoints().size() - 1;
   result.timePoint = sim->getTimePoints()[i];
   result.concentrationImage = toPyImageRgb(sim->getConcImage(i, {}, true));
-  result.speciesConcentration = sim->getPyConcs(i);
+  std::tie(result.speciesConcentration, result.speciesDcdt) =
+      sim->getPyConcs(i);
   return result;
 }
 
 std::vector<SimulationResult> Model::simulate(double simulationTime,
                                               double imageInterval,
-                                              int timeoutSeconds) {
+                                              int timeoutSeconds,
+                                              bool throwOnTimeout) {
   QElapsedTimer simulationRuntimeTimer;
   simulationRuntimeTimer.start();
+  double timeoutMillisecs{static_cast<double>(timeoutSeconds) * 1000.0};
   std::vector<SimulationResult> results;
   sim = std::make_unique<simulate::Simulation>(*(s.get()),
                                                simulate::SimulatorType::Pixel);
@@ -217,13 +221,19 @@ std::vector<SimulationResult> Model::simulate(double simulationTime,
   }
   results.push_back(getSimulationResult(sim.get()));
   while (sim->getTimePoints().back() < simulationTime) {
-    sim->doTimesteps(imageInterval);
-    if (const auto &e = sim->errorMessage(); !e.empty()) {
-      throw SmeRuntimeError(fmt::format("Error during simulation: {}", e));
+    double remainingTimeoutMillisecs{
+        timeoutMillisecs -
+        static_cast<double>(simulationRuntimeTimer.elapsed())};
+    if(remainingTimeoutMillisecs < 0){
+      remainingTimeoutMillisecs = 0.0;
     }
-    if (auto secs = static_cast<int>(simulationRuntimeTimer.elapsed() / 1000);
-        secs > timeoutSeconds) {
-      throw SmeRuntimeError(fmt::format("Simulation timeout: {}s", secs));
+    sim->doTimesteps(imageInterval, 1, remainingTimeoutMillisecs);
+    if (const auto &e = sim->errorMessage(); !e.empty()) {
+      if(throwOnTimeout) {
+        throw SmeRuntimeError(fmt::format("Error during simulation: {}", e));
+      } else {
+        return results;
+      }
     }
     results.push_back(getSimulationResult(sim.get()));
   }

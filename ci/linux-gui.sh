@@ -22,7 +22,7 @@ sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 100
 # check versions
 cmake --version
 g++ --version
-python3 --version
+python --version
 ccache --zero-stats
 
 # start a virtual display for the Qt GUI tests
@@ -35,7 +35,7 @@ jwm &
 # do build
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_WITH_TBB=ON
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_WITH_TBB=ON
 make -j2 VERBOSE=1
 ccache --show-stats
 
@@ -46,8 +46,8 @@ tail -n 100 tests.txt
 
 # run python tests
 cd sme
-python3 -m unittest discover -s ../../sme/test -v
-PYTHONPATH=`pwd` python3 ../../sme/test/sme_doctest.py -v
+python -m unittest discover -s ../../sme/test -v
+PYTHONPATH=`pwd` python ../../sme/test/sme_doctest.py -v
 cd ..
 
 # run benchmarks (~1 sec per benchmark, ~20secs total)

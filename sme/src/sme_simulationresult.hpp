@@ -15,6 +15,7 @@ struct SimulationResult {
   double timePoint{0.0};
   PyImageRgb concentrationImage;
   std::map<std::string, PyConc> speciesConcentration;
+  std::map<std::string, PyConc> speciesDcdt;
   std::string getStr() const;
   std::string getName() const;
 };

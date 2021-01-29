@@ -7,6 +7,7 @@
 #include "pde.hpp"
 #include "pixelsim.hpp"
 #include "utils.hpp"
+#include <QElapsedTimer>
 #include <algorithm>
 #include <limits>
 #include <numeric>
@@ -111,8 +112,11 @@ Simulation::Simulation(const model::Model &sbmlDoc, SimulatorType simType,
 
 Simulation::~Simulation() = default;
 
-std::size_t Simulation::doTimesteps(double time, std::size_t nSteps) {
+std::size_t Simulation::doTimesteps(double time, std::size_t nSteps,
+                                    double timeout_ms) {
   SPDLOG_DEBUG("integrating for {} timesteps of length {}", nSteps, time);
+  QElapsedTimer timer;
+  timer.start();
   // ensure there is enough space that push_back won't cause a reallocation
   timePoints.reserve(timePoints.size() + nSteps);
   concentration.reserve(concentration.size() + nSteps);
@@ -121,9 +125,15 @@ std::size_t Simulation::doTimesteps(double time, std::size_t nSteps) {
   isRunning.store(true);
   std::size_t steps{0};
   for (std::size_t iStep = 0; iStep < nSteps; ++iStep) {
-    steps += simulator->run(time);
-    if (!simulator->errorMessage().empty() ||
-        stopRequested.load(std::memory_order_relaxed)) {
+    double remaining_timeout_ms{-1.0};
+    if (timeout_ms >= 0.0) {
+      remaining_timeout_ms = timeout_ms - static_cast<double>(timer.elapsed());
+      if (remaining_timeout_ms < 0.0) {
+        remaining_timeout_ms = 0.0;
+      }
+    }
+    steps += simulator->run(time, remaining_timeout_ms);
+    if (!simulator->errorMessage().empty() || stopRequested.load()) {
       isRunning.store(false);
       return steps;
     }
@@ -173,6 +183,22 @@ std::vector<double> Simulation::getConc(std::size_t timeIndex,
   std::size_t stride{nSpecies + concPadding};
   for (std::size_t ix = 0; ix < nPixels; ++ix) {
     c.push_back(compConc[ix * stride + speciesIndex]);
+  }
+  return c;
+}
+
+std::vector<double> Simulation::getDcdt(std::size_t compartmentIndex,
+                                        std::size_t speciesIndex) const {
+  std::vector<double> c;
+  if (auto *s = dynamic_cast<PixelSim *>(simulator.get()); s != nullptr) {
+    const auto &compDcdt = s->getDcdt(compartmentIndex);
+    std::size_t nPixels = compartments[compartmentIndex]->nPixels();
+    std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
+    c.reserve(nPixels);
+    std::size_t stride{nSpecies + concPadding};
+    for (std::size_t ix = 0; ix < nPixels; ++ix) {
+      c.push_back(compDcdt[ix * stride + speciesIndex]);
+    }
   }
   return c;
 }
@@ -260,23 +286,31 @@ QImage Simulation::getConcImage(
   return img;
 }
 
-std::map<std::string, std::vector<std::vector<double>>>
+std::pair<std::map<std::string, std::vector<std::vector<double>>>,std::map<std::string, std::vector<std::vector<double>>>>
 Simulation::getPyConcs(std::size_t timeIndex) const {
   using PyConc = std::vector<std::vector<double>>;
-  std::map<std::string, PyConc> pyConcs;
+  std::pair<std::map<std::string, PyConc>, std::map<std::string, PyConc>> pair;
+  auto& [pyConcs, pyDcdts] = pair;
   PyConc zeros = PyConc(
       static_cast<std::size_t>(imageSize.height()),
       std::vector<double>(static_cast<std::size_t>(imageSize.width()), 0.0));
   // start with zero concentration everywhere for all species
   std::vector<std::vector<PyConc>> vecPyConcs;
+  std::vector<std::vector<PyConc>> vecPyDcdts;
   vecPyConcs.reserve(compartmentSpeciesIds.size());
+  vecPyDcdts.reserve(compartmentSpeciesIds.size());
   for (const auto &speciesIds : compartmentSpeciesIds) {
     vecPyConcs.emplace_back(speciesIds.size(), zeros);
+    vecPyDcdts.emplace_back(speciesIds.size(), zeros);
   }
   // insert concentration for each pixel & species
   for (std::size_t ci = 0; ci < compartmentSpeciesIds.size(); ++ci) {
     const auto &pixels = compartments[ci]->getPixels();
     const auto &conc = concentration[timeIndex][ci];
+    const std::vector<double>* dcdt{nullptr};
+    if (auto *s = dynamic_cast<PixelSim *>(simulator.get()); s != nullptr) {
+      dcdt = &(s->getDcdt(ci));
+    }
     std::size_t nSpecies = compartmentSpeciesIds[ci].size();
     std::size_t stride{nSpecies + concPadding};
     for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
@@ -285,6 +319,9 @@ Simulation::getPyConcs(std::size_t timeIndex) const {
       auto y = static_cast<std::size_t>(p.y());
       for (std::size_t is : compartmentSpeciesIndices[ci]) {
         vecPyConcs[ci][is][y][x] = conc[ix * stride + is];
+        if(dcdt != nullptr){
+          vecPyDcdts[ci][is][y][x] = (*dcdt)[ix * stride + is];
+        }
       }
     }
   }
@@ -292,22 +329,21 @@ Simulation::getPyConcs(std::size_t timeIndex) const {
   for (std::size_t ci = 0; ci < compartmentSpeciesIds.size(); ++ci) {
     for (std::size_t is : compartmentSpeciesIndices[ci]) {
       pyConcs[compartmentSpeciesNames[ci][is]] = std::move(vecPyConcs[ci][is]);
+      pyDcdts[compartmentSpeciesNames[ci][is]] = std::move(vecPyDcdts[ci][is]);
     }
   }
-  return pyConcs;
+  return pair;
 }
+
+
 
 std::size_t Simulation::getNCompletedTimesteps() const {
   return nCompletedTimesteps;
 }
 
-bool Simulation::getIsRunning() const {
-  return isRunning.load(std::memory_order_relaxed);
-}
+bool Simulation::getIsRunning() const { return isRunning.load(); }
 
-bool Simulation::getIsStopping() const {
-  return stopRequested.load(std::memory_order_relaxed);
-}
+bool Simulation::getIsStopping() const { return stopRequested.load(); }
 
 void Simulation::requestStop() {
   stopRequested.store(true);
