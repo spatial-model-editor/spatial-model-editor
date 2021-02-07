@@ -7,6 +7,10 @@
 
 ### Removed
 
+## [1.0.7] - 2021-02-07
+### Fixed
+- illegal instruction crash on old CPUs [#422](https://github.com/spatial-model-editor/spatial-model-editor/issues/422)
+
 ## [1.0.6] - 2021-01-29
 ### Added
 - python library `sme.Model.simulate`:

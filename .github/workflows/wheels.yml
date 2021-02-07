@@ -3,7 +3,7 @@ name: Python Wheel Builds
 on: push
 
 env:
-  CIBUILDWHEEL_VERSION: 1.8.0
+  CIBUILDWHEEL_VERSION: 1.9.0
 
 jobs:
   linux-wheel:
@@ -13,8 +13,8 @@ jobs:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2021.01.22
-      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: spatialmodeleditor/manylinux2010-pypy_x86_64:2021.01.22
+      CIBW_MANYLINUX_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2021.02.07
+      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: spatialmodeleditor/manylinux2010-pypy_x86_64:2021.02.07
       CIBW_SKIP: '*-manylinux_i686'
       CIBW_TEST_COMMAND: 'python -m unittest discover -s {project}/sme/test -v'
       CIBW_BUILD_VERBOSITY: 3
