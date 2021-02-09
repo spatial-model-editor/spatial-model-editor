@@ -3,7 +3,7 @@ target_include_directories(cli PUBLIC src)
 target_link_libraries(
   cli
   PUBLIC CLI11::CLI11
-         core
+         sme::core
          ${SME_EXTRA_EXE_LIBS})
 
 if(BUILD_TESTING)

@@ -8,7 +8,7 @@ add_subdirectory(widgets)
 add_subdirectory(dialogs)
 add_subdirectory(tabs)
 
-target_link_libraries(gui PUBLIC Qt5::Widgets core)
+target_link_libraries(gui PUBLIC Qt5::Widgets sme::core)
 set_property(TARGET gui PROPERTY CXX_STANDARD 17)
 set_target_properties(gui PROPERTIES POSITION_INDEPENDENT_CODE ON)
 

@@ -1,4 +1,3 @@
-# require CMake version >= 3.13, and use highest available version
 cmake_minimum_required(VERSION 3.13...3.19)
 message(STATUS "CMake version ${CMAKE_VERSION}")
 
@@ -17,6 +16,8 @@ list(
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
+
+set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
 
 # find required Qt5 modules
 find_package(
@@ -49,6 +50,18 @@ set(SME_EXTRA_CORE_DEFS
     CACHE STRING "Optional additional defines for core")
 message(STATUS "SME_EXTRA_CORE_DEFS: ${SME_EXTRA_CORE_DEFS}")
 
+set(SME_EXTERNAL_SMECORE
+    no
+    CACHE
+      BOOL
+      "Use an externally provided sme::core instead of building it from source")
+if(SME_EXTERNAL_SMECORE)
+  find_package(
+    sme
+    REQUIRED
+    CONFIG)
+endif()
+
 set(BUILD_BENCHMARKS
     yes
     CACHE BOOL "Build benchmarks")
@@ -76,6 +89,7 @@ if(SME_WITH_TBB AND SME_WITH_OPENMP)
       "Please choose either TBB (-DSME_WITH_TBB=ON) or OpenMP (-DSME_WITH_OPENMP=ON) for multithreading. Using both together is not supported."
   )
 endif()
+
 add_subdirectory(src)
 
 # compile spatial cli
