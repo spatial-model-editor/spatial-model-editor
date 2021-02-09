@@ -7,7 +7,8 @@ target_sources(
           mesh.cpp
           mesh_utils.cpp
           pixel_corner_iterator.cpp
-          triangulate.cpp)
+          triangulate.cpp
+          triangulate_common.cpp)
 if(BUILD_TESTING)
   target_sources(
     core_tests

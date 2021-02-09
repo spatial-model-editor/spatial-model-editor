@@ -91,10 +91,10 @@ void PixelSim::doRK323(double dt) {
   // RK3(2)3: Shu Osher method with embedded Heun error estimate
   // Taken from eq(2.18) of
   // https://doi.org/10.1016/0021-9991(88)90177-5
-  constexpr std::array<double, 3> g1{1.0, 0.25, 2.0 / 3.0};
+  constexpr std::array<double, 3> g1{1.0, 0.25, 0.666666666666666666666};
   constexpr std::array<double, 3> g2{0.0, 0.0, 0.0};
-  constexpr std::array<double, 3> g3{0.0, 0.75, 1.0 / 3.0};
-  constexpr std::array<double, 3> beta{1.0, 0.25, 2.0 / 3.0};
+  constexpr std::array<double, 3> g3{0.0, 0.75, 0.333333333333333333333};
+  constexpr std::array<double, 3> beta{1.0, 0.25, 0.6666666666666666666};
   constexpr std::array<double, 3> delta{0.0, 0.0, 1.0};
   for (auto &sim : simCompartments) {
     sim->doRKInit();

@@ -51,6 +51,7 @@ find_package(OpenCV REQUIRED COMPONENTS core imgproc)
 find_package(spdlog REQUIRED)
 find_package(TIFF REQUIRED)
 find_package(fmt REQUIRED)
+find_package(CGAL REQUIRED)
 find_package(dunecopasi REQUIRED)
 # dune-logging depends on fmt: temporary hack
 target_link_libraries(dunecopasi::dunecopasi INTERFACE fmt::fmt
@@ -78,7 +79,6 @@ if(SME_WITH_OPENMP)
   target_compile_definitions(core PUBLIC SPATIAL_MODEL_EDITOR_WITH_OPENMP)
   target_link_libraries(core PRIVATE OpenMP::OpenMP_CXX)
 endif()
-
 target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 # set Logger level
 target_compile_definitions(
@@ -93,7 +93,8 @@ target_link_libraries(
           ${SYMENGINE_LIBRARIES}
           sbml-static
           dunecopasi::dunecopasi
-          muparser::muparser)
+          muparser::muparser
+          CGAL::CGAL)
 target_link_libraries(
   core
   PUBLIC opencv_core

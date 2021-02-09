@@ -4,6 +4,6 @@
 
 BENCH_EXE=${1:-"../build/benchmark/bench"}
 
-$BENCH_EXE --benchmark_out=bench.txt
+$BENCH_EXE --benchmark_out=bench_out.json
 
 python plot.py

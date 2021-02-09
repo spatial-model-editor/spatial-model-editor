@@ -15,7 +15,7 @@ ccache --zero-stats
 # do build
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSME_WITH_TBB=ON -DSME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM=ON
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSME_WITH_TBB=ON -DSME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM=ON -DBoost_NO_BOOST_CMAKE=on
 make -j2 VERBOSE=1
 ccache --show-stats
 

@@ -128,11 +128,11 @@ SCENARIO("DUNE: function",
       //  - Dune takes vertex values & linearly interpolates other points
       //  - Vertex values themselves are taken from nearest pixel
       //  - TIFF also has smaller ULP: ~ |max conc| / 2^16
-      REQUIRE(avgDiffAnalyticTiff < 0.10); // -> 0.07 with dune cast/clamp fixes
-      REQUIRE(avgDiffAnalyticFunc < 0.07);
+      REQUIRE(avgDiffAnalyticTiff < 0.08);
+      REQUIRE(avgDiffAnalyticFunc < 0.08);
       // TIFF and Func can differ beyond ULP issues, if for a pixel-corner
       // vertex they end up using different (equally valid) nearest pixels
-      REQUIRE(avgDiffTiffFunc < 0.07); // -> 0.007 with dune cast/clamp fixes
+      REQUIRE(avgDiffTiffFunc < 0.008);
     }
   }
 }

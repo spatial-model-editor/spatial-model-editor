@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 
-benchmarks = json.load(open("bench.txt"))["benchmarks"]
+benchmarks = json.load(open("bench_out.json"))["benchmarks"]
 
 classes = set()
 datasets = set()
@@ -21,7 +21,7 @@ for class_name in classes:
         # format function names
         repl = lambda m: m.group("one")
         s["name"] = s["name"].str.replace(
-            f"{class_name}_(?P<one>.*)<{dataset_name}.*", repl
+            f"{class_name}_(?P<one>.*)<{dataset_name}.*", repl, regex=True
         )
         s["name"] = s["name"].str.replace("_", "::")
         s = s.loc[s["name"].str.lower().sort_values(ascending=False).index]

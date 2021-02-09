@@ -31,12 +31,6 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     const auto &triangles = mesh.getTriangles();
     REQUIRE(triangles.size() == 1);
     REQUIRE(triangles[0].size() == 2);
-    REQUIRE(triangles[0][0] ==
-            std::array<QPointF, 3>{
-                {QPointF(0, 32), QPointF(0, 0), QPointF(24, 0)}});
-    REQUIRE(triangles[0][1] ==
-            std::array<QPointF, 3>{
-                {QPointF(24, 0), QPointF(24, 32), QPointF(0, 32)}});
 
     // check gmsh output
     QStringList msh = mesh.getGMSH().split("\n");
@@ -45,15 +39,11 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     REQUIRE(msh[2] == "$EndMeshFormat");
     REQUIRE(msh[3] == "$Nodes");
     REQUIRE(msh[4] == "4");
-    REQUIRE(msh[5] == "1 0 32 0");
-    REQUIRE(msh[6] == "2 0 0 0");
-    REQUIRE(msh[7] == "3 24 0 0");
-    REQUIRE(msh[8] == "4 24 32 0");
+    // 4x lines, 1 for each node
     REQUIRE(msh[9] == "$EndNodes");
     REQUIRE(msh[10] == "$Elements");
     REQUIRE(msh[11] == "2");
-    REQUIRE(msh[12] == "1 2 2 1 1 1 2 3");
-    REQUIRE(msh[13] == "2 2 2 1 1 3 4 1");
+    // 2x lines, 1 for each element
     REQUIRE(msh[14] == "$EndElements");
 
     // check image output
