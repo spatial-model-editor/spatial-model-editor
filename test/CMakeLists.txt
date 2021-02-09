@@ -15,8 +15,7 @@ set_property(TARGET tests PROPERTY CXX_STANDARD 17)
 add_library(testlib resources/test_resources.qrc)
 target_link_libraries(
   testlib
-  PUBLIC resources
-         Catch2::Catch2
+  PUBLIC Catch2::Catch2
          Qt5::Widgets
          Qt5::Gui
          Qt5::Core

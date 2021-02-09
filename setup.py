@@ -49,6 +49,7 @@ class CMakeBuild(build_ext):
             "CMAKE_PREFIX_PATH",
             "SME_EXTRA_CORE_DEFS",
             "SME_EXTRA_EXE_LIBS",
+            "SME_EXTERNAL_SMECORE",
             "PYTHON_LIBRARY",
             "CMAKE_CXX_COMPILER_LAUNCHER",
             "SME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM",

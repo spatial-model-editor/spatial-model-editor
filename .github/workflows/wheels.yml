@@ -6,6 +6,7 @@ env:
   CIBUILDWHEEL_VERSION: 1.9.0
   CIBW_TEST_COMMAND: 'python -m unittest discover -v -s {project}/sme/test'
   CIBW_BUILD_VERBOSITY: 3
+  SME_EXTERNAL_SMECORE: 'true'
 
 jobs:
   linux-wheel:
@@ -18,12 +19,13 @@ jobs:
       CIBW_MANYLINUX_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2021.02.08
       CIBW_MANYLINUX_PYPY_X86_64_IMAGE: spatialmodeleditor/manylinux2010-pypy_x86_64:2021.02.08
       CIBW_SKIP: '*-manylinux_i686 cp27-*'
+      CIBW_ENVIRONMENT: 'SME_EXTERNAL_SMECORE=on'
+      CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'
     steps:
     - uses: actions/checkout@v2
       with:
         submodules: 'true'
     - uses: actions/setup-python@v2
-      name: Install Python
       with:
         python-version: '3.8'
     - name: Install cibuildwheel
@@ -40,25 +42,17 @@ jobs:
     defaults:
       run:
         shell: bash
-    env:
-      CIBW_ENVIRONMENT: 'MACOSX_DEPLOYMENT_TARGET=10.14 CCACHE_BASEDIR=/private CMAKE_CXX_COMPILER_LAUNCHER="ccache" SME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM="on" CMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune"'
-      CIBW_SKIP: cp27-macosx_x86_64
     steps:
       - uses: actions/checkout@v2
         with:
           submodules: 'true'
-      - name: Install ccache
-        run: brew install ccache
       - uses: actions/setup-python@v2
-        name: Install Python
         with:
           python-version: '3.8'
       - name: Download static libraries
         run: sudo ./ci/getlibs.sh osx
-      - name: Install cibuildwheel
-        run: python -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
       - name: Build wheels
-        run: python -m cibuildwheel --output-dir wheelhouse
+        run: ./ci/macos-wheels.sh
       - uses: actions/upload-artifact@v2
         with:
           path: ./wheelhouse/*.whl
@@ -71,7 +65,7 @@ jobs:
         shell: msys2 {0}
     env:
       CIBW_BUILD: '*-win_amd64'
-      CIBW_ENVIRONMENT: 'SME_EXTRA_CORE_DEFS="_hypot=hypot;MS_WIN64"'
+      SME_EXTRA_CORE_DEFS: '_hypot=hypot;MS_WIN64'
     steps:
       - uses: actions/checkout@v2
         with:
@@ -97,7 +91,7 @@ jobs:
         shell: msys2 {0}
     env:
       CIBW_BUILD: '*-win32'
-      CIBW_ENVIRONMENT: 'SME_EXTRA_CORE_DEFS="_hypot=hypot"'
+      SME_EXTRA_CORE_DEFS: '_hypot=hypot'
     steps:
       - uses: actions/checkout@v2
         with:

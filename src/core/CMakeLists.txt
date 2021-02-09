@@ -1,4 +1,58 @@
 add_library(core STATIC)
+add_library(
+  sme::core
+  ALIAS
+  core)
+
+# Install-related code
+
+include(GNUInstallDirs)
+set(INSTALL_CONFIGDIR ${CMAKE_INSTALL_LIBDIR}/cmake/sme)
+
+install(
+  TARGETS core
+  EXPORT core-targets
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+
+install(DIRECTORY common/inc/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY mesh/inc/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY model/inc/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY simulate/inc/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+set_target_properties(core PROPERTIES EXPORT_NAME core)
+
+install(
+  EXPORT core-targets
+  FILE smeTargets.cmake
+  NAMESPACE sme::
+  DESTINATION ${INSTALL_CONFIGDIR})
+
+# Create a ConfigVersion.cmake file
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file(
+  ${CMAKE_CURRENT_BINARY_DIR}/smeConfigVersion.cmake
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY AnyNewerVersion)
+
+configure_package_config_file(
+  ${CMAKE_CURRENT_LIST_DIR}/cmake/smeConfig.cmake.in
+  ${CMAKE_CURRENT_BINARY_DIR}/smeConfig.cmake
+  INSTALL_DESTINATION ${INSTALL_CONFIGDIR})
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/smeConfig.cmake
+              ${CMAKE_CURRENT_BINARY_DIR}/smeConfigVersion.cmake
+        DESTINATION ${INSTALL_CONFIGDIR})
+
+export(
+  EXPORT core-targets
+  FILE ${CMAKE_CURRENT_BINARY_DIR}/smeTargets.cmake
+  NAMESPACE sme::)
+
+export(PACKAGE sme)
+
+# End of install-related code
+
 if(BUILD_TESTING)
   add_library(core_tests STATIC)
 endif()
@@ -101,8 +155,7 @@ target_link_libraries(
          opencv_imgproc
          spdlog::spdlog
          Qt5::Gui
-         Qt5::Core
-         resources)
+         Qt5::Core)
 
 target_compile_definitions(core PUBLIC ${SME_EXTRA_CORE_DEFS})
 
@@ -112,9 +165,6 @@ if(BUILD_TESTING)
     PUBLIC core
            testlib
            dunecopasi::dunecopasi)
-endif()
-if(BUILD_BENCHMARKS)
-  target_link_libraries(bench PUBLIC core)
 endif()
 
 add_subdirectory(resources)

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Windows GUI/CLI build script
+
 set -e -x
 
 PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.8.*)
