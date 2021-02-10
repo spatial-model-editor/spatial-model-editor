@@ -26,6 +26,7 @@ public:
   explicit Model(const std::string &filename);
   std::string getName() const;
   void setName(const std::string &name);
+  void importGeometryFromImage(const std::string& filename);
   void exportSbmlFile(const std::string &filename);
   std::vector<Compartment> compartments;
   std::vector<Membrane> membranes;

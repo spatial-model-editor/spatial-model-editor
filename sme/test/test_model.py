@@ -1,9 +1,14 @@
 import unittest
 import sme
+import os.path
+
+
+def _get_abs_path(filename):
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
 
 
 # root-mean-square of all elements
-def rms(a_ij):
+def _rms(a_ij):
     d = 0.0
     n = 0.0
     for a_i in a_ij:
@@ -14,7 +19,7 @@ def rms(a_ij):
 
 
 # a_ij <- (a_ij - b_ij) / dt
-def sub_div(a_ij, b_ij, dt=1.0):
+def _sub_div(a_ij, b_ij, dt=1.0):
     for i, (a_i, b_i) in enumerate(zip(a_ij, b_ij)):
         for j, (a, b) in enumerate(zip(a_i, b_i)):
             a_ij[i][j] = (a - b) / dt
@@ -78,11 +83,11 @@ class TestModel(unittest.TestCase):
 
         # approximate dcdt
         dcdt_approx = sim_results[1].species_concentration["A_cell"]
-        sub_div(dcdt_approx, sim_results[0].species_concentration["A_cell"], 0.001)
+        _sub_div(dcdt_approx, sim_results[0].species_concentration["A_cell"], 0.001)
         dcdt = sim_results[1].species_dcdt["A_cell"]
-        rms_norm = rms(dcdt)
-        sub_div(dcdt, dcdt_approx)
-        rms_diff = rms(dcdt)
+        rms_norm = _rms(dcdt)
+        _sub_div(dcdt, dcdt_approx)
+        rms_diff = _rms(dcdt)
         self.assertLess(rms_diff / rms_norm, 0.01)
 
         # set timeout to 1 second: by default simulation throws on timeout
@@ -97,3 +102,21 @@ class TestModel(unittest.TestCase):
         self.assertGreaterEqual(len(res1), 1)
         res2 = m.simulate(10000, 10000, 1, False)
         self.assertEqual(len(res2), 1)
+
+    def test_import_geometry_from_image(self):
+        imgfile_original = _get_abs_path("concave-cell-nucleus-100x100.png")
+        imgfile_modified = _get_abs_path("modified-concave-cell-nucleus-100x100.png")
+        m = sme.open_example_model()
+        comp_img_0 = m.compartment_image
+        nucl_mask_0 = m.compartments["Nucleus"].geometry_mask
+        m.import_geometry_from_image(imgfile_modified)
+        comp_img_1 = m.compartment_image
+        nucl_mask_1 = m.compartments["Nucleus"].geometry_mask
+        self.assertGreater(_rms(nucl_mask_0), _rms(nucl_mask_1))
+        self.assertNotEqual(comp_img_0, comp_img_1)
+        m.import_geometry_from_image(imgfile_original)
+        comp_img_2 = m.compartment_image
+        nucl_mask_2 = m.compartments["Nucleus"].geometry_mask
+        self.assertEqual(_rms(nucl_mask_0), _rms(nucl_mask_2))
+        self.assertEqual(comp_img_0, comp_img_2)
+        self.assertEqual(nucl_mask_0, nucl_mask_2)

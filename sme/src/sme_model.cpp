@@ -5,6 +5,7 @@
 #include "logger.hpp"
 #include "sme_common.hpp"
 #include "sme_model.hpp"
+#include "tiff.hpp"
 #include <QElapsedTimer>
 #include <QFile>
 #include <QImage>
@@ -121,6 +122,20 @@ void pybindModel(pybind11::module &m) {
                     R"(
                     list of list of list of int: an image of the compartments in this model
                     )")
+      .def("import_geometry_from_image", &sme::Model::importGeometryFromImage,
+           pybind11::arg("filename"),
+           R"(
+           sets the geometry of each compartment to the corresponding pixels in the supplied geometry image
+
+           Note:
+               Currently this function assumes that the compartments maintain the same colour
+               as they had with the previous geometry image. If the new image does not contain
+               pixels of each of these colours, the new model geometry will not be valid.
+               The size of a pixel (in physical units) is also unchanged by this function.
+
+           Args:
+               filename (str): the name of the geometry image to import
+           )")
       .def("simulate", &sme::Model::simulate, pybind11::arg("simulation_time"),
            pybind11::arg("image_interval"),
            pybind11::arg("timeout_seconds") = 86400,
@@ -191,6 +206,27 @@ Model::Model(const std::string &filename) {
 std::string Model::getName() const { return s->getName().toStdString(); }
 
 void Model::setName(const std::string &name) { s->setName(name.c_str()); }
+
+void Model::importGeometryFromImage(const std::string &filename) {
+  // store existing compartment colours
+  auto ids{s->getCompartments().getIds()};
+  auto colours{s->getCompartments().getColours()};
+  // import geometry image
+  QImage img;
+  sme::utils::TiffReader tiffReader(filename);
+  if (tiffReader.size() > 0) {
+    img = tiffReader.getImage();
+  } else {
+    img = QImage(filename.c_str());
+  }
+  // this resets all compartment colours
+  s->getGeometry().importGeometryFromImage(img);
+  compartmentImage = toPyImageRgb(s->getGeometry().getImage());
+  // try to re-assign previous colour to each compartment
+  for(int i=0; i<ids.size(); ++i){
+    s->getCompartments().setColour(ids[i], colours[i]);
+  }
+}
 
 void Model::exportSbmlFile(const std::string &filename) {
   s->exportSBMLFile(filename);
