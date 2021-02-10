@@ -27,7 +27,7 @@ public:
   void setName(const std::string &name);
   std::vector<Species> species;
   std::vector<Reaction> reactions;
-  PyImageMask geometryMask;
+  PyImageMask getGeometryMask() const;
   std::string getStr() const;
 };
 
