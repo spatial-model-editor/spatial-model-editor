@@ -7,6 +7,14 @@
 
 ### Removed
 
+## [1.0.8] - 2021-02-10
+### Added
+- python library can now import a new geometry image using `sme.Model.import_geometry_from_image()`
+### Changed
+- mesh generation is now done using the CGAL library
+### Removed
+- dependence on Triangle mesh library removed due to its non-free license
+
 ## [1.0.7] - 2021-02-07
 ### Fixed
 - illegal instruction crash on old CPUs [#422](https://github.com/spatial-model-editor/spatial-model-editor/issues/422)
