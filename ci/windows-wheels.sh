@@ -9,7 +9,7 @@ export PATH="$PYDIR/x64:$PYDIR/x64/Scripts:$PATH"
 echo "PATH=$PATH"
 
 export CMAKE_GENERATOR="Unix Makefiles"
-export CMAKE_PREFIX_PATH="C:/smelibs;C:/smelibs/CMake;C:/smelibs/lib/cmake;C:/smelibs/dune"
+export CMAKE_PREFIX_PATH="C:/smelibs;C:/smelibs/CMake;C:/smelibs/lib/cmake"
 export SME_EXTRA_EXE_LIBS="-static;-static-libgcc;-static-libstdc++"
 export CMAKE_CXX_COMPILER_LAUNCHER=ccache
 export CCACHE_NOHASHDIR="true"

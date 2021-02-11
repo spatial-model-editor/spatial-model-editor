@@ -8,7 +8,7 @@ PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.8.*)
 export PATH="$PYDIR/x64:$PYDIR/x64/Scripts:$PATH"
 echo "PATH=$PATH"
 
-export CMAKE_PREFIX_PATH="C:/smelibs;C:/smelibs/CMake;C:/smelibs/lib/cmake;C:/smelibs/dune"
+export CMAKE_PREFIX_PATH="C:/smelibs;C:/smelibs/CMake;C:/smelibs/lib/cmake"
 export SME_EXTRA_EXE_LIBS="-static;-static-libgcc;-static-libstdc++"
 export CMAKE_GENERATOR="Unix Makefiles"
 export SME_EXTRA_CORE_DEFS="_hypot=hypot"
@@ -25,7 +25,7 @@ ccache -s
 
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS -DSME_WITH_TBB=ON -DBoost_NO_BOOST_CMAKE=on
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS -DSME_WITH_TBB=ON
 make -j2 VERBOSE=1
 
 ccache -s

@@ -47,7 +47,7 @@ jwm &
 # do build
 mkdir build
 cd build
-CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DSME_WITH_TBB=ON -DBoost_NO_BOOST_CMAKE=on
+CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DSME_WITH_TBB=ON  -DBoost_NO_BOOST_CMAKE=on
 build-wrapper-linux-x86-64 --out-dir bw-output make -j2
 ccache --show-stats
 

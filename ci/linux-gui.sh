@@ -35,7 +35,7 @@ jwm &
 # do build
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake;/opt/smelibs/dune" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_WITH_TBB=ON -DBoost_NO_BOOST_CMAKE=on
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_WITH_TBB=ON
 make -j2 VERBOSE=1
 ccache --show-stats
 

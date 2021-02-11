@@ -27,7 +27,7 @@
 #endif
 #endif
 
-#include <dune_config.h>
+#include <dune/copasi/config.h>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/parallel/mpihelper.hh>

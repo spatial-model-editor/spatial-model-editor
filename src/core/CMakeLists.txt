@@ -106,23 +106,7 @@ find_package(spdlog REQUIRED)
 find_package(TIFF REQUIRED)
 find_package(fmt REQUIRED)
 find_package(CGAL REQUIRED)
-find_package(dunecopasi REQUIRED)
-# dune-logging depends on fmt: temporary hack
-target_link_libraries(dunecopasi::dunecopasi INTERFACE fmt::fmt
-                                                       "${SME_EXTRA_EXE_LIBS}")
-# dune-copasi may use fallback filesystem implementation
-set(SME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM
-    no
-    CACHE
-      BOOL
-      "enable if dune-copasi is built using fallback filesystem implementation")
-if(SME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM)
-  message(STATUS "using DUNE_COPASI_USE_FALLBACK_FILESYSTEM")
-  target_compile_definitions(dunecopasi::dunecopasi
-                             INTERFACE DUNE_COPASI_USE_FALLBACK_FILESYSTEM)
-endif()
-
-find_package(muparser REQUIRED)
+find_package(dune-copasi REQUIRED)
 if(SME_WITH_TBB)
   find_package(tbb REQUIRED)
   target_compile_definitions(core PUBLIC SPATIAL_MODEL_EDITOR_WITH_TBB)
@@ -146,8 +130,7 @@ target_link_libraries(
   PRIVATE TIFF::TIFF
           ${SYMENGINE_LIBRARIES}
           sbml-static
-          dunecopasi::dunecopasi
-          muparser::muparser
+          dune-copasi::dune-copasi
           CGAL::CGAL)
 target_link_libraries(
   core
@@ -162,9 +145,9 @@ target_compile_definitions(core PUBLIC ${SME_EXTRA_CORE_DEFS})
 if(BUILD_TESTING)
   target_link_libraries(
     core_tests
-    PUBLIC core
-           testlib
-           dunecopasi::dunecopasi)
+    PUBLIC dune-copasi::dune-copasi
+           core
+           testlib)
 endif()
 
 add_subdirectory(resources)
