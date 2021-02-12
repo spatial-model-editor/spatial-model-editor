@@ -8,7 +8,7 @@ set -e -x
 OS=$1
 echo "Downloading static libs for OS: $OS"
 # download static libs
-for LIB in qt5 common dune
+for LIB in qt5 dune
 do
     wget "https://github.com/spatial-model-editor/sme_deps_${LIB}/releases/latest/download/sme_deps_${LIB}_${OS}.tgz"
     tar xvf sme_deps_${LIB}_${OS}.tgz
