@@ -7,6 +7,9 @@ set -e -x
 # static link stdc++ for portable binary
 export SME_EXTRA_EXE_LIBS="-static-libgcc;-static-libstdc++"
 
+export PKG_CONFIG_PATH="/opt/smelibs/lib/pkgconfig"
+pkg-config --debug muparser
+
 sudo apt-get update -yy
 
 # build dependencies

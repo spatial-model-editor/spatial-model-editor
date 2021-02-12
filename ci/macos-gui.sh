@@ -6,6 +6,9 @@ set -e -x
 
 brew install ccache
 
+export PKG_CONFIG_PATH="/opt/smelibs/lib/pkgconfig"
+pkg-config --debug muparser
+
 # check versions
 cmake --version
 g++ --version
