@@ -60,6 +60,7 @@ private:
   void updatePixels();
   void updateSpeciesConcentrations();
   std::string currentErrorMessage;
+  QImage currentErrorImage;
   DuneOptions options;
   double volOverL3;
 
@@ -75,6 +76,7 @@ public:
   getConcentrations(std::size_t compartmentIndex) const override;
   std::size_t getConcentrationPadding() const override;
   const std::string &errorMessage() const override;
+  const QImage& errorImage() const override;
   void requestStop() override;
 };
 

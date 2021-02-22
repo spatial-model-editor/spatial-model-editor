@@ -84,6 +84,7 @@ SimCompartment::SimCompartment(const model::Model &doc,
     : comp{compartment}, nPixels{compartment->nPixels()}, nSpecies{sIds.size()},
       compartmentId{compartment->getId()}, speciesIds{std::move(sIds)} {
   // get species in compartment
+  speciesNames.reserve(nSpecies);
   SPDLOG_DEBUG("compartment: {}", compartmentId);
   std::vector<const geometry::Field *> fields;
   for (const auto &s : speciesIds) {
@@ -95,6 +96,7 @@ SimCompartment::SimCompartment(const model::Model &doc,
     maxStableTimestep =
         std::min(maxStableTimestep, 1.0 / (4.0 * diffConstants.back()));
     fields.push_back(field);
+    speciesNames.push_back(doc.getSpecies().getName(s.c_str()).toStdString());
     if (!field->getIsSpatial()) {
       nonSpatialSpeciesIndices.push_back(fields.size() - 1);
     }
@@ -373,6 +375,34 @@ PixelIntegratorError SimCompartment::calculateRKError(double epsilon) const {
   }
   return err;
 }
+
+std::string SimCompartment::plotRKError(QImage& image, double epsilon, double max) const{
+  if(image.isNull()){
+    image = QImage(comp->getCompartmentImage().size(), QImage::Format_RGB32);
+    image.fill(qRgb(0,0,0));
+  }
+  std::size_t iSpecies{nSpecies+1};
+  for (std::size_t i = 0; i < conc.size(); ++i) {
+    double localErr = std::abs(conc[i] - s2[i]);
+    double localNorm = 0.5 * (conc[i] + s3[i] + epsilon);
+    double pixelIntensity{localErr/localNorm/max};
+    auto red{static_cast<int>(255.0*pixelIntensity)};
+    auto point{comp->getPixel(i/nSpecies)};
+    auto oldRed{qRed(image.pixel(point))};
+    if(red > oldRed){
+      image.setPixel(point, qRgb(red, 0, 0));
+      if(red > 254){
+        // update index of species with largest error
+        iSpecies = i % nSpecies;
+      }
+    }
+  }
+  if(iSpecies < nSpecies){
+    return speciesNames[iSpecies];
+  }
+  return {};
+}
+
 
 const std::string &SimCompartment::getCompartmentId() const {
   return compartmentId;

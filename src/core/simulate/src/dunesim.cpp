@@ -270,6 +270,8 @@ std::size_t DuneSim::getConcentrationPadding() const { return 0; }
 
 const std::string &DuneSim::errorMessage() const { return currentErrorMessage; }
 
+const QImage &DuneSim::errorImage() const { return currentErrorImage; }
+
 void DuneSim::requestStop() {
   SPDLOG_DEBUG("Not implemented - ignoring request");
 }

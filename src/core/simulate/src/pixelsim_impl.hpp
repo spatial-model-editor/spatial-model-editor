@@ -12,8 +12,8 @@
 #include <limits>
 #include <string>
 #include <vector>
-
-class QPoint;
+#include <QImage>
+#include <QPoint>
 
 namespace sme {
 
@@ -64,6 +64,7 @@ private:
   std::size_t nSpecies;
   std::string compartmentId;
   std::vector<std::string> speciesIds;
+  std::vector<std::string> speciesNames;
   std::vector<std::size_t> nonSpatialSpeciesIndices;
   double maxStableTimestep = std::numeric_limits<double>::max();
 
@@ -128,6 +129,7 @@ public:
   void undoRKStep_tbb();
 #endif
   PixelIntegratorError calculateRKError(double epsilon) const;
+  std::string plotRKError(QImage& image, double epsilon, double max) const;
   const std::string &getCompartmentId() const;
   const std::vector<std::string> &getSpeciesIds() const;
   const std::vector<double> &getConcentrations() const;

@@ -1,5 +1,6 @@
 #include "tabsimulate.hpp"
 #include "dialogexport.hpp"
+#include "dialogimage.hpp"
 #include "dialogimageslice.hpp"
 #include "guiutils.hpp"
 #include "logger.hpp"
@@ -267,7 +268,6 @@ void TabSimulate::updatePlotAndImages() {
 
   if (!sim->getIsRunning()) {
     SPDLOG_DEBUG("simulation finished");
-
     // simulation finished..
     progressDialog->reset();
     plotRefreshTimer.stop();
@@ -277,11 +277,13 @@ void TabSimulate::updatePlotAndImages() {
     // ..but failed
     if (const auto &err{sim->errorMessage()};
         !err.empty() && err != "Simulation stopped early") {
-      QMessageBox::warning(
+      DialogImage(
           this, "Simulation Failed",
           QString("Simulation failed - changing the Simulation options in the "
                   "\"Advanced\" menu might help.\n\nError message: %1")
-              .arg(sim->errorMessage().c_str()));
+              .arg(err.c_str()),
+          sim->errorImage())
+          .exec();
       return;
     }
     // .. and succeeded
