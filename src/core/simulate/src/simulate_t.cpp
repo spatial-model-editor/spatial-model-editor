@@ -303,6 +303,23 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
   }
 }
 
+SCENARIO("Simulate: very_simple_model, failing Pixel sim",
+         "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
+  model::Model s;
+  QFile f(":/models/very-simple-model.xml");
+  f.open(QIODevice::ReadOnly);
+  s.importSBMLString(f.readAll().toStdString());
+  // set A uptake rate very high
+  s.getReactions().setParameterValue("A_uptake", "k1", 1e40);
+  // Pixel sim stops simulation as timestep required becomes too small
+  simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
+  REQUIRE(sim.errorMessage().empty());
+  REQUIRE(sim.errorImage().isNull());
+  sim.doTimesteps(1.0);
+  REQUIRE(!sim.errorMessage().empty());
+  REQUIRE(sim.errorImage().size() == QSize(100,100));
+}
+
 static void rescaleMembraneReacRates(model::Model &s, double factor) {
   for (const auto &memId : s.getMembranes().getIds()) {
     for (const auto &reacId : s.getReactions().getIds(memId)) {

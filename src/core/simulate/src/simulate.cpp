@@ -148,6 +148,10 @@ const std::string &Simulation::errorMessage() const {
   return simulator->errorMessage();
 }
 
+const QImage& Simulation::errorImage() const{
+  return simulator->errorImage();
+}
+
 const std::vector<std::string> &Simulation::getCompartmentIds() const {
   return compartmentIds;
 }

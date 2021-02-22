@@ -66,6 +66,7 @@ public:
   std::size_t doTimesteps(double time, std::size_t nSteps = 1,
                           double timeout_ms = -1.0);
   const std::string &errorMessage() const;
+  const QImage& errorImage() const;
   const std::vector<std::string> &getCompartmentIds() const;
   const std::vector<std::string> &
   getSpeciesIds(std::size_t compartmentIndex) const;

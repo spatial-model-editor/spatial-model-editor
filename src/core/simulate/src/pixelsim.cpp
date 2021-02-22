@@ -195,7 +195,20 @@ double PixelSim::doRKAdaptive(double dtMax) {
     SPDLOG_TRACE("dt = {} gave rel err = {}, abs err = {} -> new dt = {}", dt,
                  err.rel, err.abs, nextTimestep);
     if (nextTimestep / dtMax < 1e-20) {
-      currentErrorMessage = "Failed to solve model to required accuracy.";
+      currentErrorImage = {};
+      std::string problemSpecies{"unknown"};
+      for (const auto &sim : simCompartments) {
+        auto speciesName{sim->plotRKError(currentErrorImage, epsilon, err.rel)};
+        if (!speciesName.empty()) {
+          problemSpecies = speciesName;
+        }
+      }
+      currentErrorMessage = fmt::format(
+          "Failed to solve model to required accuracy. The largest "
+          "relative integration error comes from species '{}'. The location "
+          "of the pixels with the largest relative integration error are shown "
+          "below in red:",
+          problemSpecies);
       return nextTimestep;
     }
     if (err.abs > errMax.abs || err.rel > errMax.rel) {
@@ -373,6 +386,8 @@ double PixelSim::getLowerOrderConcentration(std::size_t compartmentIndex,
 const std::string &PixelSim::errorMessage() const {
   return currentErrorMessage;
 }
+
+const QImage &PixelSim::errorImage() const { return currentErrorImage; }
 
 void PixelSim::requestStop() { stopRequested.store(true); }
 

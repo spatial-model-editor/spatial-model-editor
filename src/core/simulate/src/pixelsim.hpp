@@ -10,6 +10,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <QImage>
 
 namespace sme {
 
@@ -46,6 +47,7 @@ private:
   bool useTBB{false};
   std::size_t numMaxThreads{1};
   std::string currentErrorMessage;
+  QImage currentErrorImage;
   std::atomic<bool> stopRequested{false};
   std::size_t nExtraVars{0};
 
@@ -64,8 +66,9 @@ public:
   double getLowerOrderConcentration(std::size_t compartmentIndex,
                                     std::size_t speciesIndex,
                                     std::size_t pixelIndex) const;
-  virtual const std::string &errorMessage() const override;
-  virtual void requestStop() override;
+  const std::string &errorMessage() const override;
+  const QImage& errorImage() const override;
+  void requestStop() override;
 };
 
 } // namespace simulate
