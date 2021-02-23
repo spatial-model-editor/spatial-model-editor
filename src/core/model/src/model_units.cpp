@@ -145,6 +145,7 @@ void ModelUnits::updateReactions() {
 }
 
 ModelUnits::ModelUnits(libsbml::Model *model) : sbmlModel{model} {
+  hasUnsavedChanges = true;
   if (model != nullptr) {
     setTimeIndex(getOrAddUnitIndex(model, model->getTimeUnits(),
                                    time.getUnits(), time.getIndex()));
@@ -171,6 +172,7 @@ const QVector<Unit> &ModelUnits::getTimeUnits() const {
 QVector<Unit> &ModelUnits::getTimeUnits() { return time.getUnits(); }
 
 void ModelUnits::setTimeIndex(int index) {
+  hasUnsavedChanges = true;
   time.setIndex(index);
   if (sbmlModel != nullptr) {
     auto *timeUnitDef = getOrCreateUnitDef(sbmlModel, sbmlModel->getTimeUnits(),
@@ -193,6 +195,7 @@ const QVector<Unit> &ModelUnits::getLengthUnits() const {
 QVector<Unit> &ModelUnits::getLengthUnits() { return length.getUnits(); }
 
 void ModelUnits::setLengthIndex(int index) {
+  hasUnsavedChanges = true;
   length.setIndex(index);
   if (sbmlModel != nullptr) {
     auto *lengthUnitDef = getOrCreateUnitDef(
@@ -224,6 +227,7 @@ const QVector<Unit> &ModelUnits::getVolumeUnits() const {
 QVector<Unit> &ModelUnits::getVolumeUnits() { return volume.getUnits(); }
 
 void ModelUnits::setVolumeIndex(int index) {
+  hasUnsavedChanges = true;
   volume.setIndex(index);
   if (sbmlModel != nullptr) {
     auto *volumeUnitDef = getOrCreateUnitDef(
@@ -246,6 +250,7 @@ const QVector<Unit> &ModelUnits::getAmountUnits() const {
 QVector<Unit> &ModelUnits::getAmountUnits() { return amount.getUnits(); }
 
 void ModelUnits::setAmountIndex(int index) {
+  hasUnsavedChanges = true;
   amount.setIndex(index);
   if (sbmlModel != nullptr) {
     auto *substanceUnitDef = getOrCreateUnitDef(
@@ -268,6 +273,12 @@ const QString &ModelUnits::getCompartmentReaction() const {
 
 const QString &ModelUnits::getMembraneReaction() const {
   return membraneReaction;
+}
+
+bool ModelUnits::getHasUnsavedChanges() const { return hasUnsavedChanges; }
+
+void ModelUnits::setHasUnsavedChanges(bool unsavedChanges) {
+  hasUnsavedChanges = unsavedChanges;
 }
 
 double rescale(double val, const Unit &oldUnit, const Unit &newUnit) {

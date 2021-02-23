@@ -34,6 +34,7 @@ private:
   ModelMembranes *modelMembranes = nullptr;
   ModelSpecies *modelSpecies = nullptr;
   ModelReactions *modelReactions = nullptr;
+  bool hasUnsavedChanges{false};
 
 public:
   ModelCompartments();
@@ -58,6 +59,9 @@ public:
   geometry::Compartment *getCompartment(const QString &id);
   const geometry::Compartment *getCompartment(const QString &id) const;
   void clear();
+  bool getHasUnsavedChanges() const;
+  void setHasUnsavedChanges(bool unsavedChanges);
+
 };
 
 } // namespace model

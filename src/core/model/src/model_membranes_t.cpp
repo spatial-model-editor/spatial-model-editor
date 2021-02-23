@@ -32,11 +32,15 @@ SCENARIO("SBML membranes",
       REQUIRE(ms.getIds().isEmpty());
       REQUIRE(ms.getMembranes().empty());
       REQUIRE(ms.getNames().isEmpty());
+      ms.setHasUnsavedChanges(false);
       ms.updateCompartments(compartments);
+      ms.setHasUnsavedChanges(true);
       REQUIRE(ms.getIds().size() == 1);
       REQUIRE(ms.getMembranes().size() == 1);
       REQUIRE(ms.getNames().isEmpty());
+      ms.setHasUnsavedChanges(false);
       ms.updateCompartmentNames(names, nullptr);
+      ms.setHasUnsavedChanges(true);
       REQUIRE(ms.getIds().size() == 1);
       REQUIRE(ms.getIds()[0] == "c1_c0_membrane");
       REQUIRE(ms.getNames().size() == 1);

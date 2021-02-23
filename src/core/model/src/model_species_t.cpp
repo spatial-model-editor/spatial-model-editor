@@ -20,6 +20,11 @@ SCENARIO("SBML species",
     model.importSBMLString(f.readAll().toStdString());
     auto &s = model.getSpecies();
     auto &r = model.getReactions();
+    r.setHasUnsavedChanges(false);
+    s.setHasUnsavedChanges(false);
+    REQUIRE(r.getHasUnsavedChanges() == false);
+    REQUIRE(s.getHasUnsavedChanges() == false);
+
     // initial species
     REQUIRE(s.getIds("c1").size() == 2);
     REQUIRE(s.getIds("c1")[0] == "A_c1");
@@ -68,7 +73,11 @@ SCENARIO("SBML species",
     REQUIRE(r.getParameterValue("B_transport", "k1") == dbl_approx(0.1));
 
     // remove species B_c3
+    REQUIRE(r.getHasUnsavedChanges() == false);
+    REQUIRE(s.getHasUnsavedChanges() == false);
     s.remove("B_c3");
+    REQUIRE(r.getHasUnsavedChanges() == true);
+    REQUIRE(s.getHasUnsavedChanges() == true);
     REQUIRE(s.getIds("c1").size() == 2);
     REQUIRE(s.getIds("c1")[0] == "A_c1");
     REQUIRE(s.getField("A_c1")->getId() == "A_c1");
@@ -245,8 +254,30 @@ SCENARIO("SBML species",
     REQUIRE(r.getParameterName("B_transport", "k1") == "");
     REQUIRE(r.getParameterValue("B_transport", "k1") == dbl_approx(0.0));
 
+    // remove non-existent species: no-op
+    r.setHasUnsavedChanges(false);
+    s.setHasUnsavedChanges(false);
+    REQUIRE(r.getHasUnsavedChanges() == false);
+    REQUIRE(s.getHasUnsavedChanges() == false);
+    s.remove("not_a_species");
+    REQUIRE(s.getIds("c1").size() == 1);
+    REQUIRE(s.getField("A_c1") == nullptr);
+    REQUIRE(s.getIds("c1")[0] == "B_c1");
+    REQUIRE(s.getField("B_c1")->getId() == "B_c1");
+    REQUIRE(s.getIds("c2").size() == 1);
+    REQUIRE(s.getField("A_c2") == nullptr);
+    REQUIRE(s.getIds("c2")[0] == "B_c2");
+    REQUIRE(s.getField("B_c2")->getId() == "B_c2");
+    REQUIRE(s.getIds("c3").empty());
+    REQUIRE(s.getField("A_c3") == nullptr);
+    REQUIRE(s.getField("B_c3") == nullptr);
+    REQUIRE(r.getHasUnsavedChanges() == false);
+    REQUIRE(s.getHasUnsavedChanges() == false);
+
     // remove species B_c1
     s.remove("B_c1");
+    REQUIRE(r.getHasUnsavedChanges() == true);
+    REQUIRE(s.getHasUnsavedChanges() == true);
     REQUIRE(s.getIds("c1").empty());
     REQUIRE(s.getField("A_c1") == nullptr);
     REQUIRE(s.getField("B_c1") == nullptr);

@@ -141,6 +141,7 @@ QString ModelParameters::setName(const QString &id, const QString &name) {
     // no-op: setting name to the same value as it already had
     return name;
   }
+  hasUnsavedChanges = true;
   auto uniqueName = makeUnique(name, names);
   names[i] = uniqueName;
   std::string sId{id.toStdString()};
@@ -170,6 +171,7 @@ void ModelParameters::setExpression(const QString &id, const QString &expr) {
     SPDLOG_ERROR("Parameter '{}' not found", sId);
     return;
   }
+  hasUnsavedChanges = true;
   bool validDouble{false};
   double value = expr.toDouble(&validDouble);
   if (validDouble) {
@@ -227,6 +229,7 @@ QString ModelParameters::getExpression(const QString &id) const {
 }
 
 QString ModelParameters::add(const QString &name) {
+  hasUnsavedChanges = true;
   auto paramId = nameToUniqueSId(name, sbmlModel).toStdString();
   QString uniqueName = name;
   while (names.contains(uniqueName)) {
@@ -247,6 +250,7 @@ QString ModelParameters::add(const QString &name) {
 }
 
 void ModelParameters::remove(const QString &id) {
+  hasUnsavedChanges = true;
   std::string sId{id.toStdString()};
   SPDLOG_INFO("Removing parameter {}", sId);
   if (auto *asgn = sbmlModel->getAssignmentRuleByVariable(sId);
@@ -270,6 +274,7 @@ const SpatialCoordinates &ModelParameters::getSpatialCoordinates() const {
 }
 
 void ModelParameters::setSpatialCoordinates(SpatialCoordinates coords) {
+  hasUnsavedChanges = true;
   spatialCoordinates = std::move(coords);
   auto *x = sbmlModel->getParameter(spatialCoordinates.x.id);
   if (x == nullptr) {
@@ -376,6 +381,12 @@ std::vector<IdNameExpr> ModelParameters::getNonConstantParameters() const {
     }
   }
   return rules;
+}
+
+bool ModelParameters::getHasUnsavedChanges() const { return hasUnsavedChanges; }
+
+void ModelParameters::setHasUnsavedChanges(bool unsavedChanges) {
+  hasUnsavedChanges = unsavedChanges;
 }
 
 } // namespace model

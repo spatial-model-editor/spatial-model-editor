@@ -48,8 +48,13 @@ SCENARIO("Model geometry",
     REQUIRE(m.getMesh() == nullptr);
     REQUIRE(m.getHasImage() == false);
     REQUIRE(m.getImage().isNull());
+    m.setHasUnsavedChanges(false);
+    REQUIRE(m.getHasUnsavedChanges() == false);
+    REQUIRE(mGeometry.getHasUnsavedChanges() == false);
     WHEN("import sampled field") {
       mGeometry.importSampledFieldGeometry(doc->getModel());
+      REQUIRE(m.getHasUnsavedChanges() == true);
+      REQUIRE(mGeometry.getHasUnsavedChanges() == true);
       model::ModelParameters mParameters(doc->getModel());
       mSpecies = model::ModelSpecies(doc->getModel(), &mCompartments,
                                      &mGeometry, &mParameters, &mReactions);
@@ -71,7 +76,11 @@ SCENARIO("Model geometry",
       REQUIRE(qAlpha(outerCol) == 255);
       QRgb innerCol = img.pixel(176, 188); // opaque
       REQUIRE(qAlpha(innerCol) == 255);
+      REQUIRE(m.getHasUnsavedChanges() == false);
+      REQUIRE(mGeometry.getHasUnsavedChanges() == false);
       mGeometry.importGeometryFromImage(img);
+      REQUIRE(m.getHasUnsavedChanges() == true);
+      REQUIRE(mGeometry.getHasUnsavedChanges() == true);
       REQUIRE(m.getIsValid() == false);
       REQUIRE(m.getMesh() == nullptr);
       REQUIRE(m.getHasImage() == true);

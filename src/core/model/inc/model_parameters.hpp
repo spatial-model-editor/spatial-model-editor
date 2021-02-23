@@ -46,6 +46,7 @@ private:
   QStringList names;
   SpatialCoordinates spatialCoordinates;
   libsbml::Model *sbmlModel = nullptr;
+  bool hasUnsavedChanges{false};
 
 public:
   ModelParameters();
@@ -63,6 +64,8 @@ public:
   std::vector<IdName> getSymbols() const;
   std::vector<IdValue> getGlobalConstants() const;
   std::vector<IdNameExpr> getNonConstantParameters() const;
+  bool getHasUnsavedChanges() const;
+  void setHasUnsavedChanges(bool unsavedChanges);
 };
 
 } // namespace model

@@ -31,6 +31,7 @@ private:
   std::vector<geometry::Membrane> membranes;
   std::unique_ptr<ImageMembranePixels> membranePixels;
   std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>> idColourPairs;
+  bool hasUnsavedChanges{false};
 
 public:
   const QStringList &getIds() const;
@@ -54,6 +55,8 @@ public:
   ModelMembranes &operator=(const ModelMembranes &) = delete;
   ModelMembranes(const ModelMembranes &) = delete;
   ~ModelMembranes();
+  bool getHasUnsavedChanges() const;
+  void setHasUnsavedChanges(bool unsavedChanges);
 };
 
 } // namespace model

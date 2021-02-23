@@ -1,12 +1,4 @@
 #include "mainwindow.hpp"
-#include <QDesktopServices>
-#include <QErrorMessage>
-#include <QFileDialog>
-#include <QInputDialog>
-#include <QMessageBox>
-#include <QMimeData>
-#include <QShortcut>
-#include <QWhatsThis>
 #include "dialogabout.hpp"
 #include "dialogcoordinates.hpp"
 #include "dialogimagesize.hpp"
@@ -26,6 +18,14 @@
 #include "ui_mainwindow.h"
 #include "utils.hpp"
 #include "version.hpp"
+#include <QDesktopServices>
+#include <QErrorMessage>
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QMimeData>
+#include <QShortcut>
+#include <QWhatsThis>
 
 MainWindow::MainWindow(const QString &filename, QWidget *parent)
     : QMainWindow(parent), ui{std::make_unique<Ui::MainWindow>()} {
@@ -89,7 +89,7 @@ void MainWindow::setupConnections() {
           &MainWindow::actionExport_Dune_ini_file_triggered);
 
   connect(ui->actionE_xit, &QAction::triggered, this,
-          []() { QApplication::quit(); });
+          &QApplication::closeAllWindows);
 
   connect(ui->actionGeometry_from_model, &QAction::triggered, this,
           &MainWindow::actionGeometry_from_model_triggered);
@@ -183,9 +183,10 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
   if (!sbmlDoc.getIsValid()) {
     sbmlDoc.createSBMLFile("untitled-model");
     if (!filename.isEmpty() && filename.left(5) != ("-psn_")) {
-      // MacOS sometimes passes a command line parameter of the form `-psn_0_204850`
-      // to the executable when launched as a GUI app, so in this case we don't
-      // warn the user that we can't open this non-existent file
+      // MacOS sometimes passes a command line parameter of the form
+      // `-psn_0_204850` to the executable when launched as a GUI app, so in
+      // this case we don't warn the user that we can't open this non-existent
+      // file
       QMessageBox::warning(this, "Failed to load file",
                            "Failed to load file " + filename);
     }
@@ -270,7 +271,7 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
     iniFilename.append(".ini");
   }
   sme::simulate::DuneConverter dc(sbmlDoc, true, tabSimulate->getOptions().dune,
-                             iniFilename);
+                                  iniFilename);
 }
 
 void MainWindow::actionGeometry_from_model_triggered() {
@@ -393,6 +394,23 @@ void MainWindow::dropEvent(QDropEvent *event) {
     return;
   }
   openSBMLFile(mimeData->urls().front().toLocalFile());
+}
+
+void MainWindow::closeEvent(QCloseEvent *event) {
+  if (!sbmlDoc.getHasUnsavedChanges()) {
+    event->accept();
+    return;
+  }
+  auto res = QMessageBox::question(
+      this, "Unsaved changes",
+      "Model has unsaved changes. Do you want to save them before exiting?",
+      QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes);
+  if (res == QMessageBox::Yes) {
+    event->ignore();
+    action_Save_SBML_file_triggered();
+  } else {
+    event->accept();
+  }
 }
 
 bool MainWindow::isValidModel() {

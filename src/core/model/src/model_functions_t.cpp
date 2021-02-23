@@ -21,6 +21,7 @@ SCENARIO("SBML functions",
 
     model::Model s;
     s.importSBMLFile("tmp.xml");
+    REQUIRE(s.getHasUnsavedChanges() == false);
     REQUIRE(s.getCompartments().getIds().size() == 1);
     REQUIRE(s.getCompartments().getIds()[0] == "compartment");
     REQUIRE(s.getSpecies().getIds("compartment").size() == 25);
@@ -54,7 +55,11 @@ SCENARIO("SBML functions",
       REQUIRE(funcs.getArguments("PDC_kinetics")[1] == "Vmax");
       REQUIRE(funcs.getArguments("PDC_kinetics")[2] == "Kpyr");
       REQUIRE(funcs.getArguments("PDC_kinetics")[3] == "nH");
+      REQUIRE(s.getHasUnsavedChanges() == false);
+      REQUIRE(funcs.getHasUnsavedChanges() == false);
       auto arg = funcs.addArgument("PDC_kinetics", "x");
+      REQUIRE(s.getHasUnsavedChanges() == true);
+      REQUIRE(funcs.getHasUnsavedChanges() == true);
       REQUIRE(arg == "x");
       funcs.setName("PDC_kinetics", "newName!");
       funcs.setExpression("PDC_kinetics", "(V*(x/k)^n/(1+(a/k)^n))");
@@ -74,7 +79,11 @@ SCENARIO("SBML functions",
       REQUIRE(funcs.getIds().size() == 16);
     }
     WHEN("add function") {
+      REQUIRE(s.getHasUnsavedChanges() == false);
+      REQUIRE(funcs.getHasUnsavedChanges() == false);
       funcs.add("func N~!me");
+      REQUIRE(s.getHasUnsavedChanges() == true);
+      REQUIRE(funcs.getHasUnsavedChanges() == true);
       REQUIRE(funcs.getName("func_Nme") == "func N~!me");
       REQUIRE(funcs.getArguments("func_Nme").isEmpty());
       REQUIRE(funcs.getExpression("func_Nme") == "0");

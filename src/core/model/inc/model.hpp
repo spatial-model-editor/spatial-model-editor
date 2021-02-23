@@ -69,9 +69,11 @@ private:
   ModelMath modelMath;
 
   void initModelData();
+  void setHasUnsavedChanges(bool unsavedChanges);
 
 public:
   bool getIsValid() const;
+  bool getHasUnsavedChanges() const;
   const QString &getCurrentFilename() const;
 
   void setName(const QString &name);

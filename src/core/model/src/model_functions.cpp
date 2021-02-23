@@ -67,6 +67,7 @@ QString ModelFunctions::setName(const QString &id, const QString &name) {
     // no-op: setting name to the same value as it already had
     return name;
   }
+  hasUnsavedChanges = true;
   auto uniqueName = makeUnique(name, names);
   names[i] = uniqueName;
   std::string sId{id.toStdString()};
@@ -106,6 +107,7 @@ void ModelFunctions::setExpression(const QString &id,
     SPDLOG_ERROR("  - AST node is not well formed");
     return;
   }
+  hasUnsavedChanges = true;
   func->setMath(lambdaAST.get());
 }
 
@@ -156,6 +158,7 @@ makeValidArgumentName(const std::string &name,
 QString ModelFunctions::addArgument(const QString &functionId,
                                     const QString &argumentId) {
   auto *func = sbmlModel->getFunctionDefinition(functionId.toStdString());
+  hasUnsavedChanges = true;
   std::string argId{makeValidArgumentName(argumentId.toStdString(), func)};
   auto lambdaAST =
       std::make_unique<libsbml::ASTNode>(libsbml::ASTNodeType_t::AST_LAMBDA);
@@ -174,6 +177,7 @@ QString ModelFunctions::addArgument(const QString &functionId,
 void ModelFunctions::removeArgument(const QString &functionId,
                                     const QString &argumentId) {
   std::string argId = argumentId.toStdString();
+  hasUnsavedChanges = true;
   SPDLOG_TRACE("Removing argument '{}' from function '{}'", argId,
                functionId.toStdString());
   auto lambdaAST =
@@ -191,6 +195,7 @@ void ModelFunctions::removeArgument(const QString &functionId,
 }
 
 QString ModelFunctions::add(const QString &name) {
+  hasUnsavedChanges = true;
   auto uniqueName = makeUnique(name, names);
   auto id = nameToUniqueSId(uniqueName, sbmlModel).toStdString();
   SPDLOG_INFO("Adding function");
@@ -218,6 +223,7 @@ void ModelFunctions::remove(const QString &id) {
     SPDLOG_WARN("  - function {} not found", sId);
     return;
   }
+  hasUnsavedChanges = true;
   SPDLOG_INFO("  - function {} removed", rmfunc->getId());
   auto i = ids.indexOf(id);
   ids.removeAt(i);
@@ -242,6 +248,12 @@ std::vector<utils::Function> ModelFunctions::getSymbolicFunctions() const {
     SPDLOG_DEBUG("  - body: {}", fn.body);
   }
   return fns;
+}
+
+bool ModelFunctions::getHasUnsavedChanges() const {return hasUnsavedChanges;}
+
+void ModelFunctions::setHasUnsavedChanges(bool unsavedChanges){
+  hasUnsavedChanges = unsavedChanges;
 }
 
 } // namespace model

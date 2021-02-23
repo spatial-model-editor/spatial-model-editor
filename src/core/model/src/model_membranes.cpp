@@ -54,12 +54,14 @@ void ModelMembranes::clear() {
   membranes.clear();
   membranePixels.reset();
   idColourPairs.clear();
+  hasUnsavedChanges = true;
 }
 
 void ModelMembranes::updateCompartmentNames(const QStringList &compartmentNames,
                                             const libsbml::Model *model) {
   names.clear();
   names.reserve(compartmentNames.size());
+  hasUnsavedChanges = true;
   for (const auto &m : membranes) {
     SPDLOG_TRACE("compA: {}", m.getCompartmentA()->getId());
     SPDLOG_TRACE("compB: {}", m.getCompartmentB()->getId());
@@ -78,6 +80,7 @@ void ModelMembranes::updateCompartmentNames(const QStringList &compartmentNames,
 
 void ModelMembranes::updateCompartments(
     const std::vector<std::unique_ptr<geometry::Compartment>> &compartments) {
+  hasUnsavedChanges = true;
   compIds.clear();
   compIds.reserve(static_cast<int>(compartments.size()));
   for (const auto &compartment : compartments) {
@@ -244,6 +247,12 @@ ModelMembranes::ModelMembranes(ModelMembranes &&) noexcept = default;
 ModelMembranes &ModelMembranes::operator=(ModelMembranes &&) noexcept = default;
 
 ModelMembranes::~ModelMembranes() = default;
+
+bool ModelMembranes::getHasUnsavedChanges() const {return hasUnsavedChanges;}
+
+void ModelMembranes::setHasUnsavedChanges(bool unsavedChanges){
+  hasUnsavedChanges = unsavedChanges;
+}
 
 } // namespace model
 

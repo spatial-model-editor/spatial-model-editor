@@ -22,6 +22,7 @@ private:
   QStringList ids;
   QStringList names;
   libsbml::Model *sbmlModel = nullptr;
+  bool hasUnsavedChanges{false};
 
 public:
   ModelFunctions();
@@ -38,6 +39,8 @@ public:
   QString add(const QString &name);
   void remove(const QString &id);
   std::vector<utils::Function> getSymbolicFunctions() const;
+  bool getHasUnsavedChanges() const;
+  void setHasUnsavedChanges(bool unsavedChanges);
 };
 
 } // namespace model
