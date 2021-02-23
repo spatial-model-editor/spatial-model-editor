@@ -169,6 +169,7 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
       return;
     }
   }
+  hasUnsavedChanges = true;
   SPDLOG_INFO("  - found {}x{} geometry image", gsf.image.width(),
               gsf.image.height());
   image = gsf.image.convertToFormat(QImage::Format_Indexed8);
@@ -188,6 +189,7 @@ void ModelGeometry::importParametricGeometry(const libsbml::Model *model) {
   auto importedMesh =
       importParametricGeometryFromSBML(model, this, modelCompartments);
   if (importedMesh != nullptr) {
+    hasUnsavedChanges = true;
     mesh = std::move(importedMesh);
   }
 }
@@ -199,6 +201,7 @@ void ModelGeometry::importSampledFieldGeometry(const QString &filename) {
 }
 
 void ModelGeometry::importGeometryFromImage(const QImage &img) {
+  hasUnsavedChanges = true;
   for (const auto &id : modelCompartments->getIds()) {
     modelCompartments->setColour(id, 0);
   }
@@ -224,6 +227,7 @@ void ModelGeometry::updateMesh() {
     mesh.reset();
     return;
   }
+  hasUnsavedChanges = true;
   const auto &colours{modelCompartments->getColours()};
   const auto &ids{modelCompartments->getIds()};
   mesh = std::make_unique<mesh::Mesh>(image, std::vector<std::size_t>{},
@@ -242,6 +246,7 @@ void ModelGeometry::clear() {
   isValid = false;
   image = {};
   auto *model = sbmlModel;
+  hasUnsavedChanges = true;
   if (model == nullptr) {
     return;
   }
@@ -286,9 +291,8 @@ double ModelGeometry::getPixelWidth() const { return pixelWidth; }
 
 void ModelGeometry::setPixelWidth(double width) {
   SPDLOG_INFO("Setting pixel width to {}", width);
-
+  hasUnsavedChanges = true;
   double oldWidth = pixelWidth;
-
   pixelWidth = width;
   // update pixelWidth for each compartment
   for (const auto &id : modelCompartments->getIds()) {
@@ -367,6 +371,12 @@ bool ModelGeometry::getHasImage() const { return hasImage; }
 
 void ModelGeometry::writeGeometryToSBML() const {
   writeGeometryMeshToSBML(sbmlModel, mesh.get(), *modelCompartments);
+}
+
+bool ModelGeometry::getHasUnsavedChanges() const { return hasUnsavedChanges; }
+
+void ModelGeometry::setHasUnsavedChanges(bool unsavedChanges) {
+  hasUnsavedChanges = unsavedChanges;
 }
 
 } // namespace model

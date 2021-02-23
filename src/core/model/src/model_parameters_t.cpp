@@ -20,6 +20,8 @@ SCENARIO("SBML parameters",
     model::Model s;
     s.importSBMLFile("tmp.xml");
     auto &params = s.getParameters();
+    REQUIRE(s.getHasUnsavedChanges() == false);
+    REQUIRE(params.getHasUnsavedChanges() == false);
     REQUIRE(params.getIds().size() == 0);
     REQUIRE(params.getNames().size() == 0);
     // default geometry spatial coordinates:
@@ -32,7 +34,11 @@ SCENARIO("SBML parameters",
       auto newC = coords;
       newC.x.name = "x name";
       newC.y.name = "yY";
+      REQUIRE(s.getHasUnsavedChanges() == false);
+      REQUIRE(params.getHasUnsavedChanges() == false);
       params.setSpatialCoordinates(std::move(newC));
+      REQUIRE(s.getHasUnsavedChanges() == true);
+      REQUIRE(params.getHasUnsavedChanges() == true);
       REQUIRE(coords.x.id == "x");
       REQUIRE(coords.x.name == "x name");
       REQUIRE(coords.y.id == "y");
@@ -46,7 +52,11 @@ SCENARIO("SBML parameters",
       REQUIRE(param->getName() == "yY");
     }
     WHEN("add double parameter") {
+      REQUIRE(s.getHasUnsavedChanges() == false);
+      REQUIRE(params.getHasUnsavedChanges() == false);
       params.add("p1");
+      REQUIRE(s.getHasUnsavedChanges() == true);
+      REQUIRE(params.getHasUnsavedChanges() == true);
       REQUIRE(params.getIds().size() == 1);
       REQUIRE(params.getIds()[0] == "p1");
       REQUIRE(params.getNames().size() == 1);
@@ -99,8 +109,17 @@ SCENARIO("SBML parameters",
       REQUIRE(params.getNames().size() == 0);
     }
     WHEN("add math expression parameter") {
+      REQUIRE(s.getHasUnsavedChanges() == false);
+      REQUIRE(params.getHasUnsavedChanges() == false);
       params.add("p1");
+      REQUIRE(s.getHasUnsavedChanges() == true);
+      REQUIRE(params.getHasUnsavedChanges() == true);
+      params.setHasUnsavedChanges(false);
+      REQUIRE(s.getHasUnsavedChanges() == false);
+      REQUIRE(params.getHasUnsavedChanges() == false);
       params.setExpression("p1", "cos(1.4)");
+      REQUIRE(s.getHasUnsavedChanges() == true);
+      REQUIRE(params.getHasUnsavedChanges() == true);
       std::string xml = s.getXml().toStdString();
       std::unique_ptr<libsbml::SBMLDocument> doc2{
           libsbml::readSBMLFromString(xml.c_str())};

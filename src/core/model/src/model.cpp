@@ -41,6 +41,7 @@ void Model::importSBMLFile(const std::string &filename) {
   SPDLOG_INFO("Loading SBML file {}...", filename);
   doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
   initModelData();
+  setHasUnsavedChanges(false);
 }
 
 void Model::importSBMLString(const std::string &xml) {
@@ -48,6 +49,7 @@ void Model::importSBMLString(const std::string &xml) {
   SPDLOG_INFO("Importing SBML from string...");
   doc.reset(libsbml::readSBMLFromString(xml.c_str()));
   initModelData();
+  setHasUnsavedChanges(true);
 }
 
 void Model::initModelData() {
@@ -73,7 +75,29 @@ void Model::initModelData() {
   modelReactions = ModelReactions(model, modelMembranes.getMembranes());
 }
 
+void Model::setHasUnsavedChanges(bool unsavedChanges){
+  modelUnits.setHasUnsavedChanges(unsavedChanges);
+  modelFunctions.setHasUnsavedChanges(unsavedChanges);
+  modelMembranes.setHasUnsavedChanges(unsavedChanges);
+  modelCompartments.setHasUnsavedChanges(unsavedChanges);
+  modelGeometry.setHasUnsavedChanges(unsavedChanges);
+  modelParameters.setHasUnsavedChanges(unsavedChanges);
+  modelSpecies.setHasUnsavedChanges(unsavedChanges);
+  modelReactions.setHasUnsavedChanges(unsavedChanges);
+}
+
 bool Model::getIsValid() const { return isValid; }
+
+bool Model::getHasUnsavedChanges() const {
+  return modelUnits.getHasUnsavedChanges() ||
+         modelFunctions.getHasUnsavedChanges() ||
+         modelMembranes.getHasUnsavedChanges() ||
+         modelCompartments.getHasUnsavedChanges() ||
+         modelGeometry.getHasUnsavedChanges() ||
+         modelParameters.getHasUnsavedChanges() ||
+         modelSpecies.getHasUnsavedChanges() ||
+         modelReactions.getHasUnsavedChanges();
+}
 
 const QString &Model::getCurrentFilename() const { return currentFilename; }
 
@@ -87,7 +111,9 @@ void Model::exportSBMLFile(const std::string &filename) {
   currentFilename = filename.c_str();
   if (!libsbml::SBMLWriter().writeSBML(doc.get(), filename)) {
     SPDLOG_ERROR("Failed to write to {}", filename);
+    return;
   }
+  setHasUnsavedChanges(false);
 }
 
 QString Model::getXml() {

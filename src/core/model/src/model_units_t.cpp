@@ -45,6 +45,8 @@ TEST_CASE("Units", "[core/model/model_units][core/model][core][model][units]") {
     auto refs = std::vector<const model::Unit *>{
         &(timeUnits.getUnits()[2]), &(lengthUnits.getUnits()[2]),
         &(volumeUnits.getUnits()[3]), &(amountUnits.getUnits()[1])};
+    modelUnits.setHasUnsavedChanges(false);
+    REQUIRE(modelUnits.getHasUnsavedChanges() == false);
     for (std::size_t i = 0; i < units.size(); ++i) {
       const auto &unit = units[i];
       const auto &ref = refs[i];
@@ -64,7 +66,9 @@ TEST_CASE("Units", "[core/model/model_units][core/model][core][model][units]") {
       REQUIRE(modelUnits.getConcentration() == "mmol/mL");
     }
     SECTION("index is set: units updated") {
+      REQUIRE(modelUnits.getHasUnsavedChanges() == false);
       modelUnits.setTimeIndex(2);
+      REQUIRE(modelUnits.getHasUnsavedChanges() == true);
       REQUIRE(modelUnits.getTimeIndex() == 2);
       REQUIRE(modelUnits.getTime().name == timeUnits.getUnits()[2].name);
       modelUnits.setLengthIndex(4);
@@ -78,8 +82,10 @@ TEST_CASE("Units", "[core/model/model_units][core/model][core][model][units]") {
       REQUIRE(modelUnits.getAmount().name == amountUnits.getUnits()[1].name);
     }
     SECTION("index is set: derived units updated") {
+      REQUIRE(modelUnits.getHasUnsavedChanges() == false);
       modelUnits.setTimeIndex(2);
       modelUnits.setLengthIndex(2);
+      REQUIRE(modelUnits.getHasUnsavedChanges() == true);
       REQUIRE(modelUnits.getLength().name == "cm");
       REQUIRE(modelUnits.getTime().name == "s");
       REQUIRE(modelUnits.getDiffusion() == "cm^2/s");
@@ -97,10 +103,13 @@ TEST_CASE("Units", "[core/model/model_units][core/model][core][model][units]") {
     std::unique_ptr<libsbml::SBMLDocument> doc(
         libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
     auto modelUnits = model::ModelUnits(doc.get()->getModel());
+    modelUnits.setHasUnsavedChanges(false);
+    REQUIRE(modelUnits.getHasUnsavedChanges() == false);
     REQUIRE(modelUnits.getTime().name == "megasecond");
     REQUIRE(modelUnits.getTime().kind == "second");
     REQUIRE(modelUnits.getTime().exponent == 1);
     REQUIRE(modelUnits.getTime().scale == 6);
     REQUIRE(modelUnits.getTime().multiplier == dbl_approx(1.0));
+    REQUIRE(modelUnits.getHasUnsavedChanges() == false);
   }
 }

@@ -18,6 +18,8 @@ SCENARIO("SBML reactions",
     std::unique_ptr<libsbml::SBMLDocument> doc(
         libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
     model::ModelReactions r(doc->getModel(), {});
+    r.setHasUnsavedChanges(false);
+    REQUIRE(r.getHasUnsavedChanges() == false);
     REQUIRE(r.getIds("c1").empty());
     REQUIRE(r.getIds("c2").empty());
     REQUIRE(r.getIds("c3").size() == 1);
@@ -35,7 +37,9 @@ SCENARIO("SBML reactions",
     REQUIRE(r.getParameterIds("B_transport").size() == 1);
 
     // remove reaction
+    REQUIRE(r.getHasUnsavedChanges() == false);
     r.remove("A_B_conversion");
+    REQUIRE(r.getHasUnsavedChanges() == true);
     REQUIRE(r.getIds("c1").empty());
     REQUIRE(r.getIds("c2").empty());
     REQUIRE(r.getIds("c3").empty());
@@ -86,8 +90,22 @@ SCENARIO("SBML reactions",
     REQUIRE(r.getIds("c2_c3_membrane")[0] == "B_transport");
     REQUIRE(r.getParameterIds("B_transport").size() == 1);
 
+    // remove non-existent reaction: no-op
+    r.setHasUnsavedChanges(false);
+    REQUIRE(r.getHasUnsavedChanges() == false);
+    r.remove("i_dont_exist");
+    REQUIRE(r.getIds("c1").empty());
+    REQUIRE(r.getIds("c2").empty());
+    REQUIRE(r.getIds("c3").empty());
+    REQUIRE(r.getIds("c1_c2_membrane").empty());
+    REQUIRE(r.getIds("c2_c3_membrane").size() == 1);
+    REQUIRE(r.getIds("c2_c3_membrane")[0] == "B_transport");
+    REQUIRE(r.getParameterIds("B_transport").size() == 1);
+    REQUIRE(r.getHasUnsavedChanges() == false);
+
     // remove reaction
     r.remove("B_transport");
+    REQUIRE(r.getHasUnsavedChanges() == true);
     REQUIRE(r.getIds("c1").empty());
     REQUIRE(r.getIds("c2").empty());
     REQUIRE(r.getIds("c3").empty());

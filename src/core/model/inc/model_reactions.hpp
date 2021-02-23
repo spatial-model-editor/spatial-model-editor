@@ -24,6 +24,7 @@ private:
   QStringList names;
   QVector<QStringList> parameterIds;
   libsbml::Model *sbmlModel = nullptr;
+  bool hasUnsavedChanges{false};
 
 public:
   ModelReactions();
@@ -58,6 +59,8 @@ public:
                        double value);
   void removeParameter(const QString &reactionId, const QString &id);
   bool dependOnVariable(const QString &variableId) const;
+  bool getHasUnsavedChanges() const;
+  void setHasUnsavedChanges(bool unsavedChanges);
 };
 
 } // namespace model

@@ -18,10 +18,23 @@ SCENARIO("SBML compartments",
     f.open(QIODevice::ReadOnly);
     model::Model model;
     model.importSBMLString(f.readAll().toStdString());
+    REQUIRE(model.getHasUnsavedChanges() == true);
     auto &c = model.getCompartments();
+    REQUIRE(c.getHasUnsavedChanges() == true);
+    c.setHasUnsavedChanges(false);
+    REQUIRE(c.getHasUnsavedChanges() == false);
     auto &s = model.getSpecies();
+    REQUIRE(s.getHasUnsavedChanges() == true);
+    s.setHasUnsavedChanges(false);
+    REQUIRE(s.getHasUnsavedChanges() == false);
     auto &r = model.getReactions();
+    REQUIRE(r.getHasUnsavedChanges() == true);
+    r.setHasUnsavedChanges(false);
+    REQUIRE(r.getHasUnsavedChanges() == false);
     auto &m = model.getMembranes();
+    REQUIRE(m.getHasUnsavedChanges() == true);
+    m.setHasUnsavedChanges(false);
+    REQUIRE(m.getHasUnsavedChanges() == false);
 
     // initial compartments
     REQUIRE(c.getIds().size() == 3);
@@ -87,7 +100,12 @@ SCENARIO("SBML compartments",
     REQUIRE(r.getParameterValue("B_transport", "k1") == dbl_approx(0.1));
 
     WHEN("remove c1") {
+      REQUIRE(c.getHasUnsavedChanges() == false);
+      REQUIRE(m.getHasUnsavedChanges() == false);
+      REQUIRE(s.getHasUnsavedChanges() == false);
+      REQUIRE(r.getHasUnsavedChanges() == false);
       c.remove("c1");
+      REQUIRE(c.getHasUnsavedChanges() == true);
       // compartments
       REQUIRE(c.getIds().size() == 2);
       REQUIRE(c.getNames().size() == 2);
@@ -100,12 +118,14 @@ SCENARIO("SBML compartments",
       REQUIRE(c.getName("c3") == "Nucleus");
 
       // membranes
+      REQUIRE(m.getHasUnsavedChanges() == true);
       REQUIRE(m.getIds().size() == 1);
       REQUIRE(m.getName("c1_c2_membrane") == "");
       REQUIRE(m.getIds()[0] == "c2_c3_membrane");
       REQUIRE(m.getName("c2_c3_membrane") == "Cell <-> Nucleus");
 
       // species
+      REQUIRE(s.getHasUnsavedChanges() == true);
       REQUIRE(s.getIds("c1").empty());
       REQUIRE(s.getField("A_c1") == nullptr);
       REQUIRE(s.getField("B_c1") == nullptr);
@@ -121,6 +141,7 @@ SCENARIO("SBML compartments",
       REQUIRE(s.getField("B_c3")->getId() == "B_c3");
 
       // reactions
+      REQUIRE(r.getHasUnsavedChanges() == true);
       REQUIRE(r.getIds("c1").size() == 0);
       REQUIRE(r.getIds("c2").size() == 0);
       REQUIRE(r.getIds("c3").size() == 1);

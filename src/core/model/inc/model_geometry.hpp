@@ -39,6 +39,7 @@ private:
   libsbml::Model *sbmlModel{nullptr};
   ModelCompartments *modelCompartments{nullptr};
   ModelMembranes *modelMembranes{nullptr};
+  bool hasUnsavedChanges{false};
   bool importDimensions(const libsbml::Model *model);
   void writeDefaultGeometryToSBML();
 
@@ -62,6 +63,8 @@ public:
   bool getIsValid() const;
   bool getHasImage() const;
   void writeGeometryToSBML() const;
+  bool getHasUnsavedChanges() const;
+  void setHasUnsavedChanges(bool unsavedChanges);
 };
 
 } // namespace model

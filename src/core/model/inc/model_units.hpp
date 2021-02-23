@@ -70,6 +70,7 @@ private:
   QString compartmentReaction;
   QString membraneReaction;
   libsbml::Model *sbmlModel;
+  bool hasUnsavedChanges{false};
   void updateConcentration();
   void updateDiffusion();
   void updateReactions();
@@ -100,6 +101,8 @@ public:
   const QString &getDiffusion() const;
   const QString &getCompartmentReaction() const;
   const QString &getMembraneReaction() const;
+  bool getHasUnsavedChanges() const;
+  void setHasUnsavedChanges(bool unsavedChanges);
 };
 
 double rescale(double val, const Unit &oldUnit, const Unit &newUnit);

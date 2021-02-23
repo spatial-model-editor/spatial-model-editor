@@ -106,6 +106,7 @@ static void makeInitialConcentrationsValid(libsbml::Model *model) {
 }
 
 void ModelSpecies::removeInitialAssignment(const QString &id) {
+  hasUnsavedChanges = true;
   if (auto sampledFieldID = getSampledFieldInitialAssignment(id);
       !sampledFieldID.isEmpty()) {
     auto *geom = getOrCreateGeometry(sbmlModel);
@@ -150,6 +151,7 @@ void ModelSpecies::setFieldConcAnalytic(geometry::Field &field,
     SPDLOG_ERROR("Failed to parse expression '{}'", inlinedExpr);
     return;
   }
+  hasUnsavedChanges = true;
   const auto &origin = modelGeometry->getPhysicalOrigin();
   double pixelWidth = modelGeometry->getPixelWidth();
   int imgHeight = field.getCompartment()->getCompartmentImage().height();
@@ -292,6 +294,7 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
 }
 
 QString ModelSpecies::add(const QString &name, const QString &compartmentId) {
+  hasUnsavedChanges = true;
   QString newName = name;
   QString compName = modelCompartments->getName(compartmentId);
   while (names.contains(newName)) {
@@ -335,6 +338,7 @@ void ModelSpecies::remove(const QString &id) {
     SPDLOG_WARN("  - species {} not found in ids", sId);
     return;
   }
+  hasUnsavedChanges = true;
   std::unique_ptr<libsbml::Species> spec(sbmlModel->removeSpecies(sId));
   if (spec == nullptr) {
     SPDLOG_WARN("  - species {} not found in sbml model", sId);
@@ -356,6 +360,7 @@ QString ModelSpecies::setName(const QString &id, const QString &name) {
   if (i < 0) {
     return {};
   }
+  hasUnsavedChanges = true;
   QString uniqueName = name;
   while (names.contains(uniqueName)) {
     uniqueName.append("_");
@@ -378,6 +383,7 @@ QString ModelSpecies::getName(const QString &id) const {
 }
 
 void ModelSpecies::updateCompartmentGeometry(const QString &compartmentId) {
+  hasUnsavedChanges = true;
   for (const auto &id : ids) {
     if (getCompartment(id) == compartmentId) {
       setCompartment(id, compartmentId);
@@ -398,6 +404,7 @@ void ModelSpecies::setCompartment(const QString &id,
     SPDLOG_WARN("Species '{}' not found", sId);
     return;
   }
+  hasUnsavedChanges = true;
   spec->setCompartment(compSId);
   auto i = ids.indexOf(id);
   fields[static_cast<std::size_t>(i)].setCompartment(
@@ -457,6 +464,7 @@ void ModelSpecies::setIsSpatial(const QString &id, bool isSpatial) {
     SPDLOG_ERROR("Failed to get SpatialSpeciesPlugin for species {}", sId);
     return;
   }
+  hasUnsavedChanges = true;
   ssp->setIsSpatial(isSpatial);
   if (isSpatial) {
     // for now spatial species cannot be constant
@@ -474,6 +482,7 @@ bool ModelSpecies::getIsSpatial(const QString &id) const {
 
 void ModelSpecies::setDiffusionConstant(const QString &id,
                                         double diffusionConstant) {
+  hasUnsavedChanges = true;
   auto *param = getOrCreateDiffusionConstantParameter(sbmlModel, id);
   param->setValue(diffusionConstant);
   auto i = ids.indexOf(id);
@@ -487,6 +496,7 @@ double ModelSpecies::getDiffusionConstant(const QString &id) const {
 
 void ModelSpecies::setInitialConcentration(const QString &id,
                                            double concentration) {
+  hasUnsavedChanges = true;
   std::string sId = id.toStdString();
   removeInitialAssignment(id);
   sbmlModel->getSpecies(sId)->setInitialConcentration(concentration);
@@ -509,6 +519,7 @@ void ModelSpecies::setAnalyticConcentration(const QString &id,
     SPDLOG_ERROR("  - libSBML failed to parse expression");
     return;
   }
+  hasUnsavedChanges = true;
   removeInitialAssignment(id);
   auto *asgn = sbmlModel->createInitialAssignment();
   asgn->setSymbol(sId);
@@ -534,6 +545,7 @@ QString ModelSpecies::getAnalyticConcentration(const QString &id) const {
 
 void ModelSpecies::setSampledFieldConcentration(
     const QString &id, const std::vector<double> &concentrationArray) {
+  hasUnsavedChanges = true;
   std::string sId = id.toStdString();
   SPDLOG_INFO("speciesID: {}", sId);
   removeInitialAssignment(id);
@@ -599,6 +611,7 @@ void ModelSpecies::setColour(const QString &id, QRgb colour) {
   if (i < 0) {
     return;
   }
+  hasUnsavedChanges = true;
   fields[static_cast<std::size_t>(i)].setColour(colour);
   addSpeciesColourAnnotation(sbmlModel->getSpecies(id.toStdString()), colour);
 }
@@ -612,6 +625,7 @@ QRgb ModelSpecies::getColour(const QString &id) const {
 }
 
 void ModelSpecies::setIsConstant(const QString &id, bool constant) {
+  hasUnsavedChanges = true;
   auto *spec = sbmlModel->getSpecies(id.toStdString());
   spec->setConstant(constant);
   if (constant) {
@@ -641,6 +655,7 @@ bool ModelSpecies::isReactive(const QString &id) const {
 }
 
 void ModelSpecies::removeInitialAssignments() {
+  hasUnsavedChanges = true;
   for (const auto &id : ids) {
     removeInitialAssignment(id);
   }
@@ -690,6 +705,12 @@ const geometry::Field *ModelSpecies::getField(const QString &id) const {
     return nullptr;
   }
   return &fields[static_cast<std::size_t>(i)];
+}
+
+bool ModelSpecies::getHasUnsavedChanges() const { return hasUnsavedChanges; }
+
+void ModelSpecies::setHasUnsavedChanges(bool unsavedChanges) {
+  hasUnsavedChanges = unsavedChanges;
 }
 
 } // namespace model

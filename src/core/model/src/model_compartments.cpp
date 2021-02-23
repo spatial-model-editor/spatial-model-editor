@@ -117,6 +117,7 @@ QString ModelCompartments::add(const QString &name) {
   modelGeometry->updateMesh();
   modelMembranes->updateCompartments(compartments);
   modelMembranes->updateCompartmentNames(names, sbmlModel);
+  hasUnsavedChanges = true;
   return newName; // should be id?
 }
 
@@ -171,6 +172,7 @@ bool ModelCompartments::remove(const QString &id) {
   if (i < 0) {
     return false;
   }
+  hasUnsavedChanges = true;
   ids.removeAt(i);
   names.removeAt(i);
   colours.removeAt(i);
@@ -199,6 +201,7 @@ QString ModelCompartments::setName(const QString &id, const QString &name) {
   if (i < 0) {
     return {};
   }
+  hasUnsavedChanges = true;
   QString uniqueName = name;
   while (names.contains(uniqueName)) {
     uniqueName.append("_");
@@ -245,6 +248,7 @@ ModelCompartments::getInteriorPoints(const QString &id) const {
 
 void ModelCompartments::setInteriorPoints(const QString &id,
                                           const std::vector<QPointF> &points) {
+  hasUnsavedChanges = true;
   SPDLOG_INFO("compartmentID: {}", id.toStdString());
   auto *comp = sbmlModel->getCompartment(id.toStdString());
   auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
@@ -278,6 +282,7 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   if (i < 0) {
     return;
   }
+  hasUnsavedChanges = true;
   std::string sId{id.toStdString()};
   SPDLOG_INFO("assigning colour {:x} to compartment {}", colour, sId);
   if (auto oldId = getIdFromColour(colour); colour != 0 && !oldId.isEmpty()) {
@@ -361,6 +366,13 @@ void ModelCompartments::clear() {
   names.clear();
   colours.clear();
   compartments.clear();
+  hasUnsavedChanges = true;
+}
+
+bool ModelCompartments::getHasUnsavedChanges() const {return hasUnsavedChanges;}
+
+void ModelCompartments::setHasUnsavedChanges(bool unsavedChanges){
+  hasUnsavedChanges = unsavedChanges;
 }
 
 } // namespace model

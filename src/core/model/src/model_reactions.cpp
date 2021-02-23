@@ -173,6 +173,7 @@ void ModelReactions::makeReactionsSpatial(
   if (sbmlModel == nullptr) {
     return;
   }
+  hasUnsavedChanges = true;
   for (unsigned int i = 0; i < sbmlModel->getNumReactions(); ++i) {
     auto *reac = sbmlModel->getReaction(i);
     reac->setFast(false);
@@ -204,6 +205,7 @@ QStringList ModelReactions::getIds(const QString &locationId) const {
 
 QString ModelReactions::add(const QString &name, const QString &locationId,
                             const QString &rateExpression) {
+  hasUnsavedChanges = true;
   auto newName = makeUnique(name, names);
   SPDLOG_INFO("Adding new reaction");
   auto *reac = sbmlModel->createReaction();
@@ -237,6 +239,7 @@ void ModelReactions::remove(const QString &id) {
     SPDLOG_WARN("  - reaction {} not found in SBML", sId);
     return;
   }
+  hasUnsavedChanges = true;
   ids.removeAt(i);
   names.removeAt(i);
   parameterIds.removeAt(i);
@@ -265,6 +268,7 @@ QString ModelReactions::setName(const QString &id, const QString &name) {
     // no-op: setting name to the same value as it already had
     return name;
   }
+  hasUnsavedChanges = true;
   auto uniqueName = makeUnique(name, names);
   names[i] = uniqueName;
   std::string sId{id.toStdString()};
@@ -289,6 +293,7 @@ void ModelReactions::setLocation(const QString &id, const QString &locationId) {
     SPDLOG_WARN("Reaction '{}' not found", id.toStdString());
     return;
   }
+  hasUnsavedChanges = true;
   SPDLOG_INFO("Setting reaction '{}' location to '{}'", id.toStdString(),
               locationId.toStdString());
   reac->setCompartment(locationId.toStdString());
@@ -319,6 +324,7 @@ int ModelReactions::getSpeciesStoichiometry(const QString &id,
 void ModelReactions::setSpeciesStoichiometry(const QString &id,
                                              const QString &speciesId,
                                              int stoichiometry) {
+  hasUnsavedChanges = true;
   auto *reac = sbmlModel->getReaction(id.toStdString());
   std::string sId = speciesId.toStdString();
   const auto *spec = sbmlModel->getSpecies(sId);
@@ -379,6 +385,7 @@ void ModelReactions::setRateExpression(const QString &id,
                  libsbml::SBML_getLastParseL3Error());
     return;
   }
+  hasUnsavedChanges = true;
   kin->setMath(exprAST.get());
 }
 
@@ -408,6 +415,7 @@ QStringList ModelReactions::getParameterIds(const QString &id) const {
 QString ModelReactions::setParameterName(const QString &reactionId,
                                          const QString &parameterId,
                                          const QString &name) {
+  hasUnsavedChanges = true;
   const auto &pars = parameterIds[ids.indexOf(reactionId)];
   QStringList parNames;
   parNames.reserve(pars.size());
@@ -436,6 +444,7 @@ QString ModelReactions::getParameterName(const QString &reactionId,
 void ModelReactions::setParameterValue(const QString &reactionId,
                                        const QString &parameterId,
                                        double value) {
+  hasUnsavedChanges = true;
   auto *param = getLocalParameter(sbmlModel, reactionId, parameterId);
   param->setValue(value);
 }
@@ -453,6 +462,7 @@ double ModelReactions::getParameterValue(const QString &reactionId,
 
 QString ModelReactions::addParameter(const QString &reactionId,
                                      const QString &name, double value) {
+  hasUnsavedChanges = true;
   auto i = ids.indexOf(reactionId);
   auto &pars = parameterIds[i];
   auto uniqueName = makeUnique(name, pars);
@@ -474,6 +484,7 @@ QString ModelReactions::addParameter(const QString &reactionId,
 
 void ModelReactions::removeParameter(const QString &reactionId,
                                      const QString &id) {
+  hasUnsavedChanges = true;
   auto iReac = ids.indexOf(reactionId);
   auto wasRemoved = parameterIds[iReac].removeOne(id);
   SPDLOG_DEBUG(" removed '{}' from parameterIds: {} for Reaction '{}'",
@@ -497,6 +508,12 @@ bool ModelReactions::dependOnVariable(const QString &variableId) const {
     }
   }
   return false;
+}
+
+bool ModelReactions::getHasUnsavedChanges() const { return hasUnsavedChanges; }
+
+void ModelReactions::setHasUnsavedChanges(bool unsavedChanges) {
+  hasUnsavedChanges = unsavedChanges;
 }
 
 } // namespace model

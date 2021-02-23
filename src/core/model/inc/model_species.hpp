@@ -39,6 +39,7 @@ private:
   void removeInitialAssignment(const QString &id);
   std::vector<double>
   getSampledFieldConcentrationFromSBML(const QString &id) const;
+  bool hasUnsavedChanges{false};
 
 public:
   ModelSpecies();
@@ -77,6 +78,8 @@ public:
   QString getSampledFieldInitialAssignment(const QString &id) const;
   geometry::Field *getField(const QString &id);
   const geometry::Field *getField(const QString &id) const;
+  bool getHasUnsavedChanges() const;
+  void setHasUnsavedChanges(bool unsavedChanges);
 };
 
 } // namespace model
