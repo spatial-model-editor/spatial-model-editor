@@ -320,6 +320,36 @@ SCENARIO("Simulate: very_simple_model, failing Pixel sim",
   REQUIRE(sim.errorImage().size() == QSize(100,100));
 }
 
+SCENARIO("Simulate: very_simple_model, empty compartment, DUNE sim",
+         "[core/simulate/simulate][core/simulate][core][simulate][dune]") {
+  // check that DUNE simulates a model with an empty compartment without crashing
+  model::Model s;
+  QFile f(":/models/very-simple-model.xml");
+  f.open(QIODevice::ReadOnly);
+  s.importSBMLString(f.readAll().toStdString());
+  WHEN("Outer species removed"){
+    s.getSpecies().remove("A_c1");
+    s.getSpecies().remove("B_c1");
+    REQUIRE(s.getSpecies().getIds("c1").empty());
+    simulate::Simulation sim(s, simulate::SimulatorType::DUNE);
+    REQUIRE(sim.errorMessage().empty());
+    sim.doTimesteps(0.1, 1);
+    REQUIRE(sim.errorMessage().empty());
+  }
+  WHEN("Inner and Outer species removed"){
+    s.getSpecies().remove("A_c1");
+    s.getSpecies().remove("B_c1");
+    REQUIRE(s.getSpecies().getIds("c1").empty());
+    s.getSpecies().remove("A_c3");
+    s.getSpecies().remove("B_c3");
+    REQUIRE(s.getSpecies().getIds("c3").empty());
+    simulate::Simulation sim(s, simulate::SimulatorType::DUNE);
+    REQUIRE(sim.errorMessage().empty());
+    sim.doTimesteps(0.1, 1);
+    REQUIRE(sim.errorMessage().empty());
+  }
+}
+
 static void rescaleMembraneReacRates(model::Model &s, double factor) {
   for (const auto &memId : s.getMembranes().getIds()) {
     for (const auto &reacId : s.getReactions().getIds(memId)) {

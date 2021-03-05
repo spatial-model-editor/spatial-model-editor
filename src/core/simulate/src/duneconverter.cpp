@@ -339,10 +339,13 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
   std::size_t modelIndex{0};
   // for each compartment
   for (const auto &compId : model.getCompartments().getIds()) {
-    addCompartment(inis[modelIndex], model, doublePrecision, forExternalUse,
-                   iniFileDir, concentrations, compId);
-    if (independentCompartments) {
-      ++modelIndex;
+    // skip compartments which contain no non-constant species
+    if (compartmentContainsNonConstantSpecies(model, compId)) {
+      addCompartment(inis[modelIndex], model, doublePrecision, forExternalUse,
+                     iniFileDir, concentrations, compId);
+      if (independentCompartments) {
+        ++modelIndex;
+      }
     }
   }
 
