@@ -1,5 +1,7 @@
 #pragma once
 
+#include "model.hpp"
+#include "simulate.hpp"
 #include <QDialog>
 #include <memory>
 
@@ -14,14 +16,18 @@ class DialogExport : public QDialog {
 
 public:
   explicit DialogExport(const QVector<QImage> &images,
-                        const PlotWrapper *plotWrapper, int timepoint = 0,
-                        QWidget *parent = nullptr);
+                        const PlotWrapper *plotWrapper,
+                        sme::model::Model &model,
+                        const sme::simulate::Simulation &simulation,
+                        int timepoint = 0, QWidget *parent = nullptr);
   ~DialogExport();
 
 private:
   const std::unique_ptr<Ui::DialogExport> ui;
   const QVector<QImage> &imgs;
   const PlotWrapper *plot;
+  sme::model::Model& m;
+  const sme::simulate::Simulation& sim;
 
   void radSingleTimepoint_toggled(bool checked);
   void doExport();

@@ -27,7 +27,6 @@ TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
   progressDialog->reset();
   connect(progressDialog, &QProgressDialog::canceled, this,
           &TabSimulate::stopSimulation);
-
   connect(ui->btnSimulate, &QPushButton::clicked, this,
           &TabSimulate::btnSimulate_clicked);
   connect(ui->btnResetSimulation, &QPushButton::clicked, this,
@@ -218,7 +217,7 @@ void TabSimulate::btnSliceImage_clicked() {
 }
 
 void TabSimulate::btnExport_clicked() {
-  DialogExport dialog(images, plt.get(), ui->hslideTime->value());
+  DialogExport dialog(images, plt.get(), model, *sim.get(), ui->hslideTime->value());
   if (dialog.exec() == QDialog::Accepted) {
     SPDLOG_DEBUG("todo: save current export settings");
   }
