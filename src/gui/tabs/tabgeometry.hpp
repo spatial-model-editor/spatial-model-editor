@@ -38,7 +38,8 @@ private:
   sme::model::Model &model;
   QLabelMouseTracker *lblGeometry;
   QLabel *statusBarPermanentMessage;
-  bool waitingForCompartmentChoice = false;
+  bool waitingForCompartmentChoice{false};
+  bool membraneSelected{false};
 
   void lblGeometry_mouseClicked(QRgb col, QPoint point);
   void btnAddCompartment_clicked();

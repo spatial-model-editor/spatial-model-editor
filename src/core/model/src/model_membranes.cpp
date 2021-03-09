@@ -22,6 +22,20 @@ const QStringList &ModelMembranes::getIds() const { return ids; }
 
 const QStringList &ModelMembranes::getNames() const { return names; }
 
+QString ModelMembranes::setName(const QString &id, const QString &name){
+  auto i = ids.indexOf(id);
+  if (i < 0) {
+    return {};
+  }
+  if (names[i] == name) {
+    // no-op: setting name to the same value as it already had
+    return name;
+  }
+  hasUnsavedChanges = true;
+  names[i] = name;
+  return name;
+}
+
 QString ModelMembranes::getName(const QString &id) const {
   auto i = ids.indexOf(id);
   if (i < 0) {

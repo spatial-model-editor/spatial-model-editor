@@ -9,9 +9,8 @@
 #include <QMessageBox>
 #include <stdexcept>
 
-TabGeometry::TabGeometry(sme::model::Model &m,
-                         QLabelMouseTracker *mouseTracker, QLabel *statusBarMsg,
-                         QWidget *parent)
+TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
+                         QLabel *statusBarMsg, QWidget *parent)
     : QWidget(parent), ui{std::make_unique<Ui::TabGeometry>()}, model(m),
       lblGeometry(mouseTracker), statusBarPermanentMessage(statusBarMsg) {
   ui->setupUi(this);
@@ -177,20 +176,40 @@ void TabGeometry::btnChangeCompartment_clicked() {
 }
 
 void TabGeometry::txtCompartmentName_editingFinished() {
-  int compIndex = ui->listCompartments->currentRow();
-  if (compIndex < 0 ||
-      compIndex > model.getCompartments().getIds().size() - 1) {
+  if (membraneSelected) {
+    int membraneIndex{ui->listMembranes->currentRow()};
+    if (membraneIndex < 0 ||
+        membraneIndex >= model.getMembranes().getIds().size()) {
+      // invalid index
+      return;
+    }
+    if (ui->txtCompartmentName->text() ==
+        model.getMembranes().getNames()[membraneIndex]) {
+      // name is unchanged
+      return;
+    }
+    const auto &membraneId{model.getMembranes().getIds().at(membraneIndex)};
+    QString name{model.getMembranes().setName(membraneId,
+                                              ui->txtCompartmentName->text())};
+    ui->txtCompartmentName->setText(name);
+    ui->listMembranes->item(membraneIndex)->setText(name);
+    return;
+  }
+  // compartment
+  int compIndex{ui->listCompartments->currentRow()};
+  if (compIndex < 0 || compIndex >= model.getCompartments().getIds().size()) {
     return;
   }
   if (ui->txtCompartmentName->text() ==
       model.getCompartments().getNames()[compIndex]) {
     return;
   }
-  const auto &compartmentId = model.getCompartments().getIds().at(compIndex);
-  QString name = model.getCompartments().setName(
-      compartmentId, ui->txtCompartmentName->text());
+  const auto &compartmentId{model.getCompartments().getIds().at(compIndex)};
+  QString name{model.getCompartments().setName(compartmentId,
+                                               ui->txtCompartmentName->text())};
   ui->txtCompartmentName->setText(name);
   ui->listCompartments->item(compIndex)->setText(name);
+  // changing a compartment name may change membrane names
   ui->listMembranes->clear();
   ui->listMembranes->addItems(model.getMembranes().getNames());
 }
@@ -241,8 +260,7 @@ void TabGeometry::spinBoundaryIndex_valueChanged(int value) {
   ui->spinMaxBoundaryPoints->setValue(static_cast<int>(
       model.getGeometry().getMesh()->getBoundaryMaxPoints(boundaryIndex)));
   ui->lblCompBoundary->setImages(
-      model.getGeometry().getMesh()->getBoundariesImages(size,
-                                                           boundaryIndex));
+      model.getGeometry().getMesh()->getBoundariesImages(size, boundaryIndex));
 }
 
 void TabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
@@ -251,8 +269,7 @@ void TabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
   model.getGeometry().getMesh()->setBoundaryMaxPoints(
       boundaryIndex, static_cast<size_t>(value));
   ui->lblCompBoundary->setImages(
-      model.getGeometry().getMesh()->getBoundariesImages(size,
-                                                           boundaryIndex));
+      model.getGeometry().getMesh()->getBoundariesImages(size, boundaryIndex));
 }
 
 void TabGeometry::lblCompMesh_mouseClicked(QRgb col, QPoint point) {
@@ -286,11 +303,11 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
   ui->txtCompartmentName->clear();
   ui->lblCompSize->clear();
   int currentRow = ui->listCompartments->currentRow();
-  if (currentRow < 0 ||
-      currentRow >= model.getCompartments().getIds().size()) {
+  if (currentRow < 0 || currentRow >= model.getCompartments().getIds().size()) {
     ui->btnRemoveCompartment->setEnabled(false);
     return;
   }
+  membraneSelected = false;
   const QString &compID = model.getCompartments().getIds()[currentRow];
   ui->listMembranes->clearSelection();
   ui->btnRemoveCompartment->setEnabled(true);
@@ -351,14 +368,14 @@ void TabGeometry::listCompartments_itemDoubleClicked(QListWidgetItem *item) {
 
 void TabGeometry::listMembranes_itemSelectionChanged() {
   int currentRow = ui->listMembranes->currentRow();
-  if (currentRow < 0 ||
-      currentRow >= model.getMembranes().getNames().size()) {
+  if (currentRow < 0 || currentRow >= model.getMembranes().getNames().size()) {
     return;
   }
+  membraneSelected = true;
   ui->listCompartments->clearSelection();
   ui->btnChangeCompartment->setEnabled(false);
   ui->txtCompartmentName->clear();
-  ui->txtCompartmentName->setEnabled(false);
+  ui->txtCompartmentName->setEnabled(true);
   ui->btnRemoveCompartment->setEnabled(false);
   const QString &membraneID = model.getMembranes().getIds()[currentRow];
   SPDLOG_DEBUG("row {} selected", currentRow);

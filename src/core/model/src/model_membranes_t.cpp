@@ -32,6 +32,9 @@ SCENARIO("SBML membranes",
       REQUIRE(ms.getIds().isEmpty());
       REQUIRE(ms.getMembranes().empty());
       REQUIRE(ms.getNames().isEmpty());
+      // set name is no-op if not found
+      ms.setName("dontexist", "new name");
+      REQUIRE(ms.getNames().isEmpty());
       ms.setHasUnsavedChanges(false);
       ms.updateCompartments(compartments);
       ms.setHasUnsavedChanges(true);
@@ -45,6 +48,13 @@ SCENARIO("SBML membranes",
       REQUIRE(ms.getIds()[0] == "c1_c0_membrane");
       REQUIRE(ms.getNames().size() == 1);
       REQUIRE(ms.getNames()[0] == "c1 name <-> c0 name");
+      ms.setHasUnsavedChanges(false);
+      // setting name to same value is a no-op
+      ms.setName("c1_c0_membrane", "c1 name <-> c0 name");
+      REQUIRE(ms.getHasUnsavedChanges() == false);
+      // but setting a new name is an unsaved change
+      ms.setName("c1_c0_membrane", "mem");
+      REQUIRE(ms.getHasUnsavedChanges() == true);
       REQUIRE(ms.getIdColourPairs().size() == 1);
       REQUIRE(ms.getIdColourPairs()[0].first == "c1_c0_membrane");
       REQUIRE(ms.getIdColourPairs()[0].second ==
