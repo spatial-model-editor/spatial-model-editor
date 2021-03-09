@@ -217,10 +217,7 @@ static std::string getOrCreateDiffusionConstantUnit(libsbml::Model *model) {
 }
 
 static libsbml::Parameter *
-getOrCreateDiffusionConstantParameter(libsbml::Model *model,
-                                      const QString &speciesId) {
-  std::string units = getOrCreateDiffusionConstantUnit(model);
-  // look for existing diffusion constant parameter
+getDiffusionConstantParameter(libsbml::Model *model, const QString &speciesId) {
   for (unsigned i = 0; i < model->getNumParameters(); ++i) {
     auto *param = model->getParameter(i);
     if (auto *spp = dynamic_cast<libsbml::SpatialParameterPlugin *>(
@@ -229,28 +226,35 @@ getOrCreateDiffusionConstantParameter(libsbml::Model *model,
         (spp->getDiffusionCoefficient()->getVariable() ==
          speciesId.toStdString())) {
       SPDLOG_INFO("  - found existing diffusion constant: {}", param->getId());
-      param->setConstant(true);
-      param->setUnits(units);
-      spp->getDiffusionCoefficient()->setType(
-          libsbml::DiffusionKind_t::SPATIAL_DIFFUSIONKIND_ISOTROPIC);
       return param;
     }
   }
-  // otherwise create and return new diffusion constant parameter
-  auto *param = model->createParameter();
+  return nullptr;
+}
+
+static libsbml::Parameter *
+getOrCreateDiffusionConstantParameter(libsbml::Model *model,
+                                      const QString &speciesId) {
+  auto *param = getDiffusionConstantParameter(model, speciesId);
+  if (param != nullptr) {
+    return param;
+  }
+  // not found: create a new one
+  std::string units = getOrCreateDiffusionConstantUnit(model);
+  param = model->createParameter();
   std::string id = speciesId.toStdString() + "_diffusionConstant";
   while (!isSIdAvailable(id, model)) {
     id.append("_");
   }
   param->setId(id);
+  param->setValue(1.0);
+  param->setConstant(true);
+  param->setUnits(units);
   auto *spp = dynamic_cast<libsbml::SpatialParameterPlugin *>(
       param->getPlugin("spatial"));
   auto *diffCoeff = spp->createDiffusionCoefficient();
-  param->setConstant(true);
   diffCoeff->setVariable(speciesId.toStdString());
   diffCoeff->setType(libsbml::DiffusionKind_t::SPATIAL_DIFFUSIONKIND_ISOTROPIC);
-  param->setValue(1.0);
-  param->setUnits(units);
   SPDLOG_INFO("  - created new diffusion constant: {} = {}", param->getId(),
               param->getValue());
   return param;
@@ -352,6 +356,11 @@ void ModelSpecies::remove(const QString &id) {
   fields.erase(fields.begin() +
                static_cast<decltype(fields)::difference_type>(i));
   modelReactions->removeAllInvolvingSpecies(id);
+  if (auto *param = getDiffusionConstantParameter(sbmlModel, id);
+      param != nullptr) {
+    SPDLOG_INFO("Removing diffusion constant parameter '{}'", param->getId());
+    param->removeFromParentAndDelete();
+  }
   SPDLOG_INFO("  - species {} removed", spec->getId());
 }
 
