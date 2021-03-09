@@ -14,10 +14,10 @@ void pybindMembrane(pybind11::module &m) {
                              R"(
                              a membrane where two compartments meet
                              )")
-      .def_property_readonly("name", &Membrane::getName,
-                             R"(
-                             str: the name of this membrane
-                             )")
+      .def_property("name", &Membrane::getName, &Membrane::setName,
+                    R"(
+                    str: the name of this membrane
+                    )")
       .def_readonly("reactions", &Membrane::reactions,
                     R"(
                     ReactionList: the reactions in this membrane
@@ -40,6 +40,10 @@ Membrane::Membrane(model::Model *sbmlDocWrapper, const std::string &sId)
 
 std::string Membrane::getName() const {
   return s->getMembranes().getName(id.c_str()).toStdString();
+}
+
+void Membrane::setName(const std::string &name) {
+  s->getMembranes().setName(id.c_str(), name.c_str());
 }
 
 std::string Membrane::getStr() const {
