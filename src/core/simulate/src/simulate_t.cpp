@@ -317,17 +317,18 @@ SCENARIO("Simulate: very_simple_model, failing Pixel sim",
   REQUIRE(sim.errorImage().isNull());
   sim.doTimesteps(1.0);
   REQUIRE(!sim.errorMessage().empty());
-  REQUIRE(sim.errorImage().size() == QSize(100,100));
+  REQUIRE(sim.errorImage().size() == QSize(100, 100));
 }
 
 SCENARIO("Simulate: very_simple_model, empty compartment, DUNE sim",
          "[core/simulate/simulate][core/simulate][core][simulate][dune]") {
-  // check that DUNE simulates a model with an empty compartment without crashing
+  // check that DUNE simulates a model with an empty compartment without
+  // crashing
   model::Model s;
   QFile f(":/models/very-simple-model.xml");
   f.open(QIODevice::ReadOnly);
   s.importSBMLString(f.readAll().toStdString());
-  WHEN("Outer species removed"){
+  WHEN("Outer species removed") {
     s.getSpecies().remove("A_c1");
     s.getSpecies().remove("B_c1");
     REQUIRE(s.getSpecies().getIds("c1").empty());
@@ -336,7 +337,7 @@ SCENARIO("Simulate: very_simple_model, empty compartment, DUNE sim",
     sim.doTimesteps(0.1, 1);
     REQUIRE(sim.errorMessage().empty());
   }
-  WHEN("Inner and Outer species removed"){
+  WHEN("Inner and Outer species removed") {
     s.getSpecies().remove("A_c1");
     s.getSpecies().remove("B_c1");
     REQUIRE(s.getSpecies().getIds("c1").empty());
@@ -1002,6 +1003,115 @@ SCENARIO("PyConc",
     REQUIRE(dA.size() == 100);
     REQUIRE(dA[0].size() == 100);
     REQUIRE(dA[0][0] == dbl_approx(0.0));
+  }
+}
+
+SCENARIO("applyConcsToModel initial concentrations",
+         "[core/simulate/simulate][core/simulate][core][simulate][Q]") {
+  model::Model s;
+  QFile f(":/models/very-simple-model.xml");
+  f.open(QIODevice::ReadOnly);
+  s.importSBMLString(f.readAll().toStdString());
+  // set various types of initial concentrations
+  s.getSpecies().setInitialConcentration("B_c1", 0.66);
+  s.getSpecies().setInitialConcentration("A_c3", 0.123);
+  s.getSpecies().setAnalyticConcentration("A_c2", "cos(x/5)+2");
+  s.getSpecies().setInitialConcentration("B_c3", 1.0);
+  auto c{s.getSpecies().getField("B_c3")->getConcentrationImageArray()};
+  for (std::size_t i = 0; i < c.size(); ++i) {
+      c[i] = 0.78 * static_cast<double>(i);
+  }
+  s.getSpecies().setSampledFieldConcentration("B_c3", c);
+
+  // set up simulation of model
+  simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
+  sim.doTimesteps(0.01);
+
+  // apply simulation initial concs to a copy of the original model
+  model::Model s2;
+  QFile f2(":/models/very-simple-model.xml");
+  f2.open(QIODevice::ReadOnly);
+  s2.importSBMLString(f2.readAll().toStdString());
+  sim.applyConcsToModel(s2, 0);
+  // check concentrations match
+  for (const auto &cId : s.getCompartments().getIds()) {
+    for (const auto &sId : s.getSpecies().getIds(cId)) {
+      auto spec1{s.getSpecies().getSampledFieldConcentration(sId)};
+      auto spec2{s2.getSpecies().getSampledFieldConcentration(sId)};
+      REQUIRE(spec1.size() == spec2.size());
+      for (std::size_t i = 0; i < spec1.size(); ++i) {
+        REQUIRE(spec1[i] == dbl_approx(spec2[i]));
+      }
+    }
+  }
+}
+
+SCENARIO("applyConcsToModel after simulation",
+         "[core/simulate/simulate][core/simulate][core][simulate]") {
+  model::Model s;
+  QFile f(":/models/very-simple-model.xml");
+  f.open(QIODevice::ReadOnly);
+  s.importSBMLString(f.readAll().toStdString());
+  simulate::Options options;
+  options.dune.dt = 0.01;
+  // initial concs should match original model
+  // (note any analytic initial concs replaced with sampled fields)
+  model::Model s2;
+  QFile f2(":/models/very-simple-model.xml");
+  f2.open(QIODevice::ReadOnly);
+  s2.importSBMLString(f2.readAll().toStdString());
+  simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
+  sim.applyConcsToModel(s, 0);
+  for (const auto &cId : s.getCompartments().getIds()) {
+    for (const auto &sId : s.getSpecies().getIds(cId)) {
+      auto spec1{s.getSpecies().getSampledFieldConcentration(sId)};
+      auto spec2{s2.getSpecies().getSampledFieldConcentration(sId)};
+      REQUIRE(spec1.size() == spec2.size());
+      for (std::size_t i = 0; i < spec1.size(); ++i) {
+        REQUIRE(spec1[i] == dbl_approx(spec2[i]));
+      }
+    }
+  }
+  // do t=0.02 sim
+  sim.doTimesteps(0.02);
+  REQUIRE(sim.getNCompletedTimesteps() == 2);
+  // do t=0.01 sim, apply concs to model, create new sim from this model
+  // new sim at t=0 should equal old sim at t=0.01
+  simulate::Simulation simA(s, simulate::SimulatorType::Pixel, options);
+  simA.doTimesteps(0.01);
+  REQUIRE(simA.getNCompletedTimesteps() == 2);
+  simA.applyConcsToModel(s, 1);
+  simulate::Simulation simB(s, simulate::SimulatorType::Pixel, options);
+  for (std::size_t iComp = 0; iComp < simA.getCompartmentIds().size();
+       ++iComp) {
+    const auto &specIds = simA.getSpeciesIds(iComp);
+    for (std::size_t iSpec = 0; iSpec < specIds.size(); ++iSpec) {
+      auto concSimA{simA.getConcArray(1, iComp, iSpec)};
+      auto concSimB{simB.getConcArray(0, iComp, iSpec)};
+      REQUIRE(concSimA.size() == concSimB.size());
+      for (std::size_t i = 0; i < concSimA.size(); ++i) {
+        CAPTURE(concSimA[i]);
+        CAPTURE(concSimB[i]);
+        REQUIRE(std::abs(concSimA[i] - concSimB[i]) < 1e-12);
+      }
+    }
+  }
+  // simulate new sim for t=0.01, should equal t=0.02 sim of original model
+  simB.doTimesteps(0.01);
+  REQUIRE(simB.getNCompletedTimesteps() == 2);
+  for (std::size_t iComp = 0; iComp < simA.getCompartmentIds().size();
+       ++iComp) {
+    const auto &specIds = simA.getSpeciesIds(iComp);
+    for (std::size_t iSpec = 0; iSpec < specIds.size(); ++iSpec) {
+      auto concSim{sim.getConcArray(1, iComp, iSpec)};
+      auto concSimB{simB.getConcArray(1, iComp, iSpec)};
+      REQUIRE(concSim.size() == concSimB.size());
+      for (std::size_t i = 0; i < concSimB.size(); ++i) {
+        CAPTURE(concSim[i]);
+        CAPTURE(concSimB[i]);
+        REQUIRE(std::abs(concSim[i] - concSimB[i]) < 1e-14);
+      }
+    }
   }
 }
 

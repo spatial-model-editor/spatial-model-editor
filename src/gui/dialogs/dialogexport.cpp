@@ -8,10 +8,12 @@
 #include <algorithm>
 
 DialogExport::DialogExport(const QVector<QImage> &images,
-                           const PlotWrapper *plotWrapper, int timepoint,
+                           const PlotWrapper *plotWrapper,
+                           sme::model::Model &model,
+                           const sme::simulate::Simulation &simulation, int timepoint,
                            QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogExport>()}, imgs{images},
-      plot(plotWrapper) {
+      plot(plotWrapper), m(model), sim(simulation) {
   ui->setupUi(this);
   for (double t : plotWrapper->getTimepoints()) {
     ui->cmbTimepoint->addItem(sme::utils::dblToQStr(t, 6));
@@ -24,14 +26,16 @@ DialogExport::DialogExport(const QVector<QImage> &images,
           &DialogExport::doExport);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogExport::reject);
-  connect(ui->radSingleTimepoint, &QRadioButton::toggled, this,
+  connect(ui->radSingleImage, &QRadioButton::toggled, this,
+          &DialogExport::radSingleTimepoint_toggled);
+  connect(ui->radModel, &QRadioButton::toggled, this,
           &DialogExport::radSingleTimepoint_toggled);
 }
 
 DialogExport::~DialogExport() = default;
 
 void DialogExport::radSingleTimepoint_toggled(bool checked) {
-  if (checked) {
+  if (ui->radModel->isChecked() || ui->radSingleImage->isChecked()) {
     ui->cmbTimepoint->setEnabled(true);
   } else {
     ui->cmbTimepoint->setEnabled(false);
@@ -39,9 +43,13 @@ void DialogExport::radSingleTimepoint_toggled(bool checked) {
 }
 
 void DialogExport::doExport() {
-  if (ui->radSingleTimepoint->isChecked()) {
+  if (ui->radModel->isChecked()){
+    auto timePoint{static_cast<std::size_t>(ui->cmbTimepoint->currentIndex())};
+    sim.applyConcsToModel(m, timePoint);
+    accept();
+  } else if (ui->radSingleImage->isChecked()) {
     return saveImage();
-  } else if (ui->radAllTimepoints->isChecked()) {
+  } else if (ui->radAllImages->isChecked()) {
     return saveImages();
   } else if (ui->radCSV->isChecked()) {
     return saveCSV();

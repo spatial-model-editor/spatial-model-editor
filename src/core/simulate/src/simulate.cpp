@@ -148,9 +148,7 @@ const std::string &Simulation::errorMessage() const {
   return simulator->errorMessage();
 }
 
-const QImage& Simulation::errorImage() const{
-  return simulator->errorImage();
-}
+const QImage &Simulation::errorImage() const { return simulator->errorImage(); }
 
 const std::vector<std::string> &Simulation::getCompartmentIds() const {
   return compartmentIds;
@@ -189,6 +187,38 @@ std::vector<double> Simulation::getConc(std::size_t timeIndex,
     c.push_back(compConc[ix * stride + speciesIndex]);
   }
   return c;
+}
+
+std::vector<double> Simulation::getConcArray(std::size_t timeIndex,
+                                             std::size_t compartmentIndex,
+                                             std::size_t speciesIndex) const {
+  std::vector<double> c(
+      static_cast<std::size_t>(imageSize.width() * imageSize.height()), 0.0);
+  const auto &compConc = concentration[timeIndex][compartmentIndex];
+  const auto &comp = compartments[compartmentIndex];
+  std::size_t nPixels = comp->nPixels();
+  std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
+  std::size_t stride{nSpecies + concPadding};
+  for (std::size_t ix = 0; ix < nPixels; ++ix) {
+    const auto &point = comp->getPixel(ix);
+    auto arrayIndex{static_cast<std::size_t>(
+        point.x() + imageSize.width() * (imageSize.height() - 1 - point.y()))};
+    c[arrayIndex] = compConc[ix * stride + speciesIndex];
+  }
+  return c;
+}
+
+void Simulation::applyConcsToModel(model::Model &model,
+                                   std::size_t timeIndex) const {
+  for (std::size_t iCompartment = 0; iCompartment < compartmentIds.size();
+       ++iCompartment) {
+    const auto &speciesIds{getSpeciesIds(iCompartment)};
+    for (std::size_t iSpecies = 0; iSpecies < speciesIds.size(); ++iSpecies) {
+      model.getSpecies().setSampledFieldConcentration(
+          speciesIds[iSpecies].c_str(),
+          getConcArray(timeIndex, iCompartment, iSpecies));
+    }
+  }
 }
 
 std::vector<double> Simulation::getDcdt(std::size_t compartmentIndex,
@@ -290,11 +320,12 @@ QImage Simulation::getConcImage(
   return img;
 }
 
-std::pair<std::map<std::string, std::vector<std::vector<double>>>,std::map<std::string, std::vector<std::vector<double>>>>
+std::pair<std::map<std::string, std::vector<std::vector<double>>>,
+          std::map<std::string, std::vector<std::vector<double>>>>
 Simulation::getPyConcs(std::size_t timeIndex) const {
   using PyConc = std::vector<std::vector<double>>;
   std::pair<std::map<std::string, PyConc>, std::map<std::string, PyConc>> pair;
-  auto& [pyConcs, pyDcdts] = pair;
+  auto &[pyConcs, pyDcdts] = pair;
   PyConc zeros = PyConc(
       static_cast<std::size_t>(imageSize.height()),
       std::vector<double>(static_cast<std::size_t>(imageSize.width()), 0.0));
@@ -311,7 +342,7 @@ Simulation::getPyConcs(std::size_t timeIndex) const {
   for (std::size_t ci = 0; ci < compartmentSpeciesIds.size(); ++ci) {
     const auto &pixels = compartments[ci]->getPixels();
     const auto &conc = concentration[timeIndex][ci];
-    const std::vector<double>* dcdt{nullptr};
+    const std::vector<double> *dcdt{nullptr};
     if (auto *s = dynamic_cast<PixelSim *>(simulator.get()); s != nullptr) {
       dcdt = &(s->getDcdt(ci));
     }
@@ -323,7 +354,7 @@ Simulation::getPyConcs(std::size_t timeIndex) const {
       auto y = static_cast<std::size_t>(p.y());
       for (std::size_t is : compartmentSpeciesIndices[ci]) {
         vecPyConcs[ci][is][y][x] = conc[ix * stride + is];
-        if(dcdt != nullptr){
+        if (dcdt != nullptr) {
           vecPyDcdts[ci][is][y][x] = (*dcdt)[ix * stride + is];
         }
       }
@@ -338,8 +369,6 @@ Simulation::getPyConcs(std::size_t timeIndex) const {
   }
   return pair;
 }
-
-
 
 std::size_t Simulation::getNCompletedTimesteps() const {
   return nCompletedTimesteps;

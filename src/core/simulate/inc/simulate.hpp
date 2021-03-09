@@ -78,6 +78,10 @@ public:
   std::vector<double> getConc(std::size_t timeIndex,
                               std::size_t compartmentIndex,
                               std::size_t speciesIndex) const;
+  std::vector<double> getConcArray(std::size_t timeIndex,
+                                   std::size_t compartmentIndex,
+                                   std::size_t speciesIndex) const;
+  void applyConcsToModel(model::Model& model, std::size_t timeIndex) const;
   std::vector<double> getDcdt(std::size_t compartmentIndex,
                               std::size_t speciesIndex) const;
   double getLowerOrderConc(std::size_t compartmentIndex,
