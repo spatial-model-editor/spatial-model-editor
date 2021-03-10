@@ -1,6 +1,7 @@
 target_sources(
   gui
-  PRIVATE tabfunctions.cpp
+  PRIVATE tabevents.cpp
+          tabfunctions.cpp
           tabgeometry.cpp
           tabparameters.cpp
           tabreactions.cpp
@@ -11,7 +12,8 @@ target_include_directories(gui PUBLIC .)
 if(BUILD_TESTING)
   target_sources(
     gui_tests
-    PUBLIC tabfunctions_t.cpp
+    PUBLIC tabevents_t.cpp
+           tabfunctions_t.cpp
            tabgeometry_t.cpp
            tabparameters_t.cpp
            tabreactions_t.cpp

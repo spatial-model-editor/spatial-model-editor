@@ -8,6 +8,7 @@
 
 #include "model_compartments.hpp"
 #include "model_display_options.hpp"
+#include "model_events.hpp"
 #include "model_functions.hpp"
 #include "model_geometry.hpp"
 #include "model_math.hpp"
@@ -59,6 +60,7 @@ private:
   QString currentFilename;
 
   ModelCompartments modelCompartments;
+  ModelEvents modelEvents;
   ModelGeometry modelGeometry;
   ModelMembranes modelMembranes;
   ModelSpecies modelSpecies;
@@ -93,6 +95,8 @@ public:
   const ModelFunctions &getFunctions() const;
   ModelParameters &getParameters();
   const ModelParameters &getParameters() const;
+  ModelEvents &getEvents();
+  const ModelEvents &getEvents() const;
   ModelUnits &getUnits();
   const ModelUnits &getUnits() const;
   ModelMath &getMath();
@@ -109,7 +113,8 @@ public:
   void importSBMLFile(const std::string &filename);
   void importSBMLString(const std::string &xml);
   void exportSBMLFile(const std::string &filename);
-  QString getXml();
+  void updateSBMLDoc();
+  QString getXml() const;
   void clear();
 
   SpeciesGeometry getSpeciesGeometry(const QString &speciesID) const;

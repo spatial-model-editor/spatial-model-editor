@@ -17,7 +17,7 @@ namespace sme {
 
 namespace model {
 
-class ModelSpecies;
+class ModelEvents;
 
 struct IdName {
   std::string id;
@@ -45,12 +45,13 @@ private:
   QStringList ids;
   QStringList names;
   SpatialCoordinates spatialCoordinates;
-  libsbml::Model *sbmlModel = nullptr;
+  libsbml::Model *sbmlModel{nullptr};
   bool hasUnsavedChanges{false};
+  ModelEvents* modelEvents{nullptr};
 
 public:
   ModelParameters();
-  explicit ModelParameters(libsbml::Model *model);
+  explicit ModelParameters(libsbml::Model *model, ModelEvents* events= nullptr);
   const QStringList &getIds() const;
   const QStringList &getNames() const;
   QString setName(const QString &id, const QString &name);

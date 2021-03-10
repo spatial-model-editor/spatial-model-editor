@@ -1,17 +1,15 @@
 #include "model_parameters.hpp"
-
+#include "id.hpp"
+#include "logger.hpp"
+#include "model_events.hpp"
+#include "sbml_math.hpp"
+#include "sbml_utils.hpp"
+#include <QString>
+#include <memory>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
-
-#include <QString>
-#include <memory>
-
-#include "id.hpp"
-#include "logger.hpp"
-#include "sbml_math.hpp"
-#include "sbml_utils.hpp"
 
 namespace sme {
 
@@ -124,9 +122,10 @@ static SpatialCoordinates importSpatialCoordinates(libsbml::Model *model) {
 
 ModelParameters::ModelParameters() = default;
 
-ModelParameters::ModelParameters(libsbml::Model *model)
+ModelParameters::ModelParameters(libsbml::Model *model, ModelEvents *events)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(ids, model)},
-      spatialCoordinates{importSpatialCoordinates(model)}, sbmlModel{model} {}
+      spatialCoordinates{importSpatialCoordinates(model)}, sbmlModel{model},
+      modelEvents{events} {}
 
 const QStringList &ModelParameters::getIds() const { return ids; }
 
@@ -262,6 +261,9 @@ void ModelParameters::remove(const QString &id) {
   if (rmpar == nullptr) {
     SPDLOG_WARN("  - parameter {} not found", sId);
     return;
+  }
+  if (modelEvents != nullptr) {
+    modelEvents->removeAnyUsingVariable(id);
   }
   SPDLOG_INFO("  - parameter {} removed", rmpar->getId());
   auto i = ids.indexOf(id);

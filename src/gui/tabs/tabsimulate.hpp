@@ -20,7 +20,7 @@ namespace sme {
 namespace model {
 class Model;
 }
-}
+} // namespace sme
 class PlotWrapper;
 
 class TabSimulate : public QWidget {
@@ -62,6 +62,7 @@ private:
   void btnExport_clicked();
   void updateSpeciesToDraw();
   void updatePlotAndImages();
+  void finalizePlotAndImages();
   void btnDisplayOptions_clicked();
   void graphClicked(const QMouseEvent *event);
   void hslideTime_valueChanged(int value);
