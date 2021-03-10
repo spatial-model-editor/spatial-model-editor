@@ -43,6 +43,7 @@ SCENARIO("SBML parameters",
       REQUIRE(coords.x.name == "x name");
       REQUIRE(coords.y.id == "y");
       REQUIRE(coords.y.name == "yY");
+      s.updateSBMLDoc();
       std::string xml = s.getXml().toStdString();
       std::unique_ptr<libsbml::SBMLDocument> doc2{
           libsbml::readSBMLFromString(xml.c_str())};
@@ -77,6 +78,7 @@ SCENARIO("SBML parameters",
       REQUIRE(param->getValue() == dbl_approx(0));
       // set value
       params.setExpression("p1", "1.4");
+      s.updateSBMLDoc();
       xml = s.getXml().toStdString();
       doc2.reset(libsbml::readSBMLFromString(xml.c_str()));
       param = doc2->getModel()->getParameter("p1");
@@ -88,6 +90,7 @@ SCENARIO("SBML parameters",
       REQUIRE(asgn == nullptr);
       // set another value
       params.setExpression("p1", "-2.7e-5");
+      s.updateSBMLDoc();
       xml = s.getXml().toStdString();
       doc2.reset(libsbml::readSBMLFromString(xml.c_str()));
       param = doc2->getModel()->getParameter("p1");
@@ -99,6 +102,7 @@ SCENARIO("SBML parameters",
       REQUIRE(asgn == nullptr);
       // remove param
       params.remove("p1");
+      s.updateSBMLDoc();
       xml = s.getXml().toStdString();
       doc2.reset(libsbml::readSBMLFromString(xml.c_str()));
       param = doc2->getModel()->getParameter("p1");
@@ -120,6 +124,7 @@ SCENARIO("SBML parameters",
       params.setExpression("p1", "cos(1.4)");
       REQUIRE(s.getHasUnsavedChanges() == true);
       REQUIRE(params.getHasUnsavedChanges() == true);
+      s.updateSBMLDoc();
       std::string xml = s.getXml().toStdString();
       std::unique_ptr<libsbml::SBMLDocument> doc2{
           libsbml::readSBMLFromString(xml.c_str())};
@@ -132,6 +137,7 @@ SCENARIO("SBML parameters",
       REQUIRE(params.getExpression("p1") == "cos(1.4)");
       // change expression to a double: assignment removed
       params.setExpression("p1", "1.4");
+      s.updateSBMLDoc();
       xml = s.getXml().toStdString();
       doc2.reset(libsbml::readSBMLFromString(xml.c_str()));
       param = doc2->getModel()->getParameter("p1");
@@ -143,6 +149,7 @@ SCENARIO("SBML parameters",
       REQUIRE(asgn == nullptr);
       // change back to an expression
       params.setExpression("p1", "exp(2)  ");
+      s.updateSBMLDoc();
       xml = s.getXml().toStdString();
       doc2.reset(libsbml::readSBMLFromString(xml.c_str()));
       param = doc2->getModel()->getParameter("p1");
@@ -154,6 +161,7 @@ SCENARIO("SBML parameters",
       REQUIRE(params.getExpression("p1") == "exp(2)");
       // remove param
       params.remove("p1");
+      s.updateSBMLDoc();
       xml = s.getXml().toStdString();
       doc2.reset(libsbml::readSBMLFromString(xml.c_str()));
       param = doc2->getModel()->getParameter("p1");

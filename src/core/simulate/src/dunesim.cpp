@@ -169,10 +169,10 @@ void DuneSim::updatePixels() {
     auto &missing = missingPixels.emplace_back();
     for (std::size_t ix = 0; ix < ixAssigned.size(); ++ix) {
       if (!ixAssigned[ix]) {
-        SPDLOG_WARN("pixel {} not in a triangle", ix);
+        SPDLOG_DEBUG("pixel {} not in a triangle", ix);
         // find a neigbouring valid pixel
         auto ixNeighbour = getIxValidNeighbour(ix, ixAssigned, geom);
-        SPDLOG_WARN("  -> using concentration from pixel {}", ixNeighbour);
+        SPDLOG_DEBUG("  -> using concentration from pixel {}", ixNeighbour);
         missing.push_back({ix, ixNeighbour});
       }
     }

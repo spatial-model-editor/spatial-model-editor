@@ -61,6 +61,7 @@ void Model::initModelData() {
   modelUnits = ModelUnits(model);
   modelMath = ModelMath(model);
   modelFunctions = ModelFunctions(model);
+  modelEvents = ModelEvents(model);
   modelMembranes.clear();
   // todo: reduce these cyclic dependencies: currently order of initialization
   // matters, should be possible to reduce coupling here
@@ -69,13 +70,13 @@ void Model::initModelData() {
   modelGeometry = ModelGeometry(model, &modelCompartments, &modelMembranes);
   modelGeometry.importSampledFieldGeometry(model);
   modelGeometry.importParametricGeometry(model);
-  modelParameters = ModelParameters(model);
+  modelParameters = ModelParameters(model, &modelEvents);
   modelSpecies = ModelSpecies(model, &modelCompartments, &modelGeometry,
                               &modelParameters, &modelReactions);
   modelReactions = ModelReactions(model, modelMembranes.getMembranes());
 }
 
-void Model::setHasUnsavedChanges(bool unsavedChanges){
+void Model::setHasUnsavedChanges(bool unsavedChanges) {
   modelUnits.setHasUnsavedChanges(unsavedChanges);
   modelFunctions.setHasUnsavedChanges(unsavedChanges);
   modelMembranes.setHasUnsavedChanges(unsavedChanges);
@@ -84,6 +85,7 @@ void Model::setHasUnsavedChanges(bool unsavedChanges){
   modelParameters.setHasUnsavedChanges(unsavedChanges);
   modelSpecies.setHasUnsavedChanges(unsavedChanges);
   modelReactions.setHasUnsavedChanges(unsavedChanges);
+  modelEvents.setHasUnsavedChanges(unsavedChanges);
 }
 
 bool Model::getIsValid() const { return isValid; }
@@ -96,7 +98,8 @@ bool Model::getHasUnsavedChanges() const {
          modelGeometry.getHasUnsavedChanges() ||
          modelParameters.getHasUnsavedChanges() ||
          modelSpecies.getHasUnsavedChanges() ||
-         modelReactions.getHasUnsavedChanges();
+         modelReactions.getHasUnsavedChanges() ||
+         modelEvents.getHasUnsavedChanges();
 }
 
 const QString &Model::getCurrentFilename() const { return currentFilename; }
@@ -105,8 +108,7 @@ void Model::exportSBMLFile(const std::string &filename) {
   if (!isValid) {
     return;
   }
-  modelGeometry.writeGeometryToSBML();
-  modelMembranes.exportToSBML(doc->getModel());
+  updateSBMLDoc();
   SPDLOG_INFO("Exporting SBML model to {}", filename);
   currentFilename = filename.c_str();
   if (!libsbml::SBMLWriter().writeSBML(doc.get(), filename)) {
@@ -116,13 +118,16 @@ void Model::exportSBMLFile(const std::string &filename) {
   setHasUnsavedChanges(false);
 }
 
-QString Model::getXml() {
+void Model::updateSBMLDoc(){
+  modelGeometry.writeGeometryToSBML();
+  modelMembranes.exportToSBML(doc->getModel());
+}
+
+QString Model::getXml() const {
   QString xml;
   if (!isValid) {
     return {};
   }
-  modelGeometry.writeGeometryToSBML();
-  modelMembranes.exportToSBML(doc->getModel());
   printSBMLDocErrors(doc.get());
   std::unique_ptr<char, decltype(&std::free)> xmlChar(
       libsbml::writeSBMLToString(doc.get()), &std::free);
@@ -166,6 +171,10 @@ ModelParameters &Model::getParameters() { return modelParameters; }
 
 const ModelParameters &Model::getParameters() const { return modelParameters; }
 
+ModelEvents &Model::getEvents() { return modelEvents; }
+
+const ModelEvents &Model::getEvents() const { return modelEvents; }
+
 ModelUnits &Model::getUnits() { return modelUnits; }
 
 const ModelUnits &Model::getUnits() const { return modelUnits; }
@@ -185,6 +194,7 @@ void Model::clear() {
   modelReactions = ModelReactions{};
   modelFunctions = ModelFunctions{};
   modelParameters = ModelParameters{};
+  modelEvents = ModelEvents{};
   modelUnits = ModelUnits{};
   modelMath = ModelMath{};
 }

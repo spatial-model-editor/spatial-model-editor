@@ -11,6 +11,7 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <queue>
 #include <string>
 #include <vector>
 
@@ -33,8 +34,7 @@ class Simulation {
 private:
   std::unique_ptr<BaseSim> simulator;
   SimulatorType simulatorType;
-  DuneOptions duneOptions;
-  PixelOptions pixelOptions;
+  Options simulatorOptions;
   std::vector<const geometry::Compartment *> compartments;
   std::vector<std::string> compartmentIds;
   // compartment->species
@@ -54,7 +54,12 @@ private:
   std::atomic<bool> stopRequested{false};
   std::atomic<std::size_t> nCompletedTimesteps{0};
   std::size_t concPadding{0};
+  std::unique_ptr<sme::model::Model> nextModel;
+  std::string xmlPrevModel;
+  std::queue<double> eventTimes;
   void initModel(const model::Model &model);
+  void initEvents(const model::Model &model);
+  void applyNextEvent();
   void updateConcentrations(double t);
 
 public:
