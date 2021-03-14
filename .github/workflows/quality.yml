@@ -14,6 +14,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: 'true'
+        fetch-depth: 0
     - name: Cache ccache
       uses: actions/cache@v2
       with:
@@ -58,3 +59,66 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: ./ci/sonar.sh
+
+  asan:
+    name: ASAN
+    runs-on: ubuntu-16.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - name: Cache ccache
+        uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
+          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Get static libs
+        run: sudo ./ci/getlibs.sh linux
+      - name: Build script
+        run: ./ci/asan.sh
+
+  ubsan:
+    name: UBSAN
+    runs-on: ubuntu-16.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - name: Cache ccache
+        uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
+          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Get static libs
+        run: sudo ./ci/getlibs.sh linux
+      - name: Build script
+        run: ./ci/ubsan.sh
+
+  tsan:
+    name: TSAN
+    runs-on: ubuntu-16.04
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+      - name: Cache ccache
+        uses: actions/cache@v2
+        with:
+          path: ~/.ccache
+          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
+          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: Get static libs
+        run: sudo ./ci/getlibs.sh linux
+      - name: Build script
+        run: ./ci/tsan.sh

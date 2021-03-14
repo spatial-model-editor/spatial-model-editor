@@ -67,5 +67,10 @@ SCENARIO("SBML events",
     REQUIRE(events.getHasUnsavedChanges() == true);
     REQUIRE(events.getIds().size() == 0);
     REQUIRE(events.getNames().size() == 0);
+//    int k = 0x7fffffff;
+//    int kk = k + 1;
+//    CAPTURE(k);
+//    CAPTURE(kk);
+//    REQUIRE(k == kk);
   }
 }

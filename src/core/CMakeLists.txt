@@ -120,10 +120,7 @@ endif()
 target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 # set Logger level
 target_compile_definitions(
-  core
-  PUBLIC
-    SPDLOG_ACTIVE_LEVEL=$<$<CONFIG:Debug>:SPDLOG_LEVEL_TRACE>$<$<CONFIG:Release>:SPDLOG_LEVEL_INFO>
-)
+  core PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_${SME_LOG_LEVEL})
 
 target_link_libraries(
   core
@@ -159,29 +156,3 @@ add_subdirectory(simulate)
 # set Compile options and warnings
 set_target_properties(core PROPERTIES CXX_STANDARD 17)
 set_target_properties(core PROPERTIES POSITION_INDEPENDENT_CODE ON)
-
-# todo: do these in CI, not here:
-target_link_options(
-  core
-  PUBLIC
-  $<$<CONFIG:Debug>:
-  --coverage
-  -fsanitize=address
-  -fno-omit-frame-pointer>
-  $<$<CXX_COMPILER_ID:Clang>:-fuse-ld=lld>)
-target_compile_options(
-  core
-  PUBLIC $<$<CONFIG:Debug>:--coverage
-         -fsanitize=address
-         -fno-omit-frame-pointer
-         -Wall
-         -Wextra
-         -Wpedantic
-         -Wshadow
-         -Wunused
-         -Wconversion
-         -Wsign-conversion
-         -Wcast-align>)
-target_compile_options(
-  core
-  PUBLIC $<$<AND:$<CONFIG:Debug>,$<CXX_COMPILER_ID:Clang>>:-shared-libasan>)

@@ -84,6 +84,8 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       REQUIRE(txtCompartmentName->text() == "Cell");
       // select first membrane
       listMembranes->setFocus();
+      // CI delay: give time for focus to be set
+      wait(50);
       sendKeyEvents(listMembranes, {" "});
       REQUIRE(txtCompartmentName->isEnabled() == true);
       REQUIRE(listMembranes->currentItem()->text() == "Outside <-> Cell");

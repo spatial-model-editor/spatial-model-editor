@@ -40,6 +40,14 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
+set(SME_LOG_LEVEL
+    "INFO"
+    CACHE
+      STRING
+      "Logging level. Available levels in ascending order of verbosity: OFF, CRITICAL, ERROR, WARN, INFO, DEBUG, TRACE"
+)
+message(STATUS "SME_LOG_LEVEL: ${SME_LOG_LEVEL}")
+
 set(SME_EXTRA_EXE_LIBS
     ""
     CACHE STRING "Optional additional exe libs")
