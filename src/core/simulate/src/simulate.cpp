@@ -48,6 +48,61 @@ void Simulation::initModel(const model::Model &model) {
   }
 }
 
+void Simulation::initEvents(const model::Model &model) {
+  auto &events = model.getEvents();
+  xmlPrevModel = model.getXml().toStdString();
+  std::vector<double> times;
+  for (const auto &id : events.getIds()) {
+    double t{events.getTime(id)};
+    SPDLOG_INFO("  - event '{}' at time {}", id.toStdString(), t);
+    times.push_back(t);
+  }
+  std::sort(times.begin(), times.end());
+  std::unique(times.begin(), times.end());
+  for (auto t : times) {
+    SPDLOG_INFO("Adding event time {}", t);
+    eventTimes.push(t);
+  }
+  // add a null event at infinite time
+  eventTimes.push(std::numeric_limits<double>::max());
+}
+
+void Simulation::applyNextEvent() {
+  SPDLOG_INFO("Applying event(s) at time {}", eventTimes.front());
+  // make new copy of model
+  nextModel = std::make_unique<sme::model::Model>();
+  nextModel->importSBMLString(xmlPrevModel);
+  // apply latest simulation concentrations to model
+  applyConcsToModel(*nextModel.get(), nCompletedTimesteps - 1);
+  // apply events to model
+  const auto &events{nextModel->getEvents()};
+  for (const auto &id : events.getIds()) {
+    if (events.getTime(id) == eventTimes.front()) {
+      SPDLOG_INFO("  - event '{}'", id.toStdString());
+      nextModel->getParameters().setExpression(events.getVariable(id),
+                                               events.getExpression(id));
+    }
+  }
+  // export this model to xml for applying next event
+  nextModel->updateSBMLDoc();
+  xmlPrevModel = nextModel->getXml().toStdString();
+  // re-init simulator
+  simulator.reset();
+  if (simulatorType == SimulatorType::DUNE &&
+      nextModel->getGeometry().getMesh() != nullptr &&
+      nextModel->getGeometry().getMesh()->isValid()) {
+    simulator =
+        std::make_unique<DuneSim>(*nextModel.get(), compartmentIds,
+                                  compartmentSpeciesIds, simulatorOptions.dune);
+  } else {
+    simulator = std::make_unique<PixelSim>(*nextModel.get(), compartmentIds,
+                                           compartmentSpeciesIds,
+                                           simulatorOptions.pixel);
+  }
+  // remove event time
+  eventTimes.pop();
+}
+
 static std::vector<AvgMinMax>
 calculateAvgMinMax(const std::vector<double> &concs, std::size_t nSpecies,
                    std::size_t concPadding) {
@@ -90,9 +145,10 @@ void Simulation::updateConcentrations(double t) {
 
 Simulation::Simulation(const model::Model &sbmlDoc, SimulatorType simType,
                        const Options &options)
-    : simulatorType(simType),
+    : simulatorType(simType), simulatorOptions(options),
       imageSize(sbmlDoc.getGeometry().getImage().size()) {
   initModel(sbmlDoc);
+  initEvents(sbmlDoc);
   // init simulator
   if (simulatorType == SimulatorType::DUNE &&
       sbmlDoc.getGeometry().getMesh() != nullptr &&
@@ -118,6 +174,9 @@ std::size_t Simulation::doTimesteps(double time, std::size_t nSteps,
   QElapsedTimer timer;
   timer.start();
   // ensure there is enough space that push_back won't cause a reallocation
+
+  // todo: there should be a mutex/lock here in case reserve() reallocates
+  // to avoid a user getting garbage data while the vector contents are moving
   timePoints.reserve(timePoints.size() + nSteps);
   concentration.reserve(concentration.size() + nSteps);
   avgMinMax.reserve(avgMinMax.size() + nSteps);
@@ -132,7 +191,32 @@ std::size_t Simulation::doTimesteps(double time, std::size_t nSteps,
         remaining_timeout_ms = 0.0;
       }
     }
-    steps += simulator->run(time, remaining_timeout_ms);
+    if (timePoints.back() == eventTimes.front()) {
+      SPDLOG_INFO("Apply event at {}", eventTimes.front());
+      // event occurs before step: don't remove concentrations
+      applyNextEvent();
+    }
+    if (timePoints.back() + time > eventTimes.front()) {
+      // event occurs during step: need to split the step in two & apply event
+      // in between
+      double dt0{eventTimes.front() - timePoints.back()};
+      double dt1{timePoints.back() + time - eventTimes.front()};
+      SPDLOG_INFO("Partial pre-event step of {} to apply event at {}", dt0,
+                  eventTimes.front());
+      steps += simulator->run(dt0, remaining_timeout_ms);
+      // update intermediate concentrations to be able to apply them to model
+      updateConcentrations(timePoints.back() + dt0);
+      // apply event
+      applyNextEvent();
+      // remove intermediate concentrations
+      timePoints.pop_back();
+      concentration.pop_back();
+      avgMinMax.pop_back();
+      SPDLOG_INFO("Partial post-event step of {}", dt1);
+      steps += simulator->run(dt1, remaining_timeout_ms);
+    } else {
+      steps += simulator->run(time, remaining_timeout_ms);
+    }
     if (!simulator->errorMessage().empty() || stopRequested.load()) {
       isRunning.store(false);
       return steps;

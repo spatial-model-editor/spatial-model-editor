@@ -7,6 +7,7 @@ target_sources(
           id.cpp
           model.cpp
           model_compartments.cpp
+          model_events.cpp
           model_functions.cpp
           model_geometry.cpp
           model_math.cpp
@@ -29,6 +30,7 @@ if(BUILD_TESTING)
            id_t.cpp
            model_t.cpp
            model_compartments_t.cpp
+           model_events_t.cpp
            model_functions_t.cpp
            model_geometry_t.cpp
            model_math_t.cpp

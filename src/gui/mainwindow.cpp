@@ -9,6 +9,7 @@
 #include "logger.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
+#include "tabevents.hpp"
 #include "tabfunctions.hpp"
 #include "tabgeometry.hpp"
 #include "tabparameters.hpp"
@@ -17,7 +18,6 @@
 #include "tabspecies.hpp"
 #include "ui_mainwindow.h"
 #include "utils.hpp"
-#include "version.hpp"
 #include <QDesktopServices>
 #include <QErrorMessage>
 #include <QFileDialog>
@@ -66,6 +66,9 @@ void MainWindow::setupTabs() {
 
   tabParameters = new TabParameters(sbmlDoc, ui->tabParameters);
   ui->tabParameters->layout()->addWidget(tabParameters);
+
+  tabEvents = new TabEvents(sbmlDoc, ui->tabEvents);
+  ui->tabEvents->layout()->addWidget(tabEvents);
 
   tabSimulate = new TabSimulate(sbmlDoc, ui->lblGeometry, ui->tabSimulate);
   ui->tabSimulate->layout()->addWidget(tabSimulate);
@@ -150,7 +153,8 @@ void MainWindow::tabMain_currentChanged(int index) {
     REACTIONS = 2,
     FUNCTIONS = 3,
     PARAMETERS = 4,
-    SIMULATE = 5
+    EVENTS = 5,
+    SIMULATE = 6
   };
   ui->tabMain->setWhatsThis(ui->tabMain->tabWhatsThis(index));
   SPDLOG_DEBUG("Tab changed to {} [{}]", index,
@@ -170,6 +174,9 @@ void MainWindow::tabMain_currentChanged(int index) {
     break;
   case TabIndex::PARAMETERS:
     tabParameters->loadModelData();
+    break;
+  case TabIndex::EVENTS:
+    tabEvents->loadModelData();
     break;
   case TabIndex::SIMULATE:
     tabSimulate->loadModelData();
@@ -320,7 +327,7 @@ void MainWindow::importGeometryImage(const QImage &image) {
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   enableTabs();
-  // set default pixelwidth in case user doesn't set image physical size
+  // set default pixel width in case user doesn't set image physical size
   sbmlDoc.getGeometry().setPixelWidth(1.0);
   actionSet_image_size_triggered();
 }

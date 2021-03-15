@@ -7,6 +7,7 @@
 class QLabel;
 class TabFunctions;
 class TabGeometry;
+class TabEvents;
 class TabParameters;
 class TabReactions;
 class TabSimulate;
@@ -45,6 +46,7 @@ private:
   TabReactions *tabReactions;
   TabFunctions *tabFunctions;
   TabParameters *tabParameters;
+  TabEvents *tabEvents;
   TabSimulate *tabSimulate;
 
   void validateSBMLDoc(const QString &filename = {});

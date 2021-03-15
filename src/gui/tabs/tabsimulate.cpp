@@ -46,9 +46,14 @@ TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
   plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
   constexpr int plotMsRefreshInterval = 1000;
   plotRefreshTimer.setInterval(plotMsRefreshInterval);
-  connect(&plotRefreshTimer, &QTimer::timeout, this,
-          &TabSimulate::updatePlotAndImages);
-
+  connect(&plotRefreshTimer, &QTimer::timeout, this, [this]() {
+    updatePlotAndImages();
+    if (!sim->getIsRunning()) {
+      // simulation finished - repeat above first in case new data was added
+      updatePlotAndImages();
+      finalizePlotAndImages();
+    }
+  });
   useDune(true);
   ui->hslideTime->setEnabled(false);
   ui->btnResetSimulation->setEnabled(false);
@@ -217,7 +222,8 @@ void TabSimulate::btnSliceImage_clicked() {
 }
 
 void TabSimulate::btnExport_clicked() {
-  DialogExport dialog(images, plt.get(), model, *sim.get(), ui->hslideTime->value());
+  DialogExport dialog(images, plt.get(), model, *sim.get(),
+                      ui->hslideTime->value());
   if (dialog.exec() == QDialog::Accepted) {
     SPDLOG_DEBUG("todo: save current export settings");
   }
@@ -264,51 +270,51 @@ void TabSimulate::updatePlotAndImages() {
     plt->plot->rescaleAxes(true);
     plt->plot->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
   }
+}
 
-  if (!sim->getIsRunning()) {
-    SPDLOG_DEBUG("simulation finished");
-    // simulation finished..
-    progressDialog->reset();
-    plotRefreshTimer.stop();
-    this->setCursor(Qt::ArrowCursor);
-    ui->btnSimulate->setEnabled(true);
-    ui->btnResetSimulation->setEnabled(true);
-    // ..but failed
-    if (const auto &err{sim->errorMessage()};
-        !err.empty() && err != "Simulation stopped early") {
-      DialogImage(
-          this, "Simulation Failed",
-          QString("Simulation failed - changing the Simulation options in the "
-                  "\"Advanced\" menu might help.\n\nError message: %1")
-              .arg(err.c_str()),
-          sim->errorImage())
-          .exec();
-      return;
-    }
-    // .. and succeeded
-    // add custom observables to plot
-    plt->clearObservableLines();
-    std::size_t colorIndex{displayOptions.showSpecies.size()};
-    for (const auto &obs : observables) {
-      plt->addObservableLine(obs, sme::utils::indexedColours()[colorIndex]);
-      ++colorIndex;
-    }
-    plt->update(displayOptions.showSpecies, displayOptions.showMinMax);
-    updateSpeciesToDraw();
-    // update all images
-    for (int iTime = 0; iTime < time.size(); ++iTime) {
-      images[iTime] = sim->getConcImage(
-          static_cast<std::size_t>(iTime), compartmentSpeciesToDraw,
-          displayOptions.normaliseOverAllTimepoints,
-          displayOptions.normaliseOverAllSpecies);
-    }
-    plt->setVerticalLine(time.back());
-    // enable slider to choose time to display
-    ui->hslideTime->setEnabled(true);
-    ui->hslideTime->setMinimum(0);
-    ui->hslideTime->setMaximum(time.size() - 1);
-    ui->hslideTime->setValue(time.size() - 1);
+void TabSimulate::finalizePlotAndImages() {
+  SPDLOG_DEBUG("simulation finished");
+  // simulation finished..
+  progressDialog->reset();
+  plotRefreshTimer.stop();
+  this->setCursor(Qt::ArrowCursor);
+  ui->btnSimulate->setEnabled(true);
+  ui->btnResetSimulation->setEnabled(true);
+  // ..but failed
+  if (const auto &err{sim->errorMessage()};
+      !err.empty() && err != "Simulation stopped early") {
+    DialogImage(
+        this, "Simulation Failed",
+        QString("Simulation failed - changing the Simulation options in the "
+                "\"Advanced\" menu might help.\n\nError message: %1")
+            .arg(err.c_str()),
+        sim->errorImage())
+        .exec();
+    return;
   }
+  // .. and succeeded
+  // add custom observables to plot
+  plt->clearObservableLines();
+  std::size_t colorIndex{displayOptions.showSpecies.size()};
+  for (const auto &obs : observables) {
+    plt->addObservableLine(obs, sme::utils::indexedColours()[colorIndex]);
+    ++colorIndex;
+  }
+  plt->update(displayOptions.showSpecies, displayOptions.showMinMax);
+  updateSpeciesToDraw();
+  // update all images
+  for (int iTime = 0; iTime < time.size(); ++iTime) {
+    images[iTime] = sim->getConcImage(static_cast<std::size_t>(iTime),
+                                      compartmentSpeciesToDraw,
+                                      displayOptions.normaliseOverAllTimepoints,
+                                      displayOptions.normaliseOverAllSpecies);
+  }
+  plt->setVerticalLine(time.back());
+  // enable slider to choose time to display
+  ui->hslideTime->setEnabled(true);
+  ui->hslideTime->setMinimum(0);
+  ui->hslideTime->setMaximum(time.size() - 1);
+  ui->hslideTime->setValue(time.size() - 1);
 }
 
 void TabSimulate::btnDisplayOptions_clicked() {
@@ -324,6 +330,7 @@ void TabSimulate::btnDisplayOptions_clicked() {
     observables = dialog.getObservables();
     model.setDisplayOptions(displayOptions);
     updatePlotAndImages();
+    finalizePlotAndImages();
     hslideTime_valueChanged(ui->hslideTime->value());
   }
 }
