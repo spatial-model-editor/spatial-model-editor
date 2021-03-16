@@ -86,7 +86,7 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
   if (size.width() > size.height()) {
     imageSize.setHeight(static_cast<int>(
         static_cast<double>(imageSize.width()) * size.height() / size.width()));
-  } else {
+  } else if (size.width() < size.height()) {
     imageSize.setWidth(
         static_cast<int>(static_cast<double>(imageSize.height()) *
                          size.width() / size.height()));

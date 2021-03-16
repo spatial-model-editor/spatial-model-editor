@@ -445,7 +445,7 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
 }
 
 SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
-         "[core/simulate/simulate][core/simulate][core][simulate]") {
+         "[core/simulate/simulate][core/simulate][core][simulate][Q]") {
   for (auto simulatorType :
        {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
     double epsilon{1e-8};

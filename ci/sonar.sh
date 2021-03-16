@@ -47,14 +47,14 @@ jwm &
 # do build
 mkdir build
 cd build
-CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS=-fuse-ld=lld -DSME_WITH_TBB=ON  -DBoost_NO_BOOST_CMAKE=on
+CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld --coverage" -DCMAKE_CXX_FLAGS="--coverage" -DSME_WITH_TBB=ON  -DBoost_NO_BOOST_CMAKE=on
 build-wrapper-linux-x86-64 --out-dir bw-output make -j2
 ccache --show-stats
 
 # run c++ tests and collect coverage data
 mkdir gcov
 lcov -q -z -d .
-LSAN_OPTIONS=exitcode=0 ./test/tests -as > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
+./test/tests -as > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 llvm-cov gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
 llvm-cov gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
@@ -67,7 +67,7 @@ rm -f *.gcov
 # also run python tests, but only copy gcov data for sme files: don't want to overwrite coverage info on core from c++ tests
 lcov -q -z -d .
 cd sme
-LSAN_OPTIONS=exitcode=0 LD_PRELOAD=$(clang -print-file-name=libclang_rt.asan-x86_64.so) PYTHONMALLOC=malloc python -m unittest discover -s ../../sme/test > sme.txt 2>&1
+python -m unittest discover -s ../../sme/test > sme.txt 2>&1
 tail -n 100 sme.txt
 cd ..
 llvm-cov gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null
