@@ -300,28 +300,30 @@ void TabGeometry::spinMaxTriangleArea_valueChanged(int value) {
 }
 
 void TabGeometry::listCompartments_itemSelectionChanged() {
-  ui->txtCompartmentName->clear();
-  ui->lblCompSize->clear();
-  int currentRow = ui->listCompartments->currentRow();
-  if (currentRow < 0 || currentRow >= model.getCompartments().getIds().size()) {
+  auto items{ui->listCompartments->selectedItems()};
+  if (items.isEmpty()) {
     ui->btnRemoveCompartment->setEnabled(false);
+    ui->btnChangeCompartment->setEnabled(false);
     return;
   }
-  membraneSelected = false;
-  const QString &compID = model.getCompartments().getIds()[currentRow];
   ui->listMembranes->clearSelection();
-  ui->btnRemoveCompartment->setEnabled(true);
+  int currentRow{ui->listCompartments->row(items[0])};
+  ui->txtCompartmentName->clear();
+  ui->lblCompSize->clear();
+  membraneSelected = false;
+  const QString &compId{model.getCompartments().getIds()[currentRow]};
   ui->btnChangeCompartment->setEnabled(true);
+  ui->btnRemoveCompartment->setEnabled(true);
   SPDLOG_DEBUG("row {} selected", currentRow);
   SPDLOG_DEBUG("  - Compartment Name: {}",
                ui->listCompartments->currentItem()->text().toStdString());
-  SPDLOG_DEBUG("  - Compartment Id: {}", compID.toStdString());
+  SPDLOG_DEBUG("  - Compartment Id: {}", compId.toStdString());
   ui->txtCompartmentName->setEnabled(true);
-  ui->txtCompartmentName->setText(model.getCompartments().getName(compID));
-  QRgb col = model.getCompartments().getColour(compID);
+  ui->txtCompartmentName->setText(model.getCompartments().getName(compId));
+  QRgb col{model.getCompartments().getColour(compId)};
   SPDLOG_DEBUG("  - Compartment colour {:x} ", col);
   if (col == 0) {
-    // null (transparent white) RGB colour: compartment does not have
+    // null (transparent) RGB colour: compartment does not have
     // an assigned colour in the image
     ui->lblCompShape->setImage(QImage());
     ui->lblCompartmentColour->setText("none");
@@ -341,7 +343,7 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
     ui->lblCompartmentColour->setPixmap(QPixmap::fromImage(img));
     ui->lblCompartmentColour->setText("");
     // update image of compartment
-    const auto *comp = model.getCompartments().getCompartment(compID);
+    const auto *comp{model.getCompartments().getCompartment(compId)};
     ui->lblCompShape->setImage(comp->getCompartmentImage());
     ui->lblCompShape->setText("");
     // update mesh or boundary image if tab is currently visible
@@ -367,26 +369,25 @@ void TabGeometry::listCompartments_itemDoubleClicked(QListWidgetItem *item) {
 }
 
 void TabGeometry::listMembranes_itemSelectionChanged() {
-  int currentRow = ui->listMembranes->currentRow();
-  if (currentRow < 0 || currentRow >= model.getMembranes().getNames().size()) {
+  auto items{ui->listMembranes->selectedItems()};
+  if (items.isEmpty()) {
     return;
   }
+  int currentRow{ui->listMembranes->row(items[0])};
   membraneSelected = true;
   ui->listCompartments->clearSelection();
-  ui->btnChangeCompartment->setEnabled(false);
   ui->txtCompartmentName->clear();
   ui->txtCompartmentName->setEnabled(true);
-  ui->btnRemoveCompartment->setEnabled(false);
-  const QString &membraneID = model.getMembranes().getIds()[currentRow];
+  const QString &membraneId{model.getMembranes().getIds()[currentRow]};
   SPDLOG_DEBUG("row {} selected", currentRow);
   SPDLOG_DEBUG("  - Membrane Name: {}",
                ui->listMembranes->currentItem()->text().toStdString());
-  SPDLOG_DEBUG("  - Membrane Id: {}", membraneID.toStdString());
+  SPDLOG_DEBUG("  - Membrane Id: {}", membraneId.toStdString());
   ui->txtCompartmentName->setText(ui->listMembranes->currentItem()->text());
   // update image
-  const auto *m = model.getMembranes().getMembrane(membraneID);
+  const auto *m{model.getMembranes().getMembrane(membraneId)};
   ui->lblCompShape->setImage(m->getImage());
-  auto nPixels = m->getIndexPairs().size();
+  auto nPixels{m->getIndexPairs().size()};
   // update colour box
   QImage img(1, 2, QImage::Format_RGB32);
   img.setPixel(0, 0, m->getCompartmentA()->getColour());
