@@ -110,9 +110,9 @@ SCENARIO("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
       mwt.start();
       dia.exec();
       REQUIRE(mwt2.getResult() == "QFileDialog::AcceptSave");
-      QFile f("xyz.txt");
-      f.open(QIODevice::ReadOnly | QIODevice::Text);
-      QTextStream in(&f);
+      QFile f2("xyz.txt");
+      f2.open(QIODevice::ReadOnly | QIODevice::Text);
+      QTextStream in(&f2);
       QStringList lines;
       while (!in.atEnd()) {
         lines.push_back(in.readLine());

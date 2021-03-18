@@ -4,6 +4,9 @@ add_library(gui_tests STATIC)
 target_sources(gui PRIVATE mainwindow.cpp guiutils.cpp)
 target_include_directories(gui PUBLIC .)
 
+find_package(qcustomplot)
+target_link_libraries(gui PUBLIC qcustomplot::qcustomplot)
+
 add_subdirectory(widgets)
 add_subdirectory(dialogs)
 add_subdirectory(tabs)

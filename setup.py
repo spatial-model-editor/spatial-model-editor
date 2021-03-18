@@ -43,6 +43,7 @@ class CMakeBuild(build_ext):
             "-DPYTHON_EXECUTABLE=" + sys.executable,
             "-DBUILD_BENCHMARKS=off",
             "-DBUILD_CLI=off",
+            "-DBUILD_GUI=off",
             "-DBUILD_TESTING=off",
         ]
         for e in [

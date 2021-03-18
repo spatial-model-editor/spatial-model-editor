@@ -29,7 +29,7 @@ int main(int argc, char *argv[]) {
   spdlog::set_level(spdlog::level::trace);
 
   QApplication a(argc, argv);
-  QApplication::setWindowIcon(QIcon(":/icon/icon64.png"));
+  QApplication::setWindowIcon(QIcon(":/icon/icon.ico"));
   MainWindow w(filename);
   w.show();
 

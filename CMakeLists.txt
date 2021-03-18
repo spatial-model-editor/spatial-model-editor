@@ -84,7 +84,6 @@ if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 
-# compile spatial model editor
 set(SME_WITH_TBB
     no
     CACHE BOOL "Build with TBB support (multithreading)")
@@ -98,6 +97,9 @@ if(SME_WITH_TBB AND SME_WITH_OPENMP)
   )
 endif()
 
+set(BUILD_GUI
+    yes
+    CACHE BOOL "Build GUI version")
 add_subdirectory(src)
 
 # compile spatial cli

@@ -4,33 +4,14 @@
 
 set -e -x
 
-# static link stdc++ for portable binary
-export SME_EXTRA_EXE_LIBS="-static-libgcc;-static-libstdc++"
-
-sudo apt-get update -yy
-
-# build dependencies
-sudo apt-get install -yy ccache xvfb jwm
-
-# qt dependencies
-sudo apt-get install -yy libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxkbcommon-dev libxkbcommon-x11-dev libxcb-xinerama0-dev libkrb5-dev
-
-# use gcc 9
-sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 100
-sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 100
-
-# check versions
-cmake --version
-g++ --version
-python --version
-ccache --zero-stats
-
 # start a virtual display for the Qt GUI tests
+# it can take a while before the display is ready,
+# which is why it is the first thing done here
 Xvfb -screen 0 1280x800x24 :99 &
 export DISPLAY=:99
 
-# start a window manager so the Qt GUI tests can have their focus set
-jwm &
+# static link stdc++ for portable binary
+export SME_EXTRA_EXE_LIBS="-static-libgcc;-static-libstdc++"
 
 # do build
 mkdir build
@@ -39,8 +20,12 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smeli
 make -j2 VERBOSE=1
 ccache --show-stats
 
+# start a window manager so the Qt GUI tests can have their focus set
+# note: Xvfb can take a while to start up, which is why jwm is only called now,
+# when (hopefully) the Xvfb display will be ready
+jwm &
+
 # run cpp tests
-# skip gui tests as segfaults on github actions
 ./test/tests -as > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
