@@ -484,18 +484,32 @@ QString ModelReactions::addParameter(const QString &reactionId,
 
 void ModelReactions::removeParameter(const QString &reactionId,
                                      const QString &id) {
-  hasUnsavedChanges = true;
-  auto iReac = ids.indexOf(reactionId);
-  auto wasRemoved = parameterIds[iReac].removeOne(id);
-  SPDLOG_DEBUG(" removed '{}' from parameterIds: {} for Reaction '{}'",
-               id.toStdString(), reactionId.toStdString(), wasRemoved);
-  auto *reac = sbmlModel->getReaction(reactionId.toStdString());
-  auto *kin = reac->getKineticLaw();
+  auto iReac{ids.indexOf(reactionId)};
+  if (iReac < 0) {
+    SPDLOG_WARN("Reaction '{}' not found", reactionId.toStdString());
+    return;
+  }
+  auto wasRemoved{parameterIds[iReac].removeOne(id)};
+  if (!wasRemoved) {
+    SPDLOG_WARN("parameter '{}' not found in parameterIds of reaction '{}'",
+                id.toStdString(), reactionId.toStdString());
+  } else {
+    SPDLOG_DEBUG(" removed parameter '{}' from Reaction '{}' parameterIds",
+                 id.toStdString(), reactionId.toStdString());
+    hasUnsavedChanges = true;
+  }
+  auto *reac{sbmlModel->getReaction(reactionId.toStdString())};
+  if (reac == nullptr || !reac->isSetKineticLaw()) {
+    SPDLOG_WARN("reaction '{}' not found in sbml or has no kinetic law",
+                reactionId.toStdString());
+    return;
+  }
   if (std::unique_ptr<libsbml::LocalParameter> rmParam{
-          kin->removeLocalParameter(id.toStdString())};
+          reac->getKineticLaw()->removeLocalParameter(id.toStdString())};
       rmParam != nullptr) {
     SPDLOG_INFO("  - removed LocalParameter '{}' from Reaction '{}'",
                 rmParam->getId(), reac->getId());
+    hasUnsavedChanges = true;
   }
 }
 

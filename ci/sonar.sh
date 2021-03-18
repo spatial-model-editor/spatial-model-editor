@@ -1,30 +1,14 @@
 #!/bin/bash
 
-# Ubuntu 16.04 Sonar static analysis build script
+# Ubuntu Sonar static analysis build script
 
 set -e -x
 
-sudo apt-get update -yy
-
-# build dependencies
-sudo apt-get install -yy ccache xvfb jwm lcov
-
-# qt dependencies
-sudo apt-get install -yy libfontconfig1-dev libfreetype6-dev libx11-dev libx11-xcb-dev libxext-dev libxfixes-dev libxi-dev libxrender-dev libxcb1-dev libxcb-glx0-dev libxcb-keysyms1-dev libxcb-image0-dev libxcb-shm0-dev libxcb-icccm4-dev libxcb-sync-dev libxcb-xfixes0-dev libxcb-shape0-dev libxcb-randr0-dev libxcb-render-util0-dev libxkbcommon-dev libxkbcommon-x11-dev libxcb-xinerama0-dev libkrb5-dev
-
-# use clang 9
-sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-9 100
-sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-9 100
-sudo update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-9 100
-
-# check versions
-cmake --version
-clang++ --version
-llvm-cov --version
-python --version
-ccache --version
-
-ccache --zero-stats
+# start a virtual display for the Qt GUI tests
+# it can take a while before the display is ready,
+# which is why it is the first thing done here
+Xvfb -screen 0 1280x800x24 :99 &
+export DISPLAY=:99
 
 # download sonar scanner (generated from https://sonarcloud.io/ CI setup helper)
 export SONAR_SCANNER_VERSION=4.4.0.2170
@@ -37,19 +21,17 @@ curl --create-dirs -sSLo $HOME/.sonar/build-wrapper-linux-x86.zip https://sonarc
 unzip -o $HOME/.sonar/build-wrapper-linux-x86.zip -d $HOME/.sonar/
 export PATH=$HOME/.sonar/build-wrapper-linux-x86:$PATH
 
-# start a virtual display for the Qt GUI tests
-Xvfb -screen 0 1280x800x24 :99 &
-export DISPLAY=:99
-
-# start a window manager so the Qt GUI tests can have their focus set
-jwm &
-
 # do build
 mkdir build
 cd build
 CC=clang CXX=clang++ cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld --coverage" -DCMAKE_CXX_FLAGS="--coverage" -DSME_WITH_TBB=ON  -DBoost_NO_BOOST_CMAKE=on
 build-wrapper-linux-x86-64 --out-dir bw-output make -j2
 ccache --show-stats
+
+# start a window manager so the Qt GUI tests can have their focus set
+# note: Xvfb can take a while to start up, which is why jwm is only called now,
+# when (hopefully) the Xvfb display will be ready
+jwm &
 
 # run c++ tests and collect coverage data
 mkdir gcov

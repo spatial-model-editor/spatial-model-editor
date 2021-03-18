@@ -137,7 +137,7 @@ void DialogSimulationOptions::loadDuneOpts() {
   ui->txtDuneNewtonAbs->setText(dblToQString(opt.dune.newtonAbsErr));
 }
 
-void DialogSimulationOptions::cmbDuneIntegrator_currentIndexChanged(int index) {
+void DialogSimulationOptions::cmbDuneIntegrator_currentIndexChanged([[maybe_unused]] int index) {
   opt.dune.integrator = ui->cmbDuneIntegrator->currentText().toStdString();
 }
 

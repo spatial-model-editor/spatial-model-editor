@@ -34,7 +34,7 @@ DialogExport::DialogExport(const QVector<QImage> &images,
 
 DialogExport::~DialogExport() = default;
 
-void DialogExport::radSingleTimepoint_toggled(bool checked) {
+void DialogExport::radSingleTimepoint_toggled([[maybe_unused]] bool checked) {
   if (ui->radModel->isChecked() || ui->radSingleImage->isChecked()) {
     ui->cmbTimepoint->setEnabled(true);
   } else {

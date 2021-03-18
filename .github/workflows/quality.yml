@@ -1,39 +1,23 @@
 name: Code Quality
 
 on: push
-
 defaults:
   run:
     shell: bash
+env:
+  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
-  codecov:
-    name: Codecov tests coverage
+  quality:
     runs-on: ubuntu-16.04
+    strategy:
+      fail-fast: false
+      matrix:
+        script: [codecov, sonar, asan, ubsan, tsan]
     steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: 'true'
-        fetch-depth: 0
-    - name: Cache ccache
-      uses: actions/cache@v2
-      with:
-        path: ~/.ccache
-        key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-        restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-    - uses: actions/setup-python@v2
-      with:
-        python-version: 3.8
-    - name: Get static libs
-      run: sudo ./ci/getlibs.sh linux
-    - name: Build script
-      run: ./ci/codecov.sh
-
-  sonar:
-    name: Sonar static analysis
-    runs-on: ubuntu-16.04
-    steps:
-      - uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
         with:
           submodules: 'true'
           fetch-depth: 0
@@ -41,84 +25,21 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.ccache
-          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
+          key: ccache-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-${{ github.sha }}
+          restore-keys: ccache-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-
       - name: Cache sonar
         uses: actions/cache@v2
+        if: matrix.script == 'sonar'
         with:
           path: ~/.sonarcache
-          key: sonar-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-          restore-keys: sonar-${{ github.job }}-${{ runner.os }}-
+          key: sonar-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-${{ github.sha }}
+          restore-keys: sonar-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-
       - uses: actions/setup-python@v2
         with:
           python-version: 3.8
       - name: Get static libs
         run: sudo ./ci/getlibs.sh linux
-      - name: Build script
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: ./ci/sonar.sh
-
-  asan:
-    name: ASAN
-    runs-on: ubuntu-16.04
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: 'true'
-      - name: Cache ccache
-        uses: actions/cache@v2
-        with:
-          path: ~/.ccache
-          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - name: Get static libs
-        run: sudo ./ci/getlibs.sh linux
-      - name: Build script
-        run: ./ci/asan.sh
-
-  ubsan:
-    name: UBSAN
-    runs-on: ubuntu-16.04
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: 'true'
-      - name: Cache ccache
-        uses: actions/cache@v2
-        with:
-          path: ~/.ccache
-          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - name: Get static libs
-        run: sudo ./ci/getlibs.sh linux
-      - name: Build script
-        run: ./ci/ubsan.sh
-
-  tsan:
-    name: TSAN
-    runs-on: ubuntu-16.04
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: 'true'
-      - name: Cache ccache
-        uses: actions/cache@v2
-        with:
-          path: ~/.ccache
-          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-      - uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-      - name: Get static libs
-        run: sudo ./ci/getlibs.sh linux
-      - name: Build script
-        run: ./ci/tsan.sh
+      - name: Install dependencies
+        run: ./ci/linux-install.sh
+      - name: Run job script
+        run: ./ci/${{ matrix.script }}.sh

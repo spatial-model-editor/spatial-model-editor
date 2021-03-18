@@ -1,1 +1,1 @@
-convert icon16.png icon32.png icon64.png icon128.png icon256.png icon.ico
+convert ../icon.iconset/icon_16x16.png ../icon.iconset/icon_32x32.png ../icon.iconset/icon_32x32@2x.png ../icon.iconset/icon_128x128.png ../icon.iconset/icon_256x256.png icon.ico

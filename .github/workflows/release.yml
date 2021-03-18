@@ -24,6 +24,8 @@ jobs:
         python-version: 3.8
     - name: Get static libs
       run: sudo ./ci/getlibs.sh linux
+    - name: Install dependencies
+      run: ./ci/linux-install.sh
     - name: Build script
       run: ./ci/linux-gui.sh
     - uses: actions/upload-artifact@v2

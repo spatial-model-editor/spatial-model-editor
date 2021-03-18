@@ -246,7 +246,7 @@ DuneSim::DuneSim(
 
 DuneSim::~DuneSim() = default;
 
-std::size_t DuneSim::run(double time, double timeout_ms) {
+std::size_t DuneSim::run(double time, [[maybe_unused]] double timeout_ms) {
   if (pDuneImpl == nullptr) {
     return 0;
   }

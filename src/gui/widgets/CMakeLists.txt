@@ -4,8 +4,6 @@ target_sources(
           qlabelslice.cpp
           qlabelmousetracker.cpp
           qplaintextmathedit.cpp)
-add_subdirectory(ext/qcustomplot)
-target_link_libraries(gui PUBLIC qcustomplot)
 target_include_directories(gui PUBLIC .)
 
 if(BUILD_TESTING)

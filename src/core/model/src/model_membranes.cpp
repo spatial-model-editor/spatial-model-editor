@@ -145,9 +145,6 @@ void ModelMembranes::updateCompartments(
 void ModelMembranes::updateCompartmentImage(const QImage &img) {
   membranePixels = std::make_unique<ImageMembranePixels>(img);
   SPDLOG_TRACE("{} colour image:", img.colorCount());
-  for (auto c : img.colorTable()) {
-    SPDLOG_TRACE("  - {:x}", c);
-  }
 }
 
 void ModelMembranes::importMembraneIdsAndNames(const libsbml::Model *model) {
@@ -198,7 +195,7 @@ void ModelMembranes::exportToSBML(libsbml::Model *model) {
     SPDLOG_INFO("  - name: {}", comp->getName());
     comp->setConstant(true);
     comp->setSpatialDimensions(nDimMinusOne);
-    auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
+    auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
         comp->getPlugin("spatial"));
     libsbml::CompartmentMapping *cmap{nullptr};
     libsbml::DomainType *dt{nullptr};

@@ -36,7 +36,27 @@ SCENARIO("SBML reactions",
     REQUIRE(r.getIds("c2_c3_membrane")[1] == "B_transport");
     REQUIRE(r.getParameterIds("B_transport").size() == 1);
 
+    // remove parameter from non-existent reaction: no-op
+    r.setHasUnsavedChanges(false);
+    REQUIRE(r.getHasUnsavedChanges() == false);
+    r.removeParameter("i_dont_exist", "i_dont_exist");
+    REQUIRE(r.getHasUnsavedChanges() == false);
+
+    // remove non-existent reaction parameter: no-op
+    r.setHasUnsavedChanges(false);
+    REQUIRE(r.getHasUnsavedChanges() == false);
+    REQUIRE(r.getParameterIds("A_B_conversion").size() == 1);
+    r.removeParameter("A_B_conversion", "i_dont_exist");
+    REQUIRE(r.getParameterIds("A_B_conversion").size() == 1);
+    REQUIRE(r.getHasUnsavedChanges() == false);
+
+    // remove reaction parameter
+    r.removeParameter("A_B_conversion", "k1");
+    REQUIRE(r.getParameterIds("A_B_conversion").size() == 0);
+    REQUIRE(r.getHasUnsavedChanges() == true);
+
     // remove reaction
+    r.setHasUnsavedChanges(false);
     REQUIRE(r.getHasUnsavedChanges() == false);
     r.remove("A_B_conversion");
     REQUIRE(r.getHasUnsavedChanges() == true);

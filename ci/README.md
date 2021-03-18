@@ -2,7 +2,9 @@
 
 ## To release a new version
 
-- Tag a commit on master with the version number `x.y.z`
+- Ensure that the [CMakeLists.txt](https://github.com/spatial-model-editor/spatial-model-editor/blob/master/CMakeLists.txt#L7) version number matches the one in [setup.py](https://github.com/spatial-model-editor/spatial-model-editor/blob/master/setup.py#L93)
+
+- Tag this commit on master with the same version number `x.y.z`
 
 - Github Actions will run and generate [Github](https://github.com/spatial-model-editor/spatial-model-editor/releases) & [PyPI](https://pypi.org/project/sme/) releases
 
@@ -24,21 +26,24 @@ git push origin latest
 
 ## Dependencies
 
+### Static libraries
+
 - The CI builds use statically compiled versions of all dependencies
 
-- These are provided as binary releases from these repos:
+- These are provided as binary releases from [sme_deps](https://github.com/spatial-model-editor/sme_deps)
 
-  - <https://github.com/spatial-model-editor/sme_deps_common>
+- To use a new release, update `SME_DEPS_VERSION` in [ci/getlibs.sh](https://github.com/spatial-model-editor/spatial-model-editor/blob/master/CMakeLists.txt#L7) version number matches the one in [setup.py](https://github.com/spatial-model-editor/spatial-model-editor/blob/master/ci/getlibs.sh#L6)
 
-      - This repo in turn includes: <https://github.com/spatial-model-editor/sme_deps_llvm>
+- Note that sme_deps depends on [sme_deps_common](https://github.com/spatial-model-editor/sme_deps_common), which in turn depends on [sme_deps_qt5](https://github.com/spatial-model-editor/sme_deps_qt5) and [sme_deps_llvm](https://github.com/spatial-model-editor/sme_deps_llvm), so a new sme_deps release may first require a new release from these repos.
 
-  - <https://github.com/spatial-model-editor/sme_deps_dune>
+### Docker images
 
-  - <https://github.com/spatial-model-editor/sme_deps_qt5>
-
-
-- The linux Python Wheel builds use these custom docker containers:
+- The linux Python Wheel CI builds use these custom docker containers:
 
   - <https://github.com/spatial-model-editor/sme_manylinux2010_x86_64>
 
   - <https://github.com/spatial-model-editor/sme_manylinux2010-pypy_x86_64>
+
+- See those repos for instructions on updating them
+
+- To use a new tag, update `CIBW_MANYLINUX_X86_64_IMAGE` and `CIBW_MANYLINUX_PYPY_X86_64_IMAGE` in [ci/getlibs.sh](https://github.com/spatial-model-editor/spatial-model-editor/blob/master/CMakeLists.txt#L7) version number matches the one in [.github/workflows/wheels.yml](https://github.com/spatial-model-editor/spatial-model-editor/blob/master/.github/workflows/wheels.yml#L19-L20)

@@ -16,9 +16,7 @@ using CGALFace = CGAL::Delaunay_mesh_face_base_2<CGALKernel>;
 using CGALTds = CGAL::Triangulation_data_structure_2<CGALVertex, CGALFace>;
 using CDT = CGAL::Constrained_Delaunay_triangulation_2<CGALKernel, CGALTds>;
 
-namespace sme {
-
-namespace mesh {
+namespace sme::mesh {
 
 static TriangulateTriangleIndex toTriangleIndex(const CDT::Face_handle face) {
   return {static_cast<std::size_t>(face->vertex(0)->id()),
@@ -113,8 +111,7 @@ static void meshCdt(CDT &cdt,
     std::vector<CDT::Point> seeds;
     seeds.reserve(compartment.interiorPoints.size());
     for (const auto &ip : compartment.interiorPoints) {
-      auto face{cdt.locate(CDT::Point(ip.x(), ip.y()))};
-      seeds.push_back(CDT::Point(ip.x(), ip.y()));
+      seeds.emplace_back(ip.x(), ip.y());
     }
     double maxArea{compartment.maxTriangleArea};
     // convert max area constraint to a max triangle edge length constraint
@@ -170,6 +167,4 @@ Triangulate::getTriangleIndices() const {
   return triangleIndices;
 }
 
-} // namespace mesh
-
-} // namespace sme
+} // namespace sme::mesh
