@@ -47,8 +47,8 @@ private:
   std::vector<std::vector<std::vector<double>>> concentration;
   // time->compartment->species
   std::vector<std::vector<std::vector<AvgMinMax>>> avgMinMax;
-  // compartment->species
-  std::vector<std::vector<double>> maxConcWholeSimulation;
+  // time->compartment->species
+  std::vector<std::vector<std::vector<double>>> concentrationMax;
   QSize imageSize;
   std::atomic<bool> isRunning{false};
   std::atomic<bool> stopRequested{false};
