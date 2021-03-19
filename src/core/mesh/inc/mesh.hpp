@@ -20,9 +20,7 @@
 #include <utility>
 #include <vector>
 
-namespace sme {
-
-namespace mesh {
+namespace sme::mesh {
 
 using QTriangleF = std::array<QPointF, 3>;
 using TriangulateTriangleIndex = std::array<std::size_t, 3>;
@@ -31,7 +29,6 @@ class Boundary;
 
 class Mesh {
 private:
-  bool readOnlyMesh{false};
   bool validMesh{true};
   // input data
   QImage img;
@@ -58,14 +55,9 @@ public:
                 double pixelWidth = 1.0,
                 const QPointF &originPoint = QPointF(0, 0),
                 const std::vector<QRgb> &compartmentColours = {});
-  // constructor to load existing vertices & triangles without original image
-  Mesh(const std::vector<double> &inputVertices,
-       const std::vector<std::vector<int>> &inputTriangleIndices,
-       const std::vector<std::vector<QPointF>> &interiorPoints);
   ~Mesh();
   // if mesh not constructed from image, but supplied as vertices&trianges,
   // we cannot alter boundary or triangle area easily, so treat as read-only
-  bool isReadOnly() const;
   bool isValid() const;
   std::size_t getNumBoundaries() const;
   void setBoundaryMaxPoints(std::size_t boundaryIndex, std::size_t maxPoints);
@@ -94,6 +86,4 @@ public:
   QString getGMSH(const std::unordered_set<int> &gmshCompIndices = {}) const;
 };
 
-} // namespace mesh
-
-} // namespace sme
+} // namespace sme::mesh

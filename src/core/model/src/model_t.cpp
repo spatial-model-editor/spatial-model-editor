@@ -754,13 +754,24 @@ SCENARIO("SBML: load model, change size of geometry, save",
   REQUIRE(v[3] == dbl_approx(a * v3));
 }
 
-SCENARIO("SBML: Delete mesh annotation, load as read-only mesh",
+SCENARIO("SBML: Delete mesh annotation & load",
          "[core/model/model][core/model][core][model][mesh]") {
-  // delete mesh info annotation
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
+  std::string xml{f.readAll().toStdString()};
+
+  // set boundary points & triangle areas far from default values
+  model::Model s;
+  s.importSBMLString(xml);
+  s.getGeometry().getMesh()->setBoundaryMaxPoints(0, 32);
+  s.getGeometry().getMesh()->setCompartmentMaxTriangleArea(0, 3);
+  s.updateSBMLDoc();
+  REQUIRE(s.getGeometry().getMesh()->getBoundaryMaxPoints(0) == 32);
+  REQUIRE(s.getGeometry().getMesh()->getCompartmentMaxTriangleArea(0) == 3);
+
+  // delete mesh info annotation
   std::unique_ptr<libsbml::SBMLDocument> doc(
-      libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
+      libsbml::readSBMLFromString(s.getXml().toStdString().c_str()));
   auto *plugin = dynamic_cast<libsbml::SpatialModelPlugin *>(
       doc->getModel()->getPlugin("spatial"));
   auto *geom = plugin->getGeometry();
@@ -773,29 +784,13 @@ SCENARIO("SBML: Delete mesh annotation, load as read-only mesh",
   }
   auto *annotation = parageom->getAnnotation();
   annotation->removeChildren();
-
-  // load model: without annotation should load as read-only mesh
-  model::Model s;
   std::unique_ptr<char, decltype(&std::free)> xmlChar(
       libsbml::writeSBMLToString(doc.get()), &std::free);
-  s.importSBMLString(xmlChar.get());
 
-  REQUIRE(s.getGeometry().getMesh()->isReadOnly() == true);
-  REQUIRE(s.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size() ==
-          345);
-
-  // changing maxBoundaryPoints or maxTriangleAreas is a no-op:
-  s.getGeometry().getMesh()->setBoundaryMaxPoints(0, 99);
-  s.getGeometry().getMesh()->setCompartmentMaxTriangleArea(0, 3);
-  REQUIRE(s.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size() ==
-          345);
-
-  // save SBML doc
-  s.exportSBMLFile("tmp.xml");
-  // import again: mesh is still read-only
+  // re-load model: without annotation should use default boundary points / triangle areas
   model::Model s2;
-  s2.importSBMLFile("tmp.xml");
-  REQUIRE(s2.getGeometry().getMesh()->isReadOnly() == true);
-  REQUIRE(s2.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size() ==
-          345);
+  s2.importSBMLString(xmlChar.get());
+
+  REQUIRE(s2.getGeometry().getMesh()->getBoundaryMaxPoints(0) != 32);
+  REQUIRE(s2.getGeometry().getMesh()->getCompartmentMaxTriangleArea(0) != 3);
 }
