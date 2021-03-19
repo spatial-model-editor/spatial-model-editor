@@ -32,7 +32,6 @@ void Simulation::initModel(const model::Model &model) {
       }
     }
     if (!sIds.empty()) {
-      maxConcWholeSimulation.emplace_back(sIds.size(), 0.0);
       auto sIndices = std::vector<std::size_t>(sIds.size());
       std::iota(sIndices.begin(), sIndices.end(), 0);
       compartmentIds.push_back(compartmentId.toStdString());
@@ -130,15 +129,24 @@ void Simulation::updateConcentrations(double t) {
   c.reserve(compartments.size());
   auto &a = avgMinMax.emplace_back();
   a.reserve(compartments.size());
+  if (concentrationMax.empty()) {
+    auto &m = concentrationMax.emplace_back();
+    for (std::size_t i = 0; i < compartments.size(); ++i) {
+      std::size_t nSpecies = compartmentSpeciesIds[i].size();
+      m.push_back(std::vector<double>(nSpecies, 0.0));
+    }
+  } else {
+    concentrationMax.push_back(concentrationMax.back());
+  }
   for (std::size_t compIndex = 0; compIndex < compartments.size();
        ++compIndex) {
     std::size_t nSpecies = compartmentSpeciesIds[compIndex].size();
     const auto &compConcs = simulator->getConcentrations(compIndex);
     c.push_back(compConcs);
     a.push_back(calculateAvgMinMax(compConcs, nSpecies, concPadding));
-    auto &maxC = maxConcWholeSimulation[compIndex];
+    auto &maxS{concentrationMax.back()[compIndex]};
     for (std::size_t is = 0; is < nSpecies; ++is) {
-      maxC[is] = std::max(maxC[is], a.back()[is].max);
+      maxS[is] = std::max(maxS[is], a.back()[is].max);
     }
   }
 }
@@ -179,6 +187,7 @@ std::size_t Simulation::doTimesteps(double time, std::size_t nSteps,
   // to avoid a user getting garbage data while the vector contents are moving
   timePoints.reserve(timePoints.size() + nSteps);
   concentration.reserve(concentration.size() + nSteps);
+  concentrationMax.reserve(concentrationMax.size() + nSteps);
   avgMinMax.reserve(avgMinMax.size() + nSteps);
   stopRequested.store(false);
   isRunning.store(true);
@@ -212,6 +221,7 @@ std::size_t Simulation::doTimesteps(double time, std::size_t nSteps,
       timePoints.pop_back();
       concentration.pop_back();
       avgMinMax.pop_back();
+      concentrationMax.pop_back();
       SPDLOG_INFO("Partial post-event step of {}", dt1);
       steps += simulator->run(dt1, remaining_timeout_ms);
     } else {
@@ -346,7 +356,8 @@ QImage Simulation::getConcImage(
     speciesIndices = &compartmentSpeciesIndices;
   }
   // calculate normalisation for each species
-  auto maxConcs = maxConcWholeSimulation;
+  auto maxConcs =
+      concentrationMax[nCompletedTimesteps.load(std::memory_order_seq_cst) - 1];
   if (!normaliseOverAllTimepoints) {
     // get max for each species at this timepoint
     for (std::size_t ic = 0; ic < compartments.size(); ++ic) {
