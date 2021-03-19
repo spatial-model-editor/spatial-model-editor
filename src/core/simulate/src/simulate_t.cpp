@@ -445,7 +445,7 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
 }
 
 SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
-         "[core/simulate/simulate][core/simulate][core][simulate][Q]") {
+         "[core/simulate/simulate][core/simulate][core][simulate]") {
   for (auto simulatorType :
        {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
     double epsilon{1e-8};
@@ -1007,7 +1007,7 @@ SCENARIO("PyConc",
 }
 
 SCENARIO("applyConcsToModel initial concentrations",
-         "[core/simulate/simulate][core/simulate][core][simulate][Q]") {
+         "[core/simulate/simulate][core/simulate][core][simulate]") {
   model::Model s;
   QFile f(":/models/very-simple-model.xml");
   f.open(QIODevice::ReadOnly);

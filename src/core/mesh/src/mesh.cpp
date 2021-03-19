@@ -15,9 +15,7 @@
 #include <exception>
 #include <utility>
 
-namespace sme {
-
-namespace mesh {
+namespace sme::mesh {
 
 QPointF
 Mesh::pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept {
@@ -70,47 +68,7 @@ Mesh::Mesh(const QImage &image, std::vector<std::size_t> maxPoints,
   constructMesh();
 }
 
-Mesh::Mesh(const std::vector<double> &inputVertices,
-           const std::vector<std::vector<int>> &inputTriangleIndices,
-           const std::vector<std::vector<QPointF>> &interiorPoints)
-    : readOnlyMesh(true), compartmentInteriorPoints(interiorPoints) {
-  // we don't have the original image, so no boundary info: read only mesh
-  // import vertices: supplied as list of doubles, two for each vertex
-  std::size_t nV = inputVertices.size() / 2;
-  vertices.clear();
-  vertices.reserve(nV);
-  for (std::size_t i = 0; i < nV; ++i) {
-    vertices.emplace_back(inputVertices[2 * i], inputVertices[2 * i + 1]);
-  }
-  // import triangles: supplies as list of ints, three for each triangle
-  nTriangles = 0;
-  triangles = std::vector<std::vector<QTriangleF>>(interiorPoints.size(),
-                                                   std::vector<QTriangleF>{});
-  triangleIndices = std::vector<std::vector<TriangulateTriangleIndex>>(
-      interiorPoints.size(), std::vector<TriangulateTriangleIndex>{});
-  for (std::size_t compIndex = 0; compIndex < interiorPoints.size();
-       ++compIndex) {
-    const auto &t = inputTriangleIndices[compIndex];
-    std::size_t nT = t.size() / 3;
-    triangles[compIndex].reserve(nT);
-    triangleIndices[compIndex].reserve(nT);
-    for (std::size_t i = 0; i < nT; ++i) {
-      auto t0 = static_cast<std::size_t>(t[3 * i]);
-      auto t1 = static_cast<std::size_t>(t[3 * i + 1]);
-      auto t2 = static_cast<std::size_t>(t[3 * i + 2]);
-      triangleIndices[compIndex].push_back({{t0, t1, t2}});
-      triangles[compIndex].push_back(
-          {{vertices[t0], vertices[t1], vertices[t2]}});
-      ++nTriangles;
-    }
-  }
-  SPDLOG_INFO("Imported read-only mesh of {} vertices, {} triangles",
-              vertices.size(), nTriangles);
-}
-
 Mesh::~Mesh() = default;
-
-bool Mesh::isReadOnly() const { return readOnlyMesh; }
 
 bool Mesh::isValid() const { return validMesh; }
 
@@ -118,10 +76,6 @@ std::size_t Mesh::getNumBoundaries() const { return boundaries->size(); }
 
 void Mesh::setBoundaryMaxPoints(std::size_t boundaryIndex,
                                 std::size_t maxPoints) {
-  if (readOnlyMesh) {
-    SPDLOG_INFO("mesh is read only, ignoring.");
-    return;
-  }
   SPDLOG_INFO("boundaryIndex {}: max points {} -> {}", boundaryIndex,
               (*boundaries)[boundaryIndex].getMaxPoints(), maxPoints);
   (*boundaries)[boundaryIndex].setMaxPoints(maxPoints);
@@ -140,10 +94,6 @@ std::vector<std::size_t> Mesh::getBoundaryMaxPoints() const {
 
 void Mesh::setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
                                          std::size_t maxTriangleArea) {
-  if (readOnlyMesh) {
-    SPDLOG_INFO("mesh is read only, ignoring.");
-    return;
-  }
   SPDLOG_INFO("compIndex {}: max triangle area {} -> {}", compartmentIndex,
               compartmentMaxTriangleArea.at(compartmentIndex), maxTriangleArea);
   compartmentMaxTriangleArea.at(compartmentIndex) = maxTriangleArea;
@@ -406,6 +356,4 @@ QString Mesh::getGMSH(const std::unordered_set<int> &gmshCompIndices) const {
   return msh;
 }
 
-} // namespace mesh
-
-} // namespace sme
+} // namespace sme::mesh
