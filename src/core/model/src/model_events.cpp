@@ -12,12 +12,52 @@
 
 namespace sme::model {
 
-static QStringList importIds(const libsbml::Model *model) {
+static void moveLastAssignmentToNewEvent(libsbml::Model *model,
+                                         libsbml::Event *event) {
+  // copy & rename event
+  std::unique_ptr<libsbml::Event> eventClone(event->clone());
+  // get a new event id
+  SPDLOG_INFO("event id '{}'", event->getId());
+  std::string newId{event->getId()};
+  while (!isSIdAvailable(newId, model)) {
+    newId.append("_");
+  }
+  eventClone->setId(newId);
+  model->addEvent(eventClone.get());
+  auto *newEvent{model->getEvent(newId)};
+  SPDLOG_INFO("new event id '{}'", newEvent->getId());
+  // remove last assignment from event
+  event->getEventAssignment(event->getNumEventAssignments() - 1)
+      ->removeFromParentAndDelete();
+  // remove all except last assignment from new event
+  while (newEvent->getNumEventAssignments() > 1) {
+    newEvent->getEventAssignment(0)->removeFromParentAndDelete();
+  }
+}
+
+static void splitMultipleEventAssignments(libsbml::Model *model) {
+  std::vector<libsbml::Event *> eventsToSplit;
+  unsigned int numEvents = model->getNumEvents();
+  for (unsigned int i = 0; i < numEvents; ++i) {
+    auto *event = model->getEvent(i);
+    if (event->getNumEventAssignments() > 1) {
+      eventsToSplit.push_back(event);
+    }
+  }
+  for (auto *event : eventsToSplit) {
+    while (event->getNumEventAssignments() > 1) {
+      moveLastAssignmentToNewEvent(model, event);
+    }
+  }
+}
+
+static QStringList importIds(libsbml::Model *model) {
   QStringList ids;
+  splitMultipleEventAssignments(model);
   unsigned int numEvents = model->getNumEvents();
   ids.reserve(static_cast<int>(numEvents));
   for (unsigned int i = 0; i < numEvents; ++i) {
-    const auto *event = model->getEvent(i);
+    auto *event = model->getEvent(i);
     ids.push_back(event->getId().c_str());
   }
   return ids;
@@ -51,7 +91,13 @@ ModelEvents::ModelEvents() = default;
 
 ModelEvents::ModelEvents(libsbml::Model *model)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(ids, model)},
-      sbmlModel{model} {}
+      sbmlModel{model} {
+  // try to import time from triggers: if this fails just set a default trigger
+  for(const auto& id : ids){
+    double t{getTime(id)};
+    setTime(id, t);
+  }
+}
 
 const QStringList &ModelEvents::getIds() const { return ids; }
 
@@ -124,7 +170,7 @@ QString ModelEvents::getVariable(const QString &id) const {
 }
 
 void ModelEvents::setTime(const QString &id, double time) {
-  auto triggerExpression{fmt::format("time == {}", time)};
+  auto triggerExpression{fmt::format("time >= {}", time)};
   SPDLOG_INFO("Setting event '{}' trigger to '{}'", id.toStdString(),
               triggerExpression);
   auto *event{sbmlModel->getEvent(id.toStdString())};
@@ -159,7 +205,7 @@ double ModelEvents::getTime(const QString &id) const {
     return lhs->getValue();
   }
   SPDLOG_WARN(
-      "Trigger '{}' is not of supported form 'time == 1' or '1 == time'",
+      "Trigger '{}' is not of supported form 'time >= 1' or '1 <= time'",
       mathASTtoString(ast));
   return defaultTime;
 }
