@@ -61,7 +61,6 @@ void Model::initModelData() {
   modelUnits = ModelUnits(model);
   modelMath = ModelMath(model);
   modelFunctions = ModelFunctions(model);
-  modelEvents = ModelEvents(model);
   modelMembranes.clear();
   // todo: reduce these cyclic dependencies: currently order of initialization
   // matters, should be possible to reduce coupling here
@@ -73,6 +72,7 @@ void Model::initModelData() {
   modelParameters = ModelParameters(model, &modelEvents);
   modelSpecies = ModelSpecies(model, &modelCompartments, &modelGeometry,
                               &modelParameters, &modelReactions);
+  modelEvents = ModelEvents(model, &modelParameters, &modelSpecies);
   modelReactions = ModelReactions(model, modelMembranes.getMembranes());
 }
 

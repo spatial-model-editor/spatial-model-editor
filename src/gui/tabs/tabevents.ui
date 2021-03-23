@@ -85,6 +85,19 @@
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
         <layout class="QGridLayout" name="gridEvents">
+         <item row="2" column="1">
+          <widget class="QComboBox" name="cmbEventVariable"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="lblEventTimeLabel">
+           <property name="text">
+            <string>Time:</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
          <item row="3" column="0">
           <widget class="QLabel" name="lblEventValueLabel">
            <property name="sizePolicy">
@@ -102,14 +115,17 @@
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QLabel" name="lblEventParamLabel">
+          <widget class="QLabel" name="lblEventVariableLabel">
            <property name="text">
-            <string>Parameter:</string>
+            <string>Variable:</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="txtEventTime"/>
          </item>
          <item row="4" column="1">
           <widget class="QLabel" name="lblExpressionStatus">
@@ -248,19 +264,6 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1" colspan="2">
-          <widget class="QLineEdit" name="txtEventName"/>
-         </item>
-         <item row="3" column="1">
-          <widget class="QPlainTextMathEdit" name="txtExpression">
-           <property name="tabChangesFocus">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QComboBox" name="cmbEventParam"/>
-         </item>
          <item row="0" column="0">
           <widget class="QLabel" name="lblEventNameLabel">
            <property name="text">
@@ -271,18 +274,44 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="lblEventTimeLabel">
-           <property name="text">
-            <string>Time:</string>
+         <item row="3" column="1">
+          <widget class="QStackedWidget" name="stkValue">
+           <property name="currentIndex">
+            <number>0</number>
            </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
+           <widget class="QWidget" name="pgeParameter">
+            <layout class="QHBoxLayout" name="horizontalLayout_2">
+             <item>
+              <widget class="QPlainTextMathEdit" name="txtExpression">
+               <property name="tabChangesFocus">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="pgeSpecies">
+            <layout class="QVBoxLayout" name="verticalLayout_2">
+             <item>
+              <widget class="QLabel" name="lblSpeciesExpression">
+               <property name="text">
+                <string/>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="btnSetSpeciesConcentration">
+               <property name="text">
+                <string>Edit species concentration</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
           </widget>
          </item>
-         <item row="1" column="1">
-          <widget class="QLineEdit" name="txtEventTime"/>
+         <item row="0" column="1" colspan="2">
+          <widget class="QLineEdit" name="txtEventName"/>
          </item>
         </layout>
        </item>
@@ -305,8 +334,9 @@
   <tabstop>btnRemoveEvent</tabstop>
   <tabstop>txtEventName</tabstop>
   <tabstop>txtEventTime</tabstop>
-  <tabstop>cmbEventParam</tabstop>
+  <tabstop>cmbEventVariable</tabstop>
   <tabstop>txtExpression</tabstop>
+  <tabstop>btnSetSpeciesConcentration</tabstop>
  </tabstops>
  <resources/>
  <connections/>

@@ -1,4 +1,5 @@
 #include "tabevents.hpp"
+#include "dialoganalytic.hpp"
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "model.hpp"
@@ -20,8 +21,10 @@ TabEvents::TabEvents(sme::model::Model &m, QWidget *parent)
           &TabEvents::txtEventName_editingFinished);
   connect(ui->txtEventTime, &QLineEdit::editingFinished, this,
           &TabEvents::txtEventTime_editingFinished);
-  connect(ui->cmbEventParam, qOverload<int>(&QComboBox::activated), this,
-          &TabEvents::cmbEventParam_activated);
+  connect(ui->cmbEventVariable, qOverload<int>(&QComboBox::activated), this,
+          &TabEvents::cmbEventVariable_activated);
+  connect(ui->btnSetSpeciesConcentration, &QPushButton::clicked, this,
+          &TabEvents::btnSetSpeciesConcentration_clicked);
   connect(ui->txtExpression, &QPlainTextMathEdit::mathChanged, this,
           &TabEvents::txtExpression_mathChanged);
 }
@@ -31,10 +34,25 @@ TabEvents::~TabEvents() = default;
 void TabEvents::loadModelData(const QString &selection) {
   currentEventId.clear();
   ui->listEvents->clear();
+  ui->lblSpeciesExpression->clear();
+  ui->stkValue->setCurrentIndex(0);
   ui->txtExpression->clearVariables();
   ui->txtExpression->resetToDefaultFunctions();
-  ui->cmbEventParam->clear();
-  ui->cmbEventParam->addItems(model.getParameters().getNames());
+  ui->cmbEventVariable->clear();
+  variableIds.clear();
+  for (const auto &cId : model.getCompartments().getIds()) {
+    const auto &compartmentName{model.getCompartments().getName(cId)};
+    for (const auto &sId : model.getSpecies().getIds(cId)) {
+      variableIds.push_back(sId);
+      ui->cmbEventVariable->addItem(compartmentName + "/" +
+                                    model.getSpecies().getName(sId));
+    }
+  }
+  nSpecies = variableIds.size();
+  for (const auto &id : model.getParameters().getIds()) {
+    variableIds.push_back(id);
+    ui->cmbEventVariable->addItem(model.getParameters().getName(id));
+  }
   for (const auto &[id, name] : model.getParameters().getSymbols()) {
     ui->txtExpression->addVariable(id, name);
   }
@@ -54,9 +72,13 @@ void TabEvents::loadModelData(const QString &selection) {
 void TabEvents::enableWidgets(bool enable) {
   ui->txtEventName->setEnabled(enable);
   ui->txtEventTime->setEnabled(enable);
-  ui->cmbEventParam->setEnabled(enable);
-  ui->txtExpression->setEnabled(enable);
+  ui->cmbEventVariable->setEnabled(enable);
+  ui->stkValue->setEnabled(enable);
   ui->btnRemoveEvent->setEnabled(enable);
+  if (!enable) {
+    ui->txtExpression->setEnabled(false);
+    ui->btnSetSpeciesConcentration->setEnabled(false);
+  }
 }
 
 void TabEvents::listEvents_currentRowChanged(int row) {
@@ -74,29 +96,26 @@ void TabEvents::listEvents_currentRowChanged(int row) {
   SPDLOG_DEBUG("Event {} selected", currentEventId.toStdString());
   ui->txtEventName->setText(events.getName(currentEventId));
   ui->txtEventTime->setText(QString::number(events.getTime(currentEventId)));
-  if (auto i = ui->cmbEventParam->findText(
-          model.getParameters().getName(events.getVariable(currentEventId)));
-      i >= 0) {
-    ui->cmbEventParam->setCurrentIndex(i);
+  if (auto i{variableIds.indexOf(events.getVariable(currentEventId))}; i >= 0) {
+    ui->cmbEventVariable->setEnabled(true);
+    ui->cmbEventVariable->setCurrentIndex(i);
+    cmbEventVariable_activated(i);
   }
-  ui->txtExpression->importVariableMath(
-      events.getExpression(currentEventId).toStdString());
   enableWidgets(true);
 }
 
 void TabEvents::btnAddEvent_clicked() {
-  if (model.getParameters().getIds().isEmpty()) {
+  if (variableIds.isEmpty()) {
     QMessageBox::information(
-        this, "Model has no parameters",
-        "To add events, the model must contain parameters.");
+        this, "Model has no species or parameters",
+        "To add events, the model must contain species or parameters.");
     return;
   }
   bool ok{false};
   auto eventName = QInputDialog::getText(
       this, "Add event", "New event name:", QLineEdit::Normal, {}, &ok);
   if (ok && !eventName.isEmpty()) {
-    auto newEventName{
-        model.getEvents().add(eventName, model.getParameters().getIds()[0])};
+    auto newEventName{model.getEvents().add(eventName, variableIds[0])};
     loadModelData(newEventName);
   }
 }
@@ -106,11 +125,11 @@ void TabEvents::btnRemoveEvent_clicked() {
   if ((row < 0) || (row > model.getEvents().getIds().size() - 1)) {
     return;
   }
-  auto msgbox =
+  auto msgbox{
       newYesNoMessageBox("Remove event?",
                          QString("Remove event '%1' from the model?")
                              .arg(ui->listEvents->currentItem()->text()),
-                         this);
+                         this)};
   connect(msgbox, &QMessageBox::finished, this, [this](int result) {
     if (result == QMessageBox::Yes) {
       SPDLOG_INFO("Removing event {}", currentEventId.toStdString());
@@ -142,10 +161,50 @@ void TabEvents::txtEventTime_editingFinished() {
   model.getEvents().setTime(currentEventId, time);
 }
 
-void TabEvents::cmbEventParam_activated(int index) {
-  if (index < model.getParameters().getIds().size()) {
-    model.getEvents().setVariable(currentEventId,
-                                  model.getParameters().getIds()[index]);
+void TabEvents::cmbEventVariable_activated(int index) {
+  if (!ui->cmbEventVariable->isEnabled() || index < 0 ||
+      index >= variableIds.size()) {
+    ui->lblSpeciesExpression->clear();
+    ui->stkValue->setCurrentIndex(0);
+    ui->stkValue->setEnabled(false);
+    return;
+  }
+  ui->stkValue->setEnabled(true);
+  model.getEvents().setVariable(currentEventId, variableIds[index]);
+  bool isSpecies{index < nSpecies};
+  if (isSpecies) {
+    ui->stkValue->setCurrentIndex(1);
+    ui->btnSetSpeciesConcentration->setEnabled(true);
+    ui->lblSpeciesExpression->setPixmap(QPixmap::fromImage(
+        DialogAnalytic(model.getEvents().getExpression(currentEventId),
+                       model.getSpeciesGeometry(variableIds[index]),
+                       model.getMath(),
+                       model.getParameters().getSpatialCoordinates())
+            .getImage()));
+    ui->txtExpression->setEnabled(false);
+  } else {
+    ui->stkValue->setCurrentIndex(0);
+    ui->btnSetSpeciesConcentration->setEnabled(false);
+    ui->txtExpression->setEnabled(true);
+    ui->txtExpression->importVariableMath(
+        model.getEvents().getExpression(currentEventId).toStdString());
+  }
+}
+
+void TabEvents::btnSetSpeciesConcentration_clicked() {
+  int iSpecies{ui->cmbEventVariable->currentIndex()};
+  if (iSpecies >= nSpecies) {
+    return;
+  }
+  QString sId{variableIds[iSpecies]};
+  DialogAnalytic dialog(model.getEvents().getExpression(currentEventId),
+                        model.getSpeciesGeometry(sId), model.getMath(),
+                        model.getParameters().getSpatialCoordinates());
+  if (dialog.exec() == QDialog::Accepted) {
+    const std::string &expr{dialog.getExpression()};
+    SPDLOG_DEBUG("  - set expr: {}", expr);
+    model.getEvents().setExpression(currentEventId, expr.c_str());
+    ui->lblSpeciesExpression->setPixmap(QPixmap::fromImage(dialog.getImage()));
   }
 }
 

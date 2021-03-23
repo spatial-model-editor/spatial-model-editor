@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" xmlns:spatial="http://www.sbml.org/sbml/level3/version1/spatial/version1" level="3" version="2" spatial:required="true">
   <model id="gray_scott" name="Gray-Scott Model" substanceUnits="substance" timeUnits="unit_of_time" volumeUnits="volume" areaUnits="area" lengthUnits="unit_of_length" extentUnits="substance">
+    <annotation>
+      <spatialModelEditor:displayOptions xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:showMinMax="1" spatialModelEditor:normaliseOverAllTimepoints="1" spatialModelEditor:normaliseOverAllSpecies="1" spatialModelEditor:showSpecies="1 1"/>
+    </annotation>
     <listOfUnitDefinitions>
       <unitDefinition id="volume" name="mL">
         <listOfUnits>
@@ -44,7 +47,7 @@
       <species id="V" name="V" compartment="compartment" initialConcentration="1" substanceUnits="substance" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
     </listOfSpecies>
     <listOfParameters>
-      <parameter id="f" name="f" value="0.037" constant="true"/>
+      <parameter id="f" name="f" value="0.037" constant="false"/>
       <parameter id="k" name="k" value="0.06" constant="true"/>
       <parameter id="U_diffusionConstant" value="0.2097" units="diffusion_constant_units" constant="true">
         <spatial:diffusionCoefficient spatial:variable="U" spatial:type="isotropic"/>
@@ -208,6 +211,26 @@
         </kineticLaw>
       </reaction>
     </listOfReactions>
+    <listOfEvents>
+      <event id="increase_f" name="increase f" useValuesFromTriggerTime="false">
+        <trigger initialValue="false" persistent="false">
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <geq/>
+              <csymbol encoding="text" definitionURL="http://www.sbml.org/sbml/symbols/time"> time </csymbol>
+              <cn type="integer"> 25000 </cn>
+            </apply>
+          </math>
+        </trigger>
+        <listOfEventAssignments>
+          <eventAssignment variable="f">
+            <math xmlns="http://www.w3.org/1998/Math/MathML">
+              <cn> 0.05 </cn>
+            </math>
+          </eventAssignment>
+        </listOfEventAssignments>
+      </event>
+    </listOfEvents>
     <spatial:geometry spatial:coordinateSystem="cartesian">
       <spatial:listOfCoordinateComponents>
         <spatial:coordinateComponent spatial:id="xCoord" spatial:type="cartesianX">

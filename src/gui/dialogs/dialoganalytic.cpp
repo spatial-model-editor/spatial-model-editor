@@ -54,6 +54,10 @@ const std::string &DialogAnalytic::getExpression() const {
   return variableExpression;
 }
 
+const QImage& DialogAnalytic::getImage() const{
+  return img;
+}
+
 bool DialogAnalytic::isExpressionValid() const { return expressionIsValid; }
 
 QPointF DialogAnalytic::physicalPoint(const QPoint &pixelPoint) const {
