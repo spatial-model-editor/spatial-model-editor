@@ -32,3 +32,8 @@ All quantities in the model have units that can be written as some combination o
     - have units of amount / membrane-area / time, i.e. ``amount`` / ``length`` / ``length`` / ``time``
 - diffusion constants
     - have units of `area / time`, i.e. ``length`` * ``length`` / ``time``
+
+More information
+----------------
+
+For more information see :download:`units.pdf <units.pdf>`

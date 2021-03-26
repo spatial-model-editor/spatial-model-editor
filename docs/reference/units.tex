@@ -1,0 +1,140 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+
+\title{PDE units}
+\author{Liam Keegan}
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+We have fundamental units of
+\begin{itemize}
+    \item time: $T$
+    \item length: $L$
+    \item amount: $A$
+\end{itemize}
+and we want to simulate the $d$-dimensional reaction diffusion equation
+\begin{equation}
+\label{eq:reacdiff}
+    \frac{\partial u}{\partial t} = D \nabla^2 u + R(u)
+\end{equation}
+where
+\begin{itemize}
+    \item $t$ is time, with units $[t] = T$
+    \item $u$ is (a vector of) species concentration, with units $[u] = A L^{-d}$
+    \item $D$ is the diffusion constant, with units $[D] = L^2 T^{-1}$
+    \item $R$ is the reaction term, with units $[R] = [u] T^{-1} = A L^{-d} T^{-1}$
+\end{itemize}
+
+To fully define the problem we need to specify the geometry of the compartment where $u$ lives,
+and the boundary conditions on $u$ at the boundaries of this compartment.
+
+We choose to start with zero-flux Neumann boundary conditions at all surfaces, to which we can add flux terms $\Gamma(u)$,
+which specify the rate at which species \emph{amount} crosses unit area of the surface,
+\begin{itemize}
+    \item $\Gamma(u)$ is a flux term, with units $[\Gamma] = A L^{1-d} T^{-1}$
+\end{itemize}
+
+Systems with multiple compartments have a reaction diffusion equation for each compartment,
+which are coupled to each other via the flux terms at the surfaces where compartments meet.
+
+\section{Alternative concentration units}
+
+To allow the use of common units of concentration for the species density, we introduce an additional (derived) unit
+\begin{itemize}
+    \item volume: $V = \alpha L^d$,
+\end{itemize}
+where $\alpha$ is a dimensionless scalar, along with an alternative definition for species concentration $u'$, where
+\begin{itemize}
+    \item $u'$ is (a vector of) species concentration, with units $[u'] = A V^{-1}$
+\end{itemize}
+so the units of concentration are related by the constant factor $\alpha$,
+\begin{equation}
+    [u'] = A (\alpha L^d)^{-1} = \alpha^{-1} A L^{-d} = \alpha^{-1} [u]
+\end{equation}
+and the dimensionless part of the variables are related by
+\begin{equation}
+    u' = \alpha u
+\end{equation}
+
+Inserting this into Eq.(\ref{eq:reacdiff}) gives
+\begin{equation}
+    \frac{\partial u'/\alpha}{\partial t} = D \nabla^2 u'/\alpha + R(u'/\alpha)
+\end{equation}
+and multiplying by $\alpha$ gives
+\begin{equation}
+   \Rightarrow \frac{\partial u'}{\partial t} = D \nabla^2 u' + \alpha R(u'/\alpha)
+\end{equation}
+
+Comparing this with a reaction diffusion equation for $u'$
+\begin{equation}
+   \label{eq:reacdiffprime}
+   \Rightarrow \frac{\partial u'}{\partial t} = D \nabla^2 u' + R'(u')
+\end{equation}
+we find the reaction terms $R$ and $R'$ are related by
+\begin{equation}
+   R(x) = \frac{1}{\alpha} R'(\alpha x)
+\end{equation}
+
+\section{What the user provides}
+
+In the GUI, the user provides
+\begin{itemize}
+    \item $u'$: initial species concentrations, with units $[u'] = A V^{-1}$
+    \item $R'(u')$: reaction terms, with units $[R'] = [u']/T = A V^{-1} T^{-1}$
+    \item $\Gamma'(u')$: membrane flux terms, with units $[\Gamma'] = A L^{1-d} T^{-1}$
+\end{itemize}
+(note the different units for the membrane flux terms vs the reaction terms - this is unfortunate and results in confusion for the user)
+
+\section{Dune implementation}
+
+For Dune simulations, we need to provide Eq.(\ref{eq:reacdiff}),
+along with the flux terms for the boundaries between compartments.
+
+\begin{enumerate}
+\item The user provides
+\begin{itemize}
+    \item $u'$: species concentrations, with units $[u'] = A V^{-1}$
+    \item $R'(u')$: reaction terms, with units $[R'] = [u']/T = A V^{-1} T^{-1}$
+    \item $\Gamma'(u')$: membrane reaction terms, with units $[\Gamma'] = A L^{1-d} T^{-1}$
+\end{itemize}
+\item The GUI (internally) converts these to
+\begin{itemize}
+    \item $u = u' / \alpha$: species concentrations, with units $[u'] = A L^{-d}$
+    \item $R(u) = R'(\alpha u) / \alpha$: reaction terms, with units $[R] = [u]/T = A L^{-d} T^{-1}$
+    \item $\Gamma(u) = \Gamma'(\alpha u)$: membrane reaction terms, with units $[\Gamma] = A L^{1-d} T^{-1}$
+\end{itemize}
+\item DUNE simulates Eq.(\ref{eq:reacdiff}), i.e. the reaction-diffusion equation for $u$
+\item The GUI converts the results back to $u'$
+\begin{itemize}
+    \item $u' = \alpha u$: species concentrations, with units $[u'] = A V^{-1}$
+\end{itemize}
+\end{enumerate}
+
+\section{Pixel implementation}
+For Pixel simulations, we implement the membrane as a thin but finite-width $d$-dimensional compartment, rather than a $(d-1)$-dimensional surface.
+This means that for each membrane pixel, a change in amount due to a flux into/out of the pixel can then be converted into an equivalent change in concentration within the pixel.
+Taking advantage of this, we convert the flux terms into reaction terms for the membrane pixels,
+and then directly simulate Eq.(\ref{eq:reacdiffprime}) with zero-flux boundary conditions at all boundaries.
+
+Assuming a pixel in the membrane has surface area $S$ and width $w$,
+\begin{itemize}
+    \item rate at which \emph{amount} enters the pixel: $\Gamma'(u') S$
+    \item $\Rightarrow \partial u /\partial t$ contribution in the pixel: $\Gamma'(u') S / (S w) = \Gamma'(u') / w$
+    \item $\Rightarrow \partial u' /\partial t$ contribution in the pixel: $\alpha \Gamma'(u') / w$
+\end{itemize}
+so we replace the membrane flux term with the following extra reaction term (for the membrane pixels in the compartment only):
+\begin{equation}
+    R'(u') \mathrel{+}= \alpha \Gamma'(u') / w
+\end{equation}
+
+\section{Open questions}
+
+\begin{itemize}
+    \item are these methods correct (and equivalent)?
+    \item can we make the units more intuitive for the user?
+\end{itemize}
+
+\end{document}
