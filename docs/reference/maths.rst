@@ -33,7 +33,7 @@ Compartment reaction terms correspond to the :math:`R_s` term in the reaction-di
 Membrane reactions
 ------------------
 
-Membrane reactions are reactions that occur on the membrane between two compartments, and describe the species amount that crosses the membrane per unit membrane area per unit time. They are evaluated on the membrane, and can be implemented as interface conditions between the PDEs in neighbouring compartments, or as additional reaction terms localised on these membranes.
+Membrane reactions are reactions that occur on the membrane between two compartments, and describe the species amount that crosses the membrane per unit membrane area per unit time.
 
 Boundary Conditions
 -------------------
