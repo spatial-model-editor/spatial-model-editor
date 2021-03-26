@@ -1,12 +1,12 @@
+#include "catch_wrapper.hpp"
+#include "mainwindow.hpp"
+#include "qt_test_utils.hpp"
+#include <QFile>
+#include <QMenu>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
-#include <QFile>
-#include <QMenu>
-#include "catch_wrapper.hpp"
-#include "mainwindow.hpp"
-#include "qt_test_utils.hpp"
 
 static void openBuiltInModel(MainWindow &w, const QString &shortcutKey = "V") {
   auto *menuFile = w.findChild<QMenu *>("menuFile");
@@ -52,7 +52,7 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
     SECTION("Ctrl+N") {
       // ctrl+n to create new model, then escape to cancel
       QString oldTitle{w.windowTitle()};
-      mwt.addUserAction({"Esc"});
+      mwt.addUserAction({"Esc"}, false);
       mwt.start();
       sendKeyEvents(&w, {"Ctrl+N"});
       REQUIRE(mwt.getResult() == "Create new model");
@@ -62,35 +62,44 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
       mwt.start();
       sendKeyEvents(&w, {"Ctrl+N"});
       REQUIRE(mwt.getResult() == "Create new model");
-      REQUIRE(w.windowTitle().right(9) == "[new.xml]");
+      REQUIRE(w.windowTitle().right(9) == "[new.sme]");
     }
     SECTION("Ctrl+O") {
       // ctrl+o to open model, then escape to cancel
-      mwt.addUserAction({"Esc"});
+      mwt.addUserAction({"Esc"}, false);
       mwt.start();
       sendKeyEvents(&w, {"Ctrl+O"});
       REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
     }
-    SECTION("user presses ctrl+s (SBML model but no geometry loaded)") {
-      SECTION("offer to import a geometry image") {
-        sendKeyEvents(&w, {"Ctrl+S"});
-        // press no when asked to import image
-        auto title = sendKeyEventsToNextQDialog({"Esc"});
-        REQUIRE(title == "No compartment geometry image");
-      }
-    }
     SECTION("user presses ctrl+s (with valid SBML model)") {
       openBuiltInModel(w, "V");
       SECTION("cancel") {
-        mwt.addUserAction(QStringList{"Escape"});
+        mwt.addUserAction(QStringList{"Escape"}, false);
         mwt.start();
         sendKeyEvents(&w, {"Ctrl+S"});
         REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
       }
-      SECTION("save xml file") {
+      SECTION("save sme file") {
+        QFile::remove("wqz.sme");
         mwt.addUserAction({"w", "q", "z"});
         mwt.start();
         sendKeyEvents(&w, {"Ctrl+S"});
+        REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
+      }
+    }
+    SECTION("user presses ctrl+e (with valid SBML model)") {
+      openBuiltInModel(w, "V");
+      SECTION("cancel") {
+        mwt.addUserAction(QStringList{"Escape"}, false);
+        mwt.start();
+        sendKeyEvents(&w, {"Ctrl+E"});
+        REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
+      }
+      SECTION("save sme file") {
+        QFile::remove("wqz.xml");
+        mwt.addUserAction({"w", "q", "z"});
+        mwt.start();
+        sendKeyEvents(&w, {"Ctrl+E"});
         REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
         QFile file("wqz.xml");
         REQUIRE(file.open(QIODevice::ReadOnly | QIODevice::Text));
@@ -232,7 +241,7 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
     QFile::remove("units.xml");
     mwt.addUserAction({"u", "n", "i", "t", "s", ".", "x", "m", "l"});
     mwt.start();
-    sendKeyEvents(&w, {"Ctrl+S"});
+    sendKeyEvents(&w, {"Ctrl+E"});
     // check units of SBML model
     std::unique_ptr<libsbml::SBMLDocument> doc(
         libsbml::readSBMLFromFile("units.xml"));

@@ -26,15 +26,19 @@ DialogExport::DialogExport(const QVector<QImage> &images,
           &DialogExport::doExport);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogExport::reject);
-  connect(ui->radSingleImage, &QRadioButton::toggled, this,
-          &DialogExport::radSingleTimepoint_toggled);
+  connect(ui->radAllImages, &QRadioButton::toggled, this,
+          &DialogExport::radios_toggled);
+  connect(ui->radCSV, &QRadioButton::toggled, this,
+          &DialogExport::radios_toggled);
   connect(ui->radModel, &QRadioButton::toggled, this,
-          &DialogExport::radSingleTimepoint_toggled);
+          &DialogExport::radios_toggled);
+  connect(ui->radSingleImage, &QRadioButton::toggled, this,
+          &DialogExport::radios_toggled);
 }
 
 DialogExport::~DialogExport() = default;
 
-void DialogExport::radSingleTimepoint_toggled([[maybe_unused]] bool checked) {
+void DialogExport::radios_toggled([[maybe_unused]] bool checked) {
   if (ui->radModel->isChecked() || ui->radSingleImage->isChecked()) {
     ui->cmbTimepoint->setEnabled(true);
   } else {
@@ -43,16 +47,16 @@ void DialogExport::radSingleTimepoint_toggled([[maybe_unused]] bool checked) {
 }
 
 void DialogExport::doExport() {
-  if (ui->radModel->isChecked()){
+  if (ui->radAllImages->isChecked()) {
+    return saveImages();
+  } else if (ui->radCSV->isChecked()) {
+    return saveCSV();
+  }else if (ui->radModel->isChecked()){
     auto timePoint{static_cast<std::size_t>(ui->cmbTimepoint->currentIndex())};
     sim.applyConcsToModel(m, timePoint);
     accept();
   } else if (ui->radSingleImage->isChecked()) {
     return saveImage();
-  } else if (ui->radAllImages->isChecked()) {
-    return saveImages();
-  } else if (ui->radCSV->isChecked()) {
-    return saveCSV();
   }
 }
 

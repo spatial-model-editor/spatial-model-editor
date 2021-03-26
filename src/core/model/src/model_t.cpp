@@ -765,7 +765,6 @@ SCENARIO("SBML: Delete mesh annotation & load",
   s.importSBMLString(xml);
   s.getGeometry().getMesh()->setBoundaryMaxPoints(0, 32);
   s.getGeometry().getMesh()->setCompartmentMaxTriangleArea(0, 3);
-  s.updateSBMLDoc();
   REQUIRE(s.getGeometry().getMesh()->getBoundaryMaxPoints(0) == 32);
   REQUIRE(s.getGeometry().getMesh()->getCompartmentMaxTriangleArea(0) == 3);
 
@@ -793,4 +792,23 @@ SCENARIO("SBML: Delete mesh annotation & load",
 
   REQUIRE(s2.getGeometry().getMesh()->getBoundaryMaxPoints(0) != 32);
   REQUIRE(s2.getGeometry().getMesh()->getCompartmentMaxTriangleArea(0) != 3);
+}
+
+SCENARIO("SBML: load .xml model, simulate, save as .sme, load .sme",
+         "[core/model/model][core/model][core][model]") {
+  model::Model s;
+  QFile f(":/models/ABtoC.xml");
+  f.open(QIODevice::ReadOnly);
+  s.importSBMLString(f.readAll().toStdString());
+  simulate::Simulation sim(s);
+  sim.doTimesteps(0.1, 2);
+  s.exportSMEFile("test.sme");
+  model::Model s2;
+  s2.importFile("test.sme");
+  REQUIRE(s2.getCompartments().getIds() == s.getCompartments().getIds());
+  REQUIRE(s.getXml() == s2.getXml());
+  REQUIRE(s.getSimulationData().timePoints.size() == 3);
+  REQUIRE(s.getSimulationData().timePoints[2] == dbl_approx(0.2));
+  REQUIRE(s.getSimulationData().concPadding.size() == 3);
+  REQUIRE(s.getSimulationData().concPadding[2] == dbl_approx(0));
 }

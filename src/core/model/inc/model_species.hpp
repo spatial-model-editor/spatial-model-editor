@@ -17,6 +17,10 @@ class Species;
 
 namespace sme {
 
+namespace simulate {
+class SimulationData;
+}
+
 namespace model {
 class ModelCompartments;
 class ModelGeometry;
@@ -35,6 +39,7 @@ private:
   const ModelGeometry *modelGeometry = nullptr;
   const ModelParameters *modelParameters = nullptr;
   ModelReactions *modelReactions = nullptr;
+  simulate::SimulationData *simulationData = nullptr;
   void setFieldConcAnalytic(geometry::Field &field, const std::string &expr);
   void removeInitialAssignment(const QString &id);
   std::vector<double>
@@ -45,7 +50,7 @@ public:
   ModelSpecies();
   ModelSpecies(libsbml::Model *model, const ModelCompartments *compartments,
                const ModelGeometry *geometry, const ModelParameters *parameters,
-               ModelReactions *reactions);
+               ModelReactions *reactions, simulate::SimulationData *data);
   QString add(const QString &name, const QString &compartmentId);
   void remove(const QString &id);
   QString setName(const QString &id, const QString &name);

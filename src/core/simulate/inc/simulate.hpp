@@ -3,6 +3,7 @@
 #pragma once
 
 #include "simulate_options.hpp"
+#include "simulate_data.hpp"
 #include <QImage>
 #include <QRgb>
 #include <QSize>
@@ -42,28 +43,21 @@ private:
   std::vector<std::vector<std::string>> compartmentSpeciesNames;
   std::vector<std::vector<std::size_t>> compartmentSpeciesIndices;
   std::vector<std::vector<QRgb>> compartmentSpeciesColors;
-  std::vector<double> timePoints;
-  // time->compartment->(ix->species)
-  std::vector<std::vector<std::vector<double>>> concentration;
-  // time->compartment->species
-  std::vector<std::vector<std::vector<AvgMinMax>>> avgMinMax;
-  // time->compartment->species
-  std::vector<std::vector<std::vector<double>>> concentrationMax;
+  SimulationData* data;
+  std::unique_ptr<SimulationData> dataIfNotProvided;
   QSize imageSize;
   std::atomic<bool> isRunning{false};
   std::atomic<bool> stopRequested{false};
   std::atomic<std::size_t> nCompletedTimesteps{0};
-  std::size_t concPadding{0};
-  std::unique_ptr<sme::model::Model> nextModel;
-  std::string xmlPrevModel;
+  std::unique_ptr<sme::model::Model> simModel;
   std::queue<double> eventTimes;
   void initModel(const model::Model &model);
-  void initEvents(const model::Model &model);
+  void initEvents(model::Model &model);
   void applyNextEvent();
   void updateConcentrations(double t);
 
 public:
-  explicit Simulation(const model::Model &sbmlDoc,
+  explicit Simulation(model::Model &sbmlDoc,
                       SimulatorType simType = SimulatorType::DUNE,
                       const Options &options = {});
   ~Simulation();
@@ -71,7 +65,7 @@ public:
   std::size_t doTimesteps(double time, std::size_t nSteps = 1,
                           double timeout_ms = -1.0);
   const std::string &errorMessage() const;
-  const QImage& errorImage() const;
+  const QImage &errorImage() const;
   const std::vector<std::string> &getCompartmentIds() const;
   const std::vector<std::string> &
   getSpeciesIds(std::size_t compartmentIndex) const;
@@ -86,7 +80,7 @@ public:
   std::vector<double> getConcArray(std::size_t timeIndex,
                                    std::size_t compartmentIndex,
                                    std::size_t speciesIndex) const;
-  void applyConcsToModel(model::Model& model, std::size_t timeIndex) const;
+  void applyConcsToModel(model::Model &model, std::size_t timeIndex) const;
   std::vector<double> getDcdt(std::size_t compartmentIndex,
                               std::size_t speciesIndex) const;
   double getLowerOrderConc(std::size_t compartmentIndex,
@@ -98,9 +92,11 @@ public:
                bool normaliseOverAllTimepoints = false,
                bool normaliseOverAllSpecies = false) const;
   // map from name to vec<vec<double>> species conc/dcdt for python bindings
-  std::pair<std::map<std::string, std::vector<std::vector<double>>>,std::map<std::string, std::vector<std::vector<double>>>>
+  std::pair<std::map<std::string, std::vector<std::vector<double>>>,
+            std::map<std::string, std::vector<std::vector<double>>>>
   getPyConcs(std::size_t timeIndex) const;
   std::size_t getNCompletedTimesteps() const;
+  const SimulationData& getSimulationData() const;
   bool getIsRunning() const;
   bool getIsStopping() const;
   void requestStop();

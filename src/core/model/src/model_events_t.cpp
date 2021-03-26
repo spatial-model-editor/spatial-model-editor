@@ -74,7 +74,6 @@ SCENARIO("SBML events",
     REQUIRE(params.getExpression("param1") == "1");
     REQUIRE(params.getExpression("param2") == "1");
     // check sbml output
-    s.updateSBMLDoc();
     std::unique_ptr<libsbml::SBMLDocument> doc2(
         libsbml::readSBMLFromString(s.getXml().toStdString().c_str()));
     const auto *model{doc2->getModel()};
@@ -168,7 +167,6 @@ SCENARIO("SBML events",
     REQUIRE(s.getHasUnsavedChanges() == true);
     REQUIRE(events.getHasUnsavedChanges() == true);
     // check sbml output
-    s.updateSBMLDoc();
     std::unique_ptr<libsbml::SBMLDocument> doc2(
         libsbml::readSBMLFromString(s.getXml().toStdString().c_str()));
     const auto *model{doc2->getModel()};

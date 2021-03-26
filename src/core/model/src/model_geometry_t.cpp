@@ -1,5 +1,6 @@
 #include "catch_wrapper.hpp"
 #include "mesh.hpp"
+#include "serialization.hpp"
 #include "model_compartments.hpp"
 #include "model_geometry.hpp"
 #include "model_membranes.hpp"
@@ -39,8 +40,9 @@ SCENARIO("Model geometry",
     model::ModelSpecies mSpecies;
     model::ModelReactions mReactions(doc->getModel(),
                                      mMembranes.getMembranes());
+    utils::SmeFile smeFile;
     mCompartments = model::ModelCompartments(
-        doc->getModel(), &mGeometry, &mMembranes, &mSpecies, &mReactions);
+        doc->getModel(), &mGeometry, &mMembranes, &mSpecies, &mReactions, &smeFile.simulationData());
     mGeometry =
         model::ModelGeometry(doc->getModel(), &mCompartments, &mMembranes);
     auto &m = mGeometry;
@@ -56,8 +58,9 @@ SCENARIO("Model geometry",
       REQUIRE(m.getHasUnsavedChanges() == true);
       REQUIRE(mGeometry.getHasUnsavedChanges() == true);
       model::ModelParameters mParameters(doc->getModel());
+      simulate::SimulationData data;
       mSpecies = model::ModelSpecies(doc->getModel(), &mCompartments,
-                                     &mGeometry, &mParameters, &mReactions);
+                                     &mGeometry, &mParameters, &mReactions, &data);
       REQUIRE(m.getIsValid() == true);
       REQUIRE(m.getMesh() != nullptr);
       REQUIRE(m.getHasImage() == true);

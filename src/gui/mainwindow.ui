@@ -167,7 +167,7 @@
     </property>
     <widget class="QMenu" name="menuOpen_example_SBML_file">
      <property name="title">
-      <string>Open &amp;example SBML file</string>
+      <string>Open &amp;example model</string>
      </property>
      <addaction name="action_ABtoC"/>
      <addaction name="action_very_simple_model"/>
@@ -181,6 +181,7 @@
     <addaction name="action_New"/>
     <addaction name="action_Open_SBML_file"/>
     <addaction name="menuOpen_example_SBML_file"/>
+    <addaction name="action_Save"/>
     <addaction name="action_Save_SBML_file"/>
     <addaction name="actionExport_Dune_ini_file"/>
     <addaction name="actionE_xit"/>
@@ -271,7 +272,7 @@
   </action>
   <action name="action_Open_SBML_file">
    <property name="text">
-    <string>&amp;Open SBML file</string>
+    <string>&amp;Open</string>
    </property>
    <property name="toolTip">
     <string>Open SBML file</string>
@@ -282,10 +283,10 @@
   </action>
   <action name="action_Save_SBML_file">
    <property name="text">
-    <string>&amp;Save SBML file</string>
+    <string>&amp;Export SBML file</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+S</string>
+    <string>Ctrl+E</string>
    </property>
   </action>
   <action name="actionAbout_Qt">
@@ -447,6 +448,14 @@
   <action name="action_liver_cells">
    <property name="text">
     <string>&amp;liver-cells</string>
+   </property>
+  </action>
+  <action name="action_Save">
+   <property name="text">
+    <string>&amp;Save</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+S</string>
    </property>
   </action>
   <actiongroup name="actionGroupSimType">

@@ -17,6 +17,7 @@ namespace Ui {
 class MainWindow;
 }
 
+
 class MainWindow : public QMainWindow {
   Q_OBJECT
 
@@ -28,6 +29,7 @@ private:
   std::unique_ptr<Ui::MainWindow> ui;
   QLabel *statusBarPermanentMessage;
   sme::model::Model sbmlDoc;
+  QString currentFilename;
 
   void setupTabs();
   void setupConnections();
@@ -36,10 +38,7 @@ private:
   // offer user to load a valid one if not
   bool isValidModel();
   bool isValidModelAndGeometryImage();
-
   void importGeometryImage(const QImage &image);
-  void openSBMLFile(const QString &filename);
-
   void tabMain_currentChanged(int index);
   TabGeometry *tabGeometry;
   TabSpecies *tabSpecies;
@@ -57,6 +56,7 @@ private:
   void action_New_triggered();
   void action_Open_SBML_file_triggered();
   void menuOpen_example_SBML_file_triggered(const QAction *action);
+  void action_Save_triggered();
   void action_Save_SBML_file_triggered();
   void actionExport_Dune_ini_file_triggered();
 

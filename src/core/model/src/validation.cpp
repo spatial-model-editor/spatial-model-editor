@@ -20,21 +20,31 @@ void printSBMLDocWarnings(const libsbml::SBMLDocument *doc) {
   }
 }
 
-void printSBMLDocErrors(const libsbml::SBMLDocument *doc) {
-  auto severity = libsbml::LIBSBML_SEV_ERROR;
-  unsigned n = doc->getNumErrors(severity);
+int countAndPrintSBMLDocErrors(const libsbml::SBMLDocument *doc) {
+  int nErrors{0};
+  auto severity{libsbml::LIBSBML_SEV_ERROR};
+  const unsigned n{doc->getNumErrors(severity)};
   for (unsigned i = 0; i < n; ++i) {
-    const auto *err = doc->getErrorWithSeverity(i, severity);
-    SPDLOG_ERROR("[{}] line {}:{} {}", err->getCategoryAsString(),
-                 err->getLine(), err->getColumn(), err->getMessage());
+    const auto *err{doc->getErrorWithSeverity(i, severity)};
+    if (err->getErrorId() == 1221608) {
+      // ignore this error for now:
+      // https://github.com/spatial-model-editor/spatial-model-editor/issues/465
+      SPDLOG_WARN("Ignoring this libSBML error:\n[{}] [{}] line {}:{} {}", err->getErrorId(),
+                   err->getCategoryAsString(), err->getLine(), err->getColumn(),
+                   err->getMessage());
+    } else {
+      SPDLOG_ERROR("[{}] [{}] line {}:{} {}", err->getErrorId(),
+                   err->getCategoryAsString(), err->getLine(), err->getColumn(),
+                   err->getMessage());
+      ++nErrors;
+    }
   }
+  return nErrors;
 }
 
 bool validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc) {
-  if (doc->getErrorLog()->getNumFailsWithSeverity(libsbml::LIBSBML_SEV_ERROR) >
-      0) {
-    SPDLOG_ERROR("Errors while reading SBML file");
-    printSBMLDocErrors(doc);
+  if (countAndPrintSBMLDocErrors(doc) > 0) {
+    SPDLOG_ERROR("Errors while reading SBML file, aborting.");
     return false;
   }
   SPDLOG_INFO("Successfully imported SBML Level {}, Version {} model",
@@ -49,7 +59,7 @@ bool validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc) {
     } else {
       SPDLOG_ERROR(
           "Error - failed to upgrade SBML file (continuing anyway...)");
-      printSBMLDocErrors(doc);
+      countAndPrintSBMLDocErrors(doc);
     }
   }
   // enable spatial extension
@@ -60,7 +70,6 @@ bool validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc) {
     SPDLOG_INFO("Enabling spatial extension");
   }
   doc->checkConsistency();
-  printSBMLDocErrors(doc);
   printSBMLDocWarnings(doc);
   return true;
 }

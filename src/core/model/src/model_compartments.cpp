@@ -7,6 +7,7 @@
 #include "model_reactions.hpp"
 #include "model_species.hpp"
 #include "sbml_utils.hpp"
+#include "simulate_data.hpp"
 #include <optional>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
@@ -74,10 +75,11 @@ ModelCompartments::ModelCompartments(libsbml::Model *model,
                                      ModelGeometry *geometry,
                                      ModelMembranes *membranes,
                                      ModelSpecies *species,
-                                     ModelReactions *reactions)
+                                     ModelReactions *reactions,
+                                     simulate::SimulationData *data)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(model, ids)},
       sbmlModel{model}, modelGeometry{geometry}, modelMembranes{membranes},
-      modelSpecies{species}, modelReactions{reactions} {
+      modelSpecies{species}, modelReactions{reactions}, simulationData{data} {
   makeSizesValid(model);
   colours = QVector<QRgb>(ids.size(), 0);
   compartments.reserve(static_cast<std::size_t>(ids.size()));
@@ -118,6 +120,8 @@ QString ModelCompartments::add(const QString &name) {
   modelMembranes->updateCompartments(compartments);
   modelMembranes->updateCompartmentNames(names, sbmlModel);
   hasUnsavedChanges = true;
+  SPDLOG_INFO("Clearing simulation data");
+  simulationData->clear();
   return newName; // should be id?
 }
 
@@ -168,11 +172,15 @@ static void removeCompartmentFromSBML(libsbml::Model *model,
 }
 
 bool ModelCompartments::remove(const QString &id) {
+  SPDLOG_INFO("Removing compartment '{}'", id.toStdString());
   auto i = ids.indexOf(id);
   if (i < 0) {
+    SPDLOG_WARN("Compartment '{}' not found", id.toStdString());
     return false;
   }
   hasUnsavedChanges = true;
+  SPDLOG_INFO("Clearing simulation data");
+  simulationData->clear();
   ids.removeAt(i);
   names.removeAt(i);
   colours.removeAt(i);
@@ -283,6 +291,8 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
     return;
   }
   hasUnsavedChanges = true;
+  SPDLOG_INFO("Clearing simulation data");
+  simulationData->clear();
   std::string sId{id.toStdString()};
   SPDLOG_INFO("assigning colour {:x} to compartment {}", colour, sId);
   if (auto oldId = getIdFromColour(colour); colour != 0 && !oldId.isEmpty()) {
@@ -367,11 +377,14 @@ void ModelCompartments::clear() {
   colours.clear();
   compartments.clear();
   hasUnsavedChanges = true;
+  simulationData->clear();
 }
 
-bool ModelCompartments::getHasUnsavedChanges() const {return hasUnsavedChanges;}
+bool ModelCompartments::getHasUnsavedChanges() const {
+  return hasUnsavedChanges;
+}
 
-void ModelCompartments::setHasUnsavedChanges(bool unsavedChanges){
+void ModelCompartments::setHasUnsavedChanges(bool unsavedChanges) {
   hasUnsavedChanges = unsavedChanges;
 }
 

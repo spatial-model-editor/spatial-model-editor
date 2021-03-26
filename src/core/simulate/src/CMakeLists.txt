@@ -13,7 +13,9 @@ target_sources(
           pde.cpp
           pixelsim.cpp
           pixelsim_impl.cpp
-          simulate.cpp)
+          simulate.cpp
+          simulate_data.cpp
+          simulate_options.cpp)
 
 if(BUILD_TESTING)
   target_sources(
@@ -25,6 +27,7 @@ if(BUILD_TESTING)
            duneini_t.cpp
            dunesim_t.cpp
            pde_t.cpp
+           simulate_data_t.cpp
            simulate_t.cpp)
 endif()
 if(BUILD_BENCHMARKS)

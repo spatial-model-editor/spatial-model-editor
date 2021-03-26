@@ -3,7 +3,9 @@
 #include "model.hpp"
 #include "qt_test_utils.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
+#include "serialization.hpp"
 #include "simulate.hpp"
+#include "simulate_options.hpp"
 #include "utils.hpp"
 #include <QFile>
 #include <algorithm>
@@ -859,6 +861,7 @@ SCENARIO(
     options.dune.dt = 0.5;
     for (auto simulator :
          {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
+      s.getSimulationData().clear();
       auto sim = simulate::Simulation(s, simulator, options);
       REQUIRE(sim.getIsRunning() == false);
       REQUIRE(sim.getIsStopping() == false);
@@ -905,6 +908,7 @@ SCENARIO("Pixel simulator: timeout",
   REQUIRE(sim.getNCompletedTimesteps() == 1);
 
   // simulate many tiny time steps, with 200ms timeout
+  s.getSimulationData().clear();
   simulate::Simulation sim2(s, simulate::SimulatorType::Pixel);
   REQUIRE(sim2.getNCompletedTimesteps() == 1);
   sim2.doTimesteps(1e-12, 100000, 200.0);
@@ -940,6 +944,7 @@ SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
       options.pixel.enableMultiThreading = multithreaded;
       options.pixel.maxErr = {std::numeric_limits<double>::max(),
                               maxAllowedRelErr};
+      s.getSimulationData().clear();
       simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
       sim2.doTimesteps(time);
       auto conc = sim2.getConc(sim.getTimePoints().size() - 1, 0, 0);
@@ -1090,6 +1095,40 @@ SCENARIO("PyConc",
   }
 }
 
+static double rel_diff(const simulate::SimulationData &a,
+                       const simulate::SimulationData &b, std::size_t iTimeA,
+                       std::size_t iTimeB) {
+  double d{0.0};
+  double n{0.0};
+  for (std::size_t iC = 0; iC < a.concentration[iTimeA].size(); ++iC) {
+    const auto &cA{a.concentration[iTimeA][iC]};
+    const auto &cB{b.concentration[iTimeB][iC]};
+    // normalise to max conc over all species & points in each compartment
+    double norm{*std::max_element(cA.cbegin(), cA.cend())};
+    n += static_cast<double>(cA.size());
+    for (std::size_t i = 0; i < cA.size(); ++i) {
+      d += std::abs(cA[i] - cB[i]) / norm;
+    }
+  }
+  return d / n;
+}
+
+static double rel_diff(const std::vector<double> &a,
+                       const std::vector<double> &b) {
+  double normA{*std::max_element(a.cbegin(), a.cend())};
+  double normB{*std::max_element(b.cbegin(), b.cend())};
+  double norm = std::max(normA, normB);
+  if (norm == 0.0) {
+    norm = 1e-14;
+  }
+  double n{static_cast<double>(a.size())};
+  double d{0.0};
+  for (std::size_t i = 0; i < a.size(); ++i) {
+    d += std::abs(a[i] - b[i]);
+  }
+  return d / n / norm;
+}
+
 SCENARIO("applyConcsToModel initial concentrations",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
   model::Model s;
@@ -1123,9 +1162,7 @@ SCENARIO("applyConcsToModel initial concentrations",
       auto spec1{s.getSpecies().getSampledFieldConcentration(sId)};
       auto spec2{s2.getSpecies().getSampledFieldConcentration(sId)};
       REQUIRE(spec1.size() == spec2.size());
-      for (std::size_t i = 0; i < spec1.size(); ++i) {
-        REQUIRE(spec1[i] == dbl_approx(spec2[i]));
-      }
+      REQUIRE(rel_diff(spec1, spec2) == dbl_approx(0.0));
     }
   }
 }
@@ -1136,14 +1173,21 @@ SCENARIO("applyConcsToModel after simulation",
   QFile f(":/models/very-simple-model.xml");
   f.open(QIODevice::ReadOnly);
   s.importSBMLString(f.readAll().toStdString());
+  // added this to try to work around
+  // https://github.com/spatial-model-editor/spatial-model-editor/issues/465
+//  s.getSpecies().setAnalyticConcentration("B_c1", "cos(x/14.2)+1");
+//  s.getSpecies().setAnalyticConcentration("A_c2", "cos(x/12.2)+1");
+//  s.getSpecies().setAnalyticConcentration("B_c2", "cos(x/15.1)+1");
+//  s.getSpecies().setAnalyticConcentration("A_c3", "cos(x/7.2)+1");
+//  s.getSpecies().setAnalyticConcentration("B_c3", "cos(x/5.2)+1");
+  s.exportSBMLFile("tmp.xml");
   simulate::Options options;
   options.dune.dt = 0.01;
-  // initial concs should match original model
-  // (note any analytic initial concs replaced with sampled fields)
+  // apply initial concs from sim to model s, check they agree with copy of
+  // model s2 (note any analytic initial concs in s are replaced with sampled
+  // fields)
   model::Model s2;
-  QFile f2(":/models/very-simple-model.xml");
-  f2.open(QIODevice::ReadOnly);
-  s2.importSBMLString(f2.readAll().toStdString());
+  s2.importSBMLFile("tmp.xml");
   simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
   sim.applyConcsToModel(s, 0);
   for (const auto &cId : s.getCompartments().getIds()) {
@@ -1151,50 +1195,48 @@ SCENARIO("applyConcsToModel after simulation",
       auto spec1{s.getSpecies().getSampledFieldConcentration(sId)};
       auto spec2{s2.getSpecies().getSampledFieldConcentration(sId)};
       REQUIRE(spec1.size() == spec2.size());
-      for (std::size_t i = 0; i < spec1.size(); ++i) {
-        REQUIRE(spec1[i] == dbl_approx(spec2[i]));
-      }
+      REQUIRE(rel_diff(spec1, spec2) == dbl_approx(0.0));
     }
   }
-  // do t=0.02 sim
-  sim.doTimesteps(0.02);
-  REQUIRE(sim.getNCompletedTimesteps() == 2);
-  // do t=0.01 sim, apply concs to model, create new sim from this model
-  // new sim at t=0 should equal old sim at t=0.01
-  simulate::Simulation simA(s, simulate::SimulatorType::Pixel, options);
-  simA.doTimesteps(0.01);
-  REQUIRE(simA.getNCompletedTimesteps() == 2);
-  simA.applyConcsToModel(s, 1);
-  simulate::Simulation simB(s, simulate::SimulatorType::Pixel, options);
-  for (std::size_t iComp = 0; iComp < simA.getCompartmentIds().size();
+  // 0 -> 0.01 -> 0.02 sim in model s
+  sim.doTimesteps(0.01, 2);
+  REQUIRE(sim.getNCompletedTimesteps() == 3);
+  // do t=0.01 sim2 using model s2
+  simulate::Simulation sim2(s2, simulate::SimulatorType::Pixel, options);
+  sim2.doTimesteps(0.01);
+  REQUIRE(sim2.getNCompletedTimesteps() == 2);
+  // apply concs at t=0.01 to model
+  sim2.applyConcsToModel(s2, 1);
+  // reset sim data
+  s2.getSimulationData() = {};
+  // create new sim3 from model s2
+  simulate::Simulation sim3(s2, simulate::SimulatorType::Pixel, options);
+  // sim3 at t=0 should equal sim at t=0.01
+  for (std::size_t iComp = 0; iComp < sim3.getCompartmentIds().size();
        ++iComp) {
-    const auto &specIds = simA.getSpeciesIds(iComp);
-    for (std::size_t iSpec = 0; iSpec < specIds.size(); ++iSpec) {
-      auto concSimA{simA.getConcArray(1, iComp, iSpec)};
-      auto concSimB{simB.getConcArray(0, iComp, iSpec)};
-      REQUIRE(concSimA.size() == concSimB.size());
-      for (std::size_t i = 0; i < concSimA.size(); ++i) {
-        CAPTURE(concSimA[i]);
-        CAPTURE(concSimB[i]);
-        REQUIRE(std::abs(concSimA[i] - concSimB[i]) < 1e-12);
-      }
-    }
-  }
-  // simulate new sim for t=0.01, should equal t=0.02 sim of original model
-  simB.doTimesteps(0.01);
-  REQUIRE(simB.getNCompletedTimesteps() == 2);
-  for (std::size_t iComp = 0; iComp < simA.getCompartmentIds().size();
-       ++iComp) {
-    const auto &specIds = simA.getSpeciesIds(iComp);
+    const auto &specIds = sim3.getSpeciesIds(iComp);
     for (std::size_t iSpec = 0; iSpec < specIds.size(); ++iSpec) {
       auto concSim{sim.getConcArray(1, iComp, iSpec)};
-      auto concSimB{simB.getConcArray(1, iComp, iSpec)};
-      REQUIRE(concSim.size() == concSimB.size());
-      for (std::size_t i = 0; i < concSimB.size(); ++i) {
-        CAPTURE(concSim[i]);
-        CAPTURE(concSimB[i]);
-        REQUIRE(std::abs(concSim[i] - concSimB[i]) < 1e-14);
-      }
+      auto concSim3{sim3.getConcArray(0, iComp, iSpec)};
+      REQUIRE(concSim.size() == concSim3.size());
+      REQUIRE(rel_diff(concSim, concSim3) == dbl_approx(0.0));
+    }
+  }
+  // simulate sim3 for t=0.01, now it should equal t=0.02 sim of original model
+  // note: should differ by O(dt^2), not by machine epsilon, since for the first
+  // step both simulations started from the same data and took the same
+  // timestep, but for the second step it is a new simulation, so timesteps will
+  // differ
+  sim3.doTimesteps(0.01);
+  REQUIRE(sim3.getNCompletedTimesteps() == 2);
+  for (std::size_t iComp = 0; iComp < sim3.getCompartmentIds().size();
+       ++iComp) {
+    const auto &specIds = sim3.getSpeciesIds(iComp);
+    for (std::size_t iSpec = 0; iSpec < specIds.size(); ++iSpec) {
+      auto concSim{sim.getConcArray(2, iComp, iSpec)};
+      auto concSim3{sim3.getConcArray(1, iComp, iSpec)};
+      REQUIRE(concSim.size() == concSim3.size());
+      REQUIRE(rel_diff(concSim, concSim3) < 5e-7);
     }
   }
 }
@@ -1224,6 +1266,7 @@ SCENARIO("Reactions depend on x, y, t",
     simPixel.doTimesteps(dt, 1);
     REQUIRE(simPixel.errorMessage().empty());
     REQUIRE(simPixel.getNCompletedTimesteps() == 2);
+    s.getSimulationData().clear();
     simulate::Simulation simDune{s, simulate::SimulatorType::DUNE};
     simDune.doTimesteps(dt, 1);
     REQUIRE(simDune.errorMessage().empty());
@@ -1252,6 +1295,7 @@ SCENARIO("Reactions depend on x, y, t",
     simPixel.doTimesteps(dt, 1);
     REQUIRE(simPixel.errorMessage().empty());
     REQUIRE(simPixel.getNCompletedTimesteps() == 2);
+    s.getSimulationData().clear();
     simulate::Simulation simDune{s, simulate::SimulatorType::DUNE};
     simDune.doTimesteps(dt, 1);
     REQUIRE(simDune.errorMessage().empty());
@@ -1282,6 +1326,7 @@ SCENARIO("Reactions depend on x, y, t",
     simPixel.doTimesteps(dt, 1);
     REQUIRE(simPixel.errorMessage().empty());
     REQUIRE(simPixel.getNCompletedTimesteps() == 2);
+    s.getSimulationData().clear();
     simulate::Simulation simDune{s, simulate::SimulatorType::DUNE};
     simDune.doTimesteps(dt, 1);
     REQUIRE(simDune.errorMessage().empty());
@@ -1310,13 +1355,16 @@ SCENARIO(
     "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
   GIVEN("circle membrane reaction") {
     model::Model s;
-    if (QFile f(":/test/models/membrane-reaction-circle.xml");
-        f.open(QIODevice::ReadOnly)) {
-      s.importSBMLString(f.readAll().toStdString());
-    }
+    QFile f(":/test/models/membrane-reaction-circle.xml");
+    f.open(QIODevice::ReadOnly);
+    s.importSBMLString(f.readAll().toStdString());
+    model::Model s2;
+    QFile f2(":/test/models/membrane-reaction-circle.xml");
+    f2.open(QIODevice::ReadOnly);
+    s2.importSBMLString(f2.readAll().toStdString());
     simulate::Options options;
     simulate::Simulation simDune(s, simulate::SimulatorType::DUNE, options);
-    simulate::Simulation simPixel(s, simulate::SimulatorType::Pixel, options);
+    simulate::Simulation simPixel(s2, simulate::SimulatorType::Pixel, options);
     REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
     REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
     simDune.doTimesteps(0.05);
@@ -1350,9 +1398,13 @@ SCENARIO(
     QFile f(":/test/models/membrane-reaction-pixels.xml");
     f.open(QIODevice::ReadOnly);
     s.importSBMLString(f.readAll().toStdString());
+    model::Model s2;
+    QFile f2(":/test/models/membrane-reaction-pixels.xml");
+    f2.open(QIODevice::ReadOnly);
+    s2.importSBMLString(f2.readAll().toStdString());
     simulate::Options options;
     simulate::Simulation simDune(s, simulate::SimulatorType::DUNE, options);
-    simulate::Simulation simPixel(s, simulate::SimulatorType::Pixel, options);
+    simulate::Simulation simPixel(s2, simulate::SimulatorType::Pixel, options);
     REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
     REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
     simDune.doTimesteps(5);
@@ -1380,5 +1432,121 @@ SCENARIO(
     CAPTURE(avgRelDiff);
     REQUIRE(avgAbsDiff < allowedAvgAbsDiff);
     REQUIRE(avgRelDiff < allowedAvgRelDiff);
+  }
+}
+
+SCENARIO("SimulationData",
+         "[core/simulate/simulate][core/simulate][core][simulate]") {
+  model::Model s;
+  QFile f(":/models/very-simple-model.xml");
+  f.open(QIODevice::ReadOnly);
+  s.importSBMLString(f.readAll().toStdString());
+  s.getSpecies().setAnalyticConcentration("B_c1", "cos(x/14.2)+1");
+  s.getSpecies().setAnalyticConcentration("A_c2", "cos(x/12.2)+1");
+  s.getSpecies().setAnalyticConcentration("B_c2", "cos(x/15.1)+1");
+  s.getSpecies().setAnalyticConcentration("A_c3", "cos(x/7.2)+1");
+  s.getSpecies().setAnalyticConcentration("B_c3", "cos(x/5.2)+1");
+  WHEN("Continue previous simulation from data") {
+    simulate::Options options;
+    options.pixel.maxErr.rel = 1e-2;
+    simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
+    // sim: 0.00 -> 0.01 -> 0.02 -> 0.03 -> 0.04 -> 0.05
+    sim.doTimesteps(0.01, 5);
+    REQUIRE(sim.getNCompletedTimesteps() == 6);
+    REQUIRE(sim.getTimePoints()[0] == dbl_approx(0.00));
+    REQUIRE(sim.getTimePoints()[1] == dbl_approx(0.01));
+    REQUIRE(sim.getTimePoints()[2] == dbl_approx(0.02));
+    REQUIRE(sim.getTimePoints()[3] == dbl_approx(0.03));
+    REQUIRE(sim.getTimePoints()[4] == dbl_approx(0.04));
+    REQUIRE(sim.getTimePoints()[5] == dbl_approx(0.05));
+    simulate::SimulationData data{sim.getSimulationData()};
+    s.getSimulationData().clear();
+    // simA: 0.00 -> 0.01 -> 0.02
+    simulate::Simulation simA(s, simulate::SimulatorType::Pixel, options);
+    simA.doTimesteps(0.01, 2);
+    REQUIRE(simA.getNCompletedTimesteps() == 3);
+    REQUIRE(simA.getTimePoints()[0] == dbl_approx(0.00));
+    REQUIRE(simA.getTimePoints()[1] == dbl_approx(0.01));
+    REQUIRE(simA.getTimePoints()[2] == dbl_approx(0.02));
+    simulate::SimulationData dataA{simA.getSimulationData()};
+    REQUIRE(dataA.timePoints.size() == 3);
+    REQUIRE(dataA.timePoints[0] == dbl_approx(0.00));
+    REQUIRE(dataA.timePoints[1] == dbl_approx(0.01));
+    REQUIRE(dataA.timePoints[2] == dbl_approx(0.02));
+    REQUIRE(dataA.avgMinMax.size() == 3);
+    REQUIRE(dataA.concentrationMax.size() == 3);
+    REQUIRE(dataA.concentration.size() == 3);
+    // simA should match first three steps of sim
+    REQUIRE(rel_diff(dataA, data, 0, 0) == dbl_approx(0));
+    REQUIRE(rel_diff(dataA, data, 1, 1) == dbl_approx(0));
+    REQUIRE(rel_diff(dataA, data, 2, 2) == dbl_approx(0));
+    // create new simulation using existing data
+    simulate::Simulation simB(s, simulate::SimulatorType::Pixel, options);
+    const auto &dataB{simB.getSimulationData()};
+    // simB: should be a copy of simA
+    REQUIRE(simB.getNCompletedTimesteps() == 3);
+    REQUIRE(simB.getTimePoints()[0] == dbl_approx(0.00));
+    REQUIRE(simB.getTimePoints()[1] == dbl_approx(0.01));
+    REQUIRE(simB.getTimePoints()[2] == dbl_approx(0.02));
+    REQUIRE(rel_diff(dataB, data, 0, 0) == dbl_approx(0));
+    REQUIRE(rel_diff(dataB, data, 1, 1) == dbl_approx(0));
+    REQUIRE(rel_diff(dataB, data, 2, 2) == dbl_approx(0));
+    // continue simB: 0.02 -> 0.03 -> 0.04 -> 0.05
+    // simB results should now match sim
+    simB.doTimesteps(0.01, 3);
+    REQUIRE(simB.getNCompletedTimesteps() == 6);
+    REQUIRE(simB.getTimePoints()[0] == dbl_approx(0.00));
+    REQUIRE(simB.getTimePoints()[1] == dbl_approx(0.01));
+    REQUIRE(simB.getTimePoints()[2] == dbl_approx(0.02));
+    REQUIRE(simB.getTimePoints()[3] == dbl_approx(0.03));
+    REQUIRE(simB.getTimePoints()[4] == dbl_approx(0.04));
+    REQUIRE(simB.getTimePoints()[5] == dbl_approx(0.05));
+    REQUIRE(dataB.timePoints.size() == 6);
+    REQUIRE(dataB.timePoints[0] == dbl_approx(0.00));
+    REQUIRE(dataB.timePoints[1] == dbl_approx(0.01));
+    REQUIRE(dataB.timePoints[2] == dbl_approx(0.02));
+    REQUIRE(dataB.timePoints[3] == dbl_approx(0.03));
+    REQUIRE(dataB.timePoints[4] == dbl_approx(0.04));
+    REQUIRE(dataB.timePoints[5] == dbl_approx(0.05));
+    REQUIRE(dataB.avgMinMax.size() == 6);
+    REQUIRE(dataB.concentrationMax.size() == 6);
+    REQUIRE(dataB.concentration.size() == 6);
+    REQUIRE(rel_diff(dataB, data, 0, 0) < 1e-14);
+    REQUIRE(rel_diff(dataB, data, 1, 1) < 1e-14);
+    REQUIRE(rel_diff(dataB, data, 2, 2) < 1e-14);
+    // note: at this point we start a new simulator, so timesteps don't match
+    // exactly, expected difference between simulations goes from being approx
+    // machine precision to being approx the O(dt^2) integration error
+    constexpr double allowedDifference{1e-7};
+    REQUIRE(rel_diff(dataB, data, 3, 3) < allowedDifference);
+    REQUIRE(rel_diff(dataB, data, 4, 4) < allowedDifference);
+    REQUIRE(rel_diff(dataB, data, 5, 5) < allowedDifference);
+  }
+  WHEN("Repeat with smaller integration errors: difference reduced") {
+    simulate::Options options;
+    options.pixel.maxErr.rel = 1e-5;
+    simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
+    sim.doTimesteps(0.01, 5);
+    simulate::SimulationData data{sim.getSimulationData()};
+    s.getSimulationData().clear();
+    auto dataA{data};
+    simulate::Simulation simA(s, simulate::SimulatorType::Pixel, options);
+    simA.doTimesteps(0.01, 2);
+    utils::SmeFile(s.getXml().toStdString(), dataA).exportFile("data.sme");
+    utils::SmeFile smeFileA;
+    smeFileA.importFile("data.sme");
+    s.getSimulationData() = smeFileA.simulationData();
+    simulate::Simulation simB(s, simulate::SimulatorType::Pixel, options);
+    const auto &dataB{simB.getSimulationData()};
+    simB.doTimesteps(0.01, 3);
+    REQUIRE(rel_diff(dataB, data, 0, 0) < 1e-14);
+    REQUIRE(rel_diff(dataB, data, 1, 1) < 1e-14);
+    REQUIRE(rel_diff(dataB, data, 2, 2) < 1e-14);
+    // reduced integration error -> smaller difference between the two
+    // simulations compared to previous test
+    constexpr double allowedDifference{1e-12};
+    REQUIRE(rel_diff(dataB, data, 3, 3) < allowedDifference);
+    REQUIRE(rel_diff(dataB, data, 4, 4) < allowedDifference);
+    REQUIRE(rel_diff(dataB, data, 5, 5) < allowedDifference);
   }
 }

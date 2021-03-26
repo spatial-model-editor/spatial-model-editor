@@ -7,6 +7,8 @@
 #include "mesh.hpp"
 #include "model.hpp"
 #include "qlabelmousetracker.hpp"
+#include "serialization.hpp"
+#include "simulate.hpp"
 #include "ui_tabsimulate.h"
 #include "utils.hpp"
 #include <QMessageBox>
@@ -16,11 +18,11 @@
 
 TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                          QWidget *parent)
-    : QWidget(parent), ui{std::make_unique<Ui::TabSimulate>()}, model(m),
+    : QWidget(parent), ui{std::make_unique<Ui::TabSimulate>()}, model{m},
       lblGeometry(mouseTracker), plt{std::make_unique<PlotWrapper>(
                                      "Average Concentration", this)} {
   ui->setupUi(this);
-  ui->gridSimulate->addWidget(plt->plot, 1, 0, 1, 8);
+  ui->gridSimulate->addWidget(plt->plot, 1, 0, 1, 7);
 
   progressDialog =
       new QProgressDialog("Simulating model...", "Stop simulation", 0, 1, this);
@@ -30,7 +32,7 @@ TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
   connect(ui->btnSimulate, &QPushButton::clicked, this,
           &TabSimulate::btnSimulate_clicked);
   connect(ui->btnResetSimulation, &QPushButton::clicked, this,
-          &TabSimulate::loadModelData);
+          &TabSimulate::reset);
   connect(plt->plot, &QCustomPlot::mousePress, this,
           &TabSimulate::graphClicked);
   connect(ui->hslideTime, &QSlider::valueChanged, this,
@@ -65,11 +67,15 @@ void TabSimulate::loadModelData() {
   if (sim != nullptr && sim->getIsRunning()) {
     return;
   }
-  reset();
   if (!(model.getIsValid() && model.getGeometry().getIsValid())) {
     ui->hslideTime->setEnabled(false);
     ui->btnSimulate->setEnabled(false);
     return;
+  }
+  if (sim != nullptr && sim->getIsRunning()) {
+    // wait for any existing running simulation to stop
+    sim->requestStop();
+    simSteps.wait();
   }
   if (simType == sme::simulate::SimulatorType::DUNE &&
       (model.getGeometry().getMesh() == nullptr ||
@@ -88,6 +94,15 @@ void TabSimulate::loadModelData() {
     msgbox->open();
     return;
   }
+  plt->clear();
+  ui->hslideTime->setMinimum(0);
+  ui->hslideTime->setMaximum(0);
+  images.clear();
+  time.clear();
+  // Note: this reset is required to delete all current DUNE objects *before*
+  // creating a new one, otherwise the new ones make use of the existing ones,
+  // and once they are deleted it dereferences a nullptr and segfaults...
+  sim.reset();
   sim = std::make_unique<sme::simulate::Simulation>(model, simType, simOptions);
   if (!sim->errorMessage().empty()) {
     QMessageBox::warning(
@@ -104,12 +119,14 @@ void TabSimulate::loadModelData() {
   // setup species names
   speciesNames.clear();
   compartmentNames.clear();
+  std::size_t nSpecies{0};
   for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
     compartmentNames.push_back(
         model.getCompartments().getNames()[static_cast<int>(ic)]);
     auto &names = speciesNames.emplace_back();
     for (const auto &sId : sim->getSpeciesIds(ic)) {
       names.push_back(model.getSpecies().getName(sId.c_str()));
+      ++nSpecies;
     }
   }
   // setup plot
@@ -127,31 +144,16 @@ void TabSimulate::loadModelData() {
       plt->addAvMinMaxLine(name, col);
     }
   }
-
-  time.push_back(0);
-  // get initial concentrations
-  int speciesIndex = 0;
-  for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
-    for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
-      auto conc = sim->getAvgMinMax(0, ic, is);
-      plt->addAvMinMaxPoint(speciesIndex, 0.0, conc);
-      ++speciesIndex;
-    }
-  }
   displayOptions = model.getDisplayOptions();
-  if (auto ns{static_cast<std::size_t>(speciesIndex)};
-      ns != displayOptions.showSpecies.size()) {
+  if (displayOptions.showSpecies.size() != nSpecies) {
     // show species count doesn't match actual number of species
     // user probably added/removed species to model
     // just set all species visible in this case
-    displayOptions.showSpecies.resize(ns, true);
+    displayOptions.showSpecies.resize(nSpecies, true);
   }
   updateSpeciesToDraw();
-
-  images.push_back(sim->getConcImage(0));
-  ui->hslideTime->setEnabled(true);
-  ui->hslideTime->setValue(0);
-  lblGeometry->setImage(images.back());
+  updatePlotAndImages();
+  finalizePlotAndImages();
 }
 
 void TabSimulate::stopSimulation() {
@@ -174,15 +176,8 @@ void TabSimulate::reset() {
     sim->requestStop();
     simSteps.wait();
   }
-  plt->clear();
-  ui->hslideTime->setMinimum(0);
-  ui->hslideTime->setMaximum(0);
-  images.clear();
-  time.clear();
-  // Note: this reset is required to delete all current DUNE objects *before*
-  // creating a new one, otherwise the new ones make use of the existing ones,
-  // and once they are deleted it dereferences a nullptr and segfaults...
-  sim.reset();
+  model.getSimulationData().clear();
+  loadModelData();
 }
 
 sme::simulate::Options TabSimulate::getOptions() const { return simOptions; }

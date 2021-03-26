@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>519</width>
-    <height>216</height>
+    <width>626</width>
+    <height>225</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,41 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="0">
+     <item row="2" column="0" colspan="2">
+      <widget class="QRadioButton" name="radCSV">
+       <property name="text">
+        <string>Export entire simulation as CSV text file of avg/min/max concentrations</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0" colspan="2">
+      <widget class="QRadioButton" name="radSingleImage">
+       <property name="text">
+        <string>Export single timepoint as concentration image</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QComboBox" name="cmbTimepoint">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0" colspan="2">
+      <widget class="QRadioButton" name="radModel">
+       <property name="text">
+        <string>Export single timepoint to model as initial concentrations</string>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
       <widget class="QLabel" name="lblTimepoint">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
@@ -35,40 +69,20 @@
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
-      <widget class="QComboBox" name="cmbTimepoint"/>
-     </item>
      <item row="1" column="0" colspan="2">
-      <widget class="QRadioButton" name="radModel">
+      <widget class="QRadioButton" name="radAllImages">
        <property name="text">
-        <string>Export timepoint to model as initial concentrations</string>
+        <string>Export entire simulation as images: one for each timepoint</string>
        </property>
        <property name="checked">
         <bool>true</bool>
        </property>
       </widget>
      </item>
-     <item row="2" column="0" colspan="2">
-      <widget class="QRadioButton" name="radSingleImage">
-       <property name="text">
-        <string>Export timepoint as concentration image</string>
-       </property>
-       <property name="checked">
-        <bool>false</bool>
-       </property>
-      </widget>
-     </item>
      <item row="3" column="0" colspan="2">
-      <widget class="QRadioButton" name="radAllImages">
-       <property name="text">
-        <string>Export entire simulation as images: one for each timepoint</string>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0" colspan="2">
-      <widget class="QRadioButton" name="radCSV">
-       <property name="text">
-        <string>Export entire simulation as CSV text file</string>
+      <widget class="Line" name="line">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -86,6 +100,13 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>radAllImages</tabstop>
+  <tabstop>radCSV</tabstop>
+  <tabstop>cmbTimepoint</tabstop>
+  <tabstop>radModel</tabstop>
+  <tabstop>radSingleImage</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
