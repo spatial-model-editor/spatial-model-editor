@@ -20,9 +20,13 @@ SCENARIO("SBML events",
     libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
     model::Model s;
     s.importSBMLFile("tmp.xml");
-    s.getParameters().add("param1");
-    s.getParameters().add("param2");
-    auto &events = s.getEvents();
+    auto &species{s.getSpecies()};
+    auto &params{s.getParameters()};
+    params.add("param1");
+    params.setExpression("param1", "55");
+    params.add("param2");
+    params.setExpression("param2", "-1.2");
+    auto &events{s.getEvents()};
     REQUIRE(s.getHasUnsavedChanges() == true);
     REQUIRE(events.getHasUnsavedChanges() == false);
     REQUIRE(events.getIds().size() == 0);
@@ -38,6 +42,10 @@ SCENARIO("SBML events",
     REQUIRE(events.getVariable("n") == "param1");
     REQUIRE(events.getTime("n") == dbl_approx(0));
     REQUIRE(events.getExpression("n") == "0");
+    // apply event to model
+    REQUIRE(params.getExpression("param1") == "55");
+    events.applyEvent("n");
+    REQUIRE(params.getExpression("param1") == "0");
     // change name
     events.setName("n", "new name");
     REQUIRE(events.getNames().size() == 1);
@@ -49,12 +57,22 @@ SCENARIO("SBML events",
     // change expression
     events.setExpression("n", "1");
     REQUIRE(events.getExpression("n") == "1");
+    // apply event to model
+    REQUIRE(params.getExpression("param1") == "0");
+    events.applyEvent("n");
+    REQUIRE(params.getExpression("param1") == "1");
     // change expression to invalid math: no-op
     events.setExpression("n", "invalidmath???");
     REQUIRE(events.getExpression("n") == "1");
     // change variable
     events.setVariable("n", "param2");
     REQUIRE(events.getVariable("n") == "param2");
+    // apply event to model
+    REQUIRE(params.getExpression("param1") == "1");
+    REQUIRE(params.getExpression("param2") == "-1.2");
+    events.applyEvent("n");
+    REQUIRE(params.getExpression("param1") == "1");
+    REQUIRE(params.getExpression("param2") == "1");
     // check sbml output
     s.updateSBMLDoc();
     std::unique_ptr<libsbml::SBMLDocument> doc2(
@@ -70,11 +88,17 @@ SCENARIO("SBML events",
     REQUIRE(event->getEventAssignment(0)->getVariable() == "param2");
     REQUIRE(sme::model::mathASTtoString(
                 event->getEventAssignment(0)->getMath()) == "1");
+    // change variable to species
+    REQUIRE(species.getInitialConcentration("ATP") == dbl_approx(2.52512746499271));
+    events.setVariable("n", "ATP");
+    events.setExpression("n", "x + y");
+    events.applyEvent("n");
+    REQUIRE(species.getAnalyticConcentration("ATP") == "x + y");
     // change to non-existent variable: no-op
     events.setHasUnsavedChanges(false);
     events.setVariable("n", "idontexist");
     REQUIRE(events.getHasUnsavedChanges() == false);
-    REQUIRE(events.getVariable("n") == "param2");
+    REQUIRE(events.getVariable("n") == "ATP");
     // removing a non-existing event is a no-op
     events.setHasUnsavedChanges(false);
     events.remove("idontexist");
@@ -154,20 +178,20 @@ SCENARIO("SBML events",
     const auto *e3{model->getEvent("e_")};
     REQUIRE(e1->getNumEventAssignments() == 1);
     REQUIRE(e1->getEventAssignment(0)->getVariable() == "v1");
-    REQUIRE(sme::model::mathASTtoString(
-        e1->getEventAssignment(0)->getMath()) == "1");
+    REQUIRE(sme::model::mathASTtoString(e1->getEventAssignment(0)->getMath()) ==
+            "1");
     REQUIRE(sme::model::mathASTtoString(e2->getTrigger()->getMath()) ==
             "time >= 0");
     REQUIRE(e2->getNumEventAssignments() == 1);
     REQUIRE(e2->getEventAssignment(0)->getVariable() == "param1");
-    REQUIRE(sme::model::mathASTtoString(
-        e2->getEventAssignment(0)->getMath()) == "2");
+    REQUIRE(sme::model::mathASTtoString(e2->getEventAssignment(0)->getMath()) ==
+            "2");
     REQUIRE(sme::model::mathASTtoString(e2->getTrigger()->getMath()) ==
             "time >= 0");
     REQUIRE(e3->getNumEventAssignments() == 1);
     REQUIRE(e3->getEventAssignment(0)->getVariable() == "v3");
-    REQUIRE(sme::model::mathASTtoString(
-        e3->getEventAssignment(0)->getMath()) == "99");
+    REQUIRE(sme::model::mathASTtoString(e3->getEventAssignment(0)->getMath()) ==
+            "99");
     REQUIRE(sme::model::mathASTtoString(e3->getTrigger()->getMath()) ==
             "time >= 9.2");
   }

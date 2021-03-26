@@ -27,10 +27,14 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
   REQUIRE(txtEventName != nullptr);
   auto *txtEventTime{tab.findChild<QLineEdit *>("txtEventTime")};
   REQUIRE(txtEventTime != nullptr);
-  auto *cmbEventParam{tab.findChild<QComboBox *>("cmbEventParam")};
-  REQUIRE(cmbEventParam != nullptr);
+  auto *cmbEventVariable{tab.findChild<QComboBox *>("cmbEventVariable")};
+  REQUIRE(cmbEventVariable != nullptr);
   auto *txtExpression{tab.findChild<QPlainTextMathEdit *>("txtExpression")};
   REQUIRE(txtExpression != nullptr);
+  auto *btnSetSpeciesConcentration{tab.findChild<QPushButton *>("btnSetSpeciesConcentration")};
+  REQUIRE(btnSetSpeciesConcentration != nullptr);
+  auto *lblSpeciesExpression{tab.findChild<QLabel *>("lblSpeciesExpression")};
+  REQUIRE(lblSpeciesExpression != nullptr);
   auto *lblExpressionStatus{tab.findChild<QLabel *>("lblExpressionStatus")};
   REQUIRE(lblExpressionStatus != nullptr);
   const auto &events = model.getEvents();
@@ -40,6 +44,11 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     QFile f(":/models/ABtoC.xml");
     f.open(QIODevice::ReadOnly);
     model.importSBMLString(f.readAll().toStdString());
+    REQUIRE(model.getSpecies().getIds("comp").size() == 3);
+    model.getSpecies().remove("A");
+    model.getSpecies().remove("B");
+    model.getSpecies().remove("C");
+    REQUIRE(model.getSpecies().getIds("comp").isEmpty());
     tab.loadModelData();
     REQUIRE(events.getIds().size() == 0);
     REQUIRE(listEvents->count() == 0);
@@ -47,13 +56,14 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     REQUIRE(btnRemoveEvent->isEnabled() == false);
     REQUIRE(txtEventName->isEnabled() == false);
     REQUIRE(txtEventTime->isEnabled() == false);
-    REQUIRE(cmbEventParam->isEnabled() == false);
+    REQUIRE(cmbEventVariable->isEnabled() == false);
     REQUIRE(txtExpression->isEnabled() == false);
+    REQUIRE(btnSetSpeciesConcentration->isEnabled() == false);
     REQUIRE(lblExpressionStatus->text() == "");
-    // try to add Event to a model with no parameters
+    // try to add Event to a model with no parameters or species
     mwt.start();
     sendMouseClick(btnAddEvent);
-    REQUIRE(mwt.getResult() == "To add events, the model must contain parameters.");
+    REQUIRE(mwt.getResult() == "To add events, the model must contain species or parameters.");
   }
   GIVEN("very simple model") {
     QFile f(":/models/very-simple-model.xml");
@@ -66,7 +76,7 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     REQUIRE(btnRemoveEvent->isEnabled() == false);
     REQUIRE(txtEventName->isEnabled() == false);
     REQUIRE(txtEventTime->isEnabled() == false);
-    REQUIRE(cmbEventParam->isEnabled() == false);
+    REQUIRE(cmbEventVariable->isEnabled() == false);
     REQUIRE(txtExpression->isEnabled() == false);
     REQUIRE(lblExpressionStatus->text() == "");
     // add Event
@@ -78,14 +88,18 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     REQUIRE(txtEventName->text() == "p !");
     REQUIRE(txtEventTime->isEnabled() == true);
     REQUIRE(txtEventTime->text() == "0");
-    REQUIRE(cmbEventParam->isEnabled() == true);
-    REQUIRE(cmbEventParam->count() == 1);
-    REQUIRE(cmbEventParam->currentIndex() == 0);
+    REQUIRE(cmbEventVariable->isEnabled() == true);
+    REQUIRE(cmbEventVariable->count() == 7);
+    REQUIRE(cmbEventVariable->currentIndex() == 0);
     REQUIRE(btnAddEvent->isEnabled() == true);
     REQUIRE(btnRemoveEvent->isEnabled() == true);
+    REQUIRE(txtExpression->isEnabled() == false);
+    REQUIRE(txtExpression->isVisible() == false);
+    REQUIRE(btnSetSpeciesConcentration->isEnabled() == true);
     REQUIRE(events.getIds().size() == 1);
     REQUIRE(events.getIds()[0] == "p_");
     REQUIRE(events.getNames()[0] == "p !");
+    REQUIRE(events.getVariable("p_") == "A_c1");
     // edit name
     txtEventName->setFocus();
     sendKeyEvents(txtEventName, {"z", "Enter"});
@@ -94,7 +108,16 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     REQUIRE(events.getIds()[0] == "p_");
     REQUIRE(events.getNames()[0] == "p !z");
     REQUIRE(events.getName("p_") == "p !z");
-    REQUIRE(txtExpression->toPlainText() == "0");
+    REQUIRE(events.getExpression("p_") == "0");
+    // edit concentration: 0 -> x
+    mwt.addUserAction({"Del", "Backspace", "x"});
+    mwt.start();
+    sendMouseClick(btnSetSpeciesConcentration);
+    REQUIRE(events.getExpression("p_") == "x");
+    // change variable to a parameter
+    cmbEventVariable->setFocus();
+    sendKeyEvents(cmbEventVariable, {"Down", "Down", "Down", "Down", "Down", "Down", "Down"});
+    REQUIRE(events.getVariable("p_") == "param");
     // edit time
     REQUIRE(events.getTime("p_") == dbl_approx(0));
     txtEventTime->setFocus();
@@ -108,7 +131,7 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     REQUIRE(txtExpression->toPlainText() == "");
     REQUIRE(lblExpressionStatus->text() == "Empty expression");
     // invalid expression so model expression unchanged
-    REQUIRE(events.getExpression("p_") == "0");
+    REQUIRE(events.getExpression("p_") == "x");
     // expression -> "2"
     sendKeyEvents(txtExpression, {"2"});
     REQUIRE(txtExpression->toPlainText() == "2");
@@ -155,9 +178,9 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     REQUIRE(txtEventName->text() == "increase k2");
     REQUIRE(txtEventTime->isEnabled() == true);
     REQUIRE(txtEventTime->text() == "25");
-    REQUIRE(cmbEventParam->isEnabled() == true);
-    REQUIRE(cmbEventParam->count() == 2);
-    REQUIRE(cmbEventParam->currentIndex() == 0);
+    REQUIRE(cmbEventVariable->isEnabled() == true);
+    REQUIRE(cmbEventVariable->count() == 8);
+    REQUIRE(cmbEventVariable->currentIndex() == 6);
     REQUIRE(btnAddEvent->isEnabled() == true);
     REQUIRE(btnRemoveEvent->isEnabled() == true);
     REQUIRE(events.getIds().size() == 2);
@@ -167,14 +190,14 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     REQUIRE(events.getNames()[1] == "decrease k2");
     // change event param
     REQUIRE(events.getVariable("double_k2") == "k2");
-    REQUIRE(cmbEventParam->currentIndex() == 0);
-    cmbEventParam->setFocus();
-    sendKeyEvents(cmbEventParam, {"Down", "Enter"});
+    REQUIRE(cmbEventVariable->currentIndex() == 6);
+    cmbEventVariable->setFocus();
+    sendKeyEvents(cmbEventVariable, {"Down", "Enter"});
     REQUIRE(events.getVariable("double_k2") == "k3");
-    REQUIRE(cmbEventParam->currentIndex() == 1);
-    cmbEventParam->setFocus();
-    sendKeyEvents(cmbEventParam, {"Up", "Enter"});
+    REQUIRE(cmbEventVariable->currentIndex() == 7);
+    cmbEventVariable->setFocus();
+    sendKeyEvents(cmbEventVariable, {"Up", "Enter"});
     REQUIRE(events.getVariable("double_k2") == "k2");
-    REQUIRE(cmbEventParam->currentIndex() == 0);
+    REQUIRE(cmbEventVariable->currentIndex() == 6);
   }
 }

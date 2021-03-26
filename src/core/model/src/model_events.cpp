@@ -1,4 +1,6 @@
 #include "model_events.hpp"
+#include "model_parameters.hpp"
+#include "model_species.hpp"
 #include "id.hpp"
 #include "logger.hpp"
 #include "sbml_math.hpp"
@@ -37,10 +39,9 @@ static void moveLastAssignmentToNewEvent(libsbml::Model *model,
 
 static void splitMultipleEventAssignments(libsbml::Model *model) {
   std::vector<libsbml::Event *> eventsToSplit;
-  unsigned int numEvents = model->getNumEvents();
+  unsigned int numEvents{model->getNumEvents()};
   for (unsigned int i = 0; i < numEvents; ++i) {
-    auto *event = model->getEvent(i);
-    if (event->getNumEventAssignments() > 1) {
+    if (auto *event{model->getEvent(i)}; event->getNumEventAssignments() > 1) {
       eventsToSplit.push_back(event);
     }
   }
@@ -54,10 +55,10 @@ static void splitMultipleEventAssignments(libsbml::Model *model) {
 static QStringList importIds(libsbml::Model *model) {
   QStringList ids;
   splitMultipleEventAssignments(model);
-  unsigned int numEvents = model->getNumEvents();
+  unsigned int numEvents{model->getNumEvents()};
   ids.reserve(static_cast<int>(numEvents));
   for (unsigned int i = 0; i < numEvents; ++i) {
-    auto *event = model->getEvent(i);
+    const auto *event{model->getEvent(i)};
     ids.push_back(event->getId().c_str());
   }
   return ids;
@@ -66,10 +67,10 @@ static QStringList importIds(libsbml::Model *model) {
 static QStringList importNamesAndMakeUnique(const QStringList &ids,
                                             libsbml::Model *model) {
   QStringList names;
-  unsigned int numEvents = model->getNumEvents();
+  unsigned int numEvents{model->getNumEvents()};
   names.reserve(static_cast<int>(numEvents));
   for (const auto &id : ids) {
-    auto *event = model->getEvent(id.toStdString());
+    auto *event{model->getEvent(id.toStdString())};
     const auto &sId{event->getId()};
     if (event->getName().empty()) {
       SPDLOG_INFO("Event '{0}' has no Name, using '{0}'", sId);
@@ -89,14 +90,18 @@ static QStringList importNamesAndMakeUnique(const QStringList &ids,
 
 ModelEvents::ModelEvents() = default;
 
-ModelEvents::ModelEvents(libsbml::Model *model)
+ModelEvents::ModelEvents(libsbml::Model *model, ModelParameters *parameters,
+                         ModelSpecies *species)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(ids, model)},
-      sbmlModel{model} {
+      sbmlModel{model}, modelParameters{parameters}, modelSpecies{species} {
   // try to import time from triggers: if this fails just set a default trigger
-  for(const auto& id : ids){
+  for (const auto &id : ids) {
     double t{getTime(id)};
     setTime(id, t);
   }
+  // todo: also validate variables & expressions
+  // we want all events to be valid (for sme & sbml) by the end of this
+  // constructor
 }
 
 const QStringList &ModelEvents::getIds() const { return ids; }
@@ -144,15 +149,19 @@ void ModelEvents::setVariable(const QString &id, const QString &variable) {
     SPDLOG_WARN("Event not found, or contains no EventAssignments");
     return;
   }
-  auto *param{sbmlModel->getParameter(vId)};
-  if (param == nullptr) {
-    SPDLOG_WARN("Parameter '{}' not found", vId);
+  if (auto *param{sbmlModel->getParameter(vId)}; param != nullptr) {
+    hasUnsavedChanges = true;
+    // parameter cannot be constant if modified by an event
+    param->setConstant(false);
+    event->getEventAssignment(0)->setVariable(vId);
+    return;
+  } else if (const auto *species{sbmlModel->getSpecies(vId)}; species != nullptr) {
+    hasUnsavedChanges = true;
+    event->getEventAssignment(0)->setVariable(vId);
     return;
   }
-  hasUnsavedChanges = true;
-  // parameter cannot be constant if modified by an event
-  param->setConstant(false);
-  event->getEventAssignment(0)->setVariable(vId);
+  SPDLOG_WARN("Variable '{}' not found in sbml model", vId);
+  return;
 }
 
 QString ModelEvents::getVariable(const QString &id) const {
@@ -299,6 +308,27 @@ void ModelEvents::removeAnyUsingVariable(const QString &variable) {
   for (const auto &id : idsToRemove) {
     remove(id);
   }
+}
+
+void ModelEvents::applyEvent(const QString &id) {
+  std::string variableId{getVariable(id).toStdString()};
+  SPDLOG_INFO("Applying event '{}' to model", id.toStdString());
+  if (variableId.empty()) {
+    SPDLOG_WARN("Variable not found for event '{}'", id.toStdString());
+    return;
+  }
+  const auto& expr{getExpression(id)};
+  if (const auto *param{sbmlModel->getParameter(variableId)};
+      param != nullptr && modelParameters != nullptr) {
+    modelParameters->setExpression(variableId.c_str(), expr);
+    return;
+  }
+  if (const auto *species{sbmlModel->getSpecies(variableId)};
+      species != nullptr && modelSpecies != nullptr) {
+    modelSpecies->setAnalyticConcentration(variableId.c_str(), expr);
+    return;
+  }
+  SPDLOG_WARN("Variable '{}' not found in sbml model", variableId);
 }
 
 bool ModelEvents::getHasUnsavedChanges() const { return hasUnsavedChanges; }

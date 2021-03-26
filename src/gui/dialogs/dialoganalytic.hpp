@@ -34,6 +34,7 @@ public:
                           QWidget *parent = nullptr);
   ~DialogAnalytic();
   const std::string &getExpression() const;
+  const QImage& getImage() const;
   bool isExpressionValid() const;
 
 private:

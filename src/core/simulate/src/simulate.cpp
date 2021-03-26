@@ -74,12 +74,11 @@ void Simulation::applyNextEvent() {
   // apply latest simulation concentrations to model
   applyConcsToModel(*nextModel.get(), nCompletedTimesteps - 1);
   // apply events to model
-  const auto &events{nextModel->getEvents()};
+  auto &events{nextModel->getEvents()};
   for (const auto &id : events.getIds()) {
     if (events.getTime(id) == eventTimes.front()) {
       SPDLOG_INFO("  - event '{}'", id.toStdString());
-      nextModel->getParameters().setExpression(events.getVariable(id),
-                                               events.getExpression(id));
+      events.applyEvent(id);
     }
   }
   // export this model to xml for applying next event
