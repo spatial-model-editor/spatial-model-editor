@@ -50,8 +50,10 @@ private:
   void lblCompBoundary_mouseClicked(QRgb col, QPoint point);
   void spinBoundaryIndex_valueChanged(int value);
   void spinMaxBoundaryPoints_valueChanged(int value);
+  void spinBoundaryZoom_valueChanged(int value);
   void lblCompMesh_mouseClicked(QRgb col, QPoint point);
   void spinMaxTriangleArea_valueChanged(int value);
+  void spinMeshZoom_valueChanged(int value);
   void listCompartments_itemSelectionChanged();
   void listCompartments_itemDoubleClicked(QListWidgetItem *item);
   void listMembranes_itemSelectionChanged();

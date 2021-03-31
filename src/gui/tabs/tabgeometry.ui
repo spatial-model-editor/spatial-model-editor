@@ -334,6 +334,44 @@
                </property>
               </widget>
              </item>
+             <item row="0" column="0" colspan="7">
+              <widget class="QScrollArea" name="scrollBoundaryLines">
+               <property name="widgetResizable">
+                <bool>true</bool>
+               </property>
+               <widget class="QWidget" name="scrollBoundaryLinesContents">
+                <layout class="QVBoxLayout" name="verticalLayout">
+                 <item>
+                  <widget class="QLabelMouseTracker" name="lblCompBoundary" native="true">
+                   <property name="toolTip">
+                    <string>The boundary lines separating the compartments</string>
+                   </property>
+                   <property name="statusTip">
+                    <string>The boundary lines separating the compartments</string>
+                   </property>
+                   <property name="whatsThis">
+                    <string>&lt;h4&gt;Compartment Geometry: Boundaries&lt;/h4&gt;
+&lt;p&gt;The boundary lines separate the compartments. Each line consists of a set of vertices connected by straight lines, and these vertices will also be included in the final mesh.&lt;/p&gt;</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QLabel" name="lblMaxBoundaryPointsLabel">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Max points:</string>
+               </property>
+              </widget>
+             </item>
              <item row="1" column="0">
               <widget class="QLabel" name="lblBoundaryIndexLabel">
                <property name="sizePolicy">
@@ -360,8 +398,15 @@
                </property>
               </widget>
              </item>
-             <item row="1" column="2">
-              <widget class="QLabel" name="lblMaxBoundaryPointsLabel">
+             <item row="1" column="6">
+              <widget class="QSpinBox" name="spinBoundaryZoom">
+               <property name="maximum">
+                <number>10</number>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="5">
+              <widget class="QLabel" name="lblBoundaryZoomLabel">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -369,27 +414,10 @@
                 </sizepolicy>
                </property>
                <property name="text">
-                <string>Max points:</string>
+                <string>Zoom:</string>
                </property>
-              </widget>
-             </item>
-             <item row="0" column="0" colspan="5">
-              <widget class="QLabelMouseTracker" name="lblCompBoundary" native="true">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>The boundary lines separating the compartments</string>
-               </property>
-               <property name="statusTip">
-                <string>The boundary lines separating the compartments</string>
-               </property>
-               <property name="whatsThis">
-                <string>&lt;h4&gt;Compartment Geometry: Boundaries&lt;/h4&gt;
-&lt;p&gt;The boundary lines separate the compartments. Each line consists of a set of vertices connected by straight lines, and these vertices will also be included in the final mesh.&lt;/p&gt;</string>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                </property>
               </widget>
              </item>
@@ -404,27 +432,6 @@
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
             <layout class="QGridLayout" name="gridLayout_2">
-             <item row="0" column="0" colspan="3">
-              <widget class="QLabelMouseTracker" name="lblCompMesh" native="true">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="toolTip">
-                <string>The mesh representing the geometry of the compartment</string>
-               </property>
-               <property name="statusTip">
-                <string>The mesh representing the geometry of the compartment</string>
-               </property>
-               <property name="whatsThis">
-                <string>&lt;h4&gt;Compartment Geometry: Mesh&lt;/h4&gt;
-&lt;p&gt;The compartment geometry mesh is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
-&lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
-               </property>
-              </widget>
-             </item>
              <item row="1" column="0">
               <widget class="QLabel" name="lblMaxTriangleAreaLabel">
                <property name="sizePolicy">
@@ -435,6 +442,13 @@
                </property>
                <property name="text">
                 <string>Max triangle area:</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="4">
+              <widget class="QSpinBox" name="spinMeshZoom">
+               <property name="maximum">
+                <number>10</number>
                </property>
               </widget>
              </item>
@@ -449,6 +463,56 @@
                <property name="value">
                 <number>32</number>
                </property>
+              </widget>
+             </item>
+             <item row="1" column="3">
+              <widget class="QLabel" name="lblMeshZoomLabel">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="text">
+                <string>Zoom:</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="0" colspan="5">
+              <widget class="QScrollArea" name="scrollMesh">
+               <property name="widgetResizable">
+                <bool>true</bool>
+               </property>
+               <widget class="QWidget" name="scrollMeshContents">
+                <property name="geometry">
+                 <rect>
+                  <x>0</x>
+                  <y>0</y>
+                  <width>797</width>
+                  <height>560</height>
+                 </rect>
+                </property>
+                <layout class="QVBoxLayout" name="verticalLayout_4">
+                 <item>
+                  <widget class="QLabelMouseTracker" name="lblCompMesh" native="true">
+                   <property name="toolTip">
+                    <string>The mesh representing the geometry of the compartment</string>
+                   </property>
+                   <property name="statusTip">
+                    <string>The mesh representing the geometry of the compartment</string>
+                   </property>
+                   <property name="whatsThis">
+                    <string>&lt;h4&gt;Compartment Geometry: Mesh&lt;/h4&gt;
+&lt;p&gt;The compartment geometry mesh is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
+&lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </widget>
               </widget>
              </item>
             </layout>
@@ -477,9 +541,11 @@
   <tabstop>listMembranes</tabstop>
   <tabstop>txtCompartmentName</tabstop>
   <tabstop>tabCompartmentGeometry</tabstop>
-  <tabstop>btnChangeCompartment</tabstop>
+  <tabstop>scrollBoundaryLines</tabstop>
   <tabstop>spinBoundaryIndex</tabstop>
   <tabstop>spinMaxBoundaryPoints</tabstop>
+  <tabstop>spinBoundaryZoom</tabstop>
+  <tabstop>btnChangeCompartment</tabstop>
   <tabstop>spinMaxTriangleArea</tabstop>
  </tabstops>
  <resources/>

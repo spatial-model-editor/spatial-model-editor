@@ -41,13 +41,21 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
   REQUIRE(lblCompShape != nullptr);
   auto *lblCompSize = tab.findChild<QLabel *>("lblCompSize");
   REQUIRE(lblCompSize != nullptr);
+  auto *lblCompBoundary = tab.findChild<QLabelMouseTracker *>("lblCompBoundary");
+  REQUIRE(lblCompBoundary != nullptr);
   auto *spinBoundaryIndex = tab.findChild<QSpinBox *>("spinBoundaryIndex");
   REQUIRE(spinBoundaryIndex != nullptr);
   auto *spinMaxBoundaryPoints =
       tab.findChild<QSpinBox *>("spinMaxBoundaryPoints");
   REQUIRE(spinMaxBoundaryPoints != nullptr);
+  auto *spinBoundaryZoom = tab.findChild<QSpinBox *>("spinBoundaryZoom");
+  REQUIRE(spinBoundaryZoom != nullptr);
+  auto *lblCompMesh = tab.findChild<QLabelMouseTracker *>("lblCompMesh");
+  REQUIRE(lblCompMesh != nullptr);
   auto *spinMaxTriangleArea = tab.findChild<QSpinBox *>("spinMaxTriangleArea");
   REQUIRE(spinMaxTriangleArea != nullptr);
+  auto *spinMeshZoom = tab.findChild<QSpinBox *>("spinMeshZoom");
+  REQUIRE(spinMeshZoom != nullptr);
   WHEN("very-simple-model loaded") {
     if (QFile f(":/models/very-simple-model.xml");
         f.open(QIODevice::ReadOnly)) {
@@ -120,14 +128,42 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       sendKeyEvents(spinBoundaryIndex, {"Up"});
       sendKeyEvents(spinMaxBoundaryPoints, {"Down"});
       sendKeyEvents(spinBoundaryIndex, {"Up"});
-
+      // zoom in and out
+      auto b0{lblCompBoundary->size().width()};
+      sendKeyEvents(spinBoundaryZoom, {"Up"});
+      REQUIRE(spinBoundaryZoom->value() == 1);
+      REQUIRE(lblCompBoundary->size().width() > b0);
+      auto b1{lblCompBoundary->size().width()};
+      sendKeyEvents(spinBoundaryZoom, {"Up"});
+      REQUIRE(spinBoundaryZoom->value() == 2);
+      REQUIRE(lblCompBoundary->size().width() > b1);
+      sendKeyEvents(spinBoundaryZoom, {"Down"});
+      REQUIRE(spinBoundaryZoom->value() == 1);
+      REQUIRE(lblCompBoundary->size().width() == b1);
+      sendKeyEvents(spinBoundaryZoom, {"Down"});
+      REQUIRE(spinBoundaryZoom->value() == 0);
+      REQUIRE(lblCompBoundary->size().width() == b0);
       // mesh tab
       tabCompartmentGeometry->setFocus();
       sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
       REQUIRE(tabCompartmentGeometry->currentIndex() == 2);
       sendKeyEvents(spinMaxTriangleArea,
                     {"End", "Backspace", "Backspace", "Backspace", "3"});
-
+      // zoom in and out
+      auto w0{lblCompMesh->size().width()};
+      sendKeyEvents(spinMeshZoom, {"Up"});
+      REQUIRE(spinMeshZoom->value() == 1);
+      REQUIRE(lblCompMesh->size().width() > w0);
+      auto w1{lblCompMesh->size().width()};
+      sendKeyEvents(spinMeshZoom, {"Up"});
+      REQUIRE(spinMeshZoom->value() == 2);
+      REQUIRE(lblCompMesh->size().width() > w1);
+      sendKeyEvents(spinMeshZoom, {"Down"});
+      REQUIRE(spinMeshZoom->value() == 1);
+      REQUIRE(lblCompMesh->size().width() == w1);
+      sendKeyEvents(spinMeshZoom, {"Down"});
+      REQUIRE(spinMeshZoom->value() == 0);
+      REQUIRE(lblCompMesh->size().width() == w0);
       // image tab
       tabCompartmentGeometry->setFocus();
       sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
@@ -160,6 +196,8 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       sendMouseClick(btnRemoveCompartment);
       sendKeyEventsToNextQDialog({"Enter"});
       REQUIRE(listCompartments->count() == 0);
+      REQUIRE(spinMeshZoom->isEnabled() == false);
+      REQUIRE(spinBoundaryZoom->isEnabled() == false);
     }
   }
 }
