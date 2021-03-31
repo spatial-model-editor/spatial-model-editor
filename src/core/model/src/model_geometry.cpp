@@ -222,7 +222,7 @@ void ModelGeometry::importGeometryFromImage(const QImage &img) {
 
 void ModelGeometry::updateMesh() {
   // geometry only valid if all compartments have a colour
-  isValid = hasImage && !modelCompartments->getColours().contains(0);
+  isValid = hasImage && !modelCompartments->getColours().empty() && !modelCompartments->getColours().contains(0);
   if (!isValid) {
     mesh.reset();
     return;
