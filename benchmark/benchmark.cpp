@@ -31,7 +31,7 @@ struct BenchmarkParams {
                                    "liver-simplified"};
   std::vector<simulate::SimulatorType> simulators{
       simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel};
-  double simulator_timestep{1e-3};
+  double simulator_timestep{1e-4};
 };
 
 static void printHelpMessage() {

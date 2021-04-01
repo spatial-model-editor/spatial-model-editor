@@ -24,7 +24,6 @@ private:
   // indices of nearest neighbours
   std::vector<std::size_t> nn;
   std::string compartmentId;
-  double pixelWidth = 1.0;
   // vector of points that make up compartment
   std::vector<QPoint> ix;
   // index of corresponding point for each pixel in array
@@ -38,8 +37,6 @@ public:
   Compartment(std::string compId, const QImage &img, QRgb col);
   const std::string &getId() const;
   QRgb getColour() const;
-  double getPixelWidth() const;
-  void setPixelWidth(double width);
   inline const std::vector<QPoint> &getPixels() const { return ix; }
   inline const QPoint &getPixel(std::size_t i) const { return ix[i]; }
   inline std::size_t nPixels() const { return ix.size(); }

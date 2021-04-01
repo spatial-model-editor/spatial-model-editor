@@ -101,10 +101,6 @@ const std::string &Compartment::getId() const { return compartmentId; }
 
 QRgb Compartment::getColour() const { return colour; }
 
-double Compartment::getPixelWidth() const { return pixelWidth; }
-
-void Compartment::setPixelWidth(double width) { pixelWidth = width; }
-
 const QImage &Compartment::getCompartmentImage() const { return image; }
 
 const std::vector<std::size_t> &Compartment::getArrayPoints() const {
