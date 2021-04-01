@@ -294,13 +294,6 @@ void ModelGeometry::setPixelWidth(double width) {
   hasUnsavedChanges = true;
   double oldWidth = pixelWidth;
   pixelWidth = width;
-  // update pixelWidth for each compartment
-  for (const auto &id : modelCompartments->getIds()) {
-    if (auto *compartment = modelCompartments->getCompartment(id);
-        compartment != nullptr) {
-      compartment->setPixelWidth(width);
-    }
-  }
   SPDLOG_INFO("New pixel width = {}", pixelWidth);
 
   auto *geom = getOrCreateGeometry(sbmlModel);

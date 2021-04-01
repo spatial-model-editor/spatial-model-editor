@@ -362,6 +362,15 @@ static void rescaleMembraneReacRates(model::Model &s, double factor) {
   }
 }
 
+static void rescaleDiffusionConstants(model::Model &s, double factor) {
+  for (const auto &cId : s.getCompartments().getIds()) {
+    for (const auto &sId : s.getSpecies().getIds(cId)) {
+      double d{s.getSpecies().getDiffusionConstant(sId)};
+      s.getSpecies().setDiffusionConstant(sId, d * factor);
+    }
+  }
+}
+
 SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
   double epsilon{1e-8};
@@ -404,6 +413,8 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
     // so net conc change from membrane flux in pixel -> 9x/27x = 1/3
     // multiply membrane rate by 3 to compensate for this
     rescaleMembraneReacRates(s, 3.0);
+    // rescale diffusion such that rate in pixel units is the same
+    rescaleDiffusionConstants(s, 9.0);
     simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
     sim2.doTimesteps(0.20);
     REQUIRE(sim2.getTimePoints().size() == 2);
@@ -413,6 +424,43 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
         if (!(iComp == 0 && iSpec == 1)) {
           REQUIRE(sim2.getAvgMinMax(1, iComp, iSpec).avg ==
                   Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).avg)
+                      .epsilon(epsilon)
+                      .margin(margin));
+          REQUIRE(sim2.getAvgMinMax(1, iComp, iSpec).min ==
+                  Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).min)
+                      .epsilon(epsilon)
+                      .margin(margin));
+          REQUIRE(sim2.getAvgMinMax(1, iComp, iSpec).max ==
+                  Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).max)
+                      .epsilon(epsilon)
+                      .margin(margin));
+        }
+      }
+    }
+    // save model, load it again and repeat test, to ensure pixel width is
+    // propagated correctly to pixel simulator on model load:
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/468
+    s.exportSBMLFile("tmp.xml");
+    model::Model sload;
+    sload.importSBMLFile("tmp.xml");
+    simulate::Simulation simload(sload, simulate::SimulatorType::Pixel,
+                                 options);
+    simload.doTimesteps(0.20);
+    REQUIRE(simload.getTimePoints().size() == 2);
+    REQUIRE(simload.errorMessage().empty());
+    for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
+      for (auto iSpec : {std::size_t(0), std::size_t(1)}) {
+        if (!(iComp == 0 && iSpec == 1)) {
+          REQUIRE(simload.getAvgMinMax(1, iComp, iSpec).avg ==
+                  Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).avg)
+                      .epsilon(epsilon)
+                      .margin(margin));
+          REQUIRE(simload.getAvgMinMax(1, iComp, iSpec).min ==
+                  Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).min)
+                      .epsilon(epsilon)
+                      .margin(margin));
+          REQUIRE(simload.getAvgMinMax(1, iComp, iSpec).max ==
+                  Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).max)
                       .epsilon(epsilon)
                       .margin(margin));
         }
@@ -427,6 +475,7 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
     REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(0.27));
     // as above
     rescaleMembraneReacRates(s, 0.27);
+    rescaleDiffusionConstants(s, 0.27 * 0.27);
     simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
     sim2.doTimesteps(0.20);
     REQUIRE(sim2.errorMessage().empty());
@@ -436,6 +485,41 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
         if (!(iComp == 0 && iSpec == 1)) {
           REQUIRE(sim2.getAvgMinMax(1, iComp, iSpec).avg ==
                   Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).avg)
+                      .epsilon(epsilon)
+                      .margin(margin));
+          REQUIRE(sim2.getAvgMinMax(1, iComp, iSpec).min ==
+                  Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).min)
+                      .epsilon(epsilon)
+                      .margin(margin));
+          REQUIRE(sim2.getAvgMinMax(1, iComp, iSpec).max ==
+                  Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).max)
+                      .epsilon(epsilon)
+                      .margin(margin));
+        }
+      }
+    }
+    // save model, load it again and repeat test as above
+    s.exportSBMLFile("tmp2.xml");
+    model::Model sload;
+    sload.importSBMLFile("tmp2.xml");
+    simulate::Simulation simload(sload, simulate::SimulatorType::Pixel,
+                                 options);
+    simload.doTimesteps(0.20);
+    REQUIRE(simload.getTimePoints().size() == 2);
+    REQUIRE(simload.errorMessage().empty());
+    for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
+      for (auto iSpec : {std::size_t(0), std::size_t(1)}) {
+        if (!(iComp == 0 && iSpec == 1)) {
+          REQUIRE(simload.getAvgMinMax(1, iComp, iSpec).avg ==
+                  Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).avg)
+                      .epsilon(epsilon)
+                      .margin(margin));
+          REQUIRE(simload.getAvgMinMax(1, iComp, iSpec).min ==
+                  Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).min)
+                      .epsilon(epsilon)
+                      .margin(margin));
+          REQUIRE(simload.getAvgMinMax(1, iComp, iSpec).max ==
+                  Catch::Approx(sim.getAvgMinMax(1, iComp, iSpec).max)
                       .epsilon(epsilon)
                       .margin(margin));
         }
@@ -1019,7 +1103,7 @@ SCENARIO("applyConcsToModel initial concentrations",
   s.getSpecies().setInitialConcentration("B_c3", 1.0);
   auto c{s.getSpecies().getField("B_c3")->getConcentrationImageArray()};
   for (std::size_t i = 0; i < c.size(); ++i) {
-      c[i] = 0.78 * static_cast<double>(i);
+    c[i] = 0.78 * static_cast<double>(i);
   }
   s.getSpecies().setSampledFieldConcentration("B_c3", c);
 

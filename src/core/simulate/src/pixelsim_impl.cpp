@@ -87,9 +87,9 @@ SimCompartment::SimCompartment(const model::Model &doc,
   speciesNames.reserve(nSpecies);
   SPDLOG_DEBUG("compartment: {}", compartmentId);
   std::vector<const geometry::Field *> fields;
+  const double pixelWidth{doc.getGeometry().getPixelWidth()};
   for (const auto &s : speciesIds) {
     const auto *field = doc.getSpecies().getField(s.c_str());
-    double pixelWidth = comp->getPixelWidth();
     diffConstants.push_back(field->getDiffusionConstant() / pixelWidth /
                             pixelWidth);
     // forwards euler stability bound: dt < a^2/4D
@@ -127,7 +127,6 @@ SimCompartment::SimCompartment(const model::Model &doc,
   // setup concentrations vector with initial values
   conc.resize(nSpecies * nPixels);
   dcdt.resize(conc.size(), 0.0);
-  double width{doc.getGeometry().getPixelWidth()};
   auto origin{doc.getGeometry().getPhysicalOrigin()};
   auto concIter = conc.begin();
   for (std::size_t ix = 0; ix < compartment->nPixels(); ++ix) {
@@ -143,9 +142,9 @@ SimCompartment::SimCompartment(const model::Model &doc,
       auto pixel{compartment->getPixel(ix)};
       // pixels have y=0 in top-left, convert to bottom-left:
       pixel.ry() = compartment->getCompartmentImage().height() - 1 - pixel.y();
-      *concIter = origin.x() + static_cast<double>(pixel.x()) * width; // x
+      *concIter = origin.x() + static_cast<double>(pixel.x()) * pixelWidth; // x
       ++concIter;
-      *concIter = origin.y() + static_cast<double>(pixel.y()) * width; // y
+      *concIter = origin.y() + static_cast<double>(pixel.y()) * pixelWidth; // y
       ++concIter;
     }
   }
