@@ -7,11 +7,37 @@
 
 ### Removed
 
+## [1.0.9] - 2021-04-06
+### Added
+- open/save as `.sme` filetype: contains both the model and the simulation results [#461](https://github.com/spatial-model-editor/spatial-model-editor/issues/461)
+- support for time-based events: parameters and species concentrations can be set at specified times in the simulation
+- diagnostic info & image when a simulation fails [#432](https://github.com/spatial-model-editor/spatial-model-editor/issues/432)
+- zoom option for Boundary and Mesh images in the Geometry Tab
+- new option in Simulation Tab to export concentrations to model as initial concentrations
+
+### Changed
+- simulation is no longer reset when the Simulate tab is left in the GUI
+- simulations can be continued using a different simulator
+- use v1.0.0 of Dune-Copasi simulator
+- GUI warns before closing a model with unsaved changes [#346](https://github.com/spatial-model-editor/spatial-model-editor/issues/346)
+- Membrane names can now be edited in the GUI and in the python interface
+
+### Fixed
+- diffusion constant bug in the Pixel simulator [#468](https://github.com/spatial-model-editor/spatial-model-editor/issues/468)
+- bug in dune-copasi mesh generation that could cause a crash [#434](https://github.com/spatial-model-editor/spatial-model-editor/issues/434)
+- bug where unused diffusion constant parameter was sometimes not removed from sbml document
+- data race in generating simulation concentration images [#434](https://github.com/spatial-model-editor/spatial-model-editor/issues/434)
+
+### Removed
+- incomplete Parametric geometry sbml import support [#452](https://github.com/spatial-model-editor/spatial-model-editor/issues/452)
+
 ## [1.0.8] - 2021-02-10
 ### Added
 - python library can now import a new geometry image using `sme.Model.import_geometry_from_image()`
+
 ### Changed
 - mesh generation is now done using the CGAL library
+
 ### Removed
 - dependence on Triangle mesh library removed due to its non-free license
 
