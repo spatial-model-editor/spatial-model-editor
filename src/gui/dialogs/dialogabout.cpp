@@ -4,6 +4,7 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <muParserDef.h>
+#include <cereal/version.hpp>
 #include <sbml/common/libsbml-version.h>
 #include <spdlog/version.h>
 #include <symengine/symengine_config.h>
@@ -92,6 +93,9 @@ DialogAbout::DialogAbout(QWidget *parent)
   libraries.append(dep("OpenCV", "https://github.com/opencv/opencv",
                        CV_MAJOR_VERSION, CV_MINOR_VERSION,
                        CV_SUBMINOR_VERSION));
+  libraries.append(dep("cereal", "https://uscilab.github.io/cereal",
+                       CEREAL_VERSION_MAJOR, CEREAL_VERSION_MINOR,
+                       CEREAL_VERSION_PATCH));
   libraries.append("</ul>");
   ui->lblLibraries->setText(libraries);
 }
