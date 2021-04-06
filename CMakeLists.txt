@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.13...3.19)
+cmake_minimum_required(VERSION 3.13...3.20)
 message(STATUS "CMake version ${CMAKE_VERSION}")
 
 # version number here is embedded in compiled executable
 project(
   SpatialModelEditor
-  VERSION 1.0.8
+  VERSION 1.0.9
   DESCRIPTION "Spatial Model Editor"
   LANGUAGES CXX)
 
