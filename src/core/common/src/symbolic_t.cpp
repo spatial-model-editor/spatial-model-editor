@@ -389,4 +389,10 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(utils::symbolicContains("z*unknown(y)", "x") == false);
     REQUIRE(utils::symbolicContains("(cos(symbol))^2+3", "symbol") == true);
   }
+  GIVEN("expressions equal up to double prec in coefficients test equal"){
+    REQUIRE(symEq(QString("0.999999999999"), QString("1")) == false);
+    REQUIRE(symEq(QString("0.999999999999999999999"), QString("1")) == true);
+    REQUIRE(symEq(QString("1e-3*x+y"), QString("9.9999999999999e-4*x + 1.00000000000001*y")) == false);
+    REQUIRE(symEq(QString("1e-3*x+y"), QString("9.999999999999999e-4*x + 1.0000000000000001*y")) == true);
+  }
 }

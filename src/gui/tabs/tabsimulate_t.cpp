@@ -18,13 +18,19 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   ModalWidgetTimer mwt;
   // get pointers to widgets within tab
   auto *txtSimLength = tab.findChild<QLineEdit *>("txtSimLength");
+  REQUIRE(txtSimLength != nullptr);
   auto *txtSimInterval = tab.findChild<QLineEdit *>("txtSimInterval");
-  auto *txtSimDt = tab.findChild<QLineEdit *>("txtSimDt");
+  REQUIRE(txtSimInterval != nullptr);
   auto *btnSimulate = tab.findChild<QPushButton *>("btnSimulate");
+  REQUIRE(btnSimulate != nullptr);
   auto *btnResetSimulation = tab.findChild<QPushButton *>("btnResetSimulation");
+  REQUIRE(btnResetSimulation != nullptr);
   auto *hslideTime = tab.findChild<QSlider *>("hslideTime");
+  REQUIRE(hslideTime != nullptr);
   auto *btnExport = tab.findChild<QPushButton *>("btnExport");
+  REQUIRE(btnExport != nullptr);
   auto *btnDisplayOptions = tab.findChild<QPushButton *>("btnDisplayOptions");
+  REQUIRE(btnDisplayOptions != nullptr);
 
   if (QFile f(":/models/ABtoC.xml"); f.open(QIODevice::ReadOnly)) {
     sbmlDoc.importSBMLString(f.readAll().toStdString());
@@ -38,8 +44,6 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
                 {"End", "Backspace", "Backspace", "Backspace", "0", ".", "2"});
   sendKeyEvents(txtSimInterval,
                 {"End", "Backspace", "Backspace", "Backspace", "0", ".", "1"});
-  sendKeyEvents(txtSimDt, {"End", "Backspace", "Backspace", "Backspace",
-                           "Backspace", "0", ".", "1"});
   sendMouseClick(btnSimulate);
   REQUIRE(btnSimulate->isEnabled() == false);
   // simulation happens asynchronously - wait until finished
@@ -50,11 +54,12 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   REQUIRE(hslideTime->isEnabled() == true);
   REQUIRE(hslideTime->minimum() == 0);
 
+  // reset simulation
   sendMouseClick(btnResetSimulation);
   REQUIRE(hslideTime->isEnabled() == true);
   REQUIRE(btnSimulate->isEnabled() == true);
 
-  // repeat simulation using Pixel simulator
+  // new simulation using Pixel simulator
   tab.useDune(false);
   sendMouseClick(btnSimulate);
   REQUIRE(btnSimulate->isEnabled() == false);
@@ -68,7 +73,7 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   sendMouseClick(btnResetSimulation);
   REQUIRE(hslideTime->isEnabled() == true);
 
-  // repeat sim but click cancel straight away
+  // start new sim but click cancel straight away
   // cancel simulation early
   mwt.addUserAction({"Escape"});
   mwt.start();
@@ -83,7 +88,7 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   mwt.start();
   sendMouseClick(btnDisplayOptions);
 
-  // click save image & cancel
+  // click export & cancel
   mwt.addUserAction({"Esc"});
   mwt.start();
   sendMouseClick(btnExport);

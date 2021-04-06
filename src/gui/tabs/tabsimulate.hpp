@@ -3,10 +3,10 @@
 #pragma once
 #include "dialogdisplayoptions.hpp"
 #include "plotwrapper.hpp"
-#include "simulate.hpp"
 #include <QWidget>
 #include <future>
 #include <memory>
+#include "simulate.hpp"
 
 namespace Ui {
 class TabSimulate;
@@ -52,7 +52,6 @@ private:
   std::vector<QStringList> speciesNames;
   std::vector<std::vector<std::size_t>> compartmentSpeciesToDraw;
   std::vector<PlotWrapperObservable> observables;
-  std::vector<bool> obsVisible;
   std::future<std::size_t> simSteps;
   QTimer plotRefreshTimer;
   QProgressDialog *progressDialog;

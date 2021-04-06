@@ -6,6 +6,7 @@
 #include "model_parameters.hpp"
 #include "model_reactions.hpp"
 #include "sbml_math.hpp"
+#include "simulate_data.hpp"
 #include "sbml_utils.hpp"
 #include "utils.hpp"
 #include "xml_annotation.hpp"
@@ -176,9 +177,20 @@ ModelSpecies::getSampledFieldConcentrationFromSBML(const QString &id) const {
   if (!sampledFieldID.empty()) {
     const auto *geom = getOrCreateGeometry(sbmlModel);
     const auto *sf = geom->getSampledField(sampledFieldID);
-    sf->getSamples(array);
+    // use string instead of vector of doubles overload to avoid libsbml issue
+    // with stringtreams & subnormal doubles on macos:
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/465
+    std::stringstream ss{sf->getSamples()};
+    double val;
+    while(ss >> val || !ss.eof()){
+      if(ss.fail() && std::fpclassify(val) == FP_SUBNORMAL){
+        // subnormal doubles set fail bit on macos but are otherwise correctly parsed
+        ss.clear();
+      }
+      array.push_back(val);
+    }
   }
-  SPDLOG_DEBUG("returning array of size {}", array.size());
+  SPDLOG_INFO("returning array of size {}", array.size());
   return array;
 }
 
@@ -266,12 +278,12 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
                            const ModelCompartments *compartments,
                            const ModelGeometry *geometry,
                            const ModelParameters *parameters,
-                           ModelReactions *reactions)
+                           ModelReactions *reactions, simulate::SimulationData *data)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(model)},
       compartmentIds{importCompartmentIds(model)},
       colours{importColours(model)}, sbmlModel{model},
       modelCompartments{compartments}, modelGeometry{geometry},
-      modelParameters{parameters}, modelReactions{reactions} {
+      modelParameters{parameters}, modelReactions{reactions}, simulationData{data} {
   makeInitialConcentrationsValid(model);
   for (int i = 0; i < ids.size(); ++i) {
     const auto &id = ids[i];
@@ -299,6 +311,8 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
 
 QString ModelSpecies::add(const QString &name, const QString &compartmentId) {
   hasUnsavedChanges = true;
+  SPDLOG_INFO("Clearing simulation data");
+  simulationData->clear();
   QString newName = name;
   QString compName = modelCompartments->getName(compartmentId);
   while (names.contains(newName)) {
@@ -342,6 +356,8 @@ void ModelSpecies::remove(const QString &id) {
     SPDLOG_WARN("  - species {} not found in ids", sId);
     return;
   }
+  SPDLOG_INFO("Clearing simulation data");
+  simulationData->clear();
   hasUnsavedChanges = true;
   std::unique_ptr<libsbml::Species> spec(sbmlModel->removeSpecies(sId));
   if (spec == nullptr) {
@@ -413,6 +429,8 @@ void ModelSpecies::setCompartment(const QString &id,
     SPDLOG_WARN("Species '{}' not found", sId);
     return;
   }
+  SPDLOG_INFO("Clearing simulation data");
+  simulationData->clear();
   hasUnsavedChanges = true;
   spec->setCompartment(compSId);
   auto i = ids.indexOf(id);

@@ -107,6 +107,7 @@ find_package(TIFF REQUIRED)
 find_package(fmt REQUIRED)
 find_package(CGAL REQUIRED)
 find_package(dune-copasi REQUIRED)
+find_package(cereal REQUIRED)
 if(SME_WITH_TBB)
   find_package(tbb REQUIRED)
   target_compile_definitions(core PUBLIC SPATIAL_MODEL_EDITOR_WITH_TBB)
@@ -128,7 +129,8 @@ target_link_libraries(
           ${SYMENGINE_LIBRARIES}
           sbml-static
           dune-copasi::dune-copasi
-          CGAL::CGAL)
+          CGAL::CGAL
+          cereal::cereal)
 target_link_libraries(
   core
   PUBLIC opencv_core

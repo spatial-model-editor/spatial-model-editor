@@ -9,6 +9,7 @@
 #include "logger.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
+#include "serialization.hpp"
 #include "tabevents.hpp"
 #include "tabfunctions.hpp"
 #include "tabgeometry.hpp"
@@ -42,7 +43,8 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
   ui->splitter->setSizes({1000, 3000});
 
   if (!filename.isEmpty()) {
-    openSBMLFile(filename);
+    sbmlDoc.importFile(filename.toStdString());
+    validateSBMLDoc(filename);
   } else {
     validateSBMLDoc();
   }
@@ -70,7 +72,8 @@ void MainWindow::setupTabs() {
   tabEvents = new TabEvents(sbmlDoc, ui->tabEvents);
   ui->tabEvents->layout()->addWidget(tabEvents);
 
-  tabSimulate = new TabSimulate(sbmlDoc, ui->lblGeometry, ui->tabSimulate);
+  tabSimulate = new TabSimulate(sbmlDoc,
+                                ui->lblGeometry, ui->tabSimulate);
   ui->tabSimulate->layout()->addWidget(tabSimulate);
 }
 
@@ -84,6 +87,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->menuOpen_example_SBML_file, &QMenu::triggered, this,
           &MainWindow::menuOpen_example_SBML_file_triggered);
+
+  connect(ui->action_Save, &QAction::triggered, this,
+          &MainWindow::action_Save_triggered);
 
   connect(ui->action_Save_SBML_file, &QAction::triggered, this,
           &MainWindow::action_Save_SBML_file_triggered);
@@ -198,12 +204,10 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
                            "Failed to load file " + filename);
     }
   }
-  tabSimulate->reset();
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   enableTabs();
-  this->setWindowTitle(
-      QString("Spatial Model Editor [%1]").arg(sbmlDoc.getCurrentFilename()));
+  this->setWindowTitle(QString("Spatial Model Editor [%1]").arg(filename));
 }
 
 void MainWindow::enableTabs() {
@@ -219,49 +223,59 @@ void MainWindow::action_New_triggered() {
   auto modelName = QInputDialog::getText(
       this, "Create new model", "New model name:", QLineEdit::Normal, {}, &ok);
   if (ok && !modelName.isEmpty()) {
+    tabSimulate->reset();
     sbmlDoc.createSBMLFile(modelName.toStdString());
-    validateSBMLDoc();
+    validateSBMLDoc(modelName + ".sme");
   }
 }
 
 void MainWindow::action_Open_SBML_file_triggered() {
   QString filename = QFileDialog::getOpenFileName(
-      this, "Open SBML file", "", "SBML file (*.xml);; All files (*.*)");
+      this, "Open Model", "",
+      "SME or SBML model (*.sme *.xml);; All files (*.*)");
   if (filename.isEmpty()) {
     return;
   }
-  openSBMLFile(filename);
+  sbmlDoc.importFile(filename.toStdString());
+  validateSBMLDoc(filename);
 }
 
 void MainWindow::menuOpen_example_SBML_file_triggered(const QAction *action) {
-  QString filename =
-      QString(":/models/%1.xml").arg(action->text().remove(0, 1));
-  QFile f(filename);
+  QString filename{action->text().remove(0, 1) + ".xml"};
+  QFile f(":/models/" + filename);
   if (!f.open(QIODevice::ReadOnly)) {
     SPDLOG_WARN("failed to open built-in file: {}", filename.toStdString());
     return;
   }
-  sbmlDoc.importSBMLString(f.readAll().toStdString());
+  sbmlDoc.importSBMLString(f.readAll().toStdString(), filename.toStdString());
   validateSBMLDoc(filename);
 }
 
-void MainWindow::action_Save_SBML_file_triggered() {
-  if (!isValidModelAndGeometryImage()) {
-    SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
+void MainWindow::action_Save_triggered() {
+  QString filename = QFileDialog::getSaveFileName(
+      this, "Save Model", sbmlDoc.getCurrentFilename() + ".sme",
+      "SME file (*.sme)");
+  if (filename.isEmpty()) {
     return;
   }
-  QString filename = QFileDialog::getSaveFileName(this, "Save SBML file",
-                                                  sbmlDoc.getCurrentFilename(),
-                                                  "SBML file (*.xml)");
+  if (filename.right(4) != ".sme") {
+    filename.append(".sme");
+  }
+  sbmlDoc.exportSMEFile(filename.toStdString()); // todo check for success here
+  this->setWindowTitle(QString("Spatial Model Editor [%1]").arg(filename));
+}
+
+void MainWindow::action_Save_SBML_file_triggered() {
+  QString filename = QFileDialog::getSaveFileName(
+      this, "Export SBML file", sbmlDoc.getCurrentFilename() + ".xml",
+      "SBML file (*.xml)");
   if (filename.isEmpty()) {
     return;
   }
   if (filename.right(4) != ".xml") {
     filename.append(".xml");
   }
-  sbmlDoc.exportSBMLFile(filename.toStdString());
-  this->setWindowTitle(
-      QString("Spatial Model Editor [%1]").arg(sbmlDoc.getCurrentFilename()));
+  sbmlDoc.exportSBMLFile(filename.toStdString()); // todo check for success here
 }
 
 void MainWindow::actionExport_Dune_ini_file_triggered() {
@@ -305,8 +319,7 @@ void MainWindow::actionGeometry_from_image_triggered() {
   if (!isValidModel()) {
     return;
   }
-  auto img = getImageFromUser(this, "Import geometry from image");
-  if (!img.isNull()) {
+  if (auto img{getImageFromUser(this, "Import geometry from image")}; !img.isNull()) {
     importGeometryImage(img);
   }
 }
@@ -330,11 +343,6 @@ void MainWindow::importGeometryImage(const QImage &image) {
   // set default pixel width in case user doesn't set image physical size
   sbmlDoc.getGeometry().setPixelWidth(1.0);
   actionSet_image_size_triggered();
-}
-
-void MainWindow::openSBMLFile(const QString &filename) {
-  sbmlDoc.importSBMLFile(filename.toStdString());
-  validateSBMLDoc(filename);
 }
 
 void MainWindow::actionSet_model_units_triggered() {
@@ -400,7 +408,9 @@ void MainWindow::dropEvent(QDropEvent *event) {
   if (!mimeData->hasUrls() || mimeData->urls().isEmpty()) {
     return;
   }
-  openSBMLFile(mimeData->urls().front().toLocalFile());
+  QString filename{mimeData->urls().front().toLocalFile()};
+  sbmlDoc.importFile(filename.toStdString());
+  validateSBMLDoc(filename);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
@@ -414,7 +424,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
       QMessageBox::No | QMessageBox::Yes, QMessageBox::Yes);
   if (res == QMessageBox::Yes) {
     event->ignore();
-    action_Save_SBML_file_triggered();
+    action_Save_triggered();
   } else {
     event->accept();
   }

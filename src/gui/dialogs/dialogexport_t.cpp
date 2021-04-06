@@ -1,9 +1,11 @@
 #include "catch_wrapper.hpp"
 #include "dialogexport.hpp"
+#include "model.hpp"
 #include "plotwrapper.hpp"
 #include "qt_test_utils.hpp"
-#include "model.hpp"
+#include "serialization.hpp"
 #include "simulate.hpp"
+#include "simulate_options.hpp"
 #include <QFile>
 
 SCENARIO("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
@@ -13,7 +15,8 @@ SCENARIO("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     f.open(QIODevice::ReadOnly);
     model.importSBMLString(f.readAll().toStdString());
     sme::simulate::Simulation sim(model, sme::simulate::SimulatorType::Pixel);
-
+    sme::simulate::Options options;
+    sim.doTimesteps(0.001, 4);
     QImage imgGeometry(100, 50, QImage::Format_ARGB32_Premultiplied);
     QVector<QImage> imgs(5,
                          QImage(100, 50, QImage::Format_ARGB32_Premultiplied));
@@ -43,16 +46,19 @@ SCENARIO("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
       REQUIRE(conc0 == dbl_approx(0.0));
       // change initial concentration in model
       model.getSpecies().setInitialConcentration("A_c2", 0.123);
-      REQUIRE(model.getSpecies().getSampledFieldConcentration("A_c2")[i] == dbl_approx(0.123));
-      // export initial simulation concs to model
-      mwt.addUserAction({"Up", "Up", "Up", "Up", "Up", "Enter"} );
+      REQUIRE(model.getSpecies().getSampledFieldConcentration("A_c2")[i] ==
+              dbl_approx(0.123));
+      // export t=0 simulation concs to model
+      mwt.addUserAction(
+          {"Down", "Down", "Shift+Tab", "Up", "Up", "Enter"});
       mwt.start();
       dia.exec();
-      REQUIRE(model.getSpecies().getSampledFieldConcentration("A_c2")[i] == dbl_approx(conc0));
+      REQUIRE(model.getSpecies().getSampledFieldConcentration("A_c2")[i] ==
+              dbl_approx(conc0));
     }
     WHEN("user clicks save image, then cancel") {
       ModalWidgetTimer mwt2;
-      mwt.addUserAction({"Tab", "Down", "Enter"}, true, &mwt2);
+      mwt.addUserAction({"Down", "Down", "Down", "Enter"}, true, &mwt2);
       mwt2.addUserAction({"Esc"});
       mwt.start();
       dia.exec();
@@ -60,7 +66,7 @@ SCENARIO("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     }
     WHEN("user clicks save image, then enters filename") {
       ModalWidgetTimer mwt2;
-      mwt.addUserAction({"Tab", "Down", "Enter"}, true, &mwt2);
+      mwt.addUserAction({"Down", "Down", "Down", "Enter"}, true, &mwt2);
       mwt2.addUserAction({"x", "y", "z"});
       mwt.start();
       dia.exec();
@@ -71,7 +77,9 @@ SCENARIO("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     }
     WHEN("user changes timepoint, clicks save image, then enters filename") {
       ModalWidgetTimer mwt2;
-      mwt.addUserAction({"Down", "Down", "Tab", "Down", "Enter"}, true, &mwt2);
+      mwt.addUserAction({"Down", "Down", "Down", "Shift+Tab", "Down",
+                         "Down", "Enter"},
+                        true, &mwt2);
       mwt2.addUserAction({"x", "y", "z"});
       mwt.start();
       dia.exec();
@@ -82,7 +90,7 @@ SCENARIO("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     }
     WHEN("user clicks on All timepoints, clicks save image, then enter") {
       ModalWidgetTimer mwt2;
-      mwt.addUserAction({"Tab", "Down", "Down", "Enter"}, true, &mwt2);
+      mwt.addUserAction({"Enter"}, true, &mwt2);
       mwt2.addUserAction({"Enter"});
       mwt.start();
       dia.exec();
@@ -105,7 +113,7 @@ SCENARIO("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     }
     WHEN("user clicks on csv, types xyz, then enter") {
       ModalWidgetTimer mwt2;
-      mwt.addUserAction({"Tab", "Down", "Down", "Down", "Enter"}, true, &mwt2);
+      mwt.addUserAction({"Down", "Enter"}, true, &mwt2);
       mwt2.addUserAction({"x", "y", "z"});
       mwt.start();
       dia.exec();

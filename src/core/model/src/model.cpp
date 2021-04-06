@@ -29,23 +29,29 @@ void Model::createSBMLFile(const std::string &name) {
   doc = std::make_unique<libsbml::SBMLDocument>(libsbml::SBMLDocument());
   doc->createModel(name);
   currentFilename = name.c_str();
-  if (currentFilename.right(4) != ".xml") {
-    currentFilename.append(".xml");
-  }
   initModelData();
+}
+
+static QString removeExtension(const std::string& filename){
+  QString f{filename.c_str()};
+  if (int len{f.lastIndexOf(".")}; len > 0) {
+    f.truncate(len);
+  }
+  return f;
 }
 
 void Model::importSBMLFile(const std::string &filename) {
   clear();
-  currentFilename = filename.c_str();
+  currentFilename = removeExtension(filename);
   SPDLOG_INFO("Loading SBML file {}...", filename);
   doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
   initModelData();
   setHasUnsavedChanges(false);
 }
 
-void Model::importSBMLString(const std::string &xml) {
+void Model::importSBMLString(const std::string &xml, const std::string& filename) {
   clear();
+  currentFilename = removeExtension(filename);
   SPDLOG_INFO("Importing SBML from string...");
   doc.reset(libsbml::readSBMLFromString(xml.c_str()));
   initModelData();
@@ -65,13 +71,13 @@ void Model::initModelData() {
   // todo: reduce these cyclic dependencies: currently order of initialization
   // matters, should be possible to reduce coupling here
   modelCompartments = ModelCompartments(model, &modelGeometry, &modelMembranes,
-                                        &modelSpecies, &modelReactions);
+                                        &modelSpecies, &modelReactions, &getSimulationData());
   modelGeometry = ModelGeometry(model, &modelCompartments, &modelMembranes);
   modelGeometry.importSampledFieldGeometry(model);
   modelGeometry.importParametricGeometry(model);
   modelParameters = ModelParameters(model, &modelEvents);
   modelSpecies = ModelSpecies(model, &modelCompartments, &modelGeometry,
-                              &modelParameters, &modelReactions);
+                              &modelParameters, &modelReactions, &getSimulationData());
   modelEvents = ModelEvents(model, &modelParameters, &modelSpecies);
   modelReactions = ModelReactions(model, modelMembranes.getMembranes());
 }
@@ -110,7 +116,6 @@ void Model::exportSBMLFile(const std::string &filename) {
   }
   updateSBMLDoc();
   SPDLOG_INFO("Exporting SBML model to {}", filename);
-  currentFilename = filename.c_str();
   if (!libsbml::SBMLWriter().writeSBML(doc.get(), filename)) {
     SPDLOG_ERROR("Failed to write to {}", filename);
     return;
@@ -118,17 +123,48 @@ void Model::exportSBMLFile(const std::string &filename) {
   setHasUnsavedChanges(false);
 }
 
-void Model::updateSBMLDoc(){
+void Model::importFile(const std::string &filename) {
+  clear();
+  currentFilename = removeExtension(filename);
+  SPDLOG_INFO("Importing file {} ...", filename);
+  utils::SmeFile tmpSmeFile;
+  if(tmpSmeFile.importFile(filename)){
+    SPDLOG_INFO("  -> SME file", filename);
+    doc.reset(libsbml::readSBMLFromString(tmpSmeFile.xmlModel().c_str()));
+  } else {
+    SPDLOG_INFO("  -> SBML file", filename);
+    doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
+  }
+  initModelData();
+  smeFile.simulationData() = std::move(tmpSmeFile.simulationData());
+  setHasUnsavedChanges(false);
+}
+
+void Model::exportSMEFile(const std::string &filename) {
+  currentFilename = filename.c_str();
+  if (int len{currentFilename.lastIndexOf(".")}; len > 0) {
+    currentFilename.truncate(len);
+  }
+  updateSBMLDoc();
+  smeFile.setXmlModel(getXml().toStdString());
+  if (!smeFile.exportFile(filename)) {
+    SPDLOG_WARN("Failed to save file '{}'", filename);
+  }
+  setHasUnsavedChanges(false);
+}
+
+void Model::updateSBMLDoc() {
   modelGeometry.writeGeometryToSBML();
   modelMembranes.exportToSBML(doc->getModel());
 }
 
-QString Model::getXml() const {
+QString Model::getXml() {
   QString xml;
   if (!isValid) {
     return {};
   }
-  printSBMLDocErrors(doc.get());
+  updateSBMLDoc();
+  countAndPrintSBMLDocErrors(doc.get());
   std::unique_ptr<char, decltype(&std::free)> xmlChar(
       libsbml::writeSBMLToString(doc.get()), &std::free);
   xml = QString(xmlChar.get());
@@ -183,6 +219,10 @@ ModelMath &Model::getMath() { return modelMath; }
 
 const ModelMath &Model::getMath() const { return modelMath; }
 
+simulate::SimulationData &Model::getSimulationData() {
+  return smeFile.simulationData();
+}
+
 void Model::clear() {
   doc.reset();
   isValid = false;
@@ -197,6 +237,7 @@ void Model::clear() {
   modelEvents = ModelEvents{};
   modelUnits = ModelUnits{};
   modelMath = ModelMath{};
+  smeFile = {};
 }
 
 SpeciesGeometry Model::getSpeciesGeometry(const QString &speciesID) const {

@@ -78,6 +78,8 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [Catch2](https://github.com/catchorg/Catch2) - license: [BSL-1.0](https://github.com/catchorg/Catch2/blob/master/LICENSE.txt)
 
+- [Cereal](https://github.com/USCiLab/cereal) - license: [BSD](https://github.com/USCiLab/cereal/blob/master/LICENSE)
+
 ## Licensing Note
 
 The source code in this repository is released under the MIT license, which is a permissive

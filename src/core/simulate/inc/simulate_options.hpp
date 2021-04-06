@@ -6,9 +6,7 @@
 #include <limits>
 #include <string>
 
-namespace sme {
-
-namespace simulate {
+namespace sme::simulate {
 
 enum class DuneDiscretizationType { FEM1 };
 
@@ -53,6 +51,6 @@ struct AvgMinMax {
   double max = 0;
 };
 
-} // namespace simulate
+bool operator==(const AvgMinMax &lhs, const AvgMinMax &rhs);
 
-} // namespace sme
+} // namespace sme::simulate

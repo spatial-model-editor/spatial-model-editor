@@ -17,6 +17,10 @@ class Model;
 
 namespace sme {
 
+namespace simulate {
+class SimulationData;
+}
+
 namespace model {
 class ModelGeometry;
 class ModelMembranes;
@@ -34,13 +38,14 @@ private:
   ModelMembranes *modelMembranes = nullptr;
   ModelSpecies *modelSpecies = nullptr;
   ModelReactions *modelReactions = nullptr;
+  simulate::SimulationData *simulationData = nullptr;
   bool hasUnsavedChanges{false};
 
 public:
   ModelCompartments();
   ModelCompartments(libsbml::Model *model, ModelGeometry *geometry,
                     ModelMembranes *membranes, ModelSpecies *species,
-                    ModelReactions *reactions);
+                    ModelReactions *reactions, simulate::SimulationData *data);
   const QStringList &getIds() const;
   const QStringList &getNames() const;
   const QVector<QRgb> &getColours() const;

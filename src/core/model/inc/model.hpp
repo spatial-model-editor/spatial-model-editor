@@ -17,6 +17,8 @@
 #include "model_reactions.hpp"
 #include "model_species.hpp"
 #include "model_units.hpp"
+#include "simulate.hpp"
+#include "serialization.hpp"
 #include <QColor>
 #include <QImage>
 #include <QStringList>
@@ -56,6 +58,7 @@ struct SpeciesGeometry {
 class Model {
 private:
   std::unique_ptr<libsbml::SBMLDocument> doc;
+  sme::utils::SmeFile smeFile;
   bool isValid{false};
   QString currentFilename;
 
@@ -72,6 +75,7 @@ private:
 
   void initModelData();
   void setHasUnsavedChanges(bool unsavedChanges);
+  void updateSBMLDoc();
 
 public:
   bool getIsValid() const;
@@ -101,6 +105,7 @@ public:
   const ModelUnits &getUnits() const;
   ModelMath &getMath();
   const ModelMath &getMath() const;
+  simulate::SimulationData &getSimulationData();
 
   explicit Model();
   Model(Model &&) noexcept = default;
@@ -111,10 +116,11 @@ public:
 
   void createSBMLFile(const std::string &name);
   void importSBMLFile(const std::string &filename);
-  void importSBMLString(const std::string &xml);
+  void importSBMLString(const std::string &xml, const std::string& filename={});
   void exportSBMLFile(const std::string &filename);
-  void updateSBMLDoc();
-  QString getXml() const;
+  void importFile(const std::string &filename);
+  void exportSMEFile(const std::string &filename);
+  QString getXml();
   void clear();
 
   SpeciesGeometry getSpeciesGeometry(const QString &speciesID) const;

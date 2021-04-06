@@ -29,7 +29,7 @@ private:
   sme::model::Model& m;
   const sme::simulate::Simulation& sim;
 
-  void radSingleTimepoint_toggled(bool checked);
+  void radios_toggled(bool checked);
   void doExport();
   void saveImage();
   void saveImages();
