@@ -67,7 +67,7 @@ private:
 
   // Tools menu actions
   void actionSet_model_units_triggered();
-  void actionSet_image_size_triggered();
+  void actionEdit_geometry_image_triggered();
   void actionSet_spatial_coordinates_triggered();
 
   // Advanced menu actions

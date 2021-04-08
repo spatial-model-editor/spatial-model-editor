@@ -10,8 +10,8 @@
 
 static void openBuiltInModel(MainWindow &w, const QString &shortcutKey = "V") {
   auto *menuFile = w.findChild<QMenu *>("menuFile");
-  auto *menuOpen_example_SBML_file =
-      w.findChild<QMenu *>("menuOpen_example_SBML_file");
+  auto *menuOpen_example_SBML_file{
+      w.findChild<QMenu *>("menuOpen_example_SBML_file")};
   sendKeyEvents(&w, {"Alt+F"});
   sendKeyEvents(menuFile, {"E"});
   sendKeyEvents(menuOpen_example_SBML_file, {shortcutKey});
@@ -194,10 +194,10 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
         REQUIRE(mwt.getResult() == "Set Model Units");
       }
     }
-    SECTION("menu: Tools->Set image size (default SBML model, no image)") {
+    SECTION("menu: Tools->Edit geometry image (default SBML model, no image)") {
       SECTION("offer to import geometry image") {
         sendKeyEvents(&w, {"Alt+T"});
-        sendKeyEvents(menu_Tools, {"I"});
+        sendKeyEvents(menu_Tools, {"E"});
         // press no when asked to import image
         auto title = sendKeyEventsToNextQDialog({"Esc"});
         REQUIRE(title == "No compartment geometry image");

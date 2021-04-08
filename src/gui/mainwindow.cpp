@@ -1,7 +1,7 @@
 #include "mainwindow.hpp"
 #include "dialogabout.hpp"
 #include "dialogcoordinates.hpp"
-#include "dialogimagesize.hpp"
+#include "dialoggeometryimage.hpp"
 #include "dialogsimulationoptions.hpp"
 #include "dialogunits.hpp"
 #include "duneconverter.hpp"
@@ -72,8 +72,7 @@ void MainWindow::setupTabs() {
   tabEvents = new TabEvents(sbmlDoc, ui->tabEvents);
   ui->tabEvents->layout()->addWidget(tabEvents);
 
-  tabSimulate = new TabSimulate(sbmlDoc,
-                                ui->lblGeometry, ui->tabSimulate);
+  tabSimulate = new TabSimulate(sbmlDoc, ui->lblGeometry, ui->tabSimulate);
   ui->tabSimulate->layout()->addWidget(tabSimulate);
 }
 
@@ -112,8 +111,8 @@ void MainWindow::setupConnections() {
   connect(ui->actionSet_model_units, &QAction::triggered, this,
           &MainWindow::actionSet_model_units_triggered);
 
-  connect(ui->actionSet_image_size, &QAction::triggered, this,
-          &MainWindow::actionSet_image_size_triggered);
+  connect(ui->actionEdit_geometry_image, &QAction::triggered, this,
+          &MainWindow::actionEdit_geometry_image_triggered);
 
   connect(ui->actionSet_spatial_coordinates, &QAction::triggered, this,
           &MainWindow::actionSet_spatial_coordinates_triggered);
@@ -319,7 +318,8 @@ void MainWindow::actionGeometry_from_image_triggered() {
   if (!isValidModel()) {
     return;
   }
-  if (auto img{getImageFromUser(this, "Import geometry from image")}; !img.isNull()) {
+  if (auto img{getImageFromUser(this, "Import geometry from image")};
+      !img.isNull()) {
     importGeometryImage(img);
   }
 }
@@ -342,7 +342,7 @@ void MainWindow::importGeometryImage(const QImage &image) {
   enableTabs();
   // set default pixel width in case user doesn't set image physical size
   sbmlDoc.getGeometry().setPixelWidth(1.0);
-  actionSet_image_size_triggered();
+  actionEdit_geometry_image_triggered();
 }
 
 void MainWindow::actionSet_model_units_triggered() {
@@ -363,17 +363,24 @@ void MainWindow::actionSet_model_units_triggered() {
   }
 }
 
-void MainWindow::actionSet_image_size_triggered() {
+void MainWindow::actionEdit_geometry_image_triggered() {
   if (!isValidModelAndGeometryImage()) {
     return;
   }
-  DialogImageSize dialog(sbmlDoc.getGeometry().getImage(),
-                         sbmlDoc.getGeometry().getPixelWidth(),
-                         sbmlDoc.getUnits());
+  DialogGeometryImage dialog(sbmlDoc.getGeometry().getImage(),
+                             sbmlDoc.getGeometry().getPixelWidth(),
+                             sbmlDoc.getUnits());
   if (dialog.exec() == QDialog::Accepted) {
     double pixelWidth = dialog.getPixelWidth();
     SPDLOG_INFO("Set new pixel width = {}", pixelWidth);
     sbmlDoc.getGeometry().setPixelWidth(pixelWidth);
+    if (dialog.imageAltered()) {
+      SPDLOG_INFO("Importing altered geometry image");
+      sbmlDoc.getGeometry().importGeometryFromImage(dialog.getAlteredImage());
+      ui->tabMain->setCurrentIndex(0);
+      tabMain_currentChanged(0);
+      enableTabs();
+    }
   }
 }
 

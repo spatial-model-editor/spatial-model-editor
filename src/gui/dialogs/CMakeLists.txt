@@ -7,8 +7,8 @@ target_sources(
           dialogdisplayoptions.cpp
           dialogeditunit.cpp
           dialogexport.cpp
+          dialoggeometryimage.cpp
           dialogimage.cpp
-          dialogimagesize.cpp
           dialogimageslice.cpp
           dialogsimulationoptions.cpp
           dialogunits.cpp)
@@ -24,8 +24,8 @@ if(BUILD_TESTING)
            dialogdisplayoptions_t.cpp
            dialogeditunit_t.cpp
            dialogexport_t.cpp
+           dialoggeometryimage_t.cpp
            dialogimage_t.cpp
-           dialogimagesize_t.cpp
            dialogimageslice_t.cpp
            dialogsimulationoptions_t.cpp
            dialogunits_t.cpp)

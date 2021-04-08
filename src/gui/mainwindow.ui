@@ -229,7 +229,7 @@
      <addaction name="actionSimTypePixel"/>
     </widget>
     <addaction name="actionSet_model_units"/>
-    <addaction name="actionSet_image_size"/>
+    <addaction name="actionEdit_geometry_image"/>
     <addaction name="actionSet_spatial_coordinates"/>
     <addaction name="menuSimulation_type"/>
    </widget>
@@ -389,9 +389,9 @@
     <string>&amp;concave-cell-nucleus-100x100</string>
    </property>
   </action>
-  <action name="actionSet_image_size">
+  <action name="actionEdit_geometry_image">
    <property name="text">
-    <string>Set &amp;image size</string>
+    <string>&amp;Edit geometry image</string>
    </property>
   </action>
   <action name="action_four_compartments_150x100">
