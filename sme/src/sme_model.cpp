@@ -250,6 +250,7 @@ std::vector<SimulationResult> Model::simulate(double simulationTime,
   simulationRuntimeTimer.start();
   double timeoutMillisecs{static_cast<double>(timeoutSeconds) * 1000.0};
   std::vector<SimulationResult> results;
+  s->getSimulationData().clear();
   sim = std::make_unique<simulate::Simulation>(*(s.get()),
                                                simulate::SimulatorType::Pixel);
   if (const auto &e = sim->errorMessage(); !e.empty()) {
