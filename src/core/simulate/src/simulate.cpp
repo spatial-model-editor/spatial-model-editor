@@ -148,7 +148,8 @@ void Simulation::updateConcentrations(double t) {
     std::size_t nSpecies{compartmentSpeciesIds[compIndex].size()};
     const auto &compConcs{simulator->getConcentrations(compIndex)};
     c.push_back(compConcs);
-    a.push_back(calculateAvgMinMax(compConcs, nSpecies, data->concPadding.back()));
+    a.push_back(
+        calculateAvgMinMax(compConcs, nSpecies, data->concPadding.back()));
     auto &maxS{data->concentrationMax.back()[compIndex]};
     for (std::size_t is = 0; is < nSpecies; ++is) {
       maxS[is] = std::max(maxS[is], a.back()[is].max);
@@ -192,63 +193,70 @@ Simulation::~Simulation() = default;
 
 std::size_t Simulation::doTimesteps(double time, std::size_t nSteps,
                                     double timeout_ms) {
-  SPDLOG_DEBUG("integrating for {} timesteps of length {}", nSteps, time);
+  return doMultipleTimesteps({{nSteps, time}}, timeout_ms);
+}
+
+std::size_t Simulation::doMultipleTimesteps(
+    const std::vector<std::pair<std::size_t, double>> &timesteps,
+    double timeout_ms) {
+
+  std::size_t nStepsTotal{0};
+  for (const auto &timestep : timesteps) {
+    nStepsTotal += timestep.first;
+  }
   QElapsedTimer timer;
   timer.start();
   // ensure there is enough space that push_back won't cause a reallocation
 
   // todo: there should be a mutex/lock here in case reserve() reallocates
   // to avoid a user getting garbage data while the vector contents are moving
-  data->timePoints.reserve(data->timePoints.size() + nSteps);
-  data->concentration.reserve(data->concentration.size() + nSteps);
-  data->concentrationMax.reserve(data->concentrationMax.size() + nSteps);
-  data->avgMinMax.reserve(data->avgMinMax.size() + nSteps);
-  data->concPadding.reserve(data->concPadding.size() + nSteps);
+  data->reserve(data->size() + nStepsTotal);
   stopRequested.store(false);
   isRunning.store(true);
   std::size_t steps{0};
-  for (std::size_t iStep = 0; iStep < nSteps; ++iStep) {
-    double remaining_timeout_ms{-1.0};
-    if (timeout_ms >= 0.0) {
-      remaining_timeout_ms = timeout_ms - static_cast<double>(timer.elapsed());
-      if (remaining_timeout_ms < 0.0) {
-        remaining_timeout_ms = 0.0;
+  double remaining_timeout_ms{-1.0};
+  for (const auto &timestep : timesteps) {
+    const auto [nSteps, time] = timestep;
+    SPDLOG_INFO("doing {} timesteps of length {}", nSteps, time);
+    for (std::size_t iStep = 0; iStep < nSteps; ++iStep) {
+      if (timeout_ms >= 0.0) {
+        remaining_timeout_ms =
+            timeout_ms - static_cast<double>(timer.elapsed());
+        if (remaining_timeout_ms < 0.0) {
+          remaining_timeout_ms = 0.0;
+        }
       }
+      if (data->timePoints.back() == eventTimes.front()) {
+        SPDLOG_INFO("Apply event at {}", eventTimes.front());
+        // event occurs before step: don't remove concentrations
+        applyNextEvent();
+      }
+      if (data->timePoints.back() + time > eventTimes.front()) {
+        // event occurs during step: need to split the step in two & apply event
+        // in between
+        double dt0{eventTimes.front() - data->timePoints.back()};
+        double dt1{data->timePoints.back() + time - eventTimes.front()};
+        SPDLOG_INFO("Partial pre-event step of {} to apply event at {}", dt0,
+                    eventTimes.front());
+        steps += simulator->run(dt0, remaining_timeout_ms);
+        // update intermediate concentrations to be able to apply them to model
+        updateConcentrations(data->timePoints.back() + dt0);
+        // apply event
+        applyNextEvent();
+        // remove intermediate concentrations
+        data->pop_back();
+        SPDLOG_INFO("Partial post-event step of {}", dt1);
+        steps += simulator->run(dt1, remaining_timeout_ms);
+      } else {
+        steps += simulator->run(time, remaining_timeout_ms);
+      }
+      if (!simulator->errorMessage().empty() || stopRequested.load()) {
+        isRunning.store(false);
+        return steps;
+      }
+      updateConcentrations(data->timePoints.back() + time);
+      ++nCompletedTimesteps;
     }
-    if (data->timePoints.back() == eventTimes.front()) {
-      SPDLOG_INFO("Apply event at {}", eventTimes.front());
-      // event occurs before step: don't remove concentrations
-      applyNextEvent();
-    }
-    if (data->timePoints.back() + time > eventTimes.front()) {
-      // event occurs during step: need to split the step in two & apply event
-      // in between
-      double dt0{eventTimes.front() - data->timePoints.back()};
-      double dt1{data->timePoints.back() + time - eventTimes.front()};
-      SPDLOG_INFO("Partial pre-event step of {} to apply event at {}", dt0,
-                  eventTimes.front());
-      steps += simulator->run(dt0, remaining_timeout_ms);
-      // update intermediate concentrations to be able to apply them to model
-      updateConcentrations(data->timePoints.back() + dt0);
-      // apply event
-      applyNextEvent();
-      // remove intermediate concentrations
-      data->timePoints.pop_back();
-      data->concentration.pop_back();
-      data->avgMinMax.pop_back();
-      data->concentrationMax.pop_back();
-      data->concPadding.pop_back();
-      SPDLOG_INFO("Partial post-event step of {}", dt1);
-      steps += simulator->run(dt1, remaining_timeout_ms);
-    } else {
-      steps += simulator->run(time, remaining_timeout_ms);
-    }
-    if (!simulator->errorMessage().empty() || stopRequested.load()) {
-      isRunning.store(false);
-      return steps;
-    }
-    updateConcentrations(data->timePoints.back() + time);
-    ++nCompletedTimesteps;
   }
   // write final concentrations to xml Model in data
   sme::model::Model finalModel;

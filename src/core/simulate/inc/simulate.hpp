@@ -2,8 +2,8 @@
 
 #pragma once
 
-#include "simulate_options.hpp"
 #include "simulate_data.hpp"
+#include "simulate_options.hpp"
 #include <QImage>
 #include <QRgb>
 #include <QSize>
@@ -43,7 +43,7 @@ private:
   std::vector<std::vector<std::string>> compartmentSpeciesNames;
   std::vector<std::vector<std::size_t>> compartmentSpeciesIndices;
   std::vector<std::vector<QRgb>> compartmentSpeciesColors;
-  SimulationData* data;
+  SimulationData *data;
   std::unique_ptr<SimulationData> dataIfNotProvided;
   QSize imageSize;
   std::atomic<bool> isRunning{false};
@@ -64,6 +64,9 @@ public:
 
   std::size_t doTimesteps(double time, std::size_t nSteps = 1,
                           double timeout_ms = -1.0);
+  std::size_t doMultipleTimesteps(
+      const std::vector<std::pair<std::size_t, double>> &timesteps,
+      double timeout_ms = -1.0);
   const std::string &errorMessage() const;
   const QImage &errorImage() const;
   const std::vector<std::string> &getCompartmentIds() const;
@@ -96,7 +99,7 @@ public:
             std::map<std::string, std::vector<std::vector<double>>>>
   getPyConcs(std::size_t timeIndex) const;
   std::size_t getNCompletedTimesteps() const;
-  const SimulationData& getSimulationData() const;
+  const SimulationData &getSimulationData() const;
   bool getIsRunning() const;
   bool getIsStopping() const;
   void requestStop();

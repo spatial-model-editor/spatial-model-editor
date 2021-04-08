@@ -83,6 +83,46 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
     wait(100);
   }
 
+  // set an invalid simulation lengths / image intervals
+  sendMouseClick(btnResetSimulation);
+  QString invalidMessage{"Invalid simulation length or image interval"};
+  // invalid double
+  sendKeyEvents(txtSimLength, {";", "c"});
+  mwt.start();
+  sendMouseClick(btnSimulate);
+  REQUIRE(mwt.getResult() == invalidMessage);
+
+  sendKeyEvents(txtSimLength, {"Backspace", "1"});
+  // sim interval larger than sim length
+  sendKeyEvents(txtSimInterval, {";", "9", "9", "9"});
+  mwt.start();
+  sendMouseClick(btnSimulate);
+  REQUIRE(mwt.getResult() == invalidMessage);
+
+  sendKeyEvents(txtSimLength, {";", "2", "0"});
+  // mismatch in number of elements in each vector
+  mwt.start();
+  sendMouseClick(btnSimulate);
+  REQUIRE(mwt.getResult() == invalidMessage);
+
+  // do valid multiple timestep simulation: 2x0.5, 2x0.25
+  sendKeyEvents(txtSimLength,
+                {"Backspace", "Backspace", "Backspace", "Backspace",
+                 "Backspace", "Backspace", "Backspace", "Backspace",
+                 "Backspace", "1", ";", "0", ".", "5"});
+  sendKeyEvents(txtSimInterval,
+                {"Backspace", "Backspace", "Backspace", "Backspace",
+                 "Backspace", "Backspace", "Backspace", "0", ".", "5", ";", "0",
+                 ".", "2", "5"});
+  sendMouseClick(btnSimulate);
+  REQUIRE(btnSimulate->isEnabled() == false);
+  while (!btnSimulate->isEnabled()) {
+    wait(100);
+  }
+  REQUIRE(hslideTime->isEnabled() == true);
+  REQUIRE(hslideTime->maximum() == 4);
+  REQUIRE(hslideTime->minimum() == 0);
+
   // hide all species
   mwt.addUserAction({"Space"});
   mwt.start();
