@@ -21,6 +21,8 @@ public:
   std::vector<std::size_t> concPadding;
   std::string xmlModel;
   void clear();
+  [[nodiscard]] std::size_t size() const;
+  void reserve(std::size_t n);
   void pop_back();
 };
 

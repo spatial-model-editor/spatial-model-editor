@@ -46,7 +46,7 @@ TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
 
   // timer to call updatePlotAndImages every second
   plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
-  constexpr int plotMsRefreshInterval = 1000;
+  constexpr int plotMsRefreshInterval{1000};
   plotRefreshTimer.setInterval(plotMsRefreshInterval);
   connect(&plotRefreshTimer, &QTimer::timeout, this, [this]() {
     updatePlotAndImages();
@@ -187,24 +187,59 @@ void TabSimulate::setOptions(const sme::simulate::Options &options) {
   loadModelData();
 }
 
+static std::optional<std::vector<std::pair<std::size_t, double>>>
+parseSimulationTimes(const QString &simLengthText,
+                     const QString &simIntervalText) {
+  std::vector<std::pair<std::size_t, double>> times;
+  auto simLengths{simLengthText.split(";")};
+  auto simDtImages{simIntervalText.split(";")};
+  if (simLengths.empty() || simDtImages.empty()) {
+    return {};
+  }
+  if (simLengths.size() != simDtImages.size()) {
+    return {};
+  }
+  for (int i = 0; i < simLengths.size(); ++i) {
+    bool validSimLengthDbl;
+    double simLength{simLengths[i].toDouble(&validSimLengthDbl)};
+    bool validDtImageDbl;
+    double dt{simDtImages[i].toDouble(&validDtImageDbl)};
+    if (!validDtImageDbl || !validSimLengthDbl || dt > simLength) {
+      return {};
+    }
+    int nImages{static_cast<int>(simLength / dt)};
+    SPDLOG_DEBUG("{} x {}", nImages, dt);
+    times.push_back({nImages, dt});
+  }
+  return times;
+}
+
 void TabSimulate::btnSimulate_clicked() {
+  auto simulationTimes{parseSimulationTimes(ui->txtSimLength->text(),
+                                            ui->txtSimInterval->text())};
+  if (!simulationTimes.has_value()) {
+    QMessageBox::warning(this, "Invalid simulation length or image interval",
+                         "Invalid simulation length or image interval");
+    return;
+  }
+
   // display modal progress dialog box
   progressDialog->setWindowModality(Qt::WindowModal);
   progressDialog->setValue(time.size() - 1);
   progressDialog->show();
   ui->btnSimulate->setEnabled(false);
   ui->btnResetSimulation->setEnabled(false);
-  // integration time parameters
-  double dtImage = ui->txtSimInterval->text().toDouble();
-  int n_images =
-      static_cast<int>(ui->txtSimLength->text().toDouble() / dtImage);
-  progressDialog->setMaximum(time.size() - 1 + n_images);
+  int progressMax{time.size() - 1};
+  for (const auto &simulationTime : simulationTimes.value()) {
+    progressMax += static_cast<int>(simulationTime.first);
+  }
+  progressDialog->setMaximum(progressMax);
 
   this->setCursor(Qt::WaitCursor);
   // start simulation in a new thread
-  simSteps =
-      std::async(std::launch::async, &sme::simulate::Simulation::doTimesteps,
-                 sim.get(), dtImage, n_images, -1.0);
+  simSteps = std::async(std::launch::async,
+                        &sme::simulate::Simulation::doMultipleTimesteps,
+                        sim.get(), simulationTimes.value(), -1.0);
   // start timer to periodically update simulation results
   plotRefreshTimer.start();
 }

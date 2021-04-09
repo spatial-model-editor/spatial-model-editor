@@ -11,7 +11,17 @@ void SimulationData::clear() {
   xmlModel.clear();
 }
 
-void SimulationData::pop_back(){
+std::size_t SimulationData::size() const { return timePoints.size(); }
+
+void SimulationData::reserve(std::size_t n) {
+  timePoints.reserve(n);
+  concentration.reserve(n);
+  avgMinMax.reserve(n);
+  concentrationMax.reserve(n);
+  concPadding.reserve(n);
+}
+
+void SimulationData::pop_back() {
   timePoints.pop_back();
   concentration.pop_back();
   avgMinMax.pop_back();

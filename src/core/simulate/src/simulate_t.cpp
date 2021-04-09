@@ -17,6 +17,14 @@
 
 using namespace sme;
 
+static model::Model getVerySimpleModel() {
+  model::Model m;
+  QFile f(":/models/very-simple-model.xml");
+  f.open(QIODevice::ReadOnly);
+  m.importSBMLString(f.readAll().toStdString());
+  return m;
+}
+
 SCENARIO("Simulate: very_simple_model, single pixel geometry",
          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
   // import model
@@ -1105,9 +1113,18 @@ static double rel_diff(const simulate::SimulationData &a,
     const auto &cB{b.concentration[iTimeB][iC]};
     // normalise to max conc over all species & points in each compartment
     double norm{*std::max_element(cA.cbegin(), cA.cend())};
+    if (norm == 0.0) {
+      // if norm is exactly zero, use the other data
+      norm = *std::max_element(cB.cbegin(), cB.cend());
+      // if this is also zero, then all elements are exactly zero in both
+      if (norm == 0.0) {
+        return 0;
+      }
+    }
     n += static_cast<double>(cA.size());
-    for (std::size_t i = 0; i < cA.size(); ++i) {
-      d += std::abs(cA[i] - cB[i]) / norm;
+    for (std::size_t timeIndex = 0; timeIndex < cA.size(); ++timeIndex) {
+      CAPTURE(timeIndex);
+      d += std::abs(cA[timeIndex] - cB[timeIndex]) / norm;
     }
   }
   return d / n;
@@ -1175,11 +1192,11 @@ SCENARIO("applyConcsToModel after simulation",
   s.importSBMLString(f.readAll().toStdString());
   // added this to try to work around
   // https://github.com/spatial-model-editor/spatial-model-editor/issues/465
-//  s.getSpecies().setAnalyticConcentration("B_c1", "cos(x/14.2)+1");
-//  s.getSpecies().setAnalyticConcentration("A_c2", "cos(x/12.2)+1");
-//  s.getSpecies().setAnalyticConcentration("B_c2", "cos(x/15.1)+1");
-//  s.getSpecies().setAnalyticConcentration("A_c3", "cos(x/7.2)+1");
-//  s.getSpecies().setAnalyticConcentration("B_c3", "cos(x/5.2)+1");
+  //  s.getSpecies().setAnalyticConcentration("B_c1", "cos(x/14.2)+1");
+  //  s.getSpecies().setAnalyticConcentration("A_c2", "cos(x/12.2)+1");
+  //  s.getSpecies().setAnalyticConcentration("B_c2", "cos(x/15.1)+1");
+  //  s.getSpecies().setAnalyticConcentration("A_c3", "cos(x/7.2)+1");
+  //  s.getSpecies().setAnalyticConcentration("B_c3", "cos(x/5.2)+1");
   s.exportSBMLFile("tmp.xml");
   simulate::Options options;
   options.dune.dt = 0.01;
@@ -1548,5 +1565,22 @@ SCENARIO("SimulationData",
     REQUIRE(rel_diff(dataB, data, 3, 3) < allowedDifference);
     REQUIRE(rel_diff(dataB, data, 4, 4) < allowedDifference);
     REQUIRE(rel_diff(dataB, data, 5, 5) < allowedDifference);
+  }
+}
+
+SCENARIO("doMultipleTimesteps vs doTimesteps",
+         "[core/simulate/simulate][core/simulate][core][simulate]") {
+  auto m1{getVerySimpleModel()};
+  simulate::Simulation sim1(m1);
+  sim1.doTimesteps(0.1, 3);
+  sim1.doTimesteps(0.2, 2);
+  const auto &data1{m1.getSimulationData()};
+  auto m2{getVerySimpleModel()};
+  simulate::Simulation sim2(m2);
+  sim2.doMultipleTimesteps({{3, 0.1}, {2, 0.2}});
+  const auto &data2{m2.getSimulationData()};
+  REQUIRE(data1.size() == data2.size());
+  for (std::size_t i = 0; i < data1.size(); ++i) {
+    REQUIRE(rel_diff(data1, data2, i, i) == dbl_approx(0.0));
   }
 }
