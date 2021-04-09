@@ -23,9 +23,7 @@
 #include <string>
 #include <utility>
 
-namespace sme {
-
-namespace simulate {
+namespace sme::simulate {
 
 std::vector<std::string>
 makeValidDuneSpeciesNames(const std::vector<std::string> &names) {
@@ -96,6 +94,4 @@ bool modelHasIndependentCompartments(const model::Model &model) {
   return true;
 }
 
-} // namespace simulate
-
-} // namespace sme
+} // namespace sme::simulate

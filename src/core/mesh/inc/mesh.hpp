@@ -16,7 +16,6 @@
 #include <cstddef>
 #include <memory>
 #include <string>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -83,7 +82,7 @@ public:
   getBoundariesImages(const QSize &size, std::size_t boldBoundaryIndex) const;
   std::pair<QImage, QImage> getMeshImages(const QSize &size,
                                           std::size_t compartmentIndex) const;
-  QString getGMSH(const std::unordered_set<int> &gmshCompIndices = {}) const;
+  QString getGMSH() const;
 };
 
 } // namespace sme::mesh

@@ -296,7 +296,7 @@ Mesh::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
   return imgPair;
 }
 
-QString Mesh::getGMSH(const std::unordered_set<int> &gmshCompIndices) const {
+QString Mesh::getGMSH() const {
   // note: gmsh indexing starts with 1, so we need to add 1 to all indices
   // meshing is done in terms of pixels, to convert to physical points:
   //   - rescale each vertex by a factor pixel
@@ -320,37 +320,27 @@ QString Mesh::getGMSH(const std::unordered_set<int> &gmshCompIndices) const {
   std::size_t nElem = 0;
   std::size_t compartmentIndex = 1;
   for (const auto &comp : triangleIndices) {
-    if (gmshCompIndices.empty() ||
-        gmshCompIndices.find(static_cast<int>(compartmentIndex)) !=
-            gmshCompIndices.cend()) {
       SPDLOG_TRACE("Adding compartment of triangles, index: {}",
                    compartmentIndex);
       nElem += comp.size();
-    }
     compartmentIndex++;
   }
   msh.append(QString("%1\n").arg(nElem));
-  std::size_t elementIndex = 1;
+  std::size_t elementIndex{1};
   compartmentIndex = 1;
-  std::size_t outputCompartmentIndex = 1;
   for (const auto &comp : triangleIndices) {
-    if (gmshCompIndices.empty() ||
-        gmshCompIndices.find(static_cast<int>(compartmentIndex)) !=
-            gmshCompIndices.cend()) {
-      SPDLOG_TRACE("Writing triangles for compartment index: {}",
+       SPDLOG_TRACE("Writing triangles for compartment index: {}",
                    compartmentIndex);
       for (const auto &t : comp) {
         msh.append(QString("%1 2 2 %2 %2 %3 %4 %5\n")
                        .arg(elementIndex)
-                       .arg(outputCompartmentIndex)
+                       .arg(compartmentIndex)
                        .arg(t[0] + 1)
                        .arg(t[1] + 1)
                        .arg(t[2] + 1));
         ++elementIndex;
       }
-      ++outputCompartmentIndex;
-    }
-    ++compartmentIndex;
+      ++compartmentIndex;
   }
   msh.append("$EndElements\n");
   return msh;

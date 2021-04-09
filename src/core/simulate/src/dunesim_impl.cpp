@@ -24,8 +24,7 @@ DuneImpl::DuneImpl(const simulate::DuneConverter &dc) {
     }
   }
   // construct grid
-  std::tie(grid, hostGrid) =
-      makeDuneGrid<HostGrid, MDGTraits>(*dc.getMesh(), dc.getGMSHCompIndices());
+  std::tie(grid, hostGrid) = makeDuneGrid<HostGrid, MDGTraits>(*dc.getMesh());
 }
 
 DuneImpl::~DuneImpl() = default;

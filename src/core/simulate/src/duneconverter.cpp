@@ -18,9 +18,7 @@
 #include <string>
 #include <utility>
 
-namespace sme {
-
-namespace simulate {
+namespace sme::simulate {
 
 static void addGrid(IniFile &ini) {
   ini.addSection("grid");
@@ -102,6 +100,40 @@ addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
   SPDLOG_TRACE("compartment {}", compartmentId.toStdString());
   auto nonConstantSpecies = getNonConstantSpecies(model, compartmentId);
   if (nonConstantSpecies.empty()) {
+    // need to add a dummy species with no reactions:
+    // dune doesn't support simulating an empty compartment
+    QString dummySpeciesName{"dummySpeciesForEmptyCompartment"};
+    ini.addSection("model", compartmentId, "initial");
+    ini.addValue(dummySpeciesName, "0");
+    // empty concentrations vector: gridfunction just returns zero everywhere
+    concentrations.emplace_back(1, std::vector<double>{});
+    ini.addSection("model", compartmentId, "reaction");
+    ini.addValue(dummySpeciesName, "0");
+    ini.addSection("model", compartmentId, "reaction.jacobian");
+    ini.addValue(QString("d%1__d%2").arg(dummySpeciesName, dummySpeciesName),
+                 "0");
+    ini.addSection("model", compartmentId, "diffusion");
+    ini.addValue(dummySpeciesName, "0");
+    for (const auto &membrane : model.getMembranes().getMembranes()) {
+      auto cA{membrane.getCompartmentA()->getId().c_str()};
+      auto cB{membrane.getCompartmentB()->getId().c_str()};
+      QString otherCompId;
+      if (cA == compartmentId) {
+        otherCompId = cB;
+      } else if (cB == compartmentId) {
+        otherCompId = cA;
+      }
+      if (!otherCompId.isEmpty()) {
+        ini.addSection("model", compartmentId, "boundary", otherCompId,
+                       "outflow");
+        ini.addValue(dummySpeciesName, "0");
+        ini.addSection("model", compartmentId, "boundary", otherCompId,
+                       "outflow", "jacobian");
+        ini.addValue(
+            QString("d%1_i__d%2_i").arg(dummySpeciesName, dummySpeciesName),
+            "0");
+      }
+    }
     return;
   }
   auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
@@ -295,18 +327,15 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
   if (independentCompartments) {
     // create independent ini file for each compartment
     for (const auto &comp : model.getCompartments().getIds()) {
-      // skip compartments which contain no non-constant species
-      if (compartmentContainsNonConstantSpecies(model, comp)) {
-        const auto &name = model.getCompartments().getName(comp);
-        auto fname{QString("%1_%2.ini").arg(baseIniFile).arg(name)};
-        iniFilenames.push_back(QDir(iniFileDir).filePath(fname));
-        inis.push_back(iniCommon);
-      }
+      const auto &name{model.getCompartments().getName(comp)};
+      auto filename{QString("%1_%2.ini").arg(baseIniFile).arg(name)};
+      iniFilenames.push_back(QDir(iniFileDir).filePath(filename));
+      inis.push_back(iniCommon);
     }
   } else {
     // single ini file for model
-    auto fname{QString("%1.ini").arg(baseIniFile)};
-    iniFilenames.push_back(QDir(iniFileDir).filePath(fname));
+    auto filename{QString("%1.ini").arg(baseIniFile)};
+    iniFilenames.push_back(QDir(iniFileDir).filePath(filename));
     inis.push_back(iniCommon);
   }
 
@@ -314,38 +343,28 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
   if (!independentCompartments) {
     inis[0].addSection("model.compartments");
   }
-  gmshCompIndices.clear();
-  int gmshCompIndex = 1;
-  int duneCompIndex = 0;
+  int duneCompIndex{0};
   for (const auto &comp : model.getCompartments().getIds()) {
     SPDLOG_TRACE("compartment {}", comp.toStdString());
-    // skip compartments which contain no non-constant species
-    if (compartmentContainsNonConstantSpecies(model, comp)) {
-      if (independentCompartments) {
-        inis[static_cast<std::size_t>(duneCompIndex)].addSection(
-            "model.compartments");
-        inis[static_cast<std::size_t>(duneCompIndex)].addValue(comp, 0);
-        SPDLOG_TRACE("  -> added to independent model {}", duneCompIndex);
-      } else {
-        inis[0].addValue(comp, duneCompIndex);
-        SPDLOG_TRACE("  -> added with index {}", duneCompIndex);
-      }
-      gmshCompIndices.insert(gmshCompIndex);
-      ++duneCompIndex;
+    if (independentCompartments) {
+      inis[static_cast<std::size_t>(duneCompIndex)].addSection(
+          "model.compartments");
+      inis[static_cast<std::size_t>(duneCompIndex)].addValue(comp, 0);
+      SPDLOG_TRACE("  -> added to independent model {}", duneCompIndex);
+    } else {
+      inis[0].addValue(comp, duneCompIndex);
+      SPDLOG_TRACE("  -> added with index {}", duneCompIndex);
     }
-    ++gmshCompIndex;
+    ++duneCompIndex;
   }
 
   std::size_t modelIndex{0};
   // for each compartment
   for (const auto &compId : model.getCompartments().getIds()) {
-    // skip compartments which contain no non-constant species
-    if (compartmentContainsNonConstantSpecies(model, compId)) {
-      addCompartment(inis[modelIndex], model, doublePrecision, forExternalUse,
-                     iniFileDir, concentrations, compId);
-      if (independentCompartments) {
-        ++modelIndex;
-      }
+    addCompartment(inis[modelIndex], model, doublePrecision, forExternalUse,
+                   iniFileDir, concentrations, compId);
+    if (independentCompartments) {
+      ++modelIndex;
     }
   }
 
@@ -371,7 +390,7 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
     SPDLOG_TRACE("Exporting gmsh file: '{}'", gmshFilename.toStdString());
     if (QFile f(gmshFilename);
         f.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text)) {
-      f.write(mesh->getGMSH(gmshCompIndices).toUtf8());
+      f.write(mesh->getGMSH().toUtf8());
     } else {
       SPDLOG_ERROR("Failed to export gmsh file '{}'",
                    gmshFilename.toStdString());
@@ -385,10 +404,6 @@ QString DuneConverter::getIniFile(std::size_t compartmentIndex) const {
 
 const std::vector<QString> &DuneConverter::getIniFiles() const {
   return iniFiles;
-}
-
-const std::unordered_set<int> &DuneConverter::getGMSHCompIndices() const {
-  return gmshCompIndices;
 }
 
 bool DuneConverter::hasIndependentCompartments() const {
@@ -410,6 +425,4 @@ double DuneConverter::getPixelWidth() const { return a; }
 
 int DuneConverter::getImageWidth() const { return w; }
 
-} // namespace simulate
-
-} // namespace sme
+} // namespace sme::simulate

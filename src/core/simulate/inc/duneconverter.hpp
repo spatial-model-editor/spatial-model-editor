@@ -5,7 +5,6 @@
 
 #include "simulate_options.hpp"
 #include <QString>
-#include <unordered_set>
 #include <vector>
 
 namespace sme {
@@ -28,8 +27,8 @@ public:
                          int doublePrecision = 18);
   QString getIniFile(std::size_t compartmentIndex = 0) const;
   const std::vector<QString> &getIniFiles() const;
-  const std::unordered_set<int> &getGMSHCompIndices() const;
   bool hasIndependentCompartments() const;
+
   const mesh::Mesh *getMesh() const;
   const std::vector<std::vector<std::vector<double>>> &
   getConcentrations() const;
@@ -40,7 +39,6 @@ public:
 
 private:
   std::vector<QString> iniFiles;
-  std::unordered_set<int> gmshCompIndices;
   bool independentCompartments{true};
   const mesh::Mesh *mesh;
   std::vector<std::vector<std::vector<double>>> concentrations;

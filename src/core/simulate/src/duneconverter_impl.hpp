@@ -8,9 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace sme {
-
-namespace simulate {
+namespace sme::simulate {
 
 std::vector<std::string>
 makeValidDuneSpeciesNames(const std::vector<std::string> &names);
@@ -23,6 +21,4 @@ std::vector<std::string> getNonConstantSpecies(const model::Model &model,
 
 bool modelHasIndependentCompartments(const model::Model &model);
 
-} // namespace simulate
-
-} // namespace sme
+} // namespace sme::simulate
