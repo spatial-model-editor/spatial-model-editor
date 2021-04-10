@@ -94,9 +94,8 @@ void Simulation::applyNextEvent() {
   if (simulatorType == SimulatorType::DUNE &&
       simModel->getGeometry().getMesh() != nullptr &&
       simModel->getGeometry().getMesh()->isValid()) {
-    simulator =
-        std::make_unique<DuneSim>(*simModel.get(), compartmentIds,
-                                  compartmentSpeciesIds, simulatorOptions.dune);
+    simulator = std::make_unique<DuneSim>(*simModel.get(), compartmentIds,
+                                          simulatorOptions.dune);
   } else {
     simulator = std::make_unique<PixelSim>(*simModel.get(), compartmentIds,
                                            compartmentSpeciesIds,
@@ -175,7 +174,7 @@ Simulation::Simulation(model::Model &sbmlDoc, SimulatorType simType,
       sbmlDoc.getGeometry().getMesh() != nullptr &&
       sbmlDoc.getGeometry().getMesh()->isValid()) {
     simulator = std::make_unique<DuneSim>(*modelToSimulate, compartmentIds,
-                                          compartmentSpeciesIds, options.dune);
+                                          options.dune);
   } else {
     simulator = std::make_unique<PixelSim>(
         *modelToSimulate, compartmentIds, compartmentSpeciesIds, options.pixel);

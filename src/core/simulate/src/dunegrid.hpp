@@ -55,8 +55,7 @@ void insertTriangle(const std::array<std::size_t, 3> &t,
 
 template <typename HostGrid>
 std::pair<std::vector<std::size_t>, std::shared_ptr<HostGrid>>
-makeHostGrid(const mesh::Mesh &mesh,
-             const std::unordered_set<int> &compartmentIndicies) {
+makeHostGrid(const mesh::Mesh &mesh) {
   Dune::GridFactory<HostGrid> factory;
   // get original vertices
   auto v = mesh.getVerticesAsFlatArray();
@@ -67,11 +66,9 @@ makeHostGrid(const mesh::Mesh &mesh,
   // add triangles from each compartment
   std::size_t compIndex{1};
   for (const auto &triangles : mesh.getTriangleIndices()) {
-    if (useCompartment(compIndex, compartmentIndicies)) {
-      numElements.push_back(triangles.size());
-      for (const auto &triangle : triangles) {
-        insertTriangle(triangle, factory, newVertexIndices, newVertexCount);
-      }
+    numElements.push_back(triangles.size());
+    for (const auto &triangle : triangles) {
+      insertTriangle(triangle, factory, newVertexIndices, newVertexCount);
     }
     ++compIndex;
   }
@@ -125,10 +122,8 @@ void assignElements(Grid &grid, const std::vector<std::size_t> &numElements) {
 } // namespace detail
 
 template <class HostGrid, class MDGTraits>
-auto makeDuneGrid(const mesh::Mesh &mesh,
-                  const std::unordered_set<int> &compartmentIndicies) {
-  auto [numElements, hostGrid] =
-      detail::makeHostGrid<HostGrid>(mesh, compartmentIndicies);
+auto makeDuneGrid(const mesh::Mesh &mesh) {
+  auto [numElements, hostGrid] = detail::makeHostGrid<HostGrid>(mesh);
   auto grid =
       detail::makeGrid<HostGrid, MDGTraits>(*hostGrid, numElements.size());
   detail::assignElements(grid, numElements);

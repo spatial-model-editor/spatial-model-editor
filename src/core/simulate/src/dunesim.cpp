@@ -20,59 +20,65 @@
 
 using QTriangleF = std::array<QPointF, 3>;
 
-namespace sme {
+namespace sme::simulate {
 
-namespace simulate {
+void DuneSim::initDuneSimCompartments(
 
-void DuneSim::initCompartmentNames() {
-  compartmentSpeciesIndex.clear();
-  std::size_t compIndex = 0;
-  auto names = pDuneImpl->configs[0].sub("model.compartments").getValueKeys();
+    const std::vector<const geometry::Compartment *> &comps) {
+  duneCompartments.clear();
+  auto compartmentNames{
+      pDuneImpl->configs[0].sub("model.compartments").getValueKeys()};
   for (std::size_t i = 1; i < pDuneImpl->configs.size(); ++i) {
     // if we have multiple configs each has a single compartment
-    names.push_back(
+    compartmentNames.push_back(
         pDuneImpl->configs[i].sub("model.compartments").getValueKeys().front());
   }
-  int duneCompIndex{0};
-  for (const auto &name : names) {
-    SPDLOG_DEBUG("compartment: {} - Dune index {}", name, duneCompIndex);
-    const auto &gv = pDuneImpl->grid->subDomain(duneCompIndex).leafGridView();
-    if (std::all_of(elements(gv).begin(), elements(gv).end(),
-                    [](const auto &e) { return e.type().isTriangle(); })) {
-      SPDLOG_DEBUG("  -> compartment of triangles: adding");
-      compartmentSpeciesIndex.emplace_back();
-      compartmentDuneNames.push_back(name);
-      ++compIndex;
+  std::size_t compIndex{0};
+  for (const auto &compartmentName : compartmentNames) {
+    SPDLOG_DEBUG("compartment: {} - Dune index {}", compartmentName, compIndex);
+    if (auto iter{std::find_if(comps.cbegin(), comps.cend(),
+                               [&compartmentName](const auto *c) {
+                                 return c->getId() == compartmentName;
+                               })};
+        iter != comps.cend()) {
+      const auto *comp{*iter};
+      std::size_t iModel{compIndex};
+      if (pDuneImpl->configs.size() == 1) {
+        iModel = 0;
+      }
+      auto speciesNames{pDuneImpl->configs[iModel]
+                            .sub("model." + compartmentName + ".initial")
+                            .getValueKeys()};
+      // create {0, 1, 2, ...} initial species speciesIndices
+      std::vector<std::size_t> speciesIndices(speciesNames.size(), 0);
+      std::iota(speciesIndices.begin(), speciesIndices.end(), 0);
+      // sort these speciesIndices by speciesNames, i.e. find speciesIndices
+      // that would result in a sorted speciesNames
+      std::sort(speciesIndices.begin(), speciesIndices.end(),
+                [&n = speciesNames](std::size_t i1, std::size_t i2) {
+                  return n[i1] < n[i2];
+                });
+      // speciesIndices[i] is now the Dune index of species i
+      auto imgSize{comp->getCompartmentImage().size()};
+      auto nPixels{comp->getPixels().size()};
+      SPDLOG_INFO("  - {} pixels", nPixels);
+      // todo: don't allocate wasted space for constant species here
+      auto nSpecies{speciesNames.size()};
+      SPDLOG_INFO("  - {} species", nSpecies);
+      duneCompartments.push_back(
+          {compartmentName,
+           compIndex,
+           speciesIndices,
+           utils::QPointIndexer(imgSize, comp->getPixels()),
+           comp,
+           {},
+           {},
+           std::vector<double>(nPixels * nSpecies, 0.0)});
     } else {
-      SPDLOG_DEBUG("  -> not a compartment of triangles: ignoring");
+      SPDLOG_DEBUG(
+          "  -> empty compartment (apart from dummy species): ignoring");
     }
-    ++duneCompIndex;
-  }
-}
-
-void DuneSim::initSpeciesIndices() {
-  std::size_t nComps = compartmentSpeciesIndex.size();
-  for (std::size_t iComp = 0; iComp < nComps; ++iComp) {
-    const auto &compName = compartmentDuneNames[iComp];
-    SPDLOG_DEBUG("compartment[{}]: {}", iComp, compName);
-    std::size_t iModel{iComp};
-    if (pDuneImpl->configs.size() == 1) {
-      iModel = 0;
-    }
-    auto duneNames = pDuneImpl->configs[iModel]
-                         .sub("model." + compName + ".initial")
-                         .getValueKeys();
-    // create {0, 1, 2, ...} initial species indices
-    auto &indices = compartmentSpeciesIndex[iComp];
-    indices.resize(duneNames.size());
-    std::iota(indices.begin(), indices.end(), 0);
-    // sort these indices by duneNames, i.e. find indices that would result in
-    // a sorted duneNames
-    std::sort(indices.begin(), indices.end(),
-              [&n = duneNames](std::size_t i1, std::size_t i2) {
-                return n[i1] < n[i2];
-              });
-    // indices[i] is now the Dune index of species i
+    ++compIndex;
   }
 }
 
@@ -120,21 +126,19 @@ static std::size_t getIxValidNeighbour(std::size_t ix,
 }
 
 void DuneSim::updatePixels() {
-  pixels.clear();
-  missingPixels.clear();
   SPDLOG_TRACE("pixel size: {}", pixelSize);
-  for (std::size_t compIndex = 0; compIndex < compartmentSpeciesIndex.size();
-       ++compIndex) {
-    auto &pixelsComp = pixels.emplace_back();
-    const auto &gridview =
-        pDuneImpl->grid->subDomain(static_cast<int>(compIndex)).leafGridView();
-    SPDLOG_TRACE("compartment[{}]: {}", compIndex,
-                 compartmentDuneNames[compIndex]);
-    const auto &qpi = compartmentPointIndex[compIndex];
+  for (auto &comp : duneCompartments) {
+    comp.pixels.clear();
+    comp.missingPixels.clear();
+    const auto &gridview{
+        pDuneImpl->grid->subDomain(static_cast<int>(comp.index))
+            .leafGridView()};
+    SPDLOG_TRACE("compartment[{}]: {}", comp.duneIndex, comp.name);
+    const auto &qpi{comp.qPointIndexer};
     std::vector<bool> ixAssigned(qpi.getNumPoints(), false);
     // get local coord for each pixel in each triangle
     for (const auto e : elements(gridview)) {
-      auto &pixelsTriangle = pixelsComp.emplace_back();
+      auto &pixelsTriangle = comp.pixels.emplace_back();
       const auto &geo = e.geometry();
       assert(geo.type().isTriangle());
       auto ref = Dune::referenceElement(geo);
@@ -152,7 +156,7 @@ void DuneSim::updatePixels() {
                (static_cast<double>(y) + 0.5) * pixelSize + pixelOrigin.y()});
           // note: qpi/QImage has (0,0) in top-left corner:
           QPoint pix = QPoint(x, geometryImageSize.height() - 1 - y);
-          if (auto ix = qpi.getIndex(pix);
+          if (auto ix{qpi.getIndex(pix)};
               ix.has_value() && ref.checkInside(localPoint)) {
             pixelsTriangle.push_back({*ix, {localPoint[0], localPoint[1]}});
             ixAssigned[*ix] = true;
@@ -165,15 +169,13 @@ void DuneSim::updatePixels() {
     // where the mesh boundary differs a little from the pixel boundary).
     // For now we just set the value to the nearest pixel from the same
     // compartment which does lie inside a triangle
-    const auto *geom = compartmentGeometry[compIndex];
-    auto &missing = missingPixels.emplace_back();
     for (std::size_t ix = 0; ix < ixAssigned.size(); ++ix) {
       if (!ixAssigned[ix]) {
         SPDLOG_DEBUG("pixel {} not in a triangle", ix);
-        // find a neigbouring valid pixel
-        auto ixNeighbour = getIxValidNeighbour(ix, ixAssigned, geom);
+        // find a neighbouring valid pixel
+        auto ixNeighbour = getIxValidNeighbour(ix, ixAssigned, comp.geometry);
         SPDLOG_DEBUG("  -> using concentration from pixel {}", ixNeighbour);
-        missing.push_back({ix, ixNeighbour});
+        comp.missingPixels.push_back({ix, ixNeighbour});
       }
     }
   }
@@ -181,15 +183,14 @@ void DuneSim::updatePixels() {
 
 DuneSim::DuneSim(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
-    const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
     const DuneOptions &duneOptions)
     : geometryImageSize{sbmlDoc.getGeometry().getImage().size()},
       pixelSize{sbmlDoc.getGeometry().getPixelWidth()},
       pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()}, options{
                                                                   duneOptions} {
   try {
-    const auto &lengthUnit = sbmlDoc.getUnits().getLength();
-    const auto &volumeUnit = sbmlDoc.getUnits().getVolume();
+    const auto &lengthUnit{sbmlDoc.getUnits().getLength()};
+    const auto &volumeUnit{sbmlDoc.getUnits().getVolume()};
     volOverL3 = model::getVolOverL3(lengthUnit, volumeUnit);
 
     simulate::DuneConverter dc(sbmlDoc, false, duneOptions);
@@ -203,8 +204,7 @@ DuneSim::DuneSim(
       options.discretization = DuneDiscretizationType::FEM1;
     }
     if (dc.getIniFiles().empty()) {
-      currentErrorMessage =
-          "Nothing to simulate: no non-constant species in model";
+      currentErrorMessage = "Nothing to simulate";
       SPDLOG_WARN("{}", currentErrorMessage);
       return;
     }
@@ -214,25 +214,12 @@ DuneSim::DuneSim(
       pDuneImpl = std::make_unique<DuneImplCoupled<1>>(dc, options);
     }
     pDuneImpl->setInitial(dc);
-    initCompartmentNames();
-    initSpeciesIndices();
-
-    for (std::size_t ci = 0; ci < compartmentIds.size(); ++ci) {
-      const auto &compId = compartmentIds[ci];
-      SPDLOG_INFO("compartmentId: {}", compId);
-      const auto *comp =
-          sbmlDoc.getCompartments().getCompartment(compId.c_str());
-      compartmentPointIndex.emplace_back(comp->getCompartmentImage().size(),
-                                         comp->getPixels());
-      compartmentGeometry.push_back(comp);
-      auto nPixels = comp->getPixels().size();
-      SPDLOG_INFO("  - {} pixels", nPixels);
-      // todo: don't allocate wasted space for constant species here
-      auto nSpecies = compartmentSpeciesIds[ci].size();
-      SPDLOG_INFO("  - {} species", nSpecies);
-      concentration.emplace_back(nPixels * nSpecies, 0.0);
+    std::vector<const geometry::Compartment *> comps;
+    for (const auto &compartmentId : compartmentIds) {
+      comps.push_back(
+          sbmlDoc.getCompartments().getCompartment(compartmentId.c_str()));
     }
-
+    initDuneSimCompartments(comps);
     updatePixels();
     updateSpeciesConcentrations();
   } catch (const Dune::Exception &e) {
@@ -263,7 +250,7 @@ std::size_t DuneSim::run(double time, [[maybe_unused]] double timeout_ms) {
 
 const std::vector<double> &
 DuneSim::getConcentrations(std::size_t compartmentIndex) const {
-  return concentration[compartmentIndex];
+  return duneCompartments[compartmentIndex].concentration;
 }
 
 std::size_t DuneSim::getConcentrationPadding() const { return 0; }
@@ -277,16 +264,17 @@ void DuneSim::requestStop() {
 }
 
 void DuneSim::updateSpeciesConcentrations() {
-  for (std::size_t iComp = 0; iComp < compartmentSpeciesIndex.size(); ++iComp) {
-    std::size_t nSpecies = compartmentSpeciesIndex[iComp].size();
-    pDuneImpl->updateGridFunctions(iComp, nSpecies);
-    const auto &gridview =
-        pDuneImpl->grid->subDomain(static_cast<int>(iComp)).leafGridView();
-    std::size_t iTriangle = 0;
+  for (auto &comp : duneCompartments) {
+    const std::size_t nSpecies{comp.speciesIndices.size()};
+    pDuneImpl->updateGridFunctions(comp.index, nSpecies);
+    const auto &gridview{
+        pDuneImpl->grid->subDomain(static_cast<int>(comp.index))
+            .leafGridView()};
+    std::size_t iTriangle{0};
     for (const auto e : elements(gridview)) {
       SPDLOG_TRACE("triangle {} ({})", iTriangle,
                    utils::decltypeStr<decltype(e)>());
-      for (const auto &[ix, point] : pixels[iComp][iTriangle]) {
+      for (const auto &[ix, point] : comp.pixels[iTriangle]) {
         // evaluate DUNE grid function at this pixel location
         // convert pixel->global->local
         Dune::FieldVector<double, 2> localPoint = {point[0], point[1]};
@@ -295,33 +283,27 @@ void DuneSim::updateSpeciesConcentrations() {
         std::vector<double> localConcs;
         localConcs.reserve(nSpecies);
         for (std::size_t iSpecies = 0; iSpecies < nSpecies; ++iSpecies) {
-          std::size_t externalSpeciesIndex =
-              compartmentSpeciesIndex[iComp][iSpecies];
-          double result =
-              pDuneImpl->evaluateGridFunction(iSpecies, e, localPoint);
+          std::size_t externalSpeciesIndex = comp.speciesIndices[iSpecies];
+          double result{
+              pDuneImpl->evaluateGridFunction(iSpecies, e, localPoint)};
           // convert result from Amount / Length^3 to Amount / Volume
           result *= volOverL3;
           SPDLOG_TRACE("    - species[{}] = {}", iSpecies, result);
           // replace negative values with zero
-          concentration[iComp][ix * nSpecies + externalSpeciesIndex] =
+          comp.concentration[ix * nSpecies + externalSpeciesIndex] =
               result < 0 ? 0 : result;
         }
       }
       ++iTriangle;
     }
-  }
-  // fill in missing pixels with neighbouring value
-  for (std::size_t iComp = 0; iComp < compartmentSpeciesIndex.size(); ++iComp) {
-    std::size_t nSpecies = compartmentSpeciesIndex[iComp].size();
-    for (const auto &[ixMissing, ixNeighbour] : missingPixels[iComp]) {
+    // fill in missing pixels with neighbouring value
+    for (const auto &[ixMissing, ixNeighbour] : comp.missingPixels) {
       for (std::size_t iSpecies = 0; iSpecies < nSpecies; ++iSpecies) {
-        concentration[iComp][ixMissing * nSpecies + iSpecies] =
-            concentration[iComp][ixNeighbour * nSpecies + iSpecies];
+        comp.concentration[ixMissing * nSpecies + iSpecies] =
+            comp.concentration[ixNeighbour * nSpecies + iSpecies];
       }
     }
   }
 }
 
-} // namespace simulate
-
-} // namespace sme
+} // namespace sme::simulate

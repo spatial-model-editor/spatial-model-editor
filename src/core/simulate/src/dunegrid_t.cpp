@@ -38,16 +38,14 @@ SCENARIO("DUNE: grid",
       m.importSBMLString(f.readAll().toStdString());
     }
     simulate::DuneConverter dc(m, false);
-    const auto *mesh = m.getGeometry().getMesh();
-    const auto &compIndices = dc.getGMSHCompIndices();
+    const auto *mesh{m.getGeometry().getMesh()};
 
     // generate dune grid with sim::makeDuneGrid
-    auto [grid, hostGrid] =
-        simulate::makeDuneGrid<HostGrid, MDGTraits>(*mesh, compIndices);
+    auto [grid, hostGrid] = simulate::makeDuneGrid<HostGrid, MDGTraits>(*mesh);
 
     // generate dune grid with Dune::Copasi::MultiDomainGmshReader
     if (QFile f("grid.msh"); f.open(QIODevice::WriteOnly | QIODevice::Text)) {
-      f.write(mesh->getGMSH(compIndices).toUtf8());
+      f.write(mesh->getGMSH().toUtf8());
       f.close();
     }
     // note: requires C locale
@@ -64,7 +62,6 @@ SCENARIO("DUNE: grid",
 
     // compare grids
     int nCompartments{grid->maxSubDomainIndex()};
-    REQUIRE(nCompartments == static_cast<int>(compIndices.size()));
     REQUIRE(gmshGrid->maxSubDomainIndex() == nCompartments);
     for (int compIndex = 0; compIndex < nCompartments; ++compIndex) {
       auto meshCoords = getAllElementCoordinates(grid.get(), compIndex);

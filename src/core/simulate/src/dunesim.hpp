@@ -35,28 +35,28 @@ using PixelLocalPair = std::pair<std::size_t, std::array<double, 2>>;
 
 class DuneImpl;
 
+struct DuneSimCompartment {
+  std::string name;
+  std::size_t index;
+  std::vector<std::size_t> speciesIndices;
+  utils::QPointIndexer qPointIndexer;
+  const geometry::Compartment *geometry;
+  // pixels+dune local coords for each triangle
+  std::vector<std::vector<PixelLocalPair>> pixels;
+  // index of nearest valid pixel for any missing pixels
+  std::vector<std::pair<std::size_t, std::size_t>> missingPixels;
+  std::vector<double> concentration;
+};
+
 class DuneSim : public BaseSim {
 private:
   std::unique_ptr<DuneImpl> pDuneImpl;
-  std::vector<std::string> compartmentDuneNames;
-  // DUNE species index for each species
-  std::vector<std::vector<std::size_t>> compartmentSpeciesIndex;
+  std::vector<DuneSimCompartment> duneCompartments;
   // dimensions of model
   QSize geometryImageSize;
   double pixelSize;
   QPointF pixelOrigin;
-  // map from pixel QPoint to ix index for each compartment
-  std::vector<utils::QPointIndexer> compartmentPointIndex;
-  std::vector<const geometry::Compartment *> compartmentGeometry;
-  // pixels+dune local coords for each triangle
-  // compartment::triangle::pixels+local-coord
-  std::vector<std::vector<std::vector<PixelLocalPair>>> pixels;
-  // missing pixels: use concentration from neighbouring pixel
-  std::vector<std::vector<std::pair<std::size_t, std::size_t>>> missingPixels;
-  // concentrations for each pixel in compartments
-  std::vector<std::vector<double>> concentration;
-  void initCompartmentNames();
-  void initSpeciesIndices();
+  void initDuneSimCompartments(const std::vector<const geometry::Compartment*>& comps);
   void updatePixels();
   void updateSpeciesConcentrations();
   std::string currentErrorMessage;
@@ -68,15 +68,14 @@ public:
   explicit DuneSim(
       const model::Model &sbmlDoc,
       const std::vector<std::string> &compartmentIds,
-      const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
       const DuneOptions &duneOptions = {});
   ~DuneSim() override;
   std::size_t run(double time, double timeout_ms) override;
-  const std::vector<double> &
+  [[nodiscard]] const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const override;
-  std::size_t getConcentrationPadding() const override;
-  const std::string &errorMessage() const override;
-  const QImage& errorImage() const override;
+  [[nodiscard]] std::size_t getConcentrationPadding() const override;
+  [[nodiscard]] const std::string &errorMessage() const override;
+  [[nodiscard]] const QImage &errorImage() const override;
   void requestStop() override;
 };
 

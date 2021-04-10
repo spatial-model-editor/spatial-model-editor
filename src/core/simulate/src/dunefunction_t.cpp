@@ -72,8 +72,7 @@ SCENARIO("DUNE: function",
         Dune::Copasi::BitFlags<Dune::Copasi::ModelSetup::Stages>::all_flags();
     stages.reset(Dune::Copasi::ModelSetup::Stages::Writer);
     simulate::DuneConverter dc(m, false);
-    auto [grid, hostGrid] = simulate::makeDuneGrid<HostGrid, MDGTraits>(
-        mesh, dc.getGMSHCompIndices());
+    auto [grid, hostGrid] = simulate::makeDuneGrid<HostGrid, MDGTraits>(mesh);
     auto config = getConfig(dc);
     Model model(grid, config.sub("model"), stages);
     model.set_initial(simulate::makeModelDuneFunctions<Grid::LeafGridView>(dc));
