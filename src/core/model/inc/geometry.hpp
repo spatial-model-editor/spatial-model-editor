@@ -70,11 +70,13 @@ private:
   const Compartment *compB{};
   QImage image{};
   const std::vector<std::pair<QPoint, QPoint>> *pointPairs{};
+  std::vector<double> weights{};
 
 public:
   Membrane() = default;
   Membrane(std::string membraneId, const Compartment *A, const Compartment *B,
-           const std::vector<std::pair<QPoint, QPoint>> *membranePairs);
+           const std::vector<std::pair<QPoint, QPoint>> *membranePairs,
+           const std::vector<double> &edgeWeights);
   [[nodiscard]] const std::string &getId() const;
   void setId(const std::string &membraneId);
   [[nodiscard]] const Compartment *getCompartmentA() const;
@@ -83,6 +85,7 @@ public:
   [[nodiscard]] const std::vector<std::pair<std::size_t, std::size_t>> &
   getIndexPairs() const;
   [[nodiscard]] const QImage &getImage() const;
+  [[nodiscard]] const std::vector<double> &getWeights() const;
 };
 
 class Field {

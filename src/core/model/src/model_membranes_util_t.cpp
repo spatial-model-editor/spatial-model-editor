@@ -62,7 +62,7 @@ SCENARIO("SBML membranes utils",
   }
   GIVEN("ImageMembranePixels") {
     WHEN("No image") {
-      model::ImageMembranePixels imp;
+      model::ImageMembranePixels imp({}, {});
       REQUIRE(imp.getImageSize() == QSize(0, 0));
     }
     WHEN("Single colour") {
@@ -70,8 +70,10 @@ SCENARIO("SBML membranes utils",
       QImage img(3, 3, QImage::Format_RGB32);
       QRgb col0 = qRgb(0, 0, 0);
       img.fill(col0);
+      QImage cornerPixels(4, 4, QImage::Format_RGB32);
+      cornerPixels.fill(qRgb(0, 0, 0));
       model::ImageMembranePixels imp(
-          img.convertToFormat(QImage::Format_Indexed8));
+          img.convertToFormat(QImage::Format_Indexed8), cornerPixels);
       REQUIRE(imp.getImageSize() == img.size());
       REQUIRE(imp.getColourIndex(col0) == 0);
     }
@@ -88,8 +90,25 @@ SCENARIO("SBML membranes utils",
       // 1 0 0
       // 2 0 0
       // 0 3 0
-      model::ImageMembranePixels imp;
-      imp.setImage(img.convertToFormat(QImage::Format_Indexed8));
+      QImage cornerPixels(4, 4, QImage::Format_RGB32);
+      cornerPixels.fill(qRgb(0, 0, 0));
+      // pixel 1
+      cornerPixels.setPixel(0, 0, qRgb(255, 0, 0));
+      cornerPixels.setPixel(0, 1, qRgb(255, 0, 0));
+      cornerPixels.setPixel(1, 0, qRgb(255, 0, 0));
+      cornerPixels.setPixel(1, 1, qRgb(255, 0, 0));
+      // pixel 2
+      cornerPixels.setPixel(0, 1, qRgb(255, 0, 0));
+      cornerPixels.setPixel(0, 2, qRgb(255, 0, 0));
+      cornerPixels.setPixel(1, 1, qRgb(255, 0, 0));
+      cornerPixels.setPixel(1, 2, qRgb(255, 0, 0));
+      // pixel 3
+      cornerPixels.setPixel(1, 2, qRgb(255, 0, 0));
+      cornerPixels.setPixel(1, 3, qRgb(255, 0, 0));
+      cornerPixels.setPixel(2, 2, qRgb(255, 0, 0));
+      cornerPixels.setPixel(2, 3, qRgb(255, 0, 0));
+      model::ImageMembranePixels imp(
+          img.convertToFormat(QImage::Format_Indexed8), cornerPixels);
       REQUIRE(imp.getImageSize() == img.size());
       auto i0 = imp.getColourIndex(col0);
       auto i1 = imp.getColourIndex(col1);

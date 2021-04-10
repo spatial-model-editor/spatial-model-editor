@@ -29,8 +29,9 @@ template <typename T> static void geometry_Membrane(benchmark::State &state) {
   int p1{static_cast<int>(data.membraneIndexPair.first)};
   int p2{static_cast<int>(data.membraneIndexPair.second)};
   const auto *pointPairs{data.imageMembranePixels.getPoints(p1, p2)};
+  const auto *weights{data.imageMembranePixels.getWeights(p1, p2)};
   for (auto _ : state) {
-    membrane = geometry::Membrane("id", &cA, &cB, pointPairs);
+    membrane = geometry::Membrane("id", &cA, &cB, pointPairs, *weights);
   }
 }
 

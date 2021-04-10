@@ -4,6 +4,7 @@
 #include "model_geometry.hpp"
 #include "model_membranes_util.hpp"
 #include "sbml_utils.hpp"
+#include "utils.hpp"
 #include <QImage>
 #include <QPoint>
 #include <QString>
@@ -128,7 +129,9 @@ void ModelMembranes::updateCompartments(
         SPDLOG_TRACE("  -> {} point membrane", pixelPairs->size());
         std::string mId{compA->getId()};
         mId.append("_").append(compB->getId()).append("_membrane");
-        membranes.emplace_back(mId, compA, compB, pixelPairs);
+        membranes.emplace_back(
+            mId, compA, compB, pixelPairs,
+            *membranePixels->getWeights(colourIndexA, colourIndexB));
         ids.push_back(QString(mId.c_str()));
         idColourPairs.push_back({mId, {colourA, colourB}});
       }
@@ -136,8 +139,10 @@ void ModelMembranes::updateCompartments(
   }
 }
 
-void ModelMembranes::updateCompartmentImage(const QImage &img) {
-  membranePixels = std::make_unique<ImageMembranePixels>(img);
+void ModelMembranes::updateCompartmentImage(const QImage &img,
+                                            const QImage &pixelCornersImage) {
+  membranePixels =
+      std::make_unique<ImageMembranePixels>(img, pixelCornersImage);
   SPDLOG_TRACE("{} colour image:", img.colorCount());
 }
 
@@ -199,8 +204,9 @@ void ModelMembranes::exportToSBML(double pixelArea) {
       // we set the model units, compartment units are then inferred from that
       comp->unsetUnits();
     }
-    auto nPixels{membranes[static_cast<std::size_t>(i)].getIndexPairs().size()};
-    double area{static_cast<double>(nPixels) * pixelArea};
+    double pixelEdges{
+        common::sum(membranes[static_cast<std::size_t>(i)].getWeights())};
+    double area{pixelEdges * pixelArea};
     SPDLOG_INFO("  - size: {}", area);
     comp->setSize(area);
     auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(

@@ -53,9 +53,33 @@ toQPointsInvertYAxis(const std::vector<cv::Point> &points, int height) {
   return v;
 }
 
-static void
-extractContoursFromMask(const cv::Mat &mask,
-                        std::vector<std::vector<cv::Point>> &edges) {
+static void colourCodeCorners(std::vector<cv::Point> &vertices,
+                              QImage &pixelCorners) {
+  constexpr QRgb colCorner{qRgb(255, 0, 0)};
+  constexpr QRgb colStraight{qRgb(0, 0, 255)};
+  auto prevDir{vertices.front() - vertices.back()};
+  auto nextDir{prevDir};
+  for (std::size_t i = 0; i < vertices.size(); ++i) {
+    const auto &v{vertices[i]};
+    prevDir = nextDir;
+    if (i + 1 == vertices.size()) {
+      nextDir = vertices.front() - vertices.back();
+    } else {
+      nextDir = vertices[i + 1] - v;
+    }
+    if (prevDir != nextDir) {
+      // red pixel if corner is inflexion point / corner in boundary line
+      pixelCorners.setPixel(v.x, v.y, colCorner);
+    } else {
+      // blue pixel if corner is part of straight segment of boundary line
+      pixelCorners.setPixel(v.x, v.y, colStraight);
+    }
+  }
+}
+
+static void extractContoursFromMask(const cv::Mat &mask,
+                                    std::vector<std::vector<cv::Point>> &edges,
+                                    QImage &pixelCorners) {
   // get contours of compartment as closed loops
   std::vector<std::vector<cv::Point>> compContours;
   // for each contour, last component of hierarchy is index of parent
@@ -64,30 +88,39 @@ extractContoursFromMask(const cv::Mat &mask,
                    cv::CHAIN_APPROX_NONE);
   for (std::size_t i = 0; i < compContours.size(); ++i) {
     auto &edgeContour = edges.emplace_back();
-    const auto &compContour = compContours[i];
-    bool outer = hierarchy[i][3] == -1; // -1: no parent, i.e. outer contour
+    const auto &compContour{compContours[i]};
+    bool outer{hierarchy[i][3] == -1}; // -1: no parent, i.e. outer contour
     SPDLOG_TRACE("  - {} pixels", compContour.size());
     SPDLOG_TRACE("  - outer: {}", outer);
-    PixelCornerIterator cpi(compContour, outer);
-    while (!cpi.done()) {
-      edgeContour.push_back(cpi.vertex());
+    PixelCornerIterator pci(compContour, outer);
+    while (!pci.done()) {
+      edgeContour.push_back(pci.vertex());
       SPDLOG_TRACE("    - ({},{})", edgeContour.back().x, edgeContour.back().y);
-      ++cpi;
+      ++pci;
     }
+    colourCodeCorners(edgeContour, pixelCorners);
   }
 }
 
 static Contours getContours(const QImage &img,
-                            const std::vector<QRgb> &compartmentColours) {
+                            const std::vector<QRgb> &compartmentColours,
+                            QImage &pixelCorners) {
+  pixelCorners =
+      QImage(img.width() + 1, img.height() + 1, QImage::Format_RGB32);
+  pixelCorners.fill(qRgb(0, 0, 0));
   Contours contours;
   for (auto col : compartmentColours) {
     auto binaryMask = makeBinaryMask(img, col);
     SPDLOG_TRACE("comp {:x}", col);
-    extractContoursFromMask(binaryMask, contours.compartmentEdges);
+    extractContoursFromMask(binaryMask, contours.compartmentEdges,
+                            pixelCorners);
   }
   auto binaryMask = makeBinaryMask(img, compartmentColours);
   SPDLOG_TRACE("domain");
-  extractContoursFromMask(binaryMask, contours.domainEdges);
+  extractContoursFromMask(binaryMask, contours.domainEdges, pixelCorners);
+  //#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+  pixelCorners.save("pixelCorners.png");
+  //#endif
   return contours;
 }
 
@@ -159,10 +192,11 @@ static std::vector<Boundary> splitContours(const QImage &img,
 }
 
 std::vector<Boundary>
-constructBoundaries(const QImage &compartmentImage,
-                    const std::vector<QRgb> &compartmentColours) {
-  auto edgeContours{getContours(compartmentImage, compartmentColours)};
-  return splitContours(compartmentImage, edgeContours);
+constructBoundaries(const QImage &img,
+                    const std::vector<QRgb> &compartmentColours,
+                    QImage &pixelCorners) {
+  auto edgeContours = getContours(img, compartmentColours, pixelCorners);
+  return splitContours(img, edgeContours);
 }
 
 } // namespace sme::mesh

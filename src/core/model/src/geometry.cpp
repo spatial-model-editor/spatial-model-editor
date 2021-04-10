@@ -149,11 +149,12 @@ const std::vector<std::size_t> &Compartment::getArrayPoints() const {
 
 Membrane::Membrane(std::string membraneId, const Compartment *A,
                    const Compartment *B,
-                   const std::vector<std::pair<QPoint, QPoint>> *membranePairs)
+                   const std::vector<std::pair<QPoint, QPoint>> *membranePairs,
+                   const std::vector<double> &edgeWeights)
     : id{std::move(membraneId)}, compA{A}, compB{B},
       image{A->getCompartmentImage().size(),
             QImage::Format_ARGB32_Premultiplied},
-      pointPairs{membranePairs} {
+      pointPairs{membranePairs}, weights{edgeWeights} {
   SPDLOG_INFO("membraneID: {}", id);
   SPDLOG_INFO("compartment A: {}", compA->getId());
   QRgb colA = A->getColour();
@@ -162,6 +163,14 @@ Membrane::Membrane(std::string membraneId, const Compartment *A,
   QRgb colB = B->getColour();
   SPDLOG_INFO("  - colour: {:x}", colB);
   SPDLOG_INFO("number of point pairs: {}", membranePairs->size());
+  SPDLOG_INFO("number of edge weights: {}", weights.size());
+  if (membranePairs->size() != weights.size()) {
+    SPDLOG_WARN(
+        "Number of point pairs {} doesn't match number of weights {} - "
+        "resizing weights to match and filling any missing elements with 1",
+        membranePairs->size(), weights.size());
+    weights.resize(membranePairs->size(), 1.0);
+  }
   // convert each pair of QPoints into a pair of indices of the corresponding
   // points in the two compartments
   indexPair.clear();
@@ -198,6 +207,8 @@ const std::vector<std::pair<std::size_t, std::size_t>> &
 Membrane::getIndexPairs() const {
   return indexPair;
 }
+
+const std::vector<double> &Membrane::getWeights() const { return weights; }
 
 const QImage &Membrane::getImage() const { return image; }
 

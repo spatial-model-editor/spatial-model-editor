@@ -852,9 +852,13 @@ SCENARIO("SBML: load multi-compartment model, change size of geometry",
   REQUIRE(s.getCompartments().getSize("c1") == dbl_approx(5441 * 1e3));
   REQUIRE(s.getCompartments().getSize("c2") == dbl_approx(4034 * 1e3));
   REQUIRE(s.getCompartments().getSize("c3") == dbl_approx(525 * 1e3));
-  // area of 1 pixel = 1m^2
-  REQUIRE(s.getCompartments().getSize("c1_c2_membrane") == dbl_approx(338));
-  REQUIRE(s.getCompartments().getSize("c2_c3_membrane") == dbl_approx(108));
+  // area of 1 pixel = 1m^2, minus correction factors for corners
+  double len_c1_c2{267.604}; // 338 pixels
+  double len_c2_c3{83.48};   // 108 pixels
+  REQUIRE(s.getCompartments().getSize("c1_c2_membrane") ==
+          dbl_approx(len_c1_c2));
+  REQUIRE(s.getCompartments().getSize("c2_c3_membrane") ==
+          dbl_approx(len_c2_c3));
   auto interiorPoint{s.getCompartments().getInteriorPoints("c1").value()[0]};
   REQUIRE(interiorPoint.x() == dbl_approx(68.5));
   REQUIRE(interiorPoint.y() == dbl_approx(83.5));
@@ -868,8 +872,10 @@ SCENARIO("SBML: load multi-compartment model, change size of geometry",
   REQUIRE(s.getCompartments().getSize("c1") == dbl_approx(a * a * 5441 * 1e3));
   REQUIRE(s.getCompartments().getSize("c2") == dbl_approx(a * a * 4034 * 1e3));
   REQUIRE(s.getCompartments().getSize("c3") == dbl_approx(a * a * 525 * 1e3));
-  REQUIRE(s.getCompartments().getSize("c1_c2_membrane") == dbl_approx(a * 338));
-  REQUIRE(s.getCompartments().getSize("c2_c3_membrane") == dbl_approx(a * 108));
+  REQUIRE(s.getCompartments().getSize("c1_c2_membrane") ==
+          dbl_approx(a * len_c1_c2));
+  REQUIRE(s.getCompartments().getSize("c2_c3_membrane") ==
+          dbl_approx(a * len_c2_c3));
   interiorPoint = s.getCompartments().getInteriorPoints("c1").value()[0];
   REQUIRE(interiorPoint.x() == dbl_approx(a * 68.5));
   REQUIRE(interiorPoint.y() == dbl_approx(a * 83.5));
@@ -887,9 +893,9 @@ SCENARIO("SBML: load multi-compartment model, change size of geometry",
   REQUIRE(s.getCompartments().getSize("c3") ==
           dbl_approx(a * a * d * 525 * 1e3));
   REQUIRE(s.getCompartments().getSize("c1_c2_membrane") ==
-          dbl_approx(a * d * 338));
+          dbl_approx(a * d * len_c1_c2));
   REQUIRE(s.getCompartments().getSize("c2_c3_membrane") ==
-          dbl_approx(a * d * 108));
+          dbl_approx(a * d * len_c2_c3));
   interiorPoint = s.getCompartments().getInteriorPoints("c1").value()[0];
   REQUIRE(interiorPoint.x() == dbl_approx(a * 68.5));
   REQUIRE(interiorPoint.y() == dbl_approx(a * 83.5));
@@ -908,9 +914,9 @@ SCENARIO("SBML: load multi-compartment model, change size of geometry",
   REQUIRE(s2.getCompartments().getSize("c3") ==
           dbl_approx(a * a * d * 525 * 1e3));
   REQUIRE(s2.getCompartments().getSize("c1_c2_membrane") ==
-          dbl_approx(a * d * 338));
+          dbl_approx(a * d * len_c1_c2));
   REQUIRE(s2.getCompartments().getSize("c2_c3_membrane") ==
-          dbl_approx(a * d * 108));
+          dbl_approx(a * d * len_c2_c3));
   interiorPoint = s2.getCompartments().getInteriorPoints("c1").value()[0];
   REQUIRE(interiorPoint.x() == dbl_approx(a * 68.5));
   REQUIRE(interiorPoint.y() == dbl_approx(a * 83.5));

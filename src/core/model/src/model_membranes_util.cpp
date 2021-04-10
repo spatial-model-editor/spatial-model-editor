@@ -1,5 +1,4 @@
 #include "model_membranes_util.hpp"
-#include "logger.hpp"
 #include <QImage>
 #include <QPoint>
 #include <limits>
@@ -54,16 +53,24 @@ std::optional<std::size_t> OrderedIntPairIndex::find(int smaller,
 
 std::size_t OrderedIntPairIndex::size() const { return nItems; }
 
-ImageMembranePixels::ImageMembranePixels() = default;
+// relative length of a pixel edge between vertices v1, v2
+// see 3.B.(ii) of https://doi.org/10.1016/S0146-664X(79)80042-8
+static double getEdgeWeight(QRgb v1, QRgb v2) {
+  constexpr double baseWeight{0.948};
+  constexpr double cornerWeight{0.139};
+  constexpr QRgb cornerColour{qRgb(255, 0, 0)};
+  auto nCorners{static_cast<int>(v1 == cornerColour) +
+                static_cast<int>(v2 == cornerColour)};
+  return baseWeight - static_cast<double>(nCorners) * cornerWeight;
+}
 
-ImageMembranePixels::ImageMembranePixels(const QImage &img) { setImage(img); }
-
-ImageMembranePixels::~ImageMembranePixels() = default;
-
-void ImageMembranePixels::setImage(const QImage &img) {
+ImageMembranePixels::ImageMembranePixels(const QImage &img,
+                                         const QImage &pixelCorners) {
   points.clear();
+  weights.clear();
   points.resize(
       static_cast<std::size_t>(img.colorCount() * (img.colorCount() - 1)));
+  weights.resize(points.size());
   colourIndexPairIndex = OrderedIntPairIndex{img.colorCount() - 1};
   colours = img.colorTable();
   imageSize = img.size();
@@ -73,12 +80,18 @@ void ImageMembranePixels::setImage(const QImage &img) {
     int prevIndex = img.pixelIndex(0, y);
     for (int x = 1; x < img.width(); ++x) {
       int currIndex = img.pixelIndex(x, y);
-      if (currIndex < prevIndex) {
-        auto i = colourIndexPairIndex.findOrInsert(currIndex, prevIndex);
-        points[i].push_back({QPoint(x, y), QPoint(x - 1, y)});
-      } else if (currIndex > prevIndex) {
-        auto i = colourIndexPairIndex.findOrInsert(prevIndex, currIndex);
-        points[i].push_back({QPoint(x - 1, y), QPoint(x, y)});
+      if (currIndex != prevIndex) {
+        auto weight{getEdgeWeight(pixelCorners.pixel(x, y),
+                                  pixelCorners.pixel(x, y + 1))};
+        if (currIndex < prevIndex) {
+          auto i = colourIndexPairIndex.findOrInsert(currIndex, prevIndex);
+          points[i].push_back({QPoint(x, y), QPoint(x - 1, y)});
+          weights[i].push_back(weight);
+        } else if (currIndex > prevIndex) {
+          auto i = colourIndexPairIndex.findOrInsert(prevIndex, currIndex);
+          points[i].push_back({QPoint(x - 1, y), QPoint(x, y)});
+          weights[i].push_back(weight);
+        }
       }
       prevIndex = currIndex;
     }
@@ -88,17 +101,25 @@ void ImageMembranePixels::setImage(const QImage &img) {
     int prevIndex = img.pixelIndex(x, 0);
     for (int y = 1; y < img.height(); ++y) {
       int currIndex = img.pixelIndex(x, y);
-      if (currIndex < prevIndex) {
-        auto i = colourIndexPairIndex.findOrInsert(currIndex, prevIndex);
-        points[i].push_back({QPoint(x, y), QPoint(x, y - 1)});
-      } else if (currIndex > prevIndex) {
-        auto i = colourIndexPairIndex.findOrInsert(prevIndex, currIndex);
-        points[i].push_back({QPoint(x, y - 1), QPoint(x, y)});
+      if (currIndex != prevIndex) {
+        auto weight{getEdgeWeight(pixelCorners.pixel(x, y),
+                                  pixelCorners.pixel(x + 1, y))};
+        if (currIndex < prevIndex) {
+          auto i = colourIndexPairIndex.findOrInsert(currIndex, prevIndex);
+          points[i].push_back({QPoint(x, y), QPoint(x, y - 1)});
+          weights[i].push_back(weight);
+        } else if (currIndex > prevIndex) {
+          auto i = colourIndexPairIndex.findOrInsert(prevIndex, currIndex);
+          points[i].push_back({QPoint(x, y - 1), QPoint(x, y)});
+          weights[i].push_back(weight);
+        }
       }
       prevIndex = currIndex;
     }
   }
 }
+
+ImageMembranePixels::~ImageMembranePixels() = default;
 
 int ImageMembranePixels::getColourIndex(QRgb colour) const {
   for (int i = 0; i < colours.size(); ++i) {
@@ -113,6 +134,14 @@ const std::vector<QPointPair> *ImageMembranePixels::getPoints(int iA,
                                                               int iB) const {
   if (auto i = colourIndexPairIndex.find(iA, iB); i.has_value()) {
     return &points[i.value()];
+  }
+  return nullptr;
+}
+
+[[nodiscard]] const std::vector<double> *
+ImageMembranePixels::getWeights(int iA, int iB) const {
+  if (auto i = colourIndexPairIndex.find(iA, iB); i.has_value()) {
+    return &weights[i.value()];
   }
   return nullptr;
 }

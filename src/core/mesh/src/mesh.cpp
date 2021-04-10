@@ -32,7 +32,7 @@ Mesh::Mesh(const QImage &image, std::vector<std::size_t> maxPoints,
       boundaryMaxPoints(std::move(maxPoints)),
       compartmentMaxTriangleArea(std::move(maxTriangleArea)) {
   boundaries = std::make_unique<std::vector<Boundary>>(
-      constructBoundaries(image, compartmentColours));
+      constructBoundaries(image, compartmentColours, pixelCornersImage));
   compartmentInteriorPoints = getInteriorPoints(image, compartmentColours);
   SPDLOG_INFO("found {} boundaries", boundaries->size());
   for (const auto &boundary : *boundaries) {
@@ -296,6 +296,8 @@ Mesh::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
   maskImage = maskImage.mirrored(false, true);
   return imgPair;
 }
+
+const QImage &Mesh::getPixelCornersImage() const { return pixelCornersImage; }
 
 QString Mesh::getGMSH() const {
   // note: gmsh indexing starts with 1, so we need to add 1 to all indices

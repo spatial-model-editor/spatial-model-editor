@@ -11,13 +11,11 @@
 #include <vector>
 
 namespace sme::mesh {
-
 /**
- * @brief Approximate boundary line with adjustable number of points
+ * @brief A planar line segment boundary line
  *
- * Given an ordered set of pixels that form a line or a closed loop, constructs
- * an approximation to the line. The number of points used can be chosen
- * automatically or set by the user.
+ * A planar line segment approximation to a boundary, where the maximum number
+ * of points used for the approximation can be altered.
  */
 class Boundary {
 private:
@@ -66,14 +64,23 @@ public:
                     bool isClosedLoop = false);
 };
 
-/**
- * @brief Construct all the compartment boundaries from an image
+/** @brief Constructs a set of planar line segment approximate boundary lines
  *
- * @param[in] compartmentImage the segmented compartment geometry image
- * @param[in] compartmentColours the colours that correspond to compartments
+ * Given a segmented geometry image and the colours of the compartments in
+ * the image, constructs a set of boundaries that approximate all compartment
+ * boundaries.
+ *
+ * @param[in] img segmented geometry image
+ * @param[in] compartmentColours the colours of all the compartments in the
+ * model
+ * @param[out] pixelCorners an image of the pixel corners, colour coded as
+ * either black (not part of a boundary), blue (part of a straight boundary
+ * segment), or red (a corner or inflexion point of a boundary)
+ *
  */
 std::vector<Boundary>
-constructBoundaries(const QImage &compartmentImage,
-                    const std::vector<QRgb> &compartmentColours);
+constructBoundaries(const QImage &img,
+                    const std::vector<QRgb> &compartmentColours,
+                    QImage &pixelCorners);
 
 } // namespace sme::mesh

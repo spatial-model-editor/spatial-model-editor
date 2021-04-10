@@ -89,15 +89,19 @@ SCENARIO("constructBoundaries",
     QImage img(24, 32, QImage::Format_RGB32);
     QRgb col = qRgb(0, 0, 0);
     img.fill(col);
+    QImage pixelCorners;
     WHEN("no compartment colours") {
       auto interiorPoints{mesh::getInteriorPoints(img, {})};
-      auto boundaries = mesh::constructBoundaries(img, {});
+      auto boundaries = mesh::constructBoundaries(img, {}, pixelCorners);
       REQUIRE(boundaries.empty());
       REQUIRE(interiorPoints.empty());
+      REQUIRE(pixelCorners.pixel(3, 6) == qRgb(0, 0, 0));
+      REQUIRE(pixelCorners.pixel(24, 32) == qRgb(0, 0, 0));
+      REQUIRE(pixelCorners.pixel(24, 16) == qRgb(0, 0, 0));
     }
     WHEN("whole image is a compartment") {
       auto interiorPoints{mesh::getInteriorPoints(img, {col})};
-      auto boundaries = mesh::constructBoundaries(img, {col});
+      auto boundaries = mesh::constructBoundaries(img, {col}, pixelCorners);
       std::vector<QPoint> outer{{0, 0},
                                 {img.width(), 0},
                                 {img.width(), img.height()},
@@ -112,6 +116,9 @@ SCENARIO("constructBoundaries",
       REQUIRE(b.isValid());
       REQUIRE(b.isLoop());
       REQUIRE(common::isCyclicPermutation(b.getAllPoints(), outer));
+      REQUIRE(pixelCorners.pixel(3, 6) == qRgb(0, 0, 0));     // not on boundary
+      REQUIRE(pixelCorners.pixel(24, 16) == qRgb(0, 0, 255)); // straight edge
+      REQUIRE(pixelCorners.pixel(24, 32) == qRgb(255, 0, 0)); // corner
     }
   }
   GIVEN("image with 3 concentric compartments, no fixed points") {
@@ -119,9 +126,10 @@ SCENARIO("constructBoundaries",
     QRgb col0 = img.pixel(0, 0);
     QRgb col1 = img.pixel(35, 20);
     QRgb col2 = img.pixel(40, 50);
+    QImage pixelCorners;
     auto interiorPoints{mesh::getInteriorPoints(img, {col0, col1, col2})};
-    auto boundaries = mesh::constructBoundaries(img, {col0, col1, col2});
-
+    auto boundaries =
+        mesh::constructBoundaries(img, {col0, col1, col2}, pixelCorners);
     REQUIRE(boundaries.size() == 3);
     REQUIRE(interiorPoints.size() == 3);
     REQUIRE(interiorPoints[0].size() == 1);
@@ -139,14 +147,22 @@ SCENARIO("constructBoundaries",
     const auto &b2 = boundaries[2];
     REQUIRE(b2.isValid());
     REQUIRE(b2.isLoop());
+
+    REQUIRE(pixelCorners.pixel(3, 6) == qRgb(0, 0, 0));    // not on boundary
+    REQUIRE(pixelCorners.pixel(0, 5) == qRgb(0, 0, 255));  // straight edge
+    REQUIRE(pixelCorners.pixel(5, 0) == qRgb(0, 0, 255));  // straight edge
+    REQUIRE(pixelCorners.pixel(0, 0) == qRgb(255, 0, 0));  // corner
+    REQUIRE(pixelCorners.pixel(33, 8) == qRgb(255, 0, 0)); // corner
   }
   GIVEN("image with 3 compartments, two fixed points") {
     QImage img(":/geometry/two-blobs-100x100.png");
     QRgb col0 = img.pixel(0, 0);
     QRgb col1 = img.pixel(33, 33);
     QRgb col2 = img.pixel(66, 66);
+    QImage pixelCorners;
     auto interiorPoints{mesh::getInteriorPoints(img, {col0, col1, col2})};
-    auto boundaries = mesh::constructBoundaries(img, {col0, col1, col2});
+    auto boundaries =
+        mesh::constructBoundaries(img, {col0, col1, col2}, pixelCorners);
 
     REQUIRE(boundaries.size() == 4);
     REQUIRE(interiorPoints.size() == 3);
@@ -169,6 +185,12 @@ SCENARIO("constructBoundaries",
     const auto &b3 = boundaries[3];
     REQUIRE(b3.isValid());
     REQUIRE(!b3.isLoop());
+
+    REQUIRE(pixelCorners.pixel(3, 6) == qRgb(0, 0, 0));     // not on boundary
+    REQUIRE(pixelCorners.pixel(0, 5) == qRgb(0, 0, 255));   // straight edge
+    REQUIRE(pixelCorners.pixel(5, 0) == qRgb(0, 0, 255));   // straight edge
+    REQUIRE(pixelCorners.pixel(0, 0) == qRgb(255, 0, 0));   // corner
+    REQUIRE(pixelCorners.pixel(53, 40) == qRgb(255, 0, 0)); // corner
   }
 }
 
@@ -180,6 +202,7 @@ SCENARIO("constructBoundaries using images from Medha Bhattacharya",
   QRgb bg{qRgb(0, 0, 0)};
   QRgb fg{qRgb(255, 255, 255)};
   std::vector<BoundaryTestImage> boundaryTestImages;
+  QImage pixelCorners;
 
   auto &bt0 = boundaryTestImages.emplace_back();
   bt0.description = "single cell, separated from edges of image";
@@ -231,7 +254,8 @@ SCENARIO("constructBoundaries using images from Medha Bhattacharya",
         CAPTURE(filename.toStdString());
         QImage img(filename);
         auto interiorPoints{mesh::getInteriorPoints(img, boundaryData.colours)};
-        auto boundaries = mesh::constructBoundaries(img, boundaryData.colours);
+        auto boundaries =
+            mesh::constructBoundaries(img, boundaryData.colours, pixelCorners);
         REQUIRE(boundaries.size() == boundaryData.nBoundaries);
         REQUIRE(interiorPoints.size() == boundaryData.colours.size());
         for (std::size_t i = 0; i < interiorPoints.size(); ++i) {

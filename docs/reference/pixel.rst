@@ -167,6 +167,37 @@ Membranes
 
 Reactions that take place between two compartments involve a flux across the membrane separating the two compartments. For each neighbouring pair of pixels from the two compartments, whose common boundary constitutes the membrane, the flux term is converted into a reaction term that creates or destroys the appropriate amount of species concentration in each pixel.
 
+Membrane length
+^^^^^^^^^^^^^^^
+
+A first approximation to the length of the membrane is to simply count the number of pixel edges.
+This tends to overestimate the length however, for example:
+
+* a horizontal line of length :math:`n` has :math:`n` pixel edges
+* a diagonal line of length :math:`n` has :math:`\sqrt(2) n` pixel edges
+
+One way to improve the length estimate is to take into account the changes in direction
+as the edges are traversed. Our boundaries are the exterior edges of a region of 8-connected pixels,
+which makes our boundaries 4-connected. In this case, the changes in direction simplify to simply
+counting the number of corners in the boundary.
+
+We use the scheme proposed in section 3.B.(ii) of `10.1016/S0146-664X(79)80042-8 <https://doi.org/10.1016/S0146-664X(79)80042-8>`_,
+which gives an improved estimate of the length as
+
+.. math::
+
+   L = 0.948 n - 0.278 n_c
+
+Where :math:`n` is the number of pixel edges, and :math:`n_c` is the number of corners.
+
+Converting this to a local re-weighting for each individual pixel edge,
+each corner gives a half contribution to each of the two edges connected to it,
+giving the following three possible weights for a pixel edge:
+
+* 0.948: edge with no corners
+* 0.809: edge with one corner
+* 0.670: edge with two corners
+
 Non-spatial species
 ^^^^^^^^^^^^^^^^^^^
 

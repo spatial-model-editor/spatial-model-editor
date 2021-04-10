@@ -19,7 +19,8 @@ struct ABtoC {
   double pixelWidth{1.0};
   sme::mesh::Mesh mesh{img, {}, maxTriangleArea, pixelWidth, origin, colours};
   QSize imageSize{100, 100};
-  sme::model::ImageMembranePixels imageMembranePixels{img};
+  sme::model::ImageMembranePixels imageMembranePixels{
+      img, mesh.getPixelCornersImage()};
   std::pair<std::size_t, std::size_t> membraneIndexPair{0, 1};
   sme::model::Model model;
   std::string xml;
@@ -40,7 +41,8 @@ struct VerySimpleModel {
   double pixelWidth{1.0};
   sme::mesh::Mesh mesh{img, {}, maxTriangleArea, pixelWidth, origin, colours};
   QSize imageSize{300, 300};
-  sme::model::ImageMembranePixels imageMembranePixels{img};
+  sme::model::ImageMembranePixels imageMembranePixels{
+      img, mesh.getPixelCornersImage()};
   std::pair<std::size_t, std::size_t> membraneIndexPair{0, 1};
   sme::model::Model model;
   std::string xml;
@@ -61,7 +63,8 @@ struct LiverCells {
   double pixelWidth{1.0};
   sme::mesh::Mesh mesh{img, {}, maxTriangleArea, pixelWidth, origin, colours};
   QSize imageSize{1000, 1000};
-  sme::model::ImageMembranePixels imageMembranePixels{img};
+  sme::model::ImageMembranePixels imageMembranePixels{
+      img, mesh.getPixelCornersImage()};
   std::pair<std::size_t, std::size_t> membraneIndexPair{0, 1};
   sme::model::Model model;
   std::string xml;

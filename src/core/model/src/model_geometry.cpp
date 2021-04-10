@@ -238,7 +238,6 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   hasImage = true;
   pixelWidth = calculatePixelWidth(image.size(), physicalSize);
   setPixelWidth(pixelWidth, false);
-  modelMembranes->updateCompartmentImage(image);
   for (const auto &[id, colour] : gsf.compartmentIdColourPairs) {
     SPDLOG_INFO("setting compartment {} colour to {:x}", id, colour);
     modelCompartments->setColour(id.c_str(), colour);
@@ -269,8 +268,7 @@ void ModelGeometry::importGeometryFromImage(const QImage &img,
     imgNoAlpha = img.convertToFormat(QImage::Format_RGB32, flagNoDither);
   }
   image = imgNoAlpha.convertToFormat(QImage::Format_Indexed8, flagNoDither);
-  modelMembranes->updateCompartmentImage(image);
-  auto *geom{getOrCreateGeometry(sbmlModel)};
+  auto *geom = getOrCreateGeometry(sbmlModel);
   exportSampledFieldGeometry(geom, image);
   if (keepColourAssignments) {
     for (int i = 0; i < ids.size(); ++i) {
@@ -300,6 +298,7 @@ void ModelGeometry::updateMesh() {
         ids[i],
         mesh->getCompartmentInteriorPoints()[static_cast<std::size_t>(i)]);
   }
+  modelMembranes->updateCompartmentImage(image, mesh->getPixelCornersImage());
 }
 
 void ModelGeometry::clear() {

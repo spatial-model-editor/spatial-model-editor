@@ -41,17 +41,17 @@ public:
 class ImageMembranePixels {
 private:
   std::vector<std::vector<QPointPair>> points;
+  std::vector<std::vector<double>> weights;
   OrderedIntPairIndex colourIndexPairIndex;
   QVector<QRgb> colours;
   QSize imageSize{0, 0};
 
 public:
-  explicit ImageMembranePixels();
-  explicit ImageMembranePixels(const QImage &img);
+  explicit ImageMembranePixels(const QImage &img, const QImage &pixelCorners);
   ~ImageMembranePixels();
-  void setImage(const QImage &img);
   [[nodiscard]] int getColourIndex(QRgb colour) const;
   [[nodiscard]] const std::vector<QPointPair> *getPoints(int iA, int iB) const;
+  [[nodiscard]] const std::vector<double> *getWeights(int iA, int iB) const;
   [[nodiscard]] const QSize &getImageSize() const;
 };
 

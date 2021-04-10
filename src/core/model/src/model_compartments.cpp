@@ -374,9 +374,9 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   if (modelSpecies != nullptr) {
     modelSpecies->updateCompartmentGeometry(id);
   }
+  modelGeometry->updateMesh();
   modelMembranes->updateCompartments(compartments);
   modelMembranes->updateCompartmentNames(names);
-  modelGeometry->updateMesh();
   if (modelGeometry->getIsValid()) {
     modelMembranes->exportToSBML(modelGeometry->getPixelWidth() *
                                  modelGeometry->getPixelDepth());

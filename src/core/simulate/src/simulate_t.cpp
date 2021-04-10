@@ -1031,14 +1031,14 @@ SCENARIO("getConcImage",
     img1.save("concImg1.png");
     REQUIRE(img1.pixel(48, 43) == qRgb(255, 255, 225));
     REQUIRE(img1.pixel(49, 43) == qRgb(245, 130, 48));
-    REQUIRE(img1.pixel(33, 8) == qRgb(47, 142, 59));
+    REQUIRE(img1.pixel(33, 8) == qRgb(50, 151, 63));
 
     // draw all species, normalise to max of all species, at this timepoint
     auto img3{sim.getConcImage(1, {}, false, true)};
     img3.save("concImg3.png");
     REQUIRE(img3.pixel(48, 43) == qRgb(0, 0, 0));
     REQUIRE(img3.pixel(49, 43) == qRgb(0, 0, 0));
-    REQUIRE(img3.pixel(33, 8) == qRgb(47, 142, 59));
+    REQUIRE(img3.pixel(33, 8) == qRgb(50, 151, 63));
 
     // draw all species, normalise to max of each/all species, at all timepoints
     for (auto allSpecies : {true, false}) {
@@ -1046,7 +1046,7 @@ SCENARIO("getConcImage",
       img2.save("concImg2.png");
       REQUIRE(img2.pixel(48, 43) == qRgb(0, 0, 0));
       REQUIRE(img2.pixel(49, 43) == qRgb(0, 0, 0));
-      REQUIRE(img2.pixel(33, 8) == qRgb(31, 93, 39));
+      REQUIRE(img2.pixel(33, 8) == qRgb(32, 98, 41));
     }
   }
 }
@@ -1366,8 +1366,8 @@ SCENARIO("circle membrane reaction",
   simulate::Simulation simPixel(mPixel);
   REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
   REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
-  simDune.doTimesteps(0.05);
-  simPixel.doTimesteps(0.05);
+  simDune.doTimesteps(0.25);
+  simPixel.doTimesteps(0.25);
   REQUIRE(std::abs(simPixel.getAvgMinMax(1, 1, 0).avg -
                    simDune.getAvgMinMax(1, 1, 0).avg) /
               std::abs(simPixel.getAvgMinMax(1, 1, 0).avg +
@@ -1379,7 +1379,7 @@ SCENARIO("circle membrane reaction",
   double avgAbsDiff{0};
   double avgRelDiff{0};
   constexpr double eps{1e-11};
-  double allowedAvgAbsDiff{0.012};
+  double allowedAvgAbsDiff{0.05};
   double allowedAvgRelDiff{0.40};
   for (std::size_t i = 0; i < p.size(); ++i) {
     avgAbsDiff += std::abs(p[i] - d[i]);

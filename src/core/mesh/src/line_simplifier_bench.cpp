@@ -4,7 +4,9 @@
 
 template <typename T> static void mesh_LineSimplifier(benchmark::State &state) {
   T data;
-  auto boundaries{sme::mesh::constructBoundaries(data.img, data.colours)};
+  QImage pixelCorners;
+  auto boundaries{
+      sme::mesh::constructBoundaries(data.img, data.colours, pixelCorners)};
   for (auto _ : state) {
     for (const auto &boundary : boundaries) {
       auto l{sme::mesh::LineSimplifier(boundary.getAllPoints(),

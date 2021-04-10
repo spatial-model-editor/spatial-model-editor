@@ -21,14 +21,22 @@ SCENARIO("SBML membranes",
       img.fill(col1);
       img.setPixel(1, 1, col0);
       img = img.convertToFormat(QImage::Format_Indexed8);
+      // identify corner pixels with red
+      QImage cornerPixels(4, 4, QImage::Format_RGB32);
+      cornerPixels.fill(qRgb(0, 0, 0));
+      cornerPixels.setPixel(1, 1, qRgb(255, 0, 0));
+      cornerPixels.setPixel(1, 2, qRgb(255, 0, 0));
+      cornerPixels.setPixel(2, 1, qRgb(255, 0, 0));
+      cornerPixels.setPixel(2, 2, qRgb(255, 0, 0));
       std::vector<std::unique_ptr<geometry::Compartment>> compartments;
       compartments.push_back(
           std::make_unique<geometry::Compartment>("c0", img, col0));
       compartments.push_back(
           std::make_unique<geometry::Compartment>("c1", img, col1));
       QStringList names{"c0 name", "c1 name"};
+
       model::ModelMembranes ms;
-      ms.updateCompartmentImage(img);
+      ms.updateCompartmentImage(img, cornerPixels);
       REQUIRE(ms.getIds().isEmpty());
       REQUIRE(ms.getMembranes().empty());
       REQUIRE(ms.getNames().isEmpty());

@@ -44,6 +44,7 @@ private:
   // generated data
   std::unique_ptr<std::vector<Boundary>> boundaries;
   std::vector<QPointF> vertices;
+  QImage pixelCornersImage{};
   std::size_t nTriangles{};
   std::vector<std::vector<QTriangleF>> triangles;
   std::vector<std::vector<TriangulateTriangleIndex>> triangleIndices;
@@ -192,6 +193,7 @@ public:
    */
   [[nodiscard]] std::pair<QImage, QImage>
   getMeshImages(const QSize &size, std::size_t compartmentIndex) const;
+  [[nodiscard]] const QImage &getPixelCornersImage() const;
   /**
    * @brief The mesh in GMSH format
    *

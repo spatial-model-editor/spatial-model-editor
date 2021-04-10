@@ -529,7 +529,9 @@ void SimMembrane::evaluateReactions() {
   }
   std::vector<double> species(nSpeciesA + nSpeciesB + nExtraVars, 0);
   std::vector<double> result(nSpeciesA + nSpeciesB + nExtraVars, 0);
-  for (const auto &[ixA, ixB] : membrane->getIndexPairs()) {
+  for (std::size_t i = 0; i < membrane->getIndexPairs().size(); ++i) {
+    const auto &[ixA, ixB] = membrane->getIndexPairs()[i];
+    const auto weight{membrane->getWeights()[i]};
     // populate species concentrations: first A, then B, then t,x,y
     if (concA != nullptr) {
       std::copy_n(&((*concA)[ixA * (nSpeciesA + nExtraVars)]), nSpeciesA,
@@ -548,10 +550,11 @@ void SimMembrane::evaluateReactions() {
 
     // add results to dc/dt: first A, then B
     for (std::size_t is = 0; is < nSpeciesA; ++is) {
-      (*dcdtA)[ixA * (nSpeciesA + nExtraVars) + is] += result[is];
+      (*dcdtA)[ixA * (nSpeciesA + nExtraVars) + is] += weight * result[is];
     }
     for (std::size_t is = 0; is < nSpeciesB; ++is) {
-      (*dcdtB)[ixB * (nSpeciesB + nExtraVars) + is] += result[is + nSpeciesA];
+      (*dcdtB)[ixB * (nSpeciesB + nExtraVars) + is] +=
+          weight * result[is + nSpeciesA];
     }
   }
 }
