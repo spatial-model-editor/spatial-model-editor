@@ -1,4 +1,5 @@
 #include "catch_wrapper.hpp"
+#include "model.hpp"
 #include "model_reactions.hpp"
 #include <QFile>
 #include <QImage>
@@ -131,5 +132,70 @@ SCENARIO("SBML reactions",
     REQUIRE(r.getIds("c3").empty());
     REQUIRE(r.getIds("c1_c2_membrane").empty());
     REQUIRE(r.getIds("c2_c3_membrane").empty());
+  }
+  GIVEN("Model with spatial reactions whose location is not set") {
+    QFile f(":test/models/fish_300x300.xml");
+    f.open(QIODevice::ReadOnly);
+    std::string xml{f.readAll().toStdString()};
+    std::unique_ptr<libsbml::SBMLDocument> doc(
+        libsbml::readSBMLFromString(xml.c_str()));
+    {
+      const auto *reac0{doc->getModel()->getReaction("re0")};
+      REQUIRE(reac0->isSetCompartment() == false);
+      const auto *reac1{doc->getModel()->getReaction("re1")};
+      REQUIRE(reac1->isSetCompartment() == false);
+      const auto *reac2{doc->getModel()->getReaction("re2")};
+      REQUIRE(reac2->isSetCompartment() == false);
+    }
+    model::Model m;
+    m.importSBMLString(xml);
+    const auto &reactions{m.getReactions()};
+    model::ModelReactions r(doc->getModel(), {});
+    // reaction location inferred from species involved
+    REQUIRE(reactions.getIds("fish").size() == 3);
+    REQUIRE(reactions.getIds("fish")[0] == "re0");
+    REQUIRE(reactions.getIds("fish")[1] == "re1");
+    REQUIRE(reactions.getIds("fish")[2] == "re2");
+    {
+      auto xml2{m.getXml().toStdString()};
+      std::unique_ptr<libsbml::SBMLDocument> doc2(
+          libsbml::readSBMLFromString(xml2.c_str()));
+      const auto *reac0{doc2->getModel()->getReaction("re0")};
+      REQUIRE(reac0->isSetCompartment() == true);
+      REQUIRE(reac0->getCompartment() == "fish");
+      const auto *reac1{doc2->getModel()->getReaction("re1")};
+      REQUIRE(reac1->isSetCompartment() == true);
+      REQUIRE(reac1->getCompartment() == "fish");
+      const auto *reac2{doc2->getModel()->getReaction("re2")};
+      REQUIRE(reac2->isSetCompartment() == true);
+      REQUIRE(reac2->getCompartment() == "fish");
+    }
+  }
+  GIVEN("Model with spatial reaction whose name & location is not set") {
+    QFile f(":test/models/example2D.xml");
+    f.open(QIODevice::ReadOnly);
+    std::string xml{f.readAll().toStdString()};
+    std::unique_ptr<libsbml::SBMLDocument> doc(
+        libsbml::readSBMLFromString(xml.c_str()));
+    const auto *reac{doc->getModel()->getReaction(0)};
+    REQUIRE(reac->isSetCompartment() == false);
+    REQUIRE(reac->isSetName() == false);
+    model::Model m;
+    m.importSBMLString(xml);
+    const auto &reactions{m.getReactions()};
+    model::ModelReactions r(doc->getModel(), {});
+    // reaction location inferred from species involved
+    REQUIRE(reactions.getIds("Nucleus_Cytosol_membrane").size() == 1);
+    REQUIRE(reactions.getIds("Nucleus_Cytosol_membrane")[0] == "re1");
+    // reaction name uses Id if not orginally set
+    REQUIRE(reactions.getName("re1") == "re1");
+    auto xml2{m.getXml().toStdString()};
+    std::unique_ptr<libsbml::SBMLDocument> doc2(
+        libsbml::readSBMLFromString(xml2.c_str()));
+    const auto *reac2{doc2->getModel()->getReaction(0)};
+    REQUIRE(reac2->isSetCompartment() == true);
+    REQUIRE(reac2->getCompartment() == "Nucleus_Cytosol_membrane");
+    REQUIRE(reac2->isSetName() == true);
+    REQUIRE(reac2->getName() == reac2->getId());
   }
 }

@@ -1,0 +1,977 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" xmlns:spatial="http://www.sbml.org/sbml/level3/version1/spatial/version1" level="3" version="1" spatial:required="true">
+  <model metaid="meta_fish_skin_pnas2_Application0" id="fish_skin_pnas2_Application0" name="fish-skin-pnas2_Application0">
+    <annotation>
+      <oldspatialInfo xmlns="http://fbergmann.github.io/oldspatial-sbml/settings">
+        <update step="1" freq="100"/>
+        <items>
+          <item sbmlId="u" palette="black-blue.txt" max="6"/>
+          <item sbmlId="v" palette="black-green.txt" max="6"/>
+          <item sbmlId="w" palette="black-red.txt" max="6"/>
+        </items>
+      </oldspatialInfo>
+    </annotation>
+    <listOfUnitDefinitions>
+      <unitDefinition id="substance">
+        <listOfUnits>
+          <unit kind="item" exponent="1" scale="0" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="volume">
+        <listOfUnits>
+          <unit kind="metre" exponent="3" scale="0" multiplier="1e-06"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="area">
+        <listOfUnits>
+          <unit kind="metre" exponent="2" scale="0" multiplier="1e-06"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="molecules">
+        <listOfUnits>
+          <unit kind="item" exponent="1" scale="0" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="umol_um3_litre_1">
+        <listOfUnits>
+          <unit kind="mole" exponent="1" scale="0" multiplier="1e-21"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="um3">
+        <listOfUnits>
+          <unit kind="metre" exponent="3" scale="0" multiplier="1e-06"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="um2">
+        <listOfUnits>
+          <unit kind="metre" exponent="2" scale="0" multiplier="1e-06"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="uM_um3_molecules_1">
+        <listOfUnits>
+          <unit kind="dimensionless" exponent="1" scale="0" multiplier="1e-21"/>
+          <unit kind="item" exponent="-1" scale="0" multiplier="1"/>
+          <unit kind="mole" exponent="1" scale="0" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="uM_s_1">
+        <listOfUnits>
+          <unit kind="dimensionless" exponent="1" scale="0" multiplier="0.001"/>
+          <unit kind="metre" exponent="-3" scale="0" multiplier="1"/>
+          <unit kind="mole" exponent="1" scale="0" multiplier="1"/>
+          <unit kind="second" exponent="-1" scale="0" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+      <unitDefinition id="s_1">
+        <listOfUnits>
+          <unit kind="second" exponent="-1" scale="0" multiplier="1"/>
+        </listOfUnits>
+      </unitDefinition>
+    </listOfUnitDefinitions>
+    <listOfCompartments>
+      <compartment id="outside" name="outside" spatialDimensions="3" size="50000" units="um3" constant="true">
+        <spatial:compartmentMapping spatial:id="outsideoutside" spatial:domainType="outside" spatial:unitSize="1"/>
+      </compartment>
+      <compartment id="eye" name="eye" spatialDimensions="3" size="500" units="um3" constant="true">
+        <spatial:compartmentMapping spatial:id="fish_eyeeye" spatial:domainType="fish_eye" spatial:unitSize="1"/>
+      </compartment>
+      <compartment id="fish" name="fish" spatialDimensions="3" size="5000" units="um3" constant="true">
+        <annotation>
+          <vcell:VCellInfo xmlns:vcell="http://sourceforge.net/projects/vcell">
+            <vcell:VCMLSpecific>
+              <vcell:OutsideCompartment Name="Membrane0"/>
+            </vcell:VCMLSpecific>
+          </vcell:VCellInfo>
+        </annotation>
+        <spatial:compartmentMapping spatial:id="fish_bodyfish" spatial:domainType="fish_body" spatial:unitSize="1"/>
+      </compartment>
+      <compartment id="Membrane0" name="Membrane0" spatialDimensions="2" size="1414" units="um2" constant="true">
+        <annotation>
+          <vcell:VCellInfo xmlns:vcell="http://sourceforge.net/projects/vcell">
+            <vcell:VCMLSpecific>
+              <vcell:OutsideCompartment Name="outside"/>
+            </vcell:VCMLSpecific>
+          </vcell:VCellInfo>
+        </annotation>
+        <spatial:compartmentMapping spatial:id="fish_body_outside_membraneMembrane0" spatial:domainType="fish_body_outside_membrane" spatial:unitSize="1"/>
+      </compartment>
+      <compartment id="Membrane1" name="Membrane1" spatialDimensions="2" size="304.6" units="um2" constant="true">
+        <annotation>
+          <vcell:VCellInfo xmlns:vcell="http://sourceforge.net/projects/vcell">
+            <vcell:VCMLSpecific>
+              <vcell:OutsideCompartment Name="fish"/>
+            </vcell:VCMLSpecific>
+          </vcell:VCellInfo>
+        </annotation>
+        <spatial:compartmentMapping spatial:id="fish_body_fish_eye_membraneMembrane1" spatial:domainType="fish_body_fish_eye_membrane" spatial:unitSize="1"/>
+      </compartment>
+    </listOfCompartments>
+    <listOfSpecies>
+      <species id="u" compartment="fish" substanceUnits="molecules" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true">
+        <annotation>
+          <vcell:VCellInfo xmlns:vcell="http://sourceforge.net/projects/vcell">
+            <vcell:VCMLSpecific>
+              <vcell:Compound Name="s0"/>
+            </vcell:VCMLSpecific>
+          </vcell:VCellInfo>
+        </annotation>
+      </species>
+      <species id="v" compartment="fish" substanceUnits="molecules" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true">
+        <annotation>
+          <vcell:VCellInfo xmlns:vcell="http://sourceforge.net/projects/vcell">
+            <vcell:VCMLSpecific>
+              <vcell:Compound Name="s1"/>
+            </vcell:VCMLSpecific>
+          </vcell:VCellInfo>
+        </annotation>
+      </species>
+      <species id="X" compartment="fish" initialConcentration="0" substanceUnits="molecules" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true">
+        <annotation>
+          <vcell:VCellInfo xmlns:vcell="http://sourceforge.net/projects/vcell">
+            <vcell:VCMLSpecific>
+              <vcell:Compound Name="s2"/>
+            </vcell:VCMLSpecific>
+          </vcell:VCellInfo>
+        </annotation>
+      </species>
+      <species id="w" compartment="fish" substanceUnits="molecules" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true">
+        <annotation>
+          <vcell:VCellInfo xmlns:vcell="http://sourceforge.net/projects/vcell">
+            <vcell:VCMLSpecific>
+              <vcell:Compound Name="s3"/>
+            </vcell:VCMLSpecific>
+          </vcell:VCellInfo>
+        </annotation>
+      </species>
+    </listOfSpecies>
+    <listOfParameters>
+      <parameter id="x" value="0" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="x"/>
+      </parameter>
+      <parameter id="y" value="0" constant="false">
+        <spatial:spatialSymbolReference spatial:spatialRef="y"/>
+      </parameter>
+      <parameter id="u_diff_X" value="0.02" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="u" spatial:type="isotropic" spatial:coordinateReference1="cartesianX"/>
+      </parameter>
+      <parameter id="u_diff_Y" value="0.02" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="u" spatial:type="isotropic" spatial:coordinateReference1="cartesianY"/>
+      </parameter>
+      <parameter id="u_BC_Xm" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="u" spatial:type="Neumann" spatial:coordinateBoundary="Xmin"/>
+      </parameter>
+      <parameter id="u_BC_Xp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="u" spatial:type="Neumann" spatial:coordinateBoundary="Xmax"/>
+      </parameter>
+      <parameter id="u_BC_Ym" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="u" spatial:type="Neumann" spatial:coordinateBoundary="Ymin"/>
+      </parameter>
+      <parameter id="u_BC_Yp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="u" spatial:type="Neumann" spatial:coordinateBoundary="Ymax"/>
+      </parameter>
+      <parameter id="v_diff_X" value="0.02" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="v" spatial:type="isotropic" spatial:coordinateReference1="cartesianX"/>
+      </parameter>
+      <parameter id="v_diff_Y" value="0.02" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="v" spatial:type="isotropic" spatial:coordinateReference1="cartesianY"/>
+      </parameter>
+      <parameter id="v_BC_Xm" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="v" spatial:type="Neumann" spatial:coordinateBoundary="Xmin"/>
+      </parameter>
+      <parameter id="v_BC_Xp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="v" spatial:type="Neumann" spatial:coordinateBoundary="Xmax"/>
+      </parameter>
+      <parameter id="v_BC_Ym" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="v" spatial:type="Neumann" spatial:coordinateBoundary="Ymin"/>
+      </parameter>
+      <parameter id="v_BC_Yp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="v" spatial:type="Neumann" spatial:coordinateBoundary="Ymax"/>
+      </parameter>
+      <parameter id="w_diff_X" value="0.2" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="w" spatial:type="isotropic" spatial:coordinateReference1="cartesianX"/>
+      </parameter>
+      <parameter id="w_diff_Y" value="0.2" constant="true">
+        <spatial:diffusionCoefficient spatial:variable="w" spatial:type="isotropic" spatial:coordinateReference1="cartesianY"/>
+      </parameter>
+      <parameter id="w_BC_Xm" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="w" spatial:type="Neumann" spatial:coordinateBoundary="Xmin"/>
+      </parameter>
+      <parameter id="w_BC_Xp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="w" spatial:type="Neumann" spatial:coordinateBoundary="Xmax"/>
+      </parameter>
+      <parameter id="w_BC_Ym" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="w" spatial:type="Neumann" spatial:coordinateBoundary="Ymin"/>
+      </parameter>
+      <parameter id="w_BC_Yp" value="0" constant="true">
+        <spatial:boundaryCondition spatial:variable="w" spatial:type="Neumann" spatial:coordinateBoundary="Ymax"/>
+      </parameter>
+      <parameter id="KMOLE" value="0.00166112956810631" units="uM_um3_molecules_1" constant="true"/>
+    </listOfParameters>
+    <listOfInitialAssignments>
+      <initialAssignment symbol="u">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <piecewise>
+            <piece>
+              <cn> 4 </cn>
+              <apply>
+                <and/>
+                <apply>
+                  <gt/>
+                  <ci> y </ci>
+                  <cn> 141 </cn>
+                </apply>
+                <apply>
+                  <lt/>
+                  <ci> y </ci>
+                  <cn> 153 </cn>
+                </apply>
+              </apply>
+            </piece>
+            <otherwise>
+              <cn> 0 </cn>
+            </otherwise>
+          </piecewise>
+        </math>
+      </initialAssignment>
+      <initialAssignment symbol="v">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <piecewise>
+            <piece>
+              <cn> 4 </cn>
+              <apply>
+                <and/>
+                <apply>
+                  <gt/>
+                  <ci> y </ci>
+                  <cn> 141 </cn>
+                </apply>
+                <apply>
+                  <lt/>
+                  <ci> y </ci>
+                  <cn> 153 </cn>
+                </apply>
+              </apply>
+            </piece>
+            <otherwise>
+              <cn> 0 </cn>
+            </otherwise>
+          </piecewise>
+        </math>
+      </initialAssignment>
+      <initialAssignment symbol="w">
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+          <piecewise>
+            <piece>
+              <cn> 4 </cn>
+              <apply>
+                <and/>
+                <apply>
+                  <gt/>
+                  <ci> y </ci>
+                  <cn> 141 </cn>
+                </apply>
+                <apply>
+                  <lt/>
+                  <ci> y </ci>
+                  <cn> 153 </cn>
+                </apply>
+              </apply>
+            </piece>
+            <otherwise>
+              <cn> 0 </cn>
+            </otherwise>
+          </piecewise>
+        </math>
+      </initialAssignment>
+    </listOfInitialAssignments>
+    <listOfReactions>
+      <reaction id="re0" name="re0" reversible="false" fast="false" spatial:isLocal="true">
+        <annotation>
+          <vcell:VCellInfo xmlns:vcell="http://sourceforge.net/projects/vcell">
+            <vcell:VCMLSpecific>
+              <vcell:SimpleReaction Structure="fish"/>
+              <vcell:ReactionRate Name="J"/>
+            </vcell:VCMLSpecific>
+          </vcell:VCellInfo>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="X" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="u" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="v"/>
+          <modifierSpeciesReference species="w"/>
+        </listOfModifiers>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <plus/>
+              <piecewise>
+                <piece>
+                  <ci> U </ci>
+                  <apply>
+                    <geq/>
+                    <apply>
+                      <plus/>
+                      <apply>
+                        <times/>
+                        <ci> c1 </ci>
+                        <ci> v </ci>
+                      </apply>
+                      <apply>
+                        <times/>
+                        <ci> c2 </ci>
+                        <ci> w </ci>
+                      </apply>
+                      <ci> c3 </ci>
+                    </apply>
+                    <ci> U </ci>
+                  </apply>
+                </piece>
+                <otherwise>
+                  <cn> 0 </cn>
+                </otherwise>
+              </piecewise>
+              <piecewise>
+                <piece>
+                  <apply>
+                    <plus/>
+                    <apply>
+                      <times/>
+                      <ci> c1 </ci>
+                      <ci> v </ci>
+                    </apply>
+                    <apply>
+                      <times/>
+                      <ci> c2 </ci>
+                      <ci> w </ci>
+                    </apply>
+                    <ci> c3 </ci>
+                  </apply>
+                  <apply>
+                    <and/>
+                    <apply>
+                      <gt/>
+                      <apply>
+                        <plus/>
+                        <apply>
+                          <times/>
+                          <ci> c1 </ci>
+                          <ci> v </ci>
+                        </apply>
+                        <apply>
+                          <times/>
+                          <ci> c2 </ci>
+                          <ci> w </ci>
+                        </apply>
+                        <ci> c3 </ci>
+                      </apply>
+                      <cn> 0 </cn>
+                    </apply>
+                    <apply>
+                      <lt/>
+                      <apply>
+                        <plus/>
+                        <apply>
+                          <times/>
+                          <ci> c1 </ci>
+                          <ci> v </ci>
+                        </apply>
+                        <apply>
+                          <times/>
+                          <ci> c2 </ci>
+                          <ci> w </ci>
+                        </apply>
+                        <ci> c3 </ci>
+                      </apply>
+                      <ci> U </ci>
+                    </apply>
+                  </apply>
+                </piece>
+                <otherwise>
+                  <cn> 0 </cn>
+                </otherwise>
+              </piecewise>
+              <apply>
+                <minus/>
+                <apply>
+                  <times/>
+                  <ci> cu </ci>
+                  <ci> u </ci>
+                </apply>
+              </apply>
+            </apply>
+          </math>
+          <listOfLocalParameters>
+            <localParameter id="U" value="0.5" units="uM_s_1"/>
+            <localParameter id="c1" value="-0.04" units="s_1"/>
+            <localParameter id="c2" value="-0.055" units="s_1"/>
+            <localParameter id="c3" value="0.37" units="uM_s_1"/>
+            <localParameter id="cu" value="0.02" units="s_1"/>
+          </listOfLocalParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="re1" name="re1" reversible="false" fast="false" spatial:isLocal="true">
+        <annotation>
+          <vcell:VCellInfo xmlns:vcell="http://sourceforge.net/projects/vcell">
+            <vcell:VCMLSpecific>
+              <vcell:SimpleReaction Structure="fish"/>
+              <vcell:ReactionRate Name="J"/>
+            </vcell:VCMLSpecific>
+          </vcell:VCellInfo>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="X" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="v" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="u"/>
+          <modifierSpeciesReference species="w"/>
+        </listOfModifiers>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <plus/>
+              <piecewise>
+                <piece>
+                  <ci> V </ci>
+                  <apply>
+                    <geq/>
+                    <apply>
+                      <plus/>
+                      <apply>
+                        <times/>
+                        <ci> c4 </ci>
+                        <ci> u </ci>
+                      </apply>
+                      <apply>
+                        <times/>
+                        <ci> c5 </ci>
+                        <ci> w </ci>
+                      </apply>
+                      <ci> c6 </ci>
+                    </apply>
+                    <ci> V </ci>
+                  </apply>
+                </piece>
+                <otherwise>
+                  <cn> 0 </cn>
+                </otherwise>
+              </piecewise>
+              <piecewise>
+                <piece>
+                  <apply>
+                    <plus/>
+                    <apply>
+                      <times/>
+                      <ci> c4 </ci>
+                      <ci> u </ci>
+                    </apply>
+                    <apply>
+                      <times/>
+                      <ci> c5 </ci>
+                      <ci> w </ci>
+                    </apply>
+                    <ci> c6 </ci>
+                  </apply>
+                  <apply>
+                    <and/>
+                    <apply>
+                      <gt/>
+                      <apply>
+                        <plus/>
+                        <apply>
+                          <times/>
+                          <ci> c4 </ci>
+                          <ci> u </ci>
+                        </apply>
+                        <apply>
+                          <times/>
+                          <ci> c5 </ci>
+                          <ci> w </ci>
+                        </apply>
+                        <ci> c6 </ci>
+                      </apply>
+                      <cn> 0 </cn>
+                    </apply>
+                    <apply>
+                      <lt/>
+                      <apply>
+                        <plus/>
+                        <apply>
+                          <times/>
+                          <ci> c4 </ci>
+                          <ci> u </ci>
+                        </apply>
+                        <apply>
+                          <times/>
+                          <ci> c5 </ci>
+                          <ci> w </ci>
+                        </apply>
+                        <ci> c6 </ci>
+                      </apply>
+                      <ci> V </ci>
+                    </apply>
+                  </apply>
+                </piece>
+                <otherwise>
+                  <cn> 0 </cn>
+                </otherwise>
+              </piecewise>
+              <apply>
+                <minus/>
+                <apply>
+                  <times/>
+                  <ci> cv </ci>
+                  <ci> v </ci>
+                </apply>
+              </apply>
+            </apply>
+          </math>
+          <listOfLocalParameters>
+            <localParameter id="V" value="0.5" units="uM_s_1"/>
+            <localParameter id="c4" value="-0.05" units="s_1"/>
+            <localParameter id="c5" value="0" units="s_1"/>
+            <localParameter id="c6" value="0.25" units="uM_s_1"/>
+            <localParameter id="cv" value="0.025" units="s_1"/>
+          </listOfLocalParameters>
+        </kineticLaw>
+      </reaction>
+      <reaction id="re2" name="re2" reversible="false" fast="false" spatial:isLocal="true">
+        <annotation>
+          <vcell:VCellInfo xmlns:vcell="http://sourceforge.net/projects/vcell">
+            <vcell:VCMLSpecific>
+              <vcell:SimpleReaction Structure="fish"/>
+              <vcell:ReactionRate Name="J"/>
+            </vcell:VCMLSpecific>
+          </vcell:VCellInfo>
+        </annotation>
+        <listOfReactants>
+          <speciesReference species="X" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="w" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="u"/>
+          <modifierSpeciesReference species="v"/>
+        </listOfModifiers>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <plus/>
+              <piecewise>
+                <piece>
+                  <ci> W </ci>
+                  <apply>
+                    <geq/>
+                    <apply>
+                      <plus/>
+                      <apply>
+                        <times/>
+                        <ci> c7 </ci>
+                        <ci> u </ci>
+                      </apply>
+                      <apply>
+                        <times/>
+                        <ci> c8 </ci>
+                        <ci> v </ci>
+                      </apply>
+                      <ci> c9 </ci>
+                    </apply>
+                    <ci> W </ci>
+                  </apply>
+                </piece>
+                <otherwise>
+                  <cn> 0 </cn>
+                </otherwise>
+              </piecewise>
+              <piecewise>
+                <piece>
+                  <apply>
+                    <plus/>
+                    <apply>
+                      <times/>
+                      <ci> c7 </ci>
+                      <ci> u </ci>
+                    </apply>
+                    <apply>
+                      <times/>
+                      <ci> c8 </ci>
+                      <ci> v </ci>
+                    </apply>
+                    <ci> c9 </ci>
+                  </apply>
+                  <apply>
+                    <and/>
+                    <apply>
+                      <gt/>
+                      <apply>
+                        <plus/>
+                        <apply>
+                          <times/>
+                          <ci> c7 </ci>
+                          <ci> u </ci>
+                        </apply>
+                        <apply>
+                          <times/>
+                          <ci> c8 </ci>
+                          <ci> v </ci>
+                        </apply>
+                        <ci> c9 </ci>
+                      </apply>
+                      <cn> 0 </cn>
+                    </apply>
+                    <apply>
+                      <lt/>
+                      <apply>
+                        <plus/>
+                        <apply>
+                          <times/>
+                          <ci> c7 </ci>
+                          <ci> u </ci>
+                        </apply>
+                        <apply>
+                          <times/>
+                          <ci> c8 </ci>
+                          <ci> v </ci>
+                        </apply>
+                        <ci> c9 </ci>
+                      </apply>
+                      <ci> W </ci>
+                    </apply>
+                  </apply>
+                </piece>
+                <otherwise>
+                  <cn> 0 </cn>
+                </otherwise>
+              </piecewise>
+              <apply>
+                <minus/>
+                <apply>
+                  <times/>
+                  <ci> cw </ci>
+                  <ci> w </ci>
+                </apply>
+              </apply>
+            </apply>
+          </math>
+          <listOfLocalParameters>
+            <localParameter id="W" value="0.5" units="uM_s_1"/>
+            <localParameter id="c7" value="0.016" units="s_1"/>
+            <localParameter id="c8" value="-0.03" units="s_1"/>
+            <localParameter id="c9" value="0.24" units="uM_s_1"/>
+            <localParameter id="cw" value="0.06" units="s_1"/>
+          </listOfLocalParameters>
+        </kineticLaw>
+      </reaction>
+    </listOfReactions>
+    <spatial:geometry spatial:id="newGeometry" spatial:coordinateSystem="cartesian">
+      <spatial:listOfCoordinateComponents>
+        <spatial:coordinateComponent spatial:id="x" spatial:type="cartesianX">
+          <spatial:boundaryMin spatial:id="Xmin" spatial:value="0"/>
+          <spatial:boundaryMax spatial:id="Xmax" spatial:value="300"/>
+        </spatial:coordinateComponent>
+        <spatial:coordinateComponent spatial:id="y" spatial:type="cartesianY">
+          <spatial:boundaryMin spatial:id="Ymin" spatial:value="0"/>
+          <spatial:boundaryMax spatial:id="Ymax" spatial:value="300"/>
+        </spatial:coordinateComponent>
+      </spatial:listOfCoordinateComponents>
+      <spatial:listOfDomainTypes>
+        <spatial:domainType spatial:id="fish_eye" spatial:spatialDimensions="3"/>
+        <spatial:domainType spatial:id="fish_body" spatial:spatialDimensions="3"/>
+        <spatial:domainType spatial:id="outside" spatial:spatialDimensions="3"/>
+        <spatial:domainType spatial:id="fish_body_outside_membrane" spatial:spatialDimensions="2"/>
+        <spatial:domainType spatial:id="fish_body_fish_eye_membrane" spatial:spatialDimensions="2"/>
+      </spatial:listOfDomainTypes>
+      <spatial:listOfDomains>
+        <spatial:domain spatial:id="outside0" spatial:domainType="outside">
+          <spatial:listOfInteriorPoints>
+            <spatial:interiorPoint spatial:coord1="0" spatial:coord2="0" spatial:coord3="5"/>
+          </spatial:listOfInteriorPoints>
+        </spatial:domain>
+        <spatial:domain spatial:id="fish_body1" spatial:domainType="fish_body">
+          <spatial:listOfInteriorPoints>
+            <spatial:interiorPoint spatial:coord1="267" spatial:coord2="66" spatial:coord3="5"/>
+          </spatial:listOfInteriorPoints>
+        </spatial:domain>
+        <spatial:domain spatial:id="fish_eye2" spatial:domainType="fish_eye">
+          <spatial:listOfInteriorPoints>
+            <spatial:interiorPoint spatial:coord1="66" spatial:coord2="114" spatial:coord3="5"/>
+          </spatial:listOfInteriorPoints>
+        </spatial:domain>
+        <spatial:domain spatial:id="membrane_outside0_fish_body1" spatial:domainType="fish_body_outside_membrane"/>
+        <spatial:domain spatial:id="membrane_fish_body1_fish_eye2" spatial:domainType="fish_body_fish_eye_membrane"/>
+      </spatial:listOfDomains>
+      <spatial:listOfAdjacentDomains>
+        <spatial:adjacentDomains spatial:id="membrane_outside0_fish_body1_fish_body1" spatial:domain1="membrane_outside0_fish_body1" spatial:domain2="fish_body1"/>
+        <spatial:adjacentDomains spatial:id="membrane_outside0_fish_body1_outside0" spatial:domain1="membrane_outside0_fish_body1" spatial:domain2="outside0"/>
+        <spatial:adjacentDomains spatial:id="membrane_fish_body1_fish_eye2_fish_eye2" spatial:domain1="membrane_fish_body1_fish_eye2" spatial:domain2="fish_eye2"/>
+        <spatial:adjacentDomains spatial:id="membrane_fish_body1_fish_eye2_fish_body1" spatial:domain1="membrane_fish_body1_fish_eye2" spatial:domain2="fish_body1"/>
+      </spatial:listOfAdjacentDomains>
+      <spatial:listOfGeometryDefinitions>
+        <spatial:analyticGeometry spatial:id="Geometry225509093" spatial:isActive="true">
+          <spatial:listOfAnalyticVolumes>
+            <spatial:analyticVolume spatial:id="fish_body" spatial:functionType="layered" spatial:ordinal="1" spatial:domainType="fish_body">
+              <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <piecewise>
+                  <piece>
+                    <cn type="integer"> 1 </cn>
+                    <apply>
+                      <and/>
+                      <apply>
+                        <or/>
+                        <apply>
+                          <lt/>
+                          <apply>
+                            <plus/>
+                            <apply>
+                              <divide/>
+                              <apply>
+                                <power/>
+                                <apply>
+                                  <minus/>
+                                  <ci> x </ci>
+                                  <apply>
+                                    <times/>
+                                    <cn type="integer"> 300 </cn>
+                                    <cn> 0.42 </cn>
+                                  </apply>
+                                </apply>
+                                <cn type="integer"> 2 </cn>
+                              </apply>
+                              <apply>
+                                <power/>
+                                <apply>
+                                  <times/>
+                                  <cn type="integer"> 300 </cn>
+                                  <cn> 0.37 </cn>
+                                </apply>
+                                <cn type="integer"> 2 </cn>
+                              </apply>
+                            </apply>
+                            <apply>
+                              <divide/>
+                              <apply>
+                                <power/>
+                                <apply>
+                                  <minus/>
+                                  <ci> y </ci>
+                                  <apply>
+                                    <divide/>
+                                    <cn type="integer"> 300 </cn>
+                                    <cn type="integer"> 2 </cn>
+                                  </apply>
+                                </apply>
+                                <cn type="integer"> 2 </cn>
+                              </apply>
+                              <apply>
+                                <power/>
+                                <apply>
+                                  <times/>
+                                  <cn type="integer"> 300 </cn>
+                                  <cn> 0.25 </cn>
+                                </apply>
+                                <cn type="integer"> 2 </cn>
+                              </apply>
+                            </apply>
+                          </apply>
+                          <cn type="integer"> 1 </cn>
+                        </apply>
+                        <apply>
+                          <and/>
+                          <apply>
+                            <lt/>
+                            <ci> y </ci>
+                            <apply>
+                              <plus/>
+                              <apply>
+                                <minus/>
+                                <apply>
+                                  <times/>
+                                  <cn type="integer"> 300 </cn>
+                                  <cn> 0.1 </cn>
+                                </apply>
+                              </apply>
+                              <ci> x </ci>
+                            </apply>
+                          </apply>
+                          <apply>
+                            <gt/>
+                            <ci> y </ci>
+                            <apply>
+                              <plus/>
+                              <apply>
+                                <times/>
+                                <cn type="integer"> 300 </cn>
+                                <cn> 1.1 </cn>
+                              </apply>
+                              <apply>
+                                <minus/>
+                                <ci> x </ci>
+                              </apply>
+                            </apply>
+                          </apply>
+                          <apply>
+                            <lt/>
+                            <ci> x </ci>
+                            <apply>
+                              <times/>
+                              <cn type="integer"> 300 </cn>
+                              <cn> 0.9 </cn>
+                            </apply>
+                          </apply>
+                        </apply>
+                      </apply>
+                      <apply>
+                        <not/>
+                        <apply>
+                          <lt/>
+                          <apply>
+                            <plus/>
+                            <apply>
+                              <divide/>
+                              <apply>
+                                <power/>
+                                <apply>
+                                  <minus/>
+                                  <ci> x </ci>
+                                  <apply>
+                                    <times/>
+                                    <cn type="integer"> 300 </cn>
+                                    <cn> 0.25 </cn>
+                                  </apply>
+                                </apply>
+                                <cn type="integer"> 2 </cn>
+                              </apply>
+                              <apply>
+                                <power/>
+                                <apply>
+                                  <times/>
+                                  <cn> 0.08 </cn>
+                                  <cn type="integer"> 300 </cn>
+                                </apply>
+                                <cn type="integer"> 2 </cn>
+                              </apply>
+                            </apply>
+                            <apply>
+                              <divide/>
+                              <apply>
+                                <power/>
+                                <apply>
+                                  <minus/>
+                                  <ci> y </ci>
+                                  <apply>
+                                    <times/>
+                                    <cn type="integer"> 300 </cn>
+                                    <cn> 0.45 </cn>
+                                  </apply>
+                                </apply>
+                                <cn type="integer"> 2 </cn>
+                              </apply>
+                              <apply>
+                                <power/>
+                                <apply>
+                                  <times/>
+                                  <cn> 0.08 </cn>
+                                  <cn type="integer"> 300 </cn>
+                                </apply>
+                                <cn type="integer"> 2 </cn>
+                              </apply>
+                            </apply>
+                          </apply>
+                          <cn type="integer"> 1 </cn>
+                        </apply>
+                      </apply>
+                    </apply>
+                  </piece>
+                  <otherwise>
+                    <cn type="integer"> 0 </cn>
+                  </otherwise>
+                </piecewise>
+              </math>
+            </spatial:analyticVolume>
+            <spatial:analyticVolume spatial:id="fish_eye" spatial:functionType="layered" spatial:ordinal="2" spatial:domainType="fish_eye">
+              <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <piecewise>
+                  <piece>
+                    <cn type="integer"> 1 </cn>
+                    <apply>
+                      <lt/>
+                      <apply>
+                        <plus/>
+                        <apply>
+                          <divide/>
+                          <apply>
+                            <power/>
+                            <apply>
+                              <minus/>
+                              <ci> x </ci>
+                              <apply>
+                                <times/>
+                                <cn type="integer"> 300 </cn>
+                                <cn> 0.25 </cn>
+                              </apply>
+                            </apply>
+                            <cn type="integer"> 2 </cn>
+                          </apply>
+                          <apply>
+                            <power/>
+                            <apply>
+                              <times/>
+                              <cn> 0.08 </cn>
+                              <cn type="integer"> 300 </cn>
+                            </apply>
+                            <cn type="integer"> 2 </cn>
+                          </apply>
+                        </apply>
+                        <apply>
+                          <divide/>
+                          <apply>
+                            <power/>
+                            <apply>
+                              <minus/>
+                              <ci> y </ci>
+                              <apply>
+                                <times/>
+                                <cn type="integer"> 300 </cn>
+                                <cn> 0.45 </cn>
+                              </apply>
+                            </apply>
+                            <cn type="integer"> 2 </cn>
+                          </apply>
+                          <apply>
+                            <power/>
+                            <apply>
+                              <times/>
+                              <cn> 0.08 </cn>
+                              <cn type="integer"> 300 </cn>
+                            </apply>
+                            <cn type="integer"> 2 </cn>
+                          </apply>
+                        </apply>
+                      </apply>
+                      <cn type="integer"> 1 </cn>
+                    </apply>
+                  </piece>
+                  <otherwise>
+                    <cn type="integer"> 0 </cn>
+                  </otherwise>
+                </piecewise>
+              </math>
+            </spatial:analyticVolume>
+            <spatial:analyticVolume spatial:id="outside" spatial:functionType="layered" spatial:ordinal="0" spatial:domainType="outside">
+              <math xmlns="http://www.w3.org/1998/Math/MathML">
+                <cn type="integer"> 1 </cn>
+              </math>
+            </spatial:analyticVolume>
+          </spatial:listOfAnalyticVolumes>
+        </spatial:analyticGeometry>
+      </spatial:listOfGeometryDefinitions>
+    </spatial:geometry>
+  </model>
+</sbml>
