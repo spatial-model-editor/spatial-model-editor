@@ -2,8 +2,15 @@
 
 ## [latest]
 ### Added
+- support for simulating models with empty compartments with the Dune-Copasi simulator [#435](https://github.com/spatial-model-editor/spatial-model-editor/issues/435)
+- option to specify multiple timesteps in the simulation tab [#464](https://github.com/spatial-model-editor/spatial-model-editor/issues/464)
+- option to resize the number of pixels in the geometry image [#462](https://github.com/spatial-model-editor/spatial-model-editor/issues/462)
+- option to reduce the number of colours in the geometry image [#280](https://github.com/spatial-model-editor/spatial-model-editor/issues/280)
 
 ### Changed
+
+### Fixed
+- python interface: revert change in simulate() behaviour when doing a second simulation of a model [#475](https://github.com/spatial-model-editor/spatial-model-editor/issues/475)
 
 ### Removed
 
@@ -73,6 +80,10 @@
   - use pixel edges as boundary edges instead of pixels
   - shared boundaries and their end points now unambiguously determined
 - improved line simplification
+
+### Fixed
+- bug in scaling of membrane reactions in Pixel simulations
+  - added missing `1/a` factor, where `a` is the width of a pixel in model units
 
 ### Removed
 - inconsistent `RateRule` support in SBML import
