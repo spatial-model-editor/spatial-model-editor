@@ -122,7 +122,7 @@ void TabSimulate::loadModelData() {
   std::size_t nSpecies{0};
   for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
     compartmentNames.push_back(
-        model.getCompartments().getNames()[static_cast<int>(ic)]);
+        model.getCompartments().getName(sim->getCompartmentIds()[ic].c_str()));
     auto &names = speciesNames.emplace_back();
     for (const auto &sId : sim->getSpeciesIds(ic)) {
       names.push_back(model.getSpecies().getName(sId.c_str()));
