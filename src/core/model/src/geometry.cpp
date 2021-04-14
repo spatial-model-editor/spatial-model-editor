@@ -263,6 +263,10 @@ void Field::importConcentration(
   isUniformConcentration = false;
 }
 
+void Field::setConcentration(const std::vector<double> &concentration){
+  conc = concentration;
+}
+
 void Field::setUniformConcentration(double concentration) {
   SPDLOG_INFO("species {}, compartment {}", id, comp->getId());
   SPDLOG_INFO("  - concentration = {}", concentration);

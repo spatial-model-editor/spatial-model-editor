@@ -13,13 +13,11 @@ using namespace sme;
 SCENARIO("DUNE: DuneConverter",
          "[core/simulate/duneconverter][core/simulate][core][duneconverter]") {
   GIVEN("ABtoC model") {
-
-    // REQUIRE(symEq(std::string("0.1*0.1"), "0.01"));
     model::Model s;
     QFile f(":/models/ABtoC.xml");
     f.open(QIODevice::ReadOnly);
     s.importSBMLString(f.readAll().toStdString());
-    simulate::DuneConverter dc(s, true, {}, 14);
+    simulate::DuneConverter dc(s, {}, true, {}, 14);
     QStringList ini = dc.getIniFile().split("\n");
     auto line = ini.cbegin();
     REQUIRE(*line++ == "[grid]");
@@ -75,12 +73,11 @@ SCENARIO("DUNE: DuneConverter",
       ++line;
     }
     REQUIRE(*line++ == "[model.compartment.reaction]");
-    // TODO: fix precision issue here: 1 != 0.9999999999999
-    // REQUIRE(symEq(*line++, "X = 0.5 - 4.0*X + 1.0*X^2*Y"));
-    // REQUIRE(symEq(*line++, "Y = 3.0*X - 1.0*X^2*Y"));
-    // the rest of the species are constant,
-    // so they don't exist from DUNE's point of view:
-    // REQUIRE(*line++ == "");
+    REQUIRE(symEq(*line++, "X = 0.5 - 4.0*X + 2.0*X^2*Y"));
+    REQUIRE(symEq(*line++, "Y = 3.0*X - 2.0*X^2*Y"));
+    //     the rest of the species are constant,
+    //     so they don't exist from DUNE's point of view:
+    REQUIRE(*line++ == "");
   }
   GIVEN("very simple model") {
     model::Model s;
@@ -131,5 +128,48 @@ SCENARIO("DUNE: DuneConverter",
     REQUIRE(symEq(*line++, "ddim___ddim_ = -1e-7*x__"));
     REQUIRE(symEq(*line++, "ddim___dx__ = -1e-7*dim_"));
     REQUIRE(symEq(*line++, "ddim___dx_ = 0"));
+  }
+  GIVEN("brusselator model with substitutions") {
+    model::Model s;
+    QFile f(":/models/brusselator-model.xml");
+    f.open(QIODevice::ReadOnly);
+    s.importSBMLString(f.readAll().toStdString());
+    // X = k_1/2 - (3+k_1)*X + k_2 X^2 Y
+    // Y = 3 X - k_2 X^2 Y
+    {
+      simulate::DuneConverter dc(s);
+      QStringList ini = dc.getIniFile().split("\n");
+      auto line = ini.cbegin();
+      while (line != ini.cend() && *line != "[model.compartment.reaction]") {
+        ++line;
+      }
+      // default values: k1 = 1, k2 = 2
+      REQUIRE(*line++ == "[model.compartment.reaction]");
+      REQUIRE(symEq(*line++, "X = 0.5 - 4.0*X + 2.0*X^2*Y"));
+      REQUIRE(symEq(*line++, "Y = 3.0*X - 2.0*X^2*Y"));
+    }
+    {
+      simulate::DuneConverter dc(s, {{"k1", 1.74}, {"k2", 5.2}});
+      QStringList ini = dc.getIniFile().split("\n");
+      auto line = ini.cbegin();
+      while (line != ini.cend() && *line != "[model.compartment.reaction]") {
+        ++line;
+      }
+      REQUIRE(*line++ == "[model.compartment.reaction]");
+      REQUIRE(symEq(*line++, "X = 0.87 - 4.74*X + 5.2*X^2*Y"));
+      REQUIRE(symEq(*line++, "Y = 3.0*X - 5.2*X^2*Y"));
+    }
+    {
+      simulate::DuneConverter dc(
+          s, {{"k1", -1.74}, {"k2", -20.2}, {"doesnotexist", -1}});
+      QStringList ini = dc.getIniFile().split("\n");
+      auto line = ini.cbegin();
+      while (line != ini.cend() && *line != "[model.compartment.reaction]") {
+        ++line;
+      }
+      REQUIRE(*line++ == "[model.compartment.reaction]");
+      REQUIRE(symEq(*line++, "X = -0.87 - 1.26*X - 20.2*X^2*Y"));
+      REQUIRE(symEq(*line++, "Y = 3.0*X + 20.2*X^2*Y"));
+    }
   }
 }

@@ -12,6 +12,7 @@
 #pragma once
 
 #include <cstddef>
+#include <map>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -37,7 +38,6 @@ struct PdeScaleFactors {
 
 class Pde {
 private:
-  std::vector<std::string> species;
   std::vector<std::string> rhs;
   std::vector<std::vector<std::string>> jacobian;
 
@@ -48,7 +48,8 @@ public:
                const std::vector<std::string> &relabelledSpeciesIDs = {},
                const PdeScaleFactors &pdeScaleFactors = {},
                const std::vector<std::string> &extraVariables = {},
-               const std::vector<std::string> &relabelledExtraVariables = {});
+               const std::vector<std::string> &relabelledExtraVariables = {},
+               const std::map<std::string, double, std::less<>> &substitutions = {});
   const std::vector<std::string> &getRHS() const;
   const std::vector<std::vector<std::string>> &getJacobian() const;
 };

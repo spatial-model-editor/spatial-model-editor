@@ -37,7 +37,7 @@ SCENARIO("DUNE: grid",
         f.open(QIODevice::ReadOnly)) {
       m.importSBMLString(f.readAll().toStdString());
     }
-    simulate::DuneConverter dc(m, false);
+    simulate::DuneConverter dc(m, {}, false);
     const auto *mesh{m.getGeometry().getMesh()};
 
     // generate dune grid with sim::makeDuneGrid

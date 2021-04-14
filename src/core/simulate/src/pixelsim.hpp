@@ -4,13 +4,14 @@
 
 #include "basesim.hpp"
 #include "simulate_options.hpp"
+#include <QImage>
 #include <atomic>
 #include <cstddef>
 #include <limits>
 #include <memory>
 #include <string>
+#include <map>
 #include <vector>
-#include <QImage>
 
 namespace sme {
 
@@ -55,7 +56,8 @@ public:
   explicit PixelSim(
       const model::Model &sbmlDoc,
       const std::vector<std::string> &compartmentIds,
-      const std::vector<std::vector<std::string>> &compartmentSpeciesIds);
+      const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
+      const std::map<std::string, double, std::less<>> &substitutions = {});
   ~PixelSim() override;
   std::size_t run(double time, double timeout_ms) override;
   const std::vector<double> &
@@ -66,7 +68,7 @@ public:
                                     std::size_t speciesIndex,
                                     std::size_t pixelIndex) const;
   const std::string &errorMessage() const override;
-  const QImage& errorImage() const override;
+  const QImage &errorImage() const override;
   void requestStop() override;
 };
 

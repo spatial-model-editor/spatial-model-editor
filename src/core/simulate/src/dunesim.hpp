@@ -13,6 +13,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <map>
 #include <vector>
 
 namespace dune {
@@ -56,7 +57,8 @@ private:
   QSize geometryImageSize;
   double pixelSize;
   QPointF pixelOrigin;
-  void initDuneSimCompartments(const std::vector<const geometry::Compartment*>& comps);
+  void initDuneSimCompartments(
+      const std::vector<const geometry::Compartment *> &comps);
   void updatePixels();
   void updateSpeciesConcentrations();
   std::string currentErrorMessage;
@@ -64,9 +66,9 @@ private:
   double volOverL3;
 
 public:
-  explicit DuneSim(
-      const model::Model &sbmlDoc,
-      const std::vector<std::string> &compartmentIds);
+  explicit DuneSim(const model::Model &sbmlDoc,
+                   const std::vector<std::string> &compartmentIds,
+                   const std::map<std::string, double, std::less<>> &substitutions = {});
   ~DuneSim() override;
   std::size_t run(double time, double timeout_ms) override;
   [[nodiscard]] const std::vector<double> &

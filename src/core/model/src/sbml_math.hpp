@@ -13,9 +13,7 @@ class Model;
 class ASTNode;
 } // namespace libsbml
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 // return supplied math expression as string with any Function calls and/or
 // Assignment rules inlined e.g. given mathExpression = "z*f(x,y)" where the
@@ -51,7 +49,5 @@ double evaluateMathString(
     const std::string &mathExpression,
     const std::map<const std::string, std::pair<double, bool>> &vars = {},
     const libsbml::Model *model = nullptr);
-
-} // namespace model
 
 } // namespace sme

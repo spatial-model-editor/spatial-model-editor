@@ -40,7 +40,6 @@ private:
   ModelReactions *modelReactions = nullptr;
   simulate::SimulationData *simulationData = nullptr;
   Settings *sbmlAnnotation = nullptr;
-  void setFieldConcAnalytic(geometry::Field &field, const std::string &expr);
   void removeInitialAssignment(const QString &id);
   std::vector<double>
   getSampledFieldConcentrationFromSBML(const QString &id) const;
@@ -69,6 +68,9 @@ public:
   double getInitialConcentration(const QString &id) const;
   void setAnalyticConcentration(const QString &id,
                                 const QString &analyticExpression);
+  void
+  setFieldConcAnalytic(geometry::Field &field, const std::string &expr,
+                       const std::map<std::string, double, std::less<>> &substitutions = {});
   QString getAnalyticConcentration(const QString &id) const;
   void
   setSampledFieldConcentration(const QString &id,
@@ -88,4 +90,4 @@ public:
   void setHasUnsavedChanges(bool unsavedChanges);
 };
 
-} // namespace sme
+} // namespace sme::model

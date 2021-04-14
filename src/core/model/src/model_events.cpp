@@ -1,8 +1,8 @@
 #include "model_events.hpp"
-#include "model_parameters.hpp"
-#include "model_species.hpp"
 #include "id.hpp"
 #include "logger.hpp"
+#include "model_parameters.hpp"
+#include "model_species.hpp"
 #include "sbml_math.hpp"
 #include "sbml_utils.hpp"
 #include <QString>
@@ -155,13 +155,13 @@ void ModelEvents::setVariable(const QString &id, const QString &variable) {
     param->setConstant(false);
     event->getEventAssignment(0)->setVariable(vId);
     return;
-  } else if (const auto *species{sbmlModel->getSpecies(vId)}; species != nullptr) {
+  } else if (const auto *species{sbmlModel->getSpecies(vId)};
+             species != nullptr) {
     hasUnsavedChanges = true;
     event->getEventAssignment(0)->setVariable(vId);
     return;
   }
   SPDLOG_WARN("Variable '{}' not found in sbml model", vId);
-  return;
 }
 
 QString ModelEvents::getVariable(const QString &id) const {
@@ -283,6 +283,20 @@ QString ModelEvents::add(const QString &name, const QString &variable) {
   return uniqueName;
 }
 
+bool ModelEvents::isParameter(const QString &id) const {
+  return sbmlModel->getParameter(getVariable(id).toStdString()) != nullptr;
+}
+
+double ModelEvents::getValue(const QString &id) const{
+  bool validDouble{false};
+  auto expr{getExpression(id)};
+  double val{expr.toDouble(&validDouble)};
+  if(!validDouble){
+    SPDLOG_WARN("Expression '{}' of event '{}' not a valid double", expr.toStdString(), id.toStdString());
+  }
+  return val;
+}
+
 void ModelEvents::remove(const QString &id) {
   std::string sId{id.toStdString()};
   SPDLOG_INFO("Removing event {}", sId);
@@ -317,7 +331,7 @@ void ModelEvents::applyEvent(const QString &id) {
     SPDLOG_WARN("Variable not found for event '{}'", id.toStdString());
     return;
   }
-  const auto& expr{getExpression(id)};
+  const auto &expr{getExpression(id)};
   if (const auto *param{sbmlModel->getParameter(variableId)};
       param != nullptr && modelParameters != nullptr) {
     modelParameters->setExpression(variableId.c_str(), expr);

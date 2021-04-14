@@ -32,6 +32,17 @@ SCENARIO("Utils", "[core/common/utils][core/common][core][utils]") {
     REQUIRE(min == dbl_approx(-1.0));
     REQUIRE(max == dbl_approx(6.0));
   }
+  GIVEN("index of element in vector of doubles") {
+    std::vector<double> v{1, 2, 3, 4, 5, 6, -1};
+    REQUIRE(utils::element_index(v, 1) == 0);
+    REQUIRE(utils::element_index(v, 2) == 1);
+    REQUIRE(utils::element_index(v, 3) == 2);
+    REQUIRE(utils::element_index(v, -1) == 6);
+    // element not found: return 0 by default
+    REQUIRE(utils::element_index(v, -3) == 0);
+    // element not found: specify return value for this
+    REQUIRE(utils::element_index(v, -3, 999) == 999);
+  }
   GIVEN("QStringList <-> std::vector<std::string>") {
     std::vector<std::string> s{"ab", "qwef", "Qvsdss!"};
     QStringList q;

@@ -22,8 +22,8 @@ Pde::Pde(const model::Model *doc_ptr,
          const std::vector<std::string> &relabelledSpeciesIDs,
          const PdeScaleFactors &pdeScaleFactors,
          const std::vector<std::string> &extraVariables,
-         const std::vector<std::string> &relabelledExtraVariables)
-    : species(speciesIDs) {
+         const std::vector<std::string> &relabelledExtraVariables,
+         const std::map<std::string, double, std::less<>> &substitutions) {
   bool relabel{!relabelledSpeciesIDs.empty() ||
                !relabelledExtraVariables.empty()};
   if (relabel && relabelledSpeciesIDs.size() != speciesIDs.size()) {
@@ -62,8 +62,18 @@ Pde::Pde(const model::Model *doc_ptr,
       expr = QString("((%1)*(%2)) ").arg(expr, str.c_str());
       SPDLOG_DEBUG("Species {} Reaction {} = {}", speciesIDs.at(i), j,
                    expr.toStdString());
+      auto constants{reactions.getConstants(j)};
+      if(!substitutions.empty()){
+        // substitute values of any constants in substitutions map
+        for(auto& [id, v] : constants){
+          if(auto iter = substitutions.find(id); iter != substitutions.end()){
+            SPDLOG_INFO("Substituting: {} = {} -> {}", id, v, iter->second);
+            v = iter->second;
+          }
+        }
+      }
       // parse and inline constants & function calls
-      utils::Symbolic sym(expr.toStdString(), vars, reactions.getConstants(j),
+      utils::Symbolic sym(expr.toStdString(), vars, constants,
                           doc_ptr->getFunctions().getSymbolicFunctions(),
                           false);
       if (!sym.isValid()) {
@@ -195,4 +205,4 @@ Reaction::Reaction(const model::Model *doc, std::vector<std::string> species,
   }
 }
 
-} // namespace sme
+} // namespace sme::simulate

@@ -15,7 +15,7 @@
 
 namespace sme::simulate {
 
-void Simulation::initModel(const model::Model &model) {
+void Simulation::initModel() {
   // get compartments with interacting species, name & colour of each species
   for (const auto &compartmentId : model.getCompartments().getIds()) {
     std::vector<std::string> sIds;
@@ -45,14 +45,14 @@ void Simulation::initModel(const model::Model &model) {
   }
 }
 
-void Simulation::initEvents(model::Model &model) {
+void Simulation::initEvents() {
+  eventSubstitutions = {};
   simEvents = {};
   double t0{0.0};
   if (!data->timePoints.empty()) {
     t0 = data->timePoints.back();
   }
   const auto &events{model.getEvents()};
-  data->xmlModel = model.getXml().toStdString();
   std::vector<SimEvent> evs;
   for (const auto &id : events.getIds()) {
     double t{events.getTime(id)};
@@ -68,8 +68,12 @@ void Simulation::initEvents(model::Model &model) {
         evs.push_back({t, {id.toStdString()}});
         SPDLOG_INFO("    -> adding new SimEvent at time {}", evs.back().time);
       }
-    } else {
-      SPDLOG_INFO("    -> ignoring past event (t0 = {})", t0);
+    } else if (events.isParameter(id)) {
+      std::string var{events.getVariable(id).toStdString()};
+      double val{events.getValue(id)};
+      eventSubstitutions[var] = val;
+      SPDLOG_INFO("applied event {}: {} = {} from time {}", id.toStdString(),
+                  var, val, t);
     }
   }
   std::sort(evs.begin(), evs.end(),
@@ -89,28 +93,50 @@ void Simulation::initEvents(model::Model &model) {
 void Simulation::applyNextEvent() {
   const auto &ev{simEvents.front()};
   SPDLOG_INFO("Applying SimEvent at time {}", ev.time);
-  // make new copy of model
-  simModel = std::make_unique<sme::model::Model>();
-  simModel->importSBMLString(data->xmlModel);
-  // apply latest simulation concentrations to model
-  applyConcsToModel(*simModel.get(), data->concentration.size() - 1);
   // apply events to model
-  auto &events{simModel->getEvents()};
+  auto &events{model.getEvents()};
   for (const auto &id : ev.ids) {
     SPDLOG_INFO("  - event '{}'", id);
-    events.applyEvent(id.c_str());
+    std::string var{events.getVariable(id.c_str()).toStdString()};
+    if (events.isParameter(id.c_str())) {
+      double val{events.getValue(id.c_str())};
+      eventSubstitutions[var] = val;
+      SPDLOG_INFO("    {} = {}", var, val);
+    } else {
+      // species initial concentration
+      const auto &sId{var};
+      SPDLOG_INFO("    sId {}", sId);
+      auto tempField{*(model.getSpecies().getField(sId.c_str()))};
+      SPDLOG_INFO("    field {}", tempField.getId());
+      model.getSpecies().setFieldConcAnalytic(
+          tempField, events.getExpression(id.c_str()).toStdString(),
+          eventSubstitutions);
+      const auto &tempConc{tempField.getConcentration()};
+      std::string compId{tempField.getCompartment()->getId()};
+      std::size_t compIndex{utils::element_index(compartmentIds, compId)};
+      SPDLOG_INFO("    compartment[{}] = {}", compIndex, compId);
+      std::size_t speciesIndex{
+          utils::element_index(compartmentSpeciesIds[compIndex], sId)};
+      SPDLOG_INFO("    species[{}] = {}", speciesIndex, sId);
+      auto &c{data->concentration.back()[compIndex]};
+      const std::size_t stride{simulator->getConcentrationPadding() +
+                               compartmentSpeciesIds[compIndex].size()};
+      SPDLOG_INFO("    stride = {}", stride);
+      for (std::size_t iPixel = 0; iPixel < tempConc.size(); ++iPixel) {
+        c[stride * iPixel + speciesIndex] = tempConc[iPixel];
+      }
+    }
   }
-  // export this model to xml for applying next event
-  data->xmlModel = simModel->getXml().toStdString();
   // re-init simulator
   simulator.reset();
   if (settings->simulatorType == SimulatorType::DUNE &&
-      simModel->getGeometry().getMesh() != nullptr &&
-      simModel->getGeometry().getMesh()->isValid()) {
-    simulator = std::make_unique<DuneSim>(*simModel.get(), compartmentIds);
+      model.getGeometry().getMesh() != nullptr &&
+      model.getGeometry().getMesh()->isValid()) {
+    simulator =
+        std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
   } else {
-    simulator = std::make_unique<PixelSim>(*simModel.get(), compartmentIds,
-                                           compartmentSpeciesIds);
+    simulator = std::make_unique<PixelSim>(
+        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
   }
   // remove applied simEvent
   simEvents.pop();
@@ -167,31 +193,28 @@ void Simulation::updateConcentrations(double t) {
   }
 }
 
-Simulation::Simulation(model::Model &sbmlDoc)
-    : settings(&sbmlDoc.getSimulationSettings()),
-      data{&sbmlDoc.getSimulationData()},
-      imageSize(sbmlDoc.getGeometry().getImage().size()) {
-  sme::model::Model *modelToSimulate{&sbmlDoc};
+Simulation::Simulation(model::Model &model)
+    : model(model), settings(&model.getSimulationSettings()),
+      data{&model.getSimulationData()},
+      imageSize(model.getGeometry().getImage().size()) {
   if (data->timePoints.size() <= 1) {
     SPDLOG_INFO("starting new simulation");
     data->clear();
   } else {
-    SPDLOG_INFO("re-importing model with {} timepoints",
+    SPDLOG_INFO("continuing existing simulation with {} timepoints",
                 data->timePoints.size());
-    simModel = std::make_unique<sme::model::Model>();
-    simModel->importSBMLString(data->xmlModel);
-    modelToSimulate = simModel.get();
   }
-  initModel(sbmlDoc);
-  initEvents(sbmlDoc);
+  initModel();
+  initEvents();
   // init simulator
   if (settings->simulatorType == SimulatorType::DUNE &&
-      sbmlDoc.getGeometry().getMesh() != nullptr &&
-      sbmlDoc.getGeometry().getMesh()->isValid()) {
-    simulator = std::make_unique<DuneSim>(*modelToSimulate, compartmentIds);
+      model.getGeometry().getMesh() != nullptr &&
+      model.getGeometry().getMesh()->isValid()) {
+    simulator =
+        std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
   } else {
-    simulator = std::make_unique<PixelSim>(*modelToSimulate, compartmentIds,
-                                           compartmentSpeciesIds);
+    simulator = std::make_unique<PixelSim>(
+        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
   }
   if (simulator->errorMessage().empty()) {
     nCompletedTimesteps.store(data->timePoints.size());
@@ -279,12 +302,6 @@ std::size_t Simulation::doMultipleTimesteps(
       ++nCompletedTimesteps;
     }
   }
-
-  // write final concentrations to xml Model in data
-  sme::model::Model finalModel;
-  finalModel.importSBMLString(data->xmlModel);
-  applyConcsToModel(finalModel, nCompletedTimesteps - 1);
-  data->xmlModel = finalModel.getXml().toStdString();
   isRunning.store(false);
   return steps;
 }
@@ -353,13 +370,13 @@ std::vector<double> Simulation::getConcArray(std::size_t timeIndex,
   return c;
 }
 
-void Simulation::applyConcsToModel(model::Model &model,
+void Simulation::applyConcsToModel(model::Model &m,
                                    std::size_t timeIndex) const {
   for (std::size_t iCompartment = 0; iCompartment < compartmentIds.size();
        ++iCompartment) {
     const auto &speciesIds{getSpeciesIds(iCompartment)};
     for (std::size_t iSpecies = 0; iSpecies < speciesIds.size(); ++iSpecies) {
-      model.getSpecies().setSampledFieldConcentration(
+      m.getSpecies().setSampledFieldConcentration(
           speciesIds[iSpecies].c_str(),
           getConcArray(timeIndex, iCompartment, iSpecies));
     }

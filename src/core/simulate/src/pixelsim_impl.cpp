@@ -25,7 +25,8 @@ ReacEval::ReacEval(const model::Model &doc,
                    const std::vector<std::string> &speciesIDs,
                    const std::vector<std::string> &reactionIDs,
                    double reactionScaleFactor, bool doCSE, unsigned optLevel,
-                   bool timeDependent, bool spaceDependent) {
+                   bool timeDependent, bool spaceDependent,
+                   const std::map<std::string, double, std::less<>> &substitutions) {
   // construct reaction expressions and stoich matrix
   PdeScaleFactors pdeScaleFactors;
   pdeScaleFactors.reaction = reactionScaleFactor;
@@ -39,7 +40,8 @@ ReacEval::ReacEval(const model::Model &doc,
     extraVars.push_back(doc.getParameters().getSpatialCoordinates().x.id);
     extraVars.push_back(doc.getParameters().getSpatialCoordinates().y.id);
   }
-  Pde pde(&doc, speciesIDs, reactionIDs, {}, pdeScaleFactors, extraVars);
+  Pde pde(&doc, speciesIDs, reactionIDs, {}, pdeScaleFactors, extraVars, {},
+          substitutions);
   // add dt/dt = 1 reaction term, and t,x,y "species"
   auto sIds{speciesIDs};
   sIds.insert(sIds.end(), extraVars.cbegin(), extraVars.cend());
@@ -74,11 +76,11 @@ void SimCompartment::spatiallyAverageDcdt() {
   }
 }
 
-SimCompartment::SimCompartment(const model::Model &doc,
-                               const geometry::Compartment *compartment,
-                               std::vector<std::string> sIds, bool doCSE,
-                               unsigned optLevel, bool timeDependent,
-                               bool spaceDependent)
+SimCompartment::SimCompartment(
+    const model::Model &doc, const geometry::Compartment *compartment,
+    std::vector<std::string> sIds, bool doCSE, unsigned optLevel,
+    bool timeDependent, bool spaceDependent,
+    const std::map<std::string, double, std::less<>> &substitutions)
     : comp{compartment}, nPixels{compartment->nPixels()}, nSpecies{sIds.size()},
       compartmentId{compartment->getId()}, speciesIds{std::move(sIds)} {
   // get species in compartment
@@ -109,7 +111,7 @@ SimCompartment::SimCompartment(const model::Model &doc,
     reactionIDs = utils::toStdString(reacsInCompartment);
   }
   reacEval = ReacEval(doc, speciesIds, reactionIDs, 1.0, doCSE, optLevel,
-                      timeDependent, spaceDependent);
+                      timeDependent, spaceDependent, substitutions);
   if (timeDependent) {
     speciesIds.push_back("time");
     diffConstants.push_back(0);
@@ -373,33 +375,33 @@ PixelIntegratorError SimCompartment::calculateRKError(double epsilon) const {
   return err;
 }
 
-std::string SimCompartment::plotRKError(QImage& image, double epsilon, double max) const{
-  if(image.isNull()){
+std::string SimCompartment::plotRKError(QImage &image, double epsilon,
+                                        double max) const {
+  if (image.isNull()) {
     image = QImage(comp->getCompartmentImage().size(), QImage::Format_RGB32);
-    image.fill(qRgb(0,0,0));
+    image.fill(qRgb(0, 0, 0));
   }
-  std::size_t iSpecies{nSpecies+1};
+  std::size_t iSpecies{nSpecies + 1};
   for (std::size_t i = 0; i < conc.size(); ++i) {
     double localErr = std::abs(conc[i] - s2[i]);
     double localNorm = 0.5 * (conc[i] + s3[i] + epsilon);
-    double pixelIntensity{localErr/localNorm/max};
-    auto red{static_cast<int>(255.0*pixelIntensity)};
-    auto point{comp->getPixel(i/nSpecies)};
+    double pixelIntensity{localErr / localNorm / max};
+    auto red{static_cast<int>(255.0 * pixelIntensity)};
+    auto point{comp->getPixel(i / nSpecies)};
     auto oldRed{qRed(image.pixel(point))};
-    if(red > oldRed){
+    if (red > oldRed) {
       image.setPixel(point, qRgb(red, 0, 0));
-      if(red > 254){
+      if (red > 254) {
         // update index of species with largest error
         iSpecies = i % nSpecies;
       }
     }
   }
-  if(iSpecies < nSpecies){
+  if (iSpecies < nSpecies) {
     return speciesNames[iSpecies];
   }
   return {};
 }
-
 
 const std::string &SimCompartment::getCompartmentId() const {
   return compartmentId;
@@ -411,6 +413,11 @@ const std::vector<std::string> &SimCompartment::getSpeciesIds() const {
 
 const std::vector<double> &SimCompartment::getConcentrations() const {
   return conc;
+}
+
+void SimCompartment::setConcentrations(
+    const std::vector<double> &concentrations) {
+  conc = concentrations;
 }
 
 double
@@ -436,7 +443,8 @@ SimMembrane::SimMembrane(const model::Model &doc,
                          const geometry::Membrane *membrane_ptr,
                          SimCompartment *simCompA, SimCompartment *simCompB,
                          bool doCSE, unsigned optLevel, bool timeDependent,
-                         bool spaceDependent)
+                         bool spaceDependent,
+                         const std::map<std::string, double, std::less<>> &substitutions)
     : membrane(membrane_ptr), compA(simCompA), compB(simCompB) {
   if (timeDependent) {
     ++nExtraVars;
@@ -489,8 +497,9 @@ SimMembrane::SimMembrane(const model::Model &doc,
   // make vector of reaction IDs from membrane
   std::vector<std::string> reactionID =
       utils::toStdString(doc.getReactions().getIds(membrane->getId().c_str()));
-  reacEval = ReacEval(doc, speciesIds, reactionID, volOverL3 / pixelWidth,
-                      doCSE, optLevel, timeDependent, spaceDependent);
+  reacEval =
+      ReacEval(doc, speciesIds, reactionID, volOverL3 / pixelWidth, doCSE,
+               optLevel, timeDependent, spaceDependent, substitutions);
 }
 
 void SimMembrane::evaluateReactions() {
@@ -539,4 +548,4 @@ void SimMembrane::evaluateReactions() {
   }
 }
 
-} // namespace sme
+} // namespace sme::simulate

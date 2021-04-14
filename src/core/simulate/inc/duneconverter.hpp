@@ -6,6 +6,7 @@
 #include "simulate_options.hpp"
 #include <QString>
 #include <vector>
+#include <map>
 
 namespace sme {
 
@@ -21,9 +22,11 @@ namespace simulate {
 
 class DuneConverter {
 public:
-  explicit DuneConverter(const model::Model &model, bool forExternalUse = false,
-                         const QString &outputIniFile = {},
-                         int doublePrecision = 18);
+  explicit DuneConverter(
+      const model::Model &model,
+      const std::map<std::string, double, std::less<>> &substitutions = {},
+      bool forExternalUse = false, const QString &outputIniFile = {},
+      int doublePrecision = 18);
   QString getIniFile(std::size_t compartmentIndex = 0) const;
   const std::vector<QString> &getIniFiles() const;
   bool hasIndependentCompartments() const;
