@@ -133,7 +133,7 @@ void DuneSim::updatePixels() {
     const auto &gridview{
         pDuneImpl->grid->subDomain(static_cast<int>(comp.index))
             .leafGridView()};
-    SPDLOG_TRACE("compartment[{}]: {}", comp.duneIndex, comp.name);
+    SPDLOG_TRACE("compartment[{}]: {}", comp.index, comp.name);
     const auto &qpi{comp.qPointIndexer};
     std::vector<bool> ixAssigned(qpi.getNumPoints(), false);
     // get local coord for each pixel in each triangle

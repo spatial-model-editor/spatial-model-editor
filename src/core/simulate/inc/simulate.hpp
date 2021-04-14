@@ -31,6 +31,11 @@ namespace simulate {
 class BaseSim;
 enum class SimulatorType { DUNE, Pixel };
 
+struct SimEvent{
+  double time;
+  std::vector<std::string> ids;
+};
+
 class Simulation {
 private:
   std::unique_ptr<BaseSim> simulator;
@@ -50,7 +55,7 @@ private:
   std::atomic<bool> stopRequested{false};
   std::atomic<std::size_t> nCompletedTimesteps{0};
   std::unique_ptr<sme::model::Model> simModel;
-  std::queue<double> eventTimes;
+  std::queue<SimEvent> simEvents;
   void initModel(const model::Model &model);
   void initEvents(model::Model &model);
   void applyNextEvent();
