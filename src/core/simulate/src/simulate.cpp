@@ -46,46 +46,59 @@ void Simulation::initModel(const model::Model &model) {
 }
 
 void Simulation::initEvents(model::Model &model) {
+  simEvents = {};
   double t0{0.0};
   if (!data->timePoints.empty()) {
     t0 = data->timePoints.back();
   }
   const auto &events{model.getEvents()};
   data->xmlModel = model.getXml().toStdString();
-  std::vector<double> times;
+  std::vector<SimEvent> evs;
   for (const auto &id : events.getIds()) {
     double t{events.getTime(id)};
     SPDLOG_INFO("  - event '{}' at time {}", id.toStdString(), t);
     if (t >= t0) {
-      times.push_back(t);
+      if (auto iter{std::find_if(evs.begin(), evs.end(),
+                                 [t](const auto &ev) { return ev.time == t; })};
+          iter != evs.end()) {
+        SPDLOG_INFO("    -> adding to existing SimEvent at time {}",
+                    iter->time);
+        iter->ids.push_back(id.toStdString());
+      } else {
+        evs.push_back({t, {id.toStdString()}});
+        SPDLOG_INFO("    -> adding new SimEvent at time {}", evs.back().time);
+      }
     } else {
       SPDLOG_INFO("    -> ignoring past event (t0 = {})", t0);
     }
   }
-  std::sort(times.begin(), times.end());
-  std::unique(times.begin(), times.end());
-  for (auto t : times) {
-    SPDLOG_INFO("Adding event time {}", t);
-    eventTimes.push(t);
+  std::sort(evs.begin(), evs.end(),
+            [](const auto &a, const auto &b) { return a.time < b.time; });
+  for (auto &ev : evs) {
+    SPDLOG_INFO("Adding SimEvent at time {}", ev.time);
+    for (const auto &id : ev.ids) {
+      SPDLOG_INFO("  - '{}'", id);
+    }
+    simEvents.push(std::move(ev));
   }
   // add a null event at infinite time
-  eventTimes.push(std::numeric_limits<double>::max());
+  simEvents.push(
+      {std::numeric_limits<double>::max(), {"null_infinite_time_event"}});
 }
 
 void Simulation::applyNextEvent() {
-  SPDLOG_INFO("Applying event(s) at time {}", eventTimes.front());
+  const auto &ev{simEvents.front()};
+  SPDLOG_INFO("Applying SimEvent at time {}", ev.time);
   // make new copy of model
   simModel = std::make_unique<sme::model::Model>();
   simModel->importSBMLString(data->xmlModel);
   // apply latest simulation concentrations to model
-  applyConcsToModel(*simModel.get(), nCompletedTimesteps - 1);
+  applyConcsToModel(*simModel.get(), data->concentration.size() - 1);
   // apply events to model
   auto &events{simModel->getEvents()};
-  for (const auto &id : events.getIds()) {
-    if (events.getTime(id) == eventTimes.front()) {
-      SPDLOG_INFO("  - event '{}'", id.toStdString());
-      events.applyEvent(id);
-    }
+  for (const auto &id : ev.ids) {
+    SPDLOG_INFO("  - event '{}'", id);
+    events.applyEvent(id.c_str());
   }
   // export this model to xml for applying next event
   data->xmlModel = simModel->getXml().toStdString();
@@ -101,8 +114,8 @@ void Simulation::applyNextEvent() {
                                            compartmentSpeciesIds,
                                            simulatorOptions.pixel);
   }
-  // remove event time
-  eventTimes.pop();
+  // remove applied simEvent
+  simEvents.pop();
 }
 
 static std::vector<AvgMinMax>
@@ -162,13 +175,18 @@ Simulation::Simulation(model::Model &sbmlDoc, SimulatorType simType,
       simulatorOptions(options), data{&sbmlDoc.getSimulationData()},
       imageSize(sbmlDoc.getGeometry().getImage().size()) {
   sme::model::Model *modelToSimulate{&sbmlDoc};
-  if (!data->timePoints.empty()) {
+  if (data->timePoints.size() <= 1) {
+    SPDLOG_INFO("starting new simulation");
+    data->clear();
+  } else {
+    SPDLOG_INFO("re-importing model with {} timepoints",
+                data->timePoints.size());
     simModel = std::make_unique<sme::model::Model>();
     simModel->importSBMLString(data->xmlModel);
     modelToSimulate = simModel.get();
   }
-  initModel(*modelToSimulate);
-  initEvents(*modelToSimulate);
+  initModel(sbmlDoc);
+  initEvents(sbmlDoc);
   // init simulator
   if (simulatorType == SimulatorType::DUNE &&
       sbmlDoc.getGeometry().getMesh() != nullptr &&
@@ -225,30 +243,37 @@ std::size_t Simulation::doMultipleTimesteps(
           remaining_timeout_ms = 0.0;
         }
       }
-      if (data->timePoints.back() == eventTimes.front()) {
-        SPDLOG_INFO("Apply event at {}", eventTimes.front());
-        // event occurs before step: don't remove concentrations
+      double nextEventTime{simEvents.front().time};
+      // if an event would occur within this fraction of a timestep then apply
+      // it now, rather than doing a minuscule extra simulation step
+      constexpr double fractionTimestepEpsilon{1e-12};
+      double currentTime{data->timePoints.back()};
+      while (std::abs(currentTime - nextEventTime) / time <
+             fractionTimestepEpsilon) {
+        SPDLOG_INFO("t={}, applying event at {}", currentTime, nextEventTime);
         applyNextEvent();
+        nextEventTime = simEvents.front().time;
       }
-      if (data->timePoints.back() + time > eventTimes.front()) {
-        // event occurs during step: need to split the step in two & apply event
-        // in between
-        double dt0{eventTimes.front() - data->timePoints.back()};
-        double dt1{data->timePoints.back() + time - eventTimes.front()};
-        SPDLOG_INFO("Partial pre-event step of {} to apply event at {}", dt0,
-                    eventTimes.front());
-        steps += simulator->run(dt0, remaining_timeout_ms);
+      double currentTimeStep{time};
+      while ((currentTime + currentTimeStep - nextEventTime) / time >
+             0.1 * fractionTimestepEpsilon) {
+        // event would occur during this step: do a smaller sub-step until event
+        double subTimeStep{nextEventTime - currentTime};
+        SPDLOG_INFO("Sub-step of {} to apply event at {}", subTimeStep,
+                    nextEventTime);
+        steps += simulator->run(subTimeStep, remaining_timeout_ms);
         // update intermediate concentrations to be able to apply them to model
-        updateConcentrations(data->timePoints.back() + dt0);
+        updateConcentrations(currentTime + subTimeStep);
         // apply event
         applyNextEvent();
+        nextEventTime = simEvents.front().time;
         // remove intermediate concentrations
         data->pop_back();
-        SPDLOG_INFO("Partial post-event step of {}", dt1);
-        steps += simulator->run(dt1, remaining_timeout_ms);
-      } else {
-        steps += simulator->run(time, remaining_timeout_ms);
+        currentTime += subTimeStep;
+        currentTimeStep -= subTimeStep;
+        SPDLOG_INFO("Remaining time step: {}", currentTimeStep);
       }
+      steps += simulator->run(currentTimeStep, remaining_timeout_ms);
       if (!simulator->errorMessage().empty() || stopRequested.load()) {
         isRunning.store(false);
         return steps;

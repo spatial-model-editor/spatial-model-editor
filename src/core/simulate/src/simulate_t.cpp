@@ -1584,3 +1584,63 @@ SCENARIO("doMultipleTimesteps vs doTimesteps",
     REQUIRE(rel_diff(data1, data2, i, i) == dbl_approx(0.0));
   }
 }
+
+SCENARIO("Events",
+         "[core/simulate/simulate][core/simulate][core][simulate][events]") {
+  auto m1{getVerySimpleModel()};
+  // disable all reactions
+  for (const auto &id : {"A_uptake", "A_transport", "A_B_conversion",
+                         "B_transport", "B_excretion"}) {
+    m1.getReactions().remove(id);
+  }
+  // add a bunch of events that set species concentrations so we can easily
+  // check they were done correctly
+  auto &events{m1.getEvents()};
+  events.add("eB_c1a", "B_c1");
+  events.setExpression("eB_c1a", "9");
+  events.setTime("eB_c1a", 0.07);
+  events.add("eB_c1b", "B_c1");
+  events.setExpression("eB_c1b", "2");
+  events.setTime("eB_c1b", 0.12);
+  events.add("eB_c2", "B_c2");
+  events.setExpression("eB_c2", "27");
+  events.setTime("eB_c2", 0.12);
+  events.add("eA_c3a", "A_c3");
+  events.setExpression("eA_c3a", "666");
+  events.setTime("eA_c3a", 0.199999);
+  events.add("eA_c3b", "A_c3");
+  events.setExpression("eA_c3b", "123");
+  // will be applied *during* 0.1->0.2 timestep: visible in 0.2 timestep
+  events.setTime("eA_c3b", 0.1999999);
+  events.add("eA_c2", "A_c2");
+  events.setExpression("eA_c2", "6");
+  // applied *at start of* 0.1-0.2 timestep: visible in 0.2 timestep
+  events.setTime("eA_c2", 0.1);
+  simulate::Simulation sim(m1);
+  sim.doTimesteps(0.1, 3);
+  const auto &data{m1.getSimulationData()};
+  // t=0.1
+  REQUIRE(data.timePoints[1] == dbl_approx(0.1));
+  // B_c1=9
+  REQUIRE(data.concentration[1][0][3] == dbl_approx(9.0));
+  REQUIRE(data.concentration[1][0][16] == dbl_approx(9.0));
+  REQUIRE(data.concentration[1][0][38] == dbl_approx(9.0));
+  // t=0.2
+  REQUIRE(data.timePoints[2] == dbl_approx(0.2));
+  // B_c1=2
+  REQUIRE(data.concentration[2][0][3] == dbl_approx(2.0));
+  REQUIRE(data.concentration[2][0][16] == dbl_approx(2.0));
+  REQUIRE(data.concentration[2][0][38] == dbl_approx(2.0));
+  // B_c2=27 (odd indices)
+  REQUIRE(data.concentration[2][1][183] == dbl_approx(27));
+  REQUIRE(data.concentration[2][1][197] == dbl_approx(27));
+  REQUIRE(data.concentration[2][1][203] == dbl_approx(27));
+  // A_c2=6 (even indices)
+  REQUIRE(data.concentration[2][1][4] == dbl_approx(6.0));
+  REQUIRE(data.concentration[2][1][16] == dbl_approx(6.0));
+  REQUIRE(data.concentration[2][1][40] == dbl_approx(6.0));
+  // A_c3=123 (even indices)
+  REQUIRE(data.concentration[2][2][4] == dbl_approx(123.0));
+  REQUIRE(data.concentration[2][2][16] == dbl_approx(123.0));
+  REQUIRE(data.concentration[2][2][40] == dbl_approx(123.0));
+}
