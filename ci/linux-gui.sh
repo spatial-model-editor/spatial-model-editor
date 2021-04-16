@@ -42,6 +42,9 @@ time ./benchmark/benchmark 1
 ldd src/spatial-model-editor
 ldd cli/spatial-cli
 
+# display version
+./src/spatial-model-editor -v
+
 # move binaries to artefacts/
 cd ..
 mkdir artefacts
