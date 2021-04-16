@@ -17,19 +17,19 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   waitFor(&tab);
   ModalWidgetTimer mwt;
   // get pointers to widgets within tab
-  auto *txtSimLength = tab.findChild<QLineEdit *>("txtSimLength");
+  auto *txtSimLength{tab.findChild<QLineEdit *>("txtSimLength")};
   REQUIRE(txtSimLength != nullptr);
-  auto *txtSimInterval = tab.findChild<QLineEdit *>("txtSimInterval");
+  auto *txtSimInterval{tab.findChild<QLineEdit *>("txtSimInterval")};
   REQUIRE(txtSimInterval != nullptr);
-  auto *btnSimulate = tab.findChild<QPushButton *>("btnSimulate");
+  auto *btnSimulate{tab.findChild<QPushButton *>("btnSimulate")};
   REQUIRE(btnSimulate != nullptr);
-  auto *btnResetSimulation = tab.findChild<QPushButton *>("btnResetSimulation");
+  auto *btnResetSimulation{tab.findChild<QPushButton *>("btnResetSimulation")};
   REQUIRE(btnResetSimulation != nullptr);
-  auto *hslideTime = tab.findChild<QSlider *>("hslideTime");
+  auto *hslideTime{tab.findChild<QSlider *>("hslideTime")};
   REQUIRE(hslideTime != nullptr);
-  auto *btnExport = tab.findChild<QPushButton *>("btnExport");
+  auto *btnExport{tab.findChild<QPushButton *>("btnExport")};
   REQUIRE(btnExport != nullptr);
-  auto *btnDisplayOptions = tab.findChild<QPushButton *>("btnDisplayOptions");
+  auto *btnDisplayOptions{tab.findChild<QPushButton *>("btnDisplayOptions")};
   REQUIRE(btnDisplayOptions != nullptr);
 
   if (QFile f(":/models/ABtoC.xml"); f.open(QIODevice::ReadOnly)) {
@@ -92,19 +92,6 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   sendMouseClick(btnSimulate);
   REQUIRE(mwt.getResult() == invalidMessage);
 
-  sendKeyEvents(txtSimLength, {"Backspace", "1"});
-  // sim interval larger than sim length
-  sendKeyEvents(txtSimInterval, {";", "9", "9", "9"});
-  mwt.start();
-  sendMouseClick(btnSimulate);
-  REQUIRE(mwt.getResult() == invalidMessage);
-
-  sendKeyEvents(txtSimLength, {";", "2", "0"});
-  // mismatch in number of elements in each vector
-  mwt.start();
-  sendMouseClick(btnSimulate);
-  REQUIRE(mwt.getResult() == invalidMessage);
-
   // do valid multiple timestep simulation: 2x0.5, 2x0.25
   sendKeyEvents(txtSimLength,
                 {"Backspace", "Backspace", "Backspace", "Backspace",
@@ -112,13 +99,15 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
                  "Backspace", "1", ";", "0", ".", "5"});
   sendKeyEvents(txtSimInterval,
                 {"Backspace", "Backspace", "Backspace", "Backspace",
-                 "Backspace", "Backspace", "Backspace", "0", ".", "5", ";", "0",
-                 ".", "2", "5"});
+                 "Backspace", "Backspace", "Backspace", "0", ".", "4", "9", "9", "9", ";", "0",
+                 ".", "2", "5", "0", "1"});
   sendMouseClick(btnSimulate);
   REQUIRE(btnSimulate->isEnabled() == false);
   while (!btnSimulate->isEnabled()) {
     wait(100);
   }
+  // image intervals -> closest valid values (i.e. integer number of steps)
+  REQUIRE(txtSimInterval->text() == "0.5;0.25");
   REQUIRE(hslideTime->isEnabled() == true);
   REQUIRE(hslideTime->maximum() == 4);
   REQUIRE(hslideTime->minimum() == 0);

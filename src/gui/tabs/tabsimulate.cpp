@@ -187,12 +187,12 @@ void TabSimulate::setOptions(const sme::simulate::Options &options) {
   loadModelData();
 }
 
-static std::optional<std::vector<std::pair<std::size_t, double>>>
-parseSimulationTimes(const QString &simLengthText,
-                     const QString &simIntervalText) {
+std::optional<std::vector<std::pair<std::size_t, double>>>
+TabSimulate::parseSimulationTimes() {
   std::vector<std::pair<std::size_t, double>> times;
-  auto simLengths{simLengthText.split(";")};
-  auto simDtImages{simIntervalText.split(";")};
+  QString imageIntervalsText;
+  auto simLengths{ui->txtSimLength->text().split(";")};
+  auto simDtImages{ui->txtSimInterval->text().split(";")};
   if (simLengths.empty() || simDtImages.empty()) {
     return {};
   }
@@ -204,25 +204,31 @@ parseSimulationTimes(const QString &simLengthText,
     double simLength{simLengths[i].toDouble(&validSimLengthDbl)};
     bool validDtImageDbl;
     double dt{simDtImages[i].toDouble(&validDtImageDbl)};
-    if (!validDtImageDbl || !validSimLengthDbl || dt > simLength) {
+    if (!validDtImageDbl || !validSimLengthDbl) {
       return {};
     }
-    int nImages{static_cast<int>(simLength / dt)};
+    int nImages{static_cast<int>(std::round(simLength / dt))};
+    if (nImages < 1) {
+      nImages = 1;
+    }
+    dt = simLength / static_cast<double>(nImages);
     SPDLOG_DEBUG("{} x {}", nImages, dt);
     times.push_back({nImages, dt});
+    imageIntervalsText.append(QString::number(dt));
+    imageIntervalsText.append(";");
   }
+  imageIntervalsText.chop(1);
+  ui->txtSimInterval->setText(imageIntervalsText);
   return times;
 }
 
 void TabSimulate::btnSimulate_clicked() {
-  auto simulationTimes{parseSimulationTimes(ui->txtSimLength->text(),
-                                            ui->txtSimInterval->text())};
+  auto simulationTimes{parseSimulationTimes()};
   if (!simulationTimes.has_value()) {
     QMessageBox::warning(this, "Invalid simulation length or image interval",
                          "Invalid simulation length or image interval");
     return;
   }
-
   // display modal progress dialog box
   progressDialog->setWindowModality(Qt::WindowModal);
   progressDialog->setValue(time.size() - 1);
