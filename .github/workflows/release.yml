@@ -13,6 +13,9 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: 'true'
+    - name: Set "latest" version number
+      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/latest')
+      run: ./ci/set-latest-version.sh ${GITHUB_SHA}
     - name: Cache ccache
       uses: actions/cache@v2
       with:
@@ -42,6 +45,9 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: 'true'
+      - name: Set "latest" version number
+        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/latest')
+        run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - name: Cache ccache
         uses: actions/cache@v2
         with:
@@ -74,6 +80,9 @@ jobs:
           msystem: MINGW64
           update: true
           install: mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache make
+      - name: Set "latest" version number
+        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/latest')
+        run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - name: Cache ccache
         uses: actions/cache@v2
         with:

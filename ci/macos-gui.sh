@@ -48,6 +48,9 @@ mkdir spatial-cli
 cp cli/spatial-cli spatial-cli/.
 hdiutil create spatial-cli -fs HFS+ -srcfolder spatial-cli
 
+# display version
+./src/spatial-model-editor.app/Contents/MacOS/spatial-model-editor -v
+
 # move binaries to artefacts/
 cd ..
 mkdir artefacts
