@@ -1,12 +1,12 @@
 #include "tabreactions.hpp"
-#include <QInputDialog>
-#include <QMessageBox>
-#include <QSpinBox>
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "model.hpp"
 #include "qlabelmousetracker.hpp"
 #include "ui_tabreactions.h"
+#include <QInputDialog>
+#include <QMessageBox>
+#include <QDoubleSpinBox>
 
 TabReactions::TabReactions(sme::model::Model &m,
                            QLabelMouseTracker *mouseTracker, QWidget *parent)
@@ -40,6 +40,7 @@ TabReactions::~TabReactions() = default;
 
 void TabReactions::loadModelData(const QString &selection) {
   currentReacId.clear();
+  ui->lblReactionScheme->clear();
   ui->cmbReactionLocation->clear();
   ui->listReactionParams->clear();
   enableWidgets(false);
@@ -86,6 +87,7 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
                                                     QTreeWidgetItem *previous) {
   Q_UNUSED(previous);
   ui->txtReactionName->clear();
+  ui->lblReactionScheme->clear();
   ui->listReactionSpecies->clear();
   ui->listReactionParams->setRowCount(0);
   ui->listReactionParams->setColumnCount(3);
@@ -156,6 +158,7 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
   // display reaction information
   currentReacId = reactionId;
   ui->txtReactionName->setText(model.getReactions().getName(currentReacId));
+  ui->lblReactionScheme->setText(model.getReactions().getScheme(currentReacId));
   ui->cmbReactionLocation->setCurrentIndex(locationIndex);
   // reset variables to only built-in functions
   ui->txtReactionRate->resetToDefaultFunctions();
@@ -183,21 +186,27 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
       ui->txtReactionRate->addVariable(sId.toStdString(), sName.toStdString());
       auto *item = new QTreeWidgetItem;
       item->setText(0, sName);
-      auto *spinBox = new QSpinBox(ui->listReactionSpecies);
-      spinBox->setRange(-99, 99);
+      auto *spinBox = new QDoubleSpinBox(ui->listReactionSpecies);
+      spinBox->setSingleStep(1.0);
+      spinBox->setDecimals(14);
+      spinBox->setRange(std::numeric_limits<double>::lowest(),
+                        std::numeric_limits<double>::max());
       comp->addChild(item);
       ui->listReactionSpecies->setItemWidget(item, 1, spinBox);
-      connect(spinBox, qOverload<int>(&QSpinBox::valueChanged),
-              [item, &reacs = model.getReactions(), reactionId, sId](int i) {
-                if (i == 0) {
+      auto *schemeLabel{ui->lblReactionScheme};
+      connect(spinBox, qOverload<double>(&QDoubleSpinBox::valueChanged),
+              [schemeLabel, item, &reacs = model.getReactions(), reactionId,
+               sId](double s) {
+                if (s == 0) {
                   item->setData(0, Qt::BackgroundRole, {});
                   item->setData(1, Qt::BackgroundRole, {});
                 } else {
-                  QColor col = i > 0 ? Qt::green : Qt::red;
+                  QColor col = s > 0 ? Qt::green : Qt::red;
                   item->setData(0, Qt::BackgroundRole, QBrush(col));
                   item->setData(1, Qt::BackgroundRole, QBrush(col));
                 }
-                reacs.setSpeciesStoichiometry(reactionId, sId, i);
+                reacs.setSpeciesStoichiometry(reactionId, sId, s);
+                schemeLabel->setText(reacs.getScheme(reactionId));
               });
       spinBox->setValue(
           model.getReactions().getSpeciesStoichiometry(reactionId, sId));
