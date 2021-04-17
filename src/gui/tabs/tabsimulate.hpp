@@ -3,10 +3,10 @@
 #pragma once
 #include "dialogdisplayoptions.hpp"
 #include "plotwrapper.hpp"
+#include "simulate.hpp"
 #include <QWidget>
 #include <future>
 #include <memory>
-#include "simulate.hpp"
 
 namespace Ui {
 class TabSimulate;
@@ -56,6 +56,8 @@ private:
   QTimer plotRefreshTimer;
   QProgressDialog *progressDialog;
 
+  std::optional<std::vector<std::pair<std::size_t, double>>>
+  parseSimulationTimes();
   void btnSimulate_clicked();
   void btnSliceImage_clicked();
   void btnExport_clicked();
