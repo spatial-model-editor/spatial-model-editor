@@ -287,6 +287,56 @@ QString ModelReactions::getName(const QString &id) const {
   return names[i];
 }
 
+QString ModelReactions::getScheme(const QString& id) const{
+  const auto *reac{sbmlModel->getReaction(id.toStdString())};
+  if (reac == nullptr) {
+    SPDLOG_WARN("Reaction '{}' not found", id.toStdString());
+    return {};
+  }
+  QString lhs;
+  const unsigned numReactants{reac->getNumReactants()};
+  for(unsigned i=0; i<numReactants; ++i){
+    const auto *r{reac->getReactant(i)};
+    const auto& sName{sbmlModel->getSpecies(r->getSpecies())->getName()};
+    if(double stoich{r->getStoichiometry()}; stoich != 0){
+      if(stoich == 1.0){
+      } else if (std::floor(stoich) == stoich){
+        lhs.append(QString::number(static_cast<int>(stoich)));
+        lhs.append(" ");
+      } else {
+        lhs.append(QString::number(stoich));
+        lhs.append(" ");
+      }
+      lhs.append(sName.c_str());
+      lhs.append(" + ");
+    }
+  }
+  lhs.chop(3);
+  QString rhs;
+  const unsigned numProducts {reac->getNumProducts()};
+  for(unsigned i=0; i<numProducts; ++i){
+    const auto *r{reac->getProduct(i)};
+    const auto& sName{sbmlModel->getSpecies(r->getSpecies())->getName()};
+    if(double stoich{r->getStoichiometry()}; stoich != 0){
+      if(stoich == 1.0){
+      } else if (std::floor(stoich) == stoich){
+        rhs.append(QString::number(static_cast<int>(stoich)));
+        rhs.append(" ");
+      } else {
+        rhs.append(QString::number(stoich));
+        rhs.append(" ");
+      }
+      rhs.append(sName.c_str());
+      rhs.append(" + ");
+    }
+  }
+  rhs.chop(3);
+  if(lhs.isEmpty() && rhs.isEmpty()){
+    return {};
+  }
+  return QString("%1 -> %2").arg(lhs, rhs);
+}
+
 void ModelReactions::setLocation(const QString &id, const QString &locationId) {
   auto *reac = sbmlModel->getReaction(id.toStdString());
   if (reac == nullptr) {
@@ -307,27 +357,27 @@ QString ModelReactions::getLocation(const QString &id) const {
   return reac->getCompartment().c_str();
 }
 
-int ModelReactions::getSpeciesStoichiometry(const QString &id,
-                                            const QString &speciesId) const {
-  const auto *reac = sbmlModel->getReaction(id.toStdString());
-  std::string sId = speciesId.toStdString();
-  int stoichiometry = 0;
+double ModelReactions::getSpeciesStoichiometry(const QString &id,
+                                               const QString &speciesId) const {
+  const auto *reac{sbmlModel->getReaction(id.toStdString())};
+  std::string sId{speciesId.toStdString()};
+  double stoichiometry{0};
   if (const auto *product = reac->getProduct(sId); product != nullptr) {
-    stoichiometry += static_cast<int>(product->getStoichiometry());
+    stoichiometry += product->getStoichiometry();
   }
   if (const auto *reactant = reac->getReactant(sId); reactant != nullptr) {
-    stoichiometry -= static_cast<int>(reactant->getStoichiometry());
+    stoichiometry -= reactant->getStoichiometry();
   }
   return stoichiometry;
 }
 
 void ModelReactions::setSpeciesStoichiometry(const QString &id,
                                              const QString &speciesId,
-                                             int stoichiometry) {
+                                             double stoichiometry) {
   hasUnsavedChanges = true;
-  auto *reac = sbmlModel->getReaction(id.toStdString());
-  std::string sId = speciesId.toStdString();
-  const auto *spec = sbmlModel->getSpecies(sId);
+  auto *reac{sbmlModel->getReaction(id.toStdString())};
+  std::string sId{speciesId.toStdString()};
+  const auto *spec{sbmlModel->getSpecies(sId)};
   SPDLOG_TRACE("Reaction '{}', Species '{}', Stoichiometry {}", reac->getId(),
                spec->getId(), stoichiometry);
   if (std::unique_ptr<libsbml::SpeciesReference> rmProduct(
@@ -341,23 +391,23 @@ void ModelReactions::setSpeciesStoichiometry(const QString &id,
     SPDLOG_TRACE("  - removed Reactant '{}'", rmReactant->getSpecies());
   }
   if (stoichiometry > 0) {
-    reac->addProduct(spec, static_cast<double>(stoichiometry));
+    reac->addProduct(spec, stoichiometry);
     SPDLOG_TRACE("  - adding Product '{}' with stoichiometry {}", spec->getId(),
                  stoichiometry);
   }
   if (stoichiometry < 0) {
-    reac->addReactant(spec, static_cast<double>(-stoichiometry));
+    reac->addReactant(spec, -stoichiometry);
     SPDLOG_TRACE("  - adding Reactant '{}' with stoichiometry {}",
                  spec->getId(), -stoichiometry);
   }
 }
 
 QString ModelReactions::getRateExpression(const QString &id) const {
-  const auto *reac = sbmlModel->getReaction(id.toStdString());
+  const auto *reac{sbmlModel->getReaction(id.toStdString())};
   if (reac == nullptr) {
     return {};
   }
-  const auto *kin = reac->getKineticLaw();
+  const auto *kin{reac->getKineticLaw()};
   if (kin == nullptr) {
     return {};
   }

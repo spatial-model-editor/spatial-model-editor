@@ -38,12 +38,13 @@ public:
   void removeAllInvolvingSpecies(const QString &speciesId);
   QString setName(const QString &id, const QString &name);
   QString getName(const QString &id) const;
+  QString getScheme(const QString& id) const;
   void setLocation(const QString &id, const QString &locationId);
   QString getLocation(const QString &id) const;
-  int getSpeciesStoichiometry(const QString &id,
+  double getSpeciesStoichiometry(const QString &id,
                               const QString &speciesId) const;
   void setSpeciesStoichiometry(const QString &id, const QString &speciesId,
-                               int stoichiometry);
+                               double stoichiometry);
   QString getRateExpression(const QString &id) const;
   void setRateExpression(const QString &id, const QString &expression);
   QStringList getParameterIds(const QString &id) const;

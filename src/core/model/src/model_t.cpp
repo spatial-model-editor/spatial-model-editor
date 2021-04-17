@@ -297,9 +297,10 @@ SCENARIO("SBML: import SBML level 2 document",
       REQUIRE(reacs.getIds("compartment0")[0] == "reac1");
       REQUIRE(reacs.getName("reac1") == "reac1");
       REQUIRE(reacs.getLocation("reac1") == "compartment0");
-      REQUIRE(reacs.getSpeciesStoichiometry("reac1", "spec1c0") == 1);
-      REQUIRE(reacs.getSpeciesStoichiometry("reac1", "spec0c0") == -1);
+      REQUIRE(reacs.getSpeciesStoichiometry("reac1", "spec1c0") == dbl_approx(1));
+      REQUIRE(reacs.getSpeciesStoichiometry("reac1", "spec0c0") == dbl_approx(-1));
       REQUIRE(reacs.getRateExpression("reac1") == "5 * spec0c0 / compartment0");
+      REQUIRE(reacs.getScheme("reac1") == "spec0c0 -> spec1c0");
     }
     WHEN("exportSBMLFile called") {
       THEN("exported file is a SBML level (3,2) document with spatial "
@@ -551,14 +552,15 @@ SCENARIO("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
         REQUIRE(s.getReactions().getIds("comp").size() == 1);
         REQUIRE(s.getReactions().getIds("comp")[0] == "r1");
         REQUIRE(s.getReactions().getName("r1") == "r1");
-        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "C") == 1);
-        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "A") == -1);
-        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "B") == -1);
+        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "C") == dbl_approx(1));
+        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "A") ==  dbl_approx(-1));
+        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "B") ==  dbl_approx(-1));
         REQUIRE(s.getReactions().getParameterIds("r1").size() == 1);
         REQUIRE(s.getReactions().getParameterName("r1", "k1") == "k1");
         REQUIRE(s.getReactions().getParameterValue("r1", "k1") ==
                 dbl_approx(0.1));
         REQUIRE(s.getReactions().getRateExpression("r1") == "A * B * k1");
+        REQUIRE(s.getReactions().getScheme("r1") == "A + B -> C");
       }
       THEN("species have correct colours") {
         REQUIRE(s.getSpecies().getColour("A") == 0xffe60003);
@@ -668,7 +670,7 @@ SCENARIO("SBML: very-simple-model.xml",
       s.getReactions().setName("re_ac1", "new Name");
       s.getReactions().setLocation("re_ac1", "c3");
       s.getReactions().setSpeciesStoichiometry("re_ac1", "A_c3", 1);
-      s.getReactions().setSpeciesStoichiometry("re_ac1", "B_c3", -2);
+      s.getReactions().setSpeciesStoichiometry("re_ac1", "B_c3", -2.0123);
       s.getReactions().addParameter("re_ac1", "const 1", 0.2);
       s.getReactions().setRateExpression("re_ac1",
                                          "0.2 + A_c3 * B_c3 * const_1");
@@ -676,8 +678,9 @@ SCENARIO("SBML: very-simple-model.xml",
       REQUIRE(s.getReactions().getLocation("re_ac1") == "c3");
       REQUIRE(s.getReactions().getRateExpression("re_ac1") ==
               "0.2 + A_c3 * B_c3 * const_1");
-      REQUIRE(s.getReactions().getSpeciesStoichiometry("re_ac1", "A_c3") == 1);
-      REQUIRE(s.getReactions().getSpeciesStoichiometry("re_ac1", "B_c3") == -2);
+      REQUIRE(s.getReactions().getSpeciesStoichiometry("re_ac1", "A_c3") ==  dbl_approx(1));
+      REQUIRE(s.getReactions().getSpeciesStoichiometry("re_ac1", "B_c3") ==  dbl_approx(-2.0123));
+      REQUIRE(s.getReactions().getScheme("re_ac1") == "2.0123 B_nucl -> A_nucl");
     }
     WHEN("change reaction location") {
       REQUIRE(s.getReactions().getIds("c2").size() == 0);

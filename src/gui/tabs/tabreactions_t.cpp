@@ -23,6 +23,8 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
   auto *btnAddReaction = tab.findChild<QPushButton *>("btnAddReaction");
   auto *btnRemoveReaction = tab.findChild<QPushButton *>("btnRemoveReaction");
   auto *txtReactionName = tab.findChild<QLineEdit *>("txtReactionName");
+  auto *lblReactionScheme{tab.findChild<QLabel *>("lblReactionScheme")};
+  REQUIRE(lblReactionScheme != nullptr);
   auto *cmbReactionLocation = tab.findChild<QComboBox *>("cmbReactionLocation");
   auto *listReactionSpecies =
       tab.findChild<QTreeWidget *>("listReactionSpecies");
@@ -50,6 +52,7 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     REQUIRE(listReactions->topLevelItem(4)->childCount() == 2);
     REQUIRE(listReactions->currentItem()->text(0) == "A to B conversion");
     REQUIRE(listReactions->currentItem()->parent()->text(0) == "Nucleus");
+    REQUIRE(lblReactionScheme->text() == "A_nucl -> B_nucl");
     // edit reaction name
     txtReactionName->setFocus();
     sendKeyEvents(txtReactionName, {" ", "!", "Enter"});
@@ -85,6 +88,7 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     REQUIRE(listReactionParams->rowCount() == 0);
     REQUIRE(sbmlDoc.getReactions().getIds("c3").size() == 2);
     REQUIRE(sbmlDoc.getReactions().getName("reacQ") == "reacQ!");
+    REQUIRE(lblReactionScheme->text() == "");
     // add & edit reaction params
     mwt.addUserAction({"y"});
     mwt.start();

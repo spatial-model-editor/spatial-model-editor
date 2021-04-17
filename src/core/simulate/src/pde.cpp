@@ -121,9 +121,8 @@ Reaction::getStoichMatrixRow(const model::Model *doc,
   bool isReaction = false;
   for (const auto &speciesID : speciesIDs) {
     auto speciesName = doc->getSpecies().getName(speciesID.c_str());
-    double stoichCoeff =
-        static_cast<double>(doc->getReactions().getSpeciesStoichiometry(
-            reacId.c_str(), speciesID.c_str()));
+    double stoichCoeff{doc->getReactions().getSpeciesStoichiometry(
+        reacId.c_str(), speciesID.c_str())};
     SPDLOG_DEBUG("product '{}'", speciesID);
     auto speciesIndex = getSpeciesIndex(doc, speciesID, speciesIDs);
     if (speciesIndex) {

@@ -99,8 +99,10 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
                  "Backspace", "1", ";", "0", ".", "5"});
   sendKeyEvents(txtSimInterval,
                 {"Backspace", "Backspace", "Backspace", "Backspace",
-                 "Backspace", "Backspace", "Backspace", "0", ".", "4", "9", "9", "9", ";", "0",
-                 ".", "2", "5", "0", "1"});
+                 "Backspace", "Backspace", "Backspace", "0",
+                 ".",         "4",         "9",         "9",
+                 "9",         ";",         "0",         ".",
+                 "2",         "5",         "0",         "1"});
   sendMouseClick(btnSimulate);
   REQUIRE(btnSimulate->isEnabled() == false);
   while (!btnSimulate->isEnabled()) {
