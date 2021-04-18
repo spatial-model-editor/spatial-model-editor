@@ -18,6 +18,7 @@
 #include "model_species.hpp"
 #include "model_units.hpp"
 #include "simulate.hpp"
+#include "simulate_options.hpp"
 #include "serialization.hpp"
 #include <QColor>
 #include <QImage>
@@ -58,7 +59,7 @@ struct SpeciesGeometry {
 class Model {
 private:
   std::unique_ptr<libsbml::SBMLDocument> doc;
-  sme::utils::SmeFile smeFile;
+  sme::utils::SmeFileContents smeFileContents;
   bool isValid{false};
   QString currentFilename;
 
@@ -106,6 +107,9 @@ public:
   ModelMath &getMath();
   const ModelMath &getMath() const;
   simulate::SimulationData &getSimulationData();
+  const simulate::SimulationData &getSimulationData() const;
+  simulate::SimulationSettings &getSimulationSettings();
+  const simulate::SimulationSettings &getSimulationSettings() const;
 
   explicit Model();
   Model(Model &&) noexcept = default;

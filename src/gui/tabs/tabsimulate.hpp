@@ -34,7 +34,6 @@ public:
   void stopSimulation();
   void useDune(bool enable);
   void reset();
-  [[nodiscard]] sme::simulate::Options getOptions() const;
   void setOptions(const sme::simulate::Options &options);
 
 private:
@@ -43,8 +42,6 @@ private:
   QLabelMouseTracker *lblGeometry;
   std::unique_ptr<PlotWrapper> plt;
   std::unique_ptr<sme::simulate::Simulation> sim;
-  sme::simulate::SimulatorType simType{sme::simulate::SimulatorType::DUNE};
-  sme::simulate::Options simOptions;
   sme::model::DisplayOptions displayOptions;
   QVector<double> time;
   QVector<QImage> images;
@@ -55,6 +52,8 @@ private:
   std::future<std::size_t> simSteps;
   QTimer plotRefreshTimer;
   QProgressDialog *progressDialog;
+  QString cachedSimLength{"100"};
+  QString cachedSimInterval{"1"};
 
   std::optional<std::vector<std::pair<std::size_t, double>>>
   parseSimulationTimes();

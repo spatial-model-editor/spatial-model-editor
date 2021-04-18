@@ -29,7 +29,6 @@ class Compartment;
 namespace simulate {
 
 class BaseSim;
-enum class SimulatorType { DUNE, Pixel };
 
 struct SimEvent{
   double time;
@@ -39,8 +38,6 @@ struct SimEvent{
 class Simulation {
 private:
   std::unique_ptr<BaseSim> simulator;
-  SimulatorType simulatorType;
-  Options simulatorOptions;
   std::vector<const geometry::Compartment *> compartments;
   std::vector<std::string> compartmentIds;
   // compartment->species
@@ -48,8 +45,8 @@ private:
   std::vector<std::vector<std::string>> compartmentSpeciesNames;
   std::vector<std::vector<std::size_t>> compartmentSpeciesIndices;
   std::vector<std::vector<QRgb>> compartmentSpeciesColors;
+  SimulationSettings *settings;
   SimulationData *data;
-  std::unique_ptr<SimulationData> dataIfNotProvided;
   QSize imageSize;
   std::atomic<bool> isRunning{false};
   std::atomic<bool> stopRequested{false};
@@ -62,9 +59,7 @@ private:
   void updateConcentrations(double t);
 
 public:
-  explicit Simulation(model::Model &sbmlDoc,
-                      SimulatorType simType = SimulatorType::DUNE,
-                      const Options &options = {});
+  explicit Simulation(model::Model &sbmlDoc);
   ~Simulation();
 
   std::size_t doTimesteps(double time, std::size_t nSteps = 1,

@@ -22,7 +22,6 @@ namespace simulate {
 class DuneConverter {
 public:
   explicit DuneConverter(const model::Model &model, bool forExternalUse = false,
-                         const simulate::DuneOptions &duneOptions = {},
                          const QString &outputIniFile = {},
                          int doublePrecision = 18);
   QString getIniFile(std::size_t compartmentIndex = 0) const;

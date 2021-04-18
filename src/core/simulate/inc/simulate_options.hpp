@@ -5,8 +5,12 @@
 #include <cstddef>
 #include <limits>
 #include <string>
+#include <vector>
+#include <utility>
 
 namespace sme::simulate {
+
+enum class SimulatorType { DUNE, Pixel };
 
 enum class DuneDiscretizationType { FEM1 };
 
@@ -43,6 +47,12 @@ struct PixelOptions {
 struct Options {
   DuneOptions dune;
   PixelOptions pixel;
+};
+
+struct SimulationSettings {
+  std::vector<std::pair<std::size_t, double>> times;
+  simulate::Options options;
+  sme::simulate::SimulatorType simulatorType;
 };
 
 struct AvgMinMax {

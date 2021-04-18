@@ -295,7 +295,6 @@ addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
 }
 
 DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
-                             const simulate::DuneOptions &duneOptions,
                              const QString &outputIniFile, int doublePrecision)
     : mesh{model.getGeometry().getMesh()},
       x0{model.getGeometry().getPhysicalOrigin().x()},
@@ -319,7 +318,7 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
   IniFile iniCommon;
   addGrid(iniCommon);
   addModel(iniCommon);
-  addTimeStepping(iniCommon, duneOptions, doublePrecision);
+  addTimeStepping(iniCommon, model.getSimulationSettings().options.dune, doublePrecision);
   addLogging(iniCommon, forExternalUse);
   addWriter(iniCommon);
 

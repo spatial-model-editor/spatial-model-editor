@@ -96,14 +96,15 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
 
   double dt = 0.134521234;
   // 1st order RK, multi-threaded fixed timestep simulation
-  simulate::Options options;
+  auto &options{s.getSimulationSettings().options};
   options.pixel.integrator = simulate::PixelIntegratorType::RK101;
   options.pixel.maxErr = {std::numeric_limits<double>::max(),
                           std::numeric_limits<double>::max()};
   options.pixel.maxTimestep = dt;
   options.pixel.enableMultiThreading = true;
   options.pixel.maxThreads = 2;
-  simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
+  s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+  simulate::Simulation sim(s);
 
   // check initial concentrations:
   // note: A_c1 is constant, so not part of simulation
@@ -195,7 +196,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
     double acceptable_error = 1.e-8;
     options.pixel.maxTimestep = 0.20138571;
 
-    simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
+    simulate::Simulation sim2(s);
     sim2.doTimesteps(1000);
     std::size_t it = sim2.getTimePoints().size() - 1;
     double A_c1 = 1.0;
@@ -277,14 +278,16 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
   REQUIRE(m1.getIndexPairs().size() == 108);
 
   // 1st order RK, fixed timestep simulation
-  simulate::Options options;
+  auto &options{s.getSimulationSettings().options};
   options.pixel.integrator = simulate::PixelIntegratorType::RK101;
   options.pixel.maxErr = {std::numeric_limits<double>::max(),
                           std::numeric_limits<double>::max()};
   options.pixel.maxTimestep = 0.01;
   options.pixel.enableMultiThreading = false;
   options.pixel.maxThreads = 1;
-  simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
+  s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+
+  simulate::Simulation sim(s);
 
   // check initial concentrations:
   // note: A_c1 is constant, so not part of simulation
@@ -322,7 +325,8 @@ SCENARIO("Simulate: very_simple_model, failing Pixel sim",
   // set A uptake rate very high
   s.getReactions().setParameterValue("A_uptake", "k1", 1e40);
   // Pixel sim stops simulation as timestep required becomes too small
-  simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
+  s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+  simulate::Simulation sim(s);
   REQUIRE(sim.errorMessage().empty());
   REQUIRE(sim.errorImage().isNull());
   sim.doTimesteps(1.0);
@@ -338,11 +342,12 @@ SCENARIO("Simulate: very_simple_model, empty compartment, DUNE sim",
   QFile f(":/models/very-simple-model.xml");
   f.open(QIODevice::ReadOnly);
   s.importSBMLString(f.readAll().toStdString());
+  s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
   WHEN("Outer species removed") {
     s.getSpecies().remove("A_c1");
     s.getSpecies().remove("B_c1");
     REQUIRE(s.getSpecies().getIds("c1").empty());
-    simulate::Simulation sim(s, simulate::SimulatorType::DUNE);
+    simulate::Simulation sim(s);
     REQUIRE(sim.errorMessage().empty());
     sim.doTimesteps(0.1, 1);
     REQUIRE(sim.errorMessage().empty());
@@ -354,7 +359,7 @@ SCENARIO("Simulate: very_simple_model, empty compartment, DUNE sim",
     s.getSpecies().remove("A_c3");
     s.getSpecies().remove("B_c3");
     REQUIRE(s.getSpecies().getIds("c3").empty());
-    simulate::Simulation sim(s, simulate::SimulatorType::DUNE);
+    simulate::Simulation sim(s);
     REQUIRE(sim.errorMessage().empty());
     sim.doTimesteps(0.1, 1);
     REQUIRE(sim.errorMessage().empty());
@@ -399,14 +404,15 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
   REQUIRE(s1.getGeometry().getPixelWidth() == dbl_approx(1.0));
   REQUIRE(s1.getUnits().getLength().name == "m");
   REQUIRE(s1.getUnits().getVolume().name == "L");
-  simulate::Options options;
+  auto &options{s1.getSimulationSettings().options};
   options.pixel.integrator = simulate::PixelIntegratorType::RK101;
   options.pixel.maxErr = {std::numeric_limits<double>::max(),
                           std::numeric_limits<double>::max()};
   options.pixel.maxTimestep = 0.01;
   options.pixel.enableMultiThreading = false;
   options.pixel.maxThreads = 1;
-  simulate::Simulation sim(s1, simulate::SimulatorType::Pixel, options);
+  s1.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+  simulate::Simulation sim(s1);
   sim.doTimesteps(0.20);
   REQUIRE(sim.getTimePoints().size() == 2);
 
@@ -414,6 +420,8 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
   {
     model::Model s;
     s.importSBMLString(str);
+    s.getSimulationSettings().options = options;
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     s.getGeometry().setPixelWidth(3.0);
     REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(3.0));
     // pixel width -> 3x larger
@@ -425,7 +433,7 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
     rescaleMembraneReacRates(s, 3.0);
     // rescale diffusion such that rate in pixel units is the same
     rescaleDiffusionConstants(s, 9.0);
-    simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
+    simulate::Simulation sim2(s);
     sim2.doTimesteps(0.20);
     REQUIRE(sim2.getTimePoints().size() == 2);
     REQUIRE(sim2.errorMessage().empty());
@@ -453,8 +461,11 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
     s.exportSBMLFile("tmp.xml");
     model::Model sload;
     sload.importSBMLFile("tmp.xml");
-    simulate::Simulation simload(sload, simulate::SimulatorType::Pixel,
-                                 options);
+    sload.getSimulationSettings().options = options;
+    sload.getSimulationSettings().simulatorType =
+        simulate::SimulatorType::Pixel;
+
+    simulate::Simulation simload(sload);
     simload.doTimesteps(0.20);
     REQUIRE(simload.getTimePoints().size() == 2);
     REQUIRE(simload.errorMessage().empty());
@@ -481,12 +492,14 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
   {
     model::Model s;
     s.importSBMLString(str);
+    s.getSimulationSettings().options = options;
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     s.getGeometry().setPixelWidth(0.27);
     REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(0.27));
     // as above
     rescaleMembraneReacRates(s, 0.27);
     rescaleDiffusionConstants(s, 0.27 * 0.27);
-    simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
+    simulate::Simulation sim2(s);
     sim2.doTimesteps(0.20);
     REQUIRE(sim2.errorMessage().empty());
     REQUIRE(sim2.getTimePoints().size() == 2);
@@ -512,8 +525,10 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
     s.exportSBMLFile("tmp2.xml");
     model::Model sload;
     sload.importSBMLFile("tmp2.xml");
-    simulate::Simulation simload(sload, simulate::SimulatorType::Pixel,
-                                 options);
+    sload.getSimulationSettings().options = options;
+    sload.getSimulationSettings().simulatorType =
+        simulate::SimulatorType::Pixel;
+    simulate::Simulation simload(sload);
     simload.doTimesteps(0.20);
     REQUIRE(simload.getTimePoints().size() == 2);
     REQUIRE(simload.errorMessage().empty());
@@ -561,7 +576,8 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     REQUIRE(s1.getGeometry().getPixelWidth() == dbl_approx(1.0));
     REQUIRE(s1.getUnits().getLength().name == "m");
     REQUIRE(s1.getUnits().getVolume().name == "L");
-    simulate::Options options;
+    s1.getSimulationSettings().simulatorType = simulatorType;
+    auto &options{s1.getSimulationSettings().options};
     options.pixel.integrator = simulate::PixelIntegratorType::RK101;
     options.pixel.maxErr = {std::numeric_limits<double>::max(),
                             std::numeric_limits<double>::max()};
@@ -572,7 +588,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     options.dune.minDt = 0.001;
     options.dune.maxDt = 0.011;
     CAPTURE(simulatorType);
-    simulate::Simulation sim(s1, simulatorType, options);
+    simulate::Simulation sim(s1);
     sim.doTimesteps(0.20);
     REQUIRE(sim.getTimePoints().size() == 2);
 
@@ -580,6 +596,8 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     {
       model::Model s;
       s.importSBMLString(str);
+      s.getSimulationSettings().options = options;
+      s.getSimulationSettings().simulatorType = simulatorType;
       s.getUnits().setLengthIndex(1);
       // concentrations & compartment reaction rates unaffected by length units
       // membrane reaction in units of [amount]/[length]^3 is the same
@@ -589,7 +607,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       rescaleMembraneReacRates(s, 1e-3);
       s.getUnits().setLengthIndex(1);
       REQUIRE(s.getUnits().getLength().name == "dm");
-      simulate::Simulation sim2(s, simulatorType, options);
+      simulate::Simulation sim2(s);
       sim2.doTimesteps(0.20);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
@@ -610,10 +628,12 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       // as above
       model::Model s;
       s.importSBMLString(str);
+      s.getSimulationSettings().options = options;
+      s.getSimulationSettings().simulatorType = simulatorType;
       rescaleMembraneReacRates(s, 1e-6);
       s.getUnits().setLengthIndex(2);
       REQUIRE(s.getUnits().getLength().name == "cm");
-      simulate::Simulation sim2(s, simulatorType, options);
+      simulate::Simulation sim2(s);
       sim2.doTimesteps(0.20);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
@@ -635,10 +655,12 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       // so membrane rates need to be 10x higher to compensate
       model::Model s;
       s.importSBMLString(str);
+      s.getSimulationSettings().options = options;
+      s.getSimulationSettings().simulatorType = simulatorType;
       rescaleMembraneReacRates(s, 10);
       s.getUnits().setVolumeIndex(1);
       REQUIRE(s.getUnits().getVolume().name == "dL");
-      simulate::Simulation sim2(s, simulatorType, options);
+      simulate::Simulation sim2(s);
       sim2.doTimesteps(0.20);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
@@ -658,10 +680,12 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       // as above
       model::Model s;
       s.importSBMLString(str);
+      s.getSimulationSettings().options = options;
+      s.getSimulationSettings().simulatorType = simulatorType;
       rescaleMembraneReacRates(s, 1000);
       s.getUnits().setVolumeIndex(3);
       REQUIRE(s.getUnits().getVolume().name == "mL");
-      simulate::Simulation sim2(s, simulatorType, options);
+      simulate::Simulation sim2(s);
       sim2.doTimesteps(0.20);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
@@ -680,10 +704,12 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     {
       model::Model s;
       s.importSBMLString(str);
+      s.getSimulationSettings().options = options;
+      s.getSimulationSettings().simulatorType = simulatorType;
       rescaleMembraneReacRates(s, 1e-3);
       s.getUnits().setVolumeIndex(4);
       REQUIRE(s.getUnits().getVolume().name == "m3");
-      simulate::Simulation sim2(s, simulatorType, options);
+      simulate::Simulation sim2(s);
       sim2.doTimesteps(0.20);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
@@ -702,9 +728,11 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     {
       model::Model s;
       s.importSBMLString(str);
+      s.getSimulationSettings().options = options;
+      s.getSimulationSettings().simulatorType = simulatorType;
       s.getUnits().setVolumeIndex(5);
       REQUIRE(s.getUnits().getVolume().name == "dm3");
-      simulate::Simulation sim2(s, simulatorType, options);
+      simulate::Simulation sim2(s);
       sim2.doTimesteps(0.20);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
@@ -781,7 +809,7 @@ SCENARIO(
     REQUIRE(maxRelErr < epsilon);
   }
 
-  simulate::Options options;
+  auto &options{s.getSimulationSettings().options};
   options.pixel.maxErr = {std::numeric_limits<double>::max(), 0.01};
   options.dune.dt = 1.0;
   options.dune.maxDt = 1.0;
@@ -800,9 +828,10 @@ SCENARIO(
       evolvedMaxRelativeError = 0.3;
       evolvedAvgRelativeError = 0.10;
     }
+    s.getSimulationSettings().simulatorType = simType;
 
     // integrate & compare
-    simulate::Simulation sim(s, simType, options);
+    simulate::Simulation sim(s);
     double t = 10.0;
     for (std::size_t step = 0; step < 2; ++step) {
       sim.doTimesteps(t);
@@ -863,14 +892,16 @@ SCENARIO(
         f.open(QIODevice::ReadOnly)) {
       s.importSBMLString(f.readAll().toStdString());
     }
-    simulate::Options options;
+    auto &options{s.getSimulationSettings().options};
     options.pixel.maxErr = {std::numeric_limits<double>::max(), 0.001};
     options.pixel.maxThreads = 2;
     options.dune.dt = 0.5;
     for (auto simulator :
          {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
       s.getSimulationData().clear();
-      auto sim = simulate::Simulation(s, simulator, options);
+      s.getSimulationSettings().simulatorType = simulator;
+
+      auto sim = simulate::Simulation(s);
       REQUIRE(sim.getIsRunning() == false);
       REQUIRE(sim.getIsStopping() == false);
       REQUIRE(sim.getNCompletedTimesteps() == 1);
@@ -908,8 +939,9 @@ SCENARIO("Pixel simulator: timeout",
   if (QFile f(":/models/brusselator-model.xml"); f.open(QIODevice::ReadOnly)) {
     s.importSBMLString(f.readAll().toStdString());
   }
+  s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   // simulate 1 very long time step, with 200ms timeout
-  simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
+  simulate::Simulation sim(s);
   REQUIRE(sim.getNCompletedTimesteps() == 1);
   sim.doTimesteps(1e9, 1, 200.0);
   // step does not complete:
@@ -917,7 +949,7 @@ SCENARIO("Pixel simulator: timeout",
 
   // simulate many tiny time steps, with 200ms timeout
   s.getSimulationData().clear();
-  simulate::Simulation sim2(s, simulate::SimulatorType::Pixel);
+  simulate::Simulation sim2(s);
   REQUIRE(sim2.getNCompletedTimesteps() == 1);
   sim2.doTimesteps(1e-12, 100000, 200.0);
   // some steps complete before timeout:
@@ -935,11 +967,13 @@ SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
     s.importSBMLString(f.readAll().toStdString());
   }
   // do accurate simulation
-  simulate::Options options;
+  auto &options{s.getSimulationSettings().options};
   options.pixel.maxErr = {std::numeric_limits<double>::max(), 1e-6};
   options.pixel.maxThreads = 2;
   options.pixel.integrator = simulate::PixelIntegratorType::RK435;
-  simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
+  s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+
+  simulate::Simulation sim(s);
   sim.doTimesteps(time);
   auto c4_accurate = sim.getConc(sim.getTimePoints().size() - 1, 0, 0);
   // check lower accuracy & different orders are consistent
@@ -953,7 +987,7 @@ SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
       options.pixel.maxErr = {std::numeric_limits<double>::max(),
                               maxAllowedRelErr};
       s.getSimulationData().clear();
-      simulate::Simulation sim2(s, simulate::SimulatorType::Pixel, options);
+      simulate::Simulation sim2(s);
       sim2.doTimesteps(time);
       auto conc = sim2.getConc(sim.getTimePoints().size() - 1, 0, 0);
       for (std::size_t i = 0; i < conc.size(); ++i) {
@@ -980,12 +1014,14 @@ SCENARIO("DUNE: simulation",
     s.getSpecies().setInitialConcentration("B", 1.0);
     s.getSpecies().setInitialConcentration("C", 0.0);
 
-    simulate::Options options;
+    auto &options{s.getSimulationSettings().options};
     options.dune.dt = 0.01;
     options.dune.maxDt = 0.01;
     options.dune.minDt = 0.005;
     options.dune.integrator = "alexander_2";
-    simulate::Simulation duneSim(s, simulate::SimulatorType::DUNE, options);
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+
+    simulate::Simulation duneSim(s);
     REQUIRE(duneSim.getAvgMinMax(0, 0, 0).avg == dbl_approx(1.0));
     REQUIRE(duneSim.getAvgMinMax(0, 0, 1).avg == dbl_approx(1.0));
     REQUIRE(duneSim.getAvgMinMax(0, 0, 2).avg == dbl_approx(0.0));
@@ -1004,9 +1040,10 @@ SCENARIO("DUNE: simulation",
         f.open(QIODevice::ReadOnly)) {
       s.importSBMLString(f.readAll().toStdString());
     }
-    simulate::Options options;
+    auto &options{s.getSimulationSettings().options};
     options.dune.dt = 0.01;
-    simulate::Simulation duneSim(s, simulate::SimulatorType::DUNE, options);
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+    simulate::Simulation duneSim(s);
     duneSim.doTimesteps(0.01);
     REQUIRE(duneSim.errorMessage().empty());
   }
@@ -1020,8 +1057,8 @@ SCENARIO("getConcImage",
         f.open(QIODevice::ReadOnly)) {
       s.importSBMLString(f.readAll().toStdString());
     }
-    simulate::Options options;
-    simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+    simulate::Simulation sim(s);
     sim.doTimesteps(0.5);
     sim.doTimesteps(0.5);
     REQUIRE(sim.errorMessage().empty());
@@ -1164,7 +1201,8 @@ SCENARIO("applyConcsToModel initial concentrations",
   s.getSpecies().setSampledFieldConcentration("B_c3", c);
 
   // set up simulation of model
-  simulate::Simulation sim(s, simulate::SimulatorType::Pixel);
+  s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+  simulate::Simulation sim(s);
   sim.doTimesteps(0.01);
 
   // apply simulation initial concs to a copy of the original model
@@ -1190,6 +1228,7 @@ SCENARIO("applyConcsToModel after simulation",
   QFile f(":/models/very-simple-model.xml");
   f.open(QIODevice::ReadOnly);
   s.importSBMLString(f.readAll().toStdString());
+  s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   // added this to try to work around
   // https://github.com/spatial-model-editor/spatial-model-editor/issues/465
   //  s.getSpecies().setAnalyticConcentration("B_c1", "cos(x/14.2)+1");
@@ -1198,14 +1237,17 @@ SCENARIO("applyConcsToModel after simulation",
   //  s.getSpecies().setAnalyticConcentration("A_c3", "cos(x/7.2)+1");
   //  s.getSpecies().setAnalyticConcentration("B_c3", "cos(x/5.2)+1");
   s.exportSBMLFile("tmp.xml");
-  simulate::Options options;
+  auto& options{s.getSimulationSettings().options};
   options.dune.dt = 0.01;
   // apply initial concs from sim to model s, check they agree with copy of
   // model s2 (note any analytic initial concs in s are replaced with sampled
   // fields)
   model::Model s2;
   s2.importSBMLFile("tmp.xml");
-  simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
+  s2.getSimulationSettings().options = options;
+  s2.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+
+  simulate::Simulation sim(s);
   sim.applyConcsToModel(s, 0);
   for (const auto &cId : s.getCompartments().getIds()) {
     for (const auto &sId : s.getSpecies().getIds(cId)) {
@@ -1219,7 +1261,7 @@ SCENARIO("applyConcsToModel after simulation",
   sim.doTimesteps(0.01, 2);
   REQUIRE(sim.getNCompletedTimesteps() == 3);
   // do t=0.01 sim2 using model s2
-  simulate::Simulation sim2(s2, simulate::SimulatorType::Pixel, options);
+  simulate::Simulation sim2(s2);
   sim2.doTimesteps(0.01);
   REQUIRE(sim2.getNCompletedTimesteps() == 2);
   // apply concs at t=0.01 to model
@@ -1227,7 +1269,7 @@ SCENARIO("applyConcsToModel after simulation",
   // reset sim data
   s2.getSimulationData() = {};
   // create new sim3 from model s2
-  simulate::Simulation sim3(s2, simulate::SimulatorType::Pixel, options);
+  simulate::Simulation sim3(s2);
   // sim3 at t=0 should equal sim at t=0.01
   for (std::size_t iComp = 0; iComp < sim3.getCompartmentIds().size();
        ++iComp) {
@@ -1266,7 +1308,8 @@ SCENARIO("Reactions depend on x, y, t",
   s.importSBMLString(f.readAll().toStdString());
   constexpr double eps{1e-20};
   constexpr double dt{1e-3};
-  simulate::Options options;
+  auto& options{s.getSimulationSettings().options};
+  s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   options.dune.dt = dt;
   options.pixel.integrator = simulate::PixelIntegratorType::RK101;
   options.pixel.maxErr = {std::numeric_limits<double>::max(),
@@ -1279,12 +1322,13 @@ SCENARIO("Reactions depend on x, y, t",
     constexpr double maxAllowedRelDiff{1e-7};
     s.getSpecies().remove("A");
     s.getSpecies().remove("B");
-    simulate::Simulation simPixel{s, simulate::SimulatorType::Pixel};
+    simulate::Simulation simPixel{s};
     simPixel.doTimesteps(dt, 1);
     REQUIRE(simPixel.errorMessage().empty());
     REQUIRE(simPixel.getNCompletedTimesteps() == 2);
     s.getSimulationData().clear();
-    simulate::Simulation simDune{s, simulate::SimulatorType::DUNE};
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+    simulate::Simulation simDune{s};
     simDune.doTimesteps(dt, 1);
     REQUIRE(simDune.errorMessage().empty());
     REQUIRE(simDune.getNCompletedTimesteps() == 2);
@@ -1308,12 +1352,14 @@ SCENARIO("Reactions depend on x, y, t",
     constexpr double maxAllowedAbsDiff{0.002};
     constexpr double maxAllowedRelDiff{0.03};
     s.getSpecies().remove("C");
-    simulate::Simulation simPixel{s, simulate::SimulatorType::Pixel};
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+    simulate::Simulation simPixel{s};
     simPixel.doTimesteps(dt, 1);
     REQUIRE(simPixel.errorMessage().empty());
     REQUIRE(simPixel.getNCompletedTimesteps() == 2);
     s.getSimulationData().clear();
-    simulate::Simulation simDune{s, simulate::SimulatorType::DUNE};
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+    simulate::Simulation simDune{s};
     simDune.doTimesteps(dt, 1);
     REQUIRE(simDune.errorMessage().empty());
     REQUIRE(simDune.getNCompletedTimesteps() == 2);
@@ -1339,12 +1385,14 @@ SCENARIO("Reactions depend on x, y, t",
     // looser tolerance: mesh distorts results
     constexpr double maxAllowedAbsDiff{0.002};
     constexpr double maxAllowedRelDiff{0.03};
-    simulate::Simulation simPixel{s, simulate::SimulatorType::Pixel};
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+    simulate::Simulation simPixel{s};
     simPixel.doTimesteps(dt, 1);
     REQUIRE(simPixel.errorMessage().empty());
     REQUIRE(simPixel.getNCompletedTimesteps() == 2);
     s.getSimulationData().clear();
-    simulate::Simulation simDune{s, simulate::SimulatorType::DUNE};
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+    simulate::Simulation simDune{s};
     simDune.doTimesteps(dt, 1);
     REQUIRE(simDune.errorMessage().empty());
     REQUIRE(simDune.getNCompletedTimesteps() == 2);
@@ -1379,9 +1427,10 @@ SCENARIO(
     QFile f2(":/test/models/membrane-reaction-circle.xml");
     f2.open(QIODevice::ReadOnly);
     s2.importSBMLString(f2.readAll().toStdString());
-    simulate::Options options;
-    simulate::Simulation simDune(s, simulate::SimulatorType::DUNE, options);
-    simulate::Simulation simPixel(s2, simulate::SimulatorType::Pixel, options);
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+    simulate::Simulation simDune(s);
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+    simulate::Simulation simPixel(s2);
     REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
     REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
     simDune.doTimesteps(0.05);
@@ -1419,9 +1468,10 @@ SCENARIO(
     QFile f2(":/test/models/membrane-reaction-pixels.xml");
     f2.open(QIODevice::ReadOnly);
     s2.importSBMLString(f2.readAll().toStdString());
-    simulate::Options options;
-    simulate::Simulation simDune(s, simulate::SimulatorType::DUNE, options);
-    simulate::Simulation simPixel(s2, simulate::SimulatorType::Pixel, options);
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+    simulate::Simulation simDune(s);
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+    simulate::Simulation simPixel(s2);
     REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
     REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
     simDune.doTimesteps(5);
@@ -1464,9 +1514,10 @@ SCENARIO("SimulationData",
   s.getSpecies().setAnalyticConcentration("A_c3", "cos(x/7.2)+1");
   s.getSpecies().setAnalyticConcentration("B_c3", "cos(x/5.2)+1");
   WHEN("Continue previous simulation from data") {
-    simulate::Options options;
+    auto& options{s.getSimulationSettings().options};
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     options.pixel.maxErr.rel = 1e-2;
-    simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
+    simulate::Simulation sim(s);
     // sim: 0.00 -> 0.01 -> 0.02 -> 0.03 -> 0.04 -> 0.05
     sim.doTimesteps(0.01, 5);
     REQUIRE(sim.getNCompletedTimesteps() == 6);
@@ -1479,7 +1530,7 @@ SCENARIO("SimulationData",
     simulate::SimulationData data{sim.getSimulationData()};
     s.getSimulationData().clear();
     // simA: 0.00 -> 0.01 -> 0.02
-    simulate::Simulation simA(s, simulate::SimulatorType::Pixel, options);
+    simulate::Simulation simA(s);
     simA.doTimesteps(0.01, 2);
     REQUIRE(simA.getNCompletedTimesteps() == 3);
     REQUIRE(simA.getTimePoints()[0] == dbl_approx(0.00));
@@ -1498,7 +1549,7 @@ SCENARIO("SimulationData",
     REQUIRE(rel_diff(dataA, data, 1, 1) == dbl_approx(0));
     REQUIRE(rel_diff(dataA, data, 2, 2) == dbl_approx(0));
     // create new simulation using existing data
-    simulate::Simulation simB(s, simulate::SimulatorType::Pixel, options);
+    simulate::Simulation simB(s);
     const auto &dataB{simB.getSimulationData()};
     // simB: should be a copy of simA
     REQUIRE(simB.getNCompletedTimesteps() == 3);
@@ -1540,20 +1591,23 @@ SCENARIO("SimulationData",
     REQUIRE(rel_diff(dataB, data, 5, 5) < allowedDifference);
   }
   WHEN("Repeat with smaller integration errors: difference reduced") {
-    simulate::Options options;
+    auto& options{s.getSimulationSettings().options};
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     options.pixel.maxErr.rel = 1e-5;
-    simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
+    simulate::Simulation sim(s);
     sim.doTimesteps(0.01, 5);
     simulate::SimulationData data{sim.getSimulationData()};
     s.getSimulationData().clear();
     auto dataA{data};
-    simulate::Simulation simA(s, simulate::SimulatorType::Pixel, options);
+    simulate::Simulation simA(s);
     simA.doTimesteps(0.01, 2);
-    utils::SmeFile(s.getXml().toStdString(), dataA).exportFile("data.sme");
-    utils::SmeFile smeFileA;
-    smeFileA.importFile("data.sme");
-    s.getSimulationData() = smeFileA.simulationData();
-    simulate::Simulation simB(s, simulate::SimulatorType::Pixel, options);
+    utils::SmeFileContents contents;
+    contents.xmlModel = s.getXml().toStdString();
+    contents.simulationData = dataA;
+    utils::exportSmeFile("data.sme", contents);
+    auto smeFileA{utils::importSmeFile("data.sme")};
+    s.getSimulationData() = smeFileA.simulationData;
+    simulate::Simulation simB(s);
     const auto &dataB{simB.getSimulationData()};
     simB.doTimesteps(0.01, 3);
     REQUIRE(rel_diff(dataB, data, 0, 0) < 1e-14);
@@ -1643,4 +1697,52 @@ SCENARIO("Events",
   REQUIRE(data.concentration[2][2][4] == dbl_approx(123.0));
   REQUIRE(data.concentration[2][2][16] == dbl_approx(123.0));
   REQUIRE(data.concentration[2][2][40] == dbl_approx(123.0));
+}
+
+SCENARIO("simulate w/options & save, load, re-simulate",
+         "[core/simulate/simulate][core/simulate][core][simulate][Q]") {
+  for (auto simulatorType :
+       {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
+    CAPTURE(simulatorType);
+    auto m1{getVerySimpleModel()};
+    auto &options1{m1.getSimulationSettings().options};
+    options1.pixel.integrator = simulate::PixelIntegratorType::RK435;
+    options1.pixel.maxErr.rel = 1e-3;
+    options1.dune.dt = 0.009;
+    options1.dune.increase = 1.44;
+    m1.getSimulationSettings().simulatorType = simulatorType;
+    simulate::Simulation sim1(m1);
+    sim1.doMultipleTimesteps({{2, 0.01}, {3, 0.04}});
+    const auto &data1{m1.getSimulationData()};
+    REQUIRE(data1.concentration.size() == 6);
+    m1.exportSMEFile("tmp.sme");
+
+    // clear simulation data, then do simulation, should regenerate same data
+    model::Model m2;
+    m2.importFile("tmp.sme");
+    REQUIRE(m2.getSimulationSettings().simulatorType == simulatorType);
+    REQUIRE(m2.getSimulationSettings().options.pixel.integrator ==
+            simulate::PixelIntegratorType::RK435);
+    REQUIRE(m2.getSimulationSettings().options.pixel.maxErr.rel ==
+            dbl_approx(1e-3));
+    REQUIRE(m2.getSimulationSettings().options.dune.dt == dbl_approx(0.009));
+    REQUIRE(m2.getSimulationSettings().options.dune.increase ==
+            dbl_approx(1.44));
+    REQUIRE(m2.getSimulationSettings().times.size() == 2);
+    REQUIRE(m2.getSimulationData().concentration.size() == 6);
+    auto times{m2.getSimulationSettings().times};
+    m2.getSimulationData().clear();
+    m2.getSimulationSettings().times.clear();
+    REQUIRE(times.size() == 2);
+    REQUIRE(m2.getSimulationData().concentration.size() == 0);
+    REQUIRE(m2.getSimulationSettings().times.size() == 0);
+    simulate::Simulation sim2(m2);
+    sim2.doMultipleTimesteps(times);
+    const auto &data2{m2.getSimulationData()};
+    REQUIRE(data1.size() == data2.size());
+    for (std::size_t i = 0; i < data1.size(); ++i) {
+      REQUIRE(rel_diff(data1, data2, i, i) == dbl_approx(0.0));
+      REQUIRE(data1.timePoints[i] == dbl_approx(data2.timePoints[i]));
+    }
+  }
 }

@@ -14,7 +14,9 @@ SCENARIO("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     QFile f(":/models/very-simple-model.xml");
     f.open(QIODevice::ReadOnly);
     model.importSBMLString(f.readAll().toStdString());
-    sme::simulate::Simulation sim(model, sme::simulate::SimulatorType::Pixel);
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::Pixel;
+    sme::simulate::Simulation sim(model);
     sme::simulate::Options options;
     sim.doTimesteps(0.001, 4);
     QImage imgGeometry(100, 50, QImage::Format_ARGB32_Premultiplied);
@@ -49,8 +51,7 @@ SCENARIO("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
       REQUIRE(model.getSpecies().getSampledFieldConcentration("A_c2")[i] ==
               dbl_approx(0.123));
       // export t=0 simulation concs to model
-      mwt.addUserAction(
-          {"Down", "Down", "Shift+Tab", "Up", "Up", "Enter"});
+      mwt.addUserAction({"Down", "Down", "Shift+Tab", "Up", "Up", "Enter"});
       mwt.start();
       dia.exec();
       REQUIRE(model.getSpecies().getSampledFieldConcentration("A_c2")[i] ==
@@ -77,9 +78,9 @@ SCENARIO("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     }
     WHEN("user changes timepoint, clicks save image, then enters filename") {
       ModalWidgetTimer mwt2;
-      mwt.addUserAction({"Down", "Down", "Down", "Shift+Tab", "Down",
-                         "Down", "Enter"},
-                        true, &mwt2);
+      mwt.addUserAction(
+          {"Down", "Down", "Down", "Shift+Tab", "Down", "Down", "Enter"}, true,
+          &mwt2);
       mwt2.addUserAction({"x", "y", "z"});
       mwt.start();
       dia.exec();

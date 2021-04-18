@@ -53,6 +53,7 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   REQUIRE(btnSimulate->isEnabled() == true);
   REQUIRE(hslideTime->isEnabled() == true);
   REQUIRE(hslideTime->minimum() == 0);
+  REQUIRE(hslideTime->maximum() == 2);
 
   // reset simulation
   sendMouseClick(btnResetSimulation);

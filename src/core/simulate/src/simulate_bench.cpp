@@ -7,21 +7,23 @@ using namespace sme;
 template <typename T>
 static void simulate_SimulationDUNE(benchmark::State &state) {
   T data;
+  data.model.getSimulationSettings().simulatorType =
+      simulate::SimulatorType::DUNE;
   std::unique_ptr<simulate::Simulation> simulation;
   for (auto _ : state) {
     simulation.reset();
-    simulation = std::make_unique<simulate::Simulation>(
-        data.model, simulate::SimulatorType::DUNE);
+    simulation = std::make_unique<simulate::Simulation>(data.model);
   }
 }
 
 template <typename T>
 static void simulate_SimulationPIXEL(benchmark::State &state) {
   T data;
+  data.model.getSimulationSettings().simulatorType =
+      simulate::SimulatorType::Pixel;
   std::unique_ptr<simulate::Simulation> simulation;
   for (auto _ : state) {
-    simulation = std::make_unique<simulate::Simulation>(
-        data.model, simulate::SimulatorType::Pixel);
+    simulation = std::make_unique<simulate::Simulation>(data.model);
   }
 }
 
