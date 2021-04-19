@@ -19,6 +19,8 @@ endif()
 
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
 
+find_package(dune-copasi REQUIRED)
+
 # find required Qt5 modules
 find_package(
   Qt5
