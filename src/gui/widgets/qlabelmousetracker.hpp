@@ -28,6 +28,9 @@ public:
   int getMaskIndex() const;
   void setAspectRatioMode(Qt::AspectRatioMode aspectRatioMode);
   void setTransformationMode(Qt::TransformationMode transformationMode);
+  void setPhysicalSize(const QSizeF& size, const QString& units);
+  void displayGrid(bool enable);
+  void displayScale(bool enable);
 
 signals:
   void mouseClicked(QRgb col, QPoint point);
@@ -45,14 +48,22 @@ protected:
 private:
   Qt::AspectRatioMode aspectRatioMode = Qt::KeepAspectRatio;
   Qt::TransformationMode transformationMode = Qt::FastTransformation;
-  // (x,y) location of current pixel
   bool setCurrentPixel(const QMouseEvent *ev);
   void resizeImage(const QSize &size);
   QImage image;
   // Pixmap used to display scaled version of image
   QPixmap pixmap;
+  // size of actual image in pixmap (may be smaller than pixmap)
+  QSize pixmapImageSize;
   QImage maskImage;
   QPoint currentPixel;
+  const int tickLength{10};
+  // x & y offsets for ruler, if present
+  QPoint offset{0,0};
+  bool drawGrid{false};
+  bool drawScale{false};
+  QSizeF physicalSize{1.0, 1.0};
+  QString lengthUnits{};
   QRgb colour{};
   int maskIndex{};
 };

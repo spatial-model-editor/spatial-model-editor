@@ -8,7 +8,8 @@
 
 DialogAnalytic::DialogAnalytic(
     const QString &analyticExpression,
-    const sme::model::SpeciesGeometry &speciesGeometry, sme::model::ModelMath &modelMath,
+    const sme::model::SpeciesGeometry &speciesGeometry,
+    sme::model::ModelMath &modelMath,
     const sme::model::SpatialCoordinates &spatialCoordinates, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogAnalytic>()},
       xId{spatialCoordinates.x.id}, yId{spatialCoordinates.y.id},
@@ -33,19 +34,38 @@ DialogAnalytic::DialogAnalytic(
   sbmlVars[xId] = {0, false};
   sbmlVars[yId] = {0, false};
 
+  QSizeF physicalSize;
+  physicalSize.rwidth() =
+      static_cast<double>(speciesGeometry.compartmentImageSize.width()) *
+      speciesGeometry.pixelWidth;
+  physicalSize.rheight() =
+      static_cast<double>(speciesGeometry.compartmentImageSize.height()) *
+      speciesGeometry.pixelWidth;
+  ui->lblImage->displayGrid(ui->chkGrid->isChecked());
+  ui->lblImage->displayScale(ui->chkScale->isChecked());
+  ui->lblImage->setPhysicalSize(physicalSize, lengthUnit);
+
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogAnalytic::accept);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogAnalytic::reject);
+  connect(ui->chkGrid, &QCheckBox::stateChanged, this,
+          [ui = ui.get()](int state) {
+            ui->lblImage->displayGrid(state == Qt::Checked);
+          });
+  connect(ui->chkScale, &QCheckBox::stateChanged, this,
+          [ui = ui.get()](int state) {
+            ui->lblImage->displayScale(state == Qt::Checked);
+          });
   connect(ui->txtExpression, &QPlainTextMathEdit::mathChanged, this,
           &DialogAnalytic::txtExpression_mathChanged);
   connect(ui->lblImage, &QLabelMouseTracker::mouseOver, this,
           &DialogAnalytic::lblImage_mouseOver);
   connect(ui->btnExportImage, &QPushButton::clicked, this,
           &DialogAnalytic::btnExportImage_clicked);
-
   ui->txtExpression->importVariableMath(analyticExpression.toStdString());
   lblImage_mouseOver(points.front());
+  ui->txtExpression->setFocus();
 }
 
 DialogAnalytic::~DialogAnalytic() = default;
@@ -54,9 +74,7 @@ const std::string &DialogAnalytic::getExpression() const {
   return variableExpression;
 }
 
-const QImage& DialogAnalytic::getImage() const{
-  return img;
-}
+const QImage &DialogAnalytic::getImage() const { return img; }
 
 bool DialogAnalytic::isExpressionValid() const { return expressionIsValid; }
 

@@ -222,7 +222,8 @@ void ModelGeometry::importGeometryFromImage(const QImage &img) {
 
 void ModelGeometry::updateMesh() {
   // geometry only valid if all compartments have a colour
-  isValid = hasImage && !modelCompartments->getColours().empty() && !modelCompartments->getColours().contains(0);
+  isValid = hasImage && !modelCompartments->getColours().empty() &&
+            !modelCompartments->getColours().contains(0);
   if (!isValid) {
     mesh.reset();
     return;
@@ -330,21 +331,21 @@ void ModelGeometry::setPixelWidth(double width) {
     mesh->setPhysicalGeometry(width, physicalOrigin);
   }
   // update xy coordinates
+  physicalSize = {pixelWidth * static_cast<double>(image.width()),
+                  pixelWidth * static_cast<double>(image.height())};
   auto *coord = geom->getCoordinateComponentByKind(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
   auto *min = coord->getBoundaryMin();
   auto *max = coord->getBoundaryMax();
   min->setValue(physicalOrigin.x());
-  max->setValue(physicalOrigin.x() +
-                pixelWidth * static_cast<double>(image.width()));
+  max->setValue(physicalOrigin.x() + physicalSize.width());
   SPDLOG_INFO("  - x now in range [{},{}]", min->getValue(), max->getValue());
   coord = geom->getCoordinateComponentByKind(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
   min = coord->getBoundaryMin();
   max = coord->getBoundaryMax();
   min->setValue(physicalOrigin.y());
-  max->setValue(physicalOrigin.y() +
-                pixelWidth * static_cast<double>(image.height()));
+  max->setValue(physicalOrigin.y() + physicalSize.height());
   SPDLOG_INFO("  - y now in range [{},{}]", min->getValue(), max->getValue());
 }
 

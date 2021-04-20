@@ -53,6 +53,8 @@ private:
   void gaussianFilter(const QPoint &direction, double sigma);
   void smoothConcentration();
   void lblImage_mouseOver(QPoint point);
+  void chkGrid_stateChanged(int state);
+  void chkScale_stateChanged(int state);
   void btnImportImage_clicked();
   void btnExportImage_clicked();
   void cmbExampleImages_currentTextChanged(const QString &text);
