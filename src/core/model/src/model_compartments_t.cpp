@@ -298,4 +298,15 @@ SCENARIO("SBML compartments",
       REQUIRE(r.getParameterValue("B_transport", "k1") == dbl_approx(0.0));
     }
   }
+  GIVEN("New model: add compartment, remove it again") {
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/506
+    model::Model m;
+    m.createSBMLFile("no-geom");
+    auto &compartments{m.getCompartments()};
+    REQUIRE(compartments.getIds().size() == 0);
+    compartments.add("c");
+    REQUIRE(compartments.getIds().size() == 1);
+    compartments.remove("c");
+    REQUIRE(compartments.getIds().size() == 0);
+  }
 }

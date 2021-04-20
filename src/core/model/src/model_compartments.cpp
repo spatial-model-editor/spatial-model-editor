@@ -144,15 +144,16 @@ static void removeCompartmentFromSBML(libsbml::Model *model,
         SPDLOG_WARN("Failed to remove Domain for compartment {}", sId);
       }
     }
-    auto *sfgeom = getSampledFieldGeometry(geom);
-    if (const auto *sfvol = sfgeom->getSampledVolumeByDomainType(domainTypeId);
-        sfvol != nullptr) {
-      if (std::unique_ptr<libsbml::SampledVolume> rmsfvol(
-              sfgeom->removeSampledVolume(sfvol->getId()));
+    if (auto *sfgeom{getSampledFieldGeometry(geom)}; sfgeom != nullptr) {
+      if (const auto *sfvol{sfgeom->getSampledVolumeByDomainType(domainTypeId)};
           sfvol != nullptr) {
-        SPDLOG_INFO("  - removed SampledVolume {}", rmsfvol->getId());
-      } else {
-        SPDLOG_WARN("Failed to remove SampledVolume for compartment {}", sId);
+        if (std::unique_ptr<libsbml::SampledVolume> rmsfvol(
+                sfgeom->removeSampledVolume(sfvol->getId()));
+            rmsfvol != nullptr) {
+          SPDLOG_INFO("  - removed SampledVolume {}", rmsfvol->getId());
+        } else {
+          SPDLOG_WARN("Failed to remove SampledVolume for compartment {}", sId);
+        }
       }
     }
     if (std::unique_ptr<libsbml::DomainType> rmdt(
