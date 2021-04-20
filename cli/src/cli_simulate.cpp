@@ -29,13 +29,14 @@ bool doSimulation(const Params &params) {
   }
 
   // setup simulator options
-  simulate::Options options;
+  s.getSimulationSettings().simulatorType = params.simType;
+  auto& options{s.getSimulationSettings().options};
   options.pixel.enableMultiThreading = true;
   options.pixel.maxThreads = params.maxThreads;
   if (params.maxThreads == 1) {
     options.pixel.enableMultiThreading = false;
   }
-  simulate::Simulation sim(s, params.simType, options);
+  simulate::Simulation sim(s);
   if (const auto &e = sim.errorMessage(); !e.empty()) {
     fmt::print("\n\nError in simulation setup: {}\n\n", e);
     return false;

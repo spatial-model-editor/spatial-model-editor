@@ -117,14 +117,10 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
   options.pixel.maxErr = {std::numeric_limits<double>::max(),
                           std::numeric_limits<double>::max()};
   options.dune.dt = dt;
-  options.dune.decrease = 0.5;
-  options.dune.increase = 1.5;
+  options.dune.decrease = 0.9999999;
+  options.dune.increase = 1.0000001;
   options.dune.maxDt = dt;
-  options.dune.minDt = 0;
-  // note: this is currently *not* a fixed timestep setup
-  // should set mindDt = dt once this issue is fixed:
-  // https://gitlab.dune-project.org/copasi/dune-copasi/-/issues/46
-  // and then ensure dt is small enough that no step fails
+  options.dune.minDt = dt;
 
   for (auto simulator : params.simulators) {
     fmt::print("\n# {} simulator\n", toString(simulator));
@@ -135,29 +131,31 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
       QFile f(QString(":/models/%1.xml").arg(model));
       f.open(QIODevice::ReadOnly);
       s.importSBMLString(f.readAll().toStdString());
+      s.getSimulationSettings().options = options;
+      s.getSimulationSettings().simulatorType = simulator;
 
       // setup simulator
-      simulate::Simulation sim(s, simulator, options);
+      simulate::Simulation sim(s);
       // do a series of simulations
       // increase length of run by a factor of 2 each time
       // stop when a run takes more than half of runtime_seconds_per_model
       // and use this last run for the benchmark
       QElapsedTimer time;
-      int iter = 1;
-      int ln2iter = 0;
-      long long elapsed_ms = 0;
+      int iter {1};
+      int ln2iter {0};
+      long long elapsed_ms{0};
       while (elapsed_ms < params.seconds_per_benchmark * 500) {
         iter += iter;
         ++ln2iter;
         time.start();
-        sim.doTimesteps(iter * dt);
+        sim.doMultipleTimesteps({{iter, dt}});
         if (!sim.errorMessage().empty()) {
           fmt::print("Simulation error: {}\n", sim.errorMessage());
           exit(1);
         }
         elapsed_ms = time.elapsed();
       }
-      double ms = static_cast<double>(elapsed_ms) / static_cast<double>(iter);
+      double ms {static_cast<double>(elapsed_ms) / static_cast<double>(iter)};
       fmt::print("{:11.5f}\t2^{:<4}\t\t{}\n", ms, ln2iter, model);
     }
   }

@@ -206,6 +206,11 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   enableTabs();
+  if(sbmlDoc.getSimulationSettings().simulatorType == sme::simulate::SimulatorType::DUNE){
+    ui->actionSimTypeDUNE->setChecked(true);
+  } else {
+    ui->actionSimTypePixel->setChecked(true);
+  }
   this->setWindowTitle(QString("Spatial Model Editor [%1]").arg(filename));
 }
 
@@ -290,7 +295,7 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
   if (iniFilename.right(4) != ".ini") {
     iniFilename.append(".ini");
   }
-  sme::simulate::DuneConverter dc(sbmlDoc, true, tabSimulate->getOptions().dune,
+  sme::simulate::DuneConverter dc(sbmlDoc, true,
                                   iniFilename);
 }
 
@@ -399,7 +404,7 @@ void MainWindow::actionSet_spatial_coordinates_triggered() {
 }
 
 void MainWindow::actionSimulation_options_triggered() {
-  DialogSimulationOptions dialog(tabSimulate->getOptions());
+  DialogSimulationOptions dialog(sbmlDoc.getSimulationSettings().options);
   if (dialog.exec() == QDialog::Accepted) {
     tabSimulate->setOptions(dialog.getOptions());
     tabMain_currentChanged(ui->tabMain->currentIndex());

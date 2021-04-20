@@ -182,26 +182,25 @@ void DuneSim::updatePixels() {
 }
 
 DuneSim::DuneSim(
-    const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
-    const DuneOptions &duneOptions)
+    const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds)
     : geometryImageSize{sbmlDoc.getGeometry().getImage().size()},
       pixelSize{sbmlDoc.getGeometry().getPixelWidth()},
-      pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()}, options{
-                                                                  duneOptions} {
+      pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()} {
   try {
     const auto &lengthUnit{sbmlDoc.getUnits().getLength()};
     const auto &volumeUnit{sbmlDoc.getUnits().getVolume()};
     volOverL3 = model::getVolOverL3(lengthUnit, volumeUnit);
 
-    simulate::DuneConverter dc(sbmlDoc, false, duneOptions);
+    simulate::DuneConverter dc(sbmlDoc, false);
+    const auto& options{sbmlDoc.getSimulationSettings().options.dune};
     if (options.discretization != DuneDiscretizationType::FEM1) {
       // for now we only support 1st order FEM
       // in future could add:
       //  - 0th order a.k.a. FVM for independent compartment models
       //  - 2nd order FEM for both types of models
-      SPDLOG_WARN(
-          "Invalid integrator type requested - using 1st order FEM instead");
-      options.discretization = DuneDiscretizationType::FEM1;
+      SPDLOG_ERROR(
+          "Invalid integrator type requested");
+      throw std::runtime_error("Invalid integrator type requested");
     }
     if (dc.getIniFiles().empty()) {
       currentErrorMessage = "Nothing to simulate";

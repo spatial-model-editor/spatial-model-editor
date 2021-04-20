@@ -61,14 +61,12 @@ private:
   void updateSpeciesConcentrations();
   std::string currentErrorMessage;
   QImage currentErrorImage;
-  DuneOptions options;
   double volOverL3;
 
 public:
   explicit DuneSim(
       const model::Model &sbmlDoc,
-      const std::vector<std::string> &compartmentIds,
-      const DuneOptions &duneOptions = {});
+      const std::vector<std::string> &compartmentIds);
   ~DuneSim() override;
   std::size_t run(double time, double timeout_ms) override;
   [[nodiscard]] const std::vector<double> &

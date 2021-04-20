@@ -77,7 +77,8 @@ void TabSimulate::loadModelData() {
     sim->requestStop();
     simSteps.wait();
   }
-  if (simType == sme::simulate::SimulatorType::DUNE &&
+  if (model.getSimulationSettings().simulatorType ==
+          sme::simulate::SimulatorType::DUNE &&
       (model.getGeometry().getMesh() == nullptr ||
        !model.getGeometry().getMesh()->isValid())) {
     ui->btnSimulate->setEnabled(false);
@@ -103,7 +104,7 @@ void TabSimulate::loadModelData() {
   // creating a new one, otherwise the new ones make use of the existing ones,
   // and once they are deleted it dereferences a nullptr and segfaults...
   sim.reset();
-  sim = std::make_unique<sme::simulate::Simulation>(model, simType, simOptions);
+  sim = std::make_unique<sme::simulate::Simulation>(model);
   if (!sim->errorMessage().empty()) {
     QMessageBox::warning(
         this, "Simulation Setup Failed",
@@ -113,6 +114,25 @@ void TabSimulate::loadModelData() {
     return;
   }
 
+  QString simLength{};
+  QString simInterval{};
+  for (const auto &[n, t] : model.getSimulationSettings().times) {
+    simLength.append(QString::number(static_cast<double>(n) * t));
+    simLength.append(";");
+    simInterval.append(QString::number(t));
+    simInterval.append(";");
+  }
+  simLength.chop(1);
+  simInterval.chop(1);
+  if (simLength.isEmpty() && simInterval.isEmpty()) {
+    simLength = cachedSimLength;
+    simInterval = cachedSimInterval;
+  } else {
+    cachedSimLength = simLength;
+    cachedSimInterval = simInterval;
+  }
+  ui->txtSimLength->setText(simLength);
+  ui->txtSimInterval->setText(simInterval);
   ui->btnSimulate->setEnabled(true);
   ui->btnResetSimulation->setEnabled(false);
 
@@ -163,9 +183,11 @@ void TabSimulate::stopSimulation() {
 
 void TabSimulate::useDune(bool enable) {
   if (enable) {
-    simType = sme::simulate::SimulatorType::DUNE;
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::DUNE;
   } else {
-    simType = sme::simulate::SimulatorType::Pixel;
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::Pixel;
   }
   loadModelData();
 }
@@ -177,13 +199,12 @@ void TabSimulate::reset() {
     simSteps.wait();
   }
   model.getSimulationData().clear();
+  model.getSimulationSettings().times.clear();
   loadModelData();
 }
 
-sme::simulate::Options TabSimulate::getOptions() const { return simOptions; }
-
 void TabSimulate::setOptions(const sme::simulate::Options &options) {
-  simOptions = options;
+  model.getSimulationSettings().options = options;
   loadModelData();
 }
 
@@ -229,6 +250,8 @@ void TabSimulate::btnSimulate_clicked() {
                          "Invalid simulation length or image interval");
     return;
   }
+  cachedSimLength = ui->txtSimLength->text();
+  cachedSimInterval = ui->txtSimInterval->text();
   // display modal progress dialog box
   progressDialog->setWindowModality(Qt::WindowModal);
   progressDialog->setValue(time.size() - 1);

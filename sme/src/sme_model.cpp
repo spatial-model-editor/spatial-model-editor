@@ -223,7 +223,7 @@ void Model::importGeometryFromImage(const std::string &filename) {
   s->getGeometry().importGeometryFromImage(img);
   compartmentImage = toPyImageRgb(s->getGeometry().getImage());
   // try to re-assign previous colour to each compartment
-  for(int i=0; i<ids.size(); ++i){
+  for (int i = 0; i < ids.size(); ++i) {
     s->getCompartments().setColour(ids[i], colours[i]);
   }
 }
@@ -251,8 +251,8 @@ std::vector<SimulationResult> Model::simulate(double simulationTime,
   double timeoutMillisecs{static_cast<double>(timeoutSeconds) * 1000.0};
   std::vector<SimulationResult> results;
   s->getSimulationData().clear();
-  sim = std::make_unique<simulate::Simulation>(*(s.get()),
-                                               simulate::SimulatorType::Pixel);
+  s->getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+  sim = std::make_unique<simulate::Simulation>(*(s.get()));
   if (const auto &e = sim->errorMessage(); !e.empty()) {
     throw SmeRuntimeError(fmt::format("Error in simulation setup: {}", e));
   }
@@ -261,12 +261,12 @@ std::vector<SimulationResult> Model::simulate(double simulationTime,
     double remainingTimeoutMillisecs{
         timeoutMillisecs -
         static_cast<double>(simulationRuntimeTimer.elapsed())};
-    if(remainingTimeoutMillisecs < 0){
+    if (remainingTimeoutMillisecs < 0) {
       remainingTimeoutMillisecs = 0.0;
     }
     sim->doTimesteps(imageInterval, 1, remainingTimeoutMillisecs);
     if (const auto &e = sim->errorMessage(); !e.empty()) {
-      if(throwOnTimeout) {
+      if (throwOnTimeout) {
         throw SmeRuntimeError(fmt::format("Error during simulation: {}", e));
       } else {
         return results;

@@ -40,9 +40,9 @@ SCENARIO("Model geometry",
     model::ModelSpecies mSpecies;
     model::ModelReactions mReactions(doc->getModel(),
                                      mMembranes.getMembranes());
-    utils::SmeFile smeFile;
+    utils::SmeFileContents smeFileContents;
     mCompartments = model::ModelCompartments(
-        doc->getModel(), &mGeometry, &mMembranes, &mSpecies, &mReactions, &smeFile.simulationData());
+        doc->getModel(), &mGeometry, &mMembranes, &mSpecies, &mReactions, &smeFileContents.simulationData);
     mGeometry =
         model::ModelGeometry(doc->getModel(), &mCompartments, &mMembranes);
     auto &m = mGeometry;

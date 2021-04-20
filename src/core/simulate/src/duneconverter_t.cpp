@@ -19,8 +19,7 @@ SCENARIO("DUNE: DuneConverter",
     QFile f(":/models/ABtoC.xml");
     f.open(QIODevice::ReadOnly);
     s.importSBMLString(f.readAll().toStdString());
-    simulate::DuneOptions opt;
-    simulate::DuneConverter dc(s, true, opt, {}, 14);
+    simulate::DuneConverter dc(s, true, {}, 14);
     QStringList ini = dc.getIniFile().split("\n");
     auto line = ini.cbegin();
     REQUIRE(*line++ == "[grid]");

@@ -127,16 +127,16 @@ void Model::importFile(const std::string &filename) {
   clear();
   currentFilename = removeExtension(filename);
   SPDLOG_INFO("Importing file {} ...", filename);
-  utils::SmeFile tmpSmeFile;
-  if(tmpSmeFile.importFile(filename)){
+  auto contents{utils::importSmeFile(filename)};
+  if(!contents.xmlModel.empty()){
     SPDLOG_INFO("  -> SME file", filename);
-    doc.reset(libsbml::readSBMLFromString(tmpSmeFile.xmlModel().c_str()));
+    doc.reset(libsbml::readSBMLFromString(contents.xmlModel.c_str()));
   } else {
     SPDLOG_INFO("  -> SBML file", filename);
     doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
   }
   initModelData();
-  smeFile.simulationData() = std::move(tmpSmeFile.simulationData());
+  smeFileContents = std::move(contents);
   setHasUnsavedChanges(false);
 }
 
@@ -146,8 +146,8 @@ void Model::exportSMEFile(const std::string &filename) {
     currentFilename.truncate(len);
   }
   updateSBMLDoc();
-  smeFile.setXmlModel(getXml().toStdString());
-  if (!smeFile.exportFile(filename)) {
+  smeFileContents.xmlModel = getXml().toStdString();
+  if (!utils::exportSmeFile(filename, smeFileContents)) {
     SPDLOG_WARN("Failed to save file '{}'", filename);
   }
   setHasUnsavedChanges(false);
@@ -220,7 +220,19 @@ ModelMath &Model::getMath() { return modelMath; }
 const ModelMath &Model::getMath() const { return modelMath; }
 
 simulate::SimulationData &Model::getSimulationData() {
-  return smeFile.simulationData();
+  return smeFileContents.simulationData;
+}
+
+const simulate::SimulationData &Model::getSimulationData() const{
+  return smeFileContents.simulationData;
+}
+
+simulate::SimulationSettings &Model::getSimulationSettings(){
+  return smeFileContents.simulationSettings;
+}
+
+const simulate::SimulationSettings &Model::getSimulationSettings() const{
+  return smeFileContents.simulationSettings;
 }
 
 void Model::clear() {
@@ -237,7 +249,7 @@ void Model::clear() {
   modelEvents = ModelEvents{};
   modelUnits = ModelUnits{};
   modelMath = ModelMath{};
-  smeFile = {};
+  smeFileContents = {};
 }
 
 SpeciesGeometry Model::getSpeciesGeometry(const QString &speciesID) const {

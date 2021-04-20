@@ -113,7 +113,9 @@ static void printFixedTimestepPixel(const PixelParams &params) {
     options.pixel.maxErr = {std::numeric_limits<double>::max(),
                             std::numeric_limits<double>::max()};
     options.pixel.maxTimestep = dt;
-    simulate::Simulation sim(s, simulate::SimulatorType::Pixel, options);
+    s.getSimulationSettings().options = options;
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+    simulate::Simulation sim(s);
 
     QElapsedTimer time;
     long long elapsed_ms = 0;

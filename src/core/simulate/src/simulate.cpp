@@ -104,15 +104,14 @@ void Simulation::applyNextEvent() {
   data->xmlModel = simModel->getXml().toStdString();
   // re-init simulator
   simulator.reset();
-  if (simulatorType == SimulatorType::DUNE &&
+  if (settings->simulatorType == SimulatorType::DUNE &&
       simModel->getGeometry().getMesh() != nullptr &&
       simModel->getGeometry().getMesh()->isValid()) {
-    simulator = std::make_unique<DuneSim>(*simModel.get(), compartmentIds,
-                                          simulatorOptions.dune);
+    simulator = std::make_unique<DuneSim>(*simModel.get(), compartmentIds);
   } else {
     simulator = std::make_unique<PixelSim>(*simModel.get(), compartmentIds,
                                            compartmentSpeciesIds,
-                                           simulatorOptions.pixel);
+                                           settings->options.pixel);
   }
   // remove applied simEvent
   simEvents.pop();
@@ -169,10 +168,8 @@ void Simulation::updateConcentrations(double t) {
   }
 }
 
-Simulation::Simulation(model::Model &sbmlDoc, SimulatorType simType,
-                       const Options &options)
-    : simulatorType(simType),
-      simulatorOptions(options), data{&sbmlDoc.getSimulationData()},
+Simulation::Simulation(model::Model &sbmlDoc)
+    : settings(&sbmlDoc.getSimulationSettings()), data{&sbmlDoc.getSimulationData()},
       imageSize(sbmlDoc.getGeometry().getImage().size()) {
   sme::model::Model *modelToSimulate{&sbmlDoc};
   if (data->timePoints.size() <= 1) {
@@ -188,14 +185,13 @@ Simulation::Simulation(model::Model &sbmlDoc, SimulatorType simType,
   initModel(sbmlDoc);
   initEvents(sbmlDoc);
   // init simulator
-  if (simulatorType == SimulatorType::DUNE &&
+  if (settings->simulatorType == SimulatorType::DUNE &&
       sbmlDoc.getGeometry().getMesh() != nullptr &&
       sbmlDoc.getGeometry().getMesh()->isValid()) {
-    simulator = std::make_unique<DuneSim>(*modelToSimulate, compartmentIds,
-                                          options.dune);
+    simulator = std::make_unique<DuneSim>(*modelToSimulate, compartmentIds);
   } else {
     simulator = std::make_unique<PixelSim>(
-        *modelToSimulate, compartmentIds, compartmentSpeciesIds, options.pixel);
+        *modelToSimulate, compartmentIds, compartmentSpeciesIds, settings->options.pixel);
   }
   if (simulator->errorMessage().empty()) {
     nCompletedTimesteps.store(data->timePoints.size());
@@ -216,15 +212,16 @@ std::size_t Simulation::doTimesteps(double time, std::size_t nSteps,
 std::size_t Simulation::doMultipleTimesteps(
     const std::vector<std::pair<std::size_t, double>> &timesteps,
     double timeout_ms) {
-
   std::size_t nStepsTotal{0};
   for (const auto &timestep : timesteps) {
     nStepsTotal += timestep.first;
   }
   QElapsedTimer timer;
   timer.start();
+  for (const auto &timestep : timesteps) {
+    settings->times.push_back(timestep);
+  }
   // ensure there is enough space that push_back won't cause a reallocation
-
   // todo: there should be a mutex/lock here in case reserve() reallocates
   // to avoid a user getting garbage data while the vector contents are moving
   data->reserve(data->size() + nStepsTotal);
