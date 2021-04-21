@@ -14,6 +14,7 @@ namespace geometry {
 
 static void fillMissingByDilation(std::vector<std::size_t> &arr, int w, int h,
                                   std::size_t invalidIndex) {
+  std::vector<std::size_t> arr_next{arr};
   const int maxIter{w + h};
   for (int iter = 0; iter < maxIter; ++iter) {
     bool finished{true};
@@ -23,26 +24,52 @@ static void fillMissingByDilation(std::vector<std::size_t> &arr, int w, int h,
         if (arr[i] == invalidIndex) {
           // replace negative pixel with any valid 4-connected neighbour
           if (x > 0 && arr[i - 1] != invalidIndex) {
-            arr[i] = arr[i - 1];
+            arr_next[i] = arr[i - 1];
           } else if (x + 1 < w && arr[i + 1] != invalidIndex) {
-            arr[i] = arr[i + 1];
-          } else if (y > 0 && arr[i - static_cast<std::size_t>(w)] != invalidIndex) {
-            arr[i] = arr[i - static_cast<std::size_t>(w)];
-          } else if (y + 1 < h && arr[i + static_cast<std::size_t>(w)] != invalidIndex) {
-            arr[i] = arr[i + static_cast<std::size_t>(w)];
+            arr_next[i] = arr[i + 1];
+          } else if (y > 0 &&
+                     arr[i - static_cast<std::size_t>(w)] != invalidIndex) {
+            arr_next[i] = arr[i - static_cast<std::size_t>(w)];
+          } else if (y + 1 < h &&
+                     arr[i + static_cast<std::size_t>(w)] != invalidIndex) {
+            arr_next[i] = arr[i + static_cast<std::size_t>(w)];
           } else {
-            // pixel has no non-negative neighbour: need another iteration
+            // pixel has no valid neighbour: need another iteration
             finished = false;
           }
         }
       }
     }
+    arr = arr_next;
     if (finished) {
       return;
     }
   }
   SPDLOG_WARN("Failed to replace all invalid pixels");
 }
+
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+static void
+saveDebuggingIndicesImage(const std::vector<std::size_t> &arrayPoints,
+                          const QSize &sz, std::size_t maxIndex,
+                          const QString &filename) {
+  double norm{static_cast<double>(maxIndex)};
+  QImage img(sz, QImage::Format_ARGB32_Premultiplied);
+  img.fill(qRgba(0, 0, 0, 0));
+  QColor c;
+  for (int x = 0; x < sz.width(); ++x) {
+    for (int y = 0; y < sz.height(); ++y) {
+      auto i{arrayPoints[static_cast<std::size_t>(x + sz.width() * y)]};
+      if (i <= maxIndex) {
+        double v{static_cast<double>(i) / norm};
+        c.setHslF(1.0 - v, 1.0, 0.5 * v);
+        img.setPixel(x, y, c.rgb());
+      }
+    }
+  }
+  img.save(filename);
+}
+#endif
 
 Compartment::Compartment(std::string compId, const QImage &img, QRgb col)
     : compartmentId{std::move(compId)}, colour{col}, image{
@@ -69,8 +96,21 @@ Compartment::Compartment(std::string compId, const QImage &img, QRgb col)
       }
     }
   }
+
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+  saveDebuggingIndicesImage(arrayPoints, img.size(), ixIndex,
+                            QString(compartmentId.c_str()) + "_indices.png");
+#endif
+
   // for pixels outside compartment, find nearest pixel in compartment
   fillMissingByDilation(arrayPoints, img.width(), img.height(), invalidIndex);
+
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+  saveDebuggingIndicesImage(arrayPoints, img.size(), ixIndex,
+                            QString(compartmentId.c_str()) +
+                                "_indices_dilated.png");
+#endif
+
   utils::QPointIndexer ixIndexer(img.size(), ix);
   // find nearest neighbours of each point
   nn.clear();

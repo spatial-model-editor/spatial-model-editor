@@ -5,6 +5,7 @@ using namespace sme;
 
 static void testFillMissingByDilation(std::vector<double> &arr, int w, int h) {
   const int maxIter{w + h};
+  std::vector<double> arr2{arr};
   for (int iter = 0; iter < maxIter; ++iter) {
     bool finished{true};
     for (int y = 0; y < h; ++y) {
@@ -13,13 +14,13 @@ static void testFillMissingByDilation(std::vector<double> &arr, int w, int h) {
         if (arr[i] < 0) {
           // replace negative pixel with any non-negative 4-connected neighbour
           if (x > 0 && arr[i - 1] >= 0) {
-            arr[i] = arr[i - 1];
+            arr2[i] = arr[i - 1];
           } else if (x + 1 < w && arr[i + 1] >= 0) {
-            arr[i] = arr[i + 1];
+            arr2[i] = arr[i + 1];
           } else if (y > 0 && arr[i - static_cast<std::size_t>(w)] >= 0) {
-            arr[i] = arr[i - static_cast<std::size_t>(w)];
+            arr2[i] = arr[i - static_cast<std::size_t>(w)];
           } else if (y + 1 < h && arr[i + static_cast<std::size_t>(w)] >= 0) {
-            arr[i] = arr[i + static_cast<std::size_t>(w)];
+            arr2[i] = arr[i + static_cast<std::size_t>(w)];
           } else {
             // pixel has no non-negative neighbour: need another iteration
             finished = false;
@@ -27,6 +28,7 @@ static void testFillMissingByDilation(std::vector<double> &arr, int w, int h) {
         }
       }
     }
+    arr = arr2;
     if (finished) {
       return;
     }
