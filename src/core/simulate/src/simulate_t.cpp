@@ -1700,7 +1700,7 @@ SCENARIO("Events",
 }
 
 SCENARIO("simulate w/options & save, load, re-simulate",
-         "[core/simulate/simulate][core/simulate][core][simulate][Q]") {
+         "[core/simulate/simulate][core/simulate][core][simulate]") {
   for (auto simulatorType :
        {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
     CAPTURE(simulatorType);

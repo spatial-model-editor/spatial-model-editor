@@ -3,15 +3,14 @@
 #include "simulate.hpp"
 #include <CLI/CLI.hpp>
 
-namespace sme {
-
-namespace cli {
+namespace sme::cli {
 
 struct Params {
-  std::string filename;
-  simulate::SimulatorType simType = simulate::SimulatorType::DUNE;
-  double simulationTime{100.0};
-  double imageInterval{1.0};
+  std::string inputFile;
+  std::string simulationTimes;
+  std::string imageIntervals;
+  simulate::SimulatorType simType{simulate::SimulatorType::DUNE};
+  std::string outputFile{};
   std::size_t maxThreads{0};
 };
 
@@ -21,6 +20,4 @@ std::string toString(const simulate::SimulatorType &s);
 
 void printParams(const Params &params);
 
-} // namespace cli
-
-} // namespace sme
+} // namespace sme::cli

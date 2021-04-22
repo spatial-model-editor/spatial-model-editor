@@ -208,48 +208,23 @@ void TabSimulate::setOptions(const sme::simulate::Options &options) {
   loadModelData();
 }
 
-std::optional<std::vector<std::pair<std::size_t, double>>>
-TabSimulate::parseSimulationTimes() {
-  std::vector<std::pair<std::size_t, double>> times;
-  QString imageIntervalsText;
-  auto simLengths{ui->txtSimLength->text().split(";")};
-  auto simDtImages{ui->txtSimInterval->text().split(";")};
-  if (simLengths.empty() || simDtImages.empty()) {
-    return {};
-  }
-  if (simLengths.size() != simDtImages.size()) {
-    return {};
-  }
-  for (int i = 0; i < simLengths.size(); ++i) {
-    bool validSimLengthDbl;
-    double simLength{simLengths[i].toDouble(&validSimLengthDbl)};
-    bool validDtImageDbl;
-    double dt{simDtImages[i].toDouble(&validDtImageDbl)};
-    if (!validDtImageDbl || !validSimLengthDbl) {
-      return {};
-    }
-    int nImages{static_cast<int>(std::round(simLength / dt))};
-    if (nImages < 1) {
-      nImages = 1;
-    }
-    dt = simLength / static_cast<double>(nImages);
-    SPDLOG_DEBUG("{} x {}", nImages, dt);
-    times.push_back({nImages, dt});
-    imageIntervalsText.append(QString::number(dt));
-    imageIntervalsText.append(";");
-  }
-  imageIntervalsText.chop(1);
-  ui->txtSimInterval->setText(imageIntervalsText);
-  return times;
-}
-
 void TabSimulate::btnSimulate_clicked() {
-  auto simulationTimes{parseSimulationTimes()};
+  auto simulationTimes{sme::simulate::parseSimulationTimes(
+      ui->txtSimLength->text(), ui->txtSimInterval->text())};
   if (!simulationTimes.has_value()) {
     QMessageBox::warning(this, "Invalid simulation length or image interval",
                          "Invalid simulation length or image interval");
     return;
   }
+  QString imageIntervalsText;
+  for (const auto &[n, dt] : simulationTimes.value()) {
+    SPDLOG_DEBUG("{} x {}", n, dt);
+    imageIntervalsText.append(QString::number(dt));
+    imageIntervalsText.append(";");
+  }
+  imageIntervalsText.chop(1);
+  ui->txtSimInterval->setText(imageIntervalsText);
+
   cachedSimLength = ui->txtSimLength->text();
   cachedSimInterval = ui->txtSimInterval->text();
   // display modal progress dialog box
