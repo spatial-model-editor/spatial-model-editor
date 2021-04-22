@@ -23,13 +23,12 @@ class MainWindow : public QMainWindow {
 
 public:
   explicit MainWindow(const QString &filename = {}, QWidget *parent = nullptr);
-  ~MainWindow();
+  ~MainWindow() override;
 
 private:
   std::unique_ptr<Ui::MainWindow> ui;
   QLabel *statusBarPermanentMessage;
-  sme::model::Model sbmlDoc;
-  QString currentFilename;
+  sme::model::Model model;
 
   void setupTabs();
   void setupConnections();
@@ -73,6 +72,7 @@ private:
   // Advanced menu actions
   void actionSimulation_options_triggered();
 
+  void lblGeometry_mouseOver(QPoint point);
   void dragEnterEvent(QDragEnterEvent *event) override;
   void dropEvent(QDropEvent *event) override;
   void closeEvent(QCloseEvent *event) override;

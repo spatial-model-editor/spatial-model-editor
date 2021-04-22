@@ -43,7 +43,7 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
   ui->splitter->setSizes({1000, 3000});
 
   if (!filename.isEmpty()) {
-    sbmlDoc.importFile(filename.toStdString());
+    model.importFile(filename.toStdString());
     validateSBMLDoc(filename);
   } else {
     validateSBMLDoc();
@@ -53,26 +53,26 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
 MainWindow::~MainWindow() = default;
 
 void MainWindow::setupTabs() {
-  tabGeometry = new TabGeometry(sbmlDoc, ui->lblGeometry,
+  tabGeometry = new TabGeometry(model, ui->lblGeometry,
                                 statusBarPermanentMessage, ui->tabReactions);
   ui->tabGeometry->layout()->addWidget(tabGeometry);
 
-  tabSpecies = new TabSpecies(sbmlDoc, ui->lblGeometry, ui->tabSpecies);
+  tabSpecies = new TabSpecies(model, ui->lblGeometry, ui->tabSpecies);
   ui->tabSpecies->layout()->addWidget(tabSpecies);
 
-  tabReactions = new TabReactions(sbmlDoc, ui->lblGeometry, ui->tabReactions);
+  tabReactions = new TabReactions(model, ui->lblGeometry, ui->tabReactions);
   ui->tabReactions->layout()->addWidget(tabReactions);
 
-  tabFunctions = new TabFunctions(sbmlDoc, ui->tabFunctions);
+  tabFunctions = new TabFunctions(model, ui->tabFunctions);
   ui->tabFunctions->layout()->addWidget(tabFunctions);
 
-  tabParameters = new TabParameters(sbmlDoc, ui->tabParameters);
+  tabParameters = new TabParameters(model, ui->tabParameters);
   ui->tabParameters->layout()->addWidget(tabParameters);
 
-  tabEvents = new TabEvents(sbmlDoc, ui->tabEvents);
+  tabEvents = new TabEvents(model, ui->tabEvents);
   ui->tabEvents->layout()->addWidget(tabEvents);
 
-  tabSimulate = new TabSimulate(sbmlDoc, ui->lblGeometry, ui->tabSimulate);
+  tabSimulate = new TabSimulate(model, ui->lblGeometry, ui->tabSimulate);
   ui->tabSimulate->layout()->addWidget(tabSimulate);
 }
 
@@ -145,10 +145,22 @@ void MainWindow::setupConnections() {
           &MainWindow::enableTabs);
 
   connect(ui->actionGroupSimType, &QActionGroup::triggered, this,
-          [s = tabSimulate, ui = ui.get()](QAction *action) {
-            Q_UNUSED(action);
+          [s = tabSimulate, ui = ui.get()]() {
             s->useDune(ui->actionSimTypeDUNE->isChecked());
           });
+
+  connect(ui->actionGeometry_grid, &QAction::triggered, this,
+          [ui = ui.get()]() {
+            ui->lblGeometry->displayGrid(ui->actionGeometry_grid->isChecked());
+          });
+
+  connect(
+      ui->actionGeometry_scale, &QAction::triggered, this, [ui = ui.get()]() {
+        ui->lblGeometry->displayScale(ui->actionGeometry_scale->isChecked());
+      });
+
+  connect(ui->lblGeometry, &QLabelMouseTracker::mouseOver, this,
+          &MainWindow::lblGeometry_mouseOver);
 }
 
 void MainWindow::tabMain_currentChanged(int index) {
@@ -192,8 +204,8 @@ void MainWindow::tabMain_currentChanged(int index) {
 }
 
 void MainWindow::validateSBMLDoc(const QString &filename) {
-  if (!sbmlDoc.getIsValid()) {
-    sbmlDoc.createSBMLFile("untitled-model");
+  if (!model.getIsValid()) {
+    model.createSBMLFile("untitled-model");
     if (!filename.isEmpty() && filename.left(5) != ("-psn_")) {
       // MacOS sometimes passes a command line parameter of the form
       // `-psn_0_204850` to the executable when launched as a GUI app, so in
@@ -206,7 +218,8 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   enableTabs();
-  if(sbmlDoc.getSimulationSettings().simulatorType == sme::simulate::SimulatorType::DUNE){
+  if (model.getSimulationSettings().simulatorType ==
+      sme::simulate::SimulatorType::DUNE) {
     ui->actionSimTypeDUNE->setChecked(true);
   } else {
     ui->actionSimTypePixel->setChecked(true);
@@ -215,7 +228,11 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
 }
 
 void MainWindow::enableTabs() {
-  bool enable = sbmlDoc.getIsValid() && sbmlDoc.getGeometry().getIsValid();
+  bool enable = model.getIsValid() && model.getGeometry().getIsValid();
+  if (model.getIsValid() && model.getGeometry().getHasImage()) {
+    ui->lblGeometry->setPhysicalSize(model.getGeometry().getPhysicalSize(),
+                                     model.getUnits().getLength().name);
+  }
   for (int i = 1; i < ui->tabMain->count(); ++i) {
     ui->tabMain->setTabEnabled(i, enable);
   }
@@ -228,7 +245,7 @@ void MainWindow::action_New_triggered() {
       this, "Create new model", "New model name:", QLineEdit::Normal, {}, &ok);
   if (ok && !modelName.isEmpty()) {
     tabSimulate->reset();
-    sbmlDoc.createSBMLFile(modelName.toStdString());
+    model.createSBMLFile(modelName.toStdString());
     validateSBMLDoc(modelName + ".sme");
   }
 }
@@ -240,7 +257,7 @@ void MainWindow::action_Open_SBML_file_triggered() {
   if (filename.isEmpty()) {
     return;
   }
-  sbmlDoc.importFile(filename.toStdString());
+  model.importFile(filename.toStdString());
   validateSBMLDoc(filename);
 }
 
@@ -251,13 +268,13 @@ void MainWindow::menuOpen_example_SBML_file_triggered(const QAction *action) {
     SPDLOG_WARN("failed to open built-in file: {}", filename.toStdString());
     return;
   }
-  sbmlDoc.importSBMLString(f.readAll().toStdString(), filename.toStdString());
+  model.importSBMLString(f.readAll().toStdString(), filename.toStdString());
   validateSBMLDoc(filename);
 }
 
 void MainWindow::action_Save_triggered() {
   QString filename = QFileDialog::getSaveFileName(
-      this, "Save Model", sbmlDoc.getCurrentFilename() + ".sme",
+      this, "Save Model", model.getCurrentFilename() + ".sme",
       "SME file (*.sme)");
   if (filename.isEmpty()) {
     return;
@@ -265,13 +282,13 @@ void MainWindow::action_Save_triggered() {
   if (filename.right(4) != ".sme") {
     filename.append(".sme");
   }
-  sbmlDoc.exportSMEFile(filename.toStdString()); // todo check for success here
+  model.exportSMEFile(filename.toStdString()); // todo check for success here
   this->setWindowTitle(QString("Spatial Model Editor [%1]").arg(filename));
 }
 
 void MainWindow::action_Save_SBML_file_triggered() {
   QString filename = QFileDialog::getSaveFileName(
-      this, "Export SBML file", sbmlDoc.getCurrentFilename() + ".xml",
+      this, "Export SBML file", model.getCurrentFilename() + ".xml",
       "SBML file (*.xml)");
   if (filename.isEmpty()) {
     return;
@@ -279,7 +296,7 @@ void MainWindow::action_Save_SBML_file_triggered() {
   if (filename.right(4) != ".xml") {
     filename.append(".xml");
   }
-  sbmlDoc.exportSBMLFile(filename.toStdString()); // todo check for success here
+  model.exportSBMLFile(filename.toStdString()); // todo check for success here
 }
 
 void MainWindow::actionExport_Dune_ini_file_triggered() {
@@ -295,8 +312,7 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
   if (iniFilename.right(4) != ".ini") {
     iniFilename.append(".ini");
   }
-  sme::simulate::DuneConverter dc(sbmlDoc, true,
-                                  iniFilename);
+  sme::simulate::DuneConverter dc(model, true, iniFilename);
 }
 
 void MainWindow::actionGeometry_from_model_triggered() {
@@ -310,10 +326,10 @@ void MainWindow::actionGeometry_from_model_triggered() {
     return;
   }
   tabSimulate->reset();
-  for (const auto &id : sbmlDoc.getCompartments().getIds()) {
-    sbmlDoc.getCompartments().setColour(id, 0);
+  for (const auto &id : model.getCompartments().getIds()) {
+    model.getCompartments().setColour(id, 0);
   }
-  sbmlDoc.getGeometry().importSampledFieldGeometry(filename);
+  model.getGeometry().importSampledFieldGeometry(filename);
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   enableTabs();
@@ -341,12 +357,12 @@ void MainWindow::menuExample_geometry_image_triggered(const QAction *action) {
 
 void MainWindow::importGeometryImage(const QImage &image) {
   tabSimulate->reset();
-  sbmlDoc.getGeometry().importGeometryFromImage(image);
+  model.getGeometry().importGeometryFromImage(image);
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
-  enableTabs();
   // set default pixel width in case user doesn't set image physical size
-  sbmlDoc.getGeometry().setPixelWidth(1.0);
+  model.getGeometry().setPixelWidth(1.0);
+  enableTabs();
   actionEdit_geometry_image_triggered();
 }
 
@@ -354,17 +370,18 @@ void MainWindow::actionSet_model_units_triggered() {
   if (!isValidModel()) {
     return;
   }
-  sme::model::Unit oldLengthUnit{sbmlDoc.getUnits().getLength()};
-  double oldPixelWidth{sbmlDoc.getGeometry().getPixelWidth()};
-  DialogUnits dialog(sbmlDoc.getUnits());
+  sme::model::Unit oldLengthUnit{model.getUnits().getLength()};
+  double oldPixelWidth{model.getGeometry().getPixelWidth()};
+  DialogUnits dialog(model.getUnits());
   if (dialog.exec() == QDialog::Accepted) {
-    sbmlDoc.getUnits().setTimeIndex(dialog.getTimeUnitIndex());
-    sbmlDoc.getUnits().setLengthIndex(dialog.getLengthUnitIndex());
-    sbmlDoc.getUnits().setVolumeIndex(dialog.getVolumeUnitIndex());
-    sbmlDoc.getUnits().setAmountIndex(dialog.getAmountUnitIndex());
+    model.getUnits().setTimeIndex(dialog.getTimeUnitIndex());
+    model.getUnits().setLengthIndex(dialog.getLengthUnitIndex());
+    model.getUnits().setVolumeIndex(dialog.getVolumeUnitIndex());
+    model.getUnits().setAmountIndex(dialog.getAmountUnitIndex());
     // rescale pixelsize to match new units
-    sbmlDoc.getGeometry().setPixelWidth(sme::model::rescale(
-        oldPixelWidth, oldLengthUnit, sbmlDoc.getUnits().getLength()));
+    model.getGeometry().setPixelWidth(sme::model::rescale(
+        oldPixelWidth, oldLengthUnit, model.getUnits().getLength()));
+    enableTabs();
   }
 }
 
@@ -372,20 +389,20 @@ void MainWindow::actionEdit_geometry_image_triggered() {
   if (!isValidModelAndGeometryImage()) {
     return;
   }
-  DialogGeometryImage dialog(sbmlDoc.getGeometry().getImage(),
-                             sbmlDoc.getGeometry().getPixelWidth(),
-                             sbmlDoc.getUnits());
+  DialogGeometryImage dialog(model.getGeometry().getImage(),
+                             model.getGeometry().getPixelWidth(),
+                             model.getUnits());
   if (dialog.exec() == QDialog::Accepted) {
     double pixelWidth = dialog.getPixelWidth();
     SPDLOG_INFO("Set new pixel width = {}", pixelWidth);
-    sbmlDoc.getGeometry().setPixelWidth(pixelWidth);
+    model.getGeometry().setPixelWidth(pixelWidth);
     if (dialog.imageAltered()) {
       SPDLOG_INFO("Importing altered geometry image");
-      sbmlDoc.getGeometry().importGeometryFromImage(dialog.getAlteredImage());
+      model.getGeometry().importGeometryFromImage(dialog.getAlteredImage());
       ui->tabMain->setCurrentIndex(0);
       tabMain_currentChanged(0);
-      enableTabs();
     }
+    enableTabs();
   }
 }
 
@@ -393,7 +410,7 @@ void MainWindow::actionSet_spatial_coordinates_triggered() {
   if (!isValidModel()) {
     return;
   }
-  auto &params = sbmlDoc.getParameters();
+  auto &params = model.getParameters();
   auto coords = params.getSpatialCoordinates();
   DialogCoordinates dialog(coords.x.name.c_str(), coords.y.name.c_str());
   if (dialog.exec() == QDialog::Accepted) {
@@ -404,7 +421,7 @@ void MainWindow::actionSet_spatial_coordinates_triggered() {
 }
 
 void MainWindow::actionSimulation_options_triggered() {
-  DialogSimulationOptions dialog(sbmlDoc.getSimulationSettings().options);
+  DialogSimulationOptions dialog(model.getSimulationSettings().options);
   if (dialog.exec() == QDialog::Accepted) {
     tabSimulate->setOptions(dialog.getOptions());
     tabMain_currentChanged(ui->tabMain->currentIndex());
@@ -421,12 +438,12 @@ void MainWindow::dropEvent(QDropEvent *event) {
     return;
   }
   QString filename{mimeData->urls().front().toLocalFile()};
-  sbmlDoc.importFile(filename.toStdString());
+  model.importFile(filename.toStdString());
   validateSBMLDoc(filename);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
-  if (!sbmlDoc.getHasUnsavedChanges()) {
+  if (!model.getHasUnsavedChanges()) {
     event->accept();
     return;
   }
@@ -443,7 +460,7 @@ void MainWindow::closeEvent(QCloseEvent *event) {
 }
 
 bool MainWindow::isValidModel() {
-  if (sbmlDoc.getIsValid()) {
+  if (model.getIsValid()) {
     return true;
   }
   SPDLOG_DEBUG("  - no SBML model");
@@ -462,7 +479,7 @@ bool MainWindow::isValidModelAndGeometryImage() {
   if (!isValidModel()) {
     return false;
   }
-  if (sbmlDoc.getGeometry().getHasImage()) {
+  if (model.getGeometry().getHasImage()) {
     return true;
   }
   SPDLOG_DEBUG("  - no geometry image");
@@ -476,4 +493,22 @@ bool MainWindow::isValidModelAndGeometryImage() {
   });
   msgbox->open();
   return false;
+}
+
+void MainWindow::lblGeometry_mouseOver(QPoint point) {
+  if (!model.getGeometry().getHasImage()) {
+    return;
+  }
+  double width{model.getGeometry().getPixelWidth()};
+  const auto &origin{model.getGeometry().getPhysicalOrigin()};
+  auto lengthUnit{model.getUnits().getLength().name};
+  auto height{model.getGeometry().getImage().height()};
+  QPointF physical;
+  physical.setX(origin.x() + width * static_cast<double>(point.x()));
+  physical.setY(origin.x() +
+                width * static_cast<double>(height - 1 - point.y()));
+  statusBar()->showMessage(QString("x=%1 %2, y=%3 %2")
+                               .arg(physical.x())
+                               .arg(lengthUnit)
+                               .arg(physical.y()));
 }

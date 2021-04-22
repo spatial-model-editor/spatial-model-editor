@@ -96,8 +96,8 @@ SCENARIO("DialogAnalytic",
                        doc.getParameters().getSpatialCoordinates());
     REQUIRE(dia.getExpression() == "x");
     ModalWidgetTimer mwt;
-    WHEN("valid expr: 10") {
-      mwt.addUserAction({"Delete", "1", "0"});
+    WHEN("valid expr: 10 & unclick grid/scale checkboxes") {
+      mwt.addUserAction({"Delete", "1", "0", "Shift+Tab", "Space", "Shift+Tab", "Space"});
       mwt.start();
       dia.exec();
       REQUIRE(dia.isExpressionValid() == true);

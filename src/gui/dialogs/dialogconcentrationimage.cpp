@@ -36,6 +36,17 @@ DialogConcentrationImage::DialogConcentrationImage(
                QImage::Format_ARGB32_Premultiplied);
   img.fill(0);
 
+  ui->lblImage->displayGrid(ui->chkGrid->isChecked());
+  ui->lblImage->displayScale(ui->chkScale->isChecked());
+  QSizeF physicalSize;
+  physicalSize.rwidth() =
+      static_cast<double>(speciesGeometry.compartmentImageSize.width()) *
+      speciesGeometry.pixelWidth;
+  physicalSize.rheight() =
+      static_cast<double>(speciesGeometry.compartmentImageSize.height()) *
+      speciesGeometry.pixelWidth;
+  ui->lblImage->setPhysicalSize(physicalSize, lengthUnit);
+
   if (concentrationArray.empty()) {
     SPDLOG_DEBUG("empty initial concentrationArray - "
                  "setting concentration to zero everywhere");
@@ -51,6 +62,10 @@ DialogConcentrationImage::DialogConcentrationImage(
           &DialogConcentrationImage::reject);
   connect(ui->lblImage, &QLabelMouseTracker::mouseOver, this,
           &DialogConcentrationImage::lblImage_mouseOver);
+  connect(ui->chkGrid, &QCheckBox::stateChanged, this,
+          &DialogConcentrationImage::chkGrid_stateChanged);
+  connect(ui->chkScale, &QCheckBox::stateChanged, this,
+          &DialogConcentrationImage::chkScale_stateChanged);
   connect(ui->btnImportImage, &QPushButton::clicked, this,
           &DialogConcentrationImage::btnImportImage_clicked);
   connect(ui->btnExportImage, &QPushButton::clicked, this,
@@ -260,6 +275,13 @@ void DialogConcentrationImage::lblImage_mouseOver(QPoint point) {
           .arg(physical.y())
           .arg(concentration[*index])
           .arg(concentrationUnit));
+}
+
+void DialogConcentrationImage::chkGrid_stateChanged(int state) {
+  ui->lblImage->displayGrid(state == Qt::Checked);
+}
+void DialogConcentrationImage::chkScale_stateChanged(int state) {
+  ui->lblImage->displayScale(state == Qt::Checked);
 }
 
 void DialogConcentrationImage::btnImportImage_clicked() {

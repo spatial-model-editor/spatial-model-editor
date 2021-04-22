@@ -239,9 +239,17 @@
     </property>
     <addaction name="actionSimulation_options"/>
    </widget>
+   <widget class="QMenu" name="menu_View">
+    <property name="title">
+     <string>&amp;View</string>
+    </property>
+    <addaction name="actionGeometry_grid"/>
+    <addaction name="actionGeometry_scale"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuImport"/>
    <addaction name="menu_Tools"/>
+   <addaction name="menu_View"/>
    <addaction name="menu_Advanced"/>
    <addaction name="menu_Help"/>
   </widget>
@@ -456,6 +464,28 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
+   </property>
+  </action>
+  <action name="actionGeometry_grid">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Geometry &amp;grid</string>
+   </property>
+  </action>
+  <action name="actionGeometry_scale">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>Geometry &amp;scale</string>
    </property>
   </action>
   <actiongroup name="actionGroupSimType">

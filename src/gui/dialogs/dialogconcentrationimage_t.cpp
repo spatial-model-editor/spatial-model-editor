@@ -1,9 +1,9 @@
-#include <QFile>
-#include <numeric>
 #include "catch_wrapper.hpp"
 #include "dialogconcentrationimage.hpp"
 #include "model.hpp"
 #include "qt_test_utils.hpp"
+#include <QFile>
+#include <numeric>
 
 SCENARIO(
     "DialogConcentrationImage",
@@ -21,7 +21,7 @@ SCENARIO(
     auto compArrayIndices = std::vector<std::size_t>{6, 3, 0, 7};
     auto outsideArrayIndices = std::vector<std::size_t>{1, 2, 4, 5, 8};
     sme::model::SpeciesGeometry specGeom{sz, compartmentPoints, origin, width,
-                                    doc.getUnits()};
+                                         doc.getUnits()};
     ModalWidgetTimer mwt;
 
     WHEN("empty concentration array: set concentration to 0") {
@@ -172,7 +172,7 @@ SCENARIO(
       DialogConcentrationImage dia({}, specGeom);
       // import image
       ModalWidgetTimer mwtImage;
-      mwt.addUserAction({"Tab", "Tab", "Space"}, true, &mwtImage);
+      mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Space"}, true, &mwtImage);
       mwtImage.addUserAction({"t", "m", "p", ".", "p", "n", "g"}, true);
       mwt.start();
       dia.exec();
@@ -191,7 +191,7 @@ SCENARIO(
       DialogConcentrationImage dia({}, specGeom);
       // import image
       ModalWidgetTimer mwtImage;
-      mwt.addUserAction({"Tab", "Tab", "Space"}, true, &mwtImage);
+      mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Space"}, true, &mwtImage);
       mwtImage.addUserAction({"t", "m", "p", ".", "p", "n", "g"});
       mwt.start();
       dia.exec();
@@ -215,7 +215,8 @@ SCENARIO(
       std::vector<double> values = {0, 1, 0.5, 0.25};
       // import image
       ModalWidgetTimer mwtImage;
-      mwt.addUserAction({"Tab", "Tab", "Space"}, false, &mwtImage);
+      mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Space"}, false,
+                        &mwtImage);
       mwtImage.addUserAction({"t", "m", "p", ".", "p", "n", "g"});
       THEN("get concentration array") {
         mwt.addUserAction();
@@ -265,9 +266,10 @@ SCENARIO(
     WHEN("built-in image loaded") {
       DialogConcentrationImage dia({}, specGeom);
       // load built-in two-blobs image
+      // uncheck grid & scale checkboxes on the way
       ModalWidgetTimer mwtImage;
-      mwt.addUserAction(
-          {"Tab", "Tab", "Tab", "Tab", "Space", "Down", "Down", "Enter"});
+      mwt.addUserAction({"Tab", "Tab", "Space", "Tab", "Space", "Tab", "Tab", "Tab", "Space",
+                         "Down", "Down", "Enter"});
       mwt.start();
       dia.exec();
       auto a = dia.getConcentrationArray();
