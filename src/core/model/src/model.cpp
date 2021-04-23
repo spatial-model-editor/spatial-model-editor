@@ -15,9 +15,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 Model::Model() = default;
 
@@ -32,7 +30,7 @@ void Model::createSBMLFile(const std::string &name) {
   initModelData();
 }
 
-static QString removeExtension(const std::string& filename){
+static QString removeExtension(const std::string &filename) {
   QString f{filename.c_str()};
   if (int len{f.lastIndexOf(".")}; len > 0) {
     f.truncate(len);
@@ -49,7 +47,8 @@ void Model::importSBMLFile(const std::string &filename) {
   setHasUnsavedChanges(false);
 }
 
-void Model::importSBMLString(const std::string &xml, const std::string& filename) {
+void Model::importSBMLString(const std::string &xml,
+                             const std::string &filename) {
   clear();
   currentFilename = removeExtension(filename);
   SPDLOG_INFO("Importing SBML from string...");
@@ -63,21 +62,24 @@ void Model::initModelData() {
   if (!isValid) {
     return;
   }
-  auto *model = doc->getModel();
+  auto *model{doc->getModel()};
+  settings = getSbmlAnnotation(model);
   modelUnits = ModelUnits(model);
   modelMath = ModelMath(model);
   modelFunctions = ModelFunctions(model);
   modelMembranes.clear();
   // todo: reduce these cyclic dependencies: currently order of initialization
   // matters, should be possible to reduce coupling here
-  modelCompartments = ModelCompartments(model, &modelGeometry, &modelMembranes,
-                                        &modelSpecies, &modelReactions, &getSimulationData());
-  modelGeometry = ModelGeometry(model, &modelCompartments, &modelMembranes);
+  modelCompartments =
+      ModelCompartments(model, &modelGeometry, &modelMembranes, &modelSpecies,
+                        &modelReactions, &getSimulationData());
+  modelGeometry = ModelGeometry(model, &modelCompartments, &modelMembranes, &settings);
   modelGeometry.importSampledFieldGeometry(model);
-  modelGeometry.importParametricGeometry(model);
+  modelGeometry.importParametricGeometry(model, &settings);
   modelParameters = ModelParameters(model, &modelEvents);
-  modelSpecies = ModelSpecies(model, &modelCompartments, &modelGeometry,
-                              &modelParameters, &modelReactions, &getSimulationData());
+  modelSpecies =
+      ModelSpecies(model, &modelCompartments, &modelGeometry, &modelParameters,
+                   &modelReactions, &getSimulationData(), &settings);
   modelEvents = ModelEvents(model, &modelParameters, &modelSpecies);
   modelReactions = ModelReactions(model, modelMembranes.getMembranes());
 }
@@ -128,7 +130,7 @@ void Model::importFile(const std::string &filename) {
   currentFilename = removeExtension(filename);
   SPDLOG_INFO("Importing file {} ...", filename);
   auto contents{utils::importSmeFile(filename)};
-  if(!contents.xmlModel.empty()){
+  if (!contents.xmlModel.empty()) {
     SPDLOG_INFO("  -> SME file", filename);
     doc.reset(libsbml::readSBMLFromString(contents.xmlModel.c_str()));
   } else {
@@ -155,6 +157,7 @@ void Model::exportSMEFile(const std::string &filename) {
 
 void Model::updateSBMLDoc() {
   modelGeometry.writeGeometryToSBML();
+  setSbmlAnnotation(doc->getModel(), settings);
   modelMembranes.exportToSBML(doc->getModel());
 }
 
@@ -223,16 +226,16 @@ simulate::SimulationData &Model::getSimulationData() {
   return smeFileContents.simulationData;
 }
 
-const simulate::SimulationData &Model::getSimulationData() const{
+const simulate::SimulationData &Model::getSimulationData() const {
   return smeFileContents.simulationData;
 }
 
-simulate::SimulationSettings &Model::getSimulationSettings(){
-  return smeFileContents.simulationSettings;
+SimulationSettings &Model::getSimulationSettings() {
+  return settings.simulationSettings;
 }
 
-const simulate::SimulationSettings &Model::getSimulationSettings() const{
-  return smeFileContents.simulationSettings;
+const SimulationSettings &Model::getSimulationSettings() const {
+  return settings.simulationSettings;
 }
 
 void Model::clear() {
@@ -250,6 +253,7 @@ void Model::clear() {
   modelUnits = ModelUnits{};
   modelMath = ModelMath{};
   smeFileContents = {};
+  settings = {};
 }
 
 SpeciesGeometry Model::getSpeciesGeometry(const QString &speciesID) const {
@@ -269,14 +273,11 @@ std::string Model::inlineExpr(const std::string &mathExpression) const {
 }
 
 DisplayOptions Model::getDisplayOptions() const {
-  return getDisplayOptionsAnnotation(doc->getModel())
-      .value_or(DisplayOptions{});
+  return settings.displayOptions;
 }
 
 void Model::setDisplayOptions(const DisplayOptions &displayOptions) {
-  addDisplayOptionsAnnotation(doc->getModel(), displayOptions);
+  settings.displayOptions = displayOptions;
 }
 
-} // namespace model
-
-} // namespace sme
+} // namespace sme::model

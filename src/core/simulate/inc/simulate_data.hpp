@@ -5,6 +5,8 @@
 #include "simulate_options.hpp"
 #include <string>
 #include <vector>
+#include <cereal/cereal.hpp>
+#include <cereal/types/string.hpp>
 
 namespace sme::simulate {
 
@@ -24,6 +26,16 @@ public:
   [[nodiscard]] std::size_t size() const;
   void reserve(std::size_t n);
   void pop_back();
+
+  template <class Archive>
+  void serialize(Archive &ar, std::uint32_t const version) {
+    if (version == 0) {
+      ar(timePoints, concentration, avgMinMax,
+         concentrationMax, concPadding, xmlModel);
+    }
+  }
 };
 
 } // namespace sme::simulate
+
+CEREAL_CLASS_VERSION(sme::simulate::SimulationData, 0);

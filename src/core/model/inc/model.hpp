@@ -7,7 +7,7 @@
 #pragma once
 
 #include "model_compartments.hpp"
-#include "model_display_options.hpp"
+#include "model_settings.hpp"
 #include "model_events.hpp"
 #include "model_functions.hpp"
 #include "model_geometry.hpp"
@@ -40,13 +40,11 @@ class Reaction;
 class UnitDefinition;
 } // namespace libsbml
 
-namespace mesh {
+namespace sme::mesh {
 class Mesh;
 }
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 struct SpeciesGeometry {
   QSize compartmentImageSize;
@@ -60,6 +58,7 @@ class Model {
 private:
   std::unique_ptr<libsbml::SBMLDocument> doc;
   sme::utils::SmeFileContents smeFileContents;
+  Settings settings;
   bool isValid{false};
   QString currentFilename;
 
@@ -108,8 +107,8 @@ public:
   const ModelMath &getMath() const;
   simulate::SimulationData &getSimulationData();
   const simulate::SimulationData &getSimulationData() const;
-  simulate::SimulationSettings &getSimulationSettings();
-  const simulate::SimulationSettings &getSimulationSettings() const;
+  SimulationSettings &getSimulationSettings();
+  const SimulationSettings &getSimulationSettings() const;
 
   explicit Model();
   Model(Model &&) noexcept = default;
@@ -134,7 +133,5 @@ public:
   DisplayOptions getDisplayOptions() const;
   void setDisplayOptions(const DisplayOptions &displayOptions);
 };
-
-} // namespace model
 
 } // namespace sme

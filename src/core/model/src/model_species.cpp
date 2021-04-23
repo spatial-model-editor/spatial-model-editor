@@ -6,8 +6,8 @@
 #include "model_parameters.hpp"
 #include "model_reactions.hpp"
 #include "sbml_math.hpp"
-#include "simulate_data.hpp"
 #include "sbml_utils.hpp"
+#include "simulate_data.hpp"
 #include "utils.hpp"
 #include "xml_annotation.hpp"
 #include <QString>
@@ -68,16 +68,6 @@ static QStringList importCompartmentIds(const libsbml::Model *model) {
     ids.push_back(spec->getCompartment().c_str());
   }
   return ids;
-}
-
-static QVector<QRgb> importColours(libsbml::Model *model) {
-  QVector<QRgb> colours;
-  for (unsigned int i = 0; i < model->getNumSpecies(); ++i) {
-    const auto *spec = model->getSpecies(i);
-    colours.push_back(getSpeciesColourAnnotation(spec).value_or(
-        utils::indexedColours()[static_cast<std::size_t>(i)].rgb()));
-  }
-  return colours;
 }
 
 static void makeInitialConcentrationsValid(libsbml::Model *model) {
@@ -182,9 +172,10 @@ ModelSpecies::getSampledFieldConcentrationFromSBML(const QString &id) const {
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/465
     std::stringstream ss{sf->getSamples()};
     double val;
-    while(ss >> val || !ss.eof()){
-      if(ss.fail() && std::fpclassify(val) == FP_SUBNORMAL){
-        // subnormal doubles set fail bit on macos but are otherwise correctly parsed
+    while (ss >> val || !ss.eof()) {
+      if (ss.fail() && std::fpclassify(val) == FP_SUBNORMAL) {
+        // subnormal doubles set fail bit on macos but are otherwise correctly
+        // parsed
         ss.clear();
       }
       array.push_back(val);
@@ -278,18 +269,26 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
                            const ModelCompartments *compartments,
                            const ModelGeometry *geometry,
                            const ModelParameters *parameters,
-                           ModelReactions *reactions, simulate::SimulationData *data)
+                           ModelReactions *reactions,
+                           simulate::SimulationData *data, Settings *annotation)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(model)},
-      compartmentIds{importCompartmentIds(model)},
-      colours{importColours(model)}, sbmlModel{model},
+      compartmentIds{importCompartmentIds(model)}, sbmlModel{model},
       modelCompartments{compartments}, modelGeometry{geometry},
-      modelParameters{parameters}, modelReactions{reactions}, simulationData{data} {
+      modelParameters{parameters}, modelReactions{reactions},
+      simulationData{data}, sbmlAnnotation{annotation} {
   makeInitialConcentrationsValid(model);
   for (int i = 0; i < ids.size(); ++i) {
     const auto &id = ids[i];
+    QRgb colour{utils::indexedColours()[static_cast<std::size_t>(i)].rgb()};
+    if (auto iter{sbmlAnnotation->speciesColours.find(id.toStdString())};
+        iter != sbmlAnnotation->speciesColours.end()) {
+      colour = iter->second;
+    } else {
+      sbmlAnnotation->speciesColours[id.toStdString()] = colour;
+    }
     auto &field =
         fields.emplace_back(compartments->getCompartment(compartmentIds[i]),
-                            ids[i].toStdString(), 1.0, colours[i]);
+                            ids[i].toStdString(), 1.0, colour);
     const auto *spec = sbmlModel->getSpecies(id.toStdString());
     fields[static_cast<std::size_t>(i)].setUniformConcentration(
         spec->getInitialConcentration());
@@ -336,12 +335,11 @@ QString ModelSpecies::add(const QString &name, const QString &compartmentId) {
   spec->setBoundaryCondition(false);
   spec->setConstant(false);
   // set default colour
-  auto colour =
-      utils::indexedColours()[static_cast<std::size_t>(ids.size() - 1)].rgb();
-  colours.push_back(colour);
+  auto colour{
+      utils::indexedColours()[static_cast<std::size_t>(ids.size() - 1)].rgb()};
   fields.emplace_back(modelCompartments->getCompartment(compartmentId), sId,
                       1.0, colour);
-  addSpeciesColourAnnotation(spec, colour);
+  sbmlAnnotation->speciesColours[sId] = colour;
   setIsSpatial(id, true);
   setDiffusionConstant(id, 1.0);
   setInitialConcentration(id, 0.0);
@@ -367,6 +365,7 @@ void ModelSpecies::remove(const QString &id) {
   // remove species from species list
   ids.removeAt(i);
   names.removeAt(i);
+  sbmlAnnotation->speciesColours.erase(sId);
   compartmentIds.removeAt(i);
   removeInitialAssignment(id);
   fields.erase(fields.begin() +
@@ -640,7 +639,7 @@ void ModelSpecies::setColour(const QString &id, QRgb colour) {
   }
   hasUnsavedChanges = true;
   fields[static_cast<std::size_t>(i)].setColour(colour);
-  addSpeciesColourAnnotation(sbmlModel->getSpecies(id.toStdString()), colour);
+  sbmlAnnotation->speciesColours[id.toStdString()] = colour;
 }
 
 QRgb ModelSpecies::getColour(const QString &id) const {

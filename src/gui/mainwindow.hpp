@@ -69,6 +69,10 @@ private:
   void actionEdit_geometry_image_triggered();
   void actionSet_spatial_coordinates_triggered();
 
+  // View menu actions
+  void actionGeometry_grid_triggered(bool checked);
+  void actionGeometry_scale_triggered(bool checked);
+
   // Advanced menu actions
   void actionSimulation_options_triggered();
 

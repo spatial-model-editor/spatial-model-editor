@@ -15,24 +15,23 @@ class Model;
 class Species;
 } // namespace libsbml
 
-namespace sme {
-
-namespace simulate {
+namespace sme::simulate {
 class SimulationData;
 }
 
-namespace model {
+namespace sme::model {
+
 class ModelCompartments;
 class ModelGeometry;
 class ModelParameters;
 class ModelReactions;
+struct Settings;
 
 class ModelSpecies {
 private:
   QStringList ids;
   QStringList names;
   QStringList compartmentIds;
-  QVector<QRgb> colours;
   std::vector<geometry::Field> fields;
   libsbml::Model *sbmlModel = nullptr;
   const ModelCompartments *modelCompartments = nullptr;
@@ -40,6 +39,7 @@ private:
   const ModelParameters *modelParameters = nullptr;
   ModelReactions *modelReactions = nullptr;
   simulate::SimulationData *simulationData = nullptr;
+  Settings *sbmlAnnotation = nullptr;
   void setFieldConcAnalytic(geometry::Field &field, const std::string &expr);
   void removeInitialAssignment(const QString &id);
   std::vector<double>
@@ -50,7 +50,8 @@ public:
   ModelSpecies();
   ModelSpecies(libsbml::Model *model, const ModelCompartments *compartments,
                const ModelGeometry *geometry, const ModelParameters *parameters,
-               ModelReactions *reactions, simulate::SimulationData *data);
+               ModelReactions *reactions, simulate::SimulationData *data,
+               Settings *annotation);
   QString add(const QString &name, const QString &compartmentId);
   void remove(const QString &id);
   QString setName(const QString &id, const QString &name);
@@ -86,7 +87,5 @@ public:
   bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);
 };
-
-} // namespace model
 
 } // namespace sme
