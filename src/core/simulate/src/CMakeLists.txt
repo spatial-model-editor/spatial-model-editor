@@ -28,6 +28,7 @@ if(BUILD_TESTING)
            dunesim_t.cpp
            pde_t.cpp
            simulate_data_t.cpp
+           simulate_options_t.cpp
            simulate_t.cpp)
 endif()
 if(BUILD_BENCHMARKS)

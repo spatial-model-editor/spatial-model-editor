@@ -2,12 +2,8 @@
 
 #include "cli_params.hpp"
 
-namespace sme {
-
-namespace cli {
+namespace sme::cli {
 
 bool doSimulation(const Params &params);
-
-}
 
 } // namespace sme

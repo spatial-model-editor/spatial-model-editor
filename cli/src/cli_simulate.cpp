@@ -5,9 +5,24 @@
 #include <QFile>
 #include <fmt/core.h>
 
-namespace sme {
+namespace sme::cli {
 
-namespace cli {
+void printSimulationInfo(const sme::model::Model &model) {
+  const auto &data{model.getSimulationData()};
+  if (auto n{data.timePoints.size()}; n > 1) {
+    fmt::print("\n# Continuing existing simulation with {} timepoints...\n", n);
+  } else {
+    fmt::print("\n# Starting new simulation...\n");
+  }
+}
+
+void printSimulationTimes(
+    const std::vector<std::pair<std::size_t, double>> &times) {
+  fmt::print("\n# Simulation times:\n");
+  for (auto [n, l] : times) {
+    fmt::print("#   - {} steps of length {}\n", n, l);
+  }
+}
 
 bool doSimulation(const Params &params) {
   // disable logging
@@ -15,22 +30,23 @@ bool doSimulation(const Params &params) {
 
   // import model
   model::Model s;
-  QFile f(params.filename.c_str());
-  if (f.open(QIODevice::ReadOnly)) {
-    s.importSBMLString(f.readAll().toStdString());
-  } else {
-    fmt::print("\n\nError: failed to open model file '{}'\n\n",
-               params.filename);
-    return false;
-  }
+  s.importFile(params.inputFile);
   if (!s.getIsValid() || !s.getGeometry().getIsValid()) {
-    fmt::print("\n\nError: invalid model '{}'\n\n", params.filename);
+    fmt::print("\n\nError: invalid model '{}'\n\n", params.inputFile);
     return false;
   }
 
+  auto times{simulate::parseSimulationTimes(params.simulationTimes.c_str(),
+                                            params.imageIntervals.c_str())};
+  if (!times.has_value()) {
+    fmt::print("\n\nError: failed to parse simulation times\n\n");
+    return false;
+  }
+  printSimulationTimes(times.value());
+
   // setup simulator options
   s.getSimulationSettings().simulatorType = params.simType;
-  auto& options{s.getSimulationSettings().options};
+  auto &options{s.getSimulationSettings().options};
   options.pixel.enableMultiThreading = true;
   options.pixel.maxThreads = params.maxThreads;
   if (params.maxThreads == 1) {
@@ -42,23 +58,15 @@ bool doSimulation(const Params &params) {
     return false;
   }
 
-  fmt::print("# t = {} [img{}.png]\n", sim.getTimePoints().back(),
-             sim.getTimePoints().size() - 1);
-  while (sim.getTimePoints().back() < params.simulationTime) {
-    sim.doTimesteps(params.imageInterval);
-    if (const auto &e = sim.errorMessage(); !e.empty()) {
-      fmt::print("\n\nError during simulation: {}\n\n", e);
-      return false;
-    }
-    fmt::print("# t = {} [img{}.png]\n", sim.getTimePoints().back(),
-               sim.getTimePoints().size() - 1);
+  printSimulationInfo(s);
+
+  sim.doMultipleTimesteps(times.value());
+  if (const auto &e = sim.errorMessage(); !e.empty()) {
+    fmt::print("\n\nError during simulation: {}\n\n", e);
+    return false;
   }
-  for (std::size_t iTime = 0; iTime < sim.getTimePoints().size(); ++iTime) {
-    sim.getConcImage(iTime, {}, true).save(QString("img%1.png").arg(iTime));
-  }
+  s.exportSMEFile(params.outputFile);
   return true;
 }
 
-} // namespace cli
-
-} // namespace sme
+} // namespace sme::cli

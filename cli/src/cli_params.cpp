@@ -3,21 +3,19 @@
 #include <fmt/core.h>
 #include <map>
 
-namespace sme {
-
-namespace cli {
+namespace sme::cli {
 
 static void addParams(CLI::App &app, Params &params) {
-  app.add_option("file", params.filename, "The spatial SBML model to simulate")
+  app.add_option("file", params.inputFile, "The spatial SBML model to simulate")
       ->required()
       ->check(CLI::ExistingFile);
-  app.add_option("-t,--time", params.simulationTime,
-                 "The simulation time (in model units of time)", true)
-      ->check(CLI::PositiveNumber);
-  app.add_option("-i,--image-interval", params.imageInterval,
-                 "The interval between saving images (in model units of time)",
-                 true)
-      ->check(CLI::PositiveNumber);
+  app.add_option("times", params.simulationTimes,
+                 "The simulation time(s) (in model units of time)", true)
+      ->required();
+  app.add_option(
+         "image-intervals", params.imageIntervals,
+         "The interval(s) between saving images (in model units of time)", true)
+      ->required();
   app.add_option("-s,--simulator", params.simType,
                  "The simulator to use: dune or pixel", true)
       ->transform(CLI::CheckedTransformer(
@@ -25,6 +23,9 @@ static void addParams(CLI::App &app, Params &params) {
               {"dune", simulate::SimulatorType::DUNE},
               {"pixel", simulate::SimulatorType::Pixel}},
           CLI::ignore_case));
+  app.add_option("-o,--output-file", params.outputFile,
+                 "The output file to write the results to. If not set, then "
+                 "the input file is used.");
   app.add_option("-n,--nthreads", params.maxThreads,
                  "The maximum number of CPU threads to use (0 means unlimited)",
                  true)
@@ -77,13 +78,12 @@ std::string toString(const simulate::SimulatorType &s) {
 
 void printParams(const Params &params) {
   fmt::print("\n# Simulation parameters:\n");
-  fmt::print("#   - Model: {}\n", params.filename);
+  fmt::print("#   - Model: {}\n", params.inputFile);
   fmt::print("#   - Simulation Type: {}\n", toString(params.simType));
-  fmt::print("#   - Simulation Length: {}\n", params.simulationTime);
-  fmt::print("#   - Image Interval: {}\n", params.imageInterval);
+  fmt::print("#   - Simulation Length(s): {}\n", params.simulationTimes);
+  fmt::print("#   - Image Interval(s): {}\n", params.imageIntervals);
+  fmt::print("#   - Output file: {}\n", params.outputFile);
   fmt::print("#   - Max CPU threads: {}\n", params.maxThreads);
 }
 
-} // namespace cli
-
-} // namespace sme
+} // namespace sme::cli

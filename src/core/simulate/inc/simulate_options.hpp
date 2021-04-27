@@ -10,8 +10,13 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <QString>
+#include <optional>
 
 namespace sme::simulate {
+
+std::optional<std::vector<std::pair<std::size_t, double>>>
+parseSimulationTimes(const QString &lengths, const QString &intervals);
 
 enum class SimulatorType { DUNE, Pixel };
 
