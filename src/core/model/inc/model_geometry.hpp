@@ -25,6 +25,7 @@ namespace model {
 
 class ModelCompartments;
 class ModelMembranes;
+struct Settings;
 
 class ModelGeometry {
 private:
@@ -39,6 +40,7 @@ private:
   libsbml::Model *sbmlModel{nullptr};
   ModelCompartments *modelCompartments{nullptr};
   ModelMembranes *modelMembranes{nullptr};
+  Settings *sbmlAnnotation = nullptr;
   bool hasUnsavedChanges{false};
   bool importDimensions(const libsbml::Model *model);
   void writeDefaultGeometryToSBML();
@@ -46,9 +48,10 @@ private:
 public:
   ModelGeometry();
   explicit ModelGeometry(libsbml::Model *model, ModelCompartments *compartments,
-                         ModelMembranes *membranes);
+                         ModelMembranes *membranes, Settings *annotation);
   void importSampledFieldGeometry(const libsbml::Model *model);
-  void importParametricGeometry(const libsbml::Model *model);
+  void importParametricGeometry(const libsbml::Model *model,
+                                const Settings *settings);
   void importSampledFieldGeometry(const QString &filename);
   void importGeometryFromImage(const QImage &img);
   void updateMesh();

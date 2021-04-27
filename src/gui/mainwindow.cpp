@@ -150,14 +150,10 @@ void MainWindow::setupConnections() {
           });
 
   connect(ui->actionGeometry_grid, &QAction::triggered, this,
-          [ui = ui.get()]() {
-            ui->lblGeometry->displayGrid(ui->actionGeometry_grid->isChecked());
-          });
+          &MainWindow::actionGeometry_grid_triggered);
 
-  connect(
-      ui->actionGeometry_scale, &QAction::triggered, this, [ui = ui.get()]() {
-        ui->lblGeometry->displayScale(ui->actionGeometry_scale->isChecked());
-      });
+  connect(ui->actionGeometry_scale, &QAction::triggered, this,
+          &MainWindow::actionGeometry_scale_triggered);
 
   connect(ui->lblGeometry, &QLabelMouseTracker::mouseOver, this,
           &MainWindow::lblGeometry_mouseOver);
@@ -224,6 +220,12 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
   } else {
     ui->actionSimTypePixel->setChecked(true);
   }
+  ui->actionGeometry_grid->setChecked(
+      model.getDisplayOptions().showGeometryGrid);
+  actionGeometry_grid_triggered(model.getDisplayOptions().showGeometryGrid);
+  ui->actionGeometry_scale->setChecked(
+      model.getDisplayOptions().showGeometryScale);
+  actionGeometry_scale_triggered(model.getDisplayOptions().showGeometryScale);
   this->setWindowTitle(QString("Spatial Model Editor [%1]").arg(filename));
 }
 
@@ -418,6 +420,20 @@ void MainWindow::actionSet_spatial_coordinates_triggered() {
     coords.y.name = dialog.getYName().toStdString();
     params.setSpatialCoordinates(std::move(coords));
   }
+}
+
+void MainWindow::actionGeometry_grid_triggered(bool checked) {
+  ui->lblGeometry->displayGrid(checked);
+  auto options{model.getDisplayOptions()};
+  options.showGeometryGrid = checked;
+  model.setDisplayOptions(options);
+}
+
+void MainWindow::actionGeometry_scale_triggered(bool checked) {
+  ui->lblGeometry->displayScale(checked);
+  auto options{model.getDisplayOptions()};
+  options.showGeometryScale = checked;
+  model.setDisplayOptions(options);
 }
 
 void MainWindow::actionSimulation_options_triggered() {

@@ -2,6 +2,7 @@
 #include "mesh.hpp"
 #include "serialization.hpp"
 #include "model_compartments.hpp"
+#include "model_settings.hpp"
 #include "model_geometry.hpp"
 #include "model_membranes.hpp"
 #include "model_parameters.hpp"
@@ -34,6 +35,7 @@ SCENARIO("Model geometry",
     f.open(QIODevice::ReadOnly);
     std::unique_ptr<libsbml::SBMLDocument> doc(
         libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
+    model::Settings sbmlAnnotation;
     model::ModelCompartments mCompartments;
     model::ModelMembranes mMembranes;
     model::ModelGeometry mGeometry;
@@ -44,7 +46,7 @@ SCENARIO("Model geometry",
     mCompartments = model::ModelCompartments(
         doc->getModel(), &mGeometry, &mMembranes, &mSpecies, &mReactions, &smeFileContents.simulationData);
     mGeometry =
-        model::ModelGeometry(doc->getModel(), &mCompartments, &mMembranes);
+        model::ModelGeometry(doc->getModel(), &mCompartments, &mMembranes, &sbmlAnnotation);
     auto &m = mGeometry;
     REQUIRE(m.getIsValid() == false);
     REQUIRE(m.getMesh() == nullptr);
@@ -60,7 +62,7 @@ SCENARIO("Model geometry",
       model::ModelParameters mParameters(doc->getModel());
       simulate::SimulationData data;
       mSpecies = model::ModelSpecies(doc->getModel(), &mCompartments,
-                                     &mGeometry, &mParameters, &mReactions, &data);
+                                     &mGeometry, &mParameters, &mReactions, &data, &sbmlAnnotation);
       REQUIRE(m.getIsValid() == true);
       REQUIRE(m.getMesh() != nullptr);
       REQUIRE(m.getHasImage() == true);

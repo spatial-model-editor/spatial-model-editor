@@ -9,6 +9,8 @@
         <file>models/txy.xml</file>
         <file>models/very-simple-model-uint8.xml</file>
         <file>models/weird-units.xml</file>
+        <file>models/ABtoC-v1.0.9.xml</file>
+        <file>models/ABtoC-invalid-annotation.xml</file>
         <file>geometry/gt1.png</file>
         <file>geometry/gt2.png</file>
         <file>geometry/gt3.png</file>
@@ -31,5 +33,6 @@
         <file>geometry/gt20.png</file>
         <file>geometry/potato_alpha_channel.png</file>
         <file>smefiles/very-simple-model-v0.sme</file>
+	<file>smefiles/very-simple-model-v1.sme</file>
     </qresource>
 </RCC>

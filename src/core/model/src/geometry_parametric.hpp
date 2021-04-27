@@ -27,6 +27,7 @@ namespace model {
 class ModelCompartments;
 class ModelGeometry;
 class ModelMembranes;
+struct Settings;
 
 const libsbml::ParametricGeometry *
 getParametricGeometry(const libsbml::Geometry *geom);
@@ -48,7 +49,8 @@ getInteriorPixelPoints(const ModelGeometry *modelGeometry,
 std::unique_ptr<mesh::Mesh>
 importParametricGeometryFromSBML(const libsbml::Model *model,
                                  const ModelGeometry *modelGeometry,
-                                 const ModelCompartments *modelCompartments);
+                                 const ModelCompartments *modelCompartments,
+                                 const Settings *annotation);
 
 void writeGeometryMeshToSBML(libsbml::Model *model, const mesh::Mesh *mesh,
                              const ModelCompartments &modelCompartments);

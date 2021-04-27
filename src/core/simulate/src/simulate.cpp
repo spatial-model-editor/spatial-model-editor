@@ -279,6 +279,7 @@ std::size_t Simulation::doMultipleTimesteps(
       ++nCompletedTimesteps;
     }
   }
+
   // write final concentrations to xml Model in data
   sme::model::Model finalModel;
   finalModel.importSBMLString(data->xmlModel);

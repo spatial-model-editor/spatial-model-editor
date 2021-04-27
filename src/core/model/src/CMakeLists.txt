@@ -20,6 +20,7 @@ target_sources(
           sbml_math.cpp
           sbml_utils.cpp
           validation.cpp
+          xml_legacy_annotation.cpp
           xml_annotation.cpp)
 
 if(BUILD_TESTING)
@@ -40,7 +41,8 @@ if(BUILD_TESTING)
            model_reactions_t.cpp
            model_species_t.cpp
            model_units_t.cpp
-           xml_annotation_t.cpp)
+           xml_annotation_t.cpp
+           xml_legacy_annotation_t.cpp)
 endif()
 if(BUILD_BENCHMARKS)
   target_sources(

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "model_display_options.hpp"
+#include "model_settings.hpp"
 #include <QDialog>
 #include <memory>
 

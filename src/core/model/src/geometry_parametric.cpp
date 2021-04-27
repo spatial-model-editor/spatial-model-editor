@@ -128,17 +128,16 @@ getInteriorPixelPoints(const ModelGeometry *modelGeometry,
 std::unique_ptr<mesh::Mesh>
 importParametricGeometryFromSBML(const libsbml::Model *model,
                                  const ModelGeometry *modelGeometry,
-                                 const ModelCompartments *modelCompartments) {
+                                 const ModelCompartments *modelCompartments,
+                                 const Settings *annotation) {
   const auto *geom{getGeometry(model)};
   const auto *parageom{getParametricGeometry(geom)};
   if (parageom == nullptr) {
     SPDLOG_WARN("Failed to load Parametric Field geometry");
     return nullptr;
   }
-  // get maxBoundaryPoints, maxTriangleAreas, membraneWidths
-  if (auto meshParams{getMeshParamsAnnotationData(parageom)};
-      meshParams.has_value()) {
-    const auto &mp = meshParams.value();
+  // get maxBoundaryPoints, maxTriangleAreas
+  if (const auto &mp{annotation->meshParameters}; !mp.maxAreas.empty()) {
     // generate Mesh
     SPDLOG_INFO("  - re-generating mesh");
     return std::make_unique<mesh::Mesh>(
@@ -177,10 +176,6 @@ void writeGeometryMeshToSBML(libsbml::Model *model, const mesh::Mesh *mesh,
     sp->setCompression(
         libsbml::CompressionKind_t::SPATIAL_COMPRESSIONKIND_UNCOMPRESSED);
   }
-
-  // add the parameters required
-  // to reconstruct the mesh from the geometry image as an annotation
-  addMeshParamsAnnotation(parageom, mesh);
 
   // write vertices
   std::vector<double> vertices = mesh->getVerticesAsFlatArray();

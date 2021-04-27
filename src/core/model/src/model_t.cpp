@@ -757,46 +757,6 @@ SCENARIO("SBML: load model, change size of geometry, save",
   REQUIRE(v[3] == dbl_approx(a * v3));
 }
 
-SCENARIO("SBML: Delete mesh annotation & load",
-         "[core/model/model][core/model][core][model][mesh]") {
-  QFile f(":/models/ABtoC.xml");
-  f.open(QIODevice::ReadOnly);
-  std::string xml{f.readAll().toStdString()};
-
-  // set boundary points & triangle areas far from default values
-  model::Model s;
-  s.importSBMLString(xml);
-  s.getGeometry().getMesh()->setBoundaryMaxPoints(0, 32);
-  s.getGeometry().getMesh()->setCompartmentMaxTriangleArea(0, 3);
-  REQUIRE(s.getGeometry().getMesh()->getBoundaryMaxPoints(0) == 32);
-  REQUIRE(s.getGeometry().getMesh()->getCompartmentMaxTriangleArea(0) == 3);
-
-  // delete mesh info annotation
-  std::unique_ptr<libsbml::SBMLDocument> doc(
-      libsbml::readSBMLFromString(s.getXml().toStdString().c_str()));
-  auto *plugin = dynamic_cast<libsbml::SpatialModelPlugin *>(
-      doc->getModel()->getPlugin("spatial"));
-  auto *geom = plugin->getGeometry();
-  libsbml::ParametricGeometry *parageom = nullptr;
-  for (unsigned i = 0; i < geom->getNumGeometryDefinitions(); ++i) {
-    if (geom->getGeometryDefinition(i)->isParametricGeometry()) {
-      parageom = dynamic_cast<libsbml::ParametricGeometry *>(
-          geom->getGeometryDefinition(i));
-    }
-  }
-  auto *annotation = parageom->getAnnotation();
-  annotation->removeChildren();
-  std::unique_ptr<char, decltype(&std::free)> xmlChar(
-      libsbml::writeSBMLToString(doc.get()), &std::free);
-
-  // re-load model: without annotation should use default boundary points / triangle areas
-  model::Model s2;
-  s2.importSBMLString(xmlChar.get());
-
-  REQUIRE(s2.getGeometry().getMesh()->getBoundaryMaxPoints(0) != 32);
-  REQUIRE(s2.getGeometry().getMesh()->getCompartmentMaxTriangleArea(0) != 3);
-}
-
 SCENARIO("SBML: load .xml model, simulate, save as .sme, load .sme",
          "[core/model/model][core/model][core][model]") {
   model::Model s;

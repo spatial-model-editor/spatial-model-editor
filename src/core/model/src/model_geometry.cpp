@@ -131,9 +131,9 @@ ModelGeometry::ModelGeometry() = default;
 
 ModelGeometry::ModelGeometry(libsbml::Model *model,
                              ModelCompartments *compartments,
-                             ModelMembranes *membranes)
-    : sbmlModel{model}, modelCompartments{compartments}, modelMembranes{
-                                                             membranes} {
+                             ModelMembranes *membranes, Settings *annotation)
+    : sbmlModel{model}, modelCompartments{compartments},
+      modelMembranes{membranes}, sbmlAnnotation{annotation} {
   if (!importDimensions(model)) {
     SPDLOG_WARN("Failed to import geometry");
     writeDefaultGeometryToSBML();
@@ -185,9 +185,10 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   exportSampledFieldGeometry(geom, image);
 }
 
-void ModelGeometry::importParametricGeometry(const libsbml::Model *model) {
-  auto importedMesh =
-      importParametricGeometryFromSBML(model, this, modelCompartments);
+void ModelGeometry::importParametricGeometry(const libsbml::Model *model,
+                                             const Settings *settings) {
+  auto importedMesh = importParametricGeometryFromSBML(
+      model, this, modelCompartments, settings);
   if (importedMesh != nullptr) {
     hasUnsavedChanges = true;
     mesh = std::move(importedMesh);
@@ -252,8 +253,7 @@ void ModelGeometry::clear() {
     return;
   }
   // remove any SBML geometry-related stuff
-  auto *geom = getOrCreateGeometry(model);
-  removeMeshParamsAnnotation(getParametricGeometry(geom));
+  sbmlAnnotation->meshParameters = {};
   for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
     auto *comp = model->getCompartment(i);
     auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
@@ -364,6 +364,12 @@ bool ModelGeometry::getIsValid() const { return isValid; }
 bool ModelGeometry::getHasImage() const { return hasImage; }
 
 void ModelGeometry::writeGeometryToSBML() const {
+  if (mesh != nullptr && mesh->isValid()) {
+    sbmlAnnotation->meshParameters = {mesh->getBoundaryMaxPoints(),
+                                  mesh->getCompartmentMaxTriangleArea()};
+  } else {
+    sbmlAnnotation->meshParameters = {};
+  }
   writeGeometryMeshToSBML(sbmlModel, mesh.get(), *modelCompartments);
 }
 
