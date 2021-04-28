@@ -13,11 +13,14 @@
 namespace sme {
 
 void pybindModel(pybind11::module &m) {
-  pybind11::class_<sme::Model>(m, "Model",
-                               R"(
-                               the spatial model
-                               )")
-      .def(pybind11::init<const std::string &>(), pybind11::arg("filename"))
+  pybind11::class_<sme::Model> model(m, "Model",
+                                     R"(
+                                     the spatial model
+                                     )");
+  pybind11::enum_<simulate::SimulatorType>(m, "SimulatorType")
+      .value("DUNE", simulate::SimulatorType::DUNE)
+      .value("Pixel", simulate::SimulatorType::Pixel);
+  model.def(pybind11::init<const std::string &>(), pybind11::arg("filename"))
       .def_property("name", &sme::Model::getName, &sme::Model::setName,
                     R"(
                     str: the name of this model
@@ -140,13 +143,16 @@ void pybindModel(pybind11::module &m) {
            pybind11::arg("image_interval"),
            pybind11::arg("timeout_seconds") = 86400,
            pybind11::arg("throw_on_timeout") = true,
+           pybind11::arg("simulator_type") = simulate::SimulatorType::Pixel,
            R"(
            returns the results of the simulation.
 
            Args:
-               simulation_time (float): The length of the simulation in model units of time
-               image_interval (float): The interval between images in model units of time
-               timeout_seconds (int): The maximum time in seconds that the simulation can run for
+               simulation_time (float): The length of the simulation in model units of time.
+               image_interval (float): The interval between images in model units of time.
+               timeout_seconds (int): The maximum time in seconds that the simulation can run for. Default value: 86400 = 1 day.
+               throw_on_timeout (bool): Whether to throw an exception on simulation timeout. Default value: `true`.
+               simulator_type (sme.SimulatorType): The simulator to use: `sme.SimulatorType.DUNE` or `sme.SimulatorType.Pixel`. Default value: Pixel.
 
            Returns:
                SimulationResultList: the results of the simulation
@@ -242,16 +248,17 @@ static SimulationResult getSimulationResult(const simulate::Simulation *sim) {
   return result;
 }
 
-std::vector<SimulationResult> Model::simulate(double simulationTime,
-                                              double imageInterval,
-                                              int timeoutSeconds,
-                                              bool throwOnTimeout) {
+std::vector<SimulationResult>
+Model::simulate(double simulationTime, double imageInterval, int timeoutSeconds,
+                bool throwOnTimeout, simulate::SimulatorType simulatorType) {
   QElapsedTimer simulationRuntimeTimer;
   simulationRuntimeTimer.start();
   double timeoutMillisecs{static_cast<double>(timeoutSeconds) * 1000.0};
   std::vector<SimulationResult> results;
   s->getSimulationData().clear();
-  s->getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+  s->getSimulationSettings().simulatorType = simulatorType;
+  // ensure any existing DUNE objects are destroyed to avoid later segfaults
+  sim.reset();
   sim = std::make_unique<simulate::Simulation>(*(s.get()));
   if (const auto &e = sim->errorMessage(); !e.empty()) {
     throw SmeRuntimeError(fmt::format("Error in simulation setup: {}", e));
