@@ -4,6 +4,7 @@
 
 #include "sme_module.hpp"
 #include "version.hpp"
+#include <QFile>
 
 namespace sme {
 
@@ -16,6 +17,16 @@ void pybindModule(pybind11::module &m) {
 
             https://spatial-model-editor.readthedocs.io/
             )";
+  m.def("open_file", openFile, pybind11::arg("filename"),
+        R"(
+        opens a sme or SBML file containing a spatial model
+
+        Args:
+            filename (str): the sme or SBML file to open
+
+        Returns:
+            Model: the spatial model
+        )");
   m.def("open_sbml_file", openSbmlFile, pybind11::arg("filename"),
         R"(
         opens an SBML file containing a spatial model
@@ -36,9 +47,22 @@ void pybindModule(pybind11::module &m) {
   m.attr("__version__") = utils::SPATIAL_MODEL_EDITOR_VERSION;
 }
 
+Model openFile(const std::string &filename) { return Model(filename);}
+
 Model openSbmlFile(const std::string &filename) { return Model(filename); }
 
-Model openExampleModel() { return Model(":/models/very-simple-model.xml"); }
+Model openExampleModel() {
+  Model m;
+  std::string xml;
+  if (QFile f(":/models/very-simple-model.xml");
+      f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+    xml = f.readAll().toStdString();
+  } else {
+    throw SmeInvalidArgument("Failed to open example model");
+  }
+  m.importSbmlString(xml);
+  return m;
+}
 
 } // namespace sme
 

@@ -7,6 +7,7 @@ namespace sme {
 
 void pybindModule(pybind11::module &m);
 
+Model openFile(const std::string &filename);
 Model openSbmlFile(const std::string &filename);
 Model openExampleModel();
 

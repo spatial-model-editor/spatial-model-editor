@@ -36,9 +36,10 @@ SCENARIO("DuneSim: empty compartments",
     m.getCompartments().setColour("c1", col1);
     std::vector<std::string> comps{"c1", "c2", "c3"};
     simulate::DuneSim duneSim(m, comps);
-    for(std::size_t i=0; i<10; ++i){
-      duneSim.run(0.1, 100);
+    for(std::size_t i=0; i<2; ++i){
+      duneSim.run(0.05, 100e3);
     }
+    simulate::SimulationData data0{m.getSimulationData()};
     REQUIRE(duneSim.getConcentrations(0).size() == 5441);
     REQUIRE(duneSim.getConcentrations(1).size() == 8068);
     REQUIRE(duneSim.errorMessage().empty());
@@ -49,8 +50,8 @@ SCENARIO("DuneSim: empty compartments",
     m.getCompartments().setColour("c2", col2);
     comps.pop_back();
     simulate::DuneSim newDuneSim(m, comps);
-    for(std::size_t i=0; i<10; ++i){
-      newDuneSim.run(0.1, 100);
+    for(std::size_t i=0; i<2; ++i){
+      newDuneSim.run(0.05, 100e3);
     }
     REQUIRE(newDuneSim.getConcentrations(0).size() == 5441);
     REQUIRE(newDuneSim.getConcentrations(1).size() == 8068);

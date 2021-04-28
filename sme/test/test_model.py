@@ -26,9 +26,13 @@ def _sub_div(a_ij, b_ij, dt=1.0):
 
 
 class TestModel(unittest.TestCase):
-    def test_load_open_sbml_file(self):
+    def test_open_sbml_file(self):
         with self.assertRaises(sme.InvalidArgument):
             sme.open_sbml_file("idontexist.xml")
+
+    def test_open_file(self):
+        with self.assertRaises(sme.InvalidArgument):
+            sme.open_file("idontexist.xml")
 
     def test_open_example_model(self):
         m = sme.open_example_model()
@@ -56,14 +60,42 @@ class TestModel(unittest.TestCase):
         self.assertEqual(m2.compartments["Nucleus"].name, "Nucleus")
         self.assertRaises(sme.InvalidArgument, lambda: m2.compartments["Cell"])
 
+    def test_export_sme_file(self):
+        m = sme.open_example_model()
+        m.name = "Mod"
+        m.compartments["Cell"].name = "C"
+        m.export_sme_file("tmp.sme")
+        m2 = sme.open_file("tmp.sme")
+        self.assertEqual(m2.name, "Mod")
+        self.assertEqual(len(m2.membranes), 2)
+        self.assertEqual(len(m2.compartments), 3)
+        self.assertEqual(m2.compartments["C"].name, "C")
+        self.assertEqual(m2.compartments["Nucleus"].name, "Nucleus")
+        self.assertRaises(sme.InvalidArgument, lambda: m2.compartments["Cell"])
+
     def test_simulate(self):
-        for sim in [sme.SimulatorType.DUNE, sme.SimulatorType.Pixel]:
+        for sim_type in [sme.SimulatorType.DUNE, sme.SimulatorType.Pixel]:
             m = sme.open_example_model()
-            sim_results = m.simulate(0.002, 0.001)
+            sim_results = m.simulate(0.002, 0.001, simulator_type=sim_type)
             self.assertEqual(len(sim_results), 3)
 
-            # repeat, previous sim results are cleared by default
-            sim_results = m.simulate(0.002, 0.001)
+            # continue previous sim
+            sim_results = m.simulate(
+                0.002, 0.001, simulator_type=sim_type, continue_existing_simulation=True
+            )
+            self.assertEqual(len(sim_results), 5)
+
+            # use string overload
+            sim_results = m.simulate(
+                "0.002;0.001",
+                "0.001;0.001",
+                simulator_type=sim_type,
+                continue_existing_simulation=True,
+            )
+            self.assertEqual(len(sim_results), 8)
+
+            # previous sim results are cleared by default
+            sim_results = m.simulate(0.002, 0.001, simulator_type=sim_type)
             self.assertEqual(len(sim_results), 3)
 
             res = sim_results[1]
@@ -82,26 +114,28 @@ class TestModel(unittest.TestCase):
             self.assertEqual(len(conc), 100)
             self.assertEqual(len(conc[0]), 100)
             self.assertEqual(conc[0][0], 0.0)
-            dcdt = res.species_dcdt["B_cell"]
-            self.assertEqual(len(dcdt), 100)
-            self.assertEqual(len(dcdt[0]), 100)
-            self.assertEqual(dcdt[0][0], 0.0)
-
-            # approximate dcdt
-            dcdt_approx = sim_results[1].species_concentration["A_cell"]
-            _sub_div(dcdt_approx, sim_results[0].species_concentration["A_cell"], 0.001)
-            dcdt = sim_results[1].species_dcdt["A_cell"]
-            rms_norm = _rms(dcdt)
-            _sub_div(dcdt, dcdt_approx)
-            rms_diff = _rms(dcdt)
-            self.assertLess(rms_diff / rms_norm, 0.01)
 
             # set timeout to 1 second: by default simulation throws on timeout
             # multiple timesteps before timeout:
             with self.assertRaises(sme.RuntimeError):
-                m.simulate(10000, 0.1, 1)
+                m.simulate(10000, 0.1, timeout_seconds=0, simulator_type=sim_type)
 
-        # single long timestep that times out (only check pixel)
+        # approximate dcdt (only pixel & only last timepoint)
+        m = sme.open_example_model()
+        sim_results = m.simulate(0.002, 0.001, simulator_type=sme.SimulatorType.Pixel)
+        self.assertEqual(len(sim_results), 3)
+        self.assertEqual(len(sim_results[0].species_dcdt), 0)
+        self.assertEqual(len(sim_results[1].species_dcdt), 0)
+        self.assertEqual(len(sim_results[2].species_dcdt), 5)
+        dcdt_approx = sim_results[2].species_concentration["A_cell"]
+        _sub_div(dcdt_approx, sim_results[1].species_concentration["A_cell"], 0.001)
+        dcdt = sim_results[2].species_dcdt["A_cell"]
+        rms_norm = _rms(dcdt)
+        _sub_div(dcdt, dcdt_approx)
+        rms_diff = _rms(dcdt)
+        self.assertLess(rms_diff / rms_norm, 0.01)
+
+        # single long timestep that times out (only pixel)
         with self.assertRaises(sme.RuntimeError):
             m.simulate(10000, 10000, 1)
         # set timeout to 1 second: don't throw on timeout, return partial results

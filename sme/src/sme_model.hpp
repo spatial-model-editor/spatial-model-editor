@@ -20,23 +20,31 @@ class Model {
 private:
   std::unique_ptr<model::Model> s;
   std::unique_ptr<simulate::Simulation> sim;
-  void importSbmlFile(const std::string &filename);
+  void init();
 
 public:
-  explicit Model(const std::string &filename);
+  explicit Model(const std::string &filename = {});
+  void importFile(const std::string &filename);
+  void importSbmlString(const std::string &xml);
   std::string getName() const;
   void setName(const std::string &name);
   void importGeometryFromImage(const std::string &filename);
   void exportSbmlFile(const std::string &filename);
+  void exportSmeFile(const std::string &filename);
   std::vector<Compartment> compartments;
   std::vector<Membrane> membranes;
   std::vector<Parameter> parameters;
   PyImageRgb compartmentImage;
-  std::vector<SimulationResult> simulate(double simulationTime,
-                                         double imageInterval,
-                                         int timeoutSeconds = 86400,
-                                         bool throwOnTimeout = true,
-                                         simulate::SimulatorType simulatorType = simulate::SimulatorType::Pixel);
+  std::vector<SimulationResult> simulateString(
+      const std::string& lengths, const std::string& intervals, int timeoutSeconds,
+      bool throwOnTimeout,
+      simulate::SimulatorType simulatorType,
+      bool continueExistingSimulation);
+  std::vector<SimulationResult> simulateFloat(
+      double simulationTime, double imageInterval, int timeoutSeconds,
+      bool throwOnTimeout,
+      simulate::SimulatorType simulatorType,
+      bool continueExistingSimulation);
   std::string getStr() const;
 };
 
