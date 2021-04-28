@@ -57,44 +57,51 @@ class TestModel(unittest.TestCase):
         self.assertRaises(sme.InvalidArgument, lambda: m2.compartments["Cell"])
 
     def test_simulate(self):
-        m = sme.open_example_model()
-        sim_results = m.simulate(0.002, 0.001)
-        self.assertEqual(len(sim_results), 3)
-        res = sim_results[1]
-        self.assertEqual(repr(res), "<sme.SimulationResult from timepoint 0.001>")
-        self.assertEqual(
-            str(res),
-            "<sme.SimulationResult>\n  - timepoint: 0.001\n  - number of species: 5\n",
-        )
-        self.assertEqual(res.time_point, 0.001)
-        img = res.concentration_image
-        self.assertEqual(len(img), 100)
-        self.assertEqual(len(img[0]), 100)
-        self.assertEqual(len(img[0][0]), 3)
-        self.assertEqual(len(res.species_concentration), 5)
-        conc = res.species_concentration["B_cell"]
-        self.assertEqual(len(conc), 100)
-        self.assertEqual(len(conc[0]), 100)
-        self.assertEqual(conc[0][0], 0.0)
-        dcdt = res.species_dcdt["B_cell"]
-        self.assertEqual(len(dcdt), 100)
-        self.assertEqual(len(dcdt[0]), 100)
-        self.assertEqual(dcdt[0][0], 0.0)
+        for sim in [sme.SimulatorType.DUNE, sme.SimulatorType.Pixel]:
+            m = sme.open_example_model()
+            sim_results = m.simulate(0.002, 0.001)
+            self.assertEqual(len(sim_results), 3)
 
-        # approximate dcdt
-        dcdt_approx = sim_results[1].species_concentration["A_cell"]
-        _sub_div(dcdt_approx, sim_results[0].species_concentration["A_cell"], 0.001)
-        dcdt = sim_results[1].species_dcdt["A_cell"]
-        rms_norm = _rms(dcdt)
-        _sub_div(dcdt, dcdt_approx)
-        rms_diff = _rms(dcdt)
-        self.assertLess(rms_diff / rms_norm, 0.01)
+            # repeat, previous sim results are cleared by default
+            sim_results = m.simulate(0.002, 0.001)
+            self.assertEqual(len(sim_results), 3)
 
-        # set timeout to 1 second: by default simulation throws on timeout
-        # multiple timesteps before timeout:
-        with self.assertRaises(sme.RuntimeError):
-            m.simulate(10000, 0.1, 1)
-        # single long timestep that times out
+            res = sim_results[1]
+            self.assertEqual(repr(res), "<sme.SimulationResult from timepoint 0.001>")
+            self.assertEqual(
+                str(res),
+                "<sme.SimulationResult>\n  - timepoint: 0.001\n  - number of species: 5\n",
+            )
+            self.assertEqual(res.time_point, 0.001)
+            img = res.concentration_image
+            self.assertEqual(len(img), 100)
+            self.assertEqual(len(img[0]), 100)
+            self.assertEqual(len(img[0][0]), 3)
+            self.assertEqual(len(res.species_concentration), 5)
+            conc = res.species_concentration["B_cell"]
+            self.assertEqual(len(conc), 100)
+            self.assertEqual(len(conc[0]), 100)
+            self.assertEqual(conc[0][0], 0.0)
+            dcdt = res.species_dcdt["B_cell"]
+            self.assertEqual(len(dcdt), 100)
+            self.assertEqual(len(dcdt[0]), 100)
+            self.assertEqual(dcdt[0][0], 0.0)
+
+            # approximate dcdt
+            dcdt_approx = sim_results[1].species_concentration["A_cell"]
+            _sub_div(dcdt_approx, sim_results[0].species_concentration["A_cell"], 0.001)
+            dcdt = sim_results[1].species_dcdt["A_cell"]
+            rms_norm = _rms(dcdt)
+            _sub_div(dcdt, dcdt_approx)
+            rms_diff = _rms(dcdt)
+            self.assertLess(rms_diff / rms_norm, 0.01)
+
+            # set timeout to 1 second: by default simulation throws on timeout
+            # multiple timesteps before timeout:
+            with self.assertRaises(sme.RuntimeError):
+                m.simulate(10000, 0.1, 1)
+
+        # single long timestep that times out (only check pixel)
         with self.assertRaises(sme.RuntimeError):
             m.simulate(10000, 10000, 1)
         # set timeout to 1 second: don't throw on timeout, return partial results

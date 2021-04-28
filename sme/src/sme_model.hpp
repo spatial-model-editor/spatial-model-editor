@@ -26,7 +26,7 @@ public:
   explicit Model(const std::string &filename);
   std::string getName() const;
   void setName(const std::string &name);
-  void importGeometryFromImage(const std::string& filename);
+  void importGeometryFromImage(const std::string &filename);
   void exportSbmlFile(const std::string &filename);
   std::vector<Compartment> compartments;
   std::vector<Membrane> membranes;
@@ -35,7 +35,8 @@ public:
   std::vector<SimulationResult> simulate(double simulationTime,
                                          double imageInterval,
                                          int timeoutSeconds = 86400,
-                                         bool throwOnTimeout = true);
+                                         bool throwOnTimeout = true,
+                                         simulate::SimulatorType simulatorType = simulate::SimulatorType::Pixel);
   std::string getStr() const;
 };
 
