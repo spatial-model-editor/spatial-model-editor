@@ -12,6 +12,7 @@
 #include "model_compartments.hpp"
 #include "model_geometry.hpp"
 #include "utils.hpp"
+#include <QElapsedTimer>
 #include <QFile>
 #include <QImage>
 #include <QPainter>
@@ -181,8 +182,8 @@ void DuneSim::updatePixels() {
   }
 }
 
-DuneSim::DuneSim(
-    const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds)
+DuneSim::DuneSim(const model::Model &sbmlDoc,
+                 const std::vector<std::string> &compartmentIds)
     : geometryImageSize{sbmlDoc.getGeometry().getImage().size()},
       pixelSize{sbmlDoc.getGeometry().getPixelWidth()},
       pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()} {
@@ -192,14 +193,13 @@ DuneSim::DuneSim(
     volOverL3 = model::getVolOverL3(lengthUnit, volumeUnit);
 
     simulate::DuneConverter dc(sbmlDoc, false);
-    const auto& options{sbmlDoc.getSimulationSettings().options.dune};
+    const auto &options{sbmlDoc.getSimulationSettings().options.dune};
     if (options.discretization != DuneDiscretizationType::FEM1) {
       // for now we only support 1st order FEM
       // in future could add:
       //  - 0th order a.k.a. FVM for independent compartment models
       //  - 2nd order FEM for both types of models
-      SPDLOG_ERROR(
-          "Invalid integrator type requested");
+      SPDLOG_ERROR("Invalid integrator type requested");
       throw std::runtime_error("Invalid integrator type requested");
     }
     if (dc.getIniFiles().empty()) {
@@ -232,10 +232,12 @@ DuneSim::DuneSim(
 
 DuneSim::~DuneSim() = default;
 
-std::size_t DuneSim::run(double time, [[maybe_unused]] double timeout_ms) {
+std::size_t DuneSim::run(double time, double timeout_ms) {
   if (pDuneImpl == nullptr) {
     return 0;
   }
+  QElapsedTimer timer;
+  timer.start();
   try {
     pDuneImpl->run(time);
     updateSpeciesConcentrations();
@@ -243,6 +245,10 @@ std::size_t DuneSim::run(double time, [[maybe_unused]] double timeout_ms) {
   } catch (const Dune::Exception &e) {
     currentErrorMessage = e.what();
     SPDLOG_ERROR("{}", currentErrorMessage);
+  }
+  if (timeout_ms >= 0.0 && static_cast<double>(timer.elapsed()) >= timeout_ms) {
+    SPDLOG_DEBUG("Simulation timeout: requesting stop");
+    currentErrorMessage = "Simulation timeout";
   }
   return 1;
 }

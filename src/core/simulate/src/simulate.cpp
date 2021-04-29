@@ -169,7 +169,8 @@ void Simulation::updateConcentrations(double t) {
 }
 
 Simulation::Simulation(model::Model &sbmlDoc)
-    : settings(&sbmlDoc.getSimulationSettings()), data{&sbmlDoc.getSimulationData()},
+    : settings(&sbmlDoc.getSimulationSettings()),
+      data{&sbmlDoc.getSimulationData()},
       imageSize(sbmlDoc.getGeometry().getImage().size()) {
   sme::model::Model *modelToSimulate{&sbmlDoc};
   if (data->timePoints.size() <= 1) {
@@ -190,8 +191,9 @@ Simulation::Simulation(model::Model &sbmlDoc)
       sbmlDoc.getGeometry().getMesh()->isValid()) {
     simulator = std::make_unique<DuneSim>(*modelToSimulate, compartmentIds);
   } else {
-    simulator = std::make_unique<PixelSim>(
-        *modelToSimulate, compartmentIds, compartmentSpeciesIds, settings->options.pixel);
+    simulator = std::make_unique<PixelSim>(*modelToSimulate, compartmentIds,
+                                           compartmentSpeciesIds,
+                                           settings->options.pixel);
   }
   if (simulator->errorMessage().empty()) {
     nCompletedTimesteps.store(data->timePoints.size());
@@ -472,6 +474,10 @@ Simulation::getPyConcs(std::size_t timeIndex) const {
   using PyConc = std::vector<std::vector<double>>;
   std::pair<std::map<std::string, PyConc>, std::map<std::string, PyConc>> pair;
   auto &[pyConcs, pyDcdts] = pair;
+  // dcdt is only available from pixel sim, and only for the last timestep
+  // in all other cases, return an empty vector for dcdt
+  PixelSim *pixelSim{dynamic_cast<PixelSim *>(simulator.get())};
+  bool getDcdt{timeIndex + 1 == data->timePoints.size() && pixelSim != nullptr};
   PyConc zeros = PyConc(
       static_cast<std::size_t>(imageSize.height()),
       std::vector<double>(static_cast<std::size_t>(imageSize.width()), 0.0));
@@ -482,15 +488,17 @@ Simulation::getPyConcs(std::size_t timeIndex) const {
   vecPyDcdts.reserve(compartmentSpeciesIds.size());
   for (const auto &speciesIds : compartmentSpeciesIds) {
     vecPyConcs.emplace_back(speciesIds.size(), zeros);
-    vecPyDcdts.emplace_back(speciesIds.size(), zeros);
+    if (getDcdt) {
+      vecPyDcdts.emplace_back(speciesIds.size(), zeros);
+    }
   }
   // insert concentration for each pixel & species
   for (std::size_t ci = 0; ci < compartmentSpeciesIds.size(); ++ci) {
     const auto &pixels = compartments[ci]->getPixels();
     const auto &conc = data->concentration[timeIndex][ci];
     const std::vector<double> *dcdt{nullptr};
-    if (auto *s = dynamic_cast<PixelSim *>(simulator.get()); s != nullptr) {
-      dcdt = &(s->getDcdt(ci));
+    if (getDcdt) {
+      dcdt = &(pixelSim->getDcdt(ci));
     }
     std::size_t nSpecies = compartmentSpeciesIds[ci].size();
     std::size_t stride{nSpecies + data->concPadding[timeIndex]};
@@ -500,7 +508,7 @@ Simulation::getPyConcs(std::size_t timeIndex) const {
       auto y = static_cast<std::size_t>(p.y());
       for (std::size_t is : compartmentSpeciesIndices[ci]) {
         vecPyConcs[ci][is][y][x] = conc[ix * stride + is];
-        if (dcdt != nullptr) {
+        if (getDcdt) {
           vecPyDcdts[ci][is][y][x] = (*dcdt)[ix * stride + is];
         }
       }
@@ -510,7 +518,10 @@ Simulation::getPyConcs(std::size_t timeIndex) const {
   for (std::size_t ci = 0; ci < compartmentSpeciesIds.size(); ++ci) {
     for (std::size_t is : compartmentSpeciesIndices[ci]) {
       pyConcs[compartmentSpeciesNames[ci][is]] = std::move(vecPyConcs[ci][is]);
-      pyDcdts[compartmentSpeciesNames[ci][is]] = std::move(vecPyDcdts[ci][is]);
+      if (getDcdt) {
+        pyDcdts[compartmentSpeciesNames[ci][is]] =
+            std::move(vecPyDcdts[ci][is]);
+      }
     }
   }
   return pair;

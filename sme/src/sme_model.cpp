@@ -33,6 +33,14 @@ void pybindModel(pybind11::module &m) {
            Args:
                filename (str): the name of the file to create
            )")
+      .def("export_sme_file", &sme::Model::exportSmeFile,
+           pybind11::arg("filename"),
+           R"(
+           exports the model as a sme file
+
+           Args:
+               filename (str): the name of the file to create
+           )")
       .def_readonly("compartments", &sme::Model::compartments,
                     pybind11::return_value_policy::reference_internal,
                     R"(
@@ -139,20 +147,22 @@ void pybindModel(pybind11::module &m) {
            Args:
                filename (str): the name of the geometry image to import
            )")
-      .def("simulate", &sme::Model::simulate, pybind11::arg("simulation_time"),
+      .def("simulate", &sme::Model::simulateFloat, pybind11::arg("simulation_time"),
            pybind11::arg("image_interval"),
            pybind11::arg("timeout_seconds") = 86400,
            pybind11::arg("throw_on_timeout") = true,
            pybind11::arg("simulator_type") = simulate::SimulatorType::Pixel,
+           pybind11::arg("continue_existing_simulation") = false,
            R"(
            returns the results of the simulation.
 
            Args:
-               simulation_time (float): The length of the simulation in model units of time.
-               image_interval (float): The interval between images in model units of time.
+               simulation_time (float): The length of the simulation in model units of time, e.g. `5.5`
+               image_interval (float): The interval between images in model units of time, e.g. `1.1`
                timeout_seconds (int): The maximum time in seconds that the simulation can run for. Default value: 86400 = 1 day.
                throw_on_timeout (bool): Whether to throw an exception on simulation timeout. Default value: `true`.
                simulator_type (sme.SimulatorType): The simulator to use: `sme.SimulatorType.DUNE` or `sme.SimulatorType.Pixel`. Default value: Pixel.
+               continue_existing_simulation (bool): Whether to continue the existing simulation, or start a new simulation. Default value: `false`, i.e. any existing simulation results are discarded before doing the simulation.
 
            Returns:
                SimulationResultList: the results of the simulation
@@ -160,25 +170,51 @@ void pybindModel(pybind11::module &m) {
            Raises:
                RuntimeError: if the simulation times out or fails
            )")
-      .def("__repr__",
+      .def("simulate", &sme::Model::simulateString, pybind11::arg("simulation_times"),
+           pybind11::arg("image_intervals"),
+           pybind11::arg("timeout_seconds") = 86400,
+           pybind11::arg("throw_on_timeout") = true,
+           pybind11::arg("simulator_type") = simulate::SimulatorType::Pixel,
+           pybind11::arg("continue_existing_simulation") = false,
+           R"(
+           returns the results of the simulation.
+
+           Args:
+               simulation_times (str): The length(s) of the simulation in model units of time as a comma-delimited list, e.g. `"5"`, or `"10;100;20"`
+               image_intervals (str): The interval(s) between images in model units of time as a comma-delimited list, e.g. `"1"`, or `"2;10;0.5"`
+               timeout_seconds (int): The maximum time in seconds that the simulation can run for. Default value: 86400 = 1 day.
+               throw_on_timeout (bool): Whether to throw an exception on simulation timeout. Default value: `true`.
+               simulator_type (sme.SimulatorType): The simulator to use: `sme.SimulatorType.DUNE` or `sme.SimulatorType.Pixel`. Default value: Pixel.
+               continue_existing_simulation (bool): Whether to continue the existing simulation, or start a new simulation. Default value: `false`, i.e. any existing simulation results are discarded before doing the simulation.
+
+           Returns:
+               SimulationResultList: the results of the simulation
+
+           Raises:
+               RuntimeError: if the simulation times out or fails
+           )")      .def("__repr__",
            [](const sme::Model &a) {
              return fmt::format("<sme.Model named '{}'>", a.getName());
            })
       .def("__str__", &sme::Model::getStr);
 }
 
-void Model::importSbmlFile(const std::string &filename) {
-  std::string xml;
-  if (QFile f(filename.c_str());
-      f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-    xml = f.readAll().toStdString();
-  } else {
-    throw SmeInvalidArgument("Failed to open file: " + filename);
+static std::vector<SimulationResult> getSimulationResults(const simulate::Simulation *sim) {
+  std::vector<SimulationResult> results;
+  for (std::size_t i = 0; i < sim->getTimePoints().size(); ++i) {
+    auto& result = results.emplace_back();
+    result.timePoint = sim->getTimePoints()[i];
+    result.concentrationImage = toPyImageRgb(sim->getConcImage(i, {}, true));
+    std::tie(result.speciesConcentration, result.speciesDcdt) =
+        sim->getPyConcs(i);
   }
-  s = std::make_unique<model::Model>();
-  s->importSBMLString(xml);
+
+  return results;
+}
+
+void Model::init() {
   if (!s->getIsValid()) {
-    throw SmeInvalidArgument("Failed to import SBML from file: " + filename);
+    throw SmeInvalidArgument("Failed to open model");
   }
   compartments.clear();
   compartments.reserve(
@@ -199,6 +235,7 @@ void Model::importSbmlFile(const std::string &filename) {
     parameters.emplace_back(s.get(), paramId.toStdString());
   }
   compartmentImage = toPyImageRgb(s->getGeometry().getImage());
+
 }
 
 Model::Model(const std::string &filename) {
@@ -206,7 +243,21 @@ Model::Model(const std::string &filename) {
   // disable logging
   spdlog::set_level(spdlog::level::critical);
 #endif
-  importSbmlFile(filename);
+  if (!filename.empty()) {
+    importFile(filename);
+  }
+}
+
+void Model::importFile(const std::string &filename) {
+  s = std::make_unique<model::Model>();
+  s->importFile(filename);
+  init();
+}
+
+void Model::importSbmlString(const std::string &xml) {
+  s = std::make_unique<model::Model>();
+  s->importSBMLString(xml);
+  init();
 }
 
 std::string Model::getName() const { return s->getName().toStdString(); }
@@ -238,50 +289,47 @@ void Model::exportSbmlFile(const std::string &filename) {
   s->exportSBMLFile(filename);
 }
 
-static SimulationResult getSimulationResult(const simulate::Simulation *sim) {
-  SimulationResult result;
-  std::size_t i = sim->getTimePoints().size() - 1;
-  result.timePoint = sim->getTimePoints()[i];
-  result.concentrationImage = toPyImageRgb(sim->getConcImage(i, {}, true));
-  std::tie(result.speciesConcentration, result.speciesDcdt) =
-      sim->getPyConcs(i);
-  return result;
+void Model::exportSmeFile(const std::string &filename) {
+  s->exportSMEFile(filename);
 }
 
-std::vector<SimulationResult>
-Model::simulate(double simulationTime, double imageInterval, int timeoutSeconds,
-                bool throwOnTimeout, simulate::SimulatorType simulatorType) {
+std::vector<SimulationResult> Model::simulateString(const std::string &lengths, const std::string &intervals,
+                     int timeoutSeconds, bool throwOnTimeout,
+                     simulate::SimulatorType simulatorType,
+                     bool continueExistingSimulation) {
   QElapsedTimer simulationRuntimeTimer;
   simulationRuntimeTimer.start();
   double timeoutMillisecs{static_cast<double>(timeoutSeconds) * 1000.0};
-  std::vector<SimulationResult> results;
-  s->getSimulationData().clear();
+  if (!continueExistingSimulation) {
+    s->getSimulationData().clear();
+  }
   s->getSimulationSettings().simulatorType = simulatorType;
+  auto times{
+      simulate::parseSimulationTimes(lengths.c_str(), intervals.c_str())};
+  if (!times.has_value()) {
+    throw SmeRuntimeError("Invalid simulation lengths or intervals");
+  }
   // ensure any existing DUNE objects are destroyed to avoid later segfaults
   sim.reset();
   sim = std::make_unique<simulate::Simulation>(*(s.get()));
   if (const auto &e = sim->errorMessage(); !e.empty()) {
     throw SmeRuntimeError(fmt::format("Error in simulation setup: {}", e));
   }
-  results.push_back(getSimulationResult(sim.get()));
-  while (sim->getTimePoints().back() < simulationTime) {
-    double remainingTimeoutMillisecs{
-        timeoutMillisecs -
-        static_cast<double>(simulationRuntimeTimer.elapsed())};
-    if (remainingTimeoutMillisecs < 0) {
-      remainingTimeoutMillisecs = 0.0;
-    }
-    sim->doTimesteps(imageInterval, 1, remainingTimeoutMillisecs);
-    if (const auto &e = sim->errorMessage(); !e.empty()) {
-      if (throwOnTimeout) {
-        throw SmeRuntimeError(fmt::format("Error during simulation: {}", e));
-      } else {
-        return results;
-      }
-    }
-    results.push_back(getSimulationResult(sim.get()));
+  sim->doMultipleTimesteps(times.value(), timeoutMillisecs);
+  if (const auto &e = sim->errorMessage(); throwOnTimeout && !e.empty()) {
+    throw SmeRuntimeError(fmt::format("Error during simulation: {}", e));
   }
-  return results;
+  return getSimulationResults(sim.get());
+}
+
+std::vector<SimulationResult> Model::simulateFloat(double simulationTime, double imageInterval,
+                     int timeoutSeconds, bool throwOnTimeout,
+                     simulate::SimulatorType simulatorType,
+                     bool continueExistingSimulation) {
+  return simulateString(QString::number(simulationTime, 'g', 17).toStdString(),
+                  QString::number(imageInterval, 'g', 17).toStdString(),
+                  timeoutSeconds, throwOnTimeout, simulatorType,
+                  continueExistingSimulation);
 }
 
 std::string Model::getStr() const {

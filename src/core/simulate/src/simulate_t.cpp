@@ -1125,18 +1125,37 @@ SCENARIO("PyConc",
     if (QFile f(":/models/ABtoC.xml"); f.open(QIODevice::ReadOnly)) {
       s.importSBMLString(f.readAll().toStdString());
     }
-    simulate::Simulation sim(s);
-    auto [pyConcs, pyDcdts] = sim.getPyConcs(0);
-    REQUIRE(pyConcs.size() == 3);
-    const auto &cA = pyConcs["A"];
-    REQUIRE(cA.size() == 100);
-    REQUIRE(cA[0].size() == 100);
-    REQUIRE(cA[0][0] == dbl_approx(0.0));
-    REQUIRE(pyDcdts.size() == 3);
-    const auto &dA = pyDcdts["A"];
-    REQUIRE(dA.size() == 100);
-    REQUIRE(dA[0].size() == 100);
-    REQUIRE(dA[0][0] == dbl_approx(0.0));
+    for(auto simType : {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
+      s.getSimulationSettings().simulatorType = simType;
+      s.getSimulationData().clear();
+      simulate::Simulation sim(s);
+      sim.doTimesteps(0.01, 1);
+      REQUIRE(sim.getTimePoints().size() == 2);
+      auto [pyConcs0, pyDcdts0] = sim.getPyConcs(0);
+      REQUIRE(pyConcs0.size() == 3);
+      const auto &cA0 = pyConcs0["A"];
+      REQUIRE(cA0.size() == 100);
+      REQUIRE(cA0[0].size() == 100);
+      REQUIRE(cA0[0][0] == dbl_approx(0.0));
+      // only last timepoint of pixel sim has dcdt data:
+      REQUIRE(pyDcdts0.size() == 0);
+
+      auto [pyConcs1, pyDcdts1] = sim.getPyConcs(1);
+      REQUIRE(pyConcs1.size() == 3);
+      const auto &cA1{pyConcs1["A"]};
+      REQUIRE(cA1.size() == 100);
+      REQUIRE(cA1[0].size() == 100);
+      REQUIRE(cA1[0][0] == dbl_approx(0.0));
+      if(simType == simulate::SimulatorType::Pixel) {
+        REQUIRE(pyDcdts1.size() == 3);
+        const auto &dA1 = pyDcdts1["A"];
+        REQUIRE(dA1.size() == 100);
+        REQUIRE(dA1[0].size() == 100);
+        REQUIRE(dA1[0][0] == dbl_approx(0.0));
+      } else {
+        REQUIRE(pyDcdts1.size() == 0);
+      }
+    }
   }
 }
 
