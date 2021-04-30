@@ -117,10 +117,10 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
   options.pixel.maxErr = {std::numeric_limits<double>::max(),
                           std::numeric_limits<double>::max()};
   options.dune.dt = dt;
-  options.dune.decrease = 0.9999999;
-  options.dune.increase = 1.0000001;
+  options.dune.decrease = 0.5;
+  options.dune.increase = 1.5;
   options.dune.maxDt = dt;
-  options.dune.minDt = dt;
+  options.dune.minDt = dt*1e-5;
 
   for (auto simulator : params.simulators) {
     fmt::print("\n# {} simulator\n", toString(simulator));

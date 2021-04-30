@@ -15,6 +15,7 @@
 #include <CGAL/version_macros.h>
 #include <boost/version.hpp>
 #include "symbolic.hpp"
+#include <dune/copasi/config.h>
 #include "ui_dialogabout.h"
 #include "version.hpp"
 #include <opencv2/opencv.hpp>
@@ -55,8 +56,8 @@ DialogAbout::DialogAbout(QWidget *parent)
 
   QString libraries("<p>Included libraries:</p><ul>");
   libraries.append(dep("dune-copasi",
-                       "https://gitlab.dune-project.org/copasi/dune-copasi", 1,
-                       0, 0));
+                       "https://gitlab.dune-project.org/copasi/dune-copasi", DUNE_COPASI_VERSION_MAJOR,
+                       DUNE_COPASI_VERSION_MINOR, DUNE_COPASI_VERSION_REVISION));
   libraries.append(dep("libSBML",
                        "http://sbml.org/Software/libSBML",
                        libsbml::getLibSBMLDottedVersion()));
