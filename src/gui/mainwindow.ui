@@ -31,7 +31,20 @@
       </property>
       <widget class="QWidget" name="gridLayoutWidget">
        <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="0" colspan="2">
+        <item row="0" column="2">
+         <widget class="QSpinBox" name="spinGeometryZoom">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximum">
+           <number>10</number>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
          <widget class="QLabel" name="lblGeometryStatus">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -44,20 +57,55 @@
           </property>
          </widget>
         </item>
-        <item row="1" column="0" colspan="2">
-         <widget class="QLabelMouseTracker" name="lblGeometry" native="true">
+        <item row="1" column="0" colspan="3">
+         <widget class="QScrollArea" name="scrollGeometry">
+          <property name="widgetResizable">
+           <bool>true</bool>
+          </property>
+          <widget class="QWidget" name="scrollGeometryContents">
+           <property name="geometry">
+            <rect>
+             <x>0</x>
+             <y>0</y>
+             <width>129</width>
+             <height>560</height>
+            </rect>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="QLabelMouseTracker" name="lblGeometry" native="true">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="whatsThis">
+               <string>&lt;h4&gt;Compartment geometry image&lt;/h4&gt;
+&lt;p&gt;An image of the geometry of the model.&lt;/p&gt;</string>
+              </property>
+              <property name="text" stdset="0">
+               <string/>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLabel" name="lblGeometryZoomLabel">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <property name="whatsThis">
-           <string>&lt;h4&gt;Compartment geometry image&lt;/h4&gt;
-&lt;p&gt;An image of the geometry of the model.&lt;/p&gt;</string>
+          <property name="text">
+           <string>Zoom:</string>
           </property>
-          <property name="text" stdset="0">
-           <string/>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>

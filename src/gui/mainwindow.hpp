@@ -1,8 +1,8 @@
 #pragma once
 
+#include "model.hpp"
 #include <QMainWindow>
 #include <memory>
-#include "model.hpp"
 
 class QLabel;
 class TabFunctions;
@@ -16,7 +16,6 @@ class TabSpecies;
 namespace Ui {
 class MainWindow;
 }
-
 
 class MainWindow : public QMainWindow {
   Q_OBJECT
@@ -77,6 +76,8 @@ private:
   void actionSimulation_options_triggered();
 
   void lblGeometry_mouseOver(QPoint point);
+  void spinGeometryZoom_valueChanged(int value);
+
   void dragEnterEvent(QDragEnterEvent *event) override;
   void dropEvent(QDropEvent *event) override;
   void closeEvent(QCloseEvent *event) override;

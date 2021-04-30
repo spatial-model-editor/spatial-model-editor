@@ -157,6 +157,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->lblGeometry, &QLabelMouseTracker::mouseOver, this,
           &MainWindow::lblGeometry_mouseOver);
+
+  connect(ui->spinGeometryZoom, qOverload<int>(&QSpinBox::valueChanged), this,
+          &MainWindow::spinGeometryZoom_valueChanged);
 }
 
 void MainWindow::tabMain_currentChanged(int index) {
@@ -527,4 +530,15 @@ void MainWindow::lblGeometry_mouseOver(QPoint point) {
                                .arg(physical.x())
                                .arg(lengthUnit)
                                .arg(physical.y()));
+}
+
+void MainWindow::spinGeometryZoom_valueChanged(int value) {
+  if (value == 0) {
+    // rescale to fit entire scroll region
+    ui->scrollGeometry->setWidgetResizable(true);
+  } else {
+    ui->scrollGeometry->setWidgetResizable(false);
+    auto sz{zoomedSize(ui->scrollGeometry->size(), value)};
+    ui->scrollGeometryContents->resize(sz);
+  }
 }

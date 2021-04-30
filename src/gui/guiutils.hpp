@@ -19,3 +19,5 @@ void selectMatchingOrFirstChild(QTreeWidget *list, const QString &text = {});
 
 QImage getImageFromUser(QWidget *parent = nullptr,
                         const QString &title = "Import image");
+
+QSize zoomedSize(const QSize& originalSize, int zoomFactor);
