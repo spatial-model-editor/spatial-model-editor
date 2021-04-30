@@ -99,3 +99,13 @@ QImage getImageFromUser(QWidget *parent, const QString &title) {
   }
   return img;
 }
+
+QSize zoomedSize(const QSize &originalSize, int zoomFactor) {
+  QSize newSize{originalSize};
+  for (int i = 0; i < zoomFactor; ++i) {
+    // 20% increase in size for each step
+    newSize *= 6;
+    newSize /= 5;
+  }
+  return newSize;
+}

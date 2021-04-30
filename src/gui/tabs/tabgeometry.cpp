@@ -38,8 +38,8 @@ TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
           &TabGeometry::spinBoundaryIndex_valueChanged);
   connect(ui->spinMaxBoundaryPoints, qOverload<int>(&QSpinBox::valueChanged),
           this, &TabGeometry::spinMaxBoundaryPoints_valueChanged);
-  connect(ui->spinBoundaryZoom, qOverload<int>(&QSpinBox::valueChanged),
-          this, &TabGeometry::spinBoundaryZoom_valueChanged);
+  connect(ui->spinBoundaryZoom, qOverload<int>(&QSpinBox::valueChanged), this,
+          &TabGeometry::spinBoundaryZoom_valueChanged);
   connect(ui->lblCompMesh, &QLabelMouseTracker::mouseClicked, this,
           &TabGeometry::lblCompMesh_mouseClicked);
   connect(ui->lblCompMesh, &QLabelMouseTracker::mouseWheelEvent, this,
@@ -48,8 +48,8 @@ TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
           });
   connect(ui->spinMaxTriangleArea, qOverload<int>(&QSpinBox::valueChanged),
           this, &TabGeometry::spinMaxTriangleArea_valueChanged);
-  connect(ui->spinMeshZoom, qOverload<int>(&QSpinBox::valueChanged),
-          this, &TabGeometry::spinMeshZoom_valueChanged);
+  connect(ui->spinMeshZoom, qOverload<int>(&QSpinBox::valueChanged), this,
+          &TabGeometry::spinMeshZoom_valueChanged);
   connect(ui->listCompartments, &QListWidget::itemSelectionChanged, this,
           &TabGeometry::listCompartments_itemSelectionChanged);
   connect(ui->listCompartments, &QListWidget::itemDoubleClicked, this,
@@ -241,7 +241,7 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
     return;
   }
   if (index == TabIndex::MESH) {
-    if(model.getGeometry().getMesh() == nullptr){
+    if (model.getGeometry().getMesh() == nullptr) {
       ui->spinMaxTriangleArea->setEnabled(false);
       ui->spinMeshZoom->setEnabled(false);
     }
@@ -284,18 +284,8 @@ void TabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
       model.getGeometry().getMesh()->getBoundariesImages(size, boundaryIndex));
 }
 
-static QSize zoomedSize(const QSize originalSize, int zoomFactor){
-  QSize newSize{originalSize};
-  for (int i = 0; i < zoomFactor; ++i) {
-    // 20% increase in size versus scroll region for each step
-    newSize *= 6;
-    newSize /= 5;
-  }
-  return newSize;
-}
-
 void TabGeometry::spinBoundaryZoom_valueChanged(int value) {
-  if(value == 0){
+  if (value == 0) {
     // rescale to fit entire scroll region
     ui->scrollBoundaryLines->setWidgetResizable(true);
   } else {
@@ -333,8 +323,8 @@ void TabGeometry::spinMaxTriangleArea_valueChanged(int value) {
       model.getGeometry().getMesh()->getMeshImages(size, compIndex));
 }
 
-void TabGeometry::spinMeshZoom_valueChanged(int value){
-  if(value == 0){
+void TabGeometry::spinMeshZoom_valueChanged(int value) {
+  if (value == 0) {
     // rescale to fit entire scroll region
     ui->scrollMesh->setWidgetResizable(true);
   } else {

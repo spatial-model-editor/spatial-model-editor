@@ -1,8 +1,10 @@
 #include "catch_wrapper.hpp"
 #include "mainwindow.hpp"
+#include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
 #include <QFile>
 #include <QMenu>
+#include <QSpinBox>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
@@ -224,6 +226,26 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
       sendKeyEvents(menu_Advanced, {"S"});
       REQUIRE(mwt.getResult() == "Simulation Options");
     }
+  }
+  SECTION("built-in SBML model, change geometry image zoom") {
+    MainWindow w;
+    w.show();
+    waitFor(&w);
+    auto *spinGeometryZoom{w.findChild<QSpinBox *>("spinGeometryZoom")};
+    REQUIRE(spinGeometryZoom != nullptr);
+    auto *lblGeometry{w.findChild<QLabelMouseTracker *>("lblGeometry")};
+    REQUIRE(lblGeometry != nullptr);
+    REQUIRE(spinGeometryZoom->value() == 0);
+    int width0{lblGeometry->width()};
+    sendKeyEvents(spinGeometryZoom, {"Up", "Up", "Up", "Up"});
+    REQUIRE(spinGeometryZoom->value() == 4);
+    int width4{lblGeometry->width()};
+    REQUIRE(width4 > width0);
+    sendKeyEvents(spinGeometryZoom, {"Down", "Down"});
+    REQUIRE(spinGeometryZoom->value() == 2);
+    int width2{lblGeometry->width()};
+    REQUIRE(width2 < width4);
+    REQUIRE(width2 > width0);
   }
   SECTION("built-in SBML model, change units") {
     MainWindow w;
