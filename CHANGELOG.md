@@ -1,18 +1,28 @@
 # Changelog
 
 ## [latest]
+
+## [1.1.0] - 2021-05-04
 ### Added
+- sme file format, contains model, simulation settings and simulation results [#482](https://github.com/spatial-model-editor/spatial-model-editor/issues/482)
+- support multiple simulation lengths as comma delimited lists [#464](https://github.com/spatial-model-editor/spatial-model-editor/issues/464)
 - support for simulating models with empty compartments with the Dune-Copasi simulator [#435](https://github.com/spatial-model-editor/spatial-model-editor/issues/435)
-- option to specify multiple timesteps in the simulation tab [#464](https://github.com/spatial-model-editor/spatial-model-editor/issues/464)
 - option to resize the number of pixels in the geometry image [#462](https://github.com/spatial-model-editor/spatial-model-editor/issues/462)
 - option to reduce the number of colours in the geometry image [#280](https://github.com/spatial-model-editor/spatial-model-editor/issues/280)
-
-### Changed
+- support for non-integer stoichiometries in reactions [#495](https://github.com/spatial-model-editor/spatial-model-editor/issues/495)
+- optional grid and scale to geometry image [#497](https://github.com/spatial-model-editor/spatial-model-editor/issues/497)
+- python interface: DUNE simulator can now be used [#276](https://github.com/spatial-model-editor/spatial-model-editor/issues/276)
+- python interface: existing simulations can be continued [#514](https://github.com/spatial-model-editor/spatial-model-editor/issues/514)
+- zoom option to geometry image [#516](https://github.com/spatial-model-editor/spatial-model-editor/issues/516)
 
 ### Fixed
-- python interface: revert change in simulate() behaviour when doing a second simulation of a model [#475](https://github.com/spatial-model-editor/spatial-model-editor/issues/475)
-
-### Removed
+- python interface: revert change in default simulate() behaviour when doing a second simulation of a model [#475](https://github.com/spatial-model-editor/spatial-model-editor/issues/475)
+- multiple event related simulation bugs [#484](https://github.com/spatial-model-editor/spatial-model-editor/issues/484), [#485](https://github.com/spatial-model-editor/spatial-model-editor/issues/485), [#486](https://github.com/spatial-model-editor/spatial-model-editor/issues/486)
+- incorrect compartment name displayed in simulate display options [#487](https://github.com/spatial-model-editor/spatial-model-editor/issues/487)
+- simulation image intervals changing length of simulation [#492](https://github.com/spatial-model-editor/spatial-model-editor/issues/492)
+- bug where removing compartment could cause a crash [#506](https://github.com/spatial-model-editor/spatial-model-editor/issues/506)
+- artefacts in import of species concentrations into simulation [#508](https://github.com/spatial-model-editor/spatial-model-editor/issues/508)
+- DUNE maximum iteraction count simulation error [#490](https://github.com/spatial-model-editor/spatial-model-editor/issues/490)
 
 ## [1.0.9] - 2021-04-06
 ### Added
