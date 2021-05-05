@@ -29,112 +29,133 @@ static QStringList importIds(const libsbml::Model *model) {
 
 static QStringList importNamesAndMakeUnique(libsbml::Model *model) {
   QStringList names;
-  // get all species, make a list for each compartment
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
-    auto *reac = model->getReaction(i);
-    const auto &sId = reac->getId();
+    auto *reac{model->getReaction(i)};
+    const auto &sId{reac->getId()};
     if (reac->getName().empty()) {
       SPDLOG_INFO("Reaction '{}' has no Name, using sId", sId);
       reac->setName(sId);
     }
-    auto name = makeUnique(reac->getName().c_str(), names);
+    auto name{makeUnique(reac->getName().c_str(), names)};
     reac->setName(name.toStdString());
     names.push_back(name);
   }
   return names;
 }
 
-static QVector<QStringList> importParameterIds(const libsbml::Model *model) {
+static QVector<QStringList> importParameterIds(libsbml::Model *model) {
   QVector<QStringList> paramIds;
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
-    const auto *reac = model->getReaction(i);
-    const auto *kin = reac->getKineticLaw();
+    auto *reac{model->getReaction(i)};
+    auto *kin{reac->getKineticLaw()};
     paramIds.push_back({});
-    auto &ids = paramIds.back();
+    auto &ids{paramIds.back()};
     for (unsigned int j = 0; j < kin->getNumLocalParameters(); ++j) {
-      ids.push_back(kin->getLocalParameter(j)->getId().c_str());
+      auto *param{kin->getLocalParameter(j)};
+      const auto& sId{param->getId()};
+      if (param->getName().empty()) {
+        SPDLOG_INFO("ReactionParameter '{}' has no Name, using sId", sId);
+        param->setName(sId);
+      }
+      ids.push_back(sId.c_str());
     }
   }
   return paramIds;
 }
 
-static bool
-makeReactionSpatial(libsbml::Reaction *reac,
-                    const std::vector<geometry::Membrane> &membranes) {
-  const auto *model = reac->getModel();
-  utils::SmallStackSet<std::string, 3> compSet;
+static std::string
+inferReactionCompartment(const libsbml::Reaction *reac,
+                         const std::vector<geometry::Membrane> &membranes) {
+  const auto *model{reac->getModel()};
+  utils::SmallStackSet<std::string, 3> possibleCompartments;
   if (reac->isSetCompartment()) {
-    compSet.insert(reac->getCompartment());
+    possibleCompartments.insert(reac->getCompartment());
   }
   for (unsigned int k = 0; k < reac->getNumProducts(); ++k) {
     const auto &sId = reac->getProduct(k)->getSpecies();
     const auto &compId = model->getSpecies(sId)->getCompartment();
-    compSet.insert(compId);
+    possibleCompartments.insert(compId);
   }
   for (unsigned int k = 0; k < reac->getNumReactants(); ++k) {
     const auto &sId = reac->getReactant(k)->getSpecies();
     const auto &compId = model->getSpecies(sId)->getCompartment();
-    compSet.insert(compId);
+    possibleCompartments.insert(compId);
   }
   for (unsigned int k = 0; k < reac->getNumModifiers(); ++k) {
     const auto &sId = reac->getModifier(k)->getSpecies();
     const auto &compId = model->getSpecies(sId)->getCompartment();
-    compSet.insert(compId);
+    possibleCompartments.insert(compId);
   }
-  const auto *kin = reac->getKineticLaw();
-  if (kin == nullptr) {
-    kin = reac->createKineticLaw();
-  }
-  if (compSet.size() == 1) {
-    if (!reac->isSetCompartment()) {
-      SPDLOG_INFO("Reaction compartment not set: using species location '{}'",
-                  compSet[0]);
-      reac->setCompartment(compSet[0]);
-    }
-    SPDLOG_INFO("Reaction involves species from a single compartment");
-    SPDLOG_INFO("  - original rate units: d[amount]/dt");
-    SPDLOG_INFO("  -> want spatial compartment reaction: d[concentration]/dt");
-    SPDLOG_INFO("  -> dividing rate by compartment size");
-    auto expr = mathASTtoString(kin->getMath());
-    SPDLOG_INFO("  - {}", expr);
-    auto newExpr = utils::symbolicDivide(expr, compSet[0]);
-    SPDLOG_INFO("  --> {}", newExpr);
-    std::unique_ptr<libsbml::ASTNode> argAST(
-        libsbml::SBML_parseL3Formula(newExpr.c_str()));
-    if (argAST != nullptr) {
-      reac->getKineticLaw()->setMath(argAST.get());
-      SPDLOG_INFO("  - new math: {}",
-                  mathASTtoString(reac->getKineticLaw()->getMath()));
-    } else {
-      SPDLOG_ERROR("  - libSBML failed to parse expression");
-    }
-    return true;
-  } else if (compSet.size() == 2) {
+  if (possibleCompartments.size() == 1) {
+    SPDLOG_INFO("Reaction involves species from a single compartment:");
+    SPDLOG_INFO("  -> Compartment '{}'", possibleCompartments[0]);
+    return possibleCompartments[0];
+  } else if (possibleCompartments.size() == 2) {
     SPDLOG_INFO("Reaction involves species from two compartments:");
-    SPDLOG_INFO("  - '{}'", compSet[0]);
-    SPDLOG_INFO("  - '{}'", compSet[1]);
+    SPDLOG_INFO("  - '{}'", possibleCompartments[0]);
+    SPDLOG_INFO("  - '{}'", possibleCompartments[1]);
+    for (const auto &membrane : membranes) {
+      const auto &cA = membrane.getCompartmentA()->getId();
+      const auto &cB = membrane.getCompartmentB()->getId();
+      if ((cA == possibleCompartments[0] && cB == possibleCompartments[1]) ||
+          (cA == possibleCompartments[1] && cB == possibleCompartments[0])) {
+        SPDLOG_INFO("  -> Membrane '{}'", membrane.getId());
+        return membrane.getId();
+      }
+    }
+  }
+  return {};
+}
+
+static bool
+makeReactionSpatial(libsbml::Reaction *reac,
+                    const std::vector<geometry::Membrane> &membranes) {
+  auto compartmentId{inferReactionCompartment(reac, membranes)};
+  if (compartmentId.empty()) {
+    SPDLOG_INFO("no valid compartment found for reaction {}", reac->getId());
+    return false;
+  }
+  if (auto iter{std::find_if(membranes.cbegin(), membranes.cend(),
+                             [compartmentId](const auto &m) {
+                               return m.getId() == compartmentId;
+                             })};
+      iter != membranes.cend()) {
+    // membrane reaction
+//    const auto &membrane{*iter};
+    SPDLOG_INFO("Reaction involves species from two compartments:");
+    SPDLOG_INFO("Setting Reaction compartment to membrane: '{}'",
+                compartmentId);
+    reac->setCompartment(compartmentId);
     SPDLOG_INFO("  - original rate units: d[amount]/dt");
     SPDLOG_INFO(
         "  -> want spatial membrane reaction: d[amount]/d[membrane area]/dt");
     SPDLOG_WARN("  -> but NOT changing rate automatically");
-    for (const auto &membrane : membranes) {
-      const auto &cA = membrane.getCompartmentA()->getId();
-      const auto &cB = membrane.getCompartmentB()->getId();
-      if ((cA == compSet[0] && cB == compSet[1]) ||
-          (cA == compSet[1] && cB == compSet[0])) {
-        SPDLOG_INFO("  -> setting reaction location to Membrane '{}'",
-                    membrane.getId());
-        reac->setCompartment(membrane.getId());
-        return true;
-      }
-    }
-    return false;
+    // todo: rescale based on length/area of membrane
+    return true;
+  }
+  // compartment reaction
+  SPDLOG_INFO("Reaction involves species from a single compartment");
+  SPDLOG_INFO("Setting Reaction compartment: '{}'", compartmentId);
+  reac->setCompartment(compartmentId);
+  SPDLOG_INFO("  - original rate units: d[amount]/dt");
+  SPDLOG_INFO("  -> want spatial compartment reaction: d[concentration]/dt");
+  SPDLOG_INFO("  -> dividing rate by compartment size");
+  const auto *kin{reac->getKineticLaw()};
+  auto expr{mathASTtoString(kin->getMath())};
+  SPDLOG_INFO("  - {}", expr);
+  auto newExpr{utils::symbolicDivide(expr, compartmentId)};
+  SPDLOG_INFO("  --> {}", newExpr);
+  if (std::unique_ptr<libsbml::ASTNode> argAST(
+          libsbml::SBML_parseL3Formula(newExpr.c_str())); // todo: withmodel
+      argAST != nullptr) {
+    reac->getKineticLaw()->setMath(argAST.get());
+    SPDLOG_INFO("  - new math: {}",
+                mathASTtoString(reac->getKineticLaw()->getMath()));
   } else {
     SPDLOG_WARN(
-        "Reaction involves species from {} compartments - not supported",
-        compSet.size());
+        "  - libSBML failed to parse expression: leaving existing math");
   }
-  return false;
+  return true;
 }
 
 static bool reactionInvolvesSpecies(const libsbml::Reaction *reac,
@@ -180,7 +201,16 @@ void ModelReactions::makeReactionsSpatial(
     }
     auto *srp = static_cast<libsbml::SpatialReactionPlugin *>(
         reac->getPlugin("spatial"));
+    if (srp != nullptr && srp->isSetIsLocal() && srp->getIsLocal() &&
+        reac->getCompartment().empty()) {
+      // spatial model, local reaction, but no compartment set, so try to set
+      // one
+      reac->setCompartment(inferReactionCompartment(reac, membranes));
+    }
     if (srp != nullptr && !(srp->isSetIsLocal() && srp->getIsLocal())) {
+      // spatial model, non-local reaction, i.e. we are importing a
+      // non-spatial model, so try to rescale it if we have enough geometry info
+      // to do so, and if successful, then set isLocal = true
       if (makeReactionSpatial(reac, membranes)) {
         SPDLOG_INFO("Setting isLocal=true for reaction {}", reac->getId());
         srp->setIsLocal(true);
