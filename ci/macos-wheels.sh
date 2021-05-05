@@ -10,7 +10,6 @@ export MACOSX_DEPLOYMENT_TARGET=10.14
 export CCACHE_BASEDIR=/private
 export CMAKE_CXX_COMPILER_LAUNCHER="ccache"
 export CMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake"
-export CIBW_SKIP="cp27-macosx_x86_64"
 export SME_EXTERNAL_SMECORE=on
 
 # check versions
