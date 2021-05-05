@@ -14,9 +14,7 @@
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 #include <stdexcept>
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 const QStringList &ModelMembranes::getIds() const { return ids; }
 
@@ -264,7 +262,5 @@ bool ModelMembranes::getHasUnsavedChanges() const {return hasUnsavedChanges;}
 void ModelMembranes::setHasUnsavedChanges(bool unsavedChanges){
   hasUnsavedChanges = unsavedChanges;
 }
-
-} // namespace model
 
 } // namespace sme

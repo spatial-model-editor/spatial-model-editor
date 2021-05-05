@@ -6,9 +6,7 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 void printSBMLDocWarnings(const libsbml::SBMLDocument *doc) {
   auto severity = libsbml::LIBSBML_SEV_WARNING;
@@ -73,7 +71,5 @@ bool validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc) {
   printSBMLDocWarnings(doc);
   return true;
 }
-
-} // namespace model
 
 } // namespace sme

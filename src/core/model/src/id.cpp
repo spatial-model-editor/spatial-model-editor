@@ -8,9 +8,7 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 bool isSIdAvailable(const std::string &id, libsbml::Model *model) {
   return model->getElementBySId(id) == nullptr;
@@ -53,7 +51,5 @@ QString makeUnique(const QString &name, const QStringList &names,
   }
   return uniqueName;
 }
-
-} // namespace model
 
 } // namespace sme

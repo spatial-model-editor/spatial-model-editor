@@ -7,9 +7,7 @@
 #include <QImage>
 #endif
 
-namespace sme {
-
-namespace mesh {
+namespace sme::mesh {
 
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
 static void writeDebuggingImageOutput(const cv::Mat &mask, const cv::Mat &blob,
@@ -132,7 +130,5 @@ getInteriorPoints(const QImage &img, const std::vector<QRgb> &cols) {
   }
   return interiorPoints;
 }
-
-} // namespace mesh
 
 } // namespace sme

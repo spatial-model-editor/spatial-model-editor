@@ -3,9 +3,7 @@
 #include "dunegrid.hpp"
 #include "logger.hpp"
 
-namespace sme {
-
-namespace simulate {
+namespace sme::simulate {
 
 DuneImpl::DuneImpl(const simulate::DuneConverter &dc) {
   for (const auto &ini : dc.getIniFiles()) {
@@ -28,7 +26,5 @@ DuneImpl::DuneImpl(const simulate::DuneConverter &dc) {
 }
 
 DuneImpl::~DuneImpl() = default;
-
-} // namespace simulate
 
 } // namespace sme

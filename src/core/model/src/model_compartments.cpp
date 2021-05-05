@@ -15,9 +15,7 @@
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 #include <string>
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 static QStringList importIds(const libsbml::Model *model) {
   QStringList ids;
@@ -388,7 +386,5 @@ bool ModelCompartments::getHasUnsavedChanges() const {
 void ModelCompartments::setHasUnsavedChanges(bool unsavedChanges) {
   hasUnsavedChanges = unsavedChanges;
 }
-
-} // namespace model
 
 } // namespace sme

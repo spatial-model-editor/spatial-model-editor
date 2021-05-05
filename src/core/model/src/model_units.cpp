@@ -6,9 +6,7 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 bool operator==(const Unit &a, const Unit &b) {
   constexpr double maxMultiplierRelativeDiff{1e-10};
@@ -313,7 +311,5 @@ static double getL3(const Unit &lengthUnit) {
 double getVolOverL3(const Unit &lengthUnit, const Unit &volumeUnit) {
   return getV(volumeUnit) / getL3(lengthUnit);
 }
-
-} // namespace model
 
 } // namespace sme

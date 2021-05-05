@@ -18,9 +18,7 @@
 #include "utils.hpp"
 #include "xml_annotation.hpp"
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 bool ModelGeometry::importDimensions(const libsbml::Model *model) {
   const auto *geom = getGeometry(model);
@@ -378,7 +376,5 @@ bool ModelGeometry::getHasUnsavedChanges() const { return hasUnsavedChanges; }
 void ModelGeometry::setHasUnsavedChanges(bool unsavedChanges) {
   hasUnsavedChanges = unsavedChanges;
 }
-
-} // namespace model
 
 } // namespace sme

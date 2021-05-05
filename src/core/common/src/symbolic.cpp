@@ -56,9 +56,7 @@ void muPrinter::_print_pow(std::ostringstream &o, const RCP<const Basic> &a,
 }
 } // namespace SymEngine
 
-namespace sme {
-
-namespace utils {
+namespace sme::utils {
 
 static std::string toString(const SymEngine::RCP<const SymEngine::Basic> &e) {
   return SymEngine::muPrinter().apply(e);
@@ -373,7 +371,5 @@ bool Symbolic::isCompiled() const { return pSymEngineImpl->compiled; }
 const std::string &Symbolic::getErrorMessage() const {
   return pSymEngineImpl->errorMessage;
 }
-
-} // namespace utils
 
 } // namespace sme

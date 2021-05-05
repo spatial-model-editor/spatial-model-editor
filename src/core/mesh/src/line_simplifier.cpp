@@ -6,9 +6,7 @@
 #include <memory>
 #include <numeric>
 
-namespace sme {
-
-namespace mesh {
+namespace sme::mesh {
 
 // triangle area in half-pixel units
 static int triangleArea(const QPoint &a, const QPoint &b, const QPoint &c) {
@@ -275,7 +273,5 @@ LineSimplifier::LineSimplifier(const std::vector<QPoint> &points,
   }
   priorities = getPriorities(vertices, closedLoop);
 }
-
-} // namespace mesh
 
 } // namespace sme
