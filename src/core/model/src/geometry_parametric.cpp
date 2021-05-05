@@ -14,9 +14,7 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 const libsbml::ParametricGeometry *
 getParametricGeometry(const libsbml::Geometry *geom) {
@@ -203,7 +201,5 @@ void writeGeometryMeshToSBML(libsbml::Model *model, const mesh::Mesh *mesh,
     SPDLOG_INFO("    - added {} uints ({} triangles)", size, size / 2);
   }
 }
-
-} // namespace model
 
 } // namespace sme

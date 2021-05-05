@@ -19,9 +19,7 @@
 #include <tbb/tick_count.h>
 #endif
 
-namespace sme {
-
-namespace simulate {
+namespace sme::simulate {
 
 ReacEval::ReacEval(const model::Model &doc,
                    const std::vector<std::string> &speciesIDs,
@@ -540,7 +538,5 @@ void SimMembrane::evaluateReactions() {
     }
   }
 }
-
-} // namespace simulate
 
 } // namespace sme

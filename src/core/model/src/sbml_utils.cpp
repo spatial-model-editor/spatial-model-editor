@@ -3,9 +3,7 @@
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 const libsbml::SampledFieldGeometry *
 getSampledFieldGeometry(const libsbml::Geometry *geom) {
@@ -231,7 +229,5 @@ libsbml::Parameter *getSpatialCoordinateParam(libsbml::Model *model,
   return const_cast<libsbml::Parameter *>(getSpatialCoordinateParam(
       const_cast<const libsbml::Model *>(model), kind));
 }
-
-} // namespace model
 
 } // namespace sme

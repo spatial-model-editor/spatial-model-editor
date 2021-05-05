@@ -21,9 +21,7 @@
 #include <omp.h>
 #endif
 
-namespace sme {
-
-namespace simulate {
+namespace sme::simulate {
 
 void PixelSim::calculateDcdt() {
   // calculate dcd/dt in all compartments
@@ -390,7 +388,5 @@ const std::string &PixelSim::errorMessage() const {
 const QImage &PixelSim::errorImage() const { return currentErrorImage; }
 
 void PixelSim::requestStop() { stopRequested.store(true); }
-
-} // namespace simulate
 
 } // namespace sme

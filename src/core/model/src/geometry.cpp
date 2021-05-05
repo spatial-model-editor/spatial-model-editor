@@ -8,9 +8,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace sme {
-
-namespace geometry {
+namespace sme::geometry {
 
 static void fillMissingByDilation(std::vector<std::size_t> &arr, int w, int h,
                                   std::size_t invalidIndex) {
@@ -307,7 +305,5 @@ void Field::setCompartment(const Compartment *compartment) {
   comp = compartment;
   conc.assign(compartment->nPixels(), 0.0);
 }
-
-} // namespace geometry
 
 } // namespace sme

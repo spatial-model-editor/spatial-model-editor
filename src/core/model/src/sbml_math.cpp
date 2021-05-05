@@ -4,9 +4,7 @@
 
 #include "logger.hpp"
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 std::string inlineFunctions(const std::string &mathExpression,
                             const libsbml::Model *model) {
@@ -199,7 +197,5 @@ double evaluateMathString(
   SPDLOG_TRACE("  ->: '{}'", mathASTtoString(ast.get()));
   return libsbml::SBMLTransforms::evaluateASTNode(ast.get(), vars, model);
 }
-
-} // namespace model
 
 } // namespace sme

@@ -16,9 +16,7 @@
 #include "utils.hpp"
 #include "xml_annotation.hpp"
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 static QStringList importIds(const libsbml::Model *model) {
   QStringList ids;
@@ -579,7 +577,5 @@ bool ModelReactions::getHasUnsavedChanges() const { return hasUnsavedChanges; }
 void ModelReactions::setHasUnsavedChanges(bool unsavedChanges) {
   hasUnsavedChanges = unsavedChanges;
 }
-
-} // namespace model
 
 } // namespace sme

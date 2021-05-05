@@ -10,9 +10,7 @@
 #include <opencv2/imgproc.hpp>
 #include <utility>
 
-namespace sme {
-
-namespace mesh {
+namespace sme::mesh {
 
 bool Boundary::isLoop() const { return lineSimplifier.isLoop(); }
 
@@ -166,7 +164,5 @@ constructBoundaries(const QImage &img,
   auto edgeContours = getContours(img, compartmentColours);
   return splitContours(img, edgeContours);
 }
-
-} // namespace mesh
 
 } // namespace sme

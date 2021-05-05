@@ -14,9 +14,7 @@
 #include <optional>
 #include <utility>
 
-namespace sme {
-
-namespace simulate {
+namespace sme::simulate {
 
 Pde::Pde(const model::Model *doc_ptr,
          const std::vector<std::string> &speciesIDs,
@@ -196,7 +194,5 @@ Reaction::Reaction(const model::Model *doc, std::vector<std::string> species,
     }
   }
 }
-
-} // namespace simulate
 
 } // namespace sme

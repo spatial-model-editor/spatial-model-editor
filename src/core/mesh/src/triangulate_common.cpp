@@ -3,9 +3,7 @@
 #include "logger.hpp"
 #include "utils.hpp"
 
-namespace sme {
-
-namespace mesh {
+namespace sme::mesh {
 
 std::size_t getOrInsertFPIndex(const QPoint &p,
                                       std::vector<QPoint> &fps) {
@@ -103,7 +101,5 @@ TriangulateBoundaries::TriangulateBoundaries(
         {interiorPoints[i], static_cast<double>(maxTriangleAreas[i])});
   }
 }
-
-} // namespace mesh
 
 } // namespace sme

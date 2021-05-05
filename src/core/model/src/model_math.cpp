@@ -7,9 +7,7 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 ModelMath::ModelMath() = default;
 
@@ -70,7 +68,5 @@ ModelMath &ModelMath::operator=(ModelMath &&that) noexcept {
 }
 
 ModelMath::~ModelMath() = default;
-
-} // namespace model
 
 } // namespace sme

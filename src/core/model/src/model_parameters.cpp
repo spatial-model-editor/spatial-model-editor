@@ -11,9 +11,7 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 static bool isUserVisibleParameter(const libsbml::Parameter *param) {
   if (const auto *spp = static_cast<const libsbml::SpatialParameterPlugin *>(
@@ -390,7 +388,5 @@ bool ModelParameters::getHasUnsavedChanges() const { return hasUnsavedChanges; }
 void ModelParameters::setHasUnsavedChanges(bool unsavedChanges) {
   hasUnsavedChanges = unsavedChanges;
 }
-
-} // namespace model
 
 } // namespace sme

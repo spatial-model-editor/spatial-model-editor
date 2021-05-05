@@ -3,9 +3,7 @@
 #include <limits>
 #include <stdexcept>
 
-namespace sme {
-
-namespace utils {
+namespace sme::utils {
 
 std::vector<std::string> toStdString(const QStringList &q) {
   std::vector<std::string> v;
@@ -150,8 +148,6 @@ QPointUniqueIndexer::getIndex(const QPoint &point) const {
 }
 
 std::vector<QPoint> QPointUniqueIndexer::getPoints() const { return points; }
-
-} // namespace utils
 
 } // namespace sme
 

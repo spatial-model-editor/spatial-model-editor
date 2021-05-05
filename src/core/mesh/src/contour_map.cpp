@@ -1,8 +1,6 @@
 #include "contour_map.hpp"
 
-namespace sme {
-
-namespace mesh {
+namespace sme::mesh {
 
 static void addEdge(ContourIndices &contourIndices, int contourIndex) {
   if (contourIndices[0] < 0 || contourIndices[0] == contourIndex) {
@@ -54,7 +52,5 @@ const ContourIndices &ContourMap::getContourIndices(const cv::Point &p) const {
 bool ContourMap::isFixedPoint(const cv::Point &p) const {
   return getContourIndices(p)[2] >= 0;
 }
-
-} // namespace mesh
 
 } // namespace sme
