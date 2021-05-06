@@ -28,7 +28,7 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     REQUIRE(vertices.size() == 2 * 4);
 
     // check triangles
-    const auto &triangles = mesh.getTriangles();
+    const auto &triangles = mesh.getTriangleIndices();
     REQUIRE(triangles.size() == 1);
     REQUIRE(triangles[0].size() == 2);
 
@@ -87,11 +87,11 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     WHEN("max triangle area decreased") {
       THEN("more vertices & triangles") {
         REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 999);
-        std::size_t oldNTriangles{mesh.getTriangles()[0].size()};
+        std::size_t oldNTriangles{mesh.getTriangleIndices()[0].size()};
         std::size_t oldNVertices{mesh.getVerticesAsFlatArray().size() / 2};
 
         mesh.setCompartmentMaxTriangleArea(0, 60);
-        std::size_t newNTriangles{mesh.getTriangles()[0].size()};
+        std::size_t newNTriangles{mesh.getTriangleIndices()[0].size()};
         std::size_t newNVertices{mesh.getVerticesAsFlatArray().size() / 2};
         REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 60);
         REQUIRE(newNTriangles > oldNTriangles);
@@ -100,7 +100,7 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
         std::swap(oldNTriangles, newNTriangles);
         std::swap(oldNVertices, newNVertices);
         mesh.setCompartmentMaxTriangleArea(0, 30);
-        newNTriangles = mesh.getTriangles()[0].size();
+        newNTriangles = mesh.getTriangleIndices()[0].size();
         newNVertices = mesh.getVerticesAsFlatArray().size() / 2;
         REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 30);
         REQUIRE(newNTriangles > oldNTriangles);
@@ -109,7 +109,7 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
         std::swap(oldNTriangles, newNTriangles);
         std::swap(oldNVertices, newNVertices);
         mesh.setCompartmentMaxTriangleArea(0, 12);
-        newNTriangles = mesh.getTriangles()[0].size();
+        newNTriangles = mesh.getTriangleIndices()[0].size();
         newNVertices = mesh.getVerticesAsFlatArray().size() / 2;
         REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 12);
         REQUIRE(newNTriangles > oldNTriangles);
@@ -118,7 +118,7 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
         std::swap(oldNTriangles, newNTriangles);
         std::swap(oldNVertices, newNVertices);
         mesh.setCompartmentMaxTriangleArea(0, 2);
-        newNTriangles = mesh.getTriangles()[0].size();
+        newNTriangles = mesh.getTriangleIndices()[0].size();
         newNVertices = mesh.getVerticesAsFlatArray().size() / 2;
         REQUIRE(mesh.getCompartmentMaxTriangleArea(0) == 2);
         REQUIRE(newNTriangles > oldNTriangles);

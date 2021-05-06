@@ -39,31 +39,44 @@
 #include <utility>
 #include <vector>
 
-namespace sme {
+namespace sme::utils {
 
-namespace utils {
-
+/**
+ * @brief The sum of all elements in a container
+ */
 template <typename Container>
 typename Container::value_type sum(const Container &c) {
   return (std::accumulate(std::cbegin(c), std::cend(c),
                           typename Container::value_type{0}));
 }
 
+/**
+ * @brief The average of all elements in a container
+ */
 template <typename Container>
 typename Container::value_type average(const Container &c) {
   return sum(c) / static_cast<typename Container::value_type>(c.size());
 }
 
+/**
+ * @brief The minimum value in a container
+ */
 template <typename Container>
 typename Container::value_type min(const Container &c) {
   return *std::min_element(std::cbegin(c), std::cend(c));
 }
 
+/**
+ * @brief The maximum value in a container
+ */
 template <typename Container>
 typename Container::value_type max(const Container &c) {
   return *std::max_element(std::cbegin(c), std::cend(c));
 }
 
+/**
+ * @brief The minimum and maximum values in a container
+ */
 template <typename Container>
 std::pair<typename Container::value_type, typename Container::value_type>
 minmax(const Container &c) {
@@ -71,13 +84,20 @@ minmax(const Container &c) {
   return {*p.first, *p.second};
 }
 
+/**
+ * @brief The index in the container of the minimum element
+ */
 template <typename Container>
 std::size_t min_element_index(const Container &c) {
   return static_cast<std::size_t>(
       std::distance(c.cbegin(), std::min_element(c.cbegin(), c.cend())));
 }
 
-// https://stackoverflow.com/a/56766138
+/**
+ * @brief The type of an object as a string
+ *
+ * @note Copied from https://stackoverflow.com/a/56766138
+ */
 template <typename T> constexpr auto decltypeStr() {
   std::string_view name;
   std::string_view prefix;
@@ -100,20 +120,57 @@ template <typename T> constexpr auto decltypeStr() {
   return name;
 }
 
+/**
+ * @brief Convert a QStringList to a vector of std::string
+ */
 std::vector<std::string> toStdString(const QStringList &q);
+
+/**
+ * @brief Convert a vector of std::string to a QStringList
+ */
 QStringList toQString(const std::vector<std::string> &v);
+
+/**
+ * @brief Convert a double to a QString
+ */
 QString dblToQStr(double x, int precision = 18);
+
+/**
+ * @brief Convert a QVector of QRgb to a vector of QRgb
+ */
 std::vector<QRgb> toStdVec(const QVector<QRgb> &q);
 
+/**
+ * @brief Convert a vector of `int` to a vector of `bool`
+ */
 std::vector<bool> toBool(const std::vector<int> &v);
+
+/**
+ * @brief Convert a vector of `bool` to a vector of `int`
+ */
 std::vector<int> toInt(const std::vector<bool> &v);
 
+/**
+ * @brief Convert a string to a vector of values
+ *
+ * The values in the string are separated by spaces.
+ *
+ * @tparam T the type of the values
+ */
 template <typename T> std::vector<T> stringToVector(const std::string &str) {
   std::istringstream ss(str);
   return std::vector<T>(std::istream_iterator<T>(ss),
                         std::istream_iterator<T>{});
 }
 
+/**
+ * @brief Convert a vector of values to a string
+ *
+ * The values in the string are separated by spaces.
+ * Doubles are printed in scientific notation with 17 significant digits.
+ *
+ * @tparam T the type of the values
+ */
 template <typename T> std::string vectorToString(const std::vector<T> &vec) {
   if (vec.empty()) {
     return {};
@@ -126,6 +183,14 @@ template <typename T> std::string vectorToString(const std::vector<T> &vec) {
   return ss.str();
 }
 
+/**
+ * @brief Indices of elements if vector were sorted
+ *
+ * Returns a vector of indices, such that the vector would be sorted if the
+ * elements were in this order.
+ *
+ * @tparam T the type of the values in the vector
+ */
 template <typename T>
 std::vector<std::size_t>
 getIndicesOfSortedVector(const std::vector<T> &unsorted) {
@@ -138,6 +203,11 @@ getIndicesOfSortedVector(const std::vector<T> &unsorted) {
   return indices;
 }
 
+/**
+ * @brief Default set of colours
+ *
+ * A vector of default colours
+ */
 class indexedColours {
 private:
   const static std::vector<QColor> colours;
@@ -146,16 +216,34 @@ public:
   const QColor &operator[](std::size_t i) const;
 };
 
+/**
+ * @brief Convert a (2d) QPoint to an integer
+ *
+ * Given a bounding box and a QPoint within this box, return an integer
+ * that identifies this point.
+ */
 class QPointFlattener {
 private:
   QSize box;
 
 public:
   explicit QPointFlattener(const QSize &boundingBox);
+  /**
+   * @brief Check if the point is inside the bounding box
+   */
   bool isValid(const QPoint &point) const;
+  /**
+   * @brief Return an index corresponding to the given point
+   */
   std::size_t flatten(const QPoint &point) const;
 };
 
+/**
+ * @brief Fast look-up of points within a bounding box
+ *
+ * Stores a set of points that lie within a bounding box. Allows fast look-up of
+ * the index of each point.
+ */
 class QPointIndexer {
 private:
   QPointFlattener flattener;
@@ -170,6 +258,13 @@ public:
   std::size_t getNumPoints() const;
 };
 
+/**
+ * @brief Fast look-up of unique points within a bounding box
+ *
+ * Stores a set of unique points that lie within a bounding box. Allows fast
+ * look-up of the index of each point.
+ * @see QPointIndexer
+ */
 class QPointUniqueIndexer {
 private:
   QPointFlattener flattener;
@@ -185,89 +280,15 @@ public:
   std::vector<QPoint> getPoints() const;
 };
 
-template <typename K, typename V> class SmallMap {
-private:
-  std::vector<K> keys;
-  std::vector<V> values;
-
-public:
-  void insert(K key, V value) noexcept {
-    keys.push_back(key);
-    values.push_back(value);
-  }
-  std::optional<V> operator[](K key) const noexcept {
-    for (std::size_t i = 0; i < keys.size(); ++i) {
-      if (keys[i] == key) {
-        return values[i];
-      }
-    }
-    return {};
-  }
-  explicit SmallMap(std::size_t size) {
-    keys.reserve(size);
-    values.reserve(size);
-  }
-};
-
-// set class for a fixed maximum number of small (i.e. pass by value) types
-// no heap allocations, elements stored in std::array,
-// insert/erase/find operations involve linear traversal of elements i.e. O(N)
-// if the set is full then insert just becomes a no-op
-template <typename T, std::size_t MaxSize> class SmallStackSet {
-private:
-  using container = std::array<T, MaxSize>;
-  using const_iterator = typename container::const_iterator;
-  container values;
-  std::size_t n = 0;
-
-public:
-  using value_type = T;
-  void clear() noexcept { n = 0; }
-  void insert(T v) {
-    if (n == MaxSize || contains(v)) {
-      return;
-    }
-    values[n] = v;
-    ++n;
-  }
-  void erase(T v) {
-    for (std::size_t i = 0; i < n; ++i) {
-      if (values[i] == v) {
-        --n;
-        values[i] = values[n];
-        return;
-      }
-    }
-  }
-  bool contains(T v) const {
-    for (std::size_t i = 0; i < n; ++i) {
-      if (values[i] == v) {
-        return true;
-      }
-    }
-    return false;
-  }
-  template <typename Cont> bool contains_any_of(const Cont &cont) const {
-    return std::any_of(std::cbegin(cont), std::cend(cont),
-                       [this](T v) { return contains(v); });
-  }
-  T operator[](std::size_t i) const { return values[i]; }
-  const_iterator cbegin() const noexcept { return values.cbegin(); }
-  const_iterator cend() const noexcept { return values.cbegin() + n; }
-  const_iterator begin() const noexcept { return cbegin(); }
-  const_iterator end() const noexcept { return cend(); }
-  std::size_t size() const { return n; }
-  std::size_t max_size() const { return MaxSize; }
-  SmallStackSet() = default;
-  explicit SmallStackSet(T v) { insert(v); }
-  explicit SmallStackSet(std::initializer_list<T> vals) {
-    for (T v : vals) {
-      insert(v);
-    }
-  }
-};
-
-// erase elements [first, last) from v, treating v as cyclic
+/**
+ * @brief Cyclic erase of elements from a vector
+ *
+ * Erase the elements with index [first, last) from the vector v,
+ * with cyclic indices, i.e. the next element after the last element is the
+ * first element of the vector
+ *
+ * @tparam T the value type
+ */
 template <typename T>
 void cyclicErase(std::vector<T> &v, std::size_t first, std::size_t last) {
   using diff = typename std::vector<T>::difference_type;
@@ -280,6 +301,13 @@ void cyclicErase(std::vector<T> &v, std::size_t first, std::size_t last) {
           v.begin() + static_cast<diff>(last));
 }
 
+/**
+ * @brief Check if a vector is a cyclic permutation of another vector
+ *
+ * @note Assumes the elements of the vector are unique
+ *
+ * @tparam T the value type
+ */
 template <typename T>
 bool isCyclicPermutation(const std::vector<T> &a, const std::vector<T> &b) {
   if (a.size() != b.size()) {
@@ -327,6 +355,4 @@ bool isCyclicPermutation(const std::vector<T> &a, const std::vector<T> &b) {
   return true;
 }
 
-} // namespace utils
-
-} // namespace sme
+} // namespace sme::utils

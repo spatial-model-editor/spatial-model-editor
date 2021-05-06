@@ -15,11 +15,9 @@ A GUI editor to create and edit 2d spatial SBML models of bio-chemical reactions
 
 To get started, download and run the GUI for your operating system
 
-- [![linux](docs/img/icon-linux.png) linux](../../releases/latest/download/spatial-model-editor)
-
-- [![macOS](docs/img/icon-osx.png) macOS](../../releases/latest/download/spatial-model-editor.dmg)
-
-- [![linux](docs/img/icon-windows.png) windows](../../releases/latest/download/spatial-model-editor.exe)
+| [Linux](../../releases/latest/download/spatial-model-editor) | [MacOS](../../releases/latest/download/spatial-model-editor.dmg) | [Windows]((../../releases/latest/download/spatial-model-editor.exe)) |
+| :-----: | :-----: | :------- |
+| [![linux](docs/img/icon-linux.png)](../../releases/latest/download/spatial-model-editor) | [![macOS](docs/img/icon-osx.png)](../../releases/latest/download/spatial-model-editor.dmg) | [![linux](docs/img/icon-windows.png)](../../releases/latest/download/spatial-model-editor.exe) |
 
 Or take a look at the [documentation](https://spatial-model-editor.readthedocs.io/)
 
@@ -34,7 +32,7 @@ Or take a look at the [documentation](https://spatial-model-editor.readthedocs.i
 
 [Bug reports](https://github.com/spatial-model-editor/spatial-model-editor/issues/new?assignees=&labels=&template=bug_report.md) and [feature requests](https://github.com/spatial-model-editor/spatial-model-editor/issues/new?assignees=&labels=&template=feature_request.md) are very welcome, as are fixes or improvements to the [documentation](https://spatial-model-editor.readthedocs.io/) (to edit a page in the documentation, click the 'Edit on GitHub' button in the top right).
 
-If you are interesting in contributing code, please see the [contributing guidelines](.github/CONTRIBUTING.md).
+If you are interested in contributing code, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
 ## Dependencies
 

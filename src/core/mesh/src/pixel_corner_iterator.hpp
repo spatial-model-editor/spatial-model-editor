@@ -4,9 +4,7 @@
 #include <opencv2/core/types.hpp>
 #include <vector>
 
-namespace sme {
-
-namespace mesh {
+namespace sme::mesh {
 
 /**
  * @brief Iterate around the edge vertices of a pixel contour.
@@ -65,7 +63,5 @@ public:
    */
   PixelCornerIterator &operator++();
 };
-
-} // namespace mesh
 
 } // namespace sme

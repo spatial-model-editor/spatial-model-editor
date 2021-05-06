@@ -149,10 +149,6 @@ Mesh::getTriangleIndices() const {
   return triangleIndices;
 }
 
-const std::vector<std::vector<QTriangleF>> &Mesh::getTriangles() const {
-  return triangles;
-}
-
 void Mesh::constructMesh() {
   try {
     Triangulate triangulate(*boundaries, compartmentInteriorPoints,

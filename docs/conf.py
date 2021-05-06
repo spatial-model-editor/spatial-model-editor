@@ -10,7 +10,9 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-# import os
+import os
+import subprocess
+
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 
@@ -24,6 +26,11 @@ author = "Liam Keegan"
 master_doc = "index"
 
 # -- General configuration ---------------------------------------------------
+
+# generate doxygen xml output
+subprocess.run(["doxygen", "Doxyfile.in"])
+# generate rst from doxygen for each class, file, namespace
+# subprocess.run(['breathe-apidoc', 'build/xml', '-o', 'developer/_auto'])
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -57,6 +64,10 @@ templates_path = ["_templates"]
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+# breathe: generate docs from doxygen xml output
+breathe_projects = {"sme": "build/xml"}
+breathe_default_project = "sme"
+breathe_default_members = ("members", "undoc-members")
 
 # -- Options for HTML output -------------------------------------------------
 
