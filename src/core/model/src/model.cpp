@@ -14,6 +14,7 @@
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 #include <stdexcept>
 #include <utility>
+#include <QFileInfo>
 
 namespace sme::model {
 
@@ -30,17 +31,9 @@ void Model::createSBMLFile(const std::string &name) {
   initModelData();
 }
 
-static QString removeExtension(const std::string &filename) {
-  QString f{filename.c_str()};
-  if (int len{f.lastIndexOf(".")}; len > 0) {
-    f.truncate(len);
-  }
-  return f;
-}
-
 void Model::importSBMLFile(const std::string &filename) {
   clear();
-  currentFilename = removeExtension(filename);
+  currentFilename = QFileInfo(filename.c_str()).baseName();
   SPDLOG_INFO("Loading SBML file {}...", filename);
   doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
   initModelData();
@@ -50,7 +43,7 @@ void Model::importSBMLFile(const std::string &filename) {
 void Model::importSBMLString(const std::string &xml,
                              const std::string &filename) {
   clear();
-  currentFilename = removeExtension(filename);
+  currentFilename = QFileInfo(filename.c_str()).baseName();
   SPDLOG_INFO("Importing SBML from string...");
   doc.reset(libsbml::readSBMLFromString(xml.c_str()));
   initModelData();
@@ -127,7 +120,7 @@ void Model::exportSBMLFile(const std::string &filename) {
 
 void Model::importFile(const std::string &filename) {
   clear();
-  currentFilename = removeExtension(filename);
+  currentFilename = QFileInfo(filename.c_str()).baseName();
   SPDLOG_INFO("Importing file {} ...", filename);
   auto contents{utils::importSmeFile(filename)};
   if (!contents.xmlModel.empty()) {

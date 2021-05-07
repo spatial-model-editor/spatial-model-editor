@@ -28,6 +28,7 @@ private:
   std::unique_ptr<Ui::MainWindow> ui;
   QLabel *statusBarPermanentMessage;
   sme::model::Model model;
+  bool haveCopasiSE{false};
 
   void setupTabs();
   void setupConnections();
@@ -46,6 +47,7 @@ private:
   TabEvents *tabEvents;
   TabSimulate *tabSimulate;
 
+  QString getConvertedFilename(const QString &cpsFilename);
   void validateSBMLDoc(const QString &filename = {});
   // if SBML model and geometry are both valid, enable all tabs
   void enableTabs();
