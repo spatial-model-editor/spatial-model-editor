@@ -22,11 +22,51 @@
 #include <QDesktopServices>
 #include <QErrorMessage>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QInputDialog>
 #include <QMessageBox>
 #include <QMimeData>
+#include <QProcess>
 #include <QShortcut>
 #include <QWhatsThis>
+
+static bool checkForCopasiSE() {
+  constexpr int msTimeout{1000};
+  QProcess copasi;
+  copasi.setProgram("CopasiSE");
+  copasi.setArguments({"--help"});
+  copasi.start();
+  return copasi.waitForStarted(msTimeout) && copasi.waitForFinished(msTimeout);
+}
+
+static QString getOutputXmlFilename(const QString &cpsFilename) {
+  QString filename{QFileInfo(cpsFilename).baseName()};
+  while (QFileInfo::exists(filename + ".xml")) {
+    // ensure we don't overwrite an existing xml file
+    filename.append("_");
+  }
+  return filename + ".xml";
+}
+
+QString MainWindow::getConvertedFilename(const QString &filename) {
+  if(!haveCopasiSE || QFileInfo(filename).suffix() != "cps"){
+    return filename;
+  }
+  constexpr int msTimeout{10000};
+  auto xmlFilename{getOutputXmlFilename(filename)};
+  SPDLOG_INFO("CopasiSE: {} -> {}", filename.toStdString(), xmlFilename.toStdString());
+  QProcess copasi;
+  copasi.setProgram("CopasiSE");
+  copasi.setArguments({"-e", xmlFilename, "--SBMLSchema", "L3V1", filename});
+  copasi.start();
+  if (copasi.waitForStarted(msTimeout) && copasi.waitForFinished(msTimeout) &&
+      copasi.exitCode() == 0) {
+    // if successful, return sbml filename
+    return xmlFilename;
+  }
+  // otherwise return original filename
+  return filename;
+}
 
 MainWindow::MainWindow(const QString &filename, QWidget *parent)
     : QMainWindow(parent), ui{std::make_unique<Ui::MainWindow>()} {
@@ -39,12 +79,18 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
   setupTabs();
   setupConnections();
 
+  haveCopasiSE = checkForCopasiSE();
+  if(haveCopasiSE){
+    SPDLOG_INFO("Found CopasiSE: enabling .cps file import");
+  }
+
   // set initial splitter position: 1/4 for image, 3/4 for tabs
   ui->splitter->setSizes({1000, 3000});
 
   if (!filename.isEmpty()) {
-    model.importFile(filename.toStdString());
-    validateSBMLDoc(filename);
+    auto f{getConvertedFilename(filename)};
+    model.importFile(f.toStdString());
+    validateSBMLDoc(f);
   } else {
     validateSBMLDoc();
   }
@@ -256,12 +302,16 @@ void MainWindow::action_New_triggered() {
 }
 
 void MainWindow::action_Open_SBML_file_triggered() {
+  QString filetypes{"SME or SBML model (*.sme *.xml)"};
+  if (haveCopasiSE) {
+    filetypes = "SME, SBML or COPASI model (*.sme *.xml *.cps)";
+  }
   QString filename = QFileDialog::getOpenFileName(
-      this, "Open Model", "",
-      "SME or SBML model (*.sme *.xml);; All files (*.*)");
+      this, "Open Model", "", filetypes + ";; All files (*.*)");
   if (filename.isEmpty()) {
     return;
   }
+  filename = getConvertedFilename(filename);
   model.importFile(filename.toStdString());
   validateSBMLDoc(filename);
 }
@@ -456,7 +506,7 @@ void MainWindow::dropEvent(QDropEvent *event) {
   if (!mimeData->hasUrls() || mimeData->urls().isEmpty()) {
     return;
   }
-  QString filename{mimeData->urls().front().toLocalFile()};
+  auto filename{getConvertedFilename(mimeData->urls().front().toLocalFile())};
   model.importFile(filename.toStdString());
   validateSBMLDoc(filename);
 }
