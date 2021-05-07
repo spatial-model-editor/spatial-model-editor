@@ -34,6 +34,7 @@ Spatial Model Editor Documentation
 
 .. toctree::
    :maxdepth: 2
-   :caption: Tests
+   :caption: Developer documentation
 
-   tests/diffusion
+   developer/core
+   developer/tests

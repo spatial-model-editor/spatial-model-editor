@@ -5,16 +5,14 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-#include <QString>
-#include <memory>
-
 #include "geometry.hpp"
 #include "id.hpp"
 #include "logger.hpp"
 #include "sbml_math.hpp"
 #include "symbolic.hpp"
-#include "utils.hpp"
-#include "xml_annotation.hpp"
+#include <QString>
+#include <memory>
+#include <set>
 
 namespace sme::model {
 
@@ -52,7 +50,7 @@ static QVector<QStringList> importParameterIds(libsbml::Model *model) {
     auto &ids{paramIds.back()};
     for (unsigned int j = 0; j < kin->getNumLocalParameters(); ++j) {
       auto *param{kin->getLocalParameter(j)};
-      const auto& sId{param->getId()};
+      const auto &sId{param->getId()};
       if (param->getName().empty()) {
         SPDLOG_INFO("ReactionParameter '{}' has no Name, using sId", sId);
         param->setName(sId);
@@ -67,7 +65,7 @@ static std::string
 inferReactionCompartment(const libsbml::Reaction *reac,
                          const std::vector<geometry::Membrane> &membranes) {
   const auto *model{reac->getModel()};
-  utils::SmallStackSet<std::string, 3> possibleCompartments;
+  std::set<std::string, std::less<>> possibleCompartments;
   if (reac->isSetCompartment()) {
     possibleCompartments.insert(reac->getCompartment());
   }
@@ -88,17 +86,16 @@ inferReactionCompartment(const libsbml::Reaction *reac,
   }
   if (possibleCompartments.size() == 1) {
     SPDLOG_INFO("Reaction involves species from a single compartment:");
-    SPDLOG_INFO("  -> Compartment '{}'", possibleCompartments[0]);
-    return possibleCompartments[0];
+    SPDLOG_INFO("  -> Compartment '{}'", *possibleCompartments.begin());
+    return *possibleCompartments.begin();
   } else if (possibleCompartments.size() == 2) {
     SPDLOG_INFO("Reaction involves species from two compartments:");
-    SPDLOG_INFO("  - '{}'", possibleCompartments[0]);
-    SPDLOG_INFO("  - '{}'", possibleCompartments[1]);
+    SPDLOG_INFO("  - '{}'", *possibleCompartments.begin());
+    SPDLOG_INFO("  - '{}'", *possibleCompartments.rbegin());
     for (const auto &membrane : membranes) {
-      const auto &cA = membrane.getCompartmentA()->getId();
-      const auto &cB = membrane.getCompartmentB()->getId();
-      if ((cA == possibleCompartments[0] && cB == possibleCompartments[1]) ||
-          (cA == possibleCompartments[1] && cB == possibleCompartments[0])) {
+      const auto &cA{membrane.getCompartmentA()->getId()};
+      const auto &cB{membrane.getCompartmentB()->getId()};
+      if (possibleCompartments.count(cA) + possibleCompartments.count(cB) == 2) {
         SPDLOG_INFO("  -> Membrane '{}'", membrane.getId());
         return membrane.getId();
       }
@@ -121,7 +118,7 @@ makeReactionSpatial(libsbml::Reaction *reac,
                              })};
       iter != membranes.cend()) {
     // membrane reaction
-//    const auto &membrane{*iter};
+    //    const auto &membrane{*iter};
     SPDLOG_INFO("Reaction involves species from two compartments:");
     SPDLOG_INFO("Setting Reaction compartment to membrane: '{}'",
                 compartmentId);
@@ -315,7 +312,7 @@ QString ModelReactions::getName(const QString &id) const {
   return names[i];
 }
 
-QString ModelReactions::getScheme(const QString& id) const{
+QString ModelReactions::getScheme(const QString &id) const {
   const auto *reac{sbmlModel->getReaction(id.toStdString())};
   if (reac == nullptr) {
     SPDLOG_WARN("Reaction '{}' not found", id.toStdString());
@@ -323,12 +320,12 @@ QString ModelReactions::getScheme(const QString& id) const{
   }
   QString lhs;
   const unsigned numReactants{reac->getNumReactants()};
-  for(unsigned i=0; i<numReactants; ++i){
+  for (unsigned i = 0; i < numReactants; ++i) {
     const auto *r{reac->getReactant(i)};
-    const auto& sName{sbmlModel->getSpecies(r->getSpecies())->getName()};
-    if(double stoich{r->getStoichiometry()}; stoich != 0){
-      if(stoich == 1.0){
-      } else if (std::floor(stoich) == stoich){
+    const auto &sName{sbmlModel->getSpecies(r->getSpecies())->getName()};
+    if (double stoich{r->getStoichiometry()}; stoich != 0) {
+      if (stoich == 1.0) {
+      } else if (std::floor(stoich) == stoich) {
         lhs.append(QString::number(static_cast<int>(stoich)));
         lhs.append(" ");
       } else {
@@ -341,13 +338,13 @@ QString ModelReactions::getScheme(const QString& id) const{
   }
   lhs.chop(3);
   QString rhs;
-  const unsigned numProducts {reac->getNumProducts()};
-  for(unsigned i=0; i<numProducts; ++i){
+  const unsigned numProducts{reac->getNumProducts()};
+  for (unsigned i = 0; i < numProducts; ++i) {
     const auto *r{reac->getProduct(i)};
-    const auto& sName{sbmlModel->getSpecies(r->getSpecies())->getName()};
-    if(double stoich{r->getStoichiometry()}; stoich != 0){
-      if(stoich == 1.0){
-      } else if (std::floor(stoich) == stoich){
+    const auto &sName{sbmlModel->getSpecies(r->getSpecies())->getName()};
+    if (double stoich{r->getStoichiometry()}; stoich != 0) {
+      if (stoich == 1.0) {
+      } else if (std::floor(stoich) == stoich) {
         rhs.append(QString::number(static_cast<int>(stoich)));
         rhs.append(" ");
       } else {
@@ -359,7 +356,7 @@ QString ModelReactions::getScheme(const QString& id) const{
     }
   }
   rhs.chop(3);
-  if(lhs.isEmpty() && rhs.isEmpty()){
+  if (lhs.isEmpty() && rhs.isEmpty()) {
     return {};
   }
   return QString("%1 -> %2").arg(lhs, rhs);
@@ -608,4 +605,4 @@ void ModelReactions::setHasUnsavedChanges(bool unsavedChanges) {
   hasUnsavedChanges = unsavedChanges;
 }
 
-} // namespace sme
+} // namespace sme::model

@@ -1,38 +1,57 @@
-// Wrapper around a meshing library
-//   - takes boundaries, interior point & max area for each compartment
-//   - generates mesh with triangles labelled according to compartment
-//   - provides resulting vertices & triangles
-
 #pragma once
 
+#include "boundary.hpp"
 #include <QPointF>
-#include <algorithm>
 #include <array>
 #include <cstddef>
-#include <string>
 #include <vector>
-#include "boundary.hpp"
 
-namespace sme {
-
-namespace mesh {
+namespace sme::mesh {
 
 using TriangulateTriangleIndex = std::array<std::size_t, 3>;
 
+/**
+ * @brief Triangulate a set of boundary lines
+ *
+ * Given a set of boundary lines, a set of interior points for each compartment,
+ * and a maximum allowed triangle area for each compartment, constructs a
+ * Constrained Delauney Triangulation of the geometry, with the triangles
+ * labelled according to the compartment they belong to.
+ */
 class Triangulate {
 private:
   std::vector<QPointF> points;
   std::vector<std::vector<TriangulateTriangleIndex>> triangleIndices;
 
 public:
-  explicit Triangulate(const std::vector<Boundary> &inputBoundaries,
+  /**
+   * @brief Triangulate a set of boundary lines
+   *
+   * Given a set of boundary lines, a set of interior points for each
+   * compartment,
+   * @param[in] boundaries the boundary lines separating the compartments
+   * @param[in] interiorPoints the interior point(s) for each compartment
+   * @param[in] maxTriangleAreas the maximum allowed triangle area for each
+   *    compartment
+   */
+  explicit Triangulate(const std::vector<Boundary> &boundaries,
                        const std::vector<std::vector<QPointF>> &interiorPoints,
                        const std::vector<std::size_t> &maxTriangleAreas);
+  /**
+   * @brief The vertices or points in the mesh
+   * @returns The vertices in the mesh
+   */
   [[nodiscard]] const std::vector<QPointF> &getPoints() const;
+  /**
+   * @brief The triangle vertex indices
+   *
+   * For each compartment, the vertices of the triangles that define this
+   * compartment in the mesh.
+   *
+   * @returns The triangle vertex indices
+   */
   [[nodiscard]] const std::vector<std::vector<TriangulateTriangleIndex>> &
   getTriangleIndices() const;
 };
 
-} // namespace mesh
-
-} // namespace sme
+} // namespace sme::mesh

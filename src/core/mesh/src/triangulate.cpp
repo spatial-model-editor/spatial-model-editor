@@ -8,6 +8,7 @@
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Triangulation_vertex_base_with_id_2.h>
 #include <QPointF>
+#include <algorithm>
 #include <initializer_list>
 
 using CGALKernel = CGAL::Exact_predicates_inexact_constructions_kernel;
@@ -44,10 +45,12 @@ static void addTriangleAndNeighbours(
     auto face{faces[faceIndex]};
     ++faceIndex;
     for (int edgeIndex = 0; edgeIndex < 3; edgeIndex++) {
+      // check each edge of this face (aka triangle)
       if (!face->is_constrained(edgeIndex)) {
-        // edge is not a boundary
+        // edge is not a boundary, so look at connected face
         if (const auto connectedFace{face->neighbor(edgeIndex)};
             !cdt.is_infinite(connectedFace) && !connectedFace->is_marked()) {
+          // connected face is valid and has not already been added, so add it
           addTriangle(connectedFace, faces, triangleIndices);
         }
       }
@@ -145,10 +148,10 @@ static std::vector<QPointF> getPointsFromCdt(CDT &cdt) {
 }
 
 Triangulate::Triangulate(
-    const std::vector<Boundary> &inputBoundaries,
+    const std::vector<Boundary> &boundaries,
     const std::vector<std::vector<QPointF>> &interiorPoints,
     const std::vector<std::size_t> &maxTriangleAreas) {
-  TriangulateBoundaries tb(inputBoundaries, interiorPoints, maxTriangleAreas);
+  TriangulateBoundaries tb(boundaries, interiorPoints, maxTriangleAreas);
   auto cdt{makeConstrainedDelaunayTriangulation(tb)};
   meshCdt(cdt, tb.compartments);
   points = getPointsFromCdt(cdt);
