@@ -110,8 +110,7 @@ void Simulation::applyNextEvent() {
     simulator = std::make_unique<DuneSim>(*simModel.get(), compartmentIds);
   } else {
     simulator = std::make_unique<PixelSim>(*simModel.get(), compartmentIds,
-                                           compartmentSpeciesIds,
-                                           settings->options.pixel);
+                                           compartmentSpeciesIds);
   }
   // remove applied simEvent
   simEvents.pop();
@@ -192,8 +191,7 @@ Simulation::Simulation(model::Model &sbmlDoc)
     simulator = std::make_unique<DuneSim>(*modelToSimulate, compartmentIds);
   } else {
     simulator = std::make_unique<PixelSim>(*modelToSimulate, compartmentIds,
-                                           compartmentSpeciesIds,
-                                           settings->options.pixel);
+                                           compartmentSpeciesIds);
   }
   if (simulator->errorMessage().empty()) {
     nCompletedTimesteps.store(data->timePoints.size());

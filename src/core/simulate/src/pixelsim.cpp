@@ -222,10 +222,9 @@ double PixelSim::doRKAdaptive(double dtMax) {
 
 PixelSim::PixelSim(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
-    const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
-    const PixelOptions &options)
-    : doc{sbmlDoc}, integrator{options.integrator}, errMax{options.maxErr},
-      maxTimestep{options.maxTimestep}, numMaxThreads{options.maxThreads} {
+    const std::vector<std::vector<std::string>> &compartmentSpeciesIds)
+    : doc{sbmlDoc}, integrator{sbmlDoc.getSimulationSettings().options.pixel.integrator}, errMax{sbmlDoc.getSimulationSettings().options.pixel.maxErr},
+      maxTimestep{sbmlDoc.getSimulationSettings().options.pixel.maxTimestep}, numMaxThreads{sbmlDoc.getSimulationSettings().options.pixel.maxThreads} {
   try {
     // check if reactions explicitly depend on time or space
     auto xId{doc.getParameters().getSpatialCoordinates().x.id};
@@ -246,7 +245,7 @@ PixelSim::PixelSim(
       const auto *compartment{doc.getCompartments().getCompartment(
           compartmentIds[compIndex].c_str())};
       simCompartments.push_back(std::make_unique<SimCompartment>(
-          doc, compartment, speciesIds, options.doCSE, options.optLevel,
+          doc, compartment, speciesIds, sbmlDoc.getSimulationSettings().options.pixel.doCSE, sbmlDoc.getSimulationSettings().options.pixel.optLevel,
           timeDependent, spaceDependent));
       maxStableTimestep = std::min(
           maxStableTimestep, simCompartments.back()->getMaxStableTimestep());
@@ -278,12 +277,12 @@ PixelSim::PixelSim(
           compB = iterB->get();
         }
         simMembranes.push_back(std::make_unique<SimMembrane>(
-            doc, &membrane, compA, compB, options.doCSE, options.optLevel,
+            doc, &membrane, compA, compB, sbmlDoc.getSimulationSettings().options.pixel.doCSE, sbmlDoc.getSimulationSettings().options.pixel.optLevel,
             timeDependent, spaceDependent));
       }
     }
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
-    if (options.enableMultiThreading) {
+    if (sbmlDoc.getSimulationSettings().options.pixel.enableMultiThreading) {
       useTBB = true;
     }
     if (numMaxThreads == 0) {
@@ -292,7 +291,7 @@ PixelSim::PixelSim(
           tbb::task_scheduler_init::default_num_threads());
     }
 #elif defined(SPATIAL_MODEL_EDITOR_WITH_OPENMP)
-    if (!options.enableMultiThreading) {
+    if (!sbmlDoc.getSimulationSettings().options.pixel.enableMultiThreading) {
       numMaxThreads = 1;
     }
     if (auto ompMaxThreads{static_cast<std::size_t>(omp_get_num_procs())};
@@ -302,7 +301,7 @@ PixelSim::PixelSim(
     }
     omp_set_num_threads(static_cast<int>(numMaxThreads));
 #else
-    if (options.enableMultiThreading) {
+    if (sbmlDoc.getSimulationSettings().options.pixel.enableMultiThreading) {
       SPDLOG_WARN(
           "Multithreading requested but not compiled with TBB or OpenMP "
           "support: ignoring");

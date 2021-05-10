@@ -55,8 +55,7 @@ public:
   explicit PixelSim(
       const model::Model &sbmlDoc,
       const std::vector<std::string> &compartmentIds,
-      const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
-      const PixelOptions &pixelOptions = {});
+      const std::vector<std::vector<std::string>> &compartmentSpeciesIds);
   ~PixelSim() override;
   std::size_t run(double time, double timeout_ms) override;
   const std::vector<double> &
