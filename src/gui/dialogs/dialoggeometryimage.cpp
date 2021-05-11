@@ -103,7 +103,7 @@ void DialogGeometryImage::updatePixelSize() {
 }
 
 void DialogGeometryImage::updateColours() {
-  int n{colorTable.size()};
+  auto n{static_cast<int>(colorTable.size())};
   QImage colourTableImage(1, 1, QImage::Format_Indexed8);
   colourTableImage.fill(qRgb(0, 0, 0));
   if (n > 0) {
@@ -214,7 +214,7 @@ static int distance(QRgb a, QRgb b) {
 static void reduceImageToTheseColours(QImage &image,
                                       const QVector<QRgb> &colorTable) {
   // map each index in image colorTable to index of nearest color in colorTable
-  int nOld{image.colorTable().size()};
+  auto nOld{static_cast<int>(image.colorTable().size())};
   QVector<int> newIndex(nOld, 0);
   for (int iOld = 0; iOld < nOld; ++iOld) {
     int dist{std::numeric_limits<int>::max()};

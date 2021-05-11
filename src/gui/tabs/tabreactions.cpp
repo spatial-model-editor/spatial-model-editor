@@ -4,9 +4,9 @@
 #include "model.hpp"
 #include "qlabelmousetracker.hpp"
 #include "ui_tabreactions.h"
+#include <QDoubleSpinBox>
 #include <QInputDialog>
 #include <QMessageBox>
-#include <QDoubleSpinBox>
 
 TabReactions::TabReactions(sme::model::Model &m,
                            QLabelMouseTracker *mouseTracker, QWidget *parent)
@@ -241,7 +241,7 @@ void TabReactions::btnAddReaction_clicked() {
     index = ui->listReactions->indexOfTopLevelItem(parent);
   }
   QString locationId;
-  int nComps = model.getCompartments().getIds().size();
+  auto nComps = static_cast<int>(model.getCompartments().getIds().size());
   if (index < nComps) {
     locationId = model.getCompartments().getIds()[index];
   } else {
@@ -280,7 +280,7 @@ void TabReactions::txtReactionName_editingFinished() {
 
 void TabReactions::cmbReactionLocation_activated(int index) {
   QString locationId;
-  int nComps = model.getCompartments().getIds().size();
+  auto nComps{static_cast<int>(model.getCompartments().getIds().size())};
   if (index < nComps) {
     locationId = model.getCompartments().getIds().at(index);
   } else {

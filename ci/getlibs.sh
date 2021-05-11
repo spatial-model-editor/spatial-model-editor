@@ -3,7 +3,7 @@
 # bash script to download static libs
 # usage: ./ci/getlibs.sh [linux, osx, win32, win64]
 
-SME_DEPS_VERSION="2021.04.30"
+SME_DEPS_VERSION="2021.05.11"
 OS=$1
 
 set -e -x

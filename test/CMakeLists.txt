@@ -6,20 +6,26 @@ target_link_libraries(
           cli_tests
           ${SME_EXTRA_EXE_LIBS})
 
-find_package(
-  Qt5
-  COMPONENTS Test
-  REQUIRED)
+if(SME_WITH_QT6)
+  find_package(Qt6 QUIET COMPONENTS Test)
+endif()
+if(NOT Qt6_FOUND)
+  find_package(
+    Qt5
+    COMPONENTS Test
+    REQUIRED)
+endif()
+
 set_property(TARGET tests PROPERTY CXX_STANDARD 17)
 
 add_library(testlib resources/test_resources.qrc)
 target_link_libraries(
   testlib
   PUBLIC Catch2::Catch2
-         Qt5::Widgets
-         Qt5::Gui
-         Qt5::Core
-         Qt5::Test)
+         Qt::Widgets
+         Qt::Gui
+         Qt::Core
+         Qt::Test)
 add_subdirectory(test_utils)
 
 if(CMAKE_CXX_COMPILER_ID

@@ -25,7 +25,7 @@ target_compile_options(sme
 # with clang)
 target_compile_options(sme PUBLIC $<$<CXX_COMPILER_ID:GNU>:-Wno-register>)
 
-qt5_import_plugins(
+qt_import_plugins(
   sme
   EXCLUDE_BY_TYPE
   platforms

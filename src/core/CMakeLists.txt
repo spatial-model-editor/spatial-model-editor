@@ -135,8 +135,8 @@ target_link_libraries(
   PUBLIC opencv_core
          opencv_imgproc
          spdlog::spdlog
-         Qt5::Gui
-         Qt5::Core)
+         Qt::Gui
+         Qt::Core)
 
 target_compile_definitions(core PUBLIC ${SME_EXTRA_CORE_DEFS})
 

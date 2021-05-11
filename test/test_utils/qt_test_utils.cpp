@@ -28,12 +28,16 @@ void sendKeyEvents(QObject *object, const QStringList &keySeqStrings,
     if (s.size() == 1) {
       str = s;
     }
-    auto keyseq = QKeySequence(s);
-    // get key code & modifier if any
-    int key = keyseq[0] & Qt::Key::Key_unknown;
-    auto modifier = static_cast<Qt::KeyboardModifier>(
-        static_cast<std::size_t>(keyseq[0]) &
-        Qt::KeyboardModifier::KeyboardModifierMask);
+    auto keyCombination{QKeySequence(s)[0]};
+#if QT_VERSION < 0x060000
+    int key{keyCombination & Qt::Key::Key_unknown};
+    auto modifier{static_cast<Qt::KeyboardModifier>(
+        static_cast<std::size_t>(keyCombination) &
+        Qt::KeyboardModifier::KeyboardModifierMask)};
+#else
+    auto key{keyCombination.key()};
+    auto modifier{keyCombination.keyboardModifiers()};
+#endif
     qDebug() << "  - " << static_cast<Qt::Key>(key) << modifier;
     // send key press & key release events to the object
     auto press = new QKeyEvent(QEvent::KeyPress, key, modifier, str);

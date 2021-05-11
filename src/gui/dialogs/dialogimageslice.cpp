@@ -59,8 +59,9 @@ QImage DialogImageSlice::getSlicedImage() const { return slice; }
 
 void DialogImageSlice::updateSlicedImage() {
   const auto &pixels = ui->lblSlice->getSlicePixels();
-  int np{static_cast<int>(pixels.size())};
-  slice = QImage(time.size(), np, QImage::Format_ARGB32_Premultiplied);
+  auto np{static_cast<int>(pixels.size())};
+  auto nt{static_cast<int>(time.size())};
+  slice = QImage(nt, np, QImage::Format_ARGB32_Premultiplied);
   int t = 0;
   for (const auto &img : imgs) {
     int y = np - 1;

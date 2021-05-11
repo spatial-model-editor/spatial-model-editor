@@ -26,7 +26,7 @@ public:
   void addAvMinMaxPoint(int lineIndex, double time,
                         const sme::simulate::AvgMinMax &concentration);
   void addObservableLine(const PlotWrapperObservable &plotWrapperObservable,
-                         QColor col);
+                         const QColor& col);
   void clearObservableLines();
   void setVerticalLine(double x);
   void update(const std::vector<bool> &speciesVisible, bool showMinMax);

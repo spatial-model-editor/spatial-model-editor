@@ -21,20 +21,38 @@ set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
 
 find_package(dune-copasi REQUIRED)
 
-# find required Qt5 modules
-find_package(
-  Qt5
-  COMPONENTS Core
-             Gui
-             Widgets
-  REQUIRED)
-get_target_property(
-  Qt5Core_location
-  Qt5::Core
-  LOCATION)
-message(STATUS "Found Qt5Core: ${Qt5Core_location}")
+# find required Qt modules
+set(SME_WITH_QT6
+    yes
+    CACHE BOOL "Use Qt6")
+if(SME_WITH_QT6)
+  find_package(
+    Qt6 QUIET
+    COMPONENTS Core
+               Gui
+               Widgets)
+endif()
+if(NOT Qt6_FOUND)
+  find_package(
+    Qt5
+    COMPONENTS Core
+               Gui
+               Widgets
+    REQUIRED)
+  get_target_property(
+    QtCore_location
+    Qt5::Core
+    LOCATION)
+  message(STATUS "Found QtCore: ${QtCore_location}")
+else()
+  get_target_property(
+    QtCore_location
+    Qt6::Core
+    LOCATION)
+  message(STATUS "Found QtCore: ${QtCore_location}")
+endif()
 
-# enable Qt5 utils: moc, uic, rcc
+# enable Qt utils: moc, uic, rcc
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)

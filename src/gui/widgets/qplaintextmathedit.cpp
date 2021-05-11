@@ -412,7 +412,7 @@ static std::pair<int, bool> getClosingBracket(const QString &expr, int pos,
                                               int sign) {
   int len = 0;
   int count = sign;
-  int iEnd = (sign < 0) ? -1 : expr.size();
+  int iEnd = (sign < 0) ? -1 : static_cast<int>(expr.size());
   for (int i = pos + sign; i != iEnd; i += sign) {
     ++len;
     if (expr[i] == ')') {

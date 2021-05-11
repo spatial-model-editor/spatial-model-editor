@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Ubuntu 16.04 GUI/CLI build script
+# Ubuntu GUI/CLI build script
 
 set -e -x
 
@@ -16,7 +16,13 @@ export SME_EXTRA_EXE_LIBS="-static-libgcc;-static-libstdc++"
 # do build
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_WITH_TBB=ON
+cmake .. \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
+  -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+  -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
+  -DOpenGL_GL_PREFERENCE=LEGACY \
+  -DSME_WITH_TBB=ON
 make -j2 VERBOSE=1
 ccache --show-stats
 

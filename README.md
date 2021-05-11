@@ -23,7 +23,6 @@ Or take a look at the [documentation](https://spatial-model-editor.readthedocs.i
 
 *Note: on linux some additional system libraries are required that may not be installed by default. To install them:*
 
-*  Ubuntu/Debian: `sudo apt-get install libxcb-xinerama0`
 *  Fedora/RHEL/CentOS: `sudo yum install xcb-util-image xcb-util-keysyms xcb-util-renderutil xcb-util-wm`
 
 ![screenshot](docs/img/mesh.png)
@@ -42,7 +41,7 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [libSBML](http://sbml.org/Software/libSBML) - license: [LGPL](http://sbml.org/Software/libSBML/LibSBML_License)
 
-- [Qt5](https://www.qt.io/) - license: [LGPL](https://doc.qt.io/qt-5/lgpl.html)
+- [Qt](https://www.qt.io/) - license: [LGPL](https://doc.qt.io/qt-6/lgpl.html)
 
 - [QCustomPlot](https://www.qcustomplot.com) - license: [GPL](https://www.gnu.org/licenses/gpl-3.0.html)
 

@@ -58,7 +58,7 @@ void PlotWrapper::addAvMinMaxPoint(int lineIndex, double time,
 }
 
 void PlotWrapper::addObservableLine(
-    const PlotWrapperObservable &plotWrapperObservable, QColor col) {
+    const PlotWrapperObservable &plotWrapperObservable, const QColor& col) {
   SPDLOG_DEBUG("Adding observable '{}' = '{}'",
                plotWrapperObservable.name.toStdString(),
                plotWrapperObservable.expression.toStdString());
@@ -156,11 +156,14 @@ void PlotWrapper::clear() {
 }
 
 double PlotWrapper::xValue(const QMouseEvent *event) const {
-  double x{static_cast<double>(event->x())};
-  double y{static_cast<double>(event->y())};
+#if QT_VERSION < 0x060000
+  const auto& pos{event->localPos()};
+#else
+  const auto& pos{event->position()};
+#endif
   double key;
   double val;
-  plot->graph(0)->pixelsToCoords(x, y, key, val);
+  plot->graph(0)->pixelsToCoords(pos, key, val);
   return key;
 }
 
