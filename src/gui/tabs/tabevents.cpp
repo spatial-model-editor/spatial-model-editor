@@ -48,7 +48,7 @@ void TabEvents::loadModelData(const QString &selection) {
                                     model.getSpecies().getName(sId));
     }
   }
-  nSpecies = variableIds.size();
+  nSpecies = static_cast<int>(variableIds.size());
   for (const auto &id : model.getParameters().getIds()) {
     variableIds.push_back(id);
     ui->cmbEventVariable->addItem(model.getParameters().getName(id));
@@ -96,7 +96,9 @@ void TabEvents::listEvents_currentRowChanged(int row) {
   SPDLOG_DEBUG("Event {} selected", currentEventId.toStdString());
   ui->txtEventName->setText(events.getName(currentEventId));
   ui->txtEventTime->setText(QString::number(events.getTime(currentEventId)));
-  if (auto i{variableIds.indexOf(events.getVariable(currentEventId))}; i >= 0) {
+  if (auto i{static_cast<int>(
+          variableIds.indexOf(events.getVariable(currentEventId)))};
+      i >= 0) {
     ui->cmbEventVariable->setEnabled(true);
     ui->cmbEventVariable->setCurrentIndex(i);
     cmbEventVariable_activated(i);

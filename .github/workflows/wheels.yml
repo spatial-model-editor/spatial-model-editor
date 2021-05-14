@@ -11,14 +11,14 @@ env:
 jobs:
   linux-wheel:
     name: Linux Wheels
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     defaults:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2021.04.30
-      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: spatialmodeleditor/manylinux2010-pypy_x86_64:2021.04.30
-      CIBW_SKIP: '*-manylinux_i686 *p27-*'
+      CIBW_MANYLINUX_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2021.05.12
+      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: spatialmodeleditor/manylinux2010-pypy_x86_64:2021.05.12
+      CIBW_SKIP: '*-manylinux_i686 *p27-* *p35-*'
       CIBW_ENVIRONMENT: 'SME_EXTERNAL_SMECORE=on'
       CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'
     steps:
@@ -43,7 +43,7 @@ jobs:
       run:
         shell: bash
     env:
-      CIBW_SKIP: '*p27-*'
+      CIBW_SKIP: '*p27-* *p35-*'
     steps:
       - uses: actions/checkout@v2
         with:
@@ -66,7 +66,7 @@ jobs:
       run:
         shell: msys2 {0}
     env:
-      CIBW_SKIP: '*p27-*'
+      CIBW_SKIP: '*p27-* *p35-*'
       CIBW_BUILD: '*-win_amd64'
       SME_EXTRA_CORE_DEFS: '_hypot=hypot;MS_WIN64'
     steps:
@@ -93,7 +93,7 @@ jobs:
       run:
         shell: msys2 {0}
     env:
-      CIBW_SKIP: '*p27-*'
+      CIBW_SKIP: '*p27-* *p35-*'
       CIBW_BUILD: '*-win32'
       SME_EXTRA_CORE_DEFS: '_hypot=hypot'
     steps:
@@ -115,7 +115,7 @@ jobs:
 
   sdist:
     name: Build source distribution
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
         with:

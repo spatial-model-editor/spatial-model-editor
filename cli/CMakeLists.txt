@@ -20,7 +20,7 @@ add_subdirectory(src)
 
 add_executable(spatial-cli spatial-cli.cpp)
 target_link_libraries(spatial-cli PRIVATE cli)
-qt5_import_plugins(
+qt_import_plugins(
   spatial-cli
   EXCLUDE_BY_TYPE
   platforms

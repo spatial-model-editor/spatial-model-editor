@@ -51,7 +51,7 @@ static void
 saveDebuggingIndicesImage(const std::vector<std::size_t> &arrayPoints,
                           const QSize &sz, std::size_t maxIndex,
                           const QString &filename) {
-  double norm{static_cast<double>(maxIndex)};
+  auto norm{static_cast<float>(maxIndex)};
   QImage img(sz, QImage::Format_ARGB32_Premultiplied);
   img.fill(qRgba(0, 0, 0, 0));
   QColor c;
@@ -59,8 +59,8 @@ saveDebuggingIndicesImage(const std::vector<std::size_t> &arrayPoints,
     for (int y = 0; y < sz.height(); ++y) {
       auto i{arrayPoints[static_cast<std::size_t>(x + sz.width() * y)]};
       if (i <= maxIndex) {
-        double v{static_cast<double>(i) / norm};
-        c.setHslF(1.0 - v, 1.0, 0.5 * v);
+        auto v{static_cast<float>(i) / norm};
+        c.setHslF(1.0f - v, 1.0, 0.5f * v);
         img.setPixel(x, y, c.rgb());
       }
     }

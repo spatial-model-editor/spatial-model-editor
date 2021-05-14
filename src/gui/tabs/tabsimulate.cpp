@@ -229,11 +229,11 @@ void TabSimulate::btnSimulate_clicked() {
   cachedSimInterval = ui->txtSimInterval->text();
   // display modal progress dialog box
   progressDialog->setWindowModality(Qt::WindowModal);
-  progressDialog->setValue(time.size() - 1);
+  progressDialog->setValue(static_cast<int>(time.size()) - 1);
   progressDialog->show();
   ui->btnSimulate->setEnabled(false);
   ui->btnResetSimulation->setEnabled(false);
-  int progressMax{time.size() - 1};
+  auto progressMax{static_cast<int>(time.size() - 1)};
   for (const auto &simulationTime : simulationTimes.value()) {
     progressMax += static_cast<int>(simulationTime.first);
   }
@@ -347,8 +347,9 @@ void TabSimulate::finalizePlotAndImages() {
   // enable slider to choose time to display
   ui->hslideTime->setEnabled(true);
   ui->hslideTime->setMinimum(0);
-  ui->hslideTime->setMaximum(time.size() - 1);
-  ui->hslideTime->setValue(time.size() - 1);
+  int sliderValue{static_cast<int>(time.size()) - 1};
+  ui->hslideTime->setMaximum(sliderValue);
+  ui->hslideTime->setValue(sliderValue);
 }
 
 void TabSimulate::btnDisplayOptions_clicked() {

@@ -110,7 +110,7 @@ static int getOrAddUnitIndex(libsbml::Model *model, const std::string &id,
   // otherwise add imported unit to model & return its index
   units.push_back(std::move(u));
   SPDLOG_INFO("  -> creating new unit '{}'", units.back().name.toStdString());
-  return units.size() - 1;
+  return static_cast<int>(units.size() - 1);
 }
 
 UnitVector::UnitVector(const QVector<Unit> &unitsVec, int defaultIndex)

@@ -137,7 +137,7 @@ void Model::importFile(const std::string &filename) {
 
 void Model::exportSMEFile(const std::string &filename) {
   currentFilename = filename.c_str();
-  if (int len{currentFilename.lastIndexOf(".")}; len > 0) {
+  if (auto len{currentFilename.lastIndexOf(".")}; len > 0) {
     currentFilename.truncate(len);
   }
   updateSBMLDoc();
