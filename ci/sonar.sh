@@ -24,7 +24,7 @@ export PATH=$HOME/.sonar/build-wrapper-linux-x86:$PATH
 # do build
 mkdir build
 cd build
-CC=gcc CXX=g++ cmake .. \
+CC=clang CXX=clang++ cmake .. \
   -DCMAKE_BUILD_TYPE=Debug \
   -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
   -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -46,12 +46,12 @@ mkdir gcov
 lcov -q -z -d .
 ./test/tests -as > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
-gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
-gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
-gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
-gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
-gcov -p cli/CMakeFiles/cli.dir/src/*.gcno > /dev/null
-gcov -p test/CMakeFiles/tests.dir/__/cli/src/*.gcno > /dev/null
+llvm-cov gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
+llvm-cov gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
+llvm-cov gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
+llvm-cov gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
+llvm-cov gcov -p cli/CMakeFiles/cli.dir/src/*.gcno > /dev/null
+llvm-cov gcov -p test/CMakeFiles/tests.dir/__/cli/src/*.gcno > /dev/null
 mv *#src#core*.gcov *#src#gui*.gcov *#cli*.gcov gcov/
 rm -f *.gcov
 # also run python tests, but only copy gcov data for sme files: don't want to overwrite coverage info on core from c++ tests
@@ -60,8 +60,8 @@ cd sme
 python -m unittest discover -s ../../sme/test > sme.txt 2>&1
 tail -n 100 sme.txt
 cd ..
-gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null
-gcov -p sme/CMakeFiles/sme.dir/src/*.gcno > /dev/null
+llvm-cov gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null
+llvm-cov gcov -p sme/CMakeFiles/sme.dir/src/*.gcno > /dev/null
 mv *#sme*.gcov gcov/
 rm -f *.gcov
 

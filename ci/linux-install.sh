@@ -6,6 +6,9 @@ set -e -x
 
 sudo apt-get update -yy
 
+# temporary fix (?) for https://github.com/actions/virtual-environments/issues/3376
+sudo apt-get remove -yy libgcc-11-dev gcc-11
+
 # install build/test dependencies
 sudo apt-get install -yy ccache xvfb jwm lcov
 
