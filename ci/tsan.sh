@@ -18,7 +18,7 @@ echo "race:^tbb::interface9::internal::start_for*" >> tsan_suppr.txt
 # do build
 mkdir build
 cd build
-CC=gcc CXX=g++ cmake .. \
+CC=clang CXX=clang++ cmake .. \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
   -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
   -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
