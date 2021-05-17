@@ -15,7 +15,7 @@ A GUI editor to create and edit 2d spatial SBML models of bio-chemical reactions
 
 To get started, download and run the GUI for your operating system
 
-| [Linux](../../releases/latest/download/spatial-model-editor) | [MacOS](../../releases/latest/download/spatial-model-editor.dmg) | [Windows]((../../releases/latest/download/spatial-model-editor.exe)) |
+| [Linux](../../releases/latest/download/spatial-model-editor) | [MacOS](../../releases/latest/download/spatial-model-editor.dmg) | [Windows](../../releases/latest/download/spatial-model-editor.exe) |
 | :-----: | :-----: | :------- |
 | [![linux](docs/img/icon-linux.png)](../../releases/latest/download/spatial-model-editor) | [![macOS](docs/img/icon-osx.png)](../../releases/latest/download/spatial-model-editor.dmg) | [![linux](docs/img/icon-windows.png)](../../releases/latest/download/spatial-model-editor.exe) |
 
