@@ -41,7 +41,8 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
   REQUIRE(lblCompShape != nullptr);
   auto *lblCompSize = tab.findChild<QLabel *>("lblCompSize");
   REQUIRE(lblCompSize != nullptr);
-  auto *lblCompBoundary = tab.findChild<QLabelMouseTracker *>("lblCompBoundary");
+  auto *lblCompBoundary =
+      tab.findChild<QLabelMouseTracker *>("lblCompBoundary");
   REQUIRE(lblCompBoundary != nullptr);
   auto *spinBoundaryIndex = tab.findChild<QSpinBox *>("spinBoundaryIndex");
   REQUIRE(spinBoundaryIndex != nullptr);
@@ -121,14 +122,36 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
       REQUIRE(tabCompartmentGeometry->currentIndex() == 1);
       spinBoundaryIndex->setFocus();
+      REQUIRE(spinBoundaryIndex->value() == 0);
+      REQUIRE(spinMaxBoundaryPoints->value() == 12);
+      // change selected boundary
       sendKeyEvents(spinBoundaryIndex, {"Up"});
+      REQUIRE(spinBoundaryIndex->value() == 1);
+      REQUIRE(spinMaxBoundaryPoints->value() == 31);
+      // change max number of points using spin box
       sendKeyEvents(spinMaxBoundaryPoints, {"Up"});
+      REQUIRE(spinMaxBoundaryPoints->value() == 32);
       sendKeyEvents(spinMaxBoundaryPoints, {"Up"});
+      REQUIRE(spinMaxBoundaryPoints->value() == 33);
       sendKeyEvents(spinMaxBoundaryPoints, {"Up"});
+      REQUIRE(spinMaxBoundaryPoints->value() == 34);
       sendKeyEvents(spinBoundaryIndex, {"Up"});
+      REQUIRE(spinBoundaryIndex->value() == 2);
+      REQUIRE(spinMaxBoundaryPoints->value() == 13);
       sendKeyEvents(spinMaxBoundaryPoints, {"Down"});
+      REQUIRE(spinMaxBoundaryPoints->value() == 12);
       sendKeyEvents(spinBoundaryIndex, {"Up"});
-      // zoom in and out
+      REQUIRE(spinBoundaryIndex->value() == 0);
+      REQUIRE(spinMaxBoundaryPoints->value() == 12);
+      // change max number of points using mouse scroll wheel
+      lblCompBoundary->setFocus();
+      sendMouseWheel(lblCompBoundary, +1);
+      REQUIRE(spinMaxBoundaryPoints->value() == 13);
+      sendMouseWheel(lblCompBoundary, +1);
+      REQUIRE(spinMaxBoundaryPoints->value() == 14);
+      sendMouseWheel(lblCompBoundary, -1);
+      REQUIRE(spinMaxBoundaryPoints->value() == 13);
+      // zoom in and out using spin box
       auto b0{lblCompBoundary->size().width()};
       sendKeyEvents(spinBoundaryZoom, {"Up"});
       REQUIRE(spinBoundaryZoom->value() == 1);
@@ -143,13 +166,40 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       sendKeyEvents(spinBoundaryZoom, {"Down"});
       REQUIRE(spinBoundaryZoom->value() == 0);
       REQUIRE(lblCompBoundary->size().width() == b0);
+      // zoom in and out using mouse scroll wheel
+      lblCompBoundary->setFocus();
+      sendMouseWheel(lblCompBoundary, +1, Qt::KeyboardModifier::ShiftModifier);
+      REQUIRE(spinBoundaryZoom->value() == 1);
+      REQUIRE(lblCompBoundary->size().width() == b1);
+      sendMouseWheel(lblCompBoundary, +1, Qt::KeyboardModifier::ShiftModifier);
+      REQUIRE(spinBoundaryZoom->value() == 2);
+      REQUIRE(lblCompBoundary->size().width() > b1);
+      sendMouseWheel(lblCompBoundary, -1, Qt::KeyboardModifier::ShiftModifier);
+      REQUIRE(spinBoundaryZoom->value() == 1);
+      REQUIRE(lblCompBoundary->size().width() == b1);
+      sendMouseWheel(lblCompBoundary, -1, Qt::KeyboardModifier::ShiftModifier);
+      REQUIRE(spinBoundaryZoom->value() == 0);
+      REQUIRE(lblCompBoundary->size().width() == b0);
+
       // mesh tab
       tabCompartmentGeometry->setFocus();
       sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
       REQUIRE(tabCompartmentGeometry->currentIndex() == 2);
+      REQUIRE(spinMaxTriangleArea->value() == 30);
+      // change max area using spinbox
       sendKeyEvents(spinMaxTriangleArea,
                     {"End", "Backspace", "Backspace", "Backspace", "3"});
-      // zoom in and out
+      REQUIRE(spinMaxTriangleArea->value() == 3);
+      sendKeyEvents(spinMaxTriangleArea, {"Up"});
+      REQUIRE(spinMaxTriangleArea->value() == 4);
+      // change max area using mouse scroll wheel
+      lblCompMesh->setFocus();
+      sendMouseWheel(lblCompMesh, +1);
+      REQUIRE(spinMaxTriangleArea->value() == 5);
+      sendMouseWheel(lblCompMesh, -1);
+      REQUIRE(spinMaxTriangleArea->value() == 4);
+
+      // zoom in and out using spinbox
       auto w0{lblCompMesh->size().width()};
       sendKeyEvents(spinMeshZoom, {"Up"});
       REQUIRE(spinMeshZoom->value() == 1);
@@ -162,6 +212,20 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       REQUIRE(spinMeshZoom->value() == 1);
       REQUIRE(lblCompMesh->size().width() == w1);
       sendKeyEvents(spinMeshZoom, {"Down"});
+      REQUIRE(spinMeshZoom->value() == 0);
+      REQUIRE(lblCompMesh->size().width() == w0);
+      // zoom in and out using mouse scroll wheel
+      lblCompMesh->setFocus();
+      sendMouseWheel(lblCompMesh, +1, Qt::KeyboardModifier::ShiftModifier);
+      REQUIRE(spinMeshZoom->value() == 1);
+      REQUIRE(lblCompMesh->size().width() == w1);
+      sendMouseWheel(lblCompMesh, +1, Qt::KeyboardModifier::ShiftModifier);
+      REQUIRE(spinMeshZoom->value() == 2);
+      REQUIRE(lblCompMesh->size().width() > w1);
+      sendMouseWheel(lblCompMesh, -1, Qt::KeyboardModifier::ShiftModifier);
+      REQUIRE(spinMeshZoom->value() == 1);
+      REQUIRE(lblCompMesh->size().width() == w1);
+      sendMouseWheel(lblCompMesh, -1, Qt::KeyboardModifier::ShiftModifier);
       REQUIRE(spinMeshZoom->value() == 0);
       REQUIRE(lblCompMesh->size().width() == w0);
       // image tab
