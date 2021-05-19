@@ -5,6 +5,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QTest>
+#include <QWheelEvent>
 
 void wait(int milliseconds) {
   QApplication::processEvents();
@@ -84,6 +85,19 @@ void sendMouseMove(QWidget *widget, const QPoint &pos, Qt::MouseButton button) {
   // https://bugreports.qt.io/browse/QTBUG-5232
   wait(mouseDelay);
   auto ev = new QMouseEvent(QEvent::MouseMove, pos, button, button, {});
+  QApplication::postEvent(widget, ev);
+  QApplication::processEvents();
+}
+
+void sendMouseWheel(QWidget *widget, int direction,
+                    Qt::KeyboardModifier modifier) {
+  wait(mouseDelay);
+  // one wheel turn corresponds to angleDelta = 120
+  int angleDelta = direction > 0 ? 120 : -120;
+  QPoint pos(widget->width() / 2, widget->height() / 2);
+  auto ev{new QWheelEvent(pos, widget->mapToGlobal(pos), {}, {0, angleDelta},
+                          Qt::MouseButton::NoButton, modifier,
+                          Qt::NoScrollPhase, false)};
   QApplication::postEvent(widget, ev);
   QApplication::processEvents();
 }

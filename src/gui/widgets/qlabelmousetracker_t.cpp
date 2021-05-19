@@ -25,10 +25,14 @@ SCENARIO(
     std::vector<QRgb> clicks;
     QObject::connect(&mouseTracker, &QLabelMouseTracker::mouseClicked,
                      [&clicks](QRgb c) { clicks.push_back(c); });
+    REQUIRE(mouseTracker.getRelativePosition().x() == dbl_approx(0));
+    REQUIRE(mouseTracker.getRelativePosition().y() == dbl_approx(0));
     REQUIRE(clicks.size() == 0);
 
     // move mouse over image
     sendMouseMove(&mouseTracker, {2, 3});
+    REQUIRE(mouseTracker.getRelativePosition().x() == dbl_approx(0));
+    REQUIRE(mouseTracker.getRelativePosition().y() == dbl_approx(0));
     // click on image
     sendMouseClick(&mouseTracker, {2, 3});
     REQUIRE(clicks.size() == 1);
@@ -38,6 +42,8 @@ SCENARIO(
     // two more clicks on image
     sendMouseMove(&mouseTracker, {66, 81});
     sendMouseClick(&mouseTracker, {66, 81});
+    REQUIRE(mouseTracker.getRelativePosition().x() == dbl_approx(0));
+    REQUIRE(mouseTracker.getRelativePosition().y() == dbl_approx(0));
     sendMouseMove(&mouseTracker, {55, 11});
     sendMouseClick(&mouseTracker, {55, 11});
     REQUIRE(clicks.size() == 3);
@@ -117,6 +123,8 @@ SCENARIO(
     clicks.clear();
     sendMouseClick(&mouseTracker, {99, 99});
     sendMouseMove(&mouseTracker, {79, 19});
+    REQUIRE(mouseTracker.getRelativePosition().x() == dbl_approx(2.0/3.0));
+    REQUIRE(mouseTracker.getRelativePosition().y() == dbl_approx(0.0));
     sendMouseClick(&mouseTracker, {5, 84});
     sendMouseClick(&mouseTracker, {50, 50});
     REQUIRE(clicks.size() == 3);

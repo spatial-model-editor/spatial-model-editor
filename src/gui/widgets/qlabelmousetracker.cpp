@@ -17,6 +17,7 @@ void QLabelMouseTracker::setImage(const QImage &img) {
     this->resize(minImageWidth, minImageWidth);
   }
   resizeImage(this->size());
+  setCurrentPixel(mapFromGlobal(QCursor::pos()));
 }
 
 const QImage &QLabelMouseTracker::getImage() const { return image; }
@@ -34,9 +35,23 @@ const QRgb &QLabelMouseTracker::getColour() const { return colour; }
 
 int QLabelMouseTracker::getMaskIndex() const { return maskIndex; }
 
+QPointF QLabelMouseTracker::getRelativePosition() const {
+  auto xRelPos{static_cast<double>(currentPixel.x()) /
+                      static_cast<double>(image.width())};
+  auto yRelPos{static_cast<double>(currentPixel.y()) /
+                      static_cast<double>(image.height())};
+  auto xAspectRatioFactor{static_cast<double>(pixmapImageSize.width()) /
+                          static_cast<double>(pixmap.width())};
+  auto yAspectRatioFactor{static_cast<double>(pixmapImageSize.height()) /
+                          static_cast<double>(pixmap.height())};
+  return {xRelPos * xAspectRatioFactor, yRelPos * yAspectRatioFactor};
+}
+
 void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
-  if (ev->buttons() != Qt::NoButton) {
-    if (setCurrentPixel(ev)) {
+  if (ev->buttons() == Qt::NoButton) {
+    return;
+  }
+  if (setCurrentPixel(ev->pos())) {
       // update current colour and emit mouseClicked signal
       colour = image.pixelColor(currentPixel).rgb();
       SPDLOG_DEBUG("pixel ({},{}) -> colour {:x}", currentPixel.x(),
@@ -46,11 +61,10 @@ void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
       }
       emit mouseClicked(colour, currentPixel);
     }
-  }
 }
 
 void QLabelMouseTracker::mouseMoveEvent(QMouseEvent *ev) {
-  if (setCurrentPixel(ev)) {
+  if (setCurrentPixel(ev->pos())) {
     emit mouseOver(currentPixel);
   }
 }
@@ -71,19 +85,18 @@ void QLabelMouseTracker::resizeEvent(QResizeEvent *event) {
   }
 }
 
-bool QLabelMouseTracker::setCurrentPixel(const QMouseEvent *ev) {
+bool QLabelMouseTracker::setCurrentPixel(const QPoint &pos) {
   if (image.isNull() || pixmap.isNull() ||
-      (ev->pos().x() >= pixmapImageSize.width() + offset.x()) ||
-      (ev->pos().y() >= pixmapImageSize.height()) ||
-      ev->pos().x() < offset.x() || ev->pos().y() < 0) {
+      (pos.x() >= pixmapImageSize.width() + offset.x()) ||
+      (pos.y() >= pixmapImageSize.height()) || pos.x() < offset.x() ||
+      pos.y() < 0) {
     return false;
   }
-  currentPixel.setX((image.width() * (ev->pos().x() - offset.x())) /
+  currentPixel.setX((image.width() * (pos.x() - offset.x())) /
                     pixmapImageSize.width());
-  currentPixel.setY((image.height() * ev->pos().y()) /
-                    pixmapImageSize.height());
-  SPDLOG_TRACE("mouse at ({},{}) -> pixel ({},{})", ev->pos().x(),
-               ev->pos().y(), currentPixel.x(), currentPixel.y());
+  currentPixel.setY((image.height() * pos.y()) / pixmapImageSize.height());
+  SPDLOG_TRACE("mouse at ({},{}) -> pixel ({},{})", pos.x(), pos.y(),
+               currentPixel.x(), currentPixel.y());
   return true;
 }
 

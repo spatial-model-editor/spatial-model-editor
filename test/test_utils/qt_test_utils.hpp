@@ -28,6 +28,10 @@ QString sendKeyEventsToNextQDialog(const QStringList &keySeqStrings,
 void sendMouseMove(QWidget *widget, const QPoint &pos = {},
                    Qt::MouseButton button = Qt::MouseButton::NoButton);
 
+void sendMouseWheel(
+    QWidget *widget, int direction,
+    Qt::KeyboardModifier modifier = Qt::KeyboardModifier::NoModifier);
+
 void sendMousePress(QWidget *widget, const QPoint &pos = {},
                     Qt::MouseButton button = Qt::MouseButton::NoButton);
 

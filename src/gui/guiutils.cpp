@@ -5,6 +5,8 @@
 #include <QInputDialog>
 #include <QListWidget>
 #include <QMessageBox>
+#include <QScrollArea>
+#include <QScrollBar>
 #include <QString>
 #include <QTreeWidget>
 #include <QWidget>
@@ -100,7 +102,7 @@ QImage getImageFromUser(QWidget *parent, const QString &title) {
   return img;
 }
 
-QSize zoomedSize(const QSize &originalSize, int zoomFactor) {
+static QSize getZoomedInSize(const QSize &originalSize, int zoomFactor) {
   QSize newSize{originalSize};
   for (int i = 0; i < zoomFactor; ++i) {
     // 20% increase in size for each step
@@ -108,4 +110,26 @@ QSize zoomedSize(const QSize &originalSize, int zoomFactor) {
     newSize /= 5;
   }
   return newSize;
+}
+
+static void adjustScrollbars(QScrollArea *scrollArea, const QSizeF &sizeChange,
+                             const QPointF &relativePos) {
+  auto *hBar{scrollArea->horizontalScrollBar()};
+  int hOffset{hBar->value() +
+              static_cast<int>(relativePos.x() * sizeChange.width())};
+  hBar->setValue(std::clamp(hOffset, 0, hBar->maximum()));
+  auto *vBar{scrollArea->verticalScrollBar()};
+  int vOffset{vBar->value() +
+              static_cast<int>(relativePos.y() * sizeChange.height())};
+  vBar->setValue(std::clamp(vOffset, 0, vBar->maximum()));
+}
+
+void zoomScrollArea(QScrollArea *scrollArea, int zoomFactor,
+                    const QPointF &relativePos) {
+  auto sizeOld{scrollArea->widget()->size()};
+  scrollArea->setWidgetResizable(false);
+  auto sizeNew{getZoomedInSize(scrollArea->size(), zoomFactor)};
+  scrollArea->widget()->resize(sizeNew);
+  QSizeF sizeChange(sizeNew - sizeOld);
+  adjustScrollbars(scrollArea, sizeChange, relativePos);
 }
