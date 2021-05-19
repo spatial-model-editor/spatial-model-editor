@@ -32,7 +32,11 @@ TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
           &TabGeometry::lblCompBoundary_mouseClicked);
   connect(ui->lblCompBoundary, &QLabelMouseTracker::mouseWheelEvent, this,
           [this](QWheelEvent *ev) {
-            QApplication::sendEvent(ui->spinMaxBoundaryPoints, ev);
+            if (ev->modifiers() == Qt::ShiftModifier) {
+              QApplication::sendEvent(ui->spinBoundaryZoom, ev);
+            } else {
+              QApplication::sendEvent(ui->spinMaxBoundaryPoints, ev);
+            }
           });
   connect(ui->spinBoundaryIndex, qOverload<int>(&QSpinBox::valueChanged), this,
           &TabGeometry::spinBoundaryIndex_valueChanged);
@@ -44,7 +48,11 @@ TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
           &TabGeometry::lblCompMesh_mouseClicked);
   connect(ui->lblCompMesh, &QLabelMouseTracker::mouseWheelEvent, this,
           [this](QWheelEvent *ev) {
-            QApplication::sendEvent(ui->spinMaxTriangleArea, ev);
+            if (ev->modifiers() == Qt::ShiftModifier) {
+              QApplication::sendEvent(ui->spinMeshZoom, ev);
+            } else {
+              QApplication::sendEvent(ui->spinMaxTriangleArea, ev);
+            }
           });
   connect(ui->spinMaxTriangleArea, qOverload<int>(&QSpinBox::valueChanged),
           this, &TabGeometry::spinMaxTriangleArea_valueChanged);
@@ -289,9 +297,8 @@ void TabGeometry::spinBoundaryZoom_valueChanged(int value) {
     // rescale to fit entire scroll region
     ui->scrollBoundaryLines->setWidgetResizable(true);
   } else {
-    ui->scrollBoundaryLines->setWidgetResizable(false);
-    auto sz{zoomedSize(ui->scrollBoundaryLines->size(), value)};
-    ui->scrollBoundaryLinesContents->resize(sz);
+    zoomScrollArea(ui->scrollBoundaryLines, value,
+                   ui->lblCompBoundary->getRelativePosition());
   }
   spinBoundaryIndex_valueChanged(ui->spinBoundaryIndex->value());
 }
@@ -328,9 +335,8 @@ void TabGeometry::spinMeshZoom_valueChanged(int value) {
     // rescale to fit entire scroll region
     ui->scrollMesh->setWidgetResizable(true);
   } else {
-    ui->scrollMesh->setWidgetResizable(false);
-    auto sz{zoomedSize(ui->scrollMesh->size(), value)};
-    ui->scrollMeshContents->resize(sz);
+    zoomScrollArea(ui->scrollMesh, value,
+                   ui->lblCompMesh->getRelativePosition());
   }
   spinMaxTriangleArea_valueChanged(ui->spinMaxTriangleArea->value());
 }

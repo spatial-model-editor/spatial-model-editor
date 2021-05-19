@@ -246,6 +246,17 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
     int width2{lblGeometry->width()};
     REQUIRE(width2 < width4);
     REQUIRE(width2 > width0);
+    lblGeometry->setFocus();
+    sendMouseWheel(lblGeometry, +1, Qt::KeyboardModifier::ShiftModifier);
+    REQUIRE(spinGeometryZoom->value() == 3);
+    int width3{lblGeometry->width()};
+    REQUIRE(width3 < width4);
+    REQUIRE(width3 > width2);
+    sendMouseWheel(lblGeometry, -1, Qt::KeyboardModifier::ShiftModifier);
+    REQUIRE(spinGeometryZoom->value() == 2);
+    // without shift key, mouse wheel event is ignored
+    sendMouseWheel(lblGeometry, +1);
+    REQUIRE(spinGeometryZoom->value() == 2);
   }
   SECTION("built-in SBML model, change units") {
     MainWindow w;

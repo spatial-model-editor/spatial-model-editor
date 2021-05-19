@@ -27,7 +27,6 @@
 #include <QMessageBox>
 #include <QMimeData>
 #include <QProcess>
-#include <QShortcut>
 #include <QWhatsThis>
 
 static bool checkForCopasiSE() {
@@ -49,12 +48,13 @@ static QString getOutputXmlFilename(const QString &cpsFilename) {
 }
 
 QString MainWindow::getConvertedFilename(const QString &filename) {
-  if(!haveCopasiSE || QFileInfo(filename).suffix() != "cps"){
+  if (!haveCopasiSE || QFileInfo(filename).suffix() != "cps") {
     return filename;
   }
   constexpr int msTimeout{10000};
   auto xmlFilename{getOutputXmlFilename(filename)};
-  SPDLOG_INFO("CopasiSE: {} -> {}", filename.toStdString(), xmlFilename.toStdString());
+  SPDLOG_INFO("CopasiSE: {} -> {}", filename.toStdString(),
+              xmlFilename.toStdString());
   QProcess copasi;
   copasi.setProgram("CopasiSE");
   copasi.setArguments({"-e", xmlFilename, "--SBMLSchema", "L3V1", filename});
@@ -80,7 +80,7 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
   setupConnections();
 
   haveCopasiSE = checkForCopasiSE();
-  if(haveCopasiSE){
+  if (haveCopasiSE) {
     SPDLOG_INFO("Found CopasiSE: enabling .cps file import");
   }
 
@@ -203,6 +203,13 @@ void MainWindow::setupConnections() {
 
   connect(ui->lblGeometry, &QLabelMouseTracker::mouseOver, this,
           &MainWindow::lblGeometry_mouseOver);
+
+  connect(ui->lblGeometry, &QLabelMouseTracker::mouseWheelEvent, this,
+          [this](QWheelEvent *ev) {
+            if (ev->modifiers() == Qt::ShiftModifier) {
+              QApplication::sendEvent(ui->spinGeometryZoom, ev);
+            }
+          });
 
   connect(ui->spinGeometryZoom, qOverload<int>(&QSpinBox::valueChanged), this,
           &MainWindow::spinGeometryZoom_valueChanged);
@@ -568,14 +575,14 @@ void MainWindow::lblGeometry_mouseOver(QPoint point) {
   if (!model.getGeometry().getHasImage()) {
     return;
   }
-  double width{model.getGeometry().getPixelWidth()};
+  double pixelWidth{model.getGeometry().getPixelWidth()};
   const auto &origin{model.getGeometry().getPhysicalOrigin()};
   auto lengthUnit{model.getUnits().getLength().name};
   auto height{model.getGeometry().getImage().height()};
   QPointF physical;
-  physical.setX(origin.x() + width * static_cast<double>(point.x()));
+  physical.setX(origin.x() + pixelWidth * static_cast<double>(point.x()));
   physical.setY(origin.x() +
-                width * static_cast<double>(height - 1 - point.y()));
+                pixelWidth * static_cast<double>(height - 1 - point.y()));
   statusBar()->showMessage(QString("x=%1 %2, y=%3 %2")
                                .arg(physical.x())
                                .arg(lengthUnit)
@@ -584,11 +591,10 @@ void MainWindow::lblGeometry_mouseOver(QPoint point) {
 
 void MainWindow::spinGeometryZoom_valueChanged(int value) {
   if (value == 0) {
-    // rescale to fit entire scroll region
+    // rescale widget to fit entire scroll region
     ui->scrollGeometry->setWidgetResizable(true);
   } else {
-    ui->scrollGeometry->setWidgetResizable(false);
-    auto sz{zoomedSize(ui->scrollGeometry->size(), value)};
-    ui->scrollGeometryContents->resize(sz);
+    zoomScrollArea(ui->scrollGeometry, value,
+                   ui->lblGeometry->getRelativePosition());
   }
 }

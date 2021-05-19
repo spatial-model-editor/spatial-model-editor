@@ -26,6 +26,8 @@ public:
   const QRgb &getColour() const;
   // value of mask index at last mouse click position
   int getMaskIndex() const;
+  // position of mouse as fraction of displayed pixmap size
+  QPointF getRelativePosition() const;
   void setAspectRatioMode(Qt::AspectRatioMode aspectRatioMode);
   void setTransformationMode(Qt::TransformationMode transformationMode);
   void setPhysicalSize(const QSizeF& size, const QString& units);
@@ -48,7 +50,7 @@ protected:
 private:
   Qt::AspectRatioMode aspectRatioMode = Qt::KeepAspectRatio;
   Qt::TransformationMode transformationMode = Qt::FastTransformation;
-  bool setCurrentPixel(const QMouseEvent *ev);
+  bool setCurrentPixel(const QPoint& pos);
   void resizeImage(const QSize &size);
   QImage image;
   // Pixmap used to display scaled version of image
@@ -56,7 +58,7 @@ private:
   // size of actual image in pixmap (may be smaller than pixmap)
   QSize pixmapImageSize;
   QImage maskImage;
-  QPoint currentPixel;
+  QPoint currentPixel{};
   const int tickLength{10};
   // x & y offsets for ruler, if present
   QPoint offset{0,0};
