@@ -66,6 +66,7 @@ bool exportSmeFile(const std::string &filename,
 
 std::string toXml(const model::Settings &sbmlAnnotation) {
   std::string s;
+  std::locale userLocale = std::locale::global(std::locale::classic());
   std::stringstream ss;
   try {
     cereal::XMLOutputArchive ar(ss);
@@ -83,11 +84,15 @@ std::string toXml(const model::Settings &sbmlAnnotation) {
   for (std::size_t i = 2; i + 2 < lines.size(); ++i) {
     s.append(lines[i]).append("\n");
   }
+  std::locale::global(userLocale);
   return s;
 }
 
 model::Settings fromXml(const std::string &xml) {
   model::Settings sbmlAnnotation{};
+  // hack until https://github.com/spatial-model-editor/spatial-model-editor/issues/535 is resolved:
+  // (cereal relies on strtod to read doubles and assumes C locale)
+  std::locale userLocale = std::locale::global(std::locale::classic());
   // re-insert header & footer
   // todo: do this in a less fragile way
   std::string fullXml{R"(<?xml version="1.0" encoding="utf-8"?><cereal>)"};
@@ -102,6 +107,7 @@ model::Settings fromXml(const std::string &xml) {
                 e.what());
     return {};
   }
+  std::locale::global(userLocale);
   return sbmlAnnotation;
 }
 

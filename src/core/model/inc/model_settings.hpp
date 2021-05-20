@@ -43,9 +43,9 @@ struct DisplayOptions {
 };
 
 struct SimulationSettings {
-  std::vector<std::pair<std::size_t, double>> times;
-  simulate::Options options;
-  sme::simulate::SimulatorType simulatorType;
+  std::vector<std::pair<std::size_t, double>> times{};
+  simulate::Options options{};
+  sme::simulate::SimulatorType simulatorType{};
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
