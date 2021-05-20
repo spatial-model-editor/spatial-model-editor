@@ -29,6 +29,7 @@ SCENARIO("Serialization",
     REQUIRE(utils::importSmeFile("invalid.sme").xmlModel.empty());
   }
   GIVEN("Valid v0 smefile (no SimulationSettings)") {
+    // v0 smefile was used in spatial-model-editor 1.0.9
     createOldSmeFile("very-simple-model-v0.sme");
     auto contents{utils::importSmeFile("very-simple-model-v0.sme")};
     REQUIRE(contents.xmlModel.size() == 134371);
@@ -46,6 +47,8 @@ SCENARIO("Serialization",
             dbl_approx(2.3650364527146514603828109e-55));
   }
   GIVEN("Valid v1 smefile (SimulationSettings not stored in model)") {
+    // v1 smefile was only used in "latest" preview versions
+    // of spatial-model-editor between 1.0.9 and 1.1.0 releases
     sme::simulate::SimulationData data;
     createOldSmeFile("very-simple-model-v1.sme");
     auto contents{utils::importSmeFile("very-simple-model-v1.sme")};
@@ -86,15 +89,48 @@ SCENARIO("Serialization",
     REQUIRE(options.pixel.maxErr.rel == dbl_approx(5e-5));
     REQUIRE(options.pixel.maxTimestep == dbl_approx(5.0));
   }
-  GIVEN("Valid current sme file") {
-    // todo: export & re-import
+  GIVEN("Valid current (v2) sme file") {
+    // v2 smefile is used in spatial-model-editor >= 1.1.0
+    QFile f(":/models/brusselator-model.xml");
+    f.open(QIODevice::ReadOnly);
+    model::Model m;
+    m.importSBMLString(f.readAll().toStdString());
+    m.exportSMEFile("test.sme");
+    model::Model m2;
+    m2.importFile("test.sme");
+    const auto &s{m2.getSimulationSettings()};
+    REQUIRE(s.options.pixel.maxErr.rel == dbl_approx(0.005));
   }
   GIVEN("settings xml roundtrip") {
-    sme::model::Settings annotation{};
-    annotation.simulationSettings.times = {{1, 0.3}, {2, 0.1}};
-    auto xml{utils::toXml(annotation)};
-    auto annotation2{utils::fromXml(xml)};
-    REQUIRE(annotation2.simulationSettings.simulatorType == annotation.simulationSettings.simulatorType);
-    REQUIRE(annotation2.simulationSettings.times == annotation.simulationSettings.times);
+    sme::model::Settings s{};
+    s.simulationSettings.times = {{1, 0.3}, {2, 0.1}};
+    s.simulationSettings.options.pixel.maxErr.rel = 0.02;
+    auto xml{utils::toXml(s)};
+    auto s2{utils::fromXml(xml)};
+    REQUIRE(s2.simulationSettings.simulatorType ==
+            s.simulationSettings.simulatorType);
+    REQUIRE(s2.simulationSettings.times == s.simulationSettings.times);
+    REQUIRE(s2.simulationSettings.options.pixel.maxErr.rel ==
+            dbl_approx(s.simulationSettings.options.pixel.maxErr.rel));
+  }
+  GIVEN("check DE locale doesn't break settings xml roundtrip") {
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/535
+    std::locale userLocale{};
+    try {
+      userLocale = std::locale::global(std::locale("de_DE.UTF-8"));
+    } catch (const std::runtime_error &e) {
+      userLocale = std::locale::classic();
+    }
+    sme::model::Settings s{};
+    s.simulationSettings.times = {{1, 0.3}, {2, 0.1}};
+    s.simulationSettings.options.pixel.maxErr.rel = 0.02;
+    auto xml{utils::toXml(s)};
+    auto s2{utils::fromXml(xml)};
+    REQUIRE(s2.simulationSettings.times == s.simulationSettings.times);
+    REQUIRE(s2.simulationSettings.simulatorType ==
+            s.simulationSettings.simulatorType);
+    REQUIRE(s2.simulationSettings.options.pixel.maxErr.rel ==
+            dbl_approx(s.simulationSettings.options.pixel.maxErr.rel));
+    std::locale::global(userLocale);
   }
 }
