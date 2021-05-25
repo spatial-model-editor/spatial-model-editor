@@ -108,6 +108,7 @@ void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
     SPDLOG_INFO("point ({},{})", point.x(), point.y());
     // update compartment geometry (i.e. colour) of selected compartment to
     // the one the user just clicked on
+    QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     try {
       const auto &compartmentID = model.getCompartments().getIds().at(
           ui->listCompartments->currentRow());
@@ -122,6 +123,7 @@ void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
     listCompartments_itemSelectionChanged();
     waitingForCompartmentChoice = false;
     statusBarPermanentMessage->clear();
+    QGuiApplication::restoreOverrideCursor();
     enableTabs();
     emit modelGeometryChanged();
     return;
@@ -277,19 +279,23 @@ void TabGeometry::lblCompBoundary_mouseClicked(QRgb col, QPoint point) {
 void TabGeometry::spinBoundaryIndex_valueChanged(int value) {
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<size_t>(value);
+  QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   ui->spinMaxBoundaryPoints->setValue(static_cast<int>(
       model.getGeometry().getMesh()->getBoundaryMaxPoints(boundaryIndex)));
   ui->lblCompBoundary->setImages(
       model.getGeometry().getMesh()->getBoundariesImages(size, boundaryIndex));
+  QGuiApplication::restoreOverrideCursor();
 }
 
 void TabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<std::size_t>(ui->spinBoundaryIndex->value());
+  QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   model.getGeometry().getMesh()->setBoundaryMaxPoints(
       boundaryIndex, static_cast<size_t>(value));
   ui->lblCompBoundary->setImages(
       model.getGeometry().getMesh()->getBoundariesImages(size, boundaryIndex));
+  QGuiApplication::restoreOverrideCursor();
 }
 
 void TabGeometry::spinBoundaryZoom_valueChanged(int value) {
@@ -324,10 +330,12 @@ void TabGeometry::lblCompMesh_mouseClicked(QRgb col, QPoint point) {
 void TabGeometry::spinMaxTriangleArea_valueChanged(int value) {
   const auto &size = ui->lblCompMesh->size();
   auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
+  QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   model.getGeometry().getMesh()->setCompartmentMaxTriangleArea(
       compIndex, static_cast<std::size_t>(value));
   ui->lblCompMesh->setImages(
       model.getGeometry().getMesh()->getMeshImages(size, compIndex));
+  QGuiApplication::restoreOverrideCursor();
 }
 
 void TabGeometry::spinMeshZoom_valueChanged(int value) {

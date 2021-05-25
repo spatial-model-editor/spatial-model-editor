@@ -319,7 +319,9 @@ void MainWindow::action_Open_SBML_file_triggered() {
     return;
   }
   filename = getConvertedFilename(filename);
+  QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   model.importFile(filename.toStdString());
+  QGuiApplication::restoreOverrideCursor();
   validateSBMLDoc(filename);
 }
 
@@ -330,7 +332,9 @@ void MainWindow::menuOpen_example_SBML_file_triggered(const QAction *action) {
     SPDLOG_WARN("failed to open built-in file: {}", filename.toStdString());
     return;
   }
+  QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   model.importSBMLString(f.readAll().toStdString(), filename.toStdString());
+  QGuiApplication::restoreOverrideCursor();
   validateSBMLDoc(filename);
 }
 
@@ -344,7 +348,9 @@ void MainWindow::action_Save_triggered() {
   if (filename.right(4) != ".sme") {
     filename.append(".sme");
   }
+  QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   model.exportSMEFile(filename.toStdString()); // todo check for success here
+  QGuiApplication::restoreOverrideCursor();
   this->setWindowTitle(QString("Spatial Model Editor [%1]").arg(filename));
 }
 
@@ -358,7 +364,9 @@ void MainWindow::action_Save_SBML_file_triggered() {
   if (filename.right(4) != ".xml") {
     filename.append(".xml");
   }
+  QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   model.exportSBMLFile(filename.toStdString()); // todo check for success here
+  QGuiApplication::restoreOverrideCursor();
 }
 
 void MainWindow::actionExport_Dune_ini_file_triggered() {
@@ -374,7 +382,9 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
   if (iniFilename.right(4) != ".ini") {
     iniFilename.append(".ini");
   }
+  QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   sme::simulate::DuneConverter dc(model, {}, true, iniFilename);
+  QGuiApplication::restoreOverrideCursor();
 }
 
 void MainWindow::actionGeometry_from_model_triggered() {
@@ -391,7 +401,9 @@ void MainWindow::actionGeometry_from_model_triggered() {
   for (const auto &id : model.getCompartments().getIds()) {
     model.getCompartments().setColour(id, 0);
   }
+  QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   model.getGeometry().importSampledFieldGeometry(filename);
+  QGuiApplication::restoreOverrideCursor();
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   enableTabs();
@@ -418,6 +430,7 @@ void MainWindow::menuExample_geometry_image_triggered(const QAction *action) {
 }
 
 void MainWindow::importGeometryImage(const QImage &image) {
+  QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   tabSimulate->reset();
   model.getGeometry().importGeometryFromImage(image);
   ui->tabMain->setCurrentIndex(0);
@@ -425,6 +438,7 @@ void MainWindow::importGeometryImage(const QImage &image) {
   // set default pixel width in case user doesn't set image physical size
   model.getGeometry().setPixelWidth(1.0);
   enableTabs();
+  QGuiApplication::restoreOverrideCursor();
   actionEdit_geometry_image_triggered();
 }
 
