@@ -374,7 +374,7 @@ void MainWindow::actionExport_Dune_ini_file_triggered() {
   if (iniFilename.right(4) != ".ini") {
     iniFilename.append(".ini");
   }
-  sme::simulate::DuneConverter dc(model, true, iniFilename);
+  sme::simulate::DuneConverter dc(model, {}, true, iniFilename);
 }
 
 void MainWindow::actionGeometry_from_model_triggered() {

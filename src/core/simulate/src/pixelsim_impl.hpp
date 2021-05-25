@@ -8,12 +8,12 @@
 #include "pde.hpp"
 #include "simulate_options.hpp"
 #include "symbolic.hpp"
+#include <QImage>
+#include <QPoint>
 #include <cstddef>
 #include <limits>
 #include <string>
 #include <vector>
-#include <QImage>
-#include <QPoint>
 
 namespace sme {
 
@@ -39,7 +39,8 @@ public:
            const std::vector<std::string> &reactionID,
            double reactionScaleFactor = 1.0, bool doCSE = true,
            unsigned optLevel = 3, bool timeDependent = false,
-           bool spaceDependent = false);
+           bool spaceDependent = false,
+           const std::map<std::string, double, std::less<>> &substitutions = {});
   ReacEval(ReacEval &&) noexcept = default;
   ReacEval(const ReacEval &) = delete;
   ReacEval &operator=(ReacEval &&) noexcept = default;
@@ -69,11 +70,11 @@ private:
   double maxStableTimestep = std::numeric_limits<double>::max();
 
 public:
-  explicit SimCompartment(const model::Model &doc,
-                          const geometry::Compartment *compartment,
-                          std::vector<std::string> sIds, bool doCSE = true,
-                          unsigned optLevel = 3, bool timeDependent = false,
-                          bool spaceDependent = false);
+  explicit SimCompartment(
+      const model::Model &doc, const geometry::Compartment *compartment,
+      std::vector<std::string> sIds, bool doCSE = true, unsigned optLevel = 3,
+      bool timeDependent = false, bool spaceDependent = false,
+      const std::map<std::string, double, std::less<>> &substitutions = {});
   SimCompartment(SimCompartment &&) noexcept = default;
   SimCompartment(const SimCompartment &) = delete;
   SimCompartment &operator=(SimCompartment &&) noexcept = default;
@@ -129,10 +130,11 @@ public:
   void undoRKStep_tbb();
 #endif
   PixelIntegratorError calculateRKError(double epsilon) const;
-  std::string plotRKError(QImage& image, double epsilon, double max) const;
+  std::string plotRKError(QImage &image, double epsilon, double max) const;
   const std::string &getCompartmentId() const;
   const std::vector<std::string> &getSpeciesIds() const;
   const std::vector<double> &getConcentrations() const;
+  void setConcentrations(const std::vector<double> &);
   double getLowerOrderConcentration(std::size_t speciesIndex,
                                     std::size_t pixelIndex) const;
   const std::vector<QPoint> &getPixels() const;
@@ -152,7 +154,8 @@ public:
   SimMembrane(const model::Model &doc, const geometry::Membrane *membrane_ptr,
               SimCompartment *simCompA, SimCompartment *simCompB,
               bool doCSE = true, unsigned optLevel = 3,
-              bool timeDependent = false, bool spaceDependent = false);
+              bool timeDependent = false, bool spaceDependent = false,
+              const std::map<std::string, double, std::less<>> &substitutions = {});
   SimMembrane(SimMembrane &&) noexcept = default;
   SimMembrane(const SimMembrane &) = delete;
   SimMembrane &operator=(SimMembrane &&) noexcept = default;

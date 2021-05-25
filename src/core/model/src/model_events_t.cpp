@@ -42,6 +42,8 @@ SCENARIO("SBML events",
     REQUIRE(events.getVariable("n") == "param1");
     REQUIRE(events.getTime("n") == dbl_approx(0));
     REQUIRE(events.getExpression("n") == "0");
+    REQUIRE(events.isParameter("n") == true);
+    REQUIRE(events.getValue("n") == dbl_approx(0.0));
     // apply event to model
     REQUIRE(params.getExpression("param1") == "55");
     events.applyEvent("n");
@@ -57,6 +59,8 @@ SCENARIO("SBML events",
     // change expression
     events.setExpression("n", "1");
     REQUIRE(events.getExpression("n") == "1");
+    REQUIRE(events.isParameter("n") == true);
+    REQUIRE(events.getValue("n") == dbl_approx(1.0));
     // apply event to model
     REQUIRE(params.getExpression("param1") == "0");
     events.applyEvent("n");
@@ -64,9 +68,12 @@ SCENARIO("SBML events",
     // change expression to invalid math: no-op
     events.setExpression("n", "invalidmath???");
     REQUIRE(events.getExpression("n") == "1");
+    REQUIRE(events.isParameter("n") == true);
+    REQUIRE(events.getValue("n") == dbl_approx(1.0));
     // change variable
     events.setVariable("n", "param2");
     REQUIRE(events.getVariable("n") == "param2");
+    REQUIRE(events.isParameter("n") == true);
     // apply event to model
     REQUIRE(params.getExpression("param1") == "1");
     REQUIRE(params.getExpression("param2") == "-1.2");
@@ -88,8 +95,10 @@ SCENARIO("SBML events",
     REQUIRE(sme::model::mathASTtoString(
                 event->getEventAssignment(0)->getMath()) == "1");
     // change variable to species
+    REQUIRE(events.isParameter("n") == true);
     REQUIRE(species.getInitialConcentration("ATP") == dbl_approx(2.52512746499271));
     events.setVariable("n", "ATP");
+    REQUIRE(events.isParameter("n") == false);
     events.setExpression("n", "x + y");
     events.applyEvent("n");
     REQUIRE(species.getAnalyticConcentration("ATP") == "x + y");
@@ -153,8 +162,14 @@ SCENARIO("SBML events",
     REQUIRE(events.getVariable("e__") == "v2");
     REQUIRE(events.getVariable("e_") == "v3");
     REQUIRE(events.getExpression("e") == "1");
+    REQUIRE(events.isParameter("e") == true);
+    REQUIRE(events.getValue("e") == dbl_approx(1.0));
     REQUIRE(events.getExpression("e__") == "2");
+    REQUIRE(events.isParameter("e__") == true);
+    REQUIRE(events.getValue("e__") == dbl_approx(2.0));
     REQUIRE(events.getExpression("e_") == "3");
+    REQUIRE(events.isParameter("e_") == true);
+    REQUIRE(events.getValue("e_") == dbl_approx(3.0));
     // trigger was unsupported, so replaced with default t >= 0 trigger
     REQUIRE(events.getTime("e") == dbl_approx(0));
     REQUIRE(events.getTime("e__") == dbl_approx(0));
@@ -162,6 +177,8 @@ SCENARIO("SBML events",
     // make some changes
     events.setTime("e_", 9.2);
     events.setExpression("e_", "99");
+    REQUIRE(events.isParameter("e_") == true);
+    REQUIRE(events.getValue("e_") == dbl_approx(99.0));
     s.getParameters().add("param1");
     events.setVariable("e__", "param1");
     REQUIRE(s.getHasUnsavedChanges() == true);

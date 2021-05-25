@@ -94,6 +94,19 @@ std::size_t min_element_index(const Container &c) {
 }
 
 /**
+ * @brief The index in the container of the matching element
+ */
+template <typename Container, typename Element>
+std::size_t element_index(const Container &c, const Element &e,
+                          std::size_t index_if_not_found = 0) {
+  auto iter{std::find(cbegin(c), cend(c), e)};
+  if (iter == cend(c)) {
+    return index_if_not_found;
+  }
+  return static_cast<std::size_t>(std::distance(cbegin(c), iter));
+}
+
+/**
  * @brief The type of an object as a string
  *
  * @note Copied from https://stackoverflow.com/a/56766138

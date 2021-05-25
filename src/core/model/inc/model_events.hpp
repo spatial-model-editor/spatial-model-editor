@@ -42,6 +42,8 @@ public:
   void setExpression(const QString &id, const QString &expr);
   QString getExpression(const QString &id) const;
   QString add(const QString &name, const QString &variable);
+  bool isParameter(const QString &id) const;
+  [[nodiscard]] double getValue(const QString &id) const;
   void remove(const QString &id);
   void removeAnyUsingVariable(const QString &variable);
   void applyEvent(const QString &id);

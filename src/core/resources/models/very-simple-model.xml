@@ -84,7 +84,7 @@
       <parameter id="y" name="y" value="0" units="unit_of_length" constant="false">
         <spatial:spatialSymbolReference spatial:spatialRef="yCoord"/>
       </parameter>
-      <parameter id="param" name="param" value="1" units="substance" constant="true"/>
+      <parameter id="param" name="param" value="1" units="substance" constant="false"/>
     </listOfParameters>
     <listOfReactions>
       <reaction id="A_uptake" name="A uptake from outside" reversible="false" compartment="c1_c2_membrane" spatial:isLocal="true">

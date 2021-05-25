@@ -9,10 +9,8 @@ namespace Ui {
 class TabEvents;
 }
 
-namespace sme {
-namespace model {
+namespace sme::model {
 class Model;
-}
 } // namespace sme
 
 class TabEvents : public QWidget {
@@ -20,7 +18,7 @@ class TabEvents : public QWidget {
 
 public:
   explicit TabEvents(sme::model::Model &m, QWidget *parent = nullptr);
-  ~TabEvents();
+  ~TabEvents() override;
   void loadModelData(const QString &selection = {});
 
 private:

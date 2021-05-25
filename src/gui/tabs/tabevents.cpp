@@ -37,7 +37,7 @@ void TabEvents::loadModelData(const QString &selection) {
   ui->lblSpeciesExpression->clear();
   ui->stkValue->setCurrentIndex(0);
   ui->txtExpression->clearVariables();
-  ui->txtExpression->resetToDefaultFunctions();
+  ui->txtExpression->clearFunctions();
   ui->cmbEventVariable->clear();
   variableIds.clear();
   for (const auto &cId : model.getCompartments().getIds()) {
@@ -52,12 +52,6 @@ void TabEvents::loadModelData(const QString &selection) {
   for (const auto &id : model.getParameters().getIds()) {
     variableIds.push_back(id);
     ui->cmbEventVariable->addItem(model.getParameters().getName(id));
-  }
-  for (const auto &[id, name] : model.getParameters().getSymbols()) {
-    ui->txtExpression->addVariable(id, name);
-  }
-  for (const auto &function : model.getFunctions().getSymbolicFunctions()) {
-    ui->txtExpression->addFunction(function);
   }
   for (const auto &id : model.getEvents().getIds()) {
     auto name = model.getEvents().getName(id);

@@ -119,44 +119,6 @@ void ModelSpecies::removeInitialAssignment(const QString &id) {
   }
 }
 
-void ModelSpecies::setFieldConcAnalytic(geometry::Field &field,
-                                        const std::string &expr) {
-  SPDLOG_INFO("expr: {}", expr);
-  auto inlinedExpr = inlineFunctions(expr, sbmlModel);
-  inlinedExpr = inlineAssignments(inlinedExpr, sbmlModel);
-  SPDLOG_INFO("  - inlined expr: {}", inlinedExpr);
-  std::string xId{modelParameters->getSpatialCoordinates().x.id};
-  std::string yId{modelParameters->getSpatialCoordinates().y.id};
-  std::map<const std::string, std::pair<double, bool>> sbmlVars;
-  auto &xCoordPair = sbmlVars[xId];
-  xCoordPair = {0, false};
-  double &xCoord = xCoordPair.first;
-  auto &yCoordPair = sbmlVars[yId];
-  yCoordPair = {0, false};
-  double &yCoord = yCoordPair.first;
-  auto astExpr = mathStringToAST(inlinedExpr);
-  SPDLOG_TRACE("  - parsed expr: {}", mathASTtoString(astExpr.get()));
-  if (astExpr == nullptr) {
-    SPDLOG_ERROR("Failed to parse expression '{}'", inlinedExpr);
-    return;
-  }
-  hasUnsavedChanges = true;
-  const auto &origin = modelGeometry->getPhysicalOrigin();
-  double pixelWidth = modelGeometry->getPixelWidth();
-  int imgHeight = field.getCompartment()->getCompartmentImage().height();
-  for (std::size_t i = 0; i < field.getCompartment()->nPixels(); ++i) {
-    // position in pixels (with (0,0) in top-left of image):
-    const auto &point = field.getCompartment()->getPixel(i);
-    // rescale to physical x,y point (with (0,0) in bottom-left):
-    xCoord = origin.x() + pixelWidth * (static_cast<double>(point.x()) + 0.5);
-    int y = imgHeight - 1 - point.y();
-    yCoord = origin.y() + pixelWidth * (static_cast<double>(y) + 0.5);
-    double conc = evaluateMathAST(astExpr.get(), sbmlVars, sbmlModel);
-    field.setConcentration(i, conc);
-  }
-  field.setIsUniformConcentration(false);
-}
-
 std::vector<double>
 ModelSpecies::getSampledFieldConcentrationFromSBML(const QString &id) const {
   std::vector<double> array;
@@ -555,6 +517,52 @@ void ModelSpecies::setAnalyticConcentration(const QString &id,
                        analyticExpression.toStdString());
 }
 
+void ModelSpecies::setFieldConcAnalytic(
+    geometry::Field &field, const std::string &expr,
+    const std::map<std::string, double, std::less<>> &substitutions) {
+  SPDLOG_INFO("expr: {}", expr);
+  auto inlinedExpr = inlineFunctions(expr, sbmlModel);
+  inlinedExpr = inlineAssignments(inlinedExpr, sbmlModel);
+  SPDLOG_INFO("  - inlined expr: {}", inlinedExpr);
+  std::string xId{modelParameters->getSpatialCoordinates().x.id};
+  std::string yId{modelParameters->getSpatialCoordinates().y.id};
+  std::map<const std::string, std::pair<double, bool>> sbmlVars;
+  for (const auto& c : modelParameters->getGlobalConstants()){
+    sbmlVars[c.id] = {c.value, false};
+  }
+  auto &xCoordPair = sbmlVars[xId];
+  xCoordPair = {0, false};
+  double &xCoord = xCoordPair.first;
+  auto &yCoordPair = sbmlVars[yId];
+  yCoordPair = {0, false};
+  double &yCoord = yCoordPair.first;
+  for (const auto &[key, val] : substitutions) {
+    SPDLOG_INFO("substituting {} -> {}", key, val);
+    sbmlVars[key] = {val, false};
+  }
+  auto astExpr = mathStringToAST(inlinedExpr);
+  SPDLOG_INFO("  - parsed expr: {}", mathASTtoString(astExpr.get()));
+  if (astExpr == nullptr) {
+    SPDLOG_ERROR("Failed to parse expression '{}'", inlinedExpr);
+    return;
+  }
+  hasUnsavedChanges = true;
+  const auto &origin = modelGeometry->getPhysicalOrigin();
+  double pixelWidth = modelGeometry->getPixelWidth();
+  int imgHeight = field.getCompartment()->getCompartmentImage().height();
+  for (std::size_t i = 0; i < field.getCompartment()->nPixels(); ++i) {
+    // position in pixels (with (0,0) in top-left of image):
+    const auto &point = field.getCompartment()->getPixel(i);
+    // rescale to physical x,y point (with (0,0) in bottom-left):
+    xCoord = origin.x() + pixelWidth * (static_cast<double>(point.x()) + 0.5);
+    int y = imgHeight - 1 - point.y();
+    yCoord = origin.y() + pixelWidth * (static_cast<double>(y) + 0.5);
+    double conc = evaluateMathAST(astExpr.get(), sbmlVars, sbmlModel);
+    field.setConcentration(i, conc);
+  }
+  field.setIsUniformConcentration(false);
+}
+
 QString ModelSpecies::getAnalyticConcentration(const QString &id) const {
   auto sf = getSampledFieldInitialAssignment(id);
   if (!sf.isEmpty()) {
@@ -737,4 +745,4 @@ void ModelSpecies::setHasUnsavedChanges(bool unsavedChanges) {
   hasUnsavedChanges = unsavedChanges;
 }
 
-} // namespace sme
+} // namespace sme::model

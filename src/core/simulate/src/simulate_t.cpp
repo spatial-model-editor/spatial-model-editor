@@ -17,12 +17,20 @@
 
 using namespace sme;
 
-static model::Model getVerySimpleModel() {
+static model::Model getModel(const QString &filename) {
   model::Model m;
-  QFile f(":/models/very-simple-model.xml");
+  QFile f(filename);
   f.open(QIODevice::ReadOnly);
   m.importSBMLString(f.readAll().toStdString());
   return m;
+}
+
+static model::Model getVerySimpleModel() {
+  return getModel(":/models/very-simple-model.xml");
+}
+
+static model::Model getBrusselatorModel() {
+  return getModel(":/models/brusselator-model.xml");
 }
 
 SCENARIO("Simulate: very_simple_model, single pixel geometry",
@@ -238,12 +246,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
 
 SCENARIO("Simulate: very_simple_model, 2d geometry",
          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
-  // import model
-  model::Model s;
-  QFile f(":/models/very-simple-model.xml");
-  f.open(QIODevice::ReadOnly);
-  s.importSBMLString(f.readAll().toStdString());
-
+  auto s{getVerySimpleModel()};
   // check fields have correct compartments & sizes
   const auto *fa1 = s.getSpecies().getField("A_c1");
   REQUIRE(fa1->getCompartment()->getId() == "c1");
@@ -318,10 +321,7 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
 
 SCENARIO("Simulate: very_simple_model, failing Pixel sim",
          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
-  model::Model s;
-  QFile f(":/models/very-simple-model.xml");
-  f.open(QIODevice::ReadOnly);
-  s.importSBMLString(f.readAll().toStdString());
+  auto s{getVerySimpleModel()};
   // set A uptake rate very high
   s.getReactions().setParameterValue("A_uptake", "k1", 1e40);
   // Pixel sim stops simulation as timestep required becomes too small
@@ -338,10 +338,7 @@ SCENARIO("Simulate: very_simple_model, empty compartment, DUNE sim",
          "[core/simulate/simulate][core/simulate][core][simulate][dune]") {
   // check that DUNE simulates a model with an empty compartment without
   // crashing
-  model::Model s;
-  QFile f(":/models/very-simple-model.xml");
-  f.open(QIODevice::ReadOnly);
-  s.importSBMLString(f.readAll().toStdString());
+  auto s{getVerySimpleModel()};
   s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
   WHEN("Outer species removed") {
     s.getSpecies().remove("A_c1");
@@ -391,11 +388,7 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
   double epsilon{1e-8};
   double margin{1e-13};
   // import model
-  model::Model s1;
-  QFile f(":/models/very-simple-model.xml");
-  f.open(QIODevice::ReadOnly);
-  std::string str{f.readAll().toStdString()};
-  s1.importSBMLString(str);
+  auto s1{getVerySimpleModel()};
   // 1st order RK, fixed timestep simulation
   // pixel width: 1
   // length unit: m
@@ -418,8 +411,7 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
 
   // 3x pixel width
   {
-    model::Model s;
-    s.importSBMLString(str);
+    auto s{getVerySimpleModel()};
     s.getSimulationSettings().options = options;
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     s.getGeometry().setPixelWidth(3.0);
@@ -490,8 +482,7 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
   }
   // 0.27* pixel width
   {
-    model::Model s;
-    s.importSBMLString(str);
+    auto s{getVerySimpleModel()};
     s.getSimulationSettings().options = options;
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     s.getGeometry().setPixelWidth(0.27);
@@ -563,11 +554,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       epsilon = 1e-6;
     }
     // import model
-    model::Model s1;
-    QFile f(":/models/very-simple-model.xml");
-    f.open(QIODevice::ReadOnly);
-    std::string str{f.readAll().toStdString()};
-    s1.importSBMLString(str);
+    auto s1{getVerySimpleModel()};
     // 1st order RK, fixed timestep simulation
     // pixel width: 1
     // length unit: m
@@ -594,8 +581,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
 
     // Length unit -> 10x smaller
     {
-      model::Model s;
-      s.importSBMLString(str);
+      auto s{getVerySimpleModel()};
       s.getSimulationSettings().options = options;
       s.getSimulationSettings().simulatorType = simulatorType;
       s.getUnits().setLengthIndex(1);
@@ -626,8 +612,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     // Length unit -> 100x smaller
     {
       // as above
-      model::Model s;
-      s.importSBMLString(str);
+      auto s{getVerySimpleModel()};
       s.getSimulationSettings().options = options;
       s.getSimulationSettings().simulatorType = simulatorType;
       rescaleMembraneReacRates(s, 1e-6);
@@ -653,8 +638,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       // concentration values unchanged, but [volume] 10x smaller
       // i.e. concentrations are 10x higher in [amount]/[length]^3 units
       // so membrane rates need to be 10x higher to compensate
-      model::Model s;
-      s.importSBMLString(str);
+      auto s{getVerySimpleModel()};
       s.getSimulationSettings().options = options;
       s.getSimulationSettings().simulatorType = simulatorType;
       rescaleMembraneReacRates(s, 10);
@@ -678,8 +662,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     // Volume unit -> 1000x smaller
     {
       // as above
-      model::Model s;
-      s.importSBMLString(str);
+      auto s{getVerySimpleModel()};
       s.getSimulationSettings().options = options;
       s.getSimulationSettings().simulatorType = simulatorType;
       rescaleMembraneReacRates(s, 1000);
@@ -702,8 +685,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     }
     // Volume unit -> 1000x larger (L -> m^3)
     {
-      model::Model s;
-      s.importSBMLString(str);
+      auto s{getVerySimpleModel()};
       s.getSimulationSettings().options = options;
       s.getSimulationSettings().simulatorType = simulatorType;
       rescaleMembraneReacRates(s, 1e-3);
@@ -726,8 +708,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     }
     // Volume unit equivalent (L -> dm^3)
     {
-      model::Model s;
-      s.importSBMLString(str);
+      auto s{getVerySimpleModel()};
       s.getSimulationSettings().options = options;
       s.getSimulationSettings().simulatorType = simulatorType;
       s.getUnits().setVolumeIndex(5);
@@ -829,6 +810,7 @@ SCENARIO(
       evolvedAvgRelativeError = 0.10;
     }
     s.getSimulationSettings().simulatorType = simType;
+    s.getSimulationData().clear();
 
     // integrate & compare
     simulate::Simulation sim(s);
@@ -1035,11 +1017,7 @@ SCENARIO("DUNE: simulation",
     REQUIRE(imgConc.size() == QSize(100, 100));
   }
   GIVEN("very-simple-model") {
-    model::Model s;
-    if (QFile f(":/models/very-simple-model.xml");
-        f.open(QIODevice::ReadOnly)) {
-      s.importSBMLString(f.readAll().toStdString());
-    }
+    auto s{getVerySimpleModel()};
     auto &options{s.getSimulationSettings().options};
     options.dune.dt = 0.01;
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
@@ -1052,11 +1030,7 @@ SCENARIO("DUNE: simulation",
 SCENARIO("getConcImage",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
   GIVEN("very-simple-model") {
-    model::Model s;
-    if (QFile f(":/models/very-simple-model.xml");
-        f.open(QIODevice::ReadOnly)) {
-      s.importSBMLString(f.readAll().toStdString());
-    }
+    auto s{getVerySimpleModel()};
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     simulate::Simulation sim(s);
     sim.doTimesteps(0.5);
@@ -1125,7 +1099,8 @@ SCENARIO("PyConc",
     if (QFile f(":/models/ABtoC.xml"); f.open(QIODevice::ReadOnly)) {
       s.importSBMLString(f.readAll().toStdString());
     }
-    for(auto simType : {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
+    for (auto simType :
+         {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
       s.getSimulationSettings().simulatorType = simType;
       s.getSimulationData().clear();
       simulate::Simulation sim(s);
@@ -1146,7 +1121,7 @@ SCENARIO("PyConc",
       REQUIRE(cA1.size() == 100);
       REQUIRE(cA1[0].size() == 100);
       REQUIRE(cA1[0][0] == dbl_approx(0.0));
-      if(simType == simulate::SimulatorType::Pixel) {
+      if (simType == simulate::SimulatorType::Pixel) {
         REQUIRE(pyDcdts1.size() == 3);
         const auto &dA1 = pyDcdts1["A"];
         REQUIRE(dA1.size() == 100);
@@ -1204,10 +1179,7 @@ static double rel_diff(const std::vector<double> &a,
 
 SCENARIO("applyConcsToModel initial concentrations",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
-  model::Model s;
-  QFile f(":/models/very-simple-model.xml");
-  f.open(QIODevice::ReadOnly);
-  s.importSBMLString(f.readAll().toStdString());
+  auto s{getVerySimpleModel()};
   // set various types of initial concentrations
   s.getSpecies().setInitialConcentration("B_c1", 0.66);
   s.getSpecies().setInitialConcentration("A_c3", 0.123);
@@ -1225,10 +1197,7 @@ SCENARIO("applyConcsToModel initial concentrations",
   sim.doTimesteps(0.01);
 
   // apply simulation initial concs to a copy of the original model
-  model::Model s2;
-  QFile f2(":/models/very-simple-model.xml");
-  f2.open(QIODevice::ReadOnly);
-  s2.importSBMLString(f2.readAll().toStdString());
+  auto s2{getVerySimpleModel()};
   sim.applyConcsToModel(s2, 0);
   // check concentrations match
   for (const auto &cId : s.getCompartments().getIds()) {
@@ -1243,10 +1212,7 @@ SCENARIO("applyConcsToModel initial concentrations",
 
 SCENARIO("applyConcsToModel after simulation",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
-  model::Model s;
-  QFile f(":/models/very-simple-model.xml");
-  f.open(QIODevice::ReadOnly);
-  s.importSBMLString(f.readAll().toStdString());
+  auto s{getVerySimpleModel()};
   s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   // added this to try to work around
   // https://github.com/spatial-model-editor/spatial-model-editor/issues/465
@@ -1256,7 +1222,7 @@ SCENARIO("applyConcsToModel after simulation",
   //  s.getSpecies().setAnalyticConcentration("A_c3", "cos(x/7.2)+1");
   //  s.getSpecies().setAnalyticConcentration("B_c3", "cos(x/5.2)+1");
   s.exportSBMLFile("tmp.xml");
-  auto& options{s.getSimulationSettings().options};
+  auto &options{s.getSimulationSettings().options};
   options.dune.dt = 0.01;
   // apply initial concs from sim to model s, check they agree with copy of
   // model s2 (note any analytic initial concs in s are replaced with sampled
@@ -1327,7 +1293,7 @@ SCENARIO("Reactions depend on x, y, t",
   s.importSBMLString(f.readAll().toStdString());
   constexpr double eps{1e-20};
   constexpr double dt{1e-3};
-  auto& options{s.getSimulationSettings().options};
+  auto &options{s.getSimulationSettings().options};
   s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   options.dune.dt = dt;
   options.pixel.integrator = simulate::PixelIntegratorType::RK101;
@@ -1523,17 +1489,14 @@ SCENARIO(
 
 SCENARIO("SimulationData",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
-  model::Model s;
-  QFile f(":/models/very-simple-model.xml");
-  f.open(QIODevice::ReadOnly);
-  s.importSBMLString(f.readAll().toStdString());
+  auto s{getVerySimpleModel()};
   s.getSpecies().setAnalyticConcentration("B_c1", "cos(x/14.2)+1");
   s.getSpecies().setAnalyticConcentration("A_c2", "cos(x/12.2)+1");
   s.getSpecies().setAnalyticConcentration("B_c2", "cos(x/15.1)+1");
   s.getSpecies().setAnalyticConcentration("A_c3", "cos(x/7.2)+1");
   s.getSpecies().setAnalyticConcentration("B_c3", "cos(x/5.2)+1");
   WHEN("Continue previous simulation from data") {
-    auto& options{s.getSimulationSettings().options};
+    auto &options{s.getSimulationSettings().options};
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     options.pixel.maxErr.rel = 1e-2;
     simulate::Simulation sim(s);
@@ -1610,7 +1573,7 @@ SCENARIO("SimulationData",
     REQUIRE(rel_diff(dataB, data, 5, 5) < allowedDifference);
   }
   WHEN("Repeat with smaller integration errors: difference reduced") {
-    auto& options{s.getSimulationSettings().options};
+    auto &options{s.getSimulationSettings().options};
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     options.pixel.maxErr.rel = 1e-5;
     simulate::Simulation sim(s);
@@ -1658,64 +1621,157 @@ SCENARIO("doMultipleTimesteps vs doTimesteps",
   }
 }
 
-SCENARIO("Events",
+SCENARIO("Events: setting species concentrations",
          "[core/simulate/simulate][core/simulate][core][simulate][events]") {
   auto m1{getVerySimpleModel()};
-  // disable all reactions
-  for (const auto &id : {"A_uptake", "A_transport", "A_B_conversion",
-                         "B_transport", "B_excretion"}) {
-    m1.getReactions().remove(id);
+  for (auto simType :
+       {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
+    CAPTURE(simType);
+    // disable all reactions
+    for (const auto &id : {"A_uptake", "A_transport", "A_B_conversion",
+                           "B_transport", "B_excretion"}) {
+      m1.getReactions().remove(id);
+    }
+    // add a bunch of events that set species concentrations so we can easily
+    // check they were done correctly
+    auto &events{m1.getEvents()};
+    events.add("eB_c1a", "B_c1");
+    // param = 1 in model
+    events.setExpression("eB_c1a", "9*param");
+    events.setTime("eB_c1a", 0.07);
+    events.add("eB_c1b", "B_c1");
+    events.setExpression("eB_c1b", "2");
+    events.setTime("eB_c1b", 0.12);
+    // change value of p
+    events.add("change_p", "param");
+    events.setExpression("change_p", "27");
+    events.setTime("change_p", 0.11);
+    events.add("eB_c2", "B_c2");
+    events.setExpression("eB_c2", "param");
+    events.setTime("eB_c2", 0.12);
+    events.add("eA_c3a", "A_c3");
+    events.setExpression("eA_c3a", "666");
+    events.setTime("eA_c3a", 0.199999);
+    events.add("eA_c3b", "A_c3");
+    events.setExpression("eA_c3b", "123");
+    // will be applied *during* 0.1->0.2 timestep: visible in 0.2 timestep
+    events.setTime("eA_c3b", 0.1999999);
+    events.add("eA_c2", "A_c2");
+    events.setExpression("eA_c2", "6");
+    // applied *at start of* 0.1-0.2 timestep: visible in 0.2 timestep
+    events.setTime("eA_c2", 0.1);
+    m1.getSimulationSettings().simulatorType = simType;
+    simulate::Simulation sim(m1);
+    sim.doTimesteps(0.1, 3);
+    const auto &data{m1.getSimulationData()};
+    // t=0.1
+    REQUIRE(data.timePoints[1] == dbl_approx(0.1));
+    // B_c1=9
+    REQUIRE(data.concentration[1][0][3] == dbl_approx(9.0));
+    REQUIRE(data.concentration[1][0][16] == dbl_approx(9.0));
+    REQUIRE(data.concentration[1][0][38] == dbl_approx(9.0));
+    // t=0.2
+    REQUIRE(data.timePoints[2] == dbl_approx(0.2));
+    // B_c1=2
+    REQUIRE(data.concentration[2][0][3] == dbl_approx(2.0));
+    REQUIRE(data.concentration[2][0][16] == dbl_approx(2.0));
+    REQUIRE(data.concentration[2][0][38] == dbl_approx(2.0));
+    // B_c2=27 (odd indices)
+    REQUIRE(data.concentration[2][1][183] == dbl_approx(27));
+    REQUIRE(data.concentration[2][1][197] == dbl_approx(27));
+    REQUIRE(data.concentration[2][1][203] == dbl_approx(27));
+    // A_c2=6 (even indices)
+    REQUIRE(data.concentration[2][1][4] == dbl_approx(6.0));
+    REQUIRE(data.concentration[2][1][16] == dbl_approx(6.0));
+    REQUIRE(data.concentration[2][1][40] == dbl_approx(6.0));
+    // A_c3=123 (even indices)
+    REQUIRE(data.concentration[2][2][4] == dbl_approx(123.0));
+    REQUIRE(data.concentration[2][2][16] == dbl_approx(123.0));
+    REQUIRE(data.concentration[2][2][40] == dbl_approx(123.0));
   }
-  // add a bunch of events that set species concentrations so we can easily
-  // check they were done correctly
-  auto &events{m1.getEvents()};
-  events.add("eB_c1a", "B_c1");
-  events.setExpression("eB_c1a", "9");
-  events.setTime("eB_c1a", 0.07);
-  events.add("eB_c1b", "B_c1");
-  events.setExpression("eB_c1b", "2");
-  events.setTime("eB_c1b", 0.12);
-  events.add("eB_c2", "B_c2");
-  events.setExpression("eB_c2", "27");
-  events.setTime("eB_c2", 0.12);
-  events.add("eA_c3a", "A_c3");
-  events.setExpression("eA_c3a", "666");
-  events.setTime("eA_c3a", 0.199999);
-  events.add("eA_c3b", "A_c3");
-  events.setExpression("eA_c3b", "123");
-  // will be applied *during* 0.1->0.2 timestep: visible in 0.2 timestep
-  events.setTime("eA_c3b", 0.1999999);
-  events.add("eA_c2", "A_c2");
-  events.setExpression("eA_c2", "6");
-  // applied *at start of* 0.1-0.2 timestep: visible in 0.2 timestep
-  events.setTime("eA_c2", 0.1);
-  simulate::Simulation sim(m1);
-  sim.doTimesteps(0.1, 3);
-  const auto &data{m1.getSimulationData()};
-  // t=0.1
-  REQUIRE(data.timePoints[1] == dbl_approx(0.1));
-  // B_c1=9
-  REQUIRE(data.concentration[1][0][3] == dbl_approx(9.0));
-  REQUIRE(data.concentration[1][0][16] == dbl_approx(9.0));
-  REQUIRE(data.concentration[1][0][38] == dbl_approx(9.0));
-  // t=0.2
-  REQUIRE(data.timePoints[2] == dbl_approx(0.2));
-  // B_c1=2
-  REQUIRE(data.concentration[2][0][3] == dbl_approx(2.0));
-  REQUIRE(data.concentration[2][0][16] == dbl_approx(2.0));
-  REQUIRE(data.concentration[2][0][38] == dbl_approx(2.0));
-  // B_c2=27 (odd indices)
-  REQUIRE(data.concentration[2][1][183] == dbl_approx(27));
-  REQUIRE(data.concentration[2][1][197] == dbl_approx(27));
-  REQUIRE(data.concentration[2][1][203] == dbl_approx(27));
-  // A_c2=6 (even indices)
-  REQUIRE(data.concentration[2][1][4] == dbl_approx(6.0));
-  REQUIRE(data.concentration[2][1][16] == dbl_approx(6.0));
-  REQUIRE(data.concentration[2][1][40] == dbl_approx(6.0));
-  // A_c3=123 (even indices)
-  REQUIRE(data.concentration[2][2][4] == dbl_approx(123.0));
-  REQUIRE(data.concentration[2][2][16] == dbl_approx(123.0));
-  REQUIRE(data.concentration[2][2][40] == dbl_approx(123.0));
+}
+
+SCENARIO("Events: continuing existing simulation",
+         "[core/simulate/simulate][core/simulate][core][simulate][events]") {
+  for (auto simType :
+       {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
+    CAPTURE(simType);
+    double allowedRelDiff{1e-5};
+    if (simType == simulate::SimulatorType::DUNE) {
+      allowedRelDiff = 0.01;
+    }
+    auto m1{getBrusselatorModel()};
+    m1.getSimulationSettings().simulatorType = simType;
+    simulate::Simulation s1(m1);
+    s1.doTimesteps(20, 1);
+    // t=20: no events so far
+    m1.exportSMEFile("t20.sme");
+    s1.doTimesteps(20, 1);
+    // t=20: k2 increased
+    m1.exportSMEFile("t40.sme");
+    s1.doTimesteps(20, 1);
+    // t=60: k2 decreased
+    m1.exportSMEFile("t60.sme");
+    s1.doTimesteps(20, 1);
+    // s1 has sim data at t = 0, 20, 40, 60, 80
+    const auto &d1{s1.getSimulationData()};
+    REQUIRE(d1.size() == 5);
+    REQUIRE(d1.timePoints.back() == dbl_approx(80.0));
+
+    // load at t=20, simulate
+    model::Model m20;
+    m20.importFile("t20.sme");
+    const auto &d20{m20.getSimulationData()};
+    REQUIRE(d20.size() == 2);
+    REQUIRE(d20.timePoints.back() == dbl_approx(20.0));
+    simulate::Simulation s20(m20);
+    s20.doTimesteps(20, 3);
+    REQUIRE(d20.timePoints.back() == dbl_approx(80.0));
+    REQUIRE(d20.size() == 5);
+    // first two timepoints agree exactly
+    REQUIRE(rel_diff(d1, d20, 0, 0) == dbl_approx(0.0));
+    REQUIRE(rel_diff(d1, d20, 1, 1) == dbl_approx(0.0));
+    // after that they differ by O(dt^2)
+    REQUIRE(rel_diff(d1, d20, 2, 2) < allowedRelDiff);
+    REQUIRE(rel_diff(d1, d20, 3, 3) < allowedRelDiff);
+    REQUIRE(rel_diff(d1, d20, 4, 4) < allowedRelDiff);
+
+    // load at t=40, simulate
+    model::Model m40;
+    m40.importFile("t40.sme");
+    const auto &d40{m40.getSimulationData()};
+    REQUIRE(d40.size() == 3);
+    REQUIRE(d40.timePoints.back() == dbl_approx(40.0));
+    simulate::Simulation s40(m40);
+    s40.doTimesteps(20, 2);
+    REQUIRE(d40.size() == 5);
+    REQUIRE(d40.timePoints.back() == dbl_approx(80.0));
+    // first three timepoints agree exactly
+    REQUIRE(rel_diff(d1, d40, 0, 0) == dbl_approx(0.0));
+    REQUIRE(rel_diff(d1, d40, 1, 1) == dbl_approx(0.0));
+    REQUIRE(rel_diff(d1, d40, 2, 2) == dbl_approx(0.0));
+    // after that they differ by O(dt^2)
+    REQUIRE(rel_diff(d1, d40, 3, 3) < allowedRelDiff);
+    REQUIRE(rel_diff(d1, d40, 4, 4) < allowedRelDiff);
+
+    // load at t=60, simulate
+    model::Model m60;
+    m60.importFile("t60.sme");
+    const auto &d60{m60.getSimulationData()};
+    REQUIRE(d60.size() == 4);
+    REQUIRE(d60.timePoints.back() == dbl_approx(60.0));
+    simulate::Simulation s60(m60);
+    s60.doTimesteps(20, 1);
+    REQUIRE(d60.size() == 5);
+    REQUIRE(d60.timePoints.back() == dbl_approx(80.0));
+    // first four timepoints agree exactly
+    REQUIRE(rel_diff(d1, d60, 0, 0) == dbl_approx(0.0));
+    REQUIRE(rel_diff(d1, d60, 1, 1) == dbl_approx(0.0));
+    REQUIRE(rel_diff(d1, d60, 2, 2) == dbl_approx(0.0));
+    REQUIRE(rel_diff(d1, d60, 3, 3) == dbl_approx(0.0));
+    // after that they differ by O(dt^2)
+    REQUIRE(rel_diff(d1, d60, 4, 4) < allowedRelDiff);
+  }
 }
 
 SCENARIO("simulate w/options & save, load, re-simulate",

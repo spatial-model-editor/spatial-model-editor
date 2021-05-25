@@ -222,9 +222,13 @@ double PixelSim::doRKAdaptive(double dtMax) {
 
 PixelSim::PixelSim(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
-    const std::vector<std::vector<std::string>> &compartmentSpeciesIds)
-    : doc{sbmlDoc}, integrator{sbmlDoc.getSimulationSettings().options.pixel.integrator}, errMax{sbmlDoc.getSimulationSettings().options.pixel.maxErr},
-      maxTimestep{sbmlDoc.getSimulationSettings().options.pixel.maxTimestep}, numMaxThreads{sbmlDoc.getSimulationSettings().options.pixel.maxThreads} {
+    const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
+    const std::map<std::string, double, std::less<>> &substitutions)
+    : doc{sbmlDoc},
+      integrator{sbmlDoc.getSimulationSettings().options.pixel.integrator},
+      errMax{sbmlDoc.getSimulationSettings().options.pixel.maxErr},
+      maxTimestep{sbmlDoc.getSimulationSettings().options.pixel.maxTimestep},
+      numMaxThreads{sbmlDoc.getSimulationSettings().options.pixel.maxThreads} {
   try {
     // check if reactions explicitly depend on time or space
     auto xId{doc.getParameters().getSpatialCoordinates().x.id};
@@ -245,8 +249,10 @@ PixelSim::PixelSim(
       const auto *compartment{doc.getCompartments().getCompartment(
           compartmentIds[compIndex].c_str())};
       simCompartments.push_back(std::make_unique<SimCompartment>(
-          doc, compartment, speciesIds, sbmlDoc.getSimulationSettings().options.pixel.doCSE, sbmlDoc.getSimulationSettings().options.pixel.optLevel,
-          timeDependent, spaceDependent));
+          doc, compartment, speciesIds,
+          sbmlDoc.getSimulationSettings().options.pixel.doCSE,
+          sbmlDoc.getSimulationSettings().options.pixel.optLevel, timeDependent,
+          spaceDependent, substitutions));
       maxStableTimestep = std::min(
           maxStableTimestep, simCompartments.back()->getMaxStableTimestep());
     }
@@ -277,8 +283,19 @@ PixelSim::PixelSim(
           compB = iterB->get();
         }
         simMembranes.push_back(std::make_unique<SimMembrane>(
-            doc, &membrane, compA, compB, sbmlDoc.getSimulationSettings().options.pixel.doCSE, sbmlDoc.getSimulationSettings().options.pixel.optLevel,
-            timeDependent, spaceDependent));
+            doc, &membrane, compA, compB,
+            sbmlDoc.getSimulationSettings().options.pixel.doCSE,
+            sbmlDoc.getSimulationSettings().options.pixel.optLevel,
+            timeDependent, spaceDependent, substitutions));
+      }
+    }
+    // apply existing simulation concentrations if present
+    const auto &data{sbmlDoc.getSimulationData()};
+    if (data.concentration.size() > 1 && !data.concentration.back().empty() &&
+        (data.concentration.back().size() == simCompartments.size())) {
+      SPDLOG_INFO("Applying supplied initial concentrations");
+      for (std::size_t i = 0; i < simCompartments.size(); ++i) {
+        simCompartments[i]->setConcentrations(data.concentration.back()[i]);
       }
     }
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
@@ -388,4 +405,4 @@ const QImage &PixelSim::errorImage() const { return currentErrorImage; }
 
 void PixelSim::requestStop() { stopRequested.store(true); }
 
-} // namespace sme
+} // namespace sme::simulate

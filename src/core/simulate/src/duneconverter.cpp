@@ -84,11 +84,12 @@ static void addWriter(IniFile &ini) {
   ini.addValue("file_path", "vtk");
 }
 
-static void
-addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
-               bool forExternalUse, const QString &iniFileDir,
-               std::vector<std::vector<std::vector<double>>> &concentrations,
-               const QString &compartmentId) {
+static void addCompartment(
+    IniFile &ini, const model::Model &model,
+    const std::map<std::string, double, std::less<>> &substitutions, int doublePrecision,
+    bool forExternalUse, const QString &iniFileDir,
+    std::vector<std::vector<std::vector<double>>> &concentrations,
+    const QString &compartmentId, std::size_t &simDataCompartmentIndex) {
   const auto &lengthUnit = model.getUnits().getLength();
   const auto &volumeUnit = model.getUnits().getVolume();
   double volOverL3{model::getVolOverL3(lengthUnit, volumeUnit)};
@@ -183,12 +184,34 @@ addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
     } else {
       ini.addValue(duneName, 0.0, doublePrecision);
       // create array of concentration values
-      concs[indices[i]] = f->getConcentrationImageArray();
+      if (const auto &simConcs{model.getSimulationData().concentration};
+          simConcs.size() > 1) {
+        // use concentrations from existing simulation data
+        auto simField{*f};
+        const std::size_t nPixels{f->getCompartment()->nPixels()};
+        const std::size_t padding{model.getSimulationData().concPadding.back()};
+        const std::size_t stride{padding + nonConstantSpecies.size()};
+        std::vector<double> c(nPixels, 0.0);
+        SPDLOG_INFO("using simulation concentration data for species {}", name.toStdString());
+        SPDLOG_INFO("- species index {}", i);
+        SPDLOG_INFO("- species dune index {}", indices[i]);
+        for (std::size_t iPixel = 0; iPixel < nPixels; ++iPixel) {
+          c[iPixel] =
+              simConcs.back()[simDataCompartmentIndex][iPixel * stride + i];
+        }
+        simField.setConcentration(c);
+        concs[indices[i]] = simField.getConcentrationImageArray();
+      } else {
+        concs[indices[i]] = f->getConcentrationImageArray();
+      }
       for (auto &c : concs[indices[i]]) {
         // convert A/V to A/L^3
         c /= volOverL3;
       }
     }
+  }
+  if (!nonConstantSpecies.empty()) {
+    ++simDataCompartmentIndex;
   }
   if (forExternalUse && !tiffs.empty()) {
     ini.addSection("model", "data");
@@ -211,7 +234,7 @@ addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
               scaleFactors.reaction);
 
   Pde pde(&model, nonConstantSpecies, reacs, duneSpeciesNames, scaleFactors,
-          extraReactionVars, relabelledExtraReactionVars);
+          extraReactionVars, relabelledExtraReactionVars, substitutions);
   for (std::size_t i = 0; i < nSpecies; ++i) {
     ini.addValue(duneSpeciesNames[i].c_str(), pde.getRHS()[i].c_str());
   }
@@ -273,7 +296,7 @@ addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
                   mScaleFactors.species);
 
       Pde pdeBcs(&model, mSpecies, mReacs, mDuneSpecies, mScaleFactors,
-                 extraReactionVars, relabelledExtraReactionVars);
+                 extraReactionVars, relabelledExtraReactionVars, substitutions);
       for (std::size_t i = 0; i < nSpecies; ++i) {
         ini.addValue(duneSpeciesNames[i].c_str(), pdeBcs.getRHS()[i].c_str());
       }
@@ -294,8 +317,10 @@ addCompartment(IniFile &ini, const model::Model &model, int doublePrecision,
   }
 }
 
-DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
-                             const QString &outputIniFile, int doublePrecision)
+DuneConverter::DuneConverter(const model::Model &model,
+                             const std::map<std::string, double, std::less<>> &substitutions,
+                             bool forExternalUse, const QString &outputIniFile,
+                             int doublePrecision)
     : mesh{model.getGeometry().getMesh()},
       x0{model.getGeometry().getPhysicalOrigin().x()},
       y0{model.getGeometry().getPhysicalOrigin().y()},
@@ -318,7 +343,8 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
   IniFile iniCommon;
   addGrid(iniCommon);
   addModel(iniCommon);
-  addTimeStepping(iniCommon, model.getSimulationSettings().options.dune, doublePrecision);
+  addTimeStepping(iniCommon, model.getSimulationSettings().options.dune,
+                  doublePrecision);
   addLogging(iniCommon, forExternalUse);
   addWriter(iniCommon);
 
@@ -358,10 +384,12 @@ DuneConverter::DuneConverter(const model::Model &model, bool forExternalUse,
   }
 
   std::size_t modelIndex{0};
+  std::size_t simDataCompartmentIndex{0};
   // for each compartment
   for (const auto &compId : model.getCompartments().getIds()) {
-    addCompartment(inis[modelIndex], model, doublePrecision, forExternalUse,
-                   iniFileDir, concentrations, compId);
+    addCompartment(inis[modelIndex], model, substitutions, doublePrecision,
+                   forExternalUse, iniFileDir, concentrations, compId,
+                   simDataCompartmentIndex);
     if (independentCompartments) {
       ++modelIndex;
     }

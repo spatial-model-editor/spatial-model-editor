@@ -183,7 +183,8 @@ void DuneSim::updatePixels() {
 }
 
 DuneSim::DuneSim(const model::Model &sbmlDoc,
-                 const std::vector<std::string> &compartmentIds)
+                 const std::vector<std::string> &compartmentIds,
+                 const std::map<std::string, double, std::less<>> &substitutions)
     : geometryImageSize{sbmlDoc.getGeometry().getImage().size()},
       pixelSize{sbmlDoc.getGeometry().getPixelWidth()},
       pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()} {
@@ -192,7 +193,7 @@ DuneSim::DuneSim(const model::Model &sbmlDoc,
     const auto &volumeUnit{sbmlDoc.getUnits().getVolume()};
     volOverL3 = model::getVolOverL3(lengthUnit, volumeUnit);
 
-    simulate::DuneConverter dc(sbmlDoc, false);
+    simulate::DuneConverter dc(sbmlDoc, substitutions, false);
     const auto &options{sbmlDoc.getSimulationSettings().options.dune};
     if (options.discretization != DuneDiscretizationType::FEM1) {
       // for now we only support 1st order FEM

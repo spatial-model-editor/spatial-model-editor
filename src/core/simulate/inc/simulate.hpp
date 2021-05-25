@@ -41,26 +41,27 @@ private:
   std::unique_ptr<BaseSim> simulator;
   std::vector<const geometry::Compartment *> compartments;
   std::vector<std::string> compartmentIds;
+  std::map<std::string, double, std::less<>> eventSubstitutions{};
   // compartment->species
   std::vector<std::vector<std::string>> compartmentSpeciesIds;
   std::vector<std::vector<std::string>> compartmentSpeciesNames;
   std::vector<std::vector<std::size_t>> compartmentSpeciesIndices;
   std::vector<std::vector<QRgb>> compartmentSpeciesColors;
+  model::Model &model;
   model::SimulationSettings *settings;
   SimulationData *data;
   QSize imageSize;
   std::atomic<bool> isRunning{false};
   std::atomic<bool> stopRequested{false};
   std::atomic<std::size_t> nCompletedTimesteps{0};
-  std::unique_ptr<sme::model::Model> simModel;
   std::queue<SimEvent> simEvents;
-  void initModel(const model::Model &model);
-  void initEvents(model::Model &model);
+  void initModel();
+  void initEvents();
   void applyNextEvent();
   void updateConcentrations(double t);
 
 public:
-  explicit Simulation(model::Model &sbmlDoc);
+  explicit Simulation(model::Model &model);
   ~Simulation();
 
   std::size_t doTimesteps(double time, std::size_t nSteps = 1,
@@ -84,7 +85,7 @@ public:
   std::vector<double> getConcArray(std::size_t timeIndex,
                                    std::size_t compartmentIndex,
                                    std::size_t speciesIndex) const;
-  void applyConcsToModel(model::Model &model, std::size_t timeIndex) const;
+  void applyConcsToModel(model::Model &m, std::size_t timeIndex) const;
   std::vector<double> getDcdt(std::size_t compartmentIndex,
                               std::size_t speciesIndex) const;
   double getLowerOrderConc(std::size_t compartmentIndex,
