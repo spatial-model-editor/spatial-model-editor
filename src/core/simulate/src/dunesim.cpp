@@ -182,9 +182,9 @@ void DuneSim::updatePixels() {
   }
 }
 
-DuneSim::DuneSim(const model::Model &sbmlDoc,
-                 const std::vector<std::string> &compartmentIds,
-                 const std::map<std::string, double, std::less<>> &substitutions)
+DuneSim::DuneSim(
+    const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
+    const std::map<std::string, double, std::less<>> &substitutions)
     : geometryImageSize{sbmlDoc.getGeometry().getImage().size()},
       pixelSize{sbmlDoc.getGeometry().getPixelWidth()},
       pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()} {
@@ -265,7 +265,7 @@ const std::string &DuneSim::errorMessage() const { return currentErrorMessage; }
 
 const QImage &DuneSim::errorImage() const { return currentErrorImage; }
 
-void DuneSim::requestStop() {
+void DuneSim::setStopRequested([[maybe_unused]] bool stop) {
   SPDLOG_DEBUG("Not implemented - ignoring request");
 }
 

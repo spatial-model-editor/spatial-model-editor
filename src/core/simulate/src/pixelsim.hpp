@@ -47,8 +47,8 @@ private:
   double epsilon{1e-14};
   bool useTBB{false};
   std::size_t numMaxThreads{1};
-  std::string currentErrorMessage;
-  QImage currentErrorImage;
+  std::string currentErrorMessage{};
+  QImage currentErrorImage{};
   std::atomic<bool> stopRequested{false};
   std::size_t nExtraVars{0};
 
@@ -69,7 +69,7 @@ public:
                                     std::size_t pixelIndex) const;
   const std::string &errorMessage() const override;
   const QImage &errorImage() const override;
-  void requestStop() override;
+  void setStopRequested(bool stop) override;
 };
 
 } // namespace simulate

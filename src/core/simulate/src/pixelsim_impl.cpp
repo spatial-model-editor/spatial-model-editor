@@ -21,12 +21,11 @@
 
 namespace sme::simulate {
 
-ReacEval::ReacEval(const model::Model &doc,
-                   const std::vector<std::string> &speciesIDs,
-                   const std::vector<std::string> &reactionIDs,
-                   double reactionScaleFactor, bool doCSE, unsigned optLevel,
-                   bool timeDependent, bool spaceDependent,
-                   const std::map<std::string, double, std::less<>> &substitutions) {
+ReacEval::ReacEval(
+    const model::Model &doc, const std::vector<std::string> &speciesIDs,
+    const std::vector<std::string> &reactionIDs, double reactionScaleFactor,
+    bool doCSE, unsigned optLevel, bool timeDependent, bool spaceDependent,
+    const std::map<std::string, double, std::less<>> &substitutions) {
   // construct reaction expressions and stoich matrix
   PdeScaleFactors pdeScaleFactors;
   pdeScaleFactors.reaction = reactionScaleFactor;
@@ -439,12 +438,11 @@ double SimCompartment::getMaxStableTimestep() const {
   return maxStableTimestep;
 }
 
-SimMembrane::SimMembrane(const model::Model &doc,
-                         const geometry::Membrane *membrane_ptr,
-                         SimCompartment *simCompA, SimCompartment *simCompB,
-                         bool doCSE, unsigned optLevel, bool timeDependent,
-                         bool spaceDependent,
-                         const std::map<std::string, double, std::less<>> &substitutions)
+SimMembrane::SimMembrane(
+    const model::Model &doc, const geometry::Membrane *membrane_ptr,
+    SimCompartment *simCompA, SimCompartment *simCompB, bool doCSE,
+    unsigned optLevel, bool timeDependent, bool spaceDependent,
+    const std::map<std::string, double, std::less<>> &substitutions)
     : membrane(membrane_ptr), compA(simCompA), compB(simCompB) {
   if (timeDependent) {
     ++nExtraVars;

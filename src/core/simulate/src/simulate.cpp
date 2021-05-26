@@ -235,6 +235,8 @@ std::size_t Simulation::doTimesteps(double time, std::size_t nSteps,
 std::size_t Simulation::doMultipleTimesteps(
     const std::vector<std::pair<std::size_t, double>> &timesteps,
     double timeout_ms) {
+  isRunning.store(true);
+  stopRequested.store(false);
   std::size_t nStepsTotal{0};
   for (const auto &timestep : timesteps) {
     nStepsTotal += timestep.first;
@@ -248,8 +250,6 @@ std::size_t Simulation::doMultipleTimesteps(
   // todo: there should be a mutex/lock here in case reserve() reallocates
   // to avoid a user getting garbage data while the vector contents are moving
   data->reserve(data->size() + nStepsTotal);
-  stopRequested.store(false);
-  isRunning.store(true);
   std::size_t steps{0};
   double remaining_timeout_ms{-1.0};
   for (const auto &timestep : timesteps) {
@@ -296,6 +296,8 @@ std::size_t Simulation::doMultipleTimesteps(
       steps += simulator->run(currentTimeStep, remaining_timeout_ms);
       if (!simulator->errorMessage().empty() || stopRequested.load()) {
         isRunning.store(false);
+        stopRequested.store(false);
+        simulator->setStopRequested(false);
         return steps;
       }
       updateConcentrations(data->timePoints.back() + time);
@@ -303,6 +305,8 @@ std::size_t Simulation::doMultipleTimesteps(
     }
   }
   isRunning.store(false);
+  stopRequested.store(false);
+  simulator->setStopRequested(false);
   return steps;
 }
 
@@ -554,7 +558,7 @@ bool Simulation::getIsStopping() const { return stopRequested.load(); }
 
 void Simulation::requestStop() {
   stopRequested.store(true);
-  simulator->requestStop();
+  simulator->setStopRequested(true);
 }
 
 } // namespace sme::simulate
