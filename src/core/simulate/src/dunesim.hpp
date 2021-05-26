@@ -10,10 +10,10 @@
 #include <array>
 #include <cstddef>
 #include <limits>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
-#include <map>
 #include <vector>
 
 namespace dune {
@@ -61,14 +61,15 @@ private:
       const std::vector<const geometry::Compartment *> &comps);
   void updatePixels();
   void updateSpeciesConcentrations();
-  std::string currentErrorMessage;
-  QImage currentErrorImage;
+  std::string currentErrorMessage{};
+  QImage currentErrorImage{};
   double volOverL3;
 
 public:
-  explicit DuneSim(const model::Model &sbmlDoc,
-                   const std::vector<std::string> &compartmentIds,
-                   const std::map<std::string, double, std::less<>> &substitutions = {});
+  explicit DuneSim(
+      const model::Model &sbmlDoc,
+      const std::vector<std::string> &compartmentIds,
+      const std::map<std::string, double, std::less<>> &substitutions = {});
   ~DuneSim() override;
   std::size_t run(double time, double timeout_ms) override;
   [[nodiscard]] const std::vector<double> &
@@ -76,7 +77,7 @@ public:
   [[nodiscard]] std::size_t getConcentrationPadding() const override;
   [[nodiscard]] const std::string &errorMessage() const override;
   [[nodiscard]] const QImage &errorImage() const override;
-  void requestStop() override;
+  void setStopRequested(bool stop) override;
 };
 
 } // namespace simulate

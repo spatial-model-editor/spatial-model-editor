@@ -1817,3 +1817,25 @@ SCENARIO("simulate w/options & save, load, re-simulate",
     }
   }
 }
+
+SCENARIO("stop, then continue pixel simulation",
+         "[core/simulate/simulate][core/simulate][core][simulate][Q]") {
+  // see https://github.com/spatial-model-editor/spatial-model-editor/issues/544
+  auto m{getVerySimpleModel()};
+  m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+  simulate::Simulation sim(m);
+  // start simulation with single huge timestep in another thread
+  auto simSteps =
+      std::async(std::launch::async, &simulate::Simulation::doTimesteps, &sim,
+                 5000.0, 1, -1.0);
+  // ask it to stop early
+  sim.requestStop();
+  // this `.get()` blocks until simulation is finished
+  REQUIRE(simSteps.get() >= 1);
+  REQUIRE(m.getSimulationData().timePoints.size() == 1);
+  REQUIRE(sim.getIsRunning() == false);
+  REQUIRE(sim.getIsStopping() == false);
+  // check we can do more timesteps
+  sim.doMultipleTimesteps({{3, 0.01}});
+  REQUIRE(m.getSimulationData().timePoints.size() == 4);
+}

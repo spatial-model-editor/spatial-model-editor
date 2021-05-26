@@ -2,9 +2,9 @@
 
 #pragma once
 
+#include "model_settings.hpp"
 #include "simulate_data.hpp"
 #include "simulate_options.hpp"
-#include "model_settings.hpp"
 #include <QImage>
 #include <QRgb>
 #include <QSize>
@@ -31,7 +31,7 @@ namespace simulate {
 
 class BaseSim;
 
-struct SimEvent{
+struct SimEvent {
   double time;
   std::vector<std::string> ids;
 };

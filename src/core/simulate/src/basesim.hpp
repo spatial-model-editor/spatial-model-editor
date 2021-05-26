@@ -2,13 +2,11 @@
 
 #pragma once
 
+#include <QImage>
 #include <string>
 #include <vector>
-#include <QImage>
 
-namespace sme {
-
-namespace simulate {
+namespace sme::simulate {
 
 class BaseSim {
 public:
@@ -19,9 +17,7 @@ public:
   virtual std::size_t getConcentrationPadding() const = 0;
   virtual const std::string &errorMessage() const = 0;
   virtual const QImage &errorImage() const = 0;
-  virtual void requestStop() = 0;
+  virtual void setStopRequested(bool stop) = 0;
 };
 
-} // namespace simulate
-
-} // namespace sme
+} // namespace sme::simulate

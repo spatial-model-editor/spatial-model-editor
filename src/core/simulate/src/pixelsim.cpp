@@ -336,6 +336,7 @@ std::size_t PixelSim::run(double time, double timeout_ms) {
   SPDLOG_TRACE("  - max rel local err {}", errMax.rel);
   SPDLOG_TRACE("  - max abs local err {}", errMax.abs);
   SPDLOG_TRACE("  - max stepsize {}", maxTimestep);
+  currentErrorMessage.clear();
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   tbb::global_control control(tbb::global_control::max_allowed_parallelism,
                               numMaxThreads);
@@ -363,7 +364,7 @@ std::size_t PixelSim::run(double time, double timeout_ms) {
     if (timeout_ms >= 0.0 &&
         static_cast<double>(timer.elapsed()) >= timeout_ms) {
       SPDLOG_DEBUG("Simulation timeout: requesting stop");
-      requestStop();
+      setStopRequested(true);
     }
     if (stopRequested.load()) {
       currentErrorMessage = "Simulation stopped early";
@@ -403,6 +404,6 @@ const std::string &PixelSim::errorMessage() const {
 
 const QImage &PixelSim::errorImage() const { return currentErrorImage; }
 
-void PixelSim::requestStop() { stopRequested.store(true); }
+void PixelSim::setStopRequested(bool stop) { stopRequested.store(stop); }
 
 } // namespace sme::simulate
