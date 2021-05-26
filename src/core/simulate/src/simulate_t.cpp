@@ -553,6 +553,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     if (simulatorType == simulate::SimulatorType::DUNE) {
       epsilon = 1e-6;
     }
+    double simTime{0.025};
     // import model
     auto s1{getVerySimpleModel()};
     // 1st order RK, fixed timestep simulation
@@ -576,7 +577,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     options.dune.maxDt = 0.011;
     CAPTURE(simulatorType);
     simulate::Simulation sim(s1);
-    sim.doTimesteps(0.20);
+    sim.doTimesteps(simTime);
     REQUIRE(sim.getTimePoints().size() == 2);
 
     // Length unit -> 10x smaller
@@ -594,7 +595,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       s.getUnits().setLengthIndex(1);
       REQUIRE(s.getUnits().getLength().name == "dm");
       simulate::Simulation sim2(s);
-      sim2.doTimesteps(0.20);
+      sim2.doTimesteps(simTime);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
       for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
@@ -619,7 +620,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       s.getUnits().setLengthIndex(2);
       REQUIRE(s.getUnits().getLength().name == "cm");
       simulate::Simulation sim2(s);
-      sim2.doTimesteps(0.20);
+      sim2.doTimesteps(simTime);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
       for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
@@ -645,7 +646,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       s.getUnits().setVolumeIndex(1);
       REQUIRE(s.getUnits().getVolume().name == "dL");
       simulate::Simulation sim2(s);
-      sim2.doTimesteps(0.20);
+      sim2.doTimesteps(simTime);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
       for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
@@ -669,7 +670,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       s.getUnits().setVolumeIndex(3);
       REQUIRE(s.getUnits().getVolume().name == "mL");
       simulate::Simulation sim2(s);
-      sim2.doTimesteps(0.20);
+      sim2.doTimesteps(simTime);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
       for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
@@ -692,7 +693,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       s.getUnits().setVolumeIndex(4);
       REQUIRE(s.getUnits().getVolume().name == "m3");
       simulate::Simulation sim2(s);
-      sim2.doTimesteps(0.20);
+      sim2.doTimesteps(simTime);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
       for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
@@ -714,7 +715,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       s.getUnits().setVolumeIndex(5);
       REQUIRE(s.getUnits().getVolume().name == "dm3");
       simulate::Simulation sim2(s);
-      sim2.doTimesteps(0.20);
+      sim2.doTimesteps(simTime);
       REQUIRE(sim2.getTimePoints().size() == 2);
       REQUIRE(sim2.errorMessage().empty());
       for (auto iComp : {std::size_t(0), std::size_t(1), std::size_t(2)}) {
@@ -1404,18 +1405,12 @@ SCENARIO(
     "membrane reactions",
     "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
   GIVEN("circle membrane reaction") {
-    model::Model s;
-    QFile f(":/test/models/membrane-reaction-circle.xml");
-    f.open(QIODevice::ReadOnly);
-    s.importSBMLString(f.readAll().toStdString());
-    model::Model s2;
-    QFile f2(":/test/models/membrane-reaction-circle.xml");
-    f2.open(QIODevice::ReadOnly);
-    s2.importSBMLString(f2.readAll().toStdString());
-    s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
-    simulate::Simulation simDune(s);
-    s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
-    simulate::Simulation simPixel(s2);
+    auto mDune{getModel(":/test/models/membrane-reaction-circle.xml")};
+    auto mPixel{getModel(":/test/models/membrane-reaction-circle.xml")};
+    mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+    simulate::Simulation simDune(mDune);
+    mPixel.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+    simulate::Simulation simPixel(mPixel);
     REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
     REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
     simDune.doTimesteps(0.05);
@@ -1424,14 +1419,14 @@ SCENARIO(
                      simDune.getAvgMinMax(1, 1, 0).avg) /
                 std::abs(simPixel.getAvgMinMax(1, 1, 0).avg +
                          simDune.getAvgMinMax(1, 1, 0).avg) <
-            0.1);
+            0.2);
     auto p{simPixel.getConc(1, 1, 0)};
     auto d{simDune.getConc(1, 1, 0)};
     REQUIRE(p.size() == d.size());
     double avgAbsDiff{0};
     double avgRelDiff{0};
     constexpr double eps{1e-11};
-    double allowedAvgAbsDiff{0.01};
+    double allowedAvgAbsDiff{0.012};
     double allowedAvgRelDiff{0.40};
     for (std::size_t i = 0; i < p.size(); ++i) {
       avgAbsDiff += std::abs(p[i] - d[i]);
@@ -1445,18 +1440,12 @@ SCENARIO(
     REQUIRE(avgRelDiff < allowedAvgRelDiff);
   }
   GIVEN("pair of pixels membrane reaction") {
-    model::Model s;
-    QFile f(":/test/models/membrane-reaction-pixels.xml");
-    f.open(QIODevice::ReadOnly);
-    s.importSBMLString(f.readAll().toStdString());
-    model::Model s2;
-    QFile f2(":/test/models/membrane-reaction-pixels.xml");
-    f2.open(QIODevice::ReadOnly);
-    s2.importSBMLString(f2.readAll().toStdString());
-    s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
-    simulate::Simulation simDune(s);
-    s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
-    simulate::Simulation simPixel(s2);
+    auto mDune{getModel(":/test/models/membrane-reaction-pixels.xml")};
+    auto mPixel{getModel(":/test/models/membrane-reaction-pixels.xml")};
+    mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+    simulate::Simulation simDune(mDune);
+    mPixel.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+    simulate::Simulation simPixel(mPixel);
     REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
     REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
     simDune.doTimesteps(5);
@@ -1698,9 +1687,16 @@ SCENARIO("Events: continuing existing simulation",
     CAPTURE(simType);
     double allowedRelDiff{1e-5};
     if (simType == simulate::SimulatorType::DUNE) {
-      allowedRelDiff = 0.01;
+      // dunesim save/load of concentrations involves mesh -> pixels -> mesh
+      // conversion, and we use a coarse mesh to avoid simulation taking too
+      // long, so this results in fairly large errors:
+      allowedRelDiff = 0.15;
     }
     auto m1{getBrusselatorModel()};
+    // make mesh coarser to speed up dune tests
+    auto *mesh{m1.getGeometry().getMesh()};
+    mesh->setBoundaryMaxPoints(0, 9);
+    mesh->setCompartmentMaxTriangleArea(0, 999);
     m1.getSimulationSettings().simulatorType = simType;
     simulate::Simulation s1(m1);
     s1.doTimesteps(20, 1);
@@ -1787,9 +1783,9 @@ SCENARIO("simulate w/options & save, load, re-simulate",
     options1.dune.increase = 1.44;
     m1.getSimulationSettings().simulatorType = simulatorType;
     simulate::Simulation sim1(m1);
-    sim1.doMultipleTimesteps({{2, 0.01}, {3, 0.04}});
+    sim1.doMultipleTimesteps({{2, 0.01}, {1, 0.02}});
     const auto &data1{m1.getSimulationData()};
-    REQUIRE(data1.concentration.size() == 6);
+    REQUIRE(data1.concentration.size() == 4);
     m1.exportSMEFile("tmp.sme");
 
     // clear simulation data, then do simulation, should regenerate same data
@@ -1804,7 +1800,7 @@ SCENARIO("simulate w/options & save, load, re-simulate",
     REQUIRE(m2.getSimulationSettings().options.dune.increase ==
             dbl_approx(1.44));
     REQUIRE(m2.getSimulationSettings().times.size() == 2);
-    REQUIRE(m2.getSimulationData().concentration.size() == 6);
+    REQUIRE(m2.getSimulationData().concentration.size() == 4);
     auto times{m2.getSimulationSettings().times};
     m2.getSimulationData().clear();
     m2.getSimulationSettings().times.clear();
