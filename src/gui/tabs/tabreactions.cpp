@@ -8,6 +8,11 @@
 #include <QInputDialog>
 #include <QMessageBox>
 
+QDoubleSpinBoxNoScroll::QDoubleSpinBoxNoScroll(QWidget *parent)
+    : QDoubleSpinBox(parent) {}
+
+void QDoubleSpinBoxNoScroll::wheelEvent(QWheelEvent *event) { event->ignore(); }
+
 TabReactions::TabReactions(sme::model::Model &m,
                            QLabelMouseTracker *mouseTracker, QWidget *parent)
     : QWidget{parent}, ui{std::make_unique<Ui::TabReactions>()}, model{m},
@@ -52,8 +57,7 @@ void TabReactions::loadModelData(const QString &selection) {
   for (int i = 0; i < locIds.size(); ++i) {
     const auto &locId = locIds[i];
     const auto &locName = locNames[i];
-    auto *comp{
-        new QTreeWidgetItem(ui->listReactions, QStringList({locName}))};
+    auto *comp{new QTreeWidgetItem(ui->listReactions, QStringList({locName}))};
     ui->listReactions->addTopLevelItem(comp);
     ui->cmbReactionLocation->addItem(locName);
     for (const auto &reacId : model.getReactions().getIds(locId)) {
@@ -83,9 +87,8 @@ static QTableWidgetItem *newQTableWidgetItem(const QString &value) {
   return item;
 }
 
-void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
-                                                    QTreeWidgetItem *previous) {
-  Q_UNUSED(previous);
+void TabReactions::listReactions_currentItemChanged(
+    QTreeWidgetItem *current, [[maybe_unused]] QTreeWidgetItem *previous) {
   ui->txtReactionName->clear();
   ui->lblReactionScheme->clear();
   ui->listReactionSpecies->clear();
@@ -186,7 +189,7 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
       ui->txtReactionRate->addVariable(sId.toStdString(), sName.toStdString());
       auto *item = new QTreeWidgetItem;
       item->setText(0, sName);
-      auto *spinBox = new QDoubleSpinBox(ui->listReactionSpecies);
+      auto *spinBox = new QDoubleSpinBoxNoScroll(ui->listReactionSpecies);
       spinBox->setSingleStep(1.0);
       spinBox->setDecimals(14);
       spinBox->setRange(std::numeric_limits<double>::lowest(),
