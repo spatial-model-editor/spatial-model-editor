@@ -31,6 +31,7 @@ Spatial Model Editor Documentation
    reference/maths
    reference/units
    reference/source-code
+   reference/license
 
 .. toctree::
    :maxdepth: 2
