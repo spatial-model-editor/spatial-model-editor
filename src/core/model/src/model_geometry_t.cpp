@@ -1,13 +1,13 @@
 #include "catch_wrapper.hpp"
 #include "mesh.hpp"
-#include "serialization.hpp"
 #include "model_compartments.hpp"
-#include "model_settings.hpp"
 #include "model_geometry.hpp"
 #include "model_membranes.hpp"
 #include "model_parameters.hpp"
 #include "model_reactions.hpp"
+#include "model_settings.hpp"
 #include "model_species.hpp"
+#include "serialization.hpp"
 #include <QFile>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
@@ -40,13 +40,13 @@ SCENARIO("Model geometry",
     model::ModelMembranes mMembranes;
     model::ModelGeometry mGeometry;
     model::ModelSpecies mSpecies;
-    model::ModelReactions mReactions(doc->getModel(),
-                                     mMembranes.getMembranes());
+    model::ModelReactions mReactions(doc->getModel(), &mMembranes);
     utils::SmeFileContents smeFileContents;
     mCompartments = model::ModelCompartments(
-        doc->getModel(), &mGeometry, &mMembranes, &mSpecies, &mReactions, &smeFileContents.simulationData);
-    mGeometry =
-        model::ModelGeometry(doc->getModel(), &mCompartments, &mMembranes, &sbmlAnnotation);
+        doc->getModel(), &mGeometry, &mMembranes, &mSpecies, &mReactions,
+        &smeFileContents.simulationData);
+    mGeometry = model::ModelGeometry(doc->getModel(), &mCompartments,
+                                     &mMembranes, &sbmlAnnotation);
     auto &m = mGeometry;
     REQUIRE(m.getIsValid() == false);
     REQUIRE(m.getMesh() == nullptr);
@@ -62,7 +62,8 @@ SCENARIO("Model geometry",
       model::ModelParameters mParameters(doc->getModel());
       simulate::SimulationData data;
       mSpecies = model::ModelSpecies(doc->getModel(), &mCompartments,
-                                     &mGeometry, &mParameters, &mReactions, &data, &sbmlAnnotation);
+                                     &mGeometry, &mParameters, &mReactions,
+                                     &data, &sbmlAnnotation);
       REQUIRE(m.getIsValid() == true);
       REQUIRE(m.getMesh() != nullptr);
       REQUIRE(m.getHasImage() == true);

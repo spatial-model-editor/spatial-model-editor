@@ -74,7 +74,7 @@ void Model::initModelData() {
       ModelSpecies(model, &modelCompartments, &modelGeometry, &modelParameters,
                    &modelReactions, &getSimulationData(), &settings);
   modelEvents = ModelEvents(model, &modelParameters, &modelSpecies);
-  modelReactions = ModelReactions(model, modelMembranes.getMembranes());
+  modelReactions = ModelReactions(model, &modelMembranes);
 }
 
 void Model::setHasUnsavedChanges(bool unsavedChanges) {

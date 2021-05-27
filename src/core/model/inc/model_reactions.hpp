@@ -11,26 +11,26 @@
 
 namespace libsbml {
 class Model;
-class Species;
-} // namespace libsbml
+}
 
-namespace sme {
+namespace sme::model {
 
-namespace model {
+class ModelMembranes;
 
 class ModelReactions {
 private:
   QStringList ids;
   QStringList names;
   QVector<QStringList> parameterIds;
-  libsbml::Model *sbmlModel = nullptr;
+  libsbml::Model *sbmlModel{};
+  const ModelMembranes *modelMembranes{};
   bool hasUnsavedChanges{false};
 
 public:
   ModelReactions();
   explicit ModelReactions(libsbml::Model *model,
-                          const std::vector<geometry::Membrane> &membranes);
-  void makeReactionsSpatial(const std::vector<geometry::Membrane> &membranes);
+                          const ModelMembranes *membranes);
+  void makeReactionsSpatial(bool haveValidGeometry);
   QStringList getIds(const QString &locationId) const;
   QString add(const QString &name, const QString &locationId,
               const QString &rateExpression = "1");
@@ -38,11 +38,11 @@ public:
   void removeAllInvolvingSpecies(const QString &speciesId);
   QString setName(const QString &id, const QString &name);
   QString getName(const QString &id) const;
-  QString getScheme(const QString& id) const;
+  QString getScheme(const QString &id) const;
   void setLocation(const QString &id, const QString &locationId);
   QString getLocation(const QString &id) const;
   double getSpeciesStoichiometry(const QString &id,
-                              const QString &speciesId) const;
+                                 const QString &speciesId) const;
   void setSpeciesStoichiometry(const QString &id, const QString &speciesId,
                                double stoichiometry);
   QString getRateExpression(const QString &id) const;
@@ -64,6 +64,4 @@ public:
   void setHasUnsavedChanges(bool unsavedChanges);
 };
 
-} // namespace model
-
-} // namespace sme
+} // namespace sme::model

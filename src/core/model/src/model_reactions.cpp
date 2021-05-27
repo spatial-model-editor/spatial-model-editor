@@ -1,17 +1,17 @@
 #include "model_reactions.hpp"
-
+#include "geometry.hpp"
+#include "id.hpp"
+#include "logger.hpp"
+#include "model_membranes.hpp"
+#include "sbml_math.hpp"
+#include "symbolic.hpp"
+#include <QString>
+#include <algorithm>
+#include <memory>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
-
-#include "geometry.hpp"
-#include "id.hpp"
-#include "logger.hpp"
-#include "sbml_math.hpp"
-#include "symbolic.hpp"
-#include <QString>
-#include <memory>
 #include <set>
 
 namespace sme::model {
@@ -19,8 +19,8 @@ namespace sme::model {
 static QStringList importIds(const libsbml::Model *model) {
   QStringList ids;
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
-    const auto *reac = model->getReaction(i);
-    ids.push_back(reac->getId().c_str());
+    const auto *reaction{model->getReaction(i)};
+    ids.push_back(reaction->getId().c_str());
   }
   return ids;
 }
@@ -28,14 +28,14 @@ static QStringList importIds(const libsbml::Model *model) {
 static QStringList importNamesAndMakeUnique(libsbml::Model *model) {
   QStringList names;
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
-    auto *reac{model->getReaction(i)};
-    const auto &sId{reac->getId()};
-    if (reac->getName().empty()) {
+    auto *reaction{model->getReaction(i)};
+    const auto &sId{reaction->getId()};
+    if (reaction->getName().empty()) {
       SPDLOG_INFO("Reaction '{}' has no Name, using sId", sId);
-      reac->setName(sId);
+      reaction->setName(sId);
     }
-    auto name{makeUnique(reac->getName().c_str(), names)};
-    reac->setName(name.toStdString());
+    auto name{makeUnique(reaction->getName().c_str(), names)};
+    reaction->setName(name.toStdString());
     names.push_back(name);
   }
   return names;
@@ -95,7 +95,8 @@ inferReactionCompartment(const libsbml::Reaction *reac,
     for (const auto &membrane : membranes) {
       const auto &cA{membrane.getCompartmentA()->getId()};
       const auto &cB{membrane.getCompartmentB()->getId()};
-      if (possibleCompartments.count(cA) + possibleCompartments.count(cB) == 2) {
+      if (possibleCompartments.count(cA) + possibleCompartments.count(cB) ==
+          2) {
         SPDLOG_INFO("  -> Membrane '{}'", membrane.getId());
         return membrane.getId();
       }
@@ -175,43 +176,103 @@ static bool reactionInvolvesSpecies(const libsbml::Reaction *reac,
   return false;
 }
 
+static void
+removeInvalidSpecies(libsbml::Reaction *reaction,
+                     const std::vector<geometry::Membrane> &membranes) {
+  std::set<std::string, std::less<>> validSpeciesIds{};
+  const auto *model{reaction->getModel()};
+  std::string compA{reaction->getCompartment()};
+  std::string compB{};
+  if (auto iter{std::find_if(membranes.cbegin(), membranes.cend(),
+                             [&compA](const auto &membrane) {
+                               return membrane.getId() == compA;
+                             })};
+      iter != membranes.cend()) {
+    // reaction location is a membrane: species can come from either
+    // neighbouring compartment
+    compA = iter->getCompartmentA()->getId();
+    compB = iter->getCompartmentB()->getId();
+  }
+  for (unsigned i = 0; i < model->getNumSpecies(); ++i) {
+    const auto *species{model->getSpecies(i)};
+    if (const auto &compartment{species->getCompartment()};
+        compartment == compA || compartment == compB) {
+      validSpeciesIds.insert(species->getId());
+    }
+  }
+  std::vector<std::string> productsToRemove;
+  for (unsigned i = 0; i < reaction->getNumProducts(); ++i) {
+    if (auto sId{reaction->getProduct(i)->getSpecies()};
+        validSpeciesIds.count(sId) == 0) {
+      productsToRemove.push_back(sId);
+    }
+  }
+  for (const auto &sId : productsToRemove) {
+    std::unique_ptr<libsbml::SpeciesReference> rmProduct{
+        reaction->removeProduct(sId)};
+    SPDLOG_INFO("removing invalid product '{}' from reaction '{}'",
+                rmProduct->getSpecies(), reaction->getId());
+  }
+  std::vector<std::string> reactantsToRemove;
+  for (unsigned i = 0; i < reaction->getNumReactants(); ++i) {
+    if (auto sId{reaction->getReactant(i)->getSpecies()};
+        validSpeciesIds.count(sId) == 0) {
+      reactantsToRemove.push_back(sId);
+    }
+  }
+  for (const auto &sId : reactantsToRemove) {
+    std::unique_ptr<libsbml::SpeciesReference> rmReactant{
+        reaction->removeReactant(sId)};
+    SPDLOG_INFO("removing invalid reactant '{}' from reaction '{}'",
+                rmReactant->getSpecies(), reaction->getId());
+  }
+}
+
 ModelReactions::ModelReactions() = default;
 
 ModelReactions::ModelReactions(libsbml::Model *model,
-                               const std::vector<geometry::Membrane> &membranes)
+                               const ModelMembranes *membranes)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(model)},
-      parameterIds{importParameterIds(model)}, sbmlModel{model} {
-  makeReactionsSpatial(membranes);
+      parameterIds{importParameterIds(model)}, sbmlModel{model},
+      modelMembranes{membranes} {
+  makeReactionsSpatial(false);
 }
 
-void ModelReactions::makeReactionsSpatial(
-    const std::vector<geometry::Membrane> &membranes) {
+void ModelReactions::makeReactionsSpatial(bool haveValidGeometry) {
   if (sbmlModel == nullptr) {
     return;
   }
   hasUnsavedChanges = true;
+  const auto &membranes{modelMembranes->getMembranes()};
   for (unsigned int i = 0; i < sbmlModel->getNumReactions(); ++i) {
-    auto *reac = sbmlModel->getReaction(i);
-    reac->setFast(false);
-    if (const auto *kin = reac->getKineticLaw(); kin == nullptr) {
-      kin = reac->createKineticLaw();
+    auto *reaction{sbmlModel->getReaction(i)};
+    reaction->setFast(false);
+    if (const auto *kineticLaw{reaction->getKineticLaw()};
+        kineticLaw == nullptr) {
+      kineticLaw = reaction->createKineticLaw();
     }
     auto *srp = static_cast<libsbml::SpatialReactionPlugin *>(
-        reac->getPlugin("spatial"));
+        reaction->getPlugin("spatial"));
     if (srp != nullptr && srp->isSetIsLocal() && srp->getIsLocal() &&
-        reac->getCompartment().empty()) {
+        reaction->getCompartment().empty()) {
       // spatial model, local reaction, but no compartment set, so try to set
       // one
-      reac->setCompartment(inferReactionCompartment(reac, membranes));
+      SPDLOG_INFO("spatial reaction '{}' compartment not set",
+                  reaction->getId());
+      reaction->setCompartment(inferReactionCompartment(reaction, membranes));
     }
     if (srp != nullptr && !(srp->isSetIsLocal() && srp->getIsLocal())) {
       // spatial model, non-local reaction, i.e. we are importing a
       // non-spatial model, so try to rescale it if we have enough geometry info
       // to do so, and if successful, then set isLocal = true
-      if (makeReactionSpatial(reac, membranes)) {
-        SPDLOG_INFO("Setting isLocal=true for reaction {}", reac->getId());
+      if (makeReactionSpatial(reaction, membranes)) {
+        SPDLOG_INFO("Setting isLocal=true for reaction {}", reaction->getId());
         srp->setIsLocal(true);
       }
+    }
+    if (haveValidGeometry && srp != nullptr && srp->isSetIsLocal() && srp->getIsLocal()){
+      // spatial, local reaction with valid geometry: ensure species involved make sense
+      removeInvalidSpecies(reaction, membranes);
     }
   }
 }
@@ -271,16 +332,16 @@ void ModelReactions::remove(const QString &id) {
 }
 
 void ModelReactions::removeAllInvolvingSpecies(const QString &speciesId) {
-  QStringList reacIdsToRemove;
+  QStringList reactionIdsToRemove;
   for (unsigned i = 0; i < sbmlModel->getNumReactions(); ++i) {
-    const auto *reac = sbmlModel->getReaction(i);
-    if (reactionInvolvesSpecies(reac, speciesId.toStdString())) {
-      SPDLOG_INFO("  - removing reaction {}", reac->getId());
-      reacIdsToRemove.push_back(reac->getId().c_str());
+    const auto *reaction{sbmlModel->getReaction(i)};
+    if (reactionInvolvesSpecies(reaction, speciesId.toStdString())) {
+      SPDLOG_INFO("  - removing reaction {}", reaction->getId());
+      reactionIdsToRemove.push_back(reaction->getId().c_str());
     }
   }
-  for (const auto &reacId : reacIdsToRemove) {
-    remove(reacId);
+  for (const auto &reactionId : reactionIdsToRemove) {
+    remove(reactionId);
   }
 }
 
@@ -363,34 +424,35 @@ QString ModelReactions::getScheme(const QString &id) const {
 }
 
 void ModelReactions::setLocation(const QString &id, const QString &locationId) {
-  auto *reac = sbmlModel->getReaction(id.toStdString());
-  if (reac == nullptr) {
+  auto *reaction{sbmlModel->getReaction(id.toStdString())};
+  if (reaction == nullptr) {
     SPDLOG_WARN("Reaction '{}' not found", id.toStdString());
     return;
   }
   hasUnsavedChanges = true;
   SPDLOG_INFO("Setting reaction '{}' location to '{}'", id.toStdString(),
               locationId.toStdString());
-  reac->setCompartment(locationId.toStdString());
+  reaction->setCompartment(locationId.toStdString());
+  removeInvalidSpecies(reaction, modelMembranes->getMembranes());
 }
 
 QString ModelReactions::getLocation(const QString &id) const {
-  const auto *reac = sbmlModel->getReaction(id.toStdString());
-  if (reac == nullptr) {
+  const auto *reaction{sbmlModel->getReaction(id.toStdString())};
+  if (reaction == nullptr) {
     return {};
   }
-  return reac->getCompartment().c_str();
+  return reaction->getCompartment().c_str();
 }
 
 double ModelReactions::getSpeciesStoichiometry(const QString &id,
                                                const QString &speciesId) const {
-  const auto *reac{sbmlModel->getReaction(id.toStdString())};
+  const auto *reaction{sbmlModel->getReaction(id.toStdString())};
   std::string sId{speciesId.toStdString()};
   double stoichiometry{0};
-  if (const auto *product = reac->getProduct(sId); product != nullptr) {
+  if (const auto *product = reaction->getProduct(sId); product != nullptr) {
     stoichiometry += product->getStoichiometry();
   }
-  if (const auto *reactant = reac->getReactant(sId); reactant != nullptr) {
+  if (const auto *reactant = reaction->getReactant(sId); reactant != nullptr) {
     stoichiometry -= reactant->getStoichiometry();
   }
   return stoichiometry;
@@ -400,58 +462,58 @@ void ModelReactions::setSpeciesStoichiometry(const QString &id,
                                              const QString &speciesId,
                                              double stoichiometry) {
   hasUnsavedChanges = true;
-  auto *reac{sbmlModel->getReaction(id.toStdString())};
+  auto *reaction{sbmlModel->getReaction(id.toStdString())};
   std::string sId{speciesId.toStdString()};
   const auto *spec{sbmlModel->getSpecies(sId)};
-  SPDLOG_TRACE("Reaction '{}', Species '{}', Stoichiometry {}", reac->getId(),
-               spec->getId(), stoichiometry);
+  SPDLOG_TRACE("Reaction '{}', Species '{}', Stoichiometry {}",
+               reaction->getId(), spec->getId(), stoichiometry);
   if (std::unique_ptr<libsbml::SpeciesReference> rmProduct(
-          reac->removeProduct(sId));
+          reaction->removeProduct(sId));
       rmProduct != nullptr) {
     SPDLOG_TRACE("  - removed Product '{}'", rmProduct->getSpecies());
   }
   if (std::unique_ptr<libsbml::SpeciesReference> rmReactant(
-          reac->removeReactant(sId));
+          reaction->removeReactant(sId));
       rmReactant != nullptr) {
     SPDLOG_TRACE("  - removed Reactant '{}'", rmReactant->getSpecies());
   }
   if (stoichiometry > 0) {
-    reac->addProduct(spec, stoichiometry);
+    reaction->addProduct(spec, stoichiometry);
     SPDLOG_TRACE("  - adding Product '{}' with stoichiometry {}", spec->getId(),
                  stoichiometry);
   }
   if (stoichiometry < 0) {
-    reac->addReactant(spec, -stoichiometry);
+    reaction->addReactant(spec, -stoichiometry);
     SPDLOG_TRACE("  - adding Reactant '{}' with stoichiometry {}",
                  spec->getId(), -stoichiometry);
   }
 }
 
 QString ModelReactions::getRateExpression(const QString &id) const {
-  const auto *reac{sbmlModel->getReaction(id.toStdString())};
-  if (reac == nullptr) {
+  const auto *reaction{sbmlModel->getReaction(id.toStdString())};
+  if (reaction == nullptr) {
     return {};
   }
-  const auto *kin{reac->getKineticLaw()};
-  if (kin == nullptr) {
+  const auto *kineticLaw{reaction->getKineticLaw()};
+  if (kineticLaw == nullptr) {
     return {};
   }
-  return kin->getFormula().c_str();
+  return kineticLaw->getFormula().c_str();
 }
 
 static libsbml::KineticLaw *getOrCreateKineticLaw(libsbml::Model *model,
                                                   const QString &reactionId) {
-  auto *reac = model->getReaction(reactionId.toStdString());
-  auto *kin = reac->getKineticLaw();
-  if (kin == nullptr) {
-    kin = reac->createKineticLaw();
+  auto *reaction{model->getReaction(reactionId.toStdString())};
+  auto *kineticLaw{reaction->getKineticLaw()};
+  if (kineticLaw == nullptr) {
+    kineticLaw = reaction->createKineticLaw();
   }
-  return kin;
+  return kineticLaw;
 }
 
 void ModelReactions::setRateExpression(const QString &id,
                                        const QString &expression) {
-  auto *kin = getOrCreateKineticLaw(sbmlModel, id);
+  auto *kin{getOrCreateKineticLaw(sbmlModel, id)};
   SPDLOG_INFO("  - expr: {}", expression.toStdString());
   std::unique_ptr<libsbml::ASTNode> exprAST(
       libsbml::SBML_parseL3Formula(expression.toStdString().c_str()));
@@ -467,15 +529,15 @@ void ModelReactions::setRateExpression(const QString &id,
 static libsbml::LocalParameter *getLocalParameter(libsbml::Model *model,
                                                   const QString &reactionId,
                                                   const QString &parameterId) {
-  auto *reac = model->getReaction(reactionId.toStdString());
-  if (reac == nullptr) {
+  auto *reaction{model->getReaction(reactionId.toStdString())};
+  if (reaction == nullptr) {
     return nullptr;
   }
-  auto *kin = reac->getKineticLaw();
-  if (kin == nullptr) {
+  auto *kineticLaw{reaction->getKineticLaw()};
+  if (kineticLaw == nullptr) {
     return nullptr;
   }
-  return kin->getLocalParameter(parameterId.toStdString());
+  return kineticLaw->getLocalParameter(parameterId.toStdString());
 }
 
 QStringList ModelReactions::getParameterIds(const QString &id) const {
@@ -590,13 +652,10 @@ void ModelReactions::removeParameter(const QString &reactionId,
 
 bool ModelReactions::dependOnVariable(const QString &variableId) const {
   auto v{variableId.toStdString()};
-  for (const auto &id : ids) {
+  return std::any_of(ids.begin(), ids.end(), [&v, this](const auto &id) {
     auto e{getRateExpression(id).toStdString()};
-    if (utils::symbolicContains(e, v)) {
-      return true;
-    }
-  }
-  return false;
+    return utils::symbolicContains(e, v);
+  });
 }
 
 bool ModelReactions::getHasUnsavedChanges() const { return hasUnsavedChanges; }
