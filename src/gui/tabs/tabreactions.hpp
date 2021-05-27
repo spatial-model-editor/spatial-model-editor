@@ -4,20 +4,29 @@
 
 #include <QString>
 #include <QWidget>
+#include <QDoubleSpinBox>
 #include <memory>
 
 namespace Ui {
 class TabReactions;
 }
 
-namespace sme {
-namespace model {
+namespace sme::model {
 class Model;
-}
 } // namespace sme
 
 class QLabelMouseTracker;
 class QTreeWidgetItem;
+
+class QDoubleSpinBoxNoScroll : public QDoubleSpinBox {
+Q_OBJECT
+
+public:
+  explicit QDoubleSpinBoxNoScroll(QWidget *parent = nullptr);
+
+protected:
+  void wheelEvent(QWheelEvent *event) override;
+};
 
 class TabReactions : public QWidget {
   Q_OBJECT
@@ -25,7 +34,7 @@ class TabReactions : public QWidget {
 public:
   explicit TabReactions(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                         QWidget *parent = nullptr);
-  ~TabReactions();
+  ~TabReactions() override;
   void loadModelData(const QString &selection = {});
 
 private:
