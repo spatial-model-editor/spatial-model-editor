@@ -52,8 +52,8 @@ void TabReactions::loadModelData(const QString &selection) {
   for (int i = 0; i < locIds.size(); ++i) {
     const auto &locId = locIds[i];
     const auto &locName = locNames[i];
-    QTreeWidgetItem *comp =
-        new QTreeWidgetItem(ui->listReactions, QStringList({locName}));
+    auto *comp{
+        new QTreeWidgetItem(ui->listReactions, QStringList({locName}))};
     ui->listReactions->addTopLevelItem(comp);
     ui->cmbReactionLocation->addItem(locName);
     for (const auto &reacId : model.getReactions().getIds(locId)) {
@@ -290,7 +290,7 @@ void TabReactions::cmbReactionLocation_activated(int index) {
     return;
   }
   model.getReactions().setLocation(currentReacId, locationId);
-  loadModelData(currentReacId);
+  loadModelData(ui->txtReactionName->text());
 }
 
 void TabReactions::listReactionParams_currentCellChanged(int currentRow,

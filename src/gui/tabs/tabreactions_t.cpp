@@ -19,25 +19,33 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
   waitFor(&tab);
   ModalWidgetTimer mwt;
   // get pointers to widgets within tab
-  auto *listReactions = tab.findChild<QTreeWidget *>("listReactions");
-  auto *btnAddReaction = tab.findChild<QPushButton *>("btnAddReaction");
-  auto *btnRemoveReaction = tab.findChild<QPushButton *>("btnRemoveReaction");
-  auto *txtReactionName = tab.findChild<QLineEdit *>("txtReactionName");
+  auto *listReactions{tab.findChild<QTreeWidget *>("listReactions")};
+  REQUIRE(listReactions != nullptr);
+  auto *btnAddReaction{tab.findChild<QPushButton *>("btnAddReaction")};
+  REQUIRE(btnAddReaction != nullptr);
+  auto *btnRemoveReaction{tab.findChild<QPushButton *>("btnRemoveReaction")};
+  REQUIRE(btnRemoveReaction != nullptr);
+  auto *txtReactionName{tab.findChild<QLineEdit *>("txtReactionName")};
+  REQUIRE(txtReactionName != nullptr);
   auto *lblReactionScheme{tab.findChild<QLabel *>("lblReactionScheme")};
   REQUIRE(lblReactionScheme != nullptr);
-  auto *cmbReactionLocation = tab.findChild<QComboBox *>("cmbReactionLocation");
-  auto *listReactionSpecies =
-      tab.findChild<QTreeWidget *>("listReactionSpecies");
-  auto *listReactionParams =
-      tab.findChild<QTableWidget *>("listReactionParams");
-  auto *btnAddReactionParam =
-      tab.findChild<QPushButton *>("btnAddReactionParam");
-  auto *btnRemoveReactionParam =
-      tab.findChild<QPushButton *>("btnRemoveReactionParam");
-  auto *txtReactionRate =
-      tab.findChild<QPlainTextMathEdit *>("txtReactionRate");
-  auto *lblReactionRateStatus =
-      tab.findChild<QLabel *>("lblReactionRateStatus");
+  auto *cmbReactionLocation{tab.findChild<QComboBox *>("cmbReactionLocation")};
+  REQUIRE(cmbReactionLocation != nullptr);
+  auto *listReactionSpecies{
+      tab.findChild<QTreeWidget *>("listReactionSpecies")};
+  REQUIRE(listReactionSpecies != nullptr);
+  auto *listReactionParams{tab.findChild<QTableWidget *>("listReactionParams")};
+  REQUIRE(listReactionParams != nullptr);
+  auto *btnAddReactionParam{
+      tab.findChild<QPushButton *>("btnAddReactionParam")};
+  REQUIRE(btnAddReactionParam != nullptr);
+  auto *btnRemoveReactionParam{
+      tab.findChild<QPushButton *>("btnRemoveReactionParam")};
+  REQUIRE(btnRemoveReactionParam != nullptr);
+  auto *txtReactionRate{tab.findChild<QPlainTextMathEdit *>("txtReactionRate")};
+  REQUIRE(txtReactionRate != nullptr);
+  auto *lblReactionRateStatus{tab.findChild<QLabel *>("lblReactionRateStatus")};
+  REQUIRE(lblReactionRateStatus != nullptr);
   WHEN("very-simple-model loaded") {
     if (QFile f(":/models/very-simple-model.xml");
         f.open(QIODevice::ReadOnly)) {
@@ -62,18 +70,22 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     // change location
     REQUIRE(cmbReactionLocation->currentIndex() == 2);
     cmbReactionLocation->setFocus();
-    sendKeyEvents(cmbReactionLocation, {"Up"});
-    REQUIRE(cmbReactionLocation->currentIndex() == 1);
-    REQUIRE(listReactions->topLevelItem(1)->childCount() == 1);
-    REQUIRE(listReactions->topLevelItem(2)->childCount() == 0);
-    REQUIRE(listReactions->currentItem()->text(0) == "A to B conversion !");
-    REQUIRE(listReactions->currentItem()->parent()->text(0) == "Cell");
-    REQUIRE(sbmlDoc.getReactions().getLocation("A_B_conversion") == "c2");
-    // change location back
     sendKeyEvents(cmbReactionLocation, {"Down"});
+    REQUIRE(cmbReactionLocation->currentIndex() == 3);
+    REQUIRE(listReactions->topLevelItem(1)->childCount() == 0);
+    REQUIRE(listReactions->topLevelItem(2)->childCount() == 0);
+    REQUIRE(listReactions->topLevelItem(3)->childCount() == 3);
+    // same reaction selected as previously
+    REQUIRE(listReactions->currentItem()->text(0) == "A to B conversion !");
+    REQUIRE(listReactions->currentItem()->parent()->text(0) == "Outside <-> Cell");
+    REQUIRE(sbmlDoc.getReactions().getLocation("A_B_conversion") == "c1_c2_membrane");
+    // change location back
+    sendKeyEvents(cmbReactionLocation, {"Up"});
     REQUIRE(cmbReactionLocation->currentIndex() == 2);
     REQUIRE(listReactions->topLevelItem(1)->childCount() == 0);
     REQUIRE(listReactions->topLevelItem(2)->childCount() == 1);
+    REQUIRE(listReactions->topLevelItem(3)->childCount() == 2);
+    // same reaction still selected
     REQUIRE(listReactions->currentItem()->text(0) == "A to B conversion !");
     REQUIRE(listReactions->currentItem()->parent()->text(0) == "Nucleus");
     REQUIRE(sbmlDoc.getReactions().getLocation("A_B_conversion") == "c3");
