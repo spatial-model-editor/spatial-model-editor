@@ -30,12 +30,18 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
   }
   SECTION("shortcut keys") {
     MainWindow w;
-    auto *menu_Tools = w.findChild<QMenu *>("menu_Tools");
-    auto *menuSimulation_type = w.findChild<QMenu *>("menuSimulation_type");
-    auto *actionSimTypeDUNE = w.findChild<QAction *>("actionSimTypeDUNE");
-    auto *actionSimTypePixel = w.findChild<QAction *>("actionSimTypePixel");
-    auto *menu_Advanced = w.findChild<QMenu *>("menu_Advanced");
-    auto *tabMain = w.findChild<QTabWidget *>("tabMain");
+    auto *menu_Tools{w.findChild<QMenu *>("menu_Tools")};
+    REQUIRE(menu_Tools != nullptr);
+    auto *menuSimulation_type{w.findChild<QMenu *>("menuSimulation_type")};
+    REQUIRE(menuSimulation_type != nullptr);
+    auto *actionSimTypeDUNE{w.findChild<QAction *>("actionSimTypeDUNE")};
+    REQUIRE(actionSimTypeDUNE != nullptr);
+    auto *actionSimTypePixel{w.findChild<QAction *>("actionSimTypePixel")};
+    REQUIRE(actionSimTypePixel != nullptr);
+    auto *menu_Advanced{w.findChild<QMenu *>("menu_Advanced")};
+    REQUIRE(menu_Advanced != nullptr);
+    auto *tabMain{w.findChild<QTabWidget *>("tabMain")};
+    REQUIRE(tabMain != nullptr);
     w.show();
     waitFor(&w);
     ModalWidgetTimer mwt;
@@ -66,13 +72,6 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
       REQUIRE(mwt.getResult() == "Create new model");
       REQUIRE(w.windowTitle().right(9) == "[new.sme]");
     }
-    SECTION("Ctrl+O") {
-      // ctrl+o to open model, then escape to cancel
-      mwt.addUserAction({"Esc"}, false);
-      mwt.start();
-      sendKeyEvents(&w, {"Ctrl+O"});
-      REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
-    }
     SECTION("user presses ctrl+s (with valid SBML model)") {
       openBuiltInModel(w, "V");
       SECTION("cancel") {
@@ -97,7 +96,7 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
         sendKeyEvents(&w, {"Ctrl+E"});
         REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
       }
-      SECTION("save sme file") {
+      SECTION("save sbml xml file") {
         QFile::remove("wqz.xml");
         mwt.addUserAction({"w", "q", "z"});
         mwt.start();
@@ -135,6 +134,31 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
         REQUIRE(file.open(QIODevice::ReadOnly | QIODevice::Text));
         auto line = file.readLine().toStdString();
         REQUIRE(line == "[grid]\n");
+      }
+    }
+    SECTION("Ctrl+O") {
+      SECTION("cancel") {
+        // ctrl+o to open model, then escape to cancel
+        mwt.addUserAction({"Esc"}, false);
+        mwt.start();
+        sendKeyEvents(&w, {"Ctrl+O"});
+        REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
+      }
+      SECTION("open sbml xml file") {
+        REQUIRE(w.windowTitle() == "Spatial Model Editor []");
+        mwt.addUserAction({"w", "q", "z", ".", "x", "m", "l"});
+        mwt.start();
+        sendKeyEvents(&w, {"Ctrl+O"});
+        REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
+        REQUIRE(w.windowTitle().right(8) == "wqz.xml]");
+      }
+      SECTION("open sme file") {
+        REQUIRE(w.windowTitle() == "Spatial Model Editor []");
+        mwt.addUserAction({"w", "q", "z", ".", "s", "m", "e"});
+        mwt.start();
+        sendKeyEvents(&w, {"Ctrl+O"});
+        REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
+        REQUIRE(w.windowTitle().right(8) == "wqz.sme]");
       }
     }
     SECTION("user presses ctrl+I to import image (default empty SBML model)") {
@@ -227,10 +251,38 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
       REQUIRE(mwt.getResult() == "Simulation Options");
     }
   }
+  SECTION("built-in SBML model, import built-in geometry image") {
+    MainWindow w;
+    w.show();
+    waitFor(&w);
+    openBuiltInModel(w);
+    ModalWidgetTimer mwt;
+    mwt.addUserAction({"Enter"});
+    mwt.start();
+    auto *menu_Import{w.findChild<QMenu *>("menu_Tools")};
+    REQUIRE(menu_Import != nullptr);
+    sendKeyEvents(&w, {"Alt+I"});
+    sendKeyEvents(menu_Import, {"E"});
+    sendKeyEvents(&w, {"Enter"});
+    REQUIRE(mwt.getResult() == "Edit Geometry Image");
+  }
+  SECTION("import geometry from model") {
+    MainWindow w;
+    w.show();
+    waitFor(&w);
+    ModalWidgetTimer mwt;
+    mwt.addUserAction({"w", "q", "z", ".", "x", "m", "l"});
+    mwt.start();
+    auto *menu_Import{w.findChild<QMenu *>("menu_Tools")};
+    REQUIRE(menu_Import != nullptr);
+    sendKeyEvents(&w, {"Ctrl+G"});
+    REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
+  }
   SECTION("built-in SBML model, change geometry image zoom") {
     MainWindow w;
     w.show();
     waitFor(&w);
+    openBuiltInModel(w);
     auto *spinGeometryZoom{w.findChild<QSpinBox *>("spinGeometryZoom")};
     REQUIRE(spinGeometryZoom != nullptr);
     auto *lblGeometry{w.findChild<QLabelMouseTracker *>("lblGeometry")};
