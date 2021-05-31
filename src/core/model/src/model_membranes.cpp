@@ -20,7 +20,7 @@ const QStringList &ModelMembranes::getIds() const { return ids; }
 
 const QStringList &ModelMembranes::getNames() const { return names; }
 
-QString ModelMembranes::setName(const QString &id, const QString &name){
+QString ModelMembranes::setName(const QString &id, const QString &name) {
   auto i = ids.indexOf(id);
   if (i < 0) {
     return {};
@@ -257,10 +257,10 @@ ModelMembranes &ModelMembranes::operator=(ModelMembranes &&) noexcept = default;
 
 ModelMembranes::~ModelMembranes() = default;
 
-bool ModelMembranes::getHasUnsavedChanges() const {return hasUnsavedChanges;}
+bool ModelMembranes::getHasUnsavedChanges() const { return hasUnsavedChanges; }
 
-void ModelMembranes::setHasUnsavedChanges(bool unsavedChanges){
+void ModelMembranes::setHasUnsavedChanges(bool unsavedChanges) {
   hasUnsavedChanges = unsavedChanges;
 }
 
-} // namespace sme
+} // namespace sme::model

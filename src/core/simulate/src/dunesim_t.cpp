@@ -6,8 +6,9 @@
 
 using namespace sme;
 
-SCENARIO("DuneSim: empty compartments",
-         "[core/simulate/dunesim][core/simulate][core][simulate][dunesim]") {
+SCENARIO(
+    "DuneSim: empty compartments",
+    "[core/simulate/dunesim][core/simulate][core][simulate][dunesim][dune]") {
   WHEN("Model has no species") {
     model::Model m;
     QFile f(":/models/ABtoC.xml");
@@ -21,7 +22,8 @@ SCENARIO("DuneSim: empty compartments",
     REQUIRE(duneSim.errorMessage().empty());
   }
   WHEN("Compartment in model has no species, but membrane contains reactions") {
-    // see https://github.com/spatial-model-editor/spatial-model-editor/issues/435
+    // see
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/435
     model::Model m;
     QFile f(":/models/very-simple-model.xml");
     f.open(QIODevice::ReadOnly);
@@ -36,7 +38,7 @@ SCENARIO("DuneSim: empty compartments",
     m.getCompartments().setColour("c1", col1);
     std::vector<std::string> comps{"c1", "c2", "c3"};
     simulate::DuneSim duneSim(m, comps);
-    for(std::size_t i=0; i<2; ++i){
+    for (std::size_t i = 0; i < 2; ++i) {
       duneSim.run(0.05, 100e3);
     }
     simulate::SimulationData data0{m.getSimulationData()};
@@ -50,24 +52,24 @@ SCENARIO("DuneSim: empty compartments",
     m.getCompartments().setColour("c2", col2);
     comps.pop_back();
     simulate::DuneSim newDuneSim(m, comps);
-    for(std::size_t i=0; i<2; ++i){
+    for (std::size_t i = 0; i < 2; ++i) {
       newDuneSim.run(0.05, 100e3);
     }
     REQUIRE(newDuneSim.getConcentrations(0).size() == 5441);
     REQUIRE(newDuneSim.getConcentrations(1).size() == 8068);
-    for(std::size_t iComp=0; iComp<2; ++iComp){
+    for (std::size_t iComp = 0; iComp < 2; ++iComp) {
       double diff{0};
       double sum{0};
       const auto n{duneSim.getConcentrations(iComp).size()};
-      const auto& a{duneSim.getConcentrations(iComp)};
-      const auto& b{newDuneSim.getConcentrations(iComp)};
-      for(std::size_t i=0; i<n; ++i){
+      const auto &a{duneSim.getConcentrations(iComp)};
+      const auto &b{newDuneSim.getConcentrations(iComp)};
+      for (std::size_t i = 0; i < n; ++i) {
         diff += std::abs(a[i] - b[i]);
         sum += std::abs(a[i]) + std::abs(b[i]);
       }
       CAPTURE(sum);
       CAPTURE(diff);
-      REQUIRE(diff/sum < 1e-8);
+      REQUIRE(diff / sum < 1e-8);
     }
   }
 }

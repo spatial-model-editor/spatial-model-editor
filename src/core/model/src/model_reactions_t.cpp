@@ -14,11 +14,12 @@ using namespace sme;
 SCENARIO("SBML reactions",
          "[core/model/reactions][core/model][core][model][reactions]") {
   GIVEN("ModelReactions") {
+    model::Model model;
     QFile f(":/models/very-simple-model.xml");
     f.open(QIODevice::ReadOnly);
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
-    model::ModelReactions r(doc->getModel(), {});
+    std::string xml{f.readAll().toStdString()};
+    model.importSBMLString(xml);
+    auto &r{model.getReactions()};
     r.setHasUnsavedChanges(false);
     REQUIRE(r.getHasUnsavedChanges() == false);
     REQUIRE(r.getIds("c1").empty());
@@ -36,6 +37,29 @@ SCENARIO("SBML reactions",
     REQUIRE(r.getParameterIds("A_transport").size() == 2);
     REQUIRE(r.getIds("c2_c3_membrane")[1] == "B_transport");
     REQUIRE(r.getParameterIds("B_transport").size() == 1);
+
+    REQUIRE(r.getSpeciesStoichiometry("A_uptake", "A_c1") == dbl_approx(-1.0));
+    REQUIRE(r.getSpeciesStoichiometry("A_uptake", "B_c1") == dbl_approx(0.0));
+    REQUIRE(r.getSpeciesStoichiometry("A_uptake", "A_c2") == dbl_approx(1.0));
+    REQUIRE(r.getSpeciesStoichiometry("A_uptake", "B_c2") == dbl_approx(0.0));
+    REQUIRE(r.getScheme("A_uptake") == "A_out -> A_cell");
+    // move reaction to cell: A_out no longer valid reaction species so removed
+    r.setLocation("A_uptake", "c2");
+    REQUIRE(r.getSpeciesStoichiometry("A_uptake", "A_c1") == dbl_approx(0.0));
+    REQUIRE(r.getSpeciesStoichiometry("A_uptake", "B_c1") == dbl_approx(0.0));
+    REQUIRE(r.getSpeciesStoichiometry("A_uptake", "A_c2") == dbl_approx(1.0));
+    REQUIRE(r.getSpeciesStoichiometry("A_uptake", "B_c2") == dbl_approx(0.0));
+    REQUIRE(r.getScheme("A_uptake") == " -> A_cell");
+    // move reaction to outside: A_cell no longer valid & removed
+    r.setLocation("A_uptake", "c1");
+    REQUIRE(r.getSpeciesStoichiometry("A_uptake", "A_c1") == dbl_approx(0.0));
+    REQUIRE(r.getSpeciesStoichiometry("A_uptake", "B_c1") == dbl_approx(0.0));
+    REQUIRE(r.getSpeciesStoichiometry("A_uptake", "A_c2") == dbl_approx(0.0));
+    REQUIRE(r.getSpeciesStoichiometry("A_uptake", "B_c2") == dbl_approx(0.0));
+    REQUIRE(r.getScheme("A_uptake") == "");
+    // move reaction back to starting location
+    r.setLocation("A_uptake", "c1_c2_membrane");
+    REQUIRE(r.getScheme("A_uptake") == "");
 
     // remove parameter from non-existent reaction: no-op
     r.setHasUnsavedChanges(false);
@@ -150,7 +174,6 @@ SCENARIO("SBML reactions",
     model::Model m;
     m.importSBMLString(xml);
     const auto &reactions{m.getReactions()};
-    model::ModelReactions r(doc->getModel(), {});
     // reaction location inferred from species involved
     REQUIRE(reactions.getIds("fish").size() == 3);
     REQUIRE(reactions.getIds("fish")[0] == "re0");
@@ -183,11 +206,10 @@ SCENARIO("SBML reactions",
     model::Model m;
     m.importSBMLString(xml);
     const auto &reactions{m.getReactions()};
-    model::ModelReactions r(doc->getModel(), {});
     // reaction location inferred from species involved
     REQUIRE(reactions.getIds("Nucleus_Cytosol_membrane").size() == 1);
     REQUIRE(reactions.getIds("Nucleus_Cytosol_membrane")[0] == "re1");
-    // reaction name uses Id if not orginally set
+    // reaction name uses Id if not originally set
     REQUIRE(reactions.getName("re1") == "re1");
     auto xml2{m.getXml().toStdString()};
     std::unique_ptr<libsbml::SBMLDocument> doc2(

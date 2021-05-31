@@ -16,21 +16,19 @@ namespace libsbml {
 class Model;
 }
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 class ImageMembranePixels;
 using QPointPair = std::pair<QPoint, QPoint>;
 
 class ModelMembranes {
 private:
-  QStringList ids;
-  QStringList names;
-  QStringList compIds;
-  std::vector<geometry::Membrane> membranes;
+  QStringList ids{};
+  QStringList names{};
+  QStringList compIds{};
+  std::vector<geometry::Membrane> membranes{};
   std::unique_ptr<ImageMembranePixels> membranePixels;
-  std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>> idColourPairs;
+  std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>> idColourPairs{};
   bool hasUnsavedChanges{false};
 
 public:
@@ -60,6 +58,4 @@ public:
   void setHasUnsavedChanges(bool unsavedChanges);
 };
 
-} // namespace model
-
-} // namespace sme
+} // namespace sme::model

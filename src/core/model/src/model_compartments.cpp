@@ -329,7 +329,7 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   modelMembranes->updateCompartments(compartments);
   modelMembranes->updateCompartmentNames(names, sbmlModel);
   modelGeometry->updateMesh();
-  modelReactions->makeReactionsSpatial(modelMembranes->getMembranes());
+  modelReactions->makeReactionsSpatial(modelGeometry->getIsValid());
 }
 
 QRgb ModelCompartments::getColour(const QString &id) const {
