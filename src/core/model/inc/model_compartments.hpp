@@ -63,6 +63,7 @@ public:
   getCompartments() const;
   geometry::Compartment *getCompartment(const QString &id);
   const geometry::Compartment *getCompartment(const QString &id) const;
+  double getSize(const QString& id) const;
   void clear();
   bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);

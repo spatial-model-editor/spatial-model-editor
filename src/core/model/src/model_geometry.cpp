@@ -1,12 +1,4 @@
 #include "model_geometry.hpp"
-
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
-
-#include <memory>
-
 #include "geometry_analytic.hpp"
 #include "geometry_parametric.hpp"
 #include "geometry_sampled_field.hpp"
@@ -17,6 +9,11 @@
 #include "sbml_utils.hpp"
 #include "utils.hpp"
 #include "xml_annotation.hpp"
+#include <memory>
+#include <sbml/SBMLTypes.h>
+#include <sbml/extension/SBMLDocumentPlugin.h>
+#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
+#include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 namespace sme::model {
 
@@ -364,7 +361,7 @@ bool ModelGeometry::getHasImage() const { return hasImage; }
 void ModelGeometry::writeGeometryToSBML() const {
   if (mesh != nullptr && mesh->isValid()) {
     sbmlAnnotation->meshParameters = {mesh->getBoundaryMaxPoints(),
-                                  mesh->getCompartmentMaxTriangleArea()};
+                                      mesh->getCompartmentMaxTriangleArea()};
   } else {
     sbmlAnnotation->meshParameters = {};
   }
@@ -377,4 +374,4 @@ void ModelGeometry::setHasUnsavedChanges(bool unsavedChanges) {
   hasUnsavedChanges = unsavedChanges;
 }
 
-} // namespace sme
+} // namespace sme::model

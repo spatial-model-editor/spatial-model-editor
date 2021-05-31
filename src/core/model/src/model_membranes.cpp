@@ -176,7 +176,7 @@ void ModelMembranes::importMembraneIdsAndNames(const libsbml::Model *model) {
   }
 }
 
-void ModelMembranes::exportToSBML(libsbml::Model *model) {
+void ModelMembranes::exportToSBML(libsbml::Model *model, double pixelWidth) {
   // ensure all membranes have a corresponding n-1 dim compartment in SBML
   auto *geom = getOrCreateGeometry(model);
   auto nDimMinusOne = geom->getNumCoordinateComponents() - 1;
@@ -193,6 +193,10 @@ void ModelMembranes::exportToSBML(libsbml::Model *model) {
     SPDLOG_INFO("  - name: {}", comp->getName());
     comp->setConstant(true);
     comp->setSpatialDimensions(nDimMinusOne);
+    auto nPixels{membranes[static_cast<std::size_t>(i)].getIndexPairs().size()};
+    double area{static_cast<double>(nPixels) * pixelWidth};
+    SPDLOG_INFO("  - size: {}", area);
+    comp->setSize(area);
     auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(
         comp->getPlugin("spatial"));
     libsbml::CompartmentMapping *cmap{nullptr};

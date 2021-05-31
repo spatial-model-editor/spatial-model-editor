@@ -400,13 +400,11 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
     tabCompartmentGeometry_currentChanged(
         ui->tabCompartmentGeometry->currentIndex());
     // update compartment size
-    auto nPixels = comp->nPixels();
-    double area = static_cast<double>(nPixels) *
-                  std::pow(model.getGeometry().getPixelWidth(), 2);
+    double volume{model.getCompartments().getSize(compId)};
     ui->lblCompSize->setText(QString("Area: %1 %2^2 (%3 pixels)")
-                                 .arg(QString::number(area, 'g', 13))
+                                 .arg(QString::number(volume, 'g', 13))
                                  .arg(model.getUnits().getLength().name)
-                                 .arg(nPixels));
+                                 .arg(comp->nPixels()));
   }
 }
 

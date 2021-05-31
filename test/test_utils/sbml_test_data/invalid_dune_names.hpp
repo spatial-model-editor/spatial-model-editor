@@ -73,7 +73,7 @@ struct invalid_dune_names {
       <spatial:listOfCoordinateComponents>
         <spatial:coordinateComponent spatial:id="xCoord" spatial:type="cartesianX">
           <spatial:boundaryMin spatial:id="xBoundaryMin" spatial:value="0"/>
-          <spatial:boundaryMax spatial:id="xBoundaryMax" spatial:value="1"/>
+          <spatial:boundaryMax spatial:id="xBoundaryMax" spatial:value="3"/>
         </spatial:coordinateComponent>
         <spatial:coordinateComponent spatial:id="yCoord" spatial:type="cartesianY">
           <spatial:boundaryMin spatial:id="yBoundaryMin" spatial:value="0"/>

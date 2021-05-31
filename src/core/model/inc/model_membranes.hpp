@@ -47,7 +47,7 @@ public:
       const std::vector<std::unique_ptr<geometry::Compartment>> &compartments);
   void updateCompartmentImage(const QImage &img);
   void importMembraneIdsAndNames(const libsbml::Model *model);
-  void exportToSBML(libsbml::Model *model);
+  void exportToSBML(libsbml::Model *model, double pixelWidth);
   explicit ModelMembranes();
   ModelMembranes(ModelMembranes &&) noexcept;
   ModelMembranes &operator=(ModelMembranes &&) noexcept;
