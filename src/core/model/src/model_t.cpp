@@ -1,4 +1,5 @@
 #include "catch_wrapper.hpp"
+#include "math_test_utils.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
 #include "sbml_test_data/very_simple_model.hpp"
@@ -297,8 +298,10 @@ SCENARIO("SBML: import SBML level 2 document",
       REQUIRE(reacs.getIds("compartment0")[0] == "reac1");
       REQUIRE(reacs.getName("reac1") == "reac1");
       REQUIRE(reacs.getLocation("reac1") == "compartment0");
-      REQUIRE(reacs.getSpeciesStoichiometry("reac1", "spec1c0") == dbl_approx(1));
-      REQUIRE(reacs.getSpeciesStoichiometry("reac1", "spec0c0") == dbl_approx(-1));
+      REQUIRE(reacs.getSpeciesStoichiometry("reac1", "spec1c0") ==
+              dbl_approx(1));
+      REQUIRE(reacs.getSpeciesStoichiometry("reac1", "spec0c0") ==
+              dbl_approx(-1));
       REQUIRE(reacs.getRateExpression("reac1") == "5 * spec0c0 / compartment0");
       REQUIRE(reacs.getScheme("reac1") == "spec0c0 -> spec1c0");
     }
@@ -399,15 +402,17 @@ SCENARIO("SBML: import uint8 sampled field",
   REQUIRE(doc->getModel()->getCompartment("c3")->isSetSize() == false);
   s.importSBMLString(xml);
   xml = s.getXml().toStdString();
-  doc.reset(
-      libsbml::readSBMLFromString(xml.c_str()));
+  doc.reset(libsbml::readSBMLFromString(xml.c_str()));
   // after import, compartment size is set based on geometry image
   REQUIRE(doc->getModel()->getCompartment("c1")->isSetSize() == true);
-  REQUIRE(doc->getModel()->getCompartment("c1")->getSize() == dbl_approx(5441.0));
+  REQUIRE(doc->getModel()->getCompartment("c1")->getSize() ==
+          dbl_approx(5441.0));
   REQUIRE(doc->getModel()->getCompartment("c2")->isSetSize() == true);
-  REQUIRE(doc->getModel()->getCompartment("c2")->getSize() == dbl_approx(4034.0));
+  REQUIRE(doc->getModel()->getCompartment("c2")->getSize() ==
+          dbl_approx(4034.0));
   REQUIRE(doc->getModel()->getCompartment("c3")->isSetSize() == true);
-  REQUIRE(doc->getModel()->getCompartment("c3")->getSize() == dbl_approx(525.0));
+  REQUIRE(doc->getModel()->getCompartment("c3")->getSize() ==
+          dbl_approx(525.0));
 
   const auto &img = s.getGeometry().getImage();
   REQUIRE(img.colorCount() == 3);
@@ -418,7 +423,8 @@ SCENARIO("SBML: import uint8 sampled field",
   REQUIRE(s.getCompartments().getColour("c3") ==
           utils::indexedColours()[2].rgb());
   // species A_c1 has initialAmount 11 -> converted to concentration
-  REQUIRE(s.getSpecies().getInitialConcentration("A_c1") == dbl_approx(11.0/5441.0));
+  REQUIRE(s.getSpecies().getInitialConcentration("A_c1") ==
+          dbl_approx(11.0 / 5441.0));
   // species A_c2 has no initialAmount or initialConcentration -> defaulted to 0
   REQUIRE(s.getSpecies().getInitialConcentration("A_c2") == dbl_approx(0.0));
 }
@@ -570,9 +576,12 @@ SCENARIO("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
         REQUIRE(s.getReactions().getIds("comp").size() == 1);
         REQUIRE(s.getReactions().getIds("comp")[0] == "r1");
         REQUIRE(s.getReactions().getName("r1") == "r1");
-        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "C") == dbl_approx(1));
-        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "A") ==  dbl_approx(-1));
-        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "B") ==  dbl_approx(-1));
+        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "C") ==
+                dbl_approx(1));
+        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "A") ==
+                dbl_approx(-1));
+        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "B") ==
+                dbl_approx(-1));
         REQUIRE(s.getReactions().getParameterIds("r1").size() == 1);
         REQUIRE(s.getReactions().getParameterName("r1", "k1") == "k1");
         REQUIRE(s.getReactions().getParameterValue("r1", "k1") ==
@@ -696,9 +705,12 @@ SCENARIO("SBML: very-simple-model.xml",
       REQUIRE(s.getReactions().getLocation("re_ac1") == "c3");
       REQUIRE(s.getReactions().getRateExpression("re_ac1") ==
               "0.2 + A_c3 * B_c3 * const_1");
-      REQUIRE(s.getReactions().getSpeciesStoichiometry("re_ac1", "A_c3") ==  dbl_approx(1));
-      REQUIRE(s.getReactions().getSpeciesStoichiometry("re_ac1", "B_c3") ==  dbl_approx(-2.0123));
-      REQUIRE(s.getReactions().getScheme("re_ac1") == "2.0123 B_nucl -> A_nucl");
+      REQUIRE(s.getReactions().getSpeciesStoichiometry("re_ac1", "A_c3") ==
+              dbl_approx(1));
+      REQUIRE(s.getReactions().getSpeciesStoichiometry("re_ac1", "B_c3") ==
+              dbl_approx(-2.0123));
+      REQUIRE(s.getReactions().getScheme("re_ac1") ==
+              "2.0123 B_nucl -> A_nucl");
     }
     WHEN("change reaction location") {
       REQUIRE(s.getReactions().getIds("c2").size() == 0);
@@ -792,4 +804,67 @@ SCENARIO("SBML: load .xml model, simulate, save as .sme, load .sme",
   REQUIRE(s.getSimulationData().timePoints[2] == dbl_approx(0.2));
   REQUIRE(s.getSimulationData().concPadding.size() == 3);
   REQUIRE(s.getSimulationData().concPadding[2] == dbl_approx(0));
+}
+
+SCENARIO("SBML: import multi-compartment SBML doc without spatial geometry",
+         "[core/model/model][core/model][core][model][Q]") {
+  model::Model s;
+  // compartments:
+  // - cyt: {B, C, D}
+  // - nuc: {A}
+  // - org: {}
+  // - ext: {Dext}
+  // reactions:
+  // - trans: A -> B
+  // - conv: B -> C
+  // - degrad: C -> D
+  // - ex: D -> Dext
+  QFile f(":test/models/non-spatial-multi-compartment.xml");
+  f.open(QIODevice::ReadOnly);
+  s.importSBMLString(f.readAll().toStdString());
+  auto &geometry{s.getGeometry()};
+  auto &compartments{s.getCompartments()};
+  auto &membranes{s.getMembranes()};
+  // reactions in original xml model have no compartment
+  auto &reactions{s.getReactions()};
+  REQUIRE(geometry.getIsValid() == false);
+  REQUIRE(geometry.getHasImage() == false);
+  // these ones are located by sme based on species all being in the same
+  // compartment, and are divided by the compartment volume
+  REQUIRE(reactions.getLocation("conv") == "cyt");
+  // note this one didn't have a cyt factor originally: although it only affects
+  // species in the cyt compartment, it was actually thought of as a membrane
+  // reaction in the original model (but no way to tell this from the ODE xml
+  // model)
+  REQUIRE(symEq(reactions.getRateExpression("conv"), "B * k1 / cyt"));
+  REQUIRE(reactions.getLocation("degrad") == "cyt");
+  REQUIRE(symEq(reactions.getRateExpression("degrad"), "C * k1 - D * k2"));
+  // these are membrane reactions: until we have geometry they have no defined
+  // location here:
+  REQUIRE(reactions.getLocation("trans") == "");
+  REQUIRE(symEq(reactions.getRateExpression("trans"),
+                "Henri_Michaelis_Menten__irreversible(A, Km, V)"));
+  REQUIRE(reactions.getLocation("ex") == "");
+  REQUIRE(symEq(reactions.getRateExpression("ex"), "k1 * D"));
+  geometry.importGeometryFromImage(QImage(":test/geometry/cell.png"));
+  auto colours{geometry.getImage().colorTable()};
+  REQUIRE(colours.size() == 4);
+  // assign each compartment to a colour region in the image
+  compartments.setColour("cyt", colours[1]);
+  compartments.setColour("nuc", colours[2]);
+  compartments.setColour("org", colours[3]);
+  compartments.setColour("ext", colours[0]);
+  REQUIRE(geometry.getIsValid() == true);
+  REQUIRE(geometry.getHasImage() == true);
+  // all reactions are now assigned to a valid location
+  REQUIRE(reactions.getLocation("conv") == "cyt");
+  REQUIRE(reactions.getLocation("degrad") == "cyt");
+  REQUIRE(reactions.getLocation("trans") == "cyt_nuc_membrane");
+  REQUIRE(reactions.getLocation("ex") == "ext_cyt_membrane");
+  // membrane reaction rates are divided by membrane area
+  REQUIRE(symEq(
+      reactions.getRateExpression("trans"),
+      "Henri_Michaelis_Menten__irreversible(A, Km, V) / cyt_nuc_membrane"));
+  REQUIRE(
+      symEq(reactions.getRateExpression("ex"), "k1 * D / ext_cyt_membrane"));
 }
