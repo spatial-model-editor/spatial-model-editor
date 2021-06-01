@@ -151,7 +151,7 @@ void Model::exportSMEFile(const std::string &filename) {
 void Model::updateSBMLDoc() {
   modelGeometry.writeGeometryToSBML();
   setSbmlAnnotation(doc->getModel(), settings);
-  modelMembranes.exportToSBML(doc->getModel());
+  modelMembranes.exportToSBML(doc->getModel(), modelGeometry.getPixelWidth());
 }
 
 QString Model::getXml() {

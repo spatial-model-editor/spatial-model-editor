@@ -390,7 +390,25 @@ SCENARIO("SBML: import uint8 sampled field",
   model::Model s;
   QFile f(":/test/models/very-simple-model-uint8.xml");
   f.open(QIODevice::ReadOnly);
-  s.importSBMLString(f.readAll().toStdString());
+  std::string xml{f.readAll().toStdString()};
+  std::unique_ptr<libsbml::SBMLDocument> doc(
+      libsbml::readSBMLFromString(xml.c_str()));
+  // size of compartments are not set in original model
+  REQUIRE(doc->getModel()->getCompartment("c1")->isSetSize() == false);
+  REQUIRE(doc->getModel()->getCompartment("c2")->isSetSize() == false);
+  REQUIRE(doc->getModel()->getCompartment("c3")->isSetSize() == false);
+  s.importSBMLString(xml);
+  xml = s.getXml().toStdString();
+  doc.reset(
+      libsbml::readSBMLFromString(xml.c_str()));
+  // after import, compartment size is set based on geometry image
+  REQUIRE(doc->getModel()->getCompartment("c1")->isSetSize() == true);
+  REQUIRE(doc->getModel()->getCompartment("c1")->getSize() == dbl_approx(5441.0));
+  REQUIRE(doc->getModel()->getCompartment("c2")->isSetSize() == true);
+  REQUIRE(doc->getModel()->getCompartment("c2")->getSize() == dbl_approx(4034.0));
+  REQUIRE(doc->getModel()->getCompartment("c3")->isSetSize() == true);
+  REQUIRE(doc->getModel()->getCompartment("c3")->getSize() == dbl_approx(525.0));
+
   const auto &img = s.getGeometry().getImage();
   REQUIRE(img.colorCount() == 3);
   REQUIRE(s.getCompartments().getColour("c1") ==
@@ -400,7 +418,7 @@ SCENARIO("SBML: import uint8 sampled field",
   REQUIRE(s.getCompartments().getColour("c3") ==
           utils::indexedColours()[2].rgb());
   // species A_c1 has initialAmount 11 -> converted to concentration
-  REQUIRE(s.getSpecies().getInitialConcentration("A_c1") == dbl_approx(11.0));
+  REQUIRE(s.getSpecies().getInitialConcentration("A_c1") == dbl_approx(11.0/5441.0));
   // species A_c2 has no initialAmount or initialConcentration -> defaulted to 0
   REQUIRE(s.getSpecies().getInitialConcentration("A_c2") == dbl_approx(0.0));
 }

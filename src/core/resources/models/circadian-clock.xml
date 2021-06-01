@@ -1741,6 +1741,112 @@
           </layout:listOfTextGlyphs>
         </layout:layout>
       </layout:listOfLayouts>
+      <spatialModelEditor xmlns="https://github.com/spatial-model-editor">
+        <settings>
+          <cereal_class_version>0</cereal_class_version>
+          <simulationSettings>
+            <cereal_class_version>1</cereal_class_version>
+            <times size="dynamic">
+              <value0>
+                <first>100</first>
+                <second>1</second>
+              </value0>
+            </times>
+            <options>
+              <cereal_class_version>0</cereal_class_version>
+              <dune>
+                <cereal_class_version>0</cereal_class_version>
+                <discretization>0</discretization>
+                <integrator>alexander_2</integrator>
+                <dt>0.10000000000000001</dt>
+                <minDt>1e-10</minDt>
+                <maxDt>10000</maxDt>
+                <increase>1.5</increase>
+                <decrease>0.5</decrease>
+                <writeVTKfiles>false</writeVTKfiles>
+                <newtonRelErr>1e-08</newtonRelErr>
+                <newtonAbsErr>9.9999999999999998e-13</newtonAbsErr>
+              </dune>
+              <pixel>
+                <cereal_class_version>0</cereal_class_version>
+                <integrator>1</integrator>
+                <maxErr>
+                  <cereal_class_version>0</cereal_class_version>
+                  <abs>1.7976931348623157e+308</abs>
+                  <rel>0.0050000000000000001</rel>
+                </maxErr>
+                <maxTimestep>1.7976931348623157e+308</maxTimestep>
+                <enableMultiThreading>false</enableMultiThreading>
+                <maxThreads>0</maxThreads>
+                <doCSE>true</doCSE>
+                <optLevel>3</optLevel>
+              </pixel>
+            </options>
+            <simulatorType>1</simulatorType>
+          </simulationSettings>
+          <displayOptions>
+            <cereal_class_version>0</cereal_class_version>
+            <showSpecies size="dynamic"/>
+            <showMinMax>true</showMinMax>
+            <normaliseOverAllTimepoints>true</normaliseOverAllTimepoints>
+            <normaliseOverAllSpecies>true</normaliseOverAllSpecies>
+            <showGeometryGrid>false</showGeometryGrid>
+            <showGeometryScale>false</showGeometryScale>
+          </displayOptions>
+          <meshParameters>
+            <cereal_class_version>0</cereal_class_version>
+            <maxPoints size="dynamic">
+              <value0>14</value0>
+              <value1>12</value1>
+            </maxPoints>
+            <maxAreas size="dynamic">
+              <value0>40</value0>
+            </maxAreas>
+          </meshParameters>
+          <speciesColours size="dynamic">
+            <value0>
+              <key>C</key>
+              <value>4292015420</value>
+            </value0>
+            <value1>
+              <key>Cn</key>
+              <value>4294622910</value>
+            </value1>
+            <value2>
+              <key>Mp</key>
+              <value>4294959385</value>
+            </value2>
+            <value3>
+              <key>Mt</key>
+              <value>4282168395</value>
+            </value3>
+            <value4>
+              <key>P0</key>
+              <value>4293269835</value>
+            </value4>
+            <value5>
+              <key>P1</key>
+              <value>4294279728</value>
+            </value5>
+            <value6>
+              <key>P2</key>
+              <value>4287700660</value>
+            </value6>
+            <value7>
+              <key>T0</key>
+              <value>4278223560</value>
+            </value7>
+            <value8>
+              <key>T1</key>
+              <value>4282839280</value>
+            </value8>
+            <value9>
+              <key>T2</key>
+              <value>4293931750</value>
+            </value9>
+          </speciesColours>
+        </settings>
+      </spatialModelEditor>
     </annotation>
     <listOfFunctionDefinitions>
       <functionDefinition metaid="COPASI44" id="Henri_Michaelis_Menten__irreversible" name="Henri-Michaelis-Menten (irreversible)">
@@ -1905,7 +2011,7 @@
       </unitDefinition>
     </listOfUnitDefinitions>
     <listOfCompartments>
-      <compartment metaid="COPASI1" id="cell" name="cell" spatialDimensions="3" size="1" units="volume" constant="true">
+      <compartment metaid="COPASI1" id="cell" name="cell" spatialDimensions="3" size="3671" units="volume" constant="true">
         <annotation>
           <COPASI xmlns="http://www.copasi.org/static/sbml">
             <rdf:RDF xmlns:dcterms="http://purl.org/dc/terms/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
@@ -2137,13 +2243,9 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> linear_activation </ci>
-                <ci> k </ci>
-                <ci> Mp </ci>
-              </apply>
+              <ci> linear_activation </ci>
+              <ci> k </ci>
+              <ci> Mp </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2174,15 +2276,11 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Transcription </ci>
-                <ci> V </ci>
-                <ci> K </ci>
-                <ci> n </ci>
-                <ci> Cn </ci>
-              </apply>
+              <ci> Transcription </ci>
+              <ci> V </ci>
+              <ci> K </ci>
+              <ci> n </ci>
+              <ci> Cn </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2212,14 +2310,10 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Henri_Michaelis_Menten__irreversible </ci>
-                <ci> Mp </ci>
-                <ci> Km </ci>
-                <ci> V </ci>
-              </apply>
+              <ci> Henri_Michaelis_Menten__irreversible </ci>
+              <ci> Mp </ci>
+              <ci> Km </ci>
+              <ci> V </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2251,15 +2345,11 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Transcription </ci>
-                <ci> V </ci>
-                <ci> K </ci>
-                <ci> n </ci>
-                <ci> Cn </ci>
-              </apply>
+              <ci> Transcription </ci>
+              <ci> V </ci>
+              <ci> K </ci>
+              <ci> n </ci>
+              <ci> Cn </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2289,14 +2379,10 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Henri_Michaelis_Menten__irreversible </ci>
-                <ci> Mt </ci>
-                <ci> Km </ci>
-                <ci> V </ci>
-              </apply>
+              <ci> Henri_Michaelis_Menten__irreversible </ci>
+              <ci> Mt </ci>
+              <ci> Km </ci>
+              <ci> V </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2328,13 +2414,9 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> linear_activation </ci>
-                <ci> k </ci>
-                <ci> Mt </ci>
-              </apply>
+              <ci> linear_activation </ci>
+              <ci> k </ci>
+              <ci> Mt </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2365,14 +2447,10 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Henri_Michaelis_Menten__irreversible </ci>
-                <ci> P0 </ci>
-                <ci> Km </ci>
-                <ci> V </ci>
-              </apply>
+              <ci> Henri_Michaelis_Menten__irreversible </ci>
+              <ci> P0 </ci>
+              <ci> Km </ci>
+              <ci> V </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2404,14 +2482,10 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Henri_Michaelis_Menten__irreversible </ci>
-                <ci> P1 </ci>
-                <ci> Km </ci>
-                <ci> V </ci>
-              </apply>
+              <ci> Henri_Michaelis_Menten__irreversible </ci>
+              <ci> P1 </ci>
+              <ci> Km </ci>
+              <ci> V </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2443,14 +2517,10 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Henri_Michaelis_Menten__irreversible </ci>
-                <ci> P1 </ci>
-                <ci> Km </ci>
-                <ci> V </ci>
-              </apply>
+              <ci> Henri_Michaelis_Menten__irreversible </ci>
+              <ci> P1 </ci>
+              <ci> Km </ci>
+              <ci> V </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2482,14 +2552,10 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Henri_Michaelis_Menten__irreversible </ci>
-                <ci> P2 </ci>
-                <ci> Km </ci>
-                <ci> V </ci>
-              </apply>
+              <ci> Henri_Michaelis_Menten__irreversible </ci>
+              <ci> P2 </ci>
+              <ci> Km </ci>
+              <ci> V </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2521,14 +2587,10 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Henri_Michaelis_Menten__irreversible </ci>
-                <ci> T0 </ci>
-                <ci> Km </ci>
-                <ci> V </ci>
-              </apply>
+              <ci> Henri_Michaelis_Menten__irreversible </ci>
+              <ci> T0 </ci>
+              <ci> Km </ci>
+              <ci> V </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2560,14 +2622,10 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Henri_Michaelis_Menten__irreversible </ci>
-                <ci> T1 </ci>
-                <ci> Km </ci>
-                <ci> V </ci>
-              </apply>
+              <ci> Henri_Michaelis_Menten__irreversible </ci>
+              <ci> T1 </ci>
+              <ci> Km </ci>
+              <ci> V </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2599,14 +2657,10 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Henri_Michaelis_Menten__irreversible </ci>
-                <ci> T1 </ci>
-                <ci> Km </ci>
-                <ci> V </ci>
-              </apply>
+              <ci> Henri_Michaelis_Menten__irreversible </ci>
+              <ci> T1 </ci>
+              <ci> Km </ci>
+              <ci> V </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2638,14 +2692,10 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Henri_Michaelis_Menten__irreversible </ci>
-                <ci> T2 </ci>
-                <ci> Km </ci>
-                <ci> V </ci>
-              </apply>
+              <ci> Henri_Michaelis_Menten__irreversible </ci>
+              <ci> T2 </ci>
+              <ci> Km </ci>
+              <ci> V </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2674,14 +2724,10 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Henri_Michaelis_Menten__irreversible </ci>
-                <ci> P2 </ci>
-                <ci> Km </ci>
-                <ci> V </ci>
-              </apply>
+              <ci> Henri_Michaelis_Menten__irreversible </ci>
+              <ci> P2 </ci>
+              <ci> Km </ci>
+              <ci> V </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2710,14 +2756,10 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Henri_Michaelis_Menten__irreversible </ci>
-                <ci> T2 </ci>
-                <ci> Km </ci>
-                <ci> V </ci>
-              </apply>
+              <ci> Henri_Michaelis_Menten__irreversible </ci>
+              <ci> T2 </ci>
+              <ci> Km </ci>
+              <ci> V </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -2747,7 +2789,6 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> cell </ci>
               <ci> k1 </ci>
               <ci> Mt </ci>
             </apply>
@@ -2778,7 +2819,6 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> cell </ci>
               <ci> k1 </ci>
               <ci> Mp </ci>
             </apply>
@@ -2809,7 +2849,6 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> cell </ci>
               <ci> k1 </ci>
               <ci> P0 </ci>
             </apply>
@@ -2840,7 +2879,6 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> cell </ci>
               <ci> k1 </ci>
               <ci> P1 </ci>
             </apply>
@@ -2871,7 +2909,6 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> cell </ci>
               <ci> k1 </ci>
               <ci> P2 </ci>
             </apply>
@@ -2902,7 +2939,6 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> cell </ci>
               <ci> k1 </ci>
               <ci> T0 </ci>
             </apply>
@@ -2933,7 +2969,6 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> cell </ci>
               <ci> k1 </ci>
               <ci> T1 </ci>
             </apply>
@@ -2964,7 +2999,6 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> cell </ci>
               <ci> k1 </ci>
               <ci> T2 </ci>
             </apply>
@@ -2995,9 +3029,8 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> cell </ci>
-              <ci> k1 </ci>
               <ci> C </ci>
+              <ci> k1 </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -3026,7 +3059,6 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> cell </ci>
               <ci> k1 </ci>
               <ci> Cn </ci>
             </apply>
@@ -3056,14 +3088,10 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Henri_Michaelis_Menten__irreversible </ci>
-                <ci> T2 </ci>
-                <ci> Km </ci>
-                <ci> V </ci>
-              </apply>
+              <ci> Henri_Michaelis_Menten__irreversible </ci>
+              <ci> T2 </ci>
+              <ci> Km </ci>
+              <ci> V </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -3092,14 +3120,10 @@
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
-              <times/>
-              <ci> cell </ci>
-              <apply>
-                <ci> Henri_Michaelis_Menten__irreversible </ci>
-                <ci> P2 </ci>
-                <ci> Km </ci>
-                <ci> V </ci>
-              </apply>
+              <ci> Henri_Michaelis_Menten__irreversible </ci>
+              <ci> P2 </ci>
+              <ci> Km </ci>
+              <ci> V </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -3133,7 +3157,6 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> cell </ci>
               <ci> k1 </ci>
               <ci> P2 </ci>
               <ci> T2 </ci>
@@ -3169,9 +3192,8 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> cell </ci>
-              <ci> k1 </ci>
               <ci> C </ci>
+              <ci> k1 </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -3203,9 +3225,8 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> cell </ci>
-              <ci> k1 </ci>
               <ci> C </ci>
+              <ci> k1 </ci>
             </apply>
           </math>
           <listOfLocalParameters>
@@ -3237,7 +3258,6 @@
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> cell </ci>
               <ci> k1 </ci>
               <ci> Cn </ci>
             </apply>
@@ -3265,7 +3285,7 @@
       <spatial:listOfDomains>
         <spatial:domain spatial:id="cell_domain" spatial:domainType="cell_domainType">
           <spatial:listOfInteriorPoints>
-            <spatial:interiorPoint spatial:coord1="47" spatial:coord2="73"/>
+            <spatial:interiorPoint spatial:coord1="49.5" spatial:coord2="77.5"/>
           </spatial:listOfInteriorPoints>
         </spatial:domain>
       </spatial:listOfDomains>
@@ -3276,12 +3296,9 @@
           </spatial:listOfSampledVolumes>
         </spatial:sampledFieldGeometry>
         <spatial:parametricGeometry spatial:id="parametricGeometry" spatial:isActive="true">
-          <annotation>
-            <spatialModelEditor:mesh xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:maxBoundaryPoints="14 12" spatialModelEditor:maxTriangleAreas="40" spatialModelEditor:membraneWidths="1.00000000000000000e+00 1.00000000000000000e+00"/>
-          </annotation>
-          <spatial:spatialPoints spatial:id="spatialPoints" spatial:compression="uncompressed" spatial:arrayDataLength="164" spatial:dataType="double">56 69 62 69 72 63 74 52 71 45 62 37 52 34 43 33 35 36 31 40 28 49 31 56 36 60 48 62 45 89 28 81 16 67 10 40 15 29 40 14 50 13 74 21 88 38 90 53 82 76 66 89 36.5 85 22 74 13 53.5 33.75 17.75 62 17 81 29.5 89 45.5 86 64.5 74 82.5 55.5 89 27.5 21.5 21.25 25.25 27.028061224489797 32.028061224489797 27.5 65.5 59 79.081249999999997 41.45432692307692 23.50721153846154 21.85759493670886 55.775316455696199 80.065985130111528 42.874535315985128 20.5 41.5 45.745327102803735 76.384929906542055 30.044692737430168 73.175977653631278 21.972067039106147 67.952513966480453 48.19082597030026 27.282566267297661 47.854931104747692 19.984151175684399 58.061187179661843 26.124227752742264 54.892004317288723 18.32398704813383 36.978108226645524 29.108288604388068 33.265364322342769 24.025607203904613 26.335687744363582 59.676306011081323 73.602584697901889 35.703280450259285 81.461705796828639 36.252124637905823 20.829083689429979 48.670916310570021 25.335276174740979 37.846933223186852 19.120208206098976 34.64710838931645 42.84728936992385 82.543260088911808 37.060372924301682 77.019921411280407 50.824667674449806 82.536264145061523 37.184475889023588 68.469197251089057 52.776749416912438 23.727328907496865 41.577094685385255 63.537431887688463 46.304879019509841 69.103471235274384 72.740384615384613 72.776627218934905 79.542197452229303 58.689490445859875 82.098036670336455 50.931413274616681 66.384007918877657 81.299548207849426 64.208019781215171 75.14406548046081 60.75 85.27565965658475 52.841814941297798 75.426817701907652 66.250888091137142 24.247335726588574 72.511190213998375 28.316770025147125 67.409327784575964 32.844480903249782 68.041475836180055 39.265839684297433 57.955958404502226 32.313471984992589 78.607216064870912 67.415983394538131 76.374305653213327 77.249145419339484 68.317150440273579 68.195250733789294 </spatial:spatialPoints>
+          <spatial:spatialPoints spatial:id="spatialPoints" spatial:compression="uncompressed" spatial:arrayDataLength="268" spatial:dataType="double">45 90 28 82 16 68 10 40 15 29 28 20 40 14 51 13 75 21 89 38 90 60 83 77 73 87 67 90 56 69 63 69 72 64 74 52 69 43 59 36 39 35 32 40 30 44 30 53 34 59 49 62 39.078512396694215 72.607438016528931 13 54 63 17 49 35.5 49.25405482509094 78.847362051238107 22 75 44.525534441805227 24.739311163895486 69.690839694656489 31.37022900763359 89.5 49 82 29.5 56 90 60.316872252422264 79.772290750807429 71.857142857142861 75.857142857142861 20.75 38.25 79.621951219512198 42.987804878048777 21.848547717842322 59.425311203319502 30.125 29.975000000000001 55.649552515950681 25.373590003358039 28.202143969379037 67.151607977034274 21.003942181340342 48.156701708278582 36.5 86 80.384615384615387 59.230769230769234 86.5 68.5 35.931675381690376 23.524141835980746 47.552576572962373 70.447423427037634 78.08724415960306 70.006512301013032 63.989864678971536 25.281871000531083 21.5 24.5 81.766497288291163 50.585235989504312 41.5 60.5 76.615608445405741 35.504212929939115 29.555134045377045 74.595599389676821 41.53136733097454 80.024199522537685 67.485056377754205 81.935598613270628 36.539256198347104 65.803719008264466 11.5 47 14.5 61 78 82 23.117111094132028 31.483660605134475 34 17 50.358673887807143 20.301350173948354 34.379691887722132 79.474404738590465 57 15 54.450105832277799 83.320947562417246 15.907303370786517 42.394863563402886 69 19 85.5 33.75 89.75 54.5 78.5 25.25 70.248581372409717 25.134675677516348 27.674184208318923 35.62122489869347 21.97725653062939 65.795006956981666 61.5 90 64 39.5 65.415516253815952 75.835432359980004 73 58 27.981835633586108 60.857237622209041 45.5 13.5 49.872576859970941 28.826547274990077 44 35.25 12.5 34.5 42.693973283901272 66.588596079329449 50.5 90 46.092679488157479 84.029140039102586 55.094460526476425 75.613998536311229 39.583226337669039 28.695940209617842 72.154418727352351 69.931292480363965 59.869818147599524 29.884357565274243 40.815738209568664 19.979432087083271 64.345419847328245 33.685114503816791 69.345419847328245 37.185114503816791 54 35.75 89.25 43.5 44.775018462640119 75.38233487576062 19.109141640113759 53.964678130613322 32.961433188475709 70.131531359093344 77.428571428571431 76.428571428571431 58.509594183217153 20.471217450348533 81.552107490925181 65.112446159035315 81.686786708949583 37.81265286781813 24.467535015227767 52.49973710455744 17.875 33.625 24.134965904844758 43.11983745742365 75.234904122595083 29.950232812089865 73.912136784175999 40.37409196203398 71.5 47.5 77.240020234444103 47.761547326684962 44.695157068047664 30.016275074304996 72.747785932696416 81.109356924446445 84.342325360403436 55.430155364826177 60.296283201744963 73.799959578877562 84.301685690526398 45.768233182639747 62.748306053210413 84.67331167926217 67.5 66.5 25.854940053015316 27.170642382236146 30.68645141590714 24.641545437714019 35.141967958065507 31.464061566600726 30 48.5 54.737577165064693 30.618282607542255 25.599420957316177 71.469621227281252 16.030083454866851 49.747093736091728 52.5 65.5 31.949017161656336 63.869423549350934 88.25 64.25 40.75 88 77.192307692307693 55.615384615384613 76.961132634681107 62.967028465686269 85.123357280532673 60.477264762572275 </spatial:spatialPoints>
           <spatial:listOfParametricObjects>
-            <spatial:parametricObject spatial:id="cell_triangles" spatial:polygonType="triangle" spatial:domainType="cell_domainType" spatial:pointIndexLength="378" spatial:compression="uncompressed" spatial:dataType="uint32">37 38 59 47 54 39 58 59 38 5 77 4 36 29 53 50 74 76 29 19 41 38 53 52 11 54 42 9 38 8 7 52 41 22 32 43 52 7 8 41 52 53 12 54 11 42 57 10 57 44 10 17 44 57 46 61 15 28 42 16 47 46 27 73 66 0 11 42 10 10 44 58 27 46 15 9 58 38 26 60 14 66 63 65 73 0 40 61 60 26 16 47 27 39 54 12 54 47 42 63 39 12 6 7 48 17 18 59 51 64 49 53 38 36 49 19 20 48 64 6 50 30 74 43 4 55 55 31 56 50 51 30 23 69 32 56 31 22 5 6 78 43 3 4 20 30 51 75 31 55 8 38 52 71 70 40 46 63 61 36 38 37 60 62 14 0 1 71 25 70 34 46 47 39 79 67 2 14 62 35 23 33 68 69 23 68 67 79 80 80 79 24 19 49 41 50 64 51 51 49 20 2 3 68 25 35 72 41 49 48 74 30 21 41 48 7 41 53 29 42 47 16 22 43 56 55 56 43 42 28 57 17 57 28 10 58 9 59 58 44 17 59 44 59 18 37 26 15 61 60 45 62 46 39 63 45 60 61 73 62 45 72 62 40 65 63 12 45 61 63 6 64 50 49 64 48 66 65 13 12 13 65 0 66 13 63 66 45 67 34 70 81 67 71 68 3 69 79 68 33 3 43 69 32 69 43 0 71 40 72 70 25 81 71 1 67 70 71 62 72 35 70 72 40 62 73 40 66 73 45 21 75 74 75 76 74 31 75 21 76 75 55 77 55 4 5 78 76 5 76 77 55 77 76 6 50 78 76 78 50 68 79 2 24 79 33 24 34 80 34 67 80 1 2 81 2 67 81 </spatial:parametricObject>
+            <spatial:parametricObject spatial:id="cell_triangles" spatial:polygonType="triangle" spatial:domainType="cell_domainType" spatial:pointIndexLength="621" spatial:compression="uncompressed" spatial:dataType="uint32">30 50 90 50 14 90 69 30 90 50 30 99 90 14 116 14 50 127 37 69 90 30 69 89 30 58 99 26 50 99 14 15 116 37 90 116 50 25 127 69 37 118 69 88 89 58 30 89 58 26 99 50 26 87 15 80 116 80 37 116 25 50 87 37 59 118 36 69 118 88 0 89 69 36 88 58 89 130 26 58 67 26 60 87 80 15 119 59 37 80 55 25 87 59 13 118 78 36 118 89 0 130 46 58 130 58 46 67 26 67 101 60 55 87 60 26 101 92 80 119 38 59 80 13 78 118 12 13 59 46 1 67 67 57 101 24 55 60 60 101 128 16 92 119 38 80 92 59 38 114 12 59 114 1 57 67 101 57 125 24 60 128 101 44 128 16 51 92 38 92 102 38 102 114 63 12 114 1 31 57 57 31 125 44 101 125 82 24 128 44 82 128 92 51 102 51 16 132 102 63 114 31 77 125 77 44 125 23 24 82 44 77 82 51 11 102 16 81 132 104 51 132 11 63 102 31 2 77 23 82 106 77 41 82 48 11 51 81 131 132 47 104 132 48 51 104 2 62 77 82 41 106 23 106 123 62 41 77 131 47 132 81 17 131 104 47 133 48 104 129 41 100 106 106 45 123 41 62 100 115 47 131 17 54 131 47 115 133 129 104 133 100 45 106 45 108 123 62 27 100 54 115 131 54 17 112 115 10 133 10 129 133 45 100 126 108 22 123 45 70 108 100 27 126 54 34 115 17 111 112 54 112 117 73 10 115 70 45 126 21 22 108 70 39 108 27 61 126 34 73 115 34 54 117 111 110 112 112 40 117 61 70 126 76 21 108 39 76 108 39 70 107 98 34 117 110 40 112 18 110 111 40 105 117 61 3 70 21 76 122 39 64 76 70 86 107 64 39 107 105 98 117 56 40 110 18 96 110 40 56 105 70 3 86 76 42 122 20 21 122 64 42 76 86 4 107 4 64 107 9 98 105 96 56 110 18 79 96 56 35 105 42 121 122 91 20 122 42 64 120 4 53 64 72 9 105 33 56 96 79 95 96 35 72 105 35 56 109 121 49 122 42 120 121 49 91 122 20 91 113 64 53 120 95 33 96 56 33 109 79 19 95 74 35 109 65 49 121 120 5 121 49 32 91 91 32 113 85 20 113 53 5 120 52 33 95 33 75 109 19 93 95 75 74 109 5 65 121 49 65 94 32 49 94 32 84 113 29 85 113 93 52 95 33 52 75 93 19 124 8 74 75 65 6 94 66 32 94 84 29 113 32 66 84 43 52 93 52 71 75 19 97 124 43 93 124 71 8 75 6 83 94 83 66 94 29 84 124 66 43 84 52 43 103 52 28 71 97 29 124 84 43 124 7 66 83 43 66 103 28 52 103 66 7 68 66 68 103 68 28 103 </spatial:parametricObject>
           </spatial:listOfParametricObjects>
         </spatial:parametricGeometry>
       </spatial:listOfGeometryDefinitions>

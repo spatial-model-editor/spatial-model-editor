@@ -303,9 +303,10 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   compartments[static_cast<std::size_t>(i)] =
       std::make_unique<geometry::Compartment>(sId, modelGeometry->getImage(),
                                               colour);
+  auto *compartment{sbmlModel->getCompartment(sId)};
   // set SampledValue (aka colour) of SampledFieldVolume
-  auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
-      sbmlModel->getCompartment(sId)->getPlugin("spatial"));
+  auto *scp{static_cast<libsbml::SpatialCompartmentPlugin *>(
+      compartment->getPlugin("spatial"))};
   const std::string &domainType = scp->getCompartmentMapping()->getDomainType();
   SPDLOG_INFO("  - domainType '{}'", domainType);
   auto *geom = getOrCreateGeometry(sbmlModel);
@@ -325,6 +326,11 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   } else {
     sfvol->setSampledValue(static_cast<double>(colour));
   }
+  auto nPixels{compartments[static_cast<std::size_t>(i)]->nPixels()};
+  double pixelWidth{modelGeometry->getPixelWidth()};
+  double volume{static_cast<double>(nPixels) * pixelWidth * pixelWidth};
+  compartment->setSize(volume);
+  SPDLOG_INFO("  - size {}", volume);
   modelSpecies->updateCompartmentGeometry(id);
   modelMembranes->updateCompartments(compartments);
   modelMembranes->updateCompartmentNames(names, sbmlModel);
@@ -370,6 +376,14 @@ ModelCompartments::getCompartment(const QString &id) const {
   return compartments[static_cast<std::size_t>(i)].get();
 }
 
+double ModelCompartments::getSize(const QString &id) const {
+  const auto *compartment{sbmlModel->getCompartment(id.toStdString())};
+  if (compartment == nullptr || !compartment->isSetSize()) {
+    return 0.0;
+  }
+  return compartment->getSize();
+}
+
 void ModelCompartments::clear() {
   ids.clear();
   names.clear();
@@ -387,4 +401,4 @@ void ModelCompartments::setHasUnsavedChanges(bool unsavedChanges) {
   hasUnsavedChanges = unsavedChanges;
 }
 
-} // namespace sme
+} // namespace sme::model
