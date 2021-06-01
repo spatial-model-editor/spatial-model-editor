@@ -56,6 +56,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   s.getCompartments().setColour("c1", col1);
   s.getCompartments().setColour("c2", col2);
   s.getCompartments().setColour("c3", col3);
+  std::string xml{s.getXml().toStdString()};
   // check we have identified the compartments and membranes
   REQUIRE(s.getCompartments().getIds() == QStringList{"c1", "c2", "c3"});
   REQUIRE(s.getMembranes().getIds() ==
@@ -1819,7 +1820,7 @@ SCENARIO("simulate w/options & save, load, re-simulate",
 }
 
 SCENARIO("stop, then continue pixel simulation",
-         "[core/simulate/simulate][core/simulate][core][simulate][Q]") {
+         "[core/simulate/simulate][core/simulate][core][simulate]") {
   // see https://github.com/spatial-model-editor/spatial-model-editor/issues/544
   auto m{getVerySimpleModel()};
   m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;

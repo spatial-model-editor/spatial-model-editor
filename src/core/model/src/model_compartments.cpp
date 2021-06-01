@@ -335,6 +335,9 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   modelMembranes->updateCompartments(compartments);
   modelMembranes->updateCompartmentNames(names, sbmlModel);
   modelGeometry->updateMesh();
+  if (modelGeometry->getIsValid()) {
+    modelMembranes->exportToSBML(sbmlModel, modelGeometry->getPixelWidth());
+  }
   modelReactions->makeReactionsSpatial(modelGeometry->getIsValid());
 }
 

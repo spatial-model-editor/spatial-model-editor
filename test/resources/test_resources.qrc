@@ -13,6 +13,7 @@
         <file>models/ABtoC-invalid-annotation.xml</file>
         <file>models/example2D.xml</file>
         <file>models/fish_300x300.xml</file>
+        <file>models/non-spatial-multi-compartment.xml</file>
         <file>geometry/gt1.png</file>
         <file>geometry/gt2.png</file>
         <file>geometry/gt3.png</file>
@@ -34,6 +35,7 @@
         <file>geometry/gt19.png</file>
         <file>geometry/gt20.png</file>
         <file>geometry/potato_alpha_channel.png</file>
+        <file>geometry/cell.png</file>
         <file>smefiles/very-simple-model-v0.sme</file>
         <file>smefiles/very-simple-model-v1.sme</file>
     </qresource>

@@ -1,8 +1,6 @@
 #include "sbml_math.hpp"
-
-#include <memory>
-
 #include "logger.hpp"
+#include <memory>
 
 namespace sme::model {
 
@@ -198,4 +196,4 @@ double evaluateMathString(
   return libsbml::SBMLTransforms::evaluateASTNode(ast.get(), vars, model);
 }
 
-} // namespace sme
+} // namespace sme::model

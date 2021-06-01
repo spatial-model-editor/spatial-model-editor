@@ -105,12 +105,33 @@ inferReactionCompartment(const libsbml::Reaction *reac,
   return {};
 }
 
+static bool divideReactionKineticLaw(libsbml::Reaction *reaction,
+                                     const std::string &divisor) {
+  const auto *model{reaction->getModel()};
+  const auto *kineticLaw{reaction->getKineticLaw()};
+  auto expr{mathASTtoString(kineticLaw->getMath())};
+  SPDLOG_INFO("  - {}", expr);
+  auto newExpr{utils::symbolicDivide(expr, divisor)};
+  SPDLOG_INFO("  --> {}", newExpr);
+  auto ast{mathStringToAST(newExpr, model)};
+  if (ast == nullptr) {
+    SPDLOG_WARN(
+        "  - libSBML failed to parse expression: leaving existing math");
+    return false;
+  }
+  reaction->getKineticLaw()->setMath(ast.get());
+  SPDLOG_INFO("  - new math: {}",
+              mathASTtoString(reaction->getKineticLaw()->getMath()));
+  return true;
+}
+
 static bool
-makeReactionSpatial(libsbml::Reaction *reac,
+makeReactionSpatial(libsbml::Reaction *reaction,
                     const std::vector<geometry::Membrane> &membranes) {
-  auto compartmentId{inferReactionCompartment(reac, membranes)};
+  auto compartmentId{inferReactionCompartment(reaction, membranes)};
   if (compartmentId.empty()) {
-    SPDLOG_INFO("no valid compartment found for reaction {}", reac->getId());
+    SPDLOG_INFO("no valid compartment found for reaction {}",
+                reaction->getId());
     return false;
   }
   if (auto iter{std::find_if(membranes.cbegin(), membranes.cend(),
@@ -119,40 +140,25 @@ makeReactionSpatial(libsbml::Reaction *reac,
                              })};
       iter != membranes.cend()) {
     // membrane reaction
-    //    const auto &membrane{*iter};
     SPDLOG_INFO("Reaction involves species from two compartments:");
     SPDLOG_INFO("Setting Reaction compartment to membrane: '{}'",
                 compartmentId);
-    reac->setCompartment(compartmentId);
+    reaction->setCompartment(compartmentId);
     SPDLOG_INFO("  - original rate units: d[amount]/dt");
     SPDLOG_INFO(
         "  -> want spatial membrane reaction: d[amount]/d[membrane area]/dt");
-    SPDLOG_WARN("  -> but NOT changing rate automatically");
-    // todo: rescale based on length/area of membrane
+    SPDLOG_INFO("  -> dividing rate by membrane area");
+    divideReactionKineticLaw(reaction, compartmentId);
     return true;
   }
   // compartment reaction
   SPDLOG_INFO("Reaction involves species from a single compartment");
   SPDLOG_INFO("Setting Reaction compartment: '{}'", compartmentId);
-  reac->setCompartment(compartmentId);
+  reaction->setCompartment(compartmentId);
   SPDLOG_INFO("  - original rate units: d[amount]/dt");
   SPDLOG_INFO("  -> want spatial compartment reaction: d[concentration]/dt");
   SPDLOG_INFO("  -> dividing rate by compartment size");
-  const auto *kin{reac->getKineticLaw()};
-  auto expr{mathASTtoString(kin->getMath())};
-  SPDLOG_INFO("  - {}", expr);
-  auto newExpr{utils::symbolicDivide(expr, compartmentId)};
-  SPDLOG_INFO("  --> {}", newExpr);
-  if (std::unique_ptr<libsbml::ASTNode> argAST(
-          libsbml::SBML_parseL3Formula(newExpr.c_str())); // todo: withmodel
-      argAST != nullptr) {
-    reac->getKineticLaw()->setMath(argAST.get());
-    SPDLOG_INFO("  - new math: {}",
-                mathASTtoString(reac->getKineticLaw()->getMath()));
-  } else {
-    SPDLOG_WARN(
-        "  - libSBML failed to parse expression: leaving existing math");
-  }
+  divideReactionKineticLaw(reaction, compartmentId);
   return true;
 }
 
@@ -270,8 +276,10 @@ void ModelReactions::makeReactionsSpatial(bool haveValidGeometry) {
         srp->setIsLocal(true);
       }
     }
-    if (haveValidGeometry && srp != nullptr && srp->isSetIsLocal() && srp->getIsLocal()){
-      // spatial, local reaction with valid geometry: ensure species involved make sense
+    if (haveValidGeometry && srp != nullptr && srp->isSetIsLocal() &&
+        srp->getIsLocal()) {
+      // spatial, local reaction with valid geometry: ensure species involved
+      // make sense
       removeInvalidSpecies(reaction, membranes);
     }
   }
