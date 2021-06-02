@@ -807,7 +807,7 @@ SCENARIO("SBML: load .xml model, simulate, save as .sme, load .sme",
 }
 
 SCENARIO("SBML: import multi-compartment SBML doc without spatial geometry",
-         "[core/model/model][core/model][core][model][Q]") {
+         "[core/model/model][core/model][core][model]") {
   model::Model s;
   // compartments:
   // - cyt: {B, C, D}
@@ -824,7 +824,6 @@ SCENARIO("SBML: import multi-compartment SBML doc without spatial geometry",
   s.importSBMLString(f.readAll().toStdString());
   auto &geometry{s.getGeometry()};
   auto &compartments{s.getCompartments()};
-  auto &membranes{s.getMembranes()};
   // reactions in original xml model have no compartment
   auto &reactions{s.getReactions()};
   REQUIRE(geometry.getIsValid() == false);
@@ -867,4 +866,16 @@ SCENARIO("SBML: import multi-compartment SBML doc without spatial geometry",
       "Henri_Michaelis_Menten__irreversible(A, Km, V) / cyt_nuc_membrane"));
   REQUIRE(
       symEq(reactions.getRateExpression("ex"), "k1 * D / ext_cyt_membrane"));
+  // move a compartment reaction to a (valid) membrane: rate rescaled
+  reactions.setLocation("conv", "cyt_org_membrane");
+  REQUIRE(reactions.getLocation("conv") == "cyt_org_membrane");
+  REQUIRE(reactions.getRateExpression("conv") == "B * k1 / cyt_org_membrane");
+  // move it back: rescaling undone
+  reactions.setLocation("conv", "cyt");
+  REQUIRE(reactions.getLocation("conv") == "cyt");
+  REQUIRE(reactions.getRateExpression("conv") == "B * k1 / cyt");
+  // move reaction to another valid membrane: rate rescaled
+  reactions.setLocation("conv", "cyt_nuc_membrane");
+  REQUIRE(reactions.getLocation("conv") == "cyt_nuc_membrane");
+  REQUIRE(reactions.getRateExpression("conv") == "B * k1 / cyt_nuc_membrane");
 }

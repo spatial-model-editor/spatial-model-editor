@@ -15,12 +15,13 @@
 #include <utility>
 #include <vector>
 
-namespace sme {
+namespace sme::utils {
 
-namespace utils {
-
-// symbolicDivide given expression by a variable
+// divide given expression by a variable
 std::string symbolicDivide(const std::string &expr, const std::string &var);
+
+// multiply given expression by a variable
+std::string symbolicMultiply(const std::string &expr, const std::string &var);
 
 // check if an expression contains a variable
 bool symbolicContains(const std::string &expr, const std::string &var);
@@ -75,7 +76,5 @@ public:
   bool isCompiled() const;
   const std::string &getErrorMessage() const;
 };
-
-} // namespace utils
 
 } // namespace sme

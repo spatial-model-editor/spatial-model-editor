@@ -190,8 +190,8 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(utils::Symbolic(expr, {}, constants).getErrorMessage() ==
             "Unknown symbol: x");
     REQUIRE(
-        utils::Symbolic(expr, {"x"}, {{"a", 1}, {"n", 2}})
-                .getErrorMessage() == "Unknown symbol: alpha");
+        utils::Symbolic(expr, {"x"}, {{"a", 1}, {"n", 2}}).getErrorMessage() ==
+        "Unknown symbol: alpha");
     utils::Symbolic sym(expr, {"x", "y"}, constants);
     CAPTURE(expr);
     REQUIRE(symEq(sym.expr(), "3*x + x*alpha - a*n*x"));
@@ -325,8 +325,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     WHEN("2-arg func calls 2-arg func") {
       std::string expr =
           "f2(x, alpha)*f2(beta, y)*g2(f2(x, y), f2(alpha, beta))";
-      utils::Symbolic sym(expr, {"alpha", "beta", "x", "y"}, {},
-                             {f1, f2, g2});
+      utils::Symbolic sym(expr, {"alpha", "beta", "x", "y"}, {}, {f1, f2, g2});
       CAPTURE(sym.getErrorMessage());
       REQUIRE(sym.isValid());
       REQUIRE(sym.getErrorMessage().empty());
@@ -351,7 +350,8 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(utils::symbolicDivide("x", "1.3") == "x/1.3");
     REQUIRE(utils::symbolicDivide("1", "2") == "2^(-1)");
     REQUIRE(utils::symbolicDivide("10*x", "5") == "10*x/5");
-    REQUIRE(utils::symbolicDivide("(cos(x))^2+3", "3.14") == "(3 + cos(x)^2)/3.14");
+    REQUIRE(utils::symbolicDivide("(cos(x))^2+3", "3.14") ==
+            "(3 + cos(x)^2)/3.14");
     REQUIRE(utils::symbolicDivide("2*unknown_function(a,b,c)", "2") ==
             "2*unknown_function(a, b, c)/2");
   }
@@ -378,6 +378,16 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(utils::symbolicDivide("unknown1(unknown2(z))", "x") ==
             "unknown1(unknown2(z))/x");
   }
+  GIVEN("symbolicMultiply expression with number") {
+    REQUIRE(utils::symbolicMultiply("x", "1.3") == "x*1.3");
+    REQUIRE(utils::symbolicMultiply("1", "2") == "2");
+    REQUIRE(utils::symbolicMultiply("10*x", "5") == "10*5*x");
+    REQUIRE(utils::symbolicMultiply("4.2/x", "x") == "4.2");
+    REQUIRE(utils::symbolicMultiply("cos(y)/x", "x") == "cos(y)");
+    REQUIRE(utils::symbolicMultiply("unknown(z)/x", "x") == "unknown(z)");
+    REQUIRE(utils::symbolicMultiply("x*unknown_function(a,b,c)/x/x", "x") ==
+            "unknown_function(a, b, c)");
+  }
   GIVEN("check if expression contains symbol") {
     REQUIRE(utils::symbolicContains("x", "x") == true);
     REQUIRE(utils::symbolicContains("1", "x") == false);
@@ -389,10 +399,14 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(utils::symbolicContains("z*unknown(y)", "x") == false);
     REQUIRE(utils::symbolicContains("(cos(symbol))^2+3", "symbol") == true);
   }
-  GIVEN("expressions equal up to double prec in coefficients test equal"){
+  GIVEN("expressions equal up to double prec in coefficients test equal") {
     REQUIRE(symEq(QString("0.999999999999"), QString("1")) == false);
     REQUIRE(symEq(QString("0.999999999999999999999"), QString("1")) == true);
-    REQUIRE(symEq(QString("1e-3*x+y"), QString("9.9999999999999e-4*x + 1.00000000000001*y")) == false);
-    REQUIRE(symEq(QString("1e-3*x+y"), QString("9.999999999999999e-4*x + 1.0000000000000001*y")) == true);
+    REQUIRE(symEq(QString("1e-3*x+y"),
+                  QString("9.9999999999999e-4*x + 1.00000000000001*y")) ==
+            false);
+    REQUIRE(symEq(QString("1e-3*x+y"),
+                  QString("9.999999999999999e-4*x + 1.0000000000000001*y")) ==
+            true);
   }
 }
