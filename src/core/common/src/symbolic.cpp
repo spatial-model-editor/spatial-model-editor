@@ -297,6 +297,14 @@ std::string symbolicDivide(const std::string &expr, const std::string &var) {
   return result;
 }
 
+std::string symbolicMultiply(const std::string &expr, const std::string &var) {
+  std::locale userLocale = std::locale::global(std::locale::classic());
+  std::string result = SymEngine::muPrinter().apply(
+      SymEngine::mul(SymEngine::parse(expr), SymEngine::symbol(var)));
+  std::locale::global(userLocale);
+  return result;
+}
+
 bool symbolicContains(const std::string &expr, const std::string &var) {
   std::locale userLocale = std::locale::global(std::locale::classic());
   auto e{SymEngine::parse(expr)};
