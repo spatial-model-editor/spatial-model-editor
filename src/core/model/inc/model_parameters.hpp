@@ -13,9 +13,7 @@ class Model;
 class Species;
 } // namespace libsbml
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 class ModelEvents;
 
@@ -29,8 +27,9 @@ struct SpatialCoordinates {
   IdName y;
 };
 
-struct IdValue {
+struct IdNameValue {
   std::string id;
+  std::string name;
   double value;
 };
 
@@ -63,12 +62,10 @@ public:
   const SpatialCoordinates &getSpatialCoordinates() const;
   void setSpatialCoordinates(SpatialCoordinates coords);
   std::vector<IdName> getSymbols() const;
-  std::vector<IdValue> getGlobalConstants() const;
+  std::vector<IdNameValue> getGlobalConstants() const;
   std::vector<IdNameExpr> getNonConstantParameters() const;
   bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);
 };
-
-} // namespace model
 
 } // namespace sme

@@ -63,7 +63,7 @@ find_package(
   CONFIG
   REQUIRED)
 message(STATUS "Found SymEngine library: ")
-message(STATUS "Testing SymEngine LLVM support")
+message(STATUS "Testing SymEngine LLVM & SBML support")
 try_compile(
   SYMENGINE_LLVM "${CMAKE_CURRENT_BINARY_DIR}/cxx"
   "${CMAKE_SOURCE_DIR}/cmake/checkSymEngineLLVM.cpp"
@@ -71,11 +71,11 @@ try_compile(
   LINK_LIBRARIES ${SYMENGINE_LIBRARIES}
   OUTPUT_VARIABLE SYMENGINE_LLVM_ERROR_LOG)
 if(${SYMENGINE_LLVM})
-  message(STATUS "Testing SymEngine LLVM support - found")
+  message(STATUS "Testing SymEngine LLVM & SBML support - found")
 else()
   message(
     WARNING
-      "Supplied SymEngine library does not appear to be compiled with LLVM support"
+      "Supplied SymEngine library appears to be missing LLVM and/or SBML support"
   )
   message(WARNING "${SYMENGINE_LLVM_ERROR_LOG}")
 endif()

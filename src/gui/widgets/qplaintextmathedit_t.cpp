@@ -55,16 +55,16 @@ SCENARIO("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
       mathEdit.compileMath();
       REQUIRE(mathEdit.evaluateMath() == dbl_approx(2.0));
 
-      // "1*2+x" (x not a variable)
-      sendKeyEvents(&mathEdit, {"+", "x"});
+      // "1*2+q" (q not a variable)
+      sendKeyEvents(&mathEdit, {"+", "q"});
       REQUIRE(mathEdit.getMath() == "");
       REQUIRE(mathEdit.mathIsValid() == false);
-      REQUIRE(mathEdit.getErrorMessage() == "Unknown symbol: x");
+      REQUIRE(mathEdit.getErrorMessage() == "variable 'q' not found");
       REQUIRE(signal.math == mathEdit.getMath());
       REQUIRE(signal.valid == mathEdit.mathIsValid());
       REQUIRE(signal.error == mathEdit.getErrorMessage());
-      mathEdit.addVariable("x");
-      REQUIRE(mathEdit.getMath() == "2 + x");
+      mathEdit.addVariable("q");
+      REQUIRE(mathEdit.getMath() == "2 + q");
       REQUIRE(mathEdit.mathIsValid() == true);
       REQUIRE(mathEdit.getErrorMessage() == "");
       REQUIRE(signal.math == mathEdit.getMath());
@@ -73,34 +73,16 @@ SCENARIO("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
       mathEdit.addVariable("y");
       // removing non-existent variable is a no-op
       mathEdit.removeVariable("notfound");
-      mathEdit.removeVariable("x");
+      mathEdit.removeVariable("q");
       REQUIRE(mathEdit.getMath() == "");
       REQUIRE(mathEdit.mathIsValid() == false);
-      REQUIRE(mathEdit.getErrorMessage() == "variable 'x' not found");
-      REQUIRE(signal.math == mathEdit.getMath());
-      REQUIRE(signal.valid == mathEdit.mathIsValid());
-      REQUIRE(signal.error == mathEdit.getErrorMessage());
-
-      // "1*2+x&" (& not a valid character)
-      sendKeyEvents(&mathEdit, {"&"});
-      REQUIRE(mathEdit.getMath() == "");
-      REQUIRE(mathEdit.mathIsValid() == false);
-      REQUIRE(mathEdit.getErrorMessage() == "variable 'x&' not found");
-      REQUIRE(signal.math == mathEdit.getMath());
-      REQUIRE(signal.valid == mathEdit.mathIsValid());
-      REQUIRE(signal.error == mathEdit.getErrorMessage());
-
-      // "1*2+x!" (! not a valid character)
-      sendKeyEvents(&mathEdit, {"Backspace", "!"});
-      REQUIRE(mathEdit.getMath() == "");
-      REQUIRE(mathEdit.mathIsValid() == false);
-      REQUIRE(mathEdit.getErrorMessage() == "variable 'x!' not found");
+      REQUIRE(mathEdit.getErrorMessage() == "variable 'q' not found");
       REQUIRE(signal.math == mathEdit.getMath());
       REQUIRE(signal.valid == mathEdit.mathIsValid());
       REQUIRE(signal.error == mathEdit.getErrorMessage());
 
       // "1*2+5*(1+3)"
-      sendKeyEvents(&mathEdit, {"Backspace", "Backspace", "5", "*", "(", "1",
+      sendKeyEvents(&mathEdit, {"Backspace", "+", "5", "*", "(", "1",
                                 "+", "3", ")"});
       REQUIRE(mathEdit.getMath() == "22");
       REQUIRE(mathEdit.mathIsValid() == true);
@@ -185,12 +167,6 @@ SCENARIO("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
               dbl_approx(2.0));
       REQUIRE(mathEdit.evaluateMath(std::vector<double>{1.0, 1.0}) ==
               dbl_approx(3.0));
-      // using libSBML map interface for variable values works but gives logger
-      // warning about inefficiency
-      std::map<const std::string, std::pair<double, bool>> vars;
-      vars["x"] = {1.0, false};
-      vars["y"] = {1.0, false};
-      REQUIRE(mathEdit.evaluateMath(vars) == dbl_approx(3.0));
       mathEdit.clearVariables();
       REQUIRE(mathEdit.getVariables().empty() == true);
     }
@@ -238,7 +214,7 @@ SCENARIO("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
       REQUIRE(mathEdit.getVariableMath() == "2*x");
       mathEdit.removeVariable("x");
       REQUIRE(mathEdit.mathIsValid() == false);
-      REQUIRE(mathEdit.getErrorMessage() == "Illegal character: !");
+      REQUIRE(mathEdit.getErrorMessage() == "variable 'X var!' not found");
     }
     GIVEN("expression with user-defined function") {
       mathEdit.show();
@@ -262,121 +238,6 @@ SCENARIO("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
       REQUIRE(mathEdit.getVariableMath() == "cse(x)");
       REQUIRE(mathEdit.getErrorMessage() == "");
       REQUIRE(mathEdit.mathIsValid() == true);
-    }
-  }
-  WHEN("libSBML backend") {
-    sme::model::Model model;
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    model.importSBMLString(f.readAll().toStdString());
-    mathEdit.enableLibSbmlBackend(&model.getMath());
-    GIVEN("expression without variables") {
-      mathEdit.show();
-      // "1"
-      sendKeyEvents(&mathEdit, {"1"});
-      REQUIRE(mathEdit.getMath() == "1");
-      REQUIRE(mathEdit.mathIsValid() == true);
-      REQUIRE(mathEdit.getErrorMessage() == "");
-      REQUIRE(signal.math == mathEdit.getMath());
-      REQUIRE(signal.valid == mathEdit.mathIsValid());
-      REQUIRE(signal.error == mathEdit.getErrorMessage());
-      mathEdit.compileMath();
-      REQUIRE(mathEdit.evaluateMath() == dbl_approx(1.0));
-
-      // "1*"
-      sendKeyEvents(&mathEdit, {"*"});
-      REQUIRE(mathEdit.getMath() == "");
-      REQUIRE(mathEdit.mathIsValid() == false);
-      REQUIRE(mathEdit.getErrorMessage() ==
-              "Error when parsing input '1*' at position 2:  syntax error, "
-              "unexpected end of string");
-      REQUIRE(signal.math == mathEdit.getMath());
-      REQUIRE(signal.valid == mathEdit.mathIsValid());
-      REQUIRE(signal.error == mathEdit.getErrorMessage());
-
-      // "1*2"
-      sendKeyEvents(&mathEdit, {"2"});
-      REQUIRE(mathEdit.getMath() == "1*2");
-      REQUIRE(mathEdit.mathIsValid() == true);
-      REQUIRE(mathEdit.getErrorMessage() == "");
-      REQUIRE(signal.math == mathEdit.getMath());
-      REQUIRE(signal.valid == mathEdit.mathIsValid());
-      REQUIRE(signal.error == mathEdit.getErrorMessage());
-      mathEdit.compileMath();
-      REQUIRE(mathEdit.evaluateMath() == dbl_approx(2.0));
-
-      // "1*2+cos(0)"
-      sendKeyEvents(&mathEdit, {"+", "c", "o", "s", "(", "0", ")"});
-      REQUIRE(mathEdit.getMath() == "1*2+cos(0)");
-      REQUIRE(mathEdit.mathIsValid() == true);
-      REQUIRE(mathEdit.getErrorMessage() == "");
-      REQUIRE(signal.math == mathEdit.getMath());
-      REQUIRE(signal.valid == mathEdit.mathIsValid());
-      REQUIRE(signal.error == mathEdit.getErrorMessage());
-      mathEdit.compileMath();
-      REQUIRE(mathEdit.evaluateMath() == dbl_approx(3.0));
-    }
-    GIVEN("expression with implicit variable (that exists in model)") {
-      mathEdit.show();
-      // "1+cos(x)"
-      sendKeyEvents(&mathEdit, {"1", "+", "c", "o", "s", "(", "x", ")"});
-      REQUIRE(mathEdit.getMath() == "1+cos(x)");
-      REQUIRE(mathEdit.mathIsValid() == true);
-      REQUIRE(mathEdit.getErrorMessage() == "");
-      REQUIRE(signal.math == mathEdit.getMath());
-      REQUIRE(signal.valid == mathEdit.mathIsValid());
-      REQUIRE(signal.error == mathEdit.getErrorMessage());
-      mathEdit.compileMath();
-      std::map<const std::string, std::pair<double, bool>> vars;
-      // if we don't specify value for x, get nan
-      REQUIRE(std::isnan(mathEdit.evaluateMath(vars)));
-      vars["x"] = {0.0, false};
-      REQUIRE(mathEdit.evaluateMath(vars) == dbl_approx(2.0));
-    }
-    GIVEN("expression with implicit variable (that doesn't exist in model)") {
-      mathEdit.show();
-      // "1+cos(z)"
-      sendKeyEvents(&mathEdit, {"1", "+", "c", "o", "s", "(", "z", ")"});
-      REQUIRE(mathEdit.getMath() == "");
-      REQUIRE(mathEdit.mathIsValid() == false);
-      REQUIRE(mathEdit.getErrorMessage() == "Unknown variable: z");
-      REQUIRE(signal.math == mathEdit.getMath());
-      REQUIRE(signal.valid == mathEdit.mathIsValid());
-      REQUIRE(signal.error == mathEdit.getErrorMessage());
-    }
-    GIVEN("expression with user defined function (that exists in model)") {
-      model.getFunctions().add("qwq");
-      model.getFunctions().addArgument("qwq", "x");
-      model.getFunctions().setExpression("qwq", "2*x");
-      mathEdit.show();
-      // "1+qwq(x)"
-      sendKeyEvents(&mathEdit, {"1", "+", "q", "w", "q", "(", "x", ")"});
-      REQUIRE(mathEdit.getMath() == "1+qwq(x)");
-      REQUIRE(mathEdit.mathIsValid() == true);
-      REQUIRE(mathEdit.getErrorMessage() == "");
-      REQUIRE(signal.math == mathEdit.getMath());
-      REQUIRE(signal.valid == mathEdit.mathIsValid());
-      REQUIRE(signal.error == mathEdit.getErrorMessage());
-      std::map<const std::string, std::pair<double, bool>> vars;
-      // if we don't specify value for x, get nan
-      REQUIRE(std::isnan(mathEdit.evaluateMath(vars)));
-      // if we use the wrong interface for evaluate we get nan & logger error
-      REQUIRE(std::isnan(mathEdit.evaluateMath(std::vector<double>{0})));
-      // right interface for libSBML backend is map:
-      vars["x"] = {4.0, false};
-      REQUIRE(mathEdit.evaluateMath(vars) == dbl_approx(9.0));
-    }
-    GIVEN(
-        "expression with user defined function (that doesn't exist in model)") {
-      mathEdit.show();
-      // "1+qwq(x)"
-      sendKeyEvents(&mathEdit, {"1", "+", "q", "w", "q", "(", "x", ")"});
-      REQUIRE(mathEdit.getMath() == "");
-      REQUIRE(mathEdit.mathIsValid() == false);
-      REQUIRE(mathEdit.getErrorMessage() == "Unknown function: qwq");
-      REQUIRE(signal.math == mathEdit.getMath());
-      REQUIRE(signal.valid == mathEdit.mathIsValid());
-      REQUIRE(signal.error == mathEdit.getErrorMessage());
     }
   }
 }

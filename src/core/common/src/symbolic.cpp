@@ -13,7 +13,7 @@
 #include <symengine/mul.h>
 #include <symengine/number.h>
 #include <symengine/parser.h>
-#include <symengine/parser/parser.h>
+#include <symengine/parser/sbml/sbml_parser.h>
 #include <symengine/printers/strprinter.h>
 #include <symengine/rational.h>
 #include <symengine/real_double.h>
@@ -22,44 +22,10 @@
 #include <symengine/symengine_rcp.h>
 #include <symengine/visitor.h>
 
-namespace SymEngine {
-
-// modify string printer to use ^ for power operator instead of **
-#ifdef __GNUC__
-#pragma GCC diagnostic push
-// ignore warning that base clase has non-virtual destructor
-#pragma GCC diagnostic ignored "-Wnon-virtual-dtor"
-#endif
-class muPrinter : public StrPrinter {
-protected:
-  void _print_pow(std::ostringstream &o, const RCP<const Basic> &a,
-                  const RCP<const Basic> &b) override;
-};
-#ifdef __GNUC__
-#pragma GCC diagnostic pop
-#endif
-
-} // namespace SymEngine
-
-namespace SymEngine {
-void muPrinter::_print_pow(std::ostringstream &o, const RCP<const Basic> &a,
-                           const RCP<const Basic> &b) {
-  if (eq(*a, *E)) {
-    o << "exp(" << apply(b) << ")";
-  } else if (eq(*b, *rational(1, 2))) {
-    o << "sqrt(" << apply(a) << ")";
-  } else {
-    o << parenthesizeLE(a, PrecedenceEnum::Pow);
-    o << "^";
-    o << parenthesizeLE(b, PrecedenceEnum::Pow);
-  }
-}
-} // namespace SymEngine
-
 namespace sme::utils {
 
 static std::string toString(const SymEngine::RCP<const SymEngine::Basic> &e) {
-  return SymEngine::muPrinter().apply(e);
+  return SymEngine::sbml(*e);
 }
 
 struct Symbolic::SymEngineFunc {
@@ -107,7 +73,7 @@ void Symbolic::SymEngineImpl::init(
   // hack until https://github.com/symengine/symengine/issues/1566 is resolved:
   // (SymEngine parser relies on strtod and assumes C locale)
   std::locale userLocale = std::locale::global(std::locale::classic());
-  SymEngine::Parser parser;
+  SymEngine::SbmlParser parser;
   // map from function id to symengine expressions
   std::map<std::string, Symbolic::SymEngineFunc> symEngineFuncs;
   for (const auto &function : functions) {
@@ -291,23 +257,23 @@ void Symbolic::SymEngineImpl::rescale(
 
 std::string symbolicDivide(const std::string &expr, const std::string &var) {
   std::locale userLocale = std::locale::global(std::locale::classic());
-  std::string result = SymEngine::muPrinter().apply(
-      SymEngine::div(SymEngine::parse(expr), SymEngine::symbol(var)));
+  std::string result = toString(
+      SymEngine::div(SymEngine::parse_sbml(expr), SymEngine::symbol(var)));
   std::locale::global(userLocale);
   return result;
 }
 
 std::string symbolicMultiply(const std::string &expr, const std::string &var) {
   std::locale userLocale = std::locale::global(std::locale::classic());
-  std::string result = SymEngine::muPrinter().apply(
-      SymEngine::mul(SymEngine::parse(expr), SymEngine::symbol(var)));
+  std::string result = toString(
+      SymEngine::mul(SymEngine::parse_sbml(expr), SymEngine::symbol(var)));
   std::locale::global(userLocale);
   return result;
 }
 
 bool symbolicContains(const std::string &expr, const std::string &var) {
   std::locale userLocale = std::locale::global(std::locale::classic());
-  auto e{SymEngine::parse(expr)};
+  auto e{SymEngine::parse_sbml(expr)};
   auto v{SymEngine::symbol(var)};
   auto fs = SymEngine::free_symbols(*e);
   std::locale::global(userLocale);

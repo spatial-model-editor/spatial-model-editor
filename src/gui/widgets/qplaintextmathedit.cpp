@@ -1,17 +1,12 @@
 #include "qplaintextmathedit.hpp"
+#include "logger.hpp"
+#include <QScrollBar>
 #include <QString>
 #include <algorithm>
 #include <limits>
 #include <locale>
-#include "logger.hpp"
-#include "model_math.hpp"
 
-void QPlainTextMathEdit::enableLibSbmlBackend(sme::model::ModelMath *math) {
-  modelMath = math;
-  useLibSbmlBackend = true;
-  allowImplicitNames = true;
-  allowIllegalChars = true;
-}
+static constexpr char quoteChar{'"'};
 
 bool QPlainTextMathEdit::mathIsValid() const { return expressionIsValid; }
 
@@ -27,38 +22,11 @@ void QPlainTextMathEdit::importVariableMath(const std::string &expr) {
   setPlainText(variablesToDisplayNames(expr).c_str());
 }
 
-void QPlainTextMathEdit::compileMath() {
-  if (useLibSbmlBackend) {
-    return;
-  }
-  sym.compile();
-}
+void QPlainTextMathEdit::compileMath() { sym.compile(); }
 
 double QPlainTextMathEdit::evaluateMath(const std::vector<double> &variables) {
-  if (useLibSbmlBackend) {
-    if (!variables.empty()) {
-      SPDLOG_ERROR(
-          "Wrong interace: use map interface when using libSBML backend");
-      return std::numeric_limits<double>::quiet_NaN();
-    }
-    return modelMath->eval();
-  }
   sym.eval(result, variables);
   return result[0];
-}
-
-double QPlainTextMathEdit::evaluateMath(
-    const std::map<const std::string, std::pair<double, bool>> &variables) {
-  if (!useLibSbmlBackend) {
-    SPDLOG_WARN("for better performance use vector interface when not using "
-                "libSBML backend");
-    std::vector<double> values(vars.size(), 0);
-    for (std::size_t i = 0; i < vars.size(); ++i) {
-      values[i] = variables.at(vars[i]).first;
-    }
-    return evaluateMath(values);
-  }
-  return modelMath->eval(variables);
 }
 
 const QString &QPlainTextMathEdit::getErrorMessage() const {
@@ -85,49 +53,55 @@ void QPlainTextMathEdit::setVariables(
   qPlainTextEdit_textChanged();
 }
 
-static bool isValidSymbol(const std::string &name) {
+static bool isValidSymbol(std::string_view name) {
   // first char must be a letter or underscore
-  if (auto c = name.front();
+  if (auto c{name.front()};
       !(std::isalpha(c, std::locale::classic()) || c == '_')) {
     return false;
   }
   // other chars must be letters, numbers or underscores
-  for (auto c : name) {
-    if (!(std::isalnum(c, std::locale::classic()) || c == '_')) {
-      return false;
-    }
+  return std::all_of(name.begin(), name.end(), [](char c) {
+    return std::isalnum(c, std::locale::classic()) || c == '_';
+  });
+}
+
+static bool isValidDouble(const std::string &str) {
+  bool valid{false};
+  QString(str.c_str()).toDouble(&valid);
+  return valid;
+}
+
+static void appendQuotedName(std::string &str, const std::string &name) {
+  auto needQuotes{!isValidSymbol(name)};
+  if (needQuotes) {
+    str.push_back(quoteChar);
   }
-  return true;
+  str.append(name);
+  if (needQuotes) {
+    str.push_back(quoteChar);
+  }
 }
 
 void QPlainTextMathEdit::addVariable(const std::string &variable,
                                      const std::string &displayName) {
   SPDLOG_TRACE("adding var: {}", variable);
   vars.push_back(variable);
-  auto name = displayName;
+  auto name{displayName};
   if (displayName.empty()) {
     name = variable;
   }
   SPDLOG_TRACE("  -> display name {}", name);
   mapDisplayNamesToVars[name] = variable;
-  if (isValidSymbol(name)) {
-    mapVarsToDisplayNames[variable] = name;
-  } else {
-    mapVarsToDisplayNames[variable] = "\"" + name + "\"";
-  }
+  mapVarsToDisplayNames[variable] = name;
   qPlainTextEdit_textChanged();
 }
 
 void QPlainTextMathEdit::removeVariable(const std::string &variable) {
   vars.erase(std::remove(vars.begin(), vars.end(), variable), vars.end());
-  if (auto iter = mapVarsToDisplayNames.find(variable);
+  if (auto iter{mapVarsToDisplayNames.find(variable)};
       iter != mapVarsToDisplayNames.cend()) {
     SPDLOG_TRACE("removing variable: {}", variable);
-    std::string displayName = iter->second;
-    // remove quotes if present
-    if (displayName.front() == '"' && displayName.back() == '"') {
-      displayName = displayName.substr(1, displayName.size() - 2);
-    }
+    const auto &displayName{iter->second};
     SPDLOG_TRACE("  -> display name {}", displayName);
     mapDisplayNamesToVars.erase(displayName);
     mapVarsToDisplayNames.erase(iter);
@@ -135,30 +109,32 @@ void QPlainTextMathEdit::removeVariable(const std::string &variable) {
   qPlainTextEdit_textChanged();
 }
 
-void QPlainTextMathEdit::clearFunctions() {
-  mapFuncsToDisplayNames.clear();
-  mapDisplayNamesToFuncs.clear();
-  functions.clear();
-  qPlainTextEdit_textChanged();
-}
-
 void QPlainTextMathEdit::resetToDefaultFunctions() {
+  // reset to all built-in sbml L3 math functions and constants
+  // http://model.caltech.edu/software/libsbml/5.18.0/docs/formatted/c-api/libsbml-math.html#math-l3
   clearFunctions();
   for (const auto &f :
-       {"sin", "cos", "tan", "exp", "log", "ln", "pow", "sqrt"}) {
-    addIntrinsicFunction(f);
+       {"sin",   "cos",      "tan",   "cot",       "csc",   "sec",
+        "asin",  "arcsin",   "acos",  "arccos",    "atan",  "arctan",
+        "asec",  "arcsec",   "acsc",  "arccsc",    "acot",  "arccot",
+        "sinh",  "cosh",     "tanh",  "coth",      "sech",  "csch",
+        "asinh", "arcsinh",  "acosh", "arccosh",   "atanh", "arctanh",
+        "asech", "arcsech",  "acoth", "arccoth",   "acsch", "arccsch",
+        "sqrt",  "abs",      "exp",   "floor",     "ceil",  "ceiling",
+        "ln",    "log",      "log10", "factorial", "root",  "sqr",
+        "plus",  "minus",    "times", "divide",    "pow",   "power",
+        "root",  "max",      "min",   "and",       "or",    "xor",
+        "not",   "eq",       "neq",   "geq",       "gt",    "leq",
+        "lt",    "piecewise"}) {
+    mapDisplayNamesToFuncs[f] = f;
+    mapFuncsToDisplayNames[f] = f;
+  }
+  for (const auto &c : {"pi", "exponentiale", "avogadro", "time", "inf",
+                        "infinity", "nan", "notanumber", "true", "false"}) {
+    mapDisplayNamesToVars[c] = c;
+    mapVarsToDisplayNames[c] = c;
   }
   qPlainTextEdit_textChanged();
-}
-
-void QPlainTextMathEdit::addIntrinsicFunction(const std::string &functionId) {
-  SPDLOG_TRACE("adding intrinsic function: {}", functionId);
-  if (!isValidSymbol(functionId)) {
-    SPDLOG_WARN("invalid intrinsic function id: '{}' - ignoring", functionId);
-    return;
-  }
-  mapDisplayNamesToFuncs[functionId] = functionId;
-  mapFuncsToDisplayNames[functionId] = functionId;
 }
 
 void QPlainTextMathEdit::addFunction(const sme::utils::Function &function) {
@@ -166,11 +142,7 @@ void QPlainTextMathEdit::addFunction(const sme::utils::Function &function) {
   functions.push_back(function);
   SPDLOG_TRACE("  -> display name {}", function.name);
   mapDisplayNamesToFuncs[function.name] = function.id;
-  if (isValidSymbol(function.name)) {
-    mapFuncsToDisplayNames[function.id] = function.name;
-  } else {
-    mapFuncsToDisplayNames[function.id] = "\"" + function.name + "\"";
-  }
+  mapFuncsToDisplayNames[function.id] = function.name;
   qPlainTextEdit_textChanged();
 }
 
@@ -179,10 +151,6 @@ void QPlainTextMathEdit::removeFunction(const std::string &functionId) {
       iter != mapFuncsToDisplayNames.cend()) {
     SPDLOG_TRACE("removing function: {}", functionId);
     std::string displayName = iter->second;
-    // remove quotes if present
-    if (displayName.front() == '"' && displayName.back() == '"') {
-      displayName = displayName.substr(1, displayName.size() - 2);
-    }
     SPDLOG_TRACE("  -> display name {}", displayName);
     mapDisplayNamesToFuncs.erase(displayName);
     mapFuncsToDisplayNames.erase(iter);
@@ -192,6 +160,18 @@ void QPlainTextMathEdit::removeFunction(const std::string &functionId) {
                                    return f.id == functionId;
                                  }),
                   functions.end());
+  qPlainTextEdit_textChanged();
+}
+
+void QPlainTextMathEdit::setConstants(
+    const std::vector<sme::model::IdNameValue> &constants) {
+  consts.clear();
+  consts.reserve(constants.size());
+  for (const auto &c : constants) {
+    consts.emplace_back(c.id, c.value);
+    mapDisplayNamesToVars[c.name] = c.id;
+    mapVarsToDisplayNames[c.id] = c.name;
+  }
   qPlainTextEdit_textChanged();
 }
 
@@ -205,60 +185,71 @@ QPlainTextMathEdit::QPlainTextMathEdit(QWidget *parent)
 }
 
 // - iterate through each symbol in expr
-// - a symbol is any text with a delimeter char before and after it
+// - a symbol is any text in quotes or with a delimeter char before and after it
 // - a function is a symbol that is directly followed by "("
-// - note: special case of scientific notation number e.g. 1e-3
-// - look-up symbol in map and replace it with result
-// - if not found in map and allowImplicitNames=false, return error message
-static std::pair<std::string, QString> substitute(
-    const std::string &expr, const std::map<std::string, std::string> &varMap,
-    const std::map<std::string, std::string> &funcMap, bool allowImplicitNames,
-    const std::string &delimeters = "()-^*/+, ") {
+// - look-up symbol in corresponding map and replace it with result
+// - if not found in map return error message
+static std::pair<std::string, QString>
+substitute(const std::string &expr,
+           const std::map<std::string, std::string, std::less<>> &varMap,
+           const std::map<std::string, std::string, std::less<>> &funcMap) {
+  const std::string delimiters{"-+/()*,^<>&%!|= "};
   SPDLOG_DEBUG("expr: {}", expr);
   if (expr.empty()) {
     return {};
   }
   std::string out;
   out.reserve(expr.size());
-  // skip over any initial delimeters
-  auto start = expr.find_first_not_of(delimeters);
+  // skip over any initial delimiters
+  auto start{expr.find_first_not_of(delimiters)};
   // append them to output
   out.append(expr.substr(0, start));
+  std::size_t end;
+  std::string var{};
   while (start != std::string::npos) {
-    // find next delimeter
-    auto end = expr.find_first_of(delimeters, start);
-    if (std::isdigit(expr[start], std::locale::classic()) &&
-        end < expr.size() && expr[end - 1] == 'e' &&
-        (expr[end] == '-' || expr[end] == '+')) {
-      // if symbol starts with a numerical digit, and ends with "e-" or "e+",
-      // we have the first half of a number in scientific notation, so carry
-      // on to next delimeter to get the rest of the number
-      end = expr.find_first_of(delimeters, end + 1);
+    if (expr[start] == quoteChar) {
+      // skip starting quote
+      ++start;
+      // find closing quote char
+      end = expr.find(quoteChar, start);
+      if (end == std::string::npos) {
+        SPDLOG_DEBUG("  - no closing quote");
+        return {out, "no closing quote"};
+      }
+      var = expr.substr(start, end - start);
+      // skip closing quote
+      ++end;
+    } else {
+      // find next delimiter
+      end = expr.find_first_of(delimiters, start + 1);
+      if (std::isdigit(expr[start], std::locale::classic()) &&
+          end < expr.size() && expr[end - 1] == 'e' &&
+          (expr[end] == '-' || expr[end] == '+')) {
+        // symbol starts with a numerical digit, and ends with "e-" or "e+",
+        // this can only be valid input if we have the first half of a number in
+        // scientific notation, so carry on to next delimiter to get the rest of
+        // the number
+        end = expr.find_first_of(delimiters, end + 1);
+      }
+      var = expr.substr(start, end - start);
     }
-    std::string var = expr.substr(start, end - start);
     SPDLOG_DEBUG("  - var {}", var);
     if (end < expr.size() && expr[end] == '(') {
       // function
-      if (auto iter = funcMap.find(var); iter != funcMap.cend()) {
+      if (auto iter{funcMap.find(var)}; iter != funcMap.cend()) {
         SPDLOG_DEBUG("    -> {} ", iter->second);
-        out.append(iter->second);
-      } else if (allowImplicitNames) {
-        out.append(var);
+        appendQuotedName(out, iter->second);
       } else {
         SPDLOG_DEBUG("    -> function not found");
         return {out, QString("function '%1' not found").arg(var.c_str())};
       }
     } else {
-      // variable
-      if (auto iter = varMap.find(var); iter != varMap.cend()) {
-        // replace variable with map result
+      // variable or number
+      if (auto iter{varMap.find(var)}; iter != varMap.cend()) {
         SPDLOG_DEBUG("    -> {} ", iter->second);
-        out.append(iter->second);
+        appendQuotedName(out, iter->second);
       } else {
-        // if not found, check if it is a number, if so append it and continue
-        bool isValidDouble{false};
-        QString(var.c_str()).toDouble(&isValidDouble);
-        if (allowImplicitNames || isValidDouble) {
+        if (isValidDouble(var)) {
           out.append(var);
         } else {
           SPDLOG_DEBUG("    -> variable not found");
@@ -269,8 +260,8 @@ static std::pair<std::string, QString> substitute(
     if (end == std::string::npos) {
       break;
     }
-    // skip over any delimeters to start of next variable
-    start = expr.find_first_not_of(delimeters, end);
+    // skip over any delimiters to start of next variable
+    start = expr.find_first_not_of(delimiters, end);
     // append them to output
     out.append(expr.substr(end, start - end));
   }
@@ -285,73 +276,23 @@ QPlainTextMathEdit::variablesToDisplayNames(const std::string &expr) const {
   if (varMap.empty() && funcMap.empty()) {
     return expr;
   }
-  return substitute(expr, varMap, funcMap, allowImplicitNames).first;
+  return substitute(expr, varMap, funcMap).first;
+}
+
+void QPlainTextMathEdit::clearFunctions() {
+  mapFuncsToDisplayNames.clear();
+  mapDisplayNamesToFuncs.clear();
+  functions.clear();
 }
 
 std::pair<std::string, QString>
 QPlainTextMathEdit::displayNamesToVariables(const std::string &expr) const {
-  if (expr.empty()) {
-    return {};
-  }
-  std::string out;
-  const char quoteChar = '"';
   const auto &varMap = mapDisplayNamesToVars;
   const auto &funcMap = mapDisplayNamesToFuncs;
   if (varMap.empty()) {
     return {expr, ""};
   }
-  // find first quote char
-  auto start = expr.find(quoteChar);
-  if (start > 0) {
-    // substitute any text before opening quote
-    auto subs =
-        substitute(expr.substr(0, start), varMap, funcMap, allowImplicitNames);
-    if (subs.second.isEmpty()) {
-      out.append(subs.first);
-    } else {
-      return subs;
-    }
-  }
-  while (start != std::string::npos) {
-    // skip over opening quote char
-    ++start;
-    // find closing quote char
-    auto end = expr.find(quoteChar, start);
-    if (end == std::string::npos) {
-      SPDLOG_DEBUG("  - no closing quote");
-      return {out, "no closing quote"};
-    }
-    // extract name & replace with variable or function if found
-    std::string name = expr.substr(start, end - start);
-    SPDLOG_TRACE("  - name {} (chars {}-{})", name, start, end);
-    if (auto varIter = varMap.find(name); varIter != varMap.cend()) {
-      out.append(varIter->second);
-    } else if (auto funcIter = funcMap.find(name); funcIter != funcMap.cend()) {
-      out.append(funcIter->second);
-    } else if (allowImplicitNames) {
-      out.append(name);
-    } else {
-      SPDLOG_DEBUG("  - name {} not found", name);
-      return {out, QString("name '%1' not found").arg(name.c_str())};
-    }
-    SPDLOG_TRACE("  - out: {}", out);
-    // skip over closing quote char
-    ++end;
-    // find next opening quote char
-    start = expr.find(quoteChar, end);
-    if (start > end) {
-      // substitute any text before next "
-      auto subs = substitute(expr.substr(end, start - end), varMap, funcMap,
-                             allowImplicitNames);
-      if (subs.second.isEmpty()) {
-        out.append(subs.first);
-      } else {
-        return subs;
-      }
-    }
-  }
-  SPDLOG_DEBUG(" -> {}", out);
-  return {out, {}};
+  return substitute(expr, varMap, funcMap);
 }
 
 void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
@@ -365,44 +306,21 @@ void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
   if (!errorMessage.isEmpty()) {
     currentErrorMessage = errorMessage;
   }
-  if (!allowIllegalChars) {
-    // check for illegal chars
-    if (auto i = newExpr.find_first_of(illegalChars); i != std::string::npos) {
-      currentErrorMessage = QString("Illegal character: %1").arg(newExpr[i]);
-    }
-  }
   if (newExpr.empty() && currentErrorMessage.isEmpty()) {
     currentErrorMessage = QString("Empty expression");
   }
   if (currentErrorMessage.isEmpty()) {
     // parse (but don't compile) symbolic expression
-    if (useLibSbmlBackend) {
-      SPDLOG_DEBUG("parsing '{}' with libSBML backend", newExpr);
-      modelMath->parse(newExpr);
-      if (modelMath->isValid()) {
-        expressionIsValid = true;
-        currentErrorMessage = "";
-        currentVariableMath = newExpr;
-        currentDisplayMath =
-            variablesToDisplayNames(currentVariableMath).c_str();
-      } else {
-        // if SymEngine failed to parse, capture error message
-        SPDLOG_DEBUG("  -> {}", modelMath->getErrorMessage().c_str());
-        currentErrorMessage = modelMath->getErrorMessage().c_str();
-      }
+    SPDLOG_DEBUG("parsing '{}' with SymEngine backend", newExpr);
+    sym = sme::utils::Symbolic(newExpr, vars, consts, functions, false);
+    if (sym.isValid()) {
+      expressionIsValid = true;
+      currentErrorMessage = "";
+      currentVariableMath = sym.expr();
+      currentDisplayMath = variablesToDisplayNames(currentVariableMath).c_str();
     } else {
-      SPDLOG_DEBUG("parsing '{}' with SymEngine backend", newExpr);
-      sym = sme::utils::Symbolic(newExpr, vars, {}, functions, false);
-      if (sym.isValid()) {
-        expressionIsValid = true;
-        currentErrorMessage = "";
-        currentVariableMath = sym.expr();
-        currentDisplayMath =
-            variablesToDisplayNames(currentVariableMath).c_str();
-      } else {
-        // if SymEngine failed to parse, capture error message
-        currentErrorMessage = sym.getErrorMessage().c_str();
-      }
+      // if SymEngine failed to parse, capture error message
+      currentErrorMessage = sym.getErrorMessage().c_str();
     }
   }
   emit mathChanged(currentDisplayMath, expressionIsValid, currentErrorMessage);

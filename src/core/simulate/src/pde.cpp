@@ -63,10 +63,10 @@ Pde::Pde(const model::Model *doc_ptr,
       SPDLOG_DEBUG("Species {} Reaction {} = {}", speciesIDs.at(i), j,
                    expr.toStdString());
       auto constants{reactions.getConstants(j)};
-      if(!substitutions.empty()){
+      if (!substitutions.empty()) {
         // substitute values of any constants in substitutions map
-        for(auto& [id, v] : constants){
-          if(auto iter = substitutions.find(id); iter != substitutions.end()){
+        for (auto &[id, v] : constants) {
+          if (auto iter = substitutions.find(id); iter != substitutions.end()) {
             SPDLOG_INFO("Substituting: {} = {} -> {}", id, v, iter->second);
             v = iter->second;
           }
@@ -182,9 +182,8 @@ Reaction::Reaction(const model::Model *doc, std::vector<std::string> species,
 
       // get local parameters, append to global constants
       constants.emplace_back();
-      for (const auto &[id, value] :
-           doc->getParameters().getGlobalConstants()) {
-        constants.back().push_back({id, value});
+      for (const auto &c : doc->getParameters().getGlobalConstants()) {
+        constants.back().push_back({c.id, c.value});
       }
       for (const auto &paramId :
            doc->getReactions().getParameterIds(reacID.c_str())) {

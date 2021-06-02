@@ -278,8 +278,8 @@ void TabSpecies::btnEditAnalyticConcentration_clicked() {
                currentSpeciesId.toStdString());
   DialogAnalytic dialog(
       model.getSpecies().getAnalyticConcentration(currentSpeciesId),
-      model.getSpeciesGeometry(currentSpeciesId), model.getMath(),
-      model.getParameters().getSpatialCoordinates());
+      model.getSpeciesGeometry(currentSpeciesId), model.getParameters(),
+      model.getFunctions());
   if (dialog.exec() == QDialog::Accepted) {
     const std::string &expr = dialog.getExpression();
     SPDLOG_DEBUG("  - set expr: {}", expr);

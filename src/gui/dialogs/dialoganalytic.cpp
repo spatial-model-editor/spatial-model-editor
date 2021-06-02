@@ -1,24 +1,25 @@
 #include "dialoganalytic.hpp"
 #include "logger.hpp"
-#include "model_parameters.hpp"
+#include "model.hpp"
 #include "model_units.hpp"
 #include "ui_dialoganalytic.h"
 #include <QFileDialog>
 #include <QPushButton>
+#include "model_geometry.hpp"
+#include "model_parameters.hpp"
+#include "model_functions.hpp"
 
 DialogAnalytic::DialogAnalytic(
     const QString &analyticExpression,
     const sme::model::SpeciesGeometry &speciesGeometry,
-    sme::model::ModelMath &modelMath,
-    const sme::model::SpatialCoordinates &spatialCoordinates, QWidget *parent)
+    const sme::model::ModelParameters &modelParameters,
+    const sme::model::ModelFunctions &modelFunctions, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogAnalytic>()},
-      xId{spatialCoordinates.x.id}, yId{spatialCoordinates.y.id},
       points(speciesGeometry.compartmentPoints),
       width(speciesGeometry.pixelWidth), origin(speciesGeometry.physicalOrigin),
       qpi(speciesGeometry.compartmentImageSize,
           speciesGeometry.compartmentPoints) {
   ui->setupUi(this);
-  ui->txtExpression->enableLibSbmlBackend(&modelMath);
 
   const auto &units = speciesGeometry.modelUnits;
   lengthUnit = units.getLength().name;
@@ -29,11 +30,16 @@ DialogAnalytic::DialogAnalytic(
   img.fill(0);
   concentration.resize(points.size(), 0.0);
   // add x,y variables
-  ui->txtExpression->addVariable(xId, spatialCoordinates.x.name);
-  ui->txtExpression->addVariable(yId, spatialCoordinates.y.name);
-  sbmlVars[xId] = {0, false};
-  sbmlVars[yId] = {0, false};
-
+  const auto &spatialCoordinates{modelParameters.getSpatialCoordinates()};
+  ui->txtExpression->addVariable(spatialCoordinates.x.id,
+                                 spatialCoordinates.x.name);
+  ui->txtExpression->addVariable(spatialCoordinates.y.id,
+                                 spatialCoordinates.y.name);
+  for (const auto &function : modelFunctions.getSymbolicFunctions()) {
+    ui->txtExpression->addFunction(function);
+  }
+  // todo: add non-constant parameters somewhere?
+  ui->txtExpression->setConstants(modelParameters.getGlobalConstants());
   QSizeF physicalSize;
   physicalSize.rwidth() =
       static_cast<double>(speciesGeometry.compartmentImageSize.width()) *
@@ -107,11 +113,13 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
     return;
   }
   // calculate concentration
+  ui->txtExpression->compileMath();
+  std::vector<double> vars{0, 0};
   for (std::size_t i = 0; i < points.size(); ++i) {
     auto physical = physicalPoint(points[i]);
-    sbmlVars[xId].first = physical.x();
-    sbmlVars[yId].first = physical.y();
-    concentration[i] = ui->txtExpression->evaluateMath(sbmlVars);
+    vars[0] = physical.x();
+    vars[1] = physical.y();
+    concentration[i] = ui->txtExpression->evaluateMath(vars);
   }
   if (std::find_if(concentration.cbegin(), concentration.cend(), [](auto c) {
         return std::isnan(c);
