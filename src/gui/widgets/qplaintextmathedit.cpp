@@ -1,5 +1,7 @@
 #include "qplaintextmathedit.hpp"
 #include "logger.hpp"
+#include <QAbstractItemModel>
+#include <QAbstractItemView>
 #include <QScrollBar>
 #include <QString>
 #include <algorithm>
@@ -82,6 +84,18 @@ static void appendQuotedName(std::string &str, const std::string &name) {
   }
 }
 
+static void appendQuotedName(QTextCursor &tc, const QString &name) {
+  auto needQuotes{!isValidSymbol(name.toStdString())};
+  QChar qQuoteChar{quoteChar};
+  if (needQuotes) {
+    tc.insertText(qQuoteChar);
+  }
+  tc.insertText(name);
+  if (needQuotes) {
+    tc.insertText(qQuoteChar);
+  }
+}
+
 void QPlainTextMathEdit::addVariable(const std::string &variable,
                                      const std::string &displayName) {
   SPDLOG_TRACE("adding var: {}", variable);
@@ -93,6 +107,7 @@ void QPlainTextMathEdit::addVariable(const std::string &variable,
   SPDLOG_TRACE("  -> display name {}", name);
   mapDisplayNamesToVars[name] = variable;
   mapVarsToDisplayNames[variable] = name;
+  updateCompleter();
   qPlainTextEdit_textChanged();
 }
 
@@ -134,6 +149,7 @@ void QPlainTextMathEdit::resetToDefaultFunctions() {
     mapDisplayNamesToVars[c] = c;
     mapVarsToDisplayNames[c] = c;
   }
+  updateCompleter();
   qPlainTextEdit_textChanged();
 }
 
@@ -143,6 +159,7 @@ void QPlainTextMathEdit::addFunction(const sme::utils::Function &function) {
   SPDLOG_TRACE("  -> display name {}", function.name);
   mapDisplayNamesToFuncs[function.name] = function.id;
   mapFuncsToDisplayNames[function.id] = function.name;
+  updateCompleter();
   qPlainTextEdit_textChanged();
 }
 
@@ -160,6 +177,7 @@ void QPlainTextMathEdit::removeFunction(const std::string &functionId) {
                                    return f.id == functionId;
                                  }),
                   functions.end());
+  updateCompleter();
   qPlainTextEdit_textChanged();
 }
 
@@ -172,12 +190,30 @@ void QPlainTextMathEdit::setConstants(
     mapDisplayNamesToVars[c.name] = c.id;
     mapVarsToDisplayNames[c.id] = c.name;
   }
+  updateCompleter();
   qPlainTextEdit_textChanged();
+}
+
+void QPlainTextMathEdit::updateCompleter() {
+  QStringList names;
+  for (const auto &[key, value] : mapDisplayNamesToVars) {
+    names.push_back(key.c_str());
+  }
+  for (const auto &[key, value] : mapDisplayNamesToFuncs) {
+    names.push_back(key.c_str());
+  }
+  stringListModel.setStringList(names);
+  completer.setModel(&stringListModel);
 }
 
 QPlainTextMathEdit::QPlainTextMathEdit(QWidget *parent)
     : QPlainTextEdit(parent) {
   resetToDefaultFunctions();
+  completer.setWidget(this);
+  completer.setCompletionMode(QCompleter::PopupCompletion);
+  completer.setCaseSensitivity(Qt::CaseSensitive);
+  connect(&completer, QOverload<const QString &>::of(&QCompleter::activated),
+          this, &QPlainTextMathEdit::insertCompletion);
   connect(this, &QPlainTextEdit::textChanged, this,
           &QPlainTextMathEdit::qPlainTextEdit_textChanged);
   connect(this, &QPlainTextEdit::cursorPositionChanged, this,
@@ -369,4 +405,70 @@ void QPlainTextMathEdit::qPlainTextEdit_cursorPositionChanged() {
     s.format.setBackground(QBrush(col));
   }
   setExtraSelections({s});
+}
+
+QString QPlainTextMathEdit::getCurrentWord() {
+  auto expr{toPlainText()};
+  auto tc{textCursor()};
+  const auto pos{tc.position()};
+  bool inQuotes{false};
+  auto quoteEndPos{expr.indexOf(quoteChar)};
+  auto quoteStartPos{quoteEndPos};
+  while (quoteEndPos >= 0 && quoteEndPos < pos) {
+    quoteStartPos = quoteEndPos;
+    inQuotes = !inQuotes;
+    quoteEndPos = expr.indexOf(quoteChar, quoteStartPos + 1);
+  }
+  if (inQuotes) {
+    // if quoted: word is everything inside the quotes
+    currentWordStartPos = quoteStartPos;
+    currentWordEndPos = quoteEndPos;
+    return expr.mid(quoteStartPos + 1, quoteEndPos - quoteStartPos - 1);
+  }
+  // otherwise use normal Qt word selection
+  tc.select(QTextCursor::WordUnderCursor);
+  currentWordStartPos = tc.selectionStart();
+  currentWordEndPos = tc.selectionEnd();
+  return tc.selectedText();
+}
+
+void QPlainTextMathEdit::insertCompletion(const QString &completion) {
+  auto tc{textCursor()};
+  tc.movePosition(QTextCursor::Left, QTextCursor::MoveAnchor,
+                  tc.position() - static_cast<int>(currentWordStartPos));
+  if (currentWordEndPos < 0) {
+    tc.movePosition(QTextCursor::EndOfLine, QTextCursor::KeepAnchor);
+  } else {
+    tc.movePosition(QTextCursor::Right, QTextCursor::KeepAnchor,
+                    static_cast<int>(currentWordEndPos - currentWordStartPos));
+  }
+  tc.removeSelectedText();
+  appendQuotedName(tc, completion);
+  setTextCursor(tc);
+}
+
+void QPlainTextMathEdit::keyPressEvent(QKeyEvent *e) {
+  if (completer.popup()->isVisible() &&
+      (e->key() == Qt::Key_Enter || e->key() == Qt::Key_Return ||
+       e->key() == Qt::Key_Escape)) {
+    // forward these key events to completer
+    e->ignore();
+    return;
+  }
+  // default processing of key event
+  QPlainTextEdit::keyPressEvent(e);
+  auto word{getCurrentWord()};
+  if (word.isEmpty() || word == completer.currentCompletion()) {
+    completer.popup()->hide();
+    return;
+  }
+  if (completer.completionPrefix() != word) {
+    completer.setCompletionPrefix(word);
+    completer.popup()->setCurrentIndex(
+        completer.completionModel()->index(0, 0));
+  }
+  QRect cr = cursorRect();
+  cr.setWidth(completer.popup()->sizeHintForColumn(0) +
+              completer.popup()->verticalScrollBar()->sizeHint().width());
+  completer.complete(cr);
 }
