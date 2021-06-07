@@ -2,6 +2,25 @@
 
 ## [latest]
 
+## [1.1.1] - 2021-05-30
+### Added
+- COPASI cps file import support (if COPASI is installed and on path) [#492](https://github.com/spatial-model-editor/spatial-model-editor/issues/492)
+- shift + mouse scroll to zoom in and out of images [#532](https://github.com/spatial-model-editor/spatial-model-editor/issues/532)
+- support for spatial models with reactions whose compartment is not specified [#481](https://github.com/spatial-model-editor/spatial-model-editor/issues/481)
+
+### Changed
+- mouse scroll no longer changes species stoichiometry in reactions [#549](https://github.com/spatial-model-editor/spatial-model-editor/issues/549)
+- membrane reaction rates automatically rescaled by membrane area on non-spatial model import [#557](https://github.com/spatial-model-editor/spatial-model-editor/pull/557)
+- reactions moved between compartments and membranes rescaled by ratio of area to volume [#558](https://github.com/spatial-model-editor/spatial-model-editor/issues/558)
+
+### Fixed
+- bug loading simulation settings depending on system locale setting [#535](https://github.com/spatial-model-editor/spatial-model-editor/issues/535)
+- slow loading of simulation data [#504](https://github.com/spatial-model-editor/spatial-model-editor/issues/504)
+- bug where simulation doesn't run again after being stopped [#545](https://github.com/spatial-model-editor/spatial-model-editor/issues/545)
+- bug where selected reaction sometimes changes when reaction location is changed [#548](https://github.com/spatial-model-editor/spatial-model-editor/issues/548)
+- ensure species involved in a reaction are valid when reaction location is changed [#551](https://github.com/spatial-model-editor/spatial-model-editor/issues/551)
+- bug where loading existing simulation uses initial concentrations instead of latest simulation concentrations [#541](https://github.com/spatial-model-editor/spatial-model-editor/issues/541)
+
 ## [1.1.0] - 2021-05-04
 ### Added
 - sme file format, contains model, simulation settings and simulation results [#482](https://github.com/spatial-model-editor/spatial-model-editor/issues/482)
@@ -14,6 +33,9 @@
 - python interface: DUNE simulator can now be used [#276](https://github.com/spatial-model-editor/spatial-model-editor/issues/276)
 - python interface: existing simulations can be continued [#514](https://github.com/spatial-model-editor/spatial-model-editor/issues/514)
 - zoom option to geometry image [#516](https://github.com/spatial-model-editor/spatial-model-editor/issues/516)
+
+### Changed
+- use v1.1.0 of Dune-Copasi simulator
 
 ### Fixed
 - python interface: revert change in default simulate() behaviour when doing a second simulation of a model [#475](https://github.com/spatial-model-editor/spatial-model-editor/issues/475)
