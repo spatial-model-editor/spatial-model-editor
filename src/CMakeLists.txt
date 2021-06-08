@@ -17,5 +17,9 @@ endif()
 if(BUILD_GUI)
   add_subdirectory(gui)
   target_compile_features(spatial-model-editor PRIVATE cxx_std_17)
-  target_link_libraries(spatial-model-editor PRIVATE ${SME_EXTRA_EXE_LIBS} gui)
+  target_link_libraries(
+    spatial-model-editor
+    PRIVATE ${SME_EXTRA_GUI_LIBS}
+            ${SME_EXTRA_EXE_LIBS}
+            gui)
 endif()
