@@ -73,6 +73,11 @@ set(SME_EXTRA_EXE_LIBS
     CACHE STRING "Optional additional exe libs")
 message(STATUS "SME_EXTRA_EXE_LIBS: ${SME_EXTRA_EXE_LIBS}")
 
+set(SME_EXTRA_GUI_LIBS
+    ""
+    CACHE STRING "Optional additional gui libs")
+message(STATUS "SME_EXTRA_GUI_LIBS: ${SME_EXTRA_GUI_LIBS}")
+
 set(SME_EXTRA_CORE_DEFS
     ""
     CACHE STRING "Optional additional defines for core")

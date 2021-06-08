@@ -12,6 +12,10 @@ export DISPLAY=:99
 
 # static link stdc++ for portable binary
 export SME_EXTRA_EXE_LIBS="-static-libgcc;-static-libstdc++"
+# add -no-pie to avoid gcc creating a pie - it works fine when ran from the command line
+# but appears as a "shared library" and can't be executed by double-clicking on it, which is not very user friendly
+# see https://stackoverflow.com/a/34522357/6465472
+export SME_EXTRA_GUI_LIBS="-no-pie"
 
 # do build
 mkdir build
@@ -21,6 +25,7 @@ cmake .. \
   -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
   -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
   -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
+  -DSME_EXTRA_GUI_LIBS=$SME_EXTRA_GUI_LIBS \
   -DOpenGL_GL_PREFERENCE=LEGACY \
   -DSME_WITH_TBB=ON
 make -j2 VERBOSE=1
