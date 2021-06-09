@@ -10,9 +10,16 @@
 #include <qcustomplot.h>
 
 SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
-  sme::model::Model sbmlDoc;
+  // load model & do initial simulation
+  sme::model::Model model;
+  if (QFile f(":/models/ABtoC.xml"); f.open(QIODevice::ReadOnly)) {
+    model.importSBMLString(f.readAll().toStdString());
+  }
+  sme::simulate::Simulation sim(model);
+  sim.doMultipleTimesteps({{2, 0.01}, {1, 0.02}});
+
   QLabelMouseTracker mouseTracker;
-  auto tab = TabSimulate(sbmlDoc, &mouseTracker);
+  auto tab{TabSimulate(model, &mouseTracker)};
   tab.show();
   waitFor(&tab);
   ModalWidgetTimer mwt;
@@ -32,18 +39,47 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   auto *btnDisplayOptions{tab.findChild<QPushButton *>("btnDisplayOptions")};
   REQUIRE(btnDisplayOptions != nullptr);
 
-  if (QFile f(":/models/ABtoC.xml"); f.open(QIODevice::ReadOnly)) {
-    sbmlDoc.importSBMLString(f.readAll().toStdString());
-  }
+  // load existing simulation data
+  tab.importTimesAndIntervalsOnNextLoad();
   tab.loadModelData();
+  REQUIRE(txtSimLength->text() == "0.02;0.02");
+  REQUIRE(txtSimInterval->text() == "0.01;0.02");
+  REQUIRE(hslideTime->minimum() == 0);
+  REQUIRE(hslideTime->maximum() == 3);
+
+  // change timesteps
   txtSimLength->setFocus();
+  sendKeyEvents(txtSimLength,
+                {"End", "Backspace", "Backspace", "Backspace",
+                 "Backspace", "Backspace", "9"});
+  sendKeyEvents(txtSimInterval,
+                {"End", "Backspace", "Backspace", "Backspace",
+                 "Backspace", "Backspace", "1"});
+  REQUIRE(txtSimLength->text() == "0.029");
+  REQUIRE(txtSimInterval->text() == "0.011");
+
+  // reset simulation: resets times to original ones
+  sendMouseClick(btnResetSimulation);
+  REQUIRE(txtSimLength->text() == "0.02;0.02");
+  REQUIRE(txtSimInterval->text() == "0.01;0.02");
+  REQUIRE(hslideTime->isEnabled() == true);
+  REQUIRE(btnSimulate->isEnabled() == true);
 
   // do DUNE simulation with two timesteps of 0.1
   REQUIRE(hslideTime->isEnabled() == true);
+  txtSimLength->setFocus();
   sendKeyEvents(txtSimLength,
-                {"End", "Backspace", "Backspace", "Backspace", "0", ".", "2"});
+                {"End", "Backspace", "Backspace", "Backspace", "Backspace",
+                 "Backspace", "Backspace", "Backspace", "Backspace",
+                 "Backspace", "Backspace", "Backspace", "Backspace", "0", ".",
+                 "2"});
   sendKeyEvents(txtSimInterval,
-                {"End", "Backspace", "Backspace", "Backspace", "0", ".", "1"});
+                {"End", "Backspace", "Backspace", "Backspace", "Backspace",
+                 "Backspace", "Backspace", "Backspace", "Backspace",
+                 "Backspace", "Backspace", "Backspace", "Backspace", "0", ".",
+                 "1"});
+  REQUIRE(txtSimLength->text() == "0.2");
+  REQUIRE(txtSimInterval->text() == "0.1");
   sendMouseClick(btnSimulate);
   REQUIRE(btnSimulate->isEnabled() == false);
   // simulation happens asynchronously - wait until finished

@@ -267,6 +267,7 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
                            "Failed to load file " + filename);
     }
   }
+  tabSimulate->importTimesAndIntervalsOnNextLoad();
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   enableTabs();
