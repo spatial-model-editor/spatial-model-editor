@@ -16,10 +16,8 @@ class QCPAbstractPlottable;
 class QCPItemStraightLine;
 class QCPTextElement;
 class QLabelMouseTracker;
-namespace sme {
-namespace model {
+namespace sme::model {
 class Model;
-}
 } // namespace sme
 class PlotWrapper;
 
@@ -33,6 +31,7 @@ public:
   void loadModelData();
   void stopSimulation();
   void useDune(bool enable);
+  void importTimesAndIntervalsOnNextLoad();
   void reset();
   void setOptions(const sme::simulate::Options &options);
 
@@ -52,8 +51,7 @@ private:
   std::future<std::size_t> simSteps;
   QTimer plotRefreshTimer;
   QProgressDialog *progressDialog;
-  QString cachedSimLength{"100"};
-  QString cachedSimInterval{"1"};
+  bool importTimesAndIntervals{false};
 
   std::optional<std::vector<std::pair<std::size_t, double>>>
   parseSimulationTimes();

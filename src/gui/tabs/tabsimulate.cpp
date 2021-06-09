@@ -63,6 +63,27 @@ TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
 
 TabSimulate::~TabSimulate() = default;
 
+static void importModelTimesAndIntervals(
+    Ui::TabSimulate *ui,
+    const std::vector<std::pair<std::size_t, double>> &times) {
+  QString simLength{};
+  QString simInterval{};
+  for (const auto &[n, t] : times) {
+    simLength.append(QString::number(static_cast<double>(n) * t));
+    simLength.append(";");
+    simInterval.append(QString::number(t));
+    simInterval.append(";");
+  }
+  simLength.chop(1);
+  simInterval.chop(1);
+  if (!simLength.isEmpty()) {
+    ui->txtSimLength->setText(simLength);
+  }
+  if (!simInterval.isEmpty()) {
+    ui->txtSimInterval->setText(simInterval);
+  }
+}
+
 void TabSimulate::loadModelData() {
   if (sim != nullptr && sim->getIsRunning()) {
     return;
@@ -114,25 +135,16 @@ void TabSimulate::loadModelData() {
     return;
   }
 
-  QString simLength{};
-  QString simInterval{};
-  for (const auto &[n, t] : model.getSimulationSettings().times) {
-    simLength.append(QString::number(static_cast<double>(n) * t));
-    simLength.append(";");
-    simInterval.append(QString::number(t));
-    simInterval.append(";");
+  if (importTimesAndIntervals) {
+    importModelTimesAndIntervals(ui.get(), model.getSimulationSettings().times);
   }
-  simLength.chop(1);
-  simInterval.chop(1);
-  if (simLength.isEmpty() && simInterval.isEmpty()) {
-    simLength = cachedSimLength;
-    simInterval = cachedSimInterval;
-  } else {
-    cachedSimLength = simLength;
-    cachedSimInterval = simInterval;
+  importTimesAndIntervals = false;
+  if (ui->txtSimLength->text().isEmpty()) {
+    ui->txtSimLength->setText("100");
   }
-  ui->txtSimLength->setText(simLength);
-  ui->txtSimInterval->setText(simInterval);
+  if (ui->txtSimInterval->text().isEmpty()) {
+    ui->txtSimInterval->setText("1");
+  }
   ui->btnSimulate->setEnabled(true);
   ui->btnResetSimulation->setEnabled(false);
 
@@ -192,6 +204,10 @@ void TabSimulate::useDune(bool enable) {
   loadModelData();
 }
 
+void TabSimulate::importTimesAndIntervalsOnNextLoad() {
+  importTimesAndIntervals = true;
+}
+
 void TabSimulate::reset() {
   if (sim != nullptr && sim->getIsRunning()) {
     // stop any existing running simulation
@@ -199,7 +215,9 @@ void TabSimulate::reset() {
     simSteps.wait();
   }
   model.getSimulationData().clear();
+  importModelTimesAndIntervals(ui.get(), model.getSimulationSettings().times);
   model.getSimulationSettings().times.clear();
+  importTimesAndIntervals = false;
   loadModelData();
 }
 
@@ -225,8 +243,6 @@ void TabSimulate::btnSimulate_clicked() {
   imageIntervalsText.chop(1);
   ui->txtSimInterval->setText(imageIntervalsText);
 
-  cachedSimLength = ui->txtSimLength->text();
-  cachedSimInterval = ui->txtSimInterval->text();
   // display modal progress dialog box
   progressDialog->setWindowModality(Qt::WindowModal);
   progressDialog->setValue(static_cast<int>(time.size()) - 1);
