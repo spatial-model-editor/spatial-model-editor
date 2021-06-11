@@ -57,6 +57,13 @@ if(BUILD_TESTING)
   add_library(core_tests STATIC)
 endif()
 
+if(SME_QT_DISABLE_UNICODE)
+  qt6_disable_unicode_defines(core)
+  if(BUILD_TESTING)
+    qt6_disable_unicode_defines(core_tests)
+  endif()
+endif()
+
 # find SymEngine and check it is compiled with LLVM enabled
 find_package(
   SymEngine

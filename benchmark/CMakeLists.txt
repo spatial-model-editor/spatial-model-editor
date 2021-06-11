@@ -14,3 +14,9 @@ target_link_libraries(
   PUBLIC sme::core
          benchmark::benchmark
          ${SME_EXTRA_EXE_LIBS})
+
+if(SME_QT_DISABLE_UNICODE)
+  qt6_disable_unicode_defines(benchmark)
+  qt6_disable_unicode_defines(pixel)
+  qt6_disable_unicode_defines(bench)
+endif()

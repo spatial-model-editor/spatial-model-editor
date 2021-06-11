@@ -4,7 +4,7 @@ message(STATUS "CMake version ${CMAKE_VERSION}")
 # version number here is embedded in compiled executable
 project(
   SpatialModelEditor
-  VERSION 1.1.1
+  VERSION 1.1.2
   DESCRIPTION "Spatial Model Editor"
   LANGUAGES CXX)
 
@@ -59,6 +59,13 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_VISIBILITY_PRESET hidden)
+
+# stop Qt from defining UNICODE on windows to avoid dune issues: this used to be
+# opt-in, but now done by default for Qt >= 6.1.2. See
+# https://codereview.qt-project.org/c/qt/qtbase/+/350443
+set(SME_QT_DISABLE_UNICODE
+    FALSE
+    CACHE BOOL "Disable Qt UNICODE option")
 
 set(SME_LOG_LEVEL
     "INFO"

@@ -1,5 +1,14 @@
 add_library(gui STATIC)
-add_library(gui_tests STATIC)
+if(BUILD_TESTING)
+  add_library(gui_tests STATIC)
+endif()
+
+if(SME_QT_DISABLE_UNICODE)
+  qt6_disable_unicode_defines(gui)
+  if(BUILD_TESTING)
+    qt6_disable_unicode_defines(gui_tests)
+  endif()
+endif()
 
 target_sources(gui PRIVATE mainwindow.cpp guiutils.cpp)
 target_include_directories(gui PUBLIC .)

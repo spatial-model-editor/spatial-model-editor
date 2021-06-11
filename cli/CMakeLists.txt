@@ -16,9 +16,19 @@ if(BUILD_TESTING)
            testlib)
 endif()
 
+if(SME_QT_DISABLE_UNICODE)
+  qt6_disable_unicode_defines(cli)
+  if(BUILD_TESTING)
+    qt6_disable_unicode_defines(cli_tests)
+  endif()
+endif()
+
 add_subdirectory(src)
 
 add_executable(spatial-cli spatial-cli.cpp)
+if(SME_QT_DISABLE_UNICODE)
+  qt6_disable_unicode_defines(spatial-cli)
+endif()
 target_link_libraries(spatial-cli PRIVATE cli)
 qt_import_plugins(
   spatial-cli

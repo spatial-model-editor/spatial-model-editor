@@ -28,13 +28,13 @@ Supported platforms and python versions:
 
   - CPython: 3.6, 3.7, 3.8, 3.9
 
-  - PyPy: 3.6, 3.7
+  - PyPy: 3.7
 
 - macOS 10.14+
 
   - CPython: 3.6, 3.7, 3.8, 3.9
 
-  - PyPy: 3.6, 3.7
+  - PyPy: 3.7
 
 - windows 64-bit
 
@@ -44,4 +44,4 @@ Supported platforms and python versions:
 
   - CPython: 3.6, 3.7, 3.8, 3.9
 
-  - PyPy: 3.6, 3.7
+  - PyPy: 3.7

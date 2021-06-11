@@ -1,11 +1,7 @@
 #include "version.hpp"
 
-namespace sme {
-
-namespace utils {
+namespace sme::utils {
 
 const char *const SPATIAL_MODEL_EDITOR_VERSION = "@PROJECT_VERSION@";
-
-}
 
 } // namespace sme
