@@ -32,7 +32,7 @@ public:
   void addVariable(const std::string &variable,
                    const std::string &displayName = {});
   void removeVariable(const std::string &variable);
-  void resetToDefaultFunctions();
+  void reset();
   void addFunction(const sme::utils::Function &function);
   void removeFunction(const std::string &functionId);
   void setConstants(const std::vector<sme::model::IdNameValue> &constants = {});

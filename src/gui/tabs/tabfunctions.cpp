@@ -64,7 +64,7 @@ void TabFunctions::listFunctions_currentRowChanged(int row) {
   ui->txtFunctionName->setText(funcs.getName(id));
   auto args = funcs.getArguments(id);
   // reset variables to only built-in functions
-  ui->txtFunctionDef->resetToDefaultFunctions();
+  ui->txtFunctionDef->reset();
   ui->txtFunctionDef->setVariables(sme::utils::toStdString(args));
   // add model functions
   for (const auto &function : model.getFunctions().getSymbolicFunctions()) {

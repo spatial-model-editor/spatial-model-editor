@@ -46,11 +46,12 @@ private:
   SpatialCoordinates spatialCoordinates;
   libsbml::Model *sbmlModel{nullptr};
   bool hasUnsavedChanges{false};
-  ModelEvents* modelEvents{nullptr};
+  ModelEvents *modelEvents{nullptr};
 
 public:
   ModelParameters();
-  explicit ModelParameters(libsbml::Model *model, ModelEvents* events= nullptr);
+  explicit ModelParameters(libsbml::Model *model,
+                           ModelEvents *events = nullptr);
   const QStringList &getIds() const;
   const QStringList &getNames() const;
   QString setName(const QString &id, const QString &name);
@@ -61,11 +62,11 @@ public:
   void remove(const QString &id);
   const SpatialCoordinates &getSpatialCoordinates() const;
   void setSpatialCoordinates(SpatialCoordinates coords);
-  std::vector<IdName> getSymbols() const;
+  std::vector<IdName> getSymbols(const QStringList &compartments = {}) const;
   std::vector<IdNameValue> getGlobalConstants() const;
   std::vector<IdNameExpr> getNonConstantParameters() const;
   bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);
 };
 
-} // namespace sme
+} // namespace sme::model

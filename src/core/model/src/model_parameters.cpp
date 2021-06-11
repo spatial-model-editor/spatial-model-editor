@@ -296,16 +296,24 @@ void ModelParameters::setSpatialCoordinates(SpatialCoordinates coords) {
               y->getName());
 }
 
-std::vector<IdName> ModelParameters::getSymbols() const {
+std::vector<IdName>
+ModelParameters::getSymbols(const QStringList &compartments) const {
   std::vector<IdName> symbols;
+  const auto nCompartments{sbmlModel->getNumCompartments()};
+  const auto nSpecies{sbmlModel->getNumSpecies()};
+  symbols.reserve(static_cast<std::size_t>(ids.size()) + 3 +
+                  static_cast<std::size_t>(nCompartments + nSpecies));
   for (int i = 0; i < ids.size(); ++i) {
     symbols.push_back({ids[i].toStdString(), names[i].toStdString()});
   }
-  for (unsigned i = 0; i < sbmlModel->getNumSpecies(); ++i) {
+  for (unsigned i = 0; i < nSpecies; ++i) {
     const auto *spec = sbmlModel->getSpecies(i);
-    symbols.push_back({spec->getId(), spec->getName()});
+    if (compartments.empty() ||
+        compartments.contains(spec->getCompartment().c_str())) {
+      symbols.push_back({spec->getId(), spec->getName()});
+    }
   }
-  for (unsigned i = 0; i < sbmlModel->getNumCompartments(); ++i) {
+  for (unsigned i = 0; i < nCompartments; ++i) {
     const auto *comp = sbmlModel->getCompartment(i);
     symbols.push_back({comp->getId(), comp->getName()});
   }
@@ -357,7 +365,8 @@ std::vector<IdNameValue> ModelParameters::getGlobalConstants() const {
     const auto *param = sbmlModel->getParameter(k);
     if (isConstantParameter(param)) {
       SPDLOG_TRACE("parameter {} = {}", param->getId(), param->getValue());
-      constants.push_back({param->getId(), param->getName(), param->getValue()});
+      constants.push_back(
+          {param->getId(), param->getName(), param->getValue()});
     }
   }
   // also get compartment volumes (the compartmentID may be used in the
@@ -389,4 +398,4 @@ void ModelParameters::setHasUnsavedChanges(bool unsavedChanges) {
   hasUnsavedChanges = unsavedChanges;
 }
 
-} // namespace sme
+} // namespace sme::model

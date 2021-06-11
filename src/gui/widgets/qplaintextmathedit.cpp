@@ -124,10 +124,11 @@ void QPlainTextMathEdit::removeVariable(const std::string &variable) {
   qPlainTextEdit_textChanged();
 }
 
-void QPlainTextMathEdit::resetToDefaultFunctions() {
+void QPlainTextMathEdit::reset() {
   // reset to all built-in sbml L3 math functions and constants
   // http://model.caltech.edu/software/libsbml/5.18.0/docs/formatted/c-api/libsbml-math.html#math-l3
   clearFunctions();
+  clearVariables();
   for (const auto &f :
        {"sin",   "cos",      "tan",   "cot",       "csc",   "sec",
         "asin",  "arcsin",   "acos",  "arccos",    "atan",  "arctan",
@@ -208,7 +209,7 @@ void QPlainTextMathEdit::updateCompleter() {
 
 QPlainTextMathEdit::QPlainTextMathEdit(QWidget *parent)
     : QPlainTextEdit(parent) {
-  resetToDefaultFunctions();
+  reset();
   completer.setWidget(this);
   completer.setCompletionMode(QCompleter::PopupCompletion);
   completer.setCaseSensitivity(Qt::CaseSensitive);

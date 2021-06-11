@@ -163,17 +163,11 @@ void TabReactions::listReactions_currentItemChanged(
   ui->txtReactionName->setText(model.getReactions().getName(currentReacId));
   ui->lblReactionScheme->setText(model.getReactions().getScheme(currentReacId));
   ui->cmbReactionLocation->setCurrentIndex(locationIndex);
-  // reset variables to only built-in functions
-  ui->txtReactionRate->resetToDefaultFunctions();
+  ui->txtReactionRate->reset();
   // add model parameters
-  for (const auto &[id, name] : model.getParameters().getSymbols()) {
+  for (const auto &[id, name] :
+       model.getParameters().getSymbols(compartments)) {
     ui->txtReactionRate->addVariable(id, name);
-  }
-  // add any reaction localParameters
-  for (const auto &id : model.getReactions().getParameterIds(currentReacId)) {
-    ui->txtReactionRate->addVariable(
-        id.toStdString(),
-        model.getReactions().getParameterName(currentReacId, id).toStdString());
   }
   // add model functions
   for (const auto &function : model.getFunctions().getSymbolicFunctions()) {
@@ -219,9 +213,9 @@ void TabReactions::listReactions_currentItemChanged(
   ui->listReactionParams->blockSignals(true);
   for (const auto &paramId :
        model.getReactions().getParameterIds(currentReacId)) {
-    auto name = model.getReactions().getParameterName(currentReacId, paramId);
-    double value =
-        model.getReactions().getParameterValue(currentReacId, paramId);
+    auto name{model.getReactions().getParameterName(currentReacId, paramId)};
+    double value{
+        model.getReactions().getParameterValue(currentReacId, paramId)};
     auto *itemName = newQTableWidgetItem(name);
     auto *itemValue =
         newQTableWidgetItem(QString("%1").arg(value, 14, 'g', 14));
