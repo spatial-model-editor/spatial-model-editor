@@ -7,17 +7,16 @@
 SCENARIO("DialogAnalytic",
          "[gui/dialogs/analytic][gui/dialogs][gui][analytic]") {
   GIVEN("10x10 image, small compartment, simple expr") {
-    sme::model::Model doc;
+    sme::model::Model model;
     QFile f(":/models/ABtoC.xml");
     f.open(QIODevice::ReadOnly);
-    doc.importSBMLString(f.readAll().toStdString());
+    model.importSBMLString(f.readAll().toStdString());
     auto compartmentPoints = std::vector<QPoint>{
         QPoint(5, 5), QPoint(5, 6), QPoint(5, 7), QPoint(6, 6), QPoint(6, 7)};
     DialogAnalytic dia("x",
                        {QSize(10, 10), compartmentPoints, QPointF(0.0, 0.0), 1,
-                        doc.getUnits()},
-                       doc.getMath(),
-                       doc.getParameters().getSpatialCoordinates());
+                        model.getUnits()},
+                       model.getParameters(), model.getFunctions());
     REQUIRE(dia.getExpression() == "x");
     ModalWidgetTimer mwt;
     WHEN("valid expr: 10") {
@@ -88,16 +87,17 @@ SCENARIO("DialogAnalytic",
     }
   }
   GIVEN("100x100 image") {
-    sme::model::Model doc;
+    sme::model::Model model;
     QFile f(":/models/ABtoC.xml");
     f.open(QIODevice::ReadOnly);
-    doc.importSBMLString(f.readAll().toStdString());
-    DialogAnalytic dia("x", doc.getSpeciesGeometry("B"), doc.getMath(),
-                       doc.getParameters().getSpatialCoordinates());
+    model.importSBMLString(f.readAll().toStdString());
+    DialogAnalytic dia("x", model.getSpeciesGeometry("B"),
+                       model.getParameters(), model.getFunctions());
     REQUIRE(dia.getExpression() == "x");
     ModalWidgetTimer mwt;
     WHEN("valid expr: 10 & unclick grid/scale checkboxes") {
-      mwt.addUserAction({"Delete", "1", "0", "Shift+Tab", "Space", "Shift+Tab", "Space"});
+      mwt.addUserAction(
+          {"Delete", "1", "0", "Shift+Tab", "Space", "Shift+Tab", "Space"});
       mwt.start();
       dia.exec();
       REQUIRE(dia.isExpressionValid() == true);

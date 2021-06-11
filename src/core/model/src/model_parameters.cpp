@@ -340,15 +340,15 @@ static bool isConstantParameter(const libsbml::Parameter *param) {
   return true;
 }
 
-std::vector<IdValue> ModelParameters::getGlobalConstants() const {
-  std::vector<IdValue> constants;
+std::vector<IdNameValue> ModelParameters::getGlobalConstants() const {
+  std::vector<IdNameValue> constants;
   // add all *constant* species as constants
   for (unsigned k = 0; k < sbmlModel->getNumSpecies(); ++k) {
     const auto *spec = sbmlModel->getSpecies(k);
     if (getIsSpeciesConstant(spec)) {
       SPDLOG_TRACE("found constant species {}", spec->getId());
       double init_conc = spec->getInitialConcentration();
-      constants.push_back({spec->getId(), init_conc});
+      constants.push_back({spec->getId(), spec->getName(), init_conc});
       SPDLOG_TRACE("parameter {} = {}", spec->getId(), init_conc);
     }
   }
@@ -357,7 +357,7 @@ std::vector<IdValue> ModelParameters::getGlobalConstants() const {
     const auto *param = sbmlModel->getParameter(k);
     if (isConstantParameter(param)) {
       SPDLOG_TRACE("parameter {} = {}", param->getId(), param->getValue());
-      constants.push_back({param->getId(), param->getValue()});
+      constants.push_back({param->getId(), param->getName(), param->getValue()});
     }
   }
   // also get compartment volumes (the compartmentID may be used in the
@@ -366,7 +366,7 @@ std::vector<IdValue> ModelParameters::getGlobalConstants() const {
   for (unsigned int k = 0; k < sbmlModel->getNumCompartments(); ++k) {
     const auto *comp = sbmlModel->getCompartment(k);
     SPDLOG_TRACE("parameter {} = {}", comp->getId(), comp->getSize());
-    constants.push_back({comp->getId(), comp->getSize()});
+    constants.push_back({comp->getId(), comp->getName(), comp->getSize()});
   }
   return constants;
 }

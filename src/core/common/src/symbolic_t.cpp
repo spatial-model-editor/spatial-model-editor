@@ -154,8 +154,8 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       }
     }
   }
-  GIVEN("e^(4*x): print exponential function") {
-    std::string expr = "e^(4*x)";
+  GIVEN("exponentiale^(4*x): print exponential function") {
+    std::string expr = "exponentiale^(4*x)";
     REQUIRE(utils::Symbolic(expr, {}, {}).getErrorMessage() ==
             "Unknown symbol: x");
     utils::Symbolic sym(expr, {"x"}, {});

@@ -1840,3 +1840,21 @@ SCENARIO("stop, then continue pixel simulation",
   sim.doMultipleTimesteps({{3, 0.01}});
   REQUIRE(m.getSimulationData().timePoints.size() == 4);
 }
+
+SCENARIO("Fish model: simulation with piecewise function in reactions",
+         "[core/simulate/simulate][core/simulate][core][simulate]") {
+  auto m{getModel(":test/models/fish_300x300.xml")};
+  // pixel
+  m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+  simulate::Simulation simPixel(m);
+  REQUIRE(simPixel.errorMessage() == "");
+  REQUIRE(m.getSimulationData().timePoints.size() == 1);
+  simPixel.doMultipleTimesteps({{2, 0.01}});
+  REQUIRE(simPixel.errorMessage() == "");
+  REQUIRE(m.getSimulationData().timePoints.size() == 3);
+  // dune doesn't have symengine yet so no piecewise func support:
+  m.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+  m.getSimulationData().clear();
+  simulate::Simulation simDune(m);
+  REQUIRE(simDune.errorMessage().substr(0, 29) == "IOError [handle_parser_error:");
+}

@@ -1,38 +1,27 @@
 // QPlainTextMathEdit
-//  - a modified QPlainTextEdit for editing math
+//  - a modified QPlainTextEdit for editing sbml math
 //  - syntax highlighting
 //  - syntax checking
+//  - evaluation
 //  - emits a signal when text changed, along with bool isValid, and
 //  errormessage
 
 #pragma once
 
+#include "model_parameters.hpp"
 #include "symbolic.hpp"
 #include <QPlainTextEdit>
-
-namespace libsbml {
-class Model;
-}
-
-namespace sme {
-namespace model {
-class ModelMath;
-}
-} // namespace sme
 
 class QPlainTextMathEdit : public QPlainTextEdit {
   Q_OBJECT
 public:
   explicit QPlainTextMathEdit(QWidget *parent = nullptr);
-  void enableLibSbmlBackend(sme::model::ModelMath *math);
   bool mathIsValid() const;
   const QString &getMath() const;
   const std::string &getVariableMath() const;
   void importVariableMath(const std::string &expr);
   void compileMath();
   double evaluateMath(const std::vector<double> &variables = {});
-  double evaluateMath(
-      const std::map<const std::string, std::pair<double, bool>> &variables);
   const QString &getErrorMessage() const;
   const std::vector<std::string> &getVariables() const;
   void clearVariables();
@@ -40,37 +29,33 @@ public:
   void addVariable(const std::string &variable,
                    const std::string &displayName = {});
   void removeVariable(const std::string &variable);
-  void clearFunctions();
   void resetToDefaultFunctions();
-  void addIntrinsicFunction(const std::string &functionId);
   void addFunction(const sme::utils::Function &function);
   void removeFunction(const std::string &functionId);
+  void setConstants(const std::vector<sme::model::IdNameValue> &constants = {});
 
 signals:
   void mathChanged(const QString &math, bool valid,
                    const QString &errorMessage);
 
 private:
-  using stringStringMap = std::map<std::string, std::string>;
-  sme::model::ModelMath *modelMath{nullptr};
-  bool useLibSbmlBackend{false};
-  bool allowImplicitNames{false};
-  bool allowIllegalChars{false};
+  using StringStringMap = std::map<std::string, std::string, std::less<>>;
   sme::utils::Symbolic sym;
   std::vector<double> result{0.0};
-  const QColor colourValid = QColor(200, 255, 200);
-  const QColor colourInvalid = QColor(255, 150, 150);
-  const char *const illegalChars = "%@&!";
+  const QColor colourValid{QColor(200, 255, 200)};
+  const QColor colourInvalid{QColor(255, 150, 150)};
   std::vector<std::string> vars;
   std::vector<sme::utils::Function> functions;
-  stringStringMap mapVarsToDisplayNames;
-  stringStringMap mapDisplayNamesToVars;
-  stringStringMap mapFuncsToDisplayNames;
-  stringStringMap mapDisplayNamesToFuncs;
+  std::vector<std::pair<std::string, double>> consts{};
+  StringStringMap mapVarsToDisplayNames;
+  StringStringMap mapDisplayNamesToVars;
+  StringStringMap mapFuncsToDisplayNames;
+  StringStringMap mapDisplayNamesToFuncs;
   QString currentDisplayMath;
   std::string currentVariableMath;
   QString currentErrorMessage;
-  bool expressionIsValid = false;
+  bool expressionIsValid{false};
+  void clearFunctions();
   std::pair<std::string, QString>
   displayNamesToVariables(const std::string &expr) const;
   std::string variablesToDisplayNames(const std::string &expr) const;

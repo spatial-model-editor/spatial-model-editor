@@ -16,8 +16,8 @@ jobs:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2021.05.31
-      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: spatialmodeleditor/manylinux2010-pypy_x86_64:2021.05.31
+      CIBW_MANYLINUX_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2021.06.11
+      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: spatialmodeleditor/manylinux2010-pypy_x86_64:2021.06.11
       CIBW_SKIP: '*-manylinux_i686 *p27-* *p35-*'
       CIBW_ENVIRONMENT: 'SME_EXTERNAL_SMECORE=on'
       CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'

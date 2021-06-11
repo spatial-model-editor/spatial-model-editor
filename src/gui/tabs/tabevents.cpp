@@ -37,7 +37,7 @@ void TabEvents::loadModelData(const QString &selection) {
   ui->lblSpeciesExpression->clear();
   ui->stkValue->setCurrentIndex(0);
   ui->txtExpression->clearVariables();
-  ui->txtExpression->clearFunctions();
+  ui->txtExpression->resetToDefaultFunctions();
   ui->cmbEventVariable->clear();
   variableIds.clear();
   for (const auto &cId : model.getCompartments().getIds()) {
@@ -155,6 +155,7 @@ void TabEvents::txtEventTime_editingFinished() {
   }
   ui->lblExpressionStatus->setText("");
   model.getEvents().setTime(currentEventId, time);
+  ui->lblExpressionStatus->setText(ui->txtExpression->getErrorMessage());
 }
 
 void TabEvents::cmbEventVariable_activated(int index) {
@@ -174,8 +175,7 @@ void TabEvents::cmbEventVariable_activated(int index) {
     ui->lblSpeciesExpression->setPixmap(QPixmap::fromImage(
         DialogAnalytic(model.getEvents().getExpression(currentEventId),
                        model.getSpeciesGeometry(variableIds[index]),
-                       model.getMath(),
-                       model.getParameters().getSpatialCoordinates())
+                       model.getParameters(), model.getFunctions())
             .getImage()));
     ui->txtExpression->setEnabled(false);
   } else {
@@ -194,8 +194,8 @@ void TabEvents::btnSetSpeciesConcentration_clicked() {
   }
   QString sId{variableIds[iSpecies]};
   DialogAnalytic dialog(model.getEvents().getExpression(currentEventId),
-                        model.getSpeciesGeometry(sId), model.getMath(),
-                        model.getParameters().getSpatialCoordinates());
+                        model.getSpeciesGeometry(sId), model.getParameters(),
+                        model.getFunctions());
   if (dialog.exec() == QDialog::Accepted) {
     const std::string &expr{dialog.getExpression()};
     SPDLOG_DEBUG("  - set expr: {}", expr);

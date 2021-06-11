@@ -70,6 +70,7 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     f.open(QIODevice::ReadOnly);
     model.importSBMLString(f.readAll().toStdString());
     tab.loadModelData();
+    tab.show();
     REQUIRE(events.getIds().size() == 0);
     REQUIRE(listEvents->count() == 0);
     REQUIRE(btnAddEvent->isEnabled() == true);
@@ -127,7 +128,7 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     REQUIRE(events.getTime("p_") == dbl_approx(24.9));
     // expression -> ""
     txtExpression->setFocus();
-    sendKeyEvents(txtExpression, {"Delete", "Backspace"});
+    sendKeyEvents(txtExpression, {"Delete", "Backspace", "Backspace"});
     REQUIRE(txtExpression->toPlainText() == "");
     REQUIRE(lblExpressionStatus->text() == "Empty expression");
     // invalid expression so model expression unchanged
