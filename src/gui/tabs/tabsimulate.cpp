@@ -390,11 +390,22 @@ void TabSimulate::graphClicked(const QMouseEvent *event) {
   if (plt->plot->graphCount() == 0) {
     return;
   }
-  double t = plt->xValue(event);
-  int maxTimeIndex = ui->hslideTime->maximum();
-  auto nearestTimeIndex =
-      static_cast<int>(0.5 + maxTimeIndex * t / time.back());
-  ui->hslideTime->setValue(std::clamp(nearestTimeIndex, 0, maxTimeIndex));
+  double t{plt->xValue(event)};
+  const auto maxIndex{ui->hslideTime->maximum()};
+  // index of first element of time >= t
+  auto timeIndex{static_cast<int>(std::distance(
+      time.begin(), std::lower_bound(time.begin(), time.end(), t)))};
+  if (timeIndex > maxIndex) {
+    timeIndex = maxIndex;
+  } else if (timeIndex > 0) {
+    // check if previous element is closer, if so use that one instead
+    auto delta{std::abs(time[timeIndex] - t)};
+    auto deltaPrev{std::abs(time[timeIndex - 1] - t)};
+    if (deltaPrev < delta) {
+      --timeIndex;
+    }
+  }
+  ui->hslideTime->setValue(timeIndex);
 }
 
 void TabSimulate::hslideTime_valueChanged(int value) {
