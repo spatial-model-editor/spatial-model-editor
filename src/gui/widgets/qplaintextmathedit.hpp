@@ -2,6 +2,7 @@
 //  - a modified QPlainTextEdit for editing sbml math
 //  - syntax highlighting
 //  - syntax checking
+//  - autocomplete
 //  - evaluation
 //  - emits a signal when text changed, along with bool isValid, and
 //  errormessage
@@ -10,7 +11,9 @@
 
 #include "model_parameters.hpp"
 #include "symbolic.hpp"
+#include <QCompleter>
 #include <QPlainTextEdit>
+#include <QStringListModel>
 
 class QPlainTextMathEdit : public QPlainTextEdit {
   Q_OBJECT
@@ -33,6 +36,7 @@ public:
   void addFunction(const sme::utils::Function &function);
   void removeFunction(const std::string &functionId);
   void setConstants(const std::vector<sme::model::IdNameValue> &constants = {});
+  void updateCompleter();
 
 signals:
   void mathChanged(const QString &math, bool valid,
@@ -40,6 +44,8 @@ signals:
 
 private:
   using StringStringMap = std::map<std::string, std::string, std::less<>>;
+  QCompleter completer;
+  QStringListModel stringListModel;
   sme::utils::Symbolic sym;
   std::vector<double> result{0.0};
   const QColor colourValid{QColor(200, 255, 200)};
@@ -55,10 +61,15 @@ private:
   std::string currentVariableMath;
   QString currentErrorMessage;
   bool expressionIsValid{false};
+  qsizetype currentWordStartPos{0};
+  qsizetype currentWordEndPos{0};
   void clearFunctions();
   std::pair<std::string, QString>
   displayNamesToVariables(const std::string &expr) const;
   std::string variablesToDisplayNames(const std::string &expr) const;
   void qPlainTextEdit_textChanged();
   void qPlainTextEdit_cursorPositionChanged();
+  QString getCurrentWord();
+  void insertCompletion(const QString &completion);
+  void keyPressEvent(QKeyEvent *e) override;
 };

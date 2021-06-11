@@ -3,6 +3,7 @@
 #include "model.hpp"
 #include "qplaintextmathedit.hpp"
 #include "qt_test_utils.hpp"
+#include <QApplication>
 
 SCENARIO("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
                                "widgets][gui][qplaintextmathedit][symbolic]") {
@@ -208,8 +209,9 @@ SCENARIO("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
       sendKeyEvents(&mathEdit, {"\"", "X", " ", "v", "a", "r", "!", "\""});
       REQUIRE(signal.math == "\"X var!\"");
       REQUIRE(mathEdit.getVariableMath() == "x");
-      // "X var!" + "X var!"
-      sendKeyEvents(&mathEdit, {"+", "\"", "X", " ", "v", "a", "r", "!", "\""});
+      // "X var!" + "X var!" (using autocomplete incl. quoting for second one)
+      sendKeyEvents(&mathEdit, {"+", "\"", "X", " ", "v"});
+      sendKeyEvents(QApplication::activePopupWidget(), {"Enter"});
       REQUIRE(signal.math == "2*\"X var!\"");
       REQUIRE(mathEdit.getVariableMath() == "2*x");
       mathEdit.removeVariable("x");
