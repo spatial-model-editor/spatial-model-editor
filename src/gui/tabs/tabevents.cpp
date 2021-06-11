@@ -37,7 +37,7 @@ void TabEvents::loadModelData(const QString &selection) {
   ui->lblSpeciesExpression->clear();
   ui->stkValue->setCurrentIndex(0);
   ui->txtExpression->clearVariables();
-  ui->txtExpression->resetToDefaultFunctions();
+  ui->txtExpression->reset();
   ui->cmbEventVariable->clear();
   variableIds.clear();
   for (const auto &cId : model.getCompartments().getIds()) {
