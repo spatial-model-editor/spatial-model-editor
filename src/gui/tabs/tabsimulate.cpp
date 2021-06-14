@@ -366,6 +366,12 @@ void TabSimulate::finalizePlotAndImages() {
   int sliderValue{static_cast<int>(time.size()) - 1};
   ui->hslideTime->setMaximum(sliderValue);
   ui->hslideTime->setValue(sliderValue);
+  if (const auto &err{sim->errorMessage()}; err == "Simulation stopped early") {
+    // reset simulation after early stop as it may contain a partial timestep
+    SPDLOG_INFO("resetting simulation after early stop");
+    sim.reset();
+    sim = std::make_unique<sme::simulate::Simulation>(model);
+  }
 }
 
 void TabSimulate::btnDisplayOptions_clicked() {
