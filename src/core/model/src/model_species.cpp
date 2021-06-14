@@ -657,9 +657,19 @@ QRgb ModelSpecies::getColour(const QString &id) const {
 }
 
 void ModelSpecies::setIsConstant(const QString &id, bool constant) {
+  auto *species{sbmlModel->getSpecies(id.toStdString())};
+  if(species == nullptr){
+    SPDLOG_WARN("Species '{}' not found", id.toStdString());
+    return;
+  }
+  if(species->isSetConstant() && species->getConstant() == constant) {
+    // species already has this constant state: no-op
+    return;
+  }
   hasUnsavedChanges = true;
-  auto *spec = sbmlModel->getSpecies(id.toStdString());
-  spec->setConstant(constant);
+  species->setConstant(constant);
+  SPDLOG_INFO("Clearing simulation data");
+  simulationData->clear();
   if (constant) {
     // for now: constant species must be non-spatial
     setIsSpatial(id, false);
@@ -667,7 +677,7 @@ void ModelSpecies::setIsConstant(const QString &id, bool constant) {
   // todo: think about how to deal with boundaryCondition properly
   // for now, just set it to false here
   // i.e. this species cannot be a product or reactant
-  spec->setBoundaryCondition(false);
+  species->setBoundaryCondition(false);
 }
 
 bool ModelSpecies::getIsConstant(const QString &id) const {
