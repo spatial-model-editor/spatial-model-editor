@@ -7,7 +7,7 @@
 DialogImageSlice::DialogImageSlice(const QImage &geometryImage,
                                    const QVector<QImage> &images,
                                    const QVector<double> &timepoints,
-                                   QWidget *parent)
+                                   bool invertYAxis, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogImageSlice>()},
       imgs{images}, time{timepoints}, startPoint{0, geometryImage.height() - 1},
       endPoint{geometryImage.width() - 1, 0} {
@@ -15,7 +15,7 @@ DialogImageSlice::DialogImageSlice(const QImage &geometryImage,
 
   ui->lblImage->setAspectRatioMode(Qt::IgnoreAspectRatio);
   ui->lblImage->setTransformationMode(Qt::SmoothTransformation);
-  ui->lblSlice->setImage(geometryImage);
+  ui->lblSlice->setImage(geometryImage, invertYAxis);
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogImageSlice::saveSlicedImage);
@@ -45,6 +45,8 @@ DialogImageSlice::DialogImageSlice(const QImage &geometryImage,
           &DialogImageSlice::lblSlice_sliceDrawn);
   connect(ui->lblSlice, &QLabelSlice::mouseWheelEvent, this,
           &DialogImageSlice::lblSlice_mouseWheelEvent);
+  connect(ui->lblSlice, &QLabelSlice::mouseOver, this,
+          &DialogImageSlice::lblSlice_mouseOver);
   connect(ui->lblImage, &QLabelMouseTracker::mouseOver, this,
           &DialogImageSlice::lblImage_mouseOver);
 
@@ -128,9 +130,14 @@ void DialogImageSlice::lblSlice_mouseWheelEvent(int delta) {
   lblSlice_mouseDown(p);
 }
 
+void DialogImageSlice::lblSlice_mouseOver(QPoint point) {
+  ui->lblMouseLocation->setText(
+      QString("Mouse location: (x=%1, y=%2)").arg(point.x()).arg(point.y()));
+}
+
 void DialogImageSlice::lblImage_mouseOver(const QPoint &point) {
   double t = time[point.x()];
-  std::size_t i = static_cast<std::size_t>(slice.height() - 1 - point.y());
+  auto i{static_cast<std::size_t>(slice.height() - 1 - point.y())};
   const auto &p = ui->lblSlice->getSlicePixels()[i];
   ui->lblMouseLocation->setText(QString("Mouse location: (x=%1, y=%2, t=%3)")
                                     .arg(p.x())

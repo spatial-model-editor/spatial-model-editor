@@ -2,16 +2,21 @@
 #include "logger.hpp"
 
 QLabelSlice::QLabelSlice(QWidget *parent) : QLabel(parent) {
+  setMouseTracking(true);
   setAlignment(Qt::AlignmentFlag::AlignTop | Qt::AlignmentFlag::AlignLeft);
   setMinimumSize(1, 1);
   setWordWrap(true);
 }
 
-void QLabelSlice::setImage(const QImage &img) {
+void QLabelSlice::setImage(const QImage &img, bool invertYAxis) {
+  flipYAxis = invertYAxis;
   slicePixels.clear();
   slicePixels.reserve(static_cast<std::size_t>(imgOriginal.width()) +
                       static_cast<std::size_t>(imgOriginal.height()));
   imgOriginal = img.convertToFormat(QImage::Format_RGB32);
+  if (flipYAxis) {
+    imgOriginal = imgOriginal.mirrored();
+  }
   imgSliced = QImage(imgOriginal.size(), QImage::Format_ARGB32);
   fadeOriginalImage();
   // on loading new image, set a minimum size for the widget
@@ -41,6 +46,9 @@ void QLabelSlice::setSlice(const QPoint &start, const QPoint &end) {
   for (int i = 0; i < np; ++i) {
     QPoint pi(start.x() + diff.x() / norm, start.y() + diff.y() / norm);
     slicePixels.push_back(pi);
+    if(flipYAxis){
+      pi.setY(imgSliced.height() - 1 - pi.y());
+    }
     auto c{imgOriginal.pixel(pi)};
     imgSliced.setPixel(pi, c);
     diff += dp;
@@ -55,6 +63,7 @@ const std::vector<QPoint> &QLabelSlice::getSlicePixels() const {
 void QLabelSlice::setHorizontalSlice(int y) {
   setSlice(QPoint(0, y), QPoint(imgOriginal.width() - 1, y));
 }
+
 void QLabelSlice::setVerticalSlice(int x) {
   setSlice(QPoint(x, imgOriginal.height() - 1), QPoint(x, 0));
 }
@@ -68,7 +77,11 @@ void QLabelSlice::mousePressEvent(QMouseEvent *ev) {
 }
 
 void QLabelSlice::mouseMoveEvent(QMouseEvent *ev) {
-  if (mouseIsDown && setPixel(ev, currentPixel)) {
+  if (!setPixel(ev, currentPixel)) {
+    return;
+  }
+  emit mouseOver(currentPixel);
+  if (mouseIsDown) {
     SPDLOG_TRACE("mouseDown ({},{})", currentPixel.x(), currentPixel.y());
     emit mouseDown(currentPixel);
   }
@@ -105,7 +118,9 @@ bool QLabelSlice::setPixel(const QMouseEvent *ev, QPoint &pixel) {
   }
   pixel.setX((imgSliced.width() * x) / pixmap.width());
   pixel.setY((imgSliced.height() * y) / pixmap.height());
-  SPDLOG_TRACE("mouse at ({},{}) -> pixel ({},{})", x, y, pixel.x(), pixel.y());
+  if (flipYAxis) {
+    pixel.setY(imgSliced.height() - 1 - pixel.y());
+  }
   return true;
 }
 

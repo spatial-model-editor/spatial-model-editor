@@ -11,7 +11,8 @@
 
 DialogConcentrationImage::DialogConcentrationImage(
     const std::vector<double> &concentrationArray,
-    const sme::model::SpeciesGeometry &speciesGeometry, QWidget *parent)
+    const sme::model::SpeciesGeometry &speciesGeometry, bool invertYAxis,
+    QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogConcentrationImage>()},
       points(speciesGeometry.compartmentPoints),
       width(speciesGeometry.pixelWidth), origin(speciesGeometry.physicalOrigin),
@@ -38,6 +39,7 @@ DialogConcentrationImage::DialogConcentrationImage(
 
   ui->lblImage->displayGrid(ui->chkGrid->isChecked());
   ui->lblImage->displayScale(ui->chkScale->isChecked());
+  ui->lblImage->invertYAxis(invertYAxis);
   QSizeF physicalSize;
   physicalSize.rwidth() =
       static_cast<double>(speciesGeometry.compartmentImageSize.width()) *

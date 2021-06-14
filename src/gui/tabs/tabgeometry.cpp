@@ -102,6 +102,12 @@ void TabGeometry::enableTabs() {
   ui->listMembranes->setEnabled(enableBoundaries);
 }
 
+void TabGeometry::invertYAxis(bool enable){
+  ui->lblCompShape->invertYAxis(enable);
+  ui->lblCompBoundary->invertYAxis(enable);
+  ui->lblCompMesh->invertYAxis(enable);
+}
+
 void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
   if (waitingForCompartmentChoice) {
     SPDLOG_INFO("colour {:x}", col);

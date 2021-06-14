@@ -9,10 +9,8 @@ class QLabel;
 class QListWidgetItem;
 class QLabelMouseTracker;
 
-namespace sme {
-namespace model {
+namespace sme::model {
 class Model;
-}
 } // namespace sme
 
 namespace Ui {
@@ -28,6 +26,7 @@ public:
   ~TabGeometry();
   void loadModelData(const QString &selection = {});
   void enableTabs();
+  void invertYAxis(bool enable);
 
 signals:
   void invalidModelOrNoGeometryImage();

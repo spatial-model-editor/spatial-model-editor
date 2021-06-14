@@ -33,6 +33,7 @@ public:
   void setPhysicalSize(const QSizeF& size, const QString& units);
   void displayGrid(bool enable);
   void displayScale(bool enable);
+  void invertYAxis(bool enable);
 
 signals:
   void mouseClicked(QRgb col, QPoint point);
@@ -64,6 +65,7 @@ private:
   QPoint offset{0,0};
   bool drawGrid{false};
   bool drawScale{false};
+  bool flipYAxis{false};
   QSizeF physicalSize{1.0, 1.0};
   QString lengthUnits{};
   QRgb colour{};

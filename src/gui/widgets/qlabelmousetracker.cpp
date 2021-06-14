@@ -11,6 +11,9 @@ QLabelMouseTracker::QLabelMouseTracker(QWidget *parent) : QLabel(parent) {
 
 void QLabelMouseTracker::setImage(const QImage &img) {
   image = img;
+  if (flipYAxis) {
+    image = image.mirrored();
+  }
   constexpr int minImageWidth{100};
   // on loading new image, set a minimum size for the widget
   if (this->width() < minImageWidth) {
@@ -37,9 +40,9 @@ int QLabelMouseTracker::getMaskIndex() const { return maskIndex; }
 
 QPointF QLabelMouseTracker::getRelativePosition() const {
   auto xRelPos{static_cast<double>(currentPixel.x()) /
-                      static_cast<double>(image.width())};
+               static_cast<double>(image.width())};
   auto yRelPos{static_cast<double>(currentPixel.y()) /
-                      static_cast<double>(image.height())};
+               static_cast<double>(image.height())};
   auto xAspectRatioFactor{static_cast<double>(pixmapImageSize.width()) /
                           static_cast<double>(pixmap.width())};
   auto yAspectRatioFactor{static_cast<double>(pixmapImageSize.height()) /
@@ -52,15 +55,19 @@ void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
     return;
   }
   if (setCurrentPixel(ev->pos())) {
-      // update current colour and emit mouseClicked signal
-      colour = image.pixelColor(currentPixel).rgb();
-      SPDLOG_DEBUG("pixel ({},{}) -> colour {:x}", currentPixel.x(),
-                   currentPixel.y(), colour);
-      if (maskImage.valid(currentPixel)) {
-        maskIndex = static_cast<int>(maskImage.pixel(currentPixel) & RGB_MASK);
-      }
-      emit mouseClicked(colour, currentPixel);
+    // update current colour and emit mouseClicked signal
+    auto imagePixel{currentPixel};
+    if (flipYAxis) {
+      imagePixel.setY(image.height() - 1 - imagePixel.y());
     }
+    colour = image.pixelColor(imagePixel).rgb();
+    SPDLOG_DEBUG("imagePixel ({},{}) -> colour {:x}", imagePixel.x(),
+                 imagePixel.y(), colour);
+    if (maskImage.valid(currentPixel)) {
+      maskIndex = static_cast<int>(maskImage.pixel(currentPixel) & RGB_MASK);
+    }
+    emit mouseClicked(colour, currentPixel);
+  }
 }
 
 void QLabelMouseTracker::mouseMoveEvent(QMouseEvent *ev) {
@@ -95,6 +102,9 @@ bool QLabelMouseTracker::setCurrentPixel(const QPoint &pos) {
   currentPixel.setX((image.width() * (pos.x() - offset.x())) /
                     pixmapImageSize.width());
   currentPixel.setY((image.height() * pos.y()) / pixmapImageSize.height());
+  if (flipYAxis) {
+    currentPixel.setY(image.height() - currentPixel.y() - 1);
+  }
   SPDLOG_TRACE("mouse at ({},{}) -> pixel ({},{})", pos.x(), pos.y(),
                currentPixel.x(), currentPixel.y());
   return true;
@@ -204,8 +214,10 @@ void QLabelMouseTracker::resizeImage(const QSize &size) {
     }
     for (int i = 0;
          i < pixmapImageSize.height() / static_cast<int>(gridPixelWidth); ++i) {
-      int y{pixmapImageSize.height() - 1 -
-            static_cast<int>(gridPixelWidth * static_cast<double>(i))};
+      auto y{static_cast<int>(gridPixelWidth * static_cast<double>(i))};
+      if (!flipYAxis) {
+        y = pixmapImageSize.height() - 1 - y;
+      }
       if (drawGrid) {
         p.drawLine(offset.x(), y, pixmapImageSize.width() + offset.x(), y);
       }
@@ -246,5 +258,14 @@ void QLabelMouseTracker::displayGrid(bool enable) {
 
 void QLabelMouseTracker::displayScale(bool enable) {
   drawScale = enable;
+  resizeImage(this->size());
+}
+
+void QLabelMouseTracker::invertYAxis(bool enable) {
+  if (enable == flipYAxis) {
+    return;
+  }
+  flipYAxis = enable;
+  image = image.mirrored();
   resizeImage(this->size());
 }

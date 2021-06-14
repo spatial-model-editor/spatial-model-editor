@@ -201,6 +201,9 @@ void MainWindow::setupConnections() {
   connect(ui->actionGeometry_scale, &QAction::triggered, this,
           &MainWindow::actionGeometry_scale_triggered);
 
+  connect(ui->actionInvert_y_axis, &QAction::triggered, this,
+          &MainWindow::actionInvert_y_axis_triggered);
+
   connect(ui->lblGeometry, &QLabelMouseTracker::mouseOver, this,
           &MainWindow::lblGeometry_mouseOver);
 
@@ -283,6 +286,9 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
   ui->actionGeometry_scale->setChecked(
       model.getDisplayOptions().showGeometryScale);
   actionGeometry_scale_triggered(model.getDisplayOptions().showGeometryScale);
+  ui->actionInvert_y_axis->setChecked(
+      model.getDisplayOptions().invertYAxis);
+  actionInvert_y_axis_triggered(model.getDisplayOptions().invertYAxis);
   this->setWindowTitle(QString("Spatial Model Editor [%1]").arg(filename));
 }
 
@@ -510,6 +516,16 @@ void MainWindow::actionGeometry_scale_triggered(bool checked) {
   options.showGeometryScale = checked;
   model.setDisplayOptions(options);
 }
+
+void MainWindow::actionInvert_y_axis_triggered(bool checked){
+  ui->lblGeometry->invertYAxis(checked);
+  tabGeometry->invertYAxis(checked);
+  tabSimulate->invertYAxis(checked);
+  auto options{model.getDisplayOptions()};
+  options.invertYAxis = checked;
+  model.setDisplayOptions(options);
+}
+
 
 void MainWindow::actionSimulation_options_triggered() {
   DialogSimulationOptions dialog(model.getSimulationSettings().options);

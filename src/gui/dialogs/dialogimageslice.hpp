@@ -16,8 +16,9 @@ public:
   explicit DialogImageSlice(const QImage &geometryImage,
                             const QVector<QImage> &images,
                             const QVector<double> &timepoints,
+                            bool invertYAxis,
                             QWidget *parent = nullptr);
-  ~DialogImageSlice();
+  ~DialogImageSlice() override;
   QImage getSlicedImage() const;
 
 private:
@@ -36,5 +37,6 @@ private:
   void lblSlice_mouseDown(QPoint point);
   void lblSlice_sliceDrawn(QPoint start, QPoint end);
   void lblSlice_mouseWheelEvent(int delta);
+  void lblSlice_mouseOver(QPoint point);
   void lblImage_mouseOver(const QPoint &point);
 };

@@ -26,6 +26,7 @@ public:
       const sme::model::SpeciesGeometry &speciesGeometry,
       const sme::model::ModelParameters &modelParameters,
       const sme::model::ModelFunctions &modelFunctions,
+      bool invertYAxis,
       QWidget *parent = nullptr);
   ~DialogAnalytic() override;
   const std::string &getExpression() const;

@@ -16,7 +16,7 @@ class QLabelSlice : public QLabel {
   Q_OBJECT
 public:
   explicit QLabelSlice(QWidget *parent = nullptr);
-  void setImage(const QImage &img);
+  void setImage(const QImage &img, bool invertYAxis = false);
   const QImage &getImage() const;
   void setAspectRatioMode(Qt::AspectRatioMode aspectRatioMode);
   void setTransformationMode(Qt::TransformationMode transformationMode);
@@ -27,6 +27,7 @@ public:
 
 signals:
   void sliceDrawn(QPoint start, QPoint end);
+  void mouseOver(QPoint point);
   void mouseDown(QPoint point);
   void mouseWheelEvent(int delta);
 
@@ -48,6 +49,7 @@ private:
   Qt::AspectRatioMode aspectRatioMode = Qt::KeepAspectRatio;
   Qt::TransformationMode transformationMode = Qt::FastTransformation;
   bool mouseIsDown{false};
+  bool flipYAxis{false};
   bool setPixel(const QMouseEvent *ev, QPoint &pixel);
   void fadeOriginalImage();
   void resizeImage(const QSize &size);

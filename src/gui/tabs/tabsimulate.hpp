@@ -34,6 +34,7 @@ public:
   void importTimesAndIntervalsOnNextLoad();
   void reset();
   void setOptions(const sme::simulate::Options &options);
+  void invertYAxis(bool enable);
 
 private:
   std::unique_ptr<Ui::TabSimulate> ui;
@@ -52,6 +53,7 @@ private:
   QTimer plotRefreshTimer;
   QProgressDialog *progressDialog;
   bool importTimesAndIntervals{false};
+  bool flipYAxis{false};
 
   std::optional<std::vector<std::pair<std::size_t, double>>>
   parseSimulationTimes();

@@ -1,5 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "dialogimageslice.hpp"
+#include "qlabelmousetracker.hpp"
+#include "qlabelslice.hpp"
 #include "qt_test_utils.hpp"
 #include <QFile>
 
@@ -16,9 +18,15 @@ SCENARIO("DialogImageSlice",
     }
     imgs[3].fill(col2);
     QVector<double> time{0, 1, 2, 3, 4};
-    DialogImageSlice dia(imgGeometry, imgs, time);
+    DialogImageSlice dia(imgGeometry, imgs, time, false);
+    auto *lblSlice{dia.findChild<QLabelSlice *>("lblSlice")};
+    REQUIRE(lblSlice != nullptr);
+    auto *lblImage{dia.findChild<QLabelMouseTracker *>("lblImage")};
+    REQUIRE(lblImage != nullptr);
+    auto *lblMouseLocation{dia.findChild<QLabel *>("lblMouseLocation")};
+    REQUIRE(lblMouseLocation != nullptr);
     ModalWidgetTimer mwt;
-    WHEN("user does nothing: default vertical slice") {
+    WHEN("mouse moves, text changes") {
       QImage slice = dia.getSlicedImage();
       REQUIRE(slice.width() == imgs.size());
       REQUIRE(slice.height() == imgs[0].height());
@@ -26,6 +34,23 @@ SCENARIO("DialogImageSlice",
       REQUIRE(slice.pixel(2, 49) == col1);
       REQUIRE(slice.pixel(3, 12) == col2);
       REQUIRE(slice.pixel(4, 0) == col1);
+      auto oldText{lblMouseLocation->text()};
+      sendMouseMove(lblSlice, {10, 10});
+      auto newText{lblMouseLocation->text()};
+      REQUIRE(oldText != newText);
+      oldText = newText;
+      sendMouseMove(lblSlice, {20, 20});
+      newText = lblMouseLocation->text();
+      REQUIRE(oldText != newText);
+      oldText = newText;
+      sendMouseMove(lblSlice, {1, 1});
+      newText = lblMouseLocation->text();
+      REQUIRE(oldText != newText);
+      oldText = newText;
+      sendMouseMove(lblImage, {1, 1});
+      sendMouseMove(lblImage, {40, 32});
+      newText = lblMouseLocation->text();
+      REQUIRE(oldText != newText);
     }
     WHEN("user sets slice to horizontal") {
       mwt.addUserAction({"Up"});
