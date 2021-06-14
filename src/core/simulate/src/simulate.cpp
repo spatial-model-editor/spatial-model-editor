@@ -237,6 +237,10 @@ std::size_t Simulation::doMultipleTimesteps(
     double timeout_ms) {
   isRunning.store(true);
   stopRequested.store(false);
+  if (data->timePoints.empty()) {
+    updateConcentrations(0);
+    ++nCompletedTimesteps;
+  }
   std::size_t nStepsTotal{0};
   for (const auto &timestep : timesteps) {
     nStepsTotal += timestep.first;

@@ -18,12 +18,19 @@ SCENARIO("SBML species",
     f.open(QIODevice::ReadOnly);
     model::Model model;
     model.importSBMLString(f.readAll().toStdString());
+    model.getSimulationSettings().simulatorType =
+        simulate::SimulatorType::Pixel;
+    simulate::Simulation sim(model);
     auto &s = model.getSpecies();
     auto &r = model.getReactions();
     r.setHasUnsavedChanges(false);
     s.setHasUnsavedChanges(false);
     REQUIRE(r.getHasUnsavedChanges() == false);
     REQUIRE(s.getHasUnsavedChanges() == false);
+    // add minimal simulation data
+    REQUIRE(model.getSimulationData().timePoints.size() == 1);
+    sim.doTimesteps(0.001);
+    REQUIRE(model.getSimulationData().timePoints.size() == 2);
 
     // initial species
     REQUIRE(s.getIds("c1").size() == 2);
@@ -72,12 +79,36 @@ SCENARIO("SBML species",
     REQUIRE(r.getParameterName("B_transport", "k1") == "k1");
     REQUIRE(r.getParameterValue("B_transport", "k1") == dbl_approx(0.1));
 
+    // make species B_c3 constant
+    // this resets any existing simulation data (as non-constant species number
+    // has changed, invalidating existing simulation data)
+    REQUIRE(r.getHasUnsavedChanges() == false);
+    REQUIRE(s.getHasUnsavedChanges() == false);
+    s.setIsConstant("B_c3", true);
+    REQUIRE(r.getHasUnsavedChanges() == false);
+    REQUIRE(s.getHasUnsavedChanges() == true);
+    REQUIRE(model.getSimulationData().timePoints.size() == 0);
+
+    // make species B_c3 constant is no-op if already constant
+    s.setHasUnsavedChanges(false);
+    s.setIsConstant("B_c3", true);
+    REQUIRE(s.getHasUnsavedChanges() == false);
+
+    // make species constant is no-op if species doesn't exist
+    s.setIsConstant("idontexist", false);
+    s.setIsConstant("idontexist", true);
+    REQUIRE(s.getHasUnsavedChanges() == false);
+
+    // add minimal simulation data
+    sim.doTimesteps(0.001);
+    REQUIRE(model.getSimulationData().timePoints.size() == 2);
     // remove species B_c3
     REQUIRE(r.getHasUnsavedChanges() == false);
     REQUIRE(s.getHasUnsavedChanges() == false);
     s.remove("B_c3");
     REQUIRE(r.getHasUnsavedChanges() == true);
     REQUIRE(s.getHasUnsavedChanges() == true);
+    REQUIRE(model.getSimulationData().timePoints.size() == 0);
     REQUIRE(s.getIds("c1").size() == 2);
     REQUIRE(s.getIds("c1")[0] == "A_c1");
     REQUIRE(s.getField("A_c1")->getId() == "A_c1");
