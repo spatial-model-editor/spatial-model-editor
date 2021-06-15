@@ -13,7 +13,7 @@ DialogAnalytic::DialogAnalytic(
     const QString &analyticExpression,
     const sme::model::SpeciesGeometry &speciesGeometry,
     const sme::model::ModelParameters &modelParameters,
-    const sme::model::ModelFunctions &modelFunctions, QWidget *parent)
+    const sme::model::ModelFunctions &modelFunctions, bool invertYAxis, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogAnalytic>()},
       points(speciesGeometry.compartmentPoints),
       width(speciesGeometry.pixelWidth), origin(speciesGeometry.physicalOrigin),
@@ -50,6 +50,7 @@ DialogAnalytic::DialogAnalytic(
   ui->lblImage->displayGrid(ui->chkGrid->isChecked());
   ui->lblImage->displayScale(ui->chkScale->isChecked());
   ui->lblImage->setPhysicalSize(physicalSize, lengthUnit);
+  ui->lblImage->invertYAxis(invertYAxis);
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogAnalytic::accept);

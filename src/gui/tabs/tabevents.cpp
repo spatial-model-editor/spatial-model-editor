@@ -169,14 +169,16 @@ void TabEvents::cmbEventVariable_activated(int index) {
   ui->stkValue->setEnabled(true);
   model.getEvents().setVariable(currentEventId, variableIds[index]);
   bool isSpecies{index < nSpecies};
+  bool invertYAxis{model.getDisplayOptions().invertYAxis};
   if (isSpecies) {
     ui->stkValue->setCurrentIndex(1);
     ui->btnSetSpeciesConcentration->setEnabled(true);
     ui->lblSpeciesExpression->setPixmap(QPixmap::fromImage(
         DialogAnalytic(model.getEvents().getExpression(currentEventId),
                        model.getSpeciesGeometry(variableIds[index]),
-                       model.getParameters(), model.getFunctions())
-            .getImage()));
+                       model.getParameters(), model.getFunctions(), invertYAxis)
+            .getImage()
+            .mirrored(false, invertYAxis)));
     ui->txtExpression->setEnabled(false);
   } else {
     ui->stkValue->setCurrentIndex(0);
@@ -193,14 +195,16 @@ void TabEvents::btnSetSpeciesConcentration_clicked() {
     return;
   }
   QString sId{variableIds[iSpecies]};
+  bool invertYAxis{model.getDisplayOptions().invertYAxis};
   DialogAnalytic dialog(model.getEvents().getExpression(currentEventId),
                         model.getSpeciesGeometry(sId), model.getParameters(),
-                        model.getFunctions());
+                        model.getFunctions(), invertYAxis);
   if (dialog.exec() == QDialog::Accepted) {
     const std::string &expr{dialog.getExpression()};
     SPDLOG_DEBUG("  - set expr: {}", expr);
     model.getEvents().setExpression(currentEventId, expr.c_str());
-    ui->lblSpeciesExpression->setPixmap(QPixmap::fromImage(dialog.getImage()));
+    ui->lblSpeciesExpression->setPixmap(
+        QPixmap::fromImage(dialog.getImage().mirrored(false, invertYAxis)));
   }
 }
 

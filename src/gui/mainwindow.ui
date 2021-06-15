@@ -67,7 +67,7 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>129</width>
+             <width>540</width>
              <height>560</height>
             </rect>
            </property>
@@ -293,6 +293,7 @@
     </property>
     <addaction name="actionGeometry_grid"/>
     <addaction name="actionGeometry_scale"/>
+    <addaction name="actionInvert_y_axis"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuImport"/>
@@ -534,6 +535,14 @@
    </property>
    <property name="text">
     <string>Geometry &amp;scale</string>
+   </property>
+  </action>
+  <action name="actionInvert_y_axis">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Invert &amp;y-axis</string>
    </property>
   </action>
   <actiongroup name="actionGroupSimType">

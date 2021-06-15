@@ -279,7 +279,7 @@ void TabSpecies::btnEditAnalyticConcentration_clicked() {
   DialogAnalytic dialog(
       model.getSpecies().getAnalyticConcentration(currentSpeciesId),
       model.getSpeciesGeometry(currentSpeciesId), model.getParameters(),
-      model.getFunctions());
+      model.getFunctions(), model.getDisplayOptions().invertYAxis);
   if (dialog.exec() == QDialog::Accepted) {
     const std::string &expr = dialog.getExpression();
     SPDLOG_DEBUG("  - set expr: {}", expr);
@@ -294,7 +294,8 @@ void TabSpecies::btnEditImageConcentration_clicked() {
                currentSpeciesId.toStdString());
   DialogConcentrationImage dialog(
       model.getSpecies().getSampledFieldConcentration(currentSpeciesId),
-      model.getSpeciesGeometry(currentSpeciesId));
+      model.getSpeciesGeometry(currentSpeciesId),
+      model.getDisplayOptions().invertYAxis);
   if (dialog.exec() == QDialog::Accepted) {
     SPDLOG_DEBUG("  - setting new sampled field concentration array");
     model.getSpecies().setSampledFieldConcentration(

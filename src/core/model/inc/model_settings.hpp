@@ -30,6 +30,7 @@ struct DisplayOptions {
   bool normaliseOverAllSpecies{true};
   bool showGeometryGrid{false};
   bool showGeometryScale{false};
+  bool invertYAxis{false};
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
@@ -38,6 +39,11 @@ struct DisplayOptions {
          CEREAL_NVP(normaliseOverAllTimepoints),
          CEREAL_NVP(normaliseOverAllSpecies), CEREAL_NVP(showGeometryGrid),
          CEREAL_NVP(showGeometryScale));
+    } else if (version == 1) {
+      ar(CEREAL_NVP(showSpecies), CEREAL_NVP(showMinMax),
+         CEREAL_NVP(normaliseOverAllTimepoints),
+         CEREAL_NVP(normaliseOverAllSpecies), CEREAL_NVP(showGeometryGrid),
+         CEREAL_NVP(showGeometryScale), CEREAL_NVP(invertYAxis));
     }
   }
 };
@@ -75,6 +81,6 @@ struct Settings {
 } // namespace sme::model
 
 CEREAL_CLASS_VERSION(sme::model::MeshParameters, 0);
-CEREAL_CLASS_VERSION(sme::model::DisplayOptions, 0);
+CEREAL_CLASS_VERSION(sme::model::DisplayOptions, 1);
 CEREAL_CLASS_VERSION(sme::model::SimulationSettings, 1);
 CEREAL_CLASS_VERSION(sme::model::Settings, 0);

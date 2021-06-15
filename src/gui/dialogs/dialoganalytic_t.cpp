@@ -16,7 +16,7 @@ SCENARIO("DialogAnalytic",
     DialogAnalytic dia("x",
                        {QSize(10, 10), compartmentPoints, QPointF(0.0, 0.0), 1,
                         model.getUnits()},
-                       model.getParameters(), model.getFunctions());
+                       model.getParameters(), model.getFunctions(), false);
     REQUIRE(dia.getExpression() == "x");
     ModalWidgetTimer mwt;
     WHEN("valid expr: 10") {
@@ -92,7 +92,7 @@ SCENARIO("DialogAnalytic",
     f.open(QIODevice::ReadOnly);
     model.importSBMLString(f.readAll().toStdString());
     DialogAnalytic dia("x", model.getSpeciesGeometry("B"),
-                       model.getParameters(), model.getFunctions());
+                       model.getParameters(), model.getFunctions(), false);
     REQUIRE(dia.getExpression() == "x");
     ModalWidgetTimer mwt;
     WHEN("valid expr: 10 & unclick grid/scale checkboxes") {

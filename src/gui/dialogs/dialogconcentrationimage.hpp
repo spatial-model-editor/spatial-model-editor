@@ -9,12 +9,6 @@ namespace Ui {
 class DialogConcentrationImage;
 }
 
-namespace sme {
-namespace units {
-class ModelUnits;
-}
-} // namespace sme
-
 class DialogConcentrationImage : public QDialog {
   Q_OBJECT
 
@@ -22,8 +16,9 @@ public:
   explicit DialogConcentrationImage(
       const std::vector<double> &concentrationArray,
       const sme::model::SpeciesGeometry &speciesGeometry,
+      bool invertYAxis = false,
       QWidget *parent = nullptr);
-  ~DialogConcentrationImage();
+  ~DialogConcentrationImage() override;
   std::vector<double> getConcentrationArray() const;
 
 private:
@@ -41,8 +36,6 @@ private:
   QImage img;
   sme::utils::QPointIndexer qpi;
   std::vector<double> concentration;
-  std::string expression;
-  bool expressionIsValid = false;
 
   QPointF physicalPoint(const QPoint &pixelPoint) const;
   std::size_t pointToConcentrationArrayIndex(const QPoint &point) const;

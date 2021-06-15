@@ -1,6 +1,5 @@
 #include "catch_wrapper.hpp"
 #include "dialogabout.hpp"
-#include "version.hpp"
 #include <QLabel>
 
 TEST_CASE("DialogAbout", "[gui/dialogs/about][gui/dialogs][gui][about]") {

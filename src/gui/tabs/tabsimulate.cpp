@@ -226,6 +226,9 @@ void TabSimulate::setOptions(const sme::simulate::Options &options) {
   loadModelData();
 }
 
+void TabSimulate::invertYAxis(bool enable) {
+  flipYAxis = enable;
+}
 void TabSimulate::btnSimulate_clicked() {
   auto simulationTimes{sme::simulate::parseSimulationTimes(
       ui->txtSimLength->text(), ui->txtSimInterval->text())};
@@ -265,7 +268,7 @@ void TabSimulate::btnSimulate_clicked() {
 }
 
 void TabSimulate::btnSliceImage_clicked() {
-  DialogImageSlice dialog(model.getGeometry().getImage(), images, time);
+  DialogImageSlice dialog(model.getGeometry().getImage(), images, time, flipYAxis);
   if (dialog.exec() == QDialog::Accepted) {
     SPDLOG_DEBUG("todo: save current slice settings");
   }
