@@ -30,7 +30,9 @@ struct Settings;
 class ModelGeometry {
 private:
   double pixelWidth{1.0};
+  double pixelDepth{1.0};
   QPointF physicalOrigin{QPointF(0, 0)};
+  double zOrigin{0.0};
   QSizeF physicalSize{QSizeF(0, 0)};
   int numDimensions{3};
   QImage image;
@@ -45,6 +47,7 @@ private:
   int importDimensions(const libsbml::Model *model);
   void convertSBMLGeometryTo3d();
   void writeDefaultGeometryToSBML();
+  void updateCompartmentAndMembraneSizes();
 
 public:
   ModelGeometry();
@@ -59,7 +62,10 @@ public:
   void clear();
   int getNumDimensions() const;
   double getPixelWidth() const;
-  void setPixelWidth(double width);
+  void setPixelWidth(double width, bool updateSBML = true);
+  double getPixelDepth() const;
+  void setPixelDepth(double depth);
+  double getZOrigin() const;
   const QPointF &getPhysicalOrigin() const;
   const QSizeF &getPhysicalSize() const;
   const QImage &getImage() const;

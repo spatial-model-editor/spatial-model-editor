@@ -1,12 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "mesh.hpp"
-#include "model_compartments.hpp"
+#include "model.hpp"
 #include "model_geometry.hpp"
-#include "model_membranes.hpp"
-#include "model_parameters.hpp"
-#include "model_reactions.hpp"
-#include "model_settings.hpp"
-#include "model_species.hpp"
 #include "serialization.hpp"
 #include <QFile>
 #include <sbml/SBMLTypes.h>
@@ -37,13 +32,14 @@ SCENARIO("Model geometry",
         libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
     model::Settings sbmlAnnotation;
     model::ModelCompartments mCompartments;
+    model::ModelUnits mUnits(doc->getModel());
     model::ModelMembranes mMembranes(doc->getModel());
     model::ModelGeometry mGeometry;
     model::ModelSpecies mSpecies;
     model::ModelReactions mReactions(doc->getModel(), &mMembranes);
     utils::SmeFileContents smeFileContents;
     mCompartments = model::ModelCompartments(
-        doc->getModel(), &mGeometry, &mMembranes, &mSpecies, &mReactions,
+        doc->getModel(), &mGeometry, &mMembranes, &mSpecies, &mReactions, &mUnits,
         &smeFileContents.simulationData);
     mGeometry = model::ModelGeometry(doc->getModel(), &mCompartments,
                                      &mMembranes, &sbmlAnnotation);

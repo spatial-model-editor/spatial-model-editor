@@ -11,6 +11,8 @@ bool symEq(const QString &exprA, const QString &exprB) {
   if (a.size() != b.size()) {
     return false;
   }
+  std::cout << "symEq: " << exprA.toStdString() << " == " << exprB.toStdString()
+            << std::endl;
   for (int i = 0; i < a.size(); ++i) {
     auto lhs{parser.parse(a[i].toStdString())};
     auto rhs{parser.parse(b[i].toStdString())};
@@ -30,12 +32,21 @@ bool symEq(const QString &exprA, const QString &exprB) {
         mapSymbolsToNumbers[s] = num;
         num = SymEngine::add(num, SymEngine::number(0.1645344));
       }
-      diff = diff->subs(mapSymbolsToNumbers);
-      std::cout << "numerical result: " << *diff << std::endl;
-      if (std::abs(SymEngine::eval_double(*diff)) > 1e-14) {
+      double numerical_diff =
+          std::abs(SymEngine::eval_double(*diff->subs(mapSymbolsToNumbers)));
+      std::cout << "numerical difference: " << numerical_diff << std::endl;
+      double numerical_sum{0.0};
+      for (const auto &expr : {lhs, rhs}) {
+        numerical_sum +=
+            std::abs(SymEngine::eval_double(*expr->subs(mapSymbolsToNumbers)));
+      }
+      std::cout << "numerical sum: " << numerical_sum << std::endl;
+      double rel_diff{2.0 * numerical_diff / numerical_sum};
+      std::cout << "relative difference: " << rel_diff << std::endl;
+      if (rel_diff > 1e-13) {
         return false;
       } else {
-        std::cout << "is < 1e-14 so assuming expressions are equal"
+        std::cout << "is < 1e-13 so assuming expressions are equal"
                   << std::endl;
       }
     }

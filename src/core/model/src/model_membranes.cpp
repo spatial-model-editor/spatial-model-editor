@@ -142,7 +142,7 @@ void ModelMembranes::updateCompartmentImage(const QImage &img) {
 }
 
 void ModelMembranes::importMembraneIdsAndNames() {
-  if(sbmlModel == nullptr){
+  if (sbmlModel == nullptr) {
     return;
   }
   auto nDim = getNumSpatialDimensions(sbmlModel);
@@ -175,17 +175,17 @@ void ModelMembranes::importMembraneIdsAndNames() {
   }
 }
 
-void ModelMembranes::exportToSBML(double pixelWidth) {
-  if(sbmlModel == nullptr){
+void ModelMembranes::exportToSBML(double pixelArea) {
+  if (sbmlModel == nullptr) {
     SPDLOG_WARN("no sbml model to export to - ignoring");
   }
   // ensure all membranes have a corresponding n-1 dim compartment in SBML
-  auto *geom = getOrCreateGeometry(sbmlModel);
-  auto nDimMinusOne = geom->getNumCoordinateComponents() - 1;
+  auto *geom{getOrCreateGeometry(sbmlModel)};
+  auto nDimMinusOne{geom->getNumCoordinateComponents() - 1};
   for (int i = 0; i < ids.size(); ++i) {
     std::string sId{ids[i].toStdString()};
     SPDLOG_INFO("Membrane id: '{}'", sId);
-    libsbml::Compartment *comp = sbmlModel->getCompartment(sId);
+    auto *comp{sbmlModel->getCompartment(sId)};
     if (comp == nullptr) {
       SPDLOG_INFO("  - creating Membrane compartment in SBML");
       comp = sbmlModel->createCompartment();
@@ -195,8 +195,12 @@ void ModelMembranes::exportToSBML(double pixelWidth) {
     SPDLOG_INFO("  - name: {}", comp->getName());
     comp->setConstant(true);
     comp->setSpatialDimensions(nDimMinusOne);
+    if (comp->isSetUnits()) {
+      // we set the model units, compartment units are then inferred from that
+      comp->unsetUnits();
+    }
     auto nPixels{membranes[static_cast<std::size_t>(i)].getIndexPairs().size()};
-    double area{static_cast<double>(nPixels) * pixelWidth};
+    double area{static_cast<double>(nPixels) * pixelArea};
     SPDLOG_INFO("  - size: {}", area);
     comp->setSize(area);
     auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(

@@ -12,11 +12,12 @@ class DialogGeometryImage : public QDialog {
   Q_OBJECT
 
 public:
-  explicit DialogGeometryImage(const QImage &image, double pixelWidth,
+  explicit DialogGeometryImage(const QImage &image, double pixelWidth, double pixelDepth,
                            const sme::model::ModelUnits &modelUnits,
                            QWidget *parent = nullptr);
   ~DialogGeometryImage() override;
   [[nodiscard]] double getPixelWidth() const;
+  [[nodiscard]] double getPixelDepth() const;
   [[nodiscard]] bool imageAltered() const;
   [[nodiscard]] const QImage &getAlteredImage() const;
 
@@ -31,6 +32,8 @@ private:
   QVector<QRgb> colorTable;
   double pixelLocalUnits;
   double pixelModelUnits;
+  double depthLocalUnits;
+  double depthModelUnits;
   const sme::model::ModelUnits &units;
   QString modelUnitSymbol;
 
@@ -40,6 +43,7 @@ private:
   void lblImage_mouseClicked(QRgb col, QPoint point);
   void txtImageWidth_editingFinished();
   void txtImageHeight_editingFinished();
+  void txtImageDepth_editingFinished();
   void spinPixelsX_valueChanged(int value);
   void spinPixelsY_valueChanged(int value);
   void btnResetPixels_clicked();

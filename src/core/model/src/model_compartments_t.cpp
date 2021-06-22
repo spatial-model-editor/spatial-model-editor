@@ -40,13 +40,13 @@ SCENARIO("SBML compartments",
     REQUIRE(c.getIds().size() == 3);
     REQUIRE(c.getIds()[0] == "c1");
     REQUIRE(c.getName("c1") == "Outside");
-    REQUIRE(c.getSize("c1") == dbl_approx(5441));
+    REQUIRE(c.getSize("c1") == dbl_approx(5441000));
     REQUIRE(c.getIds()[1] == "c2");
     REQUIRE(c.getName("c2") == "Cell");
-    REQUIRE(c.getSize("c2") == dbl_approx(4034));
+    REQUIRE(c.getSize("c2") == dbl_approx(4034000));
     REQUIRE(c.getIds()[2] == "c3");
     REQUIRE(c.getName("c3") == "Nucleus");
-    REQUIRE(c.getSize("c3") == dbl_approx(525));
+    REQUIRE(c.getSize("c3") == dbl_approx(525000));
 
     // initial membranes
     REQUIRE(m.getIds().size() == 2);

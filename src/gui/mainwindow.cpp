@@ -474,9 +474,13 @@ void MainWindow::actionEdit_geometry_image_triggered() {
   }
   DialogGeometryImage dialog(model.getGeometry().getImage(),
                              model.getGeometry().getPixelWidth(),
+                             model.getGeometry().getPixelDepth(),
                              model.getUnits());
   if (dialog.exec() == QDialog::Accepted) {
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    double pixelDepth = dialog.getPixelDepth();
+    SPDLOG_INFO("Set new pixel depth = {}", pixelDepth);
+    model.getGeometry().setPixelDepth(pixelDepth);
     double pixelWidth = dialog.getPixelWidth();
     SPDLOG_INFO("Set new pixel width = {}", pixelWidth);
     model.getGeometry().setPixelWidth(pixelWidth);

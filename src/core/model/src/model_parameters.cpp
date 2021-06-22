@@ -293,7 +293,7 @@ const SpatialCoordinates &ModelParameters::getSpatialCoordinates() const {
 void ModelParameters::setSpatialCoordinates(SpatialCoordinates coords) {
   hasUnsavedChanges = true;
   spatialCoordinates = std::move(coords);
-  auto *x = sbmlModel->getParameter(spatialCoordinates.x.id);
+  auto *x{sbmlModel->getParameter(spatialCoordinates.x.id)};
   if (x == nullptr) {
     SPDLOG_ERROR("x-coordinate parameter '{}' not found in model",
                  spatialCoordinates.x.id);
@@ -302,7 +302,7 @@ void ModelParameters::setSpatialCoordinates(SpatialCoordinates coords) {
   x->setName(spatialCoordinates.x.name);
   SPDLOG_INFO("Setting x-coord parameter '{}' name to '{}'", x->getId(),
               x->getName());
-  auto *y = sbmlModel->getParameter(spatialCoordinates.y.id);
+  auto *y{sbmlModel->getParameter(spatialCoordinates.y.id)};
   if (y == nullptr) {
     SPDLOG_ERROR("y-coordinate parameter '{}' not found in model",
                  spatialCoordinates.y.id);
@@ -311,7 +311,15 @@ void ModelParameters::setSpatialCoordinates(SpatialCoordinates coords) {
   y->setName(spatialCoordinates.y.name);
   SPDLOG_INFO("Setting y-coord parameter '{}' name to '{}'", y->getId(),
               y->getName());
-  // todo: z
+  auto *z{sbmlModel->getParameter(spatialCoordinates.z.id)};
+  if (z == nullptr) {
+    SPDLOG_ERROR("z-coordinate parameter '{}' not found in model",
+                 spatialCoordinates.z.id);
+    return;
+  }
+  z->setName(spatialCoordinates.z.name);
+  SPDLOG_INFO("Setting z-coord parameter '{}' name to '{}'", z->getId(),
+              z->getName());
 }
 
 std::vector<IdName>
@@ -337,8 +345,7 @@ ModelParameters::getSymbols(const QStringList &compartments) const {
   }
   symbols.push_back({spatialCoordinates.x.id, spatialCoordinates.x.name});
   symbols.push_back({spatialCoordinates.y.id, spatialCoordinates.y.name});
-  // todo: use actual z id/name
-  symbols.push_back({"z", "z"});
+  symbols.push_back({spatialCoordinates.z.id, spatialCoordinates.z.name});
   symbols.push_back({"time", "t"});
   return symbols;
 }

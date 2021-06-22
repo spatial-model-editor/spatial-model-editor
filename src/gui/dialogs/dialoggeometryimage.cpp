@@ -16,10 +16,11 @@ static QImage toIndexedImageNoAlpha(const QImage &image) {
 }
 
 DialogGeometryImage::DialogGeometryImage(
-    const QImage &image, double pixelWidth,
+    const QImage &image, double pixelWidth, double pixelDepth,
     const sme::model::ModelUnits &modelUnits, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogGeometryImage>()},
-      originalImage(image), pixelModelUnits(pixelWidth), units(modelUnits) {
+      originalImage(image), pixelModelUnits(pixelWidth),
+      depthModelUnits(pixelDepth), units(modelUnits) {
   coloredImage = toIndexedImageNoAlpha(originalImage);
   rescaledImage = coloredImage;
   colorTable = coloredImage.colorTable();
@@ -34,6 +35,7 @@ DialogGeometryImage::DialogGeometryImage(
   }
   modelUnitSymbol = ui->cmbUnitsWidth->currentText();
   pixelLocalUnits = pixelModelUnits;
+  depthLocalUnits = depthModelUnits;
   ui->spinPixelsX->setValue(rescaledImage.width());
   ui->spinPixelsY->setValue(rescaledImage.height());
   updateColours();
@@ -49,6 +51,8 @@ DialogGeometryImage::DialogGeometryImage(
           &DialogGeometryImage::txtImageWidth_editingFinished);
   connect(ui->txtImageHeight, &QLineEdit::editingFinished, this,
           &DialogGeometryImage::txtImageHeight_editingFinished);
+  connect(ui->txtImageDepth, &QLineEdit::editingFinished, this,
+          &DialogGeometryImage::txtImageDepth_editingFinished);
   connect(ui->cmbUnitsWidth, qOverload<int>(&QComboBox::activated), this,
           [this](int index) {
             ui->cmbUnitsHeight->setCurrentIndex(index);
@@ -79,6 +83,8 @@ DialogGeometryImage::~DialogGeometryImage() = default;
 
 double DialogGeometryImage::getPixelWidth() const { return pixelModelUnits; }
 
+double DialogGeometryImage::getPixelDepth() const { return depthModelUnits; }
+
 bool DialogGeometryImage::imageAltered() const {
   return alteredSize || alteredColours;
 }
@@ -93,13 +99,17 @@ void DialogGeometryImage::updatePixelSize() {
   ui->txtImageWidth->setText(dblToString(w));
   double h{static_cast<double>(rescaledImage.height()) * pixelLocalUnits};
   ui->txtImageHeight->setText(dblToString(h));
+  ui->txtImageDepth->setText(dblToString(depthLocalUnits));
   // calculate pixel width in model units
-  pixelModelUnits = sme::model::rescale(
-      pixelLocalUnits,
-      units.getLengthUnits().at(ui->cmbUnitsWidth->currentIndex()),
-      units.getLength());
-  ui->lblPixelSize->setText(
-      QString("%1 %2").arg(pixelModelUnits).arg(modelUnitSymbol));
+  const auto &localUnit{
+      units.getLengthUnits().at(ui->cmbUnitsWidth->currentIndex())};
+  const auto &modelUnit{units.getLength()};
+  pixelModelUnits = sme::model::rescale(pixelLocalUnits, localUnit, modelUnit);
+  depthModelUnits = sme::model::rescale(depthLocalUnits, localUnit, modelUnit);
+  ui->lblPixelSize->setText(QString("%1 %2 x %1 %2 x %3 %2")
+                                .arg(pixelModelUnits)
+                                .arg(modelUnitSymbol)
+                                .arg(depthModelUnits));
 }
 
 void DialogGeometryImage::updateColours() {
@@ -133,6 +143,7 @@ void DialogGeometryImage::enableWidgets(bool enable) {
   ui->cmbUnitsWidth->setEnabled(enable);
   ui->txtImageHeight->setEnabled(enable);
   ui->cmbUnitsHeight->setEnabled(enable);
+  ui->txtImageDepth->setEnabled(enable);
   ui->spinPixelsX->setEnabled(enable);
   ui->spinPixelsY->setEnabled(enable);
   ui->btnResetPixels->setEnabled(enable);
@@ -161,6 +172,15 @@ void DialogGeometryImage::txtImageWidth_editingFinished() {
 void DialogGeometryImage::txtImageHeight_editingFinished() {
   double h{ui->txtImageHeight->text().toDouble()};
   pixelLocalUnits = h / static_cast<double>(rescaledImage.height());
+  updatePixelSize();
+}
+
+void DialogGeometryImage::txtImageDepth_editingFinished() {
+  double d{ui->txtImageDepth->text().toDouble()};
+  if (d == 0.0) {
+    d = 1.0;
+  }
+  depthLocalUnits = d;
   updatePixelSize();
 }
 
