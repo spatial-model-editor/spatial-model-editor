@@ -72,6 +72,10 @@ Compartment::Compartment(model::Model *sbmlDocWrapper, const std::string &sId)
       reactions.emplace_back(s, reac.toStdString());
     }
   }
+  updateMask();
+}
+
+void Compartment::updateMask() {
   geometry_mask = toPyImageMask(
       s->getCompartments().getCompartment(id.c_str())->getCompartmentImage());
 }

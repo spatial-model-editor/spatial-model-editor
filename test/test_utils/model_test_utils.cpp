@@ -26,25 +26,33 @@ getSbmlDoc(const QString &filename) {
       libsbml::readSBMLFromString(getXml(filename).c_str())};
 }
 
-model::Model getExampleModel(Mod exampleModel) {
+static const char *getExampleFilename(Mod exampleModel) {
   switch (exampleModel) {
   case Mod::ABtoC:
-    return getModel(":/models/ABtoC.xml");
+    return ":/models/ABtoC.xml";
   case Mod::Brusselator:
-    return getModel(":/models/brusselator-model.xml");
+    return ":/models/brusselator-model.xml";
   case Mod::CircadianClock:
-    return getModel(":/models/circadian-clock.xml");
+    return ":/models/circadian-clock.xml";
   case Mod::GrayScott:
-    return getModel(":/models/gray-scott.xml");
+    return ":/models/gray-scott.xml";
   case Mod::LiverSimplified:
-    return getModel(":/models/liver-simplified.xml");
+    return ":/models/liver-simplified.xml";
   case Mod::LiverCells:
-    return getModel(":/models/liver-cells.xml");
+    return ":/models/liver-cells.xml";
   case Mod::SingleCompartmentDiffusion:
-    return getModel(":/models/single-compartment-diffusion.xml");
+    return ":/models/single-compartment-diffusion.xml";
   case Mod::VerySimpleModel:
-    return getModel(":/models/very-simple-model.xml");
+    return ":/models/very-simple-model.xml";
   }
+}
+
+model::Model getExampleModel(Mod exampleModel) {
+  return getModel(getExampleFilename(exampleModel));
+}
+
+std::unique_ptr<libsbml::SBMLDocument> getExampleSbmlDoc(Mod exampleModel) {
+  return getSbmlDoc(getExampleFilename(exampleModel));
 }
 
 model::Model getTestModel(const QString &filename) {

@@ -1,5 +1,12 @@
 # Changelog
 
+## latest
+### Changed
+- compartment colour assignments are now preserved when the geometry image is resized [#587](https://github.com/spatial-model-editor/spatial-model-editor/issues/587)
+
+### Fixed
+- python interface: bug where compartment geometry mask was not updated after geometry image changed [#630](https://github.com/spatial-model-editor/spatial-model-editor/issues/630)
+
 ## [1.1.4] - 2021-08-17
 ### Added
 - python interface: `Model.simulation_results()` provides access to existing model simulation data [#622](https://github.com/spatial-model-editor/spatial-model-editor/issues/622)

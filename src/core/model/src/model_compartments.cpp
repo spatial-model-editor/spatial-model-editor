@@ -303,6 +303,11 @@ void ModelCompartments::setInteriorPoints(const QString &id,
 void ModelCompartments::setColour(const QString &id, QRgb colour) {
   auto i = ids.indexOf(id);
   if (i < 0) {
+    SPDLOG_WARN("Compartment '{}' not found: ignoring", id.toStdString());
+    return;
+  }
+  if (colour != 0 && !modelGeometry->getImage().colorTable().contains(colour)) {
+    SPDLOG_WARN("Image has no pixels with colour '{:x}': ignoring", colour);
     return;
   }
   hasUnsavedChanges = true;

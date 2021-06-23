@@ -26,6 +26,8 @@ model::Model getExampleModel(Mod exampleModel);
 
 model::Model getTestModel(const QString &filename);
 
+std::unique_ptr<libsbml::SBMLDocument> getExampleSbmlDoc(Mod exampleModel);
+
 std::unique_ptr<libsbml::SBMLDocument> getTestSbmlDoc(const QString &filename);
 
 std::unique_ptr<libsbml::SBMLDocument> toSbmlDoc(model::Model &model);

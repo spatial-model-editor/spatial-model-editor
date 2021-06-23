@@ -339,10 +339,6 @@ std::string Model::getName() const { return s->getName().toStdString(); }
 void Model::setName(const std::string &name) { s->setName(name.c_str()); }
 
 void Model::importGeometryFromImage(const std::string &filename) {
-  // store existing compartment colours
-  auto ids{s->getCompartments().getIds()};
-  auto colours{s->getCompartments().getColours()};
-  // import geometry image
   QImage img;
   sme::common::TiffReader tiffReader(filename);
   if (tiffReader.size() > 0) {
@@ -350,12 +346,10 @@ void Model::importGeometryFromImage(const std::string &filename) {
   } else {
     img = QImage(filename.c_str());
   }
-  // this resets all compartment colours
-  s->getGeometry().importGeometryFromImage(img);
+  s->getGeometry().importGeometryFromImage(img, true);
   compartment_image = toPyImageRgb(s->getGeometry().getImage());
-  // try to re-assign previous colour to each compartment
-  for (int i = 0; i < ids.size(); ++i) {
-    s->getCompartments().setColour(ids[i], colours[i]);
+  for (auto &compartment : compartments) {
+    compartment.updateMask();
   }
 }
 

@@ -41,7 +41,8 @@ SCENARIO("DialogGeometryImage",
       dim.exec();
       REQUIRE(dim.getPixelWidth() == dbl_approx(0.01));
       REQUIRE(dim.getPixelDepth() == dbl_approx(1.0));
-      REQUIRE(dim.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
     }
     WHEN("user sets width to 1e-8, pixel size -> 1e-10") {
       mwt.addUserAction({"1", "e", "-", "8"});
@@ -49,7 +50,8 @@ SCENARIO("DialogGeometryImage",
       dim.exec();
       REQUIRE(dim.getPixelWidth() == dbl_approx(1e-10));
       REQUIRE(dim.getPixelDepth() == dbl_approx(1.0));
-      REQUIRE(dim.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
     }
     WHEN("user sets height to 10, pixel size -> 0.2") {
       mwt.addUserAction({"Tab", "Tab", "1", "0"});
@@ -57,7 +59,8 @@ SCENARIO("DialogGeometryImage",
       dim.exec();
       REQUIRE(dim.getPixelWidth() == dbl_approx(0.2));
       REQUIRE(dim.getPixelDepth() == dbl_approx(1.0));
-      REQUIRE(dim.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
     }
     WHEN("user sets height to 10, units to dm, pixel size -> 0.02") {
       mwt.addUserAction({"Tab", "Down", "Tab", "1", "0"});
@@ -65,7 +68,8 @@ SCENARIO("DialogGeometryImage",
       dim.exec();
       REQUIRE(dim.getPixelWidth() == dbl_approx(0.02));
       REQUIRE(dim.getPixelDepth() == dbl_approx(0.1));
-      REQUIRE(dim.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
     }
     WHEN("user sets height to 10, units to cm, pixel size -> 0.002") {
       mwt.addUserAction({"Tab", "Down", "Down", "Tab", "1", "0"});
@@ -73,7 +77,8 @@ SCENARIO("DialogGeometryImage",
       dim.exec();
       REQUIRE(dim.getPixelWidth() == dbl_approx(0.002));
       REQUIRE(dim.getPixelDepth() == dbl_approx(0.01));
-      REQUIRE(dim.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
     }
     WHEN("user sets width to 9 & units to dm, then height 10, units um,"
          " pixel size -> 0.0000002") {
@@ -83,7 +88,8 @@ SCENARIO("DialogGeometryImage",
       dim.exec();
       REQUIRE(dim.getPixelWidth() == dbl_approx(0.0000002));
       REQUIRE(dim.getPixelDepth() == dbl_approx(1e-6));
-      REQUIRE(dim.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
     }
     WHEN("user sets depth to 4, no change of units") {
       mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Backspace", "4"});
@@ -91,7 +97,8 @@ SCENARIO("DialogGeometryImage",
       dim.exec();
       REQUIRE(dim.getPixelWidth() == dbl_approx(1.0));
       REQUIRE(dim.getPixelDepth() == dbl_approx(4.0));
-      REQUIRE(dim.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
     }
     WHEN("default units changed to mm, user sets width = 1, units = m") {
       modelUnits.setLengthIndex(3); // mm
@@ -102,17 +109,20 @@ SCENARIO("DialogGeometryImage",
       dim2.exec();
       REQUIRE(dim2.getPixelWidth() == dbl_approx(10.0));
       REQUIRE(dim2.getPixelDepth() == dbl_approx(1000.0));
-      REQUIRE(dim2.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
     }
     WHEN("x pixels reduced from 100 to 98") {
       REQUIRE(dim.getPixelWidth() == dbl_approx(1.0));
-      REQUIRE(dim.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
       REQUIRE(dim.getAlteredImage().width() == 100);
       REQUIRE(dim.getAlteredImage().height() == 50);
       mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Down", "Down"});
       mwt.start();
       dim.exec();
-      REQUIRE(dim.imageAltered() == true);
+      REQUIRE(dim.imageSizeAltered() == true);
+      REQUIRE(dim.imageColoursAltered() == false);
       REQUIRE(dim.getPixelWidth() == dbl_approx(1.0 / 0.98));
       REQUIRE(dim.getPixelDepth() == dbl_approx(1.0));
       REQUIRE(dim.getAlteredImage().width() == 98);
@@ -120,13 +130,15 @@ SCENARIO("DialogGeometryImage",
     }
     WHEN("y pixels reduced from 50 to 5") {
       REQUIRE(dim.getPixelWidth() == dbl_approx(1.0));
-      REQUIRE(dim.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
       REQUIRE(dim.getAlteredImage().width() == 100);
       REQUIRE(dim.getAlteredImage().height() == 50);
       mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "5"});
       mwt.start();
       dim.exec();
-      REQUIRE(dim.imageAltered() == true);
+      REQUIRE(dim.imageSizeAltered() == true);
+      REQUIRE(dim.imageColoursAltered() == false);
       REQUIRE(dim.getPixelWidth() == dbl_approx(10.0));
       REQUIRE(dim.getPixelDepth() == dbl_approx(1.0));
       REQUIRE(dim.getAlteredImage().width() == 10);
@@ -134,14 +146,16 @@ SCENARIO("DialogGeometryImage",
     }
     WHEN("x pixels reduced, y pixels reduced, reset pixels pressed") {
       REQUIRE(dim.getPixelWidth() == dbl_approx(1.0));
-      REQUIRE(dim.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
       REQUIRE(dim.getAlteredImage().width() == 100);
       REQUIRE(dim.getAlteredImage().height() == 50);
       mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Down", "Tab", "5",
                          "Tab", "Space", "Tab", "Tab", "Tab"});
       mwt.start();
       dim.exec();
-      REQUIRE(dim.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
       REQUIRE(dim.getAlteredImage().width() == 100);
       REQUIRE(dim.getAlteredImage().height() == 50);
       // width/height both altered as aspect ratio changes slightly due to
@@ -151,7 +165,8 @@ SCENARIO("DialogGeometryImage",
     }
     WHEN("select colours pressed, then reset colours") {
       REQUIRE(dim.getPixelWidth() == dbl_approx(1.0));
-      REQUIRE(dim.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
       REQUIRE(dim.getAlteredImage().width() == 100);
       REQUIRE(dim.getAlteredImage().height() == 50);
       mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab",
@@ -160,14 +175,16 @@ SCENARIO("DialogGeometryImage",
       dim.exec();
       REQUIRE(dim.getPixelWidth() == dbl_approx(1.0));
       REQUIRE(dim.getPixelDepth() == dbl_approx(1.0));
-      REQUIRE(dim.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
       REQUIRE(dim.getAlteredImage().width() == 100);
       REQUIRE(dim.getAlteredImage().height() == 50);
     }
     WHEN("select colours pressed, then one chosen") {
       dim.show();
       REQUIRE(dim.getPixelWidth() == dbl_approx(1.0));
-      REQUIRE(dim.imageAltered() == false);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == false);
       REQUIRE(dim.getAlteredImage().width() == 100);
       REQUIRE(dim.getAlteredImage().height() == 50);
       REQUIRE(dim.getAlteredImage().colorCount() == 3);
@@ -176,7 +193,8 @@ SCENARIO("DialogGeometryImage",
       sendMouseClick(btnApplyColours);
       REQUIRE(dim.getPixelWidth() == dbl_approx(1.0));
       REQUIRE(dim.getPixelDepth() == dbl_approx(1.0));
-      REQUIRE(dim.imageAltered() == true);
+      REQUIRE(dim.imageSizeAltered() == false);
+      REQUIRE(dim.imageColoursAltered() == true);
       REQUIRE(dim.getAlteredImage().width() == 100);
       REQUIRE(dim.getAlteredImage().height() == 50);
       REQUIRE(dim.getAlteredImage().colorCount() == 1);

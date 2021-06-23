@@ -165,21 +165,19 @@ class TestModel(unittest.TestCase):
             sim_results2 = m.simulation_results()
             self.assertEqual(len(sim_results2), 3)
 
-
-def test_import_geometry_from_image(self):
-    imgfile_original = _get_abs_path("concave-cell-nucleus-100x100.png")
-    imgfile_modified = _get_abs_path("modified-concave-cell-nucleus-100x100.png")
-    m = sme.open_example_model()
-    comp_img_0 = m.compartment_image
-    nucl_mask_0 = m.compartments["Nucleus"].geometry_mask
-    m.import_geometry_from_image(imgfile_modified)
-    comp_img_1 = m.compartment_image
-    nucl_mask_1 = m.compartments["Nucleus"].geometry_mask
-    self.assertGreater(_rms(nucl_mask_0), _rms(nucl_mask_1))
-    self.assertNotEqual(comp_img_0, comp_img_1)
-    m.import_geometry_from_image(imgfile_original)
-    comp_img_2 = m.compartment_image
-    nucl_mask_2 = m.compartments["Nucleus"].geometry_mask
-    self.assertEqual(_rms(nucl_mask_0), _rms(nucl_mask_2))
-    self.assertEqual(comp_img_0, comp_img_2)
-    self.assertEqual(nucl_mask_0, nucl_mask_2)
+    def test_import_geometry_from_image(self):
+        imgfile_original = _get_abs_path("concave-cell-nucleus-100x100.png")
+        imgfile_modified = _get_abs_path("modified-concave-cell-nucleus-100x100.png")
+        m = sme.open_example_model()
+        comp_img_0 = m.compartment_image
+        nucl_mask_0 = m.compartments["Nucleus"].geometry_mask
+        m.import_geometry_from_image(imgfile_modified)
+        comp_img_1 = m.compartment_image
+        nucl_mask_1 = m.compartments["Nucleus"].geometry_mask
+        self.assertFalse(np.array_equal(nucl_mask_0, nucl_mask_1))
+        self.assertFalse(np.array_equal(comp_img_0, comp_img_1))
+        m.import_geometry_from_image(imgfile_original)
+        comp_img_2 = m.compartment_image
+        nucl_mask_2 = m.compartments["Nucleus"].geometry_mask
+        self.assertTrue(np.array_equal(comp_img_0, comp_img_2))
+        self.assertTrue(np.array_equal(nucl_mask_0, nucl_mask_2))

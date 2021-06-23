@@ -2,14 +2,11 @@
 #include "mesh.hpp"
 #include "model.hpp"
 #include "model_geometry.hpp"
+#include "model_test_utils.hpp"
 #include "serialization.hpp"
-#include <QFile>
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 using namespace sme;
+using namespace sme::test;
 
 SCENARIO("Model geometry",
          "[core/model/geometry][core/model][core][model][geometry]") {
@@ -26,10 +23,7 @@ SCENARIO("Model geometry",
     REQUIRE(m.getImage().isNull());
   }
   GIVEN("ABtoC model") {
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
+    auto doc{getExampleSbmlDoc(Mod::ABtoC)};
     model::Settings sbmlAnnotation;
     model::ModelCompartments mCompartments;
     model::ModelUnits mUnits(doc->getModel());
@@ -77,7 +71,7 @@ SCENARIO("Model geometry",
       REQUIRE(m.getImage().isNull());
     }
     WHEN("import geometry image with alpha channel") {
-      QImage img(":/test/geometry/potato_alpha_channel.png");
+      QImage img(":test/geometry/potato_alpha_channel.png");
       QRgb bgCol = img.pixel(0, 0); // transparent background
       REQUIRE(qAlpha(bgCol) == 0);
       QRgb outerCol = img.pixel(136, 78); // opaque
@@ -86,7 +80,7 @@ SCENARIO("Model geometry",
       REQUIRE(qAlpha(innerCol) == 255);
       REQUIRE(m.getHasUnsavedChanges() == false);
       REQUIRE(mGeometry.getHasUnsavedChanges() == false);
-      mGeometry.importGeometryFromImage(img);
+      mGeometry.importGeometryFromImage(img, false);
       REQUIRE(m.getHasUnsavedChanges() == true);
       REQUIRE(mGeometry.getHasUnsavedChanges() == true);
       REQUIRE(m.getIsValid() == false);
@@ -101,6 +95,48 @@ SCENARIO("Model geometry",
       REQUIRE(imgIndexed.pixelColor(0, 0).blue() == qBlue(bgCol));
       REQUIRE(imgIndexed.pixelColor(136, 78).rgba() == outerCol);
       REQUIRE(imgIndexed.pixelColor(176, 188).rgba() == innerCol);
+    }
+  }
+  GIVEN("very-simple-model") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    QRgb c0{qRgb(0, 2, 0)};
+    QRgb c1{qRgb(144, 97, 193)};
+    QRgb c2{qRgb(197, 133, 96)};
+    auto cols1{m.getCompartments().getColours()};
+    REQUIRE(cols1.size() == 3);
+    REQUIRE(cols1[0] == c0);
+    REQUIRE(cols1[1] == c1);
+    REQUIRE(cols1[2] == c2);
+    WHEN("import geometry & keep colour assignments") {
+      QImage img(":/geometry/concave-cell-nucleus-100x100.png");
+      REQUIRE(img.size() == QSize(100, 100));
+      m.getGeometry().importGeometryFromImage(img, true);
+      auto cols2{m.getCompartments().getColours()};
+      REQUIRE(cols2.size() == 3);
+      REQUIRE(cols2[0] == c0);
+      REQUIRE(cols2[1] == c1);
+      REQUIRE(cols2[2] == c2);
+    }
+    WHEN("import geometry & don't keep colour assignments") {
+      QImage img(":/geometry/concave-cell-nucleus-100x100.png");
+      REQUIRE(img.size() == QSize(100, 100));
+      m.getGeometry().importGeometryFromImage(img, false);
+      auto cols2{m.getCompartments().getColours()};
+      REQUIRE(cols2.size() == 3);
+      REQUIRE(cols2[0] == 0);
+      REQUIRE(cols2[1] == 0);
+      REQUIRE(cols2[2] == 0);
+    }
+    WHEN("import geometry & try to keep invalid colour assignments") {
+      QImage img(":/geometry/two-blobs-100x100.png");
+      REQUIRE(img.size() == QSize(100, 100));
+      m.getGeometry().importGeometryFromImage(img, true);
+      // new geometry image only contains c0 from previous colours
+      auto cols2{m.getCompartments().getColours()};
+      REQUIRE(cols2.size() == 3);
+      REQUIRE(cols2[0] == c0);
+      REQUIRE(cols2[1] == 0);
+      REQUIRE(cols2[2] == 0);
     }
   }
 }
