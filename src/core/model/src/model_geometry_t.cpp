@@ -37,7 +37,7 @@ SCENARIO("Model geometry",
         libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
     model::Settings sbmlAnnotation;
     model::ModelCompartments mCompartments;
-    model::ModelMembranes mMembranes;
+    model::ModelMembranes mMembranes(doc->getModel());
     model::ModelGeometry mGeometry;
     model::ModelSpecies mSpecies;
     model::ModelReactions mReactions(doc->getModel(), &mMembranes);

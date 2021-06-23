@@ -29,6 +29,7 @@ private:
   std::vector<geometry::Membrane> membranes{};
   std::unique_ptr<ImageMembranePixels> membranePixels;
   std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>> idColourPairs{};
+  libsbml::Model *sbmlModel{nullptr};
   bool hasUnsavedChanges{false};
 
 public:
@@ -40,15 +41,14 @@ public:
   const geometry::Membrane *getMembrane(const QString &id) const;
   const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>> &
   getIdColourPairs() const;
-  void clear();
-  void updateCompartmentNames(const QStringList &compartmentNames,
-                              const libsbml::Model *model);
+  double getSize(const QString& id) const;
+  void updateCompartmentNames(const QStringList &compartmentNames);
   void updateCompartments(
       const std::vector<std::unique_ptr<geometry::Compartment>> &compartments);
   void updateCompartmentImage(const QImage &img);
-  void importMembraneIdsAndNames(const libsbml::Model *model);
-  void exportToSBML(libsbml::Model *model, double pixelWidth);
-  explicit ModelMembranes();
+  void importMembraneIdsAndNames();
+  void exportToSBML(double pixelWidth);
+  explicit ModelMembranes(libsbml::Model *model = nullptr);
   ModelMembranes(ModelMembranes &&) noexcept;
   ModelMembranes &operator=(ModelMembranes &&) noexcept;
   ModelMembranes &operator=(const ModelMembranes &) = delete;
