@@ -59,18 +59,16 @@ ModelMembranes::getIdColourPairs() const {
   return idColourPairs;
 }
 
-void ModelMembranes::clear() {
-  ids.clear();
-  names.clear();
-  compIds.clear();
-  membranes.clear();
-  membranePixels.reset();
-  idColourPairs.clear();
-  hasUnsavedChanges = true;
+double ModelMembranes::getSize(const QString &id) const {
+  const auto *compartment{sbmlModel->getCompartment(id.toStdString())};
+  if (compartment == nullptr || !compartment->isSetSize()) {
+    return 0.0;
+  }
+  return compartment->getSize();
 }
 
-void ModelMembranes::updateCompartmentNames(const QStringList &compartmentNames,
-                                            const libsbml::Model *model) {
+void ModelMembranes::updateCompartmentNames(
+    const QStringList &compartmentNames) {
   names.clear();
   names.reserve(compartmentNames.size());
   hasUnsavedChanges = true;
@@ -85,9 +83,7 @@ void ModelMembranes::updateCompartmentNames(const QStringList &compartmentNames,
     SPDLOG_TRACE("  -> {}", id.toStdString());
     names.push_back(id);
   }
-  if (model != nullptr) {
-    importMembraneIdsAndNames(model);
-  }
+  importMembraneIdsAndNames();
 }
 
 void ModelMembranes::updateCompartments(
@@ -145,14 +141,17 @@ void ModelMembranes::updateCompartmentImage(const QImage &img) {
   SPDLOG_TRACE("{} colour image:", img.colorCount());
 }
 
-void ModelMembranes::importMembraneIdsAndNames(const libsbml::Model *model) {
-  auto nDim = getNumSpatialDimensions(model);
-  for (unsigned int i = 0; i < model->getNumCompartments(); ++i) {
-    const auto *comp = model->getCompartment(i);
+void ModelMembranes::importMembraneIdsAndNames() {
+  if(sbmlModel == nullptr){
+    return;
+  }
+  auto nDim = getNumSpatialDimensions(sbmlModel);
+  for (unsigned int i = 0; i < sbmlModel->getNumCompartments(); ++i) {
+    const auto *comp = sbmlModel->getCompartment(i);
     if (comp->isSetSpatialDimensions() &&
         comp->getSpatialDimensions() + 1 == nDim) {
       const auto &mId = comp->getId();
-      auto adjacentCompartments = getAdjacentCompartments(model, mId);
+      auto adjacentCompartments = getAdjacentCompartments(sbmlModel, mId);
       if (adjacentCompartments.has_value()) {
         const auto &[c1, c2] = adjacentCompartments.value();
         for (auto &m : membranes) {
@@ -176,17 +175,20 @@ void ModelMembranes::importMembraneIdsAndNames(const libsbml::Model *model) {
   }
 }
 
-void ModelMembranes::exportToSBML(libsbml::Model *model, double pixelWidth) {
+void ModelMembranes::exportToSBML(double pixelWidth) {
+  if(sbmlModel == nullptr){
+    SPDLOG_WARN("no sbml model to export to - ignoring");
+  }
   // ensure all membranes have a corresponding n-1 dim compartment in SBML
-  auto *geom = getOrCreateGeometry(model);
+  auto *geom = getOrCreateGeometry(sbmlModel);
   auto nDimMinusOne = geom->getNumCoordinateComponents() - 1;
   for (int i = 0; i < ids.size(); ++i) {
     std::string sId{ids[i].toStdString()};
     SPDLOG_INFO("Membrane id: '{}'", sId);
-    libsbml::Compartment *comp = model->getCompartment(sId);
+    libsbml::Compartment *comp = sbmlModel->getCompartment(sId);
     if (comp == nullptr) {
       SPDLOG_INFO("  - creating Membrane compartment in SBML");
-      comp = model->createCompartment();
+      comp = sbmlModel->createCompartment();
       comp->setId(sId);
     }
     comp->setName(names[i].toStdString());
@@ -235,25 +237,25 @@ void ModelMembranes::exportToSBML(libsbml::Model *model, double pixelWidth) {
   for (const auto &membrane : membranes) {
     std::string adjId = membrane.getId();
     adjId.append("_adjacentDomain");
-    auto domId = getDomainIdFromCompartmentId(model, membrane.getId());
+    auto domId = getDomainIdFromCompartmentId(sbmlModel, membrane.getId());
     auto *adjDomA = geom->createAdjacentDomains();
     auto adjIdA = adjId + "A";
     auto domIdA = getDomainIdFromCompartmentId(
-        model, membrane.getCompartmentA()->getId());
+        sbmlModel, membrane.getCompartmentA()->getId());
     adjDomA->setId(adjIdA);
     adjDomA->setDomain1(domId);
     adjDomA->setDomain2(domIdA);
     auto *adjDomB = geom->createAdjacentDomains();
     auto adjIdB = adjId + "B";
     auto domIdB = getDomainIdFromCompartmentId(
-        model, membrane.getCompartmentB()->getId());
+        sbmlModel, membrane.getCompartmentB()->getId());
     adjDomB->setId(adjIdB);
     adjDomB->setDomain1(domId);
     adjDomB->setDomain2(domIdB);
   }
 }
 
-ModelMembranes::ModelMembranes() = default;
+ModelMembranes::ModelMembranes(libsbml::Model *model) : sbmlModel{model} {}
 
 ModelMembranes::ModelMembranes(ModelMembranes &&) noexcept = default;
 

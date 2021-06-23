@@ -42,7 +42,7 @@ SCENARIO("SBML membranes",
       REQUIRE(ms.getMembranes().size() == 1);
       REQUIRE(ms.getNames().isEmpty());
       ms.setHasUnsavedChanges(false);
-      ms.updateCompartmentNames(names, nullptr);
+      ms.updateCompartmentNames(names);
       ms.setHasUnsavedChanges(true);
       REQUIRE(ms.getIds().size() == 1);
       REQUIRE(ms.getIds()[0] == "c1_c0_membrane");

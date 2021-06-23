@@ -60,7 +60,7 @@ void Model::initModelData() {
   modelUnits = ModelUnits(model);
   modelMath = ModelMath(model);
   modelFunctions = ModelFunctions(model);
-  modelMembranes.clear();
+  modelMembranes = ModelMembranes(model);
   // todo: reduce these cyclic dependencies: currently order of initialization
   // matters, should be possible to reduce coupling here
   modelCompartments =
@@ -151,7 +151,7 @@ void Model::exportSMEFile(const std::string &filename) {
 void Model::updateSBMLDoc() {
   modelGeometry.writeGeometryToSBML();
   setSbmlAnnotation(doc->getModel(), settings);
-  modelMembranes.exportToSBML(doc->getModel(), modelGeometry.getPixelWidth());
+  modelMembranes.exportToSBML(modelGeometry.getPixelWidth());
 }
 
 QString Model::getXml() {
@@ -237,7 +237,7 @@ void Model::clear() {
   currentFilename.clear();
   modelCompartments = ModelCompartments{};
   modelGeometry = ModelGeometry{};
-  modelMembranes.clear();
+  modelMembranes = ModelMembranes{};
   modelSpecies = ModelSpecies{};
   modelReactions = ModelReactions{};
   modelFunctions = ModelFunctions{};

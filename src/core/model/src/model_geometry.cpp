@@ -292,31 +292,6 @@ void ModelGeometry::setPixelWidth(double width) {
   pixelWidth = width;
   SPDLOG_INFO("New pixel width = {}", pixelWidth);
 
-  auto *geom = getOrCreateGeometry(sbmlModel);
-  // update compartment interior points
-  for (const auto &compartmentId : modelCompartments->getIds()) {
-    SPDLOG_INFO("  - compartmentId: {}", compartmentId.toStdString());
-    auto *comp = sbmlModel->getCompartment(compartmentId.toStdString());
-    auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
-        comp->getPlugin("spatial"));
-    const std::string &domainType =
-        scp->getCompartmentMapping()->getDomainType();
-    auto *domain = geom->getDomainByDomainType(domainType);
-    if (domain != nullptr) {
-      auto *interiorPoint = domain->getInteriorPoint(0);
-      if (interiorPoint != nullptr) {
-        double c1 = interiorPoint->getCoord1();
-        double c2 = interiorPoint->getCoord2();
-        double newc1 = c1 * width / oldWidth;
-        double newc2 = c2 * width / oldWidth;
-        SPDLOG_INFO("    -> rescaling interior point from ({},{}) to ({},{})",
-                    c1, c2, newc1, newc2);
-        interiorPoint->setCoord1(newc1);
-        interiorPoint->setCoord2(newc2);
-      }
-    }
-  }
-
   // update origin
   physicalOrigin *= width / oldWidth;
   SPDLOG_INFO("  - origin rescaled to ({},{})", physicalOrigin.x(),
@@ -326,6 +301,7 @@ void ModelGeometry::setPixelWidth(double width) {
     mesh->setPhysicalGeometry(width, physicalOrigin);
   }
   // update xy coordinates
+  auto *geom = getOrCreateGeometry(sbmlModel);
   physicalSize = {pixelWidth * static_cast<double>(image.width()),
                   pixelWidth * static_cast<double>(image.height())};
   auto *coord = geom->getCoordinateComponentByKind(
@@ -342,6 +318,11 @@ void ModelGeometry::setPixelWidth(double width) {
   min->setValue(physicalOrigin.y());
   max->setValue(physicalOrigin.y() + physicalSize.height());
   SPDLOG_INFO("  - y now in range [{},{}]", min->getValue(), max->getValue());
+
+  // reassign all compartment colours to update sizes, interior points, etc
+  for (const auto &compartmentId : modelCompartments->getIds()) {
+    modelCompartments->setColour(compartmentId, modelCompartments->getColour(compartmentId));
+  }
 }
 
 const QPointF &ModelGeometry::getPhysicalOrigin() const {

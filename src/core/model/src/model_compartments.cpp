@@ -116,7 +116,7 @@ QString ModelCompartments::add(const QString &name) {
   createDefaultCompartmentGeometryIfMissing(sbmlModel);
   modelGeometry->updateMesh();
   modelMembranes->updateCompartments(compartments);
-  modelMembranes->updateCompartmentNames(names, sbmlModel);
+  modelMembranes->updateCompartmentNames(names);
   hasUnsavedChanges = true;
   SPDLOG_INFO("Clearing simulation data");
   simulationData->clear();
@@ -190,7 +190,7 @@ bool ModelCompartments::remove(const QString &id) {
     modelSpecies->remove(s);
   }
   modelMembranes->updateCompartments(compartments);
-  modelMembranes->updateCompartmentNames(names, sbmlModel);
+  modelMembranes->updateCompartmentNames(names);
   modelGeometry->updateMesh();
   return true;
 }
@@ -219,7 +219,7 @@ QString ModelCompartments::setName(const QString &id, const QString &name) {
   auto *comp = sbmlModel->getCompartment(sId);
   SPDLOG_INFO("sId '{}' : name -> '{}'", sId, sName);
   comp->setName(sName);
-  modelMembranes->updateCompartmentNames(names, sbmlModel);
+  modelMembranes->updateCompartmentNames(names);
   return uniqueName;
 }
 
@@ -333,10 +333,10 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   SPDLOG_INFO("  - size {}", volume);
   modelSpecies->updateCompartmentGeometry(id);
   modelMembranes->updateCompartments(compartments);
-  modelMembranes->updateCompartmentNames(names, sbmlModel);
+  modelMembranes->updateCompartmentNames(names);
   modelGeometry->updateMesh();
   if (modelGeometry->getIsValid()) {
-    modelMembranes->exportToSBML(sbmlModel, modelGeometry->getPixelWidth());
+    modelMembranes->exportToSBML(modelGeometry->getPixelWidth());
   }
   modelReactions->makeReactionsSpatial(modelGeometry->getIsValid());
 }
