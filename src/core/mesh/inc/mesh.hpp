@@ -36,7 +36,6 @@ class Boundary;
  */
 class Mesh {
 private:
-  bool validMesh{true};
   // input data
   QImage img;
   QPointF origin;
@@ -50,6 +49,8 @@ private:
   std::size_t nTriangles{};
   std::vector<std::vector<QTriangleF>> triangles;
   std::vector<std::vector<TriangulateTriangleIndex>> triangleIndices;
+  bool validMesh{true};
+  std::string errorMessage{};
   // convert point in pixel units to point in physical units
   QPointF pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept;
   void constructMesh();
@@ -77,6 +78,10 @@ public:
    * @brief Returns true if the mesh is valid
    */
   bool isValid() const;
+  /**
+   * @brief Returns an error message if the mesh is invalid
+   */
+  const std::string& getErrorMessage() const;
   /**
    * @brief The number of boundary lines in the mesh
    */

@@ -102,7 +102,7 @@ void TabGeometry::enableTabs() {
   ui->listMembranes->setEnabled(enableBoundaries);
 }
 
-void TabGeometry::invertYAxis(bool enable){
+void TabGeometry::invertYAxis(bool enable) {
   ui->lblCompShape->invertYAxis(enable);
   ui->lblCompBoundary->invertYAxis(enable);
   ui->lblCompMesh->invertYAxis(enable);
@@ -115,16 +115,12 @@ void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
     // update compartment geometry (i.e. colour) of selected compartment to
     // the one the user just clicked on
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    try {
-      const auto &compartmentID = model.getCompartments().getIds().at(
-          ui->listCompartments->currentRow());
-      model.getCompartments().setColour(compartmentID, col);
-      ui->tabCompartmentGeometry->setCurrentIndex(0);
-      ui->listMembranes->clear();
-      ui->listMembranes->addItems(model.getMembranes().getNames());
-    } catch (const std::runtime_error &e) {
-      QMessageBox::warning(this, "Mesh generation failed", e.what());
-    }
+    const auto &compartmentID =
+        model.getCompartments().getIds().at(ui->listCompartments->currentRow());
+    model.getCompartments().setColour(compartmentID, col);
+    ui->tabCompartmentGeometry->setCurrentIndex(0);
+    ui->listMembranes->clear();
+    ui->listMembranes->addItems(model.getMembranes().getNames());
     // update display by simulating user click on listCompartments
     listCompartments_itemSelectionChanged();
     waitingForCompartmentChoice = false;
@@ -257,9 +253,11 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
     return;
   }
   if (index == TabIndex::MESH) {
-    if (model.getGeometry().getMesh() == nullptr) {
+    const auto *mesh{model.getGeometry().getMesh()};
+    if (mesh == nullptr) {
       ui->spinMaxTriangleArea->setEnabled(false);
       ui->spinMeshZoom->setEnabled(false);
+      return;
     }
     ui->spinMaxTriangleArea->setEnabled(true);
     ui->spinMeshZoom->setEnabled(true);
@@ -269,6 +267,18 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
         model.getGeometry().getMesh()->getCompartmentMaxTriangleArea(
             compIndex)));
     spinMaxTriangleArea_valueChanged(ui->spinMaxTriangleArea->value());
+    if (!mesh->isValid()) {
+      QString msg{"Error: Unable to generate mesh.\n\nImproving the accuracy "
+                  "of the boundary lines might help. To do this, click on the "
+                  "\"Boundary Lines\" "
+                  "tab and increase the maximum number of allowed "
+                  "points.\n\nError message: "};
+      msg.append(mesh->getErrorMessage().c_str());
+      ui->lblCompMesh->setText(msg);
+      ui->spinMaxTriangleArea->setEnabled(false);
+      ui->spinMeshZoom->setEnabled(false);
+      return;
+    }
   }
 }
 

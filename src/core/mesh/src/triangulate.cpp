@@ -48,8 +48,18 @@ static void addTriangleAndNeighbours(
       // check each edge of this face (aka triangle)
       if (!face->is_constrained(edgeIndex)) {
         // edge is not a boundary, so look at connected face
-        if (const auto connectedFace{face->neighbor(edgeIndex)};
-            !cdt.is_infinite(connectedFace) && !connectedFace->is_marked()) {
+        const auto connectedFace{face->neighbor(edgeIndex)};
+        if (cdt.is_infinite(connectedFace)) {
+          // if the edge is not constrained, but the neighbouring face is
+          // infinite, we are outside of the boundary lines (since any infinite
+          // face should be separated from the rest of the triangulation by a
+          // constrained edge) which probably means the interior point was
+          // outside of the appropriate region
+          std::string msg{"Triangle is outside of the boundary lines"};
+          SPDLOG_WARN("{}", msg);
+          throw std::runtime_error(msg);
+        }
+        if (!connectedFace->is_marked()) {
           // connected face is valid and has not already been added, so add it
           addTriangle(connectedFace, faces, triangleIndices);
         }

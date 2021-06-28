@@ -186,4 +186,39 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     REQUIRE(boundaryImage2.pixel(26, 75) == col1);
     REQUIRE(boundaryImage2.pixel(20, 76) == col1);
   }
+  GIVEN("interior point outside compartment") {
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/585
+    QImage img(3, 1, QImage::Format_RGB32);
+    QRgb col = QColor(0, 0, 0).rgb();
+    img.fill(col);
+    std::size_t maxTriangleArea{999};
+    mesh::Mesh mesh(img, {}, {maxTriangleArea}, 1.0, QPointF(0, 0), std::vector<QRgb>{col});
+    // use 3 point boundary around 3x1 pixel rectangle:
+    // interior point is outside this boundary
+    mesh.setBoundaryMaxPoints(0, 3);
+    REQUIRE(mesh.isValid() == false);
+    REQUIRE(mesh.getErrorMessage() == "Triangle is outside of the boundary lines");
+    // setting max boundary points explicitly to 4 results in a valid mesh
+    mesh.setBoundaryMaxPoints(0, 4);
+    // re-generate mesh
+    mesh.setCompartmentMaxTriangleArea(0,maxTriangleArea);
+    REQUIRE(mesh.isValid() == true);
+    REQUIRE(mesh.getErrorMessage().empty());
+    REQUIRE(mesh.getNumBoundaries() == 1);
+    REQUIRE(mesh.getVerticesAsFlatArray().size() >= 4);
+    REQUIRE(mesh.getTriangleIndices().size() == 1);
+    REQUIRE(mesh.getTriangleIndices()[0].size() >= 2);
+    // repeat to check validity & error message updated correctly
+    mesh.setBoundaryMaxPoints(0, 2);
+    // re-generate mesh
+    mesh.setCompartmentMaxTriangleArea(0,maxTriangleArea);
+    REQUIRE(mesh.isValid() == false);
+    REQUIRE(mesh.isValid() == false);
+    REQUIRE(mesh.getErrorMessage() == "Triangle is outside of the boundary lines");
+    mesh.setBoundaryMaxPoints(0, 4);
+    // re-generate mesh
+    mesh.setCompartmentMaxTriangleArea(0,maxTriangleArea);
+    REQUIRE(mesh.isValid() == true);
+    REQUIRE(mesh.getErrorMessage().empty());
+  }
 }

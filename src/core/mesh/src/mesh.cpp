@@ -72,6 +72,8 @@ Mesh::~Mesh() = default;
 
 bool Mesh::isValid() const { return validMesh; }
 
+const std::string &Mesh::getErrorMessage() const { return errorMessage; };
+
 std::size_t Mesh::getNumBoundaries() const { return boundaries->size(); }
 
 void Mesh::setBoundaryMaxPoints(std::size_t boundaryIndex,
@@ -168,9 +170,12 @@ void Mesh::constructMesh() {
             {{vertices[t[0]], vertices[t[1]], vertices[t[2]]}});
       }
     }
+    validMesh = true;
+    errorMessage.clear();
   } catch (const std::exception &e) {
-    SPDLOG_WARN("constructMesh failed with exception: {}", e.what());
     validMesh = false;
+    errorMessage = e.what();
+    SPDLOG_WARN("constructMesh failed with exception: {}", errorMessage);
     vertices.clear();
     triangleIndices.clear();
     triangles.clear();
@@ -316,27 +321,27 @@ QString Mesh::getGMSH() const {
   std::size_t nElem = 0;
   std::size_t compartmentIndex = 1;
   for (const auto &comp : triangleIndices) {
-      SPDLOG_TRACE("Adding compartment of triangles, index: {}",
-                   compartmentIndex);
-      nElem += comp.size();
+    SPDLOG_TRACE("Adding compartment of triangles, index: {}",
+                 compartmentIndex);
+    nElem += comp.size();
     compartmentIndex++;
   }
   msh.append(QString("%1\n").arg(nElem));
   std::size_t elementIndex{1};
   compartmentIndex = 1;
   for (const auto &comp : triangleIndices) {
-       SPDLOG_TRACE("Writing triangles for compartment index: {}",
-                   compartmentIndex);
-      for (const auto &t : comp) {
-        msh.append(QString("%1 2 2 %2 %2 %3 %4 %5\n")
-                       .arg(elementIndex)
-                       .arg(compartmentIndex)
-                       .arg(t[0] + 1)
-                       .arg(t[1] + 1)
-                       .arg(t[2] + 1));
-        ++elementIndex;
-      }
-      ++compartmentIndex;
+    SPDLOG_TRACE("Writing triangles for compartment index: {}",
+                 compartmentIndex);
+    for (const auto &t : comp) {
+      msh.append(QString("%1 2 2 %2 %2 %3 %4 %5\n")
+                     .arg(elementIndex)
+                     .arg(compartmentIndex)
+                     .arg(t[0] + 1)
+                     .arg(t[1] + 1)
+                     .arg(t[2] + 1));
+      ++elementIndex;
+    }
+    ++compartmentIndex;
   }
   msh.append("$EndElements\n");
   return msh;

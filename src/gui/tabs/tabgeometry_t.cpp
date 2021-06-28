@@ -23,39 +23,38 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
   waitFor(&tab);
   ModalWidgetTimer mwt;
   // get pointers to widgets within tab
-  auto *listCompartments = tab.findChild<QListWidget *>("listCompartments");
+  auto *listCompartments{tab.findChild<QListWidget *>("listCompartments")};
   REQUIRE(listCompartments != nullptr);
-  auto *listMembranes = tab.findChild<QListWidget *>("listMembranes");
+  auto *listMembranes{tab.findChild<QListWidget *>("listMembranes")};
   REQUIRE(listMembranes != nullptr);
-  auto *btnAddCompartment = tab.findChild<QPushButton *>("btnAddCompartment");
+  auto *btnAddCompartment{tab.findChild<QPushButton *>("btnAddCompartment")};
   REQUIRE(btnAddCompartment != nullptr);
-  auto *btnRemoveCompartment =
-      tab.findChild<QPushButton *>("btnRemoveCompartment");
+  auto *btnRemoveCompartment{
+      tab.findChild<QPushButton *>("btnRemoveCompartment")};
   REQUIRE(btnRemoveCompartment != nullptr);
-  auto *txtCompartmentName = tab.findChild<QLineEdit *>("txtCompartmentName");
+  auto *txtCompartmentName{tab.findChild<QLineEdit *>("txtCompartmentName")};
   REQUIRE(txtCompartmentName != nullptr);
-  auto *tabCompartmentGeometry =
-      tab.findChild<QTabWidget *>("tabCompartmentGeometry");
+  auto *tabCompartmentGeometry{
+      tab.findChild<QTabWidget *>("tabCompartmentGeometry")};
   REQUIRE(tabCompartmentGeometry != nullptr);
-  auto *lblCompShape = tab.findChild<QLabelMouseTracker *>("lblCompShape");
+  auto *lblCompShape{tab.findChild<QLabelMouseTracker *>("lblCompShape")};
   REQUIRE(lblCompShape != nullptr);
-  auto *lblCompSize = tab.findChild<QLabel *>("lblCompSize");
+  auto *lblCompSize{tab.findChild<QLabel *>("lblCompSize")};
   REQUIRE(lblCompSize != nullptr);
-  auto *lblCompBoundary =
-      tab.findChild<QLabelMouseTracker *>("lblCompBoundary");
+  auto *lblCompBoundary{tab.findChild<QLabelMouseTracker *>("lblCompBoundary")};
   REQUIRE(lblCompBoundary != nullptr);
-  auto *spinBoundaryIndex = tab.findChild<QSpinBox *>("spinBoundaryIndex");
+  auto *spinBoundaryIndex{tab.findChild<QSpinBox *>("spinBoundaryIndex")};
   REQUIRE(spinBoundaryIndex != nullptr);
-  auto *spinMaxBoundaryPoints =
-      tab.findChild<QSpinBox *>("spinMaxBoundaryPoints");
+  auto *spinMaxBoundaryPoints{
+      tab.findChild<QSpinBox *>("spinMaxBoundaryPoints")};
   REQUIRE(spinMaxBoundaryPoints != nullptr);
-  auto *spinBoundaryZoom = tab.findChild<QSpinBox *>("spinBoundaryZoom");
+  auto *spinBoundaryZoom{tab.findChild<QSpinBox *>("spinBoundaryZoom")};
   REQUIRE(spinBoundaryZoom != nullptr);
-  auto *lblCompMesh = tab.findChild<QLabelMouseTracker *>("lblCompMesh");
+  auto *lblCompMesh{tab.findChild<QLabelMouseTracker *>("lblCompMesh")};
   REQUIRE(lblCompMesh != nullptr);
-  auto *spinMaxTriangleArea = tab.findChild<QSpinBox *>("spinMaxTriangleArea");
+  auto *spinMaxTriangleArea{tab.findChild<QSpinBox *>("spinMaxTriangleArea")};
   REQUIRE(spinMaxTriangleArea != nullptr);
-  auto *spinMeshZoom = tab.findChild<QSpinBox *>("spinMeshZoom");
+  auto *spinMeshZoom{tab.findChild<QSpinBox *>("spinMeshZoom")};
   REQUIRE(spinMeshZoom != nullptr);
   WHEN("very-simple-model loaded") {
     if (QFile f(":/models/very-simple-model.xml");
@@ -124,6 +123,21 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       spinBoundaryIndex->setFocus();
       REQUIRE(spinBoundaryIndex->value() == 0);
       REQUIRE(spinMaxBoundaryPoints->value() == 12);
+      // set outer boundary to 3 points: results in invalid mesh due to boundary
+      // line intersection
+      sendKeyEvents(spinMaxBoundaryPoints, {"Ctrl+A", "3"});
+      REQUIRE(spinMaxBoundaryPoints->value() == 3);
+      // go to mesh tab: check invalid mesh error message is displayed
+      tabCompartmentGeometry->setFocus();
+      sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
+      REQUIRE(lblCompMesh->text().right(41) ==
+              "Unauthorized intersections of constraints");
+      // go back to boundary tab, reset max number of boundary points
+      tabCompartmentGeometry->setFocus();
+      sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Shift+Tab"});
+      sendKeyEvents(spinMaxBoundaryPoints, {"Ctrl+A", "1", "2"});
+      REQUIRE(spinMaxBoundaryPoints->value() == 12);
+
       // change selected boundary
       sendKeyEvents(spinBoundaryIndex, {"Up"});
       REQUIRE(spinBoundaryIndex->value() == 1);
@@ -263,5 +277,37 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       REQUIRE(spinMeshZoom->isEnabled() == false);
       REQUIRE(spinBoundaryZoom->isEnabled() == false);
     }
+  }
+  WHEN("single pixel model loaded") {
+    if (QFile f(":test/models/single-pixel-meshing.xml");
+        f.open(QIODevice::ReadOnly)) {
+      model.importSBMLString(f.readAll().toStdString());
+    }
+    tab.loadModelData();
+    // boundary tab
+    tabCompartmentGeometry->setFocus();
+    sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
+    REQUIRE(tabCompartmentGeometry->currentIndex() == 1);
+    spinBoundaryIndex->setFocus();
+    REQUIRE(spinBoundaryIndex->value() == 0);
+    REQUIRE(spinMaxBoundaryPoints->value() == 4);
+    // set outer boundary to 3 points: results in invalid mesh due to interior
+    // point lying outside of boundary lines
+    sendKeyEvents(spinMaxBoundaryPoints, {"Down"});
+    REQUIRE(spinMaxBoundaryPoints->value() == 3);
+    // go to mesh tab: check invalid mesh error message is displayed
+    tabCompartmentGeometry->setFocus();
+    sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
+    REQUIRE(lblCompMesh->text().right(41) ==
+            "Triangle is outside of the boundary lines");
+    // go back to boundary tab, reset max number of boundary points
+    tabCompartmentGeometry->setFocus();
+    sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Shift+Tab"});
+    sendKeyEvents(spinMaxBoundaryPoints, {"Up"});
+    REQUIRE(spinMaxBoundaryPoints->value() == 4);
+    // go back to mesh tab: check error message is gone
+    tabCompartmentGeometry->setFocus();
+    sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
+    REQUIRE(lblCompMesh->text().isEmpty());
   }
 }
