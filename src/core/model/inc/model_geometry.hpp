@@ -32,7 +32,7 @@ private:
   double pixelWidth{1.0};
   QPointF physicalOrigin{QPointF(0, 0)};
   QSizeF physicalSize{QSizeF(0, 0)};
-  int numDimensions{2};
+  int numDimensions{3};
   QImage image;
   std::unique_ptr<mesh::Mesh> mesh;
   bool isValid{false};
@@ -42,7 +42,8 @@ private:
   ModelMembranes *modelMembranes{nullptr};
   Settings *sbmlAnnotation = nullptr;
   bool hasUnsavedChanges{false};
-  bool importDimensions(const libsbml::Model *model);
+  int importDimensions(const libsbml::Model *model);
+  void convertSBMLGeometryTo3d();
   void writeDefaultGeometryToSBML();
 
 public:

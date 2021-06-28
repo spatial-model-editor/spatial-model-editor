@@ -69,7 +69,7 @@ SCENARIO("SBML: import SBML doc without geometry",
   REQUIRE(s.getIsValid() == true);
   // export it again
   s.exportSBMLFile("tmp.xml");
-  THEN("upgrade SBML doc and add default 2d spatial geometry") {
+  THEN("upgrade SBML doc and add default 3d spatial geometry") {
     // load new model
     std::unique_ptr<libsbml::SBMLDocument> doc(
         libsbml::readSBMLFromFile("tmp.xml"));
@@ -79,7 +79,7 @@ SCENARIO("SBML: import SBML doc without geometry",
     REQUIRE(model->getLevel() == 3);
     REQUIRE(model->getVersion() == 2);
     for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
-      REQUIRE(model->getCompartment(i)->getSpatialDimensions() == 2);
+      REQUIRE(model->getCompartment(i)->getSpatialDimensions() == 3);
     }
     REQUIRE(doc->isPackageEnabled("spatial") == true);
     auto *plugin = dynamic_cast<libsbml::SpatialModelPlugin *>(
@@ -88,11 +88,13 @@ SCENARIO("SBML: import SBML doc without geometry",
     REQUIRE(plugin->isSetGeometry() == true);
     auto *geom = plugin->getGeometry();
     REQUIRE(geom != nullptr);
-    REQUIRE(geom->getNumCoordinateComponents() == 2);
+    REQUIRE(geom->getNumCoordinateComponents() == 3);
     REQUIRE(geom->getCoordinateComponent(0)->getType() ==
             libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
     REQUIRE(geom->getCoordinateComponent(1)->getType() ==
             libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
+    REQUIRE(geom->getCoordinateComponent(2)->getType() ==
+            libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z);
 
     REQUIRE(geom->getNumGeometryDefinitions() == 0);
   }

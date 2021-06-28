@@ -120,7 +120,7 @@ QString ModelCompartments::add(const QString &name) {
   hasUnsavedChanges = true;
   SPDLOG_INFO("Clearing simulation data");
   simulationData->clear();
-  return newName; // should be id?
+  return newName;
 }
 
 static void removeCompartmentFromSBML(libsbml::Model *model,
@@ -226,13 +226,13 @@ QString ModelCompartments::setName(const QString &id, const QString &name) {
 std::optional<std::vector<QPointF>>
 ModelCompartments::getInteriorPoints(const QString &id) const {
   SPDLOG_INFO("compartmentID: {}", id.toStdString());
-  const auto *comp = sbmlModel->getCompartment(id.toStdString());
-  const auto *scp = static_cast<const libsbml::SpatialCompartmentPlugin *>(
-      comp->getPlugin("spatial"));
-  const std::string &domainType = scp->getCompartmentMapping()->getDomainType();
+  const auto *comp{sbmlModel->getCompartment(id.toStdString())};
+  const auto *scp{static_cast<const libsbml::SpatialCompartmentPlugin *>(
+      comp->getPlugin("spatial"))};
+  const std::string &domainType{scp->getCompartmentMapping()->getDomainType()};
   SPDLOG_INFO("  - domainType: {}", domainType);
-  const auto *geom = getOrCreateGeometry(sbmlModel);
-  const auto *domain = geom->getDomainByDomainType(domainType);
+  const auto *geom{getOrCreateGeometry(sbmlModel)};
+  const auto *domain{geom->getDomainByDomainType(domainType)};
   if (domain == nullptr) {
     SPDLOG_INFO("  - no Domain found");
     return {};
@@ -257,13 +257,13 @@ void ModelCompartments::setInteriorPoints(const QString &id,
                                           const std::vector<QPointF> &points) {
   hasUnsavedChanges = true;
   SPDLOG_INFO("compartmentID: {}", id.toStdString());
-  auto *comp = sbmlModel->getCompartment(id.toStdString());
-  auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
-      comp->getPlugin("spatial"));
-  const std::string &domainType = scp->getCompartmentMapping()->getDomainType();
+  auto *comp{sbmlModel->getCompartment(id.toStdString())};
+  auto *scp{static_cast<libsbml::SpatialCompartmentPlugin *>(
+      comp->getPlugin("spatial"))};
+  const std::string &domainType{scp->getCompartmentMapping()->getDomainType()};
   SPDLOG_INFO("  - domainType: {}", domainType);
-  auto *geom = getOrCreateGeometry(sbmlModel);
-  auto *domain = geom->getDomainByDomainType(domainType);
+  auto *geom{getOrCreateGeometry(sbmlModel)};
+  auto *domain{geom->getDomainByDomainType(domainType)};
   SPDLOG_INFO("  - domain: {}", domain->getId());
   while (domain->getNumInteriorPoints() > 0) {
     std::unique_ptr<libsbml::InteriorPoint> ip{domain->removeInteriorPoint(0)};
@@ -274,13 +274,14 @@ void ModelCompartments::setInteriorPoints(const QString &id,
   auto pixelWidth{modelGeometry->getPixelWidth()};
   for (const auto &point : points) {
     SPDLOG_INFO("  - creating new interior point");
-    SPDLOG_INFO("    - pixel point: ({},{})", point.x(), point.y());
+    SPDLOG_INFO("    - pixel point: ({},{},{})", point.x(), point.y(), 0);
     auto *ip = domain->createInteriorPoint();
     // convert to physical units with pixelWidth and origin
     ip->setCoord1(origin.x() + pixelWidth * point.x());
     ip->setCoord2(origin.y() + pixelWidth * point.y());
-    SPDLOG_INFO("    - physical point: ({},{})", ip->getCoord1(),
-                ip->getCoord2());
+    ip->setCoord3(0.0);
+    SPDLOG_INFO("    - physical point: ({},{},0)", ip->getCoord1(),
+                ip->getCoord2(), ip->getCoord3());
   }
 }
 
@@ -307,11 +308,11 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   // set SampledValue (aka colour) of SampledFieldVolume
   auto *scp{static_cast<libsbml::SpatialCompartmentPlugin *>(
       compartment->getPlugin("spatial"))};
-  const std::string &domainType = scp->getCompartmentMapping()->getDomainType();
+  const std::string &domainType{scp->getCompartmentMapping()->getDomainType()};
   SPDLOG_INFO("  - domainType '{}'", domainType);
-  auto *geom = getOrCreateGeometry(sbmlModel);
-  auto *sfgeom = getOrCreateSampledFieldGeometry(geom);
-  auto *sfvol = sfgeom->getSampledVolumeByDomainType(domainType);
+  auto *geom{getOrCreateGeometry(sbmlModel)};
+  auto *sfgeom{getOrCreateSampledFieldGeometry(geom)};
+  auto *sfvol{sfgeom->getSampledVolumeByDomainType(domainType)};
   if (sfvol == nullptr) {
     sfvol = sfgeom->createSampledVolume();
     sfvol->setId(sId + "_sampledVolume");

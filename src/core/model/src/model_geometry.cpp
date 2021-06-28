@@ -17,34 +17,31 @@
 
 namespace sme::model {
 
-bool ModelGeometry::importDimensions(const libsbml::Model *model) {
-  const auto *geom = getGeometry(model);
+int ModelGeometry::importDimensions(const libsbml::Model *model) {
+  const auto *geom{getGeometry(model)};
   if (geom == nullptr) {
-    return false;
+    return 0;
   }
-  SPDLOG_INFO("Importing existing {}d SBML model geometry",
-              geom->getNumCoordinateComponents());
-  if (geom->getNumCoordinateComponents() != 2) {
-    SPDLOG_WARN("Only 2d models are currently supported");
-  }
-  const auto *xcoord = geom->getCoordinateComponentByKind(
-      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
+  auto nDim{geom->getNumCoordinateComponents()};
+  SPDLOG_INFO("Importing existing {}d SBML model geometry", nDim);
+  const auto *xcoord{geom->getCoordinateComponentByKind(
+      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X)};
   if (xcoord == nullptr) {
     SPDLOG_ERROR("No x-coordinate found in SBML model");
     return false;
   }
-  const auto *ycoord = geom->getCoordinateComponentByKind(
-      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
+  const auto *ycoord{geom->getCoordinateComponentByKind(
+      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y)};
   if (ycoord == nullptr) {
     SPDLOG_ERROR("No y-coordinate found in SBML model");
     return false;
   }
 
   // import xy coordinates
-  double xmin = xcoord->getBoundaryMin()->getValue();
-  double xmax = xcoord->getBoundaryMax()->getValue();
-  double ymin = ycoord->getBoundaryMin()->getValue();
-  double ymax = ycoord->getBoundaryMax()->getValue();
+  double xmin{xcoord->getBoundaryMin()->getValue()};
+  double xmax{xcoord->getBoundaryMax()->getValue()};
+  double ymin{ycoord->getBoundaryMin()->getValue()};
+  double ymax{ycoord->getBoundaryMax()->getValue()};
   SPDLOG_INFO("  - found x range [{},{}]", xmin, xmax);
   SPDLOG_INFO("  - found y range [{},{}]", ymin, ymax);
   physicalOrigin = QPointF(xmin, ymin);
@@ -52,12 +49,60 @@ bool ModelGeometry::importDimensions(const libsbml::Model *model) {
   physicalSize = QSizeF(xmax - xmin, ymax - ymin);
   SPDLOG_INFO("  -> size [{},{}]", physicalSize.width(), physicalSize.height());
 
-  return true;
+  if (nDim == 3) {
+    // todo: import z-direction min/max values
+  }
+
+  return static_cast<int>(nDim);
+}
+
+static void createZCoordinateComponent(libsbml::Model *model){
+  auto *geom{
+      getOrCreateGeometry(model)};
+  auto *coordZ {geom->getCoordinateComponent(2)};
+  if(coordZ == nullptr){
+    coordZ = geom->createCoordinateComponent();
+  }
+  coordZ->setType(
+      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z);
+  coordZ->setId("zCoord");
+  auto *paramZ = model->createParameter();
+  paramZ->setId("z");
+  paramZ->setUnits(model->getLengthUnits());
+  paramZ->setConstant(true);
+  paramZ->setValue(0);
+  auto *ssr {static_cast<libsbml::SpatialParameterPlugin *>(
+      paramZ->getPlugin("spatial"))
+      ->createSpatialSymbolReference()};
+  ssr->setSpatialRef(coordZ->getId());
+  SPDLOG_INFO("  - creating Parameter: {}", paramZ->getId());
+  SPDLOG_INFO("  - with spatialSymbolReference: {}", ssr->getSpatialRef());
+  auto *minZ = coordZ->createBoundaryMin();
+  minZ->setId("zBoundaryMin");
+  minZ->setValue(0);
+  auto *maxZ = coordZ->createBoundaryMax();
+  maxZ->setId("zBoundaryMax");
+  maxZ->setValue(1.0);
+  SPDLOG_INFO("  - z in range [{},{}]", minZ->getValue(), maxZ->getValue());
+}
+
+void ModelGeometry::convertSBMLGeometryTo3d() {
+  SPDLOG_INFO("Converting 2d SBML model geometry to 3d");
+  createZCoordinateComponent(sbmlModel);
+  for (unsigned i = 0; i < sbmlModel->getNumCompartments(); ++i) {
+    auto *comp{sbmlModel->getCompartment(i)};
+    if (comp == nullptr) {
+      return;
+    }
+    auto nDim{comp->getSpatialDimensions() + 1};
+    SPDLOG_INFO("Setting compartment '{}' dimensions to {}", comp->getId(), nDim);
+    comp->setSpatialDimensions(nDim);
+  }
 }
 
 void ModelGeometry::writeDefaultGeometryToSBML() {
-  SPDLOG_INFO("Creating new 2d SBML model geometry");
-  numDimensions = 2;
+  SPDLOG_INFO("Creating new 3d SBML model geometry");
+  numDimensions = 3;
   auto *spatial = static_cast<libsbml::SpatialModelPlugin *>(
       sbmlModel->getPlugin("spatial"));
   auto *geom = spatial->createGeometry();
@@ -71,7 +116,7 @@ void ModelGeometry::writeDefaultGeometryToSBML() {
     comp->setSpatialDimensions(static_cast<unsigned int>(numDimensions));
   }
 
-  // set-up xy coordinates
+  // set-up xyz coordinates
   auto *coordX = geom->getCoordinateComponent(0);
   coordX->setType(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
@@ -117,6 +162,7 @@ void ModelGeometry::writeDefaultGeometryToSBML() {
   maxY->setId("yBoundaryMax");
   maxY->setValue(pixelWidth * static_cast<double>(image.height()));
   SPDLOG_INFO("  - y in range [{},{}]", minY->getValue(), maxY->getValue());
+  createZCoordinateComponent(sbmlModel);
   // the above overwrote any existing compartment geometry, so re-create
   // defaults here
   createDefaultCompartmentGeometryIfMissing(sbmlModel);
@@ -129,9 +175,12 @@ ModelGeometry::ModelGeometry(libsbml::Model *model,
                              ModelMembranes *membranes, Settings *annotation)
     : sbmlModel{model}, modelCompartments{compartments},
       modelMembranes{membranes}, sbmlAnnotation{annotation} {
-  if (!importDimensions(model)) {
+  if (auto nDim{importDimensions(model)}; nDim == 0) {
     SPDLOG_WARN("Failed to import geometry");
     writeDefaultGeometryToSBML();
+    return;
+  } else if(nDim == 2){
+    convertSBMLGeometryTo3d();
     return;
   }
 }
@@ -321,7 +370,8 @@ void ModelGeometry::setPixelWidth(double width) {
 
   // reassign all compartment colours to update sizes, interior points, etc
   for (const auto &compartmentId : modelCompartments->getIds()) {
-    modelCompartments->setColour(compartmentId, modelCompartments->getColour(compartmentId));
+    modelCompartments->setColour(compartmentId,
+                                 modelCompartments->getColour(compartmentId));
   }
 }
 

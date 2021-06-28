@@ -51,15 +51,18 @@ libsbml::Geometry *getOrCreateGeometry(libsbml::Model *model) {
 
 void createDefaultCompartmentGeometryIfMissing(libsbml::Model *model) {
   for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
-    auto *comp = model->getCompartment(i);
+    auto *comp{model->getCompartment(i)};
     if (comp == nullptr) {
       return;
     }
-    std::string sId = comp->getId();
+    std::string sId{comp->getId()};
     SPDLOG_INFO("Compartment '{}'", sId);
-    auto *geom = getOrCreateGeometry(model);
-    auto *scp = static_cast<libsbml::SpatialCompartmentPlugin *>(
-        comp->getPlugin("spatial"));
+    auto *geom{getOrCreateGeometry(model)};
+    if(geom == nullptr){
+      return;
+    }
+    auto *scp{static_cast<libsbml::SpatialCompartmentPlugin *>(
+        comp->getPlugin("spatial"))};
     libsbml::CompartmentMapping *cmap{nullptr};
     libsbml::DomainType *dt{nullptr};
     libsbml::Domain *dom{nullptr};
@@ -92,15 +95,15 @@ void createDefaultCompartmentGeometryIfMissing(libsbml::Model *model) {
 }
 
 unsigned int getNumSpatialDimensions(const libsbml::Model *model) {
-  const auto *geom = getGeometry(model);
+  const auto *geom{getGeometry(model)};
   if (geom == nullptr) {
     return 0;
   }
-  unsigned int numCoords = geom->getNumCoordinateComponents();
+  unsigned int numCoords{geom->getNumCoordinateComponents()};
   SPDLOG_INFO(" number of coordinate components: {}", numCoords);
-  unsigned int maxCompDim = 0;
+  unsigned int maxCompDim{0};
   for (unsigned int i = 0; i < model->getNumCompartments(); ++i) {
-    const auto *comp = model->getCompartment(i);
+    const auto *comp{model->getCompartment(i)};
     if (comp->isSetSpatialDimensions()) {
       maxCompDim = std::max(maxCompDim, comp->getSpatialDimensions());
     }
@@ -115,20 +118,19 @@ unsigned int getNumSpatialDimensions(const libsbml::Model *model) {
 
 static std::string getCompartmentIdFromDomainId(const libsbml::Model *model,
                                                 const std::string &domainId) {
-  const auto *geom = getGeometry(model);
+  const auto *geom{getGeometry(model)};
   if (geom == nullptr) {
     return {};
   }
-  const auto *domain = geom->getDomain(domainId);
+  const auto *domain{geom->getDomain(domainId)};
   if (domain == nullptr) {
     return {};
   }
-  const auto &domainTypeId = domain->getDomainType();
+  const auto &domainTypeId{domain->getDomainType()};
   for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
-    const auto *comp = model->getCompartment(i);
-    if (const auto *scp =
-            static_cast<const libsbml::SpatialCompartmentPlugin *>(
-                comp->getPlugin("spatial"));
+    const auto *comp{model->getCompartment(i)};
+    if (const auto *scp{static_cast<const libsbml::SpatialCompartmentPlugin *>(
+            comp->getPlugin("spatial"))};
         scp != nullptr && scp->isSetCompartmentMapping() &&
         scp->getCompartmentMapping()->getDomainType() == domainTypeId) {
       return comp->getId();
@@ -139,17 +141,17 @@ static std::string getCompartmentIdFromDomainId(const libsbml::Model *model,
 
 std::string getDomainIdFromCompartmentId(const libsbml::Model *model,
                                          const std::string &compartmentId) {
-  const auto *geom = getGeometry(model);
+  const auto *geom{getGeometry(model)};
   if (geom == nullptr) {
     return {};
   }
-  const auto *scp = static_cast<const libsbml::SpatialCompartmentPlugin *>(
-      model->getCompartment(compartmentId)->getPlugin("spatial"));
+  const auto *scp{static_cast<const libsbml::SpatialCompartmentPlugin *>(
+      model->getCompartment(compartmentId)->getPlugin("spatial"))};
   if (scp == nullptr || !scp->isSetCompartmentMapping()) {
     return {};
   }
-  const std::string &domainType = scp->getCompartmentMapping()->getDomainType();
-  const auto *domain = geom->getDomainByDomainType(domainType);
+  const std::string &domainType{scp->getCompartmentMapping()->getDomainType()};
+  const auto *domain{geom->getDomainByDomainType(domainType)};
   if (domain == nullptr) {
     return {};
   }
@@ -159,15 +161,15 @@ std::string getDomainIdFromCompartmentId(const libsbml::Model *model,
 std::optional<std::pair<std::string, std::string>>
 getAdjacentCompartments(const libsbml::Model *model,
                         const std::string &compartmentId) {
-  auto domainId = getDomainIdFromCompartmentId(model, compartmentId);
-  const auto *geom = getGeometry(model);
+  auto domainId{getDomainIdFromCompartmentId(model, compartmentId)};
+  const auto *geom{getGeometry(model)};
   if (geom == nullptr) {
     return {};
   }
   std::vector<std::string> adjacentDomains;
   adjacentDomains.reserve(2);
   for (unsigned int i = 0; i < geom->getNumAdjacentDomains(); ++i) {
-    const auto *adjDom = geom->getAdjacentDomains(i);
+    const auto *adjDom{geom->getAdjacentDomains(i)};
     if (adjDom->isSetDomain1() && adjDom->getDomain1() == domainId) {
       adjacentDomains.push_back(adjDom->getDomain2());
     }
@@ -199,16 +201,16 @@ bool getIsSpeciesConstant(const libsbml::Species *spec) {
 const libsbml::Parameter *
 getSpatialCoordinateParam(const libsbml::Model *model,
                           libsbml::CoordinateKind_t kind) {
-  auto *geom = getGeometry(model);
+  auto *geom {getGeometry(model)};
   if (geom == nullptr) {
     return nullptr;
   }
-  const auto *coord = geom->getCoordinateComponentByKind(kind);
+  const auto *coord{geom->getCoordinateComponentByKind(kind)};
   if (coord == nullptr) {
     return nullptr;
   }
   for (unsigned int i = 0; i < model->getNumParameters(); ++i) {
-    auto *param = model->getParameter(i);
+    auto *param {model->getParameter(i)};
     if (const auto *spp = static_cast<const libsbml::SpatialParameterPlugin *>(
             param->getPlugin("spatial"));
         spp != nullptr && spp->isSpatialParameter() &&
@@ -230,4 +232,4 @@ libsbml::Parameter *getSpatialCoordinateParam(libsbml::Model *model,
       const_cast<const libsbml::Model *>(model), kind));
 }
 
-} // namespace sme
+} // namespace sme::model

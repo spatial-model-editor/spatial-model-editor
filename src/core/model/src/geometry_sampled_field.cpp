@@ -1,22 +1,19 @@
 #include "geometry_sampled_field.hpp"
-
+#include "logger.hpp"
+#include "sbml_utils.hpp"
+#include "utils.hpp"
+#include <QImage>
+#include <memory>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-#include <QImage>
-#include <memory>
-
-#include "logger.hpp"
-#include "sbml_utils.hpp"
-#include "utils.hpp"
-
 namespace sme::model {
 
 libsbml::SampledFieldGeometry *
 getOrCreateSampledFieldGeometry(libsbml::Geometry *geom) {
-  auto *sfgeom = getSampledFieldGeometry(geom);
+  auto *sfgeom{getSampledFieldGeometry(geom)};
   if (sfgeom == nullptr) {
     sfgeom = geom->createSampledFieldGeometry();
     sfgeom->setId("sampledFieldGeometry");
@@ -134,8 +131,8 @@ getMatchingSampledValues(const std::vector<T> &values,
     double max = sfvol->getMaxValue();
     std::transform(values.cbegin(), values.cend(), matches.begin(),
                    [min, max](T v) {
-                     auto dblv = static_cast<double>(v);
-                     return dblv >= min && dblv < max;
+                     auto vAsDouble{static_cast<double>(v)};
+                     return vAsDouble >= min && vAsDouble < max;
                    });
   }
   return matches;
@@ -256,6 +253,7 @@ void exportSampledFieldGeometry(libsbml::Geometry *geom,
               sfgeom->getSampledField());
   sf->setNumSamples1(compartmentImage.width());
   sf->setNumSamples2(compartmentImage.height());
+  sf->setNumSamples3(1);
   sf->setSamplesLength(compartmentImage.width() * compartmentImage.height());
 
   std::vector<QRgb> samples;
@@ -276,4 +274,4 @@ void exportSampledFieldGeometry(libsbml::Geometry *geom,
               sf->getSamplesLength());
 }
 
-} // namespace sme
+} // namespace sme::model

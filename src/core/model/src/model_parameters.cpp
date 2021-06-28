@@ -63,9 +63,9 @@ static QStringList importNamesAndMakeUnique(const QStringList &ids,
 static libsbml::Parameter *
 createSpatialCoordParam(const QString &name, libsbml::CoordinateKind_t kind,
                         libsbml::Model *model) {
-  auto *geom = getOrCreateGeometry(model);
-  const auto *coord = geom->getCoordinateComponentByKind(kind);
-  auto *param = model->createParameter();
+  auto *geom{getOrCreateGeometry(model)};
+  const auto *coord{geom->getCoordinateComponentByKind(kind)};
+  auto *param{model->createParameter()};
   param->setId(nameToUniqueSId(name, model).toStdString());
   param->setName(param->getId());
   param->setUnits(model->getLengthUnits());
@@ -115,6 +115,23 @@ static SpatialCoordinates importSpatialCoordinates(libsbml::Model *model) {
   yparam->setValue(0);
   s.y.id = yparam->getId();
   s.y.name = yparam->getName();
+  auto *zparam = getSpatialCoordinateParam(
+      model, libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z);
+  if (zparam == nullptr) {
+    SPDLOG_WARN("No z-coord parameter found - creating");
+    zparam = createSpatialCoordParam(
+        "z", libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z,
+        model);
+  }
+  if (zparam->getName().empty()) {
+    SPDLOG_INFO("  - using Id as Name");
+    zparam->setName(zparam->getId());
+  }
+  zparam->setUnits(model->getLengthUnits());
+  zparam->setValue(0);
+  // todo: also add z here:
+  //  s.z.id = zparam->getId();
+  //  s.z.name = zparam->getName();
   return s;
 }
 
@@ -294,6 +311,7 @@ void ModelParameters::setSpatialCoordinates(SpatialCoordinates coords) {
   y->setName(spatialCoordinates.y.name);
   SPDLOG_INFO("Setting y-coord parameter '{}' name to '{}'", y->getId(),
               y->getName());
+  // todo: z
 }
 
 std::vector<IdName>
@@ -319,6 +337,8 @@ ModelParameters::getSymbols(const QStringList &compartments) const {
   }
   symbols.push_back({spatialCoordinates.x.id, spatialCoordinates.x.name});
   symbols.push_back({spatialCoordinates.y.id, spatialCoordinates.y.name});
+  // todo: use actual z id/name
+  symbols.push_back({"z", "z"});
   symbols.push_back({"time", "t"});
   return symbols;
 }

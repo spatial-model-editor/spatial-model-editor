@@ -98,12 +98,12 @@ SCENARIO("SBML math", "[core/model/math][core/model][core][model][math]") {
       REQUIRE(math.getErrorMessage() ==
               "Error when parsing input 'x(' at position 2:  syntax error, "
               "unexpected end of string");
-      math.parse("z");
+      math.parse("zz");
       REQUIRE(math.isValid() == false);
-      REQUIRE(math.getErrorMessage() == "Unknown variable: z");
-      math.parse("z(y)");
+      REQUIRE(math.getErrorMessage() == "Unknown variable: zz");
+      math.parse("zz(y)");
       REQUIRE(math.isValid() == false);
-      REQUIRE(math.getErrorMessage() == "Unknown function: z");
+      REQUIRE(math.getErrorMessage() == "Unknown function: zz");
     }
   }
 }
