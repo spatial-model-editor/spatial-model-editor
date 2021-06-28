@@ -24,14 +24,14 @@ SCENARIO("SBML parameters",
     REQUIRE(params.getHasUnsavedChanges() == false);
     REQUIRE(params.getIds().size() == 0);
     REQUIRE(params.getNames().size() == 0);
-    // 1 compartment + 25 species + 2 space + time
-    REQUIRE(params.getSymbols().size() == 29);
+    // 1 compartment + 25 species + 3 space + time
+    REQUIRE(params.getSymbols().size() == 30);
     // specify non-existent compartment: species not included
-    REQUIRE(params.getSymbols({"idontexist"}).size() == 4);
+    REQUIRE(params.getSymbols({"idontexist"}).size() == 5);
     // specify multiple compartments including the real one:
     REQUIRE(
         params.getSymbols({"idontexist", "meneither", "compartment"}).size() ==
-        29);
+        30);
     // default geometry spatial coordinates:
     const auto &coords = params.getSpatialCoordinates();
     REQUIRE(coords.x.id == "x");

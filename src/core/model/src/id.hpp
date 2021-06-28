@@ -11,9 +11,7 @@ class Model;
 class Geometry;
 } // namespace libsbml
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 bool isSIdAvailable(const std::string &id, libsbml::Model *model);
 
@@ -23,7 +21,5 @@ QString nameToUniqueSId(const QString &name, libsbml::Model *model);
 
 QString makeUnique(const QString &name, const QStringList &names,
                    const QString &postfix = "_");
-
-} // namespace model
 
 } // namespace sme

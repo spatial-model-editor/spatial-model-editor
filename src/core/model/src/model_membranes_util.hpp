@@ -19,9 +19,7 @@ namespace libsbml {
 class Model;
 }
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 using QPointPair = std::pair<QPoint, QPoint>;
 
@@ -56,7 +54,5 @@ public:
   const std::vector<QPointPair> *getPoints(int iA, int iB) const;
   const QSize &getImageSize() const;
 };
-
-} // namespace model
 
 } // namespace sme
