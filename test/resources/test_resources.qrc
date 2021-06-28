@@ -14,6 +14,7 @@
         <file>models/example2D.xml</file>
         <file>models/fish_300x300.xml</file>
         <file>models/non-spatial-multi-compartment.xml</file>
+        <file>models/single-pixel-meshing.xml</file>
         <file>geometry/gt1.png</file>
         <file>geometry/gt2.png</file>
         <file>geometry/gt3.png</file>
