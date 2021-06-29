@@ -476,9 +476,11 @@ void MainWindow::actionEdit_geometry_image_triggered() {
                              model.getGeometry().getPixelWidth(),
                              model.getUnits());
   if (dialog.exec() == QDialog::Accepted) {
+    QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     double pixelWidth = dialog.getPixelWidth();
     SPDLOG_INFO("Set new pixel width = {}", pixelWidth);
     model.getGeometry().setPixelWidth(pixelWidth);
+    tabSimulate->reset();
     if (dialog.imageAltered()) {
       SPDLOG_INFO("Importing altered geometry image");
       model.getGeometry().importGeometryFromImage(dialog.getAlteredImage());
@@ -486,6 +488,7 @@ void MainWindow::actionEdit_geometry_image_triggered() {
       tabMain_currentChanged(0);
     }
     enableTabs();
+    QGuiApplication::restoreOverrideCursor();
   }
 }
 
