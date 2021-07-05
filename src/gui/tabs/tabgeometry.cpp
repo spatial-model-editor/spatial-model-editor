@@ -417,9 +417,9 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
         ui->tabCompartmentGeometry->currentIndex());
     // update compartment size
     double volume{model.getCompartments().getSize(compId)};
-    ui->lblCompSize->setText(QString("Area: %1 %2^2 (%3 pixels)")
+    ui->lblCompSize->setText(QString("Volume: %1 %2 (%3 pixels)")
                                  .arg(QString::number(volume, 'g', 13))
-                                 .arg(model.getUnits().getLength().name)
+                                 .arg(model.getUnits().getVolume().name)
                                  .arg(comp->nPixels()));
   }
 }
@@ -459,10 +459,9 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
   ui->lblCompartmentColour->setPixmap(QPixmap::fromImage(img));
   ui->lblCompartmentColour->setText("");
   // update membrane length
-  double length =
-      static_cast<double>(nPixels) * model.getGeometry().getPixelWidth();
-  ui->lblCompSize->setText(QString("Length: %1 %2 (%3 pixels)")
-                               .arg(QString::number(length, 'g', 13))
+  double area{model.getMembranes().getSize(membraneId)};
+  ui->lblCompSize->setText(QString("Area: %1 %2^2 (%3 pixels)")
+                               .arg(QString::number(area, 'g', 13))
                                .arg(model.getUnits().getLength().name)
                                .arg(nPixels));
   ui->lblCompMesh->setImages(model.getGeometry().getMesh()->getMeshImages(

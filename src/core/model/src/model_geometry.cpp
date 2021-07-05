@@ -28,13 +28,13 @@ int ModelGeometry::importDimensions(const libsbml::Model *model) {
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X)};
   if (xcoord == nullptr) {
     SPDLOG_ERROR("No x-coordinate found in SBML model");
-    return false;
+    return 0;
   }
   const auto *ycoord{geom->getCoordinateComponentByKind(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y)};
   if (ycoord == nullptr) {
     SPDLOG_ERROR("No y-coordinate found in SBML model");
-    return false;
+    return 0;
   }
 
   // import xy coordinates
@@ -48,19 +48,25 @@ int ModelGeometry::importDimensions(const libsbml::Model *model) {
   SPDLOG_INFO("  -> origin [{},{}]", physicalOrigin.x(), physicalOrigin.y());
   physicalSize = QSizeF(xmax - xmin, ymax - ymin);
   SPDLOG_INFO("  -> size [{},{}]", physicalSize.width(), physicalSize.height());
-
   if (nDim == 3) {
-    // todo: import z-direction min/max values
+    const auto *zcoord{geom->getCoordinateComponentByKind(
+        libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z)};
+    if (zcoord == nullptr) {
+      SPDLOG_ERROR("No z-coordinate found in 3d SBML model");
+      return 0;
+    }
+    zOrigin = zcoord->getBoundaryMin()->getValue();
+    SPDLOG_INFO("  - found z origin {}", zOrigin);
+    pixelDepth = zcoord->getBoundaryMax()->getValue() - zOrigin;
+    SPDLOG_INFO("  - found z depth / pixel depth {}", pixelDepth);
   }
-
   return static_cast<int>(nDim);
 }
 
-static void createZCoordinateComponent(libsbml::Model *model){
-  auto *geom{
-      getOrCreateGeometry(model)};
-  auto *coordZ {geom->getCoordinateComponent(2)};
-  if(coordZ == nullptr){
+static void createZCoordinateComponent(libsbml::Model *model) {
+  auto *geom{getOrCreateGeometry(model)};
+  auto *coordZ{geom->getCoordinateComponent(2)};
+  if (coordZ == nullptr) {
     coordZ = geom->createCoordinateComponent();
   }
   coordZ->setType(
@@ -71,15 +77,15 @@ static void createZCoordinateComponent(libsbml::Model *model){
   paramZ->setUnits(model->getLengthUnits());
   paramZ->setConstant(true);
   paramZ->setValue(0);
-  auto *ssr {static_cast<libsbml::SpatialParameterPlugin *>(
-      paramZ->getPlugin("spatial"))
-      ->createSpatialSymbolReference()};
+  auto *ssr{static_cast<libsbml::SpatialParameterPlugin *>(
+                paramZ->getPlugin("spatial"))
+                ->createSpatialSymbolReference()};
   ssr->setSpatialRef(coordZ->getId());
   SPDLOG_INFO("  - creating Parameter: {}", paramZ->getId());
   SPDLOG_INFO("  - with spatialSymbolReference: {}", ssr->getSpatialRef());
   auto *minZ = coordZ->createBoundaryMin();
   minZ->setId("zBoundaryMin");
-  minZ->setValue(0);
+  minZ->setValue(0.0);
   auto *maxZ = coordZ->createBoundaryMax();
   maxZ->setId("zBoundaryMax");
   maxZ->setValue(1.0);
@@ -95,7 +101,8 @@ void ModelGeometry::convertSBMLGeometryTo3d() {
       return;
     }
     auto nDim{comp->getSpatialDimensions() + 1};
-    SPDLOG_INFO("Setting compartment '{}' dimensions to {}", comp->getId(), nDim);
+    SPDLOG_INFO("Setting compartment '{}' dimensions to {}", comp->getId(),
+                nDim);
     comp->setSpatialDimensions(nDim);
   }
 }
@@ -168,6 +175,15 @@ void ModelGeometry::writeDefaultGeometryToSBML() {
   createDefaultCompartmentGeometryIfMissing(sbmlModel);
 }
 
+void ModelGeometry::updateCompartmentAndMembraneSizes(){
+  // reassign all compartment colours to update sizes, interior points, etc
+  for (const auto &compartmentId : modelCompartments->getIds()) {
+    modelCompartments->setColour(compartmentId,
+                                 modelCompartments->getColour(compartmentId));
+  }
+  modelMembranes->exportToSBML(pixelWidth * pixelDepth);
+}
+
 ModelGeometry::ModelGeometry() = default;
 
 ModelGeometry::ModelGeometry(libsbml::Model *model,
@@ -179,7 +195,7 @@ ModelGeometry::ModelGeometry(libsbml::Model *model,
     SPDLOG_WARN("Failed to import geometry");
     writeDefaultGeometryToSBML();
     return;
-  } else if(nDim == 2){
+  } else if (nDim == 2) {
     convertSBMLGeometryTo3d();
     return;
   }
@@ -219,7 +235,7 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   image = gsf.image.convertToFormat(QImage::Format_Indexed8);
   hasImage = true;
   pixelWidth = calculatePixelWidth(image.size(), physicalSize);
-  setPixelWidth(pixelWidth);
+  setPixelWidth(pixelWidth, false);
   modelMembranes->updateCompartmentImage(image);
   for (const auto &[id, colour] : gsf.compartmentIdColourPairs) {
     SPDLOG_INFO("setting compartment {} colour to {:x}", id, colour);
@@ -334,7 +350,7 @@ int ModelGeometry::getNumDimensions() const { return numDimensions; }
 
 double ModelGeometry::getPixelWidth() const { return pixelWidth; }
 
-void ModelGeometry::setPixelWidth(double width) {
+void ModelGeometry::setPixelWidth(double width, bool updateSBML) {
   SPDLOG_INFO("Setting pixel width to {}", width);
   hasUnsavedChanges = true;
   double oldWidth = pixelWidth;
@@ -367,12 +383,29 @@ void ModelGeometry::setPixelWidth(double width) {
   min->setValue(physicalOrigin.y());
   max->setValue(physicalOrigin.y() + physicalSize.height());
   SPDLOG_INFO("  - y now in range [{},{}]", min->getValue(), max->getValue());
-
-  // reassign all compartment colours to update sizes, interior points, etc
-  for (const auto &compartmentId : modelCompartments->getIds()) {
-    modelCompartments->setColour(compartmentId,
-                                 modelCompartments->getColour(compartmentId));
+  if(updateSBML){
+    updateCompartmentAndMembraneSizes();
   }
+}
+
+double ModelGeometry::getPixelDepth() const { return pixelDepth; }
+
+void ModelGeometry::setPixelDepth(double depth) {
+  SPDLOG_INFO("Setting pixel depth to {}", depth);
+  pixelDepth = depth;
+  auto *geom{getOrCreateGeometry(sbmlModel)};
+  auto *coord{geom->getCoordinateComponentByKind(
+      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z)};
+  auto *min{coord->getBoundaryMin()};
+  auto *max{coord->getBoundaryMax()};
+  min->setValue(zOrigin);
+  max->setValue(zOrigin + pixelDepth);
+  SPDLOG_INFO("  - z now in range [{},{}]", min->getValue(), max->getValue());
+  updateCompartmentAndMembraneSizes();
+}
+
+double ModelGeometry::getZOrigin() const{
+  return zOrigin;
 }
 
 const QPointF &ModelGeometry::getPhysicalOrigin() const {

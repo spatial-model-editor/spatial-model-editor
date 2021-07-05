@@ -6,6 +6,7 @@
 #include "model_membranes.hpp"
 #include "model_reactions.hpp"
 #include "model_species.hpp"
+#include "model_units.hpp"
 #include "sbml_utils.hpp"
 #include "simulate_data.hpp"
 #include <optional>
@@ -69,15 +70,14 @@ static void makeSizesValid(libsbml::Model *model) {
 
 ModelCompartments::ModelCompartments() = default;
 
-ModelCompartments::ModelCompartments(libsbml::Model *model,
-                                     ModelGeometry *geometry,
-                                     ModelMembranes *membranes,
-                                     ModelSpecies *species,
-                                     ModelReactions *reactions,
-                                     simulate::SimulationData *data)
+ModelCompartments::ModelCompartments(
+    libsbml::Model *model, ModelGeometry *geometry, ModelMembranes *membranes,
+    ModelSpecies *species, ModelReactions *reactions, const ModelUnits *units,
+    simulate::SimulationData *data)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(model, ids)},
       sbmlModel{model}, modelGeometry{geometry}, modelMembranes{membranes},
-      modelSpecies{species}, modelReactions{reactions}, simulationData{data} {
+      modelSpecies{species}, modelReactions{reactions}, modelUnits{units},
+      simulationData{data} {
   makeSizesValid(model);
   colours = QVector<QRgb>(ids.size(), 0);
   compartments.reserve(static_cast<std::size_t>(ids.size()));
@@ -272,14 +272,17 @@ void ModelCompartments::setInteriorPoints(const QString &id,
   }
   const auto &origin{modelGeometry->getPhysicalOrigin()};
   auto pixelWidth{modelGeometry->getPixelWidth()};
+  auto centralZPoint{modelGeometry->getZOrigin() +
+                     modelGeometry->getPixelDepth() * 0.5};
   for (const auto &point : points) {
     SPDLOG_INFO("  - creating new interior point");
-    SPDLOG_INFO("    - pixel point: ({},{},{})", point.x(), point.y(), 0);
-    auto *ip = domain->createInteriorPoint();
+    SPDLOG_INFO("    - pixel point: ({},{},{})", point.x(), point.y(),
+                centralZPoint);
+    auto *ip{domain->createInteriorPoint()};
     // convert to physical units with pixelWidth and origin
     ip->setCoord1(origin.x() + pixelWidth * point.x());
     ip->setCoord2(origin.y() + pixelWidth * point.y());
-    ip->setCoord3(0.0);
+    ip->setCoord3(centralZPoint);
     SPDLOG_INFO("    - physical point: ({},{},0)", ip->getCoord1(),
                 ip->getCoord2(), ip->getCoord3());
   }
@@ -321,6 +324,10 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   geom->getDomainType(domainType)
       ->setSpatialDimensions(
           static_cast<int>(geom->getNumCoordinateComponents()));
+  if(compartment->isSetUnits()){
+    // we set the model units, compartment units are then inferred from that
+    compartment->unsetUnits();
+  }
   SPDLOG_INFO("  - sampledVolume '{}'", sfvol->getId());
   if (colour == 0 && sfvol->isSetSampledValue()) {
     sfvol->unsetSampledValue();
@@ -329,9 +336,16 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   }
   auto nPixels{compartments[static_cast<std::size_t>(i)]->nPixels()};
   double pixelWidth{modelGeometry->getPixelWidth()};
-  double volume{static_cast<double>(nPixels) * pixelWidth * pixelWidth};
-  compartment->setSize(volume);
-  SPDLOG_INFO("  - size {}", volume);
+  double pixelDepth{modelGeometry->getPixelDepth()};
+  double l3{static_cast<double>(nPixels) * pixelWidth * pixelWidth *
+            pixelDepth};
+  const auto &lengthUnit{modelUnits->getLength()};
+  const auto &volumeUnit{modelUnits->getVolume()};
+  double volOverL3 = getVolOverL3(lengthUnit, volumeUnit);
+  compartment->setSize(l3 / volOverL3);
+  SPDLOG_INFO("  - volume {} {}^3", l3, lengthUnit.name.toStdString());
+  SPDLOG_INFO("  - size {} {}", compartment->getSize(),
+              volumeUnit.name.toStdString());
   modelSpecies->updateCompartmentGeometry(id);
   modelMembranes->updateCompartments(compartments);
   modelMembranes->updateCompartmentNames(names);

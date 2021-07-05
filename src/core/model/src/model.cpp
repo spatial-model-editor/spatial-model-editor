@@ -6,6 +6,7 @@
 #include "utils.hpp"
 #include "validation.hpp"
 #include "xml_annotation.hpp"
+#include <QFileInfo>
 #include <algorithm>
 #include <sbml/SBMLTransforms.h>
 #include <sbml/SBMLTypes.h>
@@ -14,7 +15,6 @@
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 #include <stdexcept>
 #include <utility>
-#include <QFileInfo>
 
 namespace sme::model {
 
@@ -65,8 +65,9 @@ void Model::initModelData() {
   // matters, should be possible to reduce coupling here
   modelCompartments =
       ModelCompartments(model, &modelGeometry, &modelMembranes, &modelSpecies,
-                        &modelReactions, &getSimulationData());
-  modelGeometry = ModelGeometry(model, &modelCompartments, &modelMembranes, &settings);
+                        &modelReactions, &modelUnits, &getSimulationData());
+  modelGeometry =
+      ModelGeometry(model, &modelCompartments, &modelMembranes, &settings);
   modelGeometry.importSampledFieldGeometry(model);
   modelGeometry.importParametricGeometry(model, &settings);
   modelParameters = ModelParameters(model, &modelEvents);
@@ -151,7 +152,8 @@ void Model::exportSMEFile(const std::string &filename) {
 void Model::updateSBMLDoc() {
   modelGeometry.writeGeometryToSBML();
   setSbmlAnnotation(doc->getModel(), settings);
-  modelMembranes.exportToSBML(modelGeometry.getPixelWidth());
+  modelMembranes.exportToSBML(modelGeometry.getPixelWidth() *
+                              modelGeometry.getPixelDepth());
 }
 
 QString Model::getXml() {

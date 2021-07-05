@@ -69,7 +69,7 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       // select compartments
       REQUIRE(listCompartments->currentItem()->text() == "Outside");
       REQUIRE(txtCompartmentName->text() == "Outside");
-      REQUIRE(lblCompSize->text() == "Area: 5441 m^2 (5441 pixels)");
+      REQUIRE(lblCompSize->text() == "Volume: 5441000 L (5441 pixels)");
       REQUIRE(tabCompartmentGeometry->currentIndex() == 0);
       REQUIRE(lblCompShape->getImage().pixel(1, 1) == 0xff000200);
       // change compartment name
@@ -86,7 +86,7 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       listCompartments->setFocus();
       sendKeyEvents(listCompartments, {"Down"});
       REQUIRE(listCompartments->currentItem()->text() == "Cell");
-      REQUIRE(lblCompSize->text() == "Area: 4034 m^2 (4034 pixels)");
+      REQUIRE(lblCompSize->text() == "Volume: 4034000 L (4034 pixels)");
       REQUIRE(lblCompShape->getImage().pixel(20, 20) == 0xff9061c1);
       REQUIRE(txtCompartmentName->isEnabled() == true);
       REQUIRE(txtCompartmentName->text() == "Cell");
@@ -95,7 +95,7 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       sendKeyEvents(listMembranes, {" "});
       REQUIRE(txtCompartmentName->isEnabled() == true);
       REQUIRE(listMembranes->currentItem()->text() == "Outside <-> Cell");
-      REQUIRE(lblCompSize->text() == "Length: 338 m (338 pixels)");
+      REQUIRE(lblCompSize->text() == "Area: 338 m^2 (338 pixels)");
       REQUIRE(txtCompartmentName->text() == "Outside <-> Cell");
       // change membrane name
       txtCompartmentName->setFocus();
@@ -111,7 +111,7 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       listCompartments->setFocus();
       sendKeyEvents(listCompartments, {"Down"});
       REQUIRE(listCompartments->currentItem()->text() == "Nucleus");
-      REQUIRE(lblCompSize->text() == "Area: 525 m^2 (525 pixels)");
+      REQUIRE(lblCompSize->text() == "Volume: 525000 L (525 pixels)");
       REQUIRE(txtCompartmentName->isEnabled() == true);
       REQUIRE(txtCompartmentName->text() == "Nucleus");
       REQUIRE(lblCompShape->getImage().pixel(50, 50) == 0xffc58560);

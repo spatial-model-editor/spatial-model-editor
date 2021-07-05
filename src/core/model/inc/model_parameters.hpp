@@ -25,6 +25,7 @@ struct IdName {
 struct SpatialCoordinates {
   IdName x;
   IdName y;
+  IdName z;
 };
 
 struct IdNameValue {

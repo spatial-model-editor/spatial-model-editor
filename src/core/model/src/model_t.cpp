@@ -398,23 +398,43 @@ SCENARIO("SBML: import uint8 sampled field",
   std::string xml{f.readAll().toStdString()};
   std::unique_ptr<libsbml::SBMLDocument> doc(
       libsbml::readSBMLFromString(xml.c_str()));
-  // size of compartments are not set in original model
+  // original model: 2d 100m x 100m image
+  // size of compartments are not set in original spatial model
   REQUIRE(doc->getModel()->getCompartment("c1")->isSetSize() == false);
   REQUIRE(doc->getModel()->getCompartment("c2")->isSetSize() == false);
   REQUIRE(doc->getModel()->getCompartment("c3")->isSetSize() == false);
+  // compartments are 2d in original spatial model
+  REQUIRE(doc->getModel()->getCompartment("c1")->getSpatialDimensions() == 2);
+  REQUIRE(doc->getModel()->getCompartment("c2")->getSpatialDimensions() == 2);
+  REQUIRE(doc->getModel()->getCompartment("c3")->getSpatialDimensions() == 2);
+  // compartments have explicit units
+  REQUIRE(doc->getModel()->getCompartment("c1")->isSetUnits() == true);
+  REQUIRE(doc->getModel()->getCompartment("c2")->isSetUnits() == true);
+  REQUIRE(doc->getModel()->getCompartment("c3")->isSetUnits() == true);
   s.importSBMLString(xml);
   xml = s.getXml().toStdString();
   doc.reset(libsbml::readSBMLFromString(xml.c_str()));
+  // after import, model is now 3d
+  // z direction size set to 1 by default, so 100 m x 100 m x 1 m geometry image
+  // volume of pixel is 1m^3 = 1e3 litres
   // after import, compartment size is set based on geometry image
   REQUIRE(doc->getModel()->getCompartment("c1")->isSetSize() == true);
   REQUIRE(doc->getModel()->getCompartment("c1")->getSize() ==
-          dbl_approx(5441.0));
+          dbl_approx(5441000.0));
   REQUIRE(doc->getModel()->getCompartment("c2")->isSetSize() == true);
   REQUIRE(doc->getModel()->getCompartment("c2")->getSize() ==
-          dbl_approx(4034.0));
+          dbl_approx(4034000.0));
   REQUIRE(doc->getModel()->getCompartment("c3")->isSetSize() == true);
   REQUIRE(doc->getModel()->getCompartment("c3")->getSize() ==
-          dbl_approx(525.0));
+          dbl_approx(525000.0));
+  // compartments are now 3d
+  REQUIRE(doc->getModel()->getCompartment("c1")->getSpatialDimensions() == 3);
+  REQUIRE(doc->getModel()->getCompartment("c2")->getSpatialDimensions() == 3);
+  REQUIRE(doc->getModel()->getCompartment("c3")->getSpatialDimensions() == 3);
+  // no explicit units: inferred from model units & number of dimensions
+  REQUIRE(doc->getModel()->getCompartment("c1")->isSetUnits() == false);
+  REQUIRE(doc->getModel()->getCompartment("c2")->isSetUnits() == false);
+  REQUIRE(doc->getModel()->getCompartment("c3")->isSetUnits() == false);
 
   const auto &img = s.getGeometry().getImage();
   REQUIRE(img.colorCount() == 3);
@@ -426,7 +446,7 @@ SCENARIO("SBML: import uint8 sampled field",
           utils::indexedColours()[2].rgb());
   // species A_c1 has initialAmount 11 -> converted to concentration
   REQUIRE(s.getSpecies().getInitialConcentration("A_c1") ==
-          dbl_approx(11.0 / 5441.0));
+          dbl_approx(11.0 / 5441000.0));
   // species A_c2 has no initialAmount or initialConcentration -> defaulted to 0
   REQUIRE(s.getSpecies().getInitialConcentration("A_c2") == dbl_approx(0.0));
 }
@@ -437,7 +457,7 @@ SCENARIO("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
   f.open(QIODevice::ReadOnly);
   s.importSBMLString(f.readAll().toStdString());
   GIVEN("SBML document") {
-    WHEN("importSBMLFile called") {
+    WHEN("imported") {
       THEN("find compartments") {
         REQUIRE(s.getCompartments().getIds().size() == 1);
         REQUIRE(s.getCompartments().getIds()[0] == "comp");
@@ -766,23 +786,47 @@ SCENARIO("SBML: load model, refine mesh, save",
           numTriangleIndices);
 }
 
-SCENARIO("SBML: load single compartment model, change size of geometry, save",
+SCENARIO("SBML: load single compartment model, change size of geometry",
          "[core/model/model][core/model][core][model][mesh]") {
   model::Model s;
   QFile f(":/models/ABtoC.xml");
   f.open(QIODevice::ReadOnly);
   s.importSBMLString(f.readAll().toStdString());
   REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(1.0));
-  REQUIRE(s.getCompartments().getSize("comp") == dbl_approx(3149));
-  auto interiorPoint{s.getCompartments().getInteriorPoints("comp").value()[0]};
-  REQUIRE(interiorPoint.x() == dbl_approx(48.5));
-  REQUIRE(interiorPoint.y() == dbl_approx(51.5));
-  // change size of geometry, compartment sizes, interior points updated
+  REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(1.0));
+  // 100x100 image, 100m x 100m physical size
+  REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(100.0));
+  REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(100.0));
+  // z direction assumed to be 1 in length units
+  // 3149 pixels, pixel is 1m^3, volume units litres
+  REQUIRE(s.getCompartments().getSize("comp") == dbl_approx(3149 * 1000));
+
+  // change pixel width: compartment sizes, interior points updated
   double a = 0.01;
   s.getGeometry().setPixelWidth(a);
-  interiorPoint = s.getCompartments().getInteriorPoints("comp").value()[0];
   REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(0.01));
-  REQUIRE(s.getCompartments().getSize("comp") == dbl_approx(0.3149));
+  REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(1.0));
+  // physical size rescaled
+  REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(1.0));
+  REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(1.0));
+  // compartment sizes rescaled: pixel is now 0.01*0.01*1 = 1e-4 m^2
+  REQUIRE(s.getCompartments().getSize("comp") == dbl_approx(314.9));
+  auto interiorPoint{s.getCompartments().getInteriorPoints("comp").value()[0]};
+  // interior points rescaled
+  REQUIRE(interiorPoint.x() == dbl_approx(0.485));
+  REQUIRE(interiorPoint.y() == dbl_approx(0.515));
+
+  // change pixel depth: compartment sizes, interior points updated
+  s.getGeometry().setPixelDepth(0.1);
+  REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(0.01));
+  REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(0.1));
+  // 2d physical size not affected:
+  REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(1.0));
+  REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(1.0));
+  // compartment sizes rescaled: pixel is now 0.01*0.01*0.1 = 1e-5 m^2
+  REQUIRE(s.getCompartments().getSize("comp") == dbl_approx(31.49));
+  interiorPoint = s.getCompartments().getInteriorPoints("comp").value()[0];
+  // 2d part of interior points not affected
   REQUIRE(interiorPoint.x() == dbl_approx(0.485));
   REQUIRE(interiorPoint.y() == dbl_approx(0.515));
 }
@@ -793,27 +837,58 @@ SCENARIO("SBML: load multi-compartment model, change size of geometry, save",
   QFile f(":/models/very-simple-model.xml");
   f.open(QIODevice::ReadOnly);
   s.importSBMLString(f.readAll().toStdString());
+  // 100m x 100m x 1m geometry, volume units: litres
+  REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(100.0));
+  REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(100.0));
   REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(1.0));
-  REQUIRE(s.getCompartments().getSize("c1") == dbl_approx(5441));
-  REQUIRE(s.getCompartments().getSize("c2") == dbl_approx(4034));
-  REQUIRE(s.getCompartments().getSize("c3") == dbl_approx(525));
+  REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(1.0));
+  REQUIRE(s.getUnits().getLength().name == "m");
+  REQUIRE(s.getUnits().getVolume().name == "L");
+  // volume of 1 pixel = 1m^3 = 1e3 litres
+  REQUIRE(s.getCompartments().getSize("c1") == dbl_approx(5441 * 1e3));
+  REQUIRE(s.getCompartments().getSize("c2") == dbl_approx(4034 * 1e3));
+  REQUIRE(s.getCompartments().getSize("c3") == dbl_approx(525 * 1e3));
+  // area of 1 pixel = 1m^2
   REQUIRE(s.getCompartments().getSize("c1_c2_membrane") == dbl_approx(338));
   REQUIRE(s.getCompartments().getSize("c2_c3_membrane") == dbl_approx(108));
   auto interiorPoint{s.getCompartments().getInteriorPoints("c1").value()[0]};
   REQUIRE(interiorPoint.x() == dbl_approx(68.5));
   REQUIRE(interiorPoint.y() == dbl_approx(83.5));
-  // change size of geometry, compartment/membrane sizes, interior points updated
+  // change pixel width: compartment/membrane sizes, interior points updated
   double a = 1.1285;
   s.getGeometry().setPixelWidth(a);
   REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(a));
-  REQUIRE(s.getCompartments().getSize("c1") == dbl_approx(a*a*5441));
-  REQUIRE(s.getCompartments().getSize("c2") == dbl_approx(a*a*4034));
-  REQUIRE(s.getCompartments().getSize("c3") == dbl_approx(a*a*525));
-  REQUIRE(s.getCompartments().getSize("c1_c2_membrane") == dbl_approx(a*338));
-  REQUIRE(s.getCompartments().getSize("c2_c3_membrane") == dbl_approx(a*108));
+  REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(1.0));
+  REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(100.0 * a));
+  REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(100.0 * a));
+  REQUIRE(s.getCompartments().getSize("c1") == dbl_approx(a * a * 5441 * 1e3));
+  REQUIRE(s.getCompartments().getSize("c2") == dbl_approx(a * a * 4034 * 1e3));
+  REQUIRE(s.getCompartments().getSize("c3") == dbl_approx(a * a * 525 * 1e3));
+  REQUIRE(s.getCompartments().getSize("c1_c2_membrane") == dbl_approx(a * 338));
+  REQUIRE(s.getCompartments().getSize("c2_c3_membrane") == dbl_approx(a * 108));
   interiorPoint = s.getCompartments().getInteriorPoints("c1").value()[0];
-  REQUIRE(interiorPoint.x() == dbl_approx(a*68.5));
-  REQUIRE(interiorPoint.y() == dbl_approx(a*83.5));
+  REQUIRE(interiorPoint.x() == dbl_approx(a * 68.5));
+  REQUIRE(interiorPoint.y() == dbl_approx(a * 83.5));
+  // change pixel depth: compartment/membrane sizes, interior points updated
+  double d = 0.937694;
+  s.getGeometry().setPixelDepth(d);
+  REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(a));
+  REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(d));
+  REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(100.0 * a));
+  REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(100.0 * a));
+  REQUIRE(s.getCompartments().getSize("c1") ==
+          dbl_approx(a * a * d * 5441 * 1e3));
+  REQUIRE(s.getCompartments().getSize("c2") ==
+          dbl_approx(a * a * d * 4034 * 1e3));
+  REQUIRE(s.getCompartments().getSize("c3") ==
+          dbl_approx(a * a * d * 525 * 1e3));
+  REQUIRE(s.getCompartments().getSize("c1_c2_membrane") ==
+          dbl_approx(a * d * 338));
+  REQUIRE(s.getCompartments().getSize("c2_c3_membrane") ==
+          dbl_approx(a * d * 108));
+  interiorPoint = s.getCompartments().getInteriorPoints("c1").value()[0];
+  REQUIRE(interiorPoint.x() == dbl_approx(a * 68.5));
+  REQUIRE(interiorPoint.y() == dbl_approx(a * 83.5));
 }
 
 SCENARIO("SBML: load .xml model, simulate, save as .sme, load .sme",

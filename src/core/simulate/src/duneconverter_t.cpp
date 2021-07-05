@@ -120,13 +120,13 @@ SCENARIO("DUNE: DuneConverter",
       ++line;
     }
     REQUIRE(*line++ == "[model.comp.reaction]");
-    REQUIRE(symEq(*line++, "dim_ = -1e-7*x__*dim_"));
-    REQUIRE(symEq(*line++, "x__ = -1e-7*x__*dim_"));
-    REQUIRE(symEq(*line++, "x_ = 1e-7*x__*dim_"));
+    REQUIRE(symEq(*line++, "dim_ = -0.1*x__*dim_"));
+    REQUIRE(symEq(*line++, "x__ = -0.1*x__*dim_"));
+    REQUIRE(symEq(*line++, "x_ = 0.1*x__*dim_"));
     REQUIRE(*line++ == "");
     REQUIRE(*line++ == "[model.comp.reaction.jacobian]");
-    REQUIRE(symEq(*line++, "ddim___ddim_ = -1e-7*x__"));
-    REQUIRE(symEq(*line++, "ddim___dx__ = -1e-7*dim_"));
+    REQUIRE(symEq(*line++, "ddim___ddim_ = -0.1*x__"));
+    REQUIRE(symEq(*line++, "ddim___dx__ = -0.1*dim_"));
     REQUIRE(symEq(*line++, "ddim___dx_ = 0"));
   }
   GIVEN("brusselator model with substitutions") {
