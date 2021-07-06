@@ -10,6 +10,7 @@ Spatial Model Editor Documentation
    quickstart/import-geometry
    quickstart/mesh
    quickstart/species
+   quickstart/reactions
    quickstart/run-simulation
 
 .. toctree::
@@ -30,6 +31,7 @@ Spatial Model Editor Documentation
    reference/cli
    reference/maths
    reference/units
+   reference/CHANGELOG.md
    reference/source-code
    reference/license
 

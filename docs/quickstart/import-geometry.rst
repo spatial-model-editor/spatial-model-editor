@@ -1,11 +1,16 @@
 Importing Geometry
 ==================
 
-After importing a model, the next step is to import an image of the compartments in the model. To do this, go to `Import->Geometry from image`, or choose one of the built-in example images from `Import->Example geometry image`.
+After importing a non-spatial model,
+the next step is to import an image of the compartments in the model to define the geometry.
 
-The image should be segmented such that each compartment has a unique colour.
+To do this, go to `Import->Geometry from image` or press ``Ctrl+I``.
+Alternatively, go to `Import->Example geometry image` to use one of the built-in example images.
 
-For each compartment in the model:
+Then you can specify the dimensions of the geometry image, and optionally reduce the resolution
+of the image or the number of colours to be used. The geometry image should be segmented such that each compartment has a unique colour.
+
+Next, for each compartment in the model:
 
 - click on the compartment name
 - click on "Select compartment geometry..."

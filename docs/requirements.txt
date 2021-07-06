@@ -1,6 +1,7 @@
 breathe
 ipykernel
 matplotlib
+myst_parser
 nbsphinx
 numpy
 pandoc

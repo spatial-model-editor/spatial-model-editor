@@ -2,7 +2,9 @@
 
 - user documentation is written in [reStructuredText](https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html) format
 
-- `sme` API documentation is generated from the [Google style Docstrings](https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html#example-google)
+- `sme` Python API documentation is generated from the [Google style Docstrings](https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html#example-google)
+
+- `core` C++ documentation is generated from the [Doxygen documentation](https://www.doxygen.nl/index.html)
 
 - documentation should be updated along with source code changes in pull requests
 
@@ -14,7 +16,7 @@
 
   - this avoids having to compile sme on readthedocs
 
-  - however it means the documentation is generated from the latest PyPI version, not the code in the commit
+  - however it means the documentation is generated from the latest published PyPI version, not the code in the commit
 
   - the readthedocs build can be manually ran again after a new PyPI version is uploaded to update the docs
 
