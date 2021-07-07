@@ -831,7 +831,7 @@ SCENARIO("SBML: load single compartment model, change size of geometry",
   REQUIRE(interiorPoint.y() == dbl_approx(0.515));
 }
 
-SCENARIO("SBML: load multi-compartment model, change size of geometry, save",
+SCENARIO("SBML: load multi-compartment model, change size of geometry",
          "[core/model/model][core/model][core][model][mesh]") {
   model::Model s;
   QFile f(":/models/very-simple-model.xml");
@@ -887,6 +887,27 @@ SCENARIO("SBML: load multi-compartment model, change size of geometry, save",
   REQUIRE(s.getCompartments().getSize("c2_c3_membrane") ==
           dbl_approx(a * d * 108));
   interiorPoint = s.getCompartments().getInteriorPoints("c1").value()[0];
+  REQUIRE(interiorPoint.x() == dbl_approx(a * 68.5));
+  REQUIRE(interiorPoint.y() == dbl_approx(a * 83.5));
+  // export sbml, import sbml, check all sizes preserved
+  auto xml{s.getXml().toStdString()};
+  model::Model s2;
+  s2.importSBMLString(xml);
+  REQUIRE(s2.getGeometry().getPixelWidth() == dbl_approx(a));
+  REQUIRE(s2.getGeometry().getPixelDepth() == dbl_approx(d));
+  REQUIRE(s2.getGeometry().getPhysicalSize().width() == dbl_approx(100.0 * a));
+  REQUIRE(s2.getGeometry().getPhysicalSize().height() == dbl_approx(100.0 * a));
+  REQUIRE(s2.getCompartments().getSize("c1") ==
+          dbl_approx(a * a * d * 5441 * 1e3));
+  REQUIRE(s2.getCompartments().getSize("c2") ==
+          dbl_approx(a * a * d * 4034 * 1e3));
+  REQUIRE(s2.getCompartments().getSize("c3") ==
+          dbl_approx(a * a * d * 525 * 1e3));
+  REQUIRE(s2.getCompartments().getSize("c1_c2_membrane") ==
+          dbl_approx(a * d * 338));
+  REQUIRE(s2.getCompartments().getSize("c2_c3_membrane") ==
+          dbl_approx(a * d * 108));
+  interiorPoint = s2.getCompartments().getInteriorPoints("c1").value()[0];
   REQUIRE(interiorPoint.x() == dbl_approx(a * 68.5));
   REQUIRE(interiorPoint.y() == dbl_approx(a * 83.5));
 }

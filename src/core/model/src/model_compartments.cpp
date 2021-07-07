@@ -324,7 +324,7 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   geom->getDomainType(domainType)
       ->setSpatialDimensions(
           static_cast<int>(geom->getNumCoordinateComponents()));
-  if(compartment->isSetUnits()){
+  if (compartment->isSetUnits()) {
     // we set the model units, compartment units are then inferred from that
     compartment->unsetUnits();
   }
@@ -351,7 +351,8 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   modelMembranes->updateCompartmentNames(names);
   modelGeometry->updateMesh();
   if (modelGeometry->getIsValid()) {
-    modelMembranes->exportToSBML(modelGeometry->getPixelWidth());
+    modelMembranes->exportToSBML(modelGeometry->getPixelWidth() *
+                                 modelGeometry->getPixelDepth());
   }
   modelReactions->makeReactionsSpatial(modelGeometry->getIsValid());
 }
