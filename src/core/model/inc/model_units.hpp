@@ -64,7 +64,8 @@ private:
                      {"cm3", "metre", -2, 3},
                      {"mm3", "metre", -3, 3}},
                     3};
-  UnitVector amount{{{"mol", "mole", 0}, {"mmol", "mole", -3}}, 1};
+  UnitVector amount{
+      {{"mol", "mole", 0}, {"mmol", "mole", -3}, {"umol", "mole", -6}}, 1};
   QString concentration;
   QString diffusion;
   QString compartmentReaction;
