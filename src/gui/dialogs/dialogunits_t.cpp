@@ -50,7 +50,7 @@ SCENARIO("DialogUnits", "[gui/dialogs/units][gui/dialogs][gui][units]") {
       REQUIRE(dia.getTimeUnitIndex() == 1);
       REQUIRE(dia.getLengthUnitIndex() == 2);
       REQUIRE(dia.getVolumeUnitIndex() == 1);
-      REQUIRE(dia.getAmountUnitIndex() == 1);
+      REQUIRE(dia.getAmountUnitIndex() == 2);
     }
     WHEN("user presses up a lot for all") {
       mwt.addUserAction({"Up", "Up", "Tab", "Up", "Up", "Up", "Tab", "Up", "Up",
