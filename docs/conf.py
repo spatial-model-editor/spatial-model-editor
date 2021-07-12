@@ -37,6 +37,7 @@ subprocess.run(["doxygen", "Doxyfile.in"])
 # ones.
 extensions = [
     "breathe",
+    "myst_parser",
     "nbsphinx",
     "sphinx_rtd_theme",
     "sphinx.ext.autodoc",
@@ -68,6 +69,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 breathe_projects = {"sme": "build/xml"}
 breathe_default_project = "sme"
 breathe_default_members = ("members", "undoc-members")
+
+myst_update_mathjax = False
 
 # -- Options for HTML output -------------------------------------------------
 

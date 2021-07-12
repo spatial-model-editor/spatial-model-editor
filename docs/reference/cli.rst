@@ -47,7 +47,7 @@ Command line parameters
 
 .. code-block:: bash
 
-    Spatial Model Editor CLI v1.0.9
+    Spatial Model Editor CLI v1.1.1
     Usage: ./cli/spatial-cli [OPTIONS] file times image-intervals
 
     Positionals:
@@ -66,6 +66,7 @@ Command line parameters
       -v,--version                Display the version number and exit
       -d,--dump-config            Dump the default config ini file and exit
       -c,--config                 Read an ini file containing simulation options
+
 
 Using a config file
 -------------------

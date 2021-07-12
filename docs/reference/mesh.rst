@@ -8,6 +8,7 @@ Generating a triangular mesh for the dune-copasi solver from a pixel image of th
 * `Boundary line simplification`_
 * `Interior points`_
 * `Triangulation`_
+* `Mesh refinement`_
 
 These steps are described in more detail below, starting from this initial segmented image of the model geometry to illustrate each stage:
 
@@ -100,7 +101,7 @@ functions from the `OpenCV <https://opencv.org/>`_ library
 Meaning of the colours used in the animations:
 
 * grey area: original connected region pixels
-* black area: remaining pixels after previous erosions
+* black area: remaining pixels after previous erosion operations
 * green rectangle: region of interest where the next erosion operation will be applied
 * red dot: current interior point
 
@@ -114,13 +115,38 @@ Meaning of the colours used in the animations:
 Triangulation
 -------------
 
-The set of boundaries can then be triangulated using the `Triangle <https://www.cs.cmu.edu/~quake/triangle.html>`_ library.
-This generates a constrained conforming Delaunay triangulation (CCDT) from the boundary lines,
-by inserting points inside the compartments and triangulating them.
-If necessary it will also add additional points on the boundary lines (known as Steiner points).
+The set of boundaries is then triangulated using the
+`2D Conforming Triangulations and Meshes <https://doc.cgal.org/latest/Mesh_2/index.html>`_
+package from the `CGAL <https://www.cgal.org/>`_ library.
+This generates a constrained conforming Delaunay triangulation (CCDT) from the boundary lines
+and interior points.
+
+.. figure:: img/mesh_triangulate_0.png
+   :alt: Initial triangulation
+
+   Initial triangulation.
+
+Mesh refinement
+---------------
+
+The mesh is then constructed from the triangulation using
+`Delauney refinement <https://doc.cgal.org/latest/Mesh_2/index.html#secMesh_2_criteria>`_,
+which inserts points inside the compartment as far away as possible from the existing points,
+and triangulates them. It continues this until the minimum triangle angle is sufficiently large,
+and the maximum triangle area is sufficiently small.
+The minimum required angle is fixed to the largest value for
+which the algorithm is guaranteed to succeed.
 The maximum allowed triangle area for each compartment can be specified by the user.
+If necessary points will also be added to the boundary lines (known as Steiner points).
 
-.. figure:: img/mesh_triangulate.png
-   :alt: Generated triangular mesh
+.. image:: img/mesh_triangulate_0.png
+   :width: 30%
+.. image:: img/mesh_triangulate_1.png
+   :width: 30%
+.. image:: img/mesh_triangulate_2.png
+   :width: 30%
 
-   Generated triangular mesh.
+.. figure:: img/mesh_triangulate_3.png
+   :alt: Final mesh
+
+   Final mesh.

@@ -1,7 +1,9 @@
 dune-copasi simulator
 =====================
 
-`dune-copasi <https://dune-copasi.netlify.app/>`_ is the default PDE solver, which solves the PDE on a triangular mesh using finite element discretization methods. The mesh is automatically constructed from the geometry image, as described in :doc:`mesh`.
+`dune-copasi <https://dune-copasi.netlify.app/>`_ is the default PDE solver,
+which solves the PDE on a triangular mesh using finite element discretization methods.
+The mesh is automatically constructed from the geometry image, as described in :doc:`mesh`.
 
 Simulation options
 ------------------
@@ -40,5 +42,11 @@ The default settings should work well in most cases, but if desired they can be 
 * Output files
    * VTK files of the species concentrations throughout the simulation can be generated
    * these files can be viewed using `ParaView <https://www.paraview.org/>`_
+* Newton relative error
+   * the relative error where Newton iteration is considered to have converged
+   * currently this may need to be altered depending on the units and geometry size (see `#315 <https://github.com/spatial-model-editor/spatial-model-editor/issues/315#issuecomment-760085781>`_)
+* Newton absolute error
+   * the absolute error where Newton iteration is considered to have converged
+   * currently this may need to be altered depending on the units and geometry size (see `#315 <https://github.com/spatial-model-editor/spatial-model-editor/issues/315#issuecomment-760085781>`_)
 
-For more information on the solver see the `dune-copasi documentation <https://dune-copasi.netlify.app/>`_.
+For more information see the `dune-copasi documentation <https://dune-copasi.netlify.app/>`_.
