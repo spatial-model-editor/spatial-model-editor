@@ -5,6 +5,9 @@ target_link_libraries(
           gui_tests
           cli_tests
           ${SME_EXTRA_EXE_LIBS})
+if(SME_QT_DISABLE_UNICODE)
+  qt6_disable_unicode_defines(tests)
+endif()
 
 if(SME_WITH_QT6)
   find_package(Qt6 QUIET COMPONENTS Test)
@@ -19,6 +22,9 @@ endif()
 set_property(TARGET tests PROPERTY CXX_STANDARD 17)
 
 add_library(testlib resources/test_resources.qrc)
+if(SME_QT_DISABLE_UNICODE)
+  qt6_disable_unicode_defines(testlib)
+endif()
 target_link_libraries(
   testlib
   PUBLIC Catch2::Catch2

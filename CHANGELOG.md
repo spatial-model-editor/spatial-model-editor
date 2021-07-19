@@ -1,6 +1,27 @@
 # Changelog
 
-## [latest]
+## [1.1.2] - 2021-07-13
+### Added
+- autocomplete when editing maths [#559](https://github.com/spatial-model-editor/spatial-model-editor/issues/559)
+- support for all L3 sbml math in reaction rates (with Pixel simulator) [#569](https://github.com/spatial-model-editor/spatial-model-editor/issues/569)
+- option to invert y-axis of images [#568](https://github.com/spatial-model-editor/spatial-model-editor/issues/568)
+- option to set size of geometry image in third dimension [#582](https://github.com/spatial-model-editor/spatial-model-editor/issues/582)
+- `umol` unit of amount added to built-in units [#600](https://github.com/spatial-model-editor/spatial-model-editor/issues/600)
+
+### Changed
+- simulation length/intervals only loaded from model on 'reset' click or new model load [#565](https://github.com/spatial-model-editor/spatial-model-editor/issues/565)
+- models exported as 3d SBML models (to be consistent with our 3d units for species concentrations and volumes) [#588](https://github.com/spatial-model-editor/spatial-model-editor/issues/588)
+
+### Fixed
+- bug when clicking on simulation results plot selected wrong timepoint [#570](https://github.com/spatial-model-editor/spatial-model-editor/issues/570)
+- reaction rates involving species from unrelated compartments now displays an error, instead of only giving an error on simulation [#552](https://github.com/spatial-model-editor/spatial-model-editor/issues/552)
+- simulation crash when species is changed to constant & simulation data are re-loaded [#561](https://github.com/spatial-model-editor/spatial-model-editor/issues/561)
+- inaccuracy when re-starting a simulation that was stopped early [#388](https://github.com/spatial-model-editor/spatial-model-editor/issues/388)
+- bug where compartment sizes were not updated when compartment image resolution was altered [#583](https://github.com/spatial-model-editor/spatial-model-editor/issues/583)
+- bug where invalid mesh could cause a crash [#585](https://github.com/spatial-model-editor/spatial-model-editor/issues/585)
+- bug where simulating after changing geometry image size could cause a crash [#591](https://github.com/spatial-model-editor/spatial-model-editor/issues/591)
+- incorrect units used for compartment volumes when referenced in reaction rates [#584](https://github.com/spatial-model-editor/spatial-model-editor/issues/584)
+- bug where membrane area could be incorrect on model load [#595](https://github.com/spatial-model-editor/spatial-model-editor/issues/595)
 
 ## [1.1.1] - 2021-05-30
 ### Added

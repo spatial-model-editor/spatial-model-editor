@@ -3,7 +3,7 @@ name: Python Wheel Builds
 on: push
 
 env:
-  CIBUILDWHEEL_VERSION: 1.11.1
+  CIBUILDWHEEL_VERSION: 2.0.0
   CIBW_TEST_COMMAND: 'python -m unittest discover -v -s {project}/sme/test'
   CIBW_BUILD_VERBOSITY: 3
   SME_EXTERNAL_SMECORE: 'true'
@@ -16,9 +16,9 @@ jobs:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2021.06.11
-      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: spatialmodeleditor/manylinux2010-pypy_x86_64:2021.06.11
-      CIBW_SKIP: '*-manylinux_i686 *p27-* *p35-*'
+      CIBW_MANYLINUX_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2021.07.13
+      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2021.07.13
+      CIBW_SKIP: '*-manylinux_i686'
       CIBW_ENVIRONMENT: 'SME_EXTERNAL_SMECORE=on'
       CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'
     steps:
@@ -42,8 +42,6 @@ jobs:
     defaults:
       run:
         shell: bash
-    env:
-      CIBW_SKIP: '*p27-* *p35-*'
     steps:
       - uses: actions/checkout@v2
         with:
@@ -66,7 +64,6 @@ jobs:
       run:
         shell: msys2 {0}
     env:
-      CIBW_SKIP: '*p27-* *p35-*'
       CIBW_BUILD: '*-win_amd64'
       SME_EXTRA_CORE_DEFS: '_hypot=hypot;MS_WIN64'
     steps:
@@ -93,7 +90,6 @@ jobs:
       run:
         shell: msys2 {0}
     env:
-      CIBW_SKIP: '*p27-* *p35-*'
       CIBW_BUILD: '*-win32'
       SME_EXTRA_CORE_DEFS: '_hypot=hypot'
     steps:

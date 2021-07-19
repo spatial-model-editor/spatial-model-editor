@@ -11,6 +11,10 @@ echo "PATH=$PATH"
 export CMAKE_PREFIX_PATH="C:/smelibs;C:/smelibs/CMake;C:/smelibs/lib/cmake"
 export SME_EXTRA_EXE_LIBS="-static;-static-libgcc;-static-libstdc++"
 export CMAKE_GENERATOR="Unix Makefiles"
+# stop Qt from defining UNICODE on windows to avoid dune issues
+# used to be opt-in, done by default for Qt >= 6.1.2 see
+# https://codereview.qt-project.org/c/qt/qtbase/+/350443
+export SME_QT_DISABLE_UNICODE=TRUE
 export SME_EXTRA_CORE_DEFS="_hypot=hypot"
 export CMAKE_CXX_COMPILER_LAUNCHER=ccache
 
@@ -30,6 +34,7 @@ cmake .. \
   -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH \
   -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
   -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER \
+  -DSME_QT_DISABLE_UNICODE=$SME_QT_DISABLE_UNICODE \
   -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS \
   -DSME_WITH_TBB=ON
 make -j2 VERBOSE=1

@@ -51,6 +51,7 @@ class CMakeBuild(build_ext):
             "SME_EXTRA_CORE_DEFS",
             "SME_EXTRA_EXE_LIBS",
             "SME_EXTERNAL_SMECORE",
+            "SME_QT_DISABLE_UNICODE",
             "PYTHON_LIBRARY",
             "CMAKE_CXX_COMPILER_LAUNCHER",
             "SME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM",
@@ -91,7 +92,7 @@ with open(path.join(sme_directory, "README.md")) as f:
 
 setup(
     name="sme",
-    version="1.1.1",
+    version="1.1.2",
     author="Liam Keegan",
     author_email="liam@keegan.ch",
     description="Spatial Model Editor python bindings",
