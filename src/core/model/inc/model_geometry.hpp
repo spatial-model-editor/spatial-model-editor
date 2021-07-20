@@ -25,6 +25,7 @@ namespace model {
 
 class ModelCompartments;
 class ModelMembranes;
+class ModelUnits;
 struct Settings;
 
 class ModelGeometry {
@@ -42,6 +43,7 @@ private:
   libsbml::Model *sbmlModel{nullptr};
   ModelCompartments *modelCompartments{nullptr};
   ModelMembranes *modelMembranes{nullptr};
+  const ModelUnits *modelUnits{nullptr};
   Settings *sbmlAnnotation = nullptr;
   bool hasUnsavedChanges{false};
   int importDimensions(const libsbml::Model *model);
@@ -52,7 +54,7 @@ private:
 public:
   ModelGeometry();
   explicit ModelGeometry(libsbml::Model *model, ModelCompartments *compartments,
-                         ModelMembranes *membranes, Settings *annotation);
+                         ModelMembranes *membranes, const ModelUnits *units, Settings *annotation);
   void importSampledFieldGeometry(const libsbml::Model *model);
   void importParametricGeometry(const libsbml::Model *model,
                                 const Settings *settings);
@@ -68,6 +70,8 @@ public:
   double getZOrigin() const;
   const QPointF &getPhysicalOrigin() const;
   const QSizeF &getPhysicalSize() const;
+  QPointF getPhysicalPoint(const QPoint pixel) const;
+  QString getPhysicalPointAsString(const QPoint pixel) const;
   const QImage &getImage() const;
   mesh::Mesh *getMesh() const;
   bool getIsValid() const;

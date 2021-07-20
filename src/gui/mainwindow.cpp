@@ -100,7 +100,7 @@ MainWindow::~MainWindow() = default;
 
 void MainWindow::setupTabs() {
   tabGeometry = new TabGeometry(model, ui->lblGeometry,
-                                statusBarPermanentMessage, ui->tabReactions);
+                                statusBar(), ui->tabReactions);
   ui->tabGeometry->layout()->addWidget(tabGeometry);
 
   tabSpecies = new TabSpecies(model, ui->lblGeometry, ui->tabSpecies);
@@ -286,8 +286,7 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
   ui->actionGeometry_scale->setChecked(
       model.getDisplayOptions().showGeometryScale);
   actionGeometry_scale_triggered(model.getDisplayOptions().showGeometryScale);
-  ui->actionInvert_y_axis->setChecked(
-      model.getDisplayOptions().invertYAxis);
+  ui->actionInvert_y_axis->setChecked(model.getDisplayOptions().invertYAxis);
   actionInvert_y_axis_triggered(model.getDisplayOptions().invertYAxis);
   this->setWindowTitle(QString("Spatial Model Editor [%1]").arg(filename));
 }
@@ -472,10 +471,9 @@ void MainWindow::actionEdit_geometry_image_triggered() {
   if (!isValidModelAndGeometryImage()) {
     return;
   }
-  DialogGeometryImage dialog(model.getGeometry().getImage(),
-                             model.getGeometry().getPixelWidth(),
-                             model.getGeometry().getPixelDepth(),
-                             model.getUnits());
+  DialogGeometryImage dialog(
+      model.getGeometry().getImage(), model.getGeometry().getPixelWidth(),
+      model.getGeometry().getPixelDepth(), model.getUnits());
   if (dialog.exec() == QDialog::Accepted) {
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     double pixelDepth = dialog.getPixelDepth();
@@ -524,7 +522,7 @@ void MainWindow::actionGeometry_scale_triggered(bool checked) {
   model.setDisplayOptions(options);
 }
 
-void MainWindow::actionInvert_y_axis_triggered(bool checked){
+void MainWindow::actionInvert_y_axis_triggered(bool checked) {
   ui->lblGeometry->invertYAxis(checked);
   tabGeometry->invertYAxis(checked);
   tabSimulate->invertYAxis(checked);
@@ -532,7 +530,6 @@ void MainWindow::actionInvert_y_axis_triggered(bool checked){
   options.invertYAxis = checked;
   model.setDisplayOptions(options);
 }
-
 
 void MainWindow::actionSimulation_options_triggered() {
   DialogSimulationOptions dialog(model.getSimulationSettings().options);
@@ -613,18 +610,7 @@ void MainWindow::lblGeometry_mouseOver(QPoint point) {
   if (!model.getGeometry().getHasImage()) {
     return;
   }
-  double pixelWidth{model.getGeometry().getPixelWidth()};
-  const auto &origin{model.getGeometry().getPhysicalOrigin()};
-  auto lengthUnit{model.getUnits().getLength().name};
-  auto height{model.getGeometry().getImage().height()};
-  QPointF physical;
-  physical.setX(origin.x() + pixelWidth * static_cast<double>(point.x()));
-  physical.setY(origin.x() +
-                pixelWidth * static_cast<double>(height - 1 - point.y()));
-  statusBar()->showMessage(QString("x=%1 %2, y=%3 %2")
-                               .arg(physical.x())
-                               .arg(lengthUnit)
-                               .arg(physical.y()));
+  statusBar()->showMessage(model.getGeometry().getPhysicalPointAsString(point));
 }
 
 void MainWindow::spinGeometryZoom_valueChanged(int value) {

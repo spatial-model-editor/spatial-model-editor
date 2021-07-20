@@ -6,13 +6,14 @@
 #include "qlabelmousetracker.hpp"
 #include "ui_tabgeometry.h"
 #include <QInputDialog>
+#include <QStatusBar>
 #include <QMessageBox>
 #include <stdexcept>
 
 TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
-                         QLabel *statusBarMsg, QWidget *parent)
+                         QStatusBar *statusBar, QWidget *parent)
     : QWidget(parent), ui{std::make_unique<Ui::TabGeometry>()}, model(m),
-      lblGeometry(mouseTracker), statusBarPermanentMessage(statusBarMsg) {
+      lblGeometry(mouseTracker), statusBar{statusBar} {
   ui->setupUi(this);
   ui->tabCompartmentGeometry->setCurrentIndex(0);
 
@@ -28,6 +29,8 @@ TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
           &TabGeometry::txtCompartmentName_editingFinished);
   connect(ui->tabCompartmentGeometry, &QTabWidget::currentChanged, this,
           &TabGeometry::tabCompartmentGeometry_currentChanged);
+  connect(ui->lblCompShape, &QLabelMouseTracker::mouseOver, this,
+          &TabGeometry::lblCompShape_mouseOver);
   connect(ui->lblCompBoundary, &QLabelMouseTracker::mouseClicked, this,
           &TabGeometry::lblCompBoundary_mouseClicked);
   connect(ui->lblCompBoundary, &QLabelMouseTracker::mouseWheelEvent, this,
@@ -124,7 +127,9 @@ void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
     // update display by simulating user click on listCompartments
     listCompartments_itemSelectionChanged();
     waitingForCompartmentChoice = false;
-    statusBarPermanentMessage->clear();
+    if(statusBar != nullptr) {
+      statusBar->clearMessage();
+    }
     QGuiApplication::restoreOverrideCursor();
     enableTabs();
     emit modelGeometryChanged();
@@ -186,9 +191,11 @@ void TabGeometry::btnChangeCompartment_clicked() {
   }
   SPDLOG_DEBUG("waiting for user to click on geometry image..");
   waitingForCompartmentChoice = true;
-  statusBarPermanentMessage->setText(
-      "Please click on the desired location on the compartment geometry "
-      "image...");
+  if(statusBar != nullptr) {
+    statusBar->showMessage(
+        "Please click on the desired location on the compartment geometry "
+        "image...");
+  }
 }
 
 void TabGeometry::txtCompartmentName_editingFinished() {
@@ -279,6 +286,12 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
       ui->spinMeshZoom->setEnabled(false);
       return;
     }
+  }
+}
+
+void TabGeometry::lblCompShape_mouseOver(QPoint point) {
+  if(statusBar != nullptr) {
+    statusBar->showMessage(model.getGeometry().getPhysicalPointAsString(point));
   }
 }
 

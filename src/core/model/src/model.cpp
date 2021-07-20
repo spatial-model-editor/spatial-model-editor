@@ -67,7 +67,7 @@ void Model::initModelData() {
       ModelCompartments(model, &modelGeometry, &modelMembranes, &modelSpecies,
                         &modelReactions, &modelUnits, &getSimulationData());
   modelGeometry =
-      ModelGeometry(model, &modelCompartments, &modelMembranes, &settings);
+      ModelGeometry(model, &modelCompartments, &modelMembranes, &modelUnits, &settings);
   modelGeometry.importSampledFieldGeometry(model);
   modelGeometry.importParametricGeometry(model, &settings);
   modelParameters = ModelParameters(model, &modelEvents);
