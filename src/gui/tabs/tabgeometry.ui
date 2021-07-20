@@ -276,9 +276,6 @@
                <property name="toolTip">
                 <string>The shape of the compartment</string>
                </property>
-               <property name="statusTip">
-                <string>The shape of the compartment</string>
-               </property>
                <property name="whatsThis">
                 <string>&lt;h4&gt;Compartment Geometry&lt;/h4&gt;
 &lt;p&gt;The compartment geometry is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
@@ -340,6 +337,14 @@
                 <bool>true</bool>
                </property>
                <widget class="QWidget" name="scrollBoundaryLinesContents">
+                <property name="geometry">
+                 <rect>
+                  <x>0</x>
+                  <y>0</y>
+                  <width>797</width>
+                  <height>559</height>
+                 </rect>
+                </property>
                 <layout class="QVBoxLayout" name="verticalLayout">
                  <item>
                   <widget class="QLabelMouseTracker" name="lblCompBoundary" native="true">
@@ -492,7 +497,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>797</width>
-                  <height>560</height>
+                  <height>559</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout_4">

@@ -9,9 +9,7 @@ namespace libsbml {
 class Model;
 }
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 struct Unit {
   QString name;
@@ -109,7 +107,5 @@ public:
 double rescale(double val, const Unit &oldUnit, const Unit &newUnit);
 
 double getVolOverL3(const Unit &lengthUnit, const Unit &volumeUnit);
-
-} // namespace model
 
 } // namespace sme

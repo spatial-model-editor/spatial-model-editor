@@ -6,6 +6,7 @@
 #include "mesh.hpp"
 #include "model_compartments.hpp"
 #include "model_membranes.hpp"
+#include "model_units.hpp"
 #include "sbml_utils.hpp"
 #include "utils.hpp"
 #include "xml_annotation.hpp"
@@ -175,7 +176,7 @@ void ModelGeometry::writeDefaultGeometryToSBML() {
   createDefaultCompartmentGeometryIfMissing(sbmlModel);
 }
 
-void ModelGeometry::updateCompartmentAndMembraneSizes(){
+void ModelGeometry::updateCompartmentAndMembraneSizes() {
   // reassign all compartment colours to update sizes, interior points, etc
   for (const auto &compartmentId : modelCompartments->getIds()) {
     modelCompartments->setColour(compartmentId,
@@ -188,9 +189,10 @@ ModelGeometry::ModelGeometry() = default;
 
 ModelGeometry::ModelGeometry(libsbml::Model *model,
                              ModelCompartments *compartments,
-                             ModelMembranes *membranes, Settings *annotation)
+                             ModelMembranes *membranes, const ModelUnits *units,
+                             Settings *annotation)
     : sbmlModel{model}, modelCompartments{compartments},
-      modelMembranes{membranes}, sbmlAnnotation{annotation} {
+      modelMembranes{membranes}, modelUnits{units}, sbmlAnnotation{annotation} {
   if (auto nDim{importDimensions(model)}; nDim == 0) {
     SPDLOG_WARN("Failed to import geometry");
     writeDefaultGeometryToSBML();
@@ -383,7 +385,7 @@ void ModelGeometry::setPixelWidth(double width, bool updateSBML) {
   min->setValue(physicalOrigin.y());
   max->setValue(physicalOrigin.y() + physicalSize.height());
   SPDLOG_INFO("  - y now in range [{},{}]", min->getValue(), max->getValue());
-  if(updateSBML){
+  if (updateSBML) {
     updateCompartmentAndMembraneSizes();
   }
 }
@@ -404,15 +406,30 @@ void ModelGeometry::setPixelDepth(double depth) {
   updateCompartmentAndMembraneSizes();
 }
 
-double ModelGeometry::getZOrigin() const{
-  return zOrigin;
-}
+double ModelGeometry::getZOrigin() const { return zOrigin; }
 
 const QPointF &ModelGeometry::getPhysicalOrigin() const {
   return physicalOrigin;
 }
 
 const QSizeF &ModelGeometry::getPhysicalSize() const { return physicalSize; }
+
+QPointF ModelGeometry::getPhysicalPoint(const QPoint pixel) const {
+  QPointF physicalPoint{physicalOrigin};
+  physicalPoint.rx() += pixelWidth * static_cast<double>(pixel.x());
+  physicalPoint.ry() +=
+      pixelWidth * static_cast<double>(image.height() - 1 - pixel.y());
+  return physicalPoint;
+}
+
+QString ModelGeometry::getPhysicalPointAsString(const QPoint pixel) const {
+  auto lengthUnit{modelUnits->getLength().name};
+  auto physicalPoint{getPhysicalPoint(pixel)};
+  return QString("x: %1 %2, y: %3 %2")
+      .arg(physicalPoint.x())
+      .arg(lengthUnit)
+      .arg(physicalPoint.y());
+}
 
 const QImage &ModelGeometry::getImage() const { return image; }
 

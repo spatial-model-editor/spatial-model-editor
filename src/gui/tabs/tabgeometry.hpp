@@ -5,9 +5,11 @@
 #include <QWidget>
 #include <memory>
 
+
 class QLabel;
 class QListWidgetItem;
 class QLabelMouseTracker;
+class QStatusBar;
 
 namespace sme::model {
 class Model;
@@ -22,8 +24,8 @@ class TabGeometry : public QWidget {
 
 public:
   explicit TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
-                       QLabel *statusBarMsg, QWidget *parent = nullptr);
-  ~TabGeometry();
+                       QStatusBar *statusBar = nullptr, QWidget *parent = nullptr);
+  ~TabGeometry() override;
   void loadModelData(const QString &selection = {});
   void enableTabs();
   void invertYAxis(bool enable);
@@ -36,7 +38,7 @@ private:
   std::unique_ptr<Ui::TabGeometry> ui;
   sme::model::Model &model;
   QLabelMouseTracker *lblGeometry;
-  QLabel *statusBarPermanentMessage;
+  QStatusBar *statusBar{};
   bool waitingForCompartmentChoice{false};
   bool membraneSelected{false};
 
@@ -46,6 +48,7 @@ private:
   void btnChangeCompartment_clicked();
   void txtCompartmentName_editingFinished();
   void tabCompartmentGeometry_currentChanged(int index);
+  void lblCompShape_mouseOver(QPoint point);
   void lblCompBoundary_mouseClicked(QRgb col, QPoint point);
   void spinBoundaryIndex_valueChanged(int value);
   void spinMaxBoundaryPoints_valueChanged(int value);

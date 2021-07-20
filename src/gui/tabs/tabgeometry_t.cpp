@@ -18,7 +18,7 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
   mouseTracker.show();
   waitFor(&mouseTracker);
   QLabel statusBarMsg;
-  auto tab = TabGeometry(model, &mouseTracker, &statusBarMsg);
+  auto tab = TabGeometry(model, &mouseTracker);
   tab.show();
   waitFor(&tab);
   ModalWidgetTimer mwt;
