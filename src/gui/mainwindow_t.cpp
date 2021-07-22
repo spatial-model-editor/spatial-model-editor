@@ -26,7 +26,8 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
     mwt.start();
     MainWindow w("dontexist.xml");
     w.show();
-    REQUIRE(mwt.getResult() == "Failed to load file dontexist.xml");
+    REQUIRE(mwt.getResult() == "Failed to load file dontexist.xml\n\n[2] "
+                               "[Operating system] line 1:1 File unreadable.\n\n");
   }
   SECTION("shortcut keys") {
     MainWindow w;
@@ -145,7 +146,7 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
         REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
       }
       SECTION("open sbml xml file") {
-        REQUIRE(w.windowTitle() == "Spatial Model Editor []");
+        REQUIRE(w.windowTitle() == "Spatial Model Editor [untitled-model]");
         mwt.addUserAction({"w", "q", "z", ".", "x", "m", "l"});
         mwt.start();
         sendKeyEvents(&w, {"Ctrl+O"});
@@ -153,7 +154,7 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
         REQUIRE(w.windowTitle().right(8) == "wqz.xml]");
       }
       SECTION("open sme file") {
-        REQUIRE(w.windowTitle() == "Spatial Model Editor []");
+        REQUIRE(w.windowTitle() == "Spatial Model Editor [untitled-model]");
         mwt.addUserAction({"w", "q", "z", ".", "s", "m", "e"});
         mwt.start();
         sendKeyEvents(&w, {"Ctrl+O"});

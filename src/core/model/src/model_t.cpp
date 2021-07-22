@@ -67,6 +67,7 @@ SCENARIO("SBML: import SBML doc without geometry",
   model::Model s;
   s.importSBMLFile("tmp.xml");
   REQUIRE(s.getIsValid() == true);
+  REQUIRE(s.getErrorMessage().isEmpty());
   // export it again
   s.exportSBMLFile("tmp.xml");
   THEN("upgrade SBML doc and add default 3d spatial geometry") {
@@ -272,6 +273,7 @@ SCENARIO("SBML: import SBML level 2 document",
   model::Model s;
   s.importSBMLFile("tmp.xml");
   REQUIRE(s.getIsValid() == true);
+  REQUIRE(s.getErrorMessage().isEmpty());
 
   // import geometry image & assign compartments to colours
   s.getGeometry().importGeometryFromImage(
@@ -369,9 +371,11 @@ SCENARIO("SBML: create new model, import geometry from image",
   REQUIRE(s.getGeometry().getHasImage() == false);
   REQUIRE(s.getGeometry().getIsValid() == false);
   REQUIRE(s.getIsValid() == false);
+  REQUIRE(s.getErrorMessage().isEmpty());
   s.createSBMLFile("new");
   s.getCompartments().add("comp");
   REQUIRE(s.getIsValid() == true);
+  REQUIRE(s.getErrorMessage().isEmpty());
   REQUIRE(s.getGeometry().getHasImage() == false);
   REQUIRE(s.getGeometry().getIsValid() == false);
   GIVEN("Single pixel image") {
@@ -381,10 +385,12 @@ SCENARIO("SBML: create new model, import geometry from image",
     img.save("tmp.png");
     s.getGeometry().importGeometryFromImage(QImage("tmp.png"));
     REQUIRE(s.getIsValid() == true);
+    REQUIRE(s.getErrorMessage().isEmpty());
     REQUIRE(s.getGeometry().getHasImage() == true);
     REQUIRE(s.getGeometry().getIsValid() == false);
     s.getCompartments().setColour("comp", col);
     REQUIRE(s.getIsValid() == true);
+    REQUIRE(s.getErrorMessage().isEmpty());
     REQUIRE(s.getGeometry().getHasImage() == true);
     REQUIRE(s.getGeometry().getIsValid() == true);
   }

@@ -60,7 +60,8 @@ private:
   sme::utils::SmeFileContents smeFileContents;
   Settings settings;
   bool isValid{false};
-  QString currentFilename;
+  QString errorMessage{};
+  QString currentFilename{};
 
   ModelCompartments modelCompartments;
   ModelEvents modelEvents;
@@ -79,6 +80,7 @@ private:
 
 public:
   bool getIsValid() const;
+  const QString& getErrorMessage() const;
   bool getHasUnsavedChanges() const;
   const QString &getCurrentFilename() const;
 

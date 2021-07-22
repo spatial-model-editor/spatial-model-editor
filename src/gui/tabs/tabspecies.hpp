@@ -11,11 +11,9 @@ namespace Ui {
 class TabSpecies;
 }
 
-namespace sme {
-namespace model {
+namespace sme::model {
 class Model;
-}
-} // namespace sme
+} // namespace sme::model
 
 class QLabelMouseTracker;
 
@@ -25,7 +23,7 @@ class TabSpecies : public QWidget {
 public:
   explicit TabSpecies(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                       QWidget *parent = nullptr);
-  ~TabSpecies();
+  ~TabSpecies() override;
   void loadModelData(const QString &selection = {});
 
 private:

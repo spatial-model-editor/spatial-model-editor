@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace libsbml {
 class SBMLDocument;
 }
@@ -9,7 +11,7 @@ class SBMLDocument;
 namespace sme::model {
 
 void printSBMLDocWarnings(const libsbml::SBMLDocument *doc);
-int countAndPrintSBMLDocErrors(const libsbml::SBMLDocument *doc);
-bool validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc);
+std::string countAndPrintSBMLDocErrors(const libsbml::SBMLDocument *doc);
+std::string validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc);
 
 } // namespace sme::model

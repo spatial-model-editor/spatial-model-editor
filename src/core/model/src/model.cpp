@@ -51,7 +51,8 @@ void Model::importSBMLString(const std::string &xml,
 }
 
 void Model::initModelData() {
-  isValid = validateAndUpgradeSBMLDoc(doc.get());
+  errorMessage = validateAndUpgradeSBMLDoc(doc.get()).c_str();
+  isValid = errorMessage.isEmpty();
   if (!isValid) {
     return;
   }
@@ -91,6 +92,10 @@ void Model::setHasUnsavedChanges(bool unsavedChanges) {
 }
 
 bool Model::getIsValid() const { return isValid; }
+
+const QString& Model::getErrorMessage() const {
+  return errorMessage;
+}
 
 bool Model::getHasUnsavedChanges() const {
   return modelUnits.getHasUnsavedChanges() ||
@@ -236,6 +241,7 @@ const SimulationSettings &Model::getSimulationSettings() const {
 void Model::clear() {
   doc.reset();
   isValid = false;
+  errorMessage.clear();
   currentFilename.clear();
   modelCompartments = ModelCompartments{};
   modelGeometry = ModelGeometry{};

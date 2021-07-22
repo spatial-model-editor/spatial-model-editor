@@ -169,7 +169,7 @@ void DialogAnalytic::lblImage_mouseOver(QPoint point) {
     return;
   }
   auto physical = physicalPoint(point);
-  ui->lblConcentration->setText(QString("x=%1 %2, y=%3 %2, concentration=%4 %5")
+  ui->lblConcentration->setText(QString("x: %1 %2, y: %3 %2, concentration: %4 %5")
                                     .arg(physical.x())
                                     .arg(lengthUnit)
                                     .arg(physical.y())

@@ -18,8 +18,8 @@ void printSBMLDocWarnings(const libsbml::SBMLDocument *doc) {
   }
 }
 
-int countAndPrintSBMLDocErrors(const libsbml::SBMLDocument *doc) {
-  int nErrors{0};
+std::string countAndPrintSBMLDocErrors(const libsbml::SBMLDocument *doc) {
+  std::string errors{};
   auto severity{libsbml::LIBSBML_SEV_ERROR};
   const unsigned n{doc->getNumErrors(severity)};
   for (unsigned i = 0; i < n; ++i) {
@@ -31,19 +31,22 @@ int countAndPrintSBMLDocErrors(const libsbml::SBMLDocument *doc) {
                    err->getCategoryAsString(), err->getLine(), err->getColumn(),
                    err->getMessage());
     } else {
-      SPDLOG_ERROR("[{}] [{}] line {}:{} {}", err->getErrorId(),
-                   err->getCategoryAsString(), err->getLine(), err->getColumn(),
-                   err->getMessage());
-      ++nErrors;
+      auto s{fmt::format("[{}] [{}] line {}:{} {}", err->getErrorId(),
+                  err->getCategoryAsString(), err->getLine(), err->getColumn(),
+                  err->getMessage())};
+      SPDLOG_ERROR("{}", s);
+      errors.append(s);
+      errors.append("\n");
     }
   }
-  return nErrors;
+  return errors;
 }
 
-bool validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc) {
-  if (countAndPrintSBMLDocErrors(doc) > 0) {
+std::string validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc) {
+  auto errors{countAndPrintSBMLDocErrors(doc)};
+  if (!errors.empty()) {
     SPDLOG_ERROR("Errors while reading SBML file, aborting.");
-    return false;
+    return errors;
   }
   SPDLOG_INFO("Successfully imported SBML Level {}, Version {} model",
               doc->getLevel(), doc->getVersion());
@@ -69,7 +72,7 @@ bool validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc) {
   }
   doc->checkConsistency();
   printSBMLDocWarnings(doc);
-  return true;
+  return {};
 }
 
 } // namespace sme
