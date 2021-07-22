@@ -99,8 +99,8 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
 MainWindow::~MainWindow() = default;
 
 void MainWindow::setupTabs() {
-  tabGeometry = new TabGeometry(model, ui->lblGeometry,
-                                statusBar(), ui->tabReactions);
+  tabGeometry =
+      new TabGeometry(model, ui->lblGeometry, statusBar(), ui->tabReactions);
   ui->tabGeometry->layout()->addWidget(tabGeometry);
 
   tabSpecies = new TabSpecies(model, ui->lblGeometry, ui->tabSpecies);
@@ -259,16 +259,19 @@ void MainWindow::tabMain_currentChanged(int index) {
 }
 
 void MainWindow::validateSBMLDoc(const QString &filename) {
+  QString titlebarFilename{filename};
   if (!model.getIsValid()) {
-    model.createSBMLFile("untitled-model");
     if (!filename.isEmpty() && filename.left(5) != ("-psn_")) {
       // MacOS sometimes passes a command line parameter of the form
       // `-psn_0_204850` to the executable when launched as a GUI app, so in
       // this case we don't warn the user that we can't open this non-existent
       // file
       QMessageBox::warning(this, "Failed to load file",
-                           "Failed to load file " + filename);
+                           "Failed to load file " + filename + "\n\n" +
+                               model.getErrorMessage());
     }
+    model.createSBMLFile("untitled-model");
+    titlebarFilename = model.getCurrentFilename();
   }
   tabSimulate->importTimesAndIntervalsOnNextLoad();
   ui->tabMain->setCurrentIndex(0);
@@ -288,7 +291,8 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
   actionGeometry_scale_triggered(model.getDisplayOptions().showGeometryScale);
   ui->actionInvert_y_axis->setChecked(model.getDisplayOptions().invertYAxis);
   actionInvert_y_axis_triggered(model.getDisplayOptions().invertYAxis);
-  this->setWindowTitle(QString("Spatial Model Editor [%1]").arg(filename));
+  this->setWindowTitle(
+      QString("Spatial Model Editor [%1]").arg(titlebarFilename));
 }
 
 void MainWindow::enableTabs() {

@@ -7,7 +7,6 @@
 #include <map>
 #include <optional>
 #include <string>
-
 #include "geometry.hpp"
 
 namespace libsbml {

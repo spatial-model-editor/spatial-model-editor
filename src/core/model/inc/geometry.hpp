@@ -15,9 +15,7 @@
 #include <utility>
 #include <vector>
 
-namespace sme {
-
-namespace geometry {
+namespace sme::geometry {
 
 class Compartment {
 private:
@@ -54,12 +52,12 @@ public:
 
 class Membrane {
 private:
-  std::vector<std::pair<std::size_t, std::size_t>> indexPair;
-  std::string id;
-  const Compartment *compA;
-  const Compartment *compB;
-  QImage image;
-  const std::vector<std::pair<QPoint, QPoint>> *pointPairs;
+  std::vector<std::pair<std::size_t, std::size_t>> indexPair{};
+  std::string id{};
+  const Compartment *compA{};
+  const Compartment *compB{};
+  QImage image{};
+  const std::vector<std::pair<QPoint, QPoint>> *pointPairs{};
 
 public:
   Membrane() = default;
@@ -76,11 +74,11 @@ public:
 
 class Field {
 private:
-  std::string id;
-  const Compartment *comp;
-  double diffusionConstant;
-  QRgb colour;
-  std::vector<double> conc;
+  std::string id{};
+  const Compartment *comp{};
+  double diffusionConstant{};
+  QRgb colour{};
+  std::vector<double> conc{};
   bool isUniformConcentration{true};
   bool isSpatial{true};
 
@@ -107,7 +105,5 @@ public:
   std::vector<double> getConcentrationImageArray() const;
   void setCompartment(const Compartment *comp);
 };
-
-} // namespace geometry
 
 } // namespace sme

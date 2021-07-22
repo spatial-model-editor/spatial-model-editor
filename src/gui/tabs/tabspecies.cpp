@@ -130,8 +130,6 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
   // initial concentration
   ui->txtInitialConcentration->setText("");
   ui->lblInitialConcentrationUnits->setText("");
-  // lblGeometryStatus->setText(
-  //    QString("Species '%1' concentration:").arg(current->text(0)));
   lblGeometry->setImage(
       model.getSpecies().getConcentrationImage(currentSpeciesId));
   if (field->getIsUniformConcentration()) {
