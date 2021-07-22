@@ -11,7 +11,7 @@ env:
 
 jobs:
   quality:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
@@ -37,10 +37,10 @@ jobs:
           restore-keys: sonar-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
       - name: Get static libs
         run: sudo ./ci/getlibs.sh linux
-      - name: Install dependencies
-        run: ./ci/linux-install.sh
+      - name: Install dependencies (and use clang 12)
+        run: ./ci/linux-install.sh 12
       - name: Run job script
         run: ./ci/${{ matrix.script }}.sh
