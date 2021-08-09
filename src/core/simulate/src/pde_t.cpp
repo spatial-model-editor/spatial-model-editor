@@ -35,6 +35,19 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     REQUIRE_THROWS(reac.getMatrixElement(0, 3));
     REQUIRE_THROWS(reac.getMatrixElement(1, 0));
   }
+  GIVEN("ABtoC model with invalid reaction rate expression") {
+    model::Model s;
+    QFile f(":/models/ABtoC.xml");
+    f.open(QIODevice::ReadOnly);
+    s.importSBMLString(f.readAll().toStdString());
+    s.getReactions().add("r2", "comp", "A * A / idontexist");
+    s.getReactions().setSpeciesStoichiometry("r2", "A", 1.0);
+    s.getReactions().add("r3", "comp", "A / 0");
+    s.getReactions().setSpeciesStoichiometry("r3", "A", 1.0);
+    std::vector<std::string> speciesIDs{"A", "B", "C"};
+    REQUIRE_THROWS_WITH(simulate::Pde(&s, speciesIDs, {"r1", "r2", "r3"}),
+                        "Unknown symbol: idontexist");
+  }
   GIVEN("simple model") {
     std::unique_ptr<libsbml::SBMLDocument> doc(
         libsbml::readSBMLFromString(sbml_test_data::invalid_dune_names().xml));
