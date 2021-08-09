@@ -86,6 +86,9 @@ Pde::Pde(const model::Model *doc_ptr,
     SPDLOG_DEBUG("Species {} Reparsing all reaction terms", speciesIDs.at(i));
     // parse expression with symengine to simplify
     utils::Symbolic sym(r.toStdString(), vars, {}, {}, false);
+    if (!sym.isValid()) {
+      throw PdeError(sym.getErrorMessage());
+    }
     // rescale species (but not the extra variables)
     SPDLOG_DEBUG("rescaling species");
     sym.rescale(pdeScaleFactors.species, extraVariables);

@@ -186,7 +186,17 @@ void Symbolic::SymEngineImpl::compile(bool doCSE, unsigned optLevel) {
     }
   }
 #endif
-  lambdaLLVM.init(varVec, exprInlined, doCSE, optLevel);
+  try {
+    lambdaLLVM.init(varVec, exprInlined, doCSE, optLevel);
+  } catch (const std::exception &e) {
+    // if SymEngine failed to compile, capture error message
+    SPDLOG_WARN("{}", e.what());
+    valid = false;
+    compiled = false;
+    errorMessage = "Failed to compile expression: ";
+    errorMessage.append(e.what());
+    return;
+  }
   compiled = true;
 }
 
@@ -346,4 +356,4 @@ const std::string &Symbolic::getErrorMessage() const {
   return pSymEngineImpl->errorMessage;
 }
 
-} // namespace sme
+} // namespace sme::utils

@@ -1410,7 +1410,8 @@ SCENARIO(
     auto mPixel{getModel(":/test/models/membrane-reaction-circle.xml")};
     mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
     simulate::Simulation simDune(mDune);
-    mPixel.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+    mPixel.getSimulationSettings().simulatorType =
+        simulate::SimulatorType::Pixel;
     simulate::Simulation simPixel(mPixel);
     REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
     REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
@@ -1445,7 +1446,8 @@ SCENARIO(
     auto mPixel{getModel(":/test/models/membrane-reaction-pixels.xml")};
     mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
     simulate::Simulation simDune(mDune);
-    mPixel.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+    mPixel.getSimulationSettings().simulatorType =
+        simulate::SimulatorType::Pixel;
     simulate::Simulation simPixel(mPixel);
     REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
     REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
@@ -1841,6 +1843,19 @@ SCENARIO("stop, then continue pixel simulation",
   REQUIRE(m.getSimulationData().timePoints.size() == 4);
 }
 
+SCENARIO("pixel simulation with invalid reaction rate expression",
+         "[core/simulate/simulate][core/simulate][core][simulate]") {
+  auto m{getModel(":/models/ABtoC.xml")};
+  m.getReactions().add("r2", "comp", "A * A / idontexist");
+  m.getReactions().setSpeciesStoichiometry("r2", "A", 1.0);
+  m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+  REQUIRE(simulate::Simulation(m).errorMessage() ==
+          "Unknown symbol: idontexist");
+  m.getReactions().setRateExpression("r2", "1/0");
+  REQUIRE(simulate::Simulation(m).errorMessage().substr(0, 28) ==
+          "Failed to compile expression");
+}
+
 SCENARIO("Fish model: simulation with piecewise function in reactions",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
   auto m{getModel(":test/models/fish_300x300.xml")};
@@ -1856,5 +1871,6 @@ SCENARIO("Fish model: simulation with piecewise function in reactions",
   m.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
   m.getSimulationData().clear();
   simulate::Simulation simDune(m);
-  REQUIRE(simDune.errorMessage().substr(0, 29) == "IOError [handle_parser_error:");
+  REQUIRE(simDune.errorMessage().substr(0, 29) ==
+          "IOError [handle_parser_error:");
 }

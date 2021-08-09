@@ -54,6 +54,13 @@ ReacEval::ReacEval(
   }
   // compile all expressions with symengine
   sym = utils::Symbolic(rhs, sIds, {}, {}, true, doCSE, optLevel);
+  if (!sym.isValid()) {
+    std::string msg{sym.getErrorMessage()};
+    msg.append("\nExpression: \"");
+    msg.append(sym.expr());
+    msg.append("\"");
+    throw ReacEvalError(msg);
+  }
 }
 
 void ReacEval::evaluate(double *output, const double *input) const {

@@ -1,5 +1,9 @@
 # Changelog
 
+## [latest]
+### Fixed
+- bug where invalid reaction rate expression caused simulation to crash [#609](https://github.com/spatial-model-editor/spatial-model-editor/issues/609)
+
 ## [1.1.2] - 2021-07-13
 ### Added
 - autocomplete when editing maths [#559](https://github.com/spatial-model-editor/spatial-model-editor/issues/559)

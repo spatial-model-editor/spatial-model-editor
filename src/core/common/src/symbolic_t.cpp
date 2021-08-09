@@ -403,13 +403,36 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(symEq(QString("0.9999999999"), QString("1")) == false);
     REQUIRE(symEq(QString("0.99999999999999"), QString("1")) == true);
     REQUIRE(symEq(QString("9999999999"), QString("10000000000")) == false);
-    REQUIRE(symEq(QString("99999999999999"), QString("100000000000000")) == true);
+    REQUIRE(symEq(QString("99999999999999"), QString("100000000000000")) ==
+            true);
     REQUIRE(symEq(QString("0.999999999999999999999"), QString("1")) == true);
     REQUIRE(symEq(QString("1e-3*x+y"),
-                  QString("9.99999999999e-4*x + 1.000000000001*y")) ==
-            false);
+                  QString("9.99999999999e-4*x + 1.000000000001*y")) == false);
     REQUIRE(symEq(QString("1e-3*x+y"),
                   QString("9.999999999999999e-4*x + 1.0000000000000001*y")) ==
             true);
+  }
+  GIVEN("expression with 1/0") {
+    // 1/0 evaluates to complex infinity in symengine
+    utils::Symbolic sym("1/0", {}, {}, {});
+    CAPTURE(sym.getErrorMessage());
+    REQUIRE(!sym.isValid());
+    REQUIRE(sym.getErrorMessage() == "Failed to compile expression: LLVMDouble "
+                                     "can only represent real valued infinity");
+  }
+  GIVEN("expression with inf") {
+    // real infinity is ok both for parsing & for llvm compilation
+    utils::Symbolic sym("inf", {}, {}, {});
+    CAPTURE(sym.getErrorMessage());
+    REQUIRE(sym.isValid());
+    REQUIRE(sym.getErrorMessage().empty());
+  }
+  GIVEN("expression with nan") {
+    // nan parses ok but not supported by llvm compilation
+    utils::Symbolic sym("nan", {}, {}, {});
+    CAPTURE(sym.getErrorMessage());
+    REQUIRE(!sym.isValid());
+    REQUIRE(sym.getErrorMessage() ==
+            "Failed to compile expression: Not implemented.");
   }
 }

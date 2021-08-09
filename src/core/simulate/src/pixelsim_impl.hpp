@@ -28,6 +28,12 @@ class Membrane;
 
 namespace simulate {
 
+class ReacEvalError : public std::runtime_error {
+public:
+  explicit ReacEvalError(const std::string &message)
+      : std::runtime_error(message) {}
+};
+
 class ReacEval {
 private:
   // symengine reaction expression
@@ -35,12 +41,13 @@ private:
 
 public:
   ReacEval() = default;
-  ReacEval(const model::Model &doc, const std::vector<std::string> &speciesID,
-           const std::vector<std::string> &reactionID,
-           double reactionScaleFactor = 1.0, bool doCSE = true,
-           unsigned optLevel = 3, bool timeDependent = false,
-           bool spaceDependent = false,
-           const std::map<std::string, double, std::less<>> &substitutions = {});
+  ReacEval(
+      const model::Model &doc, const std::vector<std::string> &speciesID,
+      const std::vector<std::string> &reactionID,
+      double reactionScaleFactor = 1.0, bool doCSE = true,
+      unsigned optLevel = 3, bool timeDependent = false,
+      bool spaceDependent = false,
+      const std::map<std::string, double, std::less<>> &substitutions = {});
   ReacEval(ReacEval &&) noexcept = default;
   ReacEval(const ReacEval &) = delete;
   ReacEval &operator=(ReacEval &&) noexcept = default;
@@ -151,11 +158,12 @@ private:
   std::size_t nExtraVars{0};
 
 public:
-  SimMembrane(const model::Model &doc, const geometry::Membrane *membrane_ptr,
-              SimCompartment *simCompA, SimCompartment *simCompB,
-              bool doCSE = true, unsigned optLevel = 3,
-              bool timeDependent = false, bool spaceDependent = false,
-              const std::map<std::string, double, std::less<>> &substitutions = {});
+  SimMembrane(
+      const model::Model &doc, const geometry::Membrane *membrane_ptr,
+      SimCompartment *simCompA, SimCompartment *simCompB, bool doCSE = true,
+      unsigned optLevel = 3, bool timeDependent = false,
+      bool spaceDependent = false,
+      const std::map<std::string, double, std::less<>> &substitutions = {});
   SimMembrane(SimMembrane &&) noexcept = default;
   SimMembrane(const SimMembrane &) = delete;
   SimMembrane &operator=(SimMembrane &&) noexcept = default;

@@ -38,7 +38,6 @@ private:
   void doRKSubstep(double dt, double g1, double g2, double g3, double beta,
                    double delta);
   double doRKAdaptive(double dtMax);
-  double doTimestep(double dt, double dtMax);
   std::size_t discardedSteps{0};
   PixelIntegratorType integrator;
   PixelIntegratorError errMax;
