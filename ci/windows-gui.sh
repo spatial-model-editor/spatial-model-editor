@@ -4,7 +4,7 @@
 
 set -e -x
 
-PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.8.*)
+PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.9.*)
 export PATH="$PYDIR/x64:$PYDIR/x64/Scripts:$PATH"
 echo "PATH=$PATH"
 
@@ -42,7 +42,7 @@ make -j2 VERBOSE=1
 ccache -s
 
 # check dependencies
-objdump.exe -x sme/sme.cp38-win_amd64.pyd > sme_obj.txt
+objdump.exe -x sme/sme.cp39-win_amd64.pyd > sme_obj.txt
 head -n 20 sme_obj.txt
 head -n 1000 sme_obj.txt | grep "DLL Name"
 
@@ -53,7 +53,7 @@ tail -n 100 tests.txt
 
 # python tests
 cd ..
-mv build/sme/sme.cp38-win_amd64.pyd .
+mv build/sme/sme.cp39-win_amd64.pyd .
 python -m unittest discover -s sme/test -v
 
 # display version

@@ -24,7 +24,7 @@ jobs:
         restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
     - uses: actions/setup-python@v2
       with:
-        python-version: 3.8
+        python-version: 3.9
     - name: Get static libs
       run: sudo ./ci/getlibs.sh linux
     - name: Install dependencies
@@ -56,7 +56,7 @@ jobs:
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.8
+          python-version: 3.9
       - name: Get static libs
         run: sudo ./ci/getlibs.sh osx
       - name: Build script
@@ -99,7 +99,7 @@ jobs:
 
   Release:
     needs: [linux-gui, macos-gui, win64-gui]
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     # upload binaries to github release if commit is tagged
     if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/')
     steps:
