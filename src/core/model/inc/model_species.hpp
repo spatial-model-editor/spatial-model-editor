@@ -2,12 +2,12 @@
 
 #pragma once
 
+#include "geometry.hpp"
 #include <QColor>
 #include <QStringList>
 #include <map>
 #include <optional>
 #include <string>
-#include "geometry.hpp"
 
 namespace libsbml {
 class Model;
@@ -40,7 +40,7 @@ private:
   simulate::SimulationData *simulationData = nullptr;
   Settings *sbmlAnnotation = nullptr;
   void removeInitialAssignment(const QString &id);
-  std::vector<double>
+  [[nodiscard]] std::vector<double>
   getSampledFieldConcentrationFromSBML(const QString &id) const;
   bool hasUnsavedChanges{false};
 
@@ -53,39 +53,41 @@ public:
   QString add(const QString &name, const QString &compartmentId);
   void remove(const QString &id);
   QString setName(const QString &id, const QString &name);
-  QString getName(const QString &id) const;
+  [[nodiscard]] QString getName(const QString &id) const;
   void updateCompartmentGeometry(const QString &compartmentId);
   void setCompartment(const QString &id, const QString &compartmentId);
-  QString getCompartment(const QString &id) const;
-  QStringList getIds(const QString &compartmentId) const;
-  QStringList getNames(const QString &compartmentId) const;
+  [[nodiscard]] QString getCompartment(const QString &id) const;
+  [[nodiscard]] QStringList getIds(const QString &compartmentId) const;
+  [[nodiscard]] QStringList getNames(const QString &compartmentId) const;
   void setIsSpatial(const QString &id, bool isSpatial);
-  bool getIsSpatial(const QString &id) const;
+  [[nodiscard]] bool getIsSpatial(const QString &id) const;
   void setDiffusionConstant(const QString &id, double diffusionConstant);
-  double getDiffusionConstant(const QString &id) const;
+  [[nodiscard]] double getDiffusionConstant(const QString &id) const;
   void setInitialConcentration(const QString &id, double concentration);
-  double getInitialConcentration(const QString &id) const;
+  [[nodiscard]] double getInitialConcentration(const QString &id) const;
   void setAnalyticConcentration(const QString &id,
                                 const QString &analyticExpression);
-  void
-  setFieldConcAnalytic(geometry::Field &field, const std::string &expr,
-                       const std::map<std::string, double, std::less<>> &substitutions = {});
-  QString getAnalyticConcentration(const QString &id) const;
+  void setFieldConcAnalytic(
+      geometry::Field &field, const std::string &expr,
+      const std::map<std::string, double, std::less<>> &substitutions = {});
+  [[nodiscard]] QString getAnalyticConcentration(const QString &id) const;
   void
   setSampledFieldConcentration(const QString &id,
                                const std::vector<double> &concentrationArray);
-  std::vector<double> getSampledFieldConcentration(const QString &id) const;
-  QImage getConcentrationImage(const QString &id) const;
+  [[nodiscard]] std::vector<double>
+  getSampledFieldConcentration(const QString &id) const;
+  [[nodiscard]] QImage getConcentrationImage(const QString &id) const;
   void setColour(const QString &id, QRgb colour);
-  QRgb getColour(const QString &id) const;
+  [[nodiscard]] QRgb getColour(const QString &id) const;
   void setIsConstant(const QString &id, bool constant);
-  bool getIsConstant(const QString &id) const;
-  bool isReactive(const QString &id) const;
+  [[nodiscard]] bool getIsConstant(const QString &id) const;
+  [[nodiscard]] bool isReactive(const QString &id) const;
   void removeInitialAssignments();
-  QString getSampledFieldInitialAssignment(const QString &id) const;
+  [[nodiscard]] QString
+  getSampledFieldInitialAssignment(const QString &id) const;
   geometry::Field *getField(const QString &id);
-  const geometry::Field *getField(const QString &id) const;
-  bool getHasUnsavedChanges() const;
+  [[nodiscard]] const geometry::Field *getField(const QString &id) const;
+  [[nodiscard]] bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);
 };
 

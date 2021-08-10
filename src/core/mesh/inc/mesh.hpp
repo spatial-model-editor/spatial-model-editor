@@ -52,7 +52,8 @@ private:
   bool validMesh{true};
   std::string errorMessage{};
   // convert point in pixel units to point in physical units
-  QPointF pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept;
+  [[nodiscard]] QPointF
+  pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept;
   void constructMesh();
 
 public:
@@ -77,15 +78,15 @@ public:
   /**
    * @brief Returns true if the mesh is valid
    */
-  bool isValid() const;
+  [[nodiscard]] bool isValid() const;
   /**
    * @brief Returns an error message if the mesh is invalid
    */
-  const std::string& getErrorMessage() const;
+  [[nodiscard]] const std::string &getErrorMessage() const;
   /**
    * @brief The number of boundary lines in the mesh
    */
-  std::size_t getNumBoundaries() const;
+  [[nodiscard]] std::size_t getNumBoundaries() const;
   /**
    * @brief Set the maximum number of allowed points for a given boundary
    *
@@ -98,11 +99,12 @@ public:
    *
    * @param[in] boundaryIndex the index of the boundary
    */
-  std::size_t getBoundaryMaxPoints(std::size_t boundaryIndex) const;
+  [[nodiscard]] std::size_t
+  getBoundaryMaxPoints(std::size_t boundaryIndex) const;
   /**
    * @brief The maximum allowed points for each boundary in the mesh
    */
-  std::vector<std::size_t> getBoundaryMaxPoints() const;
+  [[nodiscard]] std::vector<std::size_t> getBoundaryMaxPoints() const;
   /**
    * @brief Set the maximum allowed triangle area for a given compartment
    *
@@ -116,11 +118,13 @@ public:
    *
    * @param[in] compartmentIndex the index of the compartment
    */
-  std::size_t getCompartmentMaxTriangleArea(std::size_t compartmentIndex) const;
+  [[nodiscard]] std::size_t
+  getCompartmentMaxTriangleArea(std::size_t compartmentIndex) const;
   /**
    * @brief The maximum allowed triangle areas for each compartment in the mesh
    */
-  const std::vector<std::size_t> &getCompartmentMaxTriangleArea() const;
+  [[nodiscard]] const std::vector<std::size_t> &
+  getCompartmentMaxTriangleArea() const;
   /**
    * @brief The interior points for each compartment in the mesh
    *
@@ -131,7 +135,8 @@ public:
    * @note There may be multiple interior points for a single compartment, for
    * example if that compartment has two disconnected regions
    */
-  const std::vector<std::vector<QPointF>> &getCompartmentInteriorPoints() const;
+  [[nodiscard]] const std::vector<std::vector<QPointF>> &
+  getCompartmentInteriorPoints() const;
   /**
    * @brief The physical size and origin to use
    *
@@ -148,20 +153,20 @@ public:
    *
    * For saving to the SBML document.
    */
-  std::vector<double> getVerticesAsFlatArray() const;
+  [[nodiscard]] std::vector<double> getVerticesAsFlatArray() const;
   /**
    * @brief The mesh triangle indices as a flat array of ints
    *
    * For saving to the SBML document.
    */
-  std::vector<int>
+  [[nodiscard]] std::vector<int>
   getTriangleIndicesAsFlatArray(std::size_t compartmentIndex) const;
   /**
    * @brief The mesh triangle indices
    *
    * The indices of the triangles used in the mesh for each compartment
    */
-  const std::vector<std::vector<TriangulateTriangleIndex>> &
+  [[nodiscard]] const std::vector<std::vector<TriangulateTriangleIndex>> &
   getTriangleIndices() const;
   /**
    * @brief An image of the compartment boundary lines
@@ -174,7 +179,7 @@ public:
    * @param[in] size the desired size of the image
    * @param[in] boldBoundaryIndex the boundary line to emphasize in the image
    */
-  std::pair<QImage, QImage>
+  [[nodiscard]] std::pair<QImage, QImage>
   getBoundariesImages(const QSize &size, std::size_t boldBoundaryIndex) const;
   /**
    * @brief An image of the mesh
@@ -187,14 +192,14 @@ public:
    * @param[in] compartmentIndex the compartment to emphasize in the image
    * @returns a pair of images: mesh, compartment index
    */
-  std::pair<QImage, QImage> getMeshImages(const QSize &size,
-                                          std::size_t compartmentIndex) const;
+  [[nodiscard]] std::pair<QImage, QImage>
+  getMeshImages(const QSize &size, std::size_t compartmentIndex) const;
   /**
    * @brief The mesh in GMSH format
    *
    * @returns the mesh in GMSH format
    */
-  QString getGMSH() const;
+  [[nodiscard]] QString getGMSH() const;
 };
 
 } // namespace sme::mesh

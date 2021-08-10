@@ -53,20 +53,21 @@ public:
   ModelParameters();
   explicit ModelParameters(libsbml::Model *model,
                            ModelEvents *events = nullptr);
-  const QStringList &getIds() const;
-  const QStringList &getNames() const;
+  [[nodiscard]] const QStringList &getIds() const;
+  [[nodiscard]] const QStringList &getNames() const;
   QString setName(const QString &id, const QString &name);
-  QString getName(const QString &id) const;
+  [[nodiscard]] QString getName(const QString &id) const;
   void setExpression(const QString &id, const QString &expr);
-  QString getExpression(const QString &id) const;
+  [[nodiscard]] QString getExpression(const QString &id) const;
   QString add(const QString &name);
   void remove(const QString &id);
-  const SpatialCoordinates &getSpatialCoordinates() const;
+  [[nodiscard]] const SpatialCoordinates &getSpatialCoordinates() const;
   void setSpatialCoordinates(SpatialCoordinates coords);
-  std::vector<IdName> getSymbols(const QStringList &compartments = {}) const;
-  std::vector<IdNameValue> getGlobalConstants() const;
-  std::vector<IdNameExpr> getNonConstantParameters() const;
-  bool getHasUnsavedChanges() const;
+  [[nodiscard]] std::vector<IdName>
+  getSymbols(const QStringList &compartments = {}) const;
+  [[nodiscard]] std::vector<IdNameValue> getGlobalConstants() const;
+  [[nodiscard]] std::vector<IdNameExpr> getNonConstantParameters() const;
+  [[nodiscard]] bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);
 };
 

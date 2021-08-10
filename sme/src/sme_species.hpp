@@ -19,11 +19,11 @@ private:
 public:
   Species() = default;
   explicit Species(model::Model *sbmlDocWrapper, const std::string &sId);
-  std::string getName() const;
+  [[nodiscard]] std::string getName() const;
   void setName(const std::string &name);
-  double getDiffusionConstant() const;
+  [[nodiscard]] double getDiffusionConstant() const;
   void setDiffusionConstant(double diffusionConstant);
-  std::string getStr() const;
+  [[nodiscard]] std::string getStr() const;
 };
 
 } // namespace sme

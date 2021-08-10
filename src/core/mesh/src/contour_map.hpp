@@ -21,8 +21,9 @@ private:
 
 public:
   ContourMap(const QSize &size, const Contours &contours);
-  const ContourIndices &getContourIndices(const cv::Point &p) const;
-  bool isFixedPoint(const cv::Point &p) const;
+  [[nodiscard]] const ContourIndices &
+  getContourIndices(const cv::Point &p) const;
+  [[nodiscard]] bool isFixedPoint(const cv::Point &p) const;
 };
 
 } // namespace mesh

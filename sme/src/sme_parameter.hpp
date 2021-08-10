@@ -20,10 +20,10 @@ public:
   Parameter() = default;
   explicit Parameter(model::Model *sbmlDocWrapper, const std::string &sId);
   void setName(const std::string &name);
-  std::string getName() const;
+  [[nodiscard]] std::string getName() const;
   void setValue(const std::string &expr);
-  std::string getValue() const;
-  std::string getStr() const;
+  [[nodiscard]] std::string getValue() const;
+  [[nodiscard]] std::string getStr() const;
 };
 
 } // namespace sme

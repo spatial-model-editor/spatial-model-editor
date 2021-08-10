@@ -22,11 +22,11 @@ public:
   explicit ReactionParameter(model::Model *sbmlDocWrapper,
                              const std::string &reactionId,
                              const std::string &parameterId);
-  std::string getName() const;
+  [[nodiscard]] std::string getName() const;
   void setName(const std::string &name);
-  double getValue() const;
+  [[nodiscard]] double getValue() const;
   void setValue(double value);
-  std::string getStr() const;
+  [[nodiscard]] std::string getStr() const;
 };
 
 } // namespace sme

@@ -244,11 +244,11 @@ public:
   /**
    * @brief Check if the point is inside the bounding box
    */
-  bool isValid(const QPoint &point) const;
+  [[nodiscard]] bool isValid(const QPoint &point) const;
   /**
    * @brief Return an index corresponding to the given point
    */
-  std::size_t flatten(const QPoint &point) const;
+  [[nodiscard]] std::size_t flatten(const QPoint &point) const;
 };
 
 /**
@@ -267,8 +267,8 @@ public:
   explicit QPointIndexer(const QSize &boundingBox,
                          const std::vector<QPoint> &qPoints = {});
   void addPoints(const std::vector<QPoint> &qPoints);
-  std::optional<std::size_t> getIndex(const QPoint &point) const;
-  std::size_t getNumPoints() const;
+  [[nodiscard]] std::optional<std::size_t> getIndex(const QPoint &point) const;
+  [[nodiscard]] std::size_t getNumPoints() const;
 };
 
 /**
@@ -289,8 +289,8 @@ public:
   explicit QPointUniqueIndexer(const QSize &boundingBox,
                                const std::vector<QPoint> &qPoints = {});
   void addPoints(const std::vector<QPoint> &qPoints);
-  std::optional<std::size_t> getIndex(const QPoint &point) const;
-  std::vector<QPoint> getPoints() const;
+  [[nodiscard]] std::optional<std::size_t> getIndex(const QPoint &point) const;
+  [[nodiscard]] std::vector<QPoint> getPoints() const;
 };
 
 /**

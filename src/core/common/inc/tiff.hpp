@@ -38,9 +38,9 @@ private:
 
 public:
   explicit TiffReader(const std::string &filename);
-  std::size_t size() const;
-  QImage getImage(std::size_t i = 0) const;
-  const QString &getErrorMessage() const;
+  [[nodiscard]] std::size_t size() const;
+  [[nodiscard]] QImage getImage(std::size_t i = 0) const;
+  [[nodiscard]] const QString &getErrorMessage() const;
 };
 
 } // namespace utils

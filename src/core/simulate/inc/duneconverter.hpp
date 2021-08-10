@@ -5,8 +5,8 @@
 
 #include "simulate_options.hpp"
 #include <QString>
-#include <vector>
 #include <map>
+#include <vector>
 
 namespace sme {
 
@@ -27,17 +27,17 @@ public:
       const std::map<std::string, double, std::less<>> &substitutions = {},
       bool forExternalUse = false, const QString &outputIniFile = {},
       int doublePrecision = 18);
-  QString getIniFile(std::size_t compartmentIndex = 0) const;
-  const std::vector<QString> &getIniFiles() const;
-  bool hasIndependentCompartments() const;
+  [[nodiscard]] QString getIniFile(std::size_t compartmentIndex = 0) const;
+  [[nodiscard]] const std::vector<QString> &getIniFiles() const;
+  [[nodiscard]] bool hasIndependentCompartments() const;
 
-  const mesh::Mesh *getMesh() const;
-  const std::vector<std::vector<std::vector<double>>> &
+  [[nodiscard]] const mesh::Mesh *getMesh() const;
+  [[nodiscard]] const std::vector<std::vector<std::vector<double>>> &
   getConcentrations() const;
-  double getXOrigin() const;
-  double getYOrigin() const;
-  double getPixelWidth() const;
-  int getImageWidth() const;
+  [[nodiscard]] double getXOrigin() const;
+  [[nodiscard]] double getYOrigin() const;
+  [[nodiscard]] double getPixelWidth() const;
+  [[nodiscard]] int getImageWidth() const;
 
 private:
   std::vector<QString> iniFiles;

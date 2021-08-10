@@ -64,17 +64,18 @@ public:
   ~Symbolic();
 
   void compile(bool doCSE = true, unsigned optLevel = 3);
-  std::string expr(std::size_t i = 0) const;
-  std::string inlinedExpr(std::size_t i = 0) const;
-  std::string diff(const std::string &var, std::size_t i = 0) const;
+  [[nodiscard]] std::string expr(std::size_t i = 0) const;
+  [[nodiscard]] std::string inlinedExpr(std::size_t i = 0) const;
+  [[nodiscard]] std::string diff(const std::string &var,
+                                 std::size_t i = 0) const;
   void relabel(const std::vector<std::string> &newVariables);
   void rescale(double factor, const std::vector<std::string> &exclusions = {});
   void eval(std::vector<double> &results,
             const std::vector<double> &vars = {}) const;
   void eval(double *results, const double *vars) const;
-  bool isValid() const;
-  bool isCompiled() const;
-  const std::string &getErrorMessage() const;
+  [[nodiscard]] bool isValid() const;
+  [[nodiscard]] bool isCompiled() const;
+  [[nodiscard]] const std::string &getErrorMessage() const;
 };
 
-} // namespace sme
+} // namespace sme::utils

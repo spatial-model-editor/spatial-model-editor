@@ -33,15 +33,15 @@ private:
   bool hasUnsavedChanges{false};
 
 public:
-  const QStringList &getIds() const;
-  const QStringList &getNames() const;
+  [[nodiscard]] const QStringList &getIds() const;
+  [[nodiscard]] const QStringList &getNames() const;
   QString setName(const QString &id, const QString &name);
-  QString getName(const QString &id) const;
-  const std::vector<geometry::Membrane> &getMembranes() const;
-  const geometry::Membrane *getMembrane(const QString &id) const;
-  const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>> &
-  getIdColourPairs() const;
-  double getSize(const QString& id) const;
+  [[nodiscard]] QString getName(const QString &id) const;
+  [[nodiscard]] const std::vector<geometry::Membrane> &getMembranes() const;
+  [[nodiscard]] const geometry::Membrane *getMembrane(const QString &id) const;
+  [[nodiscard]] const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>>
+      &getIdColourPairs() const;
+  [[nodiscard]] double getSize(const QString &id) const;
   void updateCompartmentNames(const QStringList &compartmentNames);
   void updateCompartments(
       const std::vector<std::unique_ptr<geometry::Compartment>> &compartments);
@@ -54,7 +54,7 @@ public:
   ModelMembranes &operator=(const ModelMembranes &) = delete;
   ModelMembranes(const ModelMembranes &) = delete;
   ~ModelMembranes();
-  bool getHasUnsavedChanges() const;
+  [[nodiscard]] bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);
 };
 

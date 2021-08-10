@@ -47,29 +47,30 @@ public:
   ModelCompartments();
   ModelCompartments(libsbml::Model *model, ModelGeometry *geometry,
                     ModelMembranes *membranes, ModelSpecies *species,
-                    ModelReactions *reactions, const ModelUnits *units, simulate::SimulationData *data);
-  const QStringList &getIds() const;
-  const QStringList &getNames() const;
-  const QVector<QRgb> &getColours() const;
+                    ModelReactions *reactions, const ModelUnits *units,
+                    simulate::SimulationData *data);
+  [[nodiscard]] const QStringList &getIds() const;
+  [[nodiscard]] const QStringList &getNames() const;
+  [[nodiscard]] const QVector<QRgb> &getColours() const;
   QString add(const QString &name);
   bool remove(const QString &id);
-  QString getName(const QString &id) const;
+  [[nodiscard]] QString getName(const QString &id) const;
   QString setName(const QString &id, const QString &name);
-  std::optional<std::vector<QPointF>>
+  [[nodiscard]] std::optional<std::vector<QPointF>>
   getInteriorPoints(const QString &id) const;
   void setInteriorPoints(const QString &id, const std::vector<QPointF> &points);
   void setColour(const QString &id, QRgb colour);
-  QRgb getColour(const QString &id) const;
-  QString getIdFromColour(QRgb colour) const;
-  const std::vector<std::unique_ptr<geometry::Compartment>> &
+  [[nodiscard]] QRgb getColour(const QString &id) const;
+  [[nodiscard]] QString getIdFromColour(QRgb colour) const;
+  [[nodiscard]] const std::vector<std::unique_ptr<geometry::Compartment>> &
   getCompartments() const;
   geometry::Compartment *getCompartment(const QString &id);
-  const geometry::Compartment *getCompartment(const QString &id) const;
-  double getSize(const QString& id) const;
+  [[nodiscard]] const geometry::Compartment *
+  getCompartment(const QString &id) const;
+  [[nodiscard]] double getSize(const QString &id) const;
   void clear();
-  bool getHasUnsavedChanges() const;
+  [[nodiscard]] bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);
-
 };
 
 } // namespace model

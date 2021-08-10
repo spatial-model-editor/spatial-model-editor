@@ -31,23 +31,23 @@ public:
   explicit ModelEvents(libsbml::Model *model,
                        ModelParameters *parameters = nullptr,
                        ModelSpecies *species = nullptr);
-  const QStringList &getIds() const;
-  const QStringList &getNames() const;
+  [[nodiscard]] const QStringList &getIds() const;
+  [[nodiscard]] const QStringList &getNames() const;
   QString setName(const QString &id, const QString &name);
-  QString getName(const QString &id) const;
+  [[nodiscard]] QString getName(const QString &id) const;
   void setVariable(const QString &id, const QString &variable);
-  QString getVariable(const QString &id) const;
+  [[nodiscard]] QString getVariable(const QString &id) const;
   void setTime(const QString &id, double time);
-  double getTime(const QString &id) const;
+  [[nodiscard]] double getTime(const QString &id) const;
   void setExpression(const QString &id, const QString &expr);
-  QString getExpression(const QString &id) const;
+  [[nodiscard]] QString getExpression(const QString &id) const;
   QString add(const QString &name, const QString &variable);
-  bool isParameter(const QString &id) const;
+  [[nodiscard]] bool isParameter(const QString &id) const;
   [[nodiscard]] double getValue(const QString &id) const;
   void remove(const QString &id);
   void removeAnyUsingVariable(const QString &variable);
   void applyEvent(const QString &id);
-  bool getHasUnsavedChanges() const;
+  [[nodiscard]] bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);
 };
 
