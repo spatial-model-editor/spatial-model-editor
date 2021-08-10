@@ -23,12 +23,12 @@ private:
 public:
   Compartment() = default;
   explicit Compartment(model::Model *sbmlDocWrapper, const std::string &sId);
-  std::string getName() const;
+  [[nodiscard]] std::string getName() const;
   void setName(const std::string &name);
   std::vector<Species> species;
   std::vector<Reaction> reactions;
-  PyImageMask getGeometryMask() const;
-  std::string getStr() const;
+  [[nodiscard]] PyImageMask getGeometryMask() const;
+  [[nodiscard]] std::string getStr() const;
 };
 
 } // namespace sme

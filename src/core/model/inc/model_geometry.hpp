@@ -54,7 +54,8 @@ private:
 public:
   ModelGeometry();
   explicit ModelGeometry(libsbml::Model *model, ModelCompartments *compartments,
-                         ModelMembranes *membranes, const ModelUnits *units, Settings *annotation);
+                         ModelMembranes *membranes, const ModelUnits *units,
+                         Settings *annotation);
   void importSampledFieldGeometry(const libsbml::Model *model);
   void importParametricGeometry(const libsbml::Model *model,
                                 const Settings *settings);
@@ -62,22 +63,22 @@ public:
   void importGeometryFromImage(const QImage &img);
   void updateMesh();
   void clear();
-  int getNumDimensions() const;
-  double getPixelWidth() const;
+  [[nodiscard]] int getNumDimensions() const;
+  [[nodiscard]] double getPixelWidth() const;
   void setPixelWidth(double width, bool updateSBML = true);
-  double getPixelDepth() const;
+  [[nodiscard]] double getPixelDepth() const;
   void setPixelDepth(double depth);
-  double getZOrigin() const;
-  const QPointF &getPhysicalOrigin() const;
-  const QSizeF &getPhysicalSize() const;
-  QPointF getPhysicalPoint(const QPoint pixel) const;
-  QString getPhysicalPointAsString(const QPoint pixel) const;
-  const QImage &getImage() const;
-  mesh::Mesh *getMesh() const;
-  bool getIsValid() const;
-  bool getHasImage() const;
+  [[nodiscard]] double getZOrigin() const;
+  [[nodiscard]] const QPointF &getPhysicalOrigin() const;
+  [[nodiscard]] const QSizeF &getPhysicalSize() const;
+  [[nodiscard]] QPointF getPhysicalPoint(const QPoint pixel) const;
+  [[nodiscard]] QString getPhysicalPointAsString(const QPoint pixel) const;
+  [[nodiscard]] const QImage &getImage() const;
+  [[nodiscard]] mesh::Mesh *getMesh() const;
+  [[nodiscard]] bool getIsValid() const;
+  [[nodiscard]] bool getHasImage() const;
   void writeGeometryToSBML() const;
-  bool getHasUnsavedChanges() const;
+  [[nodiscard]] bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);
 };
 

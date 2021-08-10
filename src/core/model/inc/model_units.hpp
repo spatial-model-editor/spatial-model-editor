@@ -31,10 +31,10 @@ private:
 
 public:
   explicit UnitVector(const QVector<Unit> &unitsVec = {}, int defaultIndex = 0);
-  const Unit &get() const;
-  const QVector<Unit> &getUnits() const;
+  [[nodiscard]] const Unit &get() const;
+  [[nodiscard]] const QVector<Unit> &getUnits() const;
   QVector<Unit> &getUnits();
-  int getIndex() const;
+  [[nodiscard]] int getIndex() const;
   void setIndex(int newIndex);
 };
 
@@ -76,31 +76,31 @@ private:
 
 public:
   explicit ModelUnits(libsbml::Model *model = nullptr);
-  const Unit &getTime() const;
-  int getTimeIndex() const;
-  const QVector<Unit> &getTimeUnits() const;
+  [[nodiscard]] const Unit &getTime() const;
+  [[nodiscard]] int getTimeIndex() const;
+  [[nodiscard]] const QVector<Unit> &getTimeUnits() const;
   QVector<Unit> &getTimeUnits();
   void setTimeIndex(int index);
-  const Unit &getLength() const;
-  int getLengthIndex() const;
-  const QVector<Unit> &getLengthUnits() const;
+  [[nodiscard]] const Unit &getLength() const;
+  [[nodiscard]] int getLengthIndex() const;
+  [[nodiscard]] const QVector<Unit> &getLengthUnits() const;
   QVector<Unit> &getLengthUnits();
   void setLengthIndex(int index);
-  const Unit &getVolume() const;
-  int getVolumeIndex() const;
-  const QVector<Unit> &getVolumeUnits() const;
+  [[nodiscard]] const Unit &getVolume() const;
+  [[nodiscard]] int getVolumeIndex() const;
+  [[nodiscard]] const QVector<Unit> &getVolumeUnits() const;
   QVector<Unit> &getVolumeUnits();
   void setVolumeIndex(int index);
-  const Unit &getAmount() const;
-  int getAmountIndex() const;
-  const QVector<Unit> &getAmountUnits() const;
+  [[nodiscard]] const Unit &getAmount() const;
+  [[nodiscard]] int getAmountIndex() const;
+  [[nodiscard]] const QVector<Unit> &getAmountUnits() const;
   QVector<Unit> &getAmountUnits();
   void setAmountIndex(int index);
-  const QString &getConcentration() const;
-  const QString &getDiffusion() const;
-  const QString &getCompartmentReaction() const;
-  const QString &getMembraneReaction() const;
-  bool getHasUnsavedChanges() const;
+  [[nodiscard]] const QString &getConcentration() const;
+  [[nodiscard]] const QString &getDiffusion() const;
+  [[nodiscard]] const QString &getCompartmentReaction() const;
+  [[nodiscard]] const QString &getMembraneReaction() const;
+  [[nodiscard]] bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);
 };
 
@@ -108,4 +108,4 @@ double rescale(double val, const Unit &oldUnit, const Unit &newUnit);
 
 double getVolOverL3(const Unit &lengthUnit, const Unit &volumeUnit);
 
-} // namespace sme
+} // namespace sme::model

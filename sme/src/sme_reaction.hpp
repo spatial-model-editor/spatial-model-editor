@@ -21,10 +21,10 @@ private:
 public:
   Reaction() = default;
   explicit Reaction(model::Model *sbmlDocWrapper, const std::string &sId);
-  std::string getName() const;
+  [[nodiscard]] std::string getName() const;
   void setName(const std::string &name);
   std::vector<ReactionParameter> parameters;
-  std::string getStr() const;
+  [[nodiscard]] std::string getStr() const;
 };
 
 } // namespace sme

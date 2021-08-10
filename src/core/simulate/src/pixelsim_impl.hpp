@@ -136,17 +136,17 @@ public:
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   void undoRKStep_tbb();
 #endif
-  PixelIntegratorError calculateRKError(double epsilon) const;
+  [[nodiscard]] PixelIntegratorError calculateRKError(double epsilon) const;
   std::string plotRKError(QImage &image, double epsilon, double max) const;
-  const std::string &getCompartmentId() const;
-  const std::vector<std::string> &getSpeciesIds() const;
-  const std::vector<double> &getConcentrations() const;
+  [[nodiscard]] const std::string &getCompartmentId() const;
+  [[nodiscard]] const std::vector<std::string> &getSpeciesIds() const;
+  [[nodiscard]] const std::vector<double> &getConcentrations() const;
   void setConcentrations(const std::vector<double> &);
-  double getLowerOrderConcentration(std::size_t speciesIndex,
-                                    std::size_t pixelIndex) const;
-  const std::vector<QPoint> &getPixels() const;
+  [[nodiscard]] double getLowerOrderConcentration(std::size_t speciesIndex,
+                                                  std::size_t pixelIndex) const;
+  [[nodiscard]] const std::vector<QPoint> &getPixels() const;
   std::vector<double> &getDcdt();
-  double getMaxStableTimestep() const;
+  [[nodiscard]] double getMaxStableTimestep() const;
 };
 
 class SimMembrane {

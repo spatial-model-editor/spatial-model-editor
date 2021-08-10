@@ -69,41 +69,43 @@ public:
   std::size_t doMultipleTimesteps(
       const std::vector<std::pair<std::size_t, double>> &timesteps,
       double timeout_ms = -1.0);
-  const std::string &errorMessage() const;
-  const QImage &errorImage() const;
-  const std::vector<std::string> &getCompartmentIds() const;
-  const std::vector<std::string> &
+  [[nodiscard]] const std::string &errorMessage() const;
+  [[nodiscard]] const QImage &errorImage() const;
+  [[nodiscard]] const std::vector<std::string> &getCompartmentIds() const;
+  [[nodiscard]] const std::vector<std::string> &
   getSpeciesIds(std::size_t compartmentIndex) const;
-  const std::vector<QRgb> &getSpeciesColors(std::size_t compartmentIndex) const;
-  const std::vector<double> &getTimePoints() const;
-  const AvgMinMax &getAvgMinMax(std::size_t timeIndex,
-                                std::size_t compartmentIndex,
-                                std::size_t speciesIndex) const;
-  std::vector<double> getConc(std::size_t timeIndex,
-                              std::size_t compartmentIndex,
-                              std::size_t speciesIndex) const;
-  std::vector<double> getConcArray(std::size_t timeIndex,
-                                   std::size_t compartmentIndex,
-                                   std::size_t speciesIndex) const;
+  [[nodiscard]] const std::vector<QRgb> &
+  getSpeciesColors(std::size_t compartmentIndex) const;
+  [[nodiscard]] const std::vector<double> &getTimePoints() const;
+  [[nodiscard]] const AvgMinMax &getAvgMinMax(std::size_t timeIndex,
+                                              std::size_t compartmentIndex,
+                                              std::size_t speciesIndex) const;
+  [[nodiscard]] std::vector<double> getConc(std::size_t timeIndex,
+                                            std::size_t compartmentIndex,
+                                            std::size_t speciesIndex) const;
+  [[nodiscard]] std::vector<double>
+  getConcArray(std::size_t timeIndex, std::size_t compartmentIndex,
+               std::size_t speciesIndex) const;
   void applyConcsToModel(model::Model &m, std::size_t timeIndex) const;
-  std::vector<double> getDcdt(std::size_t compartmentIndex,
-                              std::size_t speciesIndex) const;
-  double getLowerOrderConc(std::size_t compartmentIndex,
-                           std::size_t speciesIndex,
-                           std::size_t pixelIndex) const;
-  QImage
+  [[nodiscard]] std::vector<double> getDcdt(std::size_t compartmentIndex,
+                                            std::size_t speciesIndex) const;
+  [[nodiscard]] double getLowerOrderConc(std::size_t compartmentIndex,
+                                         std::size_t speciesIndex,
+                                         std::size_t pixelIndex) const;
+  [[nodiscard]] QImage
   getConcImage(std::size_t timeIndex,
                const std::vector<std::vector<std::size_t>> &speciesToDraw = {},
                bool normaliseOverAllTimepoints = false,
                bool normaliseOverAllSpecies = false) const;
   // map from name to vec<vec<double>> species conc/dcdt for python bindings
-  std::pair<std::map<std::string, std::vector<std::vector<double>>>,
-            std::map<std::string, std::vector<std::vector<double>>>>
+  [[nodiscard]] std::pair<
+      std::map<std::string, std::vector<std::vector<double>>>,
+      std::map<std::string, std::vector<std::vector<double>>>>
   getPyConcs(std::size_t timeIndex) const;
-  std::size_t getNCompletedTimesteps() const;
-  const SimulationData &getSimulationData() const;
-  bool getIsRunning() const;
-  bool getIsStopping() const;
+  [[nodiscard]] std::size_t getNCompletedTimesteps() const;
+  [[nodiscard]] const SimulationData &getSimulationData() const;
+  [[nodiscard]] bool getIsRunning() const;
+  [[nodiscard]] bool getIsStopping() const;
   void requestStop();
 };
 

@@ -18,9 +18,9 @@ struct LineError {
  * Given an ordered set of pixels that form a line or a closed loop, construct
  * an n-point approximation to the line.
  *
- * @note Each point in the line is ranked according to the size of the triangle formed
- * by itself and its two nearest neighbours, and points are removed in reverse
- * order of importance. See
+ * @note Each point in the line is ranked according to the size of the triangle
+ * formed by itself and its two nearest neighbours, and points are removed in
+ * reverse order of importance. See
  * [10.1179/000870493786962263](https://www.tandfonline.com/doi/abs/10.1179/000870493786962263)
  * for more details.
  */
@@ -29,7 +29,7 @@ private:
   std::vector<QPoint> vertices;
   std::size_t minNumPoints;
   std::vector<std::size_t> priorities;
-  LineError getLineError(const std::vector<QPoint> &line) const;
+  [[nodiscard]] LineError getLineError(const std::vector<QPoint> &line) const;
   bool valid{true};
   bool closedLoop{false};
 
@@ -52,19 +52,19 @@ public:
   /**
    * @brief The original un-simplified line
    */
-  const std::vector<QPoint> &getAllVertices() const;
+  [[nodiscard]] const std::vector<QPoint> &getAllVertices() const;
   /**
    * @brief The number of points in the original un-simplified line
    */
-  std::size_t maxPoints() const;
+  [[nodiscard]] std::size_t maxPoints() const;
   /**
    * @brief Is the line valid
    */
-  bool isValid() const;
+  [[nodiscard]] bool isValid() const;
   /**
    * @brief Is the line a closed loop
    */
-  bool isLoop() const;
+  [[nodiscard]] bool isLoop() const;
   /**
    * @brief Construct a simplified version of the supplied line
    *

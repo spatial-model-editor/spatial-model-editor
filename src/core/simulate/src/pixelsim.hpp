@@ -8,9 +8,9 @@
 #include <atomic>
 #include <cstddef>
 #include <limits>
+#include <map>
 #include <memory>
 #include <string>
-#include <map>
 #include <vector>
 
 namespace sme {
@@ -59,15 +59,16 @@ public:
       const std::map<std::string, double, std::less<>> &substitutions = {});
   ~PixelSim() override;
   std::size_t run(double time, double timeout_ms) override;
-  const std::vector<double> &
+  [[nodiscard]] const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const override;
-  std::size_t getConcentrationPadding() const override;
-  const std::vector<double> &getDcdt(std::size_t compartmentIndex) const;
-  double getLowerOrderConcentration(std::size_t compartmentIndex,
-                                    std::size_t speciesIndex,
-                                    std::size_t pixelIndex) const;
-  const std::string &errorMessage() const override;
-  const QImage &errorImage() const override;
+  [[nodiscard]] std::size_t getConcentrationPadding() const override;
+  [[nodiscard]] const std::vector<double> &
+  getDcdt(std::size_t compartmentIndex) const;
+  [[nodiscard]] double getLowerOrderConcentration(std::size_t compartmentIndex,
+                                                  std::size_t speciesIndex,
+                                                  std::size_t pixelIndex) const;
+  [[nodiscard]] const std::string &errorMessage() const override;
+  [[nodiscard]] const QImage &errorImage() const override;
   void setStopRequested(bool stop) override;
 };
 

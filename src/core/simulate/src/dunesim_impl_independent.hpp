@@ -84,7 +84,7 @@ public:
           models[compartmentIndex]->get_grid_function(iSpecies));
     }
   }
-  double evaluateGridFunction(
+  [[nodiscard]] double evaluateGridFunction(
       std::size_t iSpecies, const Elem &e,
       const Dune::FieldVector<double, 2> &localPoint) const override {
     typename GF::Traits::RangeType result;

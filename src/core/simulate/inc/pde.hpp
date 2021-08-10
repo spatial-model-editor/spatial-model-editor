@@ -42,16 +42,17 @@ private:
   std::vector<std::vector<std::string>> jacobian;
 
 public:
-  explicit Pde(const model::Model *doc_ptr,
-               const std::vector<std::string> &speciesIDs,
-               const std::vector<std::string> &reactionIDs,
-               const std::vector<std::string> &relabelledSpeciesIDs = {},
-               const PdeScaleFactors &pdeScaleFactors = {},
-               const std::vector<std::string> &extraVariables = {},
-               const std::vector<std::string> &relabelledExtraVariables = {},
-               const std::map<std::string, double, std::less<>> &substitutions = {});
-  const std::vector<std::string> &getRHS() const;
-  const std::vector<std::vector<std::string>> &getJacobian() const;
+  explicit Pde(
+      const model::Model *doc_ptr, const std::vector<std::string> &speciesIDs,
+      const std::vector<std::string> &reactionIDs,
+      const std::vector<std::string> &relabelledSpeciesIDs = {},
+      const PdeScaleFactors &pdeScaleFactors = {},
+      const std::vector<std::string> &extraVariables = {},
+      const std::vector<std::string> &relabelledExtraVariables = {},
+      const std::map<std::string, double, std::less<>> &substitutions = {});
+  [[nodiscard]] const std::vector<std::string> &getRHS() const;
+  [[nodiscard]] const std::vector<std::vector<std::string>> &
+  getJacobian() const;
 };
 
 class Reaction {
@@ -70,12 +71,13 @@ private:
                                          const std::string &reacId) const;
 
 public:
-  std::size_t size() const;
-  const std::vector<std::string> &getSpeciesIDs() const;
-  const std::string &getExpression(std::size_t reactionIndex) const;
-  double getMatrixElement(std::size_t speciesIndex,
-                          std::size_t reactionIndex) const;
-  const std::vector<std::pair<std::string, double>> &
+  [[nodiscard]] std::size_t size() const;
+  [[nodiscard]] const std::vector<std::string> &getSpeciesIDs() const;
+  [[nodiscard]] const std::string &
+  getExpression(std::size_t reactionIndex) const;
+  [[nodiscard]] double getMatrixElement(std::size_t speciesIndex,
+                                        std::size_t reactionIndex) const;
+  [[nodiscard]] const std::vector<std::pair<std::string, double>> &
   getConstants(std::size_t reactionIndex) const;
   Reaction(const model::Model *doc, std::vector<std::string> species,
            const std::vector<std::string> &reactionIDs);

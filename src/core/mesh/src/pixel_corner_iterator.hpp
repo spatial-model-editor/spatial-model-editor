@@ -53,15 +53,15 @@ public:
   /**
    * @brief The current vertex.
    */
-  cv::Point vertex() const;
+  [[nodiscard]] cv::Point vertex() const;
   /**
    * @brief Returns true if at the end of the contour.
    */
-  bool done() const;
+  [[nodiscard]] bool done() const;
   /**
    * @brief Progress to the next vertex in the contour.
    */
   PixelCornerIterator &operator++();
 };
 
-} // namespace sme
+} // namespace sme::mesh

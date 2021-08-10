@@ -38,7 +38,7 @@ SCENARIO("SBML math", "[core/model/math][core/model][core][model][math]") {
     model::ModelMath math2;
     math2 = std::move(math);
     math2.parse("(-2)^2");
-    REQUIRE(math.isValid() == true);
+    REQUIRE(math2.isValid() == true);
   }
   GIVEN("No SBML model, invalid expressions") {
     model::ModelMath math;

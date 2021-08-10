@@ -27,10 +27,11 @@ public:
   ModelMath();
   explicit ModelMath(const libsbml::Model *model);
   void parse(const std::string &expr);
-  double eval(const std::map<const std::string, std::pair<double, bool>> &vars =
-                  {}) const;
-  bool isValid() const;
-  const std::string &getErrorMessage() const;
+  [[nodiscard]] double
+  eval(const std::map<const std::string, std::pair<double, bool>> &vars = {})
+      const;
+  [[nodiscard]] bool isValid() const;
+  [[nodiscard]] const std::string &getErrorMessage() const;
   ModelMath(ModelMath &&) noexcept;
   ModelMath &operator=(ModelMath &&) noexcept;
   ModelMath &operator=(const ModelMath &) = delete;

@@ -29,11 +29,11 @@ private:
   std::vector<QPoint> points;
 
 public:
-  bool isLoop() const;
-  bool isValid() const;
-  const std::vector<QPoint> &getPoints() const;
-  const std::vector<QPoint> &getAllPoints() const;
-  std::size_t getMaxPoints() const;
+  [[nodiscard]] bool isLoop() const;
+  [[nodiscard]] bool isValid() const;
+  [[nodiscard]] const std::vector<QPoint> &getPoints() const;
+  [[nodiscard]] const std::vector<QPoint> &getAllPoints() const;
+  [[nodiscard]] std::size_t getMaxPoints() const;
   void setMaxPoints(std::size_t maxPoints);
   std::size_t setMaxPoints();
   explicit Boundary(const std::vector<QPoint> &boundaryPoints,

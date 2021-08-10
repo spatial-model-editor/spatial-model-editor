@@ -26,7 +26,7 @@ public:
   explicit Model(const std::string &filename = {});
   void importFile(const std::string &filename);
   void importSbmlString(const std::string &xml);
-  std::string getName() const;
+  [[nodiscard]] std::string getName() const;
   void setName(const std::string &name);
   void importGeometryFromImage(const std::string &filename);
   void exportSbmlFile(const std::string &filename);
@@ -35,17 +35,16 @@ public:
   std::vector<Membrane> membranes;
   std::vector<Parameter> parameters;
   PyImageRgb compartmentImage;
-  std::vector<SimulationResult> simulateString(
-      const std::string& lengths, const std::string& intervals, int timeoutSeconds,
-      bool throwOnTimeout,
-      simulate::SimulatorType simulatorType,
-      bool continueExistingSimulation);
-  std::vector<SimulationResult> simulateFloat(
-      double simulationTime, double imageInterval, int timeoutSeconds,
-      bool throwOnTimeout,
-      simulate::SimulatorType simulatorType,
-      bool continueExistingSimulation);
-  std::string getStr() const;
+  std::vector<SimulationResult>
+  simulateString(const std::string &lengths, const std::string &intervals,
+                 int timeoutSeconds, bool throwOnTimeout,
+                 simulate::SimulatorType simulatorType,
+                 bool continueExistingSimulation);
+  std::vector<SimulationResult>
+  simulateFloat(double simulationTime, double imageInterval, int timeoutSeconds,
+                bool throwOnTimeout, simulate::SimulatorType simulatorType,
+                bool continueExistingSimulation);
+  [[nodiscard]] std::string getStr() const;
 };
 
 } // namespace sme

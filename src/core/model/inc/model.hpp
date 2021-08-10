@@ -7,7 +7,6 @@
 #pragma once
 
 #include "model_compartments.hpp"
-#include "model_settings.hpp"
 #include "model_events.hpp"
 #include "model_functions.hpp"
 #include "model_geometry.hpp"
@@ -15,11 +14,12 @@
 #include "model_membranes.hpp"
 #include "model_parameters.hpp"
 #include "model_reactions.hpp"
+#include "model_settings.hpp"
 #include "model_species.hpp"
 #include "model_units.hpp"
+#include "serialization.hpp"
 #include "simulate.hpp"
 #include "simulate_options.hpp"
-#include "serialization.hpp"
 #include <QColor>
 #include <QImage>
 #include <QStringList>
@@ -79,38 +79,38 @@ private:
   void updateSBMLDoc();
 
 public:
-  bool getIsValid() const;
-  const QString& getErrorMessage() const;
-  bool getHasUnsavedChanges() const;
-  const QString &getCurrentFilename() const;
+  [[nodiscard]] bool getIsValid() const;
+  [[nodiscard]] const QString &getErrorMessage() const;
+  [[nodiscard]] bool getHasUnsavedChanges() const;
+  [[nodiscard]] const QString &getCurrentFilename() const;
 
   void setName(const QString &name);
-  QString getName() const;
+  [[nodiscard]] QString getName() const;
 
   ModelCompartments &getCompartments();
-  const ModelCompartments &getCompartments() const;
+  [[nodiscard]] const ModelCompartments &getCompartments() const;
   ModelGeometry &getGeometry();
-  const ModelGeometry &getGeometry() const;
+  [[nodiscard]] const ModelGeometry &getGeometry() const;
   ModelMembranes &getMembranes();
-  const ModelMembranes &getMembranes() const;
+  [[nodiscard]] const ModelMembranes &getMembranes() const;
   ModelSpecies &getSpecies();
-  const ModelSpecies &getSpecies() const;
+  [[nodiscard]] const ModelSpecies &getSpecies() const;
   ModelReactions &getReactions();
-  const ModelReactions &getReactions() const;
+  [[nodiscard]] const ModelReactions &getReactions() const;
   ModelFunctions &getFunctions();
-  const ModelFunctions &getFunctions() const;
+  [[nodiscard]] const ModelFunctions &getFunctions() const;
   ModelParameters &getParameters();
-  const ModelParameters &getParameters() const;
+  [[nodiscard]] const ModelParameters &getParameters() const;
   ModelEvents &getEvents();
-  const ModelEvents &getEvents() const;
+  [[nodiscard]] const ModelEvents &getEvents() const;
   ModelUnits &getUnits();
-  const ModelUnits &getUnits() const;
+  [[nodiscard]] const ModelUnits &getUnits() const;
   ModelMath &getMath();
-  const ModelMath &getMath() const;
+  [[nodiscard]] const ModelMath &getMath() const;
   simulate::SimulationData &getSimulationData();
-  const simulate::SimulationData &getSimulationData() const;
+  [[nodiscard]] const simulate::SimulationData &getSimulationData() const;
   SimulationSettings &getSimulationSettings();
-  const SimulationSettings &getSimulationSettings() const;
+  [[nodiscard]] const SimulationSettings &getSimulationSettings() const;
 
   explicit Model();
   Model(Model &&) noexcept = default;
@@ -121,19 +121,21 @@ public:
 
   void createSBMLFile(const std::string &name);
   void importSBMLFile(const std::string &filename);
-  void importSBMLString(const std::string &xml, const std::string& filename={});
+  void importSBMLString(const std::string &xml,
+                        const std::string &filename = {});
   void exportSBMLFile(const std::string &filename);
   void importFile(const std::string &filename);
   void exportSMEFile(const std::string &filename);
   QString getXml();
   void clear();
 
-  SpeciesGeometry getSpeciesGeometry(const QString &speciesID) const;
+  [[nodiscard]] SpeciesGeometry
+  getSpeciesGeometry(const QString &speciesID) const;
 
-  std::string inlineExpr(const std::string &mathExpression) const;
+  [[nodiscard]] std::string inlineExpr(const std::string &mathExpression) const;
 
-  DisplayOptions getDisplayOptions() const;
+  [[nodiscard]] DisplayOptions getDisplayOptions() const;
   void setDisplayOptions(const DisplayOptions &displayOptions);
 };
 
-} // namespace sme
+} // namespace sme::model

@@ -14,7 +14,7 @@ private:
   QString text;
 
 public:
-  const QString &getText() const;
+  [[nodiscard]] const QString &getText() const;
   void addSection(const QString &str);
   void addSection(const QString &str1, const QString &str2);
   void addSection(const QString &str1, const QString &str2,

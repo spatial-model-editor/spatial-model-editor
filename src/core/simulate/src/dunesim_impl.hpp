@@ -31,7 +31,7 @@ public:
   virtual void run(double time) = 0;
   virtual void updateGridFunctions(std::size_t compartmentIndex,
                                    std::size_t nSpecies) = 0;
-  virtual double evaluateGridFunction(
+  [[nodiscard]] virtual double evaluateGridFunction(
       std::size_t iSpecies, const Elem &e,
       const Dune::FieldVector<double, 2> &localPoint) const = 0;
 

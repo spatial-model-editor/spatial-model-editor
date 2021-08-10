@@ -27,19 +27,19 @@ private:
 public:
   ModelFunctions();
   explicit ModelFunctions(libsbml::Model *model);
-  const QStringList &getIds() const;
-  const QStringList &getNames() const;
+  [[nodiscard]] const QStringList &getIds() const;
+  [[nodiscard]] const QStringList &getNames() const;
   QString setName(const QString &id, const QString &name);
-  QString getName(const QString &id) const;
+  [[nodiscard]] QString getName(const QString &id) const;
   void setExpression(const QString &id, const QString &expression);
-  QString getExpression(const QString &id) const;
-  QStringList getArguments(const QString &id) const;
+  [[nodiscard]] QString getExpression(const QString &id) const;
+  [[nodiscard]] QStringList getArguments(const QString &id) const;
   QString addArgument(const QString &functionId, const QString &argumentId);
   void removeArgument(const QString &functionId, const QString &argumentId);
   QString add(const QString &name);
   void remove(const QString &id);
-  std::vector<utils::Function> getSymbolicFunctions() const;
-  bool getHasUnsavedChanges() const;
+  [[nodiscard]] std::vector<utils::Function> getSymbolicFunctions() const;
+  [[nodiscard]] bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);
 };
 

@@ -23,10 +23,10 @@ private:
 public:
   Membrane() = default;
   explicit Membrane(model::Model *sbmlDocWrapper, const std::string &sId);
-  std::string getName() const;
+  [[nodiscard]] std::string getName() const;
   void setName(const std::string &name);
   std::vector<Reaction> reactions;
-  std::string getStr() const;
+  [[nodiscard]] std::string getStr() const;
 };
 
 } // namespace sme
