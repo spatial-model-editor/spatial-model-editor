@@ -39,11 +39,13 @@ public:
   simulateString(const std::string &lengths, const std::string &intervals,
                  int timeoutSeconds, bool throwOnTimeout,
                  simulate::SimulatorType simulatorType,
-                 bool continueExistingSimulation);
+                 bool continueExistingSimulation,
+                 bool returnResults);
   std::vector<SimulationResult>
   simulateFloat(double simulationTime, double imageInterval, int timeoutSeconds,
                 bool throwOnTimeout, simulate::SimulatorType simulatorType,
-                bool continueExistingSimulation);
+                bool continueExistingSimulation,
+                bool returnResults);
   [[nodiscard]] std::string getStr() const;
 };
 
