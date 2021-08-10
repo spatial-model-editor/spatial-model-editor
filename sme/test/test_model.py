@@ -144,20 +144,29 @@ class TestModel(unittest.TestCase):
         res2 = m.simulate(10000, 10000, 1, False)
         self.assertEqual(len(res2), 1)
 
-    def test_import_geometry_from_image(self):
-        imgfile_original = _get_abs_path("concave-cell-nucleus-100x100.png")
-        imgfile_modified = _get_abs_path("modified-concave-cell-nucleus-100x100.png")
-        m = sme.open_example_model()
-        comp_img_0 = m.compartment_image
-        nucl_mask_0 = m.compartments["Nucleus"].geometry_mask
-        m.import_geometry_from_image(imgfile_modified)
-        comp_img_1 = m.compartment_image
-        nucl_mask_1 = m.compartments["Nucleus"].geometry_mask
-        self.assertGreater(_rms(nucl_mask_0), _rms(nucl_mask_1))
-        self.assertNotEqual(comp_img_0, comp_img_1)
-        m.import_geometry_from_image(imgfile_original)
-        comp_img_2 = m.compartment_image
-        nucl_mask_2 = m.compartments["Nucleus"].geometry_mask
-        self.assertEqual(_rms(nucl_mask_0), _rms(nucl_mask_2))
-        self.assertEqual(comp_img_0, comp_img_2)
-        self.assertEqual(nucl_mask_0, nucl_mask_2)
+        # don't return simulation results
+        for sim_type in [sme.SimulatorType.DUNE, sme.SimulatorType.Pixel]:
+            m = sme.open_example_model()
+            sim_results = m.simulate(
+                0.002, 0.001, simulator_type=sim_type, return_results=False
+            )
+            self.assertEqual(len(sim_results), 0)
+
+
+def test_import_geometry_from_image(self):
+    imgfile_original = _get_abs_path("concave-cell-nucleus-100x100.png")
+    imgfile_modified = _get_abs_path("modified-concave-cell-nucleus-100x100.png")
+    m = sme.open_example_model()
+    comp_img_0 = m.compartment_image
+    nucl_mask_0 = m.compartments["Nucleus"].geometry_mask
+    m.import_geometry_from_image(imgfile_modified)
+    comp_img_1 = m.compartment_image
+    nucl_mask_1 = m.compartments["Nucleus"].geometry_mask
+    self.assertGreater(_rms(nucl_mask_0), _rms(nucl_mask_1))
+    self.assertNotEqual(comp_img_0, comp_img_1)
+    m.import_geometry_from_image(imgfile_original)
+    comp_img_2 = m.compartment_image
+    nucl_mask_2 = m.compartments["Nucleus"].geometry_mask
+    self.assertEqual(_rms(nucl_mask_0), _rms(nucl_mask_2))
+    self.assertEqual(comp_img_0, comp_img_2)
+    self.assertEqual(nucl_mask_0, nucl_mask_2)

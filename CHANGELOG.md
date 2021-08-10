@@ -1,6 +1,10 @@
 # Changelog
 
-## [latest]
+## [1.1.3] - 2021-08-10
+### Added
+- python interface: add option to simulate without returning the results to reduce RAM usage [#610](https://github.com/spatial-model-editor/spatial-model-editor/issues/610)
+- more detailed error message when a model cannot be loaded [#449](https://github.com/spatial-model-editor/spatial-model-editor/issues/449)
+
 ### Fixed
 - bug where invalid reaction rate expression caused simulation to crash [#609](https://github.com/spatial-model-editor/spatial-model-editor/issues/609)
 
