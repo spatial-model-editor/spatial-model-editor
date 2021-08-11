@@ -34,7 +34,7 @@ public:
   std::vector<Compartment> compartments;
   std::vector<Membrane> membranes;
   std::vector<Parameter> parameters;
-  PyImageRgb compartmentImage;
+  pybind11::array compartment_image;
   std::vector<SimulationResult>
   simulateString(const std::string &lengths, const std::string &intervals,
                  int timeoutSeconds, bool throwOnTimeout,
@@ -46,6 +46,8 @@ public:
                 bool throwOnTimeout, simulate::SimulatorType simulatorType,
                 bool continueExistingSimulation,
                 bool returnResults);
+  std::vector<SimulationResult>
+  getSimulationResults();
   [[nodiscard]] std::string getStr() const;
 };
 

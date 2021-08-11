@@ -129,7 +129,7 @@ void pybindModel(pybind11::module &m) {
                         >>> print(last_param.name)
                         param
                     )")
-      .def_readonly("compartment_image", &sme::Model::compartmentImage,
+      .def_readonly("compartment_image", &sme::Model::compartment_image,
                     R"(
                     list of list of list of int: an image of the compartments in this model
                     )")
@@ -197,6 +197,13 @@ void pybindModel(pybind11::module &m) {
            Raises:
                RuntimeError: if the simulation times out or fails
            )")
+      .def("simulation_results", &sme::Model::getSimulationResults,
+           R"(
+          returns the simulation results.
+
+          Returns:
+              SimulationResultList: the simulation results
+          )")
       .def("__repr__",
            [](const sme::Model &a) {
              return fmt::format("<sme.Model named '{}'>", a.getName());
@@ -204,15 +211,51 @@ void pybindModel(pybind11::module &m) {
       .def("__str__", &sme::Model::getStr);
 }
 
+// return the contents of a std::vector as an ndarray, with optional shape,
+// without making a copy of the data, based on
+// https://github.com/pybind/pybind11/issues/1042#issuecomment-642215028
+template <typename T>
+static inline pybind11::array_t<T>
+as_ndarray(std::vector<T> &&v, const std::vector<ssize_t> &shape = {}) {
+  auto data{v.data()};
+  auto size{v.size()};
+  auto ptr{std::make_unique<std::vector<T>>(std::move(v))};
+  auto capsule{pybind11::capsule(ptr.get(), [](void *p) {
+    std::unique_ptr<std::vector<T>>(reinterpret_cast<std::vector<T> *>(p));
+  })};
+  ptr.release();
+  if (shape.empty()) {
+    return pybind11::array(size, data, capsule);
+  }
+  return pybind11::array(shape, data, capsule);
+}
+
 static std::vector<SimulationResult>
-getSimulationResults(const simulate::Simulation *sim) {
+constructSimulationResults(const simulate::Simulation *sim, bool getDcdt) {
   std::vector<SimulationResult> results;
+  results.reserve(sim->getTimePoints().size());
   for (std::size_t i = 0; i < sim->getTimePoints().size(); ++i) {
     auto &result = results.emplace_back();
     result.timePoint = sim->getTimePoints()[i];
-    result.concentrationImage = toPyImageRgb(sim->getConcImage(i, {}, true));
-    std::tie(result.speciesConcentration, result.speciesDcdt) =
-        sim->getPyConcs(i);
+    result.concentration_image = toPyImageRgb(sim->getConcImage(i, {}, true));
+    std::vector<ssize_t> shape{result.concentration_image.shape(0),
+                               result.concentration_image.shape(1)};
+    for (std::size_t ci = 0; ci < sim->getCompartmentIds().size(); ++ci) {
+      const auto &names{sim->getPyNames(ci)};
+      auto concs{sim->getPyConcs(i, ci)};
+      for (std::size_t si = 0; si < names.size(); ++si) {
+        result.species_concentration[pybind11::str(names[si])] =
+            as_ndarray(std::move(concs[si]), shape);
+      }
+      if (getDcdt && i + 1 == sim->getTimePoints().size()) {
+        if (auto dcdts{sim->getPyDcdts(ci)}; !dcdts.empty()) {
+          for (std::size_t si = 0; si < names.size(); ++si) {
+            result.species_dcdt[pybind11::str(names[si])] =
+                as_ndarray(std::move(dcdts[si]), shape);
+          }
+        }
+      }
+    }
   }
   return results;
 }
@@ -240,7 +283,7 @@ void Model::init() {
   for (const auto &paramId : s->getParameters().getIds()) {
     parameters.emplace_back(s.get(), paramId.toStdString());
   }
-  compartmentImage = toPyImageRgb(s->getGeometry().getImage());
+  compartment_image = toPyImageRgb(s->getGeometry().getImage());
 }
 
 Model::Model(const std::string &filename) {
@@ -283,7 +326,7 @@ void Model::importGeometryFromImage(const std::string &filename) {
   }
   // this resets all compartment colours
   s->getGeometry().importGeometryFromImage(img);
-  compartmentImage = toPyImageRgb(s->getGeometry().getImage());
+  compartment_image = toPyImageRgb(s->getGeometry().getImage());
   // try to re-assign previous colour to each compartment
   for (int i = 0; i < ids.size(); ++i) {
     s->getCompartments().setColour(ids[i], colours[i]);
@@ -326,7 +369,7 @@ Model::simulateString(const std::string &lengths, const std::string &intervals,
     throw SmeRuntimeError(fmt::format("Error during simulation: {}", e));
   }
   if (returnResults) {
-    return getSimulationResults(sim.get());
+    return constructSimulationResults(sim.get(), true);
   }
   return {};
 }
@@ -340,6 +383,15 @@ Model::simulateFloat(double simulationTime, double imageInterval,
                         QString::number(imageInterval, 'g', 17).toStdString(),
                         timeoutSeconds, throwOnTimeout, simulatorType,
                         continueExistingSimulation, returnResults);
+}
+
+std::vector<SimulationResult> Model::getSimulationResults() {
+  sim.reset();
+  sim = std::make_unique<simulate::Simulation>(*(s.get()));
+  if (const auto &e{sim->errorMessage()}; !e.empty()) {
+    throw SmeRuntimeError(fmt::format("Error in simulation setup: {}", e));
+  }
+  return constructSimulationResults(sim.get(), false);
 }
 
 std::string Model::getStr() const {

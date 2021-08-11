@@ -13,9 +13,9 @@ void pybindSimulationResult(pybind11::module &m);
 
 struct SimulationResult {
   double timePoint{0.0};
-  PyImageRgb concentrationImage;
-  std::map<std::string, PyConc> speciesConcentration;
-  std::map<std::string, PyConc> speciesDcdt;
+  pybind11::array concentration_image{};
+  pybind11::dict species_concentration{};
+  pybind11::dict species_dcdt{};
   [[nodiscard]] std::string getStr() const;
   [[nodiscard]] std::string getName() const;
 };

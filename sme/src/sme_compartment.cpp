@@ -27,9 +27,9 @@ void pybindCompartment(pybind11::module &m) {
                     R"(
                     ReactionList: the reactions in this compartment
                     )")
-      .def_property_readonly("geometry_mask", &Compartment::getGeometryMask,
+      .def_readonly("geometry_mask", &Compartment::geometry_mask,
                     R"(
-                    list of list of bool: 2d pixel mask of the compartment geometry
+                    2d array of bool: 2d pixel mask of the compartment geometry
 
                     The mask is a list of list of bool, where
                     ``geometry_mask[y][x] = True``
@@ -54,6 +54,8 @@ Compartment::Compartment(model::Model *sbmlDocWrapper, const std::string &sId)
       reactions.emplace_back(s, reac.toStdString());
     }
   }
+  geometry_mask = toPyImageMask(
+      s->getCompartments().getCompartment(id.c_str())->getCompartmentImage());
 }
 
 std::string Compartment::getName() const {
@@ -62,11 +64,6 @@ std::string Compartment::getName() const {
 
 void Compartment::setName(const std::string &name) {
   s->getCompartments().setName(id.c_str(), name.c_str());
-}
-
-PyImageMask Compartment::getGeometryMask() const {
-  return toPyImageMask(
-      s->getCompartments().getCompartment(id.c_str())->getCompartmentImage());
 }
 
 std::string Compartment::getStr() const {

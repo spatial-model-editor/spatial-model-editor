@@ -57,6 +57,7 @@ rm -f *.gcov
 # also run python tests, but only copy gcov data for sme files: don't want to overwrite coverage info on core from c++ tests
 lcov -q -z -d .
 cd sme
+python -m pip install -r ../../sme/requirements.txt
 python -m unittest discover -s ../../sme/test > sme.txt 2>&1
 tail -n 100 sme.txt
 cd ..

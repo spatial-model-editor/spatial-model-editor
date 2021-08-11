@@ -126,5 +126,8 @@ setup(
     ext_modules=[CMakeExtension("sme")],
     cmdclass=dict(build_ext=CMakeBuild),
     test_suite="test",
+    install_requires=[
+        "numpy",
+    ],
     zip_safe=False,
 )
