@@ -219,7 +219,8 @@ getSimulationResults(const simulate::Simulation *sim) {
 
 void Model::init() {
   if (!s->getIsValid()) {
-    throw SmeInvalidArgument("Failed to open model");
+    throw SmeInvalidArgument("Failed to open model: " +
+                             s->getErrorMessage().toStdString());
   }
   compartments.clear();
   compartments.reserve(
@@ -324,7 +325,7 @@ Model::simulateString(const std::string &lengths, const std::string &intervals,
   if (const auto &e = sim->errorMessage(); throwOnTimeout && !e.empty()) {
     throw SmeRuntimeError(fmt::format("Error during simulation: {}", e));
   }
-  if(returnResults) {
+  if (returnResults) {
     return getSimulationResults(sim.get());
   }
   return {};

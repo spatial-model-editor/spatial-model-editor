@@ -24,6 +24,11 @@ std::string countAndPrintSBMLDocErrors(const libsbml::SBMLDocument *doc) {
   const unsigned n{doc->getNumErrors(severity)};
   for (unsigned i = 0; i < n; ++i) {
     const auto *err{doc->getErrorWithSeverity(i, severity)};
+    if (err == nullptr){
+      SPDLOG_WARN("{} (libsbml getErrorWithSeverity returned a nullptr)", errors);
+      errors = "Failed to read file: invalid or corrupted";
+      return errors;
+    }
     if (err->getErrorId() == 1221608) {
       // ignore this error for now:
       // https://github.com/spatial-model-editor/spatial-model-editor/issues/465

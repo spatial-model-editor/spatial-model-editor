@@ -7,7 +7,7 @@
 
 using namespace sme;
 
-static void createOldSmeFile(const QString &filename) {
+static void createBinaryFile(const QString &filename) {
   QFile fIn(QString(":/test/smefiles/%1").arg(filename));
   fIn.open(QIODevice::ReadOnly);
   auto data{fIn.readAll()};
@@ -28,9 +28,19 @@ SCENARIO("Serialization",
     fs.close();
     REQUIRE(utils::importSmeFile("invalid.sme").xmlModel.empty());
   }
+  GIVEN("Import corrupted file (valid file with some randomly deleted bytes)") {
+    createBinaryFile("brusselator-model-corrupted.sme");
+    REQUIRE(utils::importSmeFile("brusselator-model-corrupted.sme")
+                .xmlModel.empty());
+  }
+  GIVEN("Import truncated file (valid file with the last few bytes deleted)") {
+    createBinaryFile("brusselator-model-truncated.sme");
+    REQUIRE(utils::importSmeFile("brusselator-model-truncated.sme")
+    .xmlModel.empty());
+  }
   GIVEN("Valid v0 smefile (no SimulationSettings)") {
     // v0 smefile was used in spatial-model-editor 1.0.9
-    createOldSmeFile("very-simple-model-v0.sme");
+    createBinaryFile("very-simple-model-v0.sme");
     auto contents{utils::importSmeFile("very-simple-model-v0.sme")};
     REQUIRE(contents.xmlModel.size() == 134371);
     REQUIRE(contents.simulationData.xmlModel.size() == 541828);
@@ -50,7 +60,7 @@ SCENARIO("Serialization",
     // v1 smefile was only used in "latest" preview versions
     // of spatial-model-editor between 1.0.9 and 1.1.0 releases
     sme::simulate::SimulationData data;
-    createOldSmeFile("very-simple-model-v1.sme");
+    createBinaryFile("very-simple-model-v1.sme");
     auto contents{utils::importSmeFile("very-simple-model-v1.sme")};
     REQUIRE(contents.simulationData.timePoints.size() == 4);
     REQUIRE(contents.simulationData.timePoints[0] == dbl_approx(0.00));

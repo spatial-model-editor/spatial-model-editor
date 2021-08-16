@@ -46,9 +46,21 @@ void serialize(Archive &ar, sme::utils::SmeFileContents &contents,
 SmeFileContents importSmeFile(const std::string &filename) {
   SmeFileContents contents{};
   std::ifstream fs(filename, std::ios::binary);
-  if (fs) {
+  if (!fs) {
+    return contents;
+  }
+  try {
     cereal::BinaryInputArchive ar(fs);
     ar(contents);
+  } catch (const cereal::Exception &e) {
+    // invalid/corrupted file might be identified by cereal
+    SPDLOG_WARN("Failed to import file '{}'. {}", filename, e.what());
+    return {};
+  } catch (const std::exception &e) {
+    // or it might not, but in attempting to load the invalid data cereal may
+    // cause an exception to be thrown, e.g. std::length_error
+    SPDLOG_WARN("Failed to import file '{}'. {}", filename, e.what());
+    return {};
   }
   return contents;
 }
@@ -90,8 +102,9 @@ std::string toXml(const model::Settings &sbmlAnnotation) {
 
 model::Settings fromXml(const std::string &xml) {
   model::Settings sbmlAnnotation{};
-  // hack until https://github.com/spatial-model-editor/spatial-model-editor/issues/535 is resolved:
-  // (cereal relies on strtod to read doubles and assumes C locale)
+  // hack until
+  // https://github.com/spatial-model-editor/spatial-model-editor/issues/535 is
+  // resolved: (cereal relies on strtod to read doubles and assumes C locale)
   std::locale userLocale = std::locale::global(std::locale::classic());
   // re-insert header & footer
   // todo: do this in a less fragile way
