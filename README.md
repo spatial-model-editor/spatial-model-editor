@@ -5,10 +5,11 @@
 [![github releases](https://img.shields.io/github/v/release/spatial-model-editor/spatial-model-editor?sort=semver)](https://github.com/spatial-model-editor/spatial-model-editor/releases)
 [![pypi releases](https://img.shields.io/pypi/v/sme.svg)](https://pypi.org/project/sme)
 [![open in colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/sme/notebooks/getting_started.ipynb)
-[![documentation](https://readthedocs.org/projects/spatial-model-editor/badge/)](https://spatial-model-editor.readthedocs.io/)
+[![documentation](https://readthedocs.org/projects/spatial-model-editor/badge/?version=stable)](https://spatial-model-editor.readthedocs.io/en/stable/?badge=stable)
 [![GUI/CLI Release Builds](https://github.com/spatial-model-editor/spatial-model-editor/workflows/GUI/CLI%20Release%20Builds/badge.svg)](https://github.com/spatial-model-editor/spatial-model-editor/actions?query=workflow%3A%22GUI%2FCLI+Release+Builds%22)
 [![codecov](https://codecov.io/gh/spatial-model-editor/spatial-model-editor/branch/master/graph/badge.svg)](https://codecov.io/gh/spatial-model-editor/spatial-model-editor)
 [![sonarcloud quality gate status](https://sonarcloud.io/api/project_badges/measure?project=spatial-model-editor_spatial-model-editor&metric=alert_status)](https://sonarcloud.io/dashboard?id=spatial-model-editor_spatial-model-editor)
+[![DOI](https://zenodo.org/badge/185185280.svg)](https://zenodo.org/badge/latestdoi/185185280)
 
 A GUI editor to create and edit 2d spatial SBML models of bio-chemical reactions and simulate them using the
 [dune-copasi](https://dune-copasi.netlify.app/) solver for reaction-diffusion systems.
