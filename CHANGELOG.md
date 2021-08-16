@@ -1,5 +1,9 @@
 # Changelog
 
+## [latest]
+### Fixed
+- bug where opening a corrupted sme file caused a crash [#618](https://github.com/spatial-model-editor/spatial-model-editor/issues/618)
+
 ## [1.1.3] - 2021-08-10
 ### Added
 - python interface: add option to simulate without returning the results to reduce RAM usage [#610](https://github.com/spatial-model-editor/spatial-model-editor/issues/610)

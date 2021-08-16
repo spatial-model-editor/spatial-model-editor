@@ -39,5 +39,7 @@
         <file>geometry/cell.png</file>
         <file>smefiles/very-simple-model-v0.sme</file>
         <file>smefiles/very-simple-model-v1.sme</file>
+        <file>smefiles/brusselator-model-corrupted.sme</file>
+        <file>smefiles/brusselator-model-truncated.sme</file>
     </qresource>
 </RCC>
