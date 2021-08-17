@@ -43,6 +43,22 @@ void pybindModule(pybind11::module &m) {
 
         Returns:
             Model: the example spatial model
+
+        Examples:
+          >>> import sme
+          >>> model = sme.open_example_model()
+          >>> repr(model)
+          "<sme.Model named 'Very Simple Model'>"
+          >>> print(model)
+          <sme.Model>
+            - name: 'Very Simple Model'
+            - compartments:
+               - Outside
+               - Cell
+               - Nucleus
+            - membranes:
+               - Outside <-> Cell
+               - Cell <-> Nucleus
         )");
   m.attr("__version__") = utils::SPATIAL_MODEL_EDITOR_VERSION;
 }

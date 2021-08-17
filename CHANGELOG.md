@@ -1,6 +1,6 @@
 # Changelog
 
-## [latest]
+## [1.1.4] - 2021-08-17
 ### Added
 - python interface: `Model.simulation_results()` provides access to existing model simulation data [#622](https://github.com/spatial-model-editor/spatial-model-editor/issues/622)
 
