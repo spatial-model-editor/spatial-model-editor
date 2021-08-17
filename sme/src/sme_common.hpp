@@ -5,17 +5,14 @@
 #include <QImage>
 #include <algorithm>
 #include <pybind11/stl.h>
+#include <pybind11/numpy.h>
 #include <stdexcept>
 #include <vector>
 
 namespace sme {
 
-using PyImageRgb = std::vector<std::vector<std::vector<int>>>;
-using PyImageMask = std::vector<std::vector<bool>>;
-using PyConc = std::vector<std::vector<double>>;
-
-PyImageRgb toPyImageRgb(const QImage &img);
-PyImageMask toPyImageMask(const QImage &img);
+pybind11::array toPyImageRgb(const QImage &img);
+pybind11::array toPyImageMask(const QImage &img);
 
 template <typename T> std::string vecToNames(const std::vector<T> &vec) {
   std::string str;
@@ -51,7 +48,7 @@ template <typename T> T &findElem(std::vector<T> &v, const std::string &name) {
 template <typename T> void bindList(pybind11::module &m, const char *typeName) {
   std::string listName{fmt::format("{}List", typeName)};
   std::string docString{
-      fmt::format("{0}: a list of :class:`{1}`\n\n"
+      fmt::format("a list of :class:`{1}` objects\n\n"
                   "the list can be iterated over, or an "
                   "element can be looked up by its index or name",
                   listName, typeName)};

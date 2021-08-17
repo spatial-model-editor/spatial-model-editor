@@ -97,11 +97,12 @@ public:
                const std::vector<std::vector<std::size_t>> &speciesToDraw = {},
                bool normaliseOverAllTimepoints = false,
                bool normaliseOverAllSpecies = false) const;
-  // map from name to vec<vec<double>> species conc/dcdt for python bindings
-  [[nodiscard]] std::pair<
-      std::map<std::string, std::vector<std::vector<double>>>,
-      std::map<std::string, std::vector<std::vector<double>>>>
-  getPyConcs(std::size_t timeIndex) const;
+  [[nodiscard]] const std::vector<std::string> &
+  getPyNames(std::size_t compartmentIndex) const;
+  [[nodiscard]] std::vector<std::vector<double>>
+  getPyConcs(std::size_t timeIndex, std::size_t compartmentIndex) const;
+  [[nodiscard]] std::vector<std::vector<double>>
+  getPyDcdts(std::size_t compartmentIndex) const;
   [[nodiscard]] std::size_t getNCompletedTimesteps() const;
   [[nodiscard]] const SimulationData &getSimulationData() const;
   [[nodiscard]] bool getIsRunning() const;

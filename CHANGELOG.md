@@ -1,6 +1,12 @@
 # Changelog
 
 ## [latest]
+### Added
+- python interface: `Model.simulation_results()` provides access to existing model simulation data [#622](https://github.com/spatial-model-editor/spatial-model-editor/issues/622)
+
+### Changed
+- python interface: simulation results now provided in [numpy.ndarray](https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html) format [#610](https://github.com/spatial-model-editor/spatial-model-editor/issues/610)
+
 ### Fixed
 - bug where opening a corrupted sme file caused a crash [#618](https://github.com/spatial-model-editor/spatial-model-editor/issues/618)
 

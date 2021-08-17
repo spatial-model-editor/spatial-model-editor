@@ -64,5 +64,6 @@ tail -n 100 tests.txt
 # run python tests
 
 #cd sme
+# python -m pip install -r ../../sme/requirements.txt
 #PYTHONMALLOC=malloc python -m unittest discover -s ../../sme/test > sme.txt 2>&1
 #tail -n 100 sme.txt

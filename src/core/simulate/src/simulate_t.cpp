@@ -1108,27 +1108,29 @@ SCENARIO("PyConc",
       simulate::Simulation sim(s);
       sim.doTimesteps(0.01, 1);
       REQUIRE(sim.getTimePoints().size() == 2);
-      auto [pyConcs0, pyDcdts0] = sim.getPyConcs(0);
+      REQUIRE(sim.getPyNames(0).size() == 3);
+      REQUIRE(sim.getPyNames(0)[0] == "A");
+      REQUIRE(sim.getPyNames(0)[1] == "B");
+      REQUIRE(sim.getPyNames(0)[2] == "C");
+      auto pyConcs0{sim.getPyConcs(0, 0)};
       REQUIRE(pyConcs0.size() == 3);
-      const auto &cA0 = pyConcs0["A"];
-      REQUIRE(cA0.size() == 100);
-      REQUIRE(cA0[0].size() == 100);
-      REQUIRE(cA0[0][0] == dbl_approx(0.0));
-      // only last timepoint of pixel sim has dcdt data:
-      REQUIRE(pyDcdts0.size() == 0);
+      const auto &cA0 = pyConcs0[0];
+      REQUIRE(cA0.size() == 100 * 100);
+      REQUIRE(cA0[0] == dbl_approx(0.0));
 
-      auto [pyConcs1, pyDcdts1] = sim.getPyConcs(1);
+      auto pyConcs1{sim.getPyConcs(1, 0)};
       REQUIRE(pyConcs1.size() == 3);
-      const auto &cA1{pyConcs1["A"]};
-      REQUIRE(cA1.size() == 100);
-      REQUIRE(cA1[0].size() == 100);
-      REQUIRE(cA1[0][0] == dbl_approx(0.0));
+      const auto &cA1{pyConcs1[0]};
+      REQUIRE(cA1.size() == 100 * 100);
+      REQUIRE(cA1[0] == dbl_approx(0.0));
+
+      // onlh have dcdt for last timepoint of pixel sim:
+      auto pyDcdts1{sim.getPyDcdts(0)};
       if (simType == simulate::SimulatorType::Pixel) {
         REQUIRE(pyDcdts1.size() == 3);
-        const auto &dA1 = pyDcdts1["A"];
-        REQUIRE(dA1.size() == 100);
-        REQUIRE(dA1[0].size() == 100);
-        REQUIRE(dA1[0][0] == dbl_approx(0.0));
+        const auto &dA1 = pyDcdts1[0];
+        REQUIRE(dA1.size() == 100 * 100);
+        REQUIRE(dA1[0] == dbl_approx(0.0));
       } else {
         REQUIRE(pyDcdts1.size() == 0);
       }
@@ -1268,11 +1270,11 @@ SCENARIO("applyConcsToModel after simulation",
       REQUIRE(rel_diff(concSim, concSim3) == dbl_approx(0.0));
     }
   }
-  // simulate sim3 for t=0.01, now it should equal t=0.02 sim of original model
-  // note: should differ by O(dt^2), not by machine epsilon, since for the first
-  // step both simulations started from the same data and took the same
-  // timestep, but for the second step it is a new simulation, so timesteps will
-  // differ
+  // simulate sim3 for t=0.01, now it should equal t=0.02 sim of original
+  // model note: should differ by O(dt^2), not by machine epsilon, since for
+  // the first step both simulations started from the same data and took the
+  // same timestep, but for the second step it is a new simulation, so
+  // timesteps will differ
   sim3.doTimesteps(0.01);
   REQUIRE(sim3.getNCompletedTimesteps() == 2);
   for (std::size_t iComp = 0; iComp < sim3.getCompartmentIds().size();
@@ -1823,7 +1825,8 @@ SCENARIO("simulate w/options & save, load, re-simulate",
 
 SCENARIO("stop, then continue pixel simulation",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
-  // see https://github.com/spatial-model-editor/spatial-model-editor/issues/544
+  // see
+  // https://github.com/spatial-model-editor/spatial-model-editor/issues/544
   auto m{getVerySimpleModel()};
   m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   simulate::Simulation sim(m);

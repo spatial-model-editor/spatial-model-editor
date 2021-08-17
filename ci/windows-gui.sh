@@ -54,6 +54,7 @@ tail -n 100 tests.txt
 # python tests
 cd ..
 mv build/sme/sme.cp39-win_amd64.pyd .
+python -m pip install -r sme/requirements.txt
 python -m unittest discover -s sme/test -v
 
 # display version

@@ -9,9 +9,9 @@ class TestCompartment(unittest.TestCase):
         self.assertEqual(len(img), 100)
         self.assertEqual(len(img[0]), 100)
         self.assertEqual(len(img[0][0]), 3)
-        self.assertEqual(img[0][0], [0, 2, 0])  # outside
-        self.assertEqual(img[30][30], [144, 97, 193])  # Cell
-        self.assertEqual(img[50][50], [197, 133, 96])  # Nucleus
+        self.assertEqual(img[0][0].tolist(), [0, 2, 0])  # outside
+        self.assertEqual(img[30][30].tolist(), [144, 97, 193])  # Cell
+        self.assertEqual(img[50][50].tolist(), [197, 133, 96])  # Nucleus
 
     def test_compartment(self):
         m = sme.open_example_model()

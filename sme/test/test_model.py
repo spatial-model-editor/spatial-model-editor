@@ -1,6 +1,7 @@
 import unittest
 import sme
 import os.path
+import numpy as np
 
 
 def _get_abs_path(filename):
@@ -8,21 +9,8 @@ def _get_abs_path(filename):
 
 
 # root-mean-square of all elements
-def _rms(a_ij):
-    d = 0.0
-    n = 0.0
-    for a_i in a_ij:
-        for a in a_i:
-            d += a ** 2
-            n += 1.0
-    return (d / n) ** 0.5
-
-
-# a_ij <- (a_ij - b_ij) / dt
-def _sub_div(a_ij, b_ij, dt=1.0):
-    for i, (a_i, b_i) in enumerate(zip(a_ij, b_ij)):
-        for j, (a, b) in enumerate(zip(a_i, b_i)):
-            a_ij[i][j] = (a - b) / dt
+def _rms(a):
+    return np.sqrt(np.mean(np.square(a)))
 
 
 class TestModel(unittest.TestCase):
@@ -79,11 +67,17 @@ class TestModel(unittest.TestCase):
             sim_results = m.simulate(0.002, 0.001, simulator_type=sim_type)
             self.assertEqual(len(sim_results), 3)
 
+            sim_results2 = m.simulation_results()
+            self.assertEqual(len(sim_results), len(sim_results2))
+
             # continue previous sim
             sim_results = m.simulate(
                 0.002, 0.001, simulator_type=sim_type, continue_existing_simulation=True
             )
             self.assertEqual(len(sim_results), 5)
+
+            sim_results2 = m.simulation_results()
+            self.assertEqual(len(sim_results), len(sim_results2))
 
             # use string overload
             sim_results = m.simulate(
@@ -94,46 +88,61 @@ class TestModel(unittest.TestCase):
             )
             self.assertEqual(len(sim_results), 8)
 
+            sim_results2 = m.simulation_results()
+            self.assertEqual(len(sim_results), len(sim_results2))
+
             # previous sim results are cleared by default
             sim_results = m.simulate(0.002, 0.001, simulator_type=sim_type)
             self.assertEqual(len(sim_results), 3)
 
-            res = sim_results[1]
-            self.assertEqual(repr(res), "<sme.SimulationResult from timepoint 0.001>")
-            self.assertEqual(
-                str(res),
-                "<sme.SimulationResult>\n  - timepoint: 0.001\n  - number of species: 5\n",
-            )
-            self.assertEqual(res.time_point, 0.001)
-            img = res.concentration_image
-            self.assertEqual(len(img), 100)
-            self.assertEqual(len(img[0]), 100)
-            self.assertEqual(len(img[0][0]), 3)
-            self.assertEqual(len(res.species_concentration), 5)
-            conc = res.species_concentration["B_cell"]
-            self.assertEqual(len(conc), 100)
-            self.assertEqual(len(conc[0]), 100)
-            self.assertEqual(conc[0][0], 0.0)
+            sim_results2 = m.simulation_results()
+            self.assertEqual(len(sim_results), len(sim_results2))
+
+            for res in [sim_results[1], sim_results2[1]]:
+                self.assertEqual(
+                    repr(res), "<sme.SimulationResult from timepoint 0.001>"
+                )
+                self.assertEqual(
+                    str(res),
+                    "<sme.SimulationResult>\n  - timepoint: 0.001\n  - number of species: 5\n",
+                )
+                self.assertEqual(res.time_point, 0.001)
+                img = res.concentration_image
+                self.assertEqual(len(img), 100)
+                self.assertEqual(len(img[0]), 100)
+                self.assertEqual(len(img[0][0]), 3)
+                self.assertEqual(len(res.species_concentration), 5)
+                conc = res.species_concentration["B_cell"]
+                self.assertEqual(len(conc), 100)
+                self.assertEqual(len(conc[0]), 100)
+                self.assertEqual(conc[0][0], 0.0)
 
             # set timeout to 1 second: by default simulation throws on timeout
             # multiple timesteps before timeout:
             with self.assertRaises(sme.RuntimeError):
                 m.simulate(10000, 0.1, timeout_seconds=0, simulator_type=sim_type)
 
-        # approximate dcdt (only pixel & only last timepoint)
+        # approximate dcdt (only returned from simulate & pixel & last timepoint)
         m = sme.open_example_model()
         sim_results = m.simulate(0.002, 0.001, simulator_type=sme.SimulatorType.Pixel)
         self.assertEqual(len(sim_results), 3)
         self.assertEqual(len(sim_results[0].species_dcdt), 0)
         self.assertEqual(len(sim_results[1].species_dcdt), 0)
         self.assertEqual(len(sim_results[2].species_dcdt), 5)
-        dcdt_approx = sim_results[2].species_concentration["A_cell"]
-        _sub_div(dcdt_approx, sim_results[1].species_concentration["A_cell"], 0.001)
+        dcdt_approx = (
+            sim_results[2].species_concentration["A_cell"]
+            - sim_results[1].species_concentration["A_cell"]
+        ) / 0.001
         dcdt = sim_results[2].species_dcdt["A_cell"]
         rms_norm = _rms(dcdt)
-        _sub_div(dcdt, dcdt_approx)
-        rms_diff = _rms(dcdt)
+        rms_diff = _rms(dcdt - dcdt_approx)
         self.assertLess(rms_diff / rms_norm, 0.01)
+
+        # don't get dcdt from simulation_results():
+        sim_results2 = m.simulation_results()
+        self.assertEqual(len(sim_results2[0].species_dcdt), 0)
+        self.assertEqual(len(sim_results2[1].species_dcdt), 0)
+        self.assertEqual(len(sim_results2[2].species_dcdt), 0)
 
         # single long timestep that times out (only pixel)
         with self.assertRaises(sme.RuntimeError):
@@ -144,13 +153,17 @@ class TestModel(unittest.TestCase):
         res2 = m.simulate(10000, 10000, 1, False)
         self.assertEqual(len(res2), 1)
 
-        # don't return simulation results
+        # option to not return simulation results
         for sim_type in [sme.SimulatorType.DUNE, sme.SimulatorType.Pixel]:
             m = sme.open_example_model()
             sim_results = m.simulate(
                 0.002, 0.001, simulator_type=sim_type, return_results=False
             )
             self.assertEqual(len(sim_results), 0)
+
+            # but results are still available from the model
+            sim_results2 = m.simulation_results()
+            self.assertEqual(len(sim_results2), 3)
 
 
 def test_import_geometry_from_image(self):

@@ -91,6 +91,7 @@ bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -
 rm -f gcov/*
 lcov -q -z -d .
 cd sme
+python -m pip install -r ../../sme/requirements.txt
 python -m unittest discover -v -s ../../sme/test > sme.txt 2>&1
 tail -n 100 sme.txt
 cd ..
