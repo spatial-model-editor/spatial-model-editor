@@ -29,11 +29,29 @@ void pybindCompartment(pybind11::module &m) {
                     )")
       .def_readonly("geometry_mask", &Compartment::geometry_mask,
                     R"(
-                    2d array of bool: 2d pixel mask of the compartment geometry
+                    numpy.ndarray: an pixel mask of the compartment geometry
 
-                    The mask is a list of list of bool, where
+                    An array of boolean values, where
                     ``geometry_mask[y][x] = True``
                     if the pixel at point (x,y) is part of this compartment
+
+                    Examples:
+                        the mask is a 2d (height x width) array of bool:
+
+                        >>> import sme
+                        >>> model = sme.open_example_model()
+                        >>> mask = model.compartments['Cell'].geometry_mask
+                        >>> type(mask)
+                        <class 'numpy.ndarray'>
+                        >>> mask.dtype
+                        dtype('bool')
+                        >>> mask.shape
+                        (100, 100)
+
+                        the mask can be displayed using matplotlib:
+
+                        >>> import matplotlib.pyplot as plt
+                        >>> imgplot = plt.imshow(mask, interpolation='none')
                     )")
       .def("__repr__",
            [](const Compartment &a) {

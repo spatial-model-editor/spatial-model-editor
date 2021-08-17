@@ -51,10 +51,10 @@ autoclass_content = "class"
 autosummary_generate = True
 
 nbsphinx_prolog = """
-|colab-icon|_ `Interactive online version <https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/docs/{{ env.doc2path(env.docname, base=None) }}>`_
+|colab-icon|_ `Interactive online version <https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/{{ env.doc2path(env.docname, base=None) }}>`_
 
 .. |colab-icon| image:: https://colab.research.google.com/assets/colab-badge.svg
-.. _colab-icon: https://colab.research.google.com/github/lkeegan/spatial-model-editor/blob/master/docs/{{ env.doc2path(env.docname, base=None) }}
+.. _colab-icon: https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/{{ env.doc2path(env.docname, base=None) }}
 """
 
 # Add any paths that contain templates here, relative to this directory.

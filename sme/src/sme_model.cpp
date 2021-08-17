@@ -131,8 +131,34 @@ void pybindModel(pybind11::module &m) {
                     )")
       .def_readonly("compartment_image", &sme::Model::compartment_image,
                     R"(
-                    list of list of list of int: an image of the compartments in this model
-                    )")
+                    numpy.ndarray: an image of the compartments in this model
+
+                    An array of RGB integer values for each pixel in the image of
+                    the compartments in this model,
+                    which can be displayed using e.g. ``matplotlib.pyplot.imshow``
+
+                    Examples:
+                        the image is a 3d (height x width x 3) array of integers:
+
+                        >>> import sme
+                        >>> model = sme.open_example_model()
+                        >>> type(model.compartment_image)
+                        <class 'numpy.ndarray'>
+                        >>> model.compartment_image.dtype
+                        dtype('uint8')
+                        >>> model.compartment_image.shape
+                        (100, 100, 3)
+
+                        each pixel in the image has a triplet of RGB integer values
+                        in the range 0-255:
+
+                        >>> model.compartment_image[34, 36]
+                        array([144,  97, 193], dtype=uint8)
+
+                        the image can be displayed using matplotlib:
+
+                        >>> import matplotlib.pyplot as plt
+                        >>> imgplot = plt.imshow(model.compartment_image))")
       .def("import_geometry_from_image", &sme::Model::importGeometryFromImage,
            pybind11::arg("filename"),
            R"(
@@ -218,7 +244,7 @@ template <typename T>
 static inline pybind11::array_t<T>
 as_ndarray(std::vector<T> &&v, const std::vector<ssize_t> &shape = {}) {
   auto data{v.data()};
-  auto size{v.size()};
+  auto size{static_cast<ssize_t>(v.size())};
   auto ptr{std::make_unique<std::vector<T>>(std::move(v))};
   auto capsule{pybind11::capsule(ptr.get(), [](void *p) {
     std::unique_ptr<std::vector<T>>(reinterpret_cast<std::vector<T> *>(p));
