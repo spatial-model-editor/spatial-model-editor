@@ -36,4 +36,4 @@ ccache --show-stats
 jwm &
 
 # run c++ tests
-time ./test/tests -as > tests.txt || echo "ignoring return code for now"
+time ./test/tests ~[expensive] -as > tests.txt || echo "ignoring return code for now"
