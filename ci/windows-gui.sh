@@ -25,7 +25,11 @@ which cmake
 cmake --version
 which python
 python --version
-ccache -s
+
+ccache --max-size 400M
+ccache --cleanup
+ccache --zero-stats
+ccache --show-stats
 
 mkdir build
 cd build

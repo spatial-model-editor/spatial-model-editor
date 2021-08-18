@@ -36,7 +36,7 @@ ccache --show-stats
 jwm &
 
 # run c++ tests
-time ./test/tests -as > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
+time ./test/tests -as ~[expensive] > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
 # print UBSAN logfile

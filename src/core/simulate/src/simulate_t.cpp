@@ -748,7 +748,7 @@ static double analytic(const QPoint &p, double t, double D, double t0) {
 
 SCENARIO(
     "Simulate: single-compartment-diffusion, circular geometry",
-    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
+    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel][expensive]") {
   // see docs/tests/diffusion.rst for analytic expressions used here
   // NB central point of initial distribution: (48,99-48) <-> ix=1577
 
@@ -1405,80 +1405,79 @@ SCENARIO("Reactions depend on x, y, t",
   }
 }
 SCENARIO(
-    "membrane reactions",
+    "circle membrane reaction",
+    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel][expensive]") {
+  auto mDune{getModel(":/test/models/membrane-reaction-circle.xml")};
+  auto mPixel{getModel(":/test/models/membrane-reaction-circle.xml")};
+  mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+  simulate::Simulation simDune(mDune);
+  mPixel.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+  simulate::Simulation simPixel(mPixel);
+  REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
+  REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
+  simDune.doTimesteps(0.05);
+  simPixel.doTimesteps(0.05);
+  REQUIRE(std::abs(simPixel.getAvgMinMax(1, 1, 0).avg -
+                   simDune.getAvgMinMax(1, 1, 0).avg) /
+              std::abs(simPixel.getAvgMinMax(1, 1, 0).avg +
+                       simDune.getAvgMinMax(1, 1, 0).avg) <
+          0.2);
+  auto p{simPixel.getConc(1, 1, 0)};
+  auto d{simDune.getConc(1, 1, 0)};
+  REQUIRE(p.size() == d.size());
+  double avgAbsDiff{0};
+  double avgRelDiff{0};
+  constexpr double eps{1e-11};
+  double allowedAvgAbsDiff{0.012};
+  double allowedAvgRelDiff{0.40};
+  for (std::size_t i = 0; i < p.size(); ++i) {
+    avgAbsDiff += std::abs(p[i] - d[i]);
+    avgRelDiff += std::abs(p[i] - d[i]) / (std::abs(p[i] + d[i] + eps));
+  }
+  avgAbsDiff /= static_cast<double>(p.size());
+  avgRelDiff /= static_cast<double>(p.size());
+  CAPTURE(avgAbsDiff);
+  CAPTURE(avgRelDiff);
+  REQUIRE(avgAbsDiff < allowedAvgAbsDiff);
+  REQUIRE(avgRelDiff < allowedAvgRelDiff);
+}
+
+SCENARIO(
+    "pair of pixels membrane reaction",
     "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
-  GIVEN("circle membrane reaction") {
-    auto mDune{getModel(":/test/models/membrane-reaction-circle.xml")};
-    auto mPixel{getModel(":/test/models/membrane-reaction-circle.xml")};
-    mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
-    simulate::Simulation simDune(mDune);
-    mPixel.getSimulationSettings().simulatorType =
-        simulate::SimulatorType::Pixel;
-    simulate::Simulation simPixel(mPixel);
-    REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
-    REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
-    simDune.doTimesteps(0.05);
-    simPixel.doTimesteps(0.05);
-    REQUIRE(std::abs(simPixel.getAvgMinMax(1, 1, 0).avg -
-                     simDune.getAvgMinMax(1, 1, 0).avg) /
-                std::abs(simPixel.getAvgMinMax(1, 1, 0).avg +
-                         simDune.getAvgMinMax(1, 1, 0).avg) <
-            0.2);
-    auto p{simPixel.getConc(1, 1, 0)};
-    auto d{simDune.getConc(1, 1, 0)};
-    REQUIRE(p.size() == d.size());
-    double avgAbsDiff{0};
-    double avgRelDiff{0};
-    constexpr double eps{1e-11};
-    double allowedAvgAbsDiff{0.012};
-    double allowedAvgRelDiff{0.40};
-    for (std::size_t i = 0; i < p.size(); ++i) {
-      avgAbsDiff += std::abs(p[i] - d[i]);
-      avgRelDiff += std::abs(p[i] - d[i]) / (std::abs(p[i] + d[i] + eps));
-    }
-    avgAbsDiff /= static_cast<double>(p.size());
-    avgRelDiff /= static_cast<double>(p.size());
-    CAPTURE(avgAbsDiff);
-    CAPTURE(avgRelDiff);
-    REQUIRE(avgAbsDiff < allowedAvgAbsDiff);
-    REQUIRE(avgRelDiff < allowedAvgRelDiff);
+  auto mDune{getModel(":/test/models/membrane-reaction-pixels.xml")};
+  auto mPixel{getModel(":/test/models/membrane-reaction-pixels.xml")};
+  mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+  simulate::Simulation simDune(mDune);
+  mPixel.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+  simulate::Simulation simPixel(mPixel);
+  REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
+  REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
+  simDune.doTimesteps(5);
+  simPixel.doTimesteps(5);
+  REQUIRE(std::abs(simPixel.getAvgMinMax(1, 1, 0).avg -
+                   simDune.getAvgMinMax(1, 1, 0).avg) /
+              std::abs(simPixel.getAvgMinMax(1, 1, 0).avg +
+                       simDune.getAvgMinMax(1, 1, 0).avg) <
+          0.005);
+  auto p{simPixel.getConc(1, 1, 0)};
+  auto d{simDune.getConc(1, 1, 0)};
+  REQUIRE(p.size() == d.size());
+  double avgAbsDiff{0};
+  double avgRelDiff{0};
+  constexpr double eps{1e-15};
+  double allowedAvgAbsDiff{0.5};
+  double allowedAvgRelDiff{0.005};
+  for (std::size_t i = 0; i < p.size(); ++i) {
+    avgAbsDiff += std::abs(p[i] - d[i]);
+    avgRelDiff += std::abs(p[i] - d[i]) / (std::abs(p[i] + d[i] + eps));
   }
-  GIVEN("pair of pixels membrane reaction") {
-    auto mDune{getModel(":/test/models/membrane-reaction-pixels.xml")};
-    auto mPixel{getModel(":/test/models/membrane-reaction-pixels.xml")};
-    mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
-    simulate::Simulation simDune(mDune);
-    mPixel.getSimulationSettings().simulatorType =
-        simulate::SimulatorType::Pixel;
-    simulate::Simulation simPixel(mPixel);
-    REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
-    REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
-    simDune.doTimesteps(5);
-    simPixel.doTimesteps(5);
-    REQUIRE(std::abs(simPixel.getAvgMinMax(1, 1, 0).avg -
-                     simDune.getAvgMinMax(1, 1, 0).avg) /
-                std::abs(simPixel.getAvgMinMax(1, 1, 0).avg +
-                         simDune.getAvgMinMax(1, 1, 0).avg) <
-            0.005);
-    auto p{simPixel.getConc(1, 1, 0)};
-    auto d{simDune.getConc(1, 1, 0)};
-    REQUIRE(p.size() == d.size());
-    double avgAbsDiff{0};
-    double avgRelDiff{0};
-    constexpr double eps{1e-15};
-    double allowedAvgAbsDiff{0.5};
-    double allowedAvgRelDiff{0.005};
-    for (std::size_t i = 0; i < p.size(); ++i) {
-      avgAbsDiff += std::abs(p[i] - d[i]);
-      avgRelDiff += std::abs(p[i] - d[i]) / (std::abs(p[i] + d[i] + eps));
-    }
-    avgAbsDiff /= static_cast<double>(p.size());
-    avgRelDiff /= static_cast<double>(p.size());
-    CAPTURE(avgAbsDiff);
-    CAPTURE(avgRelDiff);
-    REQUIRE(avgAbsDiff < allowedAvgAbsDiff);
-    REQUIRE(avgRelDiff < allowedAvgRelDiff);
-  }
+  avgAbsDiff /= static_cast<double>(p.size());
+  avgRelDiff /= static_cast<double>(p.size());
+  CAPTURE(avgAbsDiff);
+  CAPTURE(avgRelDiff);
+  REQUIRE(avgAbsDiff < allowedAvgAbsDiff);
+  REQUIRE(avgRelDiff < allowedAvgRelDiff);
 }
 
 SCENARIO("SimulationData",
@@ -1601,11 +1600,13 @@ SCENARIO("SimulationData",
 SCENARIO("doMultipleTimesteps vs doTimesteps",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
   auto m1{getVerySimpleModel()};
+  m1.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   simulate::Simulation sim1(m1);
   sim1.doTimesteps(0.1, 3);
   sim1.doTimesteps(0.2, 2);
   const auto &data1{m1.getSimulationData()};
   auto m2{getVerySimpleModel()};
+  m2.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   simulate::Simulation sim2(m2);
   sim2.doMultipleTimesteps({{3, 0.1}, {2, 0.2}});
   const auto &data2{m2.getSimulationData()};
@@ -1686,7 +1687,8 @@ SCENARIO("Events: setting species concentrations",
 }
 
 SCENARIO("Events: continuing existing simulation",
-         "[core/simulate/simulate][core/simulate][core][simulate][events]") {
+         "[core/simulate/simulate][core/"
+         "simulate][core][simulate][events][expensive]") {
   for (auto simType :
        {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
     CAPTURE(simType);
@@ -1776,7 +1778,7 @@ SCENARIO("Events: continuing existing simulation",
 }
 
 SCENARIO("simulate w/options & save, load, re-simulate",
-         "[core/simulate/simulate][core/simulate][core][simulate]") {
+         "[core/simulate/simulate][core/simulate][core][simulate][expensive]") {
   for (auto simulatorType :
        {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
     CAPTURE(simulatorType);

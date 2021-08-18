@@ -10,7 +10,11 @@ brew install ccache
 cmake --version
 g++ --version
 python --version
+
+ccache --max-size 400M
+ccache --cleanup
 ccache --zero-stats
+ccache --show-stats
 
 # do build
 mkdir build
