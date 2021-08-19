@@ -63,7 +63,7 @@ Command line parameters
       -o,--output-file TEXT       The output file to write the results to. If not set, then the input file is used.
       -n,--nthreads UINT:NONNEGATIVE=0
                                   The maximum number of CPU threads to use (0 means unlimited)
-      -v,--version                Display the version number and exit
+      -v,--version                Display program version information and exit
       -d,--dump-config            Dump the default config ini file and exit
       -c,--config                 Read an ini file containing simulation options
 
