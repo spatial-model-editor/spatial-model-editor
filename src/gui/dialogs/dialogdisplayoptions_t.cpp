@@ -2,8 +2,9 @@
 #include "dialogdisplayoptions.hpp"
 #include "plotwrapper.hpp"
 #include "qt_test_utils.hpp"
-#include <QFile>
 #include <QStringList>
+
+using namespace sme::test;
 
 SCENARIO("DialogDisplayOptions",
          "[gui/dialogs/displayoptions][gui/dialogs][gui][displayoptions]") {

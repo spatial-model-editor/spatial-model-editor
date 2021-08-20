@@ -39,8 +39,10 @@ SCENARIO("Model geometry",
     model::ModelReactions mReactions(doc->getModel(), &mMembranes);
     utils::SmeFileContents smeFileContents;
     mCompartments = model::ModelCompartments(
-        doc->getModel(), &mGeometry, &mMembranes, &mSpecies, &mReactions, &mUnits,
-        &smeFileContents.simulationData);
+        doc->getModel(), &mMembranes, &mUnits, &smeFileContents.simulationData);
+    mCompartments.setReactionsPtr(&mReactions);
+    mCompartments.setSpeciesPtr(&mSpecies);
+    mCompartments.setGeometryPtr(&mGeometry);
     mGeometry = model::ModelGeometry(doc->getModel(), &mCompartments,
                                      &mMembranes, &mUnits, &sbmlAnnotation);
     auto &m = mGeometry;
@@ -55,14 +57,15 @@ SCENARIO("Model geometry",
       mGeometry.importSampledFieldGeometry(doc->getModel());
       REQUIRE(m.getHasUnsavedChanges() == true);
       REQUIRE(mGeometry.getHasUnsavedChanges() == true);
-      REQUIRE(mGeometry.getPhysicalPoint({0,0}).x() == dbl_approx(0.0));
-      REQUIRE(mGeometry.getPhysicalPoint({0,0}).y() == dbl_approx(99.0));
-      REQUIRE(mGeometry.getPhysicalPointAsString({0,0}) == "x: 0 m, y: 99 m");
+      REQUIRE(mGeometry.getPhysicalPoint({0, 0}).x() == dbl_approx(0.0));
+      REQUIRE(mGeometry.getPhysicalPoint({0, 0}).y() == dbl_approx(99.0));
+      REQUIRE(mGeometry.getPhysicalPointAsString({0, 0}) == "x: 0 m, y: 99 m");
       model::ModelParameters mParameters(doc->getModel());
       simulate::SimulationData data;
-      mSpecies = model::ModelSpecies(doc->getModel(), &mCompartments,
-                                     &mGeometry, &mParameters, &mReactions,
-                                     &data, &sbmlAnnotation);
+      mSpecies =
+          model::ModelSpecies(doc->getModel(), &mCompartments, &mGeometry,
+                              &mParameters, &data, &sbmlAnnotation);
+      mSpecies.setReactionsPtr(&mReactions);
       REQUIRE(m.getIsValid() == true);
       REQUIRE(m.getMesh() != nullptr);
       REQUIRE(m.getHasImage() == true);

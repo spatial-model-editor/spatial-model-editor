@@ -1,9 +1,9 @@
 #include "catch_wrapper.hpp"
-#include "logger.hpp"
-#include "model.hpp"
 #include "qplaintextmathedit.hpp"
 #include "qt_test_utils.hpp"
 #include <QApplication>
+
+using namespace sme::test;
 
 SCENARIO("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
                                "widgets][gui][qplaintextmathedit][symbolic]") {
@@ -83,8 +83,8 @@ SCENARIO("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
       REQUIRE(signal.error == mathEdit.getErrorMessage());
 
       // "1*2+5*(1+3)"
-      sendKeyEvents(&mathEdit, {"Backspace", "+", "5", "*", "(", "1",
-                                "+", "3", ")"});
+      sendKeyEvents(&mathEdit,
+                    {"Backspace", "+", "5", "*", "(", "1", "+", "3", ")"});
       REQUIRE(mathEdit.getMath() == "22");
       REQUIRE(mathEdit.mathIsValid() == true);
       REQUIRE(mathEdit.getErrorMessage() == "");

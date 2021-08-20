@@ -10,6 +10,8 @@
 #include <queue>
 #include <utility>
 
+namespace sme::test {
+
 // delay in ms to insert between key events
 const int keyDelay = 0;
 // delay in ms to insert between mouse events
@@ -91,3 +93,5 @@ private:
   void executeUserAction(QWidget *widget);
   void lookForWidget();
 };
+
+} // namespace sme::test

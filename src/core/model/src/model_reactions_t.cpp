@@ -1,6 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
 #include "model_reactions.hpp"
+#include "model_test_utils.hpp"
 #include <QFile>
 #include <QImage>
 #include <memory>
@@ -10,16 +11,13 @@
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 using namespace sme;
+using namespace sme::test;
 
 SCENARIO("SBML reactions",
          "[core/model/reactions][core/model][core][model][reactions]") {
   GIVEN("ModelReactions") {
-    model::Model model;
-    QFile f(":/models/very-simple-model.xml");
-    f.open(QIODevice::ReadOnly);
-    std::string xml{f.readAll().toStdString()};
-    model.importSBMLString(xml);
-    auto &r{model.getReactions()};
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &r{m.getReactions()};
     r.setHasUnsavedChanges(false);
     REQUIRE(r.getHasUnsavedChanges() == false);
     REQUIRE(r.getIds("c1").empty());

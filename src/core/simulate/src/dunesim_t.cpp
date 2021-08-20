@@ -1,19 +1,16 @@
 #include "catch_wrapper.hpp"
+#include "model_test_utils.hpp"
 #include "dunesim.hpp"
 #include "model.hpp"
-#include "utils.hpp"
-#include <QFile>
 
 using namespace sme;
+using namespace sme::test;
 
 SCENARIO(
     "DuneSim: empty compartments",
     "[core/simulate/dunesim][core/simulate][core][simulate][dunesim][dune]") {
   WHEN("Model has no species") {
-    model::Model m;
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    m.importSBMLString(f.readAll().toStdString());
+    auto m{getExampleModel(Mod::ABtoC)};
     for (const auto &speciesId : m.getSpecies().getIds("comp")) {
       m.getSpecies().remove(speciesId);
     }
@@ -24,10 +21,7 @@ SCENARIO(
   WHEN("Compartment in model has no species, but membrane contains reactions") {
     // see
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/435
-    model::Model m;
-    QFile f(":/models/very-simple-model.xml");
-    f.open(QIODevice::ReadOnly);
-    m.importSBMLString(f.readAll().toStdString());
+    auto m{getExampleModel(Mod::VerySimpleModel)};
     m.getSpecies().setInitialConcentration("B_c2", 0.1);
     auto col1{m.getCompartments().getColour("c1")};
     auto col2{m.getCompartments().getColour("c2")};

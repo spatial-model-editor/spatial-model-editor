@@ -1,35 +1,36 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include "qplaintextmathedit.hpp"
 #include "qt_test_utils.hpp"
 #include "tabparameters.hpp"
-#include <QDebug>
-#include <QDialog>
-#include <QFile>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
-#include <QPlainTextEdit>
 #include <QPushButton>
+
+using namespace sme::test;
 
 SCENARIO("Parameters Tab", "[gui/tabs/parameters][gui/tabs][gui][parameters]") {
   sme::model::Model model;
-  auto tab = TabParameters(model);
-  // get pointers to widgets within tab
-  auto *listParameters = tab.findChild<QListWidget *>("listParameters");
-  auto *btnAddParameter = tab.findChild<QPushButton *>("btnAddParameter");
-  auto *btnRemoveParameter = tab.findChild<QPushButton *>("btnRemoveParameter");
-  auto *txtParameterName = tab.findChild<QLineEdit *>("txtParameterName");
-  auto *txtExpression = tab.findChild<QPlainTextMathEdit *>("txtExpression");
-  auto *lblExpressionStatus = tab.findChild<QLabel *>("lblExpressionStatus");
-  const auto &params = model.getParameters();
+  TabParameters tab(model);
+  auto *listParameters{tab.findChild<QListWidget *>("listParameters")};
+  REQUIRE(listParameters != nullptr);
+  auto *btnAddParameter{tab.findChild<QPushButton *>("btnAddParameter")};
+  REQUIRE(btnAddParameter != nullptr);
+  auto *btnRemoveParameter{tab.findChild<QPushButton *>("btnRemoveParameter")};
+  REQUIRE(btnRemoveParameter != nullptr);
+  auto *txtParameterName{tab.findChild<QLineEdit *>("txtParameterName")};
+  REQUIRE(txtParameterName != nullptr);
+  auto *txtExpression{tab.findChild<QPlainTextMathEdit *>("txtExpression")};
+  REQUIRE(txtExpression != nullptr);
+  auto *lblExpressionStatus{tab.findChild<QLabel *>("lblExpressionStatus")};
+  REQUIRE(lblExpressionStatus != nullptr);
   REQUIRE(txtExpression != nullptr);
   ModalWidgetTimer mwt;
   GIVEN("very simple model") {
-    if (QFile f(":/models/very-simple-model.xml");
-        f.open(QIODevice::ReadOnly)) {
-      model.importSBMLString(f.readAll().toStdString());
-    }
+    model = getExampleModel(Mod::VerySimpleModel);
+    const auto &params{model.getParameters()};
     tab.loadModelData();
     REQUIRE(params.getIds().size() == 1);
     REQUIRE(params.getIds()[0] == "param");

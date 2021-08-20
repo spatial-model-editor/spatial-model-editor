@@ -4,11 +4,13 @@
 #include "dunefunction.hpp"
 #include "dunegrid.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include <QFile>
 #include <cmath>
 #include <locale>
 
 using namespace sme;
+using namespace sme::test;
 
 constexpr int DuneDimensions = 2;
 using HostGrid = Dune::UGGrid<DuneDimensions>;
@@ -45,14 +47,10 @@ struct AvgDiff {
   double TiffFunc;
 };
 
-static std::vector<AvgDiff> getAvgDiffs(const char *modelName,
+static std::vector<AvgDiff> getAvgDiffs(Mod exampleModel,
                                         std::size_t maxTriangleArea = 5) {
   std::vector<AvgDiff> avgDiffs;
-  model::Model m;
-  if (QFile f(QString(":/models/%1.xml").arg(modelName));
-      f.open(QIODevice::ReadOnly)) {
-    m.importSBMLString(f.readAll().toStdString());
-  }
+  auto m{getExampleModel(exampleModel)};
   // set initial concentration from analytic expression
   for (const auto &compId : m.getCompartments().getIds()) {
     for (const auto &id : m.getSpecies().getIds(compId)) {
@@ -136,9 +134,10 @@ static std::vector<AvgDiff> getAvgDiffs(const char *modelName,
 SCENARIO("DUNE: function - large triangles",
          "[core/simulate/dunefunction][core/simulate][core][dunefunction]") {
   muteDuneLogging();
-  for (const auto &modelName : {"ABtoC", "very-simple-model"}) {
-    CAPTURE(modelName);
-    auto avgDiffs{getAvgDiffs(modelName, 30)};
+  for (auto exampleModel :
+       {Mod::ABtoC, Mod::VerySimpleModel}) {
+    CAPTURE(exampleModel);
+    auto avgDiffs{getAvgDiffs(exampleModel, 30)};
     for (const auto &avgDiff : avgDiffs) {
       // Differences between analytic expr and values due to:
       //  - Dune takes vertex values & linearly interpolates other points
@@ -158,10 +157,11 @@ SCENARIO("DUNE: function - more models, small triangles",
          "[core/simulate/dunefunction][core/"
          "simulate][core][dunefunction][expensive]") {
   muteDuneLogging();
-  for (const auto &modelName :
-       {"ABtoC", "very-simple-model", "liver-simplified", "liver-cells"}) {
-    CAPTURE(modelName);
-    auto avgDiffs{getAvgDiffs(modelName, 2)};
+  for (auto exampleModel :
+       {Mod::ABtoC, Mod::VerySimpleModel,
+                            Mod::LiverSimplified, Mod::LiverCells}) {
+    CAPTURE(exampleModel);
+    auto avgDiffs{getAvgDiffs(exampleModel, 2)};
     for (const auto &avgDiff : avgDiffs) {
       // Differences between analytic expr and values due to:
       //  - Dune takes vertex values & linearly interpolates other points

@@ -1,9 +1,11 @@
 #include "catch_wrapper.hpp"
 #include "duneconverter_impl.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include <QFile>
 
 using namespace sme;
+using namespace sme::test;
 
 SCENARIO("DUNE: DuneConverter impl",
          "[core/simulate/duneconverter][core/simulate][core][duneconverter]") {
@@ -23,10 +25,7 @@ SCENARIO("DUNE: DuneConverter impl",
     REQUIRE(duneNames[8] == "out_a");
   }
   GIVEN("ABtoC model") {
-    model::Model s;
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    s.importSBMLString(f.readAll().toStdString());
+    auto s{getExampleModel(Mod::ABtoC)};
     REQUIRE(simulate::compartmentContainsNonConstantSpecies(s, "comp") == true);
     auto nonConstantSpecies = simulate::getNonConstantSpecies(s, "comp");
     REQUIRE(nonConstantSpecies.size() == 3);
@@ -45,10 +44,7 @@ SCENARIO("DUNE: DuneConverter impl",
     REQUIRE(simulate::modelHasIndependentCompartments(s) == true);
   }
   GIVEN("very-simple-model model") {
-    model::Model s;
-    QFile f(":/models/very-simple-model.xml");
-    f.open(QIODevice::ReadOnly);
-    s.importSBMLString(f.readAll().toStdString());
+    auto s{getExampleModel(Mod::VerySimpleModel)};
     REQUIRE(simulate::compartmentContainsNonConstantSpecies(s, "c1") == true);
     REQUIRE(simulate::compartmentContainsNonConstantSpecies(s, "c2") == true);
     REQUIRE(simulate::compartmentContainsNonConstantSpecies(s, "c3") == true);

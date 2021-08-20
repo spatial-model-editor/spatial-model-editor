@@ -1,16 +1,15 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include "qplaintextmathedit.hpp"
 #include "qt_test_utils.hpp"
 #include "tabfunctions.hpp"
-#include <QDebug>
-#include <QDialog>
-#include <QFile>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
-#include <QPlainTextEdit>
 #include <QPushButton>
+
+using namespace sme::test;
 
 TEST_CASE("Functions Tab", "[gui/tabs/functions][gui/tabs][gui][functions]") {
   sme::model::Model model;
@@ -30,10 +29,7 @@ TEST_CASE("Functions Tab", "[gui/tabs/functions][gui/tabs][gui][functions]") {
   auto *lblFunctionDefStatus = tab.findChild<QLabel *>("lblFunctionDefStatus");
   REQUIRE(txtFunctionDef != nullptr);
   SECTION("model with no functions") {
-    if (QFile f(":/models/very-simple-model.xml");
-        f.open(QIODevice::ReadOnly)) {
-      model.importSBMLString(f.readAll().toStdString());
-    }
+    model = getExampleModel(Mod::VerySimpleModel);
     tab.loadModelData();
     REQUIRE(listFunctions->count() == 0);
     REQUIRE(btnAddFunction->isEnabled() == true);
@@ -205,9 +201,7 @@ TEST_CASE("Functions Tab", "[gui/tabs/functions][gui/tabs][gui][functions]") {
     REQUIRE(model.getFunctions().getIds().isEmpty());
   }
   SECTION("circadian clock model") {
-    if (QFile f(":/models/circadian-clock.xml"); f.open(QIODevice::ReadOnly)) {
-      model.importSBMLString(f.readAll().toStdString());
-    }
+    model = getExampleModel(Mod::CircadianClock);
     tab.loadModelData();
     REQUIRE(listFunctions->count() == 3);
   }

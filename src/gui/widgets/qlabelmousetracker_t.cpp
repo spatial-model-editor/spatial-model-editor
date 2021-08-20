@@ -5,13 +5,15 @@
 #include <QApplication>
 #include <QDebug>
 
+using namespace sme::test;
+
 SCENARIO(
     "QLabelMouseTracker",
     "[gui/widgets/qlabelmousetracker][gui/widgets][gui][qlabelmousetracker]") {
   GIVEN("single pixel, single colour image") {
     QLabelMouseTracker mouseTracker;
     QImage img(1, 1, QImage::Format_RGB32);
-    QRgb col = QColor(12, 243, 154).rgba();
+    QRgb col{qRgb(12, 243, 154)};
     img.setPixel(0, 0, col);
     mouseTracker.show();
     mouseTracker.resize(100, 100);
@@ -123,7 +125,7 @@ SCENARIO(
     clicks.clear();
     sendMouseClick(&mouseTracker, {99, 99});
     sendMouseMove(&mouseTracker, {79, 19});
-    REQUIRE(mouseTracker.getRelativePosition().x() == dbl_approx(2.0/3.0));
+    REQUIRE(mouseTracker.getRelativePosition().x() == dbl_approx(2.0 / 3.0));
     REQUIRE(mouseTracker.getRelativePosition().y() == dbl_approx(0.0));
     sendMouseClick(&mouseTracker, {5, 84});
     sendMouseClick(&mouseTracker, {50, 50});

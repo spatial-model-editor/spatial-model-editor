@@ -8,13 +8,17 @@
         <file>models/membrane-reaction-pixels.xml</file>
         <file>models/txy.xml</file>
         <file>models/very-simple-model-uint8.xml</file>
+        <file>models/very-simple-model-non-spatial.xml</file>
         <file>models/weird-units.xml</file>
         <file>models/ABtoC-v1.0.9.xml</file>
         <file>models/ABtoC-invalid-annotation.xml</file>
+        <file>models/invalid-dune-names.xml</file>
+        <file>models/yeast-glycolysis.xml</file>
         <file>models/example2D.xml</file>
         <file>models/fish_300x300.xml</file>
         <file>models/non-spatial-multi-compartment.xml</file>
         <file>models/single-pixel-meshing.xml</file>
+        <file>models/small-single-compartment-diffusion.xml</file>
         <file>geometry/gt1.png</file>
         <file>geometry/gt2.png</file>
         <file>geometry/gt3.png</file>

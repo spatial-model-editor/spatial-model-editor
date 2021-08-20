@@ -10,6 +10,8 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
+using namespace sme::test;
+
 static void openBuiltInModel(MainWindow &w, const QString &shortcutKey = "V") {
   auto *menuFile = w.findChild<QMenu *>("menuFile");
   auto *menuOpen_example_SBML_file{

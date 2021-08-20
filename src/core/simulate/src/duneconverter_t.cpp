@@ -1,22 +1,16 @@
 #include "catch_wrapper.hpp"
 #include "duneconverter.hpp"
 #include "math_test_utils.hpp"
+#include "model_test_utils.hpp"
 #include "model.hpp"
-#include "sbml_test_data/invalid_dune_names.hpp"
-#include <QFile>
-#include <sbml/SBMLDocument.h>
-#include <sbml/SBMLReader.h>
-#include <sbml/SBMLWriter.h>
 
 using namespace sme;
+using namespace sme::test;
 
 SCENARIO("DUNE: DuneConverter",
          "[core/simulate/duneconverter][core/simulate][core][duneconverter]") {
   GIVEN("ABtoC model") {
-    model::Model s;
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    s.importSBMLString(f.readAll().toStdString());
+    auto s{getExampleModel(Mod::ABtoC)};
     simulate::DuneConverter dc(s, {}, true, {}, 14);
     QStringList ini = dc.getIniFile().split("\n");
     auto line = ini.cbegin();
@@ -61,11 +55,7 @@ SCENARIO("DUNE: DuneConverter",
     REQUIRE(*line++ == "C = 25");
   }
   GIVEN("brusselator model") {
-    model::Model s;
-    QFile f(":/models/brusselator-model.xml");
-    f.open(QIODevice::ReadOnly);
-    s.importSBMLString(f.readAll().toStdString());
-
+    auto s{getExampleModel(Mod::Brusselator)};
     simulate::DuneConverter dc(s);
     QStringList ini = dc.getIniFile().split("\n");
     auto line = ini.cbegin();
@@ -80,11 +70,7 @@ SCENARIO("DUNE: DuneConverter",
     REQUIRE(*line++ == "");
   }
   GIVEN("very simple model") {
-    model::Model s;
-    QFile f(":/models/very-simple-model.xml");
-    f.open(QIODevice::ReadOnly);
-    s.importSBMLString(f.readAll().toStdString());
-
+    auto s{getExampleModel(Mod::VerySimpleModel)};
     simulate::DuneConverter dc(s);
     QStringList ini = dc.getIniFile().split("\n");
     auto line = ini.cbegin();
@@ -108,11 +94,7 @@ SCENARIO("DUNE: DuneConverter",
     REQUIRE(symEq(*line++, "dB_c3__dB_c3 = 0"));
   }
   GIVEN("species names that are invalid dune variables") {
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(sbml_test_data::invalid_dune_names().xml));
-    libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-    model::Model s;
-    s.importSBMLFile("tmp.xml");
+    auto s{getTestModel("invalid-dune-names")};
     simulate::DuneConverter dc(s);
     QStringList ini = dc.getIniFile().split("\n");
     auto line = ini.cbegin();
@@ -130,10 +112,7 @@ SCENARIO("DUNE: DuneConverter",
     REQUIRE(symEq(*line++, "ddim___dx_ = 0"));
   }
   GIVEN("brusselator model with substitutions") {
-    model::Model s;
-    QFile f(":/models/brusselator-model.xml");
-    f.open(QIODevice::ReadOnly);
-    s.importSBMLString(f.readAll().toStdString());
+    auto s{getExampleModel(Mod::Brusselator)};
     // X = k_1/2 - (3+k_1)*X + k_2 X^2 Y
     // Y = 3 X - k_2 X^2 Y
     {

@@ -18,7 +18,9 @@
 
 namespace sme::model {
 
-Model::Model() = default;
+Model::Model(){
+    clear();
+}
 
 Model::~Model() = default;
 
@@ -47,7 +49,7 @@ void Model::importSBMLString(const std::string &xml,
   SPDLOG_INFO("Importing SBML from string...");
   doc.reset(libsbml::readSBMLFromString(xml.c_str()));
   initModelData();
-  setHasUnsavedChanges(true);
+  setHasUnsavedChanges(false);
 }
 
 void Model::initModelData() {
@@ -57,56 +59,63 @@ void Model::initModelData() {
     return;
   }
   auto *model{doc->getModel()};
-  settings = getSbmlAnnotation(model);
-  modelUnits = ModelUnits(model);
-  modelMath = ModelMath(model);
-  modelFunctions = ModelFunctions(model);
-  modelMembranes = ModelMembranes(model);
+  settings = std::make_unique<Settings>(getSbmlAnnotation(model));
+  modelUnits = std::make_unique<ModelUnits>(model);
+  modelMath = std::make_unique<ModelMath>(model);
+  modelFunctions = std::make_unique<ModelFunctions>(model);
+  modelMembranes = std::make_unique<ModelMembranes>(model);
   // todo: reduce these cyclic dependencies: currently order of initialization
   // matters, should be possible to reduce coupling here
-  modelCompartments =
-      ModelCompartments(model, &modelGeometry, &modelMembranes, &modelSpecies,
-                        &modelReactions, &modelUnits, &getSimulationData());
-  modelGeometry =
-      ModelGeometry(model, &modelCompartments, &modelMembranes, &modelUnits, &settings);
-  modelGeometry.importSampledFieldGeometry(model);
-  modelGeometry.importParametricGeometry(model, &settings);
-  modelParameters = ModelParameters(model, &modelEvents);
-  modelSpecies =
-      ModelSpecies(model, &modelCompartments, &modelGeometry, &modelParameters,
-                   &modelReactions, &getSimulationData(), &settings);
-  modelEvents = ModelEvents(model, &modelParameters, &modelSpecies);
-  modelReactions = ModelReactions(model, &modelMembranes);
+  modelCompartments = std::make_unique<ModelCompartments>(
+      model, modelMembranes.get(), modelUnits.get(),
+      &getSimulationData());
+  modelGeometry = std::make_unique<ModelGeometry>(
+      model, modelCompartments.get(), modelMembranes.get(), modelUnits.get(),
+      settings.get());
+  modelCompartments->setGeometryPtr(modelGeometry.get());
+  modelGeometry->importSampledFieldGeometry(model);
+  modelGeometry->importParametricGeometry(model, settings.get());
+  modelParameters = std::make_unique<ModelParameters>(model);
+  modelSpecies = std::make_unique<ModelSpecies>(
+      model, modelCompartments.get(), modelGeometry.get(),
+      modelParameters.get(), &getSimulationData(),
+      settings.get());
+  modelCompartments->setSpeciesPtr(modelSpecies.get());
+  modelEvents = std::make_unique<ModelEvents>(model, modelParameters.get(),
+                                              modelSpecies.get());
+  modelParameters->setEventsPtr(modelEvents.get());
+  modelReactions =
+      std::make_unique<ModelReactions>(model, modelMembranes.get());
+  modelCompartments->setReactionsPtr(modelReactions.get());
+  modelSpecies->setReactionsPtr(modelReactions.get());
 }
 
 void Model::setHasUnsavedChanges(bool unsavedChanges) {
-  modelUnits.setHasUnsavedChanges(unsavedChanges);
-  modelFunctions.setHasUnsavedChanges(unsavedChanges);
-  modelMembranes.setHasUnsavedChanges(unsavedChanges);
-  modelCompartments.setHasUnsavedChanges(unsavedChanges);
-  modelGeometry.setHasUnsavedChanges(unsavedChanges);
-  modelParameters.setHasUnsavedChanges(unsavedChanges);
-  modelSpecies.setHasUnsavedChanges(unsavedChanges);
-  modelReactions.setHasUnsavedChanges(unsavedChanges);
-  modelEvents.setHasUnsavedChanges(unsavedChanges);
+  modelUnits->setHasUnsavedChanges(unsavedChanges);
+  modelFunctions->setHasUnsavedChanges(unsavedChanges);
+  modelMembranes->setHasUnsavedChanges(unsavedChanges);
+  modelCompartments->setHasUnsavedChanges(unsavedChanges);
+  modelGeometry->setHasUnsavedChanges(unsavedChanges);
+  modelParameters->setHasUnsavedChanges(unsavedChanges);
+  modelSpecies->setHasUnsavedChanges(unsavedChanges);
+  modelReactions->setHasUnsavedChanges(unsavedChanges);
+  modelEvents->setHasUnsavedChanges(unsavedChanges);
 }
 
 bool Model::getIsValid() const { return isValid; }
 
-const QString& Model::getErrorMessage() const {
-  return errorMessage;
-}
+const QString &Model::getErrorMessage() const { return errorMessage; }
 
 bool Model::getHasUnsavedChanges() const {
-  return modelUnits.getHasUnsavedChanges() ||
-         modelFunctions.getHasUnsavedChanges() ||
-         modelMembranes.getHasUnsavedChanges() ||
-         modelCompartments.getHasUnsavedChanges() ||
-         modelGeometry.getHasUnsavedChanges() ||
-         modelParameters.getHasUnsavedChanges() ||
-         modelSpecies.getHasUnsavedChanges() ||
-         modelReactions.getHasUnsavedChanges() ||
-         modelEvents.getHasUnsavedChanges();
+  return modelUnits->getHasUnsavedChanges() ||
+         modelFunctions->getHasUnsavedChanges() ||
+         modelMembranes->getHasUnsavedChanges() ||
+         modelCompartments->getHasUnsavedChanges() ||
+         modelGeometry->getHasUnsavedChanges() ||
+         modelParameters->getHasUnsavedChanges() ||
+         modelSpecies->getHasUnsavedChanges() ||
+         modelReactions->getHasUnsavedChanges() ||
+         modelEvents->getHasUnsavedChanges();
 }
 
 const QString &Model::getCurrentFilename() const { return currentFilename; }
@@ -128,10 +137,11 @@ void Model::importFile(const std::string &filename) {
   clear();
   currentFilename = QFileInfo(filename.c_str()).baseName();
   SPDLOG_INFO("Importing file {} ...", filename);
-  auto contents{utils::importSmeFile(filename)};
-  if (!contents.xmlModel.empty()) {
+  auto contents{std::make_unique<sme::utils::SmeFileContents>(
+      utils::importSmeFile(filename))};
+  if (!contents->xmlModel.empty()) {
     SPDLOG_INFO("  -> SME file", filename);
-    doc.reset(libsbml::readSBMLFromString(contents.xmlModel.c_str()));
+    doc.reset(libsbml::readSBMLFromString(contents->xmlModel.c_str()));
   } else {
     SPDLOG_INFO("  -> SBML file", filename);
     doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
@@ -147,18 +157,18 @@ void Model::exportSMEFile(const std::string &filename) {
     currentFilename.truncate(len);
   }
   updateSBMLDoc();
-  smeFileContents.xmlModel = getXml().toStdString();
-  if (!utils::exportSmeFile(filename, smeFileContents)) {
+  smeFileContents->xmlModel = getXml().toStdString();
+  if (!utils::exportSmeFile(filename, *smeFileContents)) {
     SPDLOG_WARN("Failed to save file '{}'", filename);
   }
   setHasUnsavedChanges(false);
 }
 
 void Model::updateSBMLDoc() {
-  modelGeometry.writeGeometryToSBML();
-  setSbmlAnnotation(doc->getModel(), settings);
-  modelMembranes.exportToSBML(modelGeometry.getPixelWidth() *
-                              modelGeometry.getPixelDepth());
+  modelGeometry->writeGeometryToSBML();
+  setSbmlAnnotation(doc->getModel(), *settings);
+  modelMembranes->exportToSBML(modelGeometry->getPixelWidth() *
+                               modelGeometry->getPixelDepth());
 }
 
 QString Model::getXml() {
@@ -180,62 +190,62 @@ void Model::setName(const QString &name) {
 
 QString Model::getName() const { return doc->getModel()->getName().c_str(); }
 
-ModelCompartments &Model::getCompartments() { return modelCompartments; }
+ModelCompartments &Model::getCompartments() { return *modelCompartments; }
 
 const ModelCompartments &Model::getCompartments() const {
-  return modelCompartments;
+  return *modelCompartments;
 }
 
-ModelGeometry &Model::getGeometry() { return modelGeometry; }
+ModelGeometry &Model::getGeometry() { return *modelGeometry; }
 
-const ModelGeometry &Model::getGeometry() const { return modelGeometry; }
+const ModelGeometry &Model::getGeometry() const { return *modelGeometry; }
 
-ModelMembranes &Model::getMembranes() { return modelMembranes; }
+ModelMembranes &Model::getMembranes() { return *modelMembranes; }
 
-const ModelMembranes &Model::getMembranes() const { return modelMembranes; }
+const ModelMembranes &Model::getMembranes() const { return *modelMembranes; }
 
-ModelSpecies &Model::getSpecies() { return modelSpecies; }
+ModelSpecies &Model::getSpecies() { return *modelSpecies; }
 
-const ModelSpecies &Model::getSpecies() const { return modelSpecies; }
+const ModelSpecies &Model::getSpecies() const { return *modelSpecies; }
 
-ModelReactions &Model::getReactions() { return modelReactions; }
+ModelReactions &Model::getReactions() { return *modelReactions; }
 
-const ModelReactions &Model::getReactions() const { return modelReactions; }
+const ModelReactions &Model::getReactions() const { return *modelReactions; }
 
-ModelFunctions &Model::getFunctions() { return modelFunctions; }
+ModelFunctions &Model::getFunctions() { return *modelFunctions; }
 
-const ModelFunctions &Model::getFunctions() const { return modelFunctions; }
+const ModelFunctions &Model::getFunctions() const { return *modelFunctions; }
 
-ModelParameters &Model::getParameters() { return modelParameters; }
+ModelParameters &Model::getParameters() { return *modelParameters; }
 
-const ModelParameters &Model::getParameters() const { return modelParameters; }
+const ModelParameters &Model::getParameters() const { return *modelParameters; }
 
-ModelEvents &Model::getEvents() { return modelEvents; }
+ModelEvents &Model::getEvents() { return *modelEvents; }
 
-const ModelEvents &Model::getEvents() const { return modelEvents; }
+const ModelEvents &Model::getEvents() const { return *modelEvents; }
 
-ModelUnits &Model::getUnits() { return modelUnits; }
+ModelUnits &Model::getUnits() { return *modelUnits; }
 
-const ModelUnits &Model::getUnits() const { return modelUnits; }
+const ModelUnits &Model::getUnits() const { return *modelUnits; }
 
-ModelMath &Model::getMath() { return modelMath; }
+ModelMath &Model::getMath() { return *modelMath; }
 
-const ModelMath &Model::getMath() const { return modelMath; }
+const ModelMath &Model::getMath() const { return *modelMath; }
 
 simulate::SimulationData &Model::getSimulationData() {
-  return smeFileContents.simulationData;
+  return smeFileContents->simulationData;
 }
 
 const simulate::SimulationData &Model::getSimulationData() const {
-  return smeFileContents.simulationData;
+  return smeFileContents->simulationData;
 }
 
 SimulationSettings &Model::getSimulationSettings() {
-  return settings.simulationSettings;
+  return settings->simulationSettings;
 }
 
 const SimulationSettings &Model::getSimulationSettings() const {
-  return settings.simulationSettings;
+  return settings->simulationSettings;
 }
 
 void Model::clear() {
@@ -243,24 +253,24 @@ void Model::clear() {
   isValid = false;
   errorMessage.clear();
   currentFilename.clear();
-  modelCompartments = ModelCompartments{};
-  modelGeometry = ModelGeometry{};
-  modelMembranes = ModelMembranes{};
-  modelSpecies = ModelSpecies{};
-  modelReactions = ModelReactions{};
-  modelFunctions = ModelFunctions{};
-  modelParameters = ModelParameters{};
-  modelEvents = ModelEvents{};
-  modelUnits = ModelUnits{};
-  modelMath = ModelMath{};
-  smeFileContents = {};
-  settings = {};
+  modelCompartments = std::make_unique<ModelCompartments>();
+  modelGeometry = std::make_unique<ModelGeometry>();
+  modelMembranes = std::make_unique<ModelMembranes>();
+  modelSpecies = std::make_unique<ModelSpecies>();
+  modelReactions = std::make_unique<ModelReactions>();
+  modelFunctions = std::make_unique<ModelFunctions>();
+  modelParameters = std::make_unique<ModelParameters>();
+  modelEvents = std::make_unique<ModelEvents>();
+  modelUnits = std::make_unique<ModelUnits>();
+  modelMath = std::make_unique<ModelMath>();
+  smeFileContents = std::make_unique<utils::SmeFileContents>();
+  settings = std::make_unique<Settings>();
 }
 
 SpeciesGeometry Model::getSpeciesGeometry(const QString &speciesID) const {
-  return {modelGeometry.getImage().size(),
-          modelSpecies.getField(speciesID)->getCompartment()->getPixels(),
-          modelGeometry.getPhysicalOrigin(), modelGeometry.getPixelWidth(),
+  return {modelGeometry->getImage().size(),
+          modelSpecies->getField(speciesID)->getCompartment()->getPixels(),
+          modelGeometry->getPhysicalOrigin(), modelGeometry->getPixelWidth(),
           getUnits()};
 }
 
@@ -274,11 +284,11 @@ std::string Model::inlineExpr(const std::string &mathExpression) const {
 }
 
 DisplayOptions Model::getDisplayOptions() const {
-  return settings.displayOptions;
+  return settings->displayOptions;
 }
 
 void Model::setDisplayOptions(const DisplayOptions &displayOptions) {
-  settings.displayOptions = displayOptions;
+  settings->displayOptions = displayOptions;
 }
 
 } // namespace sme::model

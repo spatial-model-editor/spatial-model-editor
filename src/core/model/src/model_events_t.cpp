@@ -1,25 +1,16 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
 #include "model_events.hpp"
+#include "model_test_utils.hpp"
 #include "sbml_math.hpp"
-#include "sbml_test_data/yeast_glycolysis.hpp"
-#include <QFile>
-#include <QImage>
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 using namespace sme;
+using namespace sme::test;
 
 SCENARIO("SBML events",
          "[core/model/events][core/model][core][model][events]") {
   GIVEN("SBML: yeast-glycolysis.xml") {
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(sbml_test_data::yeast_glycolysis().xml));
-    libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-    model::Model s;
-    s.importSBMLFile("tmp.xml");
+    auto s{getTestModel("yeast-glycolysis")};
     auto &species{s.getSpecies()};
     auto &params{s.getParameters()};
     params.add("param1");
@@ -81,9 +72,8 @@ SCENARIO("SBML events",
     REQUIRE(params.getExpression("param1") == "1");
     REQUIRE(params.getExpression("param2") == "1");
     // check sbml output
-    std::unique_ptr<libsbml::SBMLDocument> doc2(
-        libsbml::readSBMLFromString(s.getXml().toStdString().c_str()));
-    const auto *model{doc2->getModel()};
+    auto doc{toSbmlDoc(s)};
+    const auto *model{doc->getModel()};
     REQUIRE(model->getNumEvents() == 1);
     const auto *event{model->getEvent(0)};
     REQUIRE(event->getId() == "n");
@@ -96,7 +86,8 @@ SCENARIO("SBML events",
                 event->getEventAssignment(0)->getMath()) == "1");
     // change variable to species
     REQUIRE(events.isParameter("n") == true);
-    REQUIRE(species.getInitialConcentration("ATP") == dbl_approx(2.52512746499271));
+    REQUIRE(species.getInitialConcentration("ATP") ==
+            dbl_approx(2.52512746499271));
     events.setVariable("n", "ATP");
     REQUIRE(events.isParameter("n") == false);
     events.setExpression("n", "x + y");
@@ -117,8 +108,7 @@ SCENARIO("SBML events",
     REQUIRE(events.getNames().size() == 0);
   }
   GIVEN("event with multiple assignments") {
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(sbml_test_data::yeast_glycolysis().xml));
+    auto doc{getTestSbmlDoc("yeast-glycolysis")};
     // add event with 3 assignments
     auto *m{doc->getModel()};
     auto *p1{m->createParameter()};
@@ -184,8 +174,7 @@ SCENARIO("SBML events",
     REQUIRE(s.getHasUnsavedChanges() == true);
     REQUIRE(events.getHasUnsavedChanges() == true);
     // check sbml output
-    std::unique_ptr<libsbml::SBMLDocument> doc2(
-        libsbml::readSBMLFromString(s.getXml().toStdString().c_str()));
+    auto doc2{toSbmlDoc(s)};
     const auto *model{doc2->getModel()};
     REQUIRE(model->getNumEvents() == 3);
     const auto *e1{model->getEvent("e")};

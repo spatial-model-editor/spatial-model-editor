@@ -1,12 +1,14 @@
 #include "catch_wrapper.hpp"
 #include "xml_legacy_annotation.hpp"
 #include <QFile>
+#include "model_test_utils.hpp"
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 using namespace sme;
+using namespace sme::test;
 
 SCENARIO("XML Legacy Annotations",
          "[core/model/xml_annotation][core/"

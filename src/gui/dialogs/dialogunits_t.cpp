@@ -1,16 +1,15 @@
-#include <QFile>
 #include "catch_wrapper.hpp"
 #include "dialogunits.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include "qt_test_utils.hpp"
 
+using namespace sme::test;
+
 SCENARIO("DialogUnits", "[gui/dialogs/units][gui/dialogs][gui][units]") {
-  sme::model::Model doc;
-  QFile f(":/models/ABtoC.xml");
-  f.open(QIODevice::ReadOnly);
-  doc.importSBMLString(f.readAll().toStdString());
+  auto m{getExampleModel(Mod::ABtoC)};
   GIVEN("no default units") {
-    auto units = doc.getUnits();
+    auto units = m.getUnits();
     units.setTimeIndex(0);
     units.setLengthIndex(0);
     units.setVolumeIndex(0);
@@ -32,7 +31,7 @@ SCENARIO("DialogUnits", "[gui/dialogs/units][gui/dialogs][gui][units]") {
     }
   }
   GIVEN("default units") {
-    auto units = doc.getUnits();
+    auto units = m.getUnits();
     units.setTimeIndex(0);
     units.setLengthIndex(3);
     units.setVolumeIndex(2);

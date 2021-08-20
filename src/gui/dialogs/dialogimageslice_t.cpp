@@ -5,6 +5,8 @@
 #include "qt_test_utils.hpp"
 #include <QFile>
 
+using namespace sme::test;
+
 SCENARIO("DialogImageSlice",
          "[gui/dialogs/imageslice][gui/dialogs][gui][imageslice]") {
   GIVEN("5 100x50 images") {

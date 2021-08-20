@@ -7,6 +7,8 @@
 #include <QTest>
 #include <QWheelEvent>
 
+namespace sme::test {
+
 void wait(int milliseconds) {
   QApplication::processEvents();
   QTest::qWait(milliseconds);
@@ -213,3 +215,5 @@ void ModalWidgetTimer::start() {
 }
 
 const QString &ModalWidgetTimer::getResult(int i) const { return results[i]; }
+
+} // namespace sme::test
