@@ -10,37 +10,31 @@ static void addParams(CLI::App &app, Params &params) {
       ->required()
       ->check(CLI::ExistingFile);
   app.add_option("times", params.simulationTimes,
-                 "The simulation time(s) (in model units of time)", true)
+                 "The simulation time(s) (in model units of time)")
       ->required();
   app.add_option(
          "image-intervals", params.imageIntervals,
-         "The interval(s) between saving images (in model units of time)", true)
+         "The interval(s) between saving images (in model units of time)")
       ->required();
   app.add_option("-s,--simulator", params.simType,
-                 "The simulator to use: dune or pixel", true)
+                 "The simulator to use: dune or pixel")
       ->transform(CLI::CheckedTransformer(
           std::map<std::string, simulate::SimulatorType>{
               {"dune", simulate::SimulatorType::DUNE},
               {"pixel", simulate::SimulatorType::Pixel}},
-          CLI::ignore_case));
+          CLI::ignore_case))
+      ->capture_default_str();
   app.add_option("-o,--output-file", params.outputFile,
                  "The output file to write the results to. If not set, then "
                  "the input file is used.");
   app.add_option("-n,--nthreads", params.maxThreads,
-                 "The maximum number of CPU threads to use (0 means unlimited)",
-                 true)
-      ->check(CLI::NonNegativeNumber);
+                 "The maximum number of CPU threads to use (0 means unlimited)")
+      ->check(CLI::NonNegativeNumber)
+      ->capture_default_str();
 }
 
 static void addCallbacks(CLI::App &app) {
-  app.add_flag_callback(
-         "-v,--version",
-         []() {
-           fmt::print("{}", utils::SPATIAL_MODEL_EDITOR_VERSION);
-           throw CLI::Success();
-         },
-         "Display the version number and exit")
-      ->configurable(false);
+  app.set_version_flag("-v,--version", utils::SPATIAL_MODEL_EDITOR_VERSION);
   app.add_flag_callback(
          "-d,--dump-config",
          [&app]() {
