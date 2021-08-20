@@ -6,14 +6,13 @@
 #include "serialization.hpp"
 #include "simulate.hpp"
 #include "simulate_options.hpp"
-#include <QFile>
+#include "model_test_utils.hpp"
+
+using namespace sme::test;
 
 SCENARIO("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
   GIVEN("5 100x50 images") {
-    sme::model::Model model;
-    QFile f(":/models/very-simple-model.xml");
-    f.open(QIODevice::ReadOnly);
-    model.importSBMLString(f.readAll().toStdString());
+    auto model{getExampleModel(Mod::VerySimpleModel)};
     model.getSimulationSettings().simulatorType =
         sme::simulate::SimulatorType::Pixel;
     sme::simulate::Simulation sim(model);

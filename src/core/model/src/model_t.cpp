@@ -2,16 +2,15 @@
 #include "math_test_utils.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
-#include "sbml_test_data/very_simple_model.hpp"
-#include "sbml_test_data/yeast_glycolysis.hpp"
+#include "model_test_utils.hpp"
 #include "utils.hpp"
-#include <QFile>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 using namespace sme;
+using namespace sme::test;
 
 // avoid using std::to_string because of "multiple definition of vsnprintf"
 // mingw issue on windows
@@ -398,12 +397,7 @@ SCENARIO("SBML: create new model, import geometry from image",
 
 SCENARIO("SBML: import uint8 sampled field",
          "[core/model/model][core/model][core][model]") {
-  model::Model s;
-  QFile f(":/test/models/very-simple-model-uint8.xml");
-  f.open(QIODevice::ReadOnly);
-  std::string xml{f.readAll().toStdString()};
-  std::unique_ptr<libsbml::SBMLDocument> doc(
-      libsbml::readSBMLFromString(xml.c_str()));
+  auto doc{getTestSbmlDoc("very-simple-model-uint8")};
   // original model: 2d 100m x 100m image
   // size of compartments are not set in original spatial model
   REQUIRE(doc->getModel()->getCompartment("c1")->isSetSize() == false);
@@ -417,9 +411,8 @@ SCENARIO("SBML: import uint8 sampled field",
   REQUIRE(doc->getModel()->getCompartment("c1")->isSetUnits() == true);
   REQUIRE(doc->getModel()->getCompartment("c2")->isSetUnits() == true);
   REQUIRE(doc->getModel()->getCompartment("c3")->isSetUnits() == true);
-  s.importSBMLString(xml);
-  xml = s.getXml().toStdString();
-  doc.reset(libsbml::readSBMLFromString(xml.c_str()));
+  auto s{getTestModel("very-simple-model-uint8")};
+  doc = toSbmlDoc(s);
   // after import, model is now 3d
   // z direction size set to 1 by default, so 100 m x 100 m x 1 m geometry image
   // volume of pixel is 1m^3 = 1e3 litres
@@ -442,7 +435,7 @@ SCENARIO("SBML: import uint8 sampled field",
   REQUIRE(doc->getModel()->getCompartment("c2")->isSetUnits() == false);
   REQUIRE(doc->getModel()->getCompartment("c3")->isSetUnits() == false);
 
-  const auto &img = s.getGeometry().getImage();
+  const auto &img{s.getGeometry().getImage()};
   REQUIRE(img.colorCount() == 3);
   REQUIRE(s.getCompartments().getColour("c1") ==
           utils::indexedColours()[0].rgb());
@@ -458,10 +451,7 @@ SCENARIO("SBML: import uint8 sampled field",
 }
 
 SCENARIO("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
-  model::Model s;
-  QFile f(":/models/ABtoC.xml");
-  f.open(QIODevice::ReadOnly);
-  s.importSBMLString(f.readAll().toStdString());
+  auto s{getExampleModel(Mod::ABtoC)};
   GIVEN("SBML document") {
     WHEN("imported") {
       THEN("find compartments") {
@@ -641,10 +631,7 @@ SCENARIO("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
 
 SCENARIO("SBML: very-simple-model.xml",
          "[core/model/model][core/model][core][model]") {
-  QFile f(":/models/very-simple-model.xml");
-  f.open(QIODevice::ReadOnly);
-  model::Model s;
-  s.importSBMLString(f.readAll().toStdString());
+  auto s{getExampleModel(Mod::VerySimpleModel)};
   GIVEN("SBML document") {
     THEN("find compartments") {
       REQUIRE(s.getCompartments().getIds().size() == 3);
@@ -763,10 +750,7 @@ SCENARIO("SBML: very-simple-model.xml",
 
 SCENARIO("SBML: load model, refine mesh, save",
          "[core/model/model][core/model][core][model][mesh]") {
-  model::Model s;
-  QFile f(":/models/ABtoC.xml");
-  f.open(QIODevice::ReadOnly);
-  s.importSBMLString(f.readAll().toStdString());
+  auto s{getExampleModel(Mod::ABtoC)};
   REQUIRE(s.getGeometry().getMesh()->getNumBoundaries() == 1);
   REQUIRE(s.getGeometry().getMesh()->getBoundaryMaxPoints(0) == 16);
   auto oldNumTriangleIndices =
@@ -794,10 +778,7 @@ SCENARIO("SBML: load model, refine mesh, save",
 
 SCENARIO("SBML: load single compartment model, change size of geometry",
          "[core/model/model][core/model][core][model][mesh]") {
-  model::Model s;
-  QFile f(":/models/ABtoC.xml");
-  f.open(QIODevice::ReadOnly);
-  s.importSBMLString(f.readAll().toStdString());
+  auto s{getExampleModel(Mod::ABtoC)};
   REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(1.0));
   REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(1.0));
   // 100x100 image, 100m x 100m physical size
@@ -839,10 +820,7 @@ SCENARIO("SBML: load single compartment model, change size of geometry",
 
 SCENARIO("SBML: load multi-compartment model, change size of geometry",
          "[core/model/model][core/model][core][model][mesh]") {
-  model::Model s;
-  QFile f(":/models/very-simple-model.xml");
-  f.open(QIODevice::ReadOnly);
-  s.importSBMLString(f.readAll().toStdString());
+  auto s{getExampleModel(Mod::VerySimpleModel)};
   // 100m x 100m x 1m geometry, volume units: litres
   REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(100.0));
   REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(100.0));
@@ -920,10 +898,7 @@ SCENARIO("SBML: load multi-compartment model, change size of geometry",
 
 SCENARIO("SBML: load .xml model, simulate, save as .sme, load .sme",
          "[core/model/model][core/model][core][model]") {
-  model::Model s;
-  QFile f(":/models/ABtoC.xml");
-  f.open(QIODevice::ReadOnly);
-  s.importSBMLString(f.readAll().toStdString());
+  auto s{getExampleModel(Mod::ABtoC)};
   simulate::Simulation sim(s);
   sim.doTimesteps(0.1, 2);
   s.exportSMEFile("test.sme");
@@ -939,7 +914,7 @@ SCENARIO("SBML: load .xml model, simulate, save as .sme, load .sme",
 
 SCENARIO("SBML: import multi-compartment SBML doc without spatial geometry",
          "[core/model/model][core/model][core][model]") {
-  model::Model s;
+  auto s{getTestModel("non-spatial-multi-compartment")};
   // compartments:
   // - cyt: {B, C, D}
   // - nuc: {A}
@@ -950,9 +925,6 @@ SCENARIO("SBML: import multi-compartment SBML doc without spatial geometry",
   // - conv: B -> C
   // - degrad: C -> D
   // - ex: D -> Dext
-  QFile f(":test/models/non-spatial-multi-compartment.xml");
-  f.open(QIODevice::ReadOnly);
-  s.importSBMLString(f.readAll().toStdString());
   auto &geometry{s.getGeometry()};
   auto &compartments{s.getCompartments()};
   // reactions in original xml model have no compartment

@@ -1,8 +1,8 @@
 #include "catch_wrapper.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include "qt_test_utils.hpp"
-#include "sbml_test_data/very_simple_model.hpp"
 #include "serialization.hpp"
 #include "simulate.hpp"
 #include "simulate_options.hpp"
@@ -16,31 +16,12 @@
 #include <sbml/SBMLWriter.h>
 
 using namespace sme;
-
-static model::Model getModel(const QString &filename) {
-  model::Model m;
-  QFile f(filename);
-  f.open(QIODevice::ReadOnly);
-  m.importSBMLString(f.readAll().toStdString());
-  return m;
-}
-
-static model::Model getVerySimpleModel() {
-  return getModel(":/models/very-simple-model.xml");
-}
-
-static model::Model getBrusselatorModel() {
-  return getModel(":/models/brusselator-model.xml");
-}
+using namespace sme::test;
 
 SCENARIO("Simulate: very_simple_model, single pixel geometry",
          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
-  // import model
-  std::unique_ptr<libsbml::SBMLDocument> doc(
-      libsbml::readSBMLFromString(sbml_test_data::very_simple_model().xml));
-  libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-  model::Model s;
-  s.importSBMLFile("tmp.xml");
+  // import non-spatial model
+  auto s{getTestModel("very-simple-model-non-spatial")};
 
   // import geometry & assign compartments
   QImage img(1, 3, QImage::Format_RGB32);
@@ -247,7 +228,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
 
 SCENARIO("Simulate: very_simple_model, 2d geometry",
          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
-  auto s{getVerySimpleModel()};
+  auto s{getExampleModel(Mod::VerySimpleModel)};
   // check fields have correct compartments & sizes
   const auto *fa1 = s.getSpecies().getField("A_c1");
   REQUIRE(fa1->getCompartment()->getId() == "c1");
@@ -322,7 +303,7 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
 
 SCENARIO("Simulate: very_simple_model, failing Pixel sim",
          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
-  auto s{getVerySimpleModel()};
+  auto s{getExampleModel(Mod::VerySimpleModel)};
   // set A uptake rate very high
   s.getReactions().setParameterValue("A_uptake", "k1", 1e40);
   // Pixel sim stops simulation as timestep required becomes too small
@@ -339,7 +320,7 @@ SCENARIO("Simulate: very_simple_model, empty compartment, DUNE sim",
          "[core/simulate/simulate][core/simulate][core][simulate][dune]") {
   // check that DUNE simulates a model with an empty compartment without
   // crashing
-  auto s{getVerySimpleModel()};
+  auto s{getExampleModel(Mod::VerySimpleModel)};
   s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
   WHEN("Outer species removed") {
     s.getSpecies().remove("A_c1");
@@ -389,7 +370,7 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
   double epsilon{1e-8};
   double margin{1e-13};
   // import model
-  auto s1{getVerySimpleModel()};
+  auto s1{getExampleModel(Mod::VerySimpleModel)};
   // 1st order RK, fixed timestep simulation
   // pixel width: 1
   // length unit: m
@@ -412,7 +393,7 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
 
   // 3x pixel width
   {
-    auto s{getVerySimpleModel()};
+    auto s{getExampleModel(Mod::VerySimpleModel)};
     s.getSimulationSettings().options = options;
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     s.getGeometry().setPixelWidth(3.0);
@@ -483,7 +464,7 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
   }
   // 0.27* pixel width
   {
-    auto s{getVerySimpleModel()};
+    auto s{getExampleModel(Mod::VerySimpleModel)};
     s.getSimulationSettings().options = options;
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     s.getGeometry().setPixelWidth(0.27);
@@ -556,7 +537,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     }
     double simTime{0.025};
     // import model
-    auto s1{getVerySimpleModel()};
+    auto s1{getExampleModel(Mod::VerySimpleModel)};
     // 1st order RK, fixed timestep simulation
     // pixel width: 1
     // length unit: m
@@ -583,7 +564,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
 
     // Length unit -> 10x smaller
     {
-      auto s{getVerySimpleModel()};
+      auto s{getExampleModel(Mod::VerySimpleModel)};
       s.getSimulationSettings().options = options;
       s.getSimulationSettings().simulatorType = simulatorType;
       s.getUnits().setLengthIndex(1);
@@ -614,7 +595,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     // Length unit -> 100x smaller
     {
       // as above
-      auto s{getVerySimpleModel()};
+      auto s{getExampleModel(Mod::VerySimpleModel)};
       s.getSimulationSettings().options = options;
       s.getSimulationSettings().simulatorType = simulatorType;
       rescaleMembraneReacRates(s, 1e-6);
@@ -640,7 +621,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
       // concentration values unchanged, but [volume] 10x smaller
       // i.e. concentrations are 10x higher in [amount]/[length]^3 units
       // so membrane rates need to be 10x higher to compensate
-      auto s{getVerySimpleModel()};
+      auto s{getExampleModel(Mod::VerySimpleModel)};
       s.getSimulationSettings().options = options;
       s.getSimulationSettings().simulatorType = simulatorType;
       rescaleMembraneReacRates(s, 10);
@@ -664,7 +645,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     // Volume unit -> 1000x smaller
     {
       // as above
-      auto s{getVerySimpleModel()};
+      auto s{getExampleModel(Mod::VerySimpleModel)};
       s.getSimulationSettings().options = options;
       s.getSimulationSettings().simulatorType = simulatorType;
       rescaleMembraneReacRates(s, 1000);
@@ -687,7 +668,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     }
     // Volume unit -> 1000x larger (L -> m^3)
     {
-      auto s{getVerySimpleModel()};
+      auto s{getExampleModel(Mod::VerySimpleModel)};
       s.getSimulationSettings().options = options;
       s.getSimulationSettings().simulatorType = simulatorType;
       rescaleMembraneReacRates(s, 1e-3);
@@ -710,7 +691,7 @@ SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
     }
     // Volume unit equivalent (L -> dm^3)
     {
-      auto s{getVerySimpleModel()};
+      auto s{getExampleModel(Mod::VerySimpleModel)};
       s.getSimulationSettings().options = options;
       s.getSimulationSettings().simulatorType = simulatorType;
       s.getUnits().setVolumeIndex(5);
@@ -746,21 +727,16 @@ static double analytic(const QPoint &p, double t, double D, double t0) {
   return (t0 / (t + t0)) * exp(-r2(p) / (4.0 * D * (t + t0)));
 }
 
-SCENARIO(
-    "Simulate: single-compartment-diffusion, circular geometry",
-    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel][expensive]") {
+SCENARIO("Simulate: single-compartment-diffusion, circular geometry",
+         "[core/simulate/simulate][core/"
+         "simulate][core][simulate][dune][pixel][expensive]") {
   // see docs/tests/diffusion.rst for analytic expressions used here
   // NB central point of initial distribution: (48,99-48) <-> ix=1577
 
   constexpr double pi = 3.14159265358979323846;
   double sigma2 = 36.0;
   double epsilon = 1e-10;
-  // import model
-  model::Model s;
-  if (QFile f(":/models/single-compartment-diffusion.xml");
-      f.open(QIODevice::ReadOnly)) {
-    s.importSBMLString(f.readAll().toStdString());
-  }
+  auto s{getExampleModel(Mod::SingleCompartmentDiffusion)};
 
   // check fields have correct compartments
   const auto *slow = s.getSpecies().getField("slow");
@@ -870,12 +846,7 @@ SCENARIO(
     "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
   WHEN("many steps: both species end up equally & uniformly distributed") {
     double epsilon = 1e-3;
-    // import model
-    model::Model s;
-    if (QFile f(":/models/small-single-compartment-diffusion.xml");
-        f.open(QIODevice::ReadOnly)) {
-      s.importSBMLString(f.readAll().toStdString());
-    }
+    auto s{getTestModel("small-single-compartment-diffusion")};
     auto &options{s.getSimulationSettings().options};
     options.pixel.maxErr = {std::numeric_limits<double>::max(), 0.001};
     options.pixel.maxThreads = 2;
@@ -918,11 +889,7 @@ SCENARIO(
 
 SCENARIO("Pixel simulator: timeout",
          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
-  // import model
-  model::Model s;
-  if (QFile f(":/models/brusselator-model.xml"); f.open(QIODevice::ReadOnly)) {
-    s.importSBMLString(f.readAll().toStdString());
-  }
+  auto s{getExampleModel(Mod::Brusselator)};
   s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   // simulate 1 very long time step, with 200ms timeout
   simulate::Simulation sim(s);
@@ -945,11 +912,7 @@ SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
   double eps{1e-20};
   double time{30.0};
   double maxAllowedRelErr{0.01};
-  // import model
-  model::Model s;
-  if (QFile f(":/models/brusselator-model.xml"); f.open(QIODevice::ReadOnly)) {
-    s.importSBMLString(f.readAll().toStdString());
-  }
+  auto s{getExampleModel(Mod::Brusselator)};
   // do accurate simulation
   auto &options{s.getSimulationSettings().options};
   options.pixel.maxErr = {std::numeric_limits<double>::max(), 1e-6};
@@ -988,10 +951,7 @@ SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
 SCENARIO("DUNE: simulation",
          "[core/simulate/simulate][core/simulate][core][simulate][dune]") {
   GIVEN("ABtoC model") {
-    model::Model s;
-    if (QFile f(":/models/ABtoC.xml"); f.open(QIODevice::ReadOnly)) {
-      s.importSBMLString(f.readAll().toStdString());
-    }
+    auto s{getExampleModel(Mod::ABtoC)};
 
     // set spatially constant initial conditions
     s.getSpecies().setInitialConcentration("A", 1.0);
@@ -1019,7 +979,7 @@ SCENARIO("DUNE: simulation",
     REQUIRE(imgConc.size() == QSize(100, 100));
   }
   GIVEN("very-simple-model") {
-    auto s{getVerySimpleModel()};
+    auto s{getExampleModel(Mod::VerySimpleModel)};
     auto &options{s.getSimulationSettings().options};
     options.dune.dt = 0.01;
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
@@ -1032,7 +992,7 @@ SCENARIO("DUNE: simulation",
 SCENARIO("getConcImage",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
   GIVEN("very-simple-model") {
-    auto s{getVerySimpleModel()};
+    auto s{getExampleModel(Mod::VerySimpleModel)};
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     simulate::Simulation sim(s);
     sim.doTimesteps(0.5);
@@ -1097,10 +1057,7 @@ SCENARIO("getConcImage",
 SCENARIO("PyConc",
          "[core/simulate/simulate][core/simulate][core][simulate][python]") {
   GIVEN("ABtoC model") {
-    model::Model s;
-    if (QFile f(":/models/ABtoC.xml"); f.open(QIODevice::ReadOnly)) {
-      s.importSBMLString(f.readAll().toStdString());
-    }
+    auto s{getExampleModel(Mod::ABtoC)};
     for (auto simType :
          {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
       s.getSimulationSettings().simulatorType = simType;
@@ -1183,7 +1140,7 @@ static double rel_diff(const std::vector<double> &a,
 
 SCENARIO("applyConcsToModel initial concentrations",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
-  auto s{getVerySimpleModel()};
+  auto s{getExampleModel(Mod::VerySimpleModel)};
   // set various types of initial concentrations
   s.getSpecies().setInitialConcentration("B_c1", 0.66);
   s.getSpecies().setInitialConcentration("A_c3", 0.123);
@@ -1201,7 +1158,7 @@ SCENARIO("applyConcsToModel initial concentrations",
   sim.doTimesteps(0.01);
 
   // apply simulation initial concs to a copy of the original model
-  auto s2{getVerySimpleModel()};
+  auto s2{getExampleModel(Mod::VerySimpleModel)};
   sim.applyConcsToModel(s2, 0);
   // check concentrations match
   for (const auto &cId : s.getCompartments().getIds()) {
@@ -1216,7 +1173,7 @@ SCENARIO("applyConcsToModel initial concentrations",
 
 SCENARIO("applyConcsToModel after simulation",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
-  auto s{getVerySimpleModel()};
+  auto s{getExampleModel(Mod::VerySimpleModel)};
   s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   // added this to try to work around
   // https://github.com/spatial-model-editor/spatial-model-editor/issues/465
@@ -1291,10 +1248,7 @@ SCENARIO("applyConcsToModel after simulation",
 
 SCENARIO("Reactions depend on x, y, t",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
-  model::Model s;
-  QFile f(":/test/models/txy.xml");
-  f.open(QIODevice::ReadOnly);
-  s.importSBMLString(f.readAll().toStdString());
+  auto s{getTestModel("txy")};
   constexpr double eps{1e-20};
   constexpr double dt{1e-3};
   auto &options{s.getSimulationSettings().options};
@@ -1404,11 +1358,11 @@ SCENARIO("Reactions depend on x, y, t",
     }
   }
 }
-SCENARIO(
-    "circle membrane reaction",
-    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel][expensive]") {
-  auto mDune{getModel(":/test/models/membrane-reaction-circle.xml")};
-  auto mPixel{getModel(":/test/models/membrane-reaction-circle.xml")};
+SCENARIO("circle membrane reaction",
+         "[core/simulate/simulate][core/"
+         "simulate][core][simulate][dune][pixel][expensive]") {
+  auto mDune{getTestModel("membrane-reaction-circle")};
+  auto mPixel{getTestModel("membrane-reaction-circle")};
   mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
   simulate::Simulation simDune(mDune);
   mPixel.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
@@ -1445,8 +1399,8 @@ SCENARIO(
 SCENARIO(
     "pair of pixels membrane reaction",
     "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
-  auto mDune{getModel(":/test/models/membrane-reaction-pixels.xml")};
-  auto mPixel{getModel(":/test/models/membrane-reaction-pixels.xml")};
+  auto mDune{getTestModel("membrane-reaction-pixels")};
+  auto mPixel{getTestModel("membrane-reaction-pixels")};
   mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
   simulate::Simulation simDune(mDune);
   mPixel.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
@@ -1482,7 +1436,7 @@ SCENARIO(
 
 SCENARIO("SimulationData",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
-  auto s{getVerySimpleModel()};
+  auto s{getExampleModel(Mod::VerySimpleModel)};
   s.getSpecies().setAnalyticConcentration("B_c1", "cos(x/14.2)+1");
   s.getSpecies().setAnalyticConcentration("A_c2", "cos(x/12.2)+1");
   s.getSpecies().setAnalyticConcentration("B_c2", "cos(x/15.1)+1");
@@ -1599,13 +1553,13 @@ SCENARIO("SimulationData",
 
 SCENARIO("doMultipleTimesteps vs doTimesteps",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
-  auto m1{getVerySimpleModel()};
+  auto m1{getExampleModel(Mod::VerySimpleModel)};
   m1.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   simulate::Simulation sim1(m1);
   sim1.doTimesteps(0.1, 3);
   sim1.doTimesteps(0.2, 2);
   const auto &data1{m1.getSimulationData()};
-  auto m2{getVerySimpleModel()};
+  auto m2{getExampleModel(Mod::VerySimpleModel)};
   m2.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   simulate::Simulation sim2(m2);
   sim2.doMultipleTimesteps({{3, 0.1}, {2, 0.2}});
@@ -1618,7 +1572,7 @@ SCENARIO("doMultipleTimesteps vs doTimesteps",
 
 SCENARIO("Events: setting species concentrations",
          "[core/simulate/simulate][core/simulate][core][simulate][events]") {
-  auto m1{getVerySimpleModel()};
+  auto m1{getExampleModel(Mod::VerySimpleModel)};
   for (auto simType :
        {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
     CAPTURE(simType);
@@ -1699,7 +1653,7 @@ SCENARIO("Events: continuing existing simulation",
       // long, so this results in fairly large errors:
       allowedRelDiff = 0.15;
     }
-    auto m1{getBrusselatorModel()};
+    auto m1{getExampleModel(Mod::Brusselator)};
     // make mesh coarser to speed up dune tests
     auto *mesh{m1.getGeometry().getMesh()};
     mesh->setBoundaryMaxPoints(0, 9);
@@ -1782,7 +1736,7 @@ SCENARIO("simulate w/options & save, load, re-simulate",
   for (auto simulatorType :
        {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
     CAPTURE(simulatorType);
-    auto m1{getVerySimpleModel()};
+    auto m1{getExampleModel(Mod::VerySimpleModel)};
     auto &options1{m1.getSimulationSettings().options};
     options1.pixel.integrator = simulate::PixelIntegratorType::RK435;
     options1.pixel.maxErr.rel = 1e-3;
@@ -1829,7 +1783,7 @@ SCENARIO("stop, then continue pixel simulation",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
   // see
   // https://github.com/spatial-model-editor/spatial-model-editor/issues/544
-  auto m{getVerySimpleModel()};
+  auto m{getExampleModel(Mod::VerySimpleModel)};
   m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   simulate::Simulation sim(m);
   // start simulation with single huge timestep in another thread
@@ -1850,7 +1804,7 @@ SCENARIO("stop, then continue pixel simulation",
 
 SCENARIO("pixel simulation with invalid reaction rate expression",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
-  auto m{getModel(":/models/ABtoC.xml")};
+  auto m{getExampleModel(Mod::ABtoC)};
   m.getReactions().add("r2", "comp", "A * A / idontexist");
   m.getReactions().setSpeciesStoichiometry("r2", "A", 1.0);
   m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
@@ -1863,7 +1817,7 @@ SCENARIO("pixel simulation with invalid reaction rate expression",
 
 SCENARIO("Fish model: simulation with piecewise function in reactions",
          "[core/simulate/simulate][core/simulate][core][simulate]") {
-  auto m{getModel(":test/models/fish_300x300.xml")};
+  auto m{getTestModel("fish_300x300")};
   // pixel
   m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   simulate::Simulation simPixel(m);

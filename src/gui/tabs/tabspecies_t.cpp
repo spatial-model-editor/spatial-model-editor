@@ -1,56 +1,70 @@
+#include "catch_wrapper.hpp"
+#include "model.hpp"
+#include "model_test_utils.hpp"
+#include "qlabelmousetracker.hpp"
+#include "qt_test_utils.hpp"
+#include "tabspecies.hpp"
 #include <QCheckBox>
 #include <QComboBox>
-#include <QFile>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QTreeWidget>
-#include "catch_wrapper.hpp"
-#include "model.hpp"
-#include "qlabelmousetracker.hpp"
-#include "qt_test_utils.hpp"
-#include "tabspecies.hpp"
+
+using namespace sme::test;
 
 SCENARIO("Species Tab", "[gui/tabs/species][gui/tabs][gui][species]") {
   sme::model::Model model;
   QLabelMouseTracker mouseTracker;
-  auto tab = TabSpecies(model, &mouseTracker);
+  TabSpecies tab(model, &mouseTracker);
   tab.show();
   waitFor(&tab);
 
   ModalWidgetTimer mwt;
   // get pointers to widgets within tab
-  auto *listSpecies = tab.findChild<QTreeWidget *>("listSpecies");
-  auto *btnAddSpecies = tab.findChild<QPushButton *>("btnAddSpecies");
-  auto *btnRemoveSpecies = tab.findChild<QPushButton *>("btnRemoveSpecies");
-  auto *txtSpeciesName = tab.findChild<QLineEdit *>("txtSpeciesName");
-  auto *cmbSpeciesCompartment =
-      tab.findChild<QComboBox *>("cmbSpeciesCompartment");
-  auto *chkSpeciesIsSpatial = tab.findChild<QCheckBox *>("chkSpeciesIsSpatial");
-  auto *chkSpeciesIsConstant =
-      tab.findChild<QCheckBox *>("chkSpeciesIsConstant");
-  auto *radInitialConcentrationUniform =
-      tab.findChild<QRadioButton *>("radInitialConcentrationUniform");
-  auto *txtInitialConcentration =
-      tab.findChild<QLineEdit *>("txtInitialConcentration");
-  auto *radInitialConcentrationAnalytic =
-      tab.findChild<QRadioButton *>("radInitialConcentrationAnalytic");
-  auto *btnEditAnalyticConcentration =
-      tab.findChild<QPushButton *>("btnEditAnalyticConcentration");
-  auto *radInitialConcentrationImage =
-      tab.findChild<QRadioButton *>("radInitialConcentrationImage");
-  auto *btnEditImageConcentration =
-      tab.findChild<QPushButton *>("btnEditImageConcentration");
-  auto *txtDiffusionConstant =
-      tab.findChild<QLineEdit *>("txtDiffusionConstant");
-  auto *btnChangeSpeciesColour =
-      tab.findChild<QPushButton *>("btnChangeSpeciesColour");
+  auto *listSpecies{tab.findChild<QTreeWidget *>("listSpecies")};
+  REQUIRE(listSpecies != nullptr);
+  auto *btnAddSpecies{tab.findChild<QPushButton *>("btnAddSpecies")};
+  REQUIRE(btnAddSpecies != nullptr);
+  auto *btnRemoveSpecies{tab.findChild<QPushButton *>("btnRemoveSpecies")};
+  REQUIRE(btnRemoveSpecies != nullptr);
+  auto *txtSpeciesName{tab.findChild<QLineEdit *>("txtSpeciesName")};
+  REQUIRE(txtSpeciesName != nullptr);
+  auto *cmbSpeciesCompartment{
+      tab.findChild<QComboBox *>("cmbSpeciesCompartment")};
+  REQUIRE(cmbSpeciesCompartment != nullptr);
+  auto *chkSpeciesIsSpatial{tab.findChild<QCheckBox *>("chkSpeciesIsSpatial")};
+  REQUIRE(chkSpeciesIsSpatial != nullptr);
+  auto *chkSpeciesIsConstant{
+      tab.findChild<QCheckBox *>("chkSpeciesIsConstant")};
+  REQUIRE(chkSpeciesIsConstant != nullptr);
+  auto *radInitialConcentrationUniform{
+      tab.findChild<QRadioButton *>("radInitialConcentrationUniform")};
+  REQUIRE(radInitialConcentrationUniform != nullptr);
+  auto *txtInitialConcentration{
+      tab.findChild<QLineEdit *>("txtInitialConcentration")};
+  REQUIRE(txtInitialConcentration != nullptr);
+  auto *radInitialConcentrationAnalytic{
+      tab.findChild<QRadioButton *>("radInitialConcentrationAnalytic")};
+  REQUIRE(radInitialConcentrationAnalytic != nullptr);
+  auto *btnEditAnalyticConcentration{
+      tab.findChild<QPushButton *>("btnEditAnalyticConcentration")};
+  REQUIRE(btnEditAnalyticConcentration != nullptr);
+  auto *radInitialConcentrationImage{
+      tab.findChild<QRadioButton *>("radInitialConcentrationImage")};
+  REQUIRE(radInitialConcentrationImage != nullptr);
+  auto *btnEditImageConcentration{
+      tab.findChild<QPushButton *>("btnEditImageConcentration")};
+  REQUIRE(btnEditImageConcentration != nullptr);
+  auto *txtDiffusionConstant{
+      tab.findChild<QLineEdit *>("txtDiffusionConstant")};
+  REQUIRE(txtDiffusionConstant != nullptr);
+  auto *btnChangeSpeciesColour{
+      tab.findChild<QPushButton *>("btnChangeSpeciesColour")};
+  REQUIRE(btnChangeSpeciesColour != nullptr);
 
   WHEN("very-simple-model loaded") {
-    if (QFile f(":/models/very-simple-model.xml");
-        f.open(QIODevice::ReadOnly)) {
-      model.importSBMLString(f.readAll().toStdString());
-    }
+    model = getExampleModel(Mod::VerySimpleModel);
     tab.loadModelData();
 
     // initial selection: Outside / A [constant species]

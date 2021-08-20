@@ -3,15 +3,14 @@
 #include "qplaintextmathedit.hpp"
 #include "qt_test_utils.hpp"
 #include "tabevents.hpp"
+#include "model_test_utils.hpp"
 #include <QComboBox>
-#include <QDebug>
-#include <QDialog>
-#include <QFile>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
-#include <QPlainTextEdit>
 #include <QPushButton>
+
+using namespace sme::test;
 
 SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
   sme::model::Model model;
@@ -37,13 +36,11 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
   REQUIRE(lblSpeciesExpression != nullptr);
   auto *lblExpressionStatus{tab.findChild<QLabel *>("lblExpressionStatus")};
   REQUIRE(lblExpressionStatus != nullptr);
-  const auto &events = model.getEvents();
   REQUIRE(txtExpression != nullptr);
   ModalWidgetTimer mwt;
   GIVEN("ABtoC model") {
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    model.importSBMLString(f.readAll().toStdString());
+    model = getExampleModel(Mod::ABtoC);
+    const auto &events{model.getEvents()};
     REQUIRE(model.getSpecies().getIds("comp").size() == 3);
     model.getSpecies().remove("A");
     model.getSpecies().remove("B");
@@ -66,9 +63,8 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     REQUIRE(mwt.getResult() == "To add events, the model must contain species or parameters.");
   }
   GIVEN("very simple model") {
-    QFile f(":/models/very-simple-model.xml");
-    f.open(QIODevice::ReadOnly);
-    model.importSBMLString(f.readAll().toStdString());
+    model = getExampleModel(Mod::VerySimpleModel);
+    const auto &events{model.getEvents()};
     tab.loadModelData();
     tab.show();
     REQUIRE(events.getIds().size() == 0);
@@ -170,9 +166,8 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     REQUIRE(events.getIds().size() == 0);
   }
   GIVEN("brusselator model") {
-    QFile f(":/models/brusselator-model.xml");
-    f.open(QIODevice::ReadOnly);
-    model.importSBMLString(f.readAll().toStdString());
+    model = getExampleModel(Mod::Brusselator);
+    const auto &events{model.getEvents()};
     tab.loadModelData();
     REQUIRE(listEvents->count() == 2);
     REQUIRE(listEvents->currentItem()->text() == "increase k2");

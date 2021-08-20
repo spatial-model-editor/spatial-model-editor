@@ -3,11 +3,13 @@
 #include "duneconverter.hpp"
 #include "dunegrid.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include <QFile>
 #include <dune/copasi/grid/multidomain_gmsh_reader.hh>
 #include <locale>
 
 using namespace sme;
+using namespace sme::test;
 
 constexpr int DuneDimensions{2};
 using HostGrid = Dune::UGGrid<DuneDimensions>;
@@ -28,15 +30,10 @@ static std::vector<double> getAllElementCoordinates(Grid *grid, int subdomain) {
 
 SCENARIO("DUNE: grid",
          "[core/simulate/dunegrid][core/simulate][core][dunegrid]") {
-  for (const auto &modelName :
-       {"ABtoC", "very-simple-model", "liver-simplified"}) {
-    CAPTURE(modelName);
+  for (auto exampleModel : {Mod::ABtoC, Mod::VerySimpleModel, Mod::LiverSimplified}) {
+    CAPTURE(exampleModel);
     // load mesh from model
-    model::Model m;
-    if (QFile f(QString(":/models/%1.xml").arg(modelName));
-        f.open(QIODevice::ReadOnly)) {
-      m.importSBMLString(f.readAll().toStdString());
-    }
+    auto m{getExampleModel(exampleModel)};
     simulate::DuneConverter dc(m, {}, false);
     const auto *mesh{m.getGeometry().getMesh()};
 

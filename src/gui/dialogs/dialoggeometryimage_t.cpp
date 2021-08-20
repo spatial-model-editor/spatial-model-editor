@@ -1,19 +1,20 @@
 #include "catch_wrapper.hpp"
 #include "dialoggeometryimage.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
 #include <QFile>
 #include <QPushButton>
 
+using namespace sme::test;
+
+
 SCENARIO("DialogGeometryImage",
          "[gui/dialogs/geometryimage][gui/dialogs][gui][geometryimage]") {
   GIVEN("100x50 image, initial pixel size 1") {
-    sme::model::Model doc;
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    doc.importSBMLString(f.readAll().toStdString());
-    auto modelUnits = doc.getUnits();
+    auto m{getExampleModel(Mod::ABtoC)};
+    auto modelUnits = m.getUnits();
     modelUnits.setLengthIndex(0);
     REQUIRE(modelUnits.getLengthUnits()[0].scale == 0);
     REQUIRE(modelUnits.getLengthUnits()[1].scale == -1);

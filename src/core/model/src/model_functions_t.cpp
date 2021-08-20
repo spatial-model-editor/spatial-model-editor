@@ -1,31 +1,20 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
 #include "model_functions.hpp"
-#include "sbml_test_data/yeast_glycolysis.hpp"
-#include <QFile>
-#include <QImage>
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
+#include "model_test_utils.hpp"
 
 using namespace sme;
+using namespace sme::test;
 
 SCENARIO("SBML functions",
          "[core/model/functions][core/model][core][model][functions]") {
-  GIVEN("SBML: yeast-glycolysis.xml") {
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(sbml_test_data::yeast_glycolysis().xml));
-    // write SBML document to file
-    libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-
-    model::Model s;
-    s.importSBMLFile("tmp.xml");
+  GIVEN("SBML: yeast-glycolysis") {
+    auto s{getTestModel("yeast-glycolysis")};
     REQUIRE(s.getHasUnsavedChanges() == false);
     REQUIRE(s.getCompartments().getIds().size() == 1);
     REQUIRE(s.getCompartments().getIds()[0] == "compartment");
     REQUIRE(s.getSpecies().getIds("compartment").size() == 25);
-    auto &funcs = s.getFunctions();
+    auto &funcs{s.getFunctions()};
     REQUIRE(funcs.getIds().size() == 17);
     REQUIRE(funcs.getIds()[0] == "HK_kinetics");
     REQUIRE(funcs.getName("HK_kinetics") == "HK kinetics");
@@ -57,7 +46,7 @@ SCENARIO("SBML functions",
       REQUIRE(funcs.getArguments("PDC_kinetics")[3] == "nH");
       REQUIRE(s.getHasUnsavedChanges() == false);
       REQUIRE(funcs.getHasUnsavedChanges() == false);
-      auto arg = funcs.addArgument("PDC_kinetics", "x");
+      auto arg{funcs.addArgument("PDC_kinetics", "x")};
       REQUIRE(s.getHasUnsavedChanges() == true);
       REQUIRE(funcs.getHasUnsavedChanges() == true);
       REQUIRE(arg == "x");
@@ -72,8 +61,8 @@ SCENARIO("SBML functions",
       REQUIRE(funcs.getArguments("PDC_kinetics")[4] == "x");
       REQUIRE(funcs.getExpression("PDC_kinetics") ==
               "V * (x / k)^n / (1 + (a / k)^n)");
-      std::string expr = "PDC_kinetics(a,V,k,n,Q)";
-      std::string inlined = "(V * (Q / k)^n / (1 + (a / k)^n))";
+      std::string expr{"PDC_kinetics(a,V,k,n,Q)"};
+      std::string inlined{"(V * (Q / k)^n / (1 + (a / k)^n))"};
       REQUIRE(s.inlineExpr(expr) == inlined);
       funcs.remove("PDC_kinetics");
       REQUIRE(funcs.getIds().size() == 16);

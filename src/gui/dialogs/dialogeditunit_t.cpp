@@ -1,10 +1,10 @@
 #include "catch_wrapper.hpp"
 #include "dialogeditunit.hpp"
-#include "model.hpp"
 #include "qt_test_utils.hpp"
 #include <QFile>
 #include <QLabel>
-#include <QLineEdit>
+
+using namespace sme::test;
 
 TEST_CASE("DialogEditUnit",
           "[gui/dialogs/editunit][gui/dialogs][gui][editunit][units]") {

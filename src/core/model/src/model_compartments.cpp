@@ -70,13 +70,13 @@ static void makeSizesValid(libsbml::Model *model) {
 
 ModelCompartments::ModelCompartments() = default;
 
-ModelCompartments::ModelCompartments(
-    libsbml::Model *model, ModelGeometry *geometry, ModelMembranes *membranes,
-    ModelSpecies *species, ModelReactions *reactions, const ModelUnits *units,
-    simulate::SimulationData *data)
+ModelCompartments::ModelCompartments(libsbml::Model *model,
+                                     ModelMembranes *membranes,
+
+                                     const ModelUnits *units,
+                                     simulate::SimulationData *data)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(model, ids)},
-      sbmlModel{model}, modelGeometry{geometry}, modelMembranes{membranes},
-      modelSpecies{species}, modelReactions{reactions}, modelUnits{units},
+      sbmlModel{model}, modelMembranes{membranes}, modelUnits{units},
       simulationData{data} {
   makeSizesValid(model);
   colours = QVector<QRgb>(ids.size(), 0);
@@ -86,6 +86,18 @@ ModelCompartments::ModelCompartments(
     compartments.push_back(
         std::make_unique<geometry::Compartment>(id.toStdString(), QImage{}, 0));
   }
+}
+
+void ModelCompartments::setGeometryPtr(ModelGeometry *geometry) {
+  modelGeometry = geometry;
+}
+
+void ModelCompartments::setSpeciesPtr(ModelSpecies *species) {
+  modelSpecies = species;
+}
+
+void ModelCompartments::setReactionsPtr(ModelReactions *reactions) {
+  modelReactions = reactions;
 }
 
 const QStringList &ModelCompartments::getIds() const { return ids; }
@@ -346,7 +358,9 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   SPDLOG_INFO("  - volume {} {}^3", l3, lengthUnit.name.toStdString());
   SPDLOG_INFO("  - size {} {}", compartment->getSize(),
               volumeUnit.name.toStdString());
-  modelSpecies->updateCompartmentGeometry(id);
+  if (modelSpecies != nullptr) {
+    modelSpecies->updateCompartmentGeometry(id);
+  }
   modelMembranes->updateCompartments(compartments);
   modelMembranes->updateCompartmentNames(names);
   modelGeometry->updateMesh();
@@ -354,7 +368,9 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
     modelMembranes->exportToSBML(modelGeometry->getPixelWidth() *
                                  modelGeometry->getPixelDepth());
   }
-  modelReactions->makeReactionsSpatial(modelGeometry->getIsValid());
+  if (modelReactions != nullptr) {
+    modelReactions->makeReactionsSpatial(modelGeometry->getIsValid());
+  }
 }
 
 QRgb ModelCompartments::getColour(const QString &id) const {

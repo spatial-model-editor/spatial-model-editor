@@ -48,8 +48,8 @@ public:
   ModelSpecies();
   ModelSpecies(libsbml::Model *model, const ModelCompartments *compartments,
                const ModelGeometry *geometry, const ModelParameters *parameters,
-               ModelReactions *reactions, simulate::SimulationData *data,
-               Settings *annotation);
+               simulate::SimulationData *data, Settings *annotation);
+  void setReactionsPtr(ModelReactions *reactions);
   QString add(const QString &name, const QString &compartmentId);
   void remove(const QString &id);
   QString setName(const QString &id, const QString &name);

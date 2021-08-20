@@ -229,13 +229,12 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
                            const ModelCompartments *compartments,
                            const ModelGeometry *geometry,
                            const ModelParameters *parameters,
-                           ModelReactions *reactions,
                            simulate::SimulationData *data, Settings *annotation)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(model)},
       compartmentIds{importCompartmentIds(model)}, sbmlModel{model},
       modelCompartments{compartments}, modelGeometry{geometry},
-      modelParameters{parameters}, modelReactions{reactions},
-      simulationData{data}, sbmlAnnotation{annotation} {
+      modelParameters{parameters}, simulationData{data}, sbmlAnnotation{
+                                                             annotation} {
   makeInitialConcentrationsValid(model);
   for (int i = 0; i < ids.size(); ++i) {
     const auto &id = ids[i];
@@ -266,6 +265,10 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
     const auto *param = getOrCreateDiffusionConstantParameter(sbmlModel, id);
     field.setDiffusionConstant(param->getValue());
   }
+}
+
+void ModelSpecies::setReactionsPtr(ModelReactions *reactions) {
+  modelReactions = reactions;
 }
 
 QString ModelSpecies::add(const QString &name, const QString &compartmentId) {
@@ -527,7 +530,7 @@ void ModelSpecies::setFieldConcAnalytic(
   std::string xId{modelParameters->getSpatialCoordinates().x.id};
   std::string yId{modelParameters->getSpatialCoordinates().y.id};
   std::map<const std::string, std::pair<double, bool>> sbmlVars;
-  for (const auto& c : modelParameters->getGlobalConstants()){
+  for (const auto &c : modelParameters->getGlobalConstants()) {
     sbmlVars[c.id] = {c.value, false};
   }
   auto &xCoordPair = sbmlVars[xId];
@@ -658,11 +661,11 @@ QRgb ModelSpecies::getColour(const QString &id) const {
 
 void ModelSpecies::setIsConstant(const QString &id, bool constant) {
   auto *species{sbmlModel->getSpecies(id.toStdString())};
-  if(species == nullptr){
+  if (species == nullptr) {
     SPDLOG_WARN("Species '{}' not found", id.toStdString());
     return;
   }
-  if(species->isSetConstant() && species->getConstant() == constant) {
+  if (species->isSetConstant() && species->getConstant() == constant) {
     // species already has this constant state: no-op
     return;
   }

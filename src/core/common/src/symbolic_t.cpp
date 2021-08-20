@@ -4,6 +4,7 @@
 #include <cmath>
 
 using namespace sme;
+using namespace sme::test;
 
 SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
   GIVEN("5+5: no vars, no constants") {

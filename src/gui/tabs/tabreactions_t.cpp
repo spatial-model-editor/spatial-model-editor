@@ -1,20 +1,22 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qplaintextmathedit.hpp"
 #include "qt_test_utils.hpp"
 #include "tabreactions.hpp"
 #include <QComboBox>
-#include <QFile>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QTableWidget>
 #include <QTreeWidget>
 
+using namespace sme::test;
+
 SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
-  sme::model::Model sbmlDoc;
+  sme::model::Model model;
   QLabelMouseTracker mouseTracker;
-  auto tab = TabReactions(sbmlDoc, &mouseTracker);
+  TabReactions tab(model, &mouseTracker);
   tab.show();
   waitFor(&tab);
   ModalWidgetTimer mwt;
@@ -47,10 +49,7 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
   auto *lblReactionRateStatus{tab.findChild<QLabel *>("lblReactionRateStatus")};
   REQUIRE(lblReactionRateStatus != nullptr);
   WHEN("very-simple-model loaded") {
-    if (QFile f(":/models/very-simple-model.xml");
-        f.open(QIODevice::ReadOnly)) {
-      sbmlDoc.importSBMLString(f.readAll().toStdString());
-    }
+    model = getExampleModel(Mod::VerySimpleModel);
     tab.loadModelData();
     REQUIRE(listReactions->topLevelItemCount() == 5);
     REQUIRE(listReactions->topLevelItem(0)->childCount() == 0);
@@ -65,7 +64,7 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     txtReactionName->setFocus();
     sendKeyEvents(txtReactionName, {" ", "!", "Enter"});
     REQUIRE(listReactions->currentItem()->text(0) == "A to B conversion !");
-    REQUIRE(sbmlDoc.getReactions().getName("A_B_conversion") ==
+    REQUIRE(model.getReactions().getName("A_B_conversion") ==
             "A to B conversion !");
     // change location
     REQUIRE(cmbReactionLocation->currentIndex() == 2);
@@ -78,7 +77,7 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     // same reaction selected as previously
     REQUIRE(listReactions->currentItem()->text(0) == "A to B conversion !");
     REQUIRE(listReactions->currentItem()->parent()->text(0) == "Outside <-> Cell");
-    REQUIRE(sbmlDoc.getReactions().getLocation("A_B_conversion") == "c1_c2_membrane");
+    REQUIRE(model.getReactions().getLocation("A_B_conversion") == "c1_c2_membrane");
     // change location back
     sendKeyEvents(cmbReactionLocation, {"Up"});
     REQUIRE(cmbReactionLocation->currentIndex() == 2);
@@ -88,7 +87,7 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     // same reaction still selected
     REQUIRE(listReactions->currentItem()->text(0) == "A to B conversion !");
     REQUIRE(listReactions->currentItem()->parent()->text(0) == "Nucleus");
-    REQUIRE(sbmlDoc.getReactions().getLocation("A_B_conversion") == "c3");
+    REQUIRE(model.getReactions().getLocation("A_B_conversion") == "c3");
     // add reaction
     mwt.addUserAction({"r", "e", "a", "c", "Q", "!"});
     mwt.start();
@@ -98,8 +97,8 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     REQUIRE(btnRemoveReaction->isEnabled() == true);
     REQUIRE(btnRemoveReactionParam->isEnabled() == false);
     REQUIRE(listReactionParams->rowCount() == 0);
-    REQUIRE(sbmlDoc.getReactions().getIds("c3").size() == 2);
-    REQUIRE(sbmlDoc.getReactions().getName("reacQ") == "reacQ!");
+    REQUIRE(model.getReactions().getIds("c3").size() == 2);
+    REQUIRE(model.getReactions().getName("reacQ") == "reacQ!");
     REQUIRE(lblReactionScheme->text() == "");
     // add & edit reaction params
     mwt.addUserAction({"y"});
@@ -108,21 +107,21 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     REQUIRE(listReactionParams->rowCount() == 1);
     REQUIRE(listReactionParams->item(0, 0)->text() == "y");
     REQUIRE(btnRemoveReactionParam->isEnabled() == true);
-    REQUIRE(sbmlDoc.getReactions().getParameterIds("reacQ").size() == 1);
-    REQUIRE(sbmlDoc.getReactions().getParameterIds("reacQ")[0] == "y_");
-    REQUIRE(sbmlDoc.getReactions().getParameterName("reacQ", "y_") == "y");
-    REQUIRE(sbmlDoc.getReactions().getParameterValue("reacQ", "y_") ==
+    REQUIRE(model.getReactions().getParameterIds("reacQ").size() == 1);
+    REQUIRE(model.getReactions().getParameterIds("reacQ")[0] == "y_");
+    REQUIRE(model.getReactions().getParameterName("reacQ", "y_") == "y");
+    REQUIRE(model.getReactions().getParameterValue("reacQ", "y_") ==
             dbl_approx(0));
     // edit value
     listReactionParams->item(0, 1)->setText("3.14159");
-    REQUIRE(sbmlDoc.getReactions().getParameterValue("reacQ", "y_") ==
+    REQUIRE(model.getReactions().getParameterValue("reacQ", "y_") ==
             dbl_approx(3.14159));
     // edit name
     listReactionParams->item(0, 0)->setText("y !!");
-    REQUIRE(sbmlDoc.getReactions().getParameterIds("reacQ").size() == 1);
-    REQUIRE(sbmlDoc.getReactions().getParameterIds("reacQ")[0] == "y_");
-    REQUIRE(sbmlDoc.getReactions().getParameterName("reacQ", "y_") == "y !!");
-    REQUIRE(sbmlDoc.getReactions().getParameterValue("reacQ", "y_") ==
+    REQUIRE(model.getReactions().getParameterIds("reacQ").size() == 1);
+    REQUIRE(model.getReactions().getParameterIds("reacQ")[0] == "y_");
+    REQUIRE(model.getReactions().getParameterName("reacQ", "y_") == "y !!");
+    REQUIRE(model.getReactions().getParameterValue("reacQ", "y_") ==
             dbl_approx(3.14159));
     mwt.addUserAction({"q", "q"});
     mwt.start();
@@ -131,26 +130,26 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     REQUIRE(listReactionParams->item(0, 0)->text() == "y !!");
     REQUIRE(listReactionParams->item(1, 0)->text() == "qq");
     REQUIRE(btnRemoveReactionParam->isEnabled() == true);
-    REQUIRE(sbmlDoc.getReactions().getParameterIds("reacQ").size() == 2);
-    REQUIRE(sbmlDoc.getReactions().getParameterIds("reacQ")[0] == "y_");
-    REQUIRE(sbmlDoc.getReactions().getParameterIds("reacQ")[1] == "qq");
-    REQUIRE(sbmlDoc.getReactions().getParameterName("reacQ", "y_") == "y !!");
-    REQUIRE(sbmlDoc.getReactions().getParameterValue("reacQ", "y_") ==
+    REQUIRE(model.getReactions().getParameterIds("reacQ").size() == 2);
+    REQUIRE(model.getReactions().getParameterIds("reacQ")[0] == "y_");
+    REQUIRE(model.getReactions().getParameterIds("reacQ")[1] == "qq");
+    REQUIRE(model.getReactions().getParameterName("reacQ", "y_") == "y !!");
+    REQUIRE(model.getReactions().getParameterValue("reacQ", "y_") ==
             dbl_approx(3.14159));
-    REQUIRE(sbmlDoc.getReactions().getParameterName("reacQ", "qq") == "qq");
-    REQUIRE(sbmlDoc.getReactions().getParameterValue("reacQ", "qq") ==
+    REQUIRE(model.getReactions().getParameterName("reacQ", "qq") == "qq");
+    REQUIRE(model.getReactions().getParameterValue("reacQ", "qq") ==
             dbl_approx(0));
     // remove param, then cancel
     sendMouseClick(btnRemoveReactionParam);
     sendKeyEventsToNextQDialog({"Esc"});
     REQUIRE(listReactionParams->rowCount() == 2);
-    REQUIRE(sbmlDoc.getReactions().getParameterIds("reacQ").size() == 2);
+    REQUIRE(model.getReactions().getParameterIds("reacQ").size() == 2);
     // remove param, then confirm
     sendMouseClick(btnRemoveReactionParam);
     sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listReactionParams->rowCount() == 1);
     REQUIRE(listReactionParams->item(0, 0)->text() == "y !!");
-    REQUIRE(sbmlDoc.getReactions().getParameterIds("reacQ").size() == 1);
+    REQUIRE(model.getReactions().getParameterIds("reacQ").size() == 1);
     // change name back to "y"
     listReactionParams->item(0, 0)->setText("y");
     // edit reaction rate
@@ -158,7 +157,7 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     sendKeyEvents(txtReactionRate, {"Backspace", "Delete", "2", "+"});
     REQUIRE(lblReactionRateStatus->text() == "syntax error");
     sendKeyEvents(txtReactionRate, {"y"});
-    REQUIRE(sbmlDoc.getReactions().getParameterName("reacQ", "y_") == "y");
+    REQUIRE(model.getReactions().getParameterName("reacQ", "y_") == "y");
     REQUIRE(lblReactionRateStatus->text() == "");
     listReactions->setFocus();
     // change to membrane (i.e. not a reaction)

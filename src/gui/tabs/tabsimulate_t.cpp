@@ -1,25 +1,23 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
 #include "tabsimulate.hpp"
-#include <QFile>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QSlider>
-#include <qcustomplot.h>
+
+using namespace sme::test;
 
 SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   // load model & do initial simulation
-  sme::model::Model model;
-  if (QFile f(":/models/ABtoC.xml"); f.open(QIODevice::ReadOnly)) {
-    model.importSBMLString(f.readAll().toStdString());
-  }
+  auto model{getExampleModel(Mod::ABtoC)};
   sme::simulate::Simulation sim(model);
   sim.doMultipleTimesteps({{2, 0.01}, {1, 0.02}});
 
   QLabelMouseTracker mouseTracker;
-  auto tab{TabSimulate(model, &mouseTracker)};
+  TabSimulate tab(model, &mouseTracker);
   tab.show();
   waitFor(&tab);
   ModalWidgetTimer mwt;

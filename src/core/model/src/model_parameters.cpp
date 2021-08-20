@@ -137,10 +137,13 @@ static SpatialCoordinates importSpatialCoordinates(libsbml::Model *model) {
 
 ModelParameters::ModelParameters() = default;
 
-ModelParameters::ModelParameters(libsbml::Model *model, ModelEvents *events)
+ModelParameters::ModelParameters(libsbml::Model *model)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(ids, model)},
-      spatialCoordinates{importSpatialCoordinates(model)}, sbmlModel{model},
-      modelEvents{events} {}
+      spatialCoordinates{importSpatialCoordinates(model)}, sbmlModel{model} {}
+
+void ModelParameters::setEventsPtr(ModelEvents *events) {
+  modelEvents = events;
+}
 
 const QStringList &ModelParameters::getIds() const { return ids; }
 

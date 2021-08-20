@@ -51,8 +51,8 @@ private:
 
 public:
   ModelParameters();
-  explicit ModelParameters(libsbml::Model *model,
-                           ModelEvents *events = nullptr);
+  explicit ModelParameters(libsbml::Model *model);
+  void setEventsPtr(ModelEvents *events);
   [[nodiscard]] const QStringList &getIds() const;
   [[nodiscard]] const QStringList &getNames() const;
   QString setName(const QString &id, const QString &name);

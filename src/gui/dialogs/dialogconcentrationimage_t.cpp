@@ -5,6 +5,8 @@
 #include <QFile>
 #include <numeric>
 
+using namespace sme::test;
+
 SCENARIO(
     "DialogConcentrationImage",
     "[gui/dialogs/concentrationimage][gui/dialogs][gui][concentrationimage]") {

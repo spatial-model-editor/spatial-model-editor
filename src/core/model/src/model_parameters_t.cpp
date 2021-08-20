@@ -1,25 +1,16 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
 #include "model_parameters.hpp"
-#include "sbml_test_data/yeast_glycolysis.hpp"
-#include <QFile>
-#include <QImage>
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
+#include "model_test_utils.hpp"
 
 using namespace sme;
+using namespace sme::test;
 
 SCENARIO("SBML parameters",
          "[core/model/parameters][core/model][core][model][parameters]") {
   GIVEN("SBML: yeast-glycolysis.xml") {
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(sbml_test_data::yeast_glycolysis().xml));
-    libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-    model::Model s;
-    s.importSBMLFile("tmp.xml");
-    auto &params = s.getParameters();
+    auto s{getTestModel("yeast-glycolysis")};
+    auto &params{s.getParameters()};
     REQUIRE(s.getHasUnsavedChanges() == false);
     REQUIRE(params.getHasUnsavedChanges() == false);
     REQUIRE(params.getIds().size() == 0);
@@ -51,12 +42,10 @@ SCENARIO("SBML parameters",
       REQUIRE(coords.x.name == "x name");
       REQUIRE(coords.y.id == "y");
       REQUIRE(coords.y.name == "yY");
-      std::string xml = s.getXml().toStdString();
-      std::unique_ptr<libsbml::SBMLDocument> doc2{
-          libsbml::readSBMLFromString(xml.c_str())};
-      const auto *param = doc2->getModel()->getParameter("x");
+      auto doc{toSbmlDoc(s)};
+      const auto *param{doc->getModel()->getParameter("x")};
       REQUIRE(param->getName() == "x name");
-      param = doc2->getModel()->getParameter("y");
+      param = doc->getModel()->getParameter("y");
       REQUIRE(param->getName() == "yY");
     }
     WHEN("add double parameter") {
@@ -75,43 +64,38 @@ SCENARIO("SBML parameters",
       REQUIRE(params.getNames()[0] == "new Name");
       REQUIRE(params.getName("p1") == "new Name");
       // default param is constant with value zero
-      std::string xml = s.getXml().toStdString();
-      std::unique_ptr<libsbml::SBMLDocument> doc2{
-          libsbml::readSBMLFromString(xml.c_str())};
-      const auto *param = doc2->getModel()->getParameter("p1");
+      auto doc{toSbmlDoc(s)};
+      const auto *param{doc->getModel()->getParameter("p1")};
       REQUIRE(param->isSetValue() == true);
       REQUIRE(param->isSetConstant() == true);
       REQUIRE(param->getConstant() == true);
       REQUIRE(param->getValue() == dbl_approx(0));
       // set value
       params.setExpression("p1", "1.4");
-      xml = s.getXml().toStdString();
-      doc2.reset(libsbml::readSBMLFromString(xml.c_str()));
-      param = doc2->getModel()->getParameter("p1");
+      doc = toSbmlDoc(s);
+      param = doc->getModel()->getParameter("p1");
       REQUIRE(param->isSetValue() == true);
       REQUIRE(param->isSetConstant() == true);
       REQUIRE(param->getConstant() == true);
       REQUIRE(param->getValue() == dbl_approx(1.4));
-      const auto *asgn = doc2->getModel()->getAssignmentRuleByVariable("p1");
+      const auto *asgn{doc->getModel()->getAssignmentRuleByVariable("p1")};
       REQUIRE(asgn == nullptr);
       // set another value
       params.setExpression("p1", "-2.7e-5");
-      xml = s.getXml().toStdString();
-      doc2.reset(libsbml::readSBMLFromString(xml.c_str()));
-      param = doc2->getModel()->getParameter("p1");
+      doc = toSbmlDoc(s);
+      param = doc->getModel()->getParameter("p1");
       REQUIRE(param->isSetValue() == true);
       REQUIRE(param->isSetConstant() == true);
       REQUIRE(param->getConstant() == true);
       REQUIRE(param->getValue() == dbl_approx(-2.7e-5));
-      asgn = doc2->getModel()->getAssignmentRuleByVariable("p1");
+      asgn = doc->getModel()->getAssignmentRuleByVariable("p1");
       REQUIRE(asgn == nullptr);
       // remove param
       params.remove("p1");
-      xml = s.getXml().toStdString();
-      doc2.reset(libsbml::readSBMLFromString(xml.c_str()));
-      param = doc2->getModel()->getParameter("p1");
+      doc = toSbmlDoc(s);
+      param = doc->getModel()->getParameter("p1");
       REQUIRE(param == nullptr);
-      asgn = doc2->getModel()->getAssignmentRuleByVariable("p1");
+      asgn = doc->getModel()->getAssignmentRuleByVariable("p1");
       REQUIRE(asgn == nullptr);
       REQUIRE(params.getIds().size() == 0);
       REQUIRE(params.getNames().size() == 0);
@@ -128,45 +112,40 @@ SCENARIO("SBML parameters",
       params.setExpression("p1", "cos(1.4)");
       REQUIRE(s.getHasUnsavedChanges() == true);
       REQUIRE(params.getHasUnsavedChanges() == true);
-      std::string xml = s.getXml().toStdString();
-      std::unique_ptr<libsbml::SBMLDocument> doc2{
-          libsbml::readSBMLFromString(xml.c_str())};
-      const auto *param = doc2->getModel()->getParameter("p1");
+      auto doc{toSbmlDoc(s)};
+      const auto *param{doc->getModel()->getParameter("p1")};
       REQUIRE(param->isSetValue() == false);
       REQUIRE(param->isSetConstant() == true);
       REQUIRE(param->getConstant() == false);
-      const auto *asgn = doc2->getModel()->getAssignmentRuleByVariable("p1");
+      const auto *asgn{doc->getModel()->getAssignmentRuleByVariable("p1")};
       REQUIRE(asgn->getVariable() == "p1");
       REQUIRE(params.getExpression("p1") == "cos(1.4)");
       // change expression to a double: assignment removed
       params.setExpression("p1", "1.4");
-      xml = s.getXml().toStdString();
-      doc2.reset(libsbml::readSBMLFromString(xml.c_str()));
-      param = doc2->getModel()->getParameter("p1");
+      doc = toSbmlDoc(s);
+      param = doc->getModel()->getParameter("p1");
       REQUIRE(param->isSetValue() == true);
       REQUIRE(param->isSetConstant() == true);
       REQUIRE(param->getConstant() == true);
       REQUIRE(param->getValue() == dbl_approx(1.4));
-      asgn = doc2->getModel()->getAssignmentRuleByVariable("p1");
+      asgn = doc->getModel()->getAssignmentRuleByVariable("p1");
       REQUIRE(asgn == nullptr);
       // change back to an expression
       params.setExpression("p1", "exp(2)  ");
-      xml = s.getXml().toStdString();
-      doc2.reset(libsbml::readSBMLFromString(xml.c_str()));
-      param = doc2->getModel()->getParameter("p1");
+      doc = toSbmlDoc(s);
+      param = doc->getModel()->getParameter("p1");
       REQUIRE(param->isSetValue() == false);
       REQUIRE(param->isSetConstant() == true);
       REQUIRE(param->getConstant() == false);
-      asgn = doc2->getModel()->getAssignmentRuleByVariable("p1");
+      asgn = doc->getModel()->getAssignmentRuleByVariable("p1");
       REQUIRE(asgn->getVariable() == "p1");
       REQUIRE(params.getExpression("p1") == "exp(2)");
       // remove param
       params.remove("p1");
-      xml = s.getXml().toStdString();
-      doc2.reset(libsbml::readSBMLFromString(xml.c_str()));
-      param = doc2->getModel()->getParameter("p1");
+      doc = toSbmlDoc(s);
+      param = doc->getModel()->getParameter("p1");
       REQUIRE(param == nullptr);
-      asgn = doc2->getModel()->getAssignmentRuleByVariable("p1");
+      asgn = doc->getModel()->getAssignmentRuleByVariable("p1");
       REQUIRE(asgn == nullptr);
       REQUIRE(params.getIds().size() == 0);
       REQUIRE(params.getNames().size() == 0);

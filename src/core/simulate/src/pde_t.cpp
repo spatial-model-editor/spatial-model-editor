@@ -2,20 +2,14 @@
 #include "math_test_utils.hpp"
 #include "model.hpp"
 #include "pde.hpp"
-#include "sbml_test_data/invalid_dune_names.hpp"
-#include <QFile>
-#include <sbml/SBMLDocument.h>
-#include <sbml/SBMLReader.h>
-#include <sbml/SBMLWriter.h>
+#include "model_test_utils.hpp"
 
 using namespace sme;
+using namespace sme::test;
 
 SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
   GIVEN("ABtoC model") {
-    model::Model s;
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    s.importSBMLString(f.readAll().toStdString());
+    auto s{getExampleModel(Mod::ABtoC)};
 
     std::vector<std::string> speciesIDs{"A", "B", "C"};
     simulate::Reaction reac(&s, speciesIDs, {"r1"});
@@ -36,10 +30,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     REQUIRE_THROWS(reac.getMatrixElement(1, 0));
   }
   GIVEN("ABtoC model with invalid reaction rate expression") {
-    model::Model s;
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    s.importSBMLString(f.readAll().toStdString());
+    auto s{getExampleModel(Mod::ABtoC)};
     s.getReactions().add("r2", "comp", "A * A / idontexist");
     s.getReactions().setSpeciesStoichiometry("r2", "A", 1.0);
     s.getReactions().add("r3", "comp", "A / 0");
@@ -49,11 +40,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
                         "Unknown symbol: idontexist");
   }
   GIVEN("simple model") {
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(sbml_test_data::invalid_dune_names().xml));
-    libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-    model::Model s;
-    s.importSBMLFile("tmp.xml");
+    auto s{getTestModel("invalid-dune-names")};
     simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"});
     REQUIRE(symEq(pde.getRHS()[0], "-1e5*x*dim"));
     REQUIRE(symEq(pde.getRHS()[1], "-1e5*x*dim"));
@@ -68,11 +55,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
   GIVEN("simple model with relabeling of variables") {
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(sbml_test_data::invalid_dune_names().xml));
-    libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-    model::Model s;
-    s.importSBMLFile("tmp.xml");
+    auto s{getTestModel("invalid-dune-names")};
     simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
                       {"dim_", "x__", "x_", "cos__", "cos_"});
     REQUIRE(symEq(pde.getRHS()[0], "-1e5*x__*dim_"));
@@ -89,11 +72,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
   }
   GIVEN("invalid relabeling of variables") {
     THEN("ignore relabeling") {
-      std::unique_ptr<libsbml::SBMLDocument> doc(libsbml::readSBMLFromString(
-          sbml_test_data::invalid_dune_names().xml));
-      libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-      model::Model s;
-      s.importSBMLFile("tmp.xml");
+      auto s{getTestModel("invalid-dune-names")};
       simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
                         {"z", "y"});
       REQUIRE(symEq(pde.getRHS()[0], "-1e5*x*dim"));
@@ -110,11 +89,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     }
   }
   GIVEN("rescaling of reactions & relabelling of variables") {
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(sbml_test_data::invalid_dune_names().xml));
-    libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-    model::Model s;
-    s.importSBMLFile("tmp.xml");
+    auto s{getTestModel("invalid-dune-names")};
     simulate::PdeScaleFactors scaleFactors;
     scaleFactors.reaction = 0.2;
     scaleFactors.species = 1.0;
@@ -133,11 +108,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
   GIVEN("rescaling of species & reactions") {
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(sbml_test_data::invalid_dune_names().xml));
-    libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
-    model::Model s;
-    s.importSBMLFile("tmp.xml");
+    auto s{getTestModel("invalid-dune-names")};
     simulate::PdeScaleFactors scaleFactors;
     scaleFactors.reaction = 0.27;
     scaleFactors.species = 10.0;

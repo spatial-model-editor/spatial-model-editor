@@ -28,6 +28,7 @@ endif()
 target_link_libraries(
   testlib
   PUBLIC Catch2::Catch2
+         sme::core
          Qt::Widgets
          Qt::Gui
          Qt::Core

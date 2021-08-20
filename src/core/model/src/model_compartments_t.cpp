@@ -1,5 +1,6 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include "model_compartments.hpp"
 #include <QFile>
 #include <QImage>
@@ -10,29 +11,27 @@
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 using namespace sme;
+using namespace sme::test;
 
 SCENARIO("SBML compartments",
          "[core/model/compartments][core/model][core][model][compartments]") {
   GIVEN("Remove compartment also removes dependents") {
-    QFile f(":/models/very-simple-model.xml");
-    f.open(QIODevice::ReadOnly);
-    model::Model model;
-    model.importSBMLString(f.readAll().toStdString());
-    REQUIRE(model.getHasUnsavedChanges() == true);
+    auto model{getExampleModel(Mod::VerySimpleModel)};
+    REQUIRE(model.getHasUnsavedChanges() == false);
     auto &c = model.getCompartments();
-    REQUIRE(c.getHasUnsavedChanges() == true);
+    REQUIRE(c.getHasUnsavedChanges() == false);
     c.setHasUnsavedChanges(false);
     REQUIRE(c.getHasUnsavedChanges() == false);
     auto &s = model.getSpecies();
-    REQUIRE(s.getHasUnsavedChanges() == true);
+    REQUIRE(s.getHasUnsavedChanges() == false);
     s.setHasUnsavedChanges(false);
     REQUIRE(s.getHasUnsavedChanges() == false);
     auto &r = model.getReactions();
-    REQUIRE(r.getHasUnsavedChanges() == true);
+    REQUIRE(r.getHasUnsavedChanges() == false);
     r.setHasUnsavedChanges(false);
     REQUIRE(r.getHasUnsavedChanges() == false);
     auto &m = model.getMembranes();
-    REQUIRE(m.getHasUnsavedChanges() == true);
+    REQUIRE(m.getHasUnsavedChanges() == false);
     m.setHasUnsavedChanges(false);
     REQUIRE(m.getHasUnsavedChanges() == false);
 

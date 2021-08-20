@@ -1,7 +1,8 @@
 #include "catch_wrapper.hpp"
 #include "dialogcoordinates.hpp"
 #include "qt_test_utils.hpp"
-#include <QFile>
+
+using namespace sme::test;
 
 SCENARIO("DialogCoordinates",
          "[gui/dialogs/coordinates][gui/dialogs][gui][coordinates]") {

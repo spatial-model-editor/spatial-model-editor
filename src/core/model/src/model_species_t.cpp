@@ -1,6 +1,6 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
-#include "model_species.hpp"
+#include "model_test_utils.hpp"
 #include <QFile>
 #include <QImage>
 #include <memory>
@@ -10,27 +10,24 @@
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 using namespace sme;
+using namespace sme::test;
 
 SCENARIO("SBML species",
          "[core/model/species][core/model][core][model][species]") {
   GIVEN("Remove species also removes dependents") {
-    QFile f(":/models/very-simple-model.xml");
-    f.open(QIODevice::ReadOnly);
-    model::Model model;
-    model.importSBMLString(f.readAll().toStdString());
-    model.getSimulationSettings().simulatorType =
-        simulate::SimulatorType::Pixel;
-    simulate::Simulation sim(model);
-    auto &s = model.getSpecies();
-    auto &r = model.getReactions();
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+    simulate::Simulation sim(m);
+    auto &s{m.getSpecies()};
+    auto &r{m.getReactions()};
     r.setHasUnsavedChanges(false);
     s.setHasUnsavedChanges(false);
     REQUIRE(r.getHasUnsavedChanges() == false);
     REQUIRE(s.getHasUnsavedChanges() == false);
     // add minimal simulation data
-    REQUIRE(model.getSimulationData().timePoints.size() == 1);
+    REQUIRE(m.getSimulationData().timePoints.size() == 1);
     sim.doTimesteps(0.001);
-    REQUIRE(model.getSimulationData().timePoints.size() == 2);
+    REQUIRE(m.getSimulationData().timePoints.size() == 2);
 
     // initial species
     REQUIRE(s.getIds("c1").size() == 2);
@@ -87,7 +84,7 @@ SCENARIO("SBML species",
     s.setIsConstant("B_c3", true);
     REQUIRE(r.getHasUnsavedChanges() == false);
     REQUIRE(s.getHasUnsavedChanges() == true);
-    REQUIRE(model.getSimulationData().timePoints.size() == 0);
+    REQUIRE(m.getSimulationData().timePoints.size() == 0);
 
     // make species B_c3 constant is no-op if already constant
     s.setHasUnsavedChanges(false);
@@ -101,14 +98,14 @@ SCENARIO("SBML species",
 
     // add minimal simulation data
     sim.doTimesteps(0.001);
-    REQUIRE(model.getSimulationData().timePoints.size() == 2);
+    REQUIRE(m.getSimulationData().timePoints.size() == 2);
     // remove species B_c3
     REQUIRE(r.getHasUnsavedChanges() == false);
     REQUIRE(s.getHasUnsavedChanges() == false);
     s.remove("B_c3");
     REQUIRE(r.getHasUnsavedChanges() == true);
     REQUIRE(s.getHasUnsavedChanges() == true);
-    REQUIRE(model.getSimulationData().timePoints.size() == 0);
+    REQUIRE(m.getSimulationData().timePoints.size() == 0);
     REQUIRE(s.getIds("c1").size() == 2);
     REQUIRE(s.getIds("c1")[0] == "A_c1");
     REQUIRE(s.getField("A_c1")->getId() == "A_c1");

@@ -1,10 +1,4 @@
-#pragma once
-
-namespace sbml_test_data {
-
-struct very_simple_model {
-  const char* xml =
-      R"=====(<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
     <sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" level="3" version="2">
       <model metaid="COPASI0" id="New_Model" name="New Model" substanceUnits="substance" timeUnits="unit_of_time" volumeUnits="unit_of_volume" areaUnits="area" lengthUnits="unit_of_length" extentUnits="substance">
       <listOfUnitDefinitions>
@@ -169,7 +163,4 @@ struct very_simple_model {
           </reaction>
         </listOfReactions>
       </model>
-    </sbml>)=====";
-};
-
-}  // namespace sbml_test_data
+    </sbml>

@@ -2,7 +2,8 @@
 #include "dialogsimulationoptions.hpp"
 #include "qt_test_utils.hpp"
 #include "simulate.hpp"
-#include <QFile>
+
+using namespace sme::test;
 
 #if defined(SPATIAL_MODEL_EDITOR_WITH_TBB) ||                                  \
     defined(SPATIAL_MODEL_EDITOR_WITH_OPENMP)

@@ -4,6 +4,8 @@
 #include "qt_test_utils.hpp"
 #include <QFile>
 
+using namespace sme::test;
+
 SCENARIO("DialogAnalytic",
          "[gui/dialogs/analytic][gui/dialogs][gui][analytic]") {
   GIVEN("10x10 image, small compartment, simple expr") {

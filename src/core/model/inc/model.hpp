@@ -57,22 +57,22 @@ struct SpeciesGeometry {
 class Model {
 private:
   std::unique_ptr<libsbml::SBMLDocument> doc;
-  sme::utils::SmeFileContents smeFileContents;
-  Settings settings;
+  std::unique_ptr<sme::utils::SmeFileContents> smeFileContents;
+  std::unique_ptr<Settings> settings;
   bool isValid{false};
   QString errorMessage{};
   QString currentFilename{};
 
-  ModelCompartments modelCompartments;
-  ModelEvents modelEvents;
-  ModelGeometry modelGeometry;
-  ModelMembranes modelMembranes;
-  ModelSpecies modelSpecies;
-  ModelReactions modelReactions;
-  ModelFunctions modelFunctions;
-  ModelParameters modelParameters;
-  ModelUnits modelUnits;
-  ModelMath modelMath;
+  std::unique_ptr<ModelCompartments> modelCompartments;
+  std::unique_ptr<ModelEvents> modelEvents;
+  std::unique_ptr<ModelGeometry> modelGeometry;
+  std::unique_ptr<ModelMembranes> modelMembranes;
+  std::unique_ptr<ModelSpecies> modelSpecies;
+  std::unique_ptr<ModelReactions> modelReactions;
+  std::unique_ptr<ModelFunctions> modelFunctions;
+  std::unique_ptr<ModelParameters> modelParameters;
+  std::unique_ptr<ModelUnits> modelUnits;
+  std::unique_ptr<ModelMath> modelMath;
 
   void initModelData();
   void setHasUnsavedChanges(bool unsavedChanges);

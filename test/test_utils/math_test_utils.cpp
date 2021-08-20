@@ -4,6 +4,8 @@
 #include <symengine/parser/parser.h>
 #include <symengine/visitor.h>
 
+namespace sme::test {
+
 bool symEq(const QString &exprA, const QString &exprB) {
   SymEngine::Parser parser;
   auto a = exprA.split("=");
@@ -59,3 +61,5 @@ bool symEq(const std::string &exprA, const std::string &exprB) {
   QString b{exprB.c_str()};
   return symEq(a, b);
 }
+
+} // namespace sme::test

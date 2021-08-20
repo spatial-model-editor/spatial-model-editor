@@ -45,10 +45,12 @@ private:
 
 public:
   ModelCompartments();
-  ModelCompartments(libsbml::Model *model, ModelGeometry *geometry,
-                    ModelMembranes *membranes, ModelSpecies *species,
-                    ModelReactions *reactions, const ModelUnits *units,
-                    simulate::SimulationData *data);
+  ModelCompartments(libsbml::Model *model, ModelMembranes *membranes,
+
+                    const ModelUnits *units, simulate::SimulationData *data);
+  void setGeometryPtr(ModelGeometry *geometry);
+  void setSpeciesPtr( ModelSpecies *species);
+  void setReactionsPtr(ModelReactions *reactions);
   [[nodiscard]] const QStringList &getIds() const;
   [[nodiscard]] const QStringList &getNames() const;
   [[nodiscard]] const QVector<QRgb> &getColours() const;

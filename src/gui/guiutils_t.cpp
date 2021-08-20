@@ -3,6 +3,8 @@
 #include "qt_test_utils.hpp"
 #include <QImage>
 
+using namespace sme::test;
+
 SCENARIO("GUI Utils", "[gui/guiutils][gui]") {
   GIVEN("getImageFromUser") {
     ModalWidgetTimer mwt;
@@ -14,7 +16,7 @@ SCENARIO("GUI Utils", "[gui/guiutils][gui]") {
     img.save("tmp.png");
     mwt.addUserAction({"t", "m", "p", ".", "p", "n", "g"}, true);
     mwt.start();
-    auto importedImg = getImageFromUser(nullptr);
+    auto importedImg{getImageFromUser(nullptr)};
     REQUIRE(importedImg.size() == img.size());
     REQUIRE(importedImg.pixel(23, 32) == img.pixel(23, 32));
     REQUIRE(importedImg.pixel(99, 12) == img.pixel(99, 12));

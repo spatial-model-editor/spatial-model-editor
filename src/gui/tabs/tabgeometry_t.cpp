@@ -1,16 +1,17 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
 #include "tabgeometry.hpp"
 #include <QDoubleSpinBox>
-#include <QFile>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QPushButton>
-#include <QSpinBox>
 #include <QTabWidget>
+
+using namespace sme::test;
 
 SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
   sme::model::Model model;
@@ -57,10 +58,7 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
   auto *spinMeshZoom{tab.findChild<QSpinBox *>("spinMeshZoom")};
   REQUIRE(spinMeshZoom != nullptr);
   WHEN("very-simple-model loaded") {
-    if (QFile f(":/models/very-simple-model.xml");
-        f.open(QIODevice::ReadOnly)) {
-      model.importSBMLString(f.readAll().toStdString());
-    }
+    model = getExampleModel(Mod::VerySimpleModel);
     tab.loadModelData();
     WHEN("select some stuff") {
       REQUIRE(listMembranes->count() == 2);
@@ -279,10 +277,7 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
     }
   }
   WHEN("single pixel model loaded") {
-    if (QFile f(":test/models/single-pixel-meshing.xml");
-        f.open(QIODevice::ReadOnly)) {
-      model.importSBMLString(f.readAll().toStdString());
-    }
+    model = getTestModel("single-pixel-meshing");
     tab.loadModelData();
     // boundary tab
     tabCompartmentGeometry->setFocus();

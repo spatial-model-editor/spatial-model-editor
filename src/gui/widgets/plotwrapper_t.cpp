@@ -1,9 +1,6 @@
 #include "catch_wrapper.hpp"
 #include "plotwrapper.hpp"
-#include "qt_test_utils.hpp"
 #include "utils.hpp"
-#include <QApplication>
-#include <QDebug>
 
 SCENARIO("PlotWrapper",
          "[gui/widgets/plotwrapper][gui/widgets][gui][plotwrapper]") {

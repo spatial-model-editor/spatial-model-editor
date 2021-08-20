@@ -1,11 +1,11 @@
 #include "catch_wrapper.hpp"
-#include "logger.hpp"
 #include "qlabelslice.hpp"
 #include "qt_test_utils.hpp"
 #include <QApplication>
-#include <QDebug>
 #include <QObject>
 #include <vector>
+
+using namespace sme::test;
 
 SCENARIO("QLabelSlice",
          "[gui/widgets/qlabelslice][gui/widgets][gui][qlabelslice]") {
