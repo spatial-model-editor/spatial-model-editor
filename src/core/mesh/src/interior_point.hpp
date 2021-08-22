@@ -10,13 +10,9 @@
 #include <opencv2/core/types.hpp>
 #include <vector>
 
-namespace sme {
-
-namespace mesh {
+namespace sme::mesh {
 
 std::vector<std::vector<QPointF>>
 getInteriorPoints(const QImage &img, const std::vector<QRgb> &cols);
 
-} // namespace mesh
-
-} // namespace sme
+} // namespace sme::mesh

@@ -294,9 +294,9 @@ void ModelGeometry::updateMesh() {
   hasUnsavedChanges = true;
   const auto &colours{modelCompartments->getColours()};
   const auto &ids{modelCompartments->getIds()};
-  mesh = std::make_unique<mesh::Mesh>(image, std::vector<std::size_t>{},
-                                      std::vector<std::size_t>{}, pixelWidth,
-                                      physicalOrigin, utils::toStdVec(colours));
+  mesh = std::make_unique<mesh::Mesh>(
+      image, std::vector<std::size_t>{}, std::vector<std::size_t>{}, pixelWidth,
+      physicalOrigin, common::toStdVec(colours));
   for (int i = 0; i < ids.size(); ++i) {
     modelCompartments->setInteriorPoints(
         ids[i],

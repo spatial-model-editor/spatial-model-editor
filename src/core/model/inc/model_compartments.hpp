@@ -49,7 +49,7 @@ public:
 
                     const ModelUnits *units, simulate::SimulationData *data);
   void setGeometryPtr(ModelGeometry *geometry);
-  void setSpeciesPtr( ModelSpecies *species);
+  void setSpeciesPtr(ModelSpecies *species);
   void setReactionsPtr(ModelReactions *reactions);
   [[nodiscard]] const QStringList &getIds() const;
   [[nodiscard]] const QStringList &getNames() const;

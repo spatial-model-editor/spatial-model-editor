@@ -12,7 +12,7 @@ cmake ..
 Note: there are many dependencies, some of which are currently not
 very convenient to install.
 For some you may find the pre-compiled static libraries used by
-the CI builds useful - see [ci/README](../ci/README.md) and [.travis.yml](../.travis.yml) for more details.
+the CI builds useful - see [ci/README](../ci/README.md) for more details.
 
 ## Style guide
 
@@ -21,6 +21,8 @@ the CI builds useful - see [ci/README](../ci/README.md) and [.travis.yml](../.tr
 - use `clang-format` to format the code
 
 - each component `X` has a `X.hpp`, `X.cpp` and `X_t.cpp`, where the latter contains the tests
+
+- some components also have benchmarks in `X_bench.cpp`
 
 - follow [sonarcloud](https://sonarcloud.io/dashboard?id=spatial-model-editor_spatial-model-editor) static analysis suggestions where possible
 
@@ -36,13 +38,13 @@ the CI builds useful - see [ci/README](../ci/README.md) and [.travis.yml](../.tr
 
 - documentation will also be built, see [docs/README](../docs/README.md) for more information
 
+- code formatting will be checked and fixed if necessary (see pre-commit hooks below)
+
 - all must pass before a pull request can be merged
 
 ## pre-commit hooks
 
 - [pre-commit](https://pre-commit.com/) hooks to check & fix code formatting are available
-
-- they are optional, i.e. their use is not (yet) enforced by CI
 
 - to use them, first install pre-commit:
 
@@ -67,3 +69,7 @@ the CI builds useful - see [ci/README](../ci/README.md) and [.travis.yml](../.tr
   - [black](https://black.readthedocs.io/)
 
   - [nbstripout](https://pypi.org/project/nbstripout/)
+
+  - [clang-format](https://clang.llvm.org/docs/ClangFormat.html)
+
+- a CI job also runs these checks, and will automatically add a commit if any formatting changes are required

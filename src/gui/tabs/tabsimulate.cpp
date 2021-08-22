@@ -226,9 +226,7 @@ void TabSimulate::setOptions(const sme::simulate::Options &options) {
   loadModelData();
 }
 
-void TabSimulate::invertYAxis(bool enable) {
-  flipYAxis = enable;
-}
+void TabSimulate::invertYAxis(bool enable) { flipYAxis = enable; }
 void TabSimulate::btnSimulate_clicked() {
   auto simulationTimes{sme::simulate::parseSimulationTimes(
       ui->txtSimLength->text(), ui->txtSimInterval->text())};
@@ -268,7 +266,8 @@ void TabSimulate::btnSimulate_clicked() {
 }
 
 void TabSimulate::btnSliceImage_clicked() {
-  DialogImageSlice dialog(model.getGeometry().getImage(), images, time, flipYAxis);
+  DialogImageSlice dialog(model.getGeometry().getImage(), images, time,
+                          flipYAxis);
   if (dialog.exec() == QDialog::Accepted) {
     SPDLOG_DEBUG("todo: save current slice settings");
   }
@@ -350,7 +349,7 @@ void TabSimulate::finalizePlotAndImages() {
   plt->clearObservableLines();
   std::size_t colorIndex{displayOptions.showSpecies.size()};
   for (const auto &obs : observables) {
-    plt->addObservableLine(obs, sme::utils::indexedColours()[colorIndex]);
+    plt->addObservableLine(obs, sme::common::indexedColours()[colorIndex]);
     ++colorIndex;
   }
   plt->update(displayOptions.showSpecies, displayOptions.showMinMax);

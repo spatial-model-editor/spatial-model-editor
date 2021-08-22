@@ -9,7 +9,7 @@
 #include <tiff.h>
 #include <tiffio.h>
 
-namespace sme::utils {
+namespace sme::common {
 
 constexpr int TiffDataTypeBits = std::numeric_limits<TiffDataType>::digits;
 constexpr TiffDataType TiffDataTypeMaxValue =
@@ -169,7 +169,7 @@ TiffReader::TiffReader(const std::string &filename) {
                                .arg(samplefmt);
             break;
           }
-          auto [minV, maxV] = utils::minmax(img.values.back());
+          auto [minV, maxV] = common::minmax(img.values.back());
           img.maxValue = std::max(maxV, img.maxValue);
           img.minValue = std::min(minV, img.minValue);
         }
@@ -209,4 +209,4 @@ QImage TiffReader::getImage(std::size_t i) const {
 
 const QString &TiffReader::getErrorMessage() const { return errorMessage; }
 
-} // namespace sme
+} // namespace sme::common

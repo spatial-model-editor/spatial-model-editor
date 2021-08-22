@@ -69,10 +69,8 @@ set(SME_QT_DISABLE_UNICODE
 
 set(SME_LOG_LEVEL
     "INFO"
-    CACHE
-      STRING
-      "Logging level. Available levels in ascending order of verbosity: OFF, CRITICAL, ERROR, WARN, INFO, DEBUG, TRACE"
-)
+    CACHE STRING
+          "Logging level: OFF, CRITICAL, ERROR, WARN, INFO, DEBUG, TRACE")
 message(STATUS "SME_LOG_LEVEL: ${SME_LOG_LEVEL}")
 
 set(SME_EXTRA_EXE_LIBS
@@ -123,10 +121,7 @@ set(SME_WITH_OPENMP
     no
     CACHE BOOL "Build with OpenMP support (multithreading)")
 if(SME_WITH_TBB AND SME_WITH_OPENMP)
-  message(
-    FATAL_ERROR
-      "Please choose either TBB (-DSME_WITH_TBB=ON) or OpenMP (-DSME_WITH_OPENMP=ON) for multithreading. Using both together is not supported."
-  )
+  message(FATAL_ERROR "Cannot use both TBB and OpenMP together.")
 endif()
 
 set(BUILD_GUI

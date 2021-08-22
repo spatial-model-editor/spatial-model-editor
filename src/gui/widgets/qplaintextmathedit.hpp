@@ -33,7 +33,7 @@ public:
                    const std::string &displayName = {});
   void removeVariable(const std::string &variable);
   void reset();
-  void addFunction(const sme::utils::Function &function);
+  void addFunction(const sme::common::Function &function);
   void removeFunction(const std::string &functionId);
   void setConstants(const std::vector<sme::model::IdNameValue> &constants = {});
   void updateCompleter();
@@ -46,12 +46,12 @@ private:
   using StringStringMap = std::map<std::string, std::string, std::less<>>;
   QCompleter completer;
   QStringListModel stringListModel;
-  sme::utils::Symbolic sym;
+  sme::common::Symbolic sym;
   std::vector<double> result{0.0};
   const QColor colourValid{QColor(200, 255, 200)};
   const QColor colourInvalid{QColor(255, 150, 150)};
   std::vector<std::string> vars;
-  std::vector<sme::utils::Function> functions;
+  std::vector<sme::common::Function> functions;
   std::vector<std::pair<std::string, double>> consts{};
   StringStringMap mapVarsToDisplayNames;
   StringStringMap mapDisplayNamesToVars;

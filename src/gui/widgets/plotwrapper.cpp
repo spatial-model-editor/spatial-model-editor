@@ -46,8 +46,8 @@ void PlotWrapper::addAvMinMaxLine(const QString &name, QColor col) {
   concs.emplace_back();
 }
 
-void PlotWrapper::addAvMinMaxPoint(int lineIndex, double time,
-                                   const sme::simulate::AvgMinMax &concentration) {
+void PlotWrapper::addAvMinMaxPoint(
+    int lineIndex, double time, const sme::simulate::AvgMinMax &concentration) {
   plot->graph(3 * lineIndex)->addData({time}, {concentration.avg}, true);
   plot->graph(3 * lineIndex + 1)->addData({time}, {concentration.min}, true);
   plot->graph(3 * lineIndex + 2)->addData({time}, {concentration.max}, true);
@@ -58,7 +58,7 @@ void PlotWrapper::addAvMinMaxPoint(int lineIndex, double time,
 }
 
 void PlotWrapper::addObservableLine(
-    const PlotWrapperObservable &plotWrapperObservable, const QColor& col) {
+    const PlotWrapperObservable &plotWrapperObservable, const QColor &col) {
   SPDLOG_DEBUG("Adding observable '{}' = '{}'",
                plotWrapperObservable.name.toStdString(),
                plotWrapperObservable.expression.toStdString());
@@ -67,7 +67,8 @@ void PlotWrapper::addObservableLine(
   }
   auto vars = species;
   vars.push_back("t");
-  sme::utils::Symbolic sym(plotWrapperObservable.expression.toStdString(), vars);
+  sme::common::Symbolic sym(plotWrapperObservable.expression.toStdString(),
+                            vars);
   if (!sym.isValid()) {
     SPDLOG_WARN("Skipping invalid expression: '{}'",
                 plotWrapperObservable.expression.toStdString());
@@ -157,9 +158,9 @@ void PlotWrapper::clear() {
 
 double PlotWrapper::xValue(const QMouseEvent *event) const {
 #if QT_VERSION < 0x060000
-  const auto& pos{event->localPos()};
+  const auto &pos{event->localPos()};
 #else
-  const auto& pos{event->position()};
+  const auto &pos{event->position()};
 #endif
   double key;
   double val;

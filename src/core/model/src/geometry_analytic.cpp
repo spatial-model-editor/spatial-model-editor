@@ -129,7 +129,7 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
     SPDLOG_INFO("  - Ordinal: {}", analyticVol->getOrdinal());
     const auto *math = analyticVol->getMath();
     SPDLOG_INFO("  - Math: {}", mathASTtoString(math));
-    auto col = utils::indexedColours()[iComp].rgb();
+    auto col = common::indexedColours()[iComp].rgb();
     ++iComp;
     SPDLOG_INFO("  - Colour: {:x}", col);
     std::size_t nPixels = 0;
@@ -157,4 +157,4 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
   return gsf;
 }
 
-} // namespace sme
+} // namespace sme::model

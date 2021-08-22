@@ -4,8 +4,8 @@
 #include "sme_exception.hpp"
 #include <QImage>
 #include <algorithm>
-#include <pybind11/stl.h>
 #include <pybind11/numpy.h>
+#include <pybind11/stl.h>
 #include <stdexcept>
 #include <vector>
 

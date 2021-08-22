@@ -15,11 +15,11 @@
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 #include <sstream>
 
-CEREAL_CLASS_VERSION(sme::utils::SmeFileContents, 2);
+CEREAL_CLASS_VERSION(sme::common::SmeFileContents, 2);
 
-namespace sme::utils {
+namespace sme::common {
 template <class Archive>
-void serialize(Archive &ar, sme::utils::SmeFileContents &contents,
+void serialize(Archive &ar, sme::common::SmeFileContents &contents,
                std::uint32_t const version) {
   if (version == 0 || version == 2) {
     ar(contents.xmlModel, contents.simulationData);
@@ -124,4 +124,4 @@ model::Settings fromXml(const std::string &xml) {
   return sbmlAnnotation;
 }
 
-} // namespace sme::utils
+} // namespace sme::common

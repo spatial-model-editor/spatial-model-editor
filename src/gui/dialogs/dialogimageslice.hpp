@@ -15,8 +15,7 @@ class DialogImageSlice : public QDialog {
 public:
   explicit DialogImageSlice(const QImage &geometryImage,
                             const QVector<QImage> &images,
-                            const QVector<double> &timepoints,
-                            bool invertYAxis,
+                            const QVector<double> &timepoints, bool invertYAxis,
                             QWidget *parent = nullptr);
   ~DialogImageSlice() override;
   QImage getSlicedImage() const;

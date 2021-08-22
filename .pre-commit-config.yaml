@@ -1,14 +1,15 @@
 repos:
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.4.0
+    rev: v4.0.1
     hooks:
     - id: check-yaml
     - id: end-of-file-fixer
     - id: trailing-whitespace
+    - id: mixed-line-ending
 
   - repo: https://github.com/psf/black
-    rev: 21.4b2
+    rev: 21.7b0
     hooks:
     - id: black
 
@@ -16,8 +17,14 @@ repos:
     rev: v0.6.13
     hooks:
     - id: cmake-format
+      additional_dependencies: [pyyaml==5.4.1]
 
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.4.0
+    rev: 0.5.0
     hooks:
     - id: nbstripout
+
+  - repo: git://github.com/doublify/pre-commit-clang-format
+    rev: 62302476d0da01515660132d76902359bed0f782
+    hooks:
+    - id: clang-format

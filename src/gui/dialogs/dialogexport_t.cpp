@@ -1,12 +1,12 @@
 #include "catch_wrapper.hpp"
 #include "dialogexport.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include "plotwrapper.hpp"
 #include "qt_test_utils.hpp"
 #include "serialization.hpp"
 #include "simulate.hpp"
 #include "simulate_options.hpp"
-#include "model_test_utils.hpp"
 
 using namespace sme::test;
 

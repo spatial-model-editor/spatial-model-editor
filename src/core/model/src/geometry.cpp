@@ -109,7 +109,7 @@ Compartment::Compartment(std::string compId, const QImage &img, QRgb col)
                                 "_indices_dilated.png");
 #endif
 
-  utils::QPointIndexer ixIndexer(img.size(), ix);
+  common::QPointIndexer ixIndexer(img.size(), ix);
   // find nearest neighbours of each point
   nn.clear();
   nn.reserve(4 * ix.size());
@@ -164,10 +164,10 @@ Membrane::Membrane(std::string membraneId, const Compartment *A,
   // points in the two compartments
   indexPair.clear();
   indexPair.reserve(membranePairs->size());
-  utils::QPointIndexer Aindexer(A->getCompartmentImage().size(),
-                                A->getPixels());
-  utils::QPointIndexer Bindexer(B->getCompartmentImage().size(),
-                                B->getPixels());
+  common::QPointIndexer Aindexer(A->getCompartmentImage().size(),
+                                 A->getPixels());
+  common::QPointIndexer Bindexer(B->getCompartmentImage().size(),
+                                 B->getPixels());
   for (const auto &[pA, pB] : *membranePairs) {
     auto iA = Aindexer.getIndex(pA);
     auto iB = Bindexer.getIndex(pB);
@@ -263,7 +263,7 @@ void Field::importConcentration(
   isUniformConcentration = false;
 }
 
-void Field::setConcentration(const std::vector<double> &concentration){
+void Field::setConcentration(const std::vector<double> &concentration) {
   conc = concentration;
 }
 
@@ -310,4 +310,4 @@ void Field::setCompartment(const Compartment *compartment) {
   conc.assign(compartment->nPixels(), 0.0);
 }
 
-} // namespace sme
+} // namespace sme::geometry

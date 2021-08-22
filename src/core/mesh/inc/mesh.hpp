@@ -1,5 +1,6 @@
 #pragma once
 
+#include "mesh_types.hpp"
 #include <QImage>
 #include <QPointF>
 #include <QRgb>
@@ -13,9 +14,6 @@
 #include <vector>
 
 namespace sme::mesh {
-
-using QTriangleF = std::array<QPointF, 3>;
-using TriangulateTriangleIndex = std::array<std::size_t, 3>;
 
 class Boundary;
 

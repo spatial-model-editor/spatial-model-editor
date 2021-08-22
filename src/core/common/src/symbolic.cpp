@@ -1,6 +1,5 @@
 #include "symbolic.hpp"
 #include "logger.hpp"
-#include "utils.hpp"
 #include <algorithm>
 #include <llvm/Config/llvm-config.h>
 #include <locale>
@@ -22,7 +21,7 @@
 #include <symengine/symengine_rcp.h>
 #include <symengine/visitor.h>
 
-namespace sme::utils {
+namespace sme::common {
 
 static std::string toString(const SymEngine::RCP<const SymEngine::Basic> &e) {
   return SymEngine::sbml(*e);
@@ -356,4 +355,4 @@ const std::string &Symbolic::getErrorMessage() const {
   return pSymEngineImpl->errorMessage;
 }
 
-} // namespace sme::utils
+} // namespace sme::common

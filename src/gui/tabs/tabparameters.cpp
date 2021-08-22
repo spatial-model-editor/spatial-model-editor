@@ -1,11 +1,11 @@
 #include "tabparameters.hpp"
-#include <QInputDialog>
-#include <QMessageBox>
 #include "guiutils.hpp"
 #include "logger.hpp"
 #include "model.hpp"
 #include "ui_tabparameters.h"
 #include "utils.hpp"
+#include <QInputDialog>
+#include <QMessageBox>
 
 TabParameters::TabParameters(sme::model::Model &m, QWidget *parent)
     : QWidget{parent}, ui{std::make_unique<Ui::TabParameters>()}, model{m} {

@@ -125,7 +125,7 @@ void PixelSim::doRK435(double dt) {
                                         2.859440022030827,
                                         -0.655568367959557,
                                         -0.194421504490852};
-  double deltaSum = 1.0 / utils::sum(delta);
+  double deltaSum = 1.0 / common::sum(delta);
   for (auto &sim : simCompartments) {
     sim->doRKInit();
   }

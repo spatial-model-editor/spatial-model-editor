@@ -58,7 +58,7 @@ void createDefaultCompartmentGeometryIfMissing(libsbml::Model *model) {
     std::string sId{comp->getId()};
     SPDLOG_INFO("Compartment '{}'", sId);
     auto *geom{getOrCreateGeometry(model)};
-    if(geom == nullptr){
+    if (geom == nullptr) {
       return;
     }
     auto *scp{static_cast<libsbml::SpatialCompartmentPlugin *>(
@@ -201,7 +201,7 @@ bool getIsSpeciesConstant(const libsbml::Species *spec) {
 const libsbml::Parameter *
 getSpatialCoordinateParam(const libsbml::Model *model,
                           libsbml::CoordinateKind_t kind) {
-  auto *geom {getGeometry(model)};
+  auto *geom{getGeometry(model)};
   if (geom == nullptr) {
     return nullptr;
   }
@@ -210,7 +210,7 @@ getSpatialCoordinateParam(const libsbml::Model *model,
     return nullptr;
   }
   for (unsigned int i = 0; i < model->getNumParameters(); ++i) {
-    auto *param {model->getParameter(i)};
+    auto *param{model->getParameter(i)};
     if (const auto *spp = static_cast<const libsbml::SpatialParameterPlugin *>(
             param->getPlugin("spatial"));
         spp != nullptr && spp->isSpatialParameter() &&

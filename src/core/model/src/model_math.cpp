@@ -69,4 +69,4 @@ ModelMath &ModelMath::operator=(ModelMath &&that) noexcept {
 
 ModelMath::~ModelMath() = default;
 
-} // namespace sme
+} // namespace sme::model

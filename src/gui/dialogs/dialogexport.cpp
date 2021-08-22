@@ -10,13 +10,13 @@
 DialogExport::DialogExport(const QVector<QImage> &images,
                            const PlotWrapper *plotWrapper,
                            sme::model::Model &model,
-                           const sme::simulate::Simulation &simulation, int timepoint,
-                           QWidget *parent)
+                           const sme::simulate::Simulation &simulation,
+                           int timepoint, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogExport>()}, imgs{images},
       plot(plotWrapper), m(model), sim(simulation) {
   ui->setupUi(this);
   for (double t : plotWrapper->getTimepoints()) {
-    ui->cmbTimepoint->addItem(sme::utils::dblToQStr(t, 6));
+    ui->cmbTimepoint->addItem(sme::common::dblToQStr(t, 6));
   }
   if (timepoint < 0 || timepoint >= ui->cmbTimepoint->count()) {
     timepoint = 0;
@@ -51,7 +51,7 @@ void DialogExport::doExport() {
     return saveImages();
   } else if (ui->radCSV->isChecked()) {
     return saveCSV();
-  }else if (ui->radModel->isChecked()){
+  } else if (ui->radModel->isChecked()) {
     auto timePoint{static_cast<std::size_t>(ui->cmbTimepoint->currentIndex())};
     sim.applyConcsToModel(m, timePoint);
     accept();

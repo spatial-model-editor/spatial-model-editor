@@ -11,7 +11,7 @@ class TabEvents;
 
 namespace sme::model {
 class Model;
-} // namespace sme
+} // namespace sme::model
 
 class TabEvents : public QWidget {
   Q_OBJECT

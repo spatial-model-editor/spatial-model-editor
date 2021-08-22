@@ -228,8 +228,8 @@ void ModelFunctions::remove(const QString &id) {
   names.removeAt(i);
 }
 
-std::vector<utils::Function> ModelFunctions::getSymbolicFunctions() const {
-  std::vector<utils::Function> fns;
+std::vector<common::Function> ModelFunctions::getSymbolicFunctions() const {
+  std::vector<common::Function> fns;
   fns.reserve(static_cast<std::size_t>(ids.size()));
   for (const auto &id : ids) {
     auto &fn = fns.emplace_back();
@@ -248,10 +248,10 @@ std::vector<utils::Function> ModelFunctions::getSymbolicFunctions() const {
   return fns;
 }
 
-bool ModelFunctions::getHasUnsavedChanges() const {return hasUnsavedChanges;}
+bool ModelFunctions::getHasUnsavedChanges() const { return hasUnsavedChanges; }
 
-void ModelFunctions::setHasUnsavedChanges(bool unsavedChanges){
+void ModelFunctions::setHasUnsavedChanges(bool unsavedChanges) {
   hasUnsavedChanges = unsavedChanges;
 }
 
-} // namespace sme
+} // namespace sme::model

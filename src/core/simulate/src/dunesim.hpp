@@ -40,7 +40,7 @@ struct DuneSimCompartment {
   std::string name;
   std::size_t index;
   std::vector<std::size_t> speciesIndices;
-  utils::QPointIndexer qPointIndexer;
+  common::QPointIndexer qPointIndexer;
   const geometry::Compartment *geometry;
   // pixels+dune local coords for each triangle
   std::vector<std::vector<PixelLocalPair>> pixels;

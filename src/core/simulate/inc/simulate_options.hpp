@@ -2,16 +2,16 @@
 
 #pragma once
 
+#include <QString>
 #include <cereal/cereal.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/utility.hpp>
 #include <cstddef>
 #include <limits>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
-#include <QString>
-#include <optional>
 
 namespace sme::simulate {
 

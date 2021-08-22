@@ -3,6 +3,4 @@
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 
-int main() {
-	libsbml::SpatialExtension::getXmlnsL3V1V1();
-}
+int main() { libsbml::SpatialExtension::getXmlnsL3V1V1(); }

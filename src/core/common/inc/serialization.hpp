@@ -5,7 +5,7 @@
 #include "simulate_data.hpp"
 #include "simulate_options.hpp"
 
-namespace sme::utils {
+namespace sme::common {
 
 struct SmeFileContents {
   std::string xmlModel;
@@ -19,4 +19,4 @@ bool exportSmeFile(const std::string &filename,
 std::string toXml(const model::Settings &sbmlAnnotation);
 model::Settings fromXml(const std::string &xml);
 
-} // namespace sme::utils
+} // namespace sme::common

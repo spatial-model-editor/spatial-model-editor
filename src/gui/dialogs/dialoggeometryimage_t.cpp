@@ -9,7 +9,6 @@
 
 using namespace sme::test;
 
-
 SCENARIO("DialogGeometryImage",
          "[gui/dialogs/geometryimage][gui/dialogs][gui][geometryimage]") {
   GIVEN("100x50 image, initial pixel size 1") {

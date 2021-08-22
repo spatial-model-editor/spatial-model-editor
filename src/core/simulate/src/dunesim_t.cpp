@@ -1,7 +1,7 @@
 #include "catch_wrapper.hpp"
-#include "model_test_utils.hpp"
 #include "dunesim.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 
 using namespace sme;
 using namespace sme::test;

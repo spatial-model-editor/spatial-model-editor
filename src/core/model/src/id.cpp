@@ -52,4 +52,4 @@ QString makeUnique(const QString &name, const QStringList &names,
   return uniqueName;
 }
 
-} // namespace sme
+} // namespace sme::model

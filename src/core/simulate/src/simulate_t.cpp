@@ -749,7 +749,7 @@ SCENARIO("Simulate: single-compartment-diffusion, circular geometry",
   // check total initial concentration matches analytic value
   double analytic_total = sigma2 * pi;
   for (const auto &c : {slow->getConcentration(), fast->getConcentration()}) {
-    REQUIRE(std::abs(utils::sum(c) - analytic_total) / analytic_total <
+    REQUIRE(std::abs(common::sum(c) - analytic_total) / analytic_total <
             epsilon);
   }
 
@@ -798,7 +798,7 @@ SCENARIO("Simulate: single-compartment-diffusion, circular geometry",
       for (auto speciesIndex : {std::size_t{0}, std::size_t{1}}) {
         // check total concentration is conserved
         auto c = sim.getConc(step + 1, 0, speciesIndex);
-        double totalC = utils::sum(c);
+        double totalC = common::sum(c);
         double relErr = std::abs(totalC - analytic_total) / analytic_total;
         CAPTURE(simType);
         CAPTURE(speciesIndex);
@@ -1530,11 +1530,11 @@ SCENARIO("SimulationData",
     auto dataA{data};
     simulate::Simulation simA(s);
     simA.doTimesteps(0.01, 2);
-    utils::SmeFileContents contents;
+    common::SmeFileContents contents;
     contents.xmlModel = s.getXml().toStdString();
     contents.simulationData = dataA;
-    utils::exportSmeFile("data.sme", contents);
-    auto smeFileA{utils::importSmeFile("data.sme")};
+    common::exportSmeFile("data.sme", contents);
+    auto smeFileA{common::importSmeFile("data.sme")};
     s.getSimulationData() = smeFileA.simulationData;
     simulate::Simulation simB(s);
     const auto &dataB{simB.getSimulationData()};

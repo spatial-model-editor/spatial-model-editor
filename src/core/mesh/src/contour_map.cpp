@@ -53,4 +53,4 @@ bool ContourMap::isFixedPoint(const cv::Point &p) const {
   return getContourIndices(p)[2] >= 0;
 }
 
-} // namespace sme
+} // namespace sme::mesh

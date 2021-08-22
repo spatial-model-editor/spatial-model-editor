@@ -5,7 +5,6 @@
 #include <QWidget>
 #include <memory>
 
-
 class QLabel;
 class QListWidgetItem;
 class QLabelMouseTracker;
@@ -13,7 +12,7 @@ class QStatusBar;
 
 namespace sme::model {
 class Model;
-} // namespace sme
+} // namespace sme::model
 
 namespace Ui {
 class TabGeometry;
@@ -24,7 +23,8 @@ class TabGeometry : public QWidget {
 
 public:
   explicit TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
-                       QStatusBar *statusBar = nullptr, QWidget *parent = nullptr);
+                       QStatusBar *statusBar = nullptr,
+                       QWidget *parent = nullptr);
   ~TabGeometry() override;
   void loadModelData(const QString &selection = {});
   void enableTabs();

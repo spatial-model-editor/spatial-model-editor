@@ -49,7 +49,7 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     // check image output
     auto [boundaryImage, maskImage] =
         mesh.getBoundariesImages(QSize(100, 100), 0);
-    auto col0 = utils::indexedColours()[0].rgba();
+    auto col0 = common::indexedColours()[0].rgba();
     boundaryImage.save("xx.png");
     REQUIRE(boundaryImage.width() == 77);
     REQUIRE(boundaryImage.height() == 100);
@@ -164,8 +164,8 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     boundaryImage.save("tmp0.png");
     REQUIRE(boundaryImage.width() == 77);
     REQUIRE(boundaryImage.height() == 100);
-    auto col0 = utils::indexedColours()[0].rgba();
-    auto col1 = utils::indexedColours()[1].rgba();
+    auto col0 = common::indexedColours()[0].rgba();
+    auto col1 = common::indexedColours()[1].rgba();
     REQUIRE(boundaryImage.pixel(1, 1) == col0);
     REQUIRE(boundaryImage.pixel(4, 5) == col0);
     REQUIRE(boundaryImage.pixel(72, 96) == col0);
@@ -192,16 +192,18 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     QRgb col = QColor(0, 0, 0).rgb();
     img.fill(col);
     std::size_t maxTriangleArea{999};
-    mesh::Mesh mesh(img, {}, {maxTriangleArea}, 1.0, QPointF(0, 0), std::vector<QRgb>{col});
+    mesh::Mesh mesh(img, {}, {maxTriangleArea}, 1.0, QPointF(0, 0),
+                    std::vector<QRgb>{col});
     // use 3 point boundary around 3x1 pixel rectangle:
     // interior point is outside this boundary
     mesh.setBoundaryMaxPoints(0, 3);
     REQUIRE(mesh.isValid() == false);
-    REQUIRE(mesh.getErrorMessage() == "Triangle is outside of the boundary lines");
+    REQUIRE(mesh.getErrorMessage() ==
+            "Triangle is outside of the boundary lines");
     // setting max boundary points explicitly to 4 results in a valid mesh
     mesh.setBoundaryMaxPoints(0, 4);
     // re-generate mesh
-    mesh.setCompartmentMaxTriangleArea(0,maxTriangleArea);
+    mesh.setCompartmentMaxTriangleArea(0, maxTriangleArea);
     REQUIRE(mesh.isValid() == true);
     REQUIRE(mesh.getErrorMessage().empty());
     REQUIRE(mesh.getNumBoundaries() == 1);
@@ -211,13 +213,14 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     // repeat to check validity & error message updated correctly
     mesh.setBoundaryMaxPoints(0, 2);
     // re-generate mesh
-    mesh.setCompartmentMaxTriangleArea(0,maxTriangleArea);
+    mesh.setCompartmentMaxTriangleArea(0, maxTriangleArea);
     REQUIRE(mesh.isValid() == false);
     REQUIRE(mesh.isValid() == false);
-    REQUIRE(mesh.getErrorMessage() == "Triangle is outside of the boundary lines");
+    REQUIRE(mesh.getErrorMessage() ==
+            "Triangle is outside of the boundary lines");
     mesh.setBoundaryMaxPoints(0, 4);
     // re-generate mesh
-    mesh.setCompartmentMaxTriangleArea(0,maxTriangleArea);
+    mesh.setCompartmentMaxTriangleArea(0, maxTriangleArea);
     REQUIRE(mesh.isValid() == true);
     REQUIRE(mesh.getErrorMessage().empty());
   }

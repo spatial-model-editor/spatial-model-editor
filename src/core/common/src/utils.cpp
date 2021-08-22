@@ -3,7 +3,7 @@
 #include <limits>
 #include <stdexcept>
 
-namespace sme::utils {
+namespace sme::common {
 
 std::vector<std::string> toStdString(const QStringList &q) {
   std::vector<std::string> v;
@@ -149,7 +149,7 @@ QPointUniqueIndexer::getIndex(const QPoint &point) const {
 
 std::vector<QPoint> QPointUniqueIndexer::getPoints() const { return points; }
 
-} // namespace sme
+} // namespace sme::common
 
 // extra lines to work around sonarsource/coverage bug
 
@@ -175,7 +175,6 @@ std::vector<QPoint> QPointUniqueIndexer::getPoints() const { return points; }
 
 //
 
-
 //
 
 //
@@ -197,7 +196,6 @@ std::vector<QPoint> QPointUniqueIndexer::getPoints() const { return points; }
 //
 
 //
-
 
 //
 

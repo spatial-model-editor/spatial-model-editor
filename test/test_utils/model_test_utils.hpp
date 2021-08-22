@@ -1,13 +1,13 @@
 #pragma once
 
-#include "model.hpp"
 #include "mesh.hpp"
+#include "model.hpp"
+#include <QString>
+#include <memory>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
-#include <QString>
-#include <memory>
 
 namespace sme::test {
 

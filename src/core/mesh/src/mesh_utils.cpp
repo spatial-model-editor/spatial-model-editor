@@ -20,18 +20,4 @@ cv::Mat makeBinaryMask(const QImage &img, QRgb col) {
   return makeBinaryMask(img, std::vector<QRgb>{col});
 }
 
-std::optional<cv::Point> getNonZeroPixel(const cv::Mat &img) {
-  const int M{img.rows};
-  const int N{img.cols};
-  for (int m = 0; m < M; ++m) {
-    const uchar *row{img.ptr(m)};
-    for (int n = 0; n < N; ++n) {
-      if (row[n] > 0) {
-        return cv::Point(n, m);
-      }
-    }
-  }
-  return {};
-}
-
 } // namespace sme::mesh

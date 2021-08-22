@@ -27,4 +27,4 @@ DuneImpl::DuneImpl(const simulate::DuneConverter &dc) {
 
 DuneImpl::~DuneImpl() = default;
 
-} // namespace sme
+} // namespace sme::simulate

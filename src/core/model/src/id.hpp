@@ -22,4 +22,4 @@ QString nameToUniqueSId(const QString &name, libsbml::Model *model);
 QString makeUnique(const QString &name, const QStringList &names,
                    const QString &postfix = "_");
 
-} // namespace sme
+} // namespace sme::model

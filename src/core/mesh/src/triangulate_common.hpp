@@ -1,16 +1,14 @@
 #pragma once
 
+#include "boundary.hpp"
 #include <QPointF>
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <string>
 #include <vector>
-#include "boundary.hpp"
 
-namespace sme {
-
-namespace mesh {
+namespace sme::mesh {
 
 struct TriangulateBoundarySegment {
   std::size_t start;
@@ -25,8 +23,7 @@ struct TriangulateCompartment {
   double maxTriangleArea;
 };
 
-std::size_t getOrInsertFPIndex(const QPoint &p,
-                                      std::vector<QPoint> &fps);
+std::size_t getOrInsertFPIndex(const QPoint &p, std::vector<QPoint> &fps);
 
 struct TriangulateBoundaries {
   TriangulateBoundaries();
@@ -38,6 +35,4 @@ struct TriangulateBoundaries {
   std::vector<TriangulateCompartment> compartments;
 };
 
-} // namespace mesh
-
-} // namespace sme
+} // namespace sme::mesh

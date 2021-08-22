@@ -7,28 +7,28 @@
 #include <QString>
 #include <ostream>
 
-std::ostream& operator<<(std::ostream& os, QString const& value) {
+std::ostream &operator<<(std::ostream &os, QString const &value) {
   os << '"' << value.toStdString() << '"';
   return os;
 }
-std::ostream& operator<<(std::ostream& os, QPoint const& value) {
+std::ostream &operator<<(std::ostream &os, QPoint const &value) {
   os << '(' << value.x() << ',' << value.y() << ')';
   return os;
 }
-std::ostream& operator<<(std::ostream& os, QPointF const& value) {
+std::ostream &operator<<(std::ostream &os, QPointF const &value) {
   os << '(' << value.x() << ',' << value.y() << ')';
   return os;
 }
-std::ostream& operator<<(std::ostream& os, QSize const& value) {
+std::ostream &operator<<(std::ostream &os, QSize const &value) {
   os << '(' << value.width() << ',' << value.height() << ')';
   return os;
 }
-std::ostream& operator<<(std::ostream& os, QSizeF const& value) {
+std::ostream &operator<<(std::ostream &os, QSizeF const &value) {
   os << '(' << value.width() << ',' << value.height() << ')';
   return os;
 }
-std::ostream& operator<<(std::ostream& os,
-                         std::pair<QPoint, QPoint> const& value) {
+std::ostream &operator<<(std::ostream &os,
+                         std::pair<QPoint, QPoint> const &value) {
   os << '{' << value.first << ',' << value.second << '}';
   return os;
 }

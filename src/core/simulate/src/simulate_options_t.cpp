@@ -5,13 +5,14 @@ using namespace sme;
 
 SCENARIO("SimulateOptions",
          "[core/simulate][core/simulate_options][core][simulate_options]") {
-  WHEN("parseSimulationTimes: valid inputs"){
+  WHEN("parseSimulationTimes: valid inputs") {
     auto t1{simulate::parseSimulationTimes("1", "0.1").value()};
     REQUIRE(t1.size() == 1);
     REQUIRE(t1[0].first == 10);
     REQUIRE(t1[0].second == dbl_approx(0.1));
 
-    // dt is rounded to nearest value that fits an integer number of times into t
+    // dt is rounded to nearest value that fits an integer number of times into
+    // t
     auto t2{simulate::parseSimulationTimes("1;4", "198e-3;0.89").value()};
     REQUIRE(t2.size() == 2);
     REQUIRE(t2[0].first == 5);
@@ -27,12 +28,16 @@ SCENARIO("SimulateOptions",
     REQUIRE(t3[1].first == 23);
     REQUIRE(t3[1].second == dbl_approx(0.01));
   }
-  WHEN("parseSimulationTimes: invalid inputs"){
+  WHEN("parseSimulationTimes: invalid inputs") {
     REQUIRE(simulate::parseSimulationTimes("1", "").has_value() == false);
     REQUIRE(simulate::parseSimulationTimes("", "3").has_value() == false);
     REQUIRE(simulate::parseSimulationTimes("1", "e").has_value() == false);
-    REQUIRE(simulate::parseSimulationTimes("1", "0.2;0.3").has_value() == false);
-    REQUIRE(simulate::parseSimulationTimes("1;31;21", "0.2;5;").has_value() == false);
-    REQUIRE(simulate::parseSimulationTimes("1:31;21", "0.2;5;0.9").has_value() == false);
+    REQUIRE(simulate::parseSimulationTimes("1", "0.2;0.3").has_value() ==
+            false);
+    REQUIRE(simulate::parseSimulationTimes("1;31;21", "0.2;5;").has_value() ==
+            false);
+    REQUIRE(
+        simulate::parseSimulationTimes("1:31;21", "0.2;5;0.9").has_value() ==
+        false);
   }
 }

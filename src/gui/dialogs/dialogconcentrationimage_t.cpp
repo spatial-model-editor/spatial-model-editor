@@ -270,8 +270,8 @@ SCENARIO(
       // load built-in two-blobs image
       // uncheck grid & scale checkboxes on the way
       ModalWidgetTimer mwtImage;
-      mwt.addUserAction({"Tab", "Tab", "Space", "Tab", "Space", "Tab", "Tab", "Tab", "Space",
-                         "Down", "Down", "Enter"});
+      mwt.addUserAction({"Tab", "Tab", "Space", "Tab", "Space", "Tab", "Tab",
+                         "Tab", "Space", "Down", "Down", "Enter"});
       mwt.start();
       dia.exec();
       auto a = dia.getConcentrationArray();

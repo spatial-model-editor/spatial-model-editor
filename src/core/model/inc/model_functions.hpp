@@ -38,7 +38,7 @@ public:
   void removeArgument(const QString &functionId, const QString &argumentId);
   QString add(const QString &name);
   void remove(const QString &id);
-  [[nodiscard]] std::vector<utils::Function> getSymbolicFunctions() const;
+  [[nodiscard]] std::vector<common::Function> getSymbolicFunctions() const;
   [[nodiscard]] bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);
 };

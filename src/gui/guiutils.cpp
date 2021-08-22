@@ -71,7 +71,7 @@ QImage getImageFromUser(QWidget *parent, const QString &title) {
   }
   SPDLOG_DEBUG("  - import file {}", filename.toStdString());
   // first try using tiffReader
-  sme::utils::TiffReader tiffReader(filename.toStdString());
+  sme::common::TiffReader tiffReader(filename.toStdString());
   if (tiffReader.size() == 0) {
     SPDLOG_DEBUG(
         "    -> tiffReader could not read file, trying QImage::load()");

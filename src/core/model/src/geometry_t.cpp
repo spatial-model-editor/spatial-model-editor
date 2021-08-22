@@ -35,7 +35,8 @@ static void testFillMissingByDilation(std::vector<double> &arr, int w, int h) {
   }
 }
 
-static std::vector<double> testGetConcentrationImageArray(const geometry::Field& f) {
+static std::vector<double>
+testGetConcentrationImageArray(const geometry::Field &f) {
   const auto &img = f.getCompartment()->getCompartmentImage();
   int size = img.width() * img.height();
   // NOTE: order of concentration array is [ (x=0,y=0), (x=1,y=0), ... ]
@@ -186,19 +187,19 @@ SCENARIO("Geometry: Compartments and Fields",
     auto a0{field0.getConcentrationImageArray()};
     auto t0{testGetConcentrationImageArray(field0)};
     REQUIRE(a0.size() == t0.size());
-    for(std::size_t i=0; i<a0.size(); ++i){
+    for (std::size_t i = 0; i < a0.size(); ++i) {
       REQUIRE(a0[i] == dbl_approx(t0[i]));
     }
     auto a1{field1.getConcentrationImageArray()};
     auto t1{testGetConcentrationImageArray(field1)};
     REQUIRE(a1.size() == t1.size());
-    for(std::size_t i=0; i<a1.size(); ++i){
+    for (std::size_t i = 0; i < a1.size(); ++i) {
       REQUIRE(a1[i] == dbl_approx(t1[i]));
     }
     auto a2{field2.getConcentrationImageArray()};
     auto t2{testGetConcentrationImageArray(field2)};
     REQUIRE(a2.size() == t2.size());
-    for(std::size_t i=0; i<a2.size(); ++i){
+    for (std::size_t i = 0; i < a2.size(); ++i) {
       REQUIRE(a2[i] == dbl_approx(t2[i]));
     }
   }

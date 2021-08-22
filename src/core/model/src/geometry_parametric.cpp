@@ -123,11 +123,9 @@ getInteriorPixelPoints(const ModelGeometry *modelGeometry,
   return interiorPoints;
 }
 
-std::unique_ptr<mesh::Mesh>
-importParametricGeometryFromSBML(const libsbml::Model *model,
-                                 const ModelGeometry *modelGeometry,
-                                 const ModelCompartments *modelCompartments,
-                                 const Settings *annotation) {
+std::unique_ptr<mesh::Mesh> importParametricGeometryFromSBML(
+    const libsbml::Model *model, const ModelGeometry *modelGeometry,
+    const ModelCompartments *modelCompartments, const Settings *annotation) {
   const auto *geom{getGeometry(model)};
   const auto *parageom{getParametricGeometry(geom)};
   if (parageom == nullptr) {
@@ -141,7 +139,7 @@ importParametricGeometryFromSBML(const libsbml::Model *model,
     return std::make_unique<mesh::Mesh>(
         modelGeometry->getImage(), mp.maxPoints, mp.maxAreas,
         modelGeometry->getPixelWidth(), modelGeometry->getPhysicalOrigin(),
-        utils::toStdVec(modelCompartments->getColours()));
+        common::toStdVec(modelCompartments->getColours()));
   }
   SPDLOG_WARN("Failed to find mesh params annotation data");
   return nullptr;
@@ -202,4 +200,4 @@ void writeGeometryMeshToSBML(libsbml::Model *model, const mesh::Mesh *mesh,
   }
 }
 
-} // namespace sme
+} // namespace sme::model

@@ -86,8 +86,8 @@ static void addWriter(IniFile &ini) {
 
 static void addCompartment(
     IniFile &ini, const model::Model &model,
-    const std::map<std::string, double, std::less<>> &substitutions, int doublePrecision,
-    bool forExternalUse, const QString &iniFileDir,
+    const std::map<std::string, double, std::less<>> &substitutions,
+    int doublePrecision, bool forExternalUse, const QString &iniFileDir,
     std::vector<std::vector<std::vector<double>>> &concentrations,
     const QString &compartmentId, std::size_t &simDataCompartmentIndex) {
   const auto &lengthUnit = model.getUnits().getLength();
@@ -146,7 +146,7 @@ static void addCompartment(
   // initial concentrations
   auto &concs = concentrations.emplace_back(duneSpeciesNames.size(),
                                             std::vector<double>{});
-  auto indices = utils::getIndicesOfSortedVector(duneSpeciesNames);
+  auto indices = common::getIndicesOfSortedVector(duneSpeciesNames);
   std::vector<QString> tiffs;
   ini.addSection("model", compartmentId, "initial");
   for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
@@ -171,9 +171,9 @@ static void addCompartment(
           c /= volOverL3;
         }
         double max =
-            utils::writeTIFF(tiffFilename.toStdString(),
-                             f->getCompartment()->getCompartmentImage().size(),
-                             conc, model.getGeometry().getPixelWidth());
+            common::writeTIFF(tiffFilename.toStdString(),
+                              f->getCompartment()->getCompartmentImage().size(),
+                              conc, model.getGeometry().getPixelWidth());
         tiffs.push_back(sampledFieldName);
         ini.addValue(duneName,
                      QString("%1*%2(x,y)").arg(max).arg(sampledFieldName));
@@ -192,7 +192,8 @@ static void addCompartment(
         const std::size_t padding{model.getSimulationData().concPadding.back()};
         const std::size_t stride{padding + nonConstantSpecies.size()};
         std::vector<double> c(nPixels, 0.0);
-        SPDLOG_INFO("using simulation concentration data for species {}", name.toStdString());
+        SPDLOG_INFO("using simulation concentration data for species {}",
+                    name.toStdString());
         SPDLOG_INFO("- species index {}", i);
         SPDLOG_INFO("- species dune index {}", indices[i]);
         for (std::size_t iPixel = 0; iPixel < nPixels; ++iPixel) {
@@ -224,7 +225,7 @@ static void addCompartment(
   ini.addSection("model", compartmentId, "reaction");
   std::size_t nSpecies{nonConstantSpecies.size()};
 
-  auto reacs = utils::toStdString(model.getReactions().getIds(compartmentId));
+  auto reacs = common::toStdString(model.getReactions().getIds(compartmentId));
   PdeScaleFactors scaleFactors;
   scaleFactors.species = volOverL3;
   scaleFactors.reaction = 1.0 / volOverL3;
@@ -273,7 +274,8 @@ static void addCompartment(
       ini.addSection("model", compartmentId, "boundary", otherCompId,
                      "outflow");
       QString membraneID = membrane.getId().c_str();
-      auto mReacs = utils::toStdString(model.getReactions().getIds(membraneID));
+      auto mReacs =
+          common::toStdString(model.getReactions().getIds(membraneID));
       auto nonConstantSpeciesOther = getNonConstantSpecies(model, otherCompId);
       auto duneSpeciesNamesOther =
           makeValidDuneSpeciesNames(nonConstantSpeciesOther);
@@ -317,10 +319,10 @@ static void addCompartment(
   }
 }
 
-DuneConverter::DuneConverter(const model::Model &model,
-                             const std::map<std::string, double, std::less<>> &substitutions,
-                             bool forExternalUse, const QString &outputIniFile,
-                             int doublePrecision)
+DuneConverter::DuneConverter(
+    const model::Model &model,
+    const std::map<std::string, double, std::less<>> &substitutions,
+    bool forExternalUse, const QString &outputIniFile, int doublePrecision)
     : mesh{model.getGeometry().getMesh()},
       x0{model.getGeometry().getPhysicalOrigin().x()},
       y0{model.getGeometry().getPhysicalOrigin().y()},

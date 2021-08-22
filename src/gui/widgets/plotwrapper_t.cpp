@@ -8,10 +8,10 @@ SCENARIO("PlotWrapper",
   PlotWrapper p("title", &parent);
   REQUIRE(p.plot->graphCount() == 0);
   // add two species
-  p.addAvMinMaxLine("s1", sme::utils::indexedColours()[0]);
+  p.addAvMinMaxLine("s1", sme::common::indexedColours()[0]);
   REQUIRE(p.plot->graph(0)->name() == "s1 (average)");
   REQUIRE(p.plot->graph(1)->name() == "s1 (min/max range)");
-  p.addAvMinMaxLine("s2", sme::utils::indexedColours()[1]);
+  p.addAvMinMaxLine("s2", sme::common::indexedColours()[1]);
   REQUIRE(p.plot->graph(3)->name() == "s2 (average)");
   REQUIRE(p.plot->graph(4)->name() == "s2 (min/max range)");
   REQUIRE(p.plot->graphCount() == 6);
@@ -57,7 +57,7 @@ SCENARIO("PlotWrapper",
   REQUIRE(p.plot->legend->itemCount() == 2);
 
   // add a custom observable
-  p.addObservableLine({"1", "1", true}, sme::utils::indexedColours()[2]);
+  p.addObservableLine({"1", "1", true}, sme::common::indexedColours()[2]);
   REQUIRE(p.plot->graphCount() == 7);
   REQUIRE(p.plot->graph(6)->name() == "1");
   for (int i = 0; i < 6; ++i) {
@@ -67,7 +67,8 @@ SCENARIO("PlotWrapper",
   REQUIRE(p.plot->legend->itemCount() == 3);
 
   // add a custom observable
-  p.addObservableLine({"s1 + s2", "s1 + s2", true}, sme::utils::indexedColours()[3]);
+  p.addObservableLine({"s1 + s2", "s1 + s2", true},
+                      sme::common::indexedColours()[3]);
   REQUIRE(p.plot->graphCount() == 8);
 
   // make all species visible

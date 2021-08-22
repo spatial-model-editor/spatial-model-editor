@@ -18,4 +18,4 @@ GeometrySampledField
 importGeometryFromAnalyticGeometry(const libsbml::Model *model,
                                    const QPointF &origin, const QSizeF &size);
 
-} // namespace sme
+} // namespace sme::model

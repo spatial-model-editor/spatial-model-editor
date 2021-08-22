@@ -30,7 +30,8 @@ static std::vector<double> getAllElementCoordinates(Grid *grid, int subdomain) {
 
 SCENARIO("DUNE: grid",
          "[core/simulate/dunegrid][core/simulate][core][dunegrid]") {
-  for (auto exampleModel : {Mod::ABtoC, Mod::VerySimpleModel, Mod::LiverSimplified}) {
+  for (auto exampleModel :
+       {Mod::ABtoC, Mod::VerySimpleModel, Mod::LiverSimplified}) {
     CAPTURE(exampleModel);
     // load mesh from model
     auto m{getExampleModel(exampleModel)};

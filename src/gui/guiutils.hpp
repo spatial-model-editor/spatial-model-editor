@@ -21,4 +21,5 @@ void selectMatchingOrFirstChild(QTreeWidget *list, const QString &text = {});
 QImage getImageFromUser(QWidget *parent = nullptr,
                         const QString &title = "Import image");
 
-void zoomScrollArea(QScrollArea* scrollArea, int zoomFactor, const QPointF&relativePos);
+void zoomScrollArea(QScrollArea *scrollArea, int zoomFactor,
+                    const QPointF &relativePos);

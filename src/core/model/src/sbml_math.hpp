@@ -50,4 +50,4 @@ double evaluateMathString(
     const std::map<const std::string, std::pair<double, bool>> &vars = {},
     const libsbml::Model *model = nullptr);
 
-} // namespace sme
+} // namespace sme::model

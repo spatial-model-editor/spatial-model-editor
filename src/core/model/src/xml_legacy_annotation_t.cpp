@@ -1,7 +1,7 @@
 #include "catch_wrapper.hpp"
+#include "model_test_utils.hpp"
 #include "xml_legacy_annotation.hpp"
 #include <QFile>
-#include "model_test_utils.hpp"
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
@@ -28,9 +28,12 @@ SCENARIO("XML Legacy Annotations",
   REQUIRE(displayOptions->showSpecies[1] == true);
   REQUIRE(displayOptions->showSpecies[2] == false);
   REQUIRE(displayOptions->showMinMax == true);
-  auto *geom{dynamic_cast<libsbml::SpatialModelPlugin *>(model->getPlugin("spatial"))->getGeometry()};
+  auto *geom{
+      dynamic_cast<libsbml::SpatialModelPlugin *>(model->getPlugin("spatial"))
+          ->getGeometry()};
   REQUIRE(geom != nullptr);
-  auto *pg{dynamic_cast<libsbml::ParametricGeometry *>(geom->getGeometryDefinition("parametricGeometry"))};
+  auto *pg{dynamic_cast<libsbml::ParametricGeometry *>(
+      geom->getGeometryDefinition("parametricGeometry"))};
   REQUIRE(pg != nullptr);
   auto meshParameters{model::getMeshParamsAnnotationData(pg)};
   REQUIRE(meshParameters.has_value() == true);
@@ -47,7 +50,9 @@ SCENARIO("XML Legacy Annotations",
   auto cC{model::getSpeciesColourAnnotation(model->getSpecies("C"))};
   REQUIRE(cC.has_value());
   REQUIRE(cC.value() == 4294903078);
-  REQUIRE(model::getSpeciesColourAnnotation(model->getSpecies("D")).has_value() == false);
+  REQUIRE(
+      model::getSpeciesColourAnnotation(model->getSpecies("D")).has_value() ==
+      false);
 
   // check we correctly import them
   auto settings{model::importAndRemoveLegacyAnnotations(model)};
@@ -71,7 +76,13 @@ SCENARIO("XML Legacy Annotations",
   REQUIRE(model::hasLegacyAnnotations(model) == false);
   REQUIRE(model::getDisplayOptionsAnnotation(model).has_value() == false);
   REQUIRE(model::getMeshParamsAnnotationData(pg).has_value() == false);
-  REQUIRE(model::getSpeciesColourAnnotation(model->getSpecies("A")).has_value() == false);
-  REQUIRE(model::getSpeciesColourAnnotation(model->getSpecies("B")).has_value() == false);
-  REQUIRE(model::getSpeciesColourAnnotation(model->getSpecies("C")).has_value() == false);
+  REQUIRE(
+      model::getSpeciesColourAnnotation(model->getSpecies("A")).has_value() ==
+      false);
+  REQUIRE(
+      model::getSpeciesColourAnnotation(model->getSpecies("B")).has_value() ==
+      false);
+  REQUIRE(
+      model::getSpeciesColourAnnotation(model->getSpecies("C")).has_value() ==
+      false);
 }

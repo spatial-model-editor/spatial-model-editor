@@ -113,10 +113,10 @@ static bool multiplyDivideReactionKineticLaw(libsbml::Reaction *reaction,
   auto expr{mathASTtoString(kineticLaw->getMath())};
   SPDLOG_INFO("  - {}", expr);
   if (!divisor.empty()) {
-    expr = utils::symbolicDivide(expr, divisor);
+    expr = common::symbolicDivide(expr, divisor);
   }
   if (!multiplier.empty()) {
-    expr = utils::symbolicMultiply(expr, multiplier);
+    expr = common::symbolicMultiply(expr, multiplier);
   }
   SPDLOG_INFO("  --> {}", expr);
   auto ast{mathStringToAST(expr, model)};
@@ -690,7 +690,7 @@ bool ModelReactions::dependOnVariable(const QString &variableId) const {
   auto v{variableId.toStdString()};
   return std::any_of(ids.begin(), ids.end(), [&v, this](const auto &id) {
     auto e{getRateExpression(id).toStdString()};
-    return utils::symbolicContains(e, v);
+    return common::symbolicContains(e, v);
   });
 }
 

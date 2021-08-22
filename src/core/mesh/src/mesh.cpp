@@ -222,7 +222,7 @@ Mesh::getBoundariesImages(const QSize &size,
     if (k == boldBoundaryIndex) {
       penSize = boldPenSize;
     }
-    painter.setPen(QPen(utils::indexedColours()[k], penSize));
+    painter.setPen(QPen(common::indexedColours()[k], penSize));
     pMask.setPen(QPen(QColor(0, 0, static_cast<int>(k)), maskPenSize));
     for (std::size_t i = 0; i < points.size() - 1; ++i) {
       auto p1 = points[i] * scaleFactor + offset;
@@ -312,8 +312,8 @@ QString Mesh::getGMSH() const {
     auto physicalPoint = pixelPointToPhysicalPoint(vertices[i]);
     msh.append(QString("%1 %2 %3 %4\n")
                    .arg(i + 1)
-                   .arg(utils::dblToQStr(physicalPoint.x()))
-                   .arg(utils::dblToQStr(physicalPoint.y()))
+                   .arg(common::dblToQStr(physicalPoint.x()))
+                   .arg(common::dblToQStr(physicalPoint.y()))
                    .arg(0));
   }
   msh.append("$EndNodes\n");

@@ -46,7 +46,7 @@ void QLabelSlice::setSlice(const QPoint &start, const QPoint &end) {
   for (int i = 0; i < np; ++i) {
     QPoint pi(start.x() + diff.x() / norm, start.y() + diff.y() / norm);
     slicePixels.push_back(pi);
-    if(flipYAxis){
+    if (flipYAxis) {
       pi.setY(imgSliced.height() - 1 - pi.y());
     }
     auto c{imgOriginal.pixel(pi)};

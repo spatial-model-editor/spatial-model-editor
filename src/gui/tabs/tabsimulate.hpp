@@ -18,7 +18,7 @@ class QCPTextElement;
 class QLabelMouseTracker;
 namespace sme::model {
 class Model;
-} // namespace sme
+} // namespace sme::model
 class PlotWrapper;
 
 class TabSimulate : public QWidget {

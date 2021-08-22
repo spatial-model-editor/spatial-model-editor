@@ -29,4 +29,4 @@ importGeometryFromSampledField(const libsbml::Geometry *geom);
 void exportSampledFieldGeometry(libsbml::Geometry *geom,
                                 const QImage &compartmentImage);
 
-} // namespace sme
+} // namespace sme::model

@@ -238,7 +238,7 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
   makeInitialConcentrationsValid(model);
   for (int i = 0; i < ids.size(); ++i) {
     const auto &id = ids[i];
-    QRgb colour{utils::indexedColours()[static_cast<std::size_t>(i)].rgb()};
+    QRgb colour{common::indexedColours()[static_cast<std::size_t>(i)].rgb()};
     if (auto iter{sbmlAnnotation->speciesColours.find(id.toStdString())};
         iter != sbmlAnnotation->speciesColours.end()) {
       colour = iter->second;
@@ -299,7 +299,7 @@ QString ModelSpecies::add(const QString &name, const QString &compartmentId) {
   spec->setConstant(false);
   // set default colour
   auto colour{
-      utils::indexedColours()[static_cast<std::size_t>(ids.size() - 1)].rgb()};
+      common::indexedColours()[static_cast<std::size_t>(ids.size() - 1)].rgb()};
   fields.emplace_back(modelCompartments->getCompartment(compartmentId), sId,
                       1.0, colour);
   sbmlAnnotation->speciesColours[sId] = colour;

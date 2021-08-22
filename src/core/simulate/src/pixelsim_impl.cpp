@@ -53,7 +53,7 @@ ReacEval::ReacEval(
     rhs.push_back("0"); // dy/dt = 0
   }
   // compile all expressions with symengine
-  sym = utils::Symbolic(rhs, sIds, {}, {}, true, doCSE, optLevel);
+  sym = common::Symbolic(rhs, sIds, {}, {}, true, doCSE, optLevel);
   if (!sym.isValid()) {
     std::string msg{sym.getErrorMessage()};
     msg.append("\nExpression: \"");
@@ -114,7 +114,7 @@ SimCompartment::SimCompartment(
   if (auto reacsInCompartment =
           doc.getReactions().getIds(compartmentId.c_str());
       !reacsInCompartment.isEmpty()) {
-    reactionIDs = utils::toStdString(reacsInCompartment);
+    reactionIDs = common::toStdString(reacsInCompartment);
   }
   reacEval = ReacEval(doc, speciesIds, reactionIDs, 1.0, doCSE, optLevel,
                       timeDependent, spaceDependent, substitutions);
@@ -501,7 +501,7 @@ SimMembrane::SimMembrane(
   SPDLOG_INFO("  - multiplying reaction by '{}'", volOverL3 / pixelWidth);
   // make vector of reaction IDs from membrane
   std::vector<std::string> reactionID =
-      utils::toStdString(doc.getReactions().getIds(membrane->getId().c_str()));
+      common::toStdString(doc.getReactions().getIds(membrane->getId().c_str()));
   reacEval =
       ReacEval(doc, speciesIds, reactionID, volOverL3 / pixelWidth, doCSE,
                optLevel, timeDependent, spaceDependent, substitutions);
