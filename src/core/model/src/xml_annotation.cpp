@@ -51,7 +51,7 @@ void setSbmlAnnotation(libsbml::Model *model, const Settings &sbmlAnnotations) {
   auto xml{fmt::format("<{name} xmlns=\"{uri}\">{xml}</{name}>",
                        fmt::arg("name", annotationName),
                        fmt::arg("uri", annotationURI),
-                       fmt::arg("xml", utils::toXml(sbmlAnnotations)))};
+                       fmt::arg("xml", common::toXml(sbmlAnnotations)))};
   model->appendAnnotation(xml);
 }
 
@@ -61,7 +61,7 @@ Settings getSbmlAnnotation(libsbml::Model *model) {
   }
   if (const auto *node{getAnnotation(model)}; node != nullptr) {
     SPDLOG_INFO("annotation: '{}'", node->getChild(0).toXMLString());
-    return utils::fromXml(node->getChild(0).toXMLString());
+    return common::fromXml(node->getChild(0).toXMLString());
   }
   return {};
 }

@@ -18,9 +18,7 @@
 
 namespace sme::model {
 
-Model::Model(){
-    clear();
-}
+Model::Model() { clear(); }
 
 Model::~Model() = default;
 
@@ -67,8 +65,7 @@ void Model::initModelData() {
   // todo: reduce these cyclic dependencies: currently order of initialization
   // matters, should be possible to reduce coupling here
   modelCompartments = std::make_unique<ModelCompartments>(
-      model, modelMembranes.get(), modelUnits.get(),
-      &getSimulationData());
+      model, modelMembranes.get(), modelUnits.get(), &getSimulationData());
   modelGeometry = std::make_unique<ModelGeometry>(
       model, modelCompartments.get(), modelMembranes.get(), modelUnits.get(),
       settings.get());
@@ -78,8 +75,7 @@ void Model::initModelData() {
   modelParameters = std::make_unique<ModelParameters>(model);
   modelSpecies = std::make_unique<ModelSpecies>(
       model, modelCompartments.get(), modelGeometry.get(),
-      modelParameters.get(), &getSimulationData(),
-      settings.get());
+      modelParameters.get(), &getSimulationData(), settings.get());
   modelCompartments->setSpeciesPtr(modelSpecies.get());
   modelEvents = std::make_unique<ModelEvents>(model, modelParameters.get(),
                                               modelSpecies.get());
@@ -137,8 +133,8 @@ void Model::importFile(const std::string &filename) {
   clear();
   currentFilename = QFileInfo(filename.c_str()).baseName();
   SPDLOG_INFO("Importing file {} ...", filename);
-  auto contents{std::make_unique<sme::utils::SmeFileContents>(
-      utils::importSmeFile(filename))};
+  auto contents{std::make_unique<sme::common::SmeFileContents>(
+      common::importSmeFile(filename))};
   if (!contents->xmlModel.empty()) {
     SPDLOG_INFO("  -> SME file", filename);
     doc.reset(libsbml::readSBMLFromString(contents->xmlModel.c_str()));
@@ -158,7 +154,7 @@ void Model::exportSMEFile(const std::string &filename) {
   }
   updateSBMLDoc();
   smeFileContents->xmlModel = getXml().toStdString();
-  if (!utils::exportSmeFile(filename, *smeFileContents)) {
+  if (!common::exportSmeFile(filename, *smeFileContents)) {
     SPDLOG_WARN("Failed to save file '{}'", filename);
   }
   setHasUnsavedChanges(false);
@@ -263,7 +259,7 @@ void Model::clear() {
   modelEvents = std::make_unique<ModelEvents>();
   modelUnits = std::make_unique<ModelUnits>();
   modelMath = std::make_unique<ModelMath>();
-  smeFileContents = std::make_unique<utils::SmeFileContents>();
+  smeFileContents = std::make_unique<common::SmeFileContents>();
   settings = std::make_unique<Settings>();
 }
 

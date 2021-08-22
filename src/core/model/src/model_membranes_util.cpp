@@ -119,4 +119,4 @@ const std::vector<QPointPair> *ImageMembranePixels::getPoints(int iA,
 
 const QSize &ImageMembranePixels::getImageSize() const { return imageSize; }
 
-} // namespace sme
+} // namespace sme::model

@@ -1,9 +1,9 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include "qplaintextmathedit.hpp"
 #include "qt_test_utils.hpp"
 #include "tabevents.hpp"
-#include "model_test_utils.hpp"
 #include <QComboBox>
 #include <QLabel>
 #include <QLineEdit>
@@ -30,7 +30,8 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
   REQUIRE(cmbEventVariable != nullptr);
   auto *txtExpression{tab.findChild<QPlainTextMathEdit *>("txtExpression")};
   REQUIRE(txtExpression != nullptr);
-  auto *btnSetSpeciesConcentration{tab.findChild<QPushButton *>("btnSetSpeciesConcentration")};
+  auto *btnSetSpeciesConcentration{
+      tab.findChild<QPushButton *>("btnSetSpeciesConcentration")};
   REQUIRE(btnSetSpeciesConcentration != nullptr);
   auto *lblSpeciesExpression{tab.findChild<QLabel *>("lblSpeciesExpression")};
   REQUIRE(lblSpeciesExpression != nullptr);
@@ -60,7 +61,8 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     // try to add Event to a model with no parameters or species
     mwt.start();
     sendMouseClick(btnAddEvent);
-    REQUIRE(mwt.getResult() == "To add events, the model must contain species or parameters.");
+    REQUIRE(mwt.getResult() ==
+            "To add events, the model must contain species or parameters.");
   }
   GIVEN("very simple model") {
     model = getExampleModel(Mod::VerySimpleModel);
@@ -113,7 +115,8 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     REQUIRE(events.getExpression("p_") == "x");
     // change variable to a parameter
     cmbEventVariable->setFocus();
-    sendKeyEvents(cmbEventVariable, {"Down", "Down", "Down", "Down", "Down", "Down", "Down"});
+    sendKeyEvents(cmbEventVariable,
+                  {"Down", "Down", "Down", "Down", "Down", "Down", "Down"});
     REQUIRE(events.getVariable("p_") == "param");
     // edit time
     REQUIRE(events.getTime("p_") == dbl_approx(0));

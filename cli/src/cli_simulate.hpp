@@ -6,4 +6,4 @@ namespace sme::cli {
 
 bool doSimulation(const Params &params);
 
-} // namespace sme
+} // namespace sme::cli

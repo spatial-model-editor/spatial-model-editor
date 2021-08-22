@@ -48,9 +48,9 @@ void IniFile::addValue(const QString &var, int value) {
 }
 
 void IniFile::addValue(const QString &var, double value, int precision) {
-  addValue(var, utils::dblToQStr(value, precision));
+  addValue(var, common::dblToQStr(value, precision));
 }
 
 void IniFile::clear() { text.clear(); }
 
-} // namespace sme
+} // namespace sme::simulate

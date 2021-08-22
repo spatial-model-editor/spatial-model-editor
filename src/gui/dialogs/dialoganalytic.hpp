@@ -15,19 +15,17 @@ namespace sme::model {
 struct SpeciesGeometry;
 class ModelParameters;
 class ModelFunctions;
-}
+} // namespace sme::model
 
 class DialogAnalytic : public QDialog {
   Q_OBJECT
 
 public:
-  explicit DialogAnalytic(
-      const QString &analyticExpression,
-      const sme::model::SpeciesGeometry &speciesGeometry,
-      const sme::model::ModelParameters &modelParameters,
-      const sme::model::ModelFunctions &modelFunctions,
-      bool invertYAxis,
-      QWidget *parent = nullptr);
+  explicit DialogAnalytic(const QString &analyticExpression,
+                          const sme::model::SpeciesGeometry &speciesGeometry,
+                          const sme::model::ModelParameters &modelParameters,
+                          const sme::model::ModelFunctions &modelFunctions,
+                          bool invertYAxis, QWidget *parent = nullptr);
   ~DialogAnalytic() override;
   const std::string &getExpression() const;
   const QImage &getImage() const;
@@ -43,7 +41,7 @@ private:
   QString concentrationUnit;
 
   QImage img;
-  sme::utils::QPointIndexer qpi;
+  sme::common::QPointIndexer qpi;
   std::vector<double> concentration;
   std::string displayExpression;
   std::string variableExpression;

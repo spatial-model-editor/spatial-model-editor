@@ -344,7 +344,7 @@ void Model::importGeometryFromImage(const std::string &filename) {
   auto colours{s->getCompartments().getColours()};
   // import geometry image
   QImage img;
-  sme::utils::TiffReader tiffReader(filename);
+  sme::common::TiffReader tiffReader(filename);
   if (tiffReader.size() > 0) {
     img = tiffReader.getImage();
   } else {

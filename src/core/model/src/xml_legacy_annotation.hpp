@@ -6,8 +6,8 @@
 #pragma once
 
 #include "model_settings.hpp"
-#include "simulate_options.hpp"
 #include "serialization.hpp"
+#include "simulate_options.hpp"
 #include <QRgb>
 #include <optional>
 #include <string>

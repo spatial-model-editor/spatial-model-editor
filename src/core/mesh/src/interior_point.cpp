@@ -3,6 +3,7 @@
 #include "mesh_utils.hpp"
 #include <algorithm>
 #include <opencv2/imgproc.hpp>
+#include <optional>
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
 #include <QImage>
 #endif
@@ -57,6 +58,20 @@ static void writeDebuggingImageOutput(const cv::Mat &mask, const cv::Mat &blob,
   img.save(name);
 }
 #endif
+
+static std::optional<cv::Point> getNonZeroPixel(const cv::Mat &img) {
+  const int M{img.rows};
+  const int N{img.cols};
+  for (int m = 0; m < M; ++m) {
+    const uchar *row{img.ptr(m)};
+    for (int n = 0; n < N; ++n) {
+      if (row[n] > 0) {
+        return cv::Point(n, m);
+      }
+    }
+  }
+  return {};
+}
 
 static std::vector<QPointF> getInnerPoints(const cv::Mat &mask) {
   std::vector<QPointF> interiorPoints;
@@ -131,4 +146,4 @@ getInteriorPoints(const QImage &img, const std::vector<QRgb> &cols) {
   return interiorPoints;
 }
 
-} // namespace sme
+} // namespace sme::mesh

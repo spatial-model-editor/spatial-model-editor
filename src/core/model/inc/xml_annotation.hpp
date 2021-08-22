@@ -10,8 +10,7 @@ class Model;
 
 namespace sme::model {
 
-void setSbmlAnnotation(libsbml::Model *model,
-                       const Settings &sbmlAnnotation);
+void setSbmlAnnotation(libsbml::Model *model, const Settings &sbmlAnnotation);
 Settings getSbmlAnnotation(libsbml::Model *model);
 
 } // namespace sme::model

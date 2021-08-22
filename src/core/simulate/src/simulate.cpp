@@ -113,10 +113,10 @@ void Simulation::applyNextEvent() {
           eventSubstitutions);
       const auto &tempConc{tempField.getConcentration()};
       std::string compId{tempField.getCompartment()->getId()};
-      std::size_t compIndex{utils::element_index(compartmentIds, compId)};
+      std::size_t compIndex{common::element_index(compartmentIds, compId)};
       SPDLOG_INFO("    compartment[{}] = {}", compIndex, compId);
       std::size_t speciesIndex{
-          utils::element_index(compartmentSpeciesIds[compIndex], sId)};
+          common::element_index(compartmentSpeciesIds[compIndex], sId)};
       SPDLOG_INFO("    species[{}] = {}", speciesIndex, sId);
       auto &c{data->concentration.back()[compIndex]};
       const std::size_t stride{simulator->getConcentrationPadding() +
@@ -496,7 +496,7 @@ Simulation::getPyNames(std::size_t compartmentIndex) const {
   return compartmentSpeciesNames[compartmentIndex];
 }
 
-static std::size_t pointToPyIndex(const QPoint &p, std::size_t w){
+static std::size_t pointToPyIndex(const QPoint &p, std::size_t w) {
   auto x{static_cast<std::size_t>(p.x())};
   auto y{static_cast<std::size_t>(p.y())};
   return x + w * y;
@@ -526,10 +526,10 @@ Simulation::getPyConcs(std::size_t timeIndex,
 }
 
 [[nodiscard]] std::vector<std::vector<double>>
-Simulation::getPyDcdts(std::size_t compartmentIndex) const{
+Simulation::getPyDcdts(std::size_t compartmentIndex) const {
   // dcdt is only available from pixel sim, and only for the last timestep
   PixelSim *pixelSim{dynamic_cast<PixelSim *>(simulator.get())};
-  if(pixelSim == nullptr || data->concPadding.empty()){
+  if (pixelSim == nullptr || data->concPadding.empty()) {
     return {};
   }
   std::vector<std::vector<double>> pyDcdts(

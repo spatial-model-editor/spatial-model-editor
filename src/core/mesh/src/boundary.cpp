@@ -108,7 +108,7 @@ static std::vector<Boundary> splitContours(const QImage &img,
     if (startPixel == edges.size()) {
       SPDLOG_TRACE("Found loop with {} points", edges.size());
       if (std::none_of(loops.cbegin(), loops.cend(), [&edges](const auto &l) {
-            return utils::isCyclicPermutation(edges, l);
+            return common::isCyclicPermutation(edges, l);
           })) {
         SPDLOG_TRACE("  - adding loop", edges.size());
         auto points = toQPointsInvertYAxis(edges, img.height() + 1);
@@ -131,7 +131,7 @@ static std::vector<Boundary> splitContours(const QImage &img,
           SPDLOG_TRACE("Finished line with {} points", line.size());
           if (std::none_of(lines.cbegin(), lines.cend(),
                            [&line](const auto &l) {
-                             return utils::isCyclicPermutation(line, l);
+                             return common::isCyclicPermutation(line, l);
                            })) {
             SPDLOG_TRACE("  - adding line", edges.size());
             auto points = toQPointsInvertYAxis(line, img.height() + 1);
@@ -146,7 +146,7 @@ static std::vector<Boundary> splitContours(const QImage &img,
       line.push_back(edges.front());
       SPDLOG_TRACE("Finished line with {} points", line.size());
       if (std::none_of(lines.cbegin(), lines.cend(), [&line](const auto &l) {
-            return utils::isCyclicPermutation(line, l);
+            return common::isCyclicPermutation(line, l);
           })) {
         SPDLOG_TRACE("  - adding line", edges.size());
         auto points = toQPointsInvertYAxis(line, img.height() + 1);
@@ -159,10 +159,10 @@ static std::vector<Boundary> splitContours(const QImage &img,
 }
 
 std::vector<Boundary>
-constructBoundaries(const QImage &img,
+constructBoundaries(const QImage &compartmentImage,
                     const std::vector<QRgb> &compartmentColours) {
-  auto edgeContours = getContours(img, compartmentColours);
-  return splitContours(img, edgeContours);
+  auto edgeContours{getContours(compartmentImage, compartmentColours)};
+  return splitContours(compartmentImage, edgeContours);
 }
 
-} // namespace sme
+} // namespace sme::mesh

@@ -55,7 +55,7 @@ Pde::Pde(const model::Model *doc_ptr,
       // get reaction term
       QString expr =
           QString("%1*(%2) ")
-              .arg(utils::dblToQStr(reactions.getMatrixElement(j, i)),
+              .arg(common::dblToQStr(reactions.getMatrixElement(j, i)),
                    reactions.getExpression(j).c_str());
       // rescale by supplied reactionScaleFactor
       auto str = fmt::format("{}", pdeScaleFactors.reaction);
@@ -73,9 +73,9 @@ Pde::Pde(const model::Model *doc_ptr,
         }
       }
       // parse and inline constants & function calls
-      utils::Symbolic sym(expr.toStdString(), vars, constants,
-                          doc_ptr->getFunctions().getSymbolicFunctions(),
-                          false);
+      common::Symbolic sym(expr.toStdString(), vars, constants,
+                           doc_ptr->getFunctions().getSymbolicFunctions(),
+                           false);
       if (!sym.isValid()) {
         throw PdeError(sym.getErrorMessage());
       }
@@ -85,7 +85,7 @@ Pde::Pde(const model::Model *doc_ptr,
     // reparse full rhs to simplify
     SPDLOG_DEBUG("Species {} Reparsing all reaction terms", speciesIDs.at(i));
     // parse expression with symengine to simplify
-    utils::Symbolic sym(r.toStdString(), vars, {}, {}, false);
+    common::Symbolic sym(r.toStdString(), vars, {}, {}, false);
     if (!sym.isValid()) {
       throw PdeError(sym.getErrorMessage());
     }
@@ -201,7 +201,7 @@ Reaction::Reaction(const model::Model *doc, std::vector<std::string> species,
       expressions.push_back(inlinedExpr);
       SPDLOG_INFO("adding reaction {}", reacID);
       SPDLOG_INFO("  - stoichiometric matrix row: {}",
-                  utils::vectorToString(row));
+                  common::vectorToString(row));
       SPDLOG_INFO("  - expr: {}", inlinedExpr);
     }
   }

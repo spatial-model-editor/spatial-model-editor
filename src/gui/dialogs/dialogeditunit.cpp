@@ -3,8 +3,8 @@
 #include "ui_dialogeditunit.h"
 #include <QPushButton>
 
-DialogEditUnit::DialogEditUnit(const sme::model::Unit &unit, const QString &unitType,
-                               QWidget *parent)
+DialogEditUnit::DialogEditUnit(const sme::model::Unit &unit,
+                               const QString &unitType, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogEditUnit>()}, u(unit) {
   ui->setupUi(this);
   if (!unitType.isEmpty()) {

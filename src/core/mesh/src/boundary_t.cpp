@@ -111,7 +111,7 @@ SCENARIO("constructBoundaries",
       const auto &b = boundaries[0];
       REQUIRE(b.isValid());
       REQUIRE(b.isLoop());
-      REQUIRE(utils::isCyclicPermutation(b.getAllPoints(), outer));
+      REQUIRE(common::isCyclicPermutation(b.getAllPoints(), outer));
     }
   }
   GIVEN("image with 3 concentric compartments, no fixed points") {
@@ -172,10 +172,10 @@ SCENARIO("constructBoundaries",
   }
 }
 
-SCENARIO("constructBoundaries Medha Bhattacharya images",
+SCENARIO("constructBoundaries using images from Medha Bhattacharya",
          "[core/mesh/boundary][core/mesh][core][boundary][expensive]") {
   // images provided by Medha Bhattacharya
-  //  https://summerofcode.withgoogle.com/archive/2020/projects/4913136240427008/
+  // https://summerofcode.withgoogle.com/archive/2020/projects/4913136240427008/
   // https://drive.google.com/drive/folders/1z83_pUTlI7eYKL9J9iV-EV6lLAEqC7pG
   QRgb bg{qRgb(0, 0, 0)};
   QRgb fg{qRgb(255, 255, 255)};

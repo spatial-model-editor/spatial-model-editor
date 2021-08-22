@@ -39,7 +39,7 @@
 #include <utility>
 #include <vector>
 
-namespace sme::utils {
+namespace sme::common {
 
 /**
  * @brief The sum of all elements in a container
@@ -368,4 +368,4 @@ bool isCyclicPermutation(const std::vector<T> &a, const std::vector<T> &b) {
   return true;
 }
 
-} // namespace sme::utils
+} // namespace sme::common

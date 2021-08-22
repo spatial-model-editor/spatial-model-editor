@@ -1,7 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
-#include "model_test_utils.hpp"
 #include "model_compartments.hpp"
+#include "model_test_utils.hpp"
 #include <QFile>
 #include <QImage>
 #include <memory>

@@ -107,13 +107,13 @@ getMeshParamsAnnotationData(const libsbml::ParametricGeometry *pg) {
   if (const auto *node = getAnnotation(pg, annotationNameMesh);
       node != nullptr) {
     auto &d = dat.emplace();
-    d.maxPoints = utils::stringToVector<std::size_t>(
+    d.maxPoints = common::stringToVector<std::size_t>(
         node->getAttrValue("maxBoundaryPoints", annotationURI));
     SPDLOG_INFO("  - maxBoundaryPoints: {}",
-                utils::vectorToString(d.maxPoints));
-    d.maxAreas = utils::stringToVector<std::size_t>(
+                common::vectorToString(d.maxPoints));
+    d.maxAreas = common::stringToVector<std::size_t>(
         node->getAttrValue("maxTriangleAreas", annotationURI));
-    SPDLOG_INFO("  - maxTriangleAreas: {}", utils::vectorToString(d.maxAreas));
+    SPDLOG_INFO("  - maxTriangleAreas: {}", common::vectorToString(d.maxAreas));
   }
   return dat;
 }
@@ -126,7 +126,7 @@ std::optional<QRgb>
 getSpeciesColourAnnotation(const libsbml::Species *species) {
   if (const auto *node = getAnnotation(species, annotationNameColour);
       node != nullptr) {
-    auto colour = utils::stringToVector<QRgb>(
+    auto colour = common::stringToVector<QRgb>(
         node->getAttrValue("colour", annotationURI))[0];
     SPDLOG_INFO("Species: {}", species->getId());
     SPDLOG_INFO("  - colour: {:x}", colour);
@@ -146,22 +146,22 @@ getDisplayOptionsAnnotation(const libsbml::Model *model) {
       node != nullptr) {
     opts = DisplayOptions{};
     opts->normaliseOverAllTimepoints =
-        static_cast<bool>(utils::stringToVector<int>(node->getAttrValue(
+        static_cast<bool>(common::stringToVector<int>(node->getAttrValue(
             "normaliseOverAllTimepoints", annotationURI))[0]);
     SPDLOG_INFO("  - normaliseOverAllTimepoints: {}",
                 opts->normaliseOverAllTimepoints);
     opts->normaliseOverAllSpecies =
-        static_cast<bool>(utils::stringToVector<int>(
+        static_cast<bool>(common::stringToVector<int>(
             node->getAttrValue("normaliseOverAllSpecies", annotationURI))[0]);
     SPDLOG_INFO("  - normaliseOverAllSpecies: {}",
                 opts->normaliseOverAllSpecies);
-    opts->showMinMax = static_cast<bool>(utils::stringToVector<int>(
+    opts->showMinMax = static_cast<bool>(common::stringToVector<int>(
         node->getAttrValue("showMinMax", annotationURI))[0]);
     SPDLOG_INFO("  - showMinMax: {}", opts->showMinMax);
-    opts->showSpecies = utils::toBool(utils::stringToVector<int>(
+    opts->showSpecies = common::toBool(common::stringToVector<int>(
         node->getAttrValue("showSpecies", annotationURI)));
     SPDLOG_INFO("  - showSpecies: {}",
-                utils::vectorToString(utils::toInt(opts->showSpecies)));
+                common::vectorToString(common::toInt(opts->showSpecies)));
   }
   return opts;
 }

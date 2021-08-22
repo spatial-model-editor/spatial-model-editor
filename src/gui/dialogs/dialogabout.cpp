@@ -1,23 +1,23 @@
 #include "dialogabout.hpp"
+#include <cereal/version.hpp>
 #include <expat.h>
 #include <fmt/core.h>
 #include <gmp.h>
 #include <mpfr.h>
 #include <muParserDef.h>
-#include <cereal/version.hpp>
+#include <qcustomplot.h>
 #include <sbml/common/libsbml-version.h>
 #include <spdlog/version.h>
 #include <symengine/symengine_config.h>
-#include <qcustomplot.h>
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 #include <tbb/tbb_stddef.h>
 #endif
-#include <CGAL/version_macros.h>
-#include <boost/version.hpp>
 #include "symbolic.hpp"
-#include <dune/copasi/config.h>
 #include "ui_dialogabout.h"
 #include "version.hpp"
+#include <CGAL/version_macros.h>
+#include <boost/version.hpp>
+#include <dune/copasi/config.h>
 #include <opencv2/opencv.hpp>
 #include <tiffvers.h>
 
@@ -52,17 +52,18 @@ DialogAbout::DialogAbout(QWidget *parent)
           &DialogAbout::reject);
 
   ui->lblAbout->setText(QString("<h3>Spatial Model Editor %1</h3>")
-                            .arg(sme::utils::SPATIAL_MODEL_EDITOR_VERSION));
+                            .arg(sme::common::SPATIAL_MODEL_EDITOR_VERSION));
 
   QString libraries("<p>Included libraries:</p><ul>");
   libraries.append(dep("dune-copasi",
-                       "https://gitlab.dune-project.org/copasi/dune-copasi", DUNE_COPASI_VERSION_MAJOR,
-                       DUNE_COPASI_VERSION_MINOR, DUNE_COPASI_VERSION_REVISION));
-  libraries.append(dep("libSBML",
-                       "http://sbml.org/Software/libSBML",
+                       "https://gitlab.dune-project.org/copasi/dune-copasi",
+                       DUNE_COPASI_VERSION_MAJOR, DUNE_COPASI_VERSION_MINOR,
+                       DUNE_COPASI_VERSION_REVISION));
+  libraries.append(dep("libSBML", "http://sbml.org/Software/libSBML",
                        libsbml::getLibSBMLDottedVersion()));
   libraries.append(dep("Qt", "https://qt.io", QT_VERSION_STR));
-  libraries.append(dep("QCustomPlot", "https://www.qcustomplot.com", QCUSTOMPLOT_VERSION_STR));
+  libraries.append(dep("QCustomPlot", "https://www.qcustomplot.com",
+                       QCUSTOMPLOT_VERSION_STR));
   libraries.append(dep("spdlog", "https://github.com/gabime/spdlog",
                        SPDLOG_VER_MAJOR, SPDLOG_VER_MINOR, SPDLOG_VER_PATCH));
   libraries.append(dep("fmt", "https://github.com/fmtlib/fmt",
@@ -71,15 +72,16 @@ DialogAbout::DialogAbout(QWidget *parent)
   libraries.append(dep("SymEngine", "https://github.com/symengine/symengine",
                        SYMENGINE_VERSION));
   libraries.append(
-      dep("LLVM core", "https://llvm.org", sme::utils::getLLVMVersion()));
+      dep("LLVM core", "https://llvm.org", sme::common::getLLVMVersion()));
   libraries.append(dep("GMP", "https://gmplib.org", __GNU_MP_VERSION,
                        __GNU_MP_VERSION_MINOR, __GNU_MP_VERSION_PATCHLEVEL));
   libraries.append(dep("MPFR", "https://www.mpfr.org/", MPFR_VERSION_MAJOR,
                        MPFR_VERSION_MINOR, MPFR_VERSION_PATCHLEVEL));
-  libraries.append(dep("Boost", "https://www.boost.org/", BOOST_VERSION/100000,
-                       BOOST_VERSION / 100 % 1000, BOOST_VERSION % 100));
-  libraries.append(
-      dep("CGAL", "https://www.cgal.org/", CGAL_VERSION_MAJOR, CGAL_VERSION_MINOR, CGAL_VERSION_PATCH));
+  libraries.append(dep("Boost", "https://www.boost.org/",
+                       BOOST_VERSION / 100000, BOOST_VERSION / 100 % 1000,
+                       BOOST_VERSION % 100));
+  libraries.append(dep("CGAL", "https://www.cgal.org/", CGAL_VERSION_MAJOR,
+                       CGAL_VERSION_MINOR, CGAL_VERSION_PATCH));
   libraries.append(dep("muParser", "https://github.com/beltoforion/muparser",
                        mu::ParserVersion.c_str()));
   libraries.append(dep("libTIFF", "http://www.libtiff.org/",

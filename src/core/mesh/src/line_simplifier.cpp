@@ -274,4 +274,4 @@ LineSimplifier::LineSimplifier(const std::vector<QPoint> &points,
   priorities = getPriorities(vertices, closedLoop);
 }
 
-} // namespace sme
+} // namespace sme::mesh

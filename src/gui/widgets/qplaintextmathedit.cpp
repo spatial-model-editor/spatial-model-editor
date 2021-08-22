@@ -154,7 +154,7 @@ void QPlainTextMathEdit::reset() {
   qPlainTextEdit_textChanged();
 }
 
-void QPlainTextMathEdit::addFunction(const sme::utils::Function &function) {
+void QPlainTextMathEdit::addFunction(const sme::common::Function &function) {
   SPDLOG_TRACE("adding function: {}", function.id);
   functions.push_back(function);
   SPDLOG_TRACE("  -> display name {}", function.name);
@@ -349,7 +349,7 @@ void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
   if (currentErrorMessage.isEmpty()) {
     // parse (but don't compile) symbolic expression
     SPDLOG_DEBUG("parsing '{}' with SymEngine backend", newExpr);
-    sym = sme::utils::Symbolic(newExpr, vars, consts, functions, false);
+    sym = sme::common::Symbolic(newExpr, vars, consts, functions, false);
     if (sym.isValid()) {
       expressionIsValid = true;
       currentErrorMessage = "";

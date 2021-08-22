@@ -120,7 +120,7 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
   options.dune.decrease = 0.5;
   options.dune.increase = 1.5;
   options.dune.maxDt = dt;
-  options.dune.minDt = dt*1e-5;
+  options.dune.minDt = dt * 1e-5;
 
   for (auto simulator : params.simulators) {
     fmt::print("\n# {} simulator\n", toString(simulator));
@@ -141,8 +141,8 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
       // stop when a run takes more than half of runtime_seconds_per_model
       // and use this last run for the benchmark
       QElapsedTimer time;
-      int iter {1};
-      int ln2iter {0};
+      int iter{1};
+      int ln2iter{0};
       long long elapsed_ms{0};
       while (elapsed_ms < params.seconds_per_benchmark * 500) {
         iter += iter;
@@ -155,14 +155,15 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
         }
         elapsed_ms = time.elapsed();
       }
-      double ms {static_cast<double>(elapsed_ms) / static_cast<double>(iter)};
+      double ms{static_cast<double>(elapsed_ms) / static_cast<double>(iter)};
       fmt::print("{:11.5f}\t2^{:<4}\t\t{}\n", ms, ln2iter, model);
     }
   }
 }
 
 int main(int argc, char *argv[]) {
-  fmt::print("# Spatial Model Editor v{}\n", utils::SPATIAL_MODEL_EDITOR_VERSION);
+  fmt::print("# Spatial Model Editor v{}\n",
+             common::SPATIAL_MODEL_EDITOR_VERSION);
   fmt::print("# Simulator benchmark code\n");
   auto benchmarkParams = parseArgs(argc, argv);
   printSimulatorBenchmarks(benchmarkParams);

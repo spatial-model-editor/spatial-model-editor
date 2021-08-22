@@ -46,11 +46,9 @@ std::vector<std::vector<QPointF>>
 getInteriorPixelPoints(const ModelGeometry *modelGeometry,
                        const ModelCompartments *modelCompartments);
 
-std::unique_ptr<mesh::Mesh>
-importParametricGeometryFromSBML(const libsbml::Model *model,
-                                 const ModelGeometry *modelGeometry,
-                                 const ModelCompartments *modelCompartments,
-                                 const Settings *annotation);
+std::unique_ptr<mesh::Mesh> importParametricGeometryFromSBML(
+    const libsbml::Model *model, const ModelGeometry *modelGeometry,
+    const ModelCompartments *modelCompartments, const Settings *annotation);
 
 void writeGeometryMeshToSBML(libsbml::Model *model, const mesh::Mesh *mesh,
                              const ModelCompartments &modelCompartments);

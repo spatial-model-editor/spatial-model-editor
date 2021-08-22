@@ -24,21 +24,22 @@ std::string countAndPrintSBMLDocErrors(const libsbml::SBMLDocument *doc) {
   const unsigned n{doc->getNumErrors(severity)};
   for (unsigned i = 0; i < n; ++i) {
     const auto *err{doc->getErrorWithSeverity(i, severity)};
-    if (err == nullptr){
-      SPDLOG_WARN("{} (libsbml getErrorWithSeverity returned a nullptr)", errors);
+    if (err == nullptr) {
+      SPDLOG_WARN("{} (libsbml getErrorWithSeverity returned a nullptr)",
+                  errors);
       errors = "Failed to read file: invalid or corrupted";
       return errors;
     }
     if (err->getErrorId() == 1221608) {
       // ignore this error for now:
       // https://github.com/spatial-model-editor/spatial-model-editor/issues/465
-      SPDLOG_WARN("Ignoring this libSBML error:\n[{}] [{}] line {}:{} {}", err->getErrorId(),
-                   err->getCategoryAsString(), err->getLine(), err->getColumn(),
-                   err->getMessage());
+      SPDLOG_WARN("Ignoring this libSBML error:\n[{}] [{}] line {}:{} {}",
+                  err->getErrorId(), err->getCategoryAsString(), err->getLine(),
+                  err->getColumn(), err->getMessage());
     } else {
       auto s{fmt::format("[{}] [{}] line {}:{} {}", err->getErrorId(),
-                  err->getCategoryAsString(), err->getLine(), err->getColumn(),
-                  err->getMessage())};
+                         err->getCategoryAsString(), err->getLine(),
+                         err->getColumn(), err->getMessage())};
       SPDLOG_ERROR("{}", s);
       errors.append(s);
       errors.append("\n");
@@ -80,4 +81,4 @@ std::string validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc) {
   return {};
 }
 
-} // namespace sme
+} // namespace sme::model

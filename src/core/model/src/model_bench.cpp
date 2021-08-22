@@ -3,8 +3,7 @@
 
 using namespace sme;
 
-template <typename T>
-static void model_Model(benchmark::State &state) {
+template <typename T> static void model_Model(benchmark::State &state) {
   T data;
   model::Model model;
   for (auto _ : state) {
@@ -13,8 +12,7 @@ static void model_Model(benchmark::State &state) {
   }
 }
 
-template <typename T>
-static void model_Model_getXml(benchmark::State &state) {
+template <typename T> static void model_Model_getXml(benchmark::State &state) {
   T data;
   model::Model model;
   model.importSBMLString(data.xml);

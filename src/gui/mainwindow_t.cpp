@@ -28,8 +28,9 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
     mwt.start();
     MainWindow w("dontexist.xml");
     w.show();
-    REQUIRE(mwt.getResult() == "Failed to load file dontexist.xml\n\n[2] "
-                               "[Operating system] line 1:1 File unreadable.\n\n");
+    REQUIRE(mwt.getResult() ==
+            "Failed to load file dontexist.xml\n\n[2] "
+            "[Operating system] line 1:1 File unreadable.\n\n");
   }
   SECTION("shortcut keys") {
     MainWindow w;

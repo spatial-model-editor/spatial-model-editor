@@ -80,10 +80,7 @@ try_compile(
 if(${SYMENGINE_LLVM})
   message(STATUS "Testing SymEngine LLVM & SBML support - found")
 else()
-  message(
-    WARNING
-      "Supplied SymEngine library appears to be missing LLVM and/or SBML support"
-  )
+  message(WARNING "SymEngine library is missing LLVM and/or SBML support")
   message(WARNING "${SYMENGINE_LLVM_ERROR_LOG}")
 endif()
 
@@ -98,10 +95,7 @@ try_compile(
 if(${SBML_SPATIAL})
   message(STATUS "Testing libSBML spatial extension support - found")
 else()
-  message(
-    WARNING
-      "Supplied libSBML library does not appear to be compiled with spatial extension support"
-  )
+  message(WARNING "libSBML library is missing spatial extension support")
   message(WARNING "${SBML_SPATIAL_ERROR_LOG}")
 endif()
 

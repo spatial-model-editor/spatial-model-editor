@@ -229,7 +229,7 @@ SCENARIO("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
       REQUIRE(mathEdit.getVariableMath().empty() == true);
       REQUIRE(mathEdit.getErrorMessage() == "function 'cse' not found");
       REQUIRE(mathEdit.mathIsValid() == false);
-      sme::utils::Function f;
+      sme::common::Function f;
       f.id = "cse";
       f.name = "cse";
       f.args = {"z"};

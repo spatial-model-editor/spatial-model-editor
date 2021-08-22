@@ -12,9 +12,10 @@ class DialogGeometryImage : public QDialog {
   Q_OBJECT
 
 public:
-  explicit DialogGeometryImage(const QImage &image, double pixelWidth, double pixelDepth,
-                           const sme::model::ModelUnits &modelUnits,
-                           QWidget *parent = nullptr);
+  explicit DialogGeometryImage(const QImage &image, double pixelWidth,
+                               double pixelDepth,
+                               const sme::model::ModelUnits &modelUnits,
+                               QWidget *parent = nullptr);
   ~DialogGeometryImage() override;
   [[nodiscard]] double getPixelWidth() const;
   [[nodiscard]] double getPixelDepth() const;

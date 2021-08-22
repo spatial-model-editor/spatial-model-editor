@@ -70,7 +70,7 @@ void DuneSim::initDuneSimCompartments(
           {compartmentName,
            compIndex,
            speciesIndices,
-           utils::QPointIndexer(imgSize, comp->getPixels()),
+           common::QPointIndexer(imgSize, comp->getPixels()),
            comp,
            {},
            {},
@@ -279,7 +279,7 @@ void DuneSim::updateSpeciesConcentrations() {
     std::size_t iTriangle{0};
     for (const auto e : elements(gridview)) {
       SPDLOG_TRACE("triangle {} ({})", iTriangle,
-                   utils::decltypeStr<decltype(e)>());
+                   common::decltypeStr<decltype(e)>());
       for (const auto &[ix, point] : comp.pixels[iTriangle]) {
         // evaluate DUNE grid function at this pixel location
         // convert pixel->global->local

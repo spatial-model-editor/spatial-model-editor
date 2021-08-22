@@ -37,7 +37,7 @@ SCENARIO("Model geometry",
     model::ModelGeometry mGeometry;
     model::ModelSpecies mSpecies;
     model::ModelReactions mReactions(doc->getModel(), &mMembranes);
-    utils::SmeFileContents smeFileContents;
+    common::SmeFileContents smeFileContents;
     mCompartments = model::ModelCompartments(
         doc->getModel(), &mMembranes, &mUnits, &smeFileContents.simulationData);
     mCompartments.setReactionsPtr(&mReactions);

@@ -19,9 +19,9 @@ SCENARIO("Analytic geometry", "[core/model/geometry_analytic][core/"
     const auto &img{s.getGeometry().getImage()};
     REQUIRE(img.colorCount() == 3);
     REQUIRE(img.size() == QSize(200, 200));
-    REQUIRE(img.pixel(100, 100) == utils::indexedColours()[0].rgb());
-    REQUIRE(img.pixel(80, 80) == utils::indexedColours()[1].rgb());
-    REQUIRE(img.pixel(30, 20) == utils::indexedColours()[2].rgb());
+    REQUIRE(img.pixel(100, 100) == common::indexedColours()[0].rgb());
+    REQUIRE(img.pixel(80, 80) == common::indexedColours()[1].rgb());
+    REQUIRE(img.pixel(30, 20) == common::indexedColours()[2].rgb());
   }
   GIVEN("SBML model with 3d analytic geometry") {
     auto s{getTestModel("analytic_3d")};
@@ -30,8 +30,8 @@ SCENARIO("Analytic geometry", "[core/model/geometry_analytic][core/"
     const auto &img{s.getGeometry().getImage()};
     REQUIRE(img.colorCount() == 3);
     REQUIRE(img.size() == QSize(200, 200));
-    REQUIRE(img.pixel(100, 100) == utils::indexedColours()[0].rgb());
-    REQUIRE(img.pixel(80, 80) == utils::indexedColours()[1].rgb());
-    REQUIRE(img.pixel(30, 20) == utils::indexedColours()[2].rgb());
+    REQUIRE(img.pixel(100, 100) == common::indexedColours()[0].rgb());
+    REQUIRE(img.pixel(80, 80) == common::indexedColours()[1].rgb());
+    REQUIRE(img.pixel(30, 20) == common::indexedColours()[2].rgb());
   }
 }

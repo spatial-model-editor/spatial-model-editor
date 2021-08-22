@@ -34,7 +34,7 @@ static void addParams(CLI::App &app, Params &params) {
 }
 
 static void addCallbacks(CLI::App &app) {
-  app.set_version_flag("-v,--version", utils::SPATIAL_MODEL_EDITOR_VERSION);
+  app.set_version_flag("-v,--version", common::SPATIAL_MODEL_EDITOR_VERSION);
   app.add_flag_callback(
          "-d,--dump-config",
          [&app]() {
@@ -54,7 +54,7 @@ static void addConfig(CLI::App &app) {
 Params setupCLI(CLI::App &app) {
   Params params;
   app.description({fmt::format("Spatial Model Editor CLI v{}",
-                               utils::SPATIAL_MODEL_EDITOR_VERSION)});
+                               common::SPATIAL_MODEL_EDITOR_VERSION)});
   addParams(app, params);
   addCallbacks(app);
   addConfig(app);

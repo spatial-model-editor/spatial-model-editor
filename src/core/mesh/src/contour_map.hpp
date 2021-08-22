@@ -2,17 +2,19 @@
 
 #pragma once
 
-#include "boundary.hpp"
 #include <QSize>
 #include <array>
 #include <opencv2/core/types.hpp>
 #include <vector>
 
-namespace sme {
-
-namespace mesh {
+namespace sme::mesh {
 
 using ContourIndices = std::array<int, 4>;
+
+struct Contours {
+  std::vector<std::vector<cv::Point>> compartmentEdges;
+  std::vector<std::vector<cv::Point>> domainEdges;
+};
 
 class ContourMap {
 private:
@@ -26,6 +28,4 @@ public:
   [[nodiscard]] bool isFixedPoint(const cv::Point &p) const;
 };
 
-} // namespace mesh
-
-} // namespace sme
+} // namespace sme::mesh

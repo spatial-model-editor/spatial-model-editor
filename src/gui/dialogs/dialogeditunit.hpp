@@ -1,8 +1,8 @@
 #pragma once
 
+#include "model_units.hpp"
 #include <QDialog>
 #include <memory>
-#include "model_units.hpp"
 
 namespace Ui {
 class DialogEditUnit;
@@ -12,7 +12,8 @@ class DialogEditUnit : public QDialog {
   Q_OBJECT
 
 public:
-  explicit DialogEditUnit(const sme::model::Unit &unit, const QString &unitType = {},
+  explicit DialogEditUnit(const sme::model::Unit &unit,
+                          const QString &unitType = {},
                           QWidget *parent = nullptr);
   ~DialogEditUnit();
   const sme::model::Unit &getUnit() const;

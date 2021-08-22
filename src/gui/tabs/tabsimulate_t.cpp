@@ -47,12 +47,10 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
 
   // change timesteps
   txtSimLength->setFocus();
-  sendKeyEvents(txtSimLength,
-                {"End", "Backspace", "Backspace", "Backspace",
-                 "Backspace", "Backspace", "9"});
-  sendKeyEvents(txtSimInterval,
-                {"End", "Backspace", "Backspace", "Backspace",
-                 "Backspace", "Backspace", "1"});
+  sendKeyEvents(txtSimLength, {"End", "Backspace", "Backspace", "Backspace",
+                               "Backspace", "Backspace", "9"});
+  sendKeyEvents(txtSimInterval, {"End", "Backspace", "Backspace", "Backspace",
+                                 "Backspace", "Backspace", "1"});
   REQUIRE(txtSimLength->text() == "0.029");
   REQUIRE(txtSimInterval->text() == "0.011");
 

@@ -44,7 +44,7 @@ public:
   template <typename Element, typename Domain>
   void evaluate(const Element &elem, const Domain &localPos,
                 typename Traits::RangeType &result) const {
-    if(c.empty()){
+    if (c.empty()) {
       // dummy species, just return 0 everywhere
       result = 0;
       return;

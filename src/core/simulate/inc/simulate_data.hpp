@@ -3,10 +3,10 @@
 #pragma once
 
 #include "simulate_options.hpp"
-#include <string>
-#include <vector>
 #include <cereal/cereal.hpp>
 #include <cereal/types/string.hpp>
+#include <string>
+#include <vector>
 
 namespace sme::simulate {
 
@@ -30,8 +30,8 @@ public:
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
     if (version == 0) {
-      ar(timePoints, concentration, avgMinMax,
-         concentrationMax, concPadding, xmlModel);
+      ar(timePoints, concentration, avgMinMax, concentrationMax, concPadding,
+         xmlModel);
     }
   }
 };

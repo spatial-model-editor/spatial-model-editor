@@ -7,10 +7,14 @@ SCENARIO("SimulateData",
          "[core/simulate/simulate][core/simulate_data][core][simulate_data]") {
   simulate::SimulationData data;
   data.timePoints = {0.0, 1.0};
-  data.concentration = {{{1.2, -0.881}, {1.0, -0.1}}, {{2.2, -2.881}, {3.0, -3.1}}};
-  data.avgMinMax.push_back({{{1.0, 2.0, 3.0}, {0.0, 0.1, 0.2}},{{1.0, 2.0, 3.0}, {0.0, 0.1, 0.2}}});
-  data.avgMinMax.push_back({{{3.0, 4.0, 5.0}, {5.0, 5.1, 6.2}},{{6.0, 12.0, 13.0}, {90.0, 90.1, 90.2}}});
-  data.concentrationMax = {{{1.0, -0.1}, {1.2, -2.1}}, {{3.0, -3.1}, {4.2, -4.1}}};
+  data.concentration = {{{1.2, -0.881}, {1.0, -0.1}},
+                        {{2.2, -2.881}, {3.0, -3.1}}};
+  data.avgMinMax.push_back(
+      {{{1.0, 2.0, 3.0}, {0.0, 0.1, 0.2}}, {{1.0, 2.0, 3.0}, {0.0, 0.1, 0.2}}});
+  data.avgMinMax.push_back({{{3.0, 4.0, 5.0}, {5.0, 5.1, 6.2}},
+                            {{6.0, 12.0, 13.0}, {90.0, 90.1, 90.2}}});
+  data.concentrationMax = {{{1.0, -0.1}, {1.2, -2.1}},
+                           {{3.0, -3.1}, {4.2, -4.1}}};
   data.concPadding = {0, 4};
   data.xmlModel = "sim model";
   REQUIRE(data.timePoints.size() == 2);

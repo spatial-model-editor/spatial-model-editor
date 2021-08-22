@@ -6,8 +6,8 @@
 #include "qlabelmousetracker.hpp"
 #include "ui_tabgeometry.h"
 #include <QInputDialog>
-#include <QStatusBar>
 #include <QMessageBox>
+#include <QStatusBar>
 #include <stdexcept>
 
 TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
@@ -127,7 +127,7 @@ void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
     // update display by simulating user click on listCompartments
     listCompartments_itemSelectionChanged();
     waitingForCompartmentChoice = false;
-    if(statusBar != nullptr) {
+    if (statusBar != nullptr) {
       statusBar->clearMessage();
     }
     QGuiApplication::restoreOverrideCursor();
@@ -191,7 +191,7 @@ void TabGeometry::btnChangeCompartment_clicked() {
   }
   SPDLOG_DEBUG("waiting for user to click on geometry image..");
   waitingForCompartmentChoice = true;
-  if(statusBar != nullptr) {
+  if (statusBar != nullptr) {
     statusBar->showMessage(
         "Please click on the desired location on the compartment geometry "
         "image...");
@@ -290,7 +290,7 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
 }
 
 void TabGeometry::lblCompShape_mouseOver(QPoint point) {
-  if(statusBar != nullptr) {
+  if (statusBar != nullptr) {
     statusBar->showMessage(model.getGeometry().getPhysicalPointAsString(point));
   }
 }

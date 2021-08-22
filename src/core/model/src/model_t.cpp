@@ -116,7 +116,7 @@ SCENARIO("SBML: import SBML doc without geometry",
     auto *sfgeom = dynamic_cast<libsbml::SampledFieldGeometry *>(
         geom->getGeometryDefinition(0));
     auto *sf = geom->getSampledField(sfgeom->getSampledField());
-    auto sfvals = utils::stringToVector<QRgb>(sf->getSamples());
+    auto sfvals = common::stringToVector<QRgb>(sf->getSamples());
     REQUIRE(sf->getNumSamples1() == 3);
     REQUIRE(sf->getNumSamples2() == 1);
     CAPTURE(sfvals[0]);
@@ -438,11 +438,11 @@ SCENARIO("SBML: import uint8 sampled field",
   const auto &img{s.getGeometry().getImage()};
   REQUIRE(img.colorCount() == 3);
   REQUIRE(s.getCompartments().getColour("c1") ==
-          utils::indexedColours()[0].rgb());
+          common::indexedColours()[0].rgb());
   REQUIRE(s.getCompartments().getColour("c2") ==
-          utils::indexedColours()[1].rgb());
+          common::indexedColours()[1].rgb());
   REQUIRE(s.getCompartments().getColour("c3") ==
-          utils::indexedColours()[2].rgb());
+          common::indexedColours()[2].rgb());
   // species A_c1 has initialAmount 11 -> converted to concentration
   REQUIRE(s.getSpecies().getInitialConcentration("A_c1") ==
           dbl_approx(11.0 / 5441000.0));

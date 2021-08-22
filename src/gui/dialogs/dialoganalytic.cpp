@@ -1,19 +1,20 @@
 #include "dialoganalytic.hpp"
 #include "logger.hpp"
 #include "model.hpp"
+#include "model_functions.hpp"
+#include "model_geometry.hpp"
+#include "model_parameters.hpp"
 #include "model_units.hpp"
 #include "ui_dialoganalytic.h"
 #include <QFileDialog>
 #include <QPushButton>
-#include "model_geometry.hpp"
-#include "model_parameters.hpp"
-#include "model_functions.hpp"
 
 DialogAnalytic::DialogAnalytic(
     const QString &analyticExpression,
     const sme::model::SpeciesGeometry &speciesGeometry,
     const sme::model::ModelParameters &modelParameters,
-    const sme::model::ModelFunctions &modelFunctions, bool invertYAxis, QWidget *parent)
+    const sme::model::ModelFunctions &modelFunctions, bool invertYAxis,
+    QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogAnalytic>()},
       points(speciesGeometry.compartmentPoints),
       width(speciesGeometry.pixelWidth), origin(speciesGeometry.physicalOrigin),
@@ -169,12 +170,13 @@ void DialogAnalytic::lblImage_mouseOver(QPoint point) {
     return;
   }
   auto physical = physicalPoint(point);
-  ui->lblConcentration->setText(QString("x: %1 %2, y: %3 %2, concentration: %4 %5")
-                                    .arg(physical.x())
-                                    .arg(lengthUnit)
-                                    .arg(physical.y())
-                                    .arg(concentration[*index])
-                                    .arg(concentrationUnit));
+  ui->lblConcentration->setText(
+      QString("x: %1 %2, y: %3 %2, concentration: %4 %5")
+          .arg(physical.x())
+          .arg(lengthUnit)
+          .arg(physical.y())
+          .arg(concentration[*index])
+          .arg(concentrationUnit));
 }
 
 void DialogAnalytic::btnExportImage_clicked() {

@@ -16,8 +16,7 @@ public:
   explicit DialogConcentrationImage(
       const std::vector<double> &concentrationArray,
       const sme::model::SpeciesGeometry &speciesGeometry,
-      bool invertYAxis = false,
-      QWidget *parent = nullptr);
+      bool invertYAxis = false, QWidget *parent = nullptr);
   ~DialogConcentrationImage() override;
   std::vector<double> getConcentrationArray() const;
 
@@ -34,7 +33,7 @@ private:
   QImage colourMaxConc;
   QImage colourMinConc;
   QImage img;
-  sme::utils::QPointIndexer qpi;
+  sme::common::QPointIndexer qpi;
   std::vector<double> concentration;
 
   QPointF physicalPoint(const QPoint &pixelPoint) const;

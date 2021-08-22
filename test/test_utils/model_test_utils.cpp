@@ -7,8 +7,9 @@ namespace sme::test {
 
 static std::string getXml(const QString &filename) {
   QFile f(filename);
-  if(!f.open(QIODevice::ReadOnly)){
-    throw std::runtime_error("sme::test::getXml() :: File" + filename.toStdString() + " not found");
+  if (!f.open(QIODevice::ReadOnly)) {
+    throw std::runtime_error("sme::test::getXml() :: File" +
+                             filename.toStdString() + " not found");
   }
   return f.readAll().toStdString();
 }
@@ -20,9 +21,9 @@ static model::Model getModel(const QString &filename) {
 }
 
 static std::unique_ptr<libsbml::SBMLDocument>
-getSbmlDoc(const QString &filename){
+getSbmlDoc(const QString &filename) {
   return std::unique_ptr<libsbml::SBMLDocument>{
-    libsbml::readSBMLFromString(getXml(filename).c_str())};
+      libsbml::readSBMLFromString(getXml(filename).c_str())};
 }
 
 model::Model getExampleModel(Mod exampleModel) {
@@ -50,14 +51,14 @@ model::Model getTestModel(const QString &filename) {
   return getModel(QString(":test/models/%1.xml").arg(filename));
 }
 
-std::unique_ptr<libsbml::SBMLDocument> getTestSbmlDoc(const QString &filename){
+std::unique_ptr<libsbml::SBMLDocument> getTestSbmlDoc(const QString &filename) {
   return getSbmlDoc(QString(":test/models/%1.xml").arg(filename));
 }
 
-std::unique_ptr<libsbml::SBMLDocument> toSbmlDoc(model::Model &model){
+std::unique_ptr<libsbml::SBMLDocument> toSbmlDoc(model::Model &model) {
   std::string xml{model.getXml().toStdString()};
   return std::unique_ptr<libsbml::SBMLDocument>{
-    libsbml::readSBMLFromString(xml.c_str())};
+      libsbml::readSBMLFromString(xml.c_str())};
 }
 
 } // namespace sme::test

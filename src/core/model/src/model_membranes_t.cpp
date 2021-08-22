@@ -1,6 +1,6 @@
-#include <QImage>
 #include "catch_wrapper.hpp"
 #include "model_membranes.hpp"
+#include <QImage>
 
 using namespace sme;
 

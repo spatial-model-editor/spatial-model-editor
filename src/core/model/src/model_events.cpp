@@ -287,12 +287,13 @@ bool ModelEvents::isParameter(const QString &id) const {
   return sbmlModel->getParameter(getVariable(id).toStdString()) != nullptr;
 }
 
-double ModelEvents::getValue(const QString &id) const{
+double ModelEvents::getValue(const QString &id) const {
   bool validDouble{false};
   auto expr{getExpression(id)};
   double val{expr.toDouble(&validDouble)};
-  if(!validDouble){
-    SPDLOG_WARN("Expression '{}' of event '{}' not a valid double", expr.toStdString(), id.toStdString());
+  if (!validDouble) {
+    SPDLOG_WARN("Expression '{}' of event '{}' not a valid double",
+                expr.toStdString(), id.toStdString());
   }
   return val;
 }

@@ -2,9 +2,9 @@
 
 #pragma once
 
+#include <QDoubleSpinBox>
 #include <QString>
 #include <QWidget>
-#include <QDoubleSpinBox>
 #include <memory>
 
 namespace Ui {
@@ -13,13 +13,13 @@ class TabReactions;
 
 namespace sme::model {
 class Model;
-} // namespace sme
+} // namespace sme::model
 
 class QLabelMouseTracker;
 class QTreeWidgetItem;
 
 class QDoubleSpinBoxNoScroll : public QDoubleSpinBox {
-Q_OBJECT
+  Q_OBJECT
 
 public:
   explicit QDoubleSpinBoxNoScroll(QWidget *parent = nullptr);

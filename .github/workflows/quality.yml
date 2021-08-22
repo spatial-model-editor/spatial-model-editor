@@ -11,6 +11,7 @@ env:
 
 jobs:
   quality:
+    name: ${{ matrix.script }}
     runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
@@ -44,3 +45,29 @@ jobs:
         run: ./ci/linux-install.sh 12
       - name: Run job script
         run: ./ci/${{ matrix.script }}.sh
+
+  format:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+      - name: set pyver for pre-commit cache
+        run: echo "pyver=$(python -VV | sha256sum | cut -d' ' -f1)" >> $GITHUB_ENV
+      - name: Cache pre-commit
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ env.pyver }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          restore-keys: pre-commit-${{ env.pyver }}-${{ hashFiles('.pre-commit-config.yaml') }}
+      - name: Run pre-commit script
+        run: ./ci/pre-commit.sh
+      - name: Commit any changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: Fix code formatting

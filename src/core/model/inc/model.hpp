@@ -57,7 +57,7 @@ struct SpeciesGeometry {
 class Model {
 private:
   std::unique_ptr<libsbml::SBMLDocument> doc;
-  std::unique_ptr<sme::utils::SmeFileContents> smeFileContents;
+  std::unique_ptr<sme::common::SmeFileContents> smeFileContents;
   std::unique_ptr<Settings> settings;
   bool isValid{false};
   QString errorMessage{};

@@ -76,8 +76,10 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     REQUIRE(listReactions->topLevelItem(3)->childCount() == 3);
     // same reaction selected as previously
     REQUIRE(listReactions->currentItem()->text(0) == "A to B conversion !");
-    REQUIRE(listReactions->currentItem()->parent()->text(0) == "Outside <-> Cell");
-    REQUIRE(model.getReactions().getLocation("A_B_conversion") == "c1_c2_membrane");
+    REQUIRE(listReactions->currentItem()->parent()->text(0) ==
+            "Outside <-> Cell");
+    REQUIRE(model.getReactions().getLocation("A_B_conversion") ==
+            "c1_c2_membrane");
     // change location back
     sendKeyEvents(cmbReactionLocation, {"Up"});
     REQUIRE(cmbReactionLocation->currentIndex() == 2);

@@ -19,29 +19,29 @@ static void createBinaryFile(const QString &filename) {
 SCENARIO("Serialization",
          "[core/common/serialization][core/common][core][serialization]") {
   GIVEN("Import nonexistent file") {
-    REQUIRE(utils::importSmeFile("idontexist.txt").xmlModel.empty());
+    REQUIRE(common::importSmeFile("idontexist.txt").xmlModel.empty());
   }
   GIVEN("Import invalid file") {
     std::ofstream fs("invalid.sme", std::ios::binary);
     double x{0.765};
     fs << x;
     fs.close();
-    REQUIRE(utils::importSmeFile("invalid.sme").xmlModel.empty());
+    REQUIRE(common::importSmeFile("invalid.sme").xmlModel.empty());
   }
   GIVEN("Import corrupted file (valid file with some randomly deleted bytes)") {
     createBinaryFile("brusselator-model-corrupted.sme");
-    REQUIRE(utils::importSmeFile("brusselator-model-corrupted.sme")
+    REQUIRE(common::importSmeFile("brusselator-model-corrupted.sme")
                 .xmlModel.empty());
   }
   GIVEN("Import truncated file (valid file with the last few bytes deleted)") {
     createBinaryFile("brusselator-model-truncated.sme");
-    REQUIRE(utils::importSmeFile("brusselator-model-truncated.sme")
-    .xmlModel.empty());
+    REQUIRE(common::importSmeFile("brusselator-model-truncated.sme")
+                .xmlModel.empty());
   }
   GIVEN("Valid v0 smefile (no SimulationSettings)") {
     // v0 smefile was used in spatial-model-editor 1.0.9
     createBinaryFile("very-simple-model-v0.sme");
-    auto contents{utils::importSmeFile("very-simple-model-v0.sme")};
+    auto contents{common::importSmeFile("very-simple-model-v0.sme")};
     REQUIRE(contents.xmlModel.size() == 134371);
     REQUIRE(contents.simulationData.xmlModel.size() == 541828);
     REQUIRE(contents.simulationData.timePoints.size() == 3);
@@ -61,7 +61,7 @@ SCENARIO("Serialization",
     // of spatial-model-editor between 1.0.9 and 1.1.0 releases
     sme::simulate::SimulationData data;
     createBinaryFile("very-simple-model-v1.sme");
-    auto contents{utils::importSmeFile("very-simple-model-v1.sme")};
+    auto contents{common::importSmeFile("very-simple-model-v1.sme")};
     REQUIRE(contents.simulationData.timePoints.size() == 4);
     REQUIRE(contents.simulationData.timePoints[0] == dbl_approx(0.00));
     REQUIRE(contents.simulationData.timePoints[1] == dbl_approx(0.05));
@@ -115,8 +115,8 @@ SCENARIO("Serialization",
     sme::model::Settings s{};
     s.simulationSettings.times = {{1, 0.3}, {2, 0.1}};
     s.simulationSettings.options.pixel.maxErr.rel = 0.02;
-    auto xml{utils::toXml(s)};
-    auto s2{utils::fromXml(xml)};
+    auto xml{common::toXml(s)};
+    auto s2{common::fromXml(xml)};
     REQUIRE(s2.simulationSettings.simulatorType ==
             s.simulationSettings.simulatorType);
     REQUIRE(s2.simulationSettings.times == s.simulationSettings.times);
@@ -134,8 +134,8 @@ SCENARIO("Serialization",
     sme::model::Settings s{};
     s.simulationSettings.times = {{1, 0.3}, {2, 0.1}};
     s.simulationSettings.options.pixel.maxErr.rel = 0.02;
-    auto xml{utils::toXml(s)};
-    auto s2{utils::fromXml(xml)};
+    auto xml{common::toXml(s)};
+    auto s2{common::fromXml(xml)};
     REQUIRE(s2.simulationSettings.times == s.simulationSettings.times);
     REQUIRE(s2.simulationSettings.simulatorType ==
             s.simulationSettings.simulatorType);

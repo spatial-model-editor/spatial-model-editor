@@ -312,4 +312,4 @@ double getVolOverL3(const Unit &lengthUnit, const Unit &volumeUnit) {
   return getV(volumeUnit) / getL3(lengthUnit);
 }
 
-} // namespace sme
+} // namespace sme::model

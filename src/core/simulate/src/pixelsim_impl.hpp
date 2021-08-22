@@ -37,7 +37,7 @@ public:
 class ReacEval {
 private:
   // symengine reaction expression
-  utils::Symbolic sym;
+  common::Symbolic sym;
 
 public:
   ReacEval() = default;

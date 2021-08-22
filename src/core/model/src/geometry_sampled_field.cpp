@@ -68,7 +68,7 @@ static bool allSampledValuesSet(
 }
 
 static bool valuesAreAllQRgb(const std::vector<QRgb> &values) {
-  return qAlpha(utils::min(values)) == 255;
+  return qAlpha(common::min(values)) == 255;
 }
 
 static bool isNativeSampledFieldFormat(
@@ -81,7 +81,7 @@ static bool isNativeSampledFieldFormat(
   if (!allSampledValuesSet(sampledVolumes)) {
     return false;
   }
-  if (auto values = utils::stringToVector<QRgb>(sampledField->getSamples());
+  if (auto values = common::stringToVector<QRgb>(sampledField->getSamples());
       !valuesAreAllQRgb(values)) {
     return false;
   }
@@ -103,7 +103,7 @@ static std::vector<QRgb> setImagePixelsNative(
     const std::vector<const libsbml::SampledVolume *> &sampledVolumes) {
   std::vector<QRgb> colours;
   colours.reserve(sampledVolumes.size());
-  auto values = utils::stringToVector<QRgb>(sampledField->getSamples());
+  auto values = common::stringToVector<QRgb>(sampledField->getSamples());
   SPDLOG_DEBUG("Importing sampled field of {} samples of type QRgb",
                values.size());
   if (static_cast<int>(values.size()) != sampledField->getSamplesLength()) {
@@ -158,9 +158,9 @@ static std::vector<QRgb> setImagePixels(
     const std::vector<const libsbml::SampledVolume *> &sampledVolumes) {
   std::vector<QRgb> colours(sampledVolumes.size(), 0);
   img.fill(qRgb(0, 0, 0));
-  auto values = utils::stringToVector<T>(sampledField->getSamples());
+  auto values = common::stringToVector<T>(sampledField->getSamples());
   SPDLOG_DEBUG("Importing sampled field of {} samples of type {}",
-               values.size(), utils::decltypeStr<T>());
+               values.size(), common::decltypeStr<T>());
   if (static_cast<int>(values.size()) != sampledField->getSamplesLength()) {
     SPDLOG_WARN("Number of samples {} doesn't match SamplesLength {}",
                 values.size(), sampledField->getSamplesLength());
@@ -170,7 +170,7 @@ static std::vector<QRgb> setImagePixels(
   for (const auto *sampledVolume : sampledVolumes) {
     auto matches = getMatchingSampledValues(values, sampledVolume);
     if (std::find(matches.cbegin(), matches.cend(), true) != matches.cend()) {
-      auto col = utils::indexedColours()[iCol].rgb();
+      auto col = common::indexedColours()[iCol].rgb();
       SPDLOG_DEBUG("  {}/{} -> colour {:x}", sampledVolume->getId(),
                    sampledVolume->getDomainType(), col);
       setMatchingPixelsToColour(img, matches, col);
@@ -268,7 +268,7 @@ void exportSampledFieldGeometry(libsbml::Geometry *geom,
           compartmentImage.pixel(x, compartmentImage.height() - 1 - y));
     }
   }
-  sf->setSamples(utils::vectorToString(samples));
+  sf->setSamples(common::vectorToString(samples));
   SPDLOG_INFO("SampledField '{}': assigned {}x{} array of total length {}",
               sf->getId(), sf->getNumSamples1(), sf->getNumSamples2(),
               sf->getSamplesLength());

@@ -60,10 +60,10 @@ void pybindModule(pybind11::module &m) {
                - Outside <-> Cell
                - Cell <-> Nucleus
         )");
-  m.attr("__version__") = utils::SPATIAL_MODEL_EDITOR_VERSION;
+  m.attr("__version__") = common::SPATIAL_MODEL_EDITOR_VERSION;
 }
 
-Model openFile(const std::string &filename) { return Model(filename);}
+Model openFile(const std::string &filename) { return Model(filename); }
 
 Model openSbmlFile(const std::string &filename) { return Model(filename); }
 

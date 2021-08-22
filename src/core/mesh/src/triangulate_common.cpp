@@ -5,8 +5,7 @@
 
 namespace sme::mesh {
 
-std::size_t getOrInsertFPIndex(const QPoint &p,
-                                      std::vector<QPoint> &fps) {
+std::size_t getOrInsertFPIndex(const QPoint &p, std::vector<QPoint> &fps) {
   // return index of item in points that matches p
   SPDLOG_TRACE("looking for point ({}, {})", p.x(), p.y());
   for (std::size_t i = 0; i < fps.size(); ++i) {
@@ -102,4 +101,4 @@ TriangulateBoundaries::TriangulateBoundaries(
   }
 }
 
-} // namespace sme
+} // namespace sme::mesh

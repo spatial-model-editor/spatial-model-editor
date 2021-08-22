@@ -15,9 +15,7 @@
 class QSize;
 class QPoint;
 
-namespace sme {
-
-namespace utils {
+namespace sme::common {
 
 using TiffDataType = uint16_t;
 
@@ -43,6 +41,4 @@ public:
   [[nodiscard]] const QString &getErrorMessage() const;
 };
 
-} // namespace utils
-
-} // namespace sme
+} // namespace sme::common

@@ -26,8 +26,8 @@ private:
   const std::unique_ptr<Ui::DialogExport> ui;
   const QVector<QImage> &imgs;
   const PlotWrapper *plot;
-  sme::model::Model& m;
-  const sme::simulate::Simulation& sim;
+  sme::model::Model &m;
+  const sme::simulate::Simulation &sim;
 
   void radios_toggled(bool checked);
   void doExport();

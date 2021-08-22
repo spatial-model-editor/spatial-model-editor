@@ -1,8 +1,8 @@
 #include "catch_wrapper.hpp"
 #include "math_test_utils.hpp"
 #include "model.hpp"
-#include "pde.hpp"
 #include "model_test_utils.hpp"
+#include "pde.hpp"
 
 using namespace sme;
 using namespace sme::test;

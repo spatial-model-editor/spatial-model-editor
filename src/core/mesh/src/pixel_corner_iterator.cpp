@@ -75,4 +75,4 @@ PixelCornerIterator &PixelCornerIterator::operator++() {
   return *this;
 }
 
-} // namespace sme
+} // namespace sme::mesh

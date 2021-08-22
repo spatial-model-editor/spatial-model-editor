@@ -1,15 +1,16 @@
-#include "mesh.hpp"
 #include "bench.hpp"
+#include "mesh.hpp"
 
 template <typename T> static void mesh_Mesh(benchmark::State &state) {
   T data;
   for (auto _ : state) {
-    auto m{sme::mesh::Mesh(data.img, {}, data.maxTriangleArea, data.pixelWidth, data.origin,
-                      data.colours)};
+    auto m{sme::mesh::Mesh(data.img, {}, data.maxTriangleArea, data.pixelWidth,
+                           data.origin, data.colours)};
   }
 }
 
-template <typename T> static void mesh_Mesh_getMeshImages(benchmark::State &state) {
+template <typename T>
+static void mesh_Mesh_getMeshImages(benchmark::State &state) {
   T data;
   QImage img1;
   QImage img2;
@@ -18,7 +19,8 @@ template <typename T> static void mesh_Mesh_getMeshImages(benchmark::State &stat
   }
 }
 
-template <typename T> static void mesh_Mesh_getBoundariesImages(benchmark::State &state) {
+template <typename T>
+static void mesh_Mesh_getBoundariesImages(benchmark::State &state) {
   T data;
   QImage img1;
   QImage img2;

@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 
-namespace sme::utils {
+namespace sme::common {
 
 // divide given expression by a variable
 std::string symbolicDivide(const std::string &expr, const std::string &var);
@@ -78,4 +78,4 @@ public:
   [[nodiscard]] const std::string &getErrorMessage() const;
 };
 
-} // namespace sme::utils
+} // namespace sme::common

@@ -1,8 +1,8 @@
 #include "catch_wrapper.hpp"
 #include "duneconverter.hpp"
 #include "math_test_utils.hpp"
-#include "model_test_utils.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 
 using namespace sme;
 using namespace sme::test;

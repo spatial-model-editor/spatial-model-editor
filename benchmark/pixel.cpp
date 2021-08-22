@@ -134,7 +134,7 @@ static void printFixedTimestepPixel(const PixelParams &params) {
 
 int main(int argc, char *argv[]) {
   fmt::print("# Spatial Model Editor v{}\n",
-             utils::SPATIAL_MODEL_EDITOR_VERSION);
+             common::SPATIAL_MODEL_EDITOR_VERSION);
   fmt::print("# Pixel integrator test code\n");
   auto params = parseArgs(argc, argv);
   printFixedTimestepPixel(params);

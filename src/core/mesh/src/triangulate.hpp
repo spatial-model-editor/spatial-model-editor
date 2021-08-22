@@ -1,14 +1,13 @@
 #pragma once
 
 #include "boundary.hpp"
+#include "mesh_types.hpp"
 #include <QPointF>
 #include <array>
 #include <cstddef>
 #include <vector>
 
 namespace sme::mesh {
-
-using TriangulateTriangleIndex = std::array<std::size_t, 3>;
 
 /**
  * @brief Triangulate a set of boundary lines
