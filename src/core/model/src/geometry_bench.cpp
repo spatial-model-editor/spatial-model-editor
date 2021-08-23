@@ -4,6 +4,15 @@
 using namespace sme;
 
 template <typename T>
+static void geometry_Compartment_zero(benchmark::State &state) {
+  T data;
+  geometry::Compartment compartment;
+  for (auto _ : state) {
+    compartment = geometry::Compartment("id", data.img, 0);
+  }
+}
+
+template <typename T>
 static void geometry_Compartment(benchmark::State &state) {
   T data;
   geometry::Compartment compartment;
@@ -46,6 +55,7 @@ static void geometry_Field_getConcentrationImageArray(benchmark::State &state) {
   }
 }
 
+SME_BENCHMARK(geometry_Compartment_zero);
 SME_BENCHMARK(geometry_Compartment);
 SME_BENCHMARK(geometry_Membrane);
 SME_BENCHMARK(geometry_Field);

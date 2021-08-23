@@ -101,7 +101,9 @@ Compartment::Compartment(std::string compId, const QImage &img, QRgb col)
 #endif
 
   // for pixels outside compartment, find nearest pixel in compartment
-  fillMissingByDilation(arrayPoints, img.width(), img.height(), invalidIndex);
+  if (!ix.empty()) {
+    fillMissingByDilation(arrayPoints, img.width(), img.height(), invalidIndex);
+  }
 
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
   saveDebuggingIndicesImage(arrayPoints, img.size(), ixIndex,
