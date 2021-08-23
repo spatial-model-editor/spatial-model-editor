@@ -247,16 +247,6 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   exportSampledFieldGeometry(geom, image);
 }
 
-void ModelGeometry::importParametricGeometry(const libsbml::Model *model,
-                                             const Settings *settings) {
-  auto importedMesh = importParametricGeometryFromSBML(
-      model, this, modelCompartments, settings);
-  if (importedMesh != nullptr) {
-    hasUnsavedChanges = true;
-    mesh = std::move(importedMesh);
-  }
-}
-
 void ModelGeometry::importSampledFieldGeometry(const QString &filename) {
   std::unique_ptr<libsbml::SBMLDocument> doc{
       libsbml::readSBMLFromFile(filename.toStdString().c_str())};
@@ -301,8 +291,9 @@ void ModelGeometry::updateMesh() {
   hasUnsavedChanges = true;
   const auto &colours{modelCompartments->getColours()};
   const auto &ids{modelCompartments->getIds()};
+  const auto &meshParams{sbmlAnnotation->meshParameters};
   mesh = std::make_unique<mesh::Mesh>(
-      image, std::vector<std::size_t>{}, std::vector<std::size_t>{}, pixelWidth,
+      image, meshParams.maxPoints, meshParams.maxAreas, pixelWidth,
       physicalOrigin, common::toStdVec(colours));
   for (int i = 0; i < ids.size(); ++i) {
     modelCompartments->setInteriorPoints(
