@@ -11,9 +11,6 @@
 #include <algorithm>
 #include <cmath>
 #include <future>
-#include <sbml/SBMLDocument.h>
-#include <sbml/SBMLReader.h>
-#include <sbml/SBMLWriter.h>
 
 using namespace sme;
 using namespace sme::test;
@@ -32,7 +29,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   img.setPixel(0, 1, col2);
   img.setPixel(0, 2, col3);
   img.save("tmp.bmp");
-  s.getGeometry().importGeometryFromImage(QImage("tmp.bmp"));
+  s.getGeometry().importGeometryFromImage(QImage("tmp.bmp"), false);
   s.getGeometry().setPixelWidth(1.0);
   s.getCompartments().setColour("c1", col1);
   s.getCompartments().setColour("c2", col2);

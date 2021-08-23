@@ -19,7 +19,8 @@ public:
   ~DialogGeometryImage() override;
   [[nodiscard]] double getPixelWidth() const;
   [[nodiscard]] double getPixelDepth() const;
-  [[nodiscard]] bool imageAltered() const;
+  [[nodiscard]] bool imageSizeAltered() const;
+  [[nodiscard]] bool imageColoursAltered() const;
   [[nodiscard]] const QImage &getAlteredImage() const;
 
 private:

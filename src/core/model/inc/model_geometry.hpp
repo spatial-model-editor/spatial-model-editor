@@ -60,7 +60,7 @@ public:
   void importParametricGeometry(const libsbml::Model *model,
                                 const Settings *settings);
   void importSampledFieldGeometry(const QString &filename);
-  void importGeometryFromImage(const QImage &img);
+  void importGeometryFromImage(const QImage &img, bool keepColourAssignments);
   void updateMesh();
   void clear();
   [[nodiscard]] int getNumDimensions() const;

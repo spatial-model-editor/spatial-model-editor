@@ -263,23 +263,30 @@ void ModelGeometry::importSampledFieldGeometry(const QString &filename) {
   importSampledFieldGeometry(doc->getModel());
 }
 
-void ModelGeometry::importGeometryFromImage(const QImage &img) {
+void ModelGeometry::importGeometryFromImage(const QImage &img,
+                                            bool keepColourAssignments) {
   hasUnsavedChanges = true;
-  for (const auto &id : modelCompartments->getIds()) {
+  const auto &ids{modelCompartments->getIds()};
+  auto oldColours{modelCompartments->getColours()};
+  for (const auto &id : ids) {
     modelCompartments->setColour(id, 0);
   }
-  constexpr auto flagNoDither = Qt::AvoidDither | Qt::ThresholdDither |
-                                Qt::ThresholdAlphaDither |
-                                Qt::NoOpaqueDetection;
-  auto imgNoAlpha = img;
+  constexpr auto flagNoDither{Qt::AvoidDither | Qt::ThresholdDither |
+                              Qt::ThresholdAlphaDither | Qt::NoOpaqueDetection};
+  auto imgNoAlpha{img};
   if (img.hasAlphaChannel()) {
     SPDLOG_WARN("ignoring alpha channel");
     imgNoAlpha = img.convertToFormat(QImage::Format_RGB32, flagNoDither);
   }
   image = imgNoAlpha.convertToFormat(QImage::Format_Indexed8, flagNoDither);
   modelMembranes->updateCompartmentImage(image);
-  auto *geom = getOrCreateGeometry(sbmlModel);
+  auto *geom{getOrCreateGeometry(sbmlModel)};
   exportSampledFieldGeometry(geom, image);
+  if (keepColourAssignments) {
+    for (int i = 0; i < ids.size(); ++i) {
+      modelCompartments->setColour(ids[i], oldColours[i]);
+    }
+  }
   hasImage = true;
 }
 

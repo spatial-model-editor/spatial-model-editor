@@ -101,7 +101,7 @@ SCENARIO("SBML: import SBML doc without geometry",
   WHEN("import geometry & assign compartments") {
     // import geometry image & assign compartments to colours
     s.getGeometry().importGeometryFromImage(
-        QImage(":/geometry/single-pixels-3x1.png"));
+        QImage(":/geometry/single-pixels-3x1.png"), false);
     s.getCompartments().setColour("compartment0", 0xffaaaaaa);
     s.getCompartments().setColour("compartment1", 0xff525252);
     // export it again
@@ -276,7 +276,7 @@ SCENARIO("SBML: import SBML level 2 document",
 
   // import geometry image & assign compartments to colours
   s.getGeometry().importGeometryFromImage(
-      QImage(":/geometry/single-pixels-3x1.png"));
+      QImage(":/geometry/single-pixels-3x1.png"), false);
   s.getCompartments().setColour("compartment0", 0xffaaaaaa);
   s.getCompartments().setColour("compartment1", 0xff525252);
 
@@ -311,9 +311,7 @@ SCENARIO("SBML: import SBML level 2 document",
     WHEN("exportSBMLFile called") {
       THEN("exported file is a SBML level (3,2) document with spatial "
            "extension enabled & required") {
-        s.exportSBMLFile("export.xml");
-        std::unique_ptr<libsbml::SBMLDocument> doc(
-            libsbml::readSBMLFromFile("export.xml"));
+        auto doc{toSbmlDoc(s)};
         REQUIRE(doc->getLevel() == 3);
         REQUIRE(doc->getVersion() == 2);
         REQUIRE(doc->getPackageRequired("spatial") == true);
@@ -382,7 +380,7 @@ SCENARIO("SBML: create new model, import geometry from image",
     QRgb col = QColor(12, 243, 154).rgba();
     img.setPixel(0, 0, col);
     img.save("tmp.png");
-    s.getGeometry().importGeometryFromImage(QImage("tmp.png"));
+    s.getGeometry().importGeometryFromImage(QImage("tmp.png"), false);
     REQUIRE(s.getIsValid() == true);
     REQUIRE(s.getErrorMessage().isEmpty());
     REQUIRE(s.getGeometry().getHasImage() == true);
@@ -581,7 +579,7 @@ SCENARIO("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
       QRgb col = QColor(144, 97, 193).rgba();
       REQUIRE(img.pixel(50, 50) == col);
       img.save("tmp.png");
-      s.getGeometry().importGeometryFromImage(QImage("tmp.png"));
+      s.getGeometry().importGeometryFromImage(QImage("tmp.png"), false);
       s.getCompartments().setColour("comp", col);
       THEN("getCompartmentImage returns image") {
         REQUIRE(s.getGeometry().getImage().size() == QSize(100, 100));
@@ -948,7 +946,7 @@ SCENARIO("SBML: import multi-compartment SBML doc without spatial geometry",
                 "Henri_Michaelis_Menten__irreversible(A, Km, V)"));
   REQUIRE(reactions.getLocation("ex") == "");
   REQUIRE(symEq(reactions.getRateExpression("ex"), "k1 * D"));
-  geometry.importGeometryFromImage(QImage(":test/geometry/cell.png"));
+  geometry.importGeometryFromImage(QImage(":test/geometry/cell.png"), false);
   auto colours{geometry.getImage().colorTable()};
   REQUIRE(colours.size() == 4);
   // assign each compartment to a colour region in the image

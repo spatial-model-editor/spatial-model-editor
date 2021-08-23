@@ -85,9 +85,9 @@ double DialogGeometryImage::getPixelWidth() const { return pixelModelUnits; }
 
 double DialogGeometryImage::getPixelDepth() const { return depthModelUnits; }
 
-bool DialogGeometryImage::imageAltered() const {
-  return alteredSize || alteredColours;
-}
+bool DialogGeometryImage::imageSizeAltered() const { return alteredSize; }
+
+bool DialogGeometryImage::imageColoursAltered() const { return alteredColours; }
 
 const QImage &DialogGeometryImage::getAlteredImage() const {
   return ui->lblImage->getImage();

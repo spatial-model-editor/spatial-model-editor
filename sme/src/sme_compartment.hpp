@@ -23,6 +23,7 @@ private:
 public:
   Compartment() = default;
   explicit Compartment(model::Model *sbmlDocWrapper, const std::string &sId);
+  void updateMask();
   [[nodiscard]] std::string getName() const;
   void setName(const std::string &name);
   std::vector<Species> species;

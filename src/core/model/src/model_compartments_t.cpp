@@ -2,13 +2,7 @@
 #include "model.hpp"
 #include "model_compartments.hpp"
 #include "model_test_utils.hpp"
-#include <QFile>
-#include <QImage>
 #include <memory>
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 using namespace sme;
 using namespace sme::test;
@@ -310,5 +304,48 @@ SCENARIO("SBML compartments",
     REQUIRE(compartments.getIds().size() == 1);
     compartments.remove("c");
     REQUIRE(compartments.getIds().size() == 0);
+  }
+  GIVEN("Setting invalid compartment colour is a no-op") {
+    auto model{getExampleModel(Mod::VerySimpleModel)};
+    auto &compartments{model.getCompartments()};
+    REQUIRE(compartments.getIds().size() == 3);
+    REQUIRE(compartments.getIds()[0] == "c1");
+    REQUIRE(compartments.getIds()[1] == "c2");
+    REQUIRE(compartments.getIds()[2] == "c3");
+    REQUIRE(compartments.getHasUnsavedChanges() == false);
+    QRgb c1{qRgb(0, 2, 0)};
+    QRgb c2{qRgb(144, 97, 193)};
+    QRgb c3{qRgb(197, 133, 96)};
+    QRgb cInvalid{qRgb(1, 2, 3)};
+    auto cols{model.getCompartments().getColours()};
+    REQUIRE(cols.size() == 3);
+    REQUIRE(cols[0] == c1);
+    REQUIRE(cols[1] == c2);
+    REQUIRE(cols[2] == c3);
+    // invalid id, valid colour
+    compartments.setColour("notme", c3);
+    REQUIRE(compartments.getHasUnsavedChanges() == false);
+    REQUIRE(compartments.getColours() == cols);
+    // invalid id, invalid colour
+    compartments.setColour("notme", c3);
+    REQUIRE(compartments.getHasUnsavedChanges() == false);
+    REQUIRE(compartments.getColours() == cols);
+    // valid id, invalid colour
+    compartments.setColour("c1", cInvalid);
+    REQUIRE(compartments.getHasUnsavedChanges() == false);
+    REQUIRE(compartments.getColours() == cols);
+    // valid id, valid colour
+    compartments.setColour("c1", c3);
+    REQUIRE(compartments.getHasUnsavedChanges() == true);
+    REQUIRE(compartments.getColour("c1") == c3);
+    REQUIRE(compartments.getColour("c2") == c2);
+    REQUIRE(compartments.getColour("c3") == 0);
+    // valid id, invalid colour
+    compartments.setHasUnsavedChanges(false);
+    compartments.setColour("c3", cInvalid);
+    REQUIRE(compartments.getHasUnsavedChanges() == false);
+    REQUIRE(compartments.getColour("c1") == c3);
+    REQUIRE(compartments.getColour("c2") == c2);
+    REQUIRE(compartments.getColour("c3") == 0);
   }
 }

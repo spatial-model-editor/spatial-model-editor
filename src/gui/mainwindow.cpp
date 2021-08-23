@@ -442,7 +442,7 @@ void MainWindow::menuExample_geometry_image_triggered(const QAction *action) {
 void MainWindow::importGeometryImage(const QImage &image) {
   QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   tabSimulate->reset();
-  model.getGeometry().importGeometryFromImage(image);
+  model.getGeometry().importGeometryFromImage(image, false);
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   // set default pixel width in case user doesn't set image physical size
@@ -480,16 +480,18 @@ void MainWindow::actionEdit_geometry_image_triggered() {
       model.getGeometry().getPixelDepth(), model.getUnits());
   if (dialog.exec() == QDialog::Accepted) {
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    double pixelDepth = dialog.getPixelDepth();
+    double pixelDepth{dialog.getPixelDepth()};
     SPDLOG_INFO("Set new pixel depth = {}", pixelDepth);
     model.getGeometry().setPixelDepth(pixelDepth);
-    double pixelWidth = dialog.getPixelWidth();
+    double pixelWidth{dialog.getPixelWidth()};
     SPDLOG_INFO("Set new pixel width = {}", pixelWidth);
     model.getGeometry().setPixelWidth(pixelWidth);
     tabSimulate->reset();
-    if (dialog.imageAltered()) {
+    if (dialog.imageSizeAltered() || dialog.imageColoursAltered()) {
       SPDLOG_INFO("Importing altered geometry image");
-      model.getGeometry().importGeometryFromImage(dialog.getAlteredImage());
+      bool keepColourAssignments{!dialog.imageColoursAltered()};
+      model.getGeometry().importGeometryFromImage(dialog.getAlteredImage(),
+                                                  keepColourAssignments);
       ui->tabMain->setCurrentIndex(0);
       tabMain_currentChanged(0);
     }
