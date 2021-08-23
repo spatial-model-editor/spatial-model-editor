@@ -57,8 +57,6 @@ public:
                          ModelMembranes *membranes, const ModelUnits *units,
                          Settings *annotation);
   void importSampledFieldGeometry(const libsbml::Model *model);
-  void importParametricGeometry(const libsbml::Model *model,
-                                const Settings *settings);
   void importSampledFieldGeometry(const QString &filename);
   void importGeometryFromImage(const QImage &img, bool keepColourAssignments);
   void updateMesh();

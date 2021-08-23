@@ -7,6 +7,7 @@
 ### Fixed
 - python interface: bug where compartment geometry mask was not updated after geometry image changed [#630](https://github.com/spatial-model-editor/spatial-model-editor/issues/630)
 - slow loading of models with large geometry images [#632](https://github.com/spatial-model-editor/spatial-model-editor/issues/632)
+- avoid constructing mesh twice on model load [#597](https://github.com/spatial-model-editor/spatial-model-editor/issues/597)
 
 ## [1.1.4] - 2021-08-17
 ### Added

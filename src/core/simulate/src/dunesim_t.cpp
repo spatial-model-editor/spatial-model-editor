@@ -6,9 +6,9 @@
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO(
-    "DuneSim: empty compartments",
-    "[core/simulate/dunesim][core/simulate][core][simulate][dunesim][dune]") {
+SCENARIO("DuneSim: empty compartments",
+         "[core/simulate/dunesim][core/"
+         "simulate][core][simulate][dunesim][dune]") {
   WHEN("Model has no species") {
     auto m{getExampleModel(Mod::ABtoC)};
     for (const auto &speciesId : m.getSpecies().getIds("comp")) {
@@ -31,6 +31,13 @@ SCENARIO(
     // re-assign compartment colour to generate default boundaries & mesh
     m.getCompartments().setColour("c1", col1);
     std::vector<std::string> comps{"c1", "c2", "c3"};
+    auto maxPoints{m.getGeometry().getMesh()->getBoundaryMaxPoints()};
+    auto maxAreas{m.getGeometry().getMesh()->getCompartmentMaxTriangleArea()};
+    // ensure max triangle areas for compartment that we will later remove don't
+    // introduce any steiner points
+    m.getGeometry().getMesh()->setCompartmentMaxTriangleArea(2, 9999);
+    REQUIRE(maxPoints.size() == 3);
+    REQUIRE(maxAreas.size() == 3);
     simulate::DuneSim duneSim(m, comps);
     for (std::size_t i = 0; i < 2; ++i) {
       duneSim.run(0.05, 100e3);
@@ -44,6 +51,14 @@ SCENARIO(
     m.getCompartments().remove("c3");
     m.getCompartments().setColour("c1", col1);
     m.getCompartments().setColour("c2", col2);
+    REQUIRE(m.getGeometry().getMesh()->getBoundaryMaxPoints().size() == 3);
+    REQUIRE(m.getGeometry().getMesh()->getCompartmentMaxTriangleArea().size() ==
+            2);
+    m.getGeometry().getMesh()->setBoundaryMaxPoints(0, maxPoints[0]);
+    m.getGeometry().getMesh()->setBoundaryMaxPoints(1, maxPoints[1]);
+    m.getGeometry().getMesh()->setBoundaryMaxPoints(2, maxPoints[2]);
+    m.getGeometry().getMesh()->setCompartmentMaxTriangleArea(0, maxAreas[0]);
+    m.getGeometry().getMesh()->setCompartmentMaxTriangleArea(1, maxAreas[1]);
     comps.pop_back();
     simulate::DuneSim newDuneSim(m, comps);
     for (std::size_t i = 0; i < 2; ++i) {
@@ -63,7 +78,7 @@ SCENARIO(
       }
       CAPTURE(sum);
       CAPTURE(diff);
-      REQUIRE(diff / sum < 1e-8);
+      REQUIRE(diff / sum < 1e-10);
     }
   }
 }

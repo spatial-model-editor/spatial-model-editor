@@ -71,7 +71,6 @@ void Model::initModelData() {
       settings.get());
   modelCompartments->setGeometryPtr(modelGeometry.get());
   modelGeometry->importSampledFieldGeometry(model);
-  modelGeometry->importParametricGeometry(model, settings.get());
   modelParameters = std::make_unique<ModelParameters>(model);
   modelSpecies = std::make_unique<ModelSpecies>(
       model, modelCompartments.get(), modelGeometry.get(),
