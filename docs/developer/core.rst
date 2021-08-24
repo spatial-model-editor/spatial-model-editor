@@ -53,7 +53,7 @@ Simulating the model, either with Pixel or dune-copasi.
 
 .. _core-common:
 
-``sme::utils``
+``sme::common``
 --------------
 
 Symbolic math, TIFF import/export, other utility functions.

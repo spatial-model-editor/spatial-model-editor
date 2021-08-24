@@ -26,7 +26,7 @@ TriangulateBoundaries::TriangulateBoundaries(
     const std::vector<Boundary> &inputBoundaries,
     const std::vector<std::vector<QPointF>> &interiorPoints,
     const std::vector<std::size_t> &maxTriangleAreas) {
-  std::size_t nPointsUpperBound = 0;
+  std::size_t nPointsUpperBound{0};
   for (const auto &boundary : inputBoundaries) {
     nPointsUpperBound += boundary.getPoints().size();
   }
@@ -47,7 +47,7 @@ TriangulateBoundaries::TriangulateBoundaries(
 
   // for each segment in each boundary line, add the QPoints if not already
   // present, and add the pair of point indices to the list of segment indices
-  std::size_t currentIndex = vertices.size() - 1;
+  std::size_t currentIndex{vertices.size() - 1};
   for (const auto &boundary : inputBoundaries) {
     SPDLOG_TRACE("{}-point boundary", boundary.getPoints().size());
     SPDLOG_TRACE("  - loop: {}", boundary.isLoop());
