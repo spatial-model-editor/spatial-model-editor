@@ -11,15 +11,12 @@ ContourMap
 
 .. doxygenclass:: sme::mesh::ContourMap
 
+.. doxygenstruct:: sme::mesh::Contours
+
 getInteriorPoints
 -----------------
 
 .. doxygenfunction:: sme::mesh::getInteriorPoints
-
-PixelCornerIterator
--------------------
-
-.. doxygenclass:: sme::mesh::PixelCornerIterator
 
 Line Simplifier
 ---------------
@@ -27,6 +24,11 @@ Line Simplifier
 .. doxygenclass:: sme::mesh::LineSimplifier
 
 .. doxygenstruct:: sme::mesh::LineError
+
+PixelCornerIterator
+-------------------
+
+.. doxygenclass:: sme::mesh::PixelCornerIterator
 
 Triangulate
 -----------

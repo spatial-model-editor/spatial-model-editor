@@ -7,3 +7,4 @@ Example Notebooks
 
    notebooks/getting_started
    notebooks/simulating
+   notebooks/visualization
