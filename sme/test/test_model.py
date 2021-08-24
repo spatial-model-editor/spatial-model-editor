@@ -35,6 +35,22 @@ class TestModel(unittest.TestCase):
         m.name = "Model !"
         self.assertEqual(m.name, "Model !")
 
+        self.assertRaises(
+            sme.InvalidArgument, lambda: sme.open_example_model("idontexist")
+        )
+        self.assertRaises(sme.InvalidArgument, lambda: sme.open_example_model(""))
+        self.assertRaises(TypeError, lambda: sme.open_example_model([1, 2, 3]))
+
+        m = sme.open_example_model("brusselator-model")
+        self.assertEqual(repr(m), "<sme.Model named 'The Brusselator'>")
+        self.assertEqual(len(m.compartments), 1)
+        self.assertEqual(len(m.membranes), 0)
+
+        m = sme.open_example_model("gray-scott")
+        self.assertEqual(repr(m), "<sme.Model named 'Gray-Scott Model'>")
+        self.assertEqual(len(m.compartments), 1)
+        self.assertEqual(len(m.membranes), 0)
+
     def test_export_sbml_file(self):
         m = sme.open_example_model()
         m.name = "Mod"

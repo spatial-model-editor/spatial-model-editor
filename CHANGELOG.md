@@ -1,6 +1,9 @@
 # Changelog
 
 ## latest
+### Added
+- python interface: access to all built-in example models [#637](https://github.com/spatial-model-editor/spatial-model-editor/pull/637)
+
 ### Changed
 - compartment colour assignments are now preserved when the geometry image is resized [#587](https://github.com/spatial-model-editor/spatial-model-editor/issues/587)
 
