@@ -117,7 +117,7 @@ jobs:
 
   sdist:
     name: Build source distribution
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -134,17 +134,28 @@ jobs:
 
   pypi:
     name: Upload to PyPI
+    # only run on tagged commits
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/')
     needs: [linux-wheel, macos-wheel, win64-wheel, win32-wheel, sdist]
     runs-on: ubuntu-20.04
-    # upload pypi wheels if commit is tagged with "1.*"
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/1.')
     steps:
       - uses: actions/download-artifact@v2
         with:
           name: artifact
           path: dist
       - uses: pypa/gh-action-pypi-publish@release/v1
+        # upload pypi wheels if commit is tagged with "1.*"
+        if: startsWith(github.event.ref, 'refs/tags/1.')
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
           verbose: true
+      - uses: svenstaro/upload-release-action@v2
+        # upload selected wheels to github release if commit is tagged with "latest"
+        if: startsWith(github.event.ref, 'refs/tags/latest')
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: dist/sme-*-cp38-cp38-manylinux*x86_64.whl
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
