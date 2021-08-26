@@ -22,6 +22,8 @@ To get started, download and run the GUI for your operating system
 
 Or take a look at the [documentation](https://spatial-model-editor.readthedocs.io/)
 
+Pre-release [preview binaries](https://github.com/spatial-model-editor/spatial-model-editor/releases/tag/latest) are also available for testing new features before the next release.
+
 *Note: on linux some additional system libraries are required that may not be installed by default. To install them:*
 
 *  Fedora/RHEL/CentOS: `sudo yum install xcb-util-image xcb-util-keysyms xcb-util-renderutil xcb-util-wm`

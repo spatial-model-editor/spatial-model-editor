@@ -10,19 +10,10 @@
 
 - Documentation at [readthedocs](https://spatial-model-editor.readthedocs.io) will be updated
 
-## To update the "latest" binaries
+## Pre-release "latest" binaries
 
-- We provide a `latest` Github release for beta testing / live-at-head users
-
-- To update this release to the current commit on master, move the `latest` tag:
-
-```
-git push origin :refs/tags/latest
-git tag -f latest
-git push origin latest
-```
-
-- This will trigger Github Action builds that update the `latest` Github release binaries
+- The `latest` tag is automatically moved on each commit to master
+- The binaries in the [latest pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/tag/latest) are automatically updated
 
 ## Dependencies
 
@@ -38,12 +29,8 @@ git push origin latest
 
 ### Docker images
 
-- The linux Python Wheel CI builds use these custom docker containers:
+- The linux Python Wheel CI builds use this custom docker container:
 
   - <https://github.com/spatial-model-editor/sme_manylinux2010_x86_64>
 
-  - <https://github.com/spatial-model-editor/sme_manylinux2010-pypy_x86_64>
-
-- See those repos for instructions on updating them
-
-- To use a new tag, update `CIBW_MANYLINUX_X86_64_IMAGE` and `CIBW_MANYLINUX_PYPY_X86_64_IMAGE` in [ci/getlibs.sh](https://github.com/spatial-model-editor/spatial-model-editor/blob/master/CMakeLists.txt#L7) version number matches the one in [.github/workflows/wheels.yml](https://github.com/spatial-model-editor/spatial-model-editor/blob/master/.github/workflows/wheels.yml#L19-L20)
+- To use a new tag, update `CIBW_MANYLINUX_X86_64_IMAGE` and `CIBW_MANYLINUX_PYPY_X86_64_IMAGE` in [.github/workflows/wheels.yml](https://github.com/spatial-model-editor/spatial-model-editor/blob/master/.github/workflows/wheels.yml#L19-L20)
