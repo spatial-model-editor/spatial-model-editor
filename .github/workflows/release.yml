@@ -13,8 +13,8 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: 'true'
-    - name: Set "latest" version number
-      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/latest')
+    - name: Set "latest" version number unless commit is version tagged
+      if: startsWith(github.event.ref, 'refs/tags/1.') == false
       run: ./ci/set-latest-version.sh ${GITHUB_SHA}
     - name: Cache ccache
       uses: actions/cache@v2
@@ -45,8 +45,8 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: 'true'
-      - name: Set "latest" version number
-        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/latest')
+      - name: Set "latest" version number unless commit is version tagged
+        if: startsWith(github.event.ref, 'refs/tags/1.') == false
         run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - name: Cache ccache
         uses: actions/cache@v2
@@ -80,8 +80,8 @@ jobs:
           msystem: MINGW64
           update: true
           install: mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache make
-      - name: Set "latest" version number
-        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/latest')
+      - name: Set "latest" version number unless commit is version tagged
+        if: startsWith(github.event.ref, 'refs/tags/1.') == false
         run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - name: Cache ccache
         uses: actions/cache@v2
@@ -97,17 +97,52 @@ jobs:
         with:
           path: ./artefacts/*
 
-  Release:
-    needs: [linux-gui, macos-gui, win64-gui]
+  update-latest-tag:
+    name: Update latest tag and remove existing latest release
+    if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-20.04
-    # upload binaries to github release if commit is tagged
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/')
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: 'true'
+          fetch-depth: 0
+          ref: ${{ github.head_ref }}
+      - run: git show-ref --tags
+      - name: Delete any existing latest release
+        run: gh release delete latest || echo "No latest release found to delete"
+        env:
+          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+      - name: Move latest tag
+        run: |
+          git push origin :refs/tags/latest
+          git tag -f latest
+          git push origin latest
+      - run: git show-ref --tags
+
+  release:
+    needs: [linux-gui, macos-gui, win64-gui, update-latest-tag]
+    if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/download-artifact@v2
         with:
           name: artifact
           path: binaries
-      - name: Upload binaries to release
+      - name: Upload binaries to latest pre-release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: binaries/*
+          tag: latest
+          overwrite: true
+          file_glob: true
+          prerelease: true
+          body: "Latest pre-release version"
+      - name: Upload binaries to tagged release
+        if: startsWith(github.event.ref, 'refs/tags/')
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}

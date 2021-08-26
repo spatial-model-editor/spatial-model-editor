@@ -133,9 +133,9 @@ jobs:
           path: dist/*.tar.gz
 
   pypi:
-    name: Upload to PyPI
-    # only run on tagged commits
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/')
+    name: Upload to PyPI / Github Release
+    # only run on master branch
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     needs: [linux-wheel, macos-wheel, win64-wheel, win32-wheel, sdist]
     runs-on: ubuntu-20.04
     steps:
@@ -144,18 +144,19 @@ jobs:
           name: artifact
           path: dist
       - uses: pypa/gh-action-pypi-publish@release/v1
-        # upload pypi wheels if commit is tagged with "1.*"
+        # only upload pypi wheels if commit is tagged with "1.*"
         if: startsWith(github.event.ref, 'refs/tags/1.')
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
           verbose: true
       - uses: svenstaro/upload-release-action@v2
-        # upload selected wheels to github release if commit is tagged with "latest"
-        if: startsWith(github.event.ref, 'refs/tags/latest')
+        # upload selected wheels to github release
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: dist/sme-*-cp38-cp38-manylinux*x86_64.whl
-          tag: ${{ github.ref }}
+          tag: latest
           overwrite: true
           file_glob: true
+          prerelease: true
+          body: "Latest pre-release version"
