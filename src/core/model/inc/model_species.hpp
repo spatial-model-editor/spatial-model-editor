@@ -26,6 +26,8 @@ class ModelParameters;
 class ModelReactions;
 struct Settings;
 
+enum struct ConcentrationType { Uniform, Analytic, Image };
+
 class ModelSpecies {
 private:
   QStringList ids;
@@ -63,6 +65,8 @@ public:
   [[nodiscard]] bool getIsSpatial(const QString &id) const;
   void setDiffusionConstant(const QString &id, double diffusionConstant);
   [[nodiscard]] double getDiffusionConstant(const QString &id) const;
+  [[nodiscard]] ConcentrationType
+  getInitialConcentrationType(const QString &id) const;
   void setInitialConcentration(const QString &id, double concentration);
   [[nodiscard]] double getInitialConcentration(const QString &id) const;
   void setAnalyticConcentration(const QString &id,
@@ -75,7 +79,8 @@ public:
   setSampledFieldConcentration(const QString &id,
                                const std::vector<double> &concentrationArray);
   [[nodiscard]] std::vector<double>
-  getSampledFieldConcentration(const QString &id) const;
+  getSampledFieldConcentration(const QString &id,
+                               bool maskAndInvertY = false) const;
   [[nodiscard]] QImage getConcentrationImage(const QString &id) const;
   void setColour(const QString &id, QRgb colour);
   [[nodiscard]] QRgb getColour(const QString &id) const;

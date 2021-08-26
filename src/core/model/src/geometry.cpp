@@ -296,12 +296,24 @@ QImage Field::getConcentrationImage() const {
   return img;
 }
 
-std::vector<double> Field::getConcentrationImageArray() const {
+std::vector<double>
+Field::getConcentrationImageArray(bool maskAndInvertY) const {
   std::vector<double> a;
-  const auto &img = comp->getCompartmentImage();
-  a.reserve(static_cast<std::size_t>(img.width() * img.height()));
-  for (std::size_t i : comp->getArrayPoints()) {
-    a.push_back(conc[i]);
+  const auto &img{comp->getCompartmentImage()};
+  auto n{static_cast<std::size_t>(img.width() * img.height())};
+  if (maskAndInvertY) {
+    // y=0 at top of image & set pixels outside of compartment to zero
+    a.resize(n, 0.0);
+    for (std::size_t i = 0; i < comp->nPixels(); ++i) {
+      auto p{comp->getPixel(i)};
+      a[static_cast<std::size_t>(p.x() + img.width() * p.y())] = conc[i];
+    }
+  } else {
+    // y=0 at bottom, set pixels outside of compartment to nearest valid pixel
+    a.reserve(n);
+    for (std::size_t i : comp->getArrayPoints()) {
+      a.push_back(conc[i]);
+    }
   }
   return a;
 }

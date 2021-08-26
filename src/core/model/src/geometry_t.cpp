@@ -79,6 +79,10 @@ SCENARIO("Geometry: Compartments and Fields",
     REQUIRE(a.size() == 1);
     REQUIRE(a[0] == dbl_approx(1.23));
 
+    auto a2{field.getConcentrationImageArray(true)};
+    REQUIRE(a2.size() == 1);
+    REQUIRE(a2[0] == dbl_approx(1.23));
+
     // set zero concentration, get image
     // (must avoid dividing by zero in normalisation)
     field.setUniformConcentration(0.0);
@@ -112,18 +116,28 @@ SCENARIO("Geometry: Compartments and Fields",
     // (3,4)
     REQUIRE(field.getConcentration()[1] == dbl_approx(1.3));
 
-    auto a = field.getConcentrationImageArray();
+    auto a{field.getConcentrationImageArray()};
     REQUIRE(a.size() == static_cast<std::size_t>(img.width() * img.height()));
     REQUIRE(a.front() == dbl_approx(1.3));
     REQUIRE(a[20] == dbl_approx(1.3));
-    REQUIRE(a[21] == dbl_approx(1.3));
-    REQUIRE(a[15] == dbl_approx(1.3));
-    REQUIRE(a[23] == dbl_approx(1.3));
+    REQUIRE(a[21] == dbl_approx(1.3)); // (3,3)
+    REQUIRE(a[15] == dbl_approx(1.3)); // (3,4)
+    REQUIRE(a[27] == dbl_approx(1.3));
     REQUIRE(a.back() == dbl_approx(1.3));
 
+    // true -> inverted y-axis & zero outside of compartment
+    auto a2{field.getConcentrationImageArray(true)};
+    REQUIRE(a2.size() == static_cast<std::size_t>(img.width() * img.height()));
+    REQUIRE(a2.front() == dbl_approx(0.0));
+    REQUIRE(a2[20] == dbl_approx(0.0));
+    REQUIRE(a2[21] == dbl_approx(1.3)); // (3,3)
+    REQUIRE(a2[15] == dbl_approx(0.0));
+    REQUIRE(a2[27] == dbl_approx(1.3)); // (3,4)
+    REQUIRE(a2.back() == dbl_approx(0));
+
     std::vector<double> arr(6 * 7, 0.0);
-    arr[21] = 3.1;
-    arr[15] = 9.9;
+    arr[21] = 3.1; // (3,3)
+    arr[15] = 9.9; // (3,4)
     field.importConcentration(arr);
     REQUIRE(field.getConcentration()[0] == dbl_approx(3.1));
     REQUIRE(field.getConcentration()[1] == dbl_approx(9.9));
@@ -132,6 +146,16 @@ SCENARIO("Geometry: Compartments and Fields",
     REQUIRE(a[20] == dbl_approx(3.1));
     REQUIRE(a[15] == dbl_approx(9.9));
     REQUIRE(a[14] == dbl_approx(9.9));
+
+    // true -> inverted y-axis & zero outside of compartment
+    a2 = field.getConcentrationImageArray(true);
+    REQUIRE(a2.size() == static_cast<std::size_t>(img.width() * img.height()));
+    REQUIRE(a2.front() == dbl_approx(0.0));
+    REQUIRE(a2[20] == dbl_approx(0.0));
+    REQUIRE(a2[21] == dbl_approx(3.1)); // (3,3)
+    REQUIRE(a2[27] == dbl_approx(9.9)); // (3,4)
+    REQUIRE(a2[26] == dbl_approx(0.0));
+    REQUIRE(a2.back() == dbl_approx(0.0));
 
     // conc array size must match image size
     REQUIRE_THROWS(field.importConcentration({1.0, 2.0}));

@@ -1,19 +1,31 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
 #include "model_test_utils.hpp"
-#include <QFile>
-#include <QImage>
 #include <memory>
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 using namespace sme;
 using namespace sme::test;
 
 SCENARIO("SBML species",
          "[core/model/species][core/model][core][model][species]") {
+  GIVEN("Different initial concentration types") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &s{m.getSpecies()};
+    s.setHasUnsavedChanges(false);
+    REQUIRE(s.getHasUnsavedChanges() == false);
+    // initial species concentration
+    REQUIRE(s.getIds("c1")[0] == "A_c1");
+    REQUIRE(s.getInitialConcentrationType("A_c1") ==
+            model::ConcentrationType::Uniform);
+    REQUIRE(s.getInitialConcentration("A_c1") == dbl_approx(1.0));
+    // set analytic expression
+    s.setAnalyticConcentration("A_c1", "exp(-2*x*x)");
+    REQUIRE(s.getHasUnsavedChanges() == true);
+    REQUIRE(s.getInitialConcentrationType("A_c1") ==
+            model::ConcentrationType::Analytic);
+    REQUIRE(s.getInitialConcentration("A_c1") == dbl_approx(1.0));
+    REQUIRE(s.getAnalyticConcentration("A_c1") == "exp(-2 * x * x)");
+  }
   GIVEN("Remove species also removes dependents") {
     auto m{getExampleModel(Mod::VerySimpleModel)};
     m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
@@ -32,6 +44,8 @@ SCENARIO("SBML species",
     // initial species
     REQUIRE(s.getIds("c1").size() == 2);
     REQUIRE(s.getIds("c1")[0] == "A_c1");
+    REQUIRE(s.getInitialConcentrationType("A_c1") ==
+            model::ConcentrationType::Uniform);
     REQUIRE(s.getField("A_c1")->getId() == "A_c1");
     REQUIRE(s.getIds("c1")[1] == "B_c1");
     REQUIRE(s.getField("B_c1")->getId() == "B_c1");
