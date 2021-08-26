@@ -11,13 +11,13 @@ env:
 jobs:
   linux-wheel:
     name: Linux Wheels
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     defaults:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2021.08.09
-      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2021.08.09
+      CIBW_MANYLINUX_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2021.08.25
+      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: spatialmodeleditor/manylinux2010_x86_64:2021.08.25
       CIBW_SKIP: '*-manylinux_i686'
       CIBW_TEST_SKIP: 'cp310-manylinux_x86_64'
       CIBW_ENVIRONMENT: 'SME_EXTERNAL_SMECORE=on'
@@ -26,6 +26,9 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: 'true'
+    - name: Set "latest" version number unless commit is version tagged
+      if: startsWith(github.event.ref, 'refs/tags/1.') == false
+      run: ./ci/set-latest-version.sh ${GITHUB_SHA}
     - uses: actions/setup-python@v2
       with:
         python-version: '3.9'
@@ -50,6 +53,9 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: 'true'
+      - name: Set "latest" version number unless commit is version tagged
+        if: startsWith(github.event.ref, 'refs/tags/1.') == false
+        run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - uses: actions/setup-python@v2
         with:
           python-version: '3.9'
@@ -80,6 +86,9 @@ jobs:
           msystem: MINGW64
           update: true
           install: mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache make
+      - name: Set "latest" version number unless commit is version tagged
+        if: startsWith(github.event.ref, 'refs/tags/1.') == false
+        run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - name: Download static libraries
         run: ./ci/getlibs.sh win64
       - name: Build wheels
@@ -107,6 +116,9 @@ jobs:
           msystem: MINGW32
           update: true
           install: mingw-w64-i686-gcc mingw-w64-i686-cmake mingw-w64-i686-ccache make
+      - name: Set "latest" version number unless commit is version tagged
+        if: startsWith(github.event.ref, 'refs/tags/1.') == false
+        run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - name: Download static libraries
         run: ./ci/getlibs.sh win32
       - name: Build wheels
@@ -154,9 +166,9 @@ jobs:
         # upload selected wheels to github release
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: dist/sme-*-cp38-cp38-manylinux*x86_64.whl
+          file: dist/sme-*-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
+          asset_name: sme-latest-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
           tag: latest
           overwrite: true
-          file_glob: true
+          file_glob: false
           prerelease: true
-          body: "Latest pre-release version"

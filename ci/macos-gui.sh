@@ -33,7 +33,7 @@ tail -n 100 tests.txt
 
 # run python tests
 cd sme
-python3 -m pip install -r ../../sme/requirements.txt
+python3 -m pip install -r ../../sme/requirements-test.txt
 python3 -m unittest discover -s ../../sme/test -v
 PYTHONPATH=`pwd` python ../../sme/test/sme_doctest.py -v
 cd ..

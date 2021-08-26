@@ -97,33 +97,8 @@ jobs:
         with:
           path: ./artefacts/*
 
-  update-latest-tag:
-    name: Update latest tag and remove existing latest release
-    if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && github.ref == 'refs/heads/master'
-    runs-on: ubuntu-20.04
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: 'true'
-          fetch-depth: 0
-          ref: ${{ github.head_ref }}
-      - run: git show-ref --tags
-      - name: Delete any existing latest release
-        run: gh release delete latest || echo "No latest release found to delete"
-        env:
-          GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
-      - name: Move latest tag
-        run: |
-          git push origin :refs/tags/latest
-          git tag -f latest
-          git push origin latest
-      - run: git show-ref --tags
-
   release:
-    needs: [linux-gui, macos-gui, win64-gui, update-latest-tag]
+    needs: [linux-gui, macos-gui, win64-gui]
     if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-20.04
     steps:
@@ -140,7 +115,6 @@ jobs:
           overwrite: true
           file_glob: true
           prerelease: true
-          body: "Latest pre-release version"
       - name: Upload binaries to tagged release
         if: startsWith(github.event.ref, 'refs/tags/')
         uses: svenstaro/upload-release-action@v2
