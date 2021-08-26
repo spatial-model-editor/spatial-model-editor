@@ -30,7 +30,7 @@ the CI builds useful - see [ci/README](../ci/README.md) for more details.
 
 ## Pull requests
 
-- pull requests are built and tested on [travis](https://travis-ci.org/spatial-model-editor/spatial-model-editor)
+- pull requests are built and tested on [github actions](https://github.com/spatial-model-editor/spatial-model-editor/actions)
 
 - static analysis report from [sonarcloud](https://sonarcloud.io/dashboard?id=spatial-model-editor_spatial-model-editor)
 
@@ -41,6 +41,8 @@ the CI builds useful - see [ci/README](../ci/README.md) for more details.
 - code formatting will be checked and fixed if necessary (see pre-commit hooks below)
 
 - all must pass before a pull request can be merged
+
+- see [ci/README](../ci/README.md) for more information on how this works
 
 ## pre-commit hooks
 

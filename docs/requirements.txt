@@ -5,6 +5,6 @@ myst_parser
 nbsphinx
 numpy
 pandoc
-https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/sme-1.1.4-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
+https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/sme-latest-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
 sphinx==4.1.2
 sphinx_rtd_theme
