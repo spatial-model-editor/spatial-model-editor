@@ -169,7 +169,7 @@ jobs:
         # upload selected wheels to github latest release
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          files: latest/*
+          file: latest/*
           tag: latest
           overwrite: true
           file_glob: true
