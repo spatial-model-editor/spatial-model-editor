@@ -162,13 +162,15 @@ jobs:
           user: __token__
           password: ${{ secrets.pypi_password }}
           verbose: true
+      - run: |
+          mkdir latest
+          mv dist/sme-*-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl latest/sme-latest-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
       - uses: svenstaro/upload-release-action@v2
-        # upload selected wheels to github release
+        # upload selected wheels to github latest release
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: dist/sme-*-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
-          asset_name: sme-latest-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
+          files: latest/*
           tag: latest
           overwrite: true
-          file_glob: false
+          file_glob: true
           prerelease: true

@@ -26,7 +26,7 @@ jobs:
       - name: Cache ccache
         uses: actions/cache@v2
         with:
-          path: ~/.ccache
+          path: ~/.cache/ccache
           key: ccache-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-
       - name: Cache sonar
