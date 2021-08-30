@@ -19,41 +19,44 @@ static void createBinaryFile(const QString &filename) {
 SCENARIO("Serialization",
          "[core/common/serialization][core/common][core][serialization]") {
   GIVEN("Import nonexistent file") {
-    REQUIRE(common::importSmeFile("idontexist.txt").xmlModel.empty());
+    REQUIRE(common::importSmeFile("idontexist.txt") == nullptr);
   }
   GIVEN("Import invalid file") {
     std::ofstream fs("invalid.sme", std::ios::binary);
     double x{0.765};
     fs << x;
     fs.close();
-    REQUIRE(common::importSmeFile("invalid.sme").xmlModel.empty());
+    REQUIRE(common::importSmeFile("invalid.sme") == nullptr);
   }
-  GIVEN("Import corrupted file (valid file with some randomly deleted bytes)") {
+  GIVEN("Import v2 corrupted file (valid file with some randomly deleted "
+        "bytes)") {
     createBinaryFile("brusselator-model-corrupted.sme");
-    REQUIRE(common::importSmeFile("brusselator-model-corrupted.sme")
-                .xmlModel.empty());
+    REQUIRE(common::importSmeFile("brusselator-model-corrupted.sme") ==
+            nullptr);
   }
-  GIVEN("Import truncated file (valid file with the last few bytes deleted)") {
+  GIVEN(
+      "Import v2 truncated file (valid file with the last few bytes deleted)") {
     createBinaryFile("brusselator-model-truncated.sme");
-    REQUIRE(common::importSmeFile("brusselator-model-truncated.sme")
-                .xmlModel.empty());
+    REQUIRE(common::importSmeFile("brusselator-model-truncated.sme") ==
+            nullptr);
   }
   GIVEN("Valid v0 smefile (no SimulationSettings)") {
     // v0 smefile was used in spatial-model-editor 1.0.9
     createBinaryFile("very-simple-model-v0.sme");
     auto contents{common::importSmeFile("very-simple-model-v0.sme")};
-    REQUIRE(contents.xmlModel.size() == 134371);
-    REQUIRE(contents.simulationData.xmlModel.size() == 541828);
-    REQUIRE(contents.simulationData.timePoints.size() == 3);
-    REQUIRE(contents.simulationData.timePoints[0] == dbl_approx(0.0));
-    REQUIRE(contents.simulationData.timePoints[1] == dbl_approx(0.5));
-    REQUIRE(contents.simulationData.timePoints[2] == dbl_approx(1.0));
-    REQUIRE(contents.simulationData.concentration.size() == 3);
-    REQUIRE(contents.simulationData.concentration[2][0].size() == 5441);
-    REQUIRE(contents.simulationData.concentration[0][0][1642] == dbl_approx(0));
-    REQUIRE(contents.simulationData.concentration[1][0][1642] ==
+    REQUIRE(contents->xmlModel.size() == 134371);
+    REQUIRE(contents->simulationData->xmlModel.size() == 541828);
+    REQUIRE(contents->simulationData->timePoints.size() == 3);
+    REQUIRE(contents->simulationData->timePoints[0] == dbl_approx(0.0));
+    REQUIRE(contents->simulationData->timePoints[1] == dbl_approx(0.5));
+    REQUIRE(contents->simulationData->timePoints[2] == dbl_approx(1.0));
+    REQUIRE(contents->simulationData->concentration.size() == 3);
+    REQUIRE(contents->simulationData->concentration[2][0].size() == 5441);
+    REQUIRE(contents->simulationData->concentration[0][0][1642] ==
+            dbl_approx(0));
+    REQUIRE(contents->simulationData->concentration[1][0][1642] ==
             dbl_approx(1.5083400377522022672849289e-70));
-    REQUIRE(contents.simulationData.concentration[2][0][1642] ==
+    REQUIRE(contents->simulationData->concentration[2][0][1642] ==
             dbl_approx(2.3650364527146514603828109e-55));
   }
   GIVEN("Valid v1 smefile (SimulationSettings not stored in model)") {
@@ -62,24 +65,25 @@ SCENARIO("Serialization",
     sme::simulate::SimulationData data;
     createBinaryFile("very-simple-model-v1.sme");
     auto contents{common::importSmeFile("very-simple-model-v1.sme")};
-    REQUIRE(contents.simulationData.timePoints.size() == 4);
-    REQUIRE(contents.simulationData.timePoints[0] == dbl_approx(0.00));
-    REQUIRE(contents.simulationData.timePoints[1] == dbl_approx(0.05));
-    REQUIRE(contents.simulationData.timePoints[2] == dbl_approx(0.10));
-    REQUIRE(contents.simulationData.timePoints[3] == dbl_approx(0.15));
-    REQUIRE(contents.simulationData.concentration.size() == 4);
-    REQUIRE(contents.simulationData.concentration[2][0].size() == 5441);
-    REQUIRE(contents.simulationData.concentration[0][0][1642] == dbl_approx(0));
-    REQUIRE(contents.simulationData.concentration[1][0][1642] ==
+    REQUIRE(contents->simulationData->timePoints.size() == 4);
+    REQUIRE(contents->simulationData->timePoints[0] == dbl_approx(0.00));
+    REQUIRE(contents->simulationData->timePoints[1] == dbl_approx(0.05));
+    REQUIRE(contents->simulationData->timePoints[2] == dbl_approx(0.10));
+    REQUIRE(contents->simulationData->timePoints[3] == dbl_approx(0.15));
+    REQUIRE(contents->simulationData->concentration.size() == 4);
+    REQUIRE(contents->simulationData->concentration[2][0].size() == 5441);
+    REQUIRE(contents->simulationData->concentration[0][0][1642] ==
+            dbl_approx(0));
+    REQUIRE(contents->simulationData->concentration[1][0][1642] ==
             dbl_approx(4.800088138108658530889272e-128));
-    REQUIRE(contents.simulationData.concentration[2][0][1642] ==
+    REQUIRE(contents->simulationData->concentration[2][0][1642] ==
             dbl_approx(4.7061442226124325927116843e-110));
-    REQUIRE(contents.simulationData.concentration[3][0][1642] ==
+    REQUIRE(contents->simulationData->concentration[3][0][1642] ==
             dbl_approx(1.06406832003626607985324881e-99));
     // in v1, SimulationSettings are stored in contents
     // but when imported, they are transferred to the sbml doc as xml
     model::Model m;
-    m.importSBMLString(contents.xmlModel);
+    m.importSBMLString(contents->xmlModel);
     const auto &options{m.getSimulationSettings().options};
     REQUIRE(m.getSimulationSettings().simulatorType ==
             sme::simulate::SimulatorType::Pixel);
@@ -99,8 +103,30 @@ SCENARIO("Serialization",
     REQUIRE(options.pixel.maxErr.rel == dbl_approx(5e-5));
     REQUIRE(options.pixel.maxTimestep == dbl_approx(5.0));
   }
-  GIVEN("Valid current (v2) sme file") {
-    // v2 smefile is used in spatial-model-editor >= 1.1.0
+  GIVEN("Valid v2 sme file") {
+    // v2 smefile was used in spatial-model-editor 1.1.0 - 1.1.4 inclusive
+    // SimulationData was not wrapped in a unique_ptr
+    sme::simulate::SimulationData data;
+    createBinaryFile("very-simple-model-v2.sme");
+    auto contents{common::importSmeFile("very-simple-model-v2.sme")};
+    REQUIRE(contents->simulationData->timePoints.size() == 4);
+    REQUIRE(contents->simulationData->timePoints[0] == dbl_approx(0.00));
+    REQUIRE(contents->simulationData->timePoints[1] == dbl_approx(0.05));
+    REQUIRE(contents->simulationData->timePoints[2] == dbl_approx(0.10));
+    REQUIRE(contents->simulationData->timePoints[3] == dbl_approx(0.15));
+    REQUIRE(contents->simulationData->concentration.size() == 4);
+    REQUIRE(contents->simulationData->concentration[2][0].size() == 5441);
+    REQUIRE(contents->simulationData->concentration[0][0][1642] ==
+            dbl_approx(0));
+    REQUIRE(contents->simulationData->concentration[1][0][1642] ==
+            dbl_approx(4.800088138108658530889272e-128));
+    REQUIRE(contents->simulationData->concentration[2][0][1642] ==
+            dbl_approx(4.7061442226124325927116843e-110));
+    REQUIRE(contents->simulationData->concentration[3][0][1642] ==
+            dbl_approx(1.06406832003626607985324881e-99));
+  }
+  GIVEN("Valid current (v3) sme file") {
+    // sme versions >= 1.1.5
     QFile f(":/models/brusselator-model.xml");
     f.open(QIODevice::ReadOnly);
     model::Model m;
