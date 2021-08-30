@@ -237,25 +237,6 @@ void pybindModel(pybind11::module &m) {
       .def("__str__", &sme::Model::getStr);
 }
 
-// return the contents of a std::vector as an ndarray, with optional shape,
-// without making a copy of the data, based on
-// https://github.com/pybind/pybind11/issues/1042#issuecomment-642215028
-template <typename T>
-static inline pybind11::array_t<T>
-as_ndarray(std::vector<T> &&v, const std::vector<ssize_t> &shape = {}) {
-  auto data{v.data()};
-  auto size{static_cast<ssize_t>(v.size())};
-  auto ptr{std::make_unique<std::vector<T>>(std::move(v))};
-  auto capsule{pybind11::capsule(ptr.get(), [](void *p) {
-    std::unique_ptr<std::vector<T>>(reinterpret_cast<std::vector<T> *>(p));
-  })};
-  ptr.release();
-  if (shape.empty()) {
-    return pybind11::array(size, data, capsule);
-  }
-  return pybind11::array(shape, data, capsule);
-}
-
 static std::vector<SimulationResult>
 constructSimulationResults(const simulate::Simulation *sim, bool getDcdt) {
   std::vector<SimulationResult> results;

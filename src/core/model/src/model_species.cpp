@@ -483,6 +483,18 @@ double ModelSpecies::getDiffusionConstant(const QString &id) const {
   return fields[static_cast<std::size_t>(i)].getDiffusionConstant();
 }
 
+ConcentrationType
+ModelSpecies::getInitialConcentrationType(const QString &id) const {
+  if (const auto *field{getField(id)};
+      field != nullptr && field->getIsUniformConcentration()) {
+    return ConcentrationType::Uniform;
+  }
+  if (!getSampledFieldInitialAssignment(id).isEmpty()) {
+    return ConcentrationType::Image;
+  }
+  return ConcentrationType::Analytic;
+}
+
 void ModelSpecies::setInitialConcentration(const QString &id,
                                            double concentration) {
   hasUnsavedChanges = true;
@@ -631,9 +643,11 @@ void ModelSpecies::setSampledFieldConcentration(
 }
 
 std::vector<double>
-ModelSpecies::getSampledFieldConcentration(const QString &id) const {
+ModelSpecies::getSampledFieldConcentration(const QString &id,
+                                           bool maskAndInvertY) const {
   auto i = ids.indexOf(id);
-  return fields[static_cast<std::size_t>(i)].getConcentrationImageArray();
+  return fields[static_cast<std::size_t>(i)].getConcentrationImageArray(
+      maskAndInvertY);
 }
 
 QImage ModelSpecies::getConcentrationImage(const QString &id) const {

@@ -3,6 +3,7 @@
 ## latest
 ### Added
 - python interface: access to all built-in example models [#637](https://github.com/spatial-model-editor/spatial-model-editor/pull/637)
+- python interface: view and edit uniform/analytic/image species initial concentrations [#644](https://github.com/spatial-model-editor/spatial-model-editor/issues/644)
 
 ### Changed
 - compartment colour assignments are now preserved when the geometry image is resized [#587](https://github.com/spatial-model-editor/spatial-model-editor/issues/587)
@@ -11,6 +12,7 @@
 - python interface: bug where compartment geometry mask was not updated after geometry image changed [#630](https://github.com/spatial-model-editor/spatial-model-editor/issues/630)
 - slow loading of models with large geometry images [#632](https://github.com/spatial-model-editor/spatial-model-editor/issues/632)
 - avoid constructing mesh twice on model load [#597](https://github.com/spatial-model-editor/spatial-model-editor/issues/597)
+- crash when importing geometry image after importing non-spatial model [#651](https://github.com/spatial-model-editor/spatial-model-editor/issues/651)
 
 ## [1.1.4] - 2021-08-17
 ### Added

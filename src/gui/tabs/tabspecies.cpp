@@ -132,17 +132,16 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
   ui->lblInitialConcentrationUnits->setText("");
   lblGeometry->setImage(
       model.getSpecies().getConcentrationImage(currentSpeciesId));
-  if (field->getIsUniformConcentration()) {
+  auto concentrationType{
+      model.getSpecies().getInitialConcentrationType(currentSpeciesId)};
+  if (concentrationType == sme::model::ConcentrationType::Uniform) {
     // scalar
     ui->txtInitialConcentration->setText(QString::number(
         model.getSpecies().getInitialConcentration(currentSpeciesId)));
     ui->lblInitialConcentrationUnits->setText(
         model.getUnits().getConcentration());
     ui->radInitialConcentrationUniform->setChecked(true);
-  } else if (!model.getSpecies()
-                  .getSampledFieldInitialAssignment(currentSpeciesId)
-                  .isEmpty()) {
-    // image
+  } else if (concentrationType == sme::model::ConcentrationType::Image) {
     ui->radInitialConcentrationImage->setChecked(true);
   } else {
     // analytic
