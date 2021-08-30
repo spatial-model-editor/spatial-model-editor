@@ -65,7 +65,8 @@ void Model::initModelData() {
   // todo: reduce these cyclic dependencies: currently order of initialization
   // matters, should be possible to reduce coupling here
   modelCompartments = std::make_unique<ModelCompartments>(
-      model, modelMembranes.get(), modelUnits.get(), &getSimulationData());
+      model, modelMembranes.get(), modelUnits.get(),
+      smeFileContents->simulationData.get());
   modelGeometry = std::make_unique<ModelGeometry>(
       model, modelCompartments.get(), modelMembranes.get(), modelUnits.get(),
       settings.get());
@@ -74,7 +75,8 @@ void Model::initModelData() {
   modelParameters = std::make_unique<ModelParameters>(model);
   modelSpecies = std::make_unique<ModelSpecies>(
       model, modelCompartments.get(), modelGeometry.get(),
-      modelParameters.get(), &getSimulationData(), settings.get());
+      modelParameters.get(), smeFileContents->simulationData.get(),
+      settings.get());
   modelCompartments->setSpeciesPtr(modelSpecies.get());
   modelEvents = std::make_unique<ModelEvents>(model, modelParameters.get(),
                                               modelSpecies.get());
@@ -132,17 +134,20 @@ void Model::importFile(const std::string &filename) {
   clear();
   currentFilename = QFileInfo(filename.c_str()).baseName();
   SPDLOG_INFO("Importing file {} ...", filename);
-  auto contents{std::make_unique<sme::common::SmeFileContents>(
-      common::importSmeFile(filename))};
-  if (!contents->xmlModel.empty()) {
+  auto importedSmeFileContents{common::importSmeFile(filename)};
+  if (importedSmeFileContents != nullptr) {
     SPDLOG_INFO("  -> SME file", filename);
-    doc.reset(libsbml::readSBMLFromString(contents->xmlModel.c_str()));
+    doc.reset(
+        libsbml::readSBMLFromString(importedSmeFileContents->xmlModel.c_str()));
   } else {
     SPDLOG_INFO("  -> SBML file", filename);
     doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
   }
   initModelData();
-  smeFileContents = std::move(contents);
+  if (importedSmeFileContents != nullptr) {
+    smeFileContents->simulationData =
+        std::move(importedSmeFileContents->simulationData);
+  }
   setHasUnsavedChanges(false);
 }
 
@@ -228,11 +233,11 @@ ModelMath &Model::getMath() { return *modelMath; }
 const ModelMath &Model::getMath() const { return *modelMath; }
 
 simulate::SimulationData &Model::getSimulationData() {
-  return smeFileContents->simulationData;
+  return *smeFileContents->simulationData;
 }
 
 const simulate::SimulationData &Model::getSimulationData() const {
-  return smeFileContents->simulationData;
+  return *smeFileContents->simulationData;
 }
 
 SimulationSettings &Model::getSimulationSettings() {
@@ -259,6 +264,8 @@ void Model::clear() {
   modelUnits = std::make_unique<ModelUnits>();
   modelMath = std::make_unique<ModelMath>();
   smeFileContents = std::make_unique<common::SmeFileContents>();
+  smeFileContents->simulationData =
+      std::make_unique<simulate::SimulationData>();
   settings = std::make_unique<Settings>();
 }
 

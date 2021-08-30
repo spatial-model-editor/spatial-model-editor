@@ -8,11 +8,11 @@
 namespace sme::common {
 
 struct SmeFileContents {
-  std::string xmlModel;
-  simulate::SimulationData simulationData;
+  std::string xmlModel{};
+  std::unique_ptr<simulate::SimulationData> simulationData{};
 };
 
-SmeFileContents importSmeFile(const std::string &filename);
+std::unique_ptr<SmeFileContents> importSmeFile(const std::string &filename);
 bool exportSmeFile(const std::string &filename,
                    const SmeFileContents &contents);
 

@@ -7,6 +7,7 @@
 #include <cereal/archives/binary.hpp>
 #include <cereal/archives/xml.hpp>
 #include <cereal/cereal.hpp>
+#include <cereal/types/memory.hpp>
 #include <fstream>
 #include <sbml/SBMLTransforms.h>
 #include <sbml/SBMLTypes.h>
@@ -15,21 +16,41 @@
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
 #include <sstream>
 
-CEREAL_CLASS_VERSION(sme::common::SmeFileContents, 2);
+CEREAL_CLASS_VERSION(sme::common::SmeFileContents, 3);
 
 namespace sme::common {
+
 template <class Archive>
-void serialize(Archive &ar, sme::common::SmeFileContents &contents,
-               std::uint32_t const version) {
-  if (version == 0 || version == 2) {
+void save(Archive &ar, const sme::common::SmeFileContents &contents,
+          std::uint32_t const version) {
+  if (version == 3) {
     ar(contents.xmlModel, contents.simulationData);
+  }
+}
+
+template <class Archive>
+void load(Archive &ar, sme::common::SmeFileContents &contents,
+          std::uint32_t const version) {
+  if (version == 3) {
+    ar(contents.xmlModel, contents.simulationData);
+  } else if (version == 0 || version == 2) {
+    SPDLOG_ERROR("v2");
+    // simulationData wasn't wrapped in a unique_ptr until version 3
+    simulate::SimulationData simulationData{};
+    { ar(contents.xmlModel, simulationData); }
+    contents.simulationData =
+        std::make_unique<simulate::SimulationData>(std::move(simulationData));
   } else if (version == 1) {
     SPDLOG_ERROR("v1");
     // in this version, we stored the SimulationSettings in the SmeFileContents,
     // so here we need to transfer it to the annotation in the sbml xmlModel
     model::SimulationSettings simulationSettings{};
     // import settings from sme file
-    { ar(contents.xmlModel, contents.simulationData, simulationSettings); }
+    // simulationData wasn't wrapped in a unique_ptr until version 3
+    simulate::SimulationData simulationData{};
+    { ar(contents.xmlModel, simulationData, simulationSettings); }
+    contents.simulationData =
+        std::make_unique<simulate::SimulationData>(std::move(simulationData));
     // import existing annotation from sbml
     std::unique_ptr<libsbml::SBMLDocument> doc(
         libsbml::readSBMLFromString(contents.xmlModel.c_str()));
@@ -43,15 +64,16 @@ void serialize(Archive &ar, sme::common::SmeFileContents &contents,
   }
 }
 
-SmeFileContents importSmeFile(const std::string &filename) {
-  SmeFileContents contents{};
+std::unique_ptr<SmeFileContents> importSmeFile(const std::string &filename) {
+  auto contents{std::make_unique<SmeFileContents>()};
   std::ifstream fs(filename, std::ios::binary);
   if (!fs) {
-    return contents;
+    SPDLOG_WARN("Failed to read file '{}", filename);
+    return {};
   }
   try {
     cereal::BinaryInputArchive ar(fs);
-    ar(contents);
+    ar(*contents);
   } catch (const cereal::Exception &e) {
     // invalid/corrupted file might be identified by cereal
     SPDLOG_WARN("Failed to import file '{}'. {}", filename, e.what());
@@ -60,6 +82,12 @@ SmeFileContents importSmeFile(const std::string &filename) {
     // or it might not, but in attempting to load the invalid data cereal may
     // cause an exception to be thrown, e.g. std::length_error
     SPDLOG_WARN("Failed to import file '{}'. {}", filename, e.what());
+    return {};
+  }
+  // other invalid inputs can result in a silent no-op
+  if (contents->xmlModel.empty()) {
+    SPDLOG_WARN("Failed to import file '{}'. Imported Model is empty",
+                filename);
     return {};
   }
   return contents;

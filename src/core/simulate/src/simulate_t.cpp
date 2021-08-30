@@ -1524,18 +1524,12 @@ SCENARIO("SimulationData",
     sim.doTimesteps(0.01, 5);
     simulate::SimulationData data{sim.getSimulationData()};
     s.getSimulationData().clear();
-    auto dataA{data};
     simulate::Simulation simA(s);
     simA.doTimesteps(0.01, 2);
-    common::SmeFileContents contents;
-    contents.xmlModel = s.getXml().toStdString();
-    contents.simulationData = dataA;
-    common::exportSmeFile("data.sme", contents);
-    auto smeFileA{common::importSmeFile("data.sme")};
-    s.getSimulationData() = smeFileA.simulationData;
     simulate::Simulation simB(s);
     const auto &dataB{simB.getSimulationData()};
     simB.doTimesteps(0.01, 3);
+    // first three timesteps match exactly
     REQUIRE(rel_diff(dataB, data, 0, 0) < 1e-14);
     REQUIRE(rel_diff(dataB, data, 1, 1) < 1e-14);
     REQUIRE(rel_diff(dataB, data, 2, 2) < 1e-14);
