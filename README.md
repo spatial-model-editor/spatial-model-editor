@@ -20,7 +20,7 @@ To get started, download and run the GUI for your operating system
 | :-----: | :-----: | :------- |
 | [![linux](docs/img/icon-linux.png)](../../releases/latest/download/spatial-model-editor) | [![macOS](docs/img/icon-osx.png)](../../releases/latest/download/spatial-model-editor.dmg) | [![linux](docs/img/icon-windows.png)](../../releases/latest/download/spatial-model-editor.exe) |
 
-Or take a look at the [documentation](https://spatial-model-editor.readthedocs.io/)
+Or take a look at our [website](https://spatial-model-editor.github.io/) or the [documentation](https://spatial-model-editor.readthedocs.io/)
 
 Pre-release [preview binaries](https://github.com/spatial-model-editor/spatial-model-editor/releases/tag/latest) are also available for testing new features before the next release.
 

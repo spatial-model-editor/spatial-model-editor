@@ -1,6 +1,6 @@
 # Changelog
 
-## latest
+## [1.1.5] - 2021-09-01
 ### Added
 - python interface: access to all built-in example models [#637](https://github.com/spatial-model-editor/spatial-model-editor/pull/637)
 - python interface: view and edit uniform/analytic/image species initial concentrations [#644](https://github.com/spatial-model-editor/spatial-model-editor/issues/644)
