@@ -9,6 +9,7 @@
 #include "logger.hpp"
 #include "mesh.hpp"
 #include "model.hpp"
+#include "ode_import_wizard.hpp"
 #include "serialization.hpp"
 #include "tabevents.hpp"
 #include "tabfunctions.hpp"
@@ -18,7 +19,6 @@
 #include "tabsimulate.hpp"
 #include "tabspecies.hpp"
 #include "ui_mainwindow.h"
-#include "utils.hpp"
 #include <QDesktopServices>
 #include <QErrorMessage>
 #include <QFileDialog>
@@ -28,6 +28,19 @@
 #include <QMimeData>
 #include <QProcess>
 #include <QWhatsThis>
+
+static QString getStatusBarMessage(int step) {
+  if (step == 1) {
+    return R"(<h2><font color = "Green">Importing non-spatial model. Step 1/3: <a href="#geometry-image">import geometry image</a></font></h2>)";
+  }
+  if (step == 2) {
+    return R"(<h2><font color = "Green">Importing non-spatial model. Step 2/3: assign compartment geometry</font></h2>)";
+  }
+  if (step == 3) {
+    return R"(<h2><font color = "Green">Importing non-spatial model. Step 3/3: <a href="#rescale-reactions">rescale reactions</a></font></h2>)";
+  }
+  return {};
+};
 
 static bool checkForCopasiSE() {
   constexpr int msTimeout{1000};
@@ -68,13 +81,24 @@ QString MainWindow::getConvertedFilename(const QString &filename) {
   return filename;
 }
 
+static QLabel *makeStatusBarPermanentMessage(QWidget *parent) {
+  QLabel *lbl{new QLabel(QString(), parent)};
+  lbl->setTextFormat(Qt::TextFormat::RichText);
+  lbl->setOpenExternalLinks(false);
+  lbl->setTextInteractionFlags(
+      Qt::TextInteractionFlag::LinksAccessibleByKeyboard |
+      Qt::TextInteractionFlag::LinksAccessibleByMouse);
+  return lbl;
+}
+
 MainWindow::MainWindow(const QString &filename, QWidget *parent)
     : QMainWindow(parent), ui{std::make_unique<Ui::MainWindow>()} {
   ui->setupUi(this);
   Q_INIT_RESOURCE(resources);
 
-  statusBarPermanentMessage = new QLabel(QString(), this);
-  ui->statusBar->addWidget(statusBarPermanentMessage);
+  statusBarPermanentMessage = makeStatusBarPermanentMessage(this);
+  ui->statusBar->addPermanentWidget(statusBarPermanentMessage);
+  statusBarPermanentMessage->hide();
 
   setupTabs();
   setupConnections();
@@ -216,6 +240,16 @@ void MainWindow::setupConnections() {
 
   connect(ui->spinGeometryZoom, qOverload<int>(&QSpinBox::valueChanged), this,
           &MainWindow::spinGeometryZoom_valueChanged);
+
+  connect(statusBarPermanentMessage, &QLabel::linkActivated, this,
+          [this](const QString &link) {
+            if (link == "#rescale-reactions") {
+              return actionFinalize_non_spatial_import_triggered();
+            }
+            if (link == "#geometry-image") {
+              return actionGeometry_from_image_triggered();
+            }
+          });
 }
 
 void MainWindow::tabMain_currentChanged(int index) {
@@ -296,13 +330,25 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
 }
 
 void MainWindow::enableTabs() {
-  bool enable = model.getIsValid() && model.getGeometry().getIsValid();
+  bool enable{model.getIsValid() && model.getGeometry().getIsValid()};
   if (model.getIsValid() && model.getGeometry().getHasImage()) {
     ui->lblGeometry->setPhysicalSize(model.getGeometry().getPhysicalSize(),
                                      model.getUnits().getLength().name);
   }
   for (int i = 1; i < ui->tabMain->count(); ++i) {
     ui->tabMain->setTabEnabled(i, enable);
+  }
+  if (model.getReactions().getIsIncompleteODEImport()) {
+    if (model.getGeometry().getIsValid()) {
+      statusBarPermanentMessage->setText(getStatusBarMessage(3));
+    } else if (model.getGeometry().getHasImage()) {
+      statusBarPermanentMessage->setText(getStatusBarMessage(2));
+    } else {
+      statusBarPermanentMessage->setText(getStatusBarMessage(1));
+    }
+    statusBarPermanentMessage->show();
+  } else {
+    statusBarPermanentMessage->hide();
   }
   tabGeometry->enableTabs();
 }
@@ -333,6 +379,13 @@ void MainWindow::action_Open_SBML_file_triggered() {
   model.importFile(filename.toStdString());
   QGuiApplication::restoreOverrideCursor();
   validateSBMLDoc(filename);
+  if (model.getReactions().getIsIncompleteODEImport()) {
+    QMessageBox::information(
+        this, "Non-spatial model import",
+        "Non-spatial model imported. See the status message at the "
+        "bottom-right of the "
+        "window for what to do next to convert this into a spatial model.");
+  }
 }
 
 void MainWindow::menuOpen_example_SBML_file_triggered(const QAction *action) {
@@ -511,6 +564,18 @@ void MainWindow::actionSet_spatial_coordinates_triggered() {
     coords.x.name = dialog.getXName().toStdString();
     coords.y.name = dialog.getYName().toStdString();
     params.setSpatialCoordinates(std::move(coords));
+  }
+}
+
+void MainWindow::actionFinalize_non_spatial_import_triggered() {
+  OdeImportWizard wiz(model);
+  if (wiz.exec() == QWizard::Accepted) {
+    statusBarPermanentMessage->hide();
+    model.getReactions().applySpatialReactionRescalings(
+        wiz.getReactionRescalings());
+  } else {
+    // reset depth to previous value
+    model.getGeometry().setPixelDepth(wiz.getInitialPixelDepth());
   }
 }
 

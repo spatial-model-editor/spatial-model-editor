@@ -57,15 +57,20 @@ static QStringList importNamesAndMakeUnique(libsbml::Model *model,
   return names;
 }
 
-static void makeSizesValid(libsbml::Model *model) {
-  constexpr double defaultCompartmentSize = 1.0;
+static std::map<std::string, double, std::less<>>
+importSizesAndMakeValid(libsbml::Model *model) {
+  std::map<std::string, double, std::less<>> sizes;
+  constexpr double defaultCompartmentSize{1.0};
   for (unsigned int i = 0; i < model->getNumCompartments(); ++i) {
-    if (auto *comp = model->getCompartment(i); !comp->isSetSize()) {
+    auto *comp{model->getCompartment(i)};
+    if (!comp->isSetSize()) {
       SPDLOG_WARN("Compartment '{}' has no size, assigning default value: {}",
                   comp->getId(), defaultCompartmentSize);
       comp->setSize(defaultCompartmentSize);
     }
+    sizes[comp->getId()] = comp->getSize();
   }
+  return sizes;
 }
 
 ModelCompartments::ModelCompartments() = default;
@@ -77,7 +82,7 @@ ModelCompartments::ModelCompartments(libsbml::Model *model,
     : ids{importIds(model)}, names{importNamesAndMakeUnique(model, ids)},
       sbmlModel{model}, modelMembranes{membranes}, modelUnits{units},
       simulationData{data} {
-  makeSizesValid(model);
+  initialCompartmentSizes = importSizesAndMakeValid(model);
   colours = QVector<QRgb>(ids.size(), 0);
   compartments.reserve(static_cast<std::size_t>(ids.size()));
   createDefaultCompartmentGeometryIfMissing(model);
@@ -376,8 +381,8 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
     modelMembranes->exportToSBML(modelGeometry->getPixelWidth() *
                                  modelGeometry->getPixelDepth());
   }
-  if (modelReactions != nullptr) {
-    modelReactions->makeReactionsSpatial(modelGeometry->getIsValid());
+  if (modelReactions != nullptr && modelGeometry->getIsValid()) {
+    modelReactions->makeReactionLocationsValid();
   }
 }
 
@@ -425,6 +430,11 @@ double ModelCompartments::getSize(const QString &id) const {
     return 0.0;
   }
   return compartment->getSize();
+}
+
+[[nodiscard]] const std::map<std::string, double, std::less<>> &
+ModelCompartments::getInitialCompartmentSizes() const {
+  return initialCompartmentSizes;
 }
 
 void ModelCompartments::clear() {

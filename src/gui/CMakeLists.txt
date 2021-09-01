@@ -24,6 +24,7 @@ endif()
 add_subdirectory(widgets)
 add_subdirectory(dialogs)
 add_subdirectory(tabs)
+add_subdirectory(wizards)
 
 target_link_libraries(gui PUBLIC Qt::Widgets sme::core)
 set_property(TARGET gui PROPERTY CXX_STANDARD 17)

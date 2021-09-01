@@ -37,6 +37,10 @@ static QStringList importNamesAndMakeUnique(libsbml::Model *model) {
     auto name{makeUnique(reaction->getName().c_str(), names)};
     reaction->setName(name.toStdString());
     names.push_back(name);
+    // also set isLocal to true for all reactions
+    auto *srp{static_cast<libsbml::SpatialReactionPlugin *>(
+        reaction->getPlugin("spatial"))};
+    srp->setIsLocal(true);
   }
   return names;
 }
@@ -101,76 +105,39 @@ inferReactionCompartment(const libsbml::Reaction *reac,
         return membrane.getId();
       }
     }
+  } else {
+    SPDLOG_WARN("No valid compartment for reaction");
+    if (model->getNumCompartments() > 0) {
+      const auto &compId{model->getCompartment(0)->getId()};
+      SPDLOG_WARN("Using first compartment we find: {}", compId);
+      return compId;
+    }
   }
   return {};
 }
 
-static bool multiplyDivideReactionKineticLaw(libsbml::Reaction *reaction,
-                                             const std::string &multiplier,
-                                             const std::string &divisor) {
+static ReactionRescaling getReactionRescaling(
+    const libsbml::Reaction *reaction, const std::string &divisor,
+    const std::vector<std::pair<std::string, double>> &constants) {
+  ReactionRescaling reactionRescaling;
+  reactionRescaling.id = reaction->getId();
+  reactionRescaling.reactionName = reaction->getName().c_str();
   const auto *model{reaction->getModel()};
+  const auto &compartmentId{reaction->getCompartment()};
+  reactionRescaling.reactionLocation =
+      model->getCompartment(compartmentId)->getName().c_str();
+  SPDLOG_INFO("  {} ('{}')", reactionRescaling.id,
+              reactionRescaling.reactionName.toStdString());
   const auto *kineticLaw{reaction->getKineticLaw()};
   auto expr{mathASTtoString(kineticLaw->getMath())};
+  reactionRescaling.originalExpression = expr.c_str();
   SPDLOG_INFO("  - {}", expr);
-  if (!divisor.empty()) {
-    expr = common::symbolicDivide(expr, divisor);
-  }
-  if (!multiplier.empty()) {
-    expr = common::symbolicMultiply(expr, multiplier);
-  }
+  expr = common::symbolicDivide(expr, divisor);
   SPDLOG_INFO("  --> {}", expr);
-  auto ast{mathStringToAST(expr, model)};
-  if (ast == nullptr) {
-    SPDLOG_WARN(
-        "  - libSBML failed to parse expression: leaving existing math");
-    return false;
-  }
-  reaction->getKineticLaw()->setMath(ast.get());
-  SPDLOG_INFO("  - new math: {}",
-              mathASTtoString(reaction->getKineticLaw()->getMath()));
-  return true;
-}
-
-static bool divideReactionKineticLaw(libsbml::Reaction *reaction,
-                                     const std::string &divisor) {
-  return multiplyDivideReactionKineticLaw(reaction, {}, divisor);
-}
-
-static bool
-makeReactionSpatial(libsbml::Reaction *reaction,
-                    const std::vector<geometry::Membrane> &membranes) {
-  auto compartmentId{inferReactionCompartment(reaction, membranes)};
-  if (compartmentId.empty()) {
-    SPDLOG_INFO("no valid compartment found for reaction {}",
-                reaction->getId());
-    return false;
-  }
-  if (auto iter{std::find_if(membranes.cbegin(), membranes.cend(),
-                             [compartmentId](const auto &m) {
-                               return m.getId() == compartmentId;
-                             })};
-      iter != membranes.cend()) {
-    // membrane reaction
-    SPDLOG_INFO("Reaction involves species from two compartments:");
-    SPDLOG_INFO("Setting Reaction compartment to membrane: '{}'",
-                compartmentId);
-    reaction->setCompartment(compartmentId);
-    SPDLOG_INFO("  - original rate units: d[amount]/dt");
-    SPDLOG_INFO(
-        "  -> want spatial membrane reaction: d[amount]/d[membrane area]/dt");
-    SPDLOG_INFO("  -> dividing rate by membrane area");
-    divideReactionKineticLaw(reaction, compartmentId);
-    return true;
-  }
-  // compartment reaction
-  SPDLOG_INFO("Reaction involves species from a single compartment");
-  SPDLOG_INFO("Setting Reaction compartment: '{}'", compartmentId);
-  reaction->setCompartment(compartmentId);
-  SPDLOG_INFO("  - original rate units: d[amount]/dt");
-  SPDLOG_INFO("  -> want spatial compartment reaction: d[concentration]/dt");
-  SPDLOG_INFO("  -> dividing rate by compartment size");
-  divideReactionKineticLaw(reaction, compartmentId);
-  return true;
+  expr = common::symbolicSubstitute(expr, constants);
+  SPDLOG_INFO("  --> {}", expr);
+  reactionRescaling.rescaledExpression = expr.c_str();
+  return reactionRescaling;
 }
 
 static bool reactionInvolvesSpecies(const libsbml::Reaction *reac,
@@ -248,14 +215,20 @@ removeInvalidSpecies(libsbml::Reaction *reaction,
 ModelReactions::ModelReactions() = default;
 
 ModelReactions::ModelReactions(libsbml::Model *model,
-                               const ModelMembranes *membranes)
+                               const ModelMembranes *membranes,
+                               bool isNonSpatialModel)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(model)},
       parameterIds{importParameterIds(model)}, sbmlModel{model},
-      modelMembranes{membranes} {
-  makeReactionsSpatial(false);
+      modelMembranes{membranes}, isIncompleteODEImport{isNonSpatialModel} {
+  if (!isNonSpatialModel) {
+    // for a non-spatial model, we'll assign missing reaction locations after
+    // the geometry is imported but if we import a spatial model with reactions
+    // without location, should fix that straight away:
+    makeReactionLocationsValid();
+  }
 }
 
-void ModelReactions::makeReactionsSpatial(bool haveValidGeometry) {
+void ModelReactions::makeReactionLocationsValid() {
   if (sbmlModel == nullptr) {
     return;
   }
@@ -268,32 +241,59 @@ void ModelReactions::makeReactionsSpatial(bool haveValidGeometry) {
         kineticLaw == nullptr) {
       kineticLaw = reaction->createKineticLaw();
     }
-    auto *srp = static_cast<libsbml::SpatialReactionPlugin *>(
-        reaction->getPlugin("spatial"));
-    if (srp != nullptr && srp->isSetIsLocal() && srp->getIsLocal() &&
-        reaction->getCompartment().empty()) {
-      // spatial model, local reaction, but no compartment set, so try to set
-      // one
+    if (reaction->getCompartment().empty()) {
+      // make a best guess for reaction location based on species involved
       SPDLOG_INFO("spatial reaction '{}' compartment not set",
                   reaction->getId());
       reaction->setCompartment(inferReactionCompartment(reaction, membranes));
-    }
-    if (srp != nullptr && !(srp->isSetIsLocal() && srp->getIsLocal())) {
-      // spatial model, non-local reaction, i.e. we are importing a
-      // non-spatial model, so try to rescale it if we have enough geometry
-      // info to do so, and if successful, then set isLocal = true
-      if (makeReactionSpatial(reaction, membranes)) {
-        SPDLOG_INFO("Setting isLocal=true for reaction {}", reaction->getId());
-        srp->setIsLocal(true);
-      }
-    }
-    if (haveValidGeometry && srp != nullptr && srp->isSetIsLocal() &&
-        srp->getIsLocal()) {
-      // spatial, local reaction with valid geometry: ensure species involved
-      // make sense
+      // ensure species involved make sense
       removeInvalidSpecies(reaction, membranes);
     }
   }
+}
+
+void ModelReactions::applySpatialReactionRescalings(
+    const std::vector<ReactionRescaling> &reactionRescalings) {
+  for (const auto &reactionRescaling : reactionRescalings) {
+    auto *reaction{sbmlModel->getReaction(reactionRescaling.id)};
+    if (auto ast{mathStringToAST(
+            reactionRescaling.rescaledExpression.toStdString(), sbmlModel)};
+        ast == nullptr) {
+      SPDLOG_WARN(
+          "  - libSBML failed to parse expression: leaving existing math");
+    } else {
+      reaction->getKineticLaw()->setMath(ast.get());
+      SPDLOG_INFO("  - new math: {}",
+                  mathASTtoString(reaction->getKineticLaw()->getMath()));
+    }
+  }
+  isIncompleteODEImport = false;
+}
+
+std::vector<ReactionRescaling>
+ModelReactions::getSpatialReactionRescalings() const {
+  std::vector<ReactionRescaling> reactionRescaling;
+  reactionRescaling.reserve(
+      static_cast<std::size_t>(sbmlModel->getNumReactions()));
+  std::vector<std::pair<std::string, double>> compartmentSizes;
+  compartmentSizes.reserve(
+      static_cast<std::size_t>(sbmlModel->getNumCompartments()));
+  for (unsigned i = 0; i < sbmlModel->getNumCompartments(); ++i) {
+    const auto *comp{sbmlModel->getCompartment(i)};
+    compartmentSizes.emplace_back(comp->getId(), comp->getSize());
+  }
+  for (unsigned int i = 0; i < sbmlModel->getNumReactions(); ++i) {
+    const auto *reaction{sbmlModel->getReaction(i)};
+    const auto &compartmentId{reaction->getCompartment()};
+    SPDLOG_INFO("Location: {}", compartmentId);
+    reactionRescaling.push_back(
+        getReactionRescaling(reaction, compartmentId, compartmentSizes));
+  }
+  return reactionRescaling;
+}
+
+[[nodiscard]] bool ModelReactions::getIsIncompleteODEImport() const {
+  return isIncompleteODEImport;
 }
 
 QStringList ModelReactions::getIds(const QString &locationId) const {
@@ -448,24 +448,6 @@ void ModelReactions::setLocation(const QString &id, const QString &locationId) {
   }
   hasUnsavedChanges = true;
   const auto &membranes{modelMembranes->getMembranes()};
-  const auto &oldLocation{reaction->getCompartment()};
-  bool oldLocationIsCompartment{std::find_if(membranes.cbegin(),
-                                             membranes.cend(),
-                                             [oldLocation](const auto &m) {
-                                               return m.getId() == oldLocation;
-                                             }) == membranes.cend()};
-  std::string newLocation{locationId.toStdString()};
-  bool newLocationIsCompartment{std::find_if(membranes.cbegin(),
-                                             membranes.cend(),
-                                             [newLocation](const auto &m) {
-                                               return m.getId() == newLocation;
-                                             }) == membranes.cend()};
-  if (oldLocationIsCompartment != newLocationIsCompartment) {
-    SPDLOG_INFO("Doing compartment <-> membrane rescaling");
-    SPDLOG_INFO("  - multiply rate by '{}'", oldLocation);
-    SPDLOG_INFO("  - divide rate by '{}'", newLocation);
-    multiplyDivideReactionKineticLaw(reaction, oldLocation, newLocation);
-  }
   SPDLOG_INFO("Setting reaction '{}' location to '{}'", id.toStdString(),
               locationId.toStdString());
   reaction->setCompartment(locationId.toStdString());

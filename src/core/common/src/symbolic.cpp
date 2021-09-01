@@ -280,6 +280,21 @@ std::string symbolicMultiply(const std::string &expr, const std::string &var) {
   return result;
 }
 
+std::string symbolicSubstitute(
+    const std::string &expr,
+    const std::vector<std::pair<std::string, double>> &constants) {
+  std::locale userLocale = std::locale::global(std::locale::classic());
+  SymEngine::map_basic_basic d;
+  for (const auto &[name, value] : constants) {
+    SPDLOG_DEBUG("  - constant {} = {}", name, value);
+    d[SymEngine::symbol(name)] = SymEngine::real_double(value);
+  }
+  auto e{SymEngine::parse_sbml(expr)};
+  std::string result = toString(e->subs(d));
+  std::locale::global(userLocale);
+  return result;
+}
+
 bool symbolicContains(const std::string &expr, const std::string &var) {
   std::locale userLocale = std::locale::global(std::locale::classic());
   auto e{SymEngine::parse_sbml(expr)};

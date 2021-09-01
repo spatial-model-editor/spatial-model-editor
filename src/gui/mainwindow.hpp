@@ -1,10 +1,10 @@
 #pragma once
 
 #include "model.hpp"
+#include <QLabel>
 #include <QMainWindow>
 #include <memory>
 
-class QLabel;
 class TabFunctions;
 class TabGeometry;
 class TabEvents;
@@ -69,6 +69,7 @@ private:
   void actionSet_model_units_triggered();
   void actionEdit_geometry_image_triggered();
   void actionSet_spatial_coordinates_triggered();
+  void actionFinalize_non_spatial_import_triggered();
 
   // View menu actions
   void actionGeometry_grid_triggered(bool checked);

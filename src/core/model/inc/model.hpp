@@ -26,19 +26,9 @@
 #include <memory>
 #include <optional>
 
-// SBML forward declarations
 namespace libsbml {
 class SBMLDocument;
-class Model;
-class Compartment;
-class SpatialModelPlugin;
-class Geometry;
-class SampledFieldGeometry;
-class ParametricGeometry;
-class ParametricObject;
-class Reaction;
-class UnitDefinition;
-} // namespace libsbml
+}
 
 namespace sme::mesh {
 class Mesh;
@@ -74,7 +64,7 @@ private:
   std::unique_ptr<ModelUnits> modelUnits;
   std::unique_ptr<ModelMath> modelMath;
 
-  void initModelData();
+  void initModelData(bool emptySpatialModel = false);
   void setHasUnsavedChanges(bool unsavedChanges);
   void updateSBMLDoc();
 

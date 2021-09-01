@@ -17,6 +17,14 @@ namespace sme::model {
 
 class ModelMembranes;
 
+struct ReactionRescaling {
+  std::string id{};
+  QString reactionName{};
+  QString reactionLocation{};
+  QString originalExpression{};
+  QString rescaledExpression{};
+};
+
 class ModelReactions {
 private:
   QStringList ids;
@@ -25,12 +33,19 @@ private:
   libsbml::Model *sbmlModel{};
   const ModelMembranes *modelMembranes{};
   bool hasUnsavedChanges{false};
+  bool isIncompleteODEImport{false};
 
 public:
   ModelReactions();
   explicit ModelReactions(libsbml::Model *model,
-                          const ModelMembranes *membranes);
-  void makeReactionsSpatial(bool haveValidGeometry);
+                          const ModelMembranes *membranes,
+                          bool isNonSpatialModel);
+  void makeReactionLocationsValid();
+  void applySpatialReactionRescalings(
+      const std::vector<ReactionRescaling> &reactionRescalings);
+  [[nodiscard]] std::vector<ReactionRescaling>
+  getSpatialReactionRescalings() const;
+  [[nodiscard]] bool getIsIncompleteODEImport() const;
   [[nodiscard]] QStringList getIds(const QString &locationId) const;
   QString add(const QString &name, const QString &locationId,
               const QString &rateExpression = "1");
