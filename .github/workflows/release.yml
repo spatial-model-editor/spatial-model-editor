@@ -99,7 +99,7 @@ jobs:
 
   release:
     needs: [linux-gui, macos-gui, win64-gui]
-    if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || github.ref == 'refs/heads/master')
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/download-artifact@v2
@@ -107,6 +107,8 @@ jobs:
           name: artifact
           path: binaries
       - name: Upload binaries to latest pre-release
+        # if this is an untagged commit to master: upload binaries to github latest release
+        if: github.ref == 'refs/heads/master'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
@@ -116,6 +118,7 @@ jobs:
           file_glob: true
           prerelease: true
       - name: Upload binaries to tagged release
+        # if this a tagged commit, upload binaries to github release for this tag
         if: startsWith(github.event.ref, 'refs/tags/')
         uses: svenstaro/upload-release-action@v2
         with:
