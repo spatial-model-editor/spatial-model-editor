@@ -92,14 +92,15 @@ with open(path.join(sme_directory, "README.md")) as f:
 
 setup(
     name="sme",
-    version="1.1.4",
+    version="1.1.5",
     author="Liam Keegan",
     author_email="liam@keegan.ch",
     description="Spatial Model Editor python bindings",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://spatial-model-editor.readthedocs.io/",
+    url="https://spatial-model-editor.github.io/",
     project_urls={
+        "Documentation": "https://spatial-model-editor.readthedocs.io/",
         "Github": "https://github.com/spatial-model-editor/spatial-model-editor",
         "Issues": "https://github.com/spatial-model-editor/spatial-model-editor/issues",
         "Try it online": "https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/sme/notebooks/getting_started.ipynb",

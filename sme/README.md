@@ -5,7 +5,7 @@
 [![open in colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/sme/notebooks/getting_started.ipynb)
 [![python versions](https://img.shields.io/pypi/pyversions/sme)](https://pypi.org/project/sme)
 
-sme is a python interface to the [Spatial Model Editor](https://github.com/spatial-model-editor/spatial-model-editor).
+sme is the Python interface to [Spatial Model Editor](https://spatial-model-editor.github.io).
 
 It can be used to modify parameters in a model and to simulate a model.
 
@@ -20,7 +20,7 @@ You can also [try it out][1] online without installing anything using Google Col
 
 [1]: https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/sme/notebooks/getting_started.ipynb
 
-Documentation: <https://spatial-model-editor.readthedocs.io/en/stable/reference/sme/sme.html>
+Documentation: <https://spatial-model-editor.readthedocs.io/en/stable/sme/sme.html>
 
 Supported platforms and python versions:
 
