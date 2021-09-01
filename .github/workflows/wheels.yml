@@ -170,8 +170,7 @@ jobs:
 
   pypi:
     name: Upload to PyPI / Github Release
-    # only run on master branch
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || github.ref == 'refs/heads/master')
     needs: [linux-wheel, macos-wheel, win64-wheel, win32-wheel, sdist]
     runs-on: ubuntu-20.04
     steps:
@@ -180,8 +179,8 @@ jobs:
           name: artifact
           path: dist
       - uses: pypa/gh-action-pypi-publish@release/v1
-        # only upload pypi wheels if commit is tagged with "1.*"
-        if: startsWith(github.event.ref, 'refs/tags/1.')
+        # if this is a tagged commit, upload pypi wheels
+        if: startsWith(github.event.ref, 'refs/tags/')
         with:
           user: __token__
           password: ${{ secrets.pypi_password }}
@@ -190,7 +189,8 @@ jobs:
           mkdir latest
           mv dist/sme-*-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl latest/sme-latest-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
       - uses: svenstaro/upload-release-action@v2
-        # upload selected wheels to github latest release
+        # if this is an untagged commit to master: upload selected wheels to github latest release
+        if: github.ref == 'refs/heads/master'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: latest/*
