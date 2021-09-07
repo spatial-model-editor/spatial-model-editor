@@ -108,7 +108,7 @@ jobs:
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
       - name: Download static libraries
-        run: ./ci/getlibs.sh win64
+        run: ./ci/getlibs.sh win64-mingw
       - name: Build wheels
         run: ./ci/windows-wheels.sh
       - uses: actions/upload-artifact@v2
@@ -144,7 +144,7 @@ jobs:
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
       - name: Download static libraries
-        run: ./ci/getlibs.sh win32
+        run: ./ci/getlibs.sh win32-mingw
       - name: Build wheels
         run: ./ci/windows-wheels.sh
       - uses: actions/upload-artifact@v2
