@@ -90,7 +90,7 @@ jobs:
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
       - name: Get static libs
-        run: ./ci/getlibs.sh win64
+        run: ./ci/getlibs.sh win64-mingw
       - name: Build script
         run: ci/windows-gui.sh
       - uses: actions/upload-artifact@v2
