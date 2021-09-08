@@ -108,7 +108,7 @@ class TestModel(unittest.TestCase):
             self.assertEqual(len(sim_results), len(sim_results2))
 
             # previous sim results are cleared by default
-            sim_results = m.simulate(0.002, 0.001, simulator_type=sim_type)
+            sim_results = m.simulate(0.002, 0.001, simulator_type=sim_type, n_threads=2)
             self.assertEqual(len(sim_results), 3)
 
             sim_results2 = m.simulation_results()

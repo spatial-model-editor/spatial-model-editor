@@ -180,6 +180,7 @@ void pybindModel(pybind11::module &m) {
            pybind11::arg("simulator_type") = simulate::SimulatorType::Pixel,
            pybind11::arg("continue_existing_simulation") = false,
            pybind11::arg("return_results") = true,
+           pybind11::arg("n_threads") = 1,
            R"(
            returns the results of the simulation.
 
@@ -191,6 +192,7 @@ void pybindModel(pybind11::module &m) {
                simulator_type (sme.SimulatorType): The simulator to use: `sme.SimulatorType.DUNE` or `sme.SimulatorType.Pixel`. Default value: Pixel.
                continue_existing_simulation (bool): Whether to continue the existing simulation, or start a new simulation. Default value: `False`, i.e. any existing simulation results are discarded before doing the simulation.
                return_results (bool): Whether to return the simulation results. Default value: `True`. If `False`, an empty SimulationResultList is returned.
+               n_threads(int): Number of cpu threads to use (for Pixel simulations). Default value is 1, 0 means use all available threads.
 
            Returns:
                SimulationResultList: the results of the simulation
@@ -205,6 +207,7 @@ void pybindModel(pybind11::module &m) {
            pybind11::arg("simulator_type") = simulate::SimulatorType::Pixel,
            pybind11::arg("continue_existing_simulation") = false,
            pybind11::arg("return_results") = true,
+           pybind11::arg("n_threads") = 1,
            R"(
            returns the results of the simulation.
 
@@ -216,6 +219,7 @@ void pybindModel(pybind11::module &m) {
                simulator_type (sme.SimulatorType): The simulator to use: `sme.SimulatorType.DUNE` or `sme.SimulatorType.Pixel`. Default value: Pixel.
                continue_existing_simulation (bool): Whether to continue the existing simulation, or start a new simulation. Default value: `false`, i.e. any existing simulation results are discarded before doing the simulation.
                return_results (bool): Whether to return the simulation results. Default value: `True`. If `False`, an empty SimulationResultList is returned.
+               n_threads(int): Number of cpu threads to use (for Pixel simulations). Default value is 1, 0 means use all available threads.
 
            Returns:
                SimulationResultList: the results of the simulation
@@ -346,7 +350,8 @@ std::vector<SimulationResult>
 Model::simulateString(const std::string &lengths, const std::string &intervals,
                       int timeoutSeconds, bool throwOnTimeout,
                       simulate::SimulatorType simulatorType,
-                      bool continueExistingSimulation, bool returnResults) {
+                      bool continueExistingSimulation, bool returnResults,
+                      int nThreads) {
   QElapsedTimer simulationRuntimeTimer;
   simulationRuntimeTimer.start();
   double timeoutMillisecs{static_cast<double>(timeoutSeconds) * 1000.0};
@@ -354,6 +359,11 @@ Model::simulateString(const std::string &lengths, const std::string &intervals,
     s->getSimulationData().clear();
   }
   s->getSimulationSettings().simulatorType = simulatorType;
+  if (nThreads != 1 && simulatorType == simulate::SimulatorType::Pixel) {
+    auto &pixelOpts{s->getSimulationSettings().options.pixel};
+    pixelOpts.enableMultiThreading = true;
+    pixelOpts.maxThreads = static_cast<std::size_t>(nThreads);
+  }
   auto times{
       simulate::parseSimulationTimes(lengths.c_str(), intervals.c_str())};
   if (!times.has_value()) {
@@ -375,15 +385,14 @@ Model::simulateString(const std::string &lengths, const std::string &intervals,
   return {};
 }
 
-std::vector<SimulationResult>
-Model::simulateFloat(double simulationTime, double imageInterval,
-                     int timeoutSeconds, bool throwOnTimeout,
-                     simulate::SimulatorType simulatorType,
-                     bool continueExistingSimulation, bool returnResults) {
+std::vector<SimulationResult> Model::simulateFloat(
+    double simulationTime, double imageInterval, int timeoutSeconds,
+    bool throwOnTimeout, simulate::SimulatorType simulatorType,
+    bool continueExistingSimulation, bool returnResults, int nThreads) {
   return simulateString(QString::number(simulationTime, 'g', 17).toStdString(),
                         QString::number(imageInterval, 'g', 17).toStdString(),
                         timeoutSeconds, throwOnTimeout, simulatorType,
-                        continueExistingSimulation, returnResults);
+                        continueExistingSimulation, returnResults, nThreads);
 }
 
 std::vector<SimulationResult> Model::getSimulationResults() {

@@ -1,4 +1,7 @@
 # Changelog
+## latest
+### Added
+- python interface: optional multithreading (via OpenMP) for Pixel simulations on linux [#662](https://github.com/spatial-model-editor/spatial-model-editor/pull/662)
 
 ## [1.1.5] - 2021-09-01
 ### Added
