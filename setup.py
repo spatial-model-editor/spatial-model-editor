@@ -52,6 +52,7 @@ class CMakeBuild(build_ext):
             "SME_EXTRA_EXE_LIBS",
             "SME_EXTERNAL_SMECORE",
             "SME_QT_DISABLE_UNICODE",
+            "SME_WITH_OPENMP",
             "PYTHON_LIBRARY",
             "CMAKE_CXX_COMPILER_LAUNCHER",
             "SME_DUNE_COPASI_USE_FALLBACK_FILESYSTEM",
