@@ -147,6 +147,9 @@ void Model::importFile(const std::string &filename) {
   if (importedSmeFileContents != nullptr) {
     smeFileContents->simulationData =
         std::move(importedSmeFileContents->simulationData);
+    modelCompartments->setSimulationDataPtr(
+        smeFileContents->simulationData.get());
+    modelSpecies->setSimulationDataPtr(smeFileContents->simulationData.get());
   }
   setHasUnsavedChanges(false);
 }

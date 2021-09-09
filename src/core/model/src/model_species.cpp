@@ -271,6 +271,10 @@ void ModelSpecies::setReactionsPtr(ModelReactions *reactions) {
   modelReactions = reactions;
 }
 
+void ModelSpecies::setSimulationDataPtr(simulate::SimulationData *data) {
+  simulationData = data;
+}
+
 QString ModelSpecies::add(const QString &name, const QString &compartmentId) {
   hasUnsavedChanges = true;
   SPDLOG_INFO("Clearing simulation data");
