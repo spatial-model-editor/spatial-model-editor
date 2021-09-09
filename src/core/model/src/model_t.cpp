@@ -904,10 +904,16 @@ SCENARIO("SBML: load .xml model, simulate, save as .sme, load .sme",
   s2.importFile("test.sme");
   REQUIRE(s2.getCompartments().getIds() == s.getCompartments().getIds());
   REQUIRE(s.getXml() == s2.getXml());
-  REQUIRE(s.getSimulationData().timePoints.size() == 3);
-  REQUIRE(s.getSimulationData().timePoints[2] == dbl_approx(0.2));
-  REQUIRE(s.getSimulationData().concPadding.size() == 3);
-  REQUIRE(s.getSimulationData().concPadding[2] == dbl_approx(0));
+  REQUIRE(s2.getSimulationData().timePoints.size() == 3);
+  REQUIRE(s2.getSimulationData().timePoints[2] == dbl_approx(0.2));
+  REQUIRE(s2.getSimulationData().concPadding.size() == 3);
+  REQUIRE(s2.getSimulationData().concPadding[2] == dbl_approx(0));
+  model::Model s3;
+  s3.importFile("test.sme");
+  // do something that causes ModelCompartments to clear the simulation results
+  // https://github.com/spatial-model-editor/spatial-model-editor/issues/666
+  s3.getGeometry().setPixelWidth(1.2, true);
+  REQUIRE(s3.getSimulationData().timePoints.size() == 0);
 }
 
 SCENARIO("SBML: import multi-compartment SBML doc without spatial geometry",

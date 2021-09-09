@@ -72,7 +72,6 @@ ModelCompartments::ModelCompartments() = default;
 
 ModelCompartments::ModelCompartments(libsbml::Model *model,
                                      ModelMembranes *membranes,
-
                                      const ModelUnits *units,
                                      simulate::SimulationData *data)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(model, ids)},
@@ -98,6 +97,10 @@ void ModelCompartments::setSpeciesPtr(ModelSpecies *species) {
 
 void ModelCompartments::setReactionsPtr(ModelReactions *reactions) {
   modelReactions = reactions;
+}
+
+void ModelCompartments::setSimulationDataPtr(simulate::SimulationData *data) {
+  simulationData = data;
 }
 
 const QStringList &ModelCompartments::getIds() const { return ids; }
