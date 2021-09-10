@@ -11,19 +11,6 @@
 #include <QTreeWidget>
 #include <QWidget>
 
-QMessageBox *newYesNoMessageBox(const QString &title, const QString &text,
-                                QWidget *parent) {
-  auto *msgbox = new QMessageBox(parent);
-  msgbox->setIcon(QMessageBox::Question);
-  msgbox->setWindowTitle(title);
-  msgbox->setText(text);
-  msgbox->addButton(QMessageBox::Yes);
-  msgbox->addButton(QMessageBox::No);
-  msgbox->setDefaultButton(QMessageBox::Yes);
-  msgbox->setAttribute(Qt::WA_DeleteOnClose);
-  return msgbox;
-}
-
 void selectMatchingOrFirstItem(QListWidget *list, const QString &text) {
   if (list->count() == 0) {
     return;

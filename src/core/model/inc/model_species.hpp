@@ -53,6 +53,7 @@ public:
                simulate::SimulationData *data, Settings *annotation);
   void setReactionsPtr(ModelReactions *reactions);
   void setSimulationDataPtr(simulate::SimulationData *data);
+  [[nodiscard]] bool containsNonSpatialReactiveSpecies() const;
   QString add(const QString &name, const QString &compartmentId);
   void remove(const QString &id);
   QString setName(const QString &id, const QString &name);

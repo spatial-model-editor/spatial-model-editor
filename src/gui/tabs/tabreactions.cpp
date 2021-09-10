@@ -254,19 +254,16 @@ void TabReactions::btnAddReaction_clicked() {
 }
 
 void TabReactions::btnRemoveReaction_clicked() {
-  auto msgbox =
-      newYesNoMessageBox("Remove reaction?",
-                         QString("Remove reaction '%1' from the model?")
-                             .arg(ui->listReactions->currentItem()->text(0)),
-                         this);
-  connect(msgbox, &QMessageBox::finished, this, [this](int result) {
-    if (result == QMessageBox::Yes) {
-      SPDLOG_INFO("Removing reaction {}", currentReacId.toStdString());
-      model.getReactions().remove(currentReacId);
-      loadModelData();
-    }
-  });
-  msgbox->open();
+  auto result{
+      QMessageBox::question(this, "Remove reaction?",
+                            QString("Remove reaction '%1' from the model?")
+                                .arg(ui->listReactions->currentItem()->text(0)),
+                            QMessageBox::Yes | QMessageBox::No)};
+  if (result == QMessageBox::Yes) {
+    SPDLOG_INFO("Removing reaction {}", currentReacId.toStdString());
+    model.getReactions().remove(currentReacId);
+    loadModelData();
+  }
 }
 
 void TabReactions::txtReactionName_editingFinished() {
@@ -377,21 +374,19 @@ void TabReactions::btnRemoveReactionParam_clicked() {
     return;
   }
   const auto &param = ui->listReactionParams->item(row, 0)->text();
-  auto msgbox = newYesNoMessageBox(
-      "Remove reaction parameter?",
-      QString("Remove parameter '%1' from the reaction?").arg(param), this);
-  connect(msgbox, &QMessageBox::finished, this, [param, row, this](int result) {
-    if (result == QMessageBox::Yes) {
-      SPDLOG_INFO("Removing parameter {}", param.toStdString());
-      auto paramId = model.getReactions().getParameterIds(currentReacId)[row];
-      model.getReactions().removeParameter(currentReacId, paramId);
-      ui->listReactionParams->blockSignals(true);
-      ui->listReactionParams->removeRow(row);
-      ui->listReactionParams->blockSignals(false);
-      ui->txtReactionRate->removeVariable(paramId.toStdString());
-    }
-  });
-  msgbox->open();
+  auto result{QMessageBox::question(
+      this, "Remove reaction parameter?",
+      QString("Remove parameter '%1' from the reaction?").arg(param),
+      QMessageBox::Yes | QMessageBox::No)};
+  if (result == QMessageBox::Yes) {
+    SPDLOG_INFO("Removing parameter {}", param.toStdString());
+    auto paramId = model.getReactions().getParameterIds(currentReacId)[row];
+    model.getReactions().removeParameter(currentReacId, paramId);
+    ui->listReactionParams->blockSignals(true);
+    ui->listReactionParams->removeRow(row);
+    ui->listReactionParams->blockSignals(false);
+    ui->txtReactionRate->removeVariable(paramId.toStdString());
+  }
 }
 
 void TabReactions::txtReactionRate_mathChanged(const QString &math, bool valid,

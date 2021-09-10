@@ -11,6 +11,7 @@
 #include "utils.hpp"
 #include "xml_annotation.hpp"
 #include <QString>
+#include <algorithm>
 #include <memory>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
@@ -273,6 +274,12 @@ void ModelSpecies::setReactionsPtr(ModelReactions *reactions) {
 
 void ModelSpecies::setSimulationDataPtr(simulate::SimulationData *data) {
   simulationData = data;
+}
+
+bool ModelSpecies::containsNonSpatialReactiveSpecies() const {
+  return std::any_of(ids.begin(), ids.end(), [this](const auto &id) {
+    return !getIsSpatial(id) && isReactive(id);
+  });
 }
 
 QString ModelSpecies::add(const QString &name, const QString &compartmentId) {

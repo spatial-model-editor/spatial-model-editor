@@ -83,19 +83,16 @@ void TabParameters::btnRemoveParameter_clicked() {
   if ((row < 0) || (row > model.getParameters().getIds().size() - 1)) {
     return;
   }
-  auto msgbox =
-      newYesNoMessageBox("Remove parameter?",
-                         QString("Remove parameter '%1' from the model?")
-                             .arg(ui->listParameters->currentItem()->text()),
-                         this);
-  connect(msgbox, &QMessageBox::finished, this, [this](int result) {
-    if (result == QMessageBox::Yes) {
-      SPDLOG_INFO("Removing parameter {}", currentParameterId.toStdString());
-      model.getParameters().remove(currentParameterId);
-      loadModelData();
-    }
-  });
-  msgbox->open();
+  auto result{
+      QMessageBox::question(this, "Remove parameter?",
+                            QString("Remove parameter '%1' from the model?")
+                                .arg(ui->listParameters->currentItem()->text()),
+                            QMessageBox::Yes | QMessageBox::No)};
+  if (result == QMessageBox::Yes) {
+    SPDLOG_INFO("Removing parameter {}", currentParameterId.toStdString());
+    model.getParameters().remove(currentParameterId);
+    loadModelData();
+  }
 }
 
 void TabParameters::txtParameterName_editingFinished() {

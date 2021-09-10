@@ -185,28 +185,33 @@ SCENARIO("Species Tab", "[gui/tabs/species][gui/tabs][gui][species]") {
     sendKeyEvents(listSpecies, {"Up"});
     REQUIRE(listSpecies->currentItem()->text(0) == "A_out");
     // click remove species, then "no" to cancel
+    mwt.addUserAction({"Esc"});
+    mwt.start();
     sendMouseClick(btnRemoveSpecies);
-    sendKeyEventsToNextQDialog({"Esc"});
     REQUIRE(listSpecies->currentItem()->text(0) == "A_out");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Outside");
     // click remove species, then "yes" to confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveSpecies);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listSpecies->currentItem()->text(0) == "B_out");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Outside");
     // click remove species, then "yes" to confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveSpecies);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listSpecies->currentItem()->text(0) == "A_cell");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Cell");
     // click remove species, then "yes" to confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveSpecies);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listSpecies->currentItem()->text(0) == "B_cell");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Cell");
     // click remove species, then "yes" to confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveSpecies);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listSpecies->currentItem()->text(0) == "A_nucl");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Nucleus");
     REQUIRE(listSpecies->currentItem()->parent()->childCount() == 2);
@@ -219,26 +224,30 @@ SCENARIO("Species Tab", "[gui/tabs/species][gui/tabs][gui][species]") {
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Nucleus");
     REQUIRE(listSpecies->currentItem()->parent()->childCount() == 3);
     // click remove species, then "no" to cancel
+    mwt.addUserAction({"Esc"});
+    mwt.start();
     sendMouseClick(btnRemoveSpecies);
-    sendKeyEventsToNextQDialog({"Esc"});
     REQUIRE(listSpecies->currentItem()->text(0) == "new species in nucleus");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Nucleus");
     REQUIRE(listSpecies->currentItem()->parent()->childCount() == 3);
     // click remove species, then "yes" to confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveSpecies);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listSpecies->currentItem()->text(0) == "A_nucl");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Nucleus");
     REQUIRE(listSpecies->currentItem()->parent()->childCount() == 2);
     // click remove species, then "yes" to confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveSpecies);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listSpecies->currentItem()->text(0) == "B_nucl");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Nucleus");
     REQUIRE(listSpecies->currentItem()->parent()->childCount() == 1);
     // click remove species, then "yes" to confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveSpecies);
-    sendKeyEventsToNextQDialog({"Enter"});
     // no species left in model:
     REQUIRE(listSpecies->topLevelItem(0)->childCount() == 0);
     REQUIRE(listSpecies->topLevelItem(1)->childCount() == 0);

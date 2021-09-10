@@ -99,22 +99,33 @@ void TabSimulate::loadModelData() {
     simSteps.wait();
   }
   if (model.getSimulationSettings().simulatorType ==
-          sme::simulate::SimulatorType::DUNE &&
-      (model.getGeometry().getMesh() == nullptr ||
-       !model.getGeometry().getMesh()->isValid())) {
-    ui->btnSimulate->setEnabled(false);
-    auto msgbox = newYesNoMessageBox(
-        "Invalid mesh",
-        "Mesh geometry is not valid, and is required for a DUNE "
-        "simulation. Would you like to use the Pixel simulator instead?",
-        this);
-    connect(msgbox, &QMessageBox::finished, this, [this](int result) {
+      sme::simulate::SimulatorType::DUNE) {
+    QString duneInvalidTitle{};
+    QString duneInvalidMessage{};
+    if (model.getGeometry().getMesh() == nullptr ||
+        !model.getGeometry().getMesh()->isValid()) {
+      duneInvalidTitle = "Invalid Mesh";
+      duneInvalidMessage =
+          "Mesh geometry is not valid, and is required for a DuneCopasi "
+          "simulation.";
+    } else if (model.getSpecies().containsNonSpatialReactiveSpecies()) {
+      duneInvalidTitle = "Non-spatial species not supported";
+      duneInvalidMessage =
+          "The model contains non-spatial species, which are not "
+          "currently supported by DuneCopasi.";
+    }
+    if (!duneInvalidTitle.isEmpty()) {
+      ui->btnSimulate->setEnabled(false);
+      auto result{QMessageBox::question(
+          this, duneInvalidTitle,
+          duneInvalidMessage +
+              " Would you like to use the Pixel simulator instead?",
+          QMessageBox::Yes | QMessageBox::No)};
       if (result == QMessageBox::Yes) {
         useDune(false);
       }
-    });
-    msgbox->open();
-    return;
+      return;
+    }
   }
   plt->clear();
   ui->hslideTime->setMinimum(0);

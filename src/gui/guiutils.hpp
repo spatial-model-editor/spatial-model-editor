@@ -9,9 +9,6 @@ class QListWidget;
 class QTreeWidget;
 class QScrollArea;
 
-QMessageBox *newYesNoMessageBox(const QString &title, const QString &text,
-                                QWidget *parent);
-
 void selectMatchingOrFirstItem(QListWidget *list, const QString &text = {});
 
 void selectFirstChild(QTreeWidget *tree);

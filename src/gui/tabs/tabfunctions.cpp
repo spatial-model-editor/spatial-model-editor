@@ -96,19 +96,16 @@ void TabFunctions::btnRemoveFunction_clicked() {
   if (currentFunctionId.isEmpty()) {
     return;
   }
-  auto msgbox =
-      newYesNoMessageBox("Remove function?",
-                         QString("Remove function '%1' from the model?")
-                             .arg(ui->listFunctions->currentItem()->text()),
-                         this);
-  connect(msgbox, &QMessageBox::finished, this, [this](int result) {
-    if (result == QMessageBox::Yes) {
-      SPDLOG_INFO("Removing function {}", currentFunctionId.toStdString());
-      model.getFunctions().remove(currentFunctionId);
-      this->loadModelData();
-    }
-  });
-  msgbox->open();
+  auto result{
+      QMessageBox::question(this, "Remove function?",
+                            QString("Remove function '%1' from the model?")
+                                .arg(ui->listFunctions->currentItem()->text()),
+                            QMessageBox::Yes | QMessageBox::No)};
+  if (result == QMessageBox::Yes) {
+    SPDLOG_INFO("Removing function {}", currentFunctionId.toStdString());
+    model.getFunctions().remove(currentFunctionId);
+    this->loadModelData();
+  }
 }
 
 void TabFunctions::txtFunctionName_editingFinished() {
@@ -147,20 +144,17 @@ void TabFunctions::btnRemoveFunctionParam_clicked() {
   }
   auto *item = ui->listFunctionParams->currentItem();
   const auto param = item->text();
-  auto msgbox = newYesNoMessageBox(
-      "Remove function parameter?",
+  auto result{QMessageBox::question(
+      this, "Remove function parameter?",
       QString("Remove function parameter '%1' from the model?").arg(param),
-      this);
-  connect(msgbox, &QMessageBox::finished, this, [item, this](int result) {
-    if (result == QMessageBox::Yes) {
-      auto paramId = item->text().toStdString();
-      SPDLOG_INFO("Removing parameter {}", paramId);
-      ui->txtFunctionDef->removeVariable(paramId);
-      model.getFunctions().removeArgument(currentFunctionId, item->text());
-      delete item;
-    }
-  });
-  msgbox->open();
+      QMessageBox::Yes | QMessageBox::No)};
+  if (result == QMessageBox::Yes) {
+    auto paramId = item->text().toStdString();
+    SPDLOG_INFO("Removing parameter {}", paramId);
+    ui->txtFunctionDef->removeVariable(paramId);
+    model.getFunctions().removeArgument(currentFunctionId, item->text());
+    delete item;
+  }
 }
 
 void TabFunctions::txtFunctionDef_mathChanged(const QString &math, bool valid,

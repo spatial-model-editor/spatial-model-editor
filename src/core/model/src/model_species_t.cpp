@@ -13,6 +13,7 @@ SCENARIO("SBML species",
     auto &s{m.getSpecies()};
     s.setHasUnsavedChanges(false);
     REQUIRE(s.getHasUnsavedChanges() == false);
+    REQUIRE(s.containsNonSpatialReactiveSpecies() == false);
     // initial species concentration
     REQUIRE(s.getIds("c1")[0] == "A_c1");
     REQUIRE(s.getInitialConcentrationType("A_c1") ==
@@ -25,6 +26,27 @@ SCENARIO("SBML species",
             model::ConcentrationType::Analytic);
     REQUIRE(s.getInitialConcentration("A_c1") == dbl_approx(1.0));
     REQUIRE(s.getAnalyticConcentration("A_c1") == "exp(-2 * x * x)");
+  }
+  GIVEN("Non-spatial species") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &s{m.getSpecies()};
+    REQUIRE(s.containsNonSpatialReactiveSpecies() == false);
+    // make B_c3 non-spatial
+    s.setIsSpatial("B_c3", false);
+    REQUIRE(s.containsNonSpatialReactiveSpecies() == true);
+    // also make it constant
+    s.setIsConstant("B_c3", true);
+    REQUIRE(s.containsNonSpatialReactiveSpecies() == false);
+    // making a species constant also implies making it non-spatial
+    REQUIRE(s.getIsSpatial("B_c2") == true);
+    s.setIsConstant("B_c2", true);
+    REQUIRE(s.getIsConstant("B_c2") == true);
+    REQUIRE(s.getIsSpatial("B_c2") == false);
+    REQUIRE(s.containsNonSpatialReactiveSpecies() == false);
+    s.setIsConstant("B_c2", false);
+    REQUIRE(s.getIsConstant("B_c2") == false);
+    REQUIRE(s.getIsSpatial("B_c2") == false);
+    REQUIRE(s.containsNonSpatialReactiveSpecies() == true);
   }
   GIVEN("Remove species also removes dependents") {
     auto m{getExampleModel(Mod::VerySimpleModel)};
