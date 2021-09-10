@@ -151,20 +151,23 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     // name changed to make it unique
     REQUIRE(listEvents->currentItem()->text() == "p !z_");
     // remove Event & cancel
+    mwt.addUserAction({"Esc"});
+    mwt.start();
     sendMouseClick(btnRemoveEvent);
-    sendKeyEventsToNextQDialog({"Esc"});
     REQUIRE(listEvents->count() == 2);
     REQUIRE(events.getIds().size() == 2);
     REQUIRE(listEvents->currentItem()->text() == "p !z_");
     // remove Event & confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveEvent);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listEvents->count() == 1);
     REQUIRE(events.getIds().size() == 1);
     REQUIRE(listEvents->currentItem()->text() == "p !z");
     // remove Event & confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveEvent);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listEvents->count() == 0);
     REQUIRE(events.getIds().size() == 0);
   }

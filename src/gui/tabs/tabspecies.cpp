@@ -186,18 +186,14 @@ void TabSpecies::btnRemoveSpecies_clicked() {
     QString compartmentID = model.getCompartments().getIds()[compartmentIndex];
     int speciesIndex = item->parent()->indexOfChild(item);
     QString speciesID = model.getSpecies().getIds(compartmentID)[speciesIndex];
-    auto msgbox = newYesNoMessageBox(
-        "Remove species?",
+    auto result{QMessageBox::question(
+        this, "Remove species?",
         QString("Remove species '%1' from the model?").arg(item->text(0)),
-        this);
-    connect(msgbox, &QMessageBox::finished, this,
-            [speciesID, this](int result) {
-              if (result == QMessageBox::Yes) {
-                model.getSpecies().remove(speciesID);
-                loadModelData();
-              }
-            });
-    msgbox->open();
+        QMessageBox::Yes | QMessageBox::No)};
+    if (result == QMessageBox::Yes) {
+      model.getSpecies().remove(speciesID);
+      loadModelData();
+    }
   }
 }
 

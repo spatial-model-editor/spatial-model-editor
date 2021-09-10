@@ -43,8 +43,9 @@ SCENARIO("Parameters Tab", "[gui/tabs/parameters][gui/tabs][gui][parameters]") {
     REQUIRE(txtExpression->toPlainText() == params.getExpression("param"));
     REQUIRE(lblExpressionStatus->text() == "");
     // remove parameter & confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveParameter);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listParameters->count() == 0);
     REQUIRE(btnAddParameter->isEnabled() == true);
     REQUIRE(btnRemoveParameter->isEnabled() == false);
@@ -102,20 +103,23 @@ SCENARIO("Parameters Tab", "[gui/tabs/parameters][gui/tabs][gui][parameters]") {
     // name changed to make it unique
     REQUIRE(listParameters->currentItem()->text() == "p !z_");
     // remove parameter & cancel
+    mwt.addUserAction({"Esc"});
+    mwt.start();
     sendMouseClick(btnRemoveParameter);
-    sendKeyEventsToNextQDialog({"Esc"});
     REQUIRE(listParameters->count() == 2);
     REQUIRE(params.getIds().size() == 2);
     REQUIRE(listParameters->currentItem()->text() == "p !z_");
     // remove parameter & confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveParameter);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listParameters->count() == 1);
     REQUIRE(params.getIds().size() == 1);
     REQUIRE(listParameters->currentItem()->text() == "p !z");
     // remove parameter & confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveParameter);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listParameters->count() == 0);
     REQUIRE(params.getIds().size() == 0);
   }

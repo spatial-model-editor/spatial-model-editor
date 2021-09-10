@@ -142,13 +142,15 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     REQUIRE(model.getReactions().getParameterValue("reacQ", "qq") ==
             dbl_approx(0));
     // remove param, then cancel
+    mwt.addUserAction({"Esc"});
+    mwt.start();
     sendMouseClick(btnRemoveReactionParam);
-    sendKeyEventsToNextQDialog({"Esc"});
     REQUIRE(listReactionParams->rowCount() == 2);
     REQUIRE(model.getReactions().getParameterIds("reacQ").size() == 2);
     // remove param, then confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveReactionParam);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listReactionParams->rowCount() == 1);
     REQUIRE(listReactionParams->item(0, 0)->text() == "y !!");
     REQUIRE(model.getReactions().getParameterIds("reacQ").size() == 1);
@@ -187,18 +189,21 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     REQUIRE(listReactions->currentItem()->text(0) == "reacQ!");
     REQUIRE(txtReactionRate->getMath() == "2 + y");
     // remove reaction, then cancel
+    mwt.addUserAction({"Esc"});
+    mwt.start();
     sendMouseClick(btnRemoveReaction);
-    sendKeyEventsToNextQDialog({"Esc"});
     REQUIRE(listReactions->topLevelItem(2)->childCount() == 2);
     REQUIRE(listReactions->currentItem()->text(0) == "reacQ!");
     // remove reaction, then confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveReaction);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listReactions->topLevelItem(2)->childCount() == 1);
     REQUIRE(listReactions->currentItem()->text(0) == "A to B conversion !");
     // remove reaction, then confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveReaction);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listReactions->topLevelItem(2)->childCount() == 0);
     REQUIRE(listReactions->currentItem()->text(0) == "A uptake from outside");
   }

@@ -157,4 +157,15 @@ SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   mwt.start();
   sendMouseClick(btnExport);
   REQUIRE(mwt.getResult() == "Export simulation results");
+
+  // make a species non-spatial & try to use dune
+  model.getSpecies().setIsSpatial("A", false);
+  REQUIRE(model.getSpecies().getIsSpatial("A") == false);
+  mwt.addUserAction({"Esc"});
+  mwt.start();
+  tab.useDune(true);
+  QString invalidDune{"The model contains non-spatial species, which are not "
+                      "currently supported by DuneCopasi. Would you like to "
+                      "use the Pixel simulator instead?"};
+  REQUIRE(mwt.getResult() == invalidDune);
 }

@@ -121,19 +121,17 @@ void TabEvents::btnRemoveEvent_clicked() {
   if ((row < 0) || (row > model.getEvents().getIds().size() - 1)) {
     return;
   }
-  auto msgbox{
-      newYesNoMessageBox("Remove event?",
-                         QString("Remove event '%1' from the model?")
-                             .arg(ui->listEvents->currentItem()->text()),
-                         this)};
-  connect(msgbox, &QMessageBox::finished, this, [this](int result) {
-    if (result == QMessageBox::Yes) {
-      SPDLOG_INFO("Removing event {}", currentEventId.toStdString());
-      model.getEvents().remove(currentEventId);
-      loadModelData();
-    }
-  });
-  msgbox->open();
+
+  auto result{
+      QMessageBox::question(this, "Remove event?",
+                            QString("Remove event '%1' from the model?")
+                                .arg(ui->listEvents->currentItem()->text()),
+                            QMessageBox::Yes | QMessageBox::No)};
+  if (result == QMessageBox::Yes) {
+    SPDLOG_INFO("Removing event {}", currentEventId.toStdString());
+    model.getEvents().remove(currentEventId);
+    loadModelData();
+  }
 }
 
 void TabEvents::txtEventName_editingFinished() {

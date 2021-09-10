@@ -114,10 +114,12 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
     }
     SECTION("user presses ctrl+d (SBML model but no geometry loaded)") {
       SECTION("offer to import a geometry image") {
+        mwt.addUserAction({"Esc"});
+        mwt.start();
         sendKeyEvents(&w, {"Ctrl+D"});
         // press no when asked to import image
-        auto title = sendKeyEventsToNextQDialog({"Esc"});
-        REQUIRE(title == "No compartment geometry image");
+        REQUIRE(mwt.getResult() ==
+                "No compartment geometry image loaded - import one now?");
       }
     }
     SECTION("user presses ctrl+d (with valid SBML model)") {
@@ -226,11 +228,13 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
     }
     SECTION("menu: Tools->Edit geometry image (default SBML model, no image)") {
       SECTION("offer to import geometry image") {
+        mwt.addUserAction({"Esc"});
+        mwt.start();
         sendKeyEvents(&w, {"Alt+T"});
         sendKeyEvents(menu_Tools, {"E"});
         // press no when asked to import image
-        auto title = sendKeyEventsToNextQDialog({"Esc"});
-        REQUIRE(title == "No compartment geometry image");
+        REQUIRE(mwt.getResult() ==
+                "No compartment geometry image loaded - import one now?");
       }
     }
     SECTION("menu: Tools->Set simulation type") {

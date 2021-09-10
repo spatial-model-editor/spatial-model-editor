@@ -253,24 +253,29 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       REQUIRE(listCompartments->count() == 4);
       REQUIRE(listCompartments->currentItem()->text() == "CoMp!");
       // click remove compartment, then "no" to cancel
+      mwt.addUserAction({"Esc"});
+      mwt.start();
       sendMouseClick(btnRemoveCompartment);
-      sendKeyEventsToNextQDialog({"Esc"});
       REQUIRE(listCompartments->count() == 4);
       // click remove compartment, then confirm
+      mwt.addUserAction({"Enter"});
+      mwt.start();
       sendMouseClick(btnRemoveCompartment);
-      sendKeyEventsToNextQDialog({"Enter"});
       REQUIRE(listCompartments->count() == 3);
       REQUIRE(listCompartments->currentItem()->text() == "Outside");
+      mwt.addUserAction({"Enter"});
+      mwt.start();
       sendMouseClick(btnRemoveCompartment);
-      sendKeyEventsToNextQDialog({"Enter"});
       REQUIRE(listCompartments->count() == 2);
       REQUIRE(listCompartments->currentItem()->text() == "Cell");
+      mwt.addUserAction({"Enter"});
+      mwt.start();
       sendMouseClick(btnRemoveCompartment);
-      sendKeyEventsToNextQDialog({"Enter"});
       REQUIRE(listCompartments->count() == 1);
       REQUIRE(listCompartments->currentItem()->text() == "Nucleus");
+      mwt.addUserAction({"Enter"});
+      mwt.start();
       sendMouseClick(btnRemoveCompartment);
-      sendKeyEventsToNextQDialog({"Enter"});
       REQUIRE(listCompartments->count() == 0);
       REQUIRE(spinMeshZoom->isEnabled() == false);
       REQUIRE(spinBoundaryZoom->isEnabled() == false);

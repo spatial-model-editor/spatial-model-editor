@@ -581,14 +581,12 @@ bool MainWindow::isValidModel() {
     return true;
   }
   SPDLOG_DEBUG("  - no SBML model");
-  auto msgbox = newYesNoMessageBox(
-      "No SBML model", "No valid SBML model loaded - import one now?", this);
-  connect(msgbox, &QMessageBox::finished, this, [this](int result) {
-    if (result == QMessageBox::Yes) {
-      action_Open_SBML_file_triggered();
-    }
-  });
-  msgbox->open();
+  auto result{QMessageBox::question(
+      this, "No SBML model", "No valid SBML model loaded - import one now?",
+      QMessageBox::Yes | QMessageBox::No)};
+  if (result == QMessageBox::Yes) {
+    action_Open_SBML_file_triggered();
+  }
   return false;
 }
 
@@ -600,15 +598,13 @@ bool MainWindow::isValidModelAndGeometryImage() {
     return true;
   }
   SPDLOG_DEBUG("  - no geometry image");
-  auto msgbox = newYesNoMessageBox(
-      "No compartment geometry image",
-      "No compartment geometry image loaded - import one now?", this);
-  connect(msgbox, &QMessageBox::finished, this, [this](int result) {
-    if (result == QMessageBox::Yes) {
-      actionGeometry_from_image_triggered();
-    }
-  });
-  msgbox->open();
+  auto result{QMessageBox::question(
+      this, "No compartment geometry image",
+      "No compartment geometry image loaded - import one now?",
+      QMessageBox::Yes | QMessageBox::No)};
+  if (result == QMessageBox::Yes) {
+    actionGeometry_from_image_triggered();
+  }
   return false;
 }
 

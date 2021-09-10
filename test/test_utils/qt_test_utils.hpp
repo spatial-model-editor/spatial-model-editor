@@ -72,7 +72,7 @@ public:
                      ModalWidgetTimer *otherMwtToStart = nullptr);
   void setIgnoredWidget(QWidget *widgetToIgnore);
   void start();
-  const QString &getResult(int i = 0) const;
+  [[nodiscard]] const QString &getResult(int i = 0) const;
 
 private:
   struct UserAction {

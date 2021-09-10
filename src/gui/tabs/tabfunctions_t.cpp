@@ -86,8 +86,9 @@ TEST_CASE("Functions Tab", "[gui/tabs/functions][gui/tabs][gui][functions]") {
     REQUIRE(model.getFunctions().getIds()[1] == "func_1_");
 
     // click remove function, and confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveFunction);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listFunctions->count() == 1);
     REQUIRE(listFunctionParams->count() == 0);
     REQUIRE(model.getFunctions().getIds().size() == 1);
@@ -137,8 +138,9 @@ TEST_CASE("Functions Tab", "[gui/tabs/functions][gui/tabs][gui][functions]") {
     REQUIRE(model.getFunctions().getArguments("func_1")[2] == "y_");
 
     // click remove param, then press escape at confirmation dialog to cancel
+    mwt.addUserAction({"Esc"});
+    mwt.start();
     sendMouseClick(btnRemoveFunctionParam);
-    sendKeyEventsToNextQDialog({"Esc"});
     REQUIRE(listFunctionParams->count() == 3);
     REQUIRE(model.getFunctions().getArguments("func_1").size() == 3);
     REQUIRE(model.getFunctions().getArguments("func_1")[0] == "y");
@@ -146,8 +148,9 @@ TEST_CASE("Functions Tab", "[gui/tabs/functions][gui/tabs][gui][functions]") {
     REQUIRE(model.getFunctions().getArguments("func_1")[2] == "y_");
 
     // click remove param, then press enter at confirmation dialog to confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveFunctionParam);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listFunctionParams->count() == 2);
     REQUIRE(listFunctionParams->currentItem()->text() == "qqQA");
     REQUIRE(model.getFunctions().getArguments("func_1").size() == 2);
@@ -155,8 +158,9 @@ TEST_CASE("Functions Tab", "[gui/tabs/functions][gui/tabs][gui][functions]") {
     REQUIRE(model.getFunctions().getArguments("func_1")[1] == "qqQA");
 
     // click remove param, then press enter at confirmation dialog to confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveFunctionParam);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listFunctionParams->count() == 1);
     REQUIRE(listFunctionParams->currentItem()->text() == "y");
     REQUIRE(model.getFunctions().getArguments("func_1").size() == 1);
@@ -181,8 +185,9 @@ TEST_CASE("Functions Tab", "[gui/tabs/functions][gui/tabs][gui][functions]") {
     REQUIRE(model.getFunctions().getExpression("func_1") == "y");
 
     // click remove function, then cancel
+    mwt.addUserAction({"Esc"});
+    mwt.start();
     sendMouseClick(btnRemoveFunction);
-    sendKeyEventsToNextQDialog({"Esc"});
     REQUIRE(listFunctions->count() == 1);
     REQUIRE(model.getFunctions().getIds().size() == 1);
     REQUIRE(model.getFunctions().getIds()[0] == "func_1");
@@ -194,8 +199,9 @@ TEST_CASE("Functions Tab", "[gui/tabs/functions][gui/tabs][gui][functions]") {
     REQUIRE(txtFunctionName->text() == "func 1X a");
 
     // click remove function, and confirm
+    mwt.addUserAction({"Enter"});
+    mwt.start();
     sendMouseClick(btnRemoveFunction);
-    sendKeyEventsToNextQDialog({"Enter"});
     REQUIRE(listFunctions->count() == 0);
     REQUIRE(listFunctionParams->count() == 0);
     REQUIRE(model.getFunctions().getIds().isEmpty());

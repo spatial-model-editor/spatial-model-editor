@@ -165,22 +165,19 @@ void TabGeometry::btnRemoveCompartment_clicked() {
   }
   const auto &compartmentName = ui->listCompartments->item(index)->text();
   const auto &compartmentId = model.getCompartments().getIds()[index];
-  auto msgbox = newYesNoMessageBox(
-      "Remove compartment?",
+
+  auto result{QMessageBox::question(
+      this, "Remove compartment?",
       QString("Remove compartment '%1' from the model?").arg(compartmentName),
-      this);
-  connect(msgbox, &QMessageBox::finished, this,
-          [compartmentId, this](int result) {
-            if (result == QMessageBox::Yes) {
-              ui->listCompartments->clearSelection();
-              model.getCompartments().remove(compartmentId);
-              ui->tabCompartmentGeometry->setCurrentIndex(0);
-              enableTabs();
-              loadModelData();
-              emit modelGeometryChanged();
-            }
-          });
-  msgbox->open();
+      QMessageBox::Yes | QMessageBox::No)};
+  if (result == QMessageBox::Yes) {
+    ui->listCompartments->clearSelection();
+    model.getCompartments().remove(compartmentId);
+    ui->tabCompartmentGeometry->setCurrentIndex(0);
+    enableTabs();
+    loadModelData();
+    emit modelGeometryChanged();
+  }
 }
 
 void TabGeometry::btnChangeCompartment_clicked() {
