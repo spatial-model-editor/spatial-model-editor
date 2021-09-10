@@ -1,7 +1,12 @@
 # Changelog
 ## latest
 ### Added
-- python interface: optional multithreading (via OpenMP) for Pixel simulations on linux [#662](https://github.com/spatial-model-editor/spatial-model-editor/pull/662)
+- python interface: optional multithreading (via OpenMP) for Pixel simulations on linux [#662](https://github.com/spatial-model-editor/spatial-model-editor/issues/662)
+
+### Fixed
+- bug where loading a model with simulation data and changing model units could cause a crash [#666](https://github.com/spatial-model-editor/spatial-model-editor/issues/666)
+- show warning message before dune simulation of model with non-spatial species [#664](https://github.com/spatial-model-editor/spatial-model-editor/issues/664)
+- minimum supported version of macos now 10.14 instead of 10.15 [#669](https://github.com/spatial-model-editor/spatial-model-editor/issues/669)
 
 ## [1.1.5] - 2021-09-01
 ### Added

@@ -23,6 +23,7 @@ cmake .. \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
   -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+  -DCMAKE_OSX_DEPLOYMENT_TARGET="10.14" \
   -DSME_WITH_TBB=ON
 make -j2 VERBOSE=1
 ccache --show-stats
