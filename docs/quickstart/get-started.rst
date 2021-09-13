@@ -6,16 +6,16 @@ Installation
 
 No installation required, just download and run the executable for your operating system:
 
-*  |icon-linux|_ `linux <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor>`_
-*  |icon-osx|_ `macOS <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg>`_
-*  |icon-windows|_ `windows <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.exe>`_
+* |icon-linux|_ `linux <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor>`_
+* |icon-osx|_ `macOS <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg>`_
+* |icon-windows|_ `windows <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.exe>`_
 
 .. tip::
    You may have to give permission before your operating system will run the executable:
 
-   *  Windows: "More info"->"Run anyway"
-   *  MacOS: right-click open
-   *  Linux: ``chmod +x spatial-model-editor``
+   * Windows: "More info"->"Run anyway"
+   * MacOS: right-click open
+   * Linux: ``chmod +x spatial-model-editor``
 
 .. note::
    On linux some additional system libraries are required that may not be installed by default. To install them:

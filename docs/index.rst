@@ -8,6 +8,8 @@ Spatial Model Editor Documentation
    quickstart/get-started
    quickstart/import-model
    quickstart/import-geometry
+   quickstart/assign-compartments
+   quickstart/rescale-reactions
    quickstart/mesh
    quickstart/species
    quickstart/reactions

@@ -1,7 +1,7 @@
 # Changelog
-## latest
+## [1.2.0] - 2021-09-13
 ### Added
-- non-spatial model guided import [#607](https://github.com/spatial-model-editor/spatial-model-editor/issues/607)
+- non-spatial model guided import with automatic reaction rate rescaling [#607](https://github.com/spatial-model-editor/spatial-model-editor/issues/607)
 - python interface: optional multithreading (via OpenMP) for Pixel simulations on linux [#662](https://github.com/spatial-model-editor/spatial-model-editor/issues/662)
 
 ### Fixed
