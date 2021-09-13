@@ -359,10 +359,14 @@ Model::simulateString(const std::string &lengths, const std::string &intervals,
     s->getSimulationData().clear();
   }
   s->getSimulationSettings().simulatorType = simulatorType;
-  if (nThreads != 1 && simulatorType == simulate::SimulatorType::Pixel) {
+  if (simulatorType == simulate::SimulatorType::Pixel) {
     auto &pixelOpts{s->getSimulationSettings().options.pixel};
-    pixelOpts.enableMultiThreading = true;
-    pixelOpts.maxThreads = static_cast<std::size_t>(nThreads);
+    if (nThreads != 1) {
+      pixelOpts.enableMultiThreading = true;
+      pixelOpts.maxThreads = static_cast<std::size_t>(nThreads);
+    } else {
+      pixelOpts.enableMultiThreading = false;
+    }
   }
   auto times{
       simulate::parseSimulationTimes(lengths.c_str(), intervals.c_str())};
