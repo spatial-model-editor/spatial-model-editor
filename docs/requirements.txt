@@ -8,3 +8,4 @@ pandoc
 https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/sme-latest-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
 sphinx==4.1.2
 sphinx_rtd_theme
+docutils < 0.17
