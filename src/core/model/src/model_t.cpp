@@ -52,7 +52,7 @@ static void createSBMLlvl2doc(const std::string &filename) {
   reac->addProduct(model->getSpecies("spec1c0"));
   reac->addReactant(model->getSpecies("spec0c0"));
   auto *kin = model->createKineticLaw();
-  kin->setFormula("5*spec0c0");
+  kin->setFormula("5*spec0c0*compartment0");
   reac->setKineticLaw(kin);
   // write SBML document to file
   libsbml::SBMLWriter().writeSBML(document.get(), filename);
@@ -274,89 +274,111 @@ SCENARIO("SBML: import SBML level 2 document",
   REQUIRE(s.getIsValid() == true);
   REQUIRE(s.getErrorMessage().isEmpty());
 
-  // import geometry image & assign compartments to colours
+  // this is a non-spatial model:
+  REQUIRE(s.getReactions().getIsIncompleteODEImport());
+  REQUIRE(s.getGeometry().getHasImage() == false);
+  REQUIRE(s.getGeometry().getIsValid() == false);
+
+  // compartments
+  REQUIRE(s.getCompartments().getIds().size() == 2);
+  REQUIRE(s.getCompartments().getIds()[0] == "compartment0");
+  REQUIRE(s.getCompartments().getIds()[1] == "compartment1");
+
+  // species
+  REQUIRE(s.getSpecies().getIds("compartment0").size() == 2);
+  REQUIRE(s.getSpecies().getIds("compartment0")[0] == "spec0c0");
+  REQUIRE(s.getSpecies().getIds("compartment0")[1] == "spec1c0");
+  REQUIRE(s.getSpecies().getIds("compartment1").size() == 3);
+  REQUIRE(s.getSpecies().getIds("compartment1")[0] == "spec0c1");
+  REQUIRE(s.getSpecies().getIds("compartment1")[1] == "spec1c1");
+  REQUIRE(s.getSpecies().getIds("compartment1")[2] == "spec2c1");
+
+  // reactions don't have a location in original model,
+  // and we wait until the geometry is assigned to make our best guess,
+  // so at this point looking up reactions by compartment gives nothing:
+  REQUIRE(s.getReactions().getIds("compartment0").size() == 0);
+  REQUIRE(s.getReactions().getLocation("reac1") == "");
+  // the rest of the reaction information is there though
+  REQUIRE(s.getReactions().getName("reac1") == "reac1");
+  REQUIRE(s.getReactions().getSpeciesStoichiometry("reac1", "spec1c0") ==
+          dbl_approx(1));
+  REQUIRE(s.getReactions().getSpeciesStoichiometry("reac1", "spec0c0") ==
+          dbl_approx(-1));
+  REQUIRE(s.getReactions().getRateExpression("reac1") ==
+          "5 * spec0c0 * compartment0");
+  REQUIRE(s.getReactions().getScheme("reac1") == "spec0c0 -> spec1c0");
+
+  // import geometry image
   s.getGeometry().importGeometryFromImage(
       QImage(":/geometry/single-pixels-3x1.png"), false);
+  REQUIRE(s.getReactions().getIsIncompleteODEImport());
+  REQUIRE(s.getGeometry().getHasImage() == true);
+  REQUIRE(s.getGeometry().getIsValid() == false);
+
+  // assign compartments to colours
   s.getCompartments().setColour("compartment0", 0xffaaaaaa);
   s.getCompartments().setColour("compartment1", 0xff525252);
+  REQUIRE(s.getReactions().getIsIncompleteODEImport());
+  REQUIRE(s.getGeometry().getHasImage() == true);
+  REQUIRE(s.getGeometry().getIsValid() == true);
 
-  GIVEN("SBML document & geometry image") {
-    THEN("find compartments") {
-      REQUIRE(s.getCompartments().getIds().size() == 2);
-      REQUIRE(s.getCompartments().getIds()[0] == "compartment0");
-      REQUIRE(s.getCompartments().getIds()[1] == "compartment1");
-    }
-    THEN("find species") {
-      REQUIRE(s.getSpecies().getIds("compartment0").size() == 2);
-      REQUIRE(s.getSpecies().getIds("compartment0")[0] == "spec0c0");
-      REQUIRE(s.getSpecies().getIds("compartment0")[1] == "spec1c0");
-      REQUIRE(s.getSpecies().getIds("compartment1").size() == 3);
-      REQUIRE(s.getSpecies().getIds("compartment1")[0] == "spec0c1");
-      REQUIRE(s.getSpecies().getIds("compartment1")[1] == "spec1c1");
-      REQUIRE(s.getSpecies().getIds("compartment1")[2] == "spec2c1");
-    }
-    THEN("find reaction (divided by compartment volume factor)") {
-      const auto &reacs = s.getReactions();
-      REQUIRE(reacs.getIds("compartment0").size() == 1);
-      REQUIRE(reacs.getIds("compartment0")[0] == "reac1");
-      REQUIRE(reacs.getName("reac1") == "reac1");
-      REQUIRE(reacs.getLocation("reac1") == "compartment0");
-      REQUIRE(reacs.getSpeciesStoichiometry("reac1", "spec1c0") ==
-              dbl_approx(1));
-      REQUIRE(reacs.getSpeciesStoichiometry("reac1", "spec0c0") ==
-              dbl_approx(-1));
-      REQUIRE(reacs.getRateExpression("reac1") == "5 * spec0c0 / compartment0");
-      REQUIRE(reacs.getScheme("reac1") == "spec0c0 -> spec1c0");
-    }
-    WHEN("exportSBMLFile called") {
-      THEN("exported file is a SBML level (3,2) document with spatial "
-           "extension enabled & required") {
-        auto doc{toSbmlDoc(s)};
-        REQUIRE(doc->getLevel() == 3);
-        REQUIRE(doc->getVersion() == 2);
-        REQUIRE(doc->getPackageRequired("spatial") == true);
-        REQUIRE(dynamic_cast<libsbml::SpatialModelPlugin *>(
-                    doc->getModel()->getPlugin("spatial")) != nullptr);
+  // reaction locations are now assigned
+  REQUIRE(s.getReactions().getIds("compartment0").size() == 1);
+  REQUIRE(s.getReactions().getLocation("reac1") == "compartment0");
+
+  // finalize import: rescale reactions
+  auto reactionRescalings{s.getReactions().getSpatialReactionRescalings()};
+  s.getReactions().applySpatialReactionRescalings(reactionRescalings);
+  REQUIRE(s.getReactions().getIsIncompleteODEImport() == false);
+  REQUIRE(s.getGeometry().getHasImage() == true);
+  REQUIRE(s.getGeometry().getIsValid() == true);
+  REQUIRE(s.getReactions().getRateExpression("reac1") == "5 * spec0c0");
+
+  // doc is now sbml level(3,2) with spatial plugin required & enabled
+  auto doc{toSbmlDoc(s)};
+  REQUIRE(doc->getLevel() == 3);
+  REQUIRE(doc->getVersion() == 2);
+  REQUIRE(doc->getPackageRequired("spatial") == true);
+  REQUIRE(dynamic_cast<libsbml::SpatialModelPlugin *>(
+              doc->getModel()->getPlugin("spatial")) != nullptr);
+
+  GIVEN("Compartment Colours") {
+    QRgb col1 = 0xffaaaaaa;
+    QRgb col2 = 0xff525252;
+    QRgb col3 = 0xffffffff;
+    WHEN("compartment colours have been assigned") {
+      THEN("can get CompartmentID from colour") {
+        REQUIRE(s.getCompartments().getIdFromColour(col1) == "compartment0");
+        REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment1");
+        REQUIRE(s.getCompartments().getIdFromColour(col3) == "");
+      }
+      THEN("can get colour from CompartmentID") {
+        REQUIRE(s.getCompartments().getColour("compartment0") == col1);
+        REQUIRE(s.getCompartments().getColour("compartment1") == col2);
       }
     }
-    GIVEN("Compartment Colours") {
-      QRgb col1 = 0xffaaaaaa;
-      QRgb col2 = 0xff525252;
-      QRgb col3 = 0xffffffff;
-      WHEN("compartment colours have been assigned") {
-        THEN("can get CompartmentID from colour") {
-          REQUIRE(s.getCompartments().getIdFromColour(col1) == "compartment0");
-          REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment1");
-          REQUIRE(s.getCompartments().getIdFromColour(col3) == "");
-        }
-        THEN("can get colour from CompartmentID") {
-          REQUIRE(s.getCompartments().getColour("compartment0") == col1);
-          REQUIRE(s.getCompartments().getColour("compartment1") == col2);
-        }
+    WHEN("new colour assigned") {
+      s.getCompartments().setColour("compartment0", col1);
+      s.getCompartments().setColour("compartment1", col2);
+      s.getCompartments().setColour("compartment0", col3);
+      THEN("unassign old colour mapping") {
+        REQUIRE(s.getCompartments().getIdFromColour(col1) == "");
+        REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment1");
+        REQUIRE(s.getCompartments().getIdFromColour(col3) == "compartment0");
+        REQUIRE(s.getCompartments().getColour("compartment0") == col3);
+        REQUIRE(s.getCompartments().getColour("compartment1") == col2);
       }
-      WHEN("new colour assigned") {
-        s.getCompartments().setColour("compartment0", col1);
-        s.getCompartments().setColour("compartment1", col2);
-        s.getCompartments().setColour("compartment0", col3);
-        THEN("unassign old colour mapping") {
-          REQUIRE(s.getCompartments().getIdFromColour(col1) == "");
-          REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment1");
-          REQUIRE(s.getCompartments().getIdFromColour(col3) == "compartment0");
-          REQUIRE(s.getCompartments().getColour("compartment0") == col3);
-          REQUIRE(s.getCompartments().getColour("compartment1") == col2);
-        }
-      }
-      WHEN("existing colour re-assigned") {
-        s.getCompartments().setColour("compartment0", col1);
-        s.getCompartments().setColour("compartment1", col2);
-        s.getCompartments().setColour("compartment0", col2);
-        THEN("unassign old colour mapping") {
-          REQUIRE(s.getCompartments().getIdFromColour(col1) == "");
-          REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment0");
-          REQUIRE(s.getCompartments().getIdFromColour(col3) == "");
-          REQUIRE(s.getCompartments().getColour("compartment0") == col2);
-          REQUIRE(s.getCompartments().getColour("compartment1") == 0);
-        }
+    }
+    WHEN("existing colour re-assigned") {
+      s.getCompartments().setColour("compartment0", col1);
+      s.getCompartments().setColour("compartment1", col2);
+      s.getCompartments().setColour("compartment0", col2);
+      THEN("unassign old colour mapping") {
+        REQUIRE(s.getCompartments().getIdFromColour(col1) == "");
+        REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment0");
+        REQUIRE(s.getCompartments().getIdFromColour(col3) == "");
+        REQUIRE(s.getCompartments().getColour("compartment0") == col2);
+        REQUIRE(s.getCompartments().getColour("compartment1") == 0);
       }
     }
   }
@@ -933,28 +955,20 @@ SCENARIO("SBML: import multi-compartment SBML doc without spatial geometry",
   auto &compartments{s.getCompartments()};
   // reactions in original xml model have no compartment
   auto &reactions{s.getReactions()};
+  REQUIRE(reactions.getLocation("trans") == "");
+  REQUIRE(reactions.getLocation("conv") == "");
+  REQUIRE(reactions.getLocation("degrad") == "");
+  REQUIRE(reactions.getLocation("ex") == "");
   REQUIRE(geometry.getIsValid() == false);
   REQUIRE(geometry.getHasImage() == false);
-  // these ones are located by sme based on species all being in the same
-  // compartment, and are divided by the compartment volume
-  REQUIRE(reactions.getLocation("conv") == "cyt");
-  // note this one didn't have a cyt factor originally: although it only affects
-  // species in the cyt compartment, it was actually thought of as a membrane
-  // reaction in the original model (but no way to tell this from the ODE xml
-  // model)
-  REQUIRE(symEq(reactions.getRateExpression("conv"), "B * k1 / cyt"));
-  REQUIRE(reactions.getLocation("degrad") == "cyt");
-  REQUIRE(symEq(reactions.getRateExpression("degrad"), "C * k1 - D * k2"));
-  // these are membrane reactions: until we have geometry they have no defined
-  // location here:
-  REQUIRE(reactions.getLocation("trans") == "");
-  REQUIRE(symEq(reactions.getRateExpression("trans"),
-                "Henri_Michaelis_Menten__irreversible(A, Km, V)"));
-  REQUIRE(reactions.getLocation("ex") == "");
-  REQUIRE(symEq(reactions.getRateExpression("ex"), "k1 * D"));
+  REQUIRE(reactions.getIsIncompleteODEImport() == true);
+  // import a geometry image
   geometry.importGeometryFromImage(QImage(":test/geometry/cell.png"), false);
   auto colours{geometry.getImage().colorTable()};
   REQUIRE(colours.size() == 4);
+  REQUIRE(geometry.getIsValid() == false);
+  REQUIRE(geometry.getHasImage() == true);
+  REQUIRE(reactions.getIsIncompleteODEImport() == true);
   // assign each compartment to a colour region in the image
   compartments.setColour("cyt", colours[1]);
   compartments.setColour("nuc", colours[2]);
@@ -962,27 +976,30 @@ SCENARIO("SBML: import multi-compartment SBML doc without spatial geometry",
   compartments.setColour("ext", colours[0]);
   REQUIRE(geometry.getIsValid() == true);
   REQUIRE(geometry.getHasImage() == true);
+  REQUIRE(reactions.getIsIncompleteODEImport() == true);
   // all reactions are now assigned to a valid location
+  REQUIRE(reactions.getLocation("trans") == "cyt_nuc_membrane");
   REQUIRE(reactions.getLocation("conv") == "cyt");
   REQUIRE(reactions.getLocation("degrad") == "cyt");
-  REQUIRE(reactions.getLocation("trans") == "cyt_nuc_membrane");
   REQUIRE(reactions.getLocation("ex") == "ext_cyt_membrane");
-  // membrane reaction rates are divided by membrane area
+  // reaction rates have not yet been rescaled
+  REQUIRE(symEq(reactions.getRateExpression("trans"),
+                "Henri_Michaelis_Menten__irreversible(A, Km, V)"));
+  REQUIRE(symEq(reactions.getRateExpression("conv"), "k1 * B"));
+  REQUIRE(
+      symEq(reactions.getRateExpression("degrad"), "cyt * (k1 * C - k2 * D)"));
+  REQUIRE(symEq(reactions.getRateExpression("ex"), "D * k1"));
+
+  auto reactionRescalings{reactions.getSpatialReactionRescalings()};
+  reactions.applySpatialReactionRescalings(reactionRescalings);
+  REQUIRE(reactions.getIsIncompleteODEImport() == false);
+  // reaction rates are rescaled by their compartment volumes / membrane areas
   REQUIRE(symEq(
       reactions.getRateExpression("trans"),
-      "Henri_Michaelis_Menten__irreversible(A, Km, V) / cyt_nuc_membrane"));
+      "0.00367647058823529 * Henri_Michaelis_Menten__irreversible(A, Km, V)"));
+  REQUIRE(symEq(reactions.getRateExpression("conv"),
+                "6.84181718664477e-5 * k1 * B"));
+  REQUIRE(symEq(reactions.getRateExpression("degrad"), "k1 * C - k2 * D"));
   REQUIRE(
-      symEq(reactions.getRateExpression("ex"), "k1 * D / ext_cyt_membrane"));
-  // move a compartment reaction to a (valid) membrane: rate rescaled
-  reactions.setLocation("conv", "cyt_org_membrane");
-  REQUIRE(reactions.getLocation("conv") == "cyt_org_membrane");
-  REQUIRE(reactions.getRateExpression("conv") == "B * k1 / cyt_org_membrane");
-  // move it back: rescaling undone
-  reactions.setLocation("conv", "cyt");
-  REQUIRE(reactions.getLocation("conv") == "cyt");
-  REQUIRE(reactions.getRateExpression("conv") == "B * k1 / cyt");
-  // move reaction to another valid membrane: rate rescaled
-  reactions.setLocation("conv", "cyt_nuc_membrane");
-  REQUIRE(reactions.getLocation("conv") == "cyt_nuc_membrane");
-  REQUIRE(reactions.getRateExpression("conv") == "B * k1 / cyt_nuc_membrane");
+      symEq(reactions.getRateExpression("ex"), "0.00166666666666667 * k1 * D"));
 }

@@ -28,7 +28,7 @@ void Model::createSBMLFile(const std::string &name) {
   doc = std::make_unique<libsbml::SBMLDocument>(libsbml::SBMLDocument());
   doc->createModel(name);
   currentFilename = name.c_str();
-  initModelData();
+  initModelData(true);
 }
 
 void Model::importSBMLFile(const std::string &filename) {
@@ -50,9 +50,14 @@ void Model::importSBMLString(const std::string &xml,
   setHasUnsavedChanges(false);
 }
 
-void Model::initModelData() {
-  errorMessage = validateAndUpgradeSBMLDoc(doc.get()).c_str();
+void Model::initModelData(bool emptySpatialModel) {
+  auto validateAndUpgradeResult{validateAndUpgradeSBMLDoc(doc.get())};
+  if (emptySpatialModel) {
+    validateAndUpgradeResult.spatial = true;
+  }
+  errorMessage = validateAndUpgradeResult.errors.c_str();
   isValid = errorMessage.isEmpty();
+  const auto isNonSpatialModel{!validateAndUpgradeResult.spatial};
   if (!isValid) {
     return;
   }
@@ -81,8 +86,8 @@ void Model::initModelData() {
   modelEvents = std::make_unique<ModelEvents>(model, modelParameters.get(),
                                               modelSpecies.get());
   modelParameters->setEventsPtr(modelEvents.get());
-  modelReactions =
-      std::make_unique<ModelReactions>(model, modelMembranes.get());
+  modelReactions = std::make_unique<ModelReactions>(model, modelMembranes.get(),
+                                                    isNonSpatialModel);
   modelCompartments->setReactionsPtr(modelReactions.get());
   modelSpecies->setReactionsPtr(modelReactions.get());
 }

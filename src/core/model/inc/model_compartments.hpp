@@ -2,14 +2,14 @@
 
 #pragma once
 
+#include "geometry.hpp"
 #include <QPointF>
 #include <QRgb>
 #include <QStringList>
 #include <QVector>
+#include <map>
 #include <memory>
 #include <optional>
-
-#include "geometry.hpp"
 
 namespace libsbml {
 class Model;
@@ -42,6 +42,7 @@ private:
   const ModelUnits *modelUnits{nullptr};
   simulate::SimulationData *simulationData = nullptr;
   bool hasUnsavedChanges{false};
+  std::map<std::string, double, std::less<>> initialCompartmentSizes{};
 
 public:
   ModelCompartments();
@@ -70,6 +71,8 @@ public:
   [[nodiscard]] const geometry::Compartment *
   getCompartment(const QString &id) const;
   [[nodiscard]] double getSize(const QString &id) const;
+  [[nodiscard]] const std::map<std::string, double, std::less<>> &
+  getInitialCompartmentSizes() const;
   void clear();
   [[nodiscard]] bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);

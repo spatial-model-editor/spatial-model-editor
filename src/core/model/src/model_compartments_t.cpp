@@ -313,6 +313,11 @@ SCENARIO("SBML compartments",
     REQUIRE(compartments.getIds()[1] == "c2");
     REQUIRE(compartments.getIds()[2] == "c3");
     REQUIRE(compartments.getHasUnsavedChanges() == false);
+    // check initial sizes
+    const auto &initialSizes{compartments.getInitialCompartmentSizes()};
+    REQUIRE(initialSizes.at("c1") == dbl_approx(5441000.0));
+    REQUIRE(initialSizes.at("c2") == dbl_approx(4034000.0));
+    REQUIRE(initialSizes.at("c3") == dbl_approx(525000.0));
     QRgb c1{qRgb(0, 2, 0)};
     QRgb c2{qRgb(144, 97, 193)};
     QRgb c3{qRgb(197, 133, 96)};
@@ -338,8 +343,11 @@ SCENARIO("SBML compartments",
     compartments.setColour("c1", c3);
     REQUIRE(compartments.getHasUnsavedChanges() == true);
     REQUIRE(compartments.getColour("c1") == c3);
+    REQUIRE(compartments.getSize("c1") == dbl_approx(initialSizes.at("c3")));
     REQUIRE(compartments.getColour("c2") == c2);
+    REQUIRE(compartments.getSize("c2") == dbl_approx(initialSizes.at("c2")));
     REQUIRE(compartments.getColour("c3") == 0);
+    REQUIRE(compartments.getSize("c3") == dbl_approx(0));
     // valid id, invalid colour
     compartments.setHasUnsavedChanges(false);
     compartments.setColour("c3", cInvalid);

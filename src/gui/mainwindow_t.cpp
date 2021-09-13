@@ -1,14 +1,12 @@
 #include "catch_wrapper.hpp"
 #include "mainwindow.hpp"
+#include "model_test_utils.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
 #include <QFile>
 #include <QMenu>
 #include <QSpinBox>
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
+#include <QStatusBar>
 
 using namespace sme::test;
 
@@ -267,11 +265,15 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
     ModalWidgetTimer mwt;
     mwt.addUserAction({"Enter"});
     mwt.start();
-    auto *menu_Import{w.findChild<QMenu *>("menu_Tools")};
-    REQUIRE(menu_Import != nullptr);
+    auto *menuImport{w.findChild<QMenu *>("menuImport")};
+    REQUIRE(menuImport != nullptr);
+    auto *menuExample_geometry_image{
+        w.findChild<QMenu *>("menuExample_geometry_image")};
+    REQUIRE(menuExample_geometry_image != nullptr);
     sendKeyEvents(&w, {"Alt+I"});
-    sendKeyEvents(menu_Import, {"E"});
-    sendKeyEvents(&w, {"Enter"});
+    sendKeyEvents(menuImport, {"E"});
+    mwt.start();
+    sendKeyEvents(menuExample_geometry_image, {"Enter"});
     REQUIRE(mwt.getResult() == "Edit Geometry Image");
   }
   SECTION("import geometry from model") {
@@ -281,8 +283,6 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
     ModalWidgetTimer mwt;
     mwt.addUserAction({"w", "q", "z", ".", "x", "m", "l"});
     mwt.start();
-    auto *menu_Import{w.findChild<QMenu *>("menu_Tools")};
-    REQUIRE(menu_Import != nullptr);
     sendKeyEvents(&w, {"Ctrl+G"});
     REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
   }
@@ -323,7 +323,7 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
     w.show();
     waitFor(&w);
     openBuiltInModel(w);
-    auto *menu_Tools = w.findChild<QMenu *>("menu_Tools");
+    auto *menu_Tools{w.findChild<QMenu *>("menu_Tools")};
     // change units
     ModalWidgetTimer mwt;
     sendKeyEvents(&w, {"Alt+T"});
@@ -360,4 +360,31 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
     REQUIRE(amountunit->isMole() == true);
     REQUIRE(amountunit->getScale() == dbl_approx(-3));
   }
+}
+
+TEST_CASE("Mainwindow non-spatial model import",
+          "[gui/mainwindow][gui][mainwindow][Q]") {
+  ModalWidgetTimer mwt;
+  auto doc{getTestSbmlDoc("non-spatial-multi-compartment")};
+  libsbml::writeSBMLToFile(doc.get(), "tmp.xml");
+  // open non-spatial model
+  MainWindow w("tmp.xml");
+  w.show();
+  auto *statusBarPermanentMessage{w.statusBar()->findChild<QLabel *>()};
+  REQUIRE(statusBarPermanentMessage != nullptr);
+  REQUIRE(statusBarPermanentMessage->text().contains(
+      "Importing non-spatial model. Step 1/3"));
+  // import four-compartments built-in geometry image
+  auto *menuImport{w.findChild<QMenu *>("menuImport")};
+  REQUIRE(menuImport != nullptr);
+  auto *menuExample_geometry_image{
+      w.findChild<QMenu *>("menuExample_geometry_image")};
+  REQUIRE(menuExample_geometry_image != nullptr);
+  sendKeyEvents(&w, {"Alt+I"});
+  sendKeyEvents(menuImport, {"E"});
+  mwt.start();
+  sendKeyEvents(menuExample_geometry_image, {"f", "f", "Enter"});
+  REQUIRE(mwt.getResult() == "Edit Geometry Image");
+  REQUIRE(statusBarPermanentMessage->text().contains(
+      "Importing non-spatial model. Step 2/3"));
 }

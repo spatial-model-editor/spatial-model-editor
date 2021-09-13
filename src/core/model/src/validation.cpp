@@ -48,11 +48,12 @@ std::string countAndPrintSBMLDocErrors(const libsbml::SBMLDocument *doc) {
   return errors;
 }
 
-std::string validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc) {
-  auto errors{countAndPrintSBMLDocErrors(doc)};
-  if (!errors.empty()) {
+ValidateAndUpgradeResult validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc) {
+  ValidateAndUpgradeResult result;
+  result.errors = countAndPrintSBMLDocErrors(doc);
+  if (!result.errors.empty()) {
     SPDLOG_ERROR("Errors while reading SBML file, aborting.");
-    return errors;
+    return result;
   }
   SPDLOG_INFO("Successfully imported SBML Level {}, Version {} model",
               doc->getLevel(), doc->getVersion());
@@ -69,8 +70,9 @@ std::string validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc) {
       countAndPrintSBMLDocErrors(doc);
     }
   }
-  // enable spatial extension
+  // enable spatial extension if not already done
   if (!doc->isPackageEnabled("spatial")) {
+    result.spatial = false;
     doc->enablePackage(libsbml::SpatialExtension::getXmlnsL3V1V1(), "spatial",
                        true);
     doc->setPackageRequired("spatial", true);
@@ -78,7 +80,7 @@ std::string validateAndUpgradeSBMLDoc(libsbml::SBMLDocument *doc) {
   }
   doc->checkConsistency();
   printSBMLDocWarnings(doc);
-  return {};
+  return result;
 }
 
 } // namespace sme::model

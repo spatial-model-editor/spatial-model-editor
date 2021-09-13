@@ -23,6 +23,11 @@ std::string symbolicDivide(const std::string &expr, const std::string &var);
 // multiply given expression by a variable
 std::string symbolicMultiply(const std::string &expr, const std::string &var);
 
+// substitute the constants in the given expression with their numerical values
+std::string symbolicSubstitute(
+    const std::string &expr,
+    const std::vector<std::pair<std::string, double>> &constants);
+
 // check if an expression contains a variable
 bool symbolicContains(const std::string &expr, const std::string &var);
 

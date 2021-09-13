@@ -30,7 +30,7 @@ SCENARIO("Model geometry",
     model::ModelMembranes mMembranes(doc->getModel());
     model::ModelGeometry mGeometry;
     model::ModelSpecies mSpecies;
-    model::ModelReactions mReactions(doc->getModel(), &mMembranes);
+    model::ModelReactions mReactions(doc->getModel(), &mMembranes, false);
     simulate::SimulationData simulationData{};
     mCompartments = model::ModelCompartments(doc->getModel(), &mMembranes,
                                              &mUnits, &simulationData);
