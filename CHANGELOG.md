@@ -1,4 +1,9 @@
 # Changelog
+## latest
+### Fixed
+- functions with zero arguments are now fully supported [#674](https://github.com/spatial-model-editor/spatial-model-editor/issues/674)
+- python interface: setting n_threads=1 for simulate takes precedence over n_threads value in model [#672](https://github.com/spatial-model-editor/spatial-model-editor/issues/672)
+
 ## [1.2.0] - 2021-09-13
 ### Added
 - non-spatial model guided import with automatic reaction rate rescaling [#607](https://github.com/spatial-model-editor/spatial-model-editor/issues/607)
