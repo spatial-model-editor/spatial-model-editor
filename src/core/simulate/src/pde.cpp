@@ -74,8 +74,7 @@ Pde::Pde(const model::Model *doc_ptr,
       }
       // parse and inline constants & function calls
       common::Symbolic sym(expr.toStdString(), vars, constants,
-                           doc_ptr->getFunctions().getSymbolicFunctions(),
-                           false);
+                           doc_ptr->getFunctions().getSymbolicFunctions());
       if (!sym.isValid()) {
         throw PdeError(sym.getErrorMessage());
       }
@@ -85,7 +84,7 @@ Pde::Pde(const model::Model *doc_ptr,
     // reparse full rhs to simplify
     SPDLOG_DEBUG("Species {} Reparsing all reaction terms", speciesIDs.at(i));
     // parse expression with symengine to simplify
-    common::Symbolic sym(r.toStdString(), vars, {}, {}, false);
+    common::Symbolic sym(r.toStdString(), vars);
     if (!sym.isValid()) {
       throw PdeError(sym.getErrorMessage());
     }

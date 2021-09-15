@@ -33,7 +33,7 @@ public:
                    const std::string &displayName = {});
   void removeVariable(const std::string &variable);
   void reset();
-  void addFunction(const sme::common::Function &function);
+  void addFunction(const sme::common::SymbolicFunction &function);
   void removeFunction(const std::string &functionId);
   void setConstants(const std::vector<sme::model::IdNameValue> &constants = {});
   void updateCompleter();
@@ -51,7 +51,7 @@ private:
   const QColor colourValid{QColor(200, 255, 200)};
   const QColor colourInvalid{QColor(255, 150, 150)};
   std::vector<std::string> vars;
-  std::vector<sme::common::Function> functions;
+  std::vector<sme::common::SymbolicFunction> functions;
   std::vector<std::pair<std::string, double>> consts{};
   StringStringMap mapVarsToDisplayNames;
   StringStringMap mapDisplayNamesToVars;

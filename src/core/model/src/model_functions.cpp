@@ -228,8 +228,9 @@ void ModelFunctions::remove(const QString &id) {
   names.removeAt(i);
 }
 
-std::vector<common::Function> ModelFunctions::getSymbolicFunctions() const {
-  std::vector<common::Function> fns;
+std::vector<common::SymbolicFunction>
+ModelFunctions::getSymbolicFunctions() const {
+  std::vector<common::SymbolicFunction> fns;
   fns.reserve(static_cast<std::size_t>(ids.size()));
   for (const auto &id : ids) {
     auto &fn = fns.emplace_back();
