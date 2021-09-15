@@ -41,6 +41,7 @@ if(BUILD_TESTING)
            model_reactions_t.cpp
            model_species_t.cpp
            model_units_t.cpp
+           sbml_math_t.cpp
            xml_annotation_t.cpp
            xml_legacy_annotation_t.cpp)
 endif()

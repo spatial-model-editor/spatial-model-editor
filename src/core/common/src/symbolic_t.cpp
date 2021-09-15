@@ -265,6 +265,11 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     CAPTURE(expr);
   }
   GIVEN("some user-defined functions") {
+    common::Function f0;
+    f0.id = "f0";
+    f0.name = "zero_arg_func";
+    f0.args = {};
+    f0.body = "6";
     common::Function f1;
     f1.id = "f1";
     f1.name = "my func";
@@ -280,6 +285,15 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     g2.name = "g2";
     g2.args = {"a", "b"};
     g2.body = "1/a/b";
+    WHEN("0-arg func") {
+      std::string expr{"z*f0()"};
+      common::Symbolic sym(expr, {"z"}, {}, {f0});
+      REQUIRE(sym.isValid());
+      REQUIRE(sym.getErrorMessage().empty());
+      REQUIRE(sym.expr() == "z*f0()");
+      REQUIRE(sym.inlinedExpr() == "6*z");
+      CAPTURE(expr);
+    }
     WHEN("1-arg func") {
       std::string expr{"2*f1(z)"};
       common::Symbolic sym(expr, {"z"}, {}, {f1});
@@ -287,6 +301,14 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       REQUIRE(sym.getErrorMessage().empty());
       REQUIRE(sym.expr() == "2*f1(z)");
       REQUIRE(sym.inlinedExpr() == "4*z");
+      CAPTURE(expr);
+    }
+    WHEN("0-arg func called with one argument") {
+      std::string expr{"2*f0(x)"};
+      common::Symbolic sym(expr, {"x"}, {}, {f0});
+      REQUIRE(!sym.isValid());
+      REQUIRE(sym.getErrorMessage() ==
+              "Function 'zero_arg_func' requires 0 argument(s), found 1");
       CAPTURE(expr);
     }
     WHEN("1-arg func called with two arguments") {
@@ -370,6 +392,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(common::symbolicDivide("y*x*z/y", "x") == "z");
   }
   GIVEN("symbolicDivide expression with other symbols & functions") {
+    REQUIRE(common::symbolicDivide("f()", "2") == "f()/2");
     REQUIRE(common::symbolicDivide("sin(x+a)", "x") == "sin(a + x)/x");
     REQUIRE(common::symbolicDivide("x*sin(x+a)", "x") == "sin(a + x)");
     REQUIRE(common::symbolicDivide("x*unknown(z)", "x") == "unknown(z)");
@@ -395,6 +418,8 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(common::symbolicContains("y+x^2", "x") == true);
     REQUIRE(common::symbolicContains("y+x^2", "y") == true);
     REQUIRE(common::symbolicContains("y+x^2", "z") == false);
+    REQUIRE(common::symbolicContains("f()", "z") == false);
+    REQUIRE(common::symbolicContains("z + f()", "z") == true);
     REQUIRE(common::symbolicContains("x*unknown(z)", "x") == true);
     REQUIRE(common::symbolicContains("z*unknown(x)", "x") == true);
     REQUIRE(common::symbolicContains("z*unknown(y)", "x") == false);
