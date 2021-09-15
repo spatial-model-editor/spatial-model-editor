@@ -233,7 +233,8 @@ DuneSim::DuneSim(
 
 DuneSim::~DuneSim() = default;
 
-std::size_t DuneSim::run(double time, double timeout_ms) {
+std::size_t DuneSim::run(double time, double timeout_ms,
+                         const std::function<bool()> &stopRunningCallback) {
   if (pDuneImpl == nullptr) {
     return 0;
   }
@@ -246,6 +247,10 @@ std::size_t DuneSim::run(double time, double timeout_ms) {
   } catch (const Dune::Exception &e) {
     currentErrorMessage = e.what();
     SPDLOG_ERROR("{}", currentErrorMessage);
+  }
+  if (stopRunningCallback && stopRunningCallback()) {
+    SPDLOG_DEBUG("Simulation cancelled: requesting stop");
+    currentErrorMessage = "Simulation cancelled";
   }
   if (timeout_ms >= 0.0 && static_cast<double>(timer.elapsed()) >= timeout_ms) {
     SPDLOG_DEBUG("Simulation timeout: requesting stop");

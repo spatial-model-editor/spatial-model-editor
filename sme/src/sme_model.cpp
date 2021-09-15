@@ -379,7 +379,13 @@ Model::simulateString(const std::string &lengths, const std::string &intervals,
   if (const auto &e = sim->errorMessage(); !e.empty()) {
     throw SmeRuntimeError(fmt::format("Error in simulation setup: {}", e));
   }
-  sim->doMultipleTimesteps(times.value(), timeoutMillisecs);
+  sim->doMultipleTimesteps(times.value(), timeoutMillisecs, []() {
+    if (PyErr_CheckSignals() != 0) {
+      throw pybind11::error_already_set();
+      return true;
+    }
+    return false;
+  });
   if (const auto &e = sim->errorMessage(); throwOnTimeout && !e.empty()) {
     throw SmeRuntimeError(fmt::format("Error during simulation: {}", e));
   }

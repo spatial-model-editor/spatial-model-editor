@@ -332,7 +332,8 @@ PixelSim::PixelSim(
 
 PixelSim::~PixelSim() = default;
 
-std::size_t PixelSim::run(double time, double timeout_ms) {
+std::size_t PixelSim::run(double time, double timeout_ms,
+                          const std::function<bool()> &stopRunningCallback) {
   SPDLOG_TRACE("  - max rel local err {}", errMax.rel);
   SPDLOG_TRACE("  - max abs local err {}", errMax.abs);
   SPDLOG_TRACE("  - max stepsize {}", maxTimestep);
@@ -365,6 +366,10 @@ std::size_t PixelSim::run(double time, double timeout_ms) {
         static_cast<double>(timer.elapsed()) >= timeout_ms) {
       SPDLOG_DEBUG("Simulation timeout: requesting stop");
       setStopRequested(true);
+    }
+    if (stopRunningCallback && stopRunningCallback()) {
+      setStopRequested(true);
+      SPDLOG_DEBUG("Simulation cancelled: requesting stop");
     }
     if (stopRequested.load()) {
       currentErrorMessage = "Simulation stopped early";
