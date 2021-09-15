@@ -58,7 +58,8 @@ public:
       const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
       const std::map<std::string, double, std::less<>> &substitutions = {});
   ~PixelSim() override;
-  std::size_t run(double time, double timeout_ms) override;
+  std::size_t run(double time, double timeout_ms,
+                  const std::function<bool()> &stopRunningCallback) override;
   [[nodiscard]] const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const override;
   [[nodiscard]] std::size_t getConcentrationPadding() const override;

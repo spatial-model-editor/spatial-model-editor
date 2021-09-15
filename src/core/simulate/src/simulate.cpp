@@ -234,7 +234,7 @@ std::size_t Simulation::doTimesteps(double time, std::size_t nSteps,
 
 std::size_t Simulation::doMultipleTimesteps(
     const std::vector<std::pair<std::size_t, double>> &timesteps,
-    double timeout_ms) {
+    double timeout_ms, const std::function<bool()> &stopRunningCallback) {
   isRunning.store(true);
   stopRequested.store(false);
   if (data->timePoints.empty()) {
@@ -285,7 +285,8 @@ std::size_t Simulation::doMultipleTimesteps(
         double subTimeStep{nextEventTime - currentTime};
         SPDLOG_INFO("Sub-step of {} to apply event at {}", subTimeStep,
                     nextEventTime);
-        steps += simulator->run(subTimeStep, remaining_timeout_ms);
+        steps += simulator->run(subTimeStep, remaining_timeout_ms,
+                                stopRunningCallback);
         // update intermediate concentrations to be able to apply them to model
         updateConcentrations(currentTime + subTimeStep);
         // apply event
@@ -297,7 +298,8 @@ std::size_t Simulation::doMultipleTimesteps(
         currentTimeStep -= subTimeStep;
         SPDLOG_INFO("Remaining time step: {}", currentTimeStep);
       }
-      steps += simulator->run(currentTimeStep, remaining_timeout_ms);
+      steps += simulator->run(currentTimeStep, remaining_timeout_ms,
+                              stopRunningCallback);
       if (!simulator->errorMessage().empty() || stopRequested.load()) {
         isRunning.store(false);
         stopRequested.store(false);

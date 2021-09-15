@@ -269,9 +269,9 @@ void TabSimulate::btnSimulate_clicked() {
 
   this->setCursor(Qt::WaitCursor);
   // start simulation in a new thread
-  simSteps = std::async(std::launch::async,
-                        &sme::simulate::Simulation::doMultipleTimesteps,
-                        sim.get(), simulationTimes.value(), -1.0);
+  simSteps = std::async(
+      std::launch::async, &sme::simulate::Simulation::doMultipleTimesteps,
+      sim.get(), simulationTimes.value(), -1.0, std::function<bool()>{});
   // start timer to periodically update simulation results
   plotRefreshTimer.start();
 }

@@ -27,6 +27,7 @@ if(BUILD_TESTING)
            duneini_t.cpp
            dunesim_t.cpp
            pde_t.cpp
+           pixelsim_t.cpp
            simulate_data_t.cpp
            simulate_options_t.cpp
            simulate_t.cpp)

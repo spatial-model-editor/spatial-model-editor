@@ -6,9 +6,8 @@
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("DuneSim: empty compartments",
-         "[core/simulate/dunesim][core/"
-         "simulate][core][simulate][dunesim][dune]") {
+SCENARIO("DuneSim", "[core/simulate/dunesim][core/"
+                    "simulate][core][simulate][dunesim][dune]") {
   WHEN("Model has no species") {
     auto m{getExampleModel(Mod::ABtoC)};
     for (const auto &speciesId : m.getSpecies().getIds("comp")) {
@@ -40,7 +39,7 @@ SCENARIO("DuneSim: empty compartments",
     REQUIRE(maxAreas.size() == 3);
     simulate::DuneSim duneSim(m, comps);
     for (std::size_t i = 0; i < 2; ++i) {
-      duneSim.run(0.05, 100e3);
+      duneSim.run(0.05, 100e3, {});
     }
     simulate::SimulationData data0{m.getSimulationData()};
     REQUIRE(duneSim.getConcentrations(0).size() == 5441);
@@ -62,7 +61,7 @@ SCENARIO("DuneSim: empty compartments",
     comps.pop_back();
     simulate::DuneSim newDuneSim(m, comps);
     for (std::size_t i = 0; i < 2; ++i) {
-      newDuneSim.run(0.05, 100e3);
+      newDuneSim.run(0.05, 100e3, {});
     }
     REQUIRE(newDuneSim.getConcentrations(0).size() == 5441);
     REQUIRE(newDuneSim.getConcentrations(1).size() == 8068);
@@ -80,5 +79,13 @@ SCENARIO("DuneSim: empty compartments",
       CAPTURE(diff);
       REQUIRE(diff / sum < 1e-10);
     }
+  }
+  WHEN("Callback is provided and used to stop simulation") {
+    auto m{getExampleModel(Mod::ABtoC)};
+    std::vector<std::string> comps{"comp"};
+    simulate::DuneSim duneSim(m, comps);
+    REQUIRE(duneSim.errorMessage().empty());
+    duneSim.run(1, -1, []() { return true; });
+    REQUIRE(duneSim.errorMessage() == "Simulation cancelled");
   }
 }

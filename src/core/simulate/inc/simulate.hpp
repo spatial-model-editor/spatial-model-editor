@@ -10,6 +10,7 @@
 #include <QSize>
 #include <atomic>
 #include <cstddef>
+#include <functional>
 #include <limits>
 #include <map>
 #include <memory>
@@ -68,7 +69,8 @@ public:
                           double timeout_ms = -1.0);
   std::size_t doMultipleTimesteps(
       const std::vector<std::pair<std::size_t, double>> &timesteps,
-      double timeout_ms = -1.0);
+      double timeout_ms = -1.0,
+      const std::function<bool()> &stopRunningCallback = {});
   [[nodiscard]] const std::string &errorMessage() const;
   [[nodiscard]] const QImage &errorImage() const;
   [[nodiscard]] const std::vector<std::string> &getCompartmentIds() const;
