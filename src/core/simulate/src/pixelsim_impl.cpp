@@ -53,8 +53,11 @@ ReacEval::ReacEval(
     rhs.push_back("0"); // dy/dt = 0
   }
   // compile all expressions with symengine
-  sym = common::Symbolic(rhs, sIds, {}, {}, true, doCSE, optLevel);
-  if (!sym.isValid()) {
+  sym = common::Symbolic(rhs, sIds);
+  if (sym.isValid()) {
+    sym.compile(doCSE, optLevel);
+  }
+  if (!sym.isCompiled()) {
     std::string msg{sym.getErrorMessage()};
     msg.append("\nExpression: \"");
     msg.append(sym.expr());

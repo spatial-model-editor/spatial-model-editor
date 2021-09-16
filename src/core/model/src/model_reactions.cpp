@@ -4,7 +4,7 @@
 #include "logger.hpp"
 #include "model_membranes.hpp"
 #include "sbml_math.hpp"
-#include "symbolic.hpp"
+#include "simple_symbolic.hpp"
 #include <QString>
 #include <algorithm>
 #include <memory>
@@ -132,9 +132,9 @@ static ReactionRescaling getReactionRescaling(
   auto expr{mathASTtoString(kineticLaw->getMath())};
   reactionRescaling.originalExpression = expr.c_str();
   SPDLOG_INFO("  - {}", expr);
-  expr = common::symbolicDivide(expr, divisor);
+  expr = common::SimpleSymbolic::divide(expr, divisor);
   SPDLOG_INFO("  --> {}", expr);
-  expr = common::symbolicSubstitute(expr, constants);
+  expr = common::SimpleSymbolic::substitute(expr, constants);
   SPDLOG_INFO("  --> {}", expr);
   reactionRescaling.rescaledExpression = expr.c_str();
   return reactionRescaling;
@@ -672,7 +672,7 @@ bool ModelReactions::dependOnVariable(const QString &variableId) const {
   auto v{variableId.toStdString()};
   return std::any_of(ids.begin(), ids.end(), [&v, this](const auto &id) {
     auto e{getRateExpression(id).toStdString()};
-    return common::symbolicContains(e, v);
+    return common::SimpleSymbolic::contains(e, v);
   });
 }
 

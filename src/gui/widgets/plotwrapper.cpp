@@ -69,7 +69,9 @@ void PlotWrapper::addObservableLine(
   vars.push_back("t");
   sme::common::Symbolic sym(plotWrapperObservable.expression.toStdString(),
                             vars);
-  if (!sym.isValid()) {
+  if (sym.isValid()) {
+    sym.compile();
+  } else {
     SPDLOG_WARN("Skipping invalid expression: '{}'",
                 plotWrapperObservable.expression.toStdString());
     return;
