@@ -115,8 +115,8 @@ SCENARIO("Simplify Lines",
       // allow infinite deviation -> minimum number of points
       ls.getSimplifiedLine(line, {std::numeric_limits<double>::max(),
                                   std::numeric_limits<double>::max()});
-      REQUIRE(line.size() == 3);
-      REQUIRE(line == l3);
+      REQUIRE(line.size() == 4);
+      REQUIRE(line == l4);
 
       // allow total deviation of 0.5 pixels
       ls.getSimplifiedLine(line, {0.5, 0});
@@ -132,7 +132,7 @@ SCENARIO("Simplify Lines",
 
       // allow average deviation of 1 pixel
       ls.getSimplifiedLine(line, {0, 1.0});
-      REQUIRE(line.size() == 3);
+      REQUIRE(line.size() == 4);
     }
   }
   GIVEN("Non-loop") {
@@ -214,8 +214,8 @@ SCENARIO("Simplify Lines",
       // allow infinite deviation -> minimum number of points
       ls.getSimplifiedLine(line, {std::numeric_limits<double>::max(),
                                   std::numeric_limits<double>::max()});
-      REQUIRE(line.size() == 2);
-      REQUIRE(line == l2);
+      REQUIRE(line.size() == 4);
+      REQUIRE(line == l4);
 
       // allow total deviation of 0.5 pixels
       ls.getSimplifiedLine(line, {0.5, 0});
@@ -231,15 +231,15 @@ SCENARIO("Simplify Lines",
 
       // allow average deviation of 0.25 pixel
       ls.getSimplifiedLine(line, {0, 0.25});
-      REQUIRE(line.size() == 3);
+      REQUIRE(line.size() == 4);
 
       // allow total deviation of 3 pixels
       ls.getSimplifiedLine(line, {3.0, 0});
-      REQUIRE(line.size() == 3);
+      REQUIRE(line.size() == 4);
 
       // allow average deviation of 1 pixel
       ls.getSimplifiedLine(line, {0, 1.0});
-      REQUIRE(line.size() == 2);
+      REQUIRE(line.size() == 4);
     }
   }
 }

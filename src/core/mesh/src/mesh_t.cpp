@@ -194,9 +194,12 @@ SCENARIO("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     std::size_t maxTriangleArea{999};
     mesh::Mesh mesh(img, {}, {maxTriangleArea}, 1.0, QPointF(0, 0),
                     std::vector<QRgb>{col});
+    REQUIRE(mesh.isValid() == true);
     // use 3 point boundary around 3x1 pixel rectangle:
     // interior point is outside this boundary
     mesh.setBoundaryMaxPoints(0, 3);
+    // re-generate mesh
+    mesh.setCompartmentMaxTriangleArea(0, maxTriangleArea);
     REQUIRE(mesh.isValid() == false);
     REQUIRE(mesh.getErrorMessage() ==
             "Triangle is outside of the boundary lines");
