@@ -221,7 +221,8 @@ void LineSimplifier::getSimplifiedLine(std::vector<QPoint> &line,
                                        const LineError &allowedError) const {
   SPDLOG_DEBUG("Allowed error: total = {}, average = {}", allowedError.total,
                allowedError.average);
-  for (std::size_t n = minNumPoints; n <= maxPoints(); ++n) {
+  std::size_t n0{std::clamp(std::size_t{4}, minNumPoints, maxPoints())};
+  for (std::size_t n = n0; n <= maxPoints(); ++n) {
     getSimplifiedLine(line, n);
     auto error = getLineError(line);
     SPDLOG_DEBUG("  - n = {} : total = {}, average = {}", n, error.total,

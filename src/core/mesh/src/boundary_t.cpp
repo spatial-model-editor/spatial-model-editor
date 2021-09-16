@@ -72,14 +72,14 @@ SCENARIO("Boundary", "[core/mesh/boundary][core/mesh][core][boundary]") {
     REQUIRE(boundary.getMaxPoints() == 999);
     REQUIRE(boundary.getPoints() == points);
     // use 3 points for boundary
-    boundary.setMaxPoints(4);
-    REQUIRE(boundary.getMaxPoints() == 4);
-    REQUIRE(boundary.getPoints() == p4);
+    boundary.setMaxPoints(3);
+    REQUIRE(boundary.getMaxPoints() == 3);
+    REQUIRE(boundary.getPoints() == p3);
     // automatically determine number of points
     auto nPoints = boundary.setMaxPoints();
     REQUIRE(boundary.getMaxPoints() == nPoints);
-    REQUIRE(nPoints == 3);
-    REQUIRE(boundary.getPoints() == p3);
+    REQUIRE(nPoints == 4);
+    REQUIRE(boundary.getPoints() == p4);
   }
 }
 
