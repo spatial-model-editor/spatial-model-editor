@@ -1,5 +1,4 @@
 #include "xml_legacy_annotation.hpp"
-#include "geometry_parametric.hpp"
 #include "logger.hpp"
 #include "sbml_utils.hpp"
 #include "utils.hpp"
@@ -52,6 +51,26 @@ static void removeAnnotation(libsbml::SBase *parent,
       return;
     }
   }
+}
+
+static const libsbml::ParametricGeometry *
+getParametricGeometry(const libsbml::Geometry *geom) {
+  if (geom == nullptr) {
+    return nullptr;
+  }
+  for (unsigned i = 0; i < geom->getNumGeometryDefinitions(); ++i) {
+    if (auto *def{geom->getGeometryDefinition(i)};
+        def->getIsActive() && def->isParametricGeometry()) {
+      return dynamic_cast<const libsbml::ParametricGeometry *>(def);
+    }
+  }
+  return nullptr;
+}
+
+static libsbml::ParametricGeometry *
+getParametricGeometry(libsbml::Geometry *geom) {
+  return const_cast<libsbml::ParametricGeometry *>(
+      getParametricGeometry(const_cast<const libsbml::Geometry *>(geom)));
 }
 
 bool hasLegacyAnnotations(const libsbml::Model *model) {

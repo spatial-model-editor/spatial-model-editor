@@ -1,6 +1,5 @@
 #include "model_geometry.hpp"
 #include "geometry_analytic.hpp"
-#include "geometry_parametric.hpp"
 #include "geometry_sampled_field.hpp"
 #include "logger.hpp"
 #include "mesh.hpp"
@@ -443,10 +442,7 @@ void ModelGeometry::writeGeometryToSBML() const {
   if (mesh != nullptr && mesh->isValid()) {
     sbmlAnnotation->meshParameters = {mesh->getBoundaryMaxPoints(),
                                       mesh->getCompartmentMaxTriangleArea()};
-  } else {
-    sbmlAnnotation->meshParameters = {};
   }
-  writeGeometryMeshToSBML(sbmlModel, mesh.get(), *modelCompartments);
 }
 
 bool ModelGeometry::getHasUnsavedChanges() const { return hasUnsavedChanges; }
