@@ -207,4 +207,85 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     REQUIRE(listReactions->topLevelItem(2)->childCount() == 0);
     REQUIRE(listReactions->currentItem()->text(0) == "A uptake from outside");
   }
+  WHEN("model with invalid reaction locations loaded") {
+    model = getTestModel("very-simple-model-invalid-reaction-location");
+    tab.loadModelData();
+    REQUIRE(listReactions->topLevelItemCount() == 6);
+    REQUIRE(listReactions->topLevelItem(0)->childCount() == 0);
+    REQUIRE(listReactions->topLevelItem(1)->childCount() == 0);
+    REQUIRE(listReactions->topLevelItem(2)->childCount() == 1);
+    REQUIRE(listReactions->topLevelItem(3)->childCount() == 2);
+    REQUIRE(listReactions->topLevelItem(4)->childCount() == 0);
+    REQUIRE(listReactions->topLevelItem(5)->childCount() == 2);
+    REQUIRE(listReactions->topLevelItem(5)->text(0) == "Invalid Location");
+    REQUIRE(listReactions->currentItem()->text(0) == "A to B conversion");
+    REQUIRE(listReactions->currentItem()->parent()->text(0) == "Nucleus");
+    REQUIRE(lblReactionScheme->text() == "A_nucl -> B_nucl");
+    listReactions->setFocus();
+    // change to invalid reaction section
+    sendKeyEvents(listReactions, {"Down", "Down", "Down", "Down", "Down"});
+    REQUIRE(listReactions->currentItem()->text(0) == "Invalid Location");
+    REQUIRE(txtReactionName->isEnabled() == false);
+    REQUIRE(cmbReactionLocation->isEnabled() == false);
+    REQUIRE(listReactionSpecies->isEnabled() == false);
+    REQUIRE(listReactionParams->isEnabled() == false);
+    REQUIRE(btnAddReactionParam->isEnabled() == false);
+    REQUIRE(btnRemoveReactionParam->isEnabled() == false);
+    REQUIRE(txtReactionRate->isEnabled() == false);
+    REQUIRE(btnRemoveReaction->isEnabled() == false);
+    // first invalid location reaction: only remove & location enabled
+    sendKeyEvents(listReactions, {"Down"});
+    REQUIRE(listReactions->currentItem()->text(0) == "A internal transport");
+    REQUIRE(txtReactionName->isEnabled() == false);
+    REQUIRE(txtReactionName->text() == "A internal transport");
+    REQUIRE(cmbReactionLocation->isEnabled() == true);
+    REQUIRE(listReactionSpecies->isEnabled() == false);
+    REQUIRE(listReactionParams->isEnabled() == false);
+    REQUIRE(btnAddReactionParam->isEnabled() == false);
+    REQUIRE(btnRemoveReactionParam->isEnabled() == false);
+    REQUIRE(txtReactionRate->isEnabled() == false);
+    REQUIRE(btnRemoveReaction->isEnabled() == true);
+    // set a valid location for the reaction
+    cmbReactionLocation->setFocus();
+    REQUIRE(cmbReactionLocation->currentIndex() == -1);
+    sendKeyEvents(cmbReactionLocation, {"Down"});
+    REQUIRE(cmbReactionLocation->currentIndex() == 0);
+    REQUIRE(listReactions->topLevelItem(0)->childCount() == 1);
+    REQUIRE(listReactions->topLevelItem(1)->childCount() == 0);
+    REQUIRE(listReactions->topLevelItem(2)->childCount() == 1);
+    REQUIRE(listReactions->topLevelItem(3)->childCount() == 2);
+    REQUIRE(listReactions->topLevelItem(4)->childCount() == 0);
+    REQUIRE(listReactions->topLevelItem(5)->childCount() == 1);
+    // same reaction selected as previously
+    REQUIRE(listReactions->currentItem()->text(0) == "A internal transport");
+    REQUIRE(listReactions->currentItem()->parent()->text(0) == "Outside");
+    REQUIRE(model.getReactions().getLocation("A_transport") == "c1");
+    // select remaining invalid location reaction
+    sendKeyEvents(listReactions, {"Down", "Down", "Down", "Down", "Down",
+                                  "Down", "Down", "Down", "Down"});
+    REQUIRE(listReactions->currentItem()->text(0) == "B internal transport");
+    REQUIRE(txtReactionName->isEnabled() == false);
+    REQUIRE(txtReactionName->text() == "B internal transport");
+    REQUIRE(cmbReactionLocation->isEnabled() == true);
+    REQUIRE(listReactionSpecies->isEnabled() == false);
+    REQUIRE(listReactionParams->isEnabled() == false);
+    REQUIRE(btnAddReactionParam->isEnabled() == false);
+    REQUIRE(btnRemoveReactionParam->isEnabled() == false);
+    REQUIRE(txtReactionRate->isEnabled() == false);
+    REQUIRE(btnRemoveReaction->isEnabled() == true);
+    // remove reaction, then cancel
+    mwt.addUserAction({"Esc"});
+    mwt.start();
+    sendMouseClick(btnRemoveReaction);
+    REQUIRE(listReactions->topLevelItem(5)->childCount() == 1);
+    REQUIRE(listReactions->currentItem()->text(0) == "B internal transport");
+    // remove reaction, then confirm
+    REQUIRE(listReactions->topLevelItemCount() == 6);
+    mwt.addUserAction({"Enter"});
+    mwt.start();
+    sendMouseClick(btnRemoveReaction);
+    // "Invalid Location" section is completely removed once there are no
+    // reactions with invalid locations to display
+    REQUIRE(listReactions->topLevelItemCount() == 5);
+  }
 }

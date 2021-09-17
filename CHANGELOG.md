@@ -1,8 +1,12 @@
 # Changelog
 ## latest
+### Changed
+- model reactions with invalid locations can now be seen and removed or relocated [#615](https://github.com/spatial-model-editor/spatial-model-editor/issues/615)
+
 ### Fixed
 - functions with zero arguments are now fully supported [#674](https://github.com/spatial-model-editor/spatial-model-editor/issues/674)
 - python interface: setting n_threads=1 for simulate takes precedence over n_threads value in model [#672](https://github.com/spatial-model-editor/spatial-model-editor/issues/672)
+- bug where membrane reactions could disappear when geometry was changed [#679](https://github.com/spatial-model-editor/spatial-model-editor/issues/679)
 
 ## [1.2.0] - 2021-09-13
 ### Added

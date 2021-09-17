@@ -13,7 +13,7 @@ class TabReactions;
 
 namespace sme::model {
 class Model;
-} // namespace sme::model
+}
 
 class QLabelMouseTracker;
 class QTreeWidgetItem;
@@ -41,7 +41,9 @@ private:
   std::unique_ptr<Ui::TabReactions> ui;
   sme::model::Model &model;
   QLabelMouseTracker *lblGeometry;
-  QString currentReacId;
+  QString currentReacId{};
+  QString invalidLocationLabel{"Invalid Location"};
+  QStringList invalidReactionIds{};
 
   void enableWidgets(bool enable);
   void listReactions_currentItemChanged(QTreeWidgetItem *current,

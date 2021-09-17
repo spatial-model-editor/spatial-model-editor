@@ -222,8 +222,8 @@ ModelReactions::ModelReactions(libsbml::Model *model,
       modelMembranes{membranes}, isIncompleteODEImport{isNonSpatialModel} {
   if (!isNonSpatialModel) {
     // for a non-spatial model, we'll assign missing reaction locations after
-    // the geometry is imported but if we import a spatial model with reactions
-    // without location, should fix that straight away:
+    // the geometry is imported - but if we import a spatial model with
+    // reactions without a location, should fix that straight away:
     makeReactionLocationsValid();
   }
 }
@@ -302,6 +302,19 @@ QStringList ModelReactions::getIds(const QString &locationId) const {
   std::string compId = locationId.toStdString();
   for (const auto &id : ids) {
     if (sbmlModel->getReaction(id.toStdString())->getCompartment() == compId) {
+      r.push_back(id);
+    }
+  }
+  return r;
+}
+
+[[nodiscard]] QStringList
+ModelReactions::getInvalidLocationIds(const QStringList &validLocations) const {
+  QStringList r;
+  for (const auto &id : ids) {
+    if (!validLocations.contains(sbmlModel->getReaction(id.toStdString())
+                                     ->getCompartment()
+                                     .c_str())) {
       r.push_back(id);
     }
   }
