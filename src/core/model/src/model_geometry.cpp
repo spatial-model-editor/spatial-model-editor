@@ -182,7 +182,9 @@ void ModelGeometry::updateCompartmentAndMembraneSizes() {
     modelCompartments->setColour(compartmentId,
                                  modelCompartments->getColour(compartmentId));
   }
-  modelMembranes->exportToSBML(pixelWidth * pixelDepth);
+  if (isValid) {
+    modelMembranes->exportToSBML(pixelWidth * pixelDepth);
+  }
 }
 
 ModelGeometry::ModelGeometry() = default;
