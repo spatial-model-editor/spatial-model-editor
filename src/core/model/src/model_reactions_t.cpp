@@ -156,11 +156,7 @@ SCENARIO("SBML reactions",
     REQUIRE(r.getIds("c2_c3_membrane").empty());
   }
   GIVEN("Model with spatial reactions whose location is not set") {
-    QFile f(":test/models/fish_300x300.xml");
-    f.open(QIODevice::ReadOnly);
-    std::string xml{f.readAll().toStdString()};
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(xml.c_str()));
+    auto doc{getTestSbmlDoc("fish_300x300")};
     {
       const auto *reac0{doc->getModel()->getReaction("re0")};
       REQUIRE(reac0->isSetCompartment() == false);
@@ -169,8 +165,7 @@ SCENARIO("SBML reactions",
       const auto *reac2{doc->getModel()->getReaction("re2")};
       REQUIRE(reac2->isSetCompartment() == false);
     }
-    model::Model m;
-    m.importSBMLString(xml);
+    auto m{getTestModel("fish_300x300")};
     const auto &reactions{m.getReactions()};
     // reaction location inferred from species involved
     REQUIRE(reactions.getIds("fish").size() == 3);
@@ -178,9 +173,7 @@ SCENARIO("SBML reactions",
     REQUIRE(reactions.getIds("fish")[1] == "re1");
     REQUIRE(reactions.getIds("fish")[2] == "re2");
     {
-      auto xml2{m.getXml().toStdString()};
-      std::unique_ptr<libsbml::SBMLDocument> doc2(
-          libsbml::readSBMLFromString(xml2.c_str()));
+      auto doc2{toSbmlDoc(m)};
       const auto *reac0{doc2->getModel()->getReaction("re0")};
       REQUIRE(reac0->isSetCompartment() == true);
       REQUIRE(reac0->getCompartment() == "fish");
@@ -193,29 +186,54 @@ SCENARIO("SBML reactions",
     }
   }
   GIVEN("Model with spatial reaction whose name & location is not set") {
-    QFile f(":test/models/example2D.xml");
-    f.open(QIODevice::ReadOnly);
-    std::string xml{f.readAll().toStdString()};
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(xml.c_str()));
+    auto doc{getTestSbmlDoc("example2D")};
     const auto *reac{doc->getModel()->getReaction(0)};
     REQUIRE(reac->isSetCompartment() == false);
     REQUIRE(reac->isSetName() == false);
-    model::Model m;
-    m.importSBMLString(xml);
+    auto m{getTestModel("example2D")};
     const auto &reactions{m.getReactions()};
     // reaction location inferred from species involved
     REQUIRE(reactions.getIds("Nucleus_Cytosol_membrane").size() == 1);
     REQUIRE(reactions.getIds("Nucleus_Cytosol_membrane")[0] == "re1");
     // reaction name uses Id if not originally set
     REQUIRE(reactions.getName("re1") == "re1");
-    auto xml2{m.getXml().toStdString()};
-    std::unique_ptr<libsbml::SBMLDocument> doc2(
-        libsbml::readSBMLFromString(xml2.c_str()));
+    auto doc2{toSbmlDoc(m)};
     const auto *reac2{doc2->getModel()->getReaction(0)};
     REQUIRE(reac2->isSetCompartment() == true);
     REQUIRE(reac2->getCompartment() == "Nucleus_Cytosol_membrane");
     REQUIRE(reac2->isSetName() == true);
     REQUIRE(reac2->getName() == reac2->getId());
+  }
+  GIVEN("membrane reactions: import new geometry image without losing "
+        "reactions") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    REQUIRE(m.getMembranes().getIds().size() == 2);
+    REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[0]).size() == 2);
+    REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[1]).size() == 2);
+    QImage img(":/geometry/single-pixels-3x1.png");
+    m.getGeometry().importGeometryFromImage(img, false);
+    m.getGeometry().setPixelWidth(1.0);
+    REQUIRE(m.getGeometry().getIsValid() == false);
+    // assign valid compartment colours
+    m.getCompartments().setColour("c1", img.pixel(0, 0));
+    m.getCompartments().setColour("c2", img.pixel(1, 0));
+    m.getCompartments().setColour("c3", img.pixel(2, 0));
+    REQUIRE(m.getGeometry().getIsValid() == true);
+    // recover membrane ids and membrane reactions
+    REQUIRE(m.getMembranes().getIds().size() == 2);
+    REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[0]).size() == 2);
+    REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[1]).size() == 2);
+    // repeat with different but valid colour assignments
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/679
+    m.getGeometry().importGeometryFromImage(img, false);
+    m.getGeometry().setPixelWidth(1.0);
+    REQUIRE(m.getGeometry().getIsValid() == false);
+    m.getCompartments().setColour("c1", img.pixel(2, 0));
+    m.getCompartments().setColour("c2", img.pixel(1, 0));
+    m.getCompartments().setColour("c3", img.pixel(0, 0));
+    REQUIRE(m.getGeometry().getIsValid() == true);
+    REQUIRE(m.getMembranes().getIds().size() == 2);
+    REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[0]).size() == 2);
+    REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[1]).size() == 2);
   }
 }
