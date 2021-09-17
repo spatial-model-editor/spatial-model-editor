@@ -47,6 +47,8 @@ public:
   getSpatialReactionRescalings() const;
   [[nodiscard]] bool getIsIncompleteODEImport() const;
   [[nodiscard]] QStringList getIds(const QString &locationId) const;
+  [[nodiscard]] QStringList
+  getInvalidLocationIds(const QStringList &validLocations) const;
   QString add(const QString &name, const QString &locationId,
               const QString &rateExpression = "1");
   void remove(const QString &id);

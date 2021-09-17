@@ -54,6 +54,7 @@ void TabReactions::loadModelData(const QString &selection) {
   QStringList locNames{model.getCompartments().getNames()};
   locIds += model.getMembranes().getIds();
   locNames += model.getMembranes().getNames();
+  invalidReactionIds = model.getReactions().getInvalidLocationIds(locIds);
   for (int i = 0; i < locIds.size(); ++i) {
     const auto &locId = locIds[i];
     const auto &locName = locNames[i];
@@ -64,6 +65,19 @@ void TabReactions::loadModelData(const QString &selection) {
       // add each reaction as child of compartment
       comp->addChild(new QTreeWidgetItem(
           comp, QStringList({model.getReactions().getName(reacId)})));
+    }
+  }
+  if (!invalidReactionIds.isEmpty()) {
+    auto *comp{new QTreeWidgetItem(ui->listReactions,
+                                   QStringList({invalidLocationLabel}))};
+    comp->setForeground(0, Qt::red);
+    ui->listReactions->addTopLevelItem(comp);
+    for (const auto &reacId : invalidReactionIds) {
+      // add each reaction as child of compartment
+      auto *child{new QTreeWidgetItem(
+          comp, QStringList({model.getReactions().getName(reacId)}))};
+      child->setForeground(0, Qt::red);
+      comp->addChild(child);
     }
   }
   ui->listReactions->expandAll();
@@ -82,7 +96,7 @@ void TabReactions::enableWidgets(bool enable) {
 }
 
 static QTableWidgetItem *newQTableWidgetItem(const QString &value) {
-  auto *item = new QTableWidgetItem(value);
+  auto *item{new QTableWidgetItem(value)};
   item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled | Qt::ItemIsEditable);
   return item;
 }
@@ -98,28 +112,45 @@ void TabReactions::listReactions_currentItemChanged(
   ui->txtReactionRate->clear();
   ui->lblReactionRateUnits->clear();
   ui->lblReactionRateStatus->clear();
-  if (current != nullptr && current->parent() == nullptr) {
-    // user selected a compartment or membrane: update image
-    int i = ui->listReactions->indexOfTopLevelItem(current);
-    if (auto numComps = model.getCompartments().getIds().size(); i < numComps) {
+  if (current == nullptr) {
+    enableWidgets(false);
+    return;
+  }
+  if (current->parent() == nullptr) {
+    int i{ui->listReactions->indexOfTopLevelItem(current)};
+    if (current->text(0) == invalidLocationLabel) {
+      lblGeometry->clear();
+    } else if (auto numComps{model.getCompartments().getIds().size()};
+               i < numComps) {
+      // user selected a compartment
       lblGeometry->setImage(model.getCompartments()
                                 .getCompartments()[static_cast<std::size_t>(i)]
                                 ->getCompartmentImage());
     } else {
+      // user selected a membrane
       i -= numComps;
       lblGeometry->setImage(model.getMembranes()
                                 .getMembranes()[static_cast<std::size_t>(i)]
                                 .getImage());
     }
-  }
-  if ((current == nullptr) || (current->parent() == nullptr)) {
-    // selection is not a reaction
     enableWidgets(false);
     return;
   }
   SPDLOG_DEBUG("item {} / {} selected",
                current->parent()->text(0).toStdString(),
                current->text(0).toStdString());
+  if (current->parent()->text(0) == invalidLocationLabel) {
+    // selection is reaction with invalid location
+    enableWidgets(false);
+    currentReacId =
+        invalidReactionIds[current->parent()->indexOfChild(current)];
+    ui->txtReactionName->setText(model.getReactions().getName(currentReacId));
+    // only available user action is to remove it or set a valid location
+    ui->cmbReactionLocation->setCurrentIndex(-1);
+    ui->cmbReactionLocation->setEnabled(true);
+    ui->btnRemoveReaction->setEnabled(true);
+    return;
+  }
   enableWidgets(true);
   ui->btnRemoveReactionParam->setEnabled(false);
   bool isMembrane{false};
@@ -237,11 +268,11 @@ void TabReactions::btnAddReaction_clicked() {
     auto *parent = item->parent() != nullptr ? item->parent() : item;
     index = ui->listReactions->indexOfTopLevelItem(parent);
   }
-  QString locationId;
+  QString locationId{model.getCompartments().getIds()[0]};
   auto nComps = static_cast<int>(model.getCompartments().getIds().size());
   if (index < nComps) {
     locationId = model.getCompartments().getIds()[index];
-  } else {
+  } else if (index < nComps + model.getMembranes().getIds().size()) {
     locationId = model.getMembranes().getIds()[index - nComps];
   }
   bool ok;
