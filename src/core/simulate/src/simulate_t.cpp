@@ -1728,6 +1728,7 @@ SCENARIO("simulate w/options & save, load, re-simulate",
        {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
     CAPTURE(simulatorType);
     auto m1{getExampleModel(Mod::VerySimpleModel)};
+    m1.getSimulationSettings().times.clear();
     auto &options1{m1.getSimulationSettings().options};
     options1.pixel.integrator = simulate::PixelIntegratorType::RK435;
     options1.pixel.maxErr.rel = 1e-3;

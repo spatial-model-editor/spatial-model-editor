@@ -27,6 +27,7 @@ SCENARIO("XML Annotations",
     displayOptions.normaliseOverAllSpecies = true;
     displayOptions.normaliseOverAllTimepoints = false;
     auto &simulationSettings{settings.simulationSettings};
+    simulationSettings.times.clear();
     simulationSettings.times.push_back({1, 0.2});
     simulationSettings.times.push_back({5, 0.25});
     simulationSettings.options.pixel.maxThreads = 4;

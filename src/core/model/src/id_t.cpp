@@ -22,12 +22,12 @@ SCENARIO("Model id", "[core/model/id][core/model][core][model][id]") {
     // true if sId not already in model (in any namespace)
     REQUIRE(model::isSIdAvailable("boogie", model) == true);
     REQUIRE(model::isSIdAvailable("A", model) == false);
-    REQUIRE(model::isSIdAvailable("parametricGeometry", model) == false);
+    REQUIRE(model::isSIdAvailable("parametricGeometry", model) == true);
 
     // true if sId not already in spatial namespace
     REQUIRE(model::isSpatialIdAvailable("boogie", geom) == true);
     REQUIRE(model::isSpatialIdAvailable("A", geom) == true);
-    REQUIRE(model::isSpatialIdAvailable("parametricGeometry", geom) == false);
+    REQUIRE(model::isSpatialIdAvailable("parametricGeometry", geom) == true);
 
     REQUIRE(model::nameToUniqueSId("valid_id", model) == "valid_id");
 
