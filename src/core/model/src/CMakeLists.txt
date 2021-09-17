@@ -2,7 +2,6 @@ target_sources(
   core
   PRIVATE geometry.cpp
           geometry_analytic.cpp
-          geometry_parametric.cpp
           geometry_sampled_field.cpp
           id.cpp
           model.cpp
