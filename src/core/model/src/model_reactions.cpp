@@ -2,6 +2,7 @@
 #include "geometry.hpp"
 #include "id.hpp"
 #include "logger.hpp"
+#include "model_compartments.hpp"
 #include "model_membranes.hpp"
 #include "sbml_math.hpp"
 #include "simple_symbolic.hpp"
@@ -215,11 +216,13 @@ removeInvalidSpecies(libsbml::Reaction *reaction,
 ModelReactions::ModelReactions() = default;
 
 ModelReactions::ModelReactions(libsbml::Model *model,
+                               const ModelCompartments *compartments,
                                const ModelMembranes *membranes,
                                bool isNonSpatialModel)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(model)},
       parameterIds{importParameterIds(model)}, sbmlModel{model},
-      modelMembranes{membranes}, isIncompleteODEImport{isNonSpatialModel} {
+      modelCompartments{compartments}, modelMembranes{membranes},
+      isIncompleteODEImport{isNonSpatialModel} {
   if (!isNonSpatialModel) {
     // for a non-spatial model, we'll assign missing reaction locations after
     // the geometry is imported - but if we import a spatial model with
@@ -309,16 +312,43 @@ QStringList ModelReactions::getIds(const QString &locationId) const {
 }
 
 [[nodiscard]] QStringList
-ModelReactions::getInvalidLocationIds(const QStringList &validLocations) const {
+ModelReactions::getIds(const ReactionLocation &reactionLocation) const {
   QStringList r;
+  if (reactionLocation.type != ReactionLocation::Type::Invalid) {
+    return getIds(reactionLocation.id);
+  }
+  QStringList validLocations{modelCompartments->getIds()};
+  validLocations << modelMembranes->getIds();
   for (const auto &id : ids) {
-    if (!validLocations.contains(sbmlModel->getReaction(id.toStdString())
-                                     ->getCompartment()
-                                     .c_str())) {
+    const auto &locationId{
+        sbmlModel->getReaction(id.toStdString())->getCompartment()};
+    if (!validLocations.contains(locationId.c_str())) {
       r.push_back(id);
     }
   }
   return r;
+}
+
+[[nodiscard]] std::vector<ReactionLocation>
+ModelReactions::getReactionLocations() const {
+  std::vector<ReactionLocation> reactionLocations;
+  const auto &compartmentIds{modelCompartments->getIds()};
+  const auto &membraneIds{modelMembranes->getIds()};
+  reactionLocations.reserve(
+      static_cast<std::size_t>(compartmentIds.size() + membraneIds.size()));
+  for (const auto &compartmentId : compartmentIds) {
+    reactionLocations.push_back({compartmentId,
+                                 modelCompartments->getName(compartmentId),
+                                 ReactionLocation::Type::Compartment});
+  }
+  for (const auto &membraneId : membraneIds) {
+    reactionLocations.push_back({membraneId,
+                                 modelMembranes->getName(membraneId),
+                                 ReactionLocation::Type::Membrane});
+  }
+  reactionLocations.push_back(
+      {"invalid", "Invalid Location", ReactionLocation::Type::Invalid});
+  return reactionLocations;
 }
 
 QString ModelReactions::add(const QString &name, const QString &locationId,
@@ -546,8 +576,7 @@ void ModelReactions::setRateExpression(const QString &id,
                                        const QString &expression) {
   auto *kin{getOrCreateKineticLaw(sbmlModel, id)};
   SPDLOG_INFO("  - expr: {}", expression.toStdString());
-  std::unique_ptr<libsbml::ASTNode> exprAST(
-      libsbml::SBML_parseL3Formula(expression.toStdString().c_str()));
+  auto exprAST{mathStringToAST(expression.toStdString(), sbmlModel)};
   if (exprAST == nullptr) {
     SPDLOG_ERROR("SBML failed to parse expression: {}",
                  libsbml::SBML_getLastParseL3Error());
