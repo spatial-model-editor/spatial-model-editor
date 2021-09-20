@@ -161,9 +161,9 @@ static bool reactionInvolvesSpecies(const libsbml::Reaction *reac,
   return false;
 }
 
-static void
-removeInvalidSpecies(libsbml::Reaction *reaction,
-                     const std::vector<geometry::Membrane> &membranes) {
+static std::set<std::string, std::less<>>
+getValidSpeciesIds(const libsbml::Reaction *reaction,
+                   const std::vector<geometry::Membrane> &membranes) {
   std::set<std::string, std::less<>> validSpeciesIds{};
   const auto *model{reaction->getModel()};
   std::string compA{reaction->getCompartment()};
@@ -185,6 +185,26 @@ removeInvalidSpecies(libsbml::Reaction *reaction,
       validSpeciesIds.insert(species->getId());
     }
   }
+  return validSpeciesIds;
+}
+
+static std::set<std::string, std::less<>> getPossibleModifierSpeciesIds(
+    const libsbml::Reaction *reaction,
+    const std::vector<geometry::Membrane> &membranes) {
+  auto modifierSpecies{getValidSpeciesIds(reaction, membranes)};
+  for (unsigned i = 0; i < reaction->getNumProducts(); ++i) {
+    modifierSpecies.erase(reaction->getProduct(i)->getSpecies());
+  }
+  for (unsigned i = 0; i < reaction->getNumReactants(); ++i) {
+    modifierSpecies.erase(reaction->getReactant(i)->getSpecies());
+  }
+  return modifierSpecies;
+}
+
+static void
+removeInvalidSpecies(libsbml::Reaction *reaction,
+                     const std::vector<geometry::Membrane> &membranes) {
+  auto validSpeciesIds{getValidSpeciesIds(reaction, membranes)};
   std::vector<std::string> productsToRemove;
   for (unsigned i = 0; i < reaction->getNumProducts(); ++i) {
     if (auto sId{reaction->getProduct(i)->getSpecies()};
@@ -538,6 +558,11 @@ void ModelReactions::setSpeciesStoichiometry(const QString &id,
       rmReactant != nullptr) {
     SPDLOG_TRACE("  - removed Reactant '{}'", rmReactant->getSpecies());
   }
+  if (std::unique_ptr<libsbml::ModifierSpeciesReference> rmModifier(
+          reaction->removeModifier(sId));
+      rmModifier != nullptr) {
+    SPDLOG_TRACE("  - removed Modifier '{}'", rmModifier->getSpecies());
+  }
   if (stoichiometry > 0) {
     reaction->addProduct(spec, stoichiometry);
     SPDLOG_TRACE("  - adding Product '{}' with stoichiometry {}", spec->getId(),
@@ -547,6 +572,11 @@ void ModelReactions::setSpeciesStoichiometry(const QString &id,
     reaction->addReactant(spec, -stoichiometry);
     SPDLOG_TRACE("  - adding Reactant '{}' with stoichiometry {}",
                  spec->getId(), -stoichiometry);
+  }
+  if (stoichiometry == 0 && common::SimpleSymbolic::contains(
+                                getRateExpression(id).toStdString(), sId)) {
+    reaction->addModifier(spec);
+    SPDLOG_TRACE("  - adding Modifier '{}'", spec->getId());
   }
 }
 
@@ -574,15 +604,29 @@ static libsbml::KineticLaw *getOrCreateKineticLaw(libsbml::Model *model,
 
 void ModelReactions::setRateExpression(const QString &id,
                                        const QString &expression) {
+  auto *reaction{sbmlModel->getReaction(id.toStdString())};
   auto *kin{getOrCreateKineticLaw(sbmlModel, id)};
-  SPDLOG_INFO("  - expr: {}", expression.toStdString());
-  auto exprAST{mathStringToAST(expression.toStdString(), sbmlModel)};
+  std::string expr{expression.toStdString()};
+  SPDLOG_INFO("  - expr: {}", expr);
+  auto exprAST{mathStringToAST(expr, sbmlModel)};
   if (exprAST == nullptr) {
     SPDLOG_ERROR("SBML failed to parse expression: {}",
                  libsbml::SBML_getLastParseL3Error());
     return;
   }
   hasUnsavedChanges = true;
+  auto modifierSpecies{
+      getPossibleModifierSpeciesIds(reaction, modelMembranes->getMembranes())};
+  auto exprSpecies{common::SimpleSymbolic::symbols(expr)};
+  reaction->getListOfModifiers()->clear();
+  for (const auto &sId : modifierSpecies) {
+    if (exprSpecies.find(sId) != exprSpecies.end()) {
+      if (const auto *spec{sbmlModel->getSpecies(sId)}; spec != nullptr) {
+        SPDLOG_TRACE("  - adding Modifier '{}'", spec->getId());
+        reaction->addModifier(spec);
+      }
+    }
+  }
   kin->setMath(exprAST.get());
 }
 

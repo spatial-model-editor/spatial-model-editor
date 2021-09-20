@@ -10,7 +10,7 @@ using namespace sme::test;
 
 TEST_CASE("SBML reactions",
           "[core/model/reactions][core/model][core][model][reactions]") {
-  SECTION("ModelReactions") {
+  SECTION("Remove reactions") {
     auto m{getExampleModel(Mod::VerySimpleModel)};
     auto &r{m.getReactions()};
     r.setHasUnsavedChanges(false);
@@ -150,7 +150,7 @@ TEST_CASE("SBML reactions",
     REQUIRE(r.getIds("c1_c2_membrane").empty());
     REQUIRE(r.getIds("c2_c3_membrane").empty());
   }
-  SECTION("Model with spatial reactions whose location is not set") {
+  SECTION("Spatial reactions whose location is not set") {
     auto doc{getTestSbmlDoc("fish_300x300")};
     {
       const auto *reac0{doc->getModel()->getReaction("re0")};
@@ -180,7 +180,7 @@ TEST_CASE("SBML reactions",
       REQUIRE(reac2->getCompartment() == "fish");
     }
   }
-  SECTION("Model with spatial reaction whose name & location is not set") {
+  SECTION("Spatial reaction whose name & location is not set") {
     auto doc{getTestSbmlDoc("example2D")};
     const auto *reac{doc->getModel()->getReaction(0)};
     REQUIRE(reac->isSetCompartment() == false);
@@ -199,7 +199,7 @@ TEST_CASE("SBML reactions",
     REQUIRE(reac2->isSetName() == true);
     REQUIRE(reac2->getName() == reac2->getId());
   }
-  SECTION("membrane reactions: import new geometry image without losing "
+  SECTION("Membrane reactions: import new geometry image without losing "
           "reactions") {
     auto m{getExampleModel(Mod::VerySimpleModel)};
     REQUIRE(m.getMembranes().getIds().size() == 2);
@@ -231,7 +231,7 @@ TEST_CASE("SBML reactions",
     REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[0]).size() == 2);
     REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[1]).size() == 2);
   }
-  SECTION("membrane reactions removed when compartment removed") {
+  SECTION("Membrane reactions removed when compartment removed") {
     auto m{getExampleModel(Mod::VerySimpleModel)};
     REQUIRE(m.getMembranes().getIds().size() == 2);
     REQUIRE(m.getMembranes().getIds()[0] == "c1_c2_membrane");
@@ -285,7 +285,7 @@ TEST_CASE("SBML reactions",
     REQUIRE(m.getReactions().getIds(locations[1]).size() == 0);
   }
   SECTION(
-      "membrane reactions -> invalid location if membrane no longer exists") {
+      "Membrane reactions -> invalid location if membrane no longer exists") {
     auto m{getExampleModel(Mod::VerySimpleModel)};
     REQUIRE(m.getMembranes().getIds().size() == 2);
     REQUIRE(m.getMembranes().getIds()[0] == "c1_c2_membrane");
@@ -370,5 +370,139 @@ TEST_CASE("SBML reactions",
     REQUIRE(m.getReactions().getIds(locations[3]).size() == 2);
     REQUIRE(m.getReactions().getIds(locations[4]).size() == 2);
     REQUIRE(m.getReactions().getIds(locations[5]).size() == 0);
+  }
+  SECTION("SBML Modifer Species: compartment reaction") {
+    // note: these are only exported to make the SBML valid, we don't use them
+    auto m{getExampleModel(Mod::LiverSimplified)};
+    auto &r{m.getReactions()};
+    auto ids{r.getIds("cytoplasm")};
+    REQUIRE(ids.size() == 12);
+    REQUIRE(ids[0] == "IkBap_degradation");
+    auto expr{r.getRateExpression(ids[0])};
+    REQUIRE(expr == "IkBa_p * IkBa_p_degradation_k1");
+    r.setRateExpression("IkBap_degradation", expr + " + 0");
+    auto doc{toSbmlDoc(m)};
+    const auto *reac{doc->getModel()->getReaction("IkBap_degradation")};
+    REQUIRE(reac != nullptr);
+    REQUIRE(reac->getListOfReactants()->size() == 1);
+    REQUIRE(reac->getReactant(0)->getSpecies() == "IkBa_p");
+    REQUIRE(reac->getListOfProducts()->size() == 0);
+    REQUIRE(reac->getListOfModifiers()->size() == 0);
+    // add species to expression with zero stoich (i.e. modifiers)
+    r.setRateExpression("IkBap_degradation",
+                        expr + " + TNFa + cos(some_func(x, IKKb))");
+    doc = toSbmlDoc(m);
+    reac = doc->getModel()->getReaction("IkBap_degradation");
+    REQUIRE(reac != nullptr);
+    REQUIRE(reac->getListOfReactants()->size() == 1);
+    REQUIRE(reac->getReactant(0)->getSpecies() == "IkBa_p");
+    REQUIRE(reac->getListOfProducts()->size() == 0);
+    REQUIRE(reac->getListOfModifiers()->size() == 2);
+    REQUIRE(reac->getModifier("TNFa")->getSpecies() == "TNFa");
+    REQUIRE(reac->getModifier("IKKb")->getSpecies() == "IKKb");
+    // make IKKb stoich non-zero: no longer a modifier
+    r.setSpeciesStoichiometry("IkBap_degradation", "IKKb", 2);
+    // make IkBa_p stoich zero: now a modifier
+    r.setSpeciesStoichiometry("IkBap_degradation", "IkBa_p", 0);
+    doc = toSbmlDoc(m);
+    reac = doc->getModel()->getReaction("IkBap_degradation");
+    REQUIRE(reac != nullptr);
+    REQUIRE(reac->getListOfReactants()->size() == 0);
+    REQUIRE(reac->getListOfProducts()->size() == 1);
+    REQUIRE(reac->getProduct(0)->getSpecies() == "IKKb");
+    REQUIRE(reac->getListOfModifiers()->size() == 2);
+    REQUIRE(reac->getModifier("IkBa_p")->getSpecies() == "IkBa_p");
+    REQUIRE(reac->getModifier("TNFa")->getSpecies() == "TNFa");
+    // IKKb -> IkBa_cytoplasm, TNFa -> p65_cytoplasm in expression
+    r.setRateExpression(
+        "IkBap_degradation",
+        expr + " + p65_cytoplasm + cos(some_func(x, IkBa_cytoplasm))");
+    doc = toSbmlDoc(m);
+    reac = doc->getModel()->getReaction("IkBap_degradation");
+    REQUIRE(reac != nullptr);
+    REQUIRE(reac->getListOfReactants()->size() == 0);
+    REQUIRE(reac->getListOfProducts()->size() == 1);
+    REQUIRE(reac->getProduct(0)->getSpecies() == "IKKb");
+    REQUIRE(reac->getListOfModifiers()->size() == 3);
+    REQUIRE(reac->getModifier("IkBa_p")->getSpecies() == "IkBa_p");
+    REQUIRE(reac->getModifier("p65_cytoplasm")->getSpecies() ==
+            "p65_cytoplasm");
+    REQUIRE(reac->getModifier("IkBa_cytoplasm")->getSpecies() ==
+            "IkBa_cytoplasm");
+    // remove p65 from expr
+    r.setRateExpression("IkBap_degradation",
+                        expr + " + cos(some_func(x, IkBa_cytoplasm))");
+    doc = toSbmlDoc(m);
+    reac = doc->getModel()->getReaction("IkBap_degradation");
+    REQUIRE(reac != nullptr);
+    REQUIRE(reac->getListOfReactants()->size() == 0);
+    REQUIRE(reac->getListOfProducts()->size() == 1);
+    REQUIRE(reac->getProduct(0)->getSpecies() == "IKKb");
+    REQUIRE(reac->getListOfModifiers()->size() == 2);
+    REQUIRE(reac->getModifier("IkBa_cytoplasm")->getSpecies() ==
+            "IkBa_cytoplasm");
+    REQUIRE(reac->getModifier("IkBa_p")->getSpecies() == "IkBa_p");
+    // set IKKb stoich to zero: not a modifier as no longer present in expr
+    r.setSpeciesStoichiometry("IkBap_degradation", "IKKb", 0);
+    doc = toSbmlDoc(m);
+    reac = doc->getModel()->getReaction("IkBap_degradation");
+    REQUIRE(reac != nullptr);
+    REQUIRE(reac->getListOfReactants()->size() == 0);
+    REQUIRE(reac->getListOfProducts()->size() == 0);
+    REQUIRE(reac->getListOfModifiers()->size() == 2);
+    REQUIRE(reac->getModifier("IkBa_cytoplasm")->getSpecies() ==
+            "IkBa_cytoplasm");
+    REQUIRE(reac->getModifier("IkBa_p")->getSpecies() == "IkBa_p");
+    // set IKKb stoich to negative
+    r.setSpeciesStoichiometry("IkBap_degradation", "IKKb", -0.2);
+    doc = toSbmlDoc(m);
+    reac = doc->getModel()->getReaction("IkBap_degradation");
+    REQUIRE(reac != nullptr);
+    REQUIRE(reac->getListOfReactants()->size() == 1);
+    REQUIRE(reac->getReactant(0)->getSpecies() == "IKKb");
+    REQUIRE(reac->getListOfProducts()->size() == 0);
+    REQUIRE(reac->getListOfModifiers()->size() == 2);
+    REQUIRE(reac->getModifier("IkBa_cytoplasm")->getSpecies() ==
+            "IkBa_cytoplasm");
+    REQUIRE(reac->getModifier("IkBa_p")->getSpecies() == "IkBa_p");
+  }
+  SECTION("SBML Modifer Species: membrane reaction") {
+    // note: these are only exported to make the SBML valid, we don't use them
+    auto m{getExampleModel(Mod::LiverSimplified)};
+    auto &r{m.getReactions()};
+    auto ids{r.getIds("cytoplasm_nucleus_membrane")};
+    REQUIRE(ids.size() == 4);
+    REQUIRE(ids[0] == "p65_shuttle");
+    auto expr{r.getRateExpression(ids[0])};
+    REQUIRE(expr ==
+            "p65_shuttle_k1 * p65_cytoplasm - p65_shuttle_k2 * p65_nucleus");
+    r.setRateExpression("p65_shuttle", expr + " + 0");
+    auto doc{toSbmlDoc(m)};
+    const auto *reac{doc->getModel()->getReaction("p65_shuttle")};
+    REQUIRE(reac != nullptr);
+    REQUIRE(reac->getListOfReactants()->size() == 1);
+    REQUIRE(reac->getReactant(0)->getSpecies() == "p65_cytoplasm");
+    REQUIRE(reac->getListOfProducts()->size() == 1);
+    REQUIRE(reac->getProduct(0)->getSpecies() == "p65_nucleus");
+    REQUIRE(reac->getListOfModifiers()->size() == 0);
+    // add more products and reactants
+    r.setSpeciesStoichiometry("p65_shuttle", "IkBa_cytoplasm", 1.2);
+    r.setSpeciesStoichiometry("p65_shuttle", "IkBa_nucleus", -0.77);
+    // add some species to expression that have zero stoich (modifiers)
+    r.setRateExpression("p65_shuttle",
+                        expr + "sin(IkBa_cytoplasm) + myfunc(2.3, x, TNFa)");
+    doc = toSbmlDoc(m);
+    reac = doc->getModel()->getReaction("p65_shuttle");
+    REQUIRE(reac != nullptr);
+    REQUIRE(reac->getListOfReactants()->size() == 2);
+    REQUIRE(reac->getReactant("p65_cytoplasm")->getSpecies() ==
+            "p65_cytoplasm");
+    REQUIRE(reac->getReactant("IkBa_nucleus")->getSpecies() == "IkBa_nucleus");
+    REQUIRE(reac->getListOfProducts()->size() == 2);
+    REQUIRE(reac->getProduct("p65_nucleus")->getSpecies() == "p65_nucleus");
+    REQUIRE(reac->getProduct("IkBa_cytoplasm")->getSpecies() ==
+            "IkBa_cytoplasm");
+    REQUIRE(reac->getListOfModifiers()->size() == 1);
+    REQUIRE(reac->getModifier("TNFa")->getSpecies() == "TNFa");
   }
 }

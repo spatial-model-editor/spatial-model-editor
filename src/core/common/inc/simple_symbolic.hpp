@@ -5,6 +5,7 @@
 #pragma once
 
 #include <cstddef>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -19,6 +20,7 @@ public:
   substitute(const std::string &expr,
              const std::vector<std::pair<std::string, double>> &constants);
   static bool contains(const std::string &expr, const std::string &var);
+  static std::set<std::string, std::less<>> symbols(const std::string &expr);
 };
 
 } // namespace sme::common

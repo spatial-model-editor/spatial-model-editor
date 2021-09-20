@@ -40,9 +40,17 @@ std::string SimpleSymbolic::substitute(
 }
 
 bool SimpleSymbolic::contains(const std::string &expr, const std::string &var) {
-  auto v{symbol(var)};
+  return symbols(expr).count(var) != 0;
+}
+
+std::set<std::string, std::less<>>
+SimpleSymbolic::symbols(const std::string &expr) {
+  std::set<std::string, std::less<>> result;
   auto fs{free_symbols(*safeParse(expr))};
-  return fs.find(v) != fs.cend();
+  for (const auto &s : fs) {
+    result.insert(rcp_dynamic_cast<const Symbol>(s)->get_name());
+  }
+  return result;
 }
 
 } // namespace sme::common
