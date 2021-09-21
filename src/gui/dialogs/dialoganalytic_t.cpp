@@ -1,18 +1,15 @@
 #include "catch_wrapper.hpp"
 #include "dialoganalytic.hpp"
 #include "model.hpp"
+#include "model_test_utils.hpp"
 #include "qt_test_utils.hpp"
-#include <QFile>
 
 using namespace sme::test;
 
-SCENARIO("DialogAnalytic",
-         "[gui/dialogs/analytic][gui/dialogs][gui][analytic]") {
-  GIVEN("10x10 image, small compartment, simple expr") {
-    sme::model::Model model;
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    model.importSBMLString(f.readAll().toStdString());
+TEST_CASE("DialogAnalytic",
+          "[gui/dialogs/analytic][gui/dialogs][gui][analytic]") {
+  SECTION("10x10 image, small compartment, simple expr") {
+    auto model{getExampleModel(Mod::ABtoC)};
     auto compartmentPoints = std::vector<QPoint>{
         QPoint(5, 5), QPoint(5, 6), QPoint(5, 7), QPoint(6, 6), QPoint(6, 7)};
     DialogAnalytic dia("x",
@@ -21,35 +18,35 @@ SCENARIO("DialogAnalytic",
                        model.getParameters(), model.getFunctions(), false);
     REQUIRE(dia.getExpression() == "x");
     ModalWidgetTimer mwt;
-    WHEN("valid expr: 10") {
+    SECTION("valid expr: 10") {
       mwt.addUserAction({"Delete", "1", "0"});
       mwt.start();
       dia.exec();
       REQUIRE(dia.isExpressionValid() == true);
       REQUIRE(dia.getExpression() == "10");
     }
-    WHEN("invalid syntax: (") {
+    SECTION("invalid syntax: (") {
       mwt.addUserAction({"Delete", "(", "Left"});
       mwt.start();
       dia.exec();
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
-    WHEN("illegal syntax: &") {
+    SECTION("illegal syntax: &") {
       mwt.addUserAction({"Delete", "&"});
       mwt.start();
       dia.exec();
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
-    WHEN("unknown variable: q") {
+    SECTION("unknown variable: q") {
       mwt.addUserAction({"Delete", "q"});
       mwt.start();
       dia.exec();
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
-    WHEN("unknown function: sillyfunc") {
+    SECTION("unknown function: sillyfunc") {
       mwt.addUserAction({"Delete", "s", "i", "l", "l", "y", "f", "u", "n", "c",
                          "(", "x", ")"});
       mwt.start();
@@ -57,7 +54,7 @@ SCENARIO("DialogAnalytic",
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
-    WHEN("negative expr: sin(x)") {
+    SECTION("negative expr: sin(x)") {
       mwt.addUserAction({"Delete", "s", "i", "n", "(", "x", ")", "Left", "Left",
                          "Left", "Left"});
       mwt.start();
@@ -65,7 +62,7 @@ SCENARIO("DialogAnalytic",
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
-    WHEN("valid expr: 1.5 + sin(x)") {
+    SECTION("valid expr: 1.5 + sin(x)") {
       mwt.addUserAction({"Delete", "1", ".", "5", " ", "+", " ", "s", "i", "n",
                          "(", "x", ")"});
       mwt.start();
@@ -73,7 +70,7 @@ SCENARIO("DialogAnalytic",
       REQUIRE(dia.isExpressionValid() == true);
       REQUIRE(dia.getExpression() == "1.5 + sin(x)");
     }
-    WHEN("valid expr: 1.5 + sin(x) & export image") {
+    SECTION("valid expr: 1.5 + sin(x) & export image") {
       ModalWidgetTimer mwt2;
       mwt2.addUserAction(
           {"a", "n", "a", "l", "y", "t", "i", "c", "C", "o", "n", "c"});
@@ -88,16 +85,13 @@ SCENARIO("DialogAnalytic",
       REQUIRE(img.size() == QSize(10, 10));
     }
   }
-  GIVEN("100x100 image") {
-    sme::model::Model model;
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    model.importSBMLString(f.readAll().toStdString());
+  SECTION("100x100 image") {
+    auto model{getExampleModel(Mod::ABtoC)};
     DialogAnalytic dia("x", model.getSpeciesGeometry("B"),
                        model.getParameters(), model.getFunctions(), false);
     REQUIRE(dia.getExpression() == "x");
     ModalWidgetTimer mwt;
-    WHEN("valid expr: 10 & unclick grid/scale checkboxes") {
+    SECTION("valid expr: 10 & unclick grid/scale checkboxes") {
       mwt.addUserAction(
           {"Delete", "1", "0", "Shift+Tab", "Space", "Shift+Tab", "Space"});
       mwt.start();

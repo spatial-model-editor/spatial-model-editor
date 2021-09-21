@@ -13,7 +13,8 @@
 
 using namespace sme::test;
 
-SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
+TEST_CASE("TabGeometry",
+          "[gui/tabs/geometry][gui/tabs][gui][geometry][serial]") {
   sme::model::Model model;
   QLabelMouseTracker mouseTracker;
   mouseTracker.show();
@@ -57,10 +58,10 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
   REQUIRE(spinMaxTriangleArea != nullptr);
   auto *spinMeshZoom{tab.findChild<QSpinBox *>("spinMeshZoom")};
   REQUIRE(spinMeshZoom != nullptr);
-  WHEN("very-simple-model loaded") {
+  SECTION("very-simple-model loaded") {
     model = getExampleModel(Mod::VerySimpleModel);
     tab.loadModelData();
-    WHEN("select some stuff") {
+    SECTION("select some stuff") {
       REQUIRE(listMembranes->count() == 2);
       REQUIRE(listCompartments->count() == 3);
 
@@ -245,7 +246,7 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
       REQUIRE(tabCompartmentGeometry->currentIndex() == 0);
     }
-    WHEN("add/remove compartments") {
+    SECTION("add/remove compartments") {
       // add compartment
       mwt.addUserAction({"C", "o", "M", "p", "!"});
       mwt.start();
@@ -281,7 +282,7 @@ SCENARIO("Geometry Tab", "[gui/tabs/geometry][gui/tabs][gui][geometry]") {
       REQUIRE(spinBoundaryZoom->isEnabled() == false);
     }
   }
-  WHEN("single pixel model loaded") {
+  SECTION("single pixel model loaded") {
     model = getTestModel("single-pixel-meshing");
     tab.loadModelData();
     // boundary tab

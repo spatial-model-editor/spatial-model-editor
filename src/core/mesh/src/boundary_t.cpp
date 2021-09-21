@@ -21,8 +21,8 @@ struct BoundaryTestImage {
 
 using namespace sme;
 
-SCENARIO("Boundary", "[core/mesh/boundary][core/mesh][core][boundary]") {
-  GIVEN("Loop") {
+TEST_CASE("Boundary", "[core/mesh/boundary][core/mesh][core][boundary]") {
+  SECTION("Loop") {
     // points that make up the loop
     std::vector<QPoint> points{{0, 0}, {2, 0},  {3, 1}, {1, 3},
                                {0, 3}, {-1, 2}, {-1, 1}};
@@ -56,7 +56,7 @@ SCENARIO("Boundary", "[core/mesh/boundary][core/mesh][core][boundary]") {
     REQUIRE(nPoints == 4);
     REQUIRE(boundary.getPoints() == p4);
   }
-  GIVEN("Non-loop") {
+  SECTION("Non-loop") {
     // points that make up the boundary line
     std::vector<QPoint> points{{0, 0}, {2, 0}, {3, 1}, {4, 1},
                                {4, 2}, {5, 3}, {5, 4}};
@@ -83,19 +83,19 @@ SCENARIO("Boundary", "[core/mesh/boundary][core/mesh][core][boundary]") {
   }
 }
 
-SCENARIO("constructBoundaries",
-         "[core/mesh/boundary][core/mesh][core][boundary]") {
-  GIVEN("empty image") {
+TEST_CASE("constructBoundaries",
+          "[core/mesh/boundary][core/mesh][core][boundary]") {
+  SECTION("empty image") {
     QImage img(24, 32, QImage::Format_RGB32);
     QRgb col = qRgb(0, 0, 0);
     img.fill(col);
-    WHEN("no compartment colours") {
+    SECTION("no compartment colours") {
       auto interiorPoints{mesh::getInteriorPoints(img, {})};
       auto boundaries = mesh::constructBoundaries(img, {});
       REQUIRE(boundaries.empty());
       REQUIRE(interiorPoints.empty());
     }
-    WHEN("whole image is a compartment") {
+    SECTION("whole image is a compartment") {
       auto interiorPoints{mesh::getInteriorPoints(img, {col})};
       auto boundaries = mesh::constructBoundaries(img, {col});
       std::vector<QPoint> outer{{0, 0},
@@ -114,7 +114,7 @@ SCENARIO("constructBoundaries",
       REQUIRE(common::isCyclicPermutation(b.getAllPoints(), outer));
     }
   }
-  GIVEN("image with 3 concentric compartments, no fixed points") {
+  SECTION("image with 3 concentric compartments, no fixed points") {
     QImage img(":/geometry/concave-cell-nucleus-100x100.png");
     QRgb col0 = img.pixel(0, 0);
     QRgb col1 = img.pixel(35, 20);
@@ -140,7 +140,7 @@ SCENARIO("constructBoundaries",
     REQUIRE(b2.isValid());
     REQUIRE(b2.isLoop());
   }
-  GIVEN("image with 3 compartments, two fixed points") {
+  SECTION("image with 3 compartments, two fixed points") {
     QImage img(":/geometry/two-blobs-100x100.png");
     QRgb col0 = img.pixel(0, 0);
     QRgb col1 = img.pixel(33, 33);
@@ -172,8 +172,8 @@ SCENARIO("constructBoundaries",
   }
 }
 
-SCENARIO("constructBoundaries using images from Medha Bhattacharya",
-         "[core/mesh/boundary][core/mesh][core][boundary][expensive]") {
+TEST_CASE("constructBoundaries using images from Medha Bhattacharya",
+          "[core/mesh/boundary][core/mesh][core][boundary][expensive]") {
   // images provided by Medha Bhattacharya
   // https://summerofcode.withgoogle.com/archive/2020/projects/4913136240427008/
   // https://drive.google.com/drive/folders/1z83_pUTlI7eYKL9J9iV-EV6lLAEqC7pG

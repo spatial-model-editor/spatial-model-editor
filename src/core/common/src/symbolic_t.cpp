@@ -6,8 +6,8 @@
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
-  GIVEN("5+5: no vars, no constants") {
+TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
+  SECTION("5+5: no vars, no constants") {
     std::string expr = "5+5";
     common::Symbolic sym(expr);
     CAPTURE(expr);
@@ -25,7 +25,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     sym.eval(res);
     REQUIRE(res[0] == dbl_approx(10));
   }
-  GIVEN("3*x + 7*x: one var, no constants") {
+  SECTION("3*x + 7*x: one var, no constants") {
     std::string expr{"3*x + 7 * x"};
     common::Symbolic sym(expr);
     REQUIRE(!sym.isValid());
@@ -52,7 +52,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     sym.eval(res, {0.2});
     REQUIRE(res[0] == dbl_approx(4));
   }
-  GIVEN("3*x + 7*x, 4*x - 3: two expressions, one var, no constants") {
+  SECTION("3*x + 7*x, 4*x - 3: two expressions, one var, no constants") {
     std::vector<std::string> expr{"3*x + 7 * x", "4*x - 3"};
     common::Symbolic sym(expr, {"x"});
     CAPTURE(expr);
@@ -85,7 +85,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(res[0] == dbl_approx(0));
     REQUIRE(res[1] == dbl_approx(-3));
   }
-  GIVEN("1.324*x + 2*3: one var, no constants") {
+  SECTION("1.324*x + 2*3: one var, no constants") {
     std::string expr{"1.324 * x + 2*3"};
     common::Symbolic sym(expr, {"x"}, {});
     CAPTURE(expr);
@@ -105,7 +105,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     sym.eval(res, {0.05});
     REQUIRE(res[0] == dbl_approx(6.1324));
   }
-  GIVEN("0.324*x + 2*3: one var, no constants") {
+  SECTION("0.324*x + 2*3: one var, no constants") {
     std::string expr{"0.324 * x + 2*3"};
     common::Symbolic sym(expr, {"x"}, {});
     CAPTURE(expr);
@@ -120,7 +120,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     sym.eval(res, {0.1});
     REQUIRE(res[0] == dbl_approx(6.0324));
   }
-  GIVEN("3*x + 4/x - 1.0*x + 0.2*x*x - 0.1: one var, no constants") {
+  SECTION("3*x + 4/x - 1.0*x + 0.2*x*x - 0.1: one var, no constants") {
     std::string expr{"3*x + 4/x - 1.0*x + 0.2*x*x - 0.1"};
     common::Symbolic sym(expr, {"x"}, {});
     CAPTURE(expr);
@@ -138,7 +138,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
               dbl_approx(3 * x + 4 / x - 1.0 * x + 0.2 * x * x - 0.1));
     }
   }
-  GIVEN("3*x + 4/y - 1.0*x + 0.2*x*y - 0.1: two vars, no constants") {
+  SECTION("3*x + 4/y - 1.0*x + 0.2*x*y - 0.1: two vars, no constants") {
     std::string expr{"3*x + 4/y - 1.0*x + 0.2*x*y - 0.1"};
     REQUIRE(common::Symbolic(expr, {"x"}, {}).getErrorMessage() ==
             "Unknown symbol: y");
@@ -164,7 +164,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       }
     }
   }
-  GIVEN("two expressions, three vars, no constants") {
+  SECTION("two expressions, three vars, no constants") {
     std::vector<std::string> expr{"3*x + 4/y - 1.0*x + 0.2*x*y - 0.1",
                                   "z - cos(x)*sin(y) - x*y"};
     REQUIRE(common::Symbolic(expr, {"z", "x"}, {}).getErrorMessage() ==
@@ -200,7 +200,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       }
     }
   }
-  GIVEN("exponentiale^(4*x): print exponential function") {
+  SECTION("exponentiale^(4*x): print exponential function") {
     std::string expr{"exponentiale^(4*x)"};
     REQUIRE(common::Symbolic(expr, {}, {}).getErrorMessage() ==
             "Unknown symbol: x");
@@ -219,7 +219,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       REQUIRE(res[0] == dbl_approx(exp(4 * x)));
     }
   }
-  GIVEN("x^(3/2): print square-root function") {
+  SECTION("x^(3/2): print square-root function") {
     std::string expr{"x^(3/2)"};
     common::Symbolic sym(expr, {"x"}, {});
     CAPTURE(expr);
@@ -236,7 +236,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       REQUIRE(res[0] == dbl_approx(x * sqrt(x)));
     }
   }
-  GIVEN("3*x + alpha*x - a*n/x: one var, constants") {
+  SECTION("3*x + alpha*x - a*n/x: one var, constants") {
     std::vector<std::pair<std::string, double>> constants;
     constants.emplace_back("alpha", 0.5);
     constants.emplace_back("a", 0.8 + 1e-11);
@@ -266,7 +266,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
               dbl_approx(3 * x + 0.5 * x - (0.8 + 1e-11) * (-23) * x));
     }
   }
-  GIVEN("relabel one expression with two vars") {
+  SECTION("relabel one expression with two vars") {
     std::string expr{"3*x + 12*sin(y)"};
     common::Symbolic sym(expr, {"x", "y"});
     CAPTURE(expr);
@@ -279,7 +279,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(sym.isValid() == true);
     REQUIRE(sym.isCompiled() == false);
   }
-  GIVEN("relabel one compiled expression with two vars") {
+  SECTION("relabel one compiled expression with two vars") {
     std::string expr{"3*x + 12*sin(y)"};
     common::Symbolic sym(expr, {"x", "y"});
     sym.compile();
@@ -293,7 +293,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(sym.isValid() == true);
     REQUIRE(sym.isCompiled() == true);
   }
-  GIVEN("invalid variable relabeling is a no-op") {
+  SECTION("invalid variable relabeling is a no-op") {
     std::string expr{"3*x + 12*sin(y)"};
     common::Symbolic sym(expr, {"x", "y"});
     CAPTURE(expr);
@@ -307,7 +307,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     sym.relabel({"a", "b", "c"});
     REQUIRE(sym.inlinedExpr() == expr);
   }
-  GIVEN("unknown function") {
+  SECTION("unknown function") {
     std::string expr{"abcd(y)"};
     common::Symbolic sym(expr, {"y"});
     REQUIRE(sym.isValid() == false);
@@ -318,7 +318,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(sym.isCompiled() == false);
     CAPTURE(expr);
   }
-  GIVEN("unknown functions") {
+  SECTION("unknown functions") {
     std::string expr{"abcd(y) + unknown_function(y)"};
     common::Symbolic sym(expr, {"y"});
     REQUIRE(sym.isValid() == false);
@@ -329,7 +329,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(sym.isCompiled() == false);
     CAPTURE(expr);
   }
-  GIVEN("functions calling unknown functions") {
+  SECTION("functions calling unknown functions") {
     std::string expr{"pow(2*y + cos(abcd(y)), 2)"};
     common::Symbolic sym(expr, {"y"});
     REQUIRE(sym.isValid() == false);
@@ -340,7 +340,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(sym.isCompiled() == false);
     CAPTURE(expr);
   }
-  GIVEN("some user-defined functions") {
+  SECTION("some user-defined functions") {
     common::SymbolicFunction f0;
     f0.id = "f0";
     f0.name = "zero_arg_func";
@@ -361,7 +361,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     g2.name = "g2";
     g2.args = {"a", "b"};
     g2.body = "1/a/b";
-    WHEN("0-arg func") {
+    SECTION("0-arg func") {
       std::string expr{"z*f0()"};
       common::Symbolic sym(expr, {"z"}, {}, {f0});
       REQUIRE(sym.isValid());
@@ -370,7 +370,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       REQUIRE(sym.inlinedExpr() == "6*z");
       CAPTURE(expr);
     }
-    WHEN("1-arg func") {
+    SECTION("1-arg func") {
       std::string expr{"2*f1(z)"};
       common::Symbolic sym(expr, {"z"}, {}, {f1});
       REQUIRE(sym.getErrorMessage().empty());
@@ -383,7 +383,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       REQUIRE(sym.isCompiled() == true);
       CAPTURE(expr);
     }
-    WHEN("0-arg func called with one argument") {
+    SECTION("0-arg func called with one argument") {
       std::string expr{"2*f0(x)"};
       common::Symbolic sym(expr, {"x"}, {}, {f0});
       REQUIRE(!sym.isValid());
@@ -391,7 +391,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
               "Function 'zero_arg_func' requires 0 argument(s), found 1");
       CAPTURE(expr);
     }
-    WHEN("1-arg func called with two arguments") {
+    SECTION("1-arg func called with two arguments") {
       std::string expr{"2*f1(x, y)"};
       common::Symbolic sym(expr, {"x", "y"}, {}, {f1});
       REQUIRE(sym.isValid() == false);
@@ -400,7 +400,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
               "Function 'my func' requires 1 argument(s), found 2");
       CAPTURE(expr);
     }
-    WHEN("2-arg func called with one argument") {
+    SECTION("2-arg func called with one argument") {
       std::string expr{"2*f2(a)"};
       common::Symbolic sym(expr, {"a"}, {}, {f2});
       REQUIRE(sym.isValid() == false);
@@ -409,7 +409,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
               "Function 'func2' requires 2 argument(s), found 1");
       CAPTURE(expr);
     }
-    WHEN("1-arg func calls itself") {
+    SECTION("1-arg func calls itself") {
       std::string expr = "f1(2+f1(f1(2*f1(z))))";
       common::Symbolic sym(expr, {"z"}, {}, {f1});
       CAPTURE(sym.getErrorMessage());
@@ -422,7 +422,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       REQUIRE(sym.isCompiled() == true);
       CAPTURE(expr);
     }
-    WHEN("1-arg func calls 2-arg func") {
+    SECTION("1-arg func calls 2-arg func") {
       std::string expr = "f1(1+f2(alpha, beta))";
       common::Symbolic sym(expr, {"alpha", "beta"}, {}, {f1, f2});
       CAPTURE(sym.getErrorMessage());
@@ -435,7 +435,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       REQUIRE(sym.isCompiled() == true);
       CAPTURE(expr);
     }
-    WHEN("2-arg func calls 2-arg func") {
+    SECTION("2-arg func calls 2-arg func") {
       std::string expr =
           "f2(x, alpha)*f2(beta, y)*g2(f2(x, y), f2(alpha, beta))";
       common::Symbolic sym(expr, {"alpha", "beta", "x", "y"}, {}, {f1, f2, g2});
@@ -450,7 +450,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       CAPTURE(expr);
     }
   }
-  GIVEN("single recursive function call") {
+  SECTION("single recursive function call") {
     common::SymbolicFunction f1;
     f1.id = "f1";
     f1.name = "my func";
@@ -464,7 +464,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(sym.getErrorMessage() == "Recursive function calls not supported");
     CAPTURE(expr);
   }
-  GIVEN("expressions with relative difference < 1e-13 test equal") {
+  SECTION("expressions with relative difference < 1e-13 test equal") {
     REQUIRE(symEq(QString("0.9999999999"), QString("1")) == false);
     REQUIRE(symEq(QString("0.99999999999999"), QString("1")) == true);
     REQUIRE(symEq(QString("9999999999"), QString("10000000000")) == false);
@@ -477,7 +477,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
                   QString("9.999999999999999e-4*x + 1.0000000000000001*y")) ==
             true);
   }
-  GIVEN("expression with 1/0: parses but doesn't compile") {
+  SECTION("expression with 1/0: parses but doesn't compile") {
     common::Symbolic sym("1/0");
     REQUIRE(sym.isValid() == true);
     REQUIRE(sym.isCompiled() == false);
@@ -489,7 +489,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(sym.getErrorMessage() == "Failed to compile expression: LLVMDouble "
                                      "can only represent real valued infinity");
   }
-  GIVEN("expression with inf: parses and compiles") {
+  SECTION("expression with inf: parses and compiles") {
     // real infinity is ok both for parsing & for llvm compilation
     common::Symbolic sym("inf", {}, {}, {});
     REQUIRE(sym.isValid() == true);
@@ -502,7 +502,7 @@ SCENARIO("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     CAPTURE(sym.getErrorMessage());
     REQUIRE(sym.getErrorMessage().empty());
   }
-  GIVEN("expression with nan: parses but doesn't compile") {
+  SECTION("expression with nan: parses but doesn't compile") {
     // nan parses ok but not supported by llvm compilation
     common::Symbolic sym("nan");
     REQUIRE(sym.isValid() == true);

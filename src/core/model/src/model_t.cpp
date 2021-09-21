@@ -58,21 +58,21 @@ static void createSBMLlvl2doc(const std::string &filename) {
   libsbml::SBMLWriter().writeSBML(document.get(), filename);
 }
 
-SCENARIO("SBML: import SBML doc without geometry",
-         "[core/model/model][core/model][core][model]") {
+TEST_CASE("SBML: import SBML doc without geometry",
+          "[core/model/model][core/model][core][model]") {
   // create simple SBML level 2.4 model
-  createSBMLlvl2doc("tmp.xml");
+  createSBMLlvl2doc("tmplvl2model.xml");
   // import SBML model
   model::Model s;
-  s.importSBMLFile("tmp.xml");
+  s.importSBMLFile("tmplvl2model.xml");
   REQUIRE(s.getIsValid() == true);
   REQUIRE(s.getErrorMessage().isEmpty());
   // export it again
-  s.exportSBMLFile("tmp.xml");
-  THEN("upgrade SBML doc and add default 3d spatial geometry") {
+  s.exportSBMLFile("tmplvl2model.xml");
+  SECTION("upgrade SBML doc and add default 3d spatial geometry") {
     // load new model
     std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromFile("tmp.xml"));
+        libsbml::readSBMLFromFile("tmplvl2model.xml"));
     REQUIRE(doc != nullptr);
     auto *model = doc->getModel();
     REQUIRE(model != nullptr);
@@ -98,17 +98,16 @@ SCENARIO("SBML: import SBML doc without geometry",
 
     REQUIRE(geom->getNumGeometryDefinitions() == 0);
   }
-  WHEN("import geometry & assign compartments") {
+  SECTION("import geometry & assign compartments") {
     // import geometry image & assign compartments to colours
     s.getGeometry().importGeometryFromImage(
         QImage(":/geometry/single-pixels-3x1.png"), false);
     s.getCompartments().setColour("compartment0", 0xffaaaaaa);
     s.getCompartments().setColour("compartment1", 0xff525252);
     // export it again
-    s.exportSBMLFile("tmp.xml");
-
+    s.exportSBMLFile("tmplvl2model.xml");
     std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromFile("tmp.xml"));
+        libsbml::readSBMLFromFile("tmplvl2model.xml"));
     auto *model = doc->getModel();
     auto *plugin = dynamic_cast<libsbml::SpatialModelPlugin *>(
         model->getPlugin("spatial"));
@@ -142,7 +141,7 @@ SCENARIO("SBML: import SBML doc without geometry",
     REQUIRE(static_cast<unsigned>(sfvol1->getSampledValue()) == 0xff525252);
     REQUIRE(static_cast<unsigned>(sfvol1->getSampledValue()) ==
             static_cast<unsigned>(sfvals[2]));
-    THEN("import concentration & set diff constants") {
+    SECTION("import concentration & set diff constants") {
       // import concentration
       s.getSpecies().setSampledFieldConcentration("spec0c0", {0.0, 0.0, 0.0});
       REQUIRE(s.getSpecies().getConcentrationImage("spec0c0").size() ==
@@ -176,10 +175,10 @@ SCENARIO("SBML: import SBML doc without geometry",
               dbl_approx(23.1 + 1e-12));
 
       // export model
-      s.exportSBMLFile("tmp2.xml");
+      s.exportSBMLFile("tmplvl2model2.xml");
       // import model again, recover concentration & compartment assignments
       model::Model s2;
-      s2.importSBMLFile("tmp2.xml");
+      s2.importSBMLFile("tmplvl2model2.xml");
       REQUIRE(s2.getCompartments().getColour("compartment0") == 0xffaaaaaa);
       REQUIRE(s2.getCompartments().getColour("compartment1") == 0xff525252);
       REQUIRE(s2.getSpecies().getConcentrationImage("spec0c0").pixel(1, 0) ==
@@ -214,7 +213,7 @@ SCENARIO("SBML: import SBML doc without geometry",
   }
 }
 
-SCENARIO("SBML: name clashes", "[core/model/model][core/model][core][model]") {
+TEST_CASE("SBML: name clashes", "[core/model/model][core/model][core][model]") {
   std::unique_ptr<libsbml::SBMLDocument> document(
       new libsbml::SBMLDocument(2, 4));
   // create model
@@ -264,13 +263,13 @@ SCENARIO("SBML: name clashes", "[core/model/model][core/model][core][model]") {
   REQUIRE(newName2 == "spec_comp__comp__comp__comp_");
 }
 
-SCENARIO("SBML: import SBML level 2 document",
-         "[core/model/model][core/model][core][model]") {
+TEST_CASE("SBML: import SBML level 2 document",
+          "[core/model/model][core/model][core][model]") {
   // create simple SBML level 2.4 model
-  createSBMLlvl2doc("tmp.xml");
+  createSBMLlvl2doc("tmpmodelimport.xml");
   // import SBML model
   model::Model s;
-  s.importSBMLFile("tmp.xml");
+  s.importSBMLFile("tmpmodelimport.xml");
   REQUIRE(s.getIsValid() == true);
   REQUIRE(s.getErrorMessage().isEmpty());
 
@@ -342,50 +341,42 @@ SCENARIO("SBML: import SBML level 2 document",
   REQUIRE(dynamic_cast<libsbml::SpatialModelPlugin *>(
               doc->getModel()->getPlugin("spatial")) != nullptr);
 
-  GIVEN("Compartment Colours") {
+  SECTION("Compartment Colours") {
     QRgb col1 = 0xffaaaaaa;
     QRgb col2 = 0xff525252;
     QRgb col3 = 0xffffffff;
-    WHEN("compartment colours have been assigned") {
-      THEN("can get CompartmentID from colour") {
-        REQUIRE(s.getCompartments().getIdFromColour(col1) == "compartment0");
-        REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment1");
-        REQUIRE(s.getCompartments().getIdFromColour(col3) == "");
-      }
-      THEN("can get colour from CompartmentID") {
-        REQUIRE(s.getCompartments().getColour("compartment0") == col1);
-        REQUIRE(s.getCompartments().getColour("compartment1") == col2);
-      }
-    }
-    WHEN("new colour assigned") {
+    // can get CompartmentID from colour
+    REQUIRE(s.getCompartments().getIdFromColour(col1) == "compartment0");
+    REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment1");
+    REQUIRE(s.getCompartments().getIdFromColour(col3) == "");
+    // can get colour from CompartmentID"
+    REQUIRE(s.getCompartments().getColour("compartment0") == col1);
+    REQUIRE(s.getCompartments().getColour("compartment1") == col2);
+    SECTION("new colour assigned") {
       s.getCompartments().setColour("compartment0", col1);
       s.getCompartments().setColour("compartment1", col2);
       s.getCompartments().setColour("compartment0", col3);
-      THEN("unassign old colour mapping") {
-        REQUIRE(s.getCompartments().getIdFromColour(col1) == "");
-        REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment1");
-        REQUIRE(s.getCompartments().getIdFromColour(col3) == "compartment0");
-        REQUIRE(s.getCompartments().getColour("compartment0") == col3);
-        REQUIRE(s.getCompartments().getColour("compartment1") == col2);
-      }
+      REQUIRE(s.getCompartments().getIdFromColour(col1) == "");
+      REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment1");
+      REQUIRE(s.getCompartments().getIdFromColour(col3) == "compartment0");
+      REQUIRE(s.getCompartments().getColour("compartment0") == col3);
+      REQUIRE(s.getCompartments().getColour("compartment1") == col2);
     }
-    WHEN("existing colour re-assigned") {
+    SECTION("existing colour re-assigned") {
       s.getCompartments().setColour("compartment0", col1);
       s.getCompartments().setColour("compartment1", col2);
       s.getCompartments().setColour("compartment0", col2);
-      THEN("unassign old colour mapping") {
-        REQUIRE(s.getCompartments().getIdFromColour(col1) == "");
-        REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment0");
-        REQUIRE(s.getCompartments().getIdFromColour(col3) == "");
-        REQUIRE(s.getCompartments().getColour("compartment0") == col2);
-        REQUIRE(s.getCompartments().getColour("compartment1") == 0);
-      }
+      REQUIRE(s.getCompartments().getIdFromColour(col1) == "");
+      REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment0");
+      REQUIRE(s.getCompartments().getIdFromColour(col3) == "");
+      REQUIRE(s.getCompartments().getColour("compartment0") == col2);
+      REQUIRE(s.getCompartments().getColour("compartment1") == 0);
     }
   }
 }
 
-SCENARIO("SBML: create new model, import geometry from image",
-         "[core/model/model][core/model][core][model]") {
+TEST_CASE("SBML: create new model, import geometry from image",
+          "[core/model/model][core/model][core][model]") {
   model::Model s;
   REQUIRE(s.getGeometry().getHasImage() == false);
   REQUIRE(s.getGeometry().getIsValid() == false);
@@ -397,12 +388,11 @@ SCENARIO("SBML: create new model, import geometry from image",
   REQUIRE(s.getErrorMessage().isEmpty());
   REQUIRE(s.getGeometry().getHasImage() == false);
   REQUIRE(s.getGeometry().getIsValid() == false);
-  GIVEN("Single pixel image") {
+  SECTION("Single pixel image") {
     QImage img(1, 1, QImage::Format_RGB32);
     QRgb col = QColor(12, 243, 154).rgba();
     img.setPixel(0, 0, col);
-    img.save("tmp.png");
-    s.getGeometry().importGeometryFromImage(QImage("tmp.png"), false);
+    s.getGeometry().importGeometryFromImage(img, false);
     REQUIRE(s.getIsValid() == true);
     REQUIRE(s.getErrorMessage().isEmpty());
     REQUIRE(s.getGeometry().getHasImage() == true);
@@ -415,8 +405,8 @@ SCENARIO("SBML: create new model, import geometry from image",
   }
 }
 
-SCENARIO("SBML: import uint8 sampled field",
-         "[core/model/model][core/model][core][model]") {
+TEST_CASE("SBML: import uint8 sampled field",
+          "[core/model/model][core/model][core][model]") {
   auto doc{getTestSbmlDoc("very-simple-model-uint8")};
   // original model: 2d 100m x 100m image
   // size of compartments are not set in original spatial model
@@ -470,37 +460,31 @@ SCENARIO("SBML: import uint8 sampled field",
   REQUIRE(s.getSpecies().getInitialConcentration("A_c2") == dbl_approx(0.0));
 }
 
-SCENARIO("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
+TEST_CASE("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
   auto s{getExampleModel(Mod::ABtoC)};
-  GIVEN("SBML document") {
-    WHEN("imported") {
-      THEN("find compartments") {
-        REQUIRE(s.getCompartments().getIds().size() == 1);
-        REQUIRE(s.getCompartments().getIds()[0] == "comp");
-      }
-      THEN("find species") {
-        REQUIRE(s.getSpecies().getIds("comp").size() == 3);
-        REQUIRE(s.getSpecies().getIds("comp")[0] == "A");
-        REQUIRE(s.getSpecies().getIds("comp")[1] == "B");
-        REQUIRE(s.getSpecies().getIds("comp")[2] == "C");
-      }
-      THEN("find species geometry") {
-        auto g = s.getSpeciesGeometry("A");
-        REQUIRE(g.modelUnits.getAmount().name == s.getUnits().getAmount().name);
-        REQUIRE(g.pixelWidth == dbl_approx(1.0));
-        REQUIRE(g.physicalOrigin.x() == dbl_approx(0.0));
-        REQUIRE(g.physicalOrigin.y() == dbl_approx(0.0));
-        REQUIRE(g.compartmentPoints.size() == 3149);
-        REQUIRE(g.compartmentImageSize == QSize(100, 100));
-      }
+  SECTION("SBML document") {
+    SECTION("imported") {
+      REQUIRE(s.getCompartments().getIds().size() == 1);
+      REQUIRE(s.getCompartments().getIds()[0] == "comp");
+      REQUIRE(s.getSpecies().getIds("comp").size() == 3);
+      REQUIRE(s.getSpecies().getIds("comp")[0] == "A");
+      REQUIRE(s.getSpecies().getIds("comp")[1] == "B");
+      REQUIRE(s.getSpecies().getIds("comp")[2] == "C");
+      auto g = s.getSpeciesGeometry("A");
+      REQUIRE(g.modelUnits.getAmount().name == s.getUnits().getAmount().name);
+      REQUIRE(g.pixelWidth == dbl_approx(1.0));
+      REQUIRE(g.physicalOrigin.x() == dbl_approx(0.0));
+      REQUIRE(g.physicalOrigin.y() == dbl_approx(0.0));
+      REQUIRE(g.compartmentPoints.size() == 3149);
+      REQUIRE(g.compartmentImageSize == QSize(100, 100));
     }
-    WHEN("change model name") {
+    SECTION("change model name") {
       REQUIRE(s.getName() == "");
       QString newName = "new model name";
       s.setName(newName);
       REQUIRE(s.getName() == newName);
     }
-    WHEN("add / remove compartment") {
+    SECTION("add / remove compartment") {
       // add compartment
       s.getCompartments().add("newComp !");
       REQUIRE(s.getCompartments().getIds().size() == 2);
@@ -545,7 +529,7 @@ SCENARIO("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
       s.getCompartments().remove("newComp_");
       REQUIRE(s.getSpecies().getIds("newComp_").isEmpty());
     }
-    WHEN("add / remove species") {
+    SECTION("add / remove species") {
       REQUIRE(s.getSpecies().getIds("comp").size() == 3);
       s.getSpecies().add("1 stup!d N@ame?", "comp");
       REQUIRE(s.getSpecies().getIds("comp").size() == 4);
@@ -596,180 +580,158 @@ SCENARIO("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
       s.getSpecies().remove("_1_stupd_Name");
       REQUIRE(s.getSpecies().getIds("comp").size() == 0);
     }
-    WHEN("image geometry imported, assigned to compartment") {
+    SECTION("image geometry imported, assigned to compartment") {
       QImage img(":/geometry/circle-100x100.png");
       QRgb col = QColor(144, 97, 193).rgba();
       REQUIRE(img.pixel(50, 50) == col);
-      img.save("tmp.png");
-      s.getGeometry().importGeometryFromImage(QImage("tmp.png"), false);
+      s.getGeometry().importGeometryFromImage(img, false);
       s.getCompartments().setColour("comp", col);
-      THEN("getCompartmentImage returns image") {
-        REQUIRE(s.getGeometry().getImage().size() == QSize(100, 100));
-        REQUIRE(s.getGeometry().getImage().pixel(50, 50) == col);
-      }
-      THEN("find membranes") {
-        REQUIRE(s.getMembranes().getMembranes().empty());
-      }
-      THEN("find reactions") {
-        REQUIRE(s.getReactions().getIds("comp").size() == 1);
-        REQUIRE(s.getReactions().getIds("comp")[0] == "r1");
-        REQUIRE(s.getReactions().getName("r1") == "r1");
-        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "C") ==
-                dbl_approx(1));
-        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "A") ==
-                dbl_approx(-1));
-        REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "B") ==
-                dbl_approx(-1));
-        REQUIRE(s.getReactions().getParameterIds("r1").size() == 1);
-        REQUIRE(s.getReactions().getParameterName("r1", "k1") == "k1");
-        REQUIRE(s.getReactions().getParameterValue("r1", "k1") ==
-                dbl_approx(0.1));
-        REQUIRE(s.getReactions().getRateExpression("r1") == "A * B * k1");
-        REQUIRE(s.getReactions().getScheme("r1") == "A + B -> C");
-      }
-      THEN("species have correct colours") {
-        REQUIRE(s.getSpecies().getColour("A") == 0xffe60003);
-        REQUIRE(s.getSpecies().getColour("B") == 0xff00b41b);
-        REQUIRE(s.getSpecies().getColour("C") == 0xfffbff00);
-      }
-      WHEN("species colours changed") {
-        auto newA = QColor(12, 12, 12).rgb();
-        auto newB = QColor(123, 321, 1).rgb();
-        auto newC = QColor(0, 22, 99).rgb();
-        s.getSpecies().setColour("A", newA);
-        s.getSpecies().setColour("B", newB);
-        s.getSpecies().setColour("C", newC);
-        REQUIRE(s.getSpecies().getColour("A") == newA);
-        REQUIRE(s.getSpecies().getColour("B") == newB);
-        REQUIRE(s.getSpecies().getColour("C") == newC);
-        s.getSpecies().setColour("A", newC);
-        REQUIRE(s.getSpecies().getColour("A") == newC);
-      }
-    }
-  }
-}
-
-SCENARIO("SBML: very-simple-model.xml",
-         "[core/model/model][core/model][core][model]") {
-  auto s{getExampleModel(Mod::VerySimpleModel)};
-  GIVEN("SBML document") {
-    THEN("find compartments") {
-      REQUIRE(s.getCompartments().getIds().size() == 3);
-      REQUIRE(s.getCompartments().getIds()[0] == "c1");
-      REQUIRE(s.getCompartments().getIds()[1] == "c2");
-      REQUIRE(s.getCompartments().getIds()[2] == "c3");
-    }
-    THEN("find species") {
-      REQUIRE(s.getSpecies().getIds("c1").size() == 2);
-      REQUIRE(s.getSpecies().getIds("c1")[0] == "A_c1");
-      REQUIRE(s.getSpecies().getIds("c1")[1] == "B_c1");
-      REQUIRE(s.getSpecies().getIds("c2").size() == 2);
-      REQUIRE(s.getSpecies().getIds("c2")[0] == "A_c2");
-      REQUIRE(s.getSpecies().getIds("c2")[1] == "B_c2");
-      REQUIRE(s.getSpecies().getIds("c3").size() == 2);
-      REQUIRE(s.getSpecies().getIds("c3")[0] == "A_c3");
-      REQUIRE(s.getSpecies().getIds("c3")[1] == "B_c3");
-      REQUIRE(s.getSpecies().getCompartment("A_c1") == "c1");
-      REQUIRE(s.getSpecies().getCompartment("A_c2") == "c2");
-      REQUIRE(s.getSpecies().getCompartment("A_c3") == "c3");
-      REQUIRE(s.getSpecies().getCompartment("B_c1") == "c1");
-      REQUIRE(s.getSpecies().getCompartment("B_c2") == "c2");
-      REQUIRE(s.getSpecies().getCompartment("B_c3") == "c3");
-    }
-    WHEN("species name changed") {
-      REQUIRE(s.getSpecies().getName("A_c1") == "A_out");
-      s.getSpecies().setName("A_c1", "long name with Spaces");
-      REQUIRE(s.getSpecies().getName("A_c1") == "long name with Spaces");
-      REQUIRE(s.getSpecies().getName("B_c2") == "B_cell");
-      s.getSpecies().setName("B_c2",
-                             "non-alphanumeric chars allowed: @#$%^&*(_");
-      REQUIRE(s.getSpecies().getName("B_c2") ==
-              "non-alphanumeric chars allowed: @#$%^&*(_");
-    }
-    WHEN("species compartment changed") {
-      REQUIRE(s.getSpecies().getCompartment("A_c1") == "c1");
-      REQUIRE(s.getSpecies().getIds("c1") == QStringList{"A_c1", "B_c1"});
-      REQUIRE(s.getSpecies().getIds("c2") == QStringList{"A_c2", "B_c2"});
-      REQUIRE(s.getSpecies().getIds("c3") == QStringList{"A_c3", "B_c3"});
-      s.getSpecies().setCompartment("A_c1", "c2");
-      REQUIRE(s.getSpecies().getCompartment("A_c1") == "c2");
-      REQUIRE(s.getSpecies().getIds("c1") == QStringList{"B_c1"});
-      REQUIRE(s.getSpecies().getIds("c2") ==
-              QStringList{"A_c1", "A_c2", "B_c2"});
-      REQUIRE(s.getSpecies().getIds("c3") == QStringList{"A_c3", "B_c3"});
-      s.getSpecies().setCompartment("A_c1", "c1");
-      REQUIRE(s.getSpecies().getCompartment("A_c1") == "c1");
-      REQUIRE(s.getSpecies().getIds("c1") == QStringList{"A_c1", "B_c1"});
-      REQUIRE(s.getSpecies().getIds("c2") == QStringList{"A_c2", "B_c2"});
-      REQUIRE(s.getSpecies().getIds("c3") == QStringList{"A_c3", "B_c3"});
-    }
-    WHEN("invalid get species compartment call returns empty string") {
-      REQUIRE(s.getSpecies().getCompartment("non_existent_species").isEmpty());
-    }
-    WHEN("invalid species compartment change call is a no-op") {
-      REQUIRE(s.getSpecies().getCompartment("A_c1") == "c1");
-      s.getSpecies().setCompartment("A_c1", "invalid_compartment");
-      REQUIRE(s.getSpecies().getCompartment("A_c1") == "c1");
-      s.getSpecies().setCompartment("invalid_species", "invalid_compartment");
-      REQUIRE(s.getSpecies().getCompartment("A_c1") == "c1");
-    }
-    WHEN("add/remove empty reaction") {
-      REQUIRE(s.getReactions().getIds("c2").size() == 0);
-      s.getReactions().add("re ac~!1", "c2");
-      REQUIRE(s.getReactions().getIds("c2").size() == 1);
-      REQUIRE(s.getReactions().getIds("c2")[0].toStdString() == "re_ac1");
-      REQUIRE(s.getReactions().getName("re_ac1") == "re ac~!1");
-      REQUIRE(s.getReactions().getLocation("re_ac1") == "c2");
-      REQUIRE(s.getReactions().getRateExpression("re_ac1") == "1");
-      s.getReactions().remove("re_ac1");
-      REQUIRE(s.getReactions().getIds("c2").size() == 0);
-    }
-    WHEN("set reaction") {
-      REQUIRE(s.getReactions().getIds("c2").size() == 0);
-      REQUIRE(s.getReactions().getIds("c3").size() == 1);
-      s.getReactions().add("re ac~!1", "c2");
-      REQUIRE(s.getReactions().getLocation("re_ac1") == "c2");
-      s.getReactions().setName("re_ac1", "new Name");
-      s.getReactions().setLocation("re_ac1", "c3");
-      s.getReactions().setSpeciesStoichiometry("re_ac1", "A_c3", 1);
-      s.getReactions().setSpeciesStoichiometry("re_ac1", "B_c3", -2.0123);
-      s.getReactions().addParameter("re_ac1", "const 1", 0.2);
-      s.getReactions().setRateExpression("re_ac1",
-                                         "0.2 + A_c3 * B_c3 * const_1");
-      REQUIRE(s.getReactions().getName("re_ac1") == "new Name");
-      REQUIRE(s.getReactions().getLocation("re_ac1") == "c3");
-      REQUIRE(s.getReactions().getRateExpression("re_ac1") ==
-              "0.2 + A_c3 * B_c3 * const_1");
-      REQUIRE(s.getReactions().getSpeciesStoichiometry("re_ac1", "A_c3") ==
+      REQUIRE(s.getGeometry().getImage().size() == QSize(100, 100));
+      REQUIRE(s.getGeometry().getImage().pixel(50, 50) == col);
+      REQUIRE(s.getMembranes().getMembranes().empty());
+      REQUIRE(s.getReactions().getIds("comp").size() == 1);
+      REQUIRE(s.getReactions().getIds("comp")[0] == "r1");
+      REQUIRE(s.getReactions().getName("r1") == "r1");
+      REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "C") ==
               dbl_approx(1));
-      REQUIRE(s.getReactions().getSpeciesStoichiometry("re_ac1", "B_c3") ==
-              dbl_approx(-2.0123));
-      REQUIRE(s.getReactions().getScheme("re_ac1") ==
-              "2.0123 B_nucl -> A_nucl");
-    }
-    WHEN("change reaction location") {
-      REQUIRE(s.getReactions().getIds("c2").size() == 0);
-      REQUIRE(s.getReactions().getIds("c3").size() == 1);
-      s.getReactions().setLocation("A_B_conversion", "c2");
-      REQUIRE(s.getReactions().getIds("c2").size() == 1);
-      REQUIRE(s.getReactions().getIds("c3").size() == 0);
-      REQUIRE(s.getReactions().getName("A_B_conversion") ==
-              "A to B conversion");
-      REQUIRE(s.getReactions().getLocation("A_B_conversion") == "c2");
-      s.getReactions().setLocation("A_B_conversion", "c1");
-      REQUIRE(s.getReactions().getIds("c1").size() == 1);
-      REQUIRE(s.getReactions().getIds("c2").size() == 0);
-      REQUIRE(s.getReactions().getName("A_B_conversion") ==
-              "A to B conversion");
-      REQUIRE(s.getReactions().getLocation("A_B_conversion") == "c1");
-      s.getReactions().remove("A_B_conversion");
-      REQUIRE(s.getReactions().getIds("c1").size() == 0);
+      REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "A") ==
+              dbl_approx(-1));
+      REQUIRE(s.getReactions().getSpeciesStoichiometry("r1", "B") ==
+              dbl_approx(-1));
+      REQUIRE(s.getReactions().getParameterIds("r1").size() == 1);
+      REQUIRE(s.getReactions().getParameterName("r1", "k1") == "k1");
+      REQUIRE(s.getReactions().getParameterValue("r1", "k1") ==
+              dbl_approx(0.1));
+      REQUIRE(s.getReactions().getRateExpression("r1") == "A * B * k1");
+      REQUIRE(s.getReactions().getScheme("r1") == "A + B -> C");
+      REQUIRE(s.getSpecies().getColour("A") == 0xffe60003);
+      REQUIRE(s.getSpecies().getColour("B") == 0xff00b41b);
+      REQUIRE(s.getSpecies().getColour("C") == 0xfffbff00);
+      // change species colours
+      auto newA = QColor(12, 12, 12).rgb();
+      auto newB = QColor(123, 321, 1).rgb();
+      auto newC = QColor(0, 22, 99).rgb();
+      s.getSpecies().setColour("A", newA);
+      s.getSpecies().setColour("B", newB);
+      s.getSpecies().setColour("C", newC);
+      REQUIRE(s.getSpecies().getColour("A") == newA);
+      REQUIRE(s.getSpecies().getColour("B") == newB);
+      REQUIRE(s.getSpecies().getColour("C") == newC);
+      s.getSpecies().setColour("A", newC);
+      REQUIRE(s.getSpecies().getColour("A") == newC);
     }
   }
 }
 
-SCENARIO("SBML: load model, refine mesh, save",
-         "[core/model/model][core/model][core][model][mesh]") {
+TEST_CASE("SBML: very-simple-model.xml",
+          "[core/model/model][core/model][core][model]") {
+  auto s{getExampleModel(Mod::VerySimpleModel)};
+  SECTION("SBML document") {
+    REQUIRE(s.getCompartments().getIds().size() == 3);
+    REQUIRE(s.getCompartments().getIds()[0] == "c1");
+    REQUIRE(s.getCompartments().getIds()[1] == "c2");
+    REQUIRE(s.getCompartments().getIds()[2] == "c3");
+    REQUIRE(s.getSpecies().getIds("c1").size() == 2);
+    REQUIRE(s.getSpecies().getIds("c1")[0] == "A_c1");
+    REQUIRE(s.getSpecies().getIds("c1")[1] == "B_c1");
+    REQUIRE(s.getSpecies().getIds("c2").size() == 2);
+    REQUIRE(s.getSpecies().getIds("c2")[0] == "A_c2");
+    REQUIRE(s.getSpecies().getIds("c2")[1] == "B_c2");
+    REQUIRE(s.getSpecies().getIds("c3").size() == 2);
+    REQUIRE(s.getSpecies().getIds("c3")[0] == "A_c3");
+    REQUIRE(s.getSpecies().getIds("c3")[1] == "B_c3");
+    REQUIRE(s.getSpecies().getCompartment("A_c1") == "c1");
+    REQUIRE(s.getSpecies().getCompartment("A_c2") == "c2");
+    REQUIRE(s.getSpecies().getCompartment("A_c3") == "c3");
+    REQUIRE(s.getSpecies().getCompartment("B_c1") == "c1");
+    REQUIRE(s.getSpecies().getCompartment("B_c2") == "c2");
+    REQUIRE(s.getSpecies().getCompartment("B_c3") == "c3");
+  }
+  SECTION("species name changed") {
+    REQUIRE(s.getSpecies().getName("A_c1") == "A_out");
+    s.getSpecies().setName("A_c1", "long name with Spaces");
+    REQUIRE(s.getSpecies().getName("A_c1") == "long name with Spaces");
+    REQUIRE(s.getSpecies().getName("B_c2") == "B_cell");
+    s.getSpecies().setName("B_c2", "non-alphanumeric chars allowed: @#$%^&*(_");
+    REQUIRE(s.getSpecies().getName("B_c2") ==
+            "non-alphanumeric chars allowed: @#$%^&*(_");
+  }
+  SECTION("species compartment changed") {
+    REQUIRE(s.getSpecies().getCompartment("A_c1") == "c1");
+    REQUIRE(s.getSpecies().getIds("c1") == QStringList{"A_c1", "B_c1"});
+    REQUIRE(s.getSpecies().getIds("c2") == QStringList{"A_c2", "B_c2"});
+    REQUIRE(s.getSpecies().getIds("c3") == QStringList{"A_c3", "B_c3"});
+    s.getSpecies().setCompartment("A_c1", "c2");
+    REQUIRE(s.getSpecies().getCompartment("A_c1") == "c2");
+    REQUIRE(s.getSpecies().getIds("c1") == QStringList{"B_c1"});
+    REQUIRE(s.getSpecies().getIds("c2") == QStringList{"A_c1", "A_c2", "B_c2"});
+    REQUIRE(s.getSpecies().getIds("c3") == QStringList{"A_c3", "B_c3"});
+    s.getSpecies().setCompartment("A_c1", "c1");
+    REQUIRE(s.getSpecies().getCompartment("A_c1") == "c1");
+    REQUIRE(s.getSpecies().getIds("c1") == QStringList{"A_c1", "B_c1"});
+    REQUIRE(s.getSpecies().getIds("c2") == QStringList{"A_c2", "B_c2"});
+    REQUIRE(s.getSpecies().getIds("c3") == QStringList{"A_c3", "B_c3"});
+  }
+  SECTION("invalid calls are no-ops") {
+    REQUIRE(s.getSpecies().getCompartment("non_existent_species").isEmpty());
+    REQUIRE(s.getSpecies().getCompartment("A_c1") == "c1");
+    s.getSpecies().setCompartment("A_c1", "invalid_compartment");
+    REQUIRE(s.getSpecies().getCompartment("A_c1") == "c1");
+    s.getSpecies().setCompartment("invalid_species", "invalid_compartment");
+    REQUIRE(s.getSpecies().getCompartment("A_c1") == "c1");
+  }
+  SECTION("add/remove empty reaction") {
+    REQUIRE(s.getReactions().getIds("c2").size() == 0);
+    s.getReactions().add("re ac~!1", "c2");
+    REQUIRE(s.getReactions().getIds("c2").size() == 1);
+    REQUIRE(s.getReactions().getIds("c2")[0].toStdString() == "re_ac1");
+    REQUIRE(s.getReactions().getName("re_ac1") == "re ac~!1");
+    REQUIRE(s.getReactions().getLocation("re_ac1") == "c2");
+    REQUIRE(s.getReactions().getRateExpression("re_ac1") == "1");
+    s.getReactions().remove("re_ac1");
+    REQUIRE(s.getReactions().getIds("c2").size() == 0);
+  }
+  SECTION("set reaction") {
+    REQUIRE(s.getReactions().getIds("c2").size() == 0);
+    REQUIRE(s.getReactions().getIds("c3").size() == 1);
+    s.getReactions().add("re ac~!1", "c2");
+    REQUIRE(s.getReactions().getLocation("re_ac1") == "c2");
+    s.getReactions().setName("re_ac1", "new Name");
+    s.getReactions().setLocation("re_ac1", "c3");
+    s.getReactions().setSpeciesStoichiometry("re_ac1", "A_c3", 1);
+    s.getReactions().setSpeciesStoichiometry("re_ac1", "B_c3", -2.0123);
+    s.getReactions().addParameter("re_ac1", "const 1", 0.2);
+    s.getReactions().setRateExpression("re_ac1", "0.2 + A_c3 * B_c3 * const_1");
+    REQUIRE(s.getReactions().getName("re_ac1") == "new Name");
+    REQUIRE(s.getReactions().getLocation("re_ac1") == "c3");
+    REQUIRE(s.getReactions().getRateExpression("re_ac1") ==
+            "0.2 + A_c3 * B_c3 * const_1");
+    REQUIRE(s.getReactions().getSpeciesStoichiometry("re_ac1", "A_c3") ==
+            dbl_approx(1));
+    REQUIRE(s.getReactions().getSpeciesStoichiometry("re_ac1", "B_c3") ==
+            dbl_approx(-2.0123));
+    REQUIRE(s.getReactions().getScheme("re_ac1") == "2.0123 B_nucl -> A_nucl");
+  }
+  SECTION("change reaction location") {
+    REQUIRE(s.getReactions().getIds("c2").size() == 0);
+    REQUIRE(s.getReactions().getIds("c3").size() == 1);
+    s.getReactions().setLocation("A_B_conversion", "c2");
+    REQUIRE(s.getReactions().getIds("c2").size() == 1);
+    REQUIRE(s.getReactions().getIds("c3").size() == 0);
+    REQUIRE(s.getReactions().getName("A_B_conversion") == "A to B conversion");
+    REQUIRE(s.getReactions().getLocation("A_B_conversion") == "c2");
+    s.getReactions().setLocation("A_B_conversion", "c1");
+    REQUIRE(s.getReactions().getIds("c1").size() == 1);
+    REQUIRE(s.getReactions().getIds("c2").size() == 0);
+    REQUIRE(s.getReactions().getName("A_B_conversion") == "A to B conversion");
+    REQUIRE(s.getReactions().getLocation("A_B_conversion") == "c1");
+    s.getReactions().remove("A_B_conversion");
+    REQUIRE(s.getReactions().getIds("c1").size() == 0);
+  }
+}
+
+TEST_CASE("SBML: load model, refine mesh, save",
+          "[core/model/model][core/model][core][model][mesh]") {
   auto s{getExampleModel(Mod::ABtoC)};
   REQUIRE(s.getGeometry().getMesh()->getNumBoundaries() == 1);
   REQUIRE(s.getGeometry().getMesh()->getBoundaryMaxPoints(0) == 16);
@@ -784,11 +746,10 @@ SCENARIO("SBML: load model, refine mesh, save",
   auto numTriangleIndices =
       s.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size();
   // save SBML doc
-  s.exportSBMLFile("tmp.xml");
-
+  s.exportSBMLFile("tmpmodelmeshrefine.xml");
   // import again
   model::Model s2;
-  s2.importSBMLFile("tmp.xml");
+  s2.importSBMLFile("tmpmodelmeshrefine.xml");
   REQUIRE(s.getGeometry().getMesh()->getNumBoundaries() == 1);
   REQUIRE(s2.getGeometry().getMesh()->getCompartmentMaxTriangleArea(0) ==
           maxArea);
@@ -796,8 +757,8 @@ SCENARIO("SBML: load model, refine mesh, save",
           numTriangleIndices);
 }
 
-SCENARIO("SBML: load single compartment model, change size of geometry",
-         "[core/model/model][core/model][core][model][mesh]") {
+TEST_CASE("SBML: load single compartment model, change size of geometry",
+          "[core/model/model][core/model][core][model][mesh]") {
   auto s{getExampleModel(Mod::ABtoC)};
   REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(1.0));
   REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(1.0));
@@ -838,8 +799,8 @@ SCENARIO("SBML: load single compartment model, change size of geometry",
   REQUIRE(interiorPoint.y() == dbl_approx(0.515));
 }
 
-SCENARIO("SBML: load multi-compartment model, change size of geometry",
-         "[core/model/model][core/model][core][model][mesh]") {
+TEST_CASE("SBML: load multi-compartment model, change size of geometry",
+          "[core/model/model][core/model][core][model][mesh]") {
   auto s{getExampleModel(Mod::VerySimpleModel)};
   // 100m x 100m x 1m geometry, volume units: litres
   REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(100.0));
@@ -916,14 +877,14 @@ SCENARIO("SBML: load multi-compartment model, change size of geometry",
   REQUIRE(interiorPoint.y() == dbl_approx(a * 83.5));
 }
 
-SCENARIO("SBML: load .xml model, simulate, save as .sme, load .sme",
-         "[core/model/model][core/model][core][model]") {
+TEST_CASE("SBML: load .xml model, simulate, save as .sme, load .sme",
+          "[core/model/model][core/model][core][model]") {
   auto s{getExampleModel(Mod::ABtoC)};
   simulate::Simulation sim(s);
   sim.doTimesteps(0.1, 2);
-  s.exportSMEFile("test.sme");
+  s.exportSMEFile("tmpmodelsmetest.sme");
   model::Model s2;
-  s2.importFile("test.sme");
+  s2.importFile("tmpmodelsmetest.sme");
   REQUIRE(s2.getCompartments().getIds() == s.getCompartments().getIds());
   REQUIRE(s.getXml() == s2.getXml());
   REQUIRE(s2.getSimulationData().timePoints.size() == 3);
@@ -931,15 +892,15 @@ SCENARIO("SBML: load .xml model, simulate, save as .sme, load .sme",
   REQUIRE(s2.getSimulationData().concPadding.size() == 3);
   REQUIRE(s2.getSimulationData().concPadding[2] == dbl_approx(0));
   model::Model s3;
-  s3.importFile("test.sme");
+  s3.importFile("tmpmodelsmetest.sme");
   // do something that causes ModelCompartments to clear the simulation results
   // https://github.com/spatial-model-editor/spatial-model-editor/issues/666
   s3.getGeometry().setPixelWidth(1.2, true);
   REQUIRE(s3.getSimulationData().timePoints.size() == 0);
 }
 
-SCENARIO("SBML: import multi-compartment SBML doc without spatial geometry",
-         "[core/model/model][core/model][core][model]") {
+TEST_CASE("SBML: import multi-compartment SBML doc without spatial geometry",
+          "[core/model/model][core/model][core][model]") {
   auto s{getTestModel("non-spatial-multi-compartment")};
   // compartments:
   // - cyt: {B, C, D}

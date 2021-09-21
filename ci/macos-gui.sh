@@ -29,7 +29,7 @@ make -j2 VERBOSE=1
 ccache --show-stats
 
 # run cpp tests
-./test/tests -as ~[gui] > tests.txt 2>&1 || (tail -n 10000 tests.txt && exit 1)
+time ./test/tests -as ~[gui] > tests.txt 2>&1 || (tail -n 10000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
 # run python tests

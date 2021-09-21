@@ -5,9 +5,9 @@
 
 using namespace sme;
 
-SCENARIO("InteriorPoint",
-         "[core/mesh/interior_point][core/mesh][core][interior_point]") {
-  GIVEN("Single pixel") {
+TEST_CASE("InteriorPoint",
+          "[core/mesh/interior_point][core/mesh][core][interior_point]") {
+  SECTION("Single pixel") {
     QImage img(1, 1, QImage::Format_RGB32);
     QRgb col{qRgb(1, 2, 3)};
     img.fill(col);

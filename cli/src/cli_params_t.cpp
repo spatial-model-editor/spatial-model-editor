@@ -3,7 +3,7 @@
 
 using namespace sme;
 
-SCENARIO("CLI Params", "[cli][params]") {
+TEST_CASE("CLI Params", "[cli][params]") {
   REQUIRE(cli::toString(simulate::SimulatorType::DUNE) == "DUNE");
   REQUIRE(cli::toString(simulate::SimulatorType::Pixel) == "Pixel");
 

@@ -6,8 +6,8 @@
 
 using namespace sme;
 
-SCENARIO("MeshUtils", "[core/mesh/mesh_utils][core/mesh][core][mesh_utils]") {
-  GIVEN("makeBinaryMask: single colour") {
+TEST_CASE("MeshUtils", "[core/mesh/mesh_utils][core/mesh][core][mesh_utils]") {
+  SECTION("makeBinaryMask: single colour") {
     QImage img(10, 20, QImage::Format_RGB32);
     QRgb bg{qRgb(1, 2, 3)};
     QRgb fg{qRgb(21, 22, 32)};

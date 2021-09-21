@@ -4,8 +4,8 @@
 
 using namespace sme::test;
 
-SCENARIO("DialogCoordinates",
-         "[gui/dialogs/coordinates][gui/dialogs][gui][coordinates]") {
+TEST_CASE("DialogCoordinates",
+          "[gui/dialogs/coordinates][gui/dialogs][gui][coordinates]") {
   DialogCoordinates dia("x", "y");
   REQUIRE(dia.getXName() == "x");
   REQUIRE(dia.getYName() == "y");

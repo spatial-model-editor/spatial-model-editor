@@ -6,9 +6,9 @@
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("SBML parameters",
-         "[core/model/parameters][core/model][core][model][parameters]") {
-  GIVEN("SBML: yeast-glycolysis.xml") {
+TEST_CASE("SBML parameters",
+          "[core/model/parameters][core/model][core][model][parameters]") {
+  SECTION("SBML: yeast-glycolysis.xml") {
     auto s{getTestModel("yeast-glycolysis")};
     auto &params{s.getParameters()};
     REQUIRE(s.getHasUnsavedChanges() == false);
@@ -29,7 +29,7 @@ SCENARIO("SBML parameters",
     REQUIRE(coords.x.name == "x");
     REQUIRE(coords.y.id == "y");
     REQUIRE(coords.y.name == "y");
-    WHEN("change spatial coords") {
+    SECTION("change spatial coords") {
       auto newC = coords;
       newC.x.name = "x name";
       newC.y.name = "yY";
@@ -48,7 +48,7 @@ SCENARIO("SBML parameters",
       param = doc->getModel()->getParameter("y");
       REQUIRE(param->getName() == "yY");
     }
-    WHEN("add double parameter") {
+    SECTION("add double parameter") {
       REQUIRE(s.getHasUnsavedChanges() == false);
       REQUIRE(params.getHasUnsavedChanges() == false);
       params.add("p1");
@@ -100,7 +100,7 @@ SCENARIO("SBML parameters",
       REQUIRE(params.getIds().size() == 0);
       REQUIRE(params.getNames().size() == 0);
     }
-    WHEN("add math expression parameter") {
+    SECTION("add math expression parameter") {
       REQUIRE(s.getHasUnsavedChanges() == false);
       REQUIRE(params.getHasUnsavedChanges() == false);
       params.add("p1");

@@ -4,17 +4,17 @@
 
 using namespace sme;
 
-SCENARIO("SBML membranes",
-         "[core/model/membranes][core/model][core][model][membranes]") {
-  GIVEN("ModelMembranes") {
-    GIVEN("No image") {
+TEST_CASE("SBML membranes",
+          "[core/model/membranes][core/model][core][model][membranes]") {
+  SECTION("ModelMembranes") {
+    SECTION("No image") {
       model::ModelMembranes m;
       REQUIRE(m.getIds().isEmpty());
       REQUIRE(m.getNames().isEmpty());
       REQUIRE(m.getMembranes().empty());
       REQUIRE(m.getIdColourPairs().empty());
     }
-    GIVEN("Image with 2 compartments, 1 membrane") {
+    SECTION("Image with 2 compartments, 1 membrane") {
       QImage img(3, 3, QImage::Format_RGB32);
       QRgb col0 = qRgb(0, 255, 0);
       QRgb col1 = qRgb(123, 123, 0);

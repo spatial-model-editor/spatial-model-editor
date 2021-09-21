@@ -3,9 +3,9 @@
 
 using namespace sme;
 
-SCENARIO("PixelCornerIterator", "[core/mesh/pixel_corner_iterator][core/"
-                                "mesh][core][pixel_corner_iterator]") {
-  GIVEN("single pixel outer contour") {
+TEST_CASE("PixelCornerIterator", "[core/mesh/pixel_corner_iterator][core/"
+                                 "mesh][core][pixel_corner_iterator]") {
+  SECTION("single pixel outer contour") {
     std::vector<cv::Point> contour{{1, 0}};
     auto pci{mesh::PixelCornerIterator(contour, true)};
     REQUIRE(pci.done() == false);
@@ -23,7 +23,7 @@ SCENARIO("PixelCornerIterator", "[core/mesh/pixel_corner_iterator][core/"
     REQUIRE(pci.done() == true);
     REQUIRE(pci.vertex() == cv::Point{1, 0});
   }
-  GIVEN("4-pixel inner contour") {
+  SECTION("4-pixel inner contour") {
     // this inner contour has the same edge vertices as a
     // single pixel outer contour at (1,0)
     // but starting at a different vertex and in reverse order

@@ -4,9 +4,9 @@
 
 using namespace sme;
 
-SCENARIO("SBML membranes utils",
-         "[core/model/membranes][core/model][core][model][membranes]") {
-  GIVEN("OrderedIntPairIndex") {
+TEST_CASE("SBML membranes utils",
+          "[core/model/membranes][core/model][core][model][membranes]") {
+  SECTION("OrderedIntPairIndex") {
     // max key value 1: 1 possible ordered pair: (0,1)
     model::OrderedIntPairIndex ix(1);
     REQUIRE(ix.size() == 0);
@@ -60,12 +60,12 @@ SCENARIO("SBML membranes utils",
     REQUIRE(ix.find(1, 3).value() == 2);
     REQUIRE(ix.find(2, 3).value() == 1);
   }
-  GIVEN("ImageMembranePixels") {
-    WHEN("No image") {
+  SECTION("ImageMembranePixels") {
+    SECTION("No image") {
       model::ImageMembranePixels imp;
       REQUIRE(imp.getImageSize() == QSize(0, 0));
     }
-    WHEN("Single colour") {
+    SECTION("Single colour") {
       // 5x4 image with 1 colour
       QImage img(3, 3, QImage::Format_RGB32);
       QRgb col0 = qRgb(0, 0, 0);
@@ -75,7 +75,7 @@ SCENARIO("SBML membranes utils",
       REQUIRE(imp.getImageSize() == img.size());
       REQUIRE(imp.getColourIndex(col0) == 0);
     }
-    WHEN("4 colours") {
+    SECTION("4 colours") {
       QImage img(3, 3, QImage::Format_RGB32);
       QRgb col0 = qRgb(0, 0, 0);
       QRgb col1 = qRgb(123, 0, 0);

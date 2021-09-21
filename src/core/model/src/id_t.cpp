@@ -1,21 +1,16 @@
 #include "catch_wrapper.hpp"
 #include "id.hpp"
+#include "model_test_utils.hpp"
 #include "sbml_utils.hpp"
 #include <QFile>
 #include <QStringList>
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 using namespace sme;
+using namespace sme::test;
 
-SCENARIO("Model id", "[core/model/id][core/model][core][model][id]") {
-  GIVEN("ABtoC model") {
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
+TEST_CASE("Model id", "[core/model/id][core/model][core][model][id]") {
+  SECTION("ABtoC model") {
+    auto doc{getExampleSbmlDoc(Mod::ABtoC)};
     auto *model = doc->getModel();
     auto *geom = model::getOrCreateGeometry(model);
 

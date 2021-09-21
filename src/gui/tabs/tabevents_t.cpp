@@ -12,9 +12,9 @@
 
 using namespace sme::test;
 
-SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
+TEST_CASE("TabEvents", "[gui/tabs/events][gui/tabs][gui][events]") {
   sme::model::Model model;
-  auto tab = TabEvents(model);
+  TabEvents tab{model};
   // get pointers to widgets within tab
   auto *listEvents{tab.findChild<QListWidget *>("listEvents")};
   REQUIRE(listEvents != nullptr);
@@ -39,7 +39,7 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
   REQUIRE(lblExpressionStatus != nullptr);
   REQUIRE(txtExpression != nullptr);
   ModalWidgetTimer mwt;
-  GIVEN("ABtoC model") {
+  SECTION("ABtoC model") {
     model = getExampleModel(Mod::ABtoC);
     const auto &events{model.getEvents()};
     REQUIRE(model.getSpecies().getIds("comp").size() == 3);
@@ -64,7 +64,7 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     REQUIRE(mwt.getResult() ==
             "To add events, the model must contain species or parameters.");
   }
-  GIVEN("very simple model") {
+  SECTION("very simple model") {
     model = getExampleModel(Mod::VerySimpleModel);
     const auto &events{model.getEvents()};
     tab.loadModelData();
@@ -171,7 +171,7 @@ SCENARIO("Events Tab", "[gui/tabs/events][gui/tabs][gui][events]") {
     REQUIRE(listEvents->count() == 0);
     REQUIRE(events.getIds().size() == 0);
   }
-  GIVEN("brusselator model") {
+  SECTION("brusselator model") {
     model = getExampleModel(Mod::Brusselator);
     const auto &events{model.getEvents()};
     tab.loadModelData();

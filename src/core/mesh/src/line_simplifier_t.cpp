@@ -4,9 +4,9 @@
 
 using namespace sme;
 
-SCENARIO("Simplify Lines",
-         "[core/mesh/line_simplifier][core/mesh][core][line_simplifier]") {
-  GIVEN("Invalid points") {
+TEST_CASE("Simplify Lines",
+          "[core/mesh/line_simplifier][core/mesh][core][line_simplifier]") {
+  SECTION("Invalid points") {
     std::vector<QPoint> points;
     // 0 points
     mesh::LineSimplifier ls(points, true);
@@ -41,7 +41,7 @@ SCENARIO("Simplify Lines",
     REQUIRE(ls.isValid() == true);
     REQUIRE(ls.isLoop() == false);
   }
-  GIVEN("Loop") {
+  SECTION("Loop") {
     // 9 point loop with 2 degenerate points
     std::vector<QPoint> points;
     points.emplace_back(0, 0);
@@ -68,7 +68,7 @@ SCENARIO("Simplify Lines",
 
     std::vector<QPoint> line;
     line.reserve(7);
-    WHEN("set n points") {
+    SECTION("set n points") {
       // requesting n>maxPoints() is equivalent to n=maxPoints()
       ls.getSimplifiedLine(line, 847);
       REQUIRE(line.size() == l7.size());
@@ -105,7 +105,7 @@ SCENARIO("Simplify Lines",
       REQUIRE(line.size() == 3);
       REQUIRE(line == l3);
     }
-    WHEN("set max allowed deviation") {
+    SECTION("set max allowed deviation") {
       // allow zero deviation -> maximum number of points
       ls.getSimplifiedLine(line, {0, 0});
       REQUIRE(line.size() == l7.size());
@@ -135,7 +135,7 @@ SCENARIO("Simplify Lines",
       REQUIRE(line.size() == 4);
     }
   }
-  GIVEN("Non-loop") {
+  SECTION("Non-loop") {
     // 8 point line with 1 degenerate point
     std::vector<QPoint> points;
     points.emplace_back(0, 0);
@@ -162,7 +162,7 @@ SCENARIO("Simplify Lines",
 
     std::vector<QPoint> line;
     line.reserve(7);
-    WHEN("set n points") {
+    SECTION("set n points") {
       // requesting n>maxPoints() is equivalent to n=maxPoints()
       ls.getSimplifiedLine(line, 847);
       REQUIRE(line.size() == l7.size());
@@ -204,7 +204,7 @@ SCENARIO("Simplify Lines",
       REQUIRE(line.size() == 2);
       REQUIRE(line == l2);
     }
-    WHEN("set max allowed deviation") {
+    SECTION("set max allowed deviation") {
       // allow error deviation -> max number of points
       ls.getSimplifiedLine(line, {0, 0});
       REQUIRE(line.size() == l7.size());

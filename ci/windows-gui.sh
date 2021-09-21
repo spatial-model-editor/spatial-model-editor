@@ -50,7 +50,7 @@ objdump.exe -x sme/sme.cp39-win_amd64.pyd > sme_obj.txt
 head -n 20 sme_obj.txt
 head -n 1000 sme_obj.txt | grep "DLL Name"
 
-./test/tests.exe -as ~[gui] > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
+time ./test/tests.exe -as ~[gui] > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
 ./benchmark/benchmark.exe 1

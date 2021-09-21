@@ -28,8 +28,8 @@ static std::vector<double> getAllElementCoordinates(Grid *grid, int subdomain) {
   return v;
 }
 
-SCENARIO("DUNE: grid",
-         "[core/simulate/dunegrid][core/simulate][core][dunegrid]") {
+TEST_CASE("DUNE: grid",
+          "[core/simulate/dunegrid][core/simulate][core][dunegrid]") {
   for (auto exampleModel :
        {Mod::ABtoC, Mod::VerySimpleModel, Mod::LiverSimplified}) {
     CAPTURE(exampleModel);
@@ -42,7 +42,8 @@ SCENARIO("DUNE: grid",
     auto [grid, hostGrid] = simulate::makeDuneGrid<HostGrid, MDGTraits>(*mesh);
 
     // generate dune grid with Dune::Copasi::MultiDomainGmshReader
-    if (QFile f("grid.msh"); f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    if (QFile f("tmpdunegridmesh.msh");
+        f.open(QIODevice::WriteOnly | QIODevice::Text)) {
       f.write(mesh->getGMSH().toUtf8());
       f.close();
     }
@@ -55,7 +56,7 @@ SCENARIO("DUNE: grid",
     }
     Dune::Logging::Logging::mute();
     auto [gmshGrid, gmshHostGrid] =
-        Dune::Copasi::MultiDomainGmshReader<Grid>::read("grid.msh");
+        Dune::Copasi::MultiDomainGmshReader<Grid>::read("tmpdunegridmesh.msh");
     std::locale::global(userLocale);
 
     // compare grids

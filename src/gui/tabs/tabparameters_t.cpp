@@ -11,7 +11,7 @@
 
 using namespace sme::test;
 
-SCENARIO("Parameters Tab", "[gui/tabs/parameters][gui/tabs][gui][parameters]") {
+TEST_CASE("TabParameters", "[gui/tabs/parameters][gui/tabs][gui][parameters]") {
   sme::model::Model model;
   TabParameters tab(model);
   auto *listParameters{tab.findChild<QListWidget *>("listParameters")};
@@ -28,7 +28,7 @@ SCENARIO("Parameters Tab", "[gui/tabs/parameters][gui/tabs][gui][parameters]") {
   REQUIRE(lblExpressionStatus != nullptr);
   REQUIRE(txtExpression != nullptr);
   ModalWidgetTimer mwt;
-  GIVEN("very simple model") {
+  SECTION("very simple model") {
     model = getExampleModel(Mod::VerySimpleModel);
     const auto &params{model.getParameters()};
     tab.loadModelData();

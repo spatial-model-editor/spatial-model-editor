@@ -2,14 +2,13 @@
 #include "duneconverter_impl.hpp"
 #include "model.hpp"
 #include "model_test_utils.hpp"
-#include <QFile>
 
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("DUNE: DuneConverter impl",
-         "[core/simulate/duneconverter][core/simulate][core][duneconverter]") {
-  GIVEN("Species Names") {
+TEST_CASE("DUNE: DuneConverter impl",
+          "[core/simulate/duneconverter][core/simulate][core][duneconverter]") {
+  SECTION("Species Names") {
     std::vector<std::string> names{"a",   "x",  "y",     "t",    "a_i",
                                    "cos", "x_", "out_o", "out_a"};
     auto duneNames = simulate::makeValidDuneSpeciesNames(names);
@@ -24,7 +23,7 @@ SCENARIO("DUNE: DuneConverter impl",
     REQUIRE(duneNames[7] == "out_o_");
     REQUIRE(duneNames[8] == "out_a");
   }
-  GIVEN("ABtoC model") {
+  SECTION("ABtoC model") {
     auto s{getExampleModel(Mod::ABtoC)};
     REQUIRE(simulate::compartmentContainsNonConstantSpecies(s, "comp") == true);
     auto nonConstantSpecies = simulate::getNonConstantSpecies(s, "comp");
@@ -43,7 +42,7 @@ SCENARIO("DUNE: DuneConverter impl",
     REQUIRE(simulate::getNonConstantSpecies(s, "comp").empty());
     REQUIRE(simulate::modelHasIndependentCompartments(s) == true);
   }
-  GIVEN("very-simple-model model") {
+  SECTION("very-simple-model model") {
     auto s{getExampleModel(Mod::VerySimpleModel)};
     REQUIRE(simulate::compartmentContainsNonConstantSpecies(s, "c1") == true);
     REQUIRE(simulate::compartmentContainsNonConstantSpecies(s, "c2") == true);

@@ -6,9 +6,9 @@
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("DuneSim", "[core/simulate/dunesim][core/"
-                    "simulate][core][simulate][dunesim][dune]") {
-  WHEN("Model has no species") {
+TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
+                     "simulate][core][simulate][dunesim][dune]") {
+  SECTION("Model has no species") {
     auto m{getExampleModel(Mod::ABtoC)};
     for (const auto &speciesId : m.getSpecies().getIds("comp")) {
       m.getSpecies().remove(speciesId);
@@ -17,7 +17,8 @@ SCENARIO("DuneSim", "[core/simulate/dunesim][core/"
     simulate::DuneSim duneSim(m, comps);
     REQUIRE(duneSim.errorMessage().empty());
   }
-  WHEN("Compartment in model has no species, but membrane contains reactions") {
+  SECTION(
+      "Compartment in model has no species, but membrane contains reactions") {
     // see
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/435
     auto m{getExampleModel(Mod::VerySimpleModel)};
@@ -80,7 +81,7 @@ SCENARIO("DuneSim", "[core/simulate/dunesim][core/"
       REQUIRE(diff / sum < 1e-10);
     }
   }
-  WHEN("Callback is provided and used to stop simulation") {
+  SECTION("Callback is provided and used to stop simulation") {
     auto m{getExampleModel(Mod::ABtoC)};
     std::vector<std::string> comps{"comp"};
     simulate::DuneSim duneSim(m, comps);

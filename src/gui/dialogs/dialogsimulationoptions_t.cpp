@@ -7,9 +7,8 @@ using namespace sme::test;
 
 #if defined(SPATIAL_MODEL_EDITOR_WITH_TBB) ||                                  \
     defined(SPATIAL_MODEL_EDITOR_WITH_OPENMP)
-SCENARIO(
-    "DialogSimulationOptions",
-    "[gui/dialogs/simulationoptions][gui/dialogs][gui][simulationoptions]") {
+TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
+                                     "dialogs][gui][simulationoptions]") {
   sme::simulate::Options options;
   options.dune.integrator = "explicit_euler";
   options.dune.dt = 0.123;
@@ -29,7 +28,7 @@ SCENARIO(
   options.pixel.optLevel = 3;
   DialogSimulationOptions dia(options);
   ModalWidgetTimer mwt;
-  WHEN("user does nothing: unchanged") {
+  SECTION("user does nothing: unchanged") {
     mwt.addUserAction();
     mwt.start();
     dia.exec();
@@ -52,7 +51,7 @@ SCENARIO(
     REQUIRE(opt.pixel.doCSE == true);
     REQUIRE(opt.pixel.optLevel == 3);
   }
-  WHEN("user changes Dune values") {
+  SECTION("user changes Dune values") {
     mwt.addUserAction({"Tab", "Tab", "Down", "Down", "9", "Tab", ".",
                        "4",   "Tab", "1",    "e",    "-", "1",   "2",
                        "Tab", "9",   "Tab",  "1",    ".", "2",   "Tab",
@@ -71,7 +70,7 @@ SCENARIO(
     REQUIRE(opt.dune.newtonRelErr == dbl_approx(1e-7));
     REQUIRE(opt.dune.newtonAbsErr == dbl_approx(0));
   }
-  WHEN("user resets to Dune defaults") {
+  SECTION("user resets to Dune defaults") {
     mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab",
                        "Tab", "Tab", "Tab", " "});
     mwt.start();
@@ -86,7 +85,7 @@ SCENARIO(
     REQUIRE(opt.dune.decrease == defaultOpts.decrease);
     REQUIRE(opt.dune.writeVTKfiles == defaultOpts.writeVTKfiles);
   }
-  WHEN("user changes Pixel values") {
+  SECTION("user changes Pixel values") {
     mwt.addUserAction({"Right", "Tab", "Up",  "Up",  "Tab",   "7",   "Tab",
                        "9",     "9",   "Tab", "0",   ".",     "5",   "Tab",
                        "Space", "Tab", "1",   "Tab", "Space", "Tab", "1"});
@@ -102,7 +101,7 @@ SCENARIO(
     REQUIRE(opt.pixel.doCSE == false);
     REQUIRE(opt.pixel.optLevel == 1);
   }
-  WHEN("user resets to pixel defaults") {
+  SECTION("user resets to pixel defaults") {
     mwt.addUserAction(
         {"Right", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", " "});
     mwt.start();

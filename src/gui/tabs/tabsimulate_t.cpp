@@ -10,7 +10,7 @@
 
 using namespace sme::test;
 
-SCENARIO("Simulate Tab", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
+TEST_CASE("TabSimulate", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   // load model & do initial simulation
   auto model{getExampleModel(Mod::ABtoC)};
   model.getSimulationSettings().times.clear();

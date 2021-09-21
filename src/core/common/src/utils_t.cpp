@@ -11,8 +11,8 @@
 
 using namespace sme;
 
-SCENARIO("Utils", "[core/common/utils][core/common][core][utils]") {
-  GIVEN("sum/average of vector of ints") {
+TEST_CASE("Utils", "[core/common/utils][core/common][core][utils]") {
+  SECTION("sum/average of vector of ints") {
     std::vector<int> v{1, 2, 3, 4, 5, 6, -1};
     REQUIRE(common::sum(v) == 20);
     REQUIRE(common::average(v) == 20 / 7);
@@ -22,7 +22,7 @@ SCENARIO("Utils", "[core/common/utils][core/common][core][utils]") {
     REQUIRE(min == -1);
     REQUIRE(max == 6);
   }
-  GIVEN("sum/average of vector of doubles") {
+  SECTION("sum/average of vector of doubles") {
     std::vector<double> v{1, 2, 3, 4, 5, 6, -1};
     REQUIRE(common::sum(v) == dbl_approx(20.0));
     REQUIRE(common::average(v) == dbl_approx(20.0 / 7.0));
@@ -32,7 +32,7 @@ SCENARIO("Utils", "[core/common/utils][core/common][core][utils]") {
     REQUIRE(min == dbl_approx(-1.0));
     REQUIRE(max == dbl_approx(6.0));
   }
-  GIVEN("index of element in vector of doubles") {
+  SECTION("index of element in vector of doubles") {
     std::vector<double> v{1, 2, 3, 4, 5, 6, -1};
     REQUIRE(common::element_index(v, 1) == 0);
     REQUIRE(common::element_index(v, 2) == 1);
@@ -43,7 +43,7 @@ SCENARIO("Utils", "[core/common/utils][core/common][core][utils]") {
     // element not found: specify return value for this
     REQUIRE(common::element_index(v, -3, 999) == 999);
   }
-  GIVEN("QStringList <-> std::vector<std::string>") {
+  SECTION("QStringList <-> std::vector<std::string>") {
     std::vector<std::string> s{"ab", "qwef", "Qvsdss!"};
     QStringList q;
     q << "ab";
@@ -61,8 +61,8 @@ SCENARIO("Utils", "[core/common/utils][core/common][core][utils]") {
     REQUIRE(common::toStdString(qEmpty) == sEmpty);
     REQUIRE(common::toQString(sEmpty) == qEmpty);
   }
-  GIVEN("vector <-> string") {
-    WHEN("type: int") {
+  SECTION("vector <-> string") {
+    SECTION("type: int") {
       std::vector<int> v{1, 4, 7, -12, 999, 22, 0, 0};
       std::string s("1 4 7 -12 999 22 0 0");
       auto v2s = common::vectorToString(v);
@@ -71,13 +71,13 @@ SCENARIO("Utils", "[core/common/utils][core/common][core][utils]") {
       REQUIRE(v2s == s);
       REQUIRE(common::stringToVector<int>(v2s) == v);
     }
-    WHEN("type: int, empty") {
+    SECTION("type: int, empty") {
       auto v2s = common::vectorToString(std::vector<int>{});
       auto s2v = common::stringToVector<int>("");
       REQUIRE(v2s == "");
       REQUIRE(s2v == std::vector<int>{});
     }
-    WHEN("type: QRgba") {
+    SECTION("type: QRgba") {
       std::vector<QRgb> v{0xffffffff, 0x00ffffff, 123, 8435122, 0xfffffffe, 0};
       std::string s("4294967295 16777215 123 8435122 4294967294 0");
       auto v2s = common::vectorToString(v);
@@ -86,14 +86,14 @@ SCENARIO("Utils", "[core/common/utils][core/common][core][utils]") {
       REQUIRE(v2s == s);
       REQUIRE(common::stringToVector<QRgb>(v2s) == v);
     }
-    WHEN("type: double") {
+    SECTION("type: double") {
       std::vector<double> v{1.12341,     4.99,   1e-22, 999.123,
                             1e-11 + 2.1, 2.1001, -33,   88e22};
       auto v2s = common::vectorToString(v);
       REQUIRE(common::stringToVector<double>(v2s) == v);
     }
   }
-  GIVEN("int <-> bool") {
+  SECTION("int <-> bool") {
     std::vector<bool> vb{true, true, false, true, false};
     std::vector<int> vi{1, 1, 0, 1, 0};
     auto vb2i = common::toInt(vb);
@@ -103,7 +103,7 @@ SCENARIO("Utils", "[core/common/utils][core/common][core][utils]") {
     REQUIRE(common::toBool(vb2i) == vb);
     REQUIRE(common::toInt(vi2b) == vi);
   }
-  GIVEN("QPointIndexer") {
+  SECTION("QPointIndexer") {
     QSize size(20, 16);
 
     std::vector<QPoint> v{QPoint(1, 3), QPoint(5, 6), QPoint(9, 9)};
@@ -137,7 +137,7 @@ SCENARIO("Utils", "[core/common/utils][core/common][core][utils]") {
     qpi.addPoints(v);
     REQUIRE(qpi.getIndex(v[0]).has_value() == true);
   }
-  GIVEN("QPointUniqueIndexer") {
+  SECTION("QPointUniqueIndexer") {
     QSize size(20, 16);
     std::vector<QPoint> v{QPoint(1, 3), QPoint(5, 6), QPoint(9, 9)};
     common::QPointUniqueIndexer qpi(size, v);

@@ -4,9 +4,9 @@
 
 using namespace sme;
 
-SCENARIO("ContourMap",
-         "[core/mesh/contour_map][core/mesh][core][contour_map]") {
-  GIVEN("two compartment contours, one edge contour") {
+TEST_CASE("ContourMap",
+          "[core/mesh/contour_map][core/mesh][core][contour_map]") {
+  SECTION("two compartment contours, one edge contour") {
     mesh::Contours contours;
     contours.domainEdges = {{{0, 0}, {1, 0}, {2, 0}}};
     contours.compartmentEdges = {{{0, 0}, {0, 1}, {0, 2}},

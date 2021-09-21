@@ -3,9 +3,9 @@
 
 using namespace sme;
 
-SCENARIO("SimulateOptions",
-         "[core/simulate][core/simulate_options][core][simulate_options]") {
-  WHEN("parseSimulationTimes: valid inputs") {
+TEST_CASE("SimulateOptions",
+          "[core/simulate][core/simulate_options][core][simulate_options]") {
+  SECTION("parseSimulationTimes: valid inputs") {
     auto t1{simulate::parseSimulationTimes("1", "0.1").value()};
     REQUIRE(t1.size() == 1);
     REQUIRE(t1[0].first == 10);
@@ -28,7 +28,7 @@ SCENARIO("SimulateOptions",
     REQUIRE(t3[1].first == 23);
     REQUIRE(t3[1].second == dbl_approx(0.01));
   }
-  WHEN("parseSimulationTimes: invalid inputs") {
+  SECTION("parseSimulationTimes: invalid inputs") {
     REQUIRE(simulate::parseSimulationTimes("1", "").has_value() == false);
     REQUIRE(simulate::parseSimulationTimes("", "3").has_value() == false);
     REQUIRE(simulate::parseSimulationTimes("1", "e").has_value() == false);

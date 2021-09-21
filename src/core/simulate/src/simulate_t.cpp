@@ -15,8 +15,8 @@
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("Simulate: very_simple_model, single pixel geometry",
-         "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
+TEST_CASE("Simulate: very_simple_model, single pixel geometry",
+          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
   // import non-spatial model
   auto s{getTestModel("very-simple-model-non-spatial")};
 
@@ -28,8 +28,9 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   img.setPixel(0, 0, col1);
   img.setPixel(0, 1, col2);
   img.setPixel(0, 2, col3);
-  img.save("tmp.bmp");
-  s.getGeometry().importGeometryFromImage(QImage("tmp.bmp"), false);
+  img.save("tmpsimsinglepixel.bmp");
+  s.getGeometry().importGeometryFromImage(QImage("tmpsimsinglepixel.bmp"),
+                                          false);
   s.getGeometry().setPixelWidth(1.0);
   s.getCompartments().setColour("c1", col1);
   s.getCompartments().setColour("c2", col2);
@@ -109,7 +110,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   REQUIRE(img.pixel(0, 2) == QColor(0, 0, 0).rgba());
 
   double volC1 = 10.0;
-  WHEN("single Euler step") {
+  SECTION("single Euler step") {
     auto steps = sim.doTimesteps(dt);
     REQUIRE(steps == 1);
     std::size_t it = 1;
@@ -130,7 +131,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
     REQUIRE(sim.getDcdt(2, 1)[0] == dbl_approx(0.0));
   }
 
-  WHEN("two Euler steps") {
+  SECTION("two Euler steps") {
     auto steps = sim.doTimesteps(dt);
     REQUIRE(steps == 1);
     double A_c2 = sim.getAvgMinMax(1, 1, 0).avg;
@@ -155,7 +156,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
     REQUIRE(sim.getDcdt(2, 1)[0] == dbl_approx(0.0));
   }
 
-  WHEN("three Euler steps") {
+  SECTION("three Euler steps") {
     sim.doTimesteps(dt);
     sim.doTimesteps(dt);
     double A_c2 = sim.getAvgMinMax(2, 1, 0).avg;
@@ -176,7 +177,7 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
     REQUIRE(sim.getAvgMinMax(it, 2, 1).avg == dbl_approx(0.3 * A_c3 * dt));
   }
 
-  WHEN("many Euler steps -> steady state solution") {
+  SECTION("many Euler steps -> steady state solution") {
     // when A & B saturate in all compartments, we reach a steady state
     // by conservation: flux of B of into c1 = flux of A from c1 = 0.1
     // all other net fluxes are zero
@@ -223,8 +224,8 @@ SCENARIO("Simulate: very_simple_model, single pixel geometry",
   }
 }
 
-SCENARIO("Simulate: very_simple_model, 2d geometry",
-         "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
+TEST_CASE("Simulate: very_simple_model, 2d geometry",
+          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
   auto s{getExampleModel(Mod::VerySimpleModel)};
   // check fields have correct compartments & sizes
   const auto *fa1 = s.getSpecies().getField("A_c1");
@@ -279,7 +280,7 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
   REQUIRE(sim.getAvgMinMax(0, 2, 0).avg == dbl_approx(0.0));
   REQUIRE(sim.getAvgMinMax(0, 2, 1).avg == dbl_approx(0.0));
 
-  WHEN("one Euler steps: diffusion of A into c2") {
+  SECTION("one Euler steps: diffusion of A into c2") {
     sim.doTimesteps(0.01);
     REQUIRE(sim.getAvgMinMax(1, 0, 0).avg == dbl_approx(0.0));
     REQUIRE(sim.getAvgMinMax(1, 1, 0).avg > 0);
@@ -288,7 +289,7 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
     REQUIRE(sim.getAvgMinMax(1, 2, 1).avg == dbl_approx(0.0));
   }
 
-  WHEN("many Euler steps: all species non-zero") {
+  SECTION("many Euler steps: all species non-zero") {
     sim.doTimesteps(1.00);
     REQUIRE(sim.getAvgMinMax(1, 0, 0).avg > 0);
     REQUIRE(sim.getAvgMinMax(1, 1, 0).avg > 0);
@@ -298,8 +299,8 @@ SCENARIO("Simulate: very_simple_model, 2d geometry",
   }
 }
 
-SCENARIO("Simulate: very_simple_model, failing Pixel sim",
-         "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
+TEST_CASE("Simulate: very_simple_model, failing Pixel sim",
+          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
   auto s{getExampleModel(Mod::VerySimpleModel)};
   // set A uptake rate very high
   s.getReactions().setParameterValue("A_uptake", "k1", 1e40);
@@ -313,13 +314,13 @@ SCENARIO("Simulate: very_simple_model, failing Pixel sim",
   REQUIRE(sim.errorImage().size() == QSize(100, 100));
 }
 
-SCENARIO("Simulate: very_simple_model, empty compartment, DUNE sim",
-         "[core/simulate/simulate][core/simulate][core][simulate][dune]") {
+TEST_CASE("Simulate: very_simple_model, empty compartment, DUNE sim",
+          "[core/simulate/simulate][core/simulate][core][simulate][dune]") {
   // check that DUNE simulates a model with an empty compartment without
   // crashing
   auto s{getExampleModel(Mod::VerySimpleModel)};
   s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
-  WHEN("Outer species removed") {
+  SECTION("Outer species removed") {
     s.getSpecies().remove("A_c1");
     s.getSpecies().remove("B_c1");
     REQUIRE(s.getSpecies().getIds("c1").empty());
@@ -328,7 +329,7 @@ SCENARIO("Simulate: very_simple_model, empty compartment, DUNE sim",
     sim.doTimesteps(0.1, 1);
     REQUIRE(sim.errorMessage().empty());
   }
-  WHEN("Inner and Outer species removed") {
+  SECTION("Inner and Outer species removed") {
     s.getSpecies().remove("A_c1");
     s.getSpecies().remove("B_c1");
     REQUIRE(s.getSpecies().getIds("c1").empty());
@@ -362,8 +363,8 @@ static void rescaleDiffusionConstants(model::Model &s, double factor) {
   }
 }
 
-SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
-         "[core/simulate/simulate][core/simulate][core][simulate]") {
+TEST_CASE("Simulate: very_simple_model, change pixel size, Pixel sim",
+          "[core/simulate/simulate][core/simulate][core][simulate]") {
   double epsilon{1e-8};
   double margin{1e-13};
   // import model
@@ -429,9 +430,9 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
     // save model, load it again and repeat test, to ensure pixel width is
     // propagated correctly to pixel simulator on model load:
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/468
-    s.exportSBMLFile("tmp.xml");
+    s.exportSBMLFile("tmpsimpixelsize.xml");
     model::Model sload;
-    sload.importSBMLFile("tmp.xml");
+    sload.importSBMLFile("tmpsimpixelsize.xml");
     sload.getSimulationSettings().options = options;
     sload.getSimulationSettings().simulatorType =
         simulate::SimulatorType::Pixel;
@@ -492,9 +493,9 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
       }
     }
     // save model, load it again and repeat test as above
-    s.exportSBMLFile("tmp2.xml");
+    s.exportSBMLFile("tmpsimpixelsize2.xml");
     model::Model sload;
-    sload.importSBMLFile("tmp2.xml");
+    sload.importSBMLFile("tmpsimpixelsize2.xml");
     sload.getSimulationSettings().options = options;
     sload.getSimulationSettings().simulatorType =
         simulate::SimulatorType::Pixel;
@@ -523,8 +524,8 @@ SCENARIO("Simulate: very_simple_model, change pixel size, Pixel sim",
   }
 }
 
-SCENARIO("Simulate: very_simple_model, membrane reaction units consistency",
-         "[core/simulate/simulate][core/simulate][core][simulate]") {
+TEST_CASE("Simulate: very_simple_model, membrane reaction units consistency",
+          "[core/simulate/simulate][core/simulate][core][simulate]") {
   for (auto simulatorType :
        {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
     double epsilon{1e-8};
@@ -724,9 +725,9 @@ static double analytic(const QPoint &p, double t, double D, double t0) {
   return (t0 / (t + t0)) * exp(-r2(p) / (4.0 * D * (t + t0)));
 }
 
-SCENARIO("Simulate: single-compartment-diffusion, circular geometry",
-         "[core/simulate/simulate][core/"
-         "simulate][core][simulate][dune][pixel][expensive]") {
+TEST_CASE("Simulate: single-compartment-diffusion, circular geometry",
+          "[core/simulate/simulate][core/"
+          "simulate][core][simulate][dune][pixel][expensive]") {
   // see docs/tests/diffusion.rst for analytic expressions used here
   // NB central point of initial distribution: (48,99-48) <-> ix=1577
 
@@ -838,10 +839,10 @@ SCENARIO("Simulate: single-compartment-diffusion, circular geometry",
   }
 }
 
-SCENARIO(
+TEST_CASE(
     "Simulate: small-single-compartment-diffusion, circular geometry",
     "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
-  WHEN("many steps: both species end up equally & uniformly distributed") {
+  SECTION("many steps: both species end up equally & uniformly distributed") {
     double epsilon = 1e-3;
     auto s{getTestModel("small-single-compartment-diffusion")};
     auto &options{s.getSimulationSettings().options};
@@ -884,8 +885,8 @@ SCENARIO(
   }
 }
 
-SCENARIO("Pixel simulator: timeout",
-         "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
+TEST_CASE("Pixel simulator: timeout",
+          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
   auto s{getExampleModel(Mod::Brusselator)};
   s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   // simulate 1 very long time step, with 200ms timeout
@@ -904,8 +905,8 @@ SCENARIO("Pixel simulator: timeout",
   REQUIRE(sim2.getNCompletedTimesteps() > 1);
 }
 
-SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
-         "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
+TEST_CASE("Pixel simulator: brusselator model, RK2, RK3, RK4",
+          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
   double eps{1e-20};
   double time{30.0};
   double maxAllowedRelErr{0.01};
@@ -945,9 +946,9 @@ SCENARIO("Pixel simulator: brusselator model, RK2, RK3, RK4",
   }
 }
 
-SCENARIO("DUNE: simulation",
-         "[core/simulate/simulate][core/simulate][core][simulate][dune]") {
-  GIVEN("ABtoC model") {
+TEST_CASE("DUNE: simulation",
+          "[core/simulate/simulate][core/simulate][core][simulate][dune]") {
+  SECTION("ABtoC model") {
     auto s{getExampleModel(Mod::ABtoC)};
 
     // set spatially constant initial conditions
@@ -975,7 +976,7 @@ SCENARIO("DUNE: simulation",
     REQUIRE(std::abs(duneSim.getAvgMinMax(timeIndex, 0, 2).avg - 0.005) < 1e-4);
     REQUIRE(imgConc.size() == QSize(100, 100));
   }
-  GIVEN("very-simple-model") {
+  SECTION("very-simple-model") {
     auto s{getExampleModel(Mod::VerySimpleModel)};
     auto &options{s.getSimulationSettings().options};
     options.dune.dt = 0.01;
@@ -986,9 +987,9 @@ SCENARIO("DUNE: simulation",
   }
 }
 
-SCENARIO("getConcImage",
-         "[core/simulate/simulate][core/simulate][core][simulate]") {
-  GIVEN("very-simple-model") {
+TEST_CASE("getConcImage",
+          "[core/simulate/simulate][core/simulate][core][simulate]") {
+  SECTION("very-simple-model") {
     auto s{getExampleModel(Mod::VerySimpleModel)};
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     simulate::Simulation sim(s);
@@ -1000,7 +1001,6 @@ SCENARIO("getConcImage",
     for (auto allTime : {true, false}) {
       for (auto allSpecies : {true, false}) {
         auto img0{sim.getConcImage(1, {{}, {}, {}}, allTime, allSpecies)};
-        img0.save("concImg0.png");
         REQUIRE(img0.pixel(48, 43) == qRgb(0, 0, 0));
         REQUIRE(img0.pixel(49, 43) == qRgb(0, 0, 0));
         REQUIRE(img0.pixel(33, 8) == qRgb(0, 0, 0));
@@ -1011,7 +1011,6 @@ SCENARIO("getConcImage",
     for (auto allSpecies : {true, false}) {
       // this timepoint
       auto img1a{sim.getConcImage(1, {{0}, {}, {}}, false, allSpecies)};
-      img1a.save("concImg1a.png");
       REQUIRE(img1a.pixel(48, 43) == qRgb(0, 0, 0));
       REQUIRE(img1a.pixel(49, 43) == qRgb(0, 0, 0));
       REQUIRE(img1a.pixel(33, 8) == qRgb(0, 0, 0));
@@ -1019,7 +1018,6 @@ SCENARIO("getConcImage",
 
       // all timepoints
       auto img1b{sim.getConcImage(1, {{0}, {}, {}}, true, allSpecies)};
-      img1b.save("concImg1b.png");
       REQUIRE(img1b.pixel(48, 43) == qRgb(0, 0, 0));
       REQUIRE(img1b.pixel(49, 43) == qRgb(0, 0, 0));
       REQUIRE(img1b.pixel(33, 8) == qRgb(0, 0, 0));
@@ -1028,14 +1026,12 @@ SCENARIO("getConcImage",
 
     // draw all species, normalise to max of each species, at this timepoint
     auto img1{sim.getConcImage(1, {}, false, false)};
-    img1.save("concImg1.png");
     REQUIRE(img1.pixel(48, 43) == qRgb(255, 255, 225));
     REQUIRE(img1.pixel(49, 43) == qRgb(245, 130, 48));
     REQUIRE(img1.pixel(33, 8) == qRgb(47, 142, 59));
 
     // draw all species, normalise to max of all species, at this timepoint
     auto img3{sim.getConcImage(1, {}, false, true)};
-    img3.save("concImg3.png");
     REQUIRE(img3.pixel(48, 43) == qRgb(0, 0, 0));
     REQUIRE(img3.pixel(49, 43) == qRgb(0, 0, 0));
     REQUIRE(img3.pixel(33, 8) == qRgb(47, 142, 59));
@@ -1043,7 +1039,6 @@ SCENARIO("getConcImage",
     // draw all species, normalise to max of each/all species, at all timepoints
     for (auto allSpecies : {true, false}) {
       auto img2{sim.getConcImage(1, {}, true, allSpecies)};
-      img2.save("concImg2.png");
       REQUIRE(img2.pixel(48, 43) == qRgb(0, 0, 0));
       REQUIRE(img2.pixel(49, 43) == qRgb(0, 0, 0));
       REQUIRE(img2.pixel(33, 8) == qRgb(31, 93, 39));
@@ -1051,9 +1046,9 @@ SCENARIO("getConcImage",
   }
 }
 
-SCENARIO("PyConc",
-         "[core/simulate/simulate][core/simulate][core][simulate][python]") {
-  GIVEN("ABtoC model") {
+TEST_CASE("PyConc",
+          "[core/simulate/simulate][core/simulate][core][simulate][python]") {
+  SECTION("ABtoC model") {
     auto s{getExampleModel(Mod::ABtoC)};
     for (auto simType :
          {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
@@ -1135,8 +1130,8 @@ static double rel_diff(const std::vector<double> &a,
   return d / n / norm;
 }
 
-SCENARIO("applyConcsToModel initial concentrations",
-         "[core/simulate/simulate][core/simulate][core][simulate]") {
+TEST_CASE("applyConcsToModel initial concentrations",
+          "[core/simulate/simulate][core/simulate][core][simulate]") {
   auto s{getExampleModel(Mod::VerySimpleModel)};
   // set various types of initial concentrations
   s.getSpecies().setInitialConcentration("B_c1", 0.66);
@@ -1168,8 +1163,8 @@ SCENARIO("applyConcsToModel initial concentrations",
   }
 }
 
-SCENARIO("applyConcsToModel after simulation",
-         "[core/simulate/simulate][core/simulate][core][simulate]") {
+TEST_CASE("applyConcsToModel after simulation",
+          "[core/simulate/simulate][core/simulate][core][simulate]") {
   auto s{getExampleModel(Mod::VerySimpleModel)};
   s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   // added this to try to work around
@@ -1179,14 +1174,14 @@ SCENARIO("applyConcsToModel after simulation",
   //  s.getSpecies().setAnalyticConcentration("B_c2", "cos(x/15.1)+1");
   //  s.getSpecies().setAnalyticConcentration("A_c3", "cos(x/7.2)+1");
   //  s.getSpecies().setAnalyticConcentration("B_c3", "cos(x/5.2)+1");
-  s.exportSBMLFile("tmp.xml");
+  s.exportSBMLFile("tmpsimapplyconcs.xml");
   auto &options{s.getSimulationSettings().options};
   options.dune.dt = 0.01;
   // apply initial concs from sim to model s, check they agree with copy of
   // model s2 (note any analytic initial concs in s are replaced with sampled
   // fields)
   model::Model s2;
-  s2.importSBMLFile("tmp.xml");
+  s2.importSBMLFile("tmpsimapplyconcs.xml");
   s2.getSimulationSettings().options = options;
   s2.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
 
@@ -1243,8 +1238,8 @@ SCENARIO("applyConcsToModel after simulation",
   }
 }
 
-SCENARIO("Reactions depend on x, y, t",
-         "[core/simulate/simulate][core/simulate][core][simulate]") {
+TEST_CASE("Reactions depend on x, y, t",
+          "[core/simulate/simulate][core/simulate][core][simulate]") {
   auto s{getTestModel("txy")};
   constexpr double eps{1e-20};
   constexpr double dt{1e-3};
@@ -1255,7 +1250,7 @@ SCENARIO("Reactions depend on x, y, t",
   options.pixel.maxErr = {std::numeric_limits<double>::max(),
                           std::numeric_limits<double>::max()};
   options.pixel.maxTimestep = dt;
-  GIVEN("reaction with t-dependence") {
+  SECTION("reaction with t-dependence") {
     // fairly tight tolerance, as solution is spatially uniform, so mesh vs
     // pixel geometry is not a factor when comparing Pixel and Dune here
     constexpr double maxAllowedAbsDiff{1e-10};
@@ -1287,7 +1282,7 @@ SCENARIO("Reactions depend on x, y, t",
     REQUIRE(maxAbsDiff < maxAllowedAbsDiff);
     REQUIRE(maxRelDiff < maxAllowedRelDiff);
   }
-  GIVEN("reaction with x,y-dependence") {
+  SECTION("reaction with x,y-dependence") {
     // looser tolerance: mesh distorts results
     constexpr double maxAllowedAbsDiff{0.002};
     constexpr double maxAllowedRelDiff{0.03};
@@ -1321,7 +1316,7 @@ SCENARIO("Reactions depend on x, y, t",
       REQUIRE(maxRelDiff < maxAllowedRelDiff);
     }
   }
-  GIVEN("reaction with t,x,y-dependence") {
+  SECTION("reaction with t,x,y-dependence") {
     // looser tolerance: mesh distorts results
     constexpr double maxAllowedAbsDiff{0.002};
     constexpr double maxAllowedRelDiff{0.03};
@@ -1355,9 +1350,9 @@ SCENARIO("Reactions depend on x, y, t",
     }
   }
 }
-SCENARIO("circle membrane reaction",
-         "[core/simulate/simulate][core/"
-         "simulate][core][simulate][dune][pixel][expensive]") {
+TEST_CASE("circle membrane reaction",
+          "[core/simulate/simulate][core/"
+          "simulate][core][simulate][dune][pixel][expensive]") {
   auto mDune{getTestModel("membrane-reaction-circle")};
   auto mPixel{getTestModel("membrane-reaction-circle")};
   mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
@@ -1393,7 +1388,7 @@ SCENARIO("circle membrane reaction",
   REQUIRE(avgRelDiff < allowedAvgRelDiff);
 }
 
-SCENARIO(
+TEST_CASE(
     "pair of pixels membrane reaction",
     "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
   auto mDune{getTestModel("membrane-reaction-pixels")};
@@ -1431,15 +1426,15 @@ SCENARIO(
   REQUIRE(avgRelDiff < allowedAvgRelDiff);
 }
 
-SCENARIO("SimulationData",
-         "[core/simulate/simulate][core/simulate][core][simulate]") {
+TEST_CASE("SimulationData",
+          "[core/simulate/simulate][core/simulate][core][simulate]") {
   auto s{getExampleModel(Mod::VerySimpleModel)};
   s.getSpecies().setAnalyticConcentration("B_c1", "cos(x/14.2)+1");
   s.getSpecies().setAnalyticConcentration("A_c2", "cos(x/12.2)+1");
   s.getSpecies().setAnalyticConcentration("B_c2", "cos(x/15.1)+1");
   s.getSpecies().setAnalyticConcentration("A_c3", "cos(x/7.2)+1");
   s.getSpecies().setAnalyticConcentration("B_c3", "cos(x/5.2)+1");
-  WHEN("Continue previous simulation from data") {
+  SECTION("Continue previous simulation from data") {
     auto &options{s.getSimulationSettings().options};
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     options.pixel.maxErr.rel = 1e-2;
@@ -1516,7 +1511,7 @@ SCENARIO("SimulationData",
     REQUIRE(rel_diff(dataB, data, 4, 4) < allowedDifference);
     REQUIRE(rel_diff(dataB, data, 5, 5) < allowedDifference);
   }
-  WHEN("Repeat with smaller integration errors: difference reduced") {
+  SECTION("Repeat with smaller integration errors: difference reduced") {
     auto &options{s.getSimulationSettings().options};
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     options.pixel.maxErr.rel = 1e-5;
@@ -1542,8 +1537,8 @@ SCENARIO("SimulationData",
   }
 }
 
-SCENARIO("doMultipleTimesteps vs doTimesteps",
-         "[core/simulate/simulate][core/simulate][core][simulate]") {
+TEST_CASE("doMultipleTimesteps vs doTimesteps",
+          "[core/simulate/simulate][core/simulate][core][simulate]") {
   auto m1{getExampleModel(Mod::VerySimpleModel)};
   m1.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   simulate::Simulation sim1(m1);
@@ -1561,8 +1556,8 @@ SCENARIO("doMultipleTimesteps vs doTimesteps",
   }
 }
 
-SCENARIO("Events: setting species concentrations",
-         "[core/simulate/simulate][core/simulate][core][simulate][events]") {
+TEST_CASE("Events: setting species concentrations",
+          "[core/simulate/simulate][core/simulate][core][simulate][events]") {
   auto m1{getExampleModel(Mod::VerySimpleModel)};
   for (auto simType :
        {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
@@ -1631,9 +1626,9 @@ SCENARIO("Events: setting species concentrations",
   }
 }
 
-SCENARIO("Events: continuing existing simulation",
-         "[core/simulate/simulate][core/"
-         "simulate][core][simulate][events][expensive]") {
+TEST_CASE("Events: continuing existing simulation",
+          "[core/simulate/simulate][core/"
+          "simulate][core][simulate][events][expensive]") {
   for (auto simType :
        {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
     CAPTURE(simType);
@@ -1653,13 +1648,13 @@ SCENARIO("Events: continuing existing simulation",
     simulate::Simulation s1(m1);
     s1.doTimesteps(20, 1);
     // t=20: no events so far
-    m1.exportSMEFile("t20.sme");
+    m1.exportSMEFile("tmpsim_t20.sme");
     s1.doTimesteps(20, 1);
     // t=20: k2 increased
-    m1.exportSMEFile("t40.sme");
+    m1.exportSMEFile("tmpsim_t40.sme");
     s1.doTimesteps(20, 1);
     // t=60: k2 decreased
-    m1.exportSMEFile("t60.sme");
+    m1.exportSMEFile("tmpsim_t60.sme");
     s1.doTimesteps(20, 1);
     // s1 has sim data at t = 0, 20, 40, 60, 80
     const auto &d1{s1.getSimulationData()};
@@ -1668,7 +1663,7 @@ SCENARIO("Events: continuing existing simulation",
 
     // load at t=20, simulate
     model::Model m20;
-    m20.importFile("t20.sme");
+    m20.importFile("tmpsim_t20.sme");
     const auto &d20{m20.getSimulationData()};
     REQUIRE(d20.size() == 2);
     REQUIRE(d20.timePoints.back() == dbl_approx(20.0));
@@ -1686,7 +1681,7 @@ SCENARIO("Events: continuing existing simulation",
 
     // load at t=40, simulate
     model::Model m40;
-    m40.importFile("t40.sme");
+    m40.importFile("tmpsim_t40.sme");
     const auto &d40{m40.getSimulationData()};
     REQUIRE(d40.size() == 3);
     REQUIRE(d40.timePoints.back() == dbl_approx(40.0));
@@ -1704,7 +1699,7 @@ SCENARIO("Events: continuing existing simulation",
 
     // load at t=60, simulate
     model::Model m60;
-    m60.importFile("t60.sme");
+    m60.importFile("tmpsim_t60.sme");
     const auto &d60{m60.getSimulationData()};
     REQUIRE(d60.size() == 4);
     REQUIRE(d60.timePoints.back() == dbl_approx(60.0));
@@ -1722,8 +1717,9 @@ SCENARIO("Events: continuing existing simulation",
   }
 }
 
-SCENARIO("simulate w/options & save, load, re-simulate",
-         "[core/simulate/simulate][core/simulate][core][simulate][expensive]") {
+TEST_CASE(
+    "simulate w/options & save, load, re-simulate",
+    "[core/simulate/simulate][core/simulate][core][simulate][expensive]") {
   for (auto simulatorType :
        {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
     CAPTURE(simulatorType);
@@ -1739,11 +1735,11 @@ SCENARIO("simulate w/options & save, load, re-simulate",
     sim1.doMultipleTimesteps({{2, 0.01}, {1, 0.02}});
     const auto &data1{m1.getSimulationData()};
     REQUIRE(data1.concentration.size() == 4);
-    m1.exportSMEFile("tmp.sme");
+    m1.exportSMEFile("tmpsimoptions.sme");
 
     // clear simulation data, then do simulation, should regenerate same data
     model::Model m2;
-    m2.importFile("tmp.sme");
+    m2.importFile("tmpsimoptions.sme");
     REQUIRE(m2.getSimulationSettings().simulatorType == simulatorType);
     REQUIRE(m2.getSimulationSettings().options.pixel.integrator ==
             simulate::PixelIntegratorType::RK435);
@@ -1771,8 +1767,8 @@ SCENARIO("simulate w/options & save, load, re-simulate",
   }
 }
 
-SCENARIO("stop, then continue pixel simulation",
-         "[core/simulate/simulate][core/simulate][core][simulate]") {
+TEST_CASE("stop, then continue pixel simulation",
+          "[core/simulate/simulate][core/simulate][core][simulate]") {
   // see
   // https://github.com/spatial-model-editor/spatial-model-editor/issues/544
   auto m{getExampleModel(Mod::VerySimpleModel)};
@@ -1794,8 +1790,8 @@ SCENARIO("stop, then continue pixel simulation",
   REQUIRE(m.getSimulationData().timePoints.size() == 4);
 }
 
-SCENARIO("pixel simulation with invalid reaction rate expression",
-         "[core/simulate/simulate][core/simulate][core][simulate]") {
+TEST_CASE("pixel simulation with invalid reaction rate expression",
+          "[core/simulate/simulate][core/simulate][core][simulate]") {
   auto m{getExampleModel(Mod::ABtoC)};
   m.getReactions().add("r2", "comp", "A * A / idontexist");
   m.getReactions().setSpeciesStoichiometry("r2", "A", 1.0);
@@ -1807,8 +1803,8 @@ SCENARIO("pixel simulation with invalid reaction rate expression",
           "Failed to compile expression");
 }
 
-SCENARIO("Fish model: simulation with piecewise function in reactions",
-         "[core/simulate/simulate][core/simulate][core][simulate]") {
+TEST_CASE("Fish model: simulation with piecewise function in reactions",
+          "[core/simulate/simulate][core/simulate][core][simulate]") {
   auto m{getTestModel("fish_300x300")};
   // pixel
   m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;

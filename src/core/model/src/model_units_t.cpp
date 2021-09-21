@@ -1,4 +1,5 @@
 #include "catch_wrapper.hpp"
+#include "model_test_utils.hpp"
 #include "model_units.hpp"
 #include <QFile>
 #include <sbml/SBMLTypes.h>
@@ -98,11 +99,8 @@ TEST_CASE("Units", "[core/model/model_units][core/model][core][model][units]") {
     }
   }
   SECTION("model with custom units") {
-    QFile f(":/test/models/weird-units.xml");
-    f.open(QIODevice::ReadOnly);
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
-    auto modelUnits = model::ModelUnits(doc.get()->getModel());
+    auto doc{test::getTestSbmlDoc("weird-units")};
+    auto modelUnits = model::ModelUnits(doc->getModel());
     modelUnits.setHasUnsavedChanges(false);
     REQUIRE(modelUnits.getHasUnsavedChanges() == false);
     REQUIRE(modelUnits.getTime().name == "megasecond");

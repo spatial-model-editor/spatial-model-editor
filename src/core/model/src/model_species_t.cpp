@@ -6,9 +6,9 @@
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("SBML species",
-         "[core/model/species][core/model][core][model][species]") {
-  GIVEN("Different initial concentration types") {
+TEST_CASE("SBML species",
+          "[core/model/species][core/model][core][model][species]") {
+  SECTION("Different initial concentration types") {
     auto m{getExampleModel(Mod::VerySimpleModel)};
     auto &s{m.getSpecies()};
     s.setHasUnsavedChanges(false);
@@ -27,7 +27,7 @@ SCENARIO("SBML species",
     REQUIRE(s.getInitialConcentration("A_c1") == dbl_approx(1.0));
     REQUIRE(s.getAnalyticConcentration("A_c1") == "exp(-2 * x * x)");
   }
-  GIVEN("Non-spatial species") {
+  SECTION("Non-spatial species") {
     auto m{getExampleModel(Mod::VerySimpleModel)};
     auto &s{m.getSpecies()};
     REQUIRE(s.containsNonSpatialReactiveSpecies() == false);
@@ -48,7 +48,7 @@ SCENARIO("SBML species",
     REQUIRE(s.getIsSpatial("B_c2") == false);
     REQUIRE(s.containsNonSpatialReactiveSpecies() == true);
   }
-  GIVEN("Remove species also removes dependents") {
+  SECTION("Remove species also removes dependents") {
     auto m{getExampleModel(Mod::VerySimpleModel)};
     m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     simulate::Simulation sim(m);

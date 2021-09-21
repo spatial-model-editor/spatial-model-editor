@@ -16,31 +16,31 @@ static void createBinaryFile(const QString &filename) {
   fOut.write(data);
 }
 
-SCENARIO("Serialization",
-         "[core/common/serialization][core/common][core][serialization]") {
-  GIVEN("Import nonexistent file") {
+TEST_CASE("Serialization",
+          "[core/common/serialization][core/common][core][serialization]") {
+  SECTION("Import nonexistent file") {
     REQUIRE(common::importSmeFile("idontexist.txt") == nullptr);
   }
-  GIVEN("Import invalid file") {
+  SECTION("Import invalid file") {
     std::ofstream fs("invalid.sme", std::ios::binary);
     double x{0.765};
     fs << x;
     fs.close();
     REQUIRE(common::importSmeFile("invalid.sme") == nullptr);
   }
-  GIVEN("Import v2 corrupted file (valid file with some randomly deleted "
-        "bytes)") {
+  SECTION("Import v2 corrupted file (valid file with some randomly deleted "
+          "bytes)") {
     createBinaryFile("brusselator-model-corrupted.sme");
     REQUIRE(common::importSmeFile("brusselator-model-corrupted.sme") ==
             nullptr);
   }
-  GIVEN(
+  SECTION(
       "Import v2 truncated file (valid file with the last few bytes deleted)") {
     createBinaryFile("brusselator-model-truncated.sme");
     REQUIRE(common::importSmeFile("brusselator-model-truncated.sme") ==
             nullptr);
   }
-  GIVEN("Valid v0 smefile (no SimulationSettings)") {
+  SECTION("Valid v0 smefile (no SimulationSettings)") {
     // v0 smefile was used in spatial-model-editor 1.0.9
     createBinaryFile("very-simple-model-v0.sme");
     auto contents{common::importSmeFile("very-simple-model-v0.sme")};
@@ -59,7 +59,7 @@ SCENARIO("Serialization",
     REQUIRE(contents->simulationData->concentration[2][0][1642] ==
             dbl_approx(2.3650364527146514603828109e-55));
   }
-  GIVEN("Valid v1 smefile (SimulationSettings not stored in model)") {
+  SECTION("Valid v1 smefile (SimulationSettings not stored in model)") {
     // v1 smefile was only used in "latest" preview versions
     // of spatial-model-editor between 1.0.9 and 1.1.0 releases
     sme::simulate::SimulationData data;
@@ -103,7 +103,7 @@ SCENARIO("Serialization",
     REQUIRE(options.pixel.maxErr.rel == dbl_approx(5e-5));
     REQUIRE(options.pixel.maxTimestep == dbl_approx(5.0));
   }
-  GIVEN("Valid v2 sme file") {
+  SECTION("Valid v2 sme file") {
     // v2 smefile was used in spatial-model-editor 1.1.0 - 1.1.4 inclusive
     // SimulationData was not wrapped in a unique_ptr
     sme::simulate::SimulationData data;
@@ -125,7 +125,7 @@ SCENARIO("Serialization",
     REQUIRE(contents->simulationData->concentration[3][0][1642] ==
             dbl_approx(1.06406832003626607985324881e-99));
   }
-  GIVEN("Valid current (v3) sme file") {
+  SECTION("Valid current (v3) sme file") {
     // sme versions >= 1.1.5
     QFile f(":/models/brusselator-model.xml");
     f.open(QIODevice::ReadOnly);
@@ -137,7 +137,7 @@ SCENARIO("Serialization",
     const auto &s{m2.getSimulationSettings()};
     REQUIRE(s.options.pixel.maxErr.rel == dbl_approx(0.005));
   }
-  GIVEN("settings xml roundtrip") {
+  SECTION("settings xml roundtrip") {
     sme::model::Settings s{};
     s.simulationSettings.times = {{1, 0.3}, {2, 0.1}};
     s.simulationSettings.options.pixel.maxErr.rel = 0.02;
@@ -149,7 +149,7 @@ SCENARIO("Serialization",
     REQUIRE(s2.simulationSettings.options.pixel.maxErr.rel ==
             dbl_approx(s.simulationSettings.options.pixel.maxErr.rel));
   }
-  GIVEN("check DE locale doesn't break settings xml roundtrip") {
+  SECTION("check DE locale doesn't break settings xml roundtrip") {
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/535
     std::locale userLocale{};
     try {

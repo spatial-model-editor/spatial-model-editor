@@ -2,8 +2,8 @@
 #include "plotwrapper.hpp"
 #include "utils.hpp"
 
-SCENARIO("PlotWrapper",
-         "[gui/widgets/plotwrapper][gui/widgets][gui][plotwrapper]") {
+TEST_CASE("PlotWrapper",
+          "[gui/widgets/plotwrapper][gui/widgets][gui][plotwrapper]") {
   QWidget parent;
   PlotWrapper p("title", &parent);
   REQUIRE(p.plot->graphCount() == 0);

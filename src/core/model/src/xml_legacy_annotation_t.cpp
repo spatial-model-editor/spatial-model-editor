@@ -2,22 +2,15 @@
 #include "model_test_utils.hpp"
 #include "xml_legacy_annotation.hpp"
 #include <QFile>
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("XML Legacy Annotations",
-         "[core/model/xml_annotation][core/"
-         "model][core][model][xml_annotation][xml][annotation]") {
-  QFile f(":test/models/ABtoC-v1.0.9.xml");
-  f.open(QIODevice::ReadOnly);
-  std::unique_ptr<libsbml::SBMLDocument> doc(
-      libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
-  auto *model = doc->getModel();
+TEST_CASE("XML Legacy Annotations",
+          "[core/model/xml_annotation][core/"
+          "model][core][model][xml_annotation][xml][annotation]") {
+  auto doc{getTestSbmlDoc("ABtoC-v1.0.9")};
+  auto *model{doc->getModel()};
   REQUIRE(model::hasLegacyAnnotations(model) == true);
   auto displayOptions{model::getDisplayOptionsAnnotation(model)};
   REQUIRE(displayOptions.has_value() == true);
