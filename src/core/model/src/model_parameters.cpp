@@ -268,7 +268,7 @@ QString ModelParameters::add(const QString &name) {
 
 void ModelParameters::remove(const QString &id) {
   hasUnsavedChanges = true;
-  std::string sId{id.toStdString()};
+  auto sId{id.toStdString()};
   SPDLOG_INFO("Removing parameter {}", sId);
   if (auto *asgn = sbmlModel->getAssignmentRuleByVariable(sId);
       asgn != nullptr) {

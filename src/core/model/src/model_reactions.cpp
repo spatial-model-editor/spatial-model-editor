@@ -349,8 +349,8 @@ QString ModelReactions::add(const QString &name, const QString &locationId,
 }
 
 void ModelReactions::remove(const QString &id) {
-  auto i = ids.indexOf(id);
-  std::string sId = id.toStdString();
+  auto i{ids.indexOf(id)};
+  auto sId{id.toStdString()};
   SPDLOG_INFO("Removing reaction {}", sId);
   std::unique_ptr<libsbml::Reaction> rmReac(sbmlModel->removeReaction(sId));
   if (rmReac == nullptr) {

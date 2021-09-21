@@ -223,7 +223,7 @@ void ModelFunctions::remove(const QString &id) {
   }
   hasUnsavedChanges = true;
   SPDLOG_INFO("  - function {} removed", rmfunc->getId());
-  auto i = ids.indexOf(id);
+  auto i{ids.indexOf(id)};
   ids.removeAt(i);
   names.removeAt(i);
 }

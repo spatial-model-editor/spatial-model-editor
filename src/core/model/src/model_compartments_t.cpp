@@ -302,8 +302,16 @@ SCENARIO("SBML compartments",
     REQUIRE(compartments.getIds().size() == 0);
     compartments.add("c");
     REQUIRE(compartments.getIds().size() == 1);
+    REQUIRE(compartments.getHasUnsavedChanges() == true);
+    compartments.setHasUnsavedChanges(false);
+    REQUIRE(compartments.getHasUnsavedChanges() == false);
+    // invalid remove call is a no-op
+    compartments.remove("idontexist");
+    REQUIRE(compartments.getIds().size() == 1);
+    REQUIRE(compartments.getHasUnsavedChanges() == false);
     compartments.remove("c");
     REQUIRE(compartments.getIds().size() == 0);
+    REQUIRE(compartments.getHasUnsavedChanges() == true);
   }
   GIVEN("Setting invalid compartment colour is a no-op") {
     auto model{getExampleModel(Mod::VerySimpleModel)};
@@ -355,5 +363,23 @@ SCENARIO("SBML compartments",
     REQUIRE(compartments.getColour("c1") == c3);
     REQUIRE(compartments.getColour("c2") == c2);
     REQUIRE(compartments.getColour("c3") == 0);
+  }
+  GIVEN("Very simple model: remove compartment using const ref to id") {
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/685
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    REQUIRE(m.getCompartments().getIds().size() == 3);
+    REQUIRE(m.getCompartments().getIds()[0] == "c1");
+    REQUIRE(m.getCompartments().getIds()[1] == "c2");
+    REQUIRE(m.getCompartments().getIds()[2] == "c3");
+    const auto &cId{m.getCompartments().getIds()[1]};
+    REQUIRE(cId == "c2");
+    // #685: arg here is a const ref to the compartment id in the vector of ids,
+    // so when it is removed from the vector, the const ref now points to the
+    // following compartment id, i.e in this case it changed its value to "c3"
+    // halfway through the remove() call
+    m.getCompartments().remove(cId);
+    REQUIRE(m.getCompartments().getIds().size() == 2);
+    REQUIRE(m.getCompartments().getIds()[0] == "c1");
+    REQUIRE(m.getCompartments().getIds()[1] == "c3");
   }
 }
