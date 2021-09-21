@@ -7,6 +7,7 @@
 - functions with zero arguments are now fully supported [#674](https://github.com/spatial-model-editor/spatial-model-editor/issues/674)
 - python interface: setting n_threads=1 for simulate takes precedence over n_threads value in model [#672](https://github.com/spatial-model-editor/spatial-model-editor/issues/672)
 - bug where membrane reactions could disappear when geometry was changed [#679](https://github.com/spatial-model-editor/spatial-model-editor/issues/679)
+- bug where removing a compartment could result in an invalid model or a crash [#685](https://github.com/spatial-model-editor/spatial-model-editor/issues/685)
 
 ## [1.2.0] - 2021-09-13
 ### Added

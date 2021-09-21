@@ -191,10 +191,13 @@ static void removeCompartmentFromSBML(libsbml::Model *model,
 }
 
 bool ModelCompartments::remove(const QString &id) {
-  SPDLOG_INFO("Removing compartment '{}'", id.toStdString());
+  // make a copy of id to use throughout this function, as it could be ref to
+  // the one in ids that we are about to remove! (see #685)
+  std::string compartmentId{id.toStdString()};
+  SPDLOG_INFO("Removing compartment '{}'", compartmentId);
   auto i = ids.indexOf(id);
   if (i < 0) {
-    SPDLOG_WARN("Compartment '{}' not found", id.toStdString());
+    SPDLOG_WARN("Compartment '{}' not found", compartmentId);
     return false;
   }
   hasUnsavedChanges = true;
@@ -205,8 +208,8 @@ bool ModelCompartments::remove(const QString &id) {
   colours.removeAt(i);
   using diffType = decltype(compartments)::difference_type;
   compartments.erase(compartments.begin() + static_cast<diffType>(i));
-  removeCompartmentFromSBML(sbmlModel, id.toStdString());
-  for (const auto &s : modelSpecies->getIds(id)) {
+  removeCompartmentFromSBML(sbmlModel, compartmentId);
+  for (const auto &s : modelSpecies->getIds(compartmentId.c_str())) {
     modelSpecies->remove(s);
   }
   modelMembranes->updateCompartments(compartments);

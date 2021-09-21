@@ -321,7 +321,7 @@ QString ModelSpecies::add(const QString &name, const QString &compartmentId) {
 }
 
 void ModelSpecies::remove(const QString &id) {
-  std::string sId = id.toStdString();
+  auto sId{id.toStdString()};
   SPDLOG_INFO("Removing species {}", sId);
   auto i = ids.indexOf(id);
   if (i < 0) {
@@ -341,11 +341,11 @@ void ModelSpecies::remove(const QString &id) {
   names.removeAt(i);
   sbmlAnnotation->speciesColours.erase(sId);
   compartmentIds.removeAt(i);
-  removeInitialAssignment(id);
+  removeInitialAssignment(sId.c_str());
   fields.erase(fields.begin() +
                static_cast<decltype(fields)::difference_type>(i));
-  modelReactions->removeAllInvolvingSpecies(id);
-  if (auto *param = getDiffusionConstantParameter(sbmlModel, id);
+  modelReactions->removeAllInvolvingSpecies(sId.c_str());
+  if (auto *param = getDiffusionConstantParameter(sbmlModel, sId.c_str());
       param != nullptr) {
     SPDLOG_INFO("Removing diffusion constant parameter '{}'", param->getId());
     param->removeFromParentAndDelete();
