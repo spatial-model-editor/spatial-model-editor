@@ -7,9 +7,9 @@
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("SBML compartments",
-         "[core/model/compartments][core/model][core][model][compartments]") {
-  GIVEN("Remove compartment also removes dependents") {
+TEST_CASE("SBML compartments",
+          "[core/model/compartments][core/model][core][model][compartments]") {
+  SECTION("Remove compartment also removes dependents") {
     auto model{getExampleModel(Mod::VerySimpleModel)};
     REQUIRE(model.getHasUnsavedChanges() == false);
     auto &c = model.getCompartments();
@@ -95,7 +95,7 @@ SCENARIO("SBML compartments",
     REQUIRE(r.getParameterName("B_transport", "k1") == "k1");
     REQUIRE(r.getParameterValue("B_transport", "k1") == dbl_approx(0.1));
 
-    WHEN("remove c1") {
+    SECTION("remove c1") {
       REQUIRE(c.getHasUnsavedChanges() == false);
       REQUIRE(m.getHasUnsavedChanges() == false);
       REQUIRE(s.getHasUnsavedChanges() == false);
@@ -167,7 +167,7 @@ SCENARIO("SBML compartments",
       REQUIRE(r.getParameterName("B_transport", "k1") == "k1");
       REQUIRE(r.getParameterValue("B_transport", "k1") == dbl_approx(0.1));
     }
-    WHEN("remove c2") {
+    SECTION("remove c2") {
       c.remove("c2");
       // compartments
       REQUIRE(c.getIds().size() == 2);
@@ -230,7 +230,7 @@ SCENARIO("SBML compartments",
       REQUIRE(r.getParameterName("B_transport", "k1") == "");
       REQUIRE(r.getParameterValue("B_transport", "k1") == dbl_approx(0.0));
     }
-    WHEN("remove c3") {
+    SECTION("remove c3") {
       c.remove("c3");
       // compartments
       REQUIRE(c.getIds().size() == 2);
@@ -294,7 +294,7 @@ SCENARIO("SBML compartments",
       REQUIRE(r.getParameterValue("B_transport", "k1") == dbl_approx(0.0));
     }
   }
-  GIVEN("New model: add compartment, remove it again") {
+  SECTION("New model: add compartment, remove it again") {
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/506
     model::Model m;
     m.createSBMLFile("no-geom");
@@ -313,7 +313,7 @@ SCENARIO("SBML compartments",
     REQUIRE(compartments.getIds().size() == 0);
     REQUIRE(compartments.getHasUnsavedChanges() == true);
   }
-  GIVEN("Setting invalid compartment colour is a no-op") {
+  SECTION("Setting invalid compartment colour is a no-op") {
     auto model{getExampleModel(Mod::VerySimpleModel)};
     auto &compartments{model.getCompartments()};
     REQUIRE(compartments.getIds().size() == 3);
@@ -364,7 +364,7 @@ SCENARIO("SBML compartments",
     REQUIRE(compartments.getColour("c2") == c2);
     REQUIRE(compartments.getColour("c3") == 0);
   }
-  GIVEN("Very simple model: remove compartment using const ref to id") {
+  SECTION("Very simple model: remove compartment using const ref to id") {
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/685
     auto m{getExampleModel(Mod::VerySimpleModel)};
     REQUIRE(m.getCompartments().getIds().size() == 3);

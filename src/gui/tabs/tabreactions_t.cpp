@@ -13,7 +13,7 @@
 
 using namespace sme::test;
 
-SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
+TEST_CASE("TabReactions", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
   sme::model::Model model;
   QLabelMouseTracker mouseTracker;
   TabReactions tab(model, &mouseTracker);
@@ -48,7 +48,7 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
   REQUIRE(txtReactionRate != nullptr);
   auto *lblReactionRateStatus{tab.findChild<QLabel *>("lblReactionRateStatus")};
   REQUIRE(lblReactionRateStatus != nullptr);
-  WHEN("very-simple-model loaded") {
+  SECTION("very-simple-model loaded") {
     model = getExampleModel(Mod::VerySimpleModel);
     tab.loadModelData();
     REQUIRE(listReactions->topLevelItemCount() == 5);
@@ -207,7 +207,7 @@ SCENARIO("Reactions Tab", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     REQUIRE(listReactions->topLevelItem(2)->childCount() == 0);
     REQUIRE(listReactions->currentItem()->text(0) == "A uptake from outside");
   }
-  WHEN("model with invalid reaction locations loaded") {
+  SECTION("model with invalid reaction locations loaded") {
     model = getTestModel("very-simple-model-invalid-reaction-location");
     tab.loadModelData();
     REQUIRE(listReactions->topLevelItemCount() == 6);

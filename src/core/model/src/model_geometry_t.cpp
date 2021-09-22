@@ -8,9 +8,9 @@
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("Model geometry",
-         "[core/model/geometry][core/model][core][model][geometry]") {
-  GIVEN("no model") {
+TEST_CASE("Model geometry",
+          "[core/model/geometry][core/model][core][model][geometry]") {
+  SECTION("no model") {
     model::ModelGeometry m;
     REQUIRE(m.getIsValid() == false);
     REQUIRE(m.getMesh() == nullptr);
@@ -22,7 +22,7 @@ SCENARIO("Model geometry",
     REQUIRE(m.getHasImage() == false);
     REQUIRE(m.getImage().isNull());
   }
-  GIVEN("ABtoC model") {
+  SECTION("ABtoC model") {
     auto doc{getExampleSbmlDoc(Mod::ABtoC)};
     model::Settings sbmlAnnotation;
     model::ModelCompartments mCompartments;
@@ -47,7 +47,7 @@ SCENARIO("Model geometry",
     m.setHasUnsavedChanges(false);
     REQUIRE(m.getHasUnsavedChanges() == false);
     REQUIRE(mGeometry.getHasUnsavedChanges() == false);
-    WHEN("import sampled field") {
+    SECTION("import sampled field") {
       mGeometry.importSampledFieldGeometry(doc->getModel());
       REQUIRE(m.getHasUnsavedChanges() == true);
       REQUIRE(mGeometry.getHasUnsavedChanges() == true);
@@ -70,7 +70,7 @@ SCENARIO("Model geometry",
       REQUIRE(m.getHasImage() == false);
       REQUIRE(m.getImage().isNull());
     }
-    WHEN("import geometry image with alpha channel") {
+    SECTION("import geometry image with alpha channel") {
       QImage img(":test/geometry/potato_alpha_channel.png");
       QRgb bgCol = img.pixel(0, 0); // transparent background
       REQUIRE(qAlpha(bgCol) == 0);
@@ -97,7 +97,7 @@ SCENARIO("Model geometry",
       REQUIRE(imgIndexed.pixelColor(176, 188).rgba() == innerCol);
     }
   }
-  GIVEN("very-simple-model") {
+  SECTION("very-simple-model") {
     auto m{getExampleModel(Mod::VerySimpleModel)};
     QRgb c0{qRgb(0, 2, 0)};
     QRgb c1{qRgb(144, 97, 193)};
@@ -107,7 +107,7 @@ SCENARIO("Model geometry",
     REQUIRE(cols1[0] == c0);
     REQUIRE(cols1[1] == c1);
     REQUIRE(cols1[2] == c2);
-    WHEN("import geometry & keep colour assignments") {
+    SECTION("import geometry & keep colour assignments") {
       QImage img(":/geometry/concave-cell-nucleus-100x100.png");
       REQUIRE(img.size() == QSize(100, 100));
       m.getGeometry().importGeometryFromImage(img, true);
@@ -117,7 +117,7 @@ SCENARIO("Model geometry",
       REQUIRE(cols2[1] == c1);
       REQUIRE(cols2[2] == c2);
     }
-    WHEN("import geometry & don't keep colour assignments") {
+    SECTION("import geometry & don't keep colour assignments") {
       QImage img(":/geometry/concave-cell-nucleus-100x100.png");
       REQUIRE(img.size() == QSize(100, 100));
       m.getGeometry().importGeometryFromImage(img, false);
@@ -127,7 +127,7 @@ SCENARIO("Model geometry",
       REQUIRE(cols2[1] == 0);
       REQUIRE(cols2[2] == 0);
     }
-    WHEN("import geometry & try to keep invalid colour assignments") {
+    SECTION("import geometry & try to keep invalid colour assignments") {
       QImage img(":/geometry/two-blobs-100x100.png");
       REQUIRE(img.size() == QSize(100, 100));
       m.getGeometry().importGeometryFromImage(img, true);

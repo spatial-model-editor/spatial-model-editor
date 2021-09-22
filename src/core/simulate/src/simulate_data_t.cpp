@@ -3,8 +3,8 @@
 
 using namespace sme;
 
-SCENARIO("SimulateData",
-         "[core/simulate/simulate][core/simulate_data][core][simulate_data]") {
+TEST_CASE("SimulateData",
+          "[core/simulate/simulate][core/simulate_data][core][simulate_data]") {
   simulate::SimulationData data;
   data.timePoints = {0.0, 1.0};
   data.concentration = {{{1.2, -0.881}, {1.0, -0.1}},
@@ -22,7 +22,7 @@ SCENARIO("SimulateData",
   REQUIRE(data.avgMinMax.size() == 2);
   REQUIRE(data.concentrationMax.size() == 2);
   REQUIRE(data.concPadding.size() == 2);
-  WHEN("clear()") {
+  SECTION("clear()") {
     data.clear();
     REQUIRE(data.timePoints.empty());
     REQUIRE(data.concentration.empty());
@@ -31,7 +31,7 @@ SCENARIO("SimulateData",
     REQUIRE(data.concPadding.empty());
     REQUIRE(data.xmlModel.empty());
   }
-  WHEN("pop_back()") {
+  SECTION("pop_back()") {
     data.pop_back();
     REQUIRE(data.timePoints.size() == 1);
     REQUIRE(data.timePoints.back() == dbl_approx(0.0));

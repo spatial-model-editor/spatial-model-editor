@@ -2,20 +2,15 @@
 #include "model.hpp"
 #include "model_reactions.hpp"
 #include "model_test_utils.hpp"
-#include <QFile>
 #include <QImage>
 #include <memory>
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("SBML reactions",
-         "[core/model/reactions][core/model][core][model][reactions]") {
-  GIVEN("ModelReactions") {
+TEST_CASE("SBML reactions",
+          "[core/model/reactions][core/model][core][model][reactions]") {
+  SECTION("ModelReactions") {
     auto m{getExampleModel(Mod::VerySimpleModel)};
     auto &r{m.getReactions()};
     r.setHasUnsavedChanges(false);
@@ -155,7 +150,7 @@ SCENARIO("SBML reactions",
     REQUIRE(r.getIds("c1_c2_membrane").empty());
     REQUIRE(r.getIds("c2_c3_membrane").empty());
   }
-  GIVEN("Model with spatial reactions whose location is not set") {
+  SECTION("Model with spatial reactions whose location is not set") {
     auto doc{getTestSbmlDoc("fish_300x300")};
     {
       const auto *reac0{doc->getModel()->getReaction("re0")};
@@ -185,7 +180,7 @@ SCENARIO("SBML reactions",
       REQUIRE(reac2->getCompartment() == "fish");
     }
   }
-  GIVEN("Model with spatial reaction whose name & location is not set") {
+  SECTION("Model with spatial reaction whose name & location is not set") {
     auto doc{getTestSbmlDoc("example2D")};
     const auto *reac{doc->getModel()->getReaction(0)};
     REQUIRE(reac->isSetCompartment() == false);
@@ -204,8 +199,8 @@ SCENARIO("SBML reactions",
     REQUIRE(reac2->isSetName() == true);
     REQUIRE(reac2->getName() == reac2->getId());
   }
-  GIVEN("membrane reactions: import new geometry image without losing "
-        "reactions") {
+  SECTION("membrane reactions: import new geometry image without losing "
+          "reactions") {
     auto m{getExampleModel(Mod::VerySimpleModel)};
     REQUIRE(m.getMembranes().getIds().size() == 2);
     REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[0]).size() == 2);

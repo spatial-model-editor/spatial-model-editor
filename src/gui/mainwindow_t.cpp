@@ -10,6 +10,8 @@
 
 using namespace sme::test;
 
+static const char *tags{"[gui/mainwindow][gui][mainwindow]"};
+
 static void openBuiltInModel(MainWindow &w, const QString &shortcutKey = "V") {
   auto *menuFile = w.findChild<QMenu *>("menuFile");
   auto *menuOpen_example_SBML_file{
@@ -19,244 +21,285 @@ static void openBuiltInModel(MainWindow &w, const QString &shortcutKey = "V") {
   sendKeyEvents(menuOpen_example_SBML_file, {shortcutKey});
 }
 
-TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
-  SECTION("non-existent file") {
-    ModalWidgetTimer mwt;
-    mwt.addUserAction({"Esc"});
+TEST_CASE("MainWindow: non-existent file", tags) {
+  ModalWidgetTimer mwt;
+  mwt.addUserAction({"Esc"});
+  mwt.start();
+  MainWindow w("dontexist.xml");
+  w.show();
+  REQUIRE(mwt.getResult() ==
+          "Failed to load file dontexist.xml\n\n[2] "
+          "[Operating system] line 1:1 File unreadable.\n\n");
+}
+
+TEST_CASE("MainWindow: shortcut keys", tags) {
+  MainWindow w;
+  w.show();
+  waitFor(&w);
+  ModalWidgetTimer mwt;
+  SECTION("F8") {
     mwt.start();
-    MainWindow w("dontexist.xml");
-    w.show();
-    REQUIRE(mwt.getResult() ==
-            "Failed to load file dontexist.xml\n\n[2] "
-            "[Operating system] line 1:1 File unreadable.\n\n");
+    sendKeyEvents(&w, {"F8"});
+    REQUIRE(mwt.getResult() == "About Spatial Model Editor");
   }
-  SECTION("shortcut keys") {
-    MainWindow w;
-    auto *menu_Tools{w.findChild<QMenu *>("menu_Tools")};
-    REQUIRE(menu_Tools != nullptr);
-    auto *menuSimulation_type{w.findChild<QMenu *>("menuSimulation_type")};
-    REQUIRE(menuSimulation_type != nullptr);
-    auto *actionSimTypeDUNE{w.findChild<QAction *>("actionSimTypeDUNE")};
-    REQUIRE(actionSimTypeDUNE != nullptr);
-    auto *actionSimTypePixel{w.findChild<QAction *>("actionSimTypePixel")};
-    REQUIRE(actionSimTypePixel != nullptr);
-    auto *menu_Advanced{w.findChild<QMenu *>("menu_Advanced")};
-    REQUIRE(menu_Advanced != nullptr);
-    auto *tabMain{w.findChild<QTabWidget *>("tabMain")};
-    REQUIRE(tabMain != nullptr);
-    w.show();
-    waitFor(&w);
-    ModalWidgetTimer mwt;
-    SECTION("F8") {
+  SECTION("F9") {
+    mwt.start();
+    sendKeyEvents(&w, {"F9"});
+    QString correctText = "<h3>About Qt</h3>";
+    CAPTURE(mwt.getResult());
+    REQUIRE(mwt.getResult().left(correctText.size()) == correctText);
+  }
+}
+
+TEST_CASE("MainWindow: new file shortcut keys", tags) {
+  MainWindow w;
+  w.show();
+  waitFor(&w);
+  ModalWidgetTimer mwt;
+  // ctrl+n to create new model, then escape to cancel
+  SECTION("cancel") {
+    QString oldTitle{w.windowTitle()};
+    mwt.addUserAction({"Escape"}, false);
+    mwt.start();
+    sendKeyEvents(&w, {"Ctrl+N"});
+    REQUIRE(mwt.getResult() == "Create new model");
+    REQUIRE(w.windowTitle() == oldTitle);
+  }
+  SECTION("new") {
+    // ctrl+n to create new model with name "new"
+    mwt.addUserAction({"n", "e", "w"});
+    mwt.start();
+    sendKeyEvents(&w, {"Ctrl+N"});
+    REQUIRE(mwt.getResult() == "Create new model");
+    REQUIRE(w.windowTitle().right(9) == "[new.sme]");
+  }
+}
+
+TEST_CASE("MainWindow: open/save shortcut keys", tags) {
+  MainWindow w;
+  w.show();
+  waitFor(&w);
+  ModalWidgetTimer mwt;
+  SECTION("user presses ctrl+s (with valid SBML model)") {
+    openBuiltInModel(w, "V");
+    SECTION("cancel") {
+      mwt.addUserAction(QStringList{"Escape"}, false);
       mwt.start();
-      sendKeyEvents(&w, {"F8"});
-      REQUIRE(mwt.getResult() == "About Spatial Model Editor");
+      sendKeyEvents(&w, {"Ctrl+S"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
     }
-    SECTION("F9") {
+    SECTION("save sme file") {
+      QFile::remove("tmpmainw1.sme");
+      mwt.addUserAction({"t", "m", "p", "m", "a", "i", "n", "w", "1"});
       mwt.start();
-      sendKeyEvents(&w, {"F9"});
-      QString correctText = "<h3>About Qt</h3>";
-      CAPTURE(mwt.getResult());
-      REQUIRE(mwt.getResult().left(correctText.size()) == correctText);
+      sendKeyEvents(&w, {"Ctrl+S"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
     }
-    SECTION("Ctrl+N") {
-      // ctrl+n to create new model, then escape to cancel
-      QString oldTitle{w.windowTitle()};
+  }
+  SECTION("user presses ctrl+e (with valid SBML model)") {
+    openBuiltInModel(w, "V");
+    SECTION("cancel") {
+      mwt.addUserAction({"Escape"}, false);
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+E"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
+    }
+    SECTION("save sbml xml file") {
+      QFile::remove("tmpmainw1.xml");
+      mwt.addUserAction({"t", "m", "p", "m", "a", "i", "n", "w", "1"});
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+E"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
+      QFile file("tmpmainw1.xml");
+      REQUIRE(file.open(QIODevice::ReadOnly | QIODevice::Text));
+      auto line = file.readLine().toStdString();
+      REQUIRE(line == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+    }
+  }
+  SECTION("user presses ctrl+d (SBML model but no geometry loaded)") {
+    SECTION("offer to import a geometry image") {
+      mwt.addUserAction({"Escape"});
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+D"});
+      // press no when asked to import image
+      REQUIRE(mwt.getResult() ==
+              "No compartment geometry image loaded - import one now?");
+    }
+  }
+  SECTION("user presses ctrl+d (with valid SBML model)") {
+    SECTION("cancel") {
+      openBuiltInModel(w, "A");
+      mwt.addUserAction({"Escape"});
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+D"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
+    }
+    SECTION("save dune ini file") {
+      openBuiltInModel(w, "A");
+      QFile::remove("tmpmainw1_comp.ini");
+      mwt.addUserAction({"t", "m", "p", "m", "a", "i", "n", "w", "1"});
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+D"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
+      QFile file("tmpmainw1_comp.ini");
+      REQUIRE(file.open(QIODevice::ReadOnly | QIODevice::Text));
+      auto line = file.readLine().toStdString();
+      REQUIRE(line == "[grid]\n");
+    }
+  }
+  SECTION("Ctrl+O") {
+    SECTION("cancel") {
+      // ctrl+o to open model, then escape to cancel
       mwt.addUserAction({"Esc"}, false);
       mwt.start();
-      sendKeyEvents(&w, {"Ctrl+N"});
-      REQUIRE(mwt.getResult() == "Create new model");
-      REQUIRE(w.windowTitle() == oldTitle);
-      // ctrl+n to create new model with name "new"
-      mwt.addUserAction({"n", "e", "w"});
+      sendKeyEvents(&w, {"Ctrl+O"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
+    }
+    SECTION("open sbml xml file") {
+      REQUIRE(w.windowTitle() == "Spatial Model Editor [untitled-model]");
+      mwt.addUserAction(
+          {"t", "m", "p", "m", "a", "i", "n", "w", "1", ".", "x", "m", "l"});
       mwt.start();
-      sendKeyEvents(&w, {"Ctrl+N"});
-      REQUIRE(mwt.getResult() == "Create new model");
-      REQUIRE(w.windowTitle().right(9) == "[new.sme]");
+      sendKeyEvents(&w, {"Ctrl+O"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
+      REQUIRE(w.windowTitle().right(14) == "tmpmainw1.xml]");
     }
-    SECTION("user presses ctrl+s (with valid SBML model)") {
-      openBuiltInModel(w, "V");
-      SECTION("cancel") {
-        mwt.addUserAction(QStringList{"Escape"}, false);
-        mwt.start();
-        sendKeyEvents(&w, {"Ctrl+S"});
-        REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
-      }
-      SECTION("save sme file") {
-        QFile::remove("wqz.sme");
-        mwt.addUserAction({"w", "q", "z"});
-        mwt.start();
-        sendKeyEvents(&w, {"Ctrl+S"});
-        REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
-      }
-    }
-    SECTION("user presses ctrl+e (with valid SBML model)") {
-      openBuiltInModel(w, "V");
-      SECTION("cancel") {
-        mwt.addUserAction(QStringList{"Escape"}, false);
-        mwt.start();
-        sendKeyEvents(&w, {"Ctrl+E"});
-        REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
-      }
-      SECTION("save sbml xml file") {
-        QFile::remove("wqz.xml");
-        mwt.addUserAction({"w", "q", "z"});
-        mwt.start();
-        sendKeyEvents(&w, {"Ctrl+E"});
-        REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
-        QFile file("wqz.xml");
-        REQUIRE(file.open(QIODevice::ReadOnly | QIODevice::Text));
-        auto line = file.readLine().toStdString();
-        REQUIRE(line == "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-      }
-    }
-    SECTION("user presses ctrl+d (SBML model but no geometry loaded)") {
-      SECTION("offer to import a geometry image") {
-        mwt.addUserAction({"Esc"});
-        mwt.start();
-        sendKeyEvents(&w, {"Ctrl+D"});
-        // press no when asked to import image
-        REQUIRE(mwt.getResult() ==
-                "No compartment geometry image loaded - import one now?");
-      }
-    }
-    SECTION("user presses ctrl+d (with valid SBML model)") {
-      SECTION("cancel") {
-        openBuiltInModel(w, "A");
-        mwt.addUserAction(QStringList{"Escape"});
-        mwt.start();
-        sendKeyEvents(&w, {"Ctrl+D"});
-        REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
-      }
-      SECTION("save dune ini file") {
-        openBuiltInModel(w, "A");
-        mwt.addUserAction({"w", "q", "z"});
-        mwt.start();
-        sendKeyEvents(&w, {"Ctrl+D"});
-        REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
-        QFile file("wqz_comp.ini");
-        REQUIRE(file.open(QIODevice::ReadOnly | QIODevice::Text));
-        auto line = file.readLine().toStdString();
-        REQUIRE(line == "[grid]\n");
-      }
-    }
-    SECTION("Ctrl+O") {
-      SECTION("cancel") {
-        // ctrl+o to open model, then escape to cancel
-        mwt.addUserAction({"Esc"}, false);
-        mwt.start();
-        sendKeyEvents(&w, {"Ctrl+O"});
-        REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
-      }
-      SECTION("open sbml xml file") {
-        REQUIRE(w.windowTitle() == "Spatial Model Editor [untitled-model]");
-        mwt.addUserAction({"w", "q", "z", ".", "x", "m", "l"});
-        mwt.start();
-        sendKeyEvents(&w, {"Ctrl+O"});
-        REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
-        REQUIRE(w.windowTitle().right(8) == "wqz.xml]");
-      }
-      SECTION("open sme file") {
-        REQUIRE(w.windowTitle() == "Spatial Model Editor [untitled-model]");
-        mwt.addUserAction({"w", "q", "z", ".", "s", "m", "e"});
-        mwt.start();
-        sendKeyEvents(&w, {"Ctrl+O"});
-        REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
-        REQUIRE(w.windowTitle().right(8) == "wqz.sme]");
-      }
-    }
-    SECTION("user presses ctrl+I to import image (default empty SBML model)") {
-      SECTION("offer to import SBML model") {
-        // escape on SBML file open dialog
-        mwt.addUserAction({"Esc"}, false);
-        mwt.start();
-        sendKeyEvents(&w, {"Ctrl+I"});
-        REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
-      }
-    }
-    SECTION("ctrl+tab (default SBML model loaded)") {
-      // remain on Geometry tab: all others disabled
-      REQUIRE(tabMain->currentIndex() == 0);
-      sendKeyEvents(tabMain, {"Ctrl+Tab"});
-      REQUIRE(tabMain->currentIndex() == 0);
-    }
-    SECTION("ctrl+shift+tab (default SBML model loaded)") {
-      // remain on Geometry tab: all others disabled"
-      REQUIRE(tabMain->currentIndex() == 0);
-      sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
-      REQUIRE(tabMain->currentIndex() == 0);
-    }
-    SECTION("ctrl+tab with valid model loaded") {
-      openBuiltInModel(w, "V");
-      REQUIRE(tabMain->currentIndex() == 0);
-      sendKeyEvents(tabMain, {"Ctrl+Tab"});
-      REQUIRE(tabMain->currentIndex() == 1);
-      sendKeyEvents(tabMain, {"Ctrl+Tab"});
-      REQUIRE(tabMain->currentIndex() == 2);
-      sendKeyEvents(tabMain, {"Ctrl+Tab"});
-      REQUIRE(tabMain->currentIndex() == 3);
-      sendKeyEvents(tabMain, {"Ctrl+Tab"});
-      REQUIRE(tabMain->currentIndex() == 4);
-      sendKeyEvents(tabMain, {"Ctrl+Tab"});
-      REQUIRE(tabMain->currentIndex() == 5);
-      sendKeyEvents(tabMain, {"Ctrl+Tab"});
-      REQUIRE(tabMain->currentIndex() == 6);
-      sendKeyEvents(tabMain, {"Ctrl+Tab"});
-      REQUIRE(tabMain->currentIndex() == 0);
-      sendKeyEvents(tabMain, {"Ctrl+Tab"});
-      REQUIRE(tabMain->currentIndex() == 1);
-      sendKeyEvents(tabMain, {"Ctrl+Tab"});
-      REQUIRE(tabMain->currentIndex() == 2);
-      sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
-      REQUIRE(tabMain->currentIndex() == 1);
-      sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
-      REQUIRE(tabMain->currentIndex() == 0);
-      sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
-      REQUIRE(tabMain->currentIndex() == 6);
-    }
-    SECTION("menu: Tools->Set model units (default SBML model)") {
-      SECTION("offer to import SBML model") {
-        // press esc to close dialog
-        mwt.addUserAction({"Esc"}, false);
-        mwt.start();
-        sendKeyEvents(&w, {"Alt+T"});
-        sendKeyEvents(menu_Tools, {"U"});
-        REQUIRE(mwt.getResult() == "Set Model Units");
-      }
-    }
-    SECTION("menu: Tools->Edit geometry image (default SBML model, no image)") {
-      SECTION("offer to import geometry image") {
-        mwt.addUserAction({"Esc"});
-        mwt.start();
-        sendKeyEvents(&w, {"Alt+T"});
-        sendKeyEvents(menu_Tools, {"E"});
-        // press no when asked to import image
-        REQUIRE(mwt.getResult() ==
-                "No compartment geometry image loaded - import one now?");
-      }
-    }
-    SECTION("menu: Tools->Set simulation type") {
-      REQUIRE(actionSimTypeDUNE->isChecked() == true);
-      REQUIRE(actionSimTypePixel->isChecked() == false);
-      sendKeyEvents(&w, {"Alt+T"});
-      sendKeyEvents(menu_Tools, {"S"});
-      sendKeyEvents(menuSimulation_type, {"P"});
-      REQUIRE(actionSimTypeDUNE->isChecked() == false);
-      REQUIRE(actionSimTypePixel->isChecked() == true);
-      sendKeyEvents(&w, {"Alt+T"});
-      sendKeyEvents(menu_Tools, {"S"});
-      sendKeyEvents(menuSimulation_type, {"D"});
-      REQUIRE(actionSimTypeDUNE->isChecked() == true);
-      REQUIRE(actionSimTypePixel->isChecked() == false);
-    }
-    SECTION("menu: Advanced->Simulation options... ") {
-      mwt.addUserAction({"Esc"});
+    SECTION("open sme file") {
+      REQUIRE(w.windowTitle() == "Spatial Model Editor [untitled-model]");
+      mwt.addUserAction(
+          {"t", "m", "p", "m", "a", "i", "n", "w", "1", ".", "s", "m", "e"});
       mwt.start();
-      sendKeyEvents(&w, {"Alt+A"});
-      sendKeyEvents(menu_Advanced, {"S"});
-      REQUIRE(mwt.getResult() == "Simulation Options");
+      sendKeyEvents(&w, {"Ctrl+O"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
+      REQUIRE(w.windowTitle().right(14) == "tmpmainw1.sme]");
     }
   }
+  SECTION("user presses ctrl+I to import image (default empty SBML model)") {
+    SECTION("offer to import SBML model") {
+      // escape on SBML file open dialog
+      mwt.addUserAction({"Esc"}, false);
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+I"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
+    }
+  }
+}
+
+TEST_CASE("MainWindow: tabs", tags) {
+  MainWindow w;
+  auto *tabMain{w.findChild<QTabWidget *>("tabMain")};
+  REQUIRE(tabMain != nullptr);
+  w.show();
+  waitFor(&w);
+  SECTION("ctrl+tab (default SBML model loaded)") {
+    // remain on Geometry tab: all others disabled
+    REQUIRE(tabMain->currentIndex() == 0);
+    sendKeyEvents(tabMain, {"Ctrl+Tab"});
+    REQUIRE(tabMain->currentIndex() == 0);
+  }
+  SECTION("ctrl+shift+tab (default SBML model loaded)") {
+    // remain on Geometry tab: all others disabled"
+    REQUIRE(tabMain->currentIndex() == 0);
+    sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
+    REQUIRE(tabMain->currentIndex() == 0);
+  }
+  SECTION("ctrl+tab with valid model loaded") {
+    openBuiltInModel(w, "V");
+    REQUIRE(tabMain->currentIndex() == 0);
+    sendKeyEvents(tabMain, {"Ctrl+Tab"});
+    REQUIRE(tabMain->currentIndex() == 1);
+    sendKeyEvents(tabMain, {"Ctrl+Tab"});
+    REQUIRE(tabMain->currentIndex() == 2);
+    sendKeyEvents(tabMain, {"Ctrl+Tab"});
+    REQUIRE(tabMain->currentIndex() == 3);
+    sendKeyEvents(tabMain, {"Ctrl+Tab"});
+    REQUIRE(tabMain->currentIndex() == 4);
+    sendKeyEvents(tabMain, {"Ctrl+Tab"});
+    REQUIRE(tabMain->currentIndex() == 5);
+    sendKeyEvents(tabMain, {"Ctrl+Tab"});
+    REQUIRE(tabMain->currentIndex() == 6);
+    sendKeyEvents(tabMain, {"Ctrl+Tab"});
+    REQUIRE(tabMain->currentIndex() == 0);
+    sendKeyEvents(tabMain, {"Ctrl+Tab"});
+    REQUIRE(tabMain->currentIndex() == 1);
+    sendKeyEvents(tabMain, {"Ctrl+Tab"});
+    REQUIRE(tabMain->currentIndex() == 2);
+    sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
+    REQUIRE(tabMain->currentIndex() == 1);
+    sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
+    REQUIRE(tabMain->currentIndex() == 0);
+    sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
+    REQUIRE(tabMain->currentIndex() == 6);
+  }
+}
+
+TEST_CASE("MainWindow: tools menu", tags) {
+  MainWindow w;
+  auto *menu_Tools{w.findChild<QMenu *>("menu_Tools")};
+  REQUIRE(menu_Tools != nullptr);
+  auto *menuSimulation_type{w.findChild<QMenu *>("menuSimulation_type")};
+  REQUIRE(menuSimulation_type != nullptr);
+  auto *actionSimTypeDUNE{w.findChild<QAction *>("actionSimTypeDUNE")};
+  REQUIRE(actionSimTypeDUNE != nullptr);
+  auto *actionSimTypePixel{w.findChild<QAction *>("actionSimTypePixel")};
+  REQUIRE(actionSimTypePixel != nullptr);
+  w.show();
+  waitFor(&w);
+  ModalWidgetTimer mwt;
+  SECTION("menu: Tools->Set model units (default SBML model)") {
+    SECTION("offer to import SBML model") {
+      // press esc to close dialog
+      mwt.addUserAction({"Esc"}, false);
+      mwt.start();
+      sendKeyEvents(&w, {"Alt+T"});
+      sendKeyEvents(menu_Tools, {"U"});
+      REQUIRE(mwt.getResult() == "Set Model Units");
+    }
+  }
+  SECTION("menu: Tools->Edit geometry image (default SBML model, no image)") {
+    SECTION("offer to import geometry image") {
+      mwt.addUserAction({"Esc"});
+      mwt.start();
+      sendKeyEvents(&w, {"Alt+T"});
+      sendKeyEvents(menu_Tools, {"E"});
+      // press no when asked to import image
+      REQUIRE(mwt.getResult() ==
+              "No compartment geometry image loaded - import one now?");
+    }
+  }
+  SECTION("menu: Tools->Set simulation type") {
+    REQUIRE(actionSimTypeDUNE->isChecked() == true);
+    REQUIRE(actionSimTypePixel->isChecked() == false);
+    sendKeyEvents(&w, {"Alt+T"});
+    sendKeyEvents(menu_Tools, {"S"});
+    sendKeyEvents(menuSimulation_type, {"P"});
+    REQUIRE(actionSimTypeDUNE->isChecked() == false);
+    REQUIRE(actionSimTypePixel->isChecked() == true);
+    sendKeyEvents(&w, {"Alt+T"});
+    sendKeyEvents(menu_Tools, {"S"});
+    sendKeyEvents(menuSimulation_type, {"D"});
+    REQUIRE(actionSimTypeDUNE->isChecked() == true);
+    REQUIRE(actionSimTypePixel->isChecked() == false);
+  }
+}
+
+TEST_CASE("MainWindow: advanced menu", tags) {
+  MainWindow w;
+  auto *menu_Advanced{w.findChild<QMenu *>("menu_Advanced")};
+  REQUIRE(menu_Advanced != nullptr);
+  w.show();
+  waitFor(&w);
+  ModalWidgetTimer mwt;
+  SECTION("menu: Advanced->Simulation options... ") {
+    mwt.addUserAction({"Esc"});
+    mwt.start();
+    sendKeyEvents(&w, {"Alt+A"});
+    sendKeyEvents(menu_Advanced, {"S"});
+    REQUIRE(mwt.getResult() == "Simulation Options");
+  }
+}
+
+TEST_CASE("MainWindow: geometry", tags) {
   SECTION("built-in SBML model, import built-in geometry image") {
     MainWindow w;
     w.show();
@@ -281,7 +324,8 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
     w.show();
     waitFor(&w);
     ModalWidgetTimer mwt;
-    mwt.addUserAction({"w", "q", "z", ".", "x", "m", "l"});
+    mwt.addUserAction(
+        {"t", "m", "p", "m", "a", "i", "n", "w", "1", ".", "x", "m", "l"});
     mwt.start();
     sendKeyEvents(&w, {"Ctrl+G"});
     REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
@@ -318,58 +362,62 @@ TEST_CASE("Mainwindow", "[gui/mainwindow][gui][mainwindow]") {
     sendMouseWheel(lblGeometry, +1);
     REQUIRE(spinGeometryZoom->value() == 2);
   }
-  SECTION("built-in SBML model, change units") {
-    MainWindow w;
-    w.show();
-    waitFor(&w);
-    openBuiltInModel(w);
-    auto *menu_Tools{w.findChild<QMenu *>("menu_Tools")};
-    // change units
-    ModalWidgetTimer mwt;
-    sendKeyEvents(&w, {"Alt+T"});
-    mwt.addUserAction({"Down", "Tab", "Down", "Tab", "Down", "Tab", "Down"});
-    mwt.start();
-    sendKeyEvents(menu_Tools, {"U"}, false);
-    // save SBML file
-    QFile::remove("units.xml");
-    mwt.addUserAction({"u", "n", "i", "t", "s", ".", "x", "m", "l"});
-    mwt.start();
-    sendKeyEvents(&w, {"Ctrl+E"});
-    // check units of SBML model
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromFile("units.xml"));
-    const auto *model = doc->getModel();
-    // millisecond
-    const auto *timeunit =
-        model->getUnitDefinition(model->getTimeUnits())->getUnit(0);
-    REQUIRE(timeunit->isSecond() == true);
-    REQUIRE(timeunit->getScale() == dbl_approx(-3));
-    // decimetre
-    const auto *lengthunit =
-        model->getUnitDefinition(model->getLengthUnits())->getUnit(0);
-    REQUIRE(lengthunit->isMetre() == true);
-    REQUIRE(lengthunit->getScale() == dbl_approx(-1));
-    // decilitre
-    const auto *volunit =
-        model->getUnitDefinition(model->getVolumeUnits())->getUnit(0);
-    REQUIRE(volunit->isLitre() == true);
-    REQUIRE(volunit->getScale() == dbl_approx(-1));
-    // millimole
-    const auto *amountunit =
-        model->getUnitDefinition(model->getSubstanceUnits())->getUnit(0);
-    REQUIRE(amountunit->isMole() == true);
-    REQUIRE(amountunit->getScale() == dbl_approx(-3));
-  }
 }
 
-TEST_CASE("Mainwindow non-spatial model import",
-          "[gui/mainwindow][gui][mainwindow][Q]") {
+TEST_CASE("MainWindow: units", tags) {
+  MainWindow w;
+  w.show();
+  waitFor(&w);
+  openBuiltInModel(w);
+  auto *menu_Tools{w.findChild<QMenu *>("menu_Tools")};
+  // change units
+  ModalWidgetTimer mwt;
+  sendKeyEvents(&w, {"Alt+T"});
+  mwt.addUserAction({"Down", "Tab", "Down", "Tab", "Down", "Tab", "Down"});
+  mwt.start();
+  sendKeyEvents(menu_Tools, {"U"}, false);
+  // save SBML file
+  QFile::remove("tmpmainwunits.xml");
+  mwt.addUserAction({"t", "m", "p", "m", "a", "i", "n", "w", "u", "n", "i", "t",
+                     "s", ".", "x", "m", "l"});
+  mwt.start();
+  sendKeyEvents(&w, {"Ctrl+E"});
+  REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
+  // check units of SBML model
+  std::unique_ptr<libsbml::SBMLDocument> doc(
+      libsbml::readSBMLFromFile("tmpmainwunits.xml"));
+  REQUIRE(doc != nullptr);
+  const auto *model = doc->getModel();
+  // millisecond
+  const auto *timeunit =
+      model->getUnitDefinition(model->getTimeUnits())->getUnit(0);
+  REQUIRE(timeunit->isSecond() == true);
+  REQUIRE(timeunit->getScale() == dbl_approx(-3));
+  // decimetre
+  const auto *lengthunit =
+      model->getUnitDefinition(model->getLengthUnits())->getUnit(0);
+  REQUIRE(lengthunit->isMetre() == true);
+  REQUIRE(lengthunit->getScale() == dbl_approx(-1));
+  // decilitre
+  const auto *volunit =
+      model->getUnitDefinition(model->getVolumeUnits())->getUnit(0);
+  REQUIRE(volunit->isLitre() == true);
+  REQUIRE(volunit->getScale() == dbl_approx(-1));
+  // millimole
+  const auto *amountunit =
+      model->getUnitDefinition(model->getSubstanceUnits())->getUnit(0);
+  REQUIRE(amountunit->isMole() == true);
+  REQUIRE(amountunit->getScale() == dbl_approx(-3));
+}
+
+TEST_CASE("MainWindow: non-spatial model import", tags) {
   ModalWidgetTimer mwt;
   auto doc{getTestSbmlDoc("non-spatial-multi-compartment")};
-  libsbml::writeSBMLToFile(doc.get(), "tmp.xml");
+  libsbml::writeSBMLToFile(doc.get(), "tmpmainw-nonspatial.xml");
   // open non-spatial model
-  MainWindow w("tmp.xml");
+  MainWindow w("tmpmainw-nonspatial.xml");
   w.show();
+  waitFor(&w);
   auto *statusBarPermanentMessage{w.statusBar()->findChild<QLabel *>()};
   REQUIRE(statusBarPermanentMessage != nullptr);
   REQUIRE(statusBarPermanentMessage->text().contains(

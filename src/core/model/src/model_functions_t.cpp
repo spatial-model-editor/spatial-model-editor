@@ -6,9 +6,9 @@
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("SBML functions",
-         "[core/model/functions][core/model][core][model][functions]") {
-  GIVEN("SBML: yeast-glycolysis") {
+TEST_CASE("SBML functions",
+          "[core/model/functions][core/model][core][model][functions]") {
+  SECTION("SBML: yeast-glycolysis") {
     auto s{getTestModel("yeast-glycolysis")};
     REQUIRE(s.getHasUnsavedChanges() == false);
     REQUIRE(s.getCompartments().getIds().size() == 1);
@@ -23,22 +23,22 @@ SCENARIO("SBML functions",
     REQUIRE(funcs.getExpression("HK_kinetics") ==
             "Vmax * (A * B / (Kglc * Katp) - P * Q / (Kglc * Katp * Keq)) "
             "/ ((1 + A / Kglc + P / Kg6p) * (1 + B / Katp + Q / Kadp))");
-    WHEN("inline fn: Glycogen_synthesis_kinetics") {
+    SECTION("inline fn: Glycogen_synthesis_kinetics") {
       std::string expr = "Glycogen_synthesis_kinetics(abc)";
       std::string inlined = "(abc)";
       REQUIRE(s.inlineExpr(expr) == inlined);
     }
-    WHEN("inline fn: ATPase_0") {
+    SECTION("inline fn: ATPase_0") {
       std::string expr = "ATPase_0( a,b)";
       std::string inlined = "(b * a)";
       REQUIRE(s.inlineExpr(expr) == inlined);
     }
-    WHEN("inline fn: PDC_kinetics") {
+    SECTION("inline fn: PDC_kinetics") {
       std::string expr = "PDC_kinetics(a,V,k,n)";
       std::string inlined = "(V * (a / k)^n / (1 + (a / k)^n))";
       REQUIRE(s.inlineExpr(expr) == inlined);
     }
-    WHEN("edit function: PDC_kinetics") {
+    SECTION("edit function: PDC_kinetics") {
       REQUIRE(funcs.getArguments("PDC_kinetics").size() == 4);
       REQUIRE(funcs.getArguments("PDC_kinetics")[0] == "A");
       REQUIRE(funcs.getArguments("PDC_kinetics")[1] == "Vmax");
@@ -67,7 +67,7 @@ SCENARIO("SBML functions",
       funcs.remove("PDC_kinetics");
       REQUIRE(funcs.getIds().size() == 16);
     }
-    WHEN("add function") {
+    SECTION("add function") {
       REQUIRE(s.getHasUnsavedChanges() == false);
       REQUIRE(funcs.getHasUnsavedChanges() == false);
       funcs.add("func N~!me");

@@ -3,10 +3,10 @@
 #include <QLabel>
 
 TEST_CASE("DialogAbout", "[gui/dialogs/about][gui/dialogs][gui][about]") {
-  auto dia = DialogAbout();
-  auto *lblAbout = dia.findChild<QLabel *>("lblAbout");
-  auto *lblLibraries = dia.findChild<QLabel *>("lblLibraries");
+  DialogAbout dia{};
+  auto *lblAbout{dia.findChild<QLabel *>("lblAbout")};
   REQUIRE(lblAbout != nullptr);
+  auto *lblLibraries{dia.findChild<QLabel *>("lblLibraries")};
   REQUIRE(lblLibraries != nullptr);
   REQUIRE(lblLibraries->text().contains("dune-copasi"));
   REQUIRE(lblLibraries->text().contains("libSBML"));

@@ -10,9 +10,9 @@
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("Analytic geometry", "[core/model/geometry_analytic][core/"
-                              "model][core][model][geometry_analytic]") {
-  GIVEN("SBML model with 2d analytic geometry") {
+TEST_CASE("Analytic geometry", "[core/model/geometry_analytic][core/"
+                               "model][core][model][geometry_analytic]") {
+  SECTION("SBML model with 2d analytic geometry") {
     auto s{getTestModel("analytic_2d")};
     REQUIRE(s.getGeometry().getIsValid() == true);
     REQUIRE(s.getGeometry().getHasImage() == true);
@@ -23,7 +23,7 @@ SCENARIO("Analytic geometry", "[core/model/geometry_analytic][core/"
     REQUIRE(img.pixel(80, 80) == common::indexedColours()[1].rgb());
     REQUIRE(img.pixel(30, 20) == common::indexedColours()[2].rgb());
   }
-  GIVEN("SBML model with 3d analytic geometry") {
+  SECTION("SBML model with 3d analytic geometry") {
     auto s{getTestModel("analytic_3d")};
     REQUIRE(s.getGeometry().getIsValid() == true);
     REQUIRE(s.getGeometry().getHasImage() == true);

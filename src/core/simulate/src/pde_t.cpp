@@ -7,8 +7,8 @@
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
-  GIVEN("ABtoC model") {
+TEST_CASE("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
+  SECTION("ABtoC model") {
     auto s{getExampleModel(Mod::ABtoC)};
 
     std::vector<std::string> speciesIDs{"A", "B", "C"};
@@ -29,7 +29,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     REQUIRE_THROWS(reac.getMatrixElement(0, 3));
     REQUIRE_THROWS(reac.getMatrixElement(1, 0));
   }
-  GIVEN("ABtoC model with invalid reaction rate expression") {
+  SECTION("ABtoC model with invalid reaction rate expression") {
     auto s{getExampleModel(Mod::ABtoC)};
     s.getReactions().add("r2", "comp", "A * A / idontexist");
     s.getReactions().setSpeciesStoichiometry("r2", "A", 1.0);
@@ -39,7 +39,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     REQUIRE_THROWS_WITH(simulate::Pde(&s, speciesIDs, {"r1", "r2", "r3"}),
                         "Unknown symbol: idontexist");
   }
-  GIVEN("simple model") {
+  SECTION("simple model") {
     auto s{getTestModel("invalid-dune-names")};
     simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"});
     REQUIRE(symEq(pde.getRHS()[0], "-1e5*x*dim"));
@@ -54,7 +54,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     REQUIRE(symEq(pde.getJacobian()[2][1], "1e5*dim"));
     REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
-  GIVEN("simple model with relabeling of variables") {
+  SECTION("simple model with relabeling of variables") {
     auto s{getTestModel("invalid-dune-names")};
     simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
                       {"dim_", "x__", "x_", "cos__", "cos_"});
@@ -70,25 +70,23 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     REQUIRE(symEq(pde.getJacobian()[2][1], "1e5*dim_"));
     REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
-  GIVEN("invalid relabeling of variables") {
-    THEN("ignore relabeling") {
-      auto s{getTestModel("invalid-dune-names")};
-      simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
-                        {"z", "y"});
-      REQUIRE(symEq(pde.getRHS()[0], "-1e5*x*dim"));
-      REQUIRE(symEq(pde.getRHS()[1], "-1e5*x*dim"));
-      REQUIRE(symEq(pde.getRHS()[2], "1e5*x*dim"));
-      REQUIRE(symEq(pde.getJacobian()[0][0], "-1e5*x"));
-      REQUIRE(symEq(pde.getJacobian()[0][1], "-1e5*dim"));
-      REQUIRE(symEq(pde.getJacobian()[0][2], "0"));
-      REQUIRE(symEq(pde.getJacobian()[0][3], "0"));
-      REQUIRE(symEq(pde.getJacobian()[0][4], "0"));
-      REQUIRE(symEq(pde.getJacobian()[2][0], "1e5*x"));
-      REQUIRE(symEq(pde.getJacobian()[2][1], "1e5*dim"));
-      REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
-    }
+  SECTION("invalid relabeling of variables ignored") {
+    auto s{getTestModel("invalid-dune-names")};
+    simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
+                      {"z", "y"});
+    REQUIRE(symEq(pde.getRHS()[0], "-1e5*x*dim"));
+    REQUIRE(symEq(pde.getRHS()[1], "-1e5*x*dim"));
+    REQUIRE(symEq(pde.getRHS()[2], "1e5*x*dim"));
+    REQUIRE(symEq(pde.getJacobian()[0][0], "-1e5*x"));
+    REQUIRE(symEq(pde.getJacobian()[0][1], "-1e5*dim"));
+    REQUIRE(symEq(pde.getJacobian()[0][2], "0"));
+    REQUIRE(symEq(pde.getJacobian()[0][3], "0"));
+    REQUIRE(symEq(pde.getJacobian()[0][4], "0"));
+    REQUIRE(symEq(pde.getJacobian()[2][0], "1e5*x"));
+    REQUIRE(symEq(pde.getJacobian()[2][1], "1e5*dim"));
+    REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
-  GIVEN("rescaling of reactions & relabelling of variables") {
+  SECTION("rescaling of reactions & relabelling of variables") {
     auto s{getTestModel("invalid-dune-names")};
     simulate::PdeScaleFactors scaleFactors;
     scaleFactors.reaction = 0.2;
@@ -107,7 +105,7 @@ SCENARIO("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     REQUIRE(symEq(pde.getJacobian()[2][1], "2e4*dim_"));
     REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
-  GIVEN("rescaling of species & reactions") {
+  SECTION("rescaling of species & reactions") {
     auto s{getTestModel("invalid-dune-names")};
     simulate::PdeScaleFactors scaleFactors;
     scaleFactors.reaction = 0.27;

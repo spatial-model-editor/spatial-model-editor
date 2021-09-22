@@ -7,9 +7,9 @@
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("DUNE: DuneConverter",
-         "[core/simulate/duneconverter][core/simulate][core][duneconverter]") {
-  GIVEN("ABtoC model") {
+TEST_CASE("DUNE: DuneConverter",
+          "[core/simulate/duneconverter][core/simulate][core][duneconverter]") {
+  SECTION("ABtoC model") {
     auto s{getExampleModel(Mod::ABtoC)};
     simulate::DuneConverter dc(s, {}, true, {}, 14);
     QStringList ini = dc.getIniFile().split("\n");
@@ -54,7 +54,7 @@ SCENARIO("DUNE: DuneConverter",
     REQUIRE(*line++ == "B = 0.4");
     REQUIRE(*line++ == "C = 25");
   }
-  GIVEN("brusselator model") {
+  SECTION("brusselator model") {
     auto s{getExampleModel(Mod::Brusselator)};
     simulate::DuneConverter dc(s);
     QStringList ini = dc.getIniFile().split("\n");
@@ -69,7 +69,7 @@ SCENARIO("DUNE: DuneConverter",
     //     so they don't exist from DUNE's point of view:
     REQUIRE(*line++ == "");
   }
-  GIVEN("very simple model") {
+  SECTION("very simple model") {
     auto s{getExampleModel(Mod::VerySimpleModel)};
     simulate::DuneConverter dc(s);
     QStringList ini = dc.getIniFile().split("\n");
@@ -93,7 +93,7 @@ SCENARIO("DUNE: DuneConverter",
     REQUIRE(symEq(*line++, "dB_c3__dA_c3 = 0.3"));
     REQUIRE(symEq(*line++, "dB_c3__dB_c3 = 0"));
   }
-  GIVEN("species names that are invalid dune variables") {
+  SECTION("species names that are invalid dune variables") {
     auto s{getTestModel("invalid-dune-names")};
     simulate::DuneConverter dc(s);
     QStringList ini = dc.getIniFile().split("\n");
@@ -111,7 +111,7 @@ SCENARIO("DUNE: DuneConverter",
     REQUIRE(symEq(*line++, "ddim___dx__ = -0.1*dim_"));
     REQUIRE(symEq(*line++, "ddim___dx_ = 0"));
   }
-  GIVEN("brusselator model with substitutions") {
+  SECTION("brusselator model with substitutions") {
     auto s{getExampleModel(Mod::Brusselator)};
     // X = k_1/2 - (3+k_1)*X + k_2 X^2 Y
     // Y = 3 X - k_2 X^2 Y

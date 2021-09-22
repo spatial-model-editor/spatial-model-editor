@@ -11,23 +11,31 @@
 
 using namespace sme::test;
 
-TEST_CASE("Functions Tab", "[gui/tabs/functions][gui/tabs][gui][functions]") {
+TEST_CASE("TabFunctions", "[gui/tabs/functions][gui/tabs][gui][functions]") {
   sme::model::Model model;
   auto tab = TabFunctions(model);
   ModalWidgetTimer mwt;
   // get pointers to widgets within tab
-  auto *listFunctions = tab.findChild<QListWidget *>("listFunctions");
-  auto *btnAddFunction = tab.findChild<QPushButton *>("btnAddFunction");
-  auto *btnRemoveFunction = tab.findChild<QPushButton *>("btnRemoveFunction");
-  auto *txtFunctionName = tab.findChild<QLineEdit *>("txtFunctionName");
-  auto *listFunctionParams = tab.findChild<QListWidget *>("listFunctionParams");
-  auto *btnAddFunctionParam =
-      tab.findChild<QPushButton *>("btnAddFunctionParam");
-  auto *btnRemoveFunctionParam =
-      tab.findChild<QPushButton *>("btnRemoveFunctionParam");
-  auto *txtFunctionDef = tab.findChild<QPlainTextMathEdit *>("txtFunctionDef");
-  auto *lblFunctionDefStatus = tab.findChild<QLabel *>("lblFunctionDefStatus");
+  auto *listFunctions{tab.findChild<QListWidget *>("listFunctions")};
+  REQUIRE(listFunctions != nullptr);
+  auto *btnAddFunction{tab.findChild<QPushButton *>("btnAddFunction")};
+  REQUIRE(btnAddFunction != nullptr);
+  auto *btnRemoveFunction{tab.findChild<QPushButton *>("btnRemoveFunction")};
+  REQUIRE(btnRemoveFunction != nullptr);
+  auto *txtFunctionName{tab.findChild<QLineEdit *>("txtFunctionName")};
+  REQUIRE(txtFunctionName != nullptr);
+  auto *listFunctionParams{tab.findChild<QListWidget *>("listFunctionParams")};
+  REQUIRE(listFunctionParams != nullptr);
+  auto *btnAddFunctionParam{
+      tab.findChild<QPushButton *>("btnAddFunctionParam")};
+  REQUIRE(btnAddFunctionParam != nullptr);
+  auto *btnRemoveFunctionParam{
+      tab.findChild<QPushButton *>("btnRemoveFunctionParam")};
+  REQUIRE(btnRemoveFunctionParam != nullptr);
+  auto *txtFunctionDef{tab.findChild<QPlainTextMathEdit *>("txtFunctionDef")};
   REQUIRE(txtFunctionDef != nullptr);
+  auto *lblFunctionDefStatus{tab.findChild<QLabel *>("lblFunctionDefStatus")};
+  REQUIRE(lblFunctionDefStatus != nullptr);
   SECTION("model with no functions") {
     model = getExampleModel(Mod::VerySimpleModel);
     tab.loadModelData();

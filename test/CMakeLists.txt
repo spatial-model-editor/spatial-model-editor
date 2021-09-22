@@ -53,8 +53,32 @@ else()
   set(GCOV "gcov")
 endif()
 
+# ensure tests tagged with [gui] are not ran in parallel by ctest
 catch_discover_tests(
   tests
+  TEST_SPEC
+  "[gui]"
+  TEST_PREFIX
+  "[gui]"
+  PROPERTIES
+  ENVIRONMENT
+  LSAN_OPTIONS=exitcode=0
+  RESOURCE_LOCK
+  ResourceLockGui)
+# also tag expensive tests so they can be easily excluded
+catch_discover_tests(
+  tests
+  TEST_SPEC
+  "[expensive]"
+  TEST_PREFIX
+  "[expensive]"
+  PROPERTIES
+  ENVIRONMENT
+  LSAN_OPTIONS=exitcode=0)
+catch_discover_tests(
+  tests
+  TEST_SPEC
+  "~[gui]~[expensive]"
   PROPERTIES
   ENVIRONMENT
   LSAN_OPTIONS=exitcode=0)

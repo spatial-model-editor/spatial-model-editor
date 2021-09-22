@@ -23,19 +23,19 @@ maxTriangleArea(const std::vector<QPointF> &points,
   return maxArea;
 }
 
-SCENARIO("Triangulate",
-         "[core/mesh/triangulate][core/mesh][core][triangulate]") {
-  GIVEN("1 compartment") {
+TEST_CASE("Triangulate",
+          "[core/mesh/triangulate][core/mesh][core][triangulate]") {
+  SECTION("1 compartment") {
     mesh::Boundary boundary({{0, 0}, {10, 0}, {10, 10}, {0, 10}}, true);
     QPointF interiorPoint(5.0, 5.0);
-    WHEN("no max areas") {
+    SECTION("no max areas") {
       mesh::Triangulate tri({boundary}, {{interiorPoint}}, {999});
       // no additional points added: just split square into two triangles
       REQUIRE(tri.getPoints().size() == 4);
       REQUIRE(tri.getTriangleIndices().size() == 1);
       REQUIRE(tri.getTriangleIndices()[0].size() == 2);
     }
-    WHEN("max area specified") {
+    SECTION("max area specified") {
       mesh::Triangulate tri({boundary}, {{interiorPoint}}, {8});
       REQUIRE(tri.getPoints().size() > 4);
       REQUIRE(tri.getTriangleIndices().size() == 1);
@@ -52,7 +52,7 @@ SCENARIO("Triangulate",
               4);
     }
   }
-  GIVEN("2 compartments, no fixed points") {
+  SECTION("2 compartments, no fixed points") {
     std::vector<mesh::Boundary> boundaries;
     // inner compartment
     boundaries.push_back(
@@ -63,7 +63,7 @@ SCENARIO("Triangulate",
     boundaries.push_back(
         mesh::Boundary({{4, 4}, {6, 4}, {6, 6}, {4, 6}}, true));
     interiorPoints.push_back({{1.0, 1.0}});
-    WHEN("no max area specified") {
+    SECTION("no max area specified") {
       mesh::Triangulate tri(boundaries, interiorPoints, {9999, 9999});
       // minimal triangulation:
       // original 8 points + 1 point to split each outer quadrilateral
@@ -74,7 +74,7 @@ SCENARIO("Triangulate",
       // outer compartment: each quadrilateral -> 3 triangles
       REQUIRE(tri.getTriangleIndices()[1].size() == 12);
     }
-    WHEN("max area specified") {
+    SECTION("max area specified") {
       mesh::Triangulate tri(boundaries, interiorPoints, {5, 3});
       REQUIRE(maxTriangleArea(tri.getPoints(), tri.getTriangleIndices()[0]) <=
               5);
@@ -82,7 +82,7 @@ SCENARIO("Triangulate",
               3);
     }
   }
-  GIVEN("2 compartments, 1 shared border, 2 fixed points") {
+  SECTION("2 compartments, 1 shared border, 2 fixed points") {
     std::vector<mesh::Boundary> boundaries;
     // left boundary
     boundaries.push_back(
@@ -99,7 +99,7 @@ SCENARIO("Triangulate",
     // right compartment
     interiorPoints.push_back({{15.0, 5.0}});
 
-    WHEN("no max area specified") {
+    SECTION("no max area specified") {
       mesh::Triangulate tri(boundaries, interiorPoints, {999, 999});
       // minimal triangulation:
       // original points
@@ -109,7 +109,7 @@ SCENARIO("Triangulate",
       REQUIRE(tri.getTriangleIndices()[0].size() == 2);
       REQUIRE(tri.getTriangleIndices()[1].size() == 2);
     }
-    WHEN("max area specified") {
+    SECTION("max area specified") {
       mesh::Triangulate tri(boundaries, interiorPoints, {4, 3});
       REQUIRE(tri.getTriangleIndices().size() == 2);
       REQUIRE(maxTriangleArea(tri.getPoints(), tri.getTriangleIndices()[0]) <=

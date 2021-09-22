@@ -1,23 +1,18 @@
 #include "catch_wrapper.hpp"
+#include "model_test_utils.hpp"
 #include "simulate_options.hpp"
 #include "xml_annotation.hpp"
 #include <QFile>
-#include <sbml/SBMLTypes.h>
-#include <sbml/extension/SBMLDocumentPlugin.h>
-#include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
-#include <sbml/packages/spatial/extension/SpatialExtension.h>
 
 using namespace sme;
+using namespace sme::test;
 
-SCENARIO("XML Annotations",
-         "[core/model/xml_annotation][core/"
-         "model][core][model][xml_annotation][xml][annotation]") {
-  GIVEN("Settings annotations") {
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
-    auto *model = doc->getModel();
+TEST_CASE("XML Annotations",
+          "[core/model/xml_annotation][core/"
+          "model][core][model][xml_annotation][xml][annotation]") {
+  SECTION("Settings annotations") {
+    auto doc{test::getExampleSbmlDoc(Mod::ABtoC)};
+    auto *model{doc->getModel()};
     auto settings{model::getSbmlAnnotation(model)};
 
     // set some options & save
@@ -52,10 +47,10 @@ SCENARIO("XML Annotations",
     newSimulationSettings.times.push_back({7, 0.33});
     newSimulationSettings.options.pixel.maxThreads = 16;
     model::setSbmlAnnotation(model, newSettings);
-    libsbml::writeSBMLToFile(doc.get(), "settings.xml");
+    libsbml::writeSBMLToFile(doc.get(), "tmpxmlsettings.xml");
 
     // load saved model with annotations
-    QFile f2("settings.xml");
+    QFile f2("tmpxmlsettings.xml");
     f2.open(QIODevice::ReadOnly);
     std::unique_ptr<libsbml::SBMLDocument> doc2(
         libsbml::readSBMLFromString(f2.readAll().toStdString().c_str()));
@@ -72,13 +67,9 @@ SCENARIO("XML Annotations",
     REQUIRE(simulationSettings2.options.pixel.maxThreads == 16);
     REQUIRE(simulationSettings2.options.dune.dt == dbl_approx(0.0123));
   }
-  GIVEN("Invalid settings annotations") {
-    QFile f(":test/models/ABtoC-invalid-annotation.xml");
-    f.open(QIODevice::ReadOnly);
-    std::unique_ptr<libsbml::SBMLDocument> doc(
-        libsbml::readSBMLFromString(f.readAll().toStdString().c_str()));
-    auto *model = doc->getModel();
-    auto settings{model::getSbmlAnnotation(model)};
+  SECTION("Invalid settings annotations") {
+    auto doc{getTestSbmlDoc("ABtoC-invalid-annotation")};
+    auto settings{model::getSbmlAnnotation(doc->getModel())};
     // default-constructed Settings is returned if xml annotation is invalid
     REQUIRE(settings.meshParameters.maxPoints.empty());
     REQUIRE(settings.meshParameters.maxAreas.empty());

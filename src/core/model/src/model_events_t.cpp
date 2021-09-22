@@ -7,9 +7,9 @@
 using namespace sme;
 using namespace sme::test;
 
-SCENARIO("SBML events",
-         "[core/model/events][core/model][core][model][events]") {
-  GIVEN("SBML: yeast-glycolysis.xml") {
+TEST_CASE("SBML events",
+          "[core/model/events][core/model][core][model][events]") {
+  SECTION("SBML: yeast-glycolysis.xml") {
     auto s{getTestModel("yeast-glycolysis")};
     auto &species{s.getSpecies()};
     auto &params{s.getParameters()};
@@ -107,7 +107,7 @@ SCENARIO("SBML events",
     REQUIRE(events.getIds().size() == 0);
     REQUIRE(events.getNames().size() == 0);
   }
-  GIVEN("event with multiple assignments") {
+  SECTION("event with multiple assignments") {
     auto doc{getTestSbmlDoc("yeast-glycolysis")};
     // add event with 3 assignments
     auto *m{doc->getModel()};
@@ -140,9 +140,9 @@ SCENARIO("SBML events",
     a3->setId("a3");
     a3->setVariable("v3");
     a3->setMath(sme::model::mathStringToAST("3").get());
-    libsbml::SBMLWriter().writeSBML(doc.get(), "tmp.xml");
+    libsbml::SBMLWriter().writeSBML(doc.get(), "tmpevents.xml");
     model::Model s;
-    s.importSBMLFile("tmp.xml");
+    s.importSBMLFile("tmpevents.xml");
     auto &events = s.getEvents();
     REQUIRE(s.getHasUnsavedChanges() == false);
     REQUIRE(events.getHasUnsavedChanges() == false);

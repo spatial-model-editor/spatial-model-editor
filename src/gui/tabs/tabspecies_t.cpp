@@ -13,7 +13,7 @@
 
 using namespace sme::test;
 
-SCENARIO("Species Tab", "[gui/tabs/species][gui/tabs][gui][species]") {
+TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
   sme::model::Model model;
   QLabelMouseTracker mouseTracker;
   TabSpecies tab(model, &mouseTracker);
@@ -63,7 +63,7 @@ SCENARIO("Species Tab", "[gui/tabs/species][gui/tabs][gui][species]") {
       tab.findChild<QPushButton *>("btnChangeSpeciesColour")};
   REQUIRE(btnChangeSpeciesColour != nullptr);
 
-  WHEN("very-simple-model loaded") {
+  SECTION("very-simple-model loaded") {
     model = getExampleModel(Mod::VerySimpleModel);
     tab.loadModelData();
 

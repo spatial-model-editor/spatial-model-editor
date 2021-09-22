@@ -1,14 +1,15 @@
 #include "catch_wrapper.hpp"
 #include "model.hpp"
 #include "model_math.hpp"
+#include "model_test_utils.hpp"
 #include <QFile>
-#include <QImage>
 #include <cmath>
 
 using namespace sme;
+using namespace sme::test;
 
-SCENARIO("SBML math", "[core/model/math][core/model][core][model][math]") {
-  GIVEN("No SBML model, valid expressions") {
+TEST_CASE("SBML math", "[core/model/math][core/model][core][model][math]") {
+  SECTION("No SBML model, valid expressions") {
     model::ModelMath math;
     REQUIRE(math.isValid() == false);
     REQUIRE(math.getErrorMessage() == "Empty expression");
@@ -40,7 +41,7 @@ SCENARIO("SBML math", "[core/model/math][core/model][core][model][math]") {
     math2.parse("(-2)^2");
     REQUIRE(math2.isValid() == true);
   }
-  GIVEN("No SBML model, invalid expressions") {
+  SECTION("No SBML model, invalid expressions") {
     model::ModelMath math;
     math.parse("(");
     REQUIRE(math.isValid() == false);
@@ -62,11 +63,8 @@ SCENARIO("SBML math", "[core/model/math][core/model][core][model][math]") {
             "Error when parsing input 'cos(sin(yy)' at position 11:  syntax "
             "error, unexpected end of string, expecting ')' or ','");
   }
-  GIVEN("SBML model") {
-    model::Model model;
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    model.importSBMLString(f.readAll().toStdString());
+  SECTION("SBML model") {
+    auto model{getExampleModel(Mod::ABtoC)};
     auto &funcs = model.getFunctions();
     funcs.add("f1");
     funcs.addArgument("f1", "x");
@@ -78,7 +76,7 @@ SCENARIO("SBML math", "[core/model/math][core/model][core][model][math]") {
     std::map<const std::string, std::pair<double, bool>> map;
     map["x"] = {1.345, false};
     map["y"] = {-0.9, false};
-    WHEN("Valid expressions") {
+    SECTION("Valid expressions") {
       math.parse("x");
       REQUIRE(math.isValid() == true);
       REQUIRE(math.eval(map) == dbl_approx(1.345));
@@ -92,7 +90,7 @@ SCENARIO("SBML math", "[core/model/math][core/model][core][model][math]") {
       REQUIRE(math.isValid() == true);
       REQUIRE(math.eval(map) == dbl_approx(0.89));
     }
-    WHEN("Invalid expressions") {
+    SECTION("Invalid expressions") {
       math.parse("x(");
       REQUIRE(math.isValid() == false);
       REQUIRE(math.getErrorMessage() ==

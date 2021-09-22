@@ -11,23 +11,21 @@
 
 using namespace sme;
 
-SCENARIO("TiffReader", "[core/common/tiff][core/common][core][tiff]") {
-  GIVEN("1 16bit grayscale tiff") {
-    QFile::remove("tmp.tif");
-    QFile::copy(":/test/16bit_gray.tif", "tmp.tif");
+TEST_CASE("TiffReader", "[core/common/tiff][core/common][core][tiff]") {
+  SECTION("1 16bit grayscale tiff") {
+    QFile::copy(":/test/16bit_gray.tif", "tmp16bit_gray.tif");
     common::TiffReader tiffReader(
-        QDir::current().filePath("tmp.tif").toStdString());
+        QDir::current().filePath("tmp16bit_gray.tif").toStdString());
     REQUIRE(tiffReader.size() == 1);
     REQUIRE(tiffReader.getErrorMessage().isEmpty());
     auto img = tiffReader.getImage();
     REQUIRE(img.size() == QSize(100, 100));
     REQUIRE(img.pixel(0, 0) == 0xff000000);
   }
-  GIVEN("3x 8bit grayscale tiff") {
-    QFile::remove("tmp2.tif");
-    QFile::copy(":/test/8bit_gray_3x.tif", "tmp2.tif");
+  SECTION("3x 8bit grayscale tiff") {
+    QFile::copy(":/test/8bit_gray_3x.tif", "tmp8bit_gray_3x.tif");
     common::TiffReader tiffReader(
-        QDir::current().filePath("tmp2.tif").toStdString());
+        QDir::current().filePath("tmp8bit_gray_3x.tif").toStdString());
     REQUIRE(tiffReader.size() == 3);
     REQUIRE(tiffReader.getErrorMessage().isEmpty());
     auto img = tiffReader.getImage(0);

@@ -131,8 +131,8 @@ static std::vector<AvgDiff> getAvgDiffs(Mod exampleModel,
   return avgDiffs;
 }
 
-SCENARIO("DUNE: function - large triangles",
-         "[core/simulate/dunefunction][core/simulate][core][dunefunction]") {
+TEST_CASE("DUNE: function - large triangles",
+          "[core/simulate/dunefunction][core/simulate][core][dunefunction]") {
   muteDuneLogging();
   for (auto exampleModel : {Mod::ABtoC, Mod::VerySimpleModel}) {
     CAPTURE(exampleModel);
@@ -152,9 +152,9 @@ SCENARIO("DUNE: function - large triangles",
   }
 }
 
-SCENARIO("DUNE: function - more models, small triangles",
-         "[core/simulate/dunefunction][core/"
-         "simulate][core][dunefunction][expensive]") {
+TEST_CASE("DUNE: function - more models, small triangles",
+          "[core/simulate/dunefunction][core/"
+          "simulate][core][dunefunction][expensive]") {
   muteDuneLogging();
   for (auto exampleModel : {Mod::ABtoC, Mod::VerySimpleModel,
                             Mod::LiverSimplified, Mod::LiverCells}) {

@@ -3,9 +3,9 @@
 
 using namespace sme;
 
-SCENARIO("DUNE: ini files",
-         "[core/simulate/duneini][core/simulate][core][duneini]") {
-  GIVEN("IniFile class") {
+TEST_CASE("DUNE: ini files",
+          "[core/simulate/duneini][core/simulate][core][duneini]") {
+  SECTION("IniFile class") {
     simulate::IniFile ini;
     ini.addSection("t1");
     QString correct("[t1]\n");

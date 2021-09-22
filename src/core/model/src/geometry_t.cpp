@@ -53,9 +53,9 @@ testGetConcentrationImageArray(const geometry::Field &f) {
   return arr;
 }
 
-SCENARIO("Geometry: Compartments and Fields",
-         "[core/model/geometry][core/model][core][model][geometry]") {
-  GIVEN("one pixel compartment, 1x1 image") {
+TEST_CASE("Geometry: Compartments and Fields",
+          "[core/model/geometry][core/model][core][model][geometry]") {
+  SECTION("one pixel compartment, 1x1 image") {
     QImage img(1, 1, QImage::Format_RGB32);
     auto col = qRgb(12, 243, 154);
     img.setPixel(0, 0, col);
@@ -95,7 +95,7 @@ SCENARIO("Geometry: Compartments and Fields",
     REQUIRE_THROWS(field.importConcentration({1.0, 2.0}));
     REQUIRE_THROWS(field.importConcentration({}));
   }
-  GIVEN("two pixel compartment, 6x7 image") {
+  SECTION("two pixel compartment, 6x7 image") {
     QImage img(6, 7, QImage::Format_RGB32);
     auto colBG = qRgb(112, 43, 4);
     auto col = qRgb(12, 12, 12);
@@ -161,7 +161,7 @@ SCENARIO("Geometry: Compartments and Fields",
     REQUIRE_THROWS(field.importConcentration({1.0, 2.0}));
     REQUIRE_THROWS(field.importConcentration({}));
   }
-  WHEN("compartment of field is changed") {
+  SECTION("compartment of field is changed") {
     QImage img(6, 7, QImage::Format_RGB32);
     auto colBG = qRgb(112, 43, 4);
     auto col = qRgb(12, 12, 12);
@@ -188,7 +188,7 @@ SCENARIO("Geometry: Compartments and Fields",
     REQUIRE(field.getConcentration()[0] == dbl_approx(0.0));
     REQUIRE(field.getConcentration()[1] == dbl_approx(0.0));
   }
-  WHEN("getConcentrationImageArray") {
+  SECTION("getConcentrationImageArray") {
     QImage img(":/geometry/concave-cell-nucleus-100x100.png");
     QRgb col0 = img.pixel(0, 0);
     QRgb col1 = img.pixel(35, 20);
