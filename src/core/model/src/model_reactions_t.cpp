@@ -231,4 +231,144 @@ TEST_CASE("SBML reactions",
     REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[0]).size() == 2);
     REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[1]).size() == 2);
   }
+  SECTION("membrane reactions removed when compartment removed") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    REQUIRE(m.getMembranes().getIds().size() == 2);
+    REQUIRE(m.getMembranes().getIds()[0] == "c1_c2_membrane");
+    REQUIRE(m.getMembranes().getIds()[1] == "c2_c3_membrane");
+    auto locations{m.getReactions().getReactionLocations()};
+    REQUIRE(locations.size() == 6);
+    REQUIRE(locations[0].id == "c1");
+    REQUIRE(locations[0].name == "Outside");
+    REQUIRE(locations[0].type ==
+            sme::model::ReactionLocation::Type::Compartment);
+    REQUIRE(locations[1].id == "c2");
+    REQUIRE(locations[2].id == "c3");
+    REQUIRE(locations[3].id == "c1_c2_membrane");
+    REQUIRE(locations[3].type == sme::model::ReactionLocation::Type::Membrane);
+    REQUIRE(locations[4].id == "c2_c3_membrane");
+    REQUIRE(locations[5].id == "invalid");
+    REQUIRE(locations[5].type == sme::model::ReactionLocation::Type::Invalid);
+    REQUIRE(m.getReactions().getIds(locations[0]).size() == 0);
+    REQUIRE(m.getReactions().getIds(locations[1]).size() == 0);
+    REQUIRE(m.getReactions().getIds(locations[2]).size() == 1);
+    REQUIRE(m.getReactions().getIds(locations[3]).size() == 2);
+    REQUIRE(m.getReactions().getIds(locations[4]).size() == 2);
+    REQUIRE(m.getReactions().getIds(locations[5]).size() == 0);
+    m.getCompartments().remove("c1");
+    REQUIRE(m.getMembranes().getIds().size() == 1);
+    REQUIRE(m.getMembranes().getIds()[0] == "c2_c3_membrane");
+    locations = m.getReactions().getReactionLocations();
+    REQUIRE(locations.size() == 4);
+    REQUIRE(locations[0].id == "c2");
+    REQUIRE(locations[0].type ==
+            sme::model::ReactionLocation::Type::Compartment);
+    REQUIRE(locations[1].id == "c3");
+    REQUIRE(locations[2].id == "c2_c3_membrane");
+    REQUIRE(locations[2].type == sme::model::ReactionLocation::Type::Membrane);
+    REQUIRE(locations[3].id == "invalid");
+    REQUIRE(locations[3].type == sme::model::ReactionLocation::Type::Invalid);
+    REQUIRE(m.getReactions().getIds(locations[0]).size() == 0);
+    REQUIRE(m.getReactions().getIds(locations[1]).size() == 1);
+    REQUIRE(m.getReactions().getIds(locations[2]).size() == 2);
+    REQUIRE(m.getReactions().getIds(locations[3]).size() == 0);
+    m.getCompartments().remove("c2");
+    REQUIRE(m.getMembranes().getIds().size() == 0);
+    locations = m.getReactions().getReactionLocations();
+    REQUIRE(locations.size() == 2);
+    REQUIRE(locations[0].id == "c3");
+    REQUIRE(locations[0].type ==
+            sme::model::ReactionLocation::Type::Compartment);
+    REQUIRE(locations[1].id == "invalid");
+    REQUIRE(locations[1].type == sme::model::ReactionLocation::Type::Invalid);
+    REQUIRE(m.getReactions().getIds(locations[0]).size() == 1);
+    REQUIRE(m.getReactions().getIds(locations[1]).size() == 0);
+  }
+  SECTION(
+      "membrane reactions -> invalid location if membrane no longer exists") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    REQUIRE(m.getMembranes().getIds().size() == 2);
+    REQUIRE(m.getMembranes().getIds()[0] == "c1_c2_membrane");
+    REQUIRE(m.getMembranes().getIds()[1] == "c2_c3_membrane");
+    auto locations{m.getReactions().getReactionLocations()};
+    REQUIRE(locations.size() == 6);
+    REQUIRE(locations[0].id == "c1");
+    REQUIRE(locations[0].name == "Outside");
+    REQUIRE(locations[0].type ==
+            sme::model::ReactionLocation::Type::Compartment);
+    REQUIRE(locations[1].id == "c2");
+    REQUIRE(locations[2].id == "c3");
+    REQUIRE(locations[3].id == "c1_c2_membrane");
+    REQUIRE(locations[3].type == sme::model::ReactionLocation::Type::Membrane);
+    REQUIRE(locations[4].id == "c2_c3_membrane");
+    REQUIRE(locations[5].id == "invalid");
+    REQUIRE(locations[5].type == sme::model::ReactionLocation::Type::Invalid);
+    REQUIRE(m.getReactions().getIds(locations[0]).size() == 0);
+    REQUIRE(m.getReactions().getIds(locations[1]).size() == 0);
+    REQUIRE(m.getReactions().getIds(locations[2]).size() == 1);
+    REQUIRE(m.getReactions().getIds(locations[3]).size() == 2);
+    REQUIRE(m.getReactions().getIds(locations[4]).size() == 2);
+    REQUIRE(m.getReactions().getIds(locations[5]).size() == 0);
+    QImage img(":/geometry/single-pixels-3x1.png");
+    m.getGeometry().importGeometryFromImage(img, false);
+    m.getGeometry().setPixelWidth(1.0);
+    REQUIRE(m.getGeometry().getIsValid() == false);
+    // assign compartments such that c1-c3 and c3-c2 share borders,
+    // i.e. remove c1-c2 membrane from model geometry
+    m.getCompartments().setColour("c1", img.pixel(0, 0));
+    m.getCompartments().setColour("c3", img.pixel(1, 0));
+    m.getCompartments().setColour("c2", img.pixel(2, 0));
+    REQUIRE(m.getGeometry().getIsValid() == true);
+    REQUIRE(m.getMembranes().getIds().size() == 2);
+    REQUIRE(m.getMembranes().getIds()[0] == "c1_c3_membrane");
+    // previous id is maintained for c3-c2 membrane:
+    REQUIRE(m.getMembranes().getIds()[1] == "c2_c3_membrane");
+    locations = m.getReactions().getReactionLocations();
+    REQUIRE(locations[0].id == "c1");
+    REQUIRE(locations[0].name == "Outside");
+    REQUIRE(locations[0].type ==
+            sme::model::ReactionLocation::Type::Compartment);
+    REQUIRE(locations[1].id == "c2");
+    REQUIRE(locations[2].id == "c3");
+    REQUIRE(locations[3].id == "c1_c3_membrane");
+    REQUIRE(locations[3].type == sme::model::ReactionLocation::Type::Membrane);
+    REQUIRE(locations[4].id == "c2_c3_membrane");
+    REQUIRE(locations[5].id == "invalid");
+    REQUIRE(locations[5].type == sme::model::ReactionLocation::Type::Invalid);
+    REQUIRE(m.getReactions().getIds(locations[0]).size() == 0);
+    REQUIRE(m.getReactions().getIds(locations[1]).size() == 0);
+    REQUIRE(m.getReactions().getIds(locations[2]).size() == 1);
+    REQUIRE(m.getReactions().getIds(locations[3]).size() == 0);
+    REQUIRE(m.getReactions().getIds(locations[4]).size() == 2);
+    // c1-c2 membrane reactions now have invalid locations:
+    REQUIRE(m.getReactions().getIds(locations[5]).size() == 2);
+    // reassign compartment geometry so that c1-c2 membrane exists again:
+    REQUIRE(m.getGeometry().getIsValid() == true);
+    m.getCompartments().setColour("c3", img.pixel(2, 0));
+    REQUIRE(m.getGeometry().getIsValid() == false);
+    m.getCompartments().setColour("c2", img.pixel(1, 0));
+    REQUIRE(m.getGeometry().getIsValid() == true);
+    REQUIRE(m.getMembranes().getIds().size() == 2);
+    REQUIRE(m.getMembranes().getIds()[0] == "c1_c2_membrane");
+    REQUIRE(m.getMembranes().getIds()[1] == "c2_c3_membrane");
+    locations = m.getReactions().getReactionLocations();
+    REQUIRE(locations.size() == 6);
+    REQUIRE(locations[0].id == "c1");
+    REQUIRE(locations[0].name == "Outside");
+    REQUIRE(locations[0].type ==
+            sme::model::ReactionLocation::Type::Compartment);
+    REQUIRE(locations[1].id == "c2");
+    REQUIRE(locations[2].id == "c3");
+    REQUIRE(locations[3].id == "c1_c2_membrane");
+    REQUIRE(locations[3].type == sme::model::ReactionLocation::Type::Membrane);
+    REQUIRE(locations[4].id == "c2_c3_membrane");
+    REQUIRE(locations[5].id == "invalid");
+    REQUIRE(locations[5].type == sme::model::ReactionLocation::Type::Invalid);
+    REQUIRE(m.getReactions().getIds(locations[0]).size() == 0);
+    REQUIRE(m.getReactions().getIds(locations[1]).size() == 0);
+    REQUIRE(m.getReactions().getIds(locations[2]).size() == 1);
+    REQUIRE(m.getReactions().getIds(locations[3]).size() == 2);
+    REQUIRE(m.getReactions().getIds(locations[4]).size() == 2);
+    REQUIRE(m.getReactions().getIds(locations[5]).size() == 0);
+  }
 }

@@ -15,6 +15,7 @@ class Model;
 
 namespace sme::model {
 
+class ModelCompartments;
 class ModelMembranes;
 
 struct ReactionRescaling {
@@ -25,12 +26,20 @@ struct ReactionRescaling {
   QString rescaledExpression{};
 };
 
+struct ReactionLocation {
+  enum class Type { Compartment, Membrane, Invalid };
+  QString id;
+  QString name;
+  Type type;
+};
+
 class ModelReactions {
 private:
   QStringList ids;
   QStringList names;
   QVector<QStringList> parameterIds;
   libsbml::Model *sbmlModel{};
+  const ModelCompartments *modelCompartments{};
   const ModelMembranes *modelMembranes{};
   bool hasUnsavedChanges{false};
   bool isIncompleteODEImport{false};
@@ -38,6 +47,7 @@ private:
 public:
   ModelReactions();
   explicit ModelReactions(libsbml::Model *model,
+                          const ModelCompartments *compartments,
                           const ModelMembranes *membranes,
                           bool isNonSpatialModel);
   void makeReactionLocationsValid();
@@ -48,7 +58,8 @@ public:
   [[nodiscard]] bool getIsIncompleteODEImport() const;
   [[nodiscard]] QStringList getIds(const QString &locationId) const;
   [[nodiscard]] QStringList
-  getInvalidLocationIds(const QStringList &validLocations) const;
+  getIds(const ReactionLocation &reactionLocation) const;
+  [[nodiscard]] std::vector<ReactionLocation> getReactionLocations() const;
   QString add(const QString &name, const QString &locationId,
               const QString &rateExpression = "1");
   void remove(const QString &id);

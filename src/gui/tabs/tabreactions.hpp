@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "model_reactions.hpp"
 #include <QDoubleSpinBox>
 #include <QString>
 #include <QWidget>
@@ -43,7 +44,8 @@ private:
   QLabelMouseTracker *lblGeometry;
   QString currentReacId{};
   QString invalidLocationLabel{"Invalid Location"};
-  QStringList invalidReactionIds{};
+  std::vector<sme::model::ReactionLocation> reactionLocations;
+  QStringList invalidLocationReactionIds;
 
   void enableWidgets(bool enable);
   void listReactions_currentItemChanged(QTreeWidgetItem *current,
