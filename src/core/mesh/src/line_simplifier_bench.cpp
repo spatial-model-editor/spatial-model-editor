@@ -1,12 +1,12 @@
 #include "bench.hpp"
-#include "boundary.hpp"
+#include "boundaries.hpp"
 #include "line_simplifier.hpp"
 
 template <typename T> static void mesh_LineSimplifier(benchmark::State &state) {
   T data;
-  auto boundaries{sme::mesh::constructBoundaries(data.img, data.colours)};
+  sme::mesh::Boundaries boundaries(data.img, data.colours);
   for (auto _ : state) {
-    for (const auto &boundary : boundaries) {
+    for (const auto &boundary : boundaries.getBoundaries()) {
       auto l{sme::mesh::LineSimplifier(boundary.getAllPoints(),
                                        boundary.isLoop())};
     }
