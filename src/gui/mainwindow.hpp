@@ -78,6 +78,7 @@ private:
 
   // Advanced menu actions
   void actionSimulation_options_triggered();
+  void action_Meshing_options_triggered();
 
   void lblGeometry_mouseOver(QPoint point);
   void spinGeometryZoom_valueChanged(int value);

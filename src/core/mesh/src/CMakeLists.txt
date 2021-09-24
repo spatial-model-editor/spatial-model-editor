@@ -8,6 +8,7 @@ target_sources(
           mesh.cpp
           mesh_utils.cpp
           pixel_corner_iterator.cpp
+          polyline_simplifier.cpp
           triangulate.cpp
           triangulate_common.cpp)
 if(BUILD_TESTING)
@@ -26,6 +27,8 @@ if(BUILD_TESTING)
            mesh_t.cpp
            mesh_utils.cpp
            mesh_utils_t.cpp
+           polyline_simplifier.cpp
+           polyline_simplifier_t.cpp
            pixel_corner_iterator.cpp
            pixel_corner_iterator_t.cpp
            triangulate.cpp

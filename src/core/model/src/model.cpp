@@ -256,6 +256,12 @@ const SimulationSettings &Model::getSimulationSettings() const {
   return settings->simulationSettings;
 }
 
+MeshParameters &Model::getMeshParameters() { return settings->meshParameters; }
+
+const MeshParameters &Model::getMeshParameters() const {
+  return settings->meshParameters;
+}
+
 void Model::clear() {
   doc.reset();
   isValid = false;

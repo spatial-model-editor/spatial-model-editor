@@ -17,8 +17,8 @@ const std::vector<QPoint> &Boundary::getAllPoints() const {
 
 std::size_t Boundary::getMaxPoints() const { return maxPoints; }
 
-void Boundary::setPoints(const std::vector<QPoint> &simplifiedPoints) {
-  points = simplifiedPoints;
+void Boundary::setPoints(std::vector<QPoint> &&simplifiedPoints) {
+  points = std::move(simplifiedPoints);
 }
 
 void Boundary::setMaxPoints(std::size_t nMaxPoints) {

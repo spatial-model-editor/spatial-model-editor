@@ -27,6 +27,8 @@ TEST_CASE("XML Annotations",
     simulationSettings.times.push_back({5, 0.25});
     simulationSettings.options.pixel.maxThreads = 4;
     simulationSettings.options.dune.dt = 0.0123;
+    auto &meshParameters{settings.meshParameters};
+    meshParameters.boundarySimplifierType = 1;
     model::setSbmlAnnotation(model, settings);
 
     // load them from sbml
@@ -42,6 +44,8 @@ TEST_CASE("XML Annotations",
     REQUIRE(newSimulationSettings.times.size() == 2);
     REQUIRE(newSimulationSettings.options.pixel.maxThreads == 4);
     REQUIRE(newSimulationSettings.options.dune.dt == dbl_approx(0.0123));
+    auto &newMeshParameters{settings.meshParameters};
+    REQUIRE(newMeshParameters.boundarySimplifierType == 1);
 
     // change options, save & write to file
     newSimulationSettings.times.push_back({7, 0.33});

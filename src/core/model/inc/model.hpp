@@ -101,6 +101,8 @@ public:
   [[nodiscard]] const simulate::SimulationData &getSimulationData() const;
   SimulationSettings &getSimulationSettings();
   [[nodiscard]] const SimulationSettings &getSimulationSettings() const;
+  MeshParameters &getMeshParameters();
+  [[nodiscard]] const MeshParameters &getMeshParameters() const;
 
   explicit Model();
   Model(Model &&) noexcept = default;

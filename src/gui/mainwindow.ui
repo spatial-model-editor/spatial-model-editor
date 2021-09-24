@@ -286,6 +286,7 @@
      <string>&amp;Advanced</string>
     </property>
     <addaction name="actionSimulation_options"/>
+    <addaction name="action_Meshing_options"/>
    </widget>
    <widget class="QMenu" name="menu_View">
     <property name="title">
@@ -543,6 +544,11 @@
    </property>
    <property name="text">
     <string>Invert &amp;y-axis</string>
+   </property>
+  </action>
+  <action name="action_Meshing_options">
+   <property name="text">
+    <string>&amp;Meshing options...</string>
    </property>
   </action>
   <actiongroup name="actionGroupSimType">

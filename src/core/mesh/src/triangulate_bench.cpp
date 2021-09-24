@@ -7,7 +7,7 @@ template <typename T>
 static void mesh_TriangulateBoundaries(benchmark::State &state) {
   T data;
   auto interiorPoints{sme::mesh::getInteriorPoints(data.img, data.colours)};
-  sme::mesh::Boundaries boundaries(data.img, data.colours);
+  sme::mesh::Boundaries boundaries(data.img, data.colours, 0);
   for (auto _ : state) {
     auto t{sme::mesh::Triangulate(boundaries.getBoundaries(), interiorPoints,
                                   data.maxTriangleArea)};

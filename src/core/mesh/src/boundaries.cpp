@@ -128,34 +128,72 @@ static std::vector<Boundary> splitContours(const QImage &img,
 }
 
 Boundaries::Boundaries(const QImage &compartmentImage,
-                       const std::vector<QRgb> &compartmentColours) {
+                       const std::vector<QRgb> &compartmentColours,
+                       std::size_t simplifierType)
+    : simplifierType{simplifierType} {
   auto edgeContours{getContours(compartmentImage, compartmentColours)};
   boundaries = splitContours(compartmentImage, edgeContours);
+  polylineSimplifier.setBoundaries(boundaries);
 }
+
+Boundaries::~Boundaries() = default;
 
 const std::vector<Boundary> &Boundaries::getBoundaries() const {
   return boundaries;
 }
 
+[[nodiscard]] std::size_t Boundaries::getSimplifierType() const {
+  return simplifierType;
+}
+
+void Boundaries::setSimplifierType(std::size_t type) { simplifierType = type; }
+
 void Boundaries::setMaxPoints(std::size_t boundaryIndex,
                               std::size_t maxPoints) {
-  boundaries[boundaryIndex].setMaxPoints(maxPoints);
+  if (simplifierType == 0) {
+    boundaries[boundaryIndex].setMaxPoints(maxPoints);
+  } else if (simplifierType == 1) {
+    setMaxPoints(maxPoints);
+  } else {
+    SPDLOG_WARN("Invalid simplifierType: {}", simplifierType);
+  }
+}
+
+void Boundaries::setMaxPoints(std::size_t maxPoints) {
+  if (maxPoints == polylineSimplifier.getMaxPoints()) {
+    return;
+  }
+  polylineSimplifier.setMaxPoints(boundaries, maxPoints);
 }
 
 std::size_t Boundaries::getMaxPoints(std::size_t boundaryIndex) const {
-  return boundaries[boundaryIndex].getMaxPoints();
+  if (simplifierType == 0) {
+    return boundaries[boundaryIndex].getMaxPoints();
+  } else if (simplifierType == 1) {
+    return polylineSimplifier.getMaxPoints();
+  }
+  return 0;
 }
 
 std::vector<std::size_t> Boundaries::getMaxPoints() const {
-  std::vector<std::size_t> v(boundaries.size());
-  std::transform(boundaries.cbegin(), boundaries.cend(), v.begin(),
-                 [](const auto &b) { return b.getMaxPoints(); });
-  return v;
+  if (simplifierType == 0) {
+    std::vector<std::size_t> v(boundaries.size());
+    std::transform(boundaries.cbegin(), boundaries.cend(), v.begin(),
+                   [](const auto &b) { return b.getMaxPoints(); });
+    return v;
+  } else if (simplifierType == 1) {
+    return {polylineSimplifier.getMaxPoints()};
+  }
+  return {};
 }
 
 void Boundaries::setMaxPoints() {
-  for (auto &boundary : boundaries) {
-    boundary.setMaxPoints();
+  if (simplifierType == 0) {
+    for (auto &boundary : boundaries) {
+      boundary.setMaxPoints();
+    }
+  } else {
+    setMaxPoints(0);
   }
 }
 
