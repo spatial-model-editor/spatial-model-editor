@@ -1,6 +1,7 @@
 target_sources(
   core
-  PRIVATE boundary.cpp
+  PRIVATE boundaries.cpp
+          boundary.cpp
           contour_map.cpp
           interior_point.cpp
           line_simplifier.cpp
@@ -12,7 +13,9 @@ target_sources(
 if(BUILD_TESTING)
   target_sources(
     core_tests
-    PUBLIC boundary.cpp
+    PUBLIC boundaries.cpp
+           boundaries_t.cpp
+           boundary.cpp
            boundary_t.cpp
            contour_map.cpp
            contour_map_t.cpp
@@ -31,7 +34,7 @@ endif()
 if(BUILD_BENCHMARKS)
   target_sources(
     bench
-    PUBLIC boundary_bench.cpp
+    PUBLIC boundaries_bench.cpp
            interior_point_bench.cpp
            line_simplifier_bench.cpp
            mesh_bench.cpp

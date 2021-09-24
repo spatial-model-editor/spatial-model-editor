@@ -15,7 +15,7 @@
 
 namespace sme::mesh {
 
-class Boundary;
+class Boundaries;
 
 /**
  * @brief Constructs a triangular mesh from a geometry image
@@ -42,7 +42,7 @@ private:
   std::vector<std::size_t> boundaryMaxPoints;
   std::vector<std::size_t> compartmentMaxTriangleArea;
   // generated data
-  std::unique_ptr<std::vector<Boundary>> boundaries;
+  std::unique_ptr<Boundaries> boundaries;
   std::vector<QPointF> vertices;
   std::size_t nTriangles{};
   std::vector<std::vector<QTriangleF>> triangles;

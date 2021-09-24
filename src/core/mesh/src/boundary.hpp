@@ -21,9 +21,9 @@ namespace sme::mesh {
  */
 class Boundary {
 private:
+  std::vector<QPoint> points;
   LineSimplifier lineSimplifier;
   std::size_t maxPoints{};
-  std::vector<QPoint> points;
 
 public:
   /**
@@ -47,6 +47,10 @@ public:
    */
   [[nodiscard]] std::size_t getMaxPoints() const;
   /**
+   * @brief Set the simplified line points explicitly
+   */
+  void setPoints(const std::vector<QPoint> &simplifiedPoints);
+  /**
    * @brief Set the maximum number of points to use in the approximate line
    */
   void setMaxPoints(std::size_t maxPoints);
@@ -65,15 +69,5 @@ public:
   explicit Boundary(const std::vector<QPoint> &boundaryPoints,
                     bool isClosedLoop = false);
 };
-
-/**
- * @brief Construct all the compartment boundaries from an image
- *
- * @param[in] compartmentImage the segmented compartment geometry image
- * @param[in] compartmentColours the colours that correspond to compartments
- */
-std::vector<Boundary>
-constructBoundaries(const QImage &compartmentImage,
-                    const std::vector<QRgb> &compartmentColours);
 
 } // namespace sme::mesh

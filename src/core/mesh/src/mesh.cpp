@@ -1,5 +1,5 @@
 #include "mesh.hpp"
-#include "boundary.hpp"
+#include "boundaries.hpp"
 #include "interior_point.hpp"
 #include "logger.hpp"
 #include "triangulate.hpp"
@@ -30,12 +30,11 @@ Mesh::Mesh(const QImage &image, std::vector<std::size_t> maxPoints,
            const std::vector<QRgb> &compartmentColours)
     : img(image), origin(originPoint), pixel(pixelWidth),
       boundaryMaxPoints(std::move(maxPoints)),
-      compartmentMaxTriangleArea(std::move(maxTriangleArea)) {
-  boundaries = std::make_unique<std::vector<Boundary>>(
-      constructBoundaries(image, compartmentColours));
-  compartmentInteriorPoints = getInteriorPoints(image, compartmentColours);
+      compartmentMaxTriangleArea(std::move(maxTriangleArea)),
+      boundaries{std::make_unique<Boundaries>(image, compartmentColours)},
+      compartmentInteriorPoints{getInteriorPoints(image, compartmentColours)} {
   SPDLOG_INFO("found {} boundaries", boundaries->size());
-  for (const auto &boundary : *boundaries) {
+  for (const auto &boundary : boundaries->getBoundaries()) {
     SPDLOG_INFO("  - {} points, loop={}", boundary.getPoints().size(),
                 boundary.isLoop());
   }
@@ -44,16 +43,14 @@ Mesh::Mesh(const QImage &image, std::vector<std::size_t> maxPoints,
     SPDLOG_INFO("boundaryMaxPoints has size {}, but there are {} boundaries - "
                 "using automatic values",
                 boundaryMaxPoints.size(), boundaries->size());
-    for (auto &boundary : *boundaries) {
-      boundary.setMaxPoints();
-    }
+    boundaries->setMaxPoints();
   } else {
     for (std::size_t i = 0; i < boundaryMaxPoints.size(); ++i) {
-      (*boundaries)[i].setMaxPoints(boundaryMaxPoints[i]);
+      boundaries->setMaxPoints(i, boundaryMaxPoints[i]);
     }
   }
   SPDLOG_INFO("simplified {} boundaries", boundaries->size());
-  for (const auto &boundary : *boundaries) {
+  for (const auto &boundary : boundaries->getBoundaries()) {
     SPDLOG_INFO("  - {} points, loop={}", boundary.getPoints().size(),
                 boundary.isLoop());
   }
@@ -79,19 +76,16 @@ std::size_t Mesh::getNumBoundaries() const { return boundaries->size(); }
 void Mesh::setBoundaryMaxPoints(std::size_t boundaryIndex,
                                 std::size_t maxPoints) {
   SPDLOG_INFO("boundaryIndex {}: max points {} -> {}", boundaryIndex,
-              (*boundaries)[boundaryIndex].getMaxPoints(), maxPoints);
-  (*boundaries)[boundaryIndex].setMaxPoints(maxPoints);
+              boundaries->getMaxPoints(boundaryIndex), maxPoints);
+  boundaries->setMaxPoints(boundaryIndex, maxPoints);
 }
 
 std::size_t Mesh::getBoundaryMaxPoints(std::size_t boundaryIndex) const {
-  return (*boundaries)[boundaryIndex].getMaxPoints();
+  return boundaries->getMaxPoints(boundaryIndex);
 }
 
 std::vector<std::size_t> Mesh::getBoundaryMaxPoints() const {
-  std::vector<std::size_t> v(boundaries->size());
-  std::transform(boundaries->cbegin(), boundaries->cend(), v.begin(),
-                 [](const auto &b) { return b.getMaxPoints(); });
-  return v;
+  return boundaries->getMaxPoints();
 }
 
 void Mesh::setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
@@ -153,7 +147,8 @@ Mesh::getTriangleIndices() const {
 
 void Mesh::constructMesh() {
   try {
-    Triangulate triangulate(*boundaries, compartmentInteriorPoints,
+    Triangulate triangulate(boundaries->getBoundaries(),
+                            compartmentInteriorPoints,
                             compartmentMaxTriangleArea);
     vertices = triangulate.getPoints();
     triangleIndices = triangulate.getTriangleIndices();
@@ -217,7 +212,7 @@ Mesh::getBoundariesImages(const QSize &size,
 
   // draw boundary lines
   for (std::size_t k = 0; k < boundaries->size(); ++k) {
-    const auto &points = (*boundaries)[k].getPoints();
+    const auto &points = boundaries->getBoundaries()[k].getPoints();
     int penSize = defaultPenSize;
     if (k == boldBoundaryIndex) {
       penSize = boldPenSize;
@@ -232,7 +227,7 @@ Mesh::getBoundariesImages(const QSize &size,
       pMask.drawLine(p1, p2);
     }
     painter.drawEllipse(points.back() * scaleFactor + offset, penSize, penSize);
-    if ((*boundaries)[k].isLoop()) {
+    if (boundaries->getBoundaries()[k].isLoop()) {
       auto p1 = points.back() * scaleFactor + offset;
       auto p2 = points.front() * scaleFactor + offset;
       painter.drawLine(p1, p2);
