@@ -64,7 +64,9 @@ Boundary line simplification
 ----------------------------
 
 Once we have identified all of our boundaries, we want to simplify them by removing points from the boundary.
-We do this using `Visvalingam-Whyatt polyline simplification <https://www.tandfonline.com/doi/abs/10.1179/000870493786962263>`_.
+There are two ways of doing this. The default one is
+`Visvalingam-Whyatt polyline simplification <https://www.tandfonline.com/doi/abs/10.1179/000870493786962263>`_,
+which allows each boundary line to be independently simplified.
 The algorithm starts by calculating the area of the triangle formed by each point on the boundary with its two nearest neighbouring points.
 Then at each step:
 
@@ -74,6 +76,12 @@ Then at each step:
 
 This allows us to order the points in the boundary by their order of importance,
 and then the user can adjust the number of points used for each boundary as desired.
+
+An alternative `topology-preserving polyline simplification <https://doc.cgal.org/latest/Polyline_simplification_2>`_
+method is also available. This simplifies all the lines simultaneously
+with the constraint that no new intersections are created, or in other words without any of the simplified boundary lines crossing each other.
+This method can be useful for very complicated geometry images with many boundary lines, where manually adjusting the number
+of points for each line would be impractical.
 
 .. figure:: img/mesh_simplify_lines.png
    :alt: Simplified boundary lines
