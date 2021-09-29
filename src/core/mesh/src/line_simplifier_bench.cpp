@@ -4,7 +4,7 @@
 
 template <typename T> static void mesh_LineSimplifier(benchmark::State &state) {
   T data;
-  sme::mesh::Boundaries boundaries(data.img, data.colours);
+  sme::mesh::Boundaries boundaries(data.img, data.colours, 0);
   for (auto _ : state) {
     for (const auto &boundary : boundaries.getBoundaries()) {
       auto l{sme::mesh::LineSimplifier(boundary.getAllPoints(),

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "boundary.hpp"
+#include "polyline_simplifier.hpp"
 #include <QImage>
 #include <QPoint>
 #include <QPointF>
@@ -20,6 +21,8 @@ namespace sme::mesh {
 class Boundaries {
 private:
   std::vector<Boundary> boundaries{};
+  std::size_t simplifierType{0};
+  PolylineSimplifier polylineSimplifier;
 
 public:
   /**
@@ -29,10 +32,22 @@ public:
    * @param[in] compartmentColours the colours that correspond to compartments
    */
   explicit Boundaries(const QImage &compartmentImage,
-                      const std::vector<QRgb> &compartmentColours);
+                      const std::vector<QRgb> &compartmentColours,
+                      std::size_t simplifierType);
   Boundaries() = default;
-
+  ~Boundaries();
+  /**
+   * @brief The simplified boundaries
+   */
   [[nodiscard]] const std::vector<Boundary> &getBoundaries() const;
+  /**
+   * @brief Get the type of boundary simplifier used
+   */
+  [[nodiscard]] std::size_t getSimplifierType() const;
+  /**
+   * @brief Set the type of boundary simplifier used
+   */
+  void setSimplifierType(std::size_t simplifierType);
   /**
    * @brief The number of boundaries
    */
@@ -44,6 +59,12 @@ public:
    * @param[in] maxPoints the maximum number of points allowed
    */
   void setMaxPoints(std::size_t boundaryIndex, std::size_t maxPoints);
+  /**
+   * @brief Set the total maximum number of allowed points over all boundaries
+   *
+   * @param[in] maxPoints the maximum number of points allowed
+   */
+  void setMaxPoints(std::size_t maxPoints);
   /**
    * @brief Get the maximum number of allowed points for a given boundary
    *

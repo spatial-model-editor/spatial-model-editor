@@ -38,11 +38,11 @@ private:
   QImage img;
   QPointF origin;
   double pixel{};
-  std::vector<std::vector<QPointF>> compartmentInteriorPoints;
   std::vector<std::size_t> boundaryMaxPoints;
   std::vector<std::size_t> compartmentMaxTriangleArea;
   // generated data
   std::unique_ptr<Boundaries> boundaries;
+  std::vector<std::vector<QPointF>> compartmentInteriorPoints;
   std::vector<QPointF> vertices;
   std::size_t nTriangles{};
   std::vector<std::vector<QTriangleF>> triangles;
@@ -71,7 +71,8 @@ public:
                 std::vector<std::size_t> maxTriangleArea = {},
                 double pixelWidth = 1.0,
                 const QPointF &originPoint = QPointF(0, 0),
-                const std::vector<QRgb> &compartmentColours = {});
+                const std::vector<QRgb> &compartmentColours = {},
+                std::size_t boundarySimplificationType = 0);
   ~Mesh();
   /**
    * @brief Returns true if the mesh is valid
@@ -86,7 +87,24 @@ public:
    */
   [[nodiscard]] std::size_t getNumBoundaries() const;
   /**
-   * @brief Set the maximum number of allowed points for a given boundary
+   * @brief Get the type of boundary simplification
+   */
+  [[nodiscard]] std::size_t getBoundarySimplificationType() const;
+  /**
+   * @brief Set the type of boundary simplification
+   */
+  void setBoundarySimplificationType(std::size_t boundarySimplificationType);
+  /**
+   * @brief Set the maximum number of allowed points
+   *
+   * If the boundary simplification type is one where each boundary line can be
+   * independently simplified, maxPoints applies only to the specified boundary
+   * line, and only this boundary line is potentially altered by this method.
+   *
+   * If the boundary simplification type is a topology-preserving type that
+   * simplifies all boundaries simultaneously, maxPoints is the total number of
+   * allowed points summed over all boundaries, and all boundary lines can
+   * potentially be altered by this method.
    *
    * @param[in] boundaryIndex the index of the boundary
    * @param[in] maxPoints the maximum number of points allowed

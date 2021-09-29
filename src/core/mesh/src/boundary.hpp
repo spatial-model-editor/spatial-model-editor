@@ -49,7 +49,7 @@ public:
   /**
    * @brief Set the simplified line points explicitly
    */
-  void setPoints(const std::vector<QPoint> &simplifiedPoints);
+  void setPoints(std::vector<QPoint> &&simplifiedPoints);
   /**
    * @brief Set the maximum number of points to use in the approximate line
    */

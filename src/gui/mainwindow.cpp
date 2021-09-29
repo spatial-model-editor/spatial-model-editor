@@ -2,6 +2,7 @@
 #include "dialogabout.hpp"
 #include "dialogcoordinates.hpp"
 #include "dialoggeometryimage.hpp"
+#include "dialogmeshingoptions.hpp"
 #include "dialogsimulationoptions.hpp"
 #include "dialogunits.hpp"
 #include "duneconverter.hpp"
@@ -189,6 +190,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->actionSimulation_options, &QAction::triggered, this,
           &MainWindow::actionSimulation_options_triggered);
+
+  connect(ui->action_Meshing_options, &QAction::triggered, this,
+          &MainWindow::action_Meshing_options_triggered);
 
   connect(ui->action_What_s_this, &QAction::triggered, this,
           []() { QWhatsThis::enterWhatsThisMode(); });
@@ -606,6 +610,18 @@ void MainWindow::actionSimulation_options_triggered() {
   DialogSimulationOptions dialog(model.getSimulationSettings().options);
   if (dialog.exec() == QDialog::Accepted) {
     tabSimulate->setOptions(dialog.getOptions());
+    tabMain_currentChanged(ui->tabMain->currentIndex());
+  }
+}
+
+void MainWindow::action_Meshing_options_triggered() {
+  DialogMeshingOptions dialog(model.getMeshParameters().boundarySimplifierType);
+  if (auto &boundarySimplifierType{
+          model.getMeshParameters().boundarySimplifierType};
+      dialog.exec() == QDialog::Accepted &&
+      boundarySimplifierType != dialog.getBoundarySimplificationType()) {
+    boundarySimplifierType = dialog.getBoundarySimplificationType();
+    model.getGeometry().updateMesh();
     tabMain_currentChanged(ui->tabMain->currentIndex());
   }
 }

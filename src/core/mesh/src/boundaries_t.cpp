@@ -28,13 +28,19 @@ TEST_CASE("Boundaries", "[core/mesh/boundaries][core/mesh][core][boundaries]") {
     img.fill(col);
     SECTION("no compartment colours") {
       auto interiorPoints{mesh::getInteriorPoints(img, {})};
-      mesh::Boundaries boundaries(img, {});
-      REQUIRE(boundaries.size() == 0);
+      mesh::Boundaries boundaries0(img, {}, 0);
+      REQUIRE(boundaries0.getSimplifierType() == 0);
+      REQUIRE(boundaries0.size() == 0);
       REQUIRE(interiorPoints.empty());
+      mesh::Boundaries boundaries1(img, {}, 1);
+      REQUIRE(boundaries1.getSimplifierType() == 1);
+      REQUIRE(boundaries1.size() == 0);
+      boundaries1.setSimplifierType(0);
+      REQUIRE(boundaries1.getSimplifierType() == 0);
     }
     SECTION("whole image is a compartment") {
       auto interiorPoints{mesh::getInteriorPoints(img, {col})};
-      mesh::Boundaries boundaries(img, {col});
+      mesh::Boundaries boundaries(img, {col}, 0);
       std::vector<QPoint> outer{{0, 0},
                                 {img.width(), 0},
                                 {img.width(), img.height()},
@@ -49,6 +55,32 @@ TEST_CASE("Boundaries", "[core/mesh/boundaries][core/mesh][core][boundaries]") {
       REQUIRE(b.isValid());
       REQUIRE(b.isLoop());
       REQUIRE(common::isCyclicPermutation(b.getAllPoints(), outer));
+      REQUIRE(boundaries.getSimplifierType() == 0);
+      REQUIRE(boundaries.getBoundaries().size() == 1);
+      // set too many points for max
+      boundaries.setMaxPoints(0, 8);
+      REQUIRE(boundaries.getMaxPoints(0) == 8);
+      // set too few points for max
+      boundaries.setMaxPoints(0, 1);
+      REQUIRE(boundaries.getMaxPoints(0) == 1);
+      // automatic max points
+      boundaries.setMaxPoints();
+      REQUIRE(boundaries.getMaxPoints(0) == 4);
+      // change to topology-preserving line simplification
+      boundaries.setSimplifierType(1);
+      REQUIRE(boundaries.getSimplifierType() == 1);
+      // set too many points for max
+      boundaries.setMaxPoints(8);
+      REQUIRE(boundaries.getMaxPoints()[0] == 4);
+      // set too few points for max
+      boundaries.setMaxPoints(1);
+      REQUIRE(boundaries.getMaxPoints()[0] == 3);
+      // setting existing number of points is a no-op
+      boundaries.setMaxPoints(3);
+      REQUIRE(boundaries.getMaxPoints()[0] == 3);
+      // automatic max points
+      boundaries.setMaxPoints();
+      REQUIRE(boundaries.getMaxPoints()[0] == 4);
     }
   }
   SECTION("image with 3 concentric compartments, no fixed points") {
@@ -57,7 +89,7 @@ TEST_CASE("Boundaries", "[core/mesh/boundaries][core/mesh][core][boundaries]") {
     QRgb col1 = img.pixel(35, 20);
     QRgb col2 = img.pixel(40, 50);
     auto interiorPoints{mesh::getInteriorPoints(img, {col0, col1, col2})};
-    mesh::Boundaries boundaries(img, {col0, col1, col2});
+    mesh::Boundaries boundaries(img, {col0, col1, col2}, 0);
 
     REQUIRE(boundaries.size() == 3);
     REQUIRE(interiorPoints.size() == 3);
@@ -83,7 +115,7 @@ TEST_CASE("Boundaries", "[core/mesh/boundaries][core/mesh][core][boundaries]") {
     QRgb col1 = img.pixel(33, 33);
     QRgb col2 = img.pixel(66, 66);
     auto interiorPoints{mesh::getInteriorPoints(img, {col0, col1, col2})};
-    mesh::Boundaries boundaries(img, {col0, col1, col2});
+    mesh::Boundaries boundaries(img, {col0, col1, col2}, 1);
 
     REQUIRE(boundaries.size() == 4);
     REQUIRE(interiorPoints.size() == 3);
@@ -168,7 +200,7 @@ TEST_CASE("Boundaries using images from Medha Bhattacharya",
         CAPTURE(filename.toStdString());
         QImage img(filename);
         auto interiorPoints{mesh::getInteriorPoints(img, boundaryData.colours)};
-        mesh::Boundaries boundaries(img, boundaryData.colours);
+        mesh::Boundaries boundaries(img, boundaryData.colours, 0);
         REQUIRE(boundaries.size() == boundaryData.nBoundaries);
         REQUIRE(interiorPoints.size() == boundaryData.colours.size());
         for (std::size_t i = 0; i < interiorPoints.size(); ++i) {

@@ -297,6 +297,13 @@ TEST_CASE("MainWindow: advanced menu", tags) {
     sendKeyEvents(menu_Advanced, {"S"});
     REQUIRE(mwt.getResult() == "Simulation Options");
   }
+  SECTION("menu: Advanced->Meshing options... ") {
+    mwt.addUserAction({"Down", "Enter"});
+    mwt.start();
+    sendKeyEvents(&w, {"Alt+A"});
+    sendKeyEvents(menu_Advanced, {"M"});
+    REQUIRE(mwt.getResult() == "Meshing Options");
+  }
 }
 
 TEST_CASE("MainWindow: geometry", tags) {

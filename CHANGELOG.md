@@ -1,5 +1,8 @@
 # Changelog
 ## latest
+### Added
+- topology-preserving line simplification option [#328](https://github.com/spatial-model-editor/spatial-model-editor/issues/328)
+
 ### Changed
 - model reactions with invalid locations can now be seen and removed or relocated [#615](https://github.com/spatial-model-editor/spatial-model-editor/issues/615)
 

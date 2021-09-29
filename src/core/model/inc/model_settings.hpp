@@ -14,11 +14,14 @@ namespace sme::model {
 struct MeshParameters {
   std::vector<std::size_t> maxPoints{};
   std::vector<std::size_t> maxAreas{};
-
+  std::size_t boundarySimplifierType{0};
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
     if (version == 0) {
       ar(CEREAL_NVP(maxPoints), CEREAL_NVP(maxAreas));
+    } else if (version == 1) {
+      ar(CEREAL_NVP(maxPoints), CEREAL_NVP(maxAreas),
+         CEREAL_NVP(boundarySimplifierType));
     }
   }
 };
@@ -80,7 +83,7 @@ struct Settings {
 
 } // namespace sme::model
 
-CEREAL_CLASS_VERSION(sme::model::MeshParameters, 0);
+CEREAL_CLASS_VERSION(sme::model::MeshParameters, 1);
 CEREAL_CLASS_VERSION(sme::model::DisplayOptions, 1);
 CEREAL_CLASS_VERSION(sme::model::SimulationSettings, 1);
 CEREAL_CLASS_VERSION(sme::model::Settings, 0);

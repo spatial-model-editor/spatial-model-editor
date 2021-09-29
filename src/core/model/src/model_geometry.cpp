@@ -293,9 +293,10 @@ void ModelGeometry::updateMesh() {
   const auto &colours{modelCompartments->getColours()};
   const auto &ids{modelCompartments->getIds()};
   const auto &meshParams{sbmlAnnotation->meshParameters};
-  mesh = std::make_unique<mesh::Mesh>(
-      image, meshParams.maxPoints, meshParams.maxAreas, pixelWidth,
-      physicalOrigin, common::toStdVec(colours));
+  mesh = std::make_unique<mesh::Mesh>(image, meshParams.maxPoints,
+                                      meshParams.maxAreas, pixelWidth,
+                                      physicalOrigin, common::toStdVec(colours),
+                                      meshParams.boundarySimplifierType);
   for (int i = 0; i < ids.size(); ++i) {
     modelCompartments->setInteriorPoints(
         ids[i],
@@ -441,7 +442,8 @@ bool ModelGeometry::getHasImage() const { return hasImage; }
 void ModelGeometry::writeGeometryToSBML() const {
   if (mesh != nullptr && mesh->isValid()) {
     sbmlAnnotation->meshParameters = {mesh->getBoundaryMaxPoints(),
-                                      mesh->getCompartmentMaxTriangleArea()};
+                                      mesh->getCompartmentMaxTriangleArea(),
+                                      mesh->getBoundarySimplificationType()};
   }
 }
 

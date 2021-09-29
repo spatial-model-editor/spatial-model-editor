@@ -27,26 +27,38 @@ Mesh::Mesh() = default;
 Mesh::Mesh(const QImage &image, std::vector<std::size_t> maxPoints,
            std::vector<std::size_t> maxTriangleArea, double pixelWidth,
            const QPointF &originPoint,
-           const std::vector<QRgb> &compartmentColours)
+           const std::vector<QRgb> &compartmentColours,
+           std::size_t boundarySimplificationType)
     : img(image), origin(originPoint), pixel(pixelWidth),
       boundaryMaxPoints(std::move(maxPoints)),
       compartmentMaxTriangleArea(std::move(maxTriangleArea)),
-      boundaries{std::make_unique<Boundaries>(image, compartmentColours)},
+      boundaries{std::make_unique<Boundaries>(image, compartmentColours,
+                                              boundarySimplificationType)},
       compartmentInteriorPoints{getInteriorPoints(image, compartmentColours)} {
   SPDLOG_INFO("found {} boundaries", boundaries->size());
   for (const auto &boundary : boundaries->getBoundaries()) {
     SPDLOG_INFO("  - {} points, loop={}", boundary.getPoints().size(),
                 boundary.isLoop());
   }
-  if (boundaryMaxPoints.size() != boundaries->size()) {
-    // if boundary points not correctly specified use automatic values instead
-    SPDLOG_INFO("boundaryMaxPoints has size {}, but there are {} boundaries - "
-                "using automatic values",
-                boundaryMaxPoints.size(), boundaries->size());
-    boundaries->setMaxPoints();
-  } else {
-    for (std::size_t i = 0; i < boundaryMaxPoints.size(); ++i) {
-      boundaries->setMaxPoints(i, boundaryMaxPoints[i]);
+  if (boundarySimplificationType == 1) {
+    if (boundaryMaxPoints.size() == 1) {
+      boundaries->setMaxPoints(boundaryMaxPoints[0]);
+    } else {
+      // if boundary points not correctly specified use automatic values instead
+      boundaries->setMaxPoints();
+    }
+  } else if (boundarySimplificationType == 0) {
+    if (boundaryMaxPoints.size() != boundaries->size()) {
+      // if boundary points not correctly specified use automatic values instead
+      SPDLOG_INFO(
+          "boundaryMaxPoints has size {}, but there are {} boundaries - "
+          "using automatic values",
+          boundaryMaxPoints.size(), boundaries->size());
+      boundaries->setMaxPoints();
+    } else {
+      for (std::size_t i = 0; i < boundaryMaxPoints.size(); ++i) {
+        boundaries->setMaxPoints(i, boundaryMaxPoints[i]);
+      }
     }
   }
   SPDLOG_INFO("simplified {} boundaries", boundaries->size());
@@ -72,6 +84,15 @@ bool Mesh::isValid() const { return validMesh; }
 const std::string &Mesh::getErrorMessage() const { return errorMessage; };
 
 std::size_t Mesh::getNumBoundaries() const { return boundaries->size(); }
+
+std::size_t Mesh::getBoundarySimplificationType() const {
+  return boundaries->getSimplifierType();
+}
+
+void Mesh::setBoundarySimplificationType(
+    std::size_t boundarySimplificationType) {
+  boundaries->setSimplifierType(boundarySimplificationType);
+}
 
 void Mesh::setBoundaryMaxPoints(std::size_t boundaryIndex,
                                 std::size_t maxPoints) {

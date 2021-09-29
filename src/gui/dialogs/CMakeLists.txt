@@ -10,6 +10,7 @@ target_sources(
           dialoggeometryimage.cpp
           dialogimage.cpp
           dialogimageslice.cpp
+          dialogmeshingoptions.cpp
           dialogsimulationoptions.cpp
           dialogunits.cpp)
 target_include_directories(gui PUBLIC .)
@@ -27,6 +28,7 @@ if(BUILD_TESTING)
            dialoggeometryimage_t.cpp
            dialogimage_t.cpp
            dialogimageslice_t.cpp
+           dialogmeshingoptions_t.cpp
            dialogsimulationoptions_t.cpp
            dialogunits_t.cpp)
 endif()
