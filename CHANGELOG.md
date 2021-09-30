@@ -1,7 +1,8 @@
 # Changelog
-## latest
+## [1.2.1] - 2021-09-30
 ### Added
 - topology-preserving line simplification option [#328](https://github.com/spatial-model-editor/spatial-model-editor/issues/328)
+- python interface: ctrl+c now cancels a currently running simulation [#665](https://github.com/spatial-model-editor/spatial-model-editor/issues/665)
 
 ### Changed
 - model reactions with invalid locations can now be seen and removed or relocated [#615](https://github.com/spatial-model-editor/spatial-model-editor/issues/615)
@@ -11,6 +12,10 @@
 - python interface: setting n_threads=1 for simulate takes precedence over n_threads value in model [#672](https://github.com/spatial-model-editor/spatial-model-editor/issues/672)
 - bug where membrane reactions could disappear when geometry was changed [#679](https://github.com/spatial-model-editor/spatial-model-editor/issues/679)
 - bug where removing a compartment could result in an invalid model or a crash [#685](https://github.com/spatial-model-editor/spatial-model-editor/issues/685)
+- SBML export includes any ModifierSpecies in reactions [#133](https://github.com/spatial-model-editor/spatial-model-editor/issues/133)
+
+### Removed
+- incomplete Parametric geometry sbml export support [#599](https://github.com/spatial-model-editor/spatial-model-editor/issues/599)
 
 ## [1.2.0] - 2021-09-13
 ### Added
