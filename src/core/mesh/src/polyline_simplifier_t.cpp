@@ -65,10 +65,14 @@ TEST_CASE(
     mesh::PolylineSimplifier polylineSimplifier(boundaries);
     // set max points too small
     polylineSimplifier.setMaxPoints(boundaries, 12);
-    REQUIRE(polylineSimplifier.getMaxPoints() == Catch::Approx(61).margin(2));
-    // more vertices than points, as some vertices present in multiple boundary
-    // lines
-    REQUIRE(countVertices(boundaries) == Catch::Approx(97).margin(2));
+    // uses minimum number of points instead: this is not deterministic, the
+    // actual value can differ by a few points depending on numerics & the order
+    // in which points are removed by the algorithm
+    REQUIRE(polylineSimplifier.getMaxPoints() == Catch::Approx(61).margin(4));
+    // more vertices than points, as the same point can be a vertex in multiple
+    // boundary lines, for example the point where two or more boundary lines
+    // meet
+    REQUIRE(countVertices(boundaries) == Catch::Approx(97).margin(4));
     // set max points too large
     polylineSimplifier.setMaxPoints(boundaries, 999999);
     REQUIRE(polylineSimplifier.getMaxPoints() == 626);
