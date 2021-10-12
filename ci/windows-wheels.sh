@@ -25,7 +25,9 @@ which cmake
 cmake --version
 which python
 python --version
-ccache -s
+
+# disable this for now due to "terminate called after throwing an instance of 'core::Error'"
+#ccache -s
 
 # Remove CLI11 symlink to itself (causes recursive copying of folders on windows)
 rm -rf ext/CLI11/tests/mesonTest/subprojects/*
@@ -53,4 +55,5 @@ cd ..
 python -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
 python -m cibuildwheel --output-dir wheelhouse
 
-ccache -s
+# disable this for now due to "terminate called after throwing an instance of 'core::Error'"
+#ccache -s
