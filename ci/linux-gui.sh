@@ -50,6 +50,16 @@ cd ..
 # run benchmarks (~1 sec per benchmark, ~20secs total)
 time ./benchmark/benchmark 1
 
+# strip binaries
+du -sh src/spatial-model-editor
+du -sh cli/spatial-cli
+
+strip src/spatial-model-editor
+strip cli/spatial-cli
+
+du -sh src/spatial-model-editor
+du -sh cli/spatial-cli
+
 # check dependencies of binaries
 ldd src/spatial-model-editor
 ldd cli/spatial-cli

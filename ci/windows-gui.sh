@@ -61,6 +61,16 @@ mv build/sme/sme.cp39-win_amd64.pyd .
 python -m pip install -r sme/requirements.txt
 python -m unittest discover -s sme/test -v
 
+# strip binaries
+du -sh build/src/spatial-model-editor.exe
+du -sh build/cli/spatial-cli.exe
+
+strip build/src/spatial-model-editor.exe
+strip build/cli/spatial-cli.exe
+
+du -sh build/src/spatial-model-editor.exe
+du -sh build/cli/spatial-cli.exe
+
 # display version
 ./build/src/spatial-model-editor.exe -v
 
