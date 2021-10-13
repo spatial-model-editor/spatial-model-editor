@@ -15,7 +15,8 @@ export SME_EXTRA_EXE_LIBS="-static;-static-libgcc;-static-libstdc++"
 # used to be opt-in, done by default for Qt >= 6.1.2 see
 # https://codereview.qt-project.org/c/qt/qtbase/+/350443
 export SME_QT_DISABLE_UNICODE=TRUE
-export CMAKE_CXX_COMPILER_LAUNCHER=ccache
+# disable this for now due to "terminate called after throwing an instance of 'core::Error'"
+#export CMAKE_CXX_COMPILER_LAUNCHER=ccache
 export CCACHE_NOHASHDIR="true"
 export SME_EXTERNAL_SMECORE=on
 pwd
