@@ -41,7 +41,7 @@ jobs:
           restore-keys: ccache-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-
       - name: Cache sonar
         uses: actions/cache@v2
-        if: matrix.script == 'sonar'
+        if: matrix.script == 'sonar' && github.repository == 'spatial-model-editor/spatial-model-editor'
         with:
           path: ~/.sonarcache
           key: sonar-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-${{ github.sha }}
@@ -54,4 +54,5 @@ jobs:
       - name: Install dependencies (and use clang 12)
         run: ./ci/linux-install.sh 12
       - name: Run job script
+        if: matrix.script != 'sonar' || github.repository == 'spatial-model-editor/spatial-model-editor'
         run: ./ci/${{ matrix.script }}.sh
