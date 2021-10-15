@@ -80,6 +80,8 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [Cereal](https://github.com/USCiLab/cereal) - license: [BSD](https://github.com/USCiLab/cereal/blob/master/LICENSE)
 
+- [zlib](https://zlib.net/) - license: [zlib](https://zlib.net/zlib_license.html)
+
 ## Licensing Note
 
 The source code in this repository is released under the MIT license, which is a permissive

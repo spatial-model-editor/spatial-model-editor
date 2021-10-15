@@ -964,3 +964,30 @@ TEST_CASE("SBML: import multi-compartment SBML doc without spatial geometry",
   REQUIRE(
       symEq(reactions.getRateExpression("ex"), "0.00166666666666667 * k1 * D"));
 }
+
+TEST_CASE("SBML: import SBML doc with compressed sampledField",
+          "[core/model/model][core/model][core][model]") {
+  auto s{getTestModel("all_SpatialImage_SpatialUseCompression")};
+  REQUIRE(s.getIsValid() == true);
+  REQUIRE(s.getName() == "CellOrganizer2_7");
+  REQUIRE(s.getGeometry().getIsValid() == true);
+  REQUIRE(s.getGeometry().getHasImage() == true);
+  REQUIRE(s.getCompartments().getIds().size() == 4);
+  REQUIRE(s.getCompartments().getCompartment("EC")->nPixels() == 358);
+  REQUIRE(s.getCompartments().getCompartment("cell")->nPixels() == 390);
+  REQUIRE(s.getCompartments().getCompartment("nuc")->nPixels() == 237);
+  REQUIRE(s.getCompartments().getCompartment("vesicle")->nPixels() == 5);
+  // export and re-import, check compartment geometry hasn't changed
+  s.exportSBMLFile("compressedExported.xml");
+  sme::model::Model s2;
+  s2.importSBMLFile("compressedExported.xml");
+  REQUIRE(s2.getIsValid() == true);
+  REQUIRE(s2.getName() == "CellOrganizer2_7");
+  REQUIRE(s2.getGeometry().getIsValid() == true);
+  REQUIRE(s2.getGeometry().getHasImage() == true);
+  REQUIRE(s2.getCompartments().getIds().size() == 4);
+  REQUIRE(s2.getCompartments().getCompartment("EC")->nPixels() == 358);
+  REQUIRE(s2.getCompartments().getCompartment("cell")->nPixels() == 390);
+  REQUIRE(s2.getCompartments().getCompartment("nuc")->nPixels() == 237);
+  REQUIRE(s2.getCompartments().getCompartment("vesicle")->nPixels() == 5);
+}

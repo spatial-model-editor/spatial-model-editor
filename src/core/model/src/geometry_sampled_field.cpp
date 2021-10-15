@@ -158,8 +158,21 @@ static std::vector<QRgb> setImagePixels(
     const std::vector<const libsbml::SampledVolume *> &sampledVolumes) {
   std::vector<QRgb> colours(sampledVolumes.size(), 0);
   img.fill(qRgb(0, 0, 0));
-  auto values = common::stringToVector<T>(sampledField->getSamples());
-  SPDLOG_DEBUG("Importing sampled field of {} samples of type {}",
+  std::vector<T> values;
+  if (sampledField->getCompression() ==
+      libsbml::CompressionKind_t::SPATIAL_COMPRESSIONKIND_DEFLATED) {
+    // for compressed fields the string returned by getSamples() is compressed,
+    // so instead we get the field as doubles and then cast to the correct type.
+    std::vector<double> dbls;
+    sampledField->getSamples(dbls);
+    values.reserve(dbls.size());
+    for (auto dbl : dbls) {
+      values.push_back(static_cast<T>(dbl));
+    }
+  } else {
+    values = common::stringToVector<T>(sampledField->getSamples());
+  }
+  SPDLOG_ERROR("Importing sampled field of {} samples of type {}",
                values.size(), common::decltypeStr<T>());
   if (static_cast<int>(values.size()) != sampledField->getSamplesLength()) {
     SPDLOG_WARN("Number of samples {} doesn't match SamplesLength {}",
