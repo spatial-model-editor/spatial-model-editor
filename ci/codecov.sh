@@ -10,6 +10,12 @@ set -e -x
 Xvfb -screen 0 1280x800x24 :99 &
 export DISPLAY=:99
 
+# download codecov uploader
+curl --connect-timeout 10 --retry 5 -Os https://uploader.codecov.io/latest/linux/codecov
+chmod +x codecov
+sudo mv codecov /usr/bin
+codecov --version
+
 # do build
 mkdir build
 cd build
@@ -43,7 +49,7 @@ mv *#src#core*.gcov gcov/
 rm -f *.gcov
 ls gcov
 # upload coverage report to codecov.io
-bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F core
+codecov -X gcov -F core
 
 # gui unit tests
 rm -f gcov/*
@@ -57,7 +63,7 @@ llvm-cov gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
 mv *#src#core*.gcov *#src#gui*.gcov gcov/
 rm -f *.gcov
 # upload coverage report to codecov.io
-bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F gui
+codecov -X gcov -F gui
 
 # mainwindow unit tests
 rm -f gcov/*
@@ -71,7 +77,7 @@ llvm-cov gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
 mv *#src#core*.gcov *#src#gui*.gcov gcov/
 rm -f *.gcov
 # upload coverage report to codecov.io
-bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F mainwindow
+codecov -X gcov -F mainwindow
 
 # cli unit tests
 rm -f gcov/*
@@ -85,7 +91,7 @@ llvm-cov gcov -p test/CMakeFiles/tests.dir/__/cli/src/*.gcno > /dev/null
 mv *#src#core*.gcov *#cli*.gcov gcov/
 rm -f *.gcov
 # upload coverage report to codecov.io
-bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F cli
+codecov -X gcov -F cli
 
 # python tests
 rm -f gcov/*
@@ -101,4 +107,4 @@ llvm-cov gcov -p sme/CMakeFiles/sme.dir/src/*.gcno > /dev/null
 mv *#src#core*.gcov *#sme*.gcov gcov/
 rm -f *.gcov
 # upload coverage report to codecov.io
-bash <(curl --connect-timeout 10 --retry 5 -s https://codecov.io/bash) -X gcov -F sme
+codecov -X gcov -F sme
