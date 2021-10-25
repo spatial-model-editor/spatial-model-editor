@@ -3,7 +3,7 @@ name: Python Wheel Builds
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
   workflow_dispatch:
 
@@ -178,7 +178,7 @@ jobs:
 
   pypi:
     name: Upload to PyPI / Github Release
-    if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || github.ref == 'refs/heads/master')
+    if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
     needs: [linux-wheel, macos-wheel, win64-wheel, win32-wheel, sdist]
     runs-on: ubuntu-20.04
     steps:
@@ -197,8 +197,8 @@ jobs:
           mkdir latest
           mv dist/sme-*-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl latest/sme-latest-cp38-cp38-manylinux_2_12_x86_64.manylinux2010_x86_64.whl
       - uses: svenstaro/upload-release-action@v2
-        # if this is an untagged commit to master: upload selected wheels to github latest release
-        if: github.ref == 'refs/heads/master'
+        # if this is an untagged commit to main: upload selected wheels to github latest release
+        if: github.ref == 'refs/heads/main'
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: latest/*
