@@ -32,7 +32,7 @@ export ASAN_OPTIONS="detect_stack_use_after_return=1:check_initialization_order=
 # do build
 mkdir build
 cd build
-CC=clang CXX=clang++ cmake .. \
+cmake .. \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
   -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
   -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \

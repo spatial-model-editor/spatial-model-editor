@@ -19,7 +19,7 @@ codecov --version
 # do build
 mkdir build
 cd build
-CC=clang CXX=clang++ cmake .. \
+cmake .. \
   -DCMAKE_BUILD_TYPE=Debug \
   -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
   -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -43,8 +43,8 @@ mkdir gcov
 lcov -q -z -d .
 time ./test/tests -as "~[expensive][core]" > core.txt 2>&1 || (tail -n 1000 core.txt && exit 1)
 tail -n 100 core.txt
-llvm-cov gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
-llvm-cov gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
+gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
+gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
 mv *#src#core*.gcov gcov/
 rm -f *.gcov
 ls gcov
@@ -56,10 +56,10 @@ rm -f gcov/*
 lcov -q -z -d .
 time ./test/tests -as "~[expensive]~[mainwindow][gui]" > gui.txt 2>&1 || (tail -n 1000 gui.txt && exit 1)
 tail -n 100 gui.txt
-llvm-cov gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
-llvm-cov gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
-llvm-cov gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
-llvm-cov gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
+gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
+gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
+gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
+gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
 mv *#src#core*.gcov *#src#gui*.gcov gcov/
 rm -f *.gcov
 # upload coverage report to codecov.io
@@ -70,10 +70,10 @@ rm -f gcov/*
 lcov -q -z -d .
 time ./test/tests -as "~[expensive][mainwindow][gui]" > gui-mainwindow.txt 2>&1 || (tail -n 1000 gui-mainwindow.txt && exit 1)
 tail -n 100 gui-mainwindow.txt
-llvm-cov gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
-llvm-cov gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
-llvm-cov gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
-llvm-cov gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
+gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
+gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
+gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
+gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
 mv *#src#core*.gcov *#src#gui*.gcov gcov/
 rm -f *.gcov
 # upload coverage report to codecov.io
@@ -84,10 +84,10 @@ rm -f gcov/*
 lcov -q -z -d .
 time ./test/tests -as "~[expensive][cli]" > cli.txt 2>&1 || (tail -n 1000 cli.txt && exit 1)
 tail -n 100 cli.txt
-llvm-cov gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
-llvm-cov gcov -p cli/CMakeFiles/cli.dir/src/*.gcno > /dev/null
-llvm-cov gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
-llvm-cov gcov -p test/CMakeFiles/tests.dir/__/cli/src/*.gcno > /dev/null
+gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
+gcov -p cli/CMakeFiles/cli.dir/src/*.gcno > /dev/null
+gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
+gcov -p test/CMakeFiles/tests.dir/__/cli/src/*.gcno > /dev/null
 mv *#src#core*.gcov *#cli*.gcov gcov/
 rm -f *.gcov
 # upload coverage report to codecov.io
@@ -101,9 +101,9 @@ python -m pip install -r ../../sme/requirements.txt
 python -m unittest discover -v -s ../../sme/test > sme.txt 2>&1
 tail -n 100 sme.txt
 cd ..
-llvm-cov gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
-llvm-cov gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null
-llvm-cov gcov -p sme/CMakeFiles/sme.dir/src/*.gcno > /dev/null
+gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
+gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null
+gcov -p sme/CMakeFiles/sme.dir/src/*.gcno > /dev/null
 mv *#src#core*.gcov *#sme*.gcov gcov/
 rm -f *.gcov
 # upload coverage report to codecov.io

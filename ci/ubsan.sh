@@ -18,7 +18,7 @@ export UBSAN_OPTIONS="print_stacktrace=1:log_path=$(pwd)/ub"
 # do build
 mkdir build
 cd build
-CC=clang CXX=clang++ cmake .. \
+cmake .. \
   -DCMAKE_BUILD_TYPE=RelWithDebInfo \
   -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
   -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
