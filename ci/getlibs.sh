@@ -3,7 +3,7 @@
 # bash script to download static libs
 # usage: ./ci/getlibs.sh [linux, osx, win32, win64]
 
-SME_DEPS_VERSION="2021.10.15"
+SME_DEPS_VERSION="2021.11.23"
 OS=$1
 
 set -e -x
@@ -13,9 +13,9 @@ wget "https://github.com/spatial-model-editor/sme_deps/releases/download/${SME_D
 tar xf sme_deps_"$OS".tgz
 # copy libs to desired location: workaround for tar -C / not working on windows
 if [[ "$OS" == *"win"* ]]; then
-   mv smelibs /c/
-   # ls /c/smelibs
+    mv smelibs /c/
+    # ls /c/smelibs
 else
-   mv opt/* /opt/
-   # ls /opt/smelibs
+    mv opt/* /opt/
+    # ls /opt/smelibs
 fi

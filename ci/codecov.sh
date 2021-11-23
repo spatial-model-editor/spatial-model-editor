@@ -19,15 +19,15 @@ codecov --version
 # do build
 mkdir build
 cd build
-CC=clang CXX=clang++ cmake .. \
-  -DCMAKE_BUILD_TYPE=Debug \
-  -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
-  -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-  -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
-  -DCMAKE_CXX_FLAGS="--coverage" \
-  -DSME_WITH_TBB=ON \
-  -DBoost_NO_BOOST_CMAKE=on \
-  -DSTDTHREAD_WORKS=ON
+cmake .. \
+    -DCMAKE_BUILD_TYPE=Debug \
+    -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+    -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
+    -DCMAKE_CXX_FLAGS="--coverage" \
+    -DSME_WITH_TBB=ON \
+    -DBoost_NO_BOOST_CMAKE=on \
+    -DSTDTHREAD_WORKS=ON
 make -j2 VERBOSE=1
 ccache --show-stats
 

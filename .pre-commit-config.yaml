@@ -33,3 +33,8 @@ repos:
     rev: v13.0.0
     hooks:
       - id: clang-format
+
+  - repo: https://github.com/lovesegfault/beautysh
+    rev: v6.2.1
+    hooks:
+      - id: beautysh
