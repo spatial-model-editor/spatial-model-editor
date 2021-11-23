@@ -109,7 +109,7 @@ jobs:
   release:
     needs: [linux-gui, macos-gui, win64-gui]
     if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v2
         with:

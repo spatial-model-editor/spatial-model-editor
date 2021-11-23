@@ -17,17 +17,20 @@ export SME_EXTRA_EXE_LIBS="-static-libgcc;-static-libstdc++"
 # see https://stackoverflow.com/a/34522357/6465472
 export SME_EXTRA_GUI_LIBS="-no-pie"
 
+export CC=clang
+export CXX=clang++
+
 # do build
 mkdir build
 cd build
 cmake .. \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
-  -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-  -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
-  -DSME_EXTRA_GUI_LIBS=$SME_EXTRA_GUI_LIBS \
-  -DOpenGL_GL_PREFERENCE=LEGACY \
-  -DSME_WITH_TBB=ON
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+    -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
+    -DSME_EXTRA_GUI_LIBS=$SME_EXTRA_GUI_LIBS \
+    -DOpenGL_GL_PREFERENCE=LEGACY \
+    -DSME_WITH_TBB=ON
 make -j2 VERBOSE=1
 ccache --show-stats
 
