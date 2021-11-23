@@ -25,8 +25,8 @@ jobs:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2010_x86_64:2021.10.14
-      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2010_x86_64:2021.10.14
+      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2010_x86_64:2021.11.23
+      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2010_x86_64:2021.11.23
       CIBW_SKIP: '*-manylinux_i686 *-musllinux*'
       CIBW_ENVIRONMENT: 'SME_EXTERNAL_SMECORE=on'
       CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'
@@ -62,7 +62,7 @@ jobs:
         shell: bash
     env:
       CIBW_ENVIRONMENT: 'BLAS=None LAPACK=None ATLAS=None'
-      CIBW_TEST_SKIP: 'pp37-macosx_x86_64 cp310-macosx_x86_64'
+      CIBW_TEST_SKIP: 'pp37-macosx_x86_64'
     steps:
       - uses: actions/checkout@v2
         with:
@@ -96,7 +96,7 @@ jobs:
     env:
       CIBW_BUILD: '*-win_amd64'
       SME_EXTRA_CORE_DEFS: '_hypot=hypot;MS_WIN64'
-      CIBW_TEST_SKIP: "pp37-win_amd64 cp310-win_amd64"
+      CIBW_TEST_SKIP: "pp37-win_amd64"
     steps:
       - uses: actions/checkout@v2
         with:
