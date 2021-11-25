@@ -4,7 +4,7 @@
 #include "utils.hpp"
 #include <QString>
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
-#include <tbb/task_scheduler_init.h>
+#include <oneapi/tbb/info.h>
 #endif
 #ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
 #include <omp.h>
@@ -193,8 +193,7 @@ void DialogSimulationOptions::loadPixelOpts() {
   ui->txtPixelDt->setText(dblToQString(opt.pixel.maxTimestep));
   ui->chkPixelMultithread->setChecked(opt.pixel.enableMultiThreading);
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
-  ui->spnPixelThreads->setMaximum(
-      tbb::task_scheduler_init::default_num_threads());
+  ui->spnPixelThreads->setMaximum(oneapi::tbb::info::default_concurrency());
 #elif defined(SPATIAL_MODEL_EDITOR_WITH_OPENMP)
   ui->spnPixelThreads->setMaximum(omp_get_num_procs());
 #else

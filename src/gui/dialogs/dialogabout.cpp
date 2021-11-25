@@ -10,7 +10,7 @@
 #include <spdlog/version.h>
 #include <symengine/symengine_config.h>
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
-#include <tbb/tbb_stddef.h>
+#include <oneapi/tbb/version.h>
 #endif
 #include "symbolic.hpp"
 #include "ui_dialogabout.h"
@@ -91,7 +91,7 @@ DialogAbout::DialogAbout(QWidget *parent)
                        XML_MICRO_VERSION));
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   libraries.append(dep("TBB", "https://github.com/intel/tbb", TBB_VERSION_MAJOR,
-                       TBB_VERSION_MINOR));
+                       TBB_VERSION_MINOR, TBB_VERSION_PATCH));
 #endif
   libraries.append(dep("OpenCV", "https://github.com/opencv/opencv",
                        CV_MAJOR_VERSION, CV_MINOR_VERSION,

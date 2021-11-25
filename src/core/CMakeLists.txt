@@ -109,9 +109,13 @@ find_package(fmt REQUIRED)
 find_package(CGAL REQUIRED)
 find_package(cereal REQUIRED)
 if(SME_WITH_TBB)
-  find_package(tbb REQUIRED)
+  find_package(
+    TBB
+    CONFIG
+    REQUIRED)
+  message("TBB found: ${TBB_VERSION}")
   target_compile_definitions(core PUBLIC SPATIAL_MODEL_EDITOR_WITH_TBB)
-  target_link_libraries(core PRIVATE tbb::tbb)
+  target_link_libraries(core PRIVATE TBB::tbb)
 endif()
 if(SME_WITH_OPENMP)
   find_package(OpenMP REQUIRED)

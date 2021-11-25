@@ -14,8 +14,8 @@
 #include <memory>
 #include <utility>
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
-#include <tbb/global_control.h>
-#include <tbb/task_scheduler_init.h>
+#include <oneapi/tbb/global_control.h>
+#include <oneapi/tbb/info.h>
 #endif
 #ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
 #include <omp.h>
@@ -304,8 +304,8 @@ PixelSim::PixelSim(
     }
     if (numMaxThreads == 0) {
       // 0 means use all available threads
-      numMaxThreads = static_cast<std::size_t>(
-          tbb::task_scheduler_init::default_num_threads());
+      numMaxThreads =
+          static_cast<std::size_t>(oneapi::tbb::info::default_concurrency());
     }
 #elif defined(SPATIAL_MODEL_EDITOR_WITH_OPENMP)
     if (!sbmlDoc.getSimulationSettings().options.pixel.enableMultiThreading) {
@@ -339,8 +339,8 @@ std::size_t PixelSim::run(double time, double timeout_ms,
   SPDLOG_TRACE("  - max stepsize {}", maxTimestep);
   currentErrorMessage.clear();
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
-  tbb::global_control control(tbb::global_control::max_allowed_parallelism,
-                              numMaxThreads);
+  oneapi::tbb::global_control control(
+      oneapi::tbb::global_control::max_allowed_parallelism, numMaxThreads);
 #endif
   QElapsedTimer timer;
   timer.start();

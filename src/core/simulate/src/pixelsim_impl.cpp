@@ -13,10 +13,11 @@
 #include <memory>
 #include <utility>
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
-#include <tbb/global_control.h>
-#include <tbb/parallel_for.h>
-#include <tbb/task_scheduler_init.h>
-#include <tbb/tick_count.h>
+// Qt defines emit which interfers with tbb: temporary hack
+#undef emit
+#include <oneapi/tbb/global_control.h>
+#include <oneapi/tbb/parallel_for.h>
+#include <oneapi/tbb/tick_count.h>
 #endif
 
 namespace sme::simulate {
@@ -186,10 +187,11 @@ void SimCompartment::evaluateDiffusionOperator() {
 
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::evaluateDiffusionOperator_tbb() {
-  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, nPixels),
-                    [this](const tbb::blocked_range<std::size_t> &r) {
-                      evaluateDiffusionOperator(r.begin(), r.end());
-                    });
+  oneapi::tbb::parallel_for(
+      oneapi::tbb::blocked_range<std::size_t>(0, nPixels),
+      [this](const oneapi::tbb::blocked_range<std::size_t> &r) {
+        evaluateDiffusionOperator(r.begin(), r.end());
+      });
 }
 #endif
 
@@ -206,10 +208,11 @@ void SimCompartment::evaluateReactions() { evaluateReactions(0, nPixels); }
 
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::evaluateReactions_tbb() {
-  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, nPixels),
-                    [this](const tbb::blocked_range<std::size_t> &r) {
-                      evaluateReactions(r.begin(), r.end());
-                    });
+  oneapi::tbb::parallel_for(
+      oneapi::tbb::blocked_range<std::size_t>(0, nPixels),
+      [this](const oneapi::tbb::blocked_range<std::size_t> &r) {
+        evaluateReactions(r.begin(), r.end());
+      });
 }
 #endif
 
@@ -229,10 +232,11 @@ void SimCompartment::doForwardsEulerTimestep(double dt) {
 
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::doForwardsEulerTimestep_tbb(double dt) {
-  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, conc.size()),
-                    [this, dt](const tbb::blocked_range<std::size_t> &r) {
-                      doForwardsEulerTimestep(dt, r.begin(), r.end());
-                    });
+  oneapi::tbb::parallel_for(
+      oneapi::tbb::blocked_range<std::size_t>(0, conc.size()),
+      [this, dt](const oneapi::tbb::blocked_range<std::size_t> &r) {
+        doForwardsEulerTimestep(dt, r.begin(), r.end());
+      });
 }
 #endif
 
@@ -262,10 +266,11 @@ void SimCompartment::doRK212Substep1(double dt) {
 void SimCompartment::doRK212Substep1_tbb(double dt) {
   s2.resize(conc.size());
   s3.resize(conc.size());
-  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, conc.size()),
-                    [this, dt](const tbb::blocked_range<std::size_t> &r) {
-                      doRK212Substep1(dt, r.begin(), r.end());
-                    });
+  oneapi::tbb::parallel_for(
+      oneapi::tbb::blocked_range<std::size_t>(0, conc.size()),
+      [this, dt](const oneapi::tbb::blocked_range<std::size_t> &r) {
+        doRK212Substep1(dt, r.begin(), r.end());
+      });
 }
 #endif
 
@@ -286,10 +291,11 @@ void SimCompartment::doRK212Substep2(double dt) {
 
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::doRK212Substep2_tbb(double dt) {
-  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, conc.size()),
-                    [this, dt](const tbb::blocked_range<std::size_t> &r) {
-                      doRK212Substep2(dt, r.begin(), r.end());
-                    });
+  oneapi::tbb::parallel_for(
+      oneapi::tbb::blocked_range<std::size_t>(0, conc.size()),
+      [this, dt](const oneapi::tbb::blocked_range<std::size_t> &r) {
+        doRK212Substep2(dt, r.begin(), r.end());
+      });
 }
 #endif
 
@@ -313,12 +319,12 @@ void SimCompartment::doRKSubstep(double dt, double g1, double g2, double g3,
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::doRKSubstep_tbb(double dt, double g1, double g2, double g3,
                                      double beta, double delta) {
-  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, conc.size()),
-                    [this, dt, g1, g2, g3, beta,
-                     delta](const tbb::blocked_range<std::size_t> &r) {
-                      doRKSubstep(dt, g1, g2, g3, beta, delta, r.begin(),
-                                  r.end());
-                    });
+  oneapi::tbb::parallel_for(
+      oneapi::tbb::blocked_range<std::size_t>(0, conc.size()),
+      [this, dt, g1, g2, g3, beta,
+       delta](const oneapi::tbb::blocked_range<std::size_t> &r) {
+        doRKSubstep(dt, g1, g2, g3, beta, delta, r.begin(), r.end());
+      });
 }
 #endif
 
@@ -341,12 +347,12 @@ void SimCompartment::doRKFinalise(double cFactor, double s2Factor,
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::doRKFinalise_tbb(double cFactor, double s2Factor,
                                       double s3Factor) {
-  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, conc.size()),
-                    [this, cFactor, s2Factor,
-                     s3Factor](const tbb::blocked_range<std::size_t> &r) {
-                      doRKFinalise(cFactor, s2Factor, s3Factor, r.begin(),
-                                   r.end());
-                    });
+  oneapi::tbb::parallel_for(
+      oneapi::tbb::blocked_range<std::size_t>(0, conc.size()),
+      [this, cFactor, s2Factor,
+       s3Factor](const oneapi::tbb::blocked_range<std::size_t> &r) {
+        doRKFinalise(cFactor, s2Factor, s3Factor, r.begin(), r.end());
+      });
 }
 #endif
 
@@ -363,10 +369,11 @@ void SimCompartment::undoRKStep() { undoRKStep(0, conc.size()); }
 
 #ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::undoRKStep_tbb() {
-  tbb::parallel_for(tbb::blocked_range<std::size_t>(0, conc.size()),
-                    [this](const tbb::blocked_range<std::size_t> &r) {
-                      undoRKStep(r.begin(), r.end());
-                    });
+  oneapi::tbb::parallel_for(
+      oneapi::tbb::blocked_range<std::size_t>(0, conc.size()),
+      [this](const oneapi::tbb::blocked_range<std::size_t> &r) {
+        undoRKStep(r.begin(), r.end());
+      });
 }
 #endif
 
