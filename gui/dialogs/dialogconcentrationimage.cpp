@@ -163,9 +163,7 @@ void DialogConcentrationImage::importConcentrationImage(
   updateImageFromConcentration();
 }
 
-const static QString dblToString(double x) {
-  return QString::number(x, 'g', 14);
-}
+static QString toQStr(double x) { return QString::number(x, 'g', 14); }
 
 static std::pair<double, double> getMinMax(const std::vector<double> &vec) {
   auto [iterMin, iterMax] = std::minmax_element(vec.cbegin(), vec.cend());
@@ -182,8 +180,8 @@ void DialogConcentrationImage::updateImageFromConcentration() {
   // update min/max concentrations
   const auto [newMin, newMax] = getMinMax(concentration);
   SPDLOG_DEBUG("min {}, max {}", newMin, newMax);
-  ui->txtMinConc->setText(dblToString(newMin));
-  ui->txtMaxConc->setText(dblToString(newMax));
+  ui->txtMinConc->setText(toQStr(newMin));
+  ui->txtMaxConc->setText(toQStr(newMax));
   // normalise intensity to max concentration
   img.fill(0);
   for (std::size_t i = 0; i < points.size(); ++i) {
@@ -202,13 +200,13 @@ void DialogConcentrationImage::rescaleConcentration(double newMin,
                 "setting it to zero");
     newMin = 0;
   }
-  ui->txtMinConc->setText(dblToString(newMin));
+  ui->txtMinConc->setText(toQStr(newMin));
   if (newMax <= newMin) {
     SPDLOG_WARN("Max concentration cannot be smaller than Min concentration: "
                 "setting it equal to Min concentration + 1");
     newMax = newMin + 1;
   }
-  ui->txtMaxConc->setText(dblToString(newMax));
+  ui->txtMaxConc->setText(toQStr(newMax));
   SPDLOG_INFO("  - new range [{}, {}]", newMin, newMax);
   double oldMin;
   double oldMax;

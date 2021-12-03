@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>DialogOptCost</class>
+ <widget class="QDialog" name="DialogOptCost">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>516</width>
+    <height>232</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Edit Optimization Target</string>
+  </property>
+  <property name="whatsThis">
+   <string/>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="3">
+      <widget class="QComboBox" name="cmbSpecies">
+       <property name="currentIndex">
+        <number>-1</number>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="3">
+      <widget class="QPushButton" name="btnEditTargetValues">
+       <property name="text">
+        <string>Edit Target Values</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="3">
+      <widget class="QComboBox" name="cmbDiffType">
+       <item>
+        <property name="text">
+         <string>Absolute</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Relative</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="3" column="3">
+      <widget class="QLineEdit" name="txtSimulationTime"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="lblSimulationTimeLabel">
+       <property name="text">
+        <string>Simulation time:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="lblDiffTypeLabel">
+       <property name="text">
+        <string>Difference type:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="lblSpeciesLabel">
+       <property name="text">
+        <string>Species:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QComboBox" name="cmbCostType">
+       <item>
+        <property name="text">
+         <string>Concentration</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Rate of change of concentration</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="lblCostTypeLabel">
+       <property name="text">
+        <string>Target type:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="lblLowerBoundLabel">
+       <property name="text">
+        <string>Target values:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>cmbSpecies</tabstop>
+  <tabstop>cmbCostType</tabstop>
+  <tabstop>cmbDiffType</tabstop>
+  <tabstop>txtSimulationTime</tabstop>
+  <tabstop>btnEditTargetValues</tabstop>
+ </tabstops>
+ <resources/>
+ <connections/>
+</ui>

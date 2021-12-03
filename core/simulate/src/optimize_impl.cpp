@@ -1,4 +1,5 @@
 #include "optimize_impl.hpp"
+#include "sme/logger.hpp"
 
 namespace sme::simulate {
 
@@ -27,19 +28,21 @@ void applyParameters(const pagmo::vector_double &values,
 }
 
 double calculateCosts(const std::vector<OptCost> &optCosts,
+                      const std::vector<std::size_t> &optCostIndices,
                       const sme::simulate::Simulation &sim) {
   double cost{0};
-  for (const auto &optCost : optCosts) {
+  for (const auto &optCostIndex : optCostIndices) {
+    const auto &optCost{optCosts[optCostIndex]};
     std::vector<double> values;
     auto compIndex{optCost.compartmentIndex};
     auto specIndex{optCost.speciesIndex};
     switch (optCost.optCostType) {
     case OptCostType::Concentration:
-      values =
-          sim.getConc(sim.getTimePoints().size() - 1, compIndex, specIndex);
+      values = sim.getConcArray(sim.getTimePoints().size() - 1, compIndex,
+                                specIndex);
       break;
     case OptCostType::ConcentrationDcdt:
-      values = sim.getDcdt(compIndex, specIndex);
+      values = sim.getDcdtArray(compIndex, specIndex);
       break;
     default:
       throw std::invalid_argument("Optimization: Invalid OptCostType");
@@ -89,10 +92,60 @@ PagmoUDP::PagmoUDP(const PagmoUDP &other) {
   init(other.xmlModel, other.optimizeOptions);
 }
 
+static std::vector<OptTimestep>
+getOptTimesteps(const OptimizeOptions &options) {
+  std::vector<OptTimestep> optTimesteps;
+  // get time for each optCost
+  std::vector<double> times;
+  for (const auto &optCost : options.optCosts) {
+    times.push_back(optCost.simulationTime);
+  }
+  // sort times
+  std::vector sortedUniqueTimes{times};
+  std::sort(sortedUniqueTimes.begin(), sortedUniqueTimes.end());
+  // margin within which times are considered equal:
+  constexpr double relativeEps{1e-13};
+  double epsilon{sortedUniqueTimes.back() * relativeEps};
+  // remove (approx) duplicates
+  sortedUniqueTimes.erase(std::unique(sortedUniqueTimes.begin(),
+                                      sortedUniqueTimes.end(),
+                                      [epsilon](double a, double b) {
+                                        return std::abs(a - b) < epsilon;
+                                      }),
+                          sortedUniqueTimes.end());
+  double previousTime{0};
+  for (double sortedUniqueTime : sortedUniqueTimes) {
+    double dt{sortedUniqueTime - previousTime};
+    previousTime += dt;
+    optTimesteps.push_back({dt, {}});
+    for (std::size_t i = 0; i < times.size(); ++i) {
+      if (std::abs(times[i] - sortedUniqueTime) < epsilon) {
+        optTimesteps.back().optCostIndices.push_back(i);
+      }
+    }
+  }
+  for (const auto &optTimestep : optTimesteps) {
+    SPDLOG_INFO("t = {}", optTimestep.simulationTime);
+    for (const auto optCostIndex : optTimestep.optCostIndices) {
+      SPDLOG_INFO("  - index {}", optCostIndex);
+    }
+  }
+  return optTimesteps;
+}
+
 void PagmoUDP::init(const std::string &xml, const OptimizeOptions &options) {
   SPDLOG_INFO("initializing model");
   xmlModel = xml;
   optimizeOptions = options;
+  if (optimizeOptions.optCosts.empty()) {
+    throw std::invalid_argument(
+        "Optimization: No optimization targets specified");
+  }
+  if (optimizeOptions.optParams.empty()) {
+    throw std::invalid_argument(
+        "Optimization: No parameters to optimize specified");
+  }
+  optTimesteps = getOptTimesteps(options);
   model = std::make_unique<sme::model::Model>();
   model->importSBMLString(xmlModel);
 }
@@ -102,8 +155,12 @@ PagmoUDP::fitness(const pagmo::vector_double &dv) const {
   model->getSimulationData().clear();
   applyParameters(dv, optimizeOptions.optParams, model.get());
   sme::simulate::Simulation sim(*model);
-  sim.doTimesteps(optimizeOptions.simulationTime);
-  auto cost{calculateCosts(optimizeOptions.optCosts, sim)};
+  double cost{0.0};
+  for (const auto &optTimestep : optTimesteps) {
+    sim.doTimesteps(optTimestep.simulationTime);
+    cost += calculateCosts(optimizeOptions.optCosts, optTimestep.optCostIndices,
+                           sim);
+  }
   return {cost};
 }
 

@@ -91,6 +91,8 @@ public:
   void applyConcsToModel(model::Model &m, std::size_t timeIndex) const;
   [[nodiscard]] std::vector<double> getDcdt(std::size_t compartmentIndex,
                                             std::size_t speciesIndex) const;
+  [[nodiscard]] std::vector<double>
+  getDcdtArray(std::size_t compartmentIndex, std::size_t speciesIndex) const;
   [[nodiscard]] double getLowerOrderConc(std::size_t compartmentIndex,
                                          std::size_t speciesIndex,
                                          std::size_t pixelIndex) const;

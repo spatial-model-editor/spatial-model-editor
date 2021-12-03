@@ -13,6 +13,7 @@ void applyParameters(const pagmo::vector_double &values,
                      sme::model::Model *model);
 
 double calculateCosts(const std::vector<OptCost> &optCosts,
+                      const std::vector<std::size_t> &optCostIndices,
                       const sme::simulate::Simulation &sim);
 
 /**
@@ -28,11 +29,19 @@ double calculateCosts(const std::vector<OptCost> &optCosts,
  * safe when modifying/simulating this model).
  */
 
+struct OptTimestep {
+  // the time to simulate for
+  double simulationTime;
+  // the indices of the OptCosts to calculate after simulating
+  std::vector<std::size_t> optCostIndices;
+};
+
 class PagmoUDP {
 private:
   std::string xmlModel;
   std::unique_ptr<sme::model::Model> model;
   OptimizeOptions optimizeOptions;
+  std::vector<OptTimestep> optTimesteps;
 
 public:
   explicit PagmoUDP();

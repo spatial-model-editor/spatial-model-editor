@@ -359,8 +359,8 @@ std::vector<double> Simulation::getConc(std::size_t timeIndex,
   const auto &compConc = data->concentration[timeIndex][compartmentIndex];
   std::size_t nPixels = compartments[compartmentIndex]->nPixels();
   std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
-  c.reserve(nPixels);
   std::size_t stride{nSpecies + data->concPadding[timeIndex]};
+  c.reserve(nPixels);
   for (std::size_t ix = 0; ix < nPixels; ++ix) {
     c.push_back(compConc[ix * stride + speciesIndex]);
   }
@@ -402,14 +402,37 @@ void Simulation::applyConcsToModel(model::Model &m,
 std::vector<double> Simulation::getDcdt(std::size_t compartmentIndex,
                                         std::size_t speciesIndex) const {
   std::vector<double> c;
-  if (auto *s = dynamic_cast<PixelSim *>(simulator.get()); s != nullptr) {
+  if (const auto *s = dynamic_cast<const PixelSim *>(simulator.get());
+      s != nullptr) {
     const auto &compDcdt = s->getDcdt(compartmentIndex);
     std::size_t nPixels = compartments[compartmentIndex]->nPixels();
     std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
-    c.reserve(nPixels);
     std::size_t stride{nSpecies + data->concPadding.back()};
+    c.reserve(nPixels);
     for (std::size_t ix = 0; ix < nPixels; ++ix) {
       c.push_back(compDcdt[ix * stride + speciesIndex]);
+    }
+  }
+  return c;
+}
+
+std::vector<double> Simulation::getDcdtArray(std::size_t compartmentIndex,
+                                             std::size_t speciesIndex) const {
+  std::vector<double> c(
+      static_cast<std::size_t>(imageSize.width() * imageSize.height()), 0.0);
+  if (const auto *s = dynamic_cast<const PixelSim *>(simulator.get());
+      s != nullptr) {
+    const auto &compDcdt = s->getDcdt(compartmentIndex);
+    const auto &comp = compartments[compartmentIndex];
+    std::size_t nPixels = compartments[compartmentIndex]->nPixels();
+    std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
+    std::size_t stride{nSpecies + data->concPadding.back()};
+    for (std::size_t ix = 0; ix < nPixels; ++ix) {
+      const auto &point = comp->getPixel(ix);
+      auto arrayIndex{static_cast<std::size_t>(
+          point.x() +
+          imageSize.width() * (imageSize.height() - 1 - point.y()))};
+      c[arrayIndex] = compDcdt[ix * stride + speciesIndex];
     }
   }
   return c;
@@ -418,7 +441,8 @@ std::vector<double> Simulation::getDcdt(std::size_t compartmentIndex,
 double Simulation::getLowerOrderConc(std::size_t compartmentIndex,
                                      std::size_t speciesIndex,
                                      std::size_t pixelIndex) const {
-  if (auto *s = dynamic_cast<PixelSim *>(simulator.get()); s != nullptr) {
+  if (const auto *s = dynamic_cast<const PixelSim *>(simulator.get());
+      s != nullptr) {
     return s->getLowerOrderConcentration(compartmentIndex, speciesIndex,
                                          pixelIndex);
   }
@@ -536,7 +560,7 @@ Simulation::getPyConcs(std::size_t timeIndex,
 [[nodiscard]] std::vector<std::vector<double>>
 Simulation::getPyDcdts(std::size_t compartmentIndex) const {
   // dcdt is only available from pixel sim, and only for the last timestep
-  PixelSim *pixelSim{dynamic_cast<PixelSim *>(simulator.get())};
+  const PixelSim *pixelSim{dynamic_cast<const PixelSim *>(simulator.get())};
   if (pixelSim == nullptr || data->concPadding.empty()) {
     return {};
   }
