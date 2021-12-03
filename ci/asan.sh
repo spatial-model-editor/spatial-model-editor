@@ -38,9 +38,6 @@ cmake .. \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer" \
     -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic -Wshadow -Wunused -Wconversion -Wsign-conversion -Wcast-align -fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer" \
-    -DSME_WITH_TBB=ON \
-    -DBoost_NO_BOOST_CMAKE=on \
-    -DSTDTHREAD_WORKS=ON \
     -DSME_LOG_LEVEL=TRACE
 time make tests -j2
 ccache --show-stats

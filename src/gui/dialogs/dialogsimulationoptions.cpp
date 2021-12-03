@@ -3,12 +3,7 @@
 #include "ui_dialogsimulationoptions.h"
 #include "utils.hpp"
 #include <QString>
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 #include <oneapi/tbb/info.h>
-#endif
-#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
-#include <omp.h>
-#endif
 
 static QString dblToQString(double x) {
   return QString("%1").arg(x, 0, 'e', 5);
@@ -192,16 +187,7 @@ void DialogSimulationOptions::loadPixelOpts() {
   ui->txtPixelAbsErr->setText(dblToQString(opt.pixel.maxErr.abs));
   ui->txtPixelDt->setText(dblToQString(opt.pixel.maxTimestep));
   ui->chkPixelMultithread->setChecked(opt.pixel.enableMultiThreading);
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   ui->spnPixelThreads->setMaximum(oneapi::tbb::info::default_concurrency());
-#elif defined(SPATIAL_MODEL_EDITOR_WITH_OPENMP)
-  ui->spnPixelThreads->setMaximum(omp_get_num_procs());
-#else
-  ui->chkPixelMultithread->setChecked(false);
-  ui->chkPixelMultithread->setEnabled(false);
-  ui->spnPixelThreads->setValue(1);
-  ui->spnPixelThreads->setEnabled(false);
-#endif
   if (opt.pixel.enableMultiThreading) {
     ui->spnPixelThreads->setEnabled(true);
     int threads = static_cast<int>(opt.pixel.maxThreads);

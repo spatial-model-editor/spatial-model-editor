@@ -12,14 +12,9 @@
 #include <cmath>
 #include <cstdlib>
 #include <memory>
-#include <utility>
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 #include <oneapi/tbb/global_control.h>
 #include <oneapi/tbb/info.h>
-#endif
-#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
-#include <omp.h>
-#endif
+#include <utility>
 
 namespace sme::simulate {
 
@@ -27,10 +22,8 @@ void PixelSim::calculateDcdt() {
   // calculate dcd/dt in all compartments
   for (auto &sim : simCompartments) {
     if (useTBB) {
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
       sim->evaluateReactions_tbb();
       sim->evaluateDiffusionOperator_tbb();
-#endif
     } else {
       sim->evaluateReactions();
       sim->evaluateDiffusionOperator();
@@ -50,9 +43,7 @@ void PixelSim::doRK101(double dt) {
   calculateDcdt();
   for (auto &sim : simCompartments) {
     if (useTBB) {
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
       sim->doForwardsEulerTimestep_tbb(dt);
-#endif
     } else {
       sim->doForwardsEulerTimestep(dt);
     }
@@ -66,9 +57,7 @@ void PixelSim::doRK212(double dt) {
   calculateDcdt();
   for (auto &sim : simCompartments) {
     if (useTBB) {
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
       sim->doRK212Substep1_tbb(dt);
-#endif
     } else {
       sim->doRK212Substep1(dt);
     }
@@ -76,9 +65,7 @@ void PixelSim::doRK212(double dt) {
   calculateDcdt();
   for (auto &sim : simCompartments) {
     if (useTBB) {
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
       sim->doRK212Substep2_tbb(dt);
-#endif
     } else {
       sim->doRK212Substep2(dt);
     }
@@ -142,9 +129,7 @@ void PixelSim::doRKSubstep(double dt, double g1, double g2, double g3,
   calculateDcdt();
   for (auto &sim : simCompartments) {
     if (useTBB) {
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
       sim->doRKSubstep_tbb(dt, g1, g2, g3, beta, delta);
-#endif
     } else {
       sim->doRKSubstep(dt, g1, g2, g3, beta, delta);
     }
@@ -298,7 +283,6 @@ PixelSim::PixelSim(
         simCompartments[i]->setConcentrations(data.concentration.back()[i]);
       }
     }
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
     if (sbmlDoc.getSimulationSettings().options.pixel.enableMultiThreading) {
       useTBB = true;
     }
@@ -307,23 +291,6 @@ PixelSim::PixelSim(
       numMaxThreads =
           static_cast<std::size_t>(oneapi::tbb::info::default_concurrency());
     }
-#elif defined(SPATIAL_MODEL_EDITOR_WITH_OPENMP)
-    if (!sbmlDoc.getSimulationSettings().options.pixel.enableMultiThreading) {
-      numMaxThreads = 1;
-    }
-    if (auto ompMaxThreads{static_cast<std::size_t>(omp_get_num_procs())};
-        numMaxThreads == 0 || numMaxThreads > ompMaxThreads) {
-      // 0 means use all available threads
-      numMaxThreads = ompMaxThreads;
-    }
-    omp_set_num_threads(static_cast<int>(numMaxThreads));
-#else
-    if (sbmlDoc.getSimulationSettings().options.pixel.enableMultiThreading) {
-      SPDLOG_WARN(
-          "Multithreading requested but not compiled with TBB or OpenMP "
-          "support: ignoring");
-    }
-#endif
   } catch (const std::runtime_error &e) {
     SPDLOG_ERROR("runtime_error: {}", e.what());
     currentErrorMessage = e.what();
@@ -338,10 +305,8 @@ std::size_t PixelSim::run(double time, double timeout_ms,
   SPDLOG_TRACE("  - max abs local err {}", errMax.abs);
   SPDLOG_TRACE("  - max stepsize {}", maxTimestep);
   currentErrorMessage.clear();
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   oneapi::tbb::global_control control(
       oneapi::tbb::global_control::max_allowed_parallelism, numMaxThreads);
-#endif
   QElapsedTimer timer;
   timer.start();
   double tNow = 0;

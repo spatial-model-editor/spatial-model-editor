@@ -91,51 +91,35 @@ public:
   // dcdt = result of applying diffusion operator to conc
   void evaluateDiffusionOperator(std::size_t begin, std::size_t end);
   void evaluateDiffusionOperator();
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   void evaluateDiffusionOperator_tbb();
-#endif
   // dcdt += result of applying reaction expressions to conc
   void evaluateReactions(std::size_t begin, std::size_t end);
   void evaluateReactions();
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   void evaluateReactions_tbb();
-#endif
   void spatiallyAverageDcdt();
   void doForwardsEulerTimestep(double dt, std::size_t begin, std::size_t end);
   void doForwardsEulerTimestep(double dt);
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   void doForwardsEulerTimestep_tbb(double dt);
-#endif
   void doRKInit();
   void doRK212Substep1(double dt, std::size_t begin, std::size_t end);
   void doRK212Substep1(double dt);
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   void doRK212Substep1_tbb(double dt);
-#endif
   void doRK212Substep2(double dt, std::size_t begin, std::size_t end);
   void doRK212Substep2(double dt);
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   void doRK212Substep2_tbb(double dt);
-#endif
   void doRKSubstep(double dt, double g1, double g2, double g3, double beta,
                    double delta, std::size_t begin, std::size_t end);
   void doRKSubstep(double dt, double g1, double g2, double g3, double beta,
                    double delta);
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   void doRKSubstep_tbb(double dt, double g1, double g2, double g3, double beta,
                        double delta);
-#endif
   void doRKFinalise(double cFactor, double s2Factor, double s3Factor,
                     std::size_t begin, std::size_t end);
   void doRKFinalise(double cFactor, double s2Factor, double s3Factor);
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   void doRKFinalise_tbb(double cFactor, double s2Factor, double s3Factor);
-#endif
   void undoRKStep(std::size_t begin, std::size_t end);
   void undoRKStep();
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
   void undoRKStep_tbb();
-#endif
   [[nodiscard]] PixelIntegratorError calculateRKError(double epsilon) const;
   std::string plotRKError(QImage &image, double epsilon, double max) const;
   [[nodiscard]] const std::string &getCompartmentId() const;

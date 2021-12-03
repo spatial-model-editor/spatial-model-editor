@@ -12,13 +12,11 @@
 #include <cstdlib>
 #include <memory>
 #include <utility>
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 // Qt defines emit which interfers with tbb: temporary hack
 #undef emit
 #include <oneapi/tbb/global_control.h>
 #include <oneapi/tbb/parallel_for.h>
 #include <oneapi/tbb/tick_count.h>
-#endif
 
 namespace sme::simulate {
 
@@ -163,9 +161,6 @@ SimCompartment::SimCompartment(
 
 void SimCompartment::evaluateDiffusionOperator(std::size_t begin,
                                                std::size_t end) {
-#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
-#pragma omp parallel for
-#endif
   for (std::size_t i = begin; i < end; ++i) {
     std::size_t ix = i * nSpecies;
     std::size_t ix_upx = comp->up_x(i) * nSpecies;
@@ -185,7 +180,6 @@ void SimCompartment::evaluateDiffusionOperator() {
   evaluateDiffusionOperator(0, nPixels);
 }
 
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::evaluateDiffusionOperator_tbb() {
   oneapi::tbb::parallel_for(
       oneapi::tbb::blocked_range<std::size_t>(0, nPixels),
@@ -193,12 +187,8 @@ void SimCompartment::evaluateDiffusionOperator_tbb() {
         evaluateDiffusionOperator(r.begin(), r.end());
       });
 }
-#endif
 
 void SimCompartment::evaluateReactions(std::size_t begin, std::size_t end) {
-#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
-#pragma omp parallel for
-#endif
   for (std::size_t i = begin; i < end; ++i) {
     reacEval.evaluate(dcdt.data() + i * nSpecies, conc.data() + i * nSpecies);
   }
@@ -206,7 +196,6 @@ void SimCompartment::evaluateReactions(std::size_t begin, std::size_t end) {
 
 void SimCompartment::evaluateReactions() { evaluateReactions(0, nPixels); }
 
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::evaluateReactions_tbb() {
   oneapi::tbb::parallel_for(
       oneapi::tbb::blocked_range<std::size_t>(0, nPixels),
@@ -214,13 +203,9 @@ void SimCompartment::evaluateReactions_tbb() {
         evaluateReactions(r.begin(), r.end());
       });
 }
-#endif
 
 void SimCompartment::doForwardsEulerTimestep(double dt, std::size_t begin,
                                              std::size_t end) {
-#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
-#pragma omp parallel for
-#endif
   for (std::size_t i = begin; i < end; ++i) {
     conc[i] += dt * dcdt[i];
   }
@@ -230,7 +215,6 @@ void SimCompartment::doForwardsEulerTimestep(double dt) {
   doForwardsEulerTimestep(dt, 0, conc.size());
 }
 
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::doForwardsEulerTimestep_tbb(double dt) {
   oneapi::tbb::parallel_for(
       oneapi::tbb::blocked_range<std::size_t>(0, conc.size()),
@@ -238,7 +222,6 @@ void SimCompartment::doForwardsEulerTimestep_tbb(double dt) {
         doForwardsEulerTimestep(dt, r.begin(), r.end());
       });
 }
-#endif
 
 void SimCompartment::doRKInit() {
   s2.assign(conc.size(), 0.0);
@@ -247,9 +230,6 @@ void SimCompartment::doRKInit() {
 
 void SimCompartment::doRK212Substep1(double dt, std::size_t begin,
                                      std::size_t end) {
-#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
-#pragma omp parallel for
-#endif
   for (std::size_t i = begin; i < end; ++i) {
     s3[i] = conc[i];
     conc[i] += dt * dcdt[i];
@@ -262,7 +242,6 @@ void SimCompartment::doRK212Substep1(double dt) {
   doRK212Substep1(dt, 0, conc.size());
 }
 
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::doRK212Substep1_tbb(double dt) {
   s2.resize(conc.size());
   s3.resize(conc.size());
@@ -272,13 +251,9 @@ void SimCompartment::doRK212Substep1_tbb(double dt) {
         doRK212Substep1(dt, r.begin(), r.end());
       });
 }
-#endif
 
 void SimCompartment::doRK212Substep2(double dt, std::size_t begin,
                                      std::size_t end) {
-#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
-#pragma omp parallel for
-#endif
   for (std::size_t i = begin; i < end; ++i) {
     s2[i] = conc[i];
     conc[i] = 0.5 * s3[i] + 0.5 * conc[i] + 0.5 * dt * dcdt[i];
@@ -289,7 +264,6 @@ void SimCompartment::doRK212Substep2(double dt) {
   doRK212Substep2(dt, 0, conc.size());
 }
 
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::doRK212Substep2_tbb(double dt) {
   oneapi::tbb::parallel_for(
       oneapi::tbb::blocked_range<std::size_t>(0, conc.size()),
@@ -297,14 +271,10 @@ void SimCompartment::doRK212Substep2_tbb(double dt) {
         doRK212Substep2(dt, r.begin(), r.end());
       });
 }
-#endif
 
 void SimCompartment::doRKSubstep(double dt, double g1, double g2, double g3,
                                  double beta, double delta, std::size_t begin,
                                  std::size_t end) {
-#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
-#pragma omp parallel for
-#endif
   for (std::size_t i = begin; i < end; ++i) {
     s2[i] += delta * conc[i];
     conc[i] = g1 * conc[i] + g2 * s2[i] + g3 * s3[i] + beta * dt * dcdt[i];
@@ -316,7 +286,6 @@ void SimCompartment::doRKSubstep(double dt, double g1, double g2, double g3,
   doRKSubstep(dt, g1, g2, g3, beta, delta, 0, conc.size());
 }
 
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::doRKSubstep_tbb(double dt, double g1, double g2, double g3,
                                      double beta, double delta) {
   oneapi::tbb::parallel_for(
@@ -326,14 +295,10 @@ void SimCompartment::doRKSubstep_tbb(double dt, double g1, double g2, double g3,
         doRKSubstep(dt, g1, g2, g3, beta, delta, r.begin(), r.end());
       });
 }
-#endif
 
 void SimCompartment::doRKFinalise(double cFactor, double s2Factor,
                                   double s3Factor, std::size_t begin,
                                   std::size_t end) {
-#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
-#pragma omp parallel for
-#endif
   for (std::size_t i = begin; i < end; ++i) {
     s2[i] = cFactor * conc[i] + s2Factor * s2[i] + s3Factor * s3[i];
   }
@@ -344,7 +309,6 @@ void SimCompartment::doRKFinalise(double cFactor, double s2Factor,
   doRKFinalise(cFactor, s2Factor, s3Factor, 0, conc.size());
 }
 
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::doRKFinalise_tbb(double cFactor, double s2Factor,
                                       double s3Factor) {
   oneapi::tbb::parallel_for(
@@ -354,12 +318,8 @@ void SimCompartment::doRKFinalise_tbb(double cFactor, double s2Factor,
         doRKFinalise(cFactor, s2Factor, s3Factor, r.begin(), r.end());
       });
 }
-#endif
 
 void SimCompartment::undoRKStep(std::size_t begin, std::size_t end) {
-#ifdef SPATIAL_MODEL_EDITOR_WITH_OPENMP
-#pragma omp parallel for
-#endif
   for (std::size_t i = begin; i < end; ++i) {
     conc[i] = s3[i];
   }
@@ -367,7 +327,6 @@ void SimCompartment::undoRKStep(std::size_t begin, std::size_t end) {
 
 void SimCompartment::undoRKStep() { undoRKStep(0, conc.size()); }
 
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
 void SimCompartment::undoRKStep_tbb() {
   oneapi::tbb::parallel_for(
       oneapi::tbb::blocked_range<std::size_t>(0, conc.size()),
@@ -375,7 +334,6 @@ void SimCompartment::undoRKStep_tbb() {
         undoRKStep(r.begin(), r.end());
       });
 }
-#endif
 
 PixelIntegratorError SimCompartment::calculateRKError(double epsilon) const {
   PixelIntegratorError err{0.0, 0.0};

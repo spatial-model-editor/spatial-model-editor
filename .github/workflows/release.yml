@@ -95,7 +95,7 @@ jobs:
       - name: Cache ccache
         uses: actions/cache@v2
         with:
-          path: D:\a\_temp\msys\msys64\home\runneradmin\ccache
+          path: D:\a\_temp\msys64\home\runneradmin\ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
       - name: Get static libs

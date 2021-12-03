@@ -28,10 +28,7 @@ cmake .. \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
-    -DCMAKE_CXX_FLAGS="--coverage" \
-    -DSME_WITH_TBB=ON \
-    -DSTDTHREAD_WORKS=ON \
-    -DBoost_NO_BOOST_CMAKE=on
+    -DCMAKE_CXX_FLAGS="--coverage"
 build-wrapper-linux-x86-64 --out-dir bw-output make -j2
 ccache --show-stats
 

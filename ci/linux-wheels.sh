@@ -20,8 +20,7 @@ cmake .. \
     -DBUILD_TESTING=off \
     -DBUILD_PYTHON_LIBRARY=off \
     -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" \
-    -DSME_EXTERNAL_SMECORE=off \
-    -DSME_WITH_OPENMP=on
+    -DSME_EXTERNAL_SMECORE=off
 make -j2 core
 make install
 cd ..

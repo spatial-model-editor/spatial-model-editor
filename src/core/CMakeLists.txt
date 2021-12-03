@@ -108,20 +108,11 @@ find_package(TIFF REQUIRED)
 find_package(fmt REQUIRED)
 find_package(CGAL REQUIRED)
 find_package(cereal REQUIRED)
-if(SME_WITH_TBB)
-  find_package(
-    TBB
-    CONFIG
-    REQUIRED)
-  message("TBB found: ${TBB_VERSION}")
-  target_compile_definitions(core PUBLIC SPATIAL_MODEL_EDITOR_WITH_TBB)
-  target_link_libraries(core PRIVATE TBB::tbb)
-endif()
-if(SME_WITH_OPENMP)
-  find_package(OpenMP REQUIRED)
-  target_compile_definitions(core PUBLIC SPATIAL_MODEL_EDITOR_WITH_OPENMP)
-  target_link_libraries(core PRIVATE OpenMP::OpenMP_CXX)
-endif()
+find_package(Pagmo REQUIRED)
+find_package(
+  TBB
+  CONFIG
+  REQUIRED)
 target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 # set Logger level
 target_compile_definitions(
@@ -134,14 +125,16 @@ target_link_libraries(
           sbml-static
           dune-copasi::dune-copasi
           CGAL::CGAL
-          cereal::cereal)
+          cereal::cereal
+          TBB::tbb)
 target_link_libraries(
   core
   PUBLIC opencv_core
          opencv_imgproc
          spdlog::spdlog
          Qt::Gui
-         Qt::Core)
+         Qt::Core
+         Pagmo::pagmo)
 
 target_compile_definitions(core PUBLIC ${SME_EXTRA_CORE_DEFS})
 

@@ -5,8 +5,6 @@
 
 using namespace sme::test;
 
-#if defined(SPATIAL_MODEL_EDITOR_WITH_TBB) ||                                  \
-    defined(SPATIAL_MODEL_EDITOR_WITH_OPENMP)
 TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
                                      "dialogs][gui][simulationoptions]") {
   sme::simulate::Options options;
@@ -116,4 +114,3 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(opt.pixel.maxThreads == defaultOpts.maxThreads);
   }
 }
-#endif

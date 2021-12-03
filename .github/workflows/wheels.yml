@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CIBUILDWHEEL_VERSION: 2.3.0
+  CIBUILDWHEEL_VERSION: 2.3.1
   CIBW_TEST_COMMAND: 'python -m unittest discover -v -s {project}/sme/test'
   CIBW_BUILD_VERBOSITY: 3
   SME_EXTERNAL_SMECORE: 'true'
@@ -25,8 +25,8 @@ jobs:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2010_x86_64:2021.12.03
-      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2010_x86_64:2021.12.03
+      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.02.03
+      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.02.03
       CIBW_SKIP: '*-manylinux_i686 *-musllinux*'
       CIBW_ENVIRONMENT: 'SME_EXTERNAL_SMECORE=on'
       CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'
@@ -112,7 +112,7 @@ jobs:
       - name: Cache ccache
         uses: actions/cache@v2
         with:
-          path: D:\a\_temp\msys\msys64\home\runneradmin\ccache
+          path: D:\a\_temp\msys64\home\runneradmin\ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
       - name: Download static libraries
@@ -148,7 +148,7 @@ jobs:
       - name: Cache ccache
         uses: actions/cache@v2
         with:
-          path: D:\a\_temp\msys\msys64\home\runneradmin\ccache
+          path: D:\a\_temp\msys64\home\runneradmin\ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
       - name: Download static libraries

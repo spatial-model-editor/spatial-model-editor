@@ -1,25 +1,24 @@
 #include "dialogabout.hpp"
-#include <cereal/version.hpp>
-#include <expat.h>
-#include <fmt/core.h>
-#include <gmp.h>
-#include <mpfr.h>
-#include <muParserDef.h>
-#include <qcustomplot.h>
-#include <sbml/common/libsbml-version.h>
-#include <spdlog/version.h>
-#include <symengine/symengine_config.h>
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
-#include <oneapi/tbb/version.h>
-#endif
 #include "symbolic.hpp"
 #include "ui_dialogabout.h"
 #include "version.hpp"
 #include <CGAL/version_macros.h>
 #include <boost/version.hpp>
+#include <cereal/version.hpp>
 #include <dune/copasi/config.h>
+#include <expat.h>
+#include <fmt/core.h>
+#include <gmp.h>
+#include <mpfr.h>
+#include <muParserDef.h>
+#include <oneapi/tbb/version.h>
 #include <opencv2/opencv.hpp>
+#include <qcustomplot.h>
+#include <sbml/common/libsbml-version.h>
+#include <spdlog/version.h>
+#include <symengine/symengine_config.h>
 #include <tiffvers.h>
+#include <zlib.h>
 
 static QString dep(const QString &name, const QString &url,
                    const QString &version) {
@@ -89,16 +88,17 @@ DialogAbout::DialogAbout(QWidget *parent)
   libraries.append(dep("expat", "https://libexpat.github.io/",
                        XML_MAJOR_VERSION, XML_MINOR_VERSION,
                        XML_MICRO_VERSION));
-#ifdef SPATIAL_MODEL_EDITOR_WITH_TBB
-  libraries.append(dep("TBB", "https://github.com/intel/tbb", TBB_VERSION_MAJOR,
-                       TBB_VERSION_MINOR, TBB_VERSION_PATCH));
-#endif
+  libraries.append(dep("oneTBB", "https://github.com/oneapi-src/oneTBB",
+                       TBB_VERSION_MAJOR, TBB_VERSION_MINOR,
+                       TBB_VERSION_PATCH));
   libraries.append(dep("OpenCV", "https://github.com/opencv/opencv",
                        CV_MAJOR_VERSION, CV_MINOR_VERSION,
                        CV_SUBMINOR_VERSION));
   libraries.append(dep("cereal", "https://uscilab.github.io/cereal",
                        CEREAL_VERSION_MAJOR, CEREAL_VERSION_MINOR,
                        CEREAL_VERSION_PATCH));
+  libraries.append(dep("zlib", "https://zlib.net/", ZLIB_VER_MAJOR,
+                       ZLIB_VER_MINOR, ZLIB_VER_REVISION));
   libraries.append("</ul>");
   ui->lblLibraries->setText(libraries);
 }
