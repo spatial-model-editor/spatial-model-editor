@@ -18,7 +18,7 @@ env:
   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-  SONAR_SCANNER_VERSION: '4.6.2.2472'
+  SONAR_SCANNER_VERSION: '4.7.0.2747'
   CC: clang
   CXX: clang++
 
@@ -32,7 +32,7 @@ jobs:
         script: [codecov, sonar, asan, ubsan, tsan]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: 'true'
           fetch-depth: 0
@@ -49,7 +49,7 @@ jobs:
           path: ~/.sonarcache
           key: sonar-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: sonar-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           python-version: 3.9
       - name: Get static libs

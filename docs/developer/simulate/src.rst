@@ -40,3 +40,8 @@ PixelSim
 --------
 
 .. doxygenclass:: sme::simulate::PixelSim
+
+PagmoUDP
+--------
+
+.. doxygenclass:: sme::simulate::PagmoUDP
