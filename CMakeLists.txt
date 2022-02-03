@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13...3.21)
+cmake_minimum_required(VERSION 3.13...3.22)
 message(STATUS "CMake version ${CMAKE_VERSION}")
 
 # version number here is embedded in compiled executable
@@ -72,6 +72,11 @@ set(SME_QT_DISABLE_UNICODE
     FALSE
     CACHE BOOL "Disable Qt UNICODE option")
 
+set(CGAL_Boost_USE_STATIC_LIBS
+    ON
+    CACHE BOOL "Enable when using static boost libraries")
+message(STATUS "CGAL_Boost_USE_STATIC_LIBS: ${CGAL_Boost_USE_STATIC_LIBS}")
+
 set(SME_LOG_LEVEL
     "INFO"
     CACHE STRING
@@ -117,16 +122,6 @@ if(BUILD_TESTING)
   find_package(Catch2 REQUIRED)
   include(Catch)
   add_subdirectory(test)
-endif()
-
-set(SME_WITH_TBB
-    no
-    CACHE BOOL "Build with TBB support (multithreading)")
-set(SME_WITH_OPENMP
-    no
-    CACHE BOOL "Build with OpenMP support (multithreading)")
-if(SME_WITH_TBB AND SME_WITH_OPENMP)
-  message(FATAL_ERROR "Cannot use both TBB and OpenMP together.")
 endif()
 
 set(BUILD_GUI

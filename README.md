@@ -70,7 +70,7 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [Expat](https://github.com/libexpat/libexpat) - license: [MIT](https://github.com/libexpat/libexpat/blob/master/expat/COPYING)
 
-- [Threading Building Blocks](https://github.com/intel/tbb) - license: [Apache-2.0](https://github.com/intel/tbb/blob/tbb_2020/LICENSE)
+- [oneTBB](https://github.com/oneapi-src/oneTBB) - license: [Apache-2.0](https://github.com/oneapi-src/oneTBB/blob/master/LICENSE.txt)
 
 - [Open Source Computer Vision Library](https://github.com/opencv/opencv) - license: [Apache-2.0](https://github.com/opencv/opencv/blob/master/LICENSE)
 
@@ -81,6 +81,8 @@ Spatial Model Editor makes use of the following open source libraries:
 - [Cereal](https://github.com/USCiLab/cereal) - license: [BSD](https://github.com/USCiLab/cereal/blob/master/LICENSE)
 
 - [zlib](https://zlib.net/) - license: [zlib](https://zlib.net/zlib_license.html)
+
+- [pagmo](https://esa.github.io/pagmo2/index.html) - license: [GPL](https://github.com/esa/pagmo2/blob/master/COPYING.gpl3)
 
 ## Licensing Note
 
