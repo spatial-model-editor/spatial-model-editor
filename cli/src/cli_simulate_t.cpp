@@ -1,6 +1,6 @@
 #include "catch_wrapper.hpp"
 #include "cli_simulate.hpp"
-#include "model.hpp"
+#include "sme/model.hpp"
 #include <QFile>
 
 using namespace sme;

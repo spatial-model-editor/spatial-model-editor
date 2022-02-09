@@ -1,6 +1,6 @@
 #pragma once
 
-#include "simulate.hpp"
+#include "sme/simulate.hpp"
 #include <CLI/CLI.hpp>
 
 namespace sme::cli {

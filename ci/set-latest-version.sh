@@ -7,7 +7,7 @@
 set -e -x
 
 VERSION_SUFFIX=$(echo "$1" | head -c 7)
-VERSION_FILE=src/core/common/src/version.cpp.in
+VERSION_FILE=core/common/src/version.cpp.in
 
 echo "Appending ${VERSION_SUFFIX} to SPATIAL_MODEL_EDITOR_VERSION in ${VERSION_FILE}"
 

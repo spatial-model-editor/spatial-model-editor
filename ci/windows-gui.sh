@@ -61,19 +61,19 @@ python -m pip install -r sme/requirements.txt
 python -m unittest discover -s sme/test -v
 
 # strip binaries
-du -sh build/src/spatial-model-editor.exe
+du -sh build/app/spatial-model-editor.exe
 du -sh build/cli/spatial-cli.exe
 
-strip build/src/spatial-model-editor.exe
+strip build/app/spatial-model-editor.exe
 strip build/cli/spatial-cli.exe
 
-du -sh build/src/spatial-model-editor.exe
+du -sh build/app/spatial-model-editor.exe
 du -sh build/cli/spatial-cli.exe
 
 # display version
-./build/src/spatial-model-editor.exe -v
+./build/app/spatial-model-editor.exe -v
 
 # move binaries to artefacts/
 mkdir artefacts
-mv build/src/spatial-model-editor.exe artefacts/
+mv build/app/spatial-model-editor.exe artefacts/
 mv build/cli/spatial-cli.exe artefacts/

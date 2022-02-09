@@ -4,7 +4,7 @@ sleep 0.5
 # grab window id
 peekID=$(wmctrl -l | tail -n 1)
 # launch GUI
-nohup ./src/spatial-model-editor &
+nohup ./app/spatial-model-editor &
 sleep 0.5
 # grab window id
 guiID=$(wmctrl -l | tail -n 1)

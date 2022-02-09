@@ -1,7 +1,7 @@
 #include "cli_simulate.hpp"
-#include "logger.hpp"
-#include "model.hpp"
-#include "simulate.hpp"
+#include "sme/logger.hpp"
+#include "sme/model.hpp"
+#include "sme/simulate.hpp"
 #include <QFile>
 #include <fmt/core.h>
 

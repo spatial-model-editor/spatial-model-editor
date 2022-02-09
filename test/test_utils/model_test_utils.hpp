@@ -1,7 +1,7 @@
 #pragma once
 
-#include "mesh.hpp"
-#include "model.hpp"
+#include "sme/mesh.hpp"
+#include "sme/model.hpp"
 #include <QString>
 #include <memory>
 #include <sbml/SBMLTypes.h>

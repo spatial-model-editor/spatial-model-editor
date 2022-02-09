@@ -2,7 +2,7 @@
 // https://docs.python.org/3.2/c-api/intro.html#include-files
 #include <pybind11/pybind11.h>
 
-#include "model.hpp"
+#include "sme/model.hpp"
 #include "sme_common.hpp"
 #include "sme_reactionparameter.hpp"
 

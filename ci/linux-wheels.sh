@@ -17,10 +17,10 @@ cmake .. \
     -DSME_BUILD_BENCHMARKS=off \
     -DSME_BUILD_GUI=off \
     -DSME_BUILD_CLI=off \
-    -DBUILD_TESTING=on \
+    -DSME_BUILD_TESTS=on \
     -DSME_BUILD_PYTHON_LIBRARY=off \
     -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" \
-    -DSME_EXTERNAL_SMECORE=off
+    -DSME_BUILD_CORE=on
 make -j2 core tests
 ctest -j2
 make install

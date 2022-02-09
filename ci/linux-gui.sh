@@ -53,24 +53,24 @@ cd ..
 time ./benchmark/benchmark 1
 
 # strip binaries
-du -sh src/spatial-model-editor
+du -sh app/spatial-model-editor
 du -sh cli/spatial-cli
 
-strip src/spatial-model-editor
+strip app/spatial-model-editor
 strip cli/spatial-cli
 
-du -sh src/spatial-model-editor
+du -sh app/spatial-model-editor
 du -sh cli/spatial-cli
 
 # check dependencies of binaries
-ldd src/spatial-model-editor
+ldd app/spatial-model-editor
 ldd cli/spatial-cli
 
 # display version
-./src/spatial-model-editor -v
+./app/spatial-model-editor -v
 
 # move binaries to artefacts/
 cd ..
 mkdir artefacts
-mv build/src/spatial-model-editor artefacts/
+mv build/app/spatial-model-editor artefacts/
 mv build/cli/spatial-cli artefacts/

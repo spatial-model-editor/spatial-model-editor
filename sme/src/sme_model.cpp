@@ -2,10 +2,10 @@
 // https://docs.python.org/3.2/c-api/intro.html#include-files
 #include <pybind11/pybind11.h>
 
-#include "logger.hpp"
+#include "sme/logger.hpp"
+#include "sme/tiff.hpp"
 #include "sme_common.hpp"
 #include "sme_model.hpp"
-#include "tiff.hpp"
 #include <QElapsedTimer>
 #include <QFile>
 #include <QImage>

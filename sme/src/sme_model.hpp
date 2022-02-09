@@ -1,7 +1,7 @@
 #pragma once
 
-#include "model.hpp"
-#include "simulate.hpp"
+#include "sme/model.hpp"
+#include "sme/simulate.hpp"
 #include "sme_common.hpp"
 #include "sme_compartment.hpp"
 #include "sme_membrane.hpp"

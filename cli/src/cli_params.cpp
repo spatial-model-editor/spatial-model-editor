@@ -1,5 +1,5 @@
 #include "cli_params.hpp"
-#include "version.hpp"
+#include "sme/version.hpp"
 #include <fmt/core.h>
 #include <map>
 
