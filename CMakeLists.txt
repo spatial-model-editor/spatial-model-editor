@@ -27,9 +27,10 @@ set(CMAKE_CTEST_ARGUMENTS "-j${NPROC};--progress;-E;gui")
 find_package(dune-copasi REQUIRED)
 
 # find required Qt modules
-set(SME_WITH_QT6
-    yes
-    CACHE BOOL "Use Qt6")
+option(
+  SME_WITH_QT6
+  "Use Qt6"
+  ON)
 if(SME_WITH_QT6)
   find_package(
     Qt6 QUIET
@@ -68,13 +69,15 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 # stop Qt from defining UNICODE on windows to avoid dune issues: this used to be
 # opt-in, but now done by default for Qt >= 6.1.2. See
 # https://codereview.qt-project.org/c/qt/qtbase/+/350443
-set(SME_QT_DISABLE_UNICODE
-    FALSE
-    CACHE BOOL "Disable Qt UNICODE option")
+option(
+  SME_QT_DISABLE_UNICODE
+  "Disable Qt UNICODE option"
+  OFF)
 
-set(CGAL_Boost_USE_STATIC_LIBS
-    ON
-    CACHE BOOL "Enable when using static boost libraries")
+option(
+  CGAL_Boost_USE_STATIC_LIBS
+  "Enable when using static boost libraries"
+  ON)
 message(STATUS "CGAL_Boost_USE_STATIC_LIBS: ${CGAL_Boost_USE_STATIC_LIBS}")
 
 set(SME_LOG_LEVEL
@@ -98,11 +101,10 @@ set(SME_EXTRA_CORE_DEFS
     CACHE STRING "Optional additional defines for core")
 message(STATUS "SME_EXTRA_CORE_DEFS: ${SME_EXTRA_CORE_DEFS}")
 
-set(SME_EXTERNAL_SMECORE
-    no
-    CACHE
-      BOOL
-      "Use an externally provided sme::core instead of building it from source")
+option(
+  SME_EXTERNAL_SMECORE
+  "Use an externally provided sme::core instead of building it from source"
+  OFF)
 if(SME_EXTERNAL_SMECORE)
   find_package(
     sme
@@ -110,10 +112,24 @@ if(SME_EXTERNAL_SMECORE)
     CONFIG)
 endif()
 
-set(BUILD_BENCHMARKS
-    yes
-    CACHE BOOL "Build benchmarks")
-if(BUILD_BENCHMARKS)
+option(
+  SME_BUILD_BENCHMARKS
+  "Build benchmarks"
+  ON)
+option(
+  SME_BUILD_GUI
+  "Build GUI version"
+  ON)
+option(
+  SME_BUILD_CLI
+  "Build command-line version"
+  ON)
+option(
+  SME_BUILD_PYTHON_LIBRARY
+  "Build python library"
+  ON)
+
+if(SME_BUILD_BENCHMARKS)
   add_subdirectory(benchmark)
 endif()
 
@@ -124,25 +140,15 @@ if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 
-set(BUILD_GUI
-    yes
-    CACHE BOOL "Build GUI version")
 add_subdirectory(src)
 
-# compile spatial cli
-set(BUILD_CLI
-    yes
-    CACHE BOOL "Build command-line version")
-if(BUILD_CLI)
+if(SME_BUILD_CLI)
   add_subdirectory(ext/CLI11)
   add_subdirectory(cli)
 endif()
 
 # compile python library
-set(BUILD_PYTHON_LIBRARY
-    yes
-    CACHE BOOL "Build python library")
-if(BUILD_PYTHON_LIBRARY)
+if(SME_BUILD_PYTHON_LIBRARY)
   add_subdirectory(ext/pybind11)
   add_subdirectory(sme)
 endif()

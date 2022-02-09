@@ -24,16 +24,18 @@ cd build
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/opt/smelibs \
-    -DBUILD_BENCHMARKS=off \
-    -DBUILD_CLI=off \
-    -DBUILD_TESTING=off \
-    -DBUILD_PYTHON_LIBRARY=off \
+    -DBUILD_TESTING=on \
+    -DSME_BUILD_BENCHMARKS=off \
+    -DSME_BUILD_CLI=off \
+    -DSME_BUILD_GUI=off \
+    -DSME_BUILD_PYTHON_LIBRARY=off \
     -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH \
     -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
     -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER \
     -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS \
     -DSME_EXTERNAL_SMECORE=off
-make -j2 core
+make -j3 core tests
+ctest -j3
 sudo make install
 cd ..
 

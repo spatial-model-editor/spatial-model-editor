@@ -25,8 +25,8 @@ jobs:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.02.03
-      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.02.03
+      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.02.09
+      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.02.09
       CIBW_SKIP: '*-manylinux_i686 *-musllinux*'
       CIBW_ENVIRONMENT: 'SME_EXTERNAL_SMECORE=on'
       CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'
@@ -123,63 +123,10 @@ jobs:
         with:
           path: ./wheelhouse/*.whl
 
-  win32-wheel:
-    name: Windows 32-bit Wheels
-    runs-on: windows-2019
-    defaults:
-      run:
-        shell: msys2 {0}
-    env:
-      CIBW_BUILD: '*-win32'
-      SME_EXTRA_CORE_DEFS: '_hypot=hypot'
-      CIBW_TEST_SKIP: "cp310-win32"
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: 'true'
-      - uses: msys2/setup-msys2@v2
-        with:
-          msystem: MINGW32
-          update: true
-          install: mingw-w64-i686-gcc mingw-w64-i686-cmake mingw-w64-i686-ccache make
-      - name: Set "latest" version number unless commit is version tagged
-        if: startsWith(github.event.ref, 'refs/tags/1.') == false
-        run: ./ci/set-latest-version.sh ${GITHUB_SHA}
-      - name: Cache ccache
-        uses: actions/cache@v2
-        with:
-          path: D:\a\_temp\msys64\home\runneradmin\ccache
-          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-      - name: Download static libraries
-        run: ./ci/getlibs.sh win32-mingw
-      - name: Build wheels
-        run: ./ci/windows-wheels.sh
-      - uses: actions/upload-artifact@v2
-        with:
-          path: ./wheelhouse/*.whl
-
-  sdist:
-    name: Build source distribution
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: 'true'
-      - uses: actions/setup-python@v2
-        name: Install Python
-        with:
-          python-version: '3.9'
-      - name: Build sdist
-        run: python setup.py sdist
-      - uses: actions/upload-artifact@v2
-        with:
-          path: dist/*.tar.gz
-
   pypi:
     name: Upload to PyPI / Github Release
     if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-    needs: [linux-wheel, macos-wheel, win64-wheel, win32-wheel, sdist]
+    needs: [linux-wheel, macos-wheel, win64-wheel]
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/download-artifact@v2

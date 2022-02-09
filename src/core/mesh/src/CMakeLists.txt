@@ -34,7 +34,7 @@ if(BUILD_TESTING)
            triangulate.cpp
            triangulate_t.cpp)
 endif()
-if(BUILD_BENCHMARKS)
+if(SME_BUILD_BENCHMARKS)
   target_sources(
     bench
     PUBLIC boundaries_bench.cpp

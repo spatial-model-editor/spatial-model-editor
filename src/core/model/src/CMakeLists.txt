@@ -44,7 +44,7 @@ if(BUILD_TESTING)
            xml_annotation_t.cpp
            xml_legacy_annotation_t.cpp)
 endif()
-if(BUILD_BENCHMARKS)
+if(SME_BUILD_BENCHMARKS)
   target_sources(
     bench
     PUBLIC geometry_bench.cpp

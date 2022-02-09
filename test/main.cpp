@@ -8,7 +8,9 @@ int main(int argc, char *argv[]) {
   Catch::StringMaker<double>::precision = 25;
   Catch::StringMaker<float>::precision = 25;
 
+#ifdef SME_ENABLE_GUI_TESTS
   QApplication a(argc, argv);
+#endif
 
   Q_INIT_RESOURCE(resources);
   Q_INIT_RESOURCE(test_resources);

@@ -41,9 +41,9 @@ class CMakeBuild(build_ext):
         cmake_args = [
             "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=" + extdir,
             "-DPYTHON_EXECUTABLE=" + sys.executable,
-            "-DBUILD_BENCHMARKS=off",
-            "-DBUILD_CLI=off",
-            "-DBUILD_GUI=off",
+            "-DSME_BUILD_BENCHMARKS=off",
+            "-DSME_BUILD_CLI=off",
+            "-DSME_BUILD_GUI=off",
             "-DBUILD_TESTING=off",
         ]
         for e in [
