@@ -38,16 +38,12 @@ cmake .. \
     -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH \
     -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
     -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER \
+    -DBUILD_PYTHON_LIBRARY=off \
     -DSME_QT_DISABLE_UNICODE=$SME_QT_DISABLE_UNICODE \
     -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS
 make -j2 VERBOSE=1
 
 ccache -s
-
-# check dependencies
-objdump.exe -x sme/sme.cp39-win_amd64.pyd > sme_obj.txt
-head -n 20 sme_obj.txt
-head -n 1000 sme_obj.txt | grep "DLL Name"
 
 time ./test/tests.exe -as ~[gui] > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
