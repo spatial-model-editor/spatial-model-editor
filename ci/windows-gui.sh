@@ -45,6 +45,9 @@ make -j2 VERBOSE=1
 
 ccache -s
 
+# get cache saved at least
+exit
+
 time ./test/tests.exe -as ~[gui] > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
