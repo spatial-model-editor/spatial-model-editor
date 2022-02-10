@@ -45,34 +45,7 @@ make -j2 VERBOSE=1
 
 ccache -s
 
-# get cache saved at least
-exit
-
 time ./test/tests.exe -as ~[gui] > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
 ./benchmark/benchmark.exe 1
-
-# python tests
-cd ..
-mv build/sme/sme.cp39-win_amd64.pyd .
-python -m pip install -r sme/requirements.txt
-python -m unittest discover -s sme/test -v
-
-# strip binaries
-du -sh build/src/spatial-model-editor.exe
-du -sh build/cli/spatial-cli.exe
-
-strip build/src/spatial-model-editor.exe
-strip build/cli/spatial-cli.exe
-
-du -sh build/src/spatial-model-editor.exe
-du -sh build/cli/spatial-cli.exe
-
-# display version
-./build/src/spatial-model-editor.exe -v
-
-# move binaries to artefacts/
-mkdir artefacts
-mv build/src/spatial-model-editor.exe artefacts/
-mv build/cli/spatial-cli.exe artefacts/

@@ -192,6 +192,10 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     for (auto x : std::vector<double>{-0.1, 0, 0.69, 23e-7, 4.188e5}) {
       for (auto y : std::vector<double>{-0.11, 34, 0.9, 29e-7, 4.88e5}) {
         for (auto z : std::vector<double>{-0.12, 31, 0.89, 37e-7}) {
+          CAPTURE(x);
+          CAPTURE(y);
+          CAPTURE(z);
+          REQUIRE(1 == 1);
           sym.eval(res, {x, y, z});
           REQUIRE(res[0] ==
                   dbl_approx(3 * x + 4 / y - 1.0 * x + 0.2 * x * y - 0.1));
