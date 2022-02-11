@@ -1,7 +1,7 @@
 Tests
 =====
 
-The tests for a component ``X.hpp`` are located in ``X_t.cpp``.
+The tests for a component ``X.hpp`` are located next to the corresponding ``X.cpp`` file in ``X_t.cpp``.
 
 Generally they are self contained, but some require additional explanation, which is given here:
 
