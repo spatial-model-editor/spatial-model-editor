@@ -1,4 +1,4 @@
-if(BUILD_GUI)
+if(SME_BUILD_GUI)
   add_executable(spatial-model-editor)
   if(SME_QT_DISABLE_UNICODE)
     qt6_disable_unicode_defines(spatial-model-editor)
@@ -17,7 +17,7 @@ if(NOT SME_EXTERNAL_SMECORE)
   add_subdirectory(core)
 endif()
 
-if(BUILD_GUI)
+if(SME_BUILD_GUI)
   add_subdirectory(gui)
   target_compile_features(spatial-model-editor PRIVATE cxx_std_17)
   target_link_libraries(

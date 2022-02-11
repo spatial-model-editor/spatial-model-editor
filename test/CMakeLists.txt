@@ -2,11 +2,15 @@ add_executable(tests main.cpp)
 target_link_libraries(
   tests
   PRIVATE core_tests
-          gui_tests
-          cli_tests
+          $<$<BOOL:${SME_BUILD_GUI}>:gui_tests>
+          $<$<BOOL:${SME_BUILD_CLI}>:cli_tests>
           ${SME_EXTRA_EXE_LIBS})
 if(SME_QT_DISABLE_UNICODE)
   qt6_disable_unicode_defines(tests)
+endif()
+
+if(SME_BUILD_GUI)
+  target_compile_definitions(tests PRIVATE SME_ENABLE_GUI_TESTS)
 endif()
 
 if(SME_WITH_QT6)

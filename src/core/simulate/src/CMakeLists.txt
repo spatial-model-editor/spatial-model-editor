@@ -32,6 +32,6 @@ if(BUILD_TESTING)
            simulate_options_t.cpp
            simulate_t.cpp)
 endif()
-if(BUILD_BENCHMARKS)
+if(SME_BUILD_BENCHMARKS)
   target_sources(bench PUBLIC duneconverter_bench.cpp simulate_bench.cpp)
 endif()

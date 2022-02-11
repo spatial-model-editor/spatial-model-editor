@@ -24,7 +24,7 @@ cmake .. \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_OSX_DEPLOYMENT_TARGET="10.14"
-make -j2 VERBOSE=1
+make -j3 VERBOSE=1
 ccache --show-stats
 
 # run cpp tests
