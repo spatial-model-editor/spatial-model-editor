@@ -1,7 +1,7 @@
-#include "logger.hpp"
-#include "model.hpp"
-#include "simulate.hpp"
-#include "version.hpp"
+#include "sme/logger.hpp"
+#include "sme/model.hpp"
+#include "sme/simulate.hpp"
+#include "sme/version.hpp"
 #include <QElapsedTimer>
 #include <QFile>
 #include <fmt/core.h>

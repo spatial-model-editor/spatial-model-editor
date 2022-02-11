@@ -2,8 +2,8 @@
 // https://docs.python.org/3.2/c-api/intro.html#include-files
 #include <pybind11/pybind11.h>
 
+#include "sme/version.hpp"
 #include "sme_module.hpp"
-#include "version.hpp"
 #include <QFile>
 
 namespace sme {

@@ -1,5 +1,5 @@
 #include "bench.hpp"
-#include "logger.hpp"
+#include "sme/logger.hpp"
 #include <QtGlobal>
 #include <benchmark/benchmark.h>
 

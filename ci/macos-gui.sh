@@ -42,33 +42,33 @@ cd ..
 time ./benchmark/benchmark 1
 
 # strip binaries
-du -sh src/spatial-model-editor.app/Contents/MacOS/spatial-model-editor
+du -sh app/spatial-model-editor.app/Contents/MacOS/spatial-model-editor
 du -sh cli/spatial-cli
 
-strip src/spatial-model-editor.app/Contents/MacOS/spatial-model-editor
+strip app/spatial-model-editor.app/Contents/MacOS/spatial-model-editor
 strip cli/spatial-cli
 
-du -sh src/spatial-model-editor.app/Contents/MacOS/spatial-model-editor
+du -sh app/spatial-model-editor.app/Contents/MacOS/spatial-model-editor
 du -sh cli/spatial-cli
 
 # check dependencies of binaries
-otool -L src/spatial-model-editor.app/Contents/MacOS/spatial-model-editor
+otool -L app/spatial-model-editor.app/Contents/MacOS/spatial-model-editor
 otool -L cli/spatial-cli
 
 # create iconset & copy into app
-mkdir -p src/spatial-model-editor.app/Contents
-mkdir -p src/spatial-model-editor.app/Contents/Resources
-iconutil -c icns -o src/spatial-model-editor.app/Contents/Resources/icon.icns ../src/core/resources/icon.iconset
+mkdir -p app/spatial-model-editor.app/Contents
+mkdir -p app/spatial-model-editor.app/Contents/Resources
+iconutil -c icns -o app/spatial-model-editor.app/Contents/Resources/icon.icns ../core/resources/icon.iconset
 
 # make dmg of binaries
-hdiutil create spatial-model-editor -fs HFS+ -srcfolder src/spatial-model-editor.app
+hdiutil create spatial-model-editor -fs HFS+ -srcfolder app/spatial-model-editor.app
 
 mkdir spatial-cli
 cp cli/spatial-cli spatial-cli/.
 hdiutil create spatial-cli -fs HFS+ -srcfolder spatial-cli
 
 # display version
-./src/spatial-model-editor.app/Contents/MacOS/spatial-model-editor -v
+./app/spatial-model-editor.app/Contents/MacOS/spatial-model-editor -v
 
 # move binaries to artefacts/
 cd ..

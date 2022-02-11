@@ -39,16 +39,14 @@ jwm &
 
 # run c++ tests and collect coverage data
 mkdir gcov
+
 lcov -q -z -d .
 time ./test/tests -as ~[expensive] > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
-llvm-cov gcov -p src/core/CMakeFiles/core.dir/*/src/*.gcno > /dev/null
-llvm-cov gcov -p test/CMakeFiles/tests.dir/__/src/core/*/src/*.gcno > /dev/null
-llvm-cov gcov -p src/gui/CMakeFiles/gui.dir/*.gcno > /dev/null
-llvm-cov gcov -p src/gui/CMakeFiles/gui.dir/*/*.gcno > /dev/null
-llvm-cov gcov -p cli/CMakeFiles/cli.dir/src/*.gcno > /dev/null
-llvm-cov gcov -p test/CMakeFiles/tests.dir/__/cli/src/*.gcno > /dev/null
-mv *#src#core*.gcov *#src#gui*.gcov *#cli*.gcov gcov/
+find . -type f -name "*.gcno" -print0 | xargs -0 llvm-cov gcov -p > /dev/null
+ls *.gcov
+mv *#spatial-model-editor#*.gcov gcov/
+rm gcov/*#spatial-model-editor#ext#*.gcov
 rm -f *.gcov
 # also run python tests, but only copy gcov data for sme files: don't want to overwrite coverage info on core from c++ tests
 lcov -q -z -d .
@@ -57,9 +55,8 @@ python -m pip install -r ../../sme/requirements.txt
 python -m unittest discover -s ../../sme/test > sme.txt 2>&1
 tail -n 100 sme.txt
 cd ..
-llvm-cov gcov -p sme/CMakeFiles/sme.dir/*.gcno > /dev/null
-llvm-cov gcov -p sme/CMakeFiles/sme.dir/src/*.gcno > /dev/null
-mv *#sme*.gcov gcov/
+find . -type f -name "*.gcno" -print0 | xargs -0 llvm-cov gcov -p > /dev/null
+mv *#spatial-model-editor#sme#*.gcov gcov/
 rm -f *.gcov
 
 cd ..

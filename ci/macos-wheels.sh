@@ -10,7 +10,7 @@ export MACOSX_DEPLOYMENT_TARGET=10.14
 export CCACHE_BASEDIR=/private
 export CMAKE_CXX_COMPILER_LAUNCHER="ccache"
 export CMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake"
-export SME_EXTERNAL_SMECORE=on
+export SME_BUILD_CORE=off
 
 # check versions
 cmake --version
@@ -33,7 +33,7 @@ cmake .. \
     -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
     -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER \
     -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS \
-    -DSME_EXTERNAL_SMECORE=off
+    -DSME_BUILD_CORE=on
 make -j3 core tests
 ctest -j3
 sudo make install

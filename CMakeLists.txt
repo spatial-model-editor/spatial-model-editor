@@ -75,43 +75,35 @@ option(
   OFF)
 
 option(
-  CGAL_Boost_USE_STATIC_LIBS
-  "Enable when using static boost libraries"
+  SME_USE_STATIC_LIBS
+  "Use static versions of dependencies"
   ON)
-message(STATUS "CGAL_Boost_USE_STATIC_LIBS: ${CGAL_Boost_USE_STATIC_LIBS}")
+if(SME_USE_STATIC_LIBS)
+  set(CGAL_Boost_USE_STATIC_LIBS ON)
+  set(OpenCV_STATIC ON)
+endif()
 
 set(SME_LOG_LEVEL
     "INFO"
     CACHE STRING
           "Logging level: OFF, CRITICAL, ERROR, WARN, INFO, DEBUG, TRACE")
-message(STATUS "SME_LOG_LEVEL: ${SME_LOG_LEVEL}")
 
 set(SME_EXTRA_EXE_LIBS
     ""
     CACHE STRING "Optional additional exe libs")
-message(STATUS "SME_EXTRA_EXE_LIBS: ${SME_EXTRA_EXE_LIBS}")
 
 set(SME_EXTRA_GUI_LIBS
     ""
     CACHE STRING "Optional additional gui libs")
-message(STATUS "SME_EXTRA_GUI_LIBS: ${SME_EXTRA_GUI_LIBS}")
 
 set(SME_EXTRA_CORE_DEFS
     ""
     CACHE STRING "Optional additional defines for core")
-message(STATUS "SME_EXTRA_CORE_DEFS: ${SME_EXTRA_CORE_DEFS}")
 
 option(
-  SME_EXTERNAL_SMECORE
-  "Use an externally provided sme::core instead of building it from source"
-  OFF)
-if(SME_EXTERNAL_SMECORE)
-  find_package(
-    sme
-    REQUIRED
-    CONFIG)
-endif()
-
+  SME_BUILD_CORE
+  "Build core sme library"
+  ON)
 option(
   SME_BUILD_BENCHMARKS
   "Build benchmarks"
@@ -129,6 +121,18 @@ option(
   "Build python library"
   ON)
 
+if(NOT SME_BUILD_CORE)
+  find_package(
+    sme
+    REQUIRED
+    CONFIG)
+  get_target_property(
+    SME_CORE_LOCATION
+    sme::core
+    IMPORTED_LOCATION_RELEASE)
+  message(STATUS "Found sme::core: ${SME_CORE_LOCATION}")
+endif()
+
 if(SME_BUILD_BENCHMARKS)
   add_subdirectory(benchmark)
 endif()
@@ -140,7 +144,14 @@ if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
 
-add_subdirectory(src)
+if(SME_BUILD_CORE)
+  add_subdirectory(core)
+endif()
+
+if(SME_BUILD_GUI)
+  add_subdirectory(gui)
+  add_subdirectory(app)
+endif()
 
 if(SME_BUILD_CLI)
   add_subdirectory(ext/CLI11)
@@ -152,3 +163,17 @@ if(SME_BUILD_PYTHON_LIBRARY)
   add_subdirectory(ext/pybind11)
   add_subdirectory(sme)
 endif()
+
+# display sme configuration options
+message(STATUS "SME_BUILD_CORE: ${SME_BUILD_CORE}")
+message(STATUS "SME_BUILD_GUI: ${SME_BUILD_GUI}")
+message(STATUS "SME_BUILD_CLI: ${SME_BUILD_CLI}")
+message(STATUS "SME_BUILD_PYTHON_LIBRARY: ${SME_BUILD_PYTHON_LIBRARY}")
+message(STATUS "SME_BUILD_BENCHMARKS: ${SME_BUILD_BENCHMARKS}")
+message(STATUS "SME_LOG_LEVEL: ${SME_LOG_LEVEL}")
+message(STATUS "SME_EXTRA_CORE_DEFS: ${SME_EXTRA_CORE_DEFS}")
+message(STATUS "SME_EXTRA_GUI_LIBS: ${SME_EXTRA_GUI_LIBS}")
+message(STATUS "SME_EXTRA_EXE_LIBS: ${SME_EXTRA_EXE_LIBS}")
+message(STATUS "SME_USE_STATIC_LIBS: ${SME_USE_STATIC_LIBS}")
+message(STATUS "SME_WITH_QT6: ${SME_WITH_QT6}")
+message(STATUS "SME_QT_DISABLE_UNICODE: ${SME_QT_DISABLE_UNICODE}")

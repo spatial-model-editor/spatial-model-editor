@@ -18,7 +18,7 @@ export SME_QT_DISABLE_UNICODE=TRUE
 # disable this for now due to "terminate called after throwing an instance of 'core::Error'"
 #export CMAKE_CXX_COMPILER_LAUNCHER=ccache
 export CCACHE_NOHASHDIR="true"
-export SME_EXTERNAL_SMECORE=on
+export SME_BUILD_CORE=off
 pwd
 which g++
 g++ --version
@@ -49,7 +49,7 @@ cmake .. \
     -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER \
     -DSME_QT_DISABLE_UNICODE=$SME_QT_DISABLE_UNICODE \
     -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS \
-    -DSME_EXTERNAL_SMECORE=off
+    -DSME_BUILD_CORE=on
 make -j2 core tests
 ctest -j2
 make install

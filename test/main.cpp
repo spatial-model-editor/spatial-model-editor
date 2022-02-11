@@ -1,5 +1,5 @@
 #include "catch_wrapper.hpp"
-#include "logger.hpp"
+#include "sme/logger.hpp"
 #include <QApplication>
 #include <catch2/catch_session.hpp>
 #include <locale>

@@ -1,8 +1,8 @@
 #pragma once
 
-#include "mesh.hpp"
-#include "model.hpp"
-#include "model_membranes_util.hpp"
+#include "sme/mesh.hpp"
+#include "sme/model.hpp"
+#include "sme/model_membranes_util.hpp"
 #include <QFile>
 #include <QImage>
 #include <QPointF>

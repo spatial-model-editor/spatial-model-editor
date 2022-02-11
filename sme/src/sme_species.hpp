@@ -1,15 +1,15 @@
 #pragma once
 
-#include "model.hpp"
+#include "sme/model_species_types.hpp"
 #include "sme_common.hpp"
 #include <pybind11/pybind11.h>
 #include <string>
 
+namespace sme {
+
 namespace model {
 class Model;
 }
-
-namespace sme {
 
 void pybindSpecies(pybind11::module &m);
 
