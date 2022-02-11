@@ -6,7 +6,7 @@ via the GUI, Python library, or CLI.
 
 It is split into four (somewhat interdependent) parts: :ref:`core-model`, :ref:`core-mesh`, :ref:`core-simulate` and :ref:`core-common`.
 
-The public headers for each part are in ``/inc``, and the private implementation details are in ``/src``.
+The public headers for each part are in ``/include/sme``, and the private implementation details are in ``/src``.
 
 For each component X there is
 

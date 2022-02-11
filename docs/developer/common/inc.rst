@@ -4,12 +4,12 @@ inc
 Symbolic
 --------
 
-.. doxygenclass:: sme::utils::Symbolic
+.. doxygenclass:: sme::common::Symbolic
 
 TiffReader
 ----------
 
-.. doxygenclass:: sme::utils::TiffReader
+.. doxygenclass:: sme::common::TiffReader
 
 serialization.hpp
 -----------------
