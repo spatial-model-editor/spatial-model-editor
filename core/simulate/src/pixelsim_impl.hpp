@@ -90,12 +90,10 @@ public:
 
   // dcdt = result of applying diffusion operator to conc
   void evaluateDiffusionOperator(std::size_t begin, std::size_t end);
-  void evaluateDiffusionOperator();
-  void evaluateDiffusionOperator_tbb();
   // dcdt += result of applying reaction expressions to conc
   void evaluateReactions(std::size_t begin, std::size_t end);
-  void evaluateReactions();
-  void evaluateReactions_tbb();
+  void evaluateReactionsAndDiffusion();
+  void evaluateReactionsAndDiffusion_tbb();
   void spatiallyAverageDcdt();
   void doForwardsEulerTimestep(double dt, std::size_t begin, std::size_t end);
   void doForwardsEulerTimestep(double dt);
