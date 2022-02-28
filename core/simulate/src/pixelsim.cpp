@@ -22,11 +22,9 @@ void PixelSim::calculateDcdt() {
   // calculate dcd/dt in all compartments
   for (auto &sim : simCompartments) {
     if (useTBB) {
-      sim->evaluateReactions_tbb();
-      sim->evaluateDiffusionOperator_tbb();
+      sim->evaluateReactionsAndDiffusion_tbb();
     } else {
-      sim->evaluateReactions();
-      sim->evaluateDiffusionOperator();
+      sim->evaluateReactionsAndDiffusion();
     }
   }
   // membrane contribution to dc/dt

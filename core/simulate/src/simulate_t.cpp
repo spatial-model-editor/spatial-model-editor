@@ -922,27 +922,39 @@ TEST_CASE("Pixel simulator: brusselator model, RK2, RK3, RK4",
   sim.doTimesteps(time);
   auto c4_accurate = sim.getConc(sim.getTimePoints().size() - 1, 0, 0);
   // check lower accuracy & different orders are consistent
-  for (bool multithreaded : {false, true}) {
-    for (auto integrator : {simulate::PixelIntegratorType::RK212,
-                            simulate::PixelIntegratorType::RK323,
-                            simulate::PixelIntegratorType::RK435}) {
-      double maxRelDiff = 0;
-      options.pixel.integrator = integrator;
-      options.pixel.enableMultiThreading = multithreaded;
-      options.pixel.maxErr = {std::numeric_limits<double>::max(),
-                              maxAllowedRelErr};
-      s.getSimulationData().clear();
-      simulate::Simulation sim2(s);
-      sim2.doTimesteps(time);
-      auto conc = sim2.getConc(sim.getTimePoints().size() - 1, 0, 0);
-      for (std::size_t i = 0; i < conc.size(); ++i) {
-        maxRelDiff = std::max(maxRelDiff, (conc[i] - c4_accurate[i]) /
-                                              (c4_accurate[i] + eps));
-      }
-      CAPTURE(multithreaded);
-      CAPTURE(integrator);
-      REQUIRE(maxRelDiff < maxAllowedRelErr);
+  for (auto integrator : {simulate::PixelIntegratorType::RK212,
+                          simulate::PixelIntegratorType::RK323,
+                          simulate::PixelIntegratorType::RK435}) {
+    // single threaded simulation
+    double maxRelDiff = 0;
+    options.pixel.integrator = integrator;
+    options.pixel.enableMultiThreading = false;
+    options.pixel.maxErr = {std::numeric_limits<double>::max(),
+                            maxAllowedRelErr};
+    s.getSimulationData().clear();
+    simulate::Simulation sim2(s);
+    sim2.doTimesteps(time);
+    auto conc = sim2.getConc(sim.getTimePoints().size() - 1, 0, 0);
+    for (std::size_t i = 0; i < conc.size(); ++i) {
+      maxRelDiff = std::max(maxRelDiff, (conc[i] - c4_accurate[i]) /
+                                            (c4_accurate[i] + eps));
     }
+    // multi-threaded simulation
+    options.pixel.enableMultiThreading = true;
+    s.getSimulationData().clear();
+    simulate::Simulation sim2_multi(s);
+    sim2_multi.doTimesteps(time);
+    auto conc_multi = sim2_multi.getConc(sim.getTimePoints().size() - 1, 0, 0);
+    double absThreadingDiff{0};
+    for (std::size_t i = 0; i < conc.size(); ++i) {
+      absThreadingDiff += std::abs(conc[i] - conc_multi[i]);
+    }
+    absThreadingDiff /= static_cast<double>(conc.size());
+    CAPTURE(integrator);
+    // single threaded should agree with high order simulation within tolerance
+    REQUIRE(maxRelDiff < maxAllowedRelErr);
+    // single / multithreaded should agree to almost machine precision
+    REQUIRE(absThreadingDiff < 1e-13);
   }
 }
 
