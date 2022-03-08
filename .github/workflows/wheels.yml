@@ -25,13 +25,13 @@ jobs:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.02.09
-      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.02.09
+      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.02.28
+      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.02.28
       CIBW_SKIP: '*-manylinux_i686 *-musllinux*'
       CIBW_ENVIRONMENT: 'SME_BUILD_CORE=off'
       CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: 'true'
     - name: Set "latest" version number unless commit is version tagged
@@ -43,7 +43,7 @@ jobs:
         path: ${{ github.workspace }}/ccache
         key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
         restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v3
       with:
         python-version: '3.9'
     - name: Install cibuildwheel
@@ -64,7 +64,7 @@ jobs:
       CIBW_ENVIRONMENT: 'BLAS=None LAPACK=None ATLAS=None'
       CIBW_TEST_SKIP: 'pp3*-macosx_x86_64'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: 'true'
       - name: Set "latest" version number unless commit is version tagged
@@ -76,7 +76,7 @@ jobs:
           path: /Users/runner/Library/Caches/ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           python-version: '3.9'
       - name: Download static libraries
@@ -98,7 +98,7 @@ jobs:
       SME_EXTRA_CORE_DEFS: '_hypot=hypot;MS_WIN64'
       CIBW_TEST_SKIP: "pp3*-win_amd64"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: 'true'
       - uses: msys2/setup-msys2@v2

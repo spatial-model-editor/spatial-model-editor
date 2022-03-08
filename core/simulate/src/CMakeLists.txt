@@ -10,6 +10,8 @@ target_sources(
           dunesim_impl.cpp
           dunesim_impl_coupled.cpp
           dunesim_impl_independent.cpp
+          optimize.cpp
+          optimize_impl.cpp
           pde.cpp
           pixelsim.cpp
           pixelsim_impl.cpp
@@ -26,6 +28,8 @@ if(BUILD_TESTING)
            dunegrid_t.cpp
            duneini_t.cpp
            dunesim_t.cpp
+           optimize_t.cpp
+           optimize_impl_t.cpp
            pde_t.cpp
            pixelsim_t.cpp
            simulate_data_t.cpp

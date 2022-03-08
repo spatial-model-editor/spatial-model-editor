@@ -23,8 +23,8 @@ SimulationData
 
 .. doxygenstruct:: sme::simulate::AvgMinMax
 
-Options
--------
+SimulationOptions
+-----------------
 
 .. doxygenstruct:: sme::simulate::Options
 
@@ -39,3 +39,23 @@ Options
 .. doxygenstruct:: sme::simulate::DuneOptions
 
 .. doxygenenum:: sme::simulate::DuneDiscretizationType
+
+Optimization
+------------
+
+.. doxygenclass:: sme::simulate::Optimization
+
+OptimizationOptions
+-------------------
+
+.. doxygenstruct:: sme::simulate::OptimizeOptions
+
+.. doxygenstruct:: sme::simulate::OptParam
+
+.. doxygenenum:: sme::simulate::OptParamType
+
+.. doxygenstruct:: sme::simulate::OptCost
+
+.. doxygenenum:: sme::simulate::OptCostType
+
+.. doxygenenum:: sme::simulate::OptCostDiffType

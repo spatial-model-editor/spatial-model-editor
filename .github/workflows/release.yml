@@ -19,7 +19,7 @@ jobs:
       run:
         shell: bash
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: 'true'
     - name: Set "latest" version number unless commit is version tagged
@@ -31,7 +31,7 @@ jobs:
         path: ~/.cache/ccache
         key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
         restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v3
       with:
         python-version: 3.9
     - name: Get static libs
@@ -51,7 +51,7 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: 'true'
       - name: Set "latest" version number unless commit is version tagged
@@ -63,7 +63,7 @@ jobs:
           path: /Users/runner/Library/Caches/ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v3
         with:
           python-version: 3.9
       - name: Get static libs
@@ -81,7 +81,7 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: 'true'
       - uses: msys2/setup-msys2@v2

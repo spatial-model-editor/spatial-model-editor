@@ -13,6 +13,7 @@
 #include <muParserDef.h>
 #include <oneapi/tbb/version.h>
 #include <opencv2/opencv.hpp>
+#include <pagmo/config.hpp>
 #include <qcustomplot.h>
 #include <sbml/common/libsbml-version.h>
 #include <spdlog/version.h>
@@ -99,6 +100,9 @@ DialogAbout::DialogAbout(QWidget *parent)
                        CEREAL_VERSION_PATCH));
   libraries.append(dep("zlib", "https://zlib.net/", ZLIB_VER_MAJOR,
                        ZLIB_VER_MINOR, ZLIB_VER_REVISION));
+  libraries.append(dep("pagmo", "https://esa.github.io/pagmo2",
+                       PAGMO_VERSION_MAJOR, PAGMO_VERSION_MINOR,
+                       PAGMO_VERSION_PATCH));
   libraries.append("</ul>");
   ui->lblLibraries->setText(libraries);
 }
