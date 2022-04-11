@@ -1,6 +1,6 @@
 [submodule "ext/pybind11"]
 	path = ext/pybind11
-	url = git://github.com/pybind/pybind11
+	url = https://github.com/pybind/pybind11
 [submodule "ext/CLI11"]
 	path = ext/CLI11
-	url = git://github.com/CLIUtils/CLI11.git
+	url = https://github.com/CLIUtils/CLI11.git
