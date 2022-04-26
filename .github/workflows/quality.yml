@@ -37,13 +37,13 @@ jobs:
           submodules: 'true'
           fetch-depth: 0
       - name: Cache ccache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ~/.cache/ccache
           key: ccache-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-
       - name: Cache sonar
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         if: matrix.script == 'sonar' && github.repository == 'spatial-model-editor/spatial-model-editor'
         with:
           path: ~/.sonarcache
