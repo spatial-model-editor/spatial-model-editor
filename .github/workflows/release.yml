@@ -26,7 +26,7 @@ jobs:
       if: startsWith(github.event.ref, 'refs/tags/1.') == false
       run: ./ci/set-latest-version.sh ${GITHUB_SHA}
     - name: Cache ccache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.cache/ccache
         key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
@@ -40,13 +40,13 @@ jobs:
       run: ./ci/linux-install.sh
     - name: Build script
       run: ./ci/linux-gui.sh
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         path: ./artefacts/*
 
   macos-gui:
     name: MacOS GUI/CLI
-    runs-on: macos-10.15
+    runs-on: macos-11
     defaults:
       run:
         shell: bash
@@ -58,7 +58,7 @@ jobs:
         if: startsWith(github.event.ref, 'refs/tags/1.') == false
         run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - name: Cache ccache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: /Users/runner/Library/Caches/ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
@@ -70,13 +70,13 @@ jobs:
         run: sudo ./ci/getlibs.sh osx
       - name: Build script
         run: ./ci/macos-gui.sh
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           path: ./artefacts/*
 
   win64-gui:
     name: Windows 64-bit GUI/CLI
-    runs-on: windows-2019
+    runs-on: windows-2022
     defaults:
       run:
         shell: msys2 {0}
@@ -93,7 +93,7 @@ jobs:
         if: startsWith(github.event.ref, 'refs/tags/1.') == false
         run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - name: Cache ccache
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: D:\a\_temp\msys64\home\runneradmin\ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
@@ -102,7 +102,7 @@ jobs:
         run: ./ci/getlibs.sh win64-mingw
       - name: Build script
         run: ci/windows-gui.sh
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           path: ./artefacts/*
 
@@ -111,7 +111,7 @@ jobs:
     if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v3
         with:
           name: artifact
           path: binaries

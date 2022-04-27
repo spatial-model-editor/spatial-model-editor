@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# MacOS 10.15 Python wheels build script
+# MacOS 11 Python wheels build script
 
 set -e -x
 
