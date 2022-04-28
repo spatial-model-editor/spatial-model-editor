@@ -143,7 +143,7 @@ jobs:
       - run: |
           mkdir latest
           mv dist/sme-*-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl latest/sme-latest-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-      - uses: svenstaro/upload-release-action@v3
+      - uses: svenstaro/upload-release-action@v2
         # if this is an untagged commit to main: upload selected wheels to github latest release
         if: github.ref == 'refs/heads/main'
         with:
