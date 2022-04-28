@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    tags:
+      - "*.*.*"
   pull_request:
   workflow_dispatch:
 
@@ -22,8 +24,8 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: 'true'
-    - name: Set "latest" version number unless commit is version tagged
-      if: startsWith(github.event.ref, 'refs/tags/1.') == false
+    - name: Set "latest" version number unless commit is tagged
+      if: startsWith(github.event.ref, 'refs/tags/') == false
       run: ./ci/set-latest-version.sh ${GITHUB_SHA}
     - name: Cache ccache
       uses: actions/cache@v3
@@ -54,8 +56,8 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: 'true'
-      - name: Set "latest" version number unless commit is version tagged
-        if: startsWith(github.event.ref, 'refs/tags/1.') == false
+      - name: Set "latest" version number unless commit is tagged
+        if: startsWith(github.event.ref, 'refs/tags/') == false
         run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - name: Cache ccache
         uses: actions/cache@v3
@@ -89,8 +91,8 @@ jobs:
           msystem: MINGW64
           update: true
           install: mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache make
-      - name: Set "latest" version number unless commit is version tagged
-        if: startsWith(github.event.ref, 'refs/tags/1.') == false
+      - name: Set "latest" version number unless commit is tagged
+        if: startsWith(github.event.ref, 'refs/tags/') == false
         run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - name: Cache ccache
         uses: actions/cache@v3
