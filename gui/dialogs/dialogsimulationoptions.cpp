@@ -13,16 +13,12 @@ static int toIndex(sme::simulate::PixelIntegratorType integrator) {
   switch (integrator) {
   case sme::simulate::PixelIntegratorType::RK101:
     return 0;
-    break;
   case sme::simulate::PixelIntegratorType::RK212:
     return 1;
-    break;
   case sme::simulate::PixelIntegratorType::RK323:
     return 2;
-    break;
   case sme::simulate::PixelIntegratorType::RK435:
     return 3;
-    break;
   default:
     return 0;
   }
@@ -32,16 +28,12 @@ static sme::simulate::PixelIntegratorType toPixelIntegratorEnum(int index) {
   switch (index) {
   case 0:
     return sme::simulate::PixelIntegratorType::RK101;
-    break;
   case 1:
     return sme::simulate::PixelIntegratorType::RK212;
-    break;
   case 2:
     return sme::simulate::PixelIntegratorType::RK323;
-    break;
   case 3:
     return sme::simulate::PixelIntegratorType::RK435;
-    break;
   default:
     return sme::simulate::PixelIntegratorType::RK101;
   }

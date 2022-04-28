@@ -382,7 +382,6 @@ Model::simulateString(const std::string &lengths, const std::string &intervals,
   sim->doMultipleTimesteps(times.value(), timeoutMillisecs, []() {
     if (PyErr_CheckSignals() != 0) {
       throw pybind11::error_already_set();
-      return true;
     }
     return false;
   });
