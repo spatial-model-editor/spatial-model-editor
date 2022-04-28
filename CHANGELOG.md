@@ -1,15 +1,27 @@
 # Changelog
+
+## [1.2.2] - 2022-04-28
+### Added
+- support for reading compressed sampledFields [#709](https://github.com/spatial-model-editor/spatial-model-editor/issues/709)
+
+### Changed
+- TBB is now used everywhere for multithreading (previously linux Python wheels used OpenMP) [#732](https://github.com/spatial-model-editor/spatial-model-editor/issues/732)
+
+### Fixed
+- improved multi-threading performance [#742](https://github.com/spatial-model-editor/spatial-model-editor/issues/742)
+- spurious simulation times are no longer appended upon simulation [#751](https://github.com/spatial-model-editor/spatial-model-editor/issues/751)
+
 ## [1.2.1] - 2021-09-30
 ### Added
 - topology-preserving line simplification option [#328](https://github.com/spatial-model-editor/spatial-model-editor/issues/328)
-- python interface: ctrl+c now cancels a currently running simulation [#665](https://github.com/spatial-model-editor/spatial-model-editor/issues/665)
+- python interface: `ctrl+c` now cancels a currently running simulation [#665](https://github.com/spatial-model-editor/spatial-model-editor/issues/665)
 
 ### Changed
 - model reactions with invalid locations can now be seen and removed or relocated [#615](https://github.com/spatial-model-editor/spatial-model-editor/issues/615)
 
 ### Fixed
 - functions with zero arguments are now fully supported [#674](https://github.com/spatial-model-editor/spatial-model-editor/issues/674)
-- python interface: setting n_threads=1 for simulate takes precedence over n_threads value in model [#672](https://github.com/spatial-model-editor/spatial-model-editor/issues/672)
+- python interface: setting `n_threads=1` for simulate takes precedence over `n_threads` value in model [#672](https://github.com/spatial-model-editor/spatial-model-editor/issues/672)
 - bug where membrane reactions could disappear when geometry was changed [#679](https://github.com/spatial-model-editor/spatial-model-editor/issues/679)
 - bug where removing a compartment could result in an invalid model or a crash [#685](https://github.com/spatial-model-editor/spatial-model-editor/issues/685)
 - SBML export includes any ModifierSpecies in reactions [#133](https://github.com/spatial-model-editor/spatial-model-editor/issues/133)
