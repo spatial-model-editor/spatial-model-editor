@@ -241,15 +241,21 @@ std::size_t Simulation::doMultipleTimesteps(
     updateConcentrations(0);
     ++nCompletedTimesteps;
   }
+  if (data->timePoints.size() == 1) {
+    SPDLOG_DEBUG("No existing simulation data: removing any existing times "
+                 "from model simulation settings");
+    settings->times.clear();
+  }
+  for (const auto &timestep : timesteps) {
+    settings->times.push_back(timestep);
+  }
   std::size_t nStepsTotal{0};
   for (const auto &timestep : timesteps) {
     nStepsTotal += timestep.first;
   }
   QElapsedTimer timer;
   timer.start();
-  for (const auto &timestep : timesteps) {
-    settings->times.push_back(timestep);
-  }
+
   // ensure there is enough space that push_back won't cause a reallocation
   // todo: there should be a mutex/lock here in case reserve() reallocates
   // to avoid a user getting garbage data while the vector contents are moving
