@@ -47,7 +47,7 @@ Command line parameters
 
 .. code-block:: bash
 
-    Spatial Model Editor CLI v1.2.1
+    Spatial Model Editor CLI v1.2.2
     Usage: ./cli/spatial-cli [OPTIONS] file times image-intervals
 
     Positionals:
