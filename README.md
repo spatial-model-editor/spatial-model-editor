@@ -82,6 +82,8 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [zlib](https://zlib.net/) - license: [zlib](https://zlib.net/zlib_license.html)
 
+- [bzip2](https://www.sourceware.org/bzip2/) - license: [BSD-style](https://sourceware.org/git/?p=bzip2.git;a=blob;f=LICENSE;h=81a37eab7a5be1a34456f38adb74928cc9073e9b;hb=6a8690fc8d26c815e798c588f796eabe9d684cf0)
+
 - [pagmo](https://esa.github.io/pagmo2/index.html) - license: [GPL](https://github.com/esa/pagmo2/blob/master/COPYING.gpl3)
 
 ## Licensing Note
