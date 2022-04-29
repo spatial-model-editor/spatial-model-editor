@@ -4,6 +4,7 @@
 #include "ui_dialogabout.h"
 #include <CGAL/version_macros.h>
 #include <boost/version.hpp>
+#include <bzlib.h>
 #include <cereal/version.hpp>
 #include <dune/copasi/config.h>
 #include <expat.h>
@@ -100,9 +101,8 @@ DialogAbout::DialogAbout(QWidget *parent)
                        CEREAL_VERSION_PATCH));
   libraries.append(dep("zlib", "https://zlib.net/", ZLIB_VER_MAJOR,
                        ZLIB_VER_MINOR, ZLIB_VER_REVISION));
-  libraries.append(dep("pagmo", "https://esa.github.io/pagmo2",
-                       PAGMO_VERSION_MAJOR, PAGMO_VERSION_MINOR,
-                       PAGMO_VERSION_PATCH));
+  libraries.append(dep("bzip2", "https://www.sourceware.org/bzip2",
+                       BZ_API(BZ2_bzlibVersion)()));
   libraries.append("</ul>");
   ui->lblLibraries->setText(libraries);
 }

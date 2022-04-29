@@ -1,5 +1,9 @@
 # Changelog
 
+## [latest]
+### Added
+- support for reading SBML files compressed with bzip2 [#246](https://github.com/spatial-model-editor/spatial-model-editor/issues/246)
+
 ## [1.2.2] - 2022-04-28
 ### Added
 - support for reading compressed sampledFields [#709](https://github.com/spatial-model-editor/spatial-model-editor/issues/709)
