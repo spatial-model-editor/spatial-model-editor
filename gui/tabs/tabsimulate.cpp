@@ -238,6 +238,7 @@ void TabSimulate::setOptions(const sme::simulate::Options &options) {
 }
 
 void TabSimulate::invertYAxis(bool enable) { flipYAxis = enable; }
+
 void TabSimulate::btnSimulate_clicked() {
   auto simulationTimes{sme::simulate::parseSimulationTimes(
       ui->txtSimLength->text(), ui->txtSimInterval->text())};

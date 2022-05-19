@@ -67,8 +67,8 @@
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>540</width>
-             <height>560</height>
+             <width>575</width>
+             <height>551</height>
             </rect>
            </property>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -206,7 +206,7 @@
      <x>0</x>
      <y>0</y>
      <width>1400</width>
-     <height>33</height>
+     <height>36</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -280,6 +280,7 @@
     <addaction name="actionEdit_geometry_image"/>
     <addaction name="actionSet_spatial_coordinates"/>
     <addaction name="menuSimulation_type"/>
+    <addaction name="action_Optimization"/>
    </widget>
    <widget class="QMenu" name="menu_Advanced">
     <property name="title">
@@ -549,6 +550,11 @@
   <action name="action_Meshing_options">
    <property name="text">
     <string>&amp;Meshing options...</string>
+   </property>
+  </action>
+  <action name="action_Optimization">
+   <property name="text">
+    <string>&amp;Optimization</string>
    </property>
   </action>
   <actiongroup name="actionGroupSimType">

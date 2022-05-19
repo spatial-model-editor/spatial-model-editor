@@ -2,7 +2,7 @@
 #include "sme/logger.hpp"
 #include "ui_dialoggeometryimage.h"
 
-static QString dblToString(double val) { return QString::number(val, 'g', 14); }
+static QString toQStr(double val) { return QString::number(val, 'g', 14); }
 
 static QImage toIndexedImageNoAlpha(const QImage &image) {
   constexpr auto flagNoDither{Qt::AvoidDither | Qt::ThresholdDither |
@@ -96,10 +96,10 @@ const QImage &DialogGeometryImage::getAlteredImage() const {
 void DialogGeometryImage::updatePixelSize() {
   // calculate size of image in local units
   double w{static_cast<double>(rescaledImage.width()) * pixelLocalUnits};
-  ui->txtImageWidth->setText(dblToString(w));
+  ui->txtImageWidth->setText(toQStr(w));
   double h{static_cast<double>(rescaledImage.height()) * pixelLocalUnits};
-  ui->txtImageHeight->setText(dblToString(h));
-  ui->txtImageDepth->setText(dblToString(depthLocalUnits));
+  ui->txtImageHeight->setText(toQStr(h));
+  ui->txtImageDepth->setText(toQStr(depthLocalUnits));
   // calculate pixel width in model units
   const auto &localUnit{
       units.getLengthUnits().at(ui->cmbUnitsWidth->currentIndex())};

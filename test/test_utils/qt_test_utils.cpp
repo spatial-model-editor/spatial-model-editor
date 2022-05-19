@@ -17,14 +17,15 @@ void wait(int milliseconds) {
 
 void waitFor(QWidget *widget) {
   if (!QTest::qWaitForWindowExposed(widget->windowHandle())) {
-    qDebug() << "Timeout waiting for" << widget << "to be exposed";
+    qDebug() << "sme::test::waitFor :: Timeout waiting for" << widget
+             << "to be exposed";
   }
 }
 
 void sendKeyEvents(QObject *object, const QStringList &keySeqStrings,
                    bool sendReleaseEvents) {
   QApplication::processEvents();
-  qDebug() << "sending key events to" << object;
+  qDebug() << "sme::test::sendKeyEvents :: sending key events to" << object;
   for (const auto &s : keySeqStrings) {
     // get string equivalent of key if appropriate (i.e. single chars)
     QString str;
@@ -58,7 +59,8 @@ void sendKeyEvents(QObject *object, const QStringList &keySeqStrings,
 static QDialog *getNextQDialog() {
   QApplication::processEvents();
   while (true) {
-    qDebug() << "activeWindow:" << QApplication::activeWindow();
+    qDebug() << "sme::test::getNextQDialog :: activeWindow:"
+             << QApplication::activeWindow();
     if (auto *p = qobject_cast<QDialog *>(QApplication::activeWindow());
         p != nullptr) {
       return p;
@@ -71,12 +73,14 @@ QString sendKeyEventsToNextQDialog(const QStringList &keySeqStrings,
                                    bool sendReleaseEvents) {
   auto *dialog = getNextQDialog();
   QString title = dialog->windowTitle();
-  qDebug() << "send key events to QDialog:" << dialog;
+  qDebug() << "sme::test::sendKeyEventsToNextQDialog ::" << dialog;
   sendKeyEvents(dialog, keySeqStrings, sendReleaseEvents);
-  qDebug() << "activeWindow:" << QApplication::activeWindow();
+  qDebug() << "sme::test::sendKeyEventsToNextQDialog :: activeWindow:"
+           << QApplication::activeWindow();
   while (static_cast<void *>(QApplication::activeWindow()) ==
          static_cast<void *>(dialog)) {
-    qDebug() << "waiting for dialog to close..";
+    qDebug() << "sme::test::sendKeyEventsToNextQDialog :: waiting for dialog "
+                "to close..";
     wait(10);
   }
   return title;
@@ -204,10 +208,10 @@ void ModalWidgetTimer::setIgnoredWidget(QWidget *widgetToIgnore) {
 }
 
 void ModalWidgetTimer::start() {
-  qDebug() << this << " :: starting timer";
+  qDebug() << this << ":: starting timer";
   if (userActions.empty()) {
     qDebug() << this
-             << " :: no UserActions defined: adding one that just calls accept";
+             << ":: no UserActions defined: adding one that just calls accept";
     userActions.emplace();
   }
   results.clear();

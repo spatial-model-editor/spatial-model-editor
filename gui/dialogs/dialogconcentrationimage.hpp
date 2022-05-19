@@ -18,7 +18,7 @@ public:
       const sme::model::SpeciesGeometry &speciesGeometry,
       bool invertYAxis = false, QWidget *parent = nullptr);
   ~DialogConcentrationImage() override;
-  std::vector<double> getConcentrationArray() const;
+  [[nodiscard]] std::vector<double> getConcentrationArray() const;
 
 private:
   std::unique_ptr<Ui::DialogConcentrationImage> ui;

@@ -3,6 +3,8 @@
 #include "dialogcoordinates.hpp"
 #include "dialoggeometryimage.hpp"
 #include "dialogmeshingoptions.hpp"
+#include "dialogoptimize.hpp"
+#include "dialogoptsetup.hpp"
 #include "dialogsimulationoptions.hpp"
 #include "dialogunits.hpp"
 #include "guiutils.hpp"
@@ -193,6 +195,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->action_Meshing_options, &QAction::triggered, this,
           &MainWindow::action_Meshing_options_triggered);
+
+  connect(ui->action_Optimization, &QAction::triggered, this,
+          &MainWindow::action_Optimization_triggered);
 
   connect(ui->action_What_s_this, &QAction::triggered, this,
           []() { QWhatsThis::enterWhatsThisMode(); });
@@ -580,6 +585,23 @@ void MainWindow::actionFinalize_non_spatial_import_triggered() {
   } else {
     // reset depth to previous value
     model.getGeometry().setPixelDepth(wiz.getInitialPixelDepth());
+  }
+}
+
+void MainWindow::action_Optimization_triggered() {
+  // todo: load optimization options from model?
+  if (!isValidModelAndGeometryImage()) {
+    SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
+    return;
+  }
+  try {
+    DialogOptimize dialogOptimize(model, {});
+    if (dialogOptimize.exec() == QDialog::Accepted) {
+      SPDLOG_INFO("todo: offer to apply optimization params to model(?)");
+      // todo: save optimization options to model?
+    }
+  } catch (const std::invalid_argument &e) {
+    QMessageBox::warning(this, "Optimize error", e.what());
   }
 }
 

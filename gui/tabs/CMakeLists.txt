@@ -1,12 +1,19 @@
 target_sources(
   gui
   PRIVATE tabevents.cpp
+          tabevents.ui
           tabfunctions.cpp
+          tabfunctions.ui
           tabgeometry.cpp
+          tabgeometry.ui
           tabparameters.cpp
+          tabparameters.ui
           tabreactions.cpp
+          tabreactions.ui
           tabsimulate.cpp
-          tabspecies.cpp)
+          tabsimulate.ui
+          tabspecies.cpp
+          tabspecies.ui)
 target_include_directories(gui PUBLIC .)
 
 if(BUILD_TESTING)
