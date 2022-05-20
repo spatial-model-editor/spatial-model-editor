@@ -2,7 +2,14 @@
 
 ## [latest]
 ### Added
+- parameter fitting functionality to GUI [#757](https://github.com/spatial-model-editor/spatial-model-editor/issues/757)
 - support for reading SBML files compressed with bzip2 [#246](https://github.com/spatial-model-editor/spatial-model-editor/issues/246)
+
+### Changed
+- GUI no longer writes logging output to console [#771](https://github.com/spatial-model-editor/spatial-model-editor/issues/771)
+
+### Fixed
+- analytic initial species concentrations were not updated when a parameter value was modified [#776](https://github.com/spatial-model-editor/spatial-model-editor/issues/776)
 
 ## [1.2.2] - 2022-04-28
 ### Added

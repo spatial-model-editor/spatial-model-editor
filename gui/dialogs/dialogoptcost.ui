@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>516</width>
-    <height>232</height>
+    <width>517</width>
+    <height>364</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -42,6 +42,9 @@
        </property>
       </widget>
      </item>
+     <item row="5" column="3">
+      <widget class="QLineEdit" name="txtScaleFactor"/>
+     </item>
      <item row="2" column="3">
       <widget class="QComboBox" name="cmbDiffType">
        <item>
@@ -63,6 +66,16 @@
       <widget class="QLabel" name="lblSimulationTimeLabel">
        <property name="text">
         <string>Simulation time:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="lblScaleFactorLabel">
+       <property name="text">
+        <string>Scale factor:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
@@ -120,6 +133,19 @@
        </property>
       </widget>
      </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="lblEpsilonLabel">
+       <property name="text">
+        <string>Epsilon:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="3">
+      <widget class="QLineEdit" name="txtEpsilon"/>
+     </item>
     </layout>
    </item>
    <item>
@@ -140,6 +166,8 @@
   <tabstop>cmbDiffType</tabstop>
   <tabstop>txtSimulationTime</tabstop>
   <tabstop>btnEditTargetValues</tabstop>
+  <tabstop>txtScaleFactor</tabstop>
+  <tabstop>txtEpsilon</tabstop>
  </tabstops>
  <resources/>
  <connections/>
