@@ -86,6 +86,7 @@ void Model::initModelData(bool emptySpatialModel) {
   modelEvents = std::make_unique<ModelEvents>(model, modelParameters.get(),
                                               modelSpecies.get());
   modelParameters->setEventsPtr(modelEvents.get());
+  modelParameters->setSpeciesPtr(modelSpecies.get());
   modelReactions = std::make_unique<ModelReactions>(
       model, modelCompartments.get(), modelMembranes.get(), isNonSpatialModel);
   modelCompartments->setReactionsPtr(modelReactions.get());
