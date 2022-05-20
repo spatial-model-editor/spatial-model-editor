@@ -16,6 +16,7 @@ class Species;
 namespace sme::model {
 
 class ModelEvents;
+class ModelSpecies;
 
 struct IdName {
   std::string id;
@@ -48,11 +49,13 @@ private:
   libsbml::Model *sbmlModel{nullptr};
   bool hasUnsavedChanges{false};
   ModelEvents *modelEvents{nullptr};
+  ModelSpecies *modelSpecies{nullptr};
 
 public:
   ModelParameters();
   explicit ModelParameters(libsbml::Model *model);
   void setEventsPtr(ModelEvents *events);
+  void setSpeciesPtr(ModelSpecies *species);
   [[nodiscard]] const QStringList &getIds() const;
   [[nodiscard]] const QStringList &getNames() const;
   QString setName(const QString &id, const QString &name);

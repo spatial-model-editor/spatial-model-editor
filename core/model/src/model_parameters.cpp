@@ -4,6 +4,7 @@
 #include "sbml_utils.hpp"
 #include "sme/logger.hpp"
 #include "sme/model_events.hpp"
+#include "sme/model_species.hpp"
 #include <QString>
 #include <memory>
 #include <sbml/SBMLTypes.h>
@@ -145,6 +146,10 @@ void ModelParameters::setEventsPtr(ModelEvents *events) {
   modelEvents = events;
 }
 
+void ModelParameters::setSpeciesPtr(ModelSpecies *species) {
+  modelSpecies = species;
+}
+
 const QStringList &ModelParameters::getIds() const { return ids; }
 
 const QStringList &ModelParameters::getNames() const { return names; }
@@ -224,6 +229,10 @@ void ModelParameters::setExpression(const QString &id, const QString &expr) {
     asgn->setMath(astNode.get());
     SPDLOG_INFO("  -> assignment rule expression '{}'",
                 mathASTtoString(astNode.get()));
+  }
+  // in case the modified parameter was used in a species initial concentration:
+  if (modelSpecies != nullptr) {
+    modelSpecies->updateAllAnalyticConcentrations();
   }
 }
 

@@ -1,6 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "model_test_utils.hpp"
 #include "sme/model.hpp"
+#include "sme/utils.hpp"
 #include <memory>
 
 using namespace sme;
@@ -422,5 +423,20 @@ TEST_CASE("SBML species",
     REQUIRE(r.getParameterIds("B_transport").empty());
     REQUIRE(r.getParameterName("B_transport", "k1") == "");
     REQUIRE(r.getParameterValue("B_transport", "k1") == dbl_approx(0.0));
+  }
+  SECTION("Analytic conc that depends on modified parameter") {
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/776
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &s{m.getSpecies()};
+    // set analytic expression that depends on a parameter
+    s.setAnalyticConcentration("A_c1", "param");
+    REQUIRE(s.getInitialConcentrationType("A_c1") ==
+            model::ConcentrationType::Analytic);
+    REQUIRE(s.getAnalyticConcentration("A_c1") == "param");
+    REQUIRE(common::average(s.getField("A_c1")->getConcentration()) ==
+            dbl_approx(1.0));
+    m.getParameters().setExpression("param", "2.0");
+    REQUIRE(common::average(s.getField("A_c1")->getConcentration()) ==
+            dbl_approx(2.0));
   }
 }

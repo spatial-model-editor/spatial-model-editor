@@ -129,7 +129,7 @@ ModelSpecies::getSampledFieldConcentrationFromSBML(const QString &id) const {
     const auto *geom = getOrCreateGeometry(sbmlModel);
     const auto *sf = geom->getSampledField(sampledFieldID);
     // use string instead of vector of doubles overload to avoid libsbml issue
-    // with stringtreams & subnormal doubles on macos:
+    // with stringstreams & subnormal doubles on macos:
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/465
     std::stringstream ss{sf->getSamples()};
     double val;
@@ -587,6 +587,18 @@ void ModelSpecies::setFieldConcAnalytic(
     field.setConcentration(i, conc);
   }
   field.setIsUniformConcentration(false);
+}
+
+void ModelSpecies::updateAllAnalyticConcentrations() {
+  for (auto &field : fields) {
+    const auto analyticConcentration{
+        getAnalyticConcentration(field.getId().c_str()).toStdString()};
+    if (!analyticConcentration.empty()) {
+      SPDLOG_INFO("Updating species '{}' initial conc '{}'", field.getId(),
+                  analyticConcentration);
+      setFieldConcAnalytic(field, analyticConcentration);
+    }
+  }
 }
 
 QString ModelSpecies::getAnalyticConcentration(const QString &id) const {

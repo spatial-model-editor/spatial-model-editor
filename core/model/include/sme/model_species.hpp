@@ -74,6 +74,7 @@ public:
       geometry::Field &field, const std::string &expr,
       const std::map<std::string, double, std::less<>> &substitutions = {});
   [[nodiscard]] QString getAnalyticConcentration(const QString &id) const;
+  void updateAllAnalyticConcentrations();
   void
   setSampledFieldConcentration(const QString &id,
                                const std::vector<double> &concentrationArray);
