@@ -20,6 +20,7 @@ cmake .. \
     -DSME_BUILD_TESTS=on \
     -DSME_BUILD_PYTHON_LIBRARY=off \
     -DCMAKE_PREFIX_PATH="$CMAKE_PREFIX_PATH" \
+    -DSME_LOG_LEVEL=OFF \
     -DSME_BUILD_CORE=on
 make -j2 core tests
 ctest -j2
