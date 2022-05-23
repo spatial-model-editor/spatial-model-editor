@@ -51,10 +51,8 @@ static void initParamsPlot(QCustomPlot *plot,
   plot->replot();
 }
 
-DialogOptimize::DialogOptimize(
-    sme::model::Model &model,
-    const sme::simulate::OptimizeOptions &optimizeOptions, QWidget *parent)
-    : QDialog(parent), model{model}, optimizeOptions{optimizeOptions},
+DialogOptimize::DialogOptimize(sme::model::Model &model, QWidget *parent)
+    : QDialog(parent), model{model},
       ui{std::make_unique<Ui::DialogOptimize>()} {
   ui->setupUi(this);
   connect(ui->btnStart, &QPushButton::clicked, this,
@@ -84,7 +82,8 @@ DialogOptimize::DialogOptimize(
 DialogOptimize::~DialogOptimize() = default;
 
 void DialogOptimize::init() {
-  if (optimizeOptions.optParams.empty() || optimizeOptions.optCosts.empty()) {
+  if (model.getOptimizeOptions().optParams.empty() ||
+      model.getOptimizeOptions().optCosts.empty()) {
     opt.reset();
     ui->btnStart->setEnabled(false);
     ui->btnStop->setEnabled(false);
@@ -97,7 +96,7 @@ void DialogOptimize::init() {
   this->setCursor(Qt::WaitCursor);
   // todo: this constructor does one or more simulations, should be cancellable
   // & not blocking the GUI thread
-  opt = std::make_unique<sme::simulate::Optimization>(model, optimizeOptions);
+  opt = std::make_unique<sme::simulate::Optimization>(model);
   this->setCursor(Qt::ArrowCursor);
   ui->btnStart->setEnabled(true);
   ui->btnStop->setEnabled(false);
@@ -129,9 +128,9 @@ void DialogOptimize::btnStop_clicked() {
 }
 
 void DialogOptimize::btnSetup_clicked() {
-  DialogOptSetup dialogOptSetup(model, optimizeOptions);
+  DialogOptSetup dialogOptSetup(model);
   if (dialogOptSetup.exec() == QDialog::Accepted) {
-    optimizeOptions = dialogOptSetup.getOptimizeOptions();
+    model.getOptimizeOptions() = dialogOptSetup.getOptimizeOptions();
     init();
   }
 }

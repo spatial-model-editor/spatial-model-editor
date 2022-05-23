@@ -12,10 +12,8 @@ class DialogOptSetup : public QDialog {
   Q_OBJECT
 
 public:
-  explicit DialogOptSetup(
-      const sme::model::Model &model,
-      const sme::simulate::OptimizeOptions &initialOptions = {},
-      QWidget *parent = nullptr);
+  explicit DialogOptSetup(const sme::model::Model &model,
+                          QWidget *parent = nullptr);
   ~DialogOptSetup() override;
   [[nodiscard]] const sme::simulate::OptimizeOptions &
   getOptimizeOptions() const;

@@ -44,7 +44,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().name == "cell/P0");
     REQUIRE(dia.getOptCost().id == "P0");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(12.0));
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.2));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(1.2));
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-12));
   }
   SECTION("user does nothing: correct initial values") {
@@ -56,11 +56,11 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
             simulate::OptCostType::Concentration);
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.0));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(1.0));
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.0));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(1.0));
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-14));
     REQUIRE(dia.getOptCost().speciesIndex == 1);
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
@@ -76,7 +76,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.0));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(1.0));
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-14));
     REQUIRE(dia.getOptCost().speciesIndex == 1);
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
@@ -91,7 +91,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.0));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(1.0));
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-14));
     REQUIRE(dia.getOptCost().speciesIndex == 1);
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
@@ -107,7 +107,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
     REQUIRE(dia.getOptCost().speciesIndex == 1);
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.0));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(1.0));
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-14));
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
     REQUIRE(dia.getOptCost().optCostType ==
@@ -120,7 +120,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().name == "cell/T0");
     REQUIRE(dia.getOptCost().id == "T0");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(19.0));
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(0.1));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(0.1));
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-13));
     REQUIRE(dia.getOptCost().speciesIndex == 3);
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
@@ -134,7 +134,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.0));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(1.0));
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-14));
     REQUIRE(dia.getOptCost().speciesIndex == 1);
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
@@ -148,7 +148,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(62.8));
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.0));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(1.0));
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-14));
     REQUIRE(dia.getOptCost().speciesIndex == 1);
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
@@ -165,7 +165,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.0));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(1.0));
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-14));
     REQUIRE(dia.getOptCost().speciesIndex == 1);
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
@@ -181,7 +181,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.0));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(1.0));
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-14));
     REQUIRE(dia.getOptCost().speciesIndex == 1);
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
@@ -223,7 +223,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.0));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(1.0));
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-14));
     REQUIRE(dia.getOptCost().speciesIndex == 1);
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
@@ -237,7 +237,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(62.8));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(62.8));
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-14));
     REQUIRE(dia.getOptCost().speciesIndex == 1);
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
@@ -251,7 +251,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.0));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(1.0));
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-14));
     REQUIRE(dia.getOptCost().speciesIndex == 1);
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
@@ -266,7 +266,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
-    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.0));
+    REQUIRE(dia.getOptCost().weight == dbl_approx(1.0));
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-17));
     REQUIRE(dia.getOptCost().speciesIndex == 1);
     REQUIRE(dia.getOptCost().compartmentIndex == 0);

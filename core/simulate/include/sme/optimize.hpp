@@ -19,7 +19,7 @@ private:
   pagmo::problem prob;
   pagmo::algorithm algo;
   pagmo::population pop;
-  OptimizeOptions options;
+  const OptimizeOptions &options;
   std::atomic<bool> isRunning{false};
   std::atomic<bool> stopRequested{false};
   std::atomic<std::size_t> nIterations{0};
@@ -28,14 +28,11 @@ private:
 
 public:
   /**
-   * @brief Constructs an Optimization object from the supplied model and
-   * optimization options
+   * @brief Constructs an Optimization object from the supplied model
    *
    * @param[in] model the model to optimize
-   * @param[in] optimizeOptions the optimization options
    */
-  explicit Optimization(sme::model::Model &model,
-                        OptimizeOptions optimizeOptions);
+  explicit Optimization(sme::model::Model &model);
   /**
    * @brief Do n iterations of parameter optimization
    */

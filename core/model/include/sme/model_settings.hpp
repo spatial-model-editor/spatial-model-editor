@@ -1,4 +1,5 @@
 #pragma once
+#include "sme/optimize_options.hpp"
 #include "sme/simulate_options.hpp"
 #include <QRgb>
 #include <cereal/cereal.hpp>
@@ -71,12 +72,17 @@ struct Settings {
   DisplayOptions displayOptions{};
   MeshParameters meshParameters{};
   std::map<std::string, QRgb> speciesColours{};
+  sme::simulate::OptimizeOptions optimizeOptions{};
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
     if (version == 0) {
       ar(CEREAL_NVP(simulationSettings), CEREAL_NVP(displayOptions),
          CEREAL_NVP(meshParameters), CEREAL_NVP(speciesColours));
+    } else if (version == 1) {
+      ar(CEREAL_NVP(simulationSettings), CEREAL_NVP(displayOptions),
+         CEREAL_NVP(meshParameters), CEREAL_NVP(speciesColours),
+         CEREAL_NVP(optimizeOptions));
     }
   }
 };
@@ -86,4 +92,4 @@ struct Settings {
 CEREAL_CLASS_VERSION(sme::model::MeshParameters, 1);
 CEREAL_CLASS_VERSION(sme::model::DisplayOptions, 1);
 CEREAL_CLASS_VERSION(sme::model::SimulationSettings, 1);
-CEREAL_CLASS_VERSION(sme::model::Settings, 0);
+CEREAL_CLASS_VERSION(sme::model::Settings, 1);

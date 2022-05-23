@@ -31,6 +31,6 @@ private:
   void cmbDiffType_currentIndexChanged(int index);
   void txtSimulationTime_editingFinished();
   void btnEditTargetValues_clicked();
-  void txtScaleFactor_editingFinished();
+  void txtWeight_editingFinished();
   void txtEpsilon_editingFinished();
 };

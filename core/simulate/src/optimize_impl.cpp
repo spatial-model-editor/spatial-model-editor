@@ -11,15 +11,15 @@ void applyParameters(const pagmo::vector_double &values,
     double value{values[i]};
     switch (param.optParamType) {
     case OptParamType::ModelParameter:
-      SPDLOG_INFO("Setting parameter '{}' to {}", param.id.toStdString(),
-                  value);
-      model->getParameters().setExpression(param.id,
+      SPDLOG_INFO("Setting parameter '{}' to {}", param.id, value);
+      model->getParameters().setExpression(param.id.c_str(),
                                            common::dblToQStr(value, 17));
       break;
     case OptParamType::ReactionParameter:
       SPDLOG_INFO("Setting reaction parameter '{}' of reaction '{}' to {}",
-                  param.id.toStdString(), param.parentId.toStdString(), value);
-      model->getReactions().setParameterValue(param.parentId, param.id, value);
+                  param.id, param.parentId, value);
+      model->getReactions().setParameterValue(param.parentId.c_str(),
+                                              param.id.c_str(), value);
       break;
     default:
       throw std::invalid_argument("Optimization: Invalid OptParamType");
@@ -68,7 +68,7 @@ double calculateCosts(const std::vector<OptCost> &optCosts,
         values[i] = std::abs(diff);
       }
     }
-    cost += optCost.scaleFactor * sme::common::sum(values);
+    cost += optCost.weight * sme::common::sum(values);
   }
   return cost;
 }

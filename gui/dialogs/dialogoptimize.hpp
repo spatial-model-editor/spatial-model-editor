@@ -16,14 +16,11 @@ class DialogOptimize : public QDialog {
   Q_OBJECT
 
 public:
-  explicit DialogOptimize(sme::model::Model &model,
-                          const sme::simulate::OptimizeOptions &optimizeOptions,
-                          QWidget *parent = nullptr);
+  explicit DialogOptimize(sme::model::Model &model, QWidget *parent = nullptr);
   ~DialogOptimize() override;
 
 private:
   sme::model::Model &model;
-  sme::simulate::OptimizeOptions optimizeOptions;
   std::unique_ptr<Ui::DialogOptimize> ui;
   std::unique_ptr<sme::simulate::Optimization> opt;
   std::future<std::size_t> optIterations;

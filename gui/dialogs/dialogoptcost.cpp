@@ -63,7 +63,7 @@ DialogOptCost::DialogOptCost(
     ui->cmbCostType->setEnabled(false);
     ui->txtSimulationTime->setEnabled(false);
     ui->btnEditTargetValues->setEnabled(false);
-    ui->txtScaleFactor->setEnabled(false);
+    ui->txtWeight->setEnabled(false);
     ui->txtEpsilon->setEnabled(false);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
   } else {
@@ -75,12 +75,12 @@ DialogOptCost::DialogOptCost(
     ui->cmbCostType->setCurrentIndex(toIndex(optCost.optCostType));
     ui->cmbDiffType->setCurrentIndex(toIndex(optCost.optCostDiffType));
     ui->txtSimulationTime->setText(QString::number(optCost.simulationTime));
-    ui->txtScaleFactor->setText(QString::number(optCost.scaleFactor));
+    ui->txtWeight->setText(QString::number(optCost.weight));
     ui->txtEpsilon->setText(QString::number(optCost.epsilon));
     ui->txtEpsilon->setEnabled(optCost.optCostDiffType ==
                                sme::simulate::OptCostDiffType::Relative);
     for (const auto &defaultOptCost : defaultOptCosts) {
-      ui->cmbSpecies->addItem(defaultOptCost.name);
+      ui->cmbSpecies->addItem(defaultOptCost.name.c_str());
       if (defaultOptCost.name == optCost.name) {
         cmbIndex = ui->cmbSpecies->count() - 1;
       }
@@ -95,8 +95,8 @@ DialogOptCost::DialogOptCost(
             &DialogOptCost::txtSimulationTime_editingFinished);
     connect(ui->btnEditTargetValues, &QPushButton::clicked, this,
             &DialogOptCost::btnEditTargetValues_clicked);
-    connect(ui->txtScaleFactor, &QLineEdit::editingFinished, this,
-            &DialogOptCost::txtScaleFactor_editingFinished);
+    connect(ui->txtWeight, &QLineEdit::editingFinished, this,
+            &DialogOptCost::txtWeight_editingFinished);
     connect(ui->txtEpsilon, &QLineEdit::editingFinished, this,
             &DialogOptCost::txtEpsilon_editingFinished);
     ui->cmbSpecies->setCurrentIndex(cmbIndex);
@@ -120,7 +120,7 @@ void DialogOptCost::cmbSpecies_currentIndexChanged(int index) {
     ui->cmbCostType->setCurrentIndex(toIndex(optCost.optCostType));
     ui->cmbDiffType->setCurrentIndex(toIndex(optCost.optCostDiffType));
     ui->txtSimulationTime->setText(QString::number(optCost.simulationTime));
-    ui->txtScaleFactor->setText(QString::number(optCost.scaleFactor));
+    ui->txtWeight->setText(QString::number(optCost.weight));
     ui->txtEpsilon->setText(QString::number(optCost.epsilon));
     ui->txtEpsilon->setEnabled(optCost.optCostDiffType ==
                                sme::simulate::OptCostDiffType::Relative);
@@ -145,7 +145,7 @@ void DialogOptCost::txtSimulationTime_editingFinished() {
 void DialogOptCost::btnEditTargetValues_clicked() {
   QString costType{ui->cmbCostType->currentText()};
   DialogConcentrationImage dialog(
-      optCost.targetValues, model.getSpeciesGeometry(optCost.id),
+      optCost.targetValues, model.getSpeciesGeometry(optCost.id.c_str()),
       model.getDisplayOptions().invertYAxis,
       QString("Set target %1").arg(costType),
       optCost.optCostType == sme::simulate::OptCostType::ConcentrationDcdt);
@@ -154,9 +154,9 @@ void DialogOptCost::btnEditTargetValues_clicked() {
   }
 }
 
-void DialogOptCost::txtScaleFactor_editingFinished() {
-  optCost.scaleFactor = ui->txtScaleFactor->text().toDouble();
-  ui->txtScaleFactor->setText(toQStr(optCost.scaleFactor));
+void DialogOptCost::txtWeight_editingFinished() {
+  optCost.weight = ui->txtWeight->text().toDouble();
+  ui->txtWeight->setText(toQStr(optCost.weight));
 }
 
 void DialogOptCost::txtEpsilon_editingFinished() {
