@@ -33,6 +33,14 @@ TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
       REQUIRE(a == dbl_approx(0));
     }
   }
+  SECTION("rate of change of concentration array of 0's with custom title") {
+    DialogConcentrationImage dia(std::vector<double>(9, 0.0), specGeom, false,
+                                 "Custom window title", true);
+    for (const auto &a : dia.getConcentrationArray()) {
+      REQUIRE(a == dbl_approx(0));
+    }
+    REQUIRE(dia.windowTitle() == "Custom window title");
+  }
   SECTION("concentration array of 1's") {
     DialogConcentrationImage dia(std::vector<double>(9, 1.0), specGeom);
     auto a = dia.getConcentrationArray();

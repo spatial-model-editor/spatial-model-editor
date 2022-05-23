@@ -2,7 +2,9 @@
 #include "dialogoptcost.hpp"
 #include "model_test_utils.hpp"
 #include "qt_test_utils.hpp"
+#include "sme/utils.hpp"
 #include <QLineEdit>
+#include <QPushButton>
 
 using namespace sme;
 using namespace sme::test;
@@ -13,20 +15,20 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
   std::vector<simulate::OptCost> defaultOptCosts;
   defaultOptCosts.push_back({simulate::OptCostType::ConcentrationDcdt,
                              simulate::OptCostDiffType::Relative, "cell/P0",
-                             "P0", 12.0, 1.2, 0, 0,
-                             std::vector<double>{1.0, 2.0, 3.0}, 1e-12});
+                             "P0", 12.0, 1.2, 0, 0, std::vector<double>{},
+                             1e-12});
   defaultOptCosts.push_back({simulate::OptCostType::Concentration,
                              simulate::OptCostDiffType::Relative, "cell/Mt",
-                             "Mt", 10.0, 1.0, 0, 1,
-                             std::vector<double>{1.0, 2.0, 3.0}, 1e-14});
+                             "Mt", 10.0, 1.0, 0, 1, std::vector<double>{},
+                             1e-14});
   defaultOptCosts.push_back({simulate::OptCostType::Concentration,
                              simulate::OptCostDiffType::Absolute, "cell/Mp",
-                             "Mp", 15.0, 0.6, 0, 2,
-                             std::vector<double>{1.0, 2.0, 3.0}, 1e-12});
+                             "Mp", 15.0, 0.6, 0, 2, std::vector<double>{},
+                             1e-12});
   defaultOptCosts.push_back({simulate::OptCostType::ConcentrationDcdt,
                              simulate::OptCostDiffType::Relative, "cell/T0",
-                             "T0", 19.0, 0.1, 0, 3,
-                             std::vector<double>{1.0, 2.0, 3.0}, 1e-13});
+                             "T0", 19.0, 0.1, 0, 3, std::vector<double>{},
+                             1e-13});
   ModalWidgetTimer mwt;
   SECTION("no possible costs") {
     DialogOptCost dia(model, {});
@@ -34,7 +36,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     mwt.start();
     dia.exec();
   }
-  SECTION("no pre-selected cost") {
+  SECTION("no pre-selected cost: defaults to first one") {
     DialogOptCost dia(model, defaultOptCosts);
     mwt.addUserAction();
     mwt.start();
@@ -62,8 +64,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-14));
     REQUIRE(dia.getOptCost().speciesIndex == 1);
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
-    REQUIRE(dia.getOptCost().targetValues ==
-            std::vector<double>{1.0, 2.0, 3.0});
+    REQUIRE(dia.getOptCost().targetValues.empty());
     REQUIRE(dia.getOptCost().optCostType ==
             simulate::OptCostType::Concentration);
   }
@@ -155,6 +156,67 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
             simulate::OptCostType::Concentration);
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
+  }
+  SECTION("user changes target conc values") {
+    DialogOptCost dia(model, defaultOptCosts, &defaultOptCosts[1]);
+    auto *btnEditTargetValues{
+        dia.findChild<QPushButton *>("btnEditTargetValues")};
+    REQUIRE(btnEditTargetValues != nullptr);
+    REQUIRE(dia.getOptCost().name == "cell/Mt");
+    REQUIRE(dia.getOptCost().id == "Mt");
+    REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
+    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.0));
+    REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-14));
+    REQUIRE(dia.getOptCost().speciesIndex == 1);
+    REQUIRE(dia.getOptCost().compartmentIndex == 0);
+    REQUIRE(dia.getOptCost().optCostType ==
+            simulate::OptCostType::Concentration);
+    REQUIRE(dia.getOptCost().optCostDiffType ==
+            simulate::OptCostDiffType::Relative);
+    REQUIRE(dia.getOptCost().targetValues.empty());
+    // set conc from image in range [1,2]
+    mwt.addUserAction({"1", "Tab", "2"});
+    mwt.start();
+    sendMouseClick(btnEditTargetValues);
+    REQUIRE(dia.getOptCost().name == "cell/Mt");
+    REQUIRE(dia.getOptCost().id == "Mt");
+    REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
+    REQUIRE(dia.getOptCost().scaleFactor == dbl_approx(1.0));
+    REQUIRE(dia.getOptCost().epsilon == dbl_approx(1e-14));
+    REQUIRE(dia.getOptCost().speciesIndex == 1);
+    REQUIRE(dia.getOptCost().compartmentIndex == 0);
+    REQUIRE(dia.getOptCost().optCostType ==
+            simulate::OptCostType::Concentration);
+    REQUIRE(dia.getOptCost().optCostDiffType ==
+            simulate::OptCostDiffType::Relative);
+    REQUIRE(dia.getOptCost().targetValues.size() == 10000);
+    REQUIRE(mwt.getResult() == "Set target Concentration");
+    // all pixels within compartment are set to 1
+    REQUIRE(sme::common::max(dia.getOptCost().targetValues) == dbl_approx(1.0));
+    // pixels outside of compartment are zero
+    REQUIRE(sme::common::min(dia.getOptCost().targetValues) == dbl_approx(0.0));
+  }
+  SECTION("user changes target dcdt values") {
+    DialogOptCost dia(model, defaultOptCosts, &defaultOptCosts[0]);
+    auto *btnEditTargetValues{
+        dia.findChild<QPushButton *>("btnEditTargetValues")};
+    REQUIRE(btnEditTargetValues != nullptr);
+    REQUIRE(dia.getOptCost().name == "cell/P0");
+    REQUIRE(dia.getOptCost().optCostType ==
+            simulate::OptCostType::ConcentrationDcdt);
+    REQUIRE(dia.getOptCost().targetValues.empty());
+    // set conc dcdt from image in range [1.2,2]
+    mwt.addUserAction({"1", ".", "2", "Tab", "2"});
+    mwt.start();
+    sendMouseClick(btnEditTargetValues);
+    REQUIRE(dia.getOptCost().name == "cell/P0");
+    REQUIRE(dia.getOptCost().optCostType ==
+            simulate::OptCostType::ConcentrationDcdt);
+    REQUIRE(mwt.getResult() == "Set target Rate of change of concentration");
+    // all pixels within compartment are set to 1.2
+    REQUIRE(sme::common::max(dia.getOptCost().targetValues) == dbl_approx(1.2));
+    // pixels outside of compartment are zero
+    REQUIRE(sme::common::min(dia.getOptCost().targetValues) == dbl_approx(0.0));
   }
   SECTION("user changes scale factor") {
     DialogOptCost dia(model, defaultOptCosts, &defaultOptCosts[1]);

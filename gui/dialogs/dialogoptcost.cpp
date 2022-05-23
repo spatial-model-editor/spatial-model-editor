@@ -143,9 +143,12 @@ void DialogOptCost::txtSimulationTime_editingFinished() {
 }
 
 void DialogOptCost::btnEditTargetValues_clicked() {
-  DialogConcentrationImage dialog(optCost.targetValues,
-                                  model.getSpeciesGeometry(optCost.id),
-                                  model.getDisplayOptions().invertYAxis);
+  QString costType{ui->cmbCostType->currentText()};
+  DialogConcentrationImage dialog(
+      optCost.targetValues, model.getSpeciesGeometry(optCost.id),
+      model.getDisplayOptions().invertYAxis,
+      QString("Set target %1").arg(costType),
+      optCost.optCostType == sme::simulate::OptCostType::ConcentrationDcdt);
   if (dialog.exec() == QDialog::Accepted) {
     optCost.targetValues = dialog.getConcentrationArray();
   }
