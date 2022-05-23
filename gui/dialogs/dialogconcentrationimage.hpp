@@ -16,7 +16,9 @@ public:
   explicit DialogConcentrationImage(
       const std::vector<double> &concentrationArray,
       const sme::model::SpeciesGeometry &speciesGeometry,
-      bool invertYAxis = false, QWidget *parent = nullptr);
+      bool invertYAxis = false,
+      const QString &windowTitle = "Set Initial Concentration Image",
+      bool isRateOfChange = false, QWidget *parent = nullptr);
   ~DialogConcentrationImage() override;
   [[nodiscard]] std::vector<double> getConcentrationArray() const;
 
@@ -28,7 +30,8 @@ private:
   double width;
   QPointF origin;
   QString lengthUnit;
-  QString concentrationUnit;
+  QString quantityUnit;
+  QString quantityName;
 
   QImage colourMaxConc;
   QImage colourMinConc;

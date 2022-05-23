@@ -12,13 +12,14 @@
 DialogConcentrationImage::DialogConcentrationImage(
     const std::vector<double> &concentrationArray,
     const sme::model::SpeciesGeometry &speciesGeometry, bool invertYAxis,
-    QWidget *parent)
+    const QString &windowTitle, bool isRateOfChange, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogConcentrationImage>()},
       points(speciesGeometry.compartmentPoints),
       width(speciesGeometry.pixelWidth), origin(speciesGeometry.physicalOrigin),
       qpi(speciesGeometry.compartmentImageSize,
           speciesGeometry.compartmentPoints) {
   ui->setupUi(this);
+  setWindowTitle(windowTitle);
 
   colourMinConc = QImage(32, 32, QImage::Format_ARGB32_Premultiplied);
   colourMaxConc = colourMinConc;
@@ -29,10 +30,17 @@ DialogConcentrationImage::DialogConcentrationImage(
 
   const auto &units = speciesGeometry.modelUnits;
   lengthUnit = units.getLength().name;
-  concentrationUnit =
+  quantityName = "concentration";
+  if (isRateOfChange) {
+    quantityName = "concentration rate of change";
+  }
+  quantityUnit =
       QString("%1/%2").arg(units.getAmount().name).arg(units.getVolume().name);
-  ui->lblMinConcUnits->setText(concentrationUnit);
-  ui->lblMaxConcUnits->setText(concentrationUnit);
+  if (isRateOfChange) {
+    quantityUnit = QString("%1/%2").arg(quantityUnit).arg(units.getTime().name);
+  }
+  ui->lblMinConcUnits->setText(quantityUnit);
+  ui->lblMaxConcUnits->setText(quantityUnit);
   img = QImage(speciesGeometry.compartmentImageSize,
                QImage::Format_ARGB32_Premultiplied);
   img.fill(0);
@@ -268,13 +276,13 @@ void DialogConcentrationImage::lblImage_mouseOver(QPoint point) {
     return;
   }
   auto physical = physicalPoint(point);
-  ui->lblConcentration->setText(
-      QString("x=%1 %2\ny=%3 %2\nconcentration:\n%4 %5")
-          .arg(physical.x())
-          .arg(lengthUnit)
-          .arg(physical.y())
-          .arg(concentration[*index])
-          .arg(concentrationUnit));
+  ui->lblConcentration->setText(QString("x=%1 %2\ny=%3 %2\n%4:\n%5 %6")
+                                    .arg(physical.x())
+                                    .arg(lengthUnit)
+                                    .arg(physical.y())
+                                    .arg(quantityName)
+                                    .arg(concentration[*index])
+                                    .arg(quantityUnit));
 }
 
 void DialogConcentrationImage::chkGrid_stateChanged(int state) {
@@ -294,14 +302,15 @@ void DialogConcentrationImage::btnImportImage_clicked() {
 
 void DialogConcentrationImage::btnExportImage_clicked() {
   QString filename = QFileDialog::getSaveFileName(
-      this, "Export species concentration as image", "conc.png", "PNG (*.png)");
+      this, QString("Export species %1 as image").arg(quantityName), "conc.png",
+      "PNG (*.png)");
   if (filename.isEmpty()) {
     return;
   }
   if (filename.right(4) != ".png") {
     filename.append(".png");
   }
-  SPDLOG_DEBUG("exporting concentration iage to file {}",
+  SPDLOG_DEBUG("exporting concentration image to file {}",
                filename.toStdString());
   img.save(filename);
 }
