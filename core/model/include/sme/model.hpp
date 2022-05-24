@@ -17,6 +17,7 @@
 #include "sme/model_settings.hpp"
 #include "sme/model_species.hpp"
 #include "sme/model_units.hpp"
+#include "sme/optimize_options.hpp"
 #include "sme/serialization.hpp"
 #include "sme/simulate.hpp"
 #include "sme/simulate_options.hpp"
@@ -103,6 +104,8 @@ public:
   [[nodiscard]] const SimulationSettings &getSimulationSettings() const;
   MeshParameters &getMeshParameters();
   [[nodiscard]] const MeshParameters &getMeshParameters() const;
+  simulate::OptimizeOptions &getOptimizeOptions();
+  [[nodiscard]] const simulate::OptimizeOptions &getOptimizeOptions() const;
 
   explicit Model();
   Model(Model &&) noexcept = default;

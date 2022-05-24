@@ -29,6 +29,15 @@ TEST_CASE("XML Annotations",
     simulationSettings.options.dune.dt = 0.0123;
     auto &meshParameters{settings.meshParameters};
     meshParameters.boundarySimplifierType = 1;
+    auto &optimizeOptions{settings.optimizeOptions};
+    optimizeOptions.nParticles = 7;
+    auto &optCost{optimizeOptions.optCosts.emplace_back()};
+    optCost.name = "myOptCost";
+    optCost.targetValues = {1.0, 3.0, 5.0};
+    auto &optParam{optimizeOptions.optParams.emplace_back()};
+    optParam.name = "myOptParam";
+    // todo: populate all fields above
+
     model::setSbmlAnnotation(model, settings);
 
     // load them from sbml
@@ -44,12 +53,25 @@ TEST_CASE("XML Annotations",
     REQUIRE(newSimulationSettings.times.size() == 2);
     REQUIRE(newSimulationSettings.options.pixel.maxThreads == 4);
     REQUIRE(newSimulationSettings.options.dune.dt == dbl_approx(0.0123));
-    auto &newMeshParameters{settings.meshParameters};
+    auto &newMeshParameters{newSettings.meshParameters};
     REQUIRE(newMeshParameters.boundarySimplifierType == 1);
+    auto &newOptimizeOptions{newSettings.optimizeOptions};
+    REQUIRE(newOptimizeOptions.nParticles == 7);
+    REQUIRE(newOptimizeOptions.optCosts.size() == 1);
+    REQUIRE(newOptimizeOptions.optCosts[0].name == "myOptCost");
+    REQUIRE(newOptimizeOptions.optCosts[0].targetValues.size() == 3);
+    REQUIRE(newOptimizeOptions.optCosts[0].targetValues[0] == dbl_approx(1.0));
+    REQUIRE(newOptimizeOptions.optCosts[0].targetValues[1] == dbl_approx(3.0));
+    REQUIRE(newOptimizeOptions.optCosts[0].targetValues[2] == dbl_approx(5.0));
+    REQUIRE(newOptimizeOptions.optParams.size() == 1);
+    REQUIRE(newOptimizeOptions.optParams[0].name == "myOptParam");
 
     // change options, save & write to file
     newSimulationSettings.times.push_back({7, 0.33});
     newSimulationSettings.options.pixel.maxThreads = 16;
+    newOptimizeOptions.nParticles = 4;
+    newOptimizeOptions.optCosts.emplace_back().name = "optCost2";
+    newOptimizeOptions.optParams[0].name = "newOptParamName";
     model::setSbmlAnnotation(model, newSettings);
     libsbml::writeSBMLToFile(doc.get(), "tmpxmlsettings.xml");
 
@@ -70,6 +92,18 @@ TEST_CASE("XML Annotations",
     REQUIRE(simulationSettings2.times.size() == 3);
     REQUIRE(simulationSettings2.options.pixel.maxThreads == 16);
     REQUIRE(simulationSettings2.options.dune.dt == dbl_approx(0.0123));
+    auto &optimizeOptions2{settings2.optimizeOptions};
+    REQUIRE(optimizeOptions2.nParticles == 4);
+    REQUIRE(optimizeOptions2.optCosts.size() == 2);
+    REQUIRE(optimizeOptions2.optCosts[0].name == "myOptCost");
+    REQUIRE(optimizeOptions2.optCosts[0].targetValues.size() == 3);
+    REQUIRE(optimizeOptions2.optCosts[0].targetValues[0] == dbl_approx(1.0));
+    REQUIRE(optimizeOptions2.optCosts[0].targetValues[1] == dbl_approx(3.0));
+    REQUIRE(optimizeOptions2.optCosts[0].targetValues[2] == dbl_approx(5.0));
+    REQUIRE(optimizeOptions2.optCosts[1].name == "optCost2");
+    REQUIRE(optimizeOptions2.optCosts[1].targetValues.empty());
+    REQUIRE(optimizeOptions2.optParams.size() == 1);
+    REQUIRE(optimizeOptions2.optParams[0].name == "newOptParamName");
   }
   SECTION("Invalid settings annotations") {
     auto doc{getTestSbmlDoc("ABtoC-invalid-annotation")};
@@ -79,6 +113,8 @@ TEST_CASE("XML Annotations",
     REQUIRE(settings.meshParameters.maxAreas.empty());
     REQUIRE(settings.displayOptions.showSpecies.empty());
     REQUIRE(settings.simulationSettings.times.empty());
+    REQUIRE(settings.optimizeOptions.optCosts.empty());
+    REQUIRE(settings.optimizeOptions.optParams.empty());
     REQUIRE(settings.speciesColours.empty());
   }
 }

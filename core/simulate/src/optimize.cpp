@@ -8,9 +8,8 @@
 
 namespace sme::simulate {
 
-Optimization::Optimization(sme::model::Model &model,
-                           OptimizeOptions optimizeOptions)
-    : options{std::move(optimizeOptions)} {
+Optimization::Optimization(sme::model::Model &model)
+    : options{model.getOptimizeOptions()} {
   PagmoUDP udp{};
   udp.init(model.getXml().toStdString(), options);
   prob = pagmo::problem{std::move(udp)};
@@ -61,7 +60,7 @@ std::vector<QString> Optimization::getParamNames() const {
   std::vector<QString> names;
   names.reserve(options.optParams.size());
   for (const auto &optParam : options.optParams) {
-    names.push_back(optParam.name);
+    names.push_back(optParam.name.c_str());
   }
   return names;
 }

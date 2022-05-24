@@ -14,7 +14,6 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
   model.getSimulationSettings().simulatorType =
       sme::simulate::SimulatorType::Pixel;
   SECTION("No initial OptimizeOptions") {
-    sme::simulate::OptimizeOptions optimizeOptions{};
     DialogOptSetup dia(model);
     // get pointers to widgets within dialog
     auto *lstTargets{dia.findChild<QListWidget *>("lstTargets")};
@@ -346,7 +345,7 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
     optCost0.name = "cell/P0";
     optCost0.id = "P0";
     optCost0.simulationTime = 18.0;
-    optCost0.scaleFactor = 0.23;
+    optCost0.weight = 0.23;
     optCost0.compartmentIndex = 0;
     optCost0.speciesIndex = 0;
     optCost0.targetValues = {};
@@ -356,11 +355,12 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
     optCost1.name = "cell/T0";
     optCost1.id = "T0";
     optCost1.simulationTime = 9.0;
-    optCost1.scaleFactor = 0.99;
+    optCost1.weight = 0.99;
     optCost1.compartmentIndex = 0;
     optCost1.speciesIndex = 3;
     optCost1.targetValues = {};
-    DialogOptSetup dia(model, optimizeOptions);
+    model.getOptimizeOptions() = optimizeOptions;
+    DialogOptSetup dia(model);
     const auto &optParams{dia.getOptimizeOptions().optParams};
     const auto &optCosts{dia.getOptimizeOptions().optCosts};
     // get pointers to widgets within tab

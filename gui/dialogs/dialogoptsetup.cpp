@@ -31,7 +31,7 @@ static QString toQStr(sme::simulate::OptCostDiffType optCostDiffType) {
 
 static QString toQStr(const sme::simulate::OptCost &optCost) {
   return QString("%1 [%2 at t=%3, %4 difference]")
-      .arg(optCost.name)
+      .arg(optCost.name.c_str())
       .arg(toQStr(optCost.optCostType))
       .arg(toQStr(optCost.simulationTime))
       .arg(toQStr(optCost.optCostDiffType));
@@ -39,7 +39,7 @@ static QString toQStr(const sme::simulate::OptCost &optCost) {
 
 static QString toQStr(const sme::simulate::OptParam &optParam) {
   return QString("%1 [%2, %3]")
-      .arg(optParam.name)
+      .arg(optParam.name.c_str())
       .arg(optParam.lowerBound)
       .arg(optParam.upperBound);
 }
@@ -50,8 +50,8 @@ getDefaultOptParams(const sme::model::Model &model) {
   for (const auto &id : model.getParameters().getIds()) {
     double value{model.getParameters().getExpression(id).toDouble()};
     optParams.push_back({sme::simulate::OptParamType::ModelParameter,
-                         model.getParameters().getName(id), id, QString{},
-                         value, value});
+                         model.getParameters().getName(id).toStdString(),
+                         id.toStdString(), "", value, value});
   }
   for (const auto &reactionLocation :
        model.getReactions().getReactionLocations()) {
@@ -67,7 +67,8 @@ getDefaultOptParams(const sme::model::Model &model) {
         auto name{
             QString("Reaction '%1' / %2").arg(reactionName).arg(parameterName)};
         optParams.push_back({sme::simulate::OptParamType::ReactionParameter,
-                             name, parameterId, reactionId, value, value});
+                             name.toStdString(), parameterId.toStdString(),
+                             reactionId.toStdString(), value, value});
       }
     }
   }
@@ -96,8 +97,9 @@ getDefaultOptCosts(const sme::model::Model &model) {
              sme::simulate::OptCostDiffType::Absolute,
              QString("%1/%2")
                  .arg(model.getCompartments().getName(compartmentId))
-                 .arg(model.getSpecies().getName(speciesId)),
-             speciesId,
+                 .arg(model.getSpecies().getName(speciesId))
+                 .toStdString(),
+             speciesId.toStdString(),
              defaultSimTime,
              1.0,
              compartmentIndex,
@@ -115,10 +117,9 @@ getDefaultOptCosts(const sme::model::Model &model) {
   return optCosts;
 }
 
-DialogOptSetup::DialogOptSetup(
-    const sme::model::Model &model,
-    const sme::simulate::OptimizeOptions &initialOptions, QWidget *parent)
-    : QDialog(parent), model{model}, optimizeOptions{initialOptions},
+DialogOptSetup::DialogOptSetup(const sme::model::Model &model, QWidget *parent)
+    : QDialog(parent), model{model},
+      optimizeOptions{model.getOptimizeOptions()},
       defaultOptParams{getDefaultOptParams(model)},
       defaultOptCosts{getDefaultOptCosts(model)},
       ui{std::make_unique<Ui::DialogOptSetup>()} {

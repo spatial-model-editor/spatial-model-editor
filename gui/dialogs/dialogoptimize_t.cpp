@@ -27,9 +27,11 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
                                       0,
                                       0,
                                       {}});
+  model.getOptimizeOptions() = optimizeOptions;
   ModalWidgetTimer mwt;
   SECTION("no optimizeOptions") {
-    DialogOptimize dia(model, {});
+    model.getOptimizeOptions() = {};
+    DialogOptimize dia(model);
     // get pointers to widgets within dialog
     auto *btnStart{dia.findChild<QPushButton *>("btnStart")};
     REQUIRE(btnStart != nullptr);
@@ -46,7 +48,7 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
     REQUIRE(btnApplyToModel->isEnabled() == false);
   }
   SECTION("existing optimizeOptions") {
-    DialogOptimize dia(model, optimizeOptions);
+    DialogOptimize dia(model);
     // get pointers to widgets within dialog
     auto *btnStart{dia.findChild<QPushButton *>("btnStart")};
     REQUIRE(btnStart != nullptr);

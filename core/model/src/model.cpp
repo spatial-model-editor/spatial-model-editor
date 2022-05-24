@@ -263,6 +263,15 @@ const MeshParameters &Model::getMeshParameters() const {
   return settings->meshParameters;
 }
 
+simulate::OptimizeOptions &Model::getOptimizeOptions() {
+  return settings->optimizeOptions;
+}
+
+[[nodiscard]] const simulate::OptimizeOptions &
+Model::getOptimizeOptions() const {
+  return settings->optimizeOptions;
+}
+
 void Model::clear() {
   doc.reset();
   isValid = false;

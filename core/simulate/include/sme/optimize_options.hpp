@@ -1,5 +1,7 @@
 #pragma once
-#include <QString>
+#include <cereal/cereal.hpp>
+#include <cereal/types/string.hpp>
+#include <cereal/types/vector.hpp>
 #include <vector>
 
 namespace sme::simulate {
@@ -20,15 +22,15 @@ struct OptParam {
   /**
    * @brief The name of this OptParam as displayed to the user
    */
-  QString name;
+  std::string name;
   /**
    * @brief The id of the parameter in the model
    */
-  QString id;
+  std::string id;
   /**
    * @brief The id of the parent of the parameter in the model (optional)
    */
-  QString parentId;
+  std::string parentId;
   /**
    * @brief The lower bound on the allowed values of the parameter
    */
@@ -37,6 +39,14 @@ struct OptParam {
    * @brief The upper bound on the allowed values of the parameter
    */
   double upperBound;
+
+  template <class Archive>
+  void serialize(Archive &ar, std::uint32_t const version) {
+    if (version == 0) {
+      ar(CEREAL_NVP(optParamType), CEREAL_NVP(name), CEREAL_NVP(id),
+         CEREAL_NVP(parentId), CEREAL_NVP(lowerBound), CEREAL_NVP(upperBound));
+    }
+  }
 };
 
 /**
@@ -65,11 +75,11 @@ struct OptCost {
   /**
    * @brief The name of this OptCost as displayed to the user
    */
-  QString name;
+  std::string name;
   /**
    * @brief The id of the species in the model
    */
-  QString id;
+  std::string id;
   /**
    * @brief The simulation time at which the cost function should be calculated
    */
@@ -80,7 +90,7 @@ struct OptCost {
    * This assigns a relative weight to this cost when the optimization involves
    * the sum of multiple cost functions.
    */
-  double scaleFactor{1.0};
+  double weight{1.0};
   /**
    * @brief The index of the compartment containing the species
    */
@@ -104,6 +114,16 @@ struct OptCost {
    * avoid numerical issues caused by dividing by zero.
    */
   double epsilon{1e-15};
+
+  template <class Archive>
+  void serialize(Archive &ar, std::uint32_t const version) {
+    if (version == 0) {
+      ar(CEREAL_NVP(optCostType), CEREAL_NVP(optCostDiffType), CEREAL_NVP(name),
+         CEREAL_NVP(id), CEREAL_NVP(simulationTime), CEREAL_NVP(weight),
+         CEREAL_NVP(compartmentIndex), CEREAL_NVP(speciesIndex),
+         CEREAL_NVP(targetValues), CEREAL_NVP(epsilon));
+    }
+  }
 };
 
 /**
@@ -122,6 +142,17 @@ struct OptimizeOptions {
    * @brief The costs to minimize
    */
   std::vector<OptCost> optCosts;
+
+  template <class Archive>
+  void serialize(Archive &ar, std::uint32_t const version) {
+    if (version == 0) {
+      ar(CEREAL_NVP(nParticles), CEREAL_NVP(optParams), CEREAL_NVP(optCosts));
+    }
+  }
 };
 
 } // namespace sme::simulate
+
+CEREAL_CLASS_VERSION(sme::simulate::OptimizeOptions, 0);
+CEREAL_CLASS_VERSION(sme::simulate::OptCost, 0);
+CEREAL_CLASS_VERSION(sme::simulate::OptParam, 0);

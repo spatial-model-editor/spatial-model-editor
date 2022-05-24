@@ -27,7 +27,7 @@ DialogOptParam::DialogOptParam(
     ui->txtLowerBound->setText(toQStr(optParam.lowerBound));
     ui->txtUpperBound->setText(toQStr(optParam.upperBound));
     for (const auto &defaultOptParam : defaultOptParams) {
-      ui->cmbParameter->addItem(defaultOptParam.name);
+      ui->cmbParameter->addItem(defaultOptParam.name.c_str());
       if (defaultOptParam.optParamType == optParam.optParamType &&
           defaultOptParam.id == optParam.id &&
           defaultOptParam.parentId == optParam.parentId) {

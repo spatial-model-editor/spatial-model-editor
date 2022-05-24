@@ -62,7 +62,7 @@ TEST_CASE("Optimize calculateCosts: zero or no target values",
   optCostConc.optCostDiffType = simulate::OptCostDiffType::Absolute;
   optCostConc.name = "name";
   optCostConc.id = "A";
-  optCostConc.scaleFactor = 1.0;
+  optCostConc.weight = 1.0;
   optCostConc.compartmentIndex = 0;
   optCostConc.speciesIndex = 0;
   optCostConc.targetValues = {};
@@ -72,7 +72,7 @@ TEST_CASE("Optimize calculateCosts: zero or no target values",
   optCostDcdt.optCostDiffType = simulate::OptCostDiffType::Absolute;
   optCostDcdt.name = "name";
   optCostDcdt.id = "A";
-  optCostDcdt.scaleFactor = 1.0;
+  optCostDcdt.weight = 1.0;
   optCostDcdt.compartmentIndex = 0;
   optCostDcdt.speciesIndex = 0;
   optCostDcdt.targetValues = {};
@@ -176,7 +176,7 @@ TEST_CASE("Optimize calculateCosts: target values",
   optCostConcAbs.name = "name";
   optCostConcAbs.id = "A";
   optCostConcAbs.simulationTime = 100.0;
-  optCostConcAbs.scaleFactor = 1.0;
+  optCostConcAbs.weight = 1.0;
   optCostConcAbs.compartmentIndex = 0;
   optCostConcAbs.speciesIndex = 0;
   optCostConcAbs.targetValues = target;
@@ -187,7 +187,7 @@ TEST_CASE("Optimize calculateCosts: target values",
   optCostDcdtAbs.name = "name";
   optCostDcdtAbs.id = "A";
   optCostDcdtAbs.simulationTime = 100.0 * (1 + 1e-14);
-  optCostDcdtAbs.scaleFactor = 1.0;
+  optCostDcdtAbs.weight = 1.0;
   optCostDcdtAbs.compartmentIndex = 0;
   optCostDcdtAbs.speciesIndex = 0;
   optCostDcdtAbs.targetValues = target;
@@ -198,7 +198,7 @@ TEST_CASE("Optimize calculateCosts: target values",
   optCostConcRel.name = "name";
   optCostConcRel.id = "A";
   optCostConcRel.simulationTime = 100.0 * (1 - 1e-14);
-  optCostConcRel.scaleFactor = 1.0;
+  optCostConcRel.weight = 1.0;
   optCostConcRel.compartmentIndex = 0;
   optCostConcRel.speciesIndex = 0;
   optCostConcRel.targetValues = target;
@@ -210,7 +210,7 @@ TEST_CASE("Optimize calculateCosts: target values",
   optCostDcdtRel.name = "name";
   optCostDcdtRel.id = "A";
   optCostDcdtRel.simulationTime = 100.0;
-  optCostDcdtRel.scaleFactor = 1.0;
+  optCostDcdtRel.weight = 1.0;
   optCostDcdtRel.compartmentIndex = 0;
   optCostDcdtRel.speciesIndex = 0;
   optCostDcdtRel.targetValues = target;
