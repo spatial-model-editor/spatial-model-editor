@@ -5,6 +5,29 @@
 
 namespace sme::common {
 
+QImage toGrayscaleIntensityImage(const QSize &imageSize,
+                                 const std::vector<double> &values) {
+  QImage img(imageSize, QImage::Format_RGB32);
+  if (values.size() != img.width() * img.height()) {
+    img.fill(0);
+  } else {
+    double scaleFactor{0.0};
+    double maxValue{max(values)};
+    if (maxValue > 0.0) {
+      scaleFactor = 255.0 / maxValue;
+    }
+    auto value{values.cbegin()};
+    for (int y = img.height() - 1; y >= 0; --y) {
+      for (int x = 0; x < img.width(); ++x) {
+        auto intensity{static_cast<int>(scaleFactor * (*value))};
+        img.setPixel(x, y, qRgb(intensity, intensity, intensity));
+        ++value;
+      }
+    }
+  }
+  return img;
+}
+
 std::vector<std::string> toStdString(const QStringList &q) {
   std::vector<std::string> v;
   v.reserve(static_cast<std::size_t>(q.size()));

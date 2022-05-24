@@ -2,6 +2,7 @@
 #include "sme/model.hpp"
 #include "sme/optimize_options.hpp"
 #include <QDialog>
+#include <QListWidgetItem>
 #include <memory>
 
 namespace Ui {
@@ -25,10 +26,12 @@ private:
   std::vector<sme::simulate::OptCost> defaultOptCosts;
   std::unique_ptr<Ui::DialogOptSetup> ui;
   void lstTargets_currentRowChanged(int row);
+  void lstTargets_itemDoubleClicked(QListWidgetItem *item);
   void btnAddTarget_clicked();
   void btnEditTarget_clicked();
   void btnRemoveTarget_clicked();
   void lstParameters_currentRowChanged(int row);
+  void lstParameters_itemDoubleClicked(QListWidgetItem *item);
   void btnAddParameter_clicked();
   void btnEditParameter_clicked();
   void btnRemoveParameter_clicked();

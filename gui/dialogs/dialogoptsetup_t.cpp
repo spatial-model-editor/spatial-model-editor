@@ -3,6 +3,7 @@
 #include "model_test_utils.hpp"
 #include "qt_test_utils.hpp"
 #include <QListWidget>
+#include <QListWidgetItem>
 #include <QPushButton>
 
 using namespace sme;
@@ -48,6 +49,7 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(dia.getOptimizeOptions().optCosts.empty());
     }
     SECTION("user adds targets") {
+      dia.show();
       REQUIRE(lstTargets->count() == 0);
       REQUIRE(dia.getOptimizeOptions().optCosts.empty());
       // click add target, then cancel: no-op
@@ -57,8 +59,8 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(lstTargets->count() == 0);
       REQUIRE(dia.getOptimizeOptions().optCosts.empty());
       // click add target, change values, press ok
-      mwt.addUserAction(
-          {"Down", "Tab", "Down", "Tab", "Down", "Tab", "4", "Enter"});
+      mwt.addUserAction({"Down", "Tab", "Down", "Tab", "4", "Tab", "Tab",
+                         "Down", "Tab", "2", "Enter"});
       mwt.start();
       sendMouseClick(btnAddTarget);
       REQUIRE(lstTargets->count() == 1);
@@ -74,6 +76,7 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optCosts[0].simulationTime == dbl_approx(4.0));
       REQUIRE(optCosts[0].compartmentIndex == 0);
       REQUIRE(optCosts[0].speciesIndex == 1);
+      REQUIRE(optCosts[0].weight == 2);
       // add another target with default values
       mwt.addUserAction({"Enter"});
       mwt.start();
@@ -148,6 +151,32 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optCosts[1].simulationTime == dbl_approx(100.0));
       REQUIRE(optCosts[1].compartmentIndex == 0);
       REQUIRE(optCosts[1].speciesIndex == 0);
+      // user edits first target by double-clicking on it, changes opt cost type
+      REQUIRE(lstTargets->currentRow() == 0);
+      mwt.addUserAction({"Tab", "Down"});
+      mwt.start();
+      sendMouseDoubleClick(lstTargets->item(0));
+      REQUIRE(mwt.getResult() == "Edit Optimization Target");
+      REQUIRE(lstTargets->count() == 2);
+      REQUIRE(lstTargets->item(0)->text() ==
+              "cell/Mp [Rate of change of concentration at t=100, absolute "
+              "difference]");
+      REQUIRE(lstTargets->item(1)->text() ==
+              "cell/P0 [Concentration at t=100, absolute difference]");
+      REQUIRE(optCosts.size() == 2);
+      REQUIRE(optCosts[0].optCostDiffType ==
+              simulate::OptCostDiffType::Absolute);
+      REQUIRE(optCosts[0].optCostType ==
+              simulate::OptCostType::ConcentrationDcdt);
+      REQUIRE(optCosts[0].simulationTime == dbl_approx(100.0));
+      REQUIRE(optCosts[0].compartmentIndex == 0);
+      REQUIRE(optCosts[0].speciesIndex == 2);
+      REQUIRE(optCosts[1].optCostDiffType ==
+              simulate::OptCostDiffType::Absolute);
+      REQUIRE(optCosts[1].optCostType == simulate::OptCostType::Concentration);
+      REQUIRE(optCosts[1].simulationTime == dbl_approx(100.0));
+      REQUIRE(optCosts[1].compartmentIndex == 0);
+      REQUIRE(optCosts[1].speciesIndex == 0);
       // user deletes first target, but clicks cancel
       REQUIRE(lstTargets->currentRow() == 0);
       mwt.addUserAction({"Escape"}, false);
@@ -157,7 +186,8 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optCosts.size() == 2);
       REQUIRE(optCosts[0].optCostDiffType ==
               simulate::OptCostDiffType::Absolute);
-      REQUIRE(optCosts[0].optCostType == simulate::OptCostType::Concentration);
+      REQUIRE(optCosts[0].optCostType ==
+              simulate::OptCostType::ConcentrationDcdt);
       REQUIRE(optCosts[0].simulationTime == dbl_approx(100.0));
       REQUIRE(optCosts[0].compartmentIndex == 0);
       REQUIRE(optCosts[0].speciesIndex == 2);
@@ -287,6 +317,30 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optParams[1].name == "Reaction 'sP' / k");
       REQUIRE(optParams[1].lowerBound == dbl_approx(0.9));
       REQUIRE(optParams[1].upperBound == dbl_approx(0.9));
+      // user edits first parameter by doubleclick & changes bound
+      REQUIRE(lstParameters->currentRow() == 0);
+      mwt.addUserAction({"Tab", "1", "Tab", "2", "Enter"});
+      mwt.start();
+      sendMouseDoubleClick(lstParameters->item(0));
+      REQUIRE(lstParameters->count() == 2);
+      REQUIRE(lstParameters->item(0)->text() ==
+              "Reaction 'Mp transcription' / n [1, 2]");
+      REQUIRE(lstParameters->item(1)->text() == "Reaction 'sP' / k [0.9, 0.9]");
+      REQUIRE(optParams.size() == 2);
+      REQUIRE(optParams[0].optParamType ==
+              simulate::OptParamType::ReactionParameter);
+      REQUIRE(optParams[0].id == "n");
+      REQUIRE(optParams[0].parentId == "Mp_transcription");
+      REQUIRE(optParams[0].name == "Reaction 'Mp transcription' / n");
+      REQUIRE(optParams[0].lowerBound == dbl_approx(1));
+      REQUIRE(optParams[0].upperBound == dbl_approx(2));
+      REQUIRE(optParams[1].optParamType ==
+              simulate::OptParamType::ReactionParameter);
+      REQUIRE(optParams[1].id == "k");
+      REQUIRE(optParams[1].parentId == "sP");
+      REQUIRE(optParams[1].name == "Reaction 'sP' / k");
+      REQUIRE(optParams[1].lowerBound == dbl_approx(0.9));
+      REQUIRE(optParams[1].upperBound == dbl_approx(0.9));
       // user deletes first parameter, but clicks cancel
       REQUIRE(lstParameters->currentRow() == 0);
       mwt.addUserAction({"Escape"}, false);
@@ -299,8 +353,8 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optParams[0].id == "n");
       REQUIRE(optParams[0].parentId == "Mp_transcription");
       REQUIRE(optParams[0].name == "Reaction 'Mp transcription' / n");
-      REQUIRE(optParams[0].lowerBound == dbl_approx(4));
-      REQUIRE(optParams[0].upperBound == dbl_approx(4));
+      REQUIRE(optParams[0].lowerBound == dbl_approx(1));
+      REQUIRE(optParams[0].upperBound == dbl_approx(2));
       REQUIRE(optParams[1].optParamType ==
               simulate::OptParamType::ReactionParameter);
       REQUIRE(optParams[1].id == "k");

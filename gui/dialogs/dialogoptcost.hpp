@@ -33,4 +33,5 @@ private:
   void btnEditTargetValues_clicked();
   void txtWeight_editingFinished();
   void txtEpsilon_editingFinished();
+  void updateImage();
 };

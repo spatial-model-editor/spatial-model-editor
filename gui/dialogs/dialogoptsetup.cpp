@@ -136,6 +136,8 @@ DialogOptSetup::DialogOptSetup(const sme::model::Model &model, QWidget *parent)
   }
   connect(ui->lstTargets, &QListWidget::currentRowChanged, this,
           &DialogOptSetup::lstTargets_currentRowChanged);
+  connect(ui->lstTargets, &QListWidget::itemDoubleClicked, this,
+          &DialogOptSetup::lstTargets_itemDoubleClicked);
   connect(ui->btnAddTarget, &QPushButton::clicked, this,
           &DialogOptSetup::btnAddTarget_clicked);
   connect(ui->btnEditTarget, &QPushButton::clicked, this,
@@ -144,6 +146,8 @@ DialogOptSetup::DialogOptSetup(const sme::model::Model &model, QWidget *parent)
           &DialogOptSetup::btnRemoveTarget_clicked);
   connect(ui->lstParameters, &QListWidget::currentRowChanged, this,
           &DialogOptSetup::lstParameters_currentRowChanged);
+  connect(ui->lstParameters, &QListWidget::itemDoubleClicked, this,
+          &DialogOptSetup::lstParameters_itemDoubleClicked);
   connect(ui->btnAddParameter, &QPushButton::clicked, this,
           &DialogOptSetup::btnAddParameter_clicked);
   connect(ui->btnEditParameter, &QPushButton::clicked, this,
@@ -171,6 +175,12 @@ void DialogOptSetup::lstTargets_currentRowChanged(int row) {
   }
   ui->btnEditTarget->setEnabled(true);
   ui->btnRemoveTarget->setEnabled(true);
+}
+
+void DialogOptSetup::lstTargets_itemDoubleClicked(QListWidgetItem *item) {
+  if (item != nullptr) {
+    btnEditTarget_clicked();
+  }
 }
 
 void DialogOptSetup::btnAddTarget_clicked() {
@@ -218,6 +228,12 @@ void DialogOptSetup::lstParameters_currentRowChanged(int row) {
   }
   ui->btnEditParameter->setEnabled(true);
   ui->btnRemoveParameter->setEnabled(true);
+}
+
+void DialogOptSetup::lstParameters_itemDoubleClicked(QListWidgetItem *item) {
+  if (item != nullptr) {
+    btnEditParameter_clicked();
+  }
 }
 
 void DialogOptSetup::btnAddParameter_clicked() {

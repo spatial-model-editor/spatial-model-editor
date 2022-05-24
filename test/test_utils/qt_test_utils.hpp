@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <QListWidgetItem>
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -13,9 +14,9 @@
 namespace sme::test {
 
 // delay in ms to insert between key events
-const int keyDelay = 0;
+constexpr int keyDelay{0};
 // delay in ms to insert between mouse events
-const int mouseDelay = 0;
+constexpr int mouseDelay{0};
 
 void wait(int milliseconds = 100);
 
@@ -42,6 +43,15 @@ void sendMouseRelease(QWidget *widget, const QPoint &pos = {},
 
 void sendMouseClick(QWidget *widget, const QPoint &pos = {},
                     Qt::MouseButton button = Qt::MouseButton::LeftButton);
+
+void sendMouseClick(QListWidgetItem *item,
+                    Qt::MouseButton button = Qt::MouseButton::LeftButton);
+
+void sendMouseDoubleClick(QWidget *widget, const QPoint &pos = {},
+                          Qt::MouseButton button = Qt::MouseButton::LeftButton);
+
+void sendMouseDoubleClick(QListWidgetItem *item,
+                          Qt::MouseButton button = Qt::MouseButton::LeftButton);
 
 void sendMouseDrag(QWidget *widget, const QPoint &startPos,
                    const QPoint &endPos,

@@ -21,6 +21,7 @@
 #pragma once
 
 #include <QColor>
+#include <QImage>
 #include <QPoint>
 #include <QRgb>
 #include <QSize>
@@ -105,6 +106,12 @@ std::size_t element_index(const Container &c, const Element &e,
   }
   return static_cast<std::size_t>(std::distance(cbegin(c), iter));
 }
+
+/**
+ * @brief Grayscale image from array of pixel intensities
+ */
+QImage toGrayscaleIntensityImage(const QSize &imageSize,
+                                 const std::vector<double> &values);
 
 /**
  * @brief The type of an object as a string

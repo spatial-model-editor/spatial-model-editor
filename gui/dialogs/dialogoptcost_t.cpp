@@ -85,7 +85,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
     REQUIRE(txtEpsilon->isEnabled());
-    mwt.addUserAction({"Tab", "Down", "Tab", "Up"});
+    mwt.addUserAction({"Tab", "Down", "Tab", "Tab", "Tab", "Up"});
     mwt.start();
     dia.exec();
     REQUIRE(dia.getOptCost().name == "cell/Mt");
@@ -142,7 +142,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
             simulate::OptCostType::Concentration);
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
-    mwt.addUserAction({"Tab", "Tab", "Tab", "6", "2", ".", "8"});
+    mwt.addUserAction({"Tab", "Tab", "6", "2", ".", "8"});
     mwt.start();
     dia.exec();
     REQUIRE(dia.getOptCost().name == "cell/Mt");
