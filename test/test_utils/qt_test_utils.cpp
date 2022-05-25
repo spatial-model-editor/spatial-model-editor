@@ -123,6 +123,29 @@ void sendMouseClick(QWidget *widget, const QPoint &pos,
   QTest::mouseClick(widget, button, {}, pos, mouseDelay);
 }
 
+void sendMouseClick(QListWidgetItem *item, Qt::MouseButton button) {
+  // can't send mouseclick to list item as it is not a widget
+  auto widget{item->listWidget()->viewport()};
+  // find the position of the desired item within the list
+  auto pos{item->listWidget()->visualItemRect(item).center()};
+  QTest::mouseClick(widget, button, {}, pos, mouseDelay);
+}
+
+void sendMouseDoubleClick(QWidget *widget, const QPoint &pos,
+                          Qt::MouseButton button) {
+  // DClick seems to only work if widget is already selected
+  QTest::mouseClick(widget, button, {}, pos, mouseDelay);
+  QTest::mouseDClick(widget, button, {}, pos, mouseDelay);
+}
+
+void sendMouseDoubleClick(QListWidgetItem *item, Qt::MouseButton button) {
+  auto pos{item->listWidget()->visualItemRect(item).center()};
+  auto widget{item->listWidget()->viewport()};
+  // DClick seems to only work if widget is already selected
+  QTest::mouseClick(widget, button, {}, pos, mouseDelay);
+  QTest::mouseDClick(widget, button, {}, pos, mouseDelay);
+}
+
 void sendMouseDrag(QWidget *widget, const QPoint &start, const QPoint &end,
                    Qt::MouseButton button) {
   sendMousePress(widget, start, button);
@@ -218,6 +241,8 @@ void ModalWidgetTimer::start() {
   timer.start();
 }
 
-const QString &ModalWidgetTimer::getResult(int i) const { return results[i]; }
+const QString &ModalWidgetTimer::getResult(int i) const {
+  return results.at(i);
+}
 
 } // namespace sme::test

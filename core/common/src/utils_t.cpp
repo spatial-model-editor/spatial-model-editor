@@ -181,4 +181,49 @@ TEST_CASE("Utils", "[core/common/utils][core/common][core][utils]") {
     REQUIRE(qpi.getIndex(v[0]).value() == 0);
     REQUIRE(qpi.getPoints().size() == v.size());
   }
+  SECTION("toGrayscaleIntensityImage") {
+    SECTION("all values identical and non-zero should be white") {
+      QSize sz1(2, 2);
+      auto img1{common::toGrayscaleIntensityImage(
+          sz1, std::vector<double>{1.2, 1.2, 1.2, 1.2})};
+      REQUIRE(img1.size() == sz1);
+      REQUIRE(img1.pixel(0, 0) == qRgb(255, 255, 255));
+      REQUIRE(img1.pixel(0, 1) == qRgb(255, 255, 255));
+      REQUIRE(img1.pixel(1, 0) == qRgb(255, 255, 255));
+      REQUIRE(img1.pixel(1, 1) == qRgb(255, 255, 255));
+    }
+    SECTION("all values zero should be black") {
+      QSize sz1(2, 2);
+      auto img1{common::toGrayscaleIntensityImage(
+          sz1, std::vector<double>{0, 0, 0, 0})};
+      REQUIRE(img1.size() == sz1);
+      REQUIRE(img1.pixel(0, 0) == qRgb(0, 0, 0));
+      REQUIRE(img1.pixel(0, 1) == qRgb(0, 0, 0));
+      REQUIRE(img1.pixel(1, 0) == qRgb(0, 0, 0));
+      REQUIRE(img1.pixel(1, 1) == qRgb(0, 0, 0));
+    }
+    SECTION("pixels start bottom-left, scan along x, end at top right") {
+      QSize sz1(2, 2);
+      auto img1{common::toGrayscaleIntensityImage(
+          sz1, std::vector<double>{1.0, 2.0, 3.0, 4.0})};
+      REQUIRE(img1.size() == sz1);
+      REQUIRE(img1.pixel(0, 1) == qRgb(63, 63, 63));
+      REQUIRE(img1.pixel(1, 1) == qRgb(127, 127, 127));
+      REQUIRE(img1.pixel(0, 0) == qRgb(191, 191, 191));
+      REQUIRE(img1.pixel(1, 0) == qRgb(255, 255, 255));
+    }
+    SECTION("invalid array size produces black image") {
+      QSize sz1(11, 13);
+      // array too small
+      auto img1{common::toGrayscaleIntensityImage(sz1, std::vector<double>{})};
+      REQUIRE(img1.size() == sz1);
+      REQUIRE(img1.pixel(0, 0) == qRgb(0, 0, 0));
+      QSize sz2(1, 1);
+      // array too large
+      auto img2{common::toGrayscaleIntensityImage(
+          sz2, std::vector<double>{1.0, 2.0})};
+      REQUIRE(img2.size() == sz2);
+      REQUIRE(img2.pixel(0, 0) == qRgb(0, 0, 0));
+    }
+  }
 }

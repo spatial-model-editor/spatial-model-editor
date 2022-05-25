@@ -4,8 +4,7 @@
 
 using namespace sme::test;
 
-static const char *tags{
-    "[gui/widgets/qlabelmousetracker][gui/widgets][gui][qlabelmousetracker"};
+static const char *tags{"[gui/widgets/qlabelmousetracker][gui/widgets][gui]"};
 
 TEST_CASE("QLabelMouseTracker: single pixel, single colour image", tags) {
   QLabelMouseTracker mouseTracker;

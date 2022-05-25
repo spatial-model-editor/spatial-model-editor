@@ -79,6 +79,7 @@ DialogOptCost::DialogOptCost(
     ui->txtEpsilon->setText(QString::number(optCost.epsilon));
     ui->txtEpsilon->setEnabled(optCost.optCostDiffType ==
                                sme::simulate::OptCostDiffType::Relative);
+    updateImage();
     for (const auto &defaultOptCost : defaultOptCosts) {
       ui->cmbSpecies->addItem(defaultOptCost.name.c_str());
       if (defaultOptCost.name == optCost.name) {
@@ -124,6 +125,7 @@ void DialogOptCost::cmbSpecies_currentIndexChanged(int index) {
     ui->txtEpsilon->setText(QString::number(optCost.epsilon));
     ui->txtEpsilon->setEnabled(optCost.optCostDiffType ==
                                sme::simulate::OptCostDiffType::Relative);
+    updateImage();
   }
 }
 
@@ -151,6 +153,7 @@ void DialogOptCost::btnEditTargetValues_clicked() {
       optCost.optCostType == sme::simulate::OptCostType::ConcentrationDcdt);
   if (dialog.exec() == QDialog::Accepted) {
     optCost.targetValues = dialog.getConcentrationArray();
+    updateImage();
   }
 }
 
@@ -162,4 +165,11 @@ void DialogOptCost::txtWeight_editingFinished() {
 void DialogOptCost::txtEpsilon_editingFinished() {
   optCost.epsilon = ui->txtEpsilon->text().toDouble();
   ui->txtEpsilon->setText(toQStr(optCost.epsilon));
+}
+
+void DialogOptCost::updateImage() {
+  const auto &imageSize{
+      model.getSpeciesGeometry(optCost.id.c_str()).compartmentImageSize};
+  ui->lblImage->setImage(
+      sme::common::toGrayscaleIntensityImage(imageSize, optCost.targetValues));
 }
