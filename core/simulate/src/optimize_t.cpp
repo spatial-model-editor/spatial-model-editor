@@ -6,14 +6,23 @@
 using namespace sme;
 using namespace sme::test;
 
+template <typename T> static bool is_sorted_ascending(const std::vector<T> &v) {
+  return std::is_sorted(v.begin(), v.end());
+}
+
+template <typename T>
+static bool is_sorted_descending(const std::vector<T> &v) {
+  return std::is_sorted(v.begin(), v.end(), [](T a, T b) { return a > b; });
+}
+
 TEST_CASE("Optimize ABtoC model for zero concentration of A",
           "[core/simulate/optimize][core/simulate][core][optimize]") {
   auto model{getExampleModel(Mod::ABtoC)};
   model.getSimulationSettings().simulatorType =
       sme::simulate::SimulatorType::Pixel;
   sme::simulate::OptimizeOptions optimizeOptions;
-  optimizeOptions.optAlgorithm.islands = 1;
-  optimizeOptions.optAlgorithm.population = 20;
+  optimizeOptions.optAlgorithm.islands = 2;
+  optimizeOptions.optAlgorithm.population = 3;
   // optimization parameter: k1 parameter of reaction r1
   optimizeOptions.optParams.push_back(
       {sme::simulate::OptParamType::ReactionParameter, "name", "k1", "r1", 0.05,
@@ -29,24 +38,27 @@ TEST_CASE("Optimize ABtoC model for zero concentration of A",
                                       0,
                                       0,
                                       {}});
-  model.getOptimizeOptions() = optimizeOptions;
-  sme::simulate::Optimization optimization(model);
-  double cost{std::numeric_limits<double>::max()};
-  double k1{0};
-  for (std::size_t i = 1; i < 4; ++i) {
-    optimization.evolve();
-    REQUIRE(optimization.getIterations() == i);
-    // cost should decrease or stay the same with each iteration
-    REQUIRE(optimization.getFitness()[0] <= cost);
-    // k1 should increase to minimize concentration of A
-    REQUIRE(optimization.getParams().back()[0] >= k1);
-    cost = optimization.getFitness()[0];
-    k1 = optimization.getParams().back()[0];
+  for (auto optAlgorithmType : sme::simulate::optAlgorithmTypes) {
+    CAPTURE(optAlgorithmType);
+    optimizeOptions.optAlgorithm.optAlgorithmType = optAlgorithmType;
+
+    model.getOptimizeOptions() = optimizeOptions;
+    model.getReactions().setParameterValue("r1", "k1", 0.1);
+    sme::simulate::Optimization optimization(model);
+    for (std::size_t i = 1; i < 4; ++i) {
+      optimization.evolve();
+      REQUIRE(optimization.getIterations() == i);
+      // cost should decrease or stay the same with each iteration
+      REQUIRE(is_sorted_descending(optimization.getFitness()));
+      // k1 should increase to minimize concentration of A
+      REQUIRE(is_sorted_ascending(optimization.getParams()));
+    }
+    REQUIRE(model.getReactions().getParameterValue("r1", "k1") ==
+            dbl_approx(0.1));
+    optimization.applyParametersToModel(&model);
+    REQUIRE(model.getReactions().getParameterValue("r1", "k1") ==
+            dbl_approx(optimization.getParams().back()[0]));
   }
-  REQUIRE(model.getReactions().getParameterValue("r1", "k1") ==
-          dbl_approx(0.1));
-  optimization.applyParametersToModel(&model);
-  REQUIRE(model.getReactions().getParameterValue("r1", "k1") == dbl_approx(k1));
 }
 
 TEST_CASE("Optimize ABtoC model for zero concentration of C",
@@ -74,22 +86,19 @@ TEST_CASE("Optimize ABtoC model for zero concentration of C",
                                       {}});
   model.getOptimizeOptions() = optimizeOptions;
   sme::simulate::Optimization optimization(model);
-  double cost{std::numeric_limits<double>::max()};
-  double k1{std::numeric_limits<double>::max()};
   for (std::size_t i = 1; i < 3; ++i) {
     optimization.evolve();
     REQUIRE(optimization.getIterations() == i);
     // cost should decrease or stay the same with each iteration
-    REQUIRE(optimization.getFitness()[0] <= cost);
+    REQUIRE(is_sorted_descending(optimization.getFitness()));
     // k1 should decrease to minimize concentration of C
-    REQUIRE(optimization.getParams().back()[0] <= k1);
-    cost = optimization.getFitness()[0];
-    k1 = optimization.getParams().back()[0];
+    REQUIRE(is_sorted_descending(optimization.getParams()));
   }
   REQUIRE(model.getReactions().getParameterValue("r1", "k1") ==
           dbl_approx(0.1));
   optimization.applyParametersToModel(&model);
-  REQUIRE(model.getReactions().getParameterValue("r1", "k1") == dbl_approx(k1));
+  REQUIRE(model.getReactions().getParameterValue("r1", "k1") ==
+          dbl_approx(optimization.getParams().back()[0]));
 }
 
 TEST_CASE("Save and load model with optimization settings",
@@ -98,6 +107,8 @@ TEST_CASE("Save and load model with optimization settings",
   model.getSimulationSettings().simulatorType =
       sme::simulate::SimulatorType::Pixel;
   sme::simulate::OptimizeOptions optimizeOptions;
+  optimizeOptions.optAlgorithm.optAlgorithmType =
+      sme::simulate::OptAlgorithmType::ABC;
   optimizeOptions.optAlgorithm.islands = 1;
   optimizeOptions.optAlgorithm.population = 3;
   // optimization parameter: k1 parameter of reaction r1
@@ -124,7 +135,7 @@ TEST_CASE("Save and load model with optimization settings",
   reloadedModel.importFile(tempfilename);
   const auto &options{reloadedModel.getOptimizeOptions()};
   REQUIRE(optimizeOptions.optAlgorithm.optAlgorithmType ==
-          sme::simulate::OptAlgorithmType::PSO);
+          sme::simulate::OptAlgorithmType::ABC);
   REQUIRE(optimizeOptions.optAlgorithm.islands == 1);
   REQUIRE(optimizeOptions.optAlgorithm.population == 3);
   REQUIRE(optimizeOptions.optCosts.size() == 1);

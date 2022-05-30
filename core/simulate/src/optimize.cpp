@@ -3,8 +3,13 @@
 #include "sme/logger.hpp"
 #include "sme/model.hpp"
 #include <iostream>
+#include <pagmo/algorithms/bee_colony.hpp>
+#include <pagmo/algorithms/de.hpp>
+#include <pagmo/algorithms/de1220.hpp>
+#include <pagmo/algorithms/gaco.hpp>
 #include <pagmo/algorithms/pso.hpp>
 #include <pagmo/algorithms/pso_gen.hpp>
+#include <pagmo/algorithms/sade.hpp>
 #include <utility>
 
 namespace sme::simulate {
@@ -81,6 +86,18 @@ Optimization::Optimization(sme::model::Model &model) {
     algo = std::make_unique<pagmo::algorithm>(pagmo::pso());
   case sme::simulate::OptAlgorithmType::GPSO:
     algo = std::make_unique<pagmo::algorithm>(pagmo::pso_gen());
+  case sme::simulate::OptAlgorithmType::DE:
+    algo = std::make_unique<pagmo::algorithm>(pagmo::de());
+  case sme::simulate::OptAlgorithmType::iDE:
+    algo = std::make_unique<pagmo::algorithm>(pagmo::sade(1, 2, 2));
+  case sme::simulate::OptAlgorithmType::jDE:
+    algo = std::make_unique<pagmo::algorithm>(pagmo::sade(1, 2, 1));
+  case sme::simulate::OptAlgorithmType::pDE:
+    algo = std::make_unique<pagmo::algorithm>(pagmo::de1220());
+  case sme::simulate::OptAlgorithmType::ABC:
+    algo = std::make_unique<pagmo::algorithm>(pagmo::bee_colony());
+  case sme::simulate::OptAlgorithmType::gaco:
+    algo = std::make_unique<pagmo::algorithm>(pagmo::gaco());
   default:
     algo = std::make_unique<pagmo::algorithm>(pagmo::pso());
   }
@@ -102,6 +119,8 @@ std::size_t Optimization::evolve(std::size_t n) {
     SPDLOG_WARN("Evolve is currently running: ignoring call to evolve");
     return 0;
   }
+  stopRequested = false;
+  isRunning = true;
   if (archi == nullptr) {
     archi = std::make_unique<pagmo::archipelago>(
         optimizeOptions->optAlgorithm.islands, *algo,
@@ -110,8 +129,6 @@ std::size_t Optimization::evolve(std::size_t n) {
         optimizeOptions->optAlgorithm.population);
     appendBestFitnesssAndParams(*archi, bestFitness, bestParams);
   }
-  stopRequested = false;
-  isRunning = true;
   SPDLOG_INFO("Starting {} evolve steps", n);
   // ensure output vectors won't re-allocate during evolution
   bestFitness.reserve(bestFitness.size() + n);

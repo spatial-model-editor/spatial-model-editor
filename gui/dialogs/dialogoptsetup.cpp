@@ -2,6 +2,7 @@
 #include "dialogoptcost.hpp"
 #include "dialogoptparam.hpp"
 #include "sme/logger.hpp"
+#include "sme/utils.hpp"
 #include "ui_dialogoptsetup.h"
 #include <QMessageBox>
 
@@ -35,6 +36,18 @@ static QString toQStr(sme::simulate::OptAlgorithmType optAlgorithmType) {
     return "Particle Swarm Optimization";
   case sme::simulate::OptAlgorithmType::GPSO:
     return "Generational Particle Swarm Optimization";
+  case sme::simulate::OptAlgorithmType::DE:
+    return "Differential Evolution";
+  case sme::simulate::OptAlgorithmType::iDE:
+    return "Self-adaptive Differential Evolution (iDE)";
+  case sme::simulate::OptAlgorithmType::jDE:
+    return "Self-adaptive Differential Evolution (jDE)";
+  case sme::simulate::OptAlgorithmType::pDE:
+    return "Self-adaptive Differential Evolution (pDE)";
+  case sme::simulate::OptAlgorithmType::ABC:
+    return "Artificial Bee Colony";
+  case sme::simulate::OptAlgorithmType::gaco:
+    return "Extended Ant Colony Optimization";
   default:
     return "";
   }
@@ -56,25 +69,12 @@ static QString toQStr(const sme::simulate::OptParam &optParam) {
 }
 
 static int toIndex(sme::simulate::OptAlgorithmType optAlgorithmType) {
-  switch (optAlgorithmType) {
-  case sme::simulate::OptAlgorithmType::PSO:
-    return 0;
-  case sme::simulate::OptAlgorithmType::GPSO:
-    return 1;
-  default:
-    return 0;
-  }
+  return static_cast<int>(sme::common::element_index(
+      sme::simulate::optAlgorithmTypes, optAlgorithmType, 0));
 }
 
 static sme::simulate::OptAlgorithmType toOptAlgorithmType(int index) {
-  switch (index) {
-  case 0:
-    return sme::simulate::OptAlgorithmType::PSO;
-  case 1:
-    return sme::simulate::OptAlgorithmType::GPSO;
-  default:
-    return sme::simulate::OptAlgorithmType::PSO;
-  }
+  return sme::simulate::optAlgorithmTypes.at(static_cast<std::size_t>(index));
 }
 
 static std::vector<sme::simulate::OptParam>
@@ -157,6 +157,9 @@ DialogOptSetup::DialogOptSetup(const sme::model::Model &model, QWidget *parent)
       defaultOptCosts{getDefaultOptCosts(model)},
       ui{std::make_unique<Ui::DialogOptSetup>()} {
   ui->setupUi(this);
+  for (auto optAlgorithmType : sme::simulate::optAlgorithmTypes) {
+    ui->cmbAlgorithm->addItem(toQStr(optAlgorithmType));
+  }
   ui->btnEditTarget->setEnabled(false);
   ui->btnRemoveTarget->setEnabled(false);
   ui->btnEditParameter->setEnabled(false);
