@@ -2,9 +2,11 @@
 #include "dialogoptsetup.hpp"
 #include "model_test_utils.hpp"
 #include "qt_test_utils.hpp"
+#include <QComboBox>
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QPushButton>
+#include <QSpinBox>
 
 using namespace sme;
 using namespace sme::test;
@@ -17,6 +19,12 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
   SECTION("No initial OptimizeOptions") {
     DialogOptSetup dia(model);
     // get pointers to widgets within dialog
+    auto *cmbAlgorithm{dia.findChild<QComboBox *>("cmbAlgorithm")};
+    REQUIRE(cmbAlgorithm != nullptr);
+    auto *spinIslands{dia.findChild<QSpinBox *>("spinIslands")};
+    REQUIRE(spinIslands != nullptr);
+    auto *spinPopulation{dia.findChild<QSpinBox *>("spinPopulation")};
+    REQUIRE(spinPopulation != nullptr);
     auto *lstTargets{dia.findChild<QListWidget *>("lstTargets")};
     REQUIRE(lstTargets != nullptr);
     auto *lstParameters{dia.findChild<QListWidget *>("lstParameters")};
@@ -44,9 +52,29 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(btnAddParameter->isEnabled());
       REQUIRE(btnEditParameter->isEnabled() == false);
       REQUIRE(btnRemoveParameter->isEnabled() == false);
-      REQUIRE(dia.getOptimizeOptions().nParticles == 2);
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.optAlgorithmType ==
+              simulate::OptAlgorithmType::PSO);
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.islands == 1);
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.population == 2);
       REQUIRE(dia.getOptimizeOptions().optParams.empty());
       REQUIRE(dia.getOptimizeOptions().optCosts.empty());
+    }
+    SECTION("user modifies algorithm options") {
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.optAlgorithmType ==
+              simulate::OptAlgorithmType::PSO);
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.islands == 1);
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.population == 2);
+      sendKeyEvents(cmbAlgorithm, {"Down"});
+      sendKeyEvents(spinIslands, {"Delete", "Backspace", "1", "5", "Enter"});
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.optAlgorithmType ==
+              simulate::OptAlgorithmType::GPSO);
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.islands == 15);
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.population == 2);
+      sendKeyEvents(spinPopulation, {"Delete", "Backspace", "3", "2", "Enter"});
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.optAlgorithmType ==
+              simulate::OptAlgorithmType::GPSO);
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.islands == 15);
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.population == 32);
     }
     SECTION("user adds targets") {
       dia.show();
@@ -386,7 +414,8 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
   }
   SECTION("Given existing OptimizeOptions") {
     sme::simulate::OptimizeOptions optimizeOptions{};
-    optimizeOptions.nParticles = 3;
+    optimizeOptions.optAlgorithm.islands = 5;
+    optimizeOptions.optAlgorithm.population = 17;
     optimizeOptions.optParams.push_back(
         {sme::simulate::OptParamType::ReactionParameter, "Mp_transcription_K",
          "K", "Mp_transcription", 1, 2});
@@ -486,7 +515,10 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(btnAddParameter->isEnabled());
       REQUIRE(btnEditParameter->isEnabled() == false);
       REQUIRE(btnRemoveParameter->isEnabled() == false);
-      REQUIRE(dia.getOptimizeOptions().nParticles == 3);
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.optAlgorithmType ==
+              simulate::OptAlgorithmType::PSO);
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.islands == 5);
+      REQUIRE(dia.getOptimizeOptions().optAlgorithm.population == 17);
     }
     SECTION("user adds targets") {
       REQUIRE(lstTargets->count() == 2);

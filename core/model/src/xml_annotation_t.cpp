@@ -30,7 +30,8 @@ TEST_CASE("XML Annotations",
     auto &meshParameters{settings.meshParameters};
     meshParameters.boundarySimplifierType = 1;
     auto &optimizeOptions{settings.optimizeOptions};
-    optimizeOptions.nParticles = 7;
+    optimizeOptions.optAlgorithm.islands = 3;
+    optimizeOptions.optAlgorithm.population = 7;
     auto &optCost{optimizeOptions.optCosts.emplace_back()};
     optCost.name = "myOptCost";
     optCost.targetValues = {1.0, 3.0, 5.0};
@@ -56,7 +57,8 @@ TEST_CASE("XML Annotations",
     auto &newMeshParameters{newSettings.meshParameters};
     REQUIRE(newMeshParameters.boundarySimplifierType == 1);
     auto &newOptimizeOptions{newSettings.optimizeOptions};
-    REQUIRE(newOptimizeOptions.nParticles == 7);
+    REQUIRE(optimizeOptions.optAlgorithm.islands == 3);
+    REQUIRE(optimizeOptions.optAlgorithm.population == 7);
     REQUIRE(newOptimizeOptions.optCosts.size() == 1);
     REQUIRE(newOptimizeOptions.optCosts[0].name == "myOptCost");
     REQUIRE(newOptimizeOptions.optCosts[0].targetValues.size() == 3);
@@ -69,7 +71,8 @@ TEST_CASE("XML Annotations",
     // change options, save & write to file
     newSimulationSettings.times.push_back({7, 0.33});
     newSimulationSettings.options.pixel.maxThreads = 16;
-    newOptimizeOptions.nParticles = 4;
+    newOptimizeOptions.optAlgorithm.islands = 2;
+    newOptimizeOptions.optAlgorithm.population = 4;
     newOptimizeOptions.optCosts.emplace_back().name = "optCost2";
     newOptimizeOptions.optParams[0].name = "newOptParamName";
     model::setSbmlAnnotation(model, newSettings);
@@ -93,7 +96,8 @@ TEST_CASE("XML Annotations",
     REQUIRE(simulationSettings2.options.pixel.maxThreads == 16);
     REQUIRE(simulationSettings2.options.dune.dt == dbl_approx(0.0123));
     auto &optimizeOptions2{settings2.optimizeOptions};
-    REQUIRE(optimizeOptions2.nParticles == 4);
+    REQUIRE(optimizeOptions2.optAlgorithm.islands == 2);
+    REQUIRE(optimizeOptions2.optAlgorithm.population == 4);
     REQUIRE(optimizeOptions2.optCosts.size() == 2);
     REQUIRE(optimizeOptions2.optCosts[0].name == "myOptCost");
     REQUIRE(optimizeOptions2.optCosts[0].targetValues.size() == 3);

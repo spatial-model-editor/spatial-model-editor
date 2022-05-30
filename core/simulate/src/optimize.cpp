@@ -4,19 +4,103 @@
 #include "sme/model.hpp"
 #include <iostream>
 #include <pagmo/algorithms/pso.hpp>
+#include <pagmo/algorithms/pso_gen.hpp>
 #include <utility>
 
 namespace sme::simulate {
 
-Optimization::Optimization(sme::model::Model &model)
-    : options{model.getOptimizeOptions()} {
-  PagmoUDP udp{};
-  udp.init(model.getXml().toStdString(), options);
-  prob = pagmo::problem{std::move(udp)};
-  algo = pagmo::algorithm{pagmo::pso()};
-  pop = pagmo::population{prob, options.nParticles};
-  bestFitness.push_back(pop.champion_f().front());
-  bestParams.push_back(pop.champion_x());
+static void
+appendBestFitnesssAndParams(const pagmo::archipelago &archipelago,
+                            std::vector<double> &bestFitness,
+                            std::vector<std::vector<double>> &bestParams) {
+  auto fitness{std::numeric_limits<double>::max()};
+  std::vector<double> params;
+  for (const auto &island : archipelago) {
+    auto pop{island.get_population()};
+    if (auto f{pop.champion_f()[0]}; f < fitness) {
+      fitness = f;
+      params = pop.champion_x();
+    }
+  }
+  bestFitness.push_back(fitness);
+  bestParams.push_back(std::move(params));
+}
+
+static std::vector<OptTimestep>
+getOptTimesteps(const OptimizeOptions &options) {
+  std::vector<OptTimestep> optTimesteps;
+  // get time for each optCost
+  std::vector<double> times;
+  for (const auto &optCost : options.optCosts) {
+    times.push_back(optCost.simulationTime);
+  }
+  // sort times
+  std::vector sortedUniqueTimes{times};
+  std::sort(sortedUniqueTimes.begin(), sortedUniqueTimes.end());
+  // margin within which times are considered equal:
+  constexpr double relativeEps{1e-13};
+  double epsilon{sortedUniqueTimes.back() * relativeEps};
+  // remove (approx) duplicates
+  sortedUniqueTimes.erase(std::unique(sortedUniqueTimes.begin(),
+                                      sortedUniqueTimes.end(),
+                                      [epsilon](double a, double b) {
+                                        return std::abs(a - b) < epsilon;
+                                      }),
+                          sortedUniqueTimes.end());
+  double previousTime{0};
+  for (double sortedUniqueTime : sortedUniqueTimes) {
+    double dt{sortedUniqueTime - previousTime};
+    previousTime += dt;
+    optTimesteps.push_back({dt, {}});
+    for (std::size_t i = 0; i < times.size(); ++i) {
+      if (std::abs(times[i] - sortedUniqueTime) < epsilon) {
+        optTimesteps.back().optCostIndices.push_back(i);
+      }
+    }
+  }
+  for (const auto &optTimestep : optTimesteps) {
+    SPDLOG_INFO("t = {}", optTimestep.simulationTime);
+    for (const auto optCostIndex : optTimestep.optCostIndices) {
+      SPDLOG_INFO("  - index {}", optCostIndex);
+    }
+  }
+  return optTimesteps;
+}
+
+Optimization::Optimization(sme::model::Model &model) {
+  const auto &options{model.getOptimizeOptions()};
+  xmlModel = std::make_unique<std::string>(model.getXml().toStdString());
+  optimizeOptions =
+      std::make_unique<OptimizeOptions>(model.getOptimizeOptions());
+  optTimesteps = std::make_unique<std::vector<sme::simulate::OptTimestep>>(
+      getOptTimesteps(options));
+  modelQueue = std::make_unique<
+      oneapi::tbb::concurrent_queue<std::shared_ptr<sme::model::Model>>>();
+  switch (optimizeOptions->optAlgorithm.optAlgorithmType) {
+  case sme::simulate::OptAlgorithmType::PSO:
+    algo = pagmo::algorithm{pagmo::pso()};
+  case sme::simulate::OptAlgorithmType::GPSO:
+    algo = pagmo::algorithm{pagmo::pso_gen()};
+  default:
+    algo = pagmo::algorithm{pagmo::pso()};
+  }
+
+  // construct models in queue in serial for now to aovid libsbml thread safety
+  // issues (see
+  // https://github.com/spatial-model-editor/spatial-model-editor/issues/786)
+  // todo: once that is fixed, can remove this & let the UDP construct them as
+  // needed
+  for (std::size_t i = 0; i < optimizeOptions->optAlgorithm.islands; ++i) {
+    auto m{std::make_shared<sme::model::Model>()};
+    m->importSBMLString(*xmlModel);
+    modelQueue->push(std::move(m));
+  }
+  archi = pagmo::archipelago{
+      options.optAlgorithm.islands, algo,
+      pagmo::problem{PagmoUDP(xmlModel.get(), optimizeOptions.get(),
+                              optTimesteps.get(), modelQueue.get())},
+      options.optAlgorithm.population};
+  appendBestFitnesssAndParams(archi, bestFitness, bestParams);
 }
 
 std::size_t Optimization::evolve(std::size_t n) {
@@ -31,9 +115,9 @@ std::size_t Optimization::evolve(std::size_t n) {
   bestFitness.reserve(bestFitness.size() + n);
   bestParams.reserve(bestParams.size() + n);
   for (std::size_t i = 0; i < n; ++i) {
-    pop = algo.evolve(pop);
-    bestFitness.push_back(pop.champion_f().front());
-    bestParams.push_back(pop.champion_x());
+    archi.evolve();
+    archi.wait_check();
+    appendBestFitnesssAndParams(archi, bestFitness, bestParams);
     ++nIterations;
     if (stopRequested) {
       SPDLOG_INFO("Stopping evolve early after {} steps", nIterations);
@@ -49,7 +133,7 @@ std::size_t Optimization::evolve(std::size_t n) {
 }
 
 void Optimization::applyParametersToModel(sme::model::Model *model) const {
-  applyParameters(bestParams.back(), options.optParams, model);
+  applyParameters(bestParams.back(), model);
 }
 
 const std::vector<std::vector<double>> &Optimization::getParams() const {
@@ -58,8 +142,8 @@ const std::vector<std::vector<double>> &Optimization::getParams() const {
 
 std::vector<QString> Optimization::getParamNames() const {
   std::vector<QString> names;
-  names.reserve(options.optParams.size());
-  for (const auto &optParam : options.optParams) {
+  names.reserve(optimizeOptions->optParams.size());
+  for (const auto &optParam : optimizeOptions->optParams) {
     names.push_back(optParam.name.c_str());
   }
   return names;

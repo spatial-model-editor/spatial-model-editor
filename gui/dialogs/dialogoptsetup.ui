@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>814</width>
-    <height>653</height>
+    <width>703</width>
+    <height>628</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -28,22 +28,87 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="3" column="2">
+     <item row="4" column="4" colspan="2">
       <widget class="QPushButton" name="btnRemoveTarget">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="text">
         <string>Remove target</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
+     <item row="7" column="4" colspan="2">
+      <widget class="QPushButton" name="btnRemoveParameter">
+       <property name="text">
+        <string>Remove parameter</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="2" colspan="2">
+      <widget class="QPushButton" name="btnEditParameter">
+       <property name="text">
+        <string>Edit parameter</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="2" colspan="2">
+      <widget class="QPushButton" name="btnEditTarget">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Edit target</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0" colspan="2">
+      <widget class="QPushButton" name="btnAddTarget">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>1</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Add target</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0" colspan="2">
+      <widget class="QPushButton" name="btnAddParameter">
+       <property name="text">
+        <string>Add parameter</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0" colspan="6">
+      <widget class="QListWidget" name="lstParameters"/>
+     </item>
+     <item row="3" column="0" colspan="6">
+      <widget class="QListWidget" name="lstTargets"/>
+     </item>
+     <item row="5" column="0" colspan="6">
       <widget class="QLabel" name="lblParametersLabel">
        <property name="text">
         <string>Parameters:</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="0">
-      <widget class="QLabel" name="lblCompartmentLabel">
+     <item row="1" column="4">
+      <widget class="QLabel" name="lblPopulationLabel">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="text">
         <string>Population:</string>
        </property>
@@ -52,61 +117,88 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
-      <widget class="QPushButton" name="btnEditTarget">
-       <property name="text">
-        <string>Edit target</string>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0" colspan="3">
-      <widget class="QListWidget" name="lstParameters"/>
-     </item>
-     <item row="2" column="0" colspan="3">
-      <widget class="QListWidget" name="lstTargets"/>
-     </item>
-     <item row="3" column="0">
-      <widget class="QPushButton" name="btnAddTarget">
-       <property name="text">
-        <string>Add target</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="lblTargetsLabel">
-       <property name="text">
-        <string>Targets:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="1">
-      <widget class="QPushButton" name="btnEditParameter">
-       <property name="text">
-        <string>Edit parameter</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="0">
-      <widget class="QPushButton" name="btnAddParameter">
-       <property name="text">
-        <string>Add parameter</string>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="2">
-      <widget class="QPushButton" name="btnRemoveParameter">
-       <property name="text">
-        <string>Remove parameter</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1" colspan="2">
+     <item row="1" column="5">
       <widget class="QSpinBox" name="spinPopulation">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="minimum">
         <number>2</number>
        </property>
        <property name="maximum">
         <number>1024</number>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QSpinBox" name="spinIslands">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>64</number>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QLabel" name="lblIslandsLabel">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Islands:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0" colspan="2">
+      <widget class="QComboBox" name="cmbAlgorithm">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <item>
+        <property name="text">
+         <string>Particle Swarm Optimization</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Generational Particle Swarm Optimization</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="0" column="0" colspan="6">
+      <widget class="QLabel" name="lblAlgorithmLabel">
+       <property name="text">
+        <string>Algorithm:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="0" colspan="6">
+      <widget class="QLabel" name="lblTargetsLabel">
+       <property name="text">
+        <string>Targets:</string>
        </property>
       </widget>
      </item>
@@ -125,6 +217,8 @@
   </layout>
  </widget>
  <tabstops>
+  <tabstop>cmbAlgorithm</tabstop>
+  <tabstop>spinIslands</tabstop>
   <tabstop>spinPopulation</tabstop>
   <tabstop>lstTargets</tabstop>
   <tabstop>btnAddTarget</tabstop>

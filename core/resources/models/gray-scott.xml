@@ -141,9 +141,6 @@
       <parameter id="y" name="y" value="0" units="unit_of_length" constant="false">
         <spatial:spatialSymbolReference spatial:spatialRef="yCoord"/>
       </parameter>
-      <parameter id="P_diffusionConstant" value="1" units="diffusion_constant_units" constant="true">
-        <spatial:diffusionCoefficient spatial:variable="P" spatial:type="isotropic"/>
-      </parameter>
       <parameter id="z" name="z" value="0" units="unit_of_length" constant="true">
         <spatial:spatialSymbolReference spatial:spatialRef="zCoord"/>
       </parameter>

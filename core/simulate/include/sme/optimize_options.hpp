@@ -60,7 +60,7 @@ enum class OptCostType { Concentration, ConcentrationDcdt };
 enum class OptCostDiffType { Absolute, Relative };
 
 /**
- * @brief Defines a cost function to be minimzed
+ * @brief Defines a cost function to be minimized
  */
 struct OptCost {
   /**
@@ -127,13 +127,44 @@ struct OptCost {
 };
 
 /**
+ * @brief Types of algorithms that can be used in optimization
+ */
+enum class OptAlgorithmType { PSO, GPSO };
+
+/**
+ * @brief Optimization algorithm options
+ */
+struct OptAlgorithm {
+  /**
+   * @brief The algorithm to use
+   */
+  OptAlgorithmType optAlgorithmType{OptAlgorithmType::PSO};
+  /**
+   * @brief The number of islands
+   */
+  std::size_t islands{1};
+  /**
+   * @brief The population size in each island
+   */
+  std::size_t population{2};
+
+  template <class Archive>
+  void serialize(Archive &ar, std::uint32_t const version) {
+    if (version == 0) {
+      ar(CEREAL_NVP(optAlgorithmType), CEREAL_NVP(islands),
+         CEREAL_NVP(population));
+    }
+  }
+};
+
+/**
  * @brief Optimization options
  */
 struct OptimizeOptions {
   /**
-   * @brief The population size to evolve
+   * @brief The algorithm to use
    */
-  std::size_t nParticles{2};
+  OptAlgorithm optAlgorithm;
   /**
    * @brief The parameters to optimize
    */
@@ -146,7 +177,7 @@ struct OptimizeOptions {
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
     if (version == 0) {
-      ar(CEREAL_NVP(nParticles), CEREAL_NVP(optParams), CEREAL_NVP(optCosts));
+      ar(CEREAL_NVP(optAlgorithm), CEREAL_NVP(optParams), CEREAL_NVP(optCosts));
     }
   }
 };
@@ -156,3 +187,4 @@ struct OptimizeOptions {
 CEREAL_CLASS_VERSION(sme::simulate::OptimizeOptions, 0);
 CEREAL_CLASS_VERSION(sme::simulate::OptCost, 0);
 CEREAL_CLASS_VERSION(sme::simulate::OptParam, 0);
+CEREAL_CLASS_VERSION(sme::simulate::OptAlgorithm, 0);

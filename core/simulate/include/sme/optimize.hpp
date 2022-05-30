@@ -2,11 +2,30 @@
 #include "sme/model.hpp"
 #include "sme/optimize_options.hpp"
 #include "sme/simulate.hpp"
+#include <memory>
 #include <pagmo/algorithm.hpp>
+#include <pagmo/archipelago.hpp>
 #include <pagmo/population.hpp>
-#include <pagmo/problem.hpp>
+// Qt defines emit keyword which interferes with a tbb emit() function
+#ifdef emit
+#undef emit
+#include <oneapi/tbb/concurrent_queue.h>
+#define emit // restore the Qt empty definition of "emit"
+#else
+#include <oneapi/tbb/concurrent_queue.h>
+#endif
 
 namespace sme::simulate {
+
+using ThreadsafeModelQueue =
+    oneapi::tbb::concurrent_queue<std::shared_ptr<sme::model::Model>>;
+
+struct OptTimestep {
+  // the time to simulate for
+  double simulationTime;
+  // the indices of the OptCosts to calculate after simulating
+  std::vector<std::size_t> optCostIndices;
+};
 
 /**
  * @brief Optimize model parameters
@@ -16,15 +35,17 @@ namespace sme::simulate {
  */
 class Optimization {
 private:
-  pagmo::problem prob;
   pagmo::algorithm algo;
-  pagmo::population pop;
-  const OptimizeOptions &options;
+  pagmo::archipelago archi;
+  std::unique_ptr<OptimizeOptions> optimizeOptions;
+  std::unique_ptr<std::vector<OptTimestep>> optTimesteps;
+  std::unique_ptr<std::string> xmlModel{};
   std::atomic<bool> isRunning{false};
   std::atomic<bool> stopRequested{false};
   std::atomic<std::size_t> nIterations{0};
   std::vector<double> bestFitness;
   std::vector<std::vector<double>> bestParams;
+  std::unique_ptr<ThreadsafeModelQueue> modelQueue;
 
 public:
   /**

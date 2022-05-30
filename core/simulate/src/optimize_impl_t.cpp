@@ -13,14 +13,15 @@ TEST_CASE("Optimize applyParameters: parameters",
           "[core/simulate/optimize][core/simulate][core][optimize]") {
   auto model{getExampleModel(Mod::VerySimpleModel)};
   // optimization parameter: param parameter
-  simulate::OptParam optParam{
-      simulate::OptParamType::ModelParameter, "name", "param", "", 0.66, 0.99};
+  model.getOptimizeOptions().optParams.push_back(
+      {simulate::OptParamType::ModelParameter, "name", "param", "", 0.66,
+       0.99});
   REQUIRE(model.getParameters().getExpression("param").toDouble() ==
           dbl_approx(1));
-  simulate::applyParameters({0.123}, {optParam}, &model);
+  simulate::applyParameters({0.123}, &model);
   REQUIRE(model.getParameters().getExpression("param").toDouble() ==
           dbl_approx(0.123));
-  simulate::applyParameters({-99}, {optParam}, &model);
+  simulate::applyParameters({-99}, &model);
   REQUIRE(model.getParameters().getExpression("param").toDouble() ==
           dbl_approx(-99));
 }
@@ -29,18 +30,15 @@ TEST_CASE("Optimize applyParameters: reaction parameters",
           "[core/simulate/optimize][core/simulate][core][optimize]") {
   auto model{getExampleModel(Mod::ABtoC)};
   // optimization parameter: k1 parameter of reaction r1
-  simulate::OptParam optParam{simulate::OptParamType::ReactionParameter,
-                              "name",
-                              "k1",
-                              "r1",
-                              0.05,
-                              0.21};
+  model.getOptimizeOptions().optParams.push_back(
+      {simulate::OptParamType::ReactionParameter, "name", "k1", "r1", 0.05,
+       0.21});
   REQUIRE(model.getReactions().getParameterValue("r1", "k1") ==
           dbl_approx(0.1));
-  simulate::applyParameters({0.123}, {optParam}, &model);
+  simulate::applyParameters({0.123}, &model);
   REQUIRE(model.getReactions().getParameterValue("r1", "k1") ==
           dbl_approx(0.123));
-  simulate::applyParameters({-99}, {optParam}, &model);
+  simulate::applyParameters({-99}, &model);
   REQUIRE(model.getReactions().getParameterValue("r1", "k1") ==
           dbl_approx(-99));
 }

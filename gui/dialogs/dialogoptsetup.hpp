@@ -25,6 +25,9 @@ private:
   std::vector<sme::simulate::OptParam> defaultOptParams;
   std::vector<sme::simulate::OptCost> defaultOptCosts;
   std::unique_ptr<Ui::DialogOptSetup> ui;
+  void cmbAlgorithm_currentIndexChanged(int index);
+  void spinIslands_valueChanged(int value);
+  void spinPopulation_valueChanged(int value);
   void lstTargets_currentRowChanged(int row);
   void lstTargets_itemDoubleClicked(QListWidgetItem *item);
   void btnAddTarget_clicked();

@@ -4,8 +4,8 @@
 namespace sme::simulate {
 
 void applyParameters(const pagmo::vector_double &values,
-                     const std::vector<OptParam> &optParams,
                      sme::model::Model *model) {
+  const auto &optParams{model->getOptimizeOptions().optParams};
   for (std::size_t i = 0; i < values.size(); ++i) {
     const auto &param{optParams[i]};
     double value{values[i]};
@@ -73,93 +73,32 @@ double calculateCosts(const std::vector<OptCost> &optCosts,
   return cost;
 }
 
-PagmoUDP::PagmoUDP() = default;
-
-PagmoUDP::PagmoUDP(PagmoUDP &&) noexcept = default;
-
-PagmoUDP &PagmoUDP::operator=(PagmoUDP &&) noexcept = default;
-
-PagmoUDP::~PagmoUDP() = default;
-
-PagmoUDP &PagmoUDP::operator=(const PagmoUDP &other) {
-  if (&other != this) {
-    init(other.xmlModel, other.optimizeOptions);
-  }
-  return *this;
-}
-
-PagmoUDP::PagmoUDP(const PagmoUDP &other) {
-  init(other.xmlModel, other.optimizeOptions);
-}
-
-static std::vector<OptTimestep>
-getOptTimesteps(const OptimizeOptions &options) {
-  std::vector<OptTimestep> optTimesteps;
-  // get time for each optCost
-  std::vector<double> times;
-  for (const auto &optCost : options.optCosts) {
-    times.push_back(optCost.simulationTime);
-  }
-  // sort times
-  std::vector sortedUniqueTimes{times};
-  std::sort(sortedUniqueTimes.begin(), sortedUniqueTimes.end());
-  // margin within which times are considered equal:
-  constexpr double relativeEps{1e-13};
-  double epsilon{sortedUniqueTimes.back() * relativeEps};
-  // remove (approx) duplicates
-  sortedUniqueTimes.erase(std::unique(sortedUniqueTimes.begin(),
-                                      sortedUniqueTimes.end(),
-                                      [epsilon](double a, double b) {
-                                        return std::abs(a - b) < epsilon;
-                                      }),
-                          sortedUniqueTimes.end());
-  double previousTime{0};
-  for (double sortedUniqueTime : sortedUniqueTimes) {
-    double dt{sortedUniqueTime - previousTime};
-    previousTime += dt;
-    optTimesteps.push_back({dt, {}});
-    for (std::size_t i = 0; i < times.size(); ++i) {
-      if (std::abs(times[i] - sortedUniqueTime) < epsilon) {
-        optTimesteps.back().optCostIndices.push_back(i);
-      }
-    }
-  }
-  for (const auto &optTimestep : optTimesteps) {
-    SPDLOG_INFO("t = {}", optTimestep.simulationTime);
-    for (const auto optCostIndex : optTimestep.optCostIndices) {
-      SPDLOG_INFO("  - index {}", optCostIndex);
-    }
-  }
-  return optTimesteps;
-}
-
-void PagmoUDP::init(const std::string &xml, const OptimizeOptions &options) {
-  SPDLOG_INFO("initializing model");
-  xmlModel = xml;
-  optimizeOptions = options;
-  if (optimizeOptions.optCosts.empty()) {
-    throw std::invalid_argument(
-        "Optimization: No optimization targets specified");
-  }
-  if (optimizeOptions.optParams.empty()) {
-    throw std::invalid_argument(
-        "Optimization: No parameters to optimize specified");
-  }
-  optTimesteps = getOptTimesteps(options);
-  model = std::make_unique<sme::model::Model>();
-  model->importSBMLString(xmlModel);
-}
+PagmoUDP::PagmoUDP(const std::string *xmlModel,
+                   const OptimizeOptions *optimizeOptions,
+                   const std::vector<OptTimestep> *optTimesteps,
+                   ThreadsafeModelQueue *modelQueue)
+    : modelQueue{modelQueue}, xmlModel{xmlModel},
+      optimizeOptions{optimizeOptions}, optTimesteps{optTimesteps} {}
 
 [[nodiscard]] pagmo::vector_double
 PagmoUDP::fitness(const pagmo::vector_double &dv) const {
-  model->getSimulationData().clear();
-  applyParameters(dv, optimizeOptions.optParams, model.get());
-  sme::simulate::Simulation sim(*model);
+  std::shared_ptr<sme::model::Model> m;
+  if (modelQueue == nullptr || !modelQueue->try_pop(m)) {
+    SPDLOG_INFO("model queue missing or empty: constructing model");
+    m = std::make_shared<sme::model::Model>();
+    m->importSBMLString(*xmlModel);
+  }
+  m->getSimulationData().clear();
+  applyParameters(dv, m.get());
+  sme::simulate::Simulation sim(*m);
   double cost{0.0};
-  for (const auto &optTimestep : optTimesteps) {
+  for (const auto &optTimestep : *optTimesteps) {
     sim.doTimesteps(optTimestep.simulationTime);
-    cost += calculateCosts(optimizeOptions.optCosts, optTimestep.optCostIndices,
-                           sim);
+    cost += calculateCosts(optimizeOptions->optCosts,
+                           optTimestep.optCostIndices, sim);
+  }
+  if (modelQueue != nullptr) {
+    modelQueue->push(std::move(m));
   }
   return {cost};
 }
@@ -167,9 +106,9 @@ PagmoUDP::fitness(const pagmo::vector_double &dv) const {
 [[nodiscard]] std::pair<pagmo::vector_double, pagmo::vector_double>
 PagmoUDP::get_bounds() const {
   std::pair<pagmo::vector_double, pagmo::vector_double> bounds;
-  bounds.first.reserve(optimizeOptions.optParams.size());
-  bounds.second.reserve(optimizeOptions.optParams.size());
-  for (const auto &optParam : optimizeOptions.optParams) {
+  bounds.first.reserve(optimizeOptions->optParams.size());
+  bounds.second.reserve(optimizeOptions->optParams.size());
+  for (const auto &optParam : optimizeOptions->optParams) {
     bounds.first.push_back(optParam.lowerBound);
     bounds.second.push_back(optParam.upperBound);
   }

@@ -7,12 +7,13 @@ using namespace sme;
 using namespace sme::test;
 
 TEST_CASE("Optimize ABtoC model for zero concentration of A",
-          "[core/simulate/optimize][core/simulate][core][optimize]") {
+          "[core/simulate/optimize][core/simulate][core][optimize][QQ]") {
   auto model{getExampleModel(Mod::ABtoC)};
   model.getSimulationSettings().simulatorType =
       sme::simulate::SimulatorType::Pixel;
   sme::simulate::OptimizeOptions optimizeOptions;
-  optimizeOptions.nParticles = 3;
+  optimizeOptions.optAlgorithm.islands = 1;
+  optimizeOptions.optAlgorithm.population = 20;
   // optimization parameter: k1 parameter of reaction r1
   optimizeOptions.optParams.push_back(
       {sme::simulate::OptParamType::ReactionParameter, "name", "k1", "r1", 0.05,
@@ -32,7 +33,7 @@ TEST_CASE("Optimize ABtoC model for zero concentration of A",
   sme::simulate::Optimization optimization(model);
   double cost{optimization.getFitness()[0]};
   double k1{optimization.getParams()[0][0]};
-  for (std::size_t i = 1; i < 3; ++i) {
+  for (std::size_t i = 1; i < 4; ++i) {
     optimization.evolve();
     REQUIRE(optimization.getIterations() == i);
     // cost should decrease or stay the same with each iteration
@@ -54,7 +55,8 @@ TEST_CASE("Optimize ABtoC model for zero concentration of C",
   model.getSimulationSettings().simulatorType =
       sme::simulate::SimulatorType::Pixel;
   sme::simulate::OptimizeOptions optimizeOptions;
-  optimizeOptions.nParticles = 3;
+  optimizeOptions.optAlgorithm.islands = 1;
+  optimizeOptions.optAlgorithm.population = 3;
   // optimization parameter: k1 parameter of reaction r1
   optimizeOptions.optParams.push_back(
       {sme::simulate::OptParamType::ReactionParameter, "name", "k1", "r1", 0.02,
@@ -96,7 +98,8 @@ TEST_CASE("Save and load model with optimization settings",
   model.getSimulationSettings().simulatorType =
       sme::simulate::SimulatorType::Pixel;
   sme::simulate::OptimizeOptions optimizeOptions;
-  optimizeOptions.nParticles = 3;
+  optimizeOptions.optAlgorithm.islands = 1;
+  optimizeOptions.optAlgorithm.population = 3;
   // optimization parameter: k1 parameter of reaction r1
   optimizeOptions.optParams.push_back(
       {sme::simulate::OptParamType::ReactionParameter, "optParamName", "k1",
@@ -120,7 +123,10 @@ TEST_CASE("Save and load model with optimization settings",
   sme::model::Model reloadedModel;
   reloadedModel.importFile(tempfilename);
   const auto &options{reloadedModel.getOptimizeOptions()};
-  REQUIRE(optimizeOptions.nParticles == 3);
+  REQUIRE(optimizeOptions.optAlgorithm.optAlgorithmType ==
+          sme::simulate::OptAlgorithmType::PSO);
+  REQUIRE(optimizeOptions.optAlgorithm.islands == 1);
+  REQUIRE(optimizeOptions.optAlgorithm.population == 3);
   REQUIRE(optimizeOptions.optCosts.size() == 1);
   REQUIRE(optimizeOptions.optCosts[0].optCostType ==
           sme::simulate::OptCostType::Concentration);

@@ -29,6 +29,17 @@ static QString toQStr(sme::simulate::OptCostDiffType optCostDiffType) {
   }
 }
 
+static QString toQStr(sme::simulate::OptAlgorithmType optAlgorithmType) {
+  switch (optAlgorithmType) {
+  case sme::simulate::OptAlgorithmType::PSO:
+    return "Particle Swarm Optimization";
+  case sme::simulate::OptAlgorithmType::GPSO:
+    return "Generational Particle Swarm Optimization";
+  default:
+    return "";
+  }
+}
+
 static QString toQStr(const sme::simulate::OptCost &optCost) {
   return QString("%1 [%2 at t=%3, %4 difference]")
       .arg(optCost.name.c_str())
@@ -42,6 +53,28 @@ static QString toQStr(const sme::simulate::OptParam &optParam) {
       .arg(optParam.name.c_str())
       .arg(optParam.lowerBound)
       .arg(optParam.upperBound);
+}
+
+static int toIndex(sme::simulate::OptAlgorithmType optAlgorithmType) {
+  switch (optAlgorithmType) {
+  case sme::simulate::OptAlgorithmType::PSO:
+    return 0;
+  case sme::simulate::OptAlgorithmType::GPSO:
+    return 1;
+  default:
+    return 0;
+  }
+}
+
+static sme::simulate::OptAlgorithmType toOptAlgorithmType(int index) {
+  switch (index) {
+  case 0:
+    return sme::simulate::OptAlgorithmType::PSO;
+  case 1:
+    return sme::simulate::OptAlgorithmType::GPSO;
+  default:
+    return sme::simulate::OptAlgorithmType::PSO;
+  }
 }
 
 static std::vector<sme::simulate::OptParam>
@@ -128,12 +161,24 @@ DialogOptSetup::DialogOptSetup(const sme::model::Model &model, QWidget *parent)
   ui->btnRemoveTarget->setEnabled(false);
   ui->btnEditParameter->setEnabled(false);
   ui->btnRemoveParameter->setEnabled(false);
+  ui->cmbAlgorithm->setCurrentIndex(
+      toIndex(optimizeOptions.optAlgorithm.optAlgorithmType));
+  ui->spinIslands->setValue(
+      static_cast<int>(optimizeOptions.optAlgorithm.islands));
+  ui->spinPopulation->setValue(
+      static_cast<int>(optimizeOptions.optAlgorithm.population));
   for (const auto &optCost : optimizeOptions.optCosts) {
     ui->lstTargets->addItem(toQStr(optCost));
   }
   for (const auto &optParam : optimizeOptions.optParams) {
     ui->lstParameters->addItem(toQStr(optParam));
   }
+  connect(ui->cmbAlgorithm, &QComboBox::currentIndexChanged, this,
+          &DialogOptSetup::cmbAlgorithm_currentIndexChanged);
+  connect(ui->spinIslands, qOverload<int>(&QSpinBox::valueChanged), this,
+          &DialogOptSetup::spinIslands_valueChanged);
+  connect(ui->spinPopulation, qOverload<int>(&QSpinBox::valueChanged), this,
+          &DialogOptSetup::spinPopulation_valueChanged);
   connect(ui->lstTargets, &QListWidget::currentRowChanged, this,
           &DialogOptSetup::lstTargets_currentRowChanged);
   connect(ui->lstTargets, &QListWidget::itemDoubleClicked, this,
@@ -165,6 +210,18 @@ DialogOptSetup::~DialogOptSetup() = default;
 [[nodiscard]] const sme::simulate::OptimizeOptions &
 DialogOptSetup::getOptimizeOptions() const {
   return optimizeOptions;
+}
+
+void DialogOptSetup::cmbAlgorithm_currentIndexChanged(int index) {
+  optimizeOptions.optAlgorithm.optAlgorithmType = toOptAlgorithmType(index);
+}
+
+void DialogOptSetup::spinIslands_valueChanged(int value) {
+  optimizeOptions.optAlgorithm.islands = static_cast<std::size_t>(value);
+}
+
+void DialogOptSetup::spinPopulation_valueChanged(int value) {
+  optimizeOptions.optAlgorithm.population = static_cast<std::size_t>(value);
 }
 
 void DialogOptSetup::lstTargets_currentRowChanged(int row) {
