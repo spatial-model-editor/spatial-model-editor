@@ -7,7 +7,7 @@ using namespace sme;
 using namespace sme::test;
 
 TEST_CASE("Optimize ABtoC model for zero concentration of A",
-          "[core/simulate/optimize][core/simulate][core][optimize][QQ]") {
+          "[core/simulate/optimize][core/simulate][core][optimize]") {
   auto model{getExampleModel(Mod::ABtoC)};
   model.getSimulationSettings().simulatorType =
       sme::simulate::SimulatorType::Pixel;
@@ -31,8 +31,8 @@ TEST_CASE("Optimize ABtoC model for zero concentration of A",
                                       {}});
   model.getOptimizeOptions() = optimizeOptions;
   sme::simulate::Optimization optimization(model);
-  double cost{optimization.getFitness()[0]};
-  double k1{optimization.getParams()[0][0]};
+  double cost{std::numeric_limits<double>::max()};
+  double k1{0};
   for (std::size_t i = 1; i < 4; ++i) {
     optimization.evolve();
     REQUIRE(optimization.getIterations() == i);
@@ -74,8 +74,8 @@ TEST_CASE("Optimize ABtoC model for zero concentration of C",
                                       {}});
   model.getOptimizeOptions() = optimizeOptions;
   sme::simulate::Optimization optimization(model);
-  double cost{optimization.getFitness()[0]};
-  double k1{optimization.getParams()[0][0]};
+  double cost{std::numeric_limits<double>::max()};
+  double k1{std::numeric_limits<double>::max()};
   for (std::size_t i = 1; i < 3; ++i) {
     optimization.evolve();
     REQUIRE(optimization.getIterations() == i);

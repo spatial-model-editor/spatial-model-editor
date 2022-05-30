@@ -35,17 +35,17 @@ struct OptTimestep {
  */
 class Optimization {
 private:
-  pagmo::algorithm algo;
-  pagmo::archipelago archi;
-  std::unique_ptr<OptimizeOptions> optimizeOptions;
-  std::unique_ptr<std::vector<OptTimestep>> optTimesteps;
-  std::unique_ptr<std::string> xmlModel{};
+  std::unique_ptr<pagmo::algorithm> algo{nullptr};
+  std::unique_ptr<pagmo::archipelago> archi{nullptr};
+  std::unique_ptr<OptimizeOptions> optimizeOptions{nullptr};
+  std::unique_ptr<std::vector<OptTimestep>> optTimesteps{nullptr};
+  std::unique_ptr<std::string> xmlModel{nullptr};
   std::atomic<bool> isRunning{false};
   std::atomic<bool> stopRequested{false};
   std::atomic<std::size_t> nIterations{0};
   std::vector<double> bestFitness;
   std::vector<std::vector<double>> bestParams;
-  std::unique_ptr<ThreadsafeModelQueue> modelQueue;
+  std::unique_ptr<ThreadsafeModelQueue> modelQueue{nullptr};
 
 public:
   /**
