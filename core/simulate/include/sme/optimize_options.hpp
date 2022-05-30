@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <cereal/cereal.hpp>
 #include <cereal/types/string.hpp>
 #include <cereal/types/vector.hpp>
@@ -129,7 +130,15 @@ struct OptCost {
 /**
  * @brief Types of algorithms that can be used in optimization
  */
-enum class OptAlgorithmType { PSO, GPSO };
+enum class OptAlgorithmType { PSO, GPSO, DE, iDE, jDE, pDE, ABC, gaco };
+
+/**
+ * @brief An array of all algorithm types for iterating over
+ */
+inline constexpr std::array<OptAlgorithmType, 8> optAlgorithmTypes{
+    OptAlgorithmType::PSO, OptAlgorithmType::GPSO, OptAlgorithmType::DE,
+    OptAlgorithmType::iDE, OptAlgorithmType::jDE,  OptAlgorithmType::pDE,
+    OptAlgorithmType::ABC, OptAlgorithmType::gaco};
 
 /**
  * @brief Optimization algorithm options
