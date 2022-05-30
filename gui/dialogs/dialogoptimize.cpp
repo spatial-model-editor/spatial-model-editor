@@ -7,7 +7,7 @@
 #include "ui_dialogoptimize.h"
 #include <qcustomplot.h>
 
-static void initFitnessPlot(QCustomPlot *plot, double initialFitness) {
+static void initFitnessPlot(QCustomPlot *plot) {
   if (plot->plotLayout()->rowCount() == 1) {
     plot->plotLayout()->insertRow(0);
     plot->plotLayout()->addElement(0, 0,
@@ -22,14 +22,12 @@ static void initFitnessPlot(QCustomPlot *plot, double initialFitness) {
   graphFitness->setScatterStyle(
       QCPScatterStyle(QCPScatterStyle::ScatterShape::ssDisc));
   graphFitness->setName("Fitness of best parameters");
-  graphFitness->addData({0}, {initialFitness}, true);
   plot->rescaleAxes(true);
   plot->replot();
 }
 
 static void initParamsPlot(QCustomPlot *plot,
-                           const std::vector<QString> &paramNames,
-                           const std::vector<double> &params) {
+                           const std::vector<QString> &paramNames) {
   if (plot->plotLayout()->rowCount() == 1) {
     plot->plotLayout()->insertRow(0);
     plot->plotLayout()->addElement(0, 0,
@@ -39,13 +37,12 @@ static void initParamsPlot(QCustomPlot *plot,
     plot->legend->setVisible(true);
   }
   plot->clearGraphs();
-  for (std::size_t i = 0; i < params.size(); ++i) {
+  for (std::size_t i = 0; i < paramNames.size(); ++i) {
     auto *graphParams{plot->addGraph()};
     graphParams->setPen(sme::common::indexedColours()[i]);
     graphParams->setScatterStyle(
         QCPScatterStyle(QCPScatterStyle::ScatterShape::ssDisc));
     graphParams->setName(paramNames[i]);
-    graphParams->addData({0}, {params[i]}, true);
   }
   plot->rescaleAxes(true);
   plot->replot();
@@ -89,21 +86,19 @@ void DialogOptimize::init() {
     ui->btnStop->setEnabled(false);
     ui->btnSetup->setEnabled(true);
     ui->btnApplyToModel->setEnabled(false);
-    initFitnessPlot(ui->pltFitness, {});
-    initParamsPlot(ui->pltParams, {}, {});
+    initFitnessPlot(ui->pltFitness);
+    initParamsPlot(ui->pltParams, {});
     return;
   }
   this->setCursor(Qt::WaitCursor);
-  // todo: this constructor does one or more simulations, should be cancellable
-  // & not blocking the GUI thread
   opt = std::make_unique<sme::simulate::Optimization>(model);
   this->setCursor(Qt::ArrowCursor);
   ui->btnStart->setEnabled(true);
   ui->btnStop->setEnabled(false);
   ui->btnSetup->setEnabled(true);
   ui->btnApplyToModel->setEnabled(false);
-  initFitnessPlot(ui->pltFitness, opt->getFitness().front());
-  initParamsPlot(ui->pltParams, opt->getParamNames(), opt->getParams().front());
+  initFitnessPlot(ui->pltFitness);
+  initParamsPlot(ui->pltParams, opt->getParamNames());
 }
 
 void DialogOptimize::btnStart_clicked() {

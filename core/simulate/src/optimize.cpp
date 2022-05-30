@@ -78,11 +78,11 @@ Optimization::Optimization(sme::model::Model &model) {
       oneapi::tbb::concurrent_queue<std::shared_ptr<sme::model::Model>>>();
   switch (optimizeOptions->optAlgorithm.optAlgorithmType) {
   case sme::simulate::OptAlgorithmType::PSO:
-    algo = pagmo::algorithm{pagmo::pso()};
+    algo = std::make_unique<pagmo::algorithm>(pagmo::pso());
   case sme::simulate::OptAlgorithmType::GPSO:
-    algo = pagmo::algorithm{pagmo::pso_gen()};
+    algo = std::make_unique<pagmo::algorithm>(pagmo::pso_gen());
   default:
-    algo = pagmo::algorithm{pagmo::pso()};
+    algo = std::make_unique<pagmo::algorithm>(pagmo::pso());
   }
 
   // construct models in queue in serial for now to aovid libsbml thread safety
@@ -95,18 +95,20 @@ Optimization::Optimization(sme::model::Model &model) {
     m->importSBMLString(*xmlModel);
     modelQueue->push(std::move(m));
   }
-  archi = pagmo::archipelago{
-      options.optAlgorithm.islands, algo,
-      pagmo::problem{PagmoUDP(xmlModel.get(), optimizeOptions.get(),
-                              optTimesteps.get(), modelQueue.get())},
-      options.optAlgorithm.population};
-  appendBestFitnesssAndParams(archi, bestFitness, bestParams);
 }
 
 std::size_t Optimization::evolve(std::size_t n) {
   if (isRunning) {
     SPDLOG_WARN("Evolve is currently running: ignoring call to evolve");
     return 0;
+  }
+  if (archi == nullptr) {
+    archi = std::make_unique<pagmo::archipelago>(
+        optimizeOptions->optAlgorithm.islands, *algo,
+        pagmo::problem{PagmoUDP(xmlModel.get(), optimizeOptions.get(),
+                                optTimesteps.get(), modelQueue.get())},
+        optimizeOptions->optAlgorithm.population);
+    appendBestFitnesssAndParams(*archi, bestFitness, bestParams);
   }
   stopRequested = false;
   isRunning = true;
@@ -115,9 +117,9 @@ std::size_t Optimization::evolve(std::size_t n) {
   bestFitness.reserve(bestFitness.size() + n);
   bestParams.reserve(bestParams.size() + n);
   for (std::size_t i = 0; i < n; ++i) {
-    archi.evolve();
-    archi.wait_check();
-    appendBestFitnesssAndParams(archi, bestFitness, bestParams);
+    archi->evolve();
+    archi->wait_check();
+    appendBestFitnesssAndParams(*archi, bestFitness, bestParams);
     ++nIterations;
     if (stopRequested) {
       SPDLOG_INFO("Stopping evolve early after {} steps", nIterations);
