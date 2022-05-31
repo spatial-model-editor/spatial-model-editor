@@ -13,7 +13,8 @@ void applyParameters(const pagmo::vector_double &values,
 
 double calculateCosts(const std::vector<OptCost> &optCosts,
                       const std::vector<std::size_t> &optCostIndices,
-                      const sme::simulate::Simulation &sim);
+                      const sme::simulate::Simulation &sim,
+                      std::vector<std::vector<double>> &currentTargets);
 
 /**
  * @brief Implements a Pagmo User Defined Problem to evolve
@@ -25,19 +26,15 @@ double calculateCosts(const std::vector<OptCost> &optCosts,
 
 class PagmoUDP {
 private:
-  const std::string *xmlModel{nullptr};
-  const OptimizeOptions *optimizeOptions{nullptr};
-  const std::vector<OptTimestep> *optTimesteps{nullptr};
+  const OptConstData *optConstData{nullptr};
   ThreadsafeModelQueue *modelQueue{nullptr};
-  const sme::simulate::Optimization *optimization{nullptr};
+  sme::simulate::Optimization *optimization{nullptr};
 
 public:
   PagmoUDP() = default;
-  explicit PagmoUDP(const std::string *xmlModel,
-                    const OptimizeOptions *optimizeOptions,
-                    const std::vector<OptTimestep> *optTimesteps,
+  explicit PagmoUDP(const OptConstData *optConstData,
                     ThreadsafeModelQueue *modelQueue,
-                    const Optimization *optimization);
+                    Optimization *optimization);
   [[nodiscard]] pagmo::vector_double
   fitness(const pagmo::vector_double &dv) const;
   [[nodiscard]] std::pair<pagmo::vector_double, pagmo::vector_double>

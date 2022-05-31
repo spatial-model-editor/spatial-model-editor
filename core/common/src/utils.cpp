@@ -6,13 +6,17 @@
 namespace sme::common {
 
 QImage toGrayscaleIntensityImage(const QSize &imageSize,
-                                 const std::vector<double> &values) {
+                                 const std::vector<double> &values,
+                                 double maxValue) {
   QImage img(imageSize, QImage::Format_RGB32);
   if (values.size() != img.width() * img.height()) {
     img.fill(0);
   } else {
     double scaleFactor{0.0};
-    double maxValue{max(values)};
+    if (maxValue < 0) {
+      // use maximum value from supplied values
+      maxValue = max(values);
+    }
     if (maxValue > 0.0) {
       scaleFactor = 255.0 / maxValue;
     }
@@ -20,6 +24,7 @@ QImage toGrayscaleIntensityImage(const QSize &imageSize,
     for (int y = img.height() - 1; y >= 0; --y) {
       for (int x = 0; x < img.width(); ++x) {
         auto intensity{static_cast<int>(scaleFactor * (*value))};
+        intensity = std::clamp(intensity, 0, 255);
         img.setPixel(x, y, qRgb(intensity, intensity, intensity));
         ++value;
       }

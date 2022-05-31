@@ -2,6 +2,7 @@
 #include "optimize_impl.hpp"
 #include "sme/logger.hpp"
 #include "sme/model.hpp"
+#include "sme/utils.hpp"
 #include <iostream>
 #include <pagmo/algorithms/bee_colony.hpp>
 #include <pagmo/algorithms/de.hpp>
@@ -72,44 +73,63 @@ getOptTimesteps(const OptimizeOptions &options) {
   return optTimesteps;
 }
 
+static std::unique_ptr<pagmo::algorithm>
+getPagmoAlgorithm(sme::simulate::OptAlgorithmType optAlgorithmType) {
+  // https://esa.github.io/pagmo2/docs/cpp/cpp_docs.html#implemented-algorithms
+  switch (optAlgorithmType) {
+  case sme::simulate::OptAlgorithmType::PSO:
+    return std::make_unique<pagmo::algorithm>(pagmo::pso());
+  case sme::simulate::OptAlgorithmType::GPSO:
+    return std::make_unique<pagmo::algorithm>(pagmo::pso_gen());
+  case sme::simulate::OptAlgorithmType::DE:
+    return std::make_unique<pagmo::algorithm>(pagmo::de());
+  case sme::simulate::OptAlgorithmType::iDE:
+    return std::make_unique<pagmo::algorithm>(pagmo::sade(1, 2, 2));
+  case sme::simulate::OptAlgorithmType::jDE:
+    return std::make_unique<pagmo::algorithm>(pagmo::sade(1, 2, 1));
+  case sme::simulate::OptAlgorithmType::pDE:
+    return std::make_unique<pagmo::algorithm>(pagmo::de1220());
+  case sme::simulate::OptAlgorithmType::ABC:
+    return std::make_unique<pagmo::algorithm>(pagmo::bee_colony());
+  case sme::simulate::OptAlgorithmType::gaco:
+    return std::make_unique<pagmo::algorithm>(pagmo::gaco(1, 7));
+  default:
+    return std::make_unique<pagmo::algorithm>(pagmo::pso());
+  }
+}
+
 Optimization::Optimization(sme::model::Model &model) {
   const auto &options{model.getOptimizeOptions()};
-  xmlModel = std::make_unique<std::string>(model.getXml().toStdString());
-  optimizeOptions =
-      std::make_unique<OptimizeOptions>(model.getOptimizeOptions());
-  optTimesteps = std::make_unique<std::vector<sme::simulate::OptTimestep>>(
-      getOptTimesteps(options));
+  optConstData = std::make_unique<sme::simulate::OptConstData>();
+  optConstData->imageSize = model.getGeometry().getImage().size();
+  optConstData->xmlModel = model.getXml().toStdString();
+  optConstData->optimizeOptions = model.getOptimizeOptions();
+  optConstData->optTimesteps = getOptTimesteps(options);
+  for (const auto &cost : model.getOptimizeOptions().optCosts) {
+    if (cost.targetValues.empty()) {
+      // empty vector is implicitly zero everywhere,
+      // use negative value here to allow rescaling of image to whatever the
+      // result is
+      optConstData->maxTargetValues.push_back(-1.0);
+    } else {
+      optConstData->maxTargetValues.push_back(
+          sme::common::max(cost.targetValues));
+    }
+  }
   modelQueue = std::make_unique<
       oneapi::tbb::concurrent_queue<std::shared_ptr<sme::model::Model>>>();
-  switch (optimizeOptions->optAlgorithm.optAlgorithmType) {
-  case sme::simulate::OptAlgorithmType::PSO:
-    algo = std::make_unique<pagmo::algorithm>(pagmo::pso());
-  case sme::simulate::OptAlgorithmType::GPSO:
-    algo = std::make_unique<pagmo::algorithm>(pagmo::pso_gen());
-  case sme::simulate::OptAlgorithmType::DE:
-    algo = std::make_unique<pagmo::algorithm>(pagmo::de());
-  case sme::simulate::OptAlgorithmType::iDE:
-    algo = std::make_unique<pagmo::algorithm>(pagmo::sade(1, 2, 2));
-  case sme::simulate::OptAlgorithmType::jDE:
-    algo = std::make_unique<pagmo::algorithm>(pagmo::sade(1, 2, 1));
-  case sme::simulate::OptAlgorithmType::pDE:
-    algo = std::make_unique<pagmo::algorithm>(pagmo::de1220());
-  case sme::simulate::OptAlgorithmType::ABC:
-    algo = std::make_unique<pagmo::algorithm>(pagmo::bee_colony());
-  case sme::simulate::OptAlgorithmType::gaco:
-    algo = std::make_unique<pagmo::algorithm>(pagmo::gaco());
-  default:
-    algo = std::make_unique<pagmo::algorithm>(pagmo::pso());
-  }
+  algo = getPagmoAlgorithm(
+      optConstData->optimizeOptions.optAlgorithm.optAlgorithmType);
 
   // construct models in queue in serial for now to aovid libsbml thread safety
   // issues (see
   // https://github.com/spatial-model-editor/spatial-model-editor/issues/786)
   // todo: once that is fixed, can remove this & let the UDP construct them as
   // needed
-  for (std::size_t i = 0; i < optimizeOptions->optAlgorithm.islands; ++i) {
+  for (std::size_t i = 0;
+       i < optConstData->optimizeOptions.optAlgorithm.islands; ++i) {
     auto m{std::make_shared<sme::model::Model>()};
-    m->importSBMLString(*xmlModel);
+    m->importSBMLString(optConstData->xmlModel);
     modelQueue->push(std::move(m));
   }
 }
@@ -123,10 +143,9 @@ std::size_t Optimization::evolve(std::size_t n) {
   isRunning.store(true);
   if (archi == nullptr) {
     archi = std::make_unique<pagmo::archipelago>(
-        optimizeOptions->optAlgorithm.islands, *algo,
-        pagmo::problem{PagmoUDP(xmlModel.get(), optimizeOptions.get(),
-                                optTimesteps.get(), modelQueue.get(), this)},
-        optimizeOptions->optAlgorithm.population);
+        optConstData->optimizeOptions.optAlgorithm.islands, *algo,
+        pagmo::problem{PagmoUDP(optConstData.get(), modelQueue.get(), this)},
+        optConstData->optimizeOptions.optAlgorithm.population);
     appendBestFitnesssAndParams(*archi, bestFitness, bestParams);
   }
   SPDLOG_INFO("Starting {} evolve steps", n);
@@ -151,8 +170,12 @@ std::size_t Optimization::evolve(std::size_t n) {
   return nIterations;
 }
 
-void Optimization::applyParametersToModel(sme::model::Model *model) const {
+bool Optimization::applyParametersToModel(sme::model::Model *model) const {
+  if (bestParams.empty()) {
+    return false;
+  }
   applyParameters(bestParams.back(), model);
+  return true;
 }
 
 const std::vector<std::vector<double>> &Optimization::getParams() const {
@@ -161,8 +184,8 @@ const std::vector<std::vector<double>> &Optimization::getParams() const {
 
 std::vector<QString> Optimization::getParamNames() const {
   std::vector<QString> names;
-  names.reserve(optimizeOptions->optParams.size());
-  for (const auto &optParam : optimizeOptions->optParams) {
+  names.reserve(optConstData->optimizeOptions.optParams.size());
+  for (const auto &optParam : optConstData->optimizeOptions.optParams) {
     names.push_back(optParam.name.c_str());
   }
   return names;
@@ -170,6 +193,40 @@ std::vector<QString> Optimization::getParamNames() const {
 
 const std::vector<double> &Optimization::getFitness() const {
   return bestFitness;
+}
+
+bool Optimization::setBestResults(double fitness,
+                                  std::vector<std::vector<double>> &&results) {
+  std::scoped_lock lock{bestResultsMutex};
+  if (fitness < bestResults.fitness) {
+    bestResults.values = std::move(results);
+    bestResults.fitness = fitness;
+    bestResults.imageChanged = true;
+    return true;
+  }
+  return false;
+}
+
+QImage Optimization::getTargetImage(std::size_t index) const {
+  return common::toGrayscaleIntensityImage(
+      optConstData->imageSize,
+      optConstData->optimizeOptions.optCosts[index].targetValues);
+}
+
+std::optional<QImage>
+Optimization::getUpdatedBestResultImage(std::size_t index) {
+  std::scoped_lock lock{bestResultsMutex};
+  if (bestResults.values.empty()) {
+    return {};
+  }
+  if (bestResults.imageChanged || index != bestResults.imageIndex) {
+    bestResults.imageChanged = false;
+    bestResults.imageIndex = index;
+    return common::toGrayscaleIntensityImage(
+        optConstData->imageSize, bestResults.values[index],
+        optConstData->maxTargetValues[index]);
+  }
+  return {};
 }
 
 std::size_t Optimization::getIterations() const { return nIterations.load(); };

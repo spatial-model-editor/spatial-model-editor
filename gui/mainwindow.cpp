@@ -589,16 +589,23 @@ void MainWindow::actionFinalize_non_spatial_import_triggered() {
 }
 
 void MainWindow::action_Optimization_triggered() {
-  // todo: load optimization options from model?
   if (!isValidModelAndGeometryImage()) {
     SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
     return;
   }
   try {
-    DialogOptimize dialogOptimize(model, {});
+    DialogOptimize dialogOptimize(model);
     if (dialogOptimize.exec() == QDialog::Accepted) {
-      SPDLOG_INFO("todo: offer to apply optimization params to model(?)");
-      // todo: save optimization options to model?
+      auto paramsString{dialogOptimize.getParametersString()};
+      if (!paramsString.isEmpty()) {
+        auto result{QMessageBox::question(
+            this, "Apply optimized parameters to model?",
+            "Apply these optimized parameters to model?\n\n" + paramsString,
+            QMessageBox::Yes | QMessageBox::No)};
+        if (result == QMessageBox::Yes) {
+          dialogOptimize.applyToModel();
+        }
+      }
     }
   } catch (const std::invalid_argument &e) {
     QMessageBox::warning(this, "Optimize error", e.what());
