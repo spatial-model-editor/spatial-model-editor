@@ -87,7 +87,7 @@ public:
    */
   [[nodiscard]] bool getIsStopping() const;
   /**
-   * @brief Stop the evolution after the current iteration is complete
+   * @brief Stop the evolution as soon as possible
    */
   void requestStop();
 };

@@ -115,17 +115,17 @@ Optimization::Optimization(sme::model::Model &model) {
 }
 
 std::size_t Optimization::evolve(std::size_t n) {
-  if (isRunning) {
+  if (isRunning.load()) {
     SPDLOG_WARN("Evolve is currently running: ignoring call to evolve");
     return 0;
   }
-  stopRequested = false;
-  isRunning = true;
+  stopRequested.store(false);
+  isRunning.store(true);
   if (archi == nullptr) {
     archi = std::make_unique<pagmo::archipelago>(
         optimizeOptions->optAlgorithm.islands, *algo,
         pagmo::problem{PagmoUDP(xmlModel.get(), optimizeOptions.get(),
-                                optTimesteps.get(), modelQueue.get())},
+                                optTimesteps.get(), modelQueue.get(), this)},
         optimizeOptions->optAlgorithm.population);
     appendBestFitnesssAndParams(*archi, bestFitness, bestParams);
   }
@@ -140,14 +140,14 @@ std::size_t Optimization::evolve(std::size_t n) {
     ++nIterations;
     if (stopRequested) {
       SPDLOG_INFO("Stopping evolve early after {} steps", nIterations);
-      isRunning = false;
-      stopRequested = false;
+      isRunning.store(false);
+      stopRequested.store(false);
       return nIterations;
     }
   }
   SPDLOG_INFO("Completed {} steps", nIterations);
-  isRunning = false;
-  stopRequested = false;
+  isRunning.store(false);
+  stopRequested.store(false);
   return nIterations;
 }
 

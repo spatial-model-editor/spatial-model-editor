@@ -76,13 +76,18 @@ double calculateCosts(const std::vector<OptCost> &optCosts,
 PagmoUDP::PagmoUDP(const std::string *xmlModel,
                    const OptimizeOptions *optimizeOptions,
                    const std::vector<OptTimestep> *optTimesteps,
-                   ThreadsafeModelQueue *modelQueue)
-    : modelQueue{modelQueue}, xmlModel{xmlModel},
-      optimizeOptions{optimizeOptions}, optTimesteps{optTimesteps} {}
+                   ThreadsafeModelQueue *modelQueue,
+                   const sme::simulate::Optimization *optimization)
+    : xmlModel{xmlModel}, optimizeOptions{optimizeOptions},
+      optTimesteps{optTimesteps}, modelQueue{modelQueue}, optimization{
+                                                              optimization} {}
 
 [[nodiscard]] pagmo::vector_double
 PagmoUDP::fitness(const pagmo::vector_double &dv) const {
   std::shared_ptr<sme::model::Model> m;
+  if (optimization->getIsStopping()) {
+    return {std::numeric_limits<double>::max()};
+  }
   if (modelQueue == nullptr || !modelQueue->try_pop(m)) {
     SPDLOG_INFO("model queue missing or empty: constructing model");
     m = std::make_shared<sme::model::Model>();
@@ -93,7 +98,11 @@ PagmoUDP::fitness(const pagmo::vector_double &dv) const {
   sme::simulate::Simulation sim(*m);
   double cost{0.0};
   for (const auto &optTimestep : *optTimesteps) {
-    sim.doTimesteps(optTimestep.simulationTime);
+    sim.doMultipleTimesteps({{1, optTimestep.simulationTime}}, -1,
+                            [this]() { return optimization->getIsStopping(); });
+    if (optimization->getIsStopping()) {
+      return {std::numeric_limits<double>::max()};
+    }
     cost += calculateCosts(optimizeOptions->optCosts,
                            optTimestep.optCostIndices, sim);
   }
