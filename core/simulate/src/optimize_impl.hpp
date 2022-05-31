@@ -25,17 +25,19 @@ double calculateCosts(const std::vector<OptCost> &optCosts,
 
 class PagmoUDP {
 private:
-  ThreadsafeModelQueue *modelQueue{nullptr};
   const std::string *xmlModel{nullptr};
   const OptimizeOptions *optimizeOptions{nullptr};
   const std::vector<OptTimestep> *optTimesteps{nullptr};
+  ThreadsafeModelQueue *modelQueue{nullptr};
+  const sme::simulate::Optimization *optimization{nullptr};
 
 public:
   PagmoUDP() = default;
   explicit PagmoUDP(const std::string *xmlModel,
                     const OptimizeOptions *optimizeOptions,
                     const std::vector<OptTimestep> *optTimesteps,
-                    ThreadsafeModelQueue *modelQueue);
+                    ThreadsafeModelQueue *modelQueue,
+                    const Optimization *optimization);
   [[nodiscard]] pagmo::vector_double
   fitness(const pagmo::vector_double &dv) const;
   [[nodiscard]] std::pair<pagmo::vector_double, pagmo::vector_double>
