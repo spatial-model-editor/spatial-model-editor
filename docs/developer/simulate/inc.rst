@@ -59,3 +59,7 @@ OptimizationOptions
 .. doxygenenum:: sme::simulate::OptCostType
 
 .. doxygenenum:: sme::simulate::OptCostDiffType
+
+.. doxygenstruct:: sme::simulate::OptAlgorithm
+
+.. doxygenenum:: sme::simulate::OptAlgorithmType
