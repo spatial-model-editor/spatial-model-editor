@@ -3,6 +3,8 @@
 #include "sme/optimize_options.hpp"
 #include "sme/simulate.hpp"
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <pagmo/algorithm.hpp>
 #include <pagmo/archipelago.hpp>
 #include <pagmo/population.hpp>
@@ -27,6 +29,14 @@ struct OptTimestep {
   std::vector<std::size_t> optCostIndices;
 };
 
+struct OptConstData {
+  std::string xmlModel{};
+  OptimizeOptions optimizeOptions{};
+  std::vector<OptTimestep> optTimesteps{};
+  QSize imageSize{};
+  std::vector<double> maxTargetValues{};
+};
+
 /**
  * @brief Optimize model parameters
  *
@@ -35,16 +45,22 @@ struct OptTimestep {
  */
 class Optimization {
 private:
+  struct BestResults {
+    std::vector<std::vector<double>> values{};
+    double fitness{std::numeric_limits<double>::max()};
+    std::size_t imageIndex{std::numeric_limits<std::size_t>::max()};
+    bool imageChanged{true};
+  };
   std::unique_ptr<pagmo::algorithm> algo{nullptr};
   std::unique_ptr<pagmo::archipelago> archi{nullptr};
-  std::unique_ptr<OptimizeOptions> optimizeOptions{nullptr};
-  std::unique_ptr<std::vector<OptTimestep>> optTimesteps{nullptr};
-  std::unique_ptr<std::string> xmlModel{nullptr};
+  std::unique_ptr<OptConstData> optConstData{nullptr};
   std::atomic<bool> isRunning{false};
   std::atomic<bool> stopRequested{false};
   std::atomic<std::size_t> nIterations{0};
   std::vector<double> bestFitness;
   std::vector<std::vector<double>> bestParams;
+  mutable std::mutex bestResultsMutex;
+  BestResults bestResults{};
   std::unique_ptr<ThreadsafeModelQueue> modelQueue{nullptr};
 
 public:
@@ -61,7 +77,7 @@ public:
   /**
    * @brief Apply the current best parameter values to the supplied model
    */
-  void applyParametersToModel(sme::model::Model *model) const;
+  bool applyParametersToModel(sme::model::Model *model) const;
   /**
    * @brief The best set of parameters from each iteration
    */
@@ -74,6 +90,23 @@ public:
    * @brief The best fitness from each iteration
    */
   [[nodiscard]] const std::vector<double> &getFitness() const;
+  /**
+   * @brief Try to set a new set of best results for each target
+   *
+   * The best results are only updated if `fitness` is lower than the current
+   * `bestResultsFitness`
+   */
+  bool setBestResults(double fitness,
+                      std::vector<std::vector<double>> &&results);
+  /**
+   * @brief Get an image of the a target
+   */
+  [[nodiscard]] QImage getTargetImage(std::size_t index) const;
+  /**
+   * @brief Get an image of the current best result for a target
+   */
+  [[nodiscard]] std::optional<QImage>
+  getUpdatedBestResultImage(std::size_t index);
   /**
    * @brief The number of completed evolve iterations
    */

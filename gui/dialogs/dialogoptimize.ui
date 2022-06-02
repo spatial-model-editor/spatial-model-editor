@@ -25,48 +25,142 @@
   <property name="modal">
    <bool>true</bool>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>
-    <layout class="QGridLayout" name="gridLayout">
-     <item row="0" column="1">
-      <widget class="QCustomPlot" name="pltParams" native="true"/>
-     </item>
-     <item row="0" column="0">
-      <widget class="QCustomPlot" name="pltFitness" native="true"/>
-     </item>
-     <item row="1" column="0">
-      <widget class="QPushButton" name="btnStart">
-       <property name="text">
-        <string>Start</string>
+    <layout class="QVBoxLayout" name="vlayout0">
+     <item>
+      <widget class="QSplitter" name="splitter">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
+       <widget class="QWidget" name="">
+        <layout class="QGridLayout" name="gridLayout">
+         <item row="3" column="0" colspan="2">
+          <widget class="QLabel" name="lblResultLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Values using current best parameters:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lblCmbTargetLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Target:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0" colspan="2">
+          <widget class="QLabelMouseTracker" name="lblResult" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="whatsThis">
+            <string>&lt;h4&gt;Initial concentration&lt;/h4&gt;
+      &lt;p&gt;An image of the initial concentration resulting from the supplied analytic expression.&lt;/p&gt;</string>
+           </property>
+           <property name="text" stdset="0">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0" colspan="2">
+          <widget class="QLabelMouseTracker" name="lblTarget" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="whatsThis">
+            <string>&lt;h4&gt;Initial concentration&lt;/h4&gt;
+      &lt;p&gt;An image of the initial concentration resulting from the supplied analytic expression.&lt;/p&gt;</string>
+           </property>
+           <property name="text" stdset="0">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="cmbTarget">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="2">
+          <widget class="QLabel" name="lblTargetLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Target values:</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <widget class="QWidget" name="">
+        <layout class="QVBoxLayout" name="vlayout2">
+         <item>
+          <widget class="QCustomPlot" name="pltFitness" native="true"/>
+         </item>
+         <item>
+          <widget class="QCustomPlot" name="pltParams" native="true"/>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QPushButton" name="btnApplyToModel">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Apply to model</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QPushButton" name="btnStop">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="text">
-        <string>Stop</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QPushButton" name="btnSetup">
-       <property name="text">
-        <string>Setup</string>
-       </property>
-      </widget>
+     <item>
+      <layout class="QHBoxLayout" name="vlayout1">
+       <item>
+        <widget class="QPushButton" name="btnSetup">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Setup</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnStartStop">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Start</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>
@@ -84,16 +178,19 @@
  </widget>
  <customwidgets>
   <customwidget>
+   <class>QLabelMouseTracker</class>
+   <extends>QWidget</extends>
+   <header>qlabelmousetracker.hpp</header>
+  </customwidget>
+  <customwidget>
    <class>QCustomPlot</class>
    <extends>QWidget</extends>
    <header>qcustomplot.h</header>
   </customwidget>
  </customwidgets>
  <tabstops>
-  <tabstop>btnStart</tabstop>
-  <tabstop>btnStop</tabstop>
   <tabstop>btnSetup</tabstop>
-  <tabstop>btnApplyToModel</tabstop>
+  <tabstop>btnStartStop</tabstop>
  </tabstops>
  <resources/>
  <connections/>

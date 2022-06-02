@@ -109,9 +109,14 @@ std::size_t element_index(const Container &c, const Element &e,
 
 /**
  * @brief Grayscale image from array of pixel intensities
+ *
+ * If a positive value is supplied for `maxValue` it determines the value that
+ * corresponds to white in the image, otherwise by default the maximum value
+ * from `values` is used.
  */
 QImage toGrayscaleIntensityImage(const QSize &imageSize,
-                                 const std::vector<double> &values);
+                                 const std::vector<double> &values,
+                                 double maxValue = -1.0);
 
 /**
  * @brief The type of an object as a string

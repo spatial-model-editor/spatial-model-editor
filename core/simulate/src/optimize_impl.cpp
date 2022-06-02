@@ -29,11 +29,12 @@ void applyParameters(const pagmo::vector_double &values,
 
 double calculateCosts(const std::vector<OptCost> &optCosts,
                       const std::vector<std::size_t> &optCostIndices,
-                      const sme::simulate::Simulation &sim) {
+                      const sme::simulate::Simulation &sim,
+                      std::vector<std::vector<double>> &currentTargets) {
   double cost{0};
   for (const auto &optCostIndex : optCostIndices) {
     const auto &optCost{optCosts[optCostIndex]};
-    std::vector<double> values;
+    auto &values{currentTargets[optCostIndex]};
     auto compIndex{optCost.compartmentIndex};
     auto specIndex{optCost.speciesIndex};
     switch (optCost.optCostType) {
@@ -49,8 +50,8 @@ double calculateCosts(const std::vector<OptCost> &optCosts,
     }
     if (optCost.targetValues.empty()) {
       // default target is zero if not specified
-      for (auto &value : values) {
-        value = std::abs(value);
+      for (auto value : values) {
+        cost += std::abs(value);
       }
     } else {
       if (values.size() != optCost.targetValues.size()) {
@@ -65,21 +66,18 @@ double calculateCosts(const std::vector<OptCost> &optCosts,
         if (optCost.optCostDiffType == OptCostDiffType::Relative) {
           diff /= (std::abs(optCost.targetValues[i]) + optCost.epsilon);
         }
-        values[i] = std::abs(diff);
+        cost += std::abs(diff);
       }
     }
-    cost += optCost.weight * sme::common::sum(values);
+    cost *= optCost.weight;
   }
   return cost;
 }
 
-PagmoUDP::PagmoUDP(const std::string *xmlModel,
-                   const OptimizeOptions *optimizeOptions,
-                   const std::vector<OptTimestep> *optTimesteps,
+PagmoUDP::PagmoUDP(const OptConstData *optConstData,
                    ThreadsafeModelQueue *modelQueue,
-                   const sme::simulate::Optimization *optimization)
-    : xmlModel{xmlModel}, optimizeOptions{optimizeOptions},
-      optTimesteps{optTimesteps}, modelQueue{modelQueue}, optimization{
+                   sme::simulate::Optimization *optimization)
+    : optConstData{optConstData}, modelQueue{modelQueue}, optimization{
                                                               optimization} {}
 
 [[nodiscard]] pagmo::vector_double
@@ -91,20 +89,25 @@ PagmoUDP::fitness(const pagmo::vector_double &dv) const {
   if (modelQueue == nullptr || !modelQueue->try_pop(m)) {
     SPDLOG_INFO("model queue missing or empty: constructing model");
     m = std::make_shared<sme::model::Model>();
-    m->importSBMLString(*xmlModel);
+    m->importSBMLString(optConstData->xmlModel);
   }
   m->getSimulationData().clear();
   applyParameters(dv, m.get());
   sme::simulate::Simulation sim(*m);
   double cost{0.0};
-  for (const auto &optTimestep : *optTimesteps) {
+  std::vector<std::vector<double>> currentTargets(
+      optConstData->optimizeOptions.optCosts.size(), std::vector<double>{});
+  for (const auto &optTimestep : optConstData->optTimesteps) {
     sim.doMultipleTimesteps({{1, optTimestep.simulationTime}}, -1,
                             [this]() { return optimization->getIsStopping(); });
     if (optimization->getIsStopping()) {
       return {std::numeric_limits<double>::max()};
     }
-    cost += calculateCosts(optimizeOptions->optCosts,
-                           optTimestep.optCostIndices, sim);
+    cost += calculateCosts(optConstData->optimizeOptions.optCosts,
+                           optTimestep.optCostIndices, sim, currentTargets);
+  }
+  if (optimization->setBestResults(cost, std::move(currentTargets))) {
+    SPDLOG_INFO("Updated current best results with cost {}", cost);
   }
   if (modelQueue != nullptr) {
     modelQueue->push(std::move(m));
@@ -115,9 +118,10 @@ PagmoUDP::fitness(const pagmo::vector_double &dv) const {
 [[nodiscard]] std::pair<pagmo::vector_double, pagmo::vector_double>
 PagmoUDP::get_bounds() const {
   std::pair<pagmo::vector_double, pagmo::vector_double> bounds;
-  bounds.first.reserve(optimizeOptions->optParams.size());
-  bounds.second.reserve(optimizeOptions->optParams.size());
-  for (const auto &optParam : optimizeOptions->optParams) {
+  const auto &optParams{optConstData->optimizeOptions.optParams};
+  bounds.first.reserve(optParams.size());
+  bounds.second.reserve(optParams.size());
+  for (const auto &optParam : optParams) {
     bounds.first.push_back(optParam.lowerBound);
     bounds.second.push_back(optParam.upperBound);
   }

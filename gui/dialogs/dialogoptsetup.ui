@@ -110,7 +110,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Population:</string>
+        <string>Population per thread:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -141,6 +141,9 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="whatsThis">
+        <string>The number of CPU threads to use</string>
+       </property>
        <property name="minimum">
         <number>1</number>
        </property>
@@ -158,7 +161,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Islands:</string>
+        <string>Threads:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

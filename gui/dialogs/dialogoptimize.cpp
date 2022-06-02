@@ -17,6 +17,7 @@ static void initFitnessPlot(QCustomPlot *plot) {
     plot->legend->setVisible(true);
   }
   plot->clearGraphs();
+  plot->yAxis->setScaleType(QCPAxis::stLogarithmic);
   auto *graphFitness{plot->addGraph()};
   graphFitness->setPen(sme::common::indexedColours()[0]);
   graphFitness->setScatterStyle(
@@ -37,6 +38,7 @@ static void initParamsPlot(QCustomPlot *plot,
     plot->legend->setVisible(true);
   }
   plot->clearGraphs();
+  plot->yAxis->setScaleType(QCPAxis::stLogarithmic);
   for (std::size_t i = 0; i < paramNames.size(); ++i) {
     auto *graphParams{plot->addGraph()};
     graphParams->setPen(sme::common::indexedColours()[i]);
@@ -52,14 +54,20 @@ DialogOptimize::DialogOptimize(sme::model::Model &model, QWidget *parent)
     : QDialog(parent), model{model},
       ui{std::make_unique<Ui::DialogOptimize>()} {
   ui->setupUi(this);
-  connect(ui->btnStart, &QPushButton::clicked, this,
-          &DialogOptimize::btnStart_clicked);
-  connect(ui->btnStop, &QPushButton::clicked, this,
-          &DialogOptimize::btnStop_clicked);
+  ui->splitter->setSizes({1000, 1000});
+  for (auto *lbl : {ui->lblTarget, ui->lblResult}) {
+    lbl->invertYAxis(model.getDisplayOptions().invertYAxis);
+    lbl->displayScale(model.getDisplayOptions().showGeometryScale);
+    lbl->displayGrid(model.getDisplayOptions().showGeometryGrid);
+    lbl->setPhysicalSize(model.getGeometry().getPhysicalSize(),
+                         model.getUnits().getLength().name);
+  }
+  connect(ui->cmbTarget, &QComboBox::currentIndexChanged, this,
+          &DialogOptimize::cmbTarget_currentIndexChanged);
+  connect(ui->btnStartStop, &QPushButton::clicked, this,
+          &DialogOptimize::btnStartStop_clicked);
   connect(ui->btnSetup, &QPushButton::clicked, this,
           &DialogOptimize::btnSetup_clicked);
-  connect(ui->btnApplyToModel, &QPushButton::clicked, this,
-          &DialogOptimize::btnApplyToModel_clicked);
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogOptimize::accept);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
@@ -78,34 +86,73 @@ DialogOptimize::DialogOptimize(sme::model::Model &model, QWidget *parent)
 
 DialogOptimize::~DialogOptimize() = default;
 
+QString DialogOptimize::getParametersString() const {
+  QString s{};
+  if (opt == nullptr || opt->getParams().empty()) {
+    return s;
+  }
+  for (std::size_t i = 0; i < opt->getParamNames().size(); ++i) {
+    s.append(opt->getParamNames()[i])
+        .append(": ")
+        .append(QString::number(opt->getParams().back()[i]));
+    if (i < opt->getParamNames().size() - 1) {
+      s.append("\n");
+    }
+  }
+  return s;
+}
+
+void DialogOptimize::applyToModel() const {
+  opt->applyParametersToModel(&model);
+}
+
 void DialogOptimize::init() {
+  ui->lblResult->setImage({});
+  ui->cmbTarget->clear();
   if (model.getOptimizeOptions().optParams.empty() ||
       model.getOptimizeOptions().optCosts.empty()) {
     opt.reset();
-    ui->btnStart->setEnabled(false);
-    ui->btnStop->setEnabled(false);
+    ui->btnStartStop->setEnabled(false);
     ui->btnSetup->setEnabled(true);
-    ui->btnApplyToModel->setEnabled(false);
     initFitnessPlot(ui->pltFitness);
     initParamsPlot(ui->pltParams, {});
+    ui->lblTarget->setImage({});
     return;
+  }
+  for (const auto &optCost : model.getOptimizeOptions().optCosts) {
+    ui->cmbTarget->addItem(optCost.name.c_str());
   }
   this->setCursor(Qt::WaitCursor);
   opt = std::make_unique<sme::simulate::Optimization>(model);
   this->setCursor(Qt::ArrowCursor);
-  ui->btnStart->setEnabled(true);
-  ui->btnStop->setEnabled(false);
+  ui->btnStartStop->setEnabled(true);
   ui->btnSetup->setEnabled(true);
-  ui->btnApplyToModel->setEnabled(false);
+  ui->lblTarget->setImage(opt->getTargetImage(ui->cmbTarget->currentIndex()));
   initFitnessPlot(ui->pltFitness);
   initParamsPlot(ui->pltParams, opt->getParamNames());
 }
 
-void DialogOptimize::btnStart_clicked() {
-  ui->btnStart->setEnabled(false);
-  ui->btnStop->setEnabled(true);
+void DialogOptimize::cmbTarget_currentIndexChanged(int index) {
+  if (opt == nullptr || index < 0 || index >= ui->cmbTarget->count()) {
+    ui->lblTarget->setImage({});
+    return;
+  }
+  ui->lblTarget->setImage(opt->getTargetImage(static_cast<std::size_t>(index)));
+  if (auto img{opt->getUpdatedBestResultImage(ui->cmbTarget->currentIndex())};
+      img.has_value()) {
+    ui->lblResult->setImage(img.value());
+  }
+}
+
+void DialogOptimize::btnStartStop_clicked() {
+  if (opt->getIsRunning()) {
+    opt->requestStop();
+    ui->btnStartStop->setText("Start");
+    ui->btnStartStop->setEnabled(false);
+    return;
+  }
+  ui->btnStartStop->setText("Stop");
   ui->btnSetup->setEnabled(false);
-  ui->btnApplyToModel->setEnabled(false);
   ui->buttonBox->setEnabled(false);
   this->setCursor(Qt::WaitCursor);
   // start optimization in a new thread
@@ -117,21 +164,12 @@ void DialogOptimize::btnStart_clicked() {
   plotRefreshTimer.start();
 }
 
-void DialogOptimize::btnStop_clicked() {
-  opt->requestStop();
-  ui->btnStop->setEnabled(false);
-}
-
 void DialogOptimize::btnSetup_clicked() {
   DialogOptSetup dialogOptSetup(model);
   if (dialogOptSetup.exec() == QDialog::Accepted) {
     model.getOptimizeOptions() = dialogOptSetup.getOptimizeOptions();
     init();
   }
-}
-
-void DialogOptimize::btnApplyToModel_clicked() {
-  opt->applyParametersToModel(&model);
 }
 
 void DialogOptimize::updatePlots() {
@@ -159,14 +197,16 @@ void DialogOptimize::updatePlots() {
     ui->pltParams->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
   }
   nPlottedIterations = nAvailableIterations;
+  if (auto img{opt->getUpdatedBestResultImage(ui->cmbTarget->currentIndex())};
+      img.has_value()) {
+    ui->lblResult->setImage(img.value());
+  }
 }
 
 void DialogOptimize::finalizePlots() {
   plotRefreshTimer.stop();
-  ui->btnStart->setEnabled(true);
-  ui->btnStop->setEnabled(false);
+  ui->btnStartStop->setEnabled(true);
   ui->btnSetup->setEnabled(true);
-  ui->btnApplyToModel->setEnabled(true);
   ui->buttonBox->setEnabled(true);
   updatePlots();
   this->setCursor(Qt::ArrowCursor);

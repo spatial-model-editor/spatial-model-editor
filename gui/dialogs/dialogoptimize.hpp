@@ -18,6 +18,8 @@ class DialogOptimize : public QDialog {
 public:
   explicit DialogOptimize(sme::model::Model &model, QWidget *parent = nullptr);
   ~DialogOptimize() override;
+  QString getParametersString() const;
+  void applyToModel() const;
 
 private:
   sme::model::Model &model;
@@ -27,10 +29,9 @@ private:
   std::size_t nPlottedIterations{0};
   QTimer plotRefreshTimer;
   void init();
-  void btnStart_clicked();
-  void btnStop_clicked();
+  void cmbTarget_currentIndexChanged(int index);
+  void btnStartStop_clicked();
   void btnSetup_clicked();
-  void btnApplyToModel_clicked();
   void updatePlots();
   void finalizePlots();
 };

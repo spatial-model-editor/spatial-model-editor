@@ -8,7 +8,7 @@ using namespace sme;
 using namespace sme::test;
 
 TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
-                            "dialogs][gui][optimize]") {
+                            "dialogs][gui][optimize][Q]") {
   auto model{getExampleModel(Mod::ABtoC)};
   model.getSimulationSettings().simulatorType =
       sme::simulate::SimulatorType::Pixel;
@@ -33,35 +33,33 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
     model.getOptimizeOptions() = {};
     DialogOptimize dia(model);
     // get pointers to widgets within dialog
-    auto *btnStart{dia.findChild<QPushButton *>("btnStart")};
-    REQUIRE(btnStart != nullptr);
-    auto *btnStop{dia.findChild<QPushButton *>("btnStop")};
-    REQUIRE(btnStop != nullptr);
+    auto *btnStartStop{dia.findChild<QPushButton *>("btnStartStop")};
+    REQUIRE(btnStartStop != nullptr);
     auto *btnSetup{dia.findChild<QPushButton *>("btnSetup")};
     REQUIRE(btnSetup != nullptr);
-    auto *btnApplyToModel{dia.findChild<QPushButton *>("btnApplyToModel")};
-    REQUIRE(btnApplyToModel != nullptr);
     // no valid initial optimize options
-    REQUIRE(btnStart->isEnabled() == false);
-    REQUIRE(btnStop->isEnabled() == false);
+    REQUIRE(btnStartStop->text() == "Start");
+    REQUIRE(btnStartStop->isEnabled() == false);
     REQUIRE(btnSetup->isEnabled() == true);
-    REQUIRE(btnApplyToModel->isEnabled() == false);
+    REQUIRE(dia.getParametersString().isEmpty());
   }
   SECTION("existing optimizeOptions") {
     DialogOptimize dia(model);
     // get pointers to widgets within dialog
-    auto *btnStart{dia.findChild<QPushButton *>("btnStart")};
-    REQUIRE(btnStart != nullptr);
-    auto *btnStop{dia.findChild<QPushButton *>("btnStop")};
-    REQUIRE(btnStop != nullptr);
+    auto *btnStartStop{dia.findChild<QPushButton *>("btnStartStop")};
+    REQUIRE(btnStartStop != nullptr);
     auto *btnSetup{dia.findChild<QPushButton *>("btnSetup")};
     REQUIRE(btnSetup != nullptr);
-    auto *btnApplyToModel{dia.findChild<QPushButton *>("btnApplyToModel")};
-    REQUIRE(btnApplyToModel != nullptr);
     // valid initial optimize options
-    REQUIRE(btnStart->isEnabled() == true);
-    REQUIRE(btnStop->isEnabled() == false);
+    REQUIRE(btnStartStop->isEnabled() == true);
     REQUIRE(btnSetup->isEnabled() == true);
-    REQUIRE(btnApplyToModel->isEnabled() == false);
+    // no initial parameters
+    REQUIRE(dia.getParametersString().isEmpty());
+    // evolve params for 3secs
+    sendMouseClick(btnStartStop);
+    wait(3000);
+    sendMouseClick(btnStartStop);
+    auto lines{dia.getParametersString().split("\n")};
+    REQUIRE(lines.size() == 1);
   }
 }
