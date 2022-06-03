@@ -62,6 +62,9 @@ private:
   mutable std::mutex bestResultsMutex;
   BestResults bestResults{};
   std::unique_ptr<ThreadsafeModelQueue> modelQueue{nullptr};
+  std::string errorMessage{};
+
+  std::size_t finalizeEvolve(const std::string &newErrorMessage = {});
 
 public:
   /**
@@ -123,6 +126,10 @@ public:
    * @brief Stop the evolution as soon as possible
    */
   void requestStop();
+  /**
+   * @brief Returns a message if an error occurred - empty if no errors occurred
+   */
+  const std::string &getErrorMessage() const;
 };
 
 } // namespace sme::simulate

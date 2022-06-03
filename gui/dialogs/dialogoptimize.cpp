@@ -114,11 +114,13 @@ void DialogOptimize::init() {
     opt.reset();
     ui->btnStartStop->setEnabled(false);
     ui->btnSetup->setEnabled(true);
+    ui->cmbTarget->setEnabled(false);
     initFitnessPlot(ui->pltFitness);
     initParamsPlot(ui->pltParams, {});
     ui->lblTarget->setImage({});
     return;
   }
+  ui->cmbTarget->setEnabled(true);
   for (const auto &optCost : model.getOptimizeOptions().optCosts) {
     ui->cmbTarget->addItem(optCost.name.c_str());
   }
@@ -210,4 +212,9 @@ void DialogOptimize::finalizePlots() {
   ui->buttonBox->setEnabled(true);
   updatePlots();
   this->setCursor(Qt::ArrowCursor);
+  if (opt != nullptr && !opt->getErrorMessage().empty()) {
+    QMessageBox::warning(this, "Optimize error",
+                         opt->getErrorMessage().c_str());
+    ui->btnStartStop->setText("Start");
+  }
 }
