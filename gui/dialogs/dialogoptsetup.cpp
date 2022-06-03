@@ -160,6 +160,14 @@ DialogOptSetup::DialogOptSetup(const sme::model::Model &model, QWidget *parent)
   for (auto optAlgorithmType : sme::simulate::optAlgorithmTypes) {
     ui->cmbAlgorithm->addItem(toQStr(optAlgorithmType));
   }
+  if (model.getSimulationSettings().simulatorType ==
+      sme::simulate::SimulatorType::DUNE) {
+    // disable multiple islands with dune until
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/800
+    // is fixed
+    ui->spinIslands->setMaximum(1);
+    optimizeOptions.optAlgorithm.islands = 1;
+  }
   ui->btnEditTarget->setEnabled(false);
   ui->btnRemoveTarget->setEnabled(false);
   ui->btnEditParameter->setEnabled(false);
