@@ -556,6 +556,9 @@
    <property name="text">
     <string>&amp;Optimization</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
   </action>
   <actiongroup name="actionGroupSimType">
    <action name="actionSimTypeDUNE">
