@@ -1138,4 +1138,17 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optParams.empty());
     }
   }
+  SECTION("DUNE simulator: nthreads = 1") {
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/800
+    auto model{getExampleModel(Mod::CircadianClock)};
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::DUNE;
+    model.getOptimizeOptions().optAlgorithm.islands = 4;
+    DialogOptSetup dia(model);
+    auto *spinIslands{dia.findChild<QSpinBox *>("spinIslands")};
+    REQUIRE(spinIslands != nullptr);
+    REQUIRE(spinIslands->value() == 1);
+    REQUIRE(spinIslands->maximum() == 1);
+    REQUIRE(dia.getOptimizeOptions().optAlgorithm.islands == 1);
+  }
 }
