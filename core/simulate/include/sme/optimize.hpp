@@ -62,6 +62,7 @@ private:
   mutable std::mutex bestResultsMutex;
   BestResults bestResults{};
   std::unique_ptr<ThreadsafeModelQueue> modelQueue{nullptr};
+  std::unique_ptr<Simulation> duneSim{nullptr};
 
 public:
   /**

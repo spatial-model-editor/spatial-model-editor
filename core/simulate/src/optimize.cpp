@@ -132,6 +132,11 @@ Optimization::Optimization(sme::model::Model &model) {
     m->importSBMLString(optConstData->xmlModel);
     modelQueue->push(std::move(m));
   }
+
+  // make a sim & keep it alive to see if it helps DUNE issue
+  if (model.getSimulationSettings().simulatorType == SimulatorType::DUNE) {
+    new Simulation(model);
+  }
 }
 
 std::size_t Optimization::evolve(std::size_t n) {

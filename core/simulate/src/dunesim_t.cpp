@@ -2,6 +2,7 @@
 #include "dunesim.hpp"
 #include "model_test_utils.hpp"
 #include "sme/model.hpp"
+#include <memory>
 
 using namespace sme;
 using namespace sme::test;
@@ -88,5 +89,76 @@ TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
     REQUIRE(duneSim.errorMessage().empty());
     duneSim.run(1, -1, []() { return true; });
     REQUIRE(duneSim.errorMessage() == "Simulation cancelled");
+  }
+}
+
+TEST_CASE("DuneSim thread safety",
+          "[core/simulate/dunesim][core/"
+          "simulate][core][simulate][dunesim][dune][QQ]") {
+  SECTION("create & destroy a DuneSim without segfaulting or leaking") {
+    auto m{getExampleModel(Mod::ABtoC)};
+    std::vector<std::string> comps{"comp"};
+    auto duneSim = std::make_unique<simulate::DuneSim>(m, comps);
+    REQUIRE(duneSim->errorMessage().empty());
+  }
+  SECTION("working example a") {
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/800
+    auto m{getExampleModel(Mod::ABtoC)};
+    std::vector<std::string> comps{"comp"};
+    auto *duneSim1 = new simulate::DuneSim(m, comps);
+    auto *duneSim2 = new simulate::DuneSim(m, comps);
+    delete duneSim2;
+    auto *duneSim3 = new simulate::DuneSim(m, comps);
+    delete duneSim1;
+    delete duneSim3;
+  }
+  SECTION("segfault example a") {
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/800
+    auto m{getExampleModel(Mod::ABtoC)};
+    std::vector<std::string> comps{"comp"};
+    auto *duneSim1 = new simulate::DuneSim(m, comps);
+    auto *duneSim2 = new simulate::DuneSim(m, comps);
+    delete duneSim1;
+    // following line segfaults:
+    //    auto *duneSim3 = new simulate::DuneSim(m, comps);
+    //    delete duneSim3;
+    delete duneSim2;
+  }
+  SECTION("segfault example b") {
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/800
+    auto m{getExampleModel(Mod::ABtoC)};
+    std::vector<std::string> comps{"comp"};
+    std::unique_ptr<simulate::DuneSim> s;
+    s = std::make_unique<simulate::DuneSim>(m, comps);
+    s = std::make_unique<simulate::DuneSim>(m, comps);
+    // this line segfaults:
+    s = std::make_unique<simulate::DuneSim>(m, comps);
+  }
+  SECTION("segfault example a") {
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/800
+    auto m{getExampleModel(Mod::ABtoC)};
+    std::vector<std::string> comps{"comp"};
+    // try leaving one dunesim in memory: doesn't help
+    auto *duneSim1 = new simulate::DuneSim(m, comps);
+    std::unique_ptr<simulate::DuneSim> s;
+    s = std::make_unique<simulate::DuneSim>(m, comps);
+    s = std::make_unique<simulate::DuneSim>(m, comps);
+    // this line segfaults:
+    //    s = std::make_unique<simulate::DuneSim>(m, comps);
+    delete duneSim1;
+  }
+  SECTION("working example b") {
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/800
+    auto m{getExampleModel(Mod::ABtoC)};
+    std::vector<std::string> comps{"comp"};
+    // this works:
+    auto duneSim = std::make_unique<simulate::DuneSim>(m, comps);
+    for (std::size_t i = 0; i < 10; ++i) {
+      // inserting duneSim.reset() in between fixes the problem: some global
+      // state within dune, maybe reference counting ordering??
+      duneSim.reset();
+      duneSim = std::make_unique<simulate::DuneSim>(m, comps);
+    }
+    REQUIRE(duneSim->errorMessage().empty());
   }
 }

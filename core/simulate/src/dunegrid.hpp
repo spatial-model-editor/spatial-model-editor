@@ -54,7 +54,7 @@ void insertTriangle(const std::array<std::size_t, 3> &t,
 }
 
 template <typename HostGrid>
-std::pair<std::vector<std::size_t>, std::shared_ptr<HostGrid>>
+std::pair<std::vector<std::size_t>, std::unique_ptr<HostGrid>>
 makeHostGrid(const mesh::Mesh &mesh) {
   Dune::GridFactory<HostGrid> factory;
   // get original vertices
@@ -97,7 +97,7 @@ auto makeGrid(HostGrid &hostGrid, std::size_t maxSubdomains) {
   } else {
     traits = std::make_unique<MDGTraits>(maxSubdomains);
   }
-  return std::make_shared<Grid>(hostGrid, *traits);
+  return std::make_unique<Grid>(hostGrid, *traits);
 }
 
 template <typename Grid>
@@ -127,7 +127,7 @@ auto makeDuneGrid(const mesh::Mesh &mesh) {
   auto grid =
       detail::makeGrid<HostGrid, MDGTraits>(*hostGrid, numElements.size());
   detail::assignElements(grid, numElements);
-  return std::make_pair(grid, hostGrid);
+  return std::make_pair(std::move(grid), std::move(hostGrid));
 }
 
 } // namespace simulate

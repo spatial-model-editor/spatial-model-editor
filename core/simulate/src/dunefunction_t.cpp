@@ -78,13 +78,15 @@ static std::vector<AvgDiff> getAvgDiffs(Mod exampleModel,
   simulate::DuneConverter dc(m, {}, false);
   auto [grid, hostGrid] = simulate::makeDuneGrid<HostGrid, MDGTraits>(mesh);
   auto config = getConfig(dc);
-  Model model(grid, config.sub("model"), stages);
+  Model model(std::move(grid), config.sub("model"), stages);
   model.set_initial(simulate::makeModelDuneFunctions<Grid::LeafGridView>(dc));
 
   // create model using TIFF files for initial conditions
   simulate::DuneConverter dcTiff(m, {}, true);
+  auto [gridTiff, hostGridTiff] =
+      simulate::makeDuneGrid<HostGrid, MDGTraits>(mesh);
   auto configTiff = getConfig(dcTiff);
-  Model modelTiff(grid, configTiff.sub("model"));
+  Model modelTiff(std::move(gridTiff), configTiff.sub("model"));
 
   // compare initial species concentrations
   for (int domain = 0; domain < nCompartments; ++domain) {
