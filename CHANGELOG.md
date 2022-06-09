@@ -1,8 +1,8 @@
 # Changelog
 
-## [latest]
+## [1.3.0]
 ### Added
-- parameter fitting functionality to GUI [#757](https://github.com/spatial-model-editor/spatial-model-editor/issues/757)
+- [parameter fitting](https://spatial-model-editor.readthedocs.io/en/stable/reference/parameter-fitting.html) functionality to GUI [#757](https://github.com/spatial-model-editor/spatial-model-editor/issues/757)
 - support for reading SBML files compressed with bzip2 [#246](https://github.com/spatial-model-editor/spatial-model-editor/issues/246)
 
 ### Changed
