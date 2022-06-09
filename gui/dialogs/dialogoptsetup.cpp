@@ -150,6 +150,24 @@ getDefaultOptCosts(const sme::model::Model &model) {
   return optCosts;
 }
 
+static void
+setValidMinPopulation(sme::simulate::OptAlgorithmType optAlgorithmType,
+                      QSpinBox *spinPopulation) {
+  static std::unordered_map<sme::simulate::OptAlgorithmType, int> minPopulation{
+      {sme::simulate::OptAlgorithmType::PSO, 2},
+      {sme::simulate::OptAlgorithmType::GPSO, 2},
+      {sme::simulate::OptAlgorithmType::DE, 5},
+      {sme::simulate::OptAlgorithmType::iDE, 7},
+      {sme::simulate::OptAlgorithmType::jDE, 7},
+      {sme::simulate::OptAlgorithmType::pDE, 7},
+      {sme::simulate::OptAlgorithmType::ABC, 2},
+      {sme::simulate::OptAlgorithmType::gaco, 7}};
+  if (auto iter{minPopulation.find(optAlgorithmType)};
+      iter != minPopulation.end()) {
+    spinPopulation->setMinimum(iter->second);
+  }
+}
+
 DialogOptSetup::DialogOptSetup(const sme::model::Model &model, QWidget *parent)
     : QDialog(parent), model{model},
       optimizeOptions{model.getOptimizeOptions()},
@@ -214,6 +232,8 @@ DialogOptSetup::DialogOptSetup(const sme::model::Model &model, QWidget *parent)
           &DialogOptSetup::accept);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogOptSetup::reject);
+  setValidMinPopulation(optimizeOptions.optAlgorithm.optAlgorithmType,
+                        ui->spinPopulation);
 }
 
 DialogOptSetup::~DialogOptSetup() = default;
@@ -225,6 +245,8 @@ DialogOptSetup::getOptimizeOptions() const {
 
 void DialogOptSetup::cmbAlgorithm_currentIndexChanged(int index) {
   optimizeOptions.optAlgorithm.optAlgorithmType = toOptAlgorithmType(index);
+  setValidMinPopulation(optimizeOptions.optAlgorithm.optAlgorithmType,
+                        ui->spinPopulation);
 }
 
 void DialogOptSetup::spinIslands_valueChanged(int value) {

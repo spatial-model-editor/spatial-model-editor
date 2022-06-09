@@ -16,6 +16,58 @@ static bool is_sorted_descending(const std::vector<T> &v) {
   return std::is_sorted(v.begin(), v.end(), [](T a, T b) { return a > b; });
 }
 
+TEST_CASE("Invalid population sizes",
+          "[core/simulate/optimize][core/simulate][core][optimize]") {
+  auto model{getExampleModel(Mod::ABtoC)};
+  model.getSimulationSettings().simulatorType =
+      sme::simulate::SimulatorType::Pixel;
+  sme::simulate::OptimizeOptions optimizeOptions;
+  optimizeOptions.optAlgorithm.islands = 1;
+  optimizeOptions.optAlgorithm.population = 2;
+  optimizeOptions.optParams.push_back(
+      {sme::simulate::OptParamType::ReactionParameter, "name", "k1", "r1", 0.05,
+       0.21});
+  optimizeOptions.optCosts.push_back({sme::simulate::OptCostType::Concentration,
+                                      simulate::OptCostDiffType::Absolute,
+                                      "name",
+                                      "A",
+                                      0.1,
+                                      1.0,
+                                      0,
+                                      0,
+                                      {}});
+  {
+    optimizeOptions.optAlgorithm.optAlgorithmType =
+        sme::simulate::OptAlgorithmType::PSO;
+    optimizeOptions.optAlgorithm.population = 1;
+    model.getOptimizeOptions() = optimizeOptions;
+    sme::simulate::Optimization optimization(model);
+    optimization.evolve();
+    REQUIRE(optimization.getErrorMessage() ==
+            "Invalid optimization population size, can't be less than 2");
+  }
+  {
+    optimizeOptions.optAlgorithm.optAlgorithmType =
+        sme::simulate::OptAlgorithmType::pDE;
+    optimizeOptions.optAlgorithm.population = 6;
+    model.getOptimizeOptions() = optimizeOptions;
+    sme::simulate::Optimization optimization(model);
+    optimization.evolve();
+    REQUIRE(QString(optimization.getErrorMessage().c_str()).last(11) ==
+            "6 detected\n");
+  }
+  {
+    optimizeOptions.optAlgorithm.optAlgorithmType =
+        sme::simulate::OptAlgorithmType::gaco;
+    optimizeOptions.optAlgorithm.population = 5;
+    model.getOptimizeOptions() = optimizeOptions;
+    sme::simulate::Optimization optimization(model);
+    optimization.evolve();
+    REQUIRE(QString(optimization.getErrorMessage().c_str()).last(16) ==
+            "population size\n");
+  }
+}
+
 TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
           "[core/simulate/optimize][core/simulate][core][optimize]") {
   auto model{getExampleModel(Mod::ABtoC)};
@@ -46,8 +98,14 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
       optimizeOptions.optAlgorithm.population = 5;
     } else if (optAlgorithmType == sme::simulate::OptAlgorithmType::iDE) {
       optimizeOptions.optAlgorithm.population = 7;
+    } else if (optAlgorithmType == sme::simulate::OptAlgorithmType::jDE) {
+      optimizeOptions.optAlgorithm.population = 7;
+    } else if (optAlgorithmType == sme::simulate::OptAlgorithmType::pDE) {
+      optimizeOptions.optAlgorithm.population = 7;
     } else if (optAlgorithmType == sme::simulate::OptAlgorithmType::gaco) {
       optimizeOptions.optAlgorithm.population = 7;
+    } else {
+      optimizeOptions.optAlgorithm.population = 2;
     }
     optimizeOptions.optAlgorithm.optAlgorithmType = optAlgorithmType;
     model.getOptimizeOptions() = optimizeOptions;
@@ -55,6 +113,7 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
     sme::simulate::Optimization optimization(model);
     optimization.evolve();
     REQUIRE(optimization.getIterations() == 1);
+    REQUIRE(optimization.getErrorMessage().empty());
     REQUIRE(optimization.getFitness().size() == 2);
     REQUIRE(optimization.getParams().size() == 2);
     REQUIRE(optimization.getParams()[0].size() == 1);
@@ -99,6 +158,7 @@ TEST_CASE(
     sme::simulate::Optimization optimization(model);
     for (std::size_t i = 1; i < 3; ++i) {
       optimization.evolve();
+      REQUIRE(optimization.getErrorMessage().empty());
       REQUIRE(optimization.getIterations() == i);
       REQUIRE(optimization.getFitness().size() == i + 1);
       REQUIRE(optimization.getParams().size() == i + 1);
@@ -146,6 +206,7 @@ TEST_CASE("Optimize ABtoC model for zero concentration of C",
   sme::simulate::Optimization optimization(model);
   for (std::size_t i = 1; i < 3; ++i) {
     optimization.evolve();
+    REQUIRE(optimization.getErrorMessage().empty());
     REQUIRE(optimization.getIterations() == i);
     // cost should decrease or stay the same with each iteration
     REQUIRE(is_sorted_descending(optimization.getFitness()));

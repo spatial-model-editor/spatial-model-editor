@@ -98,8 +98,24 @@ getPagmoAlgorithm(sme::simulate::OptAlgorithmType optAlgorithmType) {
   }
 }
 
+std::size_t Optimization::finalizeEvolve(const std::string &newErrorMessage) {
+  if (!newErrorMessage.empty()) {
+    errorMessage = newErrorMessage;
+  }
+  if (!errorMessage.empty()) {
+    SPDLOG_ERROR("{}", errorMessage);
+  }
+  isRunning.store(false);
+  stopRequested.store(false);
+  return nIterations;
+}
+
 Optimization::Optimization(sme::model::Model &model) {
   const auto &options{model.getOptimizeOptions()};
+  if (options.optAlgorithm.population < 2) {
+    errorMessage = "Invalid optimization population size, can't be less than 2";
+    return;
+  }
   optConstData = std::make_unique<sme::simulate::OptConstData>();
   optConstData->imageSize = model.getGeometry().getImage().size();
   optConstData->xmlModel = model.getXml().toStdString();
@@ -121,7 +137,7 @@ Optimization::Optimization(sme::model::Model &model) {
   algo = getPagmoAlgorithm(
       optConstData->optimizeOptions.optAlgorithm.optAlgorithmType);
 
-  // construct models in queue in serial for now to aovid libsbml thread safety
+  // construct models in queue in serial for now to avoid libsbml thread safety
   // issues (see
   // https://github.com/spatial-model-editor/spatial-model-editor/issues/786)
   // todo: once that is fixed, can remove this & let the UDP construct them as
@@ -139,35 +155,43 @@ std::size_t Optimization::evolve(std::size_t n) {
     SPDLOG_WARN("Evolve is currently running: ignoring call to evolve");
     return 0;
   }
+  if (!errorMessage.empty()) {
+    return finalizeEvolve();
+  }
+  errorMessage.clear();
   stopRequested.store(false);
   isRunning.store(true);
   if (archi == nullptr) {
-    archi = std::make_unique<pagmo::archipelago>(
-        optConstData->optimizeOptions.optAlgorithm.islands, *algo,
-        pagmo::problem{PagmoUDP(optConstData.get(), modelQueue.get(), this)},
-        optConstData->optimizeOptions.optAlgorithm.population);
+    try {
+      archi = std::make_unique<pagmo::archipelago>(
+          optConstData->optimizeOptions.optAlgorithm.islands, *algo,
+          pagmo::problem{PagmoUDP(optConstData.get(), modelQueue.get(), this)},
+          optConstData->optimizeOptions.optAlgorithm.population);
+    } catch (const std::invalid_argument &e) {
+      return finalizeEvolve(e.what());
+    }
     appendBestFitnesssAndParams(*archi, bestFitness, bestParams);
   }
-  SPDLOG_INFO("Starting {} evolve steps", n);
+  SPDLOG_INFO("Starting {} {} evolve steps", n, algo->get_name());
   // ensure output vectors won't re-allocate during evolution
   bestFitness.reserve(bestFitness.size() + n);
   bestParams.reserve(bestParams.size() + n);
   for (std::size_t i = 0; i < n; ++i) {
-    archi->evolve();
-    archi->wait_check();
+    try {
+      archi->evolve();
+      archi->wait_check();
+    } catch (const std::invalid_argument &e) {
+      return finalizeEvolve(e.what());
+    }
     appendBestFitnesssAndParams(*archi, bestFitness, bestParams);
     ++nIterations;
     if (stopRequested) {
       SPDLOG_INFO("Stopping evolve early after {} steps", nIterations);
-      isRunning.store(false);
-      stopRequested.store(false);
-      return nIterations;
+      return finalizeEvolve();
     }
   }
   SPDLOG_INFO("Completed {} steps", nIterations);
-  isRunning.store(false);
-  stopRequested.store(false);
-  return nIterations;
+  return finalizeEvolve();
 }
 
 bool Optimization::applyParametersToModel(sme::model::Model *model) const {
@@ -236,5 +260,9 @@ bool Optimization::getIsRunning() const { return isRunning.load(); }
 bool Optimization::getIsStopping() const { return stopRequested.load(); }
 
 void Optimization::requestStop() { stopRequested.store(true); }
+
+const std::string &Optimization::getErrorMessage() const {
+  return errorMessage;
+}
 
 } // namespace sme::simulate
