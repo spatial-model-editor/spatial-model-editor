@@ -1,6 +1,10 @@
 # Changelog
 
-## [1.3.0]
+## [latest]
+### Fixed
+- crash caused by analytic initial species concentrations involving dividing by zero [#805](https://github.com/spatial-model-editor/spatial-model-editor/issues/805)
+
+## [1.3.0] - 2022-06-10
 ### Added
 - [parameter fitting](https://spatial-model-editor.readthedocs.io/en/stable/reference/parameter-fitting.html) functionality to GUI [#757](https://github.com/spatial-model-editor/spatial-model-editor/issues/757)
 - support for reading SBML files compressed with bzip2 [#246](https://github.com/spatial-model-editor/spatial-model-editor/issues/246)

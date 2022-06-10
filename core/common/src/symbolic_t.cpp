@@ -502,6 +502,21 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     CAPTURE(sym.getErrorMessage());
     REQUIRE(sym.getErrorMessage().empty());
   }
+  SECTION("expression with 1/0: parses but doesn't compile") {
+    // 1/0 gives complex inf which is ok for parsing but not for llvm
+    // compilation
+    common::Symbolic sym("1/0", {}, {}, {});
+    REQUIRE(sym.isValid() == true);
+    REQUIRE(sym.isCompiled() == false);
+    CAPTURE(sym.getErrorMessage());
+    REQUIRE(sym.getErrorMessage().empty());
+    sym.compile();
+    REQUIRE(sym.isValid() == false);
+    REQUIRE(sym.isCompiled() == false);
+    CAPTURE(sym.getErrorMessage());
+    REQUIRE(sym.getErrorMessage().substr(0, 30) ==
+            "Failed to compile expression: ");
+  }
   SECTION("expression with nan: parses but doesn't compile") {
     // nan parses ok but not supported by llvm compilation
     common::Symbolic sym("nan");

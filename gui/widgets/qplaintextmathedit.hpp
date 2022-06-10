@@ -23,7 +23,7 @@ public:
   const QString &getMath() const;
   const std::string &getVariableMath() const;
   void importVariableMath(const std::string &expr);
-  void compileMath();
+  bool compileMath();
   double evaluateMath(const std::vector<double> &variables = {});
   const QString &getErrorMessage() const;
   const std::vector<std::string> &getVariables() const;

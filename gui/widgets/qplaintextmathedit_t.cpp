@@ -33,7 +33,7 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(signal.math == mathEdit.getMath());
     REQUIRE(signal.valid == mathEdit.mathIsValid());
     REQUIRE(signal.error == mathEdit.getErrorMessage());
-    mathEdit.compileMath();
+    REQUIRE(mathEdit.compileMath() == true);
     REQUIRE(mathEdit.evaluateMath() == dbl_approx(1.0));
 
     // "1*"
@@ -44,6 +44,7 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(signal.math == mathEdit.getMath());
     REQUIRE(signal.valid == mathEdit.mathIsValid());
     REQUIRE(signal.error == mathEdit.getErrorMessage());
+    REQUIRE(mathEdit.compileMath() == false);
 
     // "1*2"
     sendKeyEvents(&mathEdit, {"2"});
@@ -53,7 +54,7 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(signal.math == mathEdit.getMath());
     REQUIRE(signal.valid == mathEdit.mathIsValid());
     REQUIRE(signal.error == mathEdit.getErrorMessage());
-    mathEdit.compileMath();
+    REQUIRE(mathEdit.compileMath() == true);
     REQUIRE(mathEdit.evaluateMath() == dbl_approx(2.0));
 
     // "1*2+q" (q not a variable)
@@ -64,6 +65,7 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(signal.math == mathEdit.getMath());
     REQUIRE(signal.valid == mathEdit.mathIsValid());
     REQUIRE(signal.error == mathEdit.getErrorMessage());
+    REQUIRE(mathEdit.compileMath() == false);
     mathEdit.addVariable("q");
     REQUIRE(mathEdit.getMath() == "2 + q");
     REQUIRE(mathEdit.mathIsValid() == true);
@@ -71,9 +73,11 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(signal.math == mathEdit.getMath());
     REQUIRE(signal.valid == mathEdit.mathIsValid());
     REQUIRE(signal.error == mathEdit.getErrorMessage());
+    REQUIRE(mathEdit.compileMath() == true);
     mathEdit.addVariable("y");
     // removing non-existent variable is a no-op
     mathEdit.removeVariable("notfound");
+    // removing a used variable makes math invalid
     mathEdit.removeVariable("q");
     REQUIRE(mathEdit.getMath() == "");
     REQUIRE(mathEdit.mathIsValid() == false);
@@ -81,6 +85,7 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(signal.math == mathEdit.getMath());
     REQUIRE(signal.valid == mathEdit.mathIsValid());
     REQUIRE(signal.error == mathEdit.getErrorMessage());
+    REQUIRE(mathEdit.compileMath() == false);
 
     // "1*2+5*(1+3)"
     sendKeyEvents(&mathEdit,
@@ -91,7 +96,7 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(signal.math == mathEdit.getMath());
     REQUIRE(signal.valid == mathEdit.mathIsValid());
     REQUIRE(signal.error == mathEdit.getErrorMessage());
-    mathEdit.compileMath();
+    REQUIRE(mathEdit.compileMath() == true);
     REQUIRE(mathEdit.evaluateMath() == dbl_approx(22.0));
   }
   SECTION("scientific notation numbers") {
@@ -104,7 +109,7 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(signal.math == mathEdit.getMath());
     REQUIRE(signal.valid == mathEdit.mathIsValid());
     REQUIRE(signal.error == mathEdit.getErrorMessage());
-    mathEdit.compileMath();
+    REQUIRE(mathEdit.compileMath() == true);
     REQUIRE(mathEdit.evaluateMath() == dbl_approx(-3e-12));
     // "-3e-12+"
     sendKeyEvents(&mathEdit, {"+"});
@@ -114,6 +119,7 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(signal.math == mathEdit.getMath());
     REQUIRE(signal.valid == mathEdit.mathIsValid());
     REQUIRE(signal.error == mathEdit.getErrorMessage());
+    REQUIRE(mathEdit.compileMath() == false);
     // "-3e-12+1"
     sendKeyEvents(&mathEdit, {"1"});
     REQUIRE(mathEdit.getMath() == "0.999999999997");
@@ -122,7 +128,7 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(signal.math == mathEdit.getMath());
     REQUIRE(signal.valid == mathEdit.mathIsValid());
     REQUIRE(signal.error == mathEdit.getErrorMessage());
-    mathEdit.compileMath();
+    REQUIRE(mathEdit.compileMath() == true);
     REQUIRE(mathEdit.evaluateMath() == dbl_approx(1 - 3e-12));
   }
   SECTION("expression with variables") {
@@ -151,6 +157,7 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(mathEdit.getMath() == "");
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage() == "Empty expression");
+    REQUIRE(mathEdit.compileMath() == false);
     // x+2*y
     sendKeyEvents(&mathEdit, {"x", "+", "2", "*", "y"});
     REQUIRE(mathEdit.getMath() == "x + 2*y");
@@ -159,7 +166,7 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(signal.math == mathEdit.getMath());
     REQUIRE(signal.valid == mathEdit.mathIsValid());
     REQUIRE(signal.error == mathEdit.getErrorMessage());
-    mathEdit.compileMath();
+    REQUIRE(mathEdit.compileMath() == true);
     REQUIRE(mathEdit.evaluateMath(std::vector<double>{0.0, 0.0}) ==
             dbl_approx(0.0));
     REQUIRE(mathEdit.evaluateMath(std::vector<double>{1.0, 0.0}) ==
@@ -179,26 +186,32 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     sendKeyEvents(&mathEdit, {"X", "+", "y", "_", "v", "a", "r"});
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage() == "Unknown symbol: X");
+    REQUIRE(mathEdit.compileMath() == false);
     mathEdit.addVariable("x", "X");
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage() == "variable 'y_var' not found");
+    REQUIRE(mathEdit.compileMath() == false);
     mathEdit.addVariable("y", "y_var");
     REQUIRE(mathEdit.getVariables().size() == 2);
     REQUIRE(mathEdit.mathIsValid() == true);
     REQUIRE(signal.math == "X + y_var");
     REQUIRE(mathEdit.getVariableMath() == "x + y");
+    REQUIRE(mathEdit.compileMath() == true);
     // "X + y_var + 3*X"
     sendKeyEvents(&mathEdit, {"+", "3", "*", "X"});
     REQUIRE(mathEdit.mathIsValid() == true);
     REQUIRE(signal.math == "4*X + y_var");
     REQUIRE(mathEdit.getVariableMath() == "4*x + y");
+    REQUIRE(mathEdit.compileMath() == true);
     mathEdit.removeVariable("y");
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage() == "variable 'y_var' not found");
+    REQUIRE(mathEdit.compileMath() == false);
     mathEdit.removeVariable("x");
     REQUIRE(mathEdit.getVariableMath().empty() == true);
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage() == "Unknown symbol: X");
+    REQUIRE(mathEdit.compileMath() == false);
   }
   SECTION("expression with quoted display names") {
     mathEdit.show();
@@ -209,14 +222,17 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     sendKeyEvents(&mathEdit, {"\"", "X", " ", "v", "a", "r", "!", "\""});
     REQUIRE(signal.math == "\"X var!\"");
     REQUIRE(mathEdit.getVariableMath() == "x");
+    REQUIRE(mathEdit.compileMath() == true);
     // "X var!" + "X var!" (using autocomplete incl. quoting for second one)
     sendKeyEvents(&mathEdit, {"+", "\"", "X", " ", "v"});
     sendKeyEvents(QApplication::activePopupWidget(), {"Enter"});
     REQUIRE(signal.math == "2*\"X var!\"");
     REQUIRE(mathEdit.getVariableMath() == "2*x");
+    REQUIRE(mathEdit.compileMath() == true);
     mathEdit.removeVariable("x");
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE(mathEdit.getErrorMessage() == "variable 'X var!' not found");
+    REQUIRE(mathEdit.compileMath() == false);
   }
   SECTION("expression with user-defined function") {
     mathEdit.show();
@@ -229,6 +245,7 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(mathEdit.getVariableMath().empty() == true);
     REQUIRE(mathEdit.getErrorMessage() == "function 'cse' not found");
     REQUIRE(mathEdit.mathIsValid() == false);
+    REQUIRE(mathEdit.compileMath() == false);
     sme::common::SymbolicFunction f;
     f.id = "cse";
     f.name = "cse";
@@ -240,5 +257,43 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(mathEdit.getVariableMath() == "cse(x)");
     REQUIRE(mathEdit.getErrorMessage() == "");
     REQUIRE(mathEdit.mathIsValid() == true);
+    REQUIRE(mathEdit.compileMath() == true);
+  }
+  SECTION("expression that parses but doesn't compile") {
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/805
+    mathEdit.show();
+    // "1"
+    sendKeyEvents(&mathEdit, {"1"});
+    REQUIRE(mathEdit.getMath() == "1");
+    REQUIRE(mathEdit.mathIsValid() == true);
+    REQUIRE(mathEdit.getErrorMessage() == "");
+    REQUIRE(signal.math == mathEdit.getMath());
+    REQUIRE(signal.valid == mathEdit.mathIsValid());
+    REQUIRE(signal.error == mathEdit.getErrorMessage());
+    REQUIRE(mathEdit.compileMath() == true);
+    REQUIRE(mathEdit.evaluateMath() == dbl_approx(1.0));
+
+    // "1/"
+    sendKeyEvents(&mathEdit, {"/"});
+    REQUIRE(mathEdit.getMath() == "");
+    REQUIRE(mathEdit.mathIsValid() == false);
+    REQUIRE(mathEdit.getErrorMessage() == "syntax error");
+    REQUIRE(signal.math == mathEdit.getMath());
+    REQUIRE(signal.valid == mathEdit.mathIsValid());
+    REQUIRE(signal.error == mathEdit.getErrorMessage());
+    REQUIRE(mathEdit.compileMath() == false);
+    REQUIRE(mathEdit.getErrorMessage() == "syntax error");
+
+    // "1/0"
+    sendKeyEvents(&mathEdit, {"0"});
+    REQUIRE(mathEdit.getMath() == "inf");
+    REQUIRE(mathEdit.mathIsValid() == true);
+    REQUIRE(mathEdit.getErrorMessage() == "");
+    REQUIRE(signal.math == mathEdit.getMath());
+    REQUIRE(signal.valid == mathEdit.mathIsValid());
+    REQUIRE(signal.error == mathEdit.getErrorMessage());
+    REQUIRE(mathEdit.compileMath() == false);
+    REQUIRE(mathEdit.getErrorMessage().left(30) ==
+            "Failed to compile expression: ");
   }
 }
