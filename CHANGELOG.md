@@ -3,6 +3,7 @@
 ## [latest]
 ### Fixed
 - crash caused by analytic initial species concentrations involving dividing by zero [#805](https://github.com/spatial-model-editor/spatial-model-editor/issues/805)
+- disappearing simulation progress bar dialog [#752](https://github.com/spatial-model-editor/spatial-model-editor/issues/752)
 
 ## [1.3.0] - 2022-06-10
 ### Added

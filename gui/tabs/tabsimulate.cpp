@@ -262,7 +262,7 @@ void TabSimulate::btnSimulate_clicked() {
   progressDialog->show();
   ui->btnSimulate->setEnabled(false);
   ui->btnResetSimulation->setEnabled(false);
-  auto progressMax{static_cast<int>(time.size() - 1)};
+  auto progressMax{static_cast<int>(time.size())};
   for (const auto &simulationTime : simulationTimes.value()) {
     progressMax += static_cast<int>(simulationTime.first);
   }
