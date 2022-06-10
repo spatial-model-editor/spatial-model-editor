@@ -24,7 +24,15 @@ void QPlainTextMathEdit::importVariableMath(const std::string &expr) {
   setPlainText(variablesToDisplayNames(expr).c_str());
 }
 
-void QPlainTextMathEdit::compileMath() { sym.compile(); }
+bool QPlainTextMathEdit::compileMath() {
+  if (!expressionIsValid || !sym.isValid()) {
+    return false;
+  }
+  sym.compile();
+  expressionIsValid = sym.isValid() && sym.isCompiled();
+  currentErrorMessage = sym.getErrorMessage().c_str();
+  return expressionIsValid;
+}
 
 double QPlainTextMathEdit::evaluateMath(const std::vector<double> &variables) {
   sym.eval(result, variables);

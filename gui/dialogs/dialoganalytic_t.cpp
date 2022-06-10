@@ -46,6 +46,28 @@ TEST_CASE("DialogAnalytic",
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
+    SECTION("1/0") {
+      // https://github.com/spatial-model-editor/spatial-model-editor/issues/805
+      mwt.addUserAction({"Delete", "1", "/", "0"});
+      mwt.start();
+      dia.exec();
+      REQUIRE(dia.isExpressionValid() == false);
+      REQUIRE(dia.getExpression().empty() == true);
+    }
+    SECTION("nan") {
+      mwt.addUserAction({"Delete", "n", "a", "n"});
+      mwt.start();
+      dia.exec();
+      REQUIRE(dia.isExpressionValid() == false);
+      REQUIRE(dia.getExpression().empty() == true);
+    }
+    SECTION("inf") {
+      mwt.addUserAction({"Delete", "i", "n", "f"});
+      mwt.start();
+      dia.exec();
+      REQUIRE(dia.isExpressionValid() == false);
+      REQUIRE(dia.getExpression().empty() == true);
+    }
     SECTION("unknown function: sillyfunc") {
       mwt.addUserAction({"Delete", "s", "i", "l", "l", "y", "f", "u", "n", "c",
                          "(", "x", ")"});

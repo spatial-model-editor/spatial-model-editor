@@ -114,8 +114,17 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
     ui->lblImage->setImage(img);
     return;
   }
+  // compile expression
+  if (!ui->txtExpression->compileMath()) {
+    // if compile fails, show error message
+    ui->lblExpressionStatus->setText(ui->txtExpression->getErrorMessage());
+    ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
+    ui->btnExportImage->setEnabled(false);
+    img.fill(0);
+    ui->lblImage->setImage(img);
+    return;
+  }
   // calculate concentration
-  ui->txtExpression->compileMath();
   std::vector<double> vars{0, 0};
   for (std::size_t i = 0; i < points.size(); ++i) {
     auto physical = physicalPoint(points[i]);
@@ -124,11 +133,11 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
     concentration[i] = ui->txtExpression->evaluateMath(vars);
   }
   if (std::find_if(concentration.cbegin(), concentration.cend(), [](auto c) {
-        return std::isnan(c);
+        return std::isnan(c) || std::isinf(c);
       }) != concentration.cend()) {
-    // if concentration contains NaN, show error message
+    // if concentration contains NaN or inf, show error message
     ui->lblExpressionStatus->setText(
-        "concentration contains NaN (Not a Number)");
+        "concentration contains inf (infinity) or NaN (Not a Number)");
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
     ui->btnExportImage->setEnabled(false);
     img.fill(0);
