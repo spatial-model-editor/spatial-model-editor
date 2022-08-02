@@ -138,11 +138,22 @@ void TabSimulate::loadModelData() {
   sim.reset();
   sim = std::make_unique<sme::simulate::Simulation>(model);
   if (!sim->errorMessage().empty()) {
-    QMessageBox::warning(
-        this, "Simulation Setup Failed",
-        QString("Simulation setup failed.\n\nError message: %1")
-            .arg(sim->errorMessage().c_str()));
     ui->btnSimulate->setEnabled(false);
+    QString alternativeSim{model.getSimulationSettings().simulatorType ==
+                                   sme::simulate::SimulatorType::DUNE
+                               ? "Pixel"
+                               : "DUNE"};
+    if (QMessageBox::question(
+            this, "Simulation Setup Failed",
+            QString(
+                "Simulation setup failed.\n\nError message: %1\n\nWould you "
+                "like to try using the %2 simulator instead?")
+                .arg(sim->errorMessage().c_str())
+                .arg(alternativeSim),
+            QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
+      useDune(model.getSimulationSettings().simulatorType !=
+              sme::simulate::SimulatorType::DUNE);
+    }
     return;
   }
 
