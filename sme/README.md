@@ -2,7 +2,7 @@
 # sme
 
 [![pypi releases](https://img.shields.io/pypi/v/sme.svg)](https://pypi.org/project/sme)
-[![open in colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/sme/notebooks/getting_started.ipynb)
+[![open in colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/main/docs/sme/notebooks/getting_started.ipynb)
 [![python versions](https://img.shields.io/pypi/pyversions/sme)](https://pypi.org/project/sme)
 
 sme is the Python interface to [Spatial Model Editor](https://spatial-model-editor.github.io).
