@@ -1,6 +1,9 @@
 # Changelog
 
-## [latest]
+## [1.3.1] - 2022-08-10
+### Changed
+- offer to use alternative simulator if simulation setup fails [#814](https://github.com/spatial-model-editor/spatial-model-editor/issues/814)
+
 ### Fixed
 - crash caused by analytic initial species concentrations involving dividing by zero [#805](https://github.com/spatial-model-editor/spatial-model-editor/issues/805)
 - disappearing simulation progress bar dialog [#752](https://github.com/spatial-model-editor/spatial-model-editor/issues/752)
