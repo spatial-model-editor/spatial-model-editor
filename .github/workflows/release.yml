@@ -16,7 +16,7 @@ concurrency:
 jobs:
   linux-gui:
     name: Linux GUI/CLI
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     defaults:
       run:
         shell: bash
@@ -33,9 +33,9 @@ jobs:
         path: ~/.cache/ccache
         key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
         restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-    - uses: actions/setup-python@v3
+    - uses: actions/setup-python@v4
       with:
-        python-version: 3.9
+        python-version: "3.10"
     - name: Get static libs
       run: sudo ./ci/getlibs.sh linux
     - name: Install dependencies
@@ -65,9 +65,9 @@ jobs:
           path: /Users/runner/Library/Caches/ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-      - uses: actions/setup-python@v3
+      - uses: actions/setup-python@v4
         with:
-          python-version: 3.9
+          python-version: "3.10"
       - name: Get static libs
         run: sudo ./ci/getlibs.sh osx
       - name: Build script
