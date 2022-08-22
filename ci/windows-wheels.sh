@@ -4,7 +4,7 @@
 
 set -e -x
 
-PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.9.*)
+PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.10.*)
 export PATH="$PYDIR/x64:$PYDIR/x64/Scripts:$PATH"
 echo "PATH=$PATH"
 

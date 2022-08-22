@@ -6,7 +6,7 @@ set -e -x
 
 # add llvm repo for clang / llvm-cov 14
 sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-sudo add-apt-repository "deb http://apt.llvm.org/bionic/ llvm-toolchain-bionic-14 main"
+sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-14 main"
 
 sudo apt-get update -yy
 

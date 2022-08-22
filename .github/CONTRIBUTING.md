@@ -18,8 +18,6 @@ the CI builds useful - see [ci/README](../ci/README.md) for more details.
 
 - C++17
 
-- use `clang-format` to format the code
-
 - each component `X` has a `X.hpp`, `X.cpp` and `X_t.cpp`, where the latter contains the tests
 
 - some components also have benchmarks in `X_bench.cpp`
@@ -56,7 +54,7 @@ the CI builds useful - see [ci/README](../ci/README.md) for more details.
 
   - `pre-commit install`
 
-- every subsquent git commit will check for (and fix)
+- every subsequent git commit will check for (and fix)
 
   - trailing whitespace
 
