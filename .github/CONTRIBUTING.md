@@ -2,17 +2,39 @@
 
 ## Getting started
 
+There are many dependencies, some of which are currently not
+very convenient to install, so the easiest way to build locally
+is probably to use the pre-compiled static libraries used by
+the CI builds - see [ci/README](../ci/README.md) for more details.
+
+### Linux local build
+
+Clone the repo including sub-modules:
+
 ```
 git clone --recursive https://github.com/spatial-model-editor/spatial-model-editor.git
 cd spatial-model-editor
+```
+
+Download the latest static libs and copy them to `/opt/smelibs`:
+
+```
+sudo ./ext/getdeps.sh
+```
+
+Build using CMake, e.g.
+
+```
 mkdir build
 cd build
-cmake ..
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" -DSME_EXTRA_EXE_LIBS="-ltirpc"
 ```
-Note: there are many dependencies, some of which are currently not
-very convenient to install.
-For some you may find the pre-compiled static libraries used by
-the CI builds useful - see [ci/README](../ci/README.md) for more details.
+Depending on how your system differs from the CI server where these static libs were compiled, you may not need `-DSME_EXTRA_EXE_LIBS="-ltirpc"`, or you may need to add something else.
+Now you can run the tests, see [test/README.md](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/test/README.md) for more information:
+
+```
+make test
+```
 
 ## Style guide
 
@@ -72,4 +94,4 @@ the CI builds useful - see [ci/README](../ci/README.md) for more details.
 
   - [clang-format](https://clang.llvm.org/docs/ClangFormat.html)
 
-- a CI job also runs these checks, and will automatically add a commit if any formatting changes are required
+- a CI job also runs these checks, and will automatically add a commit with any required fixes
