@@ -10,7 +10,7 @@ repos:
     - id: requirements-txt-fixer
 
   - repo: https://github.com/psf/black
-    rev: 22.6.0
+    rev: 22.8.0
     hooks:
     - id: black
     - id: black-jupyter
@@ -37,7 +37,7 @@ repos:
       - id: beautysh
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.18.1
+    rev: 0.18.2
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
