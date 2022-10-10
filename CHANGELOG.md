@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.2] - 2022-10-13
+### Added
+- support for importing Combine archives [#828](https://github.com/spatial-model-editor/spatial-model-editor/issues/828)
+
 ## [1.3.1] - 2022-08-10
 ### Changed
 - offer to use alternative simulator if simulation setup fails [#814](https://github.com/spatial-model-editor/spatial-model-editor/issues/814)

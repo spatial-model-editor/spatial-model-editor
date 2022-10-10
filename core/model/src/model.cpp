@@ -8,6 +8,8 @@
 #include "validation.hpp"
 #include <QFileInfo>
 #include <algorithm>
+#include <combine/combinearchive.h>
+#include <omex/CaContent.h>
 #include <sbml/SBMLTransforms.h>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
@@ -51,6 +53,10 @@ void Model::importSBMLString(const std::string &xml,
 }
 
 void Model::initModelData(bool emptySpatialModel) {
+  if (doc == nullptr) {
+    isValid = false;
+    return;
+  }
   auto validateAndUpgradeResult{validateAndUpgradeSBMLDoc(doc.get())};
   if (emptySpatialModel) {
     validateAndUpgradeResult.spatial = true;
@@ -138,16 +144,37 @@ void Model::exportSBMLFile(const std::string &filename) {
 
 void Model::importFile(const std::string &filename) {
   clear();
+  std::unique_ptr<common::SmeFileContents> importedSmeFileContents{nullptr};
   currentFilename = QFileInfo(filename.c_str()).baseName();
-  SPDLOG_INFO("Importing file {} ...", filename);
-  auto importedSmeFileContents{common::importSmeFile(filename)};
-  if (importedSmeFileContents != nullptr) {
-    SPDLOG_INFO("  -> SME file", filename);
-    doc.reset(
-        libsbml::readSBMLFromString(importedSmeFileContents->xmlModel.c_str()));
+  auto suffix{QFileInfo(filename.c_str()).suffix()};
+  if (suffix == "omex" || suffix == "sbex") {
+    SPDLOG_INFO("Importing file {} as Combine archive...", filename);
+    // attempt to extract sbml from a Combine archive
+    libcombine::CombineArchive combineArchive;
+    int numEntries{0};
+    if (combineArchive.initializeFromArchive(filename)) {
+      numEntries = combineArchive.getNumEntries();
+    }
+    for (int i = 0; i < numEntries; ++i) {
+      auto *entry{combineArchive.getEntry(i)};
+      if (entry->getFormat() ==
+          "http://identifiers.org/combine.specifications/sbml") {
+        SPDLOG_INFO("  - found SBML document {}", entry->getLocation());
+        doc.reset(libsbml::readSBMLFromString(
+            combineArchive.extractEntryToString(entry->getLocation()).c_str()));
+      }
+    }
   } else {
-    SPDLOG_INFO("  -> SBML file", filename);
-    doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
+    SPDLOG_INFO("Importing file {} ...", filename);
+    importedSmeFileContents = common::importSmeFile(filename);
+    if (importedSmeFileContents != nullptr) {
+      SPDLOG_INFO("  -> SME file", filename);
+      doc.reset(libsbml::readSBMLFromString(
+          importedSmeFileContents->xmlModel.c_str()));
+    } else {
+      SPDLOG_INFO("  -> SBML file", filename);
+      doc.reset(libsbml::readSBMLFromFile(filename.c_str()));
+    }
   }
   initModelData();
   if (importedSmeFileContents != nullptr) {

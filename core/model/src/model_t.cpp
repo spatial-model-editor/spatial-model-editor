@@ -991,3 +991,23 @@ TEST_CASE("SBML: import SBML doc with compressed sampledField",
   REQUIRE(s2.getCompartments().getCompartment("nuc")->nPixels() == 237);
   REQUIRE(s2.getCompartments().getCompartment("vesicle")->nPixels() == 5);
 }
+
+TEST_CASE("Import Combine archive",
+          "[combine][archive][core/model/model][core/model][core][model]") {
+  QString filename{"liver-simplified.omex"};
+  createBinaryFile("archives/" + filename, filename);
+  model::Model s;
+  s.importFile("i-dont-exist.omex");
+  REQUIRE(s.getIsValid() == false);
+  s.importFile(filename.toStdString());
+  REQUIRE(s.getIsValid() == true);
+  REQUIRE(s.getCurrentFilename() == "liver-simplified");
+  REQUIRE(s.getCompartments().getIds().size() == 2);
+  REQUIRE(s.getCompartments().getCompartment("cytoplasm")->nPixels() == 7800);
+  REQUIRE(s.getCompartments().getCompartment("nucleus")->nPixels() == 481);
+  REQUIRE(s.getMembranes().getIds().size() == 1);
+  REQUIRE(s.getMembranes()
+              .getMembrane("cytoplasm_nucleus_membrane")
+              ->getIndexPairs()
+              .size() == 98);
+}

@@ -110,6 +110,12 @@ find_package(
   TBB
   CONFIG
   REQUIRED)
+find_package(
+  combine-static
+  REQUIRED
+  CONFIGS
+  Combine-static-config.cmake)
+message(STATUS "")
 target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 # set Logger level
 target_compile_definitions(
@@ -120,6 +126,7 @@ target_link_libraries(
   PRIVATE TIFF::TIFF
           ${SYMENGINE_LIBRARIES}
           sbml-static
+          Combine-static
           dune-copasi::dune-copasi
           CGAL::CGAL
           cereal::cereal

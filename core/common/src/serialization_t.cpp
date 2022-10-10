@@ -1,4 +1,5 @@
 #include "catch_wrapper.hpp"
+#include "model_test_utils.hpp"
 #include "qt_test_utils.hpp"
 #include "sme/model.hpp"
 #include "sme/serialization.hpp"
@@ -6,15 +7,6 @@
 #include <vector>
 
 using namespace sme;
-
-static void createBinaryFile(const QString &filename) {
-  QFile fIn(QString(":/test/smefiles/%1").arg(filename));
-  fIn.open(QIODevice::ReadOnly);
-  auto data{fIn.readAll()};
-  QFile fOut(filename);
-  fOut.open(QIODevice::WriteOnly);
-  fOut.write(data);
-}
 
 TEST_CASE("Serialization",
           "[core/common/serialization][core/common][core][serialization]") {
@@ -30,19 +22,22 @@ TEST_CASE("Serialization",
   }
   SECTION("Import v2 corrupted file (valid file with some randomly deleted "
           "bytes)") {
-    createBinaryFile("brusselator-model-corrupted.sme");
+    test::createBinaryFile("smefiles/brusselator-model-corrupted.sme",
+                           "brusselator-model-corrupted.sme");
     REQUIRE(common::importSmeFile("brusselator-model-corrupted.sme") ==
             nullptr);
   }
   SECTION(
       "Import v2 truncated file (valid file with the last few bytes deleted)") {
-    createBinaryFile("brusselator-model-truncated.sme");
+    test::createBinaryFile("smefiles/brusselator-model-truncated.sme",
+                           "brusselator-model-truncated.sme");
     REQUIRE(common::importSmeFile("brusselator-model-truncated.sme") ==
             nullptr);
   }
   SECTION("Valid v0 smefile (no SimulationSettings)") {
     // v0 smefile was used in spatial-model-editor 1.0.9
-    createBinaryFile("very-simple-model-v0.sme");
+    test::createBinaryFile("smefiles/very-simple-model-v0.sme",
+                           "very-simple-model-v0.sme");
     auto contents{common::importSmeFile("very-simple-model-v0.sme")};
     REQUIRE(contents->xmlModel.size() == 134371);
     REQUIRE(contents->simulationData->xmlModel.size() == 541828);
@@ -63,7 +58,8 @@ TEST_CASE("Serialization",
     // v1 smefile was only used in "latest" preview versions
     // of spatial-model-editor between 1.0.9 and 1.1.0 releases
     sme::simulate::SimulationData data;
-    createBinaryFile("very-simple-model-v1.sme");
+    test::createBinaryFile("smefiles/very-simple-model-v1.sme",
+                           "very-simple-model-v1.sme");
     auto contents{common::importSmeFile("very-simple-model-v1.sme")};
     REQUIRE(contents->simulationData->timePoints.size() == 4);
     REQUIRE(contents->simulationData->timePoints[0] == dbl_approx(0.00));
@@ -107,7 +103,8 @@ TEST_CASE("Serialization",
     // v2 smefile was used in spatial-model-editor 1.1.0 - 1.1.4 inclusive
     // SimulationData was not wrapped in a unique_ptr
     sme::simulate::SimulationData data;
-    createBinaryFile("very-simple-model-v2.sme");
+    test::createBinaryFile("smefiles/very-simple-model-v2.sme",
+                           "very-simple-model-v2.sme");
     auto contents{common::importSmeFile("very-simple-model-v2.sme")};
     REQUIRE(contents->simulationData->timePoints.size() == 4);
     REQUIRE(contents->simulationData->timePoints[0] == dbl_approx(0.00));

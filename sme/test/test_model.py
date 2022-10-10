@@ -197,3 +197,12 @@ class TestModel(unittest.TestCase):
         nucl_mask_2 = m.compartments["Nucleus"].geometry_mask
         self.assertTrue(np.array_equal(comp_img_0, comp_img_2))
         self.assertTrue(np.array_equal(nucl_mask_0, nucl_mask_2))
+
+    def test_import_combine_archive(self):
+        omex_file = _get_abs_path("liver-simplified.omex")
+        m = sme.Model(omex_file)
+        self.assertEqual(m.name, "TNFa Signaling")
+        self.assertEqual(len(m.membranes), 1)
+        self.assertEqual(len(m.compartments), 2)
+        self.assertEqual(m.compartments["cytoplasm"].name, "cytoplasm")
+        self.assertEqual(m.compartments["nucleus"].name, "nucleus")

@@ -61,4 +61,4 @@ rm -f *.gcov
 
 cd ..
 # upload to sonar-scanner
-sonar-scanner
+sonar-scanner -X
