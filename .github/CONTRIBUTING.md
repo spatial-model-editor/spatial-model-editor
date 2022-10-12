@@ -22,7 +22,7 @@ Download the latest static libs and copy them to `/opt/smelibs`:
 sudo ./ext/getdeps.sh
 ```
 
-Make sure you have the necessary documents installed. 
+Make sure you have the necessary documents installed.
 
 ```
 sudo apt-get install -yy \
