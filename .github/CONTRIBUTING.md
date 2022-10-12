@@ -22,6 +22,44 @@ Download the latest static libs and copy them to `/opt/smelibs`:
 sudo ./ext/getdeps.sh
 ```
 
+Make sure you have the necessary documents installed. 
+
+```
+sudo apt-get install -yy \
+    ccache \
+    xvfb \
+    jwm \
+    lcov \
+    clang-14 \
+    llvm-14
+```
+```
+sudo apt-get install -yy \
+    libglu1-mesa-dev \
+    libx11-dev \
+    libx11-xcb-dev \
+    libxext-dev \
+    libxfixes-dev \
+    libxi-dev \
+    libxrender-dev \
+    libxcb1-dev \
+    libxcb-glx0-dev \
+    libxcb-keysyms1-dev \
+    libxcb-image0-dev \
+    libxcb-shm0-dev \
+    libxcb-icccm4-dev \
+    libxcb-sync-dev \
+    libxcb-xfixes0-dev \
+    libxcb-shape0-dev \
+    libxcb-randr0-dev \
+    libxcb-render-util0-dev \
+    libxkbcommon-dev \
+    libxkbcommon-x11-dev \
+    libfreetype-dev \
+    libfontconfig-dev \
+    '^libxcb.*-dev'
+```
+
 Build using CMake, e.g.
 
 ```
