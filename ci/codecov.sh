@@ -53,8 +53,8 @@ test_to_codecov () {
     time ./test/tests -as "$TAGS" > "$NAME".txt 2>&1 || (tail -n 1000 "$NAME".txt && exit 1)
     tail -n 100 "$NAME".txt
     run_gcov
-    # upload coverage report to codecov.io
-    codecov -X gcov -F "$NAME"
+    # upload coverage report to codecov.io - if it returns an error code try again a couple of times
+    codecov -Z -X gcov -F "$NAME" || codecov -Z -X gcov -F "$NAME" || codecov -Z -X gcov -F "$NAME"
 }
 
 test_to_codecov "core" "~[expensive][core]"
