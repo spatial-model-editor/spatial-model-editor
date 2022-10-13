@@ -149,7 +149,6 @@ void Model::importFile(const std::string &filename) {
   auto suffix{QFileInfo(filename.c_str()).suffix()};
   if (suffix == "omex" || suffix == "sbex") {
     SPDLOG_INFO("Importing file {} as Combine archive...", filename);
-    // attempt to extract sbml from a Combine archive
     libcombine::CombineArchive combineArchive;
     int numEntries{0};
     if (combineArchive.initializeFromArchive(filename)) {
