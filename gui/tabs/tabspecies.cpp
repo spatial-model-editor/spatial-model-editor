@@ -131,7 +131,7 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
   ui->txtInitialConcentration->setText("");
   ui->lblInitialConcentrationUnits->setText("");
   lblGeometry->setImage(
-      model.getSpecies().getConcentrationImage(currentSpeciesId));
+      model.getSpecies().getConcentrationImages(currentSpeciesId));
   auto concentrationType{
       model.getSpecies().getInitialConcentrationType(currentSpeciesId)};
   if (concentrationType == sme::model::ConcentrationType::Uniform) {
@@ -278,7 +278,7 @@ void TabSpecies::btnEditAnalyticConcentration_clicked() {
     SPDLOG_DEBUG("  - set expr: {}", expr);
     model.getSpecies().setAnalyticConcentration(currentSpeciesId, expr.c_str());
     lblGeometry->setImage(
-        model.getSpecies().getConcentrationImage(currentSpeciesId));
+        model.getSpecies().getConcentrationImages(currentSpeciesId));
   }
 }
 
@@ -294,7 +294,7 @@ void TabSpecies::btnEditImageConcentration_clicked() {
     model.getSpecies().setSampledFieldConcentration(
         currentSpeciesId, dialog.getConcentrationArray());
     lblGeometry->setImage(
-        model.getSpecies().getConcentrationImage(currentSpeciesId));
+        model.getSpecies().getConcentrationImages(currentSpeciesId));
   }
 }
 

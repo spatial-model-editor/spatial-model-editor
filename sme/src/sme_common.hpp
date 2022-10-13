@@ -1,6 +1,7 @@
 #pragma once
 
 #include "fmt/core.h"
+#include "sme/image_stack.hpp"
 #include "sme_exception.hpp"
 #include <QImage>
 #include <algorithm>
@@ -11,8 +12,8 @@
 
 namespace sme {
 
-pybind11::array toPyImageRgb(const QImage &img);
-pybind11::array toPyImageMask(const QImage &img);
+pybind11::array toPyImageRgb(const sme::common::ImageStack &imgs);
+pybind11::array toPyImageMask(const sme::common::ImageStack &imgs);
 
 template <typename T> std::string vecToNames(const std::vector<T> &vec) {
   std::string str;

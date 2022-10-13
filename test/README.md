@@ -44,7 +44,7 @@ Any tests that are tagged `[expensive]` are not ran in the debug/coverage CI bui
 The python tests are in [../sme/test](../sme/test), and can be ran from this directory with
 
 ```
-python -m unittest -v
+python -m pytest -v
 ```
 
 The Docstrings also contain example code snippets along with the expected output in doctest format,

@@ -2,6 +2,7 @@
 
 #include <QImage>
 #include <QString>
+#include <sme/image_stack.hpp>
 
 class QWidget;
 class QMessageBox;
@@ -15,8 +16,8 @@ void selectFirstChild(QTreeWidget *tree);
 
 void selectMatchingOrFirstChild(QTreeWidget *list, const QString &text = {});
 
-QImage getImageFromUser(QWidget *parent = nullptr,
-                        const QString &title = "Import image");
+sme::common::ImageStack getImageFromUser(QWidget *parent = nullptr,
+                                         const QString &title = "Import image");
 
 void zoomScrollArea(QScrollArea *scrollArea, int zoomFactor,
                     const QPointF &relativePos);

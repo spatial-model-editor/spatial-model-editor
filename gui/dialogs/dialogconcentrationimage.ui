@@ -50,6 +50,19 @@
          </property>
         </widget>
        </item>
+       <item>
+        <widget class="QSlider" name="slideZIndex">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="tickPosition">
+          <enum>QSlider::TicksBothSides</enum>
+         </property>
+         <property name="tickInterval">
+          <number>1</number>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QGroupBox" name="grpButtons">
@@ -328,6 +341,7 @@
   <tabstop>btnExportImage</tabstop>
   <tabstop>cmbExampleImages</tabstop>
   <tabstop>btnSmoothImage</tabstop>
+  <tabstop>slideZIndex</tabstop>
  </tabstops>
  <resources/>
  <connections/>

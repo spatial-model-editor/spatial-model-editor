@@ -90,7 +90,8 @@ void sendMouseMove(QWidget *widget, const QPoint &pos, Qt::MouseButton button) {
   // workaround for QTest::mouseMove() bug
   // https://bugreports.qt.io/browse/QTBUG-5232
   wait(mouseDelay);
-  auto ev = new QMouseEvent(QEvent::MouseMove, pos, button, button, {});
+  auto ev = new QMouseEvent(QEvent::MouseMove, pos, widget->mapToGlobal(pos),
+                            button, button, {});
   QApplication::postEvent(widget, ev);
   QApplication::processEvents();
 }

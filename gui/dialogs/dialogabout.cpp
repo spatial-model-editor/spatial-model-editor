@@ -29,13 +29,6 @@ static QString dep(const QString &name, const QString &url,
 }
 
 static QString dep(const QString &name, const QString &url, int major,
-                   int minor) {
-  auto version =
-      QString("%1.%2</li>").arg(QString::number(major), QString::number(minor));
-  return dep(name, url, version);
-}
-
-static QString dep(const QString &name, const QString &url, int major,
                    int minor, int patch) {
   auto version = QString("%1.%2.%3</li>")
                      .arg(QString::number(major), QString::number(minor),

@@ -16,7 +16,9 @@ TEST_CASE("GuiUtils: getImageFromUser", "[gui/guiutils][gui]") {
   mwt.addUserAction({"t", "m", "p", ".", "p", "n", "g"}, true);
   mwt.start();
   auto importedImg{getImageFromUser(nullptr)};
-  REQUIRE(importedImg.size() == img.size());
-  REQUIRE(importedImg.pixel(23, 32) == img.pixel(23, 32));
-  REQUIRE(importedImg.pixel(99, 12) == img.pixel(99, 12));
+  REQUIRE(importedImg.volume().width() == img.width());
+  REQUIRE(importedImg.volume().height() == img.height());
+  REQUIRE(importedImg.volume().depth() == 1);
+  REQUIRE(importedImg[0].pixel(23, 32) == img.pixel(23, 32));
+  REQUIRE(importedImg[0].pixel(99, 12) == img.pixel(99, 12));
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "sme/geometry_utils.hpp"
+#include "sme/image_stack.hpp"
 #include "sme/model.hpp"
 #include "sme/utils.hpp"
 #include <QDialog>
@@ -26,28 +28,30 @@ private:
   std::unique_ptr<Ui::DialogConcentrationImage> ui;
 
   // user supplied data
-  const std::vector<QPoint> &points;
-  double width;
-  QPointF origin;
+  const sme::common::VolumeF voxelSize;
+  const std::vector<sme::common::Voxel> &voxels;
+  const sme::common::VoxelF physicalOrigin;
   QString lengthUnit;
   QString quantityUnit;
   QString quantityName;
 
   QImage colourMaxConc;
   QImage colourMinConc;
-  QImage img;
-  sme::common::QPointIndexer qpi;
+  sme::common::ImageStack imgs;
+  sme::geometry::VoxelIndexer qpi;
   std::vector<double> concentration;
 
-  QPointF physicalPoint(const QPoint &pixelPoint) const;
-  std::size_t pointToConcentrationArrayIndex(const QPoint &point) const;
+  sme::common::VoxelF physicalPoint(const sme::common::Voxel &voxel) const;
+  std::size_t
+  pointToConcentrationArrayIndex(const sme::common::Voxel &voxel) const;
   void importConcentrationArray(const std::vector<double> &concentrationArray);
-  void importConcentrationImage(const QImage &concentrationImage);
+  void
+  importConcentrationImage(const sme::common::ImageStack &concentrationImage);
   void updateImageFromConcentration();
   void rescaleConcentration(double newMin, double newMax);
-  void gaussianFilter(const QPoint &direction, double sigma);
+  void gaussianFilter(const sme::common::Voxel &direction, double sigma);
   void smoothConcentration();
-  void lblImage_mouseOver(QPoint point);
+  void lblImage_mouseOver(const sme::common::Voxel &voxel);
   void chkGrid_stateChanged(int state);
   void chkScale_stateChanged(int state);
   void btnImportImage_clicked();

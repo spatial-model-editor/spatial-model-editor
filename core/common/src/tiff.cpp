@@ -175,6 +175,8 @@ TiffReader::TiffReader(const std::string &filename) {
         }
         SPDLOG_DEBUG("    - min value: {}", img.minValue);
         SPDLOG_DEBUG("    - max value: {}", img.maxValue);
+        maxValue = std::max(maxValue, img.maxValue);
+        minValue = std::min(minValue, img.minValue);
       }
     }
   } while (TIFFReadDirectory(tif) != 0);
@@ -183,28 +185,32 @@ TiffReader::TiffReader(const std::string &filename) {
 
 std::size_t TiffReader::size() const { return tiffImages.size(); }
 
-QImage TiffReader::getImage(std::size_t i) const {
-  const auto &tiffImage = tiffImages.at(i);
-  QImage image(static_cast<int>(tiffImage.width),
-               static_cast<int>(tiffImage.height), QImage::Format_RGB32);
-  double maxVal = tiffImage.maxValue;
-  // check for case of all zero's: should be black image
-  if (maxVal == 0) {
-    maxVal = 1.0;
-  }
-  for (int y = 0; y < image.height(); ++y) {
-    const auto &row = tiffImage.values[static_cast<std::size_t>(y)];
-    for (int x = 0; x < image.width(); ++x) {
-      // rescale pixel values from [0, max] to [0,255]
-      double unitNormValue = row[static_cast<std::size_t>(x)] / maxVal;
-      unsigned int mask8bit{0x0000ff};
-      unsigned int val8 =
-          mask8bit & static_cast<unsigned int>(255 * unitNormValue);
-      unsigned int rgb = 0xff000000 | val8 | (val8 << 8) | (val8 << 16);
-      image.setPixel(x, y, rgb);
+sme::common::ImageStack TiffReader::getImages() const {
+  std::vector<QImage> imageVector{};
+  imageVector.reserve(tiffImages.size());
+  for (const auto &tiffImage : tiffImages) {
+    auto &image = imageVector.emplace_back(static_cast<int>(tiffImage.width),
+                                           static_cast<int>(tiffImage.height),
+                                           QImage::Format_RGB32);
+    double maxVal{maxValue};
+    // check for case of all zero's: should be black image
+    if (maxVal == 0) {
+      maxVal = 1.0;
+    }
+    for (int y = 0; y < image.height(); ++y) {
+      const auto &row = tiffImage.values[static_cast<std::size_t>(y)];
+      for (int x = 0; x < image.width(); ++x) {
+        // rescale pixel values from [0, max] to [0,255]
+        double unitNormValue = row[static_cast<std::size_t>(x)] / maxVal;
+        unsigned int mask8bit{0x0000ff};
+        unsigned int val8 =
+            mask8bit & static_cast<unsigned int>(255 * unitNormValue);
+        unsigned int rgb = 0xff000000 | val8 | (val8 << 8) | (val8 << 16);
+        image.setPixel(x, y, rgb);
+      }
     }
   }
-  return image;
+  return sme::common::ImageStack(std::move(imageVector));
 }
 
 const QString &TiffReader::getErrorMessage() const { return errorMessage; }

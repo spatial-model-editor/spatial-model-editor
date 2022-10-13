@@ -18,7 +18,6 @@ class Model;
 namespace sme::model {
 
 class ImageMembranePixels;
-using QPointPair = std::pair<QPoint, QPoint>;
 
 class ModelMembranes {
 private:
@@ -44,9 +43,9 @@ public:
   void updateCompartmentNames(const QStringList &compartmentNames);
   void updateCompartments(
       const std::vector<std::unique_ptr<geometry::Compartment>> &compartments);
-  void updateCompartmentImage(const QImage &img);
+  void updateCompartmentImages(const common::ImageStack &imgs);
   void importMembraneIdsAndNames();
-  void exportToSBML(double pixelArea);
+  void exportToSBML(const common::VolumeF &voxelSize);
   explicit ModelMembranes(libsbml::Model *model = nullptr);
   ModelMembranes(ModelMembranes &&) noexcept;
   ModelMembranes &operator=(ModelMembranes &&) noexcept;

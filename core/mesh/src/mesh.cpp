@@ -25,11 +25,11 @@ Mesh::pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept {
 Mesh::Mesh() = default;
 
 Mesh::Mesh(const QImage &image, std::vector<std::size_t> maxPoints,
-           std::vector<std::size_t> maxTriangleArea, double pixelWidth,
-           const QPointF &originPoint,
+           std::vector<std::size_t> maxTriangleArea,
+           const common::VolumeF &voxelSize, const common::VoxelF &originPoint,
            const std::vector<QRgb> &compartmentColours,
            std::size_t boundarySimplificationType)
-    : img(image), origin(originPoint), pixel(pixelWidth),
+    : img(image), origin(originPoint.p), pixel(voxelSize.width()),
       boundaryMaxPoints(std::move(maxPoints)),
       compartmentMaxTriangleArea(std::move(maxTriangleArea)),
       boundaries{std::make_unique<Boundaries>(image, compartmentColours,
@@ -207,7 +207,7 @@ static double getScaleFactor(const QImage &img, const QSize &size,
   return std::min(Swidth / Iwidth, Sheight / Iheight);
 }
 
-std::pair<QImage, QImage>
+std::pair<common::ImageStack, common::ImageStack>
 Mesh::getBoundariesImages(const QSize &size,
                           std::size_t boldBoundaryIndex) const {
   constexpr int defaultPenSize = 2;
@@ -217,19 +217,22 @@ Mesh::getBoundariesImages(const QSize &size,
   double scaleFactor = getScaleFactor(img, size, offset);
 
   // construct boundary image
-  QImage boundaryImage(
-      static_cast<int>(scaleFactor * img.width() + 2 * offset.x()),
-      static_cast<int>(scaleFactor * img.height() + 2 * offset.y()),
+  common::ImageStack boundaryImage(
+      {static_cast<int>(scaleFactor * img.width() + 2 * offset.x()),
+       static_cast<int>(scaleFactor * img.height() + 2 * offset.y()), 1},
       QImage::Format_ARGB32_Premultiplied);
   boundaryImage.fill(qRgba(0, 0, 0, 0));
 
-  QImage maskImage(boundaryImage.size(), QImage::Format_ARGB32_Premultiplied);
+  common::ImageStack maskImage(boundaryImage.volume(),
+                               QImage::Format_ARGB32_Premultiplied);
   maskImage.fill(qRgb(255, 255, 255));
 
-  QPainter painter(&boundaryImage);
+  // todo: draw more than first z-slice
+  constexpr std::size_t zindex{0};
+  QPainter painter(&boundaryImage[zindex]);
   painter.setRenderHint(QPainter::Antialiasing);
 
-  QPainter pMask(&maskImage);
+  QPainter pMask(&maskImage[zindex]);
 
   // draw boundary lines
   for (std::size_t k = 0; k < boundaries->size(); ++k) {
@@ -258,28 +261,31 @@ Mesh::getBoundariesImages(const QSize &size,
   painter.end();
   pMask.end();
   // flip image on y-axis, to change (0,0) from bottom-left to top-left corner
-  return std::make_pair(boundaryImage.mirrored(false, true),
-                        maskImage.mirrored(false, true));
+  boundaryImage.flipYAxis();
+  maskImage.flipYAxis();
+  return std::make_pair(std::move(boundaryImage), std::move(maskImage));
 }
 
-std::pair<QImage, QImage>
+std::pair<common::ImageStack, common::ImageStack>
 Mesh::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
-  std::pair<QImage, QImage> imgPair;
+  std::pair<common::ImageStack, common::ImageStack> imgPair;
   auto &[meshImage, maskImage] = imgPair;
   QPointF offset(5.0, 5.0);
   double scaleFactor = getScaleFactor(img, size, offset);
   // construct mesh image
-  meshImage =
-      QImage(static_cast<int>(scaleFactor * img.width() + 2 * offset.x()),
-             static_cast<int>(scaleFactor * img.height() + 2 * offset.y()),
-             QImage::Format_ARGB32_Premultiplied);
-  meshImage.fill(QColor(0, 0, 0, 0));
-  QPainter p(&meshImage);
-  p.setRenderHint(QPainter::Antialiasing);
+  meshImage = common::ImageStack(
+      {static_cast<int>(scaleFactor * img.width() + 2 * offset.x()),
+       static_cast<int>(scaleFactor * img.height() + 2 * offset.y()), 1},
+      QImage::Format_ARGB32_Premultiplied);
+  meshImage.fill(0);
   // construct mask image
-  maskImage = QImage(meshImage.size(), QImage::Format_RGB32);
-  maskImage.fill(QColor(255, 255, 255).rgba());
-  QPainter pMask(&maskImage);
+  // todo: draw more than first z-slice
+  constexpr std::size_t zindex{0};
+  QPainter p(&meshImage[zindex]);
+  p.setRenderHint(QPainter::Antialiasing);
+  maskImage = common::ImageStack(meshImage.volume(), QImage::Format_RGB32);
+  maskImage.fill(qRgb(255, 255, 255));
+  QPainter pMask(&maskImage[zindex]);
   // draw triangles
   for (std::size_t k = 0; k < triangles.size(); ++k) {
     if (k == compartmentIndex) {
@@ -308,8 +314,8 @@ Mesh::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
     p.drawPoint(v * scaleFactor + offset);
   }
   p.end();
-  meshImage = meshImage.mirrored(false, true);
-  maskImage = maskImage.mirrored(false, true);
+  meshImage.flipYAxis();
+  maskImage.flipYAxis();
   return imgPair;
 }
 

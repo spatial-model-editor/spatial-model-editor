@@ -1,5 +1,7 @@
 #pragma once
 
+#include "sme/geometry_utils.hpp"
+#include "sme/image_stack.hpp"
 #include "sme/utils.hpp"
 #include <QDialog>
 #include <map>
@@ -34,22 +36,22 @@ public:
 private:
   std::unique_ptr<Ui::DialogAnalytic> ui;
   // user supplied data
-  const std::vector<QPoint> &points;
-  double width;
-  QPointF origin;
+  const sme::common::VolumeF voxelSize;
+  const std::vector<sme::common::Voxel> &voxels;
+  const sme::common::VoxelF physicalOrigin;
   QString lengthUnit;
   QString concentrationUnit;
 
-  QImage img;
-  sme::common::QPointIndexer qpi;
+  sme::common::ImageStack imgs;
+  sme::geometry::VoxelIndexer qpi;
   std::vector<double> concentration;
   std::string displayExpression;
   std::string variableExpression;
   bool expressionIsValid = false;
 
-  QPointF physicalPoint(const QPoint &pixelPoint) const;
+  sme::common::VoxelF physicalPoint(const sme::common::Voxel &voxel) const;
   void txtExpression_mathChanged(const QString &math, bool valid,
                                  const QString &errorMessage);
-  void lblImage_mouseOver(QPoint point);
+  void lblImage_mouseOver(const sme::common::Voxel &voxel);
   void btnExportImage_clicked();
 };

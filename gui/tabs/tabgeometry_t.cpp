@@ -70,7 +70,8 @@ TEST_CASE("TabGeometry",
       REQUIRE(txtCompartmentName->text() == "Outside");
       REQUIRE(lblCompSize->text() == "Volume: 5441000 L (5441 pixels)");
       REQUIRE(tabCompartmentGeometry->currentIndex() == 0);
-      REQUIRE(lblCompShape->getImage().pixel(1, 1) == 0xff000200);
+      REQUIRE(lblCompShape->getImage().volume().depth() == 1);
+      REQUIRE(lblCompShape->getImage()[0].pixel(1, 1) == 0xff000200);
       // change compartment name
       txtCompartmentName->setFocus();
       sendKeyEvents(txtCompartmentName, {"X", "Enter"});
@@ -86,7 +87,7 @@ TEST_CASE("TabGeometry",
       sendKeyEvents(listCompartments, {"Down"});
       REQUIRE(listCompartments->currentItem()->text() == "Cell");
       REQUIRE(lblCompSize->text() == "Volume: 4034000 L (4034 pixels)");
-      REQUIRE(lblCompShape->getImage().pixel(20, 20) == 0xff9061c1);
+      REQUIRE(lblCompShape->getImage()[0].pixel(20, 20) == 0xff9061c1);
       REQUIRE(txtCompartmentName->isEnabled() == true);
       REQUIRE(txtCompartmentName->text() == "Cell");
       // select first membrane
@@ -113,7 +114,7 @@ TEST_CASE("TabGeometry",
       REQUIRE(lblCompSize->text() == "Volume: 525000 L (525 pixels)");
       REQUIRE(txtCompartmentName->isEnabled() == true);
       REQUIRE(txtCompartmentName->text() == "Nucleus");
-      REQUIRE(lblCompShape->getImage().pixel(50, 50) == 0xffc58560);
+      REQUIRE(lblCompShape->getImage()[0].pixel(50, 50) == 0xffc58560);
 
       // boundary tab
       tabCompartmentGeometry->setFocus();

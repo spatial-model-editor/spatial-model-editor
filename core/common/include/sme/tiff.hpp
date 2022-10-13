@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include <QImage>
 #include <QString>
 #include <cstddef>
@@ -31,13 +32,15 @@ private:
     std::size_t width = 0;
     std::size_t height = 0;
   };
+  double maxValue = 0;
+  double minValue = std::numeric_limits<double>::max();
   std::vector<TiffImageData> tiffImages;
   QString errorMessage;
 
 public:
   explicit TiffReader(const std::string &filename);
   [[nodiscard]] std::size_t size() const;
-  [[nodiscard]] QImage getImage(std::size_t i = 0) const;
+  [[nodiscard]] sme::common::ImageStack getImages() const;
   [[nodiscard]] const QString &getErrorMessage() const;
 };
 

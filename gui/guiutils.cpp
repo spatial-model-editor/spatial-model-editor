@@ -47,46 +47,36 @@ void selectMatchingOrFirstChild(QTreeWidget *list, const QString &text) {
   selectFirstChild(list);
 }
 
-QImage getImageFromUser(QWidget *parent, const QString &title) {
-  QImage img;
+sme::common::ImageStack getImageFromUser(QWidget *parent,
+                                         const QString &title) {
   QString filename = QFileDialog::getOpenFileName(
       parent, title, "",
       "Image Files (*.tif *.tiff *.gif *.jpg *.jpeg *.png *.bmp);; All files "
       "(*.*)");
   if (filename.isEmpty()) {
-    return img;
+    return {};
   }
   SPDLOG_DEBUG("  - import file {}", filename.toStdString());
   // first try using tiffReader
   sme::common::TiffReader tiffReader(filename.toStdString());
-  if (tiffReader.size() == 0) {
+  if (tiffReader.size() > 0) {
+    return tiffReader.getImages();
+  } else {
     SPDLOG_DEBUG(
         "    -> tiffReader could not read file, trying QImage::load()");
+    QImage img;
     bool success = img.load(filename);
-    if (!success) {
-      SPDLOG_DEBUG("    -> QImage::load() could not read file - giving up");
-      QMessageBox::warning(
-          parent, "Could not open image file",
-          QString("Failed to open image file '%1'\nError message: '%2'")
-              .arg(filename)
-              .arg(tiffReader.getErrorMessage()));
-    }
-  } else if (tiffReader.size() == 1) {
-    SPDLOG_DEBUG("    -> tiffReader read single image file successfully");
-    img = tiffReader.getImage();
-  } else {
-    bool ok;
-    int i = QInputDialog::getInt(
-        parent, "Import tiff image",
-        "Please choose the page to use from this multi-page tiff", 0, 0,
-        static_cast<int>(tiffReader.size()) - 1, 1, &ok);
-    if (ok) {
-      SPDLOG_DEBUG("    -> tiffReader read image {}/{} from file successfully",
-                   i + 1, tiffReader.size());
-      img = tiffReader.getImage(static_cast<std::size_t>(i));
+    if (success) {
+      return sme::common::ImageStack({img});
     }
   }
-  return img;
+  SPDLOG_DEBUG("    -> QImage::load() could not read file - giving up");
+  QMessageBox::warning(
+      parent, "Could not open image file",
+      QString("Failed to open image file '%1'\nError message: '%2'")
+          .arg(filename)
+          .arg(tiffReader.getErrorMessage()));
+  return {};
 }
 
 static QSize getZoomedInSize(const QSize &originalSize, int zoomFactor) {

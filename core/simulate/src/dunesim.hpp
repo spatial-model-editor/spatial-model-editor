@@ -3,6 +3,8 @@
 #pragma once
 
 #include "basesim.hpp"
+#include "sme/geometry_utils.hpp"
+#include "sme/image_stack.hpp"
 #include "sme/simulate_options.hpp"
 #include "sme/utils.hpp"
 #include <QPointF>
@@ -40,7 +42,7 @@ struct DuneSimCompartment {
   std::string name;
   std::size_t index;
   std::vector<std::size_t> speciesIndices;
-  common::QPointIndexer qPointIndexer;
+  geometry::VoxelIndexer voxelIndexer;
   const geometry::Compartment *geometry;
   // pixels+dune local coords for each triangle
   std::vector<std::vector<PixelLocalPair>> pixels;
@@ -62,7 +64,7 @@ private:
   void updatePixels();
   void updateSpeciesConcentrations();
   std::string currentErrorMessage{};
-  QImage currentErrorImage{};
+  common::ImageStack currentErrorImages{};
   double volOverL3;
 
 public:
@@ -77,7 +79,7 @@ public:
   getConcentrations(std::size_t compartmentIndex) const override;
   [[nodiscard]] std::size_t getConcentrationPadding() const override;
   [[nodiscard]] const std::string &errorMessage() const override;
-  [[nodiscard]] const QImage &errorImage() const override;
+  [[nodiscard]] const common::ImageStack &errorImages() const override;
   void setStopRequested(bool stop) override;
 };
 

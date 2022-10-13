@@ -17,8 +17,9 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
   sme::simulate::Simulation sim(model);
   sme::simulate::Options options;
   sim.doTimesteps(0.001, 4);
-  QImage imgGeometry(100, 50, QImage::Format_ARGB32_Premultiplied);
-  QVector<QImage> imgs(5, QImage(100, 50, QImage::Format_ARGB32_Premultiplied));
+  sme::common::ImageStack imgGeometry({100, 50, 1},
+                                      QImage::Format_ARGB32_Premultiplied);
+  QVector<sme::common::ImageStack> imgs(5, imgGeometry);
   QRgb col0 = 0xff121212;
   QRgb col1 = 0xffa34f6c;
   QRgb col2 = 0xff123456;
@@ -70,7 +71,8 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     dia.exec();
     REQUIRE(mwt2.getResult() == "QFileDialog::AcceptSave");
     QImage img("tmpdiaex.png");
-    REQUIRE(img.size() == imgs[0].size());
+    REQUIRE(img.size().width() == imgs[0].volume().width());
+    REQUIRE(img.size().height() == imgs[0].volume().height());
     REQUIRE(img.pixel(0, 0) == col2);
   }
   SECTION("user changes timepoint, clicks save image, then enters filename") {
@@ -83,7 +85,8 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     dia.exec();
     REQUIRE(mwt2.getResult() == "QFileDialog::AcceptSave");
     QImage img("tmpdiaex.png");
-    REQUIRE(img.size() == imgs[0].size());
+    REQUIRE(img.size().width() == imgs[0].volume().width());
+    REQUIRE(img.size().height() == imgs[0].volume().height());
     REQUIRE(img.pixel(0, 0) == col4);
   }
   SECTION("user clicks on All timepoints, clicks save image, then enter") {
@@ -94,19 +97,24 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     dia.exec();
     REQUIRE(mwt2.getResult() == "QFileDialog::AcceptOpen");
     QImage img0("img0.png");
-    REQUIRE(img0.size() == imgs[0].size());
+    REQUIRE(img0.size().width() == imgs[0].volume().width());
+    REQUIRE(img0.size().height() == imgs[0].volume().height());
     REQUIRE(img0.pixel(0, 0) == col0);
     QImage img1("img1.png");
-    REQUIRE(img1.size() == imgs[1].size());
+    REQUIRE(img1.size().width() == imgs[1].volume().width());
+    REQUIRE(img1.size().height() == imgs[1].volume().height());
     REQUIRE(img1.pixel(0, 0) == col1);
     QImage img2("img2.png");
-    REQUIRE(img2.size() == imgs[2].size());
+    REQUIRE(img2.size().width() == imgs[2].volume().width());
+    REQUIRE(img2.size().height() == imgs[2].volume().height());
     REQUIRE(img2.pixel(0, 0) == col2);
     QImage img3("img3.png");
-    REQUIRE(img3.size() == imgs[3].size());
+    REQUIRE(img3.size().width() == imgs[3].volume().width());
+    REQUIRE(img3.size().height() == imgs[3].volume().height());
     REQUIRE(img3.pixel(0, 0) == col3);
     QImage img4("img4.png");
-    REQUIRE(img4.size() == imgs[4].size());
+    REQUIRE(img4.size().width() == imgs[4].volume().width());
+    REQUIRE(img4.size().height() == imgs[4].volume().height());
     REQUIRE(img4.pixel(0, 0) == col4);
   }
   SECTION("user clicks on csv, types filename, then enter") {

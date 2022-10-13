@@ -251,12 +251,12 @@ TEST_CASE("setBestResults and getUpdatedBestResultImage",
   // 2, after simulating for time 1
   // make explicit target of 2 for all pixels in compartment
   const auto *comp{model.getSpecies().getField("A")->getCompartment()};
-  const auto compImgWidth{comp->getCompartmentImage().width()};
-  const auto compImgHeight{comp->getCompartmentImage().height()};
+  const auto compImgWidth{comp->getCompartmentImages()[0].width()};
+  const auto compImgHeight{comp->getCompartmentImages()[0].height()};
   std::vector<double> target(compImgWidth * compImgHeight, 0.0);
   constexpr double targetPixel{2.0};
-  for (const auto &pixel : comp->getPixels()) {
-    target[pixel.x() + compImgWidth * (compImgHeight - 1 - pixel.y())] =
+  for (const auto &voxel : comp->getVoxels()) {
+    target[voxel.p.x() + compImgWidth * (compImgHeight - 1 - voxel.p.y())] =
         targetPixel;
   }
   optimizeOptions.optCosts.push_back({sme::simulate::OptCostType::Concentration,
@@ -270,13 +270,16 @@ TEST_CASE("setBestResults and getUpdatedBestResultImage",
   REQUIRE(optimization.getFitness().empty());
   REQUIRE(optimization.getIterations() == 0);
   // first target is zero C (i.e. black everywhere)
-  REQUIRE(optimization.getTargetImage(0).pixel(0, 0) == qRgb(0, 0, 0));
-  REQUIRE(optimization.getTargetImage(0).pixel(40, 40) == qRgb(0, 0, 0));
+  REQUIRE(optimization.getTargetImage(0).volume().depth() == 1);
+  REQUIRE(optimization.getTargetImage(0)[0].pixel(0, 0) == qRgb(0, 0, 0));
+  REQUIRE(optimization.getTargetImage(0)[0].pixel(40, 40) == qRgb(0, 0, 0));
   // second target is constant & non-zero A (i.e. white in compartment, black
   // outside)
-  REQUIRE(optimization.getTargetImage(1).pixel(0, 0) == qRgb(0, 0, 0));
-  for (const auto &pixel : comp->getPixels()) {
-    REQUIRE(optimization.getTargetImage(1).pixel(pixel) == qRgb(255, 255, 255));
+  REQUIRE(optimization.getTargetImage(1).volume().depth() == 1);
+  REQUIRE(optimization.getTargetImage(1)[0].pixel(0, 0) == qRgb(0, 0, 0));
+  for (const auto &voxel : comp->getVoxels()) {
+    REQUIRE(optimization.getTargetImage(1)[voxel.z].pixel(voxel.p) ==
+            qRgb(255, 255, 255));
   }
   // no best result images yet
   REQUIRE(optimization.getUpdatedBestResultImage(0).has_value() == false);
@@ -290,12 +293,14 @@ TEST_CASE("setBestResults and getUpdatedBestResultImage",
   REQUIRE(optimization.getFitness().size() == 2);
   // call getUpdatedBestResultImage with new results
   auto img0{optimization.getUpdatedBestResultImage(0).value()};
-  REQUIRE(img0.size() == QSize(100, 100));
+  REQUIRE(img0.volume().depth() == 1);
+  REQUIRE(img0[0].size() == QSize(100, 100));
   // call getUpdatedBestResultImage again with same index without new results
   REQUIRE(optimization.getUpdatedBestResultImage(0).has_value() == false);
   // different index, new results
   auto img1{optimization.getUpdatedBestResultImage(1).value()};
-  REQUIRE(img1.size() == QSize(100, 100));
+  REQUIRE(img1.volume().depth() == 1);
+  REQUIRE(img1[0].size() == QSize(100, 100));
   // call getUpdatedBestResultImage again with same index without new results
   REQUIRE(optimization.getUpdatedBestResultImage(1).has_value() == false);
   // call getUpdatedBestResultImage again with *different* index without new
@@ -307,8 +312,8 @@ TEST_CASE("setBestResults and getUpdatedBestResultImage",
   // make a set of results
   constexpr double resultPixel{1.2};
   std::vector<double> result(compImgWidth * compImgHeight, 0.0);
-  for (const auto &pixel : comp->getPixels()) {
-    result[pixel.x() + compImgWidth * (compImgHeight - 1 - pixel.y())] =
+  for (const auto &voxel : comp->getVoxels()) {
+    result[voxel.p.x() + compImgWidth * (compImgHeight - 1 - voxel.p.y())] =
         resultPixel;
   }
   // setBestResults with inferior fitness is a no-op
@@ -325,20 +330,21 @@ TEST_CASE("setBestResults and getUpdatedBestResultImage",
               std::vector<std::vector<double>>{{result, result}}) == true);
   // img0 is compared to a zero target, so image normalised to its own max value
   img0 = optimization.getUpdatedBestResultImage(0).value();
-  REQUIRE(img0.size() == QSize(100, 100));
-  for (const auto &pixel : comp->getPixels()) {
-    REQUIRE(img0.pixel(pixel) == qRgb(255, 255, 255));
+  REQUIRE(img0.volume().depth() == 1);
+  REQUIRE(img0[0].size() == QSize(100, 100));
+  for (const auto &voxel : comp->getVoxels()) {
+    REQUIRE(img0[voxel.z].pixel(voxel.p) == qRgb(255, 255, 255));
   }
   // call getUpdatedBestResultImage again without new results
   REQUIRE(optimization.getUpdatedBestResultImage(0).has_value() == false);
   // img1 is compared to a non-zero target, so it is normalised to the max value
   // of the target
   img1 = optimization.getUpdatedBestResultImage(1).value();
-  REQUIRE(img1.size() == QSize(100, 100));
-  REQUIRE(img1.size() == QSize(100, 100));
+  REQUIRE(img1.volume().depth() == 1);
+  REQUIRE(img1[0].size() == QSize(100, 100));
   auto maxColor{static_cast<int>(255.0 * resultPixel / targetPixel)};
-  for (const auto &pixel : comp->getPixels()) {
-    REQUIRE(img1.pixel(pixel) == qRgb(maxColor, maxColor, maxColor));
+  for (const auto &voxel : comp->getVoxels()) {
+    REQUIRE(img1[voxel.z].pixel(voxel.p) == qRgb(maxColor, maxColor, maxColor));
   }
   // call getUpdatedBestResultImage again without new results
   REQUIRE(optimization.getUpdatedBestResultImage(1).has_value() == false);
@@ -377,30 +383,30 @@ TEST_CASE("Save and load model with optimization settings",
   sme::model::Model reloadedModel;
   reloadedModel.importFile(tempfilename);
   const auto &options{reloadedModel.getOptimizeOptions()};
-  REQUIRE(optimizeOptions.optAlgorithm.optAlgorithmType ==
+  REQUIRE(options.optAlgorithm.optAlgorithmType ==
           sme::simulate::OptAlgorithmType::ABC);
-  REQUIRE(optimizeOptions.optAlgorithm.islands == 1);
-  REQUIRE(optimizeOptions.optAlgorithm.population == 3);
-  REQUIRE(optimizeOptions.optCosts.size() == 1);
-  REQUIRE(optimizeOptions.optCosts[0].optCostType ==
+  REQUIRE(options.optAlgorithm.islands == 1);
+  REQUIRE(options.optAlgorithm.population == 3);
+  REQUIRE(options.optCosts.size() == 1);
+  REQUIRE(options.optCosts[0].optCostType ==
           sme::simulate::OptCostType::Concentration);
-  REQUIRE(optimizeOptions.optCosts[0].optCostDiffType ==
+  REQUIRE(options.optCosts[0].optCostDiffType ==
           simulate::OptCostDiffType::Absolute);
-  REQUIRE(optimizeOptions.optCosts[0].name == "optCostName");
-  REQUIRE(optimizeOptions.optCosts[0].id == "C");
-  REQUIRE(optimizeOptions.optCosts[0].simulationTime == dbl_approx(1.0));
-  REQUIRE(optimizeOptions.optCosts[0].weight == dbl_approx(0.23));
-  REQUIRE(optimizeOptions.optCosts[0].compartmentIndex == 0);
-  REQUIRE(optimizeOptions.optCosts[0].speciesIndex == 2);
-  REQUIRE(optimizeOptions.optCosts[0].targetValues.empty());
-  REQUIRE(optimizeOptions.optParams.size() == 1);
-  REQUIRE(optimizeOptions.optParams[0].optParamType ==
+  REQUIRE(options.optCosts[0].name == "optCostName");
+  REQUIRE(options.optCosts[0].id == "C");
+  REQUIRE(options.optCosts[0].simulationTime == dbl_approx(1.0));
+  REQUIRE(options.optCosts[0].weight == dbl_approx(0.23));
+  REQUIRE(options.optCosts[0].compartmentIndex == 0);
+  REQUIRE(options.optCosts[0].speciesIndex == 2);
+  REQUIRE(options.optCosts[0].targetValues.empty());
+  REQUIRE(options.optParams.size() == 1);
+  REQUIRE(options.optParams[0].optParamType ==
           sme::simulate::OptParamType::ReactionParameter);
-  REQUIRE(optimizeOptions.optParams[0].name == "optParamName");
-  REQUIRE(optimizeOptions.optParams[0].id == "k1");
-  REQUIRE(optimizeOptions.optParams[0].parentId == "r1");
-  REQUIRE(optimizeOptions.optParams[0].lowerBound == dbl_approx(0.02));
-  REQUIRE(optimizeOptions.optParams[0].upperBound == dbl_approx(0.88));
+  REQUIRE(options.optParams[0].name == "optParamName");
+  REQUIRE(options.optParams[0].id == "k1");
+  REQUIRE(options.optParams[0].parentId == "r1");
+  REQUIRE(options.optParams[0].lowerBound == dbl_approx(0.02));
+  REQUIRE(options.optParams[0].upperBound == dbl_approx(0.88));
 }
 
 TEST_CASE("Start long optimization in another thread & stop early",

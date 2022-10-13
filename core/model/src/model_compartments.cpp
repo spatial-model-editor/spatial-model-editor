@@ -64,7 +64,7 @@ importSizesAndMakeValid(libsbml::Model *model) {
   for (unsigned int i = 0; i < model->getNumCompartments(); ++i) {
     auto *comp{model->getCompartment(i)};
     if (!comp->isSetSize()) {
-      SPDLOG_WARN("Compartment '{}' has no size, assigning default value: {}",
+      SPDLOG_WARN("Compartment '{}' has no Size, assigning default value: {}",
                   comp->getId(), defaultCompartmentSize);
       comp->setSize(defaultCompartmentSize);
     }
@@ -87,8 +87,8 @@ ModelCompartments::ModelCompartments(libsbml::Model *model,
   compartments.reserve(static_cast<std::size_t>(ids.size()));
   createDefaultCompartmentGeometryIfMissing(model);
   for (const auto &id : ids) {
-    compartments.push_back(
-        std::make_unique<geometry::Compartment>(id.toStdString(), QImage{}, 0));
+    compartments.push_back(std::make_unique<geometry::Compartment>(
+        id.toStdString(), common::ImageStack{}, 0));
   }
 }
 
@@ -294,17 +294,16 @@ void ModelCompartments::setInteriorPoints(const QString &id,
                 ip->getCoord2());
   }
   const auto &origin{modelGeometry->getPhysicalOrigin()};
-  auto pixelWidth{modelGeometry->getPixelWidth()};
-  auto centralZPoint{modelGeometry->getZOrigin() +
-                     modelGeometry->getPixelDepth() * 0.5};
+  auto voxelSize{modelGeometry->getVoxelSize()};
+  auto centralZPoint{origin.z + voxelSize.depth() * 0.5};
   for (const auto &point : points) {
     SPDLOG_INFO("  - creating new interior point");
     SPDLOG_INFO("    - pixel point: ({},{},{})", point.x(), point.y(),
                 centralZPoint);
     auto *ip{domain->createInteriorPoint()};
-    // convert to physical units with pixelWidth and origin
-    ip->setCoord1(origin.x() + pixelWidth * point.x());
-    ip->setCoord2(origin.y() + pixelWidth * point.y());
+    // convert to physical units with voxelSize and origin
+    ip->setCoord1(origin.p.x() + voxelSize.width() * point.x());
+    ip->setCoord2(origin.p.y() + voxelSize.height() * point.y());
     ip->setCoord3(centralZPoint);
     SPDLOG_INFO("    - physical point: ({},{},0)", ip->getCoord1(),
                 ip->getCoord2(), ip->getCoord3());
@@ -317,7 +316,10 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
     SPDLOG_WARN("Compartment '{}' not found: ignoring", id.toStdString());
     return;
   }
-  if (colour != 0 && !modelGeometry->getImage().colorTable().contains(colour)) {
+  // todo: have colorTable be part of geometry? or at least check for empty
+  // getImages
+  if (colour != 0 &&
+      !modelGeometry->getImages()[0].colorTable().contains(colour)) {
     SPDLOG_WARN("Image has no pixels with colour '{:x}': ignoring", colour);
     return;
   }
@@ -333,7 +335,7 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   }
   colours[i] = colour;
   compartments[static_cast<std::size_t>(i)] =
-      std::make_unique<geometry::Compartment>(sId, modelGeometry->getImage(),
+      std::make_unique<geometry::Compartment>(sId, modelGeometry->getImages(),
                                               colour);
   auto *compartment{sbmlModel->getCompartment(sId)};
   // set SampledValue (aka colour) of SampledFieldVolume
@@ -359,15 +361,14 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   SPDLOG_INFO("  - sampledVolume '{}'", sfvol->getId());
   if (colour == 0 && sfvol->isSetSampledValue()) {
     sfvol->unsetSampledValue();
-  } else {
-    auto color_index{modelGeometry->getImage().colorTable().indexOf(colour)};
+  } else if (colour != 0) {
+    auto color_index{
+        modelGeometry->getImages()[0].colorTable().indexOf(colour)};
     sfvol->setSampledValue(static_cast<double>(color_index));
   }
-  auto nPixels{compartments[static_cast<std::size_t>(i)]->nPixels()};
-  double pixelWidth{modelGeometry->getPixelWidth()};
-  double pixelDepth{modelGeometry->getPixelDepth()};
-  double l3{static_cast<double>(nPixels) * pixelWidth * pixelWidth *
-            pixelDepth};
+  auto nPixels{compartments[static_cast<std::size_t>(i)]->nVoxels()};
+  const auto &voxelSize{modelGeometry->getVoxelSize()};
+  double l3{static_cast<double>(nPixels) * voxelSize.volume()};
   const auto &lengthUnit{modelUnits->getLength()};
   const auto &volumeUnit{modelUnits->getVolume()};
   double volOverL3 = getVolOverL3(lengthUnit, volumeUnit);
@@ -382,8 +383,7 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   modelMembranes->updateCompartmentNames(names);
   modelGeometry->updateMesh();
   if (modelGeometry->getIsValid()) {
-    modelMembranes->exportToSBML(modelGeometry->getPixelWidth() *
-                                 modelGeometry->getPixelDepth());
+    modelMembranes->exportToSBML(modelGeometry->getVoxelSize());
   }
   if (modelReactions != nullptr && modelGeometry->getIsValid()) {
     modelReactions->makeReactionLocationsValid();

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include "sme/pde.hpp"
 #include "sme/simulate_options.hpp"
 #include "sme/symbolic.hpp"
@@ -119,14 +120,15 @@ public:
   void undoRKStep();
   void undoRKStep_tbb();
   [[nodiscard]] PixelIntegratorError calculateRKError(double epsilon) const;
-  std::string plotRKError(QImage &image, double epsilon, double max) const;
+  std::string plotRKError(common::ImageStack &images, double epsilon,
+                          double max) const;
   [[nodiscard]] const std::string &getCompartmentId() const;
   [[nodiscard]] const std::vector<std::string> &getSpeciesIds() const;
   [[nodiscard]] const std::vector<double> &getConcentrations() const;
   void setConcentrations(const std::vector<double> &);
   [[nodiscard]] double getLowerOrderConcentration(std::size_t speciesIndex,
                                                   std::size_t pixelIndex) const;
-  [[nodiscard]] const std::vector<QPoint> &getPixels() const;
+  [[nodiscard]] const std::vector<common::Voxel> &getVoxels() const;
   std::vector<double> &getDcdt();
   [[nodiscard]] double getMaxStableTimestep() const;
 };

@@ -8,7 +8,7 @@
 
 namespace sme::model {
 
-constexpr std::size_t nullIndex = std::numeric_limits<std::size_t>::max();
+constexpr std::size_t nullIndex{std::numeric_limits<std::size_t>::max()};
 
 std::size_t OrderedIntPairIndex::toIndex(int smaller, int larger) const {
   auto index = static_cast<std::size_t>(smaller + maxValue * larger);
@@ -56,46 +56,74 @@ std::size_t OrderedIntPairIndex::size() const { return nItems; }
 
 ImageMembranePixels::ImageMembranePixels() = default;
 
-ImageMembranePixels::ImageMembranePixels(const QImage &img) { setImage(img); }
+ImageMembranePixels::ImageMembranePixels(const common::ImageStack &imgs) {
+  setImages(imgs);
+}
 
 ImageMembranePixels::~ImageMembranePixels() = default;
 
-void ImageMembranePixels::setImage(const QImage &img) {
-  points.clear();
-  points.resize(
-      static_cast<std::size_t>(img.colorCount() * (img.colorCount() - 1)));
-  colourIndexPairIndex = OrderedIntPairIndex{img.colorCount() - 1};
-  colours = img.colorTable();
-  imageSize = img.size();
+void ImageMembranePixels::setImages(const common::ImageStack &imgs) {
+  voxelPairs.clear();
+  int nc{imgs[0].colorCount()};
+  voxelPairs.resize(static_cast<std::size_t>(nc * (nc - 1)));
+  colourIndexPairIndex = OrderedIntPairIndex{nc - 1};
+  colours = imgs[0].colorTable();
+  int nx{imgs[0].width()};
+  int ny{imgs[0].height()};
+  std::size_t nz{imgs.volume().depth()};
+  imageSize = {nx, ny, nz};
   // for each pair of adjacent pixels of different colour,
   // add the pair of QPoints to the vector for this pair of colours
-  for (int y = 0; y < img.height(); ++y) {
-    int prevIndex = img.pixelIndex(0, y);
-    for (int x = 1; x < img.width(); ++x) {
-      int currIndex = img.pixelIndex(x, y);
-      if (currIndex < prevIndex) {
-        auto i = colourIndexPairIndex.findOrInsert(currIndex, prevIndex);
-        points[i].push_back({QPoint(x, y), QPoint(x - 1, y)});
-      } else if (currIndex > prevIndex) {
-        auto i = colourIndexPairIndex.findOrInsert(prevIndex, currIndex);
-        points[i].push_back({QPoint(x - 1, y), QPoint(x, y)});
+  for (std::size_t z = 0; z < nz; ++z) {
+    const auto &img{imgs[z]};
+    for (int y = 0; y < ny; ++y) {
+      int prevIndex = img.pixelIndex(0, y);
+      for (int x = 1; x < nx; ++x) {
+        int currIndex = img.pixelIndex(x, y);
+        if (currIndex < prevIndex) {
+          auto i = colourIndexPairIndex.findOrInsert(currIndex, prevIndex);
+          voxelPairs[i].push_back({{x, y, z}, {x - 1, y, z}});
+        } else if (currIndex > prevIndex) {
+          auto i = colourIndexPairIndex.findOrInsert(prevIndex, currIndex);
+          voxelPairs[i].push_back({{x - 1, y, z}, {x, y, z}});
+        }
+        prevIndex = currIndex;
       }
-      prevIndex = currIndex;
     }
   }
   // y-neighbours
-  for (int x = 0; x < img.width(); ++x) {
-    int prevIndex = img.pixelIndex(x, 0);
-    for (int y = 1; y < img.height(); ++y) {
-      int currIndex = img.pixelIndex(x, y);
-      if (currIndex < prevIndex) {
-        auto i = colourIndexPairIndex.findOrInsert(currIndex, prevIndex);
-        points[i].push_back({QPoint(x, y), QPoint(x, y - 1)});
-      } else if (currIndex > prevIndex) {
-        auto i = colourIndexPairIndex.findOrInsert(prevIndex, currIndex);
-        points[i].push_back({QPoint(x, y - 1), QPoint(x, y)});
+  for (std::size_t z = 0; z < nz; ++z) {
+    const auto &img{imgs[z]};
+    for (int x = 0; x < nx; ++x) {
+      int prevIndex = img.pixelIndex(x, 0);
+      for (int y = 1; y < ny; ++y) {
+        int currIndex = img.pixelIndex(x, y);
+        if (currIndex < prevIndex) {
+          auto i = colourIndexPairIndex.findOrInsert(currIndex, prevIndex);
+          voxelPairs[i].push_back({{x, y, z}, {x, y - 1, z}});
+        } else if (currIndex > prevIndex) {
+          auto i = colourIndexPairIndex.findOrInsert(prevIndex, currIndex);
+          voxelPairs[i].push_back({{x, y - 1, z}, {x, y, z}});
+        }
+        prevIndex = currIndex;
       }
-      prevIndex = currIndex;
+    }
+  }
+  // z-neighbours
+  for (int x = 0; x < nx; ++x) {
+    for (int y = 0; y < ny; ++y) {
+      int prevIndex = imgs[0].pixelIndex(x, y);
+      for (std::size_t z = 1; z < nz; ++z) {
+        int currIndex = imgs[z].pixelIndex(x, y);
+        if (currIndex < prevIndex) {
+          auto i = colourIndexPairIndex.findOrInsert(currIndex, prevIndex);
+          voxelPairs[i].push_back({{x, y, z}, {x, y, z - 1}});
+        } else if (currIndex > prevIndex) {
+          auto i = colourIndexPairIndex.findOrInsert(prevIndex, currIndex);
+          voxelPairs[i].push_back({{x, y, z - 1}, {x, y, z}});
+        }
+        prevIndex = currIndex;
+      }
     }
   }
 }
@@ -109,14 +137,16 @@ int ImageMembranePixels::getColourIndex(QRgb colour) const {
   return -1;
 }
 
-const std::vector<QPointPair> *ImageMembranePixels::getPoints(int iA,
-                                                              int iB) const {
+const std::vector<VoxelPair> *ImageMembranePixels::getVoxels(int iA,
+                                                             int iB) const {
   if (auto i = colourIndexPairIndex.find(iA, iB); i.has_value()) {
-    return &points[i.value()];
+    return &voxelPairs[i.value()];
   }
   return nullptr;
 }
 
-const QSize &ImageMembranePixels::getImageSize() const { return imageSize; }
+const common::Volume &ImageMembranePixels::getImageSize() const {
+  return imageSize;
+}
 
 } // namespace sme::model

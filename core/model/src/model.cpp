@@ -202,8 +202,7 @@ void Model::exportSMEFile(const std::string &filename) {
 void Model::updateSBMLDoc() {
   modelGeometry->writeGeometryToSBML();
   setSbmlAnnotation(doc->getModel(), *settings);
-  modelMembranes->exportToSBML(modelGeometry->getPixelWidth() *
-                               modelGeometry->getPixelDepth());
+  modelMembranes->exportToSBML(modelGeometry->getVoxelSize());
 }
 
 QString Model::getXml() {
@@ -324,9 +323,9 @@ void Model::clear() {
 }
 
 SpeciesGeometry Model::getSpeciesGeometry(const QString &speciesID) const {
-  return {modelGeometry->getImage().size(),
-          modelSpecies->getField(speciesID)->getCompartment()->getPixels(),
-          modelGeometry->getPhysicalOrigin(), modelGeometry->getPixelWidth(),
+  const auto *comp{modelSpecies->getField(speciesID)->getCompartment()};
+  return {comp->getImageSize(), comp->getVoxels(),
+          modelGeometry->getPhysicalOrigin(), modelGeometry->getVoxelSize(),
           getUnits()};
 }
 

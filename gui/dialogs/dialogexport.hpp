@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include "sme/model.hpp"
 #include "sme/simulate.hpp"
 #include <QDialog>
@@ -15,7 +16,7 @@ class DialogExport : public QDialog {
   Q_OBJECT
 
 public:
-  explicit DialogExport(const QVector<QImage> &images,
+  explicit DialogExport(const QVector<sme::common::ImageStack> &images,
                         const PlotWrapper *plotWrapper,
                         sme::model::Model &model,
                         const sme::simulate::Simulation &simulation,
@@ -24,7 +25,7 @@ public:
 
 private:
   const std::unique_ptr<Ui::DialogExport> ui;
-  const QVector<QImage> &imgs;
+  const QVector<sme::common::ImageStack> &imgs;
   const PlotWrapper *plot;
   sme::model::Model &m;
   const sme::simulate::Simulation &sim;

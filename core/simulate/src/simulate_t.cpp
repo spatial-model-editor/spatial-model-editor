@@ -29,9 +29,9 @@ TEST_CASE("Simulate: very_simple_model, single pixel geometry",
   img.setPixel(0, 1, col2);
   img.setPixel(0, 2, col3);
   img.save("tmpsimsinglepixel.bmp");
-  s.getGeometry().importGeometryFromImage(QImage("tmpsimsinglepixel.bmp"),
-                                          false);
-  s.getGeometry().setPixelWidth(1.0);
+  s.getGeometry().importGeometryFromImages({QImage("tmpsimsinglepixel.bmp")},
+                                           false);
+  s.getGeometry().setVoxelSize({1.0, 1.0, 1.0});
   s.getCompartments().setColour("c1", col1);
   s.getCompartments().setColour("c2", col2);
   s.getCompartments().setColour("c3", col3);
@@ -103,11 +103,12 @@ TEST_CASE("Simulate: very_simple_model, single pixel geometry",
   REQUIRE(sim.getAvgMinMax(0, 2, 1).avg == dbl_approx(0.0));
 
   // check initial concentration image
-  img = sim.getConcImage(0);
-  REQUIRE(img.size() == QSize(1, 3));
-  REQUIRE(img.pixel(0, 0) == QColor(0, 0, 0).rgba());
-  REQUIRE(img.pixel(0, 1) == QColor(0, 0, 0).rgba());
-  REQUIRE(img.pixel(0, 2) == QColor(0, 0, 0).rgba());
+  auto intialConcImg{sim.getConcImage(0)};
+  REQUIRE(intialConcImg.volume().depth() == 1);
+  REQUIRE(intialConcImg[0].size() == QSize(1, 3));
+  REQUIRE(intialConcImg[0].pixel(0, 0) == qRgb(0, 0, 0));
+  REQUIRE(intialConcImg[0].pixel(0, 1) == qRgb(0, 0, 0));
+  REQUIRE(intialConcImg[0].pixel(0, 2) == qRgb(0, 0, 0));
 
   double volC1 = 10.0;
   SECTION("single Euler step") {
@@ -308,10 +309,10 @@ TEST_CASE("Simulate: very_simple_model, failing Pixel sim",
   s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   simulate::Simulation sim(s);
   REQUIRE(sim.errorMessage().empty());
-  REQUIRE(sim.errorImage().isNull());
+  REQUIRE(sim.errorImages().empty());
   sim.doTimesteps(1.0);
   REQUIRE(!sim.errorMessage().empty());
-  REQUIRE(sim.errorImage().size() == QSize(100, 100));
+  REQUIRE(sim.errorImages()[0].size() == QSize(100, 100));
 }
 
 TEST_CASE("Simulate: very_simple_model, empty compartment, DUNE sim",
@@ -363,7 +364,7 @@ static void rescaleDiffusionConstants(model::Model &s, double factor) {
   }
 }
 
-TEST_CASE("Simulate: very_simple_model, change pixel size, Pixel sim",
+TEST_CASE("Simulate: very_simple_model, change pixel volume, Pixel sim",
           "[core/simulate/simulate][core/simulate][core][simulate]") {
   double epsilon{1e-8};
   double margin{1e-13};
@@ -374,7 +375,9 @@ TEST_CASE("Simulate: very_simple_model, change pixel size, Pixel sim",
   // length unit: m
   // volume unit: L
   // alpha = length^3/volume = 1e3
-  REQUIRE(s1.getGeometry().getPixelWidth() == dbl_approx(1.0));
+  REQUIRE(s1.getGeometry().getVoxelSize().width() == dbl_approx(1.0));
+  REQUIRE(s1.getGeometry().getVoxelSize().height() == dbl_approx(1.0));
+  REQUIRE(s1.getGeometry().getVoxelSize().depth() == dbl_approx(1.0));
   REQUIRE(s1.getUnits().getLength().name == "m");
   REQUIRE(s1.getUnits().getVolume().name == "L");
   auto &options{s1.getSimulationSettings().options};
@@ -394,8 +397,10 @@ TEST_CASE("Simulate: very_simple_model, change pixel size, Pixel sim",
     auto s{getExampleModel(Mod::VerySimpleModel)};
     s.getSimulationSettings().options = options;
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
-    s.getGeometry().setPixelWidth(3.0);
-    REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(3.0));
+    s.getGeometry().setVoxelSize({3.0, 3.0, 3.0});
+    REQUIRE(s.getGeometry().getVoxelSize().width() == dbl_approx(3.0));
+    REQUIRE(s.getGeometry().getVoxelSize().height() == dbl_approx(3.0));
+    REQUIRE(s.getGeometry().getVoxelSize().depth() == dbl_approx(3.0));
     // pixel width -> 3x larger
     // units, concentrations & reaction rates unchanged
     // but membrane flux per pixel -> 9x larger
@@ -465,8 +470,10 @@ TEST_CASE("Simulate: very_simple_model, change pixel size, Pixel sim",
     auto s{getExampleModel(Mod::VerySimpleModel)};
     s.getSimulationSettings().options = options;
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
-    s.getGeometry().setPixelWidth(0.27);
-    REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(0.27));
+    s.getGeometry().setVoxelSize({0.27, 0.27, 0.27});
+    REQUIRE(s.getGeometry().getVoxelSize().width() == dbl_approx(0.27));
+    REQUIRE(s.getGeometry().getVoxelSize().height() == dbl_approx(0.27));
+    REQUIRE(s.getGeometry().getVoxelSize().depth() == dbl_approx(0.27));
     // as above
     rescaleMembraneReacRates(s, 0.27);
     rescaleDiffusionConstants(s, 0.27 * 0.27);
@@ -541,7 +548,9 @@ TEST_CASE("Simulate: very_simple_model, membrane reaction units consistency",
     // length unit: m
     // volume unit: L
     // alpha = length^3/volume = 1e3
-    REQUIRE(s1.getGeometry().getPixelWidth() == dbl_approx(1.0));
+    REQUIRE(s1.getGeometry().getVoxelSize().width() == dbl_approx(1.0));
+    REQUIRE(s1.getGeometry().getVoxelSize().height() == dbl_approx(1.0));
+    REQUIRE(s1.getGeometry().getVoxelSize().depth() == dbl_approx(1.0));
     REQUIRE(s1.getUnits().getLength().name == "m");
     REQUIRE(s1.getUnits().getVolume().name == "L");
     s1.getSimulationSettings().simulatorType = simulatorType;
@@ -756,9 +765,9 @@ TEST_CASE("Simulate: single-compartment-diffusion, circular geometry",
     double D = f->getDiffusionConstant();
     double t0 = sigma2 / 4.0 / D;
     double maxRelErr = 0;
-    for (std::size_t i = 0; i < f->getCompartment()->nPixels(); ++i) {
-      const auto &p = f->getCompartment()->getPixel(i);
-      double c = analytic(p, 0, D, t0);
+    for (std::size_t i = 0; i < f->getCompartment()->nVoxels(); ++i) {
+      const auto &v{f->getCompartment()->getVoxel(i)};
+      double c = analytic(v.p, 0, D, t0);
       double relErr = std::abs(f->getConcentration()[i] - c) / c;
       maxRelErr = std::max(maxRelErr, relErr);
     }
@@ -818,12 +827,12 @@ TEST_CASE("Simulate: single-compartment-diffusion, circular geometry",
       double maxRelErr{0};
       double avgRelErr{0};
       std::size_t count{0};
-      for (std::size_t i = 0; i < slow->getCompartment()->nPixels(); ++i) {
-        const auto &p = slow->getCompartment()->getPixel(i);
+      for (std::size_t i = 0; i < slow->getCompartment()->nVoxels(); ++i) {
+        const auto &v{slow->getCompartment()->getVoxel(i)};
         // only check part within a radius of 16 units from centre to avoid
         // boundary effects: analytic solution is in infinite volume
-        if (r2(p) < 16 * 16) {
-          double c_analytic = analytic(p, t, D[speciesIndex], t0);
+        if (r2(v.p) < 16 * 16) {
+          double c_analytic = analytic(v.p, t, D[speciesIndex], t0);
           double relErr = std::abs(conc[i] - c_analytic) / c_analytic;
           avgRelErr += relErr;
           ++count;
@@ -986,7 +995,8 @@ TEST_CASE("DUNE: simulation",
     REQUIRE(std::abs(duneSim.getAvgMinMax(timeIndex, 0, 0).avg - 0.995) < 1e-4);
     REQUIRE(std::abs(duneSim.getAvgMinMax(timeIndex, 0, 1).avg - 0.995) < 1e-4);
     REQUIRE(std::abs(duneSim.getAvgMinMax(timeIndex, 0, 2).avg - 0.005) < 1e-4);
-    REQUIRE(imgConc.size() == QSize(100, 100));
+    REQUIRE(imgConc.volume().depth() == 1);
+    REQUIRE(imgConc[0].size() == QSize(100, 100));
   }
   SECTION("very-simple-model") {
     auto s{getExampleModel(Mod::VerySimpleModel)};
@@ -1012,7 +1022,7 @@ TEST_CASE("getConcImage",
     // draw no species, any normalisation
     for (auto allTime : {true, false}) {
       for (auto allSpecies : {true, false}) {
-        auto img0{sim.getConcImage(1, {{}, {}, {}}, allTime, allSpecies)};
+        auto img0{sim.getConcImage(1, {{}, {}, {}}, allTime, allSpecies)[0]};
         REQUIRE(img0.pixel(48, 43) == qRgb(0, 0, 0));
         REQUIRE(img0.pixel(49, 43) == qRgb(0, 0, 0));
         REQUIRE(img0.pixel(33, 8) == qRgb(0, 0, 0));
@@ -1022,14 +1032,14 @@ TEST_CASE("getConcImage",
     // draw B_out species only
     for (auto allSpecies : {true, false}) {
       // this timepoint
-      auto img1a{sim.getConcImage(1, {{0}, {}, {}}, false, allSpecies)};
+      auto img1a{sim.getConcImage(1, {{0}, {}, {}}, false, allSpecies)[0]};
       REQUIRE(img1a.pixel(48, 43) == qRgb(0, 0, 0));
       REQUIRE(img1a.pixel(49, 43) == qRgb(0, 0, 0));
       REQUIRE(img1a.pixel(33, 8) == qRgb(0, 0, 0));
       REQUIRE(img1a.pixel(59, 33) == qRgb(145, 30, 180));
 
       // all timepoints
-      auto img1b{sim.getConcImage(1, {{0}, {}, {}}, true, allSpecies)};
+      auto img1b{sim.getConcImage(1, {{0}, {}, {}}, true, allSpecies)[0]};
       REQUIRE(img1b.pixel(48, 43) == qRgb(0, 0, 0));
       REQUIRE(img1b.pixel(49, 43) == qRgb(0, 0, 0));
       REQUIRE(img1b.pixel(33, 8) == qRgb(0, 0, 0));
@@ -1037,20 +1047,20 @@ TEST_CASE("getConcImage",
     }
 
     // draw all species, normalise to max of each species, at this timepoint
-    auto img1{sim.getConcImage(1, {}, false, false)};
+    auto img1{sim.getConcImage(1, {}, false, false)[0]};
     REQUIRE(img1.pixel(48, 43) == qRgb(255, 255, 225));
     REQUIRE(img1.pixel(49, 43) == qRgb(245, 130, 48));
     REQUIRE(img1.pixel(33, 8) == qRgb(47, 142, 59));
 
     // draw all species, normalise to max of all species, at this timepoint
-    auto img3{sim.getConcImage(1, {}, false, true)};
+    auto img3{sim.getConcImage(1, {}, false, true)[0]};
     REQUIRE(img3.pixel(48, 43) == qRgb(0, 0, 0));
     REQUIRE(img3.pixel(49, 43) == qRgb(0, 0, 0));
     REQUIRE(img3.pixel(33, 8) == qRgb(47, 142, 59));
 
     // draw all species, normalise to max of each/all species, at all timepoints
     for (auto allSpecies : {true, false}) {
-      auto img2{sim.getConcImage(1, {}, true, allSpecies)};
+      auto img2{sim.getConcImage(1, {}, true, allSpecies)[0]};
       REQUIRE(img2.pixel(48, 43) == qRgb(0, 0, 0));
       REQUIRE(img2.pixel(49, 43) == qRgb(0, 0, 0));
       REQUIRE(img2.pixel(33, 8) == qRgb(31, 93, 39));

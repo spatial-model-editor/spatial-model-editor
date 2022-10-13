@@ -15,7 +15,8 @@ concurrency:
 
 env:
   CIBUILDWHEEL_VERSION: 2.11.3
-  CIBW_TEST_COMMAND: 'python -m unittest discover -v -s {project}/sme/test'
+  CIBW_TEST_REQUIRES: pytest
+  CIBW_TEST_COMMAND: 'python -m pytest -v {project}/sme/test'
   CIBW_BUILD_VERBOSITY: 3
   SME_BUILD_CORE: 'false'
 

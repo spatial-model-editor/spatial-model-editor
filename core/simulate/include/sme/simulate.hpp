@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include "sme/model_settings.hpp"
 #include "sme/simulate_data.hpp"
 #include "sme/simulate_options.hpp"
@@ -51,7 +52,7 @@ private:
   model::Model &model;
   model::SimulationSettings *settings;
   SimulationData *data;
-  QSize imageSize;
+  common::Volume imageSize;
   std::atomic<bool> isRunning{false};
   std::atomic<bool> stopRequested{false};
   std::atomic<std::size_t> nCompletedTimesteps{0};
@@ -72,7 +73,7 @@ public:
       double timeout_ms = -1.0,
       const std::function<bool()> &stopRunningCallback = {});
   [[nodiscard]] const std::string &errorMessage() const;
-  [[nodiscard]] const QImage &errorImage() const;
+  [[nodiscard]] const common::ImageStack &errorImages() const;
   [[nodiscard]] const std::vector<std::string> &getCompartmentIds() const;
   [[nodiscard]] const std::vector<std::string> &
   getSpeciesIds(std::size_t compartmentIndex) const;
@@ -96,7 +97,7 @@ public:
   [[nodiscard]] double getLowerOrderConc(std::size_t compartmentIndex,
                                          std::size_t speciesIndex,
                                          std::size_t pixelIndex) const;
-  [[nodiscard]] QImage
+  [[nodiscard]] common::ImageStack
   getConcImage(std::size_t timeIndex,
                const std::vector<std::vector<std::size_t>> &speciesToDraw = {},
                bool normaliseOverAllTimepoints = false,

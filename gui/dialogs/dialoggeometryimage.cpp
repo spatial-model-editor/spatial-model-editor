@@ -4,27 +4,17 @@
 
 static QString toQStr(double val) { return QString::number(val, 'g', 14); }
 
-static QImage toIndexedImageNoAlpha(const QImage &image) {
-  constexpr auto flagNoDither{Qt::AvoidDither | Qt::ThresholdDither |
-                              Qt::ThresholdAlphaDither | Qt::NoOpaqueDetection};
-  auto imgNoAlpha{image};
-  if (image.hasAlphaChannel()) {
-    SPDLOG_DEBUG("ignoring alpha channel");
-    imgNoAlpha = image.convertToFormat(QImage::Format_RGB32, flagNoDither);
-  }
-  return imgNoAlpha.convertToFormat(QImage::Format_Indexed8, flagNoDither);
-}
-
 DialogGeometryImage::DialogGeometryImage(
-    const QImage &image, double pixelWidth, double pixelDepth,
+    const sme::common::ImageStack &image, sme::common::VolumeF voxelSize,
     const sme::model::ModelUnits &modelUnits, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogGeometryImage>()},
-      originalImage(image), pixelModelUnits(pixelWidth),
-      depthModelUnits(pixelDepth), units(modelUnits) {
-  coloredImage = toIndexedImageNoAlpha(originalImage);
+      originalImage(image), voxelModelUnits(voxelSize), units(modelUnits) {
+  coloredImage = originalImage;
+  coloredImage.convertToIndexed();
   rescaledImage = coloredImage;
-  colorTable = coloredImage.colorTable();
+  colorTable = coloredImage[0].colorTable();
   ui->setupUi(this);
+  ui->lblImage->setZSlider(ui->slideZIndex);
   ui->lblImage->setImage(rescaledImage);
   ui->btnApplyColours->setEnabled(false);
   for (auto *cmb : {ui->cmbUnitsWidth, ui->cmbUnitsHeight}) {
@@ -34,12 +24,13 @@ DialogGeometryImage::DialogGeometryImage(
     cmb->setCurrentIndex(units.getLengthIndex());
   }
   modelUnitSymbol = ui->cmbUnitsWidth->currentText();
-  pixelLocalUnits = pixelModelUnits;
-  depthLocalUnits = depthModelUnits;
-  ui->spinPixelsX->setValue(rescaledImage.width());
-  ui->spinPixelsY->setValue(rescaledImage.height());
+  voxelLocalUnits = voxelModelUnits;
+  ui->spinPixelsX->setValue(rescaledImage.volume().width());
+  ui->spinPixelsY->setValue(rescaledImage.volume().height());
+  ui->lblZSlices->setText(
+      QString("x %1 z-slices").arg(rescaledImage.volume().depth()));
   updateColours();
-  updatePixelSize();
+  updateVoxelSize();
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogGeometryImage::accept);
@@ -56,12 +47,12 @@ DialogGeometryImage::DialogGeometryImage(
   connect(ui->cmbUnitsWidth, qOverload<int>(&QComboBox::activated), this,
           [this](int index) {
             ui->cmbUnitsHeight->setCurrentIndex(index);
-            updatePixelSize();
+            updateVoxelSize();
           });
   connect(ui->cmbUnitsHeight, qOverload<int>(&QComboBox::activated), this,
           [this](int index) {
             ui->cmbUnitsWidth->setCurrentIndex(index);
-            updatePixelSize();
+            updateVoxelSize();
           });
   connect(ui->spinPixelsX, qOverload<int>(&QSpinBox::valueChanged), this,
           &DialogGeometryImage::spinPixelsX_valueChanged);
@@ -81,35 +72,34 @@ DialogGeometryImage::DialogGeometryImage(
 
 DialogGeometryImage::~DialogGeometryImage() = default;
 
-double DialogGeometryImage::getPixelWidth() const { return pixelModelUnits; }
-
-double DialogGeometryImage::getPixelDepth() const { return depthModelUnits; }
+sme::common::VolumeF DialogGeometryImage::getVoxelSize() const {
+  return voxelModelUnits;
+}
 
 bool DialogGeometryImage::imageSizeAltered() const { return alteredSize; }
 
 bool DialogGeometryImage::imageColoursAltered() const { return alteredColours; }
 
-const QImage &DialogGeometryImage::getAlteredImage() const {
+const sme::common::ImageStack &DialogGeometryImage::getAlteredImage() const {
   return ui->lblImage->getImage();
 }
 
-void DialogGeometryImage::updatePixelSize() {
-  // calculate size of image in local units
-  double w{static_cast<double>(rescaledImage.width()) * pixelLocalUnits};
-  ui->txtImageWidth->setText(toQStr(w));
-  double h{static_cast<double>(rescaledImage.height()) * pixelLocalUnits};
-  ui->txtImageHeight->setText(toQStr(h));
-  ui->txtImageDepth->setText(toQStr(depthLocalUnits));
-  // calculate pixel width in model units
+void DialogGeometryImage::updateVoxelSize() {
+  // calculate image volume in local units
+  auto imageSizeLocalUnits{rescaledImage.volume() * voxelLocalUnits};
+  ui->txtImageWidth->setText(toQStr(imageSizeLocalUnits.width()));
+  ui->txtImageHeight->setText(toQStr(imageSizeLocalUnits.height()));
+  ui->txtImageDepth->setText(toQStr(imageSizeLocalUnits.depth()));
+  // calculate voxel volume in model units
   const auto &localUnit{
       units.getLengthUnits().at(ui->cmbUnitsWidth->currentIndex())};
   const auto &modelUnit{units.getLength()};
-  pixelModelUnits = sme::model::rescale(pixelLocalUnits, localUnit, modelUnit);
-  depthModelUnits = sme::model::rescale(depthLocalUnits, localUnit, modelUnit);
-  ui->lblPixelSize->setText(QString("%1 %2 x %1 %2 x %3 %2")
-                                .arg(pixelModelUnits)
-                                .arg(modelUnitSymbol)
-                                .arg(depthModelUnits));
+  voxelModelUnits = sme::model::rescale(voxelLocalUnits, localUnit, modelUnit);
+  ui->lblPixelSize->setText(QString("%1 %4 x %2 %4 x %3 %4")
+                                .arg(voxelModelUnits.width())
+                                .arg(voxelModelUnits.height())
+                                .arg(voxelModelUnits.depth())
+                                .arg(modelUnitSymbol));
 }
 
 void DialogGeometryImage::updateColours() {
@@ -150,8 +140,8 @@ void DialogGeometryImage::enableWidgets(bool enable) {
   ui->btnSelectColours->setEnabled(enable);
 }
 
-void DialogGeometryImage::lblImage_mouseClicked(QRgb col,
-                                                [[maybe_unused]] QPoint point) {
+void DialogGeometryImage::lblImage_mouseClicked(
+    QRgb col, [[maybe_unused]] sme::common::Voxel voxel) {
   if (!selectingColours) {
     return;
   }
@@ -164,37 +154,41 @@ void DialogGeometryImage::lblImage_mouseClicked(QRgb col,
 }
 
 void DialogGeometryImage::txtImageWidth_editingFinished() {
-  double w{ui->txtImageWidth->text().toDouble()};
-  pixelLocalUnits = w / static_cast<double>(rescaledImage.width());
-  updatePixelSize();
+  double imageWidth{ui->txtImageWidth->text().toDouble()};
+  double voxelWidth{imageWidth /
+                    static_cast<double>(rescaledImage.volume().width())};
+  voxelLocalUnits = {voxelWidth, voxelWidth, voxelLocalUnits.depth()};
+  updateVoxelSize();
 }
 
 void DialogGeometryImage::txtImageHeight_editingFinished() {
-  double h{ui->txtImageHeight->text().toDouble()};
-  pixelLocalUnits = h / static_cast<double>(rescaledImage.height());
-  updatePixelSize();
+  double imageHeight{ui->txtImageHeight->text().toDouble()};
+  double voxelHeight{imageHeight /
+                     static_cast<double>(rescaledImage.volume().height())};
+  voxelLocalUnits = {voxelHeight, voxelHeight, voxelLocalUnits.depth()};
+  updateVoxelSize();
 }
 
 void DialogGeometryImage::txtImageDepth_editingFinished() {
-  double d{ui->txtImageDepth->text().toDouble()};
-  if (d == 0.0) {
-    d = 1.0;
-  }
-  depthLocalUnits = d;
-  updatePixelSize();
+  double imageDepth{ui->txtImageDepth->text().toDouble()};
+  double voxelDepth{imageDepth /
+                    static_cast<double>(rescaledImage.volume().depth())};
+  voxelLocalUnits = {voxelLocalUnits.width(), voxelLocalUnits.height(),
+                     voxelDepth};
+  updateVoxelSize();
 }
 
 void DialogGeometryImage::spinPixelsX_valueChanged(int value) {
   if (value <= 0) {
     return;
   }
-  if (value != coloredImage.width()) {
+  if (value != coloredImage.volume().width()) {
     alteredSize = true;
   }
-  rescaledImage = coloredImage.scaledToWidth(value, Qt::FastTransformation);
+  rescaledImage = coloredImage.scaledToWidth(value);
   ui->lblImage->setImage(rescaledImage);
   ui->spinPixelsY->blockSignals(true);
-  ui->spinPixelsY->setValue(rescaledImage.height());
+  ui->spinPixelsY->setValue(rescaledImage.volume().height());
   ui->spinPixelsY->blockSignals(false);
   txtImageWidth_editingFinished();
 }
@@ -203,14 +197,13 @@ void DialogGeometryImage::spinPixelsY_valueChanged(int value) {
   if (value <= 0) {
     return;
   }
-  if (value != coloredImage.height()) {
+  if (value != coloredImage.volume().height()) {
     alteredSize = true;
   }
-  alteredSize = true;
-  rescaledImage = coloredImage.scaledToHeight(value, Qt::FastTransformation);
+  rescaledImage = coloredImage.scaledToHeight(value);
   ui->lblImage->setImage(rescaledImage);
   ui->spinPixelsX->blockSignals(true);
-  ui->spinPixelsX->setValue(rescaledImage.width());
+  ui->spinPixelsX->setValue(rescaledImage.volume().width());
   ui->spinPixelsX->blockSignals(false);
   txtImageHeight_editingFinished();
 }
@@ -219,9 +212,9 @@ void DialogGeometryImage::btnResetPixels_clicked() {
   alteredSize = false;
   rescaledImage = coloredImage;
   ui->lblImage->setImage(rescaledImage);
-  ui->spinPixelsX->setValue(rescaledImage.width());
-  ui->spinPixelsY->setValue(rescaledImage.height());
-  updatePixelSize();
+  ui->spinPixelsX->setValue(rescaledImage.volume().width());
+  ui->spinPixelsY->setValue(rescaledImage.volume().height());
+  updateVoxelSize();
 }
 
 static int distance(QRgb a, QRgb b) {
@@ -231,29 +224,33 @@ static int distance(QRgb a, QRgb b) {
   return dr * dr + dg * dg + db * db;
 }
 
-static void reduceImageToTheseColours(QImage &image,
+static void reduceImageToTheseColours(sme::common::ImageStack &images,
                                       const QVector<QRgb> &colorTable) {
-  // map each index in image colorTable to index of nearest color in colorTable
-  auto nOld{static_cast<int>(image.colorTable().size())};
-  QVector<int> newIndex(nOld, 0);
-  for (int iOld = 0; iOld < nOld; ++iOld) {
-    int dist{std::numeric_limits<int>::max()};
-    for (int iNew = 0; iNew < colorTable.size(); ++iNew) {
-      if (auto d{distance(image.color(iOld), colorTable.at(iNew))}; d < dist) {
-        dist = d;
-        newIndex[iOld] = iNew;
+  for (auto &image : images) {
+    // map each index in image colorTable to index of nearest color in
+    // colorTable
+    auto nOld{static_cast<int>(image.colorTable().size())};
+    QVector<int> newIndex(nOld, 0);
+    for (int iOld = 0; iOld < nOld; ++iOld) {
+      int dist{std::numeric_limits<int>::max()};
+      for (int iNew = 0; iNew < colorTable.size(); ++iNew) {
+        if (auto d{distance(image.color(iOld), colorTable.at(iNew))};
+            d < dist) {
+          dist = d;
+          newIndex[iOld] = iNew;
+        }
       }
     }
-  }
-  // set each pixel to the corresponding new index
-  for (int x = 0; x < image.width(); ++x) {
-    for (int y = 0; y < image.height(); ++y) {
-      int iOld{static_cast<int>(image.pixelIndex(x, y))};
-      image.setPixel(x, y, static_cast<QRgb>(newIndex[iOld]));
+    // set each pixel to the corresponding new index
+    for (int x = 0; x < image.width(); ++x) {
+      for (int y = 0; y < image.height(); ++y) {
+        int iOld{static_cast<int>(image.pixelIndex(x, y))};
+        image.setPixel(x, y, static_cast<QRgb>(newIndex[iOld]));
+      }
     }
+    // update image colorTable to the new one
+    image.setColorTable(colorTable);
   }
-  // update image colorTable to the new one
-  image.setColorTable(colorTable);
 }
 
 void DialogGeometryImage::btnSelectColours_clicked() {
@@ -276,8 +273,9 @@ void DialogGeometryImage::btnResetColours_clicked() {
   alteredColours = false;
   selectingColours = false;
   enableWidgets(true);
-  coloredImage = toIndexedImageNoAlpha(originalImage);
-  colorTable = coloredImage.colorTable();
+  coloredImage = originalImage;
+  coloredImage.convertToIndexed();
+  colorTable = coloredImage[0].colorTable();
   updateColours();
   spinPixelsX_valueChanged(ui->spinPixelsX->value());
 }

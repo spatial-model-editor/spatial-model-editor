@@ -8,7 +8,7 @@ static void model_ImageMembranePixels(benchmark::State &state) {
   T data;
   model::ImageMembranePixels imageMembranePixels;
   for (auto _ : state) {
-    imageMembranePixels = model::ImageMembranePixels(data.img);
+    imageMembranePixels = model::ImageMembranePixels(data.imgs);
   }
 }
 

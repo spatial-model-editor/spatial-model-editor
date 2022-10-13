@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include "sme/model.hpp"
 #include <QLabel>
 #include <QMainWindow>
@@ -37,7 +38,7 @@ private:
   // offer user to load a valid one if not
   bool isValidModel();
   bool isValidModelAndGeometryImage();
-  void importGeometryImage(const QImage &image);
+  void importGeometryImage(const sme::common::ImageStack &image);
   void tabMain_currentChanged(int index);
   TabGeometry *tabGeometry;
   TabSpecies *tabSpecies;
@@ -81,7 +82,7 @@ private:
   void actionSimulation_options_triggered();
   void action_Meshing_options_triggered();
 
-  void lblGeometry_mouseOver(QPoint point);
+  void lblGeometry_mouseOver(const sme::common::Voxel &voxel);
   void spinGeometryZoom_valueChanged(int value);
 
   void dragEnterEvent(QDragEnterEvent *event) override;

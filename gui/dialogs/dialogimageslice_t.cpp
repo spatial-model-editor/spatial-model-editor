@@ -9,8 +9,9 @@ using namespace sme::test;
 
 TEST_CASE("DialogImageSlice",
           "[gui/dialogs/imageslice][gui/dialogs][gui][imageslice]") {
-  QImage imgGeometry(100, 50, QImage::Format_ARGB32_Premultiplied);
-  QVector<QImage> imgs(5, QImage(100, 50, QImage::Format_ARGB32_Premultiplied));
+  sme::common::ImageStack imgGeometry({100, 50, 1},
+                                      QImage::Format_ARGB32_Premultiplied);
+  QVector<sme::common::ImageStack> imgs(5, imgGeometry);
   QRgb col1 = 0xffa34f6c;
   QRgb col2 = 0xff123456;
   for (auto &img : imgs) {
@@ -29,7 +30,7 @@ TEST_CASE("DialogImageSlice",
   SECTION("mouse moves, text changes") {
     QImage slice = dia.getSlicedImage();
     REQUIRE(slice.width() == imgs.size());
-    REQUIRE(slice.height() == imgs[0].height());
+    REQUIRE(slice.height() == imgs[0][0].height());
     REQUIRE(slice.pixel(1, 35) == col1);
     REQUIRE(slice.pixel(2, 49) == col1);
     REQUIRE(slice.pixel(3, 12) == col2);
@@ -58,7 +59,7 @@ TEST_CASE("DialogImageSlice",
     dia.exec();
     QImage slice = dia.getSlicedImage();
     REQUIRE(slice.width() == imgs.size());
-    REQUIRE(slice.height() == imgs[0].width());
+    REQUIRE(slice.height() == imgs[0][0].width());
     REQUIRE(slice.pixel(1, 75) == col1);
     REQUIRE(slice.pixel(2, 28) == col1);
     REQUIRE(slice.pixel(3, 99) == col2);
@@ -70,7 +71,8 @@ TEST_CASE("DialogImageSlice",
     dia.exec();
     QImage slice = dia.getSlicedImage();
     REQUIRE(slice.width() == imgs.size());
-    REQUIRE(slice.height() == std::max(imgs[0].height(), imgs[0].width()));
+    REQUIRE(slice.height() ==
+            std::max(imgs[0][0].height(), imgs[0][0].width()));
     REQUIRE(slice.pixel(1, 75) == col1);
     REQUIRE(slice.pixel(2, 28) == col1);
     REQUIRE(slice.pixel(3, 99) == col2);
@@ -93,6 +95,6 @@ TEST_CASE("DialogImageSlice",
     REQUIRE(mwt2.getResult() == "QFileDialog::AcceptSave");
     QImage img("tmpdslice.png");
     REQUIRE(img.width() == imgs.size());
-    REQUIRE(img.height() == imgs[0].height());
+    REQUIRE(img.height() == imgs[0][0].height());
   }
 }

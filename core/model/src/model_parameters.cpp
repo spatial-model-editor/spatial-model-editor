@@ -130,9 +130,8 @@ static SpatialCoordinates importSpatialCoordinates(libsbml::Model *model) {
   }
   zparam->setUnits(model->getLengthUnits());
   zparam->setValue(0);
-  // todo: also add z here:
-  //  s.z.id = zparam->getId();
-  //  s.z.name = zparam->getName();
+  s.z.id = zparam->getId();
+  s.z.name = zparam->getName();
   return s;
 }
 

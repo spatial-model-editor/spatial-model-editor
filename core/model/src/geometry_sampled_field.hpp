@@ -3,6 +3,7 @@
 
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include <QImage>
 #include <QRgb>
 #include <string>
@@ -16,7 +17,7 @@ class SampledFieldGeometry;
 namespace sme::model {
 
 struct GeometrySampledField {
-  QImage image;
+  std::vector<QImage> images;
   std::vector<std::pair<std::string, QRgb>> compartmentIdColourPairs;
 };
 
@@ -28,6 +29,6 @@ GeometrySampledField importGeometryFromSampledField(
     const std::vector<QRgb> &importedSampledFieldColours);
 
 void exportSampledFieldGeometry(libsbml::Geometry *geom,
-                                const QImage &compartmentImage);
+                                const common::ImageStack &compartmentImages);
 
 } // namespace sme::model

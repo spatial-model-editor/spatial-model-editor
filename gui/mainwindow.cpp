@@ -97,6 +97,7 @@ static QLabel *makeStatusBarPermanentMessage(QWidget *parent) {
 MainWindow::MainWindow(const QString &filename, QWidget *parent)
     : QMainWindow(parent), ui{std::make_unique<Ui::MainWindow>()} {
   ui->setupUi(this);
+  ui->lblGeometry->setZSlider(ui->slideGeometryZIndex);
   Q_INIT_RESOURCE(resources);
 
   statusBarPermanentMessage = makeStatusBarPermanentMessage(this);
@@ -486,7 +487,7 @@ void MainWindow::actionGeometry_from_image_triggered() {
     return;
   }
   if (auto img{getImageFromUser(this, "Import geometry from image")};
-      !img.isNull()) {
+      !img.empty()) {
     importGeometryImage(img);
   }
 }
@@ -498,17 +499,17 @@ void MainWindow::menuExample_geometry_image_triggered(const QAction *action) {
   QString filename =
       QString(":/geometry/%1.png").arg(action->text().remove(0, 1));
   QImage img(filename);
-  importGeometryImage(img);
+  importGeometryImage(sme::common::ImageStack({img}));
 }
 
-void MainWindow::importGeometryImage(const QImage &image) {
+void MainWindow::importGeometryImage(const sme::common::ImageStack &image) {
   QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   tabSimulate->reset();
-  model.getGeometry().importGeometryFromImage(image, false);
+  model.getGeometry().importGeometryFromImages(image, false);
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
-  // set default pixel width in case user doesn't set image physical size
-  model.getGeometry().setPixelWidth(1.0);
+  // set default voxel size in case user doesn't set image physical volume
+  model.getGeometry().setVoxelSize({1.0, 1.0, 1.0});
   enableTabs();
   QGuiApplication::restoreOverrideCursor();
   actionEdit_geometry_image_triggered();
@@ -519,7 +520,7 @@ void MainWindow::actionSet_model_units_triggered() {
     return;
   }
   sme::model::Unit oldLengthUnit{model.getUnits().getLength()};
-  double oldPixelWidth{model.getGeometry().getPixelWidth()};
+  auto oldVoxelSize{model.getGeometry().getVoxelSize()};
   DialogUnits dialog(model.getUnits());
   if (dialog.exec() == QDialog::Accepted) {
     model.getUnits().setTimeIndex(dialog.getTimeUnitIndex());
@@ -527,8 +528,8 @@ void MainWindow::actionSet_model_units_triggered() {
     model.getUnits().setVolumeIndex(dialog.getVolumeUnitIndex());
     model.getUnits().setAmountIndex(dialog.getAmountUnitIndex());
     // rescale pixelsize to match new units
-    model.getGeometry().setPixelWidth(sme::model::rescale(
-        oldPixelWidth, oldLengthUnit, model.getUnits().getLength()));
+    model.getGeometry().setVoxelSize(sme::model::rescale(
+        oldVoxelSize, oldLengthUnit, model.getUnits().getLength()));
     enableTabs();
   }
 }
@@ -537,23 +538,21 @@ void MainWindow::actionEdit_geometry_image_triggered() {
   if (!isValidModelAndGeometryImage()) {
     return;
   }
-  DialogGeometryImage dialog(
-      model.getGeometry().getImage(), model.getGeometry().getPixelWidth(),
-      model.getGeometry().getPixelDepth(), model.getUnits());
+  DialogGeometryImage dialog(model.getGeometry().getImages(),
+                             model.getGeometry().getVoxelSize(),
+                             model.getUnits());
   if (dialog.exec() == QDialog::Accepted) {
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    double pixelDepth{dialog.getPixelDepth()};
-    SPDLOG_INFO("Set new pixel depth = {}", pixelDepth);
-    model.getGeometry().setPixelDepth(pixelDepth);
-    double pixelWidth{dialog.getPixelWidth()};
-    SPDLOG_INFO("Set new pixel width = {}", pixelWidth);
-    model.getGeometry().setPixelWidth(pixelWidth);
+    auto voxelSize{dialog.getVoxelSize()};
+    SPDLOG_INFO("Set new voxel volume {}x{}x{}", voxelSize.width(),
+                voxelSize.height(), voxelSize.depth());
+    model.getGeometry().setVoxelSize(voxelSize);
     tabSimulate->reset();
     if (dialog.imageSizeAltered() || dialog.imageColoursAltered()) {
       SPDLOG_INFO("Importing altered geometry image");
       bool keepColourAssignments{!dialog.imageColoursAltered()};
-      model.getGeometry().importGeometryFromImage(dialog.getAlteredImage(),
-                                                  keepColourAssignments);
+      model.getGeometry().importGeometryFromImages(dialog.getAlteredImage(),
+                                                   keepColourAssignments);
       ui->tabMain->setCurrentIndex(0);
       tabMain_currentChanged(0);
     }
@@ -584,7 +583,10 @@ void MainWindow::actionFinalize_non_spatial_import_triggered() {
         wiz.getReactionRescalings());
   } else {
     // reset depth to previous value
-    model.getGeometry().setPixelDepth(wiz.getInitialPixelDepth());
+    // todo: revisit this: probably broken
+    const auto vs{model.getGeometry().getVoxelSize()};
+    model.getGeometry().setVoxelSize(
+        {vs.width(), vs.height(), wiz.getInitialPixelDepth()});
   }
 }
 
@@ -718,11 +720,11 @@ bool MainWindow::isValidModelAndGeometryImage() {
   return false;
 }
 
-void MainWindow::lblGeometry_mouseOver(QPoint point) {
+void MainWindow::lblGeometry_mouseOver(const sme::common::Voxel &voxel) {
   if (!model.getGeometry().getHasImage()) {
     return;
   }
-  statusBar()->showMessage(model.getGeometry().getPhysicalPointAsString(point));
+  statusBar()->showMessage(model.getGeometry().getPhysicalPointAsString(voxel));
 }
 
 void MainWindow::spinGeometryZoom_valueChanged(int value) {
