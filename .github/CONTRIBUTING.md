@@ -22,19 +22,10 @@ Download the latest static libs and copy them to `/opt/smelibs`:
 sudo ./ext/getdeps.sh
 ```
 
-Make sure you have the necessary documents installed.
+Make sure you have the necessary libraries installed, for example on Ubuntu:
 
 ```
-sudo apt-get install -yy \
-    ccache \
-    xvfb \
-    jwm \
-    lcov \
-    clang-14 \
-    llvm-14
-```
-```
-sudo apt-get install -yy \
+sudo apt-get install \
     libglu1-mesa-dev \
     libx11-dev \
     libx11-xcb-dev \
