@@ -69,4 +69,14 @@ std::unique_ptr<libsbml::SBMLDocument> toSbmlDoc(model::Model &model) {
       libsbml::readSBMLFromString(xml.c_str())};
 }
 
+void createBinaryFile(const QString &test_resource_filename,
+                      const QString &output_filename) {
+  QFile fIn(QString(":/test/%1").arg(test_resource_filename));
+  fIn.open(QIODevice::ReadOnly);
+  auto data{fIn.readAll()};
+  QFile fOut(output_filename);
+  fOut.open(QIODevice::WriteOnly);
+  fOut.write(data);
+}
+
 } // namespace sme::test

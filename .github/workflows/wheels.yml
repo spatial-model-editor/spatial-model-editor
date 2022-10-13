@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CIBUILDWHEEL_VERSION: 2.9.0
+  CIBUILDWHEEL_VERSION: 2.11.0
   CIBW_TEST_COMMAND: 'python -m unittest discover -v -s {project}/sme/test'
   CIBW_BUILD_VERBOSITY: 3
   SME_BUILD_CORE: 'false'
@@ -27,8 +27,8 @@ jobs:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.08.12
-      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.08.12
+      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.10.12
+      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.10.12
       CIBW_SKIP: '*-manylinux_i686 *-musllinux* pp39-manylinux_x86_64'
       CIBW_ENVIRONMENT: 'SME_BUILD_CORE=off'
       CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'

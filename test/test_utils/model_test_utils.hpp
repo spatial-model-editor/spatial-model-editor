@@ -2,6 +2,7 @@
 
 #include "sme/mesh.hpp"
 #include "sme/model.hpp"
+#include <QFile>
 #include <QString>
 #include <memory>
 #include <sbml/SBMLTypes.h>
@@ -31,5 +32,8 @@ std::unique_ptr<libsbml::SBMLDocument> getExampleSbmlDoc(Mod exampleModel);
 std::unique_ptr<libsbml::SBMLDocument> getTestSbmlDoc(const QString &filename);
 
 std::unique_ptr<libsbml::SBMLDocument> toSbmlDoc(model::Model &model);
+
+void createBinaryFile(const QString &test_resource_filename,
+                      const QString &output_filename);
 
 } // namespace sme::test

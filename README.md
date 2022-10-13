@@ -86,6 +86,10 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [pagmo](https://esa.github.io/pagmo2/index.html) - license: [GPL](https://github.com/esa/pagmo2/blob/master/COPYING.gpl3)
 
+- [zipper](https://github.com/fbergmann/zipper) - license: [MIT](https://github.com/fbergmann/zipper/blob/master/LICENSE.md)
+
+- [LibCombine](https://github.com/sbmlteam/libcombine) - license: [BSD](https://github.com/sbmlteam/libCombine/blob/master/LICENSE.md)
+
 ## Licensing Note
 
 The source code in this repository is released under the MIT license, which is a permissive

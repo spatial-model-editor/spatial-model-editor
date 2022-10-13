@@ -12,6 +12,7 @@
 #include <gmp.h>
 #include <mpfr.h>
 #include <muParserDef.h>
+#include <omex/common/libcombine-version.h>
 #include <oneapi/tbb/version.h>
 #include <opencv2/opencv.hpp>
 #include <pagmo/config.hpp>
@@ -103,6 +104,14 @@ DialogAbout::DialogAbout(QWidget *parent)
                        ZLIB_VER_MINOR, ZLIB_VER_REVISION));
   libraries.append(dep("bzip2", "https://www.sourceware.org/bzip2",
                        BZ_API(BZ2_bzlibVersion)()));
+  libraries.append(dep("pagmo", "https://esa.github.io/pagmo2",
+                       PAGMO_VERSION_MAJOR, PAGMO_VERSION_MINOR,
+                       PAGMO_VERSION_PATCH));
+  libraries.append(
+      dep("zipper", "https://github.com/fbergmann/zipper", "master"));
+  libraries.append(dep("libCombine", "https://github.com/sbmlteam/libCombine",
+                       libcombine::getLibCombineDottedVersion()));
+
   libraries.append("</ul>");
   ui->lblLibraries->setText(libraries);
 }

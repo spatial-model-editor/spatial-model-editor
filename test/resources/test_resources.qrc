@@ -20,7 +20,8 @@
         <file>models/single-pixel-meshing.xml</file>
         <file>models/small-single-compartment-diffusion.xml</file>
         <file>models/very-simple-model-invalid-reaction-location.xml</file>
-	<file>models/all_SpatialImage_SpatialUseCompression.xml</file>
+        <file>models/all_SpatialImage_SpatialUseCompression.xml</file>
+        <file>archives/liver-simplified.omex</file>
         <file>geometry/gt1.png</file>
         <file>geometry/gt2.png</file>
         <file>geometry/gt3.png</file>
