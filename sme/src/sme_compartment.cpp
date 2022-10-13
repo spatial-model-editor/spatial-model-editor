@@ -29,14 +29,14 @@ void pybindCompartment(pybind11::module &m) {
                     )")
       .def_readonly("geometry_mask", &Compartment::geometry_mask,
                     R"(
-                    numpy.ndarray: an pixel mask of the compartment geometry
+                    numpy.ndarray: a voxel mask of the compartment geometry
 
                     An array of boolean values, where
-                    ``geometry_mask[y][x] = True``
-                    if the pixel at point (x,y) is part of this compartment
+                    ``geometry_mask[z][y][x] = True``
+                    if the voxel at point (x,y,z) is part of this compartment
 
                     Examples:
-                        the mask is a 2d (height x width) array of bool:
+                        the mask is a 3d (depth x height x width) array of bool:
 
                         >>> import sme
                         >>> model = sme.open_example_model()
@@ -46,12 +46,12 @@ void pybindCompartment(pybind11::module &m) {
                         >>> mask.dtype
                         dtype('bool')
                         >>> mask.shape
-                        (100, 100)
+                        (1, 100, 100)
 
-                        the mask can be displayed using matplotlib:
+                        the first z-slice of the mask can be displayed using matplotlib:
 
                         >>> import matplotlib.pyplot as plt
-                        >>> imgplot = plt.imshow(mask, interpolation='none')
+                        >>> imgplot = plt.imshow(mask[0], interpolation='none')
                     )")
       .def("__repr__",
            [](const Compartment &a) {
@@ -77,7 +77,7 @@ Compartment::Compartment(model::Model *sbmlDocWrapper, const std::string &sId)
 
 void Compartment::updateMask() {
   geometry_mask = toPyImageMask(
-      s->getCompartments().getCompartment(id.c_str())->getCompartmentImage());
+      s->getCompartments().getCompartment(id.c_str())->getCompartmentImages());
 }
 
 std::string Compartment::getName() const {

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include <QImage>
 #include <string>
 #include <vector>
@@ -17,7 +18,7 @@ public:
   getConcentrations(std::size_t compartmentIndex) const = 0;
   [[nodiscard]] virtual std::size_t getConcentrationPadding() const = 0;
   [[nodiscard]] virtual const std::string &errorMessage() const = 0;
-  [[nodiscard]] virtual const QImage &errorImage() const = 0;
+  [[nodiscard]] virtual const common::ImageStack &errorImages() const = 0;
   virtual void setStopRequested(bool stop) = 0;
 };
 

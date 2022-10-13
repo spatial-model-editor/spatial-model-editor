@@ -117,7 +117,7 @@ Optimization::Optimization(sme::model::Model &model) {
     return;
   }
   optConstData = std::make_unique<sme::simulate::OptConstData>();
-  optConstData->imageSize = model.getGeometry().getImage().size();
+  optConstData->imageSize = model.getGeometry().getImages().volume();
   optConstData->xmlModel = model.getXml().toStdString();
   optConstData->optimizeOptions = model.getOptimizeOptions();
   optConstData->optTimesteps = getOptTimesteps(options);
@@ -231,13 +231,13 @@ bool Optimization::setBestResults(double fitness,
   return false;
 }
 
-QImage Optimization::getTargetImage(std::size_t index) const {
-  return common::toGrayscaleIntensityImage(
+common::ImageStack Optimization::getTargetImage(std::size_t index) const {
+  return common::ImageStack(
       optConstData->imageSize,
       optConstData->optimizeOptions.optCosts[index].targetValues);
 }
 
-std::optional<QImage>
+std::optional<common::ImageStack>
 Optimization::getUpdatedBestResultImage(std::size_t index) {
   std::scoped_lock lock{bestResultsMutex};
   if (bestResults.values.empty()) {
@@ -246,9 +246,9 @@ Optimization::getUpdatedBestResultImage(std::size_t index) {
   if (bestResults.imageChanged || index != bestResults.imageIndex) {
     bestResults.imageChanged = false;
     bestResults.imageIndex = index;
-    return common::toGrayscaleIntensityImage(
-        optConstData->imageSize, bestResults.values[index],
-        optConstData->maxTargetValues[index]);
+    return common::ImageStack(optConstData->imageSize,
+                              bestResults.values[index],
+                              optConstData->maxTargetValues[index]);
   }
   return {};
 }

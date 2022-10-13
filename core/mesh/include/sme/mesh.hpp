@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include "sme/mesh_types.hpp"
 #include <QImage>
 #include <QPointF>
@@ -69,8 +70,8 @@ public:
    */
   explicit Mesh(const QImage &image, std::vector<std::size_t> maxPoints = {},
                 std::vector<std::size_t> maxTriangleArea = {},
-                double pixelWidth = 1.0,
-                const QPointF &originPoint = QPointF(0, 0),
+                const common::VolumeF &voxelSize = {1.0, 1.0, 1.0},
+                const common::VoxelF &originPoint = {0.0, 0.0, 0.0},
                 const std::vector<QRgb> &compartmentColours = {},
                 std::size_t boundarySimplificationType = 0);
   ~Mesh();
@@ -154,7 +155,7 @@ public:
   [[nodiscard]] const std::vector<std::vector<QPointF>> &
   getCompartmentInteriorPoints() const;
   /**
-   * @brief The physical size and origin to use
+   * @brief The physical volume and origin to use
    *
    * The boundary lines and mesh use pixel units internally, and are rescaled
    * to physical values using the supplied physical origin and pixel width.
@@ -195,7 +196,7 @@ public:
    * @param[in] size the desired size of the image
    * @param[in] boldBoundaryIndex the boundary line to emphasize in the image
    */
-  [[nodiscard]] std::pair<QImage, QImage>
+  [[nodiscard]] std::pair<common::ImageStack, common::ImageStack>
   getBoundariesImages(const QSize &size, std::size_t boldBoundaryIndex) const;
   /**
    * @brief An image of the mesh
@@ -208,7 +209,7 @@ public:
    * @param[in] compartmentIndex the compartment to emphasize in the image
    * @returns a pair of images: mesh, compartment index
    */
-  [[nodiscard]] std::pair<QImage, QImage>
+  [[nodiscard]] std::pair<common::ImageStack, common::ImageStack>
   getMeshImages(const QSize &size, std::size_t compartmentIndex) const;
   /**
    * @brief The mesh in GMSH format

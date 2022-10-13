@@ -37,16 +37,17 @@ static void testFillMissingByDilation(std::vector<double> &arr, int w, int h) {
 
 static std::vector<double>
 testGetConcentrationImageArray(const geometry::Field &f) {
-  const auto &img = f.getCompartment()->getCompartmentImage();
+  const auto &img = f.getCompartment()->getCompartmentImages()[0];
   int size = img.width() * img.height();
   // NOTE: order of concentration array is [ (x=0,y=0), (x=1,y=0), ... ]
   // NOTE: (0,0) point is at bottom-left
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
   constexpr double invalidPixelValue{-1.0};
   std::vector<double> arr(static_cast<std::size_t>(size), invalidPixelValue);
-  for (std::size_t i = 0; i < f.getCompartment()->nPixels(); ++i) {
-    const auto &point = f.getCompartment()->getPixel(i);
-    int arrayIndex = point.x() + img.width() * (img.height() - 1 - point.y());
+  for (std::size_t i = 0; i < f.getCompartment()->nVoxels(); ++i) {
+    const auto &voxel{f.getCompartment()->getVoxel(i)};
+    int arrayIndex =
+        voxel.p.x() + img.width() * (img.height() - 1 - voxel.p.y());
     arr[static_cast<std::size_t>(arrayIndex)] = f.getConcentration()[i];
   }
   testFillMissingByDilation(arr, img.width(), img.height());
@@ -59,19 +60,21 @@ TEST_CASE("Geometry: Compartments and Fields",
     QImage img(1, 1, QImage::Format_RGB32);
     auto col = qRgb(12, 243, 154);
     img.setPixel(0, 0, col);
-    geometry::Compartment comp("comp", img, col);
-    REQUIRE(comp.getCompartmentImage().size() == img.size());
-    REQUIRE(comp.nPixels() == 1);
-    REQUIRE(comp.getPixel(0) == QPoint(0, 0));
+    geometry::Compartment comp("comp", {img}, col);
+    REQUIRE(comp.getCompartmentImages().volume().depth() == 1);
+    REQUIRE(comp.getCompartmentImages()[0].size() == img.size());
+    REQUIRE(comp.nVoxels() == 1);
+    REQUIRE(comp.getVoxel(0).p == QPoint{0, 0});
+    REQUIRE(comp.getVoxel(0).z == 0);
 
     auto specCol = qRgb(123, 12, 1);
     geometry::Field field(&comp, "spec1", 1.0, specCol);
     field.setUniformConcentration(1.3);
     REQUIRE(field.getConcentration().size() == 1);
     REQUIRE(field.getConcentration()[0] == dbl_approx(1.3));
-    QImage imgConc = field.getConcentrationImage();
-    REQUIRE(imgConc.size() == img.size());
-    REQUIRE(imgConc.pixelColor(0, 0) == specCol);
+    const auto imgConcs{field.getConcentrationImages()};
+    REQUIRE(imgConcs[0].size() == img.size());
+    REQUIRE(imgConcs[0].pixelColor(0, 0) == specCol);
 
     field.importConcentration({1.23});
 
@@ -86,12 +89,13 @@ TEST_CASE("Geometry: Compartments and Fields",
     // set zero concentration, get image
     // (must avoid dividing by zero in normalisation)
     field.setUniformConcentration(0.0);
-    REQUIRE(field.getConcentrationImage().pixel(0, 0) == qRgba(0, 0, 0, 255));
+    REQUIRE(field.getConcentrationImages()[0].pixel(0, 0) ==
+            qRgba(0, 0, 0, 255));
     a = field.getConcentrationImageArray();
     REQUIRE(a.size() == 1);
     REQUIRE(a[0] == dbl_approx(0));
 
-    // conc array size must match image size
+    // conc array size must match image volume
     REQUIRE_THROWS(field.importConcentration({1.0, 2.0}));
     REQUIRE_THROWS(field.importConcentration({}));
   }
@@ -102,11 +106,11 @@ TEST_CASE("Geometry: Compartments and Fields",
     img.fill(colBG);
     img.setPixel(3, 3, col);
     img.setPixel(3, 4, col);
-    geometry::Compartment comp("comp", img, col);
-    REQUIRE(comp.getCompartmentImage().size() == img.size());
-    REQUIRE(comp.nPixels() == 2);
-    REQUIRE(comp.getPixel(0) == QPoint(3, 3));
-    REQUIRE(comp.getPixel(1) == QPoint(3, 4));
+    geometry::Compartment comp("comp", {img}, col);
+    REQUIRE(comp.getCompartmentImages()[0].size() == img.size());
+    REQUIRE(comp.nVoxels() == 2);
+    REQUIRE(comp.getVoxel(0).p == QPoint(3, 3));
+    REQUIRE(comp.getVoxel(1).p == QPoint(3, 4));
 
     geometry::Field field(&comp, "s1");
     field.setUniformConcentration(1.3);
@@ -157,7 +161,7 @@ TEST_CASE("Geometry: Compartments and Fields",
     REQUIRE(a2[26] == dbl_approx(0.0));
     REQUIRE(a2.back() == dbl_approx(0.0));
 
-    // conc array size must match image size
+    // conc array size must match image volume
     REQUIRE_THROWS(field.importConcentration({1.0, 2.0}));
     REQUIRE_THROWS(field.importConcentration({}));
   }
@@ -168,15 +172,15 @@ TEST_CASE("Geometry: Compartments and Fields",
     img.fill(colBG);
     img.setPixel(3, 3, col);
     img.setPixel(3, 4, col);
-    geometry::Compartment comp1("comp1", img, colBG);
-    geometry::Compartment comp2("comp2", img, col);
-    REQUIRE(comp1.nPixels() == 40);
-    REQUIRE(comp2.nPixels() == 2);
+    geometry::Compartment comp1("comp1", {img}, colBG);
+    geometry::Compartment comp2("comp2", {img}, col);
+    REQUIRE(comp1.nVoxels() == 40);
+    REQUIRE(comp2.nVoxels() == 2);
 
     geometry::Field field(&comp1, "field");
     REQUIRE(field.getCompartment() == &comp1);
     field.setUniformConcentration(2.0);
-    REQUIRE(field.getConcentration().size() == comp1.nPixels());
+    REQUIRE(field.getConcentration().size() == comp1.nVoxels());
 
     // changing compartment to the same one is a no-op
     field.setCompartment(&comp1);
@@ -184,7 +188,7 @@ TEST_CASE("Geometry: Compartments and Fields",
     // changing compartment: concentration reset to zero
     field.setCompartment(&comp2);
     REQUIRE(field.getCompartment() == &comp2);
-    REQUIRE(field.getConcentration().size() == comp2.nPixels());
+    REQUIRE(field.getConcentration().size() == comp2.nVoxels());
     REQUIRE(field.getConcentration()[0] == dbl_approx(0.0));
     REQUIRE(field.getConcentration()[1] == dbl_approx(0.0));
   }
@@ -193,19 +197,19 @@ TEST_CASE("Geometry: Compartments and Fields",
     QRgb col0 = img.pixel(0, 0);
     QRgb col1 = img.pixel(35, 20);
     QRgb col2 = img.pixel(40, 50);
-    geometry::Compartment comp0("comp0", img, col0);
-    geometry::Compartment comp1("comp1", img, col1);
-    geometry::Compartment comp2("comp2", img, col2);
+    geometry::Compartment comp0("comp0", {img}, col0);
+    geometry::Compartment comp1("comp1", {img}, col1);
+    geometry::Compartment comp2("comp2", {img}, col2);
     geometry::Field field0(&comp0, "field0");
     geometry::Field field1(&comp1, "field1");
     geometry::Field field2(&comp2, "field2");
-    for (std::size_t i = 0; i < field0.getCompartment()->nPixels(); ++i) {
+    for (std::size_t i = 0; i < field0.getCompartment()->nVoxels(); ++i) {
       field0.setConcentration(i, static_cast<double>(i) * 0.34);
     }
-    for (std::size_t i = 0; i < field1.getCompartment()->nPixels(); ++i) {
+    for (std::size_t i = 0; i < field1.getCompartment()->nVoxels(); ++i) {
       field1.setConcentration(i, static_cast<double>(i) * 0.66);
     }
-    for (std::size_t i = 0; i < field2.getCompartment()->nPixels(); ++i) {
+    for (std::size_t i = 0; i < field2.getCompartment()->nVoxels(); ++i) {
       field2.setConcentration(i, static_cast<double>(i) * 0.31 + 2.2);
     }
     auto a0{field0.getConcentrationImageArray()};

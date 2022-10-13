@@ -7,7 +7,7 @@
 #include <QFileDialog>
 #include <algorithm>
 
-DialogExport::DialogExport(const QVector<QImage> &images,
+DialogExport::DialogExport(const QVector<sme::common::ImageStack> &images,
                            const PlotWrapper *plotWrapper,
                            sme::model::Model &model,
                            const sme::simulate::Simulation &simulation,
@@ -69,7 +69,8 @@ void DialogExport::saveImage() {
   if (filename.right(4) != ".png") {
     filename.append(".png");
   }
-  imgs.at(ui->cmbTimepoint->currentIndex()).save(filename);
+  // todo: how do we save a stack of images? for now just save first z=0 slice
+  imgs.at(ui->cmbTimepoint->currentIndex())[0].save(filename);
   accept();
 }
 
@@ -80,7 +81,8 @@ void DialogExport::saveImages() {
     reject();
   }
   for (int i = 0; i < imgs.size(); ++i) {
-    imgs.at(i).save(QDir(dir).filePath(QString("img%1.png").arg(i)));
+    // todo: how do we save a stack of images? for now just save first z=0 slice
+    imgs.at(i)[0].save(QDir(dir).filePath(QString("img%1.png").arg(i)));
   }
   accept();
 }

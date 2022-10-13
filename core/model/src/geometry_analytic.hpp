@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include <QImage>
 
 namespace libsbml {
@@ -16,6 +17,7 @@ struct GeometrySampledField;
 
 GeometrySampledField
 importGeometryFromAnalyticGeometry(const libsbml::Model *model,
-                                   const QPointF &origin, const QSizeF &size);
+                                   const common::VoxelF &physicalOrigin,
+                                   const common::VolumeF &physicalSize);
 
 } // namespace sme::model

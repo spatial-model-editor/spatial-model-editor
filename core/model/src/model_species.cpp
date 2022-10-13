@@ -247,9 +247,17 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
     } else {
       sbmlAnnotation->speciesColours[id.toStdString()] = colour;
     }
-    auto &field =
-        fields.emplace_back(compartments->getCompartment(compartmentIds[i]),
-                            ids[i].toStdString(), 1.0, colour);
+    const auto *speciesCompartment{
+        compartments->getCompartment(compartmentIds[i])};
+    if (speciesCompartment == nullptr) {
+      SPDLOG_ERROR(
+          "Species '{}' compartment '{}' not found in ModelCompartments",
+          id.toStdString(), compartmentIds[i].toStdString());
+      throw std::runtime_error("Species located on membranes between "
+                               "compartments are not yet supported.");
+    }
+    auto &field = fields.emplace_back(speciesCompartment, ids[i].toStdString(),
+                                      1.0, colour);
     const auto *spec = sbmlModel->getSpecies(id.toStdString());
     fields[static_cast<std::size_t>(i)].setUniformConcentration(
         spec->getInitialConcentration());
@@ -553,6 +561,7 @@ void ModelSpecies::setFieldConcAnalytic(
   SPDLOG_INFO("  - inlined expr: {}", inlinedExpr);
   std::string xId{modelParameters->getSpatialCoordinates().x.id};
   std::string yId{modelParameters->getSpatialCoordinates().y.id};
+  std::string zId{modelParameters->getSpatialCoordinates().z.id};
   std::map<const std::string, std::pair<double, bool>> sbmlVars;
   for (const auto &c : modelParameters->getGlobalConstants()) {
     sbmlVars[c.id] = {c.value, false};
@@ -563,6 +572,9 @@ void ModelSpecies::setFieldConcAnalytic(
   auto &yCoordPair = sbmlVars[yId];
   yCoordPair = {0, false};
   double &yCoord = yCoordPair.first;
+  auto &zCoordPair = sbmlVars[zId];
+  zCoordPair = {0, false};
+  double &zCoord = zCoordPair.first;
   for (const auto &[key, val] : substitutions) {
     SPDLOG_INFO("substituting {} -> {}", key, val);
     sbmlVars[key] = {val, false};
@@ -574,16 +586,12 @@ void ModelSpecies::setFieldConcAnalytic(
     return;
   }
   hasUnsavedChanges = true;
-  const auto &origin = modelGeometry->getPhysicalOrigin();
-  double pixelWidth = modelGeometry->getPixelWidth();
-  int imgHeight = field.getCompartment()->getCompartmentImage().height();
-  for (std::size_t i = 0; i < field.getCompartment()->nPixels(); ++i) {
-    // position in pixels (with (0,0) in top-left of image):
-    const auto &point = field.getCompartment()->getPixel(i);
-    // rescale to physical x,y point (with (0,0) in bottom-left):
-    xCoord = origin.x() + pixelWidth * (static_cast<double>(point.x()) + 0.5);
-    int y = imgHeight - 1 - point.y();
-    yCoord = origin.y() + pixelWidth * (static_cast<double>(y) + 0.5);
+  for (std::size_t i = 0; i < field.getCompartment()->nVoxels(); ++i) {
+    const auto &voxel{field.getCompartment()->getVoxel(i)};
+    auto physicalPoint{modelGeometry->getPhysicalPoint(voxel)};
+    xCoord = physicalPoint.p.x();
+    yCoord = physicalPoint.p.y();
+    zCoord = physicalPoint.z;
     double conc = evaluateMathAST(astExpr.get(), sbmlVars, sbmlModel);
     field.setConcentration(i, conc);
   }
@@ -621,8 +629,8 @@ void ModelSpecies::setSampledFieldConcentration(
   SPDLOG_INFO("speciesID: {}", sId);
   removeInitialAssignment(id);
   // sampled field
-  auto *geom = getOrCreateGeometry(sbmlModel);
-  auto *sf = geom->createSampledField();
+  auto *geom{getOrCreateGeometry(sbmlModel)};
+  auto *sf{geom->createSampledField()};
   std::string sfId = id.toStdString() + "_initialConcentration";
   while (!isSpatialIdAvailable(sfId, geom)) {
     sfId.append("_");
@@ -630,12 +638,15 @@ void ModelSpecies::setSampledFieldConcentration(
   sf->setId(sfId);
   SPDLOG_INFO("  - creating SampledField: {}", sf->getId());
   sf->setSamples(concentrationArray);
-  sf->setNumSamples1(modelGeometry->getImage().width());
-  sf->setNumSamples2(modelGeometry->getImage().height());
-  sf->setSamplesLength(modelGeometry->getImage().width() *
-                       modelGeometry->getImage().height());
-  SPDLOG_INFO("  - set samples to {}x{} array", sf->getNumSamples1(),
-              sf->getNumSamples2());
+  sf->setNumSamples1(modelGeometry->getImages().volume().width());
+  sf->setNumSamples2(modelGeometry->getImages().volume().height());
+  sf->setNumSamples3(
+      static_cast<int>(modelGeometry->getImages().volume().depth()));
+  sf->setSamplesLength(static_cast<int>(concentrationArray.size()));
+  SPDLOG_INFO("  - given concentration array with {} elements",
+              concentrationArray.size());
+  SPDLOG_INFO("  - set samples to {}x{}x{} array", sf->getNumSamples1(),
+              sf->getNumSamples2(), sf->getNumSamples3());
   sf->setDataType(libsbml::DataKind_t::SPATIAL_DATAKIND_DOUBLE);
   sf->setInterpolationType(
       libsbml::InterpolationKind_t::SPATIAL_INTERPOLATIONKIND_LINEAR);
@@ -674,9 +685,10 @@ ModelSpecies::getSampledFieldConcentration(const QString &id,
       maskAndInvertY);
 }
 
-QImage ModelSpecies::getConcentrationImage(const QString &id) const {
+common::ImageStack
+ModelSpecies::getConcentrationImages(const QString &id) const {
   auto i = ids.indexOf(id);
-  return fields[static_cast<std::size_t>(i)].getConcentrationImage();
+  return fields[static_cast<std::size_t>(i)].getConcentrationImages();
 }
 
 void ModelSpecies::setColour(const QString &id, QRgb colour) {

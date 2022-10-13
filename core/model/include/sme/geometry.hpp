@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "sme/image_stack.hpp"
+#include "sme/voxel.hpp"
 #include <QImage>
 #include <QPoint>
 #include <QRgb>
@@ -22,43 +24,50 @@ private:
   // indices of nearest neighbours
   std::vector<std::size_t> nn;
   std::string compartmentId;
-  // vector of points that make up compartment
-  std::vector<QPoint> ix;
-  // index of corresponding point for each pixel in array
+  // vector of voxels that make up compartment
+  std::vector<common::Voxel> ix;
+  // index of corresponding point for each voxel in array
   std::vector<std::size_t> arrayPoints;
   QRgb colour{0};
-  QImage image;
+  sme::common::ImageStack images;
 
 public:
   Compartment() = default;
   // create compartment geometry from all pixels in `img` of colour `col`
-  Compartment(std::string compId, const QImage &img, QRgb col);
+  Compartment(std::string compId, const common::ImageStack &imgs, QRgb col);
   [[nodiscard]] const std::string &getId() const;
   [[nodiscard]] QRgb getColour() const;
-  [[nodiscard]] inline const std::vector<QPoint> &getPixels() const {
+  [[nodiscard]] inline const std::vector<common::Voxel> &getVoxels() const {
     return ix;
   }
-  [[nodiscard]] inline const QPoint &getPixel(std::size_t i) const {
+  [[nodiscard]] inline const common::Voxel &getVoxel(std::size_t i) const {
     return ix[i];
   }
-  [[nodiscard]] inline std::size_t nPixels() const { return ix.size(); }
+  [[nodiscard]] inline std::size_t nVoxels() const { return ix.size(); }
   // e.g. ix[up_x[i]] is the +x neighbour of point ix[i]
   // a field stores the concentration at point ix[i] at index i
   // zero flux Neumann bcs: outside neighbour of point on boundary is itself
   [[nodiscard]] inline std::size_t up_x(std::size_t i) const {
-    return nn[4 * i];
+    return nn[6 * i];
   }
   [[nodiscard]] inline std::size_t dn_x(std::size_t i) const {
-    return nn[4 * i + 1];
+    return nn[6 * i + 1];
   }
   [[nodiscard]] inline std::size_t up_y(std::size_t i) const {
-    return nn[4 * i + 2];
+    return nn[6 * i + 2];
   }
   [[nodiscard]] inline std::size_t dn_y(std::size_t i) const {
-    return nn[4 * i + 3];
+    return nn[6 * i + 3];
   }
+  [[nodiscard]] inline std::size_t up_z(std::size_t i) const {
+    return nn[6 * i + 4];
+  }
+  [[nodiscard]] inline std::size_t dn_z(std::size_t i) const {
+    return nn[6 * i + 5];
+  }
+  [[nodiscard]] const common::Volume &getImageSize() const;
   // return a QImage of the compartment geometry
-  [[nodiscard]] const QImage &getCompartmentImage() const;
+  [[nodiscard]] const sme::common::ImageStack &getCompartmentImages() const;
   [[nodiscard]] const std::vector<std::size_t> &getArrayPoints() const;
 };
 
@@ -68,13 +77,14 @@ private:
   std::string id{};
   const Compartment *compA{};
   const Compartment *compB{};
-  QImage image{};
-  const std::vector<std::pair<QPoint, QPoint>> *pointPairs{};
+  sme::common::ImageStack images{};
+  const std::vector<std::pair<common::Voxel, common::Voxel>> *voxelPairs{};
 
 public:
   Membrane() = default;
   Membrane(std::string membraneId, const Compartment *A, const Compartment *B,
-           const std::vector<std::pair<QPoint, QPoint>> *membranePairs);
+           const std::vector<std::pair<common::Voxel, common::Voxel>>
+               *membranePairs);
   [[nodiscard]] const std::string &getId() const;
   void setId(const std::string &membraneId);
   [[nodiscard]] const Compartment *getCompartmentA() const;
@@ -82,7 +92,7 @@ public:
   std::vector<std::pair<std::size_t, std::size_t>> &getIndexPairs();
   [[nodiscard]] const std::vector<std::pair<std::size_t, std::size_t>> &
   getIndexPairs() const;
-  [[nodiscard]] const QImage &getImage() const;
+  [[nodiscard]] const sme::common::ImageStack &getImages() const;
 };
 
 class Field {
@@ -114,9 +124,9 @@ public:
   void setUniformConcentration(double concentration);
   void importConcentration(const std::vector<double> &sbmlConcentrationArray);
   void setConcentration(const std::vector<double> &concentration);
-  [[nodiscard]] QImage getConcentrationImage() const;
-  [[nodiscard]] std::vector<double>
-  getConcentrationImageArray(bool maskAndInvertY = false) const;
+  [[nodiscard]] sme::common::ImageStack getConcentrationImages() const;
+  [[nodiscard]] std::vector<double> getConcentrationImageArray(
+      bool maskAndInvertY = false) const; // todo: -> vector of vectors?
   void setCompartment(const Compartment *comp);
 };
 

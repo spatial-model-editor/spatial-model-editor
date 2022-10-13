@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include <QDialog>
 #include <QImage>
 #include <memory>
@@ -13,7 +14,8 @@ class DialogImage : public QDialog {
 
 public:
   explicit DialogImage(QWidget *parent = nullptr, const QString &title = {},
-                       const QString &message = {}, const QImage &image = {});
+                       const QString &message = {},
+                       const sme::common::ImageStack &image = {});
   ~DialogImage() override;
 
 private:

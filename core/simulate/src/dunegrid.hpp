@@ -64,13 +64,11 @@ makeHostGrid(const mesh::Mesh &mesh) {
   int newVertexCount{0};
   std::vector<std::size_t> numElements;
   // add triangles from each compartment
-  std::size_t compIndex{1};
   for (const auto &triangles : mesh.getTriangleIndices()) {
     numElements.push_back(triangles.size());
     for (const auto &triangle : triangles) {
       insertTriangle(triangle, factory, newVertexIndices, newVertexCount);
     }
-    ++compIndex;
   }
   // add vertices
   std::vector<double> newFlatVertices(

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13...3.25)
+cmake_minimum_required(VERSION 3.13...3.26)
 message(STATUS "CMake version ${CMAKE_VERSION}")
 
 # version number here is embedded in compiled executable
@@ -22,7 +22,7 @@ set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
 # "make test" excludes gui tests & uses all cores
 include(ProcessorCount)
 ProcessorCount(NPROC)
-set(CMAKE_CTEST_ARGUMENTS "-j${NPROC};--progress;-E;gui")
+set(CMAKE_CTEST_ARGUMENTS "-j${NPROC};--progress;--output-on-failure;-E;gui")
 
 find_package(dune-copasi REQUIRED)
 

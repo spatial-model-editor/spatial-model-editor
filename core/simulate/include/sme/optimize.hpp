@@ -1,4 +1,5 @@
 #pragma once
+#include "sme/image_stack.hpp"
 #include "sme/model.hpp"
 #include "sme/optimize_options.hpp"
 #include "sme/simulate.hpp"
@@ -33,7 +34,7 @@ struct OptConstData {
   std::string xmlModel{};
   OptimizeOptions optimizeOptions{};
   std::vector<OptTimestep> optTimesteps{};
-  QSize imageSize{};
+  common::Volume imageSize{};
   std::vector<double> maxTargetValues{};
 };
 
@@ -104,11 +105,11 @@ public:
   /**
    * @brief Get an image of the a target
    */
-  [[nodiscard]] QImage getTargetImage(std::size_t index) const;
+  [[nodiscard]] common::ImageStack getTargetImage(std::size_t index) const;
   /**
    * @brief Get an image of the current best result for a target
    */
-  [[nodiscard]] std::optional<QImage>
+  [[nodiscard]] std::optional<common::ImageStack>
   getUpdatedBestResultImage(std::size_t index);
   /**
    * @brief The number of completed evolve iterations

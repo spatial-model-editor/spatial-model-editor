@@ -12,37 +12,34 @@ class DialogGeometryImage : public QDialog {
   Q_OBJECT
 
 public:
-  explicit DialogGeometryImage(const QImage &image, double pixelWidth,
-                               double pixelDepth,
+  explicit DialogGeometryImage(const sme::common::ImageStack &image,
+                               sme::common::VolumeF voxelSize,
                                const sme::model::ModelUnits &modelUnits,
                                QWidget *parent = nullptr);
   ~DialogGeometryImage() override;
-  [[nodiscard]] double getPixelWidth() const;
-  [[nodiscard]] double getPixelDepth() const;
+  [[nodiscard]] sme::common::VolumeF getVoxelSize() const;
   [[nodiscard]] bool imageSizeAltered() const;
   [[nodiscard]] bool imageColoursAltered() const;
-  [[nodiscard]] const QImage &getAlteredImage() const;
+  [[nodiscard]] const sme::common::ImageStack &getAlteredImage() const;
 
 private:
   std::unique_ptr<Ui::DialogGeometryImage> ui;
-  const QImage &originalImage;
-  QImage coloredImage;
-  QImage rescaledImage;
+  const sme::common::ImageStack &originalImage;
+  sme::common::ImageStack coloredImage;
+  sme::common::ImageStack rescaledImage;
   bool alteredSize{false};
   bool alteredColours{false};
   bool selectingColours{false};
   QVector<QRgb> colorTable;
-  double pixelLocalUnits;
-  double pixelModelUnits;
-  double depthLocalUnits;
-  double depthModelUnits;
+  sme::common::VolumeF voxelLocalUnits;
+  sme::common::VolumeF voxelModelUnits;
   const sme::model::ModelUnits &units;
   QString modelUnitSymbol;
 
-  void updatePixelSize();
+  void updateVoxelSize();
   void updateColours();
   void enableWidgets(bool enable);
-  void lblImage_mouseClicked(QRgb col, QPoint point);
+  void lblImage_mouseClicked(QRgb col, sme::common::Voxel voxel);
   void txtImageWidth_editingFinished();
   void txtImageHeight_editingFinished();
   void txtImageDepth_editingFinished();

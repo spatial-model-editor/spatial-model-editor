@@ -110,7 +110,7 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
   // symengine assumes C locale
   std::locale::global(std::locale::classic());
 
-  // fixed step size simulations
+  // fixed step-size simulations
   double dt = params.simulator_timestep;
   simulate::Options options;
   options.pixel.maxTimestep = dt;

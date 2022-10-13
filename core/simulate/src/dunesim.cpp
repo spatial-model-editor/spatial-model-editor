@@ -59,8 +59,8 @@ void DuneSim::initDuneSimCompartments(
       }
       // duneToSmeSpeciesIndices[i] is now the SME index of the species with
       // Dune index i
-      auto imgSize{comp->getCompartmentImage().size()};
-      auto nPixels{comp->getPixels().size()};
+      auto imgVolume{comp->getCompartmentImages().volume()};
+      auto nPixels{comp->getVoxels().size()};
       SPDLOG_INFO("  - {} pixels", nPixels);
       // todo: don't allocate wasted space for constant species here
       auto nSpecies{speciesNames.size()};
@@ -69,7 +69,7 @@ void DuneSim::initDuneSimCompartments(
           {compartmentName,
            compIndex,
            duneToSmeSpeciesIndices,
-           common::QPointIndexer(imgSize, comp->getPixels()),
+           geometry::VoxelIndexer(imgVolume, comp->getVoxels()),
            comp,
            {},
            {},
@@ -134,8 +134,8 @@ void DuneSim::updatePixels() {
         pDuneImpl->grid->subDomain(static_cast<int>(comp.index))
             .leafGridView()};
     SPDLOG_TRACE("compartment[{}]: {}", comp.index, comp.name);
-    const auto &qpi{comp.qPointIndexer};
-    std::vector<bool> ixAssigned(qpi.getNumPoints(), false);
+    const auto &qpi{comp.voxelIndexer};
+    std::vector<bool> ixAssigned(qpi.size(), false);
     // get local coord for each pixel in each triangle
     for (const auto e : elements(gridview)) {
       auto &pixelsTriangle = comp.pixels.emplace_back();
@@ -155,8 +155,8 @@ void DuneSim::updatePixels() {
               {(static_cast<double>(x) + 0.5) * pixelSize + pixelOrigin.x(),
                (static_cast<double>(y) + 0.5) * pixelSize + pixelOrigin.y()});
           // note: qpi/QImage has (0,0) in top-left corner:
-          QPoint pix = QPoint(x, geometryImageSize.height() - 1 - y);
-          if (auto ix{qpi.getIndex(pix)};
+          common::Voxel vox{x, geometryImageSize.height() - 1 - y, 0};
+          if (auto ix{qpi.getIndex(vox)};
               ix.has_value() && ref.checkInside(localPoint)) {
             pixelsTriangle.push_back({*ix, {localPoint[0], localPoint[1]}});
             ixAssigned[*ix] = true;
@@ -184,9 +184,9 @@ void DuneSim::updatePixels() {
 DuneSim::DuneSim(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
     const std::map<std::string, double, std::less<>> &substitutions)
-    : geometryImageSize{sbmlDoc.getGeometry().getImage().size()},
-      pixelSize{sbmlDoc.getGeometry().getPixelWidth()},
-      pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()} {
+    : geometryImageSize{sbmlDoc.getGeometry().getImages()[0].size()},
+      pixelSize{sbmlDoc.getGeometry().getVoxelSize().width()},
+      pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin().p} {
   try {
     const auto &lengthUnit{sbmlDoc.getUnits().getLength()};
     const auto &volumeUnit{sbmlDoc.getUnits().getVolume()};
@@ -267,7 +267,9 @@ std::size_t DuneSim::getConcentrationPadding() const { return 0; }
 
 const std::string &DuneSim::errorMessage() const { return currentErrorMessage; }
 
-const QImage &DuneSim::errorImage() const { return currentErrorImage; }
+const common::ImageStack &DuneSim::errorImages() const {
+  return currentErrorImages;
+}
 
 void DuneSim::setStopRequested([[maybe_unused]] bool stop) {
   SPDLOG_DEBUG("Not implemented - ignoring request");

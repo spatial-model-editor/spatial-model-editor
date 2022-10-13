@@ -4,6 +4,7 @@
 #pragma once
 
 #include "sme/geometry.hpp"
+#include "sme/image_stack.hpp"
 #include <QImage>
 #include <QRgb>
 #include <memory>
@@ -29,13 +30,11 @@ struct Settings;
 
 class ModelGeometry {
 private:
-  double pixelWidth{1.0};
-  double pixelDepth{1.0};
-  QPointF physicalOrigin{QPointF(0, 0)};
-  double zOrigin{0.0};
-  QSizeF physicalSize{QSizeF(0, 0)};
+  common::VoxelF physicalOrigin{};
+  common::VolumeF physicalSize{};
+  common::VolumeF voxelSize{1.0, 1.0, 1.0};
   int numDimensions{3};
-  QImage image;
+  common::ImageStack images;
   std::unique_ptr<mesh::Mesh> mesh;
   bool isValid{false};
   bool hasImage{false};
@@ -43,7 +42,7 @@ private:
   ModelCompartments *modelCompartments{nullptr};
   ModelMembranes *modelMembranes{nullptr};
   const ModelUnits *modelUnits{nullptr};
-  Settings *sbmlAnnotation = nullptr;
+  Settings *sbmlAnnotation{nullptr};
   bool hasUnsavedChanges{false};
   int importDimensions(const libsbml::Model *model);
   void convertSBMLGeometryTo3d();
@@ -57,20 +56,21 @@ public:
                          Settings *annotation);
   void importSampledFieldGeometry(const libsbml::Model *model);
   void importSampledFieldGeometry(const QString &filename);
-  void importGeometryFromImage(const QImage &img, bool keepColourAssignments);
+  void importGeometryFromImages(const common::ImageStack &imgs,
+                                bool keepColourAssignments);
   void updateMesh();
   void clear();
   [[nodiscard]] int getNumDimensions() const;
-  [[nodiscard]] double getPixelWidth() const;
-  void setPixelWidth(double width, bool updateSBML = true);
-  [[nodiscard]] double getPixelDepth() const;
-  void setPixelDepth(double depth);
-  [[nodiscard]] double getZOrigin() const;
-  [[nodiscard]] const QPointF &getPhysicalOrigin() const;
-  [[nodiscard]] const QSizeF &getPhysicalSize() const;
-  [[nodiscard]] QPointF getPhysicalPoint(const QPoint pixel) const;
-  [[nodiscard]] QString getPhysicalPointAsString(const QPoint pixel) const;
-  [[nodiscard]] const QImage &getImage() const;
+  [[nodiscard]] const common::VolumeF &getVoxelSize() const;
+  void setVoxelSize(const common::VolumeF &newVoxelSize,
+                    bool updateSBML = true);
+  [[nodiscard]] const common::VoxelF &getPhysicalOrigin() const;
+  [[nodiscard]] const common::VolumeF &getPhysicalSize() const;
+  [[nodiscard]] common::VoxelF
+  getPhysicalPoint(const common::Voxel &voxel) const;
+  [[nodiscard]] QString
+  getPhysicalPointAsString(const common::Voxel &voxel) const;
+  [[nodiscard]] const common::ImageStack &getImages() const;
   [[nodiscard]] mesh::Mesh *getMesh() const;
   [[nodiscard]] bool getIsValid() const;
   [[nodiscard]] bool getHasImage() const;

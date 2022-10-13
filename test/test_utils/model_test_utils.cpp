@@ -42,8 +42,13 @@ static const char *getExampleFilename(Mod exampleModel) {
     return ":/models/liver-cells.xml";
   case Mod::SingleCompartmentDiffusion:
     return ":/models/single-compartment-diffusion.xml";
+  case Mod::SingleCompartmentDiffusion3D:
+    return ":/models/single-compartment-diffusion-3d.xml";
   case Mod::VerySimpleModel:
     return ":/models/very-simple-model.xml";
+  default:
+    throw std::invalid_argument("This filename needs to be added to "
+                                "model_test_utils.getExampleFilename()");
   }
 }
 

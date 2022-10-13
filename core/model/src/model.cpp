@@ -67,36 +67,43 @@ void Model::initModelData(bool emptySpatialModel) {
   if (!isValid) {
     return;
   }
-  auto *model{doc->getModel()};
-  settings = std::make_unique<Settings>(getSbmlAnnotation(model));
-  modelUnits = std::make_unique<ModelUnits>(model);
-  modelMath = std::make_unique<ModelMath>(model);
-  modelFunctions = std::make_unique<ModelFunctions>(model);
-  modelMembranes = std::make_unique<ModelMembranes>(model);
-  // todo: reduce these cyclic dependencies: currently order of initialization
-  // matters, should be possible to reduce coupling here
-  modelCompartments = std::make_unique<ModelCompartments>(
-      model, modelMembranes.get(), modelUnits.get(),
-      smeFileContents->simulationData.get());
-  modelGeometry = std::make_unique<ModelGeometry>(
-      model, modelCompartments.get(), modelMembranes.get(), modelUnits.get(),
-      settings.get());
-  modelCompartments->setGeometryPtr(modelGeometry.get());
-  modelGeometry->importSampledFieldGeometry(model);
-  modelParameters = std::make_unique<ModelParameters>(model);
-  modelSpecies = std::make_unique<ModelSpecies>(
-      model, modelCompartments.get(), modelGeometry.get(),
-      modelParameters.get(), modelFunctions.get(),
-      smeFileContents->simulationData.get(), settings.get());
-  modelCompartments->setSpeciesPtr(modelSpecies.get());
-  modelEvents = std::make_unique<ModelEvents>(model, modelParameters.get(),
-                                              modelSpecies.get());
-  modelParameters->setEventsPtr(modelEvents.get());
-  modelParameters->setSpeciesPtr(modelSpecies.get());
-  modelReactions = std::make_unique<ModelReactions>(
-      model, modelCompartments.get(), modelMembranes.get(), isNonSpatialModel);
-  modelCompartments->setReactionsPtr(modelReactions.get());
-  modelSpecies->setReactionsPtr(modelReactions.get());
+  try {
+    auto *model{doc->getModel()};
+    settings = std::make_unique<Settings>(getSbmlAnnotation(model));
+    modelUnits = std::make_unique<ModelUnits>(model);
+    modelMath = std::make_unique<ModelMath>(model);
+    modelFunctions = std::make_unique<ModelFunctions>(model);
+    modelMembranes = std::make_unique<ModelMembranes>(model);
+    // todo: reduce these cyclic dependencies: currently order of initialization
+    // matters, should be possible to reduce coupling here
+    modelCompartments = std::make_unique<ModelCompartments>(
+        model, modelMembranes.get(), modelUnits.get(),
+        smeFileContents->simulationData.get());
+    modelGeometry = std::make_unique<ModelGeometry>(
+        model, modelCompartments.get(), modelMembranes.get(), modelUnits.get(),
+        settings.get());
+    modelCompartments->setGeometryPtr(modelGeometry.get());
+    modelGeometry->importSampledFieldGeometry(model);
+    modelParameters = std::make_unique<ModelParameters>(model);
+    modelSpecies = std::make_unique<ModelSpecies>(
+        model, modelCompartments.get(), modelGeometry.get(),
+        modelParameters.get(), modelFunctions.get(),
+        smeFileContents->simulationData.get(), settings.get());
+    modelCompartments->setSpeciesPtr(modelSpecies.get());
+    modelEvents = std::make_unique<ModelEvents>(model, modelParameters.get(),
+                                                modelSpecies.get());
+    modelParameters->setEventsPtr(modelEvents.get());
+    modelParameters->setSpeciesPtr(modelSpecies.get());
+    modelReactions = std::make_unique<ModelReactions>(
+        model, modelCompartments.get(), modelMembranes.get(),
+        isNonSpatialModel);
+    modelCompartments->setReactionsPtr(modelReactions.get());
+    modelSpecies->setReactionsPtr(modelReactions.get());
+  } catch (const std::runtime_error &e) {
+    errorMessage = e.what();
+    isValid = false;
+    return;
+  }
 }
 
 void Model::setHasUnsavedChanges(bool unsavedChanges) {
@@ -202,8 +209,7 @@ void Model::exportSMEFile(const std::string &filename) {
 void Model::updateSBMLDoc() {
   modelGeometry->writeGeometryToSBML();
   setSbmlAnnotation(doc->getModel(), *settings);
-  modelMembranes->exportToSBML(modelGeometry->getPixelWidth() *
-                               modelGeometry->getPixelDepth());
+  modelMembranes->exportToSBML(modelGeometry->getVoxelSize());
 }
 
 QString Model::getXml() {
@@ -324,9 +330,9 @@ void Model::clear() {
 }
 
 SpeciesGeometry Model::getSpeciesGeometry(const QString &speciesID) const {
-  return {modelGeometry->getImage().size(),
-          modelSpecies->getField(speciesID)->getCompartment()->getPixels(),
-          modelGeometry->getPhysicalOrigin(), modelGeometry->getPixelWidth(),
+  const auto *comp{modelSpecies->getField(speciesID)->getCompartment()};
+  return {comp->getImageSize(), comp->getVoxels(),
+          modelGeometry->getPhysicalOrigin(), modelGeometry->getVoxelSize(),
           getUnits()};
 }
 

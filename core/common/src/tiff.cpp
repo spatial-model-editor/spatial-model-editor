@@ -97,7 +97,7 @@ std::vector<double> readLineToDoubles(TIFF *tif, std::size_t y,
   return dblValues;
 }
 
-struct TiffImageData {
+struct GrayscaleImage {
   std::vector<std::vector<double>> values;
   double maxValue = 0;
   double minValue = std::numeric_limits<double>::max();
@@ -105,27 +105,33 @@ struct TiffImageData {
   std::size_t height = 0;
 };
 
-static QImage toQImage(const TiffImageData &tiffImageData) {
-  QImage image(static_cast<int>(tiffImageData.width),
-               static_cast<int>(tiffImageData.height), QImage::Format_RGB32);
-  double maxVal = tiffImageData.maxValue;
-  // check for case of all zero's: should be black image
-  if (maxVal == 0) {
-    maxVal = 1.0;
-  }
-  for (int y = 0; y < image.height(); ++y) {
-    const auto &row = tiffImageData.values[static_cast<std::size_t>(y)];
-    for (int x = 0; x < image.width(); ++x) {
-      // rescale pixel values from [0, max] to [0,255]
-      double unitNormValue = row[static_cast<std::size_t>(x)] / maxVal;
-      unsigned int mask8bit{0x0000ff};
-      unsigned int val8 =
-          mask8bit & static_cast<unsigned int>(255 * unitNormValue);
-      unsigned int rgb = 0xff000000 | val8 | (val8 << 8) | (val8 << 16);
-      image.setPixel(x, y, rgb);
+static sme::common::ImageStack
+toImageStack(const std::vector<GrayscaleImage> &grayscaleImages,
+             double maxVal) {
+  std::vector<QImage> imageVector{};
+  imageVector.reserve(grayscaleImages.size());
+  for (const auto &grayscaleImage : grayscaleImages) {
+    auto &image{imageVector.emplace_back(
+        static_cast<int>(grayscaleImage.width),
+        static_cast<int>(grayscaleImage.height), QImage::Format_RGB32)};
+    // check for case of all zero's: should be black image
+    if (maxVal == 0) {
+      maxVal = 1.0;
+    }
+    for (int y = 0; y < image.height(); ++y) {
+      const auto &row = grayscaleImage.values[static_cast<std::size_t>(y)];
+      for (int x = 0; x < image.width(); ++x) {
+        // rescale pixel values from [0, max] to [0,255]
+        double unitNormValue = row[static_cast<std::size_t>(x)] / maxVal;
+        unsigned int mask8bit{0x0000ff};
+        unsigned int val8 =
+            mask8bit & static_cast<unsigned int>(255 * unitNormValue);
+        unsigned int rgb = 0xff000000 | val8 | (val8 << 8) | (val8 << 16);
+        image.setPixel(x, y, rgb);
+      }
     }
   }
-  return image;
+  return sme::common::ImageStack(std::move(imageVector));
 }
 
 TiffReader::TiffReader(const std::string &filename) {
@@ -134,6 +140,10 @@ TiffReader::TiffReader(const std::string &filename) {
     SPDLOG_WARN("Failed to open file {}", filename);
     return;
   }
+  double maxValue = 0;
+  double minValue = std::numeric_limits<double>::max();
+  std::vector<GrayscaleImage> grayscaleImages{};
+  std::vector<QImage> qImages{};
   SPDLOG_INFO("File {} contains", filename);
   do {
     std::size_t width = 0;
@@ -174,39 +184,48 @@ TiffReader::TiffReader(const std::string &filename) {
 
       if (samplespp == 1) {
         SPDLOG_INFO("    --> importing grayscale image...");
-        auto img{TiffImageData()};
-        img.width = width;
-        img.height = height;
+        auto &grayscaleImage{grayscaleImages.emplace_back()};
+        grayscaleImage.width = width;
+        grayscaleImage.height = height;
         for (std::size_t y = 0; y < height; y++) {
           if (samplefmt == SAMPLEFORMAT_UINT && bitspp == 8) {
-            img.values.push_back(readLineToDoubles<uint8_t>(tif, y, width));
+            grayscaleImage.values.push_back(
+                readLineToDoubles<uint8_t>(tif, y, width));
           } else if (samplefmt == SAMPLEFORMAT_UINT && bitspp == 16) {
-            img.values.push_back(readLineToDoubles<uint16_t>(tif, y, width));
+            grayscaleImage.values.push_back(
+                readLineToDoubles<uint16_t>(tif, y, width));
           } else if (samplefmt == SAMPLEFORMAT_UINT && bitspp == 32) {
-            img.values.push_back(readLineToDoubles<uint32_t>(tif, y, width));
+            grayscaleImage.values.push_back(
+                readLineToDoubles<uint32_t>(tif, y, width));
           } else if (samplefmt == SAMPLEFORMAT_INT && bitspp == 8) {
-            img.values.push_back(readLineToDoubles<int8_t>(tif, y, width));
+            grayscaleImage.values.push_back(
+                readLineToDoubles<int8_t>(tif, y, width));
           } else if (samplefmt == SAMPLEFORMAT_INT && bitspp == 16) {
-            img.values.push_back(readLineToDoubles<int16_t>(tif, y, width));
+            grayscaleImage.values.push_back(
+                readLineToDoubles<int16_t>(tif, y, width));
           } else if (samplefmt == SAMPLEFORMAT_INT && bitspp == 32) {
-            img.values.push_back(readLineToDoubles<int32_t>(tif, y, width));
+            grayscaleImage.values.push_back(
+                readLineToDoubles<int32_t>(tif, y, width));
           } else if (samplefmt == SAMPLEFORMAT_IEEEFP && bitspp == 32) {
-            img.values.push_back(readLineToDoubles<float>(tif, y, width));
+            grayscaleImage.values.push_back(
+                readLineToDoubles<float>(tif, y, width));
           } else if (samplefmt == SAMPLEFORMAT_IEEEFP && bitspp == 64) {
-            img.values.push_back(readLineToDoubles<double>(tif, y, width));
+            grayscaleImage.values.push_back(
+                readLineToDoubles<double>(tif, y, width));
           } else {
             errorMessage = QString("%1-bit SAMPLEFORMAT enum %2 not supported")
                                .arg(bitspp)
                                .arg(samplefmt);
             break;
           }
-          auto [minV, maxV] = common::minmax(img.values.back());
-          img.maxValue = std::max(maxV, img.maxValue);
-          img.minValue = std::min(minV, img.minValue);
+          auto [minV, maxV] = common::minmax(grayscaleImage.values.back());
+          grayscaleImage.maxValue = std::max(maxV, grayscaleImage.maxValue);
+          grayscaleImage.minValue = std::min(minV, grayscaleImage.minValue);
         }
-        SPDLOG_DEBUG("    - min value: {}", img.minValue);
-        SPDLOG_DEBUG("    - max value: {}", img.maxValue);
-        qImages.push_back(toQImage(img));
+        maxValue = std::max(maxValue, grayscaleImage.maxValue);
+        minValue = std::min(minValue, grayscaleImage.minValue);
+        SPDLOG_DEBUG("    - min value: {}", grayscaleImage.minValue);
+        SPDLOG_DEBUG("    - max value: {}", grayscaleImage.maxValue);
       } else {
         SPDLOG_INFO("    --> importing RGBA image...");
         std::vector<uint32_t> tiffValues(width * height, 0);
@@ -214,11 +233,11 @@ TiffReader::TiffReader(const std::string &filename) {
                                       static_cast<uint32_t>(height),
                                       tiffValues.data(),
                                       ORIENTATION_TOPLEFT) == 1) {
-          auto &img{qImages.emplace_back(width, height,
-                                         QImage::Format_ARGB32_Premultiplied)};
-          for (int y = 0; y < img.height(); y++) {
-            for (int x = 0; x < img.width(); x++) {
-              img.setPixel(x, y, tiffValues[y * width + x]);
+          auto &qImage{qImages.emplace_back(
+              width, height, QImage::Format_ARGB32_Premultiplied)};
+          for (int y = 0; y < qImage.height(); y++) {
+            for (int x = 0; x < qImage.width(); x++) {
+              qImage.setPixel(x, y, tiffValues[y * width + x]);
             }
           }
         } else {
@@ -229,14 +248,20 @@ TiffReader::TiffReader(const std::string &filename) {
     }
   } while (TIFFReadDirectory(tif) != 0);
   TIFFClose(tif);
+  if (!grayscaleImages.empty()) {
+    imageStack = toImageStack(grayscaleImages, maxValue);
+  } else if (!qImages.empty()) {
+    imageStack = sme::common::ImageStack(std::move(qImages));
+  }
+  imageStack.convertToIndexed();
 }
 
 const QString &TiffReader::getErrorMessage() const { return errorMessage; }
 
-std::size_t TiffReader::size() const { return qImages.size(); }
+bool TiffReader::empty() const { return imageStack.empty(); }
 
-[[nodiscard]] QImage TiffReader::getImage(std::size_t i) const {
-  return qImages[i];
+[[nodiscard]] sme::common::ImageStack TiffReader::getImages() const {
+  return imageStack;
 }
 
 } // namespace sme::common

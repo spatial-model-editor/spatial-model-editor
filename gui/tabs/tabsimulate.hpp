@@ -3,6 +3,7 @@
 #pragma once
 #include "dialogdisplayoptions.hpp"
 #include "plotwrapper.hpp"
+#include "sme/image_stack.hpp"
 #include "sme/simulate.hpp"
 #include <QWidget>
 #include <future>
@@ -44,7 +45,7 @@ private:
   std::unique_ptr<sme::simulate::Simulation> sim;
   sme::model::DisplayOptions displayOptions;
   QVector<double> time;
-  QVector<QImage> images;
+  QVector<sme::common::ImageStack> images;
   QStringList compartmentNames;
   std::vector<QStringList> speciesNames;
   std::vector<std::vector<std::size_t>> compartmentSpeciesToDraw;

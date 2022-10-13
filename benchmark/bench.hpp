@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include "sme/mesh.hpp"
 #include "sme/model.hpp"
 #include "sme/model_membranes_util.hpp"
@@ -12,14 +13,15 @@
 
 // Each dataset for constructing benchmarks is stored as a custom type
 struct ABtoC {
-  QImage img{":/geometry/circle-100x100.png"};
-  std::vector<QRgb> colours{img.pixel(1, 1), img.pixel(50, 50)};
+  sme::common::ImageStack imgs{QImage{":/geometry/circle-100x100.png"}};
+  std::vector<QRgb> colours{imgs[0].pixel(1, 1), imgs[0].pixel(50, 50)};
   std::vector<std::size_t> maxTriangleArea{10, 10};
-  QPointF origin{0.0, 0.0};
-  double pixelWidth{1.0};
-  sme::mesh::Mesh mesh{img, {}, maxTriangleArea, pixelWidth, origin, colours};
+  sme::common::VoxelF origin{0.0, 0.0, 0.0};
+  sme::common::VolumeF voxelSize{1.0, 1.0, 1.0};
+  sme::mesh::Mesh mesh{imgs[0],   {},     maxTriangleArea,
+                       voxelSize, origin, colours};
   QSize imageSize{100, 100};
-  sme::model::ImageMembranePixels imageMembranePixels{img};
+  sme::model::ImageMembranePixels imageMembranePixels{imgs};
   std::pair<std::size_t, std::size_t> membraneIndexPair{0, 1};
   sme::model::Model model;
   std::string xml;
@@ -32,15 +34,17 @@ struct ABtoC {
 };
 
 struct VerySimpleModel {
-  QImage img{":/geometry/concave-cell-nucleus-100x100.png"};
-  std::vector<QRgb> colours{img.pixel(0, 0), img.pixel(35, 20),
-                            img.pixel(40, 50)};
+  sme::common::ImageStack imgs{
+      QImage{":/geometry/concave-cell-nucleus-100x100.png"}};
+  std::vector<QRgb> colours{imgs[0].pixel(0, 0), imgs[0].pixel(35, 20),
+                            imgs[0].pixel(40, 50)};
   std::vector<std::size_t> maxTriangleArea{10, 10, 10};
-  QPointF origin{0.0, 0.0};
-  double pixelWidth{1.0};
-  sme::mesh::Mesh mesh{img, {}, maxTriangleArea, pixelWidth, origin, colours};
+  sme::common::VoxelF origin{0.0, 0.0, 0.0};
+  sme::common::VolumeF voxelSize{1.0, 1.0, 1.0};
+  sme::mesh::Mesh mesh{imgs[0],   {},     maxTriangleArea,
+                       voxelSize, origin, colours};
   QSize imageSize{300, 300};
-  sme::model::ImageMembranePixels imageMembranePixels{img};
+  sme::model::ImageMembranePixels imageMembranePixels{imgs};
   std::pair<std::size_t, std::size_t> membraneIndexPair{0, 1};
   sme::model::Model model;
   std::string xml;
@@ -53,15 +57,16 @@ struct VerySimpleModel {
 };
 
 struct LiverCells {
-  QImage img{":/geometry/liver-cells-200x100.png"};
-  std::vector<QRgb> colours{img.pixel(50, 50), img.pixel(40, 20),
-                            img.pixel(21, 14)};
+  sme::common::ImageStack imgs{QImage{":/geometry/liver-cells-200x100.png"}};
+  std::vector<QRgb> colours{imgs[0].pixel(50, 50), imgs[0].pixel(40, 20),
+                            imgs[0].pixel(21, 14)};
   std::vector<std::size_t> maxTriangleArea{2, 2, 2};
-  QPointF origin{0.0, 0.0};
-  double pixelWidth{1.0};
-  sme::mesh::Mesh mesh{img, {}, maxTriangleArea, pixelWidth, origin, colours};
+  sme::common::VoxelF origin{0.0, 0.0, 0.0};
+  sme::common::VolumeF voxelSize{1.0, 1.0, 1.0};
+  sme::mesh::Mesh mesh{imgs[0],   {},     maxTriangleArea,
+                       voxelSize, origin, colours};
   QSize imageSize{1000, 1000};
-  sme::model::ImageMembranePixels imageMembranePixels{img};
+  sme::model::ImageMembranePixels imageMembranePixels{imgs};
   std::pair<std::size_t, std::size_t> membraneIndexPair{0, 1};
   sme::model::Model model;
   std::string xml;

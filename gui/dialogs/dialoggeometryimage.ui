@@ -19,13 +19,40 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="2" column="1" colspan="3">
-      <widget class="QLineEdit" name="txtImageHeight"/>
+     <item row="1" column="0">
+      <widget class="QLabel" name="lblZSliderLabel">
+       <property name="text">
+        <string>Z slice:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
      </item>
-     <item row="1" column="4">
-      <widget class="QComboBox" name="cmbUnitsWidth"/>
+     <item row="4" column="0">
+      <widget class="QLabel" name="lblLabelImageDepth">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Image depth:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
      </item>
-     <item row="4" column="1">
+     <item row="7" column="5">
+      <widget class="QPushButton" name="btnResetColours">
+       <property name="text">
+        <string>Reset colours</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
       <widget class="QSpinBox" name="spinPixelsX">
        <property name="suffix">
         <string>px</string>
@@ -38,20 +65,59 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="2">
-      <widget class="QLabel" name="lblLabelPixelsTimes">
+     <item row="1" column="1" colspan="5">
+      <widget class="QSlider" name="slideZIndex">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="tickPosition">
+        <enum>QSlider::TicksBothSides</enum>
+       </property>
+       <property name="tickInterval">
+        <number>1</number>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1" colspan="5">
+      <widget class="QLabel" name="lblPixelSize">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="3">
+      <widget class="QSpinBox" name="spinPixelsY">
+       <property name="suffix">
+        <string>px</string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>4096</number>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="5">
+      <widget class="QComboBox" name="cmbUnitsHeight"/>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="lblLabelImageHeight">
        <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
        <property name="text">
-        <string>x</string>
+        <string>Image height:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="0" column="0" colspan="5">
+     <item row="0" column="0" colspan="6">
       <widget class="QLabelMouseTracker" name="lblImage" native="true">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -68,54 +134,58 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="3">
-      <widget class="QSpinBox" name="spinPixelsY">
-       <property name="suffix">
-        <string>px</string>
-       </property>
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>4096</number>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="4">
-      <widget class="QComboBox" name="cmbUnitsHeight"/>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="lblLabelColours">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Colours:</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="3">
+     <item row="7" column="3">
       <widget class="QPushButton" name="btnApplyColours">
        <property name="text">
         <string>Apply selection</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1" colspan="2">
+     <item row="8" column="0">
+      <widget class="QLabel" name="lblLabelPixelSize">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Size of a voxel:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="5">
+      <widget class="QLabel" name="lblUnitsDepth">
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="5">
+      <widget class="QPushButton" name="btnResetPixels">
+       <property name="text">
+        <string>Reset voxel count</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="1" colspan="2">
       <widget class="QPushButton" name="btnSelectColours">
        <property name="text">
         <string>Select colours...</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1" colspan="4">
+     <item row="6" column="1" colspan="5">
       <widget class="QLabel" name="lblColours">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="text">
         <string/>
        </property>
@@ -124,21 +194,7 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="4">
-      <widget class="QPushButton" name="btnResetPixels">
-       <property name="text">
-        <string>Reset pixel count</string>
-       </property>
-      </widget>
-     </item>
-     <item row="7" column="1" colspan="4">
-      <widget class="QLabel" name="lblPixelSize">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
+     <item row="5" column="0">
       <widget class="QLabel" name="lblLabelPixels">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -147,21 +203,14 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Pixel count:</string>
+        <string>Voxel count:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="6" column="4">
-      <widget class="QPushButton" name="btnResetColours">
-       <property name="text">
-        <string>Reset colours</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
+     <item row="2" column="0">
       <widget class="QLabel" name="lblLabelImageWidth">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -177,8 +226,24 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="lblLabelImageDepth">
+     <item row="2" column="5">
+      <widget class="QComboBox" name="cmbUnitsWidth"/>
+     </item>
+     <item row="5" column="2">
+      <widget class="QLabel" name="lblLabelPixelsTimes">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>x</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="lblLabelColours">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -186,57 +251,28 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Image depth:</string>
+        <string>Colours:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="lblLabelImageHeight">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
+     <item row="5" column="4">
+      <widget class="QLabel" name="lblZSlices">
        <property name="text">
-        <string>Image height:</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        <string>x z-slices</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1" colspan="3">
-      <widget class="QLineEdit" name="txtImageDepth"/>
-     </item>
-     <item row="7" column="0">
-      <widget class="QLabel" name="lblLabelPixelSize">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>Size of a pixel:</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1" colspan="3">
+     <item row="2" column="1" colspan="4">
       <widget class="QLineEdit" name="txtImageWidth"/>
      </item>
-     <item row="3" column="4">
-      <widget class="QLabel" name="lblUnitsDepth">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
+     <item row="3" column="1" colspan="4">
+      <widget class="QLineEdit" name="txtImageHeight"/>
+     </item>
+     <item row="4" column="1" colspan="4">
+      <widget class="QLineEdit" name="txtImageDepth"/>
      </item>
     </layout>
    </item>
@@ -260,6 +296,7 @@
   </customwidget>
  </customwidgets>
  <tabstops>
+  <tabstop>slideZIndex</tabstop>
   <tabstop>txtImageWidth</tabstop>
   <tabstop>cmbUnitsWidth</tabstop>
   <tabstop>txtImageHeight</tabstop>

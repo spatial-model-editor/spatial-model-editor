@@ -52,8 +52,8 @@ DialogOptCost::DialogOptCost(
     const sme::model::Model &model,
     const std::vector<sme::simulate::OptCost> &defaultOptCosts,
     const sme::simulate::OptCost *initialOptCost, QWidget *parent)
-    : model{model}, defaultOptCosts{defaultOptCosts},
-      QDialog(parent), ui{std::make_unique<Ui::DialogOptCost>()} {
+    : QDialog(parent), model{model}, defaultOptCosts{defaultOptCosts},
+      ui{std::make_unique<Ui::DialogOptCost>()} {
   ui->setupUi(this);
   int cmbIndex{0};
   if (defaultOptCosts.empty()) {
@@ -171,5 +171,5 @@ void DialogOptCost::updateImage() {
   const auto &imageSize{
       model.getSpeciesGeometry(optCost.id.c_str()).compartmentImageSize};
   ui->lblImage->setImage(
-      sme::common::toGrayscaleIntensityImage(imageSize, optCost.targetValues));
+      sme::common::ImageStack(imageSize, optCost.targetValues));
 }

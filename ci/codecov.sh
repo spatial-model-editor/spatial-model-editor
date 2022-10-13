@@ -70,7 +70,8 @@ rm -f gcov/*
 lcov -q -z -d .
 cd sme
 python -m pip install -r ../../sme/requirements.txt
-python -m unittest discover -v -s ../../sme/test > sme.txt 2>&1
+python -m pip install -r ../../sme/requirements-test.txt
+python -m pytest -sv ../../sme/test > sme.txt 2>&1 || (tail -n 1000 sme.txt && exit 1)
 tail -n 100 sme.txt
 cd ..
 run_gcov

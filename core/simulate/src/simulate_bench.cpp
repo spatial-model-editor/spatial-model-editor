@@ -31,7 +31,7 @@ template <typename T>
 static void simulate_Simulation_getConcImage(benchmark::State &state) {
   T data;
   simulate::Simulation simulation(data.model);
-  QImage img;
+  sme::common::ImageStack img;
   for (auto _ : state) {
     img = simulation.getConcImage(0);
   }

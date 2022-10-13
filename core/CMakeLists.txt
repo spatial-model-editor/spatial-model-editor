@@ -115,7 +115,6 @@ find_package(
   REQUIRED
   CONFIGS
   Combine-static-config.cmake)
-message(STATUS "")
 target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 # set Logger level
 target_compile_definitions(
