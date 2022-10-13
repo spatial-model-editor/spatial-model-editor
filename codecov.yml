@@ -8,5 +8,5 @@ coverage:
         target: 80
 ignore:
   - "**/*_t.cpp" # tests
-  - "**/test/**/*"  # tests
-  - "**/ext/**/*" # external libraries
+  - "test"  # tests
+  - "ext" # external libraries
