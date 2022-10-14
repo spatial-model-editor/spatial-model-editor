@@ -89,8 +89,6 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
         static_cast<int>(static_cast<double>(imageSize.height()) *
                          size.width() / size.height()));
   }
-  gsf.image = QImage(imageSize, QImage::Format_RGB32);
-  gsf.image.fill(nullColour);
   const auto *geom = getGeometry(model);
   if (geom == nullptr) {
     return {};
@@ -108,7 +106,7 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
     SPDLOG_ERROR("No parameter for x coordinate in model");
     return {};
   }
-  std::string xCoord{xparam->getId()};
+  const std::string xCoord{xparam->getId()};
   varsMap[xCoord] = {0, false};
   const auto *yparam = getSpatialCoordinateParam(
       model, libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
@@ -116,12 +114,17 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
     SPDLOG_ERROR("No parameter for y coordinate in model");
     return {};
   }
-  std::string yCoord{yparam->getId()};
+  const std::string yCoord{yparam->getId()};
   varsMap[yCoord] = {0, false};
+  std::size_t nZ{1};
   if (const auto *zparam = getSpatialCoordinateParam(
           model, libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z);
       zparam != nullptr) {
     varsMap[zparam->getId()] = {0, false};
+  }
+  gsf.images = {nZ, {imageSize, QImage::Format_RGB32}};
+  for (auto &image : gsf.images) {
+    image.fill(nullColour);
   }
   for (const auto &[comp, analyticVol] : compVols) {
     SPDLOG_INFO("Compartment: {}", comp->getId());
@@ -133,18 +136,28 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
     ++iComp;
     SPDLOG_INFO("  - Colour: {:x}", col);
     std::size_t nPixels = 0;
-    for (int ix = 0; ix < gsf.image.width(); ++ix) {
-      for (int iy = 0; iy < gsf.image.height(); ++iy) {
-        // we want y=0 in bottom of image, Qt puts it in top:
-        int invertedYIndex = gsf.image.height() - 1 - iy;
-        if (gsf.image.pixel(ix, invertedYIndex) == nullColour) {
-          auto p = toPhysicalPoint(ix, iy, gsf.image.size(), origin, size);
-          varsMap[xCoord].first = p.x();
-          varsMap[yCoord].first = p.y();
-          if (static_cast<int>(
-                  evaluateMathAST(math, varsMap, geom->getModel())) != 0) {
-            gsf.image.setPixel(ix, invertedYIndex, col);
-            ++nPixels;
+    for (std::size_t iz = 0; iz < nZ; ++iz) {
+      auto &image{gsf.images[iz]};
+      if (nZ > 1) {
+        // todo: set actual z coord value here, not just the index
+        varsMap[getSpatialCoordinateParam(
+                    model, libsbml::CoordinateKind_t::
+                               SPATIAL_COORDINATEKIND_CARTESIAN_Z)
+                    ->getId()] = {iz, false};
+      }
+      for (int ix = 0; ix < image.width(); ++ix) {
+        for (int iy = 0; iy < image.height(); ++iy) {
+          // we want y=0 in bottom of image, Qt puts it in top:
+          int invertedYIndex = image.height() - 1 - iy;
+          if (image.pixel(ix, invertedYIndex) == nullColour) {
+            auto p = toPhysicalPoint(ix, iy, image.size(), origin, size);
+            varsMap[xCoord].first = p.x();
+            varsMap[yCoord].first = p.y();
+            if (static_cast<int>(
+                    evaluateMathAST(math, varsMap, geom->getModel())) != 0) {
+              image.setPixel(ix, invertedYIndex, col);
+              ++nPixels;
+            }
           }
         }
       }

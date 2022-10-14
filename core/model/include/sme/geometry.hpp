@@ -32,7 +32,7 @@ private:
   // index of corresponding point for each voxel in array
   std::vector<std::size_t> arrayPoints;
   QRgb colour{0};
-  QImage image;
+  std::vector<QImage> images;
 
 public:
   Compartment() = default;
@@ -63,7 +63,7 @@ public:
     return nn[4 * i + 3];
   }
   // return a QImage of the compartment geometry
-  [[nodiscard]] const QImage &getCompartmentImage() const;
+  [[nodiscard]] const std::vector<QImage> &getCompartmentImages() const;
   [[nodiscard]] const std::vector<std::size_t> &getArrayPoints() const;
 };
 

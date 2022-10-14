@@ -44,7 +44,7 @@ public:
   void updateCompartmentNames(const QStringList &compartmentNames);
   void updateCompartments(
       const std::vector<std::unique_ptr<geometry::Compartment>> &compartments);
-  void updateCompartmentImage(const QImage &img);
+  void updateCompartmentImage(const std::vector<QImage> &imgs);
   void importMembraneIdsAndNames();
   void exportToSBML(double pixelArea);
   explicit ModelMembranes(libsbml::Model *model = nullptr);

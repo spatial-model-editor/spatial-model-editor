@@ -35,7 +35,7 @@ private:
   double zOrigin{0.0};
   QSizeF physicalSize{QSizeF(0, 0)};
   int numDimensions{3};
-  QImage image;
+  std::vector<QImage> images;
   std::unique_ptr<mesh::Mesh> mesh;
   bool isValid{false};
   bool hasImage{false};
@@ -70,7 +70,7 @@ public:
   [[nodiscard]] const QSizeF &getPhysicalSize() const;
   [[nodiscard]] QPointF getPhysicalPoint(const QPoint pixel) const;
   [[nodiscard]] QString getPhysicalPointAsString(const QPoint pixel) const;
-  [[nodiscard]] const QImage &getImage() const;
+  [[nodiscard]] const std::vector<QImage> &getImages() const;
   [[nodiscard]] mesh::Mesh *getMesh() const;
   [[nodiscard]] bool getIsValid() const;
   [[nodiscard]] bool getHasImage() const;

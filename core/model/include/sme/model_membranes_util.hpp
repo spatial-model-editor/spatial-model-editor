@@ -47,9 +47,9 @@ private:
 
 public:
   explicit ImageMembranePixels();
-  explicit ImageMembranePixels(const QImage &img);
+  explicit ImageMembranePixels(const std::vector<QImage> &imgs);
   ~ImageMembranePixels();
-  void setImage(const QImage &img);
+  void setImages(const std::vector<QImage> &imgs);
   [[nodiscard]] int getColourIndex(QRgb colour) const;
   [[nodiscard]] const std::vector<QPointPair> *getPoints(int iA, int iB) const;
   [[nodiscard]] const QSize &getImageSize() const;

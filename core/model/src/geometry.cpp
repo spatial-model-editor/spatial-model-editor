@@ -69,13 +69,15 @@ saveDebuggingIndicesImage(const std::vector<std::size_t> &arrayPoints,
 }
 #endif
 
-Compartment::Compartment(std::string compId, const QImage &img, QRgb col)
-    : compartmentId{std::move(compId)}, colour{col}, image{
-                                                         img.size(),
-                                                         QImage::Format_Mono} {
-  image.setColor(0, qRgba(0, 0, 0, 0));
-  image.setColor(1, col);
-  image.fill(0);
+Compartment::Compartment(std::string compId, const std::vector<QImage> &imgs,
+                         QRgb col)
+    : compartmentId{std::move(compId)}, colour{col} {
+  images = {imgs.size(), {imgs[0].size(), QImage::Format_Mono}};
+  for (auto &image : images) {
+    image.setColor(0, qRgba(0, 0, 0, 0));
+    image.setColor(1, col);
+    image.fill(0);
+  }
   constexpr std::size_t invalidIndex{std::numeric_limits<std::size_t>::max()};
   arrayPoints.resize(static_cast<std::size_t>(img.width() * img.height()),
                      invalidIndex);
@@ -141,7 +143,9 @@ const std::string &Compartment::getId() const { return compartmentId; }
 
 QRgb Compartment::getColour() const { return colour; }
 
-const QImage &Compartment::getCompartmentImage() const { return image; }
+const std::vector<QImage> &Compartment::getCompartmentImages() const {
+  return images;
+}
 
 const std::vector<std::size_t> &Compartment::getArrayPoints() const {
   return arrayPoints;

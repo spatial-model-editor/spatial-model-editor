@@ -16,7 +16,7 @@ class SampledFieldGeometry;
 namespace sme::model {
 
 struct GeometrySampledField {
-  QImage image;
+  std::vector<QImage> images;
   std::vector<std::pair<std::string, QRgb>> compartmentIdColourPairs;
 };
 
@@ -27,6 +27,6 @@ GeometrySampledField
 importGeometryFromSampledField(const libsbml::Geometry *geom);
 
 void exportSampledFieldGeometry(libsbml::Geometry *geom,
-                                const QImage &compartmentImage);
+                                const std::vector<QImage> &compartmentImages);
 
 } // namespace sme::model

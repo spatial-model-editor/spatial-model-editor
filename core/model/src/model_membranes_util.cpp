@@ -56,11 +56,15 @@ std::size_t OrderedIntPairIndex::size() const { return nItems; }
 
 ImageMembranePixels::ImageMembranePixels() = default;
 
-ImageMembranePixels::ImageMembranePixels(const QImage &img) { setImage(img); }
+ImageMembranePixels::ImageMembranePixels(const std::vector<QImage> &imgs) {
+  setImages(imgs);
+}
 
 ImageMembranePixels::~ImageMembranePixels() = default;
 
-void ImageMembranePixels::setImage(const QImage &img) {
+void ImageMembranePixels::setImages(const std::vector<QImage> &imgs) {
+  // todo: fix 3d stuff here, for now just taking first image
+  const auto &img{imgs[0]};
   points.clear();
   points.resize(
       static_cast<std::size_t>(img.colorCount() * (img.colorCount() - 1)));

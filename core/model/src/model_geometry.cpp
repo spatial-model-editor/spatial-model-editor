@@ -144,7 +144,7 @@ void ModelGeometry::writeDefaultGeometryToSBML() {
   minX->setValue(0);
   auto *maxX = coordX->createBoundaryMax();
   maxX->setId("xBoundaryMax");
-  maxX->setValue(pixelWidth * static_cast<double>(image.width()));
+  maxX->setValue(pixelWidth * static_cast<double>(images[0].width()));
   SPDLOG_INFO("  - x in range [{},{}]", minX->getValue(), maxX->getValue());
 
   auto *coordY = geom->getCoordinateComponent(1);
@@ -167,7 +167,7 @@ void ModelGeometry::writeDefaultGeometryToSBML() {
   minY->setValue(0);
   auto *maxY = coordY->createBoundaryMax();
   maxY->setId("yBoundaryMax");
-  maxY->setValue(pixelWidth * static_cast<double>(image.height()));
+  maxY->setValue(pixelWidth * static_cast<double>(images[0].height()));
   SPDLOG_INFO("  - y in range [{},{}]", minY->getValue(), maxY->getValue());
   createZCoordinateComponent(sbmlModel);
   // the above overwrote any existing compartment geometry, so re-create
@@ -222,30 +222,34 @@ static double calculatePixelWidth(const QSize &imageSize,
 void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   importDimensions(model);
   auto gsf = importGeometryFromSampledField(getGeometry(model));
-  if (gsf.image.isNull()) {
+  if (gsf.images.empty()) {
     SPDLOG_INFO(
         "No Sampled Field Geometry found - looking for Analytic Geometry...");
     gsf =
         importGeometryFromAnalyticGeometry(model, physicalOrigin, physicalSize);
-    if (gsf.image.isNull()) {
+    if (gsf.images.empty()) {
       SPDLOG_INFO("No Analytic Geometry found");
       return;
     }
   }
   hasUnsavedChanges = true;
-  SPDLOG_INFO("  - found {}x{} geometry image", gsf.image.width(),
-              gsf.image.height());
-  image = gsf.image.convertToFormat(QImage::Format_Indexed8);
+  SPDLOG_INFO("  - found {}x{}x{} geometry image", gsf.images[0].width(),
+              gsf.images[0].height(), gsf.images.size());
+  // todo: ensure all images use the same color table here
+  images = gsf.images;
+  for (auto &image : images) {
+    image = image.convertToFormat(QImage::Format_Indexed8);
+  }
   hasImage = true;
-  pixelWidth = calculatePixelWidth(image.size(), physicalSize);
+  pixelWidth = calculatePixelWidth(images[0].size(), physicalSize);
   setPixelWidth(pixelWidth, false);
-  modelMembranes->updateCompartmentImage(image);
+  modelMembranes->updateCompartmentImage(images);
   for (const auto &[id, colour] : gsf.compartmentIdColourPairs) {
     SPDLOG_INFO("setting compartment {} colour to {:x}", id, colour);
     modelCompartments->setColour(id.c_str(), colour);
   }
   auto *geom = getOrCreateGeometry(sbmlModel);
-  exportSampledFieldGeometry(geom, image);
+  exportSampledFieldGeometry(geom, images);
 }
 
 void ModelGeometry::importSampledFieldGeometry(const QString &filename) {
@@ -269,10 +273,12 @@ void ModelGeometry::importGeometryFromImage(const QImage &img,
     SPDLOG_WARN("ignoring alpha channel");
     imgNoAlpha = img.convertToFormat(QImage::Format_RGB32, flagNoDither);
   }
-  image = imgNoAlpha.convertToFormat(QImage::Format_Indexed8, flagNoDither);
-  modelMembranes->updateCompartmentImage(image);
+  images.clear();
+  images.push_back(
+      imgNoAlpha.convertToFormat(QImage::Format_Indexed8, flagNoDither));
+  modelMembranes->updateCompartmentImage(images);
   auto *geom{getOrCreateGeometry(sbmlModel)};
-  exportSampledFieldGeometry(geom, image);
+  exportSampledFieldGeometry(geom, images);
   if (keepColourAssignments) {
     for (int i = 0; i < ids.size(); ++i) {
       modelCompartments->setColour(ids[i], oldColours[i]);
@@ -293,7 +299,8 @@ void ModelGeometry::updateMesh() {
   const auto &colours{modelCompartments->getColours()};
   const auto &ids{modelCompartments->getIds()};
   const auto &meshParams{sbmlAnnotation->meshParameters};
-  mesh = std::make_unique<mesh::Mesh>(image, meshParams.maxPoints,
+  // todo: use entire images stack - for now just take first one
+  mesh = std::make_unique<mesh::Mesh>(images[0], meshParams.maxPoints,
                                       meshParams.maxAreas, pixelWidth,
                                       physicalOrigin, common::toStdVec(colours),
                                       meshParams.boundarySimplifierType);
@@ -308,7 +315,7 @@ void ModelGeometry::clear() {
   mesh.reset();
   hasImage = false;
   isValid = false;
-  image = {};
+  images.clear();
   auto *model = sbmlModel;
   hasUnsavedChanges = true;
   if (model == nullptr) {
@@ -369,8 +376,8 @@ void ModelGeometry::setPixelWidth(double width, bool updateSBML) {
   }
   // update xy coordinates
   auto *geom = getOrCreateGeometry(sbmlModel);
-  physicalSize = {pixelWidth * static_cast<double>(image.width()),
-                  pixelWidth * static_cast<double>(image.height())};
+  physicalSize = {pixelWidth * static_cast<double>(images[0].width()),
+                  pixelWidth * static_cast<double>(images[0].height())};
   auto *coord = geom->getCoordinateComponentByKind(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
   auto *min = coord->getBoundaryMin();
@@ -418,7 +425,7 @@ QPointF ModelGeometry::getPhysicalPoint(const QPoint pixel) const {
   QPointF physicalPoint{physicalOrigin};
   physicalPoint.rx() += pixelWidth * static_cast<double>(pixel.x());
   physicalPoint.ry() +=
-      pixelWidth * static_cast<double>(image.height() - 1 - pixel.y());
+      pixelWidth * static_cast<double>(images[0].height() - 1 - pixel.y());
   return physicalPoint;
 }
 
@@ -431,7 +438,7 @@ QString ModelGeometry::getPhysicalPointAsString(const QPoint pixel) const {
       .arg(physicalPoint.y());
 }
 
-const QImage &ModelGeometry::getImage() const { return image; }
+const std::vector<QImage> &ModelGeometry::getImages() const { return images; }
 
 mesh::Mesh *ModelGeometry::getMesh() const { return mesh.get(); }
 
