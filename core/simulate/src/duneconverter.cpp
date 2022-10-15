@@ -188,7 +188,7 @@ static void addCompartment(
           simConcs.size() > 1) {
         // use concentrations from existing simulation data
         auto simField{*f};
-        const std::size_t nPixels{f->getCompartment()->nPixels()};
+        const std::size_t nPixels{f->getCompartment()->nVoxels()};
         const std::size_t padding{model.getSimulationData().concPadding.back()};
         const std::size_t stride{padding + nonConstantSpecies.size()};
         std::vector<double> c(nPixels, 0.0);

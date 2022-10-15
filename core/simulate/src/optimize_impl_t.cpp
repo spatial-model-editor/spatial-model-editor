@@ -171,7 +171,7 @@ TEST_CASE("Optimize calculateCosts: target values",
     target[pixel.x() + compImgWidth * (compImgHeight - 1 - pixel.y())] =
         targetPixel;
   }
-  double targetSum{static_cast<double>(comp->nPixels() * targetPixel)};
+  double targetSum{static_cast<double>(comp->nVoxels() * targetPixel)};
   constexpr double epsilon{3.4e-11};
 
   // cost: absolute difference of concentration of species A from zero

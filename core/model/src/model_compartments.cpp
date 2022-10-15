@@ -362,7 +362,7 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   } else {
     sfvol->setSampledValue(static_cast<double>(colour));
   }
-  auto nPixels{compartments[static_cast<std::size_t>(i)]->nPixels()};
+  auto nPixels{compartments[static_cast<std::size_t>(i)]->nVoxels()};
   double pixelWidth{modelGeometry->getPixelWidth()};
   double pixelDepth{modelGeometry->getPixelDepth()};
   double l3{static_cast<double>(nPixels) * pixelWidth * pixelWidth *

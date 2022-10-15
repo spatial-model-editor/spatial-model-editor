@@ -973,10 +973,10 @@ TEST_CASE("SBML: import SBML doc with compressed sampledField",
   REQUIRE(s.getGeometry().getIsValid() == true);
   REQUIRE(s.getGeometry().getHasImage() == true);
   REQUIRE(s.getCompartments().getIds().size() == 4);
-  REQUIRE(s.getCompartments().getCompartment("EC")->nPixels() == 358);
-  REQUIRE(s.getCompartments().getCompartment("cell")->nPixels() == 390);
-  REQUIRE(s.getCompartments().getCompartment("nuc")->nPixels() == 237);
-  REQUIRE(s.getCompartments().getCompartment("vesicle")->nPixels() == 5);
+  REQUIRE(s.getCompartments().getCompartment("EC")->nVoxels() == 358);
+  REQUIRE(s.getCompartments().getCompartment("cell")->nVoxels() == 390);
+  REQUIRE(s.getCompartments().getCompartment("nuc")->nVoxels() == 237);
+  REQUIRE(s.getCompartments().getCompartment("vesicle")->nVoxels() == 5);
   // export and re-import, check compartment geometry hasn't changed
   s.exportSBMLFile("compressedExported.xml");
   sme::model::Model s2;
@@ -986,10 +986,10 @@ TEST_CASE("SBML: import SBML doc with compressed sampledField",
   REQUIRE(s2.getGeometry().getIsValid() == true);
   REQUIRE(s2.getGeometry().getHasImage() == true);
   REQUIRE(s2.getCompartments().getIds().size() == 4);
-  REQUIRE(s2.getCompartments().getCompartment("EC")->nPixels() == 358);
-  REQUIRE(s2.getCompartments().getCompartment("cell")->nPixels() == 390);
-  REQUIRE(s2.getCompartments().getCompartment("nuc")->nPixels() == 237);
-  REQUIRE(s2.getCompartments().getCompartment("vesicle")->nPixels() == 5);
+  REQUIRE(s2.getCompartments().getCompartment("EC")->nVoxels() == 358);
+  REQUIRE(s2.getCompartments().getCompartment("cell")->nVoxels() == 390);
+  REQUIRE(s2.getCompartments().getCompartment("nuc")->nVoxels() == 237);
+  REQUIRE(s2.getCompartments().getCompartment("vesicle")->nVoxels() == 5);
 }
 
 TEST_CASE("Import Combine archive",
@@ -1003,8 +1003,8 @@ TEST_CASE("Import Combine archive",
   REQUIRE(s.getIsValid() == true);
   REQUIRE(s.getCurrentFilename() == "liver-simplified");
   REQUIRE(s.getCompartments().getIds().size() == 2);
-  REQUIRE(s.getCompartments().getCompartment("cytoplasm")->nPixels() == 7800);
-  REQUIRE(s.getCompartments().getCompartment("nucleus")->nPixels() == 481);
+  REQUIRE(s.getCompartments().getCompartment("cytoplasm")->nVoxels() == 7800);
+  REQUIRE(s.getCompartments().getCompartment("nucleus")->nVoxels() == 481);
   REQUIRE(s.getMembranes().getIds().size() == 1);
   REQUIRE(s.getMembranes()
               .getMembrane("cytoplasm_nucleus_membrane")

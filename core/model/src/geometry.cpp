@@ -13,7 +13,7 @@ namespace sme::geometry {
 static void fillMissingByDilation(std::vector<std::size_t> &arr, int nx, int ny,
                                   int nz, std::size_t invalidIndex) {
   std::vector<std::size_t> arr_next{arr};
-  const int maxIter{nx + ny + nz}; // todo: replace with correct value
+  const int maxIter{nx + ny + nz};
   std::size_t dx{1};
   std::size_t dy{static_cast<std::size_t>(nx)};
   std::size_t dz{dy * static_cast<std::size_t>(ny)};
@@ -89,7 +89,7 @@ Compartment::Compartment(std::string compId, const std::vector<QImage> &imgs,
   constexpr std::size_t invalidIndex{std::numeric_limits<std::size_t>::max()};
   arrayPoints.resize(static_cast<std::size_t>(nx * ny * nz), invalidIndex);
   std::size_t ixIndex{0};
-  // find pixels in compartment: store image QPoint for each
+  // find voxels in compartment
   for (int z = 0; z < nz; ++z) {
     const auto &img{images[static_cast<std::size_t>(z)]};
     QImage image(img.size(), QImage::Format_Mono);
@@ -99,14 +99,13 @@ Compartment::Compartment(std::string compId, const std::vector<QImage> &imgs,
     for (int x = 0; x < nx; ++x) {
       for (int y = 0; y < ny; ++y) {
         if (img.pixel(x, y) == col) {
-          // if colour matches, add pixel to field
-          QPoint p = QPoint(x, y);
-          ix.push_back(p);
-          image.setPixel(p, 1);
+          // if colour matches, add voxel to field
+          ix.emplace_back(x, y, static_cast<std::size_t>(z));
+          image.setPixel(x, y, 1);
           // NOTE: y=0 in ix is at bottom of image,
           // but we want it at the top in arrayPoints, so y index is inverted
-          arrayPoints[static_cast<std::size_t>(nx * ny * z + x +
-                                               nx * (ny - 1 - y))] = ixIndex++;
+          arrayPoints[static_cast<std::size_t>(x + nx * (ny - 1 - y) +
+                                               nx * ny * z)] = ixIndex++;
         }
       }
     }
@@ -119,7 +118,7 @@ Compartment::Compartment(std::string compId, const std::vector<QImage> &imgs,
   }
 #endif
 
-  // for pixels outside compartment, find nearest pixel in compartment
+  // for voxels outside compartment, find nearest voxel within compartment
   if (!ix.empty()) {
     fillMissingByDilation(arrayPoints, nx, ny, nz, invalidIndex);
   }
@@ -130,18 +129,20 @@ Compartment::Compartment(std::string compId, const std::vector<QImage> &imgs,
                                   "_indices_dilated");
 #endif
 
-  common::QPointIndexer ixIndexer(img.size(), ix);
+  VoxelIndexer ixIndexer(nx, ny, nz, ix);
   // find nearest neighbours of each point
   nn.clear();
-  nn.reserve(4 * ix.size());
+  nn.reserve(6 * ix.size());
   // find neighbours of each pixel in compartment
   for (std::size_t i = 0; i < ix.size(); ++i) {
-    const QPoint &p = ix[i];
-    for (const auto &pp :
-         {QPoint(p.x() + 1, p.y()), QPoint(p.x() - 1, p.y()),
-          QPoint(p.x(), p.y() + 1), QPoint(p.x(), p.y() - 1)}) {
-      auto index = ixIndexer.getIndex(pp);
-      if (index) {
+    const auto &v{ix[i]};
+    const auto x{v.p.x()};
+    const auto y{v.p.y()};
+    const auto z{v.z};
+    for (const auto &vn :
+         {Voxel{x + 1, y, z}, Voxel{x - 1, y, z}, Voxel{x, y + 1, z},
+          Voxel{x, y - 1, z}, Voxel{x, y, z + 1}, Voxel{x, y, z - 1}}) {
+      if (auto index{ixIndexer.getIndex(vn)}; index.has_value()) {
         // neighbour of p is in same compartment
         nn.push_back(index.value());
       } else {
@@ -170,11 +171,13 @@ const std::vector<std::size_t> &Compartment::getArrayPoints() const {
 
 Membrane::Membrane(std::string membraneId, const Compartment *A,
                    const Compartment *B,
-                   const std::vector<std::pair<QPoint, QPoint>> *membranePairs)
-    : id{std::move(membraneId)}, compA{A}, compB{B},
-      image{A->getCompartmentImage().size(),
-            QImage::Format_ARGB32_Premultiplied},
-      pointPairs{membranePairs} {
+                   const std::vector<std::pair<Voxel, Voxel>> *membranePairs)
+    : id{std::move(membraneId)}, compA{A}, compB{B}, voxelPairs{membranePairs} {
+  const auto &imgs{A->getCompartmentImages()};
+  int nx{imgs[0].width()};
+  int ny{imgs[1].width()};
+  int nz{static_cast<int>(imgs.size())};
+  images = {imgs.size(), QImage(nx, ny, QImage::Format_ARGB32_Premultiplied)};
   SPDLOG_INFO("membraneID: {}", id);
   SPDLOG_INFO("compartment A: {}", compA->getId());
   QRgb colA = A->getColour();
@@ -182,24 +185,24 @@ Membrane::Membrane(std::string membraneId, const Compartment *A,
   SPDLOG_INFO("compartment B: {}", compB->getId());
   QRgb colB = B->getColour();
   SPDLOG_INFO("  - colour: {:x}", colB);
-  SPDLOG_INFO("number of point pairs: {}", membranePairs->size());
-  // convert each pair of QPoints into a pair of indices of the corresponding
-  // points in the two compartments
+  SPDLOG_INFO("number of voxel pairs: {}", membranePairs->size());
+  // convert each pair of voxels into a pair of indices of the corresponding
+  // ix arrays in the two compartments
   indexPair.clear();
   indexPair.reserve(membranePairs->size());
-  common::QPointIndexer Aindexer(A->getCompartmentImage().size(),
-                                 A->getVoxels());
-  common::QPointIndexer Bindexer(B->getCompartmentImage().size(),
-                                 B->getVoxels());
+  VoxelIndexer Aindexer(nx, ny, nz, A->getVoxels());
+  VoxelIndexer Bindexer(nx, ny, nz, B->getVoxels());
   for (const auto &[pA, pB] : *membranePairs) {
-    auto iA = Aindexer.getIndex(pA);
-    auto iB = Bindexer.getIndex(pB);
+    auto iA{Aindexer.getIndex(pA)};
+    auto iB{Bindexer.getIndex(pB)};
     indexPair.emplace_back(iA.value(), iB.value());
   }
-  image.fill(qRgba(0, 0, 0, 0));
-  for (const auto &[pA, pB] : *pointPairs) {
-    image.setPixel(pA, colA);
-    image.setPixel(pB, colB);
+  for (auto &image : images) {
+    image.fill(qRgba(0, 0, 0, 0));
+  }
+  for (const auto &[vA, vB] : *voxelPairs) {
+    images[vA.z].setPixel(vA.p, colA);
+    images[vB.z].setPixel(vB.p, colB);
   }
 }
 
@@ -220,12 +223,12 @@ Membrane::getIndexPairs() const {
   return indexPair;
 }
 
-const QImage &Membrane::getImage() const { return image; }
+const std::vector<QImage> &Membrane::getImages() const { return images; }
 
 Field::Field(const Compartment *compartment, std::string specID,
              double diffConst, QRgb col)
     : id(std::move(specID)), comp(compartment), diffusionConstant(diffConst),
-      colour(col), conc(compartment->nPixels(), 0.0) {
+      colour(col), conc(compartment->nVoxels(), 0.0) {
   SPDLOG_INFO("speciesID: {}", id);
   SPDLOG_INFO("compartmentID: {}", comp->getId());
 }
@@ -266,19 +269,21 @@ void Field::importConcentration(
   SPDLOG_INFO("  - field has size {}", conc.size());
   SPDLOG_INFO("  - importing from sbml array of size {}",
               sbmlConcentrationArray.size());
-  const auto &img = comp->getCompartmentImage();
-  if (static_cast<int>(sbmlConcentrationArray.size()) !=
-      img.width() * img.height()) {
+  const auto &imgs{comp->getCompartmentImages()};
+  int nx{imgs[0].width()};
+  int ny{imgs[0].height()};
+  int nz{static_cast<int>(imgs.size())};
+  if (static_cast<int>(sbmlConcentrationArray.size()) != nx * ny * nz) {
     SPDLOG_ERROR("  - mismatch between array size [{}]"
-                 " and compartment image size [{}x{} = {}]",
-                 sbmlConcentrationArray.size(), img.width(), img.height(),
-                 img.width() * img.height());
+                 " and compartment image size [{}x{}x{} = {}]",
+                 sbmlConcentrationArray.size(), nx, ny, nz, nx * ny * nz);
     throw std::invalid_argument("invalid array size");
   }
-  // NOTE: order of concentration array is [ (x=0,y=0), (x=1,y=0), ... ]
+  // NOTE: order of concentration array is
+  // [ (x=0,y=0,z=0), (x=1,y=0,z=0), ... (x=0,y=1,z=0), ... ]
   // NOTE: (0,0) point is at bottom-left
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
-  for (std::size_t i = 0; i < comp->nPixels(); ++i) {
+  for (std::size_t i = 0; i < comp->nVoxels(); ++i) {
     const auto &point = comp->getVoxel(i);
     int arrayIndex = point.x() + img.width() * (img.height() - 1 - point.y());
     conc[i] = sbmlConcentrationArray[static_cast<std::size_t>(arrayIndex)];
@@ -307,7 +312,7 @@ QImage Field::getConcentrationImage() const {
   if (cmax < concMinNonZeroThreshold) {
     cmax = 1.0;
   }
-  for (std::size_t i = 0; i < comp->nPixels(); ++i) {
+  for (std::size_t i = 0; i < comp->nVoxels(); ++i) {
     double scale = conc[i] / cmax;
     int r = static_cast<int>(scale * qRed(colour));
     int g = static_cast<int>(scale * qGreen(colour));
@@ -325,7 +330,7 @@ Field::getConcentrationImageArray(bool maskAndInvertY) const {
   if (maskAndInvertY) {
     // y=0 at top of image & set pixels outside of compartment to zero
     a.resize(n, 0.0);
-    for (std::size_t i = 0; i < comp->nPixels(); ++i) {
+    for (std::size_t i = 0; i < comp->nVoxels(); ++i) {
       auto p{comp->getVoxel(i)};
       a[static_cast<std::size_t>(p.x() + img.width() * p.y())] = conc[i];
     }
@@ -342,7 +347,7 @@ Field::getConcentrationImageArray(bool maskAndInvertY) const {
 void Field::setCompartment(const Compartment *compartment) {
   SPDLOG_DEBUG("Changing compartment to {}", compartment->getId());
   comp = compartment;
-  conc.assign(compartment->nPixels(), 0.0);
+  conc.assign(compartment->nVoxels(), 0.0);
 }
 
 } // namespace sme::geometry

@@ -357,7 +357,7 @@ std::vector<double> Simulation::getConc(std::size_t timeIndex,
                                         std::size_t speciesIndex) const {
   std::vector<double> c;
   const auto &compConc = data->concentration[timeIndex][compartmentIndex];
-  std::size_t nPixels = compartments[compartmentIndex]->nPixels();
+  std::size_t nPixels = compartments[compartmentIndex]->nVoxels();
   std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
   std::size_t stride{nSpecies + data->concPadding[timeIndex]};
   c.reserve(nPixels);
@@ -374,7 +374,7 @@ std::vector<double> Simulation::getConcArray(std::size_t timeIndex,
       static_cast<std::size_t>(imageSize.width() * imageSize.height()), 0.0);
   const auto &compConc = data->concentration[timeIndex][compartmentIndex];
   const auto &comp = compartments[compartmentIndex];
-  std::size_t nPixels = comp->nPixels();
+  std::size_t nPixels = comp->nVoxels();
   std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
   std::size_t stride{nSpecies + data->concPadding[timeIndex]};
   for (std::size_t ix = 0; ix < nPixels; ++ix) {
@@ -405,7 +405,7 @@ std::vector<double> Simulation::getDcdt(std::size_t compartmentIndex,
   if (const auto *s = dynamic_cast<const PixelSim *>(simulator.get());
       s != nullptr) {
     const auto &compDcdt = s->getDcdt(compartmentIndex);
-    std::size_t nPixels = compartments[compartmentIndex]->nPixels();
+    std::size_t nPixels = compartments[compartmentIndex]->nVoxels();
     std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
     std::size_t stride{nSpecies + data->concPadding.back()};
     c.reserve(nPixels);
@@ -424,7 +424,7 @@ std::vector<double> Simulation::getDcdtArray(std::size_t compartmentIndex,
       s != nullptr) {
     const auto &compDcdt = s->getDcdt(compartmentIndex);
     const auto &comp = compartments[compartmentIndex];
-    std::size_t nPixels = compartments[compartmentIndex]->nPixels();
+    std::size_t nPixels = compartments[compartmentIndex]->nVoxels();
     std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
     std::size_t stride{nSpecies + data->concPadding.back()};
     for (std::size_t ix = 0; ix < nPixels; ++ix) {

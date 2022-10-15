@@ -44,7 +44,7 @@ testGetConcentrationImageArray(const geometry::Field &f) {
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
   constexpr double invalidPixelValue{-1.0};
   std::vector<double> arr(static_cast<std::size_t>(size), invalidPixelValue);
-  for (std::size_t i = 0; i < f.getCompartment()->nPixels(); ++i) {
+  for (std::size_t i = 0; i < f.getCompartment()->nVoxels(); ++i) {
     const auto &point = f.getCompartment()->getVoxel(i);
     int arrayIndex = point.x() + img.width() * (img.height() - 1 - point.y());
     arr[static_cast<std::size_t>(arrayIndex)] = f.getConcentration()[i];
@@ -61,7 +61,7 @@ TEST_CASE("Geometry: Compartments and Fields",
     img.setPixel(0, 0, col);
     geometry::Compartment comp("comp", img, col);
     REQUIRE(comp.getCompartmentImage().size() == img.size());
-    REQUIRE(comp.nPixels() == 1);
+    REQUIRE(comp.nVoxels() == 1);
     REQUIRE(comp.getVoxel(0) == QPoint(0, 0));
 
     auto specCol = qRgb(123, 12, 1);
@@ -104,7 +104,7 @@ TEST_CASE("Geometry: Compartments and Fields",
     img.setPixel(3, 4, col);
     geometry::Compartment comp("comp", img, col);
     REQUIRE(comp.getCompartmentImage().size() == img.size());
-    REQUIRE(comp.nPixels() == 2);
+    REQUIRE(comp.nVoxels() == 2);
     REQUIRE(comp.getVoxel(0) == QPoint(3, 3));
     REQUIRE(comp.getVoxel(1) == QPoint(3, 4));
 
@@ -170,13 +170,13 @@ TEST_CASE("Geometry: Compartments and Fields",
     img.setPixel(3, 4, col);
     geometry::Compartment comp1("comp1", img, colBG);
     geometry::Compartment comp2("comp2", img, col);
-    REQUIRE(comp1.nPixels() == 40);
-    REQUIRE(comp2.nPixels() == 2);
+    REQUIRE(comp1.nVoxels() == 40);
+    REQUIRE(comp2.nVoxels() == 2);
 
     geometry::Field field(&comp1, "field");
     REQUIRE(field.getCompartment() == &comp1);
     field.setUniformConcentration(2.0);
-    REQUIRE(field.getConcentration().size() == comp1.nPixels());
+    REQUIRE(field.getConcentration().size() == comp1.nVoxels());
 
     // changing compartment to the same one is a no-op
     field.setCompartment(&comp1);
@@ -184,7 +184,7 @@ TEST_CASE("Geometry: Compartments and Fields",
     // changing compartment: concentration reset to zero
     field.setCompartment(&comp2);
     REQUIRE(field.getCompartment() == &comp2);
-    REQUIRE(field.getConcentration().size() == comp2.nPixels());
+    REQUIRE(field.getConcentration().size() == comp2.nVoxels());
     REQUIRE(field.getConcentration()[0] == dbl_approx(0.0));
     REQUIRE(field.getConcentration()[1] == dbl_approx(0.0));
   }
@@ -199,13 +199,13 @@ TEST_CASE("Geometry: Compartments and Fields",
     geometry::Field field0(&comp0, "field0");
     geometry::Field field1(&comp1, "field1");
     geometry::Field field2(&comp2, "field2");
-    for (std::size_t i = 0; i < field0.getCompartment()->nPixels(); ++i) {
+    for (std::size_t i = 0; i < field0.getCompartment()->nVoxels(); ++i) {
       field0.setConcentration(i, static_cast<double>(i) * 0.34);
     }
-    for (std::size_t i = 0; i < field1.getCompartment()->nPixels(); ++i) {
+    for (std::size_t i = 0; i < field1.getCompartment()->nVoxels(); ++i) {
       field1.setConcentration(i, static_cast<double>(i) * 0.66);
     }
-    for (std::size_t i = 0; i < field2.getCompartment()->nPixels(); ++i) {
+    for (std::size_t i = 0; i < field2.getCompartment()->nVoxels(); ++i) {
       field2.setConcentration(i, static_cast<double>(i) * 0.31 + 2.2);
     }
     auto a0{field0.getConcentrationImageArray()};

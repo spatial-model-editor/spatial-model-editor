@@ -105,7 +105,7 @@ SimCompartment::SimCompartment(
     std::vector<std::string> sIds, bool doCSE, unsigned optLevel,
     bool timeDependent, bool spaceDependent,
     const std::map<std::string, double, std::less<>> &substitutions)
-    : comp{compartment}, nPixels{compartment->nPixels()}, nSpecies{sIds.size()},
+    : comp{compartment}, nPixels{compartment->nVoxels()}, nSpecies{sIds.size()},
       compartmentId{compartment->getId()}, speciesIds{std::move(sIds)} {
   // get species in compartment
   speciesNames.reserve(nSpecies);
@@ -153,7 +153,7 @@ SimCompartment::SimCompartment(
   dcdt.resize(conc.size(), 0.0);
   auto origin{doc.getGeometry().getPhysicalOrigin()};
   auto concIter = conc.begin();
-  for (std::size_t ix = 0; ix < compartment->nPixels(); ++ix) {
+  for (std::size_t ix = 0; ix < compartment->nVoxels(); ++ix) {
     for (const auto *field : fields) {
       *concIter = field->getConcentration()[ix];
       ++concIter;

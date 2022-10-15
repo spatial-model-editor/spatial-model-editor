@@ -430,7 +430,7 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
     ui->lblCompSize->setText(QString("Volume: %1 %2 (%3 pixels)")
                                  .arg(QString::number(volume, 'g', 13))
                                  .arg(model.getUnits().getVolume().name)
-                                 .arg(comp->nPixels()));
+                                 .arg(comp->nVoxels()));
   }
 }
 
