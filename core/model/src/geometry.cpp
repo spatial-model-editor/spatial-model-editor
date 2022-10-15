@@ -10,30 +10,37 @@
 
 namespace sme::geometry {
 
-static void fillMissingByDilation(std::vector<std::size_t> &arr, int w, int h,
-                                  std::size_t invalidIndex) {
+static void fillMissingByDilation(std::vector<std::size_t> &arr, int nx, int ny,
+                                  int nz, std::size_t invalidIndex) {
   std::vector<std::size_t> arr_next{arr};
-  const int maxIter{w + h};
+  const int maxIter{nx + ny + nz}; // todo: replace with correct value
+  std::size_t dx{1};
+  std::size_t dy{static_cast<std::size_t>(nx)};
+  std::size_t dz{dy * static_cast<std::size_t>(ny)};
   for (int iter = 0; iter < maxIter; ++iter) {
     bool finished{true};
-    for (int y = 0; y < h; ++y) {
-      for (int x = 0; x < w; ++x) {
-        auto i{static_cast<std::size_t>(x + w * y)};
-        if (arr[i] == invalidIndex) {
-          // replace negative pixel with any valid 4-connected neighbour
-          if (x > 0 && arr[i - 1] != invalidIndex) {
-            arr_next[i] = arr[i - 1];
-          } else if (x + 1 < w && arr[i + 1] != invalidIndex) {
-            arr_next[i] = arr[i + 1];
-          } else if (y > 0 &&
-                     arr[i - static_cast<std::size_t>(w)] != invalidIndex) {
-            arr_next[i] = arr[i - static_cast<std::size_t>(w)];
-          } else if (y + 1 < h &&
-                     arr[i + static_cast<std::size_t>(w)] != invalidIndex) {
-            arr_next[i] = arr[i + static_cast<std::size_t>(w)];
-          } else {
-            // pixel has no valid neighbour: need another iteration
-            finished = false;
+    for (int z = 0; z < nz; ++z) {
+      for (int y = 0; y < ny; ++y) {
+        for (int x = 0; x < nx; ++x) {
+          auto i{static_cast<std::size_t>(x + nx * y)};
+          if (arr[i] == invalidIndex) {
+            // replace negative pixel with any valid face-/6-connected neighbour
+            if (x > 0 && arr[i - dx] != invalidIndex) {
+              arr_next[i] = arr[i - dx];
+            } else if (x + 1 < nx && arr[i + 1] != invalidIndex) {
+              arr_next[i] = arr[i + dx];
+            } else if (y > 0 && arr[i - dy] != invalidIndex) {
+              arr_next[i] = arr[i - dy];
+            } else if (y + 1 < ny && arr[i + dy] != invalidIndex) {
+              arr_next[i] = arr[i + dy];
+            } else if (z > 0 && arr[i - dz] != invalidIndex) {
+              arr_next[i] = arr[i - dz];
+            } else if (z + 1 < nz && arr[i + dz] != invalidIndex) {
+              arr_next[i] = arr[i + dz];
+            } else {
+              // pixel has no valid neighbour: need another iteration
+              finished = false;
+            }
           }
         }
       }
@@ -48,69 +55,79 @@ static void fillMissingByDilation(std::vector<std::size_t> &arr, int w, int h,
 
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
 static void
-saveDebuggingIndicesImage(const std::vector<std::size_t> &arrayPoints,
-                          const QSize &sz, std::size_t maxIndex,
-                          const QString &filename) {
+saveDebuggingIndicesImageXY(const std::vector<std::size_t> &arrayPoints, int nx,
+                            int ny, int nz, std::size_t maxIndex,
+                            const QString &filename) {
   auto norm{static_cast<float>(maxIndex)};
-  QImage img(sz, QImage::Format_ARGB32_Premultiplied);
-  img.fill(qRgba(0, 0, 0, 0));
-  QColor c;
-  for (int x = 0; x < sz.width(); ++x) {
-    for (int y = 0; y < sz.height(); ++y) {
-      auto i{arrayPoints[static_cast<std::size_t>(x + sz.width() * y)]};
-      if (i <= maxIndex) {
-        auto v{static_cast<float>(i) / norm};
-        c.setHslF(1.0f - v, 1.0, 0.5f * v);
-        img.setPixel(x, y, c.rgb());
+  for (int z = 0; z < nz; ++z) {
+    QImage img(nx, ny, QImage::Format_ARGB32_Premultiplied);
+    img.fill(qRgba(0, 0, 0, 0));
+    QColor c;
+    for (int x = 0; x < nx; ++x) {
+      for (int y = 0; y < ny; ++y) {
+        auto i{arrayPoints[static_cast<std::size_t>(z + nz * x + nz * ny * y)]};
+        if (i <= maxIndex) {
+          auto v{static_cast<float>(i) / norm};
+          c.setHslF(1.0f - v, 1.0, 0.5f * v);
+          img.setPixel(x, y, c.rgb());
+        }
       }
     }
+    img.save(filename + "XY_z" + QString::number(z) + ".png");
   }
-  img.save(filename);
 }
+
 #endif
 
 Compartment::Compartment(std::string compId, const std::vector<QImage> &imgs,
                          QRgb col)
     : compartmentId{std::move(compId)}, colour{col} {
-  images = {imgs.size(), {imgs[0].size(), QImage::Format_Mono}};
-  for (auto &image : images) {
+  images.reserve(imgs.size());
+  int nx{imgs[0].width()};
+  int ny{imgs[1].width()};
+  int nz{static_cast<int>(imgs.size())};
+  constexpr std::size_t invalidIndex{std::numeric_limits<std::size_t>::max()};
+  arrayPoints.resize(static_cast<std::size_t>(nx * ny * nz), invalidIndex);
+  std::size_t ixIndex{0};
+  // find pixels in compartment: store image QPoint for each
+  for (int z = 0; z < nz; ++z) {
+    const auto &img{images[static_cast<std::size_t>(z)]};
+    QImage image(img.size(), QImage::Format_Mono);
     image.setColor(0, qRgba(0, 0, 0, 0));
     image.setColor(1, col);
     image.fill(0);
-  }
-  constexpr std::size_t invalidIndex{std::numeric_limits<std::size_t>::max()};
-  arrayPoints.resize(static_cast<std::size_t>(img.width() * img.height()),
-                     invalidIndex);
-  std::size_t ixIndex{0};
-  // find pixels in compartment: store image QPoint for each
-  for (int x = 0; x < img.width(); ++x) {
-    for (int y = 0; y < img.height(); ++y) {
-      if (img.pixel(x, y) == col) {
-        // if colour matches, add pixel to field
-        QPoint p = QPoint(x, y);
-        ix.push_back(p);
-        image.setPixel(p, 1);
-        // NOTE: (0,0) point in ix is at bottom-left, want top-left for array
-        arrayPoints[static_cast<std::size_t>(
-            x + img.width() * (img.height() - 1 - y))] = ixIndex++;
+    for (int x = 0; x < nx; ++x) {
+      for (int y = 0; y < ny; ++y) {
+        if (img.pixel(x, y) == col) {
+          // if colour matches, add pixel to field
+          QPoint p = QPoint(x, y);
+          ix.push_back(p);
+          image.setPixel(p, 1);
+          // NOTE: y=0 in ix is at bottom of image,
+          // but we want it at the top in arrayPoints, so y index is inverted
+          arrayPoints[static_cast<std::size_t>(nx * ny * z + x +
+                                               nx * (ny - 1 - y))] = ixIndex++;
+        }
       }
     }
   }
 
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-  saveDebuggingIndicesImage(arrayPoints, img.size(), ixIndex,
-                            QString(compartmentId.c_str()) + "_indices.png");
+  for (std::size_t iz = 0; iz < static_cast<std::size_t>(nz); ++iz) {
+    saveDebuggingIndicesImageXY(arrayPoints, nx, ny, nz, ixIndex,
+                                QString(compartmentId.c_str()) + "_indices");
+  }
 #endif
 
   // for pixels outside compartment, find nearest pixel in compartment
   if (!ix.empty()) {
-    fillMissingByDilation(arrayPoints, img.width(), img.height(), invalidIndex);
+    fillMissingByDilation(arrayPoints, nx, ny, nz, invalidIndex);
   }
 
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-  saveDebuggingIndicesImage(arrayPoints, img.size(), ixIndex,
-                            QString(compartmentId.c_str()) +
-                                "_indices_dilated.png");
+  saveDebuggingIndicesImageXY(arrayPoints, nx, ny, nz, ixIndex,
+                              QString(compartmentId.c_str()) +
+                                  "_indices_dilated");
 #endif
 
   common::QPointIndexer ixIndexer(img.size(), ix);
