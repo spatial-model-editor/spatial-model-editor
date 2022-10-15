@@ -17,14 +17,19 @@
 
 namespace sme::geometry {
 
+struct Voxel {
+  QPoint xy{0, 0};
+  std::size_t z{0};
+};
+
 class Compartment {
 private:
   // indices of nearest neighbours
   std::vector<std::size_t> nn;
   std::string compartmentId;
-  // vector of points that make up compartment
-  std::vector<QPoint> ix;
-  // index of corresponding point for each pixel in array
+  // vector of voxels that make up compartment
+  std::vector<Voxel> ix;
+  // index of corresponding point for each voxel in array
   std::vector<std::size_t> arrayPoints;
   QRgb colour{0};
   QImage image;
@@ -32,13 +37,13 @@ private:
 public:
   Compartment() = default;
   // create compartment geometry from all pixels in `img` of colour `col`
-  Compartment(std::string compId, const QImage &img, QRgb col);
+  Compartment(std::string compId, const std::vector<QImage> &imgs, QRgb col);
   [[nodiscard]] const std::string &getId() const;
   [[nodiscard]] QRgb getColour() const;
-  [[nodiscard]] inline const std::vector<QPoint> &getPixels() const {
+  [[nodiscard]] inline const std::vector<Voxel> &getVoxels() const {
     return ix;
   }
-  [[nodiscard]] inline const QPoint &getPixel(std::size_t i) const {
+  [[nodiscard]] inline const Voxel &getVoxel(std::size_t i) const {
     return ix[i];
   }
   [[nodiscard]] inline std::size_t nPixels() const { return ix.size(); }

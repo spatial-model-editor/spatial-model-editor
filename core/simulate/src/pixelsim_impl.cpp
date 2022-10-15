@@ -163,7 +163,7 @@ SimCompartment::SimCompartment(
       ++concIter;
     }
     if (spaceDependent) {
-      auto pixel{compartment->getPixel(ix)};
+      auto pixel{compartment->getVoxel(ix)};
       // pixels have y=0 in top-left, convert to bottom-left:
       pixel.ry() = compartment->getCompartmentImage().height() - 1 - pixel.y();
       *concIter = origin.x() + static_cast<double>(pixel.x()) * pixelWidth; // x
@@ -362,7 +362,7 @@ std::string SimCompartment::plotRKError(QImage &image, double epsilon,
     double localNorm = 0.5 * (conc[i] + s3[i] + epsilon);
     double pixelIntensity{localErr / localNorm / max};
     auto red{static_cast<int>(255.0 * pixelIntensity)};
-    auto point{comp->getPixel(i / nSpecies)};
+    auto point{comp->getVoxel(i / nSpecies)};
     auto oldRed{qRed(image.pixel(point))};
     if (red > oldRed) {
       image.setPixel(point, qRgb(red, 0, 0));
@@ -405,7 +405,7 @@ SimCompartment::getLowerOrderConcentration(std::size_t speciesIndex,
 }
 
 const std::vector<QPoint> &SimCompartment::getPixels() const {
-  return comp->getPixels();
+  return comp->getVoxels();
 }
 
 std::vector<double> &SimCompartment::getDcdt() { return dcdt; }

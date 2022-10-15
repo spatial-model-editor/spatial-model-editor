@@ -61,7 +61,7 @@ void DuneSim::initDuneSimCompartments(
                 });
       // speciesIndices[i] is now the Dune index of species i
       auto imgSize{comp->getCompartmentImage().size()};
-      auto nPixels{comp->getPixels().size()};
+      auto nPixels{comp->getVoxels().size()};
       SPDLOG_INFO("  - {} pixels", nPixels);
       // todo: don't allocate wasted space for constant species here
       auto nSpecies{speciesNames.size()};
@@ -70,7 +70,7 @@ void DuneSim::initDuneSimCompartments(
           {compartmentName,
            compIndex,
            speciesIndices,
-           common::QPointIndexer(imgSize, comp->getPixels()),
+           common::QPointIndexer(imgSize, comp->getVoxels()),
            comp,
            {},
            {},

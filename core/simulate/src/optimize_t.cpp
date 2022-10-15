@@ -255,7 +255,7 @@ TEST_CASE("setBestResults and getUpdatedBestResultImage",
   const auto compImgHeight{comp->getCompartmentImage().height()};
   std::vector<double> target(compImgWidth * compImgHeight, 0.0);
   constexpr double targetPixel{2.0};
-  for (const auto &pixel : comp->getPixels()) {
+  for (const auto &pixel : comp->getVoxels()) {
     target[pixel.x() + compImgWidth * (compImgHeight - 1 - pixel.y())] =
         targetPixel;
   }
@@ -275,7 +275,7 @@ TEST_CASE("setBestResults and getUpdatedBestResultImage",
   // second target is constant & non-zero A (i.e. white in compartment, black
   // outside)
   REQUIRE(optimization.getTargetImage(1).pixel(0, 0) == qRgb(0, 0, 0));
-  for (const auto &pixel : comp->getPixels()) {
+  for (const auto &pixel : comp->getVoxels()) {
     REQUIRE(optimization.getTargetImage(1).pixel(pixel) == qRgb(255, 255, 255));
   }
   // no best result images yet
@@ -307,7 +307,7 @@ TEST_CASE("setBestResults and getUpdatedBestResultImage",
   // make a set of results
   constexpr double resultPixel{1.2};
   std::vector<double> result(compImgWidth * compImgHeight, 0.0);
-  for (const auto &pixel : comp->getPixels()) {
+  for (const auto &pixel : comp->getVoxels()) {
     result[pixel.x() + compImgWidth * (compImgHeight - 1 - pixel.y())] =
         resultPixel;
   }
@@ -326,7 +326,7 @@ TEST_CASE("setBestResults and getUpdatedBestResultImage",
   // img0 is compared to a zero target, so image normalised to its own max value
   img0 = optimization.getUpdatedBestResultImage(0).value();
   REQUIRE(img0.size() == QSize(100, 100));
-  for (const auto &pixel : comp->getPixels()) {
+  for (const auto &pixel : comp->getVoxels()) {
     REQUIRE(img0.pixel(pixel) == qRgb(255, 255, 255));
   }
   // call getUpdatedBestResultImage again without new results
@@ -337,7 +337,7 @@ TEST_CASE("setBestResults and getUpdatedBestResultImage",
   REQUIRE(img1.size() == QSize(100, 100));
   REQUIRE(img1.size() == QSize(100, 100));
   auto maxColor{static_cast<int>(255.0 * resultPixel / targetPixel)};
-  for (const auto &pixel : comp->getPixels()) {
+  for (const auto &pixel : comp->getVoxels()) {
     REQUIRE(img1.pixel(pixel) == qRgb(maxColor, maxColor, maxColor));
   }
   // call getUpdatedBestResultImage again without new results

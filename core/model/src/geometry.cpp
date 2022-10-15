@@ -167,9 +167,9 @@ Membrane::Membrane(std::string membraneId, const Compartment *A,
   indexPair.clear();
   indexPair.reserve(membranePairs->size());
   common::QPointIndexer Aindexer(A->getCompartmentImage().size(),
-                                 A->getPixels());
+                                 A->getVoxels());
   common::QPointIndexer Bindexer(B->getCompartmentImage().size(),
-                                 B->getPixels());
+                                 B->getVoxels());
   for (const auto &[pA, pB] : *membranePairs) {
     auto iA = Aindexer.getIndex(pA);
     auto iB = Bindexer.getIndex(pB);
@@ -258,7 +258,7 @@ void Field::importConcentration(
   // NOTE: (0,0) point is at bottom-left
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
   for (std::size_t i = 0; i < comp->nPixels(); ++i) {
-    const auto &point = comp->getPixel(i);
+    const auto &point = comp->getVoxel(i);
     int arrayIndex = point.x() + img.width() * (img.height() - 1 - point.y());
     conc[i] = sbmlConcentrationArray[static_cast<std::size_t>(arrayIndex)];
   }
@@ -291,7 +291,7 @@ QImage Field::getConcentrationImage() const {
     int r = static_cast<int>(scale * qRed(colour));
     int g = static_cast<int>(scale * qGreen(colour));
     int b = static_cast<int>(scale * qBlue(colour));
-    img.setPixel(comp->getPixel(i), qRgb(r, g, b));
+    img.setPixel(comp->getVoxel(i), qRgb(r, g, b));
   }
   return img;
 }
@@ -305,7 +305,7 @@ Field::getConcentrationImageArray(bool maskAndInvertY) const {
     // y=0 at top of image & set pixels outside of compartment to zero
     a.resize(n, 0.0);
     for (std::size_t i = 0; i < comp->nPixels(); ++i) {
-      auto p{comp->getPixel(i)};
+      auto p{comp->getVoxel(i)};
       a[static_cast<std::size_t>(p.x() + img.width() * p.y())] = conc[i];
     }
   } else {

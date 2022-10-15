@@ -578,7 +578,7 @@ void ModelSpecies::setFieldConcAnalytic(
   int imgHeight = field.getCompartment()->getCompartmentImage().height();
   for (std::size_t i = 0; i < field.getCompartment()->nPixels(); ++i) {
     // position in pixels (with (0,0) in top-left of image):
-    const auto &point = field.getCompartment()->getPixel(i);
+    const auto &point = field.getCompartment()->getVoxel(i);
     // rescale to physical x,y point (with (0,0) in bottom-left):
     xCoord = origin.x() + pixelWidth * (static_cast<double>(point.x()) + 0.5);
     int y = imgHeight - 1 - point.y();

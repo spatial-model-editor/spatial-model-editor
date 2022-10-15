@@ -167,7 +167,7 @@ TEST_CASE("Optimize calculateCosts: target values",
   const auto compImgHeight{comp->getCompartmentImage().height()};
   std::vector<double> target(compImgWidth * compImgHeight, 0.0);
   constexpr double targetPixel{2.0};
-  for (const auto &pixel : comp->getPixels()) {
+  for (const auto &pixel : comp->getVoxels()) {
     target[pixel.x() + compImgWidth * (compImgHeight - 1 - pixel.y())] =
         targetPixel;
   }

@@ -757,7 +757,7 @@ TEST_CASE("Simulate: single-compartment-diffusion, circular geometry",
     double t0 = sigma2 / 4.0 / D;
     double maxRelErr = 0;
     for (std::size_t i = 0; i < f->getCompartment()->nPixels(); ++i) {
-      const auto &p = f->getCompartment()->getPixel(i);
+      const auto &p = f->getCompartment()->getVoxel(i);
       double c = analytic(p, 0, D, t0);
       double relErr = std::abs(f->getConcentration()[i] - c) / c;
       maxRelErr = std::max(maxRelErr, relErr);
@@ -819,7 +819,7 @@ TEST_CASE("Simulate: single-compartment-diffusion, circular geometry",
       double avgRelErr{0};
       std::size_t count{0};
       for (std::size_t i = 0; i < slow->getCompartment()->nPixels(); ++i) {
-        const auto &p = slow->getCompartment()->getPixel(i);
+        const auto &p = slow->getCompartment()->getVoxel(i);
         // only check part within a radius of 16 units from centre to avoid
         // boundary effects: analytic solution is in infinite volume
         if (r2(p) < 16 * 16) {

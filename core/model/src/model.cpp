@@ -321,7 +321,7 @@ void Model::clear() {
 
 SpeciesGeometry Model::getSpeciesGeometry(const QString &speciesID) const {
   return {modelGeometry->getImage().size(),
-          modelSpecies->getField(speciesID)->getCompartment()->getPixels(),
+          modelSpecies->getField(speciesID)->getCompartment()->getVoxels(),
           modelGeometry->getPhysicalOrigin(), modelGeometry->getPixelWidth(),
           getUnits()};
 }
