@@ -60,6 +60,9 @@ public:
   [[nodiscard]] inline double width() const { return xy.width(); }
   [[nodiscard]] inline double height() const { return xy.height(); }
   [[nodiscard]] inline double depth() const { return z; }
+  [[nodiscard]] inline double volume() const {
+    return xy.width() * xy.height() * z;
+  }
 };
 
 /**

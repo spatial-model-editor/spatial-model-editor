@@ -95,29 +95,29 @@ TEST_CASE("SBML membranes utils",
       auto i1 = imp.getColourIndex(col1);
       auto i2 = imp.getColourIndex(col2);
       auto i3 = imp.getColourIndex(col3);
-      const auto *p01 = imp.getPoints(i1, i0);
-      REQUIRE_THROWS(imp.getPoints(i0, i1));
+      const auto *p01 = imp.getVoxels(i1, i0);
+      REQUIRE_THROWS(imp.getVoxels(i0, i1));
       REQUIRE(p01->size() == 1);
       REQUIRE(p01->front() == std::pair{QPoint(0, 0), QPoint(1, 0)});
-      const auto *p02 = imp.getPoints(i0, i2);
+      const auto *p02 = imp.getVoxels(i0, i2);
       auto p02correct = std::vector<std::pair<QPoint, QPoint>>{
           {{1, 1}, {0, 1}}, {{0, 2}, {0, 1}}};
       REQUIRE(p02->size() == 2);
       REQUIRE(
           std::is_permutation(p02->cbegin(), p02->cend(), p02correct.cbegin()));
-      const auto *p03 = imp.getPoints(i0, i3);
+      const auto *p03 = imp.getVoxels(i0, i3);
       auto p03correct = std::vector<std::pair<QPoint, QPoint>>{
           {{0, 2}, {1, 2}}, {{1, 1}, {1, 2}}, {{2, 2}, {1, 2}}};
       REQUIRE(p03->size() == 3);
       REQUIRE(
           std::is_permutation(p03->cbegin(), p03->cend(), p03correct.cbegin()));
-      const auto *p12 = imp.getPoints(i1, i2);
+      const auto *p12 = imp.getVoxels(i1, i2);
       REQUIRE(p12->size() == 1);
       REQUIRE(p12->front() == std::pair{QPoint(0, 0), QPoint(0, 1)});
-      REQUIRE(imp.getPoints(i1, i3) == nullptr);
-      REQUIRE_THROWS(imp.getPoints(i3, i1));
-      REQUIRE(imp.getPoints(i2, i3) == nullptr);
-      REQUIRE_THROWS(imp.getPoints(i3, i2));
+      REQUIRE(imp.getVoxels(i1, i3) == nullptr);
+      REQUIRE_THROWS(imp.getVoxels(i3, i1));
+      REQUIRE(imp.getVoxels(i2, i3) == nullptr);
+      REQUIRE_THROWS(imp.getVoxels(i3, i2));
     }
   }
 }

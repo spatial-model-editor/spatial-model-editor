@@ -379,7 +379,7 @@ void ModelGeometry::setVoxelSize(const geometry::VSizeF &newVoxelSize,
               physicalOrigin.p.y(), physicalOrigin.z);
 
   if (mesh != nullptr) {
-    mesh->setPhysicalGeometry(voxelSize, physicalOrigin);
+    mesh->setPhysicalGeometry(voxelSize.width(), physicalOrigin.p);
   }
   // update xy coordinates
   auto *geom = getOrCreateGeometry(sbmlModel);

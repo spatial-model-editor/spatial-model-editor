@@ -11,7 +11,7 @@ static std::size_t
 countVertices(const std::vector<mesh::Boundary> &boundaries) {
   return std::accumulate(
       boundaries.cbegin(), boundaries.cend(), std::size_t{0},
-      [](std::size_t n, const auto &b) { return n + b.getPoints().size(); });
+      [](std::size_t n, const auto &b) { return n + b.getVoxels().size(); });
 }
 
 TEST_CASE(

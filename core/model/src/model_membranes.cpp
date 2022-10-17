@@ -122,13 +122,13 @@ void ModelMembranes::updateCompartments(
                    colourIndexA, colourA);
       SPDLOG_TRACE("-compB '{}': colour [{}] = {:x}", compB->getId(),
                    colourIndexB, colourB);
-      if (const auto *pixelPairs =
-              membranePixels->getPoints(colourIndexA, colourIndexB);
-          pixelPairs != nullptr) {
-        SPDLOG_TRACE("  -> {} point membrane", pixelPairs->size());
+      if (const auto *voxelPairs{
+              membranePixels->getVoxels(colourIndexA, colourIndexB)};
+          voxelPairs != nullptr) {
+        SPDLOG_TRACE("  -> {} point membrane", voxelPairs->size());
         std::string mId{compA->getId()};
         mId.append("_").append(compB->getId()).append("_membrane");
-        membranes.emplace_back(mId, compA, compB, pixelPairs);
+        membranes.emplace_back(mId, compA, compB, voxelPairs);
         ids.push_back(QString(mId.c_str()));
         idColourPairs.push_back({mId, {colourA, colourB}});
       }

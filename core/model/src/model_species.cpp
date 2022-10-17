@@ -574,15 +574,16 @@ void ModelSpecies::setFieldConcAnalytic(
   }
   hasUnsavedChanges = true;
   const auto &origin = modelGeometry->getPhysicalOrigin();
-  double pixelWidth = modelGeometry->getVoxelSize();
-  int imgHeight = field.getCompartment()->getCompartmentImage().height();
+  const auto &voxelSize{modelGeometry->getVoxelSize()};
+  int imgHeight = field.getCompartment()->getCompartmentImages()[0].height();
   for (std::size_t i = 0; i < field.getCompartment()->nVoxels(); ++i) {
     // position in pixels (with (0,0) in top-left of image):
-    const auto &point = field.getCompartment()->getVoxel(i);
-    // rescale to physical x,y point (with (0,0) in bottom-left):
-    xCoord = origin.x() + pixelWidth * (static_cast<double>(point.x()) + 0.5);
-    int y = imgHeight - 1 - point.y();
-    yCoord = origin.y() + pixelWidth * (static_cast<double>(y) + 0.5);
+    const auto &voxel{field.getCompartment()->getVoxel(i)};
+    // rescale to physical x,y voxel (with (0,0) in bottom-left):
+    xCoord = origin.p.x() +
+             voxelSize.width() * (static_cast<double>(voxel.p.x()) + 0.5);
+    int y = imgHeight - 1 - voxel.p.y();
+    yCoord = origin.p.y() + voxelSize.height() * (static_cast<double>(y) + 0.5);
     double conc = evaluateMathAST(astExpr.get(), sbmlVars, sbmlModel);
     field.setConcentration(i, conc);
   }

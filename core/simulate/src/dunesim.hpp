@@ -3,6 +3,7 @@
 #pragma once
 
 #include "basesim.hpp"
+#include "sme/geometry_utils.hpp"
 #include "sme/simulate_options.hpp"
 #include "sme/utils.hpp"
 #include <QPointF>
@@ -40,7 +41,7 @@ struct DuneSimCompartment {
   std::string name;
   std::size_t index;
   std::vector<std::size_t> speciesIndices;
-  common::QPointIndexer qPointIndexer;
+  geometry::QPointIndexer qPointIndexer;
   const geometry::Compartment *geometry;
   // pixels+dune local coords for each triangle
   std::vector<std::vector<PixelLocalPair>> pixels;

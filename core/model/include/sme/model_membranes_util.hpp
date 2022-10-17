@@ -21,7 +21,7 @@ class Model;
 
 namespace sme::model {
 
-using QPointPair = std::pair<QPoint, QPoint>;
+using VoxelPair = std::pair<geometry::Voxel, geometry::Voxel>;
 
 class OrderedIntPairIndex {
 private:
@@ -40,10 +40,10 @@ public:
 
 class ImageMembranePixels {
 private:
-  std::vector<std::vector<QPointPair>> points;
+  std::vector<std::vector<VoxelPair>> voxelPairs;
   OrderedIntPairIndex colourIndexPairIndex;
   QVector<QRgb> colours;
-  QSize imageSize{0, 0};
+  geometry::VSize imageSize{};
 
 public:
   explicit ImageMembranePixels();
@@ -51,8 +51,8 @@ public:
   ~ImageMembranePixels();
   void setImages(const std::vector<QImage> &imgs);
   [[nodiscard]] int getColourIndex(QRgb colour) const;
-  [[nodiscard]] const std::vector<QPointPair> *getPoints(int iA, int iB) const;
-  [[nodiscard]] const QSize &getImageSize() const;
+  [[nodiscard]] const std::vector<VoxelPair> *getVoxels(int iA, int iB) const;
+  [[nodiscard]] const geometry::VSize &getImageSize() const;
 };
 
 } // namespace sme::model

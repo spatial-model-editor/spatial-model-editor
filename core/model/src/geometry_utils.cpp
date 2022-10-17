@@ -99,13 +99,13 @@ VoxelFlattener::VoxelFlattener(int nx, int ny, int nz)
 bool VoxelFlattener::isValid(const Voxel &voxel) const {
   bool xInside = (voxel.p.x() >= 0) && (voxel.p.x() < nx);
   bool yInside = (voxel.p.y() >= 0) && (voxel.p.y() < ny);
-  bool zInside = (voxel.z >= 0) && (voxel.z < nz);
+  bool zInside = (voxel.z >= 0) && (voxel.z < static_cast<std::size_t>(nz));
   return xInside && yInside && zInside;
 }
 
 std::size_t VoxelFlattener::flatten(const Voxel &voxel) const {
-  return static_cast<std::size_t>(voxel.p.x() + voxel.p.y() * nx +
-                                  voxel.z * nx * ny);
+  return static_cast<std::size_t>(voxel.p.x() + voxel.p.y() * nx) +
+         voxel.z * static_cast<std::size_t>(nx * ny);
 }
 
 VoxelIndexer::VoxelIndexer(const VSize &vSize, const std::vector<Voxel> &voxels)
