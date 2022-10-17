@@ -5,6 +5,8 @@
 #include "sme/logger.hpp"
 #include "sme/utils.hpp"
 #include <QImage>
+#include <algorithm>
+#include <array>
 #include <memory>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
@@ -65,30 +67,38 @@ getCompartmentsAndAnalyticVolumes(
   return v;
 }
 
-static QPointF toPhysicalPoint(int ix, int iy, const QSize &imgSize,
-                               const QPointF &origin, const QSizeF &size) {
-  QPointF p;
-  double dx = static_cast<double>(ix) / static_cast<double>(imgSize.width());
-  double dy = static_cast<double>(iy) / static_cast<double>(imgSize.height());
-  p.setX(origin.x() + dx * size.width());
-  p.setY(origin.y() + dy * size.height());
-  return p;
+static geometry::VoxelF toPhysicalPoint(const geometry::Voxel &voxel,
+                                        const geometry::VSize &imageSize,
+                                        const geometry::VoxelF &physicalOrigin,
+                                        const geometry::VSizeF &physicalSize) {
+  auto physicalPoint{physicalOrigin};
+  physicalPoint.p.rx() += physicalSize.width() *
+                          static_cast<double>(voxel.p.x()) /
+                          static_cast<double>(imageSize.width());
+  physicalPoint.p.ry() += physicalSize.height() *
+                          static_cast<double>(voxel.p.y()) /
+                          static_cast<double>(imageSize.height());
+  physicalPoint.z += physicalSize.depth() * static_cast<double>(voxel.z) /
+                     static_cast<double>(imageSize.depth());
+  return physicalPoint;
 }
 
 GeometrySampledField
 importGeometryFromAnalyticGeometry(const libsbml::Model *model,
-                                   const QPointF &origin, const QSizeF &size) {
+                                   const geometry::VoxelF &physicalOrigin,
+                                   const geometry::VSizeF &physicalSize) {
+  int nMax{100};
+  double norm{common::max(std::array<double, 3>{
+      physicalSize.width(), physicalSize.height(), physicalSize.depth()})};
+  int nx{std::clamp(nMax * static_cast<int>(physicalSize.width() / norm), 1,
+                    nMax)};
+  int ny{std::clamp(nMax * static_cast<int>(physicalSize.height() / norm), 1,
+                    nMax)};
+  int nz{std::clamp(nMax * static_cast<int>(physicalSize.depth() / norm), 1,
+                    nMax)};
+  geometry::VSize imageSize{nx, ny, static_cast<std::size_t>(nz)};
   GeometrySampledField gsf;
   QRgb nullColour{qRgb(0, 0, 0)};
-  QSize imageSize(200, 200);
-  if (size.width() > size.height()) {
-    imageSize.setHeight(static_cast<int>(
-        static_cast<double>(imageSize.width()) * size.height() / size.width()));
-  } else if (size.width() < size.height()) {
-    imageSize.setWidth(
-        static_cast<int>(static_cast<double>(imageSize.height()) *
-                         size.width() / size.height()));
-  }
   const auto *geom = getGeometry(model);
   if (geom == nullptr) {
     return {};
@@ -117,12 +127,16 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
   const std::string yCoord{yparam->getId()};
   varsMap[yCoord] = {0, false};
   std::size_t nZ{1};
-  if (const auto *zparam = getSpatialCoordinateParam(
-          model, libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z);
+  std::string zCoord{};
+  if (const auto *zparam{getSpatialCoordinateParam(
+          model,
+          libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z)};
       zparam != nullptr) {
-    varsMap[zparam->getId()] = {0, false};
+    zCoord = zparam->getId();
+    varsMap[zCoord] = {0, false};
   }
-  gsf.images = {nZ, {imageSize, QImage::Format_RGB32}};
+  gsf.images = {nZ,
+                {imageSize.width(), imageSize.height(), QImage::Format_RGB32}};
   for (auto &image : gsf.images) {
     image.fill(nullColour);
   }
@@ -135,35 +149,33 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
     auto col = common::indexedColours()[iComp].rgb();
     ++iComp;
     SPDLOG_INFO("  - Colour: {:x}", col);
-    std::size_t nPixels = 0;
+    std::size_t nVoxels{0};
     for (std::size_t iz = 0; iz < nZ; ++iz) {
       auto &image{gsf.images[iz]};
-      if (nZ > 1) {
-        // todo: set actual z coord value here, not just the index
-        varsMap[getSpatialCoordinateParam(
-                    model, libsbml::CoordinateKind_t::
-                               SPATIAL_COORDINATEKIND_CARTESIAN_Z)
-                    ->getId()] = {iz, false};
-      }
       for (int ix = 0; ix < image.width(); ++ix) {
         for (int iy = 0; iy < image.height(); ++iy) {
+          geometry::Voxel v{ix, iy, iz};
           // we want y=0 in bottom of image, Qt puts it in top:
           int invertedYIndex = image.height() - 1 - iy;
           if (image.pixel(ix, invertedYIndex) == nullColour) {
-            auto p = toPhysicalPoint(ix, iy, image.size(), origin, size);
-            varsMap[xCoord].first = p.x();
-            varsMap[yCoord].first = p.y();
+            auto physical{
+                toPhysicalPoint(v, imageSize, physicalOrigin, physicalSize)};
+            varsMap[xCoord].first = physical.p.x();
+            varsMap[yCoord].first = physical.p.y();
+            if (nZ > 1) {
+              varsMap[zCoord].first = physical.z;
+            }
             if (static_cast<int>(
                     evaluateMathAST(math, varsMap, geom->getModel())) != 0) {
               image.setPixel(ix, invertedYIndex, col);
-              ++nPixels;
+              ++nVoxels;
             }
           }
         }
       }
     }
-    SPDLOG_INFO("  - Pixels: {}", nPixels);
-    if (nPixels > 0) {
+    SPDLOG_INFO("  - Voxels: {}", nVoxels);
+    if (nVoxels > 0) {
       gsf.compartmentIdColourPairs.push_back({comp->getId(), col});
     }
   }

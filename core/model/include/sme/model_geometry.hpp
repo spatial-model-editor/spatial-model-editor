@@ -29,11 +29,9 @@ struct Settings;
 
 class ModelGeometry {
 private:
-  double pixelWidth{1.0};
-  double pixelDepth{1.0};
-  QPointF physicalOrigin{QPointF(0, 0)};
-  double zOrigin{0.0};
-  QSizeF physicalSize{QSizeF(0, 0)};
+  geometry::VoxelF physicalOrigin{};
+  geometry::VSizeF physicalSize{};
+  geometry::VSizeF voxelSize{1.0, 1.0, 1.0};
   int numDimensions{3};
   std::vector<QImage> images;
   std::unique_ptr<mesh::Mesh> mesh;
@@ -43,7 +41,7 @@ private:
   ModelCompartments *modelCompartments{nullptr};
   ModelMembranes *modelMembranes{nullptr};
   const ModelUnits *modelUnits{nullptr};
-  Settings *sbmlAnnotation = nullptr;
+  Settings *sbmlAnnotation{nullptr};
   bool hasUnsavedChanges{false};
   int importDimensions(const libsbml::Model *model);
   void convertSBMLGeometryTo3d();
@@ -57,19 +55,20 @@ public:
                          Settings *annotation);
   void importSampledFieldGeometry(const libsbml::Model *model);
   void importSampledFieldGeometry(const QString &filename);
-  void importGeometryFromImage(const QImage &img, bool keepColourAssignments);
+  void importGeometryFromImages(const std::vector<QImage> &imgs,
+                                bool keepColourAssignments);
   void updateMesh();
   void clear();
   [[nodiscard]] int getNumDimensions() const;
-  [[nodiscard]] double getPixelWidth() const;
-  void setPixelWidth(double width, bool updateSBML = true);
-  [[nodiscard]] double getPixelDepth() const;
-  void setPixelDepth(double depth);
-  [[nodiscard]] double getZOrigin() const;
-  [[nodiscard]] const QPointF &getPhysicalOrigin() const;
-  [[nodiscard]] const QSizeF &getPhysicalSize() const;
-  [[nodiscard]] QPointF getPhysicalPoint(const QPoint pixel) const;
-  [[nodiscard]] QString getPhysicalPointAsString(const QPoint pixel) const;
+  [[nodiscard]] const geometry::VSizeF &getVoxelSize() const;
+  void setVoxelSize(const geometry::VSizeF &newVoxelSize,
+                    bool updateSBML = true);
+  [[nodiscard]] const geometry::VoxelF &getPhysicalOrigin() const;
+  [[nodiscard]] const geometry::VSizeF &getPhysicalSize() const;
+  [[nodiscard]] geometry::VoxelF
+  getPhysicalPoint(const geometry::Voxel &voxel) const;
+  [[nodiscard]] QString
+  getPhysicalPointAsString(const geometry::Voxel &voxel) const;
   [[nodiscard]] const std::vector<QImage> &getImages() const;
   [[nodiscard]] mesh::Mesh *getMesh() const;
   [[nodiscard]] bool getIsValid() const;

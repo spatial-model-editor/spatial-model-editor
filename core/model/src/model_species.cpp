@@ -574,7 +574,7 @@ void ModelSpecies::setFieldConcAnalytic(
   }
   hasUnsavedChanges = true;
   const auto &origin = modelGeometry->getPhysicalOrigin();
-  double pixelWidth = modelGeometry->getPixelWidth();
+  double pixelWidth = modelGeometry->getVoxelSize();
   int imgHeight = field.getCompartment()->getCompartmentImage().height();
   for (std::size_t i = 0; i < field.getCompartment()->nVoxels(); ++i) {
     // position in pixels (with (0,0) in top-left of image):

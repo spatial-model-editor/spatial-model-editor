@@ -508,7 +508,7 @@ void MainWindow::importGeometryImage(const QImage &image) {
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   // set default pixel width in case user doesn't set image physical size
-  model.getGeometry().setPixelWidth(1.0);
+  model.getGeometry().setVoxelSize(1.0);
   enableTabs();
   QGuiApplication::restoreOverrideCursor();
   actionEdit_geometry_image_triggered();
@@ -519,7 +519,7 @@ void MainWindow::actionSet_model_units_triggered() {
     return;
   }
   sme::model::Unit oldLengthUnit{model.getUnits().getLength()};
-  double oldPixelWidth{model.getGeometry().getPixelWidth()};
+  double oldPixelWidth{model.getGeometry().getVoxelSize()};
   DialogUnits dialog(model.getUnits());
   if (dialog.exec() == QDialog::Accepted) {
     model.getUnits().setTimeIndex(dialog.getTimeUnitIndex());
@@ -527,7 +527,7 @@ void MainWindow::actionSet_model_units_triggered() {
     model.getUnits().setVolumeIndex(dialog.getVolumeUnitIndex());
     model.getUnits().setAmountIndex(dialog.getAmountUnitIndex());
     // rescale pixelsize to match new units
-    model.getGeometry().setPixelWidth(sme::model::rescale(
+    model.getGeometry().setVoxelSize(sme::model::rescale(
         oldPixelWidth, oldLengthUnit, model.getUnits().getLength()));
     enableTabs();
   }
@@ -538,7 +538,7 @@ void MainWindow::actionEdit_geometry_image_triggered() {
     return;
   }
   DialogGeometryImage dialog(
-      model.getGeometry().getImage(), model.getGeometry().getPixelWidth(),
+      model.getGeometry().getImage(), model.getGeometry().getVoxelSize(),
       model.getGeometry().getPixelDepth(), model.getUnits());
   if (dialog.exec() == QDialog::Accepted) {
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -547,7 +547,7 @@ void MainWindow::actionEdit_geometry_image_triggered() {
     model.getGeometry().setPixelDepth(pixelDepth);
     double pixelWidth{dialog.getPixelWidth()};
     SPDLOG_INFO("Set new pixel width = {}", pixelWidth);
-    model.getGeometry().setPixelWidth(pixelWidth);
+    model.getGeometry().setVoxelSize(pixelWidth);
     tabSimulate->reset();
     if (dialog.imageSizeAltered() || dialog.imageColoursAltered()) {
       SPDLOG_INFO("Importing altered geometry image");

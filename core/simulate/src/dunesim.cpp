@@ -186,7 +186,7 @@ DuneSim::DuneSim(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
     const std::map<std::string, double, std::less<>> &substitutions)
     : geometryImageSize{sbmlDoc.getGeometry().getImage().size()},
-      pixelSize{sbmlDoc.getGeometry().getPixelWidth()},
+      pixelSize{sbmlDoc.getGeometry().getVoxelSize()},
       pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()} {
   try {
     const auto &lengthUnit{sbmlDoc.getUnits().getLength()};

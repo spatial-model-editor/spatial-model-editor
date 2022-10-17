@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "sme/geometry_utils.hpp"
 #include "sme/model_compartments.hpp"
 #include "sme/model_events.hpp"
 #include "sme/model_functions.hpp"
@@ -38,10 +39,10 @@ class Mesh;
 namespace sme::model {
 
 struct SpeciesGeometry {
-  QSize compartmentImageSize;
-  const std::vector<QPoint> &compartmentPoints;
-  const QPointF &physicalOrigin;
-  double pixelWidth;
+  const geometry::VSize &compartmentImageSize;
+  const std::vector<geometry::Voxel> &compartmentVoxels;
+  const geometry::VoxelF &physicalOrigin;
+  const geometry::VSizeF &voxelSize;
   const ModelUnits &modelUnits;
 };
 

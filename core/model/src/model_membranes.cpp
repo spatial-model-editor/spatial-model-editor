@@ -136,7 +136,7 @@ void ModelMembranes::updateCompartments(
   }
 }
 
-void ModelMembranes::updateCompartmentImage(const std::vector<QImage> &imgs) {
+void ModelMembranes::updateCompartmentImages(const std::vector<QImage> &imgs) {
   membranePixels = std::make_unique<ImageMembranePixels>(imgs);
   SPDLOG_TRACE("{} colour image:", img.colorCount());
 }
@@ -175,7 +175,9 @@ void ModelMembranes::importMembraneIdsAndNames() {
   }
 }
 
-void ModelMembranes::exportToSBML(double pixelArea) {
+void ModelMembranes::exportToSBML(const geometry::VSizeF &voxelSize) {
+  // todo: this uses the x-z face area everywhere (i.e. assumes cubic voxels)
+  double voxelFaceArea{voxelSize.width() * voxelSize.depth()};
   if (sbmlModel == nullptr) {
     SPDLOG_WARN("no sbml model to export to - ignoring");
   }
@@ -200,7 +202,7 @@ void ModelMembranes::exportToSBML(double pixelArea) {
       comp->unsetUnits();
     }
     auto nPixels{membranes[static_cast<std::size_t>(i)].getIndexPairs().size()};
-    double area{static_cast<double>(nPixels) * pixelArea};
+    double area{static_cast<double>(nPixels) * voxelFaceArea};
     SPDLOG_INFO("  - size: {}", area);
     comp->setSize(area);
     auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(

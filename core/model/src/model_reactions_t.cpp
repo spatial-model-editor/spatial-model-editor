@@ -207,7 +207,7 @@ TEST_CASE("SBML reactions",
     REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[1]).size() == 2);
     QImage img(":/geometry/single-pixels-3x1.png");
     m.getGeometry().importGeometryFromImage(img, false);
-    m.getGeometry().setPixelWidth(1.0);
+    m.getGeometry().setVoxelSize(1.0);
     REQUIRE(m.getGeometry().getIsValid() == false);
     // assign valid compartment colours
     m.getCompartments().setColour("c1", img.pixel(0, 0));
@@ -221,7 +221,7 @@ TEST_CASE("SBML reactions",
     // repeat with different but valid colour assignments
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/679
     m.getGeometry().importGeometryFromImage(img, false);
-    m.getGeometry().setPixelWidth(1.0);
+    m.getGeometry().setVoxelSize(1.0);
     REQUIRE(m.getGeometry().getIsValid() == false);
     m.getCompartments().setColour("c1", img.pixel(2, 0));
     m.getCompartments().setColour("c2", img.pixel(1, 0));
@@ -311,7 +311,7 @@ TEST_CASE("SBML reactions",
     REQUIRE(m.getReactions().getIds(locations[5]).size() == 0);
     QImage img(":/geometry/single-pixels-3x1.png");
     m.getGeometry().importGeometryFromImage(img, false);
-    m.getGeometry().setPixelWidth(1.0);
+    m.getGeometry().setVoxelSize(1.0);
     REQUIRE(m.getGeometry().getIsValid() == false);
     // assign compartments such that c1-c3 and c3-c2 share borders,
     // i.e. remove c1-c2 membrane from model geometry

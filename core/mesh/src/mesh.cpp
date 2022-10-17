@@ -25,11 +25,12 @@ Mesh::pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept {
 Mesh::Mesh() = default;
 
 Mesh::Mesh(const QImage &image, std::vector<std::size_t> maxPoints,
-           std::vector<std::size_t> maxTriangleArea, double pixelWidth,
-           const QPointF &originPoint,
+           std::vector<std::size_t> maxTriangleArea,
+           const geometry::VSizeF &voxelSize,
+           const geometry::VoxelF &originPoint,
            const std::vector<QRgb> &compartmentColours,
            std::size_t boundarySimplificationType)
-    : img(image), origin(originPoint), pixel(pixelWidth),
+    : img(image), origin(originPoint.p), pixel(voxelSize.width()),
       boundaryMaxPoints(std::move(maxPoints)),
       compartmentMaxTriangleArea(std::move(maxTriangleArea)),
       boundaries{std::make_unique<Boundaries>(image, compartmentColours,

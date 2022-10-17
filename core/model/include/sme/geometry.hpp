@@ -28,6 +28,8 @@ private:
   // index of corresponding point for each voxel in array
   std::vector<std::size_t> arrayPoints;
   QRgb colour{0};
+  // size of image stack
+  VSize imageSize{};
   std::vector<QImage> images;
 
 public:
@@ -64,6 +66,7 @@ public:
   [[nodiscard]] inline std::size_t dn_z(std::size_t i) const {
     return nn[6 * i + 5];
   }
+  [[nodiscard]] const VSize &getImageSize() const;
   // return a QImage of the compartment geometry
   [[nodiscard]] const std::vector<QImage> &getCompartmentImages() const;
   [[nodiscard]] const std::vector<std::size_t> &getArrayPoints() const;

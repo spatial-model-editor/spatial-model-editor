@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sme/geometry_utils.hpp"
 #include "sme/mesh_types.hpp"
 #include <QImage>
 #include <QPointF>
@@ -69,8 +70,8 @@ public:
    */
   explicit Mesh(const QImage &image, std::vector<std::size_t> maxPoints = {},
                 std::vector<std::size_t> maxTriangleArea = {},
-                double pixelWidth = 1.0,
-                const QPointF &originPoint = QPointF(0, 0),
+                const geometry::VSizeF &voxelSize = {1.0, 1.0, 1.0},
+                const geometry::VoxelF &originPoint = {0.0, 0.0, 0.0},
                 const std::vector<QRgb> &compartmentColours = {},
                 std::size_t boundarySimplificationType = 0);
   ~Mesh();

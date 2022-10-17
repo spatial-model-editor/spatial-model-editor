@@ -760,7 +760,7 @@ TEST_CASE("SBML: load model, refine mesh, save",
 TEST_CASE("SBML: load single compartment model, change size of geometry",
           "[core/model/model][core/model][core][model][mesh]") {
   auto s{getExampleModel(Mod::ABtoC)};
-  REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(1.0));
+  REQUIRE(s.getGeometry().getVoxelSize() == dbl_approx(1.0));
   REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(1.0));
   // 100x100 image, 100m x 100m physical size
   REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(100.0));
@@ -771,8 +771,8 @@ TEST_CASE("SBML: load single compartment model, change size of geometry",
 
   // change pixel width: compartment sizes, interior points updated
   double a = 0.01;
-  s.getGeometry().setPixelWidth(a);
-  REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(0.01));
+  s.getGeometry().setVoxelSize(a);
+  REQUIRE(s.getGeometry().getVoxelSize() == dbl_approx(0.01));
   REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(1.0));
   // physical size rescaled
   REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(1.0));
@@ -786,7 +786,7 @@ TEST_CASE("SBML: load single compartment model, change size of geometry",
 
   // change pixel depth: compartment sizes, interior points updated
   s.getGeometry().setPixelDepth(0.1);
-  REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(0.01));
+  REQUIRE(s.getGeometry().getVoxelSize() == dbl_approx(0.01));
   REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(0.1));
   // 2d physical size not affected:
   REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(1.0));
@@ -805,7 +805,7 @@ TEST_CASE("SBML: load multi-compartment model, change size of geometry",
   // 100m x 100m x 1m geometry, volume units: litres
   REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(100.0));
   REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(100.0));
-  REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(1.0));
+  REQUIRE(s.getGeometry().getVoxelSize() == dbl_approx(1.0));
   REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(1.0));
   REQUIRE(s.getUnits().getLength().name == "m");
   REQUIRE(s.getUnits().getVolume().name == "L");
@@ -821,8 +821,8 @@ TEST_CASE("SBML: load multi-compartment model, change size of geometry",
   REQUIRE(interiorPoint.y() == dbl_approx(83.5));
   // change pixel width: compartment/membrane sizes, interior points updated
   double a = 1.1285;
-  s.getGeometry().setPixelWidth(a);
-  REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(a));
+  s.getGeometry().setVoxelSize(a);
+  REQUIRE(s.getGeometry().getVoxelSize() == dbl_approx(a));
   REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(1.0));
   REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(100.0 * a));
   REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(100.0 * a));
@@ -837,7 +837,7 @@ TEST_CASE("SBML: load multi-compartment model, change size of geometry",
   // change pixel depth: compartment/membrane sizes, interior points updated
   double d = 0.937694;
   s.getGeometry().setPixelDepth(d);
-  REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(a));
+  REQUIRE(s.getGeometry().getVoxelSize() == dbl_approx(a));
   REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(d));
   REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(100.0 * a));
   REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(100.0 * a));
@@ -858,7 +858,7 @@ TEST_CASE("SBML: load multi-compartment model, change size of geometry",
   auto xml{s.getXml().toStdString()};
   model::Model s2;
   s2.importSBMLString(xml);
-  REQUIRE(s2.getGeometry().getPixelWidth() == dbl_approx(a));
+  REQUIRE(s2.getGeometry().getVoxelSize() == dbl_approx(a));
   REQUIRE(s2.getGeometry().getPixelDepth() == dbl_approx(d));
   REQUIRE(s2.getGeometry().getPhysicalSize().width() == dbl_approx(100.0 * a));
   REQUIRE(s2.getGeometry().getPhysicalSize().height() == dbl_approx(100.0 * a));
@@ -895,7 +895,7 @@ TEST_CASE("SBML: load .xml model, simulate, save as .sme, load .sme",
   s3.importFile("tmpmodelsmetest.sme");
   // do something that causes ModelCompartments to clear the simulation results
   // https://github.com/spatial-model-editor/spatial-model-editor/issues/666
-  s3.getGeometry().setPixelWidth(1.2, true);
+  s3.getGeometry().setVoxelSize(1.2, true);
   REQUIRE(s3.getSimulationData().timePoints.size() == 0);
 }
 

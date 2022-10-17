@@ -24,6 +24,44 @@ struct Voxel {
   std::size_t z{0};
 };
 
+struct VoxelF {
+  VoxelF() = default;
+  VoxelF(double x, double y, double z) : p{x, y}, z{z} {}
+  QPointF p{0, 0};
+  double z{0};
+};
+
+struct VSize {
+private:
+  QSize xy{0, 0};
+  std::size_t z{0};
+
+public:
+  VSize() = default;
+  VSize(int x, int y, std::size_t z) : xy{x, y}, z{z} {}
+  VSize(QSize xy, std::size_t z) : xy{xy}, z{z} {}
+  [[nodiscard]] inline int width() const { return xy.width(); }
+  [[nodiscard]] inline int height() const { return xy.height(); }
+  [[nodiscard]] inline std::size_t depth() const { return z; }
+  [[nodiscard]] inline std::size_t nVoxels() const {
+    return static_cast<std::size_t>(xy.width() * xy.height()) * z;
+  }
+};
+
+class VSizeF {
+private:
+  QSizeF xy{0, 0};
+  double z{0};
+
+public:
+  VSizeF() = default;
+  VSizeF(double x, double y, double z) : xy{x, y}, z{z} {}
+  VSizeF(QSizeF xy, double z) : xy{xy}, z{z} {}
+  [[nodiscard]] inline double width() const { return xy.width(); }
+  [[nodiscard]] inline double height() const { return xy.height(); }
+  [[nodiscard]] inline double depth() const { return z; }
+};
+
 /**
  * @brief Convert a (2d) QPoint to an integer
  *
@@ -101,6 +139,7 @@ private:
   int nz;
 
 public:
+  explicit VoxelFlattener(const VSize &vSize);
   explicit VoxelFlattener(int nx, int ny, int nz);
   /**
    * @brief Check if the point is inside the bounding box
@@ -125,6 +164,8 @@ private:
   std::vector<std::size_t> voxelIndex;
 
 public:
+  explicit VoxelIndexer(const VSize &vSize,
+                        const std::vector<Voxel> &voxels = {});
   explicit VoxelIndexer(int nx, int ny, int nz,
                         const std::vector<Voxel> &voxels = {});
   void addVoxels(const std::vector<Voxel> &voxels);

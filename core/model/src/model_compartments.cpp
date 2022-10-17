@@ -87,8 +87,8 @@ ModelCompartments::ModelCompartments(libsbml::Model *model,
   compartments.reserve(static_cast<std::size_t>(ids.size()));
   createDefaultCompartmentGeometryIfMissing(model);
   for (const auto &id : ids) {
-    compartments.push_back(
-        std::make_unique<geometry::Compartment>(id.toStdString(), QImage{}, 0));
+    compartments.push_back(std::make_unique<geometry::Compartment>(
+        id.toStdString(), std::vector<QImage>{}, 0));
   }
 }
 
@@ -294,7 +294,7 @@ void ModelCompartments::setInteriorPoints(const QString &id,
                 ip->getCoord2());
   }
   const auto &origin{modelGeometry->getPhysicalOrigin()};
-  auto pixelWidth{modelGeometry->getPixelWidth()};
+  auto pixelWidth{modelGeometry->getVoxelSize()};
   auto centralZPoint{modelGeometry->getZOrigin() +
                      modelGeometry->getPixelDepth() * 0.5};
   for (const auto &point : points) {
@@ -363,7 +363,7 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
     sfvol->setSampledValue(static_cast<double>(colour));
   }
   auto nPixels{compartments[static_cast<std::size_t>(i)]->nVoxels()};
-  double pixelWidth{modelGeometry->getPixelWidth()};
+  double pixelWidth{modelGeometry->getVoxelSize()};
   double pixelDepth{modelGeometry->getPixelDepth()};
   double l3{static_cast<double>(nPixels) * pixelWidth * pixelWidth *
             pixelDepth};
@@ -381,7 +381,7 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   modelMembranes->updateCompartmentNames(names);
   modelGeometry->updateMesh();
   if (modelGeometry->getIsValid()) {
-    modelMembranes->exportToSBML(modelGeometry->getPixelWidth() *
+    modelMembranes->exportToSBML(modelGeometry->getVoxelSize() *
                                  modelGeometry->getPixelDepth());
   }
   if (modelReactions != nullptr && modelGeometry->getIsValid()) {

@@ -31,7 +31,7 @@ TEST_CASE("Simulate: very_simple_model, single pixel geometry",
   img.save("tmpsimsinglepixel.bmp");
   s.getGeometry().importGeometryFromImage(QImage("tmpsimsinglepixel.bmp"),
                                           false);
-  s.getGeometry().setPixelWidth(1.0);
+  s.getGeometry().setVoxelSize(1.0);
   s.getCompartments().setColour("c1", col1);
   s.getCompartments().setColour("c2", col2);
   s.getCompartments().setColour("c3", col3);
@@ -374,7 +374,7 @@ TEST_CASE("Simulate: very_simple_model, change pixel size, Pixel sim",
   // length unit: m
   // volume unit: L
   // alpha = length^3/volume = 1e3
-  REQUIRE(s1.getGeometry().getPixelWidth() == dbl_approx(1.0));
+  REQUIRE(s1.getGeometry().getVoxelSize() == dbl_approx(1.0));
   REQUIRE(s1.getUnits().getLength().name == "m");
   REQUIRE(s1.getUnits().getVolume().name == "L");
   auto &options{s1.getSimulationSettings().options};
@@ -394,8 +394,8 @@ TEST_CASE("Simulate: very_simple_model, change pixel size, Pixel sim",
     auto s{getExampleModel(Mod::VerySimpleModel)};
     s.getSimulationSettings().options = options;
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
-    s.getGeometry().setPixelWidth(3.0);
-    REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(3.0));
+    s.getGeometry().setVoxelSize(3.0);
+    REQUIRE(s.getGeometry().getVoxelSize() == dbl_approx(3.0));
     // pixel width -> 3x larger
     // units, concentrations & reaction rates unchanged
     // but membrane flux per pixel -> 9x larger
@@ -465,8 +465,8 @@ TEST_CASE("Simulate: very_simple_model, change pixel size, Pixel sim",
     auto s{getExampleModel(Mod::VerySimpleModel)};
     s.getSimulationSettings().options = options;
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
-    s.getGeometry().setPixelWidth(0.27);
-    REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(0.27));
+    s.getGeometry().setVoxelSize(0.27);
+    REQUIRE(s.getGeometry().getVoxelSize() == dbl_approx(0.27));
     // as above
     rescaleMembraneReacRates(s, 0.27);
     rescaleDiffusionConstants(s, 0.27 * 0.27);
@@ -541,7 +541,7 @@ TEST_CASE("Simulate: very_simple_model, membrane reaction units consistency",
     // length unit: m
     // volume unit: L
     // alpha = length^3/volume = 1e3
-    REQUIRE(s1.getGeometry().getPixelWidth() == dbl_approx(1.0));
+    REQUIRE(s1.getGeometry().getVoxelSize() == dbl_approx(1.0));
     REQUIRE(s1.getUnits().getLength().name == "m");
     REQUIRE(s1.getUnits().getVolume().name == "L");
     s1.getSimulationSettings().simulatorType = simulatorType;

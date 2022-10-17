@@ -89,6 +89,10 @@ QPointUniqueIndexer::getIndex(const QPoint &point) const {
 
 std::vector<QPoint> QPointUniqueIndexer::getPoints() const { return points; }
 
+VoxelFlattener::VoxelFlattener(const VSize &vSize)
+    : nx{vSize.width()}, ny{vSize.height()}, nz{static_cast<int>(
+                                                 vSize.depth())} {}
+
 VoxelFlattener::VoxelFlattener(int nx, int ny, int nz)
     : nx{nx}, ny{ny}, nz{nz} {}
 
@@ -100,8 +104,13 @@ bool VoxelFlattener::isValid(const Voxel &voxel) const {
 }
 
 std::size_t VoxelFlattener::flatten(const Voxel &voxel) const {
-  return static_cast<std::size_t>(voxel.p.y() + voxel.p.x() * ny +
-                                  voxel.z * ny * nx);
+  return static_cast<std::size_t>(voxel.p.x() + voxel.p.y() * nx +
+                                  voxel.z * nx * ny);
+}
+
+VoxelIndexer::VoxelIndexer(const VSize &vSize, const std::vector<Voxel> &voxels)
+    : flattener(vSize), voxelIndex(vSize.nVoxels(), NULL_INDEX) {
+  addVoxels(voxels);
 }
 
 VoxelIndexer::VoxelIndexer(int nx, int ny, int nz,

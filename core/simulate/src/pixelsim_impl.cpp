@@ -111,7 +111,7 @@ SimCompartment::SimCompartment(
   speciesNames.reserve(nSpecies);
   SPDLOG_DEBUG("compartment: {}", compartmentId);
   std::vector<const geometry::Field *> fields;
-  const double pixelWidth{doc.getGeometry().getPixelWidth()};
+  const double pixelWidth{doc.getGeometry().getVoxelSize()};
   for (const auto &s : speciesIds) {
     const auto *field = doc.getSpecies().getField(s.c_str());
     diffConstants.push_back(field->getDiffusionConstant() / pixelWidth /
@@ -464,7 +464,7 @@ SimMembrane::SimMembrane(
   const auto &lengthUnit = doc.getUnits().getLength();
   const auto &volumeUnit = doc.getUnits().getVolume();
   double volOverL3 = model::getVolOverL3(lengthUnit, volumeUnit);
-  double pixelWidth{doc.getGeometry().getPixelWidth()};
+  double pixelWidth{doc.getGeometry().getVoxelSize()};
   SPDLOG_INFO("  - [vol]/[length]^3 = {}", volOverL3);
   SPDLOG_INFO("  - pixel width = {}", pixelWidth);
   SPDLOG_INFO("  - multiplying reaction by '{}'", volOverL3 / pixelWidth);

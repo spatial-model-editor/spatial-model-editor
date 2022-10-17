@@ -173,7 +173,7 @@ static void addCompartment(
         double max =
             common::writeTIFF(tiffFilename.toStdString(),
                               f->getCompartment()->getCompartmentImage().size(),
-                              conc, model.getGeometry().getPixelWidth());
+                              conc, model.getGeometry().getVoxelSize());
         tiffs.push_back(sampledFieldName);
         ini.addValue(duneName,
                      QString("%1*%2(x,y)").arg(max).arg(sampledFieldName));
@@ -326,7 +326,7 @@ DuneConverter::DuneConverter(
     : mesh{model.getGeometry().getMesh()},
       x0{model.getGeometry().getPhysicalOrigin().x()},
       y0{model.getGeometry().getPhysicalOrigin().y()},
-      a{model.getGeometry().getPixelWidth()},
+      a{model.getGeometry().getVoxelSize()},
       w{model.getGeometry().getImage().width()} {
 
   independentCompartments = modelHasIndependentCompartments(model);
