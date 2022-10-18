@@ -621,8 +621,8 @@ void ModelSpecies::setSampledFieldConcentration(
   SPDLOG_INFO("speciesID: {}", sId);
   removeInitialAssignment(id);
   // sampled field
-  auto *geom = getOrCreateGeometry(sbmlModel);
-  auto *sf = geom->createSampledField();
+  auto *geom{getOrCreateGeometry(sbmlModel)};
+  auto *sf{geom->createSampledField()};
   std::string sfId = id.toStdString() + "_initialConcentration";
   while (!isSpatialIdAvailable(sfId, geom)) {
     sfId.append("_");
@@ -674,9 +674,10 @@ ModelSpecies::getSampledFieldConcentration(const QString &id,
       maskAndInvertY);
 }
 
-QImage ModelSpecies::getConcentrationImage(const QString &id) const {
+std::vector<QImage>
+ModelSpecies::getConcentrationImages(const QString &id) const {
   auto i = ids.indexOf(id);
-  return fields[static_cast<std::size_t>(i)].getConcentrationImage();
+  return fields[static_cast<std::size_t>(i)].getConcentrationImages();
 }
 
 void ModelSpecies::setColour(const QString &id, QRgb colour) {
