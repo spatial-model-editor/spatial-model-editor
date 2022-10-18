@@ -47,7 +47,7 @@ private:
   bool useTBB{false};
   std::size_t numMaxThreads{1};
   std::string currentErrorMessage{};
-  QImage currentErrorImage{};
+  std::vector<QImage> currentErrorImages{};
   std::atomic<bool> stopRequested{false};
   std::size_t nExtraVars{0};
 
@@ -69,7 +69,7 @@ public:
                                                   std::size_t speciesIndex,
                                                   std::size_t pixelIndex) const;
   [[nodiscard]] const std::string &errorMessage() const override;
-  [[nodiscard]] const QImage &errorImage() const override;
+  [[nodiscard]] const std::vector<QImage> &errorImages() const override;
   void setStopRequested(bool stop) override;
 };
 

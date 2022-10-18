@@ -17,7 +17,8 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     imgBoundary.emplace_back(0, img.height() - 1);
     imgBoundary.emplace_back(img.width() - 1, img.height() - 1);
     imgBoundary.emplace_back(img.width() - 1, 0);
-    mesh::Mesh mesh(img, {}, {999}, 1.0, QPointF(0, 0), std::vector<QRgb>{col});
+    mesh::Mesh mesh(img, {}, {999}, {1.0, 1.0, 1.0}, {0, 0, 0},
+                    std::vector<QRgb>{col});
     SECTION("check outputs") {
       // check boundaries
       REQUIRE(mesh.getNumBoundaries() == 1);
@@ -149,7 +150,7 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     // flip y-axis to match (0,0) == bottom-left of meshing output
     img = img.mirrored(false, true);
 
-    mesh::Mesh mesh(img, {}, {999, 999}, 1.0, QPointF(0, 0),
+    mesh::Mesh mesh(img, {}, {999, 999}, {1.0, 1.0, 1.0}, {0, 0, 0},
                     std::vector<QRgb>{bgcol, col});
 
     // check boundaries image
@@ -184,7 +185,7 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     QRgb col = QColor(0, 0, 0).rgb();
     img.fill(col);
     std::size_t maxTriangleArea{999};
-    mesh::Mesh mesh(img, {}, {maxTriangleArea}, 1.0, QPointF(0, 0),
+    mesh::Mesh mesh(img, {}, {maxTriangleArea}, {1.0, 1.0, 1.0}, {0, 0, 0},
                     std::vector<QRgb>{col});
     REQUIRE(mesh.isValid() == true);
     // use 3 point boundary around 3x1 pixel rectangle:

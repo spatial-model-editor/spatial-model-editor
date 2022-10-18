@@ -630,12 +630,14 @@ void ModelSpecies::setSampledFieldConcentration(
   sf->setId(sfId);
   SPDLOG_INFO("  - creating SampledField: {}", sf->getId());
   sf->setSamples(concentrationArray);
-  sf->setNumSamples1(modelGeometry->getImage().width());
-  sf->setNumSamples2(modelGeometry->getImage().height());
-  sf->setSamplesLength(modelGeometry->getImage().width() *
-                       modelGeometry->getImage().height());
-  SPDLOG_INFO("  - set samples to {}x{} array", sf->getNumSamples1(),
-              sf->getNumSamples2());
+  sf->setNumSamples1(modelGeometry->getImages()[0].width());
+  sf->setNumSamples2(modelGeometry->getImages()[0].height());
+  sf->setNumSamples2(static_cast<int>(modelGeometry->getImages().size()));
+  sf->setSamplesLength(static_cast<int>(concentrationArray.size()));
+  SPDLOG_INFO("  - given concentration array with {} elements",
+              concentrationArray.size());
+  SPDLOG_INFO("  - set samples to {}x{}x{} array", sf->getNumSamples1(),
+              sf->getNumSamples2(), sf->getNumSamples3());
   sf->setDataType(libsbml::DataKind_t::SPATIAL_DATAKIND_DOUBLE);
   sf->setInterpolationType(
       libsbml::InterpolationKind_t::SPATIAL_INTERPOLATIONKIND_LINEAR);

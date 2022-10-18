@@ -72,7 +72,7 @@ public:
       double timeout_ms = -1.0,
       const std::function<bool()> &stopRunningCallback = {});
   [[nodiscard]] const std::string &errorMessage() const;
-  [[nodiscard]] const QImage &errorImage() const;
+  [[nodiscard]] const std::vector<QImage> &errorImages() const;
   [[nodiscard]] const std::vector<std::string> &getCompartmentIds() const;
   [[nodiscard]] const std::vector<std::string> &
   getSpeciesIds(std::size_t compartmentIndex) const;

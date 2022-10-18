@@ -37,7 +37,7 @@ static void testFillMissingByDilation(std::vector<double> &arr, int w, int h) {
 
 static std::vector<double>
 testGetConcentrationImageArray(const geometry::Field &f) {
-  const auto &img = f.getCompartment()->getCompartmentImage();
+  const auto &img = f.getCompartment()->getCompartmentImages()[0];
   int size = img.width() * img.height();
   // NOTE: order of concentration array is [ (x=0,y=0), (x=1,y=0), ... ]
   // NOTE: (0,0) point is at bottom-left
@@ -45,8 +45,9 @@ testGetConcentrationImageArray(const geometry::Field &f) {
   constexpr double invalidPixelValue{-1.0};
   std::vector<double> arr(static_cast<std::size_t>(size), invalidPixelValue);
   for (std::size_t i = 0; i < f.getCompartment()->nVoxels(); ++i) {
-    const auto &point = f.getCompartment()->getVoxel(i);
-    int arrayIndex = point.x() + img.width() * (img.height() - 1 - point.y());
+    const auto &voxel{f.getCompartment()->getVoxel(i)};
+    int arrayIndex =
+        voxel.p.x() + img.width() * (img.height() - 1 - voxel.p.y());
     arr[static_cast<std::size_t>(arrayIndex)] = f.getConcentration()[i];
   }
   testFillMissingByDilation(arr, img.width(), img.height());
@@ -59,10 +60,12 @@ TEST_CASE("Geometry: Compartments and Fields",
     QImage img(1, 1, QImage::Format_RGB32);
     auto col = qRgb(12, 243, 154);
     img.setPixel(0, 0, col);
-    geometry::Compartment comp("comp", img, col);
-    REQUIRE(comp.getCompartmentImage().size() == img.size());
+    geometry::Compartment comp("comp", {img}, col);
+    REQUIRE(comp.getCompartmentImages().size() == 1);
+    REQUIRE(comp.getCompartmentImages()[0].size() == img.size());
     REQUIRE(comp.nVoxels() == 1);
-    REQUIRE(comp.getVoxel(0) == QPoint(0, 0));
+    REQUIRE(comp.getVoxel(0).p == QPoint{0, 0});
+    REQUIRE(comp.getVoxel(0).z == 0);
 
     auto specCol = qRgb(123, 12, 1);
     geometry::Field field(&comp, "spec1", 1.0, specCol);

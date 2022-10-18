@@ -9,7 +9,7 @@ QImage toGrayscaleIntensityImage(const QSize &imageSize,
                                  const std::vector<double> &values,
                                  double maxValue) {
   QImage img(imageSize, QImage::Format_RGB32);
-  if (values.size() != img.width() * img.height()) {
+  if (static_cast<int>(values.size()) != img.width() * img.height()) {
     img.fill(0);
   } else {
     double scaleFactor{0.0};

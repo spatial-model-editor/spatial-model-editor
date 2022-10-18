@@ -170,10 +170,10 @@ static void addCompartment(
           // convert A/V to A/L^3
           c /= volOverL3;
         }
-        double max =
-            common::writeTIFF(tiffFilename.toStdString(),
-                              f->getCompartment()->getCompartmentImage().size(),
-                              conc, model.getGeometry().getVoxelSize());
+        double max = common::writeTIFF(
+            tiffFilename.toStdString(),
+            f->getCompartment()->getCompartmentImages()[0].size(), conc,
+            model.getGeometry().getVoxelSize().width());
         tiffs.push_back(sampledFieldName);
         ini.addValue(duneName,
                      QString("%1*%2(x,y)").arg(max).arg(sampledFieldName));
@@ -324,10 +324,10 @@ DuneConverter::DuneConverter(
     const std::map<std::string, double, std::less<>> &substitutions,
     bool forExternalUse, const QString &outputIniFile, int doublePrecision)
     : mesh{model.getGeometry().getMesh()},
-      x0{model.getGeometry().getPhysicalOrigin().x()},
-      y0{model.getGeometry().getPhysicalOrigin().y()},
-      a{model.getGeometry().getVoxelSize()},
-      w{model.getGeometry().getImage().width()} {
+      x0{model.getGeometry().getPhysicalOrigin().p.x()},
+      y0{model.getGeometry().getPhysicalOrigin().p.y()},
+      a{model.getGeometry().getVoxelSize().width()},
+      w{model.getGeometry().getImages()[0].width()} {
 
   independentCompartments = modelHasIndependentCompartments(model);
 

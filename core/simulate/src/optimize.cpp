@@ -117,7 +117,7 @@ Optimization::Optimization(sme::model::Model &model) {
     return;
   }
   optConstData = std::make_unique<sme::simulate::OptConstData>();
-  optConstData->imageSize = model.getGeometry().getImage().size();
+  optConstData->imageSize = model.getGeometry().getImages()[0].size();
   optConstData->xmlModel = model.getXml().toStdString();
   optConstData->optimizeOptions = model.getOptimizeOptions();
   optConstData->optTimesteps = getOptTimesteps(options);

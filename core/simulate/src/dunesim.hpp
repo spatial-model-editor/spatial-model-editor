@@ -41,7 +41,7 @@ struct DuneSimCompartment {
   std::string name;
   std::size_t index;
   std::vector<std::size_t> speciesIndices;
-  geometry::QPointIndexer qPointIndexer;
+  geometry::VoxelIndexer voxelIndexer;
   const geometry::Compartment *geometry;
   // pixels+dune local coords for each triangle
   std::vector<std::vector<PixelLocalPair>> pixels;
@@ -63,7 +63,7 @@ private:
   void updatePixels();
   void updateSpeciesConcentrations();
   std::string currentErrorMessage{};
-  QImage currentErrorImage{};
+  std::vector<QImage> currentErrorImages{};
   double volOverL3;
 
 public:
@@ -78,7 +78,7 @@ public:
   getConcentrations(std::size_t compartmentIndex) const override;
   [[nodiscard]] std::size_t getConcentrationPadding() const override;
   [[nodiscard]] const std::string &errorMessage() const override;
-  [[nodiscard]] const QImage &errorImage() const override;
+  [[nodiscard]] const std::vector<QImage> &errorImages() const override;
   void setStopRequested(bool stop) override;
 };
 
