@@ -119,11 +119,11 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
         sme::model::ReactionLocation::Type::Compartment) {
       lblGeometry->setImage(model.getCompartments()
                                 .getCompartment(reactionLocation.id)
-                                ->getCompartmentImage());
+                                ->getCompartmentImages());
     } else if (reactionLocation.type ==
                sme::model::ReactionLocation::Type::Membrane) {
       lblGeometry->setImage(
-          model.getMembranes().getMembrane(reactionLocation.id)->getImage());
+          model.getMembranes().getMembrane(reactionLocation.id)->getImages());
     } else {
       lblGeometry->clear();
     }

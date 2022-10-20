@@ -160,8 +160,7 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
   displayExpression = math.toStdString();
   variableExpression = ui->txtExpression->getVariableMath();
   // normalise displayed pixel intensity to max concentration
-  double maxConc =
-      *std::max_element(concentration.cbegin(), concentration.cend());
+  double maxConc{sme::common::max(concentration)};
   for (std::size_t i = 0; i < points.size(); ++i) {
     int intensity = static_cast<int>(255 * concentration[i] / maxConc);
     img.setPixel(points[i], QColor(intensity, intensity, intensity).rgb());

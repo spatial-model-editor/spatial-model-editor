@@ -138,7 +138,6 @@ void ModelMembranes::updateCompartments(
 
 void ModelMembranes::updateCompartmentImages(const std::vector<QImage> &imgs) {
   membranePixels = std::make_unique<ImageMembranePixels>(imgs);
-  SPDLOG_TRACE("{} colour image:", img.colorCount());
 }
 
 void ModelMembranes::importMembraneIdsAndNames() {

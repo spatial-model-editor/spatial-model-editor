@@ -56,7 +56,8 @@ void setBestDepth(sme::model::Model &model) {
   auto oldSizes{model.getCompartments().getInitialCompartmentSizes()};
   const auto &compartments{model.getCompartments()};
   auto &geometry{model.getGeometry()};
-  auto initialDepth{geometry.getPixelDepth()};
+  auto voxelSize{geometry.getVoxelSize()};
+  auto initialDepth{voxelSize.depth()};
   // set depth to match first compartment volume for which we have an ode volume
   for (const auto &compartmentId : compartments.getIds()) {
     if (auto iter{oldSizes.find(compartmentId.toStdString())};
@@ -64,7 +65,7 @@ void setBestDepth(sme::model::Model &model) {
       auto odeVol{iter->second};
       auto pdeVol{compartments.getSize(compartmentId)};
       auto newDepth{initialDepth * odeVol / pdeVol};
-      geometry.setPixelDepth(newDepth);
+      geometry.setVoxelSize({voxelSize.width(), voxelSize.height(), newDepth});
       return;
     }
   }
@@ -72,12 +73,13 @@ void setBestDepth(sme::model::Model &model) {
 
 OdeImportWizard::OdeImportWizard(sme::model::Model &smeModel, QWidget *parent)
     : QWizard(parent), ui{std::make_unique<Ui::OdeImportWizard>()},
-      model{smeModel}, initialDepth{model.getGeometry().getPixelDepth()} {
+      model{smeModel}, initialDepth{
+                           model.getGeometry().getVoxelSize().depth()} {
   ui->setupUi(this);
   setBestDepth(model);
   ui->lblDepthUnits->setText(model.getUnits().getLength().name);
   ui->txtDepthValue->setText(
-      toQStringAccurate(model.getGeometry().getPixelDepth()));
+      toQStringAccurate(model.getGeometry().getVoxelSize().depth()));
   updateDepth(ui->txtDepthValue->text());
   connect(ui->txtDepthValue, &QLineEdit::textEdited, this,
           &OdeImportWizard::updateDepth);
@@ -117,7 +119,8 @@ void OdeImportWizard::updateDepth(const QString &text) {
   bool validDouble{false};
   double depth{text.toDouble(&validDouble)};
   if (validDouble) {
-    model.getGeometry().setPixelDepth(depth);
+    const auto vs{model.getGeometry().getVoxelSize()};
+    model.getGeometry().setVoxelSize({vs.width(), vs.height(), depth});
     ui->htmlDepthVolumes->setHtml(makeDepthTable(model));
     reactionRescalings = model.getReactions().getSpatialReactionRescalings();
     ui->htmlReactionsRescalings->setHtml(

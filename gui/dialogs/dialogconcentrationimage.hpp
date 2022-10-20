@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sme/geometry_utils.hpp"
 #include "sme/model.hpp"
 #include "sme/utils.hpp"
 #include <QDialog>
@@ -36,7 +37,7 @@ private:
   QImage colourMaxConc;
   QImage colourMinConc;
   QImage img;
-  sme::common::QPointIndexer qpi;
+  sme::geometry::QPointIndexer qpi;
   std::vector<double> concentration;
 
   QPointF physicalPoint(const QPoint &pixelPoint) const;

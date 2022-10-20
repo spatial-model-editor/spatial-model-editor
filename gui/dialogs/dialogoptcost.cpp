@@ -170,6 +170,6 @@ void DialogOptCost::txtEpsilon_editingFinished() {
 void DialogOptCost::updateImage() {
   const auto &imageSize{
       model.getSpeciesGeometry(optCost.id.c_str()).compartmentImageSize};
-  ui->lblImage->setImage(
-      sme::common::toGrayscaleIntensityImage(imageSize, optCost.targetValues));
+  ui->lblImage->setImage(sme::common::toGrayscaleIntensityImage(
+      QSize(imageSize.width(), imageSize.width()), optCost.targetValues));
 }

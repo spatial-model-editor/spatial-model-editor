@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sme/geometry_utils.hpp"
 #include "sme/utils.hpp"
 #include <QDialog>
 #include <map>
@@ -41,7 +42,7 @@ private:
   QString concentrationUnit;
 
   QImage img;
-  sme::common::QPointIndexer qpi;
+  sme::geometry::QPointIndexer qpi;
   std::vector<double> concentration;
   std::string displayExpression;
   std::string variableExpression;
