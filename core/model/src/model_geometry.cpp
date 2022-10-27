@@ -221,7 +221,13 @@ static double calculatePixelWidth(const QSize &imageSize,
 
 void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   importDimensions(model);
-  auto gsf = importGeometryFromSampledField(getGeometry(model));
+
+  std::vector<QRgb> importedcompartmentColours =
+      sbmlAnnotation->compartmentColours;
+
+  auto gsf = importGeometryFromSampledField(getGeometry(model),
+                                            importedcompartmentColours);
+
   if (gsf.image.isNull()) {
     SPDLOG_INFO(
         "No Sampled Field Geometry found - looking for Analytic Geometry...");
@@ -238,6 +244,14 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   image = gsf.image.convertToFormat(QImage::Format_Indexed8);
   hasImage = true;
   pixelWidth = calculatePixelWidth(image.size(), physicalSize);
+
+  if (!sbmlAnnotation->compartmentColours.size()) {
+    auto comp_colours = gsf.compartmentIdColourPairs;
+    for (unsigned i = 0; i < comp_colours.size(); ++i) {
+      sbmlAnnotation->compartmentColours.push_back(comp_colours[i].second);
+    }
+  }
+
   setPixelWidth(pixelWidth, false);
   modelMembranes->updateCompartmentImage(image);
   for (const auto &[id, colour] : gsf.compartmentIdColourPairs) {

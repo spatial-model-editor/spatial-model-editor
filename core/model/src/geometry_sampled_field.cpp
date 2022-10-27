@@ -100,10 +100,16 @@ static void setPixelsToValues(QImage &img, const std::vector<QRgb> &values) {
 
 static std::vector<QRgb> setImagePixelsNative(
     QImage &img, const libsbml::SampledField *sampledField,
-    const std::vector<const libsbml::SampledVolume *> &sampledVolumes) {
+    const std::vector<const libsbml::SampledVolume *> &sampledVolumes,
+    std::vector<QRgb> importedcompartmentColours = {}) {
   std::vector<QRgb> colours;
   colours.reserve(sampledVolumes.size());
   auto values = common::stringToVector<QRgb>(sampledField->getSamples());
+  if (importedcompartmentColours.size()) {
+    for (int i = 0; i < values.size(); ++i) {
+      values[i] = importedcompartmentColours[values[i]];
+    }
+  }
   SPDLOG_DEBUG("Importing sampled field of {} samples of type QRgb",
                values.size());
   if (static_cast<int>(values.size()) != sampledField->getSamplesLength()) {
@@ -209,7 +215,8 @@ static std::vector<std::pair<std::string, QRgb>> getCompartmentIdAndColours(
 }
 
 GeometrySampledField
-importGeometryFromSampledField(const libsbml::Geometry *geom) {
+importGeometryFromSampledField(const libsbml::Geometry *geom,
+                               std::vector<QRgb> importedcompartmentColours) {
   GeometrySampledField gsf;
   if (geom == nullptr) {
     return gsf;
@@ -224,25 +231,37 @@ importGeometryFromSampledField(const libsbml::Geometry *geom) {
   gsf.image = makeEmptyImage(sampledField);
   std::vector<QRgb> compartmentColours;
   auto dataType = sampledField->getDataType();
-  if (isNativeSampledFieldFormat(sampledField, sampledVolumes)) {
-    compartmentColours =
-        setImagePixelsNative(gsf.image, sampledField, sampledVolumes);
-  } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_DOUBLE) {
-    compartmentColours =
-        setImagePixels<double>(gsf.image, sampledField, sampledVolumes);
-  } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_FLOAT) {
-    compartmentColours =
-        setImagePixels<float>(gsf.image, sampledField, sampledVolumes);
-  } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_INT) {
-    compartmentColours =
-        setImagePixels<int>(gsf.image, sampledField, sampledVolumes);
-  } else {
-    // remaining dataTypes are all unsigned ints of various sizes
-    compartmentColours =
-        setImagePixels<std::size_t>(gsf.image, sampledField, sampledVolumes);
+
+  if (importedcompartmentColours.size()) {
+    setImagePixelsNative(gsf.image, sampledField, sampledVolumes,
+                         importedcompartmentColours);
+
+    gsf.compartmentIdColourPairs =
+        getCompartmentIdAndColours(compartments, importedcompartmentColours);
   }
-  gsf.compartmentIdColourPairs =
-      getCompartmentIdAndColours(compartments, compartmentColours);
+
+  else {
+
+    if (isNativeSampledFieldFormat(sampledField, sampledVolumes)) {
+      compartmentColours =
+          setImagePixelsNative(gsf.image, sampledField, sampledVolumes);
+    } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_DOUBLE) {
+      compartmentColours =
+          setImagePixels<double>(gsf.image, sampledField, sampledVolumes);
+    } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_FLOAT) {
+      compartmentColours =
+          setImagePixels<float>(gsf.image, sampledField, sampledVolumes);
+    } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_INT) {
+      compartmentColours =
+          setImagePixels<int>(gsf.image, sampledField, sampledVolumes);
+    } else {
+      // remaining dataTypes are all unsigned ints of various sizes
+      compartmentColours =
+          setImagePixels<std::size_t>(gsf.image, sampledField, sampledVolumes);
+    }
+    gsf.compartmentIdColourPairs =
+        getCompartmentIdAndColours(compartments, compartmentColours);
+  }
   return gsf;
 }
 
@@ -278,7 +297,7 @@ void exportSampledFieldGeometry(libsbml::Geometry *geom,
   for (int y = 0; y < compartmentImage.height(); ++y) {
     for (int x = 0; x < compartmentImage.width(); ++x) {
       samples.push_back(
-          compartmentImage.pixel(x, compartmentImage.height() - 1 - y));
+          compartmentImage.pixelIndex(x, compartmentImage.height() - 1 - y));
     }
   }
   sf->setSamples(common::vectorToString(samples));
