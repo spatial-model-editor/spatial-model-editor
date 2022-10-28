@@ -200,7 +200,7 @@ static std::vector<QRgb> setImagePixels(
     if (std::find(matches.cbegin(), matches.cend(), true) != matches.cend()) {
       auto col = common::indexedColours()[iCol].rgb();
       SPDLOG_WARN("Color {} is {}", iCol, col);
-      if (!importedcompartmentColours.size()) {
+      if (importedcompartmentColours.size()) {
         col = importedcompartmentColours[iCol];
       }
       SPDLOG_DEBUG("  {}/{} -> colour {:x}", sampledVolume->getId(),
