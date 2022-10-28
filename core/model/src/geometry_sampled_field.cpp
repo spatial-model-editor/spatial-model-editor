@@ -132,6 +132,7 @@ getMatchingSampledValues(const std::vector<T> &values,
     T sv = static_cast<T>(sfvol->getSampledValue());
     std::transform(values.cbegin(), values.cend(), matches.begin(),
                    [sv](auto v) { return v == sv; });
+    // SPDLOG_WARN("!V {} SV {}",values[0],sv[0]);
   } else if (sfvol->isSetMinValue() && sfvol->isSetMaxValue()) {
     double min = sfvol->getMinValue();
     double max = sfvol->getMaxValue();
@@ -161,7 +162,8 @@ static void setMatchingPixelsToColour(QImage &img,
 template <typename T>
 static std::vector<QRgb> setImagePixels(
     QImage &img, const libsbml::SampledField *sampledField,
-    const std::vector<const libsbml::SampledVolume *> &sampledVolumes) {
+    const std::vector<const libsbml::SampledVolume *> &sampledVolumes,
+    std::vector<QRgb> importedcompartmentColours = {}) {
   std::vector<QRgb> colours(sampledVolumes.size(), 0);
   img.fill(qRgb(0, 0, 0));
   std::vector<T> values;
@@ -188,8 +190,19 @@ static std::vector<QRgb> setImagePixels(
   auto iter = colours.begin();
   for (const auto *sampledVolume : sampledVolumes) {
     auto matches = getMatchingSampledValues(values, sampledVolume);
+    SPDLOG_WARN("Number of matches {}", matches.size());
+    SPDLOG_WARN("Number of sampledVolumes {}", sampledVolumes.size());
+    // SPDLOG_WARN("Number of sampledVolume {}",sampledVolume[0]);
+
+    SPDLOG_WARN("Number of value {}{}{}", values[0], values[1], values[854]);
+    SPDLOG_WARN("Number of value {}{}{}", matches[0], matches[1], matches[854]);
+
     if (std::find(matches.cbegin(), matches.cend(), true) != matches.cend()) {
       auto col = common::indexedColours()[iCol].rgb();
+      SPDLOG_WARN("Color {} is {}", iCol, col);
+      if (!importedcompartmentColours.size()) {
+        col = importedcompartmentColours[iCol];
+      }
       SPDLOG_DEBUG("  {}/{} -> colour {:x}", sampledVolume->getId(),
                    sampledVolume->getDomainType(), col);
       setMatchingPixelsToColour(img, matches, col);
@@ -232,36 +245,26 @@ importGeometryFromSampledField(const libsbml::Geometry *geom,
   std::vector<QRgb> compartmentColours;
   auto dataType = sampledField->getDataType();
 
-  if (importedcompartmentColours.size()) {
-    setImagePixelsNative(gsf.image, sampledField, sampledVolumes,
-                         importedcompartmentColours);
-
-    gsf.compartmentIdColourPairs =
-        getCompartmentIdAndColours(compartments, importedcompartmentColours);
+  if (isNativeSampledFieldFormat(sampledField, sampledVolumes)) {
+    compartmentColours = setImagePixelsNative(
+        gsf.image, sampledField, sampledVolumes, importedcompartmentColours);
+  } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_DOUBLE) {
+    compartmentColours = setImagePixels<double>(
+        gsf.image, sampledField, sampledVolumes, importedcompartmentColours);
+  } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_FLOAT) {
+    compartmentColours = setImagePixels<float>(
+        gsf.image, sampledField, sampledVolumes, importedcompartmentColours);
+  } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_INT) {
+    compartmentColours = setImagePixels<int>(
+        gsf.image, sampledField, sampledVolumes, importedcompartmentColours);
+  } else {
+    // remaining dataTypes are all unsigned ints of various sizes
+    compartmentColours = setImagePixels<std::size_t>(
+        gsf.image, sampledField, sampledVolumes, importedcompartmentColours);
   }
+  gsf.compartmentIdColourPairs =
+      getCompartmentIdAndColours(compartments, compartmentColours);
 
-  else {
-
-    if (isNativeSampledFieldFormat(sampledField, sampledVolumes)) {
-      compartmentColours =
-          setImagePixelsNative(gsf.image, sampledField, sampledVolumes);
-    } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_DOUBLE) {
-      compartmentColours =
-          setImagePixels<double>(gsf.image, sampledField, sampledVolumes);
-    } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_FLOAT) {
-      compartmentColours =
-          setImagePixels<float>(gsf.image, sampledField, sampledVolumes);
-    } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_INT) {
-      compartmentColours =
-          setImagePixels<int>(gsf.image, sampledField, sampledVolumes);
-    } else {
-      // remaining dataTypes are all unsigned ints of various sizes
-      compartmentColours =
-          setImagePixels<std::size_t>(gsf.image, sampledField, sampledVolumes);
-    }
-    gsf.compartmentIdColourPairs =
-        getCompartmentIdAndColours(compartments, compartmentColours);
-  }
   return gsf;
 }
 
