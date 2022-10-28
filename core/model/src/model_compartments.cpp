@@ -360,7 +360,7 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   if (colour == 0 && sfvol->isSetSampledValue()) {
     sfvol->unsetSampledValue();
   } else {
-    sfvol->setSampledValue(static_cast<double>(colour));
+    sfvol->setSampledValue(static_cast<double>(i));
   }
   auto nPixels{compartments[static_cast<std::size_t>(i)]->nPixels()};
   double pixelWidth{modelGeometry->getPixelWidth()};
