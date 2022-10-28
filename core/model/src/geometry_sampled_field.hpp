@@ -23,9 +23,9 @@ struct GeometrySampledField {
 libsbml::SampledFieldGeometry *
 getOrCreateSampledFieldGeometry(libsbml::Geometry *geom);
 
-GeometrySampledField
-importGeometryFromSampledField(const libsbml::Geometry *geom,
-                               std::vector<QRgb> importedcompartmentColours);
+GeometrySampledField importGeometryFromSampledField(
+    const libsbml::Geometry *geom,
+    const std::vector<QRgb> &importedcompartmentColours);
 
 void exportSampledFieldGeometry(libsbml::Geometry *geom,
                                 const QImage &compartmentImage);
