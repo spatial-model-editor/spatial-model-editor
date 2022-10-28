@@ -126,7 +126,6 @@ getMatchingSampledValues(const std::vector<T> &values,
     T sv = static_cast<T>(sfvol->getSampledValue());
     std::transform(values.cbegin(), values.cend(), matches.begin(),
                    [sv](auto v) { return v == sv; });
-    // SPDLOG_WARN("!V {} SV {}",values[0],sv[0]);
   } else if (sfvol->isSetMinValue() && sfvol->isSetMaxValue()) {
     double min = sfvol->getMinValue();
     double max = sfvol->getMaxValue();
@@ -174,7 +173,7 @@ static std::vector<QRgb> setImagePixels(
   } else {
     values = common::stringToVector<T>(sampledField->getSamples());
   }
-  SPDLOG_ERROR("Importing sampled field of {} samples of type {}",
+  SPDLOG_DEBUG("Importing sampled field of {} samples of type {}",
                values.size(), common::decltypeStr<T>());
   if (static_cast<int>(values.size()) != sampledField->getSamplesLength()) {
     SPDLOG_WARN("Number of samples {} doesn't match SamplesLength {}",
@@ -184,13 +183,6 @@ static std::vector<QRgb> setImagePixels(
   auto iter = colours.begin();
   for (const auto *sampledVolume : sampledVolumes) {
     auto matches = getMatchingSampledValues(values, sampledVolume);
-    SPDLOG_WARN("Number of matches {}", matches.size());
-    SPDLOG_WARN("Number of sampledVolumes {}", sampledVolumes.size());
-    // SPDLOG_WARN("Number of sampledVolume {}",sampledVolume[0]);
-
-    SPDLOG_WARN("Number of value {}{}{}", values[0], values[1], values[854]);
-    SPDLOG_WARN("Number of value {}{}{}", matches[0], matches[1], matches[854]);
-
     if (std::find(matches.cbegin(), matches.cend(), true) != matches.cend()) {
       auto col = common::indexedColours()[iCol].rgb();
       SPDLOG_WARN("Color {} is {}", iCol, col);
