@@ -156,7 +156,7 @@ template <typename T>
 static std::vector<QRgb> setImagePixels(
     QImage &img, const libsbml::SampledField *sampledField,
     const std::vector<const libsbml::SampledVolume *> &sampledVolumes,
-    const std::vector<QRgb> &importedcompartmentColours = {}) {
+    const std::vector<QRgb> &importedSampledFieldColours = {}) {
   std::vector<QRgb> colours(sampledVolumes.size(), 0);
   img.fill(qRgb(0, 0, 0));
   std::vector<T> values;
@@ -186,8 +186,8 @@ static std::vector<QRgb> setImagePixels(
     if (std::find(matches.cbegin(), matches.cend(), true) != matches.cend()) {
       auto col = common::indexedColours()[iCol].rgb();
       SPDLOG_WARN("Color {} is {}", iCol, col);
-      if (iCol < importedcompartmentColours.size()) {
-        col = importedcompartmentColours[iCol];
+      if (iCol < importedSampledFieldColours.size()) {
+        col = importedSampledFieldColours[iCol];
         SPDLOG_WARN("  -> Using importedcompartmentColour {}", col);
       }
       SPDLOG_DEBUG("  {}/{} -> colour {:x}", sampledVolume->getId(),
@@ -203,11 +203,11 @@ static std::vector<QRgb> setImagePixels(
 
 static std::vector<std::pair<std::string, QRgb>> getCompartmentIdAndColours(
     const std::vector<const libsbml::Compartment *> &compartments,
-    const std::vector<QRgb> &compartmentColours) {
+    const std::vector<QRgb> &SampledFieldColours) {
   std::vector<std::pair<std::string, QRgb>> compartmentIdAndColours;
   compartmentIdAndColours.reserve(compartments.size());
   for (std::size_t i = 0; i < compartments.size(); ++i) {
-    if (auto colour = compartmentColours[i]; colour != 0) {
+    if (auto colour = SampledFieldColours[i]; colour != 0) {
       compartmentIdAndColours.push_back({compartments[i]->getId(), colour});
     }
   }
@@ -216,7 +216,7 @@ static std::vector<std::pair<std::string, QRgb>> getCompartmentIdAndColours(
 
 GeometrySampledField importGeometryFromSampledField(
     const libsbml::Geometry *geom,
-    const std::vector<QRgb> &importedcompartmentColours) {
+    const std::vector<QRgb> &importedSampledFieldColours) {
   GeometrySampledField gsf;
   if (geom == nullptr) {
     return gsf;
@@ -229,28 +229,28 @@ GeometrySampledField importGeometryFromSampledField(
       getCompartmentsAndSampledVolumes(sfgeom);
   const auto *sampledField = geom->getSampledField(sfgeom->getSampledField());
   gsf.image = makeEmptyImage(sampledField);
-  std::vector<QRgb> compartmentColours;
+  std::vector<QRgb> SampledFieldColours;
   auto dataType = sampledField->getDataType();
 
   if (isNativeSampledFieldFormat(sampledField, sampledVolumes)) {
-    compartmentColours =
+    SampledFieldColours =
         setImagePixelsNative(gsf.image, sampledField, sampledVolumes);
   } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_DOUBLE) {
-    compartmentColours = setImagePixels<double>(
-        gsf.image, sampledField, sampledVolumes, importedcompartmentColours);
+    SampledFieldColours = setImagePixels<double>(
+        gsf.image, sampledField, sampledVolumes, importedSampledFieldColours);
   } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_FLOAT) {
-    compartmentColours = setImagePixels<float>(
-        gsf.image, sampledField, sampledVolumes, importedcompartmentColours);
+    SampledFieldColours = setImagePixels<float>(
+        gsf.image, sampledField, sampledVolumes, importedSampledFieldColours);
   } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_INT) {
-    compartmentColours = setImagePixels<int>(
-        gsf.image, sampledField, sampledVolumes, importedcompartmentColours);
+    SampledFieldColours = setImagePixels<int>(
+        gsf.image, sampledField, sampledVolumes, importedSampledFieldColours);
   } else {
     // remaining dataTypes are all unsigned ints of various sizes
-    compartmentColours = setImagePixels<std::size_t>(
-        gsf.image, sampledField, sampledVolumes, importedcompartmentColours);
+    SampledFieldColours = setImagePixels<std::size_t>(
+        gsf.image, sampledField, sampledVolumes, importedSampledFieldColours);
   }
   gsf.compartmentIdColourPairs =
-      getCompartmentIdAndColours(compartments, compartmentColours);
+      getCompartmentIdAndColours(compartments, SampledFieldColours);
 
   return gsf;
 }
