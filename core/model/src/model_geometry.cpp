@@ -284,10 +284,12 @@ void ModelGeometry::importGeometryFromImage(const QImage &img,
     imgNoAlpha = img.convertToFormat(QImage::Format_RGB32, flagNoDither);
   }
   image = imgNoAlpha.convertToFormat(QImage::Format_Indexed8, flagNoDither);
-  if(!sbmlAnnotation->SampledFieldColours.size()){
-    for (int j=0; j<img.colorTable().size(); ++j){
+  if (!sbmlAnnotation->SampledFieldColours.size()) {
+    for (int j = 0; j < img.colorTable().size(); ++j) {
       sbmlAnnotation->SampledFieldColours.push_back(img.colorTable()[j]);
-      SPDLOG_INFO("Add {} color to {}. CompartmentColours {} is {}.",img.colorTable()[j],j,j,sbmlAnnotation->SampledFieldColours[j]);
+      SPDLOG_INFO("Add {} color to {}. CompartmentColours {} is {}.",
+                  img.colorTable()[j], j, j,
+                  sbmlAnnotation->SampledFieldColours[j]);
     }
   }
   modelMembranes->updateCompartmentImage(image);
