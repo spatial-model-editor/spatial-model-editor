@@ -223,7 +223,7 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   importDimensions(model);
 
   std::vector<QRgb> importedSampledFieldColours =
-      sbmlAnnotation->SampledFieldColours;
+      sbmlAnnotation->sampledFieldColours;
 
   auto gsf = importGeometryFromSampledField(getGeometry(model),
                                             importedSampledFieldColours);
@@ -244,12 +244,10 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   image = gsf.image.convertToFormat(QImage::Format_Indexed8);
   hasImage = true;
   pixelWidth = calculatePixelWidth(image.size(), physicalSize);
-
-  if (!sbmlAnnotation->SampledFieldColours.size()) {
-    auto comp_colours = gsf.compartmentIdColourPairs;
-    for (unsigned i = 0; i < comp_colours.size(); ++i) {
-      sbmlAnnotation->SampledFieldColours.push_back(comp_colours[i].second);
-    }
+  sbmlAnnotation->sampledFieldColours.clear();
+  auto comp_colours = gsf.compartmentIdColourPairs;
+  for (unsigned i = 0; i < comp_colours.size(); ++i) {
+    sbmlAnnotation->sampledFieldColours.push_back(comp_colours[i].second);
   }
 
   setPixelWidth(pixelWidth, false);
@@ -284,14 +282,14 @@ void ModelGeometry::importGeometryFromImage(const QImage &img,
     imgNoAlpha = img.convertToFormat(QImage::Format_RGB32, flagNoDither);
   }
   image = imgNoAlpha.convertToFormat(QImage::Format_Indexed8, flagNoDither);
-  if (!sbmlAnnotation->SampledFieldColours.size()) {
-    for (int j = 0; j < img.colorTable().size(); ++j) {
-      sbmlAnnotation->SampledFieldColours.push_back(img.colorTable()[j]);
-      SPDLOG_INFO("Add {} color to {}. CompartmentColours {} is {}.",
-                  img.colorTable()[j], j, j,
-                  sbmlAnnotation->SampledFieldColours[j]);
-    }
+  sbmlAnnotation->sampledFieldColours.clear();
+  for (int j = 0; j < img.colorTable().size(); ++j) {
+    sbmlAnnotation->sampledFieldColours.push_back(img.colorTable()[j]);
+    SPDLOG_INFO("Add {} color to {}. sampledFieldColours {} is {}.",
+                img.colorTable()[j], j, j,
+                sbmlAnnotation->sampledFieldColours[j]);
   }
+
   modelMembranes->updateCompartmentImage(image);
   auto *geom{getOrCreateGeometry(sbmlModel)};
   exportSampledFieldGeometry(geom, image);

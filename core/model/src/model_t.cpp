@@ -128,7 +128,7 @@ TEST_CASE("SBML: import SBML doc without geometry",
     auto *sfvol0 = sfgeom->getSampledVolumeByDomainType(
         scp0->getCompartmentMapping()->getDomainType());
     CAPTURE(sfvol0->getSampledValue());
-    REQUIRE(static_cast<unsigned>(sfvol0->getSampledValue()) == 0xffaaaaaa);
+    REQUIRE(static_cast<unsigned>(sfvol0->getSampledValue()) == 0);
     REQUIRE(static_cast<unsigned>(sfvol0->getSampledValue()) ==
             static_cast<unsigned>(sfvals[1]));
 

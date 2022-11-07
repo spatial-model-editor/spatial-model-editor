@@ -203,11 +203,11 @@ static std::vector<QRgb> setImagePixels(
 
 static std::vector<std::pair<std::string, QRgb>> getCompartmentIdAndColours(
     const std::vector<const libsbml::Compartment *> &compartments,
-    const std::vector<QRgb> &SampledFieldColours) {
+    const std::vector<QRgb> &sampledFieldColours) {
   std::vector<std::pair<std::string, QRgb>> compartmentIdAndColours;
   compartmentIdAndColours.reserve(compartments.size());
   for (std::size_t i = 0; i < compartments.size(); ++i) {
-    if (auto colour = SampledFieldColours[i]; colour != 0) {
+    if (auto colour = sampledFieldColours[i]; colour != 0) {
       compartmentIdAndColours.push_back({compartments[i]->getId(), colour});
     }
   }
@@ -229,28 +229,28 @@ GeometrySampledField importGeometryFromSampledField(
       getCompartmentsAndSampledVolumes(sfgeom);
   const auto *sampledField = geom->getSampledField(sfgeom->getSampledField());
   gsf.image = makeEmptyImage(sampledField);
-  std::vector<QRgb> SampledFieldColours;
+  std::vector<QRgb> sampledFieldColours;
   auto dataType = sampledField->getDataType();
 
   if (isNativeSampledFieldFormat(sampledField, sampledVolumes)) {
-    SampledFieldColours =
+    sampledFieldColours =
         setImagePixelsNative(gsf.image, sampledField, sampledVolumes);
   } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_DOUBLE) {
-    SampledFieldColours = setImagePixels<double>(
+    sampledFieldColours = setImagePixels<double>(
         gsf.image, sampledField, sampledVolumes, importedSampledFieldColours);
   } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_FLOAT) {
-    SampledFieldColours = setImagePixels<float>(
+    sampledFieldColours = setImagePixels<float>(
         gsf.image, sampledField, sampledVolumes, importedSampledFieldColours);
   } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_INT) {
-    SampledFieldColours = setImagePixels<int>(
+    sampledFieldColours = setImagePixels<int>(
         gsf.image, sampledField, sampledVolumes, importedSampledFieldColours);
   } else {
     // remaining dataTypes are all unsigned ints of various sizes
-    SampledFieldColours = setImagePixels<std::size_t>(
+    sampledFieldColours = setImagePixels<std::size_t>(
         gsf.image, sampledField, sampledVolumes, importedSampledFieldColours);
   }
   gsf.compartmentIdColourPairs =
-      getCompartmentIdAndColours(compartments, SampledFieldColours);
+      getCompartmentIdAndColours(compartments, sampledFieldColours);
 
   return gsf;
 }
