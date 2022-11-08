@@ -245,9 +245,9 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   hasImage = true;
   pixelWidth = calculatePixelWidth(image.size(), physicalSize);
   sbmlAnnotation->sampledFieldColours.clear();
-  auto comp_colours = gsf.compartmentIdColourPairs;
+  auto comp_colours = image.colorTable();
   for (unsigned i = 0; i < comp_colours.size(); ++i) {
-    sbmlAnnotation->sampledFieldColours.push_back(comp_colours[i].second);
+    sbmlAnnotation->sampledFieldColours.push_back(comp_colours[i]);
   }
 
   setPixelWidth(pixelWidth, false);
