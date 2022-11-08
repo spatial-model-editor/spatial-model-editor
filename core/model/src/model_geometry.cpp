@@ -283,10 +283,10 @@ void ModelGeometry::importGeometryFromImage(const QImage &img,
   }
   image = imgNoAlpha.convertToFormat(QImage::Format_Indexed8, flagNoDither);
   sbmlAnnotation->sampledFieldColours.clear();
-  for (int j = 0; j < img.colorTable().size(); ++j) {
-    sbmlAnnotation->sampledFieldColours.push_back(img.colorTable()[j]);
+  for (int j = 0; j < image.colorTable().size(); ++j) {
+    sbmlAnnotation->sampledFieldColours.push_back(image.colorTable()[j]);
     SPDLOG_INFO("Add {} color to {}. sampledFieldColours {} is {}.",
-                img.colorTable()[j], j, j,
+                image.colorTable()[j], j, j,
                 sbmlAnnotation->sampledFieldColours[j]);
   }
 

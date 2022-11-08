@@ -187,7 +187,8 @@ static std::vector<QRgb> setImagePixels(
       auto col = common::indexedColours()[iCol].rgb();
       SPDLOG_WARN("Color {} is {}", iCol, col);
       if (iCol < importedSampledFieldColours.size()) {
-        col = importedSampledFieldColours[iCol];
+        int sampledValue = sampledVolume->getSampledValue();
+        col = importedSampledFieldColours[sampledValue];
         SPDLOG_WARN("  -> Using importedcompartmentColour {}", col);
       }
       SPDLOG_DEBUG("  {}/{} -> colour {:x}", sampledVolume->getId(),
@@ -231,6 +232,12 @@ GeometrySampledField importGeometryFromSampledField(
   gsf.image = makeEmptyImage(sampledField);
   std::vector<QRgb> sampledFieldColours;
   auto dataType = sampledField->getDataType();
+  SPDLOG_DEBUG("importedSampledFieldColours.size() = {} ",
+               importedSampledFieldColours.size());
+  for (int i = 0; i < importedSampledFieldColours.size(); ++i) {
+    SPDLOG_DEBUG("importedSampledFieldColours {} = {} ", i,
+                 importedSampledFieldColours[i]);
+  }
 
   if (isNativeSampledFieldFormat(sampledField, sampledVolumes)) {
     sampledFieldColours =

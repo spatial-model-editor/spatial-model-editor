@@ -128,7 +128,7 @@ TEST_CASE("SBML: import SBML doc without geometry",
     auto *sfvol0 = sfgeom->getSampledVolumeByDomainType(
         scp0->getCompartmentMapping()->getDomainType());
     CAPTURE(sfvol0->getSampledValue());
-    REQUIRE(static_cast<unsigned>(sfvol0->getSampledValue()) == 0);
+    REQUIRE(static_cast<unsigned>(sfvol0->getSampledValue()) == 1);
     REQUIRE(static_cast<unsigned>(sfvol0->getSampledValue()) ==
             static_cast<unsigned>(sfvals[1]));
 
@@ -138,7 +138,7 @@ TEST_CASE("SBML: import SBML doc without geometry",
     auto *sfvol1 = sfgeom->getSampledVolumeByDomainType(
         scp1->getCompartmentMapping()->getDomainType());
     CAPTURE(sfvol1->getSampledValue());
-    REQUIRE(static_cast<unsigned>(sfvol1->getSampledValue()) == 0xff525252);
+    REQUIRE(static_cast<unsigned>(sfvol1->getSampledValue()) == 2);
     REQUIRE(static_cast<unsigned>(sfvol1->getSampledValue()) ==
             static_cast<unsigned>(sfvals[2]));
     SECTION("import concentration & set diff constants") {
