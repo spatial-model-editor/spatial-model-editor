@@ -88,6 +88,19 @@ static bool isNativeSampledFieldFormat(
   return true;
 }
 
+template <typename T>
+static void setImportedColoursToImage(
+    QImage &img, const std::vector<T> &values,
+    const std::vector<QRgb> &importedSampledFieldColours) {
+  auto iter = values.begin();
+  for (int y = 0; y < img.height(); ++y) {
+    for (int x = 0; x < img.width(); ++x) {
+      img.setPixel(x, img.height() - 1 - y, importedSampledFieldColours[*iter]);
+      ++iter;
+    }
+  }
+}
+
 static void setPixelsToValues(QImage &img, const std::vector<QRgb> &values) {
   auto iter = values.begin();
   for (int y = 0; y < img.height(); ++y) {
@@ -175,29 +188,44 @@ static std::vector<QRgb> setImagePixels(
   }
   SPDLOG_DEBUG("Importing sampled field of {} samples of type {}",
                values.size(), common::decltypeStr<T>());
-  if (static_cast<int>(values.size()) != sampledField->getSamplesLength()) {
-    SPDLOG_WARN("Number of samples {} doesn't match SamplesLength {}",
-                values.size(), sampledField->getSamplesLength());
-  }
-  std::size_t iCol = 0;
-  auto iter = colours.begin();
-  for (const auto *sampledVolume : sampledVolumes) {
-    auto matches = getMatchingSampledValues(values, sampledVolume);
-    if (std::find(matches.cbegin(), matches.cend(), true) != matches.cend()) {
-      auto col = common::indexedColours()[iCol].rgb();
-      SPDLOG_WARN("Color {} is {}", iCol, col);
-      if (iCol < importedSampledFieldColours.size()) {
-        int sampledValue = sampledVolume->getSampledValue();
-        col = importedSampledFieldColours[sampledValue];
-        SPDLOG_WARN("  -> Using importedcompartmentColour {}", col);
-      }
-      SPDLOG_DEBUG("  {}/{} -> colour {:x}", sampledVolume->getId(),
-                   sampledVolume->getDomainType(), col);
-      setMatchingPixelsToColour(img, matches, col);
+  if (common::IsItIndexes(values, importedSampledFieldColours.size())) {
+    setImportedColoursToImage(img, values, importedSampledFieldColours);
+    auto iter = colours.begin();
+    for (const auto *sampledVolume : sampledVolumes) {
+      int sampledValue = sampledVolume->getSampledValue();
+      auto col = importedSampledFieldColours[sampledValue];
+      SPDLOG_DEBUG("importedSampledFieldColours  {}/{} -> colour {:x}",
+                   sampledVolume->getId(), sampledVolume->getDomainType(), col);
       *iter = col;
-      ++iCol;
+      ++iter;
     }
-    ++iter;
+  }
+
+  else {
+    if (static_cast<int>(values.size()) != sampledField->getSamplesLength()) {
+      SPDLOG_WARN("Number of samples {} doesn't match SamplesLength {}",
+                  values.size(), sampledField->getSamplesLength());
+    }
+    std::size_t iCol = 0;
+    auto iter = colours.begin();
+    for (const auto *sampledVolume : sampledVolumes) {
+      auto matches = getMatchingSampledValues(values, sampledVolume);
+      if (std::find(matches.cbegin(), matches.cend(), true) != matches.cend()) {
+        auto col = common::indexedColours()[iCol].rgb();
+        SPDLOG_WARN("Color {} is {}", iCol, col);
+        int sampledValue = sampledVolume->getSampledValue();
+        // if (sampledValue < importedSampledFieldColours.size()) {
+        //   col = importedSampledFieldColours[sampledValue];
+        //   SPDLOG_WARN("  -> Using importedcompartmentColour {}", col);
+        // }
+        SPDLOG_DEBUG("  {}/{} -> colour {:x}", sampledVolume->getId(),
+                     sampledVolume->getDomainType(), col);
+        setMatchingPixelsToColour(img, matches, col);
+        *iter = col;
+        ++iCol;
+      }
+      ++iter;
+    }
   }
   return colours;
 }

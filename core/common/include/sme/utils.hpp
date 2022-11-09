@@ -76,6 +76,31 @@ typename Container::value_type max(const Container &c) {
 }
 
 /**
+ * @brief The unique values from a container
+ */
+template <typename Container>
+std::vector<typename Container::value_type>
+get_unique_values(const Container &c) {
+  std::vector<typename Container::value_type> uniq_values(c);
+  std::sort(uniq_values.begin(), uniq_values.end());
+  uniq_values.erase(std::unique(uniq_values.begin(), uniq_values.end()),
+                    uniq_values.end());
+  return uniq_values;
+}
+
+/**
+ * @brief Are the numbers in the container indexes?
+ */
+template <typename Container>
+bool IsItIndexes(const Container &c, const int &length) {
+  std::vector<typename Container::value_type> vec1 =
+      common::get_unique_values(c);
+  std::vector<typename Container::value_type> vec2(length);
+  std::iota(std::begin(vec2), std::end(vec2), 0);
+  return vec1 == vec2;
+}
+
+/**
  * @brief The minimum and maximum values in a container
  */
 template <typename Container>
