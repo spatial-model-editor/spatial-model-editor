@@ -258,7 +258,7 @@ GeometrySampledField importGeometryFromSampledField(
       getCompartmentsAndSampledVolumes(sfgeom);
   const auto *sampledField = geom->getSampledField(sfgeom->getSampledField());
   gsf.image = makeEmptyImage(sampledField);
-  std::vector<QRgb> sampledFieldColours;
+  std::vector<QRgb> compartmentColours;
   auto dataType = sampledField->getDataType();
   SPDLOG_DEBUG("importedSampledFieldColours.size() = {} ",
                importedSampledFieldColours.size());
@@ -268,24 +268,24 @@ GeometrySampledField importGeometryFromSampledField(
   }
 
   if (isNativeSampledFieldFormat(sampledField, sampledVolumes)) {
-    sampledFieldColours =
+    compartmentColours =
         setImagePixelsNative(gsf.image, sampledField, sampledVolumes);
   } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_DOUBLE) {
-    sampledFieldColours = setImagePixels<double>(
+    compartmentColours = setImagePixels<double>(
         gsf.image, sampledField, sampledVolumes, importedSampledFieldColours);
   } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_FLOAT) {
-    sampledFieldColours = setImagePixels<float>(
+    compartmentColours = setImagePixels<float>(
         gsf.image, sampledField, sampledVolumes, importedSampledFieldColours);
   } else if (dataType == libsbml::DataKind_t::SPATIAL_DATAKIND_INT) {
-    sampledFieldColours = setImagePixels<int>(
+    compartmentColours = setImagePixels<int>(
         gsf.image, sampledField, sampledVolumes, importedSampledFieldColours);
   } else {
     // remaining dataTypes are all unsigned ints of various sizes
-    sampledFieldColours = setImagePixels<std::size_t>(
+    compartmentColours = setImagePixels<std::size_t>(
         gsf.image, sampledField, sampledVolumes, importedSampledFieldColours);
   }
   gsf.compartmentIdColourPairs =
-      getCompartmentIdAndColours(compartments, sampledFieldColours);
+      getCompartmentIdAndColours(compartments, compartmentColours);
 
   return gsf;
 }
