@@ -126,7 +126,7 @@ TEST_CASE("Serialization",
             dbl_approx(1.06406832003626607985324881e-99));
   }
   SECTION("Valid v3 sme file") {
-    // v3 smefile was used in spatial-model-editor 1.1.5 - 1.3.0 inclusive
+    // v3 smefile was used in spatial-model-editor 1.1.5 - 1.3.1 inclusive
     // was exported colours instead of indexes in sampledField and
     // sampledFieldColours in Settings
     QFile f(":test/models/brusselator-model_v3.xml");
@@ -141,7 +141,7 @@ TEST_CASE("Serialization",
   }
   SECTION("Valid current v4 sme file. The number of colors equals the number "
           "of sampledVolumes") {
-    // sme versions >= 1.3.1
+    // sme versions > 1.3.1
     QFile f(":/models/very-simple-model.xml");
     f.open(QIODevice::ReadOnly);
     model::Model m;
@@ -162,7 +162,7 @@ TEST_CASE("Serialization",
 
   SECTION("Valid current v4 sme file. The number of colors is greater than the "
           "number of sampledVolumes") {
-    // sme versions >= 1.3.1
+    // sme versions > 1.3.1
     QFile f(":/models/liver-simplified.xml");
     f.open(QIODevice::ReadOnly);
     model::Model m;
@@ -181,7 +181,7 @@ TEST_CASE("Serialization",
   }
 
   SECTION("Import a model saved using the old (1.3.1) format.") {
-    // sme versions >= 1.3.1
+    // sme versions > 1.3.1
     QFile f(":test/models/liver-simplified_v1.3.1.xml");
     f.open(QIODevice::ReadOnly);
     model::Model m;
@@ -220,7 +220,7 @@ TEST_CASE("Serialization",
 
   SECTION("Import a model saved using the new format with invalid color "
           "annotations") {
-    // sme versions >= 1.3.1
+    // sme versions > 1.3.1
     QFile f(":test/models/liver-simplified_invalid_colours.xml");
     f.open(QIODevice::ReadOnly);
     model::Model m;
@@ -251,7 +251,7 @@ TEST_CASE("Serialization",
 
   SECTION("Import a model saved using the new format with missing color "
           "annotations") {
-    // sme versions >= 1.3.1
+    // sme versions > 1.3.1
     QFile f(":test/models/liver-simplified_missing_colours.xml");
     f.open(QIODevice::ReadOnly);
     model::Model m;
