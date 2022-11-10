@@ -106,6 +106,7 @@ public:
   [[nodiscard]] const MeshParameters &getMeshParameters() const;
   simulate::OptimizeOptions &getOptimizeOptions();
   [[nodiscard]] const simulate::OptimizeOptions &getOptimizeOptions() const;
+  [[nodiscard]] const std::vector<QRgb> &getSampledFieldColours() const;
 
   explicit Model();
   Model(Model &&) noexcept = default;

@@ -125,9 +125,11 @@ TEST_CASE("Serialization",
     REQUIRE(contents->simulationData->concentration[3][0][1642] ==
             dbl_approx(1.06406832003626607985324881e-99));
   }
-  SECTION("Valid current (v3) sme file") {
-    // sme versions >= 1.1.5
-    QFile f(":/models/brusselator-model.xml");
+  SECTION("Valid v3 sme file") {
+    // v3 smefile was used in spatial-model-editor 1.1.5 - 1.3.0 inclusive
+    // was exported colours instead of indexes in sampledField and
+    // sampledFieldColours in Settings
+    QFile f(":test/models/brusselator-model_v3.xml");
     f.open(QIODevice::ReadOnly);
     model::Model m;
     m.importSBMLString(f.readAll().toStdString());
@@ -137,6 +139,147 @@ TEST_CASE("Serialization",
     const auto &s{m2.getSimulationSettings()};
     REQUIRE(s.options.pixel.maxErr.rel == dbl_approx(0.005));
   }
+  SECTION("Valid current v4 sme file. The number of colors equals the number "
+          "of sampledVolumes") {
+    // sme versions >= 1.3.1
+    QFile f(":/models/very-simple-model.xml");
+    f.open(QIODevice::ReadOnly);
+    model::Model m;
+    m.importSBMLString(f.readAll().toStdString());
+    m.exportSMEFile("test2.sme");
+    model::Model m2;
+    m2.importFile("test2.sme");
+    const auto &s{m2.getSampledFieldColours()};
+    REQUIRE(s[0] == 4278190592);
+    REQUIRE(s[1] == 4287652289);
+    REQUIRE(s[2] == 4291134816);
+    const auto &s2{m2.getCompartments()};
+    REQUIRE(s2.getColours().size() == 3);
+    REQUIRE(s2.getColours()[0] == 4278190592);
+    REQUIRE(s2.getColours()[1] == 4287652289);
+    REQUIRE(s2.getColours()[2] == 4291134816);
+  }
+
+  SECTION("Valid current v4 sme file. The number of colors is greater than the "
+          "number of sampledVolumes") {
+    // sme versions >= 1.3.1
+    QFile f(":/models/liver-simplified.xml");
+    f.open(QIODevice::ReadOnly);
+    model::Model m;
+    m.importSBMLString(f.readAll().toStdString());
+    m.exportSMEFile("test2.sme");
+    model::Model m2;
+    m2.importFile("test2.sme");
+    const auto &s{m2.getSampledFieldColours()};
+    REQUIRE(s[0] == 4278719745);
+    REQUIRE(s[1] == 4278237440);
+    REQUIRE(s[2] == 4279380443);
+    const auto &s2{m2.getCompartments()};
+    REQUIRE(s2.getColours().size() == 2);
+    REQUIRE(s2.getColours()[0] == 4278237440);
+    REQUIRE(s2.getColours()[1] == 4279380443);
+  }
+
+  SECTION("Import a model saved using the old (1.3.1) format.") {
+    // sme versions >= 1.3.1
+    QFile f(":test/models/liver-simplified_v1.3.1.xml");
+    f.open(QIODevice::ReadOnly);
+    model::Model m;
+    m.importSBMLString(f.readAll().toStdString());
+    const auto &s{m.getCompartments()};
+    REQUIRE(s.getColours().size() == 2);
+    REQUIRE(s.getColours()[0] == 4278237440);
+    REQUIRE(s.getColours()[1] == 4279380443);
+    m.exportSMEFile("test3.sme");
+
+    model::Model m2;
+    m2.importFile("test3.sme");
+    const auto &s2{m2.getSampledFieldColours()};
+    REQUIRE(s2[0] == 4278719745);
+    REQUIRE(s2[1] == 4278237440);
+    REQUIRE(s2[2] == 4279380443);
+    const auto &s3{m2.getCompartments()};
+    REQUIRE(s3.getColours().size() == 2);
+    REQUIRE(s3.getColours()[0] == 4278237440);
+    REQUIRE(s3.getColours()[1] == 4279380443);
+    m.exportSBMLFile("test4.xml");
+
+    QFile f1("test4.xml");
+    f1.open(QIODevice::ReadOnly);
+    model::Model m3;
+    m3.importSBMLString(f1.readAll().toStdString());
+    const auto &s4{m3.getSampledFieldColours()};
+    REQUIRE(s4[0] == 4278719745);
+    REQUIRE(s4[1] == 4278237440);
+    REQUIRE(s4[2] == 4279380443);
+    const auto &s5{m3.getCompartments()};
+    REQUIRE(s5.getColours().size() == 2);
+    REQUIRE(s5.getColours()[0] == 4278237440);
+    REQUIRE(s5.getColours()[1] == 4279380443);
+  }
+
+  SECTION("Import a model saved using the new format with invalid color "
+          "annotations") {
+    // sme versions >= 1.3.1
+    QFile f(":test/models/liver-simplified_invalid_colours.xml");
+    f.open(QIODevice::ReadOnly);
+    model::Model m;
+    m.importSBMLString(f.readAll().toStdString());
+    const auto &s{m.getSampledFieldColours()};
+    REQUIRE(s[0] == 4278190080);
+    REQUIRE(s[1] == 4293269835);
+    REQUIRE(s[2] == 4282168395);
+    const auto &s2{m.getCompartments()};
+    REQUIRE(s2.getColours().size() == 2);
+    REQUIRE(s2.getColours()[0] == 4293269835);
+    REQUIRE(s2.getColours()[1] == 4282168395);
+    m.exportSBMLFile("test5.xml");
+
+    QFile f1("test5.xml");
+    f1.open(QIODevice::ReadOnly);
+    model::Model m3;
+    m3.importSBMLString(f1.readAll().toStdString());
+    const auto &s3{m3.getSampledFieldColours()};
+    REQUIRE(s3[0] == 4278190080);
+    REQUIRE(s3[1] == 4293269835);
+    REQUIRE(s3[2] == 4282168395);
+    const auto &s4{m3.getCompartments()};
+    REQUIRE(s4.getColours().size() == 2);
+    REQUIRE(s4.getColours()[0] == 4293269835);
+    REQUIRE(s4.getColours()[1] == 4282168395);
+  }
+
+  SECTION("Import a model saved using the new format with missing color "
+          "annotations") {
+    // sme versions >= 1.3.1
+    QFile f(":test/models/liver-simplified_missing_colours.xml");
+    f.open(QIODevice::ReadOnly);
+    model::Model m;
+    m.importSBMLString(f.readAll().toStdString());
+    const auto &s{m.getSampledFieldColours()};
+    REQUIRE(s[0] == 4278190080);
+    REQUIRE(s[1] == 4293269835);
+    REQUIRE(s[2] == 4282168395);
+    const auto &s2{m.getCompartments()};
+    REQUIRE(s2.getColours().size() == 2);
+    REQUIRE(s2.getColours()[0] == 4293269835);
+    REQUIRE(s2.getColours()[1] == 4282168395);
+    m.exportSBMLFile("test6.xml");
+
+    QFile f1("test6.xml");
+    f1.open(QIODevice::ReadOnly);
+    model::Model m3;
+    m3.importSBMLString(f1.readAll().toStdString());
+    const auto &s3{m3.getSampledFieldColours()};
+    REQUIRE(s3[0] == 4278190080);
+    REQUIRE(s3[1] == 4293269835);
+    REQUIRE(s3[2] == 4282168395);
+    const auto &s4{m3.getCompartments()};
+    REQUIRE(s4.getColours().size() == 2);
+    REQUIRE(s4.getColours()[0] == 4293269835);
+    REQUIRE(s4.getColours()[1] == 4282168395);
+  }
+
   SECTION("settings xml roundtrip") {
     sme::model::Settings s{};
     s.simulationSettings.times = {{1, 0.3}, {2, 0.1}};

@@ -12,6 +12,10 @@
         <file>models/weird-units.xml</file>
         <file>models/ABtoC-v1.0.9.xml</file>
         <file>models/ABtoC-invalid-annotation.xml</file>
+        <file>models/brusselator-model_v3.xml</file>
+        <file>models/liver-simplified_v1.3.1.xml</file>
+        <file>models/liver-simplified_invalid_colours.xml</file>
+        <file>models/liver-simplified_missing_colours.xml</file>
         <file>models/invalid-dune-names.xml</file>
         <file>models/yeast-glycolysis.xml</file>
         <file>models/example2D.xml</file>
