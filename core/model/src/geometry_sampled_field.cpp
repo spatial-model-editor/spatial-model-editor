@@ -188,7 +188,7 @@ static std::vector<QRgb> setImagePixels(
   }
   SPDLOG_DEBUG("Importing sampled field of {} samples of type {}",
                values.size(), common::decltypeStr<T>());
-  if (common::IsItIndexes(values, importedSampledFieldColours.size())) {
+  if (common::isItIndexes(values, importedSampledFieldColours.size())) {
     setImportedColoursToImage(img, values, importedSampledFieldColours);
     auto iter = colours.begin();
     for (const auto *sampledVolume : sampledVolumes) {
