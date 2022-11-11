@@ -92,9 +92,8 @@ get_unique_values(const Container &c) {
  * @brief Are the numbers in the container indexes?
  */
 template <typename Container>
-bool isItIndexes(const Container &c, const int &length) {
-  std::vector<typename Container::value_type> vec1 =
-      common::get_unique_values(c);
+bool isItIndexes(const Container &c, std::size_t length) {
+  auto vec1 = common::get_unique_values(c);
   std::vector<typename Container::value_type> vec2(length);
   std::iota(std::begin(vec2), std::end(vec2), 0);
   return vec1 == vec2;

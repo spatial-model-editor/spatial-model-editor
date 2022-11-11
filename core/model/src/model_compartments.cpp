@@ -360,10 +360,8 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   if (colour == 0 && sfvol->isSetSampledValue()) {
     sfvol->unsetSampledValue();
   } else {
-    auto color_table_vec = modelGeometry->getImage().colorTable();
-    auto it = std::find(color_table_vec.begin(), color_table_vec.end(), colour);
-    int dist = std::distance(color_table_vec.begin(), it);
-    sfvol->setSampledValue(static_cast<double>(dist));
+    auto color_index{modelGeometry->getImage().colorTable().indexOf(colour)};
+    sfvol->setSampledValue(static_cast<double>(color_index));
   }
   auto nPixels{compartments[static_cast<std::size_t>(i)]->nPixels()};
   double pixelWidth{modelGeometry->getPixelWidth()};

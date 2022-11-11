@@ -222,11 +222,8 @@ static double calculatePixelWidth(const QSize &imageSize,
 void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   importDimensions(model);
 
-  std::vector<QRgb> importedSampledFieldColours =
-      sbmlAnnotation->sampledFieldColours;
-
-  auto gsf = importGeometryFromSampledField(getGeometry(model),
-                                            importedSampledFieldColours);
+  auto gsf = importGeometryFromSampledField(
+      getGeometry(model), sbmlAnnotation->sampledFieldColours);
 
   if (gsf.image.isNull()) {
     SPDLOG_INFO(
@@ -245,9 +242,8 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   hasImage = true;
   pixelWidth = calculatePixelWidth(image.size(), physicalSize);
   sbmlAnnotation->sampledFieldColours.clear();
-  auto comp_colours = image.colorTable();
-  for (unsigned i = 0; i < comp_colours.size(); ++i) {
-    sbmlAnnotation->sampledFieldColours.push_back(comp_colours[i]);
+  for (auto color : image.colorTable()) {
+    sbmlAnnotation->sampledFieldColours.push_back(color);
   }
 
   setPixelWidth(pixelWidth, false);
@@ -283,11 +279,8 @@ void ModelGeometry::importGeometryFromImage(const QImage &img,
   }
   image = imgNoAlpha.convertToFormat(QImage::Format_Indexed8, flagNoDither);
   sbmlAnnotation->sampledFieldColours.clear();
-  for (int j = 0; j < image.colorTable().size(); ++j) {
-    sbmlAnnotation->sampledFieldColours.push_back(image.colorTable()[j]);
-    SPDLOG_INFO("Add {} color to {}. sampledFieldColours {} is {}.",
-                image.colorTable()[j], j, j,
-                sbmlAnnotation->sampledFieldColours[j]);
+  for (auto color : image.colorTable()) {
+    sbmlAnnotation->sampledFieldColours.push_back(color);
   }
 
   modelMembranes->updateCompartmentImage(image);

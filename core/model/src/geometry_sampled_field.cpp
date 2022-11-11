@@ -95,7 +95,8 @@ static void setImportedColoursToImage(
   auto iter = values.begin();
   for (int y = 0; y < img.height(); ++y) {
     for (int x = 0; x < img.width(); ++x) {
-      img.setPixel(x, img.height() - 1 - y, importedSampledFieldColours[*iter]);
+      img.setPixel(x, img.height() - 1 - y,
+                   importedSampledFieldColours[(int)*iter]);
       ++iter;
     }
   }
@@ -192,7 +193,7 @@ static std::vector<QRgb> setImagePixels(
     setImportedColoursToImage(img, values, importedSampledFieldColours);
     auto iter = colours.begin();
     for (const auto *sampledVolume : sampledVolumes) {
-      int sampledValue = sampledVolume->getSampledValue();
+      int sampledValue = (int)sampledVolume->getSampledValue();
       auto col = importedSampledFieldColours[sampledValue];
       SPDLOG_DEBUG("importedSampledFieldColours  {}/{} -> colour {:x}",
                    sampledVolume->getId(), sampledVolume->getDomainType(), col);
@@ -213,11 +214,11 @@ static std::vector<QRgb> setImagePixels(
       if (std::find(matches.cbegin(), matches.cend(), true) != matches.cend()) {
         auto col = common::indexedColours()[iCol].rgb();
         SPDLOG_WARN("Color {} is {}", iCol, col);
-        int sampledValue = sampledVolume->getSampledValue();
-        // if (sampledValue < importedSampledFieldColours.size()) {
-        //   col = importedSampledFieldColours[sampledValue];
-        //   SPDLOG_WARN("  -> Using importedcompartmentColour {}", col);
-        // }
+        // int sampledValue = (int) sampledVolume->getSampledValue();
+        //  if (sampledValue < importedSampledFieldColours.size()) {
+        //    col = importedSampledFieldColours[sampledValue];
+        //    SPDLOG_WARN("  -> Using importedcompartmentColour {}", col);
+        //  }
         SPDLOG_DEBUG("  {}/{} -> colour {:x}", sampledVolume->getId(),
                      sampledVolume->getDomainType(), col);
         setMatchingPixelsToColour(img, matches, col);
@@ -232,11 +233,11 @@ static std::vector<QRgb> setImagePixels(
 
 static std::vector<std::pair<std::string, QRgb>> getCompartmentIdAndColours(
     const std::vector<const libsbml::Compartment *> &compartments,
-    const std::vector<QRgb> &sampledFieldColours) {
+    const std::vector<QRgb> &compartmentColours) {
   std::vector<std::pair<std::string, QRgb>> compartmentIdAndColours;
   compartmentIdAndColours.reserve(compartments.size());
   for (std::size_t i = 0; i < compartments.size(); ++i) {
-    if (auto colour = sampledFieldColours[i]; colour != 0) {
+    if (auto colour = compartmentColours[i]; colour != 0) {
       compartmentIdAndColours.push_back({compartments[i]->getId(), colour});
     }
   }
@@ -262,10 +263,18 @@ GeometrySampledField importGeometryFromSampledField(
   auto dataType = sampledField->getDataType();
   SPDLOG_DEBUG("importedSampledFieldColours.size() = {} ",
                importedSampledFieldColours.size());
-  for (int i = 0; i < importedSampledFieldColours.size(); ++i) {
-    SPDLOG_DEBUG("importedSampledFieldColours {} = {} ", i,
-                 importedSampledFieldColours[i]);
-  }
+
+  std::vector<QRgb>::size_type b_iter = 0;
+  std::for_each(importedSampledFieldColours.cbegin(),
+                importedSampledFieldColours.cend(), [b_iter](QRgb col) mutable {
+                  SPDLOG_DEBUG("importedSampledFieldColours {} = {} ", b_iter,
+                               col);
+                });
+
+  // for (int i = 0; i < importedSampledFieldColours.size(); ++i) {
+  //   SPDLOG_DEBUG("importedSampledFieldColours {} = {} ", i,
+  //                importedSampledFieldColours[i]);
+  // }
 
   if (isNativeSampledFieldFormat(sampledField, sampledVolumes)) {
     compartmentColours =

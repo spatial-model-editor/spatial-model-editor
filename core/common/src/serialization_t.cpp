@@ -2,6 +2,7 @@
 #include "qt_test_utils.hpp"
 #include "sme/model.hpp"
 #include "sme/serialization.hpp"
+#include "sme/utils.hpp"
 #include <fstream>
 #include <vector>
 
@@ -170,6 +171,7 @@ TEST_CASE("Serialization",
     m.exportSMEFile("test2.sme");
     model::Model m2;
     m2.importFile("test2.sme");
+    REQUIRE(m.getGeometry().getImage() == m2.getGeometry().getImage());
     const auto &s{m2.getSampledFieldColours()};
     REQUIRE(s[0] == 4278719745);
     REQUIRE(s[1] == 4278237440);
@@ -194,6 +196,7 @@ TEST_CASE("Serialization",
 
     model::Model m2;
     m2.importFile("test3.sme");
+    REQUIRE(m.getGeometry().getImage() == m2.getGeometry().getImage());
     const auto &s2{m2.getSampledFieldColours()};
     REQUIRE(s2[0] == 4278719745);
     REQUIRE(s2[1] == 4278237440);
@@ -202,12 +205,15 @@ TEST_CASE("Serialization",
     REQUIRE(s3.getColours().size() == 2);
     REQUIRE(s3.getColours()[0] == 4278237440);
     REQUIRE(s3.getColours()[1] == 4279380443);
+    REQUIRE(s.getCompartments()[0]->nPixels() ==
+            s3.getCompartments()[0]->nPixels());
+    REQUIRE(s.getCompartments()[1]->nPixels() ==
+            s3.getCompartments()[1]->nPixels());
+
     m.exportSBMLFile("test4.xml");
 
-    QFile f1("test4.xml");
-    f1.open(QIODevice::ReadOnly);
     model::Model m3;
-    m3.importSBMLString(f1.readAll().toStdString());
+    m3.importFile("test4.xml");
     const auto &s4{m3.getSampledFieldColours()};
     REQUIRE(s4[0] == 4278719745);
     REQUIRE(s4[1] == 4278237440);
@@ -227,26 +233,24 @@ TEST_CASE("Serialization",
     m.importSBMLString(f.readAll().toStdString());
     const auto &s{m.getSampledFieldColours()};
     REQUIRE(s[0] == 4278190080);
-    REQUIRE(s[1] == 4293269835);
-    REQUIRE(s[2] == 4282168395);
+    REQUIRE(s[1] == common::indexedColours()[0].rgb());
+    REQUIRE(s[2] == common::indexedColours()[1].rgb());
     const auto &s2{m.getCompartments()};
     REQUIRE(s2.getColours().size() == 2);
-    REQUIRE(s2.getColours()[0] == 4293269835);
-    REQUIRE(s2.getColours()[1] == 4282168395);
+    REQUIRE(s2.getColours()[0] == common::indexedColours()[0].rgb());
+    REQUIRE(s2.getColours()[1] == common::indexedColours()[1].rgb());
     m.exportSBMLFile("test5.xml");
 
-    QFile f1("test5.xml");
-    f1.open(QIODevice::ReadOnly);
     model::Model m3;
-    m3.importSBMLString(f1.readAll().toStdString());
+    m3.importFile("test5.xml");
     const auto &s3{m3.getSampledFieldColours()};
     REQUIRE(s3[0] == 4278190080);
-    REQUIRE(s3[1] == 4293269835);
-    REQUIRE(s3[2] == 4282168395);
+    REQUIRE(s3[1] == common::indexedColours()[0].rgb());
+    REQUIRE(s3[2] == common::indexedColours()[1].rgb());
     const auto &s4{m3.getCompartments()};
     REQUIRE(s4.getColours().size() == 2);
-    REQUIRE(s4.getColours()[0] == 4293269835);
-    REQUIRE(s4.getColours()[1] == 4282168395);
+    REQUIRE(s4.getColours()[0] == common::indexedColours()[0].rgb());
+    REQUIRE(s4.getColours()[1] == common::indexedColours()[1].rgb());
   }
 
   SECTION("Import a model saved using the new format with missing color "
@@ -258,26 +262,24 @@ TEST_CASE("Serialization",
     m.importSBMLString(f.readAll().toStdString());
     const auto &s{m.getSampledFieldColours()};
     REQUIRE(s[0] == 4278190080);
-    REQUIRE(s[1] == 4293269835);
-    REQUIRE(s[2] == 4282168395);
+    REQUIRE(s[1] == common::indexedColours()[0].rgb());
+    REQUIRE(s[2] == common::indexedColours()[1].rgb());
     const auto &s2{m.getCompartments()};
     REQUIRE(s2.getColours().size() == 2);
-    REQUIRE(s2.getColours()[0] == 4293269835);
-    REQUIRE(s2.getColours()[1] == 4282168395);
+    REQUIRE(s2.getColours()[0] == common::indexedColours()[0].rgb());
+    REQUIRE(s2.getColours()[1] == common::indexedColours()[1].rgb());
     m.exportSBMLFile("test6.xml");
 
-    QFile f1("test6.xml");
-    f1.open(QIODevice::ReadOnly);
     model::Model m3;
-    m3.importSBMLString(f1.readAll().toStdString());
+    m3.importFile("test6.xml");
     const auto &s3{m3.getSampledFieldColours()};
     REQUIRE(s3[0] == 4278190080);
-    REQUIRE(s3[1] == 4293269835);
-    REQUIRE(s3[2] == 4282168395);
+    REQUIRE(s3[1] == common::indexedColours()[0].rgb());
+    REQUIRE(s3[2] == common::indexedColours()[1].rgb());
     const auto &s4{m3.getCompartments()};
     REQUIRE(s4.getColours().size() == 2);
-    REQUIRE(s4.getColours()[0] == 4293269835);
-    REQUIRE(s4.getColours()[1] == 4282168395);
+    REQUIRE(s4.getColours()[0] == common::indexedColours()[0].rgb());
+    REQUIRE(s4.getColours()[1] == common::indexedColours()[1].rgb());
   }
 
   SECTION("settings xml roundtrip") {
