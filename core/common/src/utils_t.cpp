@@ -225,5 +225,24 @@ TEST_CASE("Utils", "[core/common/utils][core/common][core][utils]") {
       REQUIRE(img2.size() == sz2);
       REQUIRE(img2.pixel(0, 0) == qRgb(0, 0, 0));
     }
+    SECTION("the container contains indexes from 0 to n") {
+      std::vector<double> A = {1, 2, 3, 5, 5, 4, 5, 5, 5, 5, 5, 5, 1, 2, 0, 5};
+      std::vector<double> A1 = {1, 2, 3, 5, 5, 4, 5, 5, 5, 5, 5, 5, 1, 2, 5, 5};
+      int size1 = 6;
+      int size2 = 5;
+
+      REQUIRE(sme::common::isItIndexes(A, size1) == true);
+      REQUIRE(sme::common::isItIndexes(A1, size1) == false);
+      REQUIRE(sme::common::isItIndexes(A, size2) == false);
+      REQUIRE(sme::common::isItIndexes(A1, size2) == false);
+    }
+    SECTION("get unique values from a container") {
+      std::vector<double> in = {1, 2, 3, 5, 5, 4, 5, 5, 5, 5, 5, 5, 1, 2, 0, 5};
+      std::vector<int> in1 = {1, 2, 3, 5, 5, 4, 5, 5, 5, 5, 5, 5, 1, 2, 5};
+      std::vector<double> out = {0, 1, 2, 3, 4, 5};
+      std::vector<int> out1 = {1, 2, 3, 4, 5};
+      REQUIRE(sme::common::get_unique_values(in) == out);
+      REQUIRE(sme::common::get_unique_values(in1) == out1);
+    }
   }
 }

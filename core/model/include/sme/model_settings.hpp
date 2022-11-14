@@ -73,6 +73,7 @@ struct Settings {
   MeshParameters meshParameters{};
   std::map<std::string, QRgb> speciesColours{};
   sme::simulate::OptimizeOptions optimizeOptions{};
+  std::vector<QRgb> sampledFieldColours{};
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
@@ -83,6 +84,10 @@ struct Settings {
       ar(CEREAL_NVP(simulationSettings), CEREAL_NVP(displayOptions),
          CEREAL_NVP(meshParameters), CEREAL_NVP(speciesColours),
          CEREAL_NVP(optimizeOptions));
+    } else if (version == 2) {
+      ar(CEREAL_NVP(simulationSettings), CEREAL_NVP(displayOptions),
+         CEREAL_NVP(meshParameters), CEREAL_NVP(speciesColours),
+         CEREAL_NVP(optimizeOptions), CEREAL_NVP(sampledFieldColours));
     }
   }
 };
@@ -92,4 +97,4 @@ struct Settings {
 CEREAL_CLASS_VERSION(sme::model::MeshParameters, 1);
 CEREAL_CLASS_VERSION(sme::model::DisplayOptions, 1);
 CEREAL_CLASS_VERSION(sme::model::SimulationSettings, 1);
-CEREAL_CLASS_VERSION(sme::model::Settings, 1);
+CEREAL_CLASS_VERSION(sme::model::Settings, 2);
