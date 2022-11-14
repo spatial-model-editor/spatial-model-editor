@@ -135,6 +135,7 @@ TEST_CASE("Serialization",
     model::Model m;
     m.importSBMLString(f.readAll().toStdString());
     m.exportSMEFile("test.sme");
+
     model::Model m2;
     m2.importFile("test.sme");
     const auto &s{m2.getSimulationSettings()};
@@ -148,6 +149,7 @@ TEST_CASE("Serialization",
     model::Model m;
     m.importSBMLString(f.readAll().toStdString());
     m.exportSMEFile("test2.sme");
+
     model::Model m2;
     m2.importFile("test2.sme");
     const auto &s{m2.getSampledFieldColours()};
@@ -169,6 +171,7 @@ TEST_CASE("Serialization",
     model::Model m;
     m.importSBMLString(f.readAll().toStdString());
     m.exportSMEFile("test2.sme");
+
     model::Model m2;
     m2.importFile("test2.sme");
     REQUIRE(m.getGeometry().getImage() == m2.getGeometry().getImage());
@@ -232,7 +235,7 @@ TEST_CASE("Serialization",
     model::Model m;
     m.importSBMLString(f.readAll().toStdString());
     const auto &s{m.getSampledFieldColours()};
-    REQUIRE(s[0] == 4278190080);
+    REQUIRE(s[0] == qRgb(0, 0, 0));
     REQUIRE(s[1] == common::indexedColours()[0].rgb());
     REQUIRE(s[2] == common::indexedColours()[1].rgb());
     const auto &s2{m.getCompartments()};
@@ -244,7 +247,7 @@ TEST_CASE("Serialization",
     model::Model m3;
     m3.importFile("test5.xml");
     const auto &s3{m3.getSampledFieldColours()};
-    REQUIRE(s3[0] == 4278190080);
+    REQUIRE(s3[0] == qRgb(0, 0, 0));
     REQUIRE(s3[1] == common::indexedColours()[0].rgb());
     REQUIRE(s3[2] == common::indexedColours()[1].rgb());
     const auto &s4{m3.getCompartments()};
@@ -261,7 +264,7 @@ TEST_CASE("Serialization",
     model::Model m;
     m.importSBMLString(f.readAll().toStdString());
     const auto &s{m.getSampledFieldColours()};
-    REQUIRE(s[0] == 4278190080);
+    REQUIRE(s[0] == qRgb(0, 0, 0));
     REQUIRE(s[1] == common::indexedColours()[0].rgb());
     REQUIRE(s[2] == common::indexedColours()[1].rgb());
     const auto &s2{m.getCompartments()};
@@ -273,7 +276,7 @@ TEST_CASE("Serialization",
     model::Model m3;
     m3.importFile("test6.xml");
     const auto &s3{m3.getSampledFieldColours()};
-    REQUIRE(s3[0] == 4278190080);
+    REQUIRE(s3[0] == qRgb(0, 0, 0));
     REQUIRE(s3[1] == common::indexedColours()[0].rgb());
     REQUIRE(s3[2] == common::indexedColours()[1].rgb());
     const auto &s4{m3.getCompartments()};
