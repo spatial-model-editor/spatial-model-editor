@@ -253,17 +253,10 @@ GeometrySampledField importGeometryFromSampledField(
   SPDLOG_DEBUG("importedSampledFieldColours.size() = {} ",
                importedSampledFieldColours.size());
 
-  std::vector<QRgb>::size_type b_iter = 0;
-  std::for_each(importedSampledFieldColours.cbegin(),
-                importedSampledFieldColours.cend(), [b_iter](QRgb col) mutable {
-                  SPDLOG_DEBUG("importedSampledFieldColours {} = {} ", b_iter,
-                               col);
-                });
-
-  // for (int i = 0; i < importedSampledFieldColours.size(); ++i) {
-  //   SPDLOG_DEBUG("importedSampledFieldColours {} = {} ", i,
-  //                importedSampledFieldColours[i]);
-  // }
+  for (std::size_t i = 0; i < importedSampledFieldColours.size(); ++i) {
+    SPDLOG_DEBUG("importedSampledFieldColours {} = {} ", i,
+                 importedSampledFieldColours[i]);
+  }
 
   if (isNativeSampledFieldFormat(sampledField, sampledVolumes)) {
     compartmentColours =
