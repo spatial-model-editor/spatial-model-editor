@@ -1,4 +1,10 @@
 # Changelog
+## [1.3.3] - 2022-11-21
+### Changed
+- exporting and importing format of Image Sampled Field from colors to indexes [#710](https://github.com/spatial-model-editor/spatial-model-editor/issues/710) and [#830](https://github.com/spatial-model-editor/spatial-model-editor/issues/830).
+### Added
+- sampledFieldColours parameter with colours to the settigs.
+
 
 ## [1.3.2] - 2022-10-13
 ### Added
