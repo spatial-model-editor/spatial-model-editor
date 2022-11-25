@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CIBUILDWHEEL_VERSION: 2.11.2  
+  CIBUILDWHEEL_VERSION: 2.11.2
   CIBW_TEST_COMMAND: 'python -m unittest discover -v -s {project}/sme/test'
   CIBW_BUILD_VERBOSITY: 3
   SME_BUILD_CORE: 'false'
