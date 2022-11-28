@@ -2,93 +2,14 @@ name: Python Wheel Builds
 
 on:
   push:
-    branches:
-      - main
-    tags:
-      - "*.*.*"
-  pull_request:
-  workflow_dispatch:
-
-concurrency:
-  group: wheels-${{ github.ref }}
-  cancel-in-progress: true
 
 env:
-  CIBUILDWHEEL_VERSION: 2.11.0
+  CIBUILDWHEEL_VERSION: 2.11.2
   CIBW_TEST_COMMAND: 'python -m unittest discover -v -s {project}/sme/test'
   CIBW_BUILD_VERBOSITY: 3
   SME_BUILD_CORE: 'false'
 
 jobs:
-  linux-wheel:
-    name: Linux Wheels
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        shell: bash
-    env:
-      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.11.21-mpfr
-      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2022.11.21-mpfr
-      CIBW_SKIP: '*-manylinux_i686 *-musllinux* pp39-manylinux_x86_64'
-      CIBW_ENVIRONMENT: 'SME_BUILD_CORE=off'
-      CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'
-    steps:
-    - uses: actions/checkout@v3
-      with:
-        submodules: 'true'
-    - name: Set "latest" version number unless commit is tagged
-      if: startsWith(github.event.ref, 'refs/tags/') == false
-      run: ./ci/set-latest-version.sh ${GITHUB_SHA}
-    - name: Cache ccache
-      uses: actions/cache@v3
-      with:
-        path: ${{ github.workspace }}/ccache
-        key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-        restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-    - name: Install cibuildwheel
-      run: python -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
-    - name: Build wheels
-      run: python -m cibuildwheel --output-dir wheelhouse
-    - uses: actions/upload-artifact@v3
-      with:
-        path: ./wheelhouse/*.whl
-
-  macos-wheel:
-    name: MacOS Wheels
-    runs-on: macos-11
-    defaults:
-      run:
-        shell: bash
-    env:
-      CIBW_ENVIRONMENT: 'BLAS=None LAPACK=None ATLAS=None'
-      CIBW_TEST_SKIP: 'pp3*-macosx_x86_64'
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: 'true'
-      - name: Set "latest" version number unless commit is tagged
-        if: startsWith(github.event.ref, 'refs/tags/') == false
-        run: ./ci/set-latest-version.sh ${GITHUB_SHA}
-      - name: Cache ccache
-        uses: actions/cache@v3
-        with:
-          path: /Users/runner/Library/Caches/ccache
-          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-      - name: Download static libraries
-        run: sudo ./ci/getlibs.sh osx
-      - name: Build wheels
-        run: ./ci/macos-wheels.sh
-      - uses: actions/upload-artifact@v3
-        with:
-          path: ./wheelhouse/*.whl
-
   win64-wheel:
     name: Windows 64-bit Wheels
     runs-on: windows-2022
@@ -122,36 +43,6 @@ jobs:
       - name: Build wheels
         run: ./ci/windows-wheels.sh
       - uses: actions/upload-artifact@v3
+        if: always()
         with:
           path: ./wheelhouse/*.whl
-
-  pypi:
-    name: Upload to PyPI / Github Release
-    if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-    needs: [linux-wheel, macos-wheel, win64-wheel]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: artifact
-          path: dist
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        # if this is a tagged commit, upload pypi wheels
-        if: startsWith(github.event.ref, 'refs/tags/')
-        with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
-          verbose: true
-      - run: |
-          mkdir latest
-          mv dist/sme-*-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl latest/sme-latest-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
-      - uses: svenstaro/upload-release-action@v2
-        # if this is an untagged commit to main: upload selected wheels to github latest release
-        if: github.ref == 'refs/heads/main'
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: latest/*
-          tag: latest
-          overwrite: true
-          file_glob: true
-          prerelease: true
