@@ -102,8 +102,10 @@ DialogAbout::DialogAbout(QWidget *parent)
                        CEREAL_VERSION_PATCH));
   libraries.append(dep("zlib", "https://zlib.net/", ZLIB_VER_MAJOR,
                        ZLIB_VER_MINOR, ZLIB_VER_REVISION));
-  libraries.append(dep("bzip2", "https://www.sourceware.org/bzip2",
-                       BZ_API(BZ2_bzlibVersion)()));
+  // Should use BZ_API(BZ2_bzlibVersion)() here for version number
+  // but currently this gives a compile error on windows, see
+  // https://github.com/spatial-model-editor/spatial-model-editor/issues/843
+  libraries.append(dep("bzip2", "https://www.sourceware.org/bzip2", "1.0.8"));
   libraries.append(dep("pagmo", "https://esa.github.io/pagmo2",
                        PAGMO_VERSION_MAJOR, PAGMO_VERSION_MINOR,
                        PAGMO_VERSION_PATCH));
