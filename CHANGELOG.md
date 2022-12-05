@@ -1,4 +1,7 @@
 # Changelog
+## [1.3.3] - 2022-12-05
+### Changed
+- export format of Image Sampled Field from colors to indices [#710](https://github.com/spatial-model-editor/spatial-model-editor/issues/710) and [#830](https://github.com/spatial-model-editor/spatial-model-editor/issues/830).
 
 ## [1.3.2] - 2022-10-13
 ### Added
