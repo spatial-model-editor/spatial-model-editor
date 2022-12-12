@@ -114,7 +114,7 @@ jobs:
       - name: Cache ccache
         uses: actions/cache@v3
         with:
-          path: D:\a\_temp\msys64\home\runneradmin\ccache
+          path: C:\Users\runneradmin\AppData\Local\ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
       - name: Download static libraries

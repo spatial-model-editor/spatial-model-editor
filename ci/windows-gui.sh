@@ -43,7 +43,7 @@ cmake .. \
     -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS
 make -j2 VERBOSE=1
 
-ccache -s
+ccache -s -v
 
 # check dependencies
 objdump.exe -x sme/sme.cp310-win_amd64.pyd > sme_obj.txt
