@@ -517,16 +517,30 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(sym.getErrorMessage().substr(0, 30) ==
             "Failed to compile expression: ");
   }
-  SECTION("expression with nan: parses but doesn't compile") {
-    // nan parses ok but not supported by llvm compilation
+  SECTION("expression with nan: parses and may compile depending on symengine "
+          "version") {
+    // nan parses ok
     common::Symbolic sym("nan");
     REQUIRE(sym.isValid() == true);
     REQUIRE(sym.isCompiled() == false);
     sym.compile();
-    REQUIRE(sym.isValid() == false);
-    REQUIRE(sym.isCompiled() == false);
-    CAPTURE(sym.getErrorMessage());
-    REQUIRE(sym.getErrorMessage().substr(0, 30) ==
-            "Failed to compile expression: ");
+    // todo: expose symengine version in Symbolic & use this below instead of
+    // using compile -> invalid as a proxy for earlier symengine versions
+    if (sym.isValid()) {
+      // compiling a NaN only works in symengine > v0.9.0
+      REQUIRE(sym.isValid() == true);
+      REQUIRE(sym.isCompiled() == true);
+      std::vector<double> res{0.0};
+      CAPTURE(sym.getErrorMessage());
+      REQUIRE(sym.getErrorMessage().empty());
+      sym.eval(res, {});
+      REQUIRE(std::isnan(res[0]));
+    } else {
+      // for previous symengine versions compilation of NaN fails
+      REQUIRE(sym.isCompiled() == false);
+      CAPTURE(sym.getErrorMessage());
+      REQUIRE(sym.getErrorMessage().substr(0, 30) ==
+              "Failed to compile expression: ");
+    }
   }
 }

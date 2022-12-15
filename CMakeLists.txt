@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13...3.24)
+cmake_minimum_required(VERSION 3.13...3.25)
 message(STATUS "CMake version ${CMAKE_VERSION}")
 
 # version number here is embedded in compiled executable

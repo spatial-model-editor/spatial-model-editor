@@ -1810,9 +1810,6 @@ TEST_CASE("pixel simulation with invalid reaction rate expression",
   m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   REQUIRE(simulate::Simulation(m).errorMessage() ==
           "Unknown symbol: idontexist");
-  m.getReactions().setRateExpression("r2", "1/0");
-  REQUIRE(simulate::Simulation(m).errorMessage().substr(0, 28) ==
-          "Failed to compile expression");
 }
 
 TEST_CASE("Fish model: simulation with piecewise function in reactions",
