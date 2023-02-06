@@ -4,7 +4,6 @@ import sme
 
 class TestReactionParameter(unittest.TestCase):
     def test_reactionparameter(self):
-
         # get an existing reaction parameter
         m = sme.open_example_model()
         r = m.compartments["Nucleus"].reactions["A to B conversion"]
