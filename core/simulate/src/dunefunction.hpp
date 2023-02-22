@@ -19,9 +19,7 @@ namespace Dune {
 template <typename F, int n> class FieldVector;
 }
 
-namespace sme {
-
-namespace simulate {
+namespace sme::simulate {
 
 template <typename GV>
 class GridFunction
@@ -40,7 +38,7 @@ public:
     SPDLOG_TRACE("  - {} pixel width", a);
     SPDLOG_TRACE("  - ({},{}) origin", x0, y0);
   }
-  void set_time([[maybe_unused]] double t) { return; }
+  void set_time([[maybe_unused]] double t) {}
   template <typename Element, typename Domain>
   void evaluate(const Element &elem, const Domain &localPos,
                 typename Traits::RangeType &result) const {
@@ -99,6 +97,4 @@ template <class GV> auto makeModelDuneFunctions(const DuneConverter &dc) {
   return functions;
 }
 
-} // namespace simulate
-
-} // namespace sme
+} // namespace sme::simulate

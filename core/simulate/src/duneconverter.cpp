@@ -144,9 +144,20 @@ static void addCompartment(
   }
 
   // initial concentrations
-  auto &concs = concentrations.emplace_back(duneSpeciesNames.size(),
-                                            std::vector<double>{});
-  auto indices = common::getIndicesOfSortedVector(duneSpeciesNames);
+  auto &concs{concentrations.emplace_back(duneSpeciesNames.size(),
+                                          std::vector<double>{})};
+  // these smeToDuneIndices map from a dune species index to the SME species
+  // index:
+  auto duneToSmeIndices{common::getIndicesOfSortedVector(duneSpeciesNames)};
+  // we want the inverse mapping: from SME index to dune index
+  auto smeToDuneIndices = duneToSmeIndices;
+  for (std::size_t i = 0; i < smeToDuneIndices.size(); ++i) {
+    smeToDuneIndices[duneToSmeIndices[i]] = i;
+  }
+  for (std::size_t i = 0; i < smeToDuneIndices.size(); ++i) {
+    SPDLOG_INFO("  - SME species {} -> DUNE species {} [{}]", i,
+                smeToDuneIndices[i], duneSpeciesNames[i]);
+  }
   std::vector<QString> tiffs;
   ini.addSection("model", compartmentId, "initial");
   for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
@@ -195,17 +206,17 @@ static void addCompartment(
         SPDLOG_INFO("using simulation concentration data for species {}",
                     name.toStdString());
         SPDLOG_INFO("- species index {}", i);
-        SPDLOG_INFO("- species dune index {}", indices[i]);
+        SPDLOG_INFO("- species dune index {}", smeToDuneIndices[i]);
         for (std::size_t iPixel = 0; iPixel < nPixels; ++iPixel) {
           c[iPixel] =
               simConcs.back()[simDataCompartmentIndex][iPixel * stride + i];
         }
         simField.setConcentration(c);
-        concs[indices[i]] = simField.getConcentrationImageArray();
+        concs[smeToDuneIndices[i]] = simField.getConcentrationImageArray();
       } else {
-        concs[indices[i]] = f->getConcentrationImageArray();
+        concs[smeToDuneIndices[i]] = f->getConcentrationImageArray();
       }
-      for (auto &c : concs[indices[i]]) {
+      for (auto &c : concs[smeToDuneIndices[i]]) {
         // convert A/V to A/L^3
         c /= volOverL3;
       }

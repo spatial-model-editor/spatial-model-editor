@@ -4,7 +4,6 @@ import sme
 
 class TestParameter(unittest.TestCase):
     def test_parameter(self):
-
         # get an existing parameter
         m = sme.open_example_model()
         p = m.parameters["param"]

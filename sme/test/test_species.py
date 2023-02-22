@@ -5,7 +5,6 @@ import numpy as np
 
 class TestSpecies(unittest.TestCase):
     def test_species(self):
-
         # get an existing species
         m = sme.open_example_model()
         s = m.compartments["Cell"].species["A_cell"]

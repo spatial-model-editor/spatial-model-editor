@@ -1,4 +1,8 @@
 # Changelog
+## [1.3.4] - 2023-02-23
+### Fixed
+- incorrect initial concentrations with DUNE simulator for some models [#852](https://github.com/spatial-model-editor/spatial-model-editor/issues/710) and [#830](https://github.com/spatial-model-editor/spatial-model-editor/issues/852).
+
 ## [1.3.3] - 2022-12-05
 ### Changed
 - export format of Image Sampled Field from colors to indices [#710](https://github.com/spatial-model-editor/spatial-model-editor/issues/710) and [#830](https://github.com/spatial-model-editor/spatial-model-editor/issues/830).

@@ -17,7 +17,9 @@ sudo apt-get install -yy \
     jwm \
     lcov \
     clang-14 \
-    llvm-14
+    llvm-14 \
+    libclang-dev \
+    libclang-rt-14-dev
 
 # install qt build dependencies
 sudo apt-get install -yy \
