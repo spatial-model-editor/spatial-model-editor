@@ -89,4 +89,40 @@ TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
     duneSim.run(1, -1, []() { return true; });
     REQUIRE(duneSim.errorMessage() == "Simulation cancelled");
   }
+  SECTION("Species are mapped to the correct initial concentrations") {
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/852
+    // used inverse mapping of indices, which happened to be correct for test
+    // models:
+    {
+      auto m{getExampleModel(Mod::ABtoC)};
+      m.getSpecies().setInitialConcentration("A", 1.0);
+      m.getSpecies().setInitialConcentration("B", 2.0);
+      m.getSpecies().setInitialConcentration("C", 3.0);
+      std::vector<std::string> comps{"comp"};
+      simulate::DuneSim duneSim(m, comps);
+      REQUIRE(duneSim.errorMessage().empty());
+      REQUIRE(m.getSpecies().getIds("comp")[0] == "A");
+      REQUIRE(duneSim.getConcentrations(0)[0] == dbl_approx(1.0));
+      REQUIRE(m.getSpecies().getIds("comp")[1] == "B");
+      REQUIRE(duneSim.getConcentrations(0)[1] == dbl_approx(2.0));
+      REQUIRE(m.getSpecies().getIds("comp")[2] == "C");
+      REQUIRE(duneSim.getConcentrations(0)[2] == dbl_approx(3.0));
+    }
+    // but for this variant with ids X,Y,W the inverse mapping is not the same:
+    {
+      auto m{getTestModel("XYtoW")};
+      m.getSpecies().setInitialConcentration("X", 5.0);
+      m.getSpecies().setInitialConcentration("Y", 2.0);
+      m.getSpecies().setInitialConcentration("W", 3.0);
+      std::vector<std::string> comps{"comp"};
+      simulate::DuneSim duneSim(m, comps);
+      REQUIRE(duneSim.errorMessage().empty());
+      REQUIRE(m.getSpecies().getIds("comp")[0] == "X");
+      REQUIRE(duneSim.getConcentrations(0)[0] == dbl_approx(5.0));
+      REQUIRE(m.getSpecies().getIds("comp")[1] == "Y");
+      REQUIRE(duneSim.getConcentrations(0)[1] == dbl_approx(2.0));
+      REQUIRE(m.getSpecies().getIds("comp")[2] == "W");
+      REQUIRE(duneSim.getConcentrations(0)[2] == dbl_approx(3.0));
+    }
+  }
 }

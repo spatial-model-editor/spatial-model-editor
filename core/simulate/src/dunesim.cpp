@@ -24,7 +24,6 @@ using QTriangleF = std::array<QPointF, 3>;
 namespace sme::simulate {
 
 void DuneSim::initDuneSimCompartments(
-
     const std::vector<const geometry::Compartment *> &comps) {
   duneCompartments.clear();
   auto compartmentNames{
@@ -50,16 +49,16 @@ void DuneSim::initDuneSimCompartments(
       auto speciesNames{pDuneImpl->configs[iModel]
                             .sub("model." + compartmentName + ".initial")
                             .getValueKeys()};
-      // create {0, 1, 2, ...} initial species speciesIndices
-      std::vector<std::size_t> speciesIndices(speciesNames.size(), 0);
-      std::iota(speciesIndices.begin(), speciesIndices.end(), 0);
-      // sort these speciesIndices by speciesNames, i.e. find speciesIndices
-      // that would result in a sorted speciesNames
-      std::sort(speciesIndices.begin(), speciesIndices.end(),
-                [&n = speciesNames](std::size_t i1, std::size_t i2) {
-                  return n[i1] < n[i2];
-                });
-      // speciesIndices[i] is now the Dune index of species i
+      auto duneToSmeSpeciesIndices{
+          common::getIndicesOfSortedVector(speciesNames)};
+
+      for (std::size_t i = 0; i < speciesNames.size(); ++i) {
+        SPDLOG_INFO("  - DUNE species {} -> SME species {} [{}]", i,
+                    duneToSmeSpeciesIndices[i],
+                    speciesNames[duneToSmeSpeciesIndices[i]]);
+      }
+      // duneToSmeSpeciesIndices[i] is now the SME index of the species with
+      // Dune index i
       auto imgSize{comp->getCompartmentImage().size()};
       auto nPixels{comp->getPixels().size()};
       SPDLOG_INFO("  - {} pixels", nPixels);
@@ -69,7 +68,7 @@ void DuneSim::initDuneSimCompartments(
       duneCompartments.push_back(
           {compartmentName,
            compIndex,
-           speciesIndices,
+           duneToSmeSpeciesIndices,
            common::QPointIndexer(imgSize, comp->getPixels()),
            comp,
            {},

@@ -4,7 +4,6 @@ import sme
 
 class TestReaction(unittest.TestCase):
     def test_reaction(self):
-
         # get an existing reaction
         m = sme.open_example_model()
         c = m.compartments["Nucleus"]
@@ -38,7 +37,6 @@ class TestReaction(unittest.TestCase):
         self.assertEqual(r2.parameters[0].value, 0.99)
 
     def test_parameter_list(self):
-
         # get an existing reaction parameter list
         m = sme.open_example_model()
         ps = m.compartments["Nucleus"].reactions["A to B conversion"].parameters
