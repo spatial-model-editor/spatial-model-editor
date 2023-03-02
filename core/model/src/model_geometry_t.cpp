@@ -30,6 +30,7 @@ TEST_CASE("Model geometry",
     model::ModelMembranes mMembranes(doc->getModel());
     model::ModelGeometry mGeometry;
     model::ModelSpecies mSpecies;
+    model::ModelFunctions mFunctions(doc->getModel());
     model::ModelReactions mReactions(doc->getModel(), &mCompartments,
                                      &mMembranes, false);
     simulate::SimulationData simulationData{};
@@ -57,9 +58,9 @@ TEST_CASE("Model geometry",
       REQUIRE(mGeometry.getPhysicalPointAsString({0, 0}) == "x: 0 m, y: 99 m");
       model::ModelParameters mParameters(doc->getModel());
       simulate::SimulationData data;
-      mSpecies =
-          model::ModelSpecies(doc->getModel(), &mCompartments, &mGeometry,
-                              &mParameters, &data, &sbmlAnnotation);
+      mSpecies = model::ModelSpecies(doc->getModel(), &mCompartments,
+                                     &mGeometry, &mParameters, &mFunctions,
+                                     &data, &sbmlAnnotation);
       mSpecies.setReactionsPtr(&mReactions);
       REQUIRE(m.getIsValid() == true);
       REQUIRE(m.getMesh() != nullptr);

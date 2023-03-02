@@ -42,7 +42,8 @@ Symbolic::Symbolic() = default;
 Symbolic::Symbolic(const std::vector<std::string> &expressions,
                    const std::vector<std::string> &variables,
                    const std::vector<std::pair<std::string, double>> &constants,
-                   const std::vector<SymbolicFunction> &functions)
+                   const std::vector<SymbolicFunction> &functions,
+                   bool allow_unknown_symbols)
     : se{std::make_unique<SymEngineWrapper>()} {
   SPDLOG_DEBUG("parsing {} expressions", expressions.size());
   for (const auto &v : variables) {
@@ -125,18 +126,20 @@ Symbolic::Symbolic(const std::vector<std::string> &expressions,
       return;
     }
     SPDLOG_DEBUG("  --> {}", sbml(*se->exprInlined.back()));
-    // check that all remaining symbols are in the variables vector
-    auto fs = free_symbols(*se->exprInlined.back());
-    if (auto iter = find_if(fs.cbegin(), fs.cend(),
-                            [&v = variables](const auto &s) {
-                              return std::find(v.cbegin(), v.cend(),
-                                               sbml(*s)) == v.cend();
-                            });
-        iter != fs.cend()) {
-      se->errorMessage = "Unknown symbol: " + sbml(*(*iter));
-      SPDLOG_WARN("{}", se->errorMessage);
-      std::locale::global(userLocale);
-      return;
+    if (!allow_unknown_symbols) {
+      // check that all remaining symbols are in the variables vector
+      auto fs = free_symbols(*se->exprInlined.back());
+      if (auto iter = find_if(fs.cbegin(), fs.cend(),
+                              [&v = variables](const auto &s) {
+                                return std::find(v.cbegin(), v.cend(),
+                                                 sbml(*s)) == v.cend();
+                              });
+          iter != fs.cend()) {
+        se->errorMessage = "Unknown symbol: " + sbml(*(*iter));
+        SPDLOG_WARN("{}", se->errorMessage);
+        std::locale::global(userLocale);
+        return;
+      }
     }
     auto fn{function_symbols(*se->exprInlined.back())};
     if (!fn.empty()) {

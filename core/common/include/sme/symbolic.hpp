@@ -33,14 +33,16 @@ public:
       const std::vector<std::string> &expressions,
       const std::vector<std::string> &variables = {},
       const std::vector<std::pair<std::string, double>> &constants = {},
-      const std::vector<SymbolicFunction> &functions = {});
+      const std::vector<SymbolicFunction> &functions = {},
+      bool allow_unknown_symbols = false);
   explicit Symbolic(
       const std::string &expression,
       const std::vector<std::string> &variables = {},
       const std::vector<std::pair<std::string, double>> &constants = {},
-      const std::vector<SymbolicFunction> &functions = {})
+      const std::vector<SymbolicFunction> &functions = {},
+      bool allow_unknown_symbols = false)
       : Symbolic(std::vector<std::string>{expression}, variables, constants,
-                 functions) {}
+                 functions, allow_unknown_symbols) {}
   Symbolic(Symbolic &&) noexcept;
   Symbolic(const Symbolic &) = delete;
   Symbolic &operator=(Symbolic &&) noexcept;

@@ -27,9 +27,17 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
   }
   SECTION("3*x + 7*x: one var, no constants") {
     std::string expr{"3*x + 7 * x"};
+    // by default missing variable is an error:
     common::Symbolic sym(expr);
     REQUIRE(!sym.isValid());
     REQUIRE(sym.getErrorMessage() == "Unknown symbol: x");
+    // can optionally allow missing variables in the expression:
+    sym = common::Symbolic(expr, {"x"}, {}, {}, true);
+    REQUIRE(sym.isValid());
+    REQUIRE(sym.getErrorMessage().empty());
+    REQUIRE(sym.expr() == "10*x");
+    REQUIRE(sym.inlinedExpr() == "10*x");
+    // specifying variable allow compiling and differentiating
     sym = common::Symbolic(expr, {"x"});
     CAPTURE(expr);
     REQUIRE(sym.expr() == "10*x");
@@ -415,6 +423,21 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       CAPTURE(sym.getErrorMessage());
       REQUIRE(sym.getErrorMessage().empty());
       REQUIRE(symEq(sym.inlinedExpr(), "2*(2 + 16*z)"));
+      REQUIRE(sym.isValid() == true);
+      REQUIRE(sym.isCompiled() == false);
+      sym.compile();
+      REQUIRE(sym.isValid() == true);
+      REQUIRE(sym.isCompiled() == true);
+      CAPTURE(expr);
+    }
+    SECTION("2-arg func called with args in same order") {
+      // ensure we don't have the same bug with functions as libsbml:
+      // https://github.com/spatial-model-editor/spatial-model-editor/issues/856#issuecomment-1451919941
+      std::string expr = "f2(y,x)";
+      common::Symbolic sym(expr, {"x", "y"}, {}, {f2});
+      CAPTURE(sym.getErrorMessage());
+      REQUIRE(sym.getErrorMessage().empty());
+      REQUIRE(symEq(sym.inlinedExpr(), "2*x*y"));
       REQUIRE(sym.isValid() == true);
       REQUIRE(sym.isCompiled() == false);
       sym.compile();

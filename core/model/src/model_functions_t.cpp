@@ -1,4 +1,5 @@
 #include "catch_wrapper.hpp"
+#include "math_test_utils.hpp"
 #include "model_test_utils.hpp"
 #include "sme/model.hpp"
 #include "sme/model_functions.hpp"
@@ -20,23 +21,24 @@ TEST_CASE("SBML functions",
     REQUIRE(funcs.getName("HK_kinetics") == "HK kinetics");
     REQUIRE(funcs.getArguments("HK_kinetics").size() == 10);
     REQUIRE(funcs.getArguments("HK_kinetics")[0] == "A");
-    REQUIRE(funcs.getExpression("HK_kinetics") ==
-            "Vmax * (A * B / (Kglc * Katp) - P * Q / (Kglc * Katp * Keq)) "
-            "/ ((1 + A / Kglc + P / Kg6p) * (1 + B / Katp + Q / Kadp))");
+    REQUIRE(
+        symEq(funcs.getExpression("HK_kinetics"),
+              "Vmax * (A * B / (Kglc * Katp) - P * Q / (Kglc * Katp * Keq)) "
+              "/ ((1 + A / Kglc + P / Kg6p) * (1 + B / Katp + Q / Kadp))"));
     SECTION("inline fn: Glycogen_synthesis_kinetics") {
       std::string expr = "Glycogen_synthesis_kinetics(abc)";
-      std::string inlined = "(abc)";
-      REQUIRE(s.inlineExpr(expr) == inlined);
+      std::string inlined = "abc";
+      REQUIRE(symEq(s.inlineExpr(expr), inlined));
     }
     SECTION("inline fn: ATPase_0") {
       std::string expr = "ATPase_0( a,b)";
-      std::string inlined = "(b * a)";
-      REQUIRE(s.inlineExpr(expr) == inlined);
+      std::string inlined = "b * a";
+      REQUIRE(symEq(s.inlineExpr(expr), inlined));
     }
     SECTION("inline fn: PDC_kinetics") {
       std::string expr = "PDC_kinetics(a,V,k,n)";
-      std::string inlined = "(V * (a / k)^n / (1 + (a / k)^n))";
-      REQUIRE(s.inlineExpr(expr) == inlined);
+      std::string inlined = "V * (a / k)^n / (1 + (a / k)^n)";
+      REQUIRE(symEq(s.inlineExpr(expr), inlined));
     }
     SECTION("edit function: PDC_kinetics") {
       REQUIRE(funcs.getArguments("PDC_kinetics").size() == 4);
@@ -59,11 +61,11 @@ TEST_CASE("SBML functions",
       REQUIRE(funcs.getArguments("PDC_kinetics")[2] == "Kpyr");
       REQUIRE(funcs.getArguments("PDC_kinetics")[3] == "nH");
       REQUIRE(funcs.getArguments("PDC_kinetics")[4] == "x");
-      REQUIRE(funcs.getExpression("PDC_kinetics") ==
-              "V * (x / k)^n / (1 + (a / k)^n)");
+      REQUIRE(symEq(funcs.getExpression("PDC_kinetics"),
+                    "V * (x / k)^n / (1 + (a / k)^n)"));
       std::string expr{"PDC_kinetics(a,V,k,n,Q)"};
-      std::string inlined{"(V * (Q / k)^n / (1 + (a / k)^n))"};
-      REQUIRE(s.inlineExpr(expr) == inlined);
+      std::string inlined{"V * (Q / k)^n / (1 + (a / k)^n)"};
+      REQUIRE(symEq(s.inlineExpr(expr), inlined));
       funcs.remove("PDC_kinetics");
       REQUIRE(funcs.getIds().size() == 16);
     }

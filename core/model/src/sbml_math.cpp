@@ -1,16 +1,16 @@
 #include "sbml_math.hpp"
 #include "sme/logger.hpp"
+#include "sme/symbolic.hpp"
 #include <memory>
 #include <sbml/SBMLTransforms.h>
 
 namespace sme::model {
 
 std::string inlineFunctions(const std::string &mathExpression,
-                            const libsbml::Model *model) {
-  auto math{mathStringToAST(mathExpression)};
-  libsbml::SBMLTransforms::replaceFD(math.get(),
-                                     model->getListOfFunctionDefinitions());
-  return "(" + mathASTtoString(math.get()) + ")";
+                            const model::ModelFunctions &modelFunctions) {
+  common::Symbolic sym{
+      mathExpression, {}, {}, modelFunctions.getSymbolicFunctions(), true};
+  return "(" + sym.inlinedExpr() + ")";
 }
 
 std::string inlineAssignments(const std::string &mathExpression,
