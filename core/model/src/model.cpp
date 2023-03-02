@@ -86,8 +86,8 @@ void Model::initModelData(bool emptySpatialModel) {
   modelParameters = std::make_unique<ModelParameters>(model);
   modelSpecies = std::make_unique<ModelSpecies>(
       model, modelCompartments.get(), modelGeometry.get(),
-      modelParameters.get(), smeFileContents->simulationData.get(),
-      settings.get());
+      modelParameters.get(), modelFunctions.get(),
+      smeFileContents->simulationData.get(), settings.get());
   modelCompartments->setSpeciesPtr(modelSpecies.get());
   modelEvents = std::make_unique<ModelEvents>(model, modelParameters.get(),
                                               modelSpecies.get());
@@ -331,10 +331,7 @@ SpeciesGeometry Model::getSpeciesGeometry(const QString &speciesID) const {
 }
 
 std::string Model::inlineExpr(const std::string &mathExpression) const {
-  std::string inlined;
-  // inline any Function calls in expr
-  inlined = inlineFunctions(mathExpression, doc->getModel());
-  // inline any Assignment Rules in expr
+  std::string inlined = inlineFunctions(mathExpression, *modelFunctions);
   inlined = inlineAssignments(inlined, doc->getModel());
   return inlined;
 }

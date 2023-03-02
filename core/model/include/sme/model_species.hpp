@@ -23,6 +23,7 @@ class ModelCompartments;
 class ModelGeometry;
 class ModelParameters;
 class ModelReactions;
+class ModelFunctions;
 struct Settings;
 
 class ModelSpecies {
@@ -36,6 +37,7 @@ private:
   const ModelGeometry *modelGeometry = nullptr;
   const ModelParameters *modelParameters = nullptr;
   ModelReactions *modelReactions = nullptr;
+  const ModelFunctions *modelFunctions = nullptr;
   simulate::SimulationData *simulationData = nullptr;
   Settings *sbmlAnnotation = nullptr;
   void removeInitialAssignment(const QString &id);
@@ -47,7 +49,8 @@ public:
   ModelSpecies();
   ModelSpecies(libsbml::Model *model, const ModelCompartments *compartments,
                const ModelGeometry *geometry, const ModelParameters *parameters,
-               simulate::SimulationData *data, Settings *annotation);
+               const ModelFunctions *functions, simulate::SimulationData *data,
+               Settings *annotation);
   void setReactionsPtr(ModelReactions *reactions);
   void setSimulationDataPtr(simulate::SimulationData *data);
   [[nodiscard]] bool containsNonSpatialReactiveSpecies() const;

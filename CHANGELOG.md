@@ -1,7 +1,11 @@
 # Changelog
+## [1.3.5] - 2023-03-02
+### Fixed
+- incorrect function evaluations in some cases [#855](https://github.com/spatial-model-editor/spatial-model-editor/issues/855), [#856](https://github.com/spatial-model-editor/spatial-model-editor/issues/856), [#857](https://github.com/spatial-model-editor/spatial-model-editor/issues/857)
+
 ## [1.3.4] - 2023-02-23
 ### Fixed
-- incorrect initial concentrations with DUNE simulator for some models [#852](https://github.com/spatial-model-editor/spatial-model-editor/issues/710) and [#830](https://github.com/spatial-model-editor/spatial-model-editor/issues/852).
+- incorrect initial concentrations with DUNE simulator for some models [#852](https://github.com/spatial-model-editor/spatial-model-editor/issues/852)
 
 ## [1.3.3] - 2022-12-05
 ### Changed

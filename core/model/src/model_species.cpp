@@ -230,12 +230,13 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
                            const ModelCompartments *compartments,
                            const ModelGeometry *geometry,
                            const ModelParameters *parameters,
+                           const ModelFunctions *functions,
                            simulate::SimulationData *data, Settings *annotation)
     : ids{importIds(model)}, names{importNamesAndMakeUnique(model)},
       compartmentIds{importCompartmentIds(model)}, sbmlModel{model},
       modelCompartments{compartments}, modelGeometry{geometry},
-      modelParameters{parameters}, simulationData{data}, sbmlAnnotation{
-                                                             annotation} {
+      modelParameters{parameters}, modelFunctions{functions},
+      simulationData{data}, sbmlAnnotation{annotation} {
   makeInitialConcentrationsValid(model);
   for (int i = 0; i < ids.size(); ++i) {
     const auto &id = ids[i];
@@ -547,7 +548,7 @@ void ModelSpecies::setFieldConcAnalytic(
     geometry::Field &field, const std::string &expr,
     const std::map<std::string, double, std::less<>> &substitutions) {
   SPDLOG_INFO("expr: {}", expr);
-  auto inlinedExpr = inlineFunctions(expr, sbmlModel);
+  auto inlinedExpr = inlineFunctions(expr, *modelFunctions);
   inlinedExpr = inlineAssignments(inlinedExpr, sbmlModel);
   SPDLOG_INFO("  - inlined expr: {}", inlinedExpr);
   std::string xId{modelParameters->getSpatialCoordinates().x.id};
