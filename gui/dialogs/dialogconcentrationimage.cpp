@@ -127,7 +127,7 @@ std::size_t DialogConcentrationImage::pointToConcentrationArrayIndex(
 
 void DialogConcentrationImage::importConcentrationArray(
     const std::vector<double> &concentrationArray) {
-  if (static_cast<int>(concentrationArray.size()) != imgs.volume().nVoxels()) {
+  if (concentrationArray.size() != imgs.volume().nVoxels()) {
     SPDLOG_ERROR("mismatch between array size {} and compartment pixels {}",
                  concentrationArray.size(), imgs.volume().nVoxels());
     throw std::invalid_argument("invalid concentration array size");

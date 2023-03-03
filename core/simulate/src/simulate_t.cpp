@@ -728,9 +728,9 @@ static double r2(const QPoint &p) {
   return std::pow(p.x() - 48 + 0.5, 2) + std::pow((99 - p.y()) - 48 + 0.5, 2);
 }
 
-// return analytic prediction for concentration
+// return 2d analytic prediction for concentration
 // u(t) = [t0/(t+t0)] * exp(-r^2/(4Dt))
-static double analytic(const QPoint &p, double t, double D, double t0) {
+static double analytic_2d(const QPoint &p, double t, double D, double t0) {
   return (t0 / (t + t0)) * exp(-r2(p) / (4.0 * D * (t + t0)));
 }
 
@@ -767,7 +767,7 @@ TEST_CASE("Simulate: single-compartment-diffusion, circular geometry",
     double maxRelErr = 0;
     for (std::size_t i = 0; i < f->getCompartment()->nVoxels(); ++i) {
       const auto &v{f->getCompartment()->getVoxel(i)};
-      double c = analytic(v.p, 0, D, t0);
+      double c = analytic_2d(v.p, 0, D, t0);
       double relErr = std::abs(f->getConcentration()[i] - c) / c;
       maxRelErr = std::max(maxRelErr, relErr);
     }
@@ -832,7 +832,137 @@ TEST_CASE("Simulate: single-compartment-diffusion, circular geometry",
         // only check part within a radius of 16 units from centre to avoid
         // boundary effects: analytic solution is in infinite volume
         if (r2(v.p) < 16 * 16) {
-          double c_analytic = analytic(v.p, t, D[speciesIndex], t0);
+          double c_analytic = analytic_2d(v.p, t, D[speciesIndex], t0);
+          double relErr = std::abs(conc[i] - c_analytic) / c_analytic;
+          avgRelErr += relErr;
+          ++count;
+          maxRelErr = std::max(maxRelErr, relErr);
+        }
+      }
+      avgRelErr /= static_cast<double>(count);
+      CAPTURE(simType);
+      CAPTURE(t);
+      REQUIRE(maxRelErr < evolvedMaxRelativeError);
+      REQUIRE(avgRelErr < evolvedAvgRelativeError);
+    }
+  }
+}
+
+static double analytic_3d(const sme::common::VoxelF &v, double t, double D,
+                          double t0) {
+  return std::pow(t0 / (t + t0), 1.5) *
+         exp(-(std::pow(v.p.x(), 2) + std::pow(v.p.y(), 2) + std::pow(v.z, 2)) /
+             (4.0 * D * (t + t0)));
+}
+
+TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
+          "[core/simulate/simulate][core/"
+          "simulate][core][simulate][dune][pixel][expensive][3d]") {
+  // see docs/tests/diffusion.rst for analytic expressions used here
+  // TODO: when we can do 3d meshing, add DUNE here
+
+  constexpr double pi = 3.14159265358979323846;
+  double sigma2 = 36.0;
+  double epsilon = 1e-10;
+  auto s{getExampleModel(Mod::SingleCompartmentDiffusion3D)};
+  auto voxel_volume{s.getGeometry().getVoxelSize().volume()};
+
+  // check fields have correct compartments
+  const auto *slow{s.getSpecies().getField("slow")};
+  REQUIRE(slow->getCompartment()->getId() == "cube");
+  REQUIRE(slow->getId() == "slow");
+  const auto *fast{s.getSpecies().getField("fast")};
+  REQUIRE(fast->getCompartment()->getId() == "cube");
+  REQUIRE(fast->getId() == "fast");
+
+  // check total initial species amount matches analytic value
+  double analytic_total = sigma2 * pi * std::sqrt(sigma2 * pi);
+  for (const auto &c : {slow->getConcentration(), fast->getConcentration()}) {
+    CAPTURE(analytic_total);
+    CAPTURE(std::abs(voxel_volume * common::sum(c)));
+    REQUIRE(std::abs(voxel_volume * common::sum(c) - analytic_total) /
+                analytic_total <
+            epsilon);
+  }
+
+  // check initial distribution matches analytic one
+  for (const auto &f : {slow, fast}) {
+    double D = f->getDiffusionConstant();
+    double t0 = sigma2 / 4.0 / D;
+    double maxRelErr = 0;
+    for (std::size_t i = 0; i < f->getCompartment()->nVoxels(); ++i) {
+      const auto &v{f->getCompartment()->getVoxel(i)};
+      auto physicalPoint{s.getGeometry().getPhysicalPoint(v)};
+      double c = analytic_3d(physicalPoint, 0, D, t0);
+      double relErr = std::abs(f->getConcentration()[i] - c) / c;
+      maxRelErr = std::max(maxRelErr, relErr);
+    }
+    CAPTURE(f->getDiffusionConstant());
+    REQUIRE(maxRelErr < epsilon);
+  }
+
+  auto &options{s.getSimulationSettings().options};
+  options.pixel.maxErr = {std::numeric_limits<double>::max(), 0.01};
+  options.dune.dt = 1.0;
+  options.dune.maxDt = 1.0;
+  options.dune.minDt = 0.5;
+  for (auto simType : {simulate::SimulatorType::Pixel}) {
+    // relative error on integral of initial concentration over all pixels:
+    double initialRelativeError{1e-9};
+    // largest relative error of any pixel after simulation:
+    double evolvedMaxRelativeError{0.025};
+    // average of relative errors of all pixels after simulation:
+    double evolvedAvgRelativeError{0.010};
+    if (simType == simulate::SimulatorType::DUNE) {
+      // increase allowed error for dune simulation
+      initialRelativeError = 0.02;
+      evolvedMaxRelativeError = 0.3;
+      evolvedAvgRelativeError = 0.10;
+    }
+    s.getSimulationSettings().simulatorType = simType;
+    s.getSimulationData().clear();
+
+    // integrate & compare
+    simulate::Simulation sim(s);
+    double t = 10.0;
+    for (std::size_t step = 0; step < 2; ++step) {
+      sim.doTimesteps(t);
+      for (auto speciesIndex : {0u, 1u}) {
+        // check total species amount is conserved
+        auto c = sim.getConc(step + 1, 0, speciesIndex);
+        double totalC = voxel_volume * common::sum(c);
+        double relErr = std::abs(totalC - analytic_total) / analytic_total;
+        CAPTURE(simType);
+        CAPTURE(speciesIndex);
+        CAPTURE(sim.getTimePoints().back());
+        CAPTURE(totalC);
+        CAPTURE(analytic_total);
+        REQUIRE(relErr < initialRelativeError);
+      }
+    }
+
+    // check new distribution matches analytic_3d one
+    std::vector<double> D{slow->getDiffusionConstant(),
+                          fast->getDiffusionConstant()};
+    std::size_t timeIndex = sim.getTimePoints().size() - 1;
+    t = sim.getTimePoints().back();
+    for (auto speciesIndex : {0u, 1u}) {
+      double t0 = sigma2 / 4.0 / D[speciesIndex];
+      auto conc = sim.getConc(timeIndex, 0, speciesIndex);
+      double maxRelErr{0};
+      double avgRelErr{0};
+      std::size_t count{0};
+      for (std::size_t i = 0; i < slow->getCompartment()->nVoxels(); ++i) {
+        const auto &v{slow->getCompartment()->getVoxel(i)};
+        // only check part within a radius of 16 units from centre to avoid
+        // boundary effects: analytic solution is in infinite volume
+        auto physicalPoint{s.getGeometry().getPhysicalPoint(v)};
+        if (std::pow(physicalPoint.p.x(), 2) +
+                std::pow(physicalPoint.p.y(), 2) +
+                std::pow(physicalPoint.z, 2) <
+            16 * 16) {
+          double c_analytic =
+              analytic_3d(physicalPoint, t, D[speciesIndex], t0);
           double relErr = std::abs(conc[i] - c_analytic) / c_analytic;
           avgRelErr += relErr;
           ++count;

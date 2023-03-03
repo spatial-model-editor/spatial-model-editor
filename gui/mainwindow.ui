@@ -244,6 +244,7 @@
      <addaction name="action_liver_cells"/>
      <addaction name="action_gray_scott"/>
      <addaction name="action_single_compartment_diffusion"/>
+     <addaction name="actionsingle_compartment_diffusion_3d"/>
     </widget>
     <addaction name="action_New"/>
     <addaction name="action_Open_SBML_file"/>
@@ -577,6 +578,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="actionsingle_compartment_diffusion_3d">
+   <property name="text">
+    <string>&amp;single-compartment-diffusion-3d</string>
    </property>
   </action>
   <actiongroup name="actionGroupSimType">

@@ -42,7 +42,7 @@ void pybindSpecies(pybind11::module &m) {
                     &Species::getAnalyticInitialConcentration,
                     &Species::setAnalyticInitialConcentration,
                     R"(
-                    str: the initial concentration of this species as an analytic expression
+                    str: the initial concentration of this species as an analytic_2d expression
                     )")
       .def_property("concentration_image",
                     &Species::getImageInitialConcentration,

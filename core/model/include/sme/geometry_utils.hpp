@@ -93,11 +93,11 @@ class VoxelFlattener {
 private:
   int nx;
   int ny;
-  int nz;
+  std::size_t nz;
 
 public:
   explicit VoxelFlattener(const common::Volume &vSize);
-  explicit VoxelFlattener(int nx, int ny, int nz);
+  explicit VoxelFlattener(int nx, int ny, std::size_t nz);
   /**
    * @brief Check if the point is inside the bounding box
    */

@@ -50,6 +50,7 @@ DialogAnalytic::DialogAnalytic(
   ui->lblImage->displayScale(ui->chkScale->isChecked());
   ui->lblImage->setPhysicalSize(physicalSize, lengthUnit);
   ui->lblImage->invertYAxis(invertYAxis);
+  ui->lblImage->setZSlider(ui->slideZIndex);
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogAnalytic::accept);
@@ -70,7 +71,6 @@ DialogAnalytic::DialogAnalytic(
   connect(ui->btnExportImage, &QPushButton::clicked, this,
           &DialogAnalytic::btnExportImage_clicked);
   ui->txtExpression->importVariableMath(analyticExpression.toStdString());
-  ui->lblImage->setZSlider(ui->slideZIndex);
   lblImage_mouseOver(voxels.front());
   ui->txtExpression->setFocus();
 }

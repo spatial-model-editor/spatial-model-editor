@@ -1,8 +1,8 @@
 Diffusion
 =========
 
-Model
------
+2d Model
+--------
 
 The example model `single-compartment-diffusion <https://github.com/lkeegan/spatial-model-editor/blob/master/src/core/resources/models/single-compartment-diffusion.xml>`_ is a single compartment that contains two species: 'fast' and 'slow', each with the same analytic initial distribution
 
@@ -32,7 +32,7 @@ For the initial condition :math:`c_s(t=0) = \delta(x)\delta(y)`, the analytic so
 
    c_s(t) = \frac{1}{4 \pi D_s t}e^{-(x^2+y^2)/(4 D_s t)}
 
-and a solution for our model can then be found by convolving this expression with our initial condition, to give
+and a solution for our initial condition can then be found with an overall rescaling and a shift in t:
 
 .. math::
 
@@ -47,3 +47,32 @@ The total amount of species in the compartment is a conserved quantity,
    \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} c_s(t) dx dy = 36 \pi
 
 and this is also valid at late times, since our zero flux Neumann boundary conditions also conserve the amount of species in the compartment.
+
+3d Model
+--------
+
+The example model `single-compartment-diffusion-3d <https://github.com/lkeegan/spatial-model-editor/blob/master/src/core/resources/models/single-compartment-diffusion-3d.xml>`_ is a single compartment that contains two species: 'fast' and 'slow', each with the same analytic initial distribution.
+
+Key differences from the 2d example above are that the origin of the geometry lies in the centre of a 100cm^3 cube, with initial species concentration given by:
+
+.. math::
+
+   c_s(t=0) = e^{-(x^2+y^2+z^2)/36}
+
+and the heat kernel in 3d is given by:
+
+.. math::
+
+   c_s(t) = \frac{1}{(4 \pi D_s t)^{3/2}}e^{-(x^2+y^2+z^2)/(4 D_s t)}
+
+which gives the solution at time t (again ignoring boundary effects):
+
+.. math::
+
+   c_s(t) = (\frac{t_0}{t+t_0})^{3/2}e^{-(x^2+y^2+z^2)/(4 D_s (t+t_0))}
+
+where :math:`t_0 = 9/D_s`, with total amount of species in the compartment a conserved quantity:
+
+.. math::
+
+   \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} c_s(t) dx dy dz = (36 \pi)^{3/2}

@@ -53,11 +53,11 @@ TEST_CASE("Model geometry",
       mGeometry.importSampledFieldGeometry(doc->getModel());
       REQUIRE(m.getHasUnsavedChanges() == true);
       REQUIRE(mGeometry.getHasUnsavedChanges() == true);
-      REQUIRE(mGeometry.getPhysicalPoint({0, 0, 0}).p.x() == dbl_approx(0.0));
-      REQUIRE(mGeometry.getPhysicalPoint({0, 0, 0}).p.y() == dbl_approx(99.0));
-      REQUIRE(mGeometry.getPhysicalPoint({0, 0, 0}).z == dbl_approx(0.0));
+      REQUIRE(mGeometry.getPhysicalPoint({0, 0, 0}).p.x() == dbl_approx(0.5));
+      REQUIRE(mGeometry.getPhysicalPoint({0, 0, 0}).p.y() == dbl_approx(99.5));
+      REQUIRE(mGeometry.getPhysicalPoint({0, 0, 0}).z == dbl_approx(0.5));
       REQUIRE(mGeometry.getPhysicalPointAsString({0, 0, 0}) ==
-              "x: 0 m, y: 99 m, z: 0 m");
+              "x: 0.5 m, y: 99.5 m, z: 0.5 m");
       model::ModelParameters mParameters(doc->getModel());
       simulate::SimulationData data;
       mSpecies = model::ModelSpecies(doc->getModel(), &mCompartments,

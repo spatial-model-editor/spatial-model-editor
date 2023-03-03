@@ -292,6 +292,12 @@ void ModelGeometry::updateMesh() {
     mesh.reset();
     return;
   }
+  // for now only generate a mesh for 2-d (single z slice) images
+  if (images.volume().depth() > 1) {
+    SPDLOG_WARN("Meshing not yet implemented for 3-d images");
+    mesh.reset();
+    return;
+  }
   hasUnsavedChanges = true;
   const auto &colours{modelCompartments->getColours()};
   const auto &ids{modelCompartments->getIds()};
@@ -415,12 +421,14 @@ const common::VolumeF &ModelGeometry::getPhysicalSize() const {
 
 common::VoxelF
 ModelGeometry::getPhysicalPoint(const common::Voxel &voxel) const {
+  // returns physical location of *centre* of voxel
   common::VoxelF physicalPoint{physicalOrigin};
-  physicalPoint.p.rx() += voxelSize.width() * static_cast<double>(voxel.p.x());
+  physicalPoint.p.rx() +=
+      voxelSize.width() * (static_cast<double>(voxel.p.x()) + 0.5);
   physicalPoint.p.ry() +=
       voxelSize.height() *
-      static_cast<double>(images[0].height() - 1 - voxel.p.y());
-  physicalPoint.z += voxelSize.depth() * static_cast<double>(voxel.z);
+      (static_cast<double>(images[0].height() - 1 - voxel.p.y()) + 0.5);
+  physicalPoint.z += voxelSize.depth() * (static_cast<double>(voxel.z) + 0.5);
   return physicalPoint;
 }
 

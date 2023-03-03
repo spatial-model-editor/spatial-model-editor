@@ -248,14 +248,15 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
     return;
   }
   if (index == TabIndex::BOUNDARIES) {
-    auto size = model.getGeometry().getMesh()->getNumBoundaries();
-    if (size == 0) {
+    const auto *mesh{model.getGeometry().getMesh()};
+    if (mesh == nullptr || mesh->getNumBoundaries() == 0) {
       ui->spinBoundaryIndex->setEnabled(false);
       ui->spinMaxBoundaryPoints->setEnabled(false);
       ui->spinBoundaryZoom->setEnabled(false);
       return;
     }
-    ui->spinBoundaryIndex->setMaximum(static_cast<int>(size) - 1);
+    ui->spinBoundaryIndex->setMaximum(
+        static_cast<int>(mesh->getNumBoundaries()) - 1);
     ui->spinBoundaryIndex->setEnabled(true);
     ui->spinMaxBoundaryPoints->setEnabled(true);
     ui->spinBoundaryZoom->setEnabled(true);

@@ -210,7 +210,6 @@ static std::vector<QRgb> setImagePixels(
   if (common::isItIndexes(values, importedSampledFieldColours.size())) {
     setImportedColoursToImages(imgs, values, importedSampledFieldColours);
   }
-
   if (static_cast<int>(values.size()) != sampledField->getSamplesLength()) {
     SPDLOG_WARN("Number of samples {} doesn't match SamplesLength {}",
                 values.size(), sampledField->getSamplesLength());
@@ -220,12 +219,13 @@ static std::vector<QRgb> setImagePixels(
   for (const auto *sampledVolume : sampledVolumes) {
     auto matches = getMatchingSampledValues(values, sampledVolume);
     if (std::find(matches.cbegin(), matches.cend(), true) != matches.cend()) {
-      auto col = common::indexedColours()[iCol].rgb();
+      auto col{common::indexedColours()[iCol].rgb()};
       SPDLOG_WARN("Color {} is {}", iCol, col);
-      int sampledValue = (int)sampledVolume->getSampledValue();
+      auto sampledValue{
+          static_cast<std::size_t>(sampledVolume->getSampledValue())};
       if (sampledValue < importedSampledFieldColours.size()) {
         col = importedSampledFieldColours[sampledValue];
-        SPDLOG_WARN("  -> Using importedcompartmentColour {}", col);
+        SPDLOG_WARN("  -> Using importedSampledFieldColour {}", col);
       }
       SPDLOG_DEBUG("  {}/{} -> colour {:x}", sampledVolume->getId(),
                    sampledVolume->getDomainType(), col);
