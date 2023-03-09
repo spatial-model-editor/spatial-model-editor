@@ -485,16 +485,24 @@ QString ModelReactions::getScheme(const QString &id) const {
   const unsigned numReactants{reaction->getNumReactants()};
   for (unsigned i = 0; i < numReactants; ++i) {
     const auto *r{reaction->getReactant(i)};
-    const auto &speciesName{sbmlModel->getSpecies(r->getSpecies())->getName()};
-    appendSpeciesToScheme(lhs, speciesName.c_str(), r->getStoichiometry());
+    const auto *s{sbmlModel->getSpecies(r->getSpecies())};
+    if (s != nullptr) {
+      appendSpeciesToScheme(lhs, s->getName().c_str(), r->getStoichiometry());
+    } else {
+      SPDLOG_ERROR("Species {} not found in model", r->getSpecies());
+    }
   }
   lhs.chop(3);
   QString rhs;
   const unsigned numProducts{reaction->getNumProducts()};
   for (unsigned i = 0; i < numProducts; ++i) {
     const auto *r{reaction->getProduct(i)};
-    const auto &speciesName{sbmlModel->getSpecies(r->getSpecies())->getName()};
-    appendSpeciesToScheme(rhs, speciesName.c_str(), r->getStoichiometry());
+    const auto *s{sbmlModel->getSpecies(r->getSpecies())};
+    if (s != nullptr) {
+      appendSpeciesToScheme(rhs, s->getName().c_str(), r->getStoichiometry());
+    } else {
+      SPDLOG_ERROR("Species {} not found in model", r->getSpecies());
+    }
   }
   rhs.chop(3);
   if (lhs.isEmpty() && rhs.isEmpty()) {

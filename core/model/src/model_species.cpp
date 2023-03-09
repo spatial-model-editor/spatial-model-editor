@@ -224,6 +224,48 @@ getOrCreateDiffusionConstantParameter(libsbml::Model *model,
   return param;
 }
 
+static void removeSpeciesWithInvalidCompartments(
+    const ModelCompartments *compartments, QStringList &ids, QStringList &names,
+    QStringList &compartmentIds, libsbml::Model *model) {
+  // check for any species with invalid compartments
+  QStringList invalidSpeciesIds{};
+  for (int i = 0; i < ids.size(); ++i) {
+    const auto &id{ids[i]};
+    const auto *speciesCompartment{
+        compartments->getCompartment(compartmentIds[i])};
+    if (speciesCompartment == nullptr) {
+      // species compartment is not in ModelCompartments, presumably it is a
+      // membrane -> membrane species not currently supported
+      SPDLOG_ERROR("Species {} '{}' lives on membrane '{}' - not supported", i,
+                   id.toStdString(), compartmentIds[i].toStdString());
+      invalidSpeciesIds.push_back(id);
+    }
+  }
+  // remove invalid (i.e. membrane) species and instead add a model parameter
+  // with the same id and set the value to the species concentration. While far
+  // from ideal, this at least allows us to import a model with membrane species
+  // without breaking reactions involving them, and in simple cases e.g. if the
+  // species is not modified by the reactions involving it, this may even be the
+  // desired behaviour...
+  for (const auto &invalidSpeciesId : invalidSpeciesIds) {
+    auto i{ids.indexOf(invalidSpeciesId)};
+    auto sId{ids[i].toStdString()};
+    SPDLOG_WARN("Removing {}/{}/{}/{}", i, sId, names[i].toStdString(),
+                compartmentIds[i].toStdString());
+    std::unique_ptr<libsbml::Species> spec(model->removeSpecies(sId));
+    ids.removeAt(i);
+    names.removeAt(i);
+    compartmentIds.removeAt(i);
+    SPDLOG_WARN("  -> adding parameter {}/{}/{}", sId, spec->getName(),
+                spec->getInitialConcentration());
+    auto *param = model->createParameter();
+    param->setId(sId);
+    param->setName(spec->getName());
+    param->setConstant(true);
+    param->setValue(spec->getInitialConcentration());
+  }
+}
+
 ModelSpecies::ModelSpecies() = default;
 
 ModelSpecies::ModelSpecies(libsbml::Model *model,
@@ -238,6 +280,8 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
       modelParameters{parameters}, modelFunctions{functions},
       simulationData{data}, sbmlAnnotation{annotation} {
   makeInitialConcentrationsValid(model);
+  removeSpeciesWithInvalidCompartments(compartments, ids, names, compartmentIds,
+                                       model);
   for (int i = 0; i < ids.size(); ++i) {
     const auto &id = ids[i];
     QRgb colour{common::indexedColours()[static_cast<std::size_t>(i)].rgb()};
