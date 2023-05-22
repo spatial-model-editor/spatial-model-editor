@@ -1,4 +1,8 @@
 # Changelog
+## [1.3.6] - 2023-05-23
+### Added
+- support for importing RGBA TIFF image files [#862](https://github.com/spatial-model-editor/spatial-model-editor/issues/862)
+
 ## [1.3.5] - 2023-03-02
 ### Fixed
 - incorrect function evaluations in some cases [#855](https://github.com/spatial-model-editor/spatial-model-editor/issues/855), [#856](https://github.com/spatial-model-editor/spatial-model-editor/issues/856), [#857](https://github.com/spatial-model-editor/spatial-model-editor/issues/857)
