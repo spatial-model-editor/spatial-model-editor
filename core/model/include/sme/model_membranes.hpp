@@ -38,8 +38,9 @@ public:
   [[nodiscard]] QString getName(const QString &id) const;
   [[nodiscard]] const std::vector<geometry::Membrane> &getMembranes() const;
   [[nodiscard]] const geometry::Membrane *getMembrane(const QString &id) const;
-  [[nodiscard]] const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>>
-      &getIdColourPairs() const;
+  [[nodiscard]] const std::vector<
+      std::pair<std::string, std::pair<QRgb, QRgb>>> &
+  getIdColourPairs() const;
   [[nodiscard]] double getSize(const QString &id) const;
   void updateCompartmentNames(const QStringList &compartmentNames);
   void updateCompartments(

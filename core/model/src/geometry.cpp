@@ -70,9 +70,8 @@ saveDebuggingIndicesImage(const std::vector<std::size_t> &arrayPoints,
 #endif
 
 Compartment::Compartment(std::string compId, const QImage &img, QRgb col)
-    : compartmentId{std::move(compId)}, colour{col}, image{
-                                                         img.size(),
-                                                         QImage::Format_Mono} {
+    : compartmentId{std::move(compId)}, colour{col},
+      image{img.size(), QImage::Format_Mono} {
   image.setColor(0, qRgba(0, 0, 0, 0));
   image.setColor(1, col);
   image.fill(0);

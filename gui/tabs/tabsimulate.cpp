@@ -19,8 +19,8 @@
 TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                          QWidget *parent)
     : QWidget(parent), ui{std::make_unique<Ui::TabSimulate>()}, model{m},
-      lblGeometry(mouseTracker), plt{std::make_unique<PlotWrapper>(
-                                     "Average Concentration", this)} {
+      lblGeometry(mouseTracker),
+      plt{std::make_unique<PlotWrapper>("Average Concentration", this)} {
   ui->setupUi(this);
   ui->gridSimulate->addWidget(plt->plot, 1, 0, 1, 7);
 

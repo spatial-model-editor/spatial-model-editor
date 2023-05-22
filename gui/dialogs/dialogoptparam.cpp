@@ -8,8 +8,8 @@ static QString toQStr(double x) { return QString::number(x, 'g', 14); }
 DialogOptParam::DialogOptParam(
     const std::vector<sme::simulate::OptParam> &defaultOptParams,
     const sme::simulate::OptParam *initialOptParam, QWidget *parent)
-    : defaultOptParams{defaultOptParams},
-      QDialog(parent), ui{std::make_unique<Ui::DialogOptParam>()} {
+    : defaultOptParams{defaultOptParams}, QDialog(parent),
+      ui{std::make_unique<Ui::DialogOptParam>()} {
   ui->setupUi(this);
   int cmbIndex{0};
   if (defaultOptParams.empty()) {

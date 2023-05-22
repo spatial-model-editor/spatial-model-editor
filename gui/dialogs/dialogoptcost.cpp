@@ -52,8 +52,8 @@ DialogOptCost::DialogOptCost(
     const sme::model::Model &model,
     const std::vector<sme::simulate::OptCost> &defaultOptCosts,
     const sme::simulate::OptCost *initialOptCost, QWidget *parent)
-    : model{model}, defaultOptCosts{defaultOptCosts},
-      QDialog(parent), ui{std::make_unique<Ui::DialogOptCost>()} {
+    : model{model}, defaultOptCosts{defaultOptCosts}, QDialog(parent),
+      ui{std::make_unique<Ui::DialogOptCost>()} {
   ui->setupUi(this);
   int cmbIndex{0};
   if (defaultOptCosts.empty()) {
