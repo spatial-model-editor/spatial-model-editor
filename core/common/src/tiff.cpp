@@ -97,6 +97,37 @@ std::vector<double> readLineToDoubles(TIFF *tif, std::size_t y,
   return dblValues;
 }
 
+struct TiffImageData {
+  std::vector<std::vector<double>> values;
+  double maxValue = 0;
+  double minValue = std::numeric_limits<double>::max();
+  std::size_t width = 0;
+  std::size_t height = 0;
+};
+
+static QImage toQImage(const TiffImageData &tiffImageData) {
+  QImage image(static_cast<int>(tiffImageData.width),
+               static_cast<int>(tiffImageData.height), QImage::Format_RGB32);
+  double maxVal = tiffImageData.maxValue;
+  // check for case of all zero's: should be black image
+  if (maxVal == 0) {
+    maxVal = 1.0;
+  }
+  for (int y = 0; y < image.height(); ++y) {
+    const auto &row = tiffImageData.values[static_cast<std::size_t>(y)];
+    for (int x = 0; x < image.width(); ++x) {
+      // rescale pixel values from [0, max] to [0,255]
+      double unitNormValue = row[static_cast<std::size_t>(x)] / maxVal;
+      unsigned int mask8bit{0x0000ff};
+      unsigned int val8 =
+          mask8bit & static_cast<unsigned int>(255 * unitNormValue);
+      unsigned int rgb = 0xff000000 | val8 | (val8 << 8) | (val8 << 16);
+      image.setPixel(x, y, rgb);
+    }
+  }
+  return image;
+}
+
 TiffReader::TiffReader(const std::string &filename) {
   TIFF *tif = TIFFOpen(filename.c_str(), "r");
   if (tif == nullptr) {
@@ -143,7 +174,7 @@ TiffReader::TiffReader(const std::string &filename) {
 
       if (samplespp == 1) {
         SPDLOG_INFO("    --> importing grayscale image...");
-        auto &img = tiffImages.emplace_back();
+        auto img{TiffImageData()};
         img.width = width;
         img.height = height;
         for (std::size_t y = 0; y < height; y++) {
@@ -175,38 +206,37 @@ TiffReader::TiffReader(const std::string &filename) {
         }
         SPDLOG_DEBUG("    - min value: {}", img.minValue);
         SPDLOG_DEBUG("    - max value: {}", img.maxValue);
+        qImages.push_back(toQImage(img));
+      } else {
+        SPDLOG_INFO("    --> importing RGBA image...");
+        std::vector<uint32_t> tiffValues(width * height, 0);
+        if (TIFFReadRGBAImageOriented(tif, static_cast<uint32_t>(width),
+                                      static_cast<uint32_t>(height),
+                                      tiffValues.data(),
+                                      ORIENTATION_TOPLEFT) == 1) {
+          auto &img{qImages.emplace_back(width, height,
+                                         QImage::Format_ARGB32_Premultiplied)};
+          for (int y = 0; y < img.height(); y++) {
+            for (int x = 0; x < img.width(); x++) {
+              img.setPixel(x, y, tiffValues[y * width + x]);
+            }
+          }
+        } else {
+          errorMessage = QString("Failed to import RGBA image");
+          break;
+        }
       }
     }
   } while (TIFFReadDirectory(tif) != 0);
   TIFFClose(tif);
 }
 
-std::size_t TiffReader::size() const { return tiffImages.size(); }
-
-QImage TiffReader::getImage(std::size_t i) const {
-  const auto &tiffImage = tiffImages.at(i);
-  QImage image(static_cast<int>(tiffImage.width),
-               static_cast<int>(tiffImage.height), QImage::Format_RGB32);
-  double maxVal = tiffImage.maxValue;
-  // check for case of all zero's: should be black image
-  if (maxVal == 0) {
-    maxVal = 1.0;
-  }
-  for (int y = 0; y < image.height(); ++y) {
-    const auto &row = tiffImage.values[static_cast<std::size_t>(y)];
-    for (int x = 0; x < image.width(); ++x) {
-      // rescale pixel values from [0, max] to [0,255]
-      double unitNormValue = row[static_cast<std::size_t>(x)] / maxVal;
-      unsigned int mask8bit{0x0000ff};
-      unsigned int val8 =
-          mask8bit & static_cast<unsigned int>(255 * unitNormValue);
-      unsigned int rgb = 0xff000000 | val8 | (val8 << 8) | (val8 << 16);
-      image.setPixel(x, y, rgb);
-    }
-  }
-  return image;
-}
-
 const QString &TiffReader::getErrorMessage() const { return errorMessage; }
+
+std::size_t TiffReader::size() const { return qImages.size(); }
+
+[[nodiscard]] QImage TiffReader::getImage(std::size_t i) const {
+  return qImages[i];
+}
 
 } // namespace sme::common

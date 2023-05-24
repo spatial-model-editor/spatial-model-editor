@@ -32,4 +32,14 @@ TEST_CASE("TiffReader", "[core/common/tiff][core/common][core][tiff]") {
     REQUIRE(img.size() == QSize(5, 5));
     REQUIRE(img.pixel(0, 0) == 0xff000000);
   }
+  SECTION("1 RGBA tiff") {
+    QFile::copy(":/test/rgba.tif", "tmp_rgba.tif");
+    common::TiffReader tiffReader(
+        QDir::current().filePath("tmp_rgba.tif").toStdString());
+    REQUIRE(tiffReader.size() == 1);
+    REQUIRE(tiffReader.getErrorMessage().isEmpty());
+    auto img = tiffReader.getImage();
+    REQUIRE(img.size() == QSize(32, 24));
+    REQUIRE(img.pixel(0, 0) == 0xffffffff);
+  }
 }

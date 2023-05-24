@@ -24,14 +24,7 @@ double writeTIFF(const std::string &filename, const QSize &imageSize,
 
 class TiffReader {
 private:
-  struct TiffImageData {
-    std::vector<std::vector<double>> values;
-    double maxValue = 0;
-    double minValue = std::numeric_limits<double>::max();
-    std::size_t width = 0;
-    std::size_t height = 0;
-  };
-  std::vector<TiffImageData> tiffImages;
+  std::vector<QImage> qImages;
   QString errorMessage;
 
 public:
