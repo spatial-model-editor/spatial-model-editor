@@ -42,13 +42,6 @@ jobs:
           path: ~/.cache/ccache
           key: ccache-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-
-      - name: Cache sonar
-        uses: actions/cache@v3
-        if: matrix.script == 'sonar' && github.repository == 'spatial-model-editor/spatial-model-editor'
-        with:
-          path: ~/.sonarcache
-          key: sonar-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-${{ github.sha }}
-          restore-keys: sonar-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-
       - uses: actions/setup-python@v4
         with:
           python-version: "3.10"

@@ -42,13 +42,13 @@ void pybindSpecies(pybind11::module &m) {
                     &Species::getAnalyticInitialConcentration,
                     &Species::setAnalyticInitialConcentration,
                     R"(
-                    str: the initial concentration of this species as an analytic expression
+                    str: the initial concentration of this species as an analytic_2d expression
                     )")
       .def_property("concentration_image",
                     &Species::getImageInitialConcentration,
                     &Species::setImageInitialConcentration,
                     R"(
-                    np.ndarray(float): the initial concentration of this species as a 2d array of floats, one for each pixel in the geometry image
+                    np.ndarray(float): the initial concentration of this species as a 3d array of floats, one for each voxel in the geometry image
                     )")
       .def("__repr__",
            [](const Species &a) {
@@ -99,36 +99,44 @@ void Species::setAnalyticInitialConcentration(const std::string &expression) {
 
 [[nodiscard]] pybind11::array_t<double>
 Species::getImageInitialConcentration() const {
-  auto size{s->getGeometry().getImage().size()};
+  auto size{s->getGeometry().getImages().volume()};
   return as_ndarray(
       s->getSpecies().getSampledFieldConcentration(id.c_str(), true),
-      {size.height(), size.width()});
+      {static_cast<int>(size.depth()), size.height(), size.width()});
 }
 
 void Species::setImageInitialConcentration(pybind11::array_t<double> array) {
-  const auto size{s->getGeometry().getImage().size()};
+  const auto size{s->getGeometry().getImages().volume()};
   auto h{size.height()};
   auto w{size.width()};
+  auto d{static_cast<int>(size.depth())};
   std::string err{"Invalid concentration image array"};
-  if (array.ndim() != 2) {
+  if (array.ndim() != 3) {
     throw sme::SmeInvalidArgument(fmt::format(
-        "{}: is {}-dimensional, should be 2-dimensional", err, array.ndim()));
+        "{}: is {}-dimensional, should be 3-dimensional", err, array.ndim()));
   }
-  if (array.shape(0) != size.height()) {
+  if (array.shape(0) != d) {
     throw sme::SmeInvalidArgument(
-        fmt::format("{}: height is {}, should be {}", err, array.shape(0), h));
+        fmt::format("{}: depth is {}, should be {}", err, array.shape(0), d));
   }
-  if (array.shape(1) != size.width()) {
+  if (array.shape(1) != h) {
     throw sme::SmeInvalidArgument(
-        fmt::format("{}: width is {}, should be {}", err, array.shape(1), w));
+        fmt::format("{}: height is {}, should be {}", err, array.shape(1), h));
   }
-  std::vector<double> sampledFieldConcentration(static_cast<std::size_t>(h * w),
-                                                0.0);
-  auto r{array.unchecked<2>()};
-  for (pybind11::ssize_t y = 0; y < array.shape(0); y++) {
-    for (pybind11::ssize_t x = 0; x < array.shape(1); x++) {
-      auto sampledFieldIndex{static_cast<std::size_t>(x + w * (h - 1 - y))};
-      sampledFieldConcentration[sampledFieldIndex] = r(y, x);
+  if (array.shape(2) != w) {
+    throw sme::SmeInvalidArgument(
+        fmt::format("{}: width is {}, should be {}", err, array.shape(2), w));
+  }
+  std::vector<double> sampledFieldConcentration(
+      static_cast<std::size_t>(h * w * d), 0.0);
+  auto r{array.unchecked<3>()};
+  for (pybind11::ssize_t z = 0; z < array.shape(0); z++) {
+    for (pybind11::ssize_t y = 0; y < array.shape(1); y++) {
+      for (pybind11::ssize_t x = 0; x < array.shape(2); x++) {
+        auto sampledFieldIndex{
+            static_cast<std::size_t>(x + w * (h - 1 - y) + w * h * z)};
+        sampledFieldConcentration[sampledFieldIndex] = r(z, y, x);
+      }
     }
   }
   s->getSpecies().setSampledFieldConcentration(id.c_str(),

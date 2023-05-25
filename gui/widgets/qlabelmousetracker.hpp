@@ -1,6 +1,6 @@
 // QLabelMouseTracker
 //  - a modified QLabel
-//  - displays (and rescales without interpolation) an image,
+//  - displays (and rescales without interpolation) a slice of an image stack,
 //  - tracks the mouse location in terms of the pixels of the original image
 //  - provides the colour of the last pixel that was clicked on
 //  - emits a signal when the user clicks the mouse, along with the colour of
@@ -8,36 +8,44 @@
 
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include <QLabel>
 #include <QMouseEvent>
+#include <QSlider>
 
 class QLabelMouseTracker : public QLabel {
   Q_OBJECT
 public:
   explicit QLabelMouseTracker(QWidget *parent = nullptr);
   // QImage used for pixel location and colour
-  void setImage(const QImage &img);
-  const QImage &getImage() const;
-  // QImage mask used to translate pixel location to index
-  void setMaskImage(const QImage &img);
-  const QImage &getMaskImage() const;
-  void setImages(const std::pair<QImage, QImage> &imgPair);
+  void setImage(const sme::common::ImageStack &img);
+  [[nodiscard]] const sme::common::ImageStack &getImage() const;
+  // set which z-slice to display
+  void setZIndex(int value);
+  // optional QSlider to control which z-slice to display
+  void setZSlider(QSlider *slider);
+  [[nodiscard]] QSlider *getZSlider() const;
+  // optional image mask used to translate pixel location to index
+  void setMaskImage(const sme::common::ImageStack &img);
+  [[nodiscard]] const sme::common::ImageStack &getMaskImage() const;
+  void setImages(const std::pair<sme::common::ImageStack,
+                                 sme::common::ImageStack> &imgPair);
   // colour of pixel at last mouse click position
-  const QRgb &getColour() const;
+  [[nodiscard]] const QRgb &getColour() const;
   // value of mask index at last mouse click position
-  int getMaskIndex() const;
-  // position of mouse as fraction of displayed pixmap size
-  QPointF getRelativePosition() const;
+  [[nodiscard]] int getMaskIndex() const;
+  // position of mouse as fraction of displayed pixmap volume
+  [[nodiscard]] QPointF getRelativePosition() const;
   void setAspectRatioMode(Qt::AspectRatioMode aspectRatioMode);
   void setTransformationMode(Qt::TransformationMode transformationMode);
-  void setPhysicalSize(const QSizeF &size, const QString &units);
+  void setPhysicalSize(const sme::common::VolumeF &size, const QString &units);
   void displayGrid(bool enable);
   void displayScale(bool enable);
   void invertYAxis(bool enable);
 
 signals:
-  void mouseClicked(QRgb col, QPoint point);
-  void mouseOver(QPoint point);
+  void mouseClicked(QRgb col, sme::common::Voxel voxel);
+  void mouseOver(const sme::common::Voxel &voxel);
   void mouseWheelEvent(QWheelEvent *ev);
 
 protected:
@@ -49,24 +57,25 @@ protected:
   void resizeEvent(QResizeEvent *ev) override;
 
 private:
+  QSlider *zSlider{nullptr};
   Qt::AspectRatioMode aspectRatioMode = Qt::KeepAspectRatio;
   Qt::TransformationMode transformationMode = Qt::FastTransformation;
   bool setCurrentPixel(const QPoint &pos);
   void resizeImage(const QSize &size);
-  QImage image;
+  sme::common::ImageStack image;
   // Pixmap used to display scaled version of image
   QPixmap pixmap;
-  // size of actual image in pixmap (may be smaller than pixmap)
+  // volume of actual image in pixmap (may be smaller than pixmap)
   QSize pixmapImageSize;
-  QImage maskImage;
-  QPoint currentPixel{};
+  sme::common::ImageStack maskImage;
+  sme::common::Voxel currentVoxel{0, 0, 0};
   const int tickLength{10};
   // x & y offsets for ruler, if present
   QPoint offset{0, 0};
   bool drawGrid{false};
   bool drawScale{false};
   bool flipYAxis{false};
-  QSizeF physicalSize{1.0, 1.0};
+  sme::common::VolumeF physicalSize{1.0, 1.0, 1.0};
   QString lengthUnits{};
   QRgb colour{};
   int maskIndex{};

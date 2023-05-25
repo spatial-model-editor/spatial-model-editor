@@ -77,8 +77,8 @@ double calculateCosts(const std::vector<OptCost> &optCosts,
 PagmoUDP::PagmoUDP(const OptConstData *optConstData,
                    ThreadsafeModelQueue *modelQueue,
                    sme::simulate::Optimization *optimization)
-    : optConstData{optConstData}, modelQueue{modelQueue}, optimization{
-                                                              optimization} {}
+    : optConstData{optConstData}, modelQueue{modelQueue},
+      optimization{optimization} {}
 
 [[nodiscard]] pagmo::vector_double
 PagmoUDP::fitness(const pagmo::vector_double &dv) const {

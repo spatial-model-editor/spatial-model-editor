@@ -16,42 +16,41 @@ DialogAnalytic::DialogAnalytic(
     const sme::model::ModelFunctions &modelFunctions, bool invertYAxis,
     QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogAnalytic>()},
-      points(speciesGeometry.compartmentPoints),
-      width(speciesGeometry.pixelWidth), origin(speciesGeometry.physicalOrigin),
+      voxelSize(speciesGeometry.voxelSize),
+      voxels(speciesGeometry.compartmentVoxels),
+      physicalOrigin(speciesGeometry.physicalOrigin),
+      imgs{speciesGeometry.compartmentImageSize,
+           QImage::Format_ARGB32_Premultiplied},
       qpi(speciesGeometry.compartmentImageSize,
-          speciesGeometry.compartmentPoints) {
+          speciesGeometry.compartmentVoxels) {
   ui->setupUi(this);
 
   const auto &units = speciesGeometry.modelUnits;
   lengthUnit = units.getLength().name;
   concentrationUnit =
       QString("%1/%2").arg(units.getAmount().name).arg(units.getVolume().name);
-  img = QImage(speciesGeometry.compartmentImageSize,
-               QImage::Format_ARGB32_Premultiplied);
-  img.fill(0);
-  concentration.resize(points.size(), 0.0);
-  // add x,y variables
+  imgs.fill(0);
+  concentration.resize(voxels.size(), 0.0);
+  // add x,y,z variables
   const auto &spatialCoordinates{modelParameters.getSpatialCoordinates()};
   ui->txtExpression->addVariable(spatialCoordinates.x.id,
                                  spatialCoordinates.x.name);
   ui->txtExpression->addVariable(spatialCoordinates.y.id,
                                  spatialCoordinates.y.name);
+  ui->txtExpression->addVariable(spatialCoordinates.z.id,
+                                 spatialCoordinates.z.name);
   for (const auto &function : modelFunctions.getSymbolicFunctions()) {
     ui->txtExpression->addFunction(function);
   }
   // todo: add non-constant parameters somewhere?
   ui->txtExpression->setConstants(modelParameters.getGlobalConstants());
-  QSizeF physicalSize;
-  physicalSize.rwidth() =
-      static_cast<double>(speciesGeometry.compartmentImageSize.width()) *
-      speciesGeometry.pixelWidth;
-  physicalSize.rheight() =
-      static_cast<double>(speciesGeometry.compartmentImageSize.height()) *
-      speciesGeometry.pixelWidth;
+  sme::common::VolumeF physicalSize{speciesGeometry.compartmentImageSize *
+                                    speciesGeometry.voxelSize};
   ui->lblImage->displayGrid(ui->chkGrid->isChecked());
   ui->lblImage->displayScale(ui->chkScale->isChecked());
   ui->lblImage->setPhysicalSize(physicalSize, lengthUnit);
   ui->lblImage->invertYAxis(invertYAxis);
+  ui->lblImage->setZSlider(ui->slideZIndex);
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogAnalytic::accept);
@@ -72,7 +71,7 @@ DialogAnalytic::DialogAnalytic(
   connect(ui->btnExportImage, &QPushButton::clicked, this,
           &DialogAnalytic::btnExportImage_clicked);
   ui->txtExpression->importVariableMath(analyticExpression.toStdString());
-  lblImage_mouseOver(points.front());
+  lblImage_mouseOver(voxels.front());
   ui->txtExpression->setFocus();
 }
 
@@ -82,18 +81,20 @@ const std::string &DialogAnalytic::getExpression() const {
   return variableExpression;
 }
 
-const QImage &DialogAnalytic::getImage() const { return img; }
+const QImage &DialogAnalytic::getImage() const { return imgs[0]; }
 
 bool DialogAnalytic::isExpressionValid() const { return expressionIsValid; }
 
-QPointF DialogAnalytic::physicalPoint(const QPoint &pixelPoint) const {
+sme::common::VoxelF
+DialogAnalytic::physicalPoint(const sme::common::Voxel &voxel) const {
   // position in pixels (with (0,0) in top-left of image)
   // rescale to physical x,y point (with (0,0) in bottom-left)
-  QPointF physical;
-  physical.setX(origin.x() + width * static_cast<double>(pixelPoint.x()));
-  physical.setY(origin.x() +
-                width * static_cast<double>(img.height() - 1 - pixelPoint.y()));
-  return physical;
+  return {physicalOrigin.p.x() +
+              voxelSize.width() * static_cast<double>(voxel.p.x()),
+          physicalOrigin.p.y() +
+              voxelSize.height() *
+                  static_cast<double>(imgs.volume().height() - 1 - voxel.p.y()),
+          physicalOrigin.z + voxelSize.depth() * static_cast<double>(voxel.z)};
 }
 
 void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
@@ -110,8 +111,8 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
     ui->lblExpressionStatus->setText(errorMessage);
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
     ui->btnExportImage->setEnabled(false);
-    img.fill(0);
-    ui->lblImage->setImage(img);
+    imgs.fill(0);
+    ui->lblImage->setImage(imgs);
     return;
   }
   // compile expression
@@ -120,16 +121,17 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
     ui->lblExpressionStatus->setText(ui->txtExpression->getErrorMessage());
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
     ui->btnExportImage->setEnabled(false);
-    img.fill(0);
-    ui->lblImage->setImage(img);
+    imgs.fill(0);
+    ui->lblImage->setImage(imgs);
     return;
   }
   // calculate concentration
-  std::vector<double> vars{0, 0};
-  for (std::size_t i = 0; i < points.size(); ++i) {
-    auto physical = physicalPoint(points[i]);
-    vars[0] = physical.x();
-    vars[1] = physical.y();
+  std::vector<double> vars{0, 0, 0};
+  for (std::size_t i = 0; i < voxels.size(); ++i) {
+    auto physical = physicalPoint(voxels[i]);
+    vars[0] = physical.p.x();
+    vars[1] = physical.p.y();
+    vars[2] = physical.z;
     concentration[i] = ui->txtExpression->evaluateMath(vars);
   }
   if (std::find_if(concentration.cbegin(), concentration.cend(), [](auto c) {
@@ -140,8 +142,8 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
         "concentration contains inf (infinity) or NaN (Not a Number)");
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
     ui->btnExportImage->setEnabled(false);
-    img.fill(0);
-    ui->lblImage->setImage(img);
+    imgs.fill(0);
+    ui->lblImage->setImage(imgs);
     return;
   }
   if (*std::min_element(concentration.cbegin(), concentration.cend()) < 0) {
@@ -149,8 +151,8 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
     ui->lblExpressionStatus->setText("concentration cannot be negative");
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
     ui->btnExportImage->setEnabled(false);
-    img.fill(0);
-    ui->lblImage->setImage(img);
+    imgs.fill(0);
+    ui->lblImage->setImage(imgs);
     return;
   }
   ui->lblExpressionStatus->setText("");
@@ -160,30 +162,31 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
   displayExpression = math.toStdString();
   variableExpression = ui->txtExpression->getVariableMath();
   // normalise displayed pixel intensity to max concentration
-  double maxConc =
-      *std::max_element(concentration.cbegin(), concentration.cend());
-  for (std::size_t i = 0; i < points.size(); ++i) {
+  double maxConc{sme::common::max(concentration)};
+  for (std::size_t i = 0; i < voxels.size(); ++i) {
     int intensity = static_cast<int>(255 * concentration[i] / maxConc);
-    img.setPixel(points[i], QColor(intensity, intensity, intensity).rgb());
+    imgs[voxels[i].z].setPixel(voxels[i].p,
+                               qRgb(intensity, intensity, intensity));
   }
-  ui->lblImage->setImage(img);
+  ui->lblImage->setImage(imgs);
 }
 
-void DialogAnalytic::lblImage_mouseOver(QPoint point) {
+void DialogAnalytic::lblImage_mouseOver(const sme::common::Voxel &voxel) {
   if (!expressionIsValid) {
     return;
   }
-  auto index = qpi.getIndex(point);
+  auto index = qpi.getIndex(voxel);
   if (!index) {
     ui->lblConcentration->setText("");
     return;
   }
-  auto physical = physicalPoint(point);
+  auto physical = physicalPoint(voxel);
   ui->lblConcentration->setText(
-      QString("x: %1 %2, y: %3 %2, concentration: %4 %5")
-          .arg(physical.x())
+      QString("x: %1 %4, y: %2 %4, z: %3 %4, concentration: %5 %6")
+          .arg(physical.p.x())
+          .arg(physical.p.y())
+          .arg(physical.z)
           .arg(lengthUnit)
-          .arg(physical.y())
           .arg(concentration[*index])
           .arg(concentrationUnit));
 }
@@ -199,5 +202,5 @@ void DialogAnalytic::btnExportImage_clicked() {
   }
   SPDLOG_DEBUG("exporting concentration image to file {}",
                filename.toStdString());
-  img.save(filename);
+  imgs[0].save(filename);
 }

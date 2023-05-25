@@ -19,14 +19,46 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="5" column="0" colspan="2">
-      <widget class="QPushButton" name="btnExportImage">
+     <item row="3" column="1">
+      <widget class="QCheckBox" name="chkScale">
        <property name="text">
-        <string>export as image...</string>
+        <string>Show &amp;scale</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>
-     <item row="3" column="0" colspan="2">
+     <item row="5" column="0" colspan="2">
+      <widget class="QLabel" name="lblExpressionStatus">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">font-weight: bold; color: red</string>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Plain</enum>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QCheckBox" name="chkGrid">
+       <property name="text">
+        <string>Show &amp;grid</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0" colspan="2">
       <widget class="QPlainTextMathEdit" name="txtExpression">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
@@ -51,39 +83,10 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="0" colspan="2">
-      <widget class="QLabel" name="lblExpressionStatus">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">font-weight: bold; color: red</string>
-       </property>
-       <property name="frameShadow">
-        <enum>QFrame::Plain</enum>
-       </property>
+     <item row="6" column="0" colspan="2">
+      <widget class="QPushButton" name="btnExportImage">
        <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0" colspan="2">
-      <widget class="QLabelMouseTracker" name="lblImage" native="true">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-         <horstretch>0</horstretch>
-         <verstretch>1</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="whatsThis">
-        <string>&lt;h4&gt;Initial concentration&lt;/h4&gt;
-&lt;p&gt;An image of the initial concentration resulting from the supplied analytic expression.&lt;/p&gt;</string>
-       </property>
-       <property name="text" stdset="0">
-        <string/>
+        <string>export as image...</string>
        </property>
       </widget>
      </item>
@@ -106,23 +109,36 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
-      <widget class="QCheckBox" name="chkGrid">
-       <property name="text">
-        <string>Show &amp;grid</string>
+     <item row="1" column="0" colspan="2">
+      <widget class="QLabelMouseTracker" name="lblImage" native="true">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+         <horstretch>0</horstretch>
+         <verstretch>1</verstretch>
+        </sizepolicy>
        </property>
-       <property name="checked">
-        <bool>true</bool>
+       <property name="whatsThis">
+        <string>&lt;h4&gt;Initial concentration&lt;/h4&gt;
+&lt;p&gt;An image of the initial concentration resulting from the supplied analytic expression.&lt;/p&gt;</string>
+       </property>
+       <property name="text" stdset="0">
+        <string/>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QCheckBox" name="chkScale">
-       <property name="text">
-        <string>Show &amp;scale</string>
+     <item row="2" column="0" colspan="2">
+      <widget class="QSlider" name="slideZIndex">
+       <property name="maximum">
+        <number>0</number>
        </property>
-       <property name="checked">
-        <bool>true</bool>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="tickPosition">
+        <enum>QSlider::TicksBothSides</enum>
+       </property>
+       <property name="tickInterval">
+        <number>1</number>
        </property>
       </widget>
      </item>

@@ -5,6 +5,8 @@
 #include "sme/logger.hpp"
 #include "sme/utils.hpp"
 #include <QImage>
+#include <algorithm>
+#include <array>
 #include <memory>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
@@ -65,32 +67,39 @@ getCompartmentsAndAnalyticVolumes(
   return v;
 }
 
-static QPointF toPhysicalPoint(int ix, int iy, const QSize &imgSize,
-                               const QPointF &origin, const QSizeF &size) {
-  QPointF p;
-  double dx = static_cast<double>(ix) / static_cast<double>(imgSize.width());
-  double dy = static_cast<double>(iy) / static_cast<double>(imgSize.height());
-  p.setX(origin.x() + dx * size.width());
-  p.setY(origin.y() + dy * size.height());
-  return p;
+static common::VoxelF toPhysicalVoxelCenter(
+    const common::Voxel &voxel, const common::Volume &imageSize,
+    const common::VoxelF &physicalOrigin, const common::VolumeF &physicalSize) {
+  auto physicalPoint{physicalOrigin};
+  physicalPoint.p.rx() += physicalSize.width() *
+                          (0.5 + static_cast<double>(voxel.p.x())) /
+                          static_cast<double>(imageSize.width());
+  physicalPoint.p.ry() += physicalSize.height() *
+                          (0.5 + static_cast<double>(voxel.p.y())) /
+                          static_cast<double>(imageSize.height());
+  physicalPoint.z += physicalSize.depth() *
+                     (0.5 + static_cast<double>(voxel.z)) /
+                     static_cast<double>(imageSize.depth());
+  return physicalPoint;
 }
 
 GeometrySampledField
 importGeometryFromAnalyticGeometry(const libsbml::Model *model,
-                                   const QPointF &origin, const QSizeF &size) {
+                                   const common::VoxelF &physicalOrigin,
+                                   const common::VolumeF &physicalSize) {
+  int nMax{50};
+  double norm{common::max(std::array<double, 3>{
+      physicalSize.width(), physicalSize.height(), physicalSize.depth()})};
+  int nx{std::clamp(static_cast<int>(nMax * physicalSize.width() / norm), 1,
+                    nMax)};
+  int ny{std::clamp(static_cast<int>(nMax * physicalSize.height() / norm), 1,
+                    nMax)};
+  auto nz{static_cast<std::size_t>(std::clamp(
+      static_cast<int>(nMax * physicalSize.depth() / norm), 1, nMax))};
+  common::Volume imageSize{nx, ny, nz};
+  SPDLOG_INFO("Using {}x{}x{} ImageStack", nx, ny, nz);
   GeometrySampledField gsf;
   QRgb nullColour{qRgb(0, 0, 0)};
-  QSize imageSize(200, 200);
-  if (size.width() > size.height()) {
-    imageSize.setHeight(static_cast<int>(
-        static_cast<double>(imageSize.width()) * size.height() / size.width()));
-  } else if (size.width() < size.height()) {
-    imageSize.setWidth(
-        static_cast<int>(static_cast<double>(imageSize.height()) *
-                         size.width() / size.height()));
-  }
-  gsf.image = QImage(imageSize, QImage::Format_RGB32);
-  gsf.image.fill(nullColour);
   const auto *geom = getGeometry(model);
   if (geom == nullptr) {
     return {};
@@ -108,7 +117,7 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
     SPDLOG_ERROR("No parameter for x coordinate in model");
     return {};
   }
-  std::string xCoord{xparam->getId()};
+  const std::string xCoord{xparam->getId()};
   varsMap[xCoord] = {0, false};
   const auto *yparam = getSpatialCoordinateParam(
       model, libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
@@ -116,12 +125,20 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
     SPDLOG_ERROR("No parameter for y coordinate in model");
     return {};
   }
-  std::string yCoord{yparam->getId()};
+  const std::string yCoord{yparam->getId()};
   varsMap[yCoord] = {0, false};
-  if (const auto *zparam = getSpatialCoordinateParam(
-          model, libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z);
-      zparam != nullptr) {
-    varsMap[zparam->getId()] = {0, false};
+  const auto *zparam = getSpatialCoordinateParam(
+      model, libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z);
+  if (zparam == nullptr) {
+    SPDLOG_ERROR("No parameter for z coordinate in model");
+    return {};
+  }
+  const std::string zCoord{zparam->getId()};
+  varsMap[zCoord] = {0, false};
+  gsf.images = {static_cast<std::size_t>(nz),
+                {imageSize.width(), imageSize.height(), QImage::Format_RGB32}};
+  for (auto &image : gsf.images) {
+    image.fill(nullColour);
   }
   for (const auto &[comp, analyticVol] : compVols) {
     SPDLOG_INFO("Compartment: {}", comp->getId());
@@ -132,25 +149,32 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
     auto col = common::indexedColours()[iComp].rgb();
     ++iComp;
     SPDLOG_INFO("  - Colour: {:x}", col);
-    std::size_t nPixels = 0;
-    for (int ix = 0; ix < gsf.image.width(); ++ix) {
-      for (int iy = 0; iy < gsf.image.height(); ++iy) {
-        // we want y=0 in bottom of image, Qt puts it in top:
-        int invertedYIndex = gsf.image.height() - 1 - iy;
-        if (gsf.image.pixel(ix, invertedYIndex) == nullColour) {
-          auto p = toPhysicalPoint(ix, iy, gsf.image.size(), origin, size);
-          varsMap[xCoord].first = p.x();
-          varsMap[yCoord].first = p.y();
-          if (static_cast<int>(
-                  evaluateMathAST(math, varsMap, geom->getModel())) != 0) {
-            gsf.image.setPixel(ix, invertedYIndex, col);
-            ++nPixels;
+    std::size_t nVoxels{0};
+    for (std::size_t iz = 0; iz < nz; ++iz) {
+      auto &image{gsf.images[iz]};
+      for (int ix = 0; ix < image.width(); ++ix) {
+        for (int iy = 0; iy < image.height(); ++iy) {
+          common::Voxel v{ix, iy, iz};
+          // we want y=0 in bottom of image, Qt puts it in top:
+          int invertedYIndex = image.height() - 1 - iy;
+          if (image.pixel(ix, invertedYIndex) == nullColour) {
+            // todo: need ot invert y inside v here???
+            auto physical{toPhysicalVoxelCenter(v, imageSize, physicalOrigin,
+                                                physicalSize)};
+            varsMap[xCoord].first = physical.p.x();
+            varsMap[yCoord].first = physical.p.y();
+            varsMap[zCoord].first = physical.z;
+            if (static_cast<int>(
+                    evaluateMathAST(math, varsMap, geom->getModel())) != 0) {
+              image.setPixel(ix, invertedYIndex, col);
+              ++nVoxels;
+            }
           }
         }
       }
     }
-    SPDLOG_INFO("  - Pixels: {}", nPixels);
-    if (nPixels > 0) {
+    SPDLOG_INFO("  - Voxels: {}", nVoxels);
+    if (nVoxels > 0) {
       gsf.compartmentIdColourPairs.push_back({comp->getId(), col});
     }
   }

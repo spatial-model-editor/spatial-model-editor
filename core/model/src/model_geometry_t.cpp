@@ -15,12 +15,12 @@ TEST_CASE("Model geometry",
     REQUIRE(m.getIsValid() == false);
     REQUIRE(m.getMesh() == nullptr);
     REQUIRE(m.getHasImage() == false);
-    REQUIRE(m.getImage().isNull());
+    REQUIRE(m.getImages().empty());
     m.clear();
     REQUIRE(m.getIsValid() == false);
     REQUIRE(m.getMesh() == nullptr);
     REQUIRE(m.getHasImage() == false);
-    REQUIRE(m.getImage().isNull());
+    REQUIRE(m.getImages().empty());
   }
   SECTION("ABtoC model") {
     auto doc{getExampleSbmlDoc(Mod::ABtoC)};
@@ -45,7 +45,7 @@ TEST_CASE("Model geometry",
     REQUIRE(m.getIsValid() == false);
     REQUIRE(m.getMesh() == nullptr);
     REQUIRE(m.getHasImage() == false);
-    REQUIRE(m.getImage().isNull());
+    REQUIRE(m.getImages().empty());
     m.setHasUnsavedChanges(false);
     REQUIRE(m.getHasUnsavedChanges() == false);
     REQUIRE(mGeometry.getHasUnsavedChanges() == false);
@@ -53,9 +53,11 @@ TEST_CASE("Model geometry",
       mGeometry.importSampledFieldGeometry(doc->getModel());
       REQUIRE(m.getHasUnsavedChanges() == true);
       REQUIRE(mGeometry.getHasUnsavedChanges() == true);
-      REQUIRE(mGeometry.getPhysicalPoint({0, 0}).x() == dbl_approx(0.0));
-      REQUIRE(mGeometry.getPhysicalPoint({0, 0}).y() == dbl_approx(99.0));
-      REQUIRE(mGeometry.getPhysicalPointAsString({0, 0}) == "x: 0 m, y: 99 m");
+      REQUIRE(mGeometry.getPhysicalPoint({0, 0, 0}).p.x() == dbl_approx(0.5));
+      REQUIRE(mGeometry.getPhysicalPoint({0, 0, 0}).p.y() == dbl_approx(99.5));
+      REQUIRE(mGeometry.getPhysicalPoint({0, 0, 0}).z == dbl_approx(0.5));
+      REQUIRE(mGeometry.getPhysicalPointAsString({0, 0, 0}) ==
+              "x: 0.5 m, y: 99.5 m, z: 0.5 m");
       model::ModelParameters mParameters(doc->getModel());
       simulate::SimulationData data;
       mSpecies = model::ModelSpecies(doc->getModel(), &mCompartments,
@@ -65,12 +67,12 @@ TEST_CASE("Model geometry",
       REQUIRE(m.getIsValid() == true);
       REQUIRE(m.getMesh() != nullptr);
       REQUIRE(m.getHasImage() == true);
-      REQUIRE(!m.getImage().isNull());
+      REQUIRE(!m.getImages().empty());
       m.clear();
       REQUIRE(m.getIsValid() == false);
       REQUIRE(m.getMesh() == nullptr);
       REQUIRE(m.getHasImage() == false);
-      REQUIRE(m.getImage().isNull());
+      REQUIRE(m.getImages().empty());
     }
     SECTION("import geometry image with alpha channel") {
       QImage img(":test/geometry/potato_alpha_channel.png");
@@ -82,21 +84,23 @@ TEST_CASE("Model geometry",
       REQUIRE(qAlpha(innerCol) == 255);
       REQUIRE(m.getHasUnsavedChanges() == false);
       REQUIRE(mGeometry.getHasUnsavedChanges() == false);
-      mGeometry.importGeometryFromImage(img, false);
+      mGeometry.importGeometryFromImages(img, false);
       REQUIRE(m.getHasUnsavedChanges() == true);
       REQUIRE(mGeometry.getHasUnsavedChanges() == true);
       REQUIRE(m.getIsValid() == false);
       REQUIRE(m.getMesh() == nullptr);
       REQUIRE(m.getHasImage() == true);
-      auto imgIndexed = mGeometry.getImage();
-      REQUIRE(imgIndexed.colorCount() == 3);
-      REQUIRE(imgIndexed.pixelColor(0, 0).alpha() == 255);
-      REQUIRE(imgIndexed.pixelColor(0, 0).alpha() != qAlpha(bgCol));
-      REQUIRE(imgIndexed.pixelColor(0, 0).red() == qRed(bgCol));
-      REQUIRE(imgIndexed.pixelColor(0, 0).green() == qGreen(bgCol));
-      REQUIRE(imgIndexed.pixelColor(0, 0).blue() == qBlue(bgCol));
-      REQUIRE(imgIndexed.pixelColor(136, 78).rgba() == outerCol);
-      REQUIRE(imgIndexed.pixelColor(176, 188).rgba() == innerCol);
+      auto imgIndexed = mGeometry.getImages();
+      REQUIRE(imgIndexed.volume().depth() == 1);
+      REQUIRE(imgIndexed[0].size() == img.size());
+      REQUIRE(imgIndexed[0].colorCount() == 3);
+      REQUIRE(imgIndexed[0].pixelColor(0, 0).alpha() == 255);
+      REQUIRE(imgIndexed[0].pixelColor(0, 0).alpha() != qAlpha(bgCol));
+      REQUIRE(imgIndexed[0].pixelColor(0, 0).red() == qRed(bgCol));
+      REQUIRE(imgIndexed[0].pixelColor(0, 0).green() == qGreen(bgCol));
+      REQUIRE(imgIndexed[0].pixelColor(0, 0).blue() == qBlue(bgCol));
+      REQUIRE(imgIndexed[0].pixelColor(136, 78).rgba() == outerCol);
+      REQUIRE(imgIndexed[0].pixelColor(176, 188).rgba() == innerCol);
     }
   }
   SECTION("very-simple-model") {
@@ -112,7 +116,7 @@ TEST_CASE("Model geometry",
     SECTION("import geometry & keep colour assignments") {
       QImage img(":/geometry/concave-cell-nucleus-100x100.png");
       REQUIRE(img.size() == QSize(100, 100));
-      m.getGeometry().importGeometryFromImage(img, true);
+      m.getGeometry().importGeometryFromImages(img, true);
       auto cols2{m.getCompartments().getColours()};
       REQUIRE(cols2.size() == 3);
       REQUIRE(cols2[0] == c0);
@@ -122,7 +126,7 @@ TEST_CASE("Model geometry",
     SECTION("import geometry & don't keep colour assignments") {
       QImage img(":/geometry/concave-cell-nucleus-100x100.png");
       REQUIRE(img.size() == QSize(100, 100));
-      m.getGeometry().importGeometryFromImage(img, false);
+      m.getGeometry().importGeometryFromImages(img, false);
       auto cols2{m.getCompartments().getColours()};
       REQUIRE(cols2.size() == 3);
       REQUIRE(cols2[0] == 0);
@@ -132,7 +136,7 @@ TEST_CASE("Model geometry",
     SECTION("import geometry & try to keep invalid colour assignments") {
       QImage img(":/geometry/two-blobs-100x100.png");
       REQUIRE(img.size() == QSize(100, 100));
-      m.getGeometry().importGeometryFromImage(img, true);
+      m.getGeometry().importGeometryFromImages(img, true);
       // new geometry image only contains c0 from previous colours
       auto cols2{m.getCompartments().getColours()};
       REQUIRE(cols2.size() == 3);

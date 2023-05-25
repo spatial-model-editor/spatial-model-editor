@@ -84,7 +84,8 @@ public:
   [[nodiscard]] std::vector<double>
   getSampledFieldConcentration(const QString &id,
                                bool maskAndInvertY = false) const;
-  [[nodiscard]] QImage getConcentrationImage(const QString &id) const;
+  [[nodiscard]] common::ImageStack
+  getConcentrationImages(const QString &id) const;
   void setColour(const QString &id, QRgb colour);
   [[nodiscard]] QRgb getColour(const QString &id) const;
   void setIsConstant(const QString &id, bool constant);

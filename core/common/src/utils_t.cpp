@@ -55,7 +55,6 @@ TEST_CASE("Utils", "[core/common/utils][core/common][core][utils]") {
     REQUIRE(q2s == s);
     REQUIRE(common::toQString(q2s) == q);
     REQUIRE(common::toStdString(s2q) == s);
-
     QStringList qEmpty;
     std::vector<std::string> sEmpty;
     REQUIRE(common::toStdString(qEmpty) == sEmpty);
@@ -103,128 +102,7 @@ TEST_CASE("Utils", "[core/common/utils][core/common][core][utils]") {
     REQUIRE(common::toBool(vb2i) == vb);
     REQUIRE(common::toInt(vi2b) == vi);
   }
-  SECTION("QPointIndexer") {
-    QSize size(20, 16);
-
-    std::vector<QPoint> v{QPoint(1, 3), QPoint(5, 6), QPoint(9, 9)};
-    common::QPointIndexer qpi(size, v);
-
-    REQUIRE(qpi.getIndex(v[0]).has_value() == true);
-    REQUIRE(qpi.getIndex(v[0]).value() == 0);
-    REQUIRE(qpi.getIndex(v[1]).has_value() == true);
-    REQUIRE(qpi.getIndex(v[1]).value() == 1);
-    REQUIRE(qpi.getIndex(v[2]).has_value() == true);
-    REQUIRE(qpi.getIndex(v[2]).value() == 2);
-
-    REQUIRE(qpi.getIndex(QPoint(0, 0)).has_value() == false);
-    REQUIRE(qpi.getIndex(QPoint(11, 11)).has_value() == false);
-    REQUIRE(qpi.getIndex(QPoint(18, 4)).has_value() == false);
-    REQUIRE(qpi.getIndex(QPoint(-1, -12)).has_value() == false);
-    REQUIRE(qpi.getIndex(QPoint(38, 46)).has_value() == false);
-
-    qpi.addPoints({QPoint(0, 0), QPoint(11, 11)});
-    REQUIRE(qpi.getIndex(QPoint(0, 0)).has_value() == true);
-    REQUIRE(qpi.getIndex(QPoint(0, 0)).value() == 3);
-    REQUIRE(qpi.getIndex(QPoint(11, 11)).has_value() == true);
-    REQUIRE(qpi.getIndex(QPoint(11, 11)).value() == 4);
-
-    REQUIRE_THROWS(qpi.addPoints({QPoint(-1, 4)}));
-    REQUIRE_THROWS(qpi.addPoints({QPoint(281, 117)}));
-    REQUIRE_THROWS(qpi.addPoints({QPoint(20, 16)}));
-
-    qpi = common::QPointIndexer(QSize(99, 99));
-    REQUIRE(qpi.getIndex(v[0]).has_value() == false);
-    qpi.addPoints(v);
-    REQUIRE(qpi.getIndex(v[0]).has_value() == true);
-  }
-  SECTION("QPointUniqueIndexer") {
-    QSize size(20, 16);
-    std::vector<QPoint> v{QPoint(1, 3), QPoint(5, 6), QPoint(9, 9)};
-    common::QPointUniqueIndexer qpi(size, v);
-    REQUIRE(qpi.getPoints().size() == 3);
-    REQUIRE(qpi.getPoints() == v);
-
-    REQUIRE(qpi.getIndex(v[0]).has_value() == true);
-    REQUIRE(qpi.getIndex(v[0]).value() == 0);
-    REQUIRE(qpi.getIndex(v[1]).has_value() == true);
-    REQUIRE(qpi.getIndex(v[1]).value() == 1);
-    REQUIRE(qpi.getIndex(v[2]).has_value() == true);
-    REQUIRE(qpi.getIndex(v[2]).value() == 2);
-
-    REQUIRE(qpi.getIndex(QPoint(0, 0)).has_value() == false);
-    REQUIRE(qpi.getIndex(QPoint(11, 11)).has_value() == false);
-    REQUIRE(qpi.getIndex(QPoint(18, 4)).has_value() == false);
-    REQUIRE(qpi.getIndex(QPoint(-1, -12)).has_value() == false);
-    REQUIRE(qpi.getIndex(QPoint(38, 46)).has_value() == false);
-
-    std::vector<QPoint> v2{QPoint(1, 3), QPoint(11, 11), QPoint(1, 3)};
-    qpi.addPoints(v2);
-    REQUIRE(qpi.getPoints().size() == 4);
-    REQUIRE(qpi.getIndex(v[0]).value() == 0);
-    REQUIRE(qpi.getIndex(QPoint(11, 11)).value() == 3);
-    qpi.addPoints(v2);
-    REQUIRE(qpi.getPoints().size() == 4);
-
-    REQUIRE_THROWS(qpi.addPoints({QPoint(-1, 4)}));
-    REQUIRE_THROWS(qpi.addPoints({QPoint(281, 117)}));
-    REQUIRE_THROWS(qpi.addPoints({QPoint(20, 16)}));
-
-    qpi = common::QPointUniqueIndexer(QSize(99, 99));
-    REQUIRE(qpi.getIndex(v[0]).has_value() == false);
-    REQUIRE(qpi.getPoints().size() == 0);
-    qpi.addPoints(v);
-    REQUIRE(qpi.getIndex(v[0]).has_value() == true);
-    REQUIRE(qpi.getIndex(v[0]).value() == 0);
-    REQUIRE(qpi.getPoints().size() == v.size());
-    qpi.addPoints(v);
-    REQUIRE(qpi.getIndex(v[0]).has_value() == true);
-    REQUIRE(qpi.getIndex(v[0]).value() == 0);
-    REQUIRE(qpi.getPoints().size() == v.size());
-  }
-  SECTION("toGrayscaleIntensityImage") {
-    SECTION("all values identical and non-zero should be white") {
-      QSize sz1(2, 2);
-      auto img1{common::toGrayscaleIntensityImage(
-          sz1, std::vector<double>{1.2, 1.2, 1.2, 1.2})};
-      REQUIRE(img1.size() == sz1);
-      REQUIRE(img1.pixel(0, 0) == qRgb(255, 255, 255));
-      REQUIRE(img1.pixel(0, 1) == qRgb(255, 255, 255));
-      REQUIRE(img1.pixel(1, 0) == qRgb(255, 255, 255));
-      REQUIRE(img1.pixel(1, 1) == qRgb(255, 255, 255));
-    }
-    SECTION("all values zero should be black") {
-      QSize sz1(2, 2);
-      auto img1{common::toGrayscaleIntensityImage(
-          sz1, std::vector<double>{0, 0, 0, 0})};
-      REQUIRE(img1.size() == sz1);
-      REQUIRE(img1.pixel(0, 0) == qRgb(0, 0, 0));
-      REQUIRE(img1.pixel(0, 1) == qRgb(0, 0, 0));
-      REQUIRE(img1.pixel(1, 0) == qRgb(0, 0, 0));
-      REQUIRE(img1.pixel(1, 1) == qRgb(0, 0, 0));
-    }
-    SECTION("pixels start bottom-left, scan along x, end at top right") {
-      QSize sz1(2, 2);
-      auto img1{common::toGrayscaleIntensityImage(
-          sz1, std::vector<double>{1.0, 2.0, 3.0, 4.0})};
-      REQUIRE(img1.size() == sz1);
-      REQUIRE(img1.pixel(0, 1) == qRgb(63, 63, 63));
-      REQUIRE(img1.pixel(1, 1) == qRgb(127, 127, 127));
-      REQUIRE(img1.pixel(0, 0) == qRgb(191, 191, 191));
-      REQUIRE(img1.pixel(1, 0) == qRgb(255, 255, 255));
-    }
-    SECTION("invalid array size produces black image") {
-      QSize sz1(11, 13);
-      // array too small
-      auto img1{common::toGrayscaleIntensityImage(sz1, std::vector<double>{})};
-      REQUIRE(img1.size() == sz1);
-      REQUIRE(img1.pixel(0, 0) == qRgb(0, 0, 0));
-      QSize sz2(1, 1);
-      // array too large
-      auto img2{common::toGrayscaleIntensityImage(
-          sz2, std::vector<double>{1.0, 2.0})};
-      REQUIRE(img2.size() == sz2);
-      REQUIRE(img2.pixel(0, 0) == qRgb(0, 0, 0));
-    }
+  SECTION("isItIndexes") {
     SECTION("the container contains indexes from 0 to n") {
       std::vector<double> A = {1, 2, 3, 5, 5, 4, 5, 5, 5, 5, 5, 5, 1, 2, 0, 5};
       std::vector<double> A1 = {1, 2, 3, 5, 5, 4, 5, 5, 5, 5, 5, 5, 1, 2, 5, 5};

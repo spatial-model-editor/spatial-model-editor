@@ -1,6 +1,6 @@
 <RCC>
     <qresource prefix="/test/">
-        <file>rgba.tif</file>
+        <file>rgba_green.tif</file>
         <file>16bit_gray.tif</file>
         <file>8bit_gray_3x.tif</file>
         <file>models/analytic_2d.xml</file>

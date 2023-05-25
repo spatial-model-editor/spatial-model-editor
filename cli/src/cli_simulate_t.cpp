@@ -6,10 +6,10 @@
 using namespace sme;
 
 TEST_CASE("CLI Simulate", "[cli][simulate]") {
-  const char *tmpInputFile{"tmpcli.xml"};
-  const char *tmpOutputFile{"tmpcli.sme"};
-  QFile::copy(":/models/ABtoC.xml", tmpInputFile);
   SECTION("Single simulation length, dune sim") {
+    const char *tmpInputFile{"tmpcli1.xml"};
+    const char *tmpOutputFile{"tmpcli1.sme"};
+    QFile::copy(":/models/ABtoC.xml", tmpInputFile);
     cli::Params params;
     params.inputFile = tmpInputFile;
     params.simulationTimes = "0.2";
@@ -25,6 +25,9 @@ TEST_CASE("CLI Simulate", "[cli][simulate]") {
     REQUIRE(m.getSimulationData().timePoints[2] == dbl_approx(0.2));
   }
   SECTION("Multiple simulation lengths, pixel sim") {
+    const char *tmpInputFile{"tmpcli2.xml"};
+    const char *tmpOutputFile{"tmpcli2.sme"};
+    QFile::copy(":/models/ABtoC.xml", tmpInputFile);
     cli::Params params;
     params.inputFile = tmpInputFile;
     params.simulationTimes = "0.1;0.2;0.3";
@@ -42,7 +45,7 @@ TEST_CASE("CLI Simulate", "[cli][simulate]") {
     REQUIRE(m.getSimulationData().timePoints[4] == dbl_approx(0.30));
     REQUIRE(m.getSimulationData().timePoints[5] == dbl_approx(0.45));
     REQUIRE(m.getSimulationData().timePoints[6] == dbl_approx(0.60));
-    // repeat using tmp.sme as input file:\
+    // repeat using previous output file as input file:
     // simulation continued & results appended
     params.inputFile = tmpOutputFile;
     doSimulation(params);

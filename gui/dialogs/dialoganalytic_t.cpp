@@ -10,10 +10,13 @@ TEST_CASE("DialogAnalytic",
           "[gui/dialogs/analytic][gui/dialogs][gui][analytic]") {
   SECTION("10x10 image, small compartment, simple expr") {
     auto model{getExampleModel(Mod::ABtoC)};
-    auto compartmentPoints = std::vector<QPoint>{
-        QPoint(5, 5), QPoint(5, 6), QPoint(5, 7), QPoint(6, 6), QPoint(6, 7)};
+    auto compartmentVoxels = std::vector<sme::common::Voxel>{
+        {5, 5, 0}, {5, 6, 0}, {5, 7, 0}, {6, 6, 0}, {6, 7, 0}};
     DialogAnalytic dia("x",
-                       {QSize(10, 10), compartmentPoints, QPointF(0.0, 0.0), 1,
+                       {{10, 10, 1},
+                        compartmentVoxels,
+                        {0.0, 0.0, 0.0},
+                        {1.0, 1.0, 1.0},
                         model.getUnits()},
                        model.getParameters(), model.getFunctions(), false);
     REQUIRE(dia.getExpression() == "x");

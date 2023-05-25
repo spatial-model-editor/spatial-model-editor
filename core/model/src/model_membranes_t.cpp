@@ -28,7 +28,7 @@ TEST_CASE("SBML membranes",
           std::make_unique<geometry::Compartment>("c1", img, col1));
       QStringList names{"c0 name", "c1 name"};
       model::ModelMembranes ms;
-      ms.updateCompartmentImage(img);
+      ms.updateCompartmentImages(img);
       REQUIRE(ms.getIds().isEmpty());
       REQUIRE(ms.getMembranes().empty());
       REQUIRE(ms.getNames().isEmpty());
@@ -64,7 +64,8 @@ TEST_CASE("SBML membranes",
       REQUIRE(m.getId() == "c1_c0_membrane");
       REQUIRE(m.getCompartmentA()->getId() == "c1");
       REQUIRE(m.getCompartmentB()->getId() == "c0");
-      REQUIRE(m.getImage().size() == img.size());
+      REQUIRE(m.getImages().volume().depth() == 1);
+      REQUIRE(m.getImages()[0].size() == img.size());
       REQUIRE(m.getIndexPairs().size() == 4);
     }
   }

@@ -176,10 +176,11 @@ double PixelSim::doRKAdaptive(double dtMax) {
     SPDLOG_TRACE("dt = {} gave rel err = {}, abs err = {} -> new dt = {}", dt,
                  err.rel, err.abs, nextTimestep);
     if (nextTimestep / dtMax < 1e-20) {
-      currentErrorImage = {};
+      currentErrorImages.clear();
       std::string problemSpecies{"unknown"};
       for (const auto &sim : simCompartments) {
-        auto speciesName{sim->plotRKError(currentErrorImage, epsilon, err.rel)};
+        auto speciesName{
+            sim->plotRKError(currentErrorImages, epsilon, err.rel)};
         if (!speciesName.empty()) {
           problemSpecies = speciesName;
         }
@@ -370,7 +371,9 @@ const std::string &PixelSim::errorMessage() const {
   return currentErrorMessage;
 }
 
-const QImage &PixelSim::errorImage() const { return currentErrorImage; }
+const common::ImageStack &PixelSim::errorImages() const {
+  return currentErrorImages;
+}
 
 void PixelSim::setStopRequested(bool stop) { stopRequested.store(stop); }
 

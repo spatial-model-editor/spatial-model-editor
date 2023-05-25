@@ -119,11 +119,11 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
         sme::model::ReactionLocation::Type::Compartment) {
       lblGeometry->setImage(model.getCompartments()
                                 .getCompartment(reactionLocation.id)
-                                ->getCompartmentImage());
+                                ->getCompartmentImages());
     } else if (reactionLocation.type ==
                sme::model::ReactionLocation::Type::Membrane) {
       lblGeometry->setImage(
-          model.getMembranes().getMembrane(reactionLocation.id)->getImage());
+          model.getMembranes().getMembrane(reactionLocation.id)->getImages());
     } else {
       lblGeometry->clear();
     }
@@ -152,7 +152,7 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
   QStringList compartments;
   if (reactionLocation.type == sme::model::ReactionLocation::Type::Membrane) {
     const auto *m = model.getMembranes().getMembrane(reactionLocation.id);
-    lblGeometry->setImage(m->getImage());
+    lblGeometry->setImage(m->getImages());
     compartments = QStringList{m->getCompartmentA()->getId().c_str(),
                                m->getCompartmentB()->getId().c_str()};
     ui->lblReactionRateUnits->setText(model.getUnits().getMembraneReaction());
@@ -160,7 +160,7 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
     compartments = QStringList{reactionLocation.id};
     lblGeometry->setImage(model.getCompartments()
                               .getCompartment(reactionLocation.id)
-                              ->getCompartmentImage());
+                              ->getCompartmentImages());
     ui->lblReactionRateUnits->setText(
         model.getUnits().getCompartmentReaction());
   }

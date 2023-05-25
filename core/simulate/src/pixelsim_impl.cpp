@@ -105,20 +105,20 @@ SimCompartment::SimCompartment(
     std::vector<std::string> sIds, bool doCSE, unsigned optLevel,
     bool timeDependent, bool spaceDependent,
     const std::map<std::string, double, std::less<>> &substitutions)
-    : comp{compartment}, nPixels{compartment->nPixels()}, nSpecies{sIds.size()},
+    : comp{compartment}, nPixels{compartment->nVoxels()}, nSpecies{sIds.size()},
       compartmentId{compartment->getId()}, speciesIds{std::move(sIds)} {
   // get species in compartment
   speciesNames.reserve(nSpecies);
   SPDLOG_DEBUG("compartment: {}", compartmentId);
   std::vector<const geometry::Field *> fields;
-  const double pixelWidth{doc.getGeometry().getPixelWidth()};
+  const double pixelWidth{doc.getGeometry().getVoxelSize().width()};
   for (const auto &s : speciesIds) {
     const auto *field = doc.getSpecies().getField(s.c_str());
     diffConstants.push_back(field->getDiffusionConstant() / pixelWidth /
                             pixelWidth);
-    // forwards euler stability bound: dt < a^2/4D
+    // forwards euler stability bound: dt < a^2/6D
     maxStableTimestep =
-        std::min(maxStableTimestep, 1.0 / (4.0 * diffConstants.back()));
+        std::min(maxStableTimestep, 1.0 / (6.0 * diffConstants.back()));
     fields.push_back(field);
     speciesNames.push_back(doc.getSpecies().getName(s.c_str()).toStdString());
     if (!field->getIsSpatial()) {
@@ -146,14 +146,17 @@ SimCompartment::SimCompartment(
     diffConstants.push_back(0);
     speciesIds.push_back(doc.getParameters().getSpatialCoordinates().y.id);
     diffConstants.push_back(0);
-    nSpecies += 2;
+    // todo: make sure we can still import previous sim results without z
+    speciesIds.push_back(doc.getParameters().getSpatialCoordinates().z.id);
+    diffConstants.push_back(0);
+    nSpecies += 3;
   }
   // setup concentrations vector with initial values
   conc.resize(nSpecies * nPixels);
   dcdt.resize(conc.size(), 0.0);
   auto origin{doc.getGeometry().getPhysicalOrigin()};
   auto concIter = conc.begin();
-  for (std::size_t ix = 0; ix < compartment->nPixels(); ++ix) {
+  for (std::size_t ix = 0; ix < compartment->nVoxels(); ++ix) {
     for (const auto *field : fields) {
       *concIter = field->getConcentration()[ix];
       ++concIter;
@@ -163,12 +166,16 @@ SimCompartment::SimCompartment(
       ++concIter;
     }
     if (spaceDependent) {
-      auto pixel{compartment->getPixel(ix)};
-      // pixels have y=0 in top-left, convert to bottom-left:
-      pixel.ry() = compartment->getCompartmentImage().height() - 1 - pixel.y();
-      *concIter = origin.x() + static_cast<double>(pixel.x()) * pixelWidth; // x
+      auto voxel{compartment->getVoxel(ix)};
+      int ny{compartment->getCompartmentImages()[0].height()};
+      *concIter =
+          origin.p.x() + static_cast<double>(voxel.p.x()) * pixelWidth; // x
       ++concIter;
-      *concIter = origin.y() + static_cast<double>(pixel.y()) * pixelWidth; // y
+      // pixels have y=0 in top-left, convert to bottom-left:
+      *concIter = origin.p.y() +
+                  static_cast<double>(ny - 1 - voxel.p.y()) * pixelWidth; // y
+      ++concIter;
+      *concIter = origin.z + static_cast<double>(voxel.z) * pixelWidth; // z
       ++concIter;
     }
   }
@@ -178,16 +185,19 @@ SimCompartment::SimCompartment(
 void SimCompartment::evaluateDiffusionOperator(std::size_t begin,
                                                std::size_t end) {
   for (std::size_t i = begin; i < end; ++i) {
-    std::size_t ix = i * nSpecies;
-    std::size_t ix_upx = comp->up_x(i) * nSpecies;
-    std::size_t ix_dnx = comp->dn_x(i) * nSpecies;
-    std::size_t ix_upy = comp->up_y(i) * nSpecies;
-    std::size_t ix_dny = comp->dn_y(i) * nSpecies;
+    const std::size_t ix{i * nSpecies};
+    const std::size_t ix_upx{comp->up_x(i) * nSpecies};
+    const std::size_t ix_dnx{comp->dn_x(i) * nSpecies};
+    const std::size_t ix_upy{comp->up_y(i) * nSpecies};
+    const std::size_t ix_dny{comp->dn_y(i) * nSpecies};
+    const std::size_t ix_upz{comp->up_z(i) * nSpecies};
+    const std::size_t ix_dnz{comp->dn_z(i) * nSpecies};
     for (std::size_t is = 0; is < nSpecies; ++is) {
       dcdt[ix + is] +=
           diffConstants[is] *
           (conc[ix_upx + is] + conc[ix_dnx + is] + conc[ix_upy + is] +
-           conc[ix_dny + is] - 4.0 * conc[ix + is]);
+           conc[ix_dny + is] + conc[ix_upz + is] + conc[ix_dnz + is] -
+           6.0 * conc[ix + is]);
     }
   }
 }
@@ -350,22 +360,21 @@ PixelIntegratorError SimCompartment::calculateRKError(double epsilon) const {
   return err;
 }
 
-std::string SimCompartment::plotRKError(QImage &image, double epsilon,
-                                        double max) const {
-  if (image.isNull()) {
-    image = QImage(comp->getCompartmentImage().size(), QImage::Format_RGB32);
-    image.fill(qRgb(0, 0, 0));
-  }
+std::string SimCompartment::plotRKError(common::ImageStack &images,
+                                        double epsilon, double max) const {
+  auto imageSize{comp->getImageSize()};
+  images = {imageSize, QImage::Format_RGB32};
+  images.fill(0);
   std::size_t iSpecies{nSpecies + 1};
   for (std::size_t i = 0; i < conc.size(); ++i) {
     double localErr = std::abs(conc[i] - s2[i]);
     double localNorm = 0.5 * (conc[i] + s3[i] + epsilon);
     double pixelIntensity{localErr / localNorm / max};
     auto red{static_cast<int>(255.0 * pixelIntensity)};
-    auto point{comp->getPixel(i / nSpecies)};
-    auto oldRed{qRed(image.pixel(point))};
+    auto voxel{comp->getVoxel(i / nSpecies)};
+    auto oldRed{qRed(images[voxel.z].pixel(voxel.p))};
     if (red > oldRed) {
-      image.setPixel(point, qRgb(red, 0, 0));
+      images[voxel.z].setPixel(voxel.p, qRgb(red, 0, 0));
       if (red > 254) {
         // update index of species with largest error
         iSpecies = i % nSpecies;
@@ -404,8 +413,8 @@ SimCompartment::getLowerOrderConcentration(std::size_t speciesIndex,
   return s2[pixelIndex * nSpecies + speciesIndex];
 }
 
-const std::vector<QPoint> &SimCompartment::getPixels() const {
-  return comp->getPixels();
+const std::vector<common::Voxel> &SimCompartment::getVoxels() const {
+  return comp->getVoxels();
 }
 
 std::vector<double> &SimCompartment::getDcdt() { return dcdt; }
@@ -424,7 +433,7 @@ SimMembrane::SimMembrane(
     ++nExtraVars;
   }
   if (spaceDependent) {
-    nExtraVars += 2;
+    nExtraVars += 3;
   }
   if (compA != nullptr &&
       membrane->getCompartmentA()->getId() != compA->getCompartmentId()) {
@@ -464,7 +473,7 @@ SimMembrane::SimMembrane(
   const auto &lengthUnit = doc.getUnits().getLength();
   const auto &volumeUnit = doc.getUnits().getVolume();
   double volOverL3 = model::getVolOverL3(lengthUnit, volumeUnit);
-  double pixelWidth{doc.getGeometry().getPixelWidth()};
+  double pixelWidth{doc.getGeometry().getVoxelSize().width()};
   SPDLOG_INFO("  - [vol]/[length]^3 = {}", volOverL3);
   SPDLOG_INFO("  - pixel width = {}", pixelWidth);
   SPDLOG_INFO("  - multiplying reaction by '{}'", volOverL3 / pixelWidth);
@@ -496,7 +505,7 @@ void SimMembrane::evaluateReactions() {
   std::vector<double> species(nSpeciesA + nSpeciesB + nExtraVars, 0);
   std::vector<double> result(nSpeciesA + nSpeciesB + nExtraVars, 0);
   for (const auto &[ixA, ixB] : membrane->getIndexPairs()) {
-    // populate species concentrations: first A, then B, then t,x,y
+    // populate species concentrations: first A, then B, then t,x,y,z
     if (concA != nullptr) {
       std::copy_n(&((*concA)[ixA * (nSpeciesA + nExtraVars)]), nSpeciesA,
                   &species[0]);

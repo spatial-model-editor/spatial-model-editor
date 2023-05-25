@@ -279,11 +279,12 @@ void ModelUnits::setHasUnsavedChanges(bool unsavedChanges) {
   hasUnsavedChanges = unsavedChanges;
 }
 
-double rescale(double val, const Unit &oldUnit, const Unit &newUnit) {
+sme::common::VolumeF rescale(const sme::common::VolumeF &voxelSize,
+                             const Unit &oldUnit, const Unit &newUnit) {
   // rescale units, assuming same base unit & unit exponent
   // e.g. m -> cm, or mol -> mmol
   return (oldUnit.multiplier / newUnit.multiplier) *
-         std::pow(10, oldUnit.scale - newUnit.scale) * val;
+         std::pow(10, oldUnit.scale - newUnit.scale) * voxelSize;
 }
 
 static double getV(const Unit &volumeUnit) {

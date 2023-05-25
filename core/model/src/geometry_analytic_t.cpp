@@ -16,22 +16,30 @@ TEST_CASE("Analytic geometry", "[core/model/geometry_analytic][core/"
     auto s{getTestModel("analytic_2d")};
     REQUIRE(s.getGeometry().getIsValid() == true);
     REQUIRE(s.getGeometry().getHasImage() == true);
-    const auto &img{s.getGeometry().getImage()};
-    REQUIRE(img.colorCount() == 3);
-    REQUIRE(img.size() == QSize(200, 200));
-    REQUIRE(img.pixel(100, 100) == common::indexedColours()[0].rgb());
-    REQUIRE(img.pixel(80, 80) == common::indexedColours()[1].rgb());
-    REQUIRE(img.pixel(30, 20) == common::indexedColours()[2].rgb());
+    const auto &imgs{s.getGeometry().getImages()};
+    REQUIRE(imgs[0].colorCount() == 3);
+    REQUIRE(imgs[0].size() == QSize(50, 50));
+    REQUIRE(imgs[0].pixel(25, 25) == common::indexedColours()[0].rgb());
+    REQUIRE(imgs[0].pixel(20, 20) == common::indexedColours()[1].rgb());
+    REQUIRE(imgs[0].pixel(8, 5) == common::indexedColours()[2].rgb());
   }
   SECTION("SBML model with 3d analytic geometry") {
     auto s{getTestModel("analytic_3d")};
     REQUIRE(s.getGeometry().getIsValid() == true);
     REQUIRE(s.getGeometry().getHasImage() == true);
-    const auto &img{s.getGeometry().getImage()};
-    REQUIRE(img.colorCount() == 3);
-    REQUIRE(img.size() == QSize(200, 200));
-    REQUIRE(img.pixel(100, 100) == common::indexedColours()[0].rgb());
-    REQUIRE(img.pixel(80, 80) == common::indexedColours()[1].rgb());
-    REQUIRE(img.pixel(30, 20) == common::indexedColours()[2].rgb());
+    const auto &imgs{s.getGeometry().getImages()};
+    REQUIRE(imgs.volume().width() == 50);
+    REQUIRE(imgs.volume().height() == 50);
+    REQUIRE(imgs.volume().depth() == 50);
+    REQUIRE(imgs[0].colorCount() == 3);
+    REQUIRE(imgs[0].size() == QSize(50, 50));
+    // first z-slice is all background
+    REQUIRE(imgs[0].pixel(25, 25) == common::indexedColours()[2].rgb());
+    REQUIRE(imgs[0].pixel(20, 20) == common::indexedColours()[2].rgb());
+    REQUIRE(imgs[0].pixel(8, 5) == common::indexedColours()[2].rgb());
+    // central z-slice has 3 concentric circles
+    REQUIRE(imgs[24].pixel(26, 24) == common::indexedColours()[0].rgb());
+    REQUIRE(imgs[24].pixel(20, 20) == common::indexedColours()[1].rgb());
+    REQUIRE(imgs[24].pixel(7, 3) == common::indexedColours()[2].rgb());
   }
 }

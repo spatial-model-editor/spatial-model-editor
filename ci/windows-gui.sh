@@ -58,8 +58,8 @@ tail -n 100 tests.txt
 # python tests
 cd ..
 mv build/sme/sme.cp310-win_amd64.pyd .
-python -m pip install -r sme/requirements.txt
-python -m unittest discover -s sme/test -v
+python -m pip install -r sme/requirements-test.txt
+python -m pytest sme/test -v
 
 # strip binaries
 du -sh build/app/spatial-model-editor.exe

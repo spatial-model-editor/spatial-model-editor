@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include <QString>
 #include <QVector>
 
@@ -104,7 +105,8 @@ public:
   void setHasUnsavedChanges(bool unsavedChanges);
 };
 
-double rescale(double val, const Unit &oldUnit, const Unit &newUnit);
+sme::common::VolumeF rescale(const sme::common::VolumeF &voxelSize,
+                             const Unit &oldUnit, const Unit &newUnit);
 
 double getVolOverL3(const Unit &lengthUnit, const Unit &volumeUnit);
 

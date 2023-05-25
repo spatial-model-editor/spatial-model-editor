@@ -133,12 +133,12 @@ void pybindModel(pybind11::module &m) {
                     R"(
                     numpy.ndarray: an image of the compartments in this model
 
-                    An array of RGB integer values for each pixel in the image of
+                    An array of RGB integer values for each voxel in the image of
                     the compartments in this model,
                     which can be displayed using e.g. ``matplotlib.pyplot.imshow``
 
                     Examples:
-                        the image is a 3d (height x width x 3) array of integers:
+                        the image is a 4d (depth x height x width x 3) array of integers:
 
                         >>> import sme
                         >>> model = sme.open_example_model()
@@ -147,18 +147,18 @@ void pybindModel(pybind11::module &m) {
                         >>> model.compartment_image.dtype
                         dtype('uint8')
                         >>> model.compartment_image.shape
-                        (100, 100, 3)
+                        (1, 100, 100, 3)
 
-                        each pixel in the image has a triplet of RGB integer values
+                        each voxel in the image has a triplet of RGB integer values
                         in the range 0-255:
 
-                        >>> model.compartment_image[34, 36]
+                        >>> model.compartment_image[0, 34, 36]
                         array([144,  97, 193], dtype=uint8)
 
-                        the image can be displayed using matplotlib:
+                        the first z-slice of the image can be displayed using matplotlib:
 
                         >>> import matplotlib.pyplot as plt
-                        >>> imgplot = plt.imshow(model.compartment_image))")
+                        >>> imgplot = plt.imshow(model.compartment_image[0]))")
       .def("import_geometry_from_image", &sme::Model::importGeometryFromImage,
            pybind11::arg("filename"),
            R"(
@@ -168,7 +168,7 @@ void pybindModel(pybind11::module &m) {
                Currently this function assumes that the compartments maintain the same colour
                as they had with the previous geometry image. If the new image does not contain
                pixels of each of these colours, the new model geometry will not be valid.
-               The size of a pixel (in physical units) is also unchanged by this function.
+               The volume of a pixel (in physical units) is also unchanged by this function.
 
            Args:
                filename (str): the name of the geometry image to import
@@ -250,7 +250,8 @@ constructSimulationResults(const simulate::Simulation *sim, bool getDcdt) {
     result.timePoint = sim->getTimePoints()[i];
     result.concentration_image = toPyImageRgb(sim->getConcImage(i, {}, true));
     std::vector<ssize_t> shape{result.concentration_image.shape(0),
-                               result.concentration_image.shape(1)};
+                               result.concentration_image.shape(1),
+                               result.concentration_image.shape(2)};
     for (std::size_t ci = 0; ci < sim->getCompartmentIds().size(); ++ci) {
       const auto &names{sim->getPyNames(ci)};
       auto concs{sim->getPyConcs(i, ci)};
@@ -294,7 +295,7 @@ void Model::init() {
   for (const auto &paramId : s->getParameters().getIds()) {
     parameters.emplace_back(s.get(), paramId.toStdString());
   }
-  compartment_image = toPyImageRgb(s->getGeometry().getImage());
+  compartment_image = toPyImageRgb(s->getGeometry().getImages());
 }
 
 Model::Model(const std::string &filename) {
@@ -324,15 +325,16 @@ std::string Model::getName() const { return s->getName().toStdString(); }
 void Model::setName(const std::string &name) { s->setName(name.c_str()); }
 
 void Model::importGeometryFromImage(const std::string &filename) {
+  // todo: refactor to take image stack, for now assume 2d geometry image
   QImage img;
   sme::common::TiffReader tiffReader(filename);
-  if (tiffReader.size() > 0) {
-    img = tiffReader.getImage();
+  if (!tiffReader.empty()) {
+    img = tiffReader.getImages()[0];
   } else {
     img = QImage(filename.c_str());
   }
-  s->getGeometry().importGeometryFromImage(img, true);
-  compartment_image = toPyImageRgb(s->getGeometry().getImage());
+  s->getGeometry().importGeometryFromImages({img}, true);
+  compartment_image = toPyImageRgb(s->getGeometry().getImages());
   for (auto &compartment : compartments) {
     compartment.updateMask();
   }

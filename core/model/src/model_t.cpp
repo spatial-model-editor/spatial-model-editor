@@ -25,7 +25,7 @@ static void createSBMLlvl2doc(const std::string &filename) {
       new libsbml::SBMLDocument(2, 4));
   // create model
   auto *model = document->createModel();
-  // create two compartments of different size
+  // create two compartments of different volume
   for (int i = 0; i < 2; ++i) {
     auto *comp = model->createCompartment();
     comp->setId("compartment" + toString(i));
@@ -100,7 +100,7 @@ TEST_CASE("SBML: import SBML doc without geometry",
   }
   SECTION("import geometry & assign compartments") {
     // import geometry image & assign compartments to colours
-    s.getGeometry().importGeometryFromImage(
+    s.getGeometry().importGeometryFromImages(
         QImage(":/geometry/single-pixels-3x1.png"), false);
     s.getCompartments().setColour("compartment0", 0xffaaaaaa);
     s.getCompartments().setColour("compartment1", 0xff525252);
@@ -144,17 +144,24 @@ TEST_CASE("SBML: import SBML doc without geometry",
     SECTION("import concentration & set diff constants") {
       // import concentration
       s.getSpecies().setSampledFieldConcentration("spec0c0", {0.0, 0.0, 0.0});
-      REQUIRE(s.getSpecies().getConcentrationImage("spec0c0").size() ==
+      REQUIRE(
+          s.getSpecies().getConcentrationImages("spec0c0").volume().depth() ==
+          1);
+      REQUIRE(s.getSpecies().getConcentrationImages("spec0c0")[0].size() ==
               QSize(3, 1));
-      REQUIRE(s.getSpecies().getConcentrationImage("spec0c0").pixel(1, 0) ==
+      REQUIRE(s.getSpecies().getConcentrationImages("spec0c0")[0].pixel(1, 0) ==
               qRgb(0, 0, 0));
-      REQUIRE(s.getSpecies().getConcentrationImage("spec0c0").pixel(0, 0) == 0);
-      REQUIRE(s.getSpecies().getConcentrationImage("spec0c0").pixel(2, 0) == 0);
+      REQUIRE(s.getSpecies().getConcentrationImages("spec0c0")[0].pixel(0, 0) ==
+              0);
+      REQUIRE(s.getSpecies().getConcentrationImages("spec0c0")[0].pixel(2, 0) ==
+              0);
       // set spec1c1conc to zero -> black pixel
       s.getSpecies().setSampledFieldConcentration("spec1c1", {0.0, 0.0, 0.0});
-      REQUIRE(s.getSpecies().getConcentrationImage("spec1c1").pixel(0, 0) == 0);
-      REQUIRE(s.getSpecies().getConcentrationImage("spec1c1").pixel(1, 0) == 0);
-      REQUIRE(s.getSpecies().getConcentrationImage("spec1c1").pixel(2, 0) ==
+      REQUIRE(s.getSpecies().getConcentrationImages("spec1c1")[0].pixel(0, 0) ==
+              0);
+      REQUIRE(s.getSpecies().getConcentrationImages("spec1c1")[0].pixel(1, 0) ==
+              0);
+      REQUIRE(s.getSpecies().getConcentrationImages("spec1c1")[0].pixel(2, 0) ==
               qRgb(0, 0, 0));
       s.getSpecies().setSampledFieldConcentration("spec2c1", {0.0, 0.0, 0.0});
       s.getSpecies().setIsSpatial("spec0c0", true);
@@ -181,24 +188,24 @@ TEST_CASE("SBML: import SBML doc without geometry",
       s2.importSBMLFile("tmplvl2model2.xml");
       REQUIRE(s2.getCompartments().getColour("compartment0") == 0xffaaaaaa);
       REQUIRE(s2.getCompartments().getColour("compartment1") == 0xff525252);
-      REQUIRE(s2.getSpecies().getConcentrationImage("spec0c0").pixel(1, 0) ==
-              qRgb(0, 0, 0));
-      REQUIRE(s2.getSpecies().getConcentrationImage("spec0c0").pixel(0, 0) ==
-              0);
-      REQUIRE(s2.getSpecies().getConcentrationImage("spec0c0").pixel(2, 0) ==
-              0);
-      REQUIRE(s2.getSpecies().getConcentrationImage("spec1c1").pixel(0, 0) ==
-              0);
-      REQUIRE(s2.getSpecies().getConcentrationImage("spec1c1").pixel(1, 0) ==
-              0);
-      REQUIRE(s2.getSpecies().getConcentrationImage("spec1c1").pixel(2, 0) ==
-              qRgb(0, 0, 0));
-      REQUIRE(s2.getSpecies().getConcentrationImage("spec2c1").pixel(0, 0) ==
-              0);
-      REQUIRE(s2.getSpecies().getConcentrationImage("spec2c1").pixel(1, 0) ==
-              0);
-      REQUIRE(s2.getSpecies().getConcentrationImage("spec2c1").pixel(2, 0) ==
-              qRgb(0, 0, 0));
+      REQUIRE(s2.getSpecies().getConcentrationImages("spec0c0")[0].pixel(
+                  1, 0) == qRgb(0, 0, 0));
+      REQUIRE(s2.getSpecies().getConcentrationImages("spec0c0")[0].pixel(
+                  0, 0) == 0);
+      REQUIRE(s2.getSpecies().getConcentrationImages("spec0c0")[0].pixel(
+                  2, 0) == 0);
+      REQUIRE(s2.getSpecies().getConcentrationImages("spec1c1")[0].pixel(
+                  0, 0) == 0);
+      REQUIRE(s2.getSpecies().getConcentrationImages("spec1c1")[0].pixel(
+                  1, 0) == 0);
+      REQUIRE(s2.getSpecies().getConcentrationImages("spec1c1")[0].pixel(
+                  2, 0) == qRgb(0, 0, 0));
+      REQUIRE(s2.getSpecies().getConcentrationImages("spec2c1")[0].pixel(
+                  0, 0) == 0);
+      REQUIRE(s2.getSpecies().getConcentrationImages("spec2c1")[0].pixel(
+                  1, 0) == 0);
+      REQUIRE(s2.getSpecies().getConcentrationImages("spec2c1")[0].pixel(
+                  2, 0) == qRgb(0, 0, 0));
 
       CAPTURE(s2.getSpecies().getDiffusionConstant("spec0c0"));
       CAPTURE(s2.getSpecies().getDiffusionConstant("spec1c0"));
@@ -308,7 +315,7 @@ TEST_CASE("SBML: import SBML level 2 document",
   REQUIRE(s.getReactions().getScheme("reac1") == "spec0c0 -> spec1c0");
 
   // import geometry image
-  s.getGeometry().importGeometryFromImage(
+  s.getGeometry().importGeometryFromImages(
       QImage(":/geometry/single-pixels-3x1.png"), false);
   REQUIRE(s.getReactions().getIsIncompleteODEImport());
   REQUIRE(s.getGeometry().getHasImage() == true);
@@ -392,7 +399,7 @@ TEST_CASE("SBML: create new model, import geometry from image",
     QImage img(1, 1, QImage::Format_RGB32);
     QRgb col = QColor(12, 243, 154).rgba();
     img.setPixel(0, 0, col);
-    s.getGeometry().importGeometryFromImage(img, false);
+    s.getGeometry().importGeometryFromImages(img, false);
     REQUIRE(s.getIsValid() == true);
     REQUIRE(s.getErrorMessage().isEmpty());
     REQUIRE(s.getGeometry().getHasImage() == true);
@@ -409,7 +416,7 @@ TEST_CASE("SBML: import uint8 sampled field",
           "[core/model/model][core/model][core][model]") {
   auto doc{getTestSbmlDoc("very-simple-model-uint8")};
   // original model: 2d 100m x 100m image
-  // size of compartments are not set in original spatial model
+  // volume of compartments are not set in original spatial model
   REQUIRE(doc->getModel()->getCompartment("c1")->isSetSize() == false);
   REQUIRE(doc->getModel()->getCompartment("c2")->isSetSize() == false);
   REQUIRE(doc->getModel()->getCompartment("c3")->isSetSize() == false);
@@ -426,7 +433,7 @@ TEST_CASE("SBML: import uint8 sampled field",
   // after import, model is now 3d
   // z direction size set to 1 by default, so 100 m x 100 m x 1 m geometry image
   // volume of pixel is 1m^3 = 1e3 litres
-  // after import, compartment size is set based on geometry image
+  // after import, compartment volume is set based on geometry image
   REQUIRE(doc->getModel()->getCompartment("c1")->isSetSize() == true);
   REQUIRE(doc->getModel()->getCompartment("c1")->getSize() ==
           dbl_approx(5441000.0));
@@ -445,8 +452,8 @@ TEST_CASE("SBML: import uint8 sampled field",
   REQUIRE(doc->getModel()->getCompartment("c2")->isSetUnits() == false);
   REQUIRE(doc->getModel()->getCompartment("c3")->isSetUnits() == false);
 
-  const auto &img{s.getGeometry().getImage()};
-  REQUIRE(img.colorCount() == 3);
+  const auto &img{s.getGeometry().getImages()};
+  REQUIRE(img[0].colorCount() == 3);
   REQUIRE(s.getCompartments().getColour("c1") ==
           common::indexedColours()[0].rgb());
   REQUIRE(s.getCompartments().getColour("c2") ==
@@ -472,11 +479,14 @@ TEST_CASE("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
       REQUIRE(s.getSpecies().getIds("comp")[2] == "C");
       auto g = s.getSpeciesGeometry("A");
       REQUIRE(g.modelUnits.getAmount().name == s.getUnits().getAmount().name);
-      REQUIRE(g.pixelWidth == dbl_approx(1.0));
-      REQUIRE(g.physicalOrigin.x() == dbl_approx(0.0));
-      REQUIRE(g.physicalOrigin.y() == dbl_approx(0.0));
-      REQUIRE(g.compartmentPoints.size() == 3149);
-      REQUIRE(g.compartmentImageSize == QSize(100, 100));
+      REQUIRE(g.voxelSize.width() == dbl_approx(1.0));
+      REQUIRE(g.voxelSize.height() == dbl_approx(1.0));
+      REQUIRE(g.voxelSize.depth() == dbl_approx(1.0));
+      REQUIRE(g.physicalOrigin.p.x() == dbl_approx(0.0));
+      REQUIRE(g.physicalOrigin.p.y() == dbl_approx(0.0));
+      REQUIRE(g.physicalOrigin.z == dbl_approx(0.0));
+      REQUIRE(g.compartmentVoxels.size() == 3149);
+      REQUIRE(g.compartmentImageSize == sme::common::Volume{100, 100, 1});
     }
     SECTION("change model name") {
       REQUIRE(s.getName() == "");
@@ -584,10 +594,11 @@ TEST_CASE("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
       QImage img(":/geometry/circle-100x100.png");
       QRgb col = QColor(144, 97, 193).rgba();
       REQUIRE(img.pixel(50, 50) == col);
-      s.getGeometry().importGeometryFromImage(img, false);
+      s.getGeometry().importGeometryFromImages(img, false);
       s.getCompartments().setColour("comp", col);
-      REQUIRE(s.getGeometry().getImage().size() == QSize(100, 100));
-      REQUIRE(s.getGeometry().getImage().pixel(50, 50) == col);
+      REQUIRE(s.getGeometry().getImages().volume().depth() == 1);
+      REQUIRE(s.getGeometry().getImages()[0].size() == QSize(100, 100));
+      REQUIRE(s.getGeometry().getImages()[0].pixel(50, 50) == col);
       REQUIRE(s.getMembranes().getMembranes().empty());
       REQUIRE(s.getReactions().getIds("comp").size() == 1);
       REQUIRE(s.getReactions().getIds("comp")[0] == "r1");
@@ -757,56 +768,63 @@ TEST_CASE("SBML: load model, refine mesh, save",
           numTriangleIndices);
 }
 
-TEST_CASE("SBML: load single compartment model, change size of geometry",
+TEST_CASE("SBML: load single compartment model, change volume of geometry",
           "[core/model/model][core/model][core][model][mesh]") {
   auto s{getExampleModel(Mod::ABtoC)};
-  REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(1.0));
-  REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(1.0));
-  // 100x100 image, 100m x 100m physical size
+  REQUIRE(s.getGeometry().getVoxelSize().width() == dbl_approx(1.0));
+  REQUIRE(s.getGeometry().getVoxelSize().height() == dbl_approx(1.0));
+  REQUIRE(s.getGeometry().getVoxelSize().depth() == dbl_approx(1.0));
+  // 100x100 image, 100m x 100m physical volume
   REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(100.0));
   REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(100.0));
   // z direction assumed to be 1 in length units
+  REQUIRE(s.getGeometry().getPhysicalSize().depth() == dbl_approx(1.0));
   // 3149 pixels, pixel is 1m^3, volume units litres
   REQUIRE(s.getCompartments().getSize("comp") == dbl_approx(3149 * 1000));
 
-  // change pixel width: compartment sizes, interior points updated
-  double a = 0.01;
-  s.getGeometry().setPixelWidth(a);
-  REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(0.01));
-  REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(1.0));
-  // physical size rescaled
+  // change voxel width & height: compartment sizes, interior points updated
+  s.getGeometry().setVoxelSize({0.01, 0.01, 1.0});
+  REQUIRE(s.getGeometry().getVoxelSize().width() == dbl_approx(0.01));
+  REQUIRE(s.getGeometry().getVoxelSize().height() == dbl_approx(0.01));
+  REQUIRE(s.getGeometry().getVoxelSize().depth() == dbl_approx(1.0));
+  // physical volume rescaled
   REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(1.0));
   REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(1.0));
+  REQUIRE(s.getGeometry().getPhysicalSize().depth() == dbl_approx(1.0));
   // compartment sizes rescaled: pixel is now 0.01*0.01*1 = 1e-4 m^2
   REQUIRE(s.getCompartments().getSize("comp") == dbl_approx(314.9));
   auto interiorPoint{s.getCompartments().getInteriorPoints("comp").value()[0]};
-  // interior points rescaled
+  // 2-d interior points rescaled
   REQUIRE(interiorPoint.x() == dbl_approx(0.485));
   REQUIRE(interiorPoint.y() == dbl_approx(0.515));
+  // todo: z interior point?
 
-  // change pixel depth: compartment sizes, interior points updated
-  s.getGeometry().setPixelDepth(0.1);
-  REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(0.01));
-  REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(0.1));
-  // 2d physical size not affected:
+  // change voxel depth: compartment sizes, interior points updated
+  s.getGeometry().setVoxelSize({0.01, 0.01, 0.1});
+  REQUIRE(s.getGeometry().getVoxelSize().width() == dbl_approx(0.01));
+  REQUIRE(s.getGeometry().getVoxelSize().height() == dbl_approx(0.01));
+  REQUIRE(s.getGeometry().getVoxelSize().depth() == dbl_approx(0.1));
+  // physical volume rescaled
   REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(1.0));
   REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(1.0));
+  REQUIRE(s.getGeometry().getPhysicalSize().depth() == dbl_approx(0.1));
   // compartment sizes rescaled: pixel is now 0.01*0.01*0.1 = 1e-5 m^2
   REQUIRE(s.getCompartments().getSize("comp") == dbl_approx(31.49));
   interiorPoint = s.getCompartments().getInteriorPoints("comp").value()[0];
-  // 2d part of interior points not affected
+  // 2-d interior points not affected
   REQUIRE(interiorPoint.x() == dbl_approx(0.485));
   REQUIRE(interiorPoint.y() == dbl_approx(0.515));
 }
 
-TEST_CASE("SBML: load multi-compartment model, change size of geometry",
+TEST_CASE("SBML: load multi-compartment model, change volume of geometry",
           "[core/model/model][core/model][core][model][mesh]") {
   auto s{getExampleModel(Mod::VerySimpleModel)};
   // 100m x 100m x 1m geometry, volume units: litres
   REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(100.0));
   REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(100.0));
-  REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(1.0));
-  REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(1.0));
+  REQUIRE(s.getGeometry().getVoxelSize().width() == dbl_approx(1.0));
+  REQUIRE(s.getGeometry().getVoxelSize().height() == dbl_approx(1.0));
+  REQUIRE(s.getGeometry().getVoxelSize().depth() == dbl_approx(1.0));
   REQUIRE(s.getUnits().getLength().name == "m");
   REQUIRE(s.getUnits().getVolume().name == "L");
   // volume of 1 pixel = 1m^3 = 1e3 litres
@@ -819,13 +837,16 @@ TEST_CASE("SBML: load multi-compartment model, change size of geometry",
   auto interiorPoint{s.getCompartments().getInteriorPoints("c1").value()[0]};
   REQUIRE(interiorPoint.x() == dbl_approx(68.5));
   REQUIRE(interiorPoint.y() == dbl_approx(83.5));
-  // change pixel width: compartment/membrane sizes, interior points updated
+  // change voxel width/height: compartment/membrane sizes, interior points
+  // updated
   double a = 1.1285;
-  s.getGeometry().setPixelWidth(a);
-  REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(a));
-  REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(1.0));
+  s.getGeometry().setVoxelSize({a, a, 1.0});
+  REQUIRE(s.getGeometry().getVoxelSize().width() == dbl_approx(a));
+  REQUIRE(s.getGeometry().getVoxelSize().height() == dbl_approx(a));
+  REQUIRE(s.getGeometry().getVoxelSize().depth() == dbl_approx(1.0));
   REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(100.0 * a));
   REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(100.0 * a));
+  REQUIRE(s.getGeometry().getPhysicalSize().depth() == dbl_approx(1.0));
   REQUIRE(s.getCompartments().getSize("c1") == dbl_approx(a * a * 5441 * 1e3));
   REQUIRE(s.getCompartments().getSize("c2") == dbl_approx(a * a * 4034 * 1e3));
   REQUIRE(s.getCompartments().getSize("c3") == dbl_approx(a * a * 525 * 1e3));
@@ -834,13 +855,15 @@ TEST_CASE("SBML: load multi-compartment model, change size of geometry",
   interiorPoint = s.getCompartments().getInteriorPoints("c1").value()[0];
   REQUIRE(interiorPoint.x() == dbl_approx(a * 68.5));
   REQUIRE(interiorPoint.y() == dbl_approx(a * 83.5));
-  // change pixel depth: compartment/membrane sizes, interior points updated
+  // change voxel depth: compartment/membrane sizes, interior points updated
   double d = 0.937694;
-  s.getGeometry().setPixelDepth(d);
-  REQUIRE(s.getGeometry().getPixelWidth() == dbl_approx(a));
-  REQUIRE(s.getGeometry().getPixelDepth() == dbl_approx(d));
+  s.getGeometry().setVoxelSize({a, a, d});
+  REQUIRE(s.getGeometry().getVoxelSize().width() == dbl_approx(a));
+  REQUIRE(s.getGeometry().getVoxelSize().height() == dbl_approx(a));
+  REQUIRE(s.getGeometry().getVoxelSize().depth() == dbl_approx(d));
   REQUIRE(s.getGeometry().getPhysicalSize().width() == dbl_approx(100.0 * a));
   REQUIRE(s.getGeometry().getPhysicalSize().height() == dbl_approx(100.0 * a));
+  REQUIRE(s.getGeometry().getPhysicalSize().depth() == dbl_approx(1.0 * d));
   REQUIRE(s.getCompartments().getSize("c1") ==
           dbl_approx(a * a * d * 5441 * 1e3));
   REQUIRE(s.getCompartments().getSize("c2") ==
@@ -858,8 +881,9 @@ TEST_CASE("SBML: load multi-compartment model, change size of geometry",
   auto xml{s.getXml().toStdString()};
   model::Model s2;
   s2.importSBMLString(xml);
-  REQUIRE(s2.getGeometry().getPixelWidth() == dbl_approx(a));
-  REQUIRE(s2.getGeometry().getPixelDepth() == dbl_approx(d));
+  REQUIRE(s.getGeometry().getVoxelSize().width() == dbl_approx(a));
+  REQUIRE(s.getGeometry().getVoxelSize().height() == dbl_approx(a));
+  REQUIRE(s.getGeometry().getVoxelSize().depth() == dbl_approx(d));
   REQUIRE(s2.getGeometry().getPhysicalSize().width() == dbl_approx(100.0 * a));
   REQUIRE(s2.getGeometry().getPhysicalSize().height() == dbl_approx(100.0 * a));
   REQUIRE(s2.getCompartments().getSize("c1") ==
@@ -895,7 +919,7 @@ TEST_CASE("SBML: load .xml model, simulate, save as .sme, load .sme",
   s3.importFile("tmpmodelsmetest.sme");
   // do something that causes ModelCompartments to clear the simulation results
   // https://github.com/spatial-model-editor/spatial-model-editor/issues/666
-  s3.getGeometry().setPixelWidth(1.2, true);
+  s3.getGeometry().setVoxelSize({1.2, 1.2, 1.2}, true);
   REQUIRE(s3.getSimulationData().timePoints.size() == 0);
 }
 
@@ -924,8 +948,8 @@ TEST_CASE("SBML: import multi-compartment SBML doc without spatial geometry",
   REQUIRE(geometry.getHasImage() == false);
   REQUIRE(reactions.getIsIncompleteODEImport() == true);
   // import a geometry image
-  geometry.importGeometryFromImage(QImage(":test/geometry/cell.png"), false);
-  auto colours{geometry.getImage().colorTable()};
+  geometry.importGeometryFromImages(QImage(":test/geometry/cell.png"), false);
+  auto colours{geometry.getImages()[0].colorTable()};
   REQUIRE(colours.size() == 4);
   REQUIRE(geometry.getIsValid() == false);
   REQUIRE(geometry.getHasImage() == true);
@@ -972,11 +996,14 @@ TEST_CASE("SBML: import SBML doc with compressed sampledField",
   REQUIRE(s.getName() == "CellOrganizer2_7");
   REQUIRE(s.getGeometry().getIsValid() == true);
   REQUIRE(s.getGeometry().getHasImage() == true);
+  REQUIRE(s.getGeometry().getImages().volume().width() == 33);
+  REQUIRE(s.getGeometry().getImages().volume().height() == 30);
+  REQUIRE(s.getGeometry().getImages().volume().depth() == 24);
   REQUIRE(s.getCompartments().getIds().size() == 4);
-  REQUIRE(s.getCompartments().getCompartment("EC")->nPixels() == 358);
-  REQUIRE(s.getCompartments().getCompartment("cell")->nPixels() == 390);
-  REQUIRE(s.getCompartments().getCompartment("nuc")->nPixels() == 237);
-  REQUIRE(s.getCompartments().getCompartment("vesicle")->nPixels() == 5);
+  REQUIRE(s.getCompartments().getCompartment("EC")->nVoxels() == 12640);
+  REQUIRE(s.getCompartments().getCompartment("cell")->nVoxels() == 6976);
+  REQUIRE(s.getCompartments().getCompartment("nuc")->nVoxels() == 4040);
+  REQUIRE(s.getCompartments().getCompartment("vesicle")->nVoxels() == 104);
   // export and re-import, check compartment geometry hasn't changed
   s.exportSBMLFile("compressedExported.xml");
   sme::model::Model s2;
@@ -985,11 +1012,14 @@ TEST_CASE("SBML: import SBML doc with compressed sampledField",
   REQUIRE(s2.getName() == "CellOrganizer2_7");
   REQUIRE(s2.getGeometry().getIsValid() == true);
   REQUIRE(s2.getGeometry().getHasImage() == true);
+  REQUIRE(s.getGeometry().getImages().volume().width() == 33);
+  REQUIRE(s.getGeometry().getImages().volume().height() == 30);
+  REQUIRE(s.getGeometry().getImages().volume().depth() == 24);
   REQUIRE(s2.getCompartments().getIds().size() == 4);
-  REQUIRE(s2.getCompartments().getCompartment("EC")->nPixels() == 358);
-  REQUIRE(s2.getCompartments().getCompartment("cell")->nPixels() == 390);
-  REQUIRE(s2.getCompartments().getCompartment("nuc")->nPixels() == 237);
-  REQUIRE(s2.getCompartments().getCompartment("vesicle")->nPixels() == 5);
+  REQUIRE(s.getCompartments().getCompartment("EC")->nVoxels() == 12640);
+  REQUIRE(s.getCompartments().getCompartment("cell")->nVoxels() == 6976);
+  REQUIRE(s.getCompartments().getCompartment("nuc")->nVoxels() == 4040);
+  REQUIRE(s.getCompartments().getCompartment("vesicle")->nVoxels() == 104);
 }
 
 TEST_CASE("Import Combine archive",
@@ -1003,8 +1033,8 @@ TEST_CASE("Import Combine archive",
   REQUIRE(s.getIsValid() == true);
   REQUIRE(s.getCurrentFilename() == "liver-simplified");
   REQUIRE(s.getCompartments().getIds().size() == 2);
-  REQUIRE(s.getCompartments().getCompartment("cytoplasm")->nPixels() == 7800);
-  REQUIRE(s.getCompartments().getCompartment("nucleus")->nPixels() == 481);
+  REQUIRE(s.getCompartments().getCompartment("cytoplasm")->nVoxels() == 7800);
+  REQUIRE(s.getCompartments().getCompartment("nucleus")->nVoxels() == 481);
   REQUIRE(s.getMembranes().getIds().size() == 1);
   REQUIRE(s.getMembranes()
               .getMembrane("cytoplasm_nucleus_membrane")

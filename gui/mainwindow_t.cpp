@@ -9,6 +9,7 @@
 #include <QStatusBar>
 
 using namespace sme::test;
+using Catch::Matchers::ContainsSubstring;
 
 static const char *tags{"[gui/mainwindow][gui][mainwindow]"};
 
@@ -27,9 +28,8 @@ TEST_CASE("MainWindow: non-existent file", tags) {
   mwt.start();
   MainWindow w("dontexist.xml");
   w.show();
-  REQUIRE(mwt.getResult() ==
-          "Failed to load file dontexist.xml\n\n[2] "
-          "[Operating system] line 1:1 File unreadable.\n\n");
+  REQUIRE_THAT(mwt.getResult().toStdString(),
+               ContainsSubstring("Failed to load file dontexist.xml"));
 }
 
 TEST_CASE("MainWindow: shortcut keys", tags) {

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include <QWidget>
 #include <memory>
 
@@ -42,18 +43,18 @@ private:
   bool waitingForCompartmentChoice{false};
   bool membraneSelected{false};
 
-  void lblGeometry_mouseClicked(QRgb col, QPoint point);
+  void lblGeometry_mouseClicked(QRgb col, sme::common::Voxel point);
   void btnAddCompartment_clicked();
   void btnRemoveCompartment_clicked();
   void btnChangeCompartment_clicked();
   void txtCompartmentName_editingFinished();
   void tabCompartmentGeometry_currentChanged(int index);
-  void lblCompShape_mouseOver(QPoint point);
-  void lblCompBoundary_mouseClicked(QRgb col, QPoint point);
+  void lblCompShape_mouseOver(const sme::common::Voxel &point);
+  void lblCompBoundary_mouseClicked(QRgb col, sme::common::Voxel point);
   void spinBoundaryIndex_valueChanged(int value);
   void spinMaxBoundaryPoints_valueChanged(int value);
   void spinBoundaryZoom_valueChanged(int value);
-  void lblCompMesh_mouseClicked(QRgb col, QPoint point);
+  void lblCompMesh_mouseClicked(QRgb col, sme::common::Voxel point);
   void spinMaxTriangleArea_valueChanged(int value);
   void spinMeshZoom_valueChanged(int value);
   void listCompartments_itemSelectionChanged();

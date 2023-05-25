@@ -8,15 +8,8 @@
 //  - stringToVector: convert space-delimited list of values to a vector
 //  - vectorToString: convert vector of values to a space-delimited list
 //  - indexedColours: a set of default colours for display purposes
-//  - QPointIndexer class:
-//     - given vector of QPoints
-//     - lookup index of any QPoint in the vector
-//     - returns std::optional with index if found
-//  - QPointUniqueIndexer class:
-//     - as above but removes duplicated QPoints first
 //  - SmallMap: simple insert-only map for small number of small types
 //  - SmallStackSet: simple fast non-allocating set implementation for a small
-//  number of small (i.e. pass by copy) types, with hard limit on size
 
 #pragma once
 
@@ -130,17 +123,6 @@ std::size_t element_index(const Container &c, const Element &e,
   }
   return static_cast<std::size_t>(std::distance(cbegin(c), iter));
 }
-
-/**
- * @brief Grayscale image from array of pixel intensities
- *
- * If a positive value is supplied for `maxValue` it determines the value that
- * corresponds to white in the image, otherwise by default the maximum value
- * from `values` is used.
- */
-QImage toGrayscaleIntensityImage(const QSize &imageSize,
-                                 const std::vector<double> &values,
-                                 double maxValue = -1.0);
 
 /**
  * @brief The type of an object as a string
@@ -263,70 +245,6 @@ private:
 
 public:
   const QColor &operator[](std::size_t i) const;
-};
-
-/**
- * @brief Convert a (2d) QPoint to an integer
- *
- * Given a bounding box and a QPoint within this box, return an integer
- * that identifies this point.
- */
-class QPointFlattener {
-private:
-  QSize box;
-
-public:
-  explicit QPointFlattener(const QSize &boundingBox);
-  /**
-   * @brief Check if the point is inside the bounding box
-   */
-  [[nodiscard]] bool isValid(const QPoint &point) const;
-  /**
-   * @brief Return an index corresponding to the given point
-   */
-  [[nodiscard]] std::size_t flatten(const QPoint &point) const;
-};
-
-/**
- * @brief Fast look-up of points within a bounding box
- *
- * Stores a set of points that lie within a bounding box. Allows fast look-up of
- * the index of each point.
- */
-class QPointIndexer {
-private:
-  QPointFlattener flattener;
-  std::size_t nPoints = 0;
-  std::vector<std::size_t> pointIndex;
-
-public:
-  explicit QPointIndexer(const QSize &boundingBox,
-                         const std::vector<QPoint> &qPoints = {});
-  void addPoints(const std::vector<QPoint> &qPoints);
-  [[nodiscard]] std::optional<std::size_t> getIndex(const QPoint &point) const;
-  [[nodiscard]] std::size_t getNumPoints() const;
-};
-
-/**
- * @brief Fast look-up of unique points within a bounding box
- *
- * Stores a set of unique points that lie within a bounding box. Allows fast
- * look-up of the index of each point.
- * @see QPointIndexer
- */
-class QPointUniqueIndexer {
-private:
-  QPointFlattener flattener;
-  std::size_t nPoints = 0;
-  std::vector<std::size_t> pointIndex;
-  std::vector<QPoint> points;
-
-public:
-  explicit QPointUniqueIndexer(const QSize &boundingBox,
-                               const std::vector<QPoint> &qPoints = {});
-  void addPoints(const std::vector<QPoint> &qPoints);
-  [[nodiscard]] std::optional<std::size_t> getIndex(const QPoint &point) const;
-  [[nodiscard]] std::vector<QPoint> getPoints() const;
 };
 
 /**

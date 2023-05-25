@@ -20,6 +20,7 @@ enum struct Mod {
   LiverSimplified,
   LiverCells,
   SingleCompartmentDiffusion,
+  SingleCompartmentDiffusion3D,
   VerySimpleModel
 };
 

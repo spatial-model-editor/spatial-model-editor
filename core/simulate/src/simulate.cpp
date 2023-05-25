@@ -2,6 +2,7 @@
 #include "dunesim.hpp"
 #include "pixelsim.hpp"
 #include "sme/geometry.hpp"
+#include "sme/geometry_utils.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh.hpp"
 #include "sme/model.hpp"
@@ -196,7 +197,7 @@ void Simulation::updateConcentrations(double t) {
 Simulation::Simulation(model::Model &model)
     : model(model), settings(&model.getSimulationSettings()),
       data{&model.getSimulationData()},
-      imageSize(model.getGeometry().getImage().size()) {
+      imageSize(model.getGeometry().getImages().volume()) {
   if (data->timePoints.size() <= 1) {
     SPDLOG_INFO("starting new simulation");
     data->clear();
@@ -326,7 +327,9 @@ const std::string &Simulation::errorMessage() const {
   return simulator->errorMessage();
 }
 
-const QImage &Simulation::errorImage() const { return simulator->errorImage(); }
+const common::ImageStack &Simulation::errorImages() const {
+  return simulator->errorImages();
+}
 
 const std::vector<std::string> &Simulation::getCompartmentIds() const {
   return compartmentIds;
@@ -357,7 +360,7 @@ std::vector<double> Simulation::getConc(std::size_t timeIndex,
                                         std::size_t speciesIndex) const {
   std::vector<double> c;
   const auto &compConc = data->concentration[timeIndex][compartmentIndex];
-  std::size_t nPixels = compartments[compartmentIndex]->nPixels();
+  std::size_t nPixels = compartments[compartmentIndex]->nVoxels();
   std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
   std::size_t stride{nSpecies + data->concPadding[timeIndex]};
   c.reserve(nPixels);
@@ -374,13 +377,14 @@ std::vector<double> Simulation::getConcArray(std::size_t timeIndex,
       static_cast<std::size_t>(imageSize.width() * imageSize.height()), 0.0);
   const auto &compConc = data->concentration[timeIndex][compartmentIndex];
   const auto &comp = compartments[compartmentIndex];
-  std::size_t nPixels = comp->nPixels();
+  std::size_t nPixels = comp->nVoxels();
   std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
   std::size_t stride{nSpecies + data->concPadding[timeIndex]};
   for (std::size_t ix = 0; ix < nPixels; ++ix) {
-    const auto &point = comp->getPixel(ix);
+    const auto &point = comp->getVoxel(ix);
     auto arrayIndex{static_cast<std::size_t>(
-        point.x() + imageSize.width() * (imageSize.height() - 1 - point.y()))};
+        point.p.x() +
+        imageSize.width() * (imageSize.height() - 1 - point.p.y()))};
     c[arrayIndex] = compConc[ix * stride + speciesIndex];
   }
   return c;
@@ -405,7 +409,7 @@ std::vector<double> Simulation::getDcdt(std::size_t compartmentIndex,
   if (const auto *s = dynamic_cast<const PixelSim *>(simulator.get());
       s != nullptr) {
     const auto &compDcdt = s->getDcdt(compartmentIndex);
-    std::size_t nPixels = compartments[compartmentIndex]->nPixels();
+    std::size_t nPixels = compartments[compartmentIndex]->nVoxels();
     std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
     std::size_t stride{nSpecies + data->concPadding.back()};
     c.reserve(nPixels);
@@ -424,14 +428,14 @@ std::vector<double> Simulation::getDcdtArray(std::size_t compartmentIndex,
       s != nullptr) {
     const auto &compDcdt = s->getDcdt(compartmentIndex);
     const auto &comp = compartments[compartmentIndex];
-    std::size_t nPixels = compartments[compartmentIndex]->nPixels();
+    std::size_t nPixels = compartments[compartmentIndex]->nVoxels();
     std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
     std::size_t stride{nSpecies + data->concPadding.back()};
     for (std::size_t ix = 0; ix < nPixels; ++ix) {
-      const auto &point = comp->getPixel(ix);
+      const auto &point = comp->getVoxel(ix);
       auto arrayIndex{static_cast<std::size_t>(
-          point.x() +
-          imageSize.width() * (imageSize.height() - 1 - point.y()))};
+          point.p.x() +
+          imageSize.width() * (imageSize.height() - 1 - point.p.y()))};
       c[arrayIndex] = compDcdt[ix * stride + speciesIndex];
     }
   }
@@ -449,12 +453,12 @@ double Simulation::getLowerOrderConc(std::size_t compartmentIndex,
   return 0;
 }
 
-QImage Simulation::getConcImage(
+common::ImageStack Simulation::getConcImage(
     std::size_t timeIndex,
     const std::vector<std::vector<std::size_t>> &speciesToDraw,
     bool normaliseOverAllTimepoints, bool normaliseOverAllSpecies) const {
   if (compartments.empty()) {
-    return QImage();
+    return common::ImageStack{};
   }
   constexpr double minimumNonzeroConc{100.0 *
                                       std::numeric_limits<double>::min()};
@@ -494,16 +498,15 @@ QImage Simulation::getConcImage(
       }
     }
   }
-  QImage img(imageSize, QImage::Format_ARGB32_Premultiplied);
-  img.fill(qRgba(0, 0, 0, 0));
+  common::ImageStack imgs(imageSize, QImage::Format_ARGB32_Premultiplied);
+  imgs.fill(0);
   // iterate over compartments
   for (std::size_t ic = 0; ic < compartments.size(); ++ic) {
-    const auto &pixels{compartments[ic]->getPixels()};
+    const auto &voxels{compartments[ic]->getVoxels()};
     const auto &conc{data->concentration[timeIndex][ic]};
     std::size_t nSpecies = compartmentSpeciesIds[ic].size();
     std::size_t stride{nSpecies + data->concPadding[timeIndex]};
-    for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
-      const QPoint &p{pixels[ix]};
+    for (std::size_t ix = 0; ix < voxels.size(); ++ix) {
       int r = 0;
       int g = 0;
       int b = 0;
@@ -517,10 +520,10 @@ QImage Simulation::getConcImage(
       r = r < 256 ? r : 255;
       g = g < 256 ? g : 255;
       b = b < 256 ? b : 255;
-      img.setPixel(p, qRgb(r, g, b));
+      imgs[voxels[ix].z].setPixel(voxels[ix].p, qRgb(r, g, b));
     }
   }
-  return img;
+  return imgs;
 }
 
 [[nodiscard]] const std::vector<std::string> &
@@ -544,12 +547,12 @@ Simulation::getPyConcs(std::size_t timeIndex,
           static_cast<std::size_t>(imageSize.width() * imageSize.height()),
           0.0));
   const auto w{static_cast<std::size_t>(imageSize.width())};
-  const auto &pixels{compartments[compartmentIndex]->getPixels()};
+  const auto &pixels{compartments[compartmentIndex]->getVoxels()};
   const auto &conc{data->concentration[timeIndex][compartmentIndex]};
   const std::size_t nSpecies{compartmentSpeciesIds[compartmentIndex].size()};
   const std::size_t stride{nSpecies + data->concPadding[timeIndex]};
   for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
-    const auto pyIndex{pointToPyIndex(pixels[ix], w)};
+    const auto pyIndex{pointToPyIndex(pixels[ix].p, w)};
     for (std::size_t is : compartmentSpeciesIndices[compartmentIndex]) {
       pyConcs[is][pyIndex] = conc[ix * stride + is];
     }
@@ -570,12 +573,12 @@ Simulation::getPyDcdts(std::size_t compartmentIndex) const {
           static_cast<std::size_t>(imageSize.width() * imageSize.height()),
           0.0));
   const auto w{static_cast<std::size_t>(imageSize.width())};
-  const auto &pixels{compartments[compartmentIndex]->getPixels()};
+  const auto &pixels{compartments[compartmentIndex]->getVoxels()};
   const auto &dcdt{pixelSim->getDcdt(compartmentIndex)};
   const std::size_t nSpecies{compartmentSpeciesIds[compartmentIndex].size()};
   const std::size_t stride{nSpecies + data->concPadding.back()};
   for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
-    const auto pyIndex{pointToPyIndex(pixels[ix], w)};
+    const auto pyIndex{pointToPyIndex(pixels[ix].p, w)};
     for (std::size_t is : compartmentSpeciesIndices[compartmentIndex]) {
       pyDcdts[is][pyIndex] = dcdt[ix * stride + is];
     }

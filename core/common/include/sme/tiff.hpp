@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "sme/image_stack.hpp"
 #include <QImage>
 #include <QString>
 #include <cstddef>
@@ -24,13 +25,13 @@ double writeTIFF(const std::string &filename, const QSize &imageSize,
 
 class TiffReader {
 private:
-  std::vector<QImage> qImages;
-  QString errorMessage;
+  sme::common::ImageStack imageStack{};
+  QString errorMessage{};
 
 public:
   explicit TiffReader(const std::string &filename);
-  [[nodiscard]] std::size_t size() const;
-  [[nodiscard]] QImage getImage(std::size_t i = 0) const;
+  [[nodiscard]] bool empty() const;
+  [[nodiscard]] sme::common::ImageStack getImages() const;
   [[nodiscard]] const QString &getErrorMessage() const;
 };
 

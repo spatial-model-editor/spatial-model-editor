@@ -31,8 +31,12 @@ TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
           &TabGeometry::tabCompartmentGeometry_currentChanged);
   connect(ui->lblCompShape, &QLabelMouseTracker::mouseOver, this,
           &TabGeometry::lblCompShape_mouseOver);
+  connect(lblGeometry->getZSlider(), &QSlider::valueChanged, ui->lblCompShape,
+          &QLabelMouseTracker::setZIndex);
   connect(ui->lblCompBoundary, &QLabelMouseTracker::mouseClicked, this,
           &TabGeometry::lblCompBoundary_mouseClicked);
+  connect(lblGeometry->getZSlider(), &QSlider::valueChanged,
+          ui->lblCompBoundary, &QLabelMouseTracker::setZIndex);
   connect(ui->lblCompBoundary, &QLabelMouseTracker::mouseWheelEvent, this,
           [this](QWheelEvent *ev) {
             if (ev->modifiers() == Qt::ShiftModifier) {
@@ -49,6 +53,8 @@ TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
           &TabGeometry::spinBoundaryZoom_valueChanged);
   connect(ui->lblCompMesh, &QLabelMouseTracker::mouseClicked, this,
           &TabGeometry::lblCompMesh_mouseClicked);
+  connect(lblGeometry->getZSlider(), &QSlider::valueChanged, ui->lblCompMesh,
+          &QLabelMouseTracker::setZIndex);
   connect(ui->lblCompMesh, &QLabelMouseTracker::mouseWheelEvent, this,
           [this](QWheelEvent *ev) {
             if (ev->modifiers() == Qt::ShiftModifier) {
@@ -89,7 +95,7 @@ void TabGeometry::loadModelData(const QString &selection) {
     ui->listCompartments->setCurrentRow(0);
     ui->btnChangeCompartment->setEnabled(true);
   }
-  lblGeometry->setImage(model.getGeometry().getImage());
+  lblGeometry->setImage(model.getGeometry().getImages());
   enableTabs();
   selectMatchingOrFirstItem(ui->listCompartments, selection);
 }
@@ -111,10 +117,10 @@ void TabGeometry::invertYAxis(bool enable) {
   ui->lblCompMesh->invertYAxis(enable);
 }
 
-void TabGeometry::lblGeometry_mouseClicked(QRgb col, QPoint point) {
+void TabGeometry::lblGeometry_mouseClicked(QRgb col, sme::common::Voxel point) {
   if (waitingForCompartmentChoice) {
     SPDLOG_INFO("colour {:x}", col);
-    SPDLOG_INFO("point ({},{})", point.x(), point.y());
+    SPDLOG_INFO("point ({},{},{})", point.p.x(), point.p.y(), point.z);
     // update compartment geometry (i.e. colour) of selected compartment to
     // the one the user just clicked on
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -242,14 +248,15 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
     return;
   }
   if (index == TabIndex::BOUNDARIES) {
-    auto size = model.getGeometry().getMesh()->getNumBoundaries();
-    if (size == 0) {
+    const auto *mesh{model.getGeometry().getMesh()};
+    if (mesh == nullptr || mesh->getNumBoundaries() == 0) {
       ui->spinBoundaryIndex->setEnabled(false);
       ui->spinMaxBoundaryPoints->setEnabled(false);
       ui->spinBoundaryZoom->setEnabled(false);
       return;
     }
-    ui->spinBoundaryIndex->setMaximum(static_cast<int>(size) - 1);
+    ui->spinBoundaryIndex->setMaximum(
+        static_cast<int>(mesh->getNumBoundaries()) - 1);
     ui->spinBoundaryIndex->setEnabled(true);
     ui->spinMaxBoundaryPoints->setEnabled(true);
     ui->spinBoundaryZoom->setEnabled(true);
@@ -286,13 +293,14 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
   }
 }
 
-void TabGeometry::lblCompShape_mouseOver(QPoint point) {
+void TabGeometry::lblCompShape_mouseOver(const sme::common::Voxel &point) {
   if (statusBar != nullptr) {
     statusBar->showMessage(model.getGeometry().getPhysicalPointAsString(point));
   }
 }
 
-void TabGeometry::lblCompBoundary_mouseClicked(QRgb col, QPoint point) {
+void TabGeometry::lblCompBoundary_mouseClicked(QRgb col,
+                                               sme::common::Voxel point) {
   Q_UNUSED(col);
   Q_UNUSED(point);
   auto index = ui->lblCompBoundary->getMaskIndex();
@@ -335,11 +343,11 @@ void TabGeometry::spinBoundaryZoom_valueChanged(int value) {
   spinBoundaryIndex_valueChanged(ui->spinBoundaryIndex->value());
 }
 
-void TabGeometry::lblCompMesh_mouseClicked(QRgb col, QPoint point) {
+void TabGeometry::lblCompMesh_mouseClicked(QRgb col, sme::common::Voxel point) {
   Q_UNUSED(col);
   Q_UNUSED(point);
   auto index = ui->lblCompMesh->getMaskIndex();
-  SPDLOG_TRACE("Point ({},{}), Mask index {}", point.x(), point.y(), index);
+  SPDLOG_TRACE("Point ({},{}), Mask index {}", point.p.x(), point.p.y(), index);
   auto membraneIndex = static_cast<int>(index) - ui->listCompartments->count();
   if (index >= 0 && index < ui->listCompartments->count()) {
     ui->listCompartments->setCurrentRow(index);
@@ -401,16 +409,16 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
   if (col == 0) {
     // null (transparent) RGB colour: compartment does not have
     // an assigned colour in the image
-    ui->lblCompShape->setImage(QImage());
+    ui->lblCompShape->setImage({});
     ui->lblCompartmentColour->setText("none");
-    ui->lblCompShape->setImage(QImage());
+    ui->lblCompShape->setImage({});
     ui->lblCompShape->setText(
         "<p>Compartment has no assigned geometry</p> "
         "<ul><li>please click on the 'Select compartment geometry...' "
         "button below</li> "
         "<li> then on the desired location in the geometry "
         "image on the left</li></ul>");
-    ui->lblCompMesh->setImage(QImage());
+    ui->lblCompMesh->setImage({});
     ui->lblCompMesh->setText("none");
   } else {
     // update colour box
@@ -420,17 +428,17 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
     ui->lblCompartmentColour->setText("");
     // update image of compartment
     const auto *comp{model.getCompartments().getCompartment(compId)};
-    ui->lblCompShape->setImage(comp->getCompartmentImage());
+    ui->lblCompShape->setImage(comp->getCompartmentImages());
     ui->lblCompShape->setText("");
     // update mesh or boundary image if tab is currently visible
     tabCompartmentGeometry_currentChanged(
         ui->tabCompartmentGeometry->currentIndex());
-    // update compartment size
+    // update compartment volume
     double volume{model.getCompartments().getSize(compId)};
     ui->lblCompSize->setText(QString("Volume: %1 %2 (%3 pixels)")
                                  .arg(QString::number(volume, 'g', 13))
                                  .arg(model.getUnits().getVolume().name)
-                                 .arg(comp->nPixels()));
+                                 .arg(comp->nVoxels()));
   }
 }
 
@@ -460,7 +468,7 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
   ui->txtCompartmentName->setText(ui->listMembranes->currentItem()->text());
   // update image
   const auto *m{model.getMembranes().getMembrane(membraneId)};
-  ui->lblCompShape->setImage(m->getImage());
+  ui->lblCompShape->setImage(m->getImages());
   auto nPixels{m->getIndexPairs().size()};
   // update colour box
   QImage img(1, 2, QImage::Format_RGB32);

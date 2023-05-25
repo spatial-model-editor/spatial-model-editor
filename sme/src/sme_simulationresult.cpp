@@ -21,7 +21,7 @@ void pybindSimulationResult(pybind11::module &m) {
                     R"(
                     numpy.ndarray: an image of the species concentrations at this timepoint
 
-                    An array of RGB integer values for each pixel in the image of
+                    An array of RGB integer values for each voxel in the image of
                     the compartments in this model,
                     which can be displayed using e.g. ``matplotlib.pyplot.imshow``
 
@@ -34,25 +34,25 @@ void pybindSimulationResult(pybind11::module &m) {
                         >>> results = model.simulate(10, 1)
                         >>> concentration_image = results[-1].concentration_image
 
-                        the image is a 3d (height x width x 3) array of integers:
+                        the image is a 4d (depth x height x width x 3) array of integers:
 
                         >>> type(concentration_image)
                         <class 'numpy.ndarray'>
                         >>> concentration_image.dtype
                         dtype('uint8')
                         >>> concentration_image.shape
-                        (100, 100, 3)
+                        (1, 100, 100, 3)
 
-                        each pixel in the image has a triplet of RGB integer values
+                        each voxel in the image has a triplet of RGB integer values
                         in the range 0-255:
 
-                        >>> concentration_image[34, 36]
+                        >>> concentration_image[0, 34, 36]
                         array([33, 23,  9], dtype=uint8)
 
                         the image can be displayed using matplotlib:
 
                         >>> import matplotlib.pyplot as plt
-                        >>> imgplot = plt.imshow(concentration_image)
+                        >>> imgplot = plt.imshow(concentration_image[0])
                     )")
       .def_readonly("species_concentration",
                     &SimulationResult::species_concentration,
@@ -60,8 +60,8 @@ void pybindSimulationResult(pybind11::module &m) {
                     Dict[str, numpy.ndarray]: the species concentrations at this timepoint
 
                     for each species, the concentrations are provided as a
-                    2d array, where ``species_concentration['A'][y][x]``
-                    is the concentration of species "A" at the point (x,y)
+                    3d array, where ``species_concentration['A'][z][y][x]``
+                    is the concentration of species "A" at the point (x,y,z)
 
                     Examples:
                         do a short simulation and get the species concentrations from the last timepoint:
@@ -78,7 +78,7 @@ void pybindSimulationResult(pybind11::module &m) {
                         >>> species_concentration.keys()
                         dict_keys(['B_out', 'A_cell', 'B_cell', 'A_nucl', 'B_nucl'])
 
-                        the concentrations are a 2d ndarray of doubles,
+                        the concentrations are a 3d ndarray of doubles,
                         one for each pixel in the geometry image:
 
                         >>> b_cell = species_concentration['B_cell']
@@ -87,20 +87,20 @@ void pybindSimulationResult(pybind11::module &m) {
                         >>> b_cell.dtype
                         dtype('float64')
                         >>> b_cell.shape
-                        (100, 100)
+                        (1, 100, 100)
 
                         the concentrations can be displayed using matplotlib:
 
                         >>> import matplotlib.pyplot as plt
-                        >>> imgplot = plt.imshow(b_cell)
+                        >>> imgplot = plt.imshow(b_cell[0])
                     )")
       .def_readonly("species_dcdt", &SimulationResult::species_dcdt,
                     R"(
                     Dict[str, numpy.ndarray]: the species concentration rate of change at this timepoint
 
                     for each species, the rate of change of concentration is provided as a
-                    2d array, where ``species_dcdt['A'][y][x]``
-                    is the rate of change of the concentration of species "A" at the point (x,y)
+                    3d array, where ``species_dcdt['A'][z][y][x]``
+                    is the rate of change of the concentration of species "A" at the point (x,y,z)
 
                     Note:
                         The rate of change of species concentrations is only provided
@@ -132,12 +132,12 @@ void pybindSimulationResult(pybind11::module &m) {
                         >>> b_cell.dtype
                         dtype('float64')
                         >>> b_cell.shape
-                        (100, 100)
+                        (1, 100, 100)
 
                         the rate of change of concentration can be displayed using matplotlib:
 
                         >>> import matplotlib.pyplot as plt
-                        >>> imgplot = plt.imshow(b_cell)
+                        >>> imgplot = plt.imshow(b_cell[0])
                     )")
       .def("__repr__",
            [](const SimulationResult &a) {

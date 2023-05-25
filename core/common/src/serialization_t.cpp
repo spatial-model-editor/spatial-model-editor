@@ -171,7 +171,9 @@ TEST_CASE("Serialization",
 
     model::Model m2;
     m2.importFile("test2.sme");
-    REQUIRE(m.getGeometry().getImage() == m2.getGeometry().getImage());
+    REQUIRE(m.getGeometry().getImages().volume().depth() == 1);
+    REQUIRE(m2.getGeometry().getImages().volume().depth() == 1);
+    REQUIRE(m.getGeometry().getImages()[0] == m2.getGeometry().getImages()[0]);
     const auto &s{m2.getSampledFieldColours()};
     REQUIRE(s[0] == 4278719745);
     REQUIRE(s[1] == 4278237440);
@@ -196,7 +198,9 @@ TEST_CASE("Serialization",
 
     model::Model m2;
     m2.importFile("test3.sme");
-    REQUIRE(m.getGeometry().getImage() == m2.getGeometry().getImage());
+    REQUIRE(m.getGeometry().getImages().volume().depth() == 1);
+    REQUIRE(m2.getGeometry().getImages().volume().depth() == 1);
+    REQUIRE(m.getGeometry().getImages()[0] == m2.getGeometry().getImages()[0]);
     const auto &s2{m2.getSampledFieldColours()};
     REQUIRE(s2[0] == 4278719745);
     REQUIRE(s2[1] == 4278237440);
@@ -205,10 +209,10 @@ TEST_CASE("Serialization",
     REQUIRE(s3.getColours().size() == 2);
     REQUIRE(s3.getColours()[0] == 4278237440);
     REQUIRE(s3.getColours()[1] == 4279380443);
-    REQUIRE(s.getCompartments()[0]->nPixels() ==
-            s3.getCompartments()[0]->nPixels());
-    REQUIRE(s.getCompartments()[1]->nPixels() ==
-            s3.getCompartments()[1]->nPixels());
+    REQUIRE(s.getCompartments()[0]->nVoxels() ==
+            s3.getCompartments()[0]->nVoxels());
+    REQUIRE(s.getCompartments()[1]->nVoxels() ==
+            s3.getCompartments()[1]->nVoxels());
 
     m.exportSBMLFile("test4.xml");
 

@@ -17,7 +17,8 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     imgBoundary.emplace_back(0, img.height() - 1);
     imgBoundary.emplace_back(img.width() - 1, img.height() - 1);
     imgBoundary.emplace_back(img.width() - 1, 0);
-    mesh::Mesh mesh(img, {}, {999}, 1.0, QPointF(0, 0), std::vector<QRgb>{col});
+    mesh::Mesh mesh(img, {}, {999}, {1.0, 1.0, 1.0}, {0, 0, 0},
+                    std::vector<QRgb>{col});
     SECTION("check outputs") {
       // check boundaries
       REQUIRE(mesh.getNumBoundaries() == 1);
@@ -49,29 +50,29 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
       auto [boundaryImage, maskImage] =
           mesh.getBoundariesImages(QSize(100, 100), 0);
       auto col0 = common::indexedColours()[0].rgba();
-      REQUIRE(boundaryImage.width() == 77);
-      REQUIRE(boundaryImage.height() == 100);
-      REQUIRE(boundaryImage.pixel(1, 1) == col0);
-      REQUIRE(boundaryImage.pixel(8, 8) == col0);
-      REQUIRE(boundaryImage.pixel(73, 4) == col0);
-      REQUIRE(boundaryImage.pixel(73, 51) == col0);
-      REQUIRE(boundaryImage.pixel(72, 93) == col0);
-      REQUIRE(boundaryImage.pixel(30, 94) == col0);
-      REQUIRE(boundaryImage.pixel(1, 95) == col0);
-      REQUIRE(boundaryImage.pixel(9, 11) == 0);
-      REQUIRE(boundaryImage.pixel(54, 19) == 0);
-      REQUIRE(boundaryImage.pixel(53, 78) == 0);
-      REQUIRE(boundaryImage.pixel(9, 81) == 0);
+      REQUIRE(boundaryImage[0].width() == 77);
+      REQUIRE(boundaryImage[0].height() == 100);
+      REQUIRE(boundaryImage[0].pixel(1, 1) == col0);
+      REQUIRE(boundaryImage[0].pixel(8, 8) == col0);
+      REQUIRE(boundaryImage[0].pixel(73, 4) == col0);
+      REQUIRE(boundaryImage[0].pixel(73, 51) == col0);
+      REQUIRE(boundaryImage[0].pixel(72, 93) == col0);
+      REQUIRE(boundaryImage[0].pixel(30, 94) == col0);
+      REQUIRE(boundaryImage[0].pixel(1, 95) == col0);
+      REQUIRE(boundaryImage[0].pixel(9, 11) == 0);
+      REQUIRE(boundaryImage[0].pixel(54, 19) == 0);
+      REQUIRE(boundaryImage[0].pixel(53, 78) == 0);
+      REQUIRE(boundaryImage[0].pixel(9, 81) == 0);
 
       auto [meshImage, meshMaskImage] = mesh.getMeshImages(QSize(100, 100), 0);
-      REQUIRE(meshImage.width() == 77);
-      REQUIRE(meshImage.height() == 100);
+      REQUIRE(meshImage[0].width() == 77);
+      REQUIRE(meshImage[0].height() == 100);
 
       // check rescaling of image
       auto [boundaryImage2, maskImage2] =
           mesh.getBoundariesImages(QSize(30, 120), 0);
-      REQUIRE(boundaryImage2.width() == 30);
-      REQUIRE(boundaryImage2.height() == 36);
+      REQUIRE(boundaryImage2[0].width() == 30);
+      REQUIRE(boundaryImage2[0].height() == 36);
     }
     SECTION("max boundary points increased") {
       REQUIRE(mesh.getBoundaryMaxPoints(0) == 4);
@@ -149,34 +150,34 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     // flip y-axis to match (0,0) == bottom-left of meshing output
     img = img.mirrored(false, true);
 
-    mesh::Mesh mesh(img, {}, {999, 999}, 1.0, QPointF(0, 0),
+    mesh::Mesh mesh(img, {}, {999, 999}, {1.0, 1.0, 1.0}, {0, 0, 0},
                     std::vector<QRgb>{bgcol, col});
 
     // check boundaries image
     auto [boundaryImage, maskImage] =
         mesh.getBoundariesImages(QSize(100, 100), 0);
-    REQUIRE(boundaryImage.width() == 77);
-    REQUIRE(boundaryImage.height() == 100);
+    REQUIRE(boundaryImage[0].width() == 77);
+    REQUIRE(boundaryImage[0].height() == 100);
     auto col0 = common::indexedColours()[0].rgba();
     auto col1 = common::indexedColours()[1].rgba();
-    REQUIRE(boundaryImage.pixel(1, 1) == col0);
-    REQUIRE(boundaryImage.pixel(4, 5) == col0);
-    REQUIRE(boundaryImage.pixel(72, 96) == col0);
-    REQUIRE(boundaryImage.pixel(72, 1) == col0);
-    REQUIRE(boundaryImage.pixel(22, 76) == 0);
+    REQUIRE(boundaryImage[0].pixel(1, 1) == col0);
+    REQUIRE(boundaryImage[0].pixel(4, 5) == col0);
+    REQUIRE(boundaryImage[0].pixel(72, 96) == col0);
+    REQUIRE(boundaryImage[0].pixel(72, 1) == col0);
+    REQUIRE(boundaryImage[0].pixel(22, 76) == 0);
     // anti-aliasing means pixel may not have exactly the expected color:
-    REQUIRE(qRed(boundaryImage.pixel(25, 80)) ==
+    REQUIRE(qRed(boundaryImage[0].pixel(25, 80)) ==
             Catch::Approx(qRed(col1)).margin(10));
-    REQUIRE(qGreen(boundaryImage.pixel(25, 80)) ==
+    REQUIRE(qGreen(boundaryImage[0].pixel(25, 80)) ==
             Catch::Approx(qGreen(col1)).margin(10));
-    REQUIRE(qBlue(boundaryImage.pixel(25, 80)) ==
+    REQUIRE(qBlue(boundaryImage[0].pixel(25, 80)) ==
             Catch::Approx(qBlue(col1)).margin(10));
     auto [boundaryImage2, maskImage2] =
         mesh.getBoundariesImages(QSize(100, 100), 1);
-    REQUIRE(boundaryImage2.pixel(4, 5) == col0);
-    REQUIRE(boundaryImage2.pixel(8, 7) == 0);
-    REQUIRE(boundaryImage2.pixel(26, 75) == col1);
-    REQUIRE(boundaryImage2.pixel(20, 76) == col1);
+    REQUIRE(boundaryImage2[0].pixel(4, 5) == col0);
+    REQUIRE(boundaryImage2[0].pixel(8, 7) == 0);
+    REQUIRE(boundaryImage2[0].pixel(26, 75) == col1);
+    REQUIRE(boundaryImage2[0].pixel(20, 76) == col1);
   }
   SECTION("interior point outside compartment") {
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/585
@@ -184,7 +185,7 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     QRgb col = QColor(0, 0, 0).rgb();
     img.fill(col);
     std::size_t maxTriangleArea{999};
-    mesh::Mesh mesh(img, {}, {maxTriangleArea}, 1.0, QPointF(0, 0),
+    mesh::Mesh mesh(img, {}, {maxTriangleArea}, {1.0, 1.0, 1.0}, {0, 0, 0},
                     std::vector<QRgb>{col});
     REQUIRE(mesh.isValid() == true);
     // use 3 point boundary around 3x1 pixel rectangle:

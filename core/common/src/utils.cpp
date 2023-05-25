@@ -1,37 +1,10 @@
 #include "sme/utils.hpp"
+#include "sme/image_stack.hpp"
 #include <algorithm>
 #include <limits>
 #include <stdexcept>
 
 namespace sme::common {
-
-QImage toGrayscaleIntensityImage(const QSize &imageSize,
-                                 const std::vector<double> &values,
-                                 double maxValue) {
-  QImage img(imageSize, QImage::Format_RGB32);
-  if (values.size() != img.width() * img.height()) {
-    img.fill(0);
-  } else {
-    double scaleFactor{0.0};
-    if (maxValue < 0) {
-      // use maximum value from supplied values
-      maxValue = max(values);
-    }
-    if (maxValue > 0.0) {
-      scaleFactor = 255.0 / maxValue;
-    }
-    auto value{values.cbegin()};
-    for (int y = img.height() - 1; y >= 0; --y) {
-      for (int x = 0; x < img.width(); ++x) {
-        auto intensity{static_cast<int>(scaleFactor * (*value))};
-        intensity = std::clamp(intensity, 0, 255);
-        img.setPixel(x, y, qRgb(intensity, intensity, intensity));
-        ++value;
-      }
-    }
-  }
-  return img;
-}
 
 std::vector<std::string> toStdString(const QStringList &q) {
   std::vector<std::string> v;
@@ -94,88 +67,6 @@ const std::vector<QColor> indexedColours::colours = std::vector<QColor>{
 const QColor &indexedColours::operator[](std::size_t i) const {
   return colours[i % colours.size()];
 }
-
-constexpr std::size_t NULL_INDEX = std::numeric_limits<std::size_t>::max();
-
-QPointFlattener::QPointFlattener(const QSize &boundingBox) : box(boundingBox) {}
-
-bool QPointFlattener::isValid(const QPoint &point) const {
-  bool xInside = (point.x() >= 0) && (point.x() < box.width());
-  bool yInside = (point.y() >= 0) && (point.y() < box.height());
-  return xInside && yInside;
-}
-
-std::size_t QPointFlattener::flatten(const QPoint &point) const {
-  return static_cast<std::size_t>(point.x() * box.height() + point.y());
-}
-
-QPointIndexer::QPointIndexer(const QSize &boundingBox,
-                             const std::vector<QPoint> &qPoints)
-    : flattener(boundingBox),
-      pointIndex(
-          static_cast<std::size_t>(boundingBox.width() * boundingBox.height()),
-          NULL_INDEX) {
-  addPoints(qPoints);
-}
-
-void QPointIndexer::addPoints(const std::vector<QPoint> &qPoints) {
-  for (const auto &point : qPoints) {
-    if (!flattener.isValid(point)) {
-      throw std::invalid_argument("invalid point: not within bounding box");
-    }
-    pointIndex[flattener.flatten(point)] = nPoints++;
-  }
-}
-
-std::optional<std::size_t> QPointIndexer::getIndex(const QPoint &point) const {
-  if (!flattener.isValid(point)) {
-    return {};
-  }
-  auto index = pointIndex[flattener.flatten(point)];
-  if (index == NULL_INDEX) {
-    return {};
-  }
-  return index;
-}
-
-std::size_t QPointIndexer::getNumPoints() const { return nPoints; }
-
-QPointUniqueIndexer::QPointUniqueIndexer(const QSize &boundingBox,
-                                         const std::vector<QPoint> &qPoints)
-    : flattener(boundingBox),
-      pointIndex(
-          static_cast<std::size_t>(boundingBox.width() * boundingBox.height()),
-          NULL_INDEX) {
-  addPoints(qPoints);
-}
-
-void QPointUniqueIndexer::addPoints(const std::vector<QPoint> &qPoints) {
-  // add only unique points to vector & index
-  for (const auto &point : qPoints) {
-    if (!flattener.isValid(point)) {
-      throw std::invalid_argument("invalid point: not within bounding box");
-    }
-    auto existingIndex = pointIndex[flattener.flatten(point)];
-    if (existingIndex == NULL_INDEX) {
-      pointIndex[flattener.flatten(point)] = nPoints++;
-      points.push_back(point);
-    }
-  }
-}
-
-std::optional<std::size_t>
-QPointUniqueIndexer::getIndex(const QPoint &point) const {
-  if (!flattener.isValid(point)) {
-    return {};
-  }
-  auto index = pointIndex[flattener.flatten(point)];
-  if (index == NULL_INDEX) {
-    return {};
-  }
-  return index;
-}
-
-std::vector<QPoint> QPointUniqueIndexer::getPoints() const { return points; }
 
 } // namespace sme::common
 

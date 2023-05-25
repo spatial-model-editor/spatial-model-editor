@@ -44,10 +44,9 @@ int ModelGeometry::importDimensions(const libsbml::Model *model) {
   double ymax{ycoord->getBoundaryMax()->getValue()};
   SPDLOG_INFO("  - found x range [{},{}]", xmin, xmax);
   SPDLOG_INFO("  - found y range [{},{}]", ymin, ymax);
-  physicalOrigin = QPointF(xmin, ymin);
-  SPDLOG_INFO("  -> origin [{},{}]", physicalOrigin.x(), physicalOrigin.y());
-  physicalSize = QSizeF(xmax - xmin, ymax - ymin);
-  SPDLOG_INFO("  -> size [{},{}]", physicalSize.width(), physicalSize.height());
+  // default z coordinates
+  double zmin{0.0};
+  double zmax{1.0};
   if (nDim == 3) {
     const auto *zcoord{geom->getCoordinateComponentByKind(
         libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z)};
@@ -55,11 +54,16 @@ int ModelGeometry::importDimensions(const libsbml::Model *model) {
       SPDLOG_ERROR("No z-coordinate found in 3d SBML model");
       return 0;
     }
-    zOrigin = zcoord->getBoundaryMin()->getValue();
-    SPDLOG_INFO("  - found z origin {}", zOrigin);
-    pixelDepth = zcoord->getBoundaryMax()->getValue() - zOrigin;
-    SPDLOG_INFO("  - found z depth / pixel depth {}", pixelDepth);
+    zmin = zcoord->getBoundaryMin()->getValue();
+    zmax = zcoord->getBoundaryMax()->getValue();
+    SPDLOG_INFO("  - found z range [{},{}]", zmin, zmax);
   }
+  physicalOrigin = {xmin, ymin, zmin};
+  SPDLOG_INFO("  -> origin [{},{},{}]", physicalOrigin.p.x(),
+              physicalOrigin.p.y(), physicalOrigin.z);
+  physicalSize = {xmax - xmin, ymax - ymin, zmax - zmin};
+  SPDLOG_INFO("  -> volume [{},{},{}]", physicalSize.width(),
+              physicalSize.height(), physicalSize.depth());
   return static_cast<int>(nDim);
 }
 
@@ -144,7 +148,8 @@ void ModelGeometry::writeDefaultGeometryToSBML() {
   minX->setValue(0);
   auto *maxX = coordX->createBoundaryMax();
   maxX->setId("xBoundaryMax");
-  maxX->setValue(pixelWidth * static_cast<double>(image.width()));
+  maxX->setValue(voxelSize.width() *
+                 static_cast<double>(images.volume().width()));
   SPDLOG_INFO("  - x in range [{},{}]", minX->getValue(), maxX->getValue());
 
   auto *coordY = geom->getCoordinateComponent(1);
@@ -160,14 +165,15 @@ void ModelGeometry::writeDefaultGeometryToSBML() {
             paramY->getPlugin("spatial"))
             ->createSpatialSymbolReference();
   ssr->setSpatialRef(coordY->getId());
-  SPDLOG_INFO("  - creating Parameter: {}", ssr->getId());
+  SPDLOG_INFO("  - creating Parameter: {}", paramY->getId());
   SPDLOG_INFO("  - with spatialSymbolReference: {}", ssr->getSpatialRef());
   auto *minY = coordY->createBoundaryMin();
   minY->setId("yBoundaryMin");
   minY->setValue(0);
   auto *maxY = coordY->createBoundaryMax();
   maxY->setId("yBoundaryMax");
-  maxY->setValue(pixelWidth * static_cast<double>(image.height()));
+  maxY->setValue(voxelSize.height() *
+                 static_cast<double>(images.volume().height()));
   SPDLOG_INFO("  - y in range [{},{}]", minY->getValue(), maxY->getValue());
   createZCoordinateComponent(sbmlModel);
   // the above overwrote any existing compartment geometry, so re-create
@@ -182,7 +188,7 @@ void ModelGeometry::updateCompartmentAndMembraneSizes() {
                                  modelCompartments->getColour(compartmentId));
   }
   if (isValid) {
-    modelMembranes->exportToSBML(pixelWidth * pixelDepth);
+    modelMembranes->exportToSBML(voxelSize);
   }
 }
 
@@ -204,56 +210,49 @@ ModelGeometry::ModelGeometry(libsbml::Model *model,
   }
 }
 
-static double calculatePixelWidth(const QSize &imageSize,
-                                  const QSizeF &physicalSize) {
-  // calculate pixel size from image dimensions
-  double xPixels = static_cast<double>(imageSize.width());
-  double xPixelSize = physicalSize.width() / xPixels;
-  double yPixels = static_cast<double>(imageSize.height());
-  double yPixelSize = physicalSize.height() / yPixels;
+static common::VolumeF calculateVoxelSize(const common::Volume &imageSize,
+                                          const common::VolumeF &physicalSize) {
+  // calculate voxel volume from image dimensions
+  double x{physicalSize.width() / static_cast<double>(imageSize.width())};
+  double y{physicalSize.height() / static_cast<double>(imageSize.height())};
+  double z{physicalSize.depth() / static_cast<double>(imageSize.depth())};
   constexpr double maxRelativeDifference{1e-12};
-  if (std::abs((xPixelSize - yPixelSize) / xPixelSize) >
-      maxRelativeDifference) {
-    SPDLOG_WARN("Pixels are not square: {} x {}", xPixelSize, yPixelSize);
+  if (std::abs((y - x) / x) + std::abs((z - x) / x) > maxRelativeDifference) {
+    SPDLOG_WARN("Voxels are not cubes: {} x {} x {}", x, y, z);
   }
-  return xPixelSize;
+  return {x, y, z};
 }
 
 void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   importDimensions(model);
-
   auto gsf = importGeometryFromSampledField(
       getGeometry(model), sbmlAnnotation->sampledFieldColours);
-
-  if (gsf.image.isNull()) {
+  if (gsf.images.empty()) {
     SPDLOG_INFO(
         "No Sampled Field Geometry found - looking for Analytic Geometry...");
     gsf =
         importGeometryFromAnalyticGeometry(model, physicalOrigin, physicalSize);
-    if (gsf.image.isNull()) {
+    if (gsf.images.empty()) {
       SPDLOG_INFO("No Analytic Geometry found");
       return;
     }
   }
   hasUnsavedChanges = true;
-  SPDLOG_INFO("  - found {}x{} geometry image", gsf.image.width(),
-              gsf.image.height());
-  image = gsf.image.convertToFormat(QImage::Format_Indexed8);
+  SPDLOG_INFO("  - found {}x{}x{} geometry image", gsf.images[0].width(),
+              gsf.images[0].height(), gsf.images.size());
+  images = common::ImageStack(std::move(gsf.images));
+  images.convertToIndexed();
   hasImage = true;
-  pixelWidth = calculatePixelWidth(image.size(), physicalSize);
-  sbmlAnnotation->sampledFieldColours.clear();
-  for (auto color : image.colorTable()) {
-    sbmlAnnotation->sampledFieldColours.push_back(color);
-  }
-
-  setPixelWidth(pixelWidth, false);
-  modelMembranes->updateCompartmentImage(image);
+  sbmlAnnotation->sampledFieldColours =
+      common::toStdVec(images[0].colorTable());
+  voxelSize = calculateVoxelSize(images.volume(), physicalSize);
+  modelMembranes->updateCompartmentImages(images);
   for (const auto &[id, colour] : gsf.compartmentIdColourPairs) {
     SPDLOG_INFO("setting compartment {} colour to {:x}", id, colour);
     modelCompartments->setColour(id.c_str(), colour);
   }
   auto *geom = getOrCreateGeometry(sbmlModel);
-  exportSampledFieldGeometry(geom, image);
+  exportSampledFieldGeometry(geom, images);
 }
 
 void ModelGeometry::importSampledFieldGeometry(const QString &filename) {
@@ -262,30 +261,21 @@ void ModelGeometry::importSampledFieldGeometry(const QString &filename) {
   importSampledFieldGeometry(doc->getModel());
 }
 
-void ModelGeometry::importGeometryFromImage(const QImage &img,
-                                            bool keepColourAssignments) {
+void ModelGeometry::importGeometryFromImages(const common::ImageStack &imgs,
+                                             bool keepColourAssignments) {
   hasUnsavedChanges = true;
   const auto &ids{modelCompartments->getIds()};
   auto oldColours{modelCompartments->getColours()};
   for (const auto &id : ids) {
     modelCompartments->setColour(id, 0);
   }
-  constexpr auto flagNoDither{Qt::AvoidDither | Qt::ThresholdDither |
-                              Qt::ThresholdAlphaDither | Qt::NoOpaqueDetection};
-  auto imgNoAlpha{img};
-  if (img.hasAlphaChannel()) {
-    SPDLOG_WARN("ignoring alpha channel");
-    imgNoAlpha = img.convertToFormat(QImage::Format_RGB32, flagNoDither);
-  }
-  image = imgNoAlpha.convertToFormat(QImage::Format_Indexed8, flagNoDither);
-  sbmlAnnotation->sampledFieldColours.clear();
-  for (auto color : image.colorTable()) {
-    sbmlAnnotation->sampledFieldColours.push_back(color);
-  }
-
-  modelMembranes->updateCompartmentImage(image);
+  images = common::ImageStack{imgs};
+  images.convertToIndexed();
+  sbmlAnnotation->sampledFieldColours =
+      common::toStdVec(images[0].colorTable());
+  modelMembranes->updateCompartmentImages(images);
   auto *geom{getOrCreateGeometry(sbmlModel)};
-  exportSampledFieldGeometry(geom, image);
+  exportSampledFieldGeometry(geom, images);
   if (keepColourAssignments) {
     for (int i = 0; i < ids.size(); ++i) {
       modelCompartments->setColour(ids[i], oldColours[i]);
@@ -302,12 +292,19 @@ void ModelGeometry::updateMesh() {
     mesh.reset();
     return;
   }
+  // for now only generate a mesh for 2-d (single z slice) images
+  if (images.volume().depth() > 1) {
+    SPDLOG_WARN("Meshing not yet implemented for 3-d images");
+    mesh.reset();
+    return;
+  }
   hasUnsavedChanges = true;
   const auto &colours{modelCompartments->getColours()};
   const auto &ids{modelCompartments->getIds()};
   const auto &meshParams{sbmlAnnotation->meshParameters};
-  mesh = std::make_unique<mesh::Mesh>(image, meshParams.maxPoints,
-                                      meshParams.maxAreas, pixelWidth,
+  // todo: use entire images stack - for now just take first one
+  mesh = std::make_unique<mesh::Mesh>(images[0], meshParams.maxPoints,
+                                      meshParams.maxAreas, voxelSize,
                                       physicalOrigin, common::toStdVec(colours),
                                       meshParams.boundarySimplifierType);
   for (int i = 0; i < ids.size(); ++i) {
@@ -321,7 +318,7 @@ void ModelGeometry::clear() {
   mesh.reset();
   hasImage = false;
   isValid = false;
-  image = {};
+  images.clear();
   auto *model = sbmlModel;
   hasUnsavedChanges = true;
   if (model == nullptr) {
@@ -363,88 +360,90 @@ void ModelGeometry::clear() {
 
 int ModelGeometry::getNumDimensions() const { return numDimensions; }
 
-double ModelGeometry::getPixelWidth() const { return pixelWidth; }
-
-void ModelGeometry::setPixelWidth(double width, bool updateSBML) {
-  SPDLOG_INFO("Setting pixel width to {}", width);
+void ModelGeometry::setVoxelSize(const common::VolumeF &newVoxelSize,
+                                 bool updateSBML) {
+  SPDLOG_INFO("Setting pixel volume to {}x{}x{}", newVoxelSize.width(),
+              newVoxelSize.height(), newVoxelSize.depth());
   hasUnsavedChanges = true;
-  double oldWidth = pixelWidth;
-  pixelWidth = width;
-  SPDLOG_INFO("New pixel width = {}", pixelWidth);
+  auto oldVoxelSize{voxelSize};
+  voxelSize = newVoxelSize;
 
   // update origin
-  physicalOrigin *= width / oldWidth;
-  SPDLOG_INFO("  - origin rescaled to ({},{})", physicalOrigin.x(),
-              physicalOrigin.y());
+  physicalOrigin.p.rx() *= voxelSize.width() / oldVoxelSize.width();
+  physicalOrigin.p.ry() *= voxelSize.height() / oldVoxelSize.height();
+  physicalOrigin.z *= voxelSize.depth() / oldVoxelSize.depth();
+  SPDLOG_INFO("  - origin rescaled to ({},{},{})", physicalOrigin.p.x(),
+              physicalOrigin.p.y(), physicalOrigin.z);
 
   if (mesh != nullptr) {
-    mesh->setPhysicalGeometry(width, physicalOrigin);
+    mesh->setPhysicalGeometry(voxelSize.width(), physicalOrigin.p);
   }
-  // update xy coordinates
+  // update xyz coordinates
   auto *geom = getOrCreateGeometry(sbmlModel);
-  physicalSize = {pixelWidth * static_cast<double>(image.width()),
-                  pixelWidth * static_cast<double>(image.height())};
+  physicalSize = voxelSize * images.volume();
   auto *coord = geom->getCoordinateComponentByKind(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
   auto *min = coord->getBoundaryMin();
   auto *max = coord->getBoundaryMax();
-  min->setValue(physicalOrigin.x());
-  max->setValue(physicalOrigin.x() + physicalSize.width());
+  min->setValue(physicalOrigin.p.x());
+  max->setValue(physicalOrigin.p.x() + physicalSize.width());
   SPDLOG_INFO("  - x now in range [{},{}]", min->getValue(), max->getValue());
   coord = geom->getCoordinateComponentByKind(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
   min = coord->getBoundaryMin();
   max = coord->getBoundaryMax();
-  min->setValue(physicalOrigin.y());
-  max->setValue(physicalOrigin.y() + physicalSize.height());
+  min->setValue(physicalOrigin.p.y());
+  max->setValue(physicalOrigin.p.y() + physicalSize.height());
   SPDLOG_INFO("  - y now in range [{},{}]", min->getValue(), max->getValue());
+  coord = geom->getCoordinateComponentByKind(
+      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z);
+  min = coord->getBoundaryMin();
+  max = coord->getBoundaryMax();
+  min->setValue(physicalOrigin.z);
+  max->setValue(physicalOrigin.z + physicalSize.depth());
+  SPDLOG_INFO("  - z now in range [{},{}]", min->getValue(), max->getValue());
   if (updateSBML) {
     updateCompartmentAndMembraneSizes();
   }
 }
 
-double ModelGeometry::getPixelDepth() const { return pixelDepth; }
-
-void ModelGeometry::setPixelDepth(double depth) {
-  SPDLOG_INFO("Setting pixel depth to {}", depth);
-  pixelDepth = depth;
-  auto *geom{getOrCreateGeometry(sbmlModel)};
-  auto *coord{geom->getCoordinateComponentByKind(
-      libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z)};
-  auto *min{coord->getBoundaryMin()};
-  auto *max{coord->getBoundaryMax()};
-  min->setValue(zOrigin);
-  max->setValue(zOrigin + pixelDepth);
-  SPDLOG_INFO("  - z now in range [{},{}]", min->getValue(), max->getValue());
-  updateCompartmentAndMembraneSizes();
+[[nodiscard]] const common::VolumeF &ModelGeometry::getVoxelSize() const {
+  return voxelSize;
 }
 
-double ModelGeometry::getZOrigin() const { return zOrigin; }
-
-const QPointF &ModelGeometry::getPhysicalOrigin() const {
+const common::VoxelF &ModelGeometry::getPhysicalOrigin() const {
   return physicalOrigin;
 }
 
-const QSizeF &ModelGeometry::getPhysicalSize() const { return physicalSize; }
+const common::VolumeF &ModelGeometry::getPhysicalSize() const {
+  return physicalSize;
+}
 
-QPointF ModelGeometry::getPhysicalPoint(const QPoint pixel) const {
-  QPointF physicalPoint{physicalOrigin};
-  physicalPoint.rx() += pixelWidth * static_cast<double>(pixel.x());
-  physicalPoint.ry() +=
-      pixelWidth * static_cast<double>(image.height() - 1 - pixel.y());
+common::VoxelF
+ModelGeometry::getPhysicalPoint(const common::Voxel &voxel) const {
+  // returns physical location of *centre* of voxel
+  common::VoxelF physicalPoint{physicalOrigin};
+  physicalPoint.p.rx() +=
+      voxelSize.width() * (static_cast<double>(voxel.p.x()) + 0.5);
+  physicalPoint.p.ry() +=
+      voxelSize.height() *
+      (static_cast<double>(images[0].height() - 1 - voxel.p.y()) + 0.5);
+  physicalPoint.z += voxelSize.depth() * (static_cast<double>(voxel.z) + 0.5);
   return physicalPoint;
 }
 
-QString ModelGeometry::getPhysicalPointAsString(const QPoint pixel) const {
+QString
+ModelGeometry::getPhysicalPointAsString(const common::Voxel &voxel) const {
   auto lengthUnit{modelUnits->getLength().name};
-  auto physicalPoint{getPhysicalPoint(pixel)};
-  return QString("x: %1 %2, y: %3 %2")
-      .arg(physicalPoint.x())
+  auto physicalPoint{getPhysicalPoint(voxel)};
+  return QString("x: %1 %2, y: %3 %2, z: %4 %2")
+      .arg(physicalPoint.p.x())
       .arg(lengthUnit)
-      .arg(physicalPoint.y());
+      .arg(physicalPoint.p.y())
+      .arg(physicalPoint.z);
 }
 
-const QImage &ModelGeometry::getImage() const { return image; }
+const common::ImageStack &ModelGeometry::getImages() const { return images; }
 
 mesh::Mesh *ModelGeometry::getMesh() const { return mesh.get(); }
 

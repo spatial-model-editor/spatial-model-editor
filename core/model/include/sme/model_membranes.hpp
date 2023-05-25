@@ -18,7 +18,6 @@ class Model;
 namespace sme::model {
 
 class ImageMembranePixels;
-using QPointPair = std::pair<QPoint, QPoint>;
 
 class ModelMembranes {
 private:
@@ -38,15 +37,16 @@ public:
   [[nodiscard]] QString getName(const QString &id) const;
   [[nodiscard]] const std::vector<geometry::Membrane> &getMembranes() const;
   [[nodiscard]] const geometry::Membrane *getMembrane(const QString &id) const;
-  [[nodiscard]] const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>>
-      &getIdColourPairs() const;
+  [[nodiscard]] const std::vector<
+      std::pair<std::string, std::pair<QRgb, QRgb>>> &
+  getIdColourPairs() const;
   [[nodiscard]] double getSize(const QString &id) const;
   void updateCompartmentNames(const QStringList &compartmentNames);
   void updateCompartments(
       const std::vector<std::unique_ptr<geometry::Compartment>> &compartments);
-  void updateCompartmentImage(const QImage &img);
+  void updateCompartmentImages(const common::ImageStack &imgs);
   void importMembraneIdsAndNames();
-  void exportToSBML(double pixelArea);
+  void exportToSBML(const common::VolumeF &voxelSize);
   explicit ModelMembranes(libsbml::Model *model = nullptr);
   ModelMembranes(ModelMembranes &&) noexcept;
   ModelMembranes &operator=(ModelMembranes &&) noexcept;

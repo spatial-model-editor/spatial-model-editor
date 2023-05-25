@@ -163,15 +163,15 @@ TEST_CASE("Optimize calculateCosts: target values",
   simulate::Simulation sim(model);
   // make explicit target of 2 for all pixels in compartment
   const auto *comp{model.getSpecies().getField("A")->getCompartment()};
-  const auto compImgWidth{comp->getCompartmentImage().width()};
-  const auto compImgHeight{comp->getCompartmentImage().height()};
+  const auto compImgWidth{comp->getCompartmentImages()[0].width()};
+  const auto compImgHeight{comp->getCompartmentImages()[0].height()};
   std::vector<double> target(compImgWidth * compImgHeight, 0.0);
   constexpr double targetPixel{2.0};
-  for (const auto &pixel : comp->getPixels()) {
-    target[pixel.x() + compImgWidth * (compImgHeight - 1 - pixel.y())] =
+  for (const auto &voxel : comp->getVoxels()) {
+    target[voxel.p.x() + compImgWidth * (compImgHeight - 1 - voxel.p.y())] =
         targetPixel;
   }
-  double targetSum{static_cast<double>(comp->nPixels() * targetPixel)};
+  double targetSum{static_cast<double>(comp->nVoxels() * targetPixel)};
   constexpr double epsilon{3.4e-11};
 
   // cost: absolute difference of concentration of species A from zero
@@ -314,7 +314,7 @@ TEST_CASE("Optimize calculateCosts: invalid target values",
                                    {}};
   // a place for calculateCosts to write the current targets to
   std::vector<std::vector<double>> currentTargets(1, std::vector<double>{});
-  // correct size
+  // correct volume
   optCostInvalid.targetValues = std::vector<double>(correctSize, 1.5);
   REQUIRE_NOTHROW(
       simulate::calculateCosts({optCostInvalid}, {0}, sim, currentTargets));

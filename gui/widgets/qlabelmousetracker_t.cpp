@@ -17,8 +17,9 @@ TEST_CASE("QLabelMouseTracker: single pixel, single colour image", tags) {
   // so wait a bit until the size is correct and stable
   wait();
   mouseTracker.setImage(img);
-  REQUIRE(mouseTracker.getImage().size() == img.size());
-  REQUIRE(mouseTracker.getImage().pixel(0, 0) == img.pixel(0, 0));
+  REQUIRE(mouseTracker.getImage().volume() ==
+          sme::common::Volume{img.size(), 1});
+  REQUIRE(mouseTracker.getImage()[0].pixel(0, 0) == img.pixel(0, 0));
 
   std::vector<QRgb> clicks;
   QObject::connect(&mouseTracker, &QLabelMouseTracker::mouseClicked,
@@ -74,9 +75,10 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
   CAPTURE(col2);
   CAPTURE(col3);
   CAPTURE(col4);
-  REQUIRE(mouseTracker.getImage().size() == img.size());
-  REQUIRE(mouseTracker.getImage().pixel(0, 0) == img.pixel(0, 0));
-  REQUIRE(mouseTracker.getImage().pixel(2, 2) == img.pixel(2, 2));
+  REQUIRE(mouseTracker.getImage().volume() ==
+          sme::common::Volume{img.size(), 1});
+  REQUIRE(mouseTracker.getImage()[0].pixel(0, 0) == img.pixel(0, 0));
+  REQUIRE(mouseTracker.getImage()[0].pixel(2, 2) == img.pixel(2, 2));
   int imgDisplaySize = std::min(mouseTracker.width(), mouseTracker.height());
   CAPTURE(imgDisplaySize);
 
@@ -169,12 +171,14 @@ TEST_CASE("QLabelMouseTracker: image and mask", tags) {
   mouseTracker.resize(100, 100);
   wait();
 
-  REQUIRE(mouseTracker.getImage().size() == img.size());
-  REQUIRE(mouseTracker.getImage().pixel(0, 0) == img.pixel(0, 0));
-  REQUIRE(mouseTracker.getImage().pixel(2, 2) == img.pixel(2, 2));
-  REQUIRE(mouseTracker.getMaskImage().size() == mask.size());
-  REQUIRE(mouseTracker.getMaskImage().pixel(0, 0) == mask.pixel(0, 0));
-  REQUIRE(mouseTracker.getMaskImage().pixel(2, 2) == mask.pixel(2, 2));
+  REQUIRE(mouseTracker.getImage().volume() ==
+          sme::common::Volume{img.size(), 1});
+  REQUIRE(mouseTracker.getImage()[0].pixel(0, 0) == img.pixel(0, 0));
+  REQUIRE(mouseTracker.getImage()[0].pixel(2, 2) == img.pixel(2, 2));
+  REQUIRE(mouseTracker.getMaskImage().volume() ==
+          sme::common::Volume{mask.size(), 1});
+  REQUIRE(mouseTracker.getMaskImage()[0].pixel(0, 0) == mask.pixel(0, 0));
+  REQUIRE(mouseTracker.getMaskImage()[0].pixel(2, 2) == mask.pixel(2, 2));
 
   std::vector<QRgb> clicks;
   QObject::connect(&mouseTracker, &QLabelMouseTracker::mouseClicked,

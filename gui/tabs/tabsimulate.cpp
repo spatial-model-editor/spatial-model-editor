@@ -19,8 +19,8 @@
 TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                          QWidget *parent)
     : QWidget(parent), ui{std::make_unique<Ui::TabSimulate>()}, model{m},
-      lblGeometry(mouseTracker), plt{std::make_unique<PlotWrapper>(
-                                     "Average Concentration", this)} {
+      lblGeometry(mouseTracker),
+      plt{std::make_unique<PlotWrapper>("Average Concentration", this)} {
   ui->setupUi(this);
   ui->gridSimulate->addWidget(plt->plot, 1, 0, 1, 7);
 
@@ -289,7 +289,7 @@ void TabSimulate::btnSimulate_clicked() {
 }
 
 void TabSimulate::btnSliceImage_clicked() {
-  DialogImageSlice dialog(model.getGeometry().getImage(), images, time,
+  DialogImageSlice dialog(model.getGeometry().getImages(), images, time,
                           flipYAxis);
   if (dialog.exec() == QDialog::Accepted) {
     SPDLOG_DEBUG("todo: save current slice settings");
@@ -363,7 +363,7 @@ void TabSimulate::finalizePlotAndImages() {
         QString("Simulation failed - changing the Simulation options in the "
                 "\"Advanced\" menu might help.\n\nError message: %1")
             .arg(err.c_str()),
-        sim->errorImage())
+        sim->errorImages())
         .exec();
     return;
   }
