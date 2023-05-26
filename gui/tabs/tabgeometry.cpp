@@ -482,7 +482,9 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
                                .arg(QString::number(area, 'g', 13))
                                .arg(model.getUnits().getLength().name)
                                .arg(nPixels));
-  ui->lblCompMesh->setImages(model.getGeometry().getMesh()->getMeshImages(
-      ui->lblCompMesh->size(),
-      static_cast<std::size_t>(currentRow + ui->listCompartments->count())));
+  if (const auto *mesh{model.getGeometry().getMesh()}; mesh != nullptr) {
+    ui->lblCompMesh->setImages(mesh->getMeshImages(
+        ui->lblCompMesh->size(),
+        static_cast<std::size_t>(currentRow + ui->listCompartments->count())));
+  }
 }
