@@ -47,6 +47,9 @@ TEST_CASE("Model geometry",
     REQUIRE(m.getHasImage() == false);
     REQUIRE(m.getImages().empty());
     m.setHasUnsavedChanges(false);
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/872
+    // no geometry image but getPhysicalPoint should still not throw or segfault
+    REQUIRE_NOTHROW(mGeometry.getPhysicalPoint({1, 2, 3}));
     REQUIRE(m.getHasUnsavedChanges() == false);
     REQUIRE(mGeometry.getHasUnsavedChanges() == false);
     SECTION("import sampled field") {
