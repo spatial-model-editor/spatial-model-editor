@@ -422,6 +422,9 @@ const common::VolumeF &ModelGeometry::getPhysicalSize() const {
 common::VoxelF
 ModelGeometry::getPhysicalPoint(const common::Voxel &voxel) const {
   // returns physical location of *centre* of voxel
+  if (!hasImage) {
+    return {0.0, 0.0, 0.0};
+  }
   common::VoxelF physicalPoint{physicalOrigin};
   physicalPoint.p.rx() +=
       voxelSize.width() * (static_cast<double>(voxel.p.x()) + 0.5);
