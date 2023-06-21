@@ -184,7 +184,7 @@ static void addCompartment(
         double max = common::writeTIFF(
             tiffFilename.toStdString(),
             f->getCompartment()->getCompartmentImages()[0].size(), conc,
-            model.getGeometry().getVoxelSize().width());
+            model.getGeometry().getVoxelSize());
         tiffs.push_back(sampledFieldName);
         ini.addValue(duneName,
                      QString("%1*%2(x,y)").arg(max).arg(sampledFieldName));
@@ -335,10 +335,9 @@ DuneConverter::DuneConverter(
     const std::map<std::string, double, std::less<>> &substitutions,
     bool forExternalUse, const QString &outputIniFile, int doublePrecision)
     : mesh{model.getGeometry().getMesh()},
-      x0{model.getGeometry().getPhysicalOrigin().p.x()},
-      y0{model.getGeometry().getPhysicalOrigin().p.y()},
-      a{model.getGeometry().getVoxelSize().width()},
-      w{model.getGeometry().getImages()[0].width()} {
+      origin{model.getGeometry().getPhysicalOrigin()},
+      voxelSize{model.getGeometry().getVoxelSize()},
+      imageSize{model.getGeometry().getImages().volume()} {
 
   independentCompartments = modelHasIndependentCompartments(model);
 
@@ -457,12 +456,10 @@ DuneConverter::getConcentrations() const {
   return concentrations;
 }
 
-double DuneConverter::getXOrigin() const { return x0; }
+common::VoxelF DuneConverter::getOrigin() const { return origin; }
 
-double DuneConverter::getYOrigin() const { return y0; }
+common::VolumeF DuneConverter::getVoxelSize() const { return voxelSize; }
 
-double DuneConverter::getPixelWidth() const { return a; }
-
-int DuneConverter::getImageWidth() const { return w; }
+common::Volume DuneConverter::getImageSize() const { return imageSize; }
 
 } // namespace sme::simulate

@@ -40,70 +40,70 @@ TEST_CASE("DialogGeometryImage",
   REQUIRE(btnApplyColours != nullptr);
   auto *btnResetColours{dim.findChild<QPushButton *>("btnResetColours")};
   REQUIRE(btnResetColours != nullptr);
-  SECTION("user sets width to 1, same units, pixel volume -> 0.01") {
+  SECTION("user sets width to 1, same units, width -> 0.01") {
     mwt.addUserAction({"Tab", "1"});
     mwt.start();
     dim.exec();
     REQUIRE(dim.getVoxelSize().width() == dbl_approx(0.01));
-    REQUIRE(dim.getVoxelSize().height() == dbl_approx(0.01));
+    REQUIRE(dim.getVoxelSize().height() == dbl_approx(1.0));
     REQUIRE(dim.getVoxelSize().depth() == dbl_approx(1.0));
     REQUIRE(dim.imageSizeAltered() == false);
     REQUIRE(dim.imageColoursAltered() == false);
   }
-  SECTION("user sets width to 1e-8, pixel volume -> 1e-10") {
+  SECTION("user sets width to 1e-8, width -> 1e-10") {
     mwt.addUserAction({"Tab", "1", "e", "-", "8"});
     mwt.start();
     dim.exec();
     REQUIRE(dim.getVoxelSize().width() == dbl_approx(1e-10));
-    REQUIRE(dim.getVoxelSize().height() == dbl_approx(1e-10));
+    REQUIRE(dim.getVoxelSize().height() == dbl_approx(1.0));
     REQUIRE(dim.getVoxelSize().depth() == dbl_approx(1.0));
     REQUIRE(dim.imageSizeAltered() == false);
     REQUIRE(dim.imageColoursAltered() == false);
   }
-  SECTION("user sets height to 10, pixel volume -> 0.2") {
+  SECTION("user sets height to 10, height -> 0.2") {
     mwt.addUserAction({"Tab", "Tab", "Tab", "1", "0"});
     mwt.start();
     dim.exec();
-    REQUIRE(dim.getVoxelSize().width() == dbl_approx(0.2));
+    REQUIRE(dim.getVoxelSize().width() == dbl_approx(1.0));
     REQUIRE(dim.getVoxelSize().height() == dbl_approx(0.2));
     REQUIRE(dim.getVoxelSize().depth() == dbl_approx(1.0));
     REQUIRE(dim.imageSizeAltered() == false);
     REQUIRE(dim.imageColoursAltered() == false);
   }
-  SECTION("user sets height to 10, units to dm, pixel volume -> 0.02") {
+  SECTION("user sets height to 10, units to dm, height -> 0.02, others /=10") {
     mwt.addUserAction({"Tab", "Tab", "Down", "Tab", "1", "0"});
     mwt.start();
     dim.exec();
-    REQUIRE(dim.getVoxelSize().width() == dbl_approx(0.02));
+    REQUIRE(dim.getVoxelSize().width() == dbl_approx(0.1));
     REQUIRE(dim.getVoxelSize().height() == dbl_approx(0.02));
     REQUIRE(dim.getVoxelSize().depth() == dbl_approx(0.1));
     REQUIRE(dim.imageSizeAltered() == false);
     REQUIRE(dim.imageColoursAltered() == false);
   }
-  SECTION("user sets height to 10, units to cm, pixel volume -> 0.002") {
+  SECTION(
+      "user sets height to 10, units to cm, height -> 0.002, others /=100") {
     mwt.addUserAction({"Tab", "Tab", "Down", "Down", "Tab", "1", "0"});
     mwt.start();
     dim.exec();
-    REQUIRE(dim.getVoxelSize().width() == dbl_approx(0.002));
+    REQUIRE(dim.getVoxelSize().width() == dbl_approx(0.01));
     REQUIRE(dim.getVoxelSize().height() == dbl_approx(0.002));
     REQUIRE(dim.getVoxelSize().depth() == dbl_approx(0.01));
     REQUIRE(dim.imageSizeAltered() == false);
     REQUIRE(dim.imageColoursAltered() == false);
   }
-  SECTION("user sets width to 9 & units to dm, then height 10, units um,"
-          " pixel volume -> 0.0000002") {
-    mwt.addUserAction({"Tab", "9", "Tab", "Down", "Tab", "1", "0", "Tab",
+  SECTION("user sets width to 9 & units to dm, then height 10, units um") {
+    mwt.addUserAction({"Tab", "9", "Tab", "Down", "Tab", "1", "0", "Shift+Tab",
                        "Down", "Down", "Down"});
     mwt.start();
     dim.exec();
-    REQUIRE(dim.getVoxelSize().width() == dbl_approx(0.0000002));
-    REQUIRE(dim.getVoxelSize().height() == dbl_approx(0.0000002));
+    REQUIRE(dim.getVoxelSize().width() == dbl_approx(0.09 * 1e-6));
+    REQUIRE(dim.getVoxelSize().height() == dbl_approx(0.2 * 1e-6));
     REQUIRE(dim.getVoxelSize().depth() == dbl_approx(1e-6));
     REQUIRE(dim.imageSizeAltered() == false);
     REQUIRE(dim.imageColoursAltered() == false);
   }
   SECTION("user sets depth to 4, no change of units") {
-    mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Backspace", "4"});
+    mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Backspace", "4"});
     mwt.start();
     dim.exec();
     REQUIRE(dim.getVoxelSize().width() == dbl_approx(1.0));
@@ -122,8 +122,8 @@ TEST_CASE("DialogGeometryImage",
     mwt.start();
     dim2.exec();
     REQUIRE(dim2.getVoxelSize().width() == dbl_approx(10.0));
-    REQUIRE(dim2.getVoxelSize().height() == dbl_approx(10.0));
-    REQUIRE(dim2.getVoxelSize().depth() == dbl_approx(1000.0));
+    REQUIRE(dim2.getVoxelSize().height() == dbl_approx(22e3));
+    REQUIRE(dim2.getVoxelSize().depth() == dbl_approx(1e3));
     REQUIRE(dim.imageSizeAltered() == false);
     REQUIRE(dim.imageColoursAltered() == false);
   }
@@ -179,8 +179,8 @@ TEST_CASE("DialogGeometryImage",
     REQUIRE(dim.getAlteredImage().volume().width() == 100);
     REQUIRE(dim.getAlteredImage().volume().height() == 50);
     REQUIRE(dim.getAlteredImage().volume().depth() == 1);
-    mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Down", "Tab",
-                       "5", "Tab", "Space", "Tab", "Tab", "Tab"});
+    mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Down", "Tab", "5",
+                       "Tab", "Space", "Tab", "Tab", "Tab"});
     mwt.start();
     dim.exec();
     REQUIRE(dim.imageSizeAltered() == false);
@@ -204,7 +204,7 @@ TEST_CASE("DialogGeometryImage",
     REQUIRE(dim.getAlteredImage().volume().height() == 50);
     REQUIRE(dim.getAlteredImage().volume().depth() == 1);
     mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab",
-                       "Tab", "Space", "Space", "Tab"});
+                       "Space", "Space", "Tab"});
     mwt.start();
     dim.exec();
     REQUIRE(dim.getVoxelSize().width() == dbl_approx(1.0));

@@ -1036,8 +1036,9 @@ TEST_CASE("Import Combine archive",
   REQUIRE(s.getCompartments().getCompartment("cytoplasm")->nVoxels() == 7800);
   REQUIRE(s.getCompartments().getCompartment("nucleus")->nVoxels() == 481);
   REQUIRE(s.getMembranes().getIds().size() == 1);
-  REQUIRE(s.getMembranes()
-              .getMembrane("cytoplasm_nucleus_membrane")
-              ->getIndexPairs()
-              .size() == 98);
+  const auto &membrane{
+      s.getMembranes().getMembrane("cytoplasm_nucleus_membrane")};
+  REQUIRE(membrane->getIndexPairs(sme::geometry::Membrane::X).size() == 48);
+  REQUIRE(membrane->getIndexPairs(sme::geometry::Membrane::Y).size() == 50);
+  REQUIRE(membrane->getIndexPairs(sme::geometry::Membrane::Z).size() == 0);
 }

@@ -96,6 +96,8 @@ void TabGeometry::loadModelData(const QString &selection) {
     ui->btnChangeCompartment->setEnabled(true);
   }
   lblGeometry->setImage(model.getGeometry().getImages());
+  lblGeometry->setPhysicalSize(model.getGeometry().getPhysicalSize(),
+                               model.getUnits().getLength().name);
   enableTabs();
   selectMatchingOrFirstItem(ui->listCompartments, selection);
 }
@@ -318,6 +320,8 @@ void TabGeometry::spinBoundaryIndex_valueChanged(int value) {
       model.getGeometry().getMesh()->getBoundaryMaxPoints(boundaryIndex)));
   ui->lblCompBoundary->setImages(
       model.getGeometry().getMesh()->getBoundariesImages(size, boundaryIndex));
+  ui->lblCompBoundary->setPhysicalSize(model.getGeometry().getPhysicalSize(),
+                                       model.getUnits().getLength().name);
   QGuiApplication::restoreOverrideCursor();
 }
 
@@ -329,6 +333,8 @@ void TabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
       boundaryIndex, static_cast<size_t>(value));
   ui->lblCompBoundary->setImages(
       model.getGeometry().getMesh()->getBoundariesImages(size, boundaryIndex));
+  ui->lblCompBoundary->setPhysicalSize(model.getGeometry().getPhysicalSize(),
+                                       model.getUnits().getLength().name);
   QGuiApplication::restoreOverrideCursor();
 }
 
@@ -369,6 +375,8 @@ void TabGeometry::spinMaxTriangleArea_valueChanged(int value) {
       compIndex, static_cast<std::size_t>(value));
   ui->lblCompMesh->setImages(
       model.getGeometry().getMesh()->getMeshImages(size, compIndex));
+  ui->lblCompMesh->setPhysicalSize(model.getGeometry().getPhysicalSize(),
+                                   model.getUnits().getLength().name);
   QGuiApplication::restoreOverrideCursor();
 }
 
@@ -429,13 +437,15 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
     // update image of compartment
     const auto *comp{model.getCompartments().getCompartment(compId)};
     ui->lblCompShape->setImage(comp->getCompartmentImages());
+    ui->lblCompShape->setPhysicalSize(model.getGeometry().getPhysicalSize(),
+                                      model.getUnits().getLength().name);
     ui->lblCompShape->setText("");
     // update mesh or boundary image if tab is currently visible
     tabCompartmentGeometry_currentChanged(
         ui->tabCompartmentGeometry->currentIndex());
     // update compartment volume
     double volume{model.getCompartments().getSize(compId)};
-    ui->lblCompSize->setText(QString("Volume: %1 %2 (%3 pixels)")
+    ui->lblCompSize->setText(QString("Volume: %1 %2 (%3 voxels)")
                                  .arg(QString::number(volume, 'g', 13))
                                  .arg(model.getUnits().getVolume().name)
                                  .arg(comp->nVoxels()));
@@ -469,7 +479,11 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
   // update image
   const auto *m{model.getMembranes().getMembrane(membraneId)};
   ui->lblCompShape->setImage(m->getImages());
-  auto nPixels{m->getIndexPairs().size()};
+  ui->lblCompShape->setPhysicalSize(model.getGeometry().getPhysicalSize(),
+                                    model.getUnits().getLength().name);
+  auto nVoxelPairs{m->getIndexPairs(sme::geometry::Membrane::X).size() +
+                   m->getIndexPairs(sme::geometry::Membrane::Y).size() +
+                   m->getIndexPairs(sme::geometry::Membrane::Z).size()};
   // update colour box
   QImage img(1, 2, QImage::Format_RGB32);
   img.setPixel(0, 0, m->getCompartmentA()->getColour());
@@ -478,13 +492,15 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
   ui->lblCompartmentColour->setText("");
   // update membrane length
   double area{model.getMembranes().getSize(membraneId)};
-  ui->lblCompSize->setText(QString("Area: %1 %2^2 (%3 pixels)")
+  ui->lblCompSize->setText(QString("Area: %1 %2^2 (%3 voxel faces)")
                                .arg(QString::number(area, 'g', 13))
                                .arg(model.getUnits().getLength().name)
-                               .arg(nPixels));
+                               .arg(nVoxelPairs));
   if (const auto *mesh{model.getGeometry().getMesh()}; mesh != nullptr) {
     ui->lblCompMesh->setImages(mesh->getMeshImages(
         ui->lblCompMesh->size(),
         static_cast<std::size_t>(currentRow + ui->listCompartments->count())));
+    ui->lblCompMesh->setPhysicalSize(model.getGeometry().getPhysicalSize(),
+                                     model.getUnits().getLength().name);
   }
 }
