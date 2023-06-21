@@ -12,10 +12,11 @@ class DialogCoordinates : public QDialog {
 
 public:
   explicit DialogCoordinates(const QString &xName, const QString &yName,
-                             QWidget *parent = nullptr);
+                             const QString &zName, QWidget *parent = nullptr);
   ~DialogCoordinates();
   QString getXName() const;
   QString getYName() const;
+  QString getZName() const;
 
 private:
   std::unique_ptr<Ui::DialogCoordinates> ui;

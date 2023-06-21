@@ -565,12 +565,14 @@ void MainWindow::actionSet_spatial_coordinates_triggered() {
   if (!isValidModel()) {
     return;
   }
-  auto &params = model.getParameters();
-  auto coords = params.getSpatialCoordinates();
-  DialogCoordinates dialog(coords.x.name.c_str(), coords.y.name.c_str());
+  auto &params{model.getParameters()};
+  auto coords{params.getSpatialCoordinates()};
+  DialogCoordinates dialog(coords.x.name.c_str(), coords.y.name.c_str(),
+                           coords.z.name.c_str());
   if (dialog.exec() == QDialog::Accepted) {
     coords.x.name = dialog.getXName().toStdString();
     coords.y.name = dialog.getYName().toStdString();
+    coords.z.name = dialog.getZName().toStdString();
     params.setSpatialCoordinates(std::move(coords));
   }
 }
