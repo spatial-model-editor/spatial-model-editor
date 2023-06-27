@@ -1,4 +1,4 @@
-add_library(core STATIC)
+add_library(core STATIC mesh/include/sme/mesh3d.hpp)
 add_library(
   sme::core
   ALIAS
@@ -146,7 +146,8 @@ if(BUILD_TESTING)
     core_tests
     PUBLIC dune-copasi::dune-copasi
            core
-           testlib)
+           testlib
+           Qt6::OpenGLWidgets)
 endif()
 
 add_subdirectory(resources)
