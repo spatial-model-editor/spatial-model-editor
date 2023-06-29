@@ -36,7 +36,9 @@ if(SME_WITH_QT6)
     Qt6 QUIET
     COMPONENTS Core
                Gui
-               Widgets)
+               Widgets
+               OpenGLWidgets
+               OpenGL)
 endif()
 if(NOT Qt6_FOUND)
   find_package(
