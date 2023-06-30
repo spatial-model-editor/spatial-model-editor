@@ -7,15 +7,22 @@
 #include <QPainter>
 
 
+
 QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent)
     : QOpenGLWidget(parent)
-{}
+{
+  this->timer = new QTimer(this);
+  connect(this->timer, SIGNAL(timeout()), this, SLOT(update()));
+  timer->start(200);
+}
 
 QOpenGLMouseTracker::~QOpenGLMouseTracker()
 {}
 
 void QOpenGLMouseTracker::initializeGL()
 {
+  QOpenGLFunctions::initializeOpenGLFunctions();
+
   glClearColor(0,0,0,1);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_LIGHT0);
@@ -28,6 +35,8 @@ void QOpenGLMouseTracker::paintGL()
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  glRotated(this->angle,0,1,0);
+  this->angle += 0.01;
   glBegin(GL_TRIANGLES);
   glColor3f(1.0, 0.0, 0.0);
   glVertex3f(-0.5, -0.5, 0);
@@ -47,4 +56,5 @@ void QOpenGLMouseTracker::resizeGL(int w, int h)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   gluLookAt(0,0,5,0,0,0,0,1,0);
+  this->update();
 }

@@ -4,6 +4,7 @@
 
 #include "catch_wrapper.hpp"
 #include "qt_test_utils.hpp"
+#include <QApplication>
 
 using namespace sme::test;
 
@@ -16,6 +17,14 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   QOpenGLMouseTracker *test = new QOpenGLMouseTracker();
 
-  test->show();
+  QSurfaceFormat format;
+  format.setDepthBufferSize(24);
+  format.setStencilBufferSize(8);
+  format.setVersion(3, 2);
+  format.setProfile(QSurfaceFormat::CoreProfile);
+  //test->setFormat(format); // must be called before the widget or its parent window gets shown
+  QSurfaceFormat::setDefaultFormat(format);
 
+  test->show();
+  wait(50000);
 }

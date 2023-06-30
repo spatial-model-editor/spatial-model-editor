@@ -13,17 +13,25 @@
 #include <QtOpenGL>
 #include <GL/gl.h>
 #include <GL/glu.h>
+#include <QMainWindow>
+#include <QTimer>
 
 
-class QOpenGLMouseTracker : public QOpenGLWidget{
+class QOpenGLMouseTracker : public QOpenGLWidget, QOpenGLFunctions{
 public:
   QOpenGLMouseTracker(QWidget *parent = 0);
   ~QOpenGLMouseTracker();
 
 protected:
-  void initializeGL();
-  void resizeGL(int w, int h);
-  void paintGL();
+
+  GLfloat angle;
+  QTimer *timer;
+
+  void initializeGL() override;
+  void resizeGL(int w, int h) override;
+  void paintGL() override;
+
 };
+
 
 #endif // SPATIALMODELEDITOR_QOPENGLMOUSETRACKER_H
