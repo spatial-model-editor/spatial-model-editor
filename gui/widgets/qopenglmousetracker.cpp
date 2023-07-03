@@ -2,7 +2,7 @@
 // Created by acaramizaru on 6/29/23.
 //
 
-#include "QOpenGLMouseTracker.hpp"
+#include "qopenglmousetracker.hpp"
 #include "sme/logger.hpp"
 #include <QPainter>
 

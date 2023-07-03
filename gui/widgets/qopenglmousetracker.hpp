@@ -17,7 +17,11 @@
 #include <QTimer>
 
 
-class QOpenGLMouseTracker : public QOpenGLWidget, QOpenGLFunctions{
+class QOpenGLMouseTracker :
+    public QOpenGLWidget,
+    protected QOpenGLFunctions
+{
+
 public:
   QOpenGLMouseTracker(QWidget *parent = 0);
   ~QOpenGLMouseTracker();
