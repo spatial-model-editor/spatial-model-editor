@@ -4,7 +4,8 @@
 
 #include "catch_wrapper.hpp"
 #include "qt_test_utils.hpp"
-#include <QApplication>
+
+#include "rendering/rendering.hpp"
 
 using namespace sme::test;
 
