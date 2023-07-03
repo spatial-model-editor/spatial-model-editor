@@ -25,6 +25,7 @@ add_subdirectory(widgets)
 add_subdirectory(dialogs)
 add_subdirectory(tabs)
 add_subdirectory(wizards)
+add_subdirectory(rendering)
 
 target_link_libraries(gui PUBLIC Qt::Widgets sme::core Qt6::OpenGLWidgets Qt6::OpenGL OpenGL::GL OpenGL::GLU)
 set_property(TARGET gui PROPERTY CXX_STANDARD 17)
