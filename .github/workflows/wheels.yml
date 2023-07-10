@@ -14,11 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CIBUILDWHEEL_VERSION: 2.12.3
-  CIBW_TEST_REQUIRES: pytest
-  CIBW_TEST_COMMAND: 'python -m pytest -v {project}/sme/test'
+  CIBUILDWHEEL_VERSION: 2.14.0
   CIBW_BUILD_VERBOSITY: 3
-  SME_BUILD_CORE: 'false'
 
 jobs:
   linux-wheel:
@@ -28,10 +25,10 @@ jobs:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2023.05.23
-      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2023.05.23
-      CIBW_SKIP: '*-manylinux_i686 *-musllinux* pp39-manylinux_x86_64'
-      CIBW_ENVIRONMENT: 'SME_BUILD_CORE=off'
+      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2023.07.10
+      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2023.07.10
+      CIBW_SKIP: '*-manylinux_i686 *-musllinux* pp*-*'
+      CIBW_ENVIRONMENT: 'CMAKE_ARGS="-DSME_BUILD_CORE=off -DCMAKE_PREFIX_PATH=/opt/smelibs;/opt/smelibs/lib64/cmake"'
       CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'
     steps:
     - uses: actions/checkout@v3
@@ -65,6 +62,7 @@ jobs:
         shell: bash
     env:
       CIBW_ENVIRONMENT: 'BLAS=None LAPACK=None ATLAS=None'
+      CIBW_SKIP: 'pp*-*'
       CIBW_TEST_SKIP: 'pp3*-macosx_x86_64'
     steps:
       - uses: actions/checkout@v3
@@ -98,7 +96,7 @@ jobs:
         shell: msys2 {0}
     env:
       CIBW_BUILD: '*-win_amd64'
-      SME_EXTRA_CORE_DEFS: '_hypot=hypot;MS_WIN64'
+      CIBW_SKIP: 'pp*-*'
       CIBW_TEST_SKIP: "pp3*-win_amd64"
     steps:
       - uses: actions/checkout@v3

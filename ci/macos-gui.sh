@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# MacOS 11 GUI/CLI build script
+# MacOS GUI/CLI build script
 
 set -e -x
 
