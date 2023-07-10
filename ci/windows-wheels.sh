@@ -15,10 +15,12 @@ export SME_EXTRA_EXE_LIBS="-static;-static-libgcc;-static-libstdc++"
 # used to be opt-in, done by default for Qt >= 6.1.2 see
 # https://codereview.qt-project.org/c/qt/qtbase/+/350443
 export SME_QT_DISABLE_UNICODE=TRUE
+export SME_EXTRA_CORE_DEFS="_hypot=hypot;MS_WIN64"
+
+export CMAKE_ARGS="-DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH -DSME_BUILD_CORE=off -DSME_QT_DISABLE_UNICODE=$SME_QT_DISABLE_UNICODE"
 # disable this for now due to "terminate called after throwing an instance of 'core::Error'"
 #export CMAKE_CXX_COMPILER_LAUNCHER=ccache
-export CCACHE_NOHASHDIR="true"
-export SME_BUILD_CORE=off
+#export CCACHE_NOHASHDIR="true"
 pwd
 which g++
 g++ --version
