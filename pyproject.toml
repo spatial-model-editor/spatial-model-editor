@@ -9,7 +9,7 @@ description = "Spatial Model Editor python bindings"
 readme = "README.md"
 license = {text = "MIT"}
 authors=[{name="Liam Keegan", email="liam@keegan.ch"}]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 classifiers=[
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "License :: OSI Approved :: MIT License",
@@ -50,4 +50,4 @@ SME_LOG_LEVEL = "OFF"
 
 [tool.cibuildwheel]
 test-extras = "test"
-test-command = "python -m pytest {project}/sme/test -v"
+test-command = "objdump.exe -x {wheel} && python -m pytest {project}/sme/test -v"
