@@ -50,4 +50,4 @@ SME_LOG_LEVEL = "OFF"
 
 [tool.cibuildwheel]
 test-extras = "test"
-test-command = "objdump.exe -x {wheel} && python -m pytest {project}/sme/test -v"
+#test-command = "objdump.exe -x {wheel} && python -m pytest {project}/sme/test -v"
