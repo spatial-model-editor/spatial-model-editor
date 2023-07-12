@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# MacOS 11 Python wheels build script
+# MacOS Python wheels build script
 
 set -e -x
 
@@ -10,7 +10,8 @@ export MACOSX_DEPLOYMENT_TARGET=10.14
 export CCACHE_BASEDIR=/private
 export CMAKE_CXX_COMPILER_LAUNCHER="ccache"
 export CMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake"
-export SME_BUILD_CORE=off
+
+export CMAKE_ARGS="-DCMAKE_OSX_DEPLOYMENT_TARGET=$MACOSX_DEPLOYMENT_TARGET -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH -DSME_BUILD_CORE=off -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER"
 
 # check versions
 cmake --version

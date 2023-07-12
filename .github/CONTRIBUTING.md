@@ -65,6 +65,14 @@ Now you can run the tests, see [test/README.md](https://github.com/spatial-model
 make test
 ```
 
+The python bindings can also be independently built & installed using pip, where any required CMake arguments can be supplied
+via the `CMAKE_ARGS` env var, separated by spaces:
+
+```
+CMAKE_ARGS="-DCMAKE_PREFIX_PATH='/opt/smelibs;/opt/smelibs/lib/cmake' -DSME_BUILD_CORE=ON" pip install -v .
+pytest sme
+```
+
 ## Style guide
 
 - C++17

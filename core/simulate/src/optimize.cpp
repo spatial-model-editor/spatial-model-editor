@@ -186,11 +186,11 @@ std::size_t Optimization::evolve(std::size_t n) {
     appendBestFitnesssAndParams(*archi, bestFitness, bestParams);
     ++nIterations;
     if (stopRequested) {
-      SPDLOG_INFO("Stopping evolve early after {} steps", nIterations);
+      SPDLOG_INFO("Stopping evolve early after {} steps", nIterations.load());
       return finalizeEvolve();
     }
   }
-  SPDLOG_INFO("Completed {} steps", nIterations);
+  SPDLOG_INFO("Completed {} steps", nIterations.load());
   return finalizeEvolve();
 }
 
