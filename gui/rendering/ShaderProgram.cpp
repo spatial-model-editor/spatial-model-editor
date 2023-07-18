@@ -4,20 +4,19 @@
 
 #include "ShaderProgram.hpp"
 
-#include <cstdio>
 #include "Utils.hpp"
 
-ShaderProgram::ShaderProgram(const char* vertexShaderName, const char* fragmentShaderName)
+ShaderProgram::ShaderProgram(std::string vertexShaderName, std::string fragmentShaderName)
 {
   m_vertexShaderText = Utils::LoadFile(vertexShaderName);
   m_fragmentShaderText = Utils::LoadFile(fragmentShaderName);
 
   m_vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
-  glShaderSource(m_vertexShaderId, 1, &m_vertexShaderText, NULL);
+  glShaderSource(m_vertexShaderId, 1, &m_vertexShaderText.c_str(), NULL);
   glCompileShader(m_vertexShaderId);
 
   m_fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
-  glShaderSource(m_fragmentShaderId, 1, &m_fragmentShaderText, NULL);
+  glShaderSource(m_fragmentShaderId, 1, &m_fragmentShaderText.c_str(), NULL);
   glCompileShader(m_fragmentShaderId);
 
 

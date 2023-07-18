@@ -47,8 +47,13 @@ void WireframeObject::CreateVBO(void)
   GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(GLfloat);
   GLsizeiptr indexBufferSize = m_indices.size() * sizeof(GLuint);
 
-  glGenVertexArrays(1, &m_vao);
-  glBindVertexArray(m_vao);
+//  glGenVertexArrays(1, &m_vao);
+//  glBindVertexArray(m_vao);
+
+  m_vao = new QOpenGLVertexArrayObject(nullptr);
+  m_vao->create();
+  m_vao->bind();
+
 
   glGenBuffers(1, &m_vbo);
   glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
@@ -78,8 +83,11 @@ void WireframeObject::DestroyVBO(void)
   glDeleteBuffers(1, &m_vbo);
   glDeleteBuffers(1, &m_elementBufferId);
 
-  glBindVertexArray(0);
-  glDeleteVertexArrays(1, &m_vao);
+//  glBindVertexArray(0);
+//  glDeleteVertexArrays(1, &m_vao);
+
+  m_vao->release();
+  m_vao->destroy();
 }
 
 void WireframeObject::Render(ShaderProgram* program)
@@ -88,7 +96,8 @@ void WireframeObject::Render(ShaderProgram* program)
   program->SetPosition(m_position.x, m_position.y, m_position.z);
   program->SetRotation(m_rotation.x, m_rotation.y, m_rotation.z);
   program->SetScale(m_scale.x, m_scale.y, m_scale.z);
-  glBindVertexArray(m_vao);
+//  glBindVertexArray(m_vao);
+  m_vao->bind();
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferId);
   glDrawElements(GL_LINES, m_indices.size(), GL_UNSIGNED_INT, (void*)0);
   glPopMatrix();

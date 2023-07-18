@@ -4,44 +4,41 @@
 
 #include "ObjectLoader.hpp"
 
-#include <stdio.h>
-
-ObjectInfo ObjectLoader::Load(const char* filename)
+ObjectInfo ObjectLoader::Load(std::string filename)
 {
-  FILE* objectFile;
-  errno_t err = fopen_s(&objectFile, filename, "r");
-  char elementType[32];
-  ObjectInfo objectInfo;
 
-  if (err == 0)
-  {
-    while (!feof(objectFile))
-    {
-      strcpy_s(elementType, 32, "\0");
-      fscanf_s(objectFile, "%s", elementType, (unsigned int)_countof(elementType));
-      if (!strcmp(elementType, "v"))
-      {
-        Vector4 v;
-        fscanf_s(objectFile, "%f %f %f", &v.x, &v.y, &v.z);
-        objectInfo.vertices.push_back(v);
-      }
-      else if (!strcmp(elementType, "f"))
-      {
-        Face f;
-        int* tmp = new int;
-        fscanf_s(objectFile, "%d/%d/%d %d/%d/%d %d/%d/%d",
-                 &f.vertexIndices[0], tmp, tmp,
-                 &f.vertexIndices[1], tmp, tmp,
-                 &f.vertexIndices[2], tmp, tmp);
-        objectInfo.faces.push_back(f);
-      }
-    }
-    fclose(objectFile);
-  }
-  else
-  {
-    printf("Error when loading file '%s'\n", filename);
-  }
+  std::ifstream in(filename);
 
-  return objectInfo;
+  SMesh mesh;
+  CGAL::IO::read_PLY(in, mesh);
+
+  return Load(mesh);
 }
+
+ObjectInfo ObjectLoader::Load(SMesh mesh)
+{
+  ObjectInfo Obj;
+
+  SMesh::Property_map<SMesh::Vertex_index, Point> Positions;
+  SMesh::Property_map<SMesh::Face_index, std::vector<double>> Faces;
+
+  bool foundPosition;
+  bool foundFaces;
+
+  std::tie(Positions, foundPosition) = mesh.property_map<SMesh::Vertex_index, Point>("Position");
+  assert( !foundPosition );
+
+  std::tie(Faces, foundFaces)  = mesh.property_map<SMesh::Face_index, std::vector<double>>("Faces");
+  assert( !foundFaces );
+
+  for(vertex_descriptor vd: vertices(mesh))
+    std::cout << Positions[vd] << std::endl;
+
+  for(face_descriptor fd: faces(mesh))
+    std::cout << Faces[fd][0] << std::endl;
+
+  return Obj;
+}
+
+
+

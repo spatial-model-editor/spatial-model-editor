@@ -42,7 +42,8 @@ private:
   vector<GLfloat> m_verticesBuffer;
   vector<GLfloat> m_colorBuffer;
 
-  GLuint m_vao;
+//  GLuint m_vao;
+  QOpenGLVertexArrayObject *m_vao;
   GLuint m_vbo;
   GLuint m_colorBufferId;
   GLuint m_elementBufferId;

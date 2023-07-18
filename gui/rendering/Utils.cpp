@@ -4,13 +4,29 @@
 
 #include "Utils.hpp"
 
-#include <stdio.h>
+#include <iostream>
+#include <fstream>
 
-void Utils::TraceGLError(string tag)
+void Utils::TraceGLError(std::string tag)
 {
   GLenum errorCode = glGetError();
   if (errorCode != GL_NO_ERROR)
   {
-    fprintf(stderr, "%s: %d\n", tag.data(), errorCode);
+    std::cerr << tag << ":" << errorCode;
+  }
+}
+
+std::string Utils::LoadFile(std::string filename)
+{
+  try
+  {
+    std::ifstream fileIn(filename);
+    std::stringstream buffer;
+    buffer << fileIn.rdbuf();
+    return buffer.str();
+  }
+  catch(...)
+  {
+    std::cerr<<"Error when loading file:"<< filename;
   }
 }

@@ -10,7 +10,10 @@ target_sources(
         Vector4.cpp
         WireframeObject.cpp)
 
-target_include_directories(gui PUBLIC .)
+target_include_directories(
+        gui
+        PUBLIC
+        .)
 
 if(BUILD_TESTING)
     target_sources(

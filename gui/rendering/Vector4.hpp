@@ -25,7 +25,7 @@ public:
   GLfloat z;
   GLfloat w;
 
-  virtual vector<GLfloat> ToArray(void);
+  virtual std::vector<GLfloat> ToArray(void);
 };
 
 

@@ -13,7 +13,7 @@ class Vector3 : public IArray<GLfloat>
 public:
   Vector3(void);
   Vector3(GLfloat x, GLfloat y, GLfloat z);
-  vector<GLfloat> ToArray() override;
+  std::vector<GLfloat> ToArray() override;
 
   Vector3 operator+(Vector3) const;
   Vector3 operator-(Vector3) const;

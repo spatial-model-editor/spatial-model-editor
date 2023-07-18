@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 #include <string>
-#define MAX_FILE_SIZE 8192
+//#define MAX_FILE_SIZE 8192
 
 #include <QtOpenGL>
 
@@ -17,7 +17,7 @@ class Utils
 {
 public:
   static void TraceGLError(string tag);
-  //static GLchar* LoadFile(const char* filename);
+  static std::string LoadFile(string filename);
 };
 
 

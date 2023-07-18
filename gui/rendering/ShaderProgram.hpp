@@ -6,11 +6,12 @@
 #define SPATIALMODELEDITOR_SHADERPROGRAM_H
 
 #include <QtOpenGL>
+#include <string>
 
 class ShaderProgram: protected QOpenGLFunctions
 {
 public:
-  ShaderProgram(const char* vertexShaderName, const char* fragmentShaderName);
+  ShaderProgram(std::string vertexShaderName, std::string fragmentShaderName);
   ~ShaderProgram();
 
   void Use(void);
@@ -22,8 +23,8 @@ public:
   void SetViewPosition(GLfloat viewPosX, GLfloat viewPosY, GLfloat viewPosZ);
   void SetViewRotation(GLfloat viewRotationX, GLfloat viewRotationY, GLfloat viewRotationZ);
 private:
-  GLchar* m_vertexShaderText;
-  GLchar* m_fragmentShaderText;
+  std::string m_vertexShaderText;
+  std::string m_fragmentShaderText;
 
   GLint m_vertexShaderId;
   GLint m_fragmentShaderId;
