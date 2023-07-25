@@ -17,7 +17,10 @@ QOpenGLMouseTracker::~QOpenGLMouseTracker()
 
 void QOpenGLMouseTracker::initializeGL()
 {
-  mainProgram = new ShaderProgram("Shaders/vertex.glsl", "Shaders/fragment.glsl");
+  //mainProgram = new ShaderProgram("Shaders/vertex.glsl", "Shaders/fragment.glsl");
+  mainProgram = new ShaderProgram(
+      "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Shaders/vertex.glsl",
+      "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Shaders/fragment.glsl");
   mainProgram->Use();
 
   camera = new Camera(60.0f, 800, 600, 0.2f, 1000.0f);
@@ -26,9 +29,12 @@ void QOpenGLMouseTracker::initializeGL()
 
   objectLoader = new ObjectLoader;
 
-  ObjectInfo sphereInfo = objectLoader->Load("Objects/sphere.ply");
-  ObjectInfo cubeInfo = objectLoader->Load("Objects/cube.ply");
-  ObjectInfo monkeyInfo = objectLoader->Load("Objects/teapot.ply");
+  ObjectInfo cubeInfo = objectLoader->Load(
+      "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/cube.ply");
+  ObjectInfo sphereInfo = objectLoader->Load(
+      "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/sphere.ply");
+  ObjectInfo monkeyInfo = objectLoader->Load(
+      "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/teapot.ply");
 
   Vector4 redColor = Vector4(1.0f, 0.0f, 0.0f);
   Vector4 greenColor = Vector4(0.0f, 1.0f, 0.0f);
