@@ -2,13 +2,13 @@
 // Created by acaramizaru on 6/29/23.
 //
 
-#include "qopenglmousetracker.hpp"
+#include "qopengltriangle.hpp"
 #include "sme/logger.hpp"
 #include <QPainter>
 
 
 
-QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent)
+QOpenGLTriangle::QOpenGLTriangle(QWidget *parent)
     : QOpenGLWidget(parent)
 {
   this->timer = new QTimer(this);
@@ -16,10 +16,10 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent)
   timer->start(200);
 }
 
-QOpenGLMouseTracker::~QOpenGLMouseTracker()
+QOpenGLTriangle::~QOpenGLTriangle()
 {}
 
-void QOpenGLMouseTracker::initializeGL()
+void QOpenGLTriangle::initializeGL()
 {
   QOpenGLFunctions::initializeOpenGLFunctions();
 
@@ -31,7 +31,7 @@ void QOpenGLMouseTracker::initializeGL()
   glEnable(GL_COLOR_MATERIAL);
 }
 
-void QOpenGLMouseTracker::paintGL()
+void QOpenGLTriangle::paintGL()
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -47,7 +47,7 @@ void QOpenGLMouseTracker::paintGL()
   glEnd();
 }
 
-void QOpenGLMouseTracker::resizeGL(int w, int h)
+void QOpenGLTriangle::resizeGL(int w, int h)
 {
   glViewport(0,0,w,h);
   glMatrixMode(GL_PROJECTION);

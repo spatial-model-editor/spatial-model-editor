@@ -2,8 +2,8 @@
 // Created by acaramizaru on 6/29/23.
 //
 
-#ifndef SPATIALMODELEDITOR_QOPENGLMOUSETRACKER_H
-#define SPATIALMODELEDITOR_QOPENGLMOUSETRACKER_H
+#ifndef SPATIALMODELEDITOR_QOPENGLTRIANGLE_H
+#define SPATIALMODELEDITOR_QOPENGLTRIANGLE_H
 
 #include <QOpenGLWidget>
 
@@ -17,14 +17,14 @@
 #include <QTimer>
 
 
-class QOpenGLMouseTracker :
+class QOpenGLTriangle :
     public QOpenGLWidget,
     protected QOpenGLFunctions
 {
 
 public:
-  QOpenGLMouseTracker(QWidget *parent = 0);
-  ~QOpenGLMouseTracker();
+  QOpenGLTriangle(QWidget *parent = 0);
+  ~QOpenGLTriangle();
 
 protected:
 
@@ -38,4 +38,4 @@ protected:
 };
 
 
-#endif // SPATIALMODELEDITOR_QOPENGLMOUSETRACKER_H
+#endif // SPATIALMODELEDITOR_QOPENGLTRIANGLE_H

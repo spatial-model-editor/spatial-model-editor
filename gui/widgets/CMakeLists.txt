@@ -3,7 +3,7 @@ target_sources(
   PRIVATE plotwrapper.cpp
           qlabelslice.cpp
           qlabelmousetracker.cpp
-          qopenglmousetracker.cpp
+          qopengltriangle.cpp
           qplaintextmathedit.cpp)
 target_include_directories(gui PUBLIC .)
 
@@ -13,6 +13,6 @@ if(BUILD_TESTING)
     PUBLIC plotwrapper_t.cpp
            qlabelslice_t.cpp
            qlabelmousetracker_t.cpp
-           qopenglmousetracker_t.cpp
+           qopengltriangle_t.cpp
            qplaintextmathedit_t.cpp)
 endif()
