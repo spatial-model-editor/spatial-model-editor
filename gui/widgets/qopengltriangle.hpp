@@ -5,8 +5,6 @@
 #ifndef SPATIALMODELEDITOR_QOPENGLTRIANGLE_H
 #define SPATIALMODELEDITOR_QOPENGLTRIANGLE_H
 
-#include <QOpenGLWidget>
-
 #include <QWidget>
 #include <QOpenGLWidget>
 

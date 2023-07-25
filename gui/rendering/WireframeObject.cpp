@@ -6,6 +6,8 @@
 
 WireframeObject::WireframeObject(ObjectInfo info, Vector4 color)
 {
+  QOpenGLFunctions::initializeOpenGLFunctions();
+
   m_vertices = info.vertices;
   m_color = color;
 

@@ -12,9 +12,9 @@ using namespace sme::test;
 
 #include "qopengltriangle.hpp"
 
-static const char *tags{"[gui/widgets/QOpenGLMouseTracker][gui/widgets][gui]"};
+static const char *tags{"[gui/widgets/QOpenGLTriangle][gui/widgets][gui]"};
 
-TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
+TEST_CASE("QOpenGLTriangle: OpenGL", tags) {
 
   QOpenGLTriangle *test = new QOpenGLTriangle();
 
