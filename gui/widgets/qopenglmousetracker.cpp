@@ -29,11 +29,11 @@ void QOpenGLMouseTracker::initializeGL()
 
   objectLoader = new ObjectLoader;
 
-  ObjectInfo cubeInfo = objectLoader->Load(
-      "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/cube.ply");
+//  ObjectInfo cubeInfo = objectLoader->Load(
+//      "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/pyramid.ply");
   ObjectInfo sphereInfo = objectLoader->Load(
       "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/sphere.ply");
-  ObjectInfo monkeyInfo = objectLoader->Load(
+  ObjectInfo teapotInfo = objectLoader->Load(
       "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/teapot.ply");
 
   Vector4 redColor = Vector4(1.0f, 0.0f, 0.0f);
@@ -41,8 +41,8 @@ void QOpenGLMouseTracker::initializeGL()
   Vector4 blueColor = Vector4(0.0f, 0.0f, 1.0f);
 
   sphereObject = new WireframeObject(sphereInfo, redColor);
-  cubeObject = new WireframeObject(cubeInfo, greenColor);
-  monkeyObject = new WireframeObject(monkeyInfo, blueColor);
+//  cubeObject = new WireframeObject(cubeInfo, greenColor);
+  teapotObject = new WireframeObject(teapotInfo, blueColor);
 
 }
 
@@ -56,11 +56,11 @@ void QOpenGLMouseTracker::paintGL()
   camera->UpdateView(mainProgram);
 
   sphereObject->SetPosition(cos(dt) * 10.0f, 0.0f, sin(dt) * 10.0f);
-  cubeObject->SetPosition(0.0f, sin(dt), 1.0f);
+//  cubeObject->SetPosition(0.0f, sin(dt), 1.0f);
 
   sphereObject->Render(mainProgram);
-  cubeObject->Render(mainProgram);
-  monkeyObject->Render(mainProgram);
+//  cubeObject->Render(mainProgram);
+  teapotObject->Render(mainProgram);
 
 }
 

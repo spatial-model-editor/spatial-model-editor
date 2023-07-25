@@ -32,7 +32,7 @@ protected:
 
   WireframeObject* sphereObject;
   WireframeObject* cubeObject;
-  WireframeObject* monkeyObject;
+  WireframeObject* teapotObject;
 
   void initializeGL() override;
   void resizeGL(int w, int h) override;
