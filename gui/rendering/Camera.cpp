@@ -6,7 +6,7 @@
 #include <QtOpenGL>
 
 
-Camera::Camera(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ)
+void Camera::Init(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ)
 {
   m_aspectRatio = width / height;
   m_near = nearZ;
@@ -39,6 +39,12 @@ Camera::Camera(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloa
 
   m_viewPosition = Vector3(0.0f, 0.0f, 0.0f);
   m_viewRotation = Vector3(0.0f, 0.0f, 0.0f);
+}
+
+
+Camera::Camera(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ)
+{
+  Init( FOV, width, height, nearZ, farZ);
 }
 
 void Camera::SetPosition(GLfloat posX, GLfloat posY, GLfloat posZ)

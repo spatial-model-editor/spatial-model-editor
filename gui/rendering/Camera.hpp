@@ -17,6 +17,8 @@ class Camera
 public:
   Camera(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ);
 
+  void Init(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ);
+
   void SetPosition(GLfloat posX, GLfloat posY, GLfloat posZ);
   void SetPosition(Vector3 position);
   Vector3 GetPosition();

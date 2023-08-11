@@ -8,6 +8,8 @@ WireframeObject::WireframeObject(ObjectInfo info, Vector4 color)
 {
   QOpenGLFunctions::initializeOpenGLFunctions();
 
+  m_scaleGeometry = 1.0f;
+
   m_vertices = info.vertices;
   m_color = color;
 
@@ -92,8 +94,14 @@ void WireframeObject::DestroyVBO(void)
   m_vao->destroy();
 }
 
-void WireframeObject::Render(ShaderProgram* program)
+void WireframeObject::Render(ShaderProgram* program, float lineWidth)
 {
+  //scale geometry for a more reliable picking
+  //https://registry.khronos.org/OpenGL-Refpages/gl4/html/glLineWidth.xhtml
+  //glLineWidth(m_scaleGeometry);
+  glLineWidth(lineWidth);
+  glEnable(GL_LINE_SMOOTH);
+
   glPushMatrix();
   program->SetPosition(m_position.x, m_position.y, m_position.z);
   program->SetRotation(m_rotation.x, m_rotation.y, m_rotation.z);
@@ -139,4 +147,14 @@ void WireframeObject::SetScale(GLfloat scaleX, GLfloat scaleY, GLfloat scaleZ)
 void WireframeObject::SetScale(Vector3 scale)
 {
   m_scale = scale;
+}
+
+void WireframeObject::SetScaleGeometry(float scale)
+{
+
+}
+
+float WireframeObject::GetScaleGeometry()
+{
+
 }
