@@ -8,8 +8,6 @@ WireframeObject::WireframeObject(ObjectInfo info, Vector4 color)
 {
   QOpenGLFunctions::initializeOpenGLFunctions();
 
-  m_scaleGeometry = 1.0f;
-
   m_vertices = info.vertices;
   m_color = color;
 
@@ -37,12 +35,38 @@ WireframeObject::WireframeObject(ObjectInfo info, Vector4 color)
   m_rotation = Vector3(0.0f, 0.0f, 0.0f);
   m_scale = Vector3(1.0f, 1.0f, 1.0f);
   CreateVBO();
-
 }
 
 WireframeObject::~WireframeObject(void)
 {
   DestroyVBO();
+}
+
+void WireframeObject::SetColor(Vector4 color)
+{
+  m_color = color;
+  UpdateVBOColor();
+}
+
+void WireframeObject::UpdateVBOColor()
+{
+  int size = m_colorBuffer.size() / m_color.ToArray().size();
+
+  auto cArr = m_color.ToArray();
+
+  m_colorBuffer.clear();
+
+  for(int iter=0; iter < size; iter++)
+    m_colorBuffer.insert(m_colorBuffer.end(), cArr.begin(), cArr.end());
+
+  GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(GLfloat);
+
+  m_vao->bind();
+
+  glBindBuffer(GL_ARRAY_BUFFER, m_colorBufferId);
+  glBufferData(GL_ARRAY_BUFFER, colorBufferSize, m_colorBuffer.data(), GL_DYNAMIC_DRAW);
+  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0);
+  glEnableVertexAttribArray(1);
 }
 
 void WireframeObject::CreateVBO(void)
@@ -60,20 +84,34 @@ void WireframeObject::CreateVBO(void)
 
 
   glGenBuffers(1, &m_vbo);
+  Utils::TraceGLError("glGenBuffers");
   glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
+  Utils::TraceGLError("glBindBuffer");
   glBufferData(GL_ARRAY_BUFFER, vboSize, m_verticesBuffer.data(), GL_STATIC_DRAW);
+  Utils::TraceGLError("glBufferData");
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, 0);
+  Utils::TraceGLError("glVertexAttribPointer");
   glEnableVertexAttribArray(0);
+  Utils::TraceGLError("glEnableVertexAttribArray");
 
   glGenBuffers(1, &m_colorBufferId);
+  Utils::TraceGLError("glGenBuffers");
   glBindBuffer(GL_ARRAY_BUFFER, m_colorBufferId);
-  glBufferData(GL_ARRAY_BUFFER, colorBufferSize, m_colorBuffer.data(), GL_STATIC_DRAW);
+  Utils::TraceGLError("glBindBuffer");
+  //glBufferData(GL_ARRAY_BUFFER, colorBufferSize, m_colorBuffer.data(), GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, colorBufferSize, m_colorBuffer.data(), GL_DYNAMIC_DRAW);
+  Utils::TraceGLError("glBufferData");
   glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, 0);
+  Utils::TraceGLError("glVertexAttribPointer");
   glEnableVertexAttribArray(1);
+  Utils::TraceGLError("glEnableVertexAttribArray");
 
   glGenBuffers(1, &m_elementBufferId);
+  Utils::TraceGLError("glGenBuffers");
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferId);
+  Utils::TraceGLError("glBindBuffer");
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBufferSize, m_indices.data(), GL_STATIC_DRAW);
+  Utils::TraceGLError("glBufferData");
 }
 
 void WireframeObject::DestroyVBO(void)
@@ -98,19 +136,17 @@ void WireframeObject::Render(ShaderProgram* program, float lineWidth)
 {
   //scale geometry for a more reliable picking
   //https://registry.khronos.org/OpenGL-Refpages/gl4/html/glLineWidth.xhtml
-  //glLineWidth(m_scaleGeometry);
+
   glLineWidth(lineWidth);
   glEnable(GL_LINE_SMOOTH);
 
-  glPushMatrix();
   program->SetPosition(m_position.x, m_position.y, m_position.z);
   program->SetRotation(m_rotation.x, m_rotation.y, m_rotation.z);
   program->SetScale(m_scale.x, m_scale.y, m_scale.z);
-//  glBindVertexArray(m_vao);
+  //  glBindVertexArray(m_vao);
   m_vao->bind();
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferId);
   glDrawElements(GL_LINES, m_indices.size(), GL_UNSIGNED_INT, (void*)0);
-  glPopMatrix();
 }
 
 void WireframeObject::SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ)
@@ -147,14 +183,4 @@ void WireframeObject::SetScale(GLfloat scaleX, GLfloat scaleY, GLfloat scaleZ)
 void WireframeObject::SetScale(Vector3 scale)
 {
   m_scale = scale;
-}
-
-void WireframeObject::SetScaleGeometry(float scale)
-{
-
-}
-
-float WireframeObject::GetScaleGeometry()
-{
-
 }

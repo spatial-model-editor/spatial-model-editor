@@ -34,8 +34,7 @@ public:
   void SetScale(Vector3 scale);
   Vector3 GetScale();
 
-  void SetScaleGeometry(float scale);
-  float GetScaleGeometry();
+  void SetColor(Vector4 color);
 
 private:
   vector<Vector4> m_vertices;
@@ -55,10 +54,10 @@ private:
   Vector3 m_position;
   Vector3 m_scale;
 
-  float m_scaleGeometry;
-
   void CreateVBO(void);
   void DestroyVBO(void);
+
+  void UpdateVBOColor();
 };
 
 

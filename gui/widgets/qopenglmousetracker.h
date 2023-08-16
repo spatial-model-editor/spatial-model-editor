@@ -21,21 +21,28 @@ public:
   QOpenGLMouseTracker(QWidget *parent = 0);
   ~QOpenGLMouseTracker();
 
-  void SetCamera(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ);
+  void SetCameraProjection(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ);
+  void SetCameraPosition(float x, float y, float z);
+  void SetCameraSetRotation(float x, float y, float z);
 
+  void addMesh(SMesh mesh, Vector4 color);
 
 protected:
 
   QTimer *timer;
   GLfloat dt;
 
+  typedef pair<Vector4, WireframeObject> color_mesh;
+
+  vector<color_mesh> meshSet;
+
   ShaderProgram* mainProgram;
-  Camera* camera;
+  Camera camera;
   ObjectLoader* objectLoader;
 
-  WireframeObject* sphereObject;
-  WireframeObject* cubeObject;
-  WireframeObject* teapotObject;
+//  WireframeObject* sphereObject;
+//  WireframeObject* cubeObject;
+//  WireframeObject* teapotObject;
 
   QImage offscreenPickingImage;
 
@@ -52,6 +59,8 @@ protected:
   void mouseReleaseEvent(QMouseEvent * event);
 
   void moveEvent(QMoveEvent *event);
+
+
 
 //  void SetCameraPosition(float x,float y,float z);
 //  void SetCameraRotation(float rotx, float roty, float rotz);

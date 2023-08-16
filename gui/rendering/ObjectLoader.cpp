@@ -4,9 +4,8 @@
 
 #include "ObjectLoader.hpp"
 
-ObjectInfo ObjectLoader::Load(std::string filename)
+SMesh ObjectLoader::LoadMesh(std::string filename)
 {
-
   std::ifstream in(filename);
   if(in.fail())
   {
@@ -15,6 +14,14 @@ ObjectInfo ObjectLoader::Load(std::string filename)
 
   SMesh mesh;
   CGAL::IO::read_PLY(in, mesh);
+
+  return mesh;
+}
+
+ObjectInfo ObjectLoader::Load(std::string filename)
+{
+
+  SMesh mesh = ObjectLoader::LoadMesh(filename);
 
   return Load(mesh);
 }

@@ -28,8 +28,9 @@ typedef boost::graph_traits<SMesh>::face_descriptor        face_descriptor;
 class ObjectLoader
 {
 public:
-  ObjectInfo Load(std::string filename);
-  ObjectInfo Load(SMesh);
+  static ObjectInfo Load(std::string filename);
+  static ObjectInfo Load(SMesh);
+  static SMesh LoadMesh(std::string filename);
 };
 
 

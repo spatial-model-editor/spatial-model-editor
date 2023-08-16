@@ -4,7 +4,8 @@
 
 #include "qopenglmousetracker.h"
 
-QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent)
+QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent):
+                                                            camera(60.0f,size().width(), size().height(),0.001f, 2000)
 {
   this->timer = new QTimer(this);
   connect(this->timer, SIGNAL(timeout()), this, SLOT(update()));
@@ -14,11 +15,12 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent)
 }
 
 QOpenGLMouseTracker::~QOpenGLMouseTracker()
-{}
-
-void QOpenGLMouseTracker::SetCamera(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ)
 {
-  this->camera = new Camera(FOV, width, height, nearZ, farZ);
+}
+
+void QOpenGLMouseTracker::SetCameraProjection(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ)
+{
+  camera = Camera(FOV, width, height, nearZ, farZ);
 }
 
 void QOpenGLMouseTracker::initializeGL()
@@ -29,55 +31,56 @@ void QOpenGLMouseTracker::initializeGL()
       "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Shaders/fragment.glsl");
   mainProgram->Use();
 
-  camera = new Camera(60.0f, size().width(), size().height(), 0.2f, 1000.0f);
 
-  camera->UpdateProjection(mainProgram);
-  camera->UpdateView(mainProgram);
+//    // default camera
+//    camera = Camera(60.0f, size().width(), size().height(), 0.2f, 1000.0f);
 
-  objectLoader = new ObjectLoader;
+//  camera.UpdateProjection(mainProgram);
+//  camera.UpdateView(mainProgram);
 
 //  ObjectInfo cubeInfo = objectLoader->Load(
 //      "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/pyramid.ply");
-  ObjectInfo sphereInfo = objectLoader->Load(
-      "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/sphere.ply");
-  ObjectInfo teapotInfo = objectLoader->Load(
-      "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/teapot.ply");
 
+//  ObjectInfo sphereInfo = ObjectLoader::Load(
+//      "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/sphere.ply");
+//  ObjectInfo teapotInfo = ObjectLoader::Load(
+//      "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/teapot.ply");
+//
   Vector4 redColor = Vector4(1.0f, 0.0f, 0.0f);
-  Vector4 greenColor = Vector4(0.0f, 1.0f, 0.0f);
+//  Vector4 greenColor = Vector4(0.0f, 1.0f, 0.0f);
   Vector4 blueColor = Vector4(0.0f, 0.0f, 1.0f);
+//
+//  sphereObject = new WireframeObject(sphereInfo, redColor);
+////  cubeObject = new WireframeObject(cubeInfo, greenColor);
+//  teapotObject = new WireframeObject(teapotInfo, blueColor);
+//
+  SMesh teapotMesh = ObjectLoader::LoadMesh("/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/teapot.ply");
+  addMesh(teapotMesh, blueColor);
 
-  sphereObject = new WireframeObject(sphereInfo, redColor);
-//  cubeObject = new WireframeObject(cubeInfo, greenColor);
-  teapotObject = new WireframeObject(teapotInfo, blueColor);
-
-
-//  QOpenGLFramebufferObjectFormat format;
-//  format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-//  format.setSamples(4);
-//  fbo = new QOpenGLFramebufferObject( size(),format);
-
-//  fbo = new QOpenGLFramebufferObject( size());
-
-//  auto a  = size();
-//  auto b = a;
-
+  SMesh sphereMesh = ObjectLoader::LoadMesh("/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/teapot.ply");
+  addMesh(sphereMesh, redColor);
 }
 
 void QOpenGLMouseTracker::render(float lineWidth)
 {
-  camera->SetPosition( 0,0,-20);
-  camera->SetRotation(0,0,0);
-  camera->UpdateView(mainProgram);
-  camera->UpdateProjection(mainProgram);
+  camera.UpdateView(mainProgram);
+  camera.UpdateProjection(mainProgram);
 
-  sphereObject->SetPosition(cos(dt) * 10.0f, 0.0f, sin(dt) * 10.0f);
-  sphereObject->SetRotation(dt,0,0);
-  //  cubeObject->SetPosition(0.0f, sin(dt), 1.0f);
+//  sphereObject->SetPosition(cos(dt) * 10.0f, 0.0f, sin(dt) * 10.0f);
+//  sphereObject->SetRotation(dt,0,0);
+//  //  cubeObject->SetPosition(0.0f, sin(dt), 1.0f);
+//
+//  Vector4 redColor = Vector4(1.0f, 0.0f, 0.0f);
+//  Vector4 blueColor = Vector4(0.0f, 0.0f, 1.0f);
+//
+//  sphereObject->Render(mainProgram, lineWidth);
+//  //  cubeObject->Render(mainProgram);
+//  teapotObject->Render(mainProgram, lineWidth);
 
-  sphereObject->Render(mainProgram, lineWidth);
-  //  cubeObject->Render(mainProgram);
-  teapotObject->Render(mainProgram, lineWidth);
+  for(color_mesh obj: meshSet)
+  {
+    obj.second.Render(mainProgram, lineWidth);
+  }
 
 }
 
@@ -88,29 +91,27 @@ void QOpenGLMouseTracker::paintGL()
 
   render(1);
 
-  QOpenGLFramebufferObject* fboPicking = createFramebufferObject(size());
-  fboPicking->bind();
+  QOpenGLFramebufferObject fboPicking(size());
+  fboPicking.bind();
 
 //  QOpenGLContext::currentContext()->functions()->glViewport(
 //      0,0, fboPicking->width(), fboPicking->height());
 
   render(4);
 
-  QImage offscreenPickingImage = fboPicking->toImage();
+  offscreenPickingImage = fboPicking.toImage();
 
 //  static int number = 0;
 //  number++;
 //  QString fileName = QString("/home/acaramizaru/bla_bla2")+QString::number(number)+QString(".png");
 //  image.save(fileName);
 
-  fboPicking->bindDefault();
-  delete fboPicking;
-
+  fboPicking.bindDefault();
 }
 
 void QOpenGLMouseTracker::resizeGL(int w, int h)
 {
-  camera->Init(60.0f, w, h, 0.2f, 1000.0f);
+  camera.Init(60.0f, w, h, 0.2f, 1000.0f);
   this->update();
 }
 
@@ -128,7 +129,8 @@ void QOpenGLMouseTracker::mouseReleaseEvent(QMouseEvent * event) {
   int yAtRelease = event->position().y();
 
   QRgb pixel = offscreenPickingImage.pixel(xAtRelease,yAtRelease);
-
+  QColor color(pixel);
+  std::cout << color.green();
 }
 
 void QOpenGLMouseTracker::moveEvent(QMoveEvent *event)
@@ -140,4 +142,23 @@ void QOpenGLMouseTracker::moveEvent(QMoveEvent *event)
   int oldY = event->oldPos().y();
 
   // apply rotation of the scene or rotation of the camera
+}
+
+void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z)
+{
+  camera.SetPosition( x,y,z);
+}
+
+void QOpenGLMouseTracker::SetCameraSetRotation(float x, float y, float z)
+{
+  camera.SetRotation(x,y,z);
+}
+
+void QOpenGLMouseTracker::addMesh(SMesh mesh, Vector4 color)
+{
+  ObjectInfo objectInfo = ObjectLoader::Load(mesh);
+
+  meshSet.push_back(
+      make_pair(color,WireframeObject(objectInfo, color) )
+      );
 }
