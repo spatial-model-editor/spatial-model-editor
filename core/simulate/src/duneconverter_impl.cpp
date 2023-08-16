@@ -37,7 +37,9 @@ makeValidDuneSpeciesNames(const std::vector<std::string> &names) {
        "log",  "ln",   "exp",   "sqrt",  "sign",  "rint", "abs",
        "min",  "max",  "sum",   "avg"}};
   // dune-copasi reserved words:
-  reservedNames.insert(reservedNames.end(), {"x", "y", "t", "pi", "dim"});
+  reservedNames.insert(
+      reservedNames.end(),
+      {"position_x", "position_y", "position_z", "time", "pi", "dim"});
   for (auto &name : duneNames) {
     SPDLOG_TRACE("name {}", name);
     std::string duneName = name;
@@ -45,12 +47,6 @@ makeValidDuneSpeciesNames(const std::vector<std::string> &names) {
     // if species name clashes with a reserved name, append an underscore
     if (std::find(reservedNames.cbegin(), reservedNames.cend(), duneName) !=
         reservedNames.cend()) {
-      duneName.append("_");
-    }
-    // if species name ends with "_o" or "_i", append an underscore
-    // to avoid possible dune-copasi parsing issues with flux bcs
-    if (duneName.size() > 1 && duneName[duneName.size() - 2] == '_' &&
-        (duneName.back() == 'o' || duneName.back() == 'i')) {
       duneName.append("_");
     }
     // if species name clashes with another species name,

@@ -5,9 +5,6 @@
 set -e -x
 
 ls /host
-export CCACHE_DIR=/host/home/runner/work/spatial-model-editor/spatial-model-editor/ccache
-
-ccache -s
 
 mkdir /project/build
 cd /project/build

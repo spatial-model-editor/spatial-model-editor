@@ -20,7 +20,9 @@ inline Voxel operator+(const Voxel &a, const Voxel &b) {
 inline Voxel operator-(const Voxel &a, const Voxel &b) {
   return {a.p - b.p, a.z - b.z};
 }
-inline Voxel operator*(int a, const Voxel &b) { return {a * b.p, a * b.z}; }
+inline Voxel operator*(int a, const Voxel &b) {
+  return {a * b.p, static_cast<std::size_t>(a) * b.z};
+}
 inline bool operator==(const Voxel &a, const Voxel &b) {
   return a.z == b.z && a.p == b.p;
 }

@@ -16,9 +16,7 @@
 #include <utility>
 #include <vector>
 
-namespace sme {
-
-namespace simulate {
+namespace sme::simulate {
 
 namespace detail {
 
@@ -128,6 +126,4 @@ auto makeDuneGrid(const mesh::Mesh &mesh) {
   return std::make_pair(grid, hostGrid);
 }
 
-} // namespace simulate
-
-} // namespace sme
+} // namespace sme::simulate

@@ -24,7 +24,7 @@ enum class DuneDiscretizationType { FEM1 };
 
 struct DuneOptions {
   DuneDiscretizationType discretization{DuneDiscretizationType::FEM1};
-  std::string integrator{"alexander_2"};
+  std::string integrator{"Alexander2"};
   double dt{1e-1};
   double minDt{1e-10};
   double maxDt{1e4};

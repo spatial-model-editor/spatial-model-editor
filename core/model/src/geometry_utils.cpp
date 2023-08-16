@@ -116,7 +116,7 @@ VoxelIndexer::VoxelIndexer(const common::Volume &vSize,
 
 VoxelIndexer::VoxelIndexer(int nx, int ny, int nz,
                            const std::vector<common::Voxel> &voxels)
-    : flattener(nx, ny, nz),
+    : flattener(nx, ny, static_cast<std::size_t>(nz)),
       voxelIndex(static_cast<std::size_t>(nx * ny * nz), NULL_INDEX) {
   addVoxels(voxels);
 }
