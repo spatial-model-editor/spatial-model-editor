@@ -138,6 +138,7 @@ void DialogGeometryImage::enableWidgets(bool enable) {
   ui->spinPixelsY->setEnabled(enable);
   ui->btnResetPixels->setEnabled(enable);
   ui->btnSelectColours->setEnabled(enable);
+  ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(enable);
 }
 
 void DialogGeometryImage::lblImage_mouseClicked(
@@ -227,8 +228,8 @@ static int distance(QRgb a, QRgb b) {
 static void reduceImageToTheseColours(sme::common::ImageStack &images,
                                       const QVector<QRgb> &colorTable) {
   for (auto &image : images) {
-    // map each index in image colorTable to index of nearest color in
-    // colorTable
+    // map each index in image colorTable to the index of
+    // the nearest color in colorTable
     auto nOld{static_cast<int>(image.colorTable().size())};
     QVector<int> newIndex(nOld, 0);
     for (int iOld = 0; iOld < nOld; ++iOld) {

@@ -4,6 +4,7 @@
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
 #include "sme/model.hpp"
+#include <QDialogButtonBox>
 #include <QPushButton>
 
 using namespace sme::test;
@@ -30,6 +31,9 @@ TEST_CASE("DialogGeometryImage",
   ModalWidgetTimer mwt;
   auto *lblImage{dim.findChild<QLabelMouseTracker *>("lblImage")};
   REQUIRE(lblImage != nullptr);
+  auto *okButton{dim.findChild<QDialogButtonBox *>("buttonBox")
+                     ->button(QDialogButtonBox::Ok)};
+  REQUIRE(okButton != nullptr);
   auto *btnSelectColours{dim.findChild<QPushButton *>("btnSelectColours")};
   REQUIRE(btnSelectColours != nullptr);
   auto *btnApplyColours{dim.findChild<QPushButton *>("btnApplyColours")};
@@ -223,9 +227,14 @@ TEST_CASE("DialogGeometryImage",
     REQUIRE(dim.getAlteredImage().volume().height() == 50);
     REQUIRE(dim.getAlteredImage().volume().depth() == 1);
     REQUIRE(dim.getAlteredImage()[0].colorCount() == 3);
+    REQUIRE(okButton->isEnabled() == true);
     sendMouseClick(btnSelectColours);
+    // ok/cancel disabled while selecting colours
+    REQUIRE(okButton->isEnabled() == false);
     sendMouseClick(lblImage, QPoint(3, 3));
+    REQUIRE(okButton->isEnabled() == false);
     sendMouseClick(btnApplyColours);
+    REQUIRE(okButton->isEnabled() == true);
     REQUIRE(dim.getVoxelSize().width() == dbl_approx(1.0));
     REQUIRE(dim.getVoxelSize().height() == dbl_approx(1.0));
     REQUIRE(dim.getVoxelSize().depth() == dbl_approx(1.0));
