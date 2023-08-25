@@ -98,22 +98,22 @@ void QOpenGLMouseTracker::paintGL()
 
   render(1);
 
-//  QOpenGLFramebufferObject fboPicking(size());
-//  fboPicking.bind();
-//
-////  QOpenGLContext::currentContext()->functions()->glViewport(
-////      0,0, fboPicking->width(), fboPicking->height());
-//
-//  render(4);
-//
-//  offscreenPickingImage = fboPicking.toImage();
-//
-////  static int number = 0;
-////  number++;
-////  QString fileName = QString("/home/acaramizaru/bla_bla2")+QString::number(number)+QString(".png");
-////  image.save(fileName);
-//
-//  fboPicking.bindDefault();
+  QOpenGLFramebufferObject fboPicking(size());
+  fboPicking.bind();
+
+//  QOpenGLContext::currentContext()->functions()->glViewport(
+//      0,0, fboPicking->width(), fboPicking->height());
+
+  render(4);
+
+  offscreenPickingImage = fboPicking.toImage();
+
+//  static int number = 0;
+//  number++;
+//  QString fileName = QString("/home/acaramizaru/bla_bla2")+QString::number(number)+QString(".png");
+//  image.save(fileName);
+
+  fboPicking.bindDefault();
 }
 
 void QOpenGLMouseTracker::resizeGL(int w, int h)
