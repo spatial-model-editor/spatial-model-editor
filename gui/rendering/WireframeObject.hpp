@@ -18,7 +18,10 @@ class WireframeObject: protected QOpenGLFunctions
 {
 public:
   WireframeObject(ObjectInfo info, Vector4 color);
+  WireframeObject(const WireframeObject& cpy);
   ~WireframeObject(void);
+
+  void Init();
 
   void Render(ShaderProgram* program, float lineWidth=1);
 

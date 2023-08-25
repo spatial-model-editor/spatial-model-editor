@@ -15,6 +15,8 @@ SMesh ObjectLoader::LoadMesh(std::string filename)
   SMesh mesh;
   CGAL::IO::read_PLY(in, mesh);
 
+  in.close();
+
   return mesh;
 }
 

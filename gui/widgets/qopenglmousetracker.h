@@ -32,7 +32,7 @@ protected:
   QTimer *timer;
   GLfloat dt;
 
-  typedef pair<Vector4, WireframeObject> color_mesh;
+  typedef pair<Vector4, WireframeObject*> color_mesh;
 
   vector<color_mesh> meshSet;
 
@@ -40,9 +40,9 @@ protected:
   Camera camera;
   ObjectLoader* objectLoader;
 
-//  WireframeObject* sphereObject;
-//  WireframeObject* cubeObject;
-//  WireframeObject* teapotObject;
+  WireframeObject* sphereObject;
+  WireframeObject* cubeObject;
+  WireframeObject* teapotObject;
 
   QImage offscreenPickingImage;
 

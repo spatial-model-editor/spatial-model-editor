@@ -45,20 +45,24 @@ void QOpenGLMouseTracker::initializeGL()
 //      "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/sphere.ply");
 //  ObjectInfo teapotInfo = ObjectLoader::Load(
 //      "/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/teapot.ply");
-//
+
   Vector4 redColor = Vector4(1.0f, 0.0f, 0.0f);
 //  Vector4 greenColor = Vector4(0.0f, 1.0f, 0.0f);
   Vector4 blueColor = Vector4(0.0f, 0.0f, 1.0f);
-//
-//  sphereObject = new WireframeObject(sphereInfo, redColor);
-////  cubeObject = new WireframeObject(cubeInfo, greenColor);
-//  teapotObject = new WireframeObject(teapotInfo, blueColor);
-//
+
+
+  SMesh sphereMesh = ObjectLoader::LoadMesh("/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/sphere.ply");
+  //ObjectInfo sphereInfo = ObjectLoader::Load(sphereMesh);
+  addMesh(sphereMesh, redColor);
+
   SMesh teapotMesh = ObjectLoader::LoadMesh("/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/teapot.ply");
+  //ObjectInfo teapotInfo = ObjectLoader::Load(teapotMesh);
   addMesh(teapotMesh, blueColor);
 
-  SMesh sphereMesh = ObjectLoader::LoadMesh("/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/teapot.ply");
-  addMesh(sphereMesh, redColor);
+
+//    sphereObject = new WireframeObject(sphereInfo, redColor);
+//  //  cubeObject = new WireframeObject(cubeInfo, greenColor);
+//    teapotObject = new WireframeObject(teapotInfo, blueColor);
 }
 
 void QOpenGLMouseTracker::render(float lineWidth)
@@ -77,9 +81,12 @@ void QOpenGLMouseTracker::render(float lineWidth)
 //  //  cubeObject->Render(mainProgram);
 //  teapotObject->Render(mainProgram, lineWidth);
 
+  meshSet[0].second->SetPosition(cos(dt) * 10.0f, 0.0f, sin(dt) * 10.0f);
+
+
   for(color_mesh obj: meshSet)
   {
-    obj.second.Render(mainProgram, lineWidth);
+    obj.second->Render(mainProgram, lineWidth);
   }
 
 }
@@ -91,22 +98,22 @@ void QOpenGLMouseTracker::paintGL()
 
   render(1);
 
-  QOpenGLFramebufferObject fboPicking(size());
-  fboPicking.bind();
-
-//  QOpenGLContext::currentContext()->functions()->glViewport(
-//      0,0, fboPicking->width(), fboPicking->height());
-
-  render(4);
-
-  offscreenPickingImage = fboPicking.toImage();
-
-//  static int number = 0;
-//  number++;
-//  QString fileName = QString("/home/acaramizaru/bla_bla2")+QString::number(number)+QString(".png");
-//  image.save(fileName);
-
-  fboPicking.bindDefault();
+//  QOpenGLFramebufferObject fboPicking(size());
+//  fboPicking.bind();
+//
+////  QOpenGLContext::currentContext()->functions()->glViewport(
+////      0,0, fboPicking->width(), fboPicking->height());
+//
+//  render(4);
+//
+//  offscreenPickingImage = fboPicking.toImage();
+//
+////  static int number = 0;
+////  number++;
+////  QString fileName = QString("/home/acaramizaru/bla_bla2")+QString::number(number)+QString(".png");
+////  image.save(fileName);
+//
+//  fboPicking.bindDefault();
 }
 
 void QOpenGLMouseTracker::resizeGL(int w, int h)
@@ -158,7 +165,9 @@ void QOpenGLMouseTracker::addMesh(SMesh mesh, Vector4 color)
 {
   ObjectInfo objectInfo = ObjectLoader::Load(mesh);
 
+  WireframeObject* wireframeObject = new WireframeObject(objectInfo, color);
+
   meshSet.push_back(
-      make_pair(color,WireframeObject(objectInfo, color) )
+      make_pair(color, wireframeObject)
       );
 }
