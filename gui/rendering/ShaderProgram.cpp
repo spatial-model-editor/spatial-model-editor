@@ -6,6 +6,16 @@
 
 #include "Utils.hpp"
 
+ShaderProgram::ShaderProgram(const char* vertexProgram, const char* fragmentProgram)
+{
+  QOpenGLFunctions::initializeOpenGLFunctions();
+
+  m_vertexShaderText = std::string(vertexProgram);
+  m_fragmentShaderText = std::string(fragmentProgram);
+
+  Init();
+}
+
 ShaderProgram::ShaderProgram(std::string vertexShaderName, std::string fragmentShaderName)
 {
   QOpenGLFunctions::initializeOpenGLFunctions();
@@ -13,6 +23,11 @@ ShaderProgram::ShaderProgram(std::string vertexShaderName, std::string fragmentS
   m_vertexShaderText = Utils::LoadFile(vertexShaderName);
   m_fragmentShaderText = Utils::LoadFile(fragmentShaderName);
 
+  Init();
+}
+
+void ShaderProgram::Init()
+{
   m_vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
   Utils::TraceGLError("glCreateShader");
   char *vertexShaderText = new char[m_vertexShaderText.length() + 1];

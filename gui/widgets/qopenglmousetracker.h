@@ -25,6 +25,9 @@ public:
   void SetCameraPosition(float x, float y, float z);
   void SetCameraSetRotation(float x, float y, float z);
 
+  Vector3 GetCameraPosition();
+  Vector3 GetCameraOrientation();
+
   void addMesh(SMesh mesh, Vector4 color);
 
 protected:
@@ -38,13 +41,11 @@ protected:
 
   ShaderProgram* mainProgram;
   Camera camera;
-  ObjectLoader* objectLoader;
-
-  WireframeObject* sphereObject;
-  WireframeObject* cubeObject;
-  WireframeObject* teapotObject;
 
   QImage offscreenPickingImage;
+
+  int m_xAtPress;
+  int m_yAtPress;
 
 //  QOpenGLFramebufferObject *fbo;
 
@@ -58,8 +59,11 @@ protected:
 
   void mouseReleaseEvent(QMouseEvent * event);
 
-  void moveEvent(QMoveEvent *event);
+  void mouseMoveEvent(QMouseEvent *event);
 
+  void mousePressEvent(QMouseEvent *event);
+
+  void wheelEvent(QWheelEvent *event);
 
 
 //  void SetCameraPosition(float x,float y,float z);

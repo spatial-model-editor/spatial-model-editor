@@ -37,14 +37,17 @@ void Camera::Init(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLf
   m_projectionMatrix[3][2] = 1.0f;
   m_projectionMatrix[3][3] = 0.0f;
 
-  m_viewPosition = Vector3(0.0f, 0.0f, 0.0f);
-  m_viewRotation = Vector3(0.0f, 0.0f, 0.0f);
+//  m_viewPosition = Vector3(0.0f, 0.0f, 0.0f);
+//  m_viewRotation = Vector3(0.0f, 0.0f, 0.0f);
 }
 
 
 Camera::Camera(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ)
 {
   Init( FOV, width, height, nearZ, farZ);
+
+  SetRotation(0,0,0);
+  SetPosition(0,0,0);
 }
 
 void Camera::SetPosition(GLfloat posX, GLfloat posY, GLfloat posZ)
