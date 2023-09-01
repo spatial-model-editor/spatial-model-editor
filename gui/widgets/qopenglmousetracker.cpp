@@ -6,101 +6,71 @@
 #include "rendering/Shaders/fragment.hpp"
 #include "rendering/Shaders/vertex.hpp"
 
-QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent):
-                                                            camera(60.0f,size().width(), size().height(),0.001f, 2000)
+QOpenGLMouseTracker::QOpenGLMouseTracker(
+    QWidget *parent,
+    float lineWidth,
+    float lineSelectPrecision,
+    rendering::Vector4 selectedObjectColor,
+    float cameraFOV,
+    float cameraNearZ,
+    float cameraFarZ,
+    float frameRate):
+                       camera(cameraFOV,size().width(), size().height(),cameraNearZ, cameraFarZ)
 {
+  this->frameRate = frameRate;
+
   this->timer = new QTimer(this);
   connect(this->timer, SIGNAL(timeout()), this, SLOT(update()));
-  timer->start(20);
+  timer->start(1 / frameRate * 1000);
 
-  dt = 0;
+  setLineWidth(lineWidth);
+  setLineSelectPrecision(lineSelectPrecision);
+  setSelectedObjectColor(selectedObjectColor);
 }
 
 QOpenGLMouseTracker::~QOpenGLMouseTracker()
 {
-}
+  delete mainProgram;
 
-void QOpenGLMouseTracker::SetCameraProjection(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ)
-{
-  camera = Camera(FOV, width, height, nearZ, farZ);
+  for(color_mesh obj: meshSet)
+    delete obj.second;
 }
 
 void QOpenGLMouseTracker::initializeGL()
 {
-
-//  mainProgram = new ShaderProgram(
-//      std::string("/home/acaramizaru/git/spatial-model-editor/gui/rendering/Shaders/vertex.glsl"),
-//      std::string ("/home/acaramizaru/git/spatial-model-editor/gui/rendering/Shaders/fragment.glsl")
-//      );
-
-  mainProgram = new ShaderProgram(rendering::text_vertex, rendering::text_fragment);
+  mainProgram = new rendering::ShaderProgram(rendering::text_vertex, rendering::text_fragment);
   mainProgram->Use();
 
-//  Vector4 redColor = Vector4(1.0f, 0.0f, 0.0f);
-//  Vector4 blueColor = Vector4(0.0f, 0.0f, 1.0f);
-//
-//
-//  SMesh sphereMesh = ObjectLoader::LoadMesh("/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/sphere.ply");
-//  addMesh(sphereMesh, redColor);
-//
-//  SMesh teapotMesh = ObjectLoader::LoadMesh("/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/teapot.ply");
-//  addMesh(teapotMesh, blueColor);
 }
 
 void QOpenGLMouseTracker::render(float lineWidth)
 {
-  camera.UpdateView(mainProgram);
-  camera.UpdateProjection(mainProgram);
-
-//  sphereObject->SetPosition(cos(dt) * 10.0f, 0.0f, sin(dt) * 10.0f);
-//  sphereObject->SetRotation(dt,0,0);
-//  //  cubeObject->SetPosition(0.0f, sin(dt), 1.0f);
-//
-//  Vector4 redColor = Vector4(1.0f, 0.0f, 0.0f);
-//  Vector4 blueColor = Vector4(0.0f, 0.0f, 1.0f);
-//
-//  sphereObject->Render(mainProgram, lineWidth);
-//  //  cubeObject->Render(mainProgram);
-//  teapotObject->Render(mainProgram, lineWidth);
-
-//  meshSet[0].second->SetPosition(cos(dt) * 10.0f, 0.0f, sin(dt) * 10.0f);
-//  meshSet[0].second->SetRotation(cos(dt) * 10.0f, 0.0f, sin(dt) * 10.0f);
-
   for(color_mesh obj: meshSet)
   {
     obj.second->Render(mainProgram, lineWidth);
   }
-
 }
 
 void QOpenGLMouseTracker::paintGL()
 {
+  camera.UpdateView(mainProgram);
+  camera.UpdateProjection(mainProgram);
 
-  dt += 0.01f;
-
-  render(1);
+  render(lineWidth);
 
   QOpenGLFramebufferObject fboPicking(size());
   fboPicking.bind();
 
-//  QOpenGLContext::currentContext()->functions()->glViewport(
-//      0,0, fboPicking->width(), fboPicking->height());
-
-  render(10);
+  render(lineSelectPrecision);
 
   offscreenPickingImage = fboPicking.toImage();
-
-//  static int number = 0;
-//  number++;
-//  QString fileName = QString("/home/acaramizaru/bla_bla2")+QString::number(number)+QString(".png");
-//  image.save(fileName);
 
   fboPicking.bindDefault();
 }
 
 void QOpenGLMouseTracker::resizeGL(int w, int h)
 {
-  camera.Init(60.0f, w, h, 0.2f, 1000.0f);
+  camera.SetFrustum(camera.getFOV(), w, h, camera.getNear(), camera.getFar());
   this->update();
 }
 
@@ -112,9 +82,9 @@ QOpenGLFramebufferObject* QOpenGLMouseTracker::createFramebufferObject(const QSi
   return new QOpenGLFramebufferObject(size, format);
 }
 
-void QOpenGLMouseTracker::mouseReleaseEvent(QMouseEvent * event) {
-
-
+void QOpenGLMouseTracker::SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ)
+{
+  camera.SetFrustum(FOV, width, height, nearZ, farZ);
 }
 
 void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event)
@@ -122,16 +92,13 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event)
   m_xAtPress = event->pos().x();
   m_yAtPress = event->pos().y();
 
-
   int xAtRelease = event->position().x();
   int yAtRelease = event->position().y();
-
-  Vector4 yellow = Vector4(1.0f, 1.0f, 0.0f);
 
   QRgb pixel = offscreenPickingImage.pixel(xAtRelease,yAtRelease);
   QColor color(pixel);
 
-  Vector4 colorVector = Vector4(color.redF(),color.greenF(),color.blueF());
+  rendering::Vector4 colorVector = rendering::Vector4(color.redF(),color.greenF(),color.blueF());
 
   bool objectSelected = false;
 
@@ -139,7 +106,7 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event)
   {
     if (obj.first.ToArray() == colorVector.ToArray())
     {
-      obj.second->SetColor(yellow);
+      obj.second->SetColor(selectedObjectColor);
       objectSelected = true;
     }
   }
@@ -167,19 +134,21 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event)
   m_yAtPress = yAtPress;
 
   // apply rotation of the scene or rotation of the camera
-  Vector3 cameraOrientation = GetCameraOrientation();
-  SetCameraSetRotation(cameraOrientation.x + y_len, cameraOrientation.y + x_len, cameraOrientation.z);
+  rendering::Vector3 cameraOrientation = GetCameraOrientation();
+  SetCameraSetRotation(
+      cameraOrientation.x + y_len * (1 / frameRate),
+      cameraOrientation.y + x_len * (1 / frameRate),
+      cameraOrientation.z);
 }
 
 void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event)
 {
-  //QPoint numDegrees = event->angleDelta() / 8;
   auto Degrees = event->angleDelta().y() / 8;
 
   auto forwardVector = camera.GetForwardVector();
   auto position = camera.GetPosition();
 
-  camera.SetPosition(position+forwardVector * Degrees);
+  camera.SetPosition(position + forwardVector * Degrees * (1 / frameRate) );
 }
 
 void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z)
@@ -192,21 +161,37 @@ void QOpenGLMouseTracker::SetCameraSetRotation(float x, float y, float z)
   camera.SetRotation(x,y,z);
 }
 
-Vector3 QOpenGLMouseTracker::GetCameraPosition()
+rendering::Vector3 QOpenGLMouseTracker::GetCameraPosition()
 {
   return camera.GetPosition();
 }
 
-Vector3 QOpenGLMouseTracker::GetCameraOrientation()
+rendering::Vector3 QOpenGLMouseTracker::GetCameraOrientation()
 {
   return camera.GetRotation();
 }
 
-void QOpenGLMouseTracker::addMesh(SMesh mesh, Vector4 color)
+void QOpenGLMouseTracker::addMesh(rendering::SMesh mesh, rendering::Vector4 color)
 {
-  ObjectInfo objectInfo = ObjectLoader::Load(mesh);
+  rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
 
   meshSet.push_back(
-      make_pair(color, new WireframeObject(objectInfo, color))
+      std::make_pair(color, new rendering::WireframeObject(objectInfo, color))
       );
+}
+
+void QOpenGLMouseTracker::setFPS(float frameRate)
+{
+  this->frameRate = frameRate;
+  timer->start(1 / frameRate * 1000);
+}
+
+void QOpenGLMouseTracker::setLineWidth(float lineWidth)
+{
+  this->lineWidth = lineWidth;
+}
+
+void QOpenGLMouseTracker::setLineSelectPrecision(float lineSelectPrecision)
+{
+  this->lineSelectPrecision = lineSelectPrecision;
 }

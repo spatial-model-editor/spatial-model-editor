@@ -14,54 +14,54 @@
 
 #include <QtOpenGL>
 
-class WireframeObject: protected QOpenGLFunctions
-{
-public:
-  WireframeObject(ObjectInfo info, Vector4 color);
-  WireframeObject(const WireframeObject& cpy);
-  ~WireframeObject(void);
+namespace rendering {
 
-  void Init();
+    class WireframeObject : protected QOpenGLFunctions {
 
-  void Render(ShaderProgram* program, float lineWidth=1);
+    public:
+      WireframeObject(rendering::ObjectInfo info, rendering::Vector4 color);
+      WireframeObject(const WireframeObject &cpy);
+      ~WireframeObject(void);
 
-  void SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ);
-  void SetRotation(Vector3 rotation);
-  Vector3 GetRotation();
+      void Render(rendering::ShaderProgram *program, float lineWidth = 1);
 
-  void SetPosition(GLfloat positionX, GLfloat positionY, GLfloat positionZ);
-  void SetPosition(Vector3 position);
-  Vector3 GetPosition();
+      void SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ);
+      void SetRotation(rendering::Vector3 rotation);
+      rendering::Vector3 GetRotation();
 
-  void SetScale(GLfloat scaleX, GLfloat scaleY, GLfloat scaleZ);
-  void SetScale(Vector3 scale);
-  Vector3 GetScale();
+      void SetPosition(GLfloat positionX, GLfloat positionY, GLfloat positionZ);
+      void SetPosition(rendering::Vector3 position);
+      rendering::Vector3 GetPosition();
 
-  void SetColor(Vector4 color);
+      void SetScale(GLfloat scaleX, GLfloat scaleY, GLfloat scaleZ);
+      void SetScale(rendering::Vector3 scale);
+      rendering::Vector3 GetScale();
 
-private:
-  vector<Vector4> m_vertices;
-  vector<GLuint> m_indices;
-  Vector4 m_color;
+      void SetColor(rendering::Vector4 color);
 
-  vector<GLfloat> m_verticesBuffer;
-  vector<GLfloat> m_colorBuffer;
+    private:
+      std::vector<rendering::Vector4> m_vertices;
+      std::vector<GLuint> m_indices;
+      rendering::Vector4 m_color;
 
-//  GLuint m_vao;
-  QOpenGLVertexArrayObject *m_vao;
-  GLuint m_vbo;
-  GLuint m_colorBufferId;
-  GLuint m_elementBufferId;
+      std::vector<GLfloat> m_verticesBuffer;
+      std::vector<GLfloat> m_colorBuffer;
 
-  Vector3 m_rotation;
-  Vector3 m_position;
-  Vector3 m_scale;
+      QOpenGLVertexArrayObject *m_vao;
+      GLuint m_vbo;
+      GLuint m_colorBufferId;
+      GLuint m_elementBufferId;
 
-  void CreateVBO(void);
-  void DestroyVBO(void);
+      rendering::Vector3 m_rotation;
+      rendering::Vector3 m_position;
+      rendering::Vector3 m_scale;
 
-  void UpdateVBOColor();
-};
+      void CreateVBO(void);
+      void DestroyVBO(void);
 
+      void UpdateVBOColor();
+    };
+
+}
 
 #endif // SPATIALMODELEDITOR_WIREFRAMEOBJECT_H

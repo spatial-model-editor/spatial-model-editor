@@ -4,11 +4,11 @@
 
 #include "Vector4.hpp"
 
-Vector4::Vector4() : Vector4(0.0f, 0.0f, 0.0f) { }
+rendering::Vector4::Vector4() : Vector4(0.0f, 0.0f, 0.0f) { }
 
-Vector4::Vector4(GLfloat x, GLfloat y, GLfloat z) : Vector4(x, y, z, 1.0f) { }
+rendering::Vector4::Vector4(GLfloat x, GLfloat y, GLfloat z) : Vector4(x, y, z, 1.0f) { }
 
-Vector4::Vector4(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+rendering::Vector4::Vector4(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
   this->x = x;
   this->y = y;
@@ -16,13 +16,13 @@ Vector4::Vector4(GLfloat x, GLfloat y, GLfloat z, GLfloat w)
   this->w = w;
 }
 
-std::vector<GLfloat> Vector4::ToArray()
+std::vector<GLfloat> rendering::Vector4::ToArray()
 {
   std::vector<GLfloat> v = { x, y, z, w };
   return v;
 }
 
-Vector4 Vector4::operator+(Vector4 rhs) const
+rendering::Vector4 rendering::Vector4::operator+(Vector4 rhs) const
 {
   return Vector4(
       this->x + rhs.x,
@@ -32,7 +32,7 @@ Vector4 Vector4::operator+(Vector4 rhs) const
   );
 }
 
-Vector4 Vector4::operator-(Vector4 rhs) const
+rendering::Vector4 rendering::Vector4::operator-(Vector4 rhs) const
 {
   return Vector4(
       this->x - rhs.x,
@@ -42,9 +42,9 @@ Vector4 Vector4::operator-(Vector4 rhs) const
   );
 }
 
-Vector4 Vector4::operator*(Vector4 rhs) const
+rendering::Vector4 rendering::Vector4::operator*(Vector4 rhs) const
 {
-  return Vector4(
+  return rendering::Vector4(
       this->x * rhs.x,
       this->y * rhs.y,
       this->z * rhs.z,
@@ -52,9 +52,9 @@ Vector4 Vector4::operator*(Vector4 rhs) const
   );
 }
 
-Vector4 Vector4::operator*(GLfloat rhs) const
+rendering::Vector4 rendering::Vector4::operator*(GLfloat rhs) const
 {
-  return Vector4(
+  return rendering::Vector4(
       this->x * rhs,
       this->y * rhs,
       this->z * rhs,

@@ -1,7 +1,6 @@
 target_sources(
         gui
         PRIVATE
-        IArray.cpp
         Camera.cpp
         ObjectLoader.cpp
         ShaderProgram.cpp

@@ -4,22 +4,22 @@
 
 #include "Vector3.hpp"
 
-Vector3::Vector3() : Vector3(0.0f, 0.0f, 0.0f) { }
+rendering::Vector3::Vector3() : Vector3(0.0f, 0.0f, 0.0f){ }
 
-Vector3::Vector3(GLfloat x, GLfloat y, GLfloat z)
+rendering::Vector3::Vector3(GLfloat x, GLfloat y, GLfloat z)
 {
   this->x = x;
   this->y = y;
   this->z = z;
 }
 
-std::vector<GLfloat> Vector3::ToArray()
+std::vector<GLfloat> rendering::Vector3::ToArray()
 {
   std::vector<GLfloat> v = { x, y, z };
   return v;
 }
 
-Vector3 Vector3::operator+(const Vector3 rhs) const
+rendering::Vector3 rendering::Vector3::operator+(const Vector3 rhs) const
 {
   return Vector3(
       this->x + rhs.x,
@@ -28,7 +28,7 @@ Vector3 Vector3::operator+(const Vector3 rhs) const
   );
 }
 
-Vector3 Vector3::operator-(const Vector3 rhs) const
+rendering::Vector3 rendering::Vector3::operator-(const Vector3 rhs) const
 {
   return Vector3(
       this->x - rhs.x,
@@ -37,7 +37,7 @@ Vector3 Vector3::operator-(const Vector3 rhs) const
   );
 }
 
-Vector3 Vector3::operator*(const Vector3 rhs) const
+rendering::Vector3 rendering::Vector3::operator*(const Vector3 rhs) const
 {
   return Vector3(
       this->x * rhs.x,
@@ -46,7 +46,7 @@ Vector3 Vector3::operator*(const Vector3 rhs) const
   );
 }
 
-Vector3 Vector3::operator*(const GLfloat rhs) const
+rendering::Vector3 rendering::Vector3::operator*(const GLfloat rhs) const
 {
   return Vector3(
       this->x * rhs,

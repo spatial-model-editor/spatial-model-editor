@@ -10,28 +10,48 @@
 #include "ShaderProgram.hpp"
 #include "Vector3.hpp"
 
+namespace rendering
+{
+
 #define PI 3.1415926535
 
-class Camera
-{
+class Camera {
 public:
-  Camera(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ);
+  Camera(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ,
+         GLfloat farZ, GLfloat posX = 0.0f, GLfloat posY = 0.0f,
+         GLfloat posZ = 0.0f, GLfloat rotX = 0.0f, GLfloat rotY = 0.0f,
+         GLfloat rotZ = 0.0f);
 
-  void Init(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ);
+  void SetFrustum(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ,
+                  GLfloat farZ);
 
   void SetPosition(GLfloat posX, GLfloat posY, GLfloat posZ);
-  void SetPosition(Vector3 position);
-  Vector3 GetPosition();
+  void SetPosition(rendering::Vector3 position);
+  rendering::Vector3 GetPosition();
 
   void SetRotation(GLfloat rotX, GLfloat rotY, GLfloat rotZ);
-  void SetRotation(Vector3 rotation);
-  Vector3 GetRotation();
+  void SetRotation(rendering::Vector3 rotation);
+  rendering::Vector3 GetRotation();
 
-  Vector3 GetForwardVector();
-  Vector3 GetUpVector();
+  rendering::Vector3 GetForwardVector();
+  rendering::Vector3 GetUpVector();
 
-  void UpdateProjection(ShaderProgram* program);
-  void UpdateView(ShaderProgram* program);
+  // Translate Camera - world axis
+  //  void MoveForward(float elapsedTime);
+  //  void MoveBackward(float elapsedTime);
+  //  void MoveRight(float elapsedTime);
+  //  void MoveLeft(float elapsedTime);
+  //  void MoveUp(float elapsedTime);
+  //  void MoveDown(float elapsedTime);
+  //  void MoveInDirection(rendering::Vector3 direction, float elapsedTime);
+
+  void UpdateProjection(rendering::ShaderProgram *program);
+  void UpdateView(rendering::ShaderProgram *program);
+
+  GLfloat getNear();
+  GLfloat getFar();
+  GLfloat getFOV();
+
 private:
   GLfloat m_aspectRatio;
   GLfloat m_near;
@@ -41,11 +61,13 @@ private:
 
   GLfloat m_projectionMatrix[4][4];
 
-  Vector3 m_viewPosition;
-  Vector3 m_viewRotation;
+  rendering::Vector3 m_viewPosition;
+  rendering::Vector3 m_viewRotation;
 
-  Vector3 m_viewForward;
-  Vector3 m_viewUp;
+  rendering::Vector3 m_viewForward;
+  rendering::Vector3 m_viewUp;
 };
+
+}
 
 #endif // SPATIALMODELEDITOR_CAMERA_H

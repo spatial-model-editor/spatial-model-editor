@@ -4,7 +4,7 @@
 
 #include "ObjectLoader.hpp"
 
-SMesh ObjectLoader::LoadMesh(std::string filename)
+rendering::SMesh rendering::ObjectLoader::LoadMesh(std::string filename)
 {
   std::ifstream in(filename);
   if(in.fail())
@@ -20,7 +20,7 @@ SMesh ObjectLoader::LoadMesh(std::string filename)
   return mesh;
 }
 
-ObjectInfo ObjectLoader::Load(std::string filename)
+rendering::ObjectInfo rendering::ObjectLoader::Load(std::string filename)
 {
 
   SMesh mesh = ObjectLoader::LoadMesh(filename);
@@ -28,37 +28,14 @@ ObjectInfo ObjectLoader::Load(std::string filename)
   return Load(mesh);
 }
 
-ObjectInfo ObjectLoader::Load(SMesh mesh)
+rendering::ObjectInfo rendering::ObjectLoader::Load(SMesh mesh)
 {
   ObjectInfo Obj;
-
-  SMesh::Property_map<SMesh::Vertex_index, Point> Positions;
-  SMesh::Property_map<SMesh::Face_index, std::vector<double>> Faces;
-
-  bool foundPosition;
-  bool foundFaces;
-
-//  std::tie(Positions, foundPosition) = mesh.property_map<SMesh::Vertex_index, Point>("vertex");
-//  //assert( foundPosition );
-//
-//  std::tie(Faces, foundFaces)  = mesh.property_map<SMesh::Face_index, std::vector<double>>("Faces");
-//  //assert( foundFaces );
-
-//  cout<<"vertex_descriptor:";
-//  for(vertex_descriptor vd: vertices(mesh))
-//    std::cout << Positions[vd] << std::endl;
-//
-//  cout<<"face_descriptor";
-//  for(face_descriptor fd: faces(mesh))
-//    std::cout << Faces[fd][0] << std::endl;
-
-  std::vector<float> verts;
-  std::vector<uint32_t> indices;
 
   //Get vertices
   for (SMesh::Vertex_index vi : mesh.vertices()) {
     Point pt = mesh.point(vi);
-    Obj.vertices.push_back(Vector4(pt.x(), pt.y(), pt.z()));
+    Obj.vertices.push_back(rendering::Vector4(pt.x(), pt.y(), pt.z()));
   }
 
   //Get face indices

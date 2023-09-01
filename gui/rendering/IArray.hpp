@@ -7,11 +7,14 @@
 
 #include <vector>
 
-template <typename T>
-class IArray
+namespace rendering
 {
-public:
-  virtual std::vector<T> ToArray() = 0;
-};
+
+    template <typename T> class IArray {
+    public:
+      virtual std::vector<T> ToArray() = 0;
+    };
+
+}
 
 #endif // SPATIALMODELEDITOR_IARRAY_H

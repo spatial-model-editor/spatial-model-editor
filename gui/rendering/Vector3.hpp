@@ -8,22 +8,24 @@
 #include "IArray.hpp"
 #include <QtOpenGL>
 
-class Vector3 : public IArray<GLfloat>
-{
-public:
-  Vector3(void);
-  Vector3(GLfloat x, GLfloat y, GLfloat z);
-  std::vector<GLfloat> ToArray() override;
+namespace rendering {
 
-  Vector3 operator+(Vector3) const;
-  Vector3 operator-(Vector3) const;
-  Vector3 operator*(Vector3) const;
-  Vector3 operator*(GLfloat) const;
+    class Vector3 : public IArray<GLfloat> {
+    public:
+      Vector3(void);
+      Vector3(GLfloat x, GLfloat y, GLfloat z);
+      std::vector<GLfloat> ToArray() override;
 
-  GLfloat x;
-  GLfloat y;
-  GLfloat z;
-};
+      Vector3 operator+(Vector3) const;
+      Vector3 operator-(Vector3) const;
+      Vector3 operator*(Vector3) const;
+      Vector3 operator*(GLfloat) const;
 
+      GLfloat x;
+      GLfloat y;
+      GLfloat z;
+    };
+
+}
 
 #endif // SPATIALMODELEDITOR_VECTOR3_H

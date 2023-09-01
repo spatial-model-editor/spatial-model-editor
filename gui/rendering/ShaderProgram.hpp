@@ -8,39 +8,45 @@
 #include <QtOpenGL>
 #include <string>
 
-class ShaderProgram: protected QOpenGLFunctions
-{
+namespace rendering {
 
-protected:
-  void Init();
+    class ShaderProgram : protected QOpenGLFunctions {
 
-public:
-  explicit ShaderProgram(std::string vertexShaderName, std::string fragmentShaderName);
-  ShaderProgram(const char* vertexProgram, const char* fragmentProgram);
-  ~ShaderProgram();
+    protected:
+      void Init();
 
-  void Use(void);
+    public:
+      explicit ShaderProgram(std::string vertexShaderName,
+                             std::string fragmentShaderName);
+      ShaderProgram(const char *vertexProgram, const char *fragmentProgram);
+      ~ShaderProgram();
 
-  void SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ);
-  void SetPosition(GLfloat x, GLfloat y, GLfloat z);
-  void SetScale(GLfloat x, GLfloat y, GLfloat z);
-  void SetProjection(GLfloat* matrix4);
-  void SetViewPosition(GLfloat viewPosX, GLfloat viewPosY, GLfloat viewPosZ);
-  void SetViewRotation(GLfloat viewRotationX, GLfloat viewRotationY, GLfloat viewRotationZ);
-private:
-  std::string m_vertexShaderText;
-  std::string m_fragmentShaderText;
+      void Use(void);
 
-  GLint m_vertexShaderId;
-  GLint m_fragmentShaderId;
-  GLint m_programId;
+      void SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ);
+      void SetPosition(GLfloat x, GLfloat y, GLfloat z);
+      void SetScale(GLfloat x, GLfloat y, GLfloat z);
+      void SetProjection(GLfloat *matrix4);
+      void SetViewPosition(GLfloat viewPosX, GLfloat viewPosY, GLfloat viewPosZ);
+      void SetViewRotation(GLfloat viewRotationX, GLfloat viewRotationY,
+                           GLfloat viewRotationZ);
 
-  GLint m_rotationLocation;
-  GLint m_positionLocation;
-  GLint m_scaleLocation;
-  GLint m_projectionLocation;
-  GLint m_viewPositionLocation;
-  GLint m_viewRotationLocation;
-};
+    private:
+      std::string m_vertexShaderText;
+      std::string m_fragmentShaderText;
+
+      GLint m_vertexShaderId;
+      GLint m_fragmentShaderId;
+      GLint m_programId;
+
+      GLint m_rotationLocation;
+      GLint m_positionLocation;
+      GLint m_scaleLocation;
+      GLint m_projectionLocation;
+      GLint m_viewPositionLocation;
+      GLint m_viewRotationLocation;
+    };
+
+}
 
 #endif // SPATIALMODELEDITOR_SHADERPROGRAM_H

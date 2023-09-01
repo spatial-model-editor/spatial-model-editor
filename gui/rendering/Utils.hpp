@@ -7,18 +7,27 @@
 
 #include <stdio.h>
 #include <string>
-//#define MAX_FILE_SIZE 8192
 
 #include <QtOpenGL>
+#include "sme/logger.hpp"
 
-using namespace std;
+#ifdef QT_DEBUG
+    #define CheckOpenGLError(tag)      rendering::Utils::TraceGLError(tag, __FILE__, __LINE__)
+#else
+    #define CheckOpenGLError(tag)
+#endif
 
-class Utils
-{
-public:
-  static void TraceGLError(string tag);
-  static std::string LoadFile(string filename);
-};
+namespace rendering {
 
+    class Utils {
+
+      static std::string PrintGLErrorDescription(unsigned int glErr);
+
+    public:
+      static void TraceGLError(std::string tag, std::string file, int line);
+      static std::string LoadFile(std::string filename);
+    };
+
+}
 
 #endif // SPATIALMODELEDITOR_UTILS_H

@@ -28,17 +28,21 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   QSurfaceFormat::setDefaultFormat(format);
 
 
-  Vector4 redColor = Vector4(1.0f, 0.0f, 0.0f);
-  Vector4 blueColor = Vector4(0.0f, 0.0f, 1.0f);
+  rendering::Vector4 redColor = rendering::Vector4(1.0f, 0.0f, 0.0f);
+  rendering::Vector4 blueColor = rendering::Vector4(0.0f, 0.0f, 1.0f);
 
   test->show();
 
   test->SetCameraPosition(0,0,-10);
 
-  SMesh sphereMesh = ObjectLoader::LoadMesh("/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/sphere.ply");
+  QFile::copy(":/test/rendering/Objects/sphere.ply", "tmp_sphere.ply");
+
+  rendering::SMesh sphereMesh = rendering::ObjectLoader::LoadMesh(QDir::current().filePath("tmp_sphere.ply").toStdString());
   test->addMesh(sphereMesh, redColor);
 
-  SMesh teapotMesh = ObjectLoader::LoadMesh("/home/acaramizaru/git/spatial-model-editor/gui/rendering/Objects/teapot.ply");
+  QFile::copy(":/test/rendering/Objects/teapot.ply", "tmp_teapot.ply");
+
+  rendering::SMesh teapotMesh = rendering::ObjectLoader::LoadMesh(QDir::current().filePath("tmp_teapot.ply").toStdString());
   test->addMesh(teapotMesh, blueColor);
 
   wait(50000);

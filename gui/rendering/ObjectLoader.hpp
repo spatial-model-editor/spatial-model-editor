@@ -17,21 +17,20 @@
 
 #include "Vector4.hpp"
 
-typedef CGAL::Exact_predicates_inexact_constructions_kernel   Kernel;
-typedef Kernel::Point_3                                       Point;
+namespace rendering {
 
-typedef CGAL::Surface_mesh<Point>                             SMesh;
+    typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
+    typedef Kernel::Point_3 Point;
 
-typedef boost::graph_traits<SMesh>::vertex_descriptor      vertex_descriptor;
-typedef boost::graph_traits<SMesh>::face_descriptor        face_descriptor;
+    typedef CGAL::Surface_mesh<Point> SMesh;
 
-class ObjectLoader
-{
-public:
-  static ObjectInfo Load(std::string filename);
-  static ObjectInfo Load(SMesh);
-  static SMesh LoadMesh(std::string filename);
-};
+    class ObjectLoader {
+    public:
+      static ObjectInfo Load(std::string filename);
+      static ObjectInfo Load(SMesh);
+      static SMesh LoadMesh(std::string filename);
+    };
 
+}
 
 #endif // SPATIALMODELEDITOR_OBJECTLOADER_H
