@@ -4,12 +4,18 @@
 
 #include "WireframeObject.hpp"
 
-rendering::WireframeObject::WireframeObject(rendering::ObjectInfo info, rendering::Vector4 color)
+rendering::WireframeObject::WireframeObject(
+    rendering::ObjectInfo info,
+    rendering::Vector4 color,
+    rendering::SMesh mesh,
+    Vector3 position,
+    Vector3 rotation,
+    Vector3 scale):
+                     m_mesh(mesh), m_position(position), m_rotation(rotation), m_scale(scale), m_color(color)
 {
   QOpenGLFunctions::initializeOpenGLFunctions();
 
   m_vertices = info.vertices;
-  m_color = color;
 
   for (rendering::Face f : info.faces)
   {
@@ -30,10 +36,6 @@ rendering::WireframeObject::WireframeObject(rendering::ObjectInfo info, renderin
     m_verticesBuffer.insert(m_verticesBuffer.end(), vArr.begin(), vArr.end());
     m_colorBuffer.insert(m_colorBuffer.end(), cArr.begin(), cArr.end());
   }
-
-  m_position = rendering::Vector3(0.0f, 0.0f, 0.0f);
-  m_rotation = rendering::Vector3(0.0f, 0.0f, 0.0f);
-  m_scale = rendering::Vector3(1.0f, 1.0f, 1.0f);
 
   CreateVBO();
 }
@@ -65,6 +67,11 @@ void rendering::WireframeObject::SetColor(rendering::Vector4 color)
 {
   m_color = color;
   UpdateVBOColor();
+}
+
+rendering::SMesh rendering::WireframeObject::GetMesh()
+{
+  return m_mesh;
 }
 
 void rendering::WireframeObject::UpdateVBOColor()

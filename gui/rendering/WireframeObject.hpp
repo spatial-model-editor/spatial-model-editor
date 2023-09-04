@@ -10,6 +10,7 @@
 #include "Utils.hpp"
 #include "Vector3.hpp"
 #include "Vector4.hpp"
+#include "ObjectLoader.hpp"
 #include <vector>
 
 #include <QtOpenGL>
@@ -19,7 +20,14 @@ namespace rendering {
     class WireframeObject : protected QOpenGLFunctions {
 
     public:
-      WireframeObject(rendering::ObjectInfo info, rendering::Vector4 color);
+      WireframeObject(
+          rendering::ObjectInfo info,
+          rendering::Vector4 color,
+          rendering::SMesh mesh,
+          Vector3 position = rendering::Vector3(0.0f, 0.0f, 0.0f),
+          Vector3 rotation = rendering::Vector3(0.0f, 0.0f, 0.0f),
+          Vector3 scale = rendering::Vector3(1.0f, 1.0f, 1.0f)
+          );
       WireframeObject(const WireframeObject &cpy);
       ~WireframeObject(void);
 
@@ -38,6 +46,7 @@ namespace rendering {
       rendering::Vector3 GetScale();
 
       void SetColor(rendering::Vector4 color);
+      rendering::SMesh GetMesh();
 
     private:
       std::vector<rendering::Vector4> m_vertices;
@@ -46,6 +55,8 @@ namespace rendering {
 
       std::vector<GLfloat> m_verticesBuffer;
       std::vector<GLfloat> m_colorBuffer;
+
+      rendering::SMesh m_mesh;
 
       QOpenGLVertexArrayObject *m_vao;
       GLuint m_vbo;

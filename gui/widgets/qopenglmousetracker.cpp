@@ -95,6 +95,9 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event)
   int xAtRelease = event->position().x();
   int yAtRelease = event->position().y();
 
+  xAtRelease = std::clamp(xAtRelease, 0, offscreenPickingImage.width()-1);
+  yAtRelease = std::clamp(yAtRelease, 0, offscreenPickingImage.height()-1);
+
   QRgb pixel = offscreenPickingImage.pixel(xAtRelease,yAtRelease);
   QColor color(pixel);
 
@@ -108,6 +111,8 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event)
     {
       obj.second->SetColor(selectedObjectColor);
       objectSelected = true;
+      lastColour = pixel;
+      emit mouseClicked(pixel, obj.second->GetMesh());
     }
   }
 
@@ -127,6 +132,9 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event)
   int xAtPress = event->pos().x();
   int yAtPress = event->pos().y();
 
+  xAtPress = std::clamp(xAtPress, 0, offscreenPickingImage.width()-1);
+  yAtPress = std::clamp(yAtPress, 0, offscreenPickingImage.height()-1);
+
   int x_len = xAtPress - m_xAtPress;
   int y_len = yAtPress - m_yAtPress;
 
@@ -139,6 +147,20 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event)
       cameraOrientation.x + y_len * (1 / frameRate),
       cameraOrientation.y + x_len * (1 / frameRate),
       cameraOrientation.z);
+
+  QRgb pixel = offscreenPickingImage.pixel(xAtPress, yAtPress);
+  QColor color(pixel);
+
+  rendering::Vector4 colorVector = rendering::Vector4(color.redF(),color.greenF(),color.blueF());
+
+  for(color_mesh obj: meshSet)
+  {
+    if (obj.first.ToArray() == colorVector.ToArray())
+    {
+      emit mouseOver(obj.second->GetMesh());
+    }
+  }
+
 }
 
 void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event)
@@ -149,6 +171,8 @@ void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event)
   auto position = camera.GetPosition();
 
   camera.SetPosition(position + forwardVector * Degrees * (1 / frameRate) );
+
+  emit mouseWheelEvent(event);
 }
 
 void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z)
@@ -176,7 +200,7 @@ void QOpenGLMouseTracker::addMesh(rendering::SMesh mesh, rendering::Vector4 colo
   rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
 
   meshSet.push_back(
-      std::make_pair(color, new rendering::WireframeObject(objectInfo, color))
+      std::make_pair(color, new rendering::WireframeObject(objectInfo, color, mesh))
       );
 }
 
@@ -195,3 +219,6 @@ void QOpenGLMouseTracker::setLineSelectPrecision(float lineSelectPrecision)
 {
   this->lineSelectPrecision = lineSelectPrecision;
 }
+
+const QRgb &QOpenGLMouseTracker::getColour() const { return lastColour; }
+

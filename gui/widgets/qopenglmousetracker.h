@@ -17,6 +17,7 @@ class QOpenGLMouseTracker:
     public QOpenGLWidget,
     protected QOpenGLFunctions
 {
+  Q_OBJECT
 public:
 
   QOpenGLMouseTracker(
@@ -49,7 +50,17 @@ public:
     this->selectedObjectColor = color;
   }
 
+  // colour of pixel at last mouse click position
+  [[nodiscard]] const QRgb &getColour() const;
+
+signals:
+  void mouseClicked(QRgb color, rendering::SMesh mesh);
+  void mouseOver(const rendering::SMesh& mesh);
+  void mouseWheelEvent(QWheelEvent *ev);
+
 protected:
+
+  QRgb lastColour{};
 
   QTimer *timer;
   float frameRate;
