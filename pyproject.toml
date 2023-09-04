@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "sme"
-version = "1.3.6"
+version = "1.4.0"
 description = "Spatial Model Editor python bindings"
 readme = "README.md"
 license = {text = "MIT"}
