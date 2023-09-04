@@ -40,24 +40,6 @@ rendering::WireframeObject::WireframeObject(
   CreateVBO();
 }
 
-rendering::WireframeObject::WireframeObject(const WireframeObject& cpy)
-{
-  QOpenGLFunctions::initializeOpenGLFunctions();
-
-  m_vertices = cpy.m_vertices;
-  m_color = cpy.m_color;
-
-  m_indices = cpy.m_indices;
-  m_verticesBuffer = cpy.m_verticesBuffer;
-  m_colorBuffer = cpy.m_colorBuffer;
-
-  m_position = cpy.m_position;
-  m_rotation = cpy.m_rotation;
-  m_scale = cpy.m_scale;
-
-  CreateVBO();
-}
-
 rendering::WireframeObject::~WireframeObject(void)
 {
   DestroyVBO();

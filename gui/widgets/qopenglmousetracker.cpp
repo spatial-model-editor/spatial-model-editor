@@ -74,14 +74,6 @@ void QOpenGLMouseTracker::resizeGL(int w, int h)
   this->update();
 }
 
-QOpenGLFramebufferObject* QOpenGLMouseTracker::createFramebufferObject(const QSize &size)
-{
-  QOpenGLFramebufferObjectFormat format;
-  format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-  format.setSamples(4);
-  return new QOpenGLFramebufferObject(size, format);
-}
-
 void QOpenGLMouseTracker::SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ)
 {
   camera.SetFrustum(FOV, width, height, nearZ, farZ);

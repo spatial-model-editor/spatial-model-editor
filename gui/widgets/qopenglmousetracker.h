@@ -86,8 +86,6 @@ protected:
   void resizeGL(int w, int h) override;
   void paintGL() override;
 
-  QOpenGLFramebufferObject *createFramebufferObject(const QSize &size);
-
   void render(float widthLine);
 
   void mouseMoveEvent(QMouseEvent *event);

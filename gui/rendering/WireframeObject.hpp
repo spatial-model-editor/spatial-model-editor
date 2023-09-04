@@ -28,8 +28,8 @@ namespace rendering {
           Vector3 rotation = rendering::Vector3(0.0f, 0.0f, 0.0f),
           Vector3 scale = rendering::Vector3(1.0f, 1.0f, 1.0f)
           );
-      WireframeObject(const WireframeObject &cpy);
-      ~WireframeObject(void);
+      WireframeObject(const WireframeObject &cpy) = delete;
+      ~WireframeObject();
 
       void Render(rendering::ShaderProgram *program, float lineWidth = 1);
 
