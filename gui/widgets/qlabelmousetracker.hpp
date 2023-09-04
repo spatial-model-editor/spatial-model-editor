@@ -58,14 +58,14 @@ protected:
 
 private:
   QSlider *zSlider{nullptr};
-  Qt::AspectRatioMode aspectRatioMode = Qt::KeepAspectRatio;
+  Qt::AspectRatioMode aspectRatioMode = Qt::IgnoreAspectRatio;
   Qt::TransformationMode transformationMode = Qt::FastTransformation;
   bool setCurrentPixel(const QPoint &pos);
   void resizeImage(const QSize &size);
   sme::common::ImageStack image;
   // Pixmap used to display scaled version of image
   QPixmap pixmap;
-  // volume of actual image in pixmap (may be smaller than pixmap)
+  // size of actual image in pixmap (may be smaller than pixmap)
   QSize pixmapImageSize;
   sme::common::ImageStack maskImage;
   sme::common::Voxel currentVoxel{0, 0, 0};

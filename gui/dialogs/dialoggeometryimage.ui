@@ -52,19 +52,6 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
-      <widget class="QSpinBox" name="spinPixelsX">
-       <property name="suffix">
-        <string>px</string>
-       </property>
-       <property name="minimum">
-        <number>1</number>
-       </property>
-       <property name="maximum">
-        <number>4096</number>
-       </property>
-      </widget>
-     </item>
      <item row="1" column="1" colspan="5">
       <widget class="QSlider" name="slideZIndex">
        <property name="orientation">
@@ -97,9 +84,6 @@
         <number>4096</number>
        </property>
       </widget>
-     </item>
-     <item row="3" column="5">
-      <widget class="QComboBox" name="cmbUnitsHeight"/>
      </item>
      <item row="3" column="0">
       <widget class="QLabel" name="lblLabelImageHeight">
@@ -157,13 +141,6 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="5">
-      <widget class="QLabel" name="lblUnitsDepth">
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
      <item row="5" column="5">
       <widget class="QPushButton" name="btnResetPixels">
        <property name="text">
@@ -203,7 +180,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Voxel count:</string>
+        <string>Image resolution:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -228,19 +205,6 @@
      </item>
      <item row="2" column="5">
       <widget class="QComboBox" name="cmbUnitsWidth"/>
-     </item>
-     <item row="5" column="2">
-      <widget class="QLabel" name="lblLabelPixelsTimes">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string>x</string>
-       </property>
-      </widget>
      </item>
      <item row="6" column="0">
       <widget class="QLabel" name="lblLabelColours">
@@ -274,6 +238,29 @@
      <item row="4" column="1" colspan="4">
       <widget class="QLineEdit" name="txtImageDepth"/>
      </item>
+     <item row="5" column="2">
+      <widget class="QSpinBox" name="spinPixelsX">
+       <property name="suffix">
+        <string>px</string>
+       </property>
+       <property name="minimum">
+        <number>1</number>
+       </property>
+       <property name="maximum">
+        <number>4096</number>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QCheckBox" name="chkKeepAspectRatio">
+       <property name="text">
+        <string>Fix aspect ratio</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item>
@@ -300,8 +287,8 @@
   <tabstop>txtImageWidth</tabstop>
   <tabstop>cmbUnitsWidth</tabstop>
   <tabstop>txtImageHeight</tabstop>
-  <tabstop>cmbUnitsHeight</tabstop>
   <tabstop>txtImageDepth</tabstop>
+  <tabstop>chkKeepAspectRatio</tabstop>
   <tabstop>spinPixelsX</tabstop>
   <tabstop>spinPixelsY</tabstop>
   <tabstop>btnResetPixels</tabstop>

@@ -73,14 +73,14 @@ public:
 
 class Membrane {
 private:
-  std::vector<std::pair<std::size_t, std::size_t>> indexPair{};
+  std::array<std::vector<std::pair<std::size_t, std::size_t>>, 3> indexPairs{};
   std::string id{};
   const Compartment *compA{};
   const Compartment *compB{};
   sme::common::ImageStack images{};
-  const std::vector<std::pair<common::Voxel, common::Voxel>> *voxelPairs{};
 
 public:
+  enum FLUX_DIRECTION { X = 0, Y = 1, Z = 2 };
   Membrane() = default;
   Membrane(std::string membraneId, const Compartment *A, const Compartment *B,
            const std::vector<std::pair<common::Voxel, common::Voxel>>
@@ -89,9 +89,8 @@ public:
   void setId(const std::string &membraneId);
   [[nodiscard]] const Compartment *getCompartmentA() const;
   [[nodiscard]] const Compartment *getCompartmentB() const;
-  std::vector<std::pair<std::size_t, std::size_t>> &getIndexPairs();
   [[nodiscard]] const std::vector<std::pair<std::size_t, std::size_t>> &
-  getIndexPairs() const;
+  getIndexPairs(FLUX_DIRECTION fluxDirection) const;
   [[nodiscard]] const sme::common::ImageStack &getImages() const;
 };
 

@@ -8,6 +8,7 @@
 
 #include "sme/duneconverter.hpp"
 #include "sme/logger.hpp"
+#include "sme/voxel.hpp"
 #include <QPoint>
 #include <algorithm>
 #include <cstddef>
@@ -30,13 +31,14 @@ class GridFunction
 public:
   using Traits = Dune::PDELab::GridFunctionTraits<GV, double, 1,
                                                   Dune::FieldVector<double, 1>>;
-  GridFunction(double xOrigin, double yOrigin, double pixelWidth, int imgWidth,
+  GridFunction(const common::VoxelF &origin, const common::VolumeF &voxelSize,
+               const common::Volume &imageSize,
                const std::vector<double> &concentration)
-      : x0(xOrigin), y0(yOrigin), a(pixelWidth), w(imgWidth),
-        h(static_cast<int>(concentration.size()) / imgWidth), c(concentration) {
-    SPDLOG_TRACE("  - {}x{} pixels", w, h);
-    SPDLOG_TRACE("  - {} pixel width", a);
-    SPDLOG_TRACE("  - ({},{}) origin", x0, y0);
+      : origin{origin}, voxelSize{voxelSize}, imageSize{imageSize},
+        c(concentration) {
+    SPDLOG_TRACE("  - {}x{} pixels", imageSize.width(), imageSize.height());
+    SPDLOG_TRACE("  - {}x{} pixel size", voxelSize.width(), voxelSize.height());
+    SPDLOG_TRACE("  - ({},{}) origin", origin.p.x(), origin.p.y());
   }
   void set_time([[maybe_unused]] double t) {}
   template <typename Element, typename Domain>
@@ -51,19 +53,21 @@ public:
     auto globalPos = elem.geometry().global(localPos);
     SPDLOG_TRACE("globalPos ({},{})", globalPos[0], globalPos[1]);
     // get nearest pixel to physical point
-    auto ix = std::clamp(static_cast<int>((globalPos[0] - x0) / a), 0, w - 1);
-    auto iy = std::clamp(static_cast<int>((globalPos[1] - y0) / a), 0, h - 1);
-    result = c[static_cast<std::size_t>(ix + w * iy)];
+    auto ix = std::clamp(
+        static_cast<int>((globalPos[0] - origin.p.x()) / voxelSize.width()), 0,
+        imageSize.width() - 1);
+    auto iy = std::clamp(
+        static_cast<int>((globalPos[1] - origin.p.y()) / voxelSize.height()), 0,
+        imageSize.height() - 1);
+    result = c[static_cast<std::size_t>(ix + imageSize.width() * iy)];
     SPDLOG_TRACE("pixel ({},{})", ix, iy);
     SPDLOG_TRACE("conc {}", result);
   }
 
 private:
-  double x0;
-  double y0;
-  double a;
-  int w;
-  int h;
+  common::VoxelF origin;
+  common::VolumeF voxelSize;
+  common::Volume imageSize;
   std::vector<double> c;
 };
 
@@ -76,13 +80,9 @@ auto makeCompartmentDuneFunctions(const DuneConverter &dc,
   functions.reserve(nSpecies);
   SPDLOG_TRACE("compartment {}", compIndex);
   SPDLOG_TRACE("  - contains {} species", nSpecies);
-  auto x0 = dc.getXOrigin();
-  auto y0 = dc.getYOrigin();
-  auto a = dc.getPixelWidth();
-  auto w = dc.getImageWidth();
   for (const auto &concentration : concentrations) {
-    functions.emplace_back(
-        std::make_shared<GridFunction<GV>>(x0, y0, a, w, concentration));
+    functions.emplace_back(std::make_shared<GridFunction<GV>>(
+        dc.getOrigin(), dc.getVoxelSize(), dc.getImageSize(), concentration));
   }
   return functions;
 }

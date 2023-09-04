@@ -66,15 +66,21 @@ TEST_CASE("Simulate: very_simple_model, single pixel geometry",
   REQUIRE(m0.getId() == "c1_c2_membrane");
   REQUIRE(m0.getCompartmentA()->getId() == "c1");
   REQUIRE(m0.getCompartmentB()->getId() == "c2");
-  REQUIRE(m0.getIndexPairs().size() == 1);
-  REQUIRE(m0.getIndexPairs()[0] == std::pair<std::size_t, std::size_t>{0, 0});
+  REQUIRE(m0.getIndexPairs(sme::geometry::Membrane::X).size() == 0);
+  REQUIRE(m0.getIndexPairs(sme::geometry::Membrane::Y).size() == 1);
+  REQUIRE(m0.getIndexPairs(sme::geometry::Membrane::Z).size() == 0);
+  REQUIRE(m0.getIndexPairs(sme::geometry::Membrane::Y)[0] ==
+          std::pair<std::size_t, std::size_t>{0, 0});
 
   const auto &m1 = s.getMembranes().getMembranes()[1];
   REQUIRE(m1.getId() == "c2_c3_membrane");
   REQUIRE(m1.getCompartmentA()->getId() == "c2");
   REQUIRE(m1.getCompartmentB()->getId() == "c3");
-  REQUIRE(m1.getIndexPairs().size() == 1);
-  REQUIRE(m1.getIndexPairs()[0] == std::pair<std::size_t, std::size_t>{0, 0});
+  REQUIRE(m1.getIndexPairs(sme::geometry::Membrane::X).size() == 0);
+  REQUIRE(m1.getIndexPairs(sme::geometry::Membrane::Y).size() == 1);
+  REQUIRE(m1.getIndexPairs(sme::geometry::Membrane::Z).size() == 0);
+  REQUIRE(m1.getIndexPairs(sme::geometry::Membrane::Y)[0] ==
+          std::pair<std::size_t, std::size_t>{0, 0});
 
   // move membrane reactions from compartment to membrane
   s.getReactions().setLocation("A_uptake", "c1_c2_membrane");
@@ -223,6 +229,42 @@ TEST_CASE("Simulate: very_simple_model, single pixel geometry",
     double dB3 = (sim2.getAvgMinMax(it, 2, 1).avg - B_c3) / eps;
     REQUIRE(dB3 == Catch::Approx(0).epsilon(acceptable_error));
   }
+
+  SECTION(
+      "anisotropic voxels: many Euler steps -> same steady state solution") {
+    // when A & B saturate in all compartments, we reach a steady state
+    // by conservation: flux of B of into c1 = flux of A from c1 =
+    // 1/voxel-height, all other net fluxes are zero
+    s.getGeometry().setVoxelSize(
+        {0.62342352135, 0.445698740687352, 0.8323498574235});
+    double acceptable_error = 1.e-8;
+    options.pixel.maxTimestep = 0.20138571;
+
+    simulate::Simulation sim2(s);
+    sim2.doTimesteps(1000);
+    std::size_t it = sim2.getTimePoints().size() - 1;
+    double A_c1 = 1.0;
+    double A_c2 = sim2.getAvgMinMax(it, 1, 0).avg;
+    double A_c3 = sim2.getAvgMinMax(it, 2, 0).avg;
+    double B_c1 = sim2.getAvgMinMax(it, 0, 0).avg;
+    double B_c2 = sim2.getAvgMinMax(it, 1, 1).avg;
+    double B_c3 = sim2.getAvgMinMax(it, 2, 1).avg;
+    // check concentration derivatives
+    double eps = 1.e-5;
+    sim2.doTimesteps(eps);
+    ++it;
+    double dA2 = (sim2.getAvgMinMax(it, 1, 0).avg - A_c2) / eps;
+    REQUIRE(dA2 == Catch::Approx(0).epsilon(acceptable_error));
+    double dA3 = (sim2.getAvgMinMax(it, 2, 0).avg - A_c3) / eps;
+    REQUIRE(dA3 == Catch::Approx(0).epsilon(acceptable_error));
+    double dB1 = volC1 * (sim2.getAvgMinMax(it, 0, 0).avg - B_c1) / eps;
+    REQUIRE(dB1 == Catch::Approx(1.0 / s.getGeometry().getVoxelSize().height())
+                       .epsilon(acceptable_error));
+    double dB2 = (sim2.getAvgMinMax(it, 1, 1).avg - B_c2) / eps;
+    REQUIRE(dB2 == Catch::Approx(0).epsilon(acceptable_error));
+    double dB3 = (sim2.getAvgMinMax(it, 2, 1).avg - B_c3) / eps;
+    REQUIRE(dB3 == Catch::Approx(0).epsilon(acceptable_error));
+  }
 }
 
 TEST_CASE("Simulate: very_simple_model, 2d geometry",
@@ -253,13 +295,17 @@ TEST_CASE("Simulate: very_simple_model, 2d geometry",
   REQUIRE(m0.getId() == "c1_c2_membrane");
   REQUIRE(m0.getCompartmentA()->getId() == "c1");
   REQUIRE(m0.getCompartmentB()->getId() == "c2");
-  REQUIRE(m0.getIndexPairs().size() == 338);
+  REQUIRE(m0.getIndexPairs(sme::geometry::Membrane::X).size() == 178);
+  REQUIRE(m0.getIndexPairs(sme::geometry::Membrane::Y).size() == 160);
+  REQUIRE(m0.getIndexPairs(sme::geometry::Membrane::Z).size() == 0);
 
   const auto &m1 = s.getMembranes().getMembranes()[1];
   REQUIRE(m1.getId() == "c2_c3_membrane");
   REQUIRE(m1.getCompartmentA()->getId() == "c2");
   REQUIRE(m1.getCompartmentB()->getId() == "c3");
-  REQUIRE(m1.getIndexPairs().size() == 108);
+  REQUIRE(m1.getIndexPairs(sme::geometry::Membrane::X).size() == 58);
+  REQUIRE(m1.getIndexPairs(sme::geometry::Membrane::Y).size() == 50);
+  REQUIRE(m1.getIndexPairs(sme::geometry::Membrane::Z).size() == 0);
 
   // 1st order RK, fixed timestep simulation
   auto &options{s.getSimulationSettings().options};
@@ -371,7 +417,7 @@ TEST_CASE("Simulate: very_simple_model, change pixel volume, Pixel sim",
   // import model
   auto s1{getExampleModel(Mod::VerySimpleModel)};
   // 1st order RK, fixed timestep simulation
-  // pixel width: 1
+  // pixel: 1x1x1
   // length unit: m
   // volume unit: L
   // alpha = length^3/volume = 1e3
@@ -865,7 +911,22 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
   double sigma2 = 36.0;
   double epsilon = 1e-10;
   auto s{getExampleModel(Mod::SingleCompartmentDiffusion3D)};
+  REQUIRE(s.getGeometry().getVoxelSize().width() == dbl_approx(2.0));
+  REQUIRE(s.getGeometry().getVoxelSize().height() == dbl_approx(2.0));
+  REQUIRE(s.getGeometry().getVoxelSize().depth() == dbl_approx(2.0));
+  auto initial_voxel_volume{s.getGeometry().getVoxelSize().volume()};
+  // Asymmetric voxels shouldn't affect diffusion (apart from modifying
+  // discretization errors)
+  double w{1.4876432};
+  double h{2.319873454};
+  double d{2.0 * 2.0 * 2.0 / w / h};
+  s.getGeometry().setVoxelSize({w, h, d});
+  s.getSpecies().setAnalyticConcentration("slow",
+                                          "exp((-1/36) * (x^2 + y^2 + z^2))");
+  s.getSpecies().setAnalyticConcentration("fast",
+                                          "exp((-1/36) * (x^2 + y^2 + z^2))");
   auto voxel_volume{s.getGeometry().getVoxelSize().volume()};
+  REQUIRE(voxel_volume == dbl_approx(initial_voxel_volume));
 
   // check fields have correct compartments
   const auto *slow{s.getSpecies().getField("slow")};
@@ -910,7 +971,7 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
     // relative error on integral of initial concentration over all pixels:
     double initialRelativeError{1e-9};
     // largest relative error of any pixel after simulation:
-    double evolvedMaxRelativeError{0.025};
+    double evolvedMaxRelativeError{0.030};
     // average of relative errors of all pixels after simulation:
     double evolvedAvgRelativeError{0.010};
     if (simType == simulate::SimulatorType::DUNE) {
@@ -1655,8 +1716,8 @@ TEST_CASE("SimulationData",
     REQUIRE(rel_diff(dataB, data, 0, 0) < 1e-14);
     REQUIRE(rel_diff(dataB, data, 1, 1) < 1e-14);
     REQUIRE(rel_diff(dataB, data, 2, 2) < 1e-14);
-    // note: at this point we start a new simulator, so timesteps don't match
     // exactly, expected difference between simulations goes from being approx
+    // note: at this point we start a new simulator, so timesteps don't match
     // machine precision to being approx the O(dt^2) integration error
     constexpr double allowedDifference{1e-7};
     REQUIRE(rel_diff(dataB, data, 3, 3) < allowedDifference);

@@ -57,7 +57,7 @@ private:
   std::vector<DuneSimCompartment> duneCompartments;
   // dimensions of model
   QSize geometryImageSize;
-  double pixelSize;
+  QSizeF pixelSize;
   QPointF pixelOrigin;
   void initDuneSimCompartments(
       const std::vector<const geometry::Compartment *> &comps);

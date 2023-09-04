@@ -4,6 +4,10 @@
 #pragma once
 
 #include "sme/simulate_options.hpp"
+#include "sme/voxel.hpp"
+#include <QPoint>
+#include <QSize>
+#include <QSizeF>
 #include <QString>
 #include <map>
 #include <vector>
@@ -34,20 +38,18 @@ public:
   [[nodiscard]] const mesh::Mesh *getMesh() const;
   [[nodiscard]] const std::vector<std::vector<std::vector<double>>> &
   getConcentrations() const;
-  [[nodiscard]] double getXOrigin() const;
-  [[nodiscard]] double getYOrigin() const;
-  [[nodiscard]] double getPixelWidth() const;
-  [[nodiscard]] int getImageWidth() const;
+  [[nodiscard]] common::VoxelF getOrigin() const;
+  [[nodiscard]] common::VolumeF getVoxelSize() const;
+  [[nodiscard]] common::Volume getImageSize() const;
 
 private:
   std::vector<QString> iniFiles;
   bool independentCompartments{true};
   const mesh::Mesh *mesh;
   std::vector<std::vector<std::vector<double>>> concentrations;
-  double x0;
-  double y0;
-  double a;
-  int w;
+  common::VoxelF origin;
+  common::VolumeF voxelSize;
+  common::Volume imageSize;
 };
 
 } // namespace simulate

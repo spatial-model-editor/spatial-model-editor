@@ -38,7 +38,7 @@ private:
   // input data
   QImage img;
   QPointF origin;
-  double pixel{};
+  QSizeF pixel{};
   std::vector<std::size_t> boundaryMaxPoints;
   std::vector<std::size_t> compartmentMaxTriangleArea;
   // generated data
@@ -64,7 +64,7 @@ public:
    * @param[in] maxPoints the max points allowed for each boundary line
    * @param[in] maxTriangleArea the max triangle area allowed for each
    *    compartment
-   * @param[in] pixelWidth the physical width of a pixel
+   * @param[in] voxelSize the physical size of a pixel
    * @param[in] originPoint the physical location of the ``(0,0)`` pixel
    * @param[in] compartmentColours the colours of compartments in the image
    */
@@ -160,11 +160,11 @@ public:
    * The boundary lines and mesh use pixel units internally, and are rescaled
    * to physical values using the supplied physical origin and pixel width.
    *
-   * @param[in] pixelWidth the physical width of a pixel
-   * @param[in] originPoint the physical location of the ``(0,0)`` pixel
+   * @param[in] voxelSize the physical size of a voxel
+   * @param[in] originPoint the physical location of the ``(0,0,0)`` voxel
    */
-  void setPhysicalGeometry(double pixelWidth,
-                           const QPointF &originPoint = QPointF(0, 0));
+  void setPhysicalGeometry(const common::VolumeF &voxelSize,
+                           const common::VoxelF &originPoint = {0.0, 0.0, 0.0});
   /**
    * @brief The physical mesh vertices as a flat array of doubles
    *
