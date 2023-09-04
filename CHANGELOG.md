@@ -1,4 +1,16 @@
 # Changelog
+## [1.4.0] - 2023-09-04
+### Added
+- initial support for 3d spatial models [#850](https://github.com/spatial-model-editor/spatial-model-editor/issues/850)
+- support for anisotropic voxels [#879](https://github.com/spatial-model-editor/spatial-model-editor/issues/879)
+
+### Changed
+- disable OK button while selecting geometry image colours [#878](https://github.com/spatial-model-editor/spatial-model-editor/issues/878).
+- image arrays in sme (Python interface) now include a z dimension [#850](https://github.com/spatial-model-editor/spatial-model-editor/issues/850)
+
+### Fixed
+- lack of geometry image could cause a crash in some cases [#872](https://github.com/spatial-model-editor/spatial-model-editor/issues/872)
+
 ## [1.3.6] - 2023-05-23
 ### Added
 - support for importing RGBA TIFF image files [#862](https://github.com/spatial-model-editor/spatial-model-editor/issues/862)

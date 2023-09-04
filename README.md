@@ -11,7 +11,7 @@
 [![sonarcloud quality gate status](https://sonarcloud.io/api/project_badges/measure?project=spatial-model-editor_spatial-model-editor&metric=alert_status)](https://sonarcloud.io/dashboard?id=spatial-model-editor_spatial-model-editor)
 [![DOI](https://zenodo.org/badge/185185280.svg)](https://zenodo.org/badge/latestdoi/185185280)
 
-A GUI editor to create and edit 2d spatial SBML models of bio-chemical reactions and simulate them using the
+A GUI editor to create and edit spatial SBML models of bio-chemical reactions and simulate them using the
 [dune-copasi](https://dune-copasi.netlify.app/) solver for reaction-diffusion systems.
 
 To get started, download and run the GUI for your operating system
