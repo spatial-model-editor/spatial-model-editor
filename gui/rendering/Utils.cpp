@@ -63,13 +63,14 @@ void rendering::Utils::TraceGLError(std::string tag, std::string file,
 
 std::string rendering::Utils::LoadFile(std::string filename) {
 
+  std::stringstream buffer;
+
   try {
     std::ifstream fileIn(filename);
-    std::stringstream buffer;
+
     buffer << fileIn.rdbuf();
-    return buffer.str();
   } catch (...) {
     SPDLOG_CRITICAL(std::string("Error when loading file:") + filename);
   }
-  return std::string();
+  return buffer.str();
 }
