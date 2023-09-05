@@ -69,9 +69,9 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   QcolorSelection = QColor(test->getColour());
 
-  rendering::Vector4 colorSelect = rendering::Vector4(QcolorSelection.redF(),
-                     QcolorSelection.greenF(),
-                     QcolorSelection.blueF());
+  rendering::Vector4 colorSelect =
+      rendering::Vector4(QcolorSelection.redF(), QcolorSelection.greenF(),
+                         QcolorSelection.blueF());
 
   REQUIRE(blueColor == colorSelect);
 
