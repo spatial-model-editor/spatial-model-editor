@@ -32,7 +32,7 @@ void rendering::ShaderProgram::Init() {
   char *vertexShaderText = new char[m_vertexShaderText.length() + 1];
   strncpy(vertexShaderText, m_vertexShaderText.c_str(),
           m_vertexShaderText.length() + 1);
-  glShaderSource(m_vertexShaderId, 1, (const char **)&vertexShaderText, NULL);
+  glShaderSource(m_vertexShaderId, 1, (const char **)&vertexShaderText, nullptr);
   CheckOpenGLError("glShaderSource");
   glCompileShader(m_vertexShaderId);
   CheckOpenGLError("glCompileShader");
@@ -44,7 +44,7 @@ void rendering::ShaderProgram::Init() {
   strncpy(fragmentShaderText, m_fragmentShaderText.c_str(),
           m_fragmentShaderText.length() + 1);
   glShaderSource(m_fragmentShaderId, 1, (const char **)&fragmentShaderText,
-                 NULL);
+                 nullptr);
   CheckOpenGLError("Utils::TraceGLError");
   glCompileShader(m_fragmentShaderId);
   CheckOpenGLError("glCompileShader");

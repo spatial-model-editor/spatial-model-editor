@@ -17,8 +17,8 @@
 class QOpenGLTriangle : public QOpenGLWidget, protected QOpenGLFunctions {
 
 public:
-  QOpenGLTriangle(QWidget *parent = 0);
-  ~QOpenGLTriangle();
+  explicit QOpenGLTriangle(QWidget *parent = nullptr);
+  ~QOpenGLTriangle() = default;
 
 protected:
   GLfloat angle;

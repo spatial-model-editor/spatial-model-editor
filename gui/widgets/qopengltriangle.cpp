@@ -12,8 +12,6 @@ QOpenGLTriangle::QOpenGLTriangle(QWidget *parent) : QOpenGLWidget(parent) {
   timer->start(200);
 }
 
-QOpenGLTriangle::~QOpenGLTriangle() {}
-
 void QOpenGLTriangle::initializeGL() {
   QOpenGLFunctions::initializeOpenGLFunctions();
 

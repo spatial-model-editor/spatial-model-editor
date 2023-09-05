@@ -37,7 +37,7 @@ void QOpenGLMouseTracker::initializeGL() {
   mainProgram->Use();
 }
 
-void QOpenGLMouseTracker::render(float lineWidth) {
+void QOpenGLMouseTracker::renderScene(float lineWidth) {
   for (color_mesh obj : meshSet) {
     obj.second->Render(mainProgram, lineWidth);
   }
@@ -47,12 +47,12 @@ void QOpenGLMouseTracker::paintGL() {
   camera.UpdateView(mainProgram);
   camera.UpdateProjection(mainProgram);
 
-  render(lineWidth);
+  renderScene(lineWidth);
 
   QOpenGLFramebufferObject fboPicking(size());
   fboPicking.bind();
 
-  render(lineSelectPrecision);
+  renderScene(lineSelectPrecision);
 
   offscreenPickingImage = fboPicking.toImage();
 

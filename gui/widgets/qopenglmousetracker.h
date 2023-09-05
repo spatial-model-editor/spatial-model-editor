@@ -80,7 +80,7 @@ protected:
   void resizeGL(int w, int h) override;
   void paintGL() override;
 
-  void render(float widthLine);
+  void renderScene(float widthLine);
 
   void mouseMoveEvent(QMouseEvent *event) override;
 
