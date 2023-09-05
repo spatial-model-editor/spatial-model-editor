@@ -5,8 +5,8 @@
 #include "Camera.hpp"
 #include <QtOpenGL>
 
-void rendering::Camera::SetFrustum(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ)
-{
+void rendering::Camera::SetFrustum(GLfloat FOV, GLfloat width, GLfloat height,
+                                   GLfloat nearZ, GLfloat farZ) {
 
   m_aspectRatio = width / height;
   m_near = nearZ;
@@ -36,39 +36,31 @@ void rendering::Camera::SetFrustum(GLfloat FOV, GLfloat width, GLfloat height, G
   m_projectionMatrix[3][1] = 0.0f;
   m_projectionMatrix[3][2] = 1.0f;
   m_projectionMatrix[3][3] = 0.0f;
-
 }
 
-
-rendering::Camera::Camera(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ,
-               GLfloat posX, GLfloat posY, GLfloat posZ,
-               GLfloat rotX, GLfloat rotY, GLfloat rotZ)
-{
+rendering::Camera::Camera(GLfloat FOV, GLfloat width, GLfloat height,
+                          GLfloat nearZ, GLfloat farZ, GLfloat posX,
+                          GLfloat posY, GLfloat posZ, GLfloat rotX,
+                          GLfloat rotY, GLfloat rotZ) {
   SetFrustum(FOV, width, height, nearZ, farZ);
 
-  SetPosition(posX,posY,posZ);
-  SetRotation(rotX,rotY,rotZ);
+  SetPosition(posX, posY, posZ);
+  SetRotation(rotX, rotY, rotZ);
 }
 
-void rendering::Camera::SetPosition(GLfloat posX, GLfloat posY, GLfloat posZ)
-{
+void rendering::Camera::SetPosition(GLfloat posX, GLfloat posY, GLfloat posZ) {
   m_viewPosition.x = posX;
   m_viewPosition.y = posY;
   m_viewPosition.z = posZ;
 }
 
-void rendering::Camera::SetPosition(rendering::Vector3 position)
-{
+void rendering::Camera::SetPosition(rendering::Vector3 position) {
   SetPosition(position.x, position.y, position.z);
 }
 
-rendering::Vector3 rendering::Camera::GetPosition()
-{
-  return m_viewPosition;
-}
+rendering::Vector3 rendering::Camera::GetPosition() { return m_viewPosition; }
 
-void rendering::Camera::SetRotation(GLfloat rotX, GLfloat rotY, GLfloat rotZ)
-{
+void rendering::Camera::SetRotation(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
   m_viewRotation.x = rotX;
   m_viewRotation.y = rotY;
   m_viewRotation.z = rotZ;
@@ -120,48 +112,31 @@ void rendering::Camera::SetRotation(GLfloat rotX, GLfloat rotY, GLfloat rotZ)
   m_viewUp.z = upZ;
 }
 
-void rendering::Camera::SetRotation(rendering::Vector3 rotation)
-{
+void rendering::Camera::SetRotation(rendering::Vector3 rotation) {
   SetRotation(rotation.x, rotation.y, rotation.z);
 }
 
-rendering::Vector3 rendering::Camera::GetRotation()
-{
-  return m_viewRotation;
-}
+rendering::Vector3 rendering::Camera::GetRotation() { return m_viewRotation; }
 
-rendering::Vector3 rendering::Camera::GetForwardVector()
-{
+rendering::Vector3 rendering::Camera::GetForwardVector() {
   return m_viewForward;
 }
 
-rendering::Vector3 rendering::Camera::GetUpVector()
-{
-  return m_viewUp;
-}
+rendering::Vector3 rendering::Camera::GetUpVector() { return m_viewUp; }
 
-void rendering::Camera::UpdateProjection(rendering::ShaderProgram* program)
-{
+void rendering::Camera::UpdateProjection(rendering::ShaderProgram *program) {
   program->SetProjection(m_projectionMatrix[0]);
 }
 
-void rendering::Camera::UpdateView(rendering::ShaderProgram* program)
-{
-  program->SetViewPosition(m_viewPosition.x, m_viewPosition.y, m_viewPosition.z);
-  program->SetViewRotation(m_viewRotation.x, m_viewRotation.y, m_viewRotation.z);
+void rendering::Camera::UpdateView(rendering::ShaderProgram *program) {
+  program->SetViewPosition(m_viewPosition.x, m_viewPosition.y,
+                           m_viewPosition.z);
+  program->SetViewRotation(m_viewRotation.x, m_viewRotation.y,
+                           m_viewRotation.z);
 }
 
-GLfloat rendering::Camera::getNear()
-{
-  return m_near;
-}
+GLfloat rendering::Camera::getNear() { return m_near; }
 
-GLfloat rendering::Camera::getFar()
-{
-  return m_far;
-}
+GLfloat rendering::Camera::getFar() { return m_far; }
 
-GLfloat rendering::Camera::getFOV()
-{
-  return m_FOV;
-}
+GLfloat rendering::Camera::getFOV() { return m_FOV; }

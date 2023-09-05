@@ -10,26 +10,26 @@
 
 namespace rendering {
 
-    class Vector4 : public IArray<GLfloat> {
-    public:
-      Vector4(void);
-      Vector4(GLfloat x, GLfloat y, GLfloat z);
-      Vector4(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+class Vector4 : public IArray<GLfloat> {
+public:
+  Vector4(void);
+  Vector4(GLfloat x, GLfloat y, GLfloat z);
+  Vector4(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
-      Vector4 operator+(Vector4) const;
-      Vector4 operator-(Vector4) const;
-      Vector4 operator*(Vector4) const;
-      Vector4 operator*(GLfloat) const;
+  Vector4 operator+(Vector4) const;
+  Vector4 operator-(Vector4) const;
+  Vector4 operator*(Vector4) const;
+  Vector4 operator*(GLfloat) const;
 
-      bool operator ==(const Vector4& rhs) const;
+  bool operator==(const Vector4 &rhs) const;
 
-      GLfloat x;
-      GLfloat y;
-      GLfloat z;
-      GLfloat w;
+  GLfloat x;
+  GLfloat y;
+  GLfloat z;
+  GLfloat w;
 
-      virtual std::vector<GLfloat> ToArray(void);
-    };
-}
+  virtual std::vector<GLfloat> ToArray(void);
+};
+} // namespace rendering
 
 #endif // SPATIALMODELEDITOR_VECTOR4_H

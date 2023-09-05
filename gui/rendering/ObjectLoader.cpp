@@ -4,11 +4,9 @@
 
 #include "ObjectLoader.hpp"
 
-rendering::SMesh rendering::ObjectLoader::LoadMesh(std::string filename)
-{
+rendering::SMesh rendering::ObjectLoader::LoadMesh(std::string filename) {
   std::ifstream in(filename);
-  if(in.fail())
-  {
+  if (in.fail()) {
     throw std::runtime_error("File not found!");
   }
 
@@ -20,30 +18,32 @@ rendering::SMesh rendering::ObjectLoader::LoadMesh(std::string filename)
   return mesh;
 }
 
-rendering::ObjectInfo rendering::ObjectLoader::Load(std::string filename)
-{
+rendering::ObjectInfo rendering::ObjectLoader::Load(std::string filename) {
 
   SMesh mesh = ObjectLoader::LoadMesh(filename);
 
   return Load(mesh);
 }
 
-rendering::ObjectInfo rendering::ObjectLoader::Load(SMesh mesh)
-{
+rendering::ObjectInfo rendering::ObjectLoader::Load(SMesh mesh) {
   ObjectInfo Obj;
 
-  //Get vertices
+  // Get vertices
   for (SMesh::Vertex_index vi : mesh.vertices()) {
     Point pt = mesh.point(vi);
     Obj.vertices.push_back(rendering::Vector4(pt.x(), pt.y(), pt.z()));
   }
 
-  //Get face indices
+  // Get face indices
   for (SMesh::Face_index face_index : mesh.faces()) {
-    CGAL::Vertex_around_face_circulator<SMesh> vcirc(mesh.halfedge(face_index), mesh), done(vcirc);
+    CGAL::Vertex_around_face_circulator<SMesh> vcirc(mesh.halfedge(face_index),
+                                                     mesh),
+        done(vcirc);
     std::vector<uint32_t> indices;
-    do indices.push_back(*vcirc++); while (vcirc != done);
-    if(indices.size()>3)
+    do
+      indices.push_back(*vcirc++);
+    while (vcirc != done);
+    if (indices.size() > 3)
       throw std::runtime_error("The faces must be triangles!");
     else
       Obj.faces.push_back(Face(indices[0], indices[1], indices[2]));
@@ -51,6 +51,3 @@ rendering::ObjectInfo rendering::ObjectLoader::Load(SMesh mesh)
 
   return Obj;
 }
-
-
-
