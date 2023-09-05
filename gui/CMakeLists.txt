@@ -24,8 +24,7 @@ if(BUILD_TESTING)
            testlib
            Qt6::OpenGLWidgets
            Qt6::OpenGL
-           OpenGL::GL
-           OpenGL::GLU)
+           )
 endif()
 
 add_subdirectory(widgets)
@@ -40,7 +39,6 @@ target_link_libraries(
          sme::core
          Qt6::OpenGLWidgets
          Qt6::OpenGL
-         OpenGL::GL
-         OpenGL::GLU)
+         )
 set_property(TARGET gui PROPERTY CXX_STANDARD 17)
 set_target_properties(gui PROPERTIES POSITION_INDEPENDENT_CODE ON)
