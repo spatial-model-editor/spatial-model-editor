@@ -6,6 +6,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 std::string rendering::Utils::PrintGLErrorDescription(unsigned int glErr) {
   static std::string GLerrorDescription[] = {
