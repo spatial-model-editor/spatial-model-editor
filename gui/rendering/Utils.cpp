@@ -29,7 +29,8 @@ void rendering::Utils::TraceGLError(std::string tag, std::string file,
   GLenum errLast = GL_NO_ERROR;
 
   while (true) {
-    GLenum err = glGetError();
+    QOpenGLFunctions *glFuncs = QOpenGLContext::currentContext()->functions();
+    GLenum err = glFuncs->glGetError();
 
     if (err == GL_NO_ERROR) {
       break;
@@ -60,12 +61,13 @@ void rendering::Utils::TraceGLError(std::string tag, std::string file,
 }
 
 std::string rendering::Utils::LoadFile(std::string filename) {
+
+  std::stringstream buffer;
   try {
     std::ifstream fileIn(filename);
-    std::stringstream buffer;
     buffer << fileIn.rdbuf();
-    return buffer.str();
   } catch (...) {
     SPDLOG_CRITICAL(std::string("Error when loading file:") + filename);
   }
+  return buffer.str();
 }

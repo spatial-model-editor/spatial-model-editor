@@ -73,6 +73,6 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
                                           QcolorSelection.greenF(),
                                           QcolorSelection.blueF()));
 
-  // wait(50000);
+  //wait(50000);
   wait();
 }

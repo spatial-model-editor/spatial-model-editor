@@ -10,6 +10,7 @@
 
 #include "sme/logger.hpp"
 #include <QtOpenGL>
+#include <QOpenGLFunctions>
 
 #ifdef QT_DEBUG
 #define CheckOpenGLError(tag)                                                  \
