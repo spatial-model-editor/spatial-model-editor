@@ -8,8 +8,8 @@
 #include <QOpenGLWidget>
 #include <QWidget>
 
-#include <GL/gl.h>
-#include <GL/glu.h>
+//#include <GL/gl.h>
+//#include <GL/glu.h>
 #include <QMainWindow>
 #include <QTimer>
 #include <QtOpenGL>
