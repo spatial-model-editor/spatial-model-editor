@@ -9,8 +9,8 @@
 #include <string>
 
 #include "sme/logger.hpp"
-#include <QtOpenGL>
 #include <QOpenGLFunctions>
+#include <QtOpenGL>
 
 #ifdef QT_DEBUG
 #define CheckOpenGLError(tag)                                                  \
