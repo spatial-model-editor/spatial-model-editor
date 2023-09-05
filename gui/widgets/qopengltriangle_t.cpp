@@ -9,7 +9,6 @@
 
 using namespace sme::test;
 
-
 #include "qopengltriangle.hpp"
 
 static const char *tags{"[gui/widgets/QOpenGLTriangle][gui/widgets][gui]"};

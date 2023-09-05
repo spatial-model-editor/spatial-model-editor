@@ -10,8 +10,7 @@
 #include "ShaderProgram.hpp"
 #include "Vector3.hpp"
 
-namespace rendering
-{
+namespace rendering {
 
 #define PI 3.1415926535f
 
@@ -68,6 +67,6 @@ private:
   rendering::Vector3 m_viewUp;
 };
 
-}
+} // namespace rendering
 
 #endif // SPATIALMODELEDITOR_CAMERA_H

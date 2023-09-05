@@ -6,8 +6,8 @@
 
 #include "Utils.hpp"
 
-rendering::ShaderProgram::ShaderProgram(const char* vertexProgram, const char* fragmentProgram)
-{
+rendering::ShaderProgram::ShaderProgram(const char *vertexProgram,
+                                        const char *fragmentProgram) {
   QOpenGLFunctions::initializeOpenGLFunctions();
 
   m_vertexShaderText = std::string(vertexProgram);
@@ -16,8 +16,8 @@ rendering::ShaderProgram::ShaderProgram(const char* vertexProgram, const char* f
   Init();
 }
 
-rendering::ShaderProgram::ShaderProgram(std::string vertexShaderName, std::string fragmentShaderName)
-{
+rendering::ShaderProgram::ShaderProgram(std::string vertexShaderName,
+                                        std::string fragmentShaderName) {
   QOpenGLFunctions::initializeOpenGLFunctions();
 
   m_vertexShaderText = Utils::LoadFile(vertexShaderName);
@@ -26,13 +26,12 @@ rendering::ShaderProgram::ShaderProgram(std::string vertexShaderName, std::strin
   Init();
 }
 
-void rendering::ShaderProgram::Init()
-{
+void rendering::ShaderProgram::Init() {
   m_vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
   CheckOpenGLError("glCreateShader");
   char *vertexShaderText = new char[m_vertexShaderText.length() + 1];
   strcpy(vertexShaderText, m_vertexShaderText.c_str());
-  glShaderSource(m_vertexShaderId, 1, (const char**)&vertexShaderText, NULL);
+  glShaderSource(m_vertexShaderId, 1, (const char **)&vertexShaderText, NULL);
   CheckOpenGLError("glShaderSource");
   glCompileShader(m_vertexShaderId);
   CheckOpenGLError("glCompileShader");
@@ -40,14 +39,14 @@ void rendering::ShaderProgram::Init()
 
   m_fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
   CheckOpenGLError("glCreateShader");
-  char *fragmentShaderText = new char[m_fragmentShaderText.length()+1];
+  char *fragmentShaderText = new char[m_fragmentShaderText.length() + 1];
   strcpy(fragmentShaderText, m_fragmentShaderText.c_str());
-  glShaderSource(m_fragmentShaderId, 1, (const char **)&fragmentShaderText, NULL);
+  glShaderSource(m_fragmentShaderId, 1, (const char **)&fragmentShaderText,
+                 NULL);
   CheckOpenGLError("Utils::TraceGLError");
   glCompileShader(m_fragmentShaderId);
   CheckOpenGLError("glCompileShader");
   delete[] fragmentShaderText;
-
 
   m_programId = glCreateProgram();
   CheckOpenGLError("glCreateProgram");
@@ -73,8 +72,7 @@ void rendering::ShaderProgram::Init()
   CheckOpenGLError("glGetUniformLocation");
 }
 
-rendering::ShaderProgram::~ShaderProgram()
-{
+rendering::ShaderProgram::~ShaderProgram() {
   glUseProgram(0);
   CheckOpenGLError("glUseProgram");
 
@@ -90,52 +88,50 @@ rendering::ShaderProgram::~ShaderProgram()
 
   glDeleteProgram(m_programId);
   CheckOpenGLError("glDeleteProgram");
-
 }
 
-void rendering::ShaderProgram::SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ)
-{
+void rendering::ShaderProgram::SetRotation(GLfloat rotationX, GLfloat rotationY,
+                                           GLfloat rotationZ) {
   Use();
   glUniform3f(m_rotationLocation, rotationX, rotationY, rotationZ);
   CheckOpenGLError("glUniform3f");
 }
 
-void rendering::ShaderProgram::SetPosition(GLfloat x, GLfloat y, GLfloat z)
-{
+void rendering::ShaderProgram::SetPosition(GLfloat x, GLfloat y, GLfloat z) {
   Use();
-  glUniform3f(m_positionLocation, x,y,z);
+  glUniform3f(m_positionLocation, x, y, z);
   CheckOpenGLError("glUniform3f");
 }
 
-void rendering::ShaderProgram::SetScale(GLfloat x, GLfloat y, GLfloat z)
-{
+void rendering::ShaderProgram::SetScale(GLfloat x, GLfloat y, GLfloat z) {
   Use();
   glUniform3f(m_scaleLocation, x, y, z);
   CheckOpenGLError("glUniform3f");
 }
 
-void rendering::ShaderProgram::SetProjection(GLfloat* matrix4)
-{
+void rendering::ShaderProgram::SetProjection(GLfloat *matrix4) {
   Use();
-  glUniformMatrix4fv(m_projectionLocation,1,GL_FALSE, matrix4);
+  glUniformMatrix4fv(m_projectionLocation, 1, GL_FALSE, matrix4);
   CheckOpenGLError("glUniformMatrix4fv");
 }
 
-void rendering::ShaderProgram::SetViewPosition(GLfloat viewPosX, GLfloat viewPosY, GLfloat viewPosZ)
-{
+void rendering::ShaderProgram::SetViewPosition(GLfloat viewPosX,
+                                               GLfloat viewPosY,
+                                               GLfloat viewPosZ) {
   Use();
   glUniform3f(m_viewPositionLocation, viewPosX, viewPosY, viewPosZ);
   CheckOpenGLError("glUniform3f");
 }
-void rendering::ShaderProgram::SetViewRotation(GLfloat viewRotationX, GLfloat viewRotationY, GLfloat viewRotationZ)
-{
+void rendering::ShaderProgram::SetViewRotation(GLfloat viewRotationX,
+                                               GLfloat viewRotationY,
+                                               GLfloat viewRotationZ) {
   Use();
-  glUniform3f(m_viewRotationLocation, viewRotationX, viewRotationY, viewRotationZ);
+  glUniform3f(m_viewRotationLocation, viewRotationX, viewRotationY,
+              viewRotationZ);
   CheckOpenGLError("glUniform3f");
 }
 
-void rendering::ShaderProgram::Use(void)
-{
+void rendering::ShaderProgram::Use(void) {
   glUseProgram(m_programId);
   CheckOpenGLError("glUseProgram");
 }

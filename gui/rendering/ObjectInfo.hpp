@@ -10,20 +10,20 @@
 
 namespace rendering {
 
-    struct Face {
-      GLint vertexIndices[3] = {0, 0, 0};
-      Face(int indx0, int indx1, int indx2) {
-        vertexIndices[0] = indx0;
-        vertexIndices[1] = indx1;
-        vertexIndices[2] = indx2;
-      }
-    };
+struct Face {
+  GLint vertexIndices[3] = {0, 0, 0};
+  Face(int indx0, int indx1, int indx2) {
+    vertexIndices[0] = indx0;
+    vertexIndices[1] = indx1;
+    vertexIndices[2] = indx2;
+  }
+};
 
-    struct ObjectInfo {
-      std::vector<rendering::Vector4> vertices;
-      std::vector<rendering::Face> faces;
-    };
+struct ObjectInfo {
+  std::vector<rendering::Vector4> vertices;
+  std::vector<rendering::Face> faces;
+};
 
-}
+} // namespace rendering
 
 #endif // SPATIALMODELEDITOR_OBJECTINFO_H

@@ -2,14 +2,12 @@
 // Created by acaramizaru on 7/25/23.
 //
 
-
 #include "catch_wrapper.hpp"
 #include "qt_test_utils.hpp"
 
 #include "rendering/rendering.hpp"
 
 using namespace sme::test;
-
 
 #include "qopenglmousetracker.h"
 
@@ -34,18 +32,20 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   test->show();
 
   // camera position
-  test->SetCameraPosition(0,0,-10);
+  test->SetCameraPosition(0, 0, -10);
 
   // loading meshes
 
   QFile::copy(":/test/rendering/Objects/sphere.ply", "tmp_sphere.ply");
   REQUIRE(QFile::exists("tmp_sphere.ply"));
-  rendering::SMesh sphereMesh = rendering::ObjectLoader::LoadMesh(QDir::current().filePath("tmp_sphere.ply").toStdString());
+  rendering::SMesh sphereMesh = rendering::ObjectLoader::LoadMesh(
+      QDir::current().filePath("tmp_sphere.ply").toStdString());
   test->addMesh(sphereMesh, redColor);
 
   QFile::copy(":/test/rendering/Objects/teapot.ply", "tmp_teapot.ply");
   REQUIRE(QFile::exists("tmp_teapot.ply"));
-  rendering::SMesh teapotMesh = rendering::ObjectLoader::LoadMesh(QDir::current().filePath("tmp_teapot.ply").toStdString());
+  rendering::SMesh teapotMesh = rendering::ObjectLoader::LoadMesh(
+      QDir::current().filePath("tmp_teapot.ply").toStdString());
   test->addMesh(teapotMesh, blueColor);
 
   auto QcolorSelection = QColor(test->getColour());
@@ -55,9 +55,11 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   test->repaint();
 
   // the corner initial color should be black.
-  REQUIRE( blackColor == rendering::Vector4(QcolorSelection.redF(),QcolorSelection.greenF(), QcolorSelection.blueF()) );
+  REQUIRE(blackColor == rendering::Vector4(QcolorSelection.redF(),
+                                           QcolorSelection.greenF(),
+                                           QcolorSelection.blueF()));
   // zoom
-  sendMouseWheel( test, 1 );
+  sendMouseWheel(test, 1);
   // move mouse over image
   sendMouseMove(test, {10, 44});
   // click on image
@@ -67,8 +69,10 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   QcolorSelection = QColor(test->getColour());
 
-  REQUIRE( blueColor == rendering::Vector4(QcolorSelection.redF(),QcolorSelection.greenF(), QcolorSelection.blueF()) );
+  REQUIRE(blueColor == rendering::Vector4(QcolorSelection.redF(),
+                                          QcolorSelection.greenF(),
+                                          QcolorSelection.blueF()));
 
-  //wait(50000);
+  // wait(50000);
   wait();
 }

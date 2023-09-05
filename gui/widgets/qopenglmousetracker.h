@@ -5,34 +5,27 @@
 #ifndef SPATIALMODELEDITOR_QOPENGLMOUSETRACKER_H
 #define SPATIALMODELEDITOR_QOPENGLMOUSETRACKER_H
 
-#include <QWidget>
 #include <QOpenGLWidget>
+#include <QWidget>
 #include <QtOpenGL>
 
 #include "rendering/rendering.hpp"
 
 #include <QTimer>
 
-class QOpenGLMouseTracker:
-    public QOpenGLWidget,
-    protected QOpenGLFunctions
-{
+class QOpenGLMouseTracker : public QOpenGLWidget, protected QOpenGLFunctions {
   Q_OBJECT
 public:
-
-  QOpenGLMouseTracker(
-      QWidget *parent = nullptr,
-      float lineWidth=1.0f,
-      float lineSelectPrecision=10.0f,
-      rendering::Vector4 selectedObjectColor = rendering::Vector4(1.0f, 1.0f, 0.0f),
-      float cameraFOV=60.0f,
-      float cameraNearZ = 0.001f,
-      float cameraFarZ = 2000.0f,
-      float frameRate = 60.0f
-      );
+  QOpenGLMouseTracker(QWidget *parent = nullptr, float lineWidth = 1.0f,
+                      float lineSelectPrecision = 10.0f,
+                      rendering::Vector4 selectedObjectColor =
+                          rendering::Vector4(1.0f, 1.0f, 0.0f),
+                      float cameraFOV = 60.0f, float cameraNearZ = 0.001f,
+                      float cameraFarZ = 2000.0f, float frameRate = 60.0f);
   ~QOpenGLMouseTracker();
 
-  void SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ, GLfloat farZ);
+  void SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height,
+                        GLfloat nearZ, GLfloat farZ);
   void SetCameraPosition(float x, float y, float z);
   void SetCameraSetRotation(float x, float y, float z);
 
@@ -42,28 +35,24 @@ public:
   void addMesh(rendering::SMesh mesh, rendering::Vector4 color);
 
   void setFPS(float frameRate);
-  void setLineWidth(float lineWidth=1.0f);
-  void setLineSelectPrecision(float lineSelectPrecision=10.0f);
+  void setLineWidth(float lineWidth = 1.0f);
+  void setLineSelectPrecision(float lineSelectPrecision = 10.0f);
 
-  void setSelectedObjectColor(rendering::Vector4 color = rendering::Vector4(1.0f, 1.0f, 0.0f))
-  {
+  void setSelectedObjectColor(
+      rendering::Vector4 color = rendering::Vector4(1.0f, 1.0f, 0.0f)) {
     this->selectedObjectColor = color;
   }
-  rendering::Vector4 getSelectedObjectColor()
-  {
-    return selectedObjectColor;
-  }
+  rendering::Vector4 getSelectedObjectColor() { return selectedObjectColor; }
 
   // colour of pixel at last mouse click position
   [[nodiscard]] const QRgb &getColour() const;
 
 signals:
   void mouseClicked(QRgb color, rendering::SMesh mesh);
-  void mouseOver(const rendering::SMesh& mesh);
+  void mouseOver(const rendering::SMesh &mesh);
   void mouseWheelEvent(QWheelEvent *ev);
 
 protected:
-
   QRgb lastColour{};
 
   QTimer *timer;
@@ -74,11 +63,12 @@ protected:
 
   rendering::Vector4 selectedObjectColor;
 
-  typedef std::pair<rendering::Vector4, rendering::WireframeObject*> color_mesh;
+  typedef std::pair<rendering::Vector4, rendering::WireframeObject *>
+      color_mesh;
 
   std::vector<color_mesh> meshSet;
 
-  rendering::ShaderProgram* mainProgram;
+  rendering::ShaderProgram *mainProgram;
   rendering::Camera camera;
 
   QImage offscreenPickingImage;
@@ -98,6 +88,5 @@ protected:
 
   void wheelEvent(QWheelEvent *event) override;
 };
-
 
 #endif // SPATIALMODELEDITOR_QOPENGLMOUSETRACKER_H
