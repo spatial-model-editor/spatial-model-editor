@@ -13,7 +13,7 @@
 
 #include <QTimer>
 
-class QOpenGLMouseTracker : public QOpenGLWidget, protected QOpenGLFunctions {
+class QOpenGLMouseTracker : public QOpenGLWidget {
   Q_OBJECT
 public:
   QOpenGLMouseTracker(QWidget *parent = nullptr, float lineWidth = 1.0f,

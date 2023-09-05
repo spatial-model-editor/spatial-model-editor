@@ -13,6 +13,7 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
                                          float cameraFarZ, float frameRate)
     : camera(cameraFOV, size().width(), size().height(), cameraNearZ,
              cameraFarZ) {
+
   this->frameRate = frameRate;
 
   this->timer = new QTimer(this);
