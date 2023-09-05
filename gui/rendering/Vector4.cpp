@@ -61,3 +61,8 @@ rendering::Vector4 rendering::Vector4::operator*(GLfloat rhs) const
       this->w * rhs
   );
 }
+
+bool rendering::Vector4::operator==(const Vector4& rhs) const
+{
+  return x == rhs.x && y == rhs.y && z == rhs.z;
+}

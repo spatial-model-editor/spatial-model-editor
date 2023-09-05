@@ -49,6 +49,10 @@ public:
   {
     this->selectedObjectColor = color;
   }
+  rendering::Vector4 getSelectedObjectColor()
+  {
+    return selectedObjectColor;
+  }
 
   // colour of pixel at last mouse click position
   [[nodiscard]] const QRgb &getColour() const;

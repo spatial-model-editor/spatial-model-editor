@@ -133,7 +133,7 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event)
   m_xAtPress = xAtPress;
   m_yAtPress = yAtPress;
 
-  // apply rotation of the scene or rotation of the camera
+  // apply rotation of the camera
   rendering::Vector3 cameraOrientation = GetCameraOrientation();
   SetCameraSetRotation(
       cameraOrientation.x + y_len * (1 / frameRate),

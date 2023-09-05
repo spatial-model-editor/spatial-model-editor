@@ -21,6 +21,8 @@ namespace rendering {
       Vector4 operator*(Vector4) const;
       Vector4 operator*(GLfloat) const;
 
+      bool operator ==(const Vector4& rhs) const;
+
       GLfloat x;
       GLfloat y;
       GLfloat z;
