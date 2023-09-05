@@ -92,11 +92,11 @@ protected:
 
   void render(float widthLine);
 
-  void mouseMoveEvent(QMouseEvent *event);
+  void mouseMoveEvent(QMouseEvent *event) override;
 
-  void mousePressEvent(QMouseEvent *event);
+  void mousePressEvent(QMouseEvent *event) override;
 
-  void wheelEvent(QWheelEvent *event);
+  void wheelEvent(QWheelEvent *event) override;
 };
 
 
