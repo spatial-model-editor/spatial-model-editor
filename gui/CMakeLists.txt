@@ -22,7 +22,7 @@ if(BUILD_TESTING)
     gui_tests
     PUBLIC gui
            testlib
-           Qt6::OpenGLWidgets
+           Qt::OpenGLWidgets
            Qt6::OpenGL)
 endif()
 
