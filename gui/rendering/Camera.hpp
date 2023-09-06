@@ -44,8 +44,8 @@ public:
   //  void MoveDown(float elapsedTime);
   //  void MoveInDirection(rendering::Vector3 direction, float elapsedTime);
 
-  void UpdateProjection(std::unique_ptr<rendering::ShaderProgram>& program);
-  void UpdateView(std::unique_ptr<rendering::ShaderProgram>& program);
+  void UpdateProjection(std::unique_ptr<rendering::ShaderProgram> &program);
+  void UpdateView(std::unique_ptr<rendering::ShaderProgram> &program);
 
   GLfloat getNear();
   GLfloat getFar();
