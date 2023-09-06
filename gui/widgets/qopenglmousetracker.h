@@ -32,7 +32,7 @@ public:
   rendering::Vector3 GetCameraPosition();
   rendering::Vector3 GetCameraOrientation();
 
-  void addMesh(rendering::SMesh& mesh, rendering::Vector4 color);
+  void addMesh(rendering::SMesh &mesh, rendering::Vector4 color);
 
   void setFPS(float frameRate);
   void setLineWidth(float lineWidth = 1.0f);
