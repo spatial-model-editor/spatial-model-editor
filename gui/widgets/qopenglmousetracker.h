@@ -39,9 +39,8 @@ public:
   void setLineSelectPrecision(float lineSelectPrecision = 10.0f);
 
   void setSelectedObjectColor(
-      rendering::Vector4 color = rendering::Vector4(1.0f, 1.0f, 0.0f)) {
-    this->selectedObjectColor = color;
-  }
+      rendering::Vector4 color = rendering::Vector4(1.0f, 1.0f, 0.0f));
+
   rendering::Vector4 getSelectedObjectColor() { return selectedObjectColor; }
 
   // colour of pixel at last mouse click position

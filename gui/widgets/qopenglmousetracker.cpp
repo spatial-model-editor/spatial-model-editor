@@ -187,4 +187,8 @@ void QOpenGLMouseTracker::setLineSelectPrecision(float lineSelectPrecision) {
   this->lineSelectPrecision = lineSelectPrecision;
 }
 
+void QOpenGLMouseTracker::setSelectedObjectColor(rendering::Vector4 color) {
+  this->selectedObjectColor = color;
+}
+
 const QRgb &QOpenGLMouseTracker::getColour() const { return lastColour; }
