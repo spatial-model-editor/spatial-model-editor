@@ -166,7 +166,7 @@ rendering::Vector3 QOpenGLMouseTracker::GetCameraOrientation() {
   return camera.GetRotation();
 }
 
-void QOpenGLMouseTracker::addMesh(rendering::SMesh mesh,
+void QOpenGLMouseTracker::addMesh(rendering::SMesh& mesh,
                                   rendering::Vector4 color) {
   rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
 

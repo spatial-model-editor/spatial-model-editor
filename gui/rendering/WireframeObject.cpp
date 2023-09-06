@@ -6,7 +6,7 @@
 
 rendering::WireframeObject::WireframeObject(rendering::ObjectInfo info,
                                             rendering::Vector4 color,
-                                            rendering::SMesh mesh,
+                                            rendering::SMesh& mesh,
                                             Vector3 position, Vector3 rotation,
                                             Vector3 scale)
     : m_mesh(mesh), m_position(position), m_rotation(rotation), m_scale(scale),

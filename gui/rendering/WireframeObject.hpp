@@ -21,7 +21,7 @@ class WireframeObject : protected QOpenGLFunctions {
 
 public:
   WireframeObject(rendering::ObjectInfo info, rendering::Vector4 color,
-                  rendering::SMesh mesh,
+                  rendering::SMesh& mesh,
                   Vector3 position = rendering::Vector3(0.0f, 0.0f, 0.0f),
                   Vector3 rotation = rendering::Vector3(0.0f, 0.0f, 0.0f),
                   Vector3 scale = rendering::Vector3(1.0f, 1.0f, 1.0f));
@@ -54,7 +54,7 @@ private:
   std::vector<GLfloat> m_colorBuffer;
 
   rendering::SMesh m_mesh;
-  
+
   std::unique_ptr<QOpenGLVertexArrayObject> m_vao;
   GLuint m_vbo;
   GLuint m_colorBufferId;

@@ -25,7 +25,7 @@ rendering::ObjectInfo rendering::ObjectLoader::Load(std::string filename) {
   return Load(mesh);
 }
 
-rendering::ObjectInfo rendering::ObjectLoader::Load(SMesh mesh) {
+rendering::ObjectInfo rendering::ObjectLoader::Load(SMesh& mesh) {
   ObjectInfo Obj;
 
   // Get vertices
