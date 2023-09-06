@@ -28,7 +28,7 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
 QOpenGLMouseTracker::~QOpenGLMouseTracker() {
   delete mainProgram;
 
-  for (color_mesh& obj : meshSet)
+  for (color_mesh &obj : meshSet)
     delete obj.second;
 }
 
@@ -39,7 +39,7 @@ void QOpenGLMouseTracker::initializeGL() {
 }
 
 void QOpenGLMouseTracker::renderScene(float lineWidth) {
-  for (color_mesh& obj : meshSet) {
+  for (color_mesh &obj : meshSet) {
     obj.second->Render(mainProgram, lineWidth);
   }
 }
@@ -89,7 +89,7 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
 
   bool objectSelected = false;
 
-  for (color_mesh& obj : meshSet) {
+  for (color_mesh &obj : meshSet) {
     if (obj.first.ToArray() == colorVector.ToArray()) {
       obj.second->SetColor(selectedObjectColor);
       objectSelected = true;
@@ -99,7 +99,7 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
   }
 
   if (!objectSelected) {
-    for (color_mesh& obj : meshSet) {
+    for (color_mesh &obj : meshSet) {
       auto defaultColor = obj.first;
       obj.second->SetColor(defaultColor);
     }
@@ -132,7 +132,7 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
   rendering::Vector4 colorVector =
       rendering::Vector4(color.redF(), color.greenF(), color.blueF());
 
-  for (color_mesh& obj : meshSet) {
+  for (color_mesh &obj : meshSet) {
     if (obj.first.ToArray() == colorVector.ToArray()) {
       emit mouseOver(obj.second->GetMesh());
     }
