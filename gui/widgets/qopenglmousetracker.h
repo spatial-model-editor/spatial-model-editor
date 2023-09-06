@@ -62,7 +62,8 @@ protected:
 
   rendering::Vector4 selectedObjectColor;
 
-  typedef std::pair<rendering::Vector4, std::unique_ptr<rendering::WireframeObject> >
+  typedef std::pair<rendering::Vector4,
+                    std::unique_ptr<rendering::WireframeObject>>
       color_mesh;
 
   std::vector<color_mesh> meshSet;

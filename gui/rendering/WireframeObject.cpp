@@ -127,8 +127,8 @@ void rendering::WireframeObject::DestroyVBO(void) {
   // delete m_vao;
 }
 
-void rendering::WireframeObject::Render(std::unique_ptr<rendering::ShaderProgram>& program,
-                                        float lineWidth) {
+void rendering::WireframeObject::Render(
+    std::unique_ptr<rendering::ShaderProgram> &program, float lineWidth) {
 
   glLineWidth(lineWidth);
   glEnable(GL_LINE_SMOOTH);
