@@ -36,7 +36,7 @@ target_link_libraries(
   gui
   PUBLIC Qt::Widgets
          sme::core
-         Qt6::OpenGLWidgets
-         Qt6::OpenGL)
+         Qt::OpenGLWidgets
+         Qt::OpenGL)
 set_property(TARGET gui PROPERTY CXX_STANDARD 17)
 set_target_properties(gui PROPERTIES POSITION_INDEPENDENT_CODE ON)

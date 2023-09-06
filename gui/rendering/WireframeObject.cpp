@@ -71,7 +71,7 @@ void rendering::WireframeObject::CreateVBO(void) {
   GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(GLfloat);
   GLsizeiptr indexBufferSize = m_indices.size() * sizeof(GLuint);
 
-  m_vao = new QOpenGLVertexArrayObject(nullptr);
+  m_vao = std::unique_ptr<QOpenGLVertexArrayObject>(new QOpenGLVertexArrayObject(nullptr));
   m_vao->create();
   m_vao->bind();
 
@@ -123,7 +123,7 @@ void rendering::WireframeObject::DestroyVBO(void) {
   m_vao->release();
   m_vao->destroy();
 
-  delete m_vao;
+  //delete m_vao;
 }
 
 void rendering::WireframeObject::Render(rendering::ShaderProgram *program,
