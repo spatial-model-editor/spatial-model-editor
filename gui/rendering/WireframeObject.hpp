@@ -54,7 +54,7 @@ private:
   std::vector<GLfloat> m_colorBuffer;
 
   rendering::SMesh m_mesh;
-  
+
   std::unique_ptr<QOpenGLVertexArrayObject> m_vao;
   GLuint m_vbo;
   GLuint m_colorBufferId;
