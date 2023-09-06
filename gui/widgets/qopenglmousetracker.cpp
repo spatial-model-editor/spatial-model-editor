@@ -99,7 +99,7 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
   }
 
   if (!objectSelected) {
-    for (color_mesh obj : meshSet) {
+    for (color_mesh& obj : meshSet) {
       auto defaultColor = obj.first;
       obj.second->SetColor(defaultColor);
     }
