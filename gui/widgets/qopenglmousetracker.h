@@ -22,7 +22,7 @@ public:
                           rendering::Vector4(1.0f, 1.0f, 0.0f),
                       float cameraFOV = 60.0f, float cameraNearZ = 0.001f,
                       float cameraFarZ = 2000.0f, float frameRate = 60.0f);
-  ~QOpenGLMouseTracker();
+  ~QOpenGLMouseTracker() = default;
 
   void SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height,
                         GLfloat nearZ, GLfloat farZ);
@@ -62,7 +62,7 @@ protected:
 
   rendering::Vector4 selectedObjectColor;
 
-  typedef std::pair<rendering::Vector4, rendering::WireframeObject *>
+  typedef std::pair<rendering::Vector4, std::unique_ptr<rendering::WireframeObject> >
       color_mesh;
 
   std::vector<color_mesh> meshSet;

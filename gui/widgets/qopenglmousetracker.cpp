@@ -25,12 +25,6 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
   setSelectedObjectColor(selectedObjectColor);
 }
 
-QOpenGLMouseTracker::~QOpenGLMouseTracker() {
-
-  for (color_mesh &obj : meshSet)
-    delete obj.second;
-}
-
 void QOpenGLMouseTracker::initializeGL() {
 
   mainProgram = std::unique_ptr<rendering::ShaderProgram>(
@@ -175,7 +169,11 @@ void QOpenGLMouseTracker::addMesh(rendering::SMesh &mesh,
   rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
 
   meshSet.push_back(std::make_pair(
-      color, new rendering::WireframeObject(objectInfo, color, mesh)));
+      color,
+      std::unique_ptr<rendering::WireframeObject>(
+          new rendering::WireframeObject(objectInfo, color, mesh)
+          )
+      ));
 }
 
 void QOpenGLMouseTracker::setFPS(float frameRate) {
