@@ -70,16 +70,14 @@ void QOpenGLMouseTracker::SetCameraFrustum(GLfloat FOV, GLfloat width,
 }
 
 void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
-  m_xAtPress = event->pos().x();
-  m_yAtPress = event->pos().y();
 
-  int xAtRelease = event->position().x();
-  int yAtRelease = event->position().y();
+  m_xAtPress = event->position().x();
+  m_yAtPress = event->position().y();
 
-  xAtRelease = std::clamp(xAtRelease, 0, offscreenPickingImage.width() - 1);
-  yAtRelease = std::clamp(yAtRelease, 0, offscreenPickingImage.height() - 1);
+  m_xAtPress = std::clamp(m_xAtPress, 0, offscreenPickingImage.width() - 1);
+  m_yAtPress = std::clamp(m_yAtPress, 0, offscreenPickingImage.height() - 1);
 
-  QRgb pixel = offscreenPickingImage.pixel(xAtRelease, yAtRelease);
+  QRgb pixel = offscreenPickingImage.pixel(m_xAtPress, m_yAtPress);
   QColor color(pixel);
 
   rendering::Vector4 colorVector =
