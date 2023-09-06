@@ -39,7 +39,7 @@ void QOpenGLMouseTracker::initializeGL() {
 }
 
 void QOpenGLMouseTracker::renderScene(float lineWidth) {
-  for (color_mesh obj : meshSet) {
+  for (color_mesh &obj : meshSet) {
     obj.second->Render(mainProgram, lineWidth);
   }
 }
