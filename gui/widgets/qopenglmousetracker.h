@@ -67,7 +67,7 @@ protected:
 
   std::vector<color_mesh> meshSet;
 
-  rendering::ShaderProgram *mainProgram;
+  std::unique_ptr<rendering::ShaderProgram> mainProgram;
   rendering::Camera camera;
 
   QImage offscreenPickingImage;

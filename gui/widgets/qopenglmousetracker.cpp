@@ -26,15 +26,18 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
 }
 
 QOpenGLMouseTracker::~QOpenGLMouseTracker() {
-  delete mainProgram;
 
   for (color_mesh &obj : meshSet)
     delete obj.second;
 }
 
 void QOpenGLMouseTracker::initializeGL() {
-  mainProgram = new rendering::ShaderProgram(rendering::text_vertex,
-                                             rendering::text_fragment);
+
+  mainProgram = std::unique_ptr<rendering::ShaderProgram>(
+      new rendering::ShaderProgram(
+          rendering::text_vertex,
+          rendering::text_fragment)
+      );
 
   mainProgram->Use();
 }

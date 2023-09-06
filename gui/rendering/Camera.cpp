@@ -124,11 +124,11 @@ rendering::Vector3 rendering::Camera::GetForwardVector() {
 
 rendering::Vector3 rendering::Camera::GetUpVector() { return m_viewUp; }
 
-void rendering::Camera::UpdateProjection(rendering::ShaderProgram *program) {
+void rendering::Camera::UpdateProjection(std::unique_ptr<rendering::ShaderProgram>& program) {
   program->SetProjection(m_projectionMatrix[0]);
 }
 
-void rendering::Camera::UpdateView(rendering::ShaderProgram *program) {
+void rendering::Camera::UpdateView(std::unique_ptr<rendering::ShaderProgram>& program) {
   program->SetViewPosition(m_viewPosition.x, m_viewPosition.y,
                            m_viewPosition.z);
   program->SetViewRotation(m_viewRotation.x, m_viewRotation.y,
