@@ -35,6 +35,7 @@ QOpenGLMouseTracker::~QOpenGLMouseTracker() {
 void QOpenGLMouseTracker::initializeGL() {
   mainProgram = new rendering::ShaderProgram(rendering::text_vertex,
                                              rendering::text_fragment);
+
   mainProgram->Use();
 }
 
@@ -122,7 +123,7 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
 
   // apply rotation of the camera
   rendering::Vector3 cameraOrientation = GetCameraOrientation();
-  SetCameraSetRotation(cameraOrientation.x + y_len * (1 / frameRate),
+  SetCameraOrientation(cameraOrientation.x + y_len * (1 / frameRate),
                        cameraOrientation.y + x_len * (1 / frameRate),
                        cameraOrientation.z);
 
@@ -154,7 +155,7 @@ void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z) {
   camera.SetPosition(x, y, z);
 }
 
-void QOpenGLMouseTracker::SetCameraSetRotation(float x, float y, float z) {
+void QOpenGLMouseTracker::SetCameraOrientation(float x, float y, float z) {
   camera.SetRotation(x, y, z);
 }
 

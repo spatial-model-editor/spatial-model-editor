@@ -27,7 +27,7 @@ public:
   void SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height,
                         GLfloat nearZ, GLfloat farZ);
   void SetCameraPosition(float x, float y, float z);
-  void SetCameraSetRotation(float x, float y, float z);
+  void SetCameraOrientation(float x, float y, float z);
 
   rendering::Vector3 GetCameraPosition();
   rendering::Vector3 GetCameraOrientation();
