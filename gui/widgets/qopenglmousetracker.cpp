@@ -89,7 +89,7 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
 
   bool objectSelected = false;
 
-  for (color_mesh& obj : meshSet) {
+  for (color_mesh &obj : meshSet) {
     if (obj.first.ToArray() == colorVector.ToArray()) {
       obj.second->SetColor(selectedObjectColor);
       objectSelected = true;
@@ -99,7 +99,7 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
   }
 
   if (!objectSelected) {
-    for (color_mesh& obj : meshSet) {
+    for (color_mesh &obj : meshSet) {
       auto defaultColor = obj.first;
       obj.second->SetColor(defaultColor);
     }
