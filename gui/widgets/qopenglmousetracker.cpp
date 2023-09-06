@@ -16,8 +16,8 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
 
   this->frameRate = frameRate;
 
-  this->timer = new QTimer(this);
-  connect(this->timer, SIGNAL(timeout()), this, SLOT(update()));
+  this->timer = std::unique_ptr<QTimer>(new QTimer(this));
+  connect(this->timer.get(), SIGNAL(timeout()), this, SLOT(update()));
   timer->start(1 / frameRate * 1000);
 
   setLineWidth(lineWidth);

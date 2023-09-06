@@ -12,7 +12,7 @@
 
 namespace rendering {
 
-#define PI 3.1415926535f
+constexpr float PI = 3.1415926535f;
 
 class Camera {
 public:
