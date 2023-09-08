@@ -5,7 +5,7 @@
 #include "WireframeObject.hpp"
 
 rendering::WireframeObject::WireframeObject(rendering::ObjectInfo info,
-                                            rendering::Vector4 color,
+                                            QColor color,
                                             rendering::SMesh &mesh,
                                             Vector3 position, Vector3 rotation,
                                             Vector3 scale)
@@ -26,7 +26,9 @@ rendering::WireframeObject::WireframeObject(rendering::ObjectInfo info,
     m_indices.push_back(f.vertexIndices[0] - 1);
   }
 
-  auto cArr = m_color.ToArray();
+  //auto cArr = m_color.ToArray();
+  std::vector<uint8_t> cArr = {(uint8_t)m_color.red(), (uint8_t)m_color.green(), (uint8_t)m_color.blue(), (u_int8_t)m_color.alpha()};
+
   for (auto v : m_vertices) {
     auto vArr = v.ToArray();
     m_verticesBuffer.insert(m_verticesBuffer.end(), vArr.begin(), vArr.end());
@@ -38,7 +40,7 @@ rendering::WireframeObject::WireframeObject(rendering::ObjectInfo info,
 
 rendering::WireframeObject::~WireframeObject(void) { DestroyVBO(); }
 
-void rendering::WireframeObject::SetColor(rendering::Vector4 color) {
+void rendering::WireframeObject::SetColor(QColor color) {
   m_color = color;
   UpdateVBOColor();
 }
@@ -46,29 +48,33 @@ void rendering::WireframeObject::SetColor(rendering::Vector4 color) {
 rendering::SMesh rendering::WireframeObject::GetMesh() { return m_mesh; }
 
 void rendering::WireframeObject::UpdateVBOColor() {
-  int size = m_colorBuffer.size() / m_color.ToArray().size();
+  int size = m_colorBuffer.size() / 4;
 
-  auto cArr = m_color.ToArray();
+  //auto cArr = m_color.ToArray();
+  std::vector<uint8_t> cArr = {(uint8_t)m_color.red(), (uint8_t)m_color.green(), (uint8_t)m_color.blue(), (u_int8_t)m_color.alpha()};
 
   m_colorBuffer.clear();
 
   for (int iter = 0; iter < size; iter++)
     m_colorBuffer.insert(m_colorBuffer.end(), cArr.begin(), cArr.end());
 
-  GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(GLfloat);
+  //GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(GLfloat);
+  GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(uint8_t);
 
   m_vao->bind();
 
   glBindBuffer(GL_ARRAY_BUFFER, m_colorBufferId);
   glBufferData(GL_ARRAY_BUFFER, colorBufferSize, m_colorBuffer.data(),
                GL_DYNAMIC_DRAW);
-  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+  //glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+  glVertexAttribPointer(1, 4,  GL_UNSIGNED_BYTE, GL_FALSE, 0, nullptr);
   glEnableVertexAttribArray(1);
 }
 
 void rendering::WireframeObject::CreateVBO(void) {
   GLsizeiptr vboSize = m_verticesBuffer.size() * sizeof(GLfloat);
-  GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(GLfloat);
+  //GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(GLfloat);
+  GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(uint8_t);
   GLsizeiptr indexBufferSize = m_indices.size() * sizeof(GLuint);
 
   m_vao = std::unique_ptr<QOpenGLVertexArrayObject>(
@@ -97,7 +103,7 @@ void rendering::WireframeObject::CreateVBO(void) {
   glBufferData(GL_ARRAY_BUFFER, colorBufferSize, m_colorBuffer.data(),
                GL_DYNAMIC_DRAW);
   CheckOpenGLError("glBufferData");
-  glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+  glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, nullptr);
   CheckOpenGLError("glVertexAttribPointer");
   glEnableVertexAttribArray(1);
   CheckOpenGLError("glEnableVertexAttribArray");
@@ -186,3 +192,4 @@ void rendering::WireframeObject::SetScale(rendering::Vector3 scale) {
 }
 
 rendering::Vector3 rendering::WireframeObject::GetScale() { return m_scale; }
+

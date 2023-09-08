@@ -25,9 +25,13 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   format.setProfile(QSurfaceFormat::CoreProfile);
   QSurfaceFormat::setDefaultFormat(format);
 
-  rendering::Vector4 redColor = rendering::Vector4(1.0f, 0.0f, 0.0f);
-  rendering::Vector4 blueColor = rendering::Vector4(0.0f, 0.0f, 1.0f);
-  rendering::Vector4 blackColor = rendering::Vector4();
+//  rendering::Vector4 redColor = rendering::Vector4(1.0f, 0.0f, 0.0f);
+//  rendering::Vector4 blueColor = rendering::Vector4(0.0f, 0.0f, 1.0f);
+//  rendering::Vector4 blackColor = rendering::Vector4();
+
+  QColor redColor = QColor(255, 0, 0);
+  QColor blueColor = QColor(0, 0, 255);
+  QColor blackColor = QColor(0,0,0);
 
   test->show();
 
@@ -51,13 +55,11 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   auto QcolorSelection = QColor(test->getColour());
 
   // forced windows resize and forced repainting
-  test->resize(100, 100);
+  test->resize(500, 500);
   test->repaint();
 
   // the corner initial color should be black.
-  REQUIRE(blackColor == rendering::Vector4(QcolorSelection.redF(),
-                                           QcolorSelection.greenF(),
-                                           QcolorSelection.blueF()));
+  REQUIRE(blackColor == QcolorSelection);
   // zoom
   sendMouseWheel(test, 1);
   // move mouse over image
@@ -65,15 +67,15 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   // click on image
   sendMouseClick(test, {40, 40});
   test->repaint();
-  sendMouseClick(test, {40, 40});
+  sendMouseClick(test, {0, 0});
 
   QcolorSelection = QColor(test->getColour());
 
-  rendering::Vector4 colorSelect =
-      rendering::Vector4(QcolorSelection.redF(), QcolorSelection.greenF(),
-                         QcolorSelection.blueF());
+//  rendering::Vector4 colorSelect =
+//      rendering::Vector4(QcolorSelection.redF(), QcolorSelection.greenF(),
+//                         QcolorSelection.blueF());
 
-  REQUIRE(blueColor == colorSelect);
+  REQUIRE(blueColor == QcolorSelection);
 
   //wait(50000);
   wait();

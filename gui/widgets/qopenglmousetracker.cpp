@@ -8,7 +8,7 @@
 
 QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
                                          float lineSelectPrecision,
-                                         rendering::Vector4 selectedObjectColor,
+                                         QColor selectedObjectColor,
                                          float cameraFOV, float cameraNearZ,
                                          float cameraFarZ, float frameRate)
     : camera(cameraFOV, size().width(), size().height(), cameraNearZ,
@@ -78,13 +78,13 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
   QRgb pixel = offscreenPickingImage.pixel(m_xAtPress, m_yAtPress);
   QColor color(pixel);
 
-  rendering::Vector4 colorVector =
-      rendering::Vector4(color.redF(), color.greenF(), color.blueF());
+//  rendering::Vector4 colorVector =
+//      rendering::Vector4(color.redF(), color.greenF(), color.blueF());
 
   bool objectSelected = false;
 
   for (color_mesh &obj : meshSet) {
-    if (obj.first.ToArray() == colorVector.ToArray()) {
+    if (obj.first == color) {
       obj.second->SetColor(selectedObjectColor);
       objectSelected = true;
       lastColour = pixel;
@@ -123,11 +123,11 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
   QRgb pixel = offscreenPickingImage.pixel(xAtPress, yAtPress);
   QColor color(pixel);
 
-  rendering::Vector4 colorVector =
-      rendering::Vector4(color.redF(), color.greenF(), color.blueF());
+//  rendering::Vector4 colorVector =
+//      rendering::Vector4(color.redF(), color.greenF(), color.blueF());
 
   for (color_mesh &obj : meshSet) {
-    if (obj.first.ToArray() == colorVector.ToArray()) {
+    if (obj.first == color) {
       emit mouseOver(obj.second->GetMesh());
     }
   }
@@ -161,7 +161,7 @@ rendering::Vector3 QOpenGLMouseTracker::GetCameraOrientation() {
 }
 
 void QOpenGLMouseTracker::addMesh(rendering::SMesh &mesh,
-                                  rendering::Vector4 color) {
+                                  QColor color) {
   rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
 
   meshSet.push_back(std::make_pair(
@@ -182,8 +182,13 @@ void QOpenGLMouseTracker::setLineSelectPrecision(float lineSelectPrecision) {
   this->lineSelectPrecision = lineSelectPrecision;
 }
 
-void QOpenGLMouseTracker::setSelectedObjectColor(rendering::Vector4 color) {
+void QOpenGLMouseTracker::setSelectedObjectColor(QColor color) {
   this->selectedObjectColor = color;
 }
 
 const QRgb &QOpenGLMouseTracker::getColour() const { return lastColour; }
+
+QColor QOpenGLMouseTracker::getSelectedObjectColor()
+{
+  return selectedObjectColor;
+}
