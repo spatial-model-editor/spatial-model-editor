@@ -77,6 +77,6 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   REQUIRE(blueColor == QcolorSelection);
 
-  //wait(50000);
+  // wait(50000);
   wait();
 }

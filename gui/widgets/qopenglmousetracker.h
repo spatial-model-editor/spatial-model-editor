@@ -63,6 +63,8 @@ signals:
 protected:
   QRgb lastColour{};
 
+
+  // QTimer *timer;
   std::unique_ptr<QTimer> timer;
 
   float frameRate;
