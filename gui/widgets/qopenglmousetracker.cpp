@@ -78,8 +78,8 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
   QRgb pixel = offscreenPickingImage.pixel(m_xAtPress, m_yAtPress);
   QColor color(pixel);
 
-//  rendering::Vector4 colorVector =
-//      rendering::Vector4(color.redF(), color.greenF(), color.blueF());
+  //  rendering::Vector4 colorVector =
+  //      rendering::Vector4(color.redF(), color.greenF(), color.blueF());
 
   bool objectSelected = false;
 
@@ -123,8 +123,8 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
   QRgb pixel = offscreenPickingImage.pixel(xAtPress, yAtPress);
   QColor color(pixel);
 
-//  rendering::Vector4 colorVector =
-//      rendering::Vector4(color.redF(), color.greenF(), color.blueF());
+  //  rendering::Vector4 colorVector =
+  //      rendering::Vector4(color.redF(), color.greenF(), color.blueF());
 
   for (color_mesh &obj : meshSet) {
     if (obj.first == color) {
@@ -160,8 +160,7 @@ rendering::Vector3 QOpenGLMouseTracker::GetCameraOrientation() {
   return camera.GetRotation();
 }
 
-void QOpenGLMouseTracker::addMesh(rendering::SMesh &mesh,
-                                  QColor color) {
+void QOpenGLMouseTracker::addMesh(rendering::SMesh &mesh, QColor color) {
   rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
 
   meshSet.push_back(std::make_pair(
@@ -188,7 +187,6 @@ void QOpenGLMouseTracker::setSelectedObjectColor(QColor color) {
 
 const QRgb &QOpenGLMouseTracker::getColour() const { return lastColour; }
 
-QColor QOpenGLMouseTracker::getSelectedObjectColor()
-{
+QColor QOpenGLMouseTracker::getSelectedObjectColor() {
   return selectedObjectColor;
 }
