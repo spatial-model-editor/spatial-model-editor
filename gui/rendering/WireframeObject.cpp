@@ -27,9 +27,9 @@ rendering::WireframeObject::WireframeObject(rendering::ObjectInfo info,
   }
 
   // auto cArr = m_color.ToArray();
-  std::vector<std::uint8_t> cArr = {(std::uint8_t)m_color.red(), (std::uint8_t)m_color.green(),
-                               (std::uint8_t)m_color.blue(),
-                               (std::uint8_t)m_color.alpha()};
+  std::vector<uint8_t> cArr = {(uint8_t)m_color.red(), (uint8_t)m_color.green(),
+                               (uint8_t)m_color.blue(),
+                               (uint8_t)m_color.alpha()};
 
   for (auto v : m_vertices) {
     auto vArr = v.ToArray();
