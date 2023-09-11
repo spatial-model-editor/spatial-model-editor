@@ -20,11 +20,11 @@ namespace rendering {
 class WireframeObject : protected QOpenGLFunctions {
 
 public:
-//  WireframeObject(rendering::ObjectInfo info, rendering::Vector4 color,
-//                  rendering::SMesh &mesh,
-//                  Vector3 position = rendering::Vector3(0.0f, 0.0f, 0.0f),
-//                  Vector3 rotation = rendering::Vector3(0.0f, 0.0f, 0.0f),
-//                  Vector3 scale = rendering::Vector3(1.0f, 1.0f, 1.0f));
+  //  WireframeObject(rendering::ObjectInfo info, rendering::Vector4 color,
+  //                  rendering::SMesh &mesh,
+  //                  Vector3 position = rendering::Vector3(0.0f, 0.0f, 0.0f),
+  //                  Vector3 rotation = rendering::Vector3(0.0f, 0.0f, 0.0f),
+  //                  Vector3 scale = rendering::Vector3(1.0f, 1.0f, 1.0f));
   WireframeObject(rendering::ObjectInfo info, QColor color,
                   rendering::SMesh &mesh,
                   Vector3 position = rendering::Vector3(0.0f, 0.0f, 0.0f),
@@ -48,18 +48,18 @@ public:
   void SetScale(rendering::Vector3 scale);
   rendering::Vector3 GetScale();
 
-//  void SetColor(rendering::Vector4 color);
+  //  void SetColor(rendering::Vector4 color);
   void SetColor(QColor color);
   rendering::SMesh GetMesh();
 
 private:
   std::vector<rendering::Vector4> m_vertices;
   std::vector<GLuint> m_indices;
-  //rendering::Vector4 m_color;
+  // rendering::Vector4 m_color;
   QColor m_color;
 
   std::vector<GLfloat> m_verticesBuffer;
-  //std::vector<GLfloat> m_colorBuffer;
+  // std::vector<GLfloat> m_colorBuffer;
   std::vector<uint8_t> m_colorBuffer;
 
   rendering::SMesh m_mesh;

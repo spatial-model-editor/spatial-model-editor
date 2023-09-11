@@ -29,13 +29,13 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   format.setProfile(QSurfaceFormat::CoreProfile);
   QSurfaceFormat::setDefaultFormat(format);
 
-//  rendering::Vector4 redColor = rendering::Vector4(1.0f, 0.0f, 0.0f);
-//  rendering::Vector4 blueColor = rendering::Vector4(0.0f, 0.0f, 1.0f);
-//  rendering::Vector4 blackColor = rendering::Vector4();
+  //  rendering::Vector4 redColor = rendering::Vector4(1.0f, 0.0f, 0.0f);
+  //  rendering::Vector4 blueColor = rendering::Vector4(0.0f, 0.0f, 1.0f);
+  //  rendering::Vector4 blackColor = rendering::Vector4();
 
   QColor redColor = QColor(255, 0, 0);
   QColor blueColor = QColor(0, 0, 255);
-  QColor blackColor = QColor(0,0,0);
+  QColor blackColor = QColor(0, 0, 0);
 
   test->show();
 
@@ -75,9 +75,9 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   QcolorSelection = QColor(test->getColour());
 
-//  rendering::Vector4 colorSelect =
-//      rendering::Vector4(QcolorSelection.redF(), QcolorSelection.greenF(),
-//                         QcolorSelection.blueF());
+  //  rendering::Vector4 colorSelect =
+  //      rendering::Vector4(QcolorSelection.redF(), QcolorSelection.greenF(),
+  //                         QcolorSelection.blueF());
 
   REQUIRE(blueColor == QcolorSelection);
 
