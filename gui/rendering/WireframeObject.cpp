@@ -55,7 +55,7 @@ void rendering::WireframeObject::UpdateVBOColor() {
   // auto cArr = m_color.ToArray();
   std::vector<uint8_t> cArr = {(uint8_t)m_color.red(), (uint8_t)m_color.green(),
                                (uint8_t)m_color.blue(),
-                               (u_int8_t)m_color.alpha()};
+                               (uint8_t)m_color.alpha()};
 
   m_colorBuffer.clear();
 
