@@ -8,6 +8,8 @@
 #include <iostream>
 #include <sstream>
 
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+
 std::string rendering::Utils::PrintGLErrorDescription(unsigned int glErr) {
   static std::string GLerrorDescription[] = {
       "GL_INVALID_ENUM",                 // 0x0500
