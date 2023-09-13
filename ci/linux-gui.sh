@@ -24,7 +24,7 @@ export CXX=clang++
 mkdir build
 cd build
 cmake .. \
-    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
