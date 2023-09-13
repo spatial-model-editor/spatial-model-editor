@@ -53,6 +53,10 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   test->addMesh(sphereMesh, redColor);
 
   QFile::copy(":/test/rendering/Objects/teapot.ply", "tmp_teapot.ply");
+  QFileInfo info("tmp_teapot.ply");
+  SPDLOG_TRACE(info.exists());
+  SPDLOG_TRACE(info.absoluteFilePath());
+  SPDLOG_TRACE(info.size());
   REQUIRE(QFile::exists("tmp_teapot.ply"));
   rendering::SMesh teapotMesh = rendering::ObjectLoader::LoadMesh(
       QDir::current().filePath("tmp_teapot.ply").toStdString());
