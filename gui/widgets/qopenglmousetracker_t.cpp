@@ -11,9 +11,9 @@ using namespace sme::test;
 
 #include "qopenglmousetracker.h"
 
-//static const char *tags{"[gui/widgets/QOpenGLMouseTracker][gui/widgets][gui]"};
+// static const char
+// *tags{"[gui/widgets/QOpenGLMouseTracker][gui/widgets][gui]"};
 static const char *tags{"[gui/widgets/QOpenGLMouseTracker]"};
-
 
 TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
