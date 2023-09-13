@@ -74,3 +74,5 @@ ccache --max-size 400M
 ccache --cleanup
 ccache --zero-stats
 ccache --show-stats
+
+export LIBGL_ALWAYS_SOFTWARE=1
