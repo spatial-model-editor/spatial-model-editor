@@ -13,7 +13,6 @@ using namespace sme::test;
 
 #include "sme/logger.hpp"
 
-
 // static const char
 // *tags{"[gui/widgets/QOpenGLMouseTracker][gui/widgets][gui]"};
 static const char *tags{"[gui/widgets/QOpenGLMouseTracker]"};
