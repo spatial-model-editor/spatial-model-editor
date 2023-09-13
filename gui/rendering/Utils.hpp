@@ -12,12 +12,12 @@
 #include <QOpenGLFunctions>
 #include <QtOpenGL>
 
-//#ifdef QT_DEBUG
+// #ifdef QT_DEBUG
 #define CheckOpenGLError(tag)                                                  \
   rendering::Utils::TraceGLError(tag, __FILE__, __LINE__)
-//#else
-//#define CheckOpenGLError(tag)
-//#endif
+// #else
+// #define CheckOpenGLError(tag)
+// #endif
 
 namespace rendering {
 
