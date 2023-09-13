@@ -57,6 +57,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   QFile::copy(":/test/rendering/Objects/teapot.ply", "tmp_teapot.ply");
   QFileInfo info("tmp_teapot.ply");
+  REQUIRE(info.exists());
   SPDLOG_TRACE(info.exists());
   SPDLOG_TRACE(info.absoluteFilePath());
   SPDLOG_TRACE(info.size());
