@@ -11,6 +11,9 @@ using namespace sme::test;
 
 #include "qopenglmousetracker.h"
 
+#include "sme/logger.hpp"
+
+
 // static const char
 // *tags{"[gui/widgets/QOpenGLMouseTracker][gui/widgets][gui]"};
 static const char *tags{"[gui/widgets/QOpenGLMouseTracker]"};
