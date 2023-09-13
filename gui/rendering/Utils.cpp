@@ -8,7 +8,7 @@
 #include <iostream>
 #include <sstream>
 
-#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+//#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
 
 std::string rendering::Utils::PrintGLErrorDescription(unsigned int glErr) {
   static std::string GLerrorDescription[] = {
