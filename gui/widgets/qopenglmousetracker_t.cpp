@@ -33,6 +33,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   format.setProfile(QSurfaceFormat::CoreProfile);
   QSurfaceFormat::setDefaultFormat(format);
 
+  test->setVisible(true);
+
   //  rendering::Vector4 redColor = rendering::Vector4(1.0f, 0.0f, 0.0f);
   //  rendering::Vector4 blueColor = rendering::Vector4(0.0f, 0.0f, 1.0f);
   //  rendering::Vector4 blackColor = rendering::Vector4();
@@ -61,6 +63,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   //  SPDLOG_TRACE(info.absoluteFilePath());
   //  SPDLOG_TRACE(info.size());
   REQUIRE(QFile::exists("tmp_teapot.ply"));
+  test->setVisible(true);
+//  wait(1000);
   rendering::SMesh teapotMesh = rendering::ObjectLoader::LoadMesh(
       QDir::current().filePath("tmp_teapot.ply").toStdString());
   test->addMesh(teapotMesh, blueColor);
