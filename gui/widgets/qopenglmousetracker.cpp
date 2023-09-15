@@ -17,7 +17,7 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
   this->frameRate = frameRate;
 
   this->timer = std::unique_ptr<QTimer>(new QTimer(this));
-  connect(this->timer.get(), SIGNAL(timeout()), this, SLOT(update()));
+  //connect(this->timer.get(), SIGNAL(timeout()), this, SLOT(update()));
   timer->start(1 / frameRate * 1000);
 
   setLineWidth(lineWidth);
@@ -176,7 +176,7 @@ void QOpenGLMouseTracker::addMesh(rendering::SMesh &mesh, QColor color) {
 
 void QOpenGLMouseTracker::setFPS(float frameRate) {
   this->frameRate = frameRate;
-  timer->start(1 / frameRate * 1000);
+  //timer->start(1 / frameRate * 1000);
 }
 
 void QOpenGLMouseTracker::setLineWidth(float lineWidth) {
