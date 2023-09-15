@@ -100,6 +100,14 @@ void SimCompartment::spatiallyAverageDcdt() {
   }
 }
 
+// Forwards Euler stability bound for dimensionless diffusion constant {D/dx^2,
+// D/dy^2, D/dz^2}
+static double calculateMaxStableTimestep(
+    const std::array<double, 3> &dimensionlessDiffusion) {
+  return 1.0 / (2.0 * (dimensionlessDiffusion[0] + dimensionlessDiffusion[1] +
+                       dimensionlessDiffusion[2]));
+}
+
 SimCompartment::SimCompartment(
     const model::Model &doc, const geometry::Compartment *compartment,
     std::vector<std::string> sIds, bool doCSE, unsigned optLevel,
@@ -111,21 +119,22 @@ SimCompartment::SimCompartment(
   speciesNames.reserve(nSpecies);
   SPDLOG_DEBUG("compartment: {}", compartmentId);
   std::vector<const geometry::Field *> fields;
-  const double pixelWidth{doc.getGeometry().getVoxelSize().width()};
+  const auto voxelSize{doc.getGeometry().getVoxelSize()};
   for (const auto &s : speciesIds) {
     const auto *field = doc.getSpecies().getField(s.c_str());
-    diffConstants.push_back(field->getDiffusionConstant() / pixelWidth /
-                            pixelWidth);
-    // forwards euler stability bound: dt < a^2/6D
-    maxStableTimestep =
-        std::min(maxStableTimestep, 1.0 / (6.0 * diffConstants.back()));
+    double d{field->getDiffusionConstant()};
+    diffConstants.push_back({d / (voxelSize.width() * voxelSize.width()),
+                             d / (voxelSize.height() * voxelSize.height()),
+                             d / (voxelSize.depth() * voxelSize.depth())});
+    // forwards euler stability bound
+    maxStableTimestep = std::min(
+        maxStableTimestep, calculateMaxStableTimestep(diffConstants.back()));
     fields.push_back(field);
     speciesNames.push_back(doc.getSpecies().getName(s.c_str()).toStdString());
     if (!field->getIsSpatial()) {
       nonSpatialSpeciesIndices.push_back(fields.size() - 1);
     }
-    SPDLOG_DEBUG("  - adding species: {}, diff constant {}", s,
-                 diffConstants.back());
+    SPDLOG_DEBUG("  - adding species: {}, diff constant {}", s, d);
   }
   // get reactions in compartment
   std::vector<std::string> reactionIDs;
@@ -138,24 +147,27 @@ SimCompartment::SimCompartment(
                       timeDependent, spaceDependent, substitutions);
   if (timeDependent) {
     speciesIds.push_back("time");
-    diffConstants.push_back(0);
+    diffConstants.push_back({0.0, 0.0, 0.0});
     ++nSpecies;
   }
   if (spaceDependent) {
     speciesIds.push_back(doc.getParameters().getSpatialCoordinates().x.id);
-    diffConstants.push_back(0);
+    diffConstants.push_back({0.0, 0.0, 0.0});
     speciesIds.push_back(doc.getParameters().getSpatialCoordinates().y.id);
-    diffConstants.push_back(0);
+    diffConstants.push_back({0.0, 0.0, 0.0});
     // todo: make sure we can still import previous sim results without z
+    // OR note in release that existing simulation results with spatially
+    // dependent reaction terms will not be imported - as most likely this
+    // affects no-one.
     speciesIds.push_back(doc.getParameters().getSpatialCoordinates().z.id);
-    diffConstants.push_back(0);
+    diffConstants.push_back({0.0, 0.0, 0.0});
     nSpecies += 3;
   }
   // setup concentrations vector with initial values
   conc.resize(nSpecies * nPixels);
   dcdt.resize(conc.size(), 0.0);
   auto origin{doc.getGeometry().getPhysicalOrigin()};
-  auto concIter = conc.begin();
+  auto concIter{conc.begin()};
   for (std::size_t ix = 0; ix < compartment->nVoxels(); ++ix) {
     for (const auto *field : fields) {
       *concIter = field->getConcentration()[ix];
@@ -168,14 +180,15 @@ SimCompartment::SimCompartment(
     if (spaceDependent) {
       auto voxel{compartment->getVoxel(ix)};
       int ny{compartment->getCompartmentImages()[0].height()};
-      *concIter =
-          origin.p.x() + static_cast<double>(voxel.p.x()) * pixelWidth; // x
+      *concIter = origin.p.x() +
+                  static_cast<double>(voxel.p.x()) * voxelSize.width(); // x
       ++concIter;
       // pixels have y=0 in top-left, convert to bottom-left:
-      *concIter = origin.p.y() +
-                  static_cast<double>(ny - 1 - voxel.p.y()) * pixelWidth; // y
+      *concIter = origin.p.y() + static_cast<double>(ny - 1 - voxel.p.y()) *
+                                     voxelSize.height(); // y
       ++concIter;
-      *concIter = origin.z + static_cast<double>(voxel.z) * pixelWidth; // z
+      *concIter =
+          origin.z + static_cast<double>(voxel.z) * voxelSize.depth(); // z
       ++concIter;
     }
   }
@@ -194,10 +207,12 @@ void SimCompartment::evaluateDiffusionOperator(std::size_t begin,
     const std::size_t ix_dnz{comp->dn_z(i) * nSpecies};
     for (std::size_t is = 0; is < nSpecies; ++is) {
       dcdt[ix + is] +=
-          diffConstants[is] *
-          (conc[ix_upx + is] + conc[ix_dnx + is] + conc[ix_upy + is] +
-           conc[ix_dny + is] + conc[ix_upz + is] + conc[ix_dnz + is] -
-           6.0 * conc[ix + is]);
+          diffConstants[is][0] *
+              (conc[ix_upx + is] + conc[ix_dnx + is] - 2.0 * conc[ix + is]) +
+          diffConstants[is][1] *
+              (conc[ix_upy + is] + conc[ix_dny + is] - 2.0 * conc[ix + is]) +
+          diffConstants[is][2] *
+              (conc[ix_upz + is] + conc[ix_dnz + is] - 2.0 * conc[ix + is]);
     }
   }
 }
@@ -428,7 +443,8 @@ SimMembrane::SimMembrane(
     SimCompartment *simCompA, SimCompartment *simCompB, bool doCSE,
     unsigned optLevel, bool timeDependent, bool spaceDependent,
     const std::map<std::string, double, std::less<>> &substitutions)
-    : membrane(membrane_ptr), compA(simCompA), compB(simCompB) {
+    : membrane(membrane_ptr), compA(simCompA), compB(simCompB),
+      voxelSize{doc.getGeometry().getVoxelSize()} {
   if (timeDependent) {
     ++nExtraVars;
   }
@@ -468,21 +484,37 @@ SimMembrane::SimMembrane(
     }
   }
 
-  // get rescaling factor to convert flux to amount/length^3,
-  // then length^3 to volume to give concentration
+  /* We want to convert the user-provided flux
+   *
+   * R = delta amount of species / membrane area
+   *
+   * to a change in the concentration of species in the voxel.
+   *
+   * Assuming the membrane surface is in the y-z plane,
+   * with the flux going in the x direction:
+   *
+   * R * dy * dz = delta amount
+   * R * dy * dz / (dx * dy * dz) = R / dx = delta amount / volume[length units]
+   * R * volOverL3 / dx = delta concentration
+   *
+   * Since dx here is length of the voxel in the flux direction,
+   * it depends on the orientation of each membrane face, and we will deal
+   * with it separately for each voxel pair during the simulation.
+   * Here we only include the volOverL3 factor, so that our reacEval provides
+   *
+   * delta concentration * voxel length in flux direction
+   *
+   */
   const auto &lengthUnit = doc.getUnits().getLength();
   const auto &volumeUnit = doc.getUnits().getVolume();
   double volOverL3 = model::getVolOverL3(lengthUnit, volumeUnit);
-  double pixelWidth{doc.getGeometry().getVoxelSize().width()};
   SPDLOG_INFO("  - [vol]/[length]^3 = {}", volOverL3);
-  SPDLOG_INFO("  - pixel width = {}", pixelWidth);
-  SPDLOG_INFO("  - multiplying reaction by '{}'", volOverL3 / pixelWidth);
+  SPDLOG_INFO("  - multiplying reaction by '{}'", volOverL3);
   // make vector of reaction IDs from membrane
   std::vector<std::string> reactionID =
       common::toStdString(doc.getReactions().getIds(membrane->getId().c_str()));
-  reacEval =
-      ReacEval(doc, speciesIds, reactionID, volOverL3 / pixelWidth, doCSE,
-               optLevel, timeDependent, spaceDependent, substitutions);
+  reacEval = ReacEval(doc, speciesIds, reactionID, volOverL3, doCSE, optLevel,
+                      timeDependent, spaceDependent, substitutions);
 }
 
 void SimMembrane::evaluateReactions() {
@@ -504,29 +536,38 @@ void SimMembrane::evaluateReactions() {
   }
   std::vector<double> species(nSpeciesA + nSpeciesB + nExtraVars, 0);
   std::vector<double> result(nSpeciesA + nSpeciesB + nExtraVars, 0);
-  for (const auto &[ixA, ixB] : membrane->getIndexPairs()) {
-    // populate species concentrations: first A, then B, then t,x,y,z
-    if (concA != nullptr) {
-      std::copy_n(&((*concA)[ixA * (nSpeciesA + nExtraVars)]), nSpeciesA,
-                  &species[0]);
-    }
-    if (concB != nullptr) {
-      std::copy_n(&((*concB)[ixB * (nSpeciesB + nExtraVars)]),
-                  nSpeciesB + nExtraVars, &species[nSpeciesA]);
-    } else if (concA != nullptr) {
-      std::copy_n(&((*concA)[ixA * (nSpeciesA + nExtraVars) + nSpeciesA]),
-                  nExtraVars, &species[nSpeciesA]);
-    }
+  for (const auto [fluxDir, fluxLength] :
+       std::array<std::pair<geometry::Membrane::FLUX_DIRECTION, double>, 3>{
+           {{geometry::Membrane::FLUX_DIRECTION::X, voxelSize.width()},
+            {geometry::Membrane::FLUX_DIRECTION::Y, voxelSize.height()},
+            {geometry::Membrane::FLUX_DIRECTION::Z, voxelSize.depth()}}}) {
+    for (const auto &[ixA, ixB] : membrane->getIndexPairs(fluxDir)) {
+      // populate species concentrations: first A, then B, then t,x,y,z
+      if (concA != nullptr) {
+        std::copy_n(&((*concA)[ixA * (nSpeciesA + nExtraVars)]), nSpeciesA,
+                    &species[0]);
+      }
+      if (concB != nullptr) {
+        std::copy_n(&((*concB)[ixB * (nSpeciesB + nExtraVars)]),
+                    nSpeciesB + nExtraVars, &species[nSpeciesA]);
+      } else if (concA != nullptr) {
+        std::copy_n(&((*concA)[ixA * (nSpeciesA + nExtraVars) + nSpeciesA]),
+                    nExtraVars, &species[nSpeciesA]);
+      }
 
-    // evaluate reaction terms
-    reacEval.evaluate(result.data(), species.data());
+      // evaluate reaction terms
+      reacEval.evaluate(result.data(), species.data());
 
-    // add results to dc/dt: first A, then B
-    for (std::size_t is = 0; is < nSpeciesA; ++is) {
-      (*dcdtA)[ixA * (nSpeciesA + nExtraVars) + is] += result[is];
-    }
-    for (std::size_t is = 0; is < nSpeciesB; ++is) {
-      (*dcdtB)[ixB * (nSpeciesB + nExtraVars) + is] += result[is + nSpeciesA];
+      // add results to dc/dt: first A, then B. divide by fluxLength to get
+      // change in concentration for this voxel
+      for (std::size_t is = 0; is < nSpeciesA; ++is) {
+        (*dcdtA)[ixA * (nSpeciesA + nExtraVars) + is] +=
+            result[is] / fluxLength;
+      }
+      for (std::size_t is = 0; is < nSpeciesB; ++is) {
+        (*dcdtB)[ixB * (nSpeciesB + nExtraVars) + is] +=
+            result[is + nSpeciesA] / fluxLength;
+      }
     }
   }
 }

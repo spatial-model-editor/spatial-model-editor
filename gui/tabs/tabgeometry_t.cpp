@@ -68,7 +68,7 @@ TEST_CASE("TabGeometry",
       // select compartments
       REQUIRE(listCompartments->currentItem()->text() == "Outside");
       REQUIRE(txtCompartmentName->text() == "Outside");
-      REQUIRE(lblCompSize->text() == "Volume: 5441000 L (5441 pixels)");
+      REQUIRE(lblCompSize->text() == "Volume: 5441000 L (5441 voxels)");
       REQUIRE(tabCompartmentGeometry->currentIndex() == 0);
       REQUIRE(lblCompShape->getImage().volume().depth() == 1);
       REQUIRE(lblCompShape->getImage()[0].pixel(1, 1) == 0xff000200);
@@ -86,7 +86,7 @@ TEST_CASE("TabGeometry",
       listCompartments->setFocus();
       sendKeyEvents(listCompartments, {"Down"});
       REQUIRE(listCompartments->currentItem()->text() == "Cell");
-      REQUIRE(lblCompSize->text() == "Volume: 4034000 L (4034 pixels)");
+      REQUIRE(lblCompSize->text() == "Volume: 4034000 L (4034 voxels)");
       REQUIRE(lblCompShape->getImage()[0].pixel(20, 20) == 0xff9061c1);
       REQUIRE(txtCompartmentName->isEnabled() == true);
       REQUIRE(txtCompartmentName->text() == "Cell");
@@ -95,7 +95,7 @@ TEST_CASE("TabGeometry",
       sendKeyEvents(listMembranes, {" "});
       REQUIRE(txtCompartmentName->isEnabled() == true);
       REQUIRE(listMembranes->currentItem()->text() == "Outside <-> Cell");
-      REQUIRE(lblCompSize->text() == "Area: 338 m^2 (338 pixels)");
+      REQUIRE(lblCompSize->text() == "Area: 338 m^2 (338 voxel faces)");
       REQUIRE(txtCompartmentName->text() == "Outside <-> Cell");
       // change membrane name
       txtCompartmentName->setFocus();
@@ -111,7 +111,7 @@ TEST_CASE("TabGeometry",
       listCompartments->setFocus();
       sendKeyEvents(listCompartments, {"Down"});
       REQUIRE(listCompartments->currentItem()->text() == "Nucleus");
-      REQUIRE(lblCompSize->text() == "Volume: 525000 L (525 pixels)");
+      REQUIRE(lblCompSize->text() == "Volume: 525000 L (525 voxels)");
       REQUIRE(txtCompartmentName->isEnabled() == true);
       REQUIRE(txtCompartmentName->text() == "Nucleus");
       REQUIRE(lblCompShape->getImage()[0].pixel(50, 50) == 0xffc58560);

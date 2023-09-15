@@ -110,6 +110,16 @@ void ImageStack::convertToIndexed() {
   }
 }
 
+ImageStack ImageStack::scaled(int width, int height) {
+  ImageStack scaled{*this};
+  for (std::size_t z = 0; z < sz.depth(); ++z) {
+    scaled.imgs[z] = imgs[z].scaled(width, height, Qt::IgnoreAspectRatio,
+                                    Qt::FastTransformation);
+    scaled.sz = {scaled.imgs[z].size(), sz.depth()};
+  }
+  return scaled;
+}
+
 ImageStack ImageStack::scaledToWidth(int width) {
   ImageStack scaled{*this};
   for (std::size_t z = 0; z < sz.depth(); ++z) {

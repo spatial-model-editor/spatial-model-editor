@@ -1,12 +1,15 @@
 Pixel simulator
 ===============
 
-Pixel is an alternative PDE solver which uses the simple `FTCS <https://en.wikipedia.org/wiki/FTCS_scheme>`_ method to solve the PDE using the pixels of the geometry image as the grid.
+Pixel is an alternative PDE solver which uses the simple
+`FTCS <https://en.wikipedia.org/wiki/FTCS_scheme>`_ method to solve
+the PDE using the pixels of the geometry image as the grid.
 
 Simulation options
 ------------------
 
-The default settings should work well in most cases, but if desired they can be adjusted by going to `Advanced->Simulation options`
+The default settings should work well in most cases,
+but if desired they can be adjusted by going to `Advanced->Simulation options`
 
 .. figure:: img/pixel_options.png
    :alt: Pixel simulation options
@@ -51,15 +54,25 @@ The default settings should work well in most cases, but if desired they can be 
 Spatial discretization
 ----------------------
 
-Space is discretized using a uniform, linear grid with spacing :math:`a`. The concentration is defined as a 2d array of values :math:`c_{i,j}`, where the value with index :math:`(i,j)` corresponds to the concentration at the spatial point :math:`(x = ia, y = ja)`.
+Space is discretized using a linear grid with spacing :math:`\delta x`, :math:`\delta y`, :math:`\delta z`.
+The concentration is defined as a 3d array of values :math:`c_{i,j,k}`,
+where the value with index :math:`(i,j,k)` corresponds to the concentration
+at the spatial point :math:`(x = i \delta x, y = j \delta y, z = k \delta z)`.
 
 The Laplacian is approximated on this grid using a central difference scheme
 
 .. math::
 
-   \left( \frac{\partial^2}{\partial x^2} + \frac{\partial^2}{\partial y^2} \right) c_{i,j} = \left[ c_{i+1,j} + c_{i,j+1} - 4 c_{i,j} + c_{i-1,j} + c_{i,j-1} \right] / a^2 + \mathcal{O}(a^2)
+   \begin{eqnarray}
+   \left( \frac{\partial^2}{\partial x^2} + \frac{\partial^2}{\partial y^2} + \frac{\partial^2}{\partial z^2} \right) c_{i,j,k} & = & +\left[ c_{i+1,j,k} + c_{i-1,j,k}\right]/(\delta x^2) \\
+   & & + \left[ c_{i,j+1,k} + c_{i,j-1,k}\right]/(\delta y^2) \\
+   & & + \left[ c_{i,j,k+1} + c_{i,j,k-1}\right]/(\delta z^2) \\
+   & & - \left[\frac{1}{\delta x^2}+\frac{1}{\delta y^2}+\frac{1}{\delta z^2}\right] 2 c_{i,j,k} \\
+   & & + \mathcal{O}(\delta x^2)+\mathcal{O}(\delta y^2)+\mathcal{O}(\delta z^2)
+   \end{eqnarray}
 
-which has :math:`\mathcal{O}(a^2)` discretisation errors. Inserting this approximation into the reaction-diffusion equation converts the PDE into a system of coupled ODEs.
+which has :math:`\mathcal{O}(\delta x^2)+\mathcal{O}(\delta y^2)+\mathcal{O}(\delta z^2)` discretisation errors.
+Inserting this approximation into the reaction-diffusion equation converts the PDE into a system of coupled ODEs.
 
 .. _time-integration:
 
@@ -123,7 +136,7 @@ We use the embedded lower order solution to estimate the error at each timestep,
 
 * RK gives us a pair of :math:`u_{n+1}^{(p)} = u_{n} + \mathcal{O}(h^{p+1})` solutions
 * difference between :math:`p, p-1` solutions gives local error of order :math:`\mathcal{O}(p)`
-* to get the relative error we symbolicDivide this by :math:`c = ( |c_{n+1}| + |c_{n}| + \epsilon)/2`
+* to get the relative error we divide this by :math:`c = ( |c_{n+1}| + |c_{n}| + \epsilon)/2`
 * we use the average of the old and new concentration, plus a small constant, to avoid dividing by zero
 * we do this for all species, compartments and spatial points, and take the maximum value
 * if this error is larger than the desired value, the whole step is discarded
@@ -139,13 +152,19 @@ We use the embedded lower order solution to estimate the error at each timestep,
 Maximum timestep
 ----------------
 
-For the Euler method, we don't have an embedded lower order solution from which we can estimate of the error, so we can't automatically adjust the stepsize. However, if we ignore the reaction terms, there is an analytic upper bound on the size of timestep that can be used for Euler, above which the system becomes unstable:
+For the Euler method, we don't have an embedded lower order solution from which we can estimate of the error,
+so we can't automatically adjust the stepsize.
+However, if we ignore the reaction terms,
+there is an analytic upper bound on the size of timestep that can be used for Euler (see p125 of https://doi.org/10.1017/CBO9780511781438 ),
+above which the system becomes unstable:
 
 .. math::
 
-   \delta t \leq \frac{a^2}{4 D}
+   \delta t \leq  \frac{1}{2 D \left(\frac{1}{\delta x^2}+\frac{1}{\delta y^2}+\frac{1}{\delta z^2}\right)}
 
-So if the user selects a timestep larger than this, the simulator automatically reduces it to the above value to avoid the system becoming unstable. Note that the system can still become unstable if the reaction terms are stiffer than the diffusion terms.
+So if the user selects a timestep larger than this,
+the simulator automatically reduces it to the above value to avoid the system becoming unstable.
+Note that the system can still become unstable if the reaction terms are stiffer than the diffusion terms.
 
 .. figure:: img/runtime.png
    :alt: runtime of the RK integrators

@@ -5,6 +5,7 @@
 #pragma once
 
 #include "sme/image_stack.hpp"
+#include "sme/voxel.hpp"
 #include <QImage>
 #include <QString>
 #include <cstddef>
@@ -21,7 +22,8 @@ namespace sme::common {
 using TiffDataType = uint16_t;
 
 double writeTIFF(const std::string &filename, const QSize &imageSize,
-                 const std::vector<double> &conc, double pixelWidth);
+                 const std::vector<double> &conc,
+                 const sme::common::VolumeF &voxelSize);
 
 class TiffReader {
 private:
