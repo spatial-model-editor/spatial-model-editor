@@ -103,7 +103,7 @@ protected:
 
   void wheelEvent(QWheelEvent *event) override;
 
-  //void changeEvent(QEvent *event) override;
+  // void changeEvent(QEvent *event) override;
 };
 
 #endif // SPATIALMODELEDITOR_QOPENGLMOUSETRACKER_H

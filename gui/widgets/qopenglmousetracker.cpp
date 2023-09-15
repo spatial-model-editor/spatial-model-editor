@@ -44,7 +44,7 @@ void QOpenGLMouseTracker::renderScene(float lineWidth) {
 
 void QOpenGLMouseTracker::paintGL() {
 
-  if(!context()->isValid())
+  if (!context()->isValid())
     return;
 
   camera.UpdateView(mainProgram);
@@ -197,21 +197,21 @@ QColor QOpenGLMouseTracker::getSelectedObjectColor() {
   return selectedObjectColor;
 }
 
-//void QOpenGLMouseTracker::changeEvent(QEvent *event)
+// void QOpenGLMouseTracker::changeEvent(QEvent *event)
 //{
-//  auto type = event->type();
-//  switch (type) {
-//  case QEvent::Hide:
-//    timer->stop();
-//    break;
-//  case QEvent::Show:
-//    timer->start(1 / frameRate * 1000);
-//    break;
-//  }
-//}
+//   auto type = event->type();
+//   switch (type) {
+//   case QEvent::Hide:
+//     timer->stop();
+//     break;
+//   case QEvent::Show:
+//     timer->start(1 / frameRate * 1000);
+//     break;
+//   }
+// }
 
-bool QOpenGLMouseTracker::isVald() const
-{
-  while(context()== nullptr) {}
+bool QOpenGLMouseTracker::isVald() const {
+  while (context() == nullptr) {
+  }
   return context()->isValid();
 }
