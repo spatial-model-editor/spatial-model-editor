@@ -53,6 +53,8 @@ public:
   // colour of pixel at last mouse click position
   [[nodiscard]] const QRgb &getColour() const;
 
+  [[nodiscard]] bool isVald() const;
+
 signals:
   void mouseClicked(QRgb color, rendering::SMesh mesh);
   void mouseOver(const rendering::SMesh &mesh);
@@ -100,6 +102,8 @@ protected:
   void mousePressEvent(QMouseEvent *event) override;
 
   void wheelEvent(QWheelEvent *event) override;
+
+  //void changeEvent(QEvent *event) override;
 };
 
 #endif // SPATIALMODELEDITOR_QOPENGLMOUSETRACKER_H
