@@ -13,8 +13,8 @@
 #include "Vector4.hpp"
 #include <vector>
 
-#include <QtOpenGL>
 #include <QOpenGLWidget>
+#include <QtOpenGL>
 
 namespace rendering {
 
@@ -27,8 +27,7 @@ public:
   //                  Vector3 rotation = rendering::Vector3(0.0f, 0.0f, 0.0f),
   //                  Vector3 scale = rendering::Vector3(1.0f, 1.0f, 1.0f));
   WireframeObject(rendering::ObjectInfo info, QColor color,
-                  rendering::SMesh &mesh,
-                  QOpenGLWidget* Widget,
+                  rendering::SMesh &mesh, QOpenGLWidget *Widget,
                   Vector3 position = rendering::Vector3(0.0f, 0.0f, 0.0f),
                   Vector3 rotation = rendering::Vector3(0.0f, 0.0f, 0.0f),
                   Vector3 scale = rendering::Vector3(1.0f, 1.0f, 1.0f));
@@ -60,7 +59,7 @@ private:
   // rendering::Vector4 m_color;
   QColor m_color;
 
-  QOpenGLContext* m_openGLContext;
+  QOpenGLContext *m_openGLContext;
 
   std::vector<GLfloat> m_verticesBuffer;
   // std::vector<GLfloat> m_colorBuffer;
