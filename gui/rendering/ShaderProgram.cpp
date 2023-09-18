@@ -37,7 +37,18 @@ void rendering::ShaderProgram::Init() {
   CheckOpenGLError("glShaderSource");
   glCompileShader(m_vertexShaderId);
   CheckOpenGLError("glCompileShader");
+
+  GLint success_VS;
+  glGetShaderiv(m_vertexShaderId, GL_COMPILE_STATUS, &success_VS);
+  if (!success_VS) {
+    GLchar InfoLog[1024];
+    glGetShaderInfoLog(m_vertexShaderId, sizeof(InfoLog), NULL, InfoLog);
+    SPDLOG_ERROR("Error compiling shader type GL_VERTEX_SHADER: " + std::string(InfoLog));
+  }
+
   delete[] vertexShaderText;
+
+
 
   m_fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
   CheckOpenGLError("glCreateShader");
@@ -49,6 +60,15 @@ void rendering::ShaderProgram::Init() {
   CheckOpenGLError("Utils::TraceGLError");
   glCompileShader(m_fragmentShaderId);
   CheckOpenGLError("glCompileShader");
+
+  GLint success_FS;
+  glGetShaderiv(m_fragmentShaderId, GL_COMPILE_STATUS, &success_FS);
+  if (!success_FS) {
+    GLchar InfoLog[1024];
+    glGetShaderInfoLog(m_fragmentShaderId, sizeof(InfoLog), NULL, InfoLog);
+    SPDLOG_ERROR("Error compiling shader type GL_FRAGMENT_SHADER: " + std::string(InfoLog));
+  }
+
   delete[] fragmentShaderText;
 
   m_programId = glCreateProgram();
@@ -60,6 +80,19 @@ void rendering::ShaderProgram::Init() {
 
   glLinkProgram(m_programId);
   CheckOpenGLError("glLinkProgram");
+
+  GLint success_SP;
+  glGetProgramiv(m_programId, GL_LINK_STATUS, &success_SP);
+  if (success_SP == 0) {
+    GLchar ErrorLog[1024];
+    glGetProgramInfoLog(m_programId, sizeof(ErrorLog), NULL, ErrorLog);
+    SPDLOG_ERROR("Error linking shader program: " + std::string(ErrorLog));
+  }
+
+  GLint succes_Program;
+  glValidateProgram(m_programId);
+  glGetProgramiv(m_programId, GL_VALIDATE_STATUS, &succes_Program);
+  SPDLOG_ERROR("The status of the program: " + std::to_string(succes_Program));
 
   m_rotationLocation = glGetUniformLocation(m_programId, "rotation");
   CheckOpenGLError("glGetUniformLocation");

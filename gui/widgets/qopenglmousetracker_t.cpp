@@ -47,6 +47,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   test->show();
 
+  wait(10000);
+
   // camera position
   test->SetCameraPosition(0, 0, -10);
 
