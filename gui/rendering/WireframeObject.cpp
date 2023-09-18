@@ -40,7 +40,10 @@ rendering::WireframeObject::WireframeObject(rendering::ObjectInfo info,
   CreateVBO();
 }
 
-rendering::WireframeObject::~WireframeObject(void) { DestroyVBO(); }
+rendering::WireframeObject::~WireframeObject(void) {
+  SPDLOG_ERROR("");
+  DestroyVBO();
+}
 
 void rendering::WireframeObject::SetColor(QColor color) {
   m_color = color;
@@ -73,6 +76,7 @@ void rendering::WireframeObject::UpdateVBOColor() {
   // glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
   glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, nullptr);
   glEnableVertexAttribArray(1);
+  m_vao->release();
 }
 
 void rendering::WireframeObject::CreateVBO(void) {
@@ -84,7 +88,8 @@ void rendering::WireframeObject::CreateVBO(void) {
   m_vao = std::unique_ptr<QOpenGLVertexArrayObject>(
       new QOpenGLVertexArrayObject(nullptr));
   m_vao->create();
-  m_vao->bind();
+  SPDLOG_TRACE("Created QOpenGLVertexArrayObject {}", m_vao->objectId());
+  //  m_vao->bind();
 
   glGenBuffers(1, &m_vbo);
   CheckOpenGLError("glGenBuffers");
@@ -131,7 +136,8 @@ void rendering::WireframeObject::DestroyVBO(void) {
   glDeleteBuffers(1, &m_vbo);
   glDeleteBuffers(1, &m_elementBufferId);
 
-  m_vao->release();
+  //  m_vao->release();
+  SPDLOG_TRACE("Destroying VAO");
   m_vao->destroy();
 
   // delete m_vao;
@@ -140,16 +146,24 @@ void rendering::WireframeObject::DestroyVBO(void) {
 void rendering::WireframeObject::Render(
     std::unique_ptr<rendering::ShaderProgram> &program, float lineWidth) {
 
+  SPDLOG_ERROR("1");
   glLineWidth(lineWidth);
+  SPDLOG_ERROR("2");
   glEnable(GL_LINE_SMOOTH);
 
+  SPDLOG_ERROR("{},{},{}", m_position.x, m_position.y, m_position.z);
   program->SetPosition(m_position.x, m_position.y, m_position.z);
+  SPDLOG_ERROR("4");
   program->SetRotation(m_rotation.x, m_rotation.y, m_rotation.z);
+  SPDLOG_ERROR("5");
   program->SetScale(m_scale.x, m_scale.y, m_scale.z);
+  SPDLOG_ERROR("6");
   //  glBindVertexArray(m_vao);
+  SPDLOG_TRACE("VAO is created: {}", m_vao->isCreated());
   m_vao->bind();
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferId);
   glDrawElements(GL_LINES, m_indices.size(), GL_UNSIGNED_INT, (void *)nullptr);
+  m_vao->release();
 }
 
 void rendering::WireframeObject::SetRotation(GLfloat rotationX,

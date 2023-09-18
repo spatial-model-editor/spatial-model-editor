@@ -8,7 +8,7 @@
 
 rendering::ShaderProgram::ShaderProgram(const char *vertexProgram,
                                         const char *fragmentProgram) {
-  QOpenGLFunctions::initializeOpenGLFunctions();
+  initializeOpenGLFunctions();
 
   m_vertexShaderText = std::string(vertexProgram);
   m_fragmentShaderText = std::string(fragmentProgram);
@@ -52,6 +52,7 @@ void rendering::ShaderProgram::Init() {
   delete[] fragmentShaderText;
 
   m_programId = glCreateProgram();
+  SPDLOG_ERROR("{}", m_programId);
   CheckOpenGLError("glCreateProgram");
   glAttachShader(m_programId, m_vertexShaderId);
   CheckOpenGLError("glAttachShader");
@@ -76,6 +77,7 @@ void rendering::ShaderProgram::Init() {
 }
 
 rendering::ShaderProgram::~ShaderProgram() {
+  SPDLOG_ERROR("");
   glUseProgram(0);
   CheckOpenGLError("glUseProgram");
 
@@ -135,6 +137,7 @@ void rendering::ShaderProgram::SetViewRotation(GLfloat viewRotationX,
 }
 
 void rendering::ShaderProgram::Use(void) {
+  SPDLOG_TRACE("");
   glUseProgram(m_programId);
   CheckOpenGLError("glUseProgram");
 }

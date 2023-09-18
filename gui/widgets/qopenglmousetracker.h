@@ -61,6 +61,7 @@ signals:
   void mouseWheelEvent(QWheelEvent *ev);
 
 protected:
+  QOpenGLDebugLogger *m_debugLogger;
   QRgb lastColour{};
 
   // QTimer *timer;

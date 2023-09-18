@@ -23,29 +23,53 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
   setLineWidth(lineWidth);
   setLineSelectPrecision(lineSelectPrecision);
   setSelectedObjectColor(selectedObjectColor);
+
+  // use opengl debugging context
+  // https://doc.qt.io/qt-6/qopengldebuglogger.html#creating-an-opengl-debug-context
+  QSurfaceFormat format;
+  format.setMajorVersion(3);
+  format.setMinorVersion(2);
+  format.setProfile(QSurfaceFormat::CoreProfile);
+  format.setOption(QSurfaceFormat::DebugContext);
+  setFormat(format);
+  // create debug logger
+  m_debugLogger = new QOpenGLDebugLogger(this);
 }
 
 void QOpenGLMouseTracker::initializeGL() {
 
-  mainProgram =
-      std::unique_ptr<rendering::ShaderProgram>(new rendering::ShaderProgram(
-          rendering::text_vertex, rendering::text_fragment));
+  connect(context(), &QOpenGLContext::aboutToBeDestroyed,
+          []() { SPDLOG_ERROR("DESTRYOGIN context"); });
+  // initialize logger & display messages
+  if (m_debugLogger->initialize()) {
+    qDebug() << "GL_DEBUG Debug Logger" << m_debugLogger << "\n";
+    connect(m_debugLogger, &QOpenGLDebugLogger::messageLogged, this,
+            [](const QOpenGLDebugMessage &msg) { qDebug() << msg << "\n"; });
+    m_debugLogger->startLogging();
+  }
+  mainProgram = std::make_unique<rendering::ShaderProgram>(
+      rendering::text_vertex, rendering::text_fragment);
 
   mainProgram->Use();
 
   setFPS(frameRate);
+  SPDLOG_ERROR("");
 }
 
 void QOpenGLMouseTracker::renderScene(float lineWidth) {
+  SPDLOG_ERROR("");
   for (color_mesh &obj : meshSet) {
     obj.second->Render(mainProgram, lineWidth);
   }
 }
 
 void QOpenGLMouseTracker::paintGL() {
+  SPDLOG_ERROR("paint gl");
 
-  if (!context()->isValid())
+  if (!context()->isValid()) {
+    SPDLOG_ERROR("invalid opengl context");
     return;
+  }
 
   camera.UpdateView(mainProgram);
   camera.UpdateProjection(mainProgram);
