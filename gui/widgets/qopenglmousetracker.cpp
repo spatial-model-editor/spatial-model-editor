@@ -192,10 +192,10 @@ rendering::Vector3 QOpenGLMouseTracker::GetCameraOrientation() {
 
 void QOpenGLMouseTracker::addMesh(rendering::SMesh &mesh, QColor color) {
   rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
-
-  meshSet.push_back(std::make_pair(
-      color, std::unique_ptr<rendering::WireframeObject>(
-                 new rendering::WireframeObject(objectInfo, color, mesh))));
+  makeCurrent();
+  meshSet.emplace_back(color, std::make_unique<rendering::WireframeObject>(
+                                  objectInfo, color, mesh));
+  doneCurrent();
 }
 
 void QOpenGLMouseTracker::setFPS(float frameRate) {

@@ -11,6 +11,7 @@ rendering::WireframeObject::WireframeObject(rendering::ObjectInfo info,
                                             Vector3 scale)
     : m_mesh(mesh), m_position(position), m_rotation(rotation), m_scale(scale),
       m_color(color) {
+  SPDLOG_TRACE("");
   QOpenGLFunctions::initializeOpenGLFunctions();
 
   m_vertices = info.vertices;
@@ -89,7 +90,7 @@ void rendering::WireframeObject::CreateVBO(void) {
       new QOpenGLVertexArrayObject(nullptr));
   m_vao->create();
   SPDLOG_TRACE("Created QOpenGLVertexArrayObject {}", m_vao->objectId());
-  //  m_vao->bind();
+  m_vao->bind();
 
   glGenBuffers(1, &m_vbo);
   CheckOpenGLError("glGenBuffers");
@@ -124,6 +125,7 @@ void rendering::WireframeObject::CreateVBO(void) {
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBufferSize, m_indices.data(),
                GL_STATIC_DRAW);
   CheckOpenGLError("glBufferData");
+  m_vao->release();
 }
 
 void rendering::WireframeObject::DestroyVBO(void) {
@@ -145,6 +147,8 @@ void rendering::WireframeObject::DestroyVBO(void) {
 
 void rendering::WireframeObject::Render(
     std::unique_ptr<rendering::ShaderProgram> &program, float lineWidth) {
+  SPDLOG_TRACE("VAO is created: {}", m_vao->isCreated());
+  m_vao->bind();
 
   SPDLOG_ERROR("1");
   glLineWidth(lineWidth);
@@ -159,8 +163,6 @@ void rendering::WireframeObject::Render(
   program->SetScale(m_scale.x, m_scale.y, m_scale.z);
   SPDLOG_ERROR("6");
   //  glBindVertexArray(m_vao);
-  SPDLOG_TRACE("VAO is created: {}", m_vao->isCreated());
-  m_vao->bind();
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferId);
   glDrawElements(GL_LINES, m_indices.size(), GL_UNSIGNED_INT, (void *)nullptr);
   m_vao->release();
