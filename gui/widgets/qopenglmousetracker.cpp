@@ -44,14 +44,12 @@ void QOpenGLMouseTracker::renderScene(float lineWidth) {
 
 void QOpenGLMouseTracker::paintGL() {
 
-  if (!context()->isValid())
-  {
+  if (!context()->isValid()) {
     SPDLOG_ERROR("Widget context is not valid");
     return;
   }
 
-  if(QOpenGLContext::currentContext() != context())
-  {
+  if (QOpenGLContext::currentContext() != context()) {
     SPDLOG_ERROR("Widget Context is not the active one!");
     return;
   }
@@ -185,8 +183,9 @@ void QOpenGLMouseTracker::addMesh(rendering::SMesh &mesh, QColor color) {
   rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
 
   meshSet.push_back(std::make_pair(
-      color, std::unique_ptr<rendering::WireframeObject>(
-                 new rendering::WireframeObject(objectInfo, color, mesh, this))));
+      color,
+      std::unique_ptr<rendering::WireframeObject>(
+          new rendering::WireframeObject(objectInfo, color, mesh, this))));
 }
 
 void QOpenGLMouseTracker::setFPS(float frameRate) {

@@ -4,18 +4,15 @@
 
 #include "WireframeObject.hpp"
 
-rendering::WireframeObject::WireframeObject(rendering::ObjectInfo info,
-                                            QColor color,
-                                            rendering::SMesh &mesh,
-                                            QOpenGLWidget* Widget,
-                                            Vector3 position, Vector3 rotation,
-                                            Vector3 scale)
-    : m_mesh(mesh),m_openGLContext(Widget->context()), m_position(position), m_rotation(rotation), m_scale(scale),
-      m_color(color) {
+rendering::WireframeObject::WireframeObject(
+    rendering::ObjectInfo info, QColor color, rendering::SMesh &mesh,
+    QOpenGLWidget *Widget, Vector3 position, Vector3 rotation, Vector3 scale)
+    : m_mesh(mesh), m_openGLContext(Widget->context()), m_position(position),
+      m_rotation(rotation), m_scale(scale), m_color(color) {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
   QOpenGLFunctions::initializeOpenGLFunctions();
-  //m_openGLContext->makeCurrent(nullptr);
+  // m_openGLContext->makeCurrent(nullptr);
 
   m_vertices = info.vertices;
 
@@ -81,7 +78,7 @@ void rendering::WireframeObject::UpdateVBOColor() {
   glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, nullptr);
   glEnableVertexAttribArray(1);
 
-  //m_openGLContext->makeCurrent(nullptr);
+  // m_openGLContext->makeCurrent(nullptr);
 }
 
 void rendering::WireframeObject::CreateVBO(void) {
@@ -132,7 +129,7 @@ void rendering::WireframeObject::CreateVBO(void) {
                GL_STATIC_DRAW);
   CheckOpenGLError("glBufferData");
 
-  //m_openGLContext->makeCurrent(nullptr);
+  // m_openGLContext->makeCurrent(nullptr);
 }
 
 void rendering::WireframeObject::DestroyVBO(void) {
@@ -153,7 +150,7 @@ void rendering::WireframeObject::DestroyVBO(void) {
 
   // delete m_vao;
 
-  //m_openGLContext->makeCurrent(nullptr);
+  // m_openGLContext->makeCurrent(nullptr);
 }
 
 void rendering::WireframeObject::Render(
