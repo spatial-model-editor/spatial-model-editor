@@ -7,11 +7,15 @@
 rendering::WireframeObject::WireframeObject(rendering::ObjectInfo info,
                                             QColor color,
                                             rendering::SMesh &mesh,
+                                            QOpenGLWidget* Widget,
                                             Vector3 position, Vector3 rotation,
                                             Vector3 scale)
-    : m_mesh(mesh), m_position(position), m_rotation(rotation), m_scale(scale),
+    : m_mesh(mesh),m_openGLContext(Widget->context()), m_position(position), m_rotation(rotation), m_scale(scale),
       m_color(color) {
+
+  m_openGLContext->makeCurrent(m_openGLContext->surface());
   QOpenGLFunctions::initializeOpenGLFunctions();
+  //m_openGLContext->makeCurrent(nullptr);
 
   m_vertices = info.vertices;
 
@@ -50,6 +54,9 @@ void rendering::WireframeObject::SetColor(QColor color) {
 rendering::SMesh rendering::WireframeObject::GetMesh() { return m_mesh; }
 
 void rendering::WireframeObject::UpdateVBOColor() {
+
+  m_openGLContext->makeCurrent(m_openGLContext->surface());
+
   int size = m_colorBuffer.size() / 4;
 
   // auto cArr = m_color.ToArray();
@@ -73,9 +80,14 @@ void rendering::WireframeObject::UpdateVBOColor() {
   // glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
   glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, nullptr);
   glEnableVertexAttribArray(1);
+
+  //m_openGLContext->makeCurrent(nullptr);
 }
 
 void rendering::WireframeObject::CreateVBO(void) {
+
+  m_openGLContext->makeCurrent(m_openGLContext->surface());
+
   GLsizeiptr vboSize = m_verticesBuffer.size() * sizeof(GLfloat);
   // GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(GLfloat);
   GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(uint8_t);
@@ -119,9 +131,14 @@ void rendering::WireframeObject::CreateVBO(void) {
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBufferSize, m_indices.data(),
                GL_STATIC_DRAW);
   CheckOpenGLError("glBufferData");
+
+  //m_openGLContext->makeCurrent(nullptr);
 }
 
 void rendering::WireframeObject::DestroyVBO(void) {
+
+  m_openGLContext->makeCurrent(m_openGLContext->surface());
+
   glDisableVertexAttribArray(1);
   glDisableVertexAttribArray(0);
 
@@ -135,6 +152,8 @@ void rendering::WireframeObject::DestroyVBO(void) {
   m_vao->destroy();
 
   // delete m_vao;
+
+  //m_openGLContext->makeCurrent(nullptr);
 }
 
 void rendering::WireframeObject::Render(

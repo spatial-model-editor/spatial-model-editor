@@ -45,7 +45,16 @@ void QOpenGLMouseTracker::renderScene(float lineWidth) {
 void QOpenGLMouseTracker::paintGL() {
 
   if (!context()->isValid())
+  {
+    SPDLOG_ERROR("Widget context is not valid");
     return;
+  }
+
+  if(QOpenGLContext::currentContext() != context())
+  {
+    SPDLOG_ERROR("Widget Context is not the active one!");
+    return;
+  }
 
   camera.UpdateView(mainProgram);
   camera.UpdateProjection(mainProgram);
@@ -104,6 +113,8 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
       obj.second->SetColor(defaultColor);
     }
   }
+
+  update();
 }
 
 void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
@@ -137,6 +148,8 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
       emit mouseOver(obj.second->GetMesh());
     }
   }
+
+  update();
 }
 
 void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
@@ -148,6 +161,8 @@ void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
   camera.SetPosition(position + forwardVector * Degrees * (1 / frameRate));
 
   emit mouseWheelEvent(event);
+
+  update();
 }
 
 void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z) {
@@ -171,7 +186,7 @@ void QOpenGLMouseTracker::addMesh(rendering::SMesh &mesh, QColor color) {
 
   meshSet.push_back(std::make_pair(
       color, std::unique_ptr<rendering::WireframeObject>(
-                 new rendering::WireframeObject(objectInfo, color, mesh))));
+                 new rendering::WireframeObject(objectInfo, color, mesh, this))));
 }
 
 void QOpenGLMouseTracker::setFPS(float frameRate) {

@@ -44,6 +44,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   QColor blueColor = QColor(0, 0, 255);
   QColor blackColor = QColor(0, 0, 0);
 
+
   test->show();
 
   // camera position
@@ -56,7 +57,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   rendering::SMesh sphereMesh = rendering::ObjectLoader::LoadMesh(
       QDir::current().filePath("tmp_sphere.ply").toStdString());
   test->addMesh(sphereMesh, redColor);
-
+  wait(1000);
   QFile::copy(":/test/rendering/Objects/teapot.ply", "tmp_teapot.ply");
   QFileInfo info("tmp_teapot.ply");
   //  REQUIRE(info.exists());
@@ -65,8 +66,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   //  SPDLOG_TRACE(info.size());
   REQUIRE(QFile::exists("tmp_teapot.ply"));
 
-  // wait(1000);
-  // test->setHidden(false);
+  //wait(1000);
+  test->setHidden(false);
   rendering::SMesh teapotMesh = rendering::ObjectLoader::LoadMesh(
       QDir::current().filePath("tmp_teapot.ply").toStdString());
 
@@ -97,6 +98,6 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   //                         QcolorSelection.blueF());
   REQUIRE(blueColor == QcolorSelection);
 
-  // wait(50000);
-  wait();
+  wait(50000);
+  //wait();
 }
