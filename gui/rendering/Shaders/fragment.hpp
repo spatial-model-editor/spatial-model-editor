@@ -7,8 +7,10 @@
 
 namespace rendering {
 
-const char text_fragment[] = "#version 400\n"
+const char text_fragment[] = "#version 140\n"
                              "\n"
+                             "#extension GL_ARB_explicit_attrib_location : enable\n"
+                             "#extension GL_ARB_explicit_attrib_location: enable\n"
                              "in vec4 ex_Color;\n"
                              "out vec4 out_Color;\n"
                              "\n"

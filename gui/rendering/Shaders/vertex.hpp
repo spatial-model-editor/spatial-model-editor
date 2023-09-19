@@ -8,7 +8,9 @@
 namespace rendering {
 
 const char text_vertex[] =
-    "#version 400\n"
+    "#version 140\n"
+    "#extension GL_ARB_explicit_attrib_location : enable\n"
+    "#extension GL_ARB_explicit_attrib_location: enable\n"
     "#define PI 3.14159265359\n"
     "layout(location=0) in vec4 in_Position;\n"
     "layout(location=1) in vec4 in_Color;\n"

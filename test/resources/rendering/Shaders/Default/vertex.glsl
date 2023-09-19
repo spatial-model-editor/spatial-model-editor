@@ -1,4 +1,6 @@
-#version 400
+#version 140
+#extension GL_ARB_explicit_attrib_location : enable
+#extension GL_ARB_explicit_attrib_location: enable
 #define PI 3.14159265359
 layout(location=0) in vec4 in_Position;
 layout(location=1) in vec4 in_Color;
