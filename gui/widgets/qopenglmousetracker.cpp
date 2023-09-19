@@ -37,7 +37,7 @@ void QOpenGLMouseTracker::initializeGL() {
       ext +
       std::string("\n")
       );
-  
+
   mainProgram =
       std::unique_ptr<rendering::ShaderProgram>(new rendering::ShaderProgram(
           rendering::text_vertex, rendering::text_fragment));
