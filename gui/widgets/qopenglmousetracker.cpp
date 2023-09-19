@@ -27,7 +27,11 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
 
 void QOpenGLMouseTracker::initializeGL() {
 
-  std::string ext = QString::fromLatin1((const char*)context()->functions()->glGetString(GL_EXTENSIONS)).replace(' ', "\n\t").toStdString();
+  std::string ext =
+      QString::fromLatin1(
+          (const char *)context()->functions()->glGetString(GL_EXTENSIONS))
+          .replace(' ', "\n\t")
+          .toStdString();
   SPDLOG_ERROR(
       "OpenGL: " +
       std::string((char*)context()->functions()->glGetString(GL_VENDOR)) + std::string(" ") +
