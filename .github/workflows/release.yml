@@ -72,6 +72,8 @@ jobs:
         run: sudo ./ci/getlibs.sh osx
       - name: Install dependencies
         run: brew install mesa
+      - name: Forcing using software rendering
+        run: export LIBGL_ALWAYS_SOFTWARE=1
       - name: Build script
         run: ./ci/macos-gui.sh
       - uses: actions/upload-artifact@v3
