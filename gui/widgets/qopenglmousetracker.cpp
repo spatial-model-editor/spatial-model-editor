@@ -27,8 +27,6 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
 
 void QOpenGLMouseTracker::initializeGL() {
 
-
-
   std::string ext = QString::fromLatin1((const char*)context()->functions()->glGetString(GL_EXTENSIONS)).replace(' ', "\n\t").toStdString();
   SPDLOG_ERROR(
       "OpenGL: " +
@@ -39,7 +37,7 @@ void QOpenGLMouseTracker::initializeGL() {
       ext +
       std::string("\n")
       );
-
+  
   mainProgram =
       std::unique_ptr<rendering::ShaderProgram>(new rendering::ShaderProgram(
           rendering::text_vertex, rendering::text_fragment));
