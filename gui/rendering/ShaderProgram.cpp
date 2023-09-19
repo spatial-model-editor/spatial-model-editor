@@ -43,12 +43,11 @@ void rendering::ShaderProgram::Init() {
   if (!success_VS) {
     GLchar InfoLog[1024];
     glGetShaderInfoLog(m_vertexShaderId, sizeof(InfoLog), NULL, InfoLog);
-    SPDLOG_ERROR("Error compiling shader type GL_VERTEX_SHADER: " + std::string(InfoLog));
+    SPDLOG_ERROR("Error compiling shader type GL_VERTEX_SHADER: " +
+                 std::string(InfoLog));
   }
 
   delete[] vertexShaderText;
-
-
 
   m_fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
   CheckOpenGLError("glCreateShader");
@@ -66,7 +65,8 @@ void rendering::ShaderProgram::Init() {
   if (!success_FS) {
     GLchar InfoLog[1024];
     glGetShaderInfoLog(m_fragmentShaderId, sizeof(InfoLog), NULL, InfoLog);
-    SPDLOG_ERROR("Error compiling shader type GL_FRAGMENT_SHADER: " + std::string(InfoLog));
+    SPDLOG_ERROR("Error compiling shader type GL_FRAGMENT_SHADER: " +
+                 std::string(InfoLog));
   }
 
   delete[] fragmentShaderText;
