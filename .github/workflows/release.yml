@@ -71,7 +71,7 @@ jobs:
       - name: Get static libs
         run: sudo ./ci/getlibs.sh osx
       - name: Install dependencies
-        run: sudo port install mesa
+        run: sudo brew install mesa
       - name: Build script
         run: ./ci/macos-gui.sh
       - uses: actions/upload-artifact@v3
