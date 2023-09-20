@@ -19,18 +19,19 @@ static const char *tags{"[gui/widgets/QOpenGLMouseTracker]"};
 
 TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
-  // default buffers structure
-  QSurfaceFormat format;
-  format.setDepthBufferSize(24);
-  format.setStencilBufferSize(8);
-  format.setAlphaBufferSize(8);
-  format.setBlueBufferSize(8);
-  format.setRedBufferSize(8);
-  format.setGreenBufferSize(8);
-  //format.setProfile(QSurfaceFormat::CoreProfile);
-  format.setVersion(3,2);
+//  // default buffers structure
+//  QSurfaceFormat format;
+//  format.setDepthBufferSize(24);
+//  format.setStencilBufferSize(8);
+//  format.setAlphaBufferSize(8);
+//  format.setBlueBufferSize(8);
+//  format.setRedBufferSize(8);
+//  format.setGreenBufferSize(8);
+//  //format.setProfile(QSurfaceFormat::CoreProfile);
+//  format.setVersion(3,2);
+//
+//  QSurfaceFormat::setDefaultFormat(format);
 
-  QSurfaceFormat::setDefaultFormat(format);
 
   QOpenGLMouseTracker *test = new QOpenGLMouseTracker();
   REQUIRE(test != nullptr);

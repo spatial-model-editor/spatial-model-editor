@@ -23,9 +23,35 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
   setLineWidth(lineWidth);
   setLineSelectPrecision(lineSelectPrecision);
   setSelectedObjectColor(selectedObjectColor);
+
+//  QSurfaceFormat format;
+//
+//  format.setDepthBufferSize(24);
+//  format.setStencilBufferSize(8);
+//  format.setAlphaBufferSize(8);
+//  format.setBlueBufferSize(8);
+//  format.setRedBufferSize(8);
+//  format.setGreenBufferSize(8);
+//
+////  format.setMajorVersion(3);
+////  format.setMinorVersion(2);
+//  format.setProfile(QSurfaceFormat::CoreProfile);
+//  format.setOption(QSurfaceFormat::DebugContext);
+//  setFormat(format);
+
+  // create debug logger
+  m_debugLogger = new QOpenGLDebugLogger(this);
 }
 
 void QOpenGLMouseTracker::initializeGL() {
+
+  // initialize logger & display messages
+  if (m_debugLogger->initialize()) {
+    qDebug() << "GL_DEBUG Debug Logger" << m_debugLogger << "\n";
+    connect(m_debugLogger, &QOpenGLDebugLogger::messageLogged, this,
+            [](const QOpenGLDebugMessage &msg) { qDebug() << msg << "\n"; });
+    m_debugLogger->startLogging();
+  }
 
   std::string ext =
       QString::fromLatin1(
