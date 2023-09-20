@@ -51,7 +51,7 @@ void QOpenGLMouseTracker::initializeGL() {
     connect(m_debugLogger, &QOpenGLDebugLogger::messageLogged, this,
             [](const QOpenGLDebugMessage &msg) {
               qDebug() << msg << "\n";
-              //SPDLOG_ERROR(msg.message().toStdString());
+              // SPDLOG_ERROR(msg.message().toStdString());
             });
     m_debugLogger->startLogging();
   }
