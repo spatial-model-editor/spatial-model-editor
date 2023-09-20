@@ -24,20 +24,20 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
   setLineSelectPrecision(lineSelectPrecision);
   setSelectedObjectColor(selectedObjectColor);
 
-//  QSurfaceFormat format;
-//
-//  format.setDepthBufferSize(24);
-//  format.setStencilBufferSize(8);
-//  format.setAlphaBufferSize(8);
-//  format.setBlueBufferSize(8);
-//  format.setRedBufferSize(8);
-//  format.setGreenBufferSize(8);
-//
-////  format.setMajorVersion(3);
-////  format.setMinorVersion(2);
-//  format.setProfile(QSurfaceFormat::CoreProfile);
-//  format.setOption(QSurfaceFormat::DebugContext);
-//  setFormat(format);
+  //  QSurfaceFormat format;
+  //
+  //  format.setDepthBufferSize(24);
+  //  format.setStencilBufferSize(8);
+  //  format.setAlphaBufferSize(8);
+  //  format.setBlueBufferSize(8);
+  //  format.setRedBufferSize(8);
+  //  format.setGreenBufferSize(8);
+  //
+  ////  format.setMajorVersion(3);
+  ////  format.setMinorVersion(2);
+  //  format.setProfile(QSurfaceFormat::CoreProfile);
+  //  format.setOption(QSurfaceFormat::DebugContext);
+  //  setFormat(format);
 
   // create debug logger
   m_debugLogger = new QOpenGLDebugLogger(this);
