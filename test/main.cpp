@@ -19,7 +19,7 @@ int main(int argc, char *argv[]) {
   format.setBlueBufferSize(8);
   format.setRedBufferSize(8);
   format.setGreenBufferSize(8);
-  
+
   format.setOption(QSurfaceFormat::DebugContext);
 
   format.setMajorVersion(4);
