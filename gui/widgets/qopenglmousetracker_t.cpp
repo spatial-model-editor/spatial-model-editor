@@ -18,7 +18,7 @@ using namespace sme::test;
 static const char *tags{"[gui/widgets/QOpenGLMouseTracker]"};
 
 TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
-
+  
 //  // default buffers structure
 //  QSurfaceFormat format;
 //  format.setDepthBufferSize(24);
@@ -31,6 +31,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 //  format.setVersion(3,2);
 //
 //  QSurfaceFormat::setDefaultFormat(format);
+
 
 
   QOpenGLMouseTracker *test = new QOpenGLMouseTracker();
