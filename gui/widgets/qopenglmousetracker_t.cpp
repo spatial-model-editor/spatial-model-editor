@@ -27,7 +27,9 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   format.setBlueBufferSize(8);
   format.setRedBufferSize(8);
   format.setGreenBufferSize(8);
-  format.setProfile(QSurfaceFormat::CoreProfile);
+  //format.setProfile(QSurfaceFormat::CoreProfile);
+  format.setVersion(3,2);
+
   QSurfaceFormat::setDefaultFormat(format);
 
   QOpenGLMouseTracker *test = new QOpenGLMouseTracker();
