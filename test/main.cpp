@@ -19,10 +19,12 @@ int main(int argc, char *argv[]) {
   format.setRedBufferSize(8);
   format.setGreenBufferSize(8);
 
-  //  format.setMajorVersion(3);
-  //  format.setMinorVersion(2);
-  format.setProfile(QSurfaceFormat::CoreProfile);
+  //format.setProfile(QSurfaceFormat::CoreProfile);
   format.setOption(QSurfaceFormat::DebugContext);
+
+  format.setMajorVersion(3);
+  format.setMinorVersion(2);
+
   QSurfaceFormat::setDefaultFormat(format);
 
 #ifdef SME_ENABLE_GUI_TESTS
