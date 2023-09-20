@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
   Catch::StringMaker<float>::precision = 25;
 
   QSurfaceFormat format;
-  format.setProfile(QSurfaceFormat::CoreProfile);
+  format.setProfile(QSurfaceFormat::CompatibilityProfile);
 
   format.setDepthBufferSize(24);
   format.setStencilBufferSize(8);
@@ -22,8 +22,8 @@ int main(int argc, char *argv[]) {
 
   format.setOption(QSurfaceFormat::DebugContext);
 
-  format.setMajorVersion(4);
-  format.setMinorVersion(1);
+  format.setMajorVersion(3);
+  format.setMinorVersion(2);
 
   QSurfaceFormat::setDefaultFormat(format);
 
