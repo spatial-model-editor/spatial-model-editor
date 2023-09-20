@@ -22,8 +22,8 @@ int main(int argc, char *argv[]) {
 
   format.setOption(QSurfaceFormat::DebugContext);
 
-  format.setMajorVersion(3);
-  format.setMinorVersion(2);
+  format.setMajorVersion(4);
+  format.setMinorVersion(1);
 
   QSurfaceFormat::setDefaultFormat(format);
 
