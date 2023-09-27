@@ -24,7 +24,6 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
 
 }
 
-
 void QOpenGLMouseTracker::initializeGL() {
 
 #ifdef QT_DEBUG
@@ -36,7 +35,9 @@ void QOpenGLMouseTracker::initializeGL() {
     SPDLOG_INFO("QOpenGLDebugLogger initialized!");
     connect(m_debugLogger, &QOpenGLDebugLogger::messageLogged, this,
             [](const QOpenGLDebugMessage &msg) {
-              rendering::Utils::GLDebugMessageCallback(msg.source(),msg.type(), msg.id(), msg.severity(), msg.message().toStdString().c_str());
+              rendering::Utils::GLDebugMessageCallback(
+                  msg.source(), msg.type(), msg.id(), msg.severity(),
+                  msg.message().toStdString().c_str());
             });
     m_debugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
   }
@@ -50,9 +51,11 @@ void QOpenGLMouseTracker::initializeGL() {
 
   std::string vendor((char *)context()->functions()->glGetString(GL_VENDOR));
   CheckOpenGLError("glGetString(GL_VENDOR)");
-  std::string renderer((char *)context()->functions()->glGetString(GL_RENDERER));
+  std::string renderer(
+      (char *)context()->functions()->glGetString(GL_RENDERER));
   CheckOpenGLError("glGetString(GL_RENDERER)");
-  std::string gl_version((char *)context()->functions()->glGetString(GL_VERSION));
+  std::string gl_version(
+      (char *)context()->functions()->glGetString(GL_VERSION));
   CheckOpenGLError("glGetString(GL_VERSION)");
 
   SPDLOG_INFO(
