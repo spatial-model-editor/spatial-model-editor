@@ -26,6 +26,7 @@ int main(int argc, char *argv[]) {
 //  format.setMajorVersion(4);
 //  format.setMinorVersion(1);
 
+
   QSurfaceFormat::setDefaultFormat(format);
 
 #ifdef SME_ENABLE_GUI_TESTS
