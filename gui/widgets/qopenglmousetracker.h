@@ -20,7 +20,7 @@ public:
                       float lineSelectPrecision = 10.0f,
                       QColor selectedObjectColor = QColor(255, 255, 0),
                       float cameraFOV = 60.0f, float cameraNearZ = 0.001f,
-                      float cameraFarZ = 2000.0f, float frameRate = 60.0f);
+                      float cameraFarZ = 2000.0f, float frameRate = 30.0f);
   ~QOpenGLMouseTracker() = default;
 
   void SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height,
@@ -55,8 +55,6 @@ protected:
 #ifdef QT_DEBUG
   QOpenGLDebugLogger *m_debugLogger;
 #endif
-
-  std::unique_ptr<QTimer> timer;
 
   float frameRate;
 

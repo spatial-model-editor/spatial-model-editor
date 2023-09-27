@@ -12,16 +12,11 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
     : camera(cameraFOV, size().width(), size().height(), cameraNearZ,
              cameraFarZ) {
 
-  this->frameRate = frameRate;
-
-  this->timer = std::unique_ptr<QTimer>(new QTimer(this));
-  // connect(this->timer.get(), SIGNAL(timeout()), this, SLOT(update()));
-  timer->start(1 / frameRate * 1000);
+  setFPS(frameRate);
 
   setLineWidth(lineWidth);
   setLineSelectPrecision(lineSelectPrecision);
   setSelectedObjectColor(selectedObjectColor);
-
 }
 
 void QOpenGLMouseTracker::initializeGL() {
@@ -60,7 +55,7 @@ void QOpenGLMouseTracker::initializeGL() {
 
   SPDLOG_INFO(
       "OpenGL: " +
-       vendor +
+      vendor +
       std::string(" ") +
       renderer +
       std::string(" ") +
@@ -71,8 +66,6 @@ void QOpenGLMouseTracker::initializeGL() {
   mainProgram =
       std::unique_ptr<rendering::ShaderProgram>(new rendering::ShaderProgram(
           rendering::text_vertex, rendering::text_fragment));
-
-  setFPS(frameRate);
 }
 
 void QOpenGLMouseTracker::renderScene(float lineWidth) {
@@ -223,7 +216,6 @@ void QOpenGLMouseTracker::addMesh(rendering::SMesh &mesh, QColor color) {
 
 void QOpenGLMouseTracker::setFPS(float frameRate) {
   this->frameRate = frameRate;
-  // timer->start(1 / frameRate * 1000);
 }
 
 void QOpenGLMouseTracker::setLineWidth(float lineWidth) {
