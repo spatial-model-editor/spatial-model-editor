@@ -46,7 +46,11 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   QColor blueColor = QColor(0, 0, 255);
   QColor blackColor = QColor(0, 0, 0);
 
+  //SPDLOG_ERROR("before 1");
+
   test->show();
+
+  //SPDLOG_ERROR("after 1");
 
   wait(10000);
 

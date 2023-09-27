@@ -12,12 +12,14 @@
 #include <QOpenGLFunctions>
 #include <QtOpenGL>
 
-// #ifdef QT_DEBUG
+#ifdef QT_DEBUG
 #define CheckOpenGLError(tag)                                                  \
   rendering::Utils::TraceGLError(tag, __FILE__, __LINE__)
-// #else
-// #define CheckOpenGLError(tag)
-// #endif
+#define GetCallstack(skip) (std::string("Callstack:\n") + rendering::Utils::Backtrace(skip))
+#else
+#define CheckOpenGLError(tag)
+#define GetCallstack(skip) std::string("Callstack:\n")
+#endif
 
 namespace rendering {
 
@@ -28,6 +30,13 @@ class Utils {
 public:
   static void TraceGLError(std::string tag, std::string file, int line);
   static std::string LoadFile(std::string filename);
+
+  static std::string Backtrace(int skip = 1);
+
+  static void GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
+                              GLenum severity,
+                              const GLchar *msg);
+
 };
 
 } // namespace rendering

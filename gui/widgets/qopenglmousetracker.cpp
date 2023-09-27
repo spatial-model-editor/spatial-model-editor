@@ -3,8 +3,6 @@
 //
 
 #include "qopenglmousetracker.h"
-#include "rendering/Shaders/fragment.hpp"
-#include "rendering/Shaders/vertex.hpp"
 
 QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
                                          float lineSelectPrecision,
@@ -39,42 +37,66 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
   //  format.setOption(QSurfaceFormat::DebugContext);
   //  setFormat(format);
 
-  // create debug logger
-  m_debugLogger = new QOpenGLDebugLogger(this);
 }
+
 
 void QOpenGLMouseTracker::initializeGL() {
 
+  //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+
+#ifdef QT_DEBUG
+  // create debug logger
+  m_debugLogger = new QOpenGLDebugLogger(this);
+
   // initialize logger & display messages
   if (m_debugLogger->initialize()) {
-    qDebug() << "GL_DEBUG Debug Logger" << m_debugLogger << "\n";
+    SPDLOG_ERROR("QOpenGLDebugLogger initialized!");
     connect(m_debugLogger, &QOpenGLDebugLogger::messageLogged, this,
             [](const QOpenGLDebugMessage &msg) {
-              //qDebug() << msg << "\n";
-              SPDLOG_ERROR(msg.message().toStdString());
+              rendering::Utils::GLDebugMessageCallback(msg.source(),msg.type(), msg.id(), msg.severity(), msg.message().toStdString().c_str());
             });
-    m_debugLogger->startLogging();
+    m_debugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
   }
+#endif
+
+
+  //SPDLOG_ERROR("before asking for opengl GL_EXTENSIONS");
+
 
   std::string ext =
       QString::fromLatin1(
           (const char *)context()->functions()->glGetString(GL_EXTENSIONS))
           .replace(' ', "\n\t")
           .toStdString();
-  SPDLOG_ERROR(
-      "OpenGL: " +
-      std::string((char *)context()->functions()->glGetString(GL_VENDOR)) +
-      std::string(" ") +
-      std::string((char *)context()->functions()->glGetString(GL_RENDERER)) +
-      std::string(" ") +
-      std::string((char *)context()->functions()->glGetString(GL_VERSION)) +
-      std::string(" ") + std::string("\n\n\t") + ext + std::string("\n"));
+  CheckOpenGLError("glGetString(GL_EXTENSIONS)");
+
+  //SPDLOG_ERROR("before asking for opengl GL_VENDOR, GL_RENDERER and GL_VERSION");
+
+  std::string vendor((char *)context()->functions()->glGetString(GL_VENDOR));
+  CheckOpenGLError("glGetString(GL_VENDOR)");
+  std::string renderer((char *)context()->functions()->glGetString(GL_RENDERER));
+  CheckOpenGLError("glGetString(GL_RENDERER)");
+  std::string gl_version((char *)context()->functions()->glGetString(GL_VERSION));
+  CheckOpenGLError("glGetString(GL_VERSION)");
+
+//  SPDLOG_ERROR(
+//      "OpenGL: " +
+//       vendor +
+//      std::string(" ") +
+//      renderer +
+//      std::string(" ") +
+//      gl_version +
+//      std::string(" ") + std::string("\n\n\t") + ext + std::string("\n"));
+
+//  SPDLOG_ERROR("before compiling the shader");
 
   mainProgram =
       std::unique_ptr<rendering::ShaderProgram>(new rendering::ShaderProgram(
           rendering::text_vertex, rendering::text_fragment));
 
-  mainProgram->Use();
+//  SPDLOG_ERROR("before calling Use");
+
+  //mainProgram->Use();
 
   setFPS(frameRate);
 }

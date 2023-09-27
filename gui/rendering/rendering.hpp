@@ -14,5 +14,7 @@
 #include "Vector3.hpp"
 #include "Vector4.hpp"
 #include "WireframeObject.hpp"
+#include "Shaders/default/fragment.hpp"
+#include "Shaders/default/vertex.hpp"
 
 #endif // SPATIALMODELEDITOR_RENDERING_H

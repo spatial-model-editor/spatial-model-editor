@@ -62,7 +62,10 @@ signals:
 
 protected:
   QRgb lastColour{};
+
+#ifdef QT_DEBUG
   QOpenGLDebugLogger *m_debugLogger;
+#endif
 
   // QTimer *timer;
   std::unique_ptr<QTimer> timer;
