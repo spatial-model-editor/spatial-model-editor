@@ -8,9 +8,11 @@
 #include <iostream>
 #include <sstream>
 
+#ifdef Q_OS_UNIX
 #include <execinfo.h> // for backtrace
 #include <dlfcn.h>    // for dladdr
 #include <cxxabi.h>   // for __cxa_demangle
+#endif
 
 #include <cstdio>
 #include <cstdlib>
@@ -127,7 +129,7 @@ void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type, GLuint
 }
 
 
-#ifdef Q_OS_UNIX
+#if defined(Q_OS_UNIX) && defined(QT_DEBUG)
 // This function produces a stack backtrace with demangled function & method names.
 std::string rendering::Utils::Backtrace(int skip)
 {

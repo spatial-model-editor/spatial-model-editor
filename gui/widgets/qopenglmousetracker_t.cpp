@@ -15,96 +15,66 @@ using namespace sme::test;
 
 // static const char
 // *tags{"[gui/widgets/QOpenGLMouseTracker][gui/widgets][gui]"};
-static const char *tags{"[gui/widgets/QOpenGLMouseTracker]"};
+static const char *tags{"[gui/widgets/QOpenGLMouseTracker][gui]"};
 
 TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
-  //  // default buffers structure
-  //  QSurfaceFormat format;
-  //  format.setDepthBufferSize(24);
-  //  format.setStencilBufferSize(8);
-  //  format.setAlphaBufferSize(8);
-  //  format.setBlueBufferSize(8);
-  //  format.setRedBufferSize(8);
-  //  format.setGreenBufferSize(8);
-  //  //format.setProfile(QSurfaceFormat::CoreProfile);
-  //  format.setVersion(3,2);
-  //
-  //  QSurfaceFormat::setDefaultFormat(format);
-
-  QOpenGLMouseTracker *test = new QOpenGLMouseTracker();
-  REQUIRE(test != nullptr);
-
-  // test->setHidden(false);
-  // while(test->isVald()) {}
-
-  //  rendering::Vector4 redColor = rendering::Vector4(1.0f, 0.0f, 0.0f);
-  //  rendering::Vector4 blueColor = rendering::Vector4(0.0f, 0.0f, 1.0f);
-  //  rendering::Vector4 blackColor = rendering::Vector4();
+  QOpenGLMouseTracker test = QOpenGLMouseTracker();
 
   QColor redColor = QColor(255, 0, 0);
   QColor blueColor = QColor(0, 0, 255);
   QColor blackColor = QColor(0, 0, 0);
 
-  //SPDLOG_ERROR("before 1");
+  test.show();
 
-  test->show();
-
-  //SPDLOG_ERROR("after 1");
-
-  wait(10000);
+  wait(1000);
 
   // camera position
-  test->SetCameraPosition(0, 0, -10);
+  test.SetCameraPosition(0, 0, -10);
 
   // loading meshes
-
   QFile::copy(":/test/rendering/Objects/sphere.ply", "tmp_sphere.ply");
   REQUIRE(QFile::exists("tmp_sphere.ply"));
   rendering::SMesh sphereMesh = rendering::ObjectLoader::LoadMesh(
       QDir::current().filePath("tmp_sphere.ply").toStdString());
-  test->addMesh(sphereMesh, redColor);
+  test.addMesh(sphereMesh, redColor);
+
   wait(1000);
+
   QFile::copy(":/test/rendering/Objects/teapot.ply", "tmp_teapot.ply");
   QFileInfo info("tmp_teapot.ply");
-  //  REQUIRE(info.exists());
-  //  SPDLOG_TRACE(info.exists());
-  //  SPDLOG_TRACE(info.absoluteFilePath());
-  //  SPDLOG_TRACE(info.size());
   REQUIRE(QFile::exists("tmp_teapot.ply"));
 
-  // wait(1000);
-  test->setHidden(false);
+  wait(1000);
+
   rendering::SMesh teapotMesh = rendering::ObjectLoader::LoadMesh(
       QDir::current().filePath("tmp_teapot.ply").toStdString());
+  test.addMesh(teapotMesh, blueColor);
 
-  test->addMesh(teapotMesh, blueColor);
-
-  auto QcolorSelection = QColor(test->getColour());
+  auto QcolorSelection = QColor(test.getColour());
 
   // forced windows resize and forced repainting
-  test->resize(500, 500);
-  test->repaint();
+  test.resize(500, 500);
+  //test.repaint();
 
   // the corner initial color should be black.
   REQUIRE(blackColor == QcolorSelection);
+
   // zoom
-  sendMouseWheel(test, 1);
+  sendMouseWheel(&test, 1);
+
   // move mouse over image
-  sendMouseMove(test, {10, 44});
+  sendMouseMove(&test, {10, 44});
+
   // click on image
-  sendMouseClick(test, {40, 40});
-  test->repaint();
-  sendMouseClick(test, {0, 0});
+  sendMouseClick(&test, {40, 40});
+  //test.repaint();
 
-  QcolorSelection = QColor(test->getColour());
+  sendMouseClick(&test, {0, 0});
 
-  //  rendering::Vector4 colorSelect =
-  //      rendering::Vector4(QcolorSelection.redF(),
-  //      QcolorSelection.greenF(),
-  //                         QcolorSelection.blueF());
+  QcolorSelection = QColor(test.getColour());
+
   REQUIRE(blueColor == QcolorSelection);
 
-  wait(50000);
-  // wait();
+  wait(10000);
 }

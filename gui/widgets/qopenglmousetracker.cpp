@@ -22,27 +22,10 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
   setLineSelectPrecision(lineSelectPrecision);
   setSelectedObjectColor(selectedObjectColor);
 
-  //  QSurfaceFormat format;
-  //
-  //  format.setDepthBufferSize(24);
-  //  format.setStencilBufferSize(8);
-  //  format.setAlphaBufferSize(8);
-  //  format.setBlueBufferSize(8);
-  //  format.setRedBufferSize(8);
-  //  format.setGreenBufferSize(8);
-  //
-  ////  format.setMajorVersion(3);
-  ////  format.setMinorVersion(2);
-  //  format.setProfile(QSurfaceFormat::CoreProfile);
-  //  format.setOption(QSurfaceFormat::DebugContext);
-  //  setFormat(format);
-
 }
 
 
 void QOpenGLMouseTracker::initializeGL() {
-
-  //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
 #ifdef QT_DEBUG
   // create debug logger
@@ -50,18 +33,13 @@ void QOpenGLMouseTracker::initializeGL() {
 
   // initialize logger & display messages
   if (m_debugLogger->initialize()) {
-    SPDLOG_ERROR("QOpenGLDebugLogger initialized!");
+    SPDLOG_INFO("QOpenGLDebugLogger initialized!");
     connect(m_debugLogger, &QOpenGLDebugLogger::messageLogged, this,
             [](const QOpenGLDebugMessage &msg) {
               rendering::Utils::GLDebugMessageCallback(msg.source(),msg.type(), msg.id(), msg.severity(), msg.message().toStdString().c_str());
             });
     m_debugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
   }
-#endif
-
-
-  //SPDLOG_ERROR("before asking for opengl GL_EXTENSIONS");
-
 
   std::string ext =
       QString::fromLatin1(
@@ -70,8 +48,6 @@ void QOpenGLMouseTracker::initializeGL() {
           .toStdString();
   CheckOpenGLError("glGetString(GL_EXTENSIONS)");
 
-  //SPDLOG_ERROR("before asking for opengl GL_VENDOR, GL_RENDERER and GL_VERSION");
-
   std::string vendor((char *)context()->functions()->glGetString(GL_VENDOR));
   CheckOpenGLError("glGetString(GL_VENDOR)");
   std::string renderer((char *)context()->functions()->glGetString(GL_RENDERER));
@@ -79,24 +55,19 @@ void QOpenGLMouseTracker::initializeGL() {
   std::string gl_version((char *)context()->functions()->glGetString(GL_VERSION));
   CheckOpenGLError("glGetString(GL_VERSION)");
 
-//  SPDLOG_ERROR(
-//      "OpenGL: " +
-//       vendor +
-//      std::string(" ") +
-//      renderer +
-//      std::string(" ") +
-//      gl_version +
-//      std::string(" ") + std::string("\n\n\t") + ext + std::string("\n"));
-
-//  SPDLOG_ERROR("before compiling the shader");
+  SPDLOG_INFO(
+      "OpenGL: " +
+       vendor +
+      std::string(" ") +
+      renderer +
+      std::string(" ") +
+      gl_version +
+      std::string(" ") + std::string("\n\n\t") + ext + std::string("\n"));
+#endif
 
   mainProgram =
       std::unique_ptr<rendering::ShaderProgram>(new rendering::ShaderProgram(
           rendering::text_vertex, rendering::text_fragment));
-
-//  SPDLOG_ERROR("before calling Use");
-
-  //mainProgram->Use();
 
   setFPS(frameRate);
 }
@@ -156,9 +127,6 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
   QRgb pixel = offscreenPickingImage.pixel(m_xAtPress, m_yAtPress);
   QColor color(pixel);
 
-  //  rendering::Vector4 colorVector =
-  //      rendering::Vector4(color.redF(), color.greenF(), color.blueF());
-
   bool objectSelected = false;
 
   for (color_mesh &obj : meshSet) {
@@ -202,9 +170,6 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
 
   QRgb pixel = offscreenPickingImage.pixel(xAtPress, yAtPress);
   QColor color(pixel);
-
-  //  rendering::Vector4 colorVector =
-  //      rendering::Vector4(color.redF(), color.greenF(), color.blueF());
 
   for (color_mesh &obj : meshSet) {
     if (obj.first == color) {
@@ -274,23 +239,4 @@ const QRgb &QOpenGLMouseTracker::getColour() const { return lastColour; }
 
 QColor QOpenGLMouseTracker::getSelectedObjectColor() {
   return selectedObjectColor;
-}
-
-// void QOpenGLMouseTracker::changeEvent(QEvent *event)
-//{
-//   auto type = event->type();
-//   switch (type) {
-//   case QEvent::Hide:
-//     timer->stop();
-//     break;
-//   case QEvent::Show:
-//     timer->start(1 / frameRate * 1000);
-//     break;
-//   }
-// }
-
-bool QOpenGLMouseTracker::isVald() const {
-  while (context() == nullptr) {
-  }
-  return context()->isValid();
 }

@@ -12,7 +12,6 @@ rendering::WireframeObject::WireframeObject(
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
   QOpenGLFunctions::initializeOpenGLFunctions();
-  // m_openGLContext->makeCurrent(nullptr);
 
   m_vertices = info.vertices;
 
@@ -27,7 +26,6 @@ rendering::WireframeObject::WireframeObject(
     m_indices.push_back(f.vertexIndices[0] - 1);
   }
 
-  // auto cArr = m_color.ToArray();
   std::vector<uint8_t> cArr = {(uint8_t)m_color.red(), (uint8_t)m_color.green(),
                                (uint8_t)m_color.blue(),
                                (uint8_t)m_color.alpha()};
@@ -56,7 +54,6 @@ void rendering::WireframeObject::UpdateVBOColor() {
 
   int size = m_colorBuffer.size() / 4;
 
-  // auto cArr = m_color.ToArray();
   std::vector<uint8_t> cArr = {(uint8_t)m_color.red(), (uint8_t)m_color.green(),
                                (uint8_t)m_color.blue(),
                                (uint8_t)m_color.alpha()};
@@ -66,7 +63,6 @@ void rendering::WireframeObject::UpdateVBOColor() {
   for (int iter = 0; iter < size; iter++)
     m_colorBuffer.insert(m_colorBuffer.end(), cArr.begin(), cArr.end());
 
-  // GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(GLfloat);
   GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(uint8_t);
 
   m_vao->bind();
@@ -74,11 +70,9 @@ void rendering::WireframeObject::UpdateVBOColor() {
   glBindBuffer(GL_ARRAY_BUFFER, m_colorBufferId);
   glBufferData(GL_ARRAY_BUFFER, colorBufferSize, m_colorBuffer.data(),
                GL_DYNAMIC_DRAW);
-  // glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
   glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, nullptr);
   glEnableVertexAttribArray(1);
 
-  // m_openGLContext->makeCurrent(nullptr);
 }
 
 void rendering::WireframeObject::CreateVBO(void) {
@@ -86,7 +80,6 @@ void rendering::WireframeObject::CreateVBO(void) {
   m_openGLContext->makeCurrent(m_openGLContext->surface());
 
   GLsizeiptr vboSize = m_verticesBuffer.size() * sizeof(GLfloat);
-  // GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(GLfloat);
   GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(uint8_t);
   GLsizeiptr indexBufferSize = m_indices.size() * sizeof(GLuint);
 
@@ -128,8 +121,6 @@ void rendering::WireframeObject::CreateVBO(void) {
   glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBufferSize, m_indices.data(),
                GL_STATIC_DRAW);
   CheckOpenGLError("glBufferData");
-
-  // m_openGLContext->makeCurrent(nullptr);
 }
 
 void rendering::WireframeObject::DestroyVBO(void) {
@@ -147,10 +138,6 @@ void rendering::WireframeObject::DestroyVBO(void) {
 
   m_vao->release();
   m_vao->destroy();
-
-  // delete m_vao;
-
-  // m_openGLContext->makeCurrent(nullptr);
 }
 
 void rendering::WireframeObject::Render(
@@ -162,7 +149,6 @@ void rendering::WireframeObject::Render(
   program->SetPosition(m_position.x, m_position.y, m_position.z);
   program->SetRotation(m_rotation.x, m_rotation.y, m_rotation.z);
   program->SetScale(m_scale.x, m_scale.y, m_scale.z);
-  //  glBindVertexArray(m_vao);
   m_vao->bind();
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferId);
   glDrawElements(GL_LINES, m_indices.size(), GL_UNSIGNED_INT, (void *)nullptr);
