@@ -21,7 +21,6 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
   setLineWidth(lineWidth);
   setLineSelectPrecision(lineSelectPrecision);
   setSelectedObjectColor(selectedObjectColor);
-
 }
 
 void QOpenGLMouseTracker::initializeGL() {
@@ -58,14 +57,9 @@ void QOpenGLMouseTracker::initializeGL() {
       (char *)context()->functions()->glGetString(GL_VERSION));
   CheckOpenGLError("glGetString(GL_VERSION)");
 
-  SPDLOG_INFO(
-      "OpenGL: " +
-       vendor +
-      std::string(" ") +
-      renderer +
-      std::string(" ") +
-      gl_version +
-      std::string(" ") + std::string("\n\n\t") + ext + std::string("\n"));
+  SPDLOG_INFO("OpenGL: " + vendor + std::string(" ") + renderer +
+              std::string(" ") + gl_version + std::string(" ") +
+              std::string("\n\n\t") + ext + std::string("\n"));
 #endif
 
   mainProgram =

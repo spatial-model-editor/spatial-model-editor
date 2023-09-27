@@ -72,7 +72,6 @@ void rendering::WireframeObject::UpdateVBOColor() {
                GL_DYNAMIC_DRAW);
   glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, nullptr);
   glEnableVertexAttribArray(1);
-
 }
 
 void rendering::WireframeObject::CreateVBO(void) {

@@ -89,7 +89,6 @@ protected:
   void mousePressEvent(QMouseEvent *event) override;
 
   void wheelEvent(QWheelEvent *event) override;
-
 };
 
 #endif // SPATIALMODELEDITOR_QOPENGLMOUSETRACKER_H

@@ -98,7 +98,7 @@ void rendering::ShaderProgram::Init() {
   glValidateProgram(m_programId);
   glGetProgramiv(m_programId, GL_VALIDATE_STATUS, &succes_Program);
 
-  if(succes_Program==1)
+  if (succes_Program == 1)
     SPDLOG_INFO("The status of the shader program: OK!");
   else
     SPDLOG_ERROR("The status of the shader program: FAIL!");

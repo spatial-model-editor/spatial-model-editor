@@ -9,9 +9,9 @@
 #include <sstream>
 
 #if defined(Q_OS_UNIX) && defined(QT_DEBUG)
-#include <execinfo.h> // for backtrace
-#include <dlfcn.h>    // for dladdr
 #include <cxxabi.h>   // for __cxa_demangle
+#include <dlfcn.h>    // for dladdr
+#include <execinfo.h> // for backtrace
 #endif
 
 #include <cstdio>
@@ -119,9 +119,9 @@ void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type,
 }
 
 #if defined(Q_OS_UNIX) && defined(QT_DEBUG)
-// This function produces a stack backtrace with demangled function & method names.
-std::string rendering::Utils::Backtrace(int skip)
-{
+// This function produces a stack backtrace with demangled function & method
+// names.
+std::string rendering::Utils::Backtrace(int skip) {
   void *callstack[128];
   const int nMaxFrames = sizeof(callstack) / sizeof(callstack[0]);
   char buf[1024];
