@@ -36,13 +36,11 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
   //  format.setProfile(QSurfaceFormat::CoreProfile);
   //  format.setOption(QSurfaceFormat::DebugContext);
   //  setFormat(format);
-
 }
-
 
 void QOpenGLMouseTracker::initializeGL() {
 
-  //glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+  // glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
 #ifdef QT_DEBUG
   // create debug logger
@@ -53,15 +51,15 @@ void QOpenGLMouseTracker::initializeGL() {
     SPDLOG_ERROR("QOpenGLDebugLogger initialized!");
     connect(m_debugLogger, &QOpenGLDebugLogger::messageLogged, this,
             [](const QOpenGLDebugMessage &msg) {
-              rendering::Utils::GLDebugMessageCallback(msg.source(),msg.type(), msg.id(), msg.severity(), msg.message().toStdString().c_str());
+              rendering::Utils::GLDebugMessageCallback(
+                  msg.source(), msg.type(), msg.id(), msg.severity(),
+                  msg.message().toStdString().c_str());
             });
     m_debugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
   }
 #endif
 
-
-  //SPDLOG_ERROR("before asking for opengl GL_EXTENSIONS");
-
+  // SPDLOG_ERROR("before asking for opengl GL_EXTENSIONS");
 
   std::string ext =
       QString::fromLatin1(
@@ -70,33 +68,36 @@ void QOpenGLMouseTracker::initializeGL() {
           .toStdString();
   CheckOpenGLError("glGetString(GL_EXTENSIONS)");
 
-  //SPDLOG_ERROR("before asking for opengl GL_VENDOR, GL_RENDERER and GL_VERSION");
+  // SPDLOG_ERROR("before asking for opengl GL_VENDOR, GL_RENDERER and
+  // GL_VERSION");
 
   std::string vendor((char *)context()->functions()->glGetString(GL_VENDOR));
   CheckOpenGLError("glGetString(GL_VENDOR)");
-  std::string renderer((char *)context()->functions()->glGetString(GL_RENDERER));
+  std::string renderer(
+      (char *)context()->functions()->glGetString(GL_RENDERER));
   CheckOpenGLError("glGetString(GL_RENDERER)");
-  std::string gl_version((char *)context()->functions()->glGetString(GL_VERSION));
+  std::string gl_version(
+      (char *)context()->functions()->glGetString(GL_VERSION));
   CheckOpenGLError("glGetString(GL_VERSION)");
 
-//  SPDLOG_ERROR(
-//      "OpenGL: " +
-//       vendor +
-//      std::string(" ") +
-//      renderer +
-//      std::string(" ") +
-//      gl_version +
-//      std::string(" ") + std::string("\n\n\t") + ext + std::string("\n"));
+  //  SPDLOG_ERROR(
+  //      "OpenGL: " +
+  //       vendor +
+  //      std::string(" ") +
+  //      renderer +
+  //      std::string(" ") +
+  //      gl_version +
+  //      std::string(" ") + std::string("\n\n\t") + ext + std::string("\n"));
 
-//  SPDLOG_ERROR("before compiling the shader");
+  //  SPDLOG_ERROR("before compiling the shader");
 
   mainProgram =
       std::unique_ptr<rendering::ShaderProgram>(new rendering::ShaderProgram(
           rendering::text_vertex, rendering::text_fragment));
 
-//  SPDLOG_ERROR("before calling Use");
+  //  SPDLOG_ERROR("before calling Use");
 
-  //mainProgram->Use();
+  // mainProgram->Use();
 
   setFPS(frameRate);
 }

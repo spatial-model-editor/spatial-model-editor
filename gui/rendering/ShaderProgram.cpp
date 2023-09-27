@@ -97,7 +97,9 @@ void rendering::ShaderProgram::Init() {
   GLint succes_Program;
   glValidateProgram(m_programId);
   glGetProgramiv(m_programId, GL_VALIDATE_STATUS, &succes_Program);
-  SPDLOG_ERROR("The status of the shader program: " + ((succes_Program==1)?std::string("OK!"):std::string("FAIL!")));
+  SPDLOG_ERROR(
+      "The status of the shader program: " +
+      ((succes_Program == 1) ? std::string("OK!") : std::string("FAIL!")));
 #endif
 
   m_rotationLocation = glGetUniformLocation(m_programId, "rotation");

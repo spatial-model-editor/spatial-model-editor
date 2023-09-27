@@ -8,19 +8,18 @@
 #include <iostream>
 #include <sstream>
 
-#include <execinfo.h> // for backtrace
-#include <dlfcn.h>    // for dladdr
 #include <cxxabi.h>   // for __cxa_demangle
+#include <dlfcn.h>    // for dladdr
+#include <execinfo.h> // for backtrace
 
 #include <cstdio>
 #include <cstdlib>
 #include <string>
 
 // Callback function for printing debug statements
-void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
-                            GLenum severity,
-                            const GLchar *msg)
-{
+void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type,
+                                              GLuint id, GLenum severity,
+                                              const GLchar *msg) {
   std::string _source;
   std::string _type;
   std::string _severity;
@@ -111,26 +110,16 @@ void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type, GLuint
     break;
   }
 
-  SPDLOG_ERROR(
-      std::string("id:") +
-      std::to_string(id) +
-      std::string(" type:") +
-      _type +
-      std::string(" severity:") +
-      _severity +
-      std::string(" source:") +
-      _source +
-      std::string(" message:") +
-      msg
-      );
-
+  SPDLOG_ERROR(std::string("id:") + std::to_string(id) + std::string(" type:") +
+               _type + std::string(" severity:") + _severity +
+               std::string(" source:") + _source + std::string(" message:") +
+               msg);
 }
 
-
 #ifdef Q_OS_UNIX
-// This function produces a stack backtrace with demangled function & method names.
-std::string rendering::Utils::Backtrace(int skip)
-{
+// This function produces a stack backtrace with demangled function & method
+// names.
+std::string rendering::Utils::Backtrace(int skip) {
   void *callstack[128];
   const int nMaxFrames = sizeof(callstack) / sizeof(callstack[0]);
   char buf[1024];
@@ -147,15 +136,16 @@ std::string rendering::Utils::Backtrace(int skip)
       int status = -1;
       if (info.dli_sname[0] == '_')
         demangled = abi::__cxa_demangle(info.dli_sname, NULL, 0, &status);
-      snprintf(buf, sizeof(buf), "%-3d %*p %s + %zd\n",
-               i, int(2 + sizeof(void*) * 2), callstack[i],
-               status == 0 ? demangled :
-               info.dli_sname == 0 ? symbols[i] : info.dli_sname,
+      snprintf(buf, sizeof(buf), "%-3d %*p %s + %zd\n", i,
+               int(2 + sizeof(void *) * 2), callstack[i],
+               status == 0           ? demangled
+               : info.dli_sname == 0 ? symbols[i]
+                                     : info.dli_sname,
                (char *)callstack[i] - (char *)info.dli_saddr);
       free(demangled);
     } else {
-      snprintf(buf, sizeof(buf), "%-3d %*p %s\n",
-               i, int(2 + sizeof(void*) * 2), callstack[i], symbols[i]);
+      snprintf(buf, sizeof(buf), "%-3d %*p %s\n", i,
+               int(2 + sizeof(void *) * 2), callstack[i], symbols[i]);
     }
     trace_buf << buf;
   }
@@ -165,10 +155,7 @@ std::string rendering::Utils::Backtrace(int skip)
   return trace_buf.str();
 }
 #else
-std::string Backtrace(int skip = 1)
-{
-  return std::string();
-}
+std::string Backtrace(int skip = 1) { return std::string(); }
 #endif
 
 std::string rendering::Utils::PrintGLErrorDescription(unsigned int glErr) {
@@ -182,10 +169,8 @@ std::string rendering::Utils::PrintGLErrorDescription(unsigned int glErr) {
       "GL_INVALID_FRAMEBUFFER_OPERATION" // 0x0506
   };
 
-  return std::string("\n[OpenGL Error] :") +
-         std::string(" [") +
-         std::to_string(glErr) +
-         std::string("] : ") +
+  return std::string("\n[OpenGL Error] :") + std::string(" [") +
+         std::to_string(glErr) + std::string("] : ") +
          GLerrorDescription[glErr - GL_INVALID_ENUM] + std::string("\n");
 }
 
@@ -222,7 +207,8 @@ void rendering::Utils::TraceGLError(std::string tag, std::string file,
                            std::string("\n[OpenGL command]: ") + tag +
                            std::string("\n");
 
-    SPDLOG_ERROR(std::string("\n---->") + errorMessage + location + GetCallstack(0) + std::string("<----\n"));
+    SPDLOG_ERROR(std::string("\n---->") + errorMessage + location +
+                 GetCallstack(0) + std::string("<----\n"));
   }
 }
 
