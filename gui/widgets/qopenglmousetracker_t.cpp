@@ -55,7 +55,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   // forced windows resize and forced repainting
   test.resize(500, 500);
-  //test.repaint();
+  // test.repaint();
 
   // the corner initial color should be black.
   REQUIRE(blackColor == QcolorSelection);
@@ -68,7 +68,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   // click on image
   sendMouseClick(&test, {40, 40});
-  //test.repaint();
+  // test.repaint();
 
   sendMouseClick(&test, {0, 0});
 
