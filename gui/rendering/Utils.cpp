@@ -19,6 +19,8 @@
 #include <cstdlib>
 #include <string>
 
+
+#ifdef QT_DEBUG
 // Callback function for printing debug statements
 void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type,
                                               GLuint id, GLenum severity,
@@ -153,6 +155,7 @@ void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type,
                std::string(" source:") + _source + std::string(" message:") +
                msg);
 }
+#endif
 
 #if defined(Q_OS_UNIX) && defined(QT_DEBUG)
 // This function produces a stack backtrace with demangled function & method

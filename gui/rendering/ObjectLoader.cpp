@@ -4,7 +4,7 @@
 
 #include "ObjectLoader.hpp"
 
-rendering::SMesh rendering::ObjectLoader::LoadMesh(std::string filename) {
+rendering::SMesh rendering::ObjectLoader::LoadMesh(const std::string& filename) {
   std::ifstream in(filename);
   if (in.fail()) {
     throw std::runtime_error("File not found!");
@@ -25,7 +25,7 @@ rendering::ObjectInfo rendering::ObjectLoader::Load(std::string filename) {
   return Load(mesh);
 }
 
-rendering::ObjectInfo rendering::ObjectLoader::Load(SMesh &mesh) {
+rendering::ObjectInfo rendering::ObjectLoader::Load(const SMesh &mesh) {
   ObjectInfo Obj;
 
   // Get vertices

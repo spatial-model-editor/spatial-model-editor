@@ -35,15 +35,6 @@ public:
   rendering::Vector3 GetForwardVector();
   rendering::Vector3 GetUpVector();
 
-  // Translate Camera - world axis
-  //  void MoveForward(float elapsedTime);
-  //  void MoveBackward(float elapsedTime);
-  //  void MoveRight(float elapsedTime);
-  //  void MoveLeft(float elapsedTime);
-  //  void MoveUp(float elapsedTime);
-  //  void MoveDown(float elapsedTime);
-  //  void MoveInDirection(rendering::Vector3 direction, float elapsedTime);
-
   void UpdateProjection(std::unique_ptr<rendering::ShaderProgram> &program);
   void UpdateView(std::unique_ptr<rendering::ShaderProgram> &program);
 

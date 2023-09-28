@@ -5,7 +5,7 @@
 #include "WireframeObject.hpp"
 
 rendering::WireframeObject::WireframeObject(
-    rendering::ObjectInfo info, QColor color, rendering::SMesh &mesh,
+    const rendering::ObjectInfo& info, QColor color, const rendering::SMesh &mesh,
     QOpenGLWidget *Widget, Vector3 position, Vector3 rotation, Vector3 scale)
     : m_mesh(mesh), m_openGLContext(Widget->context()), m_position(position),
       m_rotation(rotation), m_scale(scale), m_color(color) {
@@ -30,7 +30,8 @@ rendering::WireframeObject::WireframeObject(
                                (uint8_t)m_color.blue(),
                                (uint8_t)m_color.alpha()};
 
-  for (auto v : m_vertices) {
+  for (auto& v : m_vertices) {
+
     auto vArr = v.ToArray();
     m_verticesBuffer.insert(m_verticesBuffer.end(), vArr.begin(), vArr.end());
     m_colorBuffer.insert(m_colorBuffer.end(), cArr.begin(), cArr.end());

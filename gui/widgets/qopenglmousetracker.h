@@ -31,7 +31,7 @@ public:
   rendering::Vector3 GetCameraPosition();
   rendering::Vector3 GetCameraOrientation();
 
-  void addMesh(rendering::SMesh &mesh, QColor color);
+  void addMesh(const rendering::SMesh &mesh, QColor color);
 
   void setFPS(float frameRate);
   void setLineWidth(float lineWidth = 1.0f);

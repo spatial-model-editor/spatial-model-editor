@@ -10,6 +10,7 @@ int main(int argc, char *argv[]) {
   Catch::StringMaker<double>::precision = 25;
   Catch::StringMaker<float>::precision = 25;
 
+#ifdef SME_ENABLE_GUI_TESTS
   QSurfaceFormat format;
   // format.setProfile(QSurfaceFormat::CoreProfile);
   format.setProfile(QSurfaceFormat::CompatibilityProfile);
@@ -28,7 +29,6 @@ int main(int argc, char *argv[]) {
 
   QSurfaceFormat::setDefaultFormat(format);
 
-#ifdef SME_ENABLE_GUI_TESTS
   QApplication a(argc, argv);
 #endif
 

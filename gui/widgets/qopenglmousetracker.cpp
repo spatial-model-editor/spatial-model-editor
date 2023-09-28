@@ -128,20 +128,18 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
 
   bool objectSelected = false;
 
-#ifdef QT_DEBUG
   SPDLOG_INFO("mousePressEvent at: X:" + std::to_string(m_xAtPress) +
               std::string(" Y:") + std::to_string(m_yAtPress));
   SPDLOG_INFO("color :" + color.name().toStdString());
-#endif
+
 
   for (color_mesh &obj : meshSet) {
     if (obj.first == color) {
       obj.second->SetColor(selectedObjectColor);
       objectSelected = true;
       emit mouseClicked(lastColour, obj.second->GetMesh());
-#ifdef QT_DEBUG
+
       SPDLOG_INFO("Object touched!");
-#endif
     }
   }
 
@@ -150,9 +148,8 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
       auto defaultColor = obj.first;
       obj.second->SetColor(defaultColor);
     }
-#ifdef QT_DEBUG
+
     SPDLOG_INFO("Reset state for selected objects to UNSELECTED objects!");
-#endif
   }
 
   update();
@@ -219,7 +216,7 @@ rendering::Vector3 QOpenGLMouseTracker::GetCameraOrientation() {
   return camera.GetRotation();
 }
 
-void QOpenGLMouseTracker::addMesh(rendering::SMesh &mesh, QColor color) {
+void QOpenGLMouseTracker::addMesh(const rendering::SMesh &mesh, QColor color) {
   rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
 
   meshSet.push_back(std::make_pair(

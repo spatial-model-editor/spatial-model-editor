@@ -21,9 +21,7 @@ if(BUILD_TESTING)
   target_link_libraries(
     gui_tests
     PUBLIC gui
-           testlib
-           Qt::OpenGLWidgets
-           Qt6::OpenGL)
+           testlib)
 endif()
 
 add_subdirectory(widgets)

@@ -26,8 +26,8 @@ typedef CGAL::Surface_mesh<Point> SMesh;
 class ObjectLoader {
 public:
   static ObjectInfo Load(std::string filename);
-  static ObjectInfo Load(SMesh &);
-  static SMesh LoadMesh(std::string filename);
+  static ObjectInfo Load(const SMesh &);
+  static SMesh LoadMesh(const std::string& filename);
 };
 
 } // namespace rendering
