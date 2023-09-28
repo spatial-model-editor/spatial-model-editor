@@ -118,7 +118,7 @@ void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type,
   }
 
   switch (severity) {
-    
+
   case QOpenGLDebugMessage::InvalidSeverity:
     _severity = "InvalidSeverity";
     break;
