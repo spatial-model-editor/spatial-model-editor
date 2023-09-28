@@ -27,7 +27,7 @@ class ObjectLoader {
 public:
   static ObjectInfo Load(std::string filename);
   static ObjectInfo Load(const SMesh &);
-  static SMesh LoadMesh(const std::string& filename);
+  static SMesh LoadMesh(const std::string &filename);
 };
 
 } // namespace rendering

@@ -21,7 +21,7 @@ namespace rendering {
 class WireframeObject : protected QOpenGLFunctions {
 
 public:
-  WireframeObject(const rendering::ObjectInfo& info, QColor color,
+  WireframeObject(const rendering::ObjectInfo &info, QColor color,
                   const rendering::SMesh &mesh, QOpenGLWidget *Widget,
                   Vector3 position = rendering::Vector3(0.0f, 0.0f, 0.0f),
                   Vector3 rotation = rendering::Vector3(0.0f, 0.0f, 0.0f),

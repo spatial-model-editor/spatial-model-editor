@@ -132,7 +132,6 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
               std::string(" Y:") + std::to_string(m_yAtPress));
   SPDLOG_INFO("color :" + color.name().toStdString());
 
-
   for (color_mesh &obj : meshSet) {
     if (obj.first == color) {
       obj.second->SetColor(selectedObjectColor);
