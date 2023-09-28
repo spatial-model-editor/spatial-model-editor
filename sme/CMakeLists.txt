@@ -16,6 +16,8 @@ set_target_properties(sme PROPERTIES POSITION_INDEPENDENT_CODE ON)
 target_compile_options(sme
                        PUBLIC $<$<CXX_COMPILER_ID:Clang>:-fsized-deallocation>)
 
+install(TARGETS sme DESTINATION .)
+
 qt_import_plugins(
   sme
   EXCLUDE_BY_TYPE

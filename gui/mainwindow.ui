@@ -594,7 +594,7 @@
      <bool>true</bool>
     </property>
     <property name="text">
-     <string>&amp;DUNE (high quality)</string>
+     <string>&amp;DUNE (FEM)</string>
     </property>
    </action>
    <action name="actionSimTypePixel">
@@ -605,7 +605,7 @@
      <bool>false</bool>
     </property>
     <property name="text">
-     <string>&amp;Pixel (fast but unreliable)</string>
+     <string>&amp;Pixel (FDM)</string>
     </property>
    </action>
   </actiongroup>

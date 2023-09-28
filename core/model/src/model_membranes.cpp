@@ -175,8 +175,6 @@ void ModelMembranes::importMembraneIdsAndNames() {
 }
 
 void ModelMembranes::exportToSBML(const common::VolumeF &voxelSize) {
-  // todo: this uses the x-z face area everywhere (i.e. assumes cubic voxels)
-  double voxelFaceArea{voxelSize.width() * voxelSize.depth()};
   if (sbmlModel == nullptr) {
     SPDLOG_WARN("no sbml model to export to - ignoring");
   }
@@ -200,8 +198,16 @@ void ModelMembranes::exportToSBML(const common::VolumeF &voxelSize) {
       // we set the model units, compartment units are then inferred from that
       comp->unsetUnits();
     }
-    auto nPixels{membranes[static_cast<std::size_t>(i)].getIndexPairs().size()};
-    double area{static_cast<double>(nPixels) * voxelFaceArea};
+    const auto &membrane{membranes[static_cast<std::size_t>(i)]};
+    double area{(static_cast<double>(
+                     membrane.getIndexPairs(geometry::Membrane::X).size()) *
+                 voxelSize.height() * voxelSize.depth()) +
+                (static_cast<double>(
+                     membrane.getIndexPairs(geometry::Membrane::Y).size()) *
+                 voxelSize.width() * voxelSize.depth()) +
+                (static_cast<double>(
+                     membrane.getIndexPairs(geometry::Membrane::Z).size()) *
+                 voxelSize.width() * voxelSize.height())};
     SPDLOG_INFO("  - size: {}", area);
     comp->setSize(area);
     auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(

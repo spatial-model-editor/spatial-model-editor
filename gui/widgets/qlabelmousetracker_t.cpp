@@ -4,7 +4,8 @@
 
 using namespace sme::test;
 
-static const char *tags{"[gui/widgets/qlabelmousetracker][gui/widgets][gui]"};
+static const char *tags{
+    "[qlabelmousetracker][gui/widgets/qlabelmousetracker][gui/widgets][gui]"};
 
 TEST_CASE("QLabelMouseTracker: single pixel, single colour image", tags) {
   QLabelMouseTracker mouseTracker;
@@ -81,85 +82,145 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
   REQUIRE(mouseTracker.getImage()[0].pixel(2, 2) == img.pixel(2, 2));
   int imgDisplaySize = std::min(mouseTracker.width(), mouseTracker.height());
   CAPTURE(imgDisplaySize);
-
   std::vector<QRgb> clicks;
   QObject::connect(&mouseTracker, &QLabelMouseTracker::mouseClicked,
                    [&clicks](QRgb c) { clicks.push_back(c); });
-  REQUIRE(clicks.size() == 0);
-  // mouse click (0,1)
-  // pix (0,0) <-> col2
-  sendMouseMove(&mouseTracker, {99, 99});
-  sendMouseClick(&mouseTracker, {0, 1});
-  REQUIRE(clicks.size() == 1);
-  REQUIRE(clicks.back() == col2);
-  REQUIRE(mouseTracker.getColour() == col2);
 
-  // mouse click (3,7)
-  // pix (0,0) <-> col2
-  sendMouseClick(&mouseTracker, {3, 7});
-  REQUIRE(clicks.size() == 2);
-  REQUIRE(clicks.back() == col2);
-  REQUIRE(mouseTracker.getColour() == col2);
+  SECTION("Resize QLabelMousetracker widget") {
+    REQUIRE(clicks.size() == 0);
+    // mouse click (0,1)
+    // pix (0,0) <-> col2
+    sendMouseMove(&mouseTracker, {99, 99});
+    sendMouseClick(&mouseTracker, {0, 1});
+    REQUIRE(clicks.size() == 1);
+    REQUIRE(clicks.back() == col2);
+    REQUIRE(mouseTracker.getColour() == col2);
 
-  // mouse click (5,44)
-  // pix (0,1) <-> col3
-  sendMouseClick(&mouseTracker,
-                 QPoint(static_cast<int>(0.05 * imgDisplaySize),
-                        static_cast<int>(0.44 * imgDisplaySize)));
-  REQUIRE(clicks.size() == 3);
-  REQUIRE(clicks.back() == col3);
-  REQUIRE(mouseTracker.getColour() == col3);
+    // mouse click (3,7)
+    // pix (0,0) <-> col2
+    sendMouseClick(&mouseTracker, {3, 7});
+    REQUIRE(clicks.size() == 2);
+    REQUIRE(clicks.back() == col2);
+    REQUIRE(mouseTracker.getColour() == col2);
 
-  // mouse click (5,84)
-  // pix (0,2) <-> col3
-  sendMouseClick(&mouseTracker,
-                 QPoint(static_cast<int>(0.05 * imgDisplaySize),
-                        static_cast<int>(0.84 * imgDisplaySize)));
-  REQUIRE(clicks.size() == 4);
-  REQUIRE(clicks.back() == col3);
-  REQUIRE(mouseTracker.getColour() == col3);
+    // mouse click (5,44)
+    // pix (0,1) <-> col3
+    sendMouseClick(&mouseTracker,
+                   QPoint(static_cast<int>(0.05 * imgDisplaySize),
+                          static_cast<int>(0.44 * imgDisplaySize)));
+    REQUIRE(clicks.size() == 3);
+    REQUIRE(clicks.back() == col3);
+    REQUIRE(mouseTracker.getColour() == col3);
 
-  // mouse clicks (99,99), (5,84), (50,50)
-  // pix (2,2),(0,2),(1,1) <-> col1,col3,col4
-  clicks.clear();
-  sendMouseClick(&mouseTracker, {99, 99});
-  sendMouseMove(&mouseTracker, {79, 19});
-  REQUIRE(mouseTracker.getRelativePosition().x() == dbl_approx(2.0 / 3.0));
-  REQUIRE(mouseTracker.getRelativePosition().y() == dbl_approx(0.0));
-  sendMouseClick(&mouseTracker, {5, 84});
-  sendMouseClick(&mouseTracker, {50, 50});
-  REQUIRE(clicks.size() == 3);
-  REQUIRE(clicks[0] == col1);
-  REQUIRE(clicks[1] == col3);
-  REQUIRE(clicks[2] == col4);
-  REQUIRE(mouseTracker.getColour() == col4);
+    // mouse click (5,84)
+    // pix (0,2) <-> col3
+    sendMouseClick(&mouseTracker,
+                   QPoint(static_cast<int>(0.05 * imgDisplaySize),
+                          static_cast<int>(0.84 * imgDisplaySize)));
+    REQUIRE(clicks.size() == 4);
+    REQUIRE(clicks.back() == col3);
+    REQUIRE(mouseTracker.getColour() == col3);
 
-  // resized to 600x600, mouseclick (300,300)
-  // pix (1,1) <-> col4
-  mouseTracker.resize(600, 600);
-  wait();
-  sendMouseClick(&mouseTracker, {300, 300});
-  REQUIRE(clicks.size() == 4);
-  REQUIRE(clicks.back() == col4);
-  REQUIRE(mouseTracker.getColour() == col4);
+    // mouse clicks (99,99), (5,84), (50,50)
+    // pix (2,2),(0,2),(1,1) <-> col1,col3,col4
+    clicks.clear();
+    sendMouseClick(&mouseTracker, {99, 99});
+    sendMouseMove(&mouseTracker, {79, 19});
+    REQUIRE(mouseTracker.getRelativePosition().x() == dbl_approx(2.0 / 3.0));
+    REQUIRE(mouseTracker.getRelativePosition().y() == dbl_approx(0.0));
+    sendMouseClick(&mouseTracker, {5, 84});
+    sendMouseClick(&mouseTracker, {50, 50});
+    REQUIRE(clicks.size() == 3);
+    REQUIRE(clicks[0] == col1);
+    REQUIRE(clicks[1] == col3);
+    REQUIRE(clicks[2] == col4);
+    REQUIRE(mouseTracker.getColour() == col4);
 
-  // resized to 6x6, mouseclick (1,3)
-  // pix (0,1) <-> col3
-  mouseTracker.resize(6, 6);
-  wait();
-  sendMouseClick(&mouseTracker, {1, 3});
-  REQUIRE(clicks.size() == 5);
-  REQUIRE(clicks.back() == col3);
-  REQUIRE(mouseTracker.getColour() == col3);
+    // resized to 600x600, mouseclick (300,300)
+    // pix (1,1) <-> col4
+    mouseTracker.resize(600, 600);
+    wait();
+    sendMouseClick(&mouseTracker, {300, 300});
+    REQUIRE(clicks.size() == 4);
+    REQUIRE(clicks.back() == col4);
+    REQUIRE(mouseTracker.getColour() == col4);
 
-  // resized to 900x3, mouseclick (2,2)
-  // pix (2,0) <-> col1
-  mouseTracker.resize(900, 3);
-  wait();
-  sendMouseClick(&mouseTracker, {2, 2});
-  REQUIRE(clicks.size() == 6);
-  REQUIRE(clicks.back() == col1);
-  REQUIRE(mouseTracker.getColour() == col1);
+    // resized to 6x6, mouseclick (1,3)
+    // pix (0,1) <-> col3
+    mouseTracker.resize(6, 6);
+    wait();
+    sendMouseClick(&mouseTracker, {1, 3});
+    REQUIRE(clicks.size() == 5);
+    REQUIRE(clicks.back() == col3);
+    REQUIRE(mouseTracker.getColour() == col3);
+
+    // resized to 900x3, mouseclick (2,2)
+    // pix (2,0) <-> col1
+    mouseTracker.resize(900, 3);
+    wait();
+    sendMouseClick(&mouseTracker, {2, 2});
+    REQUIRE(clicks.size() == 6);
+    REQUIRE(clicks.back() == col1);
+    REQUIRE(mouseTracker.getColour() == col1);
+  }
+  SECTION("Resize physical volume") {
+    // 100px x 100px mousetracker widget size:
+    // 1:1 aspect ratio physical size
+    mouseTracker.setPhysicalSize({0.77, 0.77, 0.77}, "");
+    // click on middle (1,1) pixel
+    sendMouseClick(&mouseTracker, QPoint(50, 50));
+    REQUIRE(clicks.size() == 1);
+    REQUIRE(clicks.back() == col4);
+    REQUIRE(mouseTracker.getColour() == col4);
+    // 2:1 aspect ratio physical size
+    mouseTracker.setPhysicalSize({2.0, 1.0, 1.0}, "");
+    // click outside geometry
+    sendMouseClick(&mouseTracker, QPoint(50, 52));
+    REQUIRE(clicks.size() == 1);
+    // click on middle (1,1) pixel
+    sendMouseClick(&mouseTracker, QPoint(50, 25));
+    REQUIRE(clicks.size() == 2);
+    REQUIRE(clicks.back() == col4);
+    REQUIRE(mouseTracker.getColour() == col4);
+    // 5:1 aspect ratio physical size
+    mouseTracker.setPhysicalSize({50.0, 10.0, 1.0}, "");
+    // click outside geometry
+    sendMouseClick(&mouseTracker, QPoint(50, 22));
+    REQUIRE(clicks.size() == 2);
+    // click on middle (1,1) pixel
+    sendMouseClick(&mouseTracker, QPoint(50, 10));
+    REQUIRE(clicks.size() == 3);
+    REQUIRE(clicks.back() == col4);
+    REQUIRE(mouseTracker.getColour() == col4);
+    // 1:3 aspect ratio physical size
+    mouseTracker.setPhysicalSize({3.0, 9.0, 1.0}, "");
+    // click outside geometry
+    sendMouseClick(&mouseTracker, QPoint(35, 50));
+    REQUIRE(clicks.size() == 3);
+    // click on middle (1,1) pixel
+    sendMouseClick(&mouseTracker, QPoint(17, 50));
+    REQUIRE(clicks.size() == 4);
+    REQUIRE(clicks.back() == col4);
+    REQUIRE(mouseTracker.getColour() == col4);
+    // 1:100000 aspect ratio physical size: display width clipped to single
+    // pixel
+    mouseTracker.setPhysicalSize({1.0, 100000.0, 1.0}, "");
+    // click outside geometry
+    sendMouseClick(&mouseTracker, QPoint(3, 50));
+    REQUIRE(clicks.size() == 4);
+    // click on geometry
+    sendMouseClick(&mouseTracker, QPoint(0, 50));
+    REQUIRE(clicks.size() == 5);
+    // 100000:1 aspect ratio physical size: display height clipped to single
+    // pixel
+    mouseTracker.setPhysicalSize({100000.0, 1.0, 1.0}, "");
+    // click outside geometry
+    sendMouseClick(&mouseTracker, QPoint(50, 3));
+    REQUIRE(clicks.size() == 5);
+    // click on geometry
+    sendMouseClick(&mouseTracker, QPoint(50, 0));
+    REQUIRE(clicks.size() == 6);
+  }
 }
 
 TEST_CASE("QLabelMouseTracker: image and mask", tags) {

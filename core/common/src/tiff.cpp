@@ -16,7 +16,8 @@ constexpr TiffDataType TiffDataTypeMaxValue =
     std::numeric_limits<TiffDataType>::max();
 
 double writeTIFF(const std::string &filename, const QSize &imageSize,
-                 const std::vector<double> &conc, double pixelWidth) {
+                 const std::vector<double> &conc,
+                 const sme::common::VolumeF &voxelSize) {
   // todo: add ORIGIN to TIFF file!
   SPDLOG_TRACE("found {} concentration values", conc.size());
   double maxConc = *std::max_element(conc.cbegin(), conc.cend());
@@ -66,8 +67,8 @@ double writeTIFF(const std::string &filename, const QSize &imageSize,
   TIFFSetField(tif, TIFFTAG_RESOLUTIONUNIT, RESUNIT_CENTIMETER);
   // NB: factor to convert from pixel location to physical location
   // pixelX = TIFFTAG_XRESOLUTION * physicalX, etc.
-  TIFFSetField(tif, TIFFTAG_XRESOLUTION, 1.0 / pixelWidth);
-  TIFFSetField(tif, TIFFTAG_YRESOLUTION, 1.0 / pixelWidth);
+  TIFFSetField(tif, TIFFTAG_XRESOLUTION, 1.0 / voxelSize.width());
+  TIFFSetField(tif, TIFFTAG_YRESOLUTION, 1.0 / voxelSize.height());
   // NB: location of (0,0) pixel
   TIFFSetField(tif, TIFFTAG_XPOSITION, 0.0);
   TIFFSetField(tif, TIFFTAG_YPOSITION, 0.0);

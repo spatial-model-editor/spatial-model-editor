@@ -66,8 +66,9 @@ private:
   std::vector<double> dcdt;
   std::vector<double> s2;
   std::vector<double> s3;
-  // dimensionless diffusion constants for each species
-  std::vector<double> diffConstants;
+  // dimensionless diffusion constants in x,y,z directions for each species
+  // i.e. [{D/dx^2, D/dy^2, D/dz^2}, {}, .. ]
+  std::vector<std::array<double, 3>> diffConstants;
   const geometry::Compartment *comp;
   std::size_t nPixels;
   std::size_t nSpecies;
@@ -139,6 +140,7 @@ private:
   const geometry::Membrane *membrane;
   SimCompartment *compA;
   SimCompartment *compB;
+  common::VolumeF voxelSize{};
   std::size_t nExtraVars{0};
 
 public:

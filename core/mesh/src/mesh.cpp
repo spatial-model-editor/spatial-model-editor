@@ -19,7 +19,8 @@ namespace sme::mesh {
 
 QPointF
 Mesh::pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept {
-  return pixelPoint * pixel + origin;
+  return origin + QPointF(pixelPoint.x() * pixel.width(),
+                          pixelPoint.y() * pixel.height());
 }
 
 Mesh::Mesh() = default;
@@ -29,7 +30,8 @@ Mesh::Mesh(const QImage &image, std::vector<std::size_t> maxPoints,
            const common::VolumeF &voxelSize, const common::VoxelF &originPoint,
            const std::vector<QRgb> &compartmentColours,
            std::size_t boundarySimplificationType)
-    : img(image), origin(originPoint.p), pixel(voxelSize.width()),
+    : img(image), origin(originPoint.p),
+      pixel(voxelSize.width(), voxelSize.height()),
       boundaryMaxPoints(std::move(maxPoints)),
       compartmentMaxTriangleArea(std::move(maxTriangleArea)),
       boundaries{std::make_unique<Boundaries>(image, compartmentColours,
@@ -131,9 +133,10 @@ Mesh::getCompartmentInteriorPoints() const {
   return compartmentInteriorPoints;
 }
 
-void Mesh::setPhysicalGeometry(double pixelWidth, const QPointF &originPoint) {
-  pixel = pixelWidth;
-  origin = originPoint;
+void Mesh::setPhysicalGeometry(const common::VolumeF &voxelSize,
+                               const common::VoxelF &originPoint) {
+  pixel = {voxelSize.width(), voxelSize.height()};
+  origin = originPoint.p;
 }
 
 std::vector<double> Mesh::getVerticesAsFlatArray() const {
@@ -198,13 +201,23 @@ void Mesh::constructMesh() {
   }
 }
 
-static double getScaleFactor(const QImage &img, const QSize &size,
-                             const QPointF &offset) {
-  auto Swidth = static_cast<double>(size.width()) - 2 * offset.x();
-  auto Sheight = static_cast<double>(size.height()) - 2 * offset.y();
-  auto Iwidth = static_cast<double>(img.width());
-  auto Iheight = static_cast<double>(img.height());
-  return std::min(Swidth / Iwidth, Sheight / Iheight);
+static QPointF getScaleFactor(const QImage &img, const QSizeF &pixel,
+                              const QSize &displaySize, const QPointF &offset) {
+  auto displayWidth{static_cast<double>(displaySize.width()) - 2 * offset.x()};
+  auto displayHeight{static_cast<double>(displaySize.height()) -
+                     2 * offset.y()};
+  double displayAspectRatio{displayWidth / displayHeight};
+  double physicalAspectRatio{(img.width() * pixel.width()) /
+                             (img.height() * pixel.height())};
+  if (displayAspectRatio > physicalAspectRatio) {
+    return {displayHeight * physicalAspectRatio /
+                static_cast<double>(img.width()),
+            displayHeight / static_cast<double>(img.height())};
+  }
+  return {
+      displayWidth / static_cast<double>(img.width()),
+      displayWidth / physicalAspectRatio / static_cast<double>(img.height()),
+  };
 }
 
 std::pair<common::ImageStack, common::ImageStack>
@@ -214,12 +227,12 @@ Mesh::getBoundariesImages(const QSize &size,
   constexpr int boldPenSize = 5;
   constexpr int maskPenSize = 15;
   QPointF offset(5.0, 5.0);
-  double scaleFactor = getScaleFactor(img, size, offset);
+  auto scaleFactor{getScaleFactor(img, pixel, size, offset)};
 
   // construct boundary image
   common::ImageStack boundaryImage(
-      {static_cast<int>(scaleFactor * img.width() + 2 * offset.x()),
-       static_cast<int>(scaleFactor * img.height() + 2 * offset.y()), 1},
+      {static_cast<int>(scaleFactor.x() * img.width() + 2 * offset.x()),
+       static_cast<int>(scaleFactor.y() * img.height() + 2 * offset.y()), 1},
       QImage::Format_ARGB32_Premultiplied);
   boundaryImage.fill(qRgba(0, 0, 0, 0));
 
@@ -243,19 +256,17 @@ Mesh::getBoundariesImages(const QSize &size,
     }
     painter.setPen(QPen(common::indexedColours()[k], penSize));
     pMask.setPen(QPen(QColor(0, 0, static_cast<int>(k)), maskPenSize));
-    for (std::size_t i = 0; i < points.size() - 1; ++i) {
-      auto p1 = points[i] * scaleFactor + offset;
-      auto p2 = points[i + 1] * scaleFactor + offset;
+    for (std::size_t i = 0; i < points.size(); ++i) {
+      QPointF p1(points[i].x() * scaleFactor.x() + offset.x(),
+                 points[i].y() * scaleFactor.y() + offset.y());
+      auto after_i{i < points.size() - 1 ? i + 1 : 0};
+      QPointF p2(points[after_i].x() * scaleFactor.x() + offset.x(),
+                 points[after_i].y() * scaleFactor.y() + offset.y());
       painter.drawEllipse(p1, penSize, penSize);
-      painter.drawLine(p1, p2);
-      pMask.drawLine(p1, p2);
-    }
-    painter.drawEllipse(points.back() * scaleFactor + offset, penSize, penSize);
-    if (boundaries->getBoundaries()[k].isLoop()) {
-      auto p1 = points.back() * scaleFactor + offset;
-      auto p2 = points.front() * scaleFactor + offset;
-      painter.drawLine(p1, p2);
-      pMask.drawLine(p1, p2);
+      if (i < points.size() - 1 || boundaries->getBoundaries()[k].isLoop()) {
+        painter.drawLine(p1, p2);
+        pMask.drawLine(p1, p2);
+      }
     }
   }
   painter.end();
@@ -271,11 +282,11 @@ Mesh::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
   std::pair<common::ImageStack, common::ImageStack> imgPair;
   auto &[meshImage, maskImage] = imgPair;
   QPointF offset(5.0, 5.0);
-  double scaleFactor = getScaleFactor(img, size, offset);
+  auto scaleFactor{getScaleFactor(img, pixel, size, offset)};
   // construct mesh image
   meshImage = common::ImageStack(
-      {static_cast<int>(scaleFactor * img.width() + 2 * offset.x()),
-       static_cast<int>(scaleFactor * img.height() + 2 * offset.y()), 1},
+      {static_cast<int>(scaleFactor.x() * img.width() + 2 * offset.x()),
+       static_cast<int>(scaleFactor.y() * img.height() + 2 * offset.y()), 1},
       QImage::Format_ARGB32_Premultiplied);
   meshImage.fill(0);
   // construct mask image
@@ -301,7 +312,8 @@ Mesh::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
     for (const auto &t : triangles[k]) {
       std::array<QPointF, 3> points;
       for (std::size_t i = 0; i < 3; ++i) {
-        points[i] = t[i] * scaleFactor + offset;
+        points[i].rx() = t[i].x() * scaleFactor.x() + offset.x();
+        points[i].ry() = t[i].y() * scaleFactor.y() + offset.y();
       }
       p.drawConvexPolygon(points.data(), 3);
       pMask.drawConvexPolygon(points.data(), 3);
@@ -311,7 +323,8 @@ Mesh::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
   // draw vertices
   p.setPen(QPen(Qt::red, 3));
   for (const auto &v : vertices) {
-    p.drawPoint(v * scaleFactor + offset);
+    p.drawPoint(QPointF(v.x() * scaleFactor.x() + offset.x(),
+                        v.y() * scaleFactor.y() + offset.y()));
   }
   p.end();
   meshImage.flipYAxis();

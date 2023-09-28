@@ -4,7 +4,7 @@
 
 set -e -x
 
-PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.10.*)
+PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.11.*)
 export PATH="$PYDIR/x64:$PYDIR/x64/Scripts:$PATH"
 echo "PATH=$PATH"
 
@@ -15,10 +15,11 @@ export SME_EXTRA_EXE_LIBS="-static;-static-libgcc;-static-libstdc++"
 # used to be opt-in, done by default for Qt >= 6.1.2 see
 # https://codereview.qt-project.org/c/qt/qtbase/+/350443
 export SME_QT_DISABLE_UNICODE=TRUE
+export SME_EXTRA_CORE_DEFS="_hypot=hypot;MS_WIN64"
 # disable this for now due to "terminate called after throwing an instance of 'core::Error'"
-#export CMAKE_CXX_COMPILER_LAUNCHER=ccache
-export CCACHE_NOHASHDIR="true"
-export SME_BUILD_CORE=off
+#export CCACHE_NOHASHDIR="true"
+
+export CMAKE_ARGS="-DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH -DSME_BUILD_CORE=off -DSME_QT_DISABLE_UNICODE=$SME_QT_DISABLE_UNICODE -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER"
 pwd
 which g++
 g++ --version
@@ -28,7 +29,7 @@ which python
 python --version
 
 # disable this for now due to "terminate called after throwing an instance of 'core::Error'"
-#ccache -s
+ccache -s
 
 # Remove CLI11 symlink to itself (causes recursive copying of folders on windows)
 rm -rf ext/CLI11/tests/mesonTest/subprojects/*
@@ -60,4 +61,4 @@ python -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
 python -m cibuildwheel --output-dir wheelhouse
 
 # disable this for now due to "terminate called after throwing an instance of 'core::Error'"
-#ccache -s
+ccache -s
