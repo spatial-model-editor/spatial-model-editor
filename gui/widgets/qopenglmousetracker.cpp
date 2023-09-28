@@ -129,7 +129,8 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
   bool objectSelected = false;
 
 #ifdef QT_DEBUG
-  SPDLOG_INFO("mousePressEvent at: X:" + std::to_string(m_xAtPress) + std::string(" Y:") + std::to_string(m_yAtPress) );
+  SPDLOG_INFO("mousePressEvent at: X:" + std::to_string(m_xAtPress) +
+              std::string(" Y:") + std::to_string(m_yAtPress));
   SPDLOG_INFO("color :" + color.name().toStdString());
 #endif
 
