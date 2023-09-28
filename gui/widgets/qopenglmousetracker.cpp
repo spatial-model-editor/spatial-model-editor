@@ -123,17 +123,24 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
   m_xAtPress = std::clamp(m_xAtPress, 0, offscreenPickingImage.width() - 1);
   m_yAtPress = std::clamp(m_yAtPress, 0, offscreenPickingImage.height() - 1);
 
-  QRgb pixel = offscreenPickingImage.pixel(m_xAtPress, m_yAtPress);
-  QColor color(pixel);
+  lastColour = offscreenPickingImage.pixel(m_xAtPress, m_yAtPress);
+  QColor color(lastColour);
 
   bool objectSelected = false;
+
+#ifdef QT_DEBUG
+  SPDLOG_INFO("mousePressEvent at: X:" + std::to_string(m_xAtPress) + std::string(" Y:") + std::to_string(m_yAtPress) );
+  SPDLOG_INFO("color :" + color.name().toStdString());
+#endif
 
   for (color_mesh &obj : meshSet) {
     if (obj.first == color) {
       obj.second->SetColor(selectedObjectColor);
       objectSelected = true;
-      lastColour = pixel;
-      emit mouseClicked(pixel, obj.second->GetMesh());
+      emit mouseClicked(lastColour, obj.second->GetMesh());
+#ifdef QT_DEBUG
+      SPDLOG_INFO("Object touched!");
+#endif
     }
   }
 
@@ -142,6 +149,9 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
       auto defaultColor = obj.first;
       obj.second->SetColor(defaultColor);
     }
+#ifdef QT_DEBUG
+    SPDLOG_INFO("Reset state for selected objects to UNSELECTED objects!");
+#endif
   }
 
   update();
