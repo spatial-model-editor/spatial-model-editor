@@ -24,12 +24,12 @@ export CXX=clang++
 mkdir build
 cd build
 cmake .. \
-    -DCMAKE_BUILD_TYPE=Debug \
+    -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
     -DSME_EXTRA_GUI_LIBS=$SME_EXTRA_GUI_LIBS \
-    -DSME_LOG_LEVEL=TRACE \
+    -DSME_LOG_LEVEL=OFF \
     -DOpenGL_GL_PREFERENCE=LEGACY
 make -j2 VERBOSE=1
 ccache --show-stats

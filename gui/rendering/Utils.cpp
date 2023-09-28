@@ -156,7 +156,7 @@ void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type,
 
 #if defined(Q_OS_UNIX) && defined(QT_DEBUG)
 // This function produces a stack backtrace with demangled function & method
-// names.
+// names. require -rdynamic linker option.
 std::string rendering::Utils::Backtrace(int skip) {
   void *callstack[128];
   const int nMaxFrames = sizeof(callstack) / sizeof(callstack[0]);
