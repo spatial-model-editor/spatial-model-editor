@@ -53,7 +53,7 @@ void QOpenGLMouseTracker::initializeGL() {
   std::string gl_version(
       (char *)context()->functions()->glGetString(GL_VERSION));
   CheckOpenGLError("glGetString(GL_VERSION)");
-
+  
   SPDLOG_INFO(
       "OpenGL: " +
       vendor +
