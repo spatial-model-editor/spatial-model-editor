@@ -6,8 +6,8 @@
 
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <qopengldebug.h>
+#include <sstream>
 
 #if defined(Q_OS_UNIX) && defined(QT_DEBUG)
 #include <cxxabi.h>   // for __cxa_demangle
@@ -57,9 +57,9 @@ void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type,
     _source = "OtherSource";
     break;
 
-//  case QOpenGLDebugMessage::LastSource:
-//    _source = "LastSource";
-//    break;
+    //  case QOpenGLDebugMessage::LastSource:
+    //    _source = "LastSource";
+    //    break;
 
   default:
     _source = "UNKNOWN";
@@ -76,11 +76,11 @@ void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type,
     _type = "ErrorType";
     break;
 
-  case QOpenGLDebugMessage::DeprecatedBehaviorType :
+  case QOpenGLDebugMessage::DeprecatedBehaviorType:
     _type = "DeprecatedBehaviorType";
     break;
 
-  case QOpenGLDebugMessage::UndefinedBehaviorType :
+  case QOpenGLDebugMessage::UndefinedBehaviorType:
     _type = "UndefinedBehaviorType";
     break;
 
@@ -108,9 +108,9 @@ void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type,
     _type = "GroupPopType";
     break;
 
-//  case QOpenGLDebugMessage::LastType:
-//    _type = "LastType";
-//    break;
+    //  case QOpenGLDebugMessage::LastType:
+    //    _type = "LastType";
+    //    break;
 
   default:
     _type = "UNKNOWN";
@@ -139,9 +139,9 @@ void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type,
     _severity = "NotificationSeverity";
     break;
 
-//  case QOpenGLDebugMessage::LastSeverity:
-//    _severity = "LastSeverity";
-//    break;
+    //  case QOpenGLDebugMessage::LastSeverity:
+    //    _severity = "LastSeverity";
+    //    break;
 
   default:
     _severity = "UNKNOWN";

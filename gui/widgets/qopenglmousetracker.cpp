@@ -23,7 +23,9 @@ void QOpenGLMouseTracker::initializeGL() {
 
 #ifdef QT_DEBUG
 
-  SPDLOG_INFO("GL_KHR_debug extension available: " + std::to_string(context()->hasExtension(QByteArrayLiteral("GL_KHR_debug"))) );
+  SPDLOG_INFO("GL_KHR_debug extension available: " +
+              std::to_string(
+                  context()->hasExtension(QByteArrayLiteral("GL_KHR_debug"))));
 
   // create debug logger
   m_debugLogger = new QOpenGLDebugLogger(this);
@@ -38,8 +40,7 @@ void QOpenGLMouseTracker::initializeGL() {
                   msg.message().toStdString().c_str());
             });
     m_debugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
-  }
-  else {
+  } else {
     SPDLOG_INFO("QOpenGLDebugLogger was NOT initialized!");
   }
 
@@ -60,15 +61,10 @@ void QOpenGLMouseTracker::initializeGL() {
   std::string gl_version(
       (char *)context()->functions()->glGetString(GL_VERSION));
   CheckOpenGLError("glGetString(GL_VERSION)");
-  
-  SPDLOG_INFO(
-      "OpenGL: " +
-      vendor +
-      std::string(" ") +
-      renderer +
-      std::string(" ") +
-      gl_version +
-      std::string(" ") + std::string("\n\n\t") + ext + std::string("\n"));
+
+  SPDLOG_INFO("OpenGL: " + vendor + std::string(" ") + renderer +
+              std::string(" ") + gl_version + std::string(" ") +
+              std::string("\n\n\t") + ext + std::string("\n"));
 
   mainProgram =
       std::unique_ptr<rendering::ShaderProgram>(new rendering::ShaderProgram(
