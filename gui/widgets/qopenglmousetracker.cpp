@@ -22,6 +22,9 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
 void QOpenGLMouseTracker::initializeGL() {
 
 #ifdef QT_DEBUG
+
+  SPDLOG_INFO("GL_KHR_debug extension available: " + std::to_string(context()->hasExtension(QByteArrayLiteral("GL_KHR_debug"))) );
+
   // create debug logger
   m_debugLogger = new QOpenGLDebugLogger(this);
 
@@ -36,6 +39,10 @@ void QOpenGLMouseTracker::initializeGL() {
             });
     m_debugLogger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
   }
+  else {
+    SPDLOG_INFO("QOpenGLDebugLogger was NOT initialized!");
+  }
+
 #endif
 
   std::string ext =
@@ -53,7 +60,7 @@ void QOpenGLMouseTracker::initializeGL() {
   std::string gl_version(
       (char *)context()->functions()->glGetString(GL_VERSION));
   CheckOpenGLError("glGetString(GL_VERSION)");
-  
+
   SPDLOG_INFO(
       "OpenGL: " +
       vendor +

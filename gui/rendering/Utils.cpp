@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <qopengldebug.h>
 
 #if defined(Q_OS_UNIX) && defined(QT_DEBUG)
 #include <cxxabi.h>   // for __cxa_demangle
@@ -27,29 +28,38 @@ void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type,
   std::string _severity;
 
   switch (source) {
-  case GL_DEBUG_SOURCE_API:
-    _source = "API";
+
+  case QOpenGLDebugMessage::InvalidSource:
+    _source = "InvalidSource";
     break;
 
-  case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
-    _source = "WINDOW SYSTEM";
+  case QOpenGLDebugMessage::APISource:
+    _source = "APISource";
     break;
 
-  case GL_DEBUG_SOURCE_SHADER_COMPILER:
-    _source = "SHADER COMPILER";
+  case QOpenGLDebugMessage::WindowSystemSource:
+    _source = "WindowSystemSource";
     break;
 
-  case GL_DEBUG_SOURCE_THIRD_PARTY:
-    _source = "THIRD PARTY";
+  case QOpenGLDebugMessage::ShaderCompilerSource:
+    _source = "ShaderCompilerSource";
     break;
 
-  case GL_DEBUG_SOURCE_APPLICATION:
-    _source = "APPLICATION";
+  case QOpenGLDebugMessage::ThirdPartySource:
+    _source = "ThirdPartySource";
     break;
 
-  case GL_DEBUG_SOURCE_OTHER:
-    _source = "UNKNOWN";
+  case QOpenGLDebugMessage::ApplicationSource:
+    _source = "ApplicationSource";
     break;
+
+  case QOpenGLDebugMessage::OtherSource:
+    _source = "OtherSource";
+    break;
+
+//  case QOpenGLDebugMessage::LastSource:
+//    _source = "LastSource";
+//    break;
 
   default:
     _source = "UNKNOWN";
@@ -57,33 +67,50 @@ void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type,
   }
 
   switch (type) {
-  case GL_DEBUG_TYPE_ERROR:
-    _type = "ERROR";
+
+  case QOpenGLDebugMessage::InvalidType:
+    _type = "InvalidType";
     break;
 
-  case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
-    _type = "DEPRECATED BEHAVIOR";
+  case QOpenGLDebugMessage::ErrorType:
+    _type = "ErrorType";
     break;
 
-  case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
-    _type = "UDEFINED BEHAVIOR";
+  case QOpenGLDebugMessage::DeprecatedBehaviorType :
+    _type = "DeprecatedBehaviorType";
     break;
 
-  case GL_DEBUG_TYPE_PORTABILITY:
-    _type = "PORTABILITY";
+  case QOpenGLDebugMessage::UndefinedBehaviorType :
+    _type = "UndefinedBehaviorType";
     break;
 
-  case GL_DEBUG_TYPE_PERFORMANCE:
-    _type = "PERFORMANCE";
+  case QOpenGLDebugMessage::PortabilityType:
+    _type = "PortabilityType";
     break;
 
-  case GL_DEBUG_TYPE_OTHER:
-    _type = "OTHER";
+  case QOpenGLDebugMessage::PerformanceType:
+    _type = "PerformanceType";
     break;
 
-  case GL_DEBUG_TYPE_MARKER:
-    _type = "MARKER";
+  case QOpenGLDebugMessage::OtherType:
+    _type = "OtherType";
     break;
+
+  case QOpenGLDebugMessage::MarkerType:
+    _type = "MarkerType";
+    break;
+
+  case QOpenGLDebugMessage::GroupPushType:
+    _type = "GroupPushType";
+    break;
+
+  case QOpenGLDebugMessage::GroupPopType:
+    _type = "GroupPopType";
+    break;
+
+//  case QOpenGLDebugMessage::LastType:
+//    _type = "LastType";
+//    break;
 
   default:
     _type = "UNKNOWN";
@@ -91,21 +118,30 @@ void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type,
   }
 
   switch (severity) {
-  case GL_DEBUG_SEVERITY_HIGH:
-    _severity = "HIGH";
+    
+  case QOpenGLDebugMessage::InvalidSeverity:
+    _severity = "InvalidSeverity";
     break;
 
-  case GL_DEBUG_SEVERITY_MEDIUM:
-    _severity = "MEDIUM";
+  case QOpenGLDebugMessage::HighSeverity:
+    _severity = "HighSeverity";
     break;
 
-  case GL_DEBUG_SEVERITY_LOW:
-    _severity = "LOW";
+  case QOpenGLDebugMessage::MediumSeverity:
+    _severity = "MediumSeverity";
     break;
 
-  case GL_DEBUG_SEVERITY_NOTIFICATION:
-    _severity = "NOTIFICATION";
+  case QOpenGLDebugMessage::LowSeverity:
+    _severity = "LowSeverity";
     break;
+
+  case QOpenGLDebugMessage::NotificationSeverity:
+    _severity = "NotificationSeverity";
+    break;
+
+//  case QOpenGLDebugMessage::LastSeverity:
+//    _severity = "LastSeverity";
+//    break;
 
   default:
     _severity = "UNKNOWN";
