@@ -13,9 +13,11 @@ using namespace sme::test;
 
 #include "sme/logger.hpp"
 
-// static const char
-// *tags{"[gui/widgets/QOpenGLMouseTracker][gui/widgets][gui]"};
-static const char *tags{"[gui/widgets/QOpenGLMouseTracker][gui]"};
+#if defined(Q_OS_WIN) || defined(Q_OS_UNIX)
+static const char *tags{"[gui/widgets/QOpenGLMouseTracker][gui][opengl]"};
+#else
+static const char *tags{"[gui/widgets/QOpenGLMouseTracker][gui][~opengl]"};
+#endif
 
 TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
