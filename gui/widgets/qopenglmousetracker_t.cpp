@@ -53,6 +53,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       QDir::current().filePath("tmp_teapot.ply").toStdString());
   test.addMesh(teapotMesh, blueColor);
 
+  wait(100000000);
+
   auto QcolorSelection = QColor(test.getColour());
 
   // forced windows resize and forced repainting
