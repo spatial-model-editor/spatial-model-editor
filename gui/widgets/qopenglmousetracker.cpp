@@ -117,6 +117,8 @@ void QOpenGLMouseTracker::SetCameraFrustum(GLfloat FOV, GLfloat width,
 
 void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
 
+  repaint();
+
   m_xAtPress = event->position().x();
   m_yAtPress = event->position().y();
 
@@ -151,8 +153,6 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
 
     SPDLOG_INFO("Reset state for selected objects to UNSELECTED objects!");
   }
-
-  update();
 }
 
 void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
@@ -175,6 +175,8 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
                        cameraOrientation.y + x_len * (1 / frameRate),
                        cameraOrientation.z);
 
+  repaint();
+
   QRgb pixel = offscreenPickingImage.pixel(xAtPress, yAtPress);
   QColor color(pixel);
 
@@ -183,8 +185,6 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
       emit mouseOver(obj.second->GetMesh());
     }
   }
-
-  update();
 }
 
 void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
@@ -197,7 +197,7 @@ void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
 
   emit mouseWheelEvent(event);
 
-  update();
+  repaint();
 }
 
 void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z) {
