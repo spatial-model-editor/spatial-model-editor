@@ -4,7 +4,8 @@
 
 #include "ObjectLoader.hpp"
 
-rendering::SMesh rendering::ObjectLoader::LoadMesh(const std::string& filename) {
+rendering::SMesh
+rendering::ObjectLoader::LoadMesh(const std::string &filename) {
   std::ifstream in(filename);
   if (in.fail()) {
     throw std::runtime_error("File not found!");

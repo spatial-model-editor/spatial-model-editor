@@ -18,10 +18,7 @@ target_link_libraries(gui PUBLIC qcustomplot::qcustomplot)
 
 if(BUILD_TESTING)
   target_sources(gui_tests PUBLIC mainwindow_t.cpp guiutils_t.cpp)
-  target_link_libraries(
-    gui_tests
-    PUBLIC gui
-           testlib)
+  target_link_libraries(gui_tests PUBLIC gui testlib)
 endif()
 
 add_subdirectory(widgets)

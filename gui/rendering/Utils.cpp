@@ -19,7 +19,6 @@
 #include <cstdlib>
 #include <string>
 
-
 #ifdef QT_DEBUG
 // Callback function for printing debug statements
 void rendering::Utils::GLDebugMessageCallback(GLenum source, GLenum type,
