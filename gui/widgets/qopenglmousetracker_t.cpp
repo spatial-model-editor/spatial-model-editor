@@ -4,6 +4,9 @@
 
 #include "catch_wrapper.hpp"
 #include "qt_test_utils.hpp"
+#include <QLabel>
+#include <QObject>
+#include <QTimer>
 
 #include "rendering/rendering.hpp"
 
@@ -22,6 +25,17 @@ static const char *tags{"[gui/widgets/QOpenGLMouseTracker][gui][~opengl]"};
 TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   QOpenGLMouseTracker test = QOpenGLMouseTracker();
+  QLabel img{};
+  img.resize(500, 500);
+  img.show();
+
+  QTimer timer{};
+
+  QObject::connect(&timer, &QTimer::timeout, [&img, &test]() {
+    img.resize(test.offscreenPickingImage.size());
+    img.setPixmap(QPixmap::fromImage(test.offscreenPickingImage));
+  });
+  timer.start(1000);
 
   QColor redColor = QColor(255, 0, 0);
   QColor blueColor = QColor(0, 0, 255);
@@ -52,6 +66,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   rendering::SMesh teapotMesh = rendering::ObjectLoader::LoadMesh(
       QDir::current().filePath("tmp_teapot.ply").toStdString());
   test.addMesh(teapotMesh, blueColor);
+
+  img.setPixmap(QPixmap::fromImage(test.offscreenPickingImage));
 
   wait(100000000);
 

@@ -43,6 +43,7 @@ public:
 
   // colour of pixel at last mouse click position
   [[nodiscard]] const QRgb &getColour() const;
+  QImage offscreenPickingImage;
 
 signals:
   void mouseClicked(QRgb color, rendering::SMesh mesh);
@@ -70,8 +71,6 @@ protected:
 
   std::unique_ptr<rendering::ShaderProgram> mainProgram;
   rendering::Camera camera;
-
-  QImage offscreenPickingImage;
 
   int m_xAtPress;
   int m_yAtPress;
