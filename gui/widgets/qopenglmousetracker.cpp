@@ -96,6 +96,7 @@ void QOpenGLMouseTracker::paintGL() {
 
   QOpenGLFramebufferObject fboPicking(size());
   fboPicking.bind();
+  glViewport(0, 0, size().width(), size().height());
 
   renderScene(lineSelectPrecision);
 
