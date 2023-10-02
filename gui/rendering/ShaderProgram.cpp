@@ -29,7 +29,7 @@ rendering::ShaderProgram::ShaderProgram(std::string vertexShaderFileName,
 void rendering::ShaderProgram::Init() {
   m_vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
   CheckOpenGLError("glCreateShader");
-  char* vertexShaderText = m_vertexShaderText.data();
+  char *vertexShaderText = m_vertexShaderText.data();
   glShaderSource(m_vertexShaderId, 1, (const char **)&vertexShaderText,
                  nullptr);
   CheckOpenGLError("glShaderSource");
