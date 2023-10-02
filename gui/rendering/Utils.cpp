@@ -253,7 +253,7 @@ void rendering::Utils::TraceGLError(std::string tag, std::string file,
   }
 }
 
-std::string rendering::Utils::LoadFile(std::string filename) {
+std::string rendering::Utils::LoadFile(std::string& filename) {
 
   std::stringstream buffer;
 

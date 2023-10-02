@@ -36,11 +36,11 @@ public:
   rendering::Vector3 GetUpVector();
 
   void UpdateProjection(std::unique_ptr<rendering::ShaderProgram> &program);
-  void UpdateView(std::unique_ptr<rendering::ShaderProgram> &program);
+  void UpdateView(std::unique_ptr<rendering::ShaderProgram> &program) const;
 
-  GLfloat getNear();
-  GLfloat getFar();
-  GLfloat getFOV();
+  GLfloat getNear() const;
+  GLfloat getFar() const;
+  GLfloat getFOV() const;
 
 private:
   GLfloat m_aspectRatio;

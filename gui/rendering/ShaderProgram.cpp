@@ -7,22 +7,18 @@
 #include "Utils.hpp"
 
 rendering::ShaderProgram::ShaderProgram(const char *vertexProgram,
-                                        const char *fragmentProgram) {
+                                        const char *fragmentProgram)
+    : m_vertexShaderText(vertexProgram), m_fragmentShaderText(fragmentProgram) {
+
   QOpenGLFunctions::initializeOpenGLFunctions();
-
-  m_vertexShaderText = std::string(vertexProgram);
-  m_fragmentShaderText = std::string(fragmentProgram);
-
   Init();
 }
 
-rendering::ShaderProgram::ShaderProgram(std::string vertexShaderFileName,
-                                        std::string fragmentShaderFileName) {
+rendering::ShaderProgram::ShaderProgram(std::string& vertexShaderFileName,
+                                        std::string& fragmentShaderFileName)
+    :m_vertexShaderText(vertexShaderFileName), m_fragmentShaderText(fragmentShaderFileName) {
+
   QOpenGLFunctions::initializeOpenGLFunctions();
-
-  m_vertexShaderText = Utils::LoadFile(vertexShaderFileName);
-  m_fragmentShaderText = Utils::LoadFile(fragmentShaderFileName);
-
   Init();
 }
 

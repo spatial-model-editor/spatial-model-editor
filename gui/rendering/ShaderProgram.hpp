@@ -16,8 +16,8 @@ protected:
   void Init();
 
 public:
-  explicit ShaderProgram(std::string vertexShaderFileName,
-                         std::string fragmentShaderFileName);
+  explicit ShaderProgram(std::string& vertexShaderFileName,
+                         std::string& fragmentShaderFileName);
   ShaderProgram(const ShaderProgram &) = delete;
   ShaderProgram(const char *vertexProgram, const char *fragmentProgram);
   ~ShaderProgram();

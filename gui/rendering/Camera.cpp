@@ -130,15 +130,15 @@ void rendering::Camera::UpdateProjection(
 }
 
 void rendering::Camera::UpdateView(
-    std::unique_ptr<rendering::ShaderProgram> &program) {
+    std::unique_ptr<rendering::ShaderProgram> &program) const{
   program->SetViewPosition(m_viewPosition.x, m_viewPosition.y,
                            m_viewPosition.z);
   program->SetViewRotation(m_viewRotation.x, m_viewRotation.y,
                            m_viewRotation.z);
 }
 
-GLfloat rendering::Camera::getNear() { return m_near; }
+GLfloat rendering::Camera::getNear() const { return m_near; }
 
-GLfloat rendering::Camera::getFar() { return m_far; }
+GLfloat rendering::Camera::getFar() const { return m_far; }
 
-GLfloat rendering::Camera::getFOV() { return m_FOV; }
+GLfloat rendering::Camera::getFOV() const { return m_FOV; }

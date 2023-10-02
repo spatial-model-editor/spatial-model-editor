@@ -30,7 +30,7 @@ class Utils {
 
 public:
   static void TraceGLError(std::string tag, std::string file, int line);
-  static std::string LoadFile(std::string filename);
+  static std::string LoadFile(std::string& filename);
 
   static std::string Backtrace(int skip = 1);
 
