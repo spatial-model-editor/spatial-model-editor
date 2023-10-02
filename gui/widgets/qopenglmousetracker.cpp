@@ -242,7 +242,7 @@ void QOpenGLMouseTracker::setSelectedObjectColor(QColor color) {
   this->selectedObjectColor = color;
 }
 
-const QRgb QOpenGLMouseTracker::getColour() const { return lastColour; }
+QRgb QOpenGLMouseTracker::getColour() const { return lastColour; }
 
 QColor QOpenGLMouseTracker::getSelectedObjectColor() {
   return selectedObjectColor;

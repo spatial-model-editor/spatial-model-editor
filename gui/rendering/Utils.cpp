@@ -175,7 +175,7 @@ std::string rendering::Utils::Backtrace(int skip) {
       char *demangled = nullptr;
       int status = -1;
       if (info.dli_sname[0] == '_')
-        demangled = abi::__cxa_demangle(info.dli_sname, nullptr, 0, &status);
+        demangled = abi::__cxa_demangle(info.dli_sname, nullptr, nullptr, &status);
       snprintf(buf, sizeof(buf), "%-3d %*p %s + %zd\n", i,
                int(2 + sizeof(void *) * 2), callstack[i],
                status == 0           ? demangled
