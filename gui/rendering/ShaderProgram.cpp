@@ -30,7 +30,7 @@ void rendering::ShaderProgram::Init() {
   m_vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
   CheckOpenGLError("glCreateShader");
   char *vertexShaderText = new char[m_vertexShaderText.length() + 1];
-  
+
   strncpy(vertexShaderText, m_vertexShaderText.c_str(),
           m_vertexShaderText.length() + 1);
   glShaderSource(m_vertexShaderId, 1, (const char **)&vertexShaderText,

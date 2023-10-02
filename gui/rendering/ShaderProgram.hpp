@@ -18,11 +18,11 @@ protected:
 public:
   explicit ShaderProgram(std::string vertexShaderFileName,
                          std::string fragmentShaderFileName);
-  ShaderProgram(const ShaderProgram&) = delete;
+  ShaderProgram(const ShaderProgram &) = delete;
   ShaderProgram(const char *vertexProgram, const char *fragmentProgram);
   ~ShaderProgram();
 
-  ShaderProgram& operator=(ShaderProgram other)=delete;
+  ShaderProgram &operator=(ShaderProgram other) = delete;
 
   void Use(void);
 
