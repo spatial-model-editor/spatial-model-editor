@@ -12,8 +12,8 @@ int main(int argc, char *argv[]) {
 
 #ifdef SME_ENABLE_GUI_TESTS
   QSurfaceFormat format;
-  //This comment is a reminder for whenever we can test using a Mac machine.
-  // format.setProfile(QSurfaceFormat::CoreProfile);
+  // This comment is a reminder for whenever we can test using a Mac machine.
+  //  format.setProfile(QSurfaceFormat::CoreProfile);
   format.setProfile(QSurfaceFormat::CompatibilityProfile);
 
   format.setDepthBufferSize(24);
@@ -25,9 +25,9 @@ int main(int argc, char *argv[]) {
 
   format.setOption(QSurfaceFormat::DebugContext);
 
-  //This comment is a reminder for whenever we can test using a Mac machine.
-  //  format.setMajorVersion(4);
-  //  format.setMinorVersion(1);
+  // This comment is a reminder for whenever we can test using a Mac machine.
+  //   format.setMajorVersion(4);
+  //   format.setMinorVersion(1);
 
   QSurfaceFormat::setDefaultFormat(format);
 
