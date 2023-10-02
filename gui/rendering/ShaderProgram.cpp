@@ -29,10 +29,7 @@ rendering::ShaderProgram::ShaderProgram(std::string vertexShaderFileName,
 void rendering::ShaderProgram::Init() {
   m_vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
   CheckOpenGLError("glCreateShader");
-  char *vertexShaderText = new char[m_vertexShaderText.length() + 1];
-  
-  strncpy(vertexShaderText, m_vertexShaderText.c_str(),
-          m_vertexShaderText.length() + 1);
+  char* vertexShaderText = m_vertexShaderText.data();
   glShaderSource(m_vertexShaderId, 1, (const char **)&vertexShaderText,
                  nullptr);
   CheckOpenGLError("glShaderSource");
@@ -50,13 +47,9 @@ void rendering::ShaderProgram::Init() {
   }
 #endif
 
-  delete[] vertexShaderText;
-
   m_fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
   CheckOpenGLError("glCreateShader");
-  char *fragmentShaderText = new char[m_fragmentShaderText.length() + 1];
-  strncpy(fragmentShaderText, m_fragmentShaderText.c_str(),
-          m_fragmentShaderText.length() + 1);
+  char *fragmentShaderText = m_fragmentShaderText.data();
   glShaderSource(m_fragmentShaderId, 1, (const char **)&fragmentShaderText,
                  nullptr);
   CheckOpenGLError("Utils::TraceGLError");
@@ -73,8 +66,6 @@ void rendering::ShaderProgram::Init() {
                  std::string(InfoLog));
   }
 #endif
-
-  delete[] fragmentShaderText;
 
   m_programId = glCreateProgram();
   CheckOpenGLError("glCreateProgram");
