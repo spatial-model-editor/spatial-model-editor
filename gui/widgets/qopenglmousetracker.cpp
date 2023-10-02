@@ -53,13 +53,13 @@ void QOpenGLMouseTracker::initializeGL() {
           .toStdString();
   CheckOpenGLError("glGetString(GL_EXTENSIONS)");
 
-  std::string vendor((char *)context()->functions()->glGetString(GL_VENDOR));
+  std::string vendor((const char *)context()->functions()->glGetString(GL_VENDOR));
   CheckOpenGLError("glGetString(GL_VENDOR)");
   std::string renderer(
-      (char *)context()->functions()->glGetString(GL_RENDERER));
+      (const char *)context()->functions()->glGetString(GL_RENDERER));
   CheckOpenGLError("glGetString(GL_RENDERER)");
   std::string gl_version(
-      (char *)context()->functions()->glGetString(GL_VERSION));
+      (const char *)context()->functions()->glGetString(GL_VERSION));
   CheckOpenGLError("glGetString(GL_VERSION)");
 
   SPDLOG_INFO("OpenGL: " + vendor + std::string(" ") + renderer +
