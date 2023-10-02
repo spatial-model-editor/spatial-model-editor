@@ -97,6 +97,8 @@ void QOpenGLMouseTracker::paintGL() {
   QOpenGLFramebufferObject fboPicking(size());
   fboPicking.bind();
 
+  context()->functions()->glViewport(0,0, size().width(), size().height());
+
   renderScene(lineSelectPrecision);
 
   offscreenPickingImage = fboPicking.toImage();
@@ -116,8 +118,6 @@ void QOpenGLMouseTracker::SetCameraFrustum(GLfloat FOV, GLfloat width,
 }
 
 void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
-
-  repaint();
 
   m_xAtPress = event->position().x();
   m_yAtPress = event->position().y();
@@ -152,6 +152,8 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
 
     SPDLOG_INFO("Reset state for selected objects to UNSELECTED objects!");
   }
+
+  repaint();
 }
 
 void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
