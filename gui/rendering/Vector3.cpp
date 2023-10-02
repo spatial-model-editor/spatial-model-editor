@@ -12,7 +12,7 @@ rendering::Vector3::Vector3(GLfloat x, GLfloat y, GLfloat z) {
   this->z = z;
 }
 
-std::vector<GLfloat> rendering::Vector3::ToArray() {
+std::vector<GLfloat> rendering::Vector3::ToArray() const{
   std::vector<GLfloat> v = {x, y, z};
   return v;
 }

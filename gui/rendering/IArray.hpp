@@ -11,7 +11,7 @@ namespace rendering {
 
 template <typename T> class IArray {
 public:
-  virtual std::vector<T> ToArray() = 0;
+  virtual std::vector<T> ToArray() const = 0;
 };
 
 } // namespace rendering

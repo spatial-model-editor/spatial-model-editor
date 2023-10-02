@@ -12,7 +12,7 @@ namespace rendering {
 
 class Vector4 : public IArray<GLfloat> {
 public:
-  Vector4(void);
+  Vector4();
   Vector4(GLfloat x, GLfloat y, GLfloat z);
   Vector4(GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
@@ -28,7 +28,7 @@ public:
   GLfloat z;
   GLfloat w;
 
-  virtual std::vector<GLfloat> ToArray(void);
+  [[nodiscard]] std::vector<GLfloat> ToArray() const override;
 };
 } // namespace rendering
 

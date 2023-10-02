@@ -16,7 +16,7 @@ rendering::Vector4::Vector4(GLfloat x, GLfloat y, GLfloat z, GLfloat w) {
   this->w = w;
 }
 
-std::vector<GLfloat> rendering::Vector4::ToArray() {
+std::vector<GLfloat> rendering::Vector4::ToArray() const {
   std::vector<GLfloat> v = {x, y, z, w};
   return v;
 }

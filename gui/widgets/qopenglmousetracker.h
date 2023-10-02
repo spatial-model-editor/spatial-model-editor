@@ -42,7 +42,7 @@ public:
   QColor getSelectedObjectColor();
 
   // colour of pixel at last mouse click position
-  [[nodiscard]] const QRgb &getColour() const;
+  [[nodiscard]] const QRgb getColour() const;
 
 signals:
   void mouseClicked(QRgb color, rendering::SMesh mesh);

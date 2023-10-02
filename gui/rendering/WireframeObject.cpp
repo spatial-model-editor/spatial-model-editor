@@ -33,7 +33,7 @@ rendering::WireframeObject::WireframeObject(const rendering::ObjectInfo &info,
                                (uint8_t)m_color.blue(),
                                (uint8_t)m_color.alpha()};
 
-  for (auto &v : m_vertices) {
+  for (const auto &v : m_vertices) {
 
     auto vArr = v.ToArray();
     m_verticesBuffer.insert(m_verticesBuffer.end(), vArr.begin(), vArr.end());
