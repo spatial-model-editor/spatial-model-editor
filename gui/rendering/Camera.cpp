@@ -130,7 +130,7 @@ void rendering::Camera::UpdateProjection(
 }
 
 void rendering::Camera::UpdateView(
-    std::unique_ptr<rendering::ShaderProgram> &program) const{
+    std::unique_ptr<rendering::ShaderProgram> &program) const {
   program->SetViewPosition(m_viewPosition.x, m_viewPosition.y,
                            m_viewPosition.z);
   program->SetViewRotation(m_viewRotation.x, m_viewRotation.y,

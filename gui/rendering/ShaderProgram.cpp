@@ -14,9 +14,10 @@ rendering::ShaderProgram::ShaderProgram(const char *vertexProgram,
   Init();
 }
 
-rendering::ShaderProgram::ShaderProgram(std::string& vertexShaderFileName,
-                                        std::string& fragmentShaderFileName)
-    :m_vertexShaderText(vertexShaderFileName), m_fragmentShaderText(fragmentShaderFileName) {
+rendering::ShaderProgram::ShaderProgram(std::string &vertexShaderFileName,
+                                        std::string &fragmentShaderFileName)
+    : m_vertexShaderText(vertexShaderFileName),
+      m_fragmentShaderText(fragmentShaderFileName) {
 
   QOpenGLFunctions::initializeOpenGLFunctions();
   Init();
