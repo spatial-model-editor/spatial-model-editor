@@ -101,7 +101,6 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   REQUIRE(blackColor == QcolorSelection);
 
-
   wait(1000);
 
   // reset
