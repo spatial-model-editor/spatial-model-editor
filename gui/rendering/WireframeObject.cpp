@@ -7,7 +7,7 @@
 rendering::WireframeObject::WireframeObject(const rendering::ObjectInfo &info,
                                             const QColor &color,
                                             const rendering::SMesh &mesh,
-                                            QOpenGLWidget *Widget,
+                                            const QOpenGLWidget *Widget,
                                             const QVector3D &position,
                                             const QVector3D &rotation,
                                             const QVector3D &scale)

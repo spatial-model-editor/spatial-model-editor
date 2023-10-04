@@ -20,7 +20,7 @@ class WireframeObject : protected QOpenGLFunctions {
 
 public:
   WireframeObject(const rendering::ObjectInfo &info, const QColor &color,
-                  const rendering::SMesh &mesh, QOpenGLWidget *Widget,
+                  const rendering::SMesh &mesh, const QOpenGLWidget *Widget,
                   const QVector3D &position = QVector3D(0.0f, 0.0f, 0.0f),
                   const QVector3D &rotation = QVector3D(0.0f, 0.0f, 0.0f),
                   const QVector3D &scale = QVector3D(1.0f, 1.0f, 1.0f));
