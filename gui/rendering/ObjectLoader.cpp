@@ -19,7 +19,8 @@ rendering::ObjectLoader::LoadMesh(const std::string &filename) {
   return mesh;
 }
 
-rendering::ObjectInfo rendering::ObjectLoader::Load(const std::string &filename) {
+rendering::ObjectInfo
+rendering::ObjectLoader::Load(const std::string &filename) {
 
   SMesh mesh = ObjectLoader::LoadMesh(filename);
 

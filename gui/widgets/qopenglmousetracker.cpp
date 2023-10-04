@@ -209,11 +209,11 @@ void QOpenGLMouseTracker::SetCameraOrientation(float x, float y, float z) {
   m_camera.SetRotation(x, y, z);
 }
 
-QVector3D QOpenGLMouseTracker::GetCameraPosition() const{
+QVector3D QOpenGLMouseTracker::GetCameraPosition() const {
   return m_camera.GetPosition();
 }
 
-QVector3D QOpenGLMouseTracker::GetCameraOrientation() const{
+QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
   return m_camera.GetRotation();
 }
 

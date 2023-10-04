@@ -192,6 +192,8 @@ void rendering::WireframeObject::SetScale(GLfloat scaleX, GLfloat scaleY,
   m_scale.setZ(scaleZ);
 }
 
-void rendering::WireframeObject::SetScale(const QVector3D &scale) { m_scale = scale; }
+void rendering::WireframeObject::SetScale(const QVector3D &scale) {
+  m_scale = scale;
+}
 
 QVector3D rendering::WireframeObject::GetScale() const { return m_scale; }
