@@ -5,8 +5,9 @@
 #ifndef SPATIALMODELEDITOR_OBJECTINFO_H
 #define SPATIALMODELEDITOR_OBJECTINFO_H
 
-#include "Vector4.hpp"
 #include <vector>
+#include <QVector4D>
+#include <QtOpenGL>
 
 namespace rendering {
 
@@ -20,7 +21,7 @@ struct Face {
 };
 
 struct ObjectInfo {
-  std::vector<rendering::Vector4> vertices;
+  std::vector<QVector4D> vertices;
   std::vector<rendering::Face> faces;
 };
 

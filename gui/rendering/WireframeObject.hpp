@@ -9,8 +9,6 @@
 #include "ObjectLoader.hpp"
 #include "ShaderProgram.hpp"
 #include "Utils.hpp"
-#include "Vector3.hpp"
-#include "Vector4.hpp"
 #include <vector>
 
 #include <QOpenGLWidget>
@@ -23,9 +21,9 @@ class WireframeObject : protected QOpenGLFunctions {
 public:
   WireframeObject(const rendering::ObjectInfo &info, QColor color,
                   const rendering::SMesh &mesh, QOpenGLWidget *Widget,
-                  Vector3 position = rendering::Vector3(0.0f, 0.0f, 0.0f),
-                  Vector3 rotation = rendering::Vector3(0.0f, 0.0f, 0.0f),
-                  Vector3 scale = rendering::Vector3(1.0f, 1.0f, 1.0f));
+                  QVector3D position = QVector3D(0.0f, 0.0f, 0.0f),
+                  QVector3D rotation = QVector3D(0.0f, 0.0f, 0.0f),
+                  QVector3D scale = QVector3D(1.0f, 1.0f, 1.0f));
   WireframeObject(const WireframeObject &cpy) = delete;
   ~WireframeObject();
 
@@ -33,22 +31,22 @@ public:
               float lineWidth = 1);
 
   void SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ);
-  void SetRotation(rendering::Vector3 rotation);
-  rendering::Vector3 GetRotation();
+  void SetRotation(QVector3D rotation);
+  QVector3D GetRotation();
 
   void SetPosition(GLfloat positionX, GLfloat positionY, GLfloat positionZ);
-  void SetPosition(rendering::Vector3 position);
-  rendering::Vector3 GetPosition();
+  void SetPosition(QVector3D position);
+  QVector3D GetPosition();
 
   void SetScale(GLfloat scaleX, GLfloat scaleY, GLfloat scaleZ);
-  void SetScale(rendering::Vector3 scale);
-  rendering::Vector3 GetScale();
+  void SetScale(QVector3D scale);
+  QVector3D GetScale();
 
   void SetColor(QColor color);
   rendering::SMesh GetMesh();
 
 private:
-  std::vector<rendering::Vector4> m_vertices;
+  std::vector<QVector4D> m_vertices;
   std::vector<GLuint> m_indices;
   QColor m_color;
 
@@ -64,9 +62,9 @@ private:
   GLuint m_colorBufferId;
   GLuint m_elementBufferId;
 
-  rendering::Vector3 m_rotation;
-  rendering::Vector3 m_position;
-  rendering::Vector3 m_scale;
+  QVector3D m_rotation;
+  QVector3D m_position;
+  QVector3D m_scale;
 
   void CreateVBO(void);
   void DestroyVBO(void);

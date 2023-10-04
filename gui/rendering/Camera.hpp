@@ -8,7 +8,6 @@
 #include <math.h>
 
 #include "ShaderProgram.hpp"
-#include "Vector3.hpp"
 
 namespace rendering {
 
@@ -25,15 +24,15 @@ public:
                   GLfloat farZ);
 
   void SetPosition(GLfloat posX, GLfloat posY, GLfloat posZ);
-  void SetPosition(rendering::Vector3 position);
-  rendering::Vector3 GetPosition();
+  void SetPosition(QVector3D position);
+  QVector3D GetPosition();
 
   void SetRotation(GLfloat rotX, GLfloat rotY, GLfloat rotZ);
-  void SetRotation(rendering::Vector3 rotation);
-  rendering::Vector3 GetRotation();
+  void SetRotation(QVector3D rotation);
+  QVector3D GetRotation();
 
-  rendering::Vector3 GetForwardVector();
-  rendering::Vector3 GetUpVector();
+  QVector3D GetForwardVector();
+  QVector3D GetUpVector();
 
   void UpdateProjection(std::unique_ptr<rendering::ShaderProgram> &program);
   void UpdateView(std::unique_ptr<rendering::ShaderProgram> &program) const;
@@ -51,11 +50,11 @@ private:
 
   GLfloat m_projectionMatrix[4][4];
 
-  rendering::Vector3 m_viewPosition;
-  rendering::Vector3 m_viewRotation;
+  QVector3D m_viewPosition;
+  QVector3D m_viewRotation;
 
-  rendering::Vector3 m_viewForward;
-  rendering::Vector3 m_viewUp;
+  QVector3D m_viewForward;
+  QVector3D m_viewUp;
 };
 
 } // namespace rendering

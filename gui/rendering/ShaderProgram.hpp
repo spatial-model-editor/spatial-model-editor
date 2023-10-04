@@ -24,7 +24,7 @@ public:
 
   ShaderProgram &operator=(ShaderProgram other) = delete;
 
-  void Use(void);
+  void Use();
 
   void SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ);
   void SetPosition(GLfloat x, GLfloat y, GLfloat z);

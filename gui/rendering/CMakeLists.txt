@@ -4,8 +4,6 @@ target_sources(
           ObjectLoader.cpp
           ShaderProgram.cpp
           Utils.cpp
-          Vector3.cpp
-          Vector4.cpp
           WireframeObject.cpp)
 
 target_include_directories(gui PUBLIC .)

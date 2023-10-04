@@ -14,8 +14,6 @@
 #include "ObjectInfo.hpp"
 #include <string>
 
-#include "Vector4.hpp"
-
 namespace rendering {
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;

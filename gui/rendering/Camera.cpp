@@ -49,21 +49,21 @@ rendering::Camera::Camera(GLfloat FOV, GLfloat width, GLfloat height,
 }
 
 void rendering::Camera::SetPosition(GLfloat posX, GLfloat posY, GLfloat posZ) {
-  m_viewPosition.x = posX;
-  m_viewPosition.y = posY;
-  m_viewPosition.z = posZ;
+  m_viewPosition.setX(posX);
+  m_viewPosition.setY(posY);
+  m_viewPosition.setZ(posZ);
 }
 
-void rendering::Camera::SetPosition(rendering::Vector3 position) {
-  SetPosition(position.x, position.y, position.z);
+void rendering::Camera::SetPosition(QVector3D position) {
+  SetPosition(position.x(), position.y(), position.z());
 }
 
-rendering::Vector3 rendering::Camera::GetPosition() { return m_viewPosition; }
+QVector3D rendering::Camera::GetPosition() { return m_viewPosition; }
 
 void rendering::Camera::SetRotation(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
-  m_viewRotation.x = rotX;
-  m_viewRotation.y = rotY;
-  m_viewRotation.z = rotZ;
+  m_viewRotation.setX(rotX);
+  m_viewRotation.setY(rotY);
+  m_viewRotation.setZ(rotZ);
 
   GLfloat _forwardX, _forwardY, _forwardZ;
   GLfloat forwardX, forwardY, forwardZ;
@@ -94,9 +94,9 @@ void rendering::Camera::SetRotation(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
   forwardX = _forwardX * cosZ + _forwardY * sinZ;
   forwardY = _forwardX * sinZ - _forwardY * cosZ;
 
-  m_viewForward.x = forwardX;
-  m_viewForward.y = forwardY;
-  m_viewForward.z = forwardZ;
+  m_viewForward.setX(forwardX);
+  m_viewForward.setY(forwardY);
+  m_viewForward.setZ(forwardZ);
 
   _upY = -cosX;
   _upZ = sinX;
@@ -107,22 +107,22 @@ void rendering::Camera::SetRotation(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
   upX = _upX * cosZ + _upY * sinZ;
   upY = _upX * sinZ - _upY * cosZ;
 
-  m_viewUp.x = upX;
-  m_viewUp.y = upY;
-  m_viewUp.z = upZ;
+  m_viewUp.setX(upX);
+  m_viewUp.setY(upY);
+  m_viewUp.setZ(upZ);
 }
 
-void rendering::Camera::SetRotation(rendering::Vector3 rotation) {
-  SetRotation(rotation.x, rotation.y, rotation.z);
+void rendering::Camera::SetRotation(QVector3D rotation) {
+  SetRotation(rotation.x(), rotation.y(), rotation.z());
 }
 
-rendering::Vector3 rendering::Camera::GetRotation() { return m_viewRotation; }
+QVector3D rendering::Camera::GetRotation() { return m_viewRotation; }
 
-rendering::Vector3 rendering::Camera::GetForwardVector() {
+QVector3D rendering::Camera::GetForwardVector() {
   return m_viewForward;
 }
 
-rendering::Vector3 rendering::Camera::GetUpVector() { return m_viewUp; }
+QVector3D rendering::Camera::GetUpVector() { return m_viewUp; }
 
 void rendering::Camera::UpdateProjection(
     std::unique_ptr<rendering::ShaderProgram> &program) {
@@ -131,10 +131,10 @@ void rendering::Camera::UpdateProjection(
 
 void rendering::Camera::UpdateView(
     std::unique_ptr<rendering::ShaderProgram> &program) const{
-  program->SetViewPosition(m_viewPosition.x, m_viewPosition.y,
-                           m_viewPosition.z);
-  program->SetViewRotation(m_viewRotation.x, m_viewRotation.y,
-                           m_viewRotation.z);
+  program->SetViewPosition(m_viewPosition.x(), m_viewPosition.y(),
+                           m_viewPosition.z());
+  program->SetViewRotation(m_viewRotation.x(), m_viewRotation.y(),
+                           m_viewRotation.z());
 }
 
 GLfloat rendering::Camera::getNear() const { return m_near; }

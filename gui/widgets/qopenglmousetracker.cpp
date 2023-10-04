@@ -172,10 +172,10 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
   m_yAtPress = yAtPress;
 
   // apply rotation of the camera
-  rendering::Vector3 cameraOrientation = GetCameraOrientation();
-  SetCameraOrientation(cameraOrientation.x + y_len * (1 / frameRate),
-                       cameraOrientation.y + x_len * (1 / frameRate),
-                       cameraOrientation.z);
+  QVector3D cameraOrientation = GetCameraOrientation();
+  SetCameraOrientation(cameraOrientation.x() + y_len * (1 / frameRate),
+                       cameraOrientation.y() + x_len * (1 / frameRate),
+                       cameraOrientation.z());
 
   repaint();
 
@@ -210,11 +210,11 @@ void QOpenGLMouseTracker::SetCameraOrientation(float x, float y, float z) {
   camera.SetRotation(x, y, z);
 }
 
-rendering::Vector3 QOpenGLMouseTracker::GetCameraPosition() {
+QVector3D QOpenGLMouseTracker::GetCameraPosition() {
   return camera.GetPosition();
 }
 
-rendering::Vector3 QOpenGLMouseTracker::GetCameraOrientation() {
+QVector3D QOpenGLMouseTracker::GetCameraOrientation() {
   return camera.GetRotation();
 }
 

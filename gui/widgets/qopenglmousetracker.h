@@ -28,8 +28,8 @@ public:
   void SetCameraPosition(float x, float y, float z);
   void SetCameraOrientation(float x, float y, float z);
 
-  rendering::Vector3 GetCameraPosition();
-  rendering::Vector3 GetCameraOrientation();
+  QVector3D GetCameraPosition();
+  QVector3D GetCameraOrientation();
 
   void addMesh(const rendering::SMesh &mesh, QColor color);
 

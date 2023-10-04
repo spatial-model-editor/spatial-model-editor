@@ -8,7 +8,7 @@
 
 rendering::ShaderProgram::ShaderProgram(const char *vertexProgram,
                                         const char *fragmentProgram)
-    : m_vertexShaderText(vertexProgram), m_fragmentShaderText(fragmentProgram) {
+    :m_vertexShaderText(vertexProgram), m_fragmentShaderText(fragmentProgram) {
 
   QOpenGLFunctions::initializeOpenGLFunctions();
   Init();
@@ -165,7 +165,7 @@ void rendering::ShaderProgram::SetViewRotation(GLfloat viewRotationX,
   CheckOpenGLError("glUniform3f");
 }
 
-void rendering::ShaderProgram::Use(void) {
+void rendering::ShaderProgram::Use() {
   glUseProgram(m_programId);
   CheckOpenGLError("glUseProgram");
 }
