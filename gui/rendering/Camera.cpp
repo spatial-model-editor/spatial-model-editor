@@ -118,9 +118,7 @@ void rendering::Camera::SetRotation(QVector3D rotation) {
 
 QVector3D rendering::Camera::GetRotation() { return m_viewRotation; }
 
-QVector3D rendering::Camera::GetForwardVector() {
-  return m_viewForward;
-}
+QVector3D rendering::Camera::GetForwardVector() { return m_viewForward; }
 
 QVector3D rendering::Camera::GetUpVector() { return m_viewUp; }
 
@@ -130,7 +128,7 @@ void rendering::Camera::UpdateProjection(
 }
 
 void rendering::Camera::UpdateView(
-    std::unique_ptr<rendering::ShaderProgram> &program) const{
+    std::unique_ptr<rendering::ShaderProgram> &program) const {
   program->SetViewPosition(m_viewPosition.x(), m_viewPosition.y(),
                            m_viewPosition.z());
   program->SetViewRotation(m_viewRotation.x(), m_viewRotation.y(),

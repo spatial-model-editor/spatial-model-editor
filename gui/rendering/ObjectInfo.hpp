@@ -5,9 +5,9 @@
 #ifndef SPATIALMODELEDITOR_OBJECTINFO_H
 #define SPATIALMODELEDITOR_OBJECTINFO_H
 
-#include <vector>
 #include <QVector4D>
 #include <QtOpenGL>
+#include <vector>
 
 namespace rendering {
 

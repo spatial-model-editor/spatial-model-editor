@@ -8,7 +8,7 @@
 
 rendering::ShaderProgram::ShaderProgram(const char *vertexProgram,
                                         const char *fragmentProgram)
-    :m_vertexShaderText(vertexProgram), m_fragmentShaderText(fragmentProgram) {
+    : m_vertexShaderText(vertexProgram), m_fragmentShaderText(fragmentProgram) {
 
   QOpenGLFunctions::initializeOpenGLFunctions();
   Init();

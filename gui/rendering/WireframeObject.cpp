@@ -8,8 +8,8 @@ rendering::WireframeObject::WireframeObject(const rendering::ObjectInfo &info,
                                             QColor color,
                                             const rendering::SMesh &mesh,
                                             QOpenGLWidget *Widget,
-                                            QVector3D position, QVector3D rotation,
-                                            QVector3D scale)
+                                            QVector3D position,
+                                            QVector3D rotation, QVector3D scale)
     : m_mesh(mesh), m_openGLContext(Widget->context()), m_position(position),
       m_rotation(rotation), m_scale(scale), m_color(color) {
 
@@ -34,7 +34,8 @@ rendering::WireframeObject::WireframeObject(const rendering::ObjectInfo &info,
                                (uint8_t)m_color.alpha()};
 
   for (const auto &v : m_vertices) {
-    m_verticesBuffer.insert(m_verticesBuffer.end(), {v.x(), v.y(), v.z(), v.w()});
+    m_verticesBuffer.insert(m_verticesBuffer.end(),
+                            {v.x(), v.y(), v.z(), v.w()});
     m_colorBuffer.insert(m_colorBuffer.end(), cArr.begin(), cArr.end());
   }
 
@@ -167,9 +168,7 @@ void rendering::WireframeObject::SetRotation(QVector3D rotation) {
   m_rotation = rotation;
 }
 
-QVector3D rendering::WireframeObject::GetRotation() {
-  return m_rotation;
-}
+QVector3D rendering::WireframeObject::GetRotation() { return m_rotation; }
 
 void rendering::WireframeObject::SetPosition(GLfloat positionX,
                                              GLfloat positionY,
@@ -183,9 +182,7 @@ void rendering::WireframeObject::SetPosition(QVector3D position) {
   m_position = position;
 }
 
-QVector3D rendering::WireframeObject::GetPosition() {
-  return m_position;
-}
+QVector3D rendering::WireframeObject::GetPosition() { return m_position; }
 
 void rendering::WireframeObject::SetScale(GLfloat scaleX, GLfloat scaleY,
                                           GLfloat scaleZ) {
@@ -194,8 +191,6 @@ void rendering::WireframeObject::SetScale(GLfloat scaleX, GLfloat scaleY,
   m_scale.setZ(scaleZ);
 }
 
-void rendering::WireframeObject::SetScale(QVector3D scale) {
-  m_scale = scale;
-}
+void rendering::WireframeObject::SetScale(QVector3D scale) { m_scale = scale; }
 
 QVector3D rendering::WireframeObject::GetScale() { return m_scale; }
