@@ -32,18 +32,18 @@ public:
 
   void SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ);
   void SetRotation(QVector3D rotation);
-  QVector3D GetRotation();
+  QVector3D GetRotation() const;
 
   void SetPosition(GLfloat positionX, GLfloat positionY, GLfloat positionZ);
   void SetPosition(QVector3D position);
-  QVector3D GetPosition();
+  QVector3D GetPosition() const;
 
   void SetScale(GLfloat scaleX, GLfloat scaleY, GLfloat scaleZ);
   void SetScale(QVector3D scale);
-  QVector3D GetScale();
+  QVector3D GetScale() const;
 
   void SetColor(QColor color);
-  rendering::SMesh GetMesh();
+  rendering::SMesh GetMesh() const;
 
 private:
   std::vector<QVector4D> m_vertices;

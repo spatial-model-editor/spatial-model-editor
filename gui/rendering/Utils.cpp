@@ -180,7 +180,7 @@ std::string rendering::Utils::Backtrace(int skip) {
       snprintf(buf, sizeof(buf), "%-3d %*p %s + %zd\n", i,
                int(2 + sizeof(void *) * 2), callstack[i],
                status == 0           ? demangled
-               : info.dli_sname == 0 ? symbols[i]
+               : info.dli_sname == nullptr ? symbols[i]
                                      : info.dli_sname,
                (char *)callstack[i] - (char *)info.dli_saddr);
       free(demangled);
@@ -215,7 +215,7 @@ std::string rendering::Utils::PrintGLErrorDescription(unsigned int glErr) {
          GLerrorDescription[glErr - GL_INVALID_ENUM] + std::string("\n");
 }
 
-void rendering::Utils::TraceGLError(std::string tag, std::string file,
+void rendering::Utils::TraceGLError(const std::string& tag,const std::string& file,
                                     int line) {
 
   GLenum errLast = GL_NO_ERROR;

@@ -58,7 +58,7 @@ void rendering::Camera::SetPosition(QVector3D position) {
   SetPosition(position.x(), position.y(), position.z());
 }
 
-QVector3D rendering::Camera::GetPosition() { return m_viewPosition; }
+QVector3D rendering::Camera::GetPosition() const { return m_viewPosition; }
 
 void rendering::Camera::SetRotation(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
   m_viewRotation.setX(rotX);
@@ -116,11 +116,11 @@ void rendering::Camera::SetRotation(QVector3D rotation) {
   SetRotation(rotation.x(), rotation.y(), rotation.z());
 }
 
-QVector3D rendering::Camera::GetRotation() { return m_viewRotation; }
+QVector3D rendering::Camera::GetRotation() const { return m_viewRotation; }
 
-QVector3D rendering::Camera::GetForwardVector() { return m_viewForward; }
+QVector3D rendering::Camera::GetForwardVector() const { return m_viewForward; }
 
-QVector3D rendering::Camera::GetUpVector() { return m_viewUp; }
+QVector3D rendering::Camera::GetUpVector() const { return m_viewUp; }
 
 void rendering::Camera::UpdateProjection(
     std::unique_ptr<rendering::ShaderProgram> &program) {

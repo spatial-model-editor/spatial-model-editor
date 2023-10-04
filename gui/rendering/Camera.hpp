@@ -25,14 +25,14 @@ public:
 
   void SetPosition(GLfloat posX, GLfloat posY, GLfloat posZ);
   void SetPosition(QVector3D position);
-  QVector3D GetPosition();
+  QVector3D GetPosition() const;
 
   void SetRotation(GLfloat rotX, GLfloat rotY, GLfloat rotZ);
   void SetRotation(QVector3D rotation);
-  QVector3D GetRotation();
+  QVector3D GetRotation() const;
 
-  QVector3D GetForwardVector();
-  QVector3D GetUpVector();
+  QVector3D GetForwardVector() const;
+  QVector3D GetUpVector() const;
 
   void UpdateProjection(std::unique_ptr<rendering::ShaderProgram> &program);
   void UpdateView(std::unique_ptr<rendering::ShaderProgram> &program) const;

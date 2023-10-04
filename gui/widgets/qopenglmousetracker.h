@@ -16,7 +16,7 @@
 class QOpenGLMouseTracker : public QOpenGLWidget {
   Q_OBJECT
 public:
-  QOpenGLMouseTracker(QWidget *parent = nullptr, float lineWidth = 1.0f,
+  QOpenGLMouseTracker(float lineWidth = 1.0f,
                       float lineSelectPrecision = 10.0f,
                       QColor selectedObjectColor = QColor(255, 255, 0),
                       float cameraFOV = 60.0f, float cameraNearZ = 0.001f,
@@ -39,7 +39,7 @@ public:
 
   void setSelectedObjectColor(QColor color = QColor(255, 255, 0));
 
-  QColor getSelectedObjectColor();
+  QColor getSelectedObjectColor() const;
 
   // colour of pixel at last mouse click position
   [[nodiscard]] QRgb getColour() const;
@@ -50,28 +50,28 @@ signals:
   void mouseWheelEvent(QWheelEvent *ev);
 
 protected:
-  QRgb lastColour{};
+  QRgb m_lastColour{};
 
 #ifdef QT_DEBUG
   QOpenGLDebugLogger *m_debugLogger;
 #endif
 
-  float frameRate;
+  float m_frameRate;
 
-  float lineWidth;
-  float lineSelectPrecision;
+  float m_lineWidth;
+  float m_lineSelectPrecision;
 
-  QColor selectedObjectColor;
+  QColor m_selectedObjectColor;
 
   typedef std::pair<QColor, std::unique_ptr<rendering::WireframeObject>>
       color_mesh;
 
-  std::vector<color_mesh> meshSet;
+  std::vector<color_mesh> m_meshSet;
 
-  std::unique_ptr<rendering::ShaderProgram> mainProgram;
-  rendering::Camera camera;
+  std::unique_ptr<rendering::ShaderProgram> m_mainProgram;
+  rendering::Camera m_camera;
 
-  QImage offscreenPickingImage;
+  QImage m_offscreenPickingImage;
 
   int m_xAtPress;
   int m_yAtPress;

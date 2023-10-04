@@ -11,12 +11,10 @@ rendering::WireframeObject::WireframeObject(const rendering::ObjectInfo &info,
                                             QVector3D position,
                                             QVector3D rotation, QVector3D scale)
     : m_mesh(mesh), m_openGLContext(Widget->context()), m_position(position),
-      m_rotation(rotation), m_scale(scale), m_color(color) {
+      m_rotation(rotation), m_scale(scale), m_color(color), m_vertices(info.vertices) {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
   QOpenGLFunctions::initializeOpenGLFunctions();
-
-  m_vertices = info.vertices;
 
   for (rendering::Face f : info.faces) {
     m_indices.push_back(f.vertexIndices[0] - 1);
@@ -49,13 +47,13 @@ void rendering::WireframeObject::SetColor(QColor color) {
   UpdateVBOColor();
 }
 
-rendering::SMesh rendering::WireframeObject::GetMesh() { return m_mesh; }
+rendering::SMesh rendering::WireframeObject::GetMesh() const { return m_mesh; }
 
 void rendering::WireframeObject::UpdateVBOColor() {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
 
-  int size = m_colorBuffer.size() / 4;
+  int size = static_cast<int>(m_colorBuffer.size() / 4);
 
   std::vector<uint8_t> cArr = {(uint8_t)m_color.red(), (uint8_t)m_color.green(),
                                (uint8_t)m_color.blue(),
@@ -153,7 +151,7 @@ void rendering::WireframeObject::Render(
   program->SetScale(m_scale.x(), m_scale.y(), m_scale.z());
   m_vao->bind();
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferId);
-  glDrawElements(GL_LINES, m_indices.size(), GL_UNSIGNED_INT, (void *)nullptr);
+  glDrawElements(GL_LINES, static_cast<int>(m_indices.size()), GL_UNSIGNED_INT, (void *)nullptr);
 }
 
 void rendering::WireframeObject::SetRotation(GLfloat rotationX,
@@ -168,7 +166,7 @@ void rendering::WireframeObject::SetRotation(QVector3D rotation) {
   m_rotation = rotation;
 }
 
-QVector3D rendering::WireframeObject::GetRotation() { return m_rotation; }
+QVector3D rendering::WireframeObject::GetRotation() const{ return m_rotation; }
 
 void rendering::WireframeObject::SetPosition(GLfloat positionX,
                                              GLfloat positionY,
@@ -182,7 +180,7 @@ void rendering::WireframeObject::SetPosition(QVector3D position) {
   m_position = position;
 }
 
-QVector3D rendering::WireframeObject::GetPosition() { return m_position; }
+QVector3D rendering::WireframeObject::GetPosition() const { return m_position; }
 
 void rendering::WireframeObject::SetScale(GLfloat scaleX, GLfloat scaleY,
                                           GLfloat scaleZ) {
@@ -193,4 +191,4 @@ void rendering::WireframeObject::SetScale(GLfloat scaleX, GLfloat scaleY,
 
 void rendering::WireframeObject::SetScale(QVector3D scale) { m_scale = scale; }
 
-QVector3D rendering::WireframeObject::GetScale() { return m_scale; }
+QVector3D rendering::WireframeObject::GetScale() const { return m_scale; }
