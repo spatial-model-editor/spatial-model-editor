@@ -73,7 +73,7 @@ void QLabelMouseTracker::setImages(
   setMaskImage(imgPair.second);
 }
 
-const QRgb &QLabelMouseTracker::getColour() const { return colour; }
+const QRgb QLabelMouseTracker::getColour() const { return colour; }
 
 int QLabelMouseTracker::getMaskIndex() const { return maskIndex; }
 
