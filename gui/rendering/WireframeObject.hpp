@@ -19,11 +19,11 @@ namespace rendering {
 class WireframeObject : protected QOpenGLFunctions {
 
 public:
-  WireframeObject(const rendering::ObjectInfo &info, QColor color,
+  WireframeObject(const rendering::ObjectInfo &info,  const QColor &color,
                   const rendering::SMesh &mesh, QOpenGLWidget *Widget,
-                  QVector3D position = QVector3D(0.0f, 0.0f, 0.0f),
-                  QVector3D rotation = QVector3D(0.0f, 0.0f, 0.0f),
-                  QVector3D scale = QVector3D(1.0f, 1.0f, 1.0f));
+                  const QVector3D &position = QVector3D(0.0f, 0.0f, 0.0f),
+                  const QVector3D &rotation = QVector3D(0.0f, 0.0f, 0.0f),
+                  const QVector3D &scale = QVector3D(1.0f, 1.0f, 1.0f));
   WireframeObject(const WireframeObject &cpy) = delete;
   ~WireframeObject();
 
@@ -31,18 +31,18 @@ public:
               float lineWidth = 1);
 
   void SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ);
-  void SetRotation(QVector3D rotation);
+  void SetRotation(const QVector3D &rotation);
   QVector3D GetRotation() const;
 
   void SetPosition(GLfloat positionX, GLfloat positionY, GLfloat positionZ);
-  void SetPosition(QVector3D position);
+  void SetPosition(const QVector3D &position);
   QVector3D GetPosition() const;
 
   void SetScale(GLfloat scaleX, GLfloat scaleY, GLfloat scaleZ);
-  void SetScale(QVector3D scale);
+  void SetScale(const QVector3D &scale);
   QVector3D GetScale() const;
 
-  void SetColor(QColor color);
+  void SetColor(const QColor &color);
   rendering::SMesh GetMesh() const;
 
 private:

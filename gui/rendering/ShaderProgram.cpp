@@ -14,8 +14,8 @@ rendering::ShaderProgram::ShaderProgram(const char *vertexProgram,
   Init();
 }
 
-rendering::ShaderProgram::ShaderProgram(std::string &vertexShaderFileName,
-                                        std::string &fragmentShaderFileName)
+rendering::ShaderProgram::ShaderProgram(const std::string &vertexShaderFileName,
+                                        const std::string &fragmentShaderFileName)
     : m_vertexShaderText(vertexShaderFileName),
       m_fragmentShaderText(fragmentShaderFileName) {
 
@@ -38,7 +38,7 @@ void rendering::ShaderProgram::Init() {
   glGetShaderiv(m_vertexShaderId, GL_COMPILE_STATUS, &success_VS);
   if (!success_VS) {
     std::string InfoLog(1024, ' ');
-    glGetShaderInfoLog(m_vertexShaderId, InfoLog.size(), nullptr,
+    glGetShaderInfoLog(m_vertexShaderId, static_cast<int>(InfoLog.size()), nullptr,
                        InfoLog.data());
     SPDLOG_ERROR("Error compiling shader type GL_VERTEX_SHADER: " + InfoLog);
   }
@@ -58,7 +58,7 @@ void rendering::ShaderProgram::Init() {
   glGetShaderiv(m_fragmentShaderId, GL_COMPILE_STATUS, &success_FS);
   if (!success_FS) {
     std::string InfoLog(1024, ' ');
-    glGetShaderInfoLog(m_fragmentShaderId, InfoLog.size(), nullptr,
+    glGetShaderInfoLog(m_fragmentShaderId, static_cast<int>(InfoLog.size()), nullptr,
                        InfoLog.data());
     SPDLOG_ERROR("Error compiling shader type GL_FRAGMENT_SHADER: " + InfoLog);
   }
@@ -79,7 +79,7 @@ void rendering::ShaderProgram::Init() {
   glGetProgramiv(m_programId, GL_LINK_STATUS, &success_SP);
   if (success_SP == 0) {
     std::string ErrorLog(1024, ' ');
-    glGetProgramInfoLog(m_programId, ErrorLog.size(), nullptr, ErrorLog.data());
+    glGetProgramInfoLog(m_programId, static_cast<int>(ErrorLog.size()), nullptr, ErrorLog.data());
     SPDLOG_ERROR("Error linking shader program: " + ErrorLog);
   }
 
