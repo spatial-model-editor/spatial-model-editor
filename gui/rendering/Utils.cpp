@@ -179,9 +179,9 @@ std::string rendering::Utils::Backtrace(int skip) {
             abi::__cxa_demangle(info.dli_sname, nullptr, nullptr, &status);
       snprintf(buf, sizeof(buf), "%-3d %*p %s + %zd\n", i,
                int(2 + sizeof(void *) * 2), callstack[i],
-               status == 0           ? demangled
+               status == 0                 ? demangled
                : info.dli_sname == nullptr ? symbols[i]
-                                     : info.dli_sname,
+                                           : info.dli_sname,
                (char *)callstack[i] - (char *)info.dli_saddr);
       free(demangled);
     } else {
@@ -215,8 +215,8 @@ std::string rendering::Utils::PrintGLErrorDescription(unsigned int glErr) {
          GLerrorDescription[glErr - GL_INVALID_ENUM] + std::string("\n");
 }
 
-void rendering::Utils::TraceGLError(const std::string& tag,const std::string& file,
-                                    int line) {
+void rendering::Utils::TraceGLError(const std::string &tag,
+                                    const std::string &file, int line) {
 
   GLenum errLast = GL_NO_ERROR;
 

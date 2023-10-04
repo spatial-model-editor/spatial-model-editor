@@ -16,8 +16,7 @@
 class QOpenGLMouseTracker : public QOpenGLWidget {
   Q_OBJECT
 public:
-  QOpenGLMouseTracker(float lineWidth = 1.0f,
-                      float lineSelectPrecision = 10.0f,
+  QOpenGLMouseTracker(float lineWidth = 1.0f, float lineSelectPrecision = 10.0f,
                       QColor selectedObjectColor = QColor(255, 255, 0),
                       float cameraFOV = 60.0f, float cameraNearZ = 0.001f,
                       float cameraFarZ = 2000.0f, float frameRate = 30.0f);

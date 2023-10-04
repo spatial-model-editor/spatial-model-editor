@@ -29,7 +29,8 @@ class Utils {
   static std::string PrintGLErrorDescription(unsigned int glErr);
 
 public:
-  static void TraceGLError(const std::string& tag,const std::string& file, int line);
+  static void TraceGLError(const std::string &tag, const std::string &file,
+                           int line);
   static std::string LoadFile(std::string &filename);
 
   static std::string Backtrace(int skip = 1);
