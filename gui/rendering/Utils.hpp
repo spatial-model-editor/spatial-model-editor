@@ -15,8 +15,7 @@
 #ifdef QT_DEBUG
 #define CheckOpenGLError(tag)                                                  \
   rendering::Utils::TraceGLError(tag, __FILE__, __LINE__)
-#define GetCallstack(skip)                                                     \
-  rendering::Utils::Backtrace("Callstack:\n", skip)
+#define GetCallstack(skip) rendering::Utils::Backtrace("Callstack:\n", skip)
 #else
 #define CheckOpenGLError(tag)
 #define GetCallstack(skip) std::string("Callstack:\n")
@@ -33,7 +32,8 @@ public:
                            int line);
   static std::string LoadFile(std::string &filename);
 
-  static std::string Backtrace(const std::string sectionName="", int skip = 1);
+  static std::string Backtrace(const std::string sectionName = "",
+                               int skip = 1);
 
   static void GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
                                      GLenum severity, const GLchar *msg);
