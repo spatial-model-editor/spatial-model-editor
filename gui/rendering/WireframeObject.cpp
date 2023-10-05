@@ -55,7 +55,7 @@ void rendering::WireframeObject::UpdateVBOColor() {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
 
-  int size = static_cast<int>(m_colorBuffer.size() / 4);
+  auto size = static_cast<int>(m_colorBuffer.size() / 4);
 
   std::vector<uint8_t> cArr = {(uint8_t)m_color.red(), (uint8_t)m_color.green(),
                                (uint8_t)m_color.blue(),

@@ -32,7 +32,7 @@ public:
                            int line);
   static std::string LoadFile(std::string &filename);
 
-  static std::string Backtrace(const std::string sectionName = "",
+  static std::string Backtrace(const std::string &sectionName = "",
                                int skip = 1);
 
   static void GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
