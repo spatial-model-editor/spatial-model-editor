@@ -165,12 +165,9 @@ std::string rendering::Utils::Backtrace(const std::string sectionName,
   const int nMaxFrames = sizeof(callstack) / sizeof(callstack[0]);
   char buf[1024];
   int nFrames = backtrace(callstack, nMaxFrames);
-  typedef char* ptrChar;
-  std::shared_ptr<ptrChar[]> symbolsPtr =
-      std::shared_ptr<ptrChar[]>(
-          backtrace_symbols(callstack, nFrames),
-          [](char **pi) { free(pi);}
-          );
+  typedef char *ptrChar;
+  std::shared_ptr<ptrChar[]> symbolsPtr = std::shared_ptr<ptrChar[]>(
+      backtrace_symbols(callstack, nFrames), [](char **pi) { free(pi); });
   std::ostringstream trace_buf;
   for (int i = skip; i < nFrames; i++) {
     printf("%s\n", symbolsPtr[i]);
@@ -181,10 +178,7 @@ std::string rendering::Utils::Backtrace(const std::string sectionName,
       int status = -1;
       if (info.dli_sname[0] == '_')
         demangledPtr = std::shared_ptr<char[]>(
-            abi::__cxa_demangle(
-                info.dli_sname,
-                nullptr,
-                nullptr, &status),
+            abi::__cxa_demangle(info.dli_sname, nullptr, nullptr, &status),
             [](char *pi) { free(pi); });
       snprintf(buf, sizeof(buf), "%-3d %*p %s + %zd\n", i,
                int(2 + sizeof(void *) * 2), callstack[i],
