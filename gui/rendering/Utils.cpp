@@ -200,6 +200,20 @@ std::string rendering::Utils::Backtrace(const std::string &sectionName,
 std::string Backtrace(int skip = 1) { return std::string(); }
 #endif
 
+#ifdef QT_DEBUG
+void CheckOpenGLError(std::string tag)
+{
+  rendering::Utils::TraceGLError(tag, __FILE__, __LINE__);
+}
+std::string GetCallstack(int skip)
+{
+  return rendering::Utils::Backtrace("Callstack:\n", skip);
+}
+#else
+void CheckOpenGLError(std::string tag){}
+std::string GetCallstack(int skip) { return std::string("Callstack:\n"); }
+#endif
+
 std::string rendering::Utils::PrintGLErrorDescription(unsigned int glErr) {
   static std::string GLerrorDescription[] = {
       "GL_INVALID_ENUM",                 // 0x0500
