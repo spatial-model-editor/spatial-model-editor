@@ -35,8 +35,8 @@ rendering::ObjectInfo rendering::ObjectLoader::Load(const SMesh &mesh) {
   for (SMesh::Vertex_index vi : mesh.vertices()) {
     Point pt = mesh.point(vi);
     Obj.vertices.emplace_back(QVector4D(static_cast<float>(pt.x()),
-                                     static_cast<float>(pt.y()),
-                                     static_cast<float>(pt.z()), 1.0f));
+                                        static_cast<float>(pt.y()),
+                                        static_cast<float>(pt.z()), 1.0f));
   }
 
   // Get face indices
