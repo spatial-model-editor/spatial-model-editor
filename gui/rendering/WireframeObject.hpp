@@ -66,8 +66,8 @@ private:
   QVector3D m_position;
   QVector3D m_scale;
 
-  void CreateVBO(void);
-  void DestroyVBO(void);
+  void CreateVBO();
+  void DestroyVBO();
 
   void UpdateVBOColor();
 };

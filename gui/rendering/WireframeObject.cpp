@@ -42,7 +42,7 @@ rendering::WireframeObject::WireframeObject(const rendering::ObjectInfo &info,
   CreateVBO();
 }
 
-rendering::WireframeObject::~WireframeObject(void) { DestroyVBO(); }
+rendering::WireframeObject::~WireframeObject() { DestroyVBO(); }
 
 void rendering::WireframeObject::SetColor(const QColor &color) {
   m_color = color;
@@ -77,7 +77,7 @@ void rendering::WireframeObject::UpdateVBOColor() {
   glEnableVertexAttribArray(1);
 }
 
-void rendering::WireframeObject::CreateVBO(void) {
+void rendering::WireframeObject::CreateVBO() {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
 
@@ -123,7 +123,7 @@ void rendering::WireframeObject::CreateVBO(void) {
   CheckOpenGLError("glBufferData");
 }
 
-void rendering::WireframeObject::DestroyVBO(void) {
+void rendering::WireframeObject::DestroyVBO() {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
 
