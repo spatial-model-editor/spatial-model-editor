@@ -106,8 +106,6 @@ void rendering::WireframeObject::CreateVBO(void) {
   CheckOpenGLError("glGenBuffers");
   glBindBuffer(GL_ARRAY_BUFFER, m_colorBufferId);
   CheckOpenGLError("glBindBuffer");
-  // glBufferData(GL_ARRAY_BUFFER, colorBufferSize, m_colorBuffer.data(),
-  // GL_STATIC_DRAW);
   glBufferData(GL_ARRAY_BUFFER, colorBufferSize, m_colorBuffer.data(),
                GL_DYNAMIC_DRAW);
   CheckOpenGLError("glBufferData");
