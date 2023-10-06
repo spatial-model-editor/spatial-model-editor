@@ -123,7 +123,7 @@ QVector3D rendering::Camera::GetForwardVector() const { return m_viewForward; }
 QVector3D rendering::Camera::GetUpVector() const { return m_viewUp; }
 
 void rendering::Camera::UpdateProjection(
-    std::unique_ptr<rendering::ShaderProgram> &program) {
+    std::unique_ptr<rendering::ShaderProgram> &program) const {
   program->SetProjection(m_projectionMatrix[0]);
 }
 

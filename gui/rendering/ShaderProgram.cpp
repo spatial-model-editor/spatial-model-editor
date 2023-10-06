@@ -146,7 +146,7 @@ void rendering::ShaderProgram::SetScale(GLfloat x, GLfloat y, GLfloat z) {
   CheckOpenGLError("glUniform3f");
 }
 
-void rendering::ShaderProgram::SetProjection(GLfloat *matrix4) {
+void rendering::ShaderProgram::SetProjection(const GLfloat *matrix4) {
   Use();
   glUniformMatrix4fv(m_projectionLocation, 1, GL_FALSE, matrix4);
   CheckOpenGLError("glUniformMatrix4fv");

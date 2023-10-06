@@ -34,7 +34,7 @@ public:
   QVector3D GetForwardVector() const;
   QVector3D GetUpVector() const;
 
-  void UpdateProjection(std::unique_ptr<rendering::ShaderProgram> &program);
+  void UpdateProjection(std::unique_ptr<rendering::ShaderProgram> &program) const;
   void UpdateView(std::unique_ptr<rendering::ShaderProgram> &program) const;
 
   GLfloat getNear() const;
