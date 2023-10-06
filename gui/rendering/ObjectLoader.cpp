@@ -31,26 +31,23 @@ rendering::ObjectInfo rendering::ObjectLoader::Load(const SMesh &mesh) {
   ObjectInfo Obj;
 
   // Get vertices
+  Obj.vertices.reserve(mesh.vertices().size());
   for (SMesh::Vertex_index vi : mesh.vertices()) {
     Point pt = mesh.point(vi);
-    Obj.vertices.push_back(QVector4D(static_cast<float>(pt.x()),
+    Obj.vertices.emplace_back(QVector4D(static_cast<float>(pt.x()),
                                      static_cast<float>(pt.y()),
                                      static_cast<float>(pt.z()), 1.0f));
   }
 
   // Get face indices
+  Obj.faces.reserve(mesh.faces().size());
   for (SMesh::Face_index face_index : mesh.faces()) {
     CGAL::Vertex_around_face_circulator<SMesh> vcirc(mesh.halfedge(face_index),
                                                      mesh),
         done(vcirc);
-    std::vector<uint32_t> indices;
-    do
-      indices.push_back(*vcirc++);
-    while (vcirc != done);
-    if (indices.size() > 3)
+    Obj.faces.emplace_back(*vcirc++, *vcirc++, *vcirc++);
+    if (vcirc != done)
       throw std::runtime_error("The faces must be triangles!");
-    else
-      Obj.faces.push_back(Face(indices[0], indices[1], indices[2]));
   }
 
   return Obj;
