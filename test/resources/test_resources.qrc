@@ -55,5 +55,10 @@
         <file>smefiles/very-simple-model-v2.sme</file>
         <file>smefiles/brusselator-model-corrupted.sme</file>
         <file>smefiles/brusselator-model-truncated.sme</file>
+        <file>rendering/Objects/pyramid.ply</file>
+        <file>rendering/Objects/sphere.ply</file>
+        <file>rendering/Objects/teapot.ply</file>
+        <file>rendering/Shaders/Default/fragment.glsl</file>
+        <file>rendering/Shaders/Default/vertex.glsl</file>
     </qresource>
 </RCC>
