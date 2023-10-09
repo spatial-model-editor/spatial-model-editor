@@ -25,7 +25,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   test.show();
 
-  wait(1000);
+  wait(100);
 
   // camera position
   test.SetCameraPosition(0, 0, -10);
@@ -37,13 +37,13 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       QDir::current().filePath("tmp_sphere.ply").toStdString());
   test.addMesh(sphereMesh, redColor);
 
-  wait(1000);
+  wait(100);
 
   QFile::copy(":/test/rendering/Objects/teapot.ply", "tmp_teapot.ply");
   QFileInfo info("tmp_teapot.ply");
   REQUIRE(QFile::exists("tmp_teapot.ply"));
 
-  wait(1000);
+  wait(100);
 
   rendering::SMesh teapotMesh = rendering::ObjectLoader::LoadMesh(
       QDir::current().filePath("tmp_teapot.ply").toStdString());
@@ -72,7 +72,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   REQUIRE(blueColor != QcolorSelection);
 
-  wait(1000);
+  wait(100);
 
   sendMouseClick(&test, {0, 0});
 
@@ -80,7 +80,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   REQUIRE(blueColor == QcolorSelection);
 
-  wait(1000);
+  wait(100);
 
   sendMouseClick(&test, {376, 366});
 
@@ -88,7 +88,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   REQUIRE(redColor == QcolorSelection);
 
-  wait(1000);
+  wait(100);
 
   // reset
   sendMouseClick(&test, {412, 445});
@@ -97,7 +97,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   REQUIRE(blackColor == QcolorSelection);
 
-  wait(1000);
+  wait(100);
 
   // reset
   sendMouseClick(&test, {412, 445});
@@ -106,7 +106,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   REQUIRE(blackColor == QcolorSelection);
 
-  wait(1000);
+  wait(100);
 
   sendMouseClick(&test, {0, 0});
 
@@ -114,7 +114,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   REQUIRE(blueColor == QcolorSelection);
 
-  wait(1000);
+  wait(100);
 
   sendMouseClick(&test, {376, 366});
 
@@ -122,7 +122,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   REQUIRE(redColor == QcolorSelection);
 
-  wait(1000);
+  wait(100);
 
   // reset
   sendMouseClick(&test, {412, 445});
@@ -130,6 +130,4 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   QcolorSelection = QColor(test.getColour());
 
   REQUIRE(blackColor == QcolorSelection);
-
-  wait(1000);
 }

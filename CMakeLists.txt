@@ -27,38 +27,20 @@ set(CMAKE_CTEST_ARGUMENTS "-j${NPROC};--progress;--output-on-failure;-E;gui")
 find_package(dune-copasi REQUIRED)
 
 # find required Qt modules
-option(
-  SME_WITH_QT6
-  "Use Qt6"
-  ON)
-if(SME_WITH_QT6)
-  find_package(
-    Qt6 QUIET
-    COMPONENTS Core
-               Gui
-               Widgets
-               OpenGLWidgets
-               OpenGL)
-endif()
-if(NOT Qt6_FOUND)
-  find_package(
-    Qt5
-    COMPONENTS Core
-               Gui
-               Widgets
-    REQUIRED)
-  get_target_property(
-    QtCore_location
-    Qt5::Core
-    LOCATION)
-  message(STATUS "Found QtCore: ${QtCore_location}")
-else()
-  get_target_property(
-    QtCore_location
-    Qt6::Core
-    LOCATION)
-  message(STATUS "Found QtCore: ${QtCore_location}")
-endif()
+find_package(
+  Qt6
+  CONFIG
+  REQUIRED
+  COMPONENTS Core
+             Gui
+             Widgets
+             OpenGLWidgets
+             OpenGL)
+get_target_property(
+  QtCore_location
+  Qt6::Core
+  LOCATION)
+message(STATUS "Found QtCore: ${QtCore_location}")
 
 # enable Qt utils: moc, uic, rcc
 set(CMAKE_AUTOMOC ON)
@@ -177,5 +159,4 @@ message(STATUS "SME_EXTRA_CORE_DEFS: ${SME_EXTRA_CORE_DEFS}")
 message(STATUS "SME_EXTRA_GUI_LIBS: ${SME_EXTRA_GUI_LIBS}")
 message(STATUS "SME_EXTRA_EXE_LIBS: ${SME_EXTRA_EXE_LIBS}")
 message(STATUS "SME_USE_STATIC_LIBS: ${SME_USE_STATIC_LIBS}")
-message(STATUS "SME_WITH_QT6: ${SME_WITH_QT6}")
 message(STATUS "SME_QT_DISABLE_UNICODE: ${SME_QT_DISABLE_UNICODE}")
