@@ -13,16 +13,11 @@ if(SME_BUILD_GUI)
   target_compile_definitions(tests PRIVATE SME_ENABLE_GUI_TESTS)
 endif()
 
-if(SME_WITH_QT6)
-  find_package(Qt6 QUIET COMPONENTS Test)
-endif()
-if(NOT Qt6_FOUND)
-  find_package(
-    Qt5
-    COMPONENTS Test
-    REQUIRED)
-endif()
-
+find_package(
+  Qt6
+  REQUIRED
+  CONFIG
+  COMPONENTS Test)
 set_property(TARGET tests PROPERTY CXX_STANDARD 17)
 
 add_library(testlib resources/test_resources.qrc)

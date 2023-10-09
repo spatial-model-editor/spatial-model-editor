@@ -159,11 +159,7 @@ void PlotWrapper::clear() {
 }
 
 double PlotWrapper::xValue(const QMouseEvent *event) const {
-#if QT_VERSION < 0x060000
-  const auto &pos{event->localPos()};
-#else
   const auto &pos{event->position()};
-#endif
   double key;
   double val;
   plot->graph(0)->pixelsToCoords(pos, key, val);
