@@ -4,11 +4,33 @@
 #include <catch2/catch_session.hpp>
 #include <locale>
 
+#include <QSurfaceFormat>
+
 int main(int argc, char *argv[]) {
   Catch::StringMaker<double>::precision = 25;
   Catch::StringMaker<float>::precision = 25;
 
 #ifdef SME_ENABLE_GUI_TESTS
+  QSurfaceFormat format;
+  // This comment is a reminder for whenever we can test using a Mac machine.
+  //  format.setProfile(QSurfaceFormat::CoreProfile);
+  format.setProfile(QSurfaceFormat::CompatibilityProfile);
+
+  format.setDepthBufferSize(24);
+  format.setStencilBufferSize(8);
+  format.setAlphaBufferSize(8);
+  format.setBlueBufferSize(8);
+  format.setRedBufferSize(8);
+  format.setGreenBufferSize(8);
+
+  format.setOption(QSurfaceFormat::DebugContext);
+
+  // This comment is a reminder for whenever we can test using a Mac machine.
+  //   format.setMajorVersion(4);
+  //   format.setMinorVersion(1);
+
+  QSurfaceFormat::setDefaultFormat(format);
+
   QApplication a(argc, argv);
 #endif
 

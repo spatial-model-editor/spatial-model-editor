@@ -89,4 +89,10 @@ inline VolumeF operator*(const VolumeF &a, const Volume &b) {
 
 inline VolumeF operator*(const Volume &a, const VolumeF &b) { return b * a; }
 
+inline VolumeF operator/(const VolumeF &a, const Volume &b) {
+  return {a.width() / static_cast<double>(b.width()),
+          a.height() / static_cast<double>(b.height()),
+          a.depth() / static_cast<double>(b.depth())};
+}
+
 } // namespace sme::common

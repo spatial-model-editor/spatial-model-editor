@@ -54,6 +54,7 @@ public:
   void rescaleXY(QSize size);
   void flipYAxis();
   void convertToIndexed();
+  ImageStack scaled(int width, int height);
   ImageStack scaledToWidth(int width);
   ImageStack scaledToHeight(int height);
 };

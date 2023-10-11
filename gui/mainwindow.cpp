@@ -543,19 +543,19 @@ void MainWindow::actionEdit_geometry_image_triggered() {
                              model.getUnits());
   if (dialog.exec() == QDialog::Accepted) {
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    auto voxelSize{dialog.getVoxelSize()};
-    SPDLOG_INFO("Set new voxel volume {}x{}x{}", voxelSize.width(),
-                voxelSize.height(), voxelSize.depth());
-    model.getGeometry().setVoxelSize(voxelSize);
     tabSimulate->reset();
     if (dialog.imageSizeAltered() || dialog.imageColoursAltered()) {
       SPDLOG_INFO("Importing altered geometry image");
       bool keepColourAssignments{!dialog.imageColoursAltered()};
       model.getGeometry().importGeometryFromImages(dialog.getAlteredImage(),
                                                    keepColourAssignments);
-      ui->tabMain->setCurrentIndex(0);
-      tabMain_currentChanged(0);
     }
+    auto voxelSize{dialog.getVoxelSize()};
+    SPDLOG_INFO("Set new voxel volume {}x{}x{}", voxelSize.width(),
+                voxelSize.height(), voxelSize.depth());
+    model.getGeometry().setVoxelSize(voxelSize);
+    ui->tabMain->setCurrentIndex(0);
+    tabMain_currentChanged(0);
     enableTabs();
     QGuiApplication::restoreOverrideCursor();
   }

@@ -73,7 +73,7 @@ void QLabelMouseTracker::setImages(
   setMaskImage(imgPair.second);
 }
 
-const QRgb &QLabelMouseTracker::getColour() const { return colour; }
+const QRgb QLabelMouseTracker::getColour() const { return colour; }
 
 int QLabelMouseTracker::getMaskIndex() const { return maskIndex; }
 
@@ -156,9 +156,8 @@ static std::pair<double, double>
 getGridWidth(const sme::common::VolumeF &physicalSize, const QSize &imageSize) {
   constexpr double minWidthPixels{20};
   // start with grid of width 1 physical unit
-  double gridPixelWidth{static_cast<double>(imageSize.width()) /
-                        physicalSize.width()};
-  double gridPhysicalWidth{1.0};
+  double gridPixelWidth{static_cast<double>(imageSize.width())};
+  double gridPhysicalWidth{physicalSize.width()};
   // rescale with in pixels to: ~ [1, 2] * minWidthPixels
   // hopefully with reasonably nice looking numerical intervals
   while (gridPixelWidth < minWidthPixels) {
@@ -189,14 +188,19 @@ static QString getGridPointLabel(int i, double gridPhysicalWidth,
   return label;
 }
 
-static QSize getActualImageSize(const QSize &before, const QSize &after) {
-  QSize sz{after};
-  if (after.width() * before.height() > after.height() * before.width()) {
-    sz.rwidth() = before.width() * after.height() / before.height();
-  } else {
-    sz.rheight() = before.height() * after.width() / before.width();
+static QSize getPixmapSize(const QSize &displaySize,
+                           double physicalAspectRatio) {
+  double displayAspectRatio{static_cast<double>(displaySize.width()) /
+                            static_cast<double>(displaySize.height())};
+  if (displayAspectRatio > physicalAspectRatio) {
+    return {std::max(1, static_cast<int>(displaySize.height() *
+                                         physicalAspectRatio)),
+            displaySize.height()};
   }
-  return sz;
+  return {
+      displaySize.width(),
+      std::max(1, static_cast<int>(displaySize.width() / physicalAspectRatio)),
+  };
 }
 
 void QLabelMouseTracker::resizeImage(const QSize &size) {
@@ -221,10 +225,10 @@ void QLabelMouseTracker::resizeImage(const QSize &size) {
   QSize availableSize{size};
   availableSize.rwidth() -= offset.x();
   availableSize.rheight() -= offset.y();
-  auto scaledImage{image[currentVoxel.z].scaled(availableSize, aspectRatioMode,
-                                                transformationMode)};
-  pixmapImageSize =
-      getActualImageSize(image[currentVoxel.z].size(), scaledImage.size());
+  pixmapImageSize = getPixmapSize(availableSize,
+                                  physicalSize.width() / physicalSize.height());
+  auto scaledImage{image[currentVoxel.z].scaled(
+      pixmapImageSize, aspectRatioMode, transformationMode)};
   p.drawImage(QPoint(offset.x(), 0), scaledImage);
   SPDLOG_DEBUG("resize -> {}x{}, pixmap -> {}x{}, image -> {}x{}", size.width(),
                size.height(), pixmap.width(), pixmap.height(),

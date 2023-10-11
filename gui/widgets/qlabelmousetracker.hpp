@@ -31,7 +31,7 @@ public:
   void setImages(const std::pair<sme::common::ImageStack,
                                  sme::common::ImageStack> &imgPair);
   // colour of pixel at last mouse click position
-  [[nodiscard]] const QRgb &getColour() const;
+  [[nodiscard]] const QRgb getColour() const;
   // value of mask index at last mouse click position
   [[nodiscard]] int getMaskIndex() const;
   // position of mouse as fraction of displayed pixmap volume
@@ -58,14 +58,14 @@ protected:
 
 private:
   QSlider *zSlider{nullptr};
-  Qt::AspectRatioMode aspectRatioMode = Qt::KeepAspectRatio;
+  Qt::AspectRatioMode aspectRatioMode = Qt::IgnoreAspectRatio;
   Qt::TransformationMode transformationMode = Qt::FastTransformation;
   bool setCurrentPixel(const QPoint &pos);
   void resizeImage(const QSize &size);
   sme::common::ImageStack image;
   // Pixmap used to display scaled version of image
   QPixmap pixmap;
-  // volume of actual image in pixmap (may be smaller than pixmap)
+  // size of actual image in pixmap (may be smaller than pixmap)
   QSize pixmapImageSize;
   sme::common::ImageStack maskImage;
   sme::common::Voxel currentVoxel{0, 0, 0};

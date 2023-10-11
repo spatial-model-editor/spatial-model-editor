@@ -83,7 +83,7 @@ void DuneSim::initDuneSimCompartments(
 }
 
 static std::pair<QPoint, QPoint> getBoundingBox(const QTriangleF &t,
-                                                double pixelSize,
+                                                const QSizeF &pixelSize,
                                                 const QPointF &pixelOrigin) {
   // get triangle bounding box in physical units
   QPointF fmin(t[0].x(), t[0].y());
@@ -96,9 +96,11 @@ static std::pair<QPoint, QPoint> getBoundingBox(const QTriangleF &t,
   }
   // convert physical points to pixel locations
   fmin -= pixelOrigin;
-  fmin /= pixelSize;
+  fmin.rx() /= pixelSize.width();
+  fmin.ry() /= pixelSize.height();
   fmax -= pixelOrigin;
-  fmax /= pixelSize;
+  fmax.rx() /= pixelSize.width();
+  fmax.ry() /= pixelSize.height();
   return std::make_pair<QPoint, QPoint>(
       QPoint(static_cast<int>(fmin.x()), static_cast<int>(fmin.y())),
       QPoint(static_cast<int>(fmax.x()), static_cast<int>(fmax.y())));
@@ -126,7 +128,7 @@ static std::size_t getIxValidNeighbour(std::size_t ix,
 }
 
 void DuneSim::updatePixels() {
-  SPDLOG_TRACE("pixel size: {}", pixelSize);
+  SPDLOG_TRACE("pixel size: {}x{}", pixelSize.width(), pixelSize.height());
   for (auto &comp : duneCompartments) {
     comp.pixels.clear();
     comp.missingPixels.clear();
@@ -152,8 +154,10 @@ void DuneSim::updatePixels() {
       for (int x = pMin.x(); x < pMax.x() + 1; ++x) {
         for (int y = pMin.y(); y < pMax.y() + 1; ++y) {
           auto localPoint = e.geometry().local(
-              {(static_cast<double>(x) + 0.5) * pixelSize + pixelOrigin.x(),
-               (static_cast<double>(y) + 0.5) * pixelSize + pixelOrigin.y()});
+              {(static_cast<double>(x) + 0.5) * pixelSize.width() +
+                   pixelOrigin.x(),
+               (static_cast<double>(y) + 0.5) * pixelSize.height() +
+                   pixelOrigin.y()});
           // note: qpi/QImage has (0,0) in top-left corner:
           common::Voxel vox{x, geometryImageSize.height() - 1 - y, 0};
           if (auto ix{qpi.getIndex(vox)};
@@ -185,7 +189,8 @@ DuneSim::DuneSim(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
     const std::map<std::string, double, std::less<>> &substitutions)
     : geometryImageSize{sbmlDoc.getGeometry().getImages()[0].size()},
-      pixelSize{sbmlDoc.getGeometry().getVoxelSize().width()},
+      pixelSize(sbmlDoc.getGeometry().getVoxelSize().width(),
+                sbmlDoc.getGeometry().getVoxelSize().height()),
       pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin().p} {
   try {
     const auto &lengthUnit{sbmlDoc.getUnits().getLength()};

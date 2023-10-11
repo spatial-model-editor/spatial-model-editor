@@ -14,11 +14,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  CIBUILDWHEEL_VERSION: 2.12.3
-  CIBW_TEST_REQUIRES: pytest
-  CIBW_TEST_COMMAND: 'python -m pytest -v {project}/sme/test'
+  CIBUILDWHEEL_VERSION: 2.16.0
   CIBW_BUILD_VERBOSITY: 3
-  SME_BUILD_CORE: 'false'
 
 jobs:
   linux-wheel:
@@ -28,13 +25,13 @@ jobs:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2023.05.23
-      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2023.05.23
-      CIBW_SKIP: '*-manylinux_i686 *-musllinux* pp39-manylinux_x86_64'
-      CIBW_ENVIRONMENT: 'SME_BUILD_CORE=off'
+      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2023.07.10
+      CIBW_MANYLINUX_PYPY_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux2014_x86_64:2023.07.10
+      CIBW_SKIP: '*-manylinux_i686 *-musllinux* pp*-*'
+      CIBW_ENVIRONMENT: 'CMAKE_ARGS="-DSME_BUILD_CORE=off -DCMAKE_PREFIX_PATH=/opt/smelibs;/opt/smelibs/lib64/cmake"'
       CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: 'true'
     - name: Set "latest" version number unless commit is tagged
@@ -48,7 +45,7 @@ jobs:
         restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
     - uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: '3.11'
     - name: Install cibuildwheel
       run: python -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
     - name: Build wheels
@@ -65,9 +62,10 @@ jobs:
         shell: bash
     env:
       CIBW_ENVIRONMENT: 'BLAS=None LAPACK=None ATLAS=None'
+      CIBW_SKIP: 'pp*-*'
       CIBW_TEST_SKIP: 'pp3*-macosx_x86_64'
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'true'
       - name: Set "latest" version number unless commit is tagged
@@ -81,7 +79,7 @@ jobs:
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11'
       - name: Download static libraries
         run: sudo ./ci/getlibs.sh osx
       - name: Build wheels
@@ -98,10 +96,10 @@ jobs:
         shell: msys2 {0}
     env:
       CIBW_BUILD: '*-win_amd64'
-      SME_EXTRA_CORE_DEFS: '_hypot=hypot;MS_WIN64'
+      CIBW_SKIP: 'pp*-*'
       CIBW_TEST_SKIP: "pp3*-win_amd64"
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'true'
       - uses: msys2/setup-msys2@v2
@@ -131,6 +129,10 @@ jobs:
     if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
     needs: [linux-wheel, macos-wheel, win64-wheel]
     runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+      contents: write
     steps:
       - uses: actions/download-artifact@v3
         with:
@@ -140,12 +142,10 @@ jobs:
         # if this is a tagged commit, upload pypi wheels
         if: startsWith(github.event.ref, 'refs/tags/')
         with:
-          user: __token__
-          password: ${{ secrets.pypi_password }}
           verbose: true
       - run: |
           mkdir latest
-          mv dist/sme-*-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl latest/sme-latest-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+          mv dist/sme-*-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl latest/sme-latest-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
       - uses: svenstaro/upload-release-action@v2
         # if this is an untagged commit to main: upload selected wheels to github latest release
         if: github.ref == 'refs/heads/main'
