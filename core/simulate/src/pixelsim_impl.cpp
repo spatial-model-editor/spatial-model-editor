@@ -536,7 +536,7 @@ void SimMembrane::evaluateReactions() {
   }
   std::vector<double> species(nSpeciesA + nSpeciesB + nExtraVars, 0);
   std::vector<double> result(nSpeciesA + nSpeciesB + nExtraVars, 0);
-  for (const auto [fluxDir, fluxLength] :
+  for (const auto &[fluxDir, fluxLength] :
        std::array<std::pair<geometry::Membrane::FLUX_DIRECTION, double>, 3>{
            {{geometry::Membrane::FLUX_DIRECTION::X, voxelSize.width()},
             {geometry::Membrane::FLUX_DIRECTION::Y, voxelSize.height()},

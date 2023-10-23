@@ -11,9 +11,9 @@ rendering::WireframeObject::WireframeObject(const rendering::ObjectInfo &info,
                                             const QVector3D &position,
                                             const QVector3D &rotation,
                                             const QVector3D &scale)
-    : m_mesh(mesh), m_openGLContext(Widget->context()), m_position(position),
-      m_rotation(rotation), m_scale(scale), m_color(color),
-      m_vertices(info.vertices) {
+    : m_vertices(info.vertices), m_color(color),
+      m_openGLContext(Widget->context()), m_mesh(mesh), m_rotation(rotation),
+      m_position(position), m_scale(scale) {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
   QOpenGLFunctions::initializeOpenGLFunctions();

@@ -243,7 +243,7 @@ TEST_CASE("Simulate: very_simple_model, single pixel geometry",
     simulate::Simulation sim2(s);
     sim2.doTimesteps(1000);
     std::size_t it = sim2.getTimePoints().size() - 1;
-    double A_c1 = 1.0;
+    [[maybe_unused]] double A_c1 = 1.0;
     double A_c2 = sim2.getAvgMinMax(it, 1, 0).avg;
     double A_c3 = sim2.getAvgMinMax(it, 2, 0).avg;
     double B_c1 = sim2.getAvgMinMax(it, 0, 0).avg;

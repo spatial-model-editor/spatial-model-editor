@@ -31,7 +31,7 @@ public:
   void setImages(const std::pair<sme::common::ImageStack,
                                  sme::common::ImageStack> &imgPair);
   // colour of pixel at last mouse click position
-  [[nodiscard]] const QRgb getColour() const;
+  [[nodiscard]] QRgb getColour() const;
   // value of mask index at last mouse click position
   [[nodiscard]] int getMaskIndex() const;
   // position of mouse as fraction of displayed pixmap volume
