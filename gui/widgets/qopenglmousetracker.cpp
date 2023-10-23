@@ -9,10 +9,11 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(float lineWidth,
                                          QColor selectedObjectColor,
                                          float cameraFOV, float cameraNearZ,
                                          float cameraFarZ, float frameRate)
-    : m_camera(cameraFOV, static_cast<float>(size().width()),
-               static_cast<float>(size().height()), cameraNearZ, cameraFarZ),
-      m_lineWidth(lineWidth), m_lineSelectPrecision(lineSelectPrecision),
-      m_selectedObjectColor(selectedObjectColor), m_frameRate(frameRate) {}
+    : m_frameRate(frameRate), m_lineWidth(lineWidth),
+      m_lineSelectPrecision(lineSelectPrecision),
+      m_selectedObjectColor(selectedObjectColor),
+      m_camera(cameraFOV, static_cast<float>(size().width()),
+               static_cast<float>(size().height()), cameraNearZ, cameraFarZ) {}
 
 void QOpenGLMouseTracker::initializeGL() {
 
