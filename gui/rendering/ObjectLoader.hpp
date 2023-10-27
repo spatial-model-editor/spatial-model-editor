@@ -14,12 +14,15 @@
 #include "ObjectInfo.hpp"
 #include <string>
 
+#include <sme/mesh3d.hpp>
+
 namespace rendering {
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel Kernel;
 typedef Kernel::Point_3 Point;
 
-typedef CGAL::Surface_mesh<Point> SMesh;
+// typedef CGAL::Surface_mesh<Point> SMesh;
+typedef sme::mesh::SMesh SMesh;
 
 class ObjectLoader {
 public:
