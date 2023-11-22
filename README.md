@@ -16,25 +16,30 @@ A GUI editor to create and edit spatial SBML models of bio-chemical reactions an
 
 To get started, download and run the GUI for your operating system
 
-| [Linux](../../releases/latest/download/spatial-model-editor) | [MacOS](../../releases/latest/download/spatial-model-editor.dmg) | [Windows](../../releases/latest/download/spatial-model-editor.exe) |
+| [Linux](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor) | [MacOS](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg) | [Windows](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) |
 | :-----: | :-----: | :------- |
-| [![linux](docs/img/icon-linux.png)](../../releases/latest/download/spatial-model-editor) | [![macOS](docs/img/icon-osx.png)](../../releases/latest/download/spatial-model-editor.dmg) | [![linux](docs/img/icon-windows.png)](../../releases/latest/download/spatial-model-editor.exe) |
+| [![linux](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-linux.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor) | [![macOS](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-osx.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg) | [![linux](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-windows.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) |
 
 Or take a look at our [website](https://spatial-model-editor.github.io/) or the [documentation](https://spatial-model-editor.readthedocs.io/)
 
-Pre-release [preview binaries](https://github.com/spatial-model-editor/spatial-model-editor/releases/tag/latest) are also available for testing new features before the next release.
+Pre-release preview binaries are also available which are built from the main branch and can be used for testing new features before the next release:
+
+- [Linux pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor)
+- [MacOS Intel pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor.dmg)
+- [MacOS Apple Silicon pre-release](https://github.com/ssciwr/sme-osx-arm64/releases/download/latest/spatial-model-editor.dmg)
+- [Windows pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor.exe)
 
 *Note: on linux some additional system libraries are required that may not be installed by default. To install them:*
 
 *  Fedora/RHEL/CentOS: `sudo yum install xcb-util-image xcb-util-keysyms xcb-util-renderutil xcb-util-wm`
 
-![screenshot](docs/img/mesh.png)
+![screenshot](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/mesh.png)
 
 ## Contributing
 
 [Bug reports](https://github.com/spatial-model-editor/spatial-model-editor/issues/new?assignees=&labels=&template=bug_report.md) and [feature requests](https://github.com/spatial-model-editor/spatial-model-editor/issues/new?assignees=&labels=&template=feature_request.md) are very welcome, as are fixes or improvements to the [documentation](https://spatial-model-editor.readthedocs.io/) (to edit a page in the documentation, click the 'Edit on GitHub' button in the top right).
 
-If you are interested in contributing code, please see the [contributing guidelines](.github/CONTRIBUTING.md).
+If you are interested in contributing code, please see the [contributing guidelines](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/.github/CONTRIBUTING.md).
 
 ## Dependencies
 
