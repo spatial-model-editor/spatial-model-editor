@@ -120,13 +120,22 @@ target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 target_compile_definitions(
   core PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_${SME_LOG_LEVEL})
 
+find_package(dune-common REQUIRED)
+find_package(dune-geometry REQUIRED)
+find_package(dune-uggrid REQUIRED)
+find_package(dune-grid REQUIRED)
+find_package(dune-istl REQUIRED)
+find_package(dune-localfunctions REQUIRED)
+find_package(dune-pdelab REQUIRED)
+find_package(dune-copasi REQUIRED)
+
 target_link_libraries(
   core
   PRIVATE TIFF::TIFF
           ${SYMENGINE_LIBRARIES}
           sbml-static
           Combine-static
-          dune-copasi::dune-copasi
+          Dune::Copasi
           CGAL::CGAL
           cereal::cereal
           TBB::tbb)
@@ -144,7 +153,7 @@ target_compile_definitions(core PUBLIC ${SME_EXTRA_CORE_DEFS})
 if(BUILD_TESTING)
   target_link_libraries(
     core_tests
-    PUBLIC dune-copasi::dune-copasi
+    PUBLIC Dune::Copasi
            core
            testlib)
 endif()

@@ -61,7 +61,7 @@ catch_discover_tests(
   "[gui]"
   PROPERTIES
   ENVIRONMENT
-  LSAN_OPTIONS=exitcode=0
+  ASAN_OPTIONS=halt_on_error=0
   RESOURCE_LOCK
   ResourceLockGui)
 # also tag expensive tests so they can be easily excluded
@@ -73,14 +73,14 @@ catch_discover_tests(
   "[expensive]"
   PROPERTIES
   ENVIRONMENT
-  LSAN_OPTIONS=exitcode=0)
+  ASAN_OPTIONS=halt_on_error=0)
 catch_discover_tests(
   tests
   TEST_SPEC
   "~[gui]~[expensive]"
   PROPERTIES
   ENVIRONMENT
-  LSAN_OPTIONS=exitcode=0)
+  ASAN_OPTIONS=halt_on_error=0)
 
 # add custom target to generate coverage report
 add_custom_target(

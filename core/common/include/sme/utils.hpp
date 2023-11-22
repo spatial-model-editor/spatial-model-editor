@@ -322,4 +322,14 @@ bool isCyclicPermutation(const std::vector<T> &a, const std::vector<T> &b) {
   return true;
 }
 
+// Creates a unique_ptr of type T with std::free as custom deleter
+// Avoids taking this address of std::free as this is undefined behaviour
+// https://stackoverflow.com/questions/27440953/stdunique-ptr-for-c-functions-that-need-free/43626234#43626234
+struct free_deleter {
+  template <typename T> void operator()(T *p) const {
+    std::free(const_cast<std::remove_const_t<T> *>(p));
+  }
+};
+template <typename T> using unique_C_ptr = std::unique_ptr<T, free_deleter>;
+
 } // namespace sme::common

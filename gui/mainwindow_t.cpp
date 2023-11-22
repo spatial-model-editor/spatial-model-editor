@@ -141,7 +141,7 @@ TEST_CASE("MainWindow: open/save shortcut keys", tags) {
       mwt.start();
       sendKeyEvents(&w, {"Ctrl+D"});
       REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
-      QFile file("tmpmainw1_comp.ini");
+      QFile file("tmpmainw1.ini");
       REQUIRE(file.open(QIODevice::ReadOnly | QIODevice::Text));
       auto line = file.readLine().toStdString();
       REQUIRE(line == "[grid]\n");

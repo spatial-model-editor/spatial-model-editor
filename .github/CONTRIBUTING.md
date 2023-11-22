@@ -75,7 +75,7 @@ pytest sme
 
 ## Style guide
 
-- C++17
+- C++20
 
 - each component `X` has a `X.hpp`, `X.cpp` and `X_t.cpp`, where the latter contains the tests
 

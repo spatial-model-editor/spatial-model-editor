@@ -6,12 +6,11 @@
 #include <boost/version.hpp>
 #include <bzlib.h>
 #include <cereal/version.hpp>
-#include <dune/copasi/config.h>
+#include <dune-copasi-config.hh>
 #include <expat.h>
 #include <fmt/core.h>
 #include <gmp.h>
 #include <mpfr.h>
-#include <muParserDef.h>
 #include <omex/common/libcombine-version.h>
 #include <oneapi/tbb/version.h>
 #include <opencv2/opencv.hpp>
@@ -77,8 +76,6 @@ DialogAbout::DialogAbout(QWidget *parent)
                        BOOST_VERSION % 100));
   libraries.append(dep("CGAL", "https://www.cgal.org/", CGAL_VERSION_MAJOR,
                        CGAL_VERSION_MINOR, CGAL_VERSION_PATCH));
-  libraries.append(dep("muParser", "https://github.com/beltoforion/muparser",
-                       mu::ParserVersion.c_str()));
   libraries.append(dep("libTIFF", "http://www.libtiff.org/",
                        QString(TIFFLIB_VERSION_STR).left(23).right(6)));
   libraries.append(dep("expat", "https://libexpat.github.io/",

@@ -41,7 +41,8 @@ class DuneImpl;
 struct DuneSimCompartment {
   std::string name;
   std::size_t index;
-  std::vector<std::size_t> speciesIndices;
+  std::size_t nSpecies;
+  std::vector<std::string> speciesNames;
   geometry::VoxelIndexer voxelIndexer;
   const geometry::Compartment *geometry;
   // pixels+dune local coords for each triangle
@@ -60,7 +61,7 @@ private:
   QSizeF pixelSize;
   QPointF pixelOrigin;
   void initDuneSimCompartments(
-      const std::vector<const geometry::Compartment *> &comps);
+      const std::vector<std::unique_ptr<geometry::Compartment>> &comps);
   void updatePixels();
   void updateSpeciesConcentrations();
   std::string currentErrorMessage{};

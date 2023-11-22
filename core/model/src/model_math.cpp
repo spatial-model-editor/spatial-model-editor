@@ -1,5 +1,6 @@
 #include "sme/model_math.hpp"
 #include "sbml_math.hpp"
+#include "sme/utils.hpp"
 #include <memory>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
@@ -21,8 +22,7 @@ void ModelMath::parse(const std::string &expr) {
   astNode = mathStringToAST(expr, sbmlModel);
   if (astNode == nullptr) {
     valid = false;
-    std::unique_ptr<char, decltype(&std::free)> err(
-        libsbml::SBML_getLastParseL3Error(), &std::free);
+    common::unique_C_ptr<char> err{libsbml::SBML_getLastParseL3Error()};
     errorMessage = err.get();
     return;
   }

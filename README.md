@@ -64,8 +64,6 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [Boost](https://www.boost.org/) - license: [boost](https://www.boost.org/users/license.html)
 
-- [muParser](https://github.com/beltoforion/muparser) - license: [MIT](https://github.com/beltoforion/muparser/blob/master/License.txt)
-
 - [libTIFF](http://www.libtiff.org/) - license: [MIT](http://www.libtiff.org/misc.html)
 
 - [Expat](https://github.com/libexpat/libexpat) - license: [MIT](https://github.com/libexpat/libexpat/blob/master/expat/COPYING)

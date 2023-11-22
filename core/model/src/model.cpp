@@ -219,8 +219,7 @@ QString Model::getXml() {
   }
   updateSBMLDoc();
   countAndPrintSBMLDocErrors(doc.get());
-  std::unique_ptr<char, decltype(&std::free)> xmlChar(
-      libsbml::writeSBMLToString(doc.get()), &std::free);
+  common::unique_C_ptr<char> xmlChar{libsbml::writeSBMLToString(doc.get())};
   xml = QString(xmlChar.get());
   return xml;
 }

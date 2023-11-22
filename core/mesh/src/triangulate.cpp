@@ -135,8 +135,10 @@ static void meshCdt(CDT &cdt,
     constexpr double bestAngleBoundWithGuaranteedTermination{0.125};
     CGAL::Delaunay_mesh_size_criteria_2<CDT> criteria(
         bestAngleBoundWithGuaranteedTermination, maxLength);
-    CGAL::refine_Delaunay_mesh_2(cdt, seeds.begin(), seeds.end(), criteria,
-                                 true);
+    CGAL::refine_Delaunay_mesh_2(
+        cdt,
+        CGAL::parameters::seeds(seeds).criteria(criteria).seeds_are_in_domain(
+            true));
     SPDLOG_INFO("Number of vertices in mesh: {}", cdt.number_of_vertices());
     SPDLOG_INFO("Number of triangles in mesh: {}", cdt.number_of_faces());
   }

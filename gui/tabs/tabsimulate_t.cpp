@@ -172,34 +172,4 @@ TEST_CASE("TabSimulate", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
                         "use the Pixel simulator instead?"};
     REQUIRE(mwt.getResult() == invalidDune);
   }
-  SECTION("Piecewise function in reactions") {
-    auto m{getTestModel("fish_300x300")};
-    ModalWidgetTimer mwt;
-    SECTION("Using DUNE, click no to Pixel") {
-      mwt.addUserAction({"Esc"});
-      mwt.start();
-      TabSimulate tab(m, &mouseTracker);
-      auto *btnSimulate{tab.findChild<QPushButton *>("btnSimulate")};
-      REQUIRE(btnSimulate != nullptr);
-      REQUIRE(mwt.getResult().left(23) == "Simulation setup failed");
-      REQUIRE(mwt.getResult().right(56) ==
-              "Would you like to try using the Pixel simulator instead?");
-      REQUIRE(m.getSimulationSettings().simulatorType ==
-              sme::simulate::SimulatorType::DUNE);
-      REQUIRE(btnSimulate->isEnabled() == false);
-    }
-    SECTION("Using DUNE, click yes to Pixel") {
-      mwt.addUserAction({"Enter"});
-      mwt.start();
-      TabSimulate tab(m, &mouseTracker);
-      auto *btnSimulate{tab.findChild<QPushButton *>("btnSimulate")};
-      REQUIRE(btnSimulate != nullptr);
-      REQUIRE(mwt.getResult().left(23) == "Simulation setup failed");
-      REQUIRE(mwt.getResult().right(56) ==
-              "Would you like to try using the Pixel simulator instead?");
-      REQUIRE(m.getSimulationSettings().simulatorType ==
-              sme::simulate::SimulatorType::Pixel);
-      REQUIRE(btnSimulate->isEnabled() == true);
-    }
-  }
 }

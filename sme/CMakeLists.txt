@@ -9,7 +9,7 @@ target_sources(sme PRIVATE sme.cpp)
 target_include_directories(sme PRIVATE src)
 add_subdirectory(src)
 
-set_target_properties(sme PROPERTIES CXX_STANDARD 17)
+set_target_properties(sme PROPERTIES CXX_STANDARD 20)
 set_target_properties(sme PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # https://github.com/pybind/pybind11/issues/1818#issuecomment-506031452

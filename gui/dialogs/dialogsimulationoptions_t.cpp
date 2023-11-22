@@ -8,7 +8,7 @@ using namespace sme::test;
 TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
                                      "dialogs][gui][simulationoptions]") {
   sme::simulate::Options options;
-  options.dune.integrator = "explicit_euler";
+  options.dune.integrator = "ExplicitEuler";
   options.dune.dt = 0.123;
   options.dune.minDt = 1e-5;
   options.dune.maxDt = 2;
@@ -31,7 +31,7 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     mwt.start();
     dia.exec();
     auto opt = dia.getOptions();
-    REQUIRE(options.dune.integrator == "explicit_euler");
+    REQUIRE(options.dune.integrator == "ExplicitEuler");
     REQUIRE(options.dune.dt == dbl_approx(0.123));
     REQUIRE(options.dune.minDt == dbl_approx(1e-5));
     REQUIRE(options.dune.maxDt == dbl_approx(2));
@@ -58,7 +58,7 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     mwt.start();
     dia.exec();
     auto opt = dia.getOptions();
-    REQUIRE(opt.dune.integrator == "heun");
+    REQUIRE(opt.dune.integrator == "Heun");
     REQUIRE(opt.dune.dt == dbl_approx(0.4));
     REQUIRE(opt.dune.minDt == dbl_approx(1e-12));
     REQUIRE(opt.dune.maxDt == dbl_approx(9));

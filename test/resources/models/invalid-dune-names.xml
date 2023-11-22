@@ -25,28 +25,28 @@
     </listOfCompartments>
     <listOfSpecies>
       <species metaid="COPASI2" id="dim" name="A" compartment="comp" initialConcentration="1" substanceUnits="substance" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
-      <species metaid="COPASI3" id="x" name="B" compartment="comp" initialConcentration="1" substanceUnits="substance" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
-      <species metaid="COPASI4" id="x_" name="C" compartment="comp" initialConcentration="0" substanceUnits="substance" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
+      <species metaid="COPASI3" id="position_x" name="B" compartment="comp" initialConcentration="1" substanceUnits="substance" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
+      <species metaid="COPASI4" id="position_x_" name="C" compartment="comp" initialConcentration="0" substanceUnits="substance" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true"/>
     </listOfSpecies>
     <listOfParameters>
       <parameter id="dim_diffusionConstant" value="1" constant="true">
         <spatial:diffusionCoefficient spatial:variable="dim" spatial:type="isotropic"/>
       </parameter>
       <parameter id="x_diffusionConstant" value="1" constant="true">
-        <spatial:diffusionCoefficient spatial:variable="x" spatial:type="isotropic"/>
+        <spatial:diffusionCoefficient spatial:variable="position_x" spatial:type="isotropic"/>
       </parameter>
       <parameter id="x__diffusionConstant" value="1" constant="true">
-        <spatial:diffusionCoefficient spatial:variable="x_" spatial:type="isotropic"/>
+        <spatial:diffusionCoefficient spatial:variable="position_x_" spatial:type="isotropic"/>
       </parameter>
     </listOfParameters>
     <listOfReactions>
       <reaction metaid="COPASI5" id="r1" name="r1" reversible="false" compartment="comp" spatial:isLocal="true">
         <listOfReactants>
           <speciesReference species="dim" stoichiometry="1" constant="true"/>
-          <speciesReference species="x" stoichiometry="1" constant="true"/>
+          <speciesReference species="position_x" stoichiometry="1" constant="true"/>
         </listOfReactants>
         <listOfProducts>
-          <speciesReference species="x_" stoichiometry="1" constant="true"/>
+          <speciesReference species="position_x_" stoichiometry="1" constant="true"/>
         </listOfProducts>
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -55,7 +55,7 @@
               <ci> comp </ci>
               <ci> k1 </ci>
               <ci> dim </ci>
-              <ci> x </ci>
+              <ci> position_x </ci>
             </apply>
           </math>
           <listOfLocalParameters>

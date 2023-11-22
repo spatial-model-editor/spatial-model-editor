@@ -6,7 +6,7 @@ set -e -x
 
 brew install ccache
 
-export MACOSX_DEPLOYMENT_TARGET=10.14
+export MACOSX_DEPLOYMENT_TARGET=11
 export CCACHE_BASEDIR=/private
 export CMAKE_CXX_COMPILER_LAUNCHER="ccache"
 export CMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake"

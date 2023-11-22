@@ -1,6 +1,7 @@
 #include "sbml_math.hpp"
 #include "sme/logger.hpp"
 #include "sme/symbolic.hpp"
+#include "sme/utils.hpp"
 #include <memory>
 #include <sbml/SBMLTransforms.h>
 
@@ -61,8 +62,7 @@ std::string mathASTtoString(const libsbml::ASTNode *node) {
   if (node == nullptr) {
     return {};
   }
-  std::unique_ptr<char, decltype(&std::free)> charAST(
-      libsbml::SBML_formulaToL3String(node), &std::free);
+  common::unique_C_ptr<char> charAST{libsbml::SBML_formulaToL3String(node)};
   return charAST.get();
 }
 

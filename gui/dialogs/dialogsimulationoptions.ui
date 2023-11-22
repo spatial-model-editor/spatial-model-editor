@@ -111,42 +111,42 @@
            </property>
            <item>
             <property name="text">
-             <string>explicit_euler</string>
+             <string>ExplicitEuler</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>implicit_euler</string>
+             <string>ImplicitEuler</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>heun</string>
+             <string>Heun</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>fractional_step_theta</string>
+             <string>FractionalStepTheta</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>alexander_2</string>
+             <string>Alexander2</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>shu_3</string>
+             <string>Shu3</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>alexander_3</string>
+             <string>Alexander3</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>runge_kutta_4</string>
+             <string>RungeKutta4</string>
             </property>
            </item>
           </widget>

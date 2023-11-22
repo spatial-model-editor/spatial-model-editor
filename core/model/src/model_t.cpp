@@ -240,8 +240,8 @@ TEST_CASE("SBML: name clashes", "[core/model/model][core/model][core][model]") {
       spec->setCompartment("compartment" + toString(iComp));
     }
   }
-  std::unique_ptr<char, decltype(&std::free)> xmlChar(
-      libsbml::writeSBMLToString(document.get()), &std::free);
+  common::unique_C_ptr<char> xmlChar{
+      libsbml::writeSBMLToString(document.get())};
   model::Model s;
   s.importSBMLString(xmlChar.get());
   REQUIRE(s.getCompartments().getIds().size() == 3);

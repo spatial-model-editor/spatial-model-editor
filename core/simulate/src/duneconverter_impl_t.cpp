@@ -9,19 +9,17 @@ using namespace sme::test;
 TEST_CASE("DUNE: DuneConverter impl",
           "[core/simulate/duneconverter][core/simulate][core][duneconverter]") {
   SECTION("Species Names") {
-    std::vector<std::string> names{"a",   "x",  "y",     "t",    "a_i",
-                                   "cos", "x_", "out_o", "out_a"};
+    std::vector<std::string> names{"a",   "position_x", "position_y", "time",
+                                   "a_i", "cos",        "position_x_"};
     auto duneNames = simulate::makeValidDuneSpeciesNames(names);
     REQUIRE(duneNames.size() == names.size());
     REQUIRE(duneNames[0] == "a");
-    REQUIRE(duneNames[1] == "x__");
-    REQUIRE(duneNames[2] == "y_");
-    REQUIRE(duneNames[3] == "t_");
-    REQUIRE(duneNames[4] == "a_i_");
+    REQUIRE(duneNames[1] == "position_x__");
+    REQUIRE(duneNames[2] == "position_y_");
+    REQUIRE(duneNames[3] == "time_");
+    REQUIRE(duneNames[4] == "a_i");
     REQUIRE(duneNames[5] == "cos_");
-    REQUIRE(duneNames[6] == "x_");
-    REQUIRE(duneNames[7] == "out_o_");
-    REQUIRE(duneNames[8] == "out_a");
+    REQUIRE(duneNames[6] == "position_x_");
   }
   SECTION("ABtoC model") {
     auto s{getExampleModel(Mod::ABtoC)};

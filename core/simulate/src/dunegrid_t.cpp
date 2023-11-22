@@ -5,11 +5,17 @@
 #include "sme/duneconverter.hpp"
 #include "sme/model.hpp"
 #include <QFile>
-#include <dune/copasi/grid/multidomain_gmsh_reader.hh>
 #include <locale>
 
 using namespace sme;
 using namespace sme::test;
+
+static Dune::ParameterTree getConfig(const simulate::DuneConverter &dc) {
+  Dune::ParameterTree config;
+  std::stringstream ssIni(dc.getIniFile().toStdString());
+  Dune::ParameterTreeParser::readINITree(ssIni, config);
+  return config;
+}
 
 constexpr int DuneDimensions{2};
 using HostGrid = Dune::UGGrid<DuneDimensions>;
@@ -35,28 +41,21 @@ TEST_CASE("DUNE: grid",
     CAPTURE(exampleModel);
     // load mesh from model
     auto m{getExampleModel(exampleModel)};
-    simulate::DuneConverter dc(m, {}, false);
+    simulate::DuneConverter dc(m, {}, true);
+    auto config{getConfig(dc)};
     const auto *mesh{m.getGeometry().getMesh()};
 
     // generate dune grid with sim::makeDuneGrid
     auto [grid, hostGrid] = simulate::makeDuneGrid<HostGrid, MDGTraits>(*mesh);
 
-    // generate dune grid with Dune::Copasi::MultiDomainGmshReader
-    if (QFile f("tmpdunegridmesh.msh");
-        f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    // generate dune grid with Dune::Copasi::make_multi_domain_grid
+    if (QFile f("grid.msh"); f.open(QIODevice::WriteOnly | QIODevice::Text)) {
       f.write(mesh->getGMSH().toUtf8());
       f.close();
     }
     // note: requires C locale
     std::locale userLocale = std::locale::global(std::locale::classic());
-    // init & mute Dune logging
-    if (!Dune::Logging::Logging::initialized()) {
-      Dune::Logging::Logging::init(
-          Dune::FakeMPIHelper::getCollectiveCommunication());
-    }
-    Dune::Logging::Logging::mute();
-    auto [gmshGrid, gmshHostGrid] =
-        Dune::Copasi::MultiDomainGmshReader<Grid>::read("tmpdunegridmesh.msh");
+    auto gmshGrid{Dune::Copasi::make_multi_domain_grid<Grid>(config)};
     std::locale::global(userLocale);
 
     // compare grids

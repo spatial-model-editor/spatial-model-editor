@@ -5,6 +5,7 @@
 #include "sme/logger.hpp"
 #include "sme/model_events.hpp"
 #include "sme/model_species.hpp"
+#include "sme/utils.hpp"
 #include <QString>
 #include <memory>
 #include <sbml/SBMLTypes.h>
@@ -220,8 +221,7 @@ void ModelParameters::setExpression(const QString &id, const QString &expr) {
     std::unique_ptr<const libsbml::ASTNode> astNode{
         mathStringToAST(expr.toStdString(), sbmlModel)};
     if (astNode == nullptr) {
-      std::unique_ptr<char, decltype(&std::free)> err(
-          libsbml::SBML_getLastParseL3Error(), &std::free);
+      common::unique_C_ptr<char> err{libsbml::SBML_getLastParseL3Error()};
       SPDLOG_ERROR("{}", err.get());
       return;
     }

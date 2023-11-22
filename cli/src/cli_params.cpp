@@ -38,7 +38,7 @@ static void addCallbacks(CLI::App &app) {
   app.add_flag_callback(
          "-d,--dump-config",
          [&app]() {
-           fmt::print(app.config_to_str(true, true));
+           fmt::print("{}", app.config_to_str(true, true));
            throw CLI::Success();
          },
          "Dump the default config ini file and exit")
