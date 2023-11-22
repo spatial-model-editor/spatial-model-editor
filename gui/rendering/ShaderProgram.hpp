@@ -2,8 +2,7 @@
 // Created by acaramizaru on 6/30/23.
 //
 
-#ifndef SPATIALMODELEDITOR_SHADERPROGRAM_H
-#define SPATIALMODELEDITOR_SHADERPROGRAM_H
+#pragma once
 
 #include <QtOpenGL>
 #include <string>
@@ -51,5 +50,3 @@ private:
 };
 
 } // namespace rendering
-
-#endif // SPATIALMODELEDITOR_SHADERPROGRAM_H

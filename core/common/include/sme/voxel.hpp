@@ -55,10 +55,6 @@ inline bool operator==(const Volume &a, const Volume &b) {
   return a.width() == b.width() && a.height() == b.height() &&
          a.depth() == b.depth();
 }
-inline bool operator!=(const Volume &a, const Volume &b) {
-  return a.width() != b.width() || a.height() != b.height() ||
-         a.depth() != b.depth();
-}
 
 class VolumeF {
 private:

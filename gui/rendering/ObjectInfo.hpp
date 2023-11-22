@@ -2,8 +2,7 @@
 // Created by acaramizaru on 6/30/23.
 //
 
-#ifndef SPATIALMODELEDITOR_OBJECTINFO_H
-#define SPATIALMODELEDITOR_OBJECTINFO_H
+#pragma once
 
 #include <QVector4D>
 #include <QtOpenGL>
@@ -20,5 +19,3 @@ struct ObjectInfo {
 };
 
 } // namespace rendering
-
-#endif // SPATIALMODELEDITOR_OBJECTINFO_H

@@ -2,8 +2,8 @@
 // https://docs.python.org/3.2/c-api/intro.html#include-files
 #include <pybind11/pybind11.h>
 
+#include "sme/image_stack.hpp"
 #include "sme/logger.hpp"
-#include "sme/tiff.hpp"
 #include "sme_common.hpp"
 #include "sme_model.hpp"
 #include <QElapsedTimer>
@@ -325,18 +325,16 @@ std::string Model::getName() const { return s->getName().toStdString(); }
 void Model::setName(const std::string &name) { s->setName(name.c_str()); }
 
 void Model::importGeometryFromImage(const std::string &filename) {
-  // todo: refactor to take image stack, for now assume 2d geometry image
-  QImage img;
-  sme::common::TiffReader tiffReader(filename);
-  if (!tiffReader.empty()) {
-    img = tiffReader.getImages()[0];
-  } else {
-    img = QImage(filename.c_str());
-  }
-  s->getGeometry().importGeometryFromImages({img}, true);
-  compartment_image = toPyImageRgb(s->getGeometry().getImages());
-  for (auto &compartment : compartments) {
-    compartment.updateMask();
+  try {
+    s->getGeometry().importGeometryFromImages(
+        common::ImageStack(filename.c_str()), true);
+    compartment_image = toPyImageRgb(s->getGeometry().getImages());
+    for (auto &compartment : compartments) {
+      compartment.updateMask();
+    }
+  } catch (const std::invalid_argument &e) {
+    throw SmeInvalidArgument("Failed to import geometry from image '" +
+                             filename + "': " + e.what());
   }
 }
 

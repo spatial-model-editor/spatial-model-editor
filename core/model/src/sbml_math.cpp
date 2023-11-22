@@ -81,8 +81,7 @@ static const libsbml::ASTNode *
 findUnknownName(const libsbml::ASTNode *node, libsbml::ASTNodeType_t nodeType,
                 const std::vector<std::string> &names) {
   if (node->getType() == nodeType &&
-      std::find(names.cbegin(), names.cend(), node->getName()) ==
-          names.cend()) {
+      std::ranges::find(names, node->getName()) == names.cend()) {
     return node;
   }
   for (unsigned int i = 0; i < node->getNumChildren(); ++i) {

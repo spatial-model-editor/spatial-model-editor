@@ -1,4 +1,5 @@
 add_library(core STATIC)
+target_compile_features(core PUBLIC cxx_std_20)
 add_library(
   sme::core
   ALIAS
@@ -163,7 +164,3 @@ add_subdirectory(common)
 add_subdirectory(mesh)
 add_subdirectory(model)
 add_subdirectory(simulate)
-
-# set Compile options and warnings
-set_target_properties(core PROPERTIES CXX_STANDARD 17)
-set_target_properties(core PROPERTIES POSITION_INDEPENDENT_CODE ON)

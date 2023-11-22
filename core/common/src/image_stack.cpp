@@ -1,6 +1,8 @@
 #include "sme/image_stack.hpp"
 #include "sme/logger.hpp"
+#include "sme/tiff.hpp"
 #include "sme/utils.hpp"
+#include <stdexcept>
 
 namespace sme::common {
 
@@ -15,6 +17,24 @@ ImageStack::ImageStack(std::vector<QImage> &&images)
       sz{imgs[0].width(), imgs[0].height(), imgs.size()} {}
 ImageStack::ImageStack(const std::vector<QImage> &images)
     : imgs{images}, sz{imgs[0].width(), imgs[0].height(), imgs.size()} {}
+
+ImageStack::ImageStack(const QString &filename) {
+  SPDLOG_DEBUG("Import image file '{}'", filename.toStdString());
+  SPDLOG_DEBUG("  - trying tiffReader");
+  sme::common::TiffReader tiffReader(filename.toStdString());
+  if (!tiffReader.empty()) {
+    *this = tiffReader.getImages();
+    return;
+  }
+  SPDLOG_DEBUG("    -> tiffReader could not read file");
+  SPDLOG_DEBUG("  - trying QImage::load()");
+  if (QImage img; img.load(filename)) {
+    *this = ImageStack({img});
+    return;
+  }
+  SPDLOG_DEBUG("    -> QImage::load() could not read file - giving up");
+  throw std::invalid_argument(tiffReader.getErrorMessage().toStdString());
+}
 
 ImageStack::ImageStack(const Volume &imageSize,
                        const std::vector<double> &values, double maxValue)
@@ -45,12 +65,6 @@ ImageStack::ImageStack(const Volume &imageSize,
     }
   }
 }
-
-// todo: remove this constructor or make it explicit
-// temporarily allow a QImage to implicitly be converted to a ImageStack
-// to avoid refactoring a lot of test code
-ImageStack::ImageStack(const QImage &image)
-    : imgs{{image}}, sz{image.width(), image.height(), 1} {}
 
 void ImageStack::clear() {
   imgs.clear();

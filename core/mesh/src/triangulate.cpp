@@ -116,10 +116,9 @@ static void meshCdt(CDT &cdt,
   // resulting in the insertion of bad (tall/thin) triangles in the already
   // meshed compartment.
   auto sortedCompartments{compartments};
-  std::sort(sortedCompartments.begin(), sortedCompartments.end(),
-            [](const auto &a, const auto &b) {
-              return a.maxTriangleArea < b.maxTriangleArea;
-            });
+  std::ranges::sort(sortedCompartments, [](const auto &a, const auto &b) {
+    return a.maxTriangleArea < b.maxTriangleArea;
+  });
   for (const auto &compartment : sortedCompartments) {
     std::vector<CDT::Point> seeds;
     seeds.reserve(compartment.interiorPoints.size());

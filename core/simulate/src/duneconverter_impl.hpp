@@ -19,6 +19,4 @@ bool compartmentContainsNonConstantSpecies(const model::Model &model,
 std::vector<std::string> getNonConstantSpecies(const model::Model &model,
                                                const QString &compId);
 
-bool modelHasIndependentCompartments(const model::Model &model);
-
 } // namespace sme::simulate

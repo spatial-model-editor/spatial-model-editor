@@ -249,15 +249,13 @@ PixelSim::PixelSim(
         std::string compIdA = membrane.getCompartmentA()->getId();
         std::string compIdB = membrane.getCompartmentB()->getId();
         auto iterA =
-            std::find_if(simCompartments.begin(), simCompartments.end(),
-                         [&compIdA](const auto &c) {
-                           return c->getCompartmentId() == compIdA;
-                         });
+            std::ranges::find_if(simCompartments, [&compIdA](const auto &c) {
+              return c->getCompartmentId() == compIdA;
+            });
         auto iterB =
-            std::find_if(simCompartments.begin(), simCompartments.end(),
-                         [&compIdB](const auto &c) {
-                           return c->getCompartmentId() == compIdB;
-                         });
+            std::ranges::find_if(simCompartments, [&compIdB](const auto &c) {
+              return c->getCompartmentId() == compIdB;
+            });
         SimCompartment *compA{nullptr};
         if (iterA != simCompartments.cend()) {
           compA = iterA->get();

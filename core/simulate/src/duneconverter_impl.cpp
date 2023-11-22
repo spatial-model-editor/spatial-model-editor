@@ -45,14 +45,12 @@ makeValidDuneSpeciesNames(const std::vector<std::string> &names) {
     std::string duneName = name;
     name = "";
     // if species name clashes with a reserved name, append an underscore
-    if (std::find(reservedNames.cbegin(), reservedNames.cend(), duneName) !=
-        reservedNames.cend()) {
+    if (std::ranges::find(reservedNames, duneName) != reservedNames.cend()) {
       duneName.append("_");
     }
     // if species name clashes with another species name,
     // append another underscore
-    while (std::find(duneNames.cbegin(), duneNames.cend(), duneName) !=
-           duneNames.cend()) {
+    while (std::ranges::find(duneNames, duneName) != duneNames.cend()) {
       duneName.append("_");
     }
     name = duneName;
@@ -64,7 +62,7 @@ makeValidDuneSpeciesNames(const std::vector<std::string> &names) {
 bool compartmentContainsNonConstantSpecies(const model::Model &model,
                                            const QString &compId) {
   const auto &specs = model.getSpecies().getIds(compId);
-  return std::any_of(specs.cbegin(), specs.cend(), [m = &model](const auto &s) {
+  return std::ranges::any_of(specs, [m = &model](const auto &s) {
     return !m->getSpecies().getIsConstant(s);
   });
 }
@@ -78,16 +76,6 @@ std::vector<std::string> getNonConstantSpecies(const model::Model &model,
     }
   }
   return v;
-}
-
-bool modelHasIndependentCompartments(const model::Model &model) {
-  for (const auto &memId : model.getMembranes().getIds()) {
-    if (!model.getReactions().getIds(memId).isEmpty()) {
-      // model has membrane reaction -> compartments coupled
-      return false;
-    }
-  }
-  return true;
 }
 
 } // namespace sme::simulate

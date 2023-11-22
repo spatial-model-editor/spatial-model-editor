@@ -18,7 +18,6 @@ find_package(
   REQUIRED
   CONFIG
   COMPONENTS Test)
-set_property(TARGET tests PROPERTY CXX_STANDARD 17)
 
 add_library(testlib resources/test_resources.qrc)
 if(SME_QT_DISABLE_UNICODE)

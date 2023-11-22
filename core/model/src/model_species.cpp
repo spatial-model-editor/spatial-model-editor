@@ -286,7 +286,7 @@ void ModelSpecies::setSimulationDataPtr(simulate::SimulationData *data) {
 }
 
 bool ModelSpecies::containsNonSpatialReactiveSpecies() const {
-  return std::any_of(ids.begin(), ids.end(), [this](const auto &id) {
+  return std::ranges::any_of(ids, [this](const auto &id) {
     return !getIsSpatial(id) && isReactive(id);
   });
 }

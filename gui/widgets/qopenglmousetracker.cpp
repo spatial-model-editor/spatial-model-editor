@@ -2,7 +2,7 @@
 // Created by acaramizaru on 7/25/23.
 //
 
-#include "qopenglmousetracker.h"
+#include "qopenglmousetracker.hpp"
 
 QOpenGLMouseTracker::QOpenGLMouseTracker(float lineWidth,
                                          float lineSelectPrecision,
@@ -221,10 +221,8 @@ QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
 void QOpenGLMouseTracker::addMesh(const rendering::SMesh &mesh, QColor color) {
   rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
 
-  m_meshSet.push_back(std::make_pair(
-      color,
-      std::unique_ptr<rendering::WireframeObject>(
-          new rendering::WireframeObject(objectInfo, color, mesh, this))));
+  m_meshSet.emplace_back(color, std::make_unique<rendering::WireframeObject>(
+                                    objectInfo, color, mesh, this));
 }
 
 void QOpenGLMouseTracker::setFPS(float frameRate) { m_frameRate = frameRate; }

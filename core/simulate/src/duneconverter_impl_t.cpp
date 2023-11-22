@@ -29,7 +29,6 @@ TEST_CASE("DUNE: DuneConverter impl",
     REQUIRE(nonConstantSpecies[0] == "A");
     REQUIRE(nonConstantSpecies[1] == "B");
     REQUIRE(nonConstantSpecies[2] == "C");
-    REQUIRE(simulate::modelHasIndependentCompartments(s) == true);
 
     // make all species constant
     s.getSpecies().setIsConstant("A", true);
@@ -38,7 +37,6 @@ TEST_CASE("DUNE: DuneConverter impl",
     REQUIRE(simulate::compartmentContainsNonConstantSpecies(s, "comp") ==
             false);
     REQUIRE(simulate::getNonConstantSpecies(s, "comp").empty());
-    REQUIRE(simulate::modelHasIndependentCompartments(s) == true);
   }
   SECTION("very-simple-model model") {
     auto s{getExampleModel(Mod::VerySimpleModel)};
@@ -48,7 +46,6 @@ TEST_CASE("DUNE: DuneConverter impl",
     REQUIRE(simulate::getNonConstantSpecies(s, "c1").size() == 1);
     REQUIRE(simulate::getNonConstantSpecies(s, "c2").size() == 2);
     REQUIRE(simulate::getNonConstantSpecies(s, "c3").size() == 2);
-    REQUIRE(simulate::modelHasIndependentCompartments(s) == false);
 
     // remove only non-constant species in compartment c1
     s.getSpecies().remove("B_c1");
@@ -58,7 +55,6 @@ TEST_CASE("DUNE: DuneConverter impl",
     REQUIRE(simulate::getNonConstantSpecies(s, "c1").empty());
     REQUIRE(simulate::getNonConstantSpecies(s, "c2").size() == 2);
     REQUIRE(simulate::getNonConstantSpecies(s, "c3").size() == 2);
-    REQUIRE(simulate::modelHasIndependentCompartments(s) == false);
 
     // remove membrane reactions
     s.getReactions().remove("A_uptake");
@@ -71,6 +67,5 @@ TEST_CASE("DUNE: DuneConverter impl",
     REQUIRE(simulate::getNonConstantSpecies(s, "c1").empty());
     REQUIRE(simulate::getNonConstantSpecies(s, "c2").size() == 2);
     REQUIRE(simulate::getNonConstantSpecies(s, "c3").size() == 2);
-    REQUIRE(simulate::modelHasIndependentCompartments(s) == true);
   }
 }

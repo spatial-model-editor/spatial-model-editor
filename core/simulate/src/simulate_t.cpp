@@ -29,8 +29,8 @@ TEST_CASE("Simulate: very_simple_model, single pixel geometry",
   img.setPixel(0, 1, col2);
   img.setPixel(0, 2, col3);
   img.save("tmpsimsinglepixel.bmp");
-  s.getGeometry().importGeometryFromImages({QImage("tmpsimsinglepixel.bmp")},
-                                           false);
+  s.getGeometry().importGeometryFromImages(
+      common::ImageStack{{QImage("tmpsimsinglepixel.bmp")}}, false);
   s.getGeometry().setVoxelSize({1.0, 1.0, 1.0});
   s.getCompartments().setColour("c1", col1);
   s.getCompartments().setColour("c2", col2);

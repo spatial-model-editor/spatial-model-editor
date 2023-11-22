@@ -45,9 +45,6 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)
-
 # stop Qt from defining UNICODE on windows to avoid dune issues: this used to be
 # opt-in, but now done by default for Qt >= 6.1.2. See
 # https://codereview.qt-project.org/c/qt/qtbase/+/350443

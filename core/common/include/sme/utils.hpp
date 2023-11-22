@@ -27,6 +27,7 @@
 #include <iterator>
 #include <numeric>
 #include <optional>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -49,7 +50,7 @@ typename Container::value_type sum(const Container &c) {
  */
 template <typename Container>
 typename Container::value_type average(const Container &c) {
-  return sum(c) / static_cast<typename Container::value_type>(c.size());
+  return sum(c) / static_cast<typename Container::value_type>(std::size(c));
 }
 
 /**
@@ -57,7 +58,7 @@ typename Container::value_type average(const Container &c) {
  */
 template <typename Container>
 typename Container::value_type min(const Container &c) {
-  return *std::min_element(std::cbegin(c), std::cend(c));
+  return *std::ranges::min_element(c);
 }
 
 /**
@@ -65,7 +66,7 @@ typename Container::value_type min(const Container &c) {
  */
 template <typename Container>
 typename Container::value_type max(const Container &c) {
-  return *std::max_element(std::cbegin(c), std::cend(c));
+  return *std::ranges::max_element(c);
 }
 
 /**
@@ -74,11 +75,11 @@ typename Container::value_type max(const Container &c) {
 template <typename Container>
 std::vector<typename Container::value_type>
 get_unique_values(const Container &c) {
-  std::vector<typename Container::value_type> uniq_values(c);
-  std::sort(uniq_values.begin(), uniq_values.end());
-  uniq_values.erase(std::unique(uniq_values.begin(), uniq_values.end()),
-                    uniq_values.end());
-  return uniq_values;
+  std::vector<typename Container::value_type> unique_values(c);
+  std::ranges::sort(std::begin(unique_values), std::end(unique_values));
+  unique_values.erase(std::unique(unique_values.begin(), unique_values.end()),
+                      unique_values.end());
+  return unique_values;
 }
 
 /**
@@ -98,8 +99,8 @@ bool isItIndexes(const Container &c, std::size_t length) {
 template <typename Container>
 std::pair<typename Container::value_type, typename Container::value_type>
 minmax(const Container &c) {
-  auto p = std::minmax_element(std::cbegin(c), std::cend(c));
-  return {*p.first, *p.second};
+  const auto [min, max] = std::ranges::minmax_element(c);
+  return {*min, *max};
 }
 
 /**
@@ -107,8 +108,8 @@ minmax(const Container &c) {
  */
 template <typename Container>
 std::size_t min_element_index(const Container &c) {
-  return static_cast<std::size_t>(
-      std::distance(c.cbegin(), std::min_element(c.cbegin(), c.cend())));
+  return static_cast<std::size_t>(std::distance(
+      std::cbegin(c), std::min_element(std::cbegin(c), std::cend(c))));
 }
 
 /**
@@ -117,11 +118,11 @@ std::size_t min_element_index(const Container &c) {
 template <typename Container, typename Element>
 std::size_t element_index(const Container &c, const Element &e,
                           std::size_t index_if_not_found = 0) {
-  auto iter{std::find(cbegin(c), cend(c), e)};
-  if (iter == cend(c)) {
+  auto iter{std::ranges::find(c, e)};
+  if (iter == std::cend(c)) {
     return index_if_not_found;
   }
-  return static_cast<std::size_t>(std::distance(cbegin(c), iter));
+  return static_cast<std::size_t>(std::distance(std::cbegin(c), iter));
 }
 
 /**
@@ -212,26 +213,6 @@ template <typename T> std::string vectorToString(const std::vector<T> &vec) {
   }
   ss << vec.back();
   return ss.str();
-}
-
-/**
- * @brief Indices of elements if vector were sorted
- *
- * Returns a vector of indices, such that the vector would be sorted if the
- * elements were in this order.
- *
- * @tparam T the type of the values in the vector
- */
-template <typename T>
-std::vector<std::size_t>
-getIndicesOfSortedVector(const std::vector<T> &unsorted) {
-  std::vector<std::size_t> indices(unsorted.size(), 0);
-  std::iota(indices.begin(), indices.end(), 0);
-  std::sort(indices.begin(), indices.end(),
-            [&unsorted = unsorted](std::size_t i1, std::size_t i2) {
-              return unsorted[i1] < unsorted[i2];
-            });
-  return indices;
 }
 
 /**

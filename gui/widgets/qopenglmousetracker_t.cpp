@@ -5,13 +5,11 @@
 #include "catch_wrapper.hpp"
 #include "qt_test_utils.hpp"
 
+#include "qopenglmousetracker.hpp"
 #include "rendering/rendering.hpp"
+#include "sme/logger.hpp"
 
 using namespace sme::test;
-
-#include "qopenglmousetracker.h"
-
-#include "sme/logger.hpp"
 
 static const char *tags{"[gui/widgets/QOpenGLMouseTracker][gui][opengl]"};
 

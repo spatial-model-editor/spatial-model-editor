@@ -3,10 +3,10 @@
 #include <QLabel>
 
 TEST_CASE("DialogImage", "[gui/dialogs/image][gui/dialogs][gui][image]") {
-  QImage image(":/icon/icon128.png");
+  sme::common::ImageStack imageStack{{QImage(":/icon/icon128.png")}};
   QString title("my title");
   QString message("see image below:");
-  DialogImage dia(nullptr, title, message, image);
+  DialogImage dia(nullptr, title, message, imageStack);
   auto *lblMessage{dia.findChild<QLabel *>("lblMessage")};
   REQUIRE(lblMessage != nullptr);
   auto *lblImage{dia.findChild<QLabel *>("lblImage")};

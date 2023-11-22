@@ -2,8 +2,7 @@
 // Created by acaramizaru on 6/30/23.
 //
 
-#ifndef SPATIALMODELEDITOR_UTILS_H
-#define SPATIALMODELEDITOR_UTILS_H
+#pragma once
 
 #include <stdio.h>
 #include <string>
@@ -34,5 +33,3 @@ public:
 };
 
 } // namespace rendering
-
-#endif // SPATIALMODELEDITOR_UTILS_H

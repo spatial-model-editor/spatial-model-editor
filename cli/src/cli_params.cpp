@@ -19,7 +19,7 @@ static void addParams(CLI::App &app, Params &params) {
   app.add_option("-s,--simulator", params.simType,
                  "The simulator to use: dune or pixel")
       ->transform(CLI::CheckedTransformer(
-          std::map<std::string, simulate::SimulatorType>{
+          std::map<std::string, simulate::SimulatorType, std::less<>>{
               {"dune", simulate::SimulatorType::DUNE},
               {"pixel", simulate::SimulatorType::Pixel}},
           CLI::ignore_case))

@@ -2,6 +2,7 @@
 #include "sme/logger.hpp"
 #include <llvm/Config/llvm-config.h>
 #include <map>
+#include <ranges>
 #include <symengine/basic.h>
 #include <symengine/llvm_double.h>
 #include <symengine/parser/sbml/sbml_parser.h>
@@ -128,13 +129,13 @@ Symbolic::Symbolic(const std::vector<std::string> &expressions,
     SPDLOG_DEBUG("  --> {}", sbml(*se->exprInlined.back()));
     if (!allow_unknown_symbols) {
       // check that all remaining symbols are in the variables vector
-      auto fs = free_symbols(*se->exprInlined.back());
-      if (auto iter = find_if(fs.cbegin(), fs.cend(),
-                              [&v = variables](const auto &s) {
-                                return std::find(v.cbegin(), v.cend(),
-                                                 sbml(*s)) == v.cend();
-                              });
-          iter != fs.cend()) {
+      auto fs{free_symbols(*se->exprInlined.back())};
+      if (auto iter = std::ranges::find_if(
+              fs,
+              [&v = variables](const auto &s) {
+                return std::ranges::find(v, sbml(*s)) == std::cend(v);
+              });
+          iter != std::cend(fs)) {
         se->errorMessage = "Unknown symbol: " + sbml(*(*iter));
         SPDLOG_WARN("{}", se->errorMessage);
         std::locale::global(userLocale);
@@ -242,8 +243,7 @@ void Symbolic::rescale(double factor,
   map_basic_basic d;
   auto f = number(factor);
   for (const auto &v : se->varVec) {
-    if (std::find(exclusions.cbegin(), exclusions.cend(), sbml(*v)) !=
-        exclusions.cend()) {
+    if (std::ranges::find(exclusions, sbml(*v)) != std::cend(exclusions)) {
       d[v] = v;
     } else {
       d[v] = mul(v, f);
