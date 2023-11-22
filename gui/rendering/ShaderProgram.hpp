@@ -38,9 +38,9 @@ private:
   std::string m_vertexShaderText;
   std::string m_fragmentShaderText;
 
-  GLint m_vertexShaderId;
-  GLint m_fragmentShaderId;
-  GLint m_programId;
+  GLuint m_vertexShaderId;
+  GLuint m_fragmentShaderId;
+  GLuint m_programId;
 
   GLint m_rotationLocation;
   GLint m_positionLocation;

@@ -8,7 +8,7 @@ static QString toQStr(double x) { return QString::number(x, 'g', 14); }
 DialogOptParam::DialogOptParam(
     const std::vector<sme::simulate::OptParam> &defaultOptParams,
     const sme::simulate::OptParam *initialOptParam, QWidget *parent)
-    : QDialog(parent), defaultOptParams{defaultOptParams},
+    : QDialog(parent), m_defaultOptParams{defaultOptParams},
       ui{std::make_unique<Ui::DialogOptParam>()} {
   ui->setupUi(this);
   int cmbIndex{0};
@@ -20,17 +20,17 @@ DialogOptParam::DialogOptParam(
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
   } else {
     if (initialOptParam != nullptr) {
-      optParam = *initialOptParam;
+      m_optParam = *initialOptParam;
     } else {
-      optParam = defaultOptParams.front();
+      m_optParam = defaultOptParams.front();
     }
-    ui->txtLowerBound->setText(toQStr(optParam.lowerBound));
-    ui->txtUpperBound->setText(toQStr(optParam.upperBound));
+    ui->txtLowerBound->setText(toQStr(m_optParam.lowerBound));
+    ui->txtUpperBound->setText(toQStr(m_optParam.upperBound));
     for (const auto &defaultOptParam : defaultOptParams) {
       ui->cmbParameter->addItem(defaultOptParam.name.c_str());
-      if (defaultOptParam.optParamType == optParam.optParamType &&
-          defaultOptParam.id == optParam.id &&
-          defaultOptParam.parentId == optParam.parentId) {
+      if (defaultOptParam.optParamType == m_optParam.optParamType &&
+          defaultOptParam.id == m_optParam.id &&
+          defaultOptParam.parentId == m_optParam.parentId) {
         cmbIndex = ui->cmbParameter->count() - 1;
       }
     }
@@ -38,10 +38,10 @@ DialogOptParam::DialogOptParam(
     connect(ui->cmbParameter, &QComboBox::currentIndexChanged, this,
             &DialogOptParam::cmbParameter_currentIndexChanged);
     connect(ui->txtLowerBound, &QLineEdit::editingFinished, this, [this]() {
-      optParam.lowerBound = ui->txtLowerBound->text().toDouble();
+      m_optParam.lowerBound = ui->txtLowerBound->text().toDouble();
     });
     connect(ui->txtUpperBound, &QLineEdit::editingFinished, this, [this]() {
-      optParam.upperBound = ui->txtUpperBound->text().toDouble();
+      m_optParam.upperBound = ui->txtUpperBound->text().toDouble();
     });
   }
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
@@ -53,11 +53,11 @@ DialogOptParam::DialogOptParam(
 DialogOptParam::~DialogOptParam() = default;
 
 const sme::simulate::OptParam &DialogOptParam::getOptParam() const {
-  return optParam;
+  return m_optParam;
 }
 
 void DialogOptParam::cmbParameter_currentIndexChanged(int index) {
-  optParam = defaultOptParams[index];
-  ui->txtLowerBound->setText(toQStr(optParam.lowerBound));
-  ui->txtUpperBound->setText(toQStr(optParam.upperBound));
+  m_optParam = m_defaultOptParams[static_cast<std::size_t>(index)];
+  ui->txtLowerBound->setText(toQStr(m_optParam.lowerBound));
+  ui->txtUpperBound->setText(toQStr(m_optParam.upperBound));
 }

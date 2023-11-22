@@ -325,15 +325,17 @@ void exportSampledFieldGeometry(libsbml::Geometry *geom,
   sf->setSamplesLength(nx * ny * nz);
 
   std::vector<QRgb> samples;
-  samples.reserve(static_cast<std::size_t>(nx * ny * nz));
+  samples.reserve(static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny) *
+                  static_cast<std::size_t>(nz));
   // convert 3d pixmap into array of uints
   // NOTE: order of samples is:
   // [ (x=0,y=0,z=0), (x=1,y=0,z=0), ..., (x=0,y=1,z=0), (x=1,y=1,z=0), ... ]
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
-  for (int z = 0; z < nz; ++z) {
+  for (std::size_t z = 0; z < static_cast<std::size_t>(nz); ++z) {
     for (int y = 0; y < ny; ++y) {
       for (int x = 0; x < nx; ++x) {
-        samples.push_back(compartmentImages[z].pixelIndex(x, ny - 1 - y));
+        samples.push_back(
+            static_cast<QRgb>(compartmentImages[z].pixelIndex(x, ny - 1 - y)));
       }
     }
   }

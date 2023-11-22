@@ -20,10 +20,10 @@ public:
   getOptimizeOptions() const;
 
 private:
-  const sme::model::Model &model;
-  sme::simulate::OptimizeOptions optimizeOptions;
-  std::vector<sme::simulate::OptParam> defaultOptParams;
-  std::vector<sme::simulate::OptCost> defaultOptCosts;
+  const sme::model::Model &m_model;
+  sme::simulate::OptimizeOptions m_optimizeOptions;
+  std::vector<sme::simulate::OptParam> m_defaultOptParams;
+  std::vector<sme::simulate::OptCost> m_defaultOptCosts;
   std::unique_ptr<Ui::DialogOptSetup> ui;
   void cmbAlgorithm_currentIndexChanged(int index);
   void spinIslands_valueChanged(int value);

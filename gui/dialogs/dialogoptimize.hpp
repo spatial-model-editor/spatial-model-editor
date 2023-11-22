@@ -22,12 +22,12 @@ public:
   void applyToModel() const;
 
 private:
-  sme::model::Model &model;
+  sme::model::Model &m_model;
   std::unique_ptr<Ui::DialogOptimize> ui;
-  std::unique_ptr<sme::simulate::Optimization> opt;
-  std::future<std::size_t> optIterations;
-  std::size_t nPlottedIterations{0};
-  QTimer plotRefreshTimer;
+  std::unique_ptr<sme::simulate::Optimization> m_opt;
+  std::future<std::size_t> m_optIterations;
+  std::size_t m_nPlottedIterations{0};
+  QTimer m_plotRefreshTimer;
   void init();
   void cmbTarget_currentIndexChanged(int index);
   void btnStartStop_clicked();

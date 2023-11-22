@@ -26,9 +26,9 @@ double calculateCosts(const std::vector<OptCost> &optCosts,
 
 class PagmoUDP {
 private:
-  const OptConstData *optConstData{nullptr};
-  ThreadsafeModelQueue *modelQueue{nullptr};
-  sme::simulate::Optimization *optimization{nullptr};
+  const OptConstData *m_optConstData{nullptr};
+  ThreadsafeModelQueue *m_modelQueue{nullptr};
+  sme::simulate::Optimization *m_optimization{nullptr};
 
 public:
   PagmoUDP() = default;

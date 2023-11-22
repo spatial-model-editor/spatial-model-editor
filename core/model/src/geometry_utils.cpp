@@ -93,8 +93,8 @@ std::vector<QPoint> QPointUniqueIndexer::getPoints() const { return points; }
 VoxelFlattener::VoxelFlattener(const common::Volume &vSize)
     : nx{vSize.width()}, ny{vSize.height()}, nz{vSize.depth()} {}
 
-VoxelFlattener::VoxelFlattener(int nx, int ny, std::size_t nz)
-    : nx{nx}, ny{ny}, nz{nz} {}
+VoxelFlattener::VoxelFlattener(int width, int height, std::size_t depth)
+    : nx{width}, ny{height}, nz{depth} {}
 
 bool VoxelFlattener::isValid(const common::Voxel &voxel) const {
   bool xInside{(voxel.p.x() >= 0) && (voxel.p.x() < nx)};

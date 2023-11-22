@@ -84,7 +84,7 @@ static void addCompartment(
   speciesNames[compartmentId.toStdString()] = [&model, &compartmentId,
                                                &duneSpeciesNames]() {
     std::vector<std::string> duneSpeciesNamesSmeIndices;
-    int duneNameIndex{0};
+    std::size_t duneNameIndex{0};
     for (const auto &s : model.getSpecies().getIds(compartmentId)) {
       if (!model.getSpecies().getIsConstant(s)) {
         duneSpeciesNamesSmeIndices.push_back(duneSpeciesNames[duneNameIndex++]);

@@ -45,7 +45,10 @@ rendering::ObjectInfo rendering::ObjectLoader::Load(const SMesh &mesh) {
     CGAL::Vertex_around_face_circulator<SMesh> vcirc(mesh.halfedge(face_index),
                                                      mesh),
         done(vcirc);
-    Obj.faces.emplace_back(*vcirc++, *vcirc++, *vcirc++);
+    auto &face{Obj.faces.emplace_back()};
+    face[0] = *vcirc++;
+    face[1] = *vcirc++;
+    face[2] = *vcirc++;
     if (vcirc != done)
       throw std::runtime_error("The faces must be triangles!");
   }
