@@ -51,7 +51,7 @@ static void initParamsPlot(QCustomPlot *plot,
 }
 
 DialogOptimize::DialogOptimize(sme::model::Model &model, QWidget *parent)
-    : QDialog(parent), model{model},
+    : QDialog(parent), m_model{model},
       ui{std::make_unique<Ui::DialogOptimize>()} {
   ui->setupUi(this);
   ui->splitter->setSizes({1000, 1000});
@@ -73,12 +73,12 @@ DialogOptimize::DialogOptimize(sme::model::Model &model, QWidget *parent)
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogOptimize::reject);
   init();
-  plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
+  m_plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
   constexpr int plotMsRefreshInterval{1000};
-  plotRefreshTimer.setInterval(plotMsRefreshInterval);
-  connect(&plotRefreshTimer, &QTimer::timeout, this, [this]() {
+  m_plotRefreshTimer.setInterval(plotMsRefreshInterval);
+  connect(&m_plotRefreshTimer, &QTimer::timeout, this, [this]() {
     updatePlots();
-    if (!opt->getIsRunning()) {
+    if (!m_opt->getIsRunning()) {
       finalizePlots();
     }
   });
@@ -88,14 +88,14 @@ DialogOptimize::~DialogOptimize() = default;
 
 QString DialogOptimize::getParametersString() const {
   QString s{};
-  if (opt == nullptr || opt->getParams().empty()) {
+  if (m_opt == nullptr || m_opt->getParams().empty()) {
     return s;
   }
-  for (std::size_t i = 0; i < opt->getParamNames().size(); ++i) {
-    s.append(opt->getParamNames()[i])
+  for (std::size_t i = 0; i < m_opt->getParamNames().size(); ++i) {
+    s.append(m_opt->getParamNames()[i])
         .append(": ")
-        .append(QString::number(opt->getParams().back()[i]));
-    if (i < opt->getParamNames().size() - 1) {
+        .append(QString::number(m_opt->getParams().back()[i]));
+    if (i < m_opt->getParamNames().size() - 1) {
       s.append("\n");
     }
   }
@@ -103,15 +103,15 @@ QString DialogOptimize::getParametersString() const {
 }
 
 void DialogOptimize::applyToModel() const {
-  opt->applyParametersToModel(&model);
+  m_opt->applyParametersToModel(&m_model);
 }
 
 void DialogOptimize::init() {
   ui->lblResult->setImage({});
   ui->cmbTarget->clear();
-  if (model.getOptimizeOptions().optParams.empty() ||
-      model.getOptimizeOptions().optCosts.empty()) {
-    opt.reset();
+  if (m_model.getOptimizeOptions().optParams.empty() ||
+      m_model.getOptimizeOptions().optCosts.empty()) {
+    m_opt.reset();
     ui->btnStartStop->setEnabled(false);
     ui->btnSetup->setEnabled(true);
     ui->cmbTarget->setEnabled(false);
@@ -121,34 +121,37 @@ void DialogOptimize::init() {
     return;
   }
   ui->cmbTarget->setEnabled(true);
-  for (const auto &optCost : model.getOptimizeOptions().optCosts) {
+  for (const auto &optCost : m_model.getOptimizeOptions().optCosts) {
     ui->cmbTarget->addItem(optCost.name.c_str());
   }
   this->setCursor(Qt::WaitCursor);
-  opt = std::make_unique<sme::simulate::Optimization>(model);
+  m_opt = std::make_unique<sme::simulate::Optimization>(m_model);
   this->setCursor(Qt::ArrowCursor);
   ui->btnStartStop->setEnabled(true);
   ui->btnSetup->setEnabled(true);
-  ui->lblTarget->setImage(opt->getTargetImage(ui->cmbTarget->currentIndex()));
+  ui->lblTarget->setImage(m_opt->getTargetImage(
+      static_cast<std::size_t>(ui->cmbTarget->currentIndex())));
   initFitnessPlot(ui->pltFitness);
-  initParamsPlot(ui->pltParams, opt->getParamNames());
+  initParamsPlot(ui->pltParams, m_opt->getParamNames());
 }
 
 void DialogOptimize::cmbTarget_currentIndexChanged(int index) {
-  if (opt == nullptr || index < 0 || index >= ui->cmbTarget->count()) {
+  if (m_opt == nullptr || index < 0 || index >= ui->cmbTarget->count()) {
     ui->lblTarget->setImage({});
     return;
   }
-  ui->lblTarget->setImage(opt->getTargetImage(static_cast<std::size_t>(index)));
-  if (auto img{opt->getUpdatedBestResultImage(ui->cmbTarget->currentIndex())};
+  ui->lblTarget->setImage(
+      m_opt->getTargetImage(static_cast<std::size_t>(index)));
+  if (auto img{m_opt->getUpdatedBestResultImage(
+          static_cast<std::size_t>(ui->cmbTarget->currentIndex()))};
       img.has_value()) {
     ui->lblResult->setImage(img.value());
   }
 }
 
 void DialogOptimize::btnStartStop_clicked() {
-  if (opt->getIsRunning()) {
-    opt->requestStop();
+  if (m_opt->getIsRunning()) {
+    m_opt->requestStop();
     ui->btnStartStop->setText("Start");
     ui->btnStartStop->setEnabled(false);
     return;
@@ -159,29 +162,29 @@ void DialogOptimize::btnStartStop_clicked() {
   this->setCursor(Qt::WaitCursor);
   // start optimization in a new thread
   constexpr std::size_t nIterations{1024};
-  optIterations =
+  m_optIterations =
       std::async(std::launch::async, &sme::simulate::Optimization::evolve,
-                 opt.get(), nIterations);
+                 m_opt.get(), nIterations);
   // start timer to periodically update simulation results
-  plotRefreshTimer.start();
+  m_plotRefreshTimer.start();
 }
 
 void DialogOptimize::btnSetup_clicked() {
-  DialogOptSetup dialogOptSetup(model);
+  DialogOptSetup dialogOptSetup(m_model);
   if (dialogOptSetup.exec() == QDialog::Accepted) {
-    model.getOptimizeOptions() = dialogOptSetup.getOptimizeOptions();
+    m_model.getOptimizeOptions() = dialogOptSetup.getOptimizeOptions();
     init();
   }
 }
 
 void DialogOptimize::updatePlots() {
-  if (opt == nullptr) {
+  if (m_opt == nullptr) {
     return;
   }
-  std::size_t nAvailableIterations{opt->getIterations()};
-  const auto &fitnesses{opt->getFitness()};
-  const auto &params{opt->getParams()};
-  for (std::size_t iIter = nPlottedIterations; iIter < nAvailableIterations;
+  std::size_t nAvailableIterations{m_opt->getIterations()};
+  const auto &fitnesses{m_opt->getFitness()};
+  const auto &params{m_opt->getParams()};
+  for (std::size_t iIter = m_nPlottedIterations; iIter < nAvailableIterations;
        ++iIter) {
     SPDLOG_DEBUG("adding iteration {}", iIter);
     // process new fitness
@@ -198,23 +201,24 @@ void DialogOptimize::updatePlots() {
     ui->pltParams->rescaleAxes(true);
     ui->pltParams->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
   }
-  nPlottedIterations = nAvailableIterations;
-  if (auto img{opt->getUpdatedBestResultImage(ui->cmbTarget->currentIndex())};
+  m_nPlottedIterations = nAvailableIterations;
+  if (auto img{m_opt->getUpdatedBestResultImage(
+          static_cast<std::size_t>(ui->cmbTarget->currentIndex()))};
       img.has_value()) {
     ui->lblResult->setImage(img.value());
   }
 }
 
 void DialogOptimize::finalizePlots() {
-  plotRefreshTimer.stop();
+  m_plotRefreshTimer.stop();
   ui->btnStartStop->setEnabled(true);
   ui->btnSetup->setEnabled(true);
   ui->buttonBox->setEnabled(true);
   updatePlots();
   this->setCursor(Qt::ArrowCursor);
-  if (opt != nullptr && !opt->getErrorMessage().empty()) {
+  if (m_opt != nullptr && !m_opt->getErrorMessage().empty()) {
     QMessageBox::warning(this, "Optimize error",
-                         opt->getErrorMessage().c_str());
+                         m_opt->getErrorMessage().c_str());
     ui->btnStartStop->setText("Start");
   }
 }

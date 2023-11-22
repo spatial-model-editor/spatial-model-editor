@@ -225,8 +225,8 @@ void MainWindow::setupConnections() {
           &MainWindow::enableTabs);
 
   connect(ui->actionGroupSimType, &QActionGroup::triggered, this,
-          [s = tabSimulate, ui = ui.get()]() {
-            s->useDune(ui->actionSimTypeDUNE->isChecked());
+          [s = tabSimulate, ui_ptr = ui.get()]() {
+            s->useDune(ui_ptr->actionSimTypeDUNE->isChecked());
           });
 
   connect(ui->actionGeometry_grid, &QAction::triggered, this,

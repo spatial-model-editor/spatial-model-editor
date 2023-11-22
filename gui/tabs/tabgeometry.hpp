@@ -39,7 +39,7 @@ private:
   std::unique_ptr<Ui::TabGeometry> ui;
   sme::model::Model &model;
   QLabelMouseTracker *lblGeometry;
-  QStatusBar *statusBar{};
+  QStatusBar *m_statusBar{};
   bool waitingForCompartmentChoice{false};
   bool membraneSelected{false};
 

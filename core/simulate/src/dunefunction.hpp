@@ -24,14 +24,14 @@ namespace sme::simulate {
 
 template <typename Domain> class SmeGridFunction {
 public:
-  SmeGridFunction(const common::VoxelF &origin,
-                  const common::VolumeF &voxelSize,
-                  const common::Volume &imageSize,
+  SmeGridFunction(const common::VoxelF &physicalOrigin,
+                  const common::VolumeF &voxelVolume,
+                  const common::Volume &imageVolume,
                   const std::vector<double> &concentration)
-      : origin{origin}, voxelSize{voxelSize}, imageSize{imageSize},
+      : origin{physicalOrigin}, voxel{voxelVolume}, vol{imageVolume},
         c(concentration) {
-    SPDLOG_TRACE("  - {}x{} pixels", imageSize.width(), imageSize.height());
-    SPDLOG_TRACE("  - {}x{} pixel size", voxelSize.width(), voxelSize.height());
+    SPDLOG_TRACE("  - {}x{} pixels", vol.width(), vol.height());
+    SPDLOG_TRACE("  - {}x{} pixel size", voxel.width(), voxel.height());
     SPDLOG_TRACE("  - ({},{}) origin", origin.p.x(), origin.p.y());
   }
   double operator()(Domain globalPos) const {
@@ -42,21 +42,20 @@ public:
     }
     // get nearest pixel to physical point
     auto ix = std::clamp(
-        static_cast<int>((globalPos[0] - origin.p.x()) / voxelSize.width()), 0,
-        imageSize.width() - 1);
+        static_cast<int>((globalPos[0] - origin.p.x()) / voxel.width()), 0,
+        vol.width() - 1);
     auto iy = std::clamp(
-        static_cast<int>((globalPos[1] - origin.p.y()) / voxelSize.height()), 0,
-        imageSize.height() - 1);
+        static_cast<int>((globalPos[1] - origin.p.y()) / voxel.height()), 0,
+        vol.height() - 1);
     SPDLOG_TRACE("pixel ({},{})", ix, iy);
-    SPDLOG_TRACE("conc {}",
-                 c[static_cast<std::size_t>(ix + imageSize.width() * iy)]);
-    return c[static_cast<std::size_t>(ix + imageSize.width() * iy)];
+    SPDLOG_TRACE("conc {}", c[static_cast<std::size_t>(ix + vol.width() * iy)]);
+    return c[static_cast<std::size_t>(ix + vol.width() * iy)];
   }
 
 private:
   common::VoxelF origin;
-  common::VolumeF voxelSize;
-  common::Volume imageSize;
+  common::VolumeF voxel;
+  common::Volume vol;
   std::vector<double> c;
 };
 

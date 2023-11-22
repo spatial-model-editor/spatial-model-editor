@@ -63,7 +63,7 @@ private:
   void updateConcentrations(double t);
 
 public:
-  explicit Simulation(model::Model &model);
+  explicit Simulation(model::Model &smeModel);
   ~Simulation();
 
   std::size_t doTimesteps(double time, std::size_t nSteps = 1,

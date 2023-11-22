@@ -194,8 +194,8 @@ void Simulation::updateConcentrations(double t) {
   }
 }
 
-Simulation::Simulation(model::Model &model)
-    : model(model), settings(&model.getSimulationSettings()),
+Simulation::Simulation(model::Model &smeModel)
+    : model(smeModel), settings(&model.getSimulationSettings()),
       data{&model.getSimulationData()},
       imageSize(model.getGeometry().getImages().volume()) {
   if (data->timePoints.size() <= 1) {

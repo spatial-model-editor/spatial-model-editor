@@ -52,7 +52,7 @@ DialogOptCost::DialogOptCost(
     const sme::model::Model &model,
     const std::vector<sme::simulate::OptCost> &defaultOptCosts,
     const sme::simulate::OptCost *initialOptCost, QWidget *parent)
-    : QDialog(parent), model{model}, defaultOptCosts{defaultOptCosts},
+    : QDialog(parent), m_model{model}, m_defaultOptCosts{defaultOptCosts},
       ui{std::make_unique<Ui::DialogOptCost>()} {
   ui->setupUi(this);
   int cmbIndex{0};
@@ -68,21 +68,21 @@ DialogOptCost::DialogOptCost(
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
   } else {
     if (initialOptCost != nullptr) {
-      optCost = *initialOptCost;
+      m_optCost = *initialOptCost;
     } else {
-      optCost = defaultOptCosts.front();
+      m_optCost = defaultOptCosts.front();
     }
-    ui->cmbCostType->setCurrentIndex(toIndex(optCost.optCostType));
-    ui->cmbDiffType->setCurrentIndex(toIndex(optCost.optCostDiffType));
-    ui->txtSimulationTime->setText(QString::number(optCost.simulationTime));
-    ui->txtWeight->setText(QString::number(optCost.weight));
-    ui->txtEpsilon->setText(QString::number(optCost.epsilon));
-    ui->txtEpsilon->setEnabled(optCost.optCostDiffType ==
+    ui->cmbCostType->setCurrentIndex(toIndex(m_optCost.optCostType));
+    ui->cmbDiffType->setCurrentIndex(toIndex(m_optCost.optCostDiffType));
+    ui->txtSimulationTime->setText(QString::number(m_optCost.simulationTime));
+    ui->txtWeight->setText(QString::number(m_optCost.weight));
+    ui->txtEpsilon->setText(QString::number(m_optCost.epsilon));
+    ui->txtEpsilon->setEnabled(m_optCost.optCostDiffType ==
                                sme::simulate::OptCostDiffType::Relative);
     updateImage();
     for (const auto &defaultOptCost : defaultOptCosts) {
       ui->cmbSpecies->addItem(defaultOptCost.name.c_str());
-      if (defaultOptCost.name == optCost.name) {
+      if (defaultOptCost.name == m_optCost.name) {
         cmbIndex = ui->cmbSpecies->count() - 1;
       }
     }
@@ -111,65 +111,65 @@ DialogOptCost::DialogOptCost(
 DialogOptCost::~DialogOptCost() = default;
 
 [[nodiscard]] const sme::simulate::OptCost &DialogOptCost::getOptCost() const {
-  return optCost;
+  return m_optCost;
 }
 
 void DialogOptCost::cmbSpecies_currentIndexChanged(int index) {
   auto i{static_cast<std::size_t>(index)};
-  if (defaultOptCosts[i].name != optCost.name) {
-    optCost = defaultOptCosts[i];
-    ui->cmbCostType->setCurrentIndex(toIndex(optCost.optCostType));
-    ui->cmbDiffType->setCurrentIndex(toIndex(optCost.optCostDiffType));
-    ui->txtSimulationTime->setText(QString::number(optCost.simulationTime));
-    ui->txtWeight->setText(QString::number(optCost.weight));
-    ui->txtEpsilon->setText(QString::number(optCost.epsilon));
-    ui->txtEpsilon->setEnabled(optCost.optCostDiffType ==
+  if (m_defaultOptCosts[i].name != m_optCost.name) {
+    m_optCost = m_defaultOptCosts[i];
+    ui->cmbCostType->setCurrentIndex(toIndex(m_optCost.optCostType));
+    ui->cmbDiffType->setCurrentIndex(toIndex(m_optCost.optCostDiffType));
+    ui->txtSimulationTime->setText(QString::number(m_optCost.simulationTime));
+    ui->txtWeight->setText(QString::number(m_optCost.weight));
+    ui->txtEpsilon->setText(QString::number(m_optCost.epsilon));
+    ui->txtEpsilon->setEnabled(m_optCost.optCostDiffType ==
                                sme::simulate::OptCostDiffType::Relative);
     updateImage();
   }
 }
 
 void DialogOptCost::cmbCostType_currentIndexChanged(int index) {
-  optCost.optCostType = toOptCostTypeEnum(index);
+  m_optCost.optCostType = toOptCostTypeEnum(index);
 }
 
 void DialogOptCost::cmbDiffType_currentIndexChanged(int index) {
-  optCost.optCostDiffType = toOptCostDiffTypeEnum(index);
-  ui->txtEpsilon->setEnabled(optCost.optCostDiffType ==
+  m_optCost.optCostDiffType = toOptCostDiffTypeEnum(index);
+  ui->txtEpsilon->setEnabled(m_optCost.optCostDiffType ==
                              sme::simulate::OptCostDiffType::Relative);
 }
 
 void DialogOptCost::txtSimulationTime_editingFinished() {
-  optCost.simulationTime = ui->txtSimulationTime->text().toDouble();
-  ui->txtSimulationTime->setText(toQStr(optCost.simulationTime));
+  m_optCost.simulationTime = ui->txtSimulationTime->text().toDouble();
+  ui->txtSimulationTime->setText(toQStr(m_optCost.simulationTime));
 }
 
 void DialogOptCost::btnEditTargetValues_clicked() {
   QString costType{ui->cmbCostType->currentText()};
   DialogConcentrationImage dialog(
-      optCost.targetValues, model.getSpeciesGeometry(optCost.id.c_str()),
-      model.getDisplayOptions().invertYAxis,
+      m_optCost.targetValues, m_model.getSpeciesGeometry(m_optCost.id.c_str()),
+      m_model.getDisplayOptions().invertYAxis,
       QString("Set target %1").arg(costType),
-      optCost.optCostType == sme::simulate::OptCostType::ConcentrationDcdt);
+      m_optCost.optCostType == sme::simulate::OptCostType::ConcentrationDcdt);
   if (dialog.exec() == QDialog::Accepted) {
-    optCost.targetValues = dialog.getConcentrationArray();
+    m_optCost.targetValues = dialog.getConcentrationArray();
     updateImage();
   }
 }
 
 void DialogOptCost::txtWeight_editingFinished() {
-  optCost.weight = ui->txtWeight->text().toDouble();
-  ui->txtWeight->setText(toQStr(optCost.weight));
+  m_optCost.weight = ui->txtWeight->text().toDouble();
+  ui->txtWeight->setText(toQStr(m_optCost.weight));
 }
 
 void DialogOptCost::txtEpsilon_editingFinished() {
-  optCost.epsilon = ui->txtEpsilon->text().toDouble();
-  ui->txtEpsilon->setText(toQStr(optCost.epsilon));
+  m_optCost.epsilon = ui->txtEpsilon->text().toDouble();
+  ui->txtEpsilon->setText(toQStr(m_optCost.epsilon));
 }
 
 void DialogOptCost::updateImage() {
   const auto &imageSize{
-      model.getSpeciesGeometry(optCost.id.c_str()).compartmentImageSize};
+      m_model.getSpeciesGeometry(m_optCost.id.c_str()).compartmentImageSize};
   ui->lblImage->setImage(
-      sme::common::ImageStack(imageSize, optCost.targetValues));
+      sme::common::ImageStack(imageSize, m_optCost.targetValues));
 }

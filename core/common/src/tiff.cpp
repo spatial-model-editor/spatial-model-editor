@@ -238,7 +238,9 @@ TiffReader::TiffReader(const std::string &filename) {
               width, height, QImage::Format_ARGB32_Premultiplied)};
           for (int y = 0; y < qImage.height(); y++) {
             for (int x = 0; x < qImage.width(); x++) {
-              qImage.setPixel(x, y, tiffValues[y * width + x]);
+              qImage.setPixel(x, y,
+                              tiffValues[static_cast<std::size_t>(y) * width +
+                                         static_cast<std::size_t>(x)]);
             }
           }
         } else {

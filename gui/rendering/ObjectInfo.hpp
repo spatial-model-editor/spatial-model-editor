@@ -7,18 +7,12 @@
 
 #include <QVector4D>
 #include <QtOpenGL>
+#include <array>
 #include <vector>
 
 namespace rendering {
 
-struct Face {
-  GLint vertexIndices[3] = {0, 0, 0};
-  Face(int indx0, int indx1, int indx2) {
-    vertexIndices[0] = indx0;
-    vertexIndices[1] = indx1;
-    vertexIndices[2] = indx2;
-  }
-};
+using Face = std::array<GLuint, 3>;
 
 struct ObjectInfo {
   std::vector<QVector4D> vertices;

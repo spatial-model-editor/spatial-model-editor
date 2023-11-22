@@ -253,10 +253,13 @@ TEST_CASE("setBestResults and getUpdatedBestResultImage",
   const auto *comp{model.getSpecies().getField("A")->getCompartment()};
   const auto compImgWidth{comp->getCompartmentImages()[0].width()};
   const auto compImgHeight{comp->getCompartmentImages()[0].height()};
-  std::vector<double> target(compImgWidth * compImgHeight, 0.0);
+  std::vector<double> target(
+      static_cast<std::size_t>(compImgWidth * compImgHeight), 0.0);
   constexpr double targetPixel{2.0};
   for (const auto &voxel : comp->getVoxels()) {
-    target[voxel.p.x() + compImgWidth * (compImgHeight - 1 - voxel.p.y())] =
+    target[static_cast<std::size_t>(voxel.p.x()) +
+           static_cast<std::size_t>(compImgWidth) *
+               static_cast<std::size_t>(compImgHeight - 1 - voxel.p.y())] =
         targetPixel;
   }
   optimizeOptions.optCosts.push_back({sme::simulate::OptCostType::Concentration,
@@ -311,9 +314,12 @@ TEST_CASE("setBestResults and getUpdatedBestResultImage",
 
   // make a set of results
   constexpr double resultPixel{1.2};
-  std::vector<double> result(compImgWidth * compImgHeight, 0.0);
+  std::vector<double> result(
+      static_cast<std::size_t>(compImgWidth * compImgHeight), 0.0);
   for (const auto &voxel : comp->getVoxels()) {
-    result[voxel.p.x() + compImgWidth * (compImgHeight - 1 - voxel.p.y())] =
+    result[static_cast<std::size_t>(voxel.p.x()) +
+           static_cast<std::size_t>(compImgWidth) *
+               static_cast<std::size_t>(compImgHeight - 1 - voxel.p.y())] =
         resultPixel;
   }
   // setBestResults with inferior fitness is a no-op

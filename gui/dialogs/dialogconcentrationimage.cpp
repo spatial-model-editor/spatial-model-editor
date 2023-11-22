@@ -119,10 +119,12 @@ std::size_t DialogConcentrationImage::pointToConcentrationArrayIndex(
   // NOTE: order of concentration array is [ (x=0,y=0), (x=1,y=0), ... ]
   // NOTE: (0,0) point is at bottom-left
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
-  return static_cast<std::size_t>(
-      voxel.p.x() +
-      imgs.volume().width() * (imgs.volume().height() - 1 - voxel.p.y()) +
-      imgs.volume().width() * imgs.volume().height() * voxel.z);
+  auto w{static_cast<std::size_t>(imgs.volume().width())};
+  auto h{static_cast<std::size_t>(imgs.volume().height())};
+  auto x{static_cast<std::size_t>(voxel.p.x())};
+  auto y{static_cast<std::size_t>(voxel.p.y())};
+  auto z{voxel.z};
+  return (x + w * (h - 1 - y) + w * h * z);
 }
 
 void DialogConcentrationImage::importConcentrationArray(

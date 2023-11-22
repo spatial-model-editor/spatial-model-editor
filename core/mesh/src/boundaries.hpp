@@ -20,9 +20,9 @@ namespace sme::mesh {
  */
 class Boundaries {
 private:
-  std::vector<Boundary> boundaries{};
-  std::size_t simplifierType{0};
-  PolylineSimplifier polylineSimplifier;
+  std::vector<Boundary> m_boundaries{};
+  std::size_t m_simplifierType{0};
+  PolylineSimplifier m_polylineSimplifier;
 
 public:
   /**
@@ -51,7 +51,7 @@ public:
   /**
    * @brief The number of boundaries
    */
-  [[nodiscard]] inline std::size_t size() const { return boundaries.size(); }
+  [[nodiscard]] inline std::size_t size() const { return m_boundaries.size(); }
   /**
    * @brief Set the maximum number of allowed points for a given boundary
    *
