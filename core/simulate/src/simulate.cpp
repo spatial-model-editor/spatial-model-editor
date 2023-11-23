@@ -59,8 +59,8 @@ void Simulation::initEvents() {
     double t{events.getTime(id)};
     SPDLOG_INFO("  - event '{}' at time {}", id.toStdString(), t);
     if (t >= t0) {
-      if (auto iter{std::find_if(evs.begin(), evs.end(),
-                                 [t](const auto &ev) { return ev.time == t; })};
+      if (auto iter{std::ranges::find_if(
+              evs, [t](const auto &ev) { return ev.time == t; })};
           iter != evs.end()) {
         SPDLOG_INFO("    -> adding to existing SimEvent at time {}",
                     iter->time);
@@ -77,8 +77,8 @@ void Simulation::initEvents() {
                   var, val, t);
     }
   }
-  std::sort(evs.begin(), evs.end(),
-            [](const auto &a, const auto &b) { return a.time < b.time; });
+  std::ranges::sort(
+      evs, [](const auto &a, const auto &b) { return a.time < b.time; });
   for (auto &ev : evs) {
     SPDLOG_INFO("Adding SimEvent at time {}", ev.time);
     for (const auto &id : ev.ids) {
@@ -487,7 +487,7 @@ common::ImageStack Simulation::getConcImage(
       }
     }
     for (auto &c : maxConcs) {
-      std::fill(c.begin(), c.end(), maxC);
+      std::ranges::fill(c, maxC);
     }
   }
   // apply minimum (avoid dividing by zero)

@@ -2,8 +2,7 @@
 // Created by acaramizaru on 8/30/23.
 //
 
-#ifndef SPATIALMODELEDITOR_VERTEX_HPP
-#define SPATIALMODELEDITOR_VERTEX_HPP
+#pragma once
 
 namespace rendering {
 
@@ -88,5 +87,3 @@ const char text_vertex[] =
     "}\n";
 
 }
-
-#endif // SPATIALMODELEDITOR_VERTEX_HPP

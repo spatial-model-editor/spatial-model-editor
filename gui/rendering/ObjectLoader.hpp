@@ -2,17 +2,16 @@
 // Created by acaramizaru on 6/30/23.
 //
 
-#ifndef SPATIALMODELEDITOR_OBJECTLOADER_H
-#define SPATIALMODELEDITOR_OBJECTLOADER_H
+#pragma once
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Surface_mesh/Surface_mesh.h>
 
 #include <fstream>
 #include <iostream>
+#include <string>
 
 #include "ObjectInfo.hpp"
-#include <string>
 
 namespace rendering {
 
@@ -29,5 +28,3 @@ public:
 };
 
 } // namespace rendering
-
-#endif // SPATIALMODELEDITOR_OBJECTLOADER_H

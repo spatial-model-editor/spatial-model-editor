@@ -11,16 +11,16 @@
 
 namespace sme::common {
 
-constexpr int TiffDataTypeBits = std::numeric_limits<TiffDataType>::digits;
-constexpr TiffDataType TiffDataTypeMaxValue =
-    std::numeric_limits<TiffDataType>::max();
+constexpr int TiffDataTypeBits{std::numeric_limits<TiffDataType>::digits};
+constexpr TiffDataType TiffDataTypeMaxValue{
+    std::numeric_limits<TiffDataType>::max()};
 
 double writeTIFF(const std::string &filename, const QSize &imageSize,
                  const std::vector<double> &conc,
                  const sme::common::VolumeF &voxelSize) {
   // todo: add ORIGIN to TIFF file!
   SPDLOG_TRACE("found {} concentration values", conc.size());
-  double maxConc = *std::max_element(conc.cbegin(), conc.cend());
+  double maxConc{common::max(conc)};
   SPDLOG_TRACE("  - max value: {}", maxConc);
 
   // convert to array of type TiffDataType

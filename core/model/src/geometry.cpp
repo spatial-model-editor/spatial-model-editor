@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <initializer_list>
 #include <limits>
-#include <optional>
 #include <stdexcept>
 #include <utility>
 
@@ -305,7 +304,7 @@ void Field::setConcentration(const std::vector<double> &concentration) {
 void Field::setUniformConcentration(double concentration) {
   SPDLOG_INFO("species {}, compartment {}", id, comp->getId());
   SPDLOG_INFO("  - concentration = {}", concentration);
-  std::fill(conc.begin(), conc.end(), concentration);
+  std::ranges::fill(conc, concentration);
   isUniformConcentration = true;
 }
 

@@ -101,7 +101,8 @@ TEST_CASE("SBML: import SBML doc without geometry",
   SECTION("import geometry & assign compartments") {
     // import geometry image & assign compartments to colours
     s.getGeometry().importGeometryFromImages(
-        QImage(":/geometry/single-pixels-3x1.png"), false);
+        common::ImageStack{{QImage(":/geometry/single-pixels-3x1.png")}},
+        false);
     s.getCompartments().setColour("compartment0", 0xffaaaaaa);
     s.getCompartments().setColour("compartment1", 0xff525252);
     // export it again
@@ -316,7 +317,7 @@ TEST_CASE("SBML: import SBML level 2 document",
 
   // import geometry image
   s.getGeometry().importGeometryFromImages(
-      QImage(":/geometry/single-pixels-3x1.png"), false);
+      common::ImageStack{{QImage(":/geometry/single-pixels-3x1.png")}}, false);
   REQUIRE(s.getReactions().getIsIncompleteODEImport());
   REQUIRE(s.getGeometry().getHasImage() == true);
   REQUIRE(s.getGeometry().getIsValid() == false);
@@ -396,10 +397,10 @@ TEST_CASE("SBML: create new model, import geometry from image",
   REQUIRE(s.getGeometry().getHasImage() == false);
   REQUIRE(s.getGeometry().getIsValid() == false);
   SECTION("Single pixel image") {
-    QImage img(1, 1, QImage::Format_RGB32);
+    common::ImageStack imgs{{QImage(1, 1, QImage::Format_RGB32)}};
     QRgb col = QColor(12, 243, 154).rgba();
-    img.setPixel(0, 0, col);
-    s.getGeometry().importGeometryFromImages(img, false);
+    imgs[0].setPixel(0, 0, col);
+    s.getGeometry().importGeometryFromImages(imgs, false);
     REQUIRE(s.getIsValid() == true);
     REQUIRE(s.getErrorMessage().isEmpty());
     REQUIRE(s.getGeometry().getHasImage() == true);
@@ -591,10 +592,10 @@ TEST_CASE("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
       REQUIRE(s.getSpecies().getIds("comp").size() == 0);
     }
     SECTION("image geometry imported, assigned to compartment") {
-      QImage img(":/geometry/circle-100x100.png");
+      common::ImageStack imgs{{QImage(":/geometry/circle-100x100.png")}};
       QRgb col = QColor(144, 97, 193).rgba();
-      REQUIRE(img.pixel(50, 50) == col);
-      s.getGeometry().importGeometryFromImages(img, false);
+      REQUIRE(imgs[0].pixel(50, 50) == col);
+      s.getGeometry().importGeometryFromImages(imgs, false);
       s.getCompartments().setColour("comp", col);
       REQUIRE(s.getGeometry().getImages().volume().depth() == 1);
       REQUIRE(s.getGeometry().getImages()[0].size() == QSize(100, 100));
@@ -948,7 +949,8 @@ TEST_CASE("SBML: import multi-compartment SBML doc without spatial geometry",
   REQUIRE(geometry.getHasImage() == false);
   REQUIRE(reactions.getIsIncompleteODEImport() == true);
   // import a geometry image
-  geometry.importGeometryFromImages(QImage(":test/geometry/cell.png"), false);
+  geometry.importGeometryFromImages(
+      common::ImageStack{{QImage(":test/geometry/cell.png")}}, false);
   auto colours{geometry.getImages()[0].colorTable()};
   REQUIRE(colours.size() == 4);
   REQUIRE(geometry.getIsValid() == false);

@@ -56,26 +56,15 @@ sme::common::ImageStack getImageFromUser(QWidget *parent,
   if (filename.isEmpty()) {
     return {};
   }
-  SPDLOG_DEBUG("  - import file {}", filename.toStdString());
-  // first try using tiffReader
-  sme::common::TiffReader tiffReader(filename.toStdString());
-  if (!tiffReader.empty()) {
-    return tiffReader.getImages();
-  } else {
-    SPDLOG_DEBUG(
-        "    -> tiffReader could not read file, trying QImage::load()");
-    QImage img;
-    bool success = img.load(filename);
-    if (success) {
-      return sme::common::ImageStack({img});
-    }
+  try {
+    return sme::common::ImageStack(filename);
+  } catch (const std::invalid_argument &e) {
+    QMessageBox::warning(
+        parent, "Could not open image file",
+        QString("Failed to open image file '%1'\nError message: '%2'")
+            .arg(filename)
+            .arg(e.what()));
   }
-  SPDLOG_DEBUG("    -> QImage::load() could not read file - giving up");
-  QMessageBox::warning(
-      parent, "Could not open image file",
-      QString("Failed to open image file '%1'\nError message: '%2'")
-          .arg(filename)
-          .arg(tiffReader.getErrorMessage()));
   return {};
 }
 

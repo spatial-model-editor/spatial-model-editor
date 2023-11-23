@@ -40,7 +40,7 @@ std::string SimpleSymbolic::substitute(
 }
 
 bool SimpleSymbolic::contains(const std::string &expr, const std::string &var) {
-  return symbols(expr).count(var) != 0;
+  return symbols(expr).contains(var);
 }
 
 std::set<std::string, std::less<>>

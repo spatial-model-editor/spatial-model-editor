@@ -168,10 +168,10 @@ getValidSpeciesIds(const libsbml::Reaction *reaction,
   const auto *model{reaction->getModel()};
   std::string compA{reaction->getCompartment()};
   std::string compB{};
-  if (auto iter{std::find_if(membranes.cbegin(), membranes.cend(),
-                             [&compA](const auto &membrane) {
-                               return membrane.getId() == compA;
-                             })};
+  if (auto iter{std::ranges::find_if(membranes,
+                                     [&compA](const auto &membrane) {
+                                       return membrane.getId() == compA;
+                                     })};
       iter != membranes.cend()) {
     // reaction location is a membrane: species can come from either
     // neighbouring compartment
@@ -756,7 +756,7 @@ void ModelReactions::removeParameter(const QString &reactionId,
 
 bool ModelReactions::dependOnVariable(const QString &variableId) const {
   auto v{variableId.toStdString()};
-  return std::any_of(ids.begin(), ids.end(), [&v, this](const auto &id) {
+  return std::ranges::any_of(ids, [&v, this](const auto &id) {
     auto e{getRateExpression(id).toStdString()};
     return common::SimpleSymbolic::contains(e, v);
   });

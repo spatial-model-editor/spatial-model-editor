@@ -2,16 +2,14 @@
 // Created by acaramizaru on 7/25/23.
 //
 
-#ifndef SPATIALMODELEDITOR_QOPENGLMOUSETRACKER_H
-#define SPATIALMODELEDITOR_QOPENGLMOUSETRACKER_H
+#pragma once
 
 #include <QOpenGLWidget>
+#include <QTimer>
 #include <QWidget>
 #include <QtOpenGL>
 
 #include "rendering/rendering.hpp"
-
-#include <QTimer>
 
 class QOpenGLMouseTracker : public QOpenGLWidget {
   Q_OBJECT
@@ -87,5 +85,3 @@ protected:
 
   void wheelEvent(QWheelEvent *event) override;
 };
-
-#endif // SPATIALMODELEDITOR_QOPENGLMOUSETRACKER_H

@@ -29,7 +29,7 @@ OrderedIntPairIndex::OrderedIntPairIndex(int maxKeyValue)
 }
 
 void OrderedIntPairIndex::clear() {
-  std::fill(values.begin(), values.end(), nullIndex);
+  std::ranges::fill(values, nullIndex);
   nItems = 0;
 }
 

@@ -2,8 +2,7 @@
 // Created by acaramizaru on 6/30/23.
 //
 
-#ifndef SPATIALMODELEDITOR_CAMERA_H
-#define SPATIALMODELEDITOR_CAMERA_H
+#pragma once
 
 #include <math.h>
 
@@ -59,5 +58,3 @@ private:
 };
 
 } // namespace rendering
-
-#endif // SPATIALMODELEDITOR_CAMERA_H

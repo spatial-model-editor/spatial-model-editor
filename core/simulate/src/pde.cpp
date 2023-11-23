@@ -116,7 +116,7 @@ const std::vector<std::vector<std::string>> &Pde::getJacobian() const {
 static std::optional<std::size_t>
 getSpeciesIndex(const model::Model *doc, const std::string &speciesID,
                 const std::vector<std::string> &speciesIDs) {
-  if (auto it = std::find(speciesIDs.cbegin(), speciesIDs.cend(), speciesID);
+  if (auto it = std::ranges::find(speciesIDs, speciesID);
       it != speciesIDs.cend() &&
       doc->getSpecies().isReactive(speciesID.c_str())) {
     return static_cast<std::size_t>(it - speciesIDs.cbegin());

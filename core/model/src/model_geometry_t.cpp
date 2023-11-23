@@ -87,7 +87,7 @@ TEST_CASE("Model geometry",
       REQUIRE(qAlpha(innerCol) == 255);
       REQUIRE(m.getHasUnsavedChanges() == false);
       REQUIRE(mGeometry.getHasUnsavedChanges() == false);
-      mGeometry.importGeometryFromImages(img, false);
+      mGeometry.importGeometryFromImages(common::ImageStack{{img}}, false);
       REQUIRE(m.getHasUnsavedChanges() == true);
       REQUIRE(mGeometry.getHasUnsavedChanges() == true);
       REQUIRE(m.getIsValid() == false);
@@ -119,7 +119,7 @@ TEST_CASE("Model geometry",
     SECTION("import geometry & keep colour assignments") {
       QImage img(":/geometry/concave-cell-nucleus-100x100.png");
       REQUIRE(img.size() == QSize(100, 100));
-      m.getGeometry().importGeometryFromImages(img, true);
+      m.getGeometry().importGeometryFromImages(common::ImageStack{{img}}, true);
       auto cols2{m.getCompartments().getColours()};
       REQUIRE(cols2.size() == 3);
       REQUIRE(cols2[0] == c0);
@@ -129,7 +129,8 @@ TEST_CASE("Model geometry",
     SECTION("import geometry & don't keep colour assignments") {
       QImage img(":/geometry/concave-cell-nucleus-100x100.png");
       REQUIRE(img.size() == QSize(100, 100));
-      m.getGeometry().importGeometryFromImages(img, false);
+      m.getGeometry().importGeometryFromImages(common::ImageStack{{img}},
+                                               false);
       auto cols2{m.getCompartments().getColours()};
       REQUIRE(cols2.size() == 3);
       REQUIRE(cols2[0] == 0);
@@ -139,7 +140,7 @@ TEST_CASE("Model geometry",
     SECTION("import geometry & try to keep invalid colour assignments") {
       QImage img(":/geometry/two-blobs-100x100.png");
       REQUIRE(img.size() == QSize(100, 100));
-      m.getGeometry().importGeometryFromImages(img, true);
+      m.getGeometry().importGeometryFromImages(common::ImageStack{{img}}, true);
       // new geometry image only contains c0 from previous colours
       auto cols2{m.getCompartments().getColours()};
       REQUIRE(cols2.size() == 3);

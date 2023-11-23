@@ -3,9 +3,13 @@
 #include <fmt/core.h>
 
 int main(int argc, char *argv[]) {
-  CLI::App app;
+  CLI::App app{"Spatial Model Editor CLI"};
   auto params{sme::cli::setupCLI(app)};
-  CLI11_PARSE(app, argc, argv);
+  try {
+    app.parse(argc, argv);
+  } catch (const CLI::ParseError &e) {
+    return app.exit(e);
+  }
   if (params.outputFile.empty()) {
     params.outputFile = params.inputFile;
   }

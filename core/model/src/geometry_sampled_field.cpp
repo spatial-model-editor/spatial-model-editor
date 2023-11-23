@@ -71,8 +71,8 @@ makeEmptyImages(const libsbml::SampledField *sampledField) {
 
 static bool allSampledValuesSet(
     const std::vector<const libsbml::SampledVolume *> &sampledVolumes) {
-  return std::all_of(sampledVolumes.cbegin(), sampledVolumes.cend(),
-                     [](auto *s) { return s->isSetSampledValue(); });
+  return std::ranges::all_of(sampledVolumes,
+                             [](auto *s) { return s->isSetSampledValue(); });
 }
 
 static bool valuesAreAllQRgb(const std::vector<QRgb> &values) {
@@ -152,12 +152,12 @@ getMatchingSampledValues(const std::vector<T> &values,
   std::vector<bool> matches(values.size(), false);
   if (sfvol->isSetSampledValue()) {
     T sv = static_cast<T>(sfvol->getSampledValue());
-    std::transform(values.cbegin(), values.cend(), matches.begin(),
-                   [sv](auto v) { return v == sv; });
+    std::transform(values.begin(), values.end(), matches.begin(),
+                   [sv](const auto v) { return v == sv; });
   } else if (sfvol->isSetMinValue() && sfvol->isSetMaxValue()) {
     double min = sfvol->getMinValue();
     double max = sfvol->getMaxValue();
-    std::transform(values.cbegin(), values.cend(), matches.begin(),
+    std::transform(values.begin(), values.end(), matches.begin(),
                    [min, max](T v) {
                      auto vAsDouble{static_cast<double>(v)};
                      return vAsDouble >= min && vAsDouble < max;
@@ -218,7 +218,7 @@ static std::vector<QRgb> setImagePixels(
   auto iter = colours.begin();
   for (const auto *sampledVolume : sampledVolumes) {
     auto matches = getMatchingSampledValues(values, sampledVolume);
-    if (std::find(matches.cbegin(), matches.cend(), true) != matches.cend()) {
+    if (std::ranges::find(matches, true) != matches.cend()) {
       auto col{common::indexedColours()[iCol].rgb()};
       SPDLOG_WARN("Color {} is {}", iCol, col);
       auto sampledValue{

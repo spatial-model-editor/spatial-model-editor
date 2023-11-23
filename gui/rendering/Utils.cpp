@@ -197,7 +197,7 @@ std::string rendering::Utils::Backtrace(const std::string &sectionName,
   return sectionName + trace_buf.str();
 }
 #else
-std::string Backtrace(int skip = 1) { return std::string(); }
+std::string Backtrace([[maybe_unused]] int skip = 1) { return std::string(); }
 #endif
 
 #ifdef QT_DEBUG
@@ -208,8 +208,10 @@ std::string GetCallstack(int skip) {
   return rendering::Utils::Backtrace("Callstack:\n", skip);
 }
 #else
-void CheckOpenGLError(std::string tag) {}
-std::string GetCallstack(int skip) { return std::string("Callstack:\n"); }
+void CheckOpenGLError([[maybe_unused]] std::string tag) {}
+std::string GetCallstack([[maybe_unused]] int skip) {
+  return std::string("Callstack:\n");
+}
 #endif
 
 std::string rendering::Utils::PrintGLErrorDescription(unsigned int glErr) {

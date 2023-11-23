@@ -8,6 +8,7 @@
 #include "sme/utils.hpp"
 #include <algorithm>
 #include <opencv2/imgproc.hpp>
+#include <ranges>
 #include <utility>
 
 namespace sme::mesh {
@@ -76,7 +77,7 @@ static std::vector<Boundary> splitContours(const QImage &img,
     // no FP: closed loop
     if (startPixel == edges.size()) {
       SPDLOG_TRACE("Found loop with {} points", edges.size());
-      if (std::none_of(loops.cbegin(), loops.cend(), [&edges](const auto &l) {
+      if (std::ranges::none_of(loops, [&edges](const auto &l) {
             return common::isCyclicPermutation(edges, l);
           })) {
         SPDLOG_TRACE("  - adding loop", edges.size());
@@ -87,21 +88,19 @@ static std::vector<Boundary> splitContours(const QImage &img,
     } else {
       // need to split the loop into lines connecting fixed points
       // rotate so the first point is a fixed point
-      std::rotate(
-          edges.begin(),
+      std::ranges::rotate(
+          edges,
           edges.begin() +
-              static_cast<std::vector<cv::Point>::difference_type>(startPixel),
-          edges.end());
+              static_cast<std::vector<cv::Point>::difference_type>(startPixel));
       std::vector<cv::Point> line;
       line.push_back(edges.front());
       for (std::size_t i = 1; i < edges.size(); ++i) {
         line.push_back(edges[i]);
         if (contourMap.isFixedPoint(edges[i])) {
           SPDLOG_TRACE("Finished line with {} points", line.size());
-          if (std::none_of(lines.cbegin(), lines.cend(),
-                           [&line](const auto &l) {
-                             return common::isCyclicPermutation(line, l);
-                           })) {
+          if (std::ranges::none_of(lines, [&line](const auto &l) {
+                return common::isCyclicPermutation(line, l);
+              })) {
             SPDLOG_TRACE("  - adding line", edges.size());
             auto points = toQPointsInvertYAxis(line, img.height() + 1);
             boundaries.emplace_back(points, false);
@@ -114,7 +113,7 @@ static std::vector<Boundary> splitContours(const QImage &img,
       }
       line.push_back(edges.front());
       SPDLOG_TRACE("Finished line with {} points", line.size());
-      if (std::none_of(lines.cbegin(), lines.cend(), [&line](const auto &l) {
+      if (std::ranges::none_of(lines, [&line](const auto &l) {
             return common::isCyclicPermutation(line, l);
           })) {
         SPDLOG_TRACE("  - adding line", edges.size());
@@ -180,8 +179,8 @@ std::size_t Boundaries::getMaxPoints(std::size_t boundaryIndex) const {
 std::vector<std::size_t> Boundaries::getMaxPoints() const {
   if (m_simplifierType == 0) {
     std::vector<std::size_t> v(m_boundaries.size());
-    std::transform(m_boundaries.cbegin(), m_boundaries.cend(), v.begin(),
-                   [](const auto &b) { return b.getMaxPoints(); });
+    std::ranges::transform(m_boundaries, v.begin(),
+                           [](const auto &b) { return b.getMaxPoints(); });
     return v;
   } else if (m_simplifierType == 1) {
     return {m_polylineSimplifier.getMaxPoints()};

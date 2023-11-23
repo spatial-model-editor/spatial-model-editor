@@ -61,7 +61,7 @@ getCompartmentsAndAnalyticVolumes(
   // this gives them in the order in which they should be processed
   // when a pixel is contained in multiple volumes, the highest ordinal takes
   // precedence
-  std::sort(v.begin(), v.end(), [](const auto &a, const auto &b) {
+  std::ranges::sort(v, [](const auto &a, const auto &b) {
     return a.second->getOrdinal() > b.second->getOrdinal();
   });
   return v;
