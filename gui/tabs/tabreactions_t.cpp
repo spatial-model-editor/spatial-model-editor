@@ -12,6 +12,7 @@
 #include <QTreeWidget>
 
 using namespace sme::test;
+using Catch::Matchers::ContainsSubstring;
 
 TEST_CASE("TabReactions", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
   sme::model::Model model;
@@ -159,7 +160,8 @@ TEST_CASE("TabReactions", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
     // edit reaction rate
     txtReactionRate->setFocus();
     sendKeyEvents(txtReactionRate, {"Backspace", "Delete", "2", "+"});
-    REQUIRE(lblReactionRateStatus->text() == "syntax error");
+    REQUIRE_THAT(lblReactionRateStatus->text().toStdString(),
+                 ContainsSubstring("syntax error"));
     sendKeyEvents(txtReactionRate, {"y"});
     REQUIRE(model.getReactions().getParameterName("reacQ", "y_") == "y");
     REQUIRE(lblReactionRateStatus->text() == "");

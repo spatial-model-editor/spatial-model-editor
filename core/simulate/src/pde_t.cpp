@@ -6,6 +6,7 @@
 
 using namespace sme;
 using namespace sme::test;
+using Catch::Matchers::ContainsSubstring;
 
 TEST_CASE("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
   SECTION("ABtoC model") {
@@ -37,7 +38,7 @@ TEST_CASE("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     s.getReactions().setSpeciesStoichiometry("r3", "A", 1.0);
     std::vector<std::string> speciesIDs{"A", "B", "C"};
     REQUIRE_THROWS_WITH(simulate::Pde(&s, speciesIDs, {"r1", "r2", "r3"}),
-                        "Unknown symbol: idontexist");
+                        ContainsSubstring("Unknown symbol 'idontexist'"));
   }
   SECTION("simple model") {
     auto s{getTestModel("invalid-dune-names")};

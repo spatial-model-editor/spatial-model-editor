@@ -1,5 +1,4 @@
 // Pixel simulator implementation
-//  - ReacEval: evaluates reaction terms at a single location
 //  - SimCompartment: evaluates reactions in a compartment
 //  - SimMembrane: evaluates reactions in a membrane
 
@@ -29,37 +28,20 @@ class Membrane;
 
 namespace simulate {
 
-class ReacEvalError : public std::runtime_error {
-public:
-  explicit ReacEvalError(const std::string &message)
-      : std::runtime_error(message) {}
-};
-
-class ReacEval {
-private:
-  // symengine reaction expression
-  common::Symbolic sym;
-
-public:
-  ReacEval() = default;
-  ReacEval(
+struct ReacExpr {
+  std::vector<std::string> expressions;
+  std::vector<std::string> variables;
+  ReacExpr(
       const model::Model &doc, const std::vector<std::string> &speciesID,
       const std::vector<std::string> &reactionID,
-      double reactionScaleFactor = 1.0, bool doCSE = true,
-      unsigned optLevel = 3, bool timeDependent = false,
+      double reactionScaleFactor = 1.0, bool timeDependent = false,
       bool spaceDependent = false,
       const std::map<std::string, double, std::less<>> &substitutions = {});
-  ReacEval(ReacEval &&) noexcept = default;
-  ReacEval(const ReacEval &) = delete;
-  ReacEval &operator=(ReacEval &&) noexcept = default;
-  ReacEval &operator=(const ReacEval &) = delete;
-  ~ReacEval() = default;
-  void evaluate(double *output, const double *input) const;
 };
 
 class SimCompartment {
 private:
-  ReacEval reacEval;
+  common::Symbolic sym;
   // species concentrations & corresponding dcdt values
   // ordering: ix, species
   std::vector<double> conc;
@@ -84,11 +66,6 @@ public:
       std::vector<std::string> sIds, bool doCSE = true, unsigned optLevel = 3,
       bool timeDependent = false, bool spaceDependent = false,
       const std::map<std::string, double, std::less<>> &substitutions = {});
-  SimCompartment(SimCompartment &&) noexcept = default;
-  SimCompartment(const SimCompartment &) = delete;
-  SimCompartment &operator=(SimCompartment &&) noexcept = default;
-  SimCompartment &operator=(const SimCompartment &) = delete;
-  ~SimCompartment() = default;
 
   // dcdt = result of applying diffusion operator to conc
   void evaluateDiffusionOperator(std::size_t begin, std::size_t end);
@@ -136,7 +113,7 @@ public:
 
 class SimMembrane {
 private:
-  ReacEval reacEval;
+  common::Symbolic sym;
   const geometry::Membrane *membrane;
   SimCompartment *compA;
   SimCompartment *compB;
@@ -150,11 +127,6 @@ public:
       unsigned optLevel = 3, bool timeDependent = false,
       bool spaceDependent = false,
       const std::map<std::string, double, std::less<>> &substitutions = {});
-  SimMembrane(SimMembrane &&) noexcept = default;
-  SimMembrane(const SimMembrane &) = delete;
-  SimMembrane &operator=(SimMembrane &&) noexcept = default;
-  SimMembrane &operator=(const SimMembrane &) = delete;
-  ~SimMembrane() = default;
   void evaluateReactions();
 };
 

@@ -14,6 +14,10 @@
 #include <cstddef>
 #include <memory>
 #include <string>
+#include <symengine/basic.h>
+#include <symengine/llvm_double.h>
+#include <symengine/parser/sbml/sbml_parser.h>
+#include <symengine/symengine_rcp.h>
 #include <utility>
 #include <vector>
 
@@ -21,9 +25,14 @@ namespace sme::common {
 
 class Symbolic {
 private:
-  struct SymEngineFunc;
-  struct SymEngineWrapper;
-  std::unique_ptr<SymEngineWrapper> se;
+  std::unique_ptr<SymEngine::LLVMDoubleVisitor> lambdaLLVM{};
+  SymEngine::vec_basic exprInlined{};
+  SymEngine::vec_basic exprOriginal{};
+  SymEngine::vec_basic varVec{};
+  std::map<std::string, SymEngine::RCP<const SymEngine::Symbol>, std::less<>>
+      symbols{};
+  std::string errorMessage{};
+  SymEngine::SbmlParser parser{};
   bool valid{false};
   bool compiled{false};
 
@@ -40,16 +49,18 @@ public:
       const std::vector<std::string> &variables = {},
       const std::vector<std::pair<std::string, double>> &constants = {},
       const std::vector<SymbolicFunction> &functions = {},
-      bool allow_unknown_symbols = false)
-      : Symbolic(std::vector<std::string>{expression}, variables, constants,
-                 functions, allow_unknown_symbols) {}
-  Symbolic(Symbolic &&) noexcept;
-  Symbolic(const Symbolic &) = delete;
-  Symbolic &operator=(Symbolic &&) noexcept;
-  Symbolic &operator=(const Symbolic &) = delete;
-  ~Symbolic();
-  static const char *getLLVMVersion();
-  void compile(bool doCSE = true, unsigned optLevel = 3);
+      bool allow_unknown_symbols = false);
+  bool parse(const std::vector<std::string> &expressions,
+             const std::vector<std::string> &variables = {},
+             const std::vector<std::pair<std::string, double>> &constants = {},
+             const std::vector<SymbolicFunction> &functions = {},
+             bool allow_unknown_symbols = false);
+  bool parse(const std::string &expression,
+             const std::vector<std::string> &variables = {},
+             const std::vector<std::pair<std::string, double>> &constants = {},
+             const std::vector<SymbolicFunction> &functions = {},
+             bool allow_unknown_symbols = false);
+  bool compile(bool doCSE = true, unsigned optLevel = 3);
   [[nodiscard]] std::string expr(std::size_t i = 0) const;
   [[nodiscard]] std::string inlinedExpr(std::size_t i = 0) const;
   [[nodiscard]] std::string diff(const std::string &var,
@@ -62,6 +73,7 @@ public:
   [[nodiscard]] bool isValid() const;
   [[nodiscard]] bool isCompiled() const;
   [[nodiscard]] const std::string &getErrorMessage() const;
+  void clear();
 };
 
 } // namespace sme::common

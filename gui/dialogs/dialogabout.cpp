@@ -10,6 +10,7 @@
 #include <expat.h>
 #include <fmt/core.h>
 #include <gmp.h>
+#include <llvm/Config/llvm-config.h>
 #include <mpfr.h>
 #include <omex/common/libcombine-version.h>
 #include <oneapi/tbb/version.h>
@@ -65,8 +66,7 @@ DialogAbout::DialogAbout(QWidget *parent)
                        FMT_VERSION % 100));
   libraries.append(dep("SymEngine", "https://github.com/symengine/symengine",
                        SYMENGINE_VERSION));
-  libraries.append(dep("LLVM core", "https://llvm.org",
-                       sme::common::Symbolic::getLLVMVersion()));
+  libraries.append(dep("LLVM core", "https://llvm.org", LLVM_VERSION_STRING));
   libraries.append(dep("GMP", "https://gmplib.org", __GNU_MP_VERSION,
                        __GNU_MP_VERSION_MINOR, __GNU_MP_VERSION_PATCHLEVEL));
   libraries.append(dep("MPFR", "https://www.mpfr.org/", MPFR_VERSION_MAJOR,

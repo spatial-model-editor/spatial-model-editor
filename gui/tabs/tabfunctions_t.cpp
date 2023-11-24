@@ -10,6 +10,7 @@
 #include <QPushButton>
 
 using namespace sme::test;
+using Catch::Matchers::ContainsSubstring;
 
 TEST_CASE("TabFunctions", "[gui/tabs/functions][gui/tabs][gui][functions]") {
   sme::model::Model model;
@@ -178,12 +179,14 @@ TEST_CASE("TabFunctions", "[gui/tabs/functions][gui/tabs][gui][functions]") {
     // delete existing "0" to have empty expression
     sendKeyEvents(txtFunctionDef, {"Delete", "Backspace"});
     REQUIRE(txtFunctionDef->toPlainText() == "");
-    REQUIRE(lblFunctionDefStatus->text() == "Empty expression");
+    REQUIRE_THAT(lblFunctionDefStatus->text().toStdString(),
+                 ContainsSubstring("Empty expression"));
     // expression invalid so model not changed:
     REQUIRE(model.getFunctions().getExpression("func_1") == "0");
     sendKeyEvents(txtFunctionDef, {"x"});
     REQUIRE(txtFunctionDef->toPlainText() == "x");
-    REQUIRE(lblFunctionDefStatus->text() == "variable 'x' not found");
+    REQUIRE_THAT(lblFunctionDefStatus->text().toStdString(),
+                 ContainsSubstring("Variable 'x' not found"));
     // edit expression: x is not a parameter, model still not changed
     REQUIRE(model.getFunctions().getExpression("func_1") == "0");
     // edit expression: y is a parameter, so math is valid and model is updated
