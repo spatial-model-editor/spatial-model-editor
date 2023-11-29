@@ -14,6 +14,7 @@
 
 using namespace sme;
 using namespace sme::test;
+using Catch::Matchers::ContainsSubstring;
 
 TEST_CASE("Simulate: very_simple_model, single pixel geometry",
           "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
@@ -2023,8 +2024,8 @@ TEST_CASE("pixel simulation with invalid reaction rate expression",
   m.getReactions().add("r2", "comp", "A * A / idontexist");
   m.getReactions().setSpeciesStoichiometry("r2", "A", 1.0);
   m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
-  REQUIRE(simulate::Simulation(m).errorMessage() ==
-          "Unknown symbol: idontexist");
+  REQUIRE_THAT(simulate::Simulation(m).errorMessage(),
+               ContainsSubstring("Unknown symbol 'idontexist'"));
 }
 
 TEST_CASE("Fish model: simulation with piecewise function in reactions",

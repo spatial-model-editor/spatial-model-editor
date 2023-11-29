@@ -27,8 +27,7 @@ class Model;
 namespace simulate {
 
 class PdeError : public std::runtime_error {
-public:
-  explicit PdeError(const std::string &message) : std::runtime_error(message) {}
+  using std::runtime_error::runtime_error;
 };
 
 struct PdeScaleFactors {

@@ -5,8 +5,14 @@
 
 using namespace sme;
 using namespace sme::test;
+using Catch::Matchers::ContainsSubstring;
 
 TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
+  SECTION("default constructor") {
+    common::Symbolic sym{};
+    REQUIRE(sym.isValid() == false);
+    REQUIRE(sym.isCompiled() == false);
+  }
   SECTION("5+5: no vars, no constants") {
     std::string expr = "5+5";
     common::Symbolic sym(expr);
@@ -30,15 +36,16 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     // by default missing variable is an error:
     common::Symbolic sym(expr);
     REQUIRE(!sym.isValid());
-    REQUIRE(sym.getErrorMessage() == "Unknown symbol: x");
+    REQUIRE_THAT(sym.getErrorMessage(),
+                 ContainsSubstring("Unknown symbol 'x'"));
     // can optionally allow missing variables in the expression:
-    sym = common::Symbolic(expr, {"x"}, {}, {}, true);
+    sym.parse(expr, {"x"}, {}, {}, true);
     REQUIRE(sym.isValid());
     REQUIRE(sym.getErrorMessage().empty());
     REQUIRE(sym.expr() == "10*x");
     REQUIRE(sym.inlinedExpr() == "10*x");
     // specifying variable allow compiling and differentiating
-    sym = common::Symbolic(expr, {"x"});
+    sym.parse(expr, {"x"});
     CAPTURE(expr);
     REQUIRE(sym.expr() == "10*x");
     REQUIRE(sym.inlinedExpr() == "10*x");
@@ -148,10 +155,10 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
   }
   SECTION("3*x + 4/y - 1.0*x + 0.2*x*y - 0.1: two vars, no constants") {
     std::string expr{"3*x + 4/y - 1.0*x + 0.2*x*y - 0.1"};
-    REQUIRE(common::Symbolic(expr, {"x"}, {}).getErrorMessage() ==
-            "Unknown symbol: y");
-    REQUIRE(common::Symbolic(expr, {"y"}, {}).getErrorMessage() ==
-            "Unknown symbol: x");
+    REQUIRE_THAT(common::Symbolic(expr, {"x"}, {}).getErrorMessage(),
+                 ContainsSubstring("Unknown symbol 'y'"));
+    REQUIRE_THAT(common::Symbolic(expr, {"y"}, {}).getErrorMessage(),
+                 ContainsSubstring("Unknown symbol 'x'"));
     common::Symbolic sym(expr, {"x", "y", "z"}, {});
     CAPTURE(expr);
     REQUIRE(symEq(sym.inlinedExpr(), "-0.1 + 2.0*x + 0.2*x*y + 4*y^(-1)"));
@@ -175,12 +182,12 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
   SECTION("two expressions, three vars, no constants") {
     std::vector<std::string> expr{"3*x + 4/y - 1.0*x + 0.2*x*y - 0.1",
                                   "z - cos(x)*sin(y) - x*y"};
-    REQUIRE(common::Symbolic(expr, {"z", "x"}, {}).getErrorMessage() ==
-            "Unknown symbol: y");
-    REQUIRE(common::Symbolic(expr, {"x", "y"}, {}).getErrorMessage() ==
-            "Unknown symbol: z");
-    REQUIRE(common::Symbolic(expr, {"z", "y"}, {}).getErrorMessage() ==
-            "Unknown symbol: x");
+    REQUIRE_THAT(common::Symbolic(expr, {"z", "x"}, {}).getErrorMessage(),
+                 ContainsSubstring("Unknown symbol 'y'"));
+    REQUIRE_THAT(common::Symbolic(expr, {"x", "y"}, {}).getErrorMessage(),
+                 ContainsSubstring("Unknown symbol 'z'"));
+    REQUIRE_THAT(common::Symbolic(expr, {"z", "y"}, {}).getErrorMessage(),
+                 ContainsSubstring("Unknown symbol 'x'"));
     common::Symbolic sym(expr, {"x", "y", "z"}, {});
     CAPTURE(expr);
     REQUIRE(symEq(sym.inlinedExpr(0), "-0.1 + 2.0*x + 0.2*x*y + 4*y^(-1)"));
@@ -210,8 +217,8 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
   }
   SECTION("exponentiale^(4*x): print exponential function") {
     std::string expr{"exponentiale^(4*x)"};
-    REQUIRE(common::Symbolic(expr, {}, {}).getErrorMessage() ==
-            "Unknown symbol: x");
+    REQUIRE_THAT(common::Symbolic(expr, {}, {}).getErrorMessage(),
+                 ContainsSubstring("Unknown symbol 'x'"));
     common::Symbolic sym(expr, {"x"}, {});
     CAPTURE(expr);
     REQUIRE(sym.inlinedExpr() == "exp(4*x)");
@@ -251,11 +258,11 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     constants.emplace_back("n", -23);
     constants.emplace_back("Unused", -99);
     std::string expr{"3*x + alpha*x - a*n*x"};
-    REQUIRE(common::Symbolic(expr, {}, constants).getErrorMessage() ==
-            "Unknown symbol: x");
-    REQUIRE(
-        common::Symbolic(expr, {"x"}, {{"a", 1}, {"n", 2}}).getErrorMessage() ==
-        "Unknown symbol: alpha");
+    REQUIRE_THAT(common::Symbolic(expr, {}, constants).getErrorMessage(),
+                 ContainsSubstring("Unknown symbol 'x'"));
+    REQUIRE_THAT(
+        common::Symbolic(expr, {"x"}, {{"a", 1}, {"n", 2}}).getErrorMessage(),
+        ContainsSubstring("Unknown symbol 'alpha'"));
     common::Symbolic sym(expr, {"x", "y"}, constants);
     CAPTURE(expr);
     REQUIRE(symEq(sym.expr(), "3*x + x*alpha - a*n*x"));
@@ -320,7 +327,8 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     common::Symbolic sym(expr, {"y"});
     REQUIRE(sym.isValid() == false);
     REQUIRE(sym.isCompiled() == false);
-    REQUIRE(sym.getErrorMessage() == "Unknown function: abcd(y)");
+    REQUIRE_THAT(sym.getErrorMessage(),
+                 ContainsSubstring("Unknown function 'abcd(y)'"));
     sym.compile();
     REQUIRE(sym.isValid() == false);
     REQUIRE(sym.isCompiled() == false);
@@ -331,7 +339,8 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     common::Symbolic sym(expr, {"y"});
     REQUIRE(sym.isValid() == false);
     REQUIRE(sym.isCompiled() == false);
-    REQUIRE(sym.getErrorMessage() == "Unknown function: abcd(y)");
+    REQUIRE_THAT(sym.getErrorMessage(),
+                 ContainsSubstring("Unknown function 'abcd(y)'"));
     sym.compile();
     REQUIRE(sym.isValid() == false);
     REQUIRE(sym.isCompiled() == false);
@@ -342,7 +351,8 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     common::Symbolic sym(expr, {"y"});
     REQUIRE(sym.isValid() == false);
     REQUIRE(sym.isCompiled() == false);
-    REQUIRE(sym.getErrorMessage() == "Unknown function: abcd(y)");
+    REQUIRE_THAT(sym.getErrorMessage(),
+                 ContainsSubstring("Unknown function 'abcd(y)'"));
     sym.compile();
     REQUIRE(sym.isValid() == false);
     REQUIRE(sym.isCompiled() == false);
@@ -395,8 +405,10 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       std::string expr{"2*f0(x)"};
       common::Symbolic sym(expr, {"x"}, {}, {f0});
       REQUIRE(!sym.isValid());
-      REQUIRE(sym.getErrorMessage() ==
-              "Function 'zero_arg_func' requires 0 argument(s), found 1");
+      REQUIRE_THAT(
+          sym.getErrorMessage(),
+          ContainsSubstring(
+              "Function 'zero_arg_func' requires 0 argument(s), found 1"));
       CAPTURE(expr);
     }
     SECTION("1-arg func called with two arguments") {
@@ -404,8 +416,9 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       common::Symbolic sym(expr, {"x", "y"}, {}, {f1});
       REQUIRE(sym.isValid() == false);
       REQUIRE(sym.isCompiled() == false);
-      REQUIRE(sym.getErrorMessage() ==
-              "Function 'my func' requires 1 argument(s), found 2");
+      REQUIRE_THAT(sym.getErrorMessage(),
+                   ContainsSubstring(
+                       "Function 'my func' requires 1 argument(s), found 2"));
       CAPTURE(expr);
     }
     SECTION("2-arg func called with one argument") {
@@ -413,8 +426,9 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       common::Symbolic sym(expr, {"a"}, {}, {f2});
       REQUIRE(sym.isValid() == false);
       REQUIRE(sym.isCompiled() == false);
-      REQUIRE(sym.getErrorMessage() ==
-              "Function 'func2' requires 2 argument(s), found 1");
+      REQUIRE_THAT(sym.getErrorMessage(),
+                   ContainsSubstring(
+                       "Function 'func2' requires 2 argument(s), found 1"));
       CAPTURE(expr);
     }
     SECTION("1-arg func calls itself") {
@@ -484,7 +498,9 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     CAPTURE(sym.getErrorMessage());
     REQUIRE(sym.isValid() == false);
     REQUIRE(sym.isCompiled() == false);
-    REQUIRE(sym.getErrorMessage() == "Recursive function calls not supported");
+    REQUIRE_THAT(
+        sym.getErrorMessage(),
+        ContainsSubstring("Recursive function calls are not supported"));
     CAPTURE(expr);
   }
   SECTION("expressions with relative difference < 1e-13 test equal") {
@@ -509,8 +525,9 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(sym.isValid() == false);
     REQUIRE(sym.isCompiled() == false);
     CAPTURE(sym.getErrorMessage());
-    REQUIRE(sym.getErrorMessage() == "Failed to compile expression: LLVMDouble "
-                                     "can only represent real valued infinity");
+    REQUIRE_THAT(sym.getErrorMessage(),
+                 ContainsSubstring(
+                     "LLVMDouble can only represent real valued infinity"));
   }
   SECTION("expression with inf: parses and compiles") {
     // real infinity is ok both for parsing & for llvm compilation
@@ -537,8 +554,7 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(sym.isValid() == false);
     REQUIRE(sym.isCompiled() == false);
     CAPTURE(sym.getErrorMessage());
-    REQUIRE(sym.getErrorMessage().substr(0, 30) ==
-            "Failed to compile expression: ");
+    REQUIRE_THAT(sym.getErrorMessage(), ContainsSubstring("Error compiling"));
   }
   SECTION("expression with nan: parses and may compile depending on symengine "
           "version") {
@@ -562,8 +578,69 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       // for previous symengine versions compilation of NaN fails
       REQUIRE(sym.isCompiled() == false);
       CAPTURE(sym.getErrorMessage());
-      REQUIRE(sym.getErrorMessage().substr(0, 30) ==
-              "Failed to compile expression: ");
+      REQUIRE_THAT(sym.getErrorMessage(), ContainsSubstring("Error compiling"));
     }
+  }
+  SECTION("3*x + alpha*x - a*n/x: one var, constants") {
+    std::vector<std::pair<std::string, double>> constants;
+    constants.emplace_back("alpha", 0.5);
+    constants.emplace_back("a", 0.8 + 1e-11);
+    constants.emplace_back("n", -23);
+    constants.emplace_back("Unused", -99);
+    std::string expr{"3*x + alpha*x - a*n*x"};
+    REQUIRE_THAT(common::Symbolic(expr, {}, constants).getErrorMessage(),
+                 ContainsSubstring("Unknown symbol 'x'"));
+    REQUIRE_THAT(
+        common::Symbolic(expr, {"x"}, {{"a", 1}, {"n", 2}}).getErrorMessage(),
+        ContainsSubstring("Unknown symbol 'alpha'"));
+    common::Symbolic sym(expr, {"x", "y"}, constants);
+    CAPTURE(expr);
+    REQUIRE(symEq(sym.expr(), "3*x + x*alpha - a*n*x"));
+    REQUIRE(sym.inlinedExpr() == "21.90000000023*x");
+    REQUIRE(sym.diff("x") == "21.90000000023");
+    REQUIRE(sym.diff("y") == "0");
+    REQUIRE(sym.isValid() == true);
+    REQUIRE(sym.isCompiled() == false);
+    sym.compile();
+    REQUIRE(sym.isValid() == true);
+    REQUIRE(sym.isCompiled() == true);
+    std::vector<double> res(1, 0);
+    for (auto x : std::vector<double>{-0.1, 0, 0.9, 23e-17, 4.88e11, 7e32}) {
+      sym.eval(res, {x, 2356.546});
+      REQUIRE(res[0] ==
+              dbl_approx(3 * x + 0.5 * x - (0.8 + 1e-11) * (-23) * x));
+    }
+  }
+  SECTION("clear") {
+    common::Symbolic sym({"3*x + 7 * x", "4*x - 3", "2*x"}, {"x"});
+    sym.compile();
+    REQUIRE(sym.isValid() == true);
+    REQUIRE(sym.isCompiled() == true);
+    sym.clear();
+    REQUIRE(sym.isValid() == false);
+    REQUIRE(sym.isCompiled() == false);
+  }
+  SECTION("parse") {
+    common::Symbolic sym{};
+    REQUIRE(sym.isValid() == false);
+    REQUIRE(sym.isCompiled() == false);
+    REQUIRE(sym.parse({"3*x + 7 * x", "4*x - 3", "2*x"}, {"x"}) == true);
+    REQUIRE(sym.isValid() == true);
+    REQUIRE(sym.isCompiled() == false);
+    REQUIRE(sym.compile() == true);
+    REQUIRE(sym.isValid() == true);
+    REQUIRE(sym.isCompiled() == true);
+    REQUIRE(sym.parse("notvalidmath", {"x"}) == false);
+    REQUIRE(sym.isValid() == false);
+    REQUIRE(sym.isCompiled() == false);
+    REQUIRE(sym.parse("2.5*exp(5*y)", {"y"}) == true);
+    REQUIRE(sym.isValid() == true);
+    REQUIRE(sym.isCompiled() == false);
+    REQUIRE(sym.compile() == true);
+    REQUIRE(sym.isValid() == true);
+    REQUIRE(sym.isCompiled() == true);
+    sym.clear();
+    REQUIRE(sym.isValid() == false);
+    REQUIRE(sym.isCompiled() == false);
   }
 }
