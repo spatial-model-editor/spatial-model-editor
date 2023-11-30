@@ -268,10 +268,6 @@ void ModelMembranes::exportToSBML(const common::VolumeF &voxelSize) {
 
 ModelMembranes::ModelMembranes(libsbml::Model *model) : sbmlModel{model} {}
 
-ModelMembranes::ModelMembranes(ModelMembranes &&) noexcept = default;
-
-ModelMembranes &ModelMembranes::operator=(ModelMembranes &&) noexcept = default;
-
 ModelMembranes::~ModelMembranes() = default;
 
 bool ModelMembranes::getHasUnsavedChanges() const { return hasUnsavedChanges; }

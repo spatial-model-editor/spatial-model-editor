@@ -35,7 +35,7 @@ addTriangle(const CDT::Face_handle face,
 }
 
 static void addTriangleAndNeighbours(
-    CDT &cdt, const CDT::Face_handle startingFace,
+    const CDT &cdt, const CDT::Face_handle startingFace,
     std::vector<TriangulateTriangleIndex> &triangleIndices) {
   std::vector<CDT::Face_handle> faces;
   faces.reserve(512);
@@ -69,7 +69,7 @@ static void addTriangleAndNeighbours(
 }
 
 static std::vector<TriangulateTriangleIndex>
-getConnectedTriangleIndices(CDT &cdt,
+getConnectedTriangleIndices(const CDT &cdt,
                             const std::vector<QPointF> &interiorPoints) {
   std::vector<TriangulateTriangleIndex> triangleIndices;
   for (auto face = cdt.all_faces_begin(); face != cdt.all_faces_end(); ++face) {
@@ -143,7 +143,7 @@ static void meshCdt(CDT &cdt,
   }
 }
 
-static std::vector<QPointF> getPointsFromCdt(CDT &cdt) {
+static std::vector<QPointF> getPointsFromCdt(const CDT &cdt) {
   std::vector<QPointF> points;
   points.reserve(cdt.number_of_vertices());
   int ih{0};

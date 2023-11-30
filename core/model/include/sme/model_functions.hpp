@@ -13,9 +13,7 @@ namespace libsbml {
 class Model;
 }
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 
 class ModelFunctions {
 private:
@@ -44,6 +42,4 @@ public:
   void setHasUnsavedChanges(bool unsavedChanges);
 };
 
-} // namespace model
-
-} // namespace sme
+} // namespace sme::model

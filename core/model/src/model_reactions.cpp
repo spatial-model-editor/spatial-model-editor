@@ -21,7 +21,7 @@ static QStringList importIds(const libsbml::Model *model) {
   QStringList ids;
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
     const auto *reaction{model->getReaction(i)};
-    ids.push_back(reaction->getId().c_str());
+    ids.emplace_back(reaction->getId().c_str());
   }
   return ids;
 }
@@ -37,7 +37,7 @@ static QStringList importNamesAndMakeUnique(libsbml::Model *model) {
     }
     auto name{makeUnique(reaction->getName().c_str(), names)};
     reaction->setName(name.toStdString());
-    names.push_back(name);
+    names.emplace_back(name);
     // also set isLocal to true for all reactions
     auto *srp{static_cast<libsbml::SpatialReactionPlugin *>(
         reaction->getPlugin("spatial"))};
@@ -51,8 +51,7 @@ static QVector<QStringList> importParameterIds(libsbml::Model *model) {
   for (unsigned int i = 0; i < model->getNumReactions(); ++i) {
     auto *reac{model->getReaction(i)};
     auto *kin{reac->getKineticLaw()};
-    paramIds.push_back({});
-    auto &ids{paramIds.back()};
+    auto &ids{paramIds.emplace_back()};
     for (unsigned int j = 0; j < kin->getNumLocalParameters(); ++j) {
       auto *param{kin->getLocalParameter(j)};
       const auto &sId{param->getId()};
@@ -60,7 +59,7 @@ static QVector<QStringList> importParameterIds(libsbml::Model *model) {
         SPDLOG_INFO("ReactionParameter '{}' has no Name, using sId", sId);
         param->setName(sId);
       }
-      ids.push_back(sId.c_str());
+      ids.emplace_back(sId.c_str());
     }
   }
   return paramIds;
@@ -100,8 +99,8 @@ inferReactionCompartment(const libsbml::Reaction *reac,
     for (const auto &membrane : membranes) {
       const auto &cA{membrane.getCompartmentA()->getId()};
       const auto &cB{membrane.getCompartmentB()->getId()};
-      if (possibleCompartments.count(cA) + possibleCompartments.count(cB) ==
-          2) {
+      if (possibleCompartments.contains(cA) &&
+          possibleCompartments.contains(cB)) {
         SPDLOG_INFO("  -> Membrane '{}'", membrane.getId());
         return membrane.getId();
       }
@@ -208,8 +207,8 @@ removeInvalidSpecies(libsbml::Reaction *reaction,
   std::vector<std::string> productsToRemove;
   for (unsigned i = 0; i < reaction->getNumProducts(); ++i) {
     if (auto sId{reaction->getProduct(i)->getSpecies()};
-        validSpeciesIds.count(sId) == 0) {
-      productsToRemove.push_back(sId);
+        !validSpeciesIds.contains(sId)) {
+      productsToRemove.emplace_back(sId);
     }
   }
   for (const auto &sId : productsToRemove) {
@@ -221,8 +220,8 @@ removeInvalidSpecies(libsbml::Reaction *reaction,
   std::vector<std::string> reactantsToRemove;
   for (unsigned i = 0; i < reaction->getNumReactants(); ++i) {
     if (auto sId{reaction->getReactant(i)->getSpecies()};
-        validSpeciesIds.count(sId) == 0) {
-      reactantsToRemove.push_back(sId);
+        !validSpeciesIds.contains(sId)) {
+      reactantsToRemove.emplace_back(sId);
     }
   }
   for (const auto &sId : reactantsToRemove) {
@@ -309,7 +308,7 @@ ModelReactions::getSpatialReactionRescalings() const {
     const auto *reaction{sbmlModel->getReaction(i)};
     const auto &compartmentId{reaction->getCompartment()};
     SPDLOG_INFO("Location: {}", compartmentId);
-    reactionRescaling.push_back(
+    reactionRescaling.emplace_back(
         getReactionRescaling(reaction, compartmentId, compartmentSizes));
   }
   return reactionRescaling;
@@ -325,7 +324,7 @@ QStringList ModelReactions::getIds(const QString &locationId) const {
   std::string compId = locationId.toStdString();
   for (const auto &id : ids) {
     if (sbmlModel->getReaction(id.toStdString())->getCompartment() == compId) {
-      r.push_back(id);
+      r.emplace_back(id);
     }
   }
   return r;
@@ -343,7 +342,7 @@ ModelReactions::getIds(const ReactionLocation &reactionLocation) const {
     const auto &locationId{
         sbmlModel->getReaction(id.toStdString())->getCompartment()};
     if (!validLocations.contains(locationId.c_str())) {
-      r.push_back(id);
+      r.emplace_back(id);
     }
   }
   return r;
@@ -379,13 +378,13 @@ QString ModelReactions::add(const QString &name, const QString &locationId,
   auto *reaction{sbmlModel->createReaction()};
   SPDLOG_INFO("  - name: {}", newName.toStdString());
   reaction->setName(newName.toStdString());
-  names.push_back(newName);
+  names.emplace_back(newName);
   auto id = nameToUniqueSId(newName, sbmlModel);
   std::string sId{id.toStdString()};
   SPDLOG_INFO("  - id: {}", sId);
   reaction->setId(sId);
-  ids.push_back(id);
-  parameterIds.push_back({});
+  ids.emplace_back(id);
+  parameterIds.emplace_back();
   reaction->setFast(false);
   reaction->setCompartment(locationId.toStdString());
   reaction->setReversible(true);
@@ -419,7 +418,7 @@ void ModelReactions::removeAllInvolvingSpecies(const QString &speciesId) {
     const auto *reaction{sbmlModel->getReaction(i)};
     if (reactionInvolvesSpecies(reaction, speciesId.toStdString())) {
       SPDLOG_INFO("  - removing reaction {}", reaction->getId());
-      reactionIdsToRemove.push_back(reaction->getId().c_str());
+      reactionIdsToRemove.emplace_back(reaction->getId().c_str());
     }
   }
   for (const auto &reactionId : reactionIdsToRemove) {
@@ -661,7 +660,7 @@ QString ModelReactions::setParameterName(const QString &reactionId,
   QStringList parNames;
   parNames.reserve(pars.size());
   for (const auto &id : pars) {
-    parNames.push_back(getParameterName(reactionId, id));
+    parNames.emplace_back(getParameterName(reactionId, id));
   }
   auto uniqueName = makeUnique(name, parNames);
   std::string sName{uniqueName.toStdString()};
@@ -717,7 +716,7 @@ QString ModelReactions::addParameter(const QString &reactionId,
   std::string sId{id.toStdString()};
   SPDLOG_INFO("  - id: {}", sId);
   param->setId(sId);
-  pars.push_back(id);
+  pars.emplace_back(id);
   param->setConstant(true);
   param->setValue(value);
   return id;

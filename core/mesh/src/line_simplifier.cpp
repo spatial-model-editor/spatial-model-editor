@@ -76,11 +76,12 @@ template <typename T> static T pop(std::vector<T> &vec, std::size_t index) {
 static std::size_t popSmallestTriangleIndex(std::vector<std::size_t> &indices,
                                             std::vector<int> &areas,
                                             const std::vector<QPoint> &points) {
-  auto iter = std::min_element(areas.cbegin(), areas.cend());
-  auto i = static_cast<std::size_t>(std::distance(areas.cbegin(), iter));
-  areas.erase(iter);
-  std::size_t smallestTriangleIndex = pop(indices, i);
-  updateTriangleAreas(areas, i, indices, points);
+  auto minElementIter{std::ranges::min_element(areas)};
+  auto minElementIndex{static_cast<std::size_t>(
+      std::ranges::distance(areas.cbegin(), minElementIter))};
+  areas.erase(minElementIter);
+  std::size_t smallestTriangleIndex = pop(indices, minElementIndex);
+  updateTriangleAreas(areas, minElementIndex, indices, points);
   return smallestTriangleIndex;
 }
 

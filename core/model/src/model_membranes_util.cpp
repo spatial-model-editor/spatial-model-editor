@@ -13,12 +13,12 @@ constexpr std::size_t nullIndex{std::numeric_limits<std::size_t>::max()};
 std::size_t OrderedIntPairIndex::toIndex(int smaller, int larger) const {
   auto index = static_cast<std::size_t>(smaller + maxValue * larger);
   if (smaller >= larger) {
-    throw(std::runtime_error(
-        "OrderedIntPairIndex :: incorrectly ordered pair of ints"));
+    throw ModelMembranesUtilError(
+        "OrderedIntPairIndex :: incorrectly ordered pair of ints");
   }
   if (index >= values.size()) {
-    throw(std::runtime_error(
-        "OrderedIntPairIndex :: invalid ints (probably too large)"));
+    throw ModelMembranesUtilError(
+        "OrderedIntPairIndex :: invalid ints (probably too large)");
   }
   return index;
 }

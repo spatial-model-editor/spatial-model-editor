@@ -1,16 +1,3 @@
-// utilities
-//  - sum/average/min/max: sum/average/min/max of a container of values
-//  - minmax: pair of min,max values in a container
-//  - decltypeStr<T>: type of T as a string
-//    (taken from https://stackoverflow.com/a/56766138)
-//  - toStdString: convert QStringList to std::vector<std::string>
-//  - toQString: convert std::vector<std::string> to QStringList
-//  - stringToVector: convert space-delimited list of values to a vector
-//  - vectorToString: convert vector of values to a space-delimited list
-//  - indexedColours: a set of default colours for display purposes
-//  - SmallMap: simple insert-only map for small number of small types
-//  - SmallStackSet: simple fast non-allocating set implementation for a small
-
 #pragma once
 
 #include <QColor>
@@ -22,6 +9,8 @@
 #include <QStringList>
 #include <QVector>
 #include <array>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 #include <initializer_list>
 #include <iomanip>
 #include <iterator>
@@ -31,6 +20,7 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -77,8 +67,8 @@ std::vector<typename Container::value_type>
 get_unique_values(const Container &c) {
   std::vector<typename Container::value_type> unique_values(c);
   std::ranges::sort(std::begin(unique_values), std::end(unique_values));
-  unique_values.erase(std::unique(unique_values.begin(), unique_values.end()),
-                      unique_values.end());
+  unique_values.erase(std::begin(std::ranges::unique(unique_values)),
+                      std::end(unique_values));
   return unique_values;
 }
 
@@ -104,15 +94,6 @@ minmax(const Container &c) {
 }
 
 /**
- * @brief The index in the container of the minimum element
- */
-template <typename Container>
-std::size_t min_element_index(const Container &c) {
-  return static_cast<std::size_t>(std::distance(
-      std::cbegin(c), std::min_element(std::cbegin(c), std::cend(c))));
-}
-
-/**
  * @brief The index in the container of the matching element
  */
 template <typename Container, typename Element>
@@ -128,7 +109,7 @@ std::size_t element_index(const Container &c, const Element &e,
 /**
  * @brief The type of an object as a string
  *
- * @note Copied from https://stackoverflow.com/a/56766138
+ * @note Based on https://stackoverflow.com/a/56766138
  */
 template <typename T> constexpr auto decltypeStr() {
   std::string_view name;
@@ -136,7 +117,7 @@ template <typename T> constexpr auto decltypeStr() {
   std::string_view suffix;
 #ifdef __clang__
   name = __PRETTY_FUNCTION__;
-  prefix = "auto type_name() [T = ";
+  prefix = "auto sme::common::decltypeStr() [T = ";
   suffix = "]";
 #elif defined(__GNUC__)
   name = __PRETTY_FUNCTION__;
@@ -204,15 +185,11 @@ template <typename T> std::vector<T> stringToVector(const std::string &str) {
  * @tparam T the type of the values
  */
 template <typename T> std::string vectorToString(const std::vector<T> &vec) {
-  if (vec.empty()) {
-    return {};
+  if constexpr (std::is_floating_point_v<T>) {
+    return fmt::format("{:.17e}", fmt::join(vec, " "));
+  } else {
+    return fmt::format("{}", fmt::join(vec, " "));
   }
-  std::stringstream ss;
-  for (std::size_t i = 0; i < vec.size() - 1; ++i) {
-    ss << std::scientific << std::setprecision(17) << vec[i] << " ";
-  }
-  ss << vec.back();
-  return ss.str();
 }
 
 /**

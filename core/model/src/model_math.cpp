@@ -51,21 +51,4 @@ bool ModelMath::isValid() const { return valid; }
 
 const std::string &ModelMath::getErrorMessage() const { return errorMessage; }
 
-// note: these move constructors could just be defaulted,
-// but are explicitly written out here to avoid an issue with noexcept default
-// constructors with gcc8
-ModelMath::ModelMath(ModelMath &&that) noexcept
-    : sbmlModel{that.sbmlModel}, astNode{std::move(that.astNode)},
-      valid{that.valid}, errorMessage{std::move(that.errorMessage)} {}
-
-ModelMath &ModelMath::operator=(ModelMath &&that) noexcept {
-  sbmlModel = std::move(that.sbmlModel);
-  astNode = std::move(that.astNode);
-  valid = std::move(that.valid);
-  errorMessage = std::move(that.errorMessage);
-  return *this;
-}
-
-ModelMath::~ModelMath() = default;
-
 } // namespace sme::model

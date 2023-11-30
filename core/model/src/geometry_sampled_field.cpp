@@ -152,11 +152,13 @@ getMatchingSampledValues(const std::vector<T> &values,
   std::vector<bool> matches(values.size(), false);
   if (sfvol->isSetSampledValue()) {
     T sv = static_cast<T>(sfvol->getSampledValue());
-    std::transform(values.begin(), values.end(), matches.begin(),
-                   [sv](const auto v) { return v == sv; });
+    // cannot use c++20 ranges with vector<bool> as it doesn't satisfy
+    // indirectly_writable: should be fixed in c++23
+    std::transform(values.cbegin(), values.cend(), matches.begin(),
+                   [sv](T v) -> bool { return v == sv; });
   } else if (sfvol->isSetMinValue() && sfvol->isSetMaxValue()) {
-    double min = sfvol->getMinValue();
-    double max = sfvol->getMaxValue();
+    double min{sfvol->getMinValue()};
+    double max{sfvol->getMaxValue()};
     std::transform(values.begin(), values.end(), matches.begin(),
                    [min, max](T v) {
                      auto vAsDouble{static_cast<double>(v)};
@@ -268,13 +270,7 @@ GeometrySampledField importGeometryFromSampledField(
   gsf.images = makeEmptyImages(sampledField);
   std::vector<QRgb> compartmentColours;
   auto dataType = sampledField->getDataType();
-  SPDLOG_DEBUG("importedSampledFieldColours.volume() = {} ",
-               importedSampledFieldColours.size());
-
-  for (std::size_t i = 0; i < importedSampledFieldColours.size(); ++i) {
-    SPDLOG_DEBUG("importedSampledFieldColours {} = {} ", i,
-                 importedSampledFieldColours[i]);
-  }
+  SPDLOG_DEBUG("importedSampledFieldColours {}", importedSampledFieldColours);
 
   if (isNativeSampledFieldFormat(sampledField, sampledVolumes)) {
     compartmentColours =

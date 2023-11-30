@@ -48,10 +48,6 @@ public:
   void importMembraneIdsAndNames();
   void exportToSBML(const common::VolumeF &voxelSize);
   explicit ModelMembranes(libsbml::Model *model = nullptr);
-  ModelMembranes(ModelMembranes &&) noexcept;
-  ModelMembranes &operator=(ModelMembranes &&) noexcept;
-  ModelMembranes &operator=(const ModelMembranes &) = delete;
-  ModelMembranes(const ModelMembranes &) = delete;
   ~ModelMembranes();
   [[nodiscard]] bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);
