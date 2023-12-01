@@ -32,7 +32,7 @@ static QStringList importIds(const libsbml::Model *model) {
   for (unsigned int i = 0; i < numParams; ++i) {
     const auto *param = model->getParameter(i);
     if (isUserVisibleParameter(param)) {
-      ids.push_back(param->getId().c_str());
+      ids.emplace_back(param->getId().c_str());
     }
   }
   return ids;
@@ -57,7 +57,7 @@ static QStringList importNamesAndMakeUnique(const QStringList &ids,
       SPDLOG_INFO("Changing Parameter '{}' name to '{}' to make it unique", sId,
                   name);
     }
-    names.push_back(QString::fromStdString(name));
+    names.emplace_back(name.c_str());
   }
   return names;
 }
@@ -264,13 +264,13 @@ QString ModelParameters::add(const QString &name) {
   SPDLOG_INFO("Adding parameter");
   SPDLOG_INFO("  - Id: {}", paramId);
   SPDLOG_INFO("  - Name: {}", paramName);
-  auto *param = sbmlModel->createParameter();
+  auto *param{sbmlModel->createParameter()};
   param->setId(paramId);
   param->setName(paramName);
   param->setConstant(true);
   param->setValue(0);
-  ids.push_back(paramId.c_str());
-  names.push_back(uniqueName);
+  ids.emplace_back(paramId.c_str());
+  names.emplace_back(uniqueName);
   return uniqueName;
 }
 

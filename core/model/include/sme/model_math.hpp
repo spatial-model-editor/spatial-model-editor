@@ -30,11 +30,6 @@ public:
       const;
   [[nodiscard]] bool isValid() const;
   [[nodiscard]] const std::string &getErrorMessage() const;
-  ModelMath(ModelMath &&) noexcept;
-  ModelMath &operator=(ModelMath &&) noexcept;
-  ModelMath &operator=(const ModelMath &) = delete;
-  ModelMath(const ModelMath &) = delete;
-  ~ModelMath();
 };
 
 } // namespace sme::model

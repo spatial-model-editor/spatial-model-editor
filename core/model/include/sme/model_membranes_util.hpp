@@ -21,6 +21,10 @@ class Model;
 
 namespace sme::model {
 
+class ModelMembranesUtilError : public std::runtime_error {
+  using std::runtime_error::runtime_error;
+};
+
 using VoxelPair = std::pair<common::Voxel, common::Voxel>;
 
 class OrderedIntPairIndex {

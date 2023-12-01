@@ -27,7 +27,7 @@ Model::~Model() = default;
 void Model::createSBMLFile(const std::string &name) {
   clear();
   SPDLOG_INFO("Creating new SBML model '{}'...", name);
-  doc = std::make_unique<libsbml::SBMLDocument>(libsbml::SBMLDocument());
+  doc = std::make_unique<libsbml::SBMLDocument>();
   doc->createModel(name);
   currentFilename = name.c_str();
   initModelData(true);

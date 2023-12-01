@@ -46,8 +46,7 @@ bool SimpleSymbolic::contains(const std::string &expr, const std::string &var) {
 std::set<std::string, std::less<>>
 SimpleSymbolic::symbols(const std::string &expr) {
   std::set<std::string, std::less<>> result;
-  auto fs{free_symbols(*safeParse(expr))};
-  for (const auto &s : fs) {
+  for (const auto &s : free_symbols(*safeParse(expr))) {
     result.insert(rcp_dynamic_cast<const Symbol>(s)->get_name());
   }
   return result;

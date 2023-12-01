@@ -2,6 +2,7 @@
 #include "id.hpp"
 #include "sbml_math.hpp"
 #include "sme/logger.hpp"
+#include "sme/utils.hpp"
 #include <QString>
 #include <memory>
 #include <sbml/SBMLTypes.h>
@@ -125,7 +126,7 @@ QStringList ModelFunctions::getArguments(const QString &id) const {
 }
 
 static libsbml::ASTNode *newLambdaBvar(const std::string &name) {
-  libsbml::ASTNode *n = new libsbml::ASTNode(libsbml::ASTNodeType_t::AST_NAME);
+  auto *n = new libsbml::ASTNode(libsbml::ASTNodeType_t::AST_NAME);
   n->setBvar();
   n->setName(name.c_str());
   return n;
@@ -233,13 +234,12 @@ ModelFunctions::getSymbolicFunctions() const {
   std::vector<common::SymbolicFunction> fns;
   fns.reserve(static_cast<std::size_t>(ids.size()));
   for (const auto &id : ids) {
-    auto &fn = fns.emplace_back();
+    auto &fn{fns.emplace_back()};
     fn.id = id.toStdString();
     SPDLOG_DEBUG("id: {}", fn.id);
     fn.name = getName(id).toStdString();
     SPDLOG_DEBUG("  - name: {}", fn.name);
-    auto args = getArguments(id);
-    for (const auto &arg : args) {
+    for (const auto &arg : getArguments(id)) {
       fn.args.push_back(arg.toStdString());
       SPDLOG_DEBUG("  - arg: {}", fn.args.back());
     }
