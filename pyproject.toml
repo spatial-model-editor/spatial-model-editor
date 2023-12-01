@@ -4,7 +4,7 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "sme"
-version = "1.4.0"
+version = "1.5.0"
 description = "Spatial Model Editor python bindings"
 readme = "README.md"
 license = {text = "MIT"}
@@ -23,6 +23,7 @@ classifiers=[
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: Microsoft :: Windows",
