@@ -1,9 +1,22 @@
 #include "catch_wrapper.hpp"
 #include "dialogoptparam.hpp"
 #include "qt_test_utils.hpp"
+#include <QComboBox>
+#include <QLineEdit>
 
 using namespace sme;
 using namespace sme::test;
+
+struct DialogOptParamWidgets {
+  explicit DialogOptParamWidgets(const DialogOptParam *dialog) {
+    GET_DIALOG_WIDGET(QComboBox, cmbParameter);
+    GET_DIALOG_WIDGET(QLineEdit, txtLowerBound);
+    GET_DIALOG_WIDGET(QLineEdit, txtUpperBound);
+  }
+  QComboBox *cmbParameter;
+  QLineEdit *txtLowerBound;
+  QLineEdit *txtUpperBound;
+};
 
 TEST_CASE("DialogOptParam", "[gui/dialogs/optparam][gui/"
                             "dialogs][gui][optimize]") {
@@ -15,27 +28,20 @@ TEST_CASE("DialogOptParam", "[gui/dialogs/optparam][gui/"
   defaultOptParams.push_back({simulate::OptParamType::ModelParameter,
                               "myOptParam", "p1", "", 0.0, 0.05});
   auto optParam{defaultOptParams.back()};
-  ModalWidgetTimer mwt;
   SECTION("no parameters") {
     DialogOptParam dia({});
-    mwt.addUserAction();
-    mwt.start();
-    dia.exec();
+    dia.show();
   }
   SECTION("no pre-selected parameter") {
     DialogOptParam dia(defaultOptParams);
-    mwt.addUserAction();
-    mwt.start();
-    dia.exec();
+    dia.show();
     REQUIRE(dia.getOptParam().optParamType ==
             simulate::OptParamType::ReactionParameter);
     REQUIRE(dia.getOptParam().name == "myReacOptParam1");
   }
   SECTION("user does nothing: correct initial values") {
     DialogOptParam dia(defaultOptParams, &optParam);
-    mwt.addUserAction();
-    mwt.start();
-    dia.exec();
+    dia.show();
     REQUIRE(dia.getOptParam().optParamType ==
             simulate::OptParamType::ModelParameter);
     REQUIRE(dia.getOptParam().name == "myOptParam");
@@ -46,9 +52,12 @@ TEST_CASE("DialogOptParam", "[gui/dialogs/optparam][gui/"
   }
   SECTION("user changes bounds") {
     DialogOptParam dia(defaultOptParams, &optParam);
-    mwt.addUserAction({"Tab", "0", ".", "4", "Tab", "1"});
-    mwt.start();
-    dia.exec();
+    DialogOptParamWidgets widgets(&dia);
+    dia.show();
+    sendKeyEvents(widgets.txtLowerBound, {"Backspace", "Backspace", "Backspace",
+                                          "0", ".", "4", "Enter"});
+    sendKeyEvents(widgets.txtUpperBound,
+                  {"Backspace", "Backspace", "Backspace", "1", "Enter"});
     REQUIRE(dia.getOptParam().optParamType ==
             simulate::OptParamType::ModelParameter);
     REQUIRE(dia.getOptParam().name == "myOptParam");
@@ -59,9 +68,9 @@ TEST_CASE("DialogOptParam", "[gui/dialogs/optparam][gui/"
   }
   SECTION("user changes parameter: bounds set from corresponding default") {
     DialogOptParam dia(defaultOptParams, &optParam);
-    mwt.addUserAction({"Up"});
-    mwt.start();
-    dia.exec();
+    DialogOptParamWidgets widgets(&dia);
+    dia.show();
+    widgets.cmbParameter->setCurrentIndex(1);
     REQUIRE(dia.getOptParam().optParamType ==
             simulate::OptParamType::ReactionParameter);
     REQUIRE(dia.getOptParam().name == "myReacOptParam2");
@@ -72,9 +81,13 @@ TEST_CASE("DialogOptParam", "[gui/dialogs/optparam][gui/"
   }
   SECTION("user changes parameter and bounds") {
     DialogOptParam dia(defaultOptParams, &optParam);
-    mwt.addUserAction({"Up", "Up", "Tab", "6", "Tab", "1", "9"});
-    mwt.start();
-    dia.exec();
+    DialogOptParamWidgets widgets(&dia);
+    dia.show();
+    widgets.cmbParameter->setCurrentIndex(0);
+    sendKeyEvents(widgets.txtLowerBound,
+                  {"Backspace", "Backspace", "Backspace", "6", "Enter"});
+    sendKeyEvents(widgets.txtUpperBound,
+                  {"Backspace", "Backspace", "Backspace", "1", "9", "Enter"});
     REQUIRE(dia.getOptParam().optParamType ==
             simulate::OptParamType::ReactionParameter);
     REQUIRE(dia.getOptParam().name == "myReacOptParam1");

@@ -4,9 +4,38 @@
 #include "qt_test_utils.hpp"
 #include "sme/model.hpp"
 #include "sme/model_units.hpp"
+#include <QCheckBox>
+#include <QComboBox>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QSlider>
 #include <numeric>
 
 using namespace sme::test;
+
+struct DialogConcentrationImageWidgets {
+  explicit DialogConcentrationImageWidgets(
+      const DialogConcentrationImage *dialog) {
+    GET_DIALOG_WIDGET(QLineEdit, txtMinConc);
+    GET_DIALOG_WIDGET(QLineEdit, txtMaxConc);
+    GET_DIALOG_WIDGET(QCheckBox, chkGrid);
+    GET_DIALOG_WIDGET(QCheckBox, chkScale);
+    GET_DIALOG_WIDGET(QPushButton, btnImportImage);
+    GET_DIALOG_WIDGET(QPushButton, btnExportImage);
+    GET_DIALOG_WIDGET(QComboBox, cmbExampleImages);
+    GET_DIALOG_WIDGET(QPushButton, btnSmoothImage);
+    GET_DIALOG_WIDGET(QSlider, slideZIndex);
+  }
+  QLineEdit *txtMinConc;
+  QLineEdit *txtMaxConc;
+  QCheckBox *chkGrid;
+  QCheckBox *chkScale;
+  QPushButton *btnImportImage;
+  QPushButton *btnExportImage;
+  QComboBox *cmbExampleImages;
+  QPushButton *btnSmoothImage;
+  QSlider *slideZIndex;
+};
 
 TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
                                       "dialogs][gui][concentrationimage]") {
@@ -17,7 +46,6 @@ TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
   sme::model::ModelUnits units{};
   sme::model::SpeciesGeometry specGeom{
       {3, 3, 1}, compartmentVoxels, {0.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, units};
-  ModalWidgetTimer mwt;
   SECTION("empty concentration array: set concentration to 0") {
     DialogConcentrationImage dia({}, specGeom);
     for (const auto &a : dia.getConcentrationArray()) {
@@ -69,11 +97,12 @@ TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
     // initial range 0-1
     std::vector<double> arr{0.5, 0.0, 0.0, 0.25, 0.0, 0.0, 1.0, 0.0, 0.0};
     DialogConcentrationImage dia(arr, specGeom);
+    dia.show();
+    DialogConcentrationImageWidgets widgets(&dia);
     // new range 0.5-1
-    mwt.addUserAction({"Backspace", "Backspace", "Backspace", "Backspace",
-                       "Backspace", "0", ".", "5", "Tab"});
-    mwt.start();
-    dia.exec();
+    sendKeyEvents(widgets.txtMinConc,
+                  {"Backspace", "Backspace", "Backspace", "Backspace",
+                   "Backspace", "0", ".", "5", "Enter"});
     auto a = dia.getConcentrationArray();
     for (auto i : compArrayIndices) {
       REQUIRE(a[i] == dbl_approx(0.5 + 0.5 * arr[i]));
@@ -86,11 +115,11 @@ TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
     // initial range 0-1
     std::vector<double> arr{0.5, 0.0, 0.0, 0.25, 0.0, 0.0, 1.0, 0.0, 0.0};
     DialogConcentrationImage dia(arr, specGeom);
+    dia.show();
+    DialogConcentrationImageWidgets widgets(&dia);
     // new range 0-5
-    mwt.addUserAction({"Tab", "Backspace", "Backspace", "Backspace",
-                       "Backspace", "5", "Tab"});
-    mwt.start();
-    dia.exec();
+    sendKeyEvents(widgets.txtMaxConc, {"Backspace", "Backspace", "Backspace",
+                                       "Backspace", "5", "Enter"});
     auto a = dia.getConcentrationArray();
     for (auto i : compArrayIndices) {
       REQUIRE(a[i] == dbl_approx(5 * arr[i]));
@@ -103,12 +132,13 @@ TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
     // initial range 0-1
     std::vector<double> arr{0.5, 0.0, 0.0, 0.25, 0.0, 0.0, 1.0, 0.0, 0.0};
     DialogConcentrationImage dia(arr, specGeom);
+    dia.show();
+    DialogConcentrationImageWidgets widgets(&dia);
     // new range 0.5-1.5
-    mwt.addUserAction({"Backspace", "Backspace", "Backspace", "Backspace", "0",
-                       ".", "5", "Tab", "Backspace", "Backspace", "Backspace",
-                       "Backspace", "1", ".", "5", "Tab"});
-    mwt.start();
-    dia.exec();
+    sendKeyEvents(widgets.txtMinConc, {"Backspace", "Backspace", "Backspace",
+                                       "Backspace", "0", ".", "5", "Enter"});
+    sendKeyEvents(widgets.txtMaxConc, {"Backspace", "Backspace", "Backspace",
+                                       "Backspace", "1", ".", "5", "Enter"});
     auto a = dia.getConcentrationArray();
     for (auto i : compArrayIndices) {
       REQUIRE(a[i] == dbl_approx(0.5 + arr[i]));
@@ -121,11 +151,11 @@ TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
     // initial range 0-0.5
     std::vector<double> arr{0.5, 0.0, 0.0, 0.25, 0.0, 0.0, 0.111, 0.0, 0.0};
     DialogConcentrationImage dia(arr, specGeom);
-    // new range 0-0 -> 0-1
-    mwt.addUserAction({"Tab", "Backspace", "Backspace", "Backspace",
-                       "Backspace", "0", "Tab"});
-    mwt.start();
-    dia.exec();
+    dia.show();
+    DialogConcentrationImageWidgets widgets(&dia);
+    // new range 0-0 -> invalid, resets to 0-1
+    sendKeyEvents(widgets.txtMaxConc, {"Backspace", "Backspace", "Backspace",
+                                       "Backspace", "0", "Enter"});
     auto a = dia.getConcentrationArray();
     for (auto i : compArrayIndices) {
       REQUIRE(a[i] == dbl_approx(2 * arr[i]));
@@ -138,11 +168,11 @@ TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
     // initial range 0.5-1
     std::vector<double> arr{0.5, 0.0, 0.0, 0.65, 0.0, 0.0, 1.0, 0.88, 0.0};
     DialogConcentrationImage dia(arr, specGeom);
+    dia.show();
+    DialogConcentrationImageWidgets widgets(&dia);
     // new min = -2, invalid -> reset to 0: new range 0-1
-    mwt.addUserAction(
-        {"Backspace", "Backspace", "Backspace", "Backspace", "-", "2"});
-    mwt.start();
-    dia.exec();
+    sendKeyEvents(widgets.txtMinConc, {"Backspace", "Backspace", "Backspace",
+                                       "Backspace", "-", "2", "Enter"});
     auto a = dia.getConcentrationArray();
     for (auto i : compArrayIndices) {
       REQUIRE(a[i] == dbl_approx(2.0 * arr[i] - 1.0));
@@ -155,10 +185,11 @@ TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
     // initial range 0.5-1
     std::vector<double> arr{0.5, 0.0, 0.0, 0.65, 0.0, 0.0, 1.0, 0.88, 0.0};
     DialogConcentrationImage dia(arr, specGeom);
+    dia.show();
+    DialogConcentrationImageWidgets widgets(&dia);
     // new min = 2, invalid -> set max to 2+1: new range 2-3
-    mwt.addUserAction({"Backspace", "Backspace", "Backspace", "2"});
-    mwt.start();
-    dia.exec();
+    sendKeyEvents(widgets.txtMinConc,
+                  {"Backspace", "Backspace", "Backspace", "2", "Enter"});
     auto a = dia.getConcentrationArray();
     for (auto i : compArrayIndices) {
       REQUIRE(a[i] == dbl_approx(2.0 * arr[i] + 1.0));
@@ -171,14 +202,14 @@ TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
     QImage concImg(3, 3, QImage::Format_ARGB32_Premultiplied);
     concImg.fill(QColor(0, 0, 0));
     concImg.save("tmpdci.png");
-    DialogConcentrationImage dia({}, specGeom);
     // import image
-    ModalWidgetTimer mwtImage;
-    mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Space"}, true, &mwtImage);
-    mwtImage.addUserAction({"t", "m", "p", "d", "c", "i", ".", "p", "n", "g"},
-                           true);
+    DialogConcentrationImage dia({}, specGeom);
+    dia.show();
+    DialogConcentrationImageWidgets widgets(&dia);
+    ModalWidgetTimer mwt;
+    mwt.addUserAction({"t", "m", "p", "d", "c", "i", ".", "p", "n", "g"}, true);
     mwt.start();
-    dia.exec();
+    sendMouseClick(widgets.btnImportImage);
     auto a = dia.getConcentrationArray();
     for (auto i : compArrayIndices) {
       REQUIRE(a[i] == dbl_approx(0.0));
@@ -192,12 +223,13 @@ TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
     concImg.fill(QColor(0, 0, 0));
     concImg.save("tmpdci.png");
     DialogConcentrationImage dia({}, specGeom);
+    dia.show();
+    DialogConcentrationImageWidgets widgets(&dia);
     // import image
-    ModalWidgetTimer mwtImage;
-    mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Space"}, true, &mwtImage);
-    mwtImage.addUserAction({"t", "m", "p", "d", "c", "i", ".", "p", "n", "g"});
+    ModalWidgetTimer mwt;
+    mwt.addUserAction({"t", "m", "p", "d", "c", "i", ".", "p", "n", "g"});
     mwt.start();
-    dia.exec();
+    sendMouseClick(widgets.btnImportImage);
     auto a = dia.getConcentrationArray();
     for (auto i : compArrayIndices) {
       REQUIRE(a[i] == dbl_approx(0.0));
@@ -215,15 +247,16 @@ TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
     concImg.setPixel(1, 0, qRgb(25, 25, 25));
     concImg.save("tmpdci.png");
     DialogConcentrationImage dia({}, specGeom);
+    dia.show();
+    DialogConcentrationImageWidgets widgets(&dia);
     std::vector<double> values = {0, 1, 0.5, 0.25};
     // import image
-    ModalWidgetTimer mwtImage;
-    mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Space"}, false, &mwtImage);
-    mwtImage.addUserAction({"t", "m", "p", "d", "c", "i", ".", "p", "n", "g"});
+    ModalWidgetTimer mwtImageImport;
+    mwtImageImport.addUserAction(
+        {"t", "m", "p", "d", "c", "i", ".", "p", "n", "g"});
+    mwtImageImport.start();
+    sendMouseClick(widgets.btnImportImage);
     SECTION("get concentration array") {
-      mwt.addUserAction();
-      mwt.start();
-      dia.exec();
       auto a = dia.getConcentrationArray();
       std::size_t iVal = 0;
       for (auto i : compArrayIndices) {
@@ -235,11 +268,10 @@ TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
     }
     SECTION("export image") {
       // export image
-      mwt.addUserAction({"Tab", "Space"}, false, &mwtImage);
-      mwtImage.addUserAction({"t", "m", "p", "d", "c", "i", "o"});
-      mwt.addUserAction();
-      mwt.start();
-      dia.exec();
+      ModalWidgetTimer mwtImageExport;
+      mwtImageExport.addUserAction({"t", "m", "p", "d", "c", "i", "o"});
+      mwtImageExport.start();
+      sendMouseClick(widgets.btnExportImage);
       QImage exportedImage("tmpdcio.png");
       REQUIRE(exportedImage.size() == concImg.size());
       // exported image normalised to black=min, white=max:
@@ -249,10 +281,7 @@ TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
       REQUIRE(exportedImage.pixel(1, 0) == qRgb(63, 63, 63));
     }
     SECTION("smooth image") {
-      // click on smooth image
-      mwt.addUserAction({"Tab", "Tab", "Tab", "Space"});
-      mwt.start();
-      dia.exec();
+      sendMouseClick(widgets.btnSmoothImage);
       auto a = dia.getConcentrationArray();
       // points inside array are smoothed
       REQUIRE(a[6] > 0.0);
@@ -267,13 +296,12 @@ TEST_CASE("DialogConcentrationImage", "[gui/dialogs/concentrationimage][gui/"
   }
   SECTION("built-in image loaded") {
     DialogConcentrationImage dia({}, specGeom);
+    dia.show();
+    DialogConcentrationImageWidgets widgets(&dia);
+    sendMouseClick(widgets.chkGrid);
+    sendMouseClick(widgets.chkScale);
     // load built-in two-blobs image
-    // uncheck grid & scale checkboxes on the way
-    ModalWidgetTimer mwtImage;
-    mwt.addUserAction({"Tab", "Tab", "Space", "Tab", "Space", "Tab", "Tab",
-                       "Tab", "Space", "Down", "Down", "Enter"});
-    mwt.start();
-    dia.exec();
+    widgets.cmbExampleImages->setCurrentIndex(2);
     auto a = dia.getConcentrationArray();
     REQUIRE(a[6] == Catch::Approx(1.0));
     REQUIRE(a[3] == Catch::Approx(0.0));

@@ -11,7 +11,7 @@ DialogEditUnit::DialogEditUnit(const sme::model::Unit &unit,
     setWindowTitle(QString("Edit Unit of %1").arg(unitType));
   }
   ui->txtName->setText(u.name);
-  ui->txtMultipler->setText(QString::number(u.multiplier));
+  ui->txtMultiplier->setText(QString::number(u.multiplier));
   ui->txtScale->setText(QString::number(u.scale));
   ui->txtExponent->setText(QString::number(u.exponent));
 
@@ -21,7 +21,7 @@ DialogEditUnit::DialogEditUnit(const sme::model::Unit &unit,
           &DialogEditUnit::reject);
   connect(ui->txtName, &QLineEdit::textEdited, this,
           &DialogEditUnit::txtName_textEdited);
-  connect(ui->txtMultipler, &QLineEdit::textEdited, this,
+  connect(ui->txtMultiplier, &QLineEdit::textEdited, this,
           &DialogEditUnit::txtMultiplier_textEdited);
   connect(ui->txtScale, &QLineEdit::textEdited, this,
           &DialogEditUnit::txtScale_textEdited);
@@ -36,7 +36,7 @@ DialogEditUnit::~DialogEditUnit() = default;
 const sme::model::Unit &DialogEditUnit::getUnit() const { return u; }
 
 void DialogEditUnit::updateLblBaseUnits() {
-  if (validScale && validExponent && validMultipler) {
+  if (validScale && validExponent && validMultiplier) {
     ui->lblBaseUnits->setText(
         QString("1 %1 = %2").arg(u.name).arg(sme::model::unitInBaseUnits(u)));
   }
@@ -60,11 +60,11 @@ void DialogEditUnit::txtName_textEdited(const QString &text) {
 }
 
 void DialogEditUnit::txtMultiplier_textEdited(const QString &text) {
-  double newMultiplier = text.toDouble(&validMultipler);
-  if (validMultipler) {
+  double newMultiplier = text.toDouble(&validMultiplier);
+  if (validMultiplier) {
     u.multiplier = newMultiplier;
   }
-  setIsValidState(ui->txtMultipler, validMultipler,
+  setIsValidState(ui->txtMultiplier, validMultiplier,
                   "Invalid value: Multiplier must be a double");
   updateLblBaseUnits();
 }

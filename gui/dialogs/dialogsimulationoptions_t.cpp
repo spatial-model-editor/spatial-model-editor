@@ -2,8 +2,66 @@
 #include "dialogsimulationoptions.hpp"
 #include "qt_test_utils.hpp"
 #include "sme/simulate.hpp"
+#include <QCheckBox>
+#include <QComboBox>
+#include <QLineEdit>
+#include <QPushButton>
+#include <QSpinBox>
+#include <QTabWidget>
 
 using namespace sme::test;
+
+struct DialogSimulationOptionsWidgets {
+  explicit DialogSimulationOptionsWidgets(
+      const DialogSimulationOptions *dialog) {
+    GET_DIALOG_WIDGET(QTabWidget, tabSimulator);
+    // DUNE tab
+    GET_DIALOG_WIDGET(QComboBox, cmbDuneDiscretization);
+    GET_DIALOG_WIDGET(QComboBox, cmbDuneIntegrator);
+    GET_DIALOG_WIDGET(QLineEdit, txtDuneDt);
+    GET_DIALOG_WIDGET(QLineEdit, txtDuneMinDt);
+    GET_DIALOG_WIDGET(QLineEdit, txtDuneMaxDt);
+    GET_DIALOG_WIDGET(QLineEdit, txtDuneIncrease);
+    GET_DIALOG_WIDGET(QLineEdit, txtDuneDecrease);
+    GET_DIALOG_WIDGET(QCheckBox, chkDuneVTK);
+    GET_DIALOG_WIDGET(QLineEdit, txtDuneNewtonRel);
+    GET_DIALOG_WIDGET(QLineEdit, txtDuneNewtonAbs);
+    GET_DIALOG_WIDGET(QPushButton, btnDuneReset);
+    // Pixel tab
+    GET_DIALOG_WIDGET(QComboBox, cmbPixelIntegrator);
+    GET_DIALOG_WIDGET(QLineEdit, txtPixelRelErr);
+    GET_DIALOG_WIDGET(QLineEdit, txtPixelAbsErr);
+    GET_DIALOG_WIDGET(QLineEdit, txtPixelDt);
+    GET_DIALOG_WIDGET(QCheckBox, chkPixelMultithread);
+    GET_DIALOG_WIDGET(QSpinBox, spnPixelThreads);
+    GET_DIALOG_WIDGET(QCheckBox, chkPixelCSE);
+    GET_DIALOG_WIDGET(QSpinBox, spnPixelOptLevel);
+    GET_DIALOG_WIDGET(QPushButton, btnPixelReset);
+  }
+  QTabWidget *tabSimulator;
+  // DUNE tab
+  QComboBox *cmbDuneDiscretization;
+  QComboBox *cmbDuneIntegrator;
+  QLineEdit *txtDuneDt;
+  QLineEdit *txtDuneMinDt;
+  QLineEdit *txtDuneMaxDt;
+  QLineEdit *txtDuneIncrease;
+  QLineEdit *txtDuneDecrease;
+  QCheckBox *chkDuneVTK;
+  QLineEdit *txtDuneNewtonRel;
+  QLineEdit *txtDuneNewtonAbs;
+  QPushButton *btnDuneReset;
+  // Pixel tab
+  QComboBox *cmbPixelIntegrator;
+  QLineEdit *txtPixelRelErr;
+  QLineEdit *txtPixelAbsErr;
+  QLineEdit *txtPixelDt;
+  QCheckBox *chkPixelMultithread;
+  QSpinBox *spnPixelThreads;
+  QCheckBox *chkPixelCSE;
+  QSpinBox *spnPixelOptLevel;
+  QPushButton *btnPixelReset;
+};
 
 TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
                                      "dialogs][gui][simulationoptions]") {
@@ -25,11 +83,10 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
   options.pixel.doCSE = true;
   options.pixel.optLevel = 3;
   DialogSimulationOptions dia(options);
+  DialogSimulationOptionsWidgets widgets(&dia);
+  dia.show();
   ModalWidgetTimer mwt;
   SECTION("user does nothing: unchanged") {
-    mwt.addUserAction();
-    mwt.start();
-    dia.exec();
     auto opt = dia.getOptions();
     REQUIRE(options.dune.integrator == "ExplicitEuler");
     REQUIRE(options.dune.dt == dbl_approx(0.123));
@@ -49,14 +106,24 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(opt.pixel.doCSE == true);
     REQUIRE(opt.pixel.optLevel == 3);
   }
-  SECTION("user changes Dune values") {
-    mwt.addUserAction({"Tab", "Tab", "Down", "Down", "9", "Tab", ".",
-                       "4",   "Tab", "1",    "e",    "-", "1",   "2",
-                       "Tab", "9",   "Tab",  "1",    ".", "2",   "Tab",
-                       "0",   ".",   "7",    "Tab",  " ", "Tab", "1",
-                       "e",   "-",   "7",    "Tab",  "0"});
-    mwt.start();
-    dia.exec();
+  SECTION("user changes Dune values, then resets to defaults") {
+    widgets.tabSimulator->setCurrentIndex(0);
+    widgets.cmbDuneIntegrator->setCurrentIndex(2);
+    widgets.txtDuneDt->clear();
+    sendKeyEvents(widgets.txtDuneDt, {"0", ".", "4", "Enter"});
+    widgets.txtDuneMinDt->clear();
+    sendKeyEvents(widgets.txtDuneMinDt, {"1", "e", "-", "1", "2", "Enter"});
+    widgets.txtDuneMaxDt->clear();
+    sendKeyEvents(widgets.txtDuneMaxDt, {"9", "Enter"});
+    widgets.txtDuneIncrease->clear();
+    sendKeyEvents(widgets.txtDuneIncrease, {"1", ".", "2", "Enter"});
+    widgets.txtDuneDecrease->clear();
+    sendKeyEvents(widgets.txtDuneDecrease, {"0", ".", "7", "Enter"});
+    widgets.chkDuneVTK->setChecked(false);
+    widgets.txtDuneNewtonRel->clear();
+    sendKeyEvents(widgets.txtDuneNewtonRel, {"1", "e", "-", "7", "Enter"});
+    widgets.txtDuneNewtonAbs->clear();
+    sendKeyEvents(widgets.txtDuneNewtonAbs, {"0", "Enter"});
     auto opt = dia.getOptions();
     REQUIRE(opt.dune.integrator == "Heun");
     REQUIRE(opt.dune.dt == dbl_approx(0.4));
@@ -67,14 +134,9 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(opt.dune.writeVTKfiles == false);
     REQUIRE(opt.dune.newtonRelErr == dbl_approx(1e-7));
     REQUIRE(opt.dune.newtonAbsErr == dbl_approx(0));
-  }
-  SECTION("user resets to Dune defaults") {
-    mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab",
-                       "Tab", "Tab", "Tab", " "});
-    mwt.start();
-    dia.exec();
+    sendMouseClick(widgets.btnDuneReset);
     sme::simulate::DuneOptions defaultOpts{};
-    auto opt = dia.getOptions();
+    opt = dia.getOptions();
     REQUIRE(opt.dune.integrator == defaultOpts.integrator);
     REQUIRE(opt.dune.dt == dbl_approx(defaultOpts.dt));
     REQUIRE(opt.dune.minDt == dbl_approx(defaultOpts.minDt));
@@ -83,34 +145,38 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(opt.dune.decrease == defaultOpts.decrease);
     REQUIRE(opt.dune.writeVTKfiles == defaultOpts.writeVTKfiles);
   }
-  SECTION("user changes Pixel values") {
-    mwt.addUserAction({"Right", "Tab", "Up",  "Up",  "Tab",   "7",   "Tab",
-                       "9",     "9",   "Tab", "0",   ".",     "5",   "Tab",
-                       "Space", "Tab", "1",   "Tab", "Space", "Tab", "1"});
-    mwt.start();
-    dia.exec();
+  SECTION("user changes Pixel values, then resets to defaults") {
+    widgets.tabSimulator->setCurrentIndex(0);
+    widgets.cmbPixelIntegrator->setCurrentIndex(2);
+    widgets.txtPixelRelErr->clear();
+    sendKeyEvents(widgets.txtPixelRelErr, {"0", ".", "4", "Enter"});
+    widgets.txtPixelAbsErr->clear();
+    sendKeyEvents(widgets.txtPixelAbsErr, {"2", ".", "7", "Enter"});
+    widgets.txtPixelDt->clear();
+    sendKeyEvents(widgets.txtPixelDt, {"0", ".", "0", "1", "8", "Enter"});
+    widgets.chkPixelMultithread->setChecked(true);
+    widgets.spnPixelThreads->setValue(1);
+    widgets.chkPixelCSE->setChecked(false);
+    widgets.spnPixelOptLevel->setValue(1);
     auto opt = dia.getOptions();
-    REQUIRE(opt.pixel.integrator == sme::simulate::PixelIntegratorType::RK212);
-    REQUIRE(opt.pixel.maxErr.rel == dbl_approx(7));
-    REQUIRE(opt.pixel.maxErr.abs == dbl_approx(99));
-    REQUIRE(opt.pixel.maxTimestep == dbl_approx(0.5));
+    REQUIRE(opt.pixel.integrator == sme::simulate::PixelIntegratorType::RK323);
+    REQUIRE(opt.pixel.maxErr.rel == dbl_approx(0.4));
+    REQUIRE(opt.pixel.maxErr.abs == dbl_approx(2.7));
+    REQUIRE(opt.pixel.maxTimestep == dbl_approx(0.018));
     REQUIRE(opt.pixel.enableMultiThreading == true);
     REQUIRE(opt.pixel.maxThreads == 1);
     REQUIRE(opt.pixel.doCSE == false);
     REQUIRE(opt.pixel.optLevel == 1);
-  }
-  SECTION("user resets to pixel defaults") {
-    mwt.addUserAction(
-        {"Right", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "Tab", " "});
-    mwt.start();
-    dia.exec();
+    sendMouseClick(widgets.btnPixelReset);
     sme::simulate::PixelOptions defaultOpts{};
-    auto opt = dia.getOptions();
+    opt = dia.getOptions();
     REQUIRE(opt.pixel.integrator == defaultOpts.integrator);
     REQUIRE(opt.pixel.maxErr.rel == dbl_approx(defaultOpts.maxErr.rel));
     REQUIRE(opt.pixel.maxErr.abs == dbl_approx(defaultOpts.maxErr.abs));
     REQUIRE(opt.pixel.maxTimestep == dbl_approx(defaultOpts.maxTimestep));
     REQUIRE(opt.pixel.enableMultiThreading == defaultOpts.enableMultiThreading);
     REQUIRE(opt.pixel.maxThreads == defaultOpts.maxThreads);
+    REQUIRE(opt.pixel.doCSE == defaultOpts.doCSE);
+    REQUIRE(opt.pixel.optLevel == defaultOpts.optLevel);
   }
 }

@@ -3,58 +3,71 @@
 #include "qt_test_utils.hpp"
 #include <QFile>
 #include <QLabel>
+#include <QLineEdit>
 
 using namespace sme::test;
+
+struct DialogEditUnitWidgets {
+  explicit DialogEditUnitWidgets(const DialogEditUnit *dialog) {
+    GET_DIALOG_WIDGET(QLineEdit, txtName);
+    GET_DIALOG_WIDGET(QLineEdit, txtMultiplier);
+    GET_DIALOG_WIDGET(QLineEdit, txtScale);
+    GET_DIALOG_WIDGET(QLineEdit, txtExponent);
+    GET_DIALOG_WIDGET(QLabel, lblBaseUnits);
+  }
+  QLineEdit *txtName;
+  QLineEdit *txtMultiplier;
+  QLineEdit *txtScale;
+  QLineEdit *txtExponent;
+  QLabel *lblBaseUnits;
+};
 
 TEST_CASE("DialogEditUnit",
           "[gui/dialogs/editunit][gui/dialogs][gui][editunit][units]") {
   sme::model::Unit u{"h", "second", 0, 1, 3600};
-  ModalWidgetTimer mwt;
   DialogEditUnit dia(u);
-  auto *lblBaseUnits = dia.findChild<QLabel *>("lblBaseUnits");
+  dia.show();
+  DialogEditUnitWidgets widgets(&dia);
   REQUIRE(dia.getUnit().kind == u.kind);
   REQUIRE(dia.getUnit().name == u.name);
   REQUIRE(dia.getUnit().multiplier == dbl_approx(u.multiplier));
   REQUIRE(dia.getUnit().scale == u.scale);
   REQUIRE(dia.getUnit().exponent == u.exponent);
-  REQUIRE(lblBaseUnits->text() == "1 h = 3600 second");
+  REQUIRE(widgets.lblBaseUnits->text() == "1 h = 3600 second");
   SECTION("valid unit") {
-    mwt.addUserAction({"Delete", "Backspace", "H", " ", "!", "Tab", ".", "2",
-                       "Tab", "1", "0", "Tab", "2"});
-    mwt.start();
-    auto result = dia.exec();
+    sendKeyEvents(widgets.txtName, {"Delete", "Backspace", "H", " ", "!"});
+    sendKeyEvents(widgets.txtMultiplier, {"Backspace", "Backspace", "Backspace",
+                                          "Backspace", ".", "2"});
+    sendKeyEvents(widgets.txtScale, {"Backspace", "Backspace", "1", "0"});
+    sendKeyEvents(widgets.txtExponent, {"Backspace", "Backspace", "2"});
     REQUIRE(dia.getUnit().kind == u.kind);
     REQUIRE(dia.getUnit().name == "H !");
     REQUIRE(dia.getUnit().multiplier == dbl_approx(0.2));
     REQUIRE(dia.getUnit().scale == 10);
     REQUIRE(dia.getUnit().exponent == 2);
-    REQUIRE(lblBaseUnits->text() == "1 H ! = (0.2 * 10^(10) second)^2");
-    REQUIRE(result == QDialog::Accepted);
+    REQUIRE(widgets.lblBaseUnits->text() == "1 H ! = (0.2 * 10^(10) second)^2");
   }
   SECTION("invalid multiplier") {
-    mwt.addUserAction({"Delete", "Backspace", "q", "Tab", ".", ",", "Tab", "1",
-                       "0", "Tab", "2"});
-    mwt.start();
-    dia.exec();
+    sendKeyEvents(widgets.txtName, {"Delete", "Backspace", "q"});
+    sendKeyEvents(widgets.txtScale, {"1", "0"});
+    sendKeyEvents(widgets.txtExponent, {"Backspace", "Backspace", "2"});
+    sendKeyEvents(widgets.txtMultiplier, {".", ","});
     REQUIRE(dia.getUnit().name == "q");
     // multiplier ".," invalid: unit retains previous valid multiplier value
     REQUIRE(dia.getUnit().multiplier == dbl_approx(3600));
     REQUIRE(dia.getUnit().scale == 10);
     REQUIRE(dia.getUnit().exponent == 2);
-    REQUIRE(lblBaseUnits->text() ==
+    REQUIRE(widgets.lblBaseUnits->text() ==
             "Invalid value: Multiplier must be a double");
   }
   SECTION("invalid scale") {
-    mwt.addUserAction({"Tab", "Tab", "q"});
-    mwt.start();
-    dia.exec();
-    REQUIRE(lblBaseUnits->text() == "Invalid value: Scale must be an integer");
+    sendKeyEvents(widgets.txtScale, {"q"});
+    REQUIRE(widgets.lblBaseUnits->text() ==
+            "Invalid value: Scale must be an integer");
   }
   SECTION("invalid exponent") {
-    mwt.addUserAction({"Tab", "Tab", "Tab", "q"});
-    mwt.start();
-    dia.exec();
-    REQUIRE(lblBaseUnits->text() ==
+    sendKeyEvents(widgets.txtExponent, {"q"});
+    REQUIRE(widgets.lblBaseUnits->text() ==
             "Invalid value: Exponent must be an integer");
   }
 }

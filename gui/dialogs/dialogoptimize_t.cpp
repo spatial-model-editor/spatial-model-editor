@@ -2,13 +2,25 @@
 #include "dialogoptimize.hpp"
 #include "model_test_utils.hpp"
 #include "qt_test_utils.hpp"
+#include <QComboBox>
 #include <QPushButton>
 
 using namespace sme;
 using namespace sme::test;
 
+struct DialogOptimizeWidgets {
+  explicit DialogOptimizeWidgets(const DialogOptimize *dialog) {
+    GET_DIALOG_WIDGET(QComboBox, cmbTarget);
+    GET_DIALOG_WIDGET(QPushButton, btnSetup);
+    GET_DIALOG_WIDGET(QPushButton, btnStartStop);
+  }
+  QComboBox *cmbTarget;
+  QPushButton *btnSetup;
+  QPushButton *btnStartStop;
+};
+
 TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
-                            "dialogs][gui][optimize][Q]") {
+                            "dialogs][gui][optimize]") {
   auto model{getExampleModel(Mod::ABtoC)};
   model.getSimulationSettings().simulatorType =
       sme::simulate::SimulatorType::Pixel;
@@ -28,37 +40,30 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
                                       0,
                                       {}});
   model.getOptimizeOptions() = optimizeOptions;
-  ModalWidgetTimer mwt;
   SECTION("no optimizeOptions") {
     model.getOptimizeOptions() = {};
     DialogOptimize dia(model);
-    // get pointers to widgets within dialog
-    auto *btnStartStop{dia.findChild<QPushButton *>("btnStartStop")};
-    REQUIRE(btnStartStop != nullptr);
-    auto *btnSetup{dia.findChild<QPushButton *>("btnSetup")};
-    REQUIRE(btnSetup != nullptr);
+    DialogOptimizeWidgets widgets(&dia);
+    dia.show();
     // no valid initial optimize options
-    REQUIRE(btnStartStop->text() == "Start");
-    REQUIRE(btnStartStop->isEnabled() == false);
-    REQUIRE(btnSetup->isEnabled() == true);
+    REQUIRE(widgets.btnStartStop->text() == "Start");
+    REQUIRE(widgets.btnStartStop->isEnabled() == false);
+    REQUIRE(widgets.btnSetup->isEnabled() == true);
     REQUIRE(dia.getParametersString().isEmpty());
   }
   SECTION("existing optimizeOptions") {
     DialogOptimize dia(model);
-    // get pointers to widgets within dialog
-    auto *btnStartStop{dia.findChild<QPushButton *>("btnStartStop")};
-    REQUIRE(btnStartStop != nullptr);
-    auto *btnSetup{dia.findChild<QPushButton *>("btnSetup")};
-    REQUIRE(btnSetup != nullptr);
+    DialogOptimizeWidgets widgets(&dia);
+    dia.show();
     // valid initial optimize options
-    REQUIRE(btnStartStop->isEnabled() == true);
-    REQUIRE(btnSetup->isEnabled() == true);
+    REQUIRE(widgets.btnStartStop->isEnabled() == true);
+    REQUIRE(widgets.btnSetup->isEnabled() == true);
     // no initial parameters
     REQUIRE(dia.getParametersString().isEmpty());
     // evolve params for 3secs
-    sendMouseClick(btnStartStop);
+    sendMouseClick(widgets.btnStartStop);
     wait(3000);
-    sendMouseClick(btnStartStop);
+    sendMouseClick(widgets.btnStartStop);
     auto lines{dia.getParametersString().split("\n")};
     REQUIRE(lines.size() == 1);
   }
