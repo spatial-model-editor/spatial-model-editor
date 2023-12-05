@@ -1,5 +1,6 @@
 #include "catch_wrapper.hpp"
 
+#include "sme/voxel.hpp"
 #include <QPoint>
 #include <QPointF>
 #include <QSize>
@@ -30,5 +31,10 @@ std::ostream &operator<<(std::ostream &os, QSizeF const &value) {
 std::ostream &operator<<(std::ostream &os,
                          std::pair<QPoint, QPoint> const &value) {
   os << '{' << value.first << ',' << value.second << '}';
+  return os;
+}
+std::ostream &operator<<(std::ostream &os, sme::common::Volume const &value) {
+  os << '{' << value.width() << " x " << value.height() << " x "
+     << value.depth() << '}';
   return os;
 }

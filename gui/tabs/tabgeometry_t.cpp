@@ -2,6 +2,7 @@
 #include "model_test_utils.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
+#include "qvoxelrenderer.hpp"
 #include "sme/model.hpp"
 #include "tabgeometry.hpp"
 #include <QDoubleSpinBox>
@@ -17,10 +18,11 @@ TEST_CASE("TabGeometry",
           "[gui/tabs/geometry][gui/tabs][gui][geometry][serial]") {
   sme::model::Model model;
   QLabelMouseTracker mouseTracker;
+  QVoxelRenderer voxelRenderer;
   mouseTracker.show();
   waitFor(&mouseTracker);
   QLabel statusBarMsg;
-  auto tab = TabGeometry(model, &mouseTracker);
+  auto tab = TabGeometry(model, &mouseTracker, &voxelRenderer);
   tab.show();
   waitFor(&tab);
   ModalWidgetTimer mwt;

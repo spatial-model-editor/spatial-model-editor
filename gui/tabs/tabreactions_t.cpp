@@ -3,6 +3,7 @@
 #include "qlabelmousetracker.hpp"
 #include "qplaintextmathedit.hpp"
 #include "qt_test_utils.hpp"
+#include "qvoxelrenderer.hpp"
 #include "sme/model.hpp"
 #include "tabreactions.hpp"
 #include <QComboBox>
@@ -17,7 +18,8 @@ using Catch::Matchers::ContainsSubstring;
 TEST_CASE("TabReactions", "[gui/tabs/reactions][gui/tabs][gui][reactions]") {
   sme::model::Model model;
   QLabelMouseTracker mouseTracker;
-  TabReactions tab(model, &mouseTracker);
+  QVoxelRenderer voxelRenderer;
+  TabReactions tab(model, &mouseTracker, &voxelRenderer);
   tab.show();
   waitFor(&tab);
   ModalWidgetTimer mwt;

@@ -3,6 +3,7 @@
 #include "dialogconcentrationimage.hpp"
 #include "guiutils.hpp"
 #include "qlabelmousetracker.hpp"
+#include "qvoxelrenderer.hpp"
 #include "sme/logger.hpp"
 #include "sme/model.hpp"
 #include "ui_tabspecies.h"
@@ -11,9 +12,9 @@
 #include <QMessageBox>
 
 TabSpecies::TabSpecies(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
-                       QWidget *parent)
+                       QVoxelRenderer *voxelRenderer, QWidget *parent)
     : QWidget(parent), ui{std::make_unique<Ui::TabSpecies>()}, model(m),
-      lblGeometry(mouseTracker) {
+      lblGeometry(mouseTracker), voxGeometry(voxelRenderer) {
   ui->setupUi(this);
   connect(ui->listSpecies, &QTreeWidget::currentItemChanged, this,
           &TabSpecies::listSpecies_currentItemChanged);
@@ -131,6 +132,8 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
   ui->txtInitialConcentration->setText("");
   ui->lblInitialConcentrationUnits->setText("");
   lblGeometry->setImage(
+      model.getSpecies().getConcentrationImages(currentSpeciesId));
+  voxGeometry->setImage(
       model.getSpecies().getConcentrationImages(currentSpeciesId));
   auto concentrationType{
       model.getSpecies().getInitialConcentrationType(currentSpeciesId)};
@@ -279,6 +282,8 @@ void TabSpecies::btnEditAnalyticConcentration_clicked() {
     model.getSpecies().setAnalyticConcentration(currentSpeciesId, expr.c_str());
     lblGeometry->setImage(
         model.getSpecies().getConcentrationImages(currentSpeciesId));
+    voxGeometry->setImage(
+        model.getSpecies().getConcentrationImages(currentSpeciesId));
   }
 }
 
@@ -294,6 +299,8 @@ void TabSpecies::btnEditImageConcentration_clicked() {
     model.getSpecies().setSampledFieldConcentration(
         currentSpeciesId, dialog.getConcentrationArray());
     lblGeometry->setImage(
+        model.getSpecies().getConcentrationImages(currentSpeciesId));
+    voxGeometry->setImage(
         model.getSpecies().getConcentrationImages(currentSpeciesId));
   }
 }

@@ -40,7 +40,10 @@ cmake .. \
     -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER \
     -DSME_QT_DISABLE_UNICODE=$SME_QT_DISABLE_UNICODE \
     -DSME_LOG_LEVEL=OFF \
-    -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS
+    -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS \
+    -DFREETYPE_LIBRARY_RELEASE=/c/smelibs/lib/libQt6BundledFreetype.a \
+    -DFREETYPE_INCLUDE_DIR_freetype2=/c/smelibs/include/QtFreetype \
+    -DFREETYPE_INCLUDE_DIR_ft2build=/c/smelibs/include/QtFreetype
 make -j2 VERBOSE=1
 
 ccache -s -v

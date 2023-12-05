@@ -93,6 +93,8 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [LibCombine](https://github.com/sbmlteam/libcombine) - license: [BSD](https://github.com/sbmlteam/libCombine/blob/master/LICENSE.md)
 
+- [VTK](https://vtk.org/) - license: [BSD](https://gitlab.kitware.com/vtk/vtk/-/blob/master/Copyright.txt)
+
 ## Licensing Note
 
 The source code in this repository is released under the MIT license, which is a permissive

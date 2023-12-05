@@ -12,6 +12,10 @@ class QPointF;
 class QSize;
 class QSizeF;
 
+namespace sme::common {
+struct Volume;
+}
+
 std::ostream &operator<<(std::ostream &os, QString const &value);
 std::ostream &operator<<(std::ostream &os, QPoint const &value);
 std::ostream &operator<<(std::ostream &os, QPointF const &value);
@@ -19,6 +23,7 @@ std::ostream &operator<<(std::ostream &os, QSize const &value);
 std::ostream &operator<<(std::ostream &os, QSizeF const &value);
 std::ostream &operator<<(std::ostream &os,
                          std::pair<QPoint, QPoint> const &value);
+std::ostream &operator<<(std::ostream &os, sme::common::Volume const &value);
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>

@@ -39,12 +39,12 @@ public:
   [[nodiscard]] inline const Volume &volume() const noexcept { return sz; }
   inline std::vector<QImage>::iterator begin() noexcept { return imgs.begin(); }
   [[nodiscard]] inline std::vector<QImage>::const_iterator
-  cbegin() const noexcept {
+  begin() const noexcept {
     return imgs.cbegin();
   }
   inline std::vector<QImage>::iterator end() noexcept { return imgs.end(); }
   [[nodiscard]] inline std::vector<QImage>::const_iterator
-  cend() const noexcept {
+  end() const noexcept {
     return imgs.cend();
   }
   void clear();

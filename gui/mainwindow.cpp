@@ -127,14 +127,16 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
 MainWindow::~MainWindow() = default;
 
 void MainWindow::setupTabs() {
-  tabGeometry =
-      new TabGeometry(model, ui->lblGeometry, statusBar(), ui->tabReactions);
+  tabGeometry = new TabGeometry(model, ui->lblGeometry, ui->voxGeometry,
+                                statusBar(), ui->tabReactions);
   ui->tabGeometry->layout()->addWidget(tabGeometry);
 
-  tabSpecies = new TabSpecies(model, ui->lblGeometry, ui->tabSpecies);
+  tabSpecies =
+      new TabSpecies(model, ui->lblGeometry, ui->voxGeometry, ui->tabSpecies);
   ui->tabSpecies->layout()->addWidget(tabSpecies);
 
-  tabReactions = new TabReactions(model, ui->lblGeometry, ui->tabReactions);
+  tabReactions = new TabReactions(model, ui->lblGeometry, ui->voxGeometry,
+                                  ui->tabReactions);
   ui->tabReactions->layout()->addWidget(tabReactions);
 
   tabFunctions = new TabFunctions(model, ui->tabFunctions);
@@ -146,7 +148,8 @@ void MainWindow::setupTabs() {
   tabEvents = new TabEvents(model, ui->tabEvents);
   ui->tabEvents->layout()->addWidget(tabEvents);
 
-  tabSimulate = new TabSimulate(model, ui->lblGeometry, ui->tabSimulate);
+  tabSimulate =
+      new TabSimulate(model, ui->lblGeometry, ui->voxGeometry, ui->tabSimulate);
   ui->tabSimulate->layout()->addWidget(tabSimulate);
 }
 
@@ -234,6 +237,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->actionGeometry_scale, &QAction::triggered, this,
           &MainWindow::actionGeometry_scale_triggered);
+
+  connect(ui->action3d_render, &QAction::triggered, this,
+          &MainWindow::action3d_render_triggered);
 
   connect(ui->actionInvert_y_axis, &QAction::triggered, this,
           &MainWindow::actionInvert_y_axis_triggered);
@@ -628,6 +634,15 @@ void MainWindow::actionGeometry_scale_triggered(bool checked) {
   auto options{model.getDisplayOptions()};
   options.showGeometryScale = checked;
   model.setDisplayOptions(options);
+}
+
+void MainWindow::action3d_render_triggered(bool checked) {
+  if (checked) {
+    ui->stackGeometry->setCurrentIndex(1);
+    ui->voxGeometry->setImage(ui->lblGeometry->getImage());
+    return;
+  }
+  ui->stackGeometry->setCurrentIndex(0);
 }
 
 void MainWindow::actionInvert_y_axis_triggered(bool checked) {

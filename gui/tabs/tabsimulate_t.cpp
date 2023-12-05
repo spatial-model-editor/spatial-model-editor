@@ -2,6 +2,7 @@
 #include "model_test_utils.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
+#include "qvoxelrenderer.hpp"
 #include "sme/model.hpp"
 #include "tabsimulate.hpp"
 #include <QLineEdit>
@@ -12,6 +13,7 @@ using namespace sme::test;
 
 TEST_CASE("TabSimulate", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   QLabelMouseTracker mouseTracker;
+  QVoxelRenderer voxelRenderer;
   SECTION("Many actions") {
     // load model & do initial simulation
     auto model{getExampleModel(Mod::ABtoC)};
@@ -19,7 +21,7 @@ TEST_CASE("TabSimulate", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
     sme::simulate::Simulation sim(model);
     sim.doMultipleTimesteps({{2, 0.01}, {1, 0.02}});
 
-    TabSimulate tab(model, &mouseTracker);
+    TabSimulate tab(model, &mouseTracker, &voxelRenderer);
     tab.show();
     waitFor(&tab);
     ModalWidgetTimer mwt;

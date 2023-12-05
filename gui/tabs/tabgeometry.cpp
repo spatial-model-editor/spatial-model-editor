@@ -1,6 +1,7 @@
 #include "tabgeometry.hpp"
 #include "guiutils.hpp"
 #include "qlabelmousetracker.hpp"
+#include "qvoxelrenderer.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh.hpp"
 #include "sme/model.hpp"
@@ -11,9 +12,11 @@
 #include <stdexcept>
 
 TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
-                         QStatusBar *statusBar, QWidget *parent)
+                         QVoxelRenderer *voxelRenderer, QStatusBar *statusBar,
+                         QWidget *parent)
     : QWidget(parent), ui{std::make_unique<Ui::TabGeometry>()}, model(m),
-      lblGeometry(mouseTracker), m_statusBar{statusBar} {
+      lblGeometry(mouseTracker), voxGeometry(voxelRenderer),
+      m_statusBar{statusBar} {
   ui->setupUi(this);
   ui->tabCompartmentGeometry->setCurrentIndex(0);
 
@@ -96,6 +99,7 @@ void TabGeometry::loadModelData(const QString &selection) {
     ui->btnChangeCompartment->setEnabled(true);
   }
   lblGeometry->setImage(model.getGeometry().getImages());
+  voxGeometry->setImage(model.getGeometry().getImages());
   lblGeometry->setPhysicalSize(model.getGeometry().getPhysicalSize(),
                                model.getUnits().getLength().name);
   enableTabs();

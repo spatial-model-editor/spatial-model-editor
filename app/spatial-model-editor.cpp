@@ -3,6 +3,7 @@
 #include "sme/version.hpp"
 #include <QApplication>
 #include <QIcon>
+#include <QVTKOpenGLNativeWidget.h>
 #include <QtGui>
 #include <fmt/core.h>
 #include <locale>
@@ -27,6 +28,9 @@ int main(int argc, char *argv[]) {
   // set to lowest level here to show everything
   // then disable lower levels at compile time
   spdlog::set_level(spdlog::level::trace);
+
+  // ensure our default opengl format is compatible with vtk
+  QSurfaceFormat::setDefaultFormat(QVTKOpenGLNativeWidget::defaultFormat());
 
   QApplication a(argc, argv);
   QApplication::setWindowIcon(QIcon(":/icon/icon.ico"));

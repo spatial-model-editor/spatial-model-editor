@@ -21,6 +21,7 @@
 #include <spdlog/version.h>
 #include <symengine/symengine_config.h>
 #include <tiffvers.h>
+#include <vtkVersion.h>
 #include <zlib.h>
 
 static QString dep(const QString &name, const QString &url,
@@ -101,6 +102,7 @@ DialogAbout::DialogAbout(QWidget *parent)
       dep("zipper", "https://github.com/fbergmann/zipper", "master"));
   libraries.append(dep("libCombine", "https://github.com/sbmlteam/libCombine",
                        libcombine::getLibCombineDottedVersion()));
+  libraries.append(dep("VTK", "https://vtk.org/", vtkVersion::GetVTKVersion()));
 
   libraries.append("</ul>");
   ui->lblLibraries->setText(libraries);
