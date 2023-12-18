@@ -1,6 +1,7 @@
 #include "tabreactions.hpp"
 #include "guiutils.hpp"
 #include "qlabelmousetracker.hpp"
+#include "qvoxelrenderer.hpp"
 #include "sme/logger.hpp"
 #include "sme/model.hpp"
 #include "ui_tabreactions.h"
@@ -14,9 +15,10 @@ QDoubleSpinBoxNoScroll::QDoubleSpinBoxNoScroll(QWidget *parent)
 void QDoubleSpinBoxNoScroll::wheelEvent(QWheelEvent *event) { event->ignore(); }
 
 TabReactions::TabReactions(sme::model::Model &m,
-                           QLabelMouseTracker *mouseTracker, QWidget *parent)
+                           QLabelMouseTracker *mouseTracker,
+                           QVoxelRenderer *voxelRenderer, QWidget *parent)
     : QWidget{parent}, ui{std::make_unique<Ui::TabReactions>()}, model{m},
-      lblGeometry{mouseTracker} {
+      lblGeometry{mouseTracker}, voxGeometry{voxelRenderer} {
   ui->setupUi(this);
 
   connect(ui->listReactions, &QTreeWidget::currentItemChanged, this,
@@ -120,9 +122,14 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
       lblGeometry->setImage(model.getCompartments()
                                 .getCompartment(reactionLocation.id)
                                 ->getCompartmentImages());
+      voxGeometry->setImage(model.getCompartments()
+                                .getCompartment(reactionLocation.id)
+                                ->getCompartmentImages());
     } else if (reactionLocation.type ==
                sme::model::ReactionLocation::Type::Membrane) {
       lblGeometry->setImage(
+          model.getMembranes().getMembrane(reactionLocation.id)->getImages());
+      voxGeometry->setImage(
           model.getMembranes().getMembrane(reactionLocation.id)->getImages());
     } else {
       lblGeometry->clear();
@@ -153,12 +160,16 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
   if (reactionLocation.type == sme::model::ReactionLocation::Type::Membrane) {
     const auto *m = model.getMembranes().getMembrane(reactionLocation.id);
     lblGeometry->setImage(m->getImages());
+    voxGeometry->setImage(m->getImages());
     compartments = QStringList{m->getCompartmentA()->getId().c_str(),
                                m->getCompartmentB()->getId().c_str()};
     ui->lblReactionRateUnits->setText(model.getUnits().getMembraneReaction());
   } else {
     compartments = QStringList{reactionLocation.id};
     lblGeometry->setImage(model.getCompartments()
+                              .getCompartment(reactionLocation.id)
+                              ->getCompartmentImages());
+    voxGeometry->setImage(model.getCompartments()
                               .getCompartment(reactionLocation.id)
                               ->getCompartmentImages());
     ui->lblReactionRateUnits->setText(
