@@ -46,7 +46,7 @@ jobs:
           path: ~/.cache/ccache
           key: ccache-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Get static libs
