@@ -33,7 +33,7 @@ jobs:
         path: ~/.cache/ccache
         key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
         restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: "3.11"
     - name: Get static libs
@@ -42,8 +42,9 @@ jobs:
       run: ./ci/linux-install.sh
     - name: Build script
       run: ./ci/linux-gui.sh
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
+        name: artifacts-linux-gui
         path: ./artefacts/*
 
   macos-gui:
@@ -68,7 +69,7 @@ jobs:
           path: /Users/runner/Library/Caches/ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - name: Get static libs
@@ -79,8 +80,9 @@ jobs:
         run: export LIBGL_ALWAYS_SOFTWARE=1
       - name: Build script
         run: ./ci/macos-gui.sh
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: artifacts-macos-gui
           path: ./artefacts/*
 
   win64-gui:
@@ -115,8 +117,9 @@ jobs:
         run: ./ci/getlibs.sh win64-mingw
       - name: Build script
         run: ci/windows-gui.sh
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
+          name: artifacts-win64-gui
           path: ./artefacts/*
 
   release:
@@ -126,9 +129,10 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: artifact
+          pattern: artifacts-*
+          merge-multiple: true
           path: binaries
       - name: Upload binaries to latest pre-release
         # if this is an untagged commit to main: upload binaries to github latest release
