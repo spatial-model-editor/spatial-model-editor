@@ -3,6 +3,7 @@
 #include "model_test_utils.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
+#include <QComboBox>
 #include <QFile>
 #include <QMenu>
 #include <QSpinBox>
@@ -42,13 +43,15 @@ TEST_CASE("MainWindow: shortcut keys", tags) {
     sendKeyEvents(&w, {"F8"});
     REQUIRE(mwt.getResult() == "About Spatial Model Editor");
   }
+#ifndef __APPLE__
+  // On MacOS About QT dialog is not modal, so we skip this test
   SECTION("F9") {
     mwt.start();
     sendKeyEvents(&w, {"F9"});
-    QString correctText = "<h3>About Qt</h3>";
     CAPTURE(mwt.getResult());
-    REQUIRE(mwt.getResult().left(correctText.size()) == correctText);
+    REQUIRE_THAT(mwt.getResult().toStdString(), ContainsSubstring("About Qt"));
   }
+#endif
 }
 
 TEST_CASE("MainWindow: new file shortcut keys", tags) {
@@ -83,7 +86,7 @@ TEST_CASE("MainWindow: open/save shortcut keys", tags) {
   SECTION("user presses ctrl+s (with valid SBML model)") {
     openBuiltInModel(w, "V");
     SECTION("cancel") {
-      mwt.addUserAction(QStringList{"Escape"}, false);
+      mwt.addUserAction({"Escape"}, false);
       mwt.start();
       sendKeyEvents(&w, {"Ctrl+S"});
       REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
@@ -380,7 +383,12 @@ TEST_CASE("MainWindow: units", tags) {
   // change units
   ModalWidgetTimer mwt;
   sendKeyEvents(&w, {"Alt+T"});
-  mwt.addUserAction({"Down", "Tab", "Down", "Tab", "Down", "Tab", "Down"});
+  mwt.addUserAction([](QWidget *w) {
+    sendKeyEvents(w->findChild<QComboBox *>("cmbTime"), {"Down"});
+    sendKeyEvents(w->findChild<QComboBox *>("cmbLength"), {"Down"});
+    sendKeyEvents(w->findChild<QComboBox *>("cmbVolume"), {"Down"});
+    sendKeyEvents(w->findChild<QComboBox *>("cmbAmount"), {"Down"});
+  });
   mwt.start();
   sendKeyEvents(menu_Tools, {"U"}, false);
   // save SBML file

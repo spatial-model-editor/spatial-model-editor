@@ -1,10 +1,29 @@
 #include "catch_wrapper.hpp"
 #include "dialoganalytic.hpp"
 #include "model_test_utils.hpp"
+#include "qplaintextmathedit.hpp"
 #include "qt_test_utils.hpp"
 #include "sme/model.hpp"
+#include <QCheckBox>
+#include <QPushButton>
+#include <QSlider>
 
 using namespace sme::test;
+
+struct DialogAnalyticWidgets {
+  explicit DialogAnalyticWidgets(const DialogAnalytic *dialog) {
+    GET_DIALOG_WIDGET(QCheckBox, chkGrid);
+    GET_DIALOG_WIDGET(QCheckBox, chkScale);
+    GET_DIALOG_WIDGET(QPlainTextMathEdit, txtExpression);
+    GET_DIALOG_WIDGET(QPushButton, btnExportImage);
+    GET_DIALOG_WIDGET(QSlider, slideZIndex);
+  }
+  QCheckBox *chkGrid;
+  QCheckBox *chkScale;
+  QPlainTextMathEdit *txtExpression;
+  QPushButton *btnExportImage;
+  QSlider *slideZIndex;
+};
 
 TEST_CASE("DialogAnalytic",
           "[gui/dialogs/analytic][gui/dialogs][gui][analytic]") {
@@ -19,91 +38,73 @@ TEST_CASE("DialogAnalytic",
                         {1.0, 1.0, 1.0},
                         model.getUnits()},
                        model.getParameters(), model.getFunctions(), false);
+    dia.show();
+    DialogAnalyticWidgets widgets(&dia);
     REQUIRE(dia.getExpression() == "x");
-    ModalWidgetTimer mwt;
     SECTION("valid expr: 10") {
-      mwt.addUserAction({"Delete", "1", "0"});
-      mwt.start();
-      dia.exec();
+      sendKeyEvents(widgets.txtExpression, {"Delete", "1", "0"});
       REQUIRE(dia.isExpressionValid() == true);
       REQUIRE(dia.getExpression() == "10");
     }
     SECTION("invalid syntax: (") {
-      mwt.addUserAction({"Delete", "(", "Left"});
-      mwt.start();
-      dia.exec();
+      sendKeyEvents(widgets.txtExpression, {"Delete", "(", "Left"});
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
     SECTION("illegal syntax: &") {
-      mwt.addUserAction({"Delete", "&"});
-      mwt.start();
-      dia.exec();
+      sendKeyEvents(widgets.txtExpression, {"Delete", "&"});
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
     SECTION("unknown variable: q") {
-      mwt.addUserAction({"Delete", "q"});
-      mwt.start();
-      dia.exec();
+      sendKeyEvents(widgets.txtExpression, {"Delete", "q"});
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
     SECTION("1/0") {
       // https://github.com/spatial-model-editor/spatial-model-editor/issues/805
-      mwt.addUserAction({"Delete", "1", "/", "0"});
-      mwt.start();
-      dia.exec();
+      sendKeyEvents(widgets.txtExpression, {"Delete", "1", "/", "0"});
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
     SECTION("nan") {
-      mwt.addUserAction({"Delete", "n", "a", "n"});
-      mwt.start();
-      dia.exec();
+      sendKeyEvents(widgets.txtExpression, {"Delete", "n", "a", "n"});
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
     SECTION("inf") {
-      mwt.addUserAction({"Delete", "i", "n", "f"});
-      mwt.start();
-      dia.exec();
+      sendKeyEvents(widgets.txtExpression, {"Delete", "i", "n", "f"});
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
     SECTION("unknown function: sillyfunc") {
-      mwt.addUserAction({"Delete", "s", "i", "l", "l", "y", "f", "u", "n", "c",
-                         "(", "x", ")"});
-      mwt.start();
-      dia.exec();
+      sendKeyEvents(widgets.txtExpression, {"Delete", "s", "i", "l", "l", "y",
+                                            "f", "u", "n", "c", "(", "x", ")"});
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
     SECTION("negative expr: sin(x)") {
-      mwt.addUserAction({"Delete", "s", "i", "n", "(", "x", ")", "Left", "Left",
-                         "Left", "Left"});
-      mwt.start();
-      dia.exec();
+      sendKeyEvents(widgets.txtExpression,
+                    {"Delete", "s", "i", "n", "(", "x", ")", "Left", "Left",
+                     "Left", "Left"});
       REQUIRE(dia.isExpressionValid() == false);
       REQUIRE(dia.getExpression().empty() == true);
     }
     SECTION("valid expr: 1.5 + sin(x)") {
-      mwt.addUserAction({"Delete", "1", ".", "5", " ", "+", " ", "s", "i", "n",
-                         "(", "x", ")"});
-      mwt.start();
-      dia.exec();
+      sendKeyEvents(widgets.txtExpression, {"Delete", "1", ".", "5", " ", "+",
+                                            " ", "s", "i", "n", "(", "x", ")"});
       REQUIRE(dia.isExpressionValid() == true);
       REQUIRE(dia.getExpression() == "1.5 + sin(x)");
     }
     SECTION("valid expr: 1.5 + sin(x) & export image") {
-      ModalWidgetTimer mwt2;
-      mwt2.addUserAction(
+      ModalWidgetTimer mwt;
+      mwt.addUserAction(
           {"a", "n", "a", "l", "y", "t", "i", "c", "C", "o", "n", "c"});
-      mwt.addUserAction({"Delete", "1", ".", "5", " ", "+", " ", "s", "i", "n",
-                         "(", "x", ")", "Tab", "Space"},
-                        true, &mwt2);
       mwt.start();
-      dia.exec();
+      sendKeyEvents(widgets.txtExpression,
+                    {"Delete", "1", ".", "5", " ", "+", " ", "s", "i", "n", "(",
+                     "x", ")", "Tab", "Space"});
+      sendMouseClick(widgets.btnExportImage);
       REQUIRE(dia.isExpressionValid() == true);
       REQUIRE(dia.getExpression() == "1.5 + sin(x)");
       QImage img("analyticConc.png");
@@ -114,13 +115,13 @@ TEST_CASE("DialogAnalytic",
     auto model{getExampleModel(Mod::ABtoC)};
     DialogAnalytic dia("x", model.getSpeciesGeometry("B"),
                        model.getParameters(), model.getFunctions(), false);
+    dia.show();
+    DialogAnalyticWidgets widgets(&dia);
     REQUIRE(dia.getExpression() == "x");
-    ModalWidgetTimer mwt;
     SECTION("valid expr: 10 & unclick grid/scale checkboxes") {
-      mwt.addUserAction(
-          {"Delete", "1", "0", "Shift+Tab", "Space", "Shift+Tab", "Space"});
-      mwt.start();
-      dia.exec();
+      sendKeyEvents(widgets.txtExpression, {"Delete", "1", "0"});
+      sendMouseClick(widgets.chkGrid);
+      sendMouseClick(widgets.chkScale);
       REQUIRE(dia.isExpressionValid() == true);
       REQUIRE(dia.getExpression() == "10");
     }

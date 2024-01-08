@@ -11,6 +11,33 @@
 using namespace sme;
 using namespace sme::test;
 
+struct DialogOptSetupWidgets {
+  explicit DialogOptSetupWidgets(const DialogOptSetup *dialog) {
+    GET_DIALOG_WIDGET(QComboBox, cmbAlgorithm);
+    GET_DIALOG_WIDGET(QSpinBox, spinIslands);
+    GET_DIALOG_WIDGET(QSpinBox, spinPopulation);
+    GET_DIALOG_WIDGET(QListWidget, lstTargets);
+    GET_DIALOG_WIDGET(QPushButton, btnAddTarget);
+    GET_DIALOG_WIDGET(QPushButton, btnEditTarget);
+    GET_DIALOG_WIDGET(QPushButton, btnRemoveTarget);
+    GET_DIALOG_WIDGET(QListWidget, lstParameters);
+    GET_DIALOG_WIDGET(QPushButton, btnAddParameter);
+    GET_DIALOG_WIDGET(QPushButton, btnEditParameter);
+    GET_DIALOG_WIDGET(QPushButton, btnRemoveParameter);
+  }
+  QComboBox *cmbAlgorithm;
+  QSpinBox *spinIslands;
+  QSpinBox *spinPopulation;
+  QListWidget *lstTargets;
+  QPushButton *btnAddTarget;
+  QPushButton *btnEditTarget;
+  QPushButton *btnRemoveTarget;
+  QListWidget *lstParameters;
+  QPushButton *btnAddParameter;
+  QPushButton *btnEditParameter;
+  QPushButton *btnRemoveParameter;
+};
+
 TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
                             "dialogs][gui][optimize]") {
   auto model{getExampleModel(Mod::CircadianClock)};
@@ -18,40 +45,18 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       sme::simulate::SimulatorType::Pixel;
   SECTION("No initial OptimizeOptions") {
     DialogOptSetup dia(model);
-    // get pointers to widgets within dialog
-    auto *cmbAlgorithm{dia.findChild<QComboBox *>("cmbAlgorithm")};
-    REQUIRE(cmbAlgorithm != nullptr);
-    auto *spinIslands{dia.findChild<QSpinBox *>("spinIslands")};
-    REQUIRE(spinIslands != nullptr);
-    auto *spinPopulation{dia.findChild<QSpinBox *>("spinPopulation")};
-    REQUIRE(spinPopulation != nullptr);
-    auto *lstTargets{dia.findChild<QListWidget *>("lstTargets")};
-    REQUIRE(lstTargets != nullptr);
-    auto *lstParameters{dia.findChild<QListWidget *>("lstParameters")};
-    REQUIRE(lstParameters != nullptr);
-    auto *btnAddTarget{dia.findChild<QPushButton *>("btnAddTarget")};
-    REQUIRE(btnAddTarget != nullptr);
-    auto *btnEditTarget{dia.findChild<QPushButton *>("btnEditTarget")};
-    REQUIRE(btnEditTarget != nullptr);
-    auto *btnRemoveTarget{dia.findChild<QPushButton *>("btnRemoveTarget")};
-    REQUIRE(btnRemoveTarget != nullptr);
-    auto *btnAddParameter{dia.findChild<QPushButton *>("btnAddParameter")};
-    REQUIRE(btnAddParameter != nullptr);
-    auto *btnEditParameter{dia.findChild<QPushButton *>("btnEditParameter")};
-    REQUIRE(btnEditParameter != nullptr);
-    auto *btnRemoveParameter{
-        dia.findChild<QPushButton *>("btnRemoveParameter")};
-    REQUIRE(btnRemoveParameter != nullptr);
+    DialogOptSetupWidgets widgets(&dia);
+    dia.show();
     ModalWidgetTimer mwt;
     SECTION("user does nothing") {
-      REQUIRE(lstTargets->count() == 0);
-      REQUIRE(btnAddTarget->isEnabled());
-      REQUIRE(btnEditTarget->isEnabled() == false);
-      REQUIRE(btnRemoveTarget->isEnabled() == false);
-      REQUIRE(lstParameters->count() == 0);
-      REQUIRE(btnAddParameter->isEnabled());
-      REQUIRE(btnEditParameter->isEnabled() == false);
-      REQUIRE(btnRemoveParameter->isEnabled() == false);
+      REQUIRE(widgets.lstTargets->count() == 0);
+      REQUIRE(widgets.btnAddTarget->isEnabled());
+      REQUIRE(widgets.btnEditTarget->isEnabled() == false);
+      REQUIRE(widgets.btnRemoveTarget->isEnabled() == false);
+      REQUIRE(widgets.lstParameters->count() == 0);
+      REQUIRE(widgets.btnAddParameter->isEnabled());
+      REQUIRE(widgets.btnEditParameter->isEnabled() == false);
+      REQUIRE(widgets.btnRemoveParameter->isEnabled() == false);
       REQUIRE(dia.getOptimizeOptions().optAlgorithm.optAlgorithmType ==
               simulate::OptAlgorithmType::PSO);
       REQUIRE(dia.getOptimizeOptions().optAlgorithm.islands == 1);
@@ -64,35 +69,36 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
               simulate::OptAlgorithmType::PSO);
       REQUIRE(dia.getOptimizeOptions().optAlgorithm.islands == 1);
       REQUIRE(dia.getOptimizeOptions().optAlgorithm.population == 2);
-      sendKeyEvents(cmbAlgorithm, {"Down"});
-      sendKeyEvents(spinIslands, {"Delete", "Backspace", "1", "5", "Enter"});
+      widgets.cmbAlgorithm->setCurrentIndex(1);
+      sendKeyEvents(widgets.spinIslands,
+                    {"Delete", "Backspace", "1", "5", "Enter"});
       REQUIRE(dia.getOptimizeOptions().optAlgorithm.optAlgorithmType ==
               simulate::OptAlgorithmType::GPSO);
       REQUIRE(dia.getOptimizeOptions().optAlgorithm.islands == 15);
       REQUIRE(dia.getOptimizeOptions().optAlgorithm.population == 2);
-      sendKeyEvents(spinPopulation, {"Delete", "Backspace", "3", "2", "Enter"});
+      sendKeyEvents(widgets.spinPopulation,
+                    {"Delete", "Backspace", "3", "2", "Enter"});
       REQUIRE(dia.getOptimizeOptions().optAlgorithm.optAlgorithmType ==
               simulate::OptAlgorithmType::GPSO);
       REQUIRE(dia.getOptimizeOptions().optAlgorithm.islands == 15);
       REQUIRE(dia.getOptimizeOptions().optAlgorithm.population == 32);
     }
     SECTION("user adds targets") {
-      dia.show();
-      REQUIRE(lstTargets->count() == 0);
+      REQUIRE(widgets.lstTargets->count() == 0);
       REQUIRE(dia.getOptimizeOptions().optCosts.empty());
       // click add target, then cancel: no-op
       mwt.addUserAction({"Esc"}, false);
       mwt.start();
-      sendMouseClick(btnAddTarget);
-      REQUIRE(lstTargets->count() == 0);
+      sendMouseClick(widgets.btnAddTarget);
+      REQUIRE(widgets.lstTargets->count() == 0);
       REQUIRE(dia.getOptimizeOptions().optCosts.empty());
       // click add target, change values, press ok
       mwt.addUserAction({"Down", "Tab", "Down", "Tab", "4", "Tab", "Tab",
                          "Down", "Tab", "2", "Enter"});
       mwt.start();
-      sendMouseClick(btnAddTarget);
-      REQUIRE(lstTargets->count() == 1);
-      REQUIRE(lstTargets->item(0)->text() ==
+      sendMouseClick(widgets.btnAddTarget);
+      REQUIRE(widgets.lstTargets->count() == 1);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/Mt [Rate of change of concentration at t=4, relative "
               "difference]");
       const auto &optCosts{dia.getOptimizeOptions().optCosts};
@@ -108,12 +114,12 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // add another target with default values
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnAddTarget);
-      REQUIRE(lstTargets->count() == 2);
-      REQUIRE(lstTargets->item(0)->text() ==
+      sendMouseClick(widgets.btnAddTarget);
+      REQUIRE(widgets.lstTargets->count() == 2);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/Mt [Rate of change of concentration at t=4, relative "
               "difference]");
-      REQUIRE(lstTargets->item(1)->text() ==
+      REQUIRE(widgets.lstTargets->item(1)->text() ==
               "cell/P0 [Concentration at t=100, absolute difference]");
       REQUIRE(optCosts.size() == 2);
       REQUIRE(optCosts[0].optCostDiffType ==
@@ -130,16 +136,16 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optCosts[1].compartmentIndex == 0);
       REQUIRE(optCosts[1].speciesIndex == 0);
       // user edits first target, but clicks cancel
-      sendKeyEvents(lstTargets, {"Up"});
-      REQUIRE(lstTargets->currentRow() == 0);
+      sendKeyEvents(widgets.lstTargets, {"Up"});
+      REQUIRE(widgets.lstTargets->currentRow() == 0);
       mwt.addUserAction({"Down", "Down", "Escape"}, false);
       mwt.start();
-      sendMouseClick(btnEditTarget);
-      REQUIRE(lstTargets->count() == 2);
-      REQUIRE(lstTargets->item(0)->text() ==
+      sendMouseClick(widgets.btnEditTarget);
+      REQUIRE(widgets.lstTargets->count() == 2);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/Mt [Rate of change of concentration at t=4, relative "
               "difference]");
-      REQUIRE(lstTargets->item(1)->text() ==
+      REQUIRE(widgets.lstTargets->item(1)->text() ==
               "cell/P0 [Concentration at t=100, absolute difference]");
       REQUIRE(optCosts.size() == 2);
       REQUIRE(optCosts[0].optCostDiffType ==
@@ -157,14 +163,14 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optCosts[1].speciesIndex == 0);
       // user edits first target & changes target species (other target values
       // get reset to defaults)
-      REQUIRE(lstTargets->currentRow() == 0);
+      REQUIRE(widgets.lstTargets->currentRow() == 0);
       mwt.addUserAction({"Down", "Enter"});
       mwt.start();
-      sendMouseClick(btnEditTarget);
-      REQUIRE(lstTargets->count() == 2);
-      REQUIRE(lstTargets->item(0)->text() ==
+      sendMouseClick(widgets.btnEditTarget);
+      REQUIRE(widgets.lstTargets->count() == 2);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/Mp [Concentration at t=100, absolute difference]");
-      REQUIRE(lstTargets->item(1)->text() ==
+      REQUIRE(widgets.lstTargets->item(1)->text() ==
               "cell/P0 [Concentration at t=100, absolute difference]");
       REQUIRE(optCosts.size() == 2);
       REQUIRE(optCosts[0].optCostDiffType ==
@@ -180,16 +186,16 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optCosts[1].compartmentIndex == 0);
       REQUIRE(optCosts[1].speciesIndex == 0);
       // user edits first target by double-clicking on it, changes opt cost type
-      REQUIRE(lstTargets->currentRow() == 0);
+      REQUIRE(widgets.lstTargets->currentRow() == 0);
       mwt.addUserAction({"Tab", "Down"});
       mwt.start();
-      sendMouseDoubleClick(lstTargets->item(0));
+      sendMouseDoubleClick(widgets.lstTargets->item(0));
       REQUIRE(mwt.getResult() == "Edit Optimization Target");
-      REQUIRE(lstTargets->count() == 2);
-      REQUIRE(lstTargets->item(0)->text() ==
+      REQUIRE(widgets.lstTargets->count() == 2);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/Mp [Rate of change of concentration at t=100, absolute "
               "difference]");
-      REQUIRE(lstTargets->item(1)->text() ==
+      REQUIRE(widgets.lstTargets->item(1)->text() ==
               "cell/P0 [Concentration at t=100, absolute difference]");
       REQUIRE(optCosts.size() == 2);
       REQUIRE(optCosts[0].optCostDiffType ==
@@ -206,11 +212,11 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optCosts[1].compartmentIndex == 0);
       REQUIRE(optCosts[1].speciesIndex == 0);
       // user deletes first target, but clicks cancel
-      REQUIRE(lstTargets->currentRow() == 0);
+      REQUIRE(widgets.lstTargets->currentRow() == 0);
       mwt.addUserAction({"Escape"}, false);
       mwt.start();
-      sendMouseClick(btnRemoveTarget);
-      REQUIRE(lstTargets->count() == 2);
+      sendMouseClick(widgets.btnRemoveTarget);
+      REQUIRE(widgets.lstTargets->count() == 2);
       REQUIRE(optCosts.size() == 2);
       REQUIRE(optCosts[0].optCostDiffType ==
               simulate::OptCostDiffType::Absolute);
@@ -228,9 +234,9 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // user deletes first target
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnRemoveTarget);
-      REQUIRE(lstTargets->count() == 1);
-      REQUIRE(lstTargets->item(0)->text() ==
+      sendMouseClick(widgets.btnRemoveTarget);
+      REQUIRE(widgets.lstTargets->count() == 1);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/P0 [Concentration at t=100, absolute difference]");
       REQUIRE(optCosts.size() == 1);
       REQUIRE(optCosts[0].optCostDiffType ==
@@ -242,27 +248,27 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // user deletes remaining target
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnRemoveTarget);
-      REQUIRE(lstTargets->count() == 0);
+      sendMouseClick(widgets.btnRemoveTarget);
+      REQUIRE(widgets.lstTargets->count() == 0);
       REQUIRE(optCosts.empty());
     }
     SECTION("user adds parameters") {
-      REQUIRE(lstParameters->count() == 0);
+      REQUIRE(widgets.lstParameters->count() == 0);
       const auto &optParams{dia.getOptimizeOptions().optParams};
       REQUIRE(optParams.empty());
       // click add parameter, then cancel: no-op
       mwt.addUserAction({"Esc"}, false);
       mwt.start();
-      sendMouseClick(btnAddParameter);
-      REQUIRE(lstParameters->count() == 0);
+      sendMouseClick(widgets.btnAddParameter);
+      REQUIRE(widgets.lstParameters->count() == 0);
       REQUIRE(optParams.empty());
       // click add parameter, change values, press ok
       mwt.addUserAction(
           {"Down", "Down", "Tab", "2", "Tab", "5", "Tab", "Enter"});
       mwt.start();
-      sendMouseClick(btnAddParameter);
-      REQUIRE(lstParameters->count() == 1);
-      REQUIRE(lstParameters->item(0)->text() ==
+      sendMouseClick(widgets.btnAddParameter);
+      REQUIRE(widgets.lstParameters->count() == 1);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
               "Reaction 'Mp transcription' / K [2, 5]");
       REQUIRE(optParams.size() == 1);
       REQUIRE(optParams[0].optParamType ==
@@ -275,11 +281,12 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // add another parameter with default values
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnAddParameter);
-      REQUIRE(lstParameters->count() == 2);
-      REQUIRE(lstParameters->item(0)->text() ==
+      sendMouseClick(widgets.btnAddParameter);
+      REQUIRE(widgets.lstParameters->count() == 2);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
               "Reaction 'Mp transcription' / K [2, 5]");
-      REQUIRE(lstParameters->item(1)->text() == "Reaction 'sP' / k [0.9, 0.9]");
+      REQUIRE(widgets.lstParameters->item(1)->text() ==
+              "Reaction 'sP' / k [0.9, 0.9]");
       REQUIRE(optParams.size() == 2);
       REQUIRE(optParams[0].optParamType ==
               simulate::OptParamType::ReactionParameter);
@@ -296,15 +303,16 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optParams[1].lowerBound == dbl_approx(0.9));
       REQUIRE(optParams[1].upperBound == dbl_approx(0.9));
       // user edits first parameter, but clicks cancel
-      sendKeyEvents(lstParameters, {"Up"});
-      REQUIRE(lstParameters->currentRow() == 0);
+      sendKeyEvents(widgets.lstParameters, {"Up"});
+      REQUIRE(widgets.lstParameters->currentRow() == 0);
       mwt.addUserAction({"Down", "Down", "Escape"}, false);
       mwt.start();
-      sendMouseClick(btnEditParameter);
-      REQUIRE(lstParameters->count() == 2);
-      REQUIRE(lstParameters->item(0)->text() ==
+      sendMouseClick(widgets.btnEditParameter);
+      REQUIRE(widgets.lstParameters->count() == 2);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
               "Reaction 'Mp transcription' / K [2, 5]");
-      REQUIRE(lstParameters->item(1)->text() == "Reaction 'sP' / k [0.9, 0.9]");
+      REQUIRE(widgets.lstParameters->item(1)->text() ==
+              "Reaction 'sP' / k [0.9, 0.9]");
       REQUIRE(optParams.size() == 2);
       REQUIRE(optParams[0].optParamType ==
               simulate::OptParamType::ReactionParameter);
@@ -322,14 +330,15 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optParams[1].upperBound == dbl_approx(0.9));
       // user edits first parameter & changes parameter (lower/upper bounds get
       // reset to default for this param)
-      REQUIRE(lstParameters->currentRow() == 0);
+      REQUIRE(widgets.lstParameters->currentRow() == 0);
       mwt.addUserAction({"Down", "Enter"});
       mwt.start();
-      sendMouseClick(btnEditParameter);
-      REQUIRE(lstParameters->count() == 2);
-      REQUIRE(lstParameters->item(0)->text() ==
+      sendMouseClick(widgets.btnEditParameter);
+      REQUIRE(widgets.lstParameters->count() == 2);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
               "Reaction 'Mp transcription' / n [4, 4]");
-      REQUIRE(lstParameters->item(1)->text() == "Reaction 'sP' / k [0.9, 0.9]");
+      REQUIRE(widgets.lstParameters->item(1)->text() ==
+              "Reaction 'sP' / k [0.9, 0.9]");
       REQUIRE(optParams.size() == 2);
       REQUIRE(optParams[0].optParamType ==
               simulate::OptParamType::ReactionParameter);
@@ -346,14 +355,15 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optParams[1].lowerBound == dbl_approx(0.9));
       REQUIRE(optParams[1].upperBound == dbl_approx(0.9));
       // user edits first parameter by doubleclick & changes bound
-      REQUIRE(lstParameters->currentRow() == 0);
+      REQUIRE(widgets.lstParameters->currentRow() == 0);
       mwt.addUserAction({"Tab", "1", "Tab", "2", "Enter"});
       mwt.start();
-      sendMouseDoubleClick(lstParameters->item(0));
-      REQUIRE(lstParameters->count() == 2);
-      REQUIRE(lstParameters->item(0)->text() ==
+      sendMouseDoubleClick(widgets.lstParameters->item(0));
+      REQUIRE(widgets.lstParameters->count() == 2);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
               "Reaction 'Mp transcription' / n [1, 2]");
-      REQUIRE(lstParameters->item(1)->text() == "Reaction 'sP' / k [0.9, 0.9]");
+      REQUIRE(widgets.lstParameters->item(1)->text() ==
+              "Reaction 'sP' / k [0.9, 0.9]");
       REQUIRE(optParams.size() == 2);
       REQUIRE(optParams[0].optParamType ==
               simulate::OptParamType::ReactionParameter);
@@ -370,11 +380,11 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optParams[1].lowerBound == dbl_approx(0.9));
       REQUIRE(optParams[1].upperBound == dbl_approx(0.9));
       // user deletes first parameter, but clicks cancel
-      REQUIRE(lstParameters->currentRow() == 0);
+      REQUIRE(widgets.lstParameters->currentRow() == 0);
       mwt.addUserAction({"Escape"}, false);
       mwt.start();
-      sendMouseClick(btnRemoveParameter);
-      REQUIRE(lstParameters->count() == 2);
+      sendMouseClick(widgets.btnRemoveParameter);
+      REQUIRE(widgets.lstParameters->count() == 2);
       REQUIRE(optParams.size() == 2);
       REQUIRE(optParams[0].optParamType ==
               simulate::OptParamType::ReactionParameter);
@@ -393,9 +403,10 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // user deletes first parameter
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnRemoveParameter);
-      REQUIRE(lstParameters->count() == 1);
-      REQUIRE(lstParameters->item(0)->text() == "Reaction 'sP' / k [0.9, 0.9]");
+      sendMouseClick(widgets.btnRemoveParameter);
+      REQUIRE(widgets.lstParameters->count() == 1);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
+              "Reaction 'sP' / k [0.9, 0.9]");
       REQUIRE(optParams.size() == 1);
       REQUIRE(optParams[0].optParamType ==
               simulate::OptParamType::ReactionParameter);
@@ -407,8 +418,8 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // user deletes remaining parameter
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnRemoveParameter);
-      REQUIRE(lstParameters->count() == 0);
+      sendMouseClick(widgets.btnRemoveParameter);
+      REQUIRE(widgets.lstParameters->count() == 0);
       REQUIRE(optParams.empty());
     }
   }
@@ -444,32 +455,16 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
     optCost1.targetValues = {};
     model.getOptimizeOptions() = optimizeOptions;
     DialogOptSetup dia(model);
+    DialogOptSetupWidgets widgets(&dia);
+    dia.show();
     const auto &optParams{dia.getOptimizeOptions().optParams};
     const auto &optCosts{dia.getOptimizeOptions().optCosts};
-    // get pointers to widgets within tab
-    auto *lstTargets{dia.findChild<QListWidget *>("lstTargets")};
-    REQUIRE(lstTargets != nullptr);
-    auto *lstParameters{dia.findChild<QListWidget *>("lstParameters")};
-    REQUIRE(lstParameters != nullptr);
-    auto *btnAddTarget{dia.findChild<QPushButton *>("btnAddTarget")};
-    REQUIRE(btnAddTarget != nullptr);
-    auto *btnEditTarget{dia.findChild<QPushButton *>("btnEditTarget")};
-    REQUIRE(btnEditTarget != nullptr);
-    auto *btnRemoveTarget{dia.findChild<QPushButton *>("btnRemoveTarget")};
-    REQUIRE(btnRemoveTarget != nullptr);
-    auto *btnAddParameter{dia.findChild<QPushButton *>("btnAddParameter")};
-    REQUIRE(btnAddParameter != nullptr);
-    auto *btnEditParameter{dia.findChild<QPushButton *>("btnEditParameter")};
-    REQUIRE(btnEditParameter != nullptr);
-    auto *btnRemoveParameter{
-        dia.findChild<QPushButton *>("btnRemoveParameter")};
-    REQUIRE(btnRemoveParameter != nullptr);
     ModalWidgetTimer mwt;
     SECTION("user does nothing") {
-      REQUIRE(lstTargets->count() == 2);
-      REQUIRE(lstTargets->item(0)->text() ==
+      REQUIRE(widgets.lstTargets->count() == 2);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/P0 [Concentration at t=18, absolute difference]");
-      REQUIRE(lstTargets->item(1)->text() ==
+      REQUIRE(widgets.lstTargets->item(1)->text() ==
               "cell/T0 [Rate of change of concentration at t=9, relative "
               "difference]");
       REQUIRE(optCosts.size() == 2);
@@ -490,12 +485,13 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optCosts[1].id == "T0");
       REQUIRE(optCosts[1].compartmentIndex == 0);
       REQUIRE(optCosts[1].speciesIndex == 3);
-      REQUIRE(btnAddTarget->isEnabled());
-      REQUIRE(btnEditTarget->isEnabled() == false);
-      REQUIRE(btnRemoveTarget->isEnabled() == false);
-      REQUIRE(lstParameters->count() == 2);
-      REQUIRE(lstParameters->item(0)->text() == "Mp_transcription_K [1, 2]");
-      REQUIRE(lstParameters->item(1)->text() ==
+      REQUIRE(widgets.btnAddTarget->isEnabled());
+      REQUIRE(widgets.btnEditTarget->isEnabled() == false);
+      REQUIRE(widgets.btnRemoveTarget->isEnabled() == false);
+      REQUIRE(widgets.lstParameters->count() == 2);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
+              "Mp_transcription_K [1, 2]");
+      REQUIRE(widgets.lstParameters->item(1)->text() ==
               "Mp_transcription_n [0.2, 0.4]");
       REQUIRE(optParams.size() == 2);
       REQUIRE(optParams[0].optParamType ==
@@ -512,19 +508,19 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optParams[1].name == "Mp_transcription_n");
       REQUIRE(optParams[1].lowerBound == 0.2);
       REQUIRE(optParams[1].upperBound == 0.4);
-      REQUIRE(btnAddParameter->isEnabled());
-      REQUIRE(btnEditParameter->isEnabled() == false);
-      REQUIRE(btnRemoveParameter->isEnabled() == false);
+      REQUIRE(widgets.btnAddParameter->isEnabled());
+      REQUIRE(widgets.btnEditParameter->isEnabled() == false);
+      REQUIRE(widgets.btnRemoveParameter->isEnabled() == false);
       REQUIRE(dia.getOptimizeOptions().optAlgorithm.optAlgorithmType ==
               simulate::OptAlgorithmType::PSO);
       REQUIRE(dia.getOptimizeOptions().optAlgorithm.islands == 5);
       REQUIRE(dia.getOptimizeOptions().optAlgorithm.population == 17);
     }
     SECTION("user adds targets") {
-      REQUIRE(lstTargets->count() == 2);
-      REQUIRE(lstTargets->item(0)->text() ==
+      REQUIRE(widgets.lstTargets->count() == 2);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/P0 [Concentration at t=18, absolute difference]");
-      REQUIRE(lstTargets->item(1)->text() ==
+      REQUIRE(widgets.lstTargets->item(1)->text() ==
               "cell/T0 [Rate of change of concentration at t=9, relative "
               "difference]");
       REQUIRE(optCosts.size() == 2);
@@ -546,11 +542,11 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // click add target, then cancel: no-op
       mwt.addUserAction({"Esc"}, false);
       mwt.start();
-      sendMouseClick(btnAddTarget);
-      REQUIRE(lstTargets->count() == 2);
-      REQUIRE(lstTargets->item(0)->text() ==
+      sendMouseClick(widgets.btnAddTarget);
+      REQUIRE(widgets.lstTargets->count() == 2);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/P0 [Concentration at t=18, absolute difference]");
-      REQUIRE(lstTargets->item(1)->text() ==
+      REQUIRE(widgets.lstTargets->item(1)->text() ==
               "cell/T0 [Rate of change of concentration at t=9, relative "
               "difference]");
       REQUIRE(optCosts.size() == 2);
@@ -572,14 +568,14 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // click add target, change values, press ok
       mwt.addUserAction({"Down", "Tab", "Down", "Tab", "Enter"});
       mwt.start();
-      sendMouseClick(btnAddTarget);
-      REQUIRE(lstTargets->count() == 3);
-      REQUIRE(lstTargets->item(0)->text() ==
+      sendMouseClick(widgets.btnAddTarget);
+      REQUIRE(widgets.lstTargets->count() == 3);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/P0 [Concentration at t=18, absolute difference]");
-      REQUIRE(lstTargets->item(1)->text() ==
+      REQUIRE(widgets.lstTargets->item(1)->text() ==
               "cell/T0 [Rate of change of concentration at t=9, relative "
               "difference]");
-      REQUIRE(lstTargets->item(2)->text() ==
+      REQUIRE(widgets.lstTargets->item(2)->text() ==
               "cell/Mt [Rate of change of concentration at t=100, absolute "
               "difference]");
       REQUIRE(optCosts.size() == 3);
@@ -608,17 +604,17 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // add another target with default values
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnAddTarget);
-      REQUIRE(lstTargets->count() == 4);
-      REQUIRE(lstTargets->item(0)->text() ==
+      sendMouseClick(widgets.btnAddTarget);
+      REQUIRE(widgets.lstTargets->count() == 4);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/P0 [Concentration at t=18, absolute difference]");
-      REQUIRE(lstTargets->item(1)->text() ==
+      REQUIRE(widgets.lstTargets->item(1)->text() ==
               "cell/T0 [Rate of change of concentration at t=9, relative "
               "difference]");
-      REQUIRE(lstTargets->item(2)->text() ==
+      REQUIRE(widgets.lstTargets->item(2)->text() ==
               "cell/Mt [Rate of change of concentration at t=100, absolute "
               "difference]");
-      REQUIRE(lstTargets->item(3)->text() ==
+      REQUIRE(widgets.lstTargets->item(3)->text() ==
               "cell/P0 [Concentration at t=100, absolute difference]");
       REQUIRE(optCosts.size() == 4);
       REQUIRE(optCosts[0].optCostType == simulate::OptCostType::Concentration);
@@ -650,21 +646,21 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optCosts[3].compartmentIndex == 0);
       REQUIRE(optCosts[3].speciesIndex == 0);
       // user edits first target, but clicks cancel
-      sendKeyEvents(lstTargets, {"Up"});
-      REQUIRE(lstTargets->currentRow() == 0);
+      sendKeyEvents(widgets.lstTargets, {"Up"});
+      REQUIRE(widgets.lstTargets->currentRow() == 0);
       mwt.addUserAction({"Down", "Down", "Escape"}, false);
       mwt.start();
-      sendMouseClick(btnEditTarget);
-      REQUIRE(lstTargets->count() == 4);
-      REQUIRE(lstTargets->item(0)->text() ==
+      sendMouseClick(widgets.btnEditTarget);
+      REQUIRE(widgets.lstTargets->count() == 4);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/P0 [Concentration at t=18, absolute difference]");
-      REQUIRE(lstTargets->item(1)->text() ==
+      REQUIRE(widgets.lstTargets->item(1)->text() ==
               "cell/T0 [Rate of change of concentration at t=9, relative "
               "difference]");
-      REQUIRE(lstTargets->item(2)->text() ==
+      REQUIRE(widgets.lstTargets->item(2)->text() ==
               "cell/Mt [Rate of change of concentration at t=100, absolute "
               "difference]");
-      REQUIRE(lstTargets->item(3)->text() ==
+      REQUIRE(widgets.lstTargets->item(3)->text() ==
               "cell/P0 [Concentration at t=100, absolute difference]");
       REQUIRE(optCosts.size() == 4);
       REQUIRE(optCosts[0].optCostType == simulate::OptCostType::Concentration);
@@ -697,20 +693,20 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optCosts[3].speciesIndex == 0);
       // user edits first target & changes target species (other target values
       // get reset to defaults)
-      REQUIRE(lstTargets->currentRow() == 0);
+      REQUIRE(widgets.lstTargets->currentRow() == 0);
       mwt.addUserAction({"Down", "Enter"});
       mwt.start();
-      sendMouseClick(btnEditTarget);
-      REQUIRE(lstTargets->count() == 4);
-      REQUIRE(lstTargets->item(0)->text() ==
+      sendMouseClick(widgets.btnEditTarget);
+      REQUIRE(widgets.lstTargets->count() == 4);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/Mt [Concentration at t=100, absolute difference]");
-      REQUIRE(lstTargets->item(1)->text() ==
+      REQUIRE(widgets.lstTargets->item(1)->text() ==
               "cell/T0 [Rate of change of concentration at t=9, relative "
               "difference]");
-      REQUIRE(lstTargets->item(2)->text() ==
+      REQUIRE(widgets.lstTargets->item(2)->text() ==
               "cell/Mt [Rate of change of concentration at t=100, absolute "
               "difference]");
-      REQUIRE(lstTargets->item(3)->text() ==
+      REQUIRE(widgets.lstTargets->item(3)->text() ==
               "cell/P0 [Concentration at t=100, absolute difference]");
       REQUIRE(optCosts.size() == 4);
       REQUIRE(optCosts[0].optCostType == simulate::OptCostType::Concentration);
@@ -746,20 +742,20 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optCosts[3].compartmentIndex == 0);
       REQUIRE(optCosts[3].speciesIndex == 0);
       // user deletes first target, but clicks cancel
-      REQUIRE(lstTargets->currentRow() == 0);
+      REQUIRE(widgets.lstTargets->currentRow() == 0);
       mwt.addUserAction({"Escape"}, false);
       mwt.start();
-      sendMouseClick(btnRemoveTarget);
-      REQUIRE(lstTargets->count() == 4);
-      REQUIRE(lstTargets->item(0)->text() ==
+      sendMouseClick(widgets.btnRemoveTarget);
+      REQUIRE(widgets.lstTargets->count() == 4);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/Mt [Concentration at t=100, absolute difference]");
-      REQUIRE(lstTargets->item(1)->text() ==
+      REQUIRE(widgets.lstTargets->item(1)->text() ==
               "cell/T0 [Rate of change of concentration at t=9, relative "
               "difference]");
-      REQUIRE(lstTargets->item(2)->text() ==
+      REQUIRE(widgets.lstTargets->item(2)->text() ==
               "cell/Mt [Rate of change of concentration at t=100, absolute "
               "difference]");
-      REQUIRE(lstTargets->item(3)->text() ==
+      REQUIRE(widgets.lstTargets->item(3)->text() ==
               "cell/P0 [Concentration at t=100, absolute difference]");
       REQUIRE(optCosts.size() == 4);
       REQUIRE(optCosts[0].optCostType == simulate::OptCostType::Concentration);
@@ -797,15 +793,15 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // user deletes first target
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnRemoveTarget);
-      REQUIRE(lstTargets->count() == 3);
-      REQUIRE(lstTargets->item(0)->text() ==
+      sendMouseClick(widgets.btnRemoveTarget);
+      REQUIRE(widgets.lstTargets->count() == 3);
+      REQUIRE(widgets.lstTargets->item(0)->text() ==
               "cell/T0 [Rate of change of concentration at t=9, relative "
               "difference]");
-      REQUIRE(lstTargets->item(1)->text() ==
+      REQUIRE(widgets.lstTargets->item(1)->text() ==
               "cell/Mt [Rate of change of concentration at t=100, absolute "
               "difference]");
-      REQUIRE(lstTargets->item(2)->text() ==
+      REQUIRE(widgets.lstTargets->item(2)->text() ==
               "cell/P0 [Concentration at t=100, absolute difference]");
       REQUIRE(optCosts.size() == 3);
       REQUIRE(optCosts[0].optCostType ==
@@ -835,20 +831,21 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // user deletes remaining targets
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnRemoveTarget);
+      sendMouseClick(widgets.btnRemoveTarget);
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnRemoveTarget);
+      sendMouseClick(widgets.btnRemoveTarget);
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnRemoveTarget);
-      REQUIRE(lstTargets->count() == 0);
+      sendMouseClick(widgets.btnRemoveTarget);
+      REQUIRE(widgets.lstTargets->count() == 0);
       REQUIRE(optCosts.empty());
     }
     SECTION("user adds parameters") {
-      REQUIRE(lstParameters->count() == 2);
-      REQUIRE(lstParameters->item(0)->text() == "Mp_transcription_K [1, 2]");
-      REQUIRE(lstParameters->item(1)->text() ==
+      REQUIRE(widgets.lstParameters->count() == 2);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
+              "Mp_transcription_K [1, 2]");
+      REQUIRE(widgets.lstParameters->item(1)->text() ==
               "Mp_transcription_n [0.2, 0.4]");
       REQUIRE(optParams.size() == 2);
       REQUIRE(optParams[0].optParamType ==
@@ -868,10 +865,11 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // click add parameter, then cancel: no-op
       mwt.addUserAction({"Esc"}, false);
       mwt.start();
-      sendMouseClick(btnAddParameter);
-      REQUIRE(lstParameters->count() == 2);
-      REQUIRE(lstParameters->item(0)->text() == "Mp_transcription_K [1, 2]");
-      REQUIRE(lstParameters->item(1)->text() ==
+      sendMouseClick(widgets.btnAddParameter);
+      REQUIRE(widgets.lstParameters->count() == 2);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
+              "Mp_transcription_K [1, 2]");
+      REQUIRE(widgets.lstParameters->item(1)->text() ==
               "Mp_transcription_n [0.2, 0.4]");
       REQUIRE(optParams.size() == 2);
       REQUIRE(optParams[0].optParamType ==
@@ -892,12 +890,13 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       mwt.addUserAction(
           {"Down", "Down", "Tab", "2", "Tab", "5", "Tab", "Enter"});
       mwt.start();
-      sendMouseClick(btnAddParameter);
-      REQUIRE(lstParameters->count() == 3);
-      REQUIRE(lstParameters->item(0)->text() == "Mp_transcription_K [1, 2]");
-      REQUIRE(lstParameters->item(1)->text() ==
+      sendMouseClick(widgets.btnAddParameter);
+      REQUIRE(widgets.lstParameters->count() == 3);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
+              "Mp_transcription_K [1, 2]");
+      REQUIRE(widgets.lstParameters->item(1)->text() ==
               "Mp_transcription_n [0.2, 0.4]");
-      REQUIRE(lstParameters->item(2)->text() ==
+      REQUIRE(widgets.lstParameters->item(2)->text() ==
               "Reaction 'Mp transcription' / K [2, 5]");
       REQUIRE(optParams.size() == 3);
       REQUIRE(optParams[0].optParamType ==
@@ -924,14 +923,16 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // add another parameter with default values
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnAddParameter);
-      REQUIRE(lstParameters->count() == 4);
-      REQUIRE(lstParameters->item(0)->text() == "Mp_transcription_K [1, 2]");
-      REQUIRE(lstParameters->item(1)->text() ==
+      sendMouseClick(widgets.btnAddParameter);
+      REQUIRE(widgets.lstParameters->count() == 4);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
+              "Mp_transcription_K [1, 2]");
+      REQUIRE(widgets.lstParameters->item(1)->text() ==
               "Mp_transcription_n [0.2, 0.4]");
-      REQUIRE(lstParameters->item(2)->text() ==
+      REQUIRE(widgets.lstParameters->item(2)->text() ==
               "Reaction 'Mp transcription' / K [2, 5]");
-      REQUIRE(lstParameters->item(3)->text() == "Reaction 'sP' / k [0.9, 0.9]");
+      REQUIRE(widgets.lstParameters->item(3)->text() ==
+              "Reaction 'sP' / k [0.9, 0.9]");
       REQUIRE(optParams.size() == 4);
       REQUIRE(optParams[0].optParamType ==
               simulate::OptParamType::ReactionParameter);
@@ -962,18 +963,20 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optParams[3].lowerBound == dbl_approx(0.9));
       REQUIRE(optParams[3].upperBound == dbl_approx(0.9));
       // user edits first parameter, but clicks cancel
-      sendKeyEvents(lstParameters, {"Up"});
-      REQUIRE(lstParameters->currentRow() == 0);
+      sendKeyEvents(widgets.lstParameters, {"Up"});
+      REQUIRE(widgets.lstParameters->currentRow() == 0);
       mwt.addUserAction({"Down", "Down", "Escape"}, false);
       mwt.start();
-      sendMouseClick(btnEditParameter);
-      REQUIRE(lstParameters->count() == 4);
-      REQUIRE(lstParameters->item(0)->text() == "Mp_transcription_K [1, 2]");
-      REQUIRE(lstParameters->item(1)->text() ==
+      sendMouseClick(widgets.btnEditParameter);
+      REQUIRE(widgets.lstParameters->count() == 4);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
+              "Mp_transcription_K [1, 2]");
+      REQUIRE(widgets.lstParameters->item(1)->text() ==
               "Mp_transcription_n [0.2, 0.4]");
-      REQUIRE(lstParameters->item(2)->text() ==
+      REQUIRE(widgets.lstParameters->item(2)->text() ==
               "Reaction 'Mp transcription' / K [2, 5]");
-      REQUIRE(lstParameters->item(3)->text() == "Reaction 'sP' / k [0.9, 0.9]");
+      REQUIRE(widgets.lstParameters->item(3)->text() ==
+              "Reaction 'sP' / k [0.9, 0.9]");
       REQUIRE(optParams.size() == 4);
       REQUIRE(optParams[0].optParamType ==
               simulate::OptParamType::ReactionParameter);
@@ -1005,18 +1008,19 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optParams[3].upperBound == dbl_approx(0.9));
       // user edits first parameter & changes parameter (lower/upper bounds get
       // reset to default for this param)
-      REQUIRE(lstParameters->currentRow() == 0);
+      REQUIRE(widgets.lstParameters->currentRow() == 0);
       mwt.addUserAction({"Down", "Enter"});
       mwt.start();
-      sendMouseClick(btnEditParameter);
-      REQUIRE(lstParameters->count() == 4);
-      REQUIRE(lstParameters->item(0)->text() ==
+      sendMouseClick(widgets.btnEditParameter);
+      REQUIRE(widgets.lstParameters->count() == 4);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
               "Reaction 'Mp transcription' / n [4, 4]");
-      REQUIRE(lstParameters->item(1)->text() ==
+      REQUIRE(widgets.lstParameters->item(1)->text() ==
               "Mp_transcription_n [0.2, 0.4]");
-      REQUIRE(lstParameters->item(2)->text() ==
+      REQUIRE(widgets.lstParameters->item(2)->text() ==
               "Reaction 'Mp transcription' / K [2, 5]");
-      REQUIRE(lstParameters->item(3)->text() == "Reaction 'sP' / k [0.9, 0.9]");
+      REQUIRE(widgets.lstParameters->item(3)->text() ==
+              "Reaction 'sP' / k [0.9, 0.9]");
       REQUIRE(optParams.size() == 4);
       REQUIRE(optParams[0].optParamType ==
               simulate::OptParamType::ReactionParameter);
@@ -1047,18 +1051,19 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optParams[3].lowerBound == dbl_approx(0.9));
       REQUIRE(optParams[3].upperBound == dbl_approx(0.9));
       // user deletes first parameter, but clicks cancel
-      REQUIRE(lstParameters->currentRow() == 0);
+      REQUIRE(widgets.lstParameters->currentRow() == 0);
       mwt.addUserAction({"Escape"}, false);
       mwt.start();
-      sendMouseClick(btnRemoveParameter);
-      REQUIRE(lstParameters->count() == 4);
-      REQUIRE(lstParameters->item(0)->text() ==
+      sendMouseClick(widgets.btnRemoveParameter);
+      REQUIRE(widgets.lstParameters->count() == 4);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
               "Reaction 'Mp transcription' / n [4, 4]");
-      REQUIRE(lstParameters->item(1)->text() ==
+      REQUIRE(widgets.lstParameters->item(1)->text() ==
               "Mp_transcription_n [0.2, 0.4]");
-      REQUIRE(lstParameters->item(2)->text() ==
+      REQUIRE(widgets.lstParameters->item(2)->text() ==
               "Reaction 'Mp transcription' / K [2, 5]");
-      REQUIRE(lstParameters->item(3)->text() == "Reaction 'sP' / k [0.9, 0.9]");
+      REQUIRE(widgets.lstParameters->item(3)->text() ==
+              "Reaction 'sP' / k [0.9, 0.9]");
       REQUIRE(optParams.size() == 4);
       REQUIRE(optParams[0].optParamType ==
               simulate::OptParamType::ReactionParameter);
@@ -1091,13 +1096,14 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // user deletes first parameter
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnRemoveParameter);
-      REQUIRE(lstParameters->count() == 3);
-      REQUIRE(lstParameters->item(0)->text() ==
+      sendMouseClick(widgets.btnRemoveParameter);
+      REQUIRE(widgets.lstParameters->count() == 3);
+      REQUIRE(widgets.lstParameters->item(0)->text() ==
               "Mp_transcription_n [0.2, 0.4]");
-      REQUIRE(lstParameters->item(1)->text() ==
+      REQUIRE(widgets.lstParameters->item(1)->text() ==
               "Reaction 'Mp transcription' / K [2, 5]");
-      REQUIRE(lstParameters->item(2)->text() == "Reaction 'sP' / k [0.9, 0.9]");
+      REQUIRE(widgets.lstParameters->item(2)->text() ==
+              "Reaction 'sP' / k [0.9, 0.9]");
       REQUIRE(optParams.size() == 3);
       REQUIRE(optParams[0].optParamType ==
               simulate::OptParamType::ReactionParameter);
@@ -1123,18 +1129,18 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // user deletes remaining parameters
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnRemoveParameter);
-      REQUIRE(lstParameters->count() == 2);
+      sendMouseClick(widgets.btnRemoveParameter);
+      REQUIRE(widgets.lstParameters->count() == 2);
       REQUIRE(optParams.size() == 2);
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnRemoveParameter);
-      REQUIRE(lstParameters->count() == 1);
+      sendMouseClick(widgets.btnRemoveParameter);
+      REQUIRE(widgets.lstParameters->count() == 1);
       REQUIRE(optParams.size() == 1);
       mwt.addUserAction({"Enter"});
       mwt.start();
-      sendMouseClick(btnRemoveParameter);
-      REQUIRE(lstParameters->count() == 0);
+      sendMouseClick(widgets.btnRemoveParameter);
+      REQUIRE(widgets.lstParameters->count() == 0);
       REQUIRE(optParams.empty());
     }
   }
@@ -1144,10 +1150,10 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
         sme::simulate::SimulatorType::DUNE;
     model.getOptimizeOptions().optAlgorithm.islands = 4;
     DialogOptSetup dia(model);
-    auto *spinIslands{dia.findChild<QSpinBox *>("spinIslands")};
-    REQUIRE(spinIslands != nullptr);
-    REQUIRE(spinIslands->value() == 1);
-    REQUIRE(spinIslands->maximum() == 1);
+    DialogOptSetupWidgets widgets(&dia);
+    dia.show();
+    REQUIRE(widgets.spinIslands->value() == 1);
+    REQUIRE(widgets.spinIslands->maximum() == 1);
     REQUIRE(dia.getOptimizeOptions().optAlgorithm.islands == 1);
   }
 }

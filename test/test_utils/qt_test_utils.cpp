@@ -5,6 +5,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QTest>
+#include <QTreeWidgetItem>
 #include <QWheelEvent>
 
 namespace sme::test {
@@ -125,6 +126,12 @@ void sendMouseClick(QListWidgetItem *item, Qt::MouseButton button) {
   QTest::mouseClick(widget, button, {}, pos, mouseDelay);
 }
 
+void sendMouseClick(QTreeWidgetItem *item, Qt::MouseButton button) {
+  auto widget{item->treeWidget()->viewport()};
+  auto pos{item->treeWidget()->visualItemRect(item).center()};
+  QTest::mouseClick(widget, button, {}, pos, mouseDelay);
+}
+
 void sendMouseDoubleClick(QWidget *widget, const QPoint &pos,
                           Qt::MouseButton button) {
   // DClick seems to only work if widget is already selected
@@ -175,8 +182,14 @@ void ModalWidgetTimer::executeUserAction(QWidget *widget) {
     mwt->setIgnoredWidget(widget);
     mwt->start();
   }
-  qDebug() << this << ":: entering" << action.keySeqStrings << "into" << widget;
-  sendKeyEvents(widget->windowHandle(), action.keySeqStrings);
+  if (action.callbackFunction != nullptr) {
+    qDebug() << this << ":: calling callback for " << widget;
+    action.callbackFunction(widget);
+  } else {
+    qDebug() << this << ":: entering" << action.keySeqStrings << "into"
+             << widget;
+    sendKeyEvents(widget->windowHandle(), action.keySeqStrings);
+  }
   if (action.callAccept) {
     if (auto *p = qobject_cast<QDialog *>(widget); p != nullptr) {
       qDebug() << this << ":: calling accept on widget" << widget;
@@ -213,11 +226,17 @@ ModalWidgetTimer::ModalWidgetTimer(int timerInterval, int timeout)
                    &ModalWidgetTimer::lookForWidget);
 }
 
-void ModalWidgetTimer::addUserAction(QStringList &&keySeqStrings,
+void ModalWidgetTimer::addUserAction(const QStringList &keySeqStrings,
                                      bool callAcceptOnDialog,
                                      ModalWidgetTimer *otherMwtToStart) {
-  userActions.emplace(std::move(keySeqStrings), callAcceptOnDialog,
-                      otherMwtToStart);
+  userActions.push({keySeqStrings, {}, callAcceptOnDialog, otherMwtToStart});
+}
+
+void ModalWidgetTimer::addUserAction(std::function<void(QWidget *)> callback,
+                                     bool callAcceptOnDialog,
+                                     ModalWidgetTimer *otherMwtToStart) {
+  userActions.push(
+      {{}, std::move(callback), callAcceptOnDialog, otherMwtToStart});
 }
 
 void ModalWidgetTimer::setIgnoredWidget(QWidget *widgetToIgnore) {
@@ -236,6 +255,13 @@ void ModalWidgetTimer::start() {
 }
 
 const QString &ModalWidgetTimer::getResult(int i) const {
+  int ms_wait{0};
+  while (timer.isActive()) {
+    qDebug() << this
+             << ":: getResult() waiting for ModalWidgetTimer to finish...";
+    wait(ms_wait);
+    ms_wait += 100;
+  }
   return results.at(i);
 }
 
