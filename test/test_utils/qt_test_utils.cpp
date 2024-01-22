@@ -3,6 +3,7 @@
 #include <QDebug>
 #include <QDialog>
 #include <QFileDialog>
+#include <QLineEdit>
 #include <QMessageBox>
 #include <QTest>
 #include <QTreeWidgetItem>
@@ -48,6 +49,13 @@ void sendKeyEvents(QObject *object, const QStringList &keySeqStrings,
     }
     wait(keyDelay);
   }
+}
+
+void sendKeyEventsToQLineEdit(QLineEdit *lineEdit,
+                              const QStringList &keySeqStrings) {
+  lineEdit->clear();
+  lineEdit->setFocus();
+  sendKeyEvents(lineEdit, keySeqStrings);
 }
 
 static QDialog *getNextQDialog() {

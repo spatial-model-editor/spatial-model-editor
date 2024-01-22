@@ -44,7 +44,7 @@ cmake .. \
     -DFREETYPE_LIBRARY_RELEASE=/c/smelibs/lib/libQt6BundledFreetype.a \
     -DFREETYPE_INCLUDE_DIR_freetype2=/c/smelibs/include/QtFreetype \
     -DFREETYPE_INCLUDE_DIR_ft2build=/c/smelibs/include/QtFreetype
-make -j2 VERBOSE=1
+make -j4 VERBOSE=1
 
 ccache -s -v
 

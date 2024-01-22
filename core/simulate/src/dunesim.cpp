@@ -220,6 +220,7 @@ std::size_t DuneSim::run(double time, double timeout_ms,
   } catch (const Dune::Exception &e) {
     currentErrorMessage = e.what();
     SPDLOG_ERROR("{}", currentErrorMessage);
+    return 0;
   }
   if (stopRunningCallback && stopRunningCallback()) {
     SPDLOG_DEBUG("Simulation cancelled: requesting stop");

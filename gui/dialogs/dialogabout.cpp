@@ -18,6 +18,7 @@
 #include <pagmo/config.hpp>
 #include <qcustomplot.h>
 #include <sbml/common/libsbml-version.h>
+#include <scotch.h>
 #include <spdlog/version.h>
 #include <symengine/symengine_config.h>
 #include <tiffvers.h>
@@ -103,7 +104,8 @@ DialogAbout::DialogAbout(QWidget *parent)
   libraries.append(dep("libCombine", "https://github.com/sbmlteam/libCombine",
                        libcombine::getLibCombineDottedVersion()));
   libraries.append(dep("VTK", "https://vtk.org/", vtkVersion::GetVTKVersion()));
-
+  libraries.append(dep("scotch", "https://gitlab.inria.fr/scotch/scotch",
+                       SCOTCH_VERSION, SCOTCH_RELEASE, SCOTCH_PATCHLEVEL));
   libraries.append("</ul>");
   ui->lblLibraries->setText(libraries);
 }

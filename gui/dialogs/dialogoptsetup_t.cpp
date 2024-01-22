@@ -3,6 +3,7 @@
 #include "model_test_utils.hpp"
 #include "qt_test_utils.hpp"
 #include <QComboBox>
+#include <QLineEdit>
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QPushButton>
@@ -93,8 +94,16 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(widgets.lstTargets->count() == 0);
       REQUIRE(dia.getOptimizeOptions().optCosts.empty());
       // click add target, change values, press ok
-      mwt.addUserAction({"Down", "Tab", "Down", "Tab", "4", "Tab", "Tab",
-                         "Down", "Tab", "2", "Enter"});
+      mwt.addUserAction([](QWidget *dialog) {
+        dialog->findChild<QComboBox *>("cmbSpecies")->setCurrentIndex(1);
+        dialog->findChild<QComboBox *>("cmbCostType")->setCurrentIndex(1);
+        sendKeyEventsToQLineEdit(
+            dialog->findChild<QLineEdit *>("txtSimulationTime"),
+            {"4", "Enter"});
+        dialog->findChild<QComboBox *>("cmbDiffType")->setCurrentIndex(1);
+        sendKeyEventsToQLineEdit(dialog->findChild<QLineEdit *>("txtWeight"),
+                                 {"2", "Enter"});
+      });
       mwt.start();
       sendMouseClick(widgets.btnAddTarget);
       REQUIRE(widgets.lstTargets->count() == 1);
@@ -164,7 +173,9 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // user edits first target & changes target species (other target values
       // get reset to defaults)
       REQUIRE(widgets.lstTargets->currentRow() == 0);
-      mwt.addUserAction({"Down", "Enter"});
+      mwt.addUserAction([](QWidget *dialog) {
+        dialog->findChild<QComboBox *>("cmbSpecies")->setCurrentIndex(2);
+      });
       mwt.start();
       sendMouseClick(widgets.btnEditTarget);
       REQUIRE(widgets.lstTargets->count() == 2);
@@ -187,7 +198,9 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optCosts[1].speciesIndex == 0);
       // user edits first target by double-clicking on it, changes opt cost type
       REQUIRE(widgets.lstTargets->currentRow() == 0);
-      mwt.addUserAction({"Tab", "Down"});
+      mwt.addUserAction([](QWidget *dialog) {
+        dialog->findChild<QComboBox *>("cmbCostType")->setCurrentIndex(1);
+      });
       mwt.start();
       sendMouseDoubleClick(widgets.lstTargets->item(0));
       REQUIRE(mwt.getResult() == "Edit Optimization Target");
@@ -263,8 +276,13 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(widgets.lstParameters->count() == 0);
       REQUIRE(optParams.empty());
       // click add parameter, change values, press ok
-      mwt.addUserAction(
-          {"Down", "Down", "Tab", "2", "Tab", "5", "Tab", "Enter"});
+      mwt.addUserAction([](QWidget *dialog) {
+        dialog->findChild<QComboBox *>("cmbParameter")->setCurrentIndex(2);
+        sendKeyEventsToQLineEdit(
+            dialog->findChild<QLineEdit *>("txtLowerBound"), {"2", "Enter"});
+        sendKeyEventsToQLineEdit(
+            dialog->findChild<QLineEdit *>("txtUpperBound"), {"5", "Enter"});
+      });
       mwt.start();
       sendMouseClick(widgets.btnAddParameter);
       REQUIRE(widgets.lstParameters->count() == 1);
@@ -331,7 +349,9 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // user edits first parameter & changes parameter (lower/upper bounds get
       // reset to default for this param)
       REQUIRE(widgets.lstParameters->currentRow() == 0);
-      mwt.addUserAction({"Down", "Enter"});
+      mwt.addUserAction([](QWidget *dialog) {
+        dialog->findChild<QComboBox *>("cmbParameter")->setCurrentIndex(3);
+      });
       mwt.start();
       sendMouseClick(widgets.btnEditParameter);
       REQUIRE(widgets.lstParameters->count() == 2);
@@ -356,7 +376,12 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optParams[1].upperBound == dbl_approx(0.9));
       // user edits first parameter by doubleclick & changes bound
       REQUIRE(widgets.lstParameters->currentRow() == 0);
-      mwt.addUserAction({"Tab", "1", "Tab", "2", "Enter"});
+      mwt.addUserAction([](QWidget *dialog) {
+        sendKeyEventsToQLineEdit(
+            dialog->findChild<QLineEdit *>("txtLowerBound"), {"1", "Enter"});
+        sendKeyEventsToQLineEdit(
+            dialog->findChild<QLineEdit *>("txtUpperBound"), {"2", "Enter"});
+      });
       mwt.start();
       sendMouseDoubleClick(widgets.lstParameters->item(0));
       REQUIRE(widgets.lstParameters->count() == 2);
@@ -566,7 +591,10 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optCosts[1].compartmentIndex == 0);
       REQUIRE(optCosts[1].speciesIndex == 3);
       // click add target, change values, press ok
-      mwt.addUserAction({"Down", "Tab", "Down", "Tab", "Enter"});
+      mwt.addUserAction([](QWidget *dialog) {
+        dialog->findChild<QComboBox *>("cmbSpecies")->setCurrentIndex(1);
+        dialog->findChild<QComboBox *>("cmbCostType")->setCurrentIndex(1);
+      });
       mwt.start();
       sendMouseClick(widgets.btnAddTarget);
       REQUIRE(widgets.lstTargets->count() == 3);
@@ -694,7 +722,9 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // user edits first target & changes target species (other target values
       // get reset to defaults)
       REQUIRE(widgets.lstTargets->currentRow() == 0);
-      mwt.addUserAction({"Down", "Enter"});
+      mwt.addUserAction([](QWidget *dialog) {
+        dialog->findChild<QComboBox *>("cmbSpecies")->setCurrentIndex(1);
+      });
       mwt.start();
       sendMouseClick(widgets.btnEditTarget);
       REQUIRE(widgets.lstTargets->count() == 4);
@@ -887,8 +917,13 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       REQUIRE(optParams[1].lowerBound == 0.2);
       REQUIRE(optParams[1].upperBound == 0.4);
       // click add parameter, change values, press ok
-      mwt.addUserAction(
-          {"Down", "Down", "Tab", "2", "Tab", "5", "Tab", "Enter"});
+      mwt.addUserAction([](QWidget *dialog) {
+        dialog->findChild<QComboBox *>("cmbParameter")->setCurrentIndex(2);
+        sendKeyEventsToQLineEdit(
+            dialog->findChild<QLineEdit *>("txtLowerBound"), {"2", "Enter"});
+        sendKeyEventsToQLineEdit(
+            dialog->findChild<QLineEdit *>("txtUpperBound"), {"5", "Enter"});
+      });
       mwt.start();
       sendMouseClick(widgets.btnAddParameter);
       REQUIRE(widgets.lstParameters->count() == 3);
@@ -1009,7 +1044,9 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
       // user edits first parameter & changes parameter (lower/upper bounds get
       // reset to default for this param)
       REQUIRE(widgets.lstParameters->currentRow() == 0);
-      mwt.addUserAction({"Down", "Enter"});
+      mwt.addUserAction([](QWidget *dialog) {
+        dialog->findChild<QComboBox *>("cmbParameter")->setCurrentIndex(3);
+      });
       mwt.start();
       sendMouseClick(widgets.btnEditParameter);
       REQUIRE(widgets.lstParameters->count() == 4);

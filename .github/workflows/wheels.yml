@@ -25,7 +25,7 @@ jobs:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux_x86_64:2023.11.21
+      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux_x86_64:2024.01.23
       CIBW_SKIP: '*-manylinux_i686 *-musllinux* pp*-*'
       CIBW_ENVIRONMENT: 'CMAKE_ARGS="-DSME_BUILD_CORE=off -DCMAKE_PREFIX_PATH=/opt/smelibs;/opt/smelibs/lib64/cmake"'
       CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'
@@ -37,7 +37,7 @@ jobs:
       if: startsWith(github.event.ref, 'refs/tags/') == false
       run: ./ci/set-latest-version.sh ${GITHUB_SHA}
     - name: Cache ccache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ${{ github.workspace }}/ccache
         key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
@@ -75,7 +75,7 @@ jobs:
         if: startsWith(github.event.ref, 'refs/tags/') == false
         run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - name: Cache ccache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /Users/runner/Library/Caches/ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
@@ -108,14 +108,14 @@ jobs:
           submodules: 'true'
       - uses: msys2/setup-msys2@v2
         with:
-          msystem: MINGW64
+          msystem: UCRT64
           update: true
-          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache make
+          install: mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ccache make
       - name: Set "latest" version number unless commit is tagged
         if: startsWith(github.event.ref, 'refs/tags/') == false
         run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - name: Cache ccache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: C:\Users\runneradmin\AppData\Local\ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}

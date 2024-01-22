@@ -122,6 +122,12 @@ target_compile_definitions(
   core PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_${SME_LOG_LEVEL})
 
 find_package(dune-common REQUIRED)
+find_package(SCOTCH)
+target_link_libraries(
+  Dune::Common
+  INTERFACE SCOTCH::scotch
+            SCOTCH::scotcherr
+            SCOTCH::scotchmetisv3)
 find_package(dune-geometry REQUIRED)
 find_package(dune-uggrid REQUIRED)
 find_package(dune-grid REQUIRED)

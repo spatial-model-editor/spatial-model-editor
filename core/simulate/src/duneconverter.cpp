@@ -46,7 +46,7 @@ static void addTimeStepping(IniFile &ini,
   ini.addValue("time_step_min", duneOptions.minDt, doublePrecision);
   ini.addValue("time_step_max", duneOptions.maxDt, doublePrecision);
   ini.addSection("model", "time_step_operator", "linear_solver");
-  ini.addValue("type", "CG");
+  ini.addValue("type", duneOptions.linearSolver.c_str());
   ini.addSection("model", "time_step_operator", "nonlinear_solver");
   ini.addValue("type", duneOptions.integrator.c_str());
   ini.addValue("convergence_condition.relative_tolerance",

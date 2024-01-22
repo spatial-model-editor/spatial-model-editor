@@ -189,7 +189,13 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().targetValues.empty());
     // set conc from image in range [1,2]
     ModalWidgetTimer mwt;
-    mwt.addUserAction({"1", "Tab", "2"});
+    mwt.setIgnoredWidget(&dia);
+    mwt.addUserAction([](QWidget *dialog) {
+      sendKeyEventsToQLineEdit(dialog->findChild<QLineEdit *>("txtMinConc"),
+                               {"1", "Enter"});
+      sendKeyEventsToQLineEdit(dialog->findChild<QLineEdit *>("txtMaxConc"),
+                               {"2", "Enter"});
+    });
     mwt.start();
     sendMouseClick(widgets.btnEditTargetValues);
     REQUIRE(dia.getOptCost().name == "cell/Mt");
@@ -220,7 +226,12 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().targetValues.empty());
     // set conc dcdt from image in range [1.2,2]
     ModalWidgetTimer mwt;
-    mwt.addUserAction({"1", ".", "2", "Tab", "2"});
+    mwt.addUserAction([](QWidget *dialog) {
+      sendKeyEventsToQLineEdit(dialog->findChild<QLineEdit *>("txtMinConc"),
+                               {"1", ".", "2", "Enter"});
+      sendKeyEventsToQLineEdit(dialog->findChild<QLineEdit *>("txtMaxConc"),
+                               {"2", "Enter"});
+    });
     mwt.start();
     sendMouseClick(widgets.btnEditTargetValues);
     REQUIRE(dia.getOptCost().name == "cell/P0");

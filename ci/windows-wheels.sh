@@ -16,8 +16,6 @@ export SME_EXTRA_EXE_LIBS="-static;-static-libgcc;-static-libstdc++"
 # https://codereview.qt-project.org/c/qt/qtbase/+/350443
 export SME_QT_DISABLE_UNICODE=TRUE
 export SME_EXTRA_CORE_DEFS="_hypot=hypot;MS_WIN64"
-# disable this for now due to "terminate called after throwing an instance of 'core::Error'"
-#export CCACHE_NOHASHDIR="true"
 
 export CMAKE_ARGS="-DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH -DSME_BUILD_CORE=off -DSME_QT_DISABLE_UNICODE=$SME_QT_DISABLE_UNICODE -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER"
 pwd
@@ -28,7 +26,6 @@ cmake --version
 which python
 python --version
 
-# disable this for now due to "terminate called after throwing an instance of 'core::Error'"
 ccache -s
 
 # Remove CLI11 symlink to itself (causes recursive copying of folders on windows)
@@ -52,13 +49,12 @@ cmake .. \
     -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS \
     -DSME_LOG_LEVEL=OFF \
     -DSME_BUILD_CORE=on
-make -j2 core tests
-ctest -j2 --rerun-failed --output-on-failure
+make -j4 core tests
+ctest -j4 --rerun-failed --output-on-failure
 make install
 cd ..
 
 python -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
 python -m cibuildwheel --output-dir wheelhouse
 
-# disable this for now due to "terminate called after throwing an instance of 'core::Error'"
 ccache -s

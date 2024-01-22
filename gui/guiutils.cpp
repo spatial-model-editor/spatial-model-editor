@@ -1,6 +1,7 @@
 #include "guiutils.hpp"
 #include "sme/logger.hpp"
 #include "sme/tiff.hpp"
+#include <QComboBox>
 #include <QFileDialog>
 #include <QInputDialog>
 #include <QListWidget>
@@ -10,6 +11,18 @@
 #include <QString>
 #include <QTreeWidget>
 #include <QWidget>
+
+void selectMatchingOrFirstItem(QComboBox *comboBox, const QString &text) {
+  if (comboBox->count() == 0) {
+    return;
+  }
+  int i = comboBox->findText(text);
+  if (i >= 0 && i < comboBox->count()) {
+    comboBox->setCurrentIndex(i);
+  } else {
+    comboBox->setCurrentIndex(0);
+  }
+}
 
 void selectMatchingOrFirstItem(QListWidget *list, const QString &text) {
   if (list->count() == 0) {

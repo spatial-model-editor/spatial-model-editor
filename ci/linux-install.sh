@@ -59,6 +59,10 @@ wget https://anaconda.org/conda-forge/ccache/4.3/download/linux-64/ccache-4.3-ha
 tar -xf ccache-4.3-haef5404_1.tar.bz2
 sudo cp bin/ccache /usr/bin/ccache
 
+# disable system blas/lapack to avoid them getting linked by accident
+sudo rm /usr/lib/x86_64-linux-gnu/libblas*
+sudo rm /usr/lib/x86_64-linux-gnu/liblapack*
+
 # check versions
 cmake --version
 g++ --version

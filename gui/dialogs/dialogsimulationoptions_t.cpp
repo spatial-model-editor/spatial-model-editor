@@ -26,6 +26,7 @@ struct DialogSimulationOptionsWidgets {
     GET_DIALOG_WIDGET(QCheckBox, chkDuneVTK);
     GET_DIALOG_WIDGET(QLineEdit, txtDuneNewtonRel);
     GET_DIALOG_WIDGET(QLineEdit, txtDuneNewtonAbs);
+    GET_DIALOG_WIDGET(QComboBox, cmbDuneLinearSolver);
     GET_DIALOG_WIDGET(QPushButton, btnDuneReset);
     // Pixel tab
     GET_DIALOG_WIDGET(QComboBox, cmbPixelIntegrator);
@@ -51,6 +52,7 @@ struct DialogSimulationOptionsWidgets {
   QLineEdit *txtDuneNewtonRel;
   QLineEdit *txtDuneNewtonAbs;
   QPushButton *btnDuneReset;
+  QComboBox *cmbDuneLinearSolver;
   // Pixel tab
   QComboBox *cmbPixelIntegrator;
   QLineEdit *txtPixelRelErr;
@@ -66,7 +68,7 @@ struct DialogSimulationOptionsWidgets {
 TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
                                      "dialogs][gui][simulationoptions]") {
   sme::simulate::Options options;
-  options.dune.integrator = "ExplicitEuler";
+  options.dune.integrator = "IDontExist";
   options.dune.dt = 0.123;
   options.dune.minDt = 1e-5;
   options.dune.maxDt = 2;
@@ -75,6 +77,7 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
   options.dune.writeVTKfiles = true;
   options.dune.newtonRelErr = 4e-4;
   options.dune.newtonAbsErr = 9e-9;
+  options.dune.linearSolver = "IDontExist";
   options.pixel.integrator = sme::simulate::PixelIntegratorType::RK435;
   options.pixel.maxErr = {0.01, 4e-4};
   options.pixel.maxTimestep = 0.2;
@@ -88,15 +91,18 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
   ModalWidgetTimer mwt;
   SECTION("user does nothing: unchanged") {
     auto opt = dia.getOptions();
-    REQUIRE(options.dune.integrator == "ExplicitEuler");
-    REQUIRE(options.dune.dt == dbl_approx(0.123));
-    REQUIRE(options.dune.minDt == dbl_approx(1e-5));
-    REQUIRE(options.dune.maxDt == dbl_approx(2));
-    REQUIRE(options.dune.increase == dbl_approx(1.11));
-    REQUIRE(options.dune.decrease == dbl_approx(0.77));
-    REQUIRE(options.dune.writeVTKfiles == true);
-    REQUIRE(options.dune.newtonRelErr == dbl_approx(4e-4));
-    REQUIRE(options.dune.newtonAbsErr == dbl_approx(9e-9));
+    REQUIRE(opt.dune.integrator ==
+            "ExplicitEuler"); // invalid choice -> first valid option
+    REQUIRE(opt.dune.dt == dbl_approx(0.123));
+    REQUIRE(opt.dune.minDt == dbl_approx(1e-5));
+    REQUIRE(opt.dune.maxDt == dbl_approx(2));
+    REQUIRE(opt.dune.increase == dbl_approx(1.11));
+    REQUIRE(opt.dune.decrease == dbl_approx(0.77));
+    REQUIRE(opt.dune.writeVTKfiles == true);
+    REQUIRE(opt.dune.newtonRelErr == dbl_approx(4e-4));
+    REQUIRE(opt.dune.newtonAbsErr == dbl_approx(9e-9));
+    REQUIRE(opt.dune.linearSolver ==
+            "BiCGSTAB"); // invalid choice -> first valid option
     REQUIRE(opt.pixel.integrator == sme::simulate::PixelIntegratorType::RK435);
     REQUIRE(opt.pixel.maxErr.rel == dbl_approx(4e-4));
     REQUIRE(opt.pixel.maxErr.abs == dbl_approx(0.01));
@@ -124,6 +130,7 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     sendKeyEvents(widgets.txtDuneNewtonRel, {"1", "e", "-", "7", "Enter"});
     widgets.txtDuneNewtonAbs->clear();
     sendKeyEvents(widgets.txtDuneNewtonAbs, {"0", "Enter"});
+    widgets.cmbDuneLinearSolver->setCurrentIndex(2);
     auto opt = dia.getOptions();
     REQUIRE(opt.dune.integrator == "Heun");
     REQUIRE(opt.dune.dt == dbl_approx(0.4));
@@ -134,6 +141,7 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(opt.dune.writeVTKfiles == false);
     REQUIRE(opt.dune.newtonRelErr == dbl_approx(1e-7));
     REQUIRE(opt.dune.newtonAbsErr == dbl_approx(0));
+    REQUIRE(opt.dune.linearSolver == "RestartedGMRes");
     sendMouseClick(widgets.btnDuneReset);
     sme::simulate::DuneOptions defaultOpts{};
     opt = dia.getOptions();
@@ -144,6 +152,7 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(opt.dune.increase == defaultOpts.increase);
     REQUIRE(opt.dune.decrease == defaultOpts.decrease);
     REQUIRE(opt.dune.writeVTKfiles == defaultOpts.writeVTKfiles);
+    REQUIRE(opt.dune.linearSolver == defaultOpts.linearSolver);
   }
   SECTION("user changes Pixel values, then resets to defaults") {
     widgets.tabSimulator->setCurrentIndex(0);
