@@ -129,10 +129,22 @@ jobs:
           name: artifacts-win64-wheel
           path: ./wheelhouse/*.whl
 
+  sdist:
+    name: Source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build sdist
+        run: pipx run build --sdist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-sdist
+          path: dist/*.tar.gz
+
   pypi:
     name: Upload to PyPI / Github Release
     if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
-    needs: [linux-wheel, macos-wheel, win64-wheel]
+    needs: [linux-wheel, macos-wheel, win64-wheel, sdist]
     runs-on: ubuntu-latest
     environment: release
     permissions:
