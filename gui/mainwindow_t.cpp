@@ -451,3 +451,39 @@ TEST_CASE("MainWindow: non-spatial model import", tags) {
   REQUIRE(statusBarPermanentMessage->text().contains(
       "Importing non-spatial model. Step 2/3"));
 }
+
+TEST_CASE("MainWindow: drag & drop events", tags) {
+  MainWindow w;
+  w.show();
+  waitFor(&w);
+  ModalWidgetTimer mwt;
+  mwt.addUserAction({"Esc"});
+  SECTION("drop non-existent xml file") {
+    mwt.start();
+    sendDropEvent(&w, "dontexist.xml");
+    auto msg = mwt.getResult().toStdString();
+    REQUIRE_THAT(msg, ContainsSubstring("Failed to load file"));
+    REQUIRE_THAT(msg, ContainsSubstring("dontexist.xml"));
+  }
+  SECTION("drop non-existent tiff file") {
+    mwt.start();
+    sendDropEvent(&w, "dontexist.tiff");
+    auto msg = mwt.getResult().toStdString();
+    REQUIRE_THAT(msg, ContainsSubstring("Failed to open image file"));
+    REQUIRE_THAT(msg, ContainsSubstring("dontexist.tiff"));
+  }
+  SECTION("drop xml file") {
+    auto defaultTitle = "Spatial Model Editor [untitled-model]";
+    REQUIRE(w.windowTitle() == defaultTitle);
+    createBinaryFile("models/txy.xml", "drag-drop.xml");
+    sendDropEvent(&w, "drag-drop.xml");
+    waitFor([&]() { return w.windowTitle() != defaultTitle; });
+    REQUIRE(w.windowTitle().right(15) == "[drag-drop.xml]");
+  }
+  SECTION("drop tiff file") {
+    mwt.start();
+    createBinaryFile("16bit_gray.tif", "drag-drop.tif");
+    sendDropEvent(&w, "drag-drop.tif");
+    REQUIRE(mwt.getResult() == "Edit Geometry Image");
+  }
+}

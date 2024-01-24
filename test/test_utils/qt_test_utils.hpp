@@ -2,13 +2,16 @@
 
 #pragma once
 
+#include <QEvent>
 #include <QListWidgetItem>
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QTest>
 #include <QTimer>
 #include <QTreeWidgetItem>
 #include <QtCore>
+#include <concepts>
 #include <functional>
 #include <queue>
 #include <utility>
@@ -32,11 +35,19 @@ void wait(int milliseconds = 100);
 
 void waitFor(QWidget *widget);
 
+void waitFor(std::invocable auto condition) {
+  if (!QTest::qWaitFor(condition)) {
+    qDebug() << "sme::test::waitFor :: Timeout waiting for condition";
+  }
+}
+
 void sendKeyEvents(QObject *object, const QStringList &keySeqStrings,
                    bool sendReleaseEvents = true);
 
 QString sendKeyEventsToNextQDialog(const QStringList &keySeqStrings,
                                    bool sendReleaseEvents = true);
+
+void sendDropEvent(QWidget *object, const QString &filename);
 
 void sendMouseMove(QWidget *widget, const QPoint &pos = {},
                    Qt::MouseButton button = Qt::MouseButton::NoButton);

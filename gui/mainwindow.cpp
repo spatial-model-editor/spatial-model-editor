@@ -128,7 +128,7 @@ MainWindow::~MainWindow() = default;
 
 void MainWindow::setupTabs() {
   tabGeometry = new TabGeometry(model, ui->lblGeometry, ui->voxGeometry,
-                                statusBar(), ui->tabReactions);
+                                statusBar(), ui->tabGeometry);
   ui->tabGeometry->layout()->addWidget(tabGeometry);
 
   tabSpecies =
@@ -683,9 +683,16 @@ void MainWindow::dropEvent(QDropEvent *event) {
   if (!mimeData->hasUrls() || mimeData->urls().isEmpty()) {
     return;
   }
-  auto filename{getConvertedFilename(mimeData->urls().front().toLocalFile())};
-  model.importFile(filename.toStdString());
-  validateSBMLDoc(filename);
+  auto filename = getConvertedFilename(mimeData->urls().front().toLocalFile());
+  QStringList imgSuffixes{"bmp", "png", "jpg", "jpeg", "gif", "tif", "tiff"};
+  if (imgSuffixes.contains(QFileInfo(filename).suffix().toLower())) {
+    if (auto img{getImageStackFromFilename(this, filename)}; !img.empty()) {
+      importGeometryImage(img);
+    }
+  } else {
+    model.importFile(filename.toStdString());
+    validateSBMLDoc(filename);
+  }
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {
