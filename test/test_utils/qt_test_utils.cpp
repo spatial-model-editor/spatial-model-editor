@@ -2,6 +2,7 @@
 #include <QApplication>
 #include <QDebug>
 #include <QDialog>
+#include <QDrag>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QTest>
@@ -78,6 +79,25 @@ QString sendKeyEventsToNextQDialog(const QStringList &keySeqStrings,
     wait(10);
   }
   return title;
+}
+
+void sendDropEvent(QWidget *widget, const QString &filename) {
+  QApplication::processEvents();
+  qDebug() << "sme::test::sendDropEvent :: sending" << filename << "to"
+           << widget;
+  QPoint pos(widget->width() / 2, widget->height() / 2);
+  auto data = new QMimeData();
+  auto drag = new QDrag(widget);
+  drag->setMimeData(data);
+  data->setUrls({QUrl::fromLocalFile(filename)});
+  auto dragEnterEvent =
+      new QDragEnterEvent(pos, Qt::DropAction::MoveAction, data, {}, {});
+  QApplication::postEvent(widget, dragEnterEvent);
+  QApplication::processEvents();
+  auto dropEvent =
+      new QDropEvent(pos, Qt::DropAction::MoveAction, data, {}, {});
+  QApplication::postEvent(widget, dropEvent);
+  QApplication::processEvents();
 }
 
 void sendMouseMove(QWidget *widget, const QPoint &pos, Qt::MouseButton button) {

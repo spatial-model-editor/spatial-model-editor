@@ -47,15 +47,8 @@ void selectMatchingOrFirstChild(QTreeWidget *list, const QString &text) {
   selectFirstChild(list);
 }
 
-sme::common::ImageStack getImageFromUser(QWidget *parent,
-                                         const QString &title) {
-  QString filename = QFileDialog::getOpenFileName(
-      parent, title, "",
-      "Image Files (*.tif *.tiff *.gif *.jpg *.jpeg *.png *.bmp);; All files "
-      "(*.*)");
-  if (filename.isEmpty()) {
-    return {};
-  }
+sme::common::ImageStack getImageStackFromFilename(QWidget *parent,
+                                                  const QString &filename) {
   try {
     return sme::common::ImageStack(filename);
   } catch (const std::invalid_argument &e) {
@@ -66,6 +59,18 @@ sme::common::ImageStack getImageFromUser(QWidget *parent,
             .arg(e.what()));
   }
   return {};
+}
+
+sme::common::ImageStack getImageFromUser(QWidget *parent,
+                                         const QString &title) {
+  QString filename = QFileDialog::getOpenFileName(
+      parent, title, "",
+      "Image Files (*.tif *.tiff *.gif *.jpg *.jpeg *.png *.bmp);; All files "
+      "(*.*)");
+  if (filename.isEmpty()) {
+    return {};
+  }
+  return getImageStackFromFilename(parent, filename);
 }
 
 static QSize getZoomedInSize(const QSize &originalSize, int zoomFactor) {
