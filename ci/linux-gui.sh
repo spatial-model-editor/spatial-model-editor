@@ -27,6 +27,7 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+    -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden" \
     -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
     -DSME_EXTRA_GUI_LIBS=$SME_EXTRA_GUI_LIBS \
     -DSME_LOG_LEVEL=OFF \

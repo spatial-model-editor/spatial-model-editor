@@ -4,6 +4,7 @@
 #include "sbml_utils.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh.hpp"
+#include "sme/mesh3d.hpp"
 #include "sme/model_compartments.hpp"
 #include "sme/model_membranes.hpp"
 #include "sme/model_units.hpp"
@@ -289,35 +290,44 @@ void ModelGeometry::updateMesh() {
   isValid = hasImage && !modelCompartments->getColours().empty() &&
             !modelCompartments->getColours().contains(0);
   if (!isValid) {
+    isMeshValid = false;
     mesh.reset();
-    return;
-  }
-  // for now only generate a mesh for 2-d (single z slice) images
-  if (images.volume().depth() > 1) {
-    SPDLOG_WARN("Meshing not yet implemented for 3-d images");
-    mesh.reset();
+    mesh3d.reset();
     return;
   }
   hasUnsavedChanges = true;
   const auto &colours{modelCompartments->getColours()};
   const auto &ids{modelCompartments->getIds()};
   const auto &meshParams{sbmlAnnotation->meshParameters};
-  // todo: use entire images stack - for now just take first one
-  mesh = std::make_unique<mesh::Mesh>(images[0], meshParams.maxPoints,
-                                      meshParams.maxAreas, voxelSize,
-                                      physicalOrigin, common::toStdVec(colours),
-                                      meshParams.boundarySimplifierType);
-  for (int i = 0; i < ids.size(); ++i) {
-    modelCompartments->setInteriorPoints(
-        ids[i],
-        mesh->getCompartmentInteriorPoints()[static_cast<std::size_t>(i)]);
+  if (images.volume().depth() > 1) {
+    SPDLOG_INFO("Updating 3d mesh");
+    mesh.reset();
+    mesh3d = std::make_unique<mesh::Mesh3d>(images, std::vector<std::size_t>{},
+                                            voxelSize, physicalOrigin,
+                                            common::toStdVec(colours));
+    isMeshValid = mesh3d->isValid();
+  } else {
+    SPDLOG_INFO("Updating 2d mesh");
+    mesh3d.reset();
+    mesh = std::make_unique<mesh::Mesh>(
+        images[0], meshParams.maxPoints, meshParams.maxAreas, voxelSize,
+        physicalOrigin, common::toStdVec(colours),
+        meshParams.boundarySimplifierType);
+    for (int i = 0; i < ids.size(); ++i) {
+      modelCompartments->setInteriorPoints(
+          ids[i],
+          mesh->getCompartmentInteriorPoints()[static_cast<std::size_t>(i)]);
+    }
+    isMeshValid = mesh->isValid();
   }
 }
 
 void ModelGeometry::clear() {
   mesh.reset();
+  mesh3d.reset();
   hasImage = false;
   isValid = false;
+  isMeshValid = false;
   images.clear();
   auto *model = sbmlModel;
   hasUnsavedChanges = true;
@@ -450,11 +460,16 @@ const common::ImageStack &ModelGeometry::getImages() const { return images; }
 
 mesh::Mesh *ModelGeometry::getMesh() const { return mesh.get(); }
 
+mesh::Mesh3d *ModelGeometry::getMesh3d() const { return mesh3d.get(); }
+
 bool ModelGeometry::getIsValid() const { return isValid; }
+
+bool ModelGeometry::getIsMeshValid() const { return isMeshValid; }
 
 bool ModelGeometry::getHasImage() const { return hasImage; }
 
 void ModelGeometry::writeGeometryToSBML() const {
+  // todo: also export 3d mesh
   if (mesh != nullptr && mesh->isValid()) {
     sbmlAnnotation->meshParameters = {mesh->getBoundaryMaxPoints(),
                                       mesh->getCompartmentMaxTriangleArea(),

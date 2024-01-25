@@ -36,7 +36,7 @@ jobs:
         with:
           submodules: 'true'
           fetch-depth: 0
-      - uses: actions/setup-java@v3
+      - uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -48,7 +48,7 @@ jobs:
           restore-keys: ccache-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Get static libs
         run: sudo ./ci/getlibs.sh linux
       - name: Install apt dependencies and use clang

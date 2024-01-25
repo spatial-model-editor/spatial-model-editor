@@ -6,6 +6,7 @@ target_sources(
           interior_point.cpp
           line_simplifier.cpp
           mesh.cpp
+          mesh3d.cpp
           mesh_utils.cpp
           pixel_corner_iterator.cpp
           polyline_simplifier.cpp
@@ -25,6 +26,7 @@ if(BUILD_TESTING)
            line_simplifier.cpp
            line_simplifier_t.cpp
            mesh_t.cpp
+           mesh3d_t.cpp
            mesh_utils.cpp
            mesh_utils_t.cpp
            polyline_simplifier.cpp

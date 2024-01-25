@@ -25,9 +25,9 @@ jobs:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux_x86_64:2024.01.23
+      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux_x86_64:2024.02.01
       CIBW_SKIP: '*-manylinux_i686 *-musllinux* pp*-*'
-      CIBW_ENVIRONMENT: 'CMAKE_ARGS="-DSME_BUILD_CORE=off -DCMAKE_PREFIX_PATH=/opt/smelibs;/opt/smelibs/lib64/cmake"'
+      CIBW_ENVIRONMENT: 'CMAKE_ARGS="-DSME_LOG_LEVEL=OFF -DSME_BUILD_CORE=off -DCMAKE_PREFIX_PATH=/opt/smelibs;/opt/smelibs/lib64/cmake"'
       CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'
     steps:
     - uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
         restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
     - uses: actions/setup-python@v5
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     - name: Install cibuildwheel
       run: python -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
     - name: Build wheels
@@ -82,7 +82,7 @@ jobs:
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - name: Download static libraries
         run: sudo ./ci/getlibs.sh osx
       - name: Build wheels

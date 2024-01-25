@@ -20,7 +20,7 @@ static void openBuiltInModel(MainWindow &w, const QString &shortcutKey = "V") {
       w.findChild<QMenu *>("menuOpen_example_SBML_file")};
   sendKeyEvents(&w, {"Alt+F"});
   sendKeyEvents(menuFile, {"E"});
-  sendKeyEvents(menuOpen_example_SBML_file, {shortcutKey});
+  sendKeyEvents(menuOpen_example_SBML_file, {shortcutKey, "Enter"});
 }
 
 TEST_CASE("MainWindow: non-existent file", tags) {

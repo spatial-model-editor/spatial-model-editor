@@ -21,7 +21,8 @@ class Model;
 
 namespace mesh {
 class Mesh;
-}
+class Mesh3d;
+} // namespace mesh
 
 namespace simulate {
 
@@ -35,6 +36,7 @@ public:
   [[nodiscard]] QString getIniFile() const;
 
   [[nodiscard]] const mesh::Mesh *getMesh() const;
+  [[nodiscard]] const mesh::Mesh3d *getMesh3d() const;
   [[nodiscard]] const std::unordered_map<std::string, std::vector<double>> &
   getConcentrations() const;
   [[nodiscard]] const std::unordered_map<std::string,
@@ -48,6 +50,7 @@ public:
 private:
   QString iniFile;
   const mesh::Mesh *mesh;
+  const mesh::Mesh3d *mesh3d;
   std::unordered_map<std::string, std::vector<double>> concentrations;
   std::unordered_map<std::string, std::vector<std::string>> speciesNames;
   std::vector<std::string> compartmentNames;

@@ -30,26 +30,36 @@ public:
                   const std::vector<double> &concentration)
       : origin{physicalOrigin}, voxel{voxelVolume}, vol{imageVolume},
         c(concentration) {
-    SPDLOG_TRACE("  - {}x{} pixels", vol.width(), vol.height());
-    SPDLOG_TRACE("  - {}x{} pixel size", voxel.width(), voxel.height());
-    SPDLOG_TRACE("  - ({},{}) origin", origin.p.x(), origin.p.y());
+    SPDLOG_TRACE("  - {}x{}x{} voxels", vol.width(), vol.height(), vol.depth());
+    SPDLOG_TRACE("  - {}x{}x{} voxel size", voxel.width(), voxel.height(),
+                 voxel.height());
+    SPDLOG_TRACE("  - ({},{},{}) origin", origin.p.x(), origin.p.y(), origin.z);
   }
   double operator()(Domain globalPos) const {
-    SPDLOG_TRACE("globalPos ({},{})", globalPos[0], globalPos[1]);
+    SPDLOG_TRACE("globalPos ({})", globalPos);
     if (c.empty()) {
       // dummy species, just return 0 everywhere
       return 0;
     }
-    // get nearest pixel to physical point
+    // get nearest voxel to physical point
     auto ix = std::clamp(
         static_cast<int>((globalPos[0] - origin.p.x()) / voxel.width()), 0,
         vol.width() - 1);
     auto iy = std::clamp(
         static_cast<int>((globalPos[1] - origin.p.y()) / voxel.height()), 0,
         vol.height() - 1);
-    SPDLOG_TRACE("pixel ({},{})", ix, iy);
-    SPDLOG_TRACE("conc {}", c[static_cast<std::size_t>(ix + vol.width() * iy)]);
-    return c[static_cast<std::size_t>(ix + vol.width() * iy)];
+    int iz = 0;
+    if constexpr (Domain::size() == 3) {
+      iz = std::clamp(
+          static_cast<int>((globalPos[2] - origin.z) / voxel.depth()), 0,
+          static_cast<int>(vol.depth()) - 1);
+    }
+    SPDLOG_TRACE("  -> voxel ({},{},{})", ix, iy, iz);
+    SPDLOG_TRACE("  -> conc {}",
+                 c[static_cast<std::size_t>(ix + vol.width() * iy +
+                                            vol.width() * vol.height() * iz)]);
+    return c[static_cast<std::size_t>(ix + vol.width() * iy +
+                                      vol.width() * vol.height() * iz)];
   }
 
 private:
@@ -62,9 +72,6 @@ private:
 template <typename Grid, typename GridFunction>
 std::unordered_map<std::string, GridFunction>
 makeModelDuneFunctions(const DuneConverter &dc, const Grid &grid) {
-  //  using GV = typename Grid::LeafGridView;
-  //  using EntitySet = Dune::Functions::GridViewEntitySet<GV, 0>;
-  //  using Domain = typename EntitySet::GlobalCoordinate;
   std::unordered_map<std::string, GridFunction> functions;
   SPDLOG_TRACE("Creating DuneGridFunctions:");
   std::size_t subdomain{0};

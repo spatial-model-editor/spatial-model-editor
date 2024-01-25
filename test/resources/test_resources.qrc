@@ -50,6 +50,8 @@
         <file>geometry/gt20.png</file>
         <file>geometry/potato_alpha_channel.png</file>
         <file>geometry/cell.png</file>
+        <file>geometry/3d_single_egg.tiff</file>
+        <file>geometry/3d_two_eggs_disconnected.tiff</file>
         <file>smefiles/very-simple-model-v0.sme</file>
         <file>smefiles/very-simple-model-v1.sme</file>
         <file>smefiles/very-simple-model-v2.sme</file>
