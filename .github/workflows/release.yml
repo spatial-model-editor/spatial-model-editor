@@ -28,7 +28,7 @@ jobs:
       if: startsWith(github.event.ref, 'refs/tags/') == false
       run: ./ci/set-latest-version.sh ${GITHUB_SHA}
     - name: Cache ccache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/ccache
         key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
@@ -64,7 +64,7 @@ jobs:
         if: startsWith(github.event.ref, 'refs/tags/') == false
         run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - name: Cache ccache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /Users/runner/Library/Caches/ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
@@ -97,9 +97,9 @@ jobs:
           submodules: 'true'
       - uses: msys2/setup-msys2@v2
         with:
-          msystem: MINGW64
+          msystem: UCRT64
           update: true
-          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-cmake mingw-w64-x86_64-ccache make
+          install: mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ccache make
       - name: Install Mesa 3D to get OpenGL support on Windows without a GPU
         uses: ssciwr/setup-mesa-dist-win@v1
         with:
@@ -108,7 +108,7 @@ jobs:
         if: startsWith(github.event.ref, 'refs/tags/') == false
         run: ./ci/set-latest-version.sh ${GITHUB_SHA}
       - name: Cache ccache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: C:\Users\runneradmin\AppData\Local\ccache
           key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}

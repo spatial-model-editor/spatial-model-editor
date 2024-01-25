@@ -22,7 +22,7 @@ cmake .. \
     -DSME_LOG_LEVEL=TRACE
 # ignore any asan errors while building / collecting tests
 export ASAN_OPTIONS="halt_on_error=0"
-time make tests -j2
+time make tests -j4
 ccache --show-stats
 
 # various external libs "leak" memory, don't fail the build because of this

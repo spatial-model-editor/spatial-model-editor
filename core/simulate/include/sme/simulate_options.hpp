@@ -33,6 +33,7 @@ struct DuneOptions {
   bool writeVTKfiles{false};
   double newtonRelErr{1e-8};
   double newtonAbsErr{1e-12};
+  std::string linearSolver{"CG"};
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
@@ -41,6 +42,12 @@ struct DuneOptions {
          CEREAL_NVP(minDt), CEREAL_NVP(maxDt), CEREAL_NVP(increase),
          CEREAL_NVP(decrease), CEREAL_NVP(writeVTKfiles),
          CEREAL_NVP(newtonRelErr), CEREAL_NVP(newtonAbsErr));
+    } else if (version == 1) {
+      ar(CEREAL_NVP(discretization), CEREAL_NVP(integrator), CEREAL_NVP(dt),
+         CEREAL_NVP(minDt), CEREAL_NVP(maxDt), CEREAL_NVP(increase),
+         CEREAL_NVP(decrease), CEREAL_NVP(writeVTKfiles),
+         CEREAL_NVP(newtonRelErr), CEREAL_NVP(newtonAbsErr),
+         CEREAL_NVP(linearSolver));
     }
   }
 };
@@ -108,7 +115,7 @@ bool operator==(const AvgMinMax &lhs, const AvgMinMax &rhs);
 } // namespace sme::simulate
 
 CEREAL_CLASS_VERSION(sme::simulate::Options, 0);
-CEREAL_CLASS_VERSION(sme::simulate::DuneOptions, 0);
+CEREAL_CLASS_VERSION(sme::simulate::DuneOptions, 1);
 CEREAL_CLASS_VERSION(sme::simulate::PixelIntegratorError, 0);
 CEREAL_CLASS_VERSION(sme::simulate::PixelOptions, 0);
 CEREAL_CLASS_VERSION(sme::simulate::AvgMinMax, 0);

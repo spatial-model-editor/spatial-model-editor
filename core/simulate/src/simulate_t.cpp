@@ -1166,7 +1166,7 @@ TEST_CASE("Pixel simulator: brusselator model, RK2, RK3, RK4",
 }
 
 TEST_CASE("DUNE: simulation",
-          "[core/simulate/simulate][core/simulate][core][simulate][dune]") {
+          "[core/simulate/simulate][core/simulate][core][simulate][dune][Q]") {
   SECTION("ABtoC model") {
     auto s{getExampleModel(Mod::ABtoC)};
 
@@ -1179,7 +1179,7 @@ TEST_CASE("DUNE: simulation",
     options.dune.dt = 0.01;
     options.dune.maxDt = 0.01;
     options.dune.minDt = 0.005;
-    options.dune.integrator = "alexander_2";
+    options.dune.integrator = "Alexander2";
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
 
     simulate::Simulation duneSim(s);
@@ -1196,14 +1196,48 @@ TEST_CASE("DUNE: simulation",
     REQUIRE(imgConc.volume().depth() == 1);
     REQUIRE(imgConc[0].size() == QSize(100, 100));
   }
-  SECTION("very-simple-model") {
-    auto s{getExampleModel(Mod::VerySimpleModel)};
-    auto &options{s.getSimulationSettings().options};
+  SECTION("very-simple-model: different linearSolvers") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    m.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+    auto &options{m.getSimulationSettings().options};
     options.dune.dt = 0.01;
-    s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
-    simulate::Simulation duneSim(s);
-    duneSim.doTimesteps(0.01);
-    REQUIRE(duneSim.errorMessage().empty());
+    SECTION("invalid: IDontExist") {
+      options.dune.linearSolver = "IDontExist";
+      simulate::Simulation duneSim(m);
+      duneSim.doTimesteps(0.01);
+      REQUIRE_THAT(duneSim.errorMessage(),
+                   ContainsSubstring("Not known linear solver"));
+    }
+    SECTION("valid & avilable: CG") {
+      options.dune.linearSolver = "CG";
+      simulate::Simulation duneSim(m);
+      duneSim.doTimesteps(0.01);
+      REQUIRE(duneSim.errorMessage().empty());
+    }
+    SECTION("valid & avilable: RestartedGMRes") {
+      options.dune.linearSolver = "RestartedGMRes";
+      simulate::Simulation duneSim(m);
+      duneSim.doTimesteps(0.01);
+      REQUIRE(duneSim.errorMessage().empty());
+    }
+    SECTION("valid & avilable: BiCGSTAB") {
+      options.dune.linearSolver = "BiCGSTAB";
+      simulate::Simulation duneSim(m);
+      duneSim.doTimesteps(0.01);
+      REQUIRE(duneSim.errorMessage().empty());
+    }
+    SECTION("valid but unavilable: UMFPack") {
+      options.dune.linearSolver = "UMFPack";
+      simulate::Simulation duneSim(m);
+      duneSim.doTimesteps(0.01);
+      REQUIRE_THAT(duneSim.errorMessage(), ContainsSubstring("not available"));
+    }
+    SECTION("valid but unavilable: SuperLU") {
+      options.dune.linearSolver = "SuperLU";
+      simulate::Simulation duneSim(m);
+      duneSim.doTimesteps(0.01);
+      REQUIRE_THAT(duneSim.errorMessage(), ContainsSubstring("not available"));
+    }
   }
 }
 

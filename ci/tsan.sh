@@ -25,7 +25,7 @@ cmake .. \
     -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" \
     -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic -Wshadow -Wunused -Wconversion -Wsign-conversion -Wcast-align -fsanitize=thread -fno-omit-frame-pointer -D_GLIBCXX_USE_TBB_PAR_BACKEND=0"
 
-time make tests -j2
+time make tests -j4
 ccache --show-stats
 
 # start a window manager so the Qt GUI tests can have their focus set

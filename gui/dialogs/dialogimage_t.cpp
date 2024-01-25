@@ -13,12 +13,24 @@ struct DialogImageWidgets {
 };
 
 TEST_CASE("DialogImage", "[gui/dialogs/image][gui/dialogs][gui][image]") {
-  sme::common::ImageStack imageStack{{QImage(":/icon/icon128.png")}};
-  QString title("my title");
-  QString message("see image below:");
-  DialogImage dia(nullptr, title, message, imageStack);
-  dia.show();
-  DialogImageWidgets widgets(&dia);
-  REQUIRE(dia.windowTitle() == title);
-  REQUIRE(widgets.lblMessage->text() == message);
+  SECTION("Valid ImageStack") {
+    sme::common::ImageStack imageStack{{QImage(":/icon/icon128.png")}};
+    QString title("my title");
+    QString message("see image below:");
+    DialogImage dia(nullptr, title, message, imageStack);
+    dia.show();
+    DialogImageWidgets widgets(&dia);
+    REQUIRE(dia.windowTitle() == title);
+    REQUIRE(widgets.lblMessage->text() == message);
+  }
+  SECTION("Empty ImageStack") {
+    sme::common::ImageStack imageStack{};
+    QString title("my title");
+    QString message("see image below:");
+    DialogImage dia(nullptr, title, message, imageStack);
+    dia.show();
+    DialogImageWidgets widgets(&dia);
+    REQUIRE(dia.windowTitle() == title);
+    REQUIRE(widgets.lblMessage->text() == message);
+  }
 }

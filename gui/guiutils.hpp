@@ -9,6 +9,9 @@ class QMessageBox;
 class QListWidget;
 class QTreeWidget;
 class QScrollArea;
+class QComboBox;
+
+void selectMatchingOrFirstItem(QComboBox *comboBox, const QString &text = {});
 
 void selectMatchingOrFirstItem(QListWidget *list, const QString &text = {});
 

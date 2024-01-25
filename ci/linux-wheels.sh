@@ -19,7 +19,7 @@ cmake .. \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib64/cmake" \
     -DSME_LOG_LEVEL=OFF \
     -DSME_BUILD_CORE=on
-make -j2 core tests
-ctest -j2 || ctest --rerun-failed --output-on-failure
+make -j4 core tests
+ctest -j4 || ctest --rerun-failed --output-on-failure
 make install
 cd ..

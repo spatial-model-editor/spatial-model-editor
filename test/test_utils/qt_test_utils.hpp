@@ -44,6 +44,9 @@ void waitFor(std::invocable auto condition) {
 void sendKeyEvents(QObject *object, const QStringList &keySeqStrings,
                    bool sendReleaseEvents = true);
 
+void sendKeyEventsToQLineEdit(QLineEdit *lineEdit,
+                              const QStringList &keySeqStrings);
+
 QString sendKeyEventsToNextQDialog(const QStringList &keySeqStrings,
                                    bool sendReleaseEvents = true);
 
