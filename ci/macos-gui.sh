@@ -23,6 +23,7 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+    -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden" \
     -DSME_LOG_LEVEL=OFF \
     -DFREETYPE_LIBRARY_RELEASE=/opt/smelibs/lib/libQt6BundledFreetype.a \
     -DFREETYPE_INCLUDE_DIR_freetype2=/opt/smelibs/include/QtFreetype \

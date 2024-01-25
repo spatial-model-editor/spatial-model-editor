@@ -4,7 +4,7 @@
 
 set -e -x
 
-PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.11.*)
+PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.12.*)
 export PATH="$PYDIR/x64:$PYDIR/x64/Scripts:$PATH"
 echo "PATH=$PATH"
 
@@ -49,7 +49,7 @@ make -j4 VERBOSE=1
 ccache -s -v
 
 # check dependencies
-objdump.exe -x sme/sme.cp311-win_amd64.pyd > sme_obj.txt
+objdump.exe -x sme/sme.cp312-win_amd64.pyd > sme_obj.txt
 head -n 20 sme_obj.txt
 head -n 1000 sme_obj.txt | grep "DLL Name"
 
@@ -60,7 +60,7 @@ tail -n 100 tests.txt
 
 # python tests
 cd ..
-mv build/sme/sme.cp311-win_amd64.pyd .
+mv build/sme/sme.cp312-win_amd64.pyd .
 python -m pip install -r sme/requirements-test.txt
 python -m pytest sme/test -v
 

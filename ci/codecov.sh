@@ -10,11 +10,15 @@ set -e -x
 Xvfb -screen 0 1280x800x24 :99 &
 export DISPLAY=:99
 
-# download codecov uploader
-curl --connect-timeout 10 --retry 5 -Os https://uploader.codecov.io/latest/linux/codecov
+# download codecov cli
+curl --connect-timeout 10 --retry 5 -Os https://cli.codecov.io/latest/linux/codecov
 chmod +x codecov
 sudo mv codecov /usr/bin
 codecov --version
+
+# break system gcov to prevent codecov from using it
+whereis gcov
+sudo mv /usr/bin/gcov /usr/bin/gcov.old
 
 # do build
 mkdir build
@@ -38,10 +42,10 @@ mkdir gcov
 
 run_gcov () {
     find . -type f -name "*.gcno" -print0 | xargs -0 llvm-cov gcov -p > /dev/null
-    ls *.gcov
     mv *#spatial-model-editor#*.gcov gcov/
     rm gcov/*#spatial-model-editor#ext#*.gcov
     rm -f *.gcov
+    ls gcov/*.gcov
 }
 
 test_to_codecov () {
@@ -53,8 +57,10 @@ test_to_codecov () {
     time ./test/tests -as "$TAGS" > "$NAME".txt 2>&1 || (tail -n 1000 "$NAME".txt && exit 1)
     tail -n 100 "$NAME".txt
     run_gcov
-    # upload coverage report to codecov.io - if it returns an error code try again a couple of times
-    codecov -Z -X gcov -F "$NAME" || codecov -Z -X gcov -F "$NAME" || codecov -Z -X gcov -F "$NAME"
+    # upload coverage report to codecov.io - needs to run from source directory, if it returns an error code try again a couple of times
+    pushd ..
+    codecov upload-process -Z -F "$NAME" -t "$CODECOV_TOKEN" || codecov upload-process -Z -F "$NAME" -t "$CODECOV_TOKEN" || codecov upload-process -Z -F "$NAME" -t "$CODECOV_TOKEN"
+    popd
 }
 
 test_to_codecov "core" "~[expensive][core]"
@@ -75,4 +81,6 @@ python -m pytest -sv ../../sme/test > sme.txt 2>&1 || (tail -n 1000 sme.txt && e
 tail -n 100 sme.txt
 cd ..
 run_gcov
-codecov -X gcov -F sme
+pushd ..
+codecov upload-process -Z -F sme -t "$CODECOV_TOKEN" || codecov upload-process -Z -F sme -t "$CODECOV_TOKEN" || codecov upload-process -Z -F sme -t "$CODECOV_TOKEN"
+popd

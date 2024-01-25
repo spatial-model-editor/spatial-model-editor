@@ -35,7 +35,7 @@ jobs:
         restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
     - uses: actions/setup-python@v5
       with:
-        python-version: "3.11"
+        python-version: "3.12"
     - name: Get static libs
       run: sudo ./ci/getlibs.sh linux
     - name: Install dependencies
@@ -71,7 +71,7 @@ jobs:
           restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: Get static libs
         run: sudo ./ci/getlibs.sh osx
       - name: Install OpenGL MESA dependencies
@@ -101,7 +101,7 @@ jobs:
           update: true
           install: mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ccache make
       - name: Install Mesa 3D to get OpenGL support on Windows without a GPU
-        uses: ssciwr/setup-mesa-dist-win@v1
+        uses: ssciwr/setup-mesa-dist-win@v2
         with:
           version: "23.1.5"
       - name: Set "latest" version number unless commit is tagged

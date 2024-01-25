@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sme/mesh.hpp"
+#include "sme/mesh3d.hpp"
 #include "sme/model.hpp"
 #include <QFile>
 #include <QString>
@@ -17,11 +18,13 @@ enum struct Mod {
   Brusselator,
   CircadianClock,
   GrayScott,
+  GrayScott3D,
   LiverSimplified,
   LiverCells,
   SingleCompartmentDiffusion,
   SingleCompartmentDiffusion3D,
-  VerySimpleModel
+  VerySimpleModel,
+  VerySimpleModel3D
 };
 
 model::Model getExampleModel(Mod exampleModel);

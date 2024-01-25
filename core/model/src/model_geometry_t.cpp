@@ -14,11 +14,15 @@ TEST_CASE("Model geometry",
     model::ModelGeometry m;
     REQUIRE(m.getIsValid() == false);
     REQUIRE(m.getMesh() == nullptr);
+    REQUIRE(m.getMesh3d() == nullptr);
+    REQUIRE(m.getIsMeshValid() == false);
     REQUIRE(m.getHasImage() == false);
     REQUIRE(m.getImages().empty());
     m.clear();
     REQUIRE(m.getIsValid() == false);
     REQUIRE(m.getMesh() == nullptr);
+    REQUIRE(m.getMesh3d() == nullptr);
+    REQUIRE(m.getIsMeshValid() == false);
     REQUIRE(m.getHasImage() == false);
     REQUIRE(m.getImages().empty());
   }
@@ -68,11 +72,15 @@ TEST_CASE("Model geometry",
                                      &data, &sbmlAnnotation);
       mSpecies.setReactionsPtr(&mReactions);
       REQUIRE(m.getIsValid() == true);
+      REQUIRE(m.getIsMeshValid() == true);
       REQUIRE(m.getMesh() != nullptr);
+      REQUIRE(m.getMesh3d() == nullptr);
       REQUIRE(m.getHasImage() == true);
       REQUIRE(!m.getImages().empty());
       m.clear();
       REQUIRE(m.getIsValid() == false);
+      REQUIRE(m.getIsMeshValid() == false);
+      REQUIRE(m.getMesh3d() == nullptr);
       REQUIRE(m.getMesh() == nullptr);
       REQUIRE(m.getHasImage() == false);
       REQUIRE(m.getImages().empty());
@@ -91,6 +99,8 @@ TEST_CASE("Model geometry",
       REQUIRE(m.getHasUnsavedChanges() == true);
       REQUIRE(mGeometry.getHasUnsavedChanges() == true);
       REQUIRE(m.getIsValid() == false);
+      REQUIRE(m.getIsMeshValid() == false);
+      REQUIRE(m.getMesh3d() == nullptr);
       REQUIRE(m.getMesh() == nullptr);
       REQUIRE(m.getHasImage() == true);
       auto imgIndexed = mGeometry.getImages();

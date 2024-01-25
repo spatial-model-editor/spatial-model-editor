@@ -121,13 +121,11 @@ target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 target_compile_definitions(
   core PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_${SME_LOG_LEVEL})
 
-find_package(dune-common REQUIRED)
 find_package(SCOTCH)
-target_link_libraries(
-  Dune::Common
-  INTERFACE SCOTCH::scotch
-            SCOTCH::scotcherr
-            SCOTCH::scotchmetisv3)
+target_link_libraries(SCOTCH::scotchmetisv3 INTERFACE SCOTCH::scotcherr)
+target_link_libraries(SCOTCH::scotch INTERFACE SCOTCH::scotchmetisv3)
+find_package(dune-common REQUIRED)
+target_link_libraries(Dune::Common INTERFACE SCOTCH::scotch)
 find_package(dune-geometry REQUIRED)
 find_package(dune-uggrid REQUIRED)
 find_package(dune-grid REQUIRED)
@@ -142,7 +140,6 @@ target_link_libraries(
           ${SYMENGINE_LIBRARIES}
           sbml-static
           Combine-static
-          Dune::Copasi
           CGAL::CGAL
           cereal::cereal
           TBB::tbb)
@@ -151,6 +148,10 @@ target_link_libraries(
   PUBLIC opencv_core
          opencv_imgproc
          spdlog::spdlog
+         Dune::Copasi
+         SCOTCH::scotch
+         SCOTCH::scotchmetisv3
+         SCOTCH::scotcherr
          Qt::Gui
          Qt::Core
          Pagmo::pagmo)
