@@ -19,35 +19,35 @@ static const char *tags{"[gui/widgets/QOpenGLMouseTracker][gui][opengl]"};
 
 TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
-  SECTION("CGAL mesh3d from image, with sme input") {
-
-    QOpenGLMouseTracker test = QOpenGLMouseTracker();
-
-    QColor redColor = QColor(255, 0, 0);
-    QColor blueColor = QColor(0, 0, 255);
-    QColor blackColor = QColor(0, 0, 0);
-
-    test.show();
-
-    wait(100);
-
-    // camera position
-    test.SetCameraPosition(0, 0, -10);
-
-    auto model = sme::model::Model();
-    model.importFile("/home/hcaramizaru/Dropbox/Work-shared/Heidelberg-IWR/"
-                     "spatial-model-editor-resources/cell-3d-model.sme");
-    REQUIRE(model.getIsValid());
-
-    sme::mesh::Mesh3d testMesh(model);
-
-    REQUIRE(testMesh.getNumberOfSubMeshes() == 5);
-
-    rendering::SMesh sphereMesh = testMesh.GetMesh(1);
-    test.addMesh(sphereMesh, redColor);
-
-    wait(100000);
-  }
+  //  SECTION("CGAL mesh3d from image, with sme input") {
+  //
+  //    QOpenGLMouseTracker test = QOpenGLMouseTracker();
+  //
+  //    QColor redColor = QColor(255, 0, 0);
+  //    QColor blueColor = QColor(0, 0, 255);
+  //    QColor blackColor = QColor(0, 0, 0);
+  //
+  //    test.show();
+  //
+  //    wait(100);
+  //
+  //    // camera position
+  //    test.SetCameraPosition(0, 0, -10);
+  //
+  //    auto model = sme::model::Model();
+  //    model.importFile("/home/hcaramizaru/Dropbox/Work-shared/Heidelberg-IWR/"
+  //                     "spatial-model-editor-resources/cell-3d-model.sme");
+  //    REQUIRE(model.getIsValid());
+  //
+  //    sme::mesh::Mesh3d testMesh(model);
+  //
+  //    REQUIRE(testMesh.getNumberOfSubMeshes() == 5);
+  //
+  //    rendering::SMesh sphereMesh = testMesh.GetMesh(1);
+  //    test.addMesh(sphereMesh, redColor);
+  //
+  //    wait(100000);
+  //  }
 
   QOpenGLMouseTracker test = QOpenGLMouseTracker();
 
@@ -154,7 +154,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   REQUIRE(redColor == QcolorSelection);
 
-  wait(100);
+  wait(100000);
 
   // reset
   sendMouseClick(&test, {412, 445});

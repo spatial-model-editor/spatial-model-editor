@@ -22,7 +22,9 @@ struct Face {
 
 struct ObjectInfo {
   std::vector<QVector4D> vertices;
-  std::vector<rendering::Face> faces;
+  // A vector of submeshes. Each submesh contains a vector of indexes of all
+  // faces.
+  std::vector<std::vector<rendering::Face>> submeshes_indexes;
 };
 
 } // namespace rendering

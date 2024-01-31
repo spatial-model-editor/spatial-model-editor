@@ -28,6 +28,9 @@ rendering::ObjectLoader::Load(const std::string &filename) {
 }
 
 rendering::ObjectInfo rendering::ObjectLoader::Load(const SMesh &mesh) {
+
+  assert(!"Not yet adapted!");
+
   ObjectInfo Obj;
 
   // Get vertices

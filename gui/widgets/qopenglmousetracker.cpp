@@ -62,9 +62,13 @@ void QOpenGLMouseTracker::initializeGL() {
               std::string(" ") + gl_version + std::string(" ") +
               std::string("\n\n\t") + ext + std::string("\n"));
 
+  //  m_mainProgram =
+  //      std::unique_ptr<rendering::ShaderProgram>(new
+  //      rendering::ShaderProgram(
+  //          rendering::text_vertex, rendering::text_fragment));
   m_mainProgram =
       std::unique_ptr<rendering::ShaderProgram>(new rendering::ShaderProgram(
-          rendering::text_vertex, rendering::text_fragment));
+          rendering::text_vertex_color_as_uniform, rendering::text_fragment));
 }
 
 void QOpenGLMouseTracker::renderScene(float lineWidth) {
@@ -217,13 +221,14 @@ QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
   return m_camera.GetRotation();
 }
 
-void QOpenGLMouseTracker::addMesh(const rendering::SMesh &mesh, QColor color) {
+void QOpenGLMouseTracker::addMesh(const rendering::SMesh &mesh,
+                                  const std::vector<QColor> &colors) {
   rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
 
   m_meshSet.push_back(std::make_pair(
       color,
       std::unique_ptr<rendering::WireframeObject>(
-          new rendering::WireframeObject(objectInfo, color, mesh, this))));
+          new rendering::WireframeObject(objectInfo, colors, mesh, this))));
 }
 
 void QOpenGLMouseTracker::setFPS(float frameRate) { m_frameRate = frameRate; }

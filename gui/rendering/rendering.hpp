@@ -9,6 +9,7 @@
 #include "ObjectInfo.hpp"
 #include "ObjectLoader.hpp"
 #include "ShaderProgram.hpp"
+#include "Shaders/colorAsUniform/colorAsUniformVertex.hpp"
 #include "Shaders/default/fragment.hpp"
 #include "Shaders/default/vertex.hpp"
 #include "Utils.hpp"
