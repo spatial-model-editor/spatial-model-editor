@@ -20,9 +20,9 @@
 
 namespace sme::simulate {
 
-static void addGrid(IniFile &ini) {
+static void addGrid(IniFile &ini, const QString &filenameGrid) {
   ini.addSection("grid");
-  ini.addValue("path", "grid.msh");
+  ini.addValue("path", filenameGrid);
   ini.addValue("dimension", 2);
 }
 
@@ -295,10 +295,11 @@ DuneConverter::DuneConverter(
     }
   }
   auto filename{QString("%1.ini").arg(baseIniFile)};
+  auto filenameGrid{QString("%1.msh").arg(baseIniFile)};
   auto iniFilename{QDir(iniFileDir).filePath(filename)};
 
   IniFile iniCommon;
-  addGrid(iniCommon);
+  addGrid(iniCommon, filenameGrid);
   addModel(iniCommon);
   addTimeStepping(iniCommon, model.getSimulationSettings().options.dune,
                   doublePrecision);

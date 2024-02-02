@@ -24,7 +24,7 @@ TEST_CASE("DUNE: DuneConverter",
     QStringList ini = dc.getIniFile().split("\n");
     auto line = ini.cbegin();
     REQUIRE(*line++ == "[grid]");
-    REQUIRE(*line++ == "path = grid.msh");
+    REQUIRE(*line++ == "path = dune.msh");
     REQUIRE(*line++ == "dimension = 2");
     line = find_line("[compartments]", ini);
     REQUIRE(*line++ == "[compartments]");
