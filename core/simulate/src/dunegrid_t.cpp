@@ -41,7 +41,9 @@ TEST_CASE("DUNE: grid",
     CAPTURE(exampleModel);
     // load mesh from model
     auto m{getExampleModel(exampleModel)};
-    simulate::DuneConverter dc(m, {}, true);
+    auto filename =
+        QString("tmp_dunegrid_model_%1").arg(static_cast<int>(exampleModel));
+    simulate::DuneConverter dc(m, {}, true, filename + ".ini");
     auto config{getConfig(dc)};
     const auto *mesh{m.getGeometry().getMesh()};
 
@@ -49,7 +51,8 @@ TEST_CASE("DUNE: grid",
     auto [grid, hostGrid] = simulate::makeDuneGrid<HostGrid, MDGTraits>(*mesh);
 
     // generate dune grid with Dune::Copasi::make_multi_domain_grid
-    if (QFile f("grid.msh"); f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    if (QFile f(filename + ".msh");
+        f.open(QIODevice::WriteOnly | QIODevice::Text)) {
       f.write(mesh->getGMSH().toUtf8());
       f.close();
     }
