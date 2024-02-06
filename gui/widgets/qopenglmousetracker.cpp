@@ -72,9 +72,10 @@ void QOpenGLMouseTracker::initializeGL() {
 }
 
 void QOpenGLMouseTracker::renderScene(float lineWidth) {
-  for (color_mesh &obj : m_meshSet) {
-    obj.second->Render(m_mainProgram, lineWidth);
-  }
+  //  for (color_mesh &obj : m_meshSet) {
+  //    obj.second->Render(m_mainProgram, lineWidth);
+  //  }
+  m_SubMeshes->Render(m_mainProgram, lineWidth);
 }
 
 void QOpenGLMouseTracker::paintGL() {
@@ -136,20 +137,39 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
               std::string(" Y:") + std::to_string(m_yAtPress));
   SPDLOG_INFO("color :" + color.name().toStdString());
 
-  for (color_mesh &obj : m_meshSet) {
-    if (obj.first == color) {
-      obj.second->SetColor(m_selectedObjectColor);
+  //  for (color_mesh &obj : m_meshSet) {
+  //    if (obj.first == color) {
+  //      obj.second->SetColor(m_selectedObjectColor);
+  //      objectSelected = true;
+  //      emit mouseClicked(m_lastColour, obj.second->GetMesh());
+  //
+  //      SPDLOG_INFO("Object touched!");
+  //    }
+  //  }
+
+  auto defaultColors = m_SubMeshes->GetDefaultColors();
+  for (uint32_t i = 0; i < defaultColors.size(); i++) {
+    if (defaultColors[i] == color) {
+      m_SubMeshes->SetColor(m_selectedObjectColor, i);
       objectSelected = true;
-      emit mouseClicked(m_lastColour, obj.second->GetMesh());
+      // emit mouseClicked(m_lastColour, obj.second->GetMesh());
 
       SPDLOG_INFO("Object touched!");
     }
   }
 
+  //  if (!objectSelected) {
+  //    for (color_mesh &obj : m_meshSet) {
+  //      auto defaultColor = obj.first;
+  //      obj.second->SetColor(defaultColor);
+  //    }
+  //
+  //    SPDLOG_INFO("Reset state for selected objects to UNSELECTED objects!");
+  //  }
+
   if (!objectSelected) {
-    for (color_mesh &obj : m_meshSet) {
-      auto defaultColor = obj.first;
-      obj.second->SetColor(defaultColor);
+    for (uint32_t i = 0; i < defaultColors.size(); i++) {
+      m_SubMeshes->ResetDefaultColor(i);
     }
 
     SPDLOG_INFO("Reset state for selected objects to UNSELECTED objects!");
@@ -184,9 +204,16 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
   QRgb pixel = m_offscreenPickingImage.pixel(xAtPress, yAtPress);
   QColor color(pixel);
 
-  for (color_mesh &obj : m_meshSet) {
-    if (obj.first == color) {
-      emit mouseOver(obj.second->GetMesh());
+  //  for (color_mesh &obj : m_meshSet) {
+  //    if (obj.first == color) {
+  //      emit mouseOver(obj.second->GetMesh());
+  //    }
+  //  }
+
+  auto defaultColors = m_SubMeshes->GetDefaultColors();
+  for (uint32_t i = 0; i < defaultColors.size(); i++) {
+    if (defaultColors[i] == color) {
+      //      emit mouseOver(obj.second->GetMesh());
     }
   }
 }
@@ -221,14 +248,26 @@ QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
   return m_camera.GetRotation();
 }
 
-void QOpenGLMouseTracker::addMesh(const rendering::SMesh &mesh,
-                                  const std::vector<QColor> &colors) {
+// void QOpenGLMouseTracker::addMesh(const rendering::SMesh &mesh,
+//                                   const std::vector<QColor> &colors) {
+//   rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
+//
+//   m_meshSet.push_back(std::make_pair(
+//       color,
+//       std::unique_ptr<rendering::WireframeObject>(
+//           new rendering::WireframeObject(objectInfo, colors, mesh, this))));
+// }
+
+void QOpenGLMouseTracker::SetSubMeshes(const rendering::SMesh &mesh,
+                                       const std::vector<QColor> &colors) {
   rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
 
-  m_meshSet.push_back(std::make_pair(
-      color,
-      std::unique_ptr<rendering::WireframeObject>(
-          new rendering::WireframeObject(objectInfo, colors, mesh, this))));
+  // check 'colors' size and if it is 0 then generate colors automatically,
+  // equally distributed during HSV space where the first color is the
+  // ''m_selectedObjectColor''
+
+  m_SubMeshes = std::unique_ptr<rendering::WireframeObject>(
+      new rendering::WireframeObject(objectInfo, mesh, this, colors));
 }
 
 void QOpenGLMouseTracker::setFPS(float frameRate) { m_frameRate = frameRate; }

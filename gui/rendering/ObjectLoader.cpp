@@ -42,16 +42,17 @@ rendering::ObjectInfo rendering::ObjectLoader::Load(const SMesh &mesh) {
                                         static_cast<float>(pt.z()), 1.0f));
   }
 
-  // Get face indices
-  Obj.faces.reserve(mesh.faces().size());
-  for (SMesh::Face_index face_index : mesh.faces()) {
-    CGAL::Vertex_around_face_circulator<SMesh> vcirc(mesh.halfedge(face_index),
-                                                     mesh),
-        done(vcirc);
-    Obj.faces.emplace_back(*vcirc++, *vcirc++, *vcirc++);
-    if (vcirc != done)
-      throw std::runtime_error("The faces must be triangles!");
-  }
+  //  // Get face indices
+  //  Obj.faces.reserve(mesh.faces().size());
+  //  for (SMesh::Face_index face_index : mesh.faces()) {
+  //    CGAL::Vertex_around_face_circulator<SMesh> vcirc(
+  //        mesh.halfedge(face_index),mesh
+  //        ),
+  //        done(vcirc);
+  //    Obj.faces.emplace_back(*vcirc++, *vcirc++, *vcirc++);
+  //    if (vcirc != done)
+  //      throw std::runtime_error("The faces must be triangles!");
+  //  }
 
   return Obj;
 }

@@ -30,7 +30,10 @@ public:
   QVector3D GetCameraPosition() const;
   QVector3D GetCameraOrientation() const;
 
-  void addMesh(const rendering::SMesh &mesh, const std::vector<QColor> &colors);
+  //  void addMesh(const rendering::SMesh &mesh, const std::vector<QColor>
+  //  &colors);
+  void SetSubMeshes(const rendering::SMesh &mesh,
+                    const std::vector<QColor> &colors = std::vector<QColor>(0));
 
   void setFPS(float frameRate);
   void setLineWidth(float lineWidth = 1.0f);
@@ -65,7 +68,8 @@ protected:
   typedef std::pair<QColor, std::unique_ptr<rendering::WireframeObject>>
       color_mesh;
 
-  std::vector<color_mesh> m_meshSet;
+  //  std::vector<color_mesh> m_meshSet;
+  std::unique_ptr<rendering::WireframeObject> m_SubMeshes;
 
   std::unique_ptr<rendering::ShaderProgram> m_mainProgram;
   rendering::Camera m_camera;

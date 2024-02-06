@@ -8,8 +8,8 @@ rendering::WireframeObject::WireframeObject(
     const rendering::ObjectInfo &info,
     //                                            const QColor &color,
     const rendering::SMesh &mesh, const QOpenGLWidget *Widget,
-    const QVector3D &position, const QVector3D &rotation,
-    const QVector3D &scale, const std::vector<QColor> &colors)
+    const std::vector<QColor> &colors, const QVector3D &position,
+    const QVector3D &rotation, const QVector3D &scale)
     : m_mesh(mesh), m_openGLContext(Widget->context()), m_position(position),
       m_rotation(rotation), m_scale(scale), m_colors(colors),
       m_default_colors(colors), m_vertices(info.vertices) {
@@ -82,6 +82,10 @@ uint32_t rendering::WireframeObject::GetNumberOfSubMeshes() {
 
 rendering::SMesh rendering::WireframeObject::GetMesh() const { return m_mesh; }
 
+std::vector<QColor> rendering::WireframeObject::GetDefaultColors() const {
+  return m_default_colors;
+}
+
 // void rendering::WireframeObject::UpdateVBOColor() {
 //
 //   m_openGLContext->makeCurrent(m_openGLContext->surface());
@@ -115,7 +119,7 @@ void rendering::WireframeObject::CreateVBO() {
 
   GLsizeiptr vboSize = m_verticesBuffer.size() * sizeof(GLfloat);
   //  GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(uint8_t);
-  GLsizeiptr indexBufferSize = m_indices.size() * sizeof(GLuint);
+  //  GLsizeiptr indexBufferSize = m_indices.size() * sizeof(GLuint);
 
   m_vao = std::unique_ptr<QOpenGLVertexArrayObject>(
       new QOpenGLVertexArrayObject(nullptr));
@@ -144,7 +148,7 @@ void rendering::WireframeObject::CreateVBO() {
   //  glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, nullptr);
   //  CheckOpenGLError("glVertexAttribPointer");
   //  glEnableVertexAttribArray(1);
-  //  CheckOpenGLError("glEnableVertexAttribArray");
+  //  CheckOpenGLError("glEnableVertexAttribArray");indexBufferSize
 
   m_elementBufferIds.resize(m_indices.size());
   glGenBuffers(m_elementBufferIds.size(), m_elementBufferIds.data());
@@ -152,8 +156,8 @@ void rendering::WireframeObject::CreateVBO() {
   for (int i = 0; i < m_elementBufferIds.size(); i++) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferIds[i]);
     CheckOpenGLError("glBindBuffer");
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBufferSize, m_indices[i].data(),
-                 GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices[i].size(),
+                 m_indices[i].data(), GL_STATIC_DRAW);
     CheckOpenGLError("glBufferData");
   }
 }
@@ -169,9 +173,10 @@ void rendering::WireframeObject::DestroyVBO() {
 
   //  glDeleteBuffers(1, &m_colorBufferId);
   glDeleteBuffers(1, &m_vbo);
-  for (int i = 0; i < m_elementBufferIds.size(); i++) {
-    glDeleteBuffers(1, &m_elementBufferIds[i]);
-  }
+  //  for (int i = 0; i < m_elementBufferIds.size(); i++) {
+  //    glDeleteBuffers(1, &m_elementBufferIds[i]);
+  //  }
+  glDeleteBuffers(m_elementBufferIds.size(), m_elementBufferIds.data());
 
   m_vao->release();
   m_vao->destroy();

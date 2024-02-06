@@ -67,7 +67,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   REQUIRE(QFile::exists("tmp_sphere.ply"));
   rendering::SMesh sphereMesh = rendering::ObjectLoader::LoadMesh(
       QDir::current().filePath("tmp_sphere.ply").toStdString());
-  test.addMesh(sphereMesh, redColor);
+  //  test.addMesh(sphereMesh, redColor);
+  test.SetSubMeshes(sphereMesh, {redColor});
 
   wait(100);
 
@@ -79,7 +80,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   rendering::SMesh teapotMesh = rendering::ObjectLoader::LoadMesh(
       QDir::current().filePath("tmp_teapot.ply").toStdString());
-  test.addMesh(teapotMesh, blueColor);
+  //  test.addMesh(teapotMesh, blueColor);
+  test.SetSubMeshes(teapotMesh, {blueColor});
 
   auto QcolorSelection = QColor(test.getColour());
 
