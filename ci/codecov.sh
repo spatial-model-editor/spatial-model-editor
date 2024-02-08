@@ -54,7 +54,7 @@ test_to_codecov () {
     tail -n 100 "$NAME".txt
     run_gcov
     # upload coverage report to codecov.io - if it returns an error code try again a couple of times
-    codecov -Z upload-process -F "$NAME" -t "$CODECOV_TOKEN" || codecov -Z upload-process -F "$NAME" -t "$CODECOV_TOKEN" || codecov -Z upload-process -F "$NAME" -t "$CODECOV_TOKEN"
+    codecov upload-process -Z -F "$NAME" -t "$CODECOV_TOKEN" || codecov upload-process -Z -F "$NAME" -t "$CODECOV_TOKEN" || codecov upload-process -Z -F "$NAME" -t "$CODECOV_TOKEN"
 }
 
 test_to_codecov "core" "~[expensive][core]"
