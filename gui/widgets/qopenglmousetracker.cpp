@@ -12,7 +12,8 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(float lineWidth,
     : m_camera(cameraFOV, static_cast<float>(size().width()),
                static_cast<float>(size().height()), cameraNearZ, cameraFarZ),
       m_lineWidth(lineWidth), m_lineSelectPrecision(lineSelectPrecision),
-      m_selectedObjectColor(selectedObjectColor), m_frameRate(frameRate) {}
+      m_selectedObjectColor(selectedObjectColor), m_frameRate(frameRate),
+      m_SubMeshes(nullptr) {}
 
 void QOpenGLMouseTracker::initializeGL() {
 
@@ -75,7 +76,8 @@ void QOpenGLMouseTracker::renderScene(float lineWidth) {
   //  for (color_mesh &obj : m_meshSet) {
   //    obj.second->Render(m_mainProgram, lineWidth);
   //  }
-  m_SubMeshes->Render(m_mainProgram, lineWidth);
+  if (m_SubMeshes)
+    m_SubMeshes->Render(m_mainProgram, lineWidth);
 }
 
 void QOpenGLMouseTracker::paintGL() {

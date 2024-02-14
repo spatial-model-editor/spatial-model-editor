@@ -28,6 +28,7 @@ class ObjectLoader {
 public:
   static ObjectInfo Load(const std::string &filename);
   static ObjectInfo Load(const SMesh &);
+  static ObjectInfo Load(const sme::mesh::C3t3 c3t3);
   static SMesh LoadMesh(const std::string &filename);
 };
 
