@@ -439,4 +439,28 @@ TEST_CASE("SBML species",
     REQUIRE(common::average(s.getField("A_c1")->getConcentration()) ==
             dbl_approx(2.0));
   }
+  SECTION("Analytic conc involving piecewise") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &s{m.getSpecies()};
+    s.setAnalyticConcentration("A_c1", "piecewise(1,x<33,2,x>66,0)");
+    REQUIRE(s.getInitialConcentrationType("A_c1") ==
+            model::ConcentrationType::Analytic);
+    REQUIRE(s.getAnalyticConcentration("A_c1") ==
+            "piecewise(1, x < 33, 2, x > 66, 0)");
+    const auto &voxels{s.getField("A_c1")->getCompartment()->getVoxels()};
+    const auto &concentration{s.getField("A_c1")->getConcentration()};
+    REQUIRE(voxels.size() == concentration.size());
+    auto correct_conc = [&m](const common::Voxel &voxel) {
+      double x{m.getGeometry().getPhysicalPoint(voxel).p.x()};
+      if (x < 33) {
+        return 1;
+      } else if (x > 66) {
+        return 2;
+      }
+      return 0;
+    };
+    for (std::size_t i = 0; i < voxels.size(); ++i) {
+      REQUIRE(concentration[i] == dbl_approx(correct_conc(voxels[i])));
+    }
+  }
 }

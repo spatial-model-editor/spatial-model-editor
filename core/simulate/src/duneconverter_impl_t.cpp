@@ -9,19 +9,17 @@ using namespace sme::test;
 TEST_CASE("DUNE: DuneConverter impl",
           "[core/simulate/duneconverter][core/simulate][core][duneconverter]") {
   SECTION("Species Names") {
-    std::vector<std::string> names{"a",   "x",  "y",     "t",    "a_i",
-                                   "cos", "x_", "out_o", "out_a"};
+    std::vector<std::string> names{"a",   "position_x", "position_y", "time",
+                                   "a_i", "cos",        "position_x_"};
     auto duneNames = simulate::makeValidDuneSpeciesNames(names);
     REQUIRE(duneNames.size() == names.size());
     REQUIRE(duneNames[0] == "a");
-    REQUIRE(duneNames[1] == "x__");
-    REQUIRE(duneNames[2] == "y_");
-    REQUIRE(duneNames[3] == "t_");
-    REQUIRE(duneNames[4] == "a_i_");
+    REQUIRE(duneNames[1] == "position_x__");
+    REQUIRE(duneNames[2] == "position_y_");
+    REQUIRE(duneNames[3] == "time_");
+    REQUIRE(duneNames[4] == "a_i");
     REQUIRE(duneNames[5] == "cos_");
-    REQUIRE(duneNames[6] == "x_");
-    REQUIRE(duneNames[7] == "out_o_");
-    REQUIRE(duneNames[8] == "out_a");
+    REQUIRE(duneNames[6] == "position_x_");
   }
   SECTION("ABtoC model") {
     auto s{getExampleModel(Mod::ABtoC)};
@@ -31,7 +29,6 @@ TEST_CASE("DUNE: DuneConverter impl",
     REQUIRE(nonConstantSpecies[0] == "A");
     REQUIRE(nonConstantSpecies[1] == "B");
     REQUIRE(nonConstantSpecies[2] == "C");
-    REQUIRE(simulate::modelHasIndependentCompartments(s) == true);
 
     // make all species constant
     s.getSpecies().setIsConstant("A", true);
@@ -40,7 +37,6 @@ TEST_CASE("DUNE: DuneConverter impl",
     REQUIRE(simulate::compartmentContainsNonConstantSpecies(s, "comp") ==
             false);
     REQUIRE(simulate::getNonConstantSpecies(s, "comp").empty());
-    REQUIRE(simulate::modelHasIndependentCompartments(s) == true);
   }
   SECTION("very-simple-model model") {
     auto s{getExampleModel(Mod::VerySimpleModel)};
@@ -50,7 +46,6 @@ TEST_CASE("DUNE: DuneConverter impl",
     REQUIRE(simulate::getNonConstantSpecies(s, "c1").size() == 1);
     REQUIRE(simulate::getNonConstantSpecies(s, "c2").size() == 2);
     REQUIRE(simulate::getNonConstantSpecies(s, "c3").size() == 2);
-    REQUIRE(simulate::modelHasIndependentCompartments(s) == false);
 
     // remove only non-constant species in compartment c1
     s.getSpecies().remove("B_c1");
@@ -60,7 +55,6 @@ TEST_CASE("DUNE: DuneConverter impl",
     REQUIRE(simulate::getNonConstantSpecies(s, "c1").empty());
     REQUIRE(simulate::getNonConstantSpecies(s, "c2").size() == 2);
     REQUIRE(simulate::getNonConstantSpecies(s, "c3").size() == 2);
-    REQUIRE(simulate::modelHasIndependentCompartments(s) == false);
 
     // remove membrane reactions
     s.getReactions().remove("A_uptake");
@@ -73,6 +67,5 @@ TEST_CASE("DUNE: DuneConverter impl",
     REQUIRE(simulate::getNonConstantSpecies(s, "c1").empty());
     REQUIRE(simulate::getNonConstantSpecies(s, "c2").size() == 2);
     REQUIRE(simulate::getNonConstantSpecies(s, "c3").size() == 2);
-    REQUIRE(simulate::modelHasIndependentCompartments(s) == true);
   }
 }

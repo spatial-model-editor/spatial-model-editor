@@ -4,6 +4,7 @@
 #include "sme/geometry.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh.hpp"
+#include "sme/mesh3d.hpp"
 #include "sme/model.hpp"
 #include "sme/pde.hpp"
 #include "sme/simulate_options.hpp"
@@ -20,149 +21,120 @@
 
 namespace sme::simulate {
 
-static void addGrid(IniFile &ini) {
+static void addGrid(IniFile &ini, int dimension, const QString &filenameGrid) {
   ini.addSection("grid");
-  ini.addValue("file", "grid.msh");
-  ini.addValue("initial_level", 0);
-  ini.addValue("dimension", 2);
+  ini.addValue("path", filenameGrid);
+  ini.addValue("dimension", dimension);
 }
 
 static void addModel(IniFile &ini) {
   ini.addSection("model");
   ini.addValue("order", 1);
+  ini.addValue("parser_type", "SymEngineSBML");
 }
 
 static void addTimeStepping(IniFile &ini,
                             const simulate::DuneOptions &duneOptions,
                             int doublePrecision) {
-  ini.addSection("model", "time_stepping");
-  ini.addValue("rk_method", duneOptions.integrator.c_str());
-  ini.addValue("begin", 0.0, doublePrecision);
-  ini.addValue("end", 100.0, doublePrecision);
-  ini.addValue("initial_step", duneOptions.dt, doublePrecision);
-  ini.addValue("min_step", duneOptions.minDt, doublePrecision);
-  ini.addValue("max_step", duneOptions.maxDt, doublePrecision);
-  ini.addValue("decrease_factor", duneOptions.decrease, doublePrecision);
-  ini.addValue("increase_factor", duneOptions.increase, doublePrecision);
-
-  ini.addSection("model", "time_stepping", "newton");
-  ini.addValue("reduction", duneOptions.newtonRelErr, doublePrecision);
-  ini.addValue("min_linear_reduction", 1e-3, doublePrecision);
-  ini.addValue("fixed_linear_reduction", "false");
-  ini.addValue("max_iterations", 40);
-  ini.addValue("absolute_limit", duneOptions.newtonAbsErr, doublePrecision);
-  ini.addValue("reassemble_threshold", 0.0, doublePrecision);
-  ini.addValue("keep_matrix", "true");
-  ini.addValue("force_iteration", "false");
-
-  ini.addSection("model", "time_stepping", "newton.linear_search");
-  ini.addValue("strategy", "hackbuschReusken");
-  ini.addValue("max_iterations", 10);
-  ini.addValue("damping_factor", 0.5, doublePrecision);
-}
-
-static void addLogging(IniFile &ini, bool forExternalUse) {
-  ini.addSection("logging.sinks.stdout");
-  ini.addValue("level", "trace");
-  ini.addSection("logging.default");
-  if (forExternalUse) {
-    ini.addValue("level", "info");
-    ini.addValue("sinks", "stdout");
-  } else if (SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_DEBUG) {
-    // for debug GUI builds enable verbose DUNE logging
-    ini.addValue("level", "trace");
-    ini.addValue("sinks", "stdout");
-  } else {
-    // for release GUI builds disable DUNE logging
-    ini.addValue("level", "off");
-    ini.addValue("sinks", "stdout");
-  }
+  ini.addSection("model", "time_step_operator");
+  ini.addValue("time_begin", 0.0, doublePrecision);
+  ini.addValue("time_end", 100.0, doublePrecision);
+  ini.addValue("time_step_initial", duneOptions.dt, doublePrecision);
+  ini.addValue("time_step_increase_factor", duneOptions.increase,
+               doublePrecision);
+  ini.addValue("time_step_decrease_factor", duneOptions.decrease,
+               doublePrecision);
+  ini.addValue("time_step_min", duneOptions.minDt, doublePrecision);
+  ini.addValue("time_step_max", duneOptions.maxDt, doublePrecision);
+  ini.addSection("model", "time_step_operator", "linear_solver");
+  ini.addValue("type", duneOptions.linearSolver.c_str());
+  ini.addSection("model", "time_step_operator", "nonlinear_solver");
+  ini.addValue("type", duneOptions.integrator.c_str());
+  ini.addValue("convergence_condition.relative_tolerance",
+               duneOptions.newtonRelErr, doublePrecision);
+  ini.addValue("convergence_condition.absolute_tolerance",
+               duneOptions.newtonAbsErr, doublePrecision);
 }
 
 static void addWriter(IniFile &ini) {
-  ini.addSection("model", "writer");
-  ini.addValue("file_path", "vtk");
+  ini.addSection("model", "writer.vtk");
+  ini.addValue("path", "vtk");
 }
 
 static void addCompartment(
     IniFile &ini, const model::Model &model,
     const std::map<std::string, double, std::less<>> &substitutions,
     int doublePrecision, bool forExternalUse, const QString &iniFileDir,
-    std::vector<std::vector<std::vector<double>>> &concentrations,
+    std::unordered_map<std::string, std::vector<double>> &concentrations,
+    std::unordered_map<std::string, std::vector<std::string>> &speciesNames,
     const QString &compartmentId, std::size_t &simDataCompartmentIndex) {
   const auto &lengthUnit = model.getUnits().getLength();
   const auto &volumeUnit = model.getUnits().getVolume();
   double volOverL3{model::getVolOverL3(lengthUnit, volumeUnit)};
   std::vector<std::string> extraReactionVars{
       "time", model.getParameters().getSpatialCoordinates().x.id,
-      model.getParameters().getSpatialCoordinates().y.id};
-  std::vector<std::string> relabelledExtraReactionVars{"t", "x", "y"};
+      model.getParameters().getSpatialCoordinates().y.id,
+      model.getParameters().getSpatialCoordinates().z.id};
+  std::vector<std::string> relabelledExtraReactionVars{
+      "time", "position_x", "position_y", "position_z"};
 
   SPDLOG_TRACE("compartment {}", compartmentId.toStdString());
+
   auto nonConstantSpecies = getNonConstantSpecies(model, compartmentId);
-  if (nonConstantSpecies.empty()) {
-    // need to add a dummy species with no reactions:
-    // dune doesn't support simulating an empty compartment
-    QString dummySpeciesName{"dummySpeciesForEmptyCompartment"};
-    ini.addSection("model", compartmentId, "initial");
-    ini.addValue(dummySpeciesName, "0");
-    // empty concentrations vector: gridfunction just returns zero everywhere
-    concentrations.emplace_back(1, std::vector<double>{});
-    ini.addSection("model", compartmentId, "reaction");
-    ini.addValue(dummySpeciesName, "0");
-    ini.addSection("model", compartmentId, "reaction.jacobian");
-    ini.addValue(QString("d%1__d%2").arg(dummySpeciesName, dummySpeciesName),
-                 "0");
-    ini.addSection("model", compartmentId, "diffusion");
-    ini.addValue(dummySpeciesName, "0");
-    for (const auto &membrane : model.getMembranes().getMembranes()) {
-      auto cA{membrane.getCompartmentA()->getId().c_str()};
-      auto cB{membrane.getCompartmentB()->getId().c_str()};
-      QString otherCompId;
-      if (cA == compartmentId) {
-        otherCompId = cB;
-      } else if (cB == compartmentId) {
-        otherCompId = cA;
-      }
-      if (!otherCompId.isEmpty()) {
-        ini.addSection("model", compartmentId, "boundary", otherCompId,
-                       "outflow");
-        ini.addValue(dummySpeciesName, "0");
-        ini.addSection("model", compartmentId, "boundary", otherCompId,
-                       "outflow", "jacobian");
-        ini.addValue(
-            QString("d%1_i__d%2_i").arg(dummySpeciesName, dummySpeciesName),
-            "0");
+  auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
+  speciesNames[compartmentId.toStdString()] = [&model, &compartmentId,
+                                               &duneSpeciesNames]() {
+    std::vector<std::string> duneSpeciesNamesSmeIndices;
+    std::size_t duneNameIndex{0};
+    for (const auto &s : model.getSpecies().getIds(compartmentId)) {
+      if (!model.getSpecies().getIsConstant(s)) {
+        duneSpeciesNamesSmeIndices.push_back(duneSpeciesNames[duneNameIndex++]);
+        SPDLOG_INFO("  - SME species {} -> DUNE species {}", s.toStdString(),
+                    duneSpeciesNamesSmeIndices.back());
+      } else {
+        // if SME species is not in dune sim dune species name is empty string
+        duneSpeciesNamesSmeIndices.emplace_back();
+        SPDLOG_INFO(
+            "  - SME species {} is constant -> not present in DUNE simulation",
+            s.toStdString());
       }
     }
+    return duneSpeciesNamesSmeIndices;
+  }();
+
+  // construct reactions
+  auto reacs = common::toStdString(model.getReactions().getIds(compartmentId));
+  PdeScaleFactors scaleFactors;
+  scaleFactors.species = volOverL3;
+  scaleFactors.reaction = 1.0 / volOverL3;
+  SPDLOG_INFO("  - multiplying species by [vol]/[length]^3 = {}",
+              scaleFactors.species);
+  SPDLOG_INFO("  - multiplying reactions by [length]^3/[vol] = {}",
+              scaleFactors.reaction);
+
+  Pde pde(&model, nonConstantSpecies, reacs, duneSpeciesNames, scaleFactors,
+          extraReactionVars, relabelledExtraReactionVars, substitutions);
+
+  std::vector<QString> tiffs;
+  std::size_t nSpecies{nonConstantSpecies.size()};
+  if (nSpecies == 0) {
+    // dummy species with no reactions if compartment is empty
+    auto dummySpeciesName{QString("%1_dummy_species").arg(compartmentId)};
+    ini.addSection("model", "scalar_field", dummySpeciesName);
+    ini.addValue("compartment", compartmentId);
+    ini.addValue("initial.expression", "0");
+    // todo: this reaction expression is a hack to avoid timestep -> 0
+    ini.addValue("reaction.expression", "0.1");
+    ini.addValue(
+        QString("reaction.jacobian.%1.expression").arg(dummySpeciesName), "0");
+    ini.addValue("storage.expression", "1");
     return;
   }
-  auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
-  for (std::size_t is = 0; is < duneSpeciesNames.size(); ++is) {
-    SPDLOG_TRACE("  - species '{}' -> '{}'", nonConstantSpecies[is],
-                 duneSpeciesNames[is]);
-  }
-
-  // initial concentrations
-  auto &concs{concentrations.emplace_back(duneSpeciesNames.size(),
-                                          std::vector<double>{})};
-  // these smeToDuneIndices map from a dune species index to the SME species
-  // index:
-  auto duneToSmeIndices{common::getIndicesOfSortedVector(duneSpeciesNames)};
-  // we want the inverse mapping: from SME index to dune index
-  auto smeToDuneIndices = duneToSmeIndices;
-  for (std::size_t i = 0; i < smeToDuneIndices.size(); ++i) {
-    smeToDuneIndices[duneToSmeIndices[i]] = i;
-  }
-  for (std::size_t i = 0; i < smeToDuneIndices.size(); ++i) {
-    SPDLOG_INFO("  - SME species {} -> DUNE species {} [{}]", i,
-                smeToDuneIndices[i], duneSpeciesNames[i]);
-  }
-  std::vector<QString> tiffs;
-  ini.addSection("model", compartmentId, "initial");
-  for (std::size_t i = 0; i < nonConstantSpecies.size(); ++i) {
+  for (std::size_t i = 0; i < nSpecies; ++i) {
     QString name{nonConstantSpecies[i].c_str()};
     QString duneName{duneSpeciesNames[i].c_str()};
+    ini.addSection("model", "scalar_field", duneName);
+    ini.addValue("compartment", compartmentId);
     double initConc = model.getSpecies().getInitialConcentration(name);
     // convert A/V to A/L^3
     initConc /= volOverL3;
@@ -186,14 +158,16 @@ static void addCompartment(
             f->getCompartment()->getCompartmentImages()[0].size(), conc,
             model.getGeometry().getVoxelSize());
         tiffs.push_back(sampledFieldName);
-        ini.addValue(duneName,
-                     QString("%1*%2(x,y)").arg(max).arg(sampledFieldName));
+        ini.addValue("initial.expression",
+                     QString("%1*%2(position_x,position_y)")
+                         .arg(max)
+                         .arg(sampledFieldName));
       } else {
         // otherwise just use initialConcentration value
-        ini.addValue(duneName, initConc, doublePrecision);
+        ini.addValue("initial.expression", initConc, doublePrecision);
       }
     } else {
-      ini.addValue(duneName, 0.0, doublePrecision);
+      ini.addValue("initial.expression", 0.0, doublePrecision);
       // create array of concentration values
       if (const auto &simConcs{model.getSimulationData().concentration};
           simConcs.size() > 1) {
@@ -206,19 +180,88 @@ static void addCompartment(
         SPDLOG_INFO("using simulation concentration data for species {}",
                     name.toStdString());
         SPDLOG_INFO("- species index {}", i);
-        SPDLOG_INFO("- species dune index {}", smeToDuneIndices[i]);
         for (std::size_t iPixel = 0; iPixel < nPixels; ++iPixel) {
           c[iPixel] =
               simConcs.back()[simDataCompartmentIndex][iPixel * stride + i];
         }
         simField.setConcentration(c);
-        concs[smeToDuneIndices[i]] = simField.getConcentrationImageArray();
+        concentrations[duneName.toStdString()] =
+            simField.getConcentrationImageArray();
       } else {
-        concs[smeToDuneIndices[i]] = f->getConcentrationImageArray();
+        concentrations[duneName.toStdString()] =
+            f->getConcentrationImageArray();
       }
-      for (auto &c : concs[smeToDuneIndices[i]]) {
+      for (auto &c : concentrations[duneName.toStdString()]) {
         // convert A/V to A/L^3
         c /= volOverL3;
+      }
+    }
+
+    // Factor to multiply d/dt term by in PDE
+    ini.addValue("storage.expression", "1");
+
+    // reactions
+    ini.addValue("reaction.expression", pde.getRHS()[i].c_str());
+    for (std::size_t j = 0; j < nSpecies; ++j) {
+      QString lhs = QString("reaction.jacobian.%1.expression")
+                        .arg(duneSpeciesNames[j].c_str());
+      QString rhs = pde.getJacobian()[i][j].c_str();
+      ini.addValue(lhs, rhs);
+    }
+
+    // diffusion coefficient
+    QString sId{nonConstantSpecies[i].c_str()};
+    double diffConst{model.getSpecies().getDiffusionConstant(sId)};
+    ini.addValue(QString("cross_diffusion.%1.expression").arg(duneName),
+                 diffConst, doublePrecision);
+
+    // membrane flux terms
+    // todo: should collect membranes outside of this loop over species!
+    for (const auto &membrane : model.getMembranes().getMembranes()) {
+      auto cA = membrane.getCompartmentA()->getId().c_str();
+      auto cB = membrane.getCompartmentB()->getId().c_str();
+      QString otherCompId;
+      if (cA == compartmentId) {
+        otherCompId = cB;
+      } else if (cB == compartmentId) {
+        otherCompId = cA;
+      }
+      if (!otherCompId.isEmpty()) {
+        QString membraneID = membrane.getId().c_str();
+        auto mReacs =
+            common::toStdString(model.getReactions().getIds(membraneID));
+        auto nonConstantSpeciesOther =
+            getNonConstantSpecies(model, otherCompId);
+        auto duneSpeciesNamesOther =
+            makeValidDuneSpeciesNames(nonConstantSpeciesOther);
+
+        auto mSpecies = nonConstantSpecies;
+        for (const auto &s : nonConstantSpeciesOther) {
+          mSpecies.push_back(s);
+        }
+        auto mDuneSpecies = duneSpeciesNames;
+        for (const auto &s : duneSpeciesNamesOther) {
+          mDuneSpecies.push_back(s);
+        }
+        PdeScaleFactors mScaleFactors;
+        mScaleFactors.species = volOverL3;
+        mScaleFactors.reaction = -1.0;
+        SPDLOG_INFO("  - multiplying species by [vol]/[length]^3 = {}",
+                    mScaleFactors.species);
+
+        Pde pdeBcs(&model, mSpecies, mReacs, mDuneSpecies, mScaleFactors,
+                   extraReactionVars, relabelledExtraReactionVars,
+                   substitutions);
+        // reaction expression
+        ini.addValue(QString("outflow.%1.expression").arg(otherCompId),
+                     pdeBcs.getRHS()[i].c_str());
+        // reaction expression jacobian
+        for (std::size_t j = 0; j < mDuneSpecies.size(); ++j) {
+          QString lhs = QString("outflow.%1.jacobian.%2.expression")
+                            .arg(otherCompId, mDuneSpecies[j].c_str());
+          QString rhs = pdeBcs.getJacobian()[i][j].c_str();
+          ini.addValue(lhs, rhs);
+        }
       }
     }
   }
@@ -226,106 +269,10 @@ static void addCompartment(
     ++simDataCompartmentIndex;
   }
   if (forExternalUse && !tiffs.empty()) {
-    ini.addSection("model", "data");
     for (const auto &tiff : tiffs) {
-      ini.addValue(tiff, tiff + QString(".tif"));
-    }
-  }
-
-  // reactions
-  ini.addSection("model", compartmentId, "reaction");
-  std::size_t nSpecies{nonConstantSpecies.size()};
-
-  auto reacs = common::toStdString(model.getReactions().getIds(compartmentId));
-  PdeScaleFactors scaleFactors;
-  scaleFactors.species = volOverL3;
-  scaleFactors.reaction = 1.0 / volOverL3;
-  SPDLOG_INFO("  - multiplying species by [vol]/[length]^3 = {}",
-              scaleFactors.species);
-  SPDLOG_INFO("  - multiplying reactions by [length]^3/[vol] = {}",
-              scaleFactors.reaction);
-
-  Pde pde(&model, nonConstantSpecies, reacs, duneSpeciesNames, scaleFactors,
-          extraReactionVars, relabelledExtraReactionVars, substitutions);
-  for (std::size_t i = 0; i < nSpecies; ++i) {
-    ini.addValue(duneSpeciesNames[i].c_str(), pde.getRHS()[i].c_str());
-  }
-
-  // reaction term jacobian
-  ini.addSection("model", compartmentId, "reaction.jacobian");
-  for (std::size_t i = 0; i < nSpecies; ++i) {
-    for (std::size_t j = 0; j < nSpecies; ++j) {
-      QString lhs =
-          QString("d%1__d%2")
-              .arg(duneSpeciesNames[i].c_str(), duneSpeciesNames[j].c_str());
-      QString rhs = pde.getJacobian()[i][j].c_str();
-      ini.addValue(lhs, rhs);
-    }
-  }
-
-  // diffusion coefficients
-  ini.addSection("model", compartmentId, "diffusion");
-  for (std::size_t i = 0; i < nSpecies; ++i) {
-    QString sId{nonConstantSpecies[i].c_str()};
-    double diffConst{model.getSpecies().getDiffusionConstant(sId)};
-    ini.addValue(duneSpeciesNames[i].c_str(), diffConst, doublePrecision);
-  }
-
-  // membrane flux terms
-  for (const auto &membrane : model.getMembranes().getMembranes()) {
-    auto cA = membrane.getCompartmentA()->getId().c_str();
-    auto cB = membrane.getCompartmentB()->getId().c_str();
-    QString otherCompId;
-    if (cA == compartmentId) {
-      otherCompId = cB;
-    } else if (cB == compartmentId) {
-      otherCompId = cA;
-    }
-    if (!otherCompId.isEmpty()) {
-      ini.addSection("model", compartmentId, "boundary", otherCompId,
-                     "outflow");
-      QString membraneID = membrane.getId().c_str();
-      auto mReacs =
-          common::toStdString(model.getReactions().getIds(membraneID));
-      auto nonConstantSpeciesOther = getNonConstantSpecies(model, otherCompId);
-      auto duneSpeciesNamesOther =
-          makeValidDuneSpeciesNames(nonConstantSpeciesOther);
-
-      auto mSpecies = nonConstantSpecies;
-      for (const auto &s : nonConstantSpeciesOther) {
-        mSpecies.push_back(s);
-      }
-      auto mDuneSpecies = duneSpeciesNames;
-      for (auto &s : mDuneSpecies) {
-        s.append("_i");
-      }
-      for (const auto &s : duneSpeciesNamesOther) {
-        mDuneSpecies.push_back(s + "_o");
-      }
-      PdeScaleFactors mScaleFactors;
-      mScaleFactors.species = volOverL3;
-      mScaleFactors.reaction = -1.0;
-      SPDLOG_INFO("  - multiplying species by [vol]/[length]^3 = {}",
-                  mScaleFactors.species);
-
-      Pde pdeBcs(&model, mSpecies, mReacs, mDuneSpecies, mScaleFactors,
-                 extraReactionVars, relabelledExtraReactionVars, substitutions);
-      for (std::size_t i = 0; i < nSpecies; ++i) {
-        ini.addValue(duneSpeciesNames[i].c_str(), pdeBcs.getRHS()[i].c_str());
-      }
-
-      // reaction term jacobian
-      ini.addSection("model", compartmentId, "boundary", otherCompId, "outflow",
-                     "jacobian");
-      for (std::size_t i = 0; i < nSpecies; ++i) {
-        for (std::size_t j = 0; j < mDuneSpecies.size(); ++j) {
-          QString lhs =
-              QString("d%1__d%2")
-                  .arg(duneSpeciesNames[i].c_str(), mDuneSpecies[j].c_str());
-          QString rhs = pdeBcs.getJacobian()[i][j].c_str();
-          ini.addValue(lhs, rhs);
-        }
-      }
+      ini.addSection("parser_context", tiff);
+      ini.addValue("type", "tiff");
+      ini.addValue("path", tiff + QString(".tif"));
     }
   }
 }
@@ -335,14 +282,12 @@ DuneConverter::DuneConverter(
     const std::map<std::string, double, std::less<>> &substitutions,
     bool forExternalUse, const QString &outputIniFile, int doublePrecision)
     : mesh{model.getGeometry().getMesh()},
+      mesh3d{model.getGeometry().getMesh3d()},
       origin{model.getGeometry().getPhysicalOrigin()},
       voxelSize{model.getGeometry().getVoxelSize()},
       imageSize{model.getGeometry().getImages().volume()} {
 
-  independentCompartments = modelHasIndependentCompartments(model);
-
   QString iniFileDir{QDir::currentPath()};
-  std::vector<QString> iniFilenames;
   QString baseIniFile{"dune"};
   if (!outputIniFile.isEmpty()) {
     iniFileDir = QFileInfo(outputIniFile).absolutePath();
@@ -351,85 +296,71 @@ DuneConverter::DuneConverter(
       baseIniFile.chop(4);
     }
   }
+  auto filename{QString("%1.ini").arg(baseIniFile)};
+  auto filenameGrid{QString("%1.msh").arg(baseIniFile)};
+  auto iniFilename{QDir(iniFileDir).filePath(filename)};
 
   IniFile iniCommon;
-  addGrid(iniCommon);
+  int dimension = mesh3d != nullptr ? 3 : 2;
+  addGrid(iniCommon, dimension, filenameGrid);
   addModel(iniCommon);
   addTimeStepping(iniCommon, model.getSimulationSettings().options.dune,
                   doublePrecision);
-  addLogging(iniCommon, forExternalUse);
   addWriter(iniCommon);
 
-  std::vector<IniFile> inis;
-  if (independentCompartments) {
-    // create independent ini file for each compartment
-    for (const auto &comp : model.getCompartments().getIds()) {
-      const auto &name{model.getCompartments().getName(comp)};
-      auto filename{QString("%1_%2.ini").arg(baseIniFile).arg(name)};
-      iniFilenames.push_back(QDir(iniFileDir).filePath(filename));
-      inis.push_back(iniCommon);
-    }
+  // list of compartments with corresponding gmsh surface index
+  if (forExternalUse) {
+    // compartments is a top level section when running externally
+    iniCommon.addSection("compartments");
   } else {
-    // single ini file for model
-    auto filename{QString("%1.ini").arg(baseIniFile)};
-    iniFilenames.push_back(QDir(iniFileDir).filePath(filename));
-    inis.push_back(iniCommon);
+    // otherwise it is part of model
+    iniCommon.addSection("model", "compartments");
   }
-
-  // list of compartments with corresponding gmsh surface index - 1
-  if (!independentCompartments) {
-    inis[0].addSection("model.compartments");
-  }
-  int duneCompIndex{0};
+  int duneCompIndex{1};
   for (const auto &comp : model.getCompartments().getIds()) {
     SPDLOG_TRACE("compartment {}", comp.toStdString());
-    if (independentCompartments) {
-      inis[static_cast<std::size_t>(duneCompIndex)].addSection(
-          "model.compartments");
-      inis[static_cast<std::size_t>(duneCompIndex)].addValue(comp, 0);
-      SPDLOG_TRACE("  -> added to independent model {}", duneCompIndex);
-    } else {
-      inis[0].addValue(comp, duneCompIndex);
-      SPDLOG_TRACE("  -> added with index {}", duneCompIndex);
+    iniCommon.addValue(QString("%1.expression").arg(comp),
+                       QString("(gmsh_id == %1)").arg(duneCompIndex));
+    SPDLOG_TRACE("  -> added with index {}", duneCompIndex);
+    if (!forExternalUse) {
+      // also need an id which determines the sub-grid for this compartment
+      // TODO: confirm this matches the sub-grid indices that we assign when
+      // constructing the grid
+      iniCommon.addValue(QString("%1.id").arg(comp), duneCompIndex - 1);
     }
     ++duneCompIndex;
   }
 
-  std::size_t modelIndex{0};
   std::size_t simDataCompartmentIndex{0};
   // for each compartment
   for (const auto &compId : model.getCompartments().getIds()) {
-    addCompartment(inis[modelIndex], model, substitutions, doublePrecision,
-                   forExternalUse, iniFileDir, concentrations, compId,
-                   simDataCompartmentIndex);
-    if (independentCompartments) {
-      ++modelIndex;
-    }
+    addCompartment(iniCommon, model, substitutions, doublePrecision,
+                   forExternalUse, iniFileDir, concentrations, speciesNames,
+                   compId, simDataCompartmentIndex);
+    compartmentNames.push_back(compId.toStdString());
   }
 
-  for (const auto &ini : inis) {
-    iniFiles.push_back(ini.getText());
-  }
+  iniFile = iniCommon.getText();
 
   if (forExternalUse) {
     // export ini files
-    for (std::size_t i = 0; i < iniFiles.size(); ++i) {
-      SPDLOG_TRACE("Exporting dune ini file: '{}'",
-                   iniFilenames[i].toStdString());
-      if (QFile f(iniFilenames[i]); f.open(
-              QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text)) {
-        f.write(iniFiles[i].toUtf8());
-      } else {
-        SPDLOG_ERROR("Failed to export ini file '{}'",
-                     iniFilenames[i].toStdString());
-      }
+    SPDLOG_TRACE("Exporting dune ini file: '{}'", iniFilename.toStdString());
+    if (QFile f(iniFilename);
+        f.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text)) {
+      f.write(iniFile.toUtf8());
+    } else {
+      SPDLOG_ERROR("Failed to export ini file '{}'", iniFilename.toStdString());
     }
     // export gmsh file `grid.msh` in the same dir
-    QString gmshFilename = QDir(iniFileDir).filePath("grid.msh");
+    QString gmshFilename = QDir(iniFileDir).filePath(filenameGrid);
     SPDLOG_TRACE("Exporting gmsh file: '{}'", gmshFilename.toStdString());
     if (QFile f(gmshFilename);
         f.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text)) {
-      f.write(mesh->getGMSH().toUtf8());
+      if (mesh3d != nullptr) {
+        f.write(mesh3d->getGMSH().toUtf8());
+      } else {
+        f.write(mesh->getGMSH().toUtf8());
+      }
     } else {
       SPDLOG_ERROR("Failed to export gmsh file '{}'",
                    gmshFilename.toStdString());
@@ -437,23 +368,25 @@ DuneConverter::DuneConverter(
   }
 }
 
-QString DuneConverter::getIniFile(std::size_t compartmentIndex) const {
-  return iniFiles[compartmentIndex];
-}
-
-const std::vector<QString> &DuneConverter::getIniFiles() const {
-  return iniFiles;
-}
-
-bool DuneConverter::hasIndependentCompartments() const {
-  return independentCompartments;
-}
+QString DuneConverter::getIniFile() const { return iniFile; }
 
 const mesh::Mesh *DuneConverter::getMesh() const { return mesh; }
 
-const std::vector<std::vector<std::vector<double>>> &
+const mesh::Mesh3d *DuneConverter::getMesh3d() const { return mesh3d; }
+
+const std::unordered_map<std::string, std::vector<double>> &
 DuneConverter::getConcentrations() const {
   return concentrations;
+}
+
+[[nodiscard]] const std::unordered_map<std::string, std::vector<std::string>> &
+DuneConverter::getSpeciesNames() const {
+  return speciesNames;
+}
+
+[[nodiscard]] const std::vector<std::string> &
+DuneConverter::getCompartmentNames() const {
+  return compartmentNames;
 }
 
 common::VoxelF DuneConverter::getOrigin() const { return origin; }

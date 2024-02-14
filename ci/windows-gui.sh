@@ -4,7 +4,7 @@
 
 set -e -x
 
-PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.11.*)
+PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.12.*)
 export PATH="$PYDIR/x64:$PYDIR/x64/Scripts:$PATH"
 echo "PATH=$PATH"
 
@@ -40,13 +40,16 @@ cmake .. \
     -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER \
     -DSME_QT_DISABLE_UNICODE=$SME_QT_DISABLE_UNICODE \
     -DSME_LOG_LEVEL=OFF \
-    -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS
-make -j2 VERBOSE=1
+    -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS \
+    -DFREETYPE_LIBRARY_RELEASE=/c/smelibs/lib/libQt6BundledFreetype.a \
+    -DFREETYPE_INCLUDE_DIR_freetype2=/c/smelibs/include/QtFreetype \
+    -DFREETYPE_INCLUDE_DIR_ft2build=/c/smelibs/include/QtFreetype
+make -j4 VERBOSE=1
 
 ccache -s -v
 
 # check dependencies
-objdump.exe -x sme/sme.cp311-win_amd64.pyd > sme_obj.txt
+objdump.exe -x sme/sme.cp312-win_amd64.pyd > sme_obj.txt
 head -n 20 sme_obj.txt
 head -n 1000 sme_obj.txt | grep "DLL Name"
 
@@ -57,7 +60,7 @@ tail -n 100 tests.txt
 
 # python tests
 cd ..
-mv build/sme/sme.cp311-win_amd64.pyd .
+mv build/sme/sme.cp312-win_amd64.pyd .
 python -m pip install -r sme/requirements-test.txt
 python -m pytest sme/test -v
 

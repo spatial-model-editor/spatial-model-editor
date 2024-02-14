@@ -20,8 +20,8 @@ public:
   [[nodiscard]] const sme::simulate::OptParam &getOptParam() const;
 
 private:
-  const std::vector<sme::simulate::OptParam> &defaultOptParams;
-  sme::simulate::OptParam optParam{};
+  const std::vector<sme::simulate::OptParam> &m_defaultOptParams;
+  sme::simulate::OptParam m_optParam{};
   std::unique_ptr<Ui::DialogOptParam> ui;
   void cmbParameter_currentIndexChanged(int index);
 };

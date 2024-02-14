@@ -12,7 +12,7 @@
 #include <QPoint>
 #include <algorithm>
 #include <cstddef>
-#include <dune/pdelab/common/function.hh>
+#include <dune/functions/gridfunctions/gridviewfunction.hh>
 #include <memory>
 #include <vector>
 
@@ -22,77 +22,75 @@ template <typename F, int n> class FieldVector;
 
 namespace sme::simulate {
 
-template <typename GV>
-class GridFunction
-    : public Dune::PDELab::GridFunctionBase<
-          Dune::PDELab::GridFunctionTraits<GV, double, 1,
-                                           Dune::FieldVector<double, 1>>,
-          GridFunction<GV>> {
+template <typename Domain> class SmeGridFunction {
 public:
-  using Traits = Dune::PDELab::GridFunctionTraits<GV, double, 1,
-                                                  Dune::FieldVector<double, 1>>;
-  GridFunction(const common::VoxelF &origin, const common::VolumeF &voxelSize,
-               const common::Volume &imageSize,
-               const std::vector<double> &concentration)
-      : origin{origin}, voxelSize{voxelSize}, imageSize{imageSize},
+  SmeGridFunction(const common::VoxelF &physicalOrigin,
+                  const common::VolumeF &voxelVolume,
+                  const common::Volume &imageVolume,
+                  const std::vector<double> &concentration)
+      : origin{physicalOrigin}, voxel{voxelVolume}, vol{imageVolume},
         c(concentration) {
-    SPDLOG_TRACE("  - {}x{} pixels", imageSize.width(), imageSize.height());
-    SPDLOG_TRACE("  - {}x{} pixel size", voxelSize.width(), voxelSize.height());
-    SPDLOG_TRACE("  - ({},{}) origin", origin.p.x(), origin.p.y());
+    SPDLOG_TRACE("  - {}x{}x{} voxels", vol.width(), vol.height(), vol.depth());
+    SPDLOG_TRACE("  - {}x{}x{} voxel size", voxel.width(), voxel.height(),
+                 voxel.height());
+    SPDLOG_TRACE("  - ({},{},{}) origin", origin.p.x(), origin.p.y(), origin.z);
   }
-  void set_time([[maybe_unused]] double t) {}
-  template <typename Element, typename Domain>
-  void evaluate(const Element &elem, const Domain &localPos,
-                typename Traits::RangeType &result) const {
+  double operator()(Domain globalPos) const {
+    SPDLOG_TRACE("globalPos ({})", globalPos);
     if (c.empty()) {
       // dummy species, just return 0 everywhere
-      result = 0;
-      return;
+      return 0;
     }
-    SPDLOG_TRACE("localPos ({},{})", localPos[0], localPos[1]);
-    auto globalPos = elem.geometry().global(localPos);
-    SPDLOG_TRACE("globalPos ({},{})", globalPos[0], globalPos[1]);
-    // get nearest pixel to physical point
+    // get nearest voxel to physical point
     auto ix = std::clamp(
-        static_cast<int>((globalPos[0] - origin.p.x()) / voxelSize.width()), 0,
-        imageSize.width() - 1);
+        static_cast<int>((globalPos[0] - origin.p.x()) / voxel.width()), 0,
+        vol.width() - 1);
     auto iy = std::clamp(
-        static_cast<int>((globalPos[1] - origin.p.y()) / voxelSize.height()), 0,
-        imageSize.height() - 1);
-    result = c[static_cast<std::size_t>(ix + imageSize.width() * iy)];
-    SPDLOG_TRACE("pixel ({},{})", ix, iy);
-    SPDLOG_TRACE("conc {}", result);
+        static_cast<int>((globalPos[1] - origin.p.y()) / voxel.height()), 0,
+        vol.height() - 1);
+    int iz = 0;
+    if constexpr (Domain::size() == 3) {
+      iz = std::clamp(
+          static_cast<int>((globalPos[2] - origin.z) / voxel.depth()), 0,
+          static_cast<int>(vol.depth()) - 1);
+    }
+    SPDLOG_TRACE("  -> voxel ({},{},{})", ix, iy, iz);
+    SPDLOG_TRACE("  -> conc {}",
+                 c[static_cast<std::size_t>(ix + vol.width() * iy +
+                                            vol.width() * vol.height() * iz)]);
+    return c[static_cast<std::size_t>(ix + vol.width() * iy +
+                                      vol.width() * vol.height() * iz)];
   }
 
 private:
   common::VoxelF origin;
-  common::VolumeF voxelSize;
-  common::Volume imageSize;
+  common::VolumeF voxel;
+  common::Volume vol;
   std::vector<double> c;
 };
 
-template <class GV>
-auto makeCompartmentDuneFunctions(const DuneConverter &dc,
-                                  std::size_t compIndex) {
-  std::vector<std::shared_ptr<GridFunction<GV>>> functions;
-  const auto &concentrations = dc.getConcentrations()[compIndex];
-  std::size_t nSpecies{concentrations.size()};
-  functions.reserve(nSpecies);
-  SPDLOG_TRACE("compartment {}", compIndex);
-  SPDLOG_TRACE("  - contains {} species", nSpecies);
-  for (const auto &concentration : concentrations) {
-    functions.emplace_back(std::make_shared<GridFunction<GV>>(
-        dc.getOrigin(), dc.getVoxelSize(), dc.getImageSize(), concentration));
-  }
-  return functions;
-}
-
-template <class GV> auto makeModelDuneFunctions(const DuneConverter &dc) {
-  std::vector<std::vector<std::shared_ptr<GridFunction<GV>>>> functions;
-  const auto &concentrations = dc.getConcentrations();
-  functions.reserve(concentrations.size());
-  for (std::size_t i = 0; i < concentrations.size(); ++i) {
-    functions.push_back(makeCompartmentDuneFunctions<GV>(dc, i));
+template <typename Grid, typename GridFunction>
+std::unordered_map<std::string, GridFunction>
+makeModelDuneFunctions(const DuneConverter &dc, const Grid &grid) {
+  std::unordered_map<std::string, GridFunction> functions;
+  SPDLOG_TRACE("Creating DuneGridFunctions:");
+  std::size_t subdomain{0};
+  for (const auto &compartmentId : dc.getCompartmentNames()) {
+    SPDLOG_TRACE("Compartment {} {}", subdomain, compartmentId);
+    auto gridView{grid.subDomain(static_cast<int>(subdomain)).leafGridView()};
+    using Domain = typename decltype(gridView)::template Codim<
+        0>::Geometry::GlobalCoordinate;
+    for (const auto &speciesName : dc.getSpeciesNames().at(compartmentId)) {
+      if (!speciesName.empty()) {
+        SPDLOG_TRACE("  - {}", speciesName);
+        auto func{SmeGridFunction<Domain>(
+            dc.getOrigin(), dc.getVoxelSize(), dc.getImageSize(),
+            dc.getConcentrations().at(speciesName))};
+        functions[fmt::format("{}.{}", compartmentId, speciesName)] =
+            Dune::Functions::makeAnalyticGridViewFunction(func, gridView);
+      }
+    }
+    ++subdomain;
   }
   return functions;
 }

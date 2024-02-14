@@ -4,9 +4,9 @@
 
 set -e -x
 
-# add llvm repo for clang / llvm-cov 16
+# add llvm repo for clang / llvm-cov 17
 sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-16 main"
+sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-17 main"
 
 sudo apt-get update -yy
 
@@ -16,10 +16,10 @@ sudo apt-get install -yy \
     xvfb \
     jwm \
     lcov \
-    clang-16 \
-    llvm-16 \
+    clang-17 \
+    llvm-17 \
     libclang-dev \
-    libclang-rt-16-dev
+    libclang-rt-17-dev
 
 # install qt build dependencies
 sudo apt-get install -yy \
@@ -45,19 +45,23 @@ sudo apt-get install -yy \
     libxkbcommon-x11-dev \
     '^libxcb.*-dev'
 
-# use clang 16 as default version
+# use clang 17 as default version
 sudo update-alternatives --remove-all clang || echo "nothing to remove"
 sudo update-alternatives --remove-all clang++ || echo "nothing to remove"
 sudo update-alternatives --remove-all llvm-cov || echo "nothing to remove"
-sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-16 100
-sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-16 100
-sudo update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-16 100
+sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-17 100
+sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-17 100
+sudo update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-17 100
 
 # get a reasonably recent version of ccache from conda-forge
 # nb: more recent versions from conda-forge depend on libhiredis >= 1 which is not available on ubuntu
 wget https://anaconda.org/conda-forge/ccache/4.3/download/linux-64/ccache-4.3-haef5404_1.tar.bz2
 tar -xf ccache-4.3-haef5404_1.tar.bz2
 sudo cp bin/ccache /usr/bin/ccache
+
+# disable system blas/lapack to avoid them getting linked by accident
+sudo rm /usr/lib/x86_64-linux-gnu/libblas*
+sudo rm /usr/lib/x86_64-linux-gnu/liblapack*
 
 # check versions
 cmake --version

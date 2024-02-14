@@ -77,6 +77,7 @@ private:
   void actionGeometry_grid_triggered(bool checked);
   void actionGeometry_scale_triggered(bool checked);
   void actionInvert_y_axis_triggered(bool checked);
+  void action3d_render_triggered(bool checked);
 
   // Advanced menu actions
   void actionSimulation_options_triggered();

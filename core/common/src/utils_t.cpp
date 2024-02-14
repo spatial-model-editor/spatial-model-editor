@@ -106,8 +106,8 @@ TEST_CASE("Utils", "[core/common/utils][core/common][core][utils]") {
     SECTION("the container contains indexes from 0 to n") {
       std::vector<double> A = {1, 2, 3, 5, 5, 4, 5, 5, 5, 5, 5, 5, 1, 2, 0, 5};
       std::vector<double> A1 = {1, 2, 3, 5, 5, 4, 5, 5, 5, 5, 5, 5, 1, 2, 5, 5};
-      int size1 = 6;
-      int size2 = 5;
+      std::size_t size1{6};
+      std::size_t size2{5};
 
       REQUIRE(sme::common::isItIndexes(A, size1) == true);
       REQUIRE(sme::common::isItIndexes(A1, size1) == false);

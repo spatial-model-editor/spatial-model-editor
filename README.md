@@ -16,25 +16,30 @@ A GUI editor to create and edit spatial SBML models of bio-chemical reactions an
 
 To get started, download and run the GUI for your operating system
 
-| [Linux](../../releases/latest/download/spatial-model-editor) | [MacOS](../../releases/latest/download/spatial-model-editor.dmg) | [Windows](../../releases/latest/download/spatial-model-editor.exe) |
-| :-----: | :-----: | :------- |
-| [![linux](docs/img/icon-linux.png)](../../releases/latest/download/spatial-model-editor) | [![macOS](docs/img/icon-osx.png)](../../releases/latest/download/spatial-model-editor.dmg) | [![linux](docs/img/icon-windows.png)](../../releases/latest/download/spatial-model-editor.exe) |
+| [Linux](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor) | [MacOS Arm64](https://github.com/ssciwr/sme-osx-arm64/releases/latest/download/spatial-model-editor.dmg) | [MacOS Intel](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg) | [Windows](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) |
+| :-----: | :-----: | :------- | :------- |
+| [![linux](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-linux.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor) | [![macOS arm64](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-osx.png)](https://github.com/ssciwr/sme-osx-arm64/releases/latest/download/spatial-model-editor.dmg) | [![macOS intel](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-osx.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg) | [![linux](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-windows.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) |
 
 Or take a look at our [website](https://spatial-model-editor.github.io/) or the [documentation](https://spatial-model-editor.readthedocs.io/)
 
-Pre-release [preview binaries](https://github.com/spatial-model-editor/spatial-model-editor/releases/tag/latest) are also available for testing new features before the next release.
+Pre-release preview binaries are also available which are built from the main branch and can be used for testing new features before the next release:
+
+- [Linux pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor)
+- [MacOS Arm64 pre-release](https://github.com/ssciwr/sme-osx-arm64/releases/download/latest/spatial-model-editor.dmg)
+- [MacOS Intel pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor.dmg)
+- [Windows pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor.exe)
 
 *Note: on linux some additional system libraries are required that may not be installed by default. To install them:*
 
 *  Fedora/RHEL/CentOS: `sudo yum install xcb-util-image xcb-util-keysyms xcb-util-renderutil xcb-util-wm`
 
-![screenshot](docs/img/mesh.png)
+![screenshot](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/mesh.png)
 
 ## Contributing
 
 [Bug reports](https://github.com/spatial-model-editor/spatial-model-editor/issues/new?assignees=&labels=&template=bug_report.md) and [feature requests](https://github.com/spatial-model-editor/spatial-model-editor/issues/new?assignees=&labels=&template=feature_request.md) are very welcome, as are fixes or improvements to the [documentation](https://spatial-model-editor.readthedocs.io/) (to edit a page in the documentation, click the 'Edit on GitHub' button in the top right).
 
-If you are interested in contributing code, please see the [contributing guidelines](.github/CONTRIBUTING.md).
+If you are interested in contributing code, please see the [contributing guidelines](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/.github/CONTRIBUTING.md).
 
 ## Dependencies
 
@@ -64,8 +69,6 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [Boost](https://www.boost.org/) - license: [boost](https://www.boost.org/users/license.html)
 
-- [muParser](https://github.com/beltoforion/muparser) - license: [MIT](https://github.com/beltoforion/muparser/blob/master/License.txt)
-
 - [libTIFF](http://www.libtiff.org/) - license: [MIT](http://www.libtiff.org/misc.html)
 
 - [Expat](https://github.com/libexpat/libexpat) - license: [MIT](https://github.com/libexpat/libexpat/blob/master/expat/COPYING)
@@ -89,6 +92,10 @@ Spatial Model Editor makes use of the following open source libraries:
 - [zipper](https://github.com/fbergmann/zipper) - license: [MIT](https://github.com/fbergmann/zipper/blob/master/LICENSE.md)
 
 - [LibCombine](https://github.com/sbmlteam/libcombine) - license: [BSD](https://github.com/sbmlteam/libCombine/blob/master/LICENSE.md)
+
+- [VTK](https://vtk.org/) - license: [BSD](https://gitlab.kitware.com/vtk/vtk/-/blob/master/Copyright.txt)
+
+- [scotch](https://gitlab.inria.fr/scotch/scotch) - license: [CeCILL-C](https://gitlab.inria.fr/scotch/scotch/-/blob/master/doc/CeCILL-C_V1-en.txt?ref_type=heads)
 
 ## Licensing Note
 

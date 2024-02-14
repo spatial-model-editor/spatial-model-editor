@@ -4,9 +4,9 @@ message(STATUS "CMake version ${CMAKE_VERSION}")
 # version number here is embedded in compiled executable
 project(
   SpatialModelEditor
-  VERSION 1.4.0
+  VERSION 1.5.0
   DESCRIPTION "Spatial Model Editor"
-  LANGUAGES CXX)
+  LANGUAGES C CXX)
 
 list(
   APPEND
@@ -23,8 +23,6 @@ set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
 include(ProcessorCount)
 ProcessorCount(NPROC)
 set(CMAKE_CTEST_ARGUMENTS "-j${NPROC};--progress;--output-on-failure;-E;gui")
-
-find_package(dune-copasi REQUIRED)
 
 # find required Qt modules
 find_package(
@@ -46,9 +44,6 @@ message(STATUS "Found QtCore: ${QtCore_location}")
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 
 # stop Qt from defining UNICODE on windows to avoid dune issues: this used to be
 # opt-in, but now done by default for Qt >= 6.1.2. See

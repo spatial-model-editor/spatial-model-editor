@@ -36,6 +36,8 @@ static const char *getExampleFilename(Mod exampleModel) {
     return ":/models/circadian-clock.xml";
   case Mod::GrayScott:
     return ":/models/gray-scott.xml";
+  case Mod::GrayScott3D:
+    return ":/models/gray-scott-3d.xml";
   case Mod::LiverSimplified:
     return ":/models/liver-simplified.xml";
   case Mod::LiverCells:
@@ -46,6 +48,8 @@ static const char *getExampleFilename(Mod exampleModel) {
     return ":/models/single-compartment-diffusion-3d.xml";
   case Mod::VerySimpleModel:
     return ":/models/very-simple-model.xml";
+  case Mod::VerySimpleModel3D:
+    return ":/models/very-simple-model-3d.xml";
   default:
     throw std::invalid_argument("This filename needs to be added to "
                                 "model_test_utils.getExampleFilename()");

@@ -11,8 +11,12 @@ DialogImage::DialogImage(QWidget *parent, const QString &title,
 
   setWindowTitle(title);
   ui->lblMessage->setText(message);
-  // todo: fix this to not hard code z=0 slice
-  ui->lblImage->setPixmap(QPixmap::fromImage(image[0]));
+  if (image.empty()) {
+    ui->lblImage->setVisible(false);
+  } else {
+    // todo: fix this to not hard code z=0 slice
+    ui->lblImage->setPixmap(QPixmap::fromImage(image[0]));
+  }
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogImage::accept);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,

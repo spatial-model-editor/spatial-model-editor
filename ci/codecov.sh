@@ -10,8 +10,8 @@ set -e -x
 Xvfb -screen 0 1280x800x24 :99 &
 export DISPLAY=:99
 
-# download codecov uploader
-curl --connect-timeout 10 --retry 5 -Os https://uploader.codecov.io/latest/linux/codecov
+# download codecov cli
+curl --connect-timeout 10 --retry 5 -Os https://cli.codecov.io/latest/linux/codecov
 chmod +x codecov
 sudo mv codecov /usr/bin
 codecov --version
@@ -24,8 +24,8 @@ cmake .. \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
-    -DCMAKE_CXX_FLAGS="--coverage"
-make -j2 VERBOSE=1
+    -DCMAKE_CXX_FLAGS="--coverage -D_GLIBCXX_USE_TBB_PAR_BACKEND=0"
+make -j4 VERBOSE=1
 ccache --show-stats
 
 # start a window manager so the Qt GUI tests can have their focus set
@@ -54,7 +54,7 @@ test_to_codecov () {
     tail -n 100 "$NAME".txt
     run_gcov
     # upload coverage report to codecov.io - if it returns an error code try again a couple of times
-    codecov -Z -X gcov -F "$NAME" || codecov -Z -X gcov -F "$NAME" || codecov -Z -X gcov -F "$NAME"
+    codecov upload-process -Z -F "$NAME" -t "$CODECOV_TOKEN" || codecov upload-process -Z -F "$NAME" -t "$CODECOV_TOKEN" || codecov upload-process -Z -F "$NAME" -t "$CODECOV_TOKEN"
 }
 
 test_to_codecov "core" "~[expensive][core]"

@@ -2,8 +2,7 @@
 // Created by acaramizaru on 6/30/23.
 //
 
-#ifndef SPATIALMODELEDITOR_WIREFRAMEOBJECT_H
-#define SPATIALMODELEDITOR_WIREFRAMEOBJECT_H
+#pragma once
 
 #include "ObjectInfo.hpp"
 #include "ObjectLoader.hpp"
@@ -82,5 +81,3 @@ private:
 };
 
 } // namespace rendering
-
-#endif // SPATIALMODELEDITOR_WIREFRAMEOBJECT_H

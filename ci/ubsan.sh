@@ -13,7 +13,7 @@ export DISPLAY=:99
 # note: currently we just output the UB logs to file, print them and return success:
 export UBSAN_OPTIONS="print_stacktrace=1:log_path=$(pwd)/ub"
 # todo: once dune has no UB, we can remove the log_path above, and instead add `-fno-sanitize-recover=undefined`
-# to the cmake copmile/link flags so that UB results in a failed build
+# to the cmake compile/link flags so that UB results in a failed build
 
 # do build
 mkdir build
@@ -23,8 +23,8 @@ cmake .. \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=undefined -fno-omit-frame-pointer" \
-    -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic -Wshadow -Wunused -Wconversion -Wsign-conversion -Wcast-align -fsanitize=undefined -fno-omit-frame-pointer"
-time make tests -j2
+    -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic -Wshadow -Wunused -Wconversion -Wsign-conversion -Wcast-align -fsanitize=undefined -fno-omit-frame-pointer -D_GLIBCXX_USE_TBB_PAR_BACKEND=0"
+time make tests -j4
 ccache --show-stats
 
 # start a window manager so the Qt GUI tests can have their focus set

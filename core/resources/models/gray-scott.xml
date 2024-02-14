@@ -22,7 +22,7 @@
               <dune>
                 <cereal_class_version>0</cereal_class_version>
                 <discretization>0</discretization>
-                <integrator>alexander_2</integrator>
+                <integrator>Alexander2</integrator>
                 <dt>0.10000000000000001</dt>
                 <minDt>1e-10</minDt>
                 <maxDt>10000</maxDt>

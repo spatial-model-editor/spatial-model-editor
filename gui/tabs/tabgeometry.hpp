@@ -9,6 +9,7 @@
 class QLabel;
 class QListWidgetItem;
 class QLabelMouseTracker;
+class QVoxelRenderer;
 class QStatusBar;
 
 namespace sme::model {
@@ -24,6 +25,7 @@ class TabGeometry : public QWidget {
 
 public:
   explicit TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
+                       QVoxelRenderer *voxelRenderer,
                        QStatusBar *statusBar = nullptr,
                        QWidget *parent = nullptr);
   ~TabGeometry() override;
@@ -39,7 +41,8 @@ private:
   std::unique_ptr<Ui::TabGeometry> ui;
   sme::model::Model &model;
   QLabelMouseTracker *lblGeometry;
-  QStatusBar *statusBar{};
+  QVoxelRenderer *voxGeometry;
+  QStatusBar *m_statusBar{};
   bool waitingForCompartmentChoice{false};
   bool membraneSelected{false};
 

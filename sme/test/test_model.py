@@ -193,6 +193,8 @@ def test_import_geometry_from_image():
     m = sme.open_example_model()
     comp_img_0 = m.compartment_image
     nucl_mask_0 = m.compartments["Nucleus"].geometry_mask
+    with pytest.raises(sme.InvalidArgument):
+        m.import_geometry_from_image("idontexist.tiff")
     m.import_geometry_from_image(imgfile_modified)
     comp_img_1 = m.compartment_image
     nucl_mask_1 = m.compartments["Nucleus"].geometry_mask

@@ -42,7 +42,7 @@ getOptTimesteps(const OptimizeOptions &options) {
   }
   // sort times
   std::vector sortedUniqueTimes{times};
-  std::sort(sortedUniqueTimes.begin(), sortedUniqueTimes.end());
+  std::ranges::sort(sortedUniqueTimes);
   // margin within which times are considered equal:
   constexpr double relativeEps{1e-13};
   double epsilon{sortedUniqueTimes.back() * relativeEps};
@@ -77,21 +77,22 @@ static std::unique_ptr<pagmo::algorithm>
 getPagmoAlgorithm(sme::simulate::OptAlgorithmType optAlgorithmType) {
   // https://esa.github.io/pagmo2/docs/cpp/cpp_docs.html#implemented-algorithms
   switch (optAlgorithmType) {
-  case sme::simulate::OptAlgorithmType::PSO:
+    using enum sme::simulate::OptAlgorithmType;
+  case PSO:
     return std::make_unique<pagmo::algorithm>(pagmo::pso());
-  case sme::simulate::OptAlgorithmType::GPSO:
+  case GPSO:
     return std::make_unique<pagmo::algorithm>(pagmo::pso_gen());
-  case sme::simulate::OptAlgorithmType::DE:
+  case DE:
     return std::make_unique<pagmo::algorithm>(pagmo::de());
-  case sme::simulate::OptAlgorithmType::iDE:
+  case iDE:
     return std::make_unique<pagmo::algorithm>(pagmo::sade(1, 2, 2));
-  case sme::simulate::OptAlgorithmType::jDE:
+  case jDE:
     return std::make_unique<pagmo::algorithm>(pagmo::sade(1, 2, 1));
-  case sme::simulate::OptAlgorithmType::pDE:
+  case pDE:
     return std::make_unique<pagmo::algorithm>(pagmo::de1220());
-  case sme::simulate::OptAlgorithmType::ABC:
+  case ABC:
     return std::make_unique<pagmo::algorithm>(pagmo::bee_colony());
-  case sme::simulate::OptAlgorithmType::gaco:
+  case gaco:
     return std::make_unique<pagmo::algorithm>(pagmo::gaco(1, 7));
   default:
     return std::make_unique<pagmo::algorithm>(pagmo::pso());

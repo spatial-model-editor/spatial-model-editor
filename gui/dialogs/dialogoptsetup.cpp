@@ -169,10 +169,10 @@ setValidMinPopulation(sme::simulate::OptAlgorithmType optAlgorithmType,
 }
 
 DialogOptSetup::DialogOptSetup(const sme::model::Model &model, QWidget *parent)
-    : QDialog(parent), model{model},
-      optimizeOptions{model.getOptimizeOptions()},
-      defaultOptParams{getDefaultOptParams(model)},
-      defaultOptCosts{getDefaultOptCosts(model)},
+    : QDialog(parent), m_model{model},
+      m_optimizeOptions{model.getOptimizeOptions()},
+      m_defaultOptParams{getDefaultOptParams(model)},
+      m_defaultOptCosts{getDefaultOptCosts(model)},
       ui{std::make_unique<Ui::DialogOptSetup>()} {
   ui->setupUi(this);
   for (auto optAlgorithmType : sme::simulate::optAlgorithmTypes) {
@@ -184,22 +184,22 @@ DialogOptSetup::DialogOptSetup(const sme::model::Model &model, QWidget *parent)
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/800
     // is fixed
     ui->spinIslands->setMaximum(1);
-    optimizeOptions.optAlgorithm.islands = 1;
+    m_optimizeOptions.optAlgorithm.islands = 1;
   }
   ui->btnEditTarget->setEnabled(false);
   ui->btnRemoveTarget->setEnabled(false);
   ui->btnEditParameter->setEnabled(false);
   ui->btnRemoveParameter->setEnabled(false);
   ui->cmbAlgorithm->setCurrentIndex(
-      toIndex(optimizeOptions.optAlgorithm.optAlgorithmType));
+      toIndex(m_optimizeOptions.optAlgorithm.optAlgorithmType));
   ui->spinIslands->setValue(
-      static_cast<int>(optimizeOptions.optAlgorithm.islands));
+      static_cast<int>(m_optimizeOptions.optAlgorithm.islands));
   ui->spinPopulation->setValue(
-      static_cast<int>(optimizeOptions.optAlgorithm.population));
-  for (const auto &optCost : optimizeOptions.optCosts) {
+      static_cast<int>(m_optimizeOptions.optAlgorithm.population));
+  for (const auto &optCost : m_optimizeOptions.optCosts) {
     ui->lstTargets->addItem(toQStr(optCost));
   }
-  for (const auto &optParam : optimizeOptions.optParams) {
+  for (const auto &optParam : m_optimizeOptions.optParams) {
     ui->lstParameters->addItem(toQStr(optParam));
   }
   connect(ui->cmbAlgorithm, &QComboBox::currentIndexChanged, this,
@@ -232,7 +232,7 @@ DialogOptSetup::DialogOptSetup(const sme::model::Model &model, QWidget *parent)
           &DialogOptSetup::accept);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogOptSetup::reject);
-  setValidMinPopulation(optimizeOptions.optAlgorithm.optAlgorithmType,
+  setValidMinPopulation(m_optimizeOptions.optAlgorithm.optAlgorithmType,
                         ui->spinPopulation);
 }
 
@@ -240,21 +240,21 @@ DialogOptSetup::~DialogOptSetup() = default;
 
 [[nodiscard]] const sme::simulate::OptimizeOptions &
 DialogOptSetup::getOptimizeOptions() const {
-  return optimizeOptions;
+  return m_optimizeOptions;
 }
 
 void DialogOptSetup::cmbAlgorithm_currentIndexChanged(int index) {
-  optimizeOptions.optAlgorithm.optAlgorithmType = toOptAlgorithmType(index);
-  setValidMinPopulation(optimizeOptions.optAlgorithm.optAlgorithmType,
+  m_optimizeOptions.optAlgorithm.optAlgorithmType = toOptAlgorithmType(index);
+  setValidMinPopulation(m_optimizeOptions.optAlgorithm.optAlgorithmType,
                         ui->spinPopulation);
 }
 
 void DialogOptSetup::spinIslands_valueChanged(int value) {
-  optimizeOptions.optAlgorithm.islands = static_cast<std::size_t>(value);
+  m_optimizeOptions.optAlgorithm.islands = static_cast<std::size_t>(value);
 }
 
 void DialogOptSetup::spinPopulation_valueChanged(int value) {
-  optimizeOptions.optAlgorithm.population = static_cast<std::size_t>(value);
+  m_optimizeOptions.optAlgorithm.population = static_cast<std::size_t>(value);
 }
 
 void DialogOptSetup::lstTargets_currentRowChanged(int row) {
@@ -274,9 +274,9 @@ void DialogOptSetup::lstTargets_itemDoubleClicked(QListWidgetItem *item) {
 }
 
 void DialogOptSetup::btnAddTarget_clicked() {
-  DialogOptCost dia(model, defaultOptCosts);
+  DialogOptCost dia(m_model, m_defaultOptCosts);
   if (dia.exec() == QDialog::Accepted) {
-    optimizeOptions.optCosts.push_back(dia.getOptCost());
+    m_optimizeOptions.optCosts.push_back(dia.getOptCost());
     ui->lstTargets->addItem(toQStr(dia.getOptCost()));
   }
 }
@@ -286,9 +286,11 @@ void DialogOptSetup::btnEditTarget_clicked() {
   if ((row < 0) || (row > ui->lstTargets->count() - 1)) {
     return;
   }
-  DialogOptCost dia(model, defaultOptCosts, &optimizeOptions.optCosts[row]);
+  DialogOptCost dia(m_model, m_defaultOptCosts,
+                    &m_optimizeOptions.optCosts[static_cast<std::size_t>(row)]);
   if (dia.exec() == QDialog::Accepted) {
-    optimizeOptions.optCosts[row] = dia.getOptCost();
+    m_optimizeOptions.optCosts[static_cast<std::size_t>(row)] =
+        dia.getOptCost();
     ui->lstTargets->item(row)->setText(toQStr(dia.getOptCost()));
   }
 }
@@ -305,7 +307,7 @@ void DialogOptSetup::btnRemoveTarget_clicked() {
                                     QMessageBox::Yes | QMessageBox::No)};
   if (result == QMessageBox::Yes) {
     SPDLOG_TRACE("Removing row {}", row);
-    optimizeOptions.optCosts.erase(optimizeOptions.optCosts.begin() + row);
+    m_optimizeOptions.optCosts.erase(m_optimizeOptions.optCosts.begin() + row);
     delete ui->lstTargets->takeItem(row);
   }
 }
@@ -327,9 +329,9 @@ void DialogOptSetup::lstParameters_itemDoubleClicked(QListWidgetItem *item) {
 }
 
 void DialogOptSetup::btnAddParameter_clicked() {
-  DialogOptParam dia(defaultOptParams);
+  DialogOptParam dia(m_defaultOptParams);
   if (dia.exec() == QDialog::Accepted) {
-    optimizeOptions.optParams.push_back(dia.getOptParam());
+    m_optimizeOptions.optParams.push_back(dia.getOptParam());
     ui->lstParameters->addItem(toQStr(dia.getOptParam()));
   }
 }
@@ -339,9 +341,12 @@ void DialogOptSetup::btnEditParameter_clicked() {
   if ((row < 0) || (row > ui->lstParameters->count() - 1)) {
     return;
   }
-  DialogOptParam dia(defaultOptParams, &optimizeOptions.optParams[row]);
+  DialogOptParam dia(
+      m_defaultOptParams,
+      &m_optimizeOptions.optParams[static_cast<std::size_t>(row)]);
   if (dia.exec() == QDialog::Accepted) {
-    optimizeOptions.optParams[row] = dia.getOptParam();
+    m_optimizeOptions.optParams[static_cast<std::size_t>(row)] =
+        dia.getOptParam();
     ui->lstParameters->item(row)->setText(toQStr(dia.getOptParam()));
   }
 }
@@ -360,7 +365,8 @@ void DialogOptSetup::btnRemoveParameter_clicked() {
                             QMessageBox::Yes | QMessageBox::No)};
   if (result == QMessageBox::Yes) {
     SPDLOG_TRACE("Removing row {}", row);
-    optimizeOptions.optParams.erase(optimizeOptions.optParams.begin() + row);
+    m_optimizeOptions.optParams.erase(m_optimizeOptions.optParams.begin() +
+                                      row);
     delete ui->lstParameters->takeItem(row);
   }
 }

@@ -17,6 +17,7 @@ class Model;
 }
 
 class QLabelMouseTracker;
+class QVoxelRenderer;
 class QTreeWidgetItem;
 
 class QDoubleSpinBoxNoScroll : public QDoubleSpinBox {
@@ -34,6 +35,7 @@ class TabReactions : public QWidget {
 
 public:
   explicit TabReactions(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
+                        QVoxelRenderer *voxelRenderer,
                         QWidget *parent = nullptr);
   ~TabReactions() override;
   void loadModelData(const QString &selection = {});
@@ -42,6 +44,7 @@ private:
   std::unique_ptr<Ui::TabReactions> ui;
   sme::model::Model &model;
   QLabelMouseTracker *lblGeometry;
+  QVoxelRenderer *voxGeometry;
   QString currentReacId{};
   QString invalidLocationLabel{"Invalid Location"};
   std::vector<sme::model::ReactionLocation> reactionLocations;

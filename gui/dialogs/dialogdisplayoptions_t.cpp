@@ -2,9 +2,34 @@
 #include "dialogdisplayoptions.hpp"
 #include "plotwrapper.hpp"
 #include "qt_test_utils.hpp"
+#include <QCheckBox>
+#include <QComboBox>
+#include <QPushButton>
 #include <QStringList>
+#include <QTreeWidget>
 
 using namespace sme::test;
+
+struct DialogDisplayOptionsWidgets {
+  explicit DialogDisplayOptionsWidgets(const DialogDisplayOptions *dialog) {
+    GET_DIALOG_WIDGET(QTreeWidget, listSpecies);
+    GET_DIALOG_WIDGET(QCheckBox, chkShowMinMaxRanges);
+    GET_DIALOG_WIDGET(QTreeWidget, listObservables);
+    GET_DIALOG_WIDGET(QPushButton, btnAddObservable);
+    GET_DIALOG_WIDGET(QPushButton, btnEditObservable);
+    GET_DIALOG_WIDGET(QPushButton, btnRemoveObservable);
+    GET_DIALOG_WIDGET(QComboBox, cmbNormaliseOverAllSpecies);
+    GET_DIALOG_WIDGET(QComboBox, cmbNormaliseOverAllTimepoints);
+  }
+  QTreeWidget *listSpecies;
+  QCheckBox *chkShowMinMaxRanges;
+  QTreeWidget *listObservables;
+  QPushButton *btnAddObservable;
+  QPushButton *btnEditObservable;
+  QPushButton *btnRemoveObservable;
+  QComboBox *cmbNormaliseOverAllSpecies;
+  QComboBox *cmbNormaliseOverAllTimepoints;
+};
 
 TEST_CASE("DialogDisplayOptions",
           "[gui/dialogs/displayoptions][gui/dialogs][gui][displayoptions]") {
@@ -19,106 +44,128 @@ TEST_CASE("DialogDisplayOptions",
     opts.normaliseOverAllTimepoints = false;
     opts.normaliseOverAllSpecies = false;
     DialogDisplayOptions dia(compartments, species, opts, {});
-    ModalWidgetTimer mwt;
+    dia.show();
+    DialogDisplayOptionsWidgets widgets(&dia);
     SECTION("user does nothing") {
-      REQUIRE(dia.getShowSpecies() == opts.showSpecies);
+      REQUIRE(dia.getShowSpecies()[0] == true);
+      REQUIRE(dia.getShowSpecies()[1] == false);
       REQUIRE(dia.getShowMinMax() == false);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
     SECTION(
         "user checks first compartment: enables all species in compartment") {
-      mwt.addUserAction({"Space"});
-      mwt.start();
-      dia.exec();
-      opts.showSpecies[0] = true;
-      opts.showSpecies[1] = true;
-      REQUIRE(dia.getShowSpecies() == opts.showSpecies);
+      REQUIRE(dia.getShowSpecies()[0] == true);
+      REQUIRE(dia.getShowSpecies()[1] == false);
+      widgets.listSpecies->topLevelItem(0)->setCheckState(
+          0, Qt::CheckState::Checked);
+      REQUIRE(dia.getShowSpecies()[0] == true);
+      REQUIRE(dia.getShowSpecies()[1] == true);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
     SECTION(
         "user checks, then unchecks first compartment: disables all species in "
         "compartment") {
-      mwt.addUserAction({"Space", "Space"});
-      mwt.start();
-      dia.exec();
-      opts.showSpecies[0] = false;
-      opts.showSpecies[1] = false;
-      REQUIRE(dia.getShowSpecies() == opts.showSpecies);
+      REQUIRE(dia.getShowSpecies()[0] == true);
+      REQUIRE(dia.getShowSpecies()[1] == false);
+      widgets.listSpecies->topLevelItem(0)->setCheckState(
+          0, Qt::CheckState::Checked);
+      widgets.listSpecies->topLevelItem(0)->setCheckState(
+          0, Qt::CheckState::Unchecked);
+      REQUIRE(dia.getShowSpecies()[0] == false);
+      REQUIRE(dia.getShowSpecies()[1] == false);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
     SECTION("user unchecks first species") {
-      mwt.addUserAction({"Down", "Space"});
-      mwt.start();
-      dia.exec();
-      opts.showSpecies[0] = false;
-      REQUIRE(dia.getShowSpecies() == opts.showSpecies);
+      REQUIRE(dia.getShowSpecies()[0] == true);
+      REQUIRE(dia.getShowSpecies()[1] == false);
+      widgets.listSpecies->topLevelItem(0)->child(0)->setCheckState(
+          0, Qt::CheckState::Unchecked);
+      REQUIRE(dia.getShowSpecies()[0] == false);
+      REQUIRE(dia.getShowSpecies()[1] == false);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
     SECTION("user unchecks then checks first species") {
-      mwt.addUserAction({"Down", "Space", "Space"});
-      mwt.start();
-      dia.exec();
-      REQUIRE(dia.getShowSpecies() == opts.showSpecies);
+      REQUIRE(dia.getShowSpecies()[0] == true);
+      REQUIRE(dia.getShowSpecies()[1] == false);
+      widgets.listSpecies->topLevelItem(0)->child(0)->setCheckState(
+          0, Qt::CheckState::Unchecked);
+      widgets.listSpecies->topLevelItem(0)->child(0)->setCheckState(
+          0, Qt::CheckState::Checked);
+      REQUIRE(dia.getShowSpecies()[0] == true);
+      REQUIRE(dia.getShowSpecies()[1] == false);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
     SECTION("user toggles show min/max checkbox") {
-      mwt.addUserAction({"Tab", "Space"});
-      mwt.start();
-      dia.exec();
+      REQUIRE(dia.getShowMinMax() == false);
+      sendMouseClick(widgets.chkShowMinMaxRanges);
       REQUIRE(dia.getShowMinMax() == true);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
     SECTION("user toggles show min/max checkbox twice") {
-      mwt.addUserAction({"Tab", "Space", "Space"});
-      mwt.start();
-      dia.exec();
+      REQUIRE(dia.getShowMinMax() == false);
+      sendMouseClick(widgets.chkShowMinMaxRanges);
+      REQUIRE(dia.getShowMinMax() == true);
+      sendMouseClick(widgets.chkShowMinMaxRanges);
       REQUIRE(dia.getShowMinMax() == false);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
     SECTION("user changes timepoint normalisation") {
-      mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Down"});
-      mwt.start();
-      dia.exec();
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
-      REQUIRE(dia.getNormaliseOverAllSpecies() == true);
-    }
-    SECTION("user changes species normalisation") {
-      mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Down"});
-      mwt.start();
-      dia.exec();
+      REQUIRE(dia.getNormaliseOverAllSpecies() == false);
+      widgets.cmbNormaliseOverAllTimepoints->setCurrentIndex(1);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == true);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
+    SECTION("user changes species normalisation") {
+      REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
+      REQUIRE(dia.getNormaliseOverAllSpecies() == false);
+      widgets.cmbNormaliseOverAllSpecies->setCurrentIndex(1);
+      REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
+      REQUIRE(dia.getNormaliseOverAllSpecies() == true);
+    }
     SECTION("user changes both normalisations") {
-      mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Down", "Tab", "Down"});
-      mwt.start();
-      dia.exec();
+      REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
+      REQUIRE(dia.getNormaliseOverAllSpecies() == false);
+      widgets.cmbNormaliseOverAllTimepoints->setCurrentIndex(1);
+      widgets.cmbNormaliseOverAllSpecies->setCurrentIndex(1);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == true);
       REQUIRE(dia.getNormaliseOverAllSpecies() == true);
     }
     SECTION("user checks both compartment: enables all species") {
-      mwt.addUserAction({"Space", "Down", "Down", "Down", "Space"});
-      mwt.start();
-      dia.exec();
-      opts.showSpecies = {true, true, true, true, true};
       REQUIRE(dia.getShowSpecies() == opts.showSpecies);
-      REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
-      REQUIRE(dia.getNormaliseOverAllSpecies() == false);
+      widgets.listSpecies->topLevelItem(0)->setCheckState(
+          0, Qt::CheckState::Checked);
+      widgets.listSpecies->topLevelItem(1)->setCheckState(
+          0, Qt::CheckState::Checked);
+      REQUIRE(dia.getShowSpecies().size() == 5);
+      REQUIRE(dia.getShowSpecies()[0] == true);
+      REQUIRE(dia.getShowSpecies()[1] == true);
+      REQUIRE(dia.getShowSpecies()[2] == true);
+      REQUIRE(dia.getShowSpecies()[3] == true);
+      REQUIRE(dia.getShowSpecies()[4] == true);
     }
     SECTION("user checks & unchecks both compartments: disable all species") {
-      mwt.addUserAction(
-          {"Space", "Space", "Down", "Down", "Down", "Space", "Space"});
-      mwt.start();
-      dia.exec();
-      opts.showSpecies = {false, false, false, false, false};
-      REQUIRE(dia.getShowSpecies() == opts.showSpecies);
+      widgets.listSpecies->topLevelItem(0)->setCheckState(
+          0, Qt::CheckState::Checked);
+      widgets.listSpecies->topLevelItem(1)->setCheckState(
+          0, Qt::CheckState::Checked);
+      widgets.listSpecies->topLevelItem(0)->setCheckState(
+          0, Qt::CheckState::Unchecked);
+      widgets.listSpecies->topLevelItem(1)->setCheckState(
+          0, Qt::CheckState::Unchecked);
+      REQUIRE(dia.getShowSpecies().size() == 5);
+      REQUIRE(dia.getShowSpecies()[0] == false);
+      REQUIRE(dia.getShowSpecies()[1] == false);
+      REQUIRE(dia.getShowSpecies()[2] == false);
+      REQUIRE(dia.getShowSpecies()[3] == false);
+      REQUIRE(dia.getShowSpecies()[4] == false);
       REQUIRE(dia.getNormaliseOverAllTimepoints() == false);
       REQUIRE(dia.getNormaliseOverAllSpecies() == false);
     }
@@ -137,7 +184,8 @@ TEST_CASE("DialogDisplayOptions",
     observables.push_back({"1", "1", true});
     observables.push_back({"s1_c1*2", "s1_c1*2", true});
     DialogDisplayOptions dia(compartments, species, opts, observables);
-    ModalWidgetTimer mwt;
+    dia.show();
+    DialogDisplayOptionsWidgets widgets(&dia);
     SECTION("user does nothing") {
       REQUIRE(dia.getShowSpecies() == opts.showSpecies);
       REQUIRE(dia.getShowMinMax() == false);
@@ -148,38 +196,39 @@ TEST_CASE("DialogDisplayOptions",
       REQUIRE(dia.getObservables()[1].visible == true);
     }
     SECTION("user hides first observable") {
-      mwt.addUserAction({"Tab", "Tab", "Space"});
-      mwt.start();
-      dia.exec();
+      widgets.listObservables->topLevelItem(0)->setCheckState(
+          0, Qt::CheckState::Unchecked);
       REQUIRE(dia.getObservables().size() == 2);
       REQUIRE(dia.getObservables()[0].visible == false);
       REQUIRE(dia.getObservables()[1].visible == true);
     }
     SECTION("user hides both observables") {
-      mwt.addUserAction({"Tab", "Tab", "Space", "Down", "Space"});
-      mwt.start();
-      dia.exec();
+      widgets.listObservables->topLevelItem(0)->setCheckState(
+          0, Qt::CheckState::Unchecked);
+      widgets.listObservables->topLevelItem(1)->setCheckState(
+          0, Qt::CheckState::Unchecked);
       REQUIRE(dia.getObservables().size() == 2);
       REQUIRE(dia.getObservables()[0].visible == false);
       REQUIRE(dia.getObservables()[1].visible == false);
     }
     SECTION("user adds new observable") {
-      ModalWidgetTimer mwt2;
-      mwt2.addUserAction({"1", "+", "2"});
-      mwt.addUserAction({"Tab", "Tab", "Tab", "Space"}, true, &mwt2);
+      ModalWidgetTimer mwt;
+      mwt.addUserAction({"1", "+", "2"});
+      mwt.setIgnoredWidget(&dia);
       mwt.start();
-      dia.exec();
+      sendMouseClick(widgets.btnAddObservable);
       REQUIRE(dia.getObservables().size() == 3);
       REQUIRE(dia.getObservables()[2].name == "1+2");
       REQUIRE(dia.getObservables()[2].expression == "1+2");
       REQUIRE(dia.getObservables()[2].visible == true);
     }
-    SECTION("user edits observable") {
-      ModalWidgetTimer mwt2;
-      mwt2.addUserAction({"Right", "-", "2"});
-      mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Space"}, true, &mwt2);
+    SECTION("user edits first observable") {
+      ModalWidgetTimer mwt;
+      mwt.addUserAction({"Right", "-", "2"});
+      mwt.setIgnoredWidget(&dia);
       mwt.start();
-      dia.exec();
+      sendMouseClick(widgets.listObservables->topLevelItem(0));
+      sendMouseClick(widgets.btnEditObservable);
       REQUIRE(dia.getObservables().size() == 2);
       REQUIRE(dia.getObservables()[0].name == "1-2");
       REQUIRE(dia.getObservables()[0].expression == "1-2");
@@ -188,10 +237,9 @@ TEST_CASE("DialogDisplayOptions",
       REQUIRE(dia.getObservables()[1].expression == "s1_c1*2");
       REQUIRE(dia.getObservables()[1].visible == true);
     }
-    SECTION("user removes observable") {
-      mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "Space"});
-      mwt.start();
-      dia.exec();
+    SECTION("user removes first observable") {
+      sendMouseClick(widgets.listObservables->topLevelItem(0));
+      sendMouseClick(widgets.btnRemoveObservable);
       REQUIRE(dia.getObservables().size() == 1);
       REQUIRE(dia.getObservables()[0].name == "s1_c1*2");
       REQUIRE(dia.getObservables()[0].expression == "s1_c1*2");

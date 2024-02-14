@@ -8,8 +8,8 @@ namespace sme::common {
 
 struct Voxel {
   Voxel() = default;
-  Voxel(QPoint p, std::size_t z) : p{p}, z{z} {}
-  Voxel(int x, int y, std::size_t z) : p{x, y}, z{z} {}
+  Voxel(QPoint vp, std::size_t vz) : p{vp}, z{vz} {}
+  Voxel(int vx, int vy, std::size_t vz) : p{vx, vy}, z{vz} {}
   QPoint p{0, 0};
   std::size_t z{0};
 };
@@ -20,14 +20,16 @@ inline Voxel operator+(const Voxel &a, const Voxel &b) {
 inline Voxel operator-(const Voxel &a, const Voxel &b) {
   return {a.p - b.p, a.z - b.z};
 }
-inline Voxel operator*(int a, const Voxel &b) { return {a * b.p, a * b.z}; }
+inline Voxel operator*(int a, const Voxel &b) {
+  return {a * b.p, static_cast<std::size_t>(a) * b.z};
+}
 inline bool operator==(const Voxel &a, const Voxel &b) {
   return a.z == b.z && a.p == b.p;
 }
 
 struct VoxelF {
   VoxelF() = default;
-  VoxelF(double x, double y, double z) : p{x, y}, z{z} {}
+  VoxelF(double vx, double vy, double vz) : p{vx, vy}, z{vz} {}
   QPointF p{0, 0};
   double z{0};
 };
@@ -39,8 +41,8 @@ private:
 
 public:
   Volume() = default;
-  Volume(int x, int y, std::size_t z) : xy{x, y}, z{z} {}
-  Volume(QSize xy, std::size_t z) : xy{xy}, z{z} {}
+  Volume(int vx, int vy, std::size_t vz) : xy{vx, vy}, z{vz} {}
+  Volume(QSize vxy, std::size_t vz) : xy{vxy}, z{vz} {}
   [[nodiscard]] inline int width() const { return xy.width(); }
   [[nodiscard]] inline int height() const { return xy.height(); }
   [[nodiscard]] inline std::size_t depth() const { return z; }
@@ -53,10 +55,6 @@ inline bool operator==(const Volume &a, const Volume &b) {
   return a.width() == b.width() && a.height() == b.height() &&
          a.depth() == b.depth();
 }
-inline bool operator!=(const Volume &a, const Volume &b) {
-  return a.width() != b.width() || a.height() != b.height() ||
-         a.depth() != b.depth();
-}
 
 class VolumeF {
 private:
@@ -65,8 +63,8 @@ private:
 
 public:
   VolumeF() = default;
-  VolumeF(double x, double y, double z) : xy{x, y}, z{z} {}
-  VolumeF(QSizeF xy, double z) : xy{xy}, z{z} {}
+  VolumeF(double vx, double vy, double vz) : xy{vx, vy}, z{vz} {}
+  VolumeF(QSizeF vxy, double vz) : xy{vxy}, z{vz} {}
   [[nodiscard]] inline double width() const { return xy.width(); }
   [[nodiscard]] inline double height() const { return xy.height(); }
   [[nodiscard]] inline double depth() const { return z; }

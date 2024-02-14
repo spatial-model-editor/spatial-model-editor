@@ -19,7 +19,7 @@ static void addParams(CLI::App &app, Params &params) {
   app.add_option("-s,--simulator", params.simType,
                  "The simulator to use: dune or pixel")
       ->transform(CLI::CheckedTransformer(
-          std::map<std::string, simulate::SimulatorType>{
+          std::map<std::string, simulate::SimulatorType, std::less<>>{
               {"dune", simulate::SimulatorType::DUNE},
               {"pixel", simulate::SimulatorType::Pixel}},
           CLI::ignore_case))
@@ -38,7 +38,7 @@ static void addCallbacks(CLI::App &app) {
   app.add_flag_callback(
          "-d,--dump-config",
          [&app]() {
-           fmt::print(app.config_to_str(true, true));
+           fmt::print("{}", app.config_to_str(true, true));
            throw CLI::Success();
          },
          "Dump the default config ini file and exit")

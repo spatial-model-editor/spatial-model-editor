@@ -3,6 +3,7 @@
 #include "sbml_math.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh.hpp"
+#include "sme/mesh3d.hpp"
 #include "sme/utils.hpp"
 #include "sme/xml_annotation.hpp"
 #include "validation.hpp"
@@ -27,7 +28,7 @@ Model::~Model() = default;
 void Model::createSBMLFile(const std::string &name) {
   clear();
   SPDLOG_INFO("Creating new SBML model '{}'...", name);
-  doc = std::make_unique<libsbml::SBMLDocument>(libsbml::SBMLDocument());
+  doc = std::make_unique<libsbml::SBMLDocument>();
   doc->createModel(name);
   currentFilename = name.c_str();
   initModelData(true);
@@ -219,8 +220,7 @@ QString Model::getXml() {
   }
   updateSBMLDoc();
   countAndPrintSBMLDocErrors(doc.get());
-  std::unique_ptr<char, decltype(&std::free)> xmlChar(
-      libsbml::writeSBMLToString(doc.get()), &std::free);
+  common::unique_C_ptr<char> xmlChar{libsbml::writeSBMLToString(doc.get())};
   xml = QString(xmlChar.get());
   return xml;
 }

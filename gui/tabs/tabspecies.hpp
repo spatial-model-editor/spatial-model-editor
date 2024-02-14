@@ -16,13 +16,14 @@ class Model;
 } // namespace sme::model
 
 class QLabelMouseTracker;
+class QVoxelRenderer;
 
 class TabSpecies : public QWidget {
   Q_OBJECT
 
 public:
   explicit TabSpecies(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
-                      QWidget *parent = nullptr);
+                      QVoxelRenderer *voxelRenderer, QWidget *parent = nullptr);
   ~TabSpecies() override;
   void loadModelData(const QString &selection = {});
 
@@ -30,6 +31,7 @@ private:
   std::unique_ptr<Ui::TabSpecies> ui;
   sme::model::Model &model;
   QLabelMouseTracker *lblGeometry;
+  QVoxelRenderer *voxGeometry;
   QPixmap lblSpeciesColourPixmap = QPixmap(1, 1);
   QString currentSpeciesId;
   void enableWidgets(bool enable);

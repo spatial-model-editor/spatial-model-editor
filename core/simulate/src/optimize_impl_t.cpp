@@ -165,13 +165,16 @@ TEST_CASE("Optimize calculateCosts: target values",
   const auto *comp{model.getSpecies().getField("A")->getCompartment()};
   const auto compImgWidth{comp->getCompartmentImages()[0].width()};
   const auto compImgHeight{comp->getCompartmentImages()[0].height()};
-  std::vector<double> target(compImgWidth * compImgHeight, 0.0);
+  std::vector<double> target(
+      static_cast<std::size_t>(compImgWidth * compImgHeight), 0.0);
   constexpr double targetPixel{2.0};
   for (const auto &voxel : comp->getVoxels()) {
-    target[voxel.p.x() + compImgWidth * (compImgHeight - 1 - voxel.p.y())] =
+    target[static_cast<std::size_t>(voxel.p.x()) +
+           static_cast<std::size_t>(compImgWidth) *
+               static_cast<std::size_t>(compImgHeight - 1 - voxel.p.y())] =
         targetPixel;
   }
-  double targetSum{static_cast<double>(comp->nVoxels() * targetPixel)};
+  double targetSum{static_cast<double>(comp->nVoxels()) * targetPixel};
   constexpr double epsilon{3.4e-11};
 
   // cost: absolute difference of concentration of species A from zero

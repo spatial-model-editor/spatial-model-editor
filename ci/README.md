@@ -30,6 +30,6 @@
 
 - The linux Python Wheel CI builds use this custom docker container:
 
-  - <https://github.com/spatial-model-editor/sme_manylinux2014_x86_64>
+  - <https://github.com/spatial-model-editor/sme_manylinux_x86_64>
 
-- To use a new tag, update `CIBW_MANYLINUX_X86_64_IMAGE` and `CIBW_MANYLINUX_PYPY_X86_64_IMAGE` in [.github/workflows/wheels.yml](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/.github/workflows/wheels.yml#L30-L31)
+- To use a new tag, update `CIBW_MANYLINUX_X86_64_IMAGE` in [.github/workflows/wheels.yml](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/.github/workflows/wheels.yml#L30-L31)

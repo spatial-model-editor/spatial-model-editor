@@ -57,12 +57,12 @@ DialogAnalytic::DialogAnalytic(
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogAnalytic::reject);
   connect(ui->chkGrid, &QCheckBox::stateChanged, this,
-          [ui = ui.get()](int state) {
-            ui->lblImage->displayGrid(state == Qt::Checked);
+          [ui_ptr = ui.get()](int state) {
+            ui_ptr->lblImage->displayGrid(state == Qt::Checked);
           });
   connect(ui->chkScale, &QCheckBox::stateChanged, this,
-          [ui = ui.get()](int state) {
-            ui->lblImage->displayScale(state == Qt::Checked);
+          [ui_ptr = ui.get()](int state) {
+            ui_ptr->lblImage->displayScale(state == Qt::Checked);
           });
   connect(ui->txtExpression, &QPlainTextMathEdit::mathChanged, this,
           &DialogAnalytic::txtExpression_mathChanged);

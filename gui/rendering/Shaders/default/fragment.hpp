@@ -2,8 +2,7 @@
 // Created by acaramizaru on 8/30/23.
 //
 
-#ifndef SPATIALMODELEDITOR_FRAGMENT_H
-#define SPATIALMODELEDITOR_FRAGMENT_H
+#pragma once
 
 namespace rendering {
 
@@ -21,5 +20,3 @@ const char text_fragment[] =
     "//out_Color = vec4(1.0, 0.0, 0.0, 1.0);\n"
     "}\n";
 }
-
-#endif // SPATIALMODELEDITOR_FRAGMENT_H

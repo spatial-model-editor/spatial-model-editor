@@ -27,6 +27,10 @@
 
 namespace sme::simulate {
 
+class PixelSimImplError : public std::runtime_error {
+  using std::runtime_error::runtime_error;
+};
+
 template <typename Body>
 static void tbbParallelFor(std::size_t n, const Body &body) {
   constexpr std::size_t tbbGrainSize{64};
@@ -36,12 +40,12 @@ static void tbbParallelFor(std::size_t n, const Body &body) {
       partitioner);
 }
 
-ReacEval::ReacEval(
+ReacExpr::ReacExpr(
     const model::Model &doc, const std::vector<std::string> &speciesIDs,
     const std::vector<std::string> &reactionIDs, double reactionScaleFactor,
-    bool doCSE, unsigned optLevel, bool timeDependent, bool spaceDependent,
+    bool timeDependent, bool spaceDependent,
     const std::map<std::string, double, std::less<>> &substitutions) {
-  // construct reaction expressions and stoich matrix
+  // construct reaction expressions and variables
   PdeScaleFactors pdeScaleFactors;
   pdeScaleFactors.reaction = reactionScaleFactor;
   std::vector<std::string> extraVars{};
@@ -57,32 +61,16 @@ ReacEval::ReacEval(
   Pde pde(&doc, speciesIDs, reactionIDs, {}, pdeScaleFactors, extraVars, {},
           substitutions);
   // add dt/dt = 1 reaction term, and t,x,y "species"
-  auto sIds{speciesIDs};
-  sIds.insert(sIds.end(), extraVars.cbegin(), extraVars.cend());
-  auto rhs{pde.getRHS()};
+  variables = speciesIDs;
+  variables.insert(variables.end(), extraVars.cbegin(), extraVars.cend());
+  expressions = pde.getRHS();
   if (timeDependent) {
-    rhs.push_back("1"); // dt/dt = 1
+    expressions.emplace_back("1"); // dt/dt = 1
   }
   if (spaceDependent) {
-    rhs.push_back("0"); // dx/dt = 0
-    rhs.push_back("0"); // dy/dt = 0
+    expressions.emplace_back("0"); // dx/dt = 0
+    expressions.emplace_back("0"); // dy/dt = 0
   }
-  // compile all expressions with symengine
-  sym = common::Symbolic(rhs, sIds);
-  if (sym.isValid()) {
-    sym.compile(doCSE, optLevel);
-  }
-  if (!sym.isCompiled()) {
-    std::string msg{sym.getErrorMessage()};
-    msg.append("\nExpression: \"");
-    msg.append(sym.expr());
-    msg.append("\"");
-    throw ReacEvalError(msg);
-  }
-}
-
-void ReacEval::evaluate(double *output, const double *input) const {
-  sym.eval(output, input);
 }
 
 void SimCompartment::spatiallyAverageDcdt() {
@@ -143,8 +131,12 @@ SimCompartment::SimCompartment(
       !reacsInCompartment.isEmpty()) {
     reactionIDs = common::toStdString(reacsInCompartment);
   }
-  reacEval = ReacEval(doc, speciesIds, reactionIDs, 1.0, doCSE, optLevel,
-                      timeDependent, spaceDependent, substitutions);
+  ReacExpr reacExpr(doc, speciesIds, reactionIDs, 1.0, timeDependent,
+                    spaceDependent, substitutions);
+  if (!(sym.parse(reacExpr.expressions, reacExpr.variables) &&
+        sym.compile(doCSE, optLevel))) {
+    throw PixelSimImplError(sym.getErrorMessage());
+  }
   if (timeDependent) {
     speciesIds.push_back("time");
     diffConstants.push_back({0.0, 0.0, 0.0});
@@ -219,7 +211,7 @@ void SimCompartment::evaluateDiffusionOperator(std::size_t begin,
 
 void SimCompartment::evaluateReactions(std::size_t begin, std::size_t end) {
   for (std::size_t i = begin; i < end; ++i) {
-    reacEval.evaluate(dcdt.data() + i * nSpecies, conc.data() + i * nSpecies);
+    sym.eval(dcdt.data() + i * nSpecies, conc.data() + i * nSpecies);
   }
 }
 
@@ -513,8 +505,12 @@ SimMembrane::SimMembrane(
   // make vector of reaction IDs from membrane
   std::vector<std::string> reactionID =
       common::toStdString(doc.getReactions().getIds(membrane->getId().c_str()));
-  reacEval = ReacEval(doc, speciesIds, reactionID, volOverL3, doCSE, optLevel,
-                      timeDependent, spaceDependent, substitutions);
+  ReacExpr reacExpr(doc, speciesIds, reactionID, volOverL3, timeDependent,
+                    spaceDependent, substitutions);
+  if (!(sym.parse(reacExpr.expressions, reacExpr.variables) &&
+        sym.compile(doCSE, optLevel))) {
+    throw PixelSimImplError(sym.getErrorMessage());
+  }
 }
 
 void SimMembrane::evaluateReactions() {
@@ -536,7 +532,7 @@ void SimMembrane::evaluateReactions() {
   }
   std::vector<double> species(nSpeciesA + nSpeciesB + nExtraVars, 0);
   std::vector<double> result(nSpeciesA + nSpeciesB + nExtraVars, 0);
-  for (const auto [fluxDir, fluxLength] :
+  for (const auto &[fluxDir, fluxLength] :
        std::array<std::pair<geometry::Membrane::FLUX_DIRECTION, double>, 3>{
            {{geometry::Membrane::FLUX_DIRECTION::X, voxelSize.width()},
             {geometry::Membrane::FLUX_DIRECTION::Y, voxelSize.height()},
@@ -556,7 +552,7 @@ void SimMembrane::evaluateReactions() {
       }
 
       // evaluate reaction terms
-      reacEval.evaluate(result.data(), species.data());
+      sym.eval(result.data(), species.data());
 
       // add results to dc/dt: first A, then B. divide by fluxLength to get
       // change in concentration for this voxel

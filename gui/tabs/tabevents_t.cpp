@@ -11,6 +11,7 @@
 #include <QPushButton>
 
 using namespace sme::test;
+using Catch::Matchers::ContainsSubstring;
 
 TEST_CASE("TabEvents", "[gui/tabs/events][gui/tabs][gui][events]") {
   sme::model::Model model;
@@ -129,7 +130,8 @@ TEST_CASE("TabEvents", "[gui/tabs/events][gui/tabs][gui][events]") {
     txtExpression->setFocus();
     sendKeyEvents(txtExpression, {"Delete", "Backspace", "Backspace"});
     REQUIRE(txtExpression->toPlainText() == "");
-    REQUIRE(lblExpressionStatus->text() == "Empty expression");
+    REQUIRE_THAT(lblExpressionStatus->text().toStdString(),
+                 ContainsSubstring("Empty expression"));
     // invalid expression so model expression unchanged
     REQUIRE(events.getExpression("p_") == "x");
     // expression -> "2"

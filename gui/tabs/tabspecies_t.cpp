@@ -2,6 +2,7 @@
 #include "model_test_utils.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
+#include "qvoxelrenderer.hpp"
 #include "sme/model.hpp"
 #include "tabspecies.hpp"
 #include <QCheckBox>
@@ -16,7 +17,8 @@ using namespace sme::test;
 TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
   sme::model::Model model;
   QLabelMouseTracker mouseTracker;
-  TabSpecies tab(model, &mouseTracker);
+  QVoxelRenderer voxelRenderer;
+  TabSpecies tab(model, &mouseTracker, &voxelRenderer);
   tab.show();
   waitFor(&tab);
 

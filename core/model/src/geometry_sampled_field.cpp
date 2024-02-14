@@ -71,8 +71,8 @@ makeEmptyImages(const libsbml::SampledField *sampledField) {
 
 static bool allSampledValuesSet(
     const std::vector<const libsbml::SampledVolume *> &sampledVolumes) {
-  return std::all_of(sampledVolumes.cbegin(), sampledVolumes.cend(),
-                     [](auto *s) { return s->isSetSampledValue(); });
+  return std::ranges::all_of(sampledVolumes,
+                             [](auto *s) { return s->isSetSampledValue(); });
 }
 
 static bool valuesAreAllQRgb(const std::vector<QRgb> &values) {
@@ -152,12 +152,14 @@ getMatchingSampledValues(const std::vector<T> &values,
   std::vector<bool> matches(values.size(), false);
   if (sfvol->isSetSampledValue()) {
     T sv = static_cast<T>(sfvol->getSampledValue());
+    // cannot use c++20 ranges with vector<bool> as it doesn't satisfy
+    // indirectly_writable: should be fixed in c++23
     std::transform(values.cbegin(), values.cend(), matches.begin(),
-                   [sv](auto v) { return v == sv; });
+                   [sv](T v) -> bool { return v == sv; });
   } else if (sfvol->isSetMinValue() && sfvol->isSetMaxValue()) {
-    double min = sfvol->getMinValue();
-    double max = sfvol->getMaxValue();
-    std::transform(values.cbegin(), values.cend(), matches.begin(),
+    double min{sfvol->getMinValue()};
+    double max{sfvol->getMaxValue()};
+    std::transform(values.begin(), values.end(), matches.begin(),
                    [min, max](T v) {
                      auto vAsDouble{static_cast<double>(v)};
                      return vAsDouble >= min && vAsDouble < max;
@@ -218,7 +220,7 @@ static std::vector<QRgb> setImagePixels(
   auto iter = colours.begin();
   for (const auto *sampledVolume : sampledVolumes) {
     auto matches = getMatchingSampledValues(values, sampledVolume);
-    if (std::find(matches.cbegin(), matches.cend(), true) != matches.cend()) {
+    if (std::ranges::find(matches, true) != matches.cend()) {
       auto col{common::indexedColours()[iCol].rgb()};
       SPDLOG_WARN("Color {} is {}", iCol, col);
       auto sampledValue{
@@ -268,13 +270,7 @@ GeometrySampledField importGeometryFromSampledField(
   gsf.images = makeEmptyImages(sampledField);
   std::vector<QRgb> compartmentColours;
   auto dataType = sampledField->getDataType();
-  SPDLOG_DEBUG("importedSampledFieldColours.volume() = {} ",
-               importedSampledFieldColours.size());
-
-  for (std::size_t i = 0; i < importedSampledFieldColours.size(); ++i) {
-    SPDLOG_DEBUG("importedSampledFieldColours {} = {} ", i,
-                 importedSampledFieldColours[i]);
-  }
+  SPDLOG_DEBUG("importedSampledFieldColours {}", importedSampledFieldColours);
 
   if (isNativeSampledFieldFormat(sampledField, sampledVolumes)) {
     compartmentColours =
@@ -325,15 +321,17 @@ void exportSampledFieldGeometry(libsbml::Geometry *geom,
   sf->setSamplesLength(nx * ny * nz);
 
   std::vector<QRgb> samples;
-  samples.reserve(static_cast<std::size_t>(nx * ny * nz));
+  samples.reserve(static_cast<std::size_t>(nx) * static_cast<std::size_t>(ny) *
+                  static_cast<std::size_t>(nz));
   // convert 3d pixmap into array of uints
   // NOTE: order of samples is:
   // [ (x=0,y=0,z=0), (x=1,y=0,z=0), ..., (x=0,y=1,z=0), (x=1,y=1,z=0), ... ]
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
-  for (int z = 0; z < nz; ++z) {
+  for (std::size_t z = 0; z < static_cast<std::size_t>(nz); ++z) {
     for (int y = 0; y < ny; ++y) {
       for (int x = 0; x < nx; ++x) {
-        samples.push_back(compartmentImages[z].pixelIndex(x, ny - 1 - y));
+        samples.push_back(
+            static_cast<QRgb>(compartmentImages[z].pixelIndex(x, ny - 1 - y)));
       }
     }
   }

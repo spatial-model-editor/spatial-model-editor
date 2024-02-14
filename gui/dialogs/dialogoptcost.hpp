@@ -22,10 +22,10 @@ public:
   [[nodiscard]] const sme::simulate::OptCost &getOptCost() const;
 
 private:
-  const sme::model::Model &model;
-  const std::vector<sme::simulate::OptCost> &defaultOptCosts;
+  const sme::model::Model &m_model;
+  const std::vector<sme::simulate::OptCost> &m_defaultOptCosts;
   std::unique_ptr<Ui::DialogOptCost> ui;
-  sme::simulate::OptCost optCost;
+  sme::simulate::OptCost m_optCost;
   void cmbSpecies_currentIndexChanged(int index);
   void cmbCostType_currentIndexChanged(int index);
   void cmbDiffType_currentIndexChanged(int index);

@@ -1,4 +1,5 @@
 #include "dialogsimulationoptions.hpp"
+#include "guiutils.hpp"
 #include "sme/logger.hpp"
 #include "sme/utils.hpp"
 #include "ui_dialogsimulationoptions.h"
@@ -80,6 +81,9 @@ void DialogSimulationOptions::setupConnections() {
           &DialogSimulationOptions::txtDuneNewtonRel_editingFinished);
   connect(ui->txtDuneNewtonAbs, &QLineEdit::editingFinished, this,
           &DialogSimulationOptions::txtDuneNewtonAbs_editingFinished);
+  connect(ui->cmbDuneLinearSolver,
+          qOverload<int>(&QComboBox::currentIndexChanged), this,
+          &DialogSimulationOptions::cmbDuneLinearSolver_currentIndexChanged);
   connect(ui->btnDuneReset, &QPushButton::clicked, this,
           &DialogSimulationOptions::resetDuneToDefaults);
   // Pixel tab
@@ -105,15 +109,8 @@ void DialogSimulationOptions::setupConnections() {
 }
 
 void DialogSimulationOptions::loadDuneOpts() {
-  int i = ui->cmbDuneIntegrator->findText(opt.dune.integrator.c_str());
-  if (i >= 0 && i < ui->cmbDuneIntegrator->count()) {
-    ui->cmbDuneIntegrator->setCurrentIndex(i);
-  } else {
-    ui->cmbDuneIntegrator->setCurrentIndex(0);
-    SPDLOG_WARN("Invalid integrator '{}' - using '{}' instead",
-                opt.dune.integrator,
-                ui->cmbDuneIntegrator->currentText().toStdString());
-  }
+  selectMatchingOrFirstItem(ui->cmbDuneIntegrator, opt.dune.integrator.c_str());
+  opt.dune.integrator = ui->cmbDuneIntegrator->currentText().toStdString();
   ui->txtDuneDt->setText(dblToQString(opt.dune.dt));
   ui->txtDuneMinDt->setText(dblToQString(opt.dune.minDt));
   ui->txtDuneMaxDt->setText(dblToQString(opt.dune.maxDt));
@@ -122,6 +119,9 @@ void DialogSimulationOptions::loadDuneOpts() {
   ui->chkDuneVTK->setChecked(opt.dune.writeVTKfiles);
   ui->txtDuneNewtonRel->setText(dblToQString(opt.dune.newtonRelErr));
   ui->txtDuneNewtonAbs->setText(dblToQString(opt.dune.newtonAbsErr));
+  selectMatchingOrFirstItem(ui->cmbDuneLinearSolver,
+                            opt.dune.linearSolver.c_str());
+  opt.dune.linearSolver = ui->cmbDuneLinearSolver->currentText().toStdString();
 }
 
 void DialogSimulationOptions::cmbDuneIntegrator_currentIndexChanged(
@@ -166,6 +166,11 @@ void DialogSimulationOptions::txtDuneNewtonRel_editingFinished() {
 void DialogSimulationOptions::txtDuneNewtonAbs_editingFinished() {
   opt.dune.newtonAbsErr = ui->txtDuneNewtonAbs->text().toDouble();
   loadDuneOpts();
+}
+
+void DialogSimulationOptions::cmbDuneLinearSolver_currentIndexChanged(
+    [[maybe_unused]] int index) {
+  opt.dune.linearSolver = ui->cmbDuneLinearSolver->currentText().toStdString();
 }
 
 void DialogSimulationOptions::resetDuneToDefaults() {

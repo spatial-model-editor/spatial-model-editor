@@ -43,5 +43,4 @@ getSpatialCoordinateParam(const libsbml::Model *model,
 
 libsbml::Parameter *getSpatialCoordinateParam(libsbml::Model *model,
                                               libsbml::CoordinateKind_t kind);
-
 } // namespace sme::model

@@ -3,6 +3,12 @@
 //
 
 #include "WireframeObject.hpp"
+#include <memory>
+
+template <typename T>
+qopengl_GLsizeiptr sizeofGLVector(const std::vector<T> &v) {
+  return static_cast<qopengl_GLsizeiptr>(v.size() * sizeof(T));
+}
 
 rendering::WireframeObject::WireframeObject(
     const rendering::ObjectInfo &info,
@@ -117,12 +123,7 @@ void rendering::WireframeObject::CreateVBO() {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
 
-  GLsizeiptr vboSize = m_verticesBuffer.size() * sizeof(GLfloat);
-  //  GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(uint8_t);
-  //  GLsizeiptr indexBufferSize = m_indices.size() * sizeof(GLuint);
-
-  m_vao = std::unique_ptr<QOpenGLVertexArrayObject>(
-      new QOpenGLVertexArrayObject(nullptr));
+  m_vao = std::make_unique<QOpenGLVertexArrayObject>(nullptr);
   m_vao->create();
   m_vao->bind();
 
@@ -130,8 +131,8 @@ void rendering::WireframeObject::CreateVBO() {
   CheckOpenGLError("glGenBuffers");
   glBindBuffer(GL_ARRAY_BUFFER, m_vbo);
   CheckOpenGLError("glBindBuffer");
-  glBufferData(GL_ARRAY_BUFFER, vboSize, m_verticesBuffer.data(),
-               GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeofGLVector(m_verticesBuffer),
+               m_verticesBuffer.data(), GL_STATIC_DRAW);
   CheckOpenGLError("glBufferData");
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
   CheckOpenGLError("glVertexAttribPointer");

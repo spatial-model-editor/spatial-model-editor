@@ -3,9 +3,29 @@
 #include "qlabelmousetracker.hpp"
 #include "qlabelslice.hpp"
 #include "qt_test_utils.hpp"
+#include <QCheckBox>
+#include <QComboBox>
 #include <QFile>
+#include <QLabel>
 
 using namespace sme::test;
+
+struct DialogImageSliceWidgets {
+  explicit DialogImageSliceWidgets(const DialogImageSlice *dialog) {
+    GET_DIALOG_WIDGET(QComboBox, cmbSliceType);
+    GET_DIALOG_WIDGET(QCheckBox, chkAspectRatio);
+    GET_DIALOG_WIDGET(QCheckBox, chkSmoothInterpolation);
+    GET_DIALOG_WIDGET(QLabel, lblSlice);
+    GET_DIALOG_WIDGET(QLabel, lblImage);
+    GET_DIALOG_WIDGET(QLabel, lblMouseLocation);
+  }
+  QComboBox *cmbSliceType;
+  QCheckBox *chkAspectRatio;
+  QCheckBox *chkSmoothInterpolation;
+  QLabel *lblSlice;
+  QLabel *lblImage;
+  QLabel *lblMouseLocation;
+};
 
 TEST_CASE("DialogImageSlice",
           "[gui/dialogs/imageslice][gui/dialogs][gui][imageslice]") {
@@ -20,13 +40,8 @@ TEST_CASE("DialogImageSlice",
   imgs[3].fill(col2);
   QVector<double> time{0, 1, 2, 3, 4};
   DialogImageSlice dia(imgGeometry, imgs, time, false);
-  auto *lblSlice{dia.findChild<QLabelSlice *>("lblSlice")};
-  REQUIRE(lblSlice != nullptr);
-  auto *lblImage{dia.findChild<QLabelMouseTracker *>("lblImage")};
-  REQUIRE(lblImage != nullptr);
-  auto *lblMouseLocation{dia.findChild<QLabel *>("lblMouseLocation")};
-  REQUIRE(lblMouseLocation != nullptr);
-  ModalWidgetTimer mwt;
+  dia.show();
+  DialogImageSliceWidgets widgets(&dia);
   SECTION("mouse moves, text changes") {
     QImage slice = dia.getSlicedImage();
     REQUIRE(slice.width() == imgs.size());
@@ -35,28 +50,26 @@ TEST_CASE("DialogImageSlice",
     REQUIRE(slice.pixel(2, 49) == col1);
     REQUIRE(slice.pixel(3, 12) == col2);
     REQUIRE(slice.pixel(4, 0) == col1);
-    auto oldText{lblMouseLocation->text()};
-    sendMouseMove(lblSlice, {10, 10});
-    auto newText{lblMouseLocation->text()};
+    auto oldText{widgets.lblMouseLocation->text()};
+    sendMouseMove(widgets.lblSlice, {10, 10});
+    auto newText{widgets.lblMouseLocation->text()};
     REQUIRE(oldText != newText);
     oldText = newText;
-    sendMouseMove(lblSlice, {20, 20});
-    newText = lblMouseLocation->text();
+    sendMouseMove(widgets.lblSlice, {20, 20});
+    newText = widgets.lblMouseLocation->text();
     REQUIRE(oldText != newText);
     oldText = newText;
-    sendMouseMove(lblSlice, {1, 1});
-    newText = lblMouseLocation->text();
+    sendMouseMove(widgets.lblSlice, {1, 1});
+    newText = widgets.lblMouseLocation->text();
     REQUIRE(oldText != newText);
     oldText = newText;
-    sendMouseMove(lblImage, {1, 1});
-    sendMouseMove(lblImage, {40, 32});
-    newText = lblMouseLocation->text();
+    sendMouseMove(widgets.lblImage, {1, 1});
+    sendMouseMove(widgets.lblImage, {40, 32});
+    newText = widgets.lblMouseLocation->text();
     REQUIRE(oldText != newText);
   }
   SECTION("user sets slice to horizontal") {
-    mwt.addUserAction({"Up"});
-    mwt.start();
-    dia.exec();
+    sendKeyEvents(widgets.cmbSliceType, {"Up"});
     QImage slice = dia.getSlicedImage();
     REQUIRE(slice.width() == imgs.size());
     REQUIRE(slice.height() == imgs[0][0].width());
@@ -66,9 +79,7 @@ TEST_CASE("DialogImageSlice",
     REQUIRE(slice.pixel(4, 0) == col1);
   }
   SECTION("user sets slice to custom: default is diagonal") {
-    mwt.addUserAction({"Down"});
-    mwt.start();
-    dia.exec();
+    sendKeyEvents(widgets.cmbSliceType, {"Down"});
     QImage slice = dia.getSlicedImage();
     REQUIRE(slice.width() == imgs.size());
     REQUIRE(slice.height() ==
@@ -79,20 +90,18 @@ TEST_CASE("DialogImageSlice",
     REQUIRE(slice.pixel(4, 0) == col1);
   }
   SECTION("user clicks save image, then cancel") {
-    ModalWidgetTimer mwt2;
-    mwt.addUserAction({"Enter"}, true, &mwt2);
-    mwt2.addUserAction({"Esc"});
+    ModalWidgetTimer mwt;
+    mwt.addUserAction({"Esc"});
     mwt.start();
-    dia.exec();
-    REQUIRE(mwt2.getResult() == "QFileDialog::AcceptSave");
+    sendKeyEvents(&dia, {"Enter"});
+    REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
   }
   SECTION("user clicks save image, then enters filename") {
-    ModalWidgetTimer mwt2;
-    mwt.addUserAction({"Enter"}, true, &mwt2);
-    mwt2.addUserAction({"t", "m", "p", "d", "s", "l", "i", "c", "e"});
+    ModalWidgetTimer mwt;
+    mwt.addUserAction({"t", "m", "p", "d", "s", "l", "i", "c", "e"});
     mwt.start();
-    dia.exec();
-    REQUIRE(mwt2.getResult() == "QFileDialog::AcceptSave");
+    sendKeyEvents(&dia, {"Enter"});
+    REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
     QImage img("tmpdslice.png");
     REQUIRE(img.width() == imgs.size());
     REQUIRE(img.height() == imgs[0][0].height());

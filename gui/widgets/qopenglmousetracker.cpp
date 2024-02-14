@@ -2,7 +2,7 @@
 // Created by acaramizaru on 7/25/23.
 //
 
-#include "qopenglmousetracker.h"
+#include "qopenglmousetracker.hpp"
 
 QOpenGLMouseTracker::QOpenGLMouseTracker(float lineWidth,
                                          float lineSelectPrecision,
@@ -12,8 +12,7 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(float lineWidth,
     : m_camera(cameraFOV, static_cast<float>(size().width()),
                static_cast<float>(size().height()), cameraNearZ, cameraFarZ),
       m_lineWidth(lineWidth), m_lineSelectPrecision(lineSelectPrecision),
-      m_selectedObjectColor(selectedObjectColor), m_frameRate(frameRate),
-      m_SubMeshes(nullptr) {}
+      m_selectedObjectColor(selectedObjectColor), m_frameRate(frameRate) {}
 
 void QOpenGLMouseTracker::initializeGL() {
 

@@ -6,6 +6,7 @@
 
 using namespace sme;
 using namespace sme::test;
+using Catch::Matchers::ContainsSubstring;
 
 TEST_CASE("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
   SECTION("ABtoC model") {
@@ -37,52 +38,54 @@ TEST_CASE("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     s.getReactions().setSpeciesStoichiometry("r3", "A", 1.0);
     std::vector<std::string> speciesIDs{"A", "B", "C"};
     REQUIRE_THROWS_WITH(simulate::Pde(&s, speciesIDs, {"r1", "r2", "r3"}),
-                        "Unknown symbol: idontexist");
+                        ContainsSubstring("Unknown symbol 'idontexist'"));
   }
   SECTION("simple model") {
     auto s{getTestModel("invalid-dune-names")};
-    simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"});
-    REQUIRE(symEq(pde.getRHS()[0], "-1e5*x*dim"));
-    REQUIRE(symEq(pde.getRHS()[1], "-1e5*x*dim"));
-    REQUIRE(symEq(pde.getRHS()[2], "1e5*x*dim"));
-    REQUIRE(symEq(pde.getJacobian()[0][0], "-1e5*x"));
+    simulate::Pde pde(&s, {"dim", "position_x", "position_x_", "cos", "cos_"},
+                      {"r1"});
+    REQUIRE(symEq(pde.getRHS()[0], "-1e5*position_x*dim"));
+    REQUIRE(symEq(pde.getRHS()[1], "-1e5*position_x*dim"));
+    REQUIRE(symEq(pde.getRHS()[2], "1e5*position_x*dim"));
+    REQUIRE(symEq(pde.getJacobian()[0][0], "-1e5*position_x"));
     REQUIRE(symEq(pde.getJacobian()[0][1], "-1e5*dim"));
     REQUIRE(symEq(pde.getJacobian()[0][2], "0"));
     REQUIRE(symEq(pde.getJacobian()[0][3], "0"));
     REQUIRE(symEq(pde.getJacobian()[0][4], "0"));
-    REQUIRE(symEq(pde.getJacobian()[2][0], "1e5*x"));
+    REQUIRE(symEq(pde.getJacobian()[2][0], "1e5*position_x"));
     REQUIRE(symEq(pde.getJacobian()[2][1], "1e5*dim"));
     REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
   SECTION("simple model with relabeling of variables") {
     auto s{getTestModel("invalid-dune-names")};
-    simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
-                      {"dim_", "x__", "x_", "cos__", "cos_"});
-    REQUIRE(symEq(pde.getRHS()[0], "-1e5*x__*dim_"));
-    REQUIRE(symEq(pde.getRHS()[1], "-1e5*x__*dim_"));
-    REQUIRE(symEq(pde.getRHS()[2], "1e5*x__*dim_"));
-    REQUIRE(symEq(pde.getJacobian()[0][0], "-1e5*x__"));
+    simulate::Pde pde(&s, {"dim", "position_x", "position_x_", "cos", "cos_"},
+                      {"r1"},
+                      {"dim_", "position_x__", "position_x_", "cos__", "cos_"});
+    REQUIRE(symEq(pde.getRHS()[0], "-1e5*position_x__*dim_"));
+    REQUIRE(symEq(pde.getRHS()[1], "-1e5*position_x__*dim_"));
+    REQUIRE(symEq(pde.getRHS()[2], "1e5*position_x__*dim_"));
+    REQUIRE(symEq(pde.getJacobian()[0][0], "-1e5*position_x__"));
     REQUIRE(symEq(pde.getJacobian()[0][1], "-1e5*dim_"));
     REQUIRE(symEq(pde.getJacobian()[0][2], "0"));
     REQUIRE(symEq(pde.getJacobian()[0][3], "0"));
     REQUIRE(symEq(pde.getJacobian()[0][4], "0"));
-    REQUIRE(symEq(pde.getJacobian()[2][0], "1e5*x__"));
+    REQUIRE(symEq(pde.getJacobian()[2][0], "1e5*position_x__"));
     REQUIRE(symEq(pde.getJacobian()[2][1], "1e5*dim_"));
     REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
   SECTION("invalid relabeling of variables ignored") {
     auto s{getTestModel("invalid-dune-names")};
-    simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
-                      {"z", "y"});
-    REQUIRE(symEq(pde.getRHS()[0], "-1e5*x*dim"));
-    REQUIRE(symEq(pde.getRHS()[1], "-1e5*x*dim"));
-    REQUIRE(symEq(pde.getRHS()[2], "1e5*x*dim"));
-    REQUIRE(symEq(pde.getJacobian()[0][0], "-1e5*x"));
+    simulate::Pde pde(&s, {"dim", "position_x", "position_x_", "cos", "cos_"},
+                      {"r1"}, {"z", "y"});
+    REQUIRE(symEq(pde.getRHS()[0], "-1e5*position_x*dim"));
+    REQUIRE(symEq(pde.getRHS()[1], "-1e5*position_x*dim"));
+    REQUIRE(symEq(pde.getRHS()[2], "1e5*position_x*dim"));
+    REQUIRE(symEq(pde.getJacobian()[0][0], "-1e5*position_x"));
     REQUIRE(symEq(pde.getJacobian()[0][1], "-1e5*dim"));
     REQUIRE(symEq(pde.getJacobian()[0][2], "0"));
     REQUIRE(symEq(pde.getJacobian()[0][3], "0"));
     REQUIRE(symEq(pde.getJacobian()[0][4], "0"));
-    REQUIRE(symEq(pde.getJacobian()[2][0], "1e5*x"));
+    REQUIRE(symEq(pde.getJacobian()[2][0], "1e5*position_x"));
     REQUIRE(symEq(pde.getJacobian()[2][1], "1e5*dim"));
     REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
@@ -91,17 +94,18 @@ TEST_CASE("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     simulate::PdeScaleFactors scaleFactors;
     scaleFactors.reaction = 0.2;
     scaleFactors.species = 1.0;
-    simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"},
-                      {"dim_", "x__", "x_", "cos__", "cos_"}, scaleFactors);
-    REQUIRE(symEq(pde.getRHS()[0], "-2e4*x__*dim_"));
-    REQUIRE(symEq(pde.getRHS()[1], "-2e4*x__*dim_"));
-    REQUIRE(symEq(pde.getRHS()[2], "2e4*x__*dim_"));
-    REQUIRE(symEq(pde.getJacobian()[0][0], "-2e4*x__"));
+    simulate::Pde pde(
+        &s, {"dim", "position_x", "position_x_", "cos", "cos_"}, {"r1"},
+        {"dim_", "position_x__", "position_x_", "cos__", "cos_"}, scaleFactors);
+    REQUIRE(symEq(pde.getRHS()[0], "-2e4*position_x__*dim_"));
+    REQUIRE(symEq(pde.getRHS()[1], "-2e4*position_x__*dim_"));
+    REQUIRE(symEq(pde.getRHS()[2], "2e4*position_x__*dim_"));
+    REQUIRE(symEq(pde.getJacobian()[0][0], "-2e4*position_x__"));
     REQUIRE(symEq(pde.getJacobian()[0][1], "-2e4*dim_"));
     REQUIRE(symEq(pde.getJacobian()[0][2], "0"));
     REQUIRE(symEq(pde.getJacobian()[0][3], "0"));
     REQUIRE(symEq(pde.getJacobian()[0][4], "0"));
-    REQUIRE(symEq(pde.getJacobian()[2][0], "2e4*x__"));
+    REQUIRE(symEq(pde.getJacobian()[2][0], "2e4*position_x__"));
     REQUIRE(symEq(pde.getJacobian()[2][1], "2e4*dim_"));
     REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }
@@ -111,17 +115,17 @@ TEST_CASE("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     scaleFactors.reaction = 0.27;
     scaleFactors.species = 10.0;
 
-    simulate::Pde pde(&s, {"dim", "x", "x_", "cos", "cos_"}, {"r1"}, {},
-                      scaleFactors);
-    REQUIRE(symEq(pde.getRHS()[0], "-2.7e6*x*dim"));
-    REQUIRE(symEq(pde.getRHS()[1], "-2.7e6*x*dim"));
-    REQUIRE(symEq(pde.getRHS()[2], "2.7e6*x*dim"));
-    REQUIRE(symEq(pde.getJacobian()[0][0], "-2.7e6*x"));
+    simulate::Pde pde(&s, {"dim", "position_x", "position_x_", "cos", "cos_"},
+                      {"r1"}, {}, scaleFactors);
+    REQUIRE(symEq(pde.getRHS()[0], "-2.7e6*position_x*dim"));
+    REQUIRE(symEq(pde.getRHS()[1], "-2.7e6*position_x*dim"));
+    REQUIRE(symEq(pde.getRHS()[2], "2.7e6*position_x*dim"));
+    REQUIRE(symEq(pde.getJacobian()[0][0], "-2.7e6*position_x"));
     REQUIRE(symEq(pde.getJacobian()[0][1], "-2.7e6*dim"));
     REQUIRE(symEq(pde.getJacobian()[0][2], "0"));
     REQUIRE(symEq(pde.getJacobian()[0][3], "0"));
     REQUIRE(symEq(pde.getJacobian()[0][4], "0"));
-    REQUIRE(symEq(pde.getJacobian()[2][0], "2.7e6*x"));
+    REQUIRE(symEq(pde.getJacobian()[2][0], "2.7e6*position_x"));
     REQUIRE(symEq(pde.getJacobian()[2][1], "2.7e6*dim"));
     REQUIRE(symEq(pde.getJacobian()[2][2], "0"));
   }

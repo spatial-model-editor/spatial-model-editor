@@ -57,12 +57,13 @@ testGetConcentrationImageArray(const geometry::Field &f) {
 TEST_CASE("Geometry: Compartments and Fields",
           "[core/model/geometry][core/model][core][model][geometry]") {
   SECTION("one pixel compartment, 1x1 image") {
-    QImage img(1, 1, QImage::Format_RGB32);
+    common::ImageStack img{{QImage(1, 1, QImage::Format_RGB32)}};
     auto col = qRgb(12, 243, 154);
-    img.setPixel(0, 0, col);
-    geometry::Compartment comp("comp", {img}, col);
+    img[0].setPixel(0, 0, col);
+    geometry::Compartment comp("comp", {{img}}, col);
+    REQUIRE(comp.getCompartmentImages().volume().width() == 1);
+    REQUIRE(comp.getCompartmentImages().volume().height() == 1);
     REQUIRE(comp.getCompartmentImages().volume().depth() == 1);
-    REQUIRE(comp.getCompartmentImages()[0].size() == img.size());
     REQUIRE(comp.nVoxels() == 1);
     REQUIRE(comp.getVoxel(0).p == QPoint{0, 0});
     REQUIRE(comp.getVoxel(0).z == 0);
@@ -73,7 +74,7 @@ TEST_CASE("Geometry: Compartments and Fields",
     REQUIRE(field.getConcentration().size() == 1);
     REQUIRE(field.getConcentration()[0] == dbl_approx(1.3));
     const auto imgConcs{field.getConcentrationImages()};
-    REQUIRE(imgConcs[0].size() == img.size());
+    REQUIRE(imgConcs.volume() == img.volume());
     REQUIRE(imgConcs[0].pixelColor(0, 0) == specCol);
 
     field.importConcentration({1.23});
@@ -100,14 +101,14 @@ TEST_CASE("Geometry: Compartments and Fields",
     REQUIRE_THROWS(field.importConcentration({}));
   }
   SECTION("two pixel compartment, 6x7 image") {
-    QImage img(6, 7, QImage::Format_RGB32);
+    common::ImageStack img{{QImage(6, 7, QImage::Format_RGB32)}};
     auto colBG = qRgb(112, 43, 4);
     auto col = qRgb(12, 12, 12);
     img.fill(colBG);
-    img.setPixel(3, 3, col);
-    img.setPixel(3, 4, col);
+    img[0].setPixel(3, 3, col);
+    img[0].setPixel(3, 4, col);
     geometry::Compartment comp("comp", {img}, col);
-    REQUIRE(comp.getCompartmentImages()[0].size() == img.size());
+    REQUIRE(comp.getCompartmentImages().volume() == img.volume());
     REQUIRE(comp.nVoxels() == 2);
     REQUIRE(comp.getVoxel(0).p == QPoint(3, 3));
     REQUIRE(comp.getVoxel(1).p == QPoint(3, 4));
@@ -121,7 +122,7 @@ TEST_CASE("Geometry: Compartments and Fields",
     REQUIRE(field.getConcentration()[1] == dbl_approx(1.3));
 
     auto a{field.getConcentrationImageArray()};
-    REQUIRE(a.size() == static_cast<std::size_t>(img.width() * img.height()));
+    REQUIRE(a.size() == img.volume().nVoxels());
     REQUIRE(a.front() == dbl_approx(1.3));
     REQUIRE(a[20] == dbl_approx(1.3));
     REQUIRE(a[21] == dbl_approx(1.3)); // (3,3)
@@ -131,7 +132,7 @@ TEST_CASE("Geometry: Compartments and Fields",
 
     // true -> inverted y-axis & zero outside of compartment
     auto a2{field.getConcentrationImageArray(true)};
-    REQUIRE(a2.size() == static_cast<std::size_t>(img.width() * img.height()));
+    REQUIRE(a2.size() == img.volume().nVoxels());
     REQUIRE(a2.front() == dbl_approx(0.0));
     REQUIRE(a2[20] == dbl_approx(0.0));
     REQUIRE(a2[21] == dbl_approx(1.3)); // (3,3)
@@ -153,7 +154,7 @@ TEST_CASE("Geometry: Compartments and Fields",
 
     // true -> inverted y-axis & zero outside of compartment
     a2 = field.getConcentrationImageArray(true);
-    REQUIRE(a2.size() == static_cast<std::size_t>(img.width() * img.height()));
+    REQUIRE(a2.size() == img.volume().nVoxels());
     REQUIRE(a2.front() == dbl_approx(0.0));
     REQUIRE(a2[20] == dbl_approx(0.0));
     REQUIRE(a2[21] == dbl_approx(3.1)); // (3,3)
@@ -166,12 +167,12 @@ TEST_CASE("Geometry: Compartments and Fields",
     REQUIRE_THROWS(field.importConcentration({}));
   }
   SECTION("compartment of field is changed") {
-    QImage img(6, 7, QImage::Format_RGB32);
+    common::ImageStack img{{QImage(6, 7, QImage::Format_RGB32)}};
     auto colBG = qRgb(112, 43, 4);
     auto col = qRgb(12, 12, 12);
     img.fill(colBG);
-    img.setPixel(3, 3, col);
-    img.setPixel(3, 4, col);
+    img[0].setPixel(3, 3, col);
+    img[0].setPixel(3, 4, col);
     geometry::Compartment comp1("comp1", {img}, colBG);
     geometry::Compartment comp2("comp2", {img}, col);
     REQUIRE(comp1.nVoxels() == 40);
@@ -193,10 +194,11 @@ TEST_CASE("Geometry: Compartments and Fields",
     REQUIRE(field.getConcentration()[1] == dbl_approx(0.0));
   }
   SECTION("getConcentrationImageArray") {
-    QImage img(":/geometry/concave-cell-nucleus-100x100.png");
-    QRgb col0 = img.pixel(0, 0);
-    QRgb col1 = img.pixel(35, 20);
-    QRgb col2 = img.pixel(40, 50);
+    common::ImageStack img{
+        {QImage(":/geometry/concave-cell-nucleus-100x100.png")}};
+    QRgb col0 = img[0].pixel(0, 0);
+    QRgb col1 = img[0].pixel(35, 20);
+    QRgb col2 = img[0].pixel(40, 50);
     geometry::Compartment comp0("comp0", {img}, col0);
     geometry::Compartment comp1("comp1", {img}, col1);
     geometry::Compartment comp2("comp2", {img}, col2);

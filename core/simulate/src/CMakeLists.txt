@@ -8,8 +8,6 @@ target_sources(
           duneini.cpp
           dunesim.cpp
           dunesim_impl.cpp
-          dunesim_impl_coupled.cpp
-          dunesim_impl_independent.cpp
           optimize.cpp
           optimize_impl.cpp
           pde.cpp

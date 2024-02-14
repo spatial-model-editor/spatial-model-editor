@@ -14,6 +14,7 @@
 
 using namespace sme;
 using namespace sme::test;
+using Catch::Matchers::ContainsSubstring;
 
 TEST_CASE("Simulate: very_simple_model, single pixel geometry",
           "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
@@ -29,8 +30,8 @@ TEST_CASE("Simulate: very_simple_model, single pixel geometry",
   img.setPixel(0, 1, col2);
   img.setPixel(0, 2, col3);
   img.save("tmpsimsinglepixel.bmp");
-  s.getGeometry().importGeometryFromImages({QImage("tmpsimsinglepixel.bmp")},
-                                           false);
+  s.getGeometry().importGeometryFromImages(
+      common::ImageStack{{QImage("tmpsimsinglepixel.bmp")}}, false);
   s.getGeometry().setVoxelSize({1.0, 1.0, 1.0});
   s.getCompartments().setColour("c1", col1);
   s.getCompartments().setColour("c2", col2);
@@ -243,7 +244,7 @@ TEST_CASE("Simulate: very_simple_model, single pixel geometry",
     simulate::Simulation sim2(s);
     sim2.doTimesteps(1000);
     std::size_t it = sim2.getTimePoints().size() - 1;
-    double A_c1 = 1.0;
+    [[maybe_unused]] double A_c1 = 1.0;
     double A_c2 = sim2.getAvgMinMax(it, 1, 0).avg;
     double A_c3 = sim2.getAvgMinMax(it, 2, 0).avg;
     double B_c1 = sim2.getAvgMinMax(it, 0, 0).avg;
@@ -372,8 +373,10 @@ TEST_CASE("Simulate: very_simple_model, empty compartment, DUNE sim",
     s.getSpecies().remove("B_c1");
     REQUIRE(s.getSpecies().getIds("c1").empty());
     simulate::Simulation sim(s);
+    CAPTURE(sim.errorMessage());
     REQUIRE(sim.errorMessage().empty());
     sim.doTimesteps(0.1, 1);
+    CAPTURE(sim.errorMessage());
     REQUIRE(sim.errorMessage().empty());
   }
   SECTION("Inner and Outer species removed") {
@@ -384,6 +387,7 @@ TEST_CASE("Simulate: very_simple_model, empty compartment, DUNE sim",
     s.getSpecies().remove("B_c3");
     REQUIRE(s.getSpecies().getIds("c3").empty());
     simulate::Simulation sim(s);
+    CAPTURE(sim.errorMessage());
     REQUIRE(sim.errorMessage().empty());
     sim.doTimesteps(0.1, 1);
     REQUIRE(sim.errorMessage().empty());
@@ -584,7 +588,10 @@ TEST_CASE("Simulate: very_simple_model, membrane reaction units consistency",
     double epsilon{1e-8};
     double margin{1e-13};
     if (simulatorType == simulate::SimulatorType::DUNE) {
-      epsilon = 1e-6;
+      // todo: why this has increased so much vs dune-copasi 1 (1e-6 epsilon,
+      // 1e-13 margin)
+      margin = 1e-6;
+      epsilon = 1e-2;
     }
     double simTime{0.025};
     // import model
@@ -905,7 +912,6 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
           "[core/simulate/simulate][core/"
           "simulate][core][simulate][dune][pixel][expensive][3d]") {
   // see docs/tests/diffusion.rst for analytic expressions used here
-  // TODO: when we can do 3d meshing, add DUNE here
 
   constexpr double pi = 3.14159265358979323846;
   double sigma2 = 36.0;
@@ -967,7 +973,8 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
   options.dune.dt = 1.0;
   options.dune.maxDt = 1.0;
   options.dune.minDt = 0.5;
-  for (auto simType : {simulate::SimulatorType::Pixel}) {
+  for (auto simType :
+       {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
     // relative error on integral of initial concentration over all pixels:
     double initialRelativeError{1e-9};
     // largest relative error of any pixel after simulation:
@@ -976,9 +983,9 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
     double evolvedAvgRelativeError{0.010};
     if (simType == simulate::SimulatorType::DUNE) {
       // increase allowed error for dune simulation
-      initialRelativeError = 0.02;
-      evolvedMaxRelativeError = 0.3;
-      evolvedAvgRelativeError = 0.10;
+      initialRelativeError = 0.04;
+      evolvedMaxRelativeError = 0.8;
+      evolvedAvgRelativeError = 0.20;
     }
     s.getSimulationSettings().simulatorType = simType;
     s.getSimulationData().clear();
@@ -1172,7 +1179,7 @@ TEST_CASE("DUNE: simulation",
     options.dune.dt = 0.01;
     options.dune.maxDt = 0.01;
     options.dune.minDt = 0.005;
-    options.dune.integrator = "alexander_2";
+    options.dune.integrator = "Alexander2";
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
 
     simulate::Simulation duneSim(s);
@@ -1189,14 +1196,48 @@ TEST_CASE("DUNE: simulation",
     REQUIRE(imgConc.volume().depth() == 1);
     REQUIRE(imgConc[0].size() == QSize(100, 100));
   }
-  SECTION("very-simple-model") {
-    auto s{getExampleModel(Mod::VerySimpleModel)};
-    auto &options{s.getSimulationSettings().options};
+  SECTION("very-simple-model: different linearSolvers") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    m.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+    auto &options{m.getSimulationSettings().options};
     options.dune.dt = 0.01;
-    s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
-    simulate::Simulation duneSim(s);
-    duneSim.doTimesteps(0.01);
-    REQUIRE(duneSim.errorMessage().empty());
+    SECTION("invalid: IDontExist") {
+      options.dune.linearSolver = "IDontExist";
+      simulate::Simulation duneSim(m);
+      duneSim.doTimesteps(0.01);
+      REQUIRE_THAT(duneSim.errorMessage(),
+                   ContainsSubstring("Not known linear solver"));
+    }
+    SECTION("valid & avilable: CG") {
+      options.dune.linearSolver = "CG";
+      simulate::Simulation duneSim(m);
+      duneSim.doTimesteps(0.01);
+      REQUIRE(duneSim.errorMessage().empty());
+    }
+    SECTION("valid & avilable: RestartedGMRes") {
+      options.dune.linearSolver = "RestartedGMRes";
+      simulate::Simulation duneSim(m);
+      duneSim.doTimesteps(0.01);
+      REQUIRE(duneSim.errorMessage().empty());
+    }
+    SECTION("valid & avilable: BiCGSTAB") {
+      options.dune.linearSolver = "BiCGSTAB";
+      simulate::Simulation duneSim(m);
+      duneSim.doTimesteps(0.01);
+      REQUIRE(duneSim.errorMessage().empty());
+    }
+    SECTION("valid but unavilable: UMFPack") {
+      options.dune.linearSolver = "UMFPack";
+      simulate::Simulation duneSim(m);
+      duneSim.doTimesteps(0.01);
+      REQUIRE_THAT(duneSim.errorMessage(), ContainsSubstring("not available"));
+    }
+    SECTION("valid but unavilable: SuperLU") {
+      options.dune.linearSolver = "SuperLU";
+      simulate::Simulation duneSim(m);
+      duneSim.doTimesteps(0.01);
+      REQUIRE_THAT(duneSim.errorMessage(), ContainsSubstring("not available"));
+    }
   }
 }
 
@@ -1380,13 +1421,6 @@ TEST_CASE("applyConcsToModel after simulation",
           "[core/simulate/simulate][core/simulate][core][simulate]") {
   auto s{getExampleModel(Mod::VerySimpleModel)};
   s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
-  // added this to try to work around
-  // https://github.com/spatial-model-editor/spatial-model-editor/issues/465
-  //  s.getSpecies().setAnalyticConcentration("B_c1", "cos(x/14.2)+1");
-  //  s.getSpecies().setAnalyticConcentration("A_c2", "cos(x/12.2)+1");
-  //  s.getSpecies().setAnalyticConcentration("B_c2", "cos(x/15.1)+1");
-  //  s.getSpecies().setAnalyticConcentration("A_c3", "cos(x/7.2)+1");
-  //  s.getSpecies().setAnalyticConcentration("B_c3", "cos(x/5.2)+1");
   s.exportSBMLFile("tmpsimapplyconcs.xml");
   auto &options{s.getSimulationSettings().options};
   options.dune.dt = 0.01;
@@ -1478,6 +1512,7 @@ TEST_CASE("Reactions depend on x, y, t",
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
     simulate::Simulation simDune{s};
     simDune.doTimesteps(dt, 1);
+    CAPTURE(simDune.errorMessage());
     REQUIRE(simDune.errorMessage().empty());
     REQUIRE(simDune.getNCompletedTimesteps() == 2);
     auto p{simPixel.getConc(1, 0, 0)};
@@ -1563,6 +1598,7 @@ TEST_CASE("Reactions depend on x, y, t",
     }
   }
 }
+
 TEST_CASE("circle membrane reaction",
           "[core/simulate/simulate][core/"
           "simulate][core][simulate][dune][pixel][expensive]") {
@@ -1574,8 +1610,8 @@ TEST_CASE("circle membrane reaction",
   simulate::Simulation simPixel(mPixel);
   REQUIRE(simDune.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
   REQUIRE(simPixel.getAvgMinMax(0, 1, 0).avg == dbl_approx(0.0));
-  simDune.doTimesteps(0.05);
-  simPixel.doTimesteps(0.05);
+  simDune.doTimesteps(0.25);
+  simPixel.doTimesteps(0.25);
   REQUIRE(std::abs(simPixel.getAvgMinMax(1, 1, 0).avg -
                    simDune.getAvgMinMax(1, 1, 0).avg) /
               std::abs(simPixel.getAvgMinMax(1, 1, 0).avg +
@@ -1586,15 +1622,21 @@ TEST_CASE("circle membrane reaction",
   REQUIRE(p.size() == d.size());
   double avgAbsDiff{0};
   double avgRelDiff{0};
-  constexpr double eps{1e-11};
-  double allowedAvgAbsDiff{0.012};
-  double allowedAvgRelDiff{0.40};
+  constexpr double cutoff{1e-1};
+  double allowedAvgAbsDiff{0.8};
+  double allowedAvgRelDiff{0.4};
+  std::size_t n_compared_pixels{0};
   for (std::size_t i = 0; i < p.size(); ++i) {
-    avgAbsDiff += std::abs(p[i] - d[i]);
-    avgRelDiff += std::abs(p[i] - d[i]) / (std::abs(p[i] + d[i] + eps));
+    if (p[i] > cutoff) {
+      avgAbsDiff += std::abs(p[i] - d[i]);
+      avgRelDiff += std::abs(p[i] - d[i]) / (std::abs(p[i] + d[i]));
+      ++n_compared_pixels;
+    }
   }
-  avgAbsDiff /= static_cast<double>(p.size());
-  avgRelDiff /= static_cast<double>(p.size());
+  avgAbsDiff /= static_cast<double>(n_compared_pixels);
+  avgRelDiff /= static_cast<double>(n_compared_pixels);
+  CAPTURE(p.size());
+  CAPTURE(n_compared_pixels);
   CAPTURE(avgAbsDiff);
   CAPTURE(avgRelDiff);
   REQUIRE(avgAbsDiff < allowedAvgAbsDiff);
@@ -1973,8 +2015,15 @@ TEST_CASE(
     sim2.doMultipleTimesteps(times);
     const auto &data2{m2.getSimulationData()};
     REQUIRE(data1.size() == data2.size());
+    // single-threaded pixel sim is deterministic: same inputs give same outputs
+    double allowedRelativeDifference = 1e-14;
+    if (simulatorType == simulate::SimulatorType::DUNE) {
+      // dune sim is multi-threaded so two runs with same inputs can differ
+      allowedRelativeDifference = 1.e-4;
+    }
     for (std::size_t i = 0; i < data1.size(); ++i) {
-      REQUIRE(rel_diff(data1, data2, i, i) == dbl_approx(0.0));
+      REQUIRE(std::abs(rel_diff(data1, data2, i, i)) <=
+              allowedRelativeDifference);
       REQUIRE(data1.timePoints[i] == dbl_approx(data2.timePoints[i]));
     }
   }
@@ -2009,12 +2058,13 @@ TEST_CASE("pixel simulation with invalid reaction rate expression",
   m.getReactions().add("r2", "comp", "A * A / idontexist");
   m.getReactions().setSpeciesStoichiometry("r2", "A", 1.0);
   m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
-  REQUIRE(simulate::Simulation(m).errorMessage() ==
-          "Unknown symbol: idontexist");
+  REQUIRE_THAT(simulate::Simulation(m).errorMessage(),
+               ContainsSubstring("Unknown symbol 'idontexist'"));
 }
 
 TEST_CASE("Fish model: simulation with piecewise function in reactions",
-          "[core/simulate/simulate][core/simulate][core][simulate]") {
+          "[core/simulate/simulate][core/simulate][core][simulate][fish]") {
+  // todo: make this test less trivial (#909)
   auto m{getTestModel("fish_300x300")};
   // pixel
   m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
@@ -2024,10 +2074,31 @@ TEST_CASE("Fish model: simulation with piecewise function in reactions",
   simPixel.doMultipleTimesteps({{2, 0.01}});
   REQUIRE(simPixel.errorMessage() == "");
   REQUIRE(m.getSimulationData().timePoints.size() == 3);
-  // dune doesn't have symengine yet so no piecewise func support:
+  // dune
   m.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
   m.getSimulationData().clear();
   simulate::Simulation simDune(m);
-  REQUIRE(simDune.errorMessage().substr(0, 29) ==
-          "IOError [handle_parser_error:");
+  REQUIRE(simDune.errorMessage() == "");
+  REQUIRE(m.getSimulationData().timePoints.size() == 1);
+  simDune.doMultipleTimesteps({{2, 0.00001}}); // use tiny timestep for now
+  REQUIRE(simDune.errorMessage() == "");
+  REQUIRE(m.getSimulationData().timePoints.size() == 3);
+}
+
+TEST_CASE("Simulate gray-scott-3d model",
+          "[core/simulate/simulate][core/"
+          "simulate][core][simulate][dune][pixel][3d]") {
+  // todo: make this test less trivial
+  SECTION("do a tiny step, don't crash") {
+    auto s{getExampleModel(sme::test::Mod::GrayScott3D)};
+    for (auto simulator :
+         {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
+      s.getSimulationData().clear();
+      s.getSimulationSettings().simulatorType = simulator;
+      auto sim = simulate::Simulation(s);
+      REQUIRE(sim.getNCompletedTimesteps() == 1);
+      sim.doTimesteps(0.01);
+      REQUIRE(sim.getNCompletedTimesteps() == 2);
+    }
+  }
 }

@@ -127,14 +127,16 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
 MainWindow::~MainWindow() = default;
 
 void MainWindow::setupTabs() {
-  tabGeometry =
-      new TabGeometry(model, ui->lblGeometry, statusBar(), ui->tabReactions);
+  tabGeometry = new TabGeometry(model, ui->lblGeometry, ui->voxGeometry,
+                                statusBar(), ui->tabGeometry);
   ui->tabGeometry->layout()->addWidget(tabGeometry);
 
-  tabSpecies = new TabSpecies(model, ui->lblGeometry, ui->tabSpecies);
+  tabSpecies =
+      new TabSpecies(model, ui->lblGeometry, ui->voxGeometry, ui->tabSpecies);
   ui->tabSpecies->layout()->addWidget(tabSpecies);
 
-  tabReactions = new TabReactions(model, ui->lblGeometry, ui->tabReactions);
+  tabReactions = new TabReactions(model, ui->lblGeometry, ui->voxGeometry,
+                                  ui->tabReactions);
   ui->tabReactions->layout()->addWidget(tabReactions);
 
   tabFunctions = new TabFunctions(model, ui->tabFunctions);
@@ -146,7 +148,8 @@ void MainWindow::setupTabs() {
   tabEvents = new TabEvents(model, ui->tabEvents);
   ui->tabEvents->layout()->addWidget(tabEvents);
 
-  tabSimulate = new TabSimulate(model, ui->lblGeometry, ui->tabSimulate);
+  tabSimulate =
+      new TabSimulate(model, ui->lblGeometry, ui->voxGeometry, ui->tabSimulate);
   ui->tabSimulate->layout()->addWidget(tabSimulate);
 }
 
@@ -225,8 +228,8 @@ void MainWindow::setupConnections() {
           &MainWindow::enableTabs);
 
   connect(ui->actionGroupSimType, &QActionGroup::triggered, this,
-          [s = tabSimulate, ui = ui.get()]() {
-            s->useDune(ui->actionSimTypeDUNE->isChecked());
+          [s = tabSimulate, ui_ptr = ui.get()]() {
+            s->useDune(ui_ptr->actionSimTypeDUNE->isChecked());
           });
 
   connect(ui->actionGeometry_grid, &QAction::triggered, this,
@@ -234,6 +237,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->actionGeometry_scale, &QAction::triggered, this,
           &MainWindow::actionGeometry_scale_triggered);
+
+  connect(ui->action3d_render, &QAction::triggered, this,
+          &MainWindow::action3d_render_triggered);
 
   connect(ui->actionInvert_y_axis, &QAction::triggered, this,
           &MainWindow::actionInvert_y_axis_triggered);
@@ -630,6 +636,15 @@ void MainWindow::actionGeometry_scale_triggered(bool checked) {
   model.setDisplayOptions(options);
 }
 
+void MainWindow::action3d_render_triggered(bool checked) {
+  if (checked) {
+    ui->stackGeometry->setCurrentIndex(1);
+    ui->voxGeometry->setImage(ui->lblGeometry->getImage());
+    return;
+  }
+  ui->stackGeometry->setCurrentIndex(0);
+}
+
 void MainWindow::actionInvert_y_axis_triggered(bool checked) {
   ui->lblGeometry->invertYAxis(checked);
   tabGeometry->invertYAxis(checked);
@@ -668,9 +683,16 @@ void MainWindow::dropEvent(QDropEvent *event) {
   if (!mimeData->hasUrls() || mimeData->urls().isEmpty()) {
     return;
   }
-  auto filename{getConvertedFilename(mimeData->urls().front().toLocalFile())};
-  model.importFile(filename.toStdString());
-  validateSBMLDoc(filename);
+  auto filename = getConvertedFilename(mimeData->urls().front().toLocalFile());
+  QStringList imgSuffixes{"bmp", "png", "jpg", "jpeg", "gif", "tif", "tiff"};
+  if (imgSuffixes.contains(QFileInfo(filename).suffix().toLower())) {
+    if (auto img{getImageStackFromFilename(this, filename)}; !img.empty()) {
+      importGeometryImage(img);
+    }
+  } else {
+    model.importFile(filename.toStdString());
+    validateSBMLDoc(filename);
+  }
 }
 
 void MainWindow::closeEvent(QCloseEvent *event) {

@@ -5,15 +5,12 @@
 #include "catch_wrapper.hpp"
 #include "qt_test_utils.hpp"
 
+#include "qopenglmousetracker.hpp"
 #include "rendering/rendering.hpp"
+#include "sme/logger.hpp"
+#include <sme/mesh3d.hpp>
 
 using namespace sme::test;
-
-#include "qopenglmousetracker.h"
-
-#include "sme/logger.hpp"
-
-#include <sme/mesh3d.hpp>
 
 static const char *tags{"[gui/widgets/QOpenGLMouseTracker][gui][opengl]"};
 
@@ -156,7 +153,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   REQUIRE(redColor == QcolorSelection);
 
-  wait(100000);
+  wait(100);
 
   // reset
   sendMouseClick(&test, {412, 445});

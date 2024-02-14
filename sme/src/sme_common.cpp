@@ -16,7 +16,7 @@ pybind11::array toPyImageRgb(const sme::common::ImageStack &imgs) {
   for (int z = 0; z < d; ++z) {
     for (int y = 0; y < h; ++y) {
       for (int x = 0; x < w; ++x) {
-        auto c{imgs[z].pixel(x, y)};
+        auto c{imgs[static_cast<std::size_t>(z)].pixel(x, y)};
         r(z, y, x, 0) = static_cast<std::uint8_t>(qRed(c));
         r(z, y, x, 1) = static_cast<std::uint8_t>(qGreen(c));
         r(z, y, x, 2) = static_cast<std::uint8_t>(qBlue(c));
@@ -36,7 +36,7 @@ pybind11::array toPyImageMask(const sme::common::ImageStack &imgs) {
   for (int z = 0; z < d; ++z) {
     for (int y = 0; y < h; ++y) {
       for (int x = 0; x < w; ++x) {
-        r(z, y, x) = imgs[z].pixelIndex(x, y) > 0;
+        r(z, y, x) = imgs[static_cast<std::size_t>(z)].pixelIndex(x, y) > 0;
       }
     }
   }

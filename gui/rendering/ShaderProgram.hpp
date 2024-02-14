@@ -2,8 +2,7 @@
 // Created by acaramizaru on 6/30/23.
 //
 
-#ifndef SPATIALMODELEDITOR_SHADERPROGRAM_H
-#define SPATIALMODELEDITOR_SHADERPROGRAM_H
+#pragma once
 
 #include <QtOpenGL>
 #include <string>
@@ -39,9 +38,9 @@ private:
   std::string m_vertexShaderText;
   std::string m_fragmentShaderText;
 
-  GLint m_vertexShaderId;
-  GLint m_fragmentShaderId;
-  GLint m_programId;
+  GLuint m_vertexShaderId;
+  GLuint m_fragmentShaderId;
+  GLuint m_programId;
 
   // uniforms
   GLint m_rotationLocation;
@@ -54,5 +53,3 @@ private:
 };
 
 } // namespace rendering
-
-#endif // SPATIALMODELEDITOR_SHADERPROGRAM_H

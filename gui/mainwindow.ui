@@ -31,19 +31,22 @@
       </property>
       <widget class="QWidget" name="gridLayoutWidget">
        <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="2">
-         <widget class="QLabel" name="lblGeometryZoomLabel">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
+        <item row="0" column="1">
+         <widget class="QSlider" name="slideGeometryZIndex">
+          <property name="maximum">
+           <number>0</number>
           </property>
-          <property name="text">
-           <string>Zoom:</string>
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
           </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          <property name="invertedControls">
+           <bool>false</bool>
+          </property>
+          <property name="tickPosition">
+           <enum>QSlider::TicksBothSides</enum>
+          </property>
+          <property name="tickInterval">
+           <number>1</number>
           </property>
          </widget>
         </item>
@@ -61,36 +64,51 @@
          </widget>
         </item>
         <item row="1" column="0" colspan="4">
-         <widget class="QScrollArea" name="scrollGeometry">
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollGeometryContents">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>752</width>
-             <height>572</height>
-            </rect>
-           </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <widget class="QStackedWidget" name="stackGeometry">
+          <widget class="QWidget" name="page1">
+           <layout class="QHBoxLayout" name="horizontalLayout_6">
             <item>
-             <widget class="QLabelMouseTracker" name="lblGeometry" native="true">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
+             <widget class="QScrollArea" name="scrollGeometry">
+              <property name="widgetResizable">
+               <bool>true</bool>
               </property>
-              <property name="whatsThis">
-               <string>&lt;h4&gt;Compartment geometry image&lt;/h4&gt;
+              <widget class="QWidget" name="scrollGeometryContents">
+               <property name="geometry">
+                <rect>
+                 <x>0</x>
+                 <y>0</y>
+                 <width>740</width>
+                 <height>560</height>
+                </rect>
+               </property>
+               <layout class="QHBoxLayout" name="horizontalLayout_3">
+                <item>
+                 <widget class="QLabelMouseTracker" name="lblGeometry" native="true">
+                  <property name="sizePolicy">
+                   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                    <horstretch>0</horstretch>
+                    <verstretch>0</verstretch>
+                   </sizepolicy>
+                  </property>
+                  <property name="whatsThis">
+                   <string>&lt;h4&gt;Compartment geometry image&lt;/h4&gt;
 &lt;p&gt;An image of the geometry of the model.&lt;/p&gt;</string>
-              </property>
-              <property name="text" stdset="0">
-               <string/>
-              </property>
+                  </property>
+                  <property name="text" stdset="0">
+                   <string/>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </widget>
              </widget>
+            </item>
+           </layout>
+          </widget>
+          <widget class="QWidget" name="page2">
+           <layout class="QHBoxLayout" name="horizontalLayout_8">
+            <item>
+             <widget class="QVoxelRenderer" name="voxGeometry"/>
             </item>
            </layout>
           </widget>
@@ -109,22 +127,19 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
-         <widget class="QSlider" name="slideGeometryZIndex">
-          <property name="maximum">
-           <number>0</number>
+        <item row="0" column="2">
+         <widget class="QLabel" name="lblGeometryZoomLabel">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
+          <property name="text">
+           <string>Zoom:</string>
           </property>
-          <property name="invertedControls">
-           <bool>false</bool>
-          </property>
-          <property name="tickPosition">
-           <enum>QSlider::TicksBothSides</enum>
-          </property>
-          <property name="tickInterval">
-           <number>1</number>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -244,6 +259,8 @@
      <addaction name="action_liver_cells"/>
      <addaction name="action_gray_scott"/>
      <addaction name="action_single_compartment_diffusion"/>
+     <addaction name="actionvery_simple_model_3d"/>
+     <addaction name="action_gray_scott_3d"/>
      <addaction name="actionsingle_compartment_diffusion_3d"/>
     </widget>
     <addaction name="action_New"/>
@@ -316,6 +333,7 @@
     <addaction name="actionGeometry_grid"/>
     <addaction name="actionGeometry_scale"/>
     <addaction name="actionInvert_y_axis"/>
+    <addaction name="action3d_render"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuImport"/>
@@ -544,6 +562,9 @@
    <property name="checked">
     <bool>false</bool>
    </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Geometry &amp;grid</string>
    </property>
@@ -585,6 +606,24 @@
     <string>&amp;single-compartment-diffusion-3d</string>
    </property>
   </action>
+  <action name="action3d_render">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>3d render</string>
+   </property>
+  </action>
+  <action name="actionvery_simple_model_3d">
+   <property name="text">
+    <string>&amp;very-simple-model-3d</string>
+   </property>
+  </action>
+  <action name="action_gray_scott_3d">
+   <property name="text">
+    <string>&amp;gray-scott-3d</string>
+   </property>
+  </action>
   <actiongroup name="actionGroupSimType">
    <action name="actionSimTypeDUNE">
     <property name="checkable">
@@ -616,6 +655,11 @@
    <class>QLabelMouseTracker</class>
    <extends>QWidget</extends>
    <header>qlabelmousetracker.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>QVoxelRenderer</class>
+   <extends>QOpenGLWidget</extends>
+   <header>qvoxelrenderer.hpp</header>
   </customwidget>
  </customwidgets>
  <tabstops>

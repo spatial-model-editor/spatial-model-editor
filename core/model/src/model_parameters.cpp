@@ -5,6 +5,7 @@
 #include "sme/logger.hpp"
 #include "sme/model_events.hpp"
 #include "sme/model_species.hpp"
+#include "sme/utils.hpp"
 #include <QString>
 #include <memory>
 #include <sbml/SBMLTypes.h>
@@ -31,7 +32,7 @@ static QStringList importIds(const libsbml::Model *model) {
   for (unsigned int i = 0; i < numParams; ++i) {
     const auto *param = model->getParameter(i);
     if (isUserVisibleParameter(param)) {
-      ids.push_back(param->getId().c_str());
+      ids.emplace_back(param->getId().c_str());
     }
   }
   return ids;
@@ -56,7 +57,7 @@ static QStringList importNamesAndMakeUnique(const QStringList &ids,
       SPDLOG_INFO("Changing Parameter '{}' name to '{}' to make it unique", sId,
                   name);
     }
-    names.push_back(QString::fromStdString(name));
+    names.emplace_back(name.c_str());
   }
   return names;
 }
@@ -220,8 +221,7 @@ void ModelParameters::setExpression(const QString &id, const QString &expr) {
     std::unique_ptr<const libsbml::ASTNode> astNode{
         mathStringToAST(expr.toStdString(), sbmlModel)};
     if (astNode == nullptr) {
-      std::unique_ptr<char, decltype(&std::free)> err(
-          libsbml::SBML_getLastParseL3Error(), &std::free);
+      common::unique_C_ptr<char> err{libsbml::SBML_getLastParseL3Error()};
       SPDLOG_ERROR("{}", err.get());
       return;
     }
@@ -264,13 +264,13 @@ QString ModelParameters::add(const QString &name) {
   SPDLOG_INFO("Adding parameter");
   SPDLOG_INFO("  - Id: {}", paramId);
   SPDLOG_INFO("  - Name: {}", paramName);
-  auto *param = sbmlModel->createParameter();
+  auto *param{sbmlModel->createParameter()};
   param->setId(paramId);
   param->setName(paramName);
   param->setConstant(true);
   param->setValue(0);
-  ids.push_back(paramId.c_str());
-  names.push_back(uniqueName);
+  ids.emplace_back(paramId.c_str());
+  names.emplace_back(uniqueName);
   return uniqueName;
 }
 

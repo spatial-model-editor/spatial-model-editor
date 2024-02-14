@@ -1,4 +1,5 @@
-add_library(core STATIC mesh/include/sme/mesh3d.hpp)
+add_library(core STATIC)
+target_compile_features(core PUBLIC cxx_std_20)
 add_library(
   sme::core
   ALIAS
@@ -120,13 +121,25 @@ target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 target_compile_definitions(
   core PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_${SME_LOG_LEVEL})
 
+find_package(SCOTCH)
+target_link_libraries(SCOTCH::scotchmetisv3 INTERFACE SCOTCH::scotcherr)
+target_link_libraries(SCOTCH::scotch INTERFACE SCOTCH::scotchmetisv3)
+find_package(dune-common REQUIRED)
+target_link_libraries(Dune::Common INTERFACE SCOTCH::scotch)
+find_package(dune-geometry REQUIRED)
+find_package(dune-uggrid REQUIRED)
+find_package(dune-grid REQUIRED)
+find_package(dune-istl REQUIRED)
+find_package(dune-localfunctions REQUIRED)
+find_package(dune-pdelab REQUIRED)
+find_package(dune-copasi REQUIRED)
+
 target_link_libraries(
   core
   PRIVATE TIFF::TIFF
           ${SYMENGINE_LIBRARIES}
           sbml-static
           Combine-static
-          dune-copasi::dune-copasi
           CGAL::CGAL
           cereal::cereal
           TBB::tbb)
@@ -135,6 +148,7 @@ target_link_libraries(
   PUBLIC opencv_core
          opencv_imgproc
          spdlog::spdlog
+         Dune::Copasi
          Qt::Gui
          Qt::Core
          Pagmo::pagmo)
@@ -144,7 +158,7 @@ target_compile_definitions(core PUBLIC ${SME_EXTRA_CORE_DEFS})
 if(BUILD_TESTING)
   target_link_libraries(
     core_tests
-    PUBLIC dune-copasi::dune-copasi
+    PUBLIC Dune::Copasi
            core
            testlib
            Qt6::OpenGLWidgets)
@@ -155,7 +169,3 @@ add_subdirectory(common)
 add_subdirectory(mesh)
 add_subdirectory(model)
 add_subdirectory(simulate)
-
-# set Compile options and warnings
-set_target_properties(core PROPERTIES CXX_STANDARD 17)
-set_target_properties(core PROPERTIES POSITION_INDEPENDENT_CODE ON)

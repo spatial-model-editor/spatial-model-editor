@@ -6,21 +6,23 @@
 #include <boost/version.hpp>
 #include <bzlib.h>
 #include <cereal/version.hpp>
-#include <dune/copasi/config.h>
+#include <dune-copasi-config.hh>
 #include <expat.h>
 #include <fmt/core.h>
 #include <gmp.h>
+#include <llvm/Config/llvm-config.h>
 #include <mpfr.h>
-#include <muParserDef.h>
 #include <omex/common/libcombine-version.h>
 #include <oneapi/tbb/version.h>
 #include <opencv2/opencv.hpp>
 #include <pagmo/config.hpp>
 #include <qcustomplot.h>
 #include <sbml/common/libsbml-version.h>
+#include <scotch.h>
 #include <spdlog/version.h>
 #include <symengine/symengine_config.h>
 #include <tiffvers.h>
+#include <vtkVersion.h>
 #include <zlib.h>
 
 static QString dep(const QString &name, const QString &url,
@@ -66,8 +68,7 @@ DialogAbout::DialogAbout(QWidget *parent)
                        FMT_VERSION % 100));
   libraries.append(dep("SymEngine", "https://github.com/symengine/symengine",
                        SYMENGINE_VERSION));
-  libraries.append(dep("LLVM core", "https://llvm.org",
-                       sme::common::Symbolic::getLLVMVersion()));
+  libraries.append(dep("LLVM core", "https://llvm.org", LLVM_VERSION_STRING));
   libraries.append(dep("GMP", "https://gmplib.org", __GNU_MP_VERSION,
                        __GNU_MP_VERSION_MINOR, __GNU_MP_VERSION_PATCHLEVEL));
   libraries.append(dep("MPFR", "https://www.mpfr.org/", MPFR_VERSION_MAJOR,
@@ -77,8 +78,6 @@ DialogAbout::DialogAbout(QWidget *parent)
                        BOOST_VERSION % 100));
   libraries.append(dep("CGAL", "https://www.cgal.org/", CGAL_VERSION_MAJOR,
                        CGAL_VERSION_MINOR, CGAL_VERSION_PATCH));
-  libraries.append(dep("muParser", "https://github.com/beltoforion/muparser",
-                       mu::ParserVersion.c_str()));
   libraries.append(dep("libTIFF", "http://www.libtiff.org/",
                        QString(TIFFLIB_VERSION_STR).left(23).right(6)));
   libraries.append(dep("expat", "https://libexpat.github.io/",
@@ -104,7 +103,9 @@ DialogAbout::DialogAbout(QWidget *parent)
       dep("zipper", "https://github.com/fbergmann/zipper", "master"));
   libraries.append(dep("libCombine", "https://github.com/sbmlteam/libCombine",
                        libcombine::getLibCombineDottedVersion()));
-
+  libraries.append(dep("VTK", "https://vtk.org/", vtkVersion::GetVTKVersion()));
+  libraries.append(dep("scotch", "https://gitlab.inria.fr/scotch/scotch",
+                       SCOTCH_VERSION, SCOTCH_RELEASE, SCOTCH_PATCHLEVEL));
   libraries.append("</ul>");
   ui->lblLibraries->setText(libraries);
 }

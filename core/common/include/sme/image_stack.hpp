@@ -2,6 +2,7 @@
 
 #include "sme/voxel.hpp"
 #include <QImage>
+#include <QString>
 
 namespace sme::common {
 
@@ -20,6 +21,7 @@ public:
   ImageStack(const Volume &size, QImage::Format format);
   explicit ImageStack(std::vector<QImage> &&images);
   explicit ImageStack(const std::vector<QImage> &images);
+  explicit ImageStack(const QString &filename);
   /**
    * @brief Grayscale image from array of pixel intensities
    *
@@ -29,10 +31,6 @@ public:
    */
   ImageStack(const Volume &imageSize, const std::vector<double> &values,
              double maxValue = -1.0);
-  // todo: remove this constructor or make it explicit
-  // temporarily allow a QImage to implicitly be converted to a ImageStack
-  // to avoid refactoring a lot of test code
-  ImageStack(const QImage &image);
   inline QImage &operator[](std::size_t z) { return imgs[z]; }
   [[nodiscard]] inline const QImage &operator[](std::size_t z) const {
     return imgs[z];
@@ -41,12 +39,12 @@ public:
   [[nodiscard]] inline const Volume &volume() const noexcept { return sz; }
   inline std::vector<QImage>::iterator begin() noexcept { return imgs.begin(); }
   [[nodiscard]] inline std::vector<QImage>::const_iterator
-  cbegin() const noexcept {
+  begin() const noexcept {
     return imgs.cbegin();
   }
   inline std::vector<QImage>::iterator end() noexcept { return imgs.end(); }
   [[nodiscard]] inline std::vector<QImage>::const_iterator
-  cend() const noexcept {
+  end() const noexcept {
     return imgs.cend();
   }
   void clear();

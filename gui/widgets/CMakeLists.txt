@@ -4,7 +4,8 @@ target_sources(
           qlabelslice.cpp
           qlabelmousetracker.cpp
           qopenglmousetracker.cpp
-          qplaintextmathedit.cpp)
+          qplaintextmathedit.cpp
+          qvoxelrenderer.cpp)
 target_include_directories(gui PUBLIC .)
 
 if(BUILD_TESTING)
@@ -14,5 +15,6 @@ if(BUILD_TESTING)
            qlabelslice_t.cpp
            qlabelmousetracker_t.cpp
            qopenglmousetracker_t.cpp
-           qplaintextmathedit_t.cpp)
+           qplaintextmathedit_t.cpp
+           qvoxelrenderer_t.cpp)
 endif()

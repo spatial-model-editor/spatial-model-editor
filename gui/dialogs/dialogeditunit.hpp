@@ -21,7 +21,7 @@ public:
 private:
   std::unique_ptr<Ui::DialogEditUnit> ui;
   sme::model::Unit u;
-  bool validMultipler{true};
+  bool validMultiplier{true};
   bool validScale{true};
   bool validExponent{true};
   void updateLblBaseUnits();

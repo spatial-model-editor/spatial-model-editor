@@ -77,40 +77,41 @@ double calculateCosts(const std::vector<OptCost> &optCosts,
 PagmoUDP::PagmoUDP(const OptConstData *optConstData,
                    ThreadsafeModelQueue *modelQueue,
                    sme::simulate::Optimization *optimization)
-    : optConstData{optConstData}, modelQueue{modelQueue},
-      optimization{optimization} {}
+    : m_optConstData{optConstData}, m_modelQueue{modelQueue},
+      m_optimization{optimization} {}
 
 [[nodiscard]] pagmo::vector_double
 PagmoUDP::fitness(const pagmo::vector_double &dv) const {
   std::shared_ptr<sme::model::Model> m;
-  if (optimization->getIsStopping()) {
+  if (m_optimization->getIsStopping()) {
     return {std::numeric_limits<double>::max()};
   }
-  if (modelQueue == nullptr || !modelQueue->try_pop(m)) {
+  if (m_modelQueue == nullptr || !m_modelQueue->try_pop(m)) {
     SPDLOG_INFO("model queue missing or empty: constructing model");
     m = std::make_shared<sme::model::Model>();
-    m->importSBMLString(optConstData->xmlModel);
+    m->importSBMLString(m_optConstData->xmlModel);
   }
   m->getSimulationData().clear();
   applyParameters(dv, m.get());
   sme::simulate::Simulation sim(*m);
   double cost{0.0};
   std::vector<std::vector<double>> currentTargets(
-      optConstData->optimizeOptions.optCosts.size(), std::vector<double>{});
-  for (const auto &optTimestep : optConstData->optTimesteps) {
-    sim.doMultipleTimesteps({{1, optTimestep.simulationTime}}, -1,
-                            [this]() { return optimization->getIsStopping(); });
-    if (optimization->getIsStopping()) {
+      m_optConstData->optimizeOptions.optCosts.size(), std::vector<double>{});
+  for (const auto &optTimestep : m_optConstData->optTimesteps) {
+    sim.doMultipleTimesteps({{1, optTimestep.simulationTime}}, -1, [this]() {
+      return m_optimization->getIsStopping();
+    });
+    if (m_optimization->getIsStopping()) {
       return {std::numeric_limits<double>::max()};
     }
-    cost += calculateCosts(optConstData->optimizeOptions.optCosts,
+    cost += calculateCosts(m_optConstData->optimizeOptions.optCosts,
                            optTimestep.optCostIndices, sim, currentTargets);
   }
-  if (optimization->setBestResults(cost, std::move(currentTargets))) {
+  if (m_optimization->setBestResults(cost, std::move(currentTargets))) {
     SPDLOG_INFO("Updated current best results with cost {}", cost);
   }
-  if (modelQueue != nullptr) {
-    modelQueue->push(std::move(m));
+  if (m_modelQueue != nullptr) {
+    m_modelQueue->push(std::move(m));
   }
   return {cost};
 }
@@ -118,7 +119,7 @@ PagmoUDP::fitness(const pagmo::vector_double &dv) const {
 [[nodiscard]] std::pair<pagmo::vector_double, pagmo::vector_double>
 PagmoUDP::get_bounds() const {
   std::pair<pagmo::vector_double, pagmo::vector_double> bounds;
-  const auto &optParams{optConstData->optimizeOptions.optParams};
+  const auto &optParams{m_optConstData->optimizeOptions.optParams};
   bounds.first.reserve(optParams.size());
   bounds.second.reserve(optParams.size());
   for (const auto &optParam : optParams) {

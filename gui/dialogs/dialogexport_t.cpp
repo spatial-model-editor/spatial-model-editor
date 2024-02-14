@@ -7,8 +7,25 @@
 #include "sme/serialization.hpp"
 #include "sme/simulate.hpp"
 #include "sme/simulate_options.hpp"
+#include <QComboBox>
+#include <QRadioButton>
 
 using namespace sme::test;
+
+struct DialogExportWidgets {
+  explicit DialogExportWidgets(const DialogExport *dialog) {
+    GET_DIALOG_WIDGET(QRadioButton, radAllImages);
+    GET_DIALOG_WIDGET(QRadioButton, radCSV);
+    GET_DIALOG_WIDGET(QComboBox, cmbTimepoint);
+    GET_DIALOG_WIDGET(QRadioButton, radModel);
+    GET_DIALOG_WIDGET(QRadioButton, radSingleImage);
+  }
+  QRadioButton *radAllImages;
+  QRadioButton *radCSV;
+  QComboBox *cmbTimepoint;
+  QRadioButton *radModel;
+  QRadioButton *radSingleImage;
+};
 
 TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
   auto model{getExampleModel(Mod::VerySimpleModel)};
@@ -39,7 +56,8 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
   plot.addAvMinMaxPoint(0, 3.0, {1.0, 1.0, 1.0});
   plot.addAvMinMaxPoint(0, 4.0, {1.0, 1.0, 1.0});
   DialogExport dia(imgs, &plot, model, sim, 2);
-  ModalWidgetTimer mwt;
+  dia.show();
+  DialogExportWidgets widgets(&dia);
   SECTION("user clicks export to model") {
     std::size_t i{18};
     double conc0{model.getSpecies().getSampledFieldConcentration("A_c2")[i]};
@@ -49,53 +67,52 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     REQUIRE(model.getSpecies().getSampledFieldConcentration("A_c2")[i] ==
             dbl_approx(0.123));
     // export t=0 simulation concs to model
-    mwt.addUserAction({"Down", "Down", "Shift+Tab", "Up", "Up", "Enter"});
-    mwt.start();
-    dia.exec();
+    widgets.cmbTimepoint->setCurrentIndex(0);
+    sendMouseClick(widgets.radModel);
+    sendKeyEvents(&dia, {"Enter"});
     REQUIRE(model.getSpecies().getSampledFieldConcentration("A_c2")[i] ==
             dbl_approx(conc0));
   }
   SECTION("user clicks save image, then cancel") {
-    ModalWidgetTimer mwt2;
-    mwt.addUserAction({"Down", "Down", "Down", "Enter"}, true, &mwt2);
-    mwt2.addUserAction({"Esc"});
+    ModalWidgetTimer mwt;
+    mwt.addUserAction({"Esc"});
     mwt.start();
-    dia.exec();
-    REQUIRE(mwt2.getResult() == "QFileDialog::AcceptSave");
+    sendMouseClick(widgets.radSingleImage);
+    sendKeyEvents(&dia, {"Enter"});
+    REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
   }
   SECTION("user clicks save image, then enters filename") {
-    ModalWidgetTimer mwt2;
-    mwt.addUserAction({"Down", "Down", "Down", "Enter"}, true, &mwt2);
-    mwt2.addUserAction({"t", "m", "p", "d", "i", "a", "e", "x"});
+    ModalWidgetTimer mwt;
+    mwt.addUserAction({"t", "m", "p", "d", "i", "a", "e", "x"});
     mwt.start();
-    dia.exec();
-    REQUIRE(mwt2.getResult() == "QFileDialog::AcceptSave");
+    sendMouseClick(widgets.radSingleImage);
+    sendKeyEvents(&dia, {"Enter"});
+    REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
     QImage img("tmpdiaex.png");
     REQUIRE(img.size().width() == imgs[0].volume().width());
     REQUIRE(img.size().height() == imgs[0].volume().height());
     REQUIRE(img.pixel(0, 0) == col2);
   }
   SECTION("user changes timepoint, clicks save image, then enters filename") {
-    ModalWidgetTimer mwt2;
-    mwt.addUserAction(
-        {"Down", "Down", "Down", "Shift+Tab", "Down", "Down", "Enter"}, true,
-        &mwt2);
-    mwt2.addUserAction({"t", "m", "p", "d", "i", "a", "e", "x"});
+    ModalWidgetTimer mwt;
+    mwt.addUserAction({"t", "m", "p", "d", "i", "a", "e", "x"});
     mwt.start();
-    dia.exec();
-    REQUIRE(mwt2.getResult() == "QFileDialog::AcceptSave");
+    widgets.cmbTimepoint->setCurrentIndex(4);
+    sendMouseClick(widgets.radSingleImage);
+    sendKeyEvents(&dia, {"Enter"});
+    REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
     QImage img("tmpdiaex.png");
     REQUIRE(img.size().width() == imgs[0].volume().width());
     REQUIRE(img.size().height() == imgs[0].volume().height());
     REQUIRE(img.pixel(0, 0) == col4);
   }
   SECTION("user clicks on All timepoints, clicks save image, then enter") {
-    ModalWidgetTimer mwt2;
-    mwt.addUserAction({"Enter"}, true, &mwt2);
-    mwt2.addUserAction({"Enter"});
+    ModalWidgetTimer mwt;
+    mwt.addUserAction({"Enter"});
     mwt.start();
-    dia.exec();
-    REQUIRE(mwt2.getResult() == "QFileDialog::AcceptOpen");
+    sendMouseClick(widgets.radAllImages);
+    sendKeyEvents(&dia, {"Enter"});
+    REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
     QImage img0("img0.png");
     REQUIRE(img0.size().width() == imgs[0].volume().width());
     REQUIRE(img0.size().height() == imgs[0].volume().height());
@@ -118,12 +135,12 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     REQUIRE(img4.pixel(0, 0) == col4);
   }
   SECTION("user clicks on csv, types filename, then enter") {
-    ModalWidgetTimer mwt2;
-    mwt.addUserAction({"Down", "Enter"}, true, &mwt2);
-    mwt2.addUserAction({"t", "m", "p", "d", "i", "a", "e", "x"});
+    ModalWidgetTimer mwt;
+    mwt.addUserAction({"t", "m", "p", "d", "i", "a", "e", "x"});
     mwt.start();
-    dia.exec();
-    REQUIRE(mwt2.getResult() == "QFileDialog::AcceptSave");
+    sendMouseClick(widgets.radCSV);
+    sendKeyEvents(&dia, {"Enter"});
+    REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
     QFile f2("tmpdiaex.txt");
     f2.open(QIODevice::ReadOnly | QIODevice::Text);
     QTextStream in(&f2);

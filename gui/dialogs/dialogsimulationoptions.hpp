@@ -28,6 +28,7 @@ private:
   void chkDuneVTK_stateChanged();
   void txtDuneNewtonRel_editingFinished();
   void txtDuneNewtonAbs_editingFinished();
+  void cmbDuneLinearSolver_currentIndexChanged(int index);
   void resetDuneToDefaults();
   void loadPixelOpts();
   void cmbPixelIntegrator_currentIndexChanged(int index);

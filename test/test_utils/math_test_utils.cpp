@@ -1,10 +1,24 @@
 #include "math_test_utils.hpp"
+#include <cctype>
 #include <symengine/eval_double.h>
 #include <symengine/parser.h>
 #include <symengine/parser/parser.h>
 #include <symengine/visitor.h>
 
 namespace sme::test {
+
+static std::string add_underscores(const std::string &expr) {
+  // convert any ".X" to "_X" where X is any non-numeric character to make
+  // variables with names like "a.b.c" valid for symengine to parse
+  std::string new_expr{expr};
+  for (std::size_t i = 0; i + 1 < expr.size(); ++i) {
+    if (expr[i] == '.' &&
+        !std::isdigit(static_cast<unsigned char>(expr[i + 1]))) {
+      new_expr[i] = '_';
+    }
+  }
+  return new_expr;
+}
 
 bool symEq(const QString &exprA, const QString &exprB) {
   SymEngine::Parser parser;
@@ -16,8 +30,8 @@ bool symEq(const QString &exprA, const QString &exprB) {
   std::cout << "symEq: " << exprA.toStdString() << " == " << exprB.toStdString()
             << std::endl;
   for (int i = 0; i < a.size(); ++i) {
-    auto lhs{parser.parse(a[i].toStdString())};
-    auto rhs{parser.parse(b[i].toStdString())};
+    auto lhs{parser.parse(add_underscores(a[i].toStdString()))};
+    auto rhs{parser.parse(add_underscores(b[i].toStdString()))};
     if (lhs->__str__() != rhs->__str__()) {
       auto diff{SymEngine::sub(lhs, rhs)};
       std::cout << *lhs << " != " << *rhs << std::endl;

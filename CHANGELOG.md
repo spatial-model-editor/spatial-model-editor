@@ -1,4 +1,10 @@
 # Changelog
+## [1.5.0] - 2023-12-01
+### Added
+- support for dune-copasi 2 [#908](https://github.com/spatial-model-editor/spatial-model-editor/issues/908)
+- Python 3.12 wheels [#897](https://github.com/spatial-model-editor/spatial-model-editor/issues/897)
+- Apple Silicon wheels and binaries [ssciwr/sme-osx-arm64](https://github.com/ssciwr/sme-osx-arm64/)
+
 ## [1.4.0] - 2023-09-04
 ### Added
 - initial support for 3d spatial models [#850](https://github.com/spatial-model-editor/spatial-model-editor/issues/850)

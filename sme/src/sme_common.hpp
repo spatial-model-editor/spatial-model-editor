@@ -36,9 +36,8 @@ T &findElem(std::vector<T> &v, typename std::vector<T>::difference_type i) {
 }
 
 template <typename T> T &findElem(std::vector<T> &v, const std::string &name) {
-  if (auto iter = std::find_if(
-          v.begin(), v.end(),
-          [&name](const auto &elem) { return elem.getName() == name; });
+  if (auto iter = std::ranges::find_if(
+          v, [&name](const auto &elem) { return elem.getName() == name; });
       iter != v.end()) {
     return *iter;
   }

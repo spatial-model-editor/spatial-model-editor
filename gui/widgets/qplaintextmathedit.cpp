@@ -260,7 +260,9 @@ substitute(const std::string &expr,
       end = expr.find(quoteChar, start);
       if (end == std::string::npos) {
         SPDLOG_DEBUG("  - no closing quote");
-        return {out, "no closing quote"};
+        return {out,
+                QString("Error parsing expression '{%1}': No closing quote")
+                    .arg(expr.c_str())};
       }
       var = expr.substr(start, end - start);
       // skip closing quote
@@ -287,7 +289,10 @@ substitute(const std::string &expr,
         appendQuotedName(out, iter->second);
       } else {
         SPDLOG_DEBUG("    -> function not found");
-        return {out, QString("function '%1' not found").arg(var.c_str())};
+        return {
+            out,
+            QString("Error parsing expression '{%1}': Function '%2' not found")
+                .arg(expr.c_str(), var.c_str())};
       }
     } else {
       // variable or number
@@ -299,7 +304,11 @@ substitute(const std::string &expr,
           out.append(var);
         } else {
           SPDLOG_DEBUG("    -> variable not found");
-          return {out, QString("variable '%1' not found").arg(var.c_str())};
+          return {
+              out,
+              QString(
+                  "Error parsing expression '{%1}': Variable '%2' not found")
+                  .arg(expr.c_str(), var.c_str())};
         }
       }
     }
@@ -357,16 +366,13 @@ void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
   }
   if (currentErrorMessage.isEmpty()) {
     // parse (but don't compile) symbolic expression
-    SPDLOG_DEBUG("parsing '{}' with SymEngine backend", newExpr);
-    sym = sme::common::Symbolic(newExpr, vars, consts, functions);
+    SPDLOG_DEBUG("parsing '{}'", newExpr);
+    sym.parse(newExpr, vars, consts, functions);
+    currentErrorMessage = sym.getErrorMessage().c_str();
     if (sym.isValid()) {
       expressionIsValid = true;
-      currentErrorMessage = "";
       currentVariableMath = sym.expr();
       currentDisplayMath = variablesToDisplayNames(currentVariableMath).c_str();
-    } else {
-      // if SymEngine failed to parse, capture error message
-      currentErrorMessage = sym.getErrorMessage().c_str();
     }
   }
   emit mathChanged(currentDisplayMath, expressionIsValid, currentErrorMessage);

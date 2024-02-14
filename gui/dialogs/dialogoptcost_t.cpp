@@ -3,11 +3,31 @@
 #include "model_test_utils.hpp"
 #include "qt_test_utils.hpp"
 #include "sme/utils.hpp"
+#include <QComboBox>
 #include <QLineEdit>
 #include <QPushButton>
 
 using namespace sme;
 using namespace sme::test;
+
+struct DialogOptCostWidgets {
+  explicit DialogOptCostWidgets(const DialogOptCost *dialog) {
+    GET_DIALOG_WIDGET(QComboBox, cmbSpecies);
+    GET_DIALOG_WIDGET(QComboBox, cmbCostType);
+    GET_DIALOG_WIDGET(QLineEdit, txtSimulationTime);
+    GET_DIALOG_WIDGET(QPushButton, btnEditTargetValues);
+    GET_DIALOG_WIDGET(QComboBox, cmbDiffType);
+    GET_DIALOG_WIDGET(QLineEdit, txtWeight);
+    GET_DIALOG_WIDGET(QLineEdit, txtEpsilon);
+  }
+  QComboBox *cmbSpecies;
+  QComboBox *cmbCostType;
+  QLineEdit *txtSimulationTime;
+  QPushButton *btnEditTargetValues;
+  QComboBox *cmbDiffType;
+  QLineEdit *txtWeight;
+  QLineEdit *txtEpsilon;
+};
 
 TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
                            "dialogs][gui][optimize]") {
@@ -29,18 +49,13 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
                              simulate::OptCostDiffType::Relative, "cell/T0",
                              "T0", 19.0, 0.1, 0, 3, std::vector<double>{},
                              1e-13});
-  ModalWidgetTimer mwt;
   SECTION("no possible costs") {
     DialogOptCost dia(model, {});
-    mwt.addUserAction();
-    mwt.start();
-    dia.exec();
+    dia.show();
   }
   SECTION("no pre-selected cost: defaults to first one") {
     DialogOptCost dia(model, defaultOptCosts);
-    mwt.addUserAction();
-    mwt.start();
-    dia.exec();
+    dia.show();
     REQUIRE(dia.getOptCost().name == "cell/P0");
     REQUIRE(dia.getOptCost().id == "P0");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(12.0));
@@ -49,9 +64,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
   }
   SECTION("user does nothing: correct initial values") {
     DialogOptCost dia(model, defaultOptCosts, &defaultOptCosts[1]);
-    mwt.addUserAction();
-    mwt.start();
-    dia.exec();
+    dia.show();
     REQUIRE(dia.getOptCost().optCostType ==
             simulate::OptCostType::Concentration);
     REQUIRE(dia.getOptCost().optCostDiffType ==
@@ -70,9 +83,8 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
   }
   SECTION("user changes cost type") {
     DialogOptCost dia(model, defaultOptCosts, &defaultOptCosts[1]);
-    // get pointers to widgets within dialog
-    auto *txtEpsilon{dia.findChild<QLineEdit *>("txtEpsilon")};
-    REQUIRE(txtEpsilon != nullptr);
+    DialogOptCostWidgets widgets(&dia);
+    dia.show();
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
@@ -84,10 +96,9 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
             simulate::OptCostType::Concentration);
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
-    REQUIRE(txtEpsilon->isEnabled());
-    mwt.addUserAction({"Tab", "Down", "Tab", "Tab", "Tab", "Up"});
-    mwt.start();
-    dia.exec();
+    REQUIRE(widgets.txtEpsilon->isEnabled());
+    widgets.cmbCostType->setCurrentIndex(1);
+    widgets.cmbDiffType->setCurrentIndex(0);
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
@@ -99,10 +110,12 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
             simulate::OptCostType::ConcentrationDcdt);
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Absolute);
-    REQUIRE(txtEpsilon->isEnabled() == false);
+    REQUIRE(widgets.txtEpsilon->isEnabled() == false);
   }
   SECTION("user changes species") {
     DialogOptCost dia(model, defaultOptCosts, &defaultOptCosts[1]);
+    DialogOptCostWidgets widgets(&dia);
+    dia.show();
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
@@ -114,9 +127,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
             simulate::OptCostType::Concentration);
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
-    mwt.addUserAction({"Down", "Down"});
-    mwt.start();
-    dia.exec();
+    widgets.cmbSpecies->setCurrentIndex(3);
     REQUIRE(dia.getOptCost().name == "cell/T0");
     REQUIRE(dia.getOptCost().id == "T0");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(19.0));
@@ -131,6 +142,8 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
   }
   SECTION("user changes simulation time") {
     DialogOptCost dia(model, defaultOptCosts, &defaultOptCosts[1]);
+    DialogOptCostWidgets widgets(&dia);
+    dia.show();
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
@@ -142,9 +155,10 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
             simulate::OptCostType::Concentration);
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
-    mwt.addUserAction({"Tab", "Tab", "6", "2", ".", "8"});
-    mwt.start();
-    dia.exec();
+    sendKeyEvents(
+        widgets.txtSimulationTime,
+        {"Backspace", "Backspace", "Backspace", "6", "2", ".", "8", "Enter"});
+    CAPTURE(widgets.txtSimulationTime->text().toStdString());
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(62.8));
@@ -159,9 +173,8 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
   }
   SECTION("user changes target conc values") {
     DialogOptCost dia(model, defaultOptCosts, &defaultOptCosts[1]);
-    auto *btnEditTargetValues{
-        dia.findChild<QPushButton *>("btnEditTargetValues")};
-    REQUIRE(btnEditTargetValues != nullptr);
+    DialogOptCostWidgets widgets(&dia);
+    dia.show();
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
@@ -175,9 +188,16 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
             simulate::OptCostDiffType::Relative);
     REQUIRE(dia.getOptCost().targetValues.empty());
     // set conc from image in range [1,2]
-    mwt.addUserAction({"1", "Tab", "2"});
+    ModalWidgetTimer mwt;
+    mwt.setIgnoredWidget(&dia);
+    mwt.addUserAction([](QWidget *dialog) {
+      sendKeyEventsToQLineEdit(dialog->findChild<QLineEdit *>("txtMinConc"),
+                               {"1", "Enter"});
+      sendKeyEventsToQLineEdit(dialog->findChild<QLineEdit *>("txtMaxConc"),
+                               {"2", "Enter"});
+    });
     mwt.start();
-    sendMouseClick(btnEditTargetValues);
+    sendMouseClick(widgets.btnEditTargetValues);
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
@@ -198,17 +218,22 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
   }
   SECTION("user changes target dcdt values") {
     DialogOptCost dia(model, defaultOptCosts, &defaultOptCosts[0]);
-    auto *btnEditTargetValues{
-        dia.findChild<QPushButton *>("btnEditTargetValues")};
-    REQUIRE(btnEditTargetValues != nullptr);
+    DialogOptCostWidgets widgets(&dia);
+    dia.show();
     REQUIRE(dia.getOptCost().name == "cell/P0");
     REQUIRE(dia.getOptCost().optCostType ==
             simulate::OptCostType::ConcentrationDcdt);
     REQUIRE(dia.getOptCost().targetValues.empty());
     // set conc dcdt from image in range [1.2,2]
-    mwt.addUserAction({"1", ".", "2", "Tab", "2"});
+    ModalWidgetTimer mwt;
+    mwt.addUserAction([](QWidget *dialog) {
+      sendKeyEventsToQLineEdit(dialog->findChild<QLineEdit *>("txtMinConc"),
+                               {"1", ".", "2", "Enter"});
+      sendKeyEventsToQLineEdit(dialog->findChild<QLineEdit *>("txtMaxConc"),
+                               {"2", "Enter"});
+    });
     mwt.start();
-    sendMouseClick(btnEditTargetValues);
+    sendMouseClick(widgets.btnEditTargetValues);
     REQUIRE(dia.getOptCost().name == "cell/P0");
     REQUIRE(dia.getOptCost().optCostType ==
             simulate::OptCostType::ConcentrationDcdt);
@@ -220,6 +245,8 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
   }
   SECTION("user changes scale factor") {
     DialogOptCost dia(model, defaultOptCosts, &defaultOptCosts[1]);
+    DialogOptCostWidgets widgets(&dia);
+    dia.show();
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
@@ -231,9 +258,8 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
             simulate::OptCostType::Concentration);
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
-    mwt.addUserAction({"Tab", "Tab", "Tab", "Tab", "Tab", "6", "2", ".", "8"});
-    mwt.start();
-    dia.exec();
+    sendKeyEvents(widgets.txtWeight, {"Backspace", "Backspace", "Backspace",
+                                      "6", "2", ".", "8", "Enter"});
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
@@ -248,6 +274,8 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
   }
   SECTION("user changes epsilon") {
     DialogOptCost dia(model, defaultOptCosts, &defaultOptCosts[1]);
+    DialogOptCostWidgets widgets(&dia);
+    dia.show();
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));
@@ -259,10 +287,9 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
             simulate::OptCostType::Concentration);
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
-    mwt.addUserAction(
-        {"Tab", "Tab", "Tab", "Tab", "Tab", "Tab", "1", "e", "-", "1", "7"});
-    mwt.start();
-    dia.exec();
+    sendKeyEvents(widgets.txtEpsilon,
+                  {"Backspace", "Backspace", "Backspace", "Backspace",
+                   "Backspace", "1", "e", "-", "1", "7", "Enter"});
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
     REQUIRE(dia.getOptCost().simulationTime == dbl_approx(10.0));

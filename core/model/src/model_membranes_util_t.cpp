@@ -71,7 +71,7 @@ TEST_CASE("SBML membranes utils",
       QRgb col0 = qRgb(0, 0, 0);
       img.fill(col0);
       model::ImageMembranePixels imp(
-          img.convertToFormat(QImage::Format_Indexed8));
+          common::ImageStack{{img.convertToFormat(QImage::Format_Indexed8)}});
       REQUIRE(imp.getImageSize().width() == img.width());
       REQUIRE(imp.getImageSize().height() == img.height());
       REQUIRE(imp.getImageSize().depth() == 1);
@@ -91,7 +91,8 @@ TEST_CASE("SBML membranes utils",
       // 2 0 0
       // 0 3 0
       model::ImageMembranePixels imp;
-      imp.setImages(img.convertToFormat(QImage::Format_Indexed8));
+      imp.setImages(
+          common::ImageStack{{img.convertToFormat(QImage::Format_Indexed8)}});
       REQUIRE(imp.getImageSize().width() == img.width());
       REQUIRE(imp.getImageSize().height() == img.height());
       REQUIRE(imp.getImageSize().depth() == 1);

@@ -35,7 +35,7 @@ addTriangle(const CDT::Face_handle face,
 }
 
 static void addTriangleAndNeighbours(
-    CDT &cdt, const CDT::Face_handle startingFace,
+    const CDT &cdt, const CDT::Face_handle startingFace,
     std::vector<TriangulateTriangleIndex> &triangleIndices) {
   std::vector<CDT::Face_handle> faces;
   faces.reserve(512);
@@ -69,7 +69,7 @@ static void addTriangleAndNeighbours(
 }
 
 static std::vector<TriangulateTriangleIndex>
-getConnectedTriangleIndices(CDT &cdt,
+getConnectedTriangleIndices(const CDT &cdt,
                             const std::vector<QPointF> &interiorPoints) {
   std::vector<TriangulateTriangleIndex> triangleIndices;
   for (auto face = cdt.all_faces_begin(); face != cdt.all_faces_end(); ++face) {
@@ -116,10 +116,9 @@ static void meshCdt(CDT &cdt,
   // resulting in the insertion of bad (tall/thin) triangles in the already
   // meshed compartment.
   auto sortedCompartments{compartments};
-  std::sort(sortedCompartments.begin(), sortedCompartments.end(),
-            [](const auto &a, const auto &b) {
-              return a.maxTriangleArea < b.maxTriangleArea;
-            });
+  std::ranges::sort(sortedCompartments, [](const auto &a, const auto &b) {
+    return a.maxTriangleArea < b.maxTriangleArea;
+  });
   for (const auto &compartment : sortedCompartments) {
     std::vector<CDT::Point> seeds;
     seeds.reserve(compartment.interiorPoints.size());
@@ -135,14 +134,16 @@ static void meshCdt(CDT &cdt,
     constexpr double bestAngleBoundWithGuaranteedTermination{0.125};
     CGAL::Delaunay_mesh_size_criteria_2<CDT> criteria(
         bestAngleBoundWithGuaranteedTermination, maxLength);
-    CGAL::refine_Delaunay_mesh_2(cdt, seeds.begin(), seeds.end(), criteria,
-                                 true);
+    CGAL::refine_Delaunay_mesh_2(
+        cdt,
+        CGAL::parameters::seeds(seeds).criteria(criteria).seeds_are_in_domain(
+            true));
     SPDLOG_INFO("Number of vertices in mesh: {}", cdt.number_of_vertices());
     SPDLOG_INFO("Number of triangles in mesh: {}", cdt.number_of_faces());
   }
 }
 
-static std::vector<QPointF> getPointsFromCdt(CDT &cdt) {
+static std::vector<QPointF> getPointsFromCdt(const CDT &cdt) {
   std::vector<QPointF> points;
   points.reserve(cdt.number_of_vertices());
   int ih{0};

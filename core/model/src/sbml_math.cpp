@@ -1,6 +1,7 @@
 #include "sbml_math.hpp"
 #include "sme/logger.hpp"
 #include "sme/symbolic.hpp"
+#include "sme/utils.hpp"
 #include <memory>
 #include <sbml/SBMLTransforms.h>
 
@@ -61,8 +62,7 @@ std::string mathASTtoString(const libsbml::ASTNode *node) {
   if (node == nullptr) {
     return {};
   }
-  std::unique_ptr<char, decltype(&std::free)> charAST(
-      libsbml::SBML_formulaToL3String(node), &std::free);
+  common::unique_C_ptr<char> charAST{libsbml::SBML_formulaToL3String(node)};
   return charAST.get();
 }
 
@@ -81,8 +81,7 @@ static const libsbml::ASTNode *
 findUnknownName(const libsbml::ASTNode *node, libsbml::ASTNodeType_t nodeType,
                 const std::vector<std::string> &names) {
   if (node->getType() == nodeType &&
-      std::find(names.cbegin(), names.cend(), node->getName()) ==
-          names.cend()) {
+      std::ranges::find(names, node->getName()) == names.cend()) {
     return node;
   }
   for (unsigned int i = 0; i < node->getNumChildren(); ++i) {

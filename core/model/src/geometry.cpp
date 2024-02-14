@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <initializer_list>
 #include <limits>
-#include <optional>
 #include <stdexcept>
 #include <utility>
 
@@ -25,7 +24,9 @@ static void fillMissingByDilation(std::vector<std::size_t> &arr, int nx, int ny,
     for (int z = 0; z < nz; ++z) {
       for (int y = 0; y < ny; ++y) {
         for (int x = 0; x < nx; ++x) {
-          auto i{static_cast<std::size_t>(x + dy * y + dz * z)};
+          auto i{(static_cast<std::size_t>(x) +
+                  dy * static_cast<std::size_t>(y) +
+                  dz * static_cast<std::size_t>(z))};
           if (arr[i] == invalidIndex) {
             // replace negative pixel with any valid face-/6-connected neighbour
             if (x > 0 && arr[i - dx] != invalidIndex) {
@@ -96,21 +97,21 @@ Compartment::Compartment(std::string compId, const common::ImageStack &imgs,
   arrayPoints.resize(images.volume().nVoxels(), invalidIndex);
   std::size_t ixIndex{0};
   // find voxels in compartment
-  for (int z = 0; z < nz; ++z) {
+  for (std::size_t z = 0; z < static_cast<std::size_t>(nz); ++z) {
     auto &image{images[z]};
     image.setColor(0, qRgba(0, 0, 0, 0));
     image.setColor(1, col);
     image.fill(0);
     for (int x = 0; x < nx; ++x) {
       for (int y = 0; y < ny; ++y) {
-        if (imgs[static_cast<std::size_t>(z)].pixel(x, y) == col) {
+        if (imgs[z].pixel(x, y) == col) {
           // if colour matches, add voxel to field
-          ix.emplace_back(x, y, static_cast<std::size_t>(z));
+          ix.emplace_back(x, y, z);
           image.setPixel(x, y, 1);
           // NOTE: y=0 in ix is at bottom of image,
           // but we want it at the top in arrayPoints, so y index is inverted
-          arrayPoints[static_cast<std::size_t>(x + nx * (ny - 1 - y) +
-                                               nx * ny * z)] = ixIndex++;
+          arrayPoints[static_cast<std::size_t>(x + nx * (ny - 1 - y)) +
+                      (static_cast<std::size_t>(nx * ny) * z)] = ixIndex++;
         }
       }
     }
@@ -303,7 +304,7 @@ void Field::setConcentration(const std::vector<double> &concentration) {
 void Field::setUniformConcentration(double concentration) {
   SPDLOG_INFO("species {}, compartment {}", id, comp->getId());
   SPDLOG_INFO("  - concentration = {}", concentration);
-  std::fill(conc.begin(), conc.end(), concentration);
+  std::ranges::fill(conc, concentration);
   isUniformConcentration = true;
 }
 
@@ -339,8 +340,8 @@ Field::getConcentrationImageArray(bool maskAndInvertY) const {
     a.resize(imageSize.nVoxels(), 0.0);
     for (std::size_t i = 0; i < comp->nVoxels(); ++i) {
       auto v{comp->getVoxel(i)};
-      a[static_cast<std::size_t>(v.p.x() + nx * v.p.y() + nx * ny * v.z)] =
-          conc[i];
+      a[static_cast<std::size_t>(v.p.x() + nx * v.p.y()) +
+        (static_cast<std::size_t>(nx * ny) * v.z)] = conc[i];
     }
   } else {
     // y=0 at bottom, set pixels outside of compartment to nearest valid pixel

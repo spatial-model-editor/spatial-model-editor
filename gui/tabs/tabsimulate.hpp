@@ -17,6 +17,7 @@ class QCPAbstractPlottable;
 class QCPItemStraightLine;
 class QCPTextElement;
 class QLabelMouseTracker;
+class QVoxelRenderer;
 namespace sme::model {
 class Model;
 } // namespace sme::model
@@ -27,6 +28,7 @@ class TabSimulate : public QWidget {
 
 public:
   explicit TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
+                       QVoxelRenderer *voxelRenderer,
                        QWidget *parent = nullptr);
   ~TabSimulate() override;
   void loadModelData();
@@ -41,6 +43,7 @@ private:
   std::unique_ptr<Ui::TabSimulate> ui;
   sme::model::Model &model;
   QLabelMouseTracker *lblGeometry;
+  QVoxelRenderer *voxGeometry;
   std::unique_ptr<PlotWrapper> plt;
   std::unique_ptr<sme::simulate::Simulation> sim;
   sme::model::DisplayOptions displayOptions;
