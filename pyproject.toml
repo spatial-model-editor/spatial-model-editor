@@ -42,6 +42,10 @@ Issues = "https://github.com/spatial-model-editor/spatial-model-editor/issues"
 [project.optional-dependencies]
 test = ["pytest", "matplotlib"]
 
+[tool.scikit-build]
+cmake.verbose = true
+logging.level = "DEBUG"
+
 [tool.scikit-build.cmake.define]
 BUILD_TESTING = "OFF"
 SME_BUILD_BENCHMARKS = "OFF"

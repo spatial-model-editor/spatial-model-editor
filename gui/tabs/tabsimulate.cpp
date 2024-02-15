@@ -7,6 +7,7 @@
 #include "qvoxelrenderer.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh.hpp"
+#include "sme/mesh3d.hpp"
 #include "sme/model.hpp"
 #include "sme/serialization.hpp"
 #include "sme/simulate.hpp"
@@ -103,8 +104,7 @@ void TabSimulate::loadModelData() {
       sme::simulate::SimulatorType::DUNE) {
     QString duneInvalidTitle{};
     QString duneInvalidMessage{};
-    if (model.getGeometry().getMesh() == nullptr ||
-        !model.getGeometry().getMesh()->isValid()) {
+    if (!model.getGeometry().getIsMeshValid()) {
       duneInvalidTitle = "Invalid Mesh";
       duneInvalidMessage =
           "Mesh geometry is not valid, and is required for a DuneCopasi "

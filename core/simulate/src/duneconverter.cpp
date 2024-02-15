@@ -4,6 +4,7 @@
 #include "sme/geometry.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh.hpp"
+#include "sme/mesh3d.hpp"
 #include "sme/model.hpp"
 #include "sme/pde.hpp"
 #include "sme/simulate_options.hpp"
@@ -20,10 +21,10 @@
 
 namespace sme::simulate {
 
-static void addGrid(IniFile &ini, const QString &filenameGrid) {
+static void addGrid(IniFile &ini, int dimension, const QString &filenameGrid) {
   ini.addSection("grid");
   ini.addValue("path", filenameGrid);
-  ini.addValue("dimension", 2);
+  ini.addValue("dimension", dimension);
 }
 
 static void addModel(IniFile &ini) {
@@ -281,6 +282,7 @@ DuneConverter::DuneConverter(
     const std::map<std::string, double, std::less<>> &substitutions,
     bool forExternalUse, const QString &outputIniFile, int doublePrecision)
     : mesh{model.getGeometry().getMesh()},
+      mesh3d{model.getGeometry().getMesh3d()},
       origin{model.getGeometry().getPhysicalOrigin()},
       voxelSize{model.getGeometry().getVoxelSize()},
       imageSize{model.getGeometry().getImages().volume()} {
@@ -299,7 +301,8 @@ DuneConverter::DuneConverter(
   auto iniFilename{QDir(iniFileDir).filePath(filename)};
 
   IniFile iniCommon;
-  addGrid(iniCommon, filenameGrid);
+  int dimension = mesh3d != nullptr ? 3 : 2;
+  addGrid(iniCommon, dimension, filenameGrid);
   addModel(iniCommon);
   addTimeStepping(iniCommon, model.getSimulationSettings().options.dune,
                   doublePrecision);
@@ -349,11 +352,15 @@ DuneConverter::DuneConverter(
       SPDLOG_ERROR("Failed to export ini file '{}'", iniFilename.toStdString());
     }
     // export gmsh file `grid.msh` in the same dir
-    QString gmshFilename = QDir(iniFileDir).filePath("grid.msh");
+    QString gmshFilename = QDir(iniFileDir).filePath(filenameGrid);
     SPDLOG_TRACE("Exporting gmsh file: '{}'", gmshFilename.toStdString());
     if (QFile f(gmshFilename);
         f.open(QIODevice::ReadWrite | QIODevice::Truncate | QIODevice::Text)) {
-      f.write(mesh->getGMSH().toUtf8());
+      if (mesh3d != nullptr) {
+        f.write(mesh3d->getGMSH().toUtf8());
+      } else {
+        f.write(mesh->getGMSH().toUtf8());
+      }
     } else {
       SPDLOG_ERROR("Failed to export gmsh file '{}'",
                    gmshFilename.toStdString());
@@ -364,6 +371,8 @@ DuneConverter::DuneConverter(
 QString DuneConverter::getIniFile() const { return iniFile; }
 
 const mesh::Mesh *DuneConverter::getMesh() const { return mesh; }
+
+const mesh::Mesh3d *DuneConverter::getMesh3d() const { return mesh3d; }
 
 const std::unordered_map<std::string, std::vector<double>> &
 DuneConverter::getConcentrations() const {

@@ -19,7 +19,8 @@ namespace sme {
 
 namespace mesh {
 class Mesh;
-}
+class Mesh3d;
+} // namespace mesh
 
 namespace model {
 
@@ -36,7 +37,9 @@ private:
   int numDimensions{3};
   common::ImageStack images;
   std::unique_ptr<mesh::Mesh> mesh;
+  std::unique_ptr<mesh::Mesh3d> mesh3d;
   bool isValid{false};
+  bool isMeshValid{false};
   bool hasImage{false};
   libsbml::Model *sbmlModel{nullptr};
   ModelCompartments *modelCompartments{nullptr};
@@ -72,7 +75,9 @@ public:
   getPhysicalPointAsString(const common::Voxel &voxel) const;
   [[nodiscard]] const common::ImageStack &getImages() const;
   [[nodiscard]] mesh::Mesh *getMesh() const;
+  [[nodiscard]] mesh::Mesh3d *getMesh3d() const;
   [[nodiscard]] bool getIsValid() const;
+  [[nodiscard]] bool getIsMeshValid() const;
   [[nodiscard]] bool getHasImage() const;
   void writeGeometryToSBML() const;
   [[nodiscard]] bool getHasUnsavedChanges() const;

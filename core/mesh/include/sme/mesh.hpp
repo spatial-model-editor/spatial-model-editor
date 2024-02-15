@@ -217,6 +217,8 @@ public:
    * @returns the mesh in GMSH format
    */
   [[nodiscard]] QString getGMSH() const;
+
+  static constexpr std::size_t dim = 2;
 };
 
 } // namespace sme::mesh

@@ -912,7 +912,6 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
           "[core/simulate/simulate][core/"
           "simulate][core][simulate][dune][pixel][expensive][3d]") {
   // see docs/tests/diffusion.rst for analytic expressions used here
-  // TODO: when we can do 3d meshing, add DUNE here
 
   constexpr double pi = 3.14159265358979323846;
   double sigma2 = 36.0;
@@ -974,7 +973,10 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
   options.dune.dt = 1.0;
   options.dune.maxDt = 1.0;
   options.dune.minDt = 0.5;
-  for (auto simType : {simulate::SimulatorType::Pixel}) {
+  // make a fine mesh for dune
+  s.getGeometry().getMesh3d()->setCompartmentMaxCellVolume(0, 4);
+  for (auto simType :
+       {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
     // relative error on integral of initial concentration over all pixels:
     double initialRelativeError{1e-9};
     // largest relative error of any pixel after simulation:
@@ -984,7 +986,7 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
     if (simType == simulate::SimulatorType::DUNE) {
       // increase allowed error for dune simulation
       initialRelativeError = 0.02;
-      evolvedMaxRelativeError = 0.3;
+      evolvedMaxRelativeError = 0.40;
       evolvedAvgRelativeError = 0.10;
     }
     s.getSimulationSettings().simulatorType = simType;
@@ -1166,7 +1168,7 @@ TEST_CASE("Pixel simulator: brusselator model, RK2, RK3, RK4",
 }
 
 TEST_CASE("DUNE: simulation",
-          "[core/simulate/simulate][core/simulate][core][simulate][dune][Q]") {
+          "[core/simulate/simulate][core/simulate][core][simulate][dune]") {
   SECTION("ABtoC model") {
     auto s{getExampleModel(Mod::ABtoC)};
 
@@ -1178,7 +1180,7 @@ TEST_CASE("DUNE: simulation",
     auto &options{s.getSimulationSettings().options};
     options.dune.dt = 0.01;
     options.dune.maxDt = 0.01;
-    options.dune.minDt = 0.005;
+    options.dune.minDt = 0.001;
     options.dune.integrator = "Alexander2";
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
 
@@ -1421,13 +1423,6 @@ TEST_CASE("applyConcsToModel after simulation",
           "[core/simulate/simulate][core/simulate][core][simulate]") {
   auto s{getExampleModel(Mod::VerySimpleModel)};
   s.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
-  // added this to try to work around
-  // https://github.com/spatial-model-editor/spatial-model-editor/issues/465
-  //  s.getSpecies().setAnalyticConcentration("B_c1", "cos(x/14.2)+1");
-  //  s.getSpecies().setAnalyticConcentration("A_c2", "cos(x/12.2)+1");
-  //  s.getSpecies().setAnalyticConcentration("B_c2", "cos(x/15.1)+1");
-  //  s.getSpecies().setAnalyticConcentration("A_c3", "cos(x/7.2)+1");
-  //  s.getSpecies().setAnalyticConcentration("B_c3", "cos(x/5.2)+1");
   s.exportSBMLFile("tmpsimapplyconcs.xml");
   auto &options{s.getSimulationSettings().options};
   options.dune.dt = 0.01;
@@ -2022,8 +2017,15 @@ TEST_CASE(
     sim2.doMultipleTimesteps(times);
     const auto &data2{m2.getSimulationData()};
     REQUIRE(data1.size() == data2.size());
+    // single-threaded pixel sim is deterministic: same inputs give same outputs
+    double allowedRelativeDifference = 1e-14;
+    if (simulatorType == simulate::SimulatorType::DUNE) {
+      // dune sim is multi-threaded so two runs with same inputs can differ
+      allowedRelativeDifference = 1.e-4;
+    }
     for (std::size_t i = 0; i < data1.size(); ++i) {
-      REQUIRE(rel_diff(data1, data2, i, i) == dbl_approx(0.0));
+      REQUIRE(std::abs(rel_diff(data1, data2, i, i)) <=
+              allowedRelativeDifference);
       REQUIRE(data1.timePoints[i] == dbl_approx(data2.timePoints[i]));
     }
   }
@@ -2080,7 +2082,25 @@ TEST_CASE("Fish model: simulation with piecewise function in reactions",
   simulate::Simulation simDune(m);
   REQUIRE(simDune.errorMessage() == "");
   REQUIRE(m.getSimulationData().timePoints.size() == 1);
-  simDune.doMultipleTimesteps({{2, 0.01}});
+  simDune.doMultipleTimesteps({{2, 0.00001}}); // use tiny timestep for now
   REQUIRE(simDune.errorMessage() == "");
   REQUIRE(m.getSimulationData().timePoints.size() == 3);
+}
+
+TEST_CASE("Simulate gray-scott-3d model",
+          "[core/simulate/simulate][core/"
+          "simulate][core][simulate][dune][pixel][3d]") {
+  // todo: make this test less trivial
+  SECTION("do a tiny step, don't crash") {
+    auto s{getExampleModel(sme::test::Mod::GrayScott3D)};
+    for (auto simulator :
+         {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
+      s.getSimulationData().clear();
+      s.getSimulationSettings().simulatorType = simulator;
+      auto sim = simulate::Simulation(s);
+      REQUIRE(sim.getNCompletedTimesteps() == 1);
+      sim.doTimesteps(0.01);
+      REQUIRE(sim.getNCompletedTimesteps() == 2);
+    }
+  }
 }

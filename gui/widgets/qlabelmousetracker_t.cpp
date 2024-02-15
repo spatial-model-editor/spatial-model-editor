@@ -66,7 +66,7 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
   img.setPixel(0, 1, col3);
   img.setPixel(0, 2, col3);
   img.setPixel(1, 1, col4);
-  mouseTracker.setImage(sme::common::ImageStack({{img}}));
+  mouseTracker.setImage(sme::common::ImageStack{{img}});
   mouseTracker.show();
   mouseTracker.resize(100, 100);
   wait();

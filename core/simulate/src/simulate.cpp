@@ -5,6 +5,7 @@
 #include "sme/geometry_utils.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh.hpp"
+#include "sme/mesh3d.hpp"
 #include "sme/model.hpp"
 #include "sme/pde.hpp"
 #include "sme/utils.hpp"
@@ -131,8 +132,7 @@ void Simulation::applyNextEvent() {
   // re-init simulator
   simulator.reset();
   if (settings->simulatorType == SimulatorType::DUNE &&
-      model.getGeometry().getMesh() != nullptr &&
-      model.getGeometry().getMesh()->isValid()) {
+      model.getGeometry().getIsMeshValid()) {
     simulator =
         std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
   } else {
@@ -209,8 +209,7 @@ Simulation::Simulation(model::Model &smeModel)
   initEvents();
   // init simulator
   if (settings->simulatorType == SimulatorType::DUNE &&
-      model.getGeometry().getMesh() != nullptr &&
-      model.getGeometry().getMesh()->isValid()) {
+      model.getGeometry().getIsMeshValid()) {
     simulator =
         std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
   } else {

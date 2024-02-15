@@ -3,10 +3,9 @@
 #pragma once
 
 #include "basesim.hpp"
-#include "sme/geometry_utils.hpp"
 #include "sme/image_stack.hpp"
 #include "sme/simulate_options.hpp"
-#include "sme/utils.hpp"
+#include "sme/voxel.hpp"
 #include <QPointF>
 #include <QSize>
 #include <array>
@@ -17,10 +16,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-namespace dune {
-class DuneConverter;
-}
 
 namespace sme {
 
@@ -34,39 +29,16 @@ class Compartment;
 
 namespace simulate {
 
-using PixelLocalPair = std::pair<std::size_t, std::array<double, 2>>;
+class DuneConverter;
 
-class DuneImpl;
-
-struct DuneSimCompartment {
-  std::string name;
-  std::size_t index;
-  std::size_t nSpecies;
-  std::vector<std::string> speciesNames;
-  geometry::VoxelIndexer voxelIndexer;
-  const geometry::Compartment *geometry;
-  // pixels+dune local coords for each triangle
-  std::vector<std::vector<PixelLocalPair>> pixels;
-  // index of nearest valid pixel for any missing pixels
-  std::vector<std::pair<std::size_t, std::size_t>> missingPixels;
-  std::vector<double> concentration;
-};
+template <int DuneDimensions> class DuneImpl;
 
 class DuneSim : public BaseSim {
 private:
-  std::unique_ptr<DuneImpl> pDuneImpl;
-  std::vector<DuneSimCompartment> duneCompartments;
-  // dimensions of model
-  QSize geometryImageSize;
-  QSizeF pixelSize;
-  QPointF pixelOrigin;
-  void initDuneSimCompartments(
-      const std::vector<std::unique_ptr<geometry::Compartment>> &comps);
-  void updatePixels();
-  void updateSpeciesConcentrations();
+  std::unique_ptr<DuneImpl<2>> pDuneImpl2d;
+  std::unique_ptr<DuneImpl<3>> pDuneImpl3d;
   std::string currentErrorMessage{};
   common::ImageStack currentErrorImages{};
-  double volOverL3;
 
 public:
   explicit DuneSim(

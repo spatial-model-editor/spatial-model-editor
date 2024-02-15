@@ -6,6 +6,7 @@
 #pragma once
 
 #include "sme/mesh.hpp"
+#include "sme/mesh3d.hpp"
 #include <array>
 #include <cstddef>
 #include <dune/geometry/type.hh>
@@ -20,6 +21,9 @@ namespace sme::simulate {
 
 namespace detail {
 
+static constexpr std::size_t UnusedVertexIndex =
+    std::numeric_limits<unsigned int>::max();
+
 static inline bool
 useCompartment(std::size_t compIndex,
                const std::unordered_set<int> &compartmentIndicies) {
@@ -30,56 +34,67 @@ useCompartment(std::size_t compIndex,
 
 static inline unsigned int
 getOrCreateVertexIndex(std::size_t oldVertexIndex,
-                       std::vector<int> &newVertexIndices,
+                       std::vector<unsigned int> &newVertexIndices,
                        int &newVertexCount) {
   auto &newVertexIndex = newVertexIndices[oldVertexIndex];
-  if (newVertexIndex < 0) {
+  if (newVertexIndex == UnusedVertexIndex) {
     newVertexIndex = newVertexCount;
     ++newVertexCount;
   }
-  return static_cast<unsigned int>(newVertexIndex);
+  return newVertexIndex;
 }
 
-template <typename HostGrid>
-void insertTriangle(const std::array<std::size_t, 3> &t,
-                    Dune::GridFactory<HostGrid> &factory,
-                    std::vector<int> &newVertexIndices, int &newVertexCount) {
-  factory.insertElement(
-      Dune::GeometryTypes::triangle,
-      {getOrCreateVertexIndex(t[0], newVertexIndices, newVertexCount),
-       getOrCreateVertexIndex(t[1], newVertexIndices, newVertexCount),
-       getOrCreateVertexIndex(t[2], newVertexIndices, newVertexCount)});
+static const std::vector<std::vector<mesh::TriangulateTriangleIndex>> &
+getElementIndices(const mesh::Mesh &mesh) {
+  return mesh.getTriangleIndices();
 }
 
-template <typename HostGrid>
+static const std::vector<std::vector<mesh::TetrahedronVertexIndices>> &
+getElementIndices(const mesh::Mesh3d &mesh3d) {
+  return mesh3d.getTetrahedronIndices();
+}
+
+template <typename HostGrid, typename MeshType>
 std::pair<std::vector<std::size_t>, std::shared_ptr<HostGrid>>
-makeHostGrid(const mesh::Mesh &mesh) {
+makeHostGrid(const MeshType &mesh) {
   Dune::GridFactory<HostGrid> factory;
   // get original vertices
   auto v = mesh.getVerticesAsFlatArray();
-  // map old to new vertex index (-1 means vertex is unused)
-  std::vector<int> newVertexIndices(v.size() / 2, -1);
+  // map old to new vertex index
+  std::vector<unsigned int> newVertexIndices(v.size() / MeshType::dim,
+                                             UnusedVertexIndex);
   int newVertexCount{0};
+  // add elements from each compartment
   std::vector<std::size_t> numElements;
-  // add triangles from each compartment
-  for (const auto &triangles : mesh.getTriangleIndices()) {
-    numElements.push_back(triangles.size());
-    for (const auto &triangle : triangles) {
-      insertTriangle(triangle, factory, newVertexIndices, newVertexCount);
+  std::vector<unsigned int> elementVertexIndices(MeshType::dim + 1, 0);
+  for (const auto &elements : getElementIndices(mesh)) {
+    numElements.push_back(elements.size());
+    for (const auto &element : elements) {
+      for (std::size_t iDim = 0; iDim <= MeshType::dim; ++iDim) {
+        elementVertexIndices[iDim] = getOrCreateVertexIndex(
+            element[iDim], newVertexIndices, newVertexCount);
+      }
+      factory.insertElement(Dune::GeometryTypes::simplex(MeshType::dim),
+                            elementVertexIndices);
     }
   }
   // add vertices
   std::vector<double> newFlatVertices(
-      2 * static_cast<std::size_t>(newVertexCount), 0.0);
+      MeshType::dim * static_cast<std::size_t>(newVertexCount), 0.0);
   for (std::size_t iOld = 0; iOld < newVertexIndices.size(); ++iOld) {
-    auto iNew{newVertexIndices[iOld]};
-    if (iNew >= 0) {
-      newFlatVertices[2 * static_cast<std::size_t>(iNew)] = v[2 * iOld];
-      newFlatVertices[2 * static_cast<std::size_t>(iNew) + 1] = v[2 * iOld + 1];
+    if (auto iNew = newVertexIndices[iOld]; iNew != UnusedVertexIndex) {
+      for (std::size_t iDim = 0; iDim < MeshType::dim; ++iDim) {
+        newFlatVertices[MeshType::dim * iNew + iDim] =
+            v[MeshType::dim * iOld + iDim];
+      }
     }
   }
-  for (std::size_t i = 0; i < newFlatVertices.size() / 2; ++i) {
-    factory.insertVertex({newFlatVertices[2 * i], newFlatVertices[2 * i + 1]});
+  Dune::FieldVector<typename HostGrid::ctype, MeshType::dim> fv;
+  for (std::size_t i = 0; i < newFlatVertices.size() / MeshType::dim; ++i) {
+    for (std::size_t iDim = 0; iDim < MeshType::dim; ++iDim) {
+      fv[iDim] = newFlatVertices[MeshType::dim * i + iDim];
+    }
+    factory.insertVertex(fv);
   }
   return {numElements, factory.createGrid()};
 }
@@ -117,8 +132,8 @@ void assignElements(Grid &grid, const std::vector<std::size_t> &numElements) {
 
 } // namespace detail
 
-template <class HostGrid, class MDGTraits>
-auto makeDuneGrid(const mesh::Mesh &mesh) {
+template <class HostGrid, class MDGTraits, class MeshType>
+auto makeDuneGrid(const MeshType &mesh) {
   auto [numElements, hostGrid] = detail::makeHostGrid<HostGrid>(mesh);
   auto grid =
       detail::makeGrid<HostGrid, MDGTraits>(*hostGrid, numElements.size());
