@@ -1,9 +1,4 @@
 pybind11_add_module(sme MODULE)
-
-if(SME_QT_DISABLE_UNICODE)
-  qt6_disable_unicode_defines(sme)
-endif()
-
 target_link_libraries(sme PRIVATE sme::core ${SME_EXTRA_EXE_LIBS})
 target_sources(sme PRIVATE sme.cpp)
 target_include_directories(sme PRIVATE src)
