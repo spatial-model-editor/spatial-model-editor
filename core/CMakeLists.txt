@@ -77,12 +77,19 @@ try_compile(
   "${CMAKE_SOURCE_DIR}/cmake/checkSymEngineLLVM.cpp"
   CMAKE_FLAGS -DINCLUDE_DIRECTORIES=${SYMENGINE_INCLUDE_DIRS}
   LINK_LIBRARIES ${SYMENGINE_LIBRARIES}
-  OUTPUT_VARIABLE SYMENGINE_LLVM_ERROR_LOG)
+  OUTPUT_VARIABLE
+    SYMENGINE_LLVM_ERROR_LOG
+    CXX_STANDARD
+    20
+    CXX_STANDARD_REQUIRED
+    TRUE)
 if(${SYMENGINE_LLVM})
-  message(STATUS "Testing SymEngine LLVM & SBML support - found")
+  message(STATUS "Testing SymEngine LLVM & SBML support - Success")
 else()
-  message(WARNING "SymEngine library is missing LLVM and/or SBML support")
-  message(WARNING "${SYMENGINE_LLVM_ERROR_LOG}")
+  message(
+    FATAL_ERROR
+      "SymEngine library is missing LLVM and/or SBML support:\n${SYMENGINE_LLVM_ERROR_LOG}"
+  )
 endif()
 
 # find libSBML and check it is compiled with the spatial extension enabled
@@ -92,12 +99,19 @@ try_compile(
   SBML_SPATIAL "${CMAKE_CURRENT_BINARY_DIR}/cxx"
   "${CMAKE_SOURCE_DIR}/cmake/checkSpatialSBML.cpp"
   LINK_LIBRARIES sbml-static
-  OUTPUT_VARIABLE SBML_SPATIAL_ERROR_LOG)
+  OUTPUT_VARIABLE
+    SBML_SPATIAL_ERROR_LOG
+    CXX_STANDARD
+    20
+    CXX_STANDARD_REQUIRED
+    TRUE)
 if(${SBML_SPATIAL})
-  message(STATUS "Testing libSBML spatial extension support - found")
+  message(STATUS "Testing libSBML spatial extension support - Success")
 else()
-  message(WARNING "libSBML library is missing spatial extension support")
-  message(WARNING "${SBML_SPATIAL_ERROR_LOG}")
+  message(
+    FATAL_ERROR
+      "libSBML library is missing spatial extension support:\n${SBML_SPATIAL_ERROR_LOG}"
+  )
 endif()
 
 find_package(OpenCV REQUIRED COMPONENTS core imgproc)
