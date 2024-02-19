@@ -45,14 +45,6 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
 
-# stop Qt from defining UNICODE on windows to avoid dune issues: this used to be
-# opt-in, but now done by default for Qt >= 6.1.2. See
-# https://codereview.qt-project.org/c/qt/qtbase/+/350443
-option(
-  SME_QT_DISABLE_UNICODE
-  "Disable Qt UNICODE option"
-  OFF)
-
 option(
   SME_USE_STATIC_LIBS
   "Use static versions of dependencies"
@@ -154,4 +146,3 @@ message(STATUS "SME_EXTRA_CORE_DEFS: ${SME_EXTRA_CORE_DEFS}")
 message(STATUS "SME_EXTRA_GUI_LIBS: ${SME_EXTRA_GUI_LIBS}")
 message(STATUS "SME_EXTRA_EXE_LIBS: ${SME_EXTRA_EXE_LIBS}")
 message(STATUS "SME_USE_STATIC_LIBS: ${SME_USE_STATIC_LIBS}")
-message(STATUS "SME_QT_DISABLE_UNICODE: ${SME_QT_DISABLE_UNICODE}")
