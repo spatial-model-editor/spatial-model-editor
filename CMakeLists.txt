@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13...3.27)
+cmake_minimum_required(VERSION 3.13...3.29)
 message(STATUS "CMake version ${CMAKE_VERSION}")
 
 # version number here is embedded in compiled executable
@@ -7,6 +7,14 @@ project(
   VERSION 1.5.0
   DESCRIPTION "Spatial Model Editor"
   LANGUAGES C CXX)
+
+# workaround for CGAL using deprecated exec_program
+if(POLICY CMP0153)
+  cmake_policy(
+    SET
+    CMP0153
+    OLD)
+endif()
 
 list(
   APPEND

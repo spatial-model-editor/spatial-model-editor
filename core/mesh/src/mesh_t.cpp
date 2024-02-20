@@ -166,11 +166,11 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     REQUIRE(boundaryImage[0].pixel(72, 1) == col0);
     REQUIRE(boundaryImage[0].pixel(22, 76) == 0);
     // anti-aliasing means pixel may not have exactly the expected color:
-    REQUIRE(qRed(boundaryImage[0].pixel(25, 80)) ==
+    REQUIRE(qRed(boundaryImage[0].pixel(24, 73)) ==
             Catch::Approx(qRed(col1)).margin(10));
-    REQUIRE(qGreen(boundaryImage[0].pixel(25, 80)) ==
+    REQUIRE(qGreen(boundaryImage[0].pixel(24, 73)) ==
             Catch::Approx(qGreen(col1)).margin(10));
-    REQUIRE(qBlue(boundaryImage[0].pixel(25, 80)) ==
+    REQUIRE(qBlue(boundaryImage[0].pixel(24, 73)) ==
             Catch::Approx(qBlue(col1)).margin(10));
     auto [boundaryImage2, maskImage2] =
         mesh.getBoundariesImages(QSize(100, 100), 1);
@@ -219,5 +219,21 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     mesh.setCompartmentMaxTriangleArea(0, maxTriangleArea);
     REQUIRE(mesh.isValid() == true);
     REQUIRE(mesh.getErrorMessage().empty());
+  }
+  SECTION("low resolution image -> small default triangle area") {
+    QImage img(16, 12, QImage::Format_RGB32);
+    QRgb col = QColor(0, 0, 0).rgb();
+    img.fill(col);
+    mesh::Mesh mesh(img, {}, {}, {1.0, 1.0, 1.0}, {0, 0, 0},
+                    std::vector<QRgb>{col});
+    REQUIRE(mesh.getCompartmentMaxTriangleArea(0) < 4);
+  }
+  SECTION("high resolution image -> large default triangle area") {
+    QImage img(3840, 2160, QImage::Format_RGB32);
+    QRgb col = QColor(32, 1, 88).rgb();
+    img.fill(col);
+    mesh::Mesh mesh(img, {}, {}, {1.0, 1.0, 1.0}, {0, 0, 0},
+                    std::vector<QRgb>{col});
+    REQUIRE(mesh.getCompartmentMaxTriangleArea(0) > 10000);
   }
 }

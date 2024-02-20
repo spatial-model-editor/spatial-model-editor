@@ -41,7 +41,7 @@ public:
    * @param[in] allowedError the maximum allowed error
    */
   void getSimplifiedLine(std::vector<QPoint> &line,
-                         const LineError &allowedError = {0.0, 0.4}) const;
+                         const LineError &allowedError = {0.0, 0.5}) const;
   /**
    * @brief Construct a simplified line given a maximum number of points
    *
