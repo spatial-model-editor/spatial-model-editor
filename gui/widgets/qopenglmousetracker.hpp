@@ -63,11 +63,11 @@ protected:
 
   QColor m_selectedObjectColor;
 
-  typedef std::pair<QColor, std::unique_ptr<rendering::WireframeObject>>
+  typedef std::pair<QColor, std::unique_ptr<rendering::WireframeObjects>>
       color_mesh;
 
   //  std::vector<color_mesh> m_meshSet;
-  std::unique_ptr<rendering::WireframeObject> m_SubMeshes;
+  std::unique_ptr<rendering::WireframeObjects> m_SubMeshes;
 
   std::unique_ptr<rendering::ShaderProgram> m_mainProgram;
   rendering::Camera m_camera;

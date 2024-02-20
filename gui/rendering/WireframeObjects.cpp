@@ -2,7 +2,7 @@
 // Created by acaramizaru on 6/30/23.
 //
 
-#include "WireframeObject.hpp"
+#include "WireframeObjects.hpp"
 #include <memory>
 
 template <typename T>
@@ -10,7 +10,7 @@ qopengl_GLsizeiptr sizeofGLVector(const std::vector<T> &v) {
   return static_cast<qopengl_GLsizeiptr>(v.size() * sizeof(T));
 }
 
-rendering::WireframeObject::WireframeObject(
+rendering::WireframeObjects::WireframeObjects(
     const rendering::ObjectInfo &info,
     //                                            const QColor &color,
     const rendering::SMesh &mesh, const QOpenGLWidget *Widget,
@@ -64,35 +64,35 @@ rendering::WireframeObject::WireframeObject(
   CreateVBO();
 }
 
-rendering::WireframeObject::~WireframeObject() { DestroyVBO(); }
+rendering::WireframeObjects::~WireframeObjects() { DestroyVBO(); }
 
-// void rendering::WireframeObject::SetColor(const QColor &color) {
+// void rendering::WireframeObjects::SetColor(const QColor &color) {
 //   m_color = color;
 //   UpdateVBOColor();
 // }
 
-void rendering::WireframeObject::SetColor(const QColor &color,
-                                          uint32_t meshID) {
+void rendering::WireframeObjects::SetColor(const QColor &color,
+                                           uint32_t meshID) {
   assert(meshID < m_colors.size());
   m_colors[meshID] = color;
 }
 
-void rendering::WireframeObject::ResetDefaultColor(uint32_t meshID) {
+void rendering::WireframeObjects::ResetDefaultColor(uint32_t meshID) {
   assert(meshID < m_colors.size());
   m_colors[meshID] = m_default_colors[meshID];
 }
 
-uint32_t rendering::WireframeObject::GetNumberOfSubMeshes() {
+uint32_t rendering::WireframeObjects::GetNumberOfSubMeshes() {
   return m_colors.size();
 }
 
-rendering::SMesh rendering::WireframeObject::GetMesh() const { return m_mesh; }
+rendering::SMesh rendering::WireframeObjects::GetMesh() const { return m_mesh; }
 
-std::vector<QColor> rendering::WireframeObject::GetDefaultColors() const {
+std::vector<QColor> rendering::WireframeObjects::GetDefaultColors() const {
   return m_default_colors;
 }
 
-// void rendering::WireframeObject::UpdateVBOColor() {
+// void rendering::WireframeObjects::UpdateVBOColor() {
 //
 //   m_openGLContext->makeCurrent(m_openGLContext->surface());
 //
@@ -119,7 +119,7 @@ std::vector<QColor> rendering::WireframeObject::GetDefaultColors() const {
 //   glEnableVertexAttribArray(1);
 // }
 
-void rendering::WireframeObject::CreateVBO() {
+void rendering::WireframeObjects::CreateVBO() {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
 
@@ -163,7 +163,7 @@ void rendering::WireframeObject::CreateVBO() {
   }
 }
 
-void rendering::WireframeObject::DestroyVBO() {
+void rendering::WireframeObjects::DestroyVBO() {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
 
@@ -183,7 +183,7 @@ void rendering::WireframeObject::DestroyVBO() {
   m_vao->destroy();
 }
 
-void rendering::WireframeObject::Render(
+void rendering::WireframeObjects::Render(
     std::unique_ptr<rendering::ShaderProgram> &program, float lineWidth) {
 
   glLineWidth(lineWidth);
@@ -202,43 +202,47 @@ void rendering::WireframeObject::Render(
   }
 }
 
-void rendering::WireframeObject::SetRotation(GLfloat rotationX,
-                                             GLfloat rotationY,
-                                             GLfloat rotationZ) {
+void rendering::WireframeObjects::SetRotation(GLfloat rotationX,
+                                              GLfloat rotationY,
+                                              GLfloat rotationZ) {
   m_rotation.setX(rotationX);
   m_rotation.setY(rotationY);
   m_rotation.setY(rotationZ);
 }
 
-void rendering::WireframeObject::SetRotation(const QVector3D &rotation) {
+void rendering::WireframeObjects::SetRotation(const QVector3D &rotation) {
   m_rotation = rotation;
 }
 
-QVector3D rendering::WireframeObject::GetRotation() const { return m_rotation; }
+QVector3D rendering::WireframeObjects::GetRotation() const {
+  return m_rotation;
+}
 
-void rendering::WireframeObject::SetPosition(GLfloat positionX,
-                                             GLfloat positionY,
-                                             GLfloat positionZ) {
+void rendering::WireframeObjects::SetPosition(GLfloat positionX,
+                                              GLfloat positionY,
+                                              GLfloat positionZ) {
   m_position.setX(positionX);
   m_position.setY(positionY);
   m_position.setZ(positionZ);
 }
 
-void rendering::WireframeObject::SetPosition(const QVector3D &position) {
+void rendering::WireframeObjects::SetPosition(const QVector3D &position) {
   m_position = position;
 }
 
-QVector3D rendering::WireframeObject::GetPosition() const { return m_position; }
+QVector3D rendering::WireframeObjects::GetPosition() const {
+  return m_position;
+}
 
-void rendering::WireframeObject::SetScale(GLfloat scaleX, GLfloat scaleY,
-                                          GLfloat scaleZ) {
+void rendering::WireframeObjects::SetScale(GLfloat scaleX, GLfloat scaleY,
+                                           GLfloat scaleZ) {
   m_scale.setX(scaleX);
   m_scale.setY(scaleY);
   m_scale.setZ(scaleZ);
 }
 
-void rendering::WireframeObject::SetScale(const QVector3D &scale) {
+void rendering::WireframeObjects::SetScale(const QVector3D &scale) {
   m_scale = scale;
 }
 
-QVector3D rendering::WireframeObject::GetScale() const { return m_scale; }
+QVector3D rendering::WireframeObjects::GetScale() const { return m_scale; }

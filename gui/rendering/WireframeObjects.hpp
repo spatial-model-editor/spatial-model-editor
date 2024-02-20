@@ -15,17 +15,17 @@
 
 namespace rendering {
 
-class WireframeObject : protected QOpenGLFunctions {
+class WireframeObjects : protected QOpenGLFunctions {
 
 public:
-  WireframeObject(const rendering::ObjectInfo &info, // const QColor &color,
-                  const rendering::SMesh &mesh, const QOpenGLWidget *Widget,
-                  const std::vector<QColor> &color = std::vector<QColor>(0),
-                  const QVector3D &position = QVector3D(0.0f, 0.0f, 0.0f),
-                  const QVector3D &rotation = QVector3D(0.0f, 0.0f, 0.0f),
-                  const QVector3D &scale = QVector3D(1.0f, 1.0f, 1.0f));
-  WireframeObject(const WireframeObject &cpy) = delete;
-  ~WireframeObject();
+  WireframeObjects(const rendering::ObjectInfo &info, // const QColor &color,
+                   const rendering::SMesh &mesh, const QOpenGLWidget *Widget,
+                   const std::vector<QColor> &color = std::vector<QColor>(0),
+                   const QVector3D &position = QVector3D(0.0f, 0.0f, 0.0f),
+                   const QVector3D &rotation = QVector3D(0.0f, 0.0f, 0.0f),
+                   const QVector3D &scale = QVector3D(1.0f, 1.0f, 1.0f));
+  WireframeObjects(const WireframeObjects &cpy) = delete;
+  ~WireframeObjects();
 
   void Render(std::unique_ptr<rendering::ShaderProgram> &program,
               float lineWidth = 1);

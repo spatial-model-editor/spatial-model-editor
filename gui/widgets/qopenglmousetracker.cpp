@@ -255,8 +255,8 @@ QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
 //
 //   m_meshSet.push_back(std::make_pair(
 //       color,
-//       std::unique_ptr<rendering::WireframeObject>(
-//           new rendering::WireframeObject(objectInfo, colors, mesh, this))));
+//       std::unique_ptr<rendering::WireframeObjects>(
+//           new rendering::WireframeObjects(objectInfo, colors, mesh, this))));
 // }
 
 void QOpenGLMouseTracker::SetSubMeshes(const rendering::SMesh &mesh,
@@ -267,8 +267,8 @@ void QOpenGLMouseTracker::SetSubMeshes(const rendering::SMesh &mesh,
   // equally distributed during HSV space where the first color is the
   // ''m_selectedObjectColor''
 
-  m_SubMeshes = std::unique_ptr<rendering::WireframeObject>(
-      new rendering::WireframeObject(objectInfo, mesh, this, colors));
+  m_SubMeshes = std::unique_ptr<rendering::WireframeObjects>(
+      new rendering::WireframeObjects(objectInfo, mesh, this, colors));
 }
 
 void QOpenGLMouseTracker::setFPS(float frameRate) { m_frameRate = frameRate; }

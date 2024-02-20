@@ -12,4 +12,4 @@
 #include "Shaders/default/fragment.hpp"
 #include "Shaders/default/vertex.hpp"
 #include "Utils.hpp"
-#include "WireframeObject.hpp"
+#include "WireframeObjects.hpp"
