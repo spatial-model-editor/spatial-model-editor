@@ -8,9 +8,17 @@ ls /host
 
 mkdir /project/build
 cd /project/build
+
+ccache --show-stats
+ccache -p
+
+ccache --max-size 400M
+ccache --cleanup
+ccache --zero-stats
 cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/opt/smelibs \
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DSME_BUILD_BENCHMARKS=off \
     -DSME_BUILD_GUI=off \
     -DSME_BUILD_CLI=off \
@@ -23,4 +31,5 @@ cmake .. \
 make -j4 core tests
 ctest -j4 --output-on-failure
 make install
+ccache --show-stats
 cd ..

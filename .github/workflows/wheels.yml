@@ -25,7 +25,7 @@ jobs:
       run:
         shell: bash
     env:
-      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux_x86_64:2024.02.01
+      CIBW_MANYLINUX_X86_64_IMAGE: ghcr.io/spatial-model-editor/manylinux_x86_64:2024.02.20
       CIBW_SKIP: '*-manylinux_i686 *-musllinux* pp*-*'
       CIBW_ENVIRONMENT: 'CMAKE_ARGS="-DSME_LOG_LEVEL=OFF -DSME_BUILD_CORE=off -DCMAKE_PREFIX_PATH=/opt/smelibs;/opt/smelibs/lib64/cmake"'
       CIBW_BEFORE_ALL: 'cd {project} && ls && bash ./ci/linux-wheels.sh'
@@ -39,7 +39,7 @@ jobs:
     - name: Cache ccache
       uses: actions/cache@v4
       with:
-        path: ${{ github.workspace }}/ccache
+        path: /opt/ccache
         key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
         restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
     - uses: actions/setup-python@v5
