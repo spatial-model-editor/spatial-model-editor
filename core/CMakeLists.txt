@@ -128,19 +128,18 @@ target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 target_compile_definitions(
   core PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_${SME_LOG_LEVEL})
 
+# provide METIS::METIS target expected by dune-copasi with scotchmetisv3
+# metis-compatible library
+add_library(
+  METIS::METIS
+  INTERFACE
+  IMPORTED)
 find_package(SCOTCH)
-target_link_libraries(SCOTCH::scotchmetisv3 INTERFACE SCOTCH::scotcherr)
-target_link_libraries(SCOTCH::scotch INTERFACE SCOTCH::scotchmetisv3)
-find_package(dune-common REQUIRED)
-target_link_libraries(Dune::Common INTERFACE SCOTCH::scotch)
-find_package(dune-geometry REQUIRED)
-find_package(dune-uggrid REQUIRED)
-find_package(dune-grid REQUIRED)
-find_package(dune-istl REQUIRED)
-find_package(dune-localfunctions REQUIRED)
-find_package(dune-pdelab REQUIRED)
+target_link_libraries(
+  METIS::METIS
+  INTERFACE SCOTCH::scotchmetisv3
+  INTERFACE SCOTCH::scotcherr)
 find_package(dune-copasi REQUIRED)
-
 target_link_libraries(
   core
   PRIVATE TIFF::TIFF
@@ -156,9 +155,6 @@ target_link_libraries(
          opencv_imgproc
          spdlog::spdlog
          Dune::Copasi
-         SCOTCH::scotch
-         SCOTCH::scotchmetisv3
-         SCOTCH::scotcherr
          Qt::Gui
          Qt::Core
          Pagmo::pagmo)

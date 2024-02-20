@@ -12,7 +12,16 @@ find_dependency(cereal REQUIRED)
 find_dependency(Pagmo REQUIRED)
 find_dependency(TBB CONFIG REQUIRED)
 find_dependency(combine-static REQUIRED CONFIGS Combine-static-config.cmake)
+# provide METIS::METIS target expected by dune-copasi
+add_library(
+  METIS::METIS
+  INTERFACE
+  IMPORTED)
 find_dependency(SCOTCH REQUIRED)
+target_link_libraries(
+  METIS::METIS
+  INTERFACE SCOTCH::scotchmetisv3
+  INTERFACE SCOTCH::scotcherr)
 find_dependency(dune-common REQUIRED)
 find_dependency(dune-geometry REQUIRED)
 find_dependency(dune-uggrid REQUIRED)
