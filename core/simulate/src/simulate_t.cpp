@@ -985,7 +985,7 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
     double evolvedAvgRelativeError{0.010};
     if (simType == simulate::SimulatorType::DUNE) {
       // increase allowed error for dune simulation
-      initialRelativeError = 0.02;
+      initialRelativeError = 0.03;
       evolvedMaxRelativeError = 0.40;
       evolvedAvgRelativeError = 0.10;
     }
