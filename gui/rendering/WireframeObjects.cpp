@@ -10,19 +10,15 @@ qopengl_GLsizeiptr sizeofGLVector(const std::vector<T> &v) {
   return static_cast<qopengl_GLsizeiptr>(v.size() * sizeof(T));
 }
 
-rendering::WireframeObjects::WireframeObjects(
-    // const rendering::ObjectInfo &info,
-    const sme::mesh::Mesh3d &info,
-    //                                            const QColor &color,
-    // const rendering::SMesh &mesh,
-    const QOpenGLWidget *Widget, const std::vector<QColor> &colors,
-    const QVector3D &position, const QVector3D &rotation,
-    const QVector3D &scale)
-    : // m_mesh(mesh),
-      m_openGLContext(Widget->context()), m_position(position),
+rendering::WireframeObjects::WireframeObjects(const sme::mesh::Mesh3d &info,
+                                              const QOpenGLWidget *Widget,
+                                              const std::vector<QColor> &colors,
+                                              const QVector3D &position,
+                                              const QVector3D &rotation,
+                                              const QVector3D &scale)
+    : m_openGLContext(Widget->context()), m_position(position),
       m_rotation(rotation), m_scale(scale), m_colors(colors),
       m_default_colors(colors),
-      // m_vertices(info.vertices)
       m_vertices(info.getVerticesAsQVector4DArrayInHomogeneousCoord()),
       m_visibleSubmesh(std::min(colors.size(), info.getNumberOfCompartment()),
                        true) {
@@ -35,52 +31,15 @@ rendering::WireframeObjects::WireframeObjects(
     m_indices.push_back(info.getMeshSegmentsIndicesAsFlatArray(i));
   }
 
-  //  for (u_int32_t i = 0; i < info.submeshes_indexes.size(); i++) {
-  //    m_indices.emplace_back(
-  //        std::vector<GLuint>(info.submeshes_indexes[i].size()));
-  //    for (rendering::Face f : info.submeshes_indexes[i]) {
-  //      //    m_indices.push_back(f.vertexIndices[0] - 1);
-  //      //    m_indices.push_back(f.vertexIndices[1] - 1);
-  //      //
-  //      //    m_indices.push_back(f.vertexIndices[1] - 1);
-  //      //    m_indices.push_back(f.vertexIndices[2] - 1);
-  //      //
-  //      //    m_indices.push_back(f.vertexIndices[2] - 1);
-  //      //    m_indices.push_back(f.vertexIndices[0] - 1);
-  //      m_indices[i].emplace_back(f.vertexIndices[0]);
-  //      m_indices[i].emplace_back(f.vertexIndices[1]);
-  //
-  //      m_indices[i].emplace_back(f.vertexIndices[1]);
-  //      m_indices[i].emplace_back(f.vertexIndices[2]);
-  //
-  //      m_indices[i].emplace_back(f.vertexIndices[2]);
-  //      m_indices[i].emplace_back(f.vertexIndices[0]);
-  //    }
-  //  }
-
-  //  std::vector<uint8_t> cArr = {(uint8_t)m_color.red(),
-  //  (uint8_t)m_color.green(),
-  //                               (uint8_t)m_color.blue(),
-  //                               (uint8_t)m_color.alpha()};
-
-  assert((m_colors.size() != 0) &&
-         "For this use case, automatic color generation should be offered!");
-
   for (const auto &v : m_vertices) {
     m_verticesBuffer.insert(m_verticesBuffer.end(),
                             {v.x(), v.y(), v.z(), v.w()});
-    //    m_colorBuffer.insert(m_colorBuffer.end(), cArr.begin(), cArr.end());
   }
 
   CreateVBO();
 }
 
 rendering::WireframeObjects::~WireframeObjects() { DestroyVBO(); }
-
-// void rendering::WireframeObjects::SetColor(const QColor &color) {
-//   m_color = color;
-//   UpdateVBOColor();
-// }
 
 void rendering::WireframeObjects::SetColor(const QColor &color,
                                            uint32_t meshID) {
@@ -94,12 +53,8 @@ void rendering::WireframeObjects::ResetDefaultColor(uint32_t meshID) {
 }
 
 uint32_t rendering::WireframeObjects::GetNumberOfSubMeshes() {
-  //  return m_colors.size();
   return m_indices.size();
 }
-
-// rendering::SMesh rendering::WireframeObjects::GetMesh() const { return
-// m_mesh; }
 
 std::vector<QColor> rendering::WireframeObjects::GetDefaultColors() const {
   return m_default_colors;
@@ -124,33 +79,6 @@ rendering::WireframeObjects::meshIDFromColor(const QColor &color) const {
   return -1;
 }
 
-// void rendering::WireframeObjects::UpdateVBOColor() {
-//
-//   m_openGLContext->makeCurrent(m_openGLContext->surface());
-//
-//   auto size = static_cast<int>(m_colorBuffer.size() / 4);
-//
-//   std::vector<uint8_t> cArr = {(uint8_t)m_color.red(),
-//   (uint8_t)m_color.green(),
-//                                (uint8_t)m_color.blue(),
-//                                (uint8_t)m_color.alpha()};
-//
-//   m_colorBuffer.clear();
-//
-//   for (int iter = 0; iter < size; iter++)
-//     m_colorBuffer.insert(m_colorBuffer.end(), cArr.begin(), cArr.end());
-//
-//   GLsizeiptr colorBufferSize = m_colorBuffer.size() * sizeof(uint8_t);
-//
-//   m_vao->bind();
-//
-//   glBindBuffer(GL_ARRAY_BUFFER, m_colorBufferId);
-//   glBufferData(GL_ARRAY_BUFFER, colorBufferSize, m_colorBuffer.data(),
-//                GL_DYNAMIC_DRAW);
-//   glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, nullptr);
-//   glEnableVertexAttribArray(1);
-// }
-
 void rendering::WireframeObjects::CreateVBO() {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
@@ -170,18 +98,6 @@ void rendering::WireframeObjects::CreateVBO() {
   CheckOpenGLError("glVertexAttribPointer");
   glEnableVertexAttribArray(0);
   CheckOpenGLError("glEnableVertexAttribArray");
-
-  //  glGenBuffers(1, &m_colorBufferId);
-  //  CheckOpenGLError("glGenBuffers");
-  //  glBindBuffer(GL_ARRAY_BUFFER, m_colorBufferId);
-  //  CheckOpenGLError("glBindBuffer");
-  //  glBufferData(GL_ARRAY_BUFFER, colorBufferSize, m_colorBuffer.data(),
-  //               GL_DYNAMIC_DRAW);
-  //  CheckOpenGLError("glBufferData");
-  //  glVertexAttribPointer(1, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, nullptr);
-  //  CheckOpenGLError("glVertexAttribPointer");
-  //  glEnableVertexAttribArray(1);
-  //  CheckOpenGLError("glEnableVertexAttribArray");indexBufferSize
 
   m_elementBufferIds.resize(m_indices.size());
   glGenBuffers(m_elementBufferIds.size(), m_elementBufferIds.data());
@@ -204,11 +120,7 @@ void rendering::WireframeObjects::DestroyVBO() {
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
-  //  glDeleteBuffers(1, &m_colorBufferId);
   glDeleteBuffers(1, &m_vbo);
-  //  for (int i = 0; i < m_elementBufferIds.size(); i++) {
-  //    glDeleteBuffers(1, &m_elementBufferIds[i]);
-  //  }
   glDeleteBuffers(m_elementBufferIds.size(), m_elementBufferIds.data());
 
   m_vao->release();
