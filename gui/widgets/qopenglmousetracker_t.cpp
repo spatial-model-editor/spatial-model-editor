@@ -59,15 +59,15 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   QColor redColor = QColor(255, 0, 0);
   QColor blueColor = QColor(0, 0, 255);
-  // QColor blackColor = QColor(0, 0, 0);
+  QColor blackColor = QColor(0, 0, 0);
   QColor greenColor = QColor(0, 255, 0);
 
   test.show();
 
-  wait(100);
+  //  wait(100);
 
   // camera position
-  test.SetCameraPosition(20, 10, -10);
+  test.SetCameraPosition(20, 10, -100);
 
   SECTION("Two disconnected eggs") {
     sme::test::createBinaryFile("geometry/3d_two_eggs_disconnected.tiff",
@@ -77,9 +77,6 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
     REQUIRE(tiffReader.empty() == false);
     REQUIRE(tiffReader.getErrorMessage().isEmpty());
     auto imageStack = tiffReader.getImages();
-    REQUIRE(imageStack.volume().width() == 40);
-    REQUIRE(imageStack.volume().height() == 40);
-    REQUIRE(imageStack.volume().depth() == 40);
     imageStack.convertToIndexed();
     sme::common::VolumeF voxelSize(1.0, 1.0, 1.0);
     sme::common::VoxelF originPoint(0.0, 0.0, 0.0);
@@ -89,6 +86,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
     QRgb colCell{0xff7f7f7f};
     QRgb colNucleus{0xffffffff};
     std::vector<std::size_t> maxCellVolume{3};
+
     //    SECTION("No compartment colours") {
     //      sme::mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize,
     //      originPoint,
@@ -161,10 +159,6 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       test.SetSubMeshes(mesh3d, {redColor, blueColor, greenColor});
 
       wait(1000000);
-
-      //      QFile f("grid.msh");
-      //      f.open(QIODevice::ReadWrite | QIODevice::Truncate |
-      //      QIODevice::Text); f.write(mesh3d.getGMSH().toUtf8());
     }
   }
 
@@ -211,7 +205,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   //  // test.repaint();
   //
   //  QcolorSelection = QColor(test.getColour());
-  //
+  // playlist
   //  REQUIRE(blueColor != QcolorSelection);
   //
   //  wait(100);

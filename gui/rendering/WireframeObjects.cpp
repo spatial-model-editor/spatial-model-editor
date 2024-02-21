@@ -203,6 +203,10 @@ void rendering::WireframeObjects::Render(
 
   glLineWidth(lineWidth);
   glEnable(GL_LINE_SMOOTH);
+  //  glEnable(GL_CULL_FACE);
+  glEnable(GL_DEPTH_TEST);
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
   program->SetPosition(m_position.x(), m_position.y(), m_position.z());
   program->SetRotation(m_rotation.x(), m_rotation.y(), m_rotation.z());
