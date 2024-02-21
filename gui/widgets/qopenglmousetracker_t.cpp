@@ -67,7 +67,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   //  wait(100);
 
   // camera position
-  test.SetCameraPosition(20, 10, -100);
+  test.SetCameraPosition(20, 20, -50);
 
   SECTION("Two disconnected eggs") {
     sme::test::createBinaryFile("geometry/3d_two_eggs_disconnected.tiff",
@@ -158,11 +158,91 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
       test.SetSubMeshes(mesh3d, {redColor, blueColor, greenColor});
 
-      wait(1000000);
+      wait(100);
+
+      auto QcolorSelection = QColor(test.getColour());
+
+      // forced windows resize and forced repainting
+      test.resize(500, 500);
+      // test.repaint();
+
+      // the corner initial color should be black.
+      REQUIRE(blackColor == QcolorSelection);
+
+      // zoom
+      sendMouseWheel(&test, 1);
+
+      // move mouse over image
+      sendMouseMove(&test, {10, 44});
+
+      // click on image
+      sendMouseClick(&test, {40, 40});
+      // test.repaint();
+
+      QcolorSelection = QColor(test.getColour());
+
+      REQUIRE(blueColor != QcolorSelection);
+
+      wait(100);
+
+      sendMouseClick(&test, {0, 0});
+
+      QcolorSelection = QColor(test.getColour());
+
+      REQUIRE(redColor == QcolorSelection);
+
+      wait(100);
+
+      sendMouseClick(&test, {126, 319});
+
+      QcolorSelection = QColor(test.getColour());
+
+      REQUIRE(greenColor == QcolorSelection);
+
+      wait(100);
+
+      // reset
+      sendMouseClick(&test, {412, 445});
+
+      QcolorSelection = QColor(test.getColour());
+
+      REQUIRE(blackColor == QcolorSelection);
+
+      wait(100);
+
+      // reset
+      sendMouseClick(&test, {412, 445});
+
+      QcolorSelection = QColor(test.getColour());
+
+      REQUIRE(blackColor == QcolorSelection);
+
+      wait(100);
+
+      sendMouseClick(&test, {0, 0});
+
+      QcolorSelection = QColor(test.getColour());
+
+      REQUIRE(redColor == QcolorSelection);
+
+      wait(100);
+
+      sendMouseClick(&test, {331, 322});
+
+      QcolorSelection = QColor(test.getColour());
+
+      REQUIRE(greenColor == QcolorSelection);
+
+      wait(100);
+
+      // reset
+      sendMouseClick(&test, {412, 445});
+
+      QcolorSelection = QColor(test.getColour());
+
+      REQUIRE(blackColor == QcolorSelection);
     }
   }
-
-  return;
 
   //  // loading meshes
   //  QFile::copy(":/test/rendering/Objects/sphere.ply", "tmp_sphere.ply");
@@ -225,7 +305,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   //  REQUIRE(redColor == QcolorSelection);
   //
   //  wait(100);
-  // gui
+  //
   //  // reset
   //  sendMouseClick(&test, {412, 445});
   //
