@@ -58,6 +58,8 @@ public:
   std::vector<QColor> GetDefaultColors() const;
   std::vector<QColor> GetCurrentColors() const;
 
+  void setSubmeshVisibility(uint32_t meshID, bool visibility);
+
 private:
   std::vector<QVector4D> m_vertices;
   std::vector<std::vector<GLuint>> m_indices;
@@ -76,6 +78,7 @@ private:
   GLuint m_vbo;
   //  GLuint m_colorBufferId;
   std::vector<GLuint> m_elementBufferIds;
+  std::vector<bool> m_visibleSubmesh;
 
   QVector3D m_rotation;
   QVector3D m_position;

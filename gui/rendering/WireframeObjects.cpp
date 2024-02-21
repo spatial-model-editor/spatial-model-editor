@@ -23,7 +23,9 @@ rendering::WireframeObjects::WireframeObjects(
       m_rotation(rotation), m_scale(scale), m_colors(colors),
       m_default_colors(colors),
       // m_vertices(info.vertices)
-      m_vertices(info.getVerticesAsQVector4DArrayInHomogeneousCoord()) {
+      m_vertices(info.getVerticesAsQVector4DArrayInHomogeneousCoord()),
+      m_visibleSubmesh(std::min(colors.size(), info.getNumberOfCompartment()),
+                       true) {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
   QOpenGLFunctions::initializeOpenGLFunctions();
@@ -105,6 +107,12 @@ std::vector<QColor> rendering::WireframeObjects::GetDefaultColors() const {
 
 std::vector<QColor> rendering::WireframeObjects::GetCurrentColors() const {
   return m_colors;
+}
+
+void rendering::WireframeObjects::setSubmeshVisibility(uint32_t meshID,
+                                                       bool visibility) {
+  assert(meshID < m_visibleSubmesh.size());
+  m_visibleSubmesh[meshID] = visibility;
 }
 
 // void rendering::WireframeObjects::UpdateVBOColor() {
@@ -215,6 +223,8 @@ void rendering::WireframeObjects::Render(
   for (int i = 0; i < m_indices.size(); i++) {
     if (i >= m_colors.size())
       break;
+    if (!m_visibleSubmesh[i])
+      continue;
     program->SetColor(m_colors[i].redF(), m_colors[i].greenF(),
                       m_colors[i].blueF(), m_colors[i].alphaF());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferIds[i]);

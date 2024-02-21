@@ -44,6 +44,8 @@ public:
   // colour of pixel at last mouse click position
   [[nodiscard]] QRgb getColour() const;
 
+  void setSubmeshVisibility(uint32_t meshID, bool visibility);
+
 signals:
   //  void mouseClicked(QRgb color, const rendering::SMesh &mesh);
   //  void mouseOver(const rendering::SMesh &mesh);
