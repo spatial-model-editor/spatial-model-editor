@@ -46,6 +46,12 @@ public:
 
   void setSubmeshVisibility(uint32_t meshID, bool visibility);
 
+  /**
+   * @brief If color is not valid returns -1 otherwise, return positive index.
+   *
+   */
+  std::size_t meshIDFromColor(const QColor &color) const;
+
 signals:
   //  void mouseClicked(QRgb color, const rendering::SMesh &mesh);
   //  void mouseOver(const rendering::SMesh &mesh);

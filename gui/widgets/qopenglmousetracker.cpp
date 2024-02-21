@@ -294,6 +294,10 @@ void QOpenGLMouseTracker::setSubmeshVisibility(uint32_t meshID,
   m_SubMeshes->setSubmeshVisibility(meshID, visibility);
 }
 
+std::size_t QOpenGLMouseTracker::meshIDFromColor(const QColor &color) const {
+  return m_SubMeshes->meshIDFromColor(color);
+}
+
 QColor QOpenGLMouseTracker::getSelectedObjectColor() const {
   return m_selectedObjectColor;
 }

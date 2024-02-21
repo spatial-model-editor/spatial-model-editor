@@ -60,6 +60,12 @@ public:
 
   void setSubmeshVisibility(uint32_t meshID, bool visibility);
 
+  /**
+   * @brief If color is not valid returns -1 otherwise, return positive index.
+   *
+   */
+  std::size_t meshIDFromColor(const QColor &color) const;
+
 private:
   std::vector<QVector4D> m_vertices;
   std::vector<std::vector<GLuint>> m_indices;

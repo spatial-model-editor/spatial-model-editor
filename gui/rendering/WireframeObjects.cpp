@@ -115,6 +115,15 @@ void rendering::WireframeObjects::setSubmeshVisibility(uint32_t meshID,
   m_visibleSubmesh[meshID] = visibility;
 }
 
+std::size_t
+rendering::WireframeObjects::meshIDFromColor(const QColor &color) const {
+  for (std::size_t i = 0; i < m_colors.size(); i++)
+    if (m_colors[i] == color) {
+      return i;
+    }
+  return -1;
+}
+
 // void rendering::WireframeObjects::UpdateVBOColor() {
 //
 //   m_openGLContext->makeCurrent(m_openGLContext->surface());
