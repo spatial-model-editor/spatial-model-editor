@@ -11,48 +11,57 @@ qopengl_GLsizeiptr sizeofGLVector(const std::vector<T> &v) {
 }
 
 rendering::WireframeObjects::WireframeObjects(
-    const rendering::ObjectInfo &info,
+    // const rendering::ObjectInfo &info,
+    const sme::mesh::Mesh3d &info,
     //                                            const QColor &color,
-    const rendering::SMesh &mesh, const QOpenGLWidget *Widget,
-    const std::vector<QColor> &colors, const QVector3D &position,
-    const QVector3D &rotation, const QVector3D &scale)
-    : m_mesh(mesh), m_openGLContext(Widget->context()), m_position(position),
+    // const rendering::SMesh &mesh,
+    const QOpenGLWidget *Widget, const std::vector<QColor> &colors,
+    const QVector3D &position, const QVector3D &rotation,
+    const QVector3D &scale)
+    : // m_mesh(mesh),
+      m_openGLContext(Widget->context()), m_position(position),
       m_rotation(rotation), m_scale(scale), m_colors(colors),
-      m_default_colors(colors), m_vertices(info.vertices) {
+      m_default_colors(colors),
+      // m_vertices(info.vertices)
+      m_vertices(info.getVerticesAsQVector4DArrayInHomogeneousCoord()) {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
   QOpenGLFunctions::initializeOpenGLFunctions();
 
-  m_indices.reserve(info.submeshes_indexes.size());
-  for (u_int32_t i = 0; i < info.submeshes_indexes.size(); i++) {
-    m_indices.emplace_back(
-        std::vector<GLuint>(info.submeshes_indexes[i].size()));
-    for (rendering::Face f : info.submeshes_indexes[i]) {
-      //    m_indices.push_back(f.vertexIndices[0] - 1);
-      //    m_indices.push_back(f.vertexIndices[1] - 1);
-      //
-      //    m_indices.push_back(f.vertexIndices[1] - 1);
-      //    m_indices.push_back(f.vertexIndices[2] - 1);
-      //
-      //    m_indices.push_back(f.vertexIndices[2] - 1);
-      //    m_indices.push_back(f.vertexIndices[0] - 1);
-      m_indices[i].emplace_back(f.vertexIndices[0]);
-      m_indices[i].emplace_back(f.vertexIndices[1]);
-
-      m_indices[i].emplace_back(f.vertexIndices[1]);
-      m_indices[i].emplace_back(f.vertexIndices[2]);
-
-      m_indices[i].emplace_back(f.vertexIndices[2]);
-      m_indices[i].emplace_back(f.vertexIndices[0]);
-    }
+  m_indices.reserve(info.getNumberOfCompartment());
+  for (size_t i = 0; i < info.getNumberOfCompartment(); i++) {
+    m_indices.push_back(info.getMeshSegmentsIndicesAsFlatArray(i));
   }
+
+  //  for (u_int32_t i = 0; i < info.submeshes_indexes.size(); i++) {
+  //    m_indices.emplace_back(
+  //        std::vector<GLuint>(info.submeshes_indexes[i].size()));
+  //    for (rendering::Face f : info.submeshes_indexes[i]) {
+  //      //    m_indices.push_back(f.vertexIndices[0] - 1);
+  //      //    m_indices.push_back(f.vertexIndices[1] - 1);
+  //      //
+  //      //    m_indices.push_back(f.vertexIndices[1] - 1);
+  //      //    m_indices.push_back(f.vertexIndices[2] - 1);
+  //      //
+  //      //    m_indices.push_back(f.vertexIndices[2] - 1);
+  //      //    m_indices.push_back(f.vertexIndices[0] - 1);
+  //      m_indices[i].emplace_back(f.vertexIndices[0]);
+  //      m_indices[i].emplace_back(f.vertexIndices[1]);
+  //
+  //      m_indices[i].emplace_back(f.vertexIndices[1]);
+  //      m_indices[i].emplace_back(f.vertexIndices[2]);
+  //
+  //      m_indices[i].emplace_back(f.vertexIndices[2]);
+  //      m_indices[i].emplace_back(f.vertexIndices[0]);
+  //    }
+  //  }
 
   //  std::vector<uint8_t> cArr = {(uint8_t)m_color.red(),
   //  (uint8_t)m_color.green(),
   //                               (uint8_t)m_color.blue(),
   //                               (uint8_t)m_color.alpha()};
 
-  assert((m_colors.size() == 0) &&
+  assert((m_colors.size() != 0) &&
          "For this use case, automatic color generation should be offered!");
 
   for (const auto &v : m_vertices) {
@@ -83,13 +92,19 @@ void rendering::WireframeObjects::ResetDefaultColor(uint32_t meshID) {
 }
 
 uint32_t rendering::WireframeObjects::GetNumberOfSubMeshes() {
-  return m_colors.size();
+  //  return m_colors.size();
+  return m_indices.size();
 }
 
-rendering::SMesh rendering::WireframeObjects::GetMesh() const { return m_mesh; }
+// rendering::SMesh rendering::WireframeObjects::GetMesh() const { return
+// m_mesh; }
 
 std::vector<QColor> rendering::WireframeObjects::GetDefaultColors() const {
   return m_default_colors;
+}
+
+std::vector<QColor> rendering::WireframeObjects::GetCurrentColors() const {
+  return m_colors;
 }
 
 // void rendering::WireframeObjects::UpdateVBOColor() {
@@ -194,6 +209,8 @@ void rendering::WireframeObjects::Render(
   program->SetScale(m_scale.x(), m_scale.y(), m_scale.z());
   m_vao->bind();
   for (int i = 0; i < m_indices.size(); i++) {
+    if (i >= m_colors.size())
+      break;
     program->SetColor(m_colors[i].redF(), m_colors[i].greenF(),
                       m_colors[i].blueF(), m_colors[i].alphaF());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferIds[i]);

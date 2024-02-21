@@ -249,14 +249,52 @@ std::vector<double> Mesh3d::getVerticesAsFlatArray() const {
   return v;
 }
 
+std::vector<QVector4D>
+Mesh3d::getVerticesAsQVector4DArrayInHomogeneousCoord() const {
+  // similar with getVerticesAsFlatArray() but in Homogeneous Coordinates
+  std::vector<QVector4D> v;
+  v.reserve(vertices_.size());
+  for (const auto &voxelPoint : vertices_) {
+    auto physicalPoint = voxelPointToPhysicalPoint(voxelPoint);
+    v.push_back(QVector4D(physicalPoint.p.x(), physicalPoint.p.y(),
+                          physicalPoint.z, 1.0f));
+  }
+  return v;
+}
+
+std::size_t Mesh3d::getNumberOfCompartment() const {
+  return tetrahedronVertexIndices_.size();
+}
+
 std::vector<int>
 Mesh3d::getTetrahedronIndicesAsFlatArray(std::size_t compartmentIndex) const {
+
+  assert(compartmentIndex < tetrahedronVertexIndices_.size());
+
   std::vector<int> out;
   const auto &indices = tetrahedronVertexIndices_[compartmentIndex];
   out.reserve(indices.size() * 4);
   for (const auto &t : indices) {
     for (std::size_t ti : t) {
       out.push_back(static_cast<int>(ti));
+    }
+  }
+  return out;
+}
+
+std::vector<uint32_t>
+Mesh3d::getMeshSegmentsIndicesAsFlatArray(std::size_t compartmentIndex) const {
+  assert(compartmentIndex < tetrahedronVertexIndices_.size());
+
+  std::vector<uint32_t> out;
+  const auto &indices = tetrahedronVertexIndices_[compartmentIndex];
+  out.reserve(indices.size() * 6);
+  for (const auto &t : indices) {
+    for (uint32_t i = 0; i < t.size() - 1; i++) {
+      for (uint32_t j = i + 1; j < t.size(); j++) {
+        out.push_back(t[i]);
+        out.push_back(t[j]);
+      }
     }
   }
   return out;

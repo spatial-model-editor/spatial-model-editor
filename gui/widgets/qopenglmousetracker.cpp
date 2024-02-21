@@ -105,6 +105,8 @@ void QOpenGLMouseTracker::paintGL() {
 
   m_offscreenPickingImage = fboPicking.toImage();
 
+  m_offscreenPickingImage.save("m_offscreenPickingImage.png");
+
   QOpenGLFramebufferObject::bindDefault();
 }
 
@@ -259,16 +261,16 @@ QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
 //           new rendering::WireframeObjects(objectInfo, colors, mesh, this))));
 // }
 
-void QOpenGLMouseTracker::SetSubMeshes(const rendering::SMesh &mesh,
+void QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
                                        const std::vector<QColor> &colors) {
-  rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
+  //  rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
 
   // check 'colors' size and if it is 0 then generate colors automatically,
   // equally distributed during HSV space where the first color is the
   // ''m_selectedObjectColor''
 
   m_SubMeshes = std::unique_ptr<rendering::WireframeObjects>(
-      new rendering::WireframeObjects(objectInfo, mesh, this, colors));
+      new rendering::WireframeObjects(mesh, this, colors));
 }
 
 void QOpenGLMouseTracker::setFPS(float frameRate) { m_frameRate = frameRate; }

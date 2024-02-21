@@ -30,7 +30,7 @@ public:
 
   //  void addMesh(const rendering::SMesh &mesh, const std::vector<QColor>
   //  &colors);
-  void SetSubMeshes(const rendering::SMesh &mesh,
+  void SetSubMeshes(const sme::mesh::Mesh3d &mesh,
                     const std::vector<QColor> &colors = std::vector<QColor>(0));
 
   void setFPS(float frameRate);

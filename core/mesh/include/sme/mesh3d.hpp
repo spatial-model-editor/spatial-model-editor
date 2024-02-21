@@ -7,6 +7,7 @@
 #include <QRgb>
 #include <QSize>
 #include <QString>
+#include <QVector4D>
 #include <array>
 #include <cstddef>
 #include <memory>
@@ -104,12 +105,32 @@ public:
    */
   [[nodiscard]] std::vector<double> getVerticesAsFlatArray() const;
   /**
+   * @brief The physical mesh vertices as an array of QVector4D ( homogeneous
+   * floating value )
+   *
+   * Used as input in the rendering system
+   */
+  [[nodiscard]] std::vector<QVector4D>
+  getVerticesAsQVector4DArrayInHomogeneousCoord() const;
+  /**
+   *
+   * @return number of compartments available.
+   */
+  [[nodiscard]] std::size_t getNumberOfCompartment() const;
+  /**
    * @brief The mesh triangle indices as a flat array of ints
    *
    * For saving to the SBML document.
    */
   [[nodiscard]] std::vector<int>
   getTetrahedronIndicesAsFlatArray(std::size_t compartmentIndex) const;
+  /**
+   * A flat array of segment indices for a particular compartment
+   *
+   * Used by the rendering system.
+   */
+  [[nodiscard]] std::vector<uint32_t>
+  getMeshSegmentsIndicesAsFlatArray(std::size_t compartmentIndex) const;
   /**
    * @brief The mesh tetrahedron indices
    *

@@ -10,6 +10,8 @@
 #include "Utils.hpp"
 #include <vector>
 
+#include "sme/mesh3d.hpp"
+
 #include <QOpenGLWidget>
 #include <QtOpenGL>
 
@@ -18,12 +20,16 @@ namespace rendering {
 class WireframeObjects : protected QOpenGLFunctions {
 
 public:
-  WireframeObjects(const rendering::ObjectInfo &info, // const QColor &color,
-                   const rendering::SMesh &mesh, const QOpenGLWidget *Widget,
-                   const std::vector<QColor> &color = std::vector<QColor>(0),
-                   const QVector3D &position = QVector3D(0.0f, 0.0f, 0.0f),
-                   const QVector3D &rotation = QVector3D(0.0f, 0.0f, 0.0f),
-                   const QVector3D &scale = QVector3D(1.0f, 1.0f, 1.0f));
+  WireframeObjects(
+      // const rendering::ObjectInfo &info,
+      const sme::mesh::Mesh3d &info,
+      // const QColor &color,
+      // const rendering::SMesh &mesh,
+      const QOpenGLWidget *Widget,
+      const std::vector<QColor> &color = std::vector<QColor>(0),
+      const QVector3D &position = QVector3D(0.0f, 0.0f, 0.0f),
+      const QVector3D &rotation = QVector3D(0.0f, 0.0f, 0.0f),
+      const QVector3D &scale = QVector3D(1.0f, 1.0f, 1.0f));
   WireframeObjects(const WireframeObjects &cpy) = delete;
   ~WireframeObjects();
 
@@ -47,9 +53,10 @@ public:
   void ResetDefaultColor(uint32_t meshID);
 
   u_int32_t GetNumberOfSubMeshes();
-  rendering::SMesh GetMesh() const;
+  //  rendering::SMesh GetMesh() const;
 
   std::vector<QColor> GetDefaultColors() const;
+  std::vector<QColor> GetCurrentColors() const;
 
 private:
   std::vector<QVector4D> m_vertices;
@@ -63,7 +70,7 @@ private:
   std::vector<GLfloat> m_verticesBuffer;
   //  std::vector<uint8_t> m_colorBuffer;
 
-  rendering::SMesh m_mesh;
+  //  rendering::SMesh m_mesh;
 
   std::unique_ptr<QOpenGLVertexArrayObject> m_vao;
   GLuint m_vbo;
