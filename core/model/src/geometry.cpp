@@ -1,4 +1,5 @@
 #include "sme/geometry.hpp"
+#include "geometry_impl.hpp"
 #include "sme/geometry_utils.hpp"
 #include "sme/logger.hpp"
 #include "sme/utils.hpp"
@@ -11,77 +12,6 @@
 using sme::common::Voxel;
 
 namespace sme::geometry {
-
-static void fillMissingByDilation(std::vector<std::size_t> &arr, int nx, int ny,
-                                  int nz, std::size_t invalidIndex) {
-  std::vector<std::size_t> arr_next{arr};
-  const int maxIter{nx + ny + nz};
-  std::size_t dx{1};
-  std::size_t dy{static_cast<std::size_t>(nx)};
-  std::size_t dz{dy * static_cast<std::size_t>(ny)};
-  for (int iter = 0; iter < maxIter; ++iter) {
-    bool finished{true};
-    for (int z = 0; z < nz; ++z) {
-      for (int y = 0; y < ny; ++y) {
-        for (int x = 0; x < nx; ++x) {
-          auto i{(static_cast<std::size_t>(x) +
-                  dy * static_cast<std::size_t>(y) +
-                  dz * static_cast<std::size_t>(z))};
-          if (arr[i] == invalidIndex) {
-            // replace negative pixel with any valid face-/6-connected neighbour
-            if (x > 0 && arr[i - dx] != invalidIndex) {
-              arr_next[i] = arr[i - dx];
-            } else if (x + 1 < nx && arr[i + 1] != invalidIndex) {
-              arr_next[i] = arr[i + dx];
-            } else if (y > 0 && arr[i - dy] != invalidIndex) {
-              arr_next[i] = arr[i - dy];
-            } else if (y + 1 < ny && arr[i + dy] != invalidIndex) {
-              arr_next[i] = arr[i + dy];
-            } else if (z > 0 && arr[i - dz] != invalidIndex) {
-              arr_next[i] = arr[i - dz];
-            } else if (z + 1 < nz && arr[i + dz] != invalidIndex) {
-              arr_next[i] = arr[i + dz];
-            } else {
-              // pixel has no valid neighbour: need another iteration
-              finished = false;
-            }
-          }
-        }
-      }
-    }
-    arr = arr_next;
-    if (finished) {
-      return;
-    }
-  }
-  SPDLOG_WARN("Failed to replace all invalid pixels");
-}
-
-#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-static void
-saveDebuggingIndicesImageXY(const std::vector<std::size_t> &arrayPoints, int nx,
-                            int ny, int nz, std::size_t maxIndex,
-                            const QString &filename) {
-  auto norm{static_cast<float>(maxIndex)};
-  for (int z = 0; z < nz; ++z) {
-    QImage img(nx, ny, QImage::Format_ARGB32_Premultiplied);
-    img.fill(qRgba(0, 0, 0, 0));
-    QColor c;
-    for (int x = 0; x < nx; ++x) {
-      for (int y = 0; y < ny; ++y) {
-        auto i{arrayPoints[static_cast<std::size_t>(x + nx * y + nx * ny * z)]};
-        if (i <= maxIndex) {
-          auto v{static_cast<float>(i) / norm};
-          c.setHslF(1.0f - v, 1.0, 0.5f * v);
-          img.setPixel(x, y, c.rgb());
-        }
-      }
-    }
-    img.save(filename + "XY_z" + QString::number(z) + ".png");
-  }
-}
-
-#endif
 
 Compartment::Compartment(std::string compId, const common::ImageStack &imgs,
                          QRgb col)
@@ -139,7 +69,7 @@ Compartment::Compartment(std::string compId, const common::ImageStack &imgs,
   // find nearest neighbours of each point
   nn.clear();
   nn.reserve(6 * ix.size());
-  // find neighbours of each pixel in compartment
+  // find neighbours of each voxel in compartment
   for (std::size_t i = 0; i < ix.size(); ++i) {
     const auto &v{ix[i]};
     const auto x{v.p.x()};
@@ -154,7 +84,7 @@ Compartment::Compartment(std::string compId, const common::ImageStack &imgs,
     }
   }
   SPDLOG_INFO("compartmentId: {}", compartmentId);
-  SPDLOG_INFO("n_pixels: {}", ix.size());
+  SPDLOG_INFO("n_voxels: {}", ix.size());
   SPDLOG_INFO("colour: {:x}", col);
 }
 
@@ -336,7 +266,7 @@ Field::getConcentrationImageArray(bool maskAndInvertY) const {
   int nx{imageSize.width()};
   int ny{imageSize.height()};
   if (maskAndInvertY) {
-    // y=0 at top of image & set pixels outside of compartment to zero
+    // y=0 at top of image & set voxels outside of compartment to zero
     a.resize(imageSize.nVoxels(), 0.0);
     for (std::size_t i = 0; i < comp->nVoxels(); ++i) {
       auto v{comp->getVoxel(i)};
@@ -344,7 +274,7 @@ Field::getConcentrationImageArray(bool maskAndInvertY) const {
         (static_cast<std::size_t>(nx * ny) * v.z)] = conc[i];
     }
   } else {
-    // y=0 at bottom, set pixels outside of compartment to nearest valid pixel
+    // y=0 at bottom, set voxels outside of compartment to nearest valid voxel
     a.reserve(imageSize.nVoxels());
     for (std::size_t i : comp->getArrayPoints()) {
       a.push_back(conc[i]);
