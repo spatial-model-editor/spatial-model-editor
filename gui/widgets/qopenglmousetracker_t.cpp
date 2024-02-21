@@ -6,7 +6,6 @@
 #include "qt_test_utils.hpp"
 
 #include "qopenglmousetracker.hpp"
-#include "rendering/rendering.hpp"
 #include "sme/logger.hpp"
 #include <sme/mesh3d.hpp>
 
@@ -15,7 +14,6 @@
 #include "sme/tiff.hpp"
 #include "sme/utils.hpp"
 #include <QDir>
-#include <QFile>
 #include <QImage>
 #include <QPoint>
 
@@ -56,74 +54,12 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
     QRgb colNucleus{0xffffffff};
     std::vector<std::size_t> maxCellVolume{3};
 
-    //    SECTION("No compartment colours") {
-    //      sme::mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize,
-    //      originPoint,
-    //                          {});
-    //      REQUIRE(mesh3d.isValid() == false);
-    //    }
-    //    SECTION("Outside only") {
-    //      sme::mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize,
-    //      originPoint,
-    //                          {colOutside});
-    //      REQUIRE(mesh3d.isValid() == true);
-    //      REQUIRE(mesh3d.getErrorMessage().empty());
-    //      REQUIRE(mesh3d.getTetrahedronIndices().size() == 1);
-    //
-    //      test.SetSubMeshes(mesh3d, {redColor});
-    //
-    //      wait(100);
-    //
-    //    }
-    //    SECTION("Cell only") {
-    //      sme::mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize,
-    //      originPoint,
-    //                          {colCell});
-    //      REQUIRE(mesh3d.isValid() == true);
-    //      REQUIRE(mesh3d.getErrorMessage().empty());
-    //      REQUIRE(mesh3d.getTetrahedronIndices().size() == 1);
-    //    }
-    //    SECTION("Nucleus only") {
-    //      sme::mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize,
-    //      originPoint,
-    //                          {colNucleus});
-    //      REQUIRE(mesh3d.isValid() == true);
-    //      REQUIRE(mesh3d.getErrorMessage().empty());
-    //      REQUIRE(mesh3d.getTetrahedronIndices().size() == 1);
-    //    }
-    //    SECTION("Nucleus+Cell only") {
-    //      sme::mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize,
-    //      originPoint,
-    //                          {colNucleus, colCell});
-    //      REQUIRE(mesh3d.isValid() == true);
-    //      REQUIRE(mesh3d.getErrorMessage().empty());
-    //      REQUIRE(mesh3d.getTetrahedronIndices().size() == 2);
-    //    }
-    //    SECTION("Nucleus+Outside only") {
-    //      sme::mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize,
-    //      originPoint,
-    //                          {colNucleus, colOutside});
-    //      REQUIRE(mesh3d.isValid() == true);
-    //      REQUIRE(mesh3d.getErrorMessage().empty());
-    //      REQUIRE(mesh3d.getTetrahedronIndices().size() == 2);
-    //    }
-    //    SECTION("Cell+Outside only") {
-    //      sme::mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize,
-    //      originPoint,
-    //                          {colOutside, colCell});
-    //      REQUIRE(mesh3d.isValid() == true);
-    //      REQUIRE(mesh3d.getErrorMessage().empty());
-    //      REQUIRE(mesh3d.getTetrahedronIndices().size() == 2);
-    //    }
     SECTION("All three compartments") {
       sme::mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize,
                                originPoint, sme::common::toStdVec(colours));
       REQUIRE(mesh3d.isValid() == true);
       REQUIRE(mesh3d.getErrorMessage().empty());
       REQUIRE(mesh3d.getTetrahedronIndices().size() == 3);
-
-      std::vector<QColor> colors_{QColor(colours[0]), QColor(colours[1]),
-                                  QColor(colours[2])};
 
       test.SetSubMeshes(mesh3d, {redColor, blueColor, greenColor});
 
