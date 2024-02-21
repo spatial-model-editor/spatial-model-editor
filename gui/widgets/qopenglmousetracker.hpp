@@ -28,8 +28,14 @@ public:
   QVector3D GetCameraPosition() const;
   QVector3D GetCameraOrientation() const;
 
-  //  void addMesh(const rendering::SMesh &mesh, const std::vector<QColor>
-  //  &colors);
+  /**
+   * @brief Number of visible submeshes is influenced by the number of colors.
+   *
+   * The colors are distributed to submeshes in the same order they are
+   * provided. In case of a smaller number of colors, submeshes with higher
+   * index will not be visible.
+   */
+
   void SetSubMeshes(const sme::mesh::Mesh3d &mesh,
                     const std::vector<QColor> &colors = std::vector<QColor>(0));
 
@@ -53,9 +59,6 @@ public:
   std::size_t meshIDFromColor(const QColor &color) const;
 
 signals:
-  //  void mouseClicked(QRgb color, const rendering::SMesh &mesh);
-  //  void mouseOver(const rendering::SMesh &mesh);
-  //  void mouseWheelEvent(QWheelEvent *ev);
   void mouseClicked(QRgb color, uint32_t meshID);
   void mouseOver(uint32_t meshID);
   void mouseWheelEvent(QWheelEvent *ev);
@@ -74,10 +77,6 @@ protected:
 
   QColor m_selectedObjectColor;
 
-  typedef std::pair<QColor, std::unique_ptr<rendering::WireframeObjects>>
-      color_mesh;
-
-  //  std::vector<color_mesh> m_meshSet;
   std::unique_ptr<rendering::WireframeObjects> m_SubMeshes;
 
   std::unique_ptr<rendering::ShaderProgram> m_mainProgram;
