@@ -45,8 +45,11 @@ public:
   [[nodiscard]] QRgb getColour() const;
 
 signals:
-  void mouseClicked(QRgb color, const rendering::SMesh &mesh);
-  void mouseOver(const rendering::SMesh &mesh);
+  //  void mouseClicked(QRgb color, const rendering::SMesh &mesh);
+  //  void mouseOver(const rendering::SMesh &mesh);
+  //  void mouseWheelEvent(QWheelEvent *ev);
+  void mouseClicked(QRgb color, uint32_t meshID);
+  void mouseOver(uint32_t meshID);
   void mouseWheelEvent(QWheelEvent *ev);
 
 protected:

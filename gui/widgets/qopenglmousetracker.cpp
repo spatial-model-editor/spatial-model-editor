@@ -105,7 +105,7 @@ void QOpenGLMouseTracker::paintGL() {
 
   m_offscreenPickingImage = fboPicking.toImage();
 
-  m_offscreenPickingImage.save("m_offscreenPickingImage.png");
+  //  m_offscreenPickingImage.save("m_offscreenPickingImage.png");
 
   QOpenGLFramebufferObject::bindDefault();
 }
@@ -155,7 +155,7 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
     if (defaultColors[i] == color) {
       m_SubMeshes->SetColor(m_selectedObjectColor, i);
       objectSelected = true;
-      // emit mouseClicked(m_lastColour, obj.second->GetMesh());
+      emit mouseClicked(m_lastColour, i);
 
       SPDLOG_INFO("Object touched!");
     }
@@ -216,7 +216,7 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
   auto defaultColors = m_SubMeshes->GetDefaultColors();
   for (uint32_t i = 0; i < defaultColors.size(); i++) {
     if (defaultColors[i] == color) {
-      //      emit mouseOver(obj.second->GetMesh());
+      emit mouseOver(i);
     }
   }
 }
