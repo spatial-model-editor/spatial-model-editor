@@ -1,7 +1,6 @@
 target_sources(
   gui
   PRIVATE Camera.cpp
-          ObjectLoader.cpp
           ShaderProgram.cpp
           Utils.cpp
           WireframeObjects.cpp)

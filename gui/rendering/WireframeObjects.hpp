@@ -5,7 +5,6 @@
 #pragma once
 
 #include "ObjectInfo.hpp"
-#include "ObjectLoader.hpp"
 #include "ShaderProgram.hpp"
 #include "Utils.hpp"
 #include <vector>
