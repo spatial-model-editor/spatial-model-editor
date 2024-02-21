@@ -1210,31 +1210,34 @@ TEST_CASE("DUNE: simulation",
       REQUIRE_THAT(duneSim.errorMessage(),
                    ContainsSubstring("Not known linear solver"));
     }
-    SECTION("valid & avilable: CG") {
+    SECTION(
+        "valid & available but only works for positive-definite models: CG") {
       options.dune.linearSolver = "CG";
       simulate::Simulation duneSim(m);
       duneSim.doTimesteps(0.01);
-      REQUIRE(duneSim.errorMessage().empty());
+      // simulation may not converge as CG is not a suitable solver for a
+      // nonlinear model, but should not have a "solver not available" error
+      REQUIRE_THAT(duneSim.errorMessage(), !ContainsSubstring("not available"));
     }
-    SECTION("valid & avilable: RestartedGMRes") {
+    SECTION("valid & available: RestartedGMRes") {
       options.dune.linearSolver = "RestartedGMRes";
       simulate::Simulation duneSim(m);
       duneSim.doTimesteps(0.01);
       REQUIRE(duneSim.errorMessage().empty());
     }
-    SECTION("valid & avilable: BiCGSTAB") {
+    SECTION("valid & available: BiCGSTAB") {
       options.dune.linearSolver = "BiCGSTAB";
       simulate::Simulation duneSim(m);
       duneSim.doTimesteps(0.01);
       REQUIRE(duneSim.errorMessage().empty());
     }
-    SECTION("valid but unavilable: UMFPack") {
+    SECTION("valid but unavailable: UMFPack") {
       options.dune.linearSolver = "UMFPack";
       simulate::Simulation duneSim(m);
       duneSim.doTimesteps(0.01);
       REQUIRE_THAT(duneSim.errorMessage(), ContainsSubstring("not available"));
     }
-    SECTION("valid but unavilable: SuperLU") {
+    SECTION("valid but unavailable: SuperLU") {
       options.dune.linearSolver = "SuperLU";
       simulate::Simulation duneSim(m);
       duneSim.doTimesteps(0.01);
@@ -1824,6 +1827,10 @@ TEST_CASE("Events: setting species concentrations",
                            "B_transport", "B_excretion"}) {
       m1.getReactions().remove(id);
     }
+    // add an absolute DUNE convergence tolerance to avoid simulation not
+    // converging
+    m1.getSimulationSettings().options.dune.newtonAbsErr = 1e-14;
+
     // add a bunch of events that set species concentrations so we can easily
     // check they were done correctly
     auto &events{m1.getEvents()};
@@ -1901,6 +1908,10 @@ TEST_CASE("Events: continuing existing simulation",
     auto *mesh{m1.getGeometry().getMesh()};
     mesh->setBoundaryMaxPoints(0, 9);
     mesh->setCompartmentMaxTriangleArea(0, 999);
+    // reduce DUNE max timestep to avoid simulation not converging
+    m1.getSimulationSettings().options.dune.minDt = 1e-9;
+    m1.getSimulationSettings().options.dune.dt = 0.005;
+    m1.getSimulationSettings().options.dune.maxDt = 0.02;
     m1.getSimulationSettings().simulatorType = simType;
     simulate::Simulation s1(m1);
     s1.doTimesteps(20, 1);

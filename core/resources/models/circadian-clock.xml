@@ -1765,7 +1765,7 @@
                 <decrease>0.5</decrease>
                 <writeVTKfiles>false</writeVTKfiles>
                 <newtonRelErr>1e-08</newtonRelErr>
-                <newtonAbsErr>9.9999999999999998e-13</newtonAbsErr>
+                <newtonAbsErr>0.0</newtonAbsErr>
               </dune>
               <pixel>
                 <cereal_class_version>0</cereal_class_version>

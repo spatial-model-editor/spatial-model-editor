@@ -20,11 +20,11 @@ static Dune::ParameterTree getConfig(const simulate::DuneConverter &dc) {
 }
 
 using HostGrid2d = Dune::UGGrid<2>;
-using MDGTraits2d = Dune::mdgrid::DynamicSubDomainCountTraits<2, 1>;
+using MDGTraits2d = Dune::mdgrid::FewSubDomainsTraits<2, 64>;
 using Grid2d = Dune::mdgrid::MultiDomainGrid<HostGrid2d, MDGTraits2d>;
 
 using HostGrid3d = Dune::UGGrid<3>;
-using MDGTraits3d = Dune::mdgrid::DynamicSubDomainCountTraits<3, 1>;
+using MDGTraits3d = Dune::mdgrid::FewSubDomainsTraits<3, 64>;
 using Grid3d = Dune::mdgrid::MultiDomainGrid<HostGrid3d, MDGTraits3d>;
 
 template <typename Grid>
@@ -66,7 +66,7 @@ TEST_CASE("DUNE grid",
       std::locale::global(userLocale);
 
       // compare grids
-      int nCompartments{grid->maxSubDomainIndex()};
+      auto nCompartments{grid->maxSubDomainIndex()};
       REQUIRE(gmshGrid->maxSubDomainIndex() == nCompartments);
       for (int compIndex = 0; compIndex < nCompartments; ++compIndex) {
         auto meshCoords = getAllElementCoordinates(grid.get(), compIndex);
@@ -107,7 +107,7 @@ TEST_CASE("DUNE grid",
       std::locale::global(userLocale);
 
       // compare grids
-      int nCompartments{grid->maxSubDomainIndex()};
+      auto nCompartments{grid->maxSubDomainIndex()};
       REQUIRE(gmshGrid->maxSubDomainIndex() == nCompartments);
       for (int compIndex = 0; compIndex < nCompartments; ++compIndex) {
         auto meshCoords = getAllElementCoordinates(grid.get(), compIndex);
