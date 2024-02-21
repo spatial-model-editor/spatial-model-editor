@@ -233,4 +233,43 @@ TEST_CASE("Geometry: Compartments and Fields",
       REQUIRE(a2[i] == dbl_approx(t2[i]));
     }
   }
+  SECTION("3d fillMissingByDilation compartment with two disconnected voxels") {
+    common::ImageStack imageStack({10, 10, 10}, QImage::Format_RGB32);
+    QRgb col0 = 0xff000000;
+    QRgb col1 = 0xff66aa00;
+    imageStack.fill(col0);
+    imageStack[5].setPixel(5, 5, col1);
+    imageStack[3].setPixel(2, 1, col1);
+    imageStack.convertToIndexed();
+    geometry::Compartment compartment("c", imageStack, col1);
+    REQUIRE(compartment.getVoxels().size() == 2);
+    for (auto voxelIndex : compartment.getArrayPoints()) {
+      // all voxels in image stack point to one of the 2 valid voxels in comp
+      REQUIRE(voxelIndex <= 1);
+    }
+  }
+  SECTION("3d fillMissingByDilation compartment with all voxels") {
+    common::ImageStack imageStack({47, 53, 42}, QImage::Format_RGB32);
+    auto nVoxels = imageStack.volume().nVoxels();
+    QRgb col0 = 0xff000000;
+    imageStack.fill(col0);
+    imageStack.convertToIndexed();
+    geometry::Compartment compartment("c", imageStack, col0);
+    REQUIRE(compartment.getVoxels().size() == nVoxels);
+    std::size_t nz = imageStack.volume().depth();
+    int ny = imageStack.volume().height();
+    int nx = imageStack.volume().width();
+    for (std::size_t z = 0; z < nz; ++z) {
+      for (int y = 0; y < ny; ++y) {
+        for (int x = 0; x < nx; ++x) {
+          auto i = x + nx * (ny - y - 1) + nx * ny * z;
+          // all voxels in image stack point to themselves
+          auto v = compartment.getVoxel(compartment.getArrayPoints()[i]);
+          REQUIRE(v.p.x() == x);
+          REQUIRE(v.p.y() == y);
+          REQUIRE(v.z == z);
+        }
+      }
+    }
+  }
 }
