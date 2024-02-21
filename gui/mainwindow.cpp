@@ -508,17 +508,30 @@ void MainWindow::menuExample_geometry_image_triggered(const QAction *action) {
   importGeometryImage(sme::common::ImageStack({img}));
 }
 
-void MainWindow::importGeometryImage(const sme::common::ImageStack &image) {
-  QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-  tabSimulate->reset();
-  model.getGeometry().importGeometryFromImages(image, false);
-  ui->tabMain->setCurrentIndex(0);
-  tabMain_currentChanged(0);
-  // set default voxel size in case user doesn't set image physical volume
-  model.getGeometry().setVoxelSize({1.0, 1.0, 1.0});
-  enableTabs();
-  QGuiApplication::restoreOverrideCursor();
-  actionEdit_geometry_image_triggered();
+void MainWindow::importGeometryImage(const sme::common::ImageStack &image,
+                                     bool is_model_image) {
+  DialogGeometryImage dialog(image, model.getGeometry().getVoxelSize(),
+                             model.getUnits());
+  if (dialog.exec() == QDialog::Accepted) {
+    QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    tabSimulate->reset();
+    if (!is_model_image || dialog.imageSizeAltered() ||
+        dialog.imageColoursAltered()) {
+      SPDLOG_INFO("Importing altered geometry image");
+      bool keepColourAssignments{is_model_image &&
+                                 !dialog.imageColoursAltered()};
+      model.getGeometry().importGeometryFromImages(dialog.getAlteredImage(),
+                                                   keepColourAssignments);
+    }
+    auto voxelSize{dialog.getVoxelSize()};
+    SPDLOG_INFO("Set new voxel volume {}x{}x{}", voxelSize.width(),
+                voxelSize.height(), voxelSize.depth());
+    model.getGeometry().setVoxelSize(voxelSize);
+    ui->tabMain->setCurrentIndex(0);
+    tabMain_currentChanged(0);
+    enableTabs();
+    QGuiApplication::restoreOverrideCursor();
+  }
 }
 
 void MainWindow::actionSet_model_units_triggered() {
@@ -544,27 +557,7 @@ void MainWindow::actionEdit_geometry_image_triggered() {
   if (!isValidModelAndGeometryImage()) {
     return;
   }
-  DialogGeometryImage dialog(model.getGeometry().getImages(),
-                             model.getGeometry().getVoxelSize(),
-                             model.getUnits());
-  if (dialog.exec() == QDialog::Accepted) {
-    QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    tabSimulate->reset();
-    if (dialog.imageSizeAltered() || dialog.imageColoursAltered()) {
-      SPDLOG_INFO("Importing altered geometry image");
-      bool keepColourAssignments{!dialog.imageColoursAltered()};
-      model.getGeometry().importGeometryFromImages(dialog.getAlteredImage(),
-                                                   keepColourAssignments);
-    }
-    auto voxelSize{dialog.getVoxelSize()};
-    SPDLOG_INFO("Set new voxel volume {}x{}x{}", voxelSize.width(),
-                voxelSize.height(), voxelSize.depth());
-    model.getGeometry().setVoxelSize(voxelSize);
-    ui->tabMain->setCurrentIndex(0);
-    tabMain_currentChanged(0);
-    enableTabs();
-    QGuiApplication::restoreOverrideCursor();
-  }
+  importGeometryImage(model.getGeometry().getImages(), true);
 }
 
 void MainWindow::actionSet_spatial_coordinates_triggered() {

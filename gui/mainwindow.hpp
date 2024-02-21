@@ -38,7 +38,8 @@ private:
   // offer user to load a valid one if not
   bool isValidModel();
   bool isValidModelAndGeometryImage();
-  void importGeometryImage(const sme::common::ImageStack &image);
+  void importGeometryImage(const sme::common::ImageStack &image,
+                           bool is_model_image = false);
   void tabMain_currentChanged(int index);
   TabGeometry *tabGeometry;
   TabSpecies *tabSpecies;
