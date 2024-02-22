@@ -31,8 +31,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   QColor greenColor = QColor(0, 255, 0);
   QColor yelloColor = QColor(255, 255, 0);
 
+  test.setBackground(blackColor);
   test.show();
-  //  wait(100);
 
   // camera position
   test.SetCameraPosition(20, 20, -50);

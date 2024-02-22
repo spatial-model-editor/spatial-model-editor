@@ -60,6 +60,8 @@ public:
    */
   std::size_t meshIDFromColor(const QColor &color) const;
 
+  void setBackground(QColor background);
+
 signals:
   void mouseClicked(QRgb color, uint32_t meshID);
   void mouseOver(uint32_t meshID);
@@ -88,6 +90,8 @@ protected:
 
   int m_xAtPress;
   int m_yAtPress;
+
+  QColor backgroundColor;
 
   void initializeGL() override;
   void resizeGL(int w, int h) override;

@@ -12,7 +12,18 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(float lineWidth,
     : m_camera(cameraFOV, static_cast<float>(size().width()),
                static_cast<float>(size().height()), cameraNearZ, cameraFarZ),
       m_lineWidth(lineWidth), m_lineSelectPrecision(lineSelectPrecision),
-      m_selectedObjectColor(selectedObjectColor), m_frameRate(frameRate) {}
+      m_selectedObjectColor(selectedObjectColor), m_frameRate(frameRate) {
+
+  int r{0};
+  int g{0};
+  int b{0};
+  palette().color(QWidget::backgroundRole()).getRgb(&r, &g, &b);
+
+  backgroundColor.setAlpha(255);
+  backgroundColor.setRed(r);
+  backgroundColor.setGreen(g);
+  backgroundColor.setBlue(b);
+}
 
 void QOpenGLMouseTracker::initializeGL() {
 
@@ -68,8 +79,11 @@ void QOpenGLMouseTracker::initializeGL() {
 }
 
 void QOpenGLMouseTracker::renderScene(float lineWidth) {
-  if (m_SubMeshes)
+
+  if (m_SubMeshes) {
+    m_SubMeshes->setBackground(backgroundColor);
     m_SubMeshes->Render(m_mainProgram, lineWidth);
+  }
 }
 
 void QOpenGLMouseTracker::paintGL() {
@@ -256,4 +270,8 @@ std::size_t QOpenGLMouseTracker::meshIDFromColor(const QColor &color) const {
 
 QColor QOpenGLMouseTracker::getSelectedObjectColor() const {
   return m_selectedObjectColor;
+}
+
+void QOpenGLMouseTracker::setBackground(QColor background) {
+  backgroundColor = background;
 }

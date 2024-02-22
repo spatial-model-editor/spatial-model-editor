@@ -58,6 +58,8 @@ public:
    **/
   std::size_t meshIDFromColor(const QColor &color) const;
 
+  void setBackground(QColor backgroundColor);
+
 private:
   std::vector<QVector4D> m_vertices;
   std::vector<std::vector<GLuint>> m_indices;
@@ -77,6 +79,8 @@ private:
   QVector3D m_rotation;
   QVector3D m_position;
   QVector3D m_scale;
+
+  QColor clearColor;
 
   void CreateVBO();
   void DestroyVBO();

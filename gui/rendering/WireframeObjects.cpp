@@ -36,6 +36,8 @@ rendering::WireframeObjects::WireframeObjects(const sme::mesh::Mesh3d &info,
                             {v.x(), v.y(), v.z(), v.w()});
   }
 
+  clearColor = QColor(0, 0, 0, 0);
+
   CreateVBO();
 }
 
@@ -77,6 +79,10 @@ rendering::WireframeObjects::meshIDFromColor(const QColor &color) const {
       return i;
     }
   return -1;
+}
+
+void rendering::WireframeObjects::setBackground(QColor backgroundColor) {
+  clearColor = backgroundColor;
 }
 
 void rendering::WireframeObjects::CreateVBO() {
@@ -136,7 +142,8 @@ void rendering::WireframeObjects::Render(
   glEnable(GL_LINE_SMOOTH);
   //  glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
-  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+  glClearColor(clearColor.redF(), clearColor.greenF(), clearColor.blueF(),
+               clearColor.alphaF());
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
   program->SetPosition(m_position.x(), m_position.y(), m_position.z());
