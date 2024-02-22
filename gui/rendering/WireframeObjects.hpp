@@ -45,7 +45,7 @@ public:
   void SetColor(const QColor &color, uint32_t meshID);
   void ResetDefaultColor(uint32_t meshID);
 
-  u_int32_t GetNumberOfSubMeshes();
+  uint32_t GetNumberOfSubMeshes();
 
   std::vector<QColor> GetDefaultColors() const;
   std::vector<QColor> GetCurrentColors() const;
