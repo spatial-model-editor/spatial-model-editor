@@ -52,8 +52,8 @@ void rendering::WireframeObjects::ResetDefaultColor(uint32_t meshID) {
   m_colors[meshID] = m_default_colors[meshID];
 }
 
-uint32_t rendering::WireframeObjects::GetNumberOfSubMeshes() {
-  return m_indices.size();
+uint32_t rendering::WireframeObjects::GetNumberOfSubMeshes() const {
+  return static_cast<uint32_t>(m_indices.size());
 }
 
 std::vector<QColor> rendering::WireframeObjects::GetDefaultColors() const {
@@ -100,7 +100,8 @@ void rendering::WireframeObjects::CreateVBO() {
   CheckOpenGLError("glEnableVertexAttribArray");
 
   m_elementBufferIds.resize(m_indices.size());
-  glGenBuffers(m_elementBufferIds.size(), m_elementBufferIds.data());
+  glGenBuffers(static_cast<GLsizei>(m_elementBufferIds.size()),
+               m_elementBufferIds.data());
   CheckOpenGLError("glGenBuffers");
   for (int i = 0; i < m_elementBufferIds.size(); i++) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferIds[i]);
@@ -121,7 +122,8 @@ void rendering::WireframeObjects::DestroyVBO() {
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glDeleteBuffers(1, &m_vbo);
-  glDeleteBuffers(m_elementBufferIds.size(), m_elementBufferIds.data());
+  glDeleteBuffers(static_cast<GLsizei>(m_elementBufferIds.size()),
+                  m_elementBufferIds.data());
 
   m_vao->release();
   m_vao->destroy();

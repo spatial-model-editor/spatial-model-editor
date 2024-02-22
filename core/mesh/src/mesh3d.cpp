@@ -281,7 +281,9 @@ Mesh3d::getVerticesAsQVector4DArrayInHomogeneousCoord() const {
   std::vector<QVector4D> v;
   v.reserve(vertices_.size());
   for (const auto &vertex : vertices_) {
-    v.push_back(QVector4D(vertex.p.x(), vertex.p.y(), vertex.z, 1.0f));
+    v.push_back(QVector4D(static_cast<float>(vertex.p.x()),
+                          static_cast<float>(vertex.p.y()),
+                          static_cast<float>(vertex.z), 1.0f));
   }
   return v;
 }
@@ -316,8 +318,8 @@ Mesh3d::getMeshSegmentsIndicesAsFlatArray(std::size_t compartmentIndex) const {
   for (const auto &t : indices) {
     for (uint32_t i = 0; i < t.size() - 1; i++) {
       for (uint32_t j = i + 1; j < t.size(); j++) {
-        out.push_back(t[i]);
-        out.push_back(t[j]);
+        out.push_back(static_cast<uint32_t>(t[i]));
+        out.push_back(static_cast<uint32_t>(t[j]));
       }
     }
   }
