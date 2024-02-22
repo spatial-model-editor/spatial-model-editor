@@ -35,6 +35,7 @@ private:
   std::vector<std::vector<TetrahedronVertexIndices>> tetrahedronVertexIndices_;
   std::vector<std::uint8_t> labelToCompartmentIndex_;
   bool validMesh_{false};
+  std::vector<QColor> colorTableVec;
   std::string errorMessage_{};
   void constructMesh();
 
@@ -144,6 +145,13 @@ public:
    * @returns the mesh in GMSH format
    */
   [[nodiscard]] QString getGMSH() const;
+
+  /**
+   * @brief Get the colors of the compartments
+   *
+   */
+
+  std::vector<QColor> getColorTable() const;
 
   static constexpr std::size_t dim = 3;
 };

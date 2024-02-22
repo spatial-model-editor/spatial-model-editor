@@ -220,6 +220,11 @@ QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
 void QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
                                        const std::vector<QColor> &colors) {
 
+  if (colors.size() == 0) {
+    m_SubMeshes = std::unique_ptr<rendering::WireframeObjects>(
+        new rendering::WireframeObjects(mesh, this, mesh.getColorTable()));
+  }
+
   m_SubMeshes = std::unique_ptr<rendering::WireframeObjects>(
       new rendering::WireframeObjects(mesh, this, colors));
 }

@@ -34,6 +34,8 @@ public:
    * The colors are distributed to submeshes in the same order they are
    * provided. In case of a smaller number of colors, submeshes with higher
    * index will not be visible.
+   *
+   * Default colors used are taken from 'mesh'
    */
 
   void SetSubMeshes(const sme::mesh::Mesh3d &mesh,

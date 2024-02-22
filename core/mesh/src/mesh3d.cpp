@@ -160,6 +160,11 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   SPDLOG_INFO("ImageStack {}x{}x{} with {} colours", vol.width(), vol.height(),
               vol.depth(), colorTable.size());
 
+  colorTableVec.reserve(colorTable.size());
+  std::transform(colorTable.cbegin(), colorTable.cend(),
+                 std::back_inserter(colorTableVec),
+                 [](QRgb color) { return QColor(color); });
+
   for (auto compartmentColor : compartmentColours) {
     if (!colorTable.contains(compartmentColor)) {
       SPDLOG_WARN("Compartment color is not present in geometry image");
@@ -380,5 +385,7 @@ QString Mesh3d::getGMSH() const {
   msh.append("$EndElements\n");
   return msh;
 }
+
+std::vector<QColor> Mesh3d::getColorTable() const { return colorTableVec; }
 
 } // namespace sme::mesh
