@@ -54,12 +54,11 @@ public:
           static_cast<int>((globalPos[2] - origin.z) / voxel.depth()), 0,
           static_cast<int>(vol.depth()) - 1);
     }
+    auto ci = static_cast<std::size_t>(ix + vol.width() * iy +
+                                       vol.width() * vol.height() * iz);
     SPDLOG_TRACE("  -> voxel ({},{},{})", ix, iy, iz);
-    SPDLOG_TRACE("  -> conc {}",
-                 c[static_cast<std::size_t>(ix + vol.width() * iy +
-                                            vol.width() * vol.height() * iz)]);
-    return c[static_cast<std::size_t>(ix + vol.width() * iy +
-                                      vol.width() * vol.height() * iz)];
+    SPDLOG_TRACE("  -> conc[{}] = {}", ci, c[ci]);
+    return c[ci];
   }
 
 private:

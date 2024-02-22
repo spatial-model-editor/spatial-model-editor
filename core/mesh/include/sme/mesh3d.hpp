@@ -28,19 +28,14 @@ class Mesh3d {
 private:
   // input data
   std::unique_ptr<CGAL::Image_3> image3_;
-  sme::common::VoxelF originPoint_{};
-  sme::common::VolumeF voxelSize_{};
   std::vector<std::size_t> compartmentMaxCellVolume_;
   // generated data
   std::vector<sme::common::VoxelF> vertices_;
-  std::size_t nTetrahedra_{};
   std::vector<std::vector<QTetrahedronF>> tetrahedra_;
   std::vector<std::vector<TetrahedronVertexIndices>> tetrahedronVertexIndices_;
+  std::vector<std::uint8_t> labelToCompartmentIndex_;
   bool validMesh_{false};
-  bool validDomain_{false};
   std::string errorMessage_{};
-  [[nodiscard]] sme::common::VoxelF
-  voxelPointToPhysicalPoint(const sme::common::VoxelF &voxel) const noexcept;
   void constructMesh();
 
 public:
@@ -49,6 +44,8 @@ public:
    * @brief Constructs a 3d mesh from the supplied ImageStack
    *
    * @param[in] imageStack the segmented geometry ImageStack
+   * @param[in] maxCellVolume the max volume (in voxels) of a cell for each
+   * compartment
    * @param[in] voxelSize the physical size of a voxel
    * @param[in] originPoint the physical location of the ``(0,0,0)`` voxel
    * @param[in] compartmentColours the colours of compartments in the image
@@ -68,10 +65,11 @@ public:
    */
   [[nodiscard]] const std::string &getErrorMessage() const;
   /**
-   * @brief Set the maximum allowed cell volume for a given compartment
+   * @brief Set the maximum allowed cell volume in voxels for a given
+   * compartment
    *
    * @param[in] compartmentIndex the index of the compartment
-   * @param[in] maxTriangleArea the maximum allowed cell volume
+   * @param[in] maxTriangleArea the maximum allowed cell volume in voxels
    */
   void setCompartmentMaxCellVolume(std::size_t compartmentIndex,
                                    std::size_t maxCellVolume);
@@ -83,7 +81,8 @@ public:
   [[nodiscard]] std::size_t
   getCompartmentMaxCellVolume(std::size_t compartmentIndex) const;
   /**
-   * @brief The maximum allowed cell volume for each compartment in the mesh
+   * @brief The maximum allowed cell volume in voxels for each compartment in
+   * the mesh
    */
   [[nodiscard]] const std::vector<std::size_t> &
   getCompartmentMaxCellVolume() const;
@@ -118,7 +117,7 @@ public:
    */
   [[nodiscard]] std::size_t getNumberOfCompartment() const;
   /**
-   * @brief The mesh triangle indices as a flat array of ints
+   * @brief The mesh tetrahedron indices as a flat array of ints
    *
    * For saving to the SBML document.
    */

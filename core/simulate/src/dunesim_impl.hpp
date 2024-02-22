@@ -18,19 +18,18 @@
 
 namespace sme::simulate {
 
-struct DuneOptions;
-class DuneConverter;
-
 template <int DuneDimensions>
 using VoxelLocalPair =
     std::pair<std::size_t, Dune::FieldVector<double, DuneDimensions>>;
 
+using VoxelPair = std::pair<sme::common::Voxel, sme::common::Voxel>;
+
 template <std::size_t DuneDimensions>
-std::pair<sme::common::Voxel, sme::common::Voxel>
+VoxelPair
 getBoundingBox(const std::vector<std::array<double, DuneDimensions>> &vertices,
                const common::VolumeF &pixelSize,
                const common::VoxelF &pixelOrigin) {
-  std::pair<sme::common::Voxel, sme::common::Voxel> minMaxPair;
+  VoxelPair minMaxPair;
   auto &[pMin, pMax] = minMaxPair;
   // get bounding box that encloses all vertices in physical units
   std::array<double, DuneDimensions> vMin = vertices[0];
@@ -83,51 +82,8 @@ static inline std::size_t getIxValidNeighbour(std::size_t ix,
   return 0;
 }
 
-template <int DuneDimensions> struct DuneSimCompartment {
-  std::string name;
-  std::size_t index;
-  std::size_t nSpecies;
-  std::vector<std::string> speciesNames;
-  geometry::VoxelIndexer voxelIndexer;
-  const geometry::Compartment *geometry;
-  // voxel+dune local coords for each triangle
-  std::vector<std::vector<VoxelLocalPair<DuneDimensions>>> voxels;
-  // index of nearest valid voxel for any missing pixels
-  std::vector<std::pair<std::size_t, std::size_t>> missingVoxels;
-  std::vector<double> concentration;
-};
-
 template <int DuneDimensions> class DuneImpl {
 public:
-  using HostGrid = Dune::UGGrid<DuneDimensions>;
-  using MDGTraits =
-      Dune::mdgrid::DynamicSubDomainCountTraits<DuneDimensions, 10>;
-  using Grid = Dune::mdgrid::MultiDomainGrid<HostGrid, MDGTraits>;
-  using GridView = typename Grid::LeafGridView;
-  using SubGrid = typename Grid::SubDomainGrid;
-  using SubGridView = typename SubGrid::LeafGridView;
-  using Elem = decltype(*(elements(std::declval<SubGridView>()).begin()));
-  using Model = Dune::Copasi::Model<
-      Grid, typename Grid::SubDomainGrid::Traits::LeafGridView, double, double>;
-  Dune::ParameterTree config;
-  std::shared_ptr<Grid> grid;
-  std::unordered_map<std::string, std::vector<std::string>> speciesNames;
-  std::shared_ptr<Model> model;
-  std::shared_ptr<typename Model::State> state;
-  std::unordered_map<std::string, typename Model::GridFunction> gridFunctions;
-  std::unique_ptr<Dune::Copasi::SimpleAdaptiveStepper<typename Model::State,
-                                                      double, double>>
-      stepper;
-  std::unique_ptr<Dune::PDELab::OneStep<typename Model::State>> step_operator;
-  // dimensions of model
-  common::Volume geometryImageSize;
-  common::VolumeF pixelSize;
-  common::VoxelF pixelOrigin;
-  double volOverL3;
-  double t0{0.0};
-  double dt{1e-3};
-  std::string vtkFilename{};
-  std::vector<DuneSimCompartment<DuneDimensions>> duneCompartments;
   explicit DuneImpl(const DuneConverter &dc, const DuneOptions &options,
                     const model::Model &sbmlDoc,
                     const std::vector<std::string> &compartmentIds)
@@ -143,7 +99,7 @@ public:
       spdlog::set_level(spdlog::level::trace);
     } else {
       // for release GUI builds disable DUNE logging
-      // spdlog::set_level(spdlog::level::off);
+      spdlog::set_level(spdlog::level::off);
     }
     std::stringstream ssIni(dc.getIniFile().toStdString());
     Dune::ParameterTreeParser::readINITree(ssIni, config);
@@ -190,6 +146,66 @@ public:
   }
 
   ~DuneImpl() = default;
+
+  void run(double time) {
+    stepper->evolve(*step_operator, *state, *state, dt, t0 + time).or_throw();
+    if (!vtkFilename.empty()) {
+      model->write_vtk(*state, vtkFilename, true);
+    }
+    t0 += time;
+    updateSpeciesConcentrations();
+  }
+
+  const std::vector<double> &
+  getConcentrations(std::size_t compartmentIndex) const {
+    return duneCompartments[compartmentIndex].concentration;
+  }
+
+private:
+  struct DuneSimCompartment {
+    std::string name;
+    std::size_t index;
+    std::size_t nSpecies;
+    std::vector<std::string> speciesNames;
+    geometry::VoxelIndexer voxelIndexer;
+    const geometry::Compartment *geometry;
+    // voxel+dune local coords for each triangle
+    std::vector<std::vector<VoxelLocalPair<DuneDimensions>>> voxels;
+    // index of nearest valid voxel for any missing pixels
+    std::vector<std::pair<std::size_t, std::size_t>> missingVoxels;
+    std::vector<double> concentration;
+  };
+
+  using HostGrid = Dune::UGGrid<DuneDimensions>;
+  std::shared_ptr<HostGrid> hostGrid;
+  using MDGTraits =
+      Dune::mdgrid::DynamicSubDomainCountTraits<DuneDimensions, 10>;
+  using Grid = Dune::mdgrid::MultiDomainGrid<HostGrid, MDGTraits>;
+  using GridView = typename Grid::LeafGridView;
+  using SubGrid = typename Grid::SubDomainGrid;
+  using SubGridView = typename SubGrid::LeafGridView;
+  using Elem = decltype(*(elements(std::declval<SubGridView>()).begin()));
+  using Model = Dune::Copasi::Model<
+      Grid, typename Grid::SubDomainGrid::Traits::LeafGridView, double, double>;
+  Dune::ParameterTree config;
+  std::shared_ptr<Grid> grid;
+  std::unordered_map<std::string, std::vector<std::string>> speciesNames;
+  std::shared_ptr<Model> model;
+  std::shared_ptr<typename Model::State> state;
+  std::unordered_map<std::string, typename Model::GridFunction> gridFunctions;
+  std::unique_ptr<Dune::Copasi::SimpleAdaptiveStepper<typename Model::State,
+                                                      double, double>>
+      stepper;
+  std::unique_ptr<Dune::PDELab::OneStep<typename Model::State>> step_operator;
+  // dimensions of model
+  common::Volume geometryImageSize;
+  common::VolumeF pixelSize;
+  common::VoxelF pixelOrigin;
+  double volOverL3;
+  double t0{0.0};
+  double dt{1e-3};
+  std::string vtkFilename{};
+  std::vector<DuneSimCompartment> duneCompartments;
 
   void updateSpeciesConcentrations() {
     for (auto &comp : duneCompartments) {
@@ -350,18 +366,6 @@ public:
     model->interpolate(*state, initialConditionFunctions);
     SPDLOG_INFO("end of interpolate");
   }
-
-  void run(double time) {
-    stepper->evolve(*step_operator, *state, *state, dt, t0 + time).or_throw();
-    if (!vtkFilename.empty()) {
-      model->write_vtk(*state, vtkFilename, true);
-    }
-    t0 += time;
-    updateSpeciesConcentrations();
-  }
-
-private:
-  std::shared_ptr<HostGrid> hostGrid;
 };
 
 } // namespace sme::simulate

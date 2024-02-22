@@ -84,9 +84,9 @@ std::size_t DuneSim::run(double time, double timeout_ms,
 const std::vector<double> &
 DuneSim::getConcentrations(std::size_t compartmentIndex) const {
   if (pDuneImpl2d != nullptr) {
-    return pDuneImpl2d->duneCompartments[compartmentIndex].concentration;
+    return pDuneImpl2d->getConcentrations(compartmentIndex);
   } else {
-    return pDuneImpl3d->duneCompartments[compartmentIndex].concentration;
+    return pDuneImpl3d->getConcentrations(compartmentIndex);
   }
 }
 

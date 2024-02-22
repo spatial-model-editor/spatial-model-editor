@@ -973,6 +973,8 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
   options.dune.dt = 1.0;
   options.dune.maxDt = 1.0;
   options.dune.minDt = 0.5;
+  // make a fine mesh for dune
+  s.getGeometry().getMesh3d()->setCompartmentMaxCellVolume(0, 4);
   for (auto simType :
        {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
     // relative error on integral of initial concentration over all pixels:
@@ -983,9 +985,9 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
     double evolvedAvgRelativeError{0.010};
     if (simType == simulate::SimulatorType::DUNE) {
       // increase allowed error for dune simulation
-      initialRelativeError = 0.04;
-      evolvedMaxRelativeError = 0.8;
-      evolvedAvgRelativeError = 0.20;
+      initialRelativeError = 0.02;
+      evolvedMaxRelativeError = 0.40;
+      evolvedAvgRelativeError = 0.10;
     }
     s.getSimulationSettings().simulatorType = simType;
     s.getSimulationData().clear();
@@ -1178,7 +1180,7 @@ TEST_CASE("DUNE: simulation",
     auto &options{s.getSimulationSettings().options};
     options.dune.dt = 0.01;
     options.dune.maxDt = 0.01;
-    options.dune.minDt = 0.005;
+    options.dune.minDt = 0.001;
     options.dune.integrator = "Alexander2";
     s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
 

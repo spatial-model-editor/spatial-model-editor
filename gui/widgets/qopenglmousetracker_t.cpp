@@ -29,6 +29,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   QColor blueColor = QColor(0, 0, 255);
   QColor blackColor = QColor(0, 0, 0);
   QColor greenColor = QColor(0, 255, 0);
+  QColor yelloColor = QColor(255, 255, 0);
 
   test.show();
   //  wait(100);
@@ -119,7 +120,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
       QcolorSelection = QColor(test.getColour());
 
-      REQUIRE(greenColor == QcolorSelection);
+      REQUIRE(yelloColor == QcolorSelection);
 
       wait(100);
 
@@ -153,7 +154,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
       QcolorSelection = QColor(test.getColour());
 
-      REQUIRE(greenColor == QcolorSelection);
+      REQUIRE(yelloColor == QcolorSelection);
 
       wait(100);
 

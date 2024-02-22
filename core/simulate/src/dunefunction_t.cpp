@@ -37,9 +37,7 @@ static Dune::ParameterTree getConfig(const simulate::DuneConverter &dc) {
 }
 
 static double initialAnalyticConcentration(double x, double y, double z) {
-  return (2 + x / 50) * (std::cos(x / 141.7) + 1.1) +
-         (y / 51 + 2) * (std::sin(y / 111.1) + 1.2) +
-         (z / 52 + 2) * (std::sin(z / 101.1) + 1.3);
+  return std::sqrt(1.0 + x * x + y * y + z * z);
 }
 
 struct AvgDiff {
@@ -53,9 +51,8 @@ static void setAnalyticInitialConc(sme::model::Model &m) {
   for (const auto &compId : m.getCompartments().getIds()) {
     for (const auto &id : m.getSpecies().getIds(compId)) {
       if (!m.getSpecies().getIsConstant(id)) {
-        m.getSpecies().setAnalyticConcentration(
-            id, "(2+x/50)*(cos(x/141.7)+1.1)+(y/51+2)*(sin(y/111.1)+1.2)+(z/"
-                "52+2)*(sin(z/101.1)+1.3)");
+        m.getSpecies().setAnalyticConcentration(id,
+                                                "sqrt(1.0 + x*x + y*y + z*z)");
       }
     }
   }
@@ -131,14 +128,18 @@ static std::vector<AvgDiff> getAvgDiffs2d(Mod exampleModel,
         double tiffULP{*std::max_element(c.cbegin(), c.cend()) / 65536.0 /
                        volOverL3};
         auto gfFunc = model->make_compartment_function(*initial_state, species);
+        auto localGfFunc = localFunction(gfFunc);
         auto gfTiff =
             modelTiff->make_compartment_function(*initial_state_tiff, species);
+        auto localGfTiff = localFunction(gfTiff);
         double avgDiffAnalyticTiff{0.0};
         double avgDiffAnalyticFunc{0.0};
         double avgDiffTiffFunc{0.0};
         double n{0.0};
         for (const auto &e : elements(
                  grid->subDomain(static_cast<int>(domain)).leafGridView())) {
+          localGfFunc.bind(e);
+          localGfTiff.bind(e);
           for (double x : {0.0}) {
             for (double y : {0.0}) {
               Dune::FieldVector<double, 2> local{x, y};
@@ -147,8 +148,8 @@ static std::vector<AvgDiff> getAvgDiffs2d(Mod exampleModel,
                   initialAnalyticConcentration(globalPos[0], globalPos[1], 0) /
                   volOverL3};
               double norm{cAnalytic + tiffULP};
-              double cFunc = gfFunc(globalPos);
-              double cTiff = gfTiff(globalPos);
+              double cFunc = localGfFunc(local);
+              double cTiff = localGfTiff(local);
               double diffAnalyticTiff{std::abs(cTiff - cAnalytic) / norm};
               double diffAnalyticFunc{std::abs(cFunc - cAnalytic) / norm};
               double diffTiffFunc{std::abs(cTiff - cFunc) / norm};
@@ -218,20 +219,22 @@ static std::vector<double> getAvgDiffs3d(Mod exampleModel,
         double tiffULP{*std::max_element(c.cbegin(), c.cend()) / 65536.0 /
                        volOverL3};
         auto gfFunc = model->make_compartment_function(*initial_state, species);
+        auto localGfFunc = localFunction(gfFunc);
         double avgDiffAnalyticFunc{0.0};
         double n{0.0};
         for (const auto &e : elements(
                  grid->subDomain(static_cast<int>(domain)).leafGridView())) {
-          for (double x : {0.0}) {
-            for (double y : {0.0}) {
-              for (double z : {0.0}) {
+          localGfFunc.bind(e);
+          for (double x : {0.5}) {
+            for (double y : {0.5}) {
+              for (double z : {0.5}) {
                 Dune::FieldVector<double, 3> local{x, y, z};
                 auto globalPos = e.geometry().global(local);
                 double cAnalytic{initialAnalyticConcentration(
                                      globalPos[0], globalPos[1], globalPos[2]) /
                                  volOverL3};
                 double norm{cAnalytic + tiffULP};
-                double cFunc = gfFunc(globalPos);
+                double cFunc = localGfFunc(local);
                 double diffAnalyticFunc{std::abs(cFunc - cAnalytic) / norm};
                 avgDiffAnalyticFunc += diffAnalyticFunc;
                 n += 1.0;
@@ -296,12 +299,13 @@ TEST_CASE("DUNE: function 3d", "[core/simulate/dunefunction][core/"
        {Mod::SingleCompartmentDiffusion3D, Mod::VerySimpleModel3D}) {
     CAPTURE(exampleModel);
     auto avgDiffs = getAvgDiffs3d(exampleModel, 12);
+    CAPTURE(avgDiffs.size());
     for (const auto &avgDiff : avgDiffs) {
       // Differences between analytic expr and values due to:
       //  - Dune takes vertex values & linearly interpolates other points
       //  - Vertex values themselves are taken from nearest pixel
       //  - Some vertices lie well outside the actual compartment due to meshing
-      REQUIRE(avgDiff < 0.200);
+      REQUIRE(avgDiff < 0.100);
     }
   }
 }
@@ -312,9 +316,10 @@ TEST_CASE("DUNE: function 3d - small cell volumes",
   for (auto exampleModel :
        {Mod::SingleCompartmentDiffusion3D, Mod::VerySimpleModel3D}) {
     CAPTURE(exampleModel);
-    auto avgDiffs = getAvgDiffs3d(exampleModel, 2);
+    auto avgDiffs = getAvgDiffs3d(exampleModel, 4);
+    CAPTURE(avgDiffs.size());
     for (const auto &avgDiff : avgDiffs) {
-      REQUIRE(avgDiff < 0.200);
+      REQUIRE(avgDiff < 0.020);
     }
   }
 }

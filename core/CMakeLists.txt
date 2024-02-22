@@ -149,6 +149,9 @@ target_link_libraries(
          opencv_imgproc
          spdlog::spdlog
          Dune::Copasi
+         SCOTCH::scotch
+         SCOTCH::scotchmetisv3
+         SCOTCH::scotcherr
          Qt::Gui
          Qt::Core
          Pagmo::pagmo)
@@ -160,8 +163,7 @@ if(BUILD_TESTING)
     core_tests
     PUBLIC Dune::Copasi
            core
-           testlib
-           Qt6::OpenGLWidgets)
+           testlib)
 endif()
 
 add_subdirectory(resources)

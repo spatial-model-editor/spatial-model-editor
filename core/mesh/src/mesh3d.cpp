@@ -42,6 +42,8 @@ using CGALTriangulation =
                                CGALMeshVertex>::type;
 using CGALC3t3 = CGAL::Mesh_complex_3_in_triangulation_3<CGALTriangulation>;
 using CGALMeshCriteria = CGAL::Mesh_criteria_3<CGALTriangulation>;
+using CGALSizingField =
+    CGAL::Mesh_constant_domain_field_3<CGALKernel, CGALIndex>;
 
 namespace sme::mesh {
 
@@ -50,16 +52,11 @@ static sme::common::VoxelF toVoxelF(CGALC3t3::Vertex_handle vertexHandle) {
           vertexHandle->point().z()};
 }
 
-sme::common::VoxelF Mesh3d::voxelPointToPhysicalPoint(
-    const sme::common::VoxelF &voxel) const noexcept {
-  common::VoxelF physicalPoint{originPoint_};
-  physicalPoint.p.rx() += voxelSize_.width() * (voxel.p.x() + 0.5);
-  physicalPoint.p.ry() += voxelSize_.height() * (voxel.p.y() + 0.5);
-  physicalPoint.z += voxelSize_.depth() * (voxel.z + 0.5);
-  return physicalPoint;
-}
+static constexpr auto NullCompartmentIndex =
+    std::numeric_limits<std::uint8_t>::max();
 
 void Mesh3d::constructMesh() {
+  vertices_.clear();
   for (auto &v : tetrahedronVertexIndices_) {
     v.clear();
   }
@@ -67,25 +64,39 @@ void Mesh3d::constructMesh() {
     v.clear();
   }
 
-  // todo: presumably we can store the generated domain instead of regenerating
-  // this?
   auto domain = CGALMeshDomain::create_labeled_image_mesh_domain(
-      *image3_,
-      CGAL::parameters::default_values().iso_value(0).value_outside(0));
-
+      *image3_, CGAL::parameters::default_values().value_outside(0));
   SPDLOG_INFO("Constructed mesh domain from Image_3");
 
-  // todo: these have a large effect on the mesh results and at least some of
-  // them need to be user adjustable and possibly also have some sanity checks
-  // on them to ensure the meshing will work
-
-  // todo: set cell size for each subdomain - for now just justing the same
-  // value for all
-  CGALMeshCriteria criteria(CGAL::parameters::facet_angle(30)
-                                .facet_size(2)
-                                .facet_distance(2)
-                                .cell_radius_edge_ratio(3)
-                                .cell_size(compartmentMaxCellVolume_[0]));
+  // radius of a sphere with approx same volume of voxel (using smallest side of
+  // voxel if anisotropic)
+  double approxVoxelRadius =
+      0.6 * (std::min(image3_->vx(), std::min(image3_->vy(), image3_->vz())));
+  // CGAL cell size is upper-bound for the circumradii of the mesh tetrahedra
+  // see https://doc.cgal.org/5.1/Mesh_3/classCGAL_1_1Mesh__criteria__3.html
+  double maxCellSize =
+      static_cast<double>(common::max(compartmentMaxCellVolume_)) *
+      approxVoxelRadius;
+  SPDLOG_INFO("Max cell size: {}", maxCellSize);
+  CGALSizingField cell_size_field(maxCellSize);
+  for (std::size_t compIndex = 0; compIndex < compartmentMaxCellVolume_.size();
+       ++compIndex) {
+    auto subdomainIndex =
+        common::element_index(labelToCompartmentIndex_, compIndex);
+    double cellSize =
+        static_cast<double>(compartmentMaxCellVolume_[compIndex]) *
+        approxVoxelRadius;
+    cell_size_field.set_size(
+        cellSize, dim,
+        domain.index_from_subdomain_index(static_cast<int>(subdomainIndex)));
+    SPDLOG_INFO("  - subdomain {} max cell size: {}", subdomainIndex, cellSize);
+  }
+  // todo: expose more criteria to user, such as facet_size or facet_distance
+  CGALMeshCriteria criteria(CGAL::parameters::facet_angle(25),
+                            CGAL::parameters::facet_size(maxCellSize),
+                            CGAL::parameters::facet_distance(maxCellSize),
+                            CGAL::parameters::cell_radius_edge_ratio(4.0),
+                            CGAL::parameters::cell_size(cell_size_field));
 
   // todo: this can hang or segfault for difficult / badly formed inputs, need
   // to sanitize inputs
@@ -101,7 +112,6 @@ void Mesh3d::constructMesh() {
   SPDLOG_INFO("  - num cells: {}", c3t3.triangulation().number_of_cells());
 
   // add an id to each index (index of this vertex in our vertices_ vector)
-
   for (int id{0}; auto v : c3t3.triangulation().finite_vertex_handles()) {
     v->id() = id;
     SPDLOG_TRACE("vertex {} at {},{},{}", v->id(), v->point().x(),
@@ -109,10 +119,11 @@ void Mesh3d::constructMesh() {
     vertices_.emplace_back(v->point().x(), v->point().y(), v->point().z());
     ++id;
   }
+
   for (auto c : c3t3.triangulation().finite_cell_handles()) {
-    if (c3t3.subdomain_index(c) > 0) {
-      // we skip subdomain 0 as it is the "outside" / not a compartment
-      auto compartmentIndex = c3t3.subdomain_index(c) - 1;
+    if (auto compartmentIndex =
+            labelToCompartmentIndex_[c3t3.subdomain_index(c)];
+        compartmentIndex != NullCompartmentIndex) {
       SPDLOG_TRACE(
           "cell with vertex ids {},{},{},{} in subdomain {} -> compartment {}",
           c->vertex(0)->id(), c->vertex(1)->id(), c->vertex(2)->id(),
@@ -136,8 +147,7 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
                const common::VolumeF &voxelSize,
                const common::VoxelF &originPoint,
                const std::vector<QRgb> &compartmentColours)
-    : originPoint_(originPoint), voxelSize_(voxelSize),
-      compartmentMaxCellVolume_(std::move(maxCellVolume)) {
+    : compartmentMaxCellVolume_(std::move(maxCellVolume)) {
   if (imageStack.empty()) {
     errorMessage_ = "Compartment geometry image missing";
     return;
@@ -150,61 +160,70 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   SPDLOG_INFO("ImageStack {}x{}x{} with {} colours", vol.width(), vol.height(),
               vol.depth(), colorTable.size());
 
-  // todo: add check for > 255 colours in image3, as the meshing expects to get
-  // a uchar for the labels
-
-  // generate a label for each colour in the image3 stack, where label 0 means
-  // no compartment, and label n means element n-1 from compartmentColour vector
-  std::vector<std::uint8_t> colourIndexToLabel(colorTable.size(), 0);
-  constexpr std::size_t notFound{std::numeric_limits<std::size_t>::max()};
-  for (std::size_t i = 0; i < colourIndexToLabel.size(); ++i) {
-    auto compartmentColourIndex =
-        sme::common::element_index(compartmentColours, colorTable[i], notFound);
-    if (compartmentColourIndex != notFound) {
-      colourIndexToLabel[i] = compartmentColourIndex + 1;
+  for (auto compartmentColor : compartmentColours) {
+    if (!colorTable.contains(compartmentColor)) {
+      SPDLOG_WARN("Compartment color is not present in geometry image");
+      errorMessage_ = "Compartment color is not present in geometry image";
+      return;
     }
-    SPDLOG_INFO("  - {:x} -> label {}", colorTable[i], colourIndexToLabel[i]);
   }
 
-  if (std::ranges::all_of(colourIndexToLabel,
-                          [](std::uint8_t a) { return a == 0; })) {
+  // convert from label to compartment index: label 0 is reserved for out of
+  // mesh voxels, so label n is colorIndex n-1 from the image colorTable
+  labelToCompartmentIndex_.assign(colorTable.size() + 1, NullCompartmentIndex);
+  for (std::size_t compartmentIndex = 0;
+       compartmentIndex < compartmentColours.size(); ++compartmentIndex) {
+    auto compartmentColor = compartmentColours[compartmentIndex];
+    auto colorIndex = colorTable.indexOf(compartmentColor);
+    if (colorIndex >= 0) {
+      auto label = colorIndex + 1;
+      labelToCompartmentIndex_[label] =
+          static_cast<std::uint8_t>(compartmentIndex);
+      SPDLOG_INFO("  - label {} -> compartment {} / color {:x}", label,
+                  compartmentIndex, compartmentColor);
+    }
+  }
+
+  if (std::ranges::all_of(labelToCompartmentIndex_, [](std::uint8_t a) {
+        return a == NullCompartmentIndex;
+      })) {
     SPDLOG_WARN("No compartments have been assigned a colour: meshing aborted");
     errorMessage_ = "No compartments have been assigned a colour";
     return;
   }
 
-  // convert image3 stack to CGAL Image_3 with the label for each voxel
+  // convert image3 stack to CGAL Image_3 with label = colorIndex + 1 for each
+  // voxel, as label 0 is reserved for voxels that lie outside of the mesh
   auto *pointImage =
       _createImage(vol.width(), vol.height(), vol.depth(), 1, 1, 1, 1, 1,
                    WORD_KIND::WK_FIXED, SIGN::SGN_UNSIGNED);
   auto *ptr = static_cast<std::uint8_t *>(pointImage->data);
   for (std::size_t z = 0; z < vol.depth(); ++z) {
-    for (int y = 0; y < vol.height(); ++y) {
+    for (int y = vol.height() - 1; y >= 0; --y) {
       for (int x = 0; x < vol.width(); ++x) {
-        auto label = colourIndexToLabel[imageStack_[z].pixelIndex(x, y)];
+        auto label =
+            static_cast<std::uint8_t>(imageStack_[z].pixelIndex(x, y) + 1);
         *ptr = label;
         ptr++;
       }
     }
   }
   image3_ = std::make_unique<CGAL::Image_3>(pointImage);
-  SPDLOG_INFO("Constructed {}x{}x{} Image_3 of {}x{}x{} voxels",
-              image3_->xdim(), image3_->ydim(), image3_->zdim(), image3_->vx(),
-              image3_->vy(), image3_->vz());
+  SPDLOG_INFO("Constructed {}x{}x{} Image_3", image3_->xdim(), image3_->ydim(),
+              image3_->zdim());
 
   tetrahedronVertexIndices_.resize(compartmentColours.size());
   tetrahedra_.resize(compartmentColours.size());
 
   if (compartmentMaxCellVolume_.size() != compartmentColours.size()) {
     // if cell volumes are not correctly specified use default value
-    constexpr std::size_t defaultCompartmentMaxCellVolume{3};
+    constexpr std::size_t defaultCompartmentMaxCellVolume{5};
     compartmentMaxCellVolume_ = std::vector<std::size_t>(
         compartmentColours.size(), defaultCompartmentMaxCellVolume);
     SPDLOG_INFO("no max cell volumes specified, using default value: {}",
                 defaultCompartmentMaxCellVolume);
   }
-
-  constructMesh();
+  setPhysicalGeometry(voxelSize, originPoint);
 }
 
 Mesh3d::~Mesh3d() = default;
@@ -232,19 +251,26 @@ const std::vector<std::size_t> &Mesh3d::getCompartmentMaxCellVolume() const {
 
 void Mesh3d::setPhysicalGeometry(const common::VolumeF &voxelSize,
                                  const common::VoxelF &originPoint) {
-  voxelSize_ = voxelSize;
-  originPoint_ = originPoint;
+  image3_->image()->vx = voxelSize.width();
+  image3_->image()->vy = voxelSize.height();
+  image3_->image()->vz = voxelSize.depth();
+  image3_->image()->tx = static_cast<float>(originPoint.p.x());
+  image3_->image()->ty = static_cast<float>(originPoint.p.y());
+  image3_->image()->tz = static_cast<float>(originPoint.z);
+  SPDLOG_INFO("{}x{}x{} Image_3 of {}x{}x{} voxels with origin ({},{},{})",
+              image3_->xdim(), image3_->ydim(), image3_->zdim(), image3_->vx(),
+              image3_->vy(), image3_->vz(), image3_->tx(), image3_->ty(),
+              image3_->tz());
+  constructMesh();
 }
 
 std::vector<double> Mesh3d::getVerticesAsFlatArray() const {
-  // convert from voxel to physical coordinates
   std::vector<double> v;
   v.reserve(vertices_.size() * 3);
-  for (const auto &voxelPoint : vertices_) {
-    auto physicalPoint = voxelPointToPhysicalPoint(voxelPoint);
-    v.push_back(physicalPoint.p.x());
-    v.push_back(physicalPoint.p.y());
-    v.push_back(physicalPoint.z);
+  for (const auto &vertex : vertices_) {
+    v.push_back(vertex.p.x());
+    v.push_back(vertex.p.y());
+    v.push_back(vertex.z);
   }
   return v;
 }
@@ -254,10 +280,8 @@ Mesh3d::getVerticesAsQVector4DArrayInHomogeneousCoord() const {
   // similar with getVerticesAsFlatArray() but in Homogeneous Coordinates
   std::vector<QVector4D> v;
   v.reserve(vertices_.size());
-  for (const auto &voxelPoint : vertices_) {
-    auto physicalPoint = voxelPointToPhysicalPoint(voxelPoint);
-    v.push_back(QVector4D(physicalPoint.p.x(), physicalPoint.p.y(),
-                          physicalPoint.z, 1.0f));
+  for (const auto &vertex : vertices_) {
+    v.push_back(QVector4D(vertex.p.x(), vertex.p.y(), vertex.z, 1.0f));
   }
   return v;
 }
@@ -316,13 +340,12 @@ QString Mesh3d::getGMSH() const {
   msh.append("$EndMeshFormat\n");
   msh.append("$Nodes\n");
   msh.append(QString("%1\n").arg(vertices_.size()));
-  for (std::size_t i = 0; i < vertices_.size(); ++i) {
-    auto physicalPoint = voxelPointToPhysicalPoint(vertices_[i]);
+  std::size_t nodeIndex = 1;
+  for (const auto &v : vertices_) {
     msh.append(QString("%1 %2 %3 %4\n")
-                   .arg(i + 1)
-                   .arg(common::dblToQStr(physicalPoint.p.x()))
-                   .arg(common::dblToQStr(physicalPoint.p.y()))
-                   .arg(common::dblToQStr(physicalPoint.z)));
+                   .arg(QString::number(nodeIndex), common::dblToQStr(v.p.x()),
+                        common::dblToQStr(v.p.y()), common::dblToQStr(v.z)));
+    ++nodeIndex;
   }
   msh.append("$EndNodes\n");
   msh.append("$Elements\n");
@@ -335,7 +358,7 @@ QString Mesh3d::getGMSH() const {
     compartmentIndex++;
   }
   msh.append(QString("%1\n").arg(nElem));
-  std::size_t elementIndex{1};
+  std::size_t elementIndex = 1;
   compartmentIndex = 1;
   for (const auto &comp : tetrahedronVertexIndices_) {
     SPDLOG_TRACE("Writing tetrahedra for compartment index: {}",
