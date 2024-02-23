@@ -388,4 +388,12 @@ QString Mesh3d::getGMSH() const {
 
 std::vector<QColor> Mesh3d::getColorTable() const { return colorTableVec; }
 
+QVector3D Mesh3d::getOffset() const {
+
+  return QVector3D(
+      -static_cast<float>(image3_->image()->vx * image3_->xdim() / 2.0f),
+      -static_cast<float>(image3_->image()->vy * image3_->ydim() / 2.0f),
+      -static_cast<float>(image3_->image()->vz * image3_->zdim() / 2.0f));
+}
+
 } // namespace sme::mesh

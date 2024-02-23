@@ -20,6 +20,8 @@ class WireframeObjects : protected QOpenGLFunctions {
 public:
   WireframeObjects(const sme::mesh::Mesh3d &info, const QOpenGLWidget *Widget,
                    const std::vector<QColor> &color = std::vector<QColor>(0),
+                   const QVector3D &meshPositionOffset = QVector3D(0.0f, 0.0f,
+                                                                   0.0f),
                    const QVector3D &position = QVector3D(0.0f, 0.0f, 0.0f),
                    const QVector3D &rotation = QVector3D(0.0f, 0.0f, 0.0f),
                    const QVector3D &scale = QVector3D(1.0f, 1.0f, 1.0f));
@@ -79,6 +81,8 @@ private:
   QVector3D m_rotation;
   QVector3D m_position;
   QVector3D m_scale;
+
+  QVector3D m_translationOffset;
 
   QColor clearColor;
 

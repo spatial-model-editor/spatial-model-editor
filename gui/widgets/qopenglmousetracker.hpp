@@ -28,6 +28,12 @@ public:
   QVector3D GetCameraPosition() const;
   QVector3D GetCameraOrientation() const;
 
+  void SetSubMeshesOrientation(float x, float y, float z);
+  void SetSubMeshesPosition(float x, float y, float z);
+
+  QVector3D GetSubMeshesOrientation() const;
+  QVector3D GetSubMeshesPosition() const;
+
   /**
    * @brief Number of visible submeshes is influenced by the number of colors.
    *

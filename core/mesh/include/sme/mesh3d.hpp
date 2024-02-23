@@ -153,6 +153,13 @@ public:
 
   std::vector<QColor> getColorTable() const;
 
+  /**
+   * @brief returns offset used for centering the mesh.
+   *
+   */
+
+  QVector3D getOffset() const;
+
   static constexpr std::size_t dim = 3;
 };
 

@@ -15,6 +15,7 @@ const char text_vertex_color_as_uniform[] =
     "layout(location=0) in vec4 in_Position;\n"
     "//layout(location=1) in vec4 in_Color;\n"
     "uniform vec4 in_Color;\n"
+    "uniform vec3 translationOffset;\n"
     "uniform vec3 position;\n"
     "uniform vec3 rotation;\n"
     "uniform vec3 scale;\n"
@@ -84,7 +85,9 @@ const char text_vertex_color_as_uniform[] =
     "translation(position.x, position.y, position.z);\n"
     "mat4 MVP = model * view(viewPosition, viewRotation) * projection;\n"
     "\n"
-    "gl_Position = in_Position * MVP;\n"
+    "mat4 offset = translation(\n"
+    "translationOffset.x, translationOffset.y, translationOffset.z);\n"
+    "gl_Position = in_Position * offset * MVP;\n"
     "ex_Color = in_Color;\n"
     "}\n";
 

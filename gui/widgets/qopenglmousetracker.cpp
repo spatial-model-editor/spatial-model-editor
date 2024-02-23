@@ -181,12 +181,18 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
   m_xAtPress = xAtPress;
   m_yAtPress = yAtPress;
 
-  // apply rotation of the camera
-  QVector3D cameraOrientation = GetCameraOrientation();
-  SetCameraOrientation(
-      cameraOrientation.x() + static_cast<float>(y_len) * (1 / m_frameRate),
-      cameraOrientation.y() + static_cast<float>(x_len) * (1 / m_frameRate),
-      cameraOrientation.z());
+  //  // apply rotation of the camera
+  //  QVector3D cameraOrientation = GetCameraOrientation();
+  //  SetCameraOrientation(
+  //      cameraOrientation.x() + static_cast<float>(y_len) * (1 / m_frameRate),
+  //      cameraOrientation.y() + static_cast<float>(x_len) * (1 / m_frameRate),
+  //      cameraOrientation.z());
+
+  // apply rotation to all sub-meshes
+  QVector3D subMeshesOrientation = GetSubMeshesOrientation();
+  SetSubMeshesOrientation(subMeshesOrientation.x() - static_cast<float>(y_len),
+                          subMeshesOrientation.y() - static_cast<float>(x_len),
+                          subMeshesOrientation.z());
 
   repaint();
 
@@ -231,16 +237,33 @@ QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
   return m_camera.GetRotation();
 }
 
+void QOpenGLMouseTracker::SetSubMeshesOrientation(float x, float y, float z) {
+  m_SubMeshes->SetRotation(x, y, z);
+}
+
+void QOpenGLMouseTracker::SetSubMeshesPosition(float x, float y, float z) {
+  m_SubMeshes->SetPosition(x, y, z);
+}
+
+QVector3D QOpenGLMouseTracker::GetSubMeshesOrientation() const {
+  return m_SubMeshes->GetRotation();
+}
+
+QVector3D QOpenGLMouseTracker::GetSubMeshesPosition() const {
+  return m_SubMeshes->GetPosition();
+}
+
 void QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
                                        const std::vector<QColor> &colors) {
 
   if (colors.size() == 0) {
     m_SubMeshes = std::unique_ptr<rendering::WireframeObjects>(
-        new rendering::WireframeObjects(mesh, this, mesh.getColorTable()));
+        new rendering::WireframeObjects(mesh, this, mesh.getColorTable(),
+                                        mesh.getOffset()));
   }
 
   m_SubMeshes = std::unique_ptr<rendering::WireframeObjects>(
-      new rendering::WireframeObjects(mesh, this, colors));
+      new rendering::WireframeObjects(mesh, this, colors, mesh.getOffset()));
 }
 
 void QOpenGLMouseTracker::setFPS(float frameRate) { m_frameRate = frameRate; }

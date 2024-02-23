@@ -35,7 +35,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   test.show();
 
   // camera position
-  test.SetCameraPosition(20, 20, -50);
+  test.SetCameraPosition(0, 0, -70);
 
   SECTION("Two disconnected eggs") {
     sme::test::createBinaryFile("geometry/3d_two_eggs_disconnected.tiff",
@@ -64,7 +64,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
       test.SetSubMeshes(mesh3d, {redColor, blueColor, greenColor});
 
-      wait(100);
+      wait(1000000);
 
       auto QcolorSelection = QColor(test.getColour());
 

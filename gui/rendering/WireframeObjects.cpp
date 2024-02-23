@@ -10,13 +10,13 @@ qopengl_GLsizeiptr sizeofGLVector(const std::vector<T> &v) {
   return static_cast<qopengl_GLsizeiptr>(v.size() * sizeof(T));
 }
 
-rendering::WireframeObjects::WireframeObjects(const sme::mesh::Mesh3d &info,
-                                              const QOpenGLWidget *Widget,
-                                              const std::vector<QColor> &colors,
-                                              const QVector3D &position,
-                                              const QVector3D &rotation,
-                                              const QVector3D &scale)
-    : m_openGLContext(Widget->context()), m_position(position),
+rendering::WireframeObjects::WireframeObjects(
+    const sme::mesh::Mesh3d &info, const QOpenGLWidget *Widget,
+    const std::vector<QColor> &colors, const QVector3D &meshPositionOffset,
+    const QVector3D &position, const QVector3D &rotation,
+    const QVector3D &scale)
+    : m_openGLContext(Widget->context()),
+      m_translationOffset(meshPositionOffset), m_position(position),
       m_rotation(rotation), m_scale(scale), m_colors(colors),
       m_default_colors(colors),
       m_vertices(info.getVerticesAsQVector4DArrayInHomogeneousCoord()),
@@ -146,6 +146,9 @@ void rendering::WireframeObjects::Render(
                clearColor.alphaF());
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+  program->SetMeshTranslationOffset(m_translationOffset.x(),
+                                    m_translationOffset.y(),
+                                    m_translationOffset.z());
   program->SetPosition(m_position.x(), m_position.y(), m_position.z());
   program->SetRotation(m_rotation.x(), m_rotation.y(), m_rotation.z());
   program->SetScale(m_scale.x(), m_scale.y(), m_scale.z());
@@ -168,7 +171,7 @@ void rendering::WireframeObjects::SetRotation(GLfloat rotationX,
                                               GLfloat rotationZ) {
   m_rotation.setX(rotationX);
   m_rotation.setY(rotationY);
-  m_rotation.setY(rotationZ);
+  m_rotation.setZ(rotationZ);
 }
 
 void rendering::WireframeObjects::SetRotation(const QVector3D &rotation) {

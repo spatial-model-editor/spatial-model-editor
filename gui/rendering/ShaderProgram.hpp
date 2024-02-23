@@ -34,6 +34,8 @@ public:
                        GLfloat viewRotationZ);
   void SetColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 
+  void SetMeshTranslationOffset(GLfloat x, GLfloat y, GLfloat z);
+
 private:
   std::string m_vertexShaderText;
   std::string m_fragmentShaderText;
@@ -50,6 +52,8 @@ private:
   GLint m_viewPositionLocation;
   GLint m_viewRotationLocation;
   GLint m_color;
+
+  GLint m_meshTranslationOffsetLocation;
 };
 
 } // namespace rendering
