@@ -64,7 +64,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
       test.SetSubMeshes(mesh3d, {redColor, blueColor, greenColor});
 
-      wait(1000000);
+      wait(100);
 
       auto QcolorSelection = QColor(test.getColour());
 
