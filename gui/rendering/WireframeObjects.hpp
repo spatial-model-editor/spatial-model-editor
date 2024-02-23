@@ -43,7 +43,6 @@ public:
   void SetScale(const QVector3D &scale);
   QVector3D GetScale() const;
 
-  //  void SetColor(const QColor &color);
   void SetColor(const QColor &color, uint32_t meshID);
   void ResetDefaultColor(uint32_t meshID);
 
@@ -65,7 +64,7 @@ public:
 private:
   std::vector<QVector4D> m_vertices;
   std::vector<std::vector<GLuint>> m_indices;
-  //  QColor m_color;
+
   std::vector<QColor> m_colors;
   std::vector<QColor> m_default_colors;
 
