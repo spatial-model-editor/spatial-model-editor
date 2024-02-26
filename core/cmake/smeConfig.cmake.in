@@ -2,8 +2,8 @@ get_filename_component(SME_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 include(CMakeFindDependencyMacro)
 
 find_dependency(SymEngine REQUIRED)
-find_dependency(sbml-static REQUIRED)
-find_dependency(OpenCV REQUIRED COMPONENTS core imgproc)
+find_dependency(sbml-static)
+find_dependency(OpenCV REQUIRED COMPONENTS core imgproc) # core imgproc
 find_dependency(spdlog REQUIRED)
 find_dependency(TIFF REQUIRED)
 find_dependency(fmt REQUIRED)
@@ -12,6 +12,23 @@ find_dependency(cereal REQUIRED)
 find_dependency(Pagmo REQUIRED)
 find_dependency(TBB CONFIG REQUIRED)
 find_dependency(combine-static REQUIRED CONFIGS Combine-static-config.cmake)
+# provide METIS::METIS target expected by dune-copasi
+add_library(
+  METIS::METIS
+  INTERFACE
+  IMPORTED)
+find_dependency(SCOTCH REQUIRED)
+target_link_libraries(
+  METIS::METIS
+  INTERFACE SCOTCH::scotchmetisv3
+  INTERFACE SCOTCH::scotcherr)
+find_dependency(dune-common REQUIRED)
+find_dependency(dune-geometry REQUIRED)
+find_dependency(dune-uggrid REQUIRED)
+find_dependency(dune-grid REQUIRED)
+find_dependency(dune-istl REQUIRED)
+find_dependency(dune-localfunctions REQUIRED)
+find_dependency(dune-pdelab REQUIRED)
 find_dependency(dune-copasi REQUIRED)
 
 if(NOT TARGET sme::core)

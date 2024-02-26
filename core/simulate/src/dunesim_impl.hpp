@@ -178,7 +178,8 @@ private:
 
   using HostGrid = Dune::UGGrid<DuneDimensions>;
   std::shared_ptr<HostGrid> hostGrid;
-  using MDGTraits = Dune::mdgrid::FewSubDomainsTraits<DuneDimensions, 64>;
+  using MDGTraits =
+      Dune::mdgrid::DynamicSubDomainCountTraits<DuneDimensions, 10>;
   using Grid = Dune::mdgrid::MultiDomainGrid<HostGrid, MDGTraits>;
   using GridView = typename Grid::LeafGridView;
   using SubGrid = typename Grid::SubDomainGrid;
