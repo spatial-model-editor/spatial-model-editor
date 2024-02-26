@@ -261,6 +261,7 @@ void QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
     m_SubMeshes = std::unique_ptr<rendering::WireframeObjects>(
         new rendering::WireframeObjects(mesh, this, mesh.getColorTable(),
                                         mesh.getOffset()));
+    return;
   }
   m_SubMeshes = std::unique_ptr<rendering::WireframeObjects>(
       new rendering::WireframeObjects(mesh, this, colors, mesh.getOffset()));
