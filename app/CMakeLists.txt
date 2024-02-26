@@ -1,7 +1,4 @@
 add_executable(spatial-model-editor)
-if(SME_QT_DISABLE_UNICODE)
-  qt6_disable_unicode_defines(spatial-model-editor)
-endif()
 target_sources(spatial-model-editor PRIVATE spatial-model-editor.cpp icon.rc)
 if(WIN32)
   set_target_properties(spatial-model-editor PROPERTIES WIN32_EXECUTABLE TRUE)

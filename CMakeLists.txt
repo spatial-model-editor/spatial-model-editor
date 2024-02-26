@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13...3.27)
+cmake_minimum_required(VERSION 3.13...3.29)
 message(STATUS "CMake version ${CMAKE_VERSION}")
 
 # version number here is embedded in compiled executable
@@ -7,6 +7,14 @@ project(
   VERSION 1.5.0
   DESCRIPTION "Spatial Model Editor"
   LANGUAGES C CXX)
+
+# workaround for CGAL using deprecated exec_program
+if(POLICY CMP0153)
+  cmake_policy(
+    SET
+    CMP0153
+    OLD)
+endif()
 
 list(
   APPEND
@@ -44,14 +52,6 @@ message(STATUS "Found QtCore: ${QtCore_location}")
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTORCC ON)
-
-# stop Qt from defining UNICODE on windows to avoid dune issues: this used to be
-# opt-in, but now done by default for Qt >= 6.1.2. See
-# https://codereview.qt-project.org/c/qt/qtbase/+/350443
-option(
-  SME_QT_DISABLE_UNICODE
-  "Disable Qt UNICODE option"
-  OFF)
 
 option(
   SME_USE_STATIC_LIBS
@@ -154,4 +154,3 @@ message(STATUS "SME_EXTRA_CORE_DEFS: ${SME_EXTRA_CORE_DEFS}")
 message(STATUS "SME_EXTRA_GUI_LIBS: ${SME_EXTRA_GUI_LIBS}")
 message(STATUS "SME_EXTRA_EXE_LIBS: ${SME_EXTRA_EXE_LIBS}")
 message(STATUS "SME_USE_STATIC_LIBS: ${SME_USE_STATIC_LIBS}")
-message(STATUS "SME_QT_DISABLE_UNICODE: ${SME_QT_DISABLE_UNICODE}")

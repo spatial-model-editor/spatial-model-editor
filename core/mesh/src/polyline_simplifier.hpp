@@ -15,15 +15,6 @@
 
 namespace sme::mesh {
 
-using CGALKernel = CGAL::Exact_predicates_inexact_constructions_kernel;
-using CGALVb = CGAL::Polyline_simplification_2::Vertex_base_2<CGALKernel>;
-using CGALFb = CGAL::Constrained_triangulation_face_base_2<CGALKernel>;
-using CGALTds = CGAL::Triangulation_data_structure_2<CGALVb, CGALFb>;
-using CGALCdt =
-    CGAL::Constrained_Delaunay_triangulation_2<CGALKernel, CGALTds,
-                                               CGAL::Exact_predicates_tag>;
-using CGALCt = CGAL::Constrained_triangulation_plus_2<CGALCdt>;
-
 /**
  * @brief Simplify a set of boundary lines
  *
@@ -33,9 +24,17 @@ using CGALCt = CGAL::Constrained_triangulation_plus_2<CGALCdt>;
  */
 class PolylineSimplifier {
 private:
+  using CGALKernel = CGAL::Exact_predicates_inexact_constructions_kernel;
+  using CGALVb = CGAL::Polyline_simplification_2::Vertex_base_2<CGALKernel>;
+  using CGALFb = CGAL::Constrained_triangulation_face_base_2<CGALKernel>;
+  using CGALTds = CGAL::Triangulation_data_structure_2<CGALVb, CGALFb>;
+  using CGALCdt =
+      CGAL::Constrained_Delaunay_triangulation_2<CGALKernel, CGALTds,
+                                                 CGAL::Exact_predicates_tag>;
+  using CGALCt = CGAL::Constrained_triangulation_plus_2<CGALCdt>;
   std::vector<CGALCt::Constraint_id> constraintIds;
   CGALCt ct;
-  void initCt(const std::vector<Boundary> &boundaries);
+  void updatePoints(std::vector<Boundary> &boundaries) const;
 
 public:
   explicit PolylineSimplifier(const std::vector<Boundary> &boundaries);

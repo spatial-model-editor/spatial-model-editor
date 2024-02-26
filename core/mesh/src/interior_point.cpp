@@ -100,9 +100,8 @@ static std::vector<QPointF> getInnerPoints(const cv::Mat &mask) {
     cv::Point inner{};
     auto p{getNonZeroPixel(roi)};
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-    int j{10};
     writeDebuggingImageOutput(mask, blob, rect, p.value() + offset,
-                              QString("blob%1_%2").arg(i).arg(j++));
+                              QString("blob%1_initial").arg(i));
 #endif
     while (p.has_value()) {
       inner = p.value();
@@ -119,15 +118,15 @@ static std::vector<QPointF> getInnerPoints(const cv::Mat &mask) {
         if (p.has_value()) {
           ++offset.x;
           ++offset.y;
-#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
-          writeDebuggingImageOutput(mask, blob, rect, p.value() + offset,
-                                    QString("blob%1_%2.png").arg(i).arg(j++));
-#endif
         }
       } else {
         p = {};
       }
     }
+#if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE
+    writeDebuggingImageOutput(mask, blob, rect, inner + offset,
+                              QString("blob%1_final").arg(i));
+#endif
     interiorPoints.push_back(
         {static_cast<double>(inner.x + offset.x) + 0.5,
          static_cast<double>(mask.rows - inner.y - offset.y) - 0.5});
