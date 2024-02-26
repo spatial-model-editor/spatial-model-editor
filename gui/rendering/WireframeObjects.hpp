@@ -28,7 +28,7 @@ public:
   WireframeObjects(const WireframeObjects &cpy) = delete;
   ~WireframeObjects();
 
-  void Render(std::unique_ptr<rendering::ShaderProgram> &program,
+  void Render(const std::unique_ptr<rendering::ShaderProgram> &program,
               float lineWidth = 1);
 
   void SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ);
