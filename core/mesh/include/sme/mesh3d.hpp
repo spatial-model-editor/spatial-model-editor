@@ -151,7 +151,7 @@ public:
    *
    */
 
-  std::vector<QColor> getColorTable() const;
+  const std::vector<QColor> &getColors() const;
 
   /**
    * @brief returns offset used for centering the mesh.

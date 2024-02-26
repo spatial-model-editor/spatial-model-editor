@@ -12,18 +12,8 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(float lineWidth,
     : m_camera(cameraFOV, static_cast<float>(size().width()),
                static_cast<float>(size().height()), cameraNearZ, cameraFarZ),
       m_lineWidth(lineWidth), m_lineSelectPrecision(lineSelectPrecision),
-      m_selectedObjectColor(selectedObjectColor), m_frameRate(frameRate) {
-
-  int r{0};
-  int g{0};
-  int b{0};
-  palette().color(QWidget::backgroundRole()).getRgb(&r, &g, &b);
-
-  backgroundColor.setAlpha(255);
-  backgroundColor.setRed(r);
-  backgroundColor.setGreen(g);
-  backgroundColor.setBlue(b);
-}
+      m_selectedObjectColor(selectedObjectColor), m_frameRate(frameRate),
+      m_backgroundColor(QWidget::palette().color(QWidget::backgroundRole())) {}
 
 void QOpenGLMouseTracker::initializeGL() {
 
@@ -81,7 +71,7 @@ void QOpenGLMouseTracker::initializeGL() {
 void QOpenGLMouseTracker::renderScene(float lineWidth) {
 
   if (m_SubMeshes) {
-    m_SubMeshes->setBackground(backgroundColor);
+    m_SubMeshes->setBackground(m_backgroundColor);
     m_SubMeshes->Render(m_mainProgram, lineWidth);
   }
 }
@@ -215,6 +205,8 @@ void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
 
   m_camera.SetPosition(position + forwardVector * static_cast<float>(Degrees) *
                                       (1 / m_frameRate));
+  //  m_camera.SetPosition(position + forwardVector *
+  //  static_cast<float>(Degrees));
 
   emit mouseWheelEvent(event);
 
@@ -258,12 +250,12 @@ void QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
 
   if (colors.size() == 0) {
     m_SubMeshes = std::unique_ptr<rendering::WireframeObjects>(
-        new rendering::WireframeObjects(mesh, this, mesh.getColorTable(),
+        new rendering::WireframeObjects(mesh, this, mesh.getColors(),
                                         mesh.getOffset()));
+  } else {
+    m_SubMeshes = std::unique_ptr<rendering::WireframeObjects>(
+        new rendering::WireframeObjects(mesh, this, colors, mesh.getOffset()));
   }
-
-  m_SubMeshes = std::unique_ptr<rendering::WireframeObjects>(
-      new rendering::WireframeObjects(mesh, this, colors, mesh.getOffset()));
 }
 
 void QOpenGLMouseTracker::setFPS(float frameRate) { m_frameRate = frameRate; }
@@ -296,5 +288,5 @@ QColor QOpenGLMouseTracker::getSelectedObjectColor() const {
 }
 
 void QOpenGLMouseTracker::setBackground(QColor background) {
-  backgroundColor = background;
+  m_backgroundColor = background;
 }

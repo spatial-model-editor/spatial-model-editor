@@ -30,6 +30,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   QColor blackColor = QColor(0, 0, 0);
   QColor greenColor = QColor(0, 255, 0);
   QColor yelloColor = QColor(255, 255, 0);
+  QColor whiteColor = QColor(255, 255, 255, 255);
 
   test.setBackground(blackColor);
   test.show();

@@ -97,7 +97,7 @@ protected:
   int m_xAtPress;
   int m_yAtPress;
 
-  QColor backgroundColor;
+  QColor m_backgroundColor;
 
   void initializeGL() override;
   void resizeGL(int w, int h) override;

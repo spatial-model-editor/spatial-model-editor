@@ -160,8 +160,8 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   SPDLOG_INFO("ImageStack {}x{}x{} with {} colours", vol.width(), vol.height(),
               vol.depth(), colorTable.size());
 
-  colorTableVec.reserve(colorTable.size());
-  std::transform(colorTable.cbegin(), colorTable.cend(),
+  colorTableVec.reserve(compartmentColours.size());
+  std::transform(compartmentColours.cbegin(), compartmentColours.cend(),
                  std::back_inserter(colorTableVec),
                  [](QRgb color) { return QColor(color); });
 
@@ -386,14 +386,17 @@ QString Mesh3d::getGMSH() const {
   return msh;
 }
 
-std::vector<QColor> Mesh3d::getColorTable() const { return colorTableVec; }
+const std::vector<QColor> &Mesh3d::getColors() const { return colorTableVec; }
 
 QVector3D Mesh3d::getOffset() const {
 
   return QVector3D(
-      -static_cast<float>(image3_->image()->vx * image3_->xdim() / 2.0f),
-      -static_cast<float>(image3_->image()->vy * image3_->ydim() / 2.0f),
-      -static_cast<float>(image3_->image()->vz * image3_->zdim() / 2.0f));
+      -static_cast<float>(image3_->image()->vx * image3_->xdim() / 2.0f) -
+          image3_->image()->tx,
+      -static_cast<float>(image3_->image()->vy * image3_->ydim() / 2.0f) -
+          image3_->image()->ty,
+      -static_cast<float>(image3_->image()->vz * image3_->zdim() / 2.0f) -
+          image3_->image()->tz);
 }
 
 } // namespace sme::mesh
