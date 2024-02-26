@@ -161,9 +161,9 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
               vol.depth(), colorTable.size());
 
   colorTableVec.reserve(compartmentColours.size());
-  std::transform(compartmentColours.cbegin(), compartmentColours.cend(),
-                 std::back_inserter(colorTableVec),
-                 [](QRgb color) { return QColor(color); });
+  std::ranges::transform(compartmentColours.cbegin(), compartmentColours.cend(),
+                         std::back_inserter(colorTableVec),
+                         [](QRgb color) { return QColor(color); });
 
   for (auto compartmentColor : compartmentColours) {
     if (!colorTable.contains(compartmentColor)) {
@@ -391,11 +391,11 @@ const std::vector<QColor> &Mesh3d::getColors() const { return colorTableVec; }
 QVector3D Mesh3d::getOffset() const {
 
   return QVector3D(
-      -static_cast<float>(image3_->image()->vx * image3_->xdim() / 2.0f) -
+      -static_cast<float>(image3_->image()->vx) * image3_->xdim() / 2.0f -
           image3_->image()->tx,
-      -static_cast<float>(image3_->image()->vy * image3_->ydim() / 2.0f) -
+      -static_cast<float>(image3_->image()->vy) * image3_->ydim() / 2.0f -
           image3_->image()->ty,
-      -static_cast<float>(image3_->image()->vz * image3_->zdim() / 2.0f) -
+      -static_cast<float>(image3_->image()->vz) * image3_->zdim() / 2.0f -
           image3_->image()->tz);
 }
 

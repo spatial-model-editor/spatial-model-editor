@@ -15,13 +15,12 @@ rendering::WireframeObjects::WireframeObjects(
     const std::vector<QColor> &colors, const QVector3D &meshPositionOffset,
     const QVector3D &position, const QVector3D &rotation,
     const QVector3D &scale)
-    : m_openGLContext(Widget->context()),
-      m_translationOffset(meshPositionOffset), m_position(position),
-      m_rotation(rotation), m_scale(scale), m_colors(colors),
-      m_default_colors(colors),
-      m_vertices(info.getVerticesAsQVector4DArrayInHomogeneousCoord()),
+    : m_vertices(info.getVerticesAsQVector4DArrayInHomogeneousCoord()),
       m_visibleSubmesh(std::min(colors.size(), info.getNumberOfCompartment()),
-                       true) {
+                       true),
+      m_openGLContext(Widget->context()), m_default_colors(colors),
+      m_colors(colors), m_translationOffset(meshPositionOffset),
+      m_position(position), m_rotation(rotation), m_scale(scale) {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
   QOpenGLFunctions::initializeOpenGLFunctions();
