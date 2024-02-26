@@ -487,7 +487,7 @@
               </widget>
              </item>
              <item row="0" column="0" colspan="5">
-              <widget class="QStackedWidget" name="stackGeometry">
+              <widget class="QStackedWidget" name="stackCompMesh">
                <widget class="QWidget" name="page1">
                 <layout class="QHBoxLayout" name="horizontalLayout_6">
                  <item>

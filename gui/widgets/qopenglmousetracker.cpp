@@ -4,12 +4,13 @@
 
 #include "qopenglmousetracker.hpp"
 
-QOpenGLMouseTracker::QOpenGLMouseTracker(float lineWidth,
+QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
                                          float lineSelectPrecision,
                                          QColor selectedObjectColor,
                                          float cameraFOV, float cameraNearZ,
                                          float cameraFarZ, float frameRate)
-    : m_camera(cameraFOV, static_cast<float>(size().width()),
+    : QOpenGLWidget(parent),
+      m_camera(cameraFOV, static_cast<float>(size().width()),
                static_cast<float>(size().height()), cameraNearZ, cameraFarZ),
       m_lineWidth(lineWidth), m_lineSelectPrecision(lineSelectPrecision),
       m_selectedObjectColor(selectedObjectColor), m_frameRate(frameRate) {
@@ -261,7 +262,6 @@ void QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
         new rendering::WireframeObjects(mesh, this, mesh.getColorTable(),
                                         mesh.getOffset()));
   }
-
   m_SubMeshes = std::unique_ptr<rendering::WireframeObjects>(
       new rendering::WireframeObjects(mesh, this, colors, mesh.getOffset()));
 }
