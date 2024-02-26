@@ -24,7 +24,11 @@ const char text_vertex_color_as_uniform[] =
     "\n"
     "uniform vec3 viewPosition;\n"
     "uniform vec3 viewRotation;\n"
+    "uniform vec4 clipPlane[8];\n"
+    "uniform bool activeClipPlane[8]=\n"
+    "bool[8](false, false, false, false, false, false, false, false);\n"
     "out vec4 ex_Color;\n"
+    "out float gl_ClipDistance[8];\n"
     "\n"
     "mat4 scaling( in float dx, in float dy, in float dz ) {\n"
     "return mat4(\n"
@@ -89,6 +93,7 @@ const char text_vertex_color_as_uniform[] =
     "translationOffset.x, translationOffset.y, translationOffset.z);\n"
     "gl_Position = in_Position * offset * MVP;\n"
     "ex_Color = in_Color;\n"
+    "gl_ClipDistance[0] = dot( in_Position * offset * model, clipPlane[0]);\n"
     "}\n";
 
 }

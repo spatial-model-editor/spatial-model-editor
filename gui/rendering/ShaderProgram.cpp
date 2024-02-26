@@ -112,6 +112,48 @@ void rendering::ShaderProgram::Init() {
   m_meshTranslationOffsetLocation =
       glGetUniformLocation(m_programId, "translationOffset");
   CheckOpenGLError("glGetUniformLocation");
+
+  m_clipPlane[0] = glGetUniformLocation(m_programId, "clipPlane[0]");
+  CheckOpenGLError("glGetUniformLocation");
+  m_clipPlane[1] = glGetUniformLocation(m_programId, "clipPlane[1]");
+  CheckOpenGLError("glGetUniformLocation");
+  m_clipPlane[2] = glGetUniformLocation(m_programId, "clipPlane[2]");
+  CheckOpenGLError("glGetUniformLocation");
+  m_clipPlane[3] = glGetUniformLocation(m_programId, "clipPlane[3]");
+  CheckOpenGLError("glGetUniformLocation");
+  m_clipPlane[4] = glGetUniformLocation(m_programId, "clipPlane[4]");
+  CheckOpenGLError("glGetUniformLocation");
+  m_clipPlane[5] = glGetUniformLocation(m_programId, "clipPlane[5]");
+  CheckOpenGLError("glGetUniformLocation");
+  m_clipPlane[6] = glGetUniformLocation(m_programId, "clipPlane[6]");
+  CheckOpenGLError("glGetUniformLocation");
+  m_clipPlane[7] = glGetUniformLocation(m_programId, "clipPlane[7]");
+  CheckOpenGLError("glGetUniformLocation");
+
+  m_activeClipPlane[0] =
+      glGetUniformLocation(m_programId, "activeClipPlane[0]");
+  CheckOpenGLError("glGetUniformLocation");
+  m_activeClipPlane[1] =
+      glGetUniformLocation(m_programId, "activeClipPlane[1]");
+  CheckOpenGLError("glGetUniformLocation");
+  m_activeClipPlane[2] =
+      glGetUniformLocation(m_programId, "activeClipPlane[2]");
+  CheckOpenGLError("glGetUniformLocation");
+  m_activeClipPlane[3] =
+      glGetUniformLocation(m_programId, "activeClipPlane[3]");
+  CheckOpenGLError("glGetUniformLocation");
+  m_activeClipPlane[4] =
+      glGetUniformLocation(m_programId, "activeClipPlane[4]");
+  CheckOpenGLError("glGetUniformLocation");
+  m_activeClipPlane[5] =
+      glGetUniformLocation(m_programId, "activeClipPlane[5]");
+  CheckOpenGLError("glGetUniformLocation");
+  m_activeClipPlane[6] =
+      glGetUniformLocation(m_programId, "activeClipPlane[6]");
+  CheckOpenGLError("glGetUniformLocation");
+  m_activeClipPlane[7] =
+      glGetUniformLocation(m_programId, "activeClipPlane[7]");
+  CheckOpenGLError("glGetUniformLocation");
 }
 
 rendering::ShaderProgram::~ShaderProgram() {
@@ -190,4 +232,45 @@ void rendering::ShaderProgram::SetMeshTranslationOffset(GLfloat x, GLfloat y,
 void rendering::ShaderProgram::Use() {
   glUseProgram(m_programId);
   CheckOpenGLError("glUseProgram");
+}
+
+void rendering::ShaderProgram::SetClipPlane(GLfloat a, GLfloat b, GLfloat c,
+                                            GLfloat d, uint32_t planeIndex) {
+
+  assert(planeIndex < MAX_NUMBER_PLANES);
+
+  Use();
+
+  // activate OpenGL's clip-plane internal state
+  glEnable(GL_CLIP_DISTANCE0 + planeIndex);
+  CheckOpenGLError("glEnable");
+
+  // activate plane test inside vertex shader
+  glUniform1i(m_activeClipPlane[planeIndex], true);
+  CheckOpenGLError("glUniform1i");
+
+  glUniform4f(m_clipPlane[planeIndex], a, b, c, d);
+  CheckOpenGLError("glUniform4f");
+}
+
+void rendering::ShaderProgram::DisablePlaneIndex(uint32_t planeIndex) {
+
+  assert(planeIndex < MAX_NUMBER_PLANES);
+
+  Use();
+
+  // disable OpenGL's clip-plane internal state
+  glDisable(GL_CLIP_DISTANCE0 + planeIndex);
+  CheckOpenGLError("glDisable");
+
+  // deactivate plane test inside vertex shader
+  glUniform1i(m_activeClipPlane[planeIndex], false);
+  CheckOpenGLError("glUniform1i");
+}
+
+void rendering::ShaderProgram::DisableAllPlanes() {
+
+  for (uint32_t i = 0; i < MAX_NUMBER_PLANES; i++) {
+    DisablePlaneIndex(i);
+  }
 }

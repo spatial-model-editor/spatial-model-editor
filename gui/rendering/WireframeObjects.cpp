@@ -138,6 +138,8 @@ void rendering::WireframeObjects::DestroyVBO() {
 void rendering::WireframeObjects::Render(
     std::unique_ptr<rendering::ShaderProgram> &program, float lineWidth) {
 
+  m_openGLContext->makeCurrent(m_openGLContext->surface());
+
   glLineWidth(lineWidth);
   glEnable(GL_LINE_SMOOTH);
   //  glEnable(GL_CULL_FACE);

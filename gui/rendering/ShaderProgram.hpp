@@ -7,6 +7,8 @@
 #include <QtOpenGL>
 #include <string>
 
+#define MAX_NUMBER_PLANES 8
+
 namespace rendering {
 
 class ShaderProgram : protected QOpenGLFunctions {
@@ -36,6 +38,11 @@ public:
 
   void SetMeshTranslationOffset(GLfloat x, GLfloat y, GLfloat z);
 
+  void SetClipPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d,
+                    uint32_t planeIndex);
+  void DisablePlaneIndex(uint32_t planeIndex);
+  void DisableAllPlanes();
+
 private:
   std::string m_vertexShaderText;
   std::string m_fragmentShaderText;
@@ -54,6 +61,9 @@ private:
   GLint m_color;
 
   GLint m_meshTranslationOffsetLocation;
+
+  GLint m_clipPlane[MAX_NUMBER_PLANES];
+  GLint m_activeClipPlane[MAX_NUMBER_PLANES];
 };
 
 } // namespace rendering
