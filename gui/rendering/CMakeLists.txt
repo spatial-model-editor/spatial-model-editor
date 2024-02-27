@@ -1,10 +1,9 @@
 target_sources(
   gui
   PRIVATE Camera.cpp
-          ObjectLoader.cpp
           ShaderProgram.cpp
           Utils.cpp
-          WireframeObject.cpp)
+          WireframeObjects.cpp)
 
 target_include_directories(gui PUBLIC .)
 

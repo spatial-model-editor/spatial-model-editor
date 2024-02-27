@@ -7,6 +7,7 @@
 #include <QRgb>
 #include <QSize>
 #include <QString>
+#include <QVector4D>
 #include <array>
 #include <cstddef>
 #include <memory>
@@ -34,6 +35,7 @@ private:
   std::vector<std::vector<TetrahedronVertexIndices>> tetrahedronVertexIndices_;
   std::vector<std::uint8_t> labelToCompartmentIndex_;
   bool validMesh_{false};
+  std::vector<QColor> colorTableVec;
   std::string errorMessage_{};
   void constructMesh();
 
@@ -103,12 +105,32 @@ public:
    */
   [[nodiscard]] std::vector<double> getVerticesAsFlatArray() const;
   /**
+   * @brief The physical mesh vertices as an array of QVector4D ( homogeneous
+   * floating value )
+   *
+   * Used as input in the rendering system
+   */
+  [[nodiscard]] std::vector<QVector4D>
+  getVerticesAsQVector4DArrayInHomogeneousCoord() const;
+  /**
+   *
+   * @return number of compartments available.
+   */
+  [[nodiscard]] std::size_t getNumberOfCompartment() const;
+  /**
    * @brief The mesh tetrahedron indices as a flat array of ints
    *
    * For saving to the SBML document.
    */
   [[nodiscard]] std::vector<int>
   getTetrahedronIndicesAsFlatArray(std::size_t compartmentIndex) const;
+  /**
+   * A flat array of segment indices for a particular compartment
+   *
+   * Used by the rendering system.
+   */
+  [[nodiscard]] std::vector<uint32_t>
+  getMeshSegmentsIndicesAsFlatArray(std::size_t compartmentIndex) const;
   /**
    * @brief The mesh tetrahedron indices
    *
@@ -123,6 +145,20 @@ public:
    * @returns the mesh in GMSH format
    */
   [[nodiscard]] QString getGMSH() const;
+
+  /**
+   * @brief Get the colors of the compartments
+   *
+   */
+
+  const std::vector<QColor> &getColors() const;
+
+  /**
+   * @brief returns offset used for centering the mesh.
+   *
+   */
+
+  QVector3D getOffset() const;
 
   static constexpr std::size_t dim = 3;
 };

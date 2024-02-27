@@ -9,11 +9,13 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(float lineWidth,
                                          QColor selectedObjectColor,
                                          float cameraFOV, float cameraNearZ,
                                          float cameraFarZ, float frameRate)
-    : m_frameRate(frameRate), m_lineWidth(lineWidth),
-      m_lineSelectPrecision(lineSelectPrecision),
+    : m_lineWidth(lineWidth), m_lineSelectPrecision(lineSelectPrecision),
       m_selectedObjectColor(selectedObjectColor),
       m_camera(cameraFOV, static_cast<float>(size().width()),
-               static_cast<float>(size().height()), cameraNearZ, cameraFarZ) {}
+               static_cast<float>(size().height()), cameraNearZ, cameraFarZ),
+      m_frameRate(frameRate),
+      m_backgroundColor(QWidget::palette().color(QWidget::backgroundRole())),
+      m_lastColour(QWidget::palette().color(QWidget::backgroundRole()).rgb()) {}
 
 void QOpenGLMouseTracker::initializeGL() {
 
@@ -65,12 +67,14 @@ void QOpenGLMouseTracker::initializeGL() {
 
   m_mainProgram =
       std::unique_ptr<rendering::ShaderProgram>(new rendering::ShaderProgram(
-          rendering::text_vertex, rendering::text_fragment));
+          rendering::text_vertex_color_as_uniform, rendering::text_fragment));
 }
 
 void QOpenGLMouseTracker::renderScene(float lineWidth) {
-  for (color_mesh &obj : m_meshSet) {
-    obj.second->Render(m_mainProgram, lineWidth);
+
+  if (m_SubMeshes) {
+    m_SubMeshes->setBackground(m_backgroundColor);
+    m_SubMeshes->Render(m_mainProgram, lineWidth);
   }
 }
 
@@ -133,20 +137,20 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
               std::string(" Y:") + std::to_string(m_yAtPress));
   SPDLOG_INFO("color :" + color.name().toStdString());
 
-  for (color_mesh &obj : m_meshSet) {
-    if (obj.first == color) {
-      obj.second->SetColor(m_selectedObjectColor);
+  auto defaultColors = m_SubMeshes->GetDefaultColors();
+  for (uint32_t i = 0; i < defaultColors.size(); i++) {
+    if (defaultColors[i] == color) {
+      m_SubMeshes->SetColor(m_selectedObjectColor, i);
       objectSelected = true;
-      emit mouseClicked(m_lastColour, obj.second->GetMesh());
+      emit mouseClicked(m_lastColour, i);
 
       SPDLOG_INFO("Object touched!");
     }
   }
 
   if (!objectSelected) {
-    for (color_mesh &obj : m_meshSet) {
-      auto defaultColor = obj.first;
-      obj.second->SetColor(defaultColor);
+    for (uint32_t i = 0; i < defaultColors.size(); i++) {
+      m_SubMeshes->ResetDefaultColor(i);
     }
 
     SPDLOG_INFO("Reset state for selected objects to UNSELECTED objects!");
@@ -169,21 +173,21 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
   m_xAtPress = xAtPress;
   m_yAtPress = yAtPress;
 
-  // apply rotation of the camera
-  QVector3D cameraOrientation = GetCameraOrientation();
-  SetCameraOrientation(
-      cameraOrientation.x() + static_cast<float>(y_len) * (1 / m_frameRate),
-      cameraOrientation.y() + static_cast<float>(x_len) * (1 / m_frameRate),
-      cameraOrientation.z());
+  // apply rotation to all sub-meshes
+  QVector3D subMeshesOrientation = GetSubMeshesOrientation();
+  SetSubMeshesOrientation(subMeshesOrientation.x() - static_cast<float>(y_len),
+                          subMeshesOrientation.y() - static_cast<float>(x_len),
+                          subMeshesOrientation.z());
 
   repaint();
 
   QRgb pixel = m_offscreenPickingImage.pixel(xAtPress, yAtPress);
   QColor color(pixel);
 
-  for (color_mesh &obj : m_meshSet) {
-    if (obj.first == color) {
-      emit mouseOver(obj.second->GetMesh());
+  auto defaultColors = m_SubMeshes->GetDefaultColors();
+  for (uint32_t i = 0; i < defaultColors.size(); i++) {
+    if (defaultColors[i] == color) {
+      emit mouseOver(i);
     }
   }
 }
@@ -218,11 +222,34 @@ QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
   return m_camera.GetRotation();
 }
 
-void QOpenGLMouseTracker::addMesh(const rendering::SMesh &mesh, QColor color) {
-  rendering::ObjectInfo objectInfo = rendering::ObjectLoader::Load(mesh);
+void QOpenGLMouseTracker::SetSubMeshesOrientation(float x, float y, float z) {
+  m_SubMeshes->SetRotation(x, y, z);
+}
 
-  m_meshSet.emplace_back(color, std::make_unique<rendering::WireframeObject>(
-                                    objectInfo, color, mesh, this));
+void QOpenGLMouseTracker::SetSubMeshesPosition(float x, float y, float z) {
+  m_SubMeshes->SetPosition(x, y, z);
+}
+
+QVector3D QOpenGLMouseTracker::GetSubMeshesOrientation() const {
+  return m_SubMeshes->GetRotation();
+}
+
+QVector3D QOpenGLMouseTracker::GetSubMeshesPosition() const {
+  return m_SubMeshes->GetPosition();
+}
+
+void QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
+                                       const std::vector<QColor> &colors) {
+
+  if (colors.empty()) {
+    m_SubMeshes = std::make_unique<rendering::WireframeObjects>(
+        mesh, this, mesh.getColors(), mesh.getOffset());
+
+  } else {
+
+    m_SubMeshes = std::make_unique<rendering::WireframeObjects>(
+        mesh, this, colors, mesh.getOffset());
+  }
 }
 
 void QOpenGLMouseTracker::setFPS(float frameRate) { m_frameRate = frameRate; }
@@ -241,6 +268,23 @@ void QOpenGLMouseTracker::setSelectedObjectColor(QColor color) {
 
 QRgb QOpenGLMouseTracker::getColour() const { return m_lastColour; }
 
+void QOpenGLMouseTracker::setSubmeshVisibility(uint32_t meshID,
+                                               bool visibility) {
+  m_SubMeshes->setSubmeshVisibility(meshID, visibility);
+}
+
+std::size_t QOpenGLMouseTracker::meshIDFromColor(const QColor &color) const {
+  return m_SubMeshes->meshIDFromColor(color);
+}
+
 QColor QOpenGLMouseTracker::getSelectedObjectColor() const {
   return m_selectedObjectColor;
+}
+
+void QOpenGLMouseTracker::setBackgroundColor(QColor background) {
+  m_backgroundColor = background;
+}
+
+QColor QOpenGLMouseTracker::getBackgroundColor() const {
+  return m_backgroundColor;
 }

@@ -6,8 +6,16 @@
 #include "qt_test_utils.hpp"
 
 #include "qopenglmousetracker.hpp"
-#include "rendering/rendering.hpp"
 #include "sme/logger.hpp"
+#include <sme/mesh3d.hpp>
+
+#include "model_test_utils.hpp"
+#include "sme/image_stack.hpp"
+#include "sme/tiff.hpp"
+#include "sme/utils.hpp"
+#include <QDir>
+#include <QImage>
+#include <QPoint>
 
 using namespace sme::test;
 
@@ -19,113 +27,234 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
   QColor redColor = QColor(255, 0, 0);
   QColor blueColor = QColor(0, 0, 255);
-  QColor blackColor = QColor(0, 0, 0);
+  QColor greenColor = QColor(0, 255, 0);
+  QColor yelloColor = QColor(255, 255, 0);
+
+  QColor backgroundColor = test.getBackgroundColor();
 
   test.show();
 
-  wait(100);
-
   // camera position
-  test.SetCameraPosition(0, 0, -10);
+  test.SetCameraPosition(0, 0, -70);
 
-  // loading meshes
-  QFile::copy(":/test/rendering/Objects/sphere.ply", "tmp_sphere.ply");
-  REQUIRE(QFile::exists("tmp_sphere.ply"));
-  rendering::SMesh sphereMesh = rendering::ObjectLoader::LoadMesh(
-      QDir::current().filePath("tmp_sphere.ply").toStdString());
-  test.addMesh(sphereMesh, redColor);
+  SECTION("Two disconnected eggs") {
+    sme::test::createBinaryFile("geometry/3d_two_eggs_disconnected.tiff",
+                                "tmp_two_eggs.tif");
+    sme::common::TiffReader tiffReader(
+        QDir::current().filePath("tmp_two_eggs.tif").toStdString());
+    REQUIRE(tiffReader.empty() == false);
+    REQUIRE(tiffReader.getErrorMessage().isEmpty());
+    auto imageStack = tiffReader.getImages();
+    imageStack.convertToIndexed();
+    auto colours = imageStack[0].colorTable();
+    REQUIRE(colours.size() == 3);
+    QRgb colOutside{0xff000000};
+    QRgb colCell{0xff7f7f7f};
+    QRgb colNucleus{0xffffffff};
+    std::vector<std::size_t> maxCellVolume{3};
 
-  wait(100);
+    SECTION("All three compartments") {
+      sme::common::VolumeF voxelSize(1.0, 1.0, 1.0);
+      sme::common::VoxelF originPoint(0.0, 0.0, 0.0);
+      sme::mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize,
+                               originPoint, sme::common::toStdVec(colours));
+      REQUIRE(mesh3d.isValid() == true);
+      REQUIRE(mesh3d.getErrorMessage().empty());
+      REQUIRE(mesh3d.getTetrahedronIndices().size() == 3);
 
-  QFile::copy(":/test/rendering/Objects/teapot.ply", "tmp_teapot.ply");
-  QFileInfo info("tmp_teapot.ply");
-  REQUIRE(QFile::exists("tmp_teapot.ply"));
+      test.SetSubMeshes(mesh3d, {redColor, blueColor, greenColor});
 
-  wait(100);
+      // rotation around y axes and reset
+      sendMouseDrag(&test, QPoint(516, 221), QPoint(546, 221));
+      wait(100);
+      sendMouseDrag(&test, QPoint(546, 221), QPoint(516, 221));
+      wait(100);
+      // rotation around x axes and reset
+      sendMouseDrag(&test, QPoint(516, 221), QPoint(516, 241));
+      wait(100);
+      sendMouseDrag(&test, QPoint(516, 241), QPoint(516, 221));
+      wait(100);
 
-  rendering::SMesh teapotMesh = rendering::ObjectLoader::LoadMesh(
-      QDir::current().filePath("tmp_teapot.ply").toStdString());
-  test.addMesh(teapotMesh, blueColor);
+      // forcing window resize and repaint
+      test.resize(500, 500);
+      wait(100);
+      auto QcolorSelection = QColor(test.getColour());
+      // the corner initial color should be backgroundColor.
+      REQUIRE(backgroundColor == QcolorSelection);
 
-  auto QcolorSelection = QColor(test.getColour());
+      // visibility test, disable sub-mesh
+      test.setSubmeshVisibility(0, false);
+      test.repaint();
+      sendMouseClick(&test, {253, 235});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
 
-  // forced windows resize and forced repainting
-  test.resize(500, 500);
-  // test.repaint();
+      wait(100);
+      // visibility test, enable sub-mesh
+      test.setSubmeshVisibility(0, true);
+      test.repaint();
+      sendMouseClick(&test, {253, 235});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor != QcolorSelection);
 
-  // the corner initial color should be black.
-  REQUIRE(blackColor == QcolorSelection);
+      wait(100);
 
-  // zoom
-  sendMouseWheel(&test, 1);
+      // zoom
+      sendMouseWheel(&test, 1);
+      // move mouse over image
+      sendMouseMove(&test, {10, 44});
+      // click on image
+      sendMouseClick(&test, {40, 40});
+      // test.repaint();
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(blueColor != QcolorSelection);
 
-  // move mouse over image
-  sendMouseMove(&test, {10, 44});
+      wait(100);
 
-  // click on image
-  sendMouseClick(&test, {40, 40});
-  // test.repaint();
+      sendMouseClick(&test, {0, 0});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(redColor == QcolorSelection);
 
-  QcolorSelection = QColor(test.getColour());
+      wait(100);
 
-  REQUIRE(blueColor != QcolorSelection);
+      sendMouseClick(&test, {126, 319});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(yelloColor == QcolorSelection);
 
-  wait(100);
+      wait(100);
 
-  sendMouseClick(&test, {0, 0});
+      // reset
+      sendMouseClick(&test, {412, 445});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
 
-  QcolorSelection = QColor(test.getColour());
+      wait(100);
 
-  REQUIRE(blueColor == QcolorSelection);
+      // reset
+      sendMouseClick(&test, {412, 445});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
 
-  wait(100);
+      wait(100);
 
-  sendMouseClick(&test, {376, 366});
+      sendMouseClick(&test, {0, 0});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(redColor == QcolorSelection);
 
-  QcolorSelection = QColor(test.getColour());
+      wait(100);
 
-  REQUIRE(redColor == QcolorSelection);
+      sendMouseClick(&test, {331, 322});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(yelloColor == QcolorSelection);
 
-  wait(100);
+      wait(100);
 
-  // reset
-  sendMouseClick(&test, {412, 445});
+      // reset
+      sendMouseClick(&test, {412, 445});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
+    }
 
-  QcolorSelection = QColor(test.getColour());
+    SECTION("All three compartments + mesh offset") {
+      sme::common::VolumeF voxelSize(1.0, 1.0, 1.0);
+      sme::common::VoxelF originPoint(1.0, 3.0, 3.0);
+      sme::mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize,
+                               originPoint, sme::common::toStdVec(colours));
+      REQUIRE(mesh3d.isValid() == true);
+      REQUIRE(mesh3d.getErrorMessage().empty());
+      REQUIRE(mesh3d.getTetrahedronIndices().size() == 3);
 
-  REQUIRE(blackColor == QcolorSelection);
+      test.SetSubMeshes(mesh3d, {redColor, blueColor, greenColor});
 
-  wait(100);
+      // rotation around y axes and reset
+      sendMouseDrag(&test, QPoint(516, 221), QPoint(546, 221));
+      wait(100);
+      sendMouseDrag(&test, QPoint(546, 221), QPoint(516, 221));
+      wait(100);
+      // rotation around x axes and reset
+      sendMouseDrag(&test, QPoint(516, 221), QPoint(516, 241));
+      wait(100);
+      sendMouseDrag(&test, QPoint(516, 241), QPoint(516, 221));
+      wait(100);
 
-  // reset
-  sendMouseClick(&test, {412, 445});
+      // forcing window resize and repaint
+      test.resize(500, 500);
+      wait(100);
+      auto QcolorSelection = QColor(test.getColour());
+      // the corner initial color should be backgroundColor.
+      REQUIRE(backgroundColor == QcolorSelection);
 
-  QcolorSelection = QColor(test.getColour());
+      // visibility test, disable sub-mesh
+      test.setSubmeshVisibility(0, false);
+      test.repaint();
+      sendMouseClick(&test, {253, 235});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
 
-  REQUIRE(blackColor == QcolorSelection);
+      wait(100);
+      // visibility test, enable sub-mesh
+      test.setSubmeshVisibility(0, true);
+      test.repaint();
+      sendMouseClick(&test, {253, 235});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor != QcolorSelection);
 
-  wait(100);
+      wait(100);
 
-  sendMouseClick(&test, {0, 0});
+      // zoom
+      sendMouseWheel(&test, 1);
+      // move mouse over image
+      sendMouseMove(&test, {10, 44});
+      // click on image
+      sendMouseClick(&test, {40, 40});
+      // test.repaint();
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(blueColor != QcolorSelection);
 
-  QcolorSelection = QColor(test.getColour());
+      wait(100);
 
-  REQUIRE(blueColor == QcolorSelection);
+      sendMouseClick(&test, {0, 0});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(redColor == QcolorSelection);
 
-  wait(100);
+      wait(100);
 
-  sendMouseClick(&test, {376, 366});
+      sendMouseClick(&test, {126, 319});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(yelloColor == QcolorSelection);
 
-  QcolorSelection = QColor(test.getColour());
+      wait(100);
 
-  REQUIRE(redColor == QcolorSelection);
+      // reset
+      sendMouseClick(&test, {412, 445});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
 
-  wait(100);
+      wait(100);
 
-  // reset
-  sendMouseClick(&test, {412, 445});
+      // reset
+      sendMouseClick(&test, {412, 445});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
 
-  QcolorSelection = QColor(test.getColour());
+      wait(100);
 
-  REQUIRE(blackColor == QcolorSelection);
+      sendMouseClick(&test, {0, 0});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(redColor == QcolorSelection);
+
+      wait(100);
+
+      sendMouseClick(&test, {331, 322});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(yelloColor == QcolorSelection);
+
+      wait(100);
+
+      // reset
+      sendMouseClick(&test, {412, 445});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
+    }
+  }
 }

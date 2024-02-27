@@ -28,7 +28,24 @@ public:
   QVector3D GetCameraPosition() const;
   QVector3D GetCameraOrientation() const;
 
-  void addMesh(const rendering::SMesh &mesh, QColor color);
+  void SetSubMeshesOrientation(float x, float y, float z);
+  void SetSubMeshesPosition(float x, float y, float z);
+
+  QVector3D GetSubMeshesOrientation() const;
+  QVector3D GetSubMeshesPosition() const;
+
+  /**
+   * @brief Number of visible submeshes is influenced by the number of colors.
+   *
+   * The colors are distributed to submeshes in the same order they are
+   * provided. In case of a smaller number of colors, submeshes with higher
+   * index will not be visible.
+   *
+   * Default colors used are taken from 'mesh'
+   */
+
+  void SetSubMeshes(const sme::mesh::Mesh3d &mesh,
+                    const std::vector<QColor> &colors = std::vector<QColor>(0));
 
   void setFPS(float frameRate);
   void setLineWidth(float lineWidth = 1.0f);
@@ -41,13 +58,24 @@ public:
   // colour of pixel at last mouse click position
   [[nodiscard]] QRgb getColour() const;
 
+  void setSubmeshVisibility(uint32_t meshID, bool visibility);
+
+  /**
+   * @brief If color is not valid returns -1 otherwise, return positive index.
+   *
+   */
+  std::size_t meshIDFromColor(const QColor &color) const;
+
+  void setBackgroundColor(QColor background);
+  QColor getBackgroundColor() const;
+
 signals:
-  void mouseClicked(QRgb color, const rendering::SMesh &mesh);
-  void mouseOver(const rendering::SMesh &mesh);
+  void mouseClicked(QRgb color, uint32_t meshID);
+  void mouseOver(uint32_t meshID);
   void mouseWheelEvent(QWheelEvent *ev);
 
 protected:
-  QRgb m_lastColour{};
+  QRgb m_lastColour;
 
 #ifdef QT_DEBUG
   QOpenGLDebugLogger *m_debugLogger;
@@ -60,10 +88,7 @@ protected:
 
   QColor m_selectedObjectColor;
 
-  typedef std::pair<QColor, std::unique_ptr<rendering::WireframeObject>>
-      color_mesh;
-
-  std::vector<color_mesh> m_meshSet;
+  std::unique_ptr<rendering::WireframeObjects> m_SubMeshes;
 
   std::unique_ptr<rendering::ShaderProgram> m_mainProgram;
   rendering::Camera m_camera;
@@ -72,6 +97,8 @@ protected:
 
   int m_xAtPress;
   int m_yAtPress;
+
+  QColor m_backgroundColor;
 
   void initializeGL() override;
   void resizeGL(int w, int h) override;

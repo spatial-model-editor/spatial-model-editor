@@ -107,6 +107,11 @@ void rendering::ShaderProgram::Init() {
   CheckOpenGLError("glGetUniformLocation");
   m_viewRotationLocation = glGetUniformLocation(m_programId, "viewRotation");
   CheckOpenGLError("glGetUniformLocation");
+  m_color = glGetUniformLocation(m_programId, "in_Color");
+  CheckOpenGLError("glGetUniformLocation");
+  m_meshTranslationOffsetLocation =
+      glGetUniformLocation(m_programId, "translationOffset");
+  CheckOpenGLError("glGetUniformLocation");
 }
 
 rendering::ShaderProgram::~ShaderProgram() {
@@ -165,6 +170,20 @@ void rendering::ShaderProgram::SetViewRotation(GLfloat viewRotationX,
   Use();
   glUniform3f(m_viewRotationLocation, viewRotationX, viewRotationY,
               viewRotationZ);
+  CheckOpenGLError("glUniform3f");
+}
+void rendering::ShaderProgram::SetColor(GLfloat r, GLfloat g, GLfloat b,
+                                        GLfloat a) {
+  Use();
+  glUniform4f(m_color, r, g, b, a);
+  CheckOpenGLError("glUniform4f");
+}
+
+void rendering::ShaderProgram::SetMeshTranslationOffset(GLfloat x, GLfloat y,
+                                                        GLfloat z) {
+
+  Use();
+  glUniform3f(m_meshTranslationOffsetLocation, x, y, z);
   CheckOpenGLError("glUniform3f");
 }
 
