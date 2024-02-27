@@ -166,6 +166,17 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
       test.SetSubMeshes(mesh3d, {redColor, blueColor, greenColor});
 
+      // rotation around y axes and reset
+      sendMouseDrag(&test, QPoint(516, 221), QPoint(546, 221));
+      wait(100);
+      sendMouseDrag(&test, QPoint(546, 221), QPoint(516, 221));
+      wait(100);
+      // rotation around x axes and reset
+      sendMouseDrag(&test, QPoint(516, 221), QPoint(516, 241));
+      wait(100);
+      sendMouseDrag(&test, QPoint(516, 241), QPoint(516, 221));
+      wait(100);
+
       // forcing window resize and repaint
       test.resize(500, 500);
       wait(100);
