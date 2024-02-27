@@ -66,7 +66,8 @@ public:
    */
   std::size_t meshIDFromColor(const QColor &color) const;
 
-  void setBackground(QColor background);
+  void setBackgroundColor(QColor background);
+  QColor getBackgroundColor() const;
 
 signals:
   void mouseClicked(QRgb color, uint32_t meshID);
@@ -74,7 +75,7 @@ signals:
   void mouseWheelEvent(QWheelEvent *ev);
 
 protected:
-  QRgb m_lastColour{};
+  QRgb m_lastColour;
 
 #ifdef QT_DEBUG
   QOpenGLDebugLogger *m_debugLogger;

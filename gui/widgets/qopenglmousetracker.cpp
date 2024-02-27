@@ -14,7 +14,8 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(float lineWidth,
       m_camera(cameraFOV, static_cast<float>(size().width()),
                static_cast<float>(size().height()), cameraNearZ, cameraFarZ),
       m_frameRate(frameRate),
-      m_backgroundColor(QWidget::palette().color(QWidget::backgroundRole())) {}
+      m_backgroundColor(QWidget::palette().color(QWidget::backgroundRole())),
+      m_lastColour(QWidget::palette().color(QWidget::backgroundRole()).rgb()) {}
 
 void QOpenGLMouseTracker::initializeGL() {
 
@@ -289,6 +290,10 @@ QColor QOpenGLMouseTracker::getSelectedObjectColor() const {
   return m_selectedObjectColor;
 }
 
-void QOpenGLMouseTracker::setBackground(QColor background) {
+void QOpenGLMouseTracker::setBackgroundColor(QColor background) {
   m_backgroundColor = background;
+}
+
+QColor QOpenGLMouseTracker::getBackgroundColor() const {
+  return m_backgroundColor;
 }
