@@ -32,6 +32,16 @@ int main(int argc, char *argv[]) {
   // ensure our default opengl format is compatible with vtk
   QSurfaceFormat::setDefaultFormat(QVTKOpenGLNativeWidget::defaultFormat());
 
+  //    QSurfaceFormat format;
+  //    format.setDepthBufferSize(24);
+  //    format.setStencilBufferSize(8);
+  //    format.setAlphaBufferSize(8);
+  //    format.setBlueBufferSize(8);
+  //    format.setRedBufferSize(8);
+  //    format.setGreenBufferSize(8);
+  //    format.setProfile(QSurfaceFormat::CompatibilityProfile);
+  //    QSurfaceFormat::setDefaultFormat(format);
+
   QApplication a(argc, argv);
   QApplication::setWindowIcon(QIcon(":/icon/icon.ico"));
   MainWindow w(filename);

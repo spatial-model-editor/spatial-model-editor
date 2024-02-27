@@ -134,24 +134,28 @@ rendering::ShaderProgram::~ShaderProgram() {
 
 void rendering::ShaderProgram::SetRotation(GLfloat rotationX, GLfloat rotationY,
                                            GLfloat rotationZ) {
+  SPDLOG_ERROR("{}");
   Use();
   glUniform3f(m_rotationLocation, rotationX, rotationY, rotationZ);
   CheckOpenGLError("glUniform3f");
 }
 
 void rendering::ShaderProgram::SetPosition(GLfloat x, GLfloat y, GLfloat z) {
+  SPDLOG_ERROR("{}");
   Use();
   glUniform3f(m_positionLocation, x, y, z);
   CheckOpenGLError("glUniform3f");
 }
 
 void rendering::ShaderProgram::SetScale(GLfloat x, GLfloat y, GLfloat z) {
+  SPDLOG_ERROR("{}");
   Use();
   glUniform3f(m_scaleLocation, x, y, z);
   CheckOpenGLError("glUniform3f");
 }
 
 void rendering::ShaderProgram::SetProjection(const GLfloat *matrix4) {
+  SPDLOG_ERROR("{}");
   Use();
   glUniformMatrix4fv(m_projectionLocation, 1, GL_FALSE, matrix4);
   CheckOpenGLError("glUniformMatrix4fv");
@@ -160,6 +164,7 @@ void rendering::ShaderProgram::SetProjection(const GLfloat *matrix4) {
 void rendering::ShaderProgram::SetViewPosition(GLfloat viewPosX,
                                                GLfloat viewPosY,
                                                GLfloat viewPosZ) {
+  SPDLOG_ERROR("{}");
   Use();
   glUniform3f(m_viewPositionLocation, viewPosX, viewPosY, viewPosZ);
   CheckOpenGLError("glUniform3f");
@@ -167,6 +172,7 @@ void rendering::ShaderProgram::SetViewPosition(GLfloat viewPosX,
 void rendering::ShaderProgram::SetViewRotation(GLfloat viewRotationX,
                                                GLfloat viewRotationY,
                                                GLfloat viewRotationZ) {
+  SPDLOG_ERROR("{}");
   Use();
   glUniform3f(m_viewRotationLocation, viewRotationX, viewRotationY,
               viewRotationZ);
@@ -174,6 +180,7 @@ void rendering::ShaderProgram::SetViewRotation(GLfloat viewRotationX,
 }
 void rendering::ShaderProgram::SetColor(GLfloat r, GLfloat g, GLfloat b,
                                         GLfloat a) {
+  SPDLOG_ERROR("{}");
   Use();
   glUniform4f(m_color, r, g, b, a);
   CheckOpenGLError("glUniform4f");
@@ -182,12 +189,14 @@ void rendering::ShaderProgram::SetColor(GLfloat r, GLfloat g, GLfloat b,
 void rendering::ShaderProgram::SetMeshTranslationOffset(GLfloat x, GLfloat y,
                                                         GLfloat z) {
 
+  SPDLOG_ERROR("{}");
   Use();
   glUniform3f(m_meshTranslationOffsetLocation, x, y, z);
   CheckOpenGLError("glUniform3f");
 }
 
 void rendering::ShaderProgram::Use() {
+  SPDLOG_ERROR("{}", m_programId);
   glUseProgram(m_programId);
   CheckOpenGLError("glUseProgram");
 }

@@ -15,6 +15,13 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
       m_lineWidth(lineWidth), m_lineSelectPrecision(lineSelectPrecision),
       m_selectedObjectColor(selectedObjectColor), m_frameRate(frameRate) {
 
+  //  QSurfaceFormat format;
+  //  format.setDepthBufferSize(24);
+  //  format.setStencilBufferSize(8);
+  //  format.setVersion(3, 2);
+  //  format.setProfile(QSurfaceFormat::CoreProfile);
+  //  setFormat(format);
+
   int r{0};
   int g{0};
   int b{0};

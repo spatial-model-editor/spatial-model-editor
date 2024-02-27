@@ -2,6 +2,7 @@
 #include "sme/logger.hpp"
 #include <QApplication>
 #include <QSurfaceFormat>
+#include <QVTKOpenGLNativeWidget.h>
 #include <catch2/catch_session.hpp>
 #include <locale>
 
@@ -10,27 +11,7 @@ int main(int argc, char *argv[]) {
   Catch::StringMaker<float>::precision = 25;
 
 #ifdef SME_ENABLE_GUI_TESTS
-  QSurfaceFormat format;
-  // This comment is a reminder for whenever we can test using a Mac
-  // machine.
-  //  format.setProfile(QSurfaceFormat::CoreProfile);
-  format.setProfile(QSurfaceFormat::CompatibilityProfile);
-
-  format.setDepthBufferSize(24);
-  format.setStencilBufferSize(8);
-  format.setAlphaBufferSize(8);
-  format.setBlueBufferSize(8);
-  format.setRedBufferSize(8);
-  format.setGreenBufferSize(8);
-
-  format.setOption(QSurfaceFormat::DebugContext);
-
-  // This comment is a reminder for whenever we can test using a Mac
-  // machine.
-  //   format.setMajorVersion(4);
-  //   format.setMinorVersion(1);
-
-  QSurfaceFormat::setDefaultFormat(format);
+  QSurfaceFormat::setDefaultFormat(QVTKOpenGLNativeWidget::defaultFormat());
 
   QApplication a(argc, argv);
 #endif
