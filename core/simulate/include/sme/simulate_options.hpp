@@ -32,8 +32,8 @@ struct DuneOptions {
   double decrease{0.5};
   bool writeVTKfiles{false};
   double newtonRelErr{1e-8};
-  double newtonAbsErr{1e-12};
-  std::string linearSolver{"CG"};
+  double newtonAbsErr{0.0};
+  std::string linearSolver{"RestartedGMRes"};
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {

@@ -128,17 +128,6 @@ target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 target_compile_definitions(
   core PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_${SME_LOG_LEVEL})
 
-# provide METIS::METIS target expected by dune-copasi with scotchmetisv3
-# metis-compatible library
-add_library(
-  METIS::METIS
-  INTERFACE
-  IMPORTED)
-find_package(SCOTCH)
-target_link_libraries(
-  METIS::METIS
-  INTERFACE SCOTCH::scotchmetisv3
-  INTERFACE SCOTCH::scotcherr)
 find_package(dune-copasi REQUIRED)
 target_link_libraries(
   core

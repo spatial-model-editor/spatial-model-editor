@@ -16,14 +16,14 @@ using namespace sme;
 using namespace sme::test;
 
 using HostGrid2d = Dune::UGGrid<2>;
-using MDGTraits2d = Dune::mdgrid::DynamicSubDomainCountTraits<2, 10>;
+using MDGTraits2d = Dune::mdgrid::FewSubDomainsTraits<2, 64>;
 using Grid2d = Dune::mdgrid::MultiDomainGrid<HostGrid2d, MDGTraits2d>;
 using Model2d =
     Dune::Copasi::Model<Grid2d, Grid2d::SubDomainGrid::Traits::LeafGridView,
                         double, double>;
 
 using HostGrid3d = Dune::UGGrid<3>;
-using MDGTraits3d = Dune::mdgrid::DynamicSubDomainCountTraits<3, 10>;
+using MDGTraits3d = Dune::mdgrid::FewSubDomainsTraits<3, 64>;
 using Grid3d = Dune::mdgrid::MultiDomainGrid<HostGrid3d, MDGTraits3d>;
 using Model3d =
     Dune::Copasi::Model<Grid3d, Grid3d::SubDomainGrid::Traits::LeafGridView,
@@ -94,8 +94,9 @@ static std::vector<AvgDiff> getAvgDiffs2d(Mod exampleModel,
           dc, *grid));
 
   // create model using TIFF files for initial conditions
-  auto filename =
-      QString("tmp_gridfunction_model_%1").arg(static_cast<int>(exampleModel));
+  auto filename = QString("tmp_gridfunction_model_%1_maxtrianglearea_%2")
+                      .arg(static_cast<int>(exampleModel))
+                      .arg(maxTriangleArea);
   simulate::DuneConverter dcTiff(m, {}, true, filename + ".ini");
   auto configTiff = getConfig(dcTiff);
   auto parser_context_tiff{std::make_shared<Dune::Copasi::ParserContext>(
