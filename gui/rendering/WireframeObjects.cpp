@@ -140,7 +140,7 @@ void rendering::WireframeObjects::Render(
   glEnableVertexAttribArray(0);
   CheckOpenGLError("glEnableVertexAttribArray");
 
-  // glLineWidth(lineWidth);
+  glLineWidth(lineWidth);
   glEnable(GL_LINE_SMOOTH);
   //  glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
