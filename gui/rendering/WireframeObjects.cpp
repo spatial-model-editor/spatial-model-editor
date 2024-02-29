@@ -101,6 +101,7 @@ void rendering::WireframeObjects::CreateVBO() {
   CheckOpenGLError("glBufferData");
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
   CheckOpenGLError("glVertexAttribPointer");
+
   glEnableVertexAttribArray(0);
   CheckOpenGLError("glEnableVertexAttribArray");
 
@@ -121,9 +122,6 @@ void rendering::WireframeObjects::DestroyVBO() {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
 
-  glDisableVertexAttribArray(1);
-  glDisableVertexAttribArray(0);
-
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   glDeleteBuffers(1, &m_vbo);
@@ -137,7 +135,12 @@ void rendering::WireframeObjects::DestroyVBO() {
 void rendering::WireframeObjects::Render(
     const std::unique_ptr<rendering::ShaderProgram> &program, float lineWidth) {
 
-  glLineWidth(lineWidth);
+  m_openGLContext->makeCurrent(m_openGLContext->surface());
+
+  glEnableVertexAttribArray(0);
+  CheckOpenGLError("glEnableVertexAttribArray");
+
+  // glLineWidth(lineWidth);
   glEnable(GL_LINE_SMOOTH);
   //  glEnable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
@@ -163,6 +166,9 @@ void rendering::WireframeObjects::Render(
     glDrawElements(GL_LINES, static_cast<int>(m_indices[i].size()),
                    GL_UNSIGNED_INT, (void *)nullptr);
   }
+
+  glDisableVertexAttribArray(0);
+  CheckOpenGLError("glDisableVertexAttribArray");
 }
 
 void rendering::WireframeObjects::SetRotation(GLfloat rotationX,
