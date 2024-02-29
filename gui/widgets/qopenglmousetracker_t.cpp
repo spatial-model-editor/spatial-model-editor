@@ -37,6 +37,16 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   // camera position
   test.SetCameraPosition(0, 0, -70);
 
+  SECTION("no mesh, mouse click") { sendMouseClick(&test); }
+  SECTION("no mesh, mouse move") {
+    sendMouseDrag(&test, QPoint(12, 12), QPoint(24, 24));
+  }
+  SECTION("very-simple-model, multiple set mesh calls") {
+    auto model = sme::test::getExampleModel(Mod::VerySimpleModel3D);
+    test.SetSubMeshes(*model.getGeometry().getMesh3d());
+    test.SetSubMeshes(*model.getGeometry().getMesh3d());
+    test.SetSubMeshes(*model.getGeometry().getMesh3d());
+  }
   SECTION("Two disconnected eggs") {
     sme::test::createBinaryFile("geometry/3d_two_eggs_disconnected.tiff",
                                 "tmp_two_eggs.tif");
