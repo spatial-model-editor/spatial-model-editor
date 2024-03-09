@@ -321,11 +321,31 @@ Mesh3d::getMeshSegmentsIndicesAsFlatArray(std::size_t compartmentIndex) const {
   const auto &indices = tetrahedronVertexIndices_[compartmentIndex];
   out.reserve(indices.size() * 6);
   for (const auto &t : indices) {
-    for (uint32_t i = 0; i < t.size() - 1; i++) {
+    for (uint32_t i = 0; i < t.size(); i++) {
       for (uint32_t j = i + 1; j < t.size(); j++) {
         out.push_back(static_cast<uint32_t>(t[i]));
         out.push_back(static_cast<uint32_t>(t[j]));
       }
+    }
+  }
+  return out;
+}
+
+std::vector<uint32_t>
+Mesh3d::getMeshTrianglesIndicesAsFlatArray(std::size_t compartmentIndex) const {
+  assert(compartmentIndex < tetrahedronVertexIndices_.size());
+
+  std::vector<uint32_t> out;
+  const auto &indices = tetrahedronVertexIndices_[compartmentIndex];
+  out.reserve(indices.size() * 4 * 3);
+  for (const auto &t : indices) {
+    for (uint32_t i = 0; i < t.size(); i++) {
+      for (uint32_t j = i + 1; j < t.size(); j++)
+        for (uint32_t k = j + 1; k < t.size(); k++) {
+          out.push_back(static_cast<uint32_t>(t[i]));
+          out.push_back(static_cast<uint32_t>(t[j]));
+          out.push_back(static_cast<uint32_t>(t[k]));
+        }
     }
   }
   return out;

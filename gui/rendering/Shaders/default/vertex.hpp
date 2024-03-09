@@ -5,11 +5,12 @@
 #pragma once
 
 namespace rendering {
+namespace shader {
+namespace default_ {
 
 const char text_vertex[] =
-    "#version 140\n"
+    "#version 150\n"
     "#extension GL_ARB_explicit_attrib_location : enable\n"
-    "#extension GL_ARB_explicit_attrib_location: enable\n"
     "#define PI 3.14159265359\n"
     "layout(location=0) in vec4 in_Position;\n"
     "layout(location=1) in vec4 in_Color;\n"
@@ -87,3 +88,5 @@ const char text_vertex[] =
     "}\n";
 
 }
+} // namespace shader
+} // namespace rendering

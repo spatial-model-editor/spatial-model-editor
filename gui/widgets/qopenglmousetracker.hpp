@@ -14,11 +14,11 @@
 class QOpenGLMouseTracker : public QOpenGLWidget {
   Q_OBJECT
 public:
-  QOpenGLMouseTracker(float lineWidth = 1.0f, float lineSelectPrecision = 10.0f,
+  QOpenGLMouseTracker(QWidget *parent = nullptr, float lineWidth = 0.005f,
+                      float lineSelectPrecision = 0.2f,
                       QColor selectedObjectColor = QColor(255, 255, 0),
                       float cameraFOV = 60.0f, float cameraNearZ = 0.001f,
                       float cameraFarZ = 2000.0f, float frameRate = 30.0f);
-  ~QOpenGLMouseTracker() = default;
 
   void SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height,
                         GLfloat nearZ, GLfloat farZ);
@@ -48,8 +48,8 @@ public:
                     const std::vector<QColor> &colors = std::vector<QColor>(0));
 
   void setFPS(float frameRate);
-  void setLineWidth(float lineWidth = 1.0f);
-  void setLineSelectPrecision(float lineSelectPrecision = 10.0f);
+  void setLineWidth(float lineWidth = 0.005f);
+  void setLineSelectPrecision(float lineSelectPrecision = 0.2f);
 
   void setSelectedObjectColor(QColor color = QColor(255, 255, 0));
 
@@ -68,6 +68,8 @@ public:
 
   void setBackgroundColor(QColor background);
   QColor getBackgroundColor() const;
+
+  void clear();
 
 signals:
   void mouseClicked(QRgb color, uint32_t meshID);
@@ -88,9 +90,9 @@ protected:
 
   QColor m_selectedObjectColor;
 
-  std::unique_ptr<rendering::WireframeObjects> m_SubMeshes;
+  std::unique_ptr<rendering::WireframeObjects> m_SubMeshes{};
 
-  std::unique_ptr<rendering::ShaderProgram> m_mainProgram;
+  std::unique_ptr<rendering::ShaderProgram> m_mainProgram{};
   rendering::Camera m_camera;
 
   QImage m_offscreenPickingImage;

@@ -132,6 +132,13 @@ public:
   [[nodiscard]] std::vector<uint32_t>
   getMeshSegmentsIndicesAsFlatArray(std::size_t compartmentIndex) const;
   /**
+   * A flat array of triangle indices for a particular compartment
+   *
+   * Used by the rendering system.
+   */
+  [[nodiscard]] std::vector<uint32_t>
+  getMeshTrianglesIndicesAsFlatArray(std::size_t compartmentIndex) const;
+  /**
    * @brief The mesh tetrahedron indices
    *
    * The indices of the vertices of each tetrahedron used in the mesh for each

@@ -27,7 +27,7 @@ rendering::WireframeObjects::WireframeObjects(
 
   m_indices.reserve(info.getNumberOfCompartment());
   for (size_t i = 0; i < info.getNumberOfCompartment(); i++) {
-    m_indices.push_back(info.getMeshSegmentsIndicesAsFlatArray(i));
+    m_indices.push_back(info.getMeshTrianglesIndicesAsFlatArray(i));
   }
 
   for (const auto &v : m_vertices) {
@@ -112,7 +112,7 @@ void rendering::WireframeObjects::CreateVBO() {
   for (int i = 0; i < m_elementBufferIds.size(); i++) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferIds[i]);
     CheckOpenGLError("glBindBuffer");
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, m_indices[i].size(),
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeofGLVector(m_indices[i]),
                  m_indices[i].data(), GL_STATIC_DRAW);
     CheckOpenGLError("glBufferData");
   }
@@ -140,12 +140,14 @@ void rendering::WireframeObjects::Render(
   glEnableVertexAttribArray(0);
   CheckOpenGLError("glEnableVertexAttribArray");
 
-  glLineWidth(lineWidth);
-  glEnable(GL_LINE_SMOOTH);
-  //  glEnable(GL_CULL_FACE);
+  // glLineWidth(lineWidth);
+  program->SetThickness(lineWidth);
+  // glDisable(GL_CULL_FACE);
   glEnable(GL_DEPTH_TEST);
   glClearColor(clearColor.redF(), clearColor.greenF(), clearColor.blueF(),
                clearColor.alphaF());
+  program->SetBackgroundColor(clearColor.redF(), clearColor.greenF(),
+                              clearColor.blueF());
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
   program->SetMeshTranslationOffset(m_translationOffset.x(),
@@ -163,7 +165,7 @@ void rendering::WireframeObjects::Render(
     program->SetColor(m_colors[i].redF(), m_colors[i].greenF(),
                       m_colors[i].blueF(), m_colors[i].alphaF());
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferIds[i]);
-    glDrawElements(GL_LINES, static_cast<int>(m_indices[i].size()),
+    glDrawElements(GL_TRIANGLES, static_cast<int>(m_indices[i].size()),
                    GL_UNSIGNED_INT, (void *)nullptr);
   }
 
