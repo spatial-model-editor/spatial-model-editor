@@ -20,6 +20,7 @@ class WireframeObjects : protected QOpenGLFunctions {
 public:
   WireframeObjects(const sme::mesh::Mesh3d &info, const QOpenGLWidget *Widget,
                    const std::vector<QColor> &color = std::vector<QColor>(0),
+                   GLfloat meshThickness = 0.005f,
                    const QVector3D &meshPositionOffset = QVector3D(0.0f, 0.0f,
                                                                    0.0f),
                    const QVector3D &position = QVector3D(0.0f, 0.0f, 0.0f),
@@ -29,7 +30,10 @@ public:
   ~WireframeObjects();
 
   void Render(const std::unique_ptr<rendering::ShaderProgram> &program,
-              float lineWidth = 1);
+              float lineWidth = 0.005f);
+
+  void RenderWithCurrentThickness(
+      const std::unique_ptr<rendering::ShaderProgram> &program);
 
   void SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ);
   void SetRotation(const QVector3D &rotation);
@@ -44,12 +48,17 @@ public:
   QVector3D GetScale() const;
 
   void SetColor(const QColor &color, uint32_t meshID);
-  void ResetDefaultColor(uint32_t meshID);
+  void ResetToDefaultColor(uint32_t meshID);
 
   uint32_t GetNumberOfSubMeshes() const;
 
   std::vector<QColor> GetDefaultColors() const;
   std::vector<QColor> GetCurrentColors() const;
+
+  void SetThickness(const GLfloat thickness, uint32_t meshID);
+  void ResetToDefaultThickness(uint32_t meshID);
+  std::vector<GLfloat> GetDefaultThickness() const;
+  std::vector<GLfloat> GetCurrentThickness() const;
 
   void setSubmeshVisibility(uint32_t meshID, bool visibility);
 
@@ -66,7 +75,9 @@ private:
   std::vector<std::vector<GLuint>> m_indices;
 
   std::vector<QColor> m_colors;
-  std::vector<QColor> m_default_colors;
+  std::vector<QColor> m_defaultColors;
+  std::vector<GLfloat> m_meshThickness;
+  std::vector<GLfloat> m_defaultThickness;
 
   QOpenGLContext *m_openGLContext;
 

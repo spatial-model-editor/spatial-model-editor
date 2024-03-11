@@ -12,15 +12,17 @@ qopengl_GLsizeiptr sizeofGLVector(const std::vector<T> &v) {
 
 rendering::WireframeObjects::WireframeObjects(
     const sme::mesh::Mesh3d &info, const QOpenGLWidget *Widget,
-    const std::vector<QColor> &colors, const QVector3D &meshPositionOffset,
-    const QVector3D &position, const QVector3D &rotation,
-    const QVector3D &scale)
+    const std::vector<QColor> &colors, GLfloat meshThickness,
+    const QVector3D &meshPositionOffset, const QVector3D &position,
+    const QVector3D &rotation, const QVector3D &scale)
     : m_vertices(info.getVerticesAsQVector4DArrayInHomogeneousCoord()),
       m_visibleSubmesh(std::min(colors.size(), info.getNumberOfCompartment()),
                        true),
-      m_openGLContext(Widget->context()), m_default_colors(colors),
-      m_colors(colors), m_translationOffset(meshPositionOffset),
-      m_position(position), m_rotation(rotation), m_scale(scale) {
+      m_openGLContext(Widget->context()), m_defaultColors(colors),
+      m_colors(colors), m_meshThickness(colors.size(), meshThickness),
+      m_defaultThickness(colors.size(), meshThickness),
+      m_translationOffset(meshPositionOffset), m_position(position),
+      m_rotation(rotation), m_scale(scale) {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
   QOpenGLFunctions::initializeOpenGLFunctions();
@@ -48,9 +50,9 @@ void rendering::WireframeObjects::SetColor(const QColor &color,
   m_colors[meshID] = color;
 }
 
-void rendering::WireframeObjects::ResetDefaultColor(uint32_t meshID) {
+void rendering::WireframeObjects::ResetToDefaultColor(uint32_t meshID) {
   assert(meshID < m_colors.size());
-  m_colors[meshID] = m_default_colors[meshID];
+  m_colors[meshID] = m_defaultColors[meshID];
 }
 
 uint32_t rendering::WireframeObjects::GetNumberOfSubMeshes() const {
@@ -58,11 +60,30 @@ uint32_t rendering::WireframeObjects::GetNumberOfSubMeshes() const {
 }
 
 std::vector<QColor> rendering::WireframeObjects::GetDefaultColors() const {
-  return m_default_colors;
+  return m_defaultColors;
 }
 
 std::vector<QColor> rendering::WireframeObjects::GetCurrentColors() const {
   return m_colors;
+}
+
+void rendering::WireframeObjects::SetThickness(const GLfloat thickness,
+                                               uint32_t meshID) {
+  assert(meshID < m_meshThickness.size());
+  m_meshThickness[meshID] = thickness;
+}
+
+void rendering::WireframeObjects::ResetToDefaultThickness(uint32_t meshID) {
+  assert(meshID < m_meshThickness.size());
+  m_meshThickness[meshID] = m_defaultThickness[meshID];
+}
+
+std::vector<GLfloat> rendering::WireframeObjects::GetDefaultThickness() const {
+  return m_defaultThickness;
+}
+
+std::vector<GLfloat> rendering::WireframeObjects::GetCurrentThickness() const {
+  return m_meshThickness;
 }
 
 void rendering::WireframeObjects::setSubmeshVisibility(uint32_t meshID,
@@ -132,6 +153,42 @@ void rendering::WireframeObjects::DestroyVBO() {
   m_vao->destroy();
 }
 
+void rendering::WireframeObjects::RenderWithCurrentThickness(
+    const std::unique_ptr<rendering::ShaderProgram> &program) {
+
+  m_openGLContext->makeCurrent(m_openGLContext->surface());
+
+  glEnableVertexAttribArray(0);
+  CheckOpenGLError("glEnableVertexAttribArray");
+
+  glEnable(GL_DEPTH_TEST);
+  glClearColor(clearColor.redF(), clearColor.greenF(), clearColor.blueF(),
+               clearColor.alphaF());
+  program->SetBackgroundColor(clearColor.redF(), clearColor.greenF(),
+                              clearColor.blueF());
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+  program->SetMeshTranslationOffset(m_translationOffset.x(),
+                                    m_translationOffset.y(),
+                                    m_translationOffset.z());
+  program->SetPosition(m_position.x(), m_position.y(), m_position.z());
+  program->SetRotation(m_rotation.x(), m_rotation.y(), m_rotation.z());
+  program->SetScale(m_scale.x(), m_scale.y(), m_scale.z());
+  m_vao->bind();
+  for (int i = 0; i < m_indices.size(); i++) {
+    if (i >= m_colors.size())
+      break;
+    if (!m_visibleSubmesh[i])
+      continue;
+    program->SetColor(m_colors[i].redF(), m_colors[i].greenF(),
+                      m_colors[i].blueF(), m_colors[i].alphaF());
+    program->SetThickness(m_meshThickness[i]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferIds[i]);
+    glDrawElements(GL_TRIANGLES, static_cast<int>(m_indices[i].size()),
+                   GL_UNSIGNED_INT, (void *)nullptr);
+  }
+}
+
 void rendering::WireframeObjects::Render(
     const std::unique_ptr<rendering::ShaderProgram> &program, float lineWidth) {
 
@@ -140,9 +197,8 @@ void rendering::WireframeObjects::Render(
   glEnableVertexAttribArray(0);
   CheckOpenGLError("glEnableVertexAttribArray");
 
-  // glLineWidth(lineWidth);
   program->SetThickness(lineWidth);
-  // glDisable(GL_CULL_FACE);
+
   glEnable(GL_DEPTH_TEST);
   glClearColor(clearColor.redF(), clearColor.greenF(), clearColor.blueF(),
                clearColor.alphaF());

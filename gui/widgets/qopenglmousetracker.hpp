@@ -16,6 +16,7 @@ class QOpenGLMouseTracker : public QOpenGLWidget {
 public:
   QOpenGLMouseTracker(QWidget *parent = nullptr, float lineWidth = 0.005f,
                       float lineSelectPrecision = 0.2f,
+                      float lineWidthSelectedSubmesh = 0.1f,
                       QColor selectedObjectColor = QColor(255, 255, 0),
                       float cameraFOV = 60.0f, float cameraNearZ = 0.001f,
                       float cameraFarZ = 2000.0f, float frameRate = 30.0f);
@@ -87,6 +88,7 @@ protected:
 
   float m_lineWidth;
   float m_lineSelectPrecision;
+  float m_lineWidthSelectedSubmesh;
 
   QColor m_selectedObjectColor;
 
@@ -107,6 +109,7 @@ protected:
   void paintGL() override;
 
   void renderScene(float widthLine);
+  void renderSceneWithCurrentThickness();
 
   void mouseMoveEvent(QMouseEvent *event) override;
 
