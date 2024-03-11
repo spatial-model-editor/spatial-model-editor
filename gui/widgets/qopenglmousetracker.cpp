@@ -226,12 +226,10 @@ void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
 
 void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z) {
   m_camera.SetPosition(x, y, z);
-  update();
 }
 
 void QOpenGLMouseTracker::SetCameraOrientation(float x, float y, float z) {
   m_camera.SetRotation(x, y, z);
-  update();
 }
 
 QVector3D QOpenGLMouseTracker::GetCameraPosition() const {
@@ -244,12 +242,10 @@ QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
 
 void QOpenGLMouseTracker::SetSubMeshesOrientation(float x, float y, float z) {
   m_SubMeshes->SetRotation(x, y, z);
-  update();
 }
 
 void QOpenGLMouseTracker::SetSubMeshesPosition(float x, float y, float z) {
   m_SubMeshes->SetPosition(x, y, z);
-  update();
 }
 
 QVector3D QOpenGLMouseTracker::GetSubMeshesOrientation() const {
@@ -272,24 +268,18 @@ void QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
   update();
 }
 
-void QOpenGLMouseTracker::setFPS(float frameRate) {
-  m_frameRate = frameRate;
-  update();
-}
+void QOpenGLMouseTracker::setFPS(float frameRate) { m_frameRate = frameRate; }
 
 void QOpenGLMouseTracker::setLineWidth(float lineWidth) {
   m_lineWidth = lineWidth;
-  update();
 }
 
 void QOpenGLMouseTracker::setLineSelectPrecision(float lineSelectPrecision) {
   m_lineSelectPrecision = lineSelectPrecision;
-  update();
 }
 
 void QOpenGLMouseTracker::setSelectedObjectColor(QColor color) {
   m_selectedObjectColor = color;
-  update();
 }
 
 QRgb QOpenGLMouseTracker::getColour() const { return m_lastColour; }
@@ -297,7 +287,6 @@ QRgb QOpenGLMouseTracker::getColour() const { return m_lastColour; }
 void QOpenGLMouseTracker::setSubmeshVisibility(uint32_t meshID,
                                                bool visibility) {
   m_SubMeshes->setSubmeshVisibility(meshID, visibility);
-  update();
 }
 
 std::size_t QOpenGLMouseTracker::meshIDFromColor(const QColor &color) const {
@@ -310,7 +299,6 @@ QColor QOpenGLMouseTracker::getSelectedObjectColor() const {
 
 void QOpenGLMouseTracker::setBackgroundColor(QColor background) {
   m_backgroundColor = background;
-  update();
 }
 
 QColor QOpenGLMouseTracker::getBackgroundColor() const {
