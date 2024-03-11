@@ -58,6 +58,7 @@ private:
   void spinMaxBoundaryPoints_valueChanged(int value);
   void spinBoundaryZoom_valueChanged(int value);
   void lblCompMesh_mouseClicked(QRgb col, sme::common::Voxel point);
+  void mshCompMesh_mouseClicked(QRgb color, uint32_t meshID);
   void spinMaxTriangleArea_valueChanged(int value);
   void spinMeshZoom_valueChanged(int value);
   void listCompartments_itemSelectionChanged();

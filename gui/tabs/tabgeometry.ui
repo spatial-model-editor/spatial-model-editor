@@ -487,34 +487,49 @@
               </widget>
              </item>
              <item row="0" column="0" colspan="5">
-              <widget class="QScrollArea" name="scrollMesh">
-               <property name="widgetResizable">
-                <bool>true</bool>
-               </property>
-               <widget class="QWidget" name="scrollMeshContents">
-                <property name="geometry">
-                 <rect>
-                  <x>0</x>
-                  <y>0</y>
-                  <width>797</width>
-                  <height>571</height>
-                 </rect>
-                </property>
-                <layout class="QVBoxLayout" name="verticalLayout_4">
+              <widget class="QStackedWidget" name="stackCompMesh">
+               <widget class="QWidget" name="page1">
+                <layout class="QHBoxLayout" name="horizontalLayout_6">
                  <item>
-                  <widget class="QLabelMouseTracker" name="lblCompMesh" native="true">
-                   <property name="toolTip">
-                    <string>The mesh representing the geometry of the compartment</string>
+                  <widget class="QScrollArea" name="scrollMesh">
+                   <property name="widgetResizable">
+                    <bool>true</bool>
                    </property>
-                   <property name="statusTip">
-                    <string>The mesh representing the geometry of the compartment</string>
-                   </property>
-                   <property name="whatsThis">
-                    <string>&lt;h4&gt;Compartment Geometry: Mesh&lt;/h4&gt;
-&lt;p&gt;The compartment geometry mesh is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
-&lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
-                   </property>
+                   <widget class="QWidget" name="scrollMeshContents">
+                    <property name="geometry">
+                     <rect>
+                      <x>0</x>
+                      <y>0</y>
+                      <width>797</width>
+                      <height>559</height>
+                     </rect>
+                    </property>
+                    <layout class="QVBoxLayout" name="verticalLayout_4">
+                     <item>
+                      <widget class="QLabelMouseTracker" name="lblCompMesh" native="true">
+                       <property name="toolTip">
+                        <string>The mesh representing the geometry of the compartment</string>
+                       </property>
+                       <property name="statusTip">
+                        <string>The mesh representing the geometry of the compartment</string>
+                       </property>
+                       <property name="whatsThis">
+                        <string>&lt;h4&gt;Compartment Geometry: Mesh&lt;/h4&gt;
+    &lt;p&gt;The compartment geometry mesh is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
+    &lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </widget>
                   </widget>
+                 </item>
+                </layout>
+               </widget>
+               <widget class="QWidget" name="page2">
+                <layout class="QHBoxLayout" name="horizontalLayout_8">
+                 <item>
+                  <widget class="QOpenGLMouseTracker" name="mshCompMesh"/>
                  </item>
                 </layout>
                </widget>
@@ -537,6 +552,11 @@
    <class>QLabelMouseTracker</class>
    <extends>QWidget</extends>
    <header>qlabelmousetracker.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>QOpenGLMouseTracker</class>
+   <extends>QOpenGLWidget</extends>
+   <header>qopenglmousetracker.hpp</header>
   </customwidget>
  </customwidgets>
  <tabstops>
