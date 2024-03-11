@@ -99,7 +99,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       QcolorSelection = QColor(test.getColour());
       REQUIRE(backgroundColor == QcolorSelection);
 
-      wait(100);
+      wait(150);
       // visibility test, enable sub-mesh
       test.setSubmeshVisibility(0, true);
       test.repaint();
