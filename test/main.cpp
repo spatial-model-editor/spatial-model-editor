@@ -27,8 +27,8 @@ int main(int argc, char *argv[]) {
 
   // This comment is a reminder for whenever we can test using a Mac
   // machine.
-  //   format.setMajorVersion(4);
-  //   format.setMinorVersion(1);
+  format.setMajorVersion(3);
+  format.setMinorVersion(2);
 
   QSurfaceFormat::setDefaultFormat(format);
 
