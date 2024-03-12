@@ -8,14 +8,16 @@
 #include <QTimer>
 #include <QWidget>
 #include <QtOpenGL>
+#include <optional>
 
 #include "rendering/rendering.hpp"
 
 class QOpenGLMouseTracker : public QOpenGLWidget {
   Q_OBJECT
 public:
-  QOpenGLMouseTracker(QWidget *parent = nullptr, float lineWidth = 1.0f,
-                      float lineSelectPrecision = 10.0f,
+  QOpenGLMouseTracker(QWidget *parent = nullptr, float lineWidth = 0.005f,
+                      float lineSelectPrecision = 0.2f,
+                      float lineWidthSelectedSubmesh = 0.1f,
                       QColor selectedObjectColor = QColor(255, 255, 0),
                       float cameraFOV = 60.0f, float cameraNearZ = 0.001f,
                       float cameraFarZ = 2000.0f, float frameRate = 30.0f);
@@ -48,8 +50,8 @@ public:
                     const std::vector<QColor> &colors = std::vector<QColor>(0));
 
   void setFPS(float frameRate);
-  void setLineWidth(float lineWidth = 1.0f);
-  void setLineSelectPrecision(float lineSelectPrecision = 10.0f);
+  void setLineWidth(float lineWidth = 0.005f);
+  void setLineSelectPrecision(float lineSelectPrecision = 0.2f);
 
   void setSelectedObjectColor(QColor color = QColor(255, 255, 0));
 
@@ -87,6 +89,7 @@ protected:
 
   float m_lineWidth;
   float m_lineSelectPrecision;
+  float m_lineWidthSelectedSubmesh;
 
   QColor m_selectedObjectColor;
 
@@ -106,7 +109,7 @@ protected:
   void resizeGL(int w, int h) override;
   void paintGL() override;
 
-  void renderScene(float widthLine);
+  void renderScene(std::optional<float> widthLine = {});
 
   void mouseMoveEvent(QMouseEvent *event) override;
 

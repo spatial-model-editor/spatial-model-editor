@@ -99,10 +99,10 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       QcolorSelection = QColor(test.getColour());
       REQUIRE(backgroundColor == QcolorSelection);
 
-      wait(100);
       // visibility test, enable sub-mesh
       test.setSubmeshVisibility(0, true);
       test.repaint();
+      wait(100);
       sendMouseClick(&test, {253, 235});
       QcolorSelection = QColor(test.getColour());
       REQUIRE(backgroundColor != QcolorSelection);
@@ -129,7 +129,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
       sendMouseClick(&test, {126, 319});
       QcolorSelection = QColor(test.getColour());
-      REQUIRE(yelloColor == QcolorSelection);
+      REQUIRE(redColor == QcolorSelection);
 
       wait(100);
 
@@ -153,9 +153,10 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
       wait(100);
 
-      sendMouseClick(&test, {331, 322});
+      sendMouseClick(&test, {263, 253});
+      wait(100);
       QcolorSelection = QColor(test.getColour());
-      REQUIRE(yelloColor == QcolorSelection);
+      REQUIRE(redColor == QcolorSelection);
 
       wait(100);
 
@@ -231,7 +232,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
       sendMouseClick(&test, {126, 319});
       QcolorSelection = QColor(test.getColour());
-      REQUIRE(yelloColor == QcolorSelection);
+      REQUIRE(redColor == QcolorSelection);
 
       wait(100);
 
@@ -257,7 +258,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
       sendMouseClick(&test, {331, 322});
       QcolorSelection = QColor(test.getColour());
-      REQUIRE(yelloColor == QcolorSelection);
+      REQUIRE(redColor == QcolorSelection);
 
       wait(100);
 

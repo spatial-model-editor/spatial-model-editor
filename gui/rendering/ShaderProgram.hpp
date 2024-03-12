@@ -15,13 +15,15 @@ protected:
   void Init();
 
 public:
-  explicit ShaderProgram(const std::string &vertexShaderFileName,
-                         const std::string &fragmentShaderFileName);
   ShaderProgram(const ShaderProgram &) = delete;
-  ShaderProgram(const char *vertexProgram, const char *fragmentProgram);
+  ShaderProgram(const std::string &vertexProgram,
+                const std::string &geometryProgram,
+                const std::string &fragmentProgram);
   ~ShaderProgram();
 
   ShaderProgram &operator=(ShaderProgram other) = delete;
+
+  GLuint createShader(GLenum type, const std::string &src);
 
   void Use();
 
@@ -35,12 +37,16 @@ public:
   void SetColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 
   void SetMeshTranslationOffset(GLfloat x, GLfloat y, GLfloat z);
+  void SetThickness(GLfloat thickness);
+  void SetBackgroundColor(GLfloat r, GLfloat g, GLfloat b);
 
 private:
   std::string m_vertexShaderText;
+  std::string m_geometryShaderText;
   std::string m_fragmentShaderText;
 
   GLuint m_vertexShaderId;
+  GLuint m_geometryShaderId;
   GLuint m_fragmentShaderId;
   GLuint m_programId;
 
@@ -54,6 +60,8 @@ private:
   GLint m_color;
 
   GLint m_meshTranslationOffsetLocation;
+  GLint m_thickness;
+  GLint m_background_color;
 };
 
 } // namespace rendering
