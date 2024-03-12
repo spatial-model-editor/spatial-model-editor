@@ -154,6 +154,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       wait(100);
 
       sendMouseClick(&test, {331, 322});
+      wait(100);
       QcolorSelection = QColor(test.getColour());
       REQUIRE(redColor == QcolorSelection);
 
