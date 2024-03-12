@@ -125,13 +125,6 @@ public:
   [[nodiscard]] std::vector<int>
   getTetrahedronIndicesAsFlatArray(std::size_t compartmentIndex) const;
   /**
-   * A flat array of segment indices for a particular compartment
-   *
-   * Used by the rendering system.
-   */
-  [[nodiscard]] std::vector<uint32_t>
-  getMeshSegmentsIndicesAsFlatArray(std::size_t compartmentIndex) const;
-  /**
    * A flat array of triangle indices for a particular compartment
    *
    * Used by the rendering system.
