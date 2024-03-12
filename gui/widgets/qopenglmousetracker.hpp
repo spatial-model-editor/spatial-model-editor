@@ -8,6 +8,7 @@
 #include <QTimer>
 #include <QWidget>
 #include <QtOpenGL>
+#include <optional>
 
 #include "rendering/rendering.hpp"
 
@@ -108,8 +109,7 @@ protected:
   void resizeGL(int w, int h) override;
   void paintGL() override;
 
-  void renderScene(float widthLine);
-  void renderSceneWithCurrentThickness();
+  void renderScene(std::optional<float> widthLine = {});
 
   void mouseMoveEvent(QMouseEvent *event) override;
 

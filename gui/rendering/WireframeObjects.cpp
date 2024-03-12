@@ -171,36 +171,9 @@ void rendering::WireframeObjects::RenderSetup(
   program->SetScale(m_scale.x(), m_scale.y(), m_scale.z());
 }
 
-void rendering::WireframeObjects::RenderWithCurrentThickness(
-    const std::unique_ptr<rendering::ShaderProgram> &program) {
-
-  m_openGLContext->makeCurrent(m_openGLContext->surface());
-
-  glEnableVertexAttribArray(0);
-  CheckOpenGLError("glEnableVertexAttribArray");
-
-  RenderSetup(program);
-
-  m_vao->bind();
-  for (int i = 0; i < m_indices.size(); i++) {
-    if (i >= m_colors.size())
-      break;
-    if (!m_visibleSubmesh[i])
-      continue;
-    program->SetColor(m_colors[i].redF(), m_colors[i].greenF(),
-                      m_colors[i].blueF(), m_colors[i].alphaF());
-    program->SetThickness(m_meshThickness[i]);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferIds[i]);
-    glDrawElements(GL_TRIANGLES, static_cast<int>(m_indices[i].size()),
-                   GL_UNSIGNED_INT, (void *)nullptr);
-  }
-
-  glDisableVertexAttribArray(0);
-  CheckOpenGLError("glDisableVertexAttribArray");
-}
-
 void rendering::WireframeObjects::Render(
-    const std::unique_ptr<rendering::ShaderProgram> &program, float lineWidth) {
+    const std::unique_ptr<rendering::ShaderProgram> &program,
+    std::optional<float> lineWidth) {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
 
@@ -217,7 +190,7 @@ void rendering::WireframeObjects::Render(
       continue;
     program->SetColor(m_colors[i].redF(), m_colors[i].greenF(),
                       m_colors[i].blueF(), m_colors[i].alphaF());
-    program->SetThickness(lineWidth);
+    program->SetThickness(lineWidth.value_or(m_meshThickness[i]));
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferIds[i]);
     glDrawElements(GL_TRIANGLES, static_cast<int>(m_indices[i].size()),
                    GL_UNSIGNED_INT, (void *)nullptr);

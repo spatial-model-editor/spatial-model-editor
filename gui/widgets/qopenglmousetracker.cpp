@@ -74,19 +74,10 @@ void QOpenGLMouseTracker::initializeGL() {
       rendering::shader::default_::text_fragment);
 }
 
-void QOpenGLMouseTracker::renderScene(float lineWidth) {
-
+void QOpenGLMouseTracker::renderScene(std::optional<float> lineWidth) {
   if (m_SubMeshes) {
     m_SubMeshes->setBackground(m_backgroundColor);
     m_SubMeshes->Render(m_mainProgram, lineWidth);
-  }
-}
-
-void QOpenGLMouseTracker::renderSceneWithCurrentThickness() {
-
-  if (m_SubMeshes) {
-    m_SubMeshes->setBackground(m_backgroundColor);
-    m_SubMeshes->RenderWithCurrentThickness(m_mainProgram);
   }
 }
 
@@ -105,7 +96,7 @@ void QOpenGLMouseTracker::paintGL() {
   m_camera.UpdateView(m_mainProgram);
   m_camera.UpdateProjection(m_mainProgram);
 
-  renderSceneWithCurrentThickness();
+  renderScene();
 
   QOpenGLFramebufferObject fboPicking(size());
   fboPicking.bind();

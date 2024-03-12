@@ -6,9 +6,9 @@
 
 #include "ShaderProgram.hpp"
 #include "Utils.hpp"
-#include <vector>
-
 #include "sme/mesh3d.hpp"
+#include <optional>
+#include <vector>
 
 #include <QOpenGLWidget>
 #include <QtOpenGL>
@@ -30,10 +30,7 @@ public:
   ~WireframeObjects();
 
   void Render(const std::unique_ptr<rendering::ShaderProgram> &program,
-              float lineWidth = 0.005f);
-
-  void RenderWithCurrentThickness(
-      const std::unique_ptr<rendering::ShaderProgram> &program);
+              std::optional<float> lineWidth = {});
 
   void SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ);
   void SetRotation(const QVector3D &rotation);
