@@ -4,9 +4,7 @@
 
 #pragma once
 
-namespace rendering {
-namespace shader {
-namespace default_ {
+namespace rendering::shader::default_ {
 
 const char text_vertex[] =
     "#version 150\n"
@@ -88,5 +86,3 @@ const char text_vertex[] =
     "}\n";
 
 }
-} // namespace shader
-} // namespace rendering

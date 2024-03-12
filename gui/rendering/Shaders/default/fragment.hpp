@@ -4,9 +4,7 @@
 
 #pragma once
 
-namespace rendering {
-namespace shader {
-namespace default_ {
+namespace rendering::shader::default_ {
 
 const char text_fragment[] =
     "#version 150\n"
@@ -37,5 +35,3 @@ const char text_fragment[] =
     "   //frag_Color = vec4(1.0, 0.0, 0.0, 0.5);\n"
     "}\n";
 }
-} // namespace shader
-} // namespace rendering

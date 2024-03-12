@@ -5,9 +5,7 @@
 #ifndef SPATIALMODELEDITOR_COLORASUNIFORMVERTEX_H
 #define SPATIALMODELEDITOR_COLORASUNIFORMVERTEX_H
 
-namespace rendering {
-namespace shader {
-namespace colorAsUniform {
+namespace rendering::shader::colorAsUniform {
 
 const char text_vertex_color_as_uniform[] =
     "#version 150\n"
@@ -93,7 +91,5 @@ const char text_vertex_color_as_uniform[] =
     "}\n";
 
 }
-} // namespace shader
-} // namespace rendering
 
 #endif // SPATIALMODELEDITOR_COLORASUNIFORMVERTEX_H

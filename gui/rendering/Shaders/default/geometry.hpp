@@ -5,9 +5,7 @@
 #ifndef SPATIALMODELEDITOR_GEOMETRY_HPP
 #define SPATIALMODELEDITOR_GEOMETRY_HPP
 
-namespace rendering {
-namespace shader {
-namespace default_ {
+namespace rendering::shader::default_ {
 
 const char text_geometry[] =
     "#version 150 core\n"
@@ -71,7 +69,5 @@ const char text_geometry[] =
     "}";
 
 }
-} // namespace shader
-} // namespace rendering
 
 #endif // SPATIALMODELEDITOR_GEOMETRY_HPP
