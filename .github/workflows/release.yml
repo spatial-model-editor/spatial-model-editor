@@ -1,13 +1,6 @@
 name: GUI/CLI Release Builds
 
-on:
-  push:
-    branches:
-      - main
-    tags:
-      - "*.*.*"
-  pull_request:
-  workflow_dispatch:
+on: push
 
 concurrency:
   group: release-${{ github.ref }}
