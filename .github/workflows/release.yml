@@ -74,8 +74,8 @@ jobs:
           python-version: "3.12"
       - name: Get static libs
         run: sudo ./ci/getlibs.sh osx
-      - name: Install OpenGL MESA dependencies
-        run: brew install mesa
+#      - name: Install OpenGL MESA dependencies
+#        run: brew install mesa
       - name: Forcing using software rendering
         run: export LIBGL_ALWAYS_SOFTWARE=1
       - name: Build script

@@ -8,16 +8,12 @@ PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.12.*)
 export PATH="$PYDIR/x64:$PYDIR/x64/Scripts:$PATH"
 echo "PATH=$PATH"
 
+export CMAKE_CXX_COMPILER_LAUNCHER=ccache
 export CMAKE_GENERATOR="Unix Makefiles"
 export CMAKE_PREFIX_PATH="C:/smelibs;C:/smelibs/CMake;C:/smelibs/lib/cmake"
 export SME_EXTRA_EXE_LIBS="-static;-static-libgcc;-static-libstdc++"
-# stop Qt from defining UNICODE on windows to avoid dune issues
-# used to be opt-in, done by default for Qt >= 6.1.2 see
-# https://codereview.qt-project.org/c/qt/qtbase/+/350443
-export SME_QT_DISABLE_UNICODE=TRUE
 export SME_EXTRA_CORE_DEFS="_hypot=hypot;MS_WIN64"
-
-export CMAKE_ARGS="-DSME_LOG_LEVEL=OFF -DCMAKE_CXX_FLAGS=-fvisibility=hidden -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH -DSME_BUILD_CORE=off -DSME_QT_DISABLE_UNICODE=$SME_QT_DISABLE_UNICODE -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER"
+export CMAKE_ARGS="-DSME_LOG_LEVEL=OFF -DCMAKE_CXX_FLAGS=-fvisibility=hidden -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH -DSME_BUILD_CORE=off -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER"
 pwd
 which g++
 g++ --version
@@ -45,7 +41,6 @@ cmake .. \
     -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH \
     -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
     -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER \
-    -DSME_QT_DISABLE_UNICODE=$SME_QT_DISABLE_UNICODE \
     -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden" \
     -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS \
     -DSME_LOG_LEVEL=OFF \

@@ -12,3 +12,4 @@
 #include "Shaders/default/vertex.hpp"
 #include "Utils.hpp"
 #include "WireframeObjects.hpp"
+#include "rendering/Shaders/default/geometry.hpp"

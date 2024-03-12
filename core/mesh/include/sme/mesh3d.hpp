@@ -125,12 +125,12 @@ public:
   [[nodiscard]] std::vector<int>
   getTetrahedronIndicesAsFlatArray(std::size_t compartmentIndex) const;
   /**
-   * A flat array of segment indices for a particular compartment
+   * A flat array of triangle indices for a particular compartment
    *
    * Used by the rendering system.
    */
   [[nodiscard]] std::vector<uint32_t>
-  getMeshSegmentsIndicesAsFlatArray(std::size_t compartmentIndex) const;
+  getMeshTrianglesIndicesAsFlatArray(std::size_t compartmentIndex) const;
   /**
    * @brief The mesh tetrahedron indices
    *
@@ -151,7 +151,7 @@ public:
    *
    */
 
-  std::vector<QColor> getColorTable() const;
+  const std::vector<QColor> &getColors() const;
 
   /**
    * @brief returns offset used for centering the mesh.

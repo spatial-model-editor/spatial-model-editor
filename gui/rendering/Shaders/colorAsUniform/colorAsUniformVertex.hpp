@@ -5,12 +5,11 @@
 #ifndef SPATIALMODELEDITOR_COLORASUNIFORMVERTEX_H
 #define SPATIALMODELEDITOR_COLORASUNIFORMVERTEX_H
 
-namespace rendering {
+namespace rendering::shader::colorAsUniform {
 
 const char text_vertex_color_as_uniform[] =
-    "#version 140\n"
+    "#version 150\n"
     "#extension GL_ARB_explicit_attrib_location : enable\n"
-    "#extension GL_ARB_explicit_attrib_location: enable\n"
     "#define PI 3.14159265359\n"
     "layout(location=0) in vec4 in_Position;\n"
     "//layout(location=1) in vec4 in_Color;\n"
@@ -24,6 +23,7 @@ const char text_vertex_color_as_uniform[] =
     "\n"
     "uniform vec3 viewPosition;\n"
     "uniform vec3 viewRotation;\n"
+    "//out vec4 out_vert_Color;\n"
     "uniform vec4 clipPlane[8];\n"
     "uniform bool activeClipPlane[8]=\n"
     "bool[8](false, false, false, false, false, false, false, false);\n"
@@ -92,7 +92,7 @@ const char text_vertex_color_as_uniform[] =
     "mat4 offset = translation(\n"
     "translationOffset.x, translationOffset.y, translationOffset.z);\n"
     "gl_Position = in_Position * offset * MVP;\n"
-    "ex_Color = in_Color;\n"
+    "//out_vert_Color = in_Color;\n"
     "gl_ClipDistance[0] = dot( in_Position * offset * model, clipPlane[0]);\n"
     "}\n";
 

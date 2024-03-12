@@ -4,6 +4,10 @@
 
 set -e -x
 
+retry () {
+    "$@" || (sleep 1 && "$@") || (sleep 3 && "$@") || (sleep 5 && "$@") || echo "$* failed"
+}
+
 brew install ccache
 
 # check versions
@@ -66,11 +70,11 @@ mkdir -p app/spatial-model-editor.app/Contents/Resources
 iconutil -c icns -o app/spatial-model-editor.app/Contents/Resources/icon.icns ../core/resources/icon.iconset
 
 # make dmg of binaries
-hdiutil create spatial-model-editor -fs HFS+ -srcfolder app/spatial-model-editor.app
+retry hdiutil create spatial-model-editor -fs HFS+ -srcfolder app/spatial-model-editor.app
 
 mkdir spatial-cli
 cp cli/spatial-cli spatial-cli/.
-hdiutil create spatial-cli -fs HFS+ -srcfolder spatial-cli
+retry hdiutil create spatial-cli -fs HFS+ -srcfolder spatial-cli
 
 # display version
 ./app/spatial-model-editor.app/Contents/MacOS/spatial-model-editor -v

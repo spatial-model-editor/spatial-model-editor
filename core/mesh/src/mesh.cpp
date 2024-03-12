@@ -69,12 +69,16 @@ Mesh::Mesh(const QImage &image, std::vector<std::size_t> maxPoints,
                 boundary.isLoop());
   }
   if (compartmentMaxTriangleArea.size() != compartmentColours.size()) {
-    // if triangle areas not correctly specified use default value
-    constexpr std::size_t defaultCompartmentMaxTriangleArea{40};
-    compartmentMaxTriangleArea = std::vector<std::size_t>(
-        compartmentColours.size(), defaultCompartmentMaxTriangleArea);
-    SPDLOG_INFO("no max triangle areas specified, using default value: {}",
-                defaultCompartmentMaxTriangleArea);
+    // if triangle areas not correctly specified pick a value proportional to
+    // the image size
+    constexpr std::size_t minArea{1};
+    constexpr std::size_t maxArea{999999};
+    auto propArea =
+        static_cast<std::size_t>(image.width() * image.height() / 250);
+    auto area = std::clamp(propArea, minArea, maxArea);
+    compartmentMaxTriangleArea =
+        std::vector<std::size_t>(compartmentColours.size(), area);
+    SPDLOG_INFO("no max triangle areas specified, using: {}", area);
   }
   constructMesh();
 }

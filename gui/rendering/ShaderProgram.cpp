@@ -6,64 +6,47 @@
 
 #include "Utils.hpp"
 
-rendering::ShaderProgram::ShaderProgram(const char *vertexProgram,
-                                        const char *fragmentProgram)
-    : m_vertexShaderText(vertexProgram), m_fragmentShaderText(fragmentProgram) {
+rendering::ShaderProgram::ShaderProgram(const std::string &vertexProgram,
+                                        const std::string &geometryProgram,
+                                        const std::string &fragmentProgram)
+    : m_vertexShaderText(vertexProgram), m_geometryShaderText(geometryProgram),
+      m_fragmentShaderText(fragmentProgram) {
 
   QOpenGLFunctions::initializeOpenGLFunctions();
   Init();
 }
 
-rendering::ShaderProgram::ShaderProgram(
-    const std::string &vertexShaderFileName,
-    const std::string &fragmentShaderFileName)
-    : m_vertexShaderText(vertexShaderFileName),
-      m_fragmentShaderText(fragmentShaderFileName) {
+GLuint rendering::ShaderProgram::createShader(GLenum type,
+                                              const std::string &src) {
 
-  QOpenGLFunctions::initializeOpenGLFunctions();
-  Init();
+  GLuint shaderID = glCreateShader(type);
+  CheckOpenGLError("glCreateShader");
+  const char *vertexShaderText = src.data();
+  glShaderSource(shaderID, 1, &vertexShaderText, nullptr);
+  CheckOpenGLError("glShaderSource");
+  glCompileShader(shaderID);
+  CheckOpenGLError("glCompileShader");
+
+#ifdef QT_DEBUG
+  GLint success;
+  glGetShaderiv(shaderID, GL_COMPILE_STATUS, &success);
+  if (!success) {
+    std::string InfoLog(1024, ' ');
+    glGetShaderInfoLog(shaderID, static_cast<int>(InfoLog.size()), nullptr,
+                       InfoLog.data());
+    SPDLOG_ERROR("Error compiling shader type " + std::to_string(type) + ":" +
+                 InfoLog);
+  }
+#endif
+
+  return shaderID;
 }
 
 void rendering::ShaderProgram::Init() {
-  m_vertexShaderId = glCreateShader(GL_VERTEX_SHADER);
-  CheckOpenGLError("glCreateShader");
-  char *vertexShaderText = m_vertexShaderText.data();
-  glShaderSource(m_vertexShaderId, 1, (const char **)&vertexShaderText,
-                 nullptr);
-  CheckOpenGLError("glShaderSource");
-  glCompileShader(m_vertexShaderId);
-  CheckOpenGLError("glCompileShader");
 
-#ifdef QT_DEBUG
-  GLint success_VS;
-  glGetShaderiv(m_vertexShaderId, GL_COMPILE_STATUS, &success_VS);
-  if (!success_VS) {
-    std::string InfoLog(1024, ' ');
-    glGetShaderInfoLog(m_vertexShaderId, static_cast<int>(InfoLog.size()),
-                       nullptr, InfoLog.data());
-    SPDLOG_ERROR("Error compiling shader type GL_VERTEX_SHADER: " + InfoLog);
-  }
-#endif
-
-  m_fragmentShaderId = glCreateShader(GL_FRAGMENT_SHADER);
-  CheckOpenGLError("glCreateShader");
-  char *fragmentShaderText = m_fragmentShaderText.data();
-  glShaderSource(m_fragmentShaderId, 1, (const char **)&fragmentShaderText,
-                 nullptr);
-  CheckOpenGLError("Utils::TraceGLError");
-  glCompileShader(m_fragmentShaderId);
-  CheckOpenGLError("glCompileShader");
-
-#ifdef QT_DEBUG
-  GLint success_FS;
-  glGetShaderiv(m_fragmentShaderId, GL_COMPILE_STATUS, &success_FS);
-  if (!success_FS) {
-    std::string InfoLog(1024, ' ');
-    glGetShaderInfoLog(m_fragmentShaderId, static_cast<int>(InfoLog.size()),
-                       nullptr, InfoLog.data());
-    SPDLOG_ERROR("Error compiling shader type GL_FRAGMENT_SHADER: " + InfoLog);
-  }
-#endif
+  m_vertexShaderId = createShader(GL_VERTEX_SHADER, m_vertexShaderText);
+  m_geometryShaderId = createShader(GL_GEOMETRY_SHADER, m_geometryShaderText);
+  m_fragmentShaderId = createShader(GL_FRAGMENT_SHADER, m_fragmentShaderText);
 
   m_programId = glCreateProgram();
   CheckOpenGLError("glCreateProgram");
@@ -71,6 +54,7 @@ void rendering::ShaderProgram::Init() {
   CheckOpenGLError("glAttachShader");
   glAttachShader(m_programId, m_fragmentShaderId);
   CheckOpenGLError("glAttachShader");
+  glAttachShader(m_programId, m_geometryShaderId);
 
   glLinkProgram(m_programId);
   CheckOpenGLError("glLinkProgram");
@@ -106,6 +90,15 @@ void rendering::ShaderProgram::Init() {
   m_viewPositionLocation = glGetUniformLocation(m_programId, "viewPosition");
   CheckOpenGLError("glGetUniformLocation");
   m_viewRotationLocation = glGetUniformLocation(m_programId, "viewRotation");
+  CheckOpenGLError("glGetUniformLocation");
+  m_color = glGetUniformLocation(m_programId, "in_Color");
+  CheckOpenGLError("glGetUniformLocation");
+  m_meshTranslationOffsetLocation =
+      glGetUniformLocation(m_programId, "translationOffset");
+  CheckOpenGLError("glGetUniformLocation");
+  m_thickness = glGetUniformLocation(m_programId, "thickness");
+  CheckOpenGLError("glGetUniformLocation");
+  m_background_color = glGetUniformLocation(m_programId, "background_color");
   CheckOpenGLError("glGetUniformLocation");
   m_color = glGetUniformLocation(m_programId, "in_Color");
   CheckOpenGLError("glGetUniformLocation");
@@ -226,6 +219,19 @@ void rendering::ShaderProgram::SetMeshTranslationOffset(GLfloat x, GLfloat y,
 
   Use();
   glUniform3f(m_meshTranslationOffsetLocation, x, y, z);
+  CheckOpenGLError("glUniform3f");
+}
+
+void rendering::ShaderProgram::SetThickness(GLfloat thickness) {
+  Use();
+  glUniform1f(m_thickness, thickness);
+  CheckOpenGLError("glUniform1f");
+}
+
+void rendering::ShaderProgram::SetBackgroundColor(GLfloat r, GLfloat g,
+                                                  GLfloat b) {
+  Use();
+  glUniform3f(m_background_color, r, g, b);
   CheckOpenGLError("glUniform3f");
 }
 

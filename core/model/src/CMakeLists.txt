@@ -2,6 +2,7 @@ target_sources(
   core
   PRIVATE geometry.cpp
           geometry_analytic.cpp
+          geometry_impl.cpp
           geometry_sampled_field.cpp
           geometry_utils.cpp
           id.cpp
@@ -28,6 +29,7 @@ if(BUILD_TESTING)
     core_tests
     PUBLIC geometry_t.cpp
            geometry_analytic_t.cpp
+           geometry_impl_t.cpp
            geometry_utils_t.cpp
            id_t.cpp
            model_t.cpp

@@ -8,17 +8,19 @@
 #include <QTimer>
 #include <QWidget>
 #include <QtOpenGL>
+#include <optional>
 
 #include "rendering/rendering.hpp"
 
 class QOpenGLMouseTracker : public QOpenGLWidget {
   Q_OBJECT
 public:
-  QOpenGLMouseTracker(float lineWidth = 1.0f, float lineSelectPrecision = 10.0f,
+  QOpenGLMouseTracker(QWidget *parent = nullptr, float lineWidth = 0.005f,
+                      float lineSelectPrecision = 0.2f,
+                      float lineWidthSelectedSubmesh = 0.1f,
                       QColor selectedObjectColor = QColor(255, 255, 0),
                       float cameraFOV = 60.0f, float cameraNearZ = 0.001f,
                       float cameraFarZ = 2000.0f, float frameRate = 30.0f);
-  ~QOpenGLMouseTracker() = default;
 
   void SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height,
                         GLfloat nearZ, GLfloat farZ);
@@ -48,8 +50,8 @@ public:
                     const std::vector<QColor> &colors = std::vector<QColor>(0));
 
   void setFPS(float frameRate);
-  void setLineWidth(float lineWidth = 1.0f);
-  void setLineSelectPrecision(float lineSelectPrecision = 10.0f);
+  void setLineWidth(float lineWidth = 0.005f);
+  void setLineSelectPrecision(float lineSelectPrecision = 0.2f);
 
   void setSelectedObjectColor(QColor color = QColor(255, 255, 0));
 
@@ -66,7 +68,10 @@ public:
    */
   std::size_t meshIDFromColor(const QColor &color) const;
 
-  void setBackground(QColor background);
+  void setBackgroundColor(QColor background);
+  QColor getBackgroundColor() const;
+
+  void clear();
 
 signals:
   void mouseClicked(QRgb color, uint32_t meshID);
@@ -74,7 +79,7 @@ signals:
   void mouseWheelEvent(QWheelEvent *ev);
 
 protected:
-  QRgb m_lastColour{};
+  QRgb m_lastColour;
 
 #ifdef QT_DEBUG
   QOpenGLDebugLogger *m_debugLogger;
@@ -84,12 +89,13 @@ protected:
 
   float m_lineWidth;
   float m_lineSelectPrecision;
+  float m_lineWidthSelectedSubmesh;
 
   QColor m_selectedObjectColor;
 
-  std::unique_ptr<rendering::WireframeObjects> m_SubMeshes;
+  std::unique_ptr<rendering::WireframeObjects> m_SubMeshes{};
 
-  std::unique_ptr<rendering::ShaderProgram> m_mainProgram;
+  std::unique_ptr<rendering::ShaderProgram> m_mainProgram{};
   rendering::Camera m_camera;
 
   QImage m_offscreenPickingImage;
@@ -97,13 +103,13 @@ protected:
   int m_xAtPress;
   int m_yAtPress;
 
-  QColor backgroundColor;
+  QColor m_backgroundColor;
 
   void initializeGL() override;
   void resizeGL(int w, int h) override;
   void paintGL() override;
 
-  void renderScene(float widthLine);
+  void renderScene(std::optional<float> widthLine = {});
 
   void mouseMoveEvent(QMouseEvent *event) override;
 

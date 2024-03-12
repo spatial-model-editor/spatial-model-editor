@@ -58,13 +58,6 @@ if(BUILD_TESTING)
   add_library(core_tests STATIC)
 endif()
 
-if(SME_QT_DISABLE_UNICODE)
-  qt6_disable_unicode_defines(core)
-  if(BUILD_TESTING)
-    qt6_disable_unicode_defines(core_tests)
-  endif()
-endif()
-
 # find SymEngine and check it is compiled with LLVM enabled
 find_package(
   SymEngine
@@ -77,12 +70,19 @@ try_compile(
   "${CMAKE_SOURCE_DIR}/cmake/checkSymEngineLLVM.cpp"
   CMAKE_FLAGS -DINCLUDE_DIRECTORIES=${SYMENGINE_INCLUDE_DIRS}
   LINK_LIBRARIES ${SYMENGINE_LIBRARIES}
-  OUTPUT_VARIABLE SYMENGINE_LLVM_ERROR_LOG)
+  OUTPUT_VARIABLE
+    SYMENGINE_LLVM_ERROR_LOG
+    CXX_STANDARD
+    20
+    CXX_STANDARD_REQUIRED
+    TRUE)
 if(${SYMENGINE_LLVM})
-  message(STATUS "Testing SymEngine LLVM & SBML support - found")
+  message(STATUS "Testing SymEngine LLVM & SBML support - Success")
 else()
-  message(WARNING "SymEngine library is missing LLVM and/or SBML support")
-  message(WARNING "${SYMENGINE_LLVM_ERROR_LOG}")
+  message(
+    FATAL_ERROR
+      "SymEngine library is missing LLVM and/or SBML support:\n${SYMENGINE_LLVM_ERROR_LOG}"
+  )
 endif()
 
 # find libSBML and check it is compiled with the spatial extension enabled
@@ -92,12 +92,19 @@ try_compile(
   SBML_SPATIAL "${CMAKE_CURRENT_BINARY_DIR}/cxx"
   "${CMAKE_SOURCE_DIR}/cmake/checkSpatialSBML.cpp"
   LINK_LIBRARIES sbml-static
-  OUTPUT_VARIABLE SBML_SPATIAL_ERROR_LOG)
+  OUTPUT_VARIABLE
+    SBML_SPATIAL_ERROR_LOG
+    CXX_STANDARD
+    20
+    CXX_STANDARD_REQUIRED
+    TRUE)
 if(${SBML_SPATIAL})
-  message(STATUS "Testing libSBML spatial extension support - found")
+  message(STATUS "Testing libSBML spatial extension support - Success")
 else()
-  message(WARNING "libSBML library is missing spatial extension support")
-  message(WARNING "${SBML_SPATIAL_ERROR_LOG}")
+  message(
+    FATAL_ERROR
+      "libSBML library is missing spatial extension support:\n${SBML_SPATIAL_ERROR_LOG}"
+  )
 endif()
 
 find_package(OpenCV REQUIRED COMPONENTS core imgproc)
@@ -121,19 +128,7 @@ target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 target_compile_definitions(
   core PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_${SME_LOG_LEVEL})
 
-find_package(SCOTCH)
-target_link_libraries(SCOTCH::scotchmetisv3 INTERFACE SCOTCH::scotcherr)
-target_link_libraries(SCOTCH::scotch INTERFACE SCOTCH::scotchmetisv3)
-find_package(dune-common REQUIRED)
-target_link_libraries(Dune::Common INTERFACE SCOTCH::scotch)
-find_package(dune-geometry REQUIRED)
-find_package(dune-uggrid REQUIRED)
-find_package(dune-grid REQUIRED)
-find_package(dune-istl REQUIRED)
-find_package(dune-localfunctions REQUIRED)
-find_package(dune-pdelab REQUIRED)
 find_package(dune-copasi REQUIRED)
-
 target_link_libraries(
   core
   PRIVATE TIFF::TIFF
@@ -149,9 +144,6 @@ target_link_libraries(
          opencv_imgproc
          spdlog::spdlog
          Dune::Copasi
-         SCOTCH::scotch
-         SCOTCH::scotchmetisv3
-         SCOTCH::scotcherr
          Qt::Gui
          Qt::Core
          Pagmo::pagmo)

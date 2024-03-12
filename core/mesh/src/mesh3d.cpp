@@ -160,10 +160,10 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   SPDLOG_INFO("ImageStack {}x{}x{} with {} colours", vol.width(), vol.height(),
               vol.depth(), colorTable.size());
 
-  colorTableVec.reserve(colorTable.size());
-  std::transform(colorTable.cbegin(), colorTable.cend(),
-                 std::back_inserter(colorTableVec),
-                 [](QRgb color) { return QColor(color); });
+  colorTableVec.reserve(compartmentColours.size());
+  std::ranges::transform(compartmentColours.cbegin(), compartmentColours.cend(),
+                         std::back_inserter(colorTableVec),
+                         [](QRgb color) { return QColor(color); });
 
   for (auto compartmentColor : compartmentColours) {
     if (!colorTable.contains(compartmentColor)) {
@@ -314,18 +314,20 @@ Mesh3d::getTetrahedronIndicesAsFlatArray(std::size_t compartmentIndex) const {
 }
 
 std::vector<uint32_t>
-Mesh3d::getMeshSegmentsIndicesAsFlatArray(std::size_t compartmentIndex) const {
+Mesh3d::getMeshTrianglesIndicesAsFlatArray(std::size_t compartmentIndex) const {
   assert(compartmentIndex < tetrahedronVertexIndices_.size());
 
   std::vector<uint32_t> out;
   const auto &indices = tetrahedronVertexIndices_[compartmentIndex];
-  out.reserve(indices.size() * 6);
+  out.reserve(indices.size() * 4 * 3);
   for (const auto &t : indices) {
-    for (uint32_t i = 0; i < t.size() - 1; i++) {
-      for (uint32_t j = i + 1; j < t.size(); j++) {
-        out.push_back(static_cast<uint32_t>(t[i]));
-        out.push_back(static_cast<uint32_t>(t[j]));
-      }
+    for (uint32_t i = 0; i < t.size(); i++) {
+      for (uint32_t j = i + 1; j < t.size(); j++)
+        for (uint32_t k = j + 1; k < t.size(); k++) {
+          out.push_back(static_cast<uint32_t>(t[i]));
+          out.push_back(static_cast<uint32_t>(t[j]));
+          out.push_back(static_cast<uint32_t>(t[k]));
+        }
     }
   }
   return out;
@@ -386,14 +388,19 @@ QString Mesh3d::getGMSH() const {
   return msh;
 }
 
-std::vector<QColor> Mesh3d::getColorTable() const { return colorTableVec; }
+const std::vector<QColor> &Mesh3d::getColors() const { return colorTableVec; }
 
 QVector3D Mesh3d::getOffset() const {
 
-  return QVector3D(
-      -static_cast<float>(image3_->image()->vx * image3_->xdim() / 2.0f),
-      -static_cast<float>(image3_->image()->vy * image3_->ydim() / 2.0f),
-      -static_cast<float>(image3_->image()->vz * image3_->zdim() / 2.0f));
+  return QVector3D(-static_cast<float>(image3_->image()->vx) *
+                           static_cast<float>(image3_->xdim()) / 2.0f -
+                       image3_->image()->tx,
+                   -static_cast<float>(image3_->image()->vy) *
+                           static_cast<float>(image3_->ydim()) / 2.0f -
+                       image3_->image()->ty,
+                   -static_cast<float>(image3_->image()->vz) *
+                           static_cast<float>(image3_->zdim()) / 2.0f -
+                       image3_->image()->tz);
 }
 
 } // namespace sme::mesh

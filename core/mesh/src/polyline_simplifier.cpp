@@ -30,10 +30,7 @@ std::size_t PolylineSimplifier::getMaxPoints() const {
   return ct.number_of_vertices();
 }
 
-static void
-updatePoints(const CGALCt &ct,
-             const std::vector<CGALCt::Constraint_id> &constraintIds,
-             std::vector<Boundary> &boundaries) {
+void PolylineSimplifier::updatePoints(std::vector<Boundary> &boundaries) const {
   for (std::size_t i = 0; i < boundaries.size(); ++i) {
     std::vector<QPoint> points;
     auto vertices{ct.vertices_in_constraint(constraintIds[i])};
@@ -68,7 +65,7 @@ void PolylineSimplifier::setMaxPoints(std::vector<Boundary> &boundaries,
     PS::simplify(ct, PS::Squared_distance_cost(),
                  PS::Stop_below_count_threshold(maxPoints), false);
   }
-  updatePoints(ct, constraintIds, boundaries);
+  updatePoints(boundaries);
 }
 
 } // namespace sme::mesh

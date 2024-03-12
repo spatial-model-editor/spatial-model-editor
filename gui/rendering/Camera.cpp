@@ -116,7 +116,6 @@ void rendering::Camera::SetRotation(QVector3D rotation) {
   SetRotation(rotation.x(), rotation.y(), rotation.z());
 }
 
-protected:
 QVector3D rendering::Camera::GetRotation() const { return m_viewRotation; }
 
 QVector3D rendering::Camera::GetForwardVector() const { return m_viewForward; }

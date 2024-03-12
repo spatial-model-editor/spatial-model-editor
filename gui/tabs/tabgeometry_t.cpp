@@ -11,6 +11,7 @@
 #include <QListWidget>
 #include <QPushButton>
 #include <QTabWidget>
+#include <qopenglmousetracker.hpp>
 
 using namespace sme::test;
 
@@ -56,6 +57,8 @@ TEST_CASE("TabGeometry",
   REQUIRE(spinBoundaryZoom != nullptr);
   auto *lblCompMesh{tab.findChild<QLabelMouseTracker *>("lblCompMesh")};
   REQUIRE(lblCompMesh != nullptr);
+  auto *mshCompMesh{tab.findChild<QOpenGLMouseTracker *>("mshCompMesh")};
+  REQUIRE(mshCompMesh != nullptr);
   auto *spinMaxTriangleArea{tab.findChild<QSpinBox *>("spinMaxTriangleArea")};
   REQUIRE(spinMaxTriangleArea != nullptr);
   auto *spinMeshZoom{tab.findChild<QSpinBox *>("spinMeshZoom")};
@@ -313,5 +316,134 @@ TEST_CASE("TabGeometry",
     tabCompartmentGeometry->setFocus();
     sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
     REQUIRE(lblCompMesh->text().isEmpty());
+  }
+  SECTION("very-simple-model-3d loaded") {
+    model = getExampleModel(Mod::VerySimpleModel3D);
+    tab.loadModelData();
+    SECTION("select some stuff") {
+      REQUIRE(listMembranes->count() == 2);
+      REQUIRE(listCompartments->count() == 3);
+
+      // select compartments
+      REQUIRE(listCompartments->currentItem()->text() == "Outside");
+      REQUIRE(txtCompartmentName->text() == "Outside");
+      REQUIRE(tabCompartmentGeometry->currentIndex() == 0);
+      // change compartment name
+      txtCompartmentName->setFocus();
+      sendKeyEvents(txtCompartmentName, {"X", "Enter"});
+      REQUIRE(txtCompartmentName->text() == "OutsideX");
+      REQUIRE(listCompartments->currentItem()->text() == "OutsideX");
+      txtCompartmentName->setFocus();
+      sendKeyEvents(txtCompartmentName, {"Backspace", "Enter"});
+      REQUIRE(txtCompartmentName->isEnabled() == true);
+      REQUIRE(txtCompartmentName->text() == "Outside");
+      REQUIRE(listCompartments->currentItem()->text() == "Outside");
+      // select Cell compartment
+      listCompartments->setFocus();
+      sendKeyEvents(listCompartments, {"Down"});
+      REQUIRE(listCompartments->currentItem()->text() == "Cell");
+      REQUIRE(txtCompartmentName->isEnabled() == true);
+      REQUIRE(txtCompartmentName->text() == "Cell");
+      // select first membrane
+      listMembranes->setFocus();
+      sendKeyEvents(listMembranes, {" "});
+      REQUIRE(txtCompartmentName->isEnabled() == true);
+      REQUIRE(listMembranes->currentItem()->text() == "Outside <-> Cell");
+      REQUIRE(txtCompartmentName->text() == "Outside <-> Cell");
+      // change membrane name
+      txtCompartmentName->setFocus();
+      sendKeyEvents(txtCompartmentName, {"X", "Enter"});
+      REQUIRE(txtCompartmentName->text() == "Outside <-> CellX");
+      REQUIRE(listMembranes->currentItem()->text() == "Outside <-> CellX");
+      txtCompartmentName->setFocus();
+      sendKeyEvents(txtCompartmentName, {"Backspace", "Enter"});
+      REQUIRE(txtCompartmentName->isEnabled() == true);
+      REQUIRE(txtCompartmentName->text() == "Outside <-> Cell");
+      REQUIRE(listMembranes->currentItem()->text() == "Outside <-> Cell");
+      // select Nucleus compartment
+      listCompartments->setFocus();
+      sendKeyEvents(listCompartments, {"Down"});
+      REQUIRE(listCompartments->currentItem()->text() == "Nucleus");
+      REQUIRE(txtCompartmentName->isEnabled() == true);
+      REQUIRE(txtCompartmentName->text() == "Nucleus");
+
+      // boundary tab
+      tabCompartmentGeometry->setFocus();
+      sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
+      REQUIRE(tabCompartmentGeometry->currentIndex() == 1);
+      REQUIRE(spinBoundaryIndex->isEnabled() == false);
+      REQUIRE(spinBoundaryZoom->isEnabled() == false);
+
+      // mesh tab
+      tabCompartmentGeometry->setFocus();
+      sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
+      REQUIRE(tabCompartmentGeometry->currentIndex() == 2);
+      REQUIRE(spinMaxTriangleArea->value() == 5);
+      // change max area using spinbox
+      sendKeyEvents(spinMaxTriangleArea,
+                    {"End", "Backspace", "Backspace", "Backspace", "9"});
+      REQUIRE(spinMaxTriangleArea->value() == 9);
+      sendKeyEvents(spinMaxTriangleArea, {"Up"});
+      REQUIRE(spinMaxTriangleArea->value() == 10);
+      // change max area using mouse scroll wheel
+      lblCompMesh->setFocus();
+      sendMouseWheel(lblCompMesh, +1);
+      REQUIRE(spinMaxTriangleArea->value() == 11);
+      sendMouseWheel(lblCompMesh, -1);
+      REQUIRE(spinMaxTriangleArea->value() == 10);
+
+      // zoom in and out using mouse scroll wheel
+      mshCompMesh->setFocus();
+      sendMouseWheel(mshCompMesh, +1);
+      sendMouseWheel(mshCompMesh, +1);
+      sendMouseWheel(mshCompMesh, -1);
+      sendMouseWheel(mshCompMesh, -1);
+
+      // click on mesh in a few different places
+      sendMouseClick(mshCompMesh);
+      sendMouseClick(mshCompMesh, {3, 3});
+      sendMouseClick(mshCompMesh, {7, 2});
+      sendMouseClick(mshCompMesh, {0, 0});
+
+      // image tab
+      tabCompartmentGeometry->setFocus();
+      sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
+      REQUIRE(tabCompartmentGeometry->currentIndex() == 0);
+    }
+    SECTION("add/remove compartments") {
+      // add compartment
+      mwt.addUserAction({"C", "o", "M", "p", "!"});
+      mwt.start();
+      sendMouseClick(btnAddCompartment);
+      REQUIRE(listCompartments->count() == 4);
+      REQUIRE(listCompartments->currentItem()->text() == "CoMp!");
+      // click remove compartment, then "no" to cancel
+      mwt.addUserAction({"Esc"});
+      mwt.start();
+      sendMouseClick(btnRemoveCompartment);
+      REQUIRE(listCompartments->count() == 4);
+      // click remove compartment, then confirm
+      mwt.addUserAction({"Enter"});
+      mwt.start();
+      sendMouseClick(btnRemoveCompartment);
+      REQUIRE(listCompartments->count() == 3);
+      REQUIRE(listCompartments->currentItem()->text() == "Outside");
+      mwt.addUserAction({"Enter"});
+      mwt.start();
+      sendMouseClick(btnRemoveCompartment);
+      REQUIRE(listCompartments->count() == 2);
+      REQUIRE(listCompartments->currentItem()->text() == "Cell");
+      mwt.addUserAction({"Enter"});
+      mwt.start();
+      sendMouseClick(btnRemoveCompartment);
+      REQUIRE(listCompartments->count() == 1);
+      REQUIRE(listCompartments->currentItem()->text() == "Nucleus");
+      mwt.addUserAction({"Enter"});
+      mwt.start();
+      sendMouseClick(btnRemoveCompartment);
+      REQUIRE(listCompartments->count() == 0);
+      REQUIRE(spinMeshZoom->isEnabled() == false);
+      REQUIRE(spinBoundaryZoom->isEnabled() == false);
+    }
   }
 }
