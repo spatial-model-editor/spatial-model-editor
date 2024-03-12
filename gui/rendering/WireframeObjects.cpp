@@ -153,13 +153,8 @@ void rendering::WireframeObjects::DestroyVBO() {
   m_vao->destroy();
 }
 
-void rendering::WireframeObjects::RenderWithCurrentThickness(
+void rendering::WireframeObjects::RenderSetup(
     const std::unique_ptr<rendering::ShaderProgram> &program) {
-
-  m_openGLContext->makeCurrent(m_openGLContext->surface());
-
-  glEnableVertexAttribArray(0);
-  CheckOpenGLError("glEnableVertexAttribArray");
 
   glEnable(GL_DEPTH_TEST);
   glClearColor(clearColor.redF(), clearColor.greenF(), clearColor.blueF(),
@@ -174,6 +169,18 @@ void rendering::WireframeObjects::RenderWithCurrentThickness(
   program->SetPosition(m_position.x(), m_position.y(), m_position.z());
   program->SetRotation(m_rotation.x(), m_rotation.y(), m_rotation.z());
   program->SetScale(m_scale.x(), m_scale.y(), m_scale.z());
+}
+
+void rendering::WireframeObjects::RenderWithCurrentThickness(
+    const std::unique_ptr<rendering::ShaderProgram> &program) {
+
+  m_openGLContext->makeCurrent(m_openGLContext->surface());
+
+  glEnableVertexAttribArray(0);
+  CheckOpenGLError("glEnableVertexAttribArray");
+
+  RenderSetup(program);
+
   m_vao->bind();
   for (int i = 0; i < m_indices.size(); i++) {
     if (i >= m_colors.size())
@@ -187,6 +194,9 @@ void rendering::WireframeObjects::RenderWithCurrentThickness(
     glDrawElements(GL_TRIANGLES, static_cast<int>(m_indices[i].size()),
                    GL_UNSIGNED_INT, (void *)nullptr);
   }
+
+  glDisableVertexAttribArray(0);
+  CheckOpenGLError("glDisableVertexAttribArray");
 }
 
 void rendering::WireframeObjects::Render(
@@ -197,21 +207,8 @@ void rendering::WireframeObjects::Render(
   glEnableVertexAttribArray(0);
   CheckOpenGLError("glEnableVertexAttribArray");
 
-  program->SetThickness(lineWidth);
+  RenderSetup(program);
 
-  glEnable(GL_DEPTH_TEST);
-  glClearColor(clearColor.redF(), clearColor.greenF(), clearColor.blueF(),
-               clearColor.alphaF());
-  program->SetBackgroundColor(clearColor.redF(), clearColor.greenF(),
-                              clearColor.blueF());
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-  program->SetMeshTranslationOffset(m_translationOffset.x(),
-                                    m_translationOffset.y(),
-                                    m_translationOffset.z());
-  program->SetPosition(m_position.x(), m_position.y(), m_position.z());
-  program->SetRotation(m_rotation.x(), m_rotation.y(), m_rotation.z());
-  program->SetScale(m_scale.x(), m_scale.y(), m_scale.z());
   m_vao->bind();
   for (int i = 0; i < m_indices.size(); i++) {
     if (i >= m_colors.size())
@@ -220,6 +217,7 @@ void rendering::WireframeObjects::Render(
       continue;
     program->SetColor(m_colors[i].redF(), m_colors[i].greenF(),
                       m_colors[i].blueF(), m_colors[i].alphaF());
+    program->SetThickness(lineWidth);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferIds[i]);
     glDrawElements(GL_TRIANGLES, static_cast<int>(m_indices[i].size()),
                    GL_UNSIGNED_INT, (void *)nullptr);

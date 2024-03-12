@@ -98,6 +98,7 @@ private:
 
   void CreateVBO();
   void DestroyVBO();
+  void RenderSetup(const std::unique_ptr<rendering::ShaderProgram> &program);
 };
 
 } // namespace rendering
