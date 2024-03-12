@@ -22,7 +22,7 @@ GLuint rendering::ShaderProgram::createShader(GLenum type,
   GLuint shaderID = glCreateShader(type);
   CheckOpenGLError("glCreateShader");
   const char *vertexShaderText = src.data();
-  glShaderSource(shaderID, 1, (const char **)&vertexShaderText, nullptr);
+  glShaderSource(shaderID, 1, &vertexShaderText, nullptr);
   CheckOpenGLError("glShaderSource");
   glCompileShader(shaderID);
   CheckOpenGLError("glCompileShader");
