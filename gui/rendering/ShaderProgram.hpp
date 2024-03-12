@@ -15,12 +15,10 @@ protected:
   void Init();
 
 public:
-  explicit ShaderProgram(const std::string &vertexShaderFileName,
-                         const std::string &geometryShaderFileName,
-                         const std::string &fragmentShaderFileName);
   ShaderProgram(const ShaderProgram &) = delete;
-  ShaderProgram(const char *vertexProgram, const char *geometryProgram,
-                const char *fragmentProgram);
+  ShaderProgram(const std::string &vertexProgram,
+                const std::string &geometryProgram,
+                const std::string &fragmentProgram);
   ~ShaderProgram();
 
   ShaderProgram &operator=(ShaderProgram other) = delete;
