@@ -10,6 +10,7 @@
 #include <sme/mesh3d.hpp>
 
 #include "model_test_utils.hpp"
+#include "rendering.hpp"
 #include "sme/image_stack.hpp"
 #include "sme/tiff.hpp"
 #include "sme/utils.hpp"
@@ -164,6 +165,34 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       sendMouseClick(&test, {412, 445});
       QcolorSelection = QColor(test.getColour());
       REQUIRE(backgroundColor == QcolorSelection);
+
+      rendering::ClippingPlane clippingPlane1(QVector3D(0, 1, 0).normalized(),
+                                              QVector3D(0, 10, 0), test, true);
+      test.repaint();
+      wait(100);
+      sendMouseClick(&test, {259, 340});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
+      wait(100);
+
+      rendering::ClippingPlane clippingPlane2(QVector3D(1, 0, 0).normalized(),
+                                              QVector3D(0, 0, 0), test, true);
+      test.repaint();
+      wait(100);
+      sendMouseClick(&test, {187, 143});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
+      wait(100);
+
+      clippingPlane2.Disable();
+      rendering::ClippingPlane clippingPlane3(QVector3D(-1, 0, 0).normalized(),
+                                              QVector3D(0, 0, 0), test, true);
+      test.repaint();
+      wait(100);
+      sendMouseClick(&test, {319, 144});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
+      wait(100);
     }
 
     SECTION("All three compartments + mesh offset") {
@@ -266,6 +295,40 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       sendMouseClick(&test, {412, 445});
       QcolorSelection = QColor(test.getColour());
       REQUIRE(backgroundColor == QcolorSelection);
+
+      rendering::ClippingPlane clippingPlane1(QVector3D(0, 1, 0).normalized(),
+                                              QVector3D(0, 10, 0), test, true);
+      test.repaint();
+      wait(100);
+      sendMouseClick(&test, {259, 340});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
+      wait(100);
+
+      rendering::ClippingPlane clippingPlane2(QVector3D(1, 0, 0).normalized(),
+                                              QVector3D(0, 0, 0), test, true);
+      test.repaint();
+      wait(100);
+      sendMouseClick(&test, {187, 143});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
+      wait(100);
+
+      clippingPlane2.Disable();
+      rendering::ClippingPlane clippingPlane3(QVector3D(-1, 0, 0).normalized(),
+                                              QVector3D(0, 0, 0), test, true);
+      test.repaint();
+      wait(100);
+      sendMouseClick(&test, {319, 144});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
+      wait(100);
+      clippingPlane3.TranslateClipPlane(10);
+      test.repaint();
+      wait(100);
+      clippingPlane3.TranslateClipPlane(-20);
+      test.repaint();
+      wait(100);
     }
   }
 }

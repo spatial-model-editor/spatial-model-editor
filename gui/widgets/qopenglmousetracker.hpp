@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <set>
+
 #include <QOpenGLWidget>
 #include <QTimer>
 #include <QWidget>
@@ -15,6 +17,8 @@
 class QOpenGLMouseTracker : public QOpenGLWidget {
   Q_OBJECT
 public:
+  friend class rendering::ClippingPlane;
+
   QOpenGLMouseTracker(QWidget *parent = nullptr, float lineWidth = 0.005f,
                       float lineSelectPrecision = 0.2f,
                       float lineWidthSelectedSubmesh = 0.1f,
@@ -105,11 +109,19 @@ protected:
 
   QColor m_backgroundColor;
 
+  std::set<rendering::ClippingPlane *> m_clippingPlanes;
+
+  void addClippingPlane(rendering::ClippingPlane *clippingPlane);
+  void deleteClippingPlane(rendering::ClippingPlane *clippingPlane);
+
   void initializeGL() override;
   void resizeGL(int w, int h) override;
   void paintGL() override;
 
   void renderScene(std::optional<float> widthLine = {});
+
+  void
+  updateAllClippingPlanes(std::unique_ptr<rendering::ShaderProgram> &program);
 
   void mouseMoveEvent(QMouseEvent *event) override;
 

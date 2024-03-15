@@ -23,7 +23,7 @@ public:
                 const std::string &fragmentProgram);
   ~ShaderProgram();
 
-  ShaderProgram &operator=(ShaderProgram other) = delete;
+  ShaderProgram &operator=(const ShaderProgram &other) = delete;
 
   GLuint createShader(GLenum type, const std::string &src);
 
@@ -42,10 +42,11 @@ public:
   void SetThickness(GLfloat thickness);
   void SetBackgroundColor(GLfloat r, GLfloat g, GLfloat b);
 
-  void SetClipPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d,
-                    uint32_t planeIndex);
-  void DisablePlaneIndex(uint32_t planeIndex);
-  void DisableAllPlanes();
+  void SetClippingPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d,
+                        uint32_t planeIndex);
+  void EnableClippingPlane(uint32_t planeIndex);
+  void DisableClippingPlane(uint32_t planeIndex);
+  void DisableAllClippingPlanes();
 
 private:
   std::string m_vertexShaderText;

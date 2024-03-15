@@ -4,7 +4,7 @@ target_sources(
           ShaderProgram.cpp
           Utils.cpp
           WireframeObjects.cpp
-          ClipPlane.cpp)
+          ClippingPlane.cpp)
 
 target_include_directories(gui PUBLIC .)
 
