@@ -120,8 +120,8 @@ protected:
 
   void renderScene(std::optional<float> widthLine = {});
 
-  void
-  updateAllClippingPlanes(std::unique_ptr<rendering::ShaderProgram> &program);
+  void updateAllClippingPlanes(
+      std::unique_ptr<rendering::ShaderProgram> &program) const;
 
   void mouseMoveEvent(QMouseEvent *event) override;
 

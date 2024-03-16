@@ -82,7 +82,7 @@ void QOpenGLMouseTracker::renderScene(std::optional<float> lineWidth) {
 }
 
 void QOpenGLMouseTracker::updateAllClippingPlanes(
-    std::unique_ptr<rendering::ShaderProgram> &program) {
+    std::unique_ptr<rendering::ShaderProgram> &program) const {
 
   // start with a clean opengl set of clipping planes.
   program->DisableAllClippingPlanes();

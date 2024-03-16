@@ -22,9 +22,10 @@ public:
 
   ~ClippingPlane();
   ClippingPlane &operator=(const ClippingPlane &other) = delete;
+  ClippingPlane(const ClippingPlane &other) = default;
 
   void SetClipPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d);
-  void SetClipPlane(QVector3D normal, QVector3D &point);
+  void SetClipPlane(QVector3D normal, const QVector3D &point);
 
   /**
    * @brief: Translate the plane alongside the normal
@@ -41,7 +42,10 @@ public:
   UpdateClipPlane(std::unique_ptr<rendering::ShaderProgram> &program) const;
 
 protected:
-  GLfloat a, b, c, d;
+  GLfloat a;
+  GLfloat b;
+  GLfloat c;
+  GLfloat d;
   uint32_t planeIndex;
   bool status;
   static std::stack<uint32_t> available;

@@ -71,7 +71,7 @@ void rendering::ClippingPlane::SetClipPlane(GLfloat a, GLfloat b, GLfloat c,
 }
 
 void rendering::ClippingPlane::SetClipPlane(QVector3D normal,
-                                            QVector3D &point) {
+                                            const QVector3D &point) {
 
   normal.normalize();
 

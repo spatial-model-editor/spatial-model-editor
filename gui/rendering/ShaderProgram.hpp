@@ -7,7 +7,7 @@
 #include <QtOpenGL>
 #include <string>
 
-#define MAX_NUMBER_PLANES 8
+constexpr uint32_t MAX_NUMBER_PLANES = 8;
 
 namespace rendering {
 
@@ -71,8 +71,8 @@ private:
   GLint m_thickness;
   GLint m_background_color;
 
-  GLint m_clipPlane[MAX_NUMBER_PLANES];
-  GLint m_activeClipPlane[MAX_NUMBER_PLANES];
+  std::array<GLfloat, MAX_NUMBER_PLANES> m_clipPlane;
+  std::array<GLfloat, MAX_NUMBER_PLANES> m_activeClipPlane;
 };
 
 } // namespace rendering
