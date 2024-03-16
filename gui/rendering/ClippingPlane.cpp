@@ -3,11 +3,10 @@
 //
 
 #include "ClippingPlane.hpp"
-#include <QVector3D>
-
-#include "qopenglmousetracker.hpp"
-
 #include "ShaderProgram.hpp"
+#include "qopenglmousetracker.hpp"
+#include "sme/logger.hpp"
+#include <QVector3D>
 
 std::stack<uint32_t> generate(int32_t n) {
 
@@ -55,7 +54,11 @@ rendering::ClippingPlane::ClippingPlane(const QVector3D &normal,
 rendering::ClippingPlane::~ClippingPlane() {
 
   Disable();
-  available.push(planeIndex);
+  try {
+    available.push(planeIndex);
+  } catch (const std::exception &e) {
+    SPDLOG_ERROR("Exception caught: " + std::string(e.what()));
+  }
   this->OpenGLWidget.deleteClippingPlane(this);
 }
 
