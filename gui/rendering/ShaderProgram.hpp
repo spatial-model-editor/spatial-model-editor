@@ -71,8 +71,8 @@ private:
   GLint m_thickness;
   GLint m_background_color;
 
-  std::array<GLfloat, MAX_NUMBER_PLANES> m_clipPlane;
-  std::array<GLfloat, MAX_NUMBER_PLANES> m_activeClipPlane;
+  std::array<GLint, MAX_NUMBER_PLANES> m_clipPlane;
+  std::array<GLint, MAX_NUMBER_PLANES> m_activeClipPlane;
 };
 
 } // namespace rendering
