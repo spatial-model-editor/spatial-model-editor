@@ -14,10 +14,9 @@ TEST_CASE("QLabelSlice",
   QObject::connect(
       &lblSlice, &QLabelSlice::mouseDown,
       [&mouseDownPoints](QPoint p) { mouseDownPoints.push_back(p); });
-  QObject::connect(&lblSlice, &QLabelSlice::sliceDrawn,
-                   [&slices](QPoint start, QPoint end) {
-                     slices.push_back({start, end});
-                   });
+  QObject::connect(
+      &lblSlice, &QLabelSlice::sliceDrawn,
+      [&slices](QPoint start, QPoint end) { slices.push_back({start, end}); });
   QImage img(10, 5, QImage::Format_RGB32);
   img.fill(qRgb(12, 66, 99));
   lblSlice.setAspectRatioMode(Qt::AspectRatioMode::IgnoreAspectRatio);
