@@ -81,14 +81,13 @@ void QOpenGLMouseTracker::renderScene(std::optional<float> lineWidth) {
   }
 }
 
-void QOpenGLMouseTracker::updateAllClippingPlanes(
-    std::unique_ptr<rendering::ShaderProgram> &program) const {
+void QOpenGLMouseTracker::updateAllClippingPlanes() {
 
   // start with a clean opengl set of clipping planes.
-  program->DisableAllClippingPlanes();
+  m_mainProgram->DisableAllClippingPlanes();
 
   for (auto &plane : m_clippingPlanes) {
-    plane->UpdateClipPlane(program);
+    plane->UpdateClipPlane(m_mainProgram);
   }
 }
 
@@ -107,7 +106,7 @@ void QOpenGLMouseTracker::paintGL() {
   m_camera.UpdateView(m_mainProgram);
   m_camera.UpdateProjection(m_mainProgram);
 
-  updateAllClippingPlanes(m_mainProgram);
+  updateAllClippingPlanes();
 
   renderScene();
 
