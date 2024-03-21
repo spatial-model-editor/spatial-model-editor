@@ -8,62 +8,24 @@
 #include "sme/logger.hpp"
 #include <QVector3D>
 
-std::stack<uint32_t> generate(int32_t n) {
+rendering::ClippingPlane::ClippingPlane(uint32_t planeIndex, bool active)
+    : planeIndex(planeIndex), active(active) {}
 
-  assert(n > 0);
-  std::stack<uint32_t> st;
-  for (int32_t i = n - 1; i >= 0; i--) {
-    st.push(i);
+std::set<std::shared_ptr<rendering::ClippingPlane>>
+rendering::ClippingPlane::BuildClippingPlanes() {
+
+  std::set<std::shared_ptr<ClippingPlane>> planes;
+
+  for (uint32_t i = 0; i < MAX_NUMBER_PLANES; i++) {
+    planes.insert(std::shared_ptr<ClippingPlane>(new ClippingPlane(i, true)));
   }
-  return st;
-}
 
-std::stack<uint32_t> rendering::ClippingPlane::available =
-    generate(MAX_NUMBER_PLANES);
-
-rendering::ClippingPlane::ClippingPlane(GLfloat a, GLfloat b, GLfloat c,
-                                        GLfloat d,
-                                        QOpenGLMouseTracker &OpenGLWidget,
-                                        bool active)
-    : a(a), b(b), c(c), d(d), status(active), OpenGLWidget(OpenGLWidget) {
-
-  assert(!available.empty());
-
-  this->OpenGLWidget.addClippingPlane(this);
-
-  planeIndex = available.top();
-  available.pop();
-}
-
-rendering::ClippingPlane::ClippingPlane(const QVector3D &normal,
-                                        const QVector3D &point,
-                                        QOpenGLMouseTracker &OpenGLWidget,
-                                        bool active)
-    : a(normal.x()), b(normal.y()), c(normal.z()),
-      d(-QVector3D::dotProduct(normal, point)), status(active),
-      OpenGLWidget(OpenGLWidget) {
-
-  assert(!available.empty());
-
-  this->OpenGLWidget.addClippingPlane(this);
-
-  planeIndex = available.top();
-  available.pop();
-}
-
-rendering::ClippingPlane::~ClippingPlane() {
-
-  Disable();
-  try {
-    available.push(planeIndex);
-  } catch (const std::exception &e) {
-    SPDLOG_ERROR("Exception caught: " + std::string(e.what()));
-  }
-  this->OpenGLWidget.deleteClippingPlane(this);
+  return planes;
 }
 
 void rendering::ClippingPlane::SetClipPlane(GLfloat a, GLfloat b, GLfloat c,
                                             GLfloat d) {
+
   this->a = a;
   this->b = b;
   this->c = c;
@@ -91,13 +53,13 @@ void rendering::ClippingPlane::TranslateClipPlane(GLfloat value) {
   SetClipPlane(normal, point);
 }
 
-void rendering::ClippingPlane::Enable() { status = true; }
-void rendering::ClippingPlane::Disable() { status = false; }
-bool rendering::ClippingPlane::getStatus() const { return status; }
+void rendering::ClippingPlane::Enable() { active = true; }
+void rendering::ClippingPlane::Disable() { active = false; }
+bool rendering::ClippingPlane::getStatus() const { return active; }
 
 void rendering::ClippingPlane::UpdateClipPlane(
     std::unique_ptr<rendering::ShaderProgram> &program) const {
-  if (status) {
+  if (active) {
     program->EnableClippingPlane(planeIndex);
     program->SetClippingPlane(a, b, c, d, planeIndex);
   } else {

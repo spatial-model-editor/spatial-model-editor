@@ -166,8 +166,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       QcolorSelection = QColor(test.getColour());
       REQUIRE(backgroundColor == QcolorSelection);
 
-      rendering::ClippingPlane clippingPlane1(QVector3D(0, 1, 0).normalized(),
-                                              QVector3D(0, 10, 0), test, true);
+      auto clippingPlane1 = test.BuildClippingPlane(
+          QVector3D(0, 1, 0).normalized(), QVector3D(0, 10, 0), true);
       test.repaint();
       wait(100);
       sendMouseClick(&test, {259, 340});
@@ -175,8 +175,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       REQUIRE(backgroundColor == QcolorSelection);
       wait(100);
 
-      rendering::ClippingPlane clippingPlane2(QVector3D(1, 0, 0).normalized(),
-                                              QVector3D(0, 0, 0), test, true);
+      auto clippingPlane2 = test.BuildClippingPlane(
+          QVector3D(1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       test.repaint();
       wait(100);
       sendMouseClick(&test, {187, 143});
@@ -184,9 +184,9 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       REQUIRE(backgroundColor == QcolorSelection);
       wait(100);
 
-      clippingPlane2.Disable();
-      rendering::ClippingPlane clippingPlane3(QVector3D(-1, 0, 0).normalized(),
-                                              QVector3D(0, 0, 0), test, true);
+      clippingPlane2->Disable();
+      auto clippingPlane3 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       test.repaint();
       wait(100);
       sendMouseClick(&test, {319, 144});
@@ -296,8 +296,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       QcolorSelection = QColor(test.getColour());
       REQUIRE(backgroundColor == QcolorSelection);
 
-      rendering::ClippingPlane clippingPlane1(QVector3D(0, 1, 0).normalized(),
-                                              QVector3D(0, 10, 0), test, true);
+      auto clippingPlane1 = test.BuildClippingPlane(
+          QVector3D(0, 1, 0).normalized(), QVector3D(0, 10, 0), true);
       test.repaint();
       wait(100);
       sendMouseClick(&test, {259, 340});
@@ -305,8 +305,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       REQUIRE(backgroundColor == QcolorSelection);
       wait(100);
 
-      rendering::ClippingPlane clippingPlane2(QVector3D(1, 0, 0).normalized(),
-                                              QVector3D(0, 0, 0), test, true);
+      auto clippingPlane2 = test.BuildClippingPlane(
+          QVector3D(1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       test.repaint();
       wait(100);
       sendMouseClick(&test, {187, 143});
@@ -314,19 +314,19 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       REQUIRE(backgroundColor == QcolorSelection);
       wait(100);
 
-      clippingPlane2.Disable();
-      rendering::ClippingPlane clippingPlane3(QVector3D(-1, 0, 0).normalized(),
-                                              QVector3D(0, 0, 0), test, true);
+      clippingPlane2->Disable();
+      auto clippingPlane3 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       test.repaint();
       wait(100);
       sendMouseClick(&test, {319, 144});
       QcolorSelection = QColor(test.getColour());
       REQUIRE(backgroundColor == QcolorSelection);
       wait(100);
-      clippingPlane3.TranslateClipPlane(10);
+      clippingPlane3->TranslateClipPlane(10);
       test.repaint();
       wait(100);
-      clippingPlane3.TranslateClipPlane(-20);
+      clippingPlane3->TranslateClipPlane(-20);
       test.repaint();
       wait(100);
     }

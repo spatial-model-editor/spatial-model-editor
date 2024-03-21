@@ -18,7 +18,68 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
                static_cast<float>(size().height()), cameraNearZ, cameraFarZ),
       m_frameRate(frameRate),
       m_backgroundColor(QWidget::palette().color(QWidget::backgroundRole())),
-      m_lastColour(QWidget::palette().color(QWidget::backgroundRole()).rgb()) {}
+      m_lastColour(QWidget::palette().color(QWidget::backgroundRole()).rgb()),
+      m_clippingPlanesPool(rendering::ClippingPlane::BuildClippingPlanes()) {}
+
+std::shared_ptr<rendering::ClippingPlane>
+QOpenGLMouseTracker::BuildClippingPlane(GLfloat a, GLfloat b, GLfloat c,
+                                        GLfloat d, bool active) {
+
+  auto it = m_clippingPlanesPool.begin();
+  assert(it != m_clippingPlanesPool.end());
+
+  auto clippingPlane = *it;
+  clippingPlane->SetClipPlane(a, b, c, d);
+
+  if (active) {
+    clippingPlane->Enable();
+  } else {
+    clippingPlane->Disable();
+  }
+
+  m_clippingPlanes.insert(clippingPlane);
+  m_clippingPlanesPool.erase(clippingPlane);
+
+  update();
+
+  return clippingPlane;
+}
+
+std::shared_ptr<rendering::ClippingPlane>
+QOpenGLMouseTracker::BuildClippingPlane(const QVector3D &normal,
+                                        const QVector3D &point, bool active) {
+
+  auto it = m_clippingPlanesPool.begin();
+  assert(it != m_clippingPlanesPool.end());
+
+  auto clippingPlane = *it;
+  clippingPlane->SetClipPlane(normal, point);
+
+  if (active) {
+    clippingPlane->Enable();
+  } else {
+    clippingPlane->Disable();
+  }
+
+  m_clippingPlanes.insert(clippingPlane);
+  m_clippingPlanesPool.erase(clippingPlane);
+
+  update();
+
+  return clippingPlane;
+}
+
+void QOpenGLMouseTracker::DestroyClippingPlane(
+    std::shared_ptr<rendering::ClippingPlane> clippingPlane) {
+
+  auto it = m_clippingPlanes.find(clippingPlane);
+  assert(it != m_clippingPlanes.end());
+
+  m_clippingPlanesPool.insert(*it);
+  m_clippingPlanes.erase(it);
+
+  update();
+}
 
 void QOpenGLMouseTracker::initializeGL() {
 
@@ -223,23 +284,6 @@ void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
                                       (1 / m_frameRate));
 
   emit mouseWheelEvent(event);
-
-  update();
-}
-
-void QOpenGLMouseTracker::addClippingPlane(
-    rendering::ClippingPlane *clippingPlane) {
-
-  m_clippingPlanes.insert(clippingPlane);
-
-  update();
-}
-
-void QOpenGLMouseTracker::deleteClippingPlane(
-    rendering::ClippingPlane *clippingPlane) {
-
-  clippingPlane->UpdateClipPlane(m_mainProgram);
-  m_clippingPlanes.erase(clippingPlane);
 
   update();
 }

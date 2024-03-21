@@ -26,6 +26,17 @@ public:
                       float cameraFOV = 60.0f, float cameraNearZ = 0.001f,
                       float cameraFarZ = 2000.0f, float frameRate = 30.0f);
 
+  std::shared_ptr<rendering::ClippingPlane>
+  BuildClippingPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d,
+                     bool active = false);
+
+  std::shared_ptr<rendering::ClippingPlane>
+  BuildClippingPlane(const QVector3D &normal, const QVector3D &point,
+                     bool active = false);
+
+  void
+  DestroyClippingPlane(std::shared_ptr<rendering::ClippingPlane> clippingPlane);
+
   void SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height,
                         GLfloat nearZ, GLfloat farZ);
   void SetCameraPosition(float x, float y, float z);
@@ -108,11 +119,16 @@ protected:
   int m_yAtPress;
 
   QColor m_backgroundColor;
+  /**
+   * Set of clipping planes that are part of the scene.
+   * They can be active in the scene or not.
+   */
+  std::set<std::shared_ptr<rendering::ClippingPlane>> m_clippingPlanes;
 
-  std::set<rendering::ClippingPlane *> m_clippingPlanes;
-
-  void addClippingPlane(rendering::ClippingPlane *clippingPlane);
-  void deleteClippingPlane(rendering::ClippingPlane *clippingPlane);
+  /**
+   * Pool of clipping planes used for populating the scene with new planes.
+   */
+  std::set<std::shared_ptr<rendering::ClippingPlane>> m_clippingPlanesPool;
 
   void initializeGL() override;
   void resizeGL(int w, int h) override;

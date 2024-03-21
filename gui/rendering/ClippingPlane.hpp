@@ -6,7 +6,8 @@
 #define SPATIALMODELEDITOR_CLIPPLANE_H
 
 #include "ShaderProgram.hpp"
-#include <stack>
+#include <set>
+#include <vector>
 
 class QOpenGLMouseTracker;
 
@@ -15,14 +16,15 @@ namespace rendering {
 class ClippingPlane {
 
 public:
-  ClippingPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d,
-                QOpenGLMouseTracker &OpenGLWidget, bool active = false);
-  ClippingPlane(const QVector3D &normal, const QVector3D &point,
-                QOpenGLMouseTracker &OpenGLWidget, bool active = false);
+  void
+  UpdateClipPlane(std::unique_ptr<rendering::ShaderProgram> &program) const;
 
-  ~ClippingPlane();
-  ClippingPlane &operator=(const ClippingPlane &other) = delete;
-  ClippingPlane(const ClippingPlane &other) = default;
+  /**
+   * @brief Create a vector that contains the minimum number of planes possible.
+   * ( MAX_NUMBER_PLANES )
+   */
+  static std::set<std::shared_ptr<rendering::ClippingPlane>>
+  BuildClippingPlanes();
 
   void SetClipPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d);
   void SetClipPlane(QVector3D normal, const QVector3D &point);
@@ -30,27 +32,33 @@ public:
   /**
    * @brief: Translate the plane alongside the normal
    *
-   * @param value the value used for translation
+   * @param value how much it gets in translation
    */
-
   void TranslateClipPlane(GLfloat value);
+
+  /**
+   * @brief: toggle between using and not the plane
+   */
   void Enable();
   void Disable();
+
+  /**
+   *
+   * @return if the plane influences the scene currently
+   */
   bool getStatus() const;
 
-  void
-  UpdateClipPlane(std::unique_ptr<rendering::ShaderProgram> &program) const;
-
 protected:
+  ClippingPlane(uint32_t planeIndex, bool active = false);
+
   GLfloat a;
   GLfloat b;
   GLfloat c;
   GLfloat d;
   uint32_t planeIndex;
-  bool status;
-  static std::stack<uint32_t> available;
 
-  QOpenGLMouseTracker &OpenGLWidget;
+  // active( true ) or disabled ( false )
+  bool active;
 };
 
 } // namespace rendering
