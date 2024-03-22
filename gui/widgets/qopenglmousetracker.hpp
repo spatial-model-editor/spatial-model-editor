@@ -128,7 +128,8 @@ protected:
   /**
    * Pool of clipping planes used for populating the scene with new planes.
    */
-  std::set<std::shared_ptr<rendering::ClippingPlane>> m_clippingPlanesPool;
+  std::set<std::shared_ptr<rendering::ClippingPlane>> m_clippingPlanesPool =
+      rendering::ClippingPlane::BuildClippingPlanes();
 
   void initializeGL() override;
   void resizeGL(int w, int h) override;

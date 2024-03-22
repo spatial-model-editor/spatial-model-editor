@@ -18,8 +18,7 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
                static_cast<float>(size().height()), cameraNearZ, cameraFarZ),
       m_frameRate(frameRate),
       m_backgroundColor(QWidget::palette().color(QWidget::backgroundRole())),
-      m_lastColour(QWidget::palette().color(QWidget::backgroundRole()).rgb()),
-      m_clippingPlanesPool(rendering::ClippingPlane::BuildClippingPlanes()) {}
+      m_lastColour(QWidget::palette().color(QWidget::backgroundRole()).rgb()) {}
 
 std::shared_ptr<rendering::ClippingPlane>
 QOpenGLMouseTracker::BuildClippingPlane(GLfloat a, GLfloat b, GLfloat c,
