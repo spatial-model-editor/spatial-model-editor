@@ -26,11 +26,11 @@ public:
                       float cameraFOV = 60.0f, float cameraNearZ = 0.001f,
                       float cameraFarZ = 2000.0f, float frameRate = 30.0f);
 
-  std::shared_ptr<rendering::ClippingPlane>
+  std::optional<std::shared_ptr<rendering::ClippingPlane>>
   BuildClippingPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d,
                      bool active = false);
 
-  std::shared_ptr<rendering::ClippingPlane>
+  std::optional<std::shared_ptr<rendering::ClippingPlane>>
   BuildClippingPlane(const QVector3D &normal, const QVector3D &point,
                      bool active = false);
 

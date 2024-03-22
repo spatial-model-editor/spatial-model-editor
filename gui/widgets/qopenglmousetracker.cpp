@@ -20,12 +20,14 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
       m_backgroundColor(QWidget::palette().color(QWidget::backgroundRole())),
       m_lastColour(QWidget::palette().color(QWidget::backgroundRole()).rgb()) {}
 
-std::shared_ptr<rendering::ClippingPlane>
+std::optional<std::shared_ptr<rendering::ClippingPlane>>
 QOpenGLMouseTracker::BuildClippingPlane(GLfloat a, GLfloat b, GLfloat c,
                                         GLfloat d, bool active) {
 
   auto it = m_clippingPlanesPool.begin();
-  assert(it != m_clippingPlanesPool.end());
+
+  if (it == m_clippingPlanesPool.end())
+    return {};
 
   auto clippingPlane = *it;
   clippingPlane->SetClipPlane(a, b, c, d);
@@ -44,12 +46,14 @@ QOpenGLMouseTracker::BuildClippingPlane(GLfloat a, GLfloat b, GLfloat c,
   return clippingPlane;
 }
 
-std::shared_ptr<rendering::ClippingPlane>
+std::optional<std::shared_ptr<rendering::ClippingPlane>>
 QOpenGLMouseTracker::BuildClippingPlane(const QVector3D &normal,
                                         const QVector3D &point, bool active) {
 
   auto it = m_clippingPlanesPool.begin();
-  assert(it != m_clippingPlanesPool.end());
+
+  if (it == m_clippingPlanesPool.end())
+    return {};
 
   auto clippingPlane = *it;
   clippingPlane->SetClipPlane(normal, point);
@@ -72,7 +76,9 @@ void QOpenGLMouseTracker::DestroyClippingPlane(
     std::shared_ptr<rendering::ClippingPlane> clippingPlane) {
 
   auto it = m_clippingPlanes.find(clippingPlane);
-  assert(it != m_clippingPlanes.end());
+
+  if (it == m_clippingPlanes.end())
+    return;
 
   m_clippingPlanesPool.insert(*it);
   m_clippingPlanes.erase(it);
