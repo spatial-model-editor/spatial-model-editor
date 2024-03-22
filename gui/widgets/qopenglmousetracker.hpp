@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <set>
+
 #include <QOpenGLWidget>
 #include <QTimer>
 #include <QWidget>
@@ -15,12 +17,25 @@
 class QOpenGLMouseTracker : public QOpenGLWidget {
   Q_OBJECT
 public:
+  friend class rendering::ClippingPlane;
+
   QOpenGLMouseTracker(QWidget *parent = nullptr, float lineWidth = 0.005f,
                       float lineSelectPrecision = 0.2f,
                       float lineWidthSelectedSubmesh = 0.1f,
                       QColor selectedObjectColor = QColor(255, 255, 0),
                       float cameraFOV = 60.0f, float cameraNearZ = 0.001f,
                       float cameraFarZ = 2000.0f, float frameRate = 30.0f);
+
+  std::shared_ptr<rendering::ClippingPlane>
+  BuildClippingPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d,
+                     bool active = false);
+
+  std::shared_ptr<rendering::ClippingPlane>
+  BuildClippingPlane(const QVector3D &normal, const QVector3D &point,
+                     bool active = false);
+
+  void
+  DestroyClippingPlane(std::shared_ptr<rendering::ClippingPlane> clippingPlane);
 
   void SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height,
                         GLfloat nearZ, GLfloat farZ);
@@ -104,12 +119,25 @@ protected:
   int m_yAtPress;
 
   QColor m_backgroundColor;
+  /**
+   * Set of clipping planes that are part of the scene.
+   * They can be active in the scene or not.
+   */
+  std::set<std::shared_ptr<rendering::ClippingPlane>> m_clippingPlanes;
+
+  /**
+   * Pool of clipping planes used for populating the scene with new planes.
+   */
+  std::set<std::shared_ptr<rendering::ClippingPlane>> m_clippingPlanesPool =
+      rendering::ClippingPlane::BuildClippingPlanes();
 
   void initializeGL() override;
   void resizeGL(int w, int h) override;
   void paintGL() override;
 
   void renderScene(std::optional<float> widthLine = {});
+
+  void updateAllClippingPlanes();
 
   void mouseMoveEvent(QMouseEvent *event) override;
 

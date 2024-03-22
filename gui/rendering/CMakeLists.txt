@@ -3,7 +3,8 @@ target_sources(
   PRIVATE Camera.cpp
           ShaderProgram.cpp
           Utils.cpp
-          WireframeObjects.cpp)
+          WireframeObjects.cpp
+          ClippingPlane.cpp)
 
 target_include_directories(gui PUBLIC .)
 

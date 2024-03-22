@@ -100,6 +100,24 @@ void rendering::ShaderProgram::Init() {
   CheckOpenGLError("glGetUniformLocation");
   m_background_color = glGetUniformLocation(m_programId, "background_color");
   CheckOpenGLError("glGetUniformLocation");
+  m_color = glGetUniformLocation(m_programId, "in_Color");
+  CheckOpenGLError("glGetUniformLocation");
+  m_meshTranslationOffsetLocation =
+      glGetUniformLocation(m_programId, "translationOffset");
+  CheckOpenGLError("glGetUniformLocation");
+
+  for (uint32_t i = 0; i < MAX_NUMBER_PLANES; i++) {
+    std::string planeName = "clipPlane[" + std::to_string(i) + "]";
+    m_clipPlane[i] = glGetUniformLocation(m_programId, planeName.c_str());
+    CheckOpenGLError("glGetUniformLocation");
+  }
+
+  for (uint32_t i = 0; i < MAX_NUMBER_PLANES; i++) {
+    std::string activeClipPlane = "activeClipPlane[" + std::to_string(i) + "]";
+    m_activeClipPlane[i] =
+        glGetUniformLocation(m_programId, activeClipPlane.c_str());
+    CheckOpenGLError("glGetUniformLocation");
+  }
 }
 
 rendering::ShaderProgram::~ShaderProgram() {
@@ -191,4 +209,52 @@ void rendering::ShaderProgram::SetBackgroundColor(GLfloat r, GLfloat g,
 void rendering::ShaderProgram::Use() {
   glUseProgram(m_programId);
   CheckOpenGLError("glUseProgram");
+}
+
+void rendering::ShaderProgram::SetClippingPlane(GLfloat a, GLfloat b, GLfloat c,
+                                                GLfloat d,
+                                                uint32_t planeIndex) {
+
+  assert(planeIndex < MAX_NUMBER_PLANES);
+
+  // set the clipping plane
+  glUniform4f(m_clipPlane[planeIndex], a, b, c, d);
+  CheckOpenGLError("glUniform4f");
+}
+
+void rendering::ShaderProgram::EnableClippingPlane(uint32_t planeIndex) {
+
+  assert(planeIndex < MAX_NUMBER_PLANES);
+
+  Use();
+
+  // activate OpenGL's clip-plane internal state
+  glEnable(GL_CLIP_DISTANCE0 + planeIndex);
+  CheckOpenGLError("glEnable");
+
+  // activate plane test inside vertex/geometry shader
+  glUniform1i(m_activeClipPlane[planeIndex], true);
+  CheckOpenGLError("glUniform1i");
+}
+
+void rendering::ShaderProgram::DisableClippingPlane(uint32_t planeIndex) {
+
+  assert(planeIndex < MAX_NUMBER_PLANES);
+
+  Use();
+
+  // disable OpenGL's clip-plane internal state
+  glDisable(GL_CLIP_DISTANCE0 + planeIndex);
+  CheckOpenGLError("glDisable");
+
+  // deactivate plane test inside vertex/geometry shader
+  glUniform1i(m_activeClipPlane[planeIndex], false);
+  CheckOpenGLError("glUniform1i");
+}
+
+void rendering::ShaderProgram::DisableAllClippingPlanes() {
+
+  for (uint32_t i = 0; i < MAX_NUMBER_PLANES; i++) {
+    DisableClippingPlane(i);
+  }
 }

@@ -156,7 +156,10 @@ void rendering::WireframeObjects::DestroyVBO() {
 void rendering::WireframeObjects::RenderSetup(
     const std::unique_ptr<rendering::ShaderProgram> &program) {
 
+  glDisable(GL_CULL_FACE);
+  CheckOpenGLError("glDisable(GL_CULL_FACE)");
   glEnable(GL_DEPTH_TEST);
+  CheckOpenGLError("glEnable(GL_DEPTH_TEST)");
   glClearColor(clearColor.redF(), clearColor.greenF(), clearColor.blueF(),
                clearColor.alphaF());
   program->SetBackgroundColor(clearColor.redF(), clearColor.greenF(),

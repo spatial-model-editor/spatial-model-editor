@@ -10,6 +10,7 @@
 #include <sme/mesh3d.hpp>
 
 #include "model_test_utils.hpp"
+#include "rendering.hpp"
 #include "sme/image_stack.hpp"
 #include "sme/tiff.hpp"
 #include "sme/utils.hpp"
@@ -164,6 +165,62 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       sendMouseClick(&test, {412, 445});
       QcolorSelection = QColor(test.getColour());
       REQUIRE(backgroundColor == QcolorSelection);
+
+      auto clippingPlane1 = test.BuildClippingPlane(
+          QVector3D(0, 1, 0).normalized(), QVector3D(0, 10, 0), true);
+      test.repaint();
+      wait(100);
+      sendMouseClick(&test, {259, 340});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
+      wait(100);
+
+      auto clippingPlane2 = test.BuildClippingPlane(
+          QVector3D(1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane2);
+      test.repaint();
+      wait(100);
+      sendMouseClick(&test, {187, 143});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
+      wait(100);
+
+      clippingPlane2->Disable();
+      auto clippingPlane3 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      test.repaint();
+      wait(100);
+      sendMouseClick(&test, {319, 144});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
+      wait(100);
+
+      test.DestroyClippingPlane(clippingPlane3);
+      clippingPlane3 = test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
+                                               QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane3);
+      auto clippingPlane4 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane4);
+      auto clippingPlane5 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane5);
+      auto clippingPlane6 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane6);
+      auto clippingPlane7 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane7);
+      auto clippingPlane8 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane8);
+      auto clippingPlane9 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE_FALSE(clippingPlane9);
+      test.DestroyClippingPlane(clippingPlane8);
+      clippingPlane9 = test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
+                                               QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane9);
     }
 
     SECTION("All three compartments + mesh offset") {
@@ -266,6 +323,69 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       sendMouseClick(&test, {412, 445});
       QcolorSelection = QColor(test.getColour());
       REQUIRE(backgroundColor == QcolorSelection);
+
+      auto clippingPlane1 = test.BuildClippingPlane(
+          QVector3D(0, 1, 0).normalized(), QVector3D(0, 10, 0), true);
+      test.repaint();
+      wait(100);
+      sendMouseClick(&test, {259, 340});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
+      wait(100);
+
+      auto clippingPlane2 = test.BuildClippingPlane(
+          QVector3D(1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane2);
+      test.repaint();
+      wait(100);
+      sendMouseClick(&test, {187, 143});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
+      wait(100);
+
+      clippingPlane2->Disable();
+      auto clippingPlane3 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane3);
+      test.repaint();
+      wait(100);
+      sendMouseClick(&test, {319, 144});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
+      wait(100);
+      clippingPlane3->TranslateClipPlane(10);
+      test.repaint();
+      wait(100);
+      clippingPlane3->TranslateClipPlane(-20);
+      test.repaint();
+      wait(100);
+
+      test.DestroyClippingPlane(clippingPlane3);
+      clippingPlane3 = test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
+                                               QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane3);
+      auto clippingPlane4 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane4);
+      auto clippingPlane5 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane5);
+      auto clippingPlane6 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane6);
+      auto clippingPlane7 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane7);
+      auto clippingPlane8 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane8);
+      auto clippingPlane9 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
+      REQUIRE_FALSE(clippingPlane9);
+      test.DestroyClippingPlane(clippingPlane8);
+      clippingPlane9 = test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
+                                               QVector3D(0, 0, 0), true);
+      REQUIRE(clippingPlane9);
     }
   }
 }

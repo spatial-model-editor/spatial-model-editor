@@ -20,6 +20,72 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
       m_backgroundColor(QWidget::palette().color(QWidget::backgroundRole())),
       m_lastColour(QWidget::palette().color(QWidget::backgroundRole()).rgb()) {}
 
+std::shared_ptr<rendering::ClippingPlane>
+QOpenGLMouseTracker::BuildClippingPlane(GLfloat a, GLfloat b, GLfloat c,
+                                        GLfloat d, bool active) {
+
+  auto it = m_clippingPlanesPool.begin();
+
+  if (it == m_clippingPlanesPool.end())
+    return std::shared_ptr<rendering::ClippingPlane>(nullptr);
+
+  auto clippingPlane = *it;
+  clippingPlane->SetClipPlane(a, b, c, d);
+
+  if (active) {
+    clippingPlane->Enable();
+  } else {
+    clippingPlane->Disable();
+  }
+
+  m_clippingPlanes.insert(clippingPlane);
+  m_clippingPlanesPool.erase(clippingPlane);
+
+  update();
+
+  return clippingPlane;
+}
+
+std::shared_ptr<rendering::ClippingPlane>
+QOpenGLMouseTracker::BuildClippingPlane(const QVector3D &normal,
+                                        const QVector3D &point, bool active) {
+
+  auto it = m_clippingPlanesPool.begin();
+
+  if (it == m_clippingPlanesPool.end())
+    return std::shared_ptr<rendering::ClippingPlane>(nullptr);
+
+  auto clippingPlane = *it;
+  clippingPlane->SetClipPlane(normal, point);
+
+  if (active) {
+    clippingPlane->Enable();
+  } else {
+    clippingPlane->Disable();
+  }
+
+  m_clippingPlanes.insert(clippingPlane);
+  m_clippingPlanesPool.erase(clippingPlane);
+
+  update();
+
+  return clippingPlane;
+}
+
+void QOpenGLMouseTracker::DestroyClippingPlane(
+    std::shared_ptr<rendering::ClippingPlane> clippingPlane) {
+
+  auto it = m_clippingPlanes.find(clippingPlane);
+
+  if (it == m_clippingPlanes.end())
+    return;
+
+  m_clippingPlanesPool.insert(*it);
+  m_clippingPlanes.erase(it);
+
+  update();
+}
+
 void QOpenGLMouseTracker::initializeGL() {
 
 #ifdef QT_DEBUG
@@ -81,6 +147,16 @@ void QOpenGLMouseTracker::renderScene(std::optional<float> lineWidth) {
   }
 }
 
+void QOpenGLMouseTracker::updateAllClippingPlanes() {
+
+  // start with a clean opengl set of clipping planes.
+  m_mainProgram->DisableAllClippingPlanes();
+
+  for (auto &plane : m_clippingPlanes) {
+    plane->UpdateClipPlane(m_mainProgram);
+  }
+}
+
 void QOpenGLMouseTracker::paintGL() {
 
   if (!context()->isValid()) {
@@ -95,6 +171,8 @@ void QOpenGLMouseTracker::paintGL() {
 
   m_camera.UpdateView(m_mainProgram);
   m_camera.UpdateProjection(m_mainProgram);
+
+  updateAllClippingPlanes();
 
   renderScene();
 

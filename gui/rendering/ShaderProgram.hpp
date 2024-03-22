@@ -7,6 +7,8 @@
 #include <QtOpenGL>
 #include <string>
 
+constexpr uint32_t MAX_NUMBER_PLANES = 8;
+
 namespace rendering {
 
 class ShaderProgram : protected QOpenGLFunctions {
@@ -21,7 +23,7 @@ public:
                 const std::string &fragmentProgram);
   ~ShaderProgram();
 
-  ShaderProgram &operator=(ShaderProgram other) = delete;
+  ShaderProgram &operator=(const ShaderProgram &other) = delete;
 
   GLuint createShader(GLenum type, const std::string &src);
 
@@ -39,6 +41,12 @@ public:
   void SetMeshTranslationOffset(GLfloat x, GLfloat y, GLfloat z);
   void SetThickness(GLfloat thickness);
   void SetBackgroundColor(GLfloat r, GLfloat g, GLfloat b);
+
+  void SetClippingPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d,
+                        uint32_t planeIndex);
+  void EnableClippingPlane(uint32_t planeIndex);
+  void DisableClippingPlane(uint32_t planeIndex);
+  void DisableAllClippingPlanes();
 
 private:
   std::string m_vertexShaderText;
@@ -62,6 +70,9 @@ private:
   GLint m_meshTranslationOffsetLocation;
   GLint m_thickness;
   GLint m_background_color;
+
+  std::array<GLint, MAX_NUMBER_PLANES> m_clipPlane;
+  std::array<GLint, MAX_NUMBER_PLANES> m_activeClipPlane;
 };
 
 } // namespace rendering
