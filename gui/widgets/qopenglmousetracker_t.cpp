@@ -175,10 +175,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       REQUIRE(backgroundColor == QcolorSelection);
       wait(100);
 
-      auto clippingPlane2 =
-          test.BuildClippingPlane(QVector3D(1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value();
+      auto clippingPlane2 = test.BuildClippingPlane(
+          QVector3D(1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane2);
       test.repaint();
       wait(100);
@@ -188,10 +186,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       wait(100);
 
       clippingPlane2->Disable();
-      auto clippingPlane3 =
-          test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value();
+      auto clippingPlane3 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       test.repaint();
       wait(100);
       sendMouseClick(&test, {319, 144});
@@ -201,43 +197,29 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
       test.DestroyClippingPlane(clippingPlane3);
       clippingPlane3 = test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                               QVector3D(0, 0, 0), true)
-                           .value();
+                                               QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane3);
-      auto clippingPlane4 =
-          test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value();
+      auto clippingPlane4 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane4);
-      auto clippingPlane5 =
-          test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value();
+      auto clippingPlane5 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane5);
-      auto clippingPlane6 =
-          test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value();
+      auto clippingPlane6 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane6);
-      auto clippingPlane7 =
-          test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value();
+      auto clippingPlane7 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane7);
-      auto clippingPlane8 =
-          test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value();
+      auto clippingPlane8 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane8);
-      auto clippingPlane9 =
-          test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value_or(std::shared_ptr<rendering::ClippingPlane>(nullptr));
+      auto clippingPlane9 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE_FALSE(clippingPlane9);
       test.DestroyClippingPlane(clippingPlane8);
       clippingPlane9 = test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                               QVector3D(0, 0, 0), true)
-                           .value();
+                                               QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane9);
     }
 
@@ -351,10 +333,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       REQUIRE(backgroundColor == QcolorSelection);
       wait(100);
 
-      auto clippingPlane2 =
-          test.BuildClippingPlane(QVector3D(1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value();
+      auto clippingPlane2 = test.BuildClippingPlane(
+          QVector3D(1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane2);
       test.repaint();
       wait(100);
@@ -364,10 +344,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       wait(100);
 
       clippingPlane2->Disable();
-      auto clippingPlane3 =
-          test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value();
+      auto clippingPlane3 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane3);
       test.repaint();
       wait(100);
@@ -384,43 +362,29 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
 
       test.DestroyClippingPlane(clippingPlane3);
       clippingPlane3 = test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                               QVector3D(0, 0, 0), true)
-                           .value();
+                                               QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane3);
-      auto clippingPlane4 =
-          test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value();
+      auto clippingPlane4 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane4);
-      auto clippingPlane5 =
-          test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value();
+      auto clippingPlane5 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane5);
-      auto clippingPlane6 =
-          test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value();
+      auto clippingPlane6 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane6);
-      auto clippingPlane7 =
-          test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value();
+      auto clippingPlane7 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane7);
-      auto clippingPlane8 =
-          test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value();
+      auto clippingPlane8 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane8);
-      auto clippingPlane9 =
-          test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                  QVector3D(0, 0, 0), true)
-              .value_or(std::shared_ptr<rendering::ClippingPlane>(nullptr));
+      auto clippingPlane9 = test.BuildClippingPlane(
+          QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE_FALSE(clippingPlane9);
       test.DestroyClippingPlane(clippingPlane8);
       clippingPlane9 = test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
-                                               QVector3D(0, 0, 0), true)
-                           .value();
+                                               QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane9);
     }
   }
