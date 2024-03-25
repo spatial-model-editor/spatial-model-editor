@@ -1,6 +1,6 @@
 #include "catch_wrapper.hpp"
 #include "model_test_utils.hpp"
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "sme/model_geometry.hpp"
 #include "sme/serialization.hpp"
@@ -13,14 +13,14 @@ TEST_CASE("Model geometry",
   SECTION("no model") {
     model::ModelGeometry m;
     REQUIRE(m.getIsValid() == false);
-    REQUIRE(m.getMesh() == nullptr);
+    REQUIRE(m.getMesh2d() == nullptr);
     REQUIRE(m.getMesh3d() == nullptr);
     REQUIRE(m.getIsMeshValid() == false);
     REQUIRE(m.getHasImage() == false);
     REQUIRE(m.getImages().empty());
     m.clear();
     REQUIRE(m.getIsValid() == false);
-    REQUIRE(m.getMesh() == nullptr);
+    REQUIRE(m.getMesh2d() == nullptr);
     REQUIRE(m.getMesh3d() == nullptr);
     REQUIRE(m.getIsMeshValid() == false);
     REQUIRE(m.getHasImage() == false);
@@ -47,7 +47,7 @@ TEST_CASE("Model geometry",
                                      &mMembranes, &mUnits, &sbmlAnnotation);
     auto &m = mGeometry;
     REQUIRE(m.getIsValid() == false);
-    REQUIRE(m.getMesh() == nullptr);
+    REQUIRE(m.getMesh2d() == nullptr);
     REQUIRE(m.getHasImage() == false);
     REQUIRE(m.getImages().empty());
     m.setHasUnsavedChanges(false);
@@ -73,7 +73,7 @@ TEST_CASE("Model geometry",
       mSpecies.setReactionsPtr(&mReactions);
       REQUIRE(m.getIsValid() == true);
       REQUIRE(m.getIsMeshValid() == true);
-      REQUIRE(m.getMesh() != nullptr);
+      REQUIRE(m.getMesh2d() != nullptr);
       REQUIRE(m.getMesh3d() == nullptr);
       REQUIRE(m.getHasImage() == true);
       REQUIRE(!m.getImages().empty());
@@ -81,7 +81,7 @@ TEST_CASE("Model geometry",
       REQUIRE(m.getIsValid() == false);
       REQUIRE(m.getIsMeshValid() == false);
       REQUIRE(m.getMesh3d() == nullptr);
-      REQUIRE(m.getMesh() == nullptr);
+      REQUIRE(m.getMesh2d() == nullptr);
       REQUIRE(m.getHasImage() == false);
       REQUIRE(m.getImages().empty());
     }
@@ -101,7 +101,7 @@ TEST_CASE("Model geometry",
       REQUIRE(m.getIsValid() == false);
       REQUIRE(m.getIsMeshValid() == false);
       REQUIRE(m.getMesh3d() == nullptr);
-      REQUIRE(m.getMesh() == nullptr);
+      REQUIRE(m.getMesh2d() == nullptr);
       REQUIRE(m.getHasImage() == true);
       auto imgIndexed = mGeometry.getImages();
       REQUIRE(imgIndexed.volume().depth() == 1);

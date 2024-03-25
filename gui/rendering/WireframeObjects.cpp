@@ -3,6 +3,7 @@
 //
 
 #include "WireframeObjects.hpp"
+#include <limits>
 #include <memory>
 
 template <typename T>
@@ -98,7 +99,7 @@ rendering::WireframeObjects::meshIDFromColor(const QColor &color) const {
     if (m_colors[i] == color) {
       return i;
     }
-  return -1;
+  return std::numeric_limits<std::size_t>::max();
 }
 
 void rendering::WireframeObjects::setBackground(QColor backgroundColor) {
@@ -130,7 +131,7 @@ void rendering::WireframeObjects::CreateVBO() {
   glGenBuffers(static_cast<GLsizei>(m_elementBufferIds.size()),
                m_elementBufferIds.data());
   CheckOpenGLError("glGenBuffers");
-  for (int i = 0; i < m_elementBufferIds.size(); i++) {
+  for (std::size_t i = 0; i < m_elementBufferIds.size(); i++) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferIds[i]);
     CheckOpenGLError("glBindBuffer");
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeofGLVector(m_indices[i]),
@@ -186,7 +187,7 @@ void rendering::WireframeObjects::Render(
   RenderSetup(program);
 
   m_vao->bind();
-  for (int i = 0; i < m_indices.size(); i++) {
+  for (std::size_t i = 0; i < m_indices.size(); i++) {
     if (i >= m_colors.size())
       break;
     if (!m_visibleSubmesh[i])

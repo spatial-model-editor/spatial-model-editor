@@ -28,7 +28,8 @@ using MDGTraits3d = Dune::mdgrid::FewSubDomainsTraits<3, 64>;
 using Grid3d = Dune::mdgrid::MultiDomainGrid<HostGrid3d, MDGTraits3d>;
 
 template <typename Grid>
-static std::vector<double> getAllElementCoordinates(Grid *grid, int subdomain) {
+static std::vector<double> getAllElementCoordinates(Grid *grid,
+                                                    unsigned int subdomain) {
   std::vector<double> v;
   auto gridView = grid->subDomain(subdomain).leafGridView();
   for (const auto &e : elements(gridView)) {
@@ -53,7 +54,7 @@ TEST_CASE("DUNE grid",
                           .arg(static_cast<int>(exampleModel));
       simulate::DuneConverter dc(m, {}, true, filename + ".ini");
       auto config{getConfig(dc)};
-      const auto *mesh{m.getGeometry().getMesh()};
+      const auto *mesh{m.getGeometry().getMesh2d()};
 
       // generate dune grid with our makeDuneGrid function
       auto [grid, hostGrid] =
@@ -66,9 +67,9 @@ TEST_CASE("DUNE grid",
       std::locale::global(userLocale);
 
       // compare grids
-      auto nCompartments{grid->maxSubDomainIndex()};
+      auto nCompartments = grid->maxSubDomainIndex();
       REQUIRE(gmshGrid->maxSubDomainIndex() == nCompartments);
-      for (int compIndex = 0; compIndex < nCompartments; ++compIndex) {
+      for (unsigned int compIndex = 0; compIndex < nCompartments; ++compIndex) {
         auto meshCoords = getAllElementCoordinates(grid.get(), compIndex);
         auto gmshCoords = getAllElementCoordinates(gmshGrid.get(), compIndex);
         CAPTURE(compIndex);
@@ -87,7 +88,6 @@ TEST_CASE("DUNE grid",
       CAPTURE(exampleModel);
       // load mesh from model
       auto m{getExampleModel(exampleModel)};
-      const auto &geometry = m.getGeometry();
       auto filename = QString("tmp_dunegrid3d_model_%1")
                           .arg(static_cast<int>(exampleModel));
       simulate::DuneConverter dc(m, {}, true, filename + ".ini");
@@ -109,7 +109,7 @@ TEST_CASE("DUNE grid",
       // compare grids
       auto nCompartments{grid->maxSubDomainIndex()};
       REQUIRE(gmshGrid->maxSubDomainIndex() == nCompartments);
-      for (int compIndex = 0; compIndex < nCompartments; ++compIndex) {
+      for (unsigned int compIndex = 0; compIndex < nCompartments; ++compIndex) {
         auto meshCoords = getAllElementCoordinates(grid.get(), compIndex);
         auto gmshCoords = getAllElementCoordinates(gmshGrid.get(), compIndex);
         CAPTURE(compIndex);

@@ -122,8 +122,8 @@ public:
         std::make_shared<Dune::Copasi::FunctorFactoryParser<DuneDimensions>>(
             parser_type, std::move(parser_context));
     SPDLOG_INFO("model");
-    model =
-        Dune::Copasi::make_model<Model>(config.sub("model"), functor_factory);
+    model = Dune::Copasi::DiffusionReaction::make_model<Model>(
+        config.sub("model"), functor_factory);
     dt = options.dt;
     SPDLOG_INFO("state");
     state = model->make_state(grid, config.sub("model"));
@@ -210,7 +210,8 @@ private:
     for (auto &comp : duneCompartments) {
       SPDLOG_TRACE("compartment {} [{}]", comp.name, comp.index);
       const auto &gridview{
-          grid->subDomain(static_cast<int>(comp.index)).leafGridView()};
+          grid->subDomain(static_cast<unsigned int>(comp.index))
+              .leafGridView()};
       std::size_t iSpecies{0};
       for (const auto &speciesName : comp.speciesNames) {
         if (!speciesName.empty()) {
@@ -290,7 +291,8 @@ private:
       comp.missingVoxels.clear();
       SPDLOG_TRACE("compartment[{}]: {}", comp.index, comp.name);
       const auto &gridview{
-          grid->subDomain(static_cast<int>(comp.index)).leafGridView()};
+          grid->subDomain(static_cast<unsigned int>(comp.index))
+              .leafGridView()};
       const auto &qpi{comp.voxelIndexer};
       std::vector<bool> ixAssigned(qpi.size(), false);
       // get local coord for each pixel in each triangle
@@ -301,9 +303,9 @@ private:
         auto &voxelsInElement = comp.voxels.emplace_back();
         const auto &geo = e.geometry();
         auto ref = Dune::referenceElement(geo);
-        for (std::size_t i = 0; i < geo.corners(); ++i) {
+        for (int i = 0; i < geo.corners(); ++i) {
           for (std::size_t j = 0; j < DuneDimensions; ++j) {
-            corners[i][j] = geo.corner(i)[j];
+            corners[static_cast<std::size_t>(i)][j] = geo.corner(i)[j];
           }
         }
         auto [pMin, pMax] = getBoundingBox(corners, pixelSize, pixelOrigin);

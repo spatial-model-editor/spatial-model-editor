@@ -71,25 +71,24 @@ private:
   std::vector<QVector4D> m_vertices;
   std::vector<std::vector<GLuint>> m_indices;
 
-  std::vector<QColor> m_colors;
+  std::vector<bool> m_visibleSubmesh;
+  QOpenGLContext *m_openGLContext;
+
   std::vector<QColor> m_defaultColors;
+  std::vector<QColor> m_colors;
   std::vector<GLfloat> m_meshThickness;
   std::vector<GLfloat> m_defaultThickness;
-
-  QOpenGLContext *m_openGLContext;
+  QVector3D m_translationOffset;
 
   std::vector<GLfloat> m_verticesBuffer;
 
   std::unique_ptr<QOpenGLVertexArrayObject> m_vao;
   GLuint m_vbo;
   std::vector<GLuint> m_elementBufferIds;
-  std::vector<bool> m_visibleSubmesh;
 
-  QVector3D m_rotation;
   QVector3D m_position;
+  QVector3D m_rotation;
   QVector3D m_scale;
-
-  QVector3D m_translationOffset;
 
   QColor clearColor;
 

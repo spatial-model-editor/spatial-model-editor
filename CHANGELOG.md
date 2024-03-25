@@ -1,4 +1,11 @@
 # Changelog
+## [1.6.0] - 2024-03-26
+### Added
+- support for using the DuneCopasi simulator with 3d models [#937](https://github.com/spatial-model-editor/spatial-model-editor/issues/937)
+- 3d volume rendering for voxel visualization [#926](https://github.com/spatial-model-editor/spatial-model-editor/issues/926)
+- visualization of 3d model geometry meshes [#882](https://github.com/spatial-model-editor/spatial-model-editor/issues/882)
+- import of geometry image files by drag and drop onto the GUI [#933](https://github.com/spatial-model-editor/spatial-model-editor/issues/933)
+
 ## [1.5.0] - 2023-12-01
 ### Added
 - support for dune-copasi 2 [#908](https://github.com/spatial-model-editor/spatial-model-editor/issues/908)

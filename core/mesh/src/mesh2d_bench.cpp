@@ -1,11 +1,11 @@
 #include "bench.hpp"
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 
 template <typename T> static void mesh_Mesh(benchmark::State &state) {
   T data;
   for (auto _ : state) {
-    auto m{sme::mesh::Mesh(data.imgs[0], {}, data.maxTriangleArea,
-                           data.voxelSize, data.origin, data.colours)};
+    auto m{sme::mesh::Mesh2d(data.imgs[0], {}, data.maxTriangleArea,
+                             data.voxelSize, data.origin, data.colours)};
   }
 }
 

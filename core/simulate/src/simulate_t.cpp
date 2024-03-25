@@ -1,7 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "model_test_utils.hpp"
 #include "qt_test_utils.hpp"
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "sme/serialization.hpp"
 #include "sme/simulate.hpp"
@@ -1208,7 +1208,7 @@ TEST_CASE("DUNE: simulation",
       simulate::Simulation duneSim(m);
       duneSim.doTimesteps(0.01);
       REQUIRE_THAT(duneSim.errorMessage(),
-                   ContainsSubstring("Not known linear solver"));
+                   ContainsSubstring("not a known inverse operator type"));
     }
     SECTION(
         "valid & available but only works for positive-definite models: CG") {
@@ -1235,13 +1235,15 @@ TEST_CASE("DUNE: simulation",
       options.dune.linearSolver = "UMFPack";
       simulate::Simulation duneSim(m);
       duneSim.doTimesteps(0.01);
-      REQUIRE_THAT(duneSim.errorMessage(), ContainsSubstring("not available"));
+      REQUIRE_THAT(duneSim.errorMessage(),
+                   ContainsSubstring("not a known inverse operator type"));
     }
     SECTION("valid but unavailable: SuperLU") {
       options.dune.linearSolver = "SuperLU";
       simulate::Simulation duneSim(m);
       duneSim.doTimesteps(0.01);
-      REQUIRE_THAT(duneSim.errorMessage(), ContainsSubstring("not available"));
+      REQUIRE_THAT(duneSim.errorMessage(),
+                   ContainsSubstring("not a known inverse operator type"));
     }
   }
 }
@@ -1905,7 +1907,7 @@ TEST_CASE("Events: continuing existing simulation",
     }
     auto m1{getExampleModel(Mod::Brusselator)};
     // make mesh coarser to speed up dune tests
-    auto *mesh{m1.getGeometry().getMesh()};
+    auto *mesh{m1.getGeometry().getMesh2d()};
     mesh->setBoundaryMaxPoints(0, 9);
     mesh->setCompartmentMaxTriangleArea(0, 999);
     // reduce DUNE max timestep to avoid simulation not converging
