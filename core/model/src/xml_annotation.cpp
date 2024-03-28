@@ -1,6 +1,6 @@
 #include "sme/xml_annotation.hpp"
 #include "sme/logger.hpp"
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/serialization.hpp"
 #include "sme/utils.hpp"
 #include "xml_legacy_annotation.hpp"

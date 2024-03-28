@@ -82,7 +82,7 @@ void saveDebuggingIndicesImageXY(const std::vector<std::size_t> &arrayPoints,
     for (int x = 0; x < nx; ++x) {
       for (int y = 0; y < ny; ++y) {
         auto i = arrayPoints[static_cast<std::size_t>(x + nx * y) +
-                             static_cast<std::size_t>(nx * ny) * z];
+                             static_cast<std::size_t>(nx * ny * z)];
         if (i <= maxIndex) {
           auto v{static_cast<float>(i) / norm};
           c.setHslF(1.0f - v, 1.0, 0.5f * v);

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/mesh3d.hpp"
 #include <array>
 #include <cstddef>
@@ -35,21 +35,21 @@ useCompartment(std::size_t compIndex,
 static inline unsigned int
 getOrCreateVertexIndex(std::size_t oldVertexIndex,
                        std::vector<unsigned int> &newVertexIndices,
-                       int &newVertexCount) {
+                       std::size_t &newVertexCount) {
   auto &newVertexIndex = newVertexIndices[oldVertexIndex];
   if (newVertexIndex == UnusedVertexIndex) {
-    newVertexIndex = newVertexCount;
+    newVertexIndex = static_cast<unsigned int>(newVertexCount);
     ++newVertexCount;
   }
   return newVertexIndex;
 }
 
-static const std::vector<std::vector<mesh::TriangulateTriangleIndex>> &
-getElementIndices(const mesh::Mesh &mesh) {
+static inline const std::vector<std::vector<mesh::TriangulateTriangleIndex>> &
+getElementIndices(const mesh::Mesh2d &mesh) {
   return mesh.getTriangleIndices();
 }
 
-static const std::vector<std::vector<mesh::TetrahedronVertexIndices>> &
+static inline const std::vector<std::vector<mesh::TetrahedronVertexIndices>> &
 getElementIndices(const mesh::Mesh3d &mesh3d) {
   return mesh3d.getTetrahedronIndices();
 }
@@ -63,7 +63,7 @@ makeHostGrid(const MeshType &mesh) {
   // map old to new vertex index
   std::vector<unsigned int> newVertexIndices(v.size() / MeshType::dim,
                                              UnusedVertexIndex);
-  int newVertexCount{0};
+  std::size_t newVertexCount{0};
   // add elements from each compartment
   std::vector<std::size_t> numElements;
   std::vector<unsigned int> elementVertexIndices(MeshType::dim + 1, 0);
@@ -79,8 +79,7 @@ makeHostGrid(const MeshType &mesh) {
     }
   }
   // add vertices
-  std::vector<double> newFlatVertices(
-      MeshType::dim * static_cast<std::size_t>(newVertexCount), 0.0);
+  std::vector<double> newFlatVertices(MeshType::dim * newVertexCount, 0.0);
   for (std::size_t iOld = 0; iOld < newVertexIndices.size(); ++iOld) {
     if (auto iNew = newVertexIndices[iOld]; iNew != UnusedVertexIndex) {
       for (std::size_t iDim = 0; iDim < MeshType::dim; ++iDim) {
@@ -122,7 +121,7 @@ void assignElements(Grid &grid, const std::vector<std::size_t> &numElements) {
       iElement = 0;
       ++iCompartment;
     }
-    grid->addToSubDomain(static_cast<int>(iCompartment), cell);
+    grid->addToSubDomain(static_cast<unsigned int>(iCompartment), cell);
     ++iElement;
   }
   grid->preUpdateSubDomains();

@@ -1,9 +1,11 @@
 #include "tabgeometry.hpp"
 #include "guiutils.hpp"
 #include "qlabelmousetracker.hpp"
+#include "qopenglmousetracker.hpp"
 #include "qvoxelrenderer.hpp"
 #include "sme/logger.hpp"
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
+#include "sme/mesh3d.hpp"
 #include "sme/model.hpp"
 #include "ui_tabgeometry.h"
 #include <QInputDialog>
@@ -256,7 +258,7 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
     return;
   }
   if (index == TabIndex::BOUNDARIES) {
-    const auto *mesh{model.getGeometry().getMesh()};
+    const auto *mesh{model.getGeometry().getMesh2d()};
     if (mesh == nullptr || mesh->getNumBoundaries() == 0) {
       ui->spinBoundaryIndex->setEnabled(false);
       ui->spinMaxBoundaryPoints->setEnabled(false);
@@ -272,7 +274,7 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
     return;
   }
   if (index == TabIndex::MESH) {
-    const auto *mesh{model.getGeometry().getMesh()};
+    const auto *mesh{model.getGeometry().getMesh2d()};
     const auto *mesh3d{model.getGeometry().getMesh3d()};
     if (mesh == nullptr && mesh3d == nullptr) {
       ui->spinMaxTriangleArea->setEnabled(false);
@@ -287,7 +289,7 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
     if (mesh != nullptr) {
       ui->spinMeshZoom->setEnabled(true);
       compartmentMaxTriangleArea =
-          model.getGeometry().getMesh()->getCompartmentMaxTriangleArea(
+          model.getGeometry().getMesh2d()->getCompartmentMaxTriangleArea(
               compIndex);
     } else if (mesh3d != nullptr) {
       compartmentMaxTriangleArea =
@@ -335,9 +337,10 @@ void TabGeometry::spinBoundaryIndex_valueChanged(int value) {
   auto boundaryIndex = static_cast<size_t>(value);
   QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   ui->spinMaxBoundaryPoints->setValue(static_cast<int>(
-      model.getGeometry().getMesh()->getBoundaryMaxPoints(boundaryIndex)));
+      model.getGeometry().getMesh2d()->getBoundaryMaxPoints(boundaryIndex)));
   ui->lblCompBoundary->setImages(
-      model.getGeometry().getMesh()->getBoundariesImages(size, boundaryIndex));
+      model.getGeometry().getMesh2d()->getBoundariesImages(size,
+                                                           boundaryIndex));
   ui->lblCompBoundary->setPhysicalSize(model.getGeometry().getPhysicalSize(),
                                        model.getUnits().getLength().name);
   QGuiApplication::restoreOverrideCursor();
@@ -347,10 +350,11 @@ void TabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<std::size_t>(ui->spinBoundaryIndex->value());
   QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-  model.getGeometry().getMesh()->setBoundaryMaxPoints(
+  model.getGeometry().getMesh2d()->setBoundaryMaxPoints(
       boundaryIndex, static_cast<size_t>(value));
   ui->lblCompBoundary->setImages(
-      model.getGeometry().getMesh()->getBoundariesImages(size, boundaryIndex));
+      model.getGeometry().getMesh2d()->getBoundariesImages(size,
+                                                           boundaryIndex));
   ui->lblCompBoundary->setPhysicalSize(model.getGeometry().getPhysicalSize(),
                                        model.getUnits().getLength().name);
   QGuiApplication::restoreOverrideCursor();
@@ -388,8 +392,9 @@ void TabGeometry::lblCompMesh_mouseClicked(
 void TabGeometry::mshCompMesh_mouseClicked([[maybe_unused]] QRgb color,
                                            uint32_t meshID) {
   SPDLOG_TRACE("Color {:x}, meshID {}", color, meshID);
-  if (meshID < ui->listCompartments->count()) {
-    ui->listCompartments->setCurrentRow(static_cast<int>(meshID));
+  auto row = static_cast<int>(meshID);
+  if (row < ui->listCompartments->count()) {
+    ui->listCompartments->setCurrentRow(row);
     ui->spinMaxTriangleArea->setFocus();
     ui->spinMaxTriangleArea->selectAll();
     return;
@@ -406,9 +411,9 @@ void TabGeometry::spinMaxTriangleArea_valueChanged(int value) {
     ui->mshCompMesh->SetSubMeshes(*mesh3d);
   } else {
     ui->stackCompMesh->setCurrentIndex(0);
-    model.getGeometry().getMesh()->setCompartmentMaxTriangleArea(
+    model.getGeometry().getMesh2d()->setCompartmentMaxTriangleArea(
         compIndex, static_cast<std::size_t>(value));
-    ui->lblCompMesh->setImages(model.getGeometry().getMesh()->getMeshImages(
+    ui->lblCompMesh->setImages(model.getGeometry().getMesh2d()->getMeshImages(
         ui->lblCompMesh->size(), compIndex));
     ui->lblCompMesh->setPhysicalSize(model.getGeometry().getPhysicalSize(),
                                      model.getUnits().getLength().name);
@@ -535,7 +540,7 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
                                .arg(QString::number(area, 'g', 13))
                                .arg(model.getUnits().getLength().name)
                                .arg(nVoxelPairs));
-  if (const auto *mesh{model.getGeometry().getMesh()}; mesh != nullptr) {
+  if (const auto *mesh{model.getGeometry().getMesh2d()}; mesh != nullptr) {
     ui->lblCompMesh->setImages(mesh->getMeshImages(
         ui->lblCompMesh->size(),
         static_cast<std::size_t>(currentRow + ui->listCompartments->count())));

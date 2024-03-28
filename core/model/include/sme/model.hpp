@@ -33,7 +33,7 @@ class SBMLDocument;
 }
 
 namespace sme::mesh {
-class Mesh;
+class Mesh2d;
 }
 
 namespace sme::model {

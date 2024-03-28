@@ -2,7 +2,7 @@ dune-copasi simulator
 =====================
 
 `dune-copasi <https://dune-copasi.netlify.app/>`_ is the default PDE solver,
-which solves the PDE on a triangular mesh using finite element discretization methods.
+which solves the PDE on a tetrahedral mesh using finite element discretization methods.
 The mesh is automatically constructed from the geometry image, as described in :doc:`mesh`.
 
 Simulation options
@@ -50,6 +50,6 @@ The default settings should work well in most cases, but if desired they can be 
    * currently this may need to be altered depending on the units and geometry size (see `#315 <https://github.com/spatial-model-editor/spatial-model-editor/issues/315#issuecomment-760085781>`_)
 * Linear solver
    * a variety of iterative and direct solvers are available
-   * the default is CG (Conjugate Gradient)
+   * the default is RestartedGMRes
 
 For more information see the `dune-copasi documentation <https://dune-copasi.netlify.app/>`_.

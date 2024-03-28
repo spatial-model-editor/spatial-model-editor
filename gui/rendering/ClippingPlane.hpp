@@ -46,19 +46,19 @@ public:
    *
    * @return if the plane influences the scene currently
    */
-  bool getStatus() const;
+  [[nodiscard]] bool getStatus() const;
 
 protected:
-  ClippingPlane(uint32_t planeIndex, bool active = false);
+  explicit ClippingPlane(uint32_t planeIndex, bool active = false);
 
-  GLfloat a;
-  GLfloat b;
-  GLfloat c;
-  GLfloat d;
-  uint32_t planeIndex;
+  GLfloat m_a;
+  GLfloat m_b;
+  GLfloat m_c;
+  GLfloat m_d;
+  uint32_t m_planeIndex;
 
   // active( true ) or disabled ( false )
-  bool active;
+  bool m_active;
 };
 
 } // namespace rendering

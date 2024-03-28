@@ -1,4 +1,4 @@
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 #include "boundaries.hpp"
 #include "interior_point.hpp"
 #include "sme/logger.hpp"
@@ -18,18 +18,19 @@
 namespace sme::mesh {
 
 QPointF
-Mesh::pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept {
+Mesh2d::pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept {
   return origin + QPointF(pixelPoint.x() * pixel.width(),
                           pixelPoint.y() * pixel.height());
 }
 
-Mesh::Mesh() = default;
+Mesh2d::Mesh2d() = default;
 
-Mesh::Mesh(const QImage &image, std::vector<std::size_t> maxPoints,
-           std::vector<std::size_t> maxTriangleArea,
-           const common::VolumeF &voxelSize, const common::VoxelF &originPoint,
-           const std::vector<QRgb> &compartmentColours,
-           std::size_t boundarySimplificationType)
+Mesh2d::Mesh2d(const QImage &image, std::vector<std::size_t> maxPoints,
+               std::vector<std::size_t> maxTriangleArea,
+               const common::VolumeF &voxelSize,
+               const common::VoxelF &originPoint,
+               const std::vector<QRgb> &compartmentColours,
+               std::size_t boundarySimplificationType)
     : img(image), origin(originPoint.p),
       pixel(voxelSize.width(), voxelSize.height()),
       boundaryMaxPoints(std::move(maxPoints)),
@@ -83,40 +84,40 @@ Mesh::Mesh(const QImage &image, std::vector<std::size_t> maxPoints,
   constructMesh();
 }
 
-Mesh::~Mesh() = default;
+Mesh2d::~Mesh2d() = default;
 
-bool Mesh::isValid() const { return validMesh; }
+bool Mesh2d::isValid() const { return validMesh; }
 
-const std::string &Mesh::getErrorMessage() const { return errorMessage; };
+const std::string &Mesh2d::getErrorMessage() const { return errorMessage; };
 
-std::size_t Mesh::getNumBoundaries() const { return boundaries->size(); }
+std::size_t Mesh2d::getNumBoundaries() const { return boundaries->size(); }
 
-std::size_t Mesh::getBoundarySimplificationType() const {
+std::size_t Mesh2d::getBoundarySimplificationType() const {
   return boundaries->getSimplifierType();
 }
 
-void Mesh::setBoundarySimplificationType(
+void Mesh2d::setBoundarySimplificationType(
     std::size_t boundarySimplificationType) {
   boundaries->setSimplifierType(boundarySimplificationType);
 }
 
-void Mesh::setBoundaryMaxPoints(std::size_t boundaryIndex,
-                                std::size_t maxPoints) {
+void Mesh2d::setBoundaryMaxPoints(std::size_t boundaryIndex,
+                                  std::size_t maxPoints) {
   SPDLOG_INFO("boundaryIndex {}: max points {} -> {}", boundaryIndex,
               boundaries->getMaxPoints(boundaryIndex), maxPoints);
   boundaries->setMaxPoints(boundaryIndex, maxPoints);
 }
 
-std::size_t Mesh::getBoundaryMaxPoints(std::size_t boundaryIndex) const {
+std::size_t Mesh2d::getBoundaryMaxPoints(std::size_t boundaryIndex) const {
   return boundaries->getMaxPoints(boundaryIndex);
 }
 
-std::vector<std::size_t> Mesh::getBoundaryMaxPoints() const {
+std::vector<std::size_t> Mesh2d::getBoundaryMaxPoints() const {
   return boundaries->getMaxPoints();
 }
 
-void Mesh::setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
-                                         std::size_t maxTriangleArea) {
+void Mesh2d::setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
+                                           std::size_t maxTriangleArea) {
   SPDLOG_INFO("compIndex {}: max triangle area {} -> {}", compartmentIndex,
               compartmentMaxTriangleArea.at(compartmentIndex), maxTriangleArea);
   compartmentMaxTriangleArea.at(compartmentIndex) = maxTriangleArea;
@@ -124,26 +125,26 @@ void Mesh::setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
 }
 
 std::size_t
-Mesh::getCompartmentMaxTriangleArea(std::size_t compartmentIndex) const {
+Mesh2d::getCompartmentMaxTriangleArea(std::size_t compartmentIndex) const {
   return compartmentMaxTriangleArea.at(compartmentIndex);
 }
 
-const std::vector<std::size_t> &Mesh::getCompartmentMaxTriangleArea() const {
+const std::vector<std::size_t> &Mesh2d::getCompartmentMaxTriangleArea() const {
   return compartmentMaxTriangleArea;
 }
 
 const std::vector<std::vector<QPointF>> &
-Mesh::getCompartmentInteriorPoints() const {
+Mesh2d::getCompartmentInteriorPoints() const {
   return compartmentInteriorPoints;
 }
 
-void Mesh::setPhysicalGeometry(const common::VolumeF &voxelSize,
-                               const common::VoxelF &originPoint) {
+void Mesh2d::setPhysicalGeometry(const common::VolumeF &voxelSize,
+                                 const common::VoxelF &originPoint) {
   pixel = {voxelSize.width(), voxelSize.height()};
   origin = originPoint.p;
 }
 
-std::vector<double> Mesh::getVerticesAsFlatArray() const {
+std::vector<double> Mesh2d::getVerticesAsFlatArray() const {
   // convert from pixels to physical coordinates
   std::vector<double> v;
   v.reserve(vertices.size() * 2);
@@ -156,7 +157,7 @@ std::vector<double> Mesh::getVerticesAsFlatArray() const {
 }
 
 std::vector<int>
-Mesh::getTriangleIndicesAsFlatArray(std::size_t compartmentIndex) const {
+Mesh2d::getTriangleIndicesAsFlatArray(std::size_t compartmentIndex) const {
   std::vector<int> out;
   const auto &indices = triangleIndices[compartmentIndex];
   out.reserve(indices.size() * 3);
@@ -169,11 +170,11 @@ Mesh::getTriangleIndicesAsFlatArray(std::size_t compartmentIndex) const {
 }
 
 const std::vector<std::vector<TriangulateTriangleIndex>> &
-Mesh::getTriangleIndices() const {
+Mesh2d::getTriangleIndices() const {
   return triangleIndices;
 }
 
-void Mesh::constructMesh() {
+void Mesh2d::constructMesh() {
   try {
     Triangulate triangulate(boundaries->getBoundaries(),
                             compartmentInteriorPoints,
@@ -225,8 +226,8 @@ static QPointF getScaleFactor(const QImage &img, const QSizeF &pixel,
 }
 
 std::pair<common::ImageStack, common::ImageStack>
-Mesh::getBoundariesImages(const QSize &size,
-                          std::size_t boldBoundaryIndex) const {
+Mesh2d::getBoundariesImages(const QSize &size,
+                            std::size_t boldBoundaryIndex) const {
   constexpr int defaultPenSize = 2;
   constexpr int boldPenSize = 5;
   constexpr int maskPenSize = 15;
@@ -244,7 +245,6 @@ Mesh::getBoundariesImages(const QSize &size,
                                QImage::Format_ARGB32_Premultiplied);
   maskImage.fill(qRgb(255, 255, 255));
 
-  // todo: draw more than first z-slice
   constexpr std::size_t zindex{0};
   QPainter painter(&boundaryImage[zindex]);
   painter.setRenderHint(QPainter::Antialiasing);
@@ -282,7 +282,7 @@ Mesh::getBoundariesImages(const QSize &size,
 }
 
 std::pair<common::ImageStack, common::ImageStack>
-Mesh::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
+Mesh2d::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
   std::pair<common::ImageStack, common::ImageStack> imgPair;
   auto &[meshImage, maskImage] = imgPair;
   QPointF offset(5.0, 5.0);
@@ -294,7 +294,6 @@ Mesh::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
       QImage::Format_ARGB32_Premultiplied);
   meshImage.fill(0);
   // construct mask image
-  // todo: draw more than first z-slice
   constexpr std::size_t zindex{0};
   QPainter p(&meshImage[zindex]);
   p.setRenderHint(QPainter::Antialiasing);
@@ -336,7 +335,7 @@ Mesh::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
   return imgPair;
 }
 
-QString Mesh::getGMSH() const {
+QString Mesh2d::getGMSH() const {
   // note: gmsh indexing starts with 1, so we need to add 1 to all indices
   // meshing is done in terms of pixels, to convert to physical points:
   //   - rescale each vertex by a factor pixel

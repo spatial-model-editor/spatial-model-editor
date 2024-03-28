@@ -122,7 +122,7 @@ TEST_CASE("Mesh3d simple geometries",
     }
     SECTION("reducing max cell volume increases number of cells") {
       auto n_prev = mesh3d.getTetrahedronIndices()[0].size();
-      for (auto maxCellVolume : {2, 1}) {
+      for (auto maxCellVolume : std::vector<std::size_t>{2, 1}) {
         CAPTURE(maxCellVolume);
         mesh3d.setCompartmentMaxCellVolume(0, maxCellVolume);
         auto n = mesh3d.getTetrahedronIndices()[0].size();
@@ -135,7 +135,7 @@ TEST_CASE("Mesh3d simple geometries",
     }
     SECTION("increasing max cell volume decreases number of cells") {
       auto n_prev = mesh3d.getTetrahedronIndices()[0].size();
-      for (auto maxCellVolume : {4, 5, 8, 20}) {
+      for (auto maxCellVolume : std::vector<std::size_t>{4, 5, 8, 20}) {
         CAPTURE(maxCellVolume);
         mesh3d.setCompartmentMaxCellVolume(0, maxCellVolume);
         auto n = mesh3d.getTetrahedronIndices()[0].size();
@@ -374,16 +374,17 @@ TEST_CASE("Mesh3d more complex geometries",
                                colNucleus) <= 0.08);
     }
     SECTION("All three compartments") {
+      auto coloursAsStdVec = sme::common::toStdVec(colours);
       mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize, originPoint,
-                          sme::common::toStdVec(colours));
+                          coloursAsStdVec);
       REQUIRE(mesh3d.isValid() == true);
       REQUIRE(mesh3d.getErrorMessage().empty());
       REQUIRE(mesh3d.getTetrahedronIndices().size() == 3);
-      for (auto compartmentIndex : {0, 1, 2}) {
+      for (auto compartmentIndex : std::vector<std::size_t>{0, 1, 2}) {
         CAPTURE(compartmentIndex);
         REQUIRE(matchingFraction(imageStack, mesh3d, voxelSize, originPoint,
                                  compartmentIndex,
-                                 colours[compartmentIndex]) >= 0.90);
+                                 coloursAsStdVec[compartmentIndex]) >= 0.90);
       }
     }
   }

@@ -5,7 +5,7 @@ target_sources(
           contour_map.cpp
           interior_point.cpp
           line_simplifier.cpp
-          mesh.cpp
+          mesh2d.cpp
           mesh3d.cpp
           mesh_utils.cpp
           pixel_corner_iterator.cpp
@@ -25,7 +25,7 @@ if(BUILD_TESTING)
            interior_point_t.cpp
            line_simplifier.cpp
            line_simplifier_t.cpp
-           mesh_t.cpp
+           mesh2d_t.cpp
            mesh3d_t.cpp
            mesh_utils.cpp
            mesh_utils_t.cpp
@@ -42,6 +42,6 @@ if(SME_BUILD_BENCHMARKS)
     PUBLIC boundaries_bench.cpp
            interior_point_bench.cpp
            line_simplifier_bench.cpp
-           mesh_bench.cpp
+           mesh2d_bench.cpp
            triangulate_bench.cpp)
 endif()

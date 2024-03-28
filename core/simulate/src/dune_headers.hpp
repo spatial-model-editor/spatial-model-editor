@@ -34,8 +34,8 @@
 
 #include <dune/copasi/common/stepper.hh>
 #include <dune/copasi/grid/make_multi_domain_grid.hh>
-#include <dune/copasi/model/factory.hh>
-#include <dune/copasi/model/local_equations/functor_factory_parser.hh>
+#include <dune/copasi/model/diffusion_reaction/factory.hh>
+#include <dune/copasi/model/functor_factory_parser.hh>
 #include <dune/copasi/model/model.hh>
 #include <dune/copasi/parser/context.hh>
 #include <dune/copasi/parser/factory.hh>

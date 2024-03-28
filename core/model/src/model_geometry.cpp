@@ -3,7 +3,7 @@
 #include "geometry_sampled_field.hpp"
 #include "sbml_utils.hpp"
 #include "sme/logger.hpp"
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/mesh3d.hpp"
 #include "sme/model_compartments.hpp"
 #include "sme/model_membranes.hpp"
@@ -309,7 +309,7 @@ void ModelGeometry::updateMesh() {
   } else {
     SPDLOG_INFO("Updating 2d mesh");
     mesh3d.reset();
-    mesh = std::make_unique<mesh::Mesh>(
+    mesh = std::make_unique<mesh::Mesh2d>(
         images[0], meshParams.maxPoints, meshParams.maxAreas, voxelSize,
         physicalOrigin, common::toStdVec(colours),
         meshParams.boundarySimplifierType);
@@ -458,7 +458,7 @@ ModelGeometry::getPhysicalPointAsString(const common::Voxel &voxel) const {
 
 const common::ImageStack &ModelGeometry::getImages() const { return images; }
 
-mesh::Mesh *ModelGeometry::getMesh() const { return mesh.get(); }
+mesh::Mesh2d *ModelGeometry::getMesh2d() const { return mesh.get(); }
 
 mesh::Mesh3d *ModelGeometry::getMesh3d() const { return mesh3d.get(); }
 

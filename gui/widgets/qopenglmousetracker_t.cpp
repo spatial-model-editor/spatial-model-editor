@@ -29,7 +29,6 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
   QColor redColor = QColor(255, 0, 0);
   QColor blueColor = QColor(0, 0, 255);
   QColor greenColor = QColor(0, 255, 0);
-  QColor yelloColor = QColor(255, 255, 0);
 
   QColor backgroundColor = test.getBackgroundColor();
 
@@ -59,9 +58,6 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
     imageStack.convertToIndexed();
     auto colours = imageStack[0].colorTable();
     REQUIRE(colours.size() == 3);
-    QRgb colOutside{0xff000000};
-    QRgb colCell{0xff7f7f7f};
-    QRgb colNucleus{0xffffffff};
     std::vector<std::size_t> maxCellVolume{3};
 
     SECTION("All three compartments") {

@@ -4,9 +4,9 @@
 
 set -e -x
 
-# add llvm repo for clang / llvm-cov 17
+# add llvm repo for clang / llvm-cov 18
 sudo wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
-sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-17 main"
+sudo add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-18 main"
 
 sudo apt-get update -yy
 
@@ -16,10 +16,10 @@ sudo apt-get install -yy \
     xvfb \
     jwm \
     lcov \
-    clang-17 \
-    llvm-17 \
+    clang-18 \
+    llvm-18 \
     libclang-dev \
-    libclang-rt-17-dev
+    libclang-rt-18-dev
 
 # install qt build dependencies
 sudo apt-get install -yy \
@@ -45,13 +45,13 @@ sudo apt-get install -yy \
     libxkbcommon-x11-dev \
     '^libxcb.*-dev'
 
-# use clang 17 as default version
+# use clang 18 as default version
 sudo update-alternatives --remove-all clang || echo "nothing to remove"
 sudo update-alternatives --remove-all clang++ || echo "nothing to remove"
 sudo update-alternatives --remove-all llvm-cov || echo "nothing to remove"
-sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-17 100
-sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-17 100
-sudo update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-17 100
+sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-18 100
+sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-18 100
+sudo update-alternatives --install /usr/bin/llvm-cov llvm-cov /usr/bin/llvm-cov-18 100
 
 # get a reasonably recent version of ccache from conda-forge
 # nb: more recent versions from conda-forge depend on libhiredis >= 1 which is not available on ubuntu
@@ -78,5 +78,3 @@ ccache --max-size 400M
 ccache --cleanup
 ccache --zero-stats
 ccache --show-stats
-
-export LIBGL_ALWAYS_SOFTWARE=1

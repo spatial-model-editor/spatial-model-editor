@@ -2,7 +2,7 @@
 #include "id.hpp"
 #include "sbml_math.hpp"
 #include "sme/logger.hpp"
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/mesh3d.hpp"
 #include "sme/utils.hpp"
 #include "sme/xml_annotation.hpp"

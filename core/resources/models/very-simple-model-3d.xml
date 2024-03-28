@@ -26,7 +26,7 @@
                 <decrease>0.5</decrease>
                 <writeVTKfiles>false</writeVTKfiles>
                 <newtonRelErr>1e-08</newtonRelErr>
-                <newtonAbsErr>0.0</newtonAbsErr>
+                <newtonAbsErr>0</newtonAbsErr>
                 <linearSolver>RestartedGMRes</linearSolver>
               </dune>
               <pixel>
@@ -44,16 +44,16 @@
                 <optLevel>3</optLevel>
               </pixel>
             </options>
-            <simulatorType>1</simulatorType>
+            <simulatorType>0</simulatorType>
           </simulationSettings>
           <displayOptions>
             <cereal_class_version>1</cereal_class_version>
             <showSpecies size="dynamic">
               <value0>true</value0>
-              <value1>false</value1>
-              <value2>false</value2>
-              <value3>false</value3>
-              <value4>false</value4>
+              <value1>true</value1>
+              <value2>true</value2>
+              <value3>true</value3>
+              <value4>true</value4>
             </showSpecies>
             <showMinMax>true</showMinMax>
             <normaliseOverAllTimepoints>true</normaliseOverAllTimepoints>

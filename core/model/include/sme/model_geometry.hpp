@@ -18,7 +18,7 @@ class Model;
 namespace sme {
 
 namespace mesh {
-class Mesh;
+class Mesh2d;
 class Mesh3d;
 } // namespace mesh
 
@@ -36,7 +36,7 @@ private:
   common::VolumeF voxelSize{1.0, 1.0, 1.0};
   int numDimensions{3};
   common::ImageStack images;
-  std::unique_ptr<mesh::Mesh> mesh;
+  std::unique_ptr<mesh::Mesh2d> mesh;
   std::unique_ptr<mesh::Mesh3d> mesh3d;
   bool isValid{false};
   bool isMeshValid{false};
@@ -74,7 +74,7 @@ public:
   [[nodiscard]] QString
   getPhysicalPointAsString(const common::Voxel &voxel) const;
   [[nodiscard]] const common::ImageStack &getImages() const;
-  [[nodiscard]] mesh::Mesh *getMesh() const;
+  [[nodiscard]] mesh::Mesh2d *getMesh2d() const;
   [[nodiscard]] mesh::Mesh3d *getMesh3d() const;
   [[nodiscard]] bool getIsValid() const;
   [[nodiscard]] bool getIsMeshValid() const;

@@ -1,7 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "math_test_utils.hpp"
 #include "model_test_utils.hpp"
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "sme/utils.hpp"
 #include <sbml/SBMLTypes.h>
@@ -745,28 +745,29 @@ TEST_CASE("SBML: very-simple-model.xml",
 TEST_CASE("SBML: load model, refine mesh, save",
           "[core/model/model][core/model][core][model][mesh]") {
   auto s{getExampleModel(Mod::ABtoC)};
-  REQUIRE(s.getGeometry().getMesh()->getNumBoundaries() == 1);
-  REQUIRE(s.getGeometry().getMesh()->getBoundaryMaxPoints(0) == 16);
+  REQUIRE(s.getGeometry().getMesh2d()->getNumBoundaries() == 1);
+  REQUIRE(s.getGeometry().getMesh2d()->getBoundaryMaxPoints(0) == 16);
   auto oldNumTriangleIndices =
-      s.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size();
+      s.getGeometry().getMesh2d()->getTriangleIndicesAsFlatArray(0).size();
   // refine boundary and mesh
-  s.getGeometry().getMesh()->setCompartmentMaxTriangleArea(0, 32);
-  REQUIRE(s.getGeometry().getMesh()->getNumBoundaries() == 1);
-  REQUIRE(s.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size() >
+  s.getGeometry().getMesh2d()->setCompartmentMaxTriangleArea(0, 32);
+  REQUIRE(s.getGeometry().getMesh2d()->getNumBoundaries() == 1);
+  REQUIRE(s.getGeometry().getMesh2d()->getTriangleIndicesAsFlatArray(0).size() >
           oldNumTriangleIndices);
-  auto maxArea = s.getGeometry().getMesh()->getCompartmentMaxTriangleArea(0);
+  auto maxArea = s.getGeometry().getMesh2d()->getCompartmentMaxTriangleArea(0);
   auto numTriangleIndices =
-      s.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size();
+      s.getGeometry().getMesh2d()->getTriangleIndicesAsFlatArray(0).size();
   // save SBML doc
   s.exportSBMLFile("tmpmodelmeshrefine.xml");
   // import again
   model::Model s2;
   s2.importSBMLFile("tmpmodelmeshrefine.xml");
-  REQUIRE(s.getGeometry().getMesh()->getNumBoundaries() == 1);
-  REQUIRE(s2.getGeometry().getMesh()->getCompartmentMaxTriangleArea(0) ==
+  REQUIRE(s.getGeometry().getMesh2d()->getNumBoundaries() == 1);
+  REQUIRE(s2.getGeometry().getMesh2d()->getCompartmentMaxTriangleArea(0) ==
           maxArea);
-  REQUIRE(s2.getGeometry().getMesh()->getTriangleIndicesAsFlatArray(0).size() ==
-          numTriangleIndices);
+  REQUIRE(
+      s2.getGeometry().getMesh2d()->getTriangleIndicesAsFlatArray(0).size() ==
+      numTriangleIndices);
 }
 
 TEST_CASE("SBML: load single compartment model, change volume of geometry",

@@ -2,7 +2,7 @@
 #include "duneini.hpp"
 #include "sme/geometry.hpp"
 #include "sme/logger.hpp"
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "sme/model_compartments.hpp"
 #include "sme/model_geometry.hpp"

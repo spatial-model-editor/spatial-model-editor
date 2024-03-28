@@ -33,7 +33,7 @@ class Boundaries;
  * area allowed for each compartment can then be adjusted.
  *
  */
-class Mesh {
+class Mesh2d {
 private:
   // input data
   QImage img;
@@ -56,7 +56,7 @@ private:
   void constructMesh();
 
 public:
-  Mesh();
+  Mesh2d();
   /**
    * @brief Constructs a mesh from the supplied image
    *
@@ -68,13 +68,13 @@ public:
    * @param[in] originPoint the physical location of the ``(0,0)`` pixel
    * @param[in] compartmentColours the colours of compartments in the image
    */
-  explicit Mesh(const QImage &image, std::vector<std::size_t> maxPoints = {},
-                std::vector<std::size_t> maxTriangleArea = {},
-                const common::VolumeF &voxelSize = {1.0, 1.0, 1.0},
-                const common::VoxelF &originPoint = {0.0, 0.0, 0.0},
-                const std::vector<QRgb> &compartmentColours = {},
-                std::size_t boundarySimplificationType = 0);
-  ~Mesh();
+  explicit Mesh2d(const QImage &image, std::vector<std::size_t> maxPoints = {},
+                  std::vector<std::size_t> maxTriangleArea = {},
+                  const common::VolumeF &voxelSize = {1.0, 1.0, 1.0},
+                  const common::VoxelF &originPoint = {0.0, 0.0, 0.0},
+                  const std::vector<QRgb> &compartmentColours = {},
+                  std::size_t boundarySimplificationType = 0);
+  ~Mesh2d();
   /**
    * @brief Returns true if the mesh is valid
    */

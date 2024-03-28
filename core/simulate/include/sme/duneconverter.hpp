@@ -20,7 +20,7 @@ class Model;
 }
 
 namespace mesh {
-class Mesh;
+class Mesh2d;
 class Mesh3d;
 } // namespace mesh
 
@@ -35,7 +35,7 @@ public:
       int doublePrecision = 18);
   [[nodiscard]] QString getIniFile() const;
 
-  [[nodiscard]] const mesh::Mesh *getMesh() const;
+  [[nodiscard]] const mesh::Mesh2d *getMesh() const;
   [[nodiscard]] const mesh::Mesh3d *getMesh3d() const;
   [[nodiscard]] const std::unordered_map<std::string, std::vector<double>> &
   getConcentrations() const;
@@ -49,7 +49,7 @@ public:
 
 private:
   QString iniFile;
-  const mesh::Mesh *mesh;
+  const mesh::Mesh2d *mesh;
   const mesh::Mesh3d *mesh3d;
   std::unordered_map<std::string, std::vector<double>> concentrations;
   std::unordered_map<std::string, std::vector<std::string>> speciesNames;

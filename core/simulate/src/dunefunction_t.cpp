@@ -8,6 +8,7 @@
 #include "model_test_utils.hpp"
 #include "sme/duneconverter.hpp"
 #include "sme/model.hpp"
+#include <QDir>
 #include <QFile>
 #include <cmath>
 #include <locale>
@@ -64,7 +65,7 @@ static std::vector<AvgDiff> getAvgDiffs2d(Mod exampleModel,
   auto m{getExampleModel(exampleModel)};
   setAnalyticInitialConc(m);
   auto nCompartments{m.getCompartments().getIds().size()};
-  auto &mesh{*(m.getGeometry().getMesh())};
+  auto &mesh{*(m.getGeometry().getMesh2d())};
   // make mesh finer to reduce interpolation errors
   for (std::size_t i = 0; i < static_cast<std::size_t>(nCompartments); ++i) {
     mesh.setCompartmentMaxTriangleArea(i, maxTriangleArea);
@@ -85,8 +86,8 @@ static std::vector<AvgDiff> getAvgDiffs2d(Mod exampleModel,
       config.get("model.parser_type", Dune::Copasi::default_parser_str))};
   auto functor_factory{std::make_shared<Dune::Copasi::FunctorFactoryParser<2>>(
       parser_type, parser_context)};
-  auto model{
-      Dune::Copasi::make_model<Model2d>(config.sub("model"), functor_factory)};
+  auto model{Dune::Copasi::DiffusionReaction::make_model<Model2d>(
+      config.sub("model"), functor_factory)};
   auto initial_state{model->make_state(grid, config.sub("model"))};
   model->interpolate(
       *initial_state,
@@ -94,10 +95,15 @@ static std::vector<AvgDiff> getAvgDiffs2d(Mod exampleModel,
           dc, *grid));
 
   // create model using TIFF files for initial conditions
-  auto filename = QString("tmp_gridfunction_model_%1_maxtrianglearea_%2")
-                      .arg(static_cast<int>(exampleModel))
-                      .arg(maxTriangleArea);
-  simulate::DuneConverter dcTiff(m, {}, true, filename + ".ini");
+  auto unique_name = QString("tmp_gridfunction_model_%1_maxtrianglearea_%2")
+                         .arg(static_cast<int>(exampleModel))
+                         .arg(maxTriangleArea);
+  // use a unique directory to avoid overwriting tiff files with the same name
+  QDir().mkdir(unique_name);
+  auto previous_current_path = QDir::current();
+  QDir::setCurrent(previous_current_path.filePath(unique_name));
+
+  simulate::DuneConverter dcTiff(m, {}, true);
   auto configTiff = getConfig(dcTiff);
   auto parser_context_tiff{std::make_shared<Dune::Copasi::ParserContext>(
       configTiff.sub("parser_context"))};
@@ -111,8 +117,8 @@ static std::vector<AvgDiff> getAvgDiffs2d(Mod exampleModel,
   auto functor_factory_tiff{
       std::make_shared<Dune::Copasi::FunctorFactoryParser<2>>(
           parser_type_tiff, parser_context_tiff)};
-  auto modelTiff{Dune::Copasi::make_model<Model2d>(configTiff.sub("model"),
-                                                   functor_factory_tiff)};
+  auto modelTiff{Dune::Copasi::DiffusionReaction::make_model<Model2d>(
+      configTiff.sub("model"), functor_factory_tiff)};
   auto initial_state_tiff{
       modelTiff->make_state(std::move(gridTiff), configTiff.sub("model"))};
   modelTiff->interpolate(*initial_state_tiff,
@@ -137,8 +143,9 @@ static std::vector<AvgDiff> getAvgDiffs2d(Mod exampleModel,
         double avgDiffAnalyticFunc{0.0};
         double avgDiffTiffFunc{0.0};
         double n{0.0};
-        for (const auto &e : elements(
-                 grid->subDomain(static_cast<int>(domain)).leafGridView())) {
+        for (const auto &e :
+             elements(grid->subDomain(static_cast<unsigned int>(domain))
+                          .leafGridView())) {
           localGfFunc.bind(e);
           localGfTiff.bind(e);
           for (double x : {0.0}) {
@@ -169,6 +176,7 @@ static std::vector<AvgDiff> getAvgDiffs2d(Mod exampleModel,
       }
     }
   }
+  QDir::setCurrent(previous_current_path.path());
   return avgDiffs;
 }
 
@@ -177,7 +185,8 @@ static std::vector<double> getAvgDiffs3d(Mod exampleModel,
   std::vector<double> avgDiffs;
   auto m{getExampleModel(exampleModel)};
   setAnalyticInitialConc(m);
-  auto nCompartments{m.getCompartments().getIds().size()};
+  auto nCompartments =
+      static_cast<std::size_t>(m.getCompartments().getIds().size());
   auto &mesh3d{*(m.getGeometry().getMesh3d())};
   for (std::size_t i = 0; i < nCompartments; ++i) {
     mesh3d.setCompartmentMaxCellVolume(i, maxCellVolume);
@@ -199,8 +208,8 @@ static std::vector<double> getAvgDiffs3d(Mod exampleModel,
       config.get("model.parser_type", Dune::Copasi::default_parser_str))};
   auto functor_factory{std::make_shared<Dune::Copasi::FunctorFactoryParser<3>>(
       parser_type, parser_context)};
-  auto model{
-      Dune::Copasi::make_model<Model3d>(config.sub("model"), functor_factory)};
+  auto model{Dune::Copasi::DiffusionReaction::make_model<Model3d>(
+      config.sub("model"), functor_factory)};
   auto initial_state{model->make_state(grid, config.sub("model"))};
   model->interpolate(
       *initial_state,
@@ -211,9 +220,11 @@ static std::vector<double> getAvgDiffs3d(Mod exampleModel,
   // with that as done above in the 2d case
 
   // compare initial species concentrations
-  for (int domain = 0; domain < nCompartments; ++domain) {
-    for (const auto &species : dc.getSpeciesNames().at(
-             m.getCompartments().getIds()[domain].toStdString())) {
+  for (std::size_t domain = 0; domain < nCompartments; ++domain) {
+    for (const auto &species :
+         dc.getSpeciesNames().at(m.getCompartments()
+                                     .getIds()[static_cast<int>(domain)]
+                                     .toStdString())) {
       if (!species.empty()) {
         const auto &c{
             m.getSpecies().getSampledFieldConcentration(species.c_str())};
@@ -223,8 +234,9 @@ static std::vector<double> getAvgDiffs3d(Mod exampleModel,
         auto localGfFunc = localFunction(gfFunc);
         double avgDiffAnalyticFunc{0.0};
         double n{0.0};
-        for (const auto &e : elements(
-                 grid->subDomain(static_cast<int>(domain)).leafGridView())) {
+        for (const auto &e :
+             elements(grid->subDomain(static_cast<unsigned int>(domain))
+                          .leafGridView())) {
           localGfFunc.bind(e);
           for (double x : {0.5}) {
             for (double y : {0.5}) {

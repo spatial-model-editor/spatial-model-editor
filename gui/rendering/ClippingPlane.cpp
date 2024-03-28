@@ -9,7 +9,7 @@
 #include <QVector3D>
 
 rendering::ClippingPlane::ClippingPlane(uint32_t planeIndex, bool active)
-    : planeIndex(planeIndex), active(active) {}
+    : m_planeIndex(planeIndex), m_active(active) {}
 
 std::set<std::shared_ptr<rendering::ClippingPlane>>
 rendering::ClippingPlane::BuildClippingPlanes() {
@@ -26,10 +26,10 @@ rendering::ClippingPlane::BuildClippingPlanes() {
 void rendering::ClippingPlane::SetClipPlane(GLfloat a, GLfloat b, GLfloat c,
                                             GLfloat d) {
 
-  this->a = a;
-  this->b = b;
-  this->c = c;
-  this->d = d;
+  m_a = a;
+  m_b = b;
+  m_c = c;
+  m_d = d;
 }
 
 void rendering::ClippingPlane::SetClipPlane(QVector3D normal,
@@ -43,26 +43,26 @@ void rendering::ClippingPlane::SetClipPlane(QVector3D normal,
 
 void rendering::ClippingPlane::TranslateClipPlane(GLfloat value) {
 
-  GLfloat length = QVector3D(a, b, c).length();
-  QVector3D normal(a / length, b / length, c / length);
+  GLfloat length = QVector3D(m_a, m_b, m_c).length();
+  QVector3D normal(m_a / length, m_b / length, m_c / length);
 
-  GLfloat p = d / length;
+  GLfloat p = m_d / length;
   QVector3D point(normal * p);
 
   point += normal * value;
   SetClipPlane(normal, point);
 }
 
-void rendering::ClippingPlane::Enable() { active = true; }
-void rendering::ClippingPlane::Disable() { active = false; }
-bool rendering::ClippingPlane::getStatus() const { return active; }
+void rendering::ClippingPlane::Enable() { m_active = true; }
+void rendering::ClippingPlane::Disable() { m_active = false; }
+bool rendering::ClippingPlane::getStatus() const { return m_active; }
 
 void rendering::ClippingPlane::UpdateClipPlane(
     std::unique_ptr<rendering::ShaderProgram> &program) const {
-  if (active) {
-    program->EnableClippingPlane(planeIndex);
-    program->SetClippingPlane(a, b, c, d, planeIndex);
+  if (m_active) {
+    program->EnableClippingPlane(m_planeIndex);
+    program->SetClippingPlane(m_a, m_b, m_c, m_d, m_planeIndex);
   } else {
-    program->DisableClippingPlane(planeIndex);
+    program->DisableClippingPlane(m_planeIndex);
   }
 }

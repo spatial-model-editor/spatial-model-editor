@@ -6,7 +6,7 @@
 #include "qlabelmousetracker.hpp"
 #include "qvoxelrenderer.hpp"
 #include "sme/logger.hpp"
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/mesh3d.hpp"
 #include "sme/model.hpp"
 #include "sme/serialization.hpp"

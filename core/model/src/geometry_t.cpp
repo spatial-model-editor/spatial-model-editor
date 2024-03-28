@@ -262,7 +262,8 @@ TEST_CASE("Geometry: Compartments and Fields",
     for (std::size_t z = 0; z < nz; ++z) {
       for (int y = 0; y < ny; ++y) {
         for (int x = 0; x < nx; ++x) {
-          auto i = x + nx * (ny - y - 1) + nx * ny * z;
+          auto i = static_cast<std::size_t>(x + nx * (ny - y - 1)) +
+                   static_cast<std::size_t>(nx * ny) * z;
           // all voxels in image stack point to themselves
           auto v = compartment.getVoxel(compartment.getArrayPoints()[i]);
           REQUIRE(v.p.x() == x);
