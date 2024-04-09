@@ -76,7 +76,8 @@ makeModelDuneFunctions(const DuneConverter &dc, const Grid &grid) {
   std::size_t subdomain{0};
   for (const auto &compartmentId : dc.getCompartmentNames()) {
     SPDLOG_TRACE("Compartment {} {}", subdomain, compartmentId);
-    auto gridView{grid.subDomain(static_cast<int>(subdomain)).leafGridView()};
+    auto gridView{
+        grid.subDomain(static_cast<unsigned int>(subdomain)).leafGridView()};
     using Domain = typename decltype(gridView)::template Codim<
         0>::Geometry::GlobalCoordinate;
     for (const auto &speciesName : dc.getSpeciesNames().at(compartmentId)) {

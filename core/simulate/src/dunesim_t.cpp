@@ -31,11 +31,11 @@ TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
     // re-assign compartment colour to generate default boundaries & mesh
     m.getCompartments().setColour("c1", col1);
     std::vector<std::string> comps{"c1", "c2", "c3"};
-    auto maxPoints{m.getGeometry().getMesh()->getBoundaryMaxPoints()};
-    auto maxAreas{m.getGeometry().getMesh()->getCompartmentMaxTriangleArea()};
+    auto maxPoints{m.getGeometry().getMesh2d()->getBoundaryMaxPoints()};
+    auto maxAreas{m.getGeometry().getMesh2d()->getCompartmentMaxTriangleArea()};
     // ensure max triangle areas for compartment that we will later remove don't
     // introduce any steiner points
-    m.getGeometry().getMesh()->setCompartmentMaxTriangleArea(2, 9999);
+    m.getGeometry().getMesh2d()->setCompartmentMaxTriangleArea(2, 9999);
     REQUIRE(maxPoints.size() == 3);
     REQUIRE(maxAreas.size() == 3);
     simulate::DuneSim duneSim(m, comps);
@@ -51,14 +51,15 @@ TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
     m.getCompartments().remove("c3");
     m.getCompartments().setColour("c1", col1);
     m.getCompartments().setColour("c2", col2);
-    REQUIRE(m.getGeometry().getMesh()->getBoundaryMaxPoints().size() == 3);
-    REQUIRE(m.getGeometry().getMesh()->getCompartmentMaxTriangleArea().size() ==
-            2);
-    m.getGeometry().getMesh()->setBoundaryMaxPoints(0, maxPoints[0]);
-    m.getGeometry().getMesh()->setBoundaryMaxPoints(1, maxPoints[1]);
-    m.getGeometry().getMesh()->setBoundaryMaxPoints(2, maxPoints[2]);
-    m.getGeometry().getMesh()->setCompartmentMaxTriangleArea(0, maxAreas[0]);
-    m.getGeometry().getMesh()->setCompartmentMaxTriangleArea(1, maxAreas[1]);
+    REQUIRE(m.getGeometry().getMesh2d()->getBoundaryMaxPoints().size() == 3);
+    REQUIRE(
+        m.getGeometry().getMesh2d()->getCompartmentMaxTriangleArea().size() ==
+        2);
+    m.getGeometry().getMesh2d()->setBoundaryMaxPoints(0, maxPoints[0]);
+    m.getGeometry().getMesh2d()->setBoundaryMaxPoints(1, maxPoints[1]);
+    m.getGeometry().getMesh2d()->setBoundaryMaxPoints(2, maxPoints[2]);
+    m.getGeometry().getMesh2d()->setCompartmentMaxTriangleArea(0, maxAreas[0]);
+    m.getGeometry().getMesh2d()->setCompartmentMaxTriangleArea(1, maxAreas[1]);
     comps.pop_back();
     simulate::DuneSim newDuneSim(m, comps);
     for (std::size_t i = 0; i < 2; ++i) {

@@ -122,7 +122,8 @@ void Mesh3d::constructMesh() {
 
   for (auto c : c3t3.triangulation().finite_cell_handles()) {
     if (auto compartmentIndex =
-            labelToCompartmentIndex_[c3t3.subdomain_index(c)];
+            labelToCompartmentIndex_[static_cast<std::size_t>(
+                c3t3.subdomain_index(c))];
         compartmentIndex != NullCompartmentIndex) {
       SPDLOG_TRACE(
           "cell with vertex ids {},{},{},{} in subdomain {} -> compartment {}",
@@ -130,11 +131,12 @@ void Mesh3d::constructMesh() {
           c->vertex(3)->id(), c3t3.subdomain_index(c), compartmentIndex);
       auto &vi = tetrahedronVertexIndices_[compartmentIndex].emplace_back();
       for (int i = 0; i < 4; ++i) {
-        vi[i] = static_cast<std::size_t>(c->vertex(i)->id());
+        vi[static_cast<std::size_t>(i)] =
+            static_cast<std::size_t>(c->vertex(i)->id());
       }
       auto &t = tetrahedra_[compartmentIndex].emplace_back();
       for (int i = 0; i < 4; ++i) {
-        t[i] = toVoxelF(c->vertex(i));
+        t[static_cast<std::size_t>(i)] = toVoxelF(c->vertex(i));
       }
     }
   }
@@ -175,13 +177,14 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
 
   // convert from label to compartment index: label 0 is reserved for out of
   // mesh voxels, so label n is colorIndex n-1 from the image colorTable
-  labelToCompartmentIndex_.assign(colorTable.size() + 1, NullCompartmentIndex);
+  labelToCompartmentIndex_.assign(
+      static_cast<std::size_t>(colorTable.size()) + 1, NullCompartmentIndex);
   for (std::size_t compartmentIndex = 0;
        compartmentIndex < compartmentColours.size(); ++compartmentIndex) {
     auto compartmentColor = compartmentColours[compartmentIndex];
     auto colorIndex = colorTable.indexOf(compartmentColor);
     if (colorIndex >= 0) {
-      auto label = colorIndex + 1;
+      auto label = static_cast<std::size_t>(colorIndex) + 1;
       labelToCompartmentIndex_[label] =
           static_cast<std::uint8_t>(compartmentIndex);
       SPDLOG_INFO("  - label {} -> compartment {} / color {:x}", label,
@@ -200,8 +203,9 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   // convert image3 stack to CGAL Image_3 with label = colorIndex + 1 for each
   // voxel, as label 0 is reserved for voxels that lie outside of the mesh
   auto *pointImage =
-      _createImage(vol.width(), vol.height(), vol.depth(), 1, 1, 1, 1, 1,
-                   WORD_KIND::WK_FIXED, SIGN::SGN_UNSIGNED);
+      _createImage(static_cast<std::size_t>(vol.width()),
+                   static_cast<std::size_t>(vol.height()), vol.depth(), 1, 1, 1,
+                   1, 1, WORD_KIND::WK_FIXED, SIGN::SGN_UNSIGNED);
   auto *ptr = static_cast<std::uint8_t *>(pointImage->data);
   for (std::size_t z = 0; z < vol.depth(); ++z) {
     for (int y = vol.height() - 1; y >= 0; --y) {

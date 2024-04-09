@@ -94,13 +94,9 @@ signals:
   void mouseWheelEvent(QWheelEvent *ev);
 
 protected:
-  QRgb m_lastColour;
-
 #ifdef QT_DEBUG
   QOpenGLDebugLogger *m_debugLogger;
 #endif
-
-  float m_frameRate;
 
   float m_lineWidth;
   float m_lineSelectPrecision;
@@ -112,6 +108,7 @@ protected:
 
   std::unique_ptr<rendering::ShaderProgram> m_mainProgram{};
   rendering::Camera m_camera;
+  float m_frameRate;
 
   QImage m_offscreenPickingImage;
 
@@ -119,6 +116,7 @@ protected:
   int m_yAtPress;
 
   QColor m_backgroundColor;
+  QRgb m_lastColour;
   /**
    * Set of clipping planes that are part of the scene.
    * They can be active in the scene or not.

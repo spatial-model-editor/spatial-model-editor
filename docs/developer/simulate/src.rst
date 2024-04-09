@@ -26,16 +26,6 @@ DuneImpl
 
 .. doxygenclass:: sme::simulate::DuneImpl
 
-DuneImplCoupled
----------------
-
-.. doxygenclass:: sme::simulate::DuneImplCoupled
-
-DuneImplIndependent
--------------------
-
-.. doxygenclass:: sme::simulate::DuneImplIndependent
-
 PixelSim
 --------
 

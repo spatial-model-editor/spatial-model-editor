@@ -22,7 +22,7 @@ class Model;
 namespace sme {
 
 namespace mesh {
-class Mesh;
+class Mesh2d;
 }
 
 namespace model {

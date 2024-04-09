@@ -4,7 +4,7 @@
 #include "sme/geometry.hpp"
 #include "sme/geometry_utils.hpp"
 #include "sme/logger.hpp"
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/mesh3d.hpp"
 #include "sme/model.hpp"
 #include "sme/pde.hpp"

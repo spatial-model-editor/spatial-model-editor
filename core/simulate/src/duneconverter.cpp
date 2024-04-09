@@ -3,7 +3,7 @@
 #include "duneini.hpp"
 #include "sme/geometry.hpp"
 #include "sme/logger.hpp"
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/mesh3d.hpp"
 #include "sme/model.hpp"
 #include "sme/pde.hpp"
@@ -281,7 +281,7 @@ DuneConverter::DuneConverter(
     const model::Model &model,
     const std::map<std::string, double, std::less<>> &substitutions,
     bool forExternalUse, const QString &outputIniFile, int doublePrecision)
-    : mesh{model.getGeometry().getMesh()},
+    : mesh{model.getGeometry().getMesh2d()},
       mesh3d{model.getGeometry().getMesh3d()},
       origin{model.getGeometry().getPhysicalOrigin()},
       voxelSize{model.getGeometry().getVoxelSize()},
@@ -370,7 +370,7 @@ DuneConverter::DuneConverter(
 
 QString DuneConverter::getIniFile() const { return iniFile; }
 
-const mesh::Mesh *DuneConverter::getMesh() const { return mesh; }
+const mesh::Mesh2d *DuneConverter::getMesh() const { return mesh; }
 
 const mesh::Mesh3d *DuneConverter::getMesh3d() const { return mesh3d; }
 

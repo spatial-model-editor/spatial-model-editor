@@ -1,7 +1,7 @@
 #pragma once
 
 #include "sme/image_stack.hpp"
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "sme/model_membranes_util.hpp"
 #include <QFile>
@@ -18,8 +18,8 @@ struct ABtoC {
   std::vector<std::size_t> maxTriangleArea{10, 10};
   sme::common::VoxelF origin{0.0, 0.0, 0.0};
   sme::common::VolumeF voxelSize{1.0, 1.0, 1.0};
-  sme::mesh::Mesh mesh{imgs[0],   {},     maxTriangleArea,
-                       voxelSize, origin, colours};
+  sme::mesh::Mesh2d mesh{imgs[0],   {},     maxTriangleArea,
+                         voxelSize, origin, colours};
   QSize imageSize{100, 100};
   sme::model::ImageMembranePixels imageMembranePixels{imgs};
   std::pair<std::size_t, std::size_t> membraneIndexPair{0, 1};
@@ -41,8 +41,8 @@ struct VerySimpleModel {
   std::vector<std::size_t> maxTriangleArea{10, 10, 10};
   sme::common::VoxelF origin{0.0, 0.0, 0.0};
   sme::common::VolumeF voxelSize{1.0, 1.0, 1.0};
-  sme::mesh::Mesh mesh{imgs[0],   {},     maxTriangleArea,
-                       voxelSize, origin, colours};
+  sme::mesh::Mesh2d mesh{imgs[0],   {},     maxTriangleArea,
+                         voxelSize, origin, colours};
   QSize imageSize{300, 300};
   sme::model::ImageMembranePixels imageMembranePixels{imgs};
   std::pair<std::size_t, std::size_t> membraneIndexPair{0, 1};
@@ -63,8 +63,8 @@ struct LiverCells {
   std::vector<std::size_t> maxTriangleArea{2, 2, 2};
   sme::common::VoxelF origin{0.0, 0.0, 0.0};
   sme::common::VolumeF voxelSize{1.0, 1.0, 1.0};
-  sme::mesh::Mesh mesh{imgs[0],   {},     maxTriangleArea,
-                       voxelSize, origin, colours};
+  sme::mesh::Mesh2d mesh{imgs[0],   {},     maxTriangleArea,
+                         voxelSize, origin, colours};
   QSize imageSize{1000, 1000};
   sme::model::ImageMembranePixels imageMembranePixels{imgs};
   std::pair<std::size_t, std::size_t> membraneIndexPair{0, 1};

@@ -1,5 +1,5 @@
 #include "catch_wrapper.hpp"
-#include "sme/mesh.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/utils.hpp"
 #include <QImage>
 #include <QPoint>
@@ -17,8 +17,8 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     imgBoundary.emplace_back(0, img.height() - 1);
     imgBoundary.emplace_back(img.width() - 1, img.height() - 1);
     imgBoundary.emplace_back(img.width() - 1, 0);
-    mesh::Mesh mesh(img, {}, {999}, {1.0, 1.0, 1.0}, {0, 0, 0},
-                    std::vector<QRgb>{col});
+    mesh::Mesh2d mesh(img, {}, {999}, {1.0, 1.0, 1.0}, {0, 0, 0},
+                      std::vector<QRgb>{col});
     SECTION("check outputs") {
       // check boundaries
       REQUIRE(mesh.getNumBoundaries() == 1);
@@ -150,8 +150,8 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     // flip y-axis to match (0,0) == bottom-left of meshing output
     img = img.mirrored(false, true);
 
-    mesh::Mesh mesh(img, {}, {999, 999}, {1.0, 1.0, 1.0}, {0, 0, 0},
-                    std::vector<QRgb>{bgcol, col});
+    mesh::Mesh2d mesh(img, {}, {999, 999}, {1.0, 1.0, 1.0}, {0, 0, 0},
+                      std::vector<QRgb>{bgcol, col});
 
     // check boundaries image
     auto [boundaryImage, maskImage] =
@@ -185,8 +185,8 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     QRgb col = QColor(0, 0, 0).rgb();
     img.fill(col);
     std::size_t maxTriangleArea{999};
-    mesh::Mesh mesh(img, {}, {maxTriangleArea}, {1.0, 1.0, 1.0}, {0, 0, 0},
-                    std::vector<QRgb>{col});
+    mesh::Mesh2d mesh(img, {}, {maxTriangleArea}, {1.0, 1.0, 1.0}, {0, 0, 0},
+                      std::vector<QRgb>{col});
     REQUIRE(mesh.isValid() == true);
     // use 3 point boundary around 3x1 pixel rectangle:
     // interior point is outside this boundary
@@ -224,16 +224,16 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     QImage img(16, 12, QImage::Format_RGB32);
     QRgb col = QColor(0, 0, 0).rgb();
     img.fill(col);
-    mesh::Mesh mesh(img, {}, {}, {1.0, 1.0, 1.0}, {0, 0, 0},
-                    std::vector<QRgb>{col});
+    mesh::Mesh2d mesh(img, {}, {}, {1.0, 1.0, 1.0}, {0, 0, 0},
+                      std::vector<QRgb>{col});
     REQUIRE(mesh.getCompartmentMaxTriangleArea(0) < 4);
   }
   SECTION("high resolution image -> large default triangle area") {
     QImage img(3840, 2160, QImage::Format_RGB32);
     QRgb col = QColor(32, 1, 88).rgb();
     img.fill(col);
-    mesh::Mesh mesh(img, {}, {}, {1.0, 1.0, 1.0}, {0, 0, 0},
-                    std::vector<QRgb>{col});
+    mesh::Mesh2d mesh(img, {}, {}, {1.0, 1.0, 1.0}, {0, 0, 0},
+                      std::vector<QRgb>{col});
     REQUIRE(mesh.getCompartmentMaxTriangleArea(0) > 10000);
   }
 }
