@@ -52,6 +52,7 @@ public:
   void rescaleXY(QSize size);
   void flipYAxis();
   void convertToIndexed();
+  [[nodiscard]] bool valid(const Voxel &voxel) const;
   ImageStack scaled(int width, int height);
   ImageStack scaledToWidth(int width);
   ImageStack scaledToHeight(int height);

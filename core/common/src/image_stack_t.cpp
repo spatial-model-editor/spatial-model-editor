@@ -6,6 +6,7 @@ TEST_CASE("ImageStack",
   SECTION("empty") {
     sme::common::ImageStack imageStack{};
     REQUIRE(imageStack.empty() == true);
+    REQUIRE(imageStack.valid({0, 0, 0}) == false);
   }
   SECTION("construct from volume") {
     sme::common::ImageStack imageStack({3, 10, 12},
@@ -15,8 +16,13 @@ TEST_CASE("ImageStack",
     REQUIRE(imageStack.volume().height() == 10);
     REQUIRE(imageStack.volume().depth() == 12);
     REQUIRE(imageStack.volume().nVoxels() == 3 * 10 * 12);
+    REQUIRE(imageStack.valid({0, 0, 0}) == true);
+    REQUIRE(imageStack.valid({1, 1, 11}) == true);
+    REQUIRE(imageStack.valid({1, 1, 12}) == false);
+    REQUIRE(imageStack.valid({2, 0, 0}) == true);
+    REQUIRE(imageStack.valid({3, 0, 0}) == false);
   }
-  SECTION("construct from grayscalae intensity array") {
+  SECTION("construct from grayscale intensity array") {
     SECTION("all values identical and non-zero should be white") {
       sme::common::ImageStack img1{{2, 2, 1},
                                    std::vector<double>{1.2, 1.2, 1.2, 1.2}};
