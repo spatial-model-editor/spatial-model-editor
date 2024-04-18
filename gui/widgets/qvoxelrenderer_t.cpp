@@ -13,6 +13,11 @@ TEST_CASE("QVoxelRenderer",
           "[qvoxelrenderer][gui/widgets/qvoxelrenderer][gui/widgets][gui]") {
   QVoxelRenderer voxelRenderer;
   voxelRenderer.show();
+  voxelRenderer.resize(200, 200);
+  std::vector<QRgb> clicks;
+  QObject::connect(&voxelRenderer, &QVoxelRenderer::mouseClicked,
+                   [&clicks](QRgb c) { clicks.push_back(c); });
+  wait(delay_ms);
   auto gray = qRgb(50, 50, 50);
   auto red = qRgb(255, 0, 0);
   auto green = qRgb(0, 255, 0);
@@ -21,11 +26,24 @@ TEST_CASE("QVoxelRenderer",
     sme::common::Volume volume{20, 47, 10};
     sme::common::ImageStack imageStack(volume, QImage::Format_RGB32);
     REQUIRE(imageStack.volume() == volume);
-    wait(delay_ms);
     // fill whole block with gray
     imageStack.fill(gray);
     voxelRenderer.setImage(imageStack);
     wait(delay_ms);
+    // click in corner of widget - should miss the volume
+    REQUIRE(clicks.empty());
+    sendMouseMove(&voxelRenderer, {1, 1});
+    sendMouseClick(&voxelRenderer, {1, 1});
+    wait(delay_ms);
+    REQUIRE(clicks.empty());
+    // click on centre of widget - should hit the gray volume
+    QPoint centre{voxelRenderer.size().width() / 2,
+                  voxelRenderer.size().height() / 2};
+    sendMouseMove(&voxelRenderer, centre);
+    sendMouseClick(&voxelRenderer, centre);
+    wait(delay_ms);
+    REQUIRE(clicks.size() == 1);
+    REQUIRE(clicks.back() == gray);
     // blue z=0 face
     imageStack[0].fill(blue);
     imageStack[1].fill(blue);
