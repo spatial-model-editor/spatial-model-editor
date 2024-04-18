@@ -24,6 +24,12 @@ public:
   void setImage(const sme::common::ImageStack &img);
   void setPhysicalSize(const sme::common::VolumeF &size, const QString &units);
 
+signals:
+  void mouseClicked(QRgb col, sme::common::Voxel voxel);
+
+protected:
+  void mousePressEvent(QMouseEvent *ev) override;
+
 private:
   vtkNew<vtkGenericOpenGLRenderWindow> renderWindow;
   vtkNew<vtkRenderer> renderer;

@@ -124,6 +124,10 @@ void ImageStack::convertToIndexed() {
   }
 }
 
+bool ImageStack::valid(const Voxel &voxel) const {
+  return voxel.z < sz.depth() && imgs[voxel.z].valid(voxel.p);
+}
+
 ImageStack ImageStack::scaled(int width, int height) {
   ImageStack scaled{*this};
   for (std::size_t z = 0; z < sz.depth(); ++z) {
