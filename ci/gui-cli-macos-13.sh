@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# MacOS GUI/CLI build script
+# MacOS x86_64 GUI/CLI build script
 
 set -e -x
 
@@ -8,22 +8,16 @@ retry () {
     "$@" || (sleep 1 && "$@") || (sleep 3 && "$@") || (sleep 5 && "$@") || echo "$* failed"
 }
 
-brew install ccache
-
 # check versions
 cmake --version
 g++ --version
 python --version
 
-ccache --max-size 400M
-ccache --cleanup
-ccache --zero-stats
-ccache --show-stats
-
 # do build
 mkdir build
 cd build
 cmake .. \
+    -GNinja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -33,7 +27,7 @@ cmake .. \
     -DFREETYPE_INCLUDE_DIR_freetype2=/opt/smelibs/include/QtFreetype \
     -DFREETYPE_INCLUDE_DIR_ft2build=/opt/smelibs/include/QtFreetype \
     -DCMAKE_OSX_DEPLOYMENT_TARGET="11"
-make -j3 VERBOSE=1
+ninja -v
 ccache --show-stats
 
 # run cpp tests

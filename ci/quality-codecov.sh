@@ -24,12 +24,13 @@ sudo mv /usr/bin/gcov /usr/bin/gcov.old
 mkdir build
 cd build
 cmake .. \
+    -GNinja \
     -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
+    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld --coverage" \
     -DCMAKE_CXX_FLAGS="--coverage -D_GLIBCXX_USE_TBB_PAR_BACKEND=0"
-make -j4 VERBOSE=1
+ninja -v
 ccache --show-stats
 
 # start a window manager so the Qt GUI tests can have their focus set

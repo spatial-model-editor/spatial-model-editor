@@ -22,14 +22,10 @@ cmake --version
 which python
 python --version
 
-ccache --max-size 400M
-ccache --cleanup
-ccache --zero-stats
-ccache --show-stats
-
 mkdir build
 cd build
 cmake .. \
+    -GNinja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH \
     -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
@@ -39,8 +35,7 @@ cmake .. \
     -DFREETYPE_LIBRARY_RELEASE=/c/smelibs/lib/libQt6BundledFreetype.a \
     -DFREETYPE_INCLUDE_DIR_freetype2=/c/smelibs/include/QtFreetype \
     -DFREETYPE_INCLUDE_DIR_ft2build=/c/smelibs/include/QtFreetype
-make -j4 VERBOSE=1
-
+ninja -v
 ccache -s -v
 
 # check dependencies

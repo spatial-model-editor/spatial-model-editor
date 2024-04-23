@@ -14,116 +14,41 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  linux-gui:
-    name: Linux GUI/CLI
-    runs-on: ubuntu-20.04
+  gui-cli:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: "ubuntu-20.04"
+            shell: "bash"
+          - os: "macos-13"
+            shell: "bash"
+          - os: "macos-14"
+            shell: "bash"
+          - os: "windows-2022"
+            shell: "msys2 {0}"
     defaults:
       run:
-        shell: bash
+        shell: ${{ matrix.shell }}
+    name: "${{ matrix.os }} GUI/CLI"
     steps:
+    - uses: spatial-model-editor/setup-ci@2024.04.23
     - uses: actions/checkout@v4
       with:
         submodules: 'true'
     - name: Set "latest" version number unless commit is tagged
       if: startsWith(github.event.ref, 'refs/tags/') == false
       run: ./ci/set-latest-version.sh ${GITHUB_SHA}
-    - name: Cache ccache
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/ccache
-        key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-        restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-    - uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
-    - name: Get static libs
-      run: sudo ./ci/getlibs.sh linux
-    - name: Install dependencies
-      run: ./ci/linux-install.sh
-    - name: Build script
-      run: ./ci/linux-gui.sh
+    - run: ./ci/get-libs.sh
+    - run: ./ci/gui-cli-${{ matrix.os }}.sh
     - uses: actions/upload-artifact@v4
       with:
-        name: artifacts-linux-gui
+        name: artifacts-gui-cli-${{ matrix.os }}
         path: ./artefacts/*
 
-  macos-gui:
-    name: MacOS GUI/CLI
-    runs-on: macos-13
-    defaults:
-      run:
-        shell: bash
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'true'
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: "14.3"
-      - name: Set "latest" version number unless commit is tagged
-        if: startsWith(github.event.ref, 'refs/tags/') == false
-        run: ./ci/set-latest-version.sh ${GITHUB_SHA}
-      - name: Cache ccache
-        uses: actions/cache@v4
-        with:
-          path: /Users/runner/Library/Caches/ccache
-          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Get static libs
-        run: sudo ./ci/getlibs.sh osx
-#      - name: Install OpenGL MESA dependencies
-#        run: brew install mesa
-      - name: Forcing using software rendering
-        run: export LIBGL_ALWAYS_SOFTWARE=1
-      - name: Build script
-        run: ./ci/macos-gui.sh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: artifacts-macos-gui
-          path: ./artefacts/*
-
-  win64-gui:
-    name: Windows 64-bit GUI/CLI
-    runs-on: windows-2022
-    defaults:
-      run:
-        shell: msys2 {0}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: 'true'
-      - uses: msys2/setup-msys2@v2
-        with:
-          msystem: UCRT64
-          update: true
-          install: mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ccache make
-      - name: Install Mesa 3D to get OpenGL support on Windows without a GPU
-        uses: ssciwr/setup-mesa-dist-win@v2
-        with:
-          version: "23.1.5"
-      - name: Set "latest" version number unless commit is tagged
-        if: startsWith(github.event.ref, 'refs/tags/') == false
-        run: ./ci/set-latest-version.sh ${GITHUB_SHA}
-      - name: Cache ccache
-        uses: actions/cache@v4
-        with:
-          path: C:\Users\runneradmin\AppData\Local\ccache
-          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-      - name: Get static libs
-        run: ./ci/getlibs.sh win64-mingw
-      - name: Build script
-        run: ci/windows-gui.sh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: artifacts-win64-gui
-          path: ./artefacts/*
-
   release:
-    needs: [linux-gui, macos-gui, win64-gui]
+    needs: [gui-cli]
     if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     permissions:

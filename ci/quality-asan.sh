@@ -14,15 +14,16 @@ export DISPLAY=:99
 mkdir build
 cd build
 cmake .. \
+    -GNinja \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer" \
+    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld -fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer" \
     -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic -Wshadow -Wunused -Wconversion -Wsign-conversion -Wcast-align -fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer -D_GLIBCXX_USE_TBB_PAR_BACKEND=0" \
     -DSME_LOG_LEVEL=TRACE
 # ignore any asan errors while building / collecting tests
 export ASAN_OPTIONS="halt_on_error=0"
-time make tests -j4
+time ninja tests
 ccache --show-stats
 
 # various external libs "leak" memory, don't fail the build because of this

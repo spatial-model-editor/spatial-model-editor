@@ -54,5 +54,15 @@ SME_BUILD_GUI = "OFF"
 SME_LOG_LEVEL = "OFF"
 
 [tool.cibuildwheel]
+build-verbosity = 3
 test-extras = "test"
 test-command = "python -m pytest {project}/sme/test -v"
+skip = '*-manylinux_i686 *-musllinux* pp*-* *-win32'
+
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = "ghcr.io/spatial-model-editor/manylinux_x86_64:2024.04.24"
+environment = { CMAKE_ARGS="-DSME_BUILD_CORE=OFF -DCMAKE_PREFIX_PATH=/opt/smelibs;/opt/smelibs/lib64/cmake" }
+before-all = "bash {project}/ci/wheels-manylinux.sh"
+
+[tool.cibuildwheel.windows]
+build = ""

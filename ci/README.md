@@ -22,7 +22,7 @@
 
 - These are provided as binary releases from [sme_deps](https://github.com/spatial-model-editor/sme_deps)
 
-- To use a new release, update `SME_DEPS_VERSION` in [ci/getlibs.sh](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/ci/getlibs.sh#L6)
+- To use a new release, update `SME_DEPS_VERSION` in [ci/get-libs.sh](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/ci/getlibs.sh#L6)
 
 - Note that sme_deps depends on [sme_deps_common](https://github.com/spatial-model-editor/sme_deps_common), which in turn depends on [sme_deps_qt](https://github.com/spatial-model-editor/sme_deps_qt) and [sme_deps_llvm](https://github.com/spatial-model-editor/sme_deps_llvm), so a new sme_deps release may first require a new release from these repos.
 

@@ -19,8 +19,6 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
   SONAR_SCANNER_VERSION: '5.0.1.3006'
-  CC: clang
-  CXX: clang++
 
 jobs:
   quality:
@@ -31,28 +29,16 @@ jobs:
       matrix:
         script: [codecov, sonar, asan, ubsan]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: spatial-model-editor/setup-ci@2024.04.23
+      - uses: actions/checkout@v4
         with:
           submodules: 'true'
           fetch-depth: 0
       - uses: actions/setup-java@v4
+        if: matrix.script == 'sonar'
         with:
           distribution: 'temurin'
           java-version: '17'
-      - name: Cache ccache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ccache
-          key: ccache-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-${{ github.sha }}
-          restore-keys: ccache-${{ github.job }}-${{ matrix.script }}-${{ runner.os }}-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Get static libs
-        run: sudo ./ci/getlibs.sh linux
-      - name: Install apt dependencies and use clang
-        run: ./ci/linux-install.sh
-      - name: Run job script
-        if: matrix.script != 'sonar' || github.repository == 'spatial-model-editor/spatial-model-editor'
-        run: ./ci/${{ matrix.script }}.sh
+      - run: ./ci/get-libs.sh
+      - if: github.repository == 'spatial-model-editor/spatial-model-editor' || matrix.script != 'sonar'
+        run: ./ci/quality-${{ matrix.script }}.sh

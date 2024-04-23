@@ -1,15 +1,11 @@
 #!/bin/bash
 
-# Windows Python wheels build script
+# Script to build and install sme::core on Windows before building Python wheels
 
 set -e -x
 
-PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.12.*)
-export PATH="$PYDIR/x64:$PYDIR/x64/Scripts:$PATH"
-echo "PATH=$PATH"
-
 export CMAKE_CXX_COMPILER_LAUNCHER=ccache
-export CMAKE_GENERATOR="Unix Makefiles"
+export CMAKE_GENERATOR="Ninja"
 export CMAKE_PREFIX_PATH="C:/smelibs;C:/smelibs/CMake;C:/smelibs/lib/cmake"
 export SME_EXTRA_EXE_LIBS="-static;-static-libgcc;-static-libstdc++"
 export SME_EXTRA_CORE_DEFS="_hypot=hypot;MS_WIN64"
@@ -31,6 +27,7 @@ rm -rf ext/CLI11/tests/mesonTest/subprojects/*
 mkdir build
 cd build
 cmake .. \
+    -GNinja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/c/smelibs \
     -DBUILD_TESTING=on \
@@ -45,12 +42,9 @@ cmake .. \
     -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS \
     -DSME_LOG_LEVEL=OFF \
     -DSME_BUILD_CORE=on
-make -j4 core tests
+ninja core tests
 ctest -j4 --output-on-failure
-make install
+ninja install
 cd ..
-
-python -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION
-python -m cibuildwheel --output-dir wheelhouse
 
 ccache -s
