@@ -19,13 +19,14 @@ echo "race:^tbb::interface9::internal::start_for*" >> tsan_suppr.txt
 mkdir build
 cd build
 cmake .. \
+    -GNinja \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread -fno-omit-frame-pointer" \
     -DCMAKE_CXX_FLAGS="-Wall -Wextra -Wpedantic -Wshadow -Wunused -Wconversion -Wsign-conversion -Wcast-align -fsanitize=thread -fno-omit-frame-pointer -D_GLIBCXX_USE_TBB_PAR_BACKEND=0"
 
-time make tests -j4
+time ninja
 ccache --show-stats
 
 # start a window manager so the Qt GUI tests can have their focus set
