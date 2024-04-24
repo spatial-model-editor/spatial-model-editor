@@ -1,4 +1,4 @@
-name: GUI/CLI Release Builds
+name: Release Builds
 
 on:
   push:
@@ -14,12 +14,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  gui-cli:
-    runs-on: ${{ matrix.os }}
+  build:
+    runs-on: ${{ matrix.platform.os }}
     strategy:
       fail-fast: false
       matrix:
-        include:
+        target: ["gui-cli", "wheels"]
+        platform:
           - os: "ubuntu-20.04"
             shell: "bash"
           - os: "macos-13"
@@ -30,8 +31,10 @@ jobs:
             shell: "msys2 {0}"
     defaults:
       run:
-        shell: ${{ matrix.shell }}
-    name: "${{ matrix.os }} GUI/CLI"
+        shell: ${{ matrix.platform.shell }}
+    env:
+      CIBUILDWHEEL_VERSION: "2.17.0"
+    name: "${{ matrix.target }} :: ${{ matrix.platform.os }}"
     steps:
     - uses: spatial-model-editor/setup-ci@2024.04.23
     - uses: actions/checkout@v4
@@ -41,31 +44,50 @@ jobs:
       if: startsWith(github.event.ref, 'refs/tags/') == false
       run: ./ci/set-latest-version.sh ${GITHUB_SHA}
     - run: ./ci/get-libs.sh
-    - run: ./ci/gui-cli-${{ matrix.os }}.sh
+    - run: ./ci/${{ matrix.target }}-${{ matrix.platform.os }}.sh
+      if: (matrix.target != 'wheels') || (runner.os != 'Linux')
+    - run: python -m pip install cibuildwheel==$CIBUILDWHEEL_VERSION && python -m cibuildwheel --output-dir ./artifacts/dist
+      if: matrix.target == 'wheels'
     - uses: actions/upload-artifact@v4
       with:
-        name: artifacts-gui-cli-${{ matrix.os }}
-        path: ./artefacts/*
+        name: artifacts-${{ matrix.target }}-${{ matrix.platform.os }}
+        path: ./artifacts/*
+
+  sdist:
+    name: PyPI source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pipx run build --sdist --outdir ./artifacts/dist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: artifacts-sdist
+          path: ./artifacts/*
 
   release:
-    needs: [gui-cli]
+    needs: [build, sdist]
     if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
+    environment: release
     permissions:
+      id-token: write
       contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
           pattern: artifacts-*
           merge-multiple: true
-          path: binaries
+          path: artifacts
+      # if this is an untagged commit to main: add a "latest" wheel to github latest release for readthedocs to use
+      - run: cp artifacts/dist/sme-*-cp311-cp311-manylinux_2_28_x86_64.whl artifacts/binaries/sme-latest-cp311-cp311-manylinux_2_28_x86_64.whl
+        if: github.ref == 'refs/heads/main'
       - name: Upload binaries to latest pre-release
         # if this is an untagged commit to main: upload binaries to github latest release
         if: github.ref == 'refs/heads/main'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: binaries/*
+          file: artifacts/binaries/*
           tag: latest
           overwrite: true
           file_glob: true
@@ -76,7 +98,13 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: binaries/*
+          file: artifacts/binaries/*
           tag: ${{ github.ref }}
           overwrite: true
           file_glob: true
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        # if this is a tagged commit, upload pypi wheels
+        if: startsWith(github.event.ref, 'refs/tags/')
+        with:
+          packages-dir: ./artifacts/dist/
+          verbose: true

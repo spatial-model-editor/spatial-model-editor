@@ -67,7 +67,8 @@ du -sh build/cli/spatial-cli.exe
 # display version
 ./build/app/spatial-model-editor.exe -v
 
-# move binaries to artefacts/
-mkdir artefacts
-mv build/app/spatial-model-editor.exe artefacts/
-mv build/cli/spatial-cli.exe artefacts/
+# move binaries to artifacts/binaries
+cd ..
+mkdir -p artifacts/binaries
+mv build/app/spatial-model-editor.exe artifacts/binaries/
+mv build/cli/spatial-cli.exe artifacts/binaries/

@@ -73,8 +73,8 @@ retry hdiutil create spatial-cli -fs HFS+ -srcfolder spatial-cli
 # display version
 ./app/spatial-model-editor.app/Contents/MacOS/spatial-model-editor -v
 
-# move binaries to artefacts/
+# move binaries to artifacts/binaries
 cd ..
-mkdir artefacts
-mv build/spatial-model-editor.dmg artefacts/
-mv build/spatial-cli.dmg artefacts/
+mkdir -p artifacts/binaries
+mv build/spatial-model-editor.dmg artifacts/binaries/
+mv build/spatial-cli.dmg artifacts/binaries/

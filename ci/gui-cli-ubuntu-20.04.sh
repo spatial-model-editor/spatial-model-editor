@@ -70,8 +70,8 @@ ldd cli/spatial-cli
 # display version
 ./app/spatial-model-editor -v
 
-# move binaries to artefacts/
+# move binaries to artifacts/binaries
 cd ..
-mkdir artefacts
-mv build/app/spatial-model-editor artefacts/
-mv build/cli/spatial-cli artefacts/
+mkdir -p artifacts/binaries
+mv build/app/spatial-model-editor artifacts/binaries/
+mv build/cli/spatial-cli artifacts/binaries/

@@ -63,11 +63,11 @@ iconutil -c icns -o app/spatial-model-editor.app/Contents/Resources/icon.icns ..
 # - https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
 # - https://gist.github.com/gubatron/5512786ff01885c32247ccecd4c3c369
 echo -n "$MACOS_CERTIFICATE" | base64 --decode -o certificate.p12
-security create-keychain -p "$KEYCHAIN_PWD" build.keychain
+security create-keychain -p "$MACOS_KEYCHAIN_PWD" build.keychain
 security default-keychain -s build.keychain
-security unlock-keychain -p "$KEYCHAIN_PWD" build.keychain
+security unlock-keychain -p "$MACOS_KEYCHAIN_PWD" build.keychain
 security import certificate.p12 -k build.keychain -P "$MACOS_CERTIFICATE_PWD" -T /usr/bin/codesign
-security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PWD" build.keychain
+security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$MACOS_KEYCHAIN_PWD" build.keychain
 security list-keychain -d user -s build.keychain
 security find-identity -v -p codesigning
 
@@ -109,8 +109,8 @@ xcrun stapler staple "spatial-cli.dmg"
 # display version
 ./app/spatial-model-editor.app/Contents/MacOS/spatial-model-editor -v
 
-# move binaries to artefacts/
+# move binaries to artifacts/binaries
 cd ..
-mkdir artefacts
-mv build/spatial-model-editor.dmg artefacts/
-mv build/spatial-cli.dmg artefacts/
+mkdir -p artifacts/binaries
+mv build/spatial-model-editor.dmg artifacts/binaries/
+mv build/spatial-cli.dmg artifacts/binaries/
