@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Script to build and install sme::core in the linux docker image before building Python wheels
+# Script to build and install sme::core in the sme_manylinux docker image before building Python wheels
 
 set -e -x
 
@@ -16,6 +16,7 @@ ccache --max-size 400M
 ccache --cleanup
 ccache --zero-stats
 cmake .. \
+    -GNinja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/opt/smelibs \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -28,8 +29,8 @@ cmake .. \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib64/cmake" \
     -DSME_LOG_LEVEL=OFF \
     -DSME_BUILD_CORE=on
-make -j4 core tests
+ninja core tests
 ctest -j4 --output-on-failure
-make install
+ninja install
 ccache --show-stats
 cd ..
