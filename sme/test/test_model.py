@@ -1,26 +1,37 @@
 import pytest
 import sme
-import os.path
+import pathlib
 import numpy as np
 
 
-def _get_abs_path(filename):
-    return os.path.join(os.path.dirname(os.path.abspath(__file__)), filename)
+def get_abs_filename(filename: str):
+    return str(pathlib.Path(__file__).parent.resolve() / filename)
 
 
 # root-mean-square of all elements
-def _rms(a):
+def rms(a):
     return np.sqrt(np.mean(np.square(a)))
 
 
-def test_open_sbml_file():
-    with pytest.raises(sme.InvalidArgument):
+def test_open_sbml_file_invalid():
+    with pytest.raises(ValueError):
         sme.open_sbml_file("idontexist.xml")
 
 
-def test_open_file():
-    with pytest.raises(sme.InvalidArgument):
+def test_open_file_invalid():
+    with pytest.raises(ValueError):
         sme.open_file("idontexist.xml")
+
+
+def test_open_example_model_invalid():
+    with pytest.raises(ValueError):
+        sme.open_example_model("idontexist")
+
+    with pytest.raises(ValueError):
+        sme.open_example_model("")
+
+    with pytest.raises(TypeError):
+        sme.open_example_model([1, 2, 3])
 
 
 def test_open_example_model():
@@ -37,15 +48,6 @@ def test_open_example_model():
     m.name = "Model !"
     assert m.name == "Model !"
 
-    with pytest.raises(sme.InvalidArgument):
-        sme.open_example_model("idontexist")
-
-    with pytest.raises(sme.InvalidArgument):
-        sme.open_example_model("")
-
-    with pytest.raises(TypeError):
-        sme.open_example_model([1, 2, 3])
-
     m = sme.open_example_model("brusselator-model")
     assert repr(m) == "<sme.Model named 'The Brusselator'>"
     assert len(m.compartments) == 1
@@ -57,34 +59,43 @@ def test_open_example_model():
     assert len(m.membranes) == 0
 
 
-def test_export_sbml_file():
+def test_export_sbml_file(tmp_path):
     m = sme.open_example_model()
     m.name = "Mod"
     m.compartments["Cell"].name = "C"
-    m.export_sbml_file("tmp.xml")
-    m2 = sme.open_sbml_file("tmp.xml")
+    tmp_filename = str(tmp_path / "tmp.xml")
+    m.export_sbml_file(tmp_filename)
+    m2 = sme.open_sbml_file(tmp_filename)
     assert m2.name == "Mod"
     assert len(m2.membranes) == 2
     assert len(m2.compartments) == 3
     assert m2.compartments["C"].name == "C"
     assert m2.compartments["Nucleus"].name == "Nucleus"
-    with pytest.raises(sme.InvalidArgument):
+    with pytest.raises(ValueError):
         m2.compartments["Cell"]
 
 
-def test_export_sme_file():
+def test_export_sme_file(tmp_path):
     m = sme.open_example_model()
     m.name = "Mod"
     m.compartments["Cell"].name = "C"
-    m.export_sme_file("tmp.sme")
-    m2 = sme.open_file("tmp.sme")
+    tmp_filename = str(tmp_path / "tmp.sme")
+    m.export_sme_file(tmp_filename)
+    m2 = sme.open_file(tmp_filename)
     assert m2.name == "Mod"
     assert len(m2.membranes) == 2
     assert len(m2.compartments) == 3
     assert m2.compartments["C"].name == "C"
     assert m2.compartments["Nucleus"].name == "Nucleus"
-    with pytest.raises(sme.InvalidArgument):
+    with pytest.raises(ValueError):
         m2.compartments["Cell"]
+
+
+def test_simulate_invalid_timesteps():
+    for sim_type in [sme.SimulatorType.DUNE, sme.SimulatorType.Pixel]:
+        m = sme.open_example_model()
+        with pytest.raises(ValueError):
+            m.simulate("10;seven", "1;1", simulator_type=sim_type)
 
 
 def test_simulate():
@@ -140,7 +151,7 @@ def test_simulate():
 
         # set timeout to 1 second: by default simulation throws on timeout
         # multiple timesteps before timeout:
-        with pytest.raises(sme.RuntimeError):
+        with pytest.raises(RuntimeError):
             m.simulate(10000, 0.1, timeout_seconds=0, simulator_type=sim_type)
 
     # approximate dcdt (only returned from simulate & pixel & last timepoint)
@@ -155,8 +166,8 @@ def test_simulate():
         - sim_results[1].species_concentration["A_cell"]
     ) / 0.001
     dcdt = sim_results[2].species_dcdt["A_cell"]
-    rms_norm = _rms(dcdt)
-    rms_diff = _rms(dcdt - dcdt_approx)
+    rms_norm = rms(dcdt)
+    rms_diff = rms(dcdt - dcdt_approx)
     assert rms_diff / rms_norm < 0.01
 
     # don't get dcdt from simulation_results():
@@ -166,7 +177,7 @@ def test_simulate():
     assert len(sim_results2[2].species_dcdt) == 0
 
     # single long timestep that times out (only pixel)
-    with pytest.raises(sme.RuntimeError):
+    with pytest.raises(RuntimeError):
         m.simulate(10000, 10000, 1)
     # set timeout to 1 second: don't throw on timeout, return partial results
     res1 = m.simulate(10000, 0.1, 1, False)
@@ -187,14 +198,18 @@ def test_simulate():
         assert len(sim_results2) == 3
 
 
+def test_import_geometry_from_image_invalid():
+    m = sme.open_example_model()
+    with pytest.raises(ValueError):
+        m.import_geometry_from_image("idontexist.tiff")
+
+
 def test_import_geometry_from_image():
-    imgfile_original = _get_abs_path("concave-cell-nucleus-100x100.png")
-    imgfile_modified = _get_abs_path("modified-concave-cell-nucleus-100x100.png")
+    imgfile_original = get_abs_filename("concave-cell-nucleus-100x100.png")
+    imgfile_modified = get_abs_filename("modified-concave-cell-nucleus-100x100.png")
     m = sme.open_example_model()
     comp_img_0 = m.compartment_image
     nucl_mask_0 = m.compartments["Nucleus"].geometry_mask
-    with pytest.raises(sme.InvalidArgument):
-        m.import_geometry_from_image("idontexist.tiff")
     m.import_geometry_from_image(imgfile_modified)
     comp_img_1 = m.compartment_image
     nucl_mask_1 = m.compartments["Nucleus"].geometry_mask
@@ -208,7 +223,7 @@ def test_import_geometry_from_image():
 
 
 def test_import_combine_archive():
-    omex_file = _get_abs_path("liver-simplified.omex")
+    omex_file = get_abs_filename("liver-simplified.omex")
     m = sme.Model(omex_file)
     assert m.name == "TNFa Signaling"
     assert len(m.membranes) == 1

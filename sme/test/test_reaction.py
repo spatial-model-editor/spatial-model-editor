@@ -25,7 +25,7 @@ def test_reaction():
     assert r.name == "New reac"
 
     # check change was propagated to model
-    with pytest.raises(sme.InvalidArgument):
+    with pytest.raises(ValueError):
         c.reactions["A to B conversion"]
     r2 = c.reactions["New reac"]
     assert r2.name == "New reac"
@@ -41,11 +41,11 @@ def test_parameter_list():
 
     # verify indexing / name-lookup
     assert len(ps) == 1
-    with pytest.raises(sme.InvalidArgument):
+    with pytest.raises(ValueError):
         ps["k2"]
-    with pytest.raises(sme.InvalidArgument):
+    with pytest.raises(ValueError):
         ps[1]
-    with pytest.raises(sme.InvalidArgument):
+    with pytest.raises(ValueError):
         ps[-2]
     k = ps["k1"]
     assert k == ps[0]

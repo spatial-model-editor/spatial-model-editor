@@ -1,24 +1,25 @@
-// Python.h (included by pybind11.h) must come first
+// Python.h (#included by nanobind.h) must come first
 // https://docs.python.org/3.2/c-api/intro.html#include-files
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 #include "sme_simulationresult.hpp"
+#include <nanobind/stl/string.h>
 
-namespace sme {
+namespace pysme {
 
-void pybindSimulationResult(pybind11::module &m) {
-  sme::bindList<SimulationResult>(m, "SimulationResult");
-  pybind11::class_<SimulationResult>(m, "SimulationResult",
+void bindSimulationResult(nanobind::module_ &m) {
+  bindList<SimulationResult>(m, "SimulationResult");
+  nanobind::class_<SimulationResult>(m, "SimulationResult",
                                      R"(
                                      results at a single timepoint of a simulation
                                      )")
-      .def_readonly("time_point", &SimulationResult::timePoint,
-                    R"(
+      .def_ro("time_point", &SimulationResult::timePoint,
+              R"(
                     float: the timepoint these simulation results are from
                     )")
-      .def_readonly("concentration_image",
-                    &SimulationResult::concentration_image,
-                    R"(
+      .def_ro("concentration_image", &SimulationResult::concentration_image,
+              nanobind::rv_policy::take_ownership,
+              R"(
                     numpy.ndarray: an image of the species concentrations at this timepoint
 
                     An array of RGB integer values for each voxel in the image of
@@ -54,9 +55,8 @@ void pybindSimulationResult(pybind11::module &m) {
                         >>> import matplotlib.pyplot as plt
                         >>> imgplot = plt.imshow(concentration_image[0])
                     )")
-      .def_readonly("species_concentration",
-                    &SimulationResult::species_concentration,
-                    R"(
+      .def_ro("species_concentration", &SimulationResult::species_concentration,
+              R"(
                     Dict[str, numpy.ndarray]: the species concentrations at this timepoint
 
                     for each species, the concentrations are provided as a
@@ -94,8 +94,8 @@ void pybindSimulationResult(pybind11::module &m) {
                         >>> import matplotlib.pyplot as plt
                         >>> imgplot = plt.imshow(b_cell[0])
                     )")
-      .def_readonly("species_dcdt", &SimulationResult::species_dcdt,
-                    R"(
+      .def_ro("species_dcdt", &SimulationResult::species_dcdt,
+              R"(
                     Dict[str, numpy.ndarray]: the species concentration rate of change at this timepoint
 
                     for each species, the rate of change of concentration is provided as a
@@ -157,40 +157,4 @@ std::string SimulationResult::getStr() const {
 
 std::string SimulationResult::getName() const { return {}; }
 
-} // namespace sme
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
+} // namespace pysme

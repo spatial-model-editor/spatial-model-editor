@@ -1,26 +1,26 @@
-// Python.h (included by pybind11.h) must come first
+// Python.h (#included by nanobind.h) must come first
 // https://docs.python.org/3.2/c-api/intro.html#include-files
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 #include "sme/model.hpp"
 #include "sme_common.hpp"
 #include "sme_parameter.hpp"
-#include <utility>
+#include <nanobind/stl/string.h>
 
-namespace sme {
+namespace pysme {
 
-void pybindParameter(pybind11::module &m) {
-  sme::bindList<Parameter>(m, "Parameter");
-  pybind11::class_<Parameter>(m, "Parameter",
+void bindParameter(nanobind::module_ &m) {
+  bindList<Parameter>(m, "Parameter");
+  nanobind::class_<Parameter>(m, "Parameter",
                               R"(
                               a parameter of the model
                               )")
-      .def_property("name", &Parameter::getName, &sme::Parameter::setName,
-                    R"(
+      .def_prop_rw("name", &Parameter::getName, &Parameter::setName,
+                   R"(
                     str: the name of this parameter
                     )")
-      .def_property("value", &Parameter::getValue, &Parameter::setValue,
-                    R"(
+      .def_prop_rw("value", &Parameter::getValue, &Parameter::setValue,
+                   R"(
                     str: the mathematical expression for this reaction parameter
                     )")
       .def("__repr__",
@@ -29,7 +29,8 @@ void pybindParameter(pybind11::module &m) {
            })
       .def("__str__", &Parameter::getStr);
 }
-Parameter::Parameter(model::Model *sbmlDocWrapper, const std::string &sId)
+Parameter::Parameter(::sme::model::Model *sbmlDocWrapper,
+                     const std::string &sId)
     : s(sbmlDocWrapper), id(sId) {}
 
 void Parameter::setName(const std::string &name) {
@@ -55,36 +56,4 @@ std::string Parameter::getStr() const {
   return str;
 }
 
-} // namespace sme
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
+} // namespace pysme

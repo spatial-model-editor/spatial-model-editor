@@ -1,4 +1,9 @@
-pybind11_add_module(sme MODULE)
+find_package(
+  Python
+  3.8
+  REQUIRED
+  COMPONENTS Interpreter Development.Module)
+nanobind_add_module(sme MODULE)
 target_link_libraries(sme PRIVATE sme::core ${SME_EXTRA_EXE_LIBS})
 target_sources(sme PRIVATE sme.cpp)
 target_include_directories(sme PRIVATE src)

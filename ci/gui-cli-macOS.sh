@@ -4,7 +4,7 @@
 
 set -e -x
 
-retry () {
+retry() {
     "$@" || (sleep 1 && "$@") || (sleep 3 && "$@") || (sleep 5 && "$@") || echo "$* failed"
 }
 
@@ -25,14 +25,14 @@ cmake .. \
 ninja --verbose
 
 # run cpp tests
-time ./test/tests -as ~[gui] > tests.txt 2>&1 || (tail -n 10000 tests.txt && exit 1)
+time ./test/tests -as ~[gui] >tests.txt 2>&1 || (tail -n 10000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
 # run python tests
 cd sme
 python -m pip install -r ../../sme/requirements-test.txt
 python -m pytest ../../sme/test -v
-PYTHONPATH=`pwd` python ../../sme/test/sme_doctest.py -v
+PYTHONPATH=$(pwd) python ../../sme/test/sme_doctest.py -v
 cd ..
 
 # run benchmarks (~1 sec per benchmark, ~20secs total)

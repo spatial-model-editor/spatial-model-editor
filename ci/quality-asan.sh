@@ -14,18 +14,18 @@ export DISPLAY=:99
 
 # known LSAN "leaks" from external libraries to suppress
 export LSAN_OPTIONS="suppressions=$(pwd)/lsan_suppr.txt"
-echo "leak:libfontconfig.so" > lsan_suppr.txt
-echo "leak:libX11.so" >> lsan_suppr.txt
-echo "leak:libdbus-1.so" >> lsan_suppr.txt
+echo "leak:libfontconfig.so" >lsan_suppr.txt
+echo "leak:libX11.so" >>lsan_suppr.txt
+echo "leak:libdbus-1.so" >>lsan_suppr.txt
 # todo: investigate these dune-copasi leaks (for now ignoring it)
-echo "leak:Dune::UG::D2::linear_segment" >> lsan_suppr.txt
-echo "leak:Dune::UG::D3::linear_segment" >> lsan_suppr.txt
+echo "leak:Dune::UG::D2::linear_segment" >>lsan_suppr.txt
+echo "leak:Dune::UG::D3::linear_segment" >>lsan_suppr.txt
 
 # hack to prevent external libs from dlclosing libraries,
 # which otherwise results in <module not found> LSAN leaks that cannot be suppressed
 # https://github.com/google/sanitizers/issues/89#issuecomment-406316683
-echo "#include <stdio.h>" > dlclose.c
-echo "int dlclose(void *handle) { return 0; }" >> dlclose.c
+echo "#include <stdio.h>" >dlclose.c
+echo "int dlclose(void *handle) { return 0; }" >>dlclose.c
 clang -shared dlclose.c -o libdlclose.so
 export LD_PRELOAD=$(pwd)/libdlclose.so
 
@@ -52,7 +52,7 @@ ccache --show-stats
 jwm &
 
 # run c++ tests
-time ./test/tests -as ~[expensive] > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
+time ./test/tests -as ~[expensive] >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
 # todo: also run with python lib

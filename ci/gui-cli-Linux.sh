@@ -40,14 +40,14 @@ ccache --show-stats
 jwm &
 
 # run cpp tests
-time ./test/tests -as > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
+time ./test/tests -as >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
 # run python tests
 cd sme
 python -m pip install -r ../../sme/requirements-test.txt
 python -m pytest ../../sme/test -v
-PYTHONPATH=`pwd` python ../../sme/test/sme_doctest.py -v
+PYTHONPATH=$(pwd) python ../../sme/test/sme_doctest.py -v
 cd ..
 
 # run benchmarks (~1 sec per benchmark, ~20secs total)

@@ -12,8 +12,8 @@ export DISPLAY=:99
 
 # suppress intel TBB false positives
 export TSAN_OPTIONS=suppressions=$(pwd)/tsan_suppr.txt
-echo "race:^tbb::blocked_range*" > tsan_suppr.txt
-echo "race:^tbb::interface9::internal::start_for*" >> tsan_suppr.txt
+echo "race:^tbb::blocked_range*" >tsan_suppr.txt
+echo "race:^tbb::interface9::internal::start_for*" >>tsan_suppr.txt
 
 # do build
 mkdir build
@@ -35,4 +35,4 @@ ccache --show-stats
 jwm &
 
 # run c++ tests
-time ./test/tests ~[expensive] -as > tests.txt || echo "ignoring return code for now"
+time ./test/tests ~[expensive] -as >tests.txt || echo "ignoring return code for now"

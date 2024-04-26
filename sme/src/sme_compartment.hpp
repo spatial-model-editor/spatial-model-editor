@@ -3,35 +3,35 @@
 #include "sme_common.hpp"
 #include "sme_reaction.hpp"
 #include "sme_species.hpp"
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 #include <string>
 #include <vector>
 
-namespace model {
+namespace sme::model {
 class Model;
 }
 
-namespace sme {
+namespace pysme {
 
-void pybindCompartment(pybind11::module &m);
+void bindCompartment(nanobind::module_ &m);
 
 class Compartment {
 private:
-  model::Model *s;
+  ::sme::model::Model *s;
   std::string id;
 
 public:
   Compartment() = default;
-  explicit Compartment(model::Model *sbmlDocWrapper, const std::string &sId);
-  void updateMask();
+  explicit Compartment(::sme::model::Model *sbmlDocWrapper,
+                       const std::string &sId);
   [[nodiscard]] std::string getName() const;
   void setName(const std::string &name);
+  [[nodiscard]] nanobind::ndarray<nanobind::numpy, bool> geometry_mask() const;
   std::vector<Species> species;
   std::vector<Reaction> reactions;
-  pybind11::array geometry_mask;
   [[nodiscard]] std::string getStr() const;
 };
 
-} // namespace sme
+} // namespace pysme
 
-PYBIND11_MAKE_OPAQUE(std::vector<sme::Compartment>)
+NB_MAKE_OPAQUE(std::vector<pysme::Compartment>)

@@ -42,9 +42,9 @@ jwm &
 mkdir gcov
 
 lcov -q -z -d .
-time ./test/tests -as ~[expensive] > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
+time ./test/tests -as ~[expensive] >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
-find . -type f -name "*.gcno" -print0 | xargs -0 llvm-cov gcov -p > /dev/null
+find . -type f -name "*.gcno" -print0 | xargs -0 llvm-cov gcov -p >/dev/null
 ls *.gcov
 mv *#spatial-model-editor#*.gcov gcov/
 rm gcov/*#spatial-model-editor#ext#*.gcov
@@ -54,10 +54,10 @@ lcov -q -z -d .
 cd sme
 python -m pip install -r ../../sme/requirements.txt
 python -m pip install -r ../../sme/requirements-test.txt
-python -m pytest -sv ../../sme/test > sme.txt 2>&1 || (tail -n 1000 sme.txt && exit 1)
+python -m pytest -sv ../../sme/test >sme.txt 2>&1 || (tail -n 1000 sme.txt && exit 1)
 tail -n 100 sme.txt
 cd ..
-find . -type f -name "*.gcno" -print0 | xargs -0 llvm-cov gcov -p > /dev/null
+find . -type f -name "*.gcno" -print0 | xargs -0 llvm-cov gcov -p >/dev/null
 mv *#spatial-model-editor#sme#*.gcov gcov/
 rm -f *.gcov
 

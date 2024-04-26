@@ -1,25 +1,26 @@
 #pragma once
 
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 #include <string>
+#include <vector>
 
-namespace model {
+namespace sme::model {
 class Model;
 }
 
-namespace sme {
+namespace pysme {
 
-void pybindReactionParameter(pybind11::module &m);
+void bindReactionParameter(nanobind::module_ &m);
 
 class ReactionParameter {
 private:
-  model::Model *s;
+  ::sme::model::Model *s;
   std::string reacId;
   std::string paramId;
 
 public:
   ReactionParameter() = default;
-  explicit ReactionParameter(model::Model *sbmlDocWrapper,
+  explicit ReactionParameter(::sme::model::Model *sbmlDocWrapper,
                              const std::string &reactionId,
                              const std::string &parameterId);
   [[nodiscard]] std::string getName() const;
@@ -29,6 +30,6 @@ public:
   [[nodiscard]] std::string getStr() const;
 };
 
-} // namespace sme
+} // namespace pysme
 
-PYBIND11_MAKE_OPAQUE(std::vector<sme::ReactionParameter>)
+NB_MAKE_OPAQUE(std::vector<pysme::ReactionParameter>)

@@ -1,25 +1,26 @@
-// Python.h (included by pybind11.h) must come first
+// Python.h (#included by nanobind.h) must come first
 // https://docs.python.org/3.2/c-api/intro.html#include-files
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 #include "sme/model.hpp"
 #include "sme_common.hpp"
 #include "sme_membrane.hpp"
+#include <nanobind/stl/string.h>
 
-namespace sme {
+namespace pysme {
 
-void pybindMembrane(pybind11::module &m) {
-  sme::bindList<Membrane>(m, "Membrane");
-  pybind11::class_<Membrane>(m, "Membrane",
+void bindMembrane(nanobind::module_ &m) {
+  bindList<Membrane>(m, "Membrane");
+  nanobind::class_<Membrane>(m, "Membrane",
                              R"(
                              a membrane where two compartments meet
                              )")
-      .def_property("name", &Membrane::getName, &Membrane::setName,
-                    R"(
+      .def_prop_rw("name", &Membrane::getName, &Membrane::setName,
+                   R"(
                     str: the name of this membrane
                     )")
-      .def_readonly("reactions", &Membrane::reactions,
-                    R"(
+      .def_ro("reactions", &Membrane::reactions,
+              R"(
                     ReactionList: the reactions in this membrane
                     )")
       .def("__repr__",
@@ -29,7 +30,7 @@ void pybindMembrane(pybind11::module &m) {
       .def("__str__", &Membrane::getStr);
 }
 
-Membrane::Membrane(model::Model *sbmlDocWrapper, const std::string &sId)
+Membrane::Membrane(::sme::model::Model *sbmlDocWrapper, const std::string &sId)
     : s(sbmlDocWrapper), id(sId) {
   if (auto reacs = s->getReactions().getIds(id.c_str()); !reacs.isEmpty()) {
     for (const auto &reac : reacs) {
@@ -53,30 +54,4 @@ std::string Membrane::getStr() const {
   return str;
 }
 
-} // namespace sme
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
+} // namespace pysme

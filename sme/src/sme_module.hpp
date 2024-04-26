@@ -1,14 +1,14 @@
 #pragma once
 
 #include "sme_model.hpp"
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
-namespace sme {
+namespace pysme {
 
-void pybindModule(pybind11::module &m);
+void bindModule(nanobind::module_ &m);
 
 Model openFile(const std::string &filename);
 Model openSbmlFile(const std::string &filename);
 Model openExampleModel(const std::string &name);
 
-} // namespace sme
+} // namespace pysme

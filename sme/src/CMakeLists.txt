@@ -2,7 +2,6 @@ target_sources(
   sme
   PRIVATE sme_common.cpp
           sme_compartment.cpp
-          sme_exception.cpp
           sme_membrane.cpp
           sme_model.cpp
           sme_module.cpp
