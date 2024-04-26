@@ -2,11 +2,11 @@
 
 ## To release a new version
 
-- Ensure that the [CMakeLists.txt](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/CMakeLists.txt#L7) version number matches the one in [setup.py](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/setup.py#L95)
+- Ensure that the [CMakeLists.txt](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/CMakeLists.txt#L7) version number matches the one in [pyproject.toml](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/pyproject.toml#L7)
 
 - Tag this commit on main with the same version number `x.y.z`
 
-- Github Actions will run and generate [Github](https://github.com/spatial-model-editor/spatial-model-editor/releases) & [PyPI](https://pypi.org/project/sme/) releases
+- Github Actions will run and generate [Github and PyPI](https://github.com/spatial-model-editor/spatial-model-editor/releases) releases
 
 - Documentation at [readthedocs](https://spatial-model-editor.readthedocs.io) will be updated
 
@@ -18,11 +18,11 @@
 
 ### Static libraries
 
+- The CI compiler toolchain is set up using the [setup-ci](https://github.com/spatial-model-editor/setup-ci) action
+
 - The CI builds use statically compiled versions of all dependencies
 
 - These are provided as binary releases from [sme_deps](https://github.com/spatial-model-editor/sme_deps)
-
-- To use a new release, update `SME_DEPS_VERSION` in [ci/get-libs.sh](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/ci/getlibs.sh#L6)
 
 - Note that sme_deps depends on [sme_deps_common](https://github.com/spatial-model-editor/sme_deps_common), which in turn depends on [sme_deps_qt](https://github.com/spatial-model-editor/sme_deps_qt) and [sme_deps_llvm](https://github.com/spatial-model-editor/sme_deps_llvm), so a new sme_deps release may first require a new release from these repos.
 

@@ -91,20 +91,20 @@ ditto -c -k --keepParent "cli/spatial-cli" "notarization_cli.zip"
 xcrun notarytool submit "notarization_cli.zip" --keychain-profile "notarytool-profile" --wait
 
 # make dmg of GUI app
-retry hdiutil create spatial-model-editor -fs HFS+ -srcfolder app/spatial-model-editor.app
+retry hdiutil create spatial-model-editor-"${RUNNER_ARCH}" -fs HFS+ -srcfolder app/spatial-model-editor.app
 # notarize & staple the dmg
-ditto -c -k --keepParent "spatial-model-editor.dmg" "notarization_gui_dmg.zip"
+ditto -c -k --keepParent "spatial-model-editor-${RUNNER_ARCH}.dmg" "notarization_gui_dmg.zip"
 xcrun notarytool submit "notarization_gui_dmg.zip" --keychain-profile "notarytool-profile" --wait
-xcrun stapler staple "spatial-model-editor.dmg"
+xcrun stapler staple "spatial-model-editor-${RUNNER_ARCH}.dmg"
 
 # make dmg of CLI
 mkdir spatial-cli
 cp cli/spatial-cli spatial-cli/.
-retry hdiutil create spatial-cli -fs HFS+ -srcfolder spatial-cli
+retry hdiutil create spatial-cli-"${RUNNER_ARCH}" -fs HFS+ -srcfolder spatial-cli
 # notarize & staple the dmg
-ditto -c -k --keepParent "spatial-cli.dmg" "notarization_cli_dmg.zip"
+ditto -c -k --keepParent "spatial-cli-${RUNNER_ARCH}.dmg" "notarization_cli_dmg.zip"
 xcrun notarytool submit "notarization_cli_dmg.zip" --keychain-profile "notarytool-profile" --wait
-xcrun stapler staple "spatial-cli.dmg"
+xcrun stapler staple "spatial-cli-${RUNNER_ARCH}.dmg"
 
 # display version
 ./app/spatial-model-editor.app/Contents/MacOS/spatial-model-editor -v
@@ -112,5 +112,5 @@ xcrun stapler staple "spatial-cli.dmg"
 # move binaries to artifacts/binaries
 cd ..
 mkdir -p artifacts/binaries
-mv build/spatial-model-editor.dmg artifacts/binaries/
-mv build/spatial-cli.dmg artifacts/binaries/
+mv build/"spatial-model-editor-${RUNNER_ARCH}.dmg" artifacts/binaries/
+mv build/"spatial-cli-${RUNNER_ARCH}.dmg" artifacts/binaries/
