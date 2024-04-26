@@ -6,7 +6,7 @@
 [![pypi releases](https://img.shields.io/pypi/v/sme.svg)](https://pypi.org/project/sme)
 [![open in colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/main/docs/sme/notebooks/getting_started.ipynb)
 [![documentation](https://readthedocs.org/projects/spatial-model-editor/badge/?version=stable)](https://spatial-model-editor.readthedocs.io/en/stable/?badge=stable)
-[![GUI/CLI Release Builds](https://github.com/spatial-model-editor/spatial-model-editor/workflows/GUI/CLI%20Release%20Builds/badge.svg)](https://github.com/spatial-model-editor/spatial-model-editor/actions?query=workflow%3A%22GUI%2FCLI+Release+Builds%22)
+[![release builds](https://github.com/spatial-model-editor/spatial-model-editor/actions/workflows/release.yml/badge.svg)](https://github.com/spatial-model-editor/spatial-model-editor/actions/workflows/release.yml)
 [![codecov](https://codecov.io/gh/spatial-model-editor/spatial-model-editor/branch/main/graph/badge.svg)](https://codecov.io/gh/spatial-model-editor/spatial-model-editor)
 [![sonarcloud quality gate status](https://sonarcloud.io/api/project_badges/measure?project=spatial-model-editor_spatial-model-editor&metric=alert_status)](https://sonarcloud.io/dashboard?id=spatial-model-editor_spatial-model-editor)
 [![DOI](https://zenodo.org/badge/185185280.svg)](https://zenodo.org/badge/latestdoi/185185280)
@@ -25,8 +25,8 @@ Or take a look at our [website](https://spatial-model-editor.github.io/) or the 
 Pre-release preview binaries are also available which are built from the main branch and can be used for testing new features before the next release:
 
 - [Linux pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor)
-- [MacOS Arm64 pre-release](https://github.com/ssciwr/sme-osx-arm64/releases/download/latest/spatial-model-editor.dmg)
-- [MacOS Intel pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor.dmg)
+- [MacOS Arm64 pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor-ARM64.dmg)
+- [MacOS Intel pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor-X64.dmg)
 - [Windows pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor.exe)
 
 *Note: on linux some additional system libraries are required that may not be installed by default. To install them:*

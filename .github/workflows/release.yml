@@ -45,13 +45,14 @@ jobs:
     name: "${{ matrix.target }} :: ${{ matrix.platform.os }}"
     steps:
     - uses: spatial-model-editor/setup-ci@2024.04.23
+      with:
+        sme_deps: '2024.04.24'
     - uses: actions/checkout@v4
       with:
         submodules: 'true'
     - name: Set "latest" version number unless commit is tagged
       if: startsWith(github.event.ref, 'refs/tags/') == false
       run: ./ci/set-latest-version.sh ${GITHUB_SHA}
-    - run: ./ci/get-libs.sh
     - run: ./ci/${{ matrix.target }}-${{ runner.os }}.sh
     - uses: actions/upload-artifact@v4
       with:
