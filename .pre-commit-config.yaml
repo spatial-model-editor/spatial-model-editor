@@ -36,6 +36,6 @@ repos:
       - id: check-github-workflows
       - id: check-readthedocs
   - repo: https://github.com/google/yamlfmt
-    rev: v0.11.0
+    rev: v0.12.1
     hooks:
       - id: yamlfmt
