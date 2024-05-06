@@ -22,9 +22,13 @@ def test_compartment() -> None:
     c.name = "NewCell"
     assert c.name == "NewCell"
     assert m.compartments["NewCell"].name == "NewCell"
-    with pytest.raises(sme.InvalidArgument):
+    assert sum(1 for c in m.compartments) == 3
+    with pytest.raises(ValueError):
         m.compartments["Cell"]
+    with pytest.raises(ValueError):
+        m.compartments[77]
     img = c.geometry_mask
+    assert img.dtype == bool
     assert img.shape == (1, 100, 100)
     assert img[0, 0, 0] == False
     assert img[0, 30, 30] == True

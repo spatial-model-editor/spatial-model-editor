@@ -36,7 +36,7 @@ def test_species():
     assert np.allclose(s.concentration_image[0, 23, 40], 0.3)
 
     # check changes were propagated to model
-    with pytest.raises(sme.InvalidArgument):
+    with pytest.raises(ValueError):
         m.compartments["Cell"].species["A_cell"]
     s2 = m.compartments["Cell"].species["New A!"]
     assert s == s2
@@ -87,33 +87,33 @@ def test_species():
     assert np.allclose(a2, a3)
 
     # invalid image assignments throw with helpful message
-    with pytest.raises(sme.InvalidArgument) as excinfo:
+    with pytest.raises(ValueError) as excinfo:
         s.concentration_image = np.random.default_rng().uniform(0, 1, 100)
     assert (
         "Invalid concentration image array: is 1-dimensional, should be 3-dimensional"
         in str(excinfo.value)
     )
 
-    with pytest.raises(sme.InvalidArgument) as excinfo:
+    with pytest.raises(ValueError) as excinfo:
         s.concentration_image = np.random.default_rng().uniform(0, 1, (10, 10))
     assert (
         "Invalid concentration image array: is 2-dimensional, should be 3-dimensional"
         in str(excinfo.value)
     )
 
-    with pytest.raises(sme.InvalidArgument) as excinfo:
+    with pytest.raises(ValueError) as excinfo:
         s.concentration_image = np.random.default_rng().uniform(0, 1, (2, 10, 100))
     assert "Invalid concentration image array: depth is 2, should be 1" in str(
         excinfo.value
     )
 
-    with pytest.raises(sme.InvalidArgument) as excinfo:
+    with pytest.raises(ValueError) as excinfo:
         s.concentration_image = np.random.default_rng().uniform(0, 1, (1, 10, 100))
     assert "Invalid concentration image array: height is 10, should be 100" in str(
         excinfo.value
     )
 
-    with pytest.raises(sme.InvalidArgument) as excinfo:
+    with pytest.raises(ValueError) as excinfo:
         s.concentration_image = np.random.default_rng().uniform(0, 1, (1, 100, 101))
     assert "Invalid concentration image array: width is 101, should be 100" in str(
         excinfo.value

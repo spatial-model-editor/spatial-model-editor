@@ -3,23 +3,23 @@
 #include "sme_common.hpp"
 #include <map>
 #include <memory>
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 #include <string>
 #include <vector>
 
-namespace sme {
+namespace pysme {
 
-void pybindSimulationResult(pybind11::module &m);
+void bindSimulationResult(nanobind::module_ &m);
 
 struct SimulationResult {
   double timePoint{0.0};
-  pybind11::array concentration_image{};
-  pybind11::dict species_concentration{};
-  pybind11::dict species_dcdt{};
+  nanobind::ndarray<nanobind::numpy, std::uint8_t> concentration_image{};
+  nanobind::dict species_concentration{};
+  nanobind::dict species_dcdt{};
   [[nodiscard]] std::string getStr() const;
   [[nodiscard]] std::string getName() const;
 };
 
-} // namespace sme
+} // namespace pysme
 
-PYBIND11_MAKE_OPAQUE(std::vector<sme::SimulationResult>)
+NB_MAKE_OPAQUE(std::vector<pysme::SimulationResult>)

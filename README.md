@@ -77,7 +77,7 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [Open Source Computer Vision Library](https://github.com/opencv/opencv) - license: [Apache-2.0](https://github.com/opencv/opencv/blob/master/LICENSE)
 
-- [pybind11](https://github.com/pybind/pybind11) - license: [BSD-style](https://github.com/pybind/pybind11/blob/master/LICENSE)
+- [nanobind](https://github.com/wjakob/nanobind) - license: [BSD-style](https://github.com/wjakob/nanobind/blob/master/LICENSE)
 
 - [Catch2](https://github.com/catchorg/Catch2) - license: [BSL-1.0](https://github.com/catchorg/Catch2/blob/master/LICENSE.txt)
 
