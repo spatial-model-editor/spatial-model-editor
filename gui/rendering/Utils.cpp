@@ -281,3 +281,18 @@ std::string rendering::Utils::LoadFile(std::string &filename) {
   }
   return buffer.str();
 }
+
+QVector3D rendering::Utils::rotationMatrixToEulerAngles(const QMatrix4x4 &rotation)
+{
+
+  QMatrix4x4 identity;
+  QMatrix4x4 axes = identity * rotation;
+  QQuaternion quaternion = QQuaternion::fromAxes(
+      axes.column(0).toVector3D(),
+      axes.column(1).toVector3D(),
+      axes.column(2).toVector3D()
+      );
+
+  // return roll, pitch, and yaw; maybe I need to swap roll and yaw?
+  return quaternion.toEulerAngles();
+}

@@ -4,10 +4,13 @@ target_sources(
           ShaderProgram.cpp
           Utils.cpp
           WireframeObjects.cpp
-          ClippingPlane.cpp)
+          ClippingPlane.cpp
+          Node.cpp)
 
 target_include_directories(gui PUBLIC .)
 
 if(BUILD_TESTING)
-  target_sources(gui_tests PUBLIC)
+  target_sources(
+          gui_tests
+          PUBLIC Node_t.cpp)
 endif()
