@@ -85,5 +85,34 @@ TEST_CASE("Node: Scene Graph", tags) {
     REQUIRE(node2->getGlobalTransform().eulerAngles == QVector3D(0,0,0));
 
   }
-  
+
+  SECTION("Test Camera") {
+
+    QVector3D positionNode1 = QVector3D(1,1,1);
+    auto node1 = std::make_shared<rendering::Node>("node1", positionNode1);
+    scenegraph->add(node1);
+    scenegraph->updateWorldTransform();
+    REQUIRE(node1->getGlobalTransform().position == positionNode1);
+
+    QVector3D positionNode2 = QVector3D(2,3,4);
+    auto camera =
+        std::make_shared<rendering::Camera>(
+            60.0f,800,600,0.001f,2000.0f,
+            positionNode2.x(),
+            positionNode2.y(),
+            positionNode2.z());
+    node1->add(camera);
+    scenegraph->updateWorldTransform();
+    REQUIRE(camera->getGlobalTransform().position == positionNode1 + positionNode2);
+
+    QVector3D newOrientationNode1 = QVector3D(90,0,0);
+    node1->setRot(newOrientationNode1);
+    QVector3D newOrientationNode2 = QVector3D(-90, 0,0);
+    node1->setPos(0,0,0);
+    camera->setRot(newOrientationNode2);
+    scenegraph->updateWorldTransform();
+    REQUIRE(camera->getGlobalTransform().eulerAngles == QVector3D(0,0,0));
+
+  }
+
 }

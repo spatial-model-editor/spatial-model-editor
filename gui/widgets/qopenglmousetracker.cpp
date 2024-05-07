@@ -283,10 +283,10 @@ void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
   auto Degrees = event->angleDelta().y() / 8;
 
   auto forwardVector = m_camera.GetForwardVector();
-  auto position = m_camera.GetPosition();
+  auto position = m_camera.getPos();
 
-  m_camera.SetPosition(position + forwardVector * static_cast<float>(Degrees) *
-                                      (1 / m_frameRate));
+  m_camera.setPos(position + forwardVector * static_cast<float>(Degrees) *
+                                 (1 / m_frameRate));
 
   emit mouseWheelEvent(event);
 
@@ -294,19 +294,19 @@ void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
 }
 
 void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z) {
-  m_camera.SetPosition(x, y, z);
+  m_camera.setPos(x, y, z);
 }
 
 void QOpenGLMouseTracker::SetCameraOrientation(float x, float y, float z) {
-  m_camera.SetRotation(x, y, z);
+  m_camera.setRot(x, y, z);
 }
 
 QVector3D QOpenGLMouseTracker::GetCameraPosition() const {
-  return m_camera.GetPosition();
+  return m_camera.getPos();
 }
 
 QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
-  return m_camera.GetRotation();
+  return m_camera.getRot();
 }
 
 void QOpenGLMouseTracker::SetSubMeshesOrientation(float x, float y, float z) {

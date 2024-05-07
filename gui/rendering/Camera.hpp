@@ -6,13 +6,14 @@
 
 #include <math.h>
 
+#include "Node.hpp"
 #include "ShaderProgram.hpp"
 
 namespace rendering {
 
 constexpr float PI = 3.1415926535f;
 
-class Camera {
+class Camera: public Node{
 public:
   Camera(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ,
          GLfloat farZ, GLfloat posX = 0.0f, GLfloat posY = 0.0f,
@@ -22,13 +23,8 @@ public:
   void SetFrustum(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ,
                   GLfloat farZ);
 
-  void SetPosition(GLfloat posX, GLfloat posY, GLfloat posZ);
-  void SetPosition(QVector3D position);
-  QVector3D GetPosition() const;
-
-  void SetRotation(GLfloat rotX, GLfloat rotY, GLfloat rotZ);
-  void SetRotation(QVector3D rotation);
-  QVector3D GetRotation() const;
+  void setRot(GLfloat rotX, GLfloat rotY, GLfloat rotZ);
+  void setRot(QVector3D rotation);
 
   QVector3D GetForwardVector() const;
   QVector3D GetUpVector() const;
@@ -49,9 +45,6 @@ private:
   GLfloat m_FOV;
 
   GLfloat m_projectionMatrix[4][4];
-
-  QVector3D m_viewPosition;
-  QVector3D m_viewRotation;
 
   QVector3D m_viewForward;
   QVector3D m_viewUp;
