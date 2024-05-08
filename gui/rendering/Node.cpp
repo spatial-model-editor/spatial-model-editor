@@ -30,7 +30,7 @@ Node::~Node() { SPDLOG_DEBUG("Removing Node \"" + name + "\""); }
 
 void Node::update(float delta) {}
 
-void Node::updateWorldTransform() {
+void Node::updateWorldTransform(float delta) {
   if (m_dirty) {
     auto parent_ref = this->parent.lock();
     this->updateLocalTransform();
@@ -43,13 +43,14 @@ void Node::updateWorldTransform() {
     m_dirty = false;
     for (auto &node : children) {
       node.get()->markDirty();
-      node.get()->updateWorldTransform();
+      node.get()->updateWorldTransform(1 / 60.0f);
     }
   } else {
     for (auto &node : children) {
-      node.get()->updateWorldTransform();
+      node.get()->updateWorldTransform(1 / 60.0f);
     }
   }
+  this->update(delta);
 }
 
 // TODO: Use quaternions as a substitute to euler angles

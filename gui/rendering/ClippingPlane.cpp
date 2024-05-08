@@ -9,7 +9,8 @@
 #include <QVector3D>
 
 rendering::ClippingPlane::ClippingPlane(uint32_t planeIndex, bool active)
-    : m_planeIndex(planeIndex), m_active(active) {}
+    : m_planeIndex(planeIndex), m_active(active),
+      Node("ClippingPlane " + std::to_string(planeIndex)) {}
 
 std::set<std::shared_ptr<rendering::ClippingPlane>>
 rendering::ClippingPlane::BuildClippingPlanes() {

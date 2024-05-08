@@ -83,7 +83,7 @@ public:
   /**
    * Traverses the tree and updates child transformations.
    */
-  virtual void updateWorldTransform();
+  void updateWorldTransform(float delta = 1 / 60.0f);
 
   /**
    * Recreates the local-space transform based on pos, rot, and scale.

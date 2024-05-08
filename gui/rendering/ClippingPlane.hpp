@@ -5,7 +5,9 @@
 #ifndef SPATIALMODELEDITOR_CLIPPLANE_H
 #define SPATIALMODELEDITOR_CLIPPLANE_H
 
+#include "Node.hpp"
 #include "ShaderProgram.hpp"
+
 #include <set>
 #include <vector>
 
@@ -13,7 +15,7 @@ class QOpenGLMouseTracker;
 
 namespace rendering {
 
-class ClippingPlane {
+class ClippingPlane : public Node {
 
 public:
   void
