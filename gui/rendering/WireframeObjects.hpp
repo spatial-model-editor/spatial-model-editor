@@ -13,9 +13,11 @@
 #include <QOpenGLWidget>
 #include <QtOpenGL>
 
+#include "Node.hpp"
+
 namespace rendering {
 
-class WireframeObjects : protected QOpenGLFunctions {
+class WireframeObjects : protected QOpenGLFunctions, public Node {
 
 public:
   WireframeObjects(const sme::mesh::Mesh3d &info, const QOpenGLWidget *Widget,
@@ -26,23 +28,13 @@ public:
                    const QVector3D &position = QVector3D(0.0f, 0.0f, 0.0f),
                    const QVector3D &rotation = QVector3D(0.0f, 0.0f, 0.0f),
                    const QVector3D &scale = QVector3D(1.0f, 1.0f, 1.0f));
+
   WireframeObjects(const WireframeObjects &cpy) = delete;
+
   ~WireframeObjects();
 
   void Render(const std::unique_ptr<rendering::ShaderProgram> &program,
               std::optional<float> lineWidth = {});
-
-  void SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ);
-  void SetRotation(const QVector3D &rotation);
-  QVector3D GetRotation() const;
-
-  void SetPosition(GLfloat positionX, GLfloat positionY, GLfloat positionZ);
-  void SetPosition(const QVector3D &position);
-  QVector3D GetPosition() const;
-
-  void SetScale(GLfloat scaleX, GLfloat scaleY, GLfloat scaleZ);
-  void SetScale(const QVector3D &scale);
-  QVector3D GetScale() const;
 
   void SetColor(const QColor &color, uint32_t meshID);
   void ResetToDefaultColor(uint32_t meshID);
@@ -86,11 +78,9 @@ private:
   GLuint m_vbo;
   std::vector<GLuint> m_elementBufferIds;
 
-  QVector3D m_position;
-  QVector3D m_rotation;
-  QVector3D m_scale;
-
   QColor clearColor;
+
+  QSurface *m_surface;
 
   void CreateVBO();
   void DestroyVBO();

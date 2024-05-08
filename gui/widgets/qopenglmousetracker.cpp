@@ -310,19 +310,19 @@ QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
 }
 
 void QOpenGLMouseTracker::SetSubMeshesOrientation(float x, float y, float z) {
-  m_SubMeshes->SetRotation(x, y, z);
+  m_SubMeshes->setRot(x, y, z);
 }
 
 void QOpenGLMouseTracker::SetSubMeshesPosition(float x, float y, float z) {
-  m_SubMeshes->SetPosition(x, y, z);
+  m_SubMeshes->setPos(x, y, z);
 }
 
 QVector3D QOpenGLMouseTracker::GetSubMeshesOrientation() const {
-  return m_SubMeshes->GetRotation();
+  return m_SubMeshes->getRot();
 }
 
 QVector3D QOpenGLMouseTracker::GetSubMeshesPosition() const {
-  return m_SubMeshes->GetPosition();
+  return m_SubMeshes->getPos();
 }
 
 void QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
