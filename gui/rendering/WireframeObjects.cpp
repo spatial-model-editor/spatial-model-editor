@@ -23,11 +23,7 @@ rendering::WireframeObjects::WireframeObjects(
       m_colors(colors), m_meshThickness(colors.size(), meshThickness),
       m_defaultThickness(colors.size(), meshThickness),
       m_translationOffset(meshPositionOffset),
-      Node(
-          "WireframeObjects",
-          position,
-          rotation,
-          scale ) {
+      Node("WireframeObjects", position, rotation, scale) {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
   QOpenGLFunctions::initializeOpenGLFunctions();
@@ -146,7 +142,7 @@ void rendering::WireframeObjects::CreateVBO() {
 
 void rendering::WireframeObjects::DestroyVBO() {
 
-//  m_openGLContext->makeCurrent(m_openGLContext->surface());
+  //  m_openGLContext->makeCurrent(m_openGLContext->surface());
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 

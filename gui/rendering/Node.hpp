@@ -56,17 +56,15 @@ public:
 
   Node();
 
-  explicit Node(const std::string& name);
+  explicit Node(const std::string &name);
 
-  Node(const std::string& name, const QVector3D& position);
+  Node(const std::string &name, const QVector3D &position);
 
-  Node(const std::string& name, const QVector3D& position, const QVector3D& rotation);
+  Node(const std::string &name, const QVector3D &position,
+       const QVector3D &rotation);
 
-  Node(
-      const std::string& name,
-      const QVector3D& position,
-      const QVector3D& rotation,
-      const QVector3D& scale);
+  Node(const std::string &name, const QVector3D &position,
+       const QVector3D &rotation, const QVector3D &scale);
 
   virtual ~Node();
 
@@ -160,6 +158,7 @@ public:
    * @param delta time in seconds
    */
   virtual void update(float delta);
+
 protected:
   // Position of the node in local-space.
   QVector3D m_position;
@@ -175,6 +174,6 @@ protected:
   bool m_dirty = true;
 };
 
-}
+} // namespace rendering
 
 #endif // SPATIALMODELEDITOR_NODE_HPP

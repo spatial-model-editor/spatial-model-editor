@@ -13,7 +13,7 @@ namespace rendering {
 
 constexpr float PI = 3.1415926535f;
 
-class Camera: public Node{
+class Camera : public Node {
 public:
   Camera(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ,
          GLfloat farZ, GLfloat posX = 0.0f, GLfloat posY = 0.0f,

@@ -5,44 +5,28 @@
 #include "Node.hpp"
 #include "sme/logger.hpp"
 
-
 namespace rendering {
 
-Node::Node(
-    const std::string& name,
-    const QVector3D& position,
-    const QVector3D& rotation,
-    const QVector3D& scale) : name(name), m_position(position), m_rotation(rotation), m_scale(scale) {
+Node::Node(const std::string &name, const QVector3D &position,
+           const QVector3D &rotation, const QVector3D &scale)
+    : name(name), m_position(position), m_rotation(rotation), m_scale(scale) {
 
   this->worldTransform.setToIdentity();
   this->localTransform.setToIdentity();
 }
 
-Node::Node(
-    const std::string& name,
-    const QVector3D& position,
-    const QVector3D& rotation)
-    : Node(name, position, rotation, QVector3D(1,1,1))
-{}
+Node::Node(const std::string &name, const QVector3D &position,
+           const QVector3D &rotation)
+    : Node(name, position, rotation, QVector3D(1, 1, 1)) {}
 
-Node::Node(
-    const std::string& name,
-    const QVector3D& position)
-    : Node(name, position, QVector3D(0,0,0))
-{}
+Node::Node(const std::string &name, const QVector3D &position)
+    : Node(name, position, QVector3D(0, 0, 0)) {}
 
-Node::Node(
-    const std::string& name)
-    : Node(name, QVector3D(0,0,0))
-{}
+Node::Node(const std::string &name) : Node(name, QVector3D(0, 0, 0)) {}
 
-Node::Node()
-    : Node("Node")
-{}
+Node::Node() : Node("Node") {}
 
-Node::~Node() {
-  SPDLOG_DEBUG("Removing Node \"" + name + "\"");
-}
+Node::~Node() { SPDLOG_DEBUG("Removing Node \"" + name + "\""); }
 
 void Node::update(float delta) {}
 
@@ -57,12 +41,12 @@ void Node::updateWorldTransform() {
     }
 
     m_dirty = false;
-    for (auto& node : children) {
+    for (auto &node : children) {
       node.get()->markDirty();
       node.get()->updateWorldTransform();
     }
   } else {
-    for (auto& node : children) {
+    for (auto &node : children) {
       node.get()->updateWorldTransform();
     }
   }
@@ -82,7 +66,6 @@ void Node::updateLocalTransform() {
     localTransform.rotate(m_rotation.z(), 0.0f, 0.0f, 1.0f);
     localTransform.rotate(m_rotation.y(), 0.0f, 1.0f, 0.0f);
     localTransform.rotate(m_rotation.x(), 1.0f, 0.0f, 0.0f);
-
   }
 }
 
@@ -102,9 +85,9 @@ void Node::remove() {
     return;
   }
 
-  auto it =
-      std::find_if(parent_ref.get()->children.begin(), parent_ref.get()->children.end(),
-                   [this](auto i) { return i.get() == this; });
+  auto it = std::find_if(parent_ref.get()->children.begin(),
+                         parent_ref.get()->children.end(),
+                         [this](auto i) { return i.get() == this; });
   if (it != parent_ref.get()->children.end()) {
     parent_ref.get()->children.erase(it);
   }
@@ -112,7 +95,7 @@ void Node::remove() {
 
 void Node::markDirty() { m_dirty = true; }
 
-DecomposedTransform Node::getGlobalTransform() const{
+DecomposedTransform Node::getGlobalTransform() const {
 
   DecomposedTransform decomposed;
 
@@ -122,14 +105,18 @@ DecomposedTransform Node::getGlobalTransform() const{
   decomposed.scale[1] = worldTransform.column(1).toVector3D().length();
   decomposed.scale[2] = worldTransform.column(2).toVector3D().length();
 
-  decomposed.rotation.setColumn( 0, worldTransform.column(0) / decomposed.scale[0]);
-  decomposed.rotation.setColumn( 1, worldTransform.column(1) / decomposed.scale[1]);
-  decomposed.rotation.setColumn( 2, worldTransform.column(2) / decomposed.scale[2]);
-  decomposed.rotation.setColumn( 3, QVector4D(0,0,0,1));
+  decomposed.rotation.setColumn(0,
+                                worldTransform.column(0) / decomposed.scale[0]);
+  decomposed.rotation.setColumn(1,
+                                worldTransform.column(1) / decomposed.scale[1]);
+  decomposed.rotation.setColumn(2,
+                                worldTransform.column(2) / decomposed.scale[2]);
+  decomposed.rotation.setColumn(3, QVector4D(0, 0, 0, 1));
 
-
-  // roll, pitch, and yaw Euler angles, it might be that I need to switch roll with yaw
-  decomposed.eulerAngles = Utils::rotationMatrixToEulerAngles(decomposed.rotation);
+  // roll, pitch, and yaw Euler angles, it might be that I need to switch roll
+  // with yaw
+  decomposed.eulerAngles =
+      Utils::rotationMatrixToEulerAngles(decomposed.rotation);
 
   return decomposed;
 }
@@ -163,4 +150,4 @@ void Node::setScale(QVector3D scale) {
   this->m_scale = scale;
 }
 
-}
+} // namespace rendering

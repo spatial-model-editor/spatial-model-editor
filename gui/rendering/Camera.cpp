@@ -42,11 +42,8 @@ rendering::Camera::Camera(GLfloat FOV, GLfloat width, GLfloat height,
                           GLfloat nearZ, GLfloat farZ, GLfloat posX,
                           GLfloat posY, GLfloat posZ, GLfloat rotX,
                           GLfloat rotY, GLfloat rotZ)
-    : Node(
-          "Camera",
-          QVector3D(posX, posY, posZ),
-          QVector3D(rotX, rotY, rotZ),
-          QVector3D(1,1,1) ) {
+    : Node("Camera", QVector3D(posX, posY, posZ), QVector3D(rotX, rotY, rotZ),
+           QVector3D(1, 1, 1)) {
 
   SetFrustum(FOV, width, height, nearZ, farZ);
 }
@@ -117,10 +114,8 @@ void rendering::Camera::UpdateProjection(
 
 void rendering::Camera::UpdateView(
     std::unique_ptr<rendering::ShaderProgram> &program) const {
-  program->SetViewPosition(m_position.x(), m_position.y(),
-                           m_position.z());
-  program->SetViewRotation(m_rotation.x(), m_rotation.y(),
-                           m_rotation.z());
+  program->SetViewPosition(m_position.x(), m_position.y(), m_position.z());
+  program->SetViewRotation(m_rotation.x(), m_rotation.y(), m_rotation.z());
 }
 
 GLfloat rendering::Camera::getNear() const { return m_near; }
