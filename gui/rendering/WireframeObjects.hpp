@@ -31,7 +31,7 @@ public:
 
   WireframeObjects(const WireframeObjects &cpy) = delete;
 
-  ~WireframeObjects();
+  ~WireframeObjects() override;
 
   void Render(const std::unique_ptr<rendering::ShaderProgram> &program,
               std::optional<float> lineWidth = {});

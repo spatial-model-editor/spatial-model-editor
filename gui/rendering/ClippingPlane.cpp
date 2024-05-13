@@ -9,10 +9,10 @@
 #include <QVector3D>
 
 rendering::ClippingPlane::ClippingPlane(uint32_t planeIndex, bool active)
-    : m_planeIndex(planeIndex), m_active(active),
-      Node("ClippingPlane " + std::to_string(planeIndex),
+    : Node("ClippingPlane " + std::to_string(planeIndex),
            QVector3D(0.0f, 0.0f, 0.0f), QVector3D(0.0f, 0.0f, 0.0f),
-           QVector3D(1.0f, 1.0f, 1.0f)) {}
+           QVector3D(1.0f, 1.0f, 1.0f)),
+      m_planeIndex(planeIndex), m_active(active) {}
 
 std::set<std::shared_ptr<rendering::ClippingPlane>>
 rendering::ClippingPlane::BuildClippingPlanes() {

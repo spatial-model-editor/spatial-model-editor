@@ -16,14 +16,14 @@ rendering::WireframeObjects::WireframeObjects(
     const std::vector<QColor> &colors, GLfloat meshThickness,
     const QVector3D &meshPositionOffset, const QVector3D &position,
     const QVector3D &rotation, const QVector3D &scale)
-    : m_vertices(info.getVerticesAsQVector4DArrayInHomogeneousCoord()),
+    : Node("WireframeObjects", position, rotation, scale),
+      m_vertices(info.getVerticesAsQVector4DArrayInHomogeneousCoord()),
       m_visibleSubmesh(std::min(colors.size(), info.getNumberOfCompartment()),
                        true),
       m_openGLContext(Widget->context()), m_defaultColors(colors),
       m_colors(colors), m_meshThickness(colors.size(), meshThickness),
       m_defaultThickness(colors.size(), meshThickness),
-      m_translationOffset(meshPositionOffset),
-      Node("WireframeObjects", position, rotation, scale) {
+      m_translationOffset(meshPositionOffset) {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
   QOpenGLFunctions::initializeOpenGLFunctions();
@@ -142,7 +142,7 @@ void rendering::WireframeObjects::CreateVBO() {
 
 void rendering::WireframeObjects::DestroyVBO() {
 
-  //    m_openGLContext->makeCurrent(m_openGLContext->surface());
+  m_openGLContext->makeCurrent(m_openGLContext->surface());
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 

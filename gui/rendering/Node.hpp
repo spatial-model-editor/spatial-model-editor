@@ -68,6 +68,9 @@ public:
 
   virtual ~Node();
 
+  Node(const Node &other) = default;
+  Node &operator=(const Node &other) = default;
+
   /**
    * Adds another node as a direct child. The node will assume ownership
    * of the node added as a child.

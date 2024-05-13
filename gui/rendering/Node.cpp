@@ -28,7 +28,9 @@ Node::Node() : Node("Node") {}
 
 Node::~Node() { SPDLOG_DEBUG("Removing Node \"" + name + "\""); }
 
-void Node::update(float delta) {}
+void Node::update(float delta) {
+  // It should be overwritten in case extra computation is required per Node.
+}
 
 void Node::updateWorldTransform(float delta) {
   if (m_dirty) {
@@ -41,13 +43,13 @@ void Node::updateWorldTransform(float delta) {
     }
 
     m_dirty = false;
-    for (auto &node : children) {
+    for (const auto &node : children) {
       node.get()->markDirty();
-      node.get()->updateWorldTransform(1 / 60.0f);
+      node.get()->updateWorldTransform();
     }
   } else {
-    for (auto &node : children) {
-      node.get()->updateWorldTransform(1 / 60.0f);
+    for (const auto &node : children) {
+      node.get()->updateWorldTransform();
     }
   }
   this->update(delta);
