@@ -39,6 +39,16 @@ rendering::ClippingPlane::fromAnalyticalToVectorial(float a, float b, float c,
   return {point, normal};
 }
 
+std::tuple<float, float, float, float>
+rendering::ClippingPlane::fromVectorialToAnalytical(QVector3D position,
+                                                    QVector3D direction) {
+
+  direction.normalize();
+
+  return {direction.x(), direction.y(), direction.z(),
+          -QVector3D::dotProduct(direction, position)};
+}
+
 void rendering::ClippingPlane::SetClipPlane(GLfloat a, GLfloat b, GLfloat c,
                                             GLfloat d) {
 
@@ -73,8 +83,13 @@ void rendering::ClippingPlane::UpdateClipPlane(
     std::unique_ptr<rendering::ShaderProgram> &program) const {
   if (m_active) {
 
+    auto [position, normal] = fromAnalyticalToVectorial(m_a, m_b, m_c, m_d);
+    QVector4D newNormal = worldTransform * QVector4D(normal, 1.0f);
+    auto [a, b, c, d] =
+        fromVectorialToAnalytical(position, newNormal.toVector3D());
+
     program->EnableClippingPlane(m_planeIndex);
-    program->SetClippingPlane(m_a, m_b, m_c, m_d, m_planeIndex);
+    program->SetClippingPlane(a, b, c, d, m_planeIndex);
   } else {
     program->DisableClippingPlane(m_planeIndex);
   }

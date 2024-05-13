@@ -42,6 +42,16 @@ public:
   static std::tuple<QVector3D, QVector3D>
   fromAnalyticalToVectorial(float a, float b, float c, float d);
 
+  /**
+   * @brief It computes the analytical equation, starting from position and
+   * direction.
+   * @param position
+   * @param direction ( Is is not necessary an unity vector )
+   * @return [a, b, c, d] -> plane parameters
+   */
+  static std::tuple<float, float, float, float>
+  fromVectorialToAnalytical(QVector3D position, QVector3D direction);
+
   void SetClipPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d);
   void SetClipPlane(QVector3D normal, const QVector3D &point);
 
