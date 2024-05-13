@@ -9,6 +9,7 @@
 #include "ShaderProgram.hpp"
 
 #include <set>
+#include <tuple>
 #include <vector>
 
 class QOpenGLMouseTracker;
@@ -27,6 +28,19 @@ public:
    */
   static std::set<std::shared_ptr<rendering::ClippingPlane>>
   BuildClippingPlanes();
+
+  /**
+   * @brief It computes the position and the normal vector for a plane starting
+   * from the analytical equation.
+   *
+   * @param a
+   * @param b
+   * @param c
+   * @param d
+   * @return [Position, Normal]
+   */
+  static std::tuple<QVector3D, QVector3D>
+  fromAnalyticalToVectorial(float a, float b, float c, float d);
 
   void SetClipPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d);
   void SetClipPlane(QVector3D normal, const QVector3D &point);

@@ -10,7 +10,9 @@
 
 rendering::ClippingPlane::ClippingPlane(uint32_t planeIndex, bool active)
     : m_planeIndex(planeIndex), m_active(active),
-      Node("ClippingPlane " + std::to_string(planeIndex)) {}
+      Node("ClippingPlane " + std::to_string(planeIndex),
+           QVector3D(0.0f, 0.0f, 0.0f), QVector3D(0.0f, 0.0f, 0.0f),
+           QVector3D(1.0f, 1.0f, 1.0f)) {}
 
 std::set<std::shared_ptr<rendering::ClippingPlane>>
 rendering::ClippingPlane::BuildClippingPlanes() {
@@ -22,6 +24,19 @@ rendering::ClippingPlane::BuildClippingPlanes() {
   }
 
   return planes;
+}
+
+std::tuple<QVector3D, QVector3D>
+rendering::ClippingPlane::fromAnalyticalToVectorial(float a, float b, float c,
+                                                    float d) {
+
+  GLfloat length = QVector3D(a, b, c).length();
+  QVector3D normal(a / length, b / length, c / length);
+
+  GLfloat p = d / length;
+  QVector3D point(normal * p);
+
+  return {point, normal};
 }
 
 void rendering::ClippingPlane::SetClipPlane(GLfloat a, GLfloat b, GLfloat c,
@@ -44,11 +59,7 @@ void rendering::ClippingPlane::SetClipPlane(QVector3D normal,
 
 void rendering::ClippingPlane::TranslateClipPlane(GLfloat value) {
 
-  GLfloat length = QVector3D(m_a, m_b, m_c).length();
-  QVector3D normal(m_a / length, m_b / length, m_c / length);
-
-  GLfloat p = m_d / length;
-  QVector3D point(normal * p);
+  auto [point, normal] = fromAnalyticalToVectorial(m_a, m_b, m_c, m_d);
 
   point += normal * value;
   SetClipPlane(normal, point);
@@ -61,6 +72,7 @@ bool rendering::ClippingPlane::getStatus() const { return m_active; }
 void rendering::ClippingPlane::UpdateClipPlane(
     std::unique_ptr<rendering::ShaderProgram> &program) const {
   if (m_active) {
+
     program->EnableClippingPlane(m_planeIndex);
     program->SetClippingPlane(m_a, m_b, m_c, m_d, m_planeIndex);
   } else {
