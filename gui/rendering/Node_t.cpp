@@ -164,6 +164,7 @@ TEST_CASE("Node: Scene Graph", tags) {
   }
 
   SECTION("Test ClippingPlane") {
+
     QVector3D positionNode1 = QVector3D(1, 1, 1);
     auto node1 = std::make_shared<rendering::Node>("node1", positionNode1);
     scenegraph->add(node1);
@@ -209,5 +210,13 @@ TEST_CASE("Node: Scene Graph", tags) {
     scenegraph->updateWorldTransform(1 / 60.0f);
     REQUIRE(clippingPlane->getGlobalTransform().eulerAngles ==
             QVector3D(0, 0, 0));
+
+    node1->setRot(-90.0f, 0.0f, 0.0f);
+    clippingPlane->SetClipPlane(QVector3D(1.0f, 0.0f, 0.0f),
+                                QVector3D(0.0f, 0.0f, 0.0f));
+    clippingPlane->setRot(90.0f, 0.0f, 0.0f);
+    scenegraph->updateWorldTransform(1 / 60.0f);
+    auto [position, normal] = clippingPlane->GetClipPlane();
+    REQUIRE(normal == QVector3D(1.0f, 0.0f, 0.0f));
   }
 }
