@@ -87,12 +87,19 @@ bool rendering::ClippingPlane::getStatus() const { return m_active; }
 
 void rendering::ClippingPlane::UpdateClipPlane(
     std::unique_ptr<rendering::ShaderProgram> &program) const {
+
   if (m_active) {
 
+    //    assert(m_dirty == false);
+
     auto [position, normal] = fromAnalyticalToVectorial(m_a, m_b, m_c, m_d);
-    QVector4D newNormal = worldTransform * QVector4D(normal, 1.0f);
-    auto [a, b, c, d] =
-        fromVectorialToAnalytical(position, newNormal.toVector3D());
+    DecomposedTransform globalTransform = getGlobalTransform();
+    QVector4D normalRotated =
+        globalTransform.rotation * QVector4D(normal, 1.0f);
+    QVector3D positionTranslated = globalTransform.position + position;
+
+    auto [a, b, c, d] = fromVectorialToAnalytical(positionTranslated,
+                                                  normalRotated.toVector3D());
 
     program->EnableClippingPlane(m_planeIndex);
     program->SetClippingPlane(a, b, c, d, m_planeIndex);
