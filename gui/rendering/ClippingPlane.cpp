@@ -86,8 +86,7 @@ void rendering::ClippingPlane::Disable() { m_active = false; }
 bool rendering::ClippingPlane::getStatus() const { return m_active; }
 
 void rendering::ClippingPlane::UpdateClipPlane(
-    std::unique_ptr<rendering::ShaderProgram> &program)
-    const { //    assert(m_dirty == false);
+    std::unique_ptr<rendering::ShaderProgram> &program) const {
 
   if (m_active) {
 
