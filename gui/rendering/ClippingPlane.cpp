@@ -67,6 +67,12 @@ void rendering::ClippingPlane::SetClipPlane(QVector3D normal,
                -QVector3D::dotProduct(normal, point));
 }
 
+std::tuple<QVector3D, QVector3D>
+rendering::ClippingPlane::GetClipPlane() const {
+
+  return fromAnalyticalToVectorial(m_a, m_b, m_c, m_d);
+}
+
 void rendering::ClippingPlane::TranslateClipPlane(GLfloat value) {
 
   auto [point, normal] = fromAnalyticalToVectorial(m_a, m_b, m_c, m_d);

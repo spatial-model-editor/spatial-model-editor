@@ -56,6 +56,13 @@ public:
   void SetClipPlane(QVector3D normal, const QVector3D &point);
 
   /**
+   * Return the vectorial form of the plane.
+   * @return [ Position, Normal ]
+   */
+
+  std::tuple<QVector3D, QVector3D> GetClipPlane() const;
+
+  /**
    * @brief: Translate the plane alongside the normal
    *
    * @param value how much it gets in translation
