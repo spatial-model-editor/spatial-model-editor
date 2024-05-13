@@ -45,11 +45,11 @@ void Node::updateWorldTransform(float delta) {
     m_dirty = false;
     for (const auto &node : children) {
       node.get()->markDirty();
-      node.get()->updateWorldTransform();
+      node.get()->updateWorldTransform(delta);
     }
   } else {
     for (const auto &node : children) {
-      node.get()->updateWorldTransform();
+      node.get()->updateWorldTransform(delta);
     }
   }
   this->update(delta);
