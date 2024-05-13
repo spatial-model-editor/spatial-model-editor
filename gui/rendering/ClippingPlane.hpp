@@ -67,7 +67,7 @@ public:
    *
    * @param value how much it gets in translation
    */
-  void TranslateClipPlane(GLfloat value);
+  void TranslateAlongsideNormal(GLfloat value);
 
   /**
    * @brief: toggle between using and not the plane

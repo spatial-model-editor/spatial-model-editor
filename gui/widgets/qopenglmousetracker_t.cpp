@@ -351,10 +351,10 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       QcolorSelection = QColor(test.getColour());
       REQUIRE(backgroundColor == QcolorSelection);
       wait(100);
-      clippingPlane3->TranslateClipPlane(10);
+      clippingPlane3->TranslateAlongsideNormal(10);
       test.repaint();
       wait(100);
-      clippingPlane3->TranslateClipPlane(-20);
+      clippingPlane3->TranslateAlongsideNormal(-20);
       test.repaint();
       wait(100);
 
