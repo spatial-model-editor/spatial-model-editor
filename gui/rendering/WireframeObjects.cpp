@@ -142,7 +142,7 @@ void rendering::WireframeObjects::CreateVBO() {
 
 void rendering::WireframeObjects::DestroyVBO() {
 
-  //  m_openGLContext->makeCurrent(m_openGLContext->surface());
+  //    m_openGLContext->makeCurrent(m_openGLContext->surface());
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
