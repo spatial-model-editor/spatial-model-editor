@@ -121,26 +121,26 @@ void QOpenGLMouseTracker::initializeGL() {
 
 #endif
 
-  std::string ext =
-      QString::fromLatin1(
-          (const char *)context()->functions()->glGetString(GL_EXTENSIONS))
-          .replace(' ', "\n\t")
-          .toStdString();
-  CheckOpenGLError("glGetString(GL_EXTENSIONS)");
-
-  std::string vendor(
-      (const char *)context()->functions()->glGetString(GL_VENDOR));
-  CheckOpenGLError("glGetString(GL_VENDOR)");
-  std::string renderer(
-      (const char *)context()->functions()->glGetString(GL_RENDERER));
-  CheckOpenGLError("glGetString(GL_RENDERER)");
-  std::string gl_version(
-      (const char *)context()->functions()->glGetString(GL_VERSION));
-  CheckOpenGLError("glGetString(GL_VERSION)");
-
-  SPDLOG_INFO("OpenGL: " + vendor + std::string(" ") + renderer +
-              std::string(" ") + gl_version + std::string(" ") +
-              std::string("\n\n\t") + ext + std::string("\n"));
+  //  std::string ext =
+  //      QString::fromLatin1(
+  //          (const char *)context()->functions()->glGetString(GL_EXTENSIONS))
+  //          .replace(' ', "\n\t")
+  //          .toStdString();
+  //  CheckOpenGLError("glGetString(GL_EXTENSIONS)");
+  //
+  //  std::string vendor(
+  //      (const char *)context()->functions()->glGetString(GL_VENDOR));
+  //  CheckOpenGLError("glGetString(GL_VENDOR)");
+  //  std::string renderer(
+  //      (const char *)context()->functions()->glGetString(GL_RENDERER));
+  //  CheckOpenGLError("glGetString(GL_RENDERER)");
+  //  std::string gl_version(
+  //      (const char *)context()->functions()->glGetString(GL_VERSION));
+  //  CheckOpenGLError("glGetString(GL_VERSION)");
+  //
+  //  SPDLOG_INFO("OpenGL: " + vendor + std::string(" ") + renderer +
+  //              std::string(" ") + gl_version + std::string(" ") +
+  //              std::string("\n\n\t") + ext + std::string("\n"));
 
   m_mainProgram = std::make_unique<rendering::ShaderProgram>(
       rendering::shader::colorAsUniform::text_vertex_color_as_uniform,
