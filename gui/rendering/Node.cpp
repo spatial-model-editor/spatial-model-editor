@@ -88,7 +88,7 @@ void Node::remove() {
 
   auto parent_ref = this->parent.lock();
   if (parent_ref.get() == nullptr) {
-    SPDLOG_WARN("Attempted to remove \"" + name + "\", but it has no parent");
+    SPDLOG_WARN("Attempted to remove '{}', but it has no parent", name);
     return;
   }
 
