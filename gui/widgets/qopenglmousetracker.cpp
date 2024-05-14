@@ -384,8 +384,6 @@ QColor QOpenGLMouseTracker::getBackgroundColor() const {
 
 void QOpenGLMouseTracker::clear() {
 
-  SPDLOG_DEBUG("QOpenGLMouseTracker::clear() \"" + m_SubMeshes->name + "\"");
-
   m_SubMeshes.reset();
   update();
 }
