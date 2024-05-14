@@ -24,12 +24,13 @@ sudo mv /usr/bin/gcov /usr/bin/gcov.old
 mkdir build
 cd build
 cmake .. \
+    -GNinja \
     -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_EXE_LINKER_FLAGS="--coverage" \
+    -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld --coverage" \
     -DCMAKE_CXX_FLAGS="--coverage -D_GLIBCXX_USE_TBB_PAR_BACKEND=0"
-make -j4 VERBOSE=1
+ninja -v
 ccache --show-stats
 
 # start a window manager so the Qt GUI tests can have their focus set
@@ -40,21 +41,21 @@ jwm &
 # run tests and collect coverage data
 mkdir gcov
 
-run_gcov () {
-    find . -type f -name "*.gcno" -print0 | xargs -0 llvm-cov gcov -p > /dev/null
+run_gcov() {
+    find . -type f -name "*.gcno" -print0 | xargs -0 llvm-cov gcov -p >/dev/null
     mv *#spatial-model-editor#*.gcov gcov/
     rm gcov/*#spatial-model-editor#ext#*.gcov
     rm -f *.gcov
     ls gcov/*.gcov
 }
 
-test_to_codecov () {
+test_to_codecov() {
     NAME=$1
     TAGS=$2
     echo "Generating $NAME coverage with tags $TAGS..."
     rm -f gcov/*
     lcov -q -z -d .
-    time ./test/tests -as "$TAGS" > "$NAME".txt 2>&1 || (tail -n 1000 "$NAME".txt && exit 1)
+    time ./test/tests -as "$TAGS" >"$NAME".txt 2>&1 || (tail -n 1000 "$NAME".txt && exit 1)
     tail -n 100 "$NAME".txt
     run_gcov
     # upload coverage report to codecov.io - needs to run from source directory, if it returns an error code try again a couple of times
@@ -77,7 +78,7 @@ lcov -q -z -d .
 cd sme
 python -m pip install -r ../../sme/requirements.txt
 python -m pip install -r ../../sme/requirements-test.txt
-python -m pytest -sv ../../sme/test > sme.txt 2>&1 || (tail -n 1000 sme.txt && exit 1)
+python -m pytest -sv ../../sme/test >sme.txt 2>&1 || (tail -n 1000 sme.txt && exit 1)
 tail -n 100 sme.txt
 cd ..
 run_gcov

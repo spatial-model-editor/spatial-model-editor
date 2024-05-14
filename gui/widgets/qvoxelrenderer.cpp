@@ -3,6 +3,7 @@
 #include <QPainter>
 #include <vtkCamera.h>
 #include <vtkPointData.h>
+#include <vtkWorldPointPicker.h>
 
 QVoxelRenderer::QVoxelRenderer(QWidget *parent)
     : QVTKOpenGLNativeWidget(parent) {
@@ -110,4 +111,33 @@ void QVoxelRenderer::setPhysicalSize(const sme::common::VolumeF &size,
   renderer->ResetCameraClippingRange();
   renderer->ResetCamera();
   renderWindow->Render();
+}
+
+void QVoxelRenderer::mousePressEvent(QMouseEvent *ev) {
+  if (ev->buttons() == Qt::NoButton) {
+    return;
+  }
+  auto *interactor = renderWindow->GetInteractor();
+  auto *picker = interactor->GetPicker();
+  const auto *pos = interactor->GetEventPosition();
+  if (picker->Pick(pos[0], pos[1], 0, renderer)) {
+    std::array<double, 3> picked{};
+    picker->GetPickPosition(picked.data());
+    std::array<int, 3> dim{};
+    imageData->GetDimensions(dim.data());
+    auto x = static_cast<int>(picked[0]);
+    auto y = static_cast<int>(picked[1]);
+    auto z = static_cast<std::size_t>(picked[2]);
+    if (z < dim[2] && y >= 0 && y < dim[1] && x >= 0 && x < dim[0]) {
+      static constexpr vtkIdType stride = 4;
+      auto idx =
+          stride * static_cast<vtkIdType>(z * dim[1] * dim[0] + y * dim[1] + x);
+      SPDLOG_ERROR("Index in imageDataArray: {}", idx);
+      auto col =
+          qRgb(imageDataArray->GetValue(idx), imageDataArray->GetValue(idx + 1),
+               imageDataArray->GetValue(idx + 2));
+      SPDLOG_ERROR("voxel ({},{},{}) -> colour {:x}", x, y, z, col);
+      emit mouseClicked(col, sme::common::Voxel{x, y, z});
+    }
+  }
 }

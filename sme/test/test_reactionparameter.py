@@ -28,7 +28,7 @@ def test_reactionparameter():
     assert k.value == 0.8765
 
     # check change was propagated to model
-    with pytest.raises(sme.InvalidArgument):
+    with pytest.raises(ValueError):
         r.parameters["k1"]
     k3 = r.parameters["New k"]
     assert k == k2

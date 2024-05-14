@@ -1,6 +1,6 @@
-// Python.h (included by pybind11.h) must come first
+// Python.h (#included by nanobind.h) must come first
 // https://docs.python.org/3.2/c-api/intro.html#include-files
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 #include "sme/image_stack.hpp"
 #include "sme/logger.hpp"
@@ -9,41 +9,41 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QImage>
+#include <nanobind/stl/string.h>
 
-namespace sme {
+namespace pysme {
 
-void pybindModel(pybind11::module &m) {
-  pybind11::class_<sme::Model> model(m, "Model",
-                                     R"(
+void bindModel(nanobind::module_ &m) {
+  nanobind::class_<Model> model(m, "Model",
+                                R"(
                                      the spatial model
                                      )");
-  pybind11::enum_<simulate::SimulatorType>(m, "SimulatorType")
-      .value("DUNE", simulate::SimulatorType::DUNE)
-      .value("Pixel", simulate::SimulatorType::Pixel);
-  model.def(pybind11::init<const std::string &>(), pybind11::arg("filename"))
-      .def_property("name", &sme::Model::getName, &sme::Model::setName,
-                    R"(
+  nanobind::enum_<::sme::simulate::SimulatorType>(m, "SimulatorType")
+      .value("DUNE", ::sme::simulate::SimulatorType::DUNE)
+      .value("Pixel", ::sme::simulate::SimulatorType::Pixel);
+  model.def(nanobind::init<const std::string &>(), nanobind::arg("filename"))
+      .def_prop_rw("name", &Model::getName, &Model::setName,
+                   R"(
                     str: the name of this model
                     )")
-      .def("export_sbml_file", &sme::Model::exportSbmlFile,
-           pybind11::arg("filename"),
+      .def("export_sbml_file", &Model::exportSbmlFile,
+           nanobind::arg("filename"),
            R"(
            exports the model as a spatial SBML file
 
            Args:
                filename (str): the name of the file to create
            )")
-      .def("export_sme_file", &sme::Model::exportSmeFile,
-           pybind11::arg("filename"),
+      .def("export_sme_file", &Model::exportSmeFile, nanobind::arg("filename"),
            R"(
            exports the model as a sme file
 
            Args:
                filename (str): the name of the file to create
            )")
-      .def_readonly("compartments", &sme::Model::compartments,
-                    pybind11::return_value_policy::reference_internal,
-                    R"(
+      .def_ro("compartments", &Model::compartments,
+              nanobind::rv_policy::reference_internal,
+              R"(
                     CompartmentList: the compartments in this model
 
                     a list of :class:`Compartment` that can be iterated over,
@@ -72,8 +72,8 @@ void pybindModel(pybind11::module &m) {
                         >>> print(last_compartment.name)
                         Nucleus
            )")
-      .def_readonly("membranes", &sme::Model::membranes,
-                    R"(
+      .def_ro("membranes", &Model::membranes,
+              R"(
                     MembraneList: the membranes in this model
 
                     a list of :class:`Membrane` that can be iterated over,
@@ -101,8 +101,8 @@ void pybindModel(pybind11::module &m) {
                         >>> print(last_membrane.name)
                         Cell <-> Nucleus
                     )")
-      .def_readonly("parameters", &sme::Model::parameters,
-                    R"(
+      .def_ro("parameters", &Model::parameters,
+              R"(
                     ParameterList: the parameters in this model
 
                     a list of :class:`Parameter` that can be iterated over,
@@ -129,8 +129,9 @@ void pybindModel(pybind11::module &m) {
                         >>> print(last_param.name)
                         param
                     )")
-      .def_readonly("compartment_image", &sme::Model::compartment_image,
-                    R"(
+      .def_prop_ro("compartment_image", &Model::compartment_image,
+                   nanobind::rv_policy::take_ownership,
+                   R"(
                     numpy.ndarray: an image of the compartments in this model
 
                     An array of RGB integer values for each voxel in the image of
@@ -159,8 +160,8 @@ void pybindModel(pybind11::module &m) {
 
                         >>> import matplotlib.pyplot as plt
                         >>> imgplot = plt.imshow(model.compartment_image[0]))")
-      .def("import_geometry_from_image", &sme::Model::importGeometryFromImage,
-           pybind11::arg("filename"),
+      .def("import_geometry_from_image", &Model::importGeometryFromImage,
+           nanobind::arg("filename"),
            R"(
            sets the geometry of each compartment to the corresponding pixels in the supplied geometry image
 
@@ -173,14 +174,15 @@ void pybindModel(pybind11::module &m) {
            Args:
                filename (str): the name of the geometry image to import
            )")
-      .def("simulate", &sme::Model::simulateFloat,
-           pybind11::arg("simulation_time"), pybind11::arg("image_interval"),
-           pybind11::arg("timeout_seconds") = 86400,
-           pybind11::arg("throw_on_timeout") = true,
-           pybind11::arg("simulator_type") = simulate::SimulatorType::Pixel,
-           pybind11::arg("continue_existing_simulation") = false,
-           pybind11::arg("return_results") = true,
-           pybind11::arg("n_threads") = 1,
+      .def("simulate", &Model::simulateFloat, nanobind::arg("simulation_time"),
+           nanobind::arg("image_interval"),
+           nanobind::arg("timeout_seconds") = 86400,
+           nanobind::arg("throw_on_timeout") = true,
+           nanobind::arg("simulator_type") =
+               ::sme::simulate::SimulatorType::Pixel,
+           nanobind::arg("continue_existing_simulation") = false,
+           nanobind::arg("return_results") = true,
+           nanobind::arg("n_threads") = 1,
            R"(
            returns the results of the simulation.
 
@@ -200,20 +202,21 @@ void pybindModel(pybind11::module &m) {
            Raises:
                RuntimeError: if the simulation times out or fails
            )")
-      .def("simulate", &sme::Model::simulateString,
-           pybind11::arg("simulation_times"), pybind11::arg("image_intervals"),
-           pybind11::arg("timeout_seconds") = 86400,
-           pybind11::arg("throw_on_timeout") = true,
-           pybind11::arg("simulator_type") = simulate::SimulatorType::Pixel,
-           pybind11::arg("continue_existing_simulation") = false,
-           pybind11::arg("return_results") = true,
-           pybind11::arg("n_threads") = 1,
+      .def("simulate", &Model::simulateString,
+           nanobind::arg("simulation_times"), nanobind::arg("image_intervals"),
+           nanobind::arg("timeout_seconds") = 86400,
+           nanobind::arg("throw_on_timeout") = true,
+           nanobind::arg("simulator_type") =
+               ::sme::simulate::SimulatorType::Pixel,
+           nanobind::arg("continue_existing_simulation") = false,
+           nanobind::arg("return_results") = true,
+           nanobind::arg("n_threads") = 1,
            R"(
            returns the results of the simulation.
 
            Args:
-               simulation_times (str): The length(s) of the simulation in model units of time as a comma-delimited list, e.g. `"5"`, or `"10;100;20"`
-               image_intervals (str): The interval(s) between images in model units of time as a comma-delimited list, e.g. `"1"`, or `"2;10;0.5"`
+               simulation_times (str): The length(s) of the simulation in model units of time as a semicolon-delimited list, e.g. `"5"`, or `"10;100;20"`
+               image_intervals (str): The interval(s) between images in model units of time as a semicolon-delimited list, e.g. `"1"`, or `"2;10;0.5"`
                timeout_seconds (int): The maximum time in seconds that the simulation can run for. Default value: 86400 = 1 day.
                throw_on_timeout (bool): Whether to throw an exception on simulation timeout. Default value: `true`.
                simulator_type (sme.SimulatorType): The simulator to use: `sme.SimulatorType.DUNE` or `sme.SimulatorType.Pixel`. Default value: Pixel.
@@ -227,7 +230,7 @@ void pybindModel(pybind11::module &m) {
            Raises:
                RuntimeError: if the simulation times out or fails
            )")
-      .def("simulation_results", &sme::Model::getSimulationResults,
+      .def("simulation_results", &Model::getSimulationResults,
            R"(
           returns the simulation results.
 
@@ -235,34 +238,36 @@ void pybindModel(pybind11::module &m) {
               SimulationResultList: the simulation results
           )")
       .def("__repr__",
-           [](const sme::Model &a) {
+           [](const Model &a) {
              return fmt::format("<sme.Model named '{}'>", a.getName());
            })
-      .def("__str__", &sme::Model::getStr);
+      .def("__str__", &Model::getStr);
 }
 
 static std::vector<SimulationResult>
-constructSimulationResults(const simulate::Simulation *sim, bool getDcdt) {
+constructSimulationResults(const ::sme::simulate::Simulation *sim,
+                           bool getDcdt) {
   std::vector<SimulationResult> results;
   results.reserve(sim->getTimePoints().size());
   for (std::size_t i = 0; i < sim->getTimePoints().size(); ++i) {
     auto &result = results.emplace_back();
     result.timePoint = sim->getTimePoints()[i];
-    result.concentration_image = toPyImageRgb(sim->getConcImage(i, {}, true));
-    std::vector<ssize_t> shape{result.concentration_image.shape(0),
-                               result.concentration_image.shape(1),
-                               result.concentration_image.shape(2)};
+    auto img = sim->getConcImage(i, {}, true);
+    auto shape = img.volume();
+    result.concentration_image = toPyImageRgb(img);
     for (std::size_t ci = 0; ci < sim->getCompartmentIds().size(); ++ci) {
       const auto &names{sim->getPyNames(ci)};
       auto concs{sim->getPyConcs(i, ci)};
       for (std::size_t si = 0; si < names.size(); ++si) {
-        result.species_concentration[pybind11::str(names[si])] =
+        result.species_concentration[nanobind::str(names[si].data(),
+                                                   names[si].size())] =
             as_ndarray(std::move(concs[si]), shape);
       }
       if (getDcdt && i + 1 == sim->getTimePoints().size()) {
         if (auto dcdts{sim->getPyDcdts(ci)}; !dcdts.empty()) {
           for (std::size_t si = 0; si < names.size(); ++si) {
-            result.species_dcdt[pybind11::str(names[si])] =
+            result.species_dcdt[nanobind::str(names[si].data(),
+                                              names[si].size())] =
                 as_ndarray(std::move(dcdts[si]), shape);
           }
         }
@@ -274,8 +279,8 @@ constructSimulationResults(const simulate::Simulation *sim, bool getDcdt) {
 
 void Model::init() {
   if (!s->getIsValid()) {
-    throw SmeInvalidArgument("Failed to open model: " +
-                             s->getErrorMessage().toStdString());
+    throw std::invalid_argument("Failed to open model: " +
+                                s->getErrorMessage().toStdString());
   }
   compartments.clear();
   compartments.reserve(
@@ -295,7 +300,6 @@ void Model::init() {
   for (const auto &paramId : s->getParameters().getIds()) {
     parameters.emplace_back(s.get(), paramId.toStdString());
   }
-  compartment_image = toPyImageRgb(s->getGeometry().getImages());
 }
 
 Model::Model(const std::string &filename) {
@@ -309,13 +313,13 @@ Model::Model(const std::string &filename) {
 }
 
 void Model::importFile(const std::string &filename) {
-  s = std::make_unique<model::Model>();
+  s = std::make_unique<::sme::model::Model>();
   s->importFile(filename);
   init();
 }
 
 void Model::importSbmlString(const std::string &xml) {
-  s = std::make_unique<model::Model>();
+  s = std::make_unique<::sme::model::Model>();
   s->importSBMLString(xml);
   init();
 }
@@ -324,17 +328,18 @@ std::string Model::getName() const { return s->getName().toStdString(); }
 
 void Model::setName(const std::string &name) { s->setName(name.c_str()); }
 
+nanobind::ndarray<nanobind::numpy, std::uint8_t>
+Model::compartment_image() const {
+  return toPyImageRgb(s->getGeometry().getImages());
+}
+
 void Model::importGeometryFromImage(const std::string &filename) {
   try {
     s->getGeometry().importGeometryFromImages(
-        common::ImageStack(filename.c_str()), true);
-    compartment_image = toPyImageRgb(s->getGeometry().getImages());
-    for (auto &compartment : compartments) {
-      compartment.updateMask();
-    }
+        ::sme::common::ImageStack(filename.c_str()), true);
   } catch (const std::invalid_argument &e) {
-    throw SmeInvalidArgument("Failed to import geometry from image '" +
-                             filename + "': " + e.what());
+    throw std::invalid_argument("Failed to import geometry from image '" +
+                                filename + "': " + e.what());
   }
 }
 
@@ -349,7 +354,7 @@ void Model::exportSmeFile(const std::string &filename) {
 std::vector<SimulationResult>
 Model::simulateString(const std::string &lengths, const std::string &intervals,
                       int timeoutSeconds, bool throwOnTimeout,
-                      simulate::SimulatorType simulatorType,
+                      ::sme::simulate::SimulatorType simulatorType,
                       bool continueExistingSimulation, bool returnResults,
                       int nThreads) {
   QElapsedTimer simulationRuntimeTimer;
@@ -359,7 +364,7 @@ Model::simulateString(const std::string &lengths, const std::string &intervals,
     s->getSimulationData().clear();
   }
   s->getSimulationSettings().simulatorType = simulatorType;
-  if (simulatorType == simulate::SimulatorType::Pixel) {
+  if (simulatorType == ::sme::simulate::SimulatorType::Pixel) {
     auto &pixelOpts{s->getSimulationSettings().options.pixel};
     if (nThreads != 1) {
       pixelOpts.enableMultiThreading = true;
@@ -368,25 +373,25 @@ Model::simulateString(const std::string &lengths, const std::string &intervals,
       pixelOpts.enableMultiThreading = false;
     }
   }
-  auto times{
-      simulate::parseSimulationTimes(lengths.c_str(), intervals.c_str())};
+  auto times{::sme::simulate::parseSimulationTimes(lengths.c_str(),
+                                                   intervals.c_str())};
   if (!times.has_value()) {
-    throw SmeRuntimeError("Invalid simulation lengths or intervals");
+    throw std::invalid_argument("Invalid simulation lengths or intervals");
   }
   // ensure any existing DUNE objects are destroyed to avoid later segfaults
   sim.reset();
-  sim = std::make_unique<simulate::Simulation>(*(s.get()));
+  sim = std::make_unique<::sme::simulate::Simulation>(*(s.get()));
   if (const auto &e = sim->errorMessage(); !e.empty()) {
-    throw SmeRuntimeError(fmt::format("Error in simulation setup: {}", e));
+    throw std::runtime_error(fmt::format("Error in simulation setup: {}", e));
   }
   sim->doMultipleTimesteps(times.value(), timeoutMillisecs, []() {
     if (PyErr_CheckSignals() != 0) {
-      throw pybind11::error_already_set();
+      throw nanobind::python_error();
     }
     return false;
   });
   if (const auto &e = sim->errorMessage(); throwOnTimeout && !e.empty()) {
-    throw SmeRuntimeError(fmt::format("Error during simulation: {}", e));
+    throw std::runtime_error(fmt::format("Error during simulation: {}", e));
   }
   if (returnResults) {
     return constructSimulationResults(sim.get(), true);
@@ -396,7 +401,7 @@ Model::simulateString(const std::string &lengths, const std::string &intervals,
 
 std::vector<SimulationResult> Model::simulateFloat(
     double simulationTime, double imageInterval, int timeoutSeconds,
-    bool throwOnTimeout, simulate::SimulatorType simulatorType,
+    bool throwOnTimeout, ::sme::simulate::SimulatorType simulatorType,
     bool continueExistingSimulation, bool returnResults, int nThreads) {
   return simulateString(QString::number(simulationTime, 'g', 17).toStdString(),
                         QString::number(imageInterval, 'g', 17).toStdString(),
@@ -406,9 +411,9 @@ std::vector<SimulationResult> Model::simulateFloat(
 
 std::vector<SimulationResult> Model::getSimulationResults() {
   sim.reset();
-  sim = std::make_unique<simulate::Simulation>(*(s.get()));
+  sim = std::make_unique<::sme::simulate::Simulation>(*s);
   if (const auto &e{sim->errorMessage()}; !e.empty()) {
-    throw SmeRuntimeError(fmt::format("Error in simulation setup: {}", e));
+    throw std::runtime_error(fmt::format("Error in simulation setup: {}", e));
   }
   return constructSimulationResults(sim.get(), false);
 }
@@ -421,30 +426,4 @@ std::string Model::getStr() const {
   return str;
 }
 
-} // namespace sme
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
+} // namespace pysme

@@ -24,6 +24,8 @@ TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
 
   connect(lblGeometry, &QLabelMouseTracker::mouseClicked, this,
           &TabGeometry::lblGeometry_mouseClicked);
+  connect(voxGeometry, &QVoxelRenderer::mouseClicked, this,
+          &TabGeometry::lblGeometry_mouseClicked);
   connect(ui->btnAddCompartment, &QPushButton::clicked, this,
           &TabGeometry::btnAddCompartment_clicked);
   connect(ui->btnRemoveCompartment, &QPushButton::clicked, this,

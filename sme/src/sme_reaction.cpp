@@ -1,25 +1,26 @@
-// Python.h (included by pybind11.h) must come first
+// Python.h (#included by nanobind.h) must come first
 // https://docs.python.org/3.2/c-api/intro.html#include-files
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 #include "sme/model.hpp"
 #include "sme_common.hpp"
 #include "sme_reaction.hpp"
+#include <nanobind/stl/string.h>
 
-namespace sme {
+namespace pysme {
 
-void pybindReaction(pybind11::module &m) {
-  sme::bindList<Reaction>(m, "Reaction");
-  pybind11::class_<Reaction>(m, "Reaction",
+void bindReaction(nanobind::module_ &m) {
+  bindList<Reaction>(m, "Reaction");
+  nanobind::class_<Reaction>(m, "Reaction",
                              R"(
                              a reaction between species
                              )")
-      .def_property("name", &Reaction::getName, &Reaction::setName,
-                    R"(
+      .def_prop_rw("name", &Reaction::getName, &Reaction::setName,
+                   R"(
                     str: the name of this reaction
                     )")
-      .def_readonly("parameters", &Reaction::parameters,
-                    R"(
+      .def_ro("parameters", &Reaction::parameters,
+              R"(
                     ReactionParameterList: the parameters of this reaction
                     )")
       .def("__repr__",
@@ -29,7 +30,7 @@ void pybindReaction(pybind11::module &m) {
       .def("__str__", &Reaction::getStr);
 }
 
-Reaction::Reaction(model::Model *sbmlDocWrapper, const std::string &sId)
+Reaction::Reaction(::sme::model::Model *sbmlDocWrapper, const std::string &sId)
     : s(sbmlDocWrapper), id(sId) {
   const auto &paramIds = s->getReactions().getParameterIds(id.c_str());
   parameters.reserve(static_cast<std::size_t>(paramIds.size()));
@@ -52,30 +53,4 @@ std::string Reaction::getStr() const {
   return str;
 }
 
-} // namespace sme
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
+} // namespace pysme

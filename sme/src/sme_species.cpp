@@ -1,53 +1,54 @@
-// Python.h (included by pybind11.h) must come first
+// Python.h (#included by nanobind.h) must come first
 // https://docs.python.org/3.2/c-api/intro.html#include-files
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 #include "sme/model.hpp"
 #include "sme_common.hpp"
 #include "sme_species.hpp"
+#include <nanobind/stl/string.h>
 
-namespace sme {
+namespace pysme {
 
-void pybindSpecies(pybind11::module &m) {
-  sme::bindList<Species>(m, "Species");
-  pybind11::enum_<model::ConcentrationType>(m, "ConcentrationType")
-      .value("Uniform", model::ConcentrationType::Uniform)
-      .value("Analytic", model::ConcentrationType::Analytic)
-      .value("Image", model::ConcentrationType::Image);
-  pybind11::class_<Species>(m, "Species",
+void bindSpecies(nanobind::module_ &m) {
+  bindList<Species>(m, "Species");
+  nanobind::enum_<::sme::model::ConcentrationType>(m, "ConcentrationType")
+      .value("Uniform", ::sme::model::ConcentrationType::Uniform)
+      .value("Analytic", ::sme::model::ConcentrationType::Analytic)
+      .value("Image", ::sme::model::ConcentrationType::Image);
+  nanobind::class_<Species>(m, "Species",
                             R"(
                             a species that lives in a compartment
                             )")
-      .def_property("name", &Species::getName, &Species::setName,
-                    R"(
+      .def_prop_rw("name", &Species::getName, &Species::setName,
+                   R"(
                     str: the name of this species
                     )")
-      .def_property("diffusion_constant", &Species::getDiffusionConstant,
-                    &Species::setDiffusionConstant,
-                    R"(
+      .def_prop_rw("diffusion_constant", &Species::getDiffusionConstant,
+                   &Species::setDiffusionConstant,
+                   R"(
                     float: the diffusion constant of this species
                     )")
-      .def_property_readonly("concentration_type",
-                             &Species::getInitialConcentrationType,
-                             R"(
+      .def_prop_ro("concentration_type", &Species::getInitialConcentrationType,
+                   R"(
                     Species.ConcentrationType: the type of initial concentration of this species (Uniform, Analytic or Image)
                     )")
-      .def_property("uniform_concentration",
-                    &Species::getUniformInitialConcentration,
-                    &Species::setUniformInitialConcentration,
-                    R"(
+      .def_prop_rw("uniform_concentration",
+                   &Species::getUniformInitialConcentration,
+                   &Species::setUniformInitialConcentration,
+                   R"(
                     float: the uniform initial concentration of this species as a float
                     )")
-      .def_property("analytic_concentration",
-                    &Species::getAnalyticInitialConcentration,
-                    &Species::setAnalyticInitialConcentration,
-                    R"(
+      .def_prop_rw("analytic_concentration",
+                   &Species::getAnalyticInitialConcentration,
+                   &Species::setAnalyticInitialConcentration,
+                   R"(
                     str: the initial concentration of this species as an analytic_2d expression
                     )")
-      .def_property("concentration_image",
-                    &Species::getImageInitialConcentration,
-                    &Species::setImageInitialConcentration,
-                    R"(
+      .def_prop_rw("concentration_image",
+                   &Species::getImageInitialConcentration,
+                   &Species::setImageInitialConcentration,
+                   nanobind::rv_policy::take_ownership,
+                   R"(
                     np.ndarray(float): the initial concentration of this species as a 3d array of floats, one for each voxel in the geometry image
                     )")
       .def("__repr__",
@@ -57,7 +58,7 @@ void pybindSpecies(pybind11::module &m) {
       .def("__str__", &Species::getStr);
 }
 
-Species::Species(model::Model *sbmlDocWrapper, const std::string &sId)
+Species::Species(::sme::model::Model *sbmlDocWrapper, const std::string &sId)
     : s(sbmlDocWrapper), id(sId) {}
 
 void Species::setName(const std::string &name) {
@@ -76,7 +77,7 @@ double Species::getDiffusionConstant() const {
   return s->getSpecies().getDiffusionConstant(id.c_str());
 }
 
-[[nodiscard]] model::ConcentrationType
+[[nodiscard]] ::sme::model::ConcentrationType
 Species::getInitialConcentrationType() const {
   return s->getSpecies().getInitialConcentrationType(id.c_str());
 }
@@ -97,45 +98,43 @@ void Species::setAnalyticInitialConcentration(const std::string &expression) {
   s->getSpecies().setAnalyticConcentration(id.c_str(), expression.c_str());
 }
 
-[[nodiscard]] pybind11::array_t<double>
+[[nodiscard]] nanobind::ndarray<nanobind::numpy, double>
 Species::getImageInitialConcentration() const {
-  auto size{s->getGeometry().getImages().volume()};
+  auto shape{s->getGeometry().getImages().volume()};
   return as_ndarray(
-      s->getSpecies().getSampledFieldConcentration(id.c_str(), true),
-      {static_cast<int>(size.depth()), size.height(), size.width()});
+      s->getSpecies().getSampledFieldConcentration(id.c_str(), true), shape);
 }
 
-void Species::setImageInitialConcentration(pybind11::array_t<double> array) {
+void Species::setImageInitialConcentration(
+    nanobind::ndarray<nanobind::numpy, double> array) {
   const auto size{s->getGeometry().getImages().volume()};
-  auto h{size.height()};
-  auto w{size.width()};
-  auto d{static_cast<int>(size.depth())};
+  auto h = static_cast<std::size_t>(size.height());
+  auto w = static_cast<std::size_t>(size.width());
+  auto d = size.depth();
   std::string err{"Invalid concentration image array"};
   if (array.ndim() != 3) {
-    throw sme::SmeInvalidArgument(fmt::format(
+    throw std::invalid_argument(fmt::format(
         "{}: is {}-dimensional, should be 3-dimensional", err, array.ndim()));
   }
-  if (array.shape(0) != d) {
-    throw sme::SmeInvalidArgument(
-        fmt::format("{}: depth is {}, should be {}", err, array.shape(0), d));
+  auto v = array.view<const double, nanobind::ndim<3>>();
+  if (v.shape(0) != d) {
+    throw std::invalid_argument(
+        fmt::format("{}: depth is {}, should be {}", err, v.shape(0), d));
   }
-  if (array.shape(1) != h) {
-    throw sme::SmeInvalidArgument(
-        fmt::format("{}: height is {}, should be {}", err, array.shape(1), h));
+  if (v.shape(1) != h) {
+    throw std::invalid_argument(
+        fmt::format("{}: height is {}, should be {}", err, v.shape(1), h));
   }
-  if (array.shape(2) != w) {
-    throw sme::SmeInvalidArgument(
-        fmt::format("{}: width is {}, should be {}", err, array.shape(2), w));
+  if (v.shape(2) != w) {
+    throw std::invalid_argument(
+        fmt::format("{}: width is {}, should be {}", err, v.shape(2), w));
   }
-  std::vector<double> sampledFieldConcentration(
-      static_cast<std::size_t>(h * w * d), 0.0);
-  auto r{array.unchecked<3>()};
-  for (pybind11::ssize_t z = 0; z < array.shape(0); z++) {
-    for (pybind11::ssize_t y = 0; y < array.shape(1); y++) {
-      for (pybind11::ssize_t x = 0; x < array.shape(2); x++) {
-        auto sampledFieldIndex{
-            static_cast<std::size_t>(x + w * (h - 1 - y) + w * h * z)};
-        sampledFieldConcentration[sampledFieldIndex] = r(z, y, x);
+  std::vector<double> sampledFieldConcentration(h * w * d, 0.0);
+  for (std::size_t z = 0; z < v.shape(0); z++) {
+    for (std::size_t y = 0; y < v.shape(1); y++) {
+      for (std::size_t x = 0; x < v.shape(2); x++) {
+        auto sampledFieldIndex = x + w * (h - 1 - y) + w * h * z;
+        sampledFieldConcentration[sampledFieldIndex] = v(z, y, x);
       }
     }
   }
@@ -151,30 +150,4 @@ std::string Species::getStr() const {
   return str;
 }
 
-} // namespace sme
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
-
-//
+} // namespace pysme

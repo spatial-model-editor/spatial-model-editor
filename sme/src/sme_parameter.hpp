@@ -1,24 +1,26 @@
 #pragma once
 
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 #include <string>
+#include <vector>
 
-namespace model {
+namespace sme::model {
 class Model;
 }
 
-namespace sme {
+namespace pysme {
 
-void pybindParameter(pybind11::module &m);
+void bindParameter(nanobind::module_ &m);
 
 class Parameter {
 private:
-  model::Model *s;
+  ::sme::model::Model *s;
   std::string id;
 
 public:
   Parameter() = default;
-  explicit Parameter(model::Model *sbmlDocWrapper, const std::string &sId);
+  explicit Parameter(::sme::model::Model *sbmlDocWrapper,
+                     const std::string &sId);
   void setName(const std::string &name);
   [[nodiscard]] std::string getName() const;
   void setValue(const std::string &expr);
@@ -26,6 +28,6 @@ public:
   [[nodiscard]] std::string getStr() const;
 };
 
-} // namespace sme
+} // namespace pysme
 
-PYBIND11_MAKE_OPAQUE(std::vector<sme::Parameter>)
+NB_MAKE_OPAQUE(std::vector<pysme::Parameter>)

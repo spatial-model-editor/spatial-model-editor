@@ -17,13 +17,11 @@ export SME_EXTRA_EXE_LIBS="-static-libgcc;-static-libstdc++"
 # see https://stackoverflow.com/a/34522357/6465472
 export SME_EXTRA_GUI_LIBS="-no-pie"
 
-export CC=clang
-export CXX=clang++
-
 # do build
 mkdir build
 cd build
 cmake .. \
+    -GNinja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -33,7 +31,7 @@ cmake .. \
     -DSME_LOG_LEVEL=OFF \
     -DCMAKE_CXX_FLAGS="-D_GLIBCXX_USE_TBB_PAR_BACKEND=0" \
     -DOpenGL_GL_PREFERENCE=LEGACY
-make -j4 VERBOSE=1
+ninja -v
 ccache --show-stats
 
 # start a window manager so the Qt GUI tests can have their focus set
@@ -42,14 +40,14 @@ ccache --show-stats
 jwm &
 
 # run cpp tests
-time ./test/tests -as > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
+time ./test/tests -as >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
 # run python tests
 cd sme
 python -m pip install -r ../../sme/requirements-test.txt
 python -m pytest ../../sme/test -v
-PYTHONPATH=`pwd` python ../../sme/test/sme_doctest.py -v
+PYTHONPATH=$(pwd) python ../../sme/test/sme_doctest.py -v
 cd ..
 
 # run benchmarks (~1 sec per benchmark, ~20secs total)
@@ -72,8 +70,8 @@ ldd cli/spatial-cli
 # display version
 ./app/spatial-model-editor -v
 
-# move binaries to artefacts/
+# move binaries to artifacts/binaries
 cd ..
-mkdir artefacts
-mv build/app/spatial-model-editor artefacts/
-mv build/cli/spatial-cli artefacts/
+mkdir -p artifacts/binaries
+mv build/app/spatial-model-editor artifacts/binaries/
+mv build/cli/spatial-cli artifacts/binaries/

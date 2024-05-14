@@ -22,14 +22,10 @@ cmake --version
 which python
 python --version
 
-ccache --max-size 400M
-ccache --cleanup
-ccache --zero-stats
-ccache --show-stats
-
 mkdir build
 cd build
 cmake .. \
+    -GNinja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH \
     -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
@@ -39,16 +35,15 @@ cmake .. \
     -DFREETYPE_LIBRARY_RELEASE=/c/smelibs/lib/libQt6BundledFreetype.a \
     -DFREETYPE_INCLUDE_DIR_freetype2=/c/smelibs/include/QtFreetype \
     -DFREETYPE_INCLUDE_DIR_ft2build=/c/smelibs/include/QtFreetype
-make -j4 VERBOSE=1
-
+ninja -v
 ccache -s -v
 
 # check dependencies
-objdump.exe -x sme/sme.cp312-win_amd64.pyd > sme_obj.txt
+objdump.exe -x sme/sme.cp312-win_amd64.pyd >sme_obj.txt
 head -n 20 sme_obj.txt
 head -n 1000 sme_obj.txt | grep "DLL Name"
 
-time ./test/tests.exe -as ~[gui] > tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
+time ./test/tests.exe -as ~[gui] >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
 ./benchmark/benchmark.exe 1
@@ -72,7 +67,7 @@ du -sh build/cli/spatial-cli.exe
 # display version
 ./build/app/spatial-model-editor.exe -v
 
-# move binaries to artefacts/
-mkdir artefacts
-mv build/app/spatial-model-editor.exe artefacts/
-mv build/cli/spatial-cli.exe artefacts/
+# move binaries to artifacts/binaries
+mkdir -p artifacts/binaries
+mv build/app/spatial-model-editor.exe artifacts/binaries/
+mv build/cli/spatial-cli.exe artifacts/binaries/

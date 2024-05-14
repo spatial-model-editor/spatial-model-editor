@@ -1,5 +1,4 @@
-name: GUI/CLI Release Builds
-
+name: Release Builds
 on:
   push:
     branches:
@@ -8,139 +7,88 @@ on:
       - "*.*.*"
   pull_request:
   workflow_dispatch:
-
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
-  linux-gui:
-    name: Linux GUI/CLI
-    runs-on: ubuntu-20.04
+  build:
+    runs-on: ${{ matrix.platform.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        target: ["gui-cli", "wheels"]
+        platform:
+          - os: "ubuntu-20.04"
+            shell: "bash"
+          - os: "macos-13"
+            shell: "bash"
+          - os: "macos-14"
+            shell: "bash"
+          - os: "windows-2022"
+            shell: "msys2 {0}"
     defaults:
       run:
-        shell: bash
+        shell: ${{ matrix.platform.shell }}
+    env:
+      CIBUILDWHEEL_VERSION: "2.17.0"
+      CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2024.04.24"
+      MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+      MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
+      MACOS_CERTIFICATE_NAME: ${{ secrets.MACOS_CERTIFICATE_NAME }}
+      MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
+      MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
+      MACOS_NOTARIZATION_PWD: ${{ secrets.MACOS_NOTARIZATION_PWD }}
+      MACOS_KEYCHAIN_PWD: ${{ secrets.MACOS_KEYCHAIN_PWD }}
+    name: "${{ matrix.target }} :: ${{ matrix.platform.os }}"
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: 'true'
-    - name: Set "latest" version number unless commit is tagged
-      if: startsWith(github.event.ref, 'refs/tags/') == false
-      run: ./ci/set-latest-version.sh ${GITHUB_SHA}
-    - name: Cache ccache
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/ccache
-        key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-        restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-    - uses: actions/setup-python@v5
-      with:
-        python-version: "3.12"
-    - name: Get static libs
-      run: sudo ./ci/getlibs.sh linux
-    - name: Install dependencies
-      run: ./ci/linux-install.sh
-    - name: Build script
-      run: ./ci/linux-gui.sh
-    - uses: actions/upload-artifact@v4
-      with:
-        name: artifacts-linux-gui
-        path: ./artefacts/*
-
-  macos-gui:
-    name: MacOS GUI/CLI
-    runs-on: macos-13
-    defaults:
-      run:
-        shell: bash
-    steps:
+      - uses: spatial-model-editor/setup-ci@2024.04.23
+        with:
+          sme_deps: '2024.04.24'
       - uses: actions/checkout@v4
         with:
-          submodules: 'true'
-      - uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: "14.3"
+          submodules: 'recursive'
       - name: Set "latest" version number unless commit is tagged
         if: startsWith(github.event.ref, 'refs/tags/') == false
         run: ./ci/set-latest-version.sh ${GITHUB_SHA}
-      - name: Cache ccache
-        uses: actions/cache@v4
-        with:
-          path: /Users/runner/Library/Caches/ccache
-          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - name: Get static libs
-        run: sudo ./ci/getlibs.sh osx
-#      - name: Install OpenGL MESA dependencies
-#        run: brew install mesa
-      - name: Forcing using software rendering
-        run: export LIBGL_ALWAYS_SOFTWARE=1
-      - name: Build script
-        run: ./ci/macos-gui.sh
+      - run: ./ci/${{ matrix.target }}-${{ runner.os }}.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: artifacts-macos-gui
-          path: ./artefacts/*
-
-  win64-gui:
-    name: Windows 64-bit GUI/CLI
-    runs-on: windows-2022
-    defaults:
-      run:
-        shell: msys2 {0}
+          name: artifacts-${{ matrix.target }}-${{ matrix.platform.os }}
+          path: ./artifacts/*
+  sdist:
+    name: PyPI source distribution
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: 'true'
-      - uses: msys2/setup-msys2@v2
-        with:
-          msystem: UCRT64
-          update: true
-          install: mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ccache make
-      - name: Install Mesa 3D to get OpenGL support on Windows without a GPU
-        uses: ssciwr/setup-mesa-dist-win@v2
-        with:
-          version: "23.1.5"
-      - name: Set "latest" version number unless commit is tagged
-        if: startsWith(github.event.ref, 'refs/tags/') == false
-        run: ./ci/set-latest-version.sh ${GITHUB_SHA}
-      - name: Cache ccache
-        uses: actions/cache@v4
-        with:
-          path: C:\Users\runneradmin\AppData\Local\ccache
-          key: ccache-${{ github.job }}-${{ runner.os }}-${{ github.sha }}
-          restore-keys: ccache-${{ github.job }}-${{ runner.os }}-
-      - name: Get static libs
-        run: ./ci/getlibs.sh win64-mingw
-      - name: Build script
-        run: ci/windows-gui.sh
+      - run: pipx run build --sdist --outdir ./artifacts/dist
       - uses: actions/upload-artifact@v4
         with:
-          name: artifacts-win64-gui
-          path: ./artefacts/*
-
+          name: artifacts-sdist
+          path: ./artifacts/*
   release:
-    needs: [linux-gui, macos-gui, win64-gui]
+    needs: [build, sdist]
     if: github.repository == 'spatial-model-editor/spatial-model-editor' && github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
+    environment: release
     permissions:
+      id-token: write
       contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:
           pattern: artifacts-*
           merge-multiple: true
-          path: binaries
+          path: artifacts
+      # if this is an untagged commit to main: add a "latest" wheel to github latest release for readthedocs to use
+      - run: cp artifacts/dist/sme-*-cp311-cp311-manylinux_2_28_x86_64.whl artifacts/binaries/sme-latest-cp311-cp311-manylinux_2_28_x86_64.whl
+        if: github.ref == 'refs/heads/main'
       - name: Upload binaries to latest pre-release
         # if this is an untagged commit to main: upload binaries to github latest release
         if: github.ref == 'refs/heads/main'
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: binaries/*
+          file: artifacts/binaries/*
           tag: latest
           overwrite: true
           file_glob: true
@@ -151,7 +99,13 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: binaries/*
+          file: artifacts/binaries/*
           tag: ${{ github.ref }}
           overwrite: true
           file_glob: true
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        # if this is a tagged commit, upload pypi wheels
+        if: startsWith(github.event.ref, 'refs/tags/')
+        with:
+          packages-dir: ./artifacts/dist/
+          verbose: true

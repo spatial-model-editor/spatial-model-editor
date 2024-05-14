@@ -1,46 +1,55 @@
-// Python.h (included by pybind11.h) must come first
+// Python.h (#included by nanobind.h) must come first
 // https://docs.python.org/3.2/c-api/intro.html#include-files
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 
 #include "sme_common.hpp"
 
-namespace sme {
+namespace pysme {
 
 // 4d array with triplet of r,g,b uint8 values for each pixel
-pybind11::array toPyImageRgb(const sme::common::ImageStack &imgs) {
-  auto h{imgs.volume().height()};
-  auto w{imgs.volume().width()};
-  auto d{static_cast<int>(imgs.volume().depth())};
-  pybind11::array_t<std::uint8_t> a({d, h, w, 3});
-  auto r{a.mutable_unchecked<4>()};
-  for (int z = 0; z < d; ++z) {
+nanobind::ndarray<nanobind::numpy, std::uint8_t>
+toPyImageRgb(const ::sme::common::ImageStack &imgs) {
+  auto d = imgs.volume().depth();
+  auto h = imgs.volume().height();
+  auto w = imgs.volume().width();
+  std::vector<std::uint8_t> a;
+  a.reserve(d * h * w * 3);
+  for (std::size_t z = 0; z < d; ++z) {
     for (int y = 0; y < h; ++y) {
       for (int x = 0; x < w; ++x) {
-        auto c{imgs[static_cast<std::size_t>(z)].pixel(x, y)};
-        r(z, y, x, 0) = static_cast<std::uint8_t>(qRed(c));
-        r(z, y, x, 1) = static_cast<std::uint8_t>(qGreen(c));
-        r(z, y, x, 2) = static_cast<std::uint8_t>(qBlue(c));
+        auto c{imgs[z].pixel(x, y)};
+        a.push_back(static_cast<std::uint8_t>(qRed(c)));
+        a.push_back(static_cast<std::uint8_t>(qGreen(c)));
+        a.push_back(static_cast<std::uint8_t>(qBlue(c)));
       }
     }
   }
-  return a;
+  return as_ndarray(std::move(a), {d, static_cast<std::size_t>(h),
+                                   static_cast<std::size_t>(w), 3});
 }
 
 // 3d array of bool for each pixel
-pybind11::array toPyImageMask(const sme::common::ImageStack &imgs) {
-  auto h{imgs.volume().height()};
-  auto w{imgs.volume().width()};
-  auto d{static_cast<int>(imgs.volume().depth())};
-  pybind11::array_t<bool> a({d, h, w});
-  auto r{a.mutable_unchecked<3>()};
-  for (int z = 0; z < d; ++z) {
+nanobind::ndarray<nanobind::numpy, bool>
+toPyImageMask(const ::sme::common::ImageStack &imgs) {
+  auto d = imgs.volume().depth();
+  auto h = imgs.volume().height();
+  auto w = imgs.volume().width();
+  std::vector<std::uint8_t> a;
+  a.reserve(d * h * w * 3);
+  for (std::size_t z = 0; z < d; ++z) {
     for (int y = 0; y < h; ++y) {
       for (int x = 0; x < w; ++x) {
-        r(z, y, x) = imgs[static_cast<std::size_t>(z)].pixelIndex(x, y) > 0;
+        // a numpy array of bool is stored as an array of bytes:
+        // https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.bool_
+        // not documented but they use 0 for False and 1 for True:
+        // https://github.com/numpy/numpy/blob/3d33d5f29baa5477e1f725310f0a1f94fb723108/numpy/_core/include/numpy/npy_common.h#L303-L305
+        a.push_back(static_cast<std::uint8_t>(imgs[z].pixelIndex(x, y) > 0));
       }
     }
   }
-  return a;
+  return as_ndarray<std::uint8_t, bool>(
+      std::move(a),
+      {d, static_cast<std::size_t>(h), static_cast<std::size_t>(w)});
 }
 
-} // namespace sme
+} // namespace pysme

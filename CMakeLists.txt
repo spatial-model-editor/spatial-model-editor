@@ -139,7 +139,7 @@ endif()
 
 # compile python library
 if(SME_BUILD_PYTHON_LIBRARY)
-  add_subdirectory(ext/pybind11)
+  add_subdirectory(ext/nanobind)
   add_subdirectory(sme)
 endif()
 

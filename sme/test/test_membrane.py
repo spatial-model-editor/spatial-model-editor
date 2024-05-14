@@ -6,7 +6,7 @@ import sme
 def test_membrane():
     m = sme.open_example_model()
     assert len(m.membranes) == 2
-    with pytest.raises(sme.InvalidArgument):
+    with pytest.raises(ValueError):
         m.membranes["X"]
     mem = m.membranes["Outside <-> Cell"]
     assert mem == m.membranes[0]
@@ -17,7 +17,7 @@ def test_membrane():
     mem.name = "new name"
     assert mem.name == "new name"
     assert len(mem.reactions) == 2
-    with pytest.raises(sme.InvalidArgument):
+    with pytest.raises(ValueError):
         mem.reactions["X"]
     r = mem.reactions["A uptake from outside"]
     assert r.name == "A uptake from outside"

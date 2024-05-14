@@ -2,39 +2,43 @@
 
 #include "sme/model_species_types.hpp"
 #include "sme_common.hpp"
-#include <pybind11/pybind11.h>
+#include <nanobind/nanobind.h>
 #include <string>
+#include <vector>
 
-namespace sme {
-
-namespace model {
+namespace sme::model {
 class Model;
 }
 
-void pybindSpecies(pybind11::module &m);
+namespace pysme {
+
+void bindSpecies(nanobind::module_ &m);
 
 class Species {
 private:
-  model::Model *s;
+  ::sme::model::Model *s;
   std::string id;
 
 public:
   Species() = default;
-  explicit Species(model::Model *sbmlDocWrapper, const std::string &sId);
+  explicit Species(::sme::model::Model *sbmlDocWrapper, const std::string &sId);
   [[nodiscard]] std::string getName() const;
   void setName(const std::string &name);
   [[nodiscard]] double getDiffusionConstant() const;
   void setDiffusionConstant(double diffusionConstant);
-  [[nodiscard]] model::ConcentrationType getInitialConcentrationType() const;
+  [[nodiscard]] ::sme::model::ConcentrationType
+  getInitialConcentrationType() const;
   [[nodiscard]] double getUniformInitialConcentration() const;
   void setUniformInitialConcentration(double value);
   [[nodiscard]] std::string getAnalyticInitialConcentration() const;
   void setAnalyticInitialConcentration(const std::string &expression);
-  [[nodiscard]] pybind11::array_t<double> getImageInitialConcentration() const;
-  void setImageInitialConcentration(pybind11::array_t<double> array);
+  [[nodiscard]] nanobind::ndarray<nanobind::numpy, double>
+  getImageInitialConcentration() const;
+  void setImageInitialConcentration(
+      nanobind::ndarray<nanobind::numpy, double> array);
   [[nodiscard]] std::string getStr() const;
 };
 
-} // namespace sme
+} // namespace pysme
 
-PYBIND11_MAKE_OPAQUE(std::vector<sme::Species>)
+NB_MAKE_OPAQUE(std::vector<pysme::Species>)

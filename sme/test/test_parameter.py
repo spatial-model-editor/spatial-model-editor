@@ -23,7 +23,7 @@ def test_parameter():
     assert p.value == "0.8765"
 
     # check change was propagated to model
-    with pytest.raises(sme.InvalidArgument):
+    with pytest.raises(ValueError):
         m.parameters["param"]
     p2 = m.parameters["New param"]
     assert p2.name == "New param"
