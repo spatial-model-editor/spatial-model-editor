@@ -17,7 +17,7 @@
 
 namespace rendering {
 
-class WireframeObjects : protected QOpenGLFunctions, public Node {
+class WireframeObjects : public Node, protected QOpenGLFunctions {
 
 public:
   WireframeObjects(const sme::mesh::Mesh3d &info, const QOpenGLWidget *Widget,

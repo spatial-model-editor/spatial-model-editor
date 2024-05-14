@@ -144,7 +144,7 @@ void rendering::WireframeObjects::DestroyVBO() {
 
   SPDLOG_DEBUG("DestroyVBO \"" + name + "\"");
 
-  //  m_openGLContext->makeCurrent(m_openGLContext->surface());
+  m_openGLContext->makeCurrent(m_openGLContext->surface());
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
