@@ -49,9 +49,9 @@ TEST_CASE("Node: Scene Graph", tags) {
             translate * scale * rotation * Vertex);
   }
 
-  auto scenegraph = std::make_shared<rendering::Node>("root");
-
   SECTION("Hierarchy rigid transformation test") {
+
+    auto scenegraph = std::make_shared<rendering::Node>("root");
 
     QVector3D positionNode1 = QVector3D(1, 1, 1);
     auto node1 = std::make_shared<rendering::Node>("node1", positionNode1);
@@ -92,6 +92,8 @@ TEST_CASE("Node: Scene Graph", tags) {
   }
 
   SECTION("Test Camera") {
+
+    auto scenegraph = std::make_shared<rendering::Node>("root");
 
     QVector3D positionNode1 = QVector3D(1, 1, 1);
     auto node1 = std::make_shared<rendering::Node>("node1", positionNode1);
@@ -134,6 +136,8 @@ TEST_CASE("Node: Scene Graph", tags) {
     REQUIRE(mesh3d.getErrorMessage().empty());
 
     {
+      auto scenegraph = std::make_shared<rendering::Node>("root");
+
       QVector3D positionNode1 = QVector3D(1, 1, 1);
       auto node1 = std::make_shared<rendering::Node>("node1", positionNode1);
       scenegraph->add(node1);
@@ -164,6 +168,8 @@ TEST_CASE("Node: Scene Graph", tags) {
   }
 
   SECTION("Test ClippingPlane") {
+
+    auto scenegraph = std::make_shared<rendering::Node>("root");
 
     QVector3D positionNode1 = QVector3D(1, 1, 1);
     auto node1 = std::make_shared<rendering::Node>("node1", positionNode1);
