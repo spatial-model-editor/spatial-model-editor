@@ -36,20 +36,20 @@ void Node::updateWorldTransform(float delta) {
   if (m_dirty) {
     auto parent_ref = this->parent.lock();
     this->updateLocalTransform();
-    if (parent_ref.get() != nullptr) {
-      worldTransform = parent_ref.get()->worldTransform * localTransform;
+    if (parent_ref != nullptr) {
+      worldTransform = parent_ref->worldTransform * localTransform;
     } else {
       worldTransform = localTransform;
     }
 
     m_dirty = false;
     for (const auto &node : children) {
-      node.get()->markDirty();
-      node.get()->updateWorldTransform(delta);
+      node->markDirty();
+      node->updateWorldTransform(delta);
     }
   } else {
     for (const auto &node : children) {
-      node.get()->updateWorldTransform(delta);
+      node->updateWorldTransform(delta);
     }
   }
   this->update(delta);
@@ -78,8 +78,8 @@ void Node::add(std::shared_ptr<Node> node, bool transformInLocalSpace) {
   assert(transformInLocalSpace == true);
 
   if (node) {
-    node.get()->parent = shared_from_this();
-    node.get()->m_dirty = true;
+    node->parent = shared_from_this();
+    node->m_dirty = true;
     children.push_back(node);
   }
 }
@@ -87,7 +87,7 @@ void Node::add(std::shared_ptr<Node> node, bool transformInLocalSpace) {
 void Node::remove() {
 
   auto parent_ref = this->parent.lock();
-  if (parent_ref.get() == nullptr) {
+  if (parent_ref == nullptr) {
     SPDLOG_WARN("Attempted to remove '{}', but it has no parent", name);
     return;
   }
