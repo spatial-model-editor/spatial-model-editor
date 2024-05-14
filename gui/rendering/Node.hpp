@@ -116,8 +116,6 @@ public:
   /**
    * Sets the node's position in local-space.
    * @param position  QVector3D m_position;
-  QVector3D m_rotation;
-  QVector3D m_scale;
    */
   virtual void setPos(QVector3D position);
 
