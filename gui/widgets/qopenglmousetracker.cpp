@@ -25,6 +25,7 @@ QOpenGLMouseTracker::BuildClippingPlane(
     GLfloat a, GLfloat b, GLfloat c, GLfloat d, bool active,
     std::shared_ptr<rendering::Node> parent) {
 
+  // TODO: Incomplete feature.
   assert(parent == nullptr);
 
   auto it = m_clippingPlanesPool.begin();
