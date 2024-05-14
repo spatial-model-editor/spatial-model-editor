@@ -92,12 +92,8 @@ void Node::remove() {
     return;
   }
 
-  auto it = std::find_if(parent_ref.get()->children.begin(),
-                         parent_ref.get()->children.end(),
-                         [this](auto i) { return i.get() == this; });
-  if (it != parent_ref.get()->children.end()) {
-    parent_ref.get()->children.erase(it);
-  }
+  std::erase_if(parent_ref->children,
+                [this](auto child) { return child.get() == this; });
 }
 
 void Node::markDirty() { m_dirty = true; }
