@@ -75,7 +75,7 @@ void Node::updateLocalTransform() {
 void Node::add(std::shared_ptr<Node> node, bool transformInLocalSpace) {
 
   // TODO: Implement use case with node transform in global coordinates.
-  assert(transformInLocalSpace == false);
+  assert(transformInLocalSpace == true);
 
   if (node) {
     node.get()->parent = shared_from_this();
