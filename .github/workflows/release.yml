@@ -30,7 +30,7 @@ jobs:
       run:
         shell: ${{ matrix.platform.shell }}
     env:
-      CIBUILDWHEEL_VERSION: "2.17.0"
+      CIBUILDWHEEL_VERSION: "2.18"
       CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2024.04.24"
       MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
       MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
@@ -43,7 +43,7 @@ jobs:
     steps:
       - uses: spatial-model-editor/setup-ci@2024.04.23
         with:
-          sme_deps: '2024.04.24'
+          sme_deps: '2024.05.15'
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
