@@ -9,20 +9,22 @@ the CI builds - see [ci/README](../ci/README.md) for more details.
 
 ### Linux local build
 
-Clone the repo including sub-modules:
+Clone the repo including submodules:
 
 ```
 git clone --recursive https://github.com/spatial-model-editor/spatial-model-editor.git
 cd spatial-model-editor
 ```
 
-Download the latest static libs and copy them to `/opt/smelibs`:
+(If you already cloned without `--recursive` you can run `git submodule update --init --recursive`)
+
+Run the getdeps script to download the latest static libs and copy them to `/opt/smelibs`:
 
 ```
 sudo ./ext/getdeps.sh
 ```
 
-Make sure you have the necessary libraries installed, for example on Ubuntu:
+Make sure you have the system libraries required by Qt6 installed, for example on Ubuntu:
 
 ```
 sudo apt-get install \
@@ -33,17 +35,6 @@ sudo apt-get install \
     libxfixes-dev \
     libxi-dev \
     libxrender-dev \
-    libxcb1-dev \
-    libxcb-glx0-dev \
-    libxcb-keysyms1-dev \
-    libxcb-image0-dev \
-    libxcb-shm0-dev \
-    libxcb-icccm4-dev \
-    libxcb-sync-dev \
-    libxcb-xfixes0-dev \
-    libxcb-shape0-dev \
-    libxcb-randr0-dev \
-    libxcb-render-util0-dev \
     libxkbcommon-dev \
     libxkbcommon-x11-dev \
     libfreetype-dev \
@@ -56,20 +47,21 @@ Build using CMake, e.g.
 ```
 mkdir build
 cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" -DSME_EXTRA_EXE_LIBS="-ltirpc"
+cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake"
+ninja
 ```
-Depending on how your system differs from the CI server where these static libs were compiled, you may not need `-DSME_EXTRA_EXE_LIBS="-ltirpc"`, or you may need to add something else.
+
 Now you can run the tests, see [test/README.md](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/test/README.md) for more information:
 
 ```
-make test
+ninja test
 ```
 
 The python bindings can also be independently built & installed using pip, where any required CMake arguments can be supplied
 via the `CMAKE_ARGS` env var, separated by spaces:
 
 ```
-CMAKE_ARGS="-DCMAKE_PREFIX_PATH='/opt/smelibs;/opt/smelibs/lib/cmake' -DSME_BUILD_CORE=ON" pip install -v .
+CMAKE_ARGS="-DCMAKE_PREFIX_PATH='/opt/smelibs;/opt/smelibs/lib/cmake'" pip install -v .
 pytest sme
 ```
 
@@ -131,4 +123,4 @@ pytest sme
 
   - [clang-format](https://clang.llvm.org/docs/ClangFormat.html)
 
-- a CI job also runs these checks, and will automatically add a commit with any required fixes
+- pre-commit.ci will automatically add a commit to a PR with any required fixes

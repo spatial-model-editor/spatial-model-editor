@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: spatial-model-editor/setup-ci@2024.04.23
         with:
-          sme_deps: '2024.04.24'
+          sme_deps: '2024.05.15'
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
