@@ -6,6 +6,7 @@
 
 #include "Camera.hpp"
 #include "ClippingPlane.hpp"
+#include "Node.hpp"
 #include "ShaderProgram.hpp"
 #include "Shaders/colorAsUniform/colorAsUniformVertex.hpp"
 #include "Shaders/default/fragment.hpp"

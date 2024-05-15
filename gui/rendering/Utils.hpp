@@ -30,6 +30,8 @@ public:
 
   static void GLDebugMessageCallback(GLenum source, GLenum type, GLuint id,
                                      GLenum severity, const GLchar *msg);
+
+  static QVector3D rotationMatrixToEulerAngles(const QMatrix4x4 &rotation);
 };
 
 } // namespace rendering

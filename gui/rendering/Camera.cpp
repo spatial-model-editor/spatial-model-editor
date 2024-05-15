@@ -41,29 +41,16 @@ void rendering::Camera::SetFrustum(GLfloat FOV, GLfloat width, GLfloat height,
 rendering::Camera::Camera(GLfloat FOV, GLfloat width, GLfloat height,
                           GLfloat nearZ, GLfloat farZ, GLfloat posX,
                           GLfloat posY, GLfloat posZ, GLfloat rotX,
-                          GLfloat rotY, GLfloat rotZ) {
+                          GLfloat rotY, GLfloat rotZ)
+    : Node("Camera", QVector3D(posX, posY, posZ), QVector3D(rotX, rotY, rotZ),
+           QVector3D(1, 1, 1)) {
+
   SetFrustum(FOV, width, height, nearZ, farZ);
-
-  SetPosition(posX, posY, posZ);
-  SetRotation(rotX, rotY, rotZ);
 }
 
-void rendering::Camera::SetPosition(GLfloat posX, GLfloat posY, GLfloat posZ) {
-  m_viewPosition.setX(posX);
-  m_viewPosition.setY(posY);
-  m_viewPosition.setZ(posZ);
-}
+void rendering::Camera::setRot(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
 
-void rendering::Camera::SetPosition(QVector3D position) {
-  SetPosition(position.x(), position.y(), position.z());
-}
-
-QVector3D rendering::Camera::GetPosition() const { return m_viewPosition; }
-
-void rendering::Camera::SetRotation(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
-  m_viewRotation.setX(rotX);
-  m_viewRotation.setY(rotY);
-  m_viewRotation.setZ(rotZ);
+  Node::setRot(rotX, rotY, rotZ);
 
   GLfloat _forwardX, _forwardY, _forwardZ;
   GLfloat forwardX, forwardY, forwardZ;
@@ -112,11 +99,9 @@ void rendering::Camera::SetRotation(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
   m_viewUp.setZ(upZ);
 }
 
-void rendering::Camera::SetRotation(QVector3D rotation) {
-  SetRotation(rotation.x(), rotation.y(), rotation.z());
+void rendering::Camera::setRot(QVector3D rotation) {
+  setRot(rotation.x(), rotation.y(), rotation.z());
 }
-
-QVector3D rendering::Camera::GetRotation() const { return m_viewRotation; }
 
 QVector3D rendering::Camera::GetForwardVector() const { return m_viewForward; }
 
@@ -129,10 +114,8 @@ void rendering::Camera::UpdateProjection(
 
 void rendering::Camera::UpdateView(
     std::unique_ptr<rendering::ShaderProgram> &program) const {
-  program->SetViewPosition(m_viewPosition.x(), m_viewPosition.y(),
-                           m_viewPosition.z());
-  program->SetViewRotation(m_viewRotation.x(), m_viewRotation.y(),
-                           m_viewRotation.z());
+  program->SetViewPosition(m_position.x(), m_position.y(), m_position.z());
+  program->SetViewRotation(m_rotation.x(), m_rotation.y(), m_rotation.z());
 }
 
 GLfloat rendering::Camera::getNear() const { return m_near; }

@@ -192,6 +192,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       wait(100);
 
       test.DestroyClippingPlane(clippingPlane3);
+      REQUIRE_FALSE(clippingPlane3);
       clippingPlane3 = test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
                                                QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane3);
@@ -214,6 +215,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
           QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE_FALSE(clippingPlane9);
       test.DestroyClippingPlane(clippingPlane8);
+      REQUIRE_FALSE(clippingPlane8);
       clippingPlane9 = test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
                                                QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane9);
@@ -349,14 +351,15 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       QcolorSelection = QColor(test.getColour());
       REQUIRE(backgroundColor == QcolorSelection);
       wait(100);
-      clippingPlane3->TranslateClipPlane(10);
+      clippingPlane3->TranslateAlongsideNormal(10);
       test.repaint();
       wait(100);
-      clippingPlane3->TranslateClipPlane(-20);
+      clippingPlane3->TranslateAlongsideNormal(-20);
       test.repaint();
       wait(100);
 
       test.DestroyClippingPlane(clippingPlane3);
+      REQUIRE_FALSE(clippingPlane3);
       clippingPlane3 = test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
                                                QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane3);
@@ -379,6 +382,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
           QVector3D(-1, 0, 0).normalized(), QVector3D(0, 0, 0), true);
       REQUIRE_FALSE(clippingPlane9);
       test.DestroyClippingPlane(clippingPlane8);
+      REQUIRE_FALSE(clippingPlane8);
       clippingPlane9 = test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
                                                QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane9);

@@ -21,8 +21,12 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
       m_lastColour(QWidget::palette().color(QWidget::backgroundRole()).rgb()) {}
 
 std::shared_ptr<rendering::ClippingPlane>
-QOpenGLMouseTracker::BuildClippingPlane(GLfloat a, GLfloat b, GLfloat c,
-                                        GLfloat d, bool active) {
+QOpenGLMouseTracker::BuildClippingPlane(
+    GLfloat a, GLfloat b, GLfloat c, GLfloat d, bool active,
+    std::shared_ptr<rendering::Node> parent) {
+
+  // TODO: Incomplete feature.
+  assert(parent == nullptr);
 
   auto it = m_clippingPlanesPool.begin();
 
@@ -47,8 +51,11 @@ QOpenGLMouseTracker::BuildClippingPlane(GLfloat a, GLfloat b, GLfloat c,
 }
 
 std::shared_ptr<rendering::ClippingPlane>
-QOpenGLMouseTracker::BuildClippingPlane(const QVector3D &normal,
-                                        const QVector3D &point, bool active) {
+QOpenGLMouseTracker::BuildClippingPlane(
+    const QVector3D &normal, const QVector3D &point, bool active,
+    std::shared_ptr<rendering::Node> parent) {
+
+  assert(parent == nullptr);
 
   auto it = m_clippingPlanesPool.begin();
 
@@ -73,7 +80,7 @@ QOpenGLMouseTracker::BuildClippingPlane(const QVector3D &normal,
 }
 
 void QOpenGLMouseTracker::DestroyClippingPlane(
-    std::shared_ptr<rendering::ClippingPlane> clippingPlane) {
+    std::shared_ptr<rendering::ClippingPlane> &clippingPlane) {
 
   auto it = m_clippingPlanes.find(clippingPlane);
 
@@ -82,6 +89,8 @@ void QOpenGLMouseTracker::DestroyClippingPlane(
 
   m_clippingPlanesPool.insert(*it);
   m_clippingPlanes.erase(it);
+
+  clippingPlane.reset();
 
   update();
 }
@@ -113,26 +122,26 @@ void QOpenGLMouseTracker::initializeGL() {
 
 #endif
 
-  std::string ext =
-      QString::fromLatin1(
-          (const char *)context()->functions()->glGetString(GL_EXTENSIONS))
-          .replace(' ', "\n\t")
-          .toStdString();
-  CheckOpenGLError("glGetString(GL_EXTENSIONS)");
-
-  std::string vendor(
-      (const char *)context()->functions()->glGetString(GL_VENDOR));
-  CheckOpenGLError("glGetString(GL_VENDOR)");
-  std::string renderer(
-      (const char *)context()->functions()->glGetString(GL_RENDERER));
-  CheckOpenGLError("glGetString(GL_RENDERER)");
-  std::string gl_version(
-      (const char *)context()->functions()->glGetString(GL_VERSION));
-  CheckOpenGLError("glGetString(GL_VERSION)");
-
-  SPDLOG_INFO("OpenGL: " + vendor + std::string(" ") + renderer +
-              std::string(" ") + gl_version + std::string(" ") +
-              std::string("\n\n\t") + ext + std::string("\n"));
+  //  std::string ext =
+  //      QString::fromLatin1(
+  //          (const char *)context()->functions()->glGetString(GL_EXTENSIONS))
+  //          .replace(' ', "\n\t")
+  //          .toStdString();
+  //  CheckOpenGLError("glGetString(GL_EXTENSIONS)");
+  //
+  //  std::string vendor(
+  //      (const char *)context()->functions()->glGetString(GL_VENDOR));
+  //  CheckOpenGLError("glGetString(GL_VENDOR)");
+  //  std::string renderer(
+  //      (const char *)context()->functions()->glGetString(GL_RENDERER));
+  //  CheckOpenGLError("glGetString(GL_RENDERER)");
+  //  std::string gl_version(
+  //      (const char *)context()->functions()->glGetString(GL_VERSION));
+  //  CheckOpenGLError("glGetString(GL_VERSION)");
+  //
+  //  SPDLOG_INFO("OpenGL: " + vendor + std::string(" ") + renderer +
+  //              std::string(" ") + gl_version + std::string(" ") +
+  //              std::string("\n\n\t") + ext + std::string("\n"));
 
   m_mainProgram = std::make_unique<rendering::ShaderProgram>(
       rendering::shader::colorAsUniform::text_vertex_color_as_uniform,
@@ -283,10 +292,10 @@ void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
   auto Degrees = event->angleDelta().y() / 8;
 
   auto forwardVector = m_camera.GetForwardVector();
-  auto position = m_camera.GetPosition();
+  auto position = m_camera.getPos();
 
-  m_camera.SetPosition(position + forwardVector * static_cast<float>(Degrees) *
-                                      (1 / m_frameRate));
+  m_camera.setPos(position + forwardVector * static_cast<float>(Degrees) *
+                                 (1 / m_frameRate));
 
   emit mouseWheelEvent(event);
 
@@ -294,35 +303,35 @@ void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
 }
 
 void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z) {
-  m_camera.SetPosition(x, y, z);
+  m_camera.setPos(x, y, z);
 }
 
 void QOpenGLMouseTracker::SetCameraOrientation(float x, float y, float z) {
-  m_camera.SetRotation(x, y, z);
+  m_camera.setRot(x, y, z);
 }
 
 QVector3D QOpenGLMouseTracker::GetCameraPosition() const {
-  return m_camera.GetPosition();
+  return m_camera.getPos();
 }
 
 QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
-  return m_camera.GetRotation();
+  return m_camera.getRot();
 }
 
 void QOpenGLMouseTracker::SetSubMeshesOrientation(float x, float y, float z) {
-  m_SubMeshes->SetRotation(x, y, z);
+  m_SubMeshes->setRot(x, y, z);
 }
 
 void QOpenGLMouseTracker::SetSubMeshesPosition(float x, float y, float z) {
-  m_SubMeshes->SetPosition(x, y, z);
+  m_SubMeshes->setPos(x, y, z);
 }
 
 QVector3D QOpenGLMouseTracker::GetSubMeshesOrientation() const {
-  return m_SubMeshes->GetRotation();
+  return m_SubMeshes->getRot();
 }
 
 QVector3D QOpenGLMouseTracker::GetSubMeshesPosition() const {
-  return m_SubMeshes->GetPosition();
+  return m_SubMeshes->getPos();
 }
 
 void QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
@@ -375,6 +384,7 @@ QColor QOpenGLMouseTracker::getBackgroundColor() const {
 }
 
 void QOpenGLMouseTracker::clear() {
+
   m_SubMeshes.reset();
   update();
 }

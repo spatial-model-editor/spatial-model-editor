@@ -28,14 +28,18 @@ public:
 
   std::shared_ptr<rendering::ClippingPlane>
   BuildClippingPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d,
-                     bool active = false);
+                     bool active = false,
+                     std::shared_ptr<rendering::Node> parent =
+                         std::shared_ptr<rendering::Node>(nullptr));
 
   std::shared_ptr<rendering::ClippingPlane>
   BuildClippingPlane(const QVector3D &normal, const QVector3D &point,
-                     bool active = false);
+                     bool active = false,
+                     std::shared_ptr<rendering::Node> parent =
+                         std::shared_ptr<rendering::Node>(nullptr));
 
-  void
-  DestroyClippingPlane(std::shared_ptr<rendering::ClippingPlane> clippingPlane);
+  void DestroyClippingPlane(
+      std::shared_ptr<rendering::ClippingPlane> &clippingPlane);
 
   void SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height,
                         GLfloat nearZ, GLfloat farZ);

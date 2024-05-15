@@ -5,15 +5,18 @@
 #ifndef SPATIALMODELEDITOR_CLIPPLANE_H
 #define SPATIALMODELEDITOR_CLIPPLANE_H
 
+#include "Node.hpp"
 #include "ShaderProgram.hpp"
+
 #include <set>
+#include <tuple>
 #include <vector>
 
 class QOpenGLMouseTracker;
 
 namespace rendering {
 
-class ClippingPlane {
+class ClippingPlane : public Node {
 
 public:
   void
@@ -26,15 +29,45 @@ public:
   static std::set<std::shared_ptr<rendering::ClippingPlane>>
   BuildClippingPlanes();
 
+  /**
+   * @brief It computes the position and the normal vector for a plane starting
+   * from the analytical equation.
+   *
+   * @param a
+   * @param b
+   * @param c
+   * @param d
+   * @return [Position, Normal]
+   */
+  static std::tuple<QVector3D, QVector3D>
+  fromAnalyticalToVectorial(float a, float b, float c, float d);
+
+  /**
+   * @brief It computes the analytical equation, starting from position and
+   * direction.
+   * @param position
+   * @param direction ( Is is not necessary an unity vector )
+   * @return [a, b, c, d] -> plane parameters
+   */
+  static std::tuple<float, float, float, float>
+  fromVectorialToAnalytical(QVector3D position, QVector3D direction);
+
   void SetClipPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d);
   void SetClipPlane(QVector3D normal, const QVector3D &point);
+
+  /**
+   * Return the vectorial form of the plane.
+   * @return [ Position, Normal ]
+   */
+
+  std::tuple<QVector3D, QVector3D> GetClipPlane() const;
 
   /**
    * @brief: Translate the plane alongside the normal
    *
    * @param value how much it gets in translation
    */
-  void TranslateClipPlane(GLfloat value);
+  void TranslateAlongsideNormal(GLfloat value);
 
   /**
    * @brief: toggle between using and not the plane
