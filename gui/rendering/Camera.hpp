@@ -37,6 +37,8 @@ public:
   GLfloat getFar() const;
   GLfloat getFOV() const;
 
+  static std::weak_ptr<Camera> currentActiveCamera;
+
 private:
   GLfloat m_aspectRatio;
   GLfloat m_near;

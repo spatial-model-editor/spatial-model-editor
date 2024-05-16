@@ -8,6 +8,8 @@
 #include <QOpenGLWidget>
 #include <QtOpenGL>
 
+#include "Config.h"
+#include "ShaderProgram.hpp"
 #include "Utils.hpp"
 
 namespace rendering {
@@ -65,6 +67,10 @@ public:
 
   Node(const std::string &name, const QVector3D &position,
        const QVector3D &rotation, const QVector3D &scale);
+
+  Node(const std::string &name, const QVector3D &position,
+       const QVector3D &rotation, const QVector3D &scale,
+       const RenderPriority &priority);
 
   virtual ~Node();
 
@@ -154,13 +160,13 @@ public:
    */
   void markDirty();
 
+protected:
   /**
    * Runs the node's update function which can vary due to inheritance.
    * @param delta time in seconds
    */
   virtual void update(float delta);
 
-protected:
   // Position of the node in local-space.
   QVector3D m_position;
 
@@ -173,6 +179,8 @@ protected:
   // Dirty flag used to speed up tree traversal and prevent cyclic loops.
   // This flag will be set when the transform is changed.
   bool m_dirty = true;
+
+  rendering::RenderPriority m_priority;
 };
 
 } // namespace rendering

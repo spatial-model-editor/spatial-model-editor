@@ -8,12 +8,18 @@
 namespace rendering {
 
 Node::Node(const std::string &name, const QVector3D &position,
-           const QVector3D &rotation, const QVector3D &scale)
-    : name(name), m_position(position), m_rotation(rotation), m_scale(scale) {
+           const QVector3D &rotation, const QVector3D &scale,
+           const RenderPriority &priority)
+    : name(name), m_position(position), m_rotation(rotation), m_scale(scale),
+      m_priority(priority) {
 
   this->worldTransform.setToIdentity();
   this->localTransform.setToIdentity();
 }
+
+Node::Node(const std::string &name, const QVector3D &position,
+           const QVector3D &rotation, const QVector3D &scale)
+    : Node(name, position, rotation, scale, RenderPriority::e_node) {}
 
 Node::Node(const std::string &name, const QVector3D &position,
            const QVector3D &rotation)

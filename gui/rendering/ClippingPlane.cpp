@@ -11,7 +11,7 @@
 rendering::ClippingPlane::ClippingPlane(uint32_t planeIndex, bool active)
     : Node("ClippingPlane " + std::to_string(planeIndex),
            QVector3D(0.0f, 0.0f, 0.0f), QVector3D(0.0f, 0.0f, 0.0f),
-           QVector3D(1.0f, 1.0f, 1.0f)),
+           QVector3D(1.0f, 1.0f, 1.0f), RenderPriority::e_clippingPlane),
       m_planeIndex(planeIndex), m_active(active) {}
 
 std::set<std::shared_ptr<rendering::ClippingPlane>>

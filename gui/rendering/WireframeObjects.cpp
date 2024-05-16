@@ -16,7 +16,8 @@ rendering::WireframeObjects::WireframeObjects(
     const std::vector<QColor> &colors, GLfloat meshThickness,
     const QVector3D &meshPositionOffset, const QVector3D &position,
     const QVector3D &rotation, const QVector3D &scale)
-    : Node("WireframeObjects", position, rotation, scale),
+    : Node("WireframeObjects", position, rotation, scale,
+           RenderPriority::e_mesh),
       m_vertices(info.getVerticesAsQVector4DArrayInHomogeneousCoord()),
       m_visibleSubmesh(std::min(colors.size(), info.getNumberOfCompartment()),
                        true),
