@@ -11,6 +11,7 @@
 #include "Config.h"
 #include "ShaderProgram.hpp"
 #include "Utils.hpp"
+#include <set>
 
 namespace rendering {
 
@@ -19,6 +20,12 @@ struct DecomposedTransform {
   QMatrix4x4 rotation;
   QVector3D eulerAngles;
   QVector3D position;
+};
+
+class CompareNodes {
+public:
+  bool operator()(const std::shared_ptr<class Node> &l,
+                  const std::shared_ptr<Node> &r) const;
 };
 
 class Node : public std::enable_shared_from_this<Node> {
@@ -95,9 +102,11 @@ public:
   void updateWorldTransform(float delta = 1 / 60.0f);
 
   /**
-   * Recreates the local-space transform based on pos, rot, and scale.
+   *
+   * @param RenderingQueue
    */
-  virtual void updateLocalTransform();
+  void buildRenderQueue(std::multiset<std::shared_ptr<rendering::Node>,
+                                      CompareNodes> &renderingQueue);
 
   DecomposedTransform getGlobalTransform() const;
 
@@ -160,12 +169,42 @@ public:
    */
   void markDirty();
 
+  /**
+   *
+   * @return RenderPriority
+   */
+  RenderPriority getPriority() const;
+
+  /**
+   *
+   * @param priority
+   */
+  void setPriority(const RenderPriority &priority);
+
 protected:
+  /**
+   * Recreates the local-space transform based on pos, rot, and scale.
+   */
+  virtual void updateLocalTransform();
+
   /**
    * Runs the node's update function which can vary due to inheritance.
    * @param delta time in seconds
    */
   virtual void update(float delta);
+
+  /**
+   * It "draws" the current node.
+   * @param program std::unique_ptr<rendering::ShaderProgram>
+   */
+  virtual void draw(std::unique_ptr<rendering::ShaderProgram> &program);
+
+  //  /**
+  //   * Each Node can implement it for debugging reasons.
+  //   * @param program std::unique_ptr<rendering::ShaderProgram>
+  //   */
+  //  virtual void debugDraw(std::unique_ptr<rendering::ShaderProgram>
+  //  &program);
 
   // Position of the node in local-space.
   QVector3D m_position;

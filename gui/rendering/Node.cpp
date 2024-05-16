@@ -7,6 +7,11 @@
 
 namespace rendering {
 
+bool CompareNodes::operator()(const std::shared_ptr<Node> &l,
+                              const std::shared_ptr<Node> &r) const {
+  return l->getPriority() < r->getPriority();
+}
+
 Node::Node(const std::string &name, const QVector3D &position,
            const QVector3D &rotation, const QVector3D &scale,
            const RenderPriority &priority)
@@ -36,6 +41,11 @@ Node::~Node() { SPDLOG_DEBUG("Removing Node \"" + name + "\""); }
 
 void Node::update(float delta) {
   // It should be overwritten in case extra computation is required per Node.
+  SPDLOG_DEBUG("Node {} update() ", name);
+}
+
+void Node::draw(std::unique_ptr<rendering::ShaderProgram> &program) {
+  SPDLOG_DEBUG("Node {} draw()", name);
 }
 
 void Node::updateWorldTransform(float delta) {
@@ -59,6 +69,18 @@ void Node::updateWorldTransform(float delta) {
     }
   }
   this->update(delta);
+}
+
+void Node::buildRenderQueue(std::multiset<std::shared_ptr<rendering::Node>,
+                                          CompareNodes> &renderingQueue) {
+
+  if (m_priority > RenderPriority::e_zero) {
+    renderingQueue.insert(shared_from_this());
+  }
+
+  for (const auto &node : children) {
+    node->buildRenderQueue(renderingQueue);
+  }
 }
 
 // TODO: Use quaternions as a substitute to euler angles
@@ -103,6 +125,12 @@ void Node::remove() {
 }
 
 void Node::markDirty() { m_dirty = true; }
+
+RenderPriority Node::getPriority() const { return m_priority; }
+
+void Node::setPriority(const RenderPriority &priority) {
+  m_priority = priority;
+}
 
 DecomposedTransform Node::getGlobalTransform() const {
 
