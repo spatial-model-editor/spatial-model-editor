@@ -9,7 +9,7 @@ namespace rendering {
 
 bool CompareNodes::operator()(const std::shared_ptr<Node> &l,
                               const std::shared_ptr<Node> &r) const {
-  return l->getPriority() < r->getPriority();
+  return l->getPriority() > r->getPriority();
 }
 
 Node::Node(const std::string &name, const QVector3D &position,
