@@ -8,7 +8,8 @@
 namespace rendering {
 
 enum class RenderPriority {
-  e_node = -10, // anything lower than 0 is not rendered
+  e_node = -10,
+  e_zero = 0, // anything lower or equal to 0 is not rendered.
   e_mesh = 10,
   e_clippingPlane = 20,
   e_camera = 30

@@ -23,8 +23,7 @@ public:
   void SetFrustum(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ,
                   GLfloat farZ);
 
-  void setRot(GLfloat rotX, GLfloat rotY, GLfloat rotZ) override;
-  void setRot(QVector3D rotation) override;
+  void update(float delta) override;
 
   QVector3D GetForwardVector() const;
   QVector3D GetUpVector() const;

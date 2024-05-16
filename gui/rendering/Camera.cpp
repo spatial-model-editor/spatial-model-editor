@@ -48,9 +48,7 @@ rendering::Camera::Camera(GLfloat FOV, GLfloat width, GLfloat height,
   SetFrustum(FOV, width, height, nearZ, farZ);
 }
 
-void rendering::Camera::setRot(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
-
-  Node::setRot(rotX, rotY, rotZ);
+void rendering::Camera::update(float delta) {
 
   GLfloat _forwardX, _forwardY, _forwardZ;
   GLfloat forwardX, forwardY, forwardZ;
@@ -59,9 +57,9 @@ void rendering::Camera::setRot(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
   GLfloat upX, upY, upZ;
 
   const GLfloat toRadian = PI / 180.0f;
-  const GLfloat radRotX = rotX * toRadian;
-  const GLfloat radRotY = rotY * toRadian;
-  const GLfloat radRotZ = rotZ * toRadian;
+  const GLfloat radRotX = getRot().x() * toRadian;
+  const GLfloat radRotY = getRot().y() * toRadian;
+  const GLfloat radRotZ = getRot().z() * toRadian;
 
   const GLfloat sinX = sinf(radRotX);
   const GLfloat cosX = cosf(radRotX);
@@ -97,10 +95,6 @@ void rendering::Camera::setRot(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
   m_viewUp.setX(upX);
   m_viewUp.setY(upY);
   m_viewUp.setZ(upZ);
-}
-
-void rendering::Camera::setRot(QVector3D rotation) {
-  setRot(rotation.x(), rotation.y(), rotation.z());
 }
 
 QVector3D rendering::Camera::GetForwardVector() const { return m_viewForward; }
