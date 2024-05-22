@@ -8,7 +8,7 @@
 #include <QOpenGLWidget>
 #include <QtOpenGL>
 
-#include "Config.h"
+#include "Config.hpp"
 #include "ShaderProgram.hpp"
 #include "Utils.hpp"
 #include <set>

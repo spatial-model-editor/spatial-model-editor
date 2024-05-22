@@ -56,6 +56,8 @@ void rendering::ClippingPlane::SetClipPlane(GLfloat a, GLfloat b, GLfloat c,
   m_b = b;
   m_c = c;
   m_d = d;
+
+  markDirty();
 }
 
 void rendering::ClippingPlane::SetClipPlane(QVector3D normal,
@@ -65,6 +67,8 @@ void rendering::ClippingPlane::SetClipPlane(QVector3D normal,
 
   SetClipPlane(normal.x(), normal.y(), normal.z(),
                -QVector3D::dotProduct(normal, point));
+
+  markDirty();
 }
 
 std::tuple<QVector3D, QVector3D>
@@ -79,30 +83,41 @@ void rendering::ClippingPlane::TranslateAlongsideNormal(GLfloat value) {
 
   point += normal * value;
   SetClipPlane(normal, point);
+
+  //  markDirty();
 }
 
 void rendering::ClippingPlane::Enable() { m_active = true; }
 void rendering::ClippingPlane::Disable() { m_active = false; }
 bool rendering::ClippingPlane::getStatus() const { return m_active; }
 
+void rendering::ClippingPlane::update(float delta) {
+
+  auto [position, normal] = fromAnalyticalToVectorial(m_a, m_b, m_c, m_d);
+  DecomposedTransform globalTransform = getGlobalTransform();
+  QVector4D normalRotated = globalTransform.rotation * QVector4D(normal, 1.0f);
+  QVector3D positionTranslated = globalTransform.position + position;
+
+  std::tie(m_global_plane.a, m_global_plane.b, m_global_plane.c,
+           m_global_plane.d) =
+      fromVectorialToAnalytical(positionTranslated, normalRotated.toVector3D());
+}
+
+void rendering::ClippingPlane::draw(
+    std::unique_ptr<rendering::ShaderProgram> &program) {
+  UpdateClipPlane(program);
+}
+
 void rendering::ClippingPlane::UpdateClipPlane(
     std::unique_ptr<rendering::ShaderProgram> &program) const {
 
   if (m_active) {
 
-    //    assert(m_dirty == false);
-
-    auto [position, normal] = fromAnalyticalToVectorial(m_a, m_b, m_c, m_d);
-    DecomposedTransform globalTransform = getGlobalTransform();
-    QVector4D normalRotated =
-        globalTransform.rotation * QVector4D(normal, 1.0f);
-    QVector3D positionTranslated = globalTransform.position + position;
-
-    auto [a, b, c, d] = fromVectorialToAnalytical(positionTranslated,
-                                                  normalRotated.toVector3D());
+    assert(m_dirty == false);
 
     program->EnableClippingPlane(m_planeIndex);
-    program->SetClippingPlane(a, b, c, d, m_planeIndex);
+    program->SetClippingPlane(m_global_plane.a, m_global_plane.b,
+                              m_global_plane.c, m_global_plane.d, m_planeIndex);
   } else {
     program->DisableClippingPlane(m_planeIndex);
   }

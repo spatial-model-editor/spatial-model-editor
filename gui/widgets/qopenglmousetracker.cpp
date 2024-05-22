@@ -14,19 +14,20 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
       m_lineSelectPrecision(lineSelectPrecision),
       m_lineWidthSelectedSubmesh(lineWidthSelectedSubmesh),
       m_selectedObjectColor(selectedObjectColor),
-      m_camera(cameraFOV, static_cast<float>(size().width()),
-               static_cast<float>(size().height()), cameraNearZ, cameraFarZ),
+      m_camera(std::make_shared<rendering::Camera>(
+          cameraFOV, static_cast<float>(size().width()),
+          static_cast<float>(size().height()), cameraNearZ, cameraFarZ)),
       m_frameRate(frameRate),
       m_backgroundColor(QWidget::palette().color(QWidget::backgroundRole())),
-      m_lastColour(QWidget::palette().color(QWidget::backgroundRole()).rgb()) {}
+      m_lastColour(QWidget::palette().color(QWidget::backgroundRole()).rgb()) {
+
+  sceneGraph->add(m_camera);
+}
 
 std::shared_ptr<rendering::ClippingPlane>
 QOpenGLMouseTracker::BuildClippingPlane(
     GLfloat a, GLfloat b, GLfloat c, GLfloat d, bool active,
     std::shared_ptr<rendering::Node> parent) {
-
-  // TODO: Incomplete feature.
-  assert(parent == nullptr);
 
   auto it = m_clippingPlanesPool.begin();
 
@@ -45,6 +46,12 @@ QOpenGLMouseTracker::BuildClippingPlane(
   m_clippingPlanes.insert(clippingPlane);
   m_clippingPlanesPool.erase(clippingPlane);
 
+  if (parent == nullptr) {
+    sceneGraph->add(clippingPlane);
+  } else {
+    parent->add(clippingPlane);
+  }
+
   update();
 
   return clippingPlane;
@@ -54,8 +61,6 @@ std::shared_ptr<rendering::ClippingPlane>
 QOpenGLMouseTracker::BuildClippingPlane(
     const QVector3D &normal, const QVector3D &point, bool active,
     std::shared_ptr<rendering::Node> parent) {
-
-  assert(parent == nullptr);
 
   auto it = m_clippingPlanesPool.begin();
 
@@ -74,6 +79,12 @@ QOpenGLMouseTracker::BuildClippingPlane(
   m_clippingPlanes.insert(clippingPlane);
   m_clippingPlanesPool.erase(clippingPlane);
 
+  if (parent == nullptr) {
+    sceneGraph->add(clippingPlane);
+  } else {
+    parent->add(clippingPlane);
+  }
+
   update();
 
   return clippingPlane;
@@ -89,6 +100,8 @@ void QOpenGLMouseTracker::DestroyClippingPlane(
 
   m_clippingPlanesPool.insert(*it);
   m_clippingPlanes.erase(it);
+
+  clippingPlane->remove();
 
   clippingPlane.reset();
 
@@ -178,10 +191,12 @@ void QOpenGLMouseTracker::paintGL() {
     return;
   }
 
-  m_camera.UpdateView(m_mainProgram);
-  m_camera.UpdateProjection(m_mainProgram);
+  //  m_camera.UpdateView(m_mainProgram);
+  //  m_camera.UpdateProjection(m_mainProgram);
 
-  updateAllClippingPlanes();
+  //  updateAllClippingPlanes();
+
+  ////////
 
   renderScene();
 
@@ -195,19 +210,21 @@ void QOpenGLMouseTracker::paintGL() {
   m_offscreenPickingImage = fboPicking.toImage();
 
   QOpenGLFramebufferObject::bindDefault();
+
+  /////////
 }
 
 void QOpenGLMouseTracker::resizeGL(int w, int h) {
-  m_camera.SetFrustum(m_camera.getFOV(), static_cast<float>(w),
-                      static_cast<float>(h), m_camera.getNear(),
-                      m_camera.getFar());
+  m_camera->SetFrustum(m_camera->getFOV(), static_cast<float>(w),
+                       static_cast<float>(h), m_camera->getNear(),
+                       m_camera->getFar());
   this->update();
 }
 
 void QOpenGLMouseTracker::SetCameraFrustum(GLfloat FOV, GLfloat width,
                                            GLfloat height, GLfloat nearZ,
                                            GLfloat farZ) {
-  m_camera.SetFrustum(FOV, width, height, nearZ, farZ);
+  m_camera->SetFrustum(FOV, width, height, nearZ, farZ);
 }
 
 void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
@@ -291,11 +308,11 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
 void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
   auto Degrees = event->angleDelta().y() / 8;
 
-  auto forwardVector = m_camera.GetForwardVector();
-  auto position = m_camera.getPos();
+  auto forwardVector = m_camera->GetForwardVector();
+  auto position = m_camera->getPos();
 
-  m_camera.setPos(position + forwardVector * static_cast<float>(Degrees) *
-                                 (1 / m_frameRate));
+  m_camera->setPos(position + forwardVector * static_cast<float>(Degrees) *
+                                  (1 / m_frameRate));
 
   emit mouseWheelEvent(event);
 
@@ -303,19 +320,19 @@ void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
 }
 
 void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z) {
-  m_camera.setPos(x, y, z);
+  m_camera->setPos(x, y, z);
 }
 
 void QOpenGLMouseTracker::SetCameraOrientation(float x, float y, float z) {
-  m_camera.setRot(x, y, z);
+  m_camera->setRot(x, y, z);
 }
 
 QVector3D QOpenGLMouseTracker::GetCameraPosition() const {
-  return m_camera.getPos();
+  return m_camera->getPos();
 }
 
 QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
-  return m_camera.getRot();
+  return m_camera->getRot();
 }
 
 void QOpenGLMouseTracker::SetSubMeshesOrientation(float x, float y, float z) {
@@ -334,16 +351,19 @@ QVector3D QOpenGLMouseTracker::GetSubMeshesPosition() const {
   return m_SubMeshes->getPos();
 }
 
-void QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
-                                       const std::vector<QColor> &colors) {
+std::shared_ptr<rendering::Node>
+QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
+                                  const std::vector<QColor> &colors) {
   if (colors.empty()) {
-    m_SubMeshes = std::make_unique<rendering::WireframeObjects>(
+    m_SubMeshes = std::make_shared<rendering::WireframeObjects>(
         mesh, this, mesh.getColors(), m_lineWidth, mesh.getOffset());
   } else {
-    m_SubMeshes = std::make_unique<rendering::WireframeObjects>(
+    m_SubMeshes = std::make_shared<rendering::WireframeObjects>(
         mesh, this, colors, m_lineWidth, mesh.getOffset());
   }
   update();
+
+  return m_SubMeshes;
 }
 
 void QOpenGLMouseTracker::setFPS(float frameRate) { m_frameRate = frameRate; }

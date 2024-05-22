@@ -22,6 +22,9 @@ public:
   void
   UpdateClipPlane(std::unique_ptr<rendering::ShaderProgram> &program) const;
 
+  void update(float delta) override;
+  void draw(std::unique_ptr<rendering::ShaderProgram> &program) override;
+
   /**
    * @brief Create a vector that contains the minimum number of planes possible.
    * ( MAX_NUMBER_PLANES )
@@ -89,6 +92,13 @@ protected:
   GLfloat m_c;
   GLfloat m_d;
   uint32_t m_planeIndex;
+
+  struct {
+    GLfloat a;
+    GLfloat b;
+    GLfloat c;
+    GLfloat d;
+  } m_global_plane;
 
   // active( true ) or disabled ( false )
   bool m_active;

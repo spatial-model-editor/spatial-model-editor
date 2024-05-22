@@ -36,6 +36,8 @@ void rendering::Camera::SetFrustum(GLfloat FOV, GLfloat width, GLfloat height,
   m_projectionMatrix[3][1] = 0.0f;
   m_projectionMatrix[3][2] = 1.0f;
   m_projectionMatrix[3][3] = 0.0f;
+
+  markDirty();
 }
 
 rendering::Camera::Camera(GLfloat FOV, GLfloat width, GLfloat height,
@@ -97,6 +99,18 @@ void rendering::Camera::update(float delta) {
   m_viewUp.setZ(upZ);
 }
 
+void rendering::Camera::draw(
+    std::unique_ptr<rendering::ShaderProgram> &program) {
+
+  //  auto CurrentActive = Camera::currentActiveCamera.lock();
+  //
+  //  if(CurrentActive && CurrentActive.get() == this) {
+
+  UpdateView(program);
+  UpdateProjection(program);
+  //  }
+}
+
 QVector3D rendering::Camera::GetForwardVector() const { return m_viewForward; }
 
 QVector3D rendering::Camera::GetUpVector() const { return m_viewUp; }
@@ -104,22 +118,14 @@ QVector3D rendering::Camera::GetUpVector() const { return m_viewUp; }
 void rendering::Camera::UpdateProjection(
     std::unique_ptr<rendering::ShaderProgram> &program) const {
 
-  //  auto CurrentActive = Camera::currentActiveCamera.lock();
-  //
-  //  if(CurrentActive && CurrentActive.get() == this) {
   program->SetProjection(m_projectionMatrix[0]);
-  //  }
 }
 
 void rendering::Camera::UpdateView(
     std::unique_ptr<rendering::ShaderProgram> &program) const {
 
-  //  auto CurrentActive = Camera::currentActiveCamera.lock();
-  //
-  //  if(CurrentActive && CurrentActive.get() == this) {
   program->SetViewPosition(m_position.x(), m_position.y(), m_position.z());
   program->SetViewRotation(m_rotation.x(), m_rotation.y(), m_rotation.z());
-  //  }
 }
 
 GLfloat rendering::Camera::getNear() const { return m_near; }
@@ -128,4 +134,4 @@ GLfloat rendering::Camera::getFar() const { return m_far; }
 
 GLfloat rendering::Camera::getFOV() const { return m_FOV; }
 
-std::weak_ptr<rendering::Camera> rendering::Camera::currentActiveCamera;
+// std::weak_ptr<rendering::Camera> rendering::Camera::currentActiveCamera;

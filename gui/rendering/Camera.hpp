@@ -24,21 +24,22 @@ public:
                   GLfloat farZ);
 
   void update(float delta) override;
+  void draw(std::unique_ptr<rendering::ShaderProgram> &program) override;
 
   QVector3D GetForwardVector() const;
   QVector3D GetUpVector() const;
-
-  void
-  UpdateProjection(std::unique_ptr<rendering::ShaderProgram> &program) const;
-  void UpdateView(std::unique_ptr<rendering::ShaderProgram> &program) const;
 
   GLfloat getNear() const;
   GLfloat getFar() const;
   GLfloat getFOV() const;
 
-  static std::weak_ptr<Camera> currentActiveCamera;
+  //  static std::weak_ptr<Camera> currentActiveCamera;
 
 private:
+  void
+  UpdateProjection(std::unique_ptr<rendering::ShaderProgram> &program) const;
+  void UpdateView(std::unique_ptr<rendering::ShaderProgram> &program) const;
+
   GLfloat m_aspectRatio;
   GLfloat m_near;
   GLfloat m_far;

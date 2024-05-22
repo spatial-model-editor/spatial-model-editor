@@ -59,6 +59,10 @@ public:
 
   void setBackground(QColor backgroundColor);
 
+  //  void update(float delta) override;
+
+  void draw(std::unique_ptr<rendering::ShaderProgram> &program) override;
+
 private:
   std::vector<QVector4D> m_vertices;
   std::vector<std::vector<GLuint>> m_indices;

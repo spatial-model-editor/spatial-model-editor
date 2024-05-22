@@ -49,6 +49,8 @@ public:
   QVector3D GetCameraPosition() const;
   QVector3D GetCameraOrientation() const;
 
+  // TODO: Add access to Camera shared pointer
+
   void SetSubMeshesOrientation(float x, float y, float z);
   void SetSubMeshesPosition(float x, float y, float z);
 
@@ -65,8 +67,9 @@ public:
    * Default colors used are taken from 'mesh'
    */
 
-  void SetSubMeshes(const sme::mesh::Mesh3d &mesh,
-                    const std::vector<QColor> &colors = std::vector<QColor>(0));
+  std::shared_ptr<rendering::Node>
+  SetSubMeshes(const sme::mesh::Mesh3d &mesh,
+               const std::vector<QColor> &colors = std::vector<QColor>(0));
 
   void setFPS(float frameRate);
   void setLineWidth(float lineWidth = 0.005f);
@@ -108,10 +111,12 @@ protected:
 
   QColor m_selectedObjectColor;
 
-  std::unique_ptr<rendering::WireframeObjects> m_SubMeshes{};
+  //  std::unique_ptr<rendering::WireframeObjects> m_SubMeshes{};
+  std::shared_ptr<rendering::WireframeObjects> m_SubMeshes{};
 
   std::unique_ptr<rendering::ShaderProgram> m_mainProgram{};
-  rendering::Camera m_camera;
+  //  rendering::Camera m_camera;
+  std::shared_ptr<rendering::Camera> m_camera;
   float m_frameRate;
 
   QImage m_offscreenPickingImage;
@@ -121,6 +126,10 @@ protected:
 
   QColor m_backgroundColor;
   QRgb m_lastColour;
+
+  std::shared_ptr<rendering::Node> sceneGraph =
+      std::make_shared<rendering::Node>("root");
+
   /**
    * Set of clipping planes that are part of the scene.
    * They can be active in the scene or not.

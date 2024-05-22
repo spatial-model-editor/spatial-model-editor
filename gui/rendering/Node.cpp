@@ -102,7 +102,7 @@ void Node::updateLocalTransform() {
 
 void Node::add(std::shared_ptr<Node> node, bool transformInLocalSpace) {
 
-  // TODO: Implement use case with node transform in global coordinates.
+  // TODO: Implement use case where the node transform is in global coordinates.
   assert(transformInLocalSpace == true);
 
   if (node) {
