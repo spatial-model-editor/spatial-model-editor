@@ -21,13 +21,17 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
       m_backgroundColor(QWidget::palette().color(QWidget::backgroundRole())),
       m_lastColour(QWidget::palette().color(QWidget::backgroundRole()).rgb()) {
 
+  // A default camera is added.
   sceneGraph->add(m_camera);
 }
 
 std::shared_ptr<rendering::ClippingPlane>
 QOpenGLMouseTracker::BuildClippingPlane(
     GLfloat a, GLfloat b, GLfloat c, GLfloat d, bool active,
-    std::shared_ptr<rendering::Node> parent) {
+    bool localFrameCoord, std::shared_ptr<rendering::Node> parent) {
+
+  // TODO: Implement global frame use case.
+  assert(localFrameCoord == true);
 
   auto it = m_clippingPlanesPool.begin();
 
@@ -47,10 +51,12 @@ QOpenGLMouseTracker::BuildClippingPlane(
   m_clippingPlanesPool.erase(clippingPlane);
 
   if (parent == nullptr) {
-    sceneGraph->add(clippingPlane);
+    sceneGraph->add(clippingPlane, localFrameCoord);
   } else {
-    parent->add(clippingPlane);
+    parent->add(clippingPlane, localFrameCoord);
   }
+
+  // TODO: The scene graph must be updated!
 
   update();
 
@@ -60,7 +66,10 @@ QOpenGLMouseTracker::BuildClippingPlane(
 std::shared_ptr<rendering::ClippingPlane>
 QOpenGLMouseTracker::BuildClippingPlane(
     const QVector3D &normal, const QVector3D &point, bool active,
-    std::shared_ptr<rendering::Node> parent) {
+    bool localFrameCoord, std::shared_ptr<rendering::Node> parent) {
+
+  // TODO: Implement global frame use case.
+  assert(localFrameCoord == true);
 
   auto it = m_clippingPlanesPool.begin();
 
@@ -80,10 +89,12 @@ QOpenGLMouseTracker::BuildClippingPlane(
   m_clippingPlanesPool.erase(clippingPlane);
 
   if (parent == nullptr) {
-    sceneGraph->add(clippingPlane);
+    sceneGraph->add(clippingPlane, localFrameCoord);
   } else {
-    parent->add(clippingPlane);
+    parent->add(clippingPlane, localFrameCoord);
   }
+
+  // TODO: The scene graph must be updated!
 
   update();
 
@@ -171,12 +182,15 @@ void QOpenGLMouseTracker::renderScene(std::optional<float> lineWidth) {
 
 void QOpenGLMouseTracker::updateAllClippingPlanes() {
 
-  // start with a clean opengl set of clipping planes.
+  // TODO: The clipping plane RESET must be done before rendering is taking
+  // place! start with a clean opengl set of clipping planes.
   m_mainProgram->DisableAllClippingPlanes();
 
-  for (auto &plane : m_clippingPlanes) {
-    plane->UpdateClipPlane(m_mainProgram);
-  }
+  // TODO: no more manual update. This process is now triggered once the scene
+  // graph gets updated!
+  //  for (auto &plane : m_clippingPlanes) {
+  //    plane->UpdateClipPlane(m_mainProgram);
+  //  }
 }
 
 void QOpenGLMouseTracker::paintGL() {
@@ -225,6 +239,8 @@ void QOpenGLMouseTracker::SetCameraFrustum(GLfloat FOV, GLfloat width,
                                            GLfloat height, GLfloat nearZ,
                                            GLfloat farZ) {
   m_camera->SetFrustum(FOV, width, height, nearZ, farZ);
+
+  // TODO: The scene graph must be updated! ( or maybe just redraw it  )
 }
 
 void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
@@ -266,6 +282,9 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
     SPDLOG_INFO("Reset state for selected objects to UNSELECTED objects!");
   }
 
+  // TODO: The scene graph must be updated! In case a consecutive access call is
+  // done before update() is done
+
   update();
 }
 
@@ -292,6 +311,9 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
                           subMeshesOrientation.y() - static_cast<float>(x_len),
                           subMeshesOrientation.z());
 
+  // TODO: The scene graph must be updated! In case an immediate, access call,
+  // is done.
+
   update();
 
   QRgb pixel = m_offscreenPickingImage.pixel(xAtPress, yAtPress);
@@ -316,15 +338,24 @@ void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
 
   emit mouseWheelEvent(event);
 
+  // TODO: The scene graph must be updated! In case an immediate, consecutive
+  // call, is done.
+
   update();
 }
 
 void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z) {
   m_camera->setPos(x, y, z);
+
+  // TODO: The scene graph must be updated! In case an immediate, consecutive
+  // call, is done.
 }
 
 void QOpenGLMouseTracker::SetCameraOrientation(float x, float y, float z) {
   m_camera->setRot(x, y, z);
+
+  // TODO: The scene graph must be updated! In case an immediate, consecutive
+  // call, is done.
 }
 
 QVector3D QOpenGLMouseTracker::GetCameraPosition() const {
@@ -337,10 +368,16 @@ QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
 
 void QOpenGLMouseTracker::SetSubMeshesOrientation(float x, float y, float z) {
   m_SubMeshes->setRot(x, y, z);
+
+  // TODO: The scene graph must be updated! In case an immediate, consecutive
+  // call, is done.
 }
 
 void QOpenGLMouseTracker::SetSubMeshesPosition(float x, float y, float z) {
   m_SubMeshes->setPos(x, y, z);
+
+  // TODO: The scene graph must be updated! In case an immediate, consecutive
+  // call, is done.
 }
 
 QVector3D QOpenGLMouseTracker::GetSubMeshesOrientation() const {
@@ -361,6 +398,10 @@ QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
     m_SubMeshes = std::make_shared<rendering::WireframeObjects>(
         mesh, this, colors, m_lineWidth, mesh.getOffset());
   }
+
+  // TODO: The scene graph must be updated! Maybe? At this point, it doesn't
+  // matter if a consecutive access call is done.
+
   update();
 
   return m_SubMeshes;
@@ -404,6 +445,8 @@ QColor QOpenGLMouseTracker::getBackgroundColor() const {
 }
 
 void QOpenGLMouseTracker::clear() {
+
+  // TODO: Maybe, reset should be applied to the entire scene graph?
 
   m_SubMeshes.reset();
   update();

@@ -89,7 +89,7 @@ public:
    * of the node added as a child.
    * @param node
    */
-  void add(std::shared_ptr<Node> node, bool transformInLocalSpace = true);
+  void add(std::shared_ptr<Node> node, bool localFrameCoord = true);
 
   /**
    * Removes the node from its parent tree.

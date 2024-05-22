@@ -4,7 +4,7 @@
 
 #include "ClippingPlane.hpp"
 #include "ShaderProgram.hpp"
-#include "qopenglmousetracker.hpp"
+// #include "qopenglmousetracker.hpp"
 #include "sme/logger.hpp"
 #include <QVector3D>
 
@@ -72,7 +72,10 @@ void rendering::ClippingPlane::SetClipPlane(QVector3D normal,
 }
 
 std::tuple<QVector3D, QVector3D>
-rendering::ClippingPlane::GetClipPlane() const {
+rendering::ClippingPlane::GetClipPlane(bool localFrameCoord) const {
+
+  // TODO: implement global frame use case.
+  assert(localFrameCoord == true);
 
   return fromAnalyticalToVectorial(m_a, m_b, m_c, m_d);
 }
@@ -98,8 +101,7 @@ void rendering::ClippingPlane::update(float delta) {
   QVector4D normalRotated = globalTransform.rotation * QVector4D(normal, 1.0f);
   QVector3D positionTranslated = globalTransform.position + position;
 
-  std::tie(m_global_plane.a, m_global_plane.b, m_global_plane.c,
-           m_global_plane.d) =
+  std::tie(m_globalPlane.a, m_globalPlane.b, m_globalPlane.c, m_globalPlane.d) =
       fromVectorialToAnalytical(positionTranslated, normalRotated.toVector3D());
 }
 
@@ -116,8 +118,8 @@ void rendering::ClippingPlane::UpdateClipPlane(
     assert(m_dirty == false);
 
     program->EnableClippingPlane(m_planeIndex);
-    program->SetClippingPlane(m_global_plane.a, m_global_plane.b,
-                              m_global_plane.c, m_global_plane.d, m_planeIndex);
+    program->SetClippingPlane(m_globalPlane.a, m_globalPlane.b, m_globalPlane.c,
+                              m_globalPlane.d, m_planeIndex);
   } else {
     program->DisableClippingPlane(m_planeIndex);
   }

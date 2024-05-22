@@ -19,9 +19,6 @@ namespace rendering {
 class ClippingPlane : public Node {
 
 public:
-  void
-  UpdateClipPlane(std::unique_ptr<rendering::ShaderProgram> &program) const;
-
   void update(float delta) override;
   void draw(std::unique_ptr<rendering::ShaderProgram> &program) override;
 
@@ -59,11 +56,12 @@ public:
   void SetClipPlane(QVector3D normal, const QVector3D &point);
 
   /**
-   * Return the vectorial form of the plane.
+   * Return the vectorial form of the plane in local or global frame.
    * @return [ Position, Normal ]
    */
 
-  std::tuple<QVector3D, QVector3D> GetClipPlane() const;
+  std::tuple<QVector3D, QVector3D>
+  GetClipPlane(bool localFrameCoord = true) const;
 
   /**
    * @brief: Translate the plane alongside the normal
@@ -85,6 +83,9 @@ public:
   [[nodiscard]] bool getStatus() const;
 
 protected:
+  void
+  UpdateClipPlane(std::unique_ptr<rendering::ShaderProgram> &program) const;
+
   explicit ClippingPlane(uint32_t planeIndex, bool active = false);
 
   GLfloat m_a;
@@ -98,9 +99,12 @@ protected:
     GLfloat b;
     GLfloat c;
     GLfloat d;
-  } m_global_plane;
+  } m_globalPlane;
 
-  // active( true ) or disabled ( false )
+  /**
+   *
+   * @details active( true ) or disabled ( false )
+   */
   bool m_active;
 };
 

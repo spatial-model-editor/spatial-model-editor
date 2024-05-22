@@ -100,10 +100,10 @@ void Node::updateLocalTransform() {
   }
 }
 
-void Node::add(std::shared_ptr<Node> node, bool transformInLocalSpace) {
+void Node::add(std::shared_ptr<Node> node, bool localFrameCoord) {
 
-  // TODO: Implement use case where the node transform is in global coordinates.
-  assert(transformInLocalSpace == true);
+  // TODO: Implement global frame use case.
+  assert(localFrameCoord == true);
 
   if (node) {
     node->parent = shared_from_this();
