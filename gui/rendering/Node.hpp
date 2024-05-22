@@ -98,8 +98,9 @@ public:
 
   /**
    * Traverses the tree and updates child transformations.
+   * @return If there was a dirty note in the scene graph.
    */
-  void updateWorldTransform(float delta = 1 / 60.0f);
+  bool updateWorld(float delta = 0);
 
   /**
    *

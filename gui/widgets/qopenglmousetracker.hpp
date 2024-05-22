@@ -127,7 +127,7 @@ protected:
   QColor m_backgroundColor;
   QRgb m_lastColour;
 
-  std::shared_ptr<rendering::Node> sceneGraph =
+  std::shared_ptr<rendering::Node> m_sceneGraph =
       std::make_shared<rendering::Node>("root");
 
   /**
@@ -149,6 +149,9 @@ protected:
   void renderScene(std::optional<float> widthLine = {});
 
   void updateAllClippingPlanes();
+
+  void updateScene();
+  void drawScene();
 
   void mouseMoveEvent(QMouseEvent *event) override;
 

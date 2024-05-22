@@ -22,7 +22,7 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
       m_lastColour(QWidget::palette().color(QWidget::backgroundRole()).rgb()) {
 
   // A default camera is added.
-  sceneGraph->add(m_camera);
+  m_sceneGraph->add(m_camera);
 }
 
 std::shared_ptr<rendering::ClippingPlane>
@@ -51,7 +51,7 @@ QOpenGLMouseTracker::BuildClippingPlane(
   m_clippingPlanesPool.erase(clippingPlane);
 
   if (parent == nullptr) {
-    sceneGraph->add(clippingPlane, localFrameCoord);
+    m_sceneGraph->add(clippingPlane, localFrameCoord);
   } else {
     parent->add(clippingPlane, localFrameCoord);
   }
@@ -89,7 +89,7 @@ QOpenGLMouseTracker::BuildClippingPlane(
   m_clippingPlanesPool.erase(clippingPlane);
 
   if (parent == nullptr) {
-    sceneGraph->add(clippingPlane, localFrameCoord);
+    m_sceneGraph->add(clippingPlane, localFrameCoord);
   } else {
     parent->add(clippingPlane, localFrameCoord);
   }
@@ -191,6 +191,29 @@ void QOpenGLMouseTracker::updateAllClippingPlanes() {
   //  for (auto &plane : m_clippingPlanes) {
   //    plane->UpdateClipPlane(m_mainProgram);
   //  }
+}
+
+void QOpenGLMouseTracker::updateScene() {
+
+  m_SubMeshes->setBackground(m_backgroundColor);
+  //  m_wasDirty -> default is true;
+  //  m_wasDirty = m_sceneGraph->updateWorld( 1 / m_frameRate);
+  m_sceneGraph->updateWorld(1 / m_frameRate);
+}
+
+void QOpenGLMouseTracker::drawScene() {
+
+  // reset states
+  m_mainProgram->DisableAllClippingPlanes();
+
+  std::multiset<std::shared_ptr<rendering::Node>, rendering::CompareNodes>
+      renderingQueue;
+
+  m_sceneGraph->buildRenderQueue(renderingQueue);
+
+  for (const auto &obj : renderingQueue) {
+    //    obj->draw();
+  }
 }
 
 void QOpenGLMouseTracker::paintGL() {

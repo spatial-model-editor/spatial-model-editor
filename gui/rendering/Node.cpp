@@ -48,7 +48,8 @@ void Node::draw(std::unique_ptr<rendering::ShaderProgram> &program) {
   SPDLOG_DEBUG("Node {} draw()", name);
 }
 
-void Node::updateWorldTransform(float delta) {
+bool Node::updateWorld(float delta) {
+  bool wasDirty = m_dirty;
   if (m_dirty) {
     auto parent_ref = this->parent.lock();
     this->updateLocalTransform();
@@ -61,14 +62,15 @@ void Node::updateWorldTransform(float delta) {
     m_dirty = false;
     for (const auto &node : children) {
       node->markDirty();
-      node->updateWorldTransform(delta);
+      node->updateWorld(delta);
     }
   } else {
     for (const auto &node : children) {
-      node->updateWorldTransform(delta);
+      wasDirty = wasDirty || node->updateWorld(delta);
     }
   }
   this->update(delta);
+  return wasDirty;
 }
 
 void Node::buildRenderQueue(std::multiset<std::shared_ptr<rendering::Node>,
@@ -122,6 +124,10 @@ void Node::remove() {
 
   std::erase_if(parent_ref->children,
                 [this](auto child) { return child.get() == this; });
+
+  // The scene graph structure changed, hence it's 'dirty' ( required by
+  // buildRenderQueue() )
+  parent_ref->markDirty();
 }
 
 void Node::markDirty() { m_dirty = true; }
