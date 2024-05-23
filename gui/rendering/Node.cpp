@@ -18,7 +18,7 @@ Node::Node(const std::string &name, const QVector3D &position,
     : name(name), m_position(position), m_rotation(rotation), m_scale(scale),
       m_priority(priority) {
 
-  this->worldTransform.setToIdentity();
+  this->globalTransform.setToIdentity();
   this->localTransform.setToIdentity();
 }
 
@@ -54,15 +54,18 @@ bool Node::updateWorld(float delta) {
     auto parent_ref = this->parent.lock();
     this->updateLocalTransform();
     if (parent_ref != nullptr) {
-      worldTransform = parent_ref->worldTransform * localTransform;
+      globalTransform = parent_ref->globalTransform * localTransform;
     } else {
-      worldTransform = localTransform;
+      globalTransform = localTransform;
     }
 
     m_dirty = false;
     for (const auto &node : children) {
       node->markDirty();
       node->updateWorld(delta);
+      // no need as we already have one node, the current node, marked as dirty
+      // just by being on the dirty branch
+      //      wasDirty = wasDirty || node->updateWorld(delta);
     }
   } else {
     for (const auto &node : children) {
@@ -142,18 +145,18 @@ DecomposedTransform Node::getGlobalTransform() const {
 
   DecomposedTransform decomposed;
 
-  decomposed.position = worldTransform.column(3).toVector3D();
+  decomposed.position = globalTransform.column(3).toVector3D();
 
-  decomposed.scale[0] = worldTransform.column(0).toVector3D().length();
-  decomposed.scale[1] = worldTransform.column(1).toVector3D().length();
-  decomposed.scale[2] = worldTransform.column(2).toVector3D().length();
+  decomposed.scale[0] = globalTransform.column(0).toVector3D().length();
+  decomposed.scale[1] = globalTransform.column(1).toVector3D().length();
+  decomposed.scale[2] = globalTransform.column(2).toVector3D().length();
 
-  decomposed.rotation.setColumn(0,
-                                worldTransform.column(0) / decomposed.scale[0]);
-  decomposed.rotation.setColumn(1,
-                                worldTransform.column(1) / decomposed.scale[1]);
-  decomposed.rotation.setColumn(2,
-                                worldTransform.column(2) / decomposed.scale[2]);
+  decomposed.rotation.setColumn(0, globalTransform.column(0) /
+                                       decomposed.scale[0]);
+  decomposed.rotation.setColumn(1, globalTransform.column(1) /
+                                       decomposed.scale[1]);
+  decomposed.rotation.setColumn(2, globalTransform.column(2) /
+                                       decomposed.scale[2]);
   decomposed.rotation.setColumn(3, QVector4D(0, 0, 0, 1));
 
   // roll, pitch, and yaw Euler angles, it might be that I need to switch roll

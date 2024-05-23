@@ -48,10 +48,10 @@ public:
   std::vector<std::shared_ptr<Node>> children;
 
   /**
-   * World-space transformation for this node. This matrix is typically
-   * used when generating the world matrix of children nodes.
+   * Global-space transformation for this node. This matrix is typically
+   * used when generating the global matrix of children nodes.
    */
-  QMatrix4x4 worldTransform;
+  QMatrix4x4 globalTransform;
 
   /**
    * Local-space transformation for this node.
@@ -182,6 +182,14 @@ public:
    */
   void setPriority(const RenderPriority &priority);
 
+  //  friend class QOpenGLMouseTracker;
+
+  /**
+   * It "draws" the current node.
+   * @param program std::unique_ptr<rendering::ShaderProgram>
+   */
+  virtual void draw(std::unique_ptr<rendering::ShaderProgram> &program);
+
 protected:
   /**
    * Recreates the local-space transform based on pos, rot, and scale.
@@ -193,12 +201,6 @@ protected:
    * @param delta time in seconds
    */
   virtual void update(float delta);
-
-  /**
-   * It "draws" the current node.
-   * @param program std::unique_ptr<rendering::ShaderProgram>
-   */
-  virtual void draw(std::unique_ptr<rendering::ShaderProgram> &program);
 
   //  /**
   //   * Each Node can implement it for debugging reasons.

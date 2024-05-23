@@ -206,13 +206,14 @@ void QOpenGLMouseTracker::drawScene() {
   // reset states
   m_mainProgram->DisableAllClippingPlanes();
 
+  // cache the result
   std::multiset<std::shared_ptr<rendering::Node>, rendering::CompareNodes>
       renderingQueue;
 
   m_sceneGraph->buildRenderQueue(renderingQueue);
 
   for (const auto &obj : renderingQueue) {
-    //    obj->draw();
+    obj->draw(m_mainProgram);
   }
 }
 
