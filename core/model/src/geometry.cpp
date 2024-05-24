@@ -92,6 +92,11 @@ const std::string &Compartment::getId() const { return compartmentId; }
 
 QRgb Compartment::getColour() const { return colour; }
 
+void Compartment::setColour(QRgb newColour) {
+  colour = newColour;
+  images.setColor(1, colour);
+}
+
 const common::Volume &Compartment::getImageSize() const {
   return images.volume();
 }

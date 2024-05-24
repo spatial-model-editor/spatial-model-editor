@@ -66,6 +66,13 @@ ImageStack::ImageStack(const Volume &imageSize,
   }
 }
 
+[[nodiscard]] QList<QRgb> ImageStack::colorTable() const {
+  if (imgs.empty()) {
+    return {};
+  }
+  return imgs[0].colorTable();
+}
+
 void ImageStack::clear() {
   imgs.clear();
   sz = {0, 0, 0};
@@ -121,6 +128,12 @@ void ImageStack::convertToIndexed() {
   for (auto &img : imgs) {
     img =
         img.convertToFormat(QImage::Format_Indexed8, colorTable, flagNoDither);
+  }
+}
+
+void ImageStack::setColor(int i, QRgb c) {
+  for (auto &img : imgs) {
+    img.setColor(i, c);
   }
 }
 

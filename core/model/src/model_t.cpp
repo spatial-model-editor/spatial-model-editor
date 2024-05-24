@@ -952,7 +952,7 @@ TEST_CASE("SBML: import multi-compartment SBML doc without spatial geometry",
   // import a geometry image
   geometry.importGeometryFromImages(
       common::ImageStack{{QImage(":test/geometry/cell.png")}}, false);
-  auto colours{geometry.getImages()[0].colorTable()};
+  auto colours{geometry.getImages().colorTable()};
   REQUIRE(colours.size() == 4);
   REQUIRE(geometry.getIsValid() == false);
   REQUIRE(geometry.getHasImage() == true);

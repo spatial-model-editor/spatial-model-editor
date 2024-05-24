@@ -143,31 +143,6 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="2">
-          <widget class="QLabel" name="lblCompColourLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="font">
-            <font>
-             <weight>50</weight>
-             <bold>false</bold>
-            </font>
-           </property>
-           <property name="text">
-            <string>Colour:</string>
-           </property>
-           <property name="scaledContents">
-            <bool>false</bool>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
          <item row="0" column="0">
           <widget class="QLabel" name="lblCompartmentNameLabel">
            <property name="sizePolicy">
@@ -232,13 +207,51 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="4">
+         <item row="0" column="2">
+          <widget class="QLabel" name="lblCompColourLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="font">
+            <font>
+             <weight>50</weight>
+             <bold>false</bold>
+            </font>
+           </property>
+           <property name="text">
+            <string>Colour:</string>
+           </property>
+           <property name="scaledContents">
+            <bool>false</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="5">
           <widget class="QLabel" name="lblCompSize">
            <property name="text">
             <string>Volume/Area:</string>
            </property>
            <property name="textInteractionFlags">
             <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="4">
+          <widget class="QPushButton" name="btnChangeCompartmentColour">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>change colour...</string>
            </property>
           </widget>
          </item>
@@ -342,7 +355,7 @@
                   <x>0</x>
                   <y>0</y>
                   <width>797</width>
-                  <height>571</height>
+                  <height>569</height>
                  </rect>
                 </property>
                 <layout class="QVBoxLayout" name="verticalLayout">
@@ -500,8 +513,8 @@
                      <rect>
                       <x>0</x>
                       <y>0</y>
-                      <width>797</width>
-                      <height>559</height>
+                      <width>785</width>
+                      <height>557</height>
                      </rect>
                     </property>
                     <layout class="QVBoxLayout" name="verticalLayout_4">

@@ -73,6 +73,19 @@ importSizesAndMakeValid(libsbml::Model *model) {
   return sizes;
 }
 
+void ModelCompartments::updateGeometryImageColor(QRgb oldColour,
+                                                 QRgb newColour) {
+  auto compartmentIndex = colours.indexOf(oldColour);
+  if (compartmentIndex < 0) {
+    SPDLOG_WARN("Compartment with oldColour {:x} not found", oldColour);
+    return;
+  }
+  SPDLOG_INFO("Updating compartment {} colour from {:x} to {:x}",
+              compartmentIndex, oldColour, newColour);
+  colours[compartmentIndex] = newColour;
+  compartments[compartmentIndex]->setColour(newColour);
+}
+
 ModelCompartments::ModelCompartments() = default;
 
 ModelCompartments::ModelCompartments(libsbml::Model *model,
@@ -316,10 +329,8 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
     SPDLOG_WARN("Compartment '{}' not found: ignoring", id.toStdString());
     return;
   }
-  // todo: have colorTable be part of geometry? or at least check for empty
-  // getImages
   if (colour != 0 &&
-      !modelGeometry->getImages()[0].colorTable().contains(colour)) {
+      !modelGeometry->getImages().colorTable().contains(colour)) {
     SPDLOG_WARN("Image has no pixels with colour '{:x}': ignoring", colour);
     return;
   }
@@ -362,8 +373,7 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   if (colour == 0 && sfvol->isSetSampledValue()) {
     sfvol->unsetSampledValue();
   } else if (colour != 0) {
-    auto color_index{
-        modelGeometry->getImages()[0].colorTable().indexOf(colour)};
+    auto color_index{modelGeometry->getImages().colorTable().indexOf(colour)};
     sfvol->setSampledValue(static_cast<double>(color_index));
   }
   auto nPixels{compartments[static_cast<std::size_t>(i)]->nVoxels()};

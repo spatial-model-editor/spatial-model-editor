@@ -54,7 +54,7 @@ TEST_CASE("TiffReader", "[core/common/tiff][core/common][core][tiff]") {
     REQUIRE(imgs.volume().depth() == 1);
     REQUIRE(imgs[0].pixel(0, 0) == 0xff010101);
     REQUIRE(imgs[0].pixel(32, 47) == 0xff37ff01);
-    auto colorTable{imgs[0].colorTable()};
+    auto colorTable{imgs.colorTable()};
     for (auto color : {0xff000000, 0xff010101, 0xff37ff01}) {
       CAPTURE(color);
       REQUIRE(colorTable.contains(color));

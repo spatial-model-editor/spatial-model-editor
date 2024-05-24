@@ -158,7 +158,7 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   auto imageStack_ = imageStack;
   imageStack_.convertToIndexed();
   auto vol = imageStack_.volume();
-  const auto &colorTable = imageStack_[0].colorTable();
+  const auto &colorTable = imageStack_.colorTable();
   SPDLOG_INFO("ImageStack {}x{}x{} with {} colours", vol.width(), vol.height(),
               vol.depth(), colorTable.size());
 

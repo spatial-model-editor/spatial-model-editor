@@ -39,6 +39,11 @@ TEST_CASE("TabGeometry",
   REQUIRE(btnRemoveCompartment != nullptr);
   auto *txtCompartmentName{tab.findChild<QLineEdit *>("txtCompartmentName")};
   REQUIRE(txtCompartmentName != nullptr);
+  auto *lblCompartmentColour{tab.findChild<QLabel *>("lblCompartmentColour")};
+  REQUIRE(lblCompartmentColour != nullptr);
+  auto *btnChangeCompartmentColour{
+      tab.findChild<QPushButton *>("btnChangeCompartmentColour")};
+  REQUIRE(btnChangeCompartmentColour != nullptr);
   auto *tabCompartmentGeometry{
       tab.findChild<QTabWidget *>("tabCompartmentGeometry")};
   REQUIRE(tabCompartmentGeometry != nullptr);
@@ -87,11 +92,21 @@ TEST_CASE("TabGeometry",
       REQUIRE(txtCompartmentName->isEnabled() == true);
       REQUIRE(txtCompartmentName->text() == "Outside");
       REQUIRE(listCompartments->currentItem()->text() == "Outside");
+      // change compartment colour to same colour
+      REQUIRE(lblCompartmentColour->pixmap().toImage().pixel(0, 0) ==
+              0xff000200);
+      mwt.addUserAction({"Enter"});
+      mwt.start();
+      sendMouseClick(btnChangeCompartmentColour);
+      REQUIRE(lblCompartmentColour->pixmap().toImage().pixel(0, 0) ==
+              0xff000200);
       // select Cell compartment
       listCompartments->setFocus();
       sendKeyEvents(listCompartments, {"Down"});
       REQUIRE(listCompartments->currentItem()->text() == "Cell");
       REQUIRE(lblCompSize->text() == "Volume: 4034000 L (4034 voxels)");
+      REQUIRE(lblCompartmentColour->pixmap().toImage().pixel(0, 0) ==
+              0xff9061c1);
       REQUIRE(lblCompShape->getImage()[0].pixel(20, 20) == 0xff9061c1);
       REQUIRE(txtCompartmentName->isEnabled() == true);
       REQUIRE(txtCompartmentName->text() == "Cell");
@@ -119,6 +134,8 @@ TEST_CASE("TabGeometry",
       REQUIRE(lblCompSize->text() == "Volume: 525000 L (525 voxels)");
       REQUIRE(txtCompartmentName->isEnabled() == true);
       REQUIRE(txtCompartmentName->text() == "Nucleus");
+      REQUIRE(lblCompartmentColour->pixmap().toImage().pixel(0, 0) ==
+              0xffc58560);
       REQUIRE(lblCompShape->getImage()[0].pixel(50, 50) == 0xffc58560);
 
       // boundary tab
