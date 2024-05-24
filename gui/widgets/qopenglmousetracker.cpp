@@ -195,7 +195,9 @@ void QOpenGLMouseTracker::updateAllClippingPlanes() {
 
 void QOpenGLMouseTracker::updateScene() {
 
-  m_SubMeshes->setBackground(m_backgroundColor);
+  if (m_SubMeshes) {
+    m_SubMeshes->setBackground(m_backgroundColor);
+  }
 
   m_sceneGraph->updateSceneGraph(1 / m_frameRate);
 }
@@ -423,6 +425,8 @@ QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
     m_SubMeshes = std::make_shared<rendering::WireframeObjects>(
         mesh, this, colors, m_lineWidth, mesh.getOffset());
   }
+
+  m_sceneGraph->add(m_SubMeshes);
 
   // TODO: The scene graph must be updated! Maybe? At this point, it doesn't
   // matter if a consecutive access call is done.
