@@ -102,7 +102,7 @@ public:
    */
   void updateSceneGraph(float delta = 0);
 
-  void drawSceneGraph(std::unique_ptr<rendering::ShaderProgram> &program);
+  void drawSceneGraph(std::unique_ptr<rendering::ShaderProgram> &program) const;
 
   DecomposedTransform getGlobalTransform() const;
 
@@ -184,8 +184,8 @@ protected:
    *
    * @param RenderingQueue
    */
-  void buildRenderingQueue(std::multiset<std::weak_ptr<rendering::Node>,
-                                         CompareNodes> &renderingQueue);
+  void buildRenderingQueue(
+      std::multiset<std::weak_ptr<rendering::Node>, CompareNodes> &queue);
 
   // TODO: must be protected!
   /**

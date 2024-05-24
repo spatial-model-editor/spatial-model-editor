@@ -89,7 +89,8 @@ void Node::updateSceneGraph(float delta) {
   }
 }
 
-void Node::drawSceneGraph(std::unique_ptr<rendering::ShaderProgram> &program) {
+void Node::drawSceneGraph(
+    std::unique_ptr<rendering::ShaderProgram> &program) const {
 
   // reset current opengl state machine
   program->DisableAllClippingPlanes();
@@ -102,15 +103,15 @@ void Node::drawSceneGraph(std::unique_ptr<rendering::ShaderProgram> &program) {
   }
 }
 
-void Node::buildRenderingQueue(std::multiset<std::weak_ptr<rendering::Node>,
-                                             CompareNodes> &renderingQueue) {
+void Node::buildRenderingQueue(
+    std::multiset<std::weak_ptr<rendering::Node>, CompareNodes> &queue) {
 
   if (m_priority > RenderPriority::e_zero) {
-    renderingQueue.insert(shared_from_this());
+    queue.insert(shared_from_this());
   }
 
   for (const auto &node : children) {
-    node->buildRenderingQueue(renderingQueue);
+    node->buildRenderingQueue(queue);
   }
 }
 
