@@ -7,9 +7,11 @@
 
 namespace rendering {
 
-bool CompareNodes::operator()(const std::shared_ptr<Node> &l,
-                              const std::shared_ptr<Node> &r) const {
-  return l->getPriority() > r->getPriority();
+bool CompareNodes::operator()(const std::weak_ptr<Node> &l,
+                              const std::weak_ptr<Node> &r) const {
+  auto l_lock = l.lock();
+  auto r_lock = r.lock();
+  return l_lock->getPriority() > r_lock->getPriority();
 }
 
 Node::Node(const std::string &name, const QVector3D &position,
@@ -76,15 +78,39 @@ bool Node::updateWorld(float delta) {
   return wasDirty;
 }
 
-void Node::buildRenderQueue(std::multiset<std::shared_ptr<rendering::Node>,
-                                          CompareNodes> &renderingQueue) {
+void Node::updateSceneGraph(float delta) {
+
+  bool isDirty = updateWorld(delta);
+
+  // invalid rendering queue
+  if (isDirty) {
+    renderingQueue.clear();
+    buildRenderingQueue(renderingQueue);
+  }
+}
+
+void Node::drawSceneGraph(std::unique_ptr<rendering::ShaderProgram> &program) {
+
+  // reset current opengl state machine
+  program->DisableAllClippingPlanes();
+
+  // render queue
+  for (const auto &obj : renderingQueue) {
+    auto objToRender = obj.lock();
+    if (objToRender)
+      objToRender->draw(program);
+  }
+}
+
+void Node::buildRenderingQueue(std::multiset<std::weak_ptr<rendering::Node>,
+                                             CompareNodes> &renderingQueue) {
 
   if (m_priority > RenderPriority::e_zero) {
     renderingQueue.insert(shared_from_this());
   }
 
   for (const auto &node : children) {
-    node->buildRenderQueue(renderingQueue);
+    node->buildRenderingQueue(renderingQueue);
   }
 }
 
@@ -129,7 +155,7 @@ void Node::remove() {
                 [this](auto child) { return child.get() == this; });
 
   // The scene graph structure changed, hence it's 'dirty' ( required by
-  // buildRenderQueue() )
+  // buildRenderingQueue() )
   parent_ref->markDirty();
 }
 

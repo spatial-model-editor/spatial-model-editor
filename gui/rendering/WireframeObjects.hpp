@@ -45,6 +45,7 @@ public:
   std::vector<QColor> GetCurrentColors() const;
 
   void SetThickness(const GLfloat thickness, uint32_t meshID);
+  void SetAllThickness(const GLfloat thicknes);
   void ResetToDefaultThickness(uint32_t meshID);
   std::vector<GLfloat> GetDefaultThickness() const;
   std::vector<GLfloat> GetCurrentThickness() const;

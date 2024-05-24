@@ -24,8 +24,8 @@ struct DecomposedTransform {
 
 class CompareNodes {
 public:
-  bool operator()(const std::shared_ptr<class Node> &l,
-                  const std::shared_ptr<Node> &r) const;
+  bool operator()(const std::weak_ptr<class Node> &l,
+                  const std::weak_ptr<Node> &r) const;
 };
 
 class Node : public std::enable_shared_from_this<Node> {
@@ -97,17 +97,12 @@ public:
   void remove();
 
   /**
-   * Traverses the tree and updates child transformations.
-   * @return If there was a dirty note in the scene graph.
+   * entry point for update the scene
+   * @param delta
    */
-  bool updateWorld(float delta = 0);
+  void updateSceneGraph(float delta = 0);
 
-  /**
-   *
-   * @param RenderingQueue
-   */
-  void buildRenderQueue(std::multiset<std::shared_ptr<rendering::Node>,
-                                      CompareNodes> &renderingQueue);
+  void drawSceneGraph(std::unique_ptr<rendering::ShaderProgram> &program);
 
   DecomposedTransform getGlobalTransform() const;
 
@@ -182,19 +177,33 @@ public:
    */
   void setPriority(const RenderPriority &priority);
 
-  //  friend class QOpenGLMouseTracker;
+protected:
+  std::multiset<std::weak_ptr<rendering::Node>, CompareNodes> renderingQueue{};
+
+  /**
+   *
+   * @param RenderingQueue
+   */
+  void buildRenderingQueue(std::multiset<std::weak_ptr<rendering::Node>,
+                                         CompareNodes> &renderingQueue);
+
+  // TODO: must be protected!
+  /**
+   * Traverses the tree and updates child transformations.
+   * @return If there was a dirty note in the scene graph.
+   */
+  bool updateWorld(float delta = 0);
+
+  /**
+   * Recreates the local-space transform based on pos, rot, and scale.
+   */
+  virtual void updateLocalTransform();
 
   /**
    * It "draws" the current node.
    * @param program std::unique_ptr<rendering::ShaderProgram>
    */
   virtual void draw(std::unique_ptr<rendering::ShaderProgram> &program);
-
-protected:
-  /**
-   * Recreates the local-space transform based on pos, rot, and scale.
-   */
-  virtual void updateLocalTransform();
 
   /**
    * Runs the node's update function which can vary due to inheritance.

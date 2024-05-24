@@ -56,38 +56,38 @@ TEST_CASE("Node: Scene Graph", tags) {
     QVector3D positionNode1 = QVector3D(1, 1, 1);
     auto node1 = std::make_shared<rendering::Node>("node1", positionNode1);
     scenegraph->add(node1);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(node1->getGlobalTransform().position == positionNode1);
 
     QVector3D positionNode2 = QVector3D(2, 3, 4);
     auto node2 = std::make_shared<rendering::Node>("node2", positionNode2);
     node1->add(node2);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(node2->getGlobalTransform().position ==
             positionNode1 + positionNode2);
 
     QVector3D newPosNode1 = QVector3D(2, 2, 2);
     node1->setPos(newPosNode1);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(node2->getGlobalTransform().position ==
             newPosNode1 + positionNode2);
 
     QVector3D newOrientationNode1 = QVector3D(90, 0, 0);
     node1->setRot(newOrientationNode1);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(node1->getGlobalTransform().eulerAngles == newOrientationNode1);
 
     QVector3D newOrientationNode2 = QVector3D(-90, 0, 0);
     node1->setPos(0, 0, 0);
     node2->setRot(newOrientationNode2);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(node2->getGlobalTransform().eulerAngles == QVector3D(0, 0, 0));
 
     node2->remove();
     node1->add(node2);
     node2->setRot(0, 0, 0);
     node1->setRot(0, 0, 0);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(node2->getGlobalTransform().eulerAngles == QVector3D(0, 0, 0));
   }
 
@@ -98,7 +98,7 @@ TEST_CASE("Node: Scene Graph", tags) {
     QVector3D positionNode1 = QVector3D(1, 1, 1);
     auto node1 = std::make_shared<rendering::Node>("node1", positionNode1);
     scenegraph->add(node1);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(node1->getGlobalTransform().position == positionNode1);
 
     QVector3D positionNode2 = QVector3D(2, 3, 4);
@@ -106,7 +106,7 @@ TEST_CASE("Node: Scene Graph", tags) {
         60.0f, 800, 600, 0.001f, 2000.0f, positionNode2.x(), positionNode2.y(),
         positionNode2.z());
     node1->add(camera);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(camera->getGlobalTransform().position ==
             positionNode1 + positionNode2);
 
@@ -115,7 +115,7 @@ TEST_CASE("Node: Scene Graph", tags) {
     QVector3D newOrientationNode2 = QVector3D(-90, 0, 0);
     node1->setPos(0, 0, 0);
     camera->setRot(newOrientationNode2);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(camera->getGlobalTransform().eulerAngles == QVector3D(0, 0, 0));
   }
 
@@ -141,7 +141,7 @@ TEST_CASE("Node: Scene Graph", tags) {
       QVector3D positionNode1 = QVector3D(1, 1, 1);
       auto node1 = std::make_shared<rendering::Node>("node1", positionNode1);
       scenegraph->add(node1);
-      scenegraph->updateWorld(1 / 60.0f);
+      scenegraph->updateSceneGraph(1 / 60.0f);
       REQUIRE(node1->getGlobalTransform().position == positionNode1);
 
       QVector3D positionNode2 = QVector3D(2, 3, 4);
@@ -152,7 +152,7 @@ TEST_CASE("Node: Scene Graph", tags) {
           QVector3D(0.0f, 0.0f, 0.0f), QVector3D(1.0f, 1.0f, 1.0f));
 
       node1->add(subMeshes);
-      scenegraph->updateWorld(1 / 60.0f);
+      scenegraph->updateSceneGraph(1 / 60.0f);
       REQUIRE(subMeshes->getGlobalTransform().position ==
               positionNode1 + positionNode2);
 
@@ -161,7 +161,7 @@ TEST_CASE("Node: Scene Graph", tags) {
       QVector3D newOrientationNode2 = QVector3D(-90, 0, 0);
       node1->setPos(0, 0, 0);
       subMeshes->setRot(newOrientationNode2);
-      scenegraph->updateWorld(1 / 60.0f);
+      scenegraph->updateSceneGraph(1 / 60.0f);
       auto res = subMeshes->getGlobalTransform().eulerAngles;
       REQUIRE(res == QVector3D(0, 0, 0));
     }
@@ -174,7 +174,7 @@ TEST_CASE("Node: Scene Graph", tags) {
     QVector3D positionNode1 = QVector3D(1, 1, 1);
     auto node1 = std::make_shared<rendering::Node>("node1", positionNode1);
     scenegraph->add(node1);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(node1->getGlobalTransform().position == positionNode1);
 
     QVector3D clippingPlanePos = QVector3D(2, 3, 4);
@@ -187,25 +187,25 @@ TEST_CASE("Node: Scene Graph", tags) {
     clippingPlane->setPos(clippingPlanePos);
 
     node1->add(clippingPlane);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(clippingPlane->getGlobalTransform().position ==
             positionNode1 + clippingPlanePos);
 
     QVector3D newPosNode1 = QVector3D(2, 2, 2);
     node1->setPos(newPosNode1);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(clippingPlane->getGlobalTransform().position ==
             newPosNode1 + clippingPlanePos);
 
     QVector3D newOrientationNode1 = QVector3D(90, 0, 0);
     node1->setRot(newOrientationNode1);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(node1->getGlobalTransform().eulerAngles == newOrientationNode1);
 
     QVector3D newOrientationNode2 = QVector3D(-90, 0, 0);
     node1->setPos(0, 0, 0);
     clippingPlane->setRot(newOrientationNode2);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(clippingPlane->getGlobalTransform().eulerAngles ==
             QVector3D(0, 0, 0));
 
@@ -213,7 +213,7 @@ TEST_CASE("Node: Scene Graph", tags) {
     node1->add(clippingPlane);
     clippingPlane->setRot(0, 0, 0);
     node1->setRot(0, 0, 0);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     REQUIRE(clippingPlane->getGlobalTransform().eulerAngles ==
             QVector3D(0, 0, 0));
 
@@ -221,7 +221,7 @@ TEST_CASE("Node: Scene Graph", tags) {
     clippingPlane->SetClipPlane(QVector3D(1.0f, 0.0f, 0.0f),
                                 QVector3D(0.0f, 0.0f, 0.0f));
     clippingPlane->setRot(90.0f, 0.0f, 0.0f);
-    scenegraph->updateWorld(1 / 60.0f);
+    scenegraph->updateSceneGraph(1 / 60.0f);
     auto [position, normal] = clippingPlane->GetClipPlane();
     REQUIRE(normal == QVector3D(1.0f, 0.0f, 0.0f));
   }

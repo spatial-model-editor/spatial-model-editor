@@ -196,25 +196,13 @@ void QOpenGLMouseTracker::updateAllClippingPlanes() {
 void QOpenGLMouseTracker::updateScene() {
 
   m_SubMeshes->setBackground(m_backgroundColor);
-  //  m_wasDirty -> default is true;
-  //  m_wasDirty = m_sceneGraph->updateWorld( 1 / m_frameRate);
-  m_sceneGraph->updateWorld(1 / m_frameRate);
+
+  m_sceneGraph->updateSceneGraph(1 / m_frameRate);
 }
 
 void QOpenGLMouseTracker::drawScene() {
 
-  // reset states
-  m_mainProgram->DisableAllClippingPlanes();
-
-  // cache the result
-  std::multiset<std::shared_ptr<rendering::Node>, rendering::CompareNodes>
-      renderingQueue;
-
-  m_sceneGraph->buildRenderQueue(renderingQueue);
-
-  for (const auto &obj : renderingQueue) {
-    obj->draw(m_mainProgram);
-  }
+  m_sceneGraph->drawSceneGraph(m_mainProgram);
 }
 
 void QOpenGLMouseTracker::paintGL() {
