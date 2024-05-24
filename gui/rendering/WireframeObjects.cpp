@@ -75,16 +75,20 @@ void rendering::WireframeObjects::SetThickness(const GLfloat thickness,
   m_meshThickness[meshID] = thickness;
 }
 
-void rendering::WireframeObjects::SetAllThickness(const GLfloat thicknes) {
+void rendering::WireframeObjects::SetAllThickness(const GLfloat thickness) {
 
   for (auto &meshThickness : m_meshThickness) {
-    meshThickness = thicknes;
+    meshThickness = thickness;
   }
 }
 
 void rendering::WireframeObjects::ResetToDefaultThickness(uint32_t meshID) {
   assert(meshID < m_meshThickness.size());
   m_meshThickness[meshID] = m_defaultThickness[meshID];
+}
+
+void rendering::WireframeObjects::ResetAllToDefaultThickness() {
+  m_meshThickness = m_defaultThickness;
 }
 
 std::vector<GLfloat> rendering::WireframeObjects::GetDefaultThickness() const {

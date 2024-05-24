@@ -224,14 +224,27 @@ void QOpenGLMouseTracker::paintGL() {
 
   ////////
 
-  renderScene();
+  //  renderScene();
+  updateScene();
+
+  drawScene();
 
   QOpenGLFramebufferObject fboPicking(size());
   fboPicking.bind();
 
   context()->functions()->glViewport(0, 0, size().width(), size().height());
 
-  renderScene(m_lineSelectPrecision);
+  if (m_SubMeshes) {
+    m_SubMeshes->SetAllThickness(m_lineSelectPrecision);
+  }
+
+  drawScene();
+
+  if (m_SubMeshes) {
+    m_SubMeshes->ResetAllToDefaultThickness();
+  }
+
+  //  renderScene(m_lineSelectPrecision);
 
   m_offscreenPickingImage = fboPicking.toImage();
 
