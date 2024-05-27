@@ -15,6 +15,7 @@
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
 #include <sbml/packages/spatial/extension/SpatialExtension.h>
+#include <stdexcept>
 
 namespace sme::model {
 
@@ -244,8 +245,7 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   images = common::ImageStack(std::move(gsf.images));
   images.convertToIndexed();
   hasImage = true;
-  sbmlAnnotation->sampledFieldColours =
-      common::toStdVec(images[0].colorTable());
+  sbmlAnnotation->sampledFieldColours = common::toStdVec(images.colorTable());
   voxelSize = calculateVoxelSize(images.volume(), physicalSize);
   modelMembranes->updateCompartmentImages(images);
   for (const auto &[id, colour] : gsf.compartmentIdColourPairs) {
@@ -272,8 +272,7 @@ void ModelGeometry::importGeometryFromImages(const common::ImageStack &imgs,
   }
   images = common::ImageStack{imgs};
   images.convertToIndexed();
-  sbmlAnnotation->sampledFieldColours =
-      common::toStdVec(images[0].colorTable());
+  sbmlAnnotation->sampledFieldColours = common::toStdVec(images.colorTable());
   modelMembranes->updateCompartmentImages(images);
   auto *geom{getOrCreateGeometry(sbmlModel)};
   exportSampledFieldGeometry(geom, images);
@@ -467,6 +466,34 @@ bool ModelGeometry::getIsValid() const { return isValid; }
 bool ModelGeometry::getIsMeshValid() const { return isMeshValid; }
 
 bool ModelGeometry::getHasImage() const { return hasImage; }
+
+void ModelGeometry::updateGeometryImageColor(QRgb oldColour, QRgb newColour) {
+  if (!hasImage) {
+    SPDLOG_WARN("No image");
+    return;
+  }
+  if (oldColour == newColour) {
+    return;
+  }
+  auto colorTable = images.colorTable();
+  auto colorIndex = static_cast<int>(colorTable.indexOf(oldColour));
+  if (colorIndex < 0) {
+    SPDLOG_WARN("oldColour {:x} not found in image", oldColour);
+    return;
+  }
+  if (colorTable.indexOf(newColour) >= 0) {
+    SPDLOG_ERROR("newColour {:x} already used in image", newColour);
+    throw std::invalid_argument(
+        "This colour is already taken by another "
+        "compartment. Please choose a different colour.");
+  }
+  SPDLOG_INFO("Changing colour {:x} to {:x} in geometry image", oldColour,
+              newColour);
+  images.setColor(colorIndex, newColour);
+  sbmlAnnotation->sampledFieldColours = common::toStdVec(images.colorTable());
+  modelCompartments->updateGeometryImageColor(oldColour, newColour);
+  hasUnsavedChanges = true;
+}
 
 void ModelGeometry::writeGeometryToSBML() const {
   // todo: also export 3d mesh

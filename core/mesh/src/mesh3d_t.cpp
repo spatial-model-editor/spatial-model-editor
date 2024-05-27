@@ -253,7 +253,7 @@ TEST_CASE("Mesh3d more complex geometries",
     imageStack.convertToIndexed();
     common::VolumeF voxelSize(1.0, 1.0, 1.0);
     common::VoxelF originPoint(0.0, 0.0, 0.0);
-    auto colours = imageStack[0].colorTable();
+    auto colours = imageStack.colorTable();
     REQUIRE(colours.size() == 3);
     QRgb colOutside{0xff000000};
     QRgb colCell{0xffffffff};
@@ -402,7 +402,7 @@ TEST_CASE("Mesh3d more complex geometries",
     imageStack.convertToIndexed();
     common::VolumeF voxelSize(1.0, 1.0, 1.0);
     common::VoxelF originPoint(0.0, 0.0, 0.0);
-    auto colours = imageStack[0].colorTable();
+    auto colours = imageStack.colorTable();
     REQUIRE(colours.size() == 3);
     QRgb colOutside{0xff000000};
     QRgb colNucleus{0xff7f7f7f};
@@ -512,7 +512,7 @@ TEST_CASE("Mesh3d more complex geometries",
     REQUIRE(imageStack.volume().width() == 50);
     REQUIRE(imageStack.volume().height() == 50);
     REQUIRE(imageStack.volume().depth() == 50);
-    auto colorTable = imageStack[0].colorTable();
+    auto colorTable = imageStack.colorTable();
     REQUIRE(colorTable.size() == 2);
     QRgb colOutside = 0xffffe119;
     QRgb colInside = compartment->getColour();

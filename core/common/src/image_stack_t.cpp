@@ -7,10 +7,13 @@ TEST_CASE("ImageStack",
     sme::common::ImageStack imageStack{};
     REQUIRE(imageStack.empty() == true);
     REQUIRE(imageStack.valid({0, 0, 0}) == false);
+    REQUIRE(imageStack.colorTable().empty());
   }
   SECTION("construct from volume") {
     sme::common::ImageStack imageStack({3, 10, 12},
                                        QImage::Format_ARGB32_Premultiplied);
+    QRgb color1{qRgb(255, 255, 255)};
+    QRgb color2{qRgb(123, 112, 0)};
     REQUIRE(imageStack.empty() == false);
     REQUIRE(imageStack.volume().width() == 3);
     REQUIRE(imageStack.volume().height() == 10);
@@ -21,6 +24,14 @@ TEST_CASE("ImageStack",
     REQUIRE(imageStack.valid({1, 1, 12}) == false);
     REQUIRE(imageStack.valid({2, 0, 0}) == true);
     REQUIRE(imageStack.valid({3, 0, 0}) == false);
+    imageStack.fill(color1);
+    REQUIRE(imageStack.colorTable().empty());
+    imageStack.convertToIndexed();
+    REQUIRE(imageStack.colorTable().size() == 1);
+    REQUIRE(imageStack.colorTable()[0] == color1);
+    imageStack.setColor(0, color2);
+    REQUIRE(imageStack.colorTable().size() == 1);
+    REQUIRE(imageStack.colorTable()[0] == color2);
   }
   SECTION("construct from grayscale intensity array") {
     SECTION("all values identical and non-zero should be white") {

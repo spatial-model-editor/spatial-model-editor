@@ -37,6 +37,7 @@ public:
   Compartment(std::string compId, const common::ImageStack &imgs, QRgb col);
   [[nodiscard]] const std::string &getId() const;
   [[nodiscard]] QRgb getColour() const;
+  void setColour(QRgb newColour);
   [[nodiscard]] inline const std::vector<common::Voxel> &getVoxels() const {
     return ix;
   }

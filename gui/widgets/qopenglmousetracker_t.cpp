@@ -56,7 +56,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
     REQUIRE(tiffReader.getErrorMessage().isEmpty());
     auto imageStack = tiffReader.getImages();
     imageStack.convertToIndexed();
-    auto colours = imageStack[0].colorTable();
+    auto colours = imageStack.colorTable();
     REQUIRE(colours.size() == 3);
     std::vector<std::size_t> maxCellVolume{3};
 

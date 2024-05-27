@@ -59,6 +59,7 @@ TEST_CASE("Geometry: Compartments and Fields",
   SECTION("one pixel compartment, 1x1 image") {
     common::ImageStack img{{QImage(1, 1, QImage::Format_RGB32)}};
     auto col = qRgb(12, 243, 154);
+    auto col2 = qRgb(121, 43, 0);
     img[0].setPixel(0, 0, col);
     geometry::Compartment comp("comp", {{img}}, col);
     REQUIRE(comp.getCompartmentImages().volume().width() == 1);
@@ -67,6 +68,9 @@ TEST_CASE("Geometry: Compartments and Fields",
     REQUIRE(comp.nVoxels() == 1);
     REQUIRE(comp.getVoxel(0).p == QPoint{0, 0});
     REQUIRE(comp.getVoxel(0).z == 0);
+    REQUIRE(comp.getColour() == col);
+    comp.setColour(col2);
+    REQUIRE(comp.getColour() == col2);
 
     auto specCol = qRgb(123, 12, 1);
     geometry::Field field(&comp, "spec1", 1.0, specCol);
