@@ -23,9 +23,6 @@ public:
   void SetFrustum(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ,
                   GLfloat farZ);
 
-  void update(float delta) override;
-  void draw(std::unique_ptr<rendering::ShaderProgram> &program) override;
-
   QVector3D GetForwardVector() const;
   QVector3D GetUpVector() const;
 
@@ -36,6 +33,9 @@ public:
   //  static std::weak_ptr<Camera> currentActiveCamera;
 
 private:
+  void update(float delta) override;
+  void draw(std::unique_ptr<rendering::ShaderProgram> &program) override;
+
   void
   UpdateProjection(std::unique_ptr<rendering::ShaderProgram> &program) const;
   void UpdateView(std::unique_ptr<rendering::ShaderProgram> &program) const;

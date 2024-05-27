@@ -61,8 +61,8 @@ public:
 
   void setBackground(QColor backgroundColor);
 
+protected:
   //  void update(float delta) override;
-
   void draw(std::unique_ptr<rendering::ShaderProgram> &program) override;
 
 private:

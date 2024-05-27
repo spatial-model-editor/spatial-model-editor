@@ -88,8 +88,14 @@ public:
    * Adds another node as a direct child. The node will assume ownership
    * of the node added as a child.
    * @param node
+   * @param localFrameCoord
    */
   void add(std::shared_ptr<Node> node, bool localFrameCoord = true);
+
+  /**
+   * Get the root node of the tree
+   */
+  std::shared_ptr<Node> getRoot();
 
   /**
    * Removes the node from its parent tree.
@@ -161,38 +167,32 @@ public:
   virtual void setScale(QVector3D scale);
 
   /**
-   * Sets the m_dirty flag for the node so transforms are updated later.
-   */
-  void markDirty();
-
-  /**
    *
    * @return RenderPriority
    */
   RenderPriority getPriority() const;
 
-  /**
-   *
-   * @param priority
-   */
-  void setPriority(const RenderPriority &priority);
+  //  /**
+  //   *
+  //   * @param priority
+  //   */
+  //  void setPriority(const RenderPriority &priority);
 
 protected:
   std::multiset<std::weak_ptr<rendering::Node>, CompareNodes> renderingQueue{};
 
   /**
    *
-   * @param RenderingQueue
+   * @param queue
    */
   void buildRenderingQueue(
       std::multiset<std::weak_ptr<rendering::Node>, CompareNodes> &queue);
 
-  // TODO: must be protected!
   /**
-   * Traverses the tree and updates child transformations.
-   * @return If there was a dirty note in the scene graph.
+   * Traverses the tree and updates child transformations and trigger update()
+   * method
    */
-  bool updateWorld(float delta = 0);
+  void updateSubGraph(float delta = 0);
 
   /**
    * Recreates the local-space transform based on pos, rot, and scale.
@@ -227,11 +227,9 @@ protected:
   // Scale of the node in local-space.
   QVector3D m_scale;
 
-  // Dirty flag used to speed up tree traversal and prevent cyclic loops.
-  // This flag will be set when the transform is changed.
-  bool m_dirty = true;
+  bool m_renderingDirty = false;
 
-  rendering::RenderPriority m_priority;
+  const rendering::RenderPriority m_priority;
 };
 
 } // namespace rendering

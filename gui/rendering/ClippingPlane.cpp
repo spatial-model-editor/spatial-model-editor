@@ -4,7 +4,6 @@
 
 #include "ClippingPlane.hpp"
 #include "ShaderProgram.hpp"
-// #include "qopenglmousetracker.hpp"
 #include "sme/logger.hpp"
 #include <QVector3D>
 
@@ -56,8 +55,6 @@ void rendering::ClippingPlane::SetClipPlane(GLfloat a, GLfloat b, GLfloat c,
   m_b = b;
   m_c = c;
   m_d = d;
-
-  markDirty();
 }
 
 void rendering::ClippingPlane::SetClipPlane(QVector3D normal,
@@ -67,8 +64,6 @@ void rendering::ClippingPlane::SetClipPlane(QVector3D normal,
 
   SetClipPlane(normal.x(), normal.y(), normal.z(),
                -QVector3D::dotProduct(normal, point));
-
-  markDirty();
 }
 
 std::tuple<QVector3D, QVector3D>
@@ -86,8 +81,6 @@ void rendering::ClippingPlane::TranslateAlongsideNormal(GLfloat value) {
 
   point += normal * value;
   SetClipPlane(normal, point);
-
-  //  markDirty();
 }
 
 void rendering::ClippingPlane::Enable() { m_active = true; }
@@ -114,8 +107,6 @@ void rendering::ClippingPlane::UpdateClipPlane(
     std::unique_ptr<rendering::ShaderProgram> &program) const {
 
   if (m_active) {
-
-    assert(m_dirty == false);
 
     program->EnableClippingPlane(m_planeIndex);
     program->SetClippingPlane(m_globalPlane.a, m_globalPlane.b, m_globalPlane.c,

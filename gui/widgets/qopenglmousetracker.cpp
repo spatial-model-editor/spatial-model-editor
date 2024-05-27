@@ -56,10 +56,6 @@ QOpenGLMouseTracker::BuildClippingPlane(
     parent->add(clippingPlane, localFrameCoord);
   }
 
-  // TODO: The scene graph must be updated!
-
-  update();
-
   return clippingPlane;
 }
 
@@ -93,10 +89,6 @@ QOpenGLMouseTracker::BuildClippingPlane(
   } else {
     parent->add(clippingPlane, localFrameCoord);
   }
-
-  // TODO: The scene graph must be updated!
-
-  update();
 
   return clippingPlane;
 }
@@ -219,14 +211,6 @@ void QOpenGLMouseTracker::paintGL() {
     return;
   }
 
-  //  m_camera.UpdateView(m_mainProgram);
-  //  m_camera.UpdateProjection(m_mainProgram);
-
-  //  updateAllClippingPlanes();
-
-  ////////
-
-  //  renderScene();
   updateScene();
 
   drawScene();
@@ -246,13 +230,9 @@ void QOpenGLMouseTracker::paintGL() {
     m_SubMeshes->ResetAllToDefaultThickness();
   }
 
-  //  renderScene(m_lineSelectPrecision);
-
   m_offscreenPickingImage = fboPicking.toImage();
 
   QOpenGLFramebufferObject::bindDefault();
-
-  /////////
 }
 
 void QOpenGLMouseTracker::resizeGL(int w, int h) {
@@ -309,9 +289,6 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
     SPDLOG_INFO("Reset state for selected objects to UNSELECTED objects!");
   }
 
-  // TODO: The scene graph must be updated! In case a consecutive access call is
-  // done before update() is done
-
   update();
 }
 
@@ -338,9 +315,6 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
                           subMeshesOrientation.y() - static_cast<float>(x_len),
                           subMeshesOrientation.z());
 
-  // TODO: The scene graph must be updated! In case an immediate, access call,
-  // is done.
-
   update();
 
   QRgb pixel = m_offscreenPickingImage.pixel(xAtPress, yAtPress);
@@ -365,24 +339,15 @@ void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
 
   emit mouseWheelEvent(event);
 
-  // TODO: The scene graph must be updated! In case an immediate, consecutive
-  // call, is done.
-
   update();
 }
 
 void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z) {
   m_camera->setPos(x, y, z);
-
-  // TODO: The scene graph must be updated! In case an immediate, consecutive
-  // call, is done.
 }
 
 void QOpenGLMouseTracker::SetCameraOrientation(float x, float y, float z) {
   m_camera->setRot(x, y, z);
-
-  // TODO: The scene graph must be updated! In case an immediate, consecutive
-  // call, is done.
 }
 
 QVector3D QOpenGLMouseTracker::GetCameraPosition() const {
@@ -395,16 +360,10 @@ QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
 
 void QOpenGLMouseTracker::SetSubMeshesOrientation(float x, float y, float z) {
   m_SubMeshes->setRot(x, y, z);
-
-  // TODO: The scene graph must be updated! In case an immediate, consecutive
-  // call, is done.
 }
 
 void QOpenGLMouseTracker::SetSubMeshesPosition(float x, float y, float z) {
   m_SubMeshes->setPos(x, y, z);
-
-  // TODO: The scene graph must be updated! In case an immediate, consecutive
-  // call, is done.
 }
 
 QVector3D QOpenGLMouseTracker::GetSubMeshesOrientation() const {
@@ -427,9 +386,6 @@ QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
   }
 
   m_sceneGraph->add(m_SubMeshes);
-
-  // TODO: The scene graph must be updated! Maybe? At this point, it doesn't
-  // matter if a consecutive access call is done.
 
   update();
 

@@ -19,9 +19,6 @@ namespace rendering {
 class ClippingPlane : public Node {
 
 public:
-  void update(float delta) override;
-  void draw(std::unique_ptr<rendering::ShaderProgram> &program) override;
-
   /**
    * @brief Create a vector that contains the minimum number of planes possible.
    * ( MAX_NUMBER_PLANES )
@@ -83,17 +80,23 @@ public:
   [[nodiscard]] bool getStatus() const;
 
 protected:
+  void update(float delta) override;
+  void draw(std::unique_ptr<rendering::ShaderProgram> &program) override;
+
   void
   UpdateClipPlane(std::unique_ptr<rendering::ShaderProgram> &program) const;
 
   explicit ClippingPlane(uint32_t planeIndex, bool active = false);
 
+  // plane parameters in local coordinates
   GLfloat m_a;
   GLfloat m_b;
   GLfloat m_c;
   GLfloat m_d;
+
   uint32_t m_planeIndex;
 
+  // plane parameters in global coordinates
   struct {
     GLfloat a;
     GLfloat b;

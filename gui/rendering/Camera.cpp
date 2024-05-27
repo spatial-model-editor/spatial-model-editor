@@ -36,8 +36,6 @@ void rendering::Camera::SetFrustum(GLfloat FOV, GLfloat width, GLfloat height,
   m_projectionMatrix[3][1] = 0.0f;
   m_projectionMatrix[3][2] = 1.0f;
   m_projectionMatrix[3][3] = 0.0f;
-
-  markDirty();
 }
 
 rendering::Camera::Camera(GLfloat FOV, GLfloat width, GLfloat height,

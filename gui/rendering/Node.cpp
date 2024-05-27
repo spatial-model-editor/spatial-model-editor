@@ -50,56 +50,32 @@ void Node::draw(std::unique_ptr<rendering::ShaderProgram> &program) {
   SPDLOG_DEBUG("Node {} draw()", name);
 }
 
-bool Node::updateWorld(float delta) {
-  bool wasDirty = m_dirty;
-  if (m_dirty) {
-    auto parent_ref = this->parent.lock();
-    this->updateLocalTransform();
-    if (parent_ref != nullptr) {
-      globalTransform = parent_ref->globalTransform * localTransform;
-    } else {
-      globalTransform = localTransform;
-    }
+void Node::updateSubGraph(float delta) {
 
-    m_dirty = false;
-    for (const auto &node : children) {
-      node->markDirty();
-      node->updateWorld(delta);
-      // no need as we already have one node, the current node, marked as dirty
-      // just by being on the dirty branch
-      //      wasDirty = wasDirty || node->updateWorld(delta);
-    }
+  auto parent_ref = this->parent.lock();
+  this->updateLocalTransform();
+  if (parent_ref != nullptr) {
+    globalTransform = parent_ref->globalTransform * localTransform;
   } else {
-    for (const auto &node : children) {
-      wasDirty = wasDirty || node->updateWorld(delta);
-    }
+    globalTransform = localTransform;
   }
+
+  for (const auto &node : children) {
+    node->updateSubGraph(delta);
+  }
+
   this->update(delta);
-  return wasDirty;
 }
 
 void Node::updateSceneGraph(float delta) {
 
-  bool isDirty = updateWorld(delta);
+  // update scene
+  updateSubGraph(delta);
 
-  // invalid rendering queue
-  if (isDirty) {
+  if (m_renderingDirty) {
     renderingQueue.clear();
     buildRenderingQueue(renderingQueue);
-  }
-}
-
-void Node::drawSceneGraph(
-    std::unique_ptr<rendering::ShaderProgram> &program) const {
-
-  // reset current opengl state machine
-  program->DisableAllClippingPlanes();
-
-  // render queue
-  for (const auto &obj : renderingQueue) {
-    auto objToRender = obj.lock();
-    if (objToRender)
-      objToRender->draw(program);
+    m_renderingDirty = false;
   }
 }
 
@@ -115,21 +91,45 @@ void Node::buildRenderingQueue(
   }
 }
 
+void Node::drawSceneGraph(
+    std::unique_ptr<rendering::ShaderProgram> &program) const {
+
+  // reset current opengl state machine
+  //
+  // reset clipping planes
+  program->DisableAllClippingPlanes();
+
+  // render queue
+  for (const auto &obj : renderingQueue) {
+    auto objToRender = obj.lock();
+    if (objToRender)
+      objToRender->draw(program);
+  }
+}
+
 // TODO: Use quaternions as a substitute to euler angles
 void Node::updateLocalTransform() {
-  if (m_dirty) {
 
-    localTransform.setToIdentity();
+  localTransform.setToIdentity();
 
-    localTransform.translate(m_position);
+  localTransform.translate(m_position);
 
-    localTransform.scale(m_scale);
+  localTransform.scale(m_scale);
 
-    // check which Euler angle convention it is used
-    localTransform.rotate(m_rotation.z(), 0.0f, 0.0f, 1.0f);
-    localTransform.rotate(m_rotation.y(), 0.0f, 1.0f, 0.0f);
-    localTransform.rotate(m_rotation.x(), 1.0f, 0.0f, 0.0f);
+  // check which Euler angle convention it is used
+  localTransform.rotate(m_rotation.z(), 0.0f, 0.0f, 1.0f);
+  localTransform.rotate(m_rotation.y(), 0.0f, 1.0f, 0.0f);
+  localTransform.rotate(m_rotation.x(), 1.0f, 0.0f, 0.0f);
+}
+
+std::shared_ptr<Node> Node::getRoot() {
+
+  auto computeRoot = shared_from_this();
+  while (computeRoot->parent.lock()) {
+    computeRoot = computeRoot->parent.lock();
   }
+
+  return computeRoot;
 }
 
 void Node::add(std::shared_ptr<Node> node, bool localFrameCoord) {
@@ -139,8 +139,15 @@ void Node::add(std::shared_ptr<Node> node, bool localFrameCoord) {
 
   if (node) {
     node->parent = shared_from_this();
-    node->m_dirty = true;
     children.push_back(node);
+
+    updateSubGraph();
+
+    auto root = getRoot();
+
+    if (root) {
+      root->m_renderingDirty = true;
+    }
   }
 }
 
@@ -152,21 +159,21 @@ void Node::remove() {
     return;
   }
 
+  auto root = getRoot();
+
   std::erase_if(parent_ref->children,
                 [this](auto child) { return child.get() == this; });
 
-  // The scene graph structure changed, hence it's 'dirty' ( required by
-  // buildRenderingQueue() )
-  parent_ref->markDirty();
+  if (root) {
+    root->m_renderingDirty = true;
+  }
 }
-
-void Node::markDirty() { m_dirty = true; }
 
 RenderPriority Node::getPriority() const { return m_priority; }
 
-void Node::setPriority(const RenderPriority &priority) {
-  m_priority = priority;
-}
+// void Node::setPriority(const RenderPriority &priority) {
+//   m_priority = priority;
+// }
 
 DecomposedTransform Node::getGlobalTransform() const {
 
@@ -201,8 +208,9 @@ QVector3D Node::getRot() const { return m_rotation; }
 QVector3D Node::getScale() const { return m_scale; }
 
 void Node::setPos(QVector3D position) {
-  markDirty();
+
   this->m_position = position;
+  updateSubGraph();
 }
 
 void Node::setPos(GLfloat posX, GLfloat posY, GLfloat posZ) {
@@ -210,8 +218,9 @@ void Node::setPos(GLfloat posX, GLfloat posY, GLfloat posZ) {
 }
 
 void Node::setRot(QVector3D rotation) {
-  markDirty();
+
   this->m_rotation = rotation;
+  updateSubGraph();
 }
 
 void Node::setRot(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
@@ -219,8 +228,9 @@ void Node::setRot(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
 }
 
 void Node::setScale(QVector3D scale) {
-  markDirty();
+
   this->m_scale = scale;
+  updateSubGraph();
 }
 
 } // namespace rendering
