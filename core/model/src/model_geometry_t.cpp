@@ -56,6 +56,9 @@ TEST_CASE("Model geometry",
     REQUIRE_NOTHROW(mGeometry.getPhysicalPoint({1, 2, 3}));
     REQUIRE(m.getHasUnsavedChanges() == false);
     REQUIRE(mGeometry.getHasUnsavedChanges() == false);
+    // this is a no-op as there is no geometry image yet:
+    REQUIRE_NOTHROW(m.updateGeometryImageColor(0, qRgb(255, 255, 255)));
+    REQUIRE(m.getHasUnsavedChanges() == false);
     SECTION("import sampled field") {
       mGeometry.importSampledFieldGeometry(doc->getModel());
       REQUIRE(m.getHasUnsavedChanges() == true);
@@ -126,6 +129,45 @@ TEST_CASE("Model geometry",
     REQUIRE(cols1[0] == c0);
     REQUIRE(cols1[1] == c1);
     REQUIRE(cols1[2] == c2);
+    SECTION("update geometry image colours no-ops") {
+      // invalid or no-op colour changes
+      REQUIRE(m.getGeometry().getHasUnsavedChanges() == false);
+      // oldColour not found
+      REQUIRE_NOTHROW(m.getGeometry().updateGeometryImageColor(
+          qRgb(255, 255, 255), qRgb(0, 0, 0)));
+      // no-op
+      REQUIRE_NOTHROW(m.getGeometry().updateGeometryImageColor(c0, c0));
+      REQUIRE_NOTHROW(m.getGeometry().updateGeometryImageColor(c1, c1));
+      // newColour already in use
+      REQUIRE_THROWS(m.getGeometry().updateGeometryImageColor(c0, c1));
+      REQUIRE_THROWS(m.getGeometry().updateGeometryImageColor(c1, c0));
+      // none of the above should have had any effect
+      REQUIRE(m.getGeometry().getHasUnsavedChanges() == false);
+    }
+    SECTION("update geometry image colours") {
+      REQUIRE(m.getGeometry().getHasUnsavedChanges() == false);
+      auto c3 = qRgb(255, 255, 255);
+      auto c4 = qRgb(0, 255, 255);
+      auto id = m.getCompartments().getIdFromColour(c0);
+      m.getGeometry().updateGeometryImageColor(c0, c3);
+      REQUIRE(m.getGeometry().getHasUnsavedChanges() == true);
+      REQUIRE(m.getCompartments().getIdFromColour(c0) == "");
+      REQUIRE(m.getCompartments().getIdFromColour(c3) == id);
+      REQUIRE(m.getCompartments().getIdFromColour(c4) == "");
+      REQUIRE(m.getGeometry().getImages().colorTable().size() == 3);
+      REQUIRE(m.getCompartments().getColours().size() == 3);
+      REQUIRE(m.getCompartments().getColours()[0] == c3);
+      REQUIRE(m.getCompartments().getColour(id) == c3);
+      m.getGeometry().updateGeometryImageColor(c3, c4);
+      REQUIRE(m.getCompartments().getIdFromColour(c0) == "");
+      REQUIRE(m.getCompartments().getIdFromColour(c3) == "");
+      REQUIRE(m.getCompartments().getIdFromColour(c4) == id);
+      REQUIRE(m.getGeometry().getHasUnsavedChanges() == true);
+      REQUIRE(m.getGeometry().getImages().colorTable().size() == 3);
+      REQUIRE(m.getCompartments().getColours().size() == 3);
+      REQUIRE(m.getCompartments().getColour(id) == c4);
+      REQUIRE(m.getCompartments().getColours()[0] == c4);
+    }
     SECTION("import geometry & keep colour assignments") {
       QImage img(":/geometry/concave-cell-nucleus-100x100.png");
       REQUIRE(img.size() == QSize(100, 100));

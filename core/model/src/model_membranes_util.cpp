@@ -67,7 +67,7 @@ void ImageMembranePixels::setImages(const common::ImageStack &imgs) {
   int nc{imgs[0].colorCount()};
   voxelPairs.resize(static_cast<std::size_t>(nc * (nc - 1)));
   colourIndexPairIndex = OrderedIntPairIndex{nc - 1};
-  colours = imgs[0].colorTable();
+  colours = imgs.colorTable();
   int nx{imgs[0].width()};
   int ny{imgs[0].height()};
   std::size_t nz{imgs.volume().depth()};

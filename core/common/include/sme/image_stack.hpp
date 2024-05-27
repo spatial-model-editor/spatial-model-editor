@@ -36,6 +36,7 @@ public:
     return imgs[z];
   }
   [[nodiscard]] inline bool empty() const { return imgs.empty(); }
+  [[nodiscard]] QList<QRgb> colorTable() const;
   [[nodiscard]] inline const Volume &volume() const noexcept { return sz; }
   inline std::vector<QImage>::iterator begin() noexcept { return imgs.begin(); }
   [[nodiscard]] inline std::vector<QImage>::const_iterator
@@ -52,6 +53,7 @@ public:
   void rescaleXY(QSize size);
   void flipYAxis();
   void convertToIndexed();
+  void setColor(int i, QRgb c);
   [[nodiscard]] bool valid(const Voxel &voxel) const;
   ImageStack scaled(int width, int height);
   ImageStack scaledToWidth(int width);

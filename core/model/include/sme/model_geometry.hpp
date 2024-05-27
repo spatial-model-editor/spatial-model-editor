@@ -79,6 +79,7 @@ public:
   [[nodiscard]] bool getIsValid() const;
   [[nodiscard]] bool getIsMeshValid() const;
   [[nodiscard]] bool getHasImage() const;
+  void updateGeometryImageColor(QRgb oldColour, QRgb newColour);
   void writeGeometryToSBML() const;
   [[nodiscard]] bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);

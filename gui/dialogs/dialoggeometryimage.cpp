@@ -12,7 +12,7 @@ DialogGeometryImage::DialogGeometryImage(
   coloredImage = originalImage;
   coloredImage.convertToIndexed();
   rescaledImage = coloredImage;
-  colorTable = coloredImage[0].colorTable();
+  colorTable = coloredImage.colorTable();
   ui->setupUi(this);
   ui->lblImage->setZSlider(ui->slideZIndex);
   ui->lblImage->setImage(rescaledImage);
@@ -274,7 +274,7 @@ void DialogGeometryImage::btnResetColours_clicked() {
   enableWidgets(true);
   coloredImage = originalImage;
   coloredImage.convertToIndexed();
-  colorTable = coloredImage[0].colorTable();
+  colorTable = coloredImage.colorTable();
   updateColours();
   spinPixelsX_valueChanged(ui->spinPixelsX->value());
 }

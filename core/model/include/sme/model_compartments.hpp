@@ -30,6 +30,7 @@ class ModelUnits;
 
 class ModelCompartments {
 private:
+  friend class ModelGeometry;
   QStringList ids;
   QStringList names;
   QVector<QRgb> colours;
@@ -43,6 +44,7 @@ private:
   simulate::SimulationData *simulationData = nullptr;
   bool hasUnsavedChanges{false};
   std::map<std::string, double, std::less<>> initialCompartmentSizes{};
+  void updateGeometryImageColor(QRgb oldColour, QRgb newColour);
 
 public:
   ModelCompartments();
