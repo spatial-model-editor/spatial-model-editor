@@ -36,15 +36,15 @@ public:
       std::shared_ptr<rendering::ClippingPlane> &clippingPlane);
 
   void SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height,
-                        GLfloat nearZ, GLfloat farZ);
-  void SetCameraPosition(float x, float y, float z);
+                        GLfloat nearZ, GLfloat farZ) const;
+  void SetCameraPosition(float x, float y, float z) const;
   void SetCameraOrientation(float x, float y, float z);
 
   QVector3D GetCameraPosition() const;
   QVector3D GetCameraOrientation() const;
 
-  void SetSubMeshesOrientation(float x, float y, float z);
-  void SetSubMeshesPosition(float x, float y, float z);
+  void SetSubMeshesOrientation(float x, float y, float z) const;
+  void SetSubMeshesPosition(float x, float y, float z) const;
 
   QVector3D GetSubMeshesOrientation() const;
   QVector3D GetSubMeshesPosition() const;
@@ -74,7 +74,7 @@ public:
   // colour of pixel at last mouse click position
   [[nodiscard]] QRgb getColour() const;
 
-  void setSubmeshVisibility(uint32_t meshID, bool visibility);
+  void setSubmeshVisibility(uint32_t meshID, bool visibility) const;
 
   /**
    * @brief If color is not valid returns -1 otherwise, return positive index.
@@ -136,7 +136,7 @@ protected:
   void resizeGL(int w, int h) override;
   void paintGL() override;
 
-  void updateScene();
+  void updateScene() const;
   void drawScene();
 
   void mouseMoveEvent(QMouseEvent *event) override;

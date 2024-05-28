@@ -30,8 +30,6 @@ public:
   GLfloat getFar() const;
   GLfloat getFOV() const;
 
-  //  static std::weak_ptr<Camera> currentActiveCamera;
-
 private:
   void update(float delta) override;
   void draw(std::unique_ptr<rendering::ShaderProgram> &program) override;

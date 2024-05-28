@@ -131,7 +131,7 @@ void QOpenGLMouseTracker::initializeGL() {
       rendering::shader::default_::text_fragment);
 }
 
-void QOpenGLMouseTracker::updateScene() {
+void QOpenGLMouseTracker::updateScene() const {
 
   if (m_SubMeshes) {
     m_SubMeshes->setBackground(m_backgroundColor);
@@ -190,10 +190,8 @@ void QOpenGLMouseTracker::resizeGL(int w, int h) {
 
 void QOpenGLMouseTracker::SetCameraFrustum(GLfloat FOV, GLfloat width,
                                            GLfloat height, GLfloat nearZ,
-                                           GLfloat farZ) {
+                                           GLfloat farZ) const {
   m_camera->SetFrustum(FOV, width, height, nearZ, farZ);
-
-  // TODO: The scene graph must be updated! ( or maybe just redraw it  )
 }
 
 void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
@@ -288,7 +286,7 @@ void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
   update();
 }
 
-void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z) {
+void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z) const {
   m_camera->setPos(x, y, z);
 }
 
@@ -304,11 +302,13 @@ QVector3D QOpenGLMouseTracker::GetCameraOrientation() const {
   return m_camera->getRot();
 }
 
-void QOpenGLMouseTracker::SetSubMeshesOrientation(float x, float y, float z) {
+void QOpenGLMouseTracker::SetSubMeshesOrientation(float x, float y,
+                                                  float z) const {
   m_SubMeshes->setRot(x, y, z);
 }
 
-void QOpenGLMouseTracker::SetSubMeshesPosition(float x, float y, float z) {
+void QOpenGLMouseTracker::SetSubMeshesPosition(float x, float y,
+                                               float z) const {
   m_SubMeshes->setPos(x, y, z);
 }
 
@@ -355,7 +355,7 @@ void QOpenGLMouseTracker::setSelectedObjectColor(QColor color) {
 QRgb QOpenGLMouseTracker::getColour() const { return m_lastColour; }
 
 void QOpenGLMouseTracker::setSubmeshVisibility(uint32_t meshID,
-                                               bool visibility) {
+                                               bool visibility) const {
   m_SubMeshes->setSubmeshVisibility(meshID, visibility);
 }
 
@@ -377,8 +377,7 @@ QColor QOpenGLMouseTracker::getBackgroundColor() const {
 
 void QOpenGLMouseTracker::clear() {
 
-  // TODO: Maybe, reset should be applied to the entire scene graph?
+  m_sceneGraph->children.clear();
 
-  m_SubMeshes.reset();
   update();
 }

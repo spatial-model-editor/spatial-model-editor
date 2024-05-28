@@ -100,13 +100,8 @@ void rendering::Camera::update(float delta) {
 void rendering::Camera::draw(
     std::unique_ptr<rendering::ShaderProgram> &program) {
 
-  //  auto CurrentActive = Camera::currentActiveCamera.lock();
-  //
-  //  if(CurrentActive && CurrentActive.get() == this) {
-
   UpdateView(program);
   UpdateProjection(program);
-  //  }
 }
 
 QVector3D rendering::Camera::GetForwardVector() const { return m_viewForward; }
@@ -131,5 +126,3 @@ GLfloat rendering::Camera::getNear() const { return m_near; }
 GLfloat rendering::Camera::getFar() const { return m_far; }
 
 GLfloat rendering::Camera::getFOV() const { return m_FOV; }
-
-// std::weak_ptr<rendering::Camera> rendering::Camera::currentActiveCamera;

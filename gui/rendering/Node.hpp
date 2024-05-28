@@ -39,11 +39,6 @@ public:
    * Each node is and is part of an ordered tree that when traversed,
    * updates nodes at the top first and direct children in a first-come
    * first-serve basis.
-   *
-   * One thing to note is cyclic references are not forbidden, but they
-   * should not stall the application as traversed nodes have a m_dirty
-   * check. Referencing the same node in different trees can lead to odd
-   * unexpected behavior in regard to coordinates and should be avoided.
    */
   std::vector<std::shared_ptr<Node>> children;
 
@@ -132,7 +127,7 @@ public:
 
   /**
    * Sets the node's position in local-space.
-   * @param position  QVector3D m_position;
+   * @param position
    */
   virtual void setPos(QVector3D position);
 
