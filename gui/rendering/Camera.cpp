@@ -117,8 +117,12 @@ void rendering::Camera::UpdateProjection(
 void rendering::Camera::UpdateView(
     std::unique_ptr<rendering::ShaderProgram> &program) const {
 
-  program->SetViewPosition(m_position.x(), m_position.y(), m_position.z());
-  program->SetViewRotation(m_rotation.x(), m_rotation.y(), m_rotation.z());
+  auto trans = getGlobalTransform();
+
+  program->SetViewPosition(trans.position.x(), trans.position.y(),
+                           trans.position.z());
+  program->SetViewRotation(trans.eulerAngles.x(), trans.eulerAngles.y(),
+                           trans.eulerAngles.z());
 }
 
 GLfloat rendering::Camera::getNear() const { return m_near; }

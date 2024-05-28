@@ -184,9 +184,14 @@ void rendering::WireframeObjects::RenderSetup(
   program->SetMeshTranslationOffset(m_translationOffset.x(),
                                     m_translationOffset.y(),
                                     m_translationOffset.z());
-  program->SetPosition(m_position.x(), m_position.y(), m_position.z());
-  program->SetRotation(m_rotation.x(), m_rotation.y(), m_rotation.z());
-  program->SetScale(m_scale.x(), m_scale.y(), m_scale.z());
+
+  auto trans = getGlobalTransform();
+
+  program->SetPosition(trans.position.x(), trans.position.y(),
+                       trans.position.z());
+  program->SetRotation(trans.eulerAngles.x(), trans.eulerAngles.y(),
+                       trans.eulerAngles.z());
+  program->SetScale(trans.scale.x(), trans.scale.y(), trans.scale.z());
 }
 
 void rendering::WireframeObjects::draw(
