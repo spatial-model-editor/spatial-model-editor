@@ -290,7 +290,8 @@ void QOpenGLMouseTracker::SetCameraPosition(float x, float y, float z) const {
   m_camera->setPos(x, y, z);
 }
 
-void QOpenGLMouseTracker::SetCameraOrientation(float x, float y, float z) {
+void QOpenGLMouseTracker::SetCameraOrientation(float x, float y,
+                                               float z) const {
   m_camera->setRot(x, y, z);
 }
 

@@ -38,7 +38,7 @@ public:
   void SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height,
                         GLfloat nearZ, GLfloat farZ) const;
   void SetCameraPosition(float x, float y, float z) const;
-  void SetCameraOrientation(float x, float y, float z);
+  void SetCameraOrientation(float x, float y, float z) const;
 
   QVector3D GetCameraPosition() const;
   QVector3D GetCameraOrientation() const;
