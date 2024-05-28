@@ -189,8 +189,6 @@ void rendering::WireframeObjects::RenderSetup(
   program->SetScale(m_scale.x(), m_scale.y(), m_scale.z());
 }
 
-// void rendering::WireframeObjects::update(float delta) {}
-
 void rendering::WireframeObjects::draw(
     std::unique_ptr<rendering::ShaderProgram> &program) {
   Render(program);

@@ -82,7 +82,7 @@ void Node::updateSceneGraph(float delta) {
 void Node::buildRenderingQueue(
     std::multiset<std::weak_ptr<rendering::Node>, CompareNodes> &queue) {
 
-  if (m_priority > RenderPriority::e_zero) {
+  if (getPriority() > RenderPriority::e_zero) {
     queue.insert(shared_from_this());
   }
 
@@ -170,10 +170,6 @@ void Node::remove() {
 }
 
 RenderPriority Node::getPriority() const { return m_priority; }
-
-// void Node::setPriority(const RenderPriority &priority) {
-//   m_priority = priority;
-// }
 
 DecomposedTransform Node::getGlobalTransform() const {
 

@@ -27,42 +27,8 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
 
 std::shared_ptr<rendering::ClippingPlane>
 QOpenGLMouseTracker::BuildClippingPlane(
-    GLfloat a, GLfloat b, GLfloat c, GLfloat d, bool active,
-    bool localFrameCoord, std::shared_ptr<rendering::Node> parent) {
-
-  // TODO: Implement global frame use case.
-  assert(localFrameCoord == true);
-
-  auto it = m_clippingPlanesPool.begin();
-
-  if (it == m_clippingPlanesPool.end())
-    return std::shared_ptr<rendering::ClippingPlane>(nullptr);
-
-  auto clippingPlane = *it;
-  clippingPlane->SetClipPlane(a, b, c, d);
-
-  if (active) {
-    clippingPlane->Enable();
-  } else {
-    clippingPlane->Disable();
-  }
-
-  m_clippingPlanes.insert(clippingPlane);
-  m_clippingPlanesPool.erase(clippingPlane);
-
-  if (parent == nullptr) {
-    m_sceneGraph->add(clippingPlane, localFrameCoord);
-  } else {
-    parent->add(clippingPlane, localFrameCoord);
-  }
-
-  return clippingPlane;
-}
-
-std::shared_ptr<rendering::ClippingPlane>
-QOpenGLMouseTracker::BuildClippingPlane(
     const QVector3D &normal, const QVector3D &point, bool active,
-    bool localFrameCoord, std::shared_ptr<rendering::Node> parent) {
+    bool localFrameCoord, const std::shared_ptr<rendering::Node> &parent) {
 
   // TODO: Implement global frame use case.
   assert(localFrameCoord == true);
@@ -138,51 +104,31 @@ void QOpenGLMouseTracker::initializeGL() {
 
 #endif
 
-  //  std::string ext =
-  //      QString::fromLatin1(
-  //          (const char *)context()->functions()->glGetString(GL_EXTENSIONS))
-  //          .replace(' ', "\n\t")
-  //          .toStdString();
-  //  CheckOpenGLError("glGetString(GL_EXTENSIONS)");
-  //
-  //  std::string vendor(
-  //      (const char *)context()->functions()->glGetString(GL_VENDOR));
-  //  CheckOpenGLError("glGetString(GL_VENDOR)");
-  //  std::string renderer(
-  //      (const char *)context()->functions()->glGetString(GL_RENDERER));
-  //  CheckOpenGLError("glGetString(GL_RENDERER)");
-  //  std::string gl_version(
-  //      (const char *)context()->functions()->glGetString(GL_VERSION));
-  //  CheckOpenGLError("glGetString(GL_VERSION)");
-  //
-  //  SPDLOG_INFO("OpenGL: " + vendor + std::string(" ") + renderer +
-  //              std::string(" ") + gl_version + std::string(" ") +
-  //              std::string("\n\n\t") + ext + std::string("\n"));
+  std::string ext =
+      QString::fromLatin1(
+          (const char *)context()->functions()->glGetString(GL_EXTENSIONS))
+          .replace(' ', "\n\t")
+          .toStdString();
+  CheckOpenGLError("glGetString(GL_EXTENSIONS)");
+
+  std::string vendor(
+      (const char *)context()->functions()->glGetString(GL_VENDOR));
+  CheckOpenGLError("glGetString(GL_VENDOR)");
+  std::string renderer(
+      (const char *)context()->functions()->glGetString(GL_RENDERER));
+  CheckOpenGLError("glGetString(GL_RENDERER)");
+  std::string gl_version(
+      (const char *)context()->functions()->glGetString(GL_VERSION));
+  CheckOpenGLError("glGetString(GL_VERSION)");
+
+  SPDLOG_INFO("OpenGL: " + vendor + std::string(" ") + renderer +
+              std::string(" ") + gl_version + std::string(" ") +
+              std::string("\n\n\t") + ext + std::string("\n"));
 
   m_mainProgram = std::make_unique<rendering::ShaderProgram>(
       rendering::shader::colorAsUniform::text_vertex_color_as_uniform,
       rendering::shader::default_::text_geometry,
       rendering::shader::default_::text_fragment);
-}
-
-void QOpenGLMouseTracker::renderScene(std::optional<float> lineWidth) {
-  if (m_SubMeshes) {
-    m_SubMeshes->setBackground(m_backgroundColor);
-    m_SubMeshes->Render(m_mainProgram, lineWidth);
-  }
-}
-
-void QOpenGLMouseTracker::updateAllClippingPlanes() {
-
-  // TODO: The clipping plane RESET must be done before rendering is taking
-  // place! start with a clean opengl set of clipping planes.
-  m_mainProgram->DisableAllClippingPlanes();
-
-  // TODO: no more manual update. This process is now triggered once the scene
-  // graph gets updated!
-  //  for (auto &plane : m_clippingPlanes) {
-  //    plane->UpdateClipPlane(m_mainProgram);
-  //  }
 }
 
 void QOpenGLMouseTracker::updateScene() {

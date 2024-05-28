@@ -172,12 +172,6 @@ public:
    */
   RenderPriority getPriority() const;
 
-  //  /**
-  //   *
-  //   * @param priority
-  //   */
-  //  void setPriority(const RenderPriority &priority);
-
 protected:
   std::multiset<std::weak_ptr<rendering::Node>, CompareNodes> renderingQueue{};
 
@@ -229,7 +223,8 @@ protected:
 
   bool m_renderingDirty = false;
 
-  const rendering::RenderPriority m_priority;
+private:
+  rendering::RenderPriority m_priority;
 };
 
 } // namespace rendering

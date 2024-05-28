@@ -27,15 +27,9 @@ public:
                       float cameraFarZ = 2000.0f, float frameRate = 30.0f);
 
   std::shared_ptr<rendering::ClippingPlane>
-  BuildClippingPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d,
-                     bool active = false, bool localFrameCoord = true,
-                     std::shared_ptr<rendering::Node> parent =
-                         std::shared_ptr<rendering::Node>(nullptr));
-
-  std::shared_ptr<rendering::ClippingPlane>
   BuildClippingPlane(const QVector3D &normal, const QVector3D &point,
                      bool active = false, bool localFrameCoord = true,
-                     std::shared_ptr<rendering::Node> parent =
+                     const std::shared_ptr<rendering::Node> &parent =
                          std::shared_ptr<rendering::Node>(nullptr));
 
   void DestroyClippingPlane(
@@ -48,8 +42,6 @@ public:
 
   QVector3D GetCameraPosition() const;
   QVector3D GetCameraOrientation() const;
-
-  // TODO: Add access to Camera shared pointer
 
   void SetSubMeshesOrientation(float x, float y, float z);
   void SetSubMeshesPosition(float x, float y, float z);
@@ -111,11 +103,9 @@ protected:
 
   QColor m_selectedObjectColor;
 
-  //  std::unique_ptr<rendering::WireframeObjects> m_SubMeshes{};
   std::shared_ptr<rendering::WireframeObjects> m_SubMeshes{};
 
   std::unique_ptr<rendering::ShaderProgram> m_mainProgram{};
-  //  rendering::Camera m_camera;
   std::shared_ptr<rendering::Camera> m_camera;
   float m_frameRate;
 
@@ -145,10 +135,6 @@ protected:
   void initializeGL() override;
   void resizeGL(int w, int h) override;
   void paintGL() override;
-
-  void renderScene(std::optional<float> widthLine = {});
-
-  void updateAllClippingPlanes();
 
   void updateScene();
   void drawScene();
