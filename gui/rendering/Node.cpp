@@ -24,21 +24,6 @@ Node::Node(const std::string &name, const QVector3D &position,
   this->localTransform.setToIdentity();
 }
 
-Node::Node(const std::string &name, const QVector3D &position,
-           const QVector3D &rotation, const QVector3D &scale)
-    : Node(name, position, rotation, scale, RenderPriority::e_node) {}
-
-Node::Node(const std::string &name, const QVector3D &position,
-           const QVector3D &rotation)
-    : Node(name, position, rotation, QVector3D(1, 1, 1)) {}
-
-Node::Node(const std::string &name, const QVector3D &position)
-    : Node(name, position, QVector3D(0, 0, 0)) {}
-
-Node::Node(const std::string &name) : Node(name, QVector3D(0, 0, 0)) {}
-
-Node::Node() : Node("Node") {}
-
 Node::~Node() { SPDLOG_DEBUG("Removing Node \"" + name + "\""); }
 
 void Node::update(float delta) {
@@ -46,7 +31,7 @@ void Node::update(float delta) {
   SPDLOG_DEBUG("Node {} update() ", name);
 }
 
-void Node::draw(std::unique_ptr<rendering::ShaderProgram> &program) {
+void Node::draw(rendering::ShaderProgram &program) {
   SPDLOG_DEBUG("Node {} draw()", name);
 }
 
@@ -75,15 +60,17 @@ void Node::updateSceneGraph(float delta) {
   if (m_renderingDirty) {
     renderingQueue.clear();
     buildRenderingQueue(renderingQueue);
+    std::sort(renderingQueue.begin(), renderingQueue.end(), CompareNodes());
     m_renderingDirty = false;
   }
 }
 
 void Node::buildRenderingQueue(
-    std::multiset<std::weak_ptr<rendering::Node>, CompareNodes> &queue) {
+    std::vector<std::weak_ptr<rendering::Node>> &queue) {
 
   if (getPriority() > RenderPriority::e_zero) {
-    queue.insert(shared_from_this());
+    //    queue.insert(shared_from_this());
+    queue.push_back(shared_from_this());
   }
 
   for (const auto &node : children) {
@@ -91,13 +78,12 @@ void Node::buildRenderingQueue(
   }
 }
 
-void Node::drawSceneGraph(
-    std::unique_ptr<rendering::ShaderProgram> &program) const {
+void Node::drawSceneGraph(rendering::ShaderProgram &program) {
 
   // reset current opengl state machine
   //
   // reset clipping planes
-  program->DisableAllClippingPlanes();
+  program.DisableAllClippingPlanes();
 
   // render queue
   for (const auto &obj : renderingQueue) {
@@ -116,13 +102,13 @@ void Node::updateLocalTransform() {
 
   localTransform.scale(m_scale);
 
-  // check which Euler angle convention it is used
+  // todo: check which Euler angle convention it is used
   localTransform.rotate(m_rotation.z(), 0.0f, 0.0f, 1.0f);
   localTransform.rotate(m_rotation.y(), 0.0f, 1.0f, 0.0f);
   localTransform.rotate(m_rotation.x(), 1.0f, 0.0f, 0.0f);
 }
 
-std::shared_ptr<Node> Node::getRoot() {
+std::weak_ptr<Node> Node::getRoot() {
 
   auto computeRoot = shared_from_this();
   while (computeRoot->parent.lock()) {
@@ -145,8 +131,9 @@ void Node::add(std::shared_ptr<Node> node, bool localFrameCoord) {
 
     auto root = getRoot();
 
-    if (root) {
-      root->m_renderingDirty = true;
+    auto root_loocked = root.lock();
+    if (root_loocked) {
+      root_loocked->m_renderingDirty = true;
     }
   }
 }
@@ -164,8 +151,9 @@ void Node::remove() {
   std::erase_if(parent_ref->children,
                 [this](auto child) { return child.get() == this; });
 
-  if (root) {
-    root->m_renderingDirty = true;
+  auto root_loocked = root.lock();
+  if (root_loocked) {
+    root_loocked->m_renderingDirty = true;
   }
 }
 

@@ -58,21 +58,11 @@ public:
    */
   std::string name;
 
-  Node();
-
-  explicit Node(const std::string &name);
-
-  Node(const std::string &name, const QVector3D &position);
-
-  Node(const std::string &name, const QVector3D &position,
-       const QVector3D &rotation);
-
-  Node(const std::string &name, const QVector3D &position,
-       const QVector3D &rotation, const QVector3D &scale);
-
-  Node(const std::string &name, const QVector3D &position,
-       const QVector3D &rotation, const QVector3D &scale,
-       const RenderPriority &priority);
+  Node(const std::string &name = std::string("Node"),
+       const QVector3D &position = QVector3D(0, 0, 0),
+       const QVector3D &rotation = QVector3D(0, 0, 0),
+       const QVector3D &scale = QVector3D(1, 1, 1),
+       const RenderPriority &priority = RenderPriority::e_node);
 
   virtual ~Node();
 
@@ -90,7 +80,7 @@ public:
   /**
    * Get the root node of the tree
    */
-  std::shared_ptr<Node> getRoot();
+  std::weak_ptr<Node> getRoot();
 
   /**
    * Removes the node from its parent tree.
@@ -103,7 +93,7 @@ public:
    */
   void updateSceneGraph(float delta = 0);
 
-  void drawSceneGraph(std::unique_ptr<rendering::ShaderProgram> &program) const;
+  void drawSceneGraph(rendering::ShaderProgram &program);
 
   DecomposedTransform getGlobalTransform() const;
 
@@ -168,14 +158,11 @@ public:
   RenderPriority getPriority() const;
 
 protected:
-  std::multiset<std::weak_ptr<rendering::Node>, CompareNodes> renderingQueue{};
-
   /**
    *
    * @param queue
    */
-  void buildRenderingQueue(
-      std::multiset<std::weak_ptr<rendering::Node>, CompareNodes> &queue);
+  void buildRenderingQueue(std::vector<std::weak_ptr<rendering::Node>> &queue);
 
   /**
    * Traverses the tree and updates child transformations and trigger update()
@@ -192,20 +179,13 @@ protected:
    * It "draws" the current node.
    * @param program std::unique_ptr<rendering::ShaderProgram>
    */
-  virtual void draw(std::unique_ptr<rendering::ShaderProgram> &program);
+  virtual void draw(rendering::ShaderProgram &program);
 
   /**
    * Runs the node's update function which can vary due to inheritance.
    * @param delta time in seconds
    */
   virtual void update(float delta);
-
-  //  /**
-  //   * Each Node can implement it for debugging reasons.
-  //   * @param program std::unique_ptr<rendering::ShaderProgram>
-  //   */
-  //  virtual void debugDraw(std::unique_ptr<rendering::ShaderProgram>
-  //  &program);
 
   // Position of the node in local-space.
   QVector3D m_position;
@@ -220,6 +200,9 @@ protected:
 
 private:
   rendering::RenderPriority m_priority;
+  //  std::multiset<std::weak_ptr<rendering::Node>, CompareNodes>
+  //  renderingQueue{};
+  std::vector<std::weak_ptr<rendering::Node>> renderingQueue;
 };
 
 } // namespace rendering

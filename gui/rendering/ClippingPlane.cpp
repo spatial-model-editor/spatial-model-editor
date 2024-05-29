@@ -98,20 +98,19 @@ void rendering::ClippingPlane::update(float delta) {
       fromVectorialToAnalytical(positionTranslated, normalRotated.toVector3D());
 }
 
-void rendering::ClippingPlane::draw(
-    std::unique_ptr<rendering::ShaderProgram> &program) {
+void rendering::ClippingPlane::draw(rendering::ShaderProgram &program) {
   UpdateClipPlane(program);
 }
 
 void rendering::ClippingPlane::UpdateClipPlane(
-    std::unique_ptr<rendering::ShaderProgram> &program) const {
+    rendering::ShaderProgram &program) {
 
   if (m_active) {
 
-    program->EnableClippingPlane(m_planeIndex);
-    program->SetClippingPlane(m_globalPlane.a, m_globalPlane.b, m_globalPlane.c,
-                              m_globalPlane.d, m_planeIndex);
+    program.EnableClippingPlane(m_planeIndex);
+    program.SetClippingPlane(m_globalPlane.a, m_globalPlane.b, m_globalPlane.c,
+                             m_globalPlane.d, m_planeIndex);
   } else {
-    program->DisableClippingPlane(m_planeIndex);
+    program.DisableClippingPlane(m_planeIndex);
   }
 }

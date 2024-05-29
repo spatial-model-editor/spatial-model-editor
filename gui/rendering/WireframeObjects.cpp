@@ -169,7 +169,7 @@ void rendering::WireframeObjects::DestroyVBO() {
 }
 
 void rendering::WireframeObjects::RenderSetup(
-    const std::unique_ptr<rendering::ShaderProgram> &program) {
+    rendering::ShaderProgram &program) {
 
   glDisable(GL_CULL_FACE);
   CheckOpenGLError("glDisable(GL_CULL_FACE)");
@@ -177,31 +177,29 @@ void rendering::WireframeObjects::RenderSetup(
   CheckOpenGLError("glEnable(GL_DEPTH_TEST)");
   glClearColor(clearColor.redF(), clearColor.greenF(), clearColor.blueF(),
                clearColor.alphaF());
-  program->SetBackgroundColor(clearColor.redF(), clearColor.greenF(),
-                              clearColor.blueF());
+  program.SetBackgroundColor(clearColor.redF(), clearColor.greenF(),
+                             clearColor.blueF());
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-  program->SetMeshTranslationOffset(m_translationOffset.x(),
-                                    m_translationOffset.y(),
-                                    m_translationOffset.z());
+  program.SetMeshTranslationOffset(m_translationOffset.x(),
+                                   m_translationOffset.y(),
+                                   m_translationOffset.z());
 
   auto trans = getGlobalTransform();
 
-  program->SetPosition(trans.position.x(), trans.position.y(),
-                       trans.position.z());
-  program->SetRotation(trans.eulerAngles.x(), trans.eulerAngles.y(),
-                       trans.eulerAngles.z());
-  program->SetScale(trans.scale.x(), trans.scale.y(), trans.scale.z());
+  program.SetPosition(trans.position.x(), trans.position.y(),
+                      trans.position.z());
+  program.SetRotation(trans.eulerAngles.x(), trans.eulerAngles.y(),
+                      trans.eulerAngles.z());
+  program.SetScale(trans.scale.x(), trans.scale.y(), trans.scale.z());
 }
 
-void rendering::WireframeObjects::draw(
-    std::unique_ptr<rendering::ShaderProgram> &program) {
+void rendering::WireframeObjects::draw(rendering::ShaderProgram &program) {
   Render(program);
 }
 
-void rendering::WireframeObjects::Render(
-    const std::unique_ptr<rendering::ShaderProgram> &program,
-    std::optional<float> lineWidth) {
+void rendering::WireframeObjects::Render(rendering::ShaderProgram &program,
+                                         std::optional<float> lineWidth) {
 
   m_openGLContext->makeCurrent(m_openGLContext->surface());
 
@@ -216,9 +214,9 @@ void rendering::WireframeObjects::Render(
       break;
     if (!m_visibleSubmesh[i])
       continue;
-    program->SetColor(m_colors[i].redF(), m_colors[i].greenF(),
-                      m_colors[i].blueF(), m_colors[i].alphaF());
-    program->SetThickness(lineWidth.value_or(m_meshThickness[i]));
+    program.SetColor(m_colors[i].redF(), m_colors[i].greenF(),
+                     m_colors[i].blueF(), m_colors[i].alphaF());
+    program.SetThickness(lineWidth.value_or(m_meshThickness[i]));
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_elementBufferIds[i]);
     glDrawElements(GL_TRIANGLES, static_cast<int>(m_indices[i].size()),
                    GL_UNSIGNED_INT, (void *)nullptr);

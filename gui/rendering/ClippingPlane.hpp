@@ -81,10 +81,9 @@ public:
 
 protected:
   void update(float delta) override;
-  void draw(std::unique_ptr<rendering::ShaderProgram> &program) override;
+  void draw(rendering::ShaderProgram &program) override;
 
-  void
-  UpdateClipPlane(std::unique_ptr<rendering::ShaderProgram> &program) const;
+  void UpdateClipPlane(rendering::ShaderProgram &program);
 
   explicit ClippingPlane(uint32_t planeIndex, bool active = false);
 

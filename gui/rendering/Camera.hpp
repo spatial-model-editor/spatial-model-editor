@@ -32,11 +32,10 @@ public:
 
 private:
   void update(float delta) override;
-  void draw(std::unique_ptr<rendering::ShaderProgram> &program) override;
+  void draw(rendering::ShaderProgram &program) override;
 
-  void
-  UpdateProjection(std::unique_ptr<rendering::ShaderProgram> &program) const;
-  void UpdateView(std::unique_ptr<rendering::ShaderProgram> &program) const;
+  void UpdateProjection(rendering::ShaderProgram &program);
+  void UpdateView(rendering::ShaderProgram &program);
 
   GLfloat m_aspectRatio;
   GLfloat m_near;

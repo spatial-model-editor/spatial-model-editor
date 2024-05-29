@@ -142,7 +142,7 @@ void QOpenGLMouseTracker::updateScene() const {
 
 void QOpenGLMouseTracker::drawScene() {
 
-  m_sceneGraph->drawSceneGraph(m_mainProgram);
+  m_sceneGraph->drawSceneGraph(*m_mainProgram);
 }
 
 void QOpenGLMouseTracker::paintGL() {

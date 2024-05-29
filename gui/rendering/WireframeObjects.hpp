@@ -33,7 +33,7 @@ public:
 
   ~WireframeObjects() override;
 
-  void Render(const std::unique_ptr<rendering::ShaderProgram> &program,
+  void Render(rendering::ShaderProgram &program,
               std::optional<float> lineWidth = {});
 
   void SetColor(const QColor &color, uint32_t meshID);
@@ -62,7 +62,7 @@ public:
   void setBackground(QColor backgroundColor);
 
 protected:
-  void draw(std::unique_ptr<rendering::ShaderProgram> &program) override;
+  void draw(rendering::ShaderProgram &program) override;
 
 private:
   std::vector<QVector4D> m_vertices;
@@ -87,7 +87,7 @@ private:
 
   void CreateVBO();
   void DestroyVBO();
-  void RenderSetup(const std::unique_ptr<rendering::ShaderProgram> &program);
+  void RenderSetup(rendering::ShaderProgram &program);
 };
 
 } // namespace rendering

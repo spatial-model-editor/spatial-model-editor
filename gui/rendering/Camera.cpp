@@ -97,8 +97,7 @@ void rendering::Camera::update(float delta) {
   m_viewUp.setZ(upZ);
 }
 
-void rendering::Camera::draw(
-    std::unique_ptr<rendering::ShaderProgram> &program) {
+void rendering::Camera::draw(rendering::ShaderProgram &program) {
 
   UpdateView(program);
   UpdateProjection(program);
@@ -108,21 +107,19 @@ QVector3D rendering::Camera::GetForwardVector() const { return m_viewForward; }
 
 QVector3D rendering::Camera::GetUpVector() const { return m_viewUp; }
 
-void rendering::Camera::UpdateProjection(
-    std::unique_ptr<rendering::ShaderProgram> &program) const {
+void rendering::Camera::UpdateProjection(rendering::ShaderProgram &program) {
 
-  program->SetProjection(m_projectionMatrix[0]);
+  program.SetProjection(m_projectionMatrix[0]);
 }
 
-void rendering::Camera::UpdateView(
-    std::unique_ptr<rendering::ShaderProgram> &program) const {
+void rendering::Camera::UpdateView(rendering::ShaderProgram &program) {
 
   auto trans = getGlobalTransform();
 
-  program->SetViewPosition(trans.position.x(), trans.position.y(),
-                           trans.position.z());
-  program->SetViewRotation(trans.eulerAngles.x(), trans.eulerAngles.y(),
-                           trans.eulerAngles.z());
+  program.SetViewPosition(trans.position.x(), trans.position.y(),
+                          trans.position.z());
+  program.SetViewRotation(trans.eulerAngles.x(), trans.eulerAngles.y(),
+                          trans.eulerAngles.z());
 }
 
 GLfloat rendering::Camera::getNear() const { return m_near; }
