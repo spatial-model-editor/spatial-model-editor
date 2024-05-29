@@ -41,9 +41,10 @@ jobs:
       MACOS_KEYCHAIN_PWD: ${{ secrets.MACOS_KEYCHAIN_PWD }}
     name: "${{ matrix.target }} :: ${{ matrix.platform.os }}"
     steps:
-      - uses: spatial-model-editor/setup-ci@2024.04.23
+      - uses: spatial-model-editor/setup-ci@2024.05.31
         with:
           sme_deps: '2024.05.15'
+          cache_id: ${{ matrix.target }}
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'

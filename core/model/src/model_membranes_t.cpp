@@ -20,15 +20,16 @@ TEST_CASE("SBML membranes",
       QRgb col1 = qRgb(123, 123, 0);
       img.fill(col1);
       img.setPixel(1, 1, col0);
-      common::ImageStack imgs{{img.convertToFormat(QImage::Format_Indexed8)}};
+      common::ImageStack images({img});
+      images.convertToIndexed();
       std::vector<std::unique_ptr<geometry::Compartment>> compartments;
       compartments.push_back(
-          std::make_unique<geometry::Compartment>("c0", imgs, col0));
+          std::make_unique<geometry::Compartment>("c0", images, col0));
       compartments.push_back(
-          std::make_unique<geometry::Compartment>("c1", imgs, col1));
+          std::make_unique<geometry::Compartment>("c1", images, col1));
       QStringList names{"c0 name", "c1 name"};
       model::ModelMembranes ms;
-      ms.updateCompartmentImages(imgs);
+      ms.updateCompartmentImages(images);
       REQUIRE(ms.getIds().isEmpty());
       REQUIRE(ms.getMembranes().empty());
       REQUIRE(ms.getNames().isEmpty());
