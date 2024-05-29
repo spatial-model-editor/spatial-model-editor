@@ -4,14 +4,13 @@
 
 #include "ClippingPlane.hpp"
 #include "ShaderProgram.hpp"
-#include "qopenglmousetracker.hpp"
 #include "sme/logger.hpp"
 #include <QVector3D>
 
 rendering::ClippingPlane::ClippingPlane(uint32_t planeIndex, bool active)
     : Node("ClippingPlane " + std::to_string(planeIndex),
            QVector3D(0.0f, 0.0f, 0.0f), QVector3D(0.0f, 0.0f, 0.0f),
-           QVector3D(1.0f, 1.0f, 1.0f)),
+           QVector3D(1.0f, 1.0f, 1.0f), RenderPriority::e_clippingPlane),
       m_planeIndex(planeIndex), m_active(active) {}
 
 std::set<std::shared_ptr<rendering::ClippingPlane>>
@@ -68,7 +67,10 @@ void rendering::ClippingPlane::SetClipPlane(QVector3D normal,
 }
 
 std::tuple<QVector3D, QVector3D>
-rendering::ClippingPlane::GetClipPlane() const {
+rendering::ClippingPlane::GetClipPlane(bool localFrameCoord) const {
+
+  // TODO: implement global frame use case.
+  assert(localFrameCoord == true);
 
   return fromAnalyticalToVectorial(m_a, m_b, m_c, m_d);
 }
@@ -85,25 +87,30 @@ void rendering::ClippingPlane::Enable() { m_active = true; }
 void rendering::ClippingPlane::Disable() { m_active = false; }
 bool rendering::ClippingPlane::getStatus() const { return m_active; }
 
+void rendering::ClippingPlane::update(float delta) {
+
+  auto [position, normal] = fromAnalyticalToVectorial(m_a, m_b, m_c, m_d);
+  DecomposedTransform globalTransform = getGlobalTransform();
+  QVector4D normalRotated = globalTransform.rotation * QVector4D(normal, 1.0f);
+  QVector3D positionTranslated = globalTransform.position + position;
+
+  std::tie(m_globalPlane.a, m_globalPlane.b, m_globalPlane.c, m_globalPlane.d) =
+      fromVectorialToAnalytical(positionTranslated, normalRotated.toVector3D());
+}
+
+void rendering::ClippingPlane::draw(rendering::ShaderProgram &program) {
+  UpdateClipPlane(program);
+}
+
 void rendering::ClippingPlane::UpdateClipPlane(
-    std::unique_ptr<rendering::ShaderProgram> &program) const {
+    rendering::ShaderProgram &program) {
 
   if (m_active) {
 
-    //    assert(m_dirty == false);
-
-    auto [position, normal] = fromAnalyticalToVectorial(m_a, m_b, m_c, m_d);
-    DecomposedTransform globalTransform = getGlobalTransform();
-    QVector4D normalRotated =
-        globalTransform.rotation * QVector4D(normal, 1.0f);
-    QVector3D positionTranslated = globalTransform.position + position;
-
-    auto [a, b, c, d] = fromVectorialToAnalytical(positionTranslated,
-                                                  normalRotated.toVector3D());
-
-    program->EnableClippingPlane(m_planeIndex);
-    program->SetClippingPlane(a, b, c, d, m_planeIndex);
+    program.EnableClippingPlane(m_planeIndex);
+    program.SetClippingPlane(m_globalPlane.a, m_globalPlane.b, m_globalPlane.c,
+                             m_globalPlane.d, m_planeIndex);
   } else {
-    program->DisableClippingPlane(m_planeIndex);
+    program.DisableClippingPlane(m_planeIndex);
   }
 }

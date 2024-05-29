@@ -33,7 +33,7 @@ public:
 
   ~WireframeObjects() override;
 
-  void Render(const std::unique_ptr<rendering::ShaderProgram> &program,
+  void Render(rendering::ShaderProgram &program,
               std::optional<float> lineWidth = {});
 
   void SetColor(const QColor &color, uint32_t meshID);
@@ -45,7 +45,9 @@ public:
   std::vector<QColor> GetCurrentColors() const;
 
   void SetThickness(const GLfloat thickness, uint32_t meshID);
+  void SetAllThickness(const GLfloat thickness);
   void ResetToDefaultThickness(uint32_t meshID);
+  void ResetAllToDefaultThickness();
   std::vector<GLfloat> GetDefaultThickness() const;
   std::vector<GLfloat> GetCurrentThickness() const;
 
@@ -58,6 +60,9 @@ public:
   std::size_t meshIDFromColor(const QColor &color) const;
 
   void setBackground(QColor backgroundColor);
+
+protected:
+  void draw(rendering::ShaderProgram &program) override;
 
 private:
   std::vector<QVector4D> m_vertices;
@@ -82,7 +87,7 @@ private:
 
   void CreateVBO();
   void DestroyVBO();
-  void RenderSetup(const std::unique_ptr<rendering::ShaderProgram> &program);
+  void RenderSetup(rendering::ShaderProgram &program);
 };
 
 } // namespace rendering

@@ -23,21 +23,20 @@ public:
   void SetFrustum(GLfloat FOV, GLfloat width, GLfloat height, GLfloat nearZ,
                   GLfloat farZ);
 
-  void setRot(GLfloat rotX, GLfloat rotY, GLfloat rotZ) override;
-  void setRot(QVector3D rotation) override;
-
   QVector3D GetForwardVector() const;
   QVector3D GetUpVector() const;
-
-  void
-  UpdateProjection(std::unique_ptr<rendering::ShaderProgram> &program) const;
-  void UpdateView(std::unique_ptr<rendering::ShaderProgram> &program) const;
 
   GLfloat getNear() const;
   GLfloat getFar() const;
   GLfloat getFOV() const;
 
 private:
+  void update(float delta) override;
+  void draw(rendering::ShaderProgram &program) override;
+
+  void UpdateProjection(rendering::ShaderProgram &program);
+  void UpdateView(rendering::ShaderProgram &program);
+
   GLfloat m_aspectRatio;
   GLfloat m_near;
   GLfloat m_far;

@@ -43,14 +43,12 @@ rendering::Camera::Camera(GLfloat FOV, GLfloat width, GLfloat height,
                           GLfloat posY, GLfloat posZ, GLfloat rotX,
                           GLfloat rotY, GLfloat rotZ)
     : Node("Camera", QVector3D(posX, posY, posZ), QVector3D(rotX, rotY, rotZ),
-           QVector3D(1, 1, 1)) {
+           QVector3D(1, 1, 1), RenderPriority::e_camera) {
 
   SetFrustum(FOV, width, height, nearZ, farZ);
 }
 
-void rendering::Camera::setRot(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
-
-  Node::setRot(rotX, rotY, rotZ);
+void rendering::Camera::update(float delta) {
 
   GLfloat _forwardX, _forwardY, _forwardZ;
   GLfloat forwardX, forwardY, forwardZ;
@@ -59,9 +57,9 @@ void rendering::Camera::setRot(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
   GLfloat upX, upY, upZ;
 
   const GLfloat toRadian = PI / 180.0f;
-  const GLfloat radRotX = rotX * toRadian;
-  const GLfloat radRotY = rotY * toRadian;
-  const GLfloat radRotZ = rotZ * toRadian;
+  const GLfloat radRotX = getRot().x() * toRadian;
+  const GLfloat radRotY = getRot().y() * toRadian;
+  const GLfloat radRotZ = getRot().z() * toRadian;
 
   const GLfloat sinX = sinf(radRotX);
   const GLfloat cosX = cosf(radRotX);
@@ -99,23 +97,29 @@ void rendering::Camera::setRot(GLfloat rotX, GLfloat rotY, GLfloat rotZ) {
   m_viewUp.setZ(upZ);
 }
 
-void rendering::Camera::setRot(QVector3D rotation) {
-  setRot(rotation.x(), rotation.y(), rotation.z());
+void rendering::Camera::draw(rendering::ShaderProgram &program) {
+
+  UpdateView(program);
+  UpdateProjection(program);
 }
 
 QVector3D rendering::Camera::GetForwardVector() const { return m_viewForward; }
 
 QVector3D rendering::Camera::GetUpVector() const { return m_viewUp; }
 
-void rendering::Camera::UpdateProjection(
-    std::unique_ptr<rendering::ShaderProgram> &program) const {
-  program->SetProjection(m_projectionMatrix[0]);
+void rendering::Camera::UpdateProjection(rendering::ShaderProgram &program) {
+
+  program.SetProjection(m_projectionMatrix[0]);
 }
 
-void rendering::Camera::UpdateView(
-    std::unique_ptr<rendering::ShaderProgram> &program) const {
-  program->SetViewPosition(m_position.x(), m_position.y(), m_position.z());
-  program->SetViewRotation(m_rotation.x(), m_rotation.y(), m_rotation.z());
+void rendering::Camera::UpdateView(rendering::ShaderProgram &program) {
+
+  auto trans = getGlobalTransform();
+
+  program.SetViewPosition(trans.position.x(), trans.position.y(),
+                          trans.position.z());
+  program.SetViewRotation(trans.eulerAngles.x(), trans.eulerAngles.y(),
+                          trans.eulerAngles.z());
 }
 
 GLfloat rendering::Camera::getNear() const { return m_near; }

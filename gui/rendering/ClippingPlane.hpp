@@ -19,9 +19,6 @@ namespace rendering {
 class ClippingPlane : public Node {
 
 public:
-  void
-  UpdateClipPlane(std::unique_ptr<rendering::ShaderProgram> &program) const;
-
   /**
    * @brief Create a vector that contains the minimum number of planes possible.
    * ( MAX_NUMBER_PLANES )
@@ -56,11 +53,12 @@ public:
   void SetClipPlane(QVector3D normal, const QVector3D &point);
 
   /**
-   * Return the vectorial form of the plane.
+   * Return the vectorial form of the plane in local or global frame.
    * @return [ Position, Normal ]
    */
 
-  std::tuple<QVector3D, QVector3D> GetClipPlane() const;
+  std::tuple<QVector3D, QVector3D>
+  GetClipPlane(bool localFrameCoord = true) const;
 
   /**
    * @brief: Translate the plane alongside the normal
@@ -82,15 +80,33 @@ public:
   [[nodiscard]] bool getStatus() const;
 
 protected:
+  void update(float delta) override;
+  void draw(rendering::ShaderProgram &program) override;
+
+  void UpdateClipPlane(rendering::ShaderProgram &program);
+
   explicit ClippingPlane(uint32_t planeIndex, bool active = false);
 
+  // plane parameters in local coordinates
   GLfloat m_a;
   GLfloat m_b;
   GLfloat m_c;
   GLfloat m_d;
+
   uint32_t m_planeIndex;
 
-  // active( true ) or disabled ( false )
+  // plane parameters in global coordinates
+  struct {
+    GLfloat a;
+    GLfloat b;
+    GLfloat c;
+    GLfloat d;
+  } m_globalPlane;
+
+  /**
+   *
+   * @details active( true ) or disabled ( false )
+   */
   bool m_active;
 };
 

@@ -27,30 +27,24 @@ public:
                       float cameraFarZ = 2000.0f, float frameRate = 30.0f);
 
   std::shared_ptr<rendering::ClippingPlane>
-  BuildClippingPlane(GLfloat a, GLfloat b, GLfloat c, GLfloat d,
-                     bool active = false,
-                     std::shared_ptr<rendering::Node> parent =
-                         std::shared_ptr<rendering::Node>(nullptr));
-
-  std::shared_ptr<rendering::ClippingPlane>
   BuildClippingPlane(const QVector3D &normal, const QVector3D &point,
-                     bool active = false,
-                     std::shared_ptr<rendering::Node> parent =
+                     bool active = false, bool localFrameCoord = true,
+                     const std::shared_ptr<rendering::Node> &parent =
                          std::shared_ptr<rendering::Node>(nullptr));
 
   void DestroyClippingPlane(
       std::shared_ptr<rendering::ClippingPlane> &clippingPlane);
 
   void SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height,
-                        GLfloat nearZ, GLfloat farZ);
-  void SetCameraPosition(float x, float y, float z);
-  void SetCameraOrientation(float x, float y, float z);
+                        GLfloat nearZ, GLfloat farZ) const;
+  void SetCameraPosition(float x, float y, float z) const;
+  void SetCameraOrientation(float x, float y, float z) const;
 
   QVector3D GetCameraPosition() const;
   QVector3D GetCameraOrientation() const;
 
-  void SetSubMeshesOrientation(float x, float y, float z);
-  void SetSubMeshesPosition(float x, float y, float z);
+  void SetSubMeshesOrientation(float x, float y, float z) const;
+  void SetSubMeshesPosition(float x, float y, float z) const;
 
   QVector3D GetSubMeshesOrientation() const;
   QVector3D GetSubMeshesPosition() const;
@@ -65,8 +59,9 @@ public:
    * Default colors used are taken from 'mesh'
    */
 
-  void SetSubMeshes(const sme::mesh::Mesh3d &mesh,
-                    const std::vector<QColor> &colors = std::vector<QColor>(0));
+  std::shared_ptr<rendering::Node>
+  SetSubMeshes(const sme::mesh::Mesh3d &mesh,
+               const std::vector<QColor> &colors = std::vector<QColor>(0));
 
   void setFPS(float frameRate);
   void setLineWidth(float lineWidth = 0.005f);
@@ -79,7 +74,7 @@ public:
   // colour of pixel at last mouse click position
   [[nodiscard]] QRgb getColour() const;
 
-  void setSubmeshVisibility(uint32_t meshID, bool visibility);
+  void setSubmeshVisibility(uint32_t meshID, bool visibility) const;
 
   /**
    * @brief If color is not valid returns -1 otherwise, return positive index.
@@ -108,10 +103,10 @@ protected:
 
   QColor m_selectedObjectColor;
 
-  std::unique_ptr<rendering::WireframeObjects> m_SubMeshes{};
+  std::shared_ptr<rendering::WireframeObjects> m_SubMeshes{};
 
   std::unique_ptr<rendering::ShaderProgram> m_mainProgram{};
-  rendering::Camera m_camera;
+  std::shared_ptr<rendering::Camera> m_camera;
   float m_frameRate;
 
   QImage m_offscreenPickingImage;
@@ -121,6 +116,10 @@ protected:
 
   QColor m_backgroundColor;
   QRgb m_lastColour;
+
+  std::shared_ptr<rendering::Node> m_sceneGraph =
+      std::make_shared<rendering::Node>("root");
+
   /**
    * Set of clipping planes that are part of the scene.
    * They can be active in the scene or not.
@@ -137,9 +136,8 @@ protected:
   void resizeGL(int w, int h) override;
   void paintGL() override;
 
-  void renderScene(std::optional<float> widthLine = {});
-
-  void updateAllClippingPlanes();
+  void updateScene() const;
+  void drawScene();
 
   void mouseMoveEvent(QMouseEvent *event) override;
 

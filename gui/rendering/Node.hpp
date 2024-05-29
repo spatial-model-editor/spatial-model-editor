@@ -8,7 +8,10 @@
 #include <QOpenGLWidget>
 #include <QtOpenGL>
 
+#include "Config.hpp"
+#include "ShaderProgram.hpp"
 #include "Utils.hpp"
+#include <set>
 
 namespace rendering {
 
@@ -17,6 +20,12 @@ struct DecomposedTransform {
   QMatrix4x4 rotation;
   QVector3D eulerAngles;
   QVector3D position;
+};
+
+class CompareNodes {
+public:
+  bool operator()(const std::weak_ptr<class Node> &l,
+                  const std::weak_ptr<Node> &r) const;
 };
 
 class Node : public std::enable_shared_from_this<Node> {
@@ -30,19 +39,14 @@ public:
    * Each node is and is part of an ordered tree that when traversed,
    * updates nodes at the top first and direct children in a first-come
    * first-serve basis.
-   *
-   * One thing to note is cyclic references are not forbidden, but they
-   * should not stall the application as traversed nodes have a m_dirty
-   * check. Referencing the same node in different trees can lead to odd
-   * unexpected behavior in regard to coordinates and should be avoided.
    */
   std::vector<std::shared_ptr<Node>> children;
 
   /**
-   * World-space transformation for this node. This matrix is typically
-   * used when generating the world matrix of children nodes.
+   * Global-space transformation for this node. This matrix is typically
+   * used when generating the global matrix of children nodes.
    */
-  QMatrix4x4 worldTransform;
+  QMatrix4x4 globalTransform;
 
   /**
    * Local-space transformation for this node.
@@ -54,17 +58,11 @@ public:
    */
   std::string name;
 
-  Node();
-
-  explicit Node(const std::string &name);
-
-  Node(const std::string &name, const QVector3D &position);
-
-  Node(const std::string &name, const QVector3D &position,
-       const QVector3D &rotation);
-
-  Node(const std::string &name, const QVector3D &position,
-       const QVector3D &rotation, const QVector3D &scale);
+  Node(const std::string &name = std::string("Node"),
+       const QVector3D &position = QVector3D(0, 0, 0),
+       const QVector3D &rotation = QVector3D(0, 0, 0),
+       const QVector3D &scale = QVector3D(1, 1, 1),
+       const RenderPriority &priority = RenderPriority::e_node);
 
   virtual ~Node();
 
@@ -75,8 +73,14 @@ public:
    * Adds another node as a direct child. The node will assume ownership
    * of the node added as a child.
    * @param node
+   * @param localFrameCoord
    */
-  void add(std::shared_ptr<Node> node, bool transformInLocalSpace = true);
+  void add(std::shared_ptr<Node> node, bool localFrameCoord = true);
+
+  /**
+   * Get the root node of the tree
+   */
+  std::weak_ptr<Node> getRoot();
 
   /**
    * Removes the node from its parent tree.
@@ -84,14 +88,12 @@ public:
   void remove();
 
   /**
-   * Traverses the tree and updates child transformations.
+   * entry point for update the scene
+   * @param delta
    */
-  void updateWorldTransform(float delta = 1 / 60.0f);
+  void updateSceneGraph(float delta = 0);
 
-  /**
-   * Recreates the local-space transform based on pos, rot, and scale.
-   */
-  virtual void updateLocalTransform();
+  void drawSceneGraph(rendering::ShaderProgram &program);
 
   DecomposedTransform getGlobalTransform() const;
 
@@ -115,7 +117,7 @@ public:
 
   /**
    * Sets the node's position in local-space.
-   * @param position  QVector3D m_position;
+   * @param position
    */
   virtual void setPos(QVector3D position);
 
@@ -150,9 +152,34 @@ public:
   virtual void setScale(QVector3D scale);
 
   /**
-   * Sets the m_dirty flag for the node so transforms are updated later.
+   *
+   * @return RenderPriority
    */
-  void markDirty();
+  RenderPriority getPriority() const;
+
+protected:
+  /**
+   *
+   * @param queue
+   */
+  void buildRenderingQueue(std::vector<std::weak_ptr<rendering::Node>> &queue);
+
+  /**
+   * Traverses the tree and updates child transformations and trigger update()
+   * method
+   */
+  void updateSubGraph(float delta = 0);
+
+  /**
+   * Recreates the local-space transform based on pos, rot, and scale.
+   */
+  virtual void updateLocalTransform();
+
+  /**
+   * It "draws" the current node.
+   * @param program std::unique_ptr<rendering::ShaderProgram>
+   */
+  virtual void draw(rendering::ShaderProgram &program);
 
   /**
    * Runs the node's update function which can vary due to inheritance.
@@ -160,7 +187,6 @@ public:
    */
   virtual void update(float delta);
 
-protected:
   // Position of the node in local-space.
   QVector3D m_position;
 
@@ -170,9 +196,13 @@ protected:
   // Scale of the node in local-space.
   QVector3D m_scale;
 
-  // Dirty flag used to speed up tree traversal and prevent cyclic loops.
-  // This flag will be set when the transform is changed.
-  bool m_dirty = true;
+  bool m_renderingDirty = false;
+
+private:
+  rendering::RenderPriority m_priority;
+  //  std::multiset<std::weak_ptr<rendering::Node>, CompareNodes>
+  //  renderingQueue{};
+  std::vector<std::weak_ptr<rendering::Node>> renderingQueue;
 };
 
 } // namespace rendering
