@@ -23,7 +23,7 @@ cmake .. \
     -DSME_BUILD_BENCHMARKS=off \
     -DSME_BUILD_GUI=off \
     -DSME_BUILD_CLI=off \
-    -DSME_BUILD_TESTS=on \
+    -DBUILD_TESTING=on \
     -DSME_BUILD_PYTHON_LIBRARY=off \
     -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden" \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib64/cmake" \
