@@ -1,4 +1,5 @@
 #include "sme/image_stack.hpp"
+#include "sme/image_stack_impl.hpp"
 #include "sme/logger.hpp"
 #include "sme/tiff.hpp"
 #include "sme/utils.hpp"
@@ -97,37 +98,17 @@ void ImageStack::flipYAxis() {
   }
 }
 
-static QList<QRgb> getCombinedColorTable(const std::vector<QImage> &images) {
-  // construct a colorTable that contains all colors from all slices
-  // todo: put this in image_stack_impl, add tests and benchmarks, optimize?
-  constexpr auto flagNoDither{Qt::AvoidDither | Qt::ThresholdDither |
-                              Qt::ThresholdAlphaDither | Qt::NoOpaqueDetection};
-  QList<QRgb> colorTable{};
-  for (auto &image : images) {
-    auto sliceColorTable{
-        image.convertToFormat(QImage::Format_Indexed8, flagNoDither)
-            .colorTable()};
-    for (auto color : sliceColorTable) {
-      if (!colorTable.contains(color)) {
-        colorTable.push_back(color);
-      }
-    }
-  }
-  return colorTable;
-}
-
 void ImageStack::convertToIndexed() {
-  constexpr auto flagNoDither{Qt::AvoidDither | Qt::ThresholdDither |
-                              Qt::ThresholdAlphaDither | Qt::NoOpaqueDetection};
   for (auto &img : imgs) {
     if (img.hasAlphaChannel()) {
-      img = img.convertToFormat(QImage::Format_RGB32, flagNoDither);
+      img = img.convertToFormat(QImage::Format_RGB32,
+                                indexedImageConversionFlags);
     }
   }
-  auto colorTable{getCombinedColorTable(imgs)};
+  auto colorTable = getCombinedColorTable(imgs);
   for (auto &img : imgs) {
-    img =
-        img.convertToFormat(QImage::Format_Indexed8, colorTable, flagNoDither);
+    img = img.convertToFormat(indexedImageFormat, colorTable,
+                              indexedImageConversionFlags);
   }
 }
 

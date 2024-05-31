@@ -25,9 +25,10 @@ jobs:
       matrix:
         script: [codecov, sonar, asan, ubsan]
     steps:
-      - uses: spatial-model-editor/setup-ci@2024.04.23
+      - uses: spatial-model-editor/setup-ci@2024.05.31
         with:
           sme_deps: '2024.05.15'
+          cache_id: ${{ matrix.script }}
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
@@ -37,5 +38,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
+      # sonar job is not run for PRs from forks due to permissions issue
       - if: github.repository == 'spatial-model-editor/spatial-model-editor' || matrix.script != 'sonar'
         run: ./ci/quality-${{ matrix.script }}.sh

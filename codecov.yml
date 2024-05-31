@@ -8,5 +8,6 @@ coverage:
         target: 80
 ignore:
   - "**/*_t.cpp" # tests
+  - "**/*_bench.cpp" # benchmarks
   - "test" # tests
   - "ext" # external libraries

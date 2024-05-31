@@ -22,6 +22,10 @@ public:
   explicit ImageStack(std::vector<QImage> &&images);
   explicit ImageStack(const std::vector<QImage> &images);
   explicit ImageStack(const QString &filename);
+  static constexpr auto indexedImageFormat = QImage::Format_Indexed8;
+  static constexpr auto indexedImageConversionFlags =
+      Qt::AvoidDither | Qt::ThresholdDither | Qt::ThresholdAlphaDither |
+      Qt::NoOpaqueDetection;
   /**
    * @brief Grayscale image from array of pixel intensities
    *
