@@ -88,9 +88,11 @@ void rendering::ShaderProgram::Init() {
   m_modelLocation = glGetUniformLocation(m_programId, "model");
   m_projectionLocation = glGetUniformLocation(m_programId, "projection");
   CheckOpenGLError("glGetUniformLocation");
-  m_viewPositionLocation = glGetUniformLocation(m_programId, "viewPosition");
-  CheckOpenGLError("glGetUniformLocation");
-  m_viewRotationLocation = glGetUniformLocation(m_programId, "viewRotation");
+  //  m_viewPositionLocation = glGetUniformLocation(m_programId,
+  //  "viewPosition"); CheckOpenGLError("glGetUniformLocation");
+  //  m_viewRotationLocation = glGetUniformLocation(m_programId,
+  //  "viewRotation"); CheckOpenGLError("glGetUniformLocation");
+  m_viewLocation = glGetUniformLocation(m_programId, "view");
   CheckOpenGLError("glGetUniformLocation");
   m_color = glGetUniformLocation(m_programId, "in_Color");
   CheckOpenGLError("glGetUniformLocation");
@@ -169,20 +171,25 @@ void rendering::ShaderProgram::SetProjection(const GLfloat *matrix4x4) {
   CheckOpenGLError("glUniformMatrix4fv");
 }
 
-void rendering::ShaderProgram::SetViewPosition(GLfloat viewPosX,
-                                               GLfloat viewPosY,
-                                               GLfloat viewPosZ) {
+// void rendering::ShaderProgram::SetViewPosition(GLfloat viewPosX,
+//                                                GLfloat viewPosY,
+//                                                GLfloat viewPosZ) {
+//   Use();
+//   glUniform3f(m_viewPositionLocation, viewPosX, viewPosY, viewPosZ);
+//   CheckOpenGLError("glUniform3f");
+// }
+// void rendering::ShaderProgram::SetViewRotation(GLfloat viewRotationX,
+//                                                GLfloat viewRotationY,
+//                                                GLfloat viewRotationZ) {
+//   Use();
+//   glUniform3f(m_viewRotationLocation, viewRotationX, viewRotationY,
+//               viewRotationZ);
+//   CheckOpenGLError("glUniform3f");
+// }
+void rendering::ShaderProgram::SetView(const GLfloat *matrix4x4) {
   Use();
-  glUniform3f(m_viewPositionLocation, viewPosX, viewPosY, viewPosZ);
-  CheckOpenGLError("glUniform3f");
-}
-void rendering::ShaderProgram::SetViewRotation(GLfloat viewRotationX,
-                                               GLfloat viewRotationY,
-                                               GLfloat viewRotationZ) {
-  Use();
-  glUniform3f(m_viewRotationLocation, viewRotationX, viewRotationY,
-              viewRotationZ);
-  CheckOpenGLError("glUniform3f");
+  glUniformMatrix4fv(m_viewLocation, 1, GL_FALSE, matrix4x4);
+  CheckOpenGLError("glUniformMatrix4fv");
 }
 void rendering::ShaderProgram::SetColor(GLfloat r, GLfloat g, GLfloat b,
                                         GLfloat a) {

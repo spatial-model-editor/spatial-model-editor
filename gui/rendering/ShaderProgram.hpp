@@ -35,9 +35,12 @@ public:
   void SetModel(const GLfloat *matrix4x4);
 
   void SetProjection(const GLfloat *matrix4x4);
-  void SetViewPosition(GLfloat viewPosX, GLfloat viewPosY, GLfloat viewPosZ);
-  void SetViewRotation(GLfloat viewRotationX, GLfloat viewRotationY,
-                       GLfloat viewRotationZ);
+  //  void SetViewPosition(GLfloat viewPosX, GLfloat viewPosY, GLfloat
+  //  viewPosZ); void SetViewRotation(GLfloat viewRotationX, GLfloat
+  //  viewRotationY,
+  //                       GLfloat viewRotationZ);
+  void SetView(const GLfloat *matrix4x4);
+
   void SetColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 
   //  void SetMeshTranslationOffset(GLfloat x, GLfloat y, GLfloat z);
@@ -68,8 +71,9 @@ private:
   GLint m_modelLocation;
 
   GLint m_projectionLocation;
-  GLint m_viewPositionLocation;
-  GLint m_viewRotationLocation;
+  //  GLint m_viewPositionLocation;
+  //  GLint m_viewRotationLocation;
+  GLint m_viewLocation;
 
   GLint m_color;
 
