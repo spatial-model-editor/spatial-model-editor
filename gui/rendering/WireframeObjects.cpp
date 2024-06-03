@@ -185,13 +185,15 @@ void rendering::WireframeObjects::RenderSetup(
                                    m_translationOffset.y(),
                                    m_translationOffset.z());
 
-  auto trans = getGlobalTransform();
+  //  auto trans = getGlobalTransform();
+  //
+  //  program.SetPosition(trans.position.x(), trans.position.y(),
+  //                      trans.position.z());
+  //  program.SetRotation(trans.eulerAngles.x(), trans.eulerAngles.y(),
+  //                      trans.eulerAngles.z());
+  //  program.SetScale(trans.scale.x(), trans.scale.y(), trans.scale.z());
 
-  program.SetPosition(trans.position.x(), trans.position.y(),
-                      trans.position.z());
-  program.SetRotation(trans.eulerAngles.x(), trans.eulerAngles.y(),
-                      trans.eulerAngles.z());
-  program.SetScale(trans.scale.x(), trans.scale.y(), trans.scale.z());
+  program.SetModel(globalTransform.data());
 }
 
 void rendering::WireframeObjects::draw(rendering::ShaderProgram &program) {

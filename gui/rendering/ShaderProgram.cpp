@@ -79,12 +79,13 @@ void rendering::ShaderProgram::Init() {
     SPDLOG_ERROR("The status of the shader program: FAIL!");
 #endif
 
-  m_rotationLocation = glGetUniformLocation(m_programId, "rotation");
-  CheckOpenGLError("glGetUniformLocation");
-  m_positionLocation = glGetUniformLocation(m_programId, "position");
-  CheckOpenGLError("glGetUniformLocation");
-  m_scaleLocation = glGetUniformLocation(m_programId, "scale");
-  CheckOpenGLError("glGetUniformLocation");
+  //  m_rotationLocation = glGetUniformLocation(m_programId, "rotation");
+  //  CheckOpenGLError("glGetUniformLocation");
+  //  m_positionLocation = glGetUniformLocation(m_programId, "position");
+  //  CheckOpenGLError("glGetUniformLocation");
+  //  m_scaleLocation = glGetUniformLocation(m_programId, "scale");
+  //  CheckOpenGLError("glGetUniformLocation");
+  m_modelLocation = glGetUniformLocation(m_programId, "model");
   m_projectionLocation = glGetUniformLocation(m_programId, "projection");
   CheckOpenGLError("glGetUniformLocation");
   m_viewPositionLocation = glGetUniformLocation(m_programId, "viewPosition");
@@ -138,28 +139,35 @@ rendering::ShaderProgram::~ShaderProgram() {
   CheckOpenGLError("glDeleteProgram");
 }
 
-void rendering::ShaderProgram::SetRotation(GLfloat rotationX, GLfloat rotationY,
-                                           GLfloat rotationZ) {
+// void rendering::ShaderProgram::SetRotation(GLfloat rotationX, GLfloat
+// rotationY,
+//                                            GLfloat rotationZ) {
+//   Use();
+//   glUniform3f(m_rotationLocation, rotationX, rotationY, rotationZ);
+//   CheckOpenGLError("glUniform3f");
+// }
+//
+// void rendering::ShaderProgram::SetPosition(GLfloat x, GLfloat y, GLfloat z) {
+//   Use();
+//   glUniform3f(m_positionLocation, x, y, z);
+//   CheckOpenGLError("glUniform3f");
+// }
+//
+// void rendering::ShaderProgram::SetScale(GLfloat x, GLfloat y, GLfloat z) {
+//   Use();
+//   glUniform3f(m_scaleLocation, x, y, z);
+//   CheckOpenGLError("glUniform3f");
+// }
+
+void rendering::ShaderProgram::SetModel(const GLfloat *matrix4x4) {
   Use();
-  glUniform3f(m_rotationLocation, rotationX, rotationY, rotationZ);
-  CheckOpenGLError("glUniform3f");
+  glUniformMatrix4fv(m_modelLocation, 1, GL_FALSE, matrix4x4);
+  CheckOpenGLError("glUniformMatrix4fv");
 }
 
-void rendering::ShaderProgram::SetPosition(GLfloat x, GLfloat y, GLfloat z) {
+void rendering::ShaderProgram::SetProjection(const GLfloat *matrix4x4) {
   Use();
-  glUniform3f(m_positionLocation, x, y, z);
-  CheckOpenGLError("glUniform3f");
-}
-
-void rendering::ShaderProgram::SetScale(GLfloat x, GLfloat y, GLfloat z) {
-  Use();
-  glUniform3f(m_scaleLocation, x, y, z);
-  CheckOpenGLError("glUniform3f");
-}
-
-void rendering::ShaderProgram::SetProjection(const GLfloat *matrix4) {
-  Use();
-  glUniformMatrix4fv(m_projectionLocation, 1, GL_FALSE, matrix4);
+  glUniformMatrix4fv(m_projectionLocation, 1, GL_FALSE, matrix4x4);
   CheckOpenGLError("glUniformMatrix4fv");
 }
 

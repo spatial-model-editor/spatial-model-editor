@@ -29,10 +29,12 @@ public:
 
   void Use();
 
-  void SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ);
-  void SetPosition(GLfloat x, GLfloat y, GLfloat z);
-  void SetScale(GLfloat x, GLfloat y, GLfloat z);
-  void SetProjection(const GLfloat *matrix4);
+  //  void SetRotation(GLfloat rotationX, GLfloat rotationY, GLfloat rotationZ);
+  //  void SetPosition(GLfloat x, GLfloat y, GLfloat z);
+  //  void SetScale(GLfloat x, GLfloat y, GLfloat z);
+  void SetModel(const GLfloat *matrix4x4);
+
+  void SetProjection(const GLfloat *matrix4x4);
   void SetViewPosition(GLfloat viewPosX, GLfloat viewPosY, GLfloat viewPosZ);
   void SetViewRotation(GLfloat viewRotationX, GLfloat viewRotationY,
                        GLfloat viewRotationZ);
@@ -59,12 +61,15 @@ private:
   GLuint m_programId;
 
   // uniforms
-  GLint m_rotationLocation;
-  GLint m_positionLocation;
-  GLint m_scaleLocation;
+  //  GLint m_rotationLocation;
+  //  GLint m_positionLocation;
+  //  GLint m_scaleLocation;
+  GLint m_modelLocation;
+
   GLint m_projectionLocation;
   GLint m_viewPositionLocation;
   GLint m_viewRotationLocation;
+
   GLint m_color;
 
   GLint m_meshTranslationOffsetLocation;
