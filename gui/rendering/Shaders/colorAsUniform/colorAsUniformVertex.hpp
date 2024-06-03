@@ -7,7 +7,7 @@
 
 namespace rendering::shader::colorAsUniform {
 
-const char text_vertex_color_as_uniformCPU[] =
+const char text_vertex_color_as_uniform[] =
     "#version 150\n"
     "#extension GL_ARB_explicit_attrib_location : enable\n"
     "#define PI 3.14159265359\n"
