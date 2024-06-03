@@ -196,7 +196,7 @@ void rendering::WireframeObjects::RenderSetup(
   //                      trans.eulerAngles.z());
   //  program.SetScale(trans.scale.x(), trans.scale.y(), trans.scale.z());
 
-  program.SetModel(globalTransform.data());
+  program.SetModel(globalTransform.transposed().data());
 }
 
 void rendering::WireframeObjects::draw(rendering::ShaderProgram &program) {
