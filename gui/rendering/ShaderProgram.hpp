@@ -40,7 +40,8 @@ public:
                        GLfloat viewRotationZ);
   void SetColor(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 
-  void SetMeshTranslationOffset(GLfloat x, GLfloat y, GLfloat z);
+  //  void SetMeshTranslationOffset(GLfloat x, GLfloat y, GLfloat z);
+  void SetModelOffset(const GLfloat *matrix4x4);
   void SetThickness(GLfloat thickness);
   void SetBackgroundColor(GLfloat r, GLfloat g, GLfloat b);
 
@@ -72,7 +73,8 @@ private:
 
   GLint m_color;
 
-  GLint m_meshTranslationOffsetLocation;
+  //  GLint m_meshTranslationOffsetLocation;
+  GLint m_modelOffsetLocation;
   GLint m_thickness;
   GLint m_background_color;
 

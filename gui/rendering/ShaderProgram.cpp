@@ -94,17 +94,15 @@ void rendering::ShaderProgram::Init() {
   CheckOpenGLError("glGetUniformLocation");
   m_color = glGetUniformLocation(m_programId, "in_Color");
   CheckOpenGLError("glGetUniformLocation");
-  m_meshTranslationOffsetLocation =
-      glGetUniformLocation(m_programId, "translationOffset");
+  //  m_meshTranslationOffsetLocation =
+  //      glGetUniformLocation(m_programId, "translationOffset");
+  m_modelOffsetLocation = glGetUniformLocation(m_programId, "modelOffset");
   CheckOpenGLError("glGetUniformLocation");
   m_thickness = glGetUniformLocation(m_programId, "thickness");
   CheckOpenGLError("glGetUniformLocation");
   m_background_color = glGetUniformLocation(m_programId, "background_color");
   CheckOpenGLError("glGetUniformLocation");
   m_color = glGetUniformLocation(m_programId, "in_Color");
-  CheckOpenGLError("glGetUniformLocation");
-  m_meshTranslationOffsetLocation =
-      glGetUniformLocation(m_programId, "translationOffset");
   CheckOpenGLError("glGetUniformLocation");
 
   for (uint32_t i = 0; i < MAX_NUMBER_PLANES; i++) {
@@ -193,12 +191,18 @@ void rendering::ShaderProgram::SetColor(GLfloat r, GLfloat g, GLfloat b,
   CheckOpenGLError("glUniform4f");
 }
 
-void rendering::ShaderProgram::SetMeshTranslationOffset(GLfloat x, GLfloat y,
-                                                        GLfloat z) {
+// void rendering::ShaderProgram::SetMeshTranslationOffset(GLfloat x, GLfloat y,
+//                                                         GLfloat z) {
+//
+//   Use();
+//   glUniform3f(m_meshTranslationOffsetLocation, x, y, z);
+//   CheckOpenGLError("glUniform3f");
+// }
 
+void rendering::ShaderProgram::SetModelOffset(const GLfloat *matrix4x4) {
   Use();
-  glUniform3f(m_meshTranslationOffsetLocation, x, y, z);
-  CheckOpenGLError("glUniform3f");
+  glUniformMatrix4fv(m_modelOffsetLocation, 1, GL_FALSE, matrix4x4);
+  CheckOpenGLError("glUniformMatrix4fv");
 }
 
 void rendering::ShaderProgram::SetThickness(GLfloat thickness) {

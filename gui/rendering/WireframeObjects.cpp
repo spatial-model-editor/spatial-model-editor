@@ -181,9 +181,12 @@ void rendering::WireframeObjects::RenderSetup(
                              clearColor.blueF());
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-  program.SetMeshTranslationOffset(m_translationOffset.x(),
-                                   m_translationOffset.y(),
-                                   m_translationOffset.z());
+  //  program.SetMeshTranslationOffset(m_translationOffset.x(),
+  //                                   m_translationOffset.y(),
+  //                                   m_translationOffset.z());
+  QMatrix4x4 offset;
+  offset.translate(m_translationOffset);
+  program.SetModelOffset(offset.transposed().data());
 
   //  auto trans = getGlobalTransform();
   //
