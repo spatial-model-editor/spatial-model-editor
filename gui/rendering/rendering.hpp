@@ -10,7 +10,6 @@
 #include "Node.hpp"
 #include "ShaderProgram.hpp"
 #include "Shaders/colorAsUniform/colorAsUniformVertex.hpp"
-#include "Shaders/colorAsUniform/colorAsUniformVertexCPU.h"
 #include "Shaders/default/fragment.hpp"
 #include "Shaders/default/vertex.hpp"
 #include "Utils.hpp"
