@@ -181,17 +181,11 @@ void rendering::WireframeObjects::RenderSetup(
                              clearColor.blueF());
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-  program.SetMeshTranslationOffset(m_translationOffset.x(),
-                                   m_translationOffset.y(),
-                                   m_translationOffset.z());
+  QMatrix4x4 offset;
+  offset.translate(m_translationOffset);
+  program.SetModelOffset(offset.transposed().data());
 
-  auto trans = getGlobalTransform();
-
-  program.SetPosition(trans.position.x(), trans.position.y(),
-                      trans.position.z());
-  program.SetRotation(trans.eulerAngles.x(), trans.eulerAngles.y(),
-                      trans.eulerAngles.z());
-  program.SetScale(trans.scale.x(), trans.scale.y(), trans.scale.z());
+  program.SetModel(globalTransform.transposed().data());
 }
 
 void rendering::WireframeObjects::draw(rendering::ShaderProgram &program) {

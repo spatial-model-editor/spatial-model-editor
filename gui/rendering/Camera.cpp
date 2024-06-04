@@ -116,10 +116,11 @@ void rendering::Camera::UpdateView(rendering::ShaderProgram &program) {
 
   auto trans = getGlobalTransform();
 
-  program.SetViewPosition(trans.position.x(), trans.position.y(),
-                          trans.position.z());
-  program.SetViewRotation(trans.eulerAngles.x(), trans.eulerAngles.y(),
-                          trans.eulerAngles.z());
+  QMatrix4x4 lookAtMatrix;
+  lookAtMatrix.translate(-trans.position);
+  lookAtMatrix = lookAtMatrix * trans.rotation.transposed();
+
+  program.SetView(lookAtMatrix.transposed().data());
 }
 
 GLfloat rendering::Camera::getNear() const { return m_near; }
