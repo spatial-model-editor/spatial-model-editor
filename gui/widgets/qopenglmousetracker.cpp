@@ -324,6 +324,12 @@ QVector3D QOpenGLMouseTracker::GetSubMeshesPosition() const {
 std::shared_ptr<rendering::Node>
 QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
                                   const std::vector<QColor> &colors) {
+
+  if (m_SubMeshes) {
+    m_SubMeshes->remove();
+    m_SubMeshes.reset();
+  }
+
   if (colors.empty()) {
     m_SubMeshes = std::make_shared<rendering::WireframeObjects>(
         mesh, this, mesh.getColors(), m_lineWidth, mesh.getOffset());
