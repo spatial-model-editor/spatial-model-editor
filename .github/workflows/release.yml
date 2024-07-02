@@ -80,8 +80,8 @@ jobs:
           pattern: artifacts-*
           merge-multiple: true
           path: artifacts
-      # if this is an untagged commit to main: add a "latest" wheel to github latest release for readthedocs to use
-      - run: cp artifacts/dist/sme-*-cp311-cp311-manylinux_2_28_x86_64.whl artifacts/binaries/sme-latest-cp311-cp311-manylinux_2_28_x86_64.whl
+      # if this is an untagged commit to main: add a "0.0.0" version wheel to github latest release for readthedocs to use
+      - run: cp artifacts/dist/sme-*-cp311-cp311-manylinux_2_28_x86_64.whl artifacts/binaries/sme-0.0.0-cp311-cp311-manylinux_2_28_x86_64.whl
         if: github.ref == 'refs/heads/main'
       - name: Upload binaries to latest pre-release
         # if this is an untagged commit to main: upload binaries to github latest release
