@@ -12,6 +12,7 @@
 #include "ShaderProgram.hpp"
 #include "Utils.hpp"
 #include <set>
+#include <typeinfo>
 
 namespace rendering {
 
@@ -68,6 +69,9 @@ public:
 
   Node(const Node &other) = default;
   Node &operator=(const Node &other) = default;
+
+  void GetAllNodesOfType(const std::type_info &type,
+                         std::vector<std::weak_ptr<rendering::Node>> &queue);
 
   /**
    * Adds another node as a direct child. The node will assume ownership
@@ -200,8 +204,6 @@ protected:
 
 private:
   rendering::RenderPriority m_priority;
-  //  std::multiset<std::weak_ptr<rendering::Node>, CompareNodes>
-  //  renderingQueue{};
   std::vector<std::weak_ptr<rendering::Node>> renderingQueue;
 };
 

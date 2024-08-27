@@ -25,8 +25,7 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
   m_sceneGraph->add(m_camera);
 }
 
-std::shared_ptr<rendering::ClippingPlane>
-QOpenGLMouseTracker::BuildClippingPlane(
+std::weak_ptr<rendering::ClippingPlane> QOpenGLMouseTracker::BuildClippingPlane(
     const QVector3D &normal, const QVector3D &point, bool active,
     bool localFrameCoord, const std::shared_ptr<rendering::Node> &parent) {
 
@@ -60,9 +59,15 @@ QOpenGLMouseTracker::BuildClippingPlane(
 }
 
 void QOpenGLMouseTracker::DestroyClippingPlane(
-    std::shared_ptr<rendering::ClippingPlane> &clippingPlane) {
+    std::weak_ptr<rendering::ClippingPlane> &clippingPlane) {
 
-  auto it = m_clippingPlanes.find(clippingPlane);
+  auto clippingPlane_locked = clippingPlane.lock();
+  if (!clippingPlane_locked) {
+    SPDLOG_DEBUG("Weak ptr already invalid.");
+    return;
+  }
+
+  auto it = m_clippingPlanes.find(clippingPlane_locked);
 
   if (it == m_clippingPlanes.end())
     return;
@@ -70,11 +75,63 @@ void QOpenGLMouseTracker::DestroyClippingPlane(
   m_clippingPlanesPool.insert(*it);
   m_clippingPlanes.erase(it);
 
-  clippingPlane->remove();
+  clippingPlane_locked->remove();
 
   clippingPlane.reset();
 
   update();
+}
+
+std::vector<std::weak_ptr<rendering::Node>>
+QOpenGLMouseTracker::GetDefaultClippingPlanes() {
+
+  std::vector<std::weak_ptr<rendering::Node>> defaultPlanes;
+
+  auto planeX_locked = planeX.lock();
+  if (!planeX_locked && m_SubMeshes) {
+    planeX = BuildClippingPlane(QVector3D(1, 0, 0).normalized(),
+                                QVector3D(10, 0, 0), true, true, m_SubMeshes);
+    defaultPlanes.push_back(planeX);
+  }
+
+  auto planeY_locked = planeY.lock();
+  if (!planeY_locked && m_SubMeshes) {
+    planeY = BuildClippingPlane(QVector3D(0, 1, 0).normalized(),
+                                QVector3D(0, 10, 0), true, true, m_SubMeshes);
+    defaultPlanes.push_back(planeY);
+  }
+
+  auto planeZ_locked = planeZ.lock();
+  if (!planeZ_locked && m_SubMeshes) {
+    planeZ = BuildClippingPlane(QVector3D(0, 0, 1).normalized(),
+                                QVector3D(0, 0, 10), true, true, m_SubMeshes);
+    defaultPlanes.push_back(planeZ);
+  }
+
+  // todo: Add Camera clipping plane as well.
+
+  return std::move(defaultPlanes);
+}
+
+std::vector<std::weak_ptr<rendering::Node>>
+QOpenGLMouseTracker::GetAllClippingPlanes(
+    const std::shared_ptr<rendering::Node> &parent) {
+
+  std::vector<std::weak_ptr<rendering::Node>> listOfPlanes;
+
+  if (parent == nullptr) {
+    m_sceneGraph->GetAllNodesOfType(typeid(rendering::ClippingPlane),
+                                    listOfPlanes);
+  } else {
+    parent->GetAllNodesOfType(typeid(rendering::ClippingPlane), listOfPlanes);
+  }
+
+  auto defaultPlanes = GetDefaultClippingPlanes();
+
+  listOfPlanes.insert(listOfPlanes.end(), defaultPlanes.begin(),
+                      defaultPlanes.end());
+
+  return std::move(listOfPlanes);
 }
 
 void QOpenGLMouseTracker::initializeGL() {
@@ -104,26 +161,26 @@ void QOpenGLMouseTracker::initializeGL() {
 
 #endif
 
-  std::string ext =
-      QString::fromLatin1(
-          (const char *)context()->functions()->glGetString(GL_EXTENSIONS))
-          .replace(' ', "\n\t")
-          .toStdString();
-  CheckOpenGLError("glGetString(GL_EXTENSIONS)");
-
-  std::string vendor(
-      (const char *)context()->functions()->glGetString(GL_VENDOR));
-  CheckOpenGLError("glGetString(GL_VENDOR)");
-  std::string renderer(
-      (const char *)context()->functions()->glGetString(GL_RENDERER));
-  CheckOpenGLError("glGetString(GL_RENDERER)");
-  std::string gl_version(
-      (const char *)context()->functions()->glGetString(GL_VERSION));
-  CheckOpenGLError("glGetString(GL_VERSION)");
-
-  SPDLOG_INFO("OpenGL: " + vendor + std::string(" ") + renderer +
-              std::string(" ") + gl_version + std::string(" ") +
-              std::string("\n\n\t") + ext + std::string("\n"));
+  //  std::string ext =
+  //      QString::fromLatin1(
+  //          (const char *)context()->functions()->glGetString(GL_EXTENSIONS))
+  //          .replace(' ', "\n\t")
+  //          .toStdString();
+  //  CheckOpenGLError("glGetString(GL_EXTENSIONS)");
+  //
+  //  std::string vendor(
+  //      (const char *)context()->functions()->glGetString(GL_VENDOR));
+  //  CheckOpenGLError("glGetString(GL_VENDOR)");
+  //  std::string renderer(
+  //      (const char *)context()->functions()->glGetString(GL_RENDERER));
+  //  CheckOpenGLError("glGetString(GL_RENDERER)");
+  //  std::string gl_version(
+  //      (const char *)context()->functions()->glGetString(GL_VERSION));
+  //  CheckOpenGLError("glGetString(GL_VERSION)");
+  //
+  //  SPDLOG_INFO("OpenGL: " + vendor + std::string(" ") + renderer +
+  //              std::string(" ") + gl_version + std::string(" ") +
+  //              std::string("\n\n\t") + ext + std::string("\n"));
 
   m_mainProgram = std::make_unique<rendering::ShaderProgram>(
       rendering::shader::colorAsUniform::text_vertex_color_as_uniform,
@@ -326,6 +383,17 @@ QOpenGLMouseTracker::SetSubMeshes(const sme::mesh::Mesh3d &mesh,
                                   const std::vector<QColor> &colors) {
 
   if (m_SubMeshes) {
+
+    std::vector<std::weak_ptr<rendering::Node>> planes;
+    m_SubMeshes->GetAllNodesOfType(typeid(rendering::ClippingPlane), planes);
+
+    for (auto &var : planes) {
+      auto elem =
+          std::dynamic_pointer_cast<rendering::ClippingPlane>(var.lock());
+      std::weak_ptr<rendering::ClippingPlane> weak_eleme = elem;
+      DestroyClippingPlane(weak_eleme);
+    }
+
     m_SubMeshes->remove();
     m_SubMeshes.reset();
   }
