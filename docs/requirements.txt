@@ -1,6 +1,6 @@
 breathe
 docutils
-https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/sme-latest-cp311-cp311-manylinux_2_28_x86_64.whl
+https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/sme-0.0.0-cp311-cp311-manylinux_2_28_x86_64.whl
 ipykernel
 matplotlib
 myst_parser
