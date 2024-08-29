@@ -164,6 +164,10 @@ TEST_CASE("Node: Scene Graph", tags) {
       scenegraph->updateSceneGraph(1 / 60.0f);
       auto res = subMeshes->getGlobalTransform().eulerAngles;
       REQUIRE(res == QVector3D(0, 0, 0));
+
+      std::vector<std::weak_ptr<rendering::Node>> listOfMeshes;
+      scenegraph->GetAllNodesOfType(typeid(*subMeshes.get()), listOfMeshes);
+      REQUIRE(listOfMeshes.size() == 1);
     }
   }
 
@@ -224,5 +228,10 @@ TEST_CASE("Node: Scene Graph", tags) {
     scenegraph->updateSceneGraph(1 / 60.0f);
     auto [position, normal] = clippingPlane->GetClipPlane();
     REQUIRE(normal == QVector3D(1.0f, 0.0f, 0.0f));
+
+    std::vector<std::weak_ptr<rendering::Node>> listOfMeshes;
+    scenegraph->GetAllNodesOfType(typeid(rendering::ClippingPlane),
+                                  listOfMeshes);
+    REQUIRE(listOfMeshes.size() == 1);
   }
 }
