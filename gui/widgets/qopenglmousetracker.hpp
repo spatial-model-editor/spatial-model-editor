@@ -94,6 +94,8 @@ public:
 
   void clear();
 
+  std::weak_ptr<rendering::ClippingPlane> m_selectedPlane;
+
 signals:
   void mouseClicked(QRgb color, uint32_t meshID);
   void mouseOver(uint32_t meshID);
@@ -125,8 +127,6 @@ protected:
 
   QColor m_backgroundColor;
   QRgb m_lastColour;
-
-  std::weak_ptr<rendering::ClippingPlane> m_selectedPlane;
 
   std::shared_ptr<rendering::Node> m_sceneGraph =
       std::make_shared<rendering::Node>("root");

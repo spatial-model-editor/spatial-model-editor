@@ -396,6 +396,7 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
         // if (elem->name == "Camera Plane")
         {
           elem->TranslateAlongsideNormal(1000);
+          test.m_selectedPlane = elem;
           break;
         }
       }
