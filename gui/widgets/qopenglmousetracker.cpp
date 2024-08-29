@@ -3,6 +3,7 @@
 //
 
 #include "qopenglmousetracker.hpp"
+#include <QMenu>
 
 QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
                                          float lineSelectPrecision,
@@ -23,6 +24,11 @@ QOpenGLMouseTracker::QOpenGLMouseTracker(QWidget *parent, float lineWidth,
 
   // A default camera is added.
   m_sceneGraph->add(m_camera);
+
+  m_labelPlaneSelected = new QLabel(this);
+  m_labelPlaneSelected->setText("Normal Mode");
+
+  //  m_labelPlaneSelected->show();
 }
 
 std::weak_ptr<rendering::ClippingPlane> QOpenGLMouseTracker::BuildClippingPlane(
@@ -90,25 +96,34 @@ QOpenGLMouseTracker::GetDefaultClippingPlanes() {
   auto planeX_locked = planeX.lock();
   if (!planeX_locked && m_SubMeshes) {
     planeX = BuildClippingPlane(QVector3D(1, 0, 0).normalized(),
-                                QVector3D(10, 0, 0), true, true, m_SubMeshes);
+                                QVector3D(-22, 0, 0), true, true, m_SubMeshes);
+    planeX.lock()->name = "Plane X";
     defaultPlanes.push_back(planeX);
   }
 
   auto planeY_locked = planeY.lock();
   if (!planeY_locked && m_SubMeshes) {
     planeY = BuildClippingPlane(QVector3D(0, 1, 0).normalized(),
-                                QVector3D(0, 10, 0), true, true, m_SubMeshes);
+                                QVector3D(0, -22, 0), true, true, m_SubMeshes);
+    planeY.lock()->name = "Plane Y";
     defaultPlanes.push_back(planeY);
   }
 
   auto planeZ_locked = planeZ.lock();
   if (!planeZ_locked && m_SubMeshes) {
     planeZ = BuildClippingPlane(QVector3D(0, 0, 1).normalized(),
-                                QVector3D(0, 0, 10), true, true, m_SubMeshes);
+                                QVector3D(0, 0, -22), true, true, m_SubMeshes);
+    planeZ.lock()->name = "Plane Z";
     defaultPlanes.push_back(planeZ);
   }
 
-  // todo: Add Camera clipping plane as well.
+  auto planeCamera_locked = planeCamera.lock();
+  if (!planeCamera_locked && m_camera) {
+    planeCamera = BuildClippingPlane(QVector3D(0, 0, 1).normalized(),
+                                     QVector3D(0, 0, 30), true, true, m_camera);
+    planeCamera.lock()->name = "Camera Plane";
+    defaultPlanes.push_back(planeCamera);
+  }
 
   return std::move(defaultPlanes);
 }
@@ -218,6 +233,14 @@ void QOpenGLMouseTracker::paintGL() {
 
   drawScene();
 
+  if (!m_selectedPlane.expired()) {
+    auto selectedPlaneShared = m_selectedPlane.lock();
+    m_labelPlaneSelected->setText(
+        (" " + selectedPlaneShared->name + " ").c_str());
+  } else {
+    m_labelPlaneSelected->setText("Normal Mode");
+  }
+
   QOpenGLFramebufferObject fboPicking(size());
   fboPicking.bind();
 
@@ -251,6 +274,13 @@ void QOpenGLMouseTracker::SetCameraFrustum(GLfloat FOV, GLfloat width,
   m_camera->SetFrustum(FOV, width, height, nearZ, farZ);
 }
 
+void QOpenGLMouseTracker::keyReleaseEvent(QKeyEvent *event) {
+  if (event->key() == Qt::Key_Escape) {
+    m_selectedPlane.reset();
+    m_labelPlaneSelected->setText("Normal Mode");
+  }
+}
+
 void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
 
   if (m_SubMeshes == nullptr) {
@@ -262,32 +292,77 @@ void QOpenGLMouseTracker::mousePressEvent(QMouseEvent *event) {
   m_xAtPress = std::clamp(m_xAtPress, 0, m_offscreenPickingImage.width() - 1);
   m_yAtPress = std::clamp(m_yAtPress, 0, m_offscreenPickingImage.height() - 1);
 
-  m_lastColour = m_offscreenPickingImage.pixel(m_xAtPress, m_yAtPress);
-  QColor color(m_lastColour);
+  auto m_selectedPlane_locked = m_selectedPlane.lock();
+  if (!m_selectedPlane_locked) {
+    m_lastColour = m_offscreenPickingImage.pixel(m_xAtPress, m_yAtPress);
+    QColor color(m_lastColour);
 
-  bool objectSelected = false;
+    bool objectSelected = false;
 
-  SPDLOG_INFO("mousePressEvent at: X:" + std::to_string(m_xAtPress) +
-              std::string(" Y:") + std::to_string(m_yAtPress));
-  SPDLOG_INFO("color :" + color.name().toStdString());
+    SPDLOG_INFO("mousePressEvent at: X:" + std::to_string(m_xAtPress) +
+                std::string(" Y:") + std::to_string(m_yAtPress));
+    SPDLOG_INFO("color :" + color.name().toStdString());
 
-  auto defaultColors = m_SubMeshes->GetDefaultColors();
-  for (uint32_t i = 0; i < defaultColors.size(); i++) {
-    if (defaultColors[i] == color) {
-      m_SubMeshes->SetThickness(m_lineWidthSelectedSubmesh, i);
-      objectSelected = true;
-      emit mouseClicked(m_lastColour, i);
+    auto defaultColors = m_SubMeshes->GetDefaultColors();
+    for (uint32_t i = 0; i < defaultColors.size(); i++) {
+      if (defaultColors[i] == color) {
+        m_SubMeshes->SetThickness(m_lineWidthSelectedSubmesh, i);
+        objectSelected = true;
+        emit mouseClicked(m_lastColour, i);
 
-      SPDLOG_INFO("Object touched!");
+        SPDLOG_INFO("Object touched!");
+      }
+    }
+
+    if (!objectSelected) {
+      for (uint32_t i = 0; i < defaultColors.size(); i++) {
+        m_SubMeshes->ResetToDefaultThickness(i);
+      }
+
+      SPDLOG_INFO("Reset state for selected objects to UNSELECTED objects!");
     }
   }
 
-  if (!objectSelected) {
-    for (uint32_t i = 0; i < defaultColors.size(); i++) {
-      m_SubMeshes->ResetToDefaultThickness(i);
+  if ((event->button() == Qt::RightButton) &&
+      (m_offscreenPickingImage.width() >
+       static_cast<int>(event->position().x())) &&
+      (static_cast<int>(event->position().x()) > 0) &&
+      (m_offscreenPickingImage.height() >
+       static_cast<int>(event->position().y())) &&
+      (static_cast<int>(event->position().y()) > 0)) {
+
+    auto planes = GetAllClippingPlanes();
+
+    std::shared_ptr<QMenu> menu = std::make_shared<QMenu>(this);
+    menu->setTitle(tr("Planes"));
+
+    for (auto &var : planes) {
+      auto elem =
+          std::dynamic_pointer_cast<rendering::ClippingPlane>(var.lock());
+
+      if (elem->getStatus() == false) {
+        continue;
+      }
+
+      QAction *item = new QAction(elem->name.c_str(), this);
+
+      const auto connection_result =
+          connect(item, &QAction::triggered, [=, this]() {
+            for (const auto &var : planes) {
+              auto elem = std::dynamic_pointer_cast<rendering::ClippingPlane>(
+                  var.lock());
+
+              if (elem->name == item->text().toStdString()) {
+                m_selectedPlane = elem;
+                break;
+              }
+            }
+          });
+
+      menu->addAction(item);
     }
 
-    SPDLOG_INFO("Reset state for selected objects to UNSELECTED objects!");
+    menu->exec(QCursor::pos());
   }
 
   update();
@@ -330,15 +405,31 @@ void QOpenGLMouseTracker::mouseMoveEvent(QMouseEvent *event) {
 }
 
 void QOpenGLMouseTracker::wheelEvent(QWheelEvent *event) {
+
   auto Degrees = event->angleDelta().y() / 8;
 
-  auto forwardVector = m_camera->GetForwardVector();
-  auto position = m_camera->getPos();
+  auto m_selectedPlane_locked = m_selectedPlane.lock();
+  if (!m_selectedPlane_locked) {
 
-  m_camera->setPos(position + forwardVector * static_cast<float>(Degrees) *
-                                  (1 / m_frameRate));
+    auto forwardVector = m_camera->GetForwardVector();
+    auto position = m_camera->getPos();
 
-  emit mouseWheelEvent(event);
+    m_camera->setPos(position + forwardVector * static_cast<float>(Degrees) *
+                                    (1 / m_frameRate));
+
+    emit mouseWheelEvent(event);
+
+  } else {
+    m_selectedPlane_locked->TranslateAlongsideNormal(
+        static_cast<float>(Degrees) * (2 / m_frameRate));
+
+    auto [position, forwardVector] = m_selectedPlane_locked->GetClipPlane();
+
+    SPDLOG_DEBUG("plane position :" + std::to_string(position.x()) + " " +
+                 std::to_string(position.y()) + " " +
+                 std::to_string(position.z()));
+    SPDLOG_DEBUG("plane Degrees :" + std::to_string(Degrees));
+  }
 
   update();
 }

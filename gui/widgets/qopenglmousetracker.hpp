@@ -6,6 +6,7 @@
 
 #include <set>
 
+#include <QLabel>
 #include <QOpenGLWidget>
 #include <QTimer>
 #include <QWidget>
@@ -103,6 +104,8 @@ protected:
   QOpenGLDebugLogger *m_debugLogger;
 #endif
 
+  void keyReleaseEvent(QKeyEvent *);
+
   float m_lineWidth;
   float m_lineSelectPrecision;
   float m_lineWidthSelectedSubmesh;
@@ -123,6 +126,8 @@ protected:
   QColor m_backgroundColor;
   QRgb m_lastColour;
 
+  std::weak_ptr<rendering::ClippingPlane> m_selectedPlane;
+
   std::shared_ptr<rendering::Node> m_sceneGraph =
       std::make_shared<rendering::Node>("root");
 
@@ -142,6 +147,8 @@ protected:
   std::weak_ptr<rendering::ClippingPlane> planeY;
   std::weak_ptr<rendering::ClippingPlane> planeZ;
   std::weak_ptr<rendering::ClippingPlane> planeCamera;
+
+  QLabel *m_labelPlaneSelected;
 
   void initializeGL() override;
   void resizeGL(int w, int h) override;
