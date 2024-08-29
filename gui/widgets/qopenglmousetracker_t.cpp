@@ -404,6 +404,8 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       sendMouseClick(&test, {259, 340});
       QcolorSelection = QColor(test.getColour());
       REQUIRE(backgroundColor == QcolorSelection);
+      sendKeyEvents(&test, {"Esc"});
+      wait(100);
     }
   }
 }
