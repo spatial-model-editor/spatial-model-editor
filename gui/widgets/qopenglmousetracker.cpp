@@ -97,7 +97,7 @@ QOpenGLMouseTracker::GetDefaultClippingPlanes() {
   if (!planeX_locked && m_SubMeshes) {
     planeX = BuildClippingPlane(QVector3D(1, 0, 0).normalized(),
                                 QVector3D(-22, 0, 0), true, true, m_SubMeshes);
-    planeX.lock()->name = "Plane X";
+    // planeX_locked->name = std::string("Plane X");
     defaultPlanes.push_back(planeX);
   }
 
@@ -105,7 +105,7 @@ QOpenGLMouseTracker::GetDefaultClippingPlanes() {
   if (!planeY_locked && m_SubMeshes) {
     planeY = BuildClippingPlane(QVector3D(0, 1, 0).normalized(),
                                 QVector3D(0, -22, 0), true, true, m_SubMeshes);
-    planeY.lock()->name = "Plane Y";
+    // planeY_locked->name = std::string("Plane Y");
     defaultPlanes.push_back(planeY);
   }
 
@@ -113,7 +113,7 @@ QOpenGLMouseTracker::GetDefaultClippingPlanes() {
   if (!planeZ_locked && m_SubMeshes) {
     planeZ = BuildClippingPlane(QVector3D(0, 0, 1).normalized(),
                                 QVector3D(0, 0, -22), true, true, m_SubMeshes);
-    planeZ.lock()->name = "Plane Z";
+    // planeZ_locked->name = std::string("Plane Z");
     defaultPlanes.push_back(planeZ);
   }
 
@@ -121,7 +121,7 @@ QOpenGLMouseTracker::GetDefaultClippingPlanes() {
   if (!planeCamera_locked && m_camera) {
     planeCamera = BuildClippingPlane(QVector3D(0, 0, 1).normalized(),
                                      QVector3D(0, 0, 30), true, true, m_camera);
-    planeCamera.lock()->name = "Camera Plane";
+    // planeCamera_locked->name = std::string("Camera Plane");
     defaultPlanes.push_back(planeCamera);
   }
 

@@ -386,6 +386,24 @@ TEST_CASE("QOpenGLMouseTracker: OpenGL", tags) {
       clippingPlane9 = test.BuildClippingPlane(QVector3D(-1, 0, 0).normalized(),
                                                QVector3D(0, 0, 0), true);
       REQUIRE(clippingPlane9.lock());
+
+      auto planes = test.GetAllClippingPlanes();
+
+      for (const auto &var : planes) {
+        auto elem =
+            std::dynamic_pointer_cast<rendering::ClippingPlane>(var.lock());
+
+        // if (elem->name == "Camera Plane")
+        {
+          elem->TranslateAlongsideNormal(1000);
+          break;
+        }
+      }
+
+      wait(100);
+      sendMouseClick(&test, {259, 340});
+      QcolorSelection = QColor(test.getColour());
+      REQUIRE(backgroundColor == QcolorSelection);
     }
   }
 }
