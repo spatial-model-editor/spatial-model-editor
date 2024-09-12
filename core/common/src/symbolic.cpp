@@ -56,9 +56,6 @@ bool Symbolic::parse(
     SPDLOG_DEBUG("  - constant {} = {}", name, value);
     d[SymEngine::symbol(name)] = SymEngine::real_double(value);
   }
-  // hack until https://github.com/symengine/symengine/issues/1566 is resolved:
-  // (SymEngine parser relies on strtod and assumes C locale)
-  std::locale userLocale{std::locale::global(std::locale::classic())};
   // map from function id to symengine expressions
   std::map<std::string, SymEngineFunc, std::less<>> symEngineFuncs;
   for (const auto &function : functions) {
@@ -94,7 +91,6 @@ bool Symbolic::parse(
                               "requires {} argument(s), found {}",
                               expression, f.name, f.args.size(), args.size());
               SPDLOG_WARN("{}", errorMessage);
-              std::locale::global(userLocale);
               return false;
             }
             SymEngine::map_basic_basic arg_map;
@@ -117,7 +113,6 @@ bool Symbolic::parse(
                                    "function calls are not supported",
                                    expression);
         SPDLOG_WARN("{}", errorMessage);
-        std::locale::global(userLocale);
         return false;
       }
       exprInlined.push_back(e->subs(d));
@@ -126,7 +121,6 @@ bool Symbolic::parse(
       SPDLOG_WARN("{}", e.what());
       errorMessage = fmt::format("Error parsing expression '{}': {}",
                                  expression, e.what());
-      std::locale::global(userLocale);
       return false;
     }
     SPDLOG_DEBUG("  --> {}", sbml(*exprInlined.back()));
@@ -143,7 +137,6 @@ bool Symbolic::parse(
             fmt::format("Error parsing expression '{}': Unknown symbol '{}'",
                         expression, sbml(*(*iter)));
         SPDLOG_WARN("{}", errorMessage);
-        std::locale::global(userLocale);
         return false;
       }
     }
@@ -153,12 +146,10 @@ bool Symbolic::parse(
           fmt::format("Error parsing expression '{}': Unknown function '{}'",
                       expression, sbml(*(*fn.begin())));
       SPDLOG_WARN("{}", errorMessage);
-      std::locale::global(userLocale);
       return false;
     }
   }
   valid = true;
-  std::locale::global(userLocale);
   return true;
 }
 

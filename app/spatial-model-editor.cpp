@@ -6,7 +6,6 @@
 #include <QVTKOpenGLNativeWidget.h>
 #include <QtGui>
 #include <fmt/core.h>
-#include <locale>
 
 int main(int argc, char *argv[]) {
   QString filename;
