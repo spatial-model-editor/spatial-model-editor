@@ -137,13 +137,12 @@ makeValidArgumentName(const std::string &name,
                       const libsbml::FunctionDefinition *func) {
   std::string s;
   // first char must be a letter or underscore
-  if (auto c = name.front();
-      !(std::isalpha(c, std::locale::classic()) || c == '_')) {
+  if (auto c = name.front(); !(sme::common::isalpha(c) || c == '_')) {
     s.append("_");
   }
   // other chars must be letters, numbers or underscores
   for (const auto c : name) {
-    if (std::isalnum(c, std::locale::classic()) || c == '_') {
+    if (sme::common::isalnum(c) || c == '_') {
       s += c;
     }
   }
