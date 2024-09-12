@@ -6,8 +6,6 @@
 #include <QFile>
 #include <fmt/core.h>
 #include <limits>
-#include <locale>
-#include <memory>
 
 using namespace sme;
 
@@ -107,8 +105,6 @@ static void printSimulatorBenchmarks(const BenchmarkParams &params) {
   Q_INIT_RESOURCE(resources);
   // disable logging
   spdlog::set_level(spdlog::level::off);
-  // symengine assumes C locale
-  std::locale::global(std::locale::classic());
 
   // fixed step-size simulations
   double dt = params.simulator_timestep;
