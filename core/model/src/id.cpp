@@ -1,5 +1,6 @@
 #include "id.hpp"
 #include "sme/logger.hpp"
+#include "sme/utils.hpp"
 #include <QString>
 #include <QStringList>
 #include <memory>
@@ -24,14 +25,14 @@ QString nameToUniqueSId(const QString &name, libsbml::Model *model) {
   std::string id;
   // remove any non-alphanumeric chars, convert spaces etc to underscores
   for (auto c : name.toStdString()) {
-    if (std::isalnum(c, std::locale::classic())) {
+    if (sme::common::isalnum(c)) {
       id.push_back(c);
     } else if (charsToConvertToUnderscore.find(c) != std::string::npos) {
       id.push_back('_');
     }
   }
   // first char must be a letter or underscore
-  if (!std::isalpha(id.front(), std::locale::classic()) && id.front() != '_') {
+  if (!sme::common::isalpha(id.front()) && id.front() != '_') {
     id = "_" + id;
   }
   SPDLOG_DEBUG("  -> '{}'", id);

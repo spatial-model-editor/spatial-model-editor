@@ -14,6 +14,7 @@
 #include <initializer_list>
 #include <iomanip>
 #include <iterator>
+#include <locale>
 #include <numeric>
 #include <optional>
 #include <ranges>
@@ -281,7 +282,7 @@ bool isCyclicPermutation(const std::vector<T> &a, const std::vector<T> &b) {
 }
 
 // Creates a unique_ptr of type T with std::free as custom deleter
-// Avoids taking this address of std::free as this is undefined behaviour
+// Avoids taking the address of std::free as this is undefined behaviour
 // https://stackoverflow.com/questions/27440953/stdunique-ptr-for-c-functions-that-need-free/43626234#43626234
 struct free_deleter {
   template <typename T> void operator()(T *p) const {
@@ -289,5 +290,12 @@ struct free_deleter {
   }
 };
 template <typename T> using unique_C_ptr = std::unique_ptr<T, free_deleter>;
+
+// C-locale versions of isalpha, isdigit, etc.
+inline bool isalpha(char c) { return std::isalpha(c, std::locale::classic()); }
+
+inline bool isalnum(char c) { return std::isalnum(c, std::locale::classic()); }
+
+inline bool isdigit(char c) { return std::isdigit(c, std::locale::classic()); }
 
 } // namespace sme::common

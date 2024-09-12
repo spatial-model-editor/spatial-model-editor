@@ -15,7 +15,7 @@ env:
   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-  SONAR_SCANNER_VERSION: '5.0.1.3006'
+  SONAR_SCANNER_VERSION: '6.2.1.4610'
 jobs:
   quality:
     name: ${{ matrix.script }}
@@ -25,9 +25,9 @@ jobs:
       matrix:
         script: [codecov, sonar, asan, ubsan]
     steps:
-      - uses: spatial-model-editor/setup-ci@2024.05.31
+      - uses: spatial-model-editor/setup-ci@2024.10.29
         with:
-          sme_deps: '2024.05.15'
+          sme_deps: '2024.10.29'
           cache_id: ${{ matrix.script }}
       - uses: actions/checkout@v4
         with:

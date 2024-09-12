@@ -1,12 +1,12 @@
 #include "qplaintextmathedit.hpp"
 #include "sme/logger.hpp"
+#include "sme/utils.hpp"
 #include <QAbstractItemModel>
 #include <QAbstractItemView>
 #include <QScrollBar>
 #include <QString>
 #include <algorithm>
 #include <limits>
-#include <locale>
 
 static constexpr char quoteChar{'"'};
 
@@ -65,13 +65,12 @@ void QPlainTextMathEdit::setVariables(
 
 static bool isValidSymbol(std::string_view name) {
   // first char must be a letter or underscore
-  if (auto c{name.front()};
-      !(std::isalpha(c, std::locale::classic()) || c == '_')) {
+  if (auto c{name.front()}; !(sme::common::isalpha(c) || c == '_')) {
     return false;
   }
   // other chars must be letters, numbers or underscores
   return std::all_of(name.begin(), name.end(), [](char c) {
-    return std::isalnum(c, std::locale::classic()) || c == '_';
+    return sme::common::isalnum(c) || c == '_';
   });
 }
 
@@ -270,9 +269,8 @@ substitute(const std::string &expr,
     } else {
       // find next delimiter
       end = expr.find_first_of(delimiters, start + 1);
-      if (std::isdigit(expr[start], std::locale::classic()) &&
-          end < expr.size() && expr[end - 1] == 'e' &&
-          (expr[end] == '-' || expr[end] == '+')) {
+      if (sme::common::isdigit(expr[start]) && end < expr.size() &&
+          expr[end - 1] == 'e' && (expr[end] == '-' || expr[end] == '+')) {
         // symbol starts with a numerical digit, and ends with "e-" or "e+",
         // this can only be valid input if we have the first half of a number in
         // scientific notation, so carry on to next delimiter to get the rest of

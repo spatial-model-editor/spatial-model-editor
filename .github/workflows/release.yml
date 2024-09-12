@@ -30,8 +30,8 @@ jobs:
       run:
         shell: ${{ matrix.platform.shell }}
     env:
-      CIBUILDWHEEL_VERSION: "2.18"
-      CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2024.04.24"
+      CIBUILDWHEEL_VERSION: "2.21"
+      CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2024.09.12"
       MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
       MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
       MACOS_CERTIFICATE_NAME: ${{ secrets.MACOS_CERTIFICATE_NAME }}
@@ -41,9 +41,9 @@ jobs:
       MACOS_KEYCHAIN_PWD: ${{ secrets.MACOS_KEYCHAIN_PWD }}
     name: "${{ matrix.target }} :: ${{ matrix.platform.os }}"
     steps:
-      - uses: spatial-model-editor/setup-ci@2024.05.31
+      - uses: spatial-model-editor/setup-ci@2024.10.29
         with:
-          sme_deps: '2024.05.15'
+          sme_deps: '2024.10.29'
           cache_id: ${{ matrix.target }}
       - uses: actions/checkout@v4
         with:
@@ -81,7 +81,7 @@ jobs:
           merge-multiple: true
           path: artifacts
       # if this is an untagged commit to main: add a "0.0.0" version wheel to github latest release for readthedocs to use
-      - run: cp artifacts/dist/sme-*-cp311-cp311-manylinux_2_28_x86_64.whl artifacts/binaries/sme-0.0.0-cp311-cp311-manylinux_2_28_x86_64.whl
+      - run: cp artifacts/dist/sme-*-cp312-cp312-manylinux_2_28_x86_64.whl artifacts/binaries/sme-0.0.0-cp312-cp312-manylinux_2_28_x86_64.whl
         if: github.ref == 'refs/heads/main'
       - name: Upload binaries to latest pre-release
         # if this is an untagged commit to main: upload binaries to github latest release

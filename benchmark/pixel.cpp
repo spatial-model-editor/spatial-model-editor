@@ -5,7 +5,6 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <fmt/core.h>
-#include <locale>
 
 using namespace sme;
 
@@ -85,8 +84,6 @@ static void printFixedTimestepPixel(const PixelParams &params) {
   Q_INIT_RESOURCE(resources);
   // disable logging
   spdlog::set_level(spdlog::level::off);
-  // symengine assumes C locale
-  std::locale::global(std::locale::classic());
 
   fmt::print("# timestep\tvalue\t\t\tlower-order\t\truntime\tsteps\tmodel\n");
   for (double dt : {1.0,     0.5,      0.25,      0.125,   0.1,     0.05,

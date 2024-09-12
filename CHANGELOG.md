@@ -1,8 +1,13 @@
 # Changelog
-## [latest]
+
+## [1.7.0] - 2024-10-29
 ### Added
+- Python 3.13 wheels [#1002](https://github.com/spatial-model-editor/spatial-model-editor/issues/1002)
 - colours in the geometry image can now be changed [#960](https://github.com/spatial-model-editor/spatial-model-editor/issues/960)
 - voxels can be selected in the 3d rendering of the geometry image [#979](https://github.com/spatial-model-editor/spatial-model-editor/issues/979)
+
+### Fixed
+- parameter optimization error with 3d models [#1007](https://github.com/spatial-model-editor/spatial-model-editor/issues/1007)
 
 ## [1.6.0] - 2024-03-26
 ### Added
