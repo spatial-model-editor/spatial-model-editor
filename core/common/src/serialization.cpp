@@ -37,7 +37,9 @@ void load(Archive &ar, sme::common::SmeFileContents &contents,
     SPDLOG_ERROR("v2");
     // simulationData wasn't wrapped in a unique_ptr until version 3
     simulate::SimulationData simulationData{};
-    { ar(contents.xmlModel, simulationData); }
+    {
+      ar(contents.xmlModel, simulationData);
+    }
     contents.simulationData =
         std::make_unique<simulate::SimulationData>(std::move(simulationData));
   } else if (version == 1) {
@@ -48,7 +50,9 @@ void load(Archive &ar, sme::common::SmeFileContents &contents,
     // import settings from sme file
     // simulationData wasn't wrapped in a unique_ptr until version 3
     simulate::SimulationData simulationData{};
-    { ar(contents.xmlModel, simulationData, simulationSettings); }
+    {
+      ar(contents.xmlModel, simulationData, simulationSettings);
+    }
     contents.simulationData =
         std::make_unique<simulate::SimulationData>(std::move(simulationData));
     // import existing annotation from sbml
