@@ -372,8 +372,7 @@ std::vector<double> Simulation::getConc(std::size_t timeIndex,
 std::vector<double> Simulation::getConcArray(std::size_t timeIndex,
                                              std::size_t compartmentIndex,
                                              std::size_t speciesIndex) const {
-  std::vector<double> c(
-      static_cast<std::size_t>(imageSize.width() * imageSize.height()), 0.0);
+  std::vector<double> c(static_cast<std::size_t>(imageSize.nVoxels()), 0.0);
   const auto &compConc = data->concentration[timeIndex][compartmentIndex];
   const auto &comp = compartments[compartmentIndex];
   std::size_t nPixels = comp->nVoxels();
@@ -383,7 +382,8 @@ std::vector<double> Simulation::getConcArray(std::size_t timeIndex,
     const auto &point = comp->getVoxel(ix);
     auto arrayIndex{static_cast<std::size_t>(
         point.p.x() +
-        imageSize.width() * (imageSize.height() - 1 - point.p.y()))};
+        imageSize.width() * (imageSize.height() - 1 - point.p.y()) +
+        imageSize.width() * imageSize.height() * point.z)};
     c[arrayIndex] = compConc[ix * stride + speciesIndex];
   }
   return c;
