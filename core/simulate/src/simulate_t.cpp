@@ -2111,6 +2111,12 @@ TEST_CASE("Simulate gray-scott-3d model",
       s.getSimulationData().clear();
       s.getSimulationSettings().simulatorType = simulator;
       auto sim = simulate::Simulation(s);
+      REQUIRE(sim.getConcArray(0, 0, 0).size() == s.getSpecies()
+                                                      .getField("s1_nuc")
+                                                      ->getCompartment()
+                                                      ->getCompartmentImages()
+                                                      .volume()
+                                                      .nVoxels());
       REQUIRE(sim.getNCompletedTimesteps() == 1);
       sim.doTimesteps(0.01);
       REQUIRE(sim.getNCompletedTimesteps() == 2);
