@@ -63,7 +63,7 @@ void rendering::ClippingPlane::SetClipPlane(QVector3D normal,
   normal.normalize();
 
   SetClipPlane(normal.x(), normal.y(), normal.z(),
-               -QVector3D::dotProduct(normal, point));
+               QVector3D::dotProduct(normal, point));
 }
 
 std::tuple<QVector3D, QVector3D>
@@ -91,8 +91,11 @@ void rendering::ClippingPlane::update(float delta) {
 
   auto [position, normal] = fromAnalyticalToVectorial(m_a, m_b, m_c, m_d);
   DecomposedTransform globalTransform = getGlobalTransform();
-  QVector4D normalRotated = globalTransform.rotation * QVector4D(normal, 1.0f);
-  QVector3D positionTranslated = globalTransform.position + position;
+  QVector4D normalRotated = globalTransform.rotation.inverted().transposed() *
+                            QVector4D(normal, 1.0f);
+  QVector3D positionTranslated =
+      globalTransform.rotation * QVector4D(position, 0).toVector3D() +
+      globalTransform.position;
 
   std::tie(m_globalPlane.a, m_globalPlane.b, m_globalPlane.c, m_globalPlane.d) =
       fromVectorialToAnalytical(positionTranslated, normalRotated.toVector3D());

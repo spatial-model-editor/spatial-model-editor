@@ -69,7 +69,6 @@ void Node::buildRenderingQueue(
     std::vector<std::weak_ptr<rendering::Node>> &queue) {
 
   if (getPriority() > RenderPriority::e_zero) {
-    //    queue.insert(shared_from_this());
     queue.push_back(shared_from_this());
   }
 
@@ -118,6 +117,19 @@ std::weak_ptr<Node> Node::getRoot() {
   return computeRoot;
 }
 
+void Node::GetAllNodesOfType(
+    const std::type_info &type,
+    std::vector<std::weak_ptr<rendering::Node>> &queue) {
+
+  if (typeid(*this) == type) {
+    queue.push_back(shared_from_this());
+  }
+
+  for (const auto &node : children) {
+    node->GetAllNodesOfType(type, queue);
+  }
+}
+
 void Node::add(std::shared_ptr<Node> node, bool localFrameCoord) {
 
   // TODO: Implement global frame use case.
@@ -131,9 +143,9 @@ void Node::add(std::shared_ptr<Node> node, bool localFrameCoord) {
 
     auto root = getRoot();
 
-    auto root_loocked = root.lock();
-    if (root_loocked) {
-      root_loocked->m_renderingDirty = true;
+    auto root_locked = root.lock();
+    if (root_locked) {
+      root_locked->m_renderingDirty = true;
     }
   }
 }
@@ -151,9 +163,9 @@ void Node::remove() {
   std::erase_if(parent_ref->children,
                 [this](auto child) { return child.get() == this; });
 
-  auto root_loocked = root.lock();
-  if (root_loocked) {
-    root_loocked->m_renderingDirty = true;
+  auto root_locked = root.lock();
+  if (root_locked) {
+    root_locked->m_renderingDirty = true;
   }
 }
 
