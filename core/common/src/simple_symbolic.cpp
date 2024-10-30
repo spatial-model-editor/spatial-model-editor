@@ -9,23 +9,14 @@ namespace sme::common {
 
 using namespace SymEngine;
 
-static RCP<const Basic> safeParse(const std::string &expr) {
-  // hack until https://github.com/symengine/symengine/issues/1566 is resolved:
-  // (SymEngine parser relies on strtod and assumes C locale)
-  std::locale userLocale{std::locale::global(std::locale::classic())};
-  auto e{parse_sbml(expr)};
-  std::locale::global(userLocale);
-  return e;
-}
-
 std::string SimpleSymbolic::divide(const std::string &expr,
                                    const std::string &var) {
-  return sbml(*div(safeParse(expr), safeParse(var)));
+  return sbml(*div(parse_sbml(expr), parse_sbml(var)));
 }
 
 std::string SimpleSymbolic::multiply(const std::string &expr,
                                      const std::string &var) {
-  return sbml(*mul(safeParse(expr), safeParse(var)));
+  return sbml(*mul(parse_sbml(expr), parse_sbml(var)));
 }
 
 std::string SimpleSymbolic::substitute(
@@ -36,7 +27,7 @@ std::string SimpleSymbolic::substitute(
     SPDLOG_DEBUG("  - constant {} = {}", name, value);
     d[symbol(name)] = real_double(value);
   }
-  return sbml(*safeParse(expr)->subs(d));
+  return sbml(*parse_sbml(expr)->subs(d));
 }
 
 bool SimpleSymbolic::contains(const std::string &expr, const std::string &var) {
@@ -46,7 +37,7 @@ bool SimpleSymbolic::contains(const std::string &expr, const std::string &var) {
 std::set<std::string, std::less<>>
 SimpleSymbolic::symbols(const std::string &expr) {
   std::set<std::string, std::less<>> result;
-  for (const auto &s : free_symbols(*safeParse(expr))) {
+  for (const auto &s : free_symbols(*parse_sbml(expr))) {
     result.insert(rcp_dynamic_cast<const Symbol>(s)->get_name());
   }
   return result;
