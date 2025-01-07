@@ -19,9 +19,8 @@ struct Unit {
   int scale{0};
   int exponent{1};
   double multiplier{1.0};
+  friend bool operator==(const Unit &, const Unit &);
 };
-
-bool operator==(const Unit &, const Unit &);
 
 QString unitInBaseUnits(const Unit &unit);
 

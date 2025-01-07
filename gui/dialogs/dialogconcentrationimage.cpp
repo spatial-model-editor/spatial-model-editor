@@ -69,9 +69,9 @@ DialogConcentrationImage::DialogConcentrationImage(
           &DialogConcentrationImage::reject);
   connect(ui->lblImage, &QLabelMouseTracker::mouseOver, this,
           &DialogConcentrationImage::lblImage_mouseOver);
-  connect(ui->chkGrid, &QCheckBox::stateChanged, this,
+  connect(ui->chkGrid, &QCheckBox::checkStateChanged, this,
           &DialogConcentrationImage::chkGrid_stateChanged);
-  connect(ui->chkScale, &QCheckBox::stateChanged, this,
+  connect(ui->chkScale, &QCheckBox::checkStateChanged, this,
           &DialogConcentrationImage::chkScale_stateChanged);
   connect(ui->btnImportImage, &QPushButton::clicked, this,
           &DialogConcentrationImage::btnImportImage_clicked);

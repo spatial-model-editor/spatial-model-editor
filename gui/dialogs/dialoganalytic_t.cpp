@@ -98,6 +98,7 @@ TEST_CASE("DialogAnalytic",
     }
     SECTION("valid expr: 1.5 + sin(x) & export image") {
       ModalWidgetTimer mwt;
+      mwt.setIgnoredWidget(&dia);
       mwt.addUserAction(
           {"a", "n", "a", "l", "y", "t", "i", "c", "C", "o", "n", "c"});
       mwt.start();

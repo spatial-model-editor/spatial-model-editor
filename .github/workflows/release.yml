@@ -18,7 +18,7 @@ jobs:
       matrix:
         target: ["gui-cli", "wheels"]
         platform:
-          - os: "ubuntu-20.04"
+          - os: "ubuntu-22.04"
             shell: "bash"
           - os: "macos-13"
             shell: "bash"
@@ -30,8 +30,8 @@ jobs:
       run:
         shell: ${{ matrix.platform.shell }}
     env:
-      CIBUILDWHEEL_VERSION: "2.21"
-      CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2024.09.12"
+      CIBUILDWHEEL_VERSION: "2.22"
+      CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2025.01.08"
       MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
       MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
       MACOS_CERTIFICATE_NAME: ${{ secrets.MACOS_CERTIFICATE_NAME }}
@@ -41,9 +41,9 @@ jobs:
       MACOS_KEYCHAIN_PWD: ${{ secrets.MACOS_KEYCHAIN_PWD }}
     name: "${{ matrix.target }} :: ${{ matrix.platform.os }}"
     steps:
-      - uses: spatial-model-editor/setup-ci@2024.10.29
+      - uses: spatial-model-editor/setup-ci@2025.01.02
         with:
-          sme_deps: '2024.10.29'
+          sme_deps: '2025.01.08'
           cache_id: ${{ matrix.target }}
       - uses: actions/checkout@v4
         with:

@@ -128,7 +128,8 @@ void QVoxelRenderer::mousePressEvent(QMouseEvent *ev) {
     auto x = static_cast<int>(picked[0]);
     auto y = static_cast<int>(picked[1]);
     auto z = static_cast<std::size_t>(picked[2]);
-    if (z < dim[2] && y >= 0 && y < dim[1] && x >= 0 && x < dim[0]) {
+    if (static_cast<int>(z) < dim[2] && y >= 0 && y < dim[1] && x >= 0 &&
+        x < dim[0]) {
       static constexpr vtkIdType stride = 4;
       auto idx =
           stride * static_cast<vtkIdType>(z * dim[1] * dim[0] + y * dim[1] + x);

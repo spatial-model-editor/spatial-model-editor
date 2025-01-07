@@ -108,9 +108,8 @@ struct AvgMinMax {
       ar(avg, min, max);
     }
   }
+  friend bool operator==(const AvgMinMax &lhs, const AvgMinMax &rhs);
 };
-
-bool operator==(const AvgMinMax &lhs, const AvgMinMax &rhs);
 
 } // namespace sme::simulate
 

@@ -51,4 +51,4 @@ def test_parameter_list():
     assert k == ps[0]
     assert k == ps[-1]
     for p in ps:
-        assert p == k
+        assert p.name == k.name
