@@ -19,15 +19,15 @@ env:
 jobs:
   quality:
     name: ${{ matrix.script }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         script: [codecov, sonar, asan, ubsan]
     steps:
-      - uses: spatial-model-editor/setup-ci@2024.10.29
+      - uses: spatial-model-editor/setup-ci@2025.01.02
         with:
-          sme_deps: '2024.10.29'
+          sme_deps: '2025.01.08'
           cache_id: ${{ matrix.script }}
       - uses: actions/checkout@v4
         with:

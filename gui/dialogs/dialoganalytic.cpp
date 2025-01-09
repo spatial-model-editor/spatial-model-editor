@@ -56,11 +56,11 @@ DialogAnalytic::DialogAnalytic(
           &DialogAnalytic::accept);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogAnalytic::reject);
-  connect(ui->chkGrid, &QCheckBox::stateChanged, this,
+  connect(ui->chkGrid, &QCheckBox::checkStateChanged, this,
           [ui_ptr = ui.get()](int state) {
             ui_ptr->lblImage->displayGrid(state == Qt::Checked);
           });
-  connect(ui->chkScale, &QCheckBox::stateChanged, this,
+  connect(ui->chkScale, &QCheckBox::checkStateChanged, this,
           [ui_ptr = ui.get()](int state) {
             ui_ptr->lblImage->displayScale(state == Qt::Checked);
           });

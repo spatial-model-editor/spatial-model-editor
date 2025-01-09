@@ -12,20 +12,19 @@ struct Voxel {
   Voxel(int vx, int vy, std::size_t vz) : p{vx, vy}, z{vz} {}
   QPoint p{0, 0};
   std::size_t z{0};
+  friend Voxel operator+(const Voxel &a, const Voxel &b) {
+    return {a.p + b.p, a.z + b.z};
+  }
+  friend Voxel operator-(const Voxel &a, const Voxel &b) {
+    return {a.p - b.p, a.z - b.z};
+  }
+  friend Voxel operator*(int a, const Voxel &b) {
+    return {a * b.p, static_cast<std::size_t>(a) * b.z};
+  }
+  friend bool operator==(const Voxel &a, const Voxel &b) {
+    return a.z == b.z && a.p == b.p;
+  }
 };
-
-inline Voxel operator+(const Voxel &a, const Voxel &b) {
-  return {a.p + b.p, a.z + b.z};
-}
-inline Voxel operator-(const Voxel &a, const Voxel &b) {
-  return {a.p - b.p, a.z - b.z};
-}
-inline Voxel operator*(int a, const Voxel &b) {
-  return {a * b.p, static_cast<std::size_t>(a) * b.z};
-}
-inline bool operator==(const Voxel &a, const Voxel &b) {
-  return a.z == b.z && a.p == b.p;
-}
 
 struct VoxelF {
   VoxelF() = default;
@@ -49,12 +48,11 @@ public:
   [[nodiscard]] inline std::size_t nVoxels() const {
     return static_cast<std::size_t>(xy.width() * xy.height()) * z;
   }
+  friend bool operator==(const Volume &a, const Volume &b) {
+    return a.width() == b.width() && a.height() == b.height() &&
+           a.depth() == b.depth();
+  }
 };
-
-inline bool operator==(const Volume &a, const Volume &b) {
-  return a.width() == b.width() && a.height() == b.height() &&
-         a.depth() == b.depth();
-}
 
 class VolumeF {
 private:
@@ -71,26 +69,21 @@ public:
   [[nodiscard]] inline double volume() const {
     return xy.width() * xy.height() * z;
   }
+  friend VolumeF operator*(double a, const VolumeF &b) {
+    return {a * b.width(), a * b.height(), a * b.depth()};
+  }
+  friend VolumeF operator*(const VolumeF &a, double b) { return b * a; }
+  friend VolumeF operator*(const VolumeF &a, const Volume &b) {
+    return {a.width() * static_cast<double>(b.width()),
+            a.height() * static_cast<double>(b.height()),
+            a.depth() * static_cast<double>(b.depth())};
+  }
+  friend VolumeF operator*(const Volume &a, const VolumeF &b) { return b * a; }
+  friend VolumeF operator/(const VolumeF &a, const Volume &b) {
+    return {a.width() / static_cast<double>(b.width()),
+            a.height() / static_cast<double>(b.height()),
+            a.depth() / static_cast<double>(b.depth())};
+  }
 };
-
-inline VolumeF operator*(double a, const VolumeF &b) {
-  return {a * b.width(), a * b.height(), a * b.depth()};
-}
-
-inline VolumeF operator*(const VolumeF &a, double b) { return b * a; }
-
-inline VolumeF operator*(const VolumeF &a, const Volume &b) {
-  return {a.width() * static_cast<double>(b.width()),
-          a.height() * static_cast<double>(b.height()),
-          a.depth() * static_cast<double>(b.depth())};
-}
-
-inline VolumeF operator*(const Volume &a, const VolumeF &b) { return b * a; }
-
-inline VolumeF operator/(const VolumeF &a, const Volume &b) {
-  return {a.width() / static_cast<double>(b.width()),
-          a.height() / static_cast<double>(b.height()),
-          a.depth() / static_cast<double>(b.depth())};
-}
 
 } // namespace sme::common

@@ -75,7 +75,7 @@ void DialogSimulationOptions::setupConnections() {
           &DialogSimulationOptions::txtDuneIncrease_editingFinished);
   connect(ui->txtDuneDecrease, &QLineEdit::editingFinished, this,
           &DialogSimulationOptions::txtDuneDecrease_editingFinished);
-  connect(ui->chkDuneVTK, &QCheckBox::stateChanged, this,
+  connect(ui->chkDuneVTK, &QCheckBox::checkStateChanged, this,
           &DialogSimulationOptions::chkDuneVTK_stateChanged);
   connect(ui->txtDuneNewtonRel, &QLineEdit::editingFinished, this,
           &DialogSimulationOptions::txtDuneNewtonRel_editingFinished);
@@ -96,11 +96,11 @@ void DialogSimulationOptions::setupConnections() {
           &DialogSimulationOptions::txtPixelRelErr_editingFinished);
   connect(ui->txtPixelDt, &QLineEdit::editingFinished, this,
           &DialogSimulationOptions::txtPixelDt_editingFinished);
-  connect(ui->chkPixelMultithread, &QCheckBox::stateChanged, this,
+  connect(ui->chkPixelMultithread, &QCheckBox::checkStateChanged, this,
           &DialogSimulationOptions::chkPixelMultithread_stateChanged);
   connect(ui->spnPixelThreads, qOverload<int>(&QSpinBox::valueChanged), this,
           &DialogSimulationOptions::spnPixelThreads_valueChanged);
-  connect(ui->chkPixelCSE, &QCheckBox::stateChanged, this,
+  connect(ui->chkPixelCSE, &QCheckBox::checkStateChanged, this,
           &DialogSimulationOptions::chkPixelCSE_stateChanged);
   connect(ui->spnPixelOptLevel, qOverload<int>(&QSpinBox::valueChanged), this,
           &DialogSimulationOptions::spnPixelOptLevel_valueChanged);
