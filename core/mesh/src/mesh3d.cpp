@@ -148,8 +148,9 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
                std::vector<std::size_t> maxCellVolume,
                const common::VolumeF &voxelSize,
                const common::VoxelF &originPoint,
-               const std::vector<QRgb> &compartmentColours)
-    : compartmentMaxCellVolume_(std::move(maxCellVolume)) {
+               std::vector<QRgb> compartmentColours)
+    : compartmentMaxCellVolume_(std::move(maxCellVolume)),
+      colors_(std::move(compartmentColours)) {
   if (imageStack.empty()) {
     errorMessage_ = "Compartment geometry image missing";
     return;
@@ -161,14 +162,8 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   const auto &colorTable = imageStack_.colorTable();
   SPDLOG_INFO("ImageStack {}x{}x{} with {} colours", vol.width(), vol.height(),
               vol.depth(), colorTable.size());
-
-  colorTableVec.reserve(compartmentColours.size());
-  std::ranges::transform(compartmentColours.cbegin(), compartmentColours.cend(),
-                         std::back_inserter(colorTableVec),
-                         [](QRgb color) { return QColor(color); });
-
-  for (auto compartmentColor : compartmentColours) {
-    if (!colorTable.contains(compartmentColor)) {
+  for (auto color : colors_) {
+    if (!colorTable.contains(color)) {
       SPDLOG_WARN("Compartment color is not present in geometry image");
       errorMessage_ = "Compartment color is not present in geometry image";
       return;
@@ -179,9 +174,9 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   // mesh voxels, so label n is colorIndex n-1 from the image colorTable
   labelToCompartmentIndex_.assign(
       static_cast<std::size_t>(colorTable.size()) + 1, NullCompartmentIndex);
-  for (std::size_t compartmentIndex = 0;
-       compartmentIndex < compartmentColours.size(); ++compartmentIndex) {
-    auto compartmentColor = compartmentColours[compartmentIndex];
+  for (std::size_t compartmentIndex = 0; compartmentIndex < colors_.size();
+       ++compartmentIndex) {
+    auto compartmentColor = colors_[compartmentIndex];
     auto colorIndex = colorTable.indexOf(compartmentColor);
     if (colorIndex >= 0) {
       auto label = static_cast<std::size_t>(colorIndex) + 1;
@@ -221,14 +216,14 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   SPDLOG_INFO("Constructed {}x{}x{} Image_3", image3_->xdim(), image3_->ydim(),
               image3_->zdim());
 
-  tetrahedronVertexIndices_.resize(compartmentColours.size());
-  tetrahedra_.resize(compartmentColours.size());
+  tetrahedronVertexIndices_.resize(colors_.size());
+  tetrahedra_.resize(colors_.size());
 
-  if (compartmentMaxCellVolume_.size() != compartmentColours.size()) {
+  if (compartmentMaxCellVolume_.size() != colors_.size()) {
     // if cell volumes are not correctly specified use default value
     constexpr std::size_t defaultCompartmentMaxCellVolume{5};
     compartmentMaxCellVolume_ = std::vector<std::size_t>(
-        compartmentColours.size(), defaultCompartmentMaxCellVolume);
+        colors_.size(), defaultCompartmentMaxCellVolume);
     SPDLOG_INFO("no max cell volumes specified, using default value: {}",
                 defaultCompartmentMaxCellVolume);
   }
@@ -243,9 +238,20 @@ const std::string &Mesh3d::getErrorMessage() const { return errorMessage_; };
 
 void Mesh3d::setCompartmentMaxCellVolume(std::size_t compartmentIndex,
                                          std::size_t maxCellVolume) {
-  SPDLOG_INFO("compIndex {}: max cell volume {} -> {}", compartmentIndex,
-              compartmentMaxCellVolume_.at(compartmentIndex), maxCellVolume);
-  compartmentMaxCellVolume_.at(compartmentIndex) = maxCellVolume;
+  SPDLOG_INFO("compartmentIndex {}: max cell volume -> {}", compartmentIndex,
+              maxCellVolume);
+  if (compartmentIndex >= compartmentMaxCellVolume_.size()) {
+    SPDLOG_WARN(
+        "compartmentIndex {} out of range for mesh with {} compartments",
+        compartmentIndex, compartmentMaxCellVolume_.size());
+    return;
+  }
+  auto &currentMaxCellVolume = compartmentMaxCellVolume_.at(compartmentIndex);
+  if (currentMaxCellVolume == maxCellVolume) {
+    SPDLOG_INFO("  -> max cell volume unchanged");
+    return;
+  }
+  currentMaxCellVolume = maxCellVolume;
   constructMesh();
 }
 
@@ -273,6 +279,10 @@ void Mesh3d::setPhysicalGeometry(const common::VolumeF &voxelSize,
   constructMesh();
 }
 
+const std::vector<sme::common::VoxelF> &Mesh3d::getVertices() const {
+  return vertices_;
+}
+
 std::vector<double> Mesh3d::getVerticesAsFlatArray() const {
   std::vector<double> v;
   v.reserve(vertices_.size() * 3);
@@ -284,20 +294,7 @@ std::vector<double> Mesh3d::getVerticesAsFlatArray() const {
   return v;
 }
 
-std::vector<QVector4D>
-Mesh3d::getVerticesAsQVector4DArrayInHomogeneousCoord() const {
-  // similar with getVerticesAsFlatArray() but in Homogeneous Coordinates
-  std::vector<QVector4D> v;
-  v.reserve(vertices_.size());
-  for (const auto &vertex : vertices_) {
-    v.push_back(QVector4D(static_cast<float>(vertex.p.x()),
-                          static_cast<float>(vertex.p.y()),
-                          static_cast<float>(vertex.z), 1.0f));
-  }
-  return v;
-}
-
-std::size_t Mesh3d::getNumberOfCompartment() const {
+std::size_t Mesh3d::getNumberOfCompartments() const {
   return tetrahedronVertexIndices_.size();
 }
 
@@ -312,26 +309,6 @@ Mesh3d::getTetrahedronIndicesAsFlatArray(std::size_t compartmentIndex) const {
   for (const auto &t : indices) {
     for (std::size_t ti : t) {
       out.push_back(static_cast<int>(ti));
-    }
-  }
-  return out;
-}
-
-std::vector<uint32_t>
-Mesh3d::getMeshTrianglesIndicesAsFlatArray(std::size_t compartmentIndex) const {
-  assert(compartmentIndex < tetrahedronVertexIndices_.size());
-
-  std::vector<uint32_t> out;
-  const auto &indices = tetrahedronVertexIndices_[compartmentIndex];
-  out.reserve(indices.size() * 4 * 3);
-  for (const auto &t : indices) {
-    for (uint32_t i = 0; i < t.size(); i++) {
-      for (uint32_t j = i + 1; j < t.size(); j++)
-        for (uint32_t k = j + 1; k < t.size(); k++) {
-          out.push_back(static_cast<uint32_t>(t[i]));
-          out.push_back(static_cast<uint32_t>(t[j]));
-          out.push_back(static_cast<uint32_t>(t[k]));
-        }
     }
   }
   return out;
@@ -392,19 +369,10 @@ QString Mesh3d::getGMSH() const {
   return msh;
 }
 
-const std::vector<QColor> &Mesh3d::getColors() const { return colorTableVec; }
+const std::vector<QRgb> &Mesh3d::getColors() const { return colors_; }
 
-QVector3D Mesh3d::getOffset() const {
-
-  return QVector3D(-static_cast<float>(image3_->image()->vx) *
-                           static_cast<float>(image3_->xdim()) / 2.0f -
-                       image3_->image()->tx,
-                   -static_cast<float>(image3_->image()->vy) *
-                           static_cast<float>(image3_->ydim()) / 2.0f -
-                       image3_->image()->ty,
-                   -static_cast<float>(image3_->image()->vz) *
-                           static_cast<float>(image3_->zdim()) / 2.0f -
-                       image3_->image()->tz);
+void Mesh3d::setColors(std::vector<QRgb> colors) {
+  colors_ = std::move(colors);
 }
 
 } // namespace sme::mesh

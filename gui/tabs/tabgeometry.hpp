@@ -59,8 +59,11 @@ private:
   void spinMaxBoundaryPoints_valueChanged(int value);
   void spinBoundaryZoom_valueChanged(int value);
   void lblCompMesh_mouseClicked(QRgb col, sme::common::Voxel point);
-  void mshCompMesh_mouseClicked(QRgb color, uint32_t meshID);
+  void mshCompMesh_mouseClicked(int compartmentIndex);
   void spinMaxTriangleArea_valueChanged(int value);
+  void updateMesh2d();
+  void spinMaxCellVolume_valueChanged(int value);
+  void cmbRenderMode_currentIndexChanged(int index);
   void spinMeshZoom_valueChanged(int value);
   void listCompartments_itemSelectionChanged();
   void listCompartments_itemDoubleClicked(QListWidgetItem *item);

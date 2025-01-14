@@ -35,7 +35,7 @@ private:
   std::vector<std::vector<TetrahedronVertexIndices>> tetrahedronVertexIndices_;
   std::vector<std::uint8_t> labelToCompartmentIndex_;
   bool validMesh_{false};
-  std::vector<QColor> colorTableVec;
+  std::vector<QRgb> colors_;
   std::string errorMessage_{};
   void constructMesh();
 
@@ -55,7 +55,7 @@ public:
                   std::vector<std::size_t> maxCellVolume = {},
                   const common::VolumeF &voxelSize = {1.0, 1.0, 1.0},
                   const common::VoxelF &originPoint = {0.0, 0.0, 0.0},
-                  const std::vector<QRgb> &compartmentColours = {});
+                  std::vector<QRgb> compartmentColours = {});
   ~Mesh3d();
   /**
    * @brief Returns true if the mesh is valid
@@ -99,24 +99,20 @@ public:
   void setPhysicalGeometry(const common::VolumeF &voxelSize,
                            const common::VoxelF &originPoint = {0.0, 0.0, 0.0});
   /**
+   * @brief The physical mesh vertices as a vector of VoxelF
+   */
+  [[nodiscard]] const std::vector<sme::common::VoxelF> &getVertices() const;
+  /**
    * @brief The physical mesh vertices as a flat array of doubles
    *
    * For saving to the SBML document.
    */
   [[nodiscard]] std::vector<double> getVerticesAsFlatArray() const;
   /**
-   * @brief The physical mesh vertices as an array of QVector4D ( homogeneous
-   * floating value )
-   *
-   * Used as input in the rendering system
-   */
-  [[nodiscard]] std::vector<QVector4D>
-  getVerticesAsQVector4DArrayInHomogeneousCoord() const;
-  /**
    *
    * @return number of compartments available.
    */
-  [[nodiscard]] std::size_t getNumberOfCompartment() const;
+  [[nodiscard]] std::size_t getNumberOfCompartments() const;
   /**
    * @brief The mesh tetrahedron indices as a flat array of ints
    *
@@ -124,13 +120,6 @@ public:
    */
   [[nodiscard]] std::vector<int>
   getTetrahedronIndicesAsFlatArray(std::size_t compartmentIndex) const;
-  /**
-   * A flat array of triangle indices for a particular compartment
-   *
-   * Used by the rendering system.
-   */
-  [[nodiscard]] std::vector<uint32_t>
-  getMeshTrianglesIndicesAsFlatArray(std::size_t compartmentIndex) const;
   /**
    * @brief The mesh tetrahedron indices
    *
@@ -150,15 +139,13 @@ public:
    * @brief Get the colors of the compartments
    *
    */
-
-  const std::vector<QColor> &getColors() const;
+  [[nodiscard]] const std::vector<QRgb> &getColors() const;
 
   /**
-   * @brief returns offset used for centering the mesh.
+   * @brief Set the colors of the compartments
    *
    */
-
-  QVector3D getOffset() const;
+  void setColors(std::vector<QRgb> colors);
 
   static constexpr std::size_t dim = 3;
 };

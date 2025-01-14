@@ -269,7 +269,7 @@
           <string>The boundaries of the geometry of the compartments</string>
          </property>
          <property name="currentIndex">
-          <number>0</number>
+          <number>2</number>
          </property>
          <widget class="QWidget" name="tabCompartmentImage">
           <attribute name="title">
@@ -450,60 +450,60 @@
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
             <layout class="QGridLayout" name="gridLayout_2">
-             <item row="1" column="0">
-              <widget class="QLabel" name="lblMaxTriangleAreaLabel">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Max triangle area:</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="4">
-              <widget class="QSpinBox" name="spinMeshZoom">
-               <property name="maximum">
-                <number>10</number>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1" colspan="2">
-              <widget class="QSpinBox" name="spinMaxTriangleArea">
-               <property name="minimum">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <number>999999</number>
-               </property>
-               <property name="value">
-                <number>32</number>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="3">
-              <widget class="QLabel" name="lblMeshZoomLabel">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="text">
-                <string>Zoom:</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-               </property>
-              </widget>
-             </item>
              <item row="0" column="0" colspan="5">
               <widget class="QStackedWidget" name="stackCompMesh">
                <widget class="QWidget" name="page1">
-                <layout class="QHBoxLayout" name="horizontalLayout_6">
-                 <item>
+                <layout class="QGridLayout" name="gridLayout_5">
+                 <item row="1" column="2">
+                  <widget class="QLabel" name="lblMeshZoomLabel">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="text">
+                    <string>Zoom:</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QSpinBox" name="spinMaxTriangleArea">
+                   <property name="minimum">
+                    <number>1</number>
+                   </property>
+                   <property name="maximum">
+                    <number>999999</number>
+                   </property>
+                   <property name="value">
+                    <number>32</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="lblMaxTriangleAreaLabel">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="text">
+                    <string>Max triangle area:</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="3">
+                  <widget class="QSpinBox" name="spinMeshZoom">
+                   <property name="maximum">
+                    <number>10</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="0" colspan="4">
                   <widget class="QScrollArea" name="scrollMesh">
                    <property name="widgetResizable">
                     <bool>true</bool>
@@ -540,9 +540,72 @@
                 </layout>
                </widget>
                <widget class="QWidget" name="page2">
-                <layout class="QHBoxLayout" name="horizontalLayout_8">
-                 <item>
-                  <widget class="QOpenGLMouseTracker" name="mshCompMesh"/>
+                <layout class="QGridLayout" name="gridLayout_6">
+                 <item row="1" column="1">
+                  <widget class="QLabel" name="lblMaxCellVolumeLabel">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                   <property name="text">
+                    <string>Max Cell Volume</string>
+                   </property>
+                   <property name="alignment">
+                    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="3">
+                  <widget class="QComboBox" name="cmbRenderMode">
+                   <item>
+                    <property name="text">
+                     <string>Solid</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>Wireframe</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                 <item row="1" column="2">
+                  <widget class="QSpinBox" name="spinMaxCellVolume">
+                   <property name="minimum">
+                    <number>1</number>
+                   </property>
+                   <property name="maximum">
+                    <number>999999</number>
+                   </property>
+                   <property name="value">
+                    <number>5</number>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="4">
+                  <spacer name="horizontalSpacer">
+                   <property name="orientation">
+                    <enum>Qt::Horizontal</enum>
+                   </property>
+                   <property name="sizeHint" stdset="0">
+                    <size>
+                     <width>40</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                  </spacer>
+                 </item>
+                 <item row="0" column="1" colspan="4">
+                  <widget class="QMeshRenderer" name="mshCompMesh">
+                   <property name="sizePolicy">
+                    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+                     <horstretch>0</horstretch>
+                     <verstretch>0</verstretch>
+                    </sizepolicy>
+                   </property>
+                  </widget>
                  </item>
                 </layout>
                </widget>
@@ -567,9 +630,9 @@
    <header>qlabelmousetracker.hpp</header>
   </customwidget>
   <customwidget>
-   <class>QOpenGLMouseTracker</class>
+   <class>QMeshRenderer</class>
    <extends>QOpenGLWidget</extends>
-   <header>qopenglmousetracker.hpp</header>
+   <header>qmeshrenderer.hpp</header>
   </customwidget>
  </customwidgets>
  <tabstops>
@@ -584,7 +647,6 @@
   <tabstop>spinMaxBoundaryPoints</tabstop>
   <tabstop>spinBoundaryZoom</tabstop>
   <tabstop>btnChangeCompartment</tabstop>
-  <tabstop>spinMaxTriangleArea</tabstop>
  </tabstops>
  <resources/>
  <connections/>

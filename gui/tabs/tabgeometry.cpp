@@ -1,7 +1,7 @@
 #include "tabgeometry.hpp"
 #include "guiutils.hpp"
 #include "qlabelmousetracker.hpp"
-#include "qopenglmousetracker.hpp"
+#include "qmeshrenderer.hpp"
 #include "qvoxelrenderer.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh2d.hpp"
@@ -73,12 +73,16 @@ TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
               QApplication::sendEvent(ui->spinMaxTriangleArea, ev);
             }
           });
-  connect(ui->mshCompMesh, &QOpenGLMouseTracker::mouseClicked, this,
+  connect(ui->mshCompMesh, &QMeshRenderer::mouseClicked, this,
           &TabGeometry::mshCompMesh_mouseClicked);
   connect(ui->spinMaxTriangleArea, qOverload<int>(&QSpinBox::valueChanged),
           this, &TabGeometry::spinMaxTriangleArea_valueChanged);
   connect(ui->spinMeshZoom, qOverload<int>(&QSpinBox::valueChanged), this,
           &TabGeometry::spinMeshZoom_valueChanged);
+  connect(ui->spinMaxCellVolume, qOverload<int>(&QSpinBox::valueChanged), this,
+          &TabGeometry::spinMaxCellVolume_valueChanged);
+  connect(ui->cmbRenderMode, &QComboBox::currentIndexChanged, this,
+          &TabGeometry::cmbRenderMode_currentIndexChanged);
   connect(ui->listCompartments, &QListWidget::itemSelectionChanged, this,
           &TabGeometry::listCompartments_itemSelectionChanged);
   connect(ui->listCompartments, &QListWidget::itemDoubleClicked, this,
@@ -310,42 +314,42 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
     return;
   }
   if (index == TabIndex::MESH) {
-    const auto *mesh{model.getGeometry().getMesh2d()};
+    auto *mesh2d{model.getGeometry().getMesh2d()};
     const auto *mesh3d{model.getGeometry().getMesh3d()};
-    if (mesh == nullptr && mesh3d == nullptr) {
-      ui->spinMaxTriangleArea->setEnabled(false);
-      ui->spinMeshZoom->setEnabled(false);
+    ui->spinMaxTriangleArea->setEnabled(mesh2d != nullptr);
+    ui->spinMeshZoom->setEnabled(mesh2d != nullptr);
+    ui->spinMaxCellVolume->setEnabled(mesh3d != nullptr);
+    ui->cmbRenderMode->setEnabled(mesh3d != nullptr);
+    if (mesh2d == nullptr && mesh3d == nullptr) {
       return;
     }
-    ui->spinMaxTriangleArea->setEnabled(true);
-    ui->spinMeshZoom->setEnabled(mesh != nullptr);
     auto compIndex =
         static_cast<std::size_t>(ui->listCompartments->currentRow());
-    std::size_t compartmentMaxTriangleArea{1};
-    if (mesh != nullptr) {
-      ui->spinMeshZoom->setEnabled(true);
-      compartmentMaxTriangleArea =
-          model.getGeometry().getMesh2d()->getCompartmentMaxTriangleArea(
-              compIndex);
+    if (mesh2d != nullptr) {
+      ui->stackCompMesh->setCurrentIndex(0);
+      ui->spinMaxTriangleArea->setValue(
+          static_cast<int>(mesh2d->getCompartmentMaxTriangleArea(compIndex)));
+      // reconstruct 2d mesh in case the boundary lines have changed
+      mesh2d->constructMesh();
+      updateMesh2d();
+      if (!mesh2d->isValid()) {
+        QString msg{
+            "Error: Unable to generate mesh.\n\nImproving the accuracy "
+            "of the boundary lines might help. To do this, click on the "
+            "\"Boundary Lines\" "
+            "tab and increase the maximum number of allowed "
+            "points.\n\nError message: "};
+        msg.append(mesh2d->getErrorMessage().c_str());
+        ui->lblCompMesh->setText(msg);
+        ui->spinMaxTriangleArea->setEnabled(false);
+        ui->spinMeshZoom->setEnabled(false);
+        return;
+      }
     } else if (mesh3d != nullptr) {
-      compartmentMaxTriangleArea =
-          model.getGeometry().getMesh3d()->getCompartmentMaxCellVolume(
-              compIndex);
-    }
-    ui->spinMaxTriangleArea->setValue(
-        static_cast<int>(compartmentMaxTriangleArea));
-    spinMaxTriangleArea_valueChanged(ui->spinMaxTriangleArea->value());
-    if (mesh != nullptr && !mesh->isValid()) {
-      QString msg{"Error: Unable to generate mesh.\n\nImproving the accuracy "
-                  "of the boundary lines might help. To do this, click on the "
-                  "\"Boundary Lines\" "
-                  "tab and increase the maximum number of allowed "
-                  "points.\n\nError message: "};
-      msg.append(mesh->getErrorMessage().c_str());
-      ui->lblCompMesh->setText(msg);
-      ui->spinMaxTriangleArea->setEnabled(false);
-      ui->spinMeshZoom->setEnabled(false);
-      return;
+      ui->stackCompMesh->setCurrentIndex(1);
+      ui->spinMaxCellVolume->setValue(
+          static_cast<int>(mesh3d->getCompartmentMaxCellVolume(compIndex)));
+      ui->mshCompMesh->setMesh(*mesh3d, compIndex);
     }
   }
 }
@@ -425,36 +429,50 @@ void TabGeometry::lblCompMesh_mouseClicked(
   }
 }
 
-void TabGeometry::mshCompMesh_mouseClicked([[maybe_unused]] QRgb color,
-                                           uint32_t meshID) {
-  SPDLOG_TRACE("Color {:x}, meshID {}", color, meshID);
-  auto row = static_cast<int>(meshID);
-  if (row < ui->listCompartments->count()) {
-    ui->listCompartments->setCurrentRow(row);
-    ui->spinMaxTriangleArea->setFocus();
-    ui->spinMaxTriangleArea->selectAll();
+void TabGeometry::mshCompMesh_mouseClicked(int compartmentIndex) {
+  SPDLOG_TRACE("compartmentIndex {}", compartmentIndex);
+  if (compartmentIndex < ui->listCompartments->count()) {
+    ui->listCompartments->setCurrentRow(compartmentIndex);
     return;
   }
 }
 
 void TabGeometry::spinMaxTriangleArea_valueChanged(int value) {
   auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
-  QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-  if (const auto *mesh3d = model.getGeometry().getMesh3d(); mesh3d != nullptr) {
-    model.getGeometry().getMesh3d()->setCompartmentMaxCellVolume(
-        compIndex, static_cast<std::size_t>(value));
-    ui->stackCompMesh->setCurrentIndex(1);
-    ui->mshCompMesh->SetSubMeshes(*mesh3d);
-  } else {
-    ui->stackCompMesh->setCurrentIndex(0);
-    model.getGeometry().getMesh2d()->setCompartmentMaxTriangleArea(
-        compIndex, static_cast<std::size_t>(value));
-    ui->lblCompMesh->setImages(model.getGeometry().getMesh2d()->getMeshImages(
-        ui->lblCompMesh->size(), compIndex));
-    ui->lblCompMesh->setPhysicalSize(model.getGeometry().getPhysicalSize(),
-                                     model.getUnits().getLength().name);
+  if (auto *mesh2d = model.getGeometry().getMesh2d(); mesh2d != nullptr) {
+    QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    mesh2d->setCompartmentMaxTriangleArea(compIndex,
+                                          static_cast<std::size_t>(value));
+    updateMesh2d();
+    QGuiApplication::restoreOverrideCursor();
   }
-  QGuiApplication::restoreOverrideCursor();
+}
+
+void TabGeometry::updateMesh2d() {
+  const auto *mesh2d = model.getGeometry().getMesh2d();
+  if (mesh2d == nullptr) {
+    return;
+  }
+  auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
+  ui->lblCompMesh->setImages(
+      mesh2d->getMeshImages(ui->lblCompMesh->size(), compIndex));
+  ui->lblCompMesh->setPhysicalSize(model.getGeometry().getPhysicalSize(),
+                                   model.getUnits().getLength().name);
+}
+
+void TabGeometry::spinMaxCellVolume_valueChanged(int value) {
+  auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
+  if (auto *mesh3d = model.getGeometry().getMesh3d(); mesh3d != nullptr) {
+    QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    mesh3d->setCompartmentMaxCellVolume(compIndex,
+                                        static_cast<std::size_t>(value));
+    ui->mshCompMesh->setMesh(*mesh3d, compIndex);
+    QGuiApplication::restoreOverrideCursor();
+  }
+}
+
+void TabGeometry::cmbRenderMode_currentIndexChanged(int index) {
+  ui->mshCompMesh->setRenderMode(static_cast<QMeshRenderer::RenderMode>(index));
 }
 
 void TabGeometry::spinMeshZoom_valueChanged(int value) {
@@ -468,7 +486,7 @@ void TabGeometry::spinMeshZoom_valueChanged(int value) {
     zoomScrollArea(ui->scrollMesh, value,
                    ui->lblCompMesh->getRelativePosition());
   }
-  spinMaxTriangleArea_valueChanged(ui->spinMaxTriangleArea->value());
+  updateMesh2d();
 }
 
 void TabGeometry::listCompartments_itemSelectionChanged() {

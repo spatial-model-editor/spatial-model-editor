@@ -192,14 +192,14 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     // interior point is outside this boundary
     mesh.setBoundaryMaxPoints(0, 3);
     // re-generate mesh
-    mesh.setCompartmentMaxTriangleArea(0, maxTriangleArea);
+    mesh.constructMesh();
     REQUIRE(mesh.isValid() == false);
     REQUIRE(mesh.getErrorMessage() ==
             "Triangle is outside of the boundary lines");
     // setting max boundary points explicitly to 4 results in a valid mesh
     mesh.setBoundaryMaxPoints(0, 4);
     // re-generate mesh
-    mesh.setCompartmentMaxTriangleArea(0, maxTriangleArea);
+    mesh.constructMesh();
     REQUIRE(mesh.isValid() == true);
     REQUIRE(mesh.getErrorMessage().empty());
     REQUIRE(mesh.getNumBoundaries() == 1);
@@ -209,14 +209,14 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     // repeat to check validity & error message updated correctly
     mesh.setBoundaryMaxPoints(0, 2);
     // re-generate mesh
-    mesh.setCompartmentMaxTriangleArea(0, maxTriangleArea);
+    mesh.constructMesh();
     REQUIRE(mesh.isValid() == false);
     REQUIRE(mesh.isValid() == false);
     REQUIRE(mesh.getErrorMessage() ==
             "Triangle is outside of the boundary lines");
     mesh.setBoundaryMaxPoints(0, 4);
     // re-generate mesh
-    mesh.setCompartmentMaxTriangleArea(0, maxTriangleArea);
+    mesh.constructMesh();
     REQUIRE(mesh.isValid() == true);
     REQUIRE(mesh.getErrorMessage().empty());
   }

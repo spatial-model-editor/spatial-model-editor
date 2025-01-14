@@ -118,9 +118,21 @@ std::vector<std::size_t> Mesh2d::getBoundaryMaxPoints() const {
 
 void Mesh2d::setCompartmentMaxTriangleArea(std::size_t compartmentIndex,
                                            std::size_t maxTriangleArea) {
-  SPDLOG_INFO("compIndex {}: max triangle area {} -> {}", compartmentIndex,
-              compartmentMaxTriangleArea.at(compartmentIndex), maxTriangleArea);
-  compartmentMaxTriangleArea.at(compartmentIndex) = maxTriangleArea;
+  SPDLOG_INFO("compartmentIndex {}: max triangle area -> {}", compartmentIndex,
+              maxTriangleArea);
+  if (compartmentIndex >= compartmentMaxTriangleArea.size()) {
+    SPDLOG_WARN(
+        "compartmentIndex {} out of range for mesh with {} compartments",
+        compartmentIndex, compartmentMaxTriangleArea.size());
+    return;
+  }
+  auto &currentMaxTriangleArea =
+      compartmentMaxTriangleArea.at(compartmentIndex);
+  if (currentMaxTriangleArea == maxTriangleArea) {
+    SPDLOG_INFO("  -> max triangle area unchanged");
+    return;
+  }
+  currentMaxTriangleArea = maxTriangleArea;
   constructMesh();
 }
 
