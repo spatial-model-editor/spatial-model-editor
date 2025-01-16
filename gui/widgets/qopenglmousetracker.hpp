@@ -6,6 +6,7 @@
 
 #include <set>
 
+#include <QLabel>
 #include <QOpenGLWidget>
 #include <QTimer>
 #include <QWidget>
@@ -26,14 +27,20 @@ public:
                       float cameraFOV = 60.0f, float cameraNearZ = 0.001f,
                       float cameraFarZ = 2000.0f, float frameRate = 30.0f);
 
-  std::shared_ptr<rendering::ClippingPlane>
+  std::weak_ptr<rendering::ClippingPlane>
   BuildClippingPlane(const QVector3D &normal, const QVector3D &point,
                      bool active = false, bool localFrameCoord = true,
                      const std::shared_ptr<rendering::Node> &parent =
                          std::shared_ptr<rendering::Node>(nullptr));
 
-  void DestroyClippingPlane(
-      std::shared_ptr<rendering::ClippingPlane> &clippingPlane);
+  void
+  DestroyClippingPlane(std::weak_ptr<rendering::ClippingPlane> &clippingPlane);
+
+  std::vector<std::weak_ptr<rendering::Node>> GetDefaultClippingPlanes();
+
+  std::vector<std::weak_ptr<rendering::Node>>
+  GetAllClippingPlanes(const std::shared_ptr<rendering::Node> &parent =
+                           std::shared_ptr<rendering::Node>(nullptr));
 
   void SetCameraFrustum(GLfloat FOV, GLfloat width, GLfloat height,
                         GLfloat nearZ, GLfloat farZ) const;
@@ -87,6 +94,8 @@ public:
 
   void clear();
 
+  std::weak_ptr<rendering::ClippingPlane> m_selectedPlane;
+
 signals:
   void mouseClicked(QRgb color, uint32_t meshID);
   void mouseOver(uint32_t meshID);
@@ -96,6 +105,8 @@ protected:
 #ifdef QT_DEBUG
   QOpenGLDebugLogger *m_debugLogger;
 #endif
+
+  void keyReleaseEvent(QKeyEvent *);
 
   float m_lineWidth;
   float m_lineSelectPrecision;
@@ -131,6 +142,13 @@ protected:
    */
   std::set<std::shared_ptr<rendering::ClippingPlane>> m_clippingPlanesPool =
       rendering::ClippingPlane::BuildClippingPlanes();
+
+  std::weak_ptr<rendering::ClippingPlane> planeX;
+  std::weak_ptr<rendering::ClippingPlane> planeY;
+  std::weak_ptr<rendering::ClippingPlane> planeZ;
+  std::weak_ptr<rendering::ClippingPlane> planeCamera;
+
+  QLabel *m_labelPlaneSelected;
 
   void initializeGL() override;
   void resizeGL(int w, int h) override;
