@@ -262,6 +262,9 @@
      <addaction name="actionvery_simple_model_3d"/>
      <addaction name="action_gray_scott_3d"/>
      <addaction name="actionsingle_compartment_diffusion_3d"/>
+     <addaction name="FitzhughNagumo3D"/>
+     <addaction name="SelKov3D"/>
+     <addaction name="CalciumWavePropagation3D"/>
     </widget>
     <addaction name="action_New"/>
     <addaction name="action_Open_SBML_file"/>
