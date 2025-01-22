@@ -44,3 +44,10 @@ CMakeLists.txt.user*
 
 # ipython notebooks
 *.ipynb_checkpoints*
+
+# build, tooling and testing
+build/*
+artifacts/*
+.cache
+**/__pycache__/*
+.clangd
