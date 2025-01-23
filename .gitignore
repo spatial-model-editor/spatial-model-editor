@@ -46,7 +46,7 @@ CMakeLists.txt.user*
 *.ipynb_checkpoints*
 
 # build, tooling and testing
-build/*
+**/build/*
 artifacts/*
 .cache
 **/__pycache__/*

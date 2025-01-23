@@ -14,6 +14,7 @@ Spatial Model Editor Documentation
    quickstart/species
    quickstart/reactions
    quickstart/run-simulation
+   quickstart/example-models
 
 .. toctree::
    :maxdepth: 2
