@@ -7,12 +7,7 @@
           <cereal_class_version>2</cereal_class_version>
           <simulationSettings>
             <cereal_class_version>1</cereal_class_version>
-            <times size="dynamic">
-              <value0>
-                <first>100</first>
-                <second>1</second>
-              </value0>
-            </times>
+            <times size="dynamic"/>
             <options>
               <cereal_class_version>0</cereal_class_version>
               <dune>
@@ -839,12 +834,12 @@
           </math>
         </kineticLaw>
       </reaction>
-      <reaction id="ru" name="ru+" reversible="true" compartment="inner_outer_membrane" spatial:isLocal="true">
+      <reaction id="ru" name="u_inner-&gt;outer" reversible="true" compartment="inner_outer_membrane" spatial:isLocal="true">
         <listOfReactants>
-          <speciesReference species="U" stoichiometry="1" constant="true"/>
+          <speciesReference species="u" stoichiometry="1" constant="true"/>
         </listOfReactants>
         <listOfProducts>
-          <speciesReference species="u" stoichiometry="1" constant="true"/>
+          <speciesReference species="U" stoichiometry="1" constant="true"/>
         </listOfProducts>
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -857,37 +852,66 @@
           </math>
         </kineticLaw>
       </reaction>
-      <reaction id="ru_" name="ru-" reversible="true" compartment="inner_outer_membrane" spatial:isLocal="true">
+      <reaction id="ru_" name="u_outer-&gt;inner" reversible="true" compartment="inner_outer_membrane" spatial:isLocal="true">
         <listOfReactants>
-          <speciesReference species="u" stoichiometry="1" constant="true"/>
+          <speciesReference species="U" stoichiometry="1" constant="true"/>
         </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="u" stoichiometry="1" constant="true"/>
+        </listOfProducts>
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
               <apply>
                 <power/>
-                <ci> u </ci>
+                <ci> U </ci>
                 <cn type="integer"> 2 </cn>
               </apply>
+              <ci> kr </ci>
               <ci> alpha </ci>
             </apply>
           </math>
         </kineticLaw>
       </reaction>
-      <reaction id="rv" name="rv+" reversible="true" compartment="inner_outer_membrane" spatial:isLocal="true">
+      <reaction id="rv" name="v_inner-&gt;outer" reversible="true" compartment="inner_outer_membrane" spatial:isLocal="true">
         <listOfReactants>
           <speciesReference species="v" stoichiometry="1" constant="true"/>
         </listOfReactants>
         <listOfProducts>
           <speciesReference species="V" stoichiometry="1" constant="true"/>
         </listOfProducts>
+        <listOfModifiers>
+          <modifierSpeciesReference species="U"/>
+        </listOfModifiers>
         <kineticLaw>
           <math xmlns="http://www.w3.org/1998/Math/MathML">
             <apply>
               <times/>
-              <ci> V </ci>
+              <ci> U </ci>
               <ci> v </ci>
+              <ci> kr </ci>
+            </apply>
+          </math>
+        </kineticLaw>
+      </reaction>
+      <reaction id="rv_" name="v_outer-&gt;inner" reversible="true" compartment="inner_outer_membrane" spatial:isLocal="true">
+        <listOfReactants>
+          <speciesReference species="V" stoichiometry="1" constant="true"/>
+        </listOfReactants>
+        <listOfProducts>
+          <speciesReference species="v" stoichiometry="1" constant="true"/>
+        </listOfProducts>
+        <kineticLaw>
+          <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <apply>
+              <times/>
+              <apply>
+                <power/>
+                <ci> v </ci>
+                <cn type="integer"> 2 </cn>
+              </apply>
+              <ci> kr </ci>
               <ci> beta </ci>
             </apply>
           </math>
