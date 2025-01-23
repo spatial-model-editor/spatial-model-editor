@@ -2100,26 +2100,25 @@ TEST_CASE("Fish model: simulation with piecewise function in reactions",
   REQUIRE(m.getSimulationData().timePoints.size() == 3);
 }
 
-TEST_CASE("Simulate gray-scott-3d model",
+TEST_CASE("Simulate example 3d models",
           "[core/simulate/simulate][core/"
-          "simulate][core][simulate][dune][pixel][3d]") {
-  // todo: make this test less trivial
+          "simulate][core][simulate][dune][pixel][3d][expensive]") {
   SECTION("do a tiny step, don't crash") {
-    auto s{getExampleModel(sme::test::Mod::GrayScott3D)};
-    for (auto simulator :
-         {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
-      s.getSimulationData().clear();
-      s.getSimulationSettings().simulatorType = simulator;
-      auto sim = simulate::Simulation(s);
-      REQUIRE(sim.getConcArray(0, 0, 0).size() == s.getSpecies()
-                                                      .getField("s1_nuc")
-                                                      ->getCompartment()
-                                                      ->getCompartmentImages()
-                                                      .volume()
-                                                      .nVoxels());
-      REQUIRE(sim.getNCompletedTimesteps() == 1);
-      sim.doTimesteps(0.01);
-      REQUIRE(sim.getNCompletedTimesteps() == 2);
+    for (auto exampleModel :
+         {sme::test::Mod::GrayScott3D,
+          sme::test::Mod::SingleCompartmentDiffusion3D,
+          sme::test::Mod::VerySimpleModel3D, sme::test::Mod::FitzhughNagumo3D,
+          sme::test::Mod::SelKov3D, sme::test::Mod::FitzhughNagumo3D}) {
+      auto s{getExampleModel(exampleModel)};
+      for (auto simulator :
+           {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
+        s.getSimulationData().clear();
+        s.getSimulationSettings().simulatorType = simulator;
+        auto sim = simulate::Simulation(s);
+        REQUIRE(sim.getNCompletedTimesteps() == 1);
+        sim.doTimesteps(0.01);
+        REQUIRE(sim.getNCompletedTimesteps() == 2);
+      }
     }
   }
 }
