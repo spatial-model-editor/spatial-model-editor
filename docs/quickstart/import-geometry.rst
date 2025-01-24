@@ -16,3 +16,5 @@ To change the geometry afterwards, go to `Tools -> Edit geometry image`. This wi
    :alt: screenshot showing geometry image import
 
    An example of importing a geometry image
+
+Next, we will define the different compartments of the geometry.

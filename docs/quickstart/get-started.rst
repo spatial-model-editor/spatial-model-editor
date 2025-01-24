@@ -1,5 +1,5 @@
-Getting Started
-===============
+Setting the stage
+=================
 
 How to read this documentation
 -------------------------------

@@ -7,6 +7,7 @@ After importing a geometry image, each compartment can be assigned a region in t
 * click on "Select compartment geometry..."
 * then click on the desired part of the image.
 
+The model equations will be defined within these compartments and on their interfaces.
 The compartment geometry will then be made up from all of the pixels in the image of the chosen colour.
 
 .. figure:: img/assign-compartments.apng
