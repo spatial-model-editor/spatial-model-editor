@@ -21,7 +21,7 @@ These chemical species need to have an initial distribution of concentration in 
 
 The graphical user interface of spatial-model-editor follows this basic structure. For each of the steps, there is a tab in the main window that allows you to define the corresponding part of the model. Additional configuration for each step is available via the menu bar at the top of the main window.
 
-.. figure:: img/simulation.png
+.. figure:: img/sme-gui.png
    :alt: screenshot showing main window of spatial-model-editor
 
    The main window of the spatial-model-editor. The five tabs at in the upper center correspond to the five parts of the model that need to be defined.
