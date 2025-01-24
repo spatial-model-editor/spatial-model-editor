@@ -1,6 +1,5 @@
 Find your bearings
 ==================
-Welcome to the spatial-model-editor (SME)!
 This guide will help you get started with the graphical user interface of spatial-model-editor.
 For this to make sense, we need to understand the basic model structure first.
 
@@ -10,8 +9,7 @@ A model in spatial-model-editor consists of five basic parts which all must be d
 
 #. A definition of the spatial domain the model should run on. This can be 2D or 3D and can be divided into an arbitrary number of compartments which have interfaces with each other. In the cellular context that is relevant here, these interfaces can represent membranes between cell compartments or cells.
 
-#. A set of chemical species whose concentration is defined in different compartments. These concentrations are assumed to undergo diffusion by default.
-These chemical species need to have an initial distribution of concentration in the compartments they are defined in and an isotropic, homogeneous diffusion constant.
+#. A set of chemical species whose concentration is defined in different compartments. These concentrations are assumed to undergo diffusion by default. These chemical species need to have an initial distribution of concentration in the compartments they are defined in and an isotropic, homogeneous diffusion constant.
 
 #. The chemical reactions that can occur between the different species. These can be devided into reactions in the volume of the compartments and fluxes and reactions that only happen on the interfaces between compartments.
 
@@ -28,4 +26,4 @@ The graphical user interface of spatial-model-editor follows this basic structur
 
 
 In the following, you will learn how to define your own model in spatial-model-editor by following the above scheme.
-If instead you are more interested in turning an existing non-spatial model defined in COPASI or SBML into a spatial model and run it via spatial-model-editor, you can skip ahead and go the respective `user guide <work_with_SBML_COPASI.html>`_ right away. However, we recommend to work through this guide once because parts of it are needed to make predefined ODE models work in spatial-model-editor, too.
+If instead you are more interested in turning an existing non-spatial model defined in COPASI or SBML into a spatial model and run it via spatial-model-editor, you can skip ahead and go the respective `user guide <work-with-copasi.html>`_ right away. However, we recommend to work through this guide once because parts of it are needed to make predefined ODE models work in spatial-model-editor, too.
