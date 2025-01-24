@@ -24,7 +24,10 @@ enum struct Mod {
   SingleCompartmentDiffusion,
   SingleCompartmentDiffusion3D,
   VerySimpleModel,
-  VerySimpleModel3D
+  VerySimpleModel3D,
+  FitzhughNagumo3D,
+  SelKov3D,
+  CalciumWavePropagation3D
 };
 
 model::Model getExampleModel(Mod exampleModel);

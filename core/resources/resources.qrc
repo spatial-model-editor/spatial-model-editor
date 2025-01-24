@@ -13,6 +13,9 @@
         <file>models/single-compartment-diffusion-3d.xml</file>
         <file>models/very-simple-model.xml</file>
         <file>models/very-simple-model-3d.xml</file>
+        <file>models/FitzhughNagumo3D.xml</file>
+        <file>models/CalciumWavePropagation3D.xml</file>
+        <file>models/SelKov3D.xml</file>
         <file>geometry/filled-donut-100x100.png</file>
         <file>geometry/single-liver-cell-180x140.png</file>
         <file>geometry/one-blob-100x100.png</file>

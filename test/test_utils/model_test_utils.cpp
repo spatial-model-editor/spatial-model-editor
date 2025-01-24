@@ -50,6 +50,12 @@ static const char *getExampleFilename(Mod exampleModel) {
     return ":/models/very-simple-model.xml";
   case Mod::VerySimpleModel3D:
     return ":/models/very-simple-model-3d.xml";
+  case Mod::FitzhughNagumo3D:
+    return ":/models/FitzhughNagumo3D.xml";
+  case Mod::SelKov3D:
+    return ":/models/SelKov3D.xml";
+  case Mod::CalciumWavePropagation3D:
+    return ":/models/CalciumWavePropagation3D.xml";
   default:
     throw std::invalid_argument("This filename needs to be added to "
                                 "model_test_utils.getExampleFilename()");
