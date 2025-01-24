@@ -6,6 +6,7 @@ Spatial Model Editor Documentation
    :caption: Getting started
 
    quickstart/get-started
+   quickstart/gui-overview
    quickstart/import-model
    quickstart/import-geometry
    quickstart/assign-compartments
@@ -14,6 +15,13 @@ Spatial Model Editor Documentation
    quickstart/species
    quickstart/reactions
    quickstart/run-simulation
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Userguides
+
+   userguides/work-with-copasi
+
 
 .. toctree::
    :maxdepth: 2
