@@ -1,7 +1,7 @@
 Species properties
 ==================
-The next step is to define the chemical species present in the system. To do this, click on the `species` tab. 
-On the left, you see a list of compartments in the model geometry. Select the one for which you want to define species. This species will only exist in this compartment. As a consequence, even if the species in all compartments are chemically the same, you still have to define them separately. Species only exist in the bulk volume of the compartments, i.e., species cannot be present only on the membranes. 
+The next step is to define the chemical species present in the system. To do this, click on the `species` tab.
+On the left, you see a list of compartments in the model geometry. Select the one for which you want to define species. This species will only exist in this compartment. As a consequence, even if the species in all compartments are chemically the same, you still have to define them separately. Species only exist in the bulk volume of the compartments, i.e., species cannot be present only on the membranes.
 
 To create a new species, click the `Add` button, select a suitable name, and hit enter. The new species will appear below the compartment name.
 

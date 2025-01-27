@@ -14,7 +14,7 @@ go to `File->Open` or press ``Ctrl+O``, like shown below:
 
    Open an existing model in SME
 
-Since the imported model is non-spatial, we need to define the geometry on which it should run next. To learn how to define a geometry with different compartments, see the `geometry section in the getting-started guide <../quickstart/import-geometry.html>`_ and the `respective section on assiging compartments <../quickstart/assign-compartments.html>`_. 
+Since the imported model is non-spatial, we need to define the geometry on which it should run next. To learn how to define a geometry with different compartments, see the `geometry section in the getting-started guide <../quickstart/import-geometry.html>`_ and the `respective section on assiging compartments <../quickstart/assign-compartments.html>`_.
 
 If you want to create your own geometry, please refer to `the respective userguide <./how-to-create-your-own-geometry.html>`_.
 
