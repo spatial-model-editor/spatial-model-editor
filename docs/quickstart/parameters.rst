@@ -8,3 +8,9 @@ To define a new global parameter, click on the `Add` button below the list of pa
 
 .. note:: 
     Parameters defined in this way do not have units! You have to make sure that you use them consistently in the reactions. Parameters with units should not go here! 
+
+.. figure:: 
+    img/parameter-definition.apng
+    :alt: Video of how to define parameters using the GUI 
+
+    How to define a parameter in the GUI.
