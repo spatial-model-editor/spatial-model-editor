@@ -13,6 +13,7 @@ Spatial Model Editor Documentation
    quickstart/species
    quickstart/reactions
    quickstart/parameters
+   quickstart/functions
    quickstart/run-simulation
 
 .. toctree::
