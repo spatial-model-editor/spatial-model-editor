@@ -1,11 +1,11 @@
 How to create your own geometry
 ===============================
-*SME* can work with png images for 2D- and tiff images for 3D geometries. You can create these in whatever way you feel comfortable with. Here, we are going to use Python to create example geometries. We will use the `numpy <https://numpy.org/>`_ and `matplotlib <https://matplotlib.org/>`_ libraries to create a 2D geometry and save it as a png image. For the 3D tiff image, we will use 
+*SME* can work with png images for 2D- and tiff images for 3D geometries. You can create these in whatever way you feel comfortable with. Here, we are going to use Python to create example geometries. We will use the `numpy <https://numpy.org/>`_ and `matplotlib <https://matplotlib.org/>`_ libraries to create a 2D geometry and save it as a png image. For the 3D tiff image, we will use
 `tifffile <https://pypi.org/project/tifffile/>`_ which allows us to save a 3D array to a tiff image.
 
 Create a 2D Geometry
 --------------------
-We first import the necessary models. 
+We first import the necessary models.
 .. code-block:: python
     import numpy as np
     import matplotlib.pyplot as plt
@@ -30,17 +30,17 @@ Finally, we plot the geometry and save it as a png image.
 
 Create a 3D Geometry
 --------------------
-We follow the same steps as for the 2D geometry: We define the basic shape of the domain and then create functions that defines the various compartments in the domain. Here, we will create 2 spheres that intersect each other. 
-This time, we use `tifffile` instead of matplotlib: 
-.. code-block:: python 
+We follow the same steps as for the 2D geometry: We define the basic shape of the domain and then create functions that defines the various compartments in the domain. Here, we will create 2 spheres that intersect each other.
+This time, we use `tifffile` instead of matplotlib:
+.. code-block:: python
     import tifffile as tiff
-    import numpy as np 
+    import numpy as np
 
 Then, we create the 3D domain and the compartments.
-.. code-block:: python 
+.. code-block:: python
     arr = np.zeros((100, 100, 100))
 
-    def sphere(x,y,z, x0=50, y0=50, z0=50, r=25): 
+    def sphere(x,y,z, x0=50, y0=50, z0=50, r=25):
         return (x-x0)**2 + (y-y0)**2 + (z-z0)**2 < r**2
 
     for i in range(100):
