@@ -19,6 +19,9 @@ and the slider below the plot can be used to change the time that is being displ
 .. note:: 
    The solvers have various parameters which can be customized via the Advanced->Simulation options menu.  
 
+.. note:: 
+   You can find out more about the DUNE solver `here <../reference/dune.html>`_ and about the Pixel solver `here <../reference/pixel.html>`_.
+
 Below the time series of the averaged species concentrations, you see three buttons, on the right of the time slider:
 - `Slice image...`: This opens a new window in which you can choose a line through the geometry and plot the distribution of species along that line. In 3D, this represents a slice through the currently selected z-plane. You can choose vertical or horizontal slices, or draw a line yourself by holding the left mouse buton and dragging it over the image on the left side. 
 - `Export`: This opens a new dialog in which you can select various things to export from the simulation and save them on disk. You can export the entire simulation as a series of images (one for each time point), the averaged time series as a csv file, or you can export single time points to use as model initial conditions or to an image file to initialize the model from later on. 
