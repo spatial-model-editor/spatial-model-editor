@@ -45,10 +45,12 @@ CMakeLists.txt.user*
 # ipython notebooks
 *.ipynb_checkpoints
 
-#build 
+# build, tooling and testing
 build/
 docs/build/
 docs/sme/_autosummary
 docs/sme/notebooks/model.sme
 artifacts/*
 sme/test/__pycache__
+.cache
+.clangd

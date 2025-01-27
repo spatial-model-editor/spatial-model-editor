@@ -1,4 +1,4 @@
-Work with SBML and COPASI models 
+Work with SBML and COPASI models
 =================================
 
 This guide will show you how to use SME to turn non-spatial ODE models created with COPASI or SBML into spatial models. If you haven't already, start by reading through the `getting started section <../quickstart/get-started.html>`_, because many of the workflows described there are useful here, too.

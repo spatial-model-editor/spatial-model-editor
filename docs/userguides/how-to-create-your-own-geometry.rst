@@ -1,6 +1,6 @@
 How to create your own geometry
 ===============================
-*SME* can work with png images for 2D- and tiff images for 3D geometries. You can create these in whatever way you feel comfortable with. Here, we are going to use Python to create example geometries. We will use the `numpy <https://numpy.org/>`_ and `matplotlib <https://matplotlib.org/>`_ libraries to create a 2D geometry and save it as a png image. For the 3D tiff image, we will use 
+*SME* can work with png images for 2D- and tiff images for 3D geometries. You can create these in whatever way you feel comfortable with. Here, we are going to use Python to create example geometries. We will use the `numpy <https://numpy.org/>`_ and `matplotlib <https://matplotlib.org/>`_ libraries to create a 2D geometry and save it as a png image. For the 3D tiff image, we will use
 `tifffile <https://pypi.org/project/tifffile/>`_ which allows us to save a 3D array to a tiff image.
 
 Create a 2D Geometry
@@ -51,7 +51,7 @@ This time, we use `tifffile` instead of matplotlib:
 .. code-block:: python 
 
     import tifffile as tiff
-    import numpy as np 
+    import numpy as np
 
 Then, we create the 3D domain and the compartments.
 
@@ -59,7 +59,7 @@ Then, we create the 3D domain and the compartments.
 
     arr = np.zeros((100, 100, 100))
 
-    def sphere(x,y,z, x0=50, y0=50, z0=50, r=25): 
+    def sphere(x,y,z, x0=50, y0=50, z0=50, r=25):
         return (x-x0)**2 + (y-y0)**2 + (z-z0)**2 < r**2
     
     def compartment(x,y,z): 
