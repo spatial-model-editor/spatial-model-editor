@@ -9,7 +9,7 @@ After importing a geometry image, each compartment can be assigned a region in t
 * repeat this until all compartments you want to have are assigned.
 The compartment geometry will then be made up from all of the pixels in the image of the chosen colour.
 
-Not every region of the image has to be assigned a compartment, but the model can only run in compartments that have been assigned.
+Not every region of the image has to be assigned a compartment, but every compartment needs to be assigned to a region of the image.
 When compartments have been assigned that have a common boundary, this boundary will be recognized automatically and be listed below the 'Compartments' tab under 'Membranes'.
 
 The model equations will be defined within these compartments and on their interfaces.

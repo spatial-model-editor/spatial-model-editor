@@ -19,7 +19,7 @@ Spatial Model Editor Documentation
 
 .. toctree::
    :maxdepth: 2
-   :caption: Userguides
+   :caption: User guides
 
    userguides/work-with-copasi
    userguides/how-to-create-your-own-geometry

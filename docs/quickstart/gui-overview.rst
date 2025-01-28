@@ -11,7 +11,7 @@ A model in spatial-model-editor consists of five basic parts which all must be d
 
 #. A set of chemical species whose concentration is defined in different compartments. These concentrations are assumed to undergo diffusion by default. These chemical species need to have an initial distribution of concentration in the compartments they are defined in and an isotropic, homogeneous diffusion constant.
 
-#. The chemical reactions that can occur between the different species. These can be devided into reactions in the volume of the compartments and fluxes and reactions that only happen on the interfaces between compartments.
+#. The chemical reactions that can occur between the different species. These can be divided into reactions in the volume of the compartments and fluxes and reactions that only happen on the interfaces between compartments.
 
 #. The chemical reactions between species typically come with a number of parameters that we need to set to defined numerical values. Often, these define the rates at which a reaction occurs.
 
@@ -19,7 +19,7 @@ A model in spatial-model-editor consists of five basic parts which all must be d
 
 The graphical user interface of spatial-model-editor follows this basic structure. For each of the steps, there is a tab in the main window that allows you to define the corresponding part of the model. 
 
-Additional functions for each step is available via the menu bar at the top of the main window. 
+Additional functions for each step are available via the menu bar at the top of the main window. 
 
 - The `File` menu lets you load and save models for future use or load example models from the model library. 
 

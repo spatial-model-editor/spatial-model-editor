@@ -27,7 +27,7 @@ Two more properties of a species are of primary importance.
 
    is always assumed by default (see the `documentation on the mathematical formulation <../reference/maths.html>`_ for more details). The diffusion constant `D` is assumed to be isotropic and homogeneous. If you don't want diffusion to be present, set this constant to zero.
 
-With the definition of these two elemetns, the species is fully defined and can be used in the next steps of the model definition.
+With the definition of these two elements, the species is fully defined and can be used in the next steps of the model definition.
 
 .. note::
    Take care to get the units correct. All quantities are assumed to have certain SI units, which are noted next to the input field for the respective quantity. For example, the diffusion constant is assumed to be in units of :math: `cm^2/s`. For more on units, `see here <../reference/units.html>`_.
