@@ -53,7 +53,6 @@ private:
   // convert point in pixel units to point in physical units
   [[nodiscard]] QPointF
   pixelPointToPhysicalPoint(const QPointF &pixelPoint) const noexcept;
-  void constructMesh();
 
 public:
   Mesh2d();
@@ -75,6 +74,10 @@ public:
                   const std::vector<QRgb> &compartmentColours = {},
                   std::size_t boundarySimplificationType = 0);
   ~Mesh2d();
+  /**
+   * @brief Constructs (or re-constructs) the mesh
+   */
+  void constructMesh();
   /**
    * @brief Returns true if the mesh is valid
    */

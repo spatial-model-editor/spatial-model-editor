@@ -75,6 +75,7 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
   }
   SECTION("user clicks save image, then cancel") {
     ModalWidgetTimer mwt;
+    mwt.setIgnoredWidget(&dia);
     mwt.addUserAction({"Esc"});
     mwt.start();
     sendMouseClick(widgets.radSingleImage);
@@ -83,6 +84,7 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
   }
   SECTION("user clicks save image, then enters filename") {
     ModalWidgetTimer mwt;
+    mwt.setIgnoredWidget(&dia);
     mwt.addUserAction({"t", "m", "p", "d", "i", "a", "e", "x"});
     mwt.start();
     sendMouseClick(widgets.radSingleImage);
@@ -95,6 +97,7 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
   }
   SECTION("user changes timepoint, clicks save image, then enters filename") {
     ModalWidgetTimer mwt;
+    mwt.setIgnoredWidget(&dia);
     mwt.addUserAction({"t", "m", "p", "d", "i", "a", "e", "x"});
     mwt.start();
     widgets.cmbTimepoint->setCurrentIndex(4);
@@ -108,6 +111,7 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
   }
   SECTION("user clicks on All timepoints, clicks save image, then enter") {
     ModalWidgetTimer mwt;
+    mwt.setIgnoredWidget(&dia);
     mwt.addUserAction({"Enter"});
     mwt.start();
     sendMouseClick(widgets.radAllImages);
@@ -136,6 +140,7 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
   }
   SECTION("user clicks on csv, types filename, then enter") {
     ModalWidgetTimer mwt;
+    mwt.setIgnoredWidget(&dia);
     mwt.addUserAction({"t", "m", "p", "d", "i", "a", "e", "x"});
     mwt.start();
     sendMouseClick(widgets.radCSV);

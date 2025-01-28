@@ -3,9 +3,10 @@ target_sources(
   PRIVATE plotwrapper.cpp
           qlabelslice.cpp
           qlabelmousetracker.cpp
-          qopenglmousetracker.cpp
           qplaintextmathedit.cpp
-          qvoxelrenderer.cpp)
+          qmeshrenderer.cpp
+          qvoxelrenderer.cpp
+          smevtkwidget.cpp)
 target_include_directories(gui PUBLIC .)
 
 if(BUILD_TESTING)
@@ -14,7 +15,7 @@ if(BUILD_TESTING)
     PUBLIC plotwrapper_t.cpp
            qlabelslice_t.cpp
            qlabelmousetracker_t.cpp
-           qopenglmousetracker_t.cpp
            qplaintextmathedit_t.cpp
+           qmeshrenderer_t.cpp
            qvoxelrenderer_t.cpp)
 endif()

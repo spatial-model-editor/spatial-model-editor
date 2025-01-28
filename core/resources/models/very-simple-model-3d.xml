@@ -114,9 +114,9 @@
             <optCosts size="dynamic"/>
           </optimizeOptions>
           <sampledFieldColours size="dynamic">
-            <value0>4278190080</value0>
-            <value1>4294967295</value1>
-            <value2>4286545791</value2>
+            <value0>4289572269</value0>
+            <value1>4278190335</value1>
+            <value2>4289331200</value2>
           </sampledFieldColours>
         </settings>
       </spatialModelEditor>

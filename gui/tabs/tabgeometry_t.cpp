@@ -5,13 +5,14 @@
 #include "qvoxelrenderer.hpp"
 #include "sme/model.hpp"
 #include "tabgeometry.hpp"
+#include <QComboBox>
 #include <QDoubleSpinBox>
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
 #include <QPushButton>
 #include <QTabWidget>
-#include <qopenglmousetracker.hpp>
+#include <qmeshrenderer.hpp>
 
 using namespace sme::test;
 
@@ -62,12 +63,16 @@ TEST_CASE("TabGeometry",
   REQUIRE(spinBoundaryZoom != nullptr);
   auto *lblCompMesh{tab.findChild<QLabelMouseTracker *>("lblCompMesh")};
   REQUIRE(lblCompMesh != nullptr);
-  auto *mshCompMesh{tab.findChild<QOpenGLMouseTracker *>("mshCompMesh")};
+  auto *mshCompMesh{tab.findChild<QMeshRenderer *>("mshCompMesh")};
   REQUIRE(mshCompMesh != nullptr);
   auto *spinMaxTriangleArea{tab.findChild<QSpinBox *>("spinMaxTriangleArea")};
   REQUIRE(spinMaxTriangleArea != nullptr);
   auto *spinMeshZoom{tab.findChild<QSpinBox *>("spinMeshZoom")};
   REQUIRE(spinMeshZoom != nullptr);
+  auto *spinMaxCellVolume{tab.findChild<QSpinBox *>("spinMaxCellVolume")};
+  REQUIRE(spinMaxCellVolume != nullptr);
+  auto *cmbRenderMode{tab.findChild<QComboBox *>("cmbRenderMode")};
+  REQUIRE(cmbRenderMode != nullptr);
   SECTION("very-simple-model loaded") {
     model = getExampleModel(Mod::VerySimpleModel);
     tab.loadModelData();
@@ -395,19 +400,18 @@ TEST_CASE("TabGeometry",
       tabCompartmentGeometry->setFocus();
       sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
       REQUIRE(tabCompartmentGeometry->currentIndex() == 2);
-      REQUIRE(spinMaxTriangleArea->value() == 5);
-      // change max area using spinbox
-      sendKeyEvents(spinMaxTriangleArea,
+      REQUIRE(spinMaxTriangleArea->isVisible() == false);
+      REQUIRE(spinMeshZoom->isVisible() == false);
+      REQUIRE(spinMaxCellVolume->isVisible() == true);
+      REQUIRE(cmbRenderMode->isVisible() == true);
+      // change max cell volume using spinbox
+      sendKeyEvents(spinMaxCellVolume,
                     {"End", "Backspace", "Backspace", "Backspace", "9"});
-      REQUIRE(spinMaxTriangleArea->value() == 9);
-      sendKeyEvents(spinMaxTriangleArea, {"Up"});
-      REQUIRE(spinMaxTriangleArea->value() == 10);
-      // change max area using mouse scroll wheel
-      lblCompMesh->setFocus();
-      sendMouseWheel(lblCompMesh, +1);
-      REQUIRE(spinMaxTriangleArea->value() == 11);
-      sendMouseWheel(lblCompMesh, -1);
-      REQUIRE(spinMaxTriangleArea->value() == 10);
+      REQUIRE(spinMaxCellVolume->value() == 9);
+      wait(1000);
+      sendKeyEvents(spinMaxCellVolume, {"Up"});
+      REQUIRE(spinMaxCellVolume->value() == 10);
+      wait(1000);
 
       // zoom in and out using mouse scroll wheel
       mshCompMesh->setFocus();
@@ -415,6 +419,10 @@ TEST_CASE("TabGeometry",
       sendMouseWheel(mshCompMesh, +1);
       sendMouseWheel(mshCompMesh, -1);
       sendMouseWheel(mshCompMesh, -1);
+
+      // change render mode
+      cmbRenderMode->setCurrentIndex(1);
+      cmbRenderMode->setCurrentIndex(0);
 
       // click on mesh in a few different places
       sendMouseClick(mshCompMesh);

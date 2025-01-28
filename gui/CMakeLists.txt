@@ -38,7 +38,6 @@ add_subdirectory(widgets)
 add_subdirectory(dialogs)
 add_subdirectory(tabs)
 add_subdirectory(wizards)
-add_subdirectory(rendering)
 
 target_link_libraries(
   gui

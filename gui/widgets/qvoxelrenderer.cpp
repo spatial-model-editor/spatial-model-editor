@@ -1,14 +1,11 @@
 #include "qvoxelrenderer.hpp"
 #include "sme/logger.hpp"
-#include <QPainter>
+#include <QMouseEvent>
 #include <vtkCamera.h>
 #include <vtkPointData.h>
 #include <vtkWorldPointPicker.h>
 
-QVoxelRenderer::QVoxelRenderer(QWidget *parent)
-    : QVTKOpenGLNativeWidget(parent) {
-  setRenderWindow(renderWindow);
-  renderWindow->AddRenderer(renderer);
+QVoxelRenderer::QVoxelRenderer(QWidget *parent) : SmeVtkWidget(parent) {
   // piecewise opacity function, converts 0-255 input value to 0-1 opacity float
   opacityTransferFunction->AddPoint(0, 0.0);
   opacityTransferFunction->AddPoint(255, 0.8);
@@ -21,23 +18,7 @@ QVoxelRenderer::QVoxelRenderer(QWidget *parent)
   volume->SetMapper(volumeMapper);
   volume->SetProperty(volumeProperty);
   volumeMapper->SetInputData(imageData);
-  axesWidget->SetOrientationMarker(axesActor);
-  axesWidget->SetInteractor(renderWindow->GetInteractor());
-  // set relative size of axes widget
-  axesWidget->SetViewport(0.0, 0.0, 0.3, 0.3);
-  axesWidget->SetEnabled(1);
-  axesWidget->InteractiveOn();
-  // inherit widget background color
-  [this]() {
-    float r{0};
-    float g{0};
-    float b{0};
-    palette().color(QWidget::backgroundRole()).getRgbF(&r, &g, &b);
-    renderer->SetBackground(r, g, b);
-  }();
   renderer->AddVolume(volume);
-  renderer->GetActiveCamera()->Azimuth(45);
-  renderer->GetActiveCamera()->Elevation(30);
 }
 
 static vtkNew<vtkUnsignedCharArray>
@@ -133,11 +114,11 @@ void QVoxelRenderer::mousePressEvent(QMouseEvent *ev) {
       static constexpr vtkIdType stride = 4;
       auto idx =
           stride * static_cast<vtkIdType>(z * dim[1] * dim[0] + y * dim[1] + x);
-      SPDLOG_ERROR("Index in imageDataArray: {}", idx);
+      SPDLOG_DEBUG("Index in imageDataArray: {}", idx);
       auto col =
           qRgb(imageDataArray->GetValue(idx), imageDataArray->GetValue(idx + 1),
                imageDataArray->GetValue(idx + 2));
-      SPDLOG_ERROR("voxel ({},{},{}) -> colour {:x}", x, y, z, col);
+      SPDLOG_DEBUG("voxel ({},{},{}) -> colour {:x}", x, y, z, col);
       emit mouseClicked(col, sme::common::Voxel{x, y, z});
     }
   }
