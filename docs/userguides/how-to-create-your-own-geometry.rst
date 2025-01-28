@@ -106,7 +106,7 @@ You can use the same workflow to create images that can serve as initial conditi
             for k in range(100):
                 arr_init[i,j,k] = compartment(x,y,z)*init(i,j,k)
 
-    tiff.imwrite('/home/hmack/Seafile/project_resources/SME/3d_skewed_hourglass_init.tiff', arr_init)
+    tiff.imwrite('3d_skewed_hourglass_init.tiff', arr_init)
 
 .. figure::
     img/init_slice_50.png
