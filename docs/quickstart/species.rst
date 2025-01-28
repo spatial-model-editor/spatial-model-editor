@@ -1,7 +1,7 @@
 Species properties
 ==================
-The next step is to define the chemical species present in the system. To do this, click on the `species` tab. 
-On the left, you see a list of compartments in the model geometry. Select the one for which you want to define species. This species will only exist in this compartment. As a consequence, even if the species in all compartments are chemically the same, you still have to define them separately. Species only exist in the bulk volume of the compartments, i.e., species cannot be present only on the membranes. 
+The next step is to define the chemical species present in the system. To do this, click on the `species` tab.
+On the left, you see a list of compartments in the model geometry. Select the one for which you want to define species. This species will only exist in this compartment. As a consequence, even if the species in all compartments are chemically the same, you still have to define them separately. Species only exist in the bulk volume of the compartments, i.e., species cannot be present only on the membranes.
 
 To create a new species, click the `Add` button, select a suitable name, and hit enter. The new species will appear below the compartment name.
 
@@ -30,7 +30,7 @@ Two more properties of a species are of primary importance.
 With the definition of these two elements, the species is fully defined and can be used in the next steps of the model definition.
 
 .. note::
-   Take care to get the units correct. All quantities are assumed to have certain SI units, which are noted next to the input field for the respective quantity. For example, the diffusion constant is assumed to be in units of :math: `cm^2/s`. For more on units, `see here <../reference/units.html>`_.
+   Take care to get the units correct. All quantities are assumed to have certain SI units, which are noted next to the input field for the respective quantity. For example, the diffusion constant could have units of :math: `cm^2/s`. For more on units, `see here <../reference/units.html>`_.
 
 .. figure:: img/concentration.apng
    :alt: screenshot showing species concentration settings

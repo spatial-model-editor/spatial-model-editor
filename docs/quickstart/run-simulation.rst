@@ -19,7 +19,7 @@ and the slider below the plot can be used to change the time that is being displ
 .. note::
    The solvers have various parameters which can be customized via the Advanced->Simulation options menu.
 
-.. note:: 
+.. note::
    You can find out more about the DUNE solver `here <../reference/dune.html>`_ and about the Pixel solver `here <../reference/pixel.html>`_.
 
 Below the time series of the averaged species concentrations, you see three buttons, on the right of the time slider:
