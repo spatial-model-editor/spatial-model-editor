@@ -30,7 +30,7 @@ Two more properties of a species are of primary importance.
 With the definition of these two elemetns, the species is fully defined and can be used in the next steps of the model definition.
 
 .. note::
-   Take care to get the units correct. All quantities are assumed to have certain SI units, which are noted next to the input field for the respective quantity. For example, the diffusion constant is assumed to be in units of :math: `cm^2/s`. For more on units, `see here <../reference/units.html>`_.
+   Take care to get the units correct. All quantities are assumed to have certain SI units, which are noted next to the input field for the respective quantity. For example, the diffusion constant could have units of :math: `cm^2/s`. For more on units, `see here <../reference/units.html>`_.
 
 .. figure:: img/concentration.apng
    :alt: screenshot showing species concentration settings
