@@ -74,7 +74,7 @@ Finally, we save the 3D geometry as a tiff image.
 
 .. code-block:: python
 
-    tiff.imwrite('/home/hmack/Seafile/project_resources/SME/3d_skewed_hourglass.tiff', arr)
+    tiff.imwrite('3d_skewed_hourglass.tiff', arr)
 
 .. figure::
     img/slice_50.png
