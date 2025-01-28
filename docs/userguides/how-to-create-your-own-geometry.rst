@@ -1,6 +1,6 @@
 How to create your own geometry
 ===============================
-*SME* can work with png images for 2D- and tiff images for 3D geometries. You can create these in whatever way you feel comfortable with. Here, we are going to use Python to create example geometries. We will use the `numpy <https://numpy.org/>`_ and `matplotlib <https://matplotlib.org/>`_ libraries to create a 2D geometry and save it as a png image. For the 3D tiff image, we will use
+*SME* can work with any image format for 2D geometries, and with stacked tiff images for 3D geometries. You can create these in whatever way you feel comfortable with. Here, we are going to use Python to create example geometries. We will use the `numpy <https://numpy.org/>`_ and `matplotlib <https://matplotlib.org/>`_ libraries to create a 2D geometry and save it as a png image. For the 3D tiff image, we will use
 `tifffile <https://pypi.org/project/tifffile/>`_ which allows us to save a 3D array to a tiff image.
 
 Create a 2D Geometry
