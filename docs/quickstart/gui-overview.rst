@@ -19,7 +19,7 @@ A model in spatial-model-editor consists of five basic parts which all must be d
 
 The graphical user interface of spatial-model-editor follows this basic structure. For each of the steps, there is a tab in the main window that allows you to define the corresponding part of the model.
 
-Additional functions for each step is available via the menu bar at the top of the main window.
+Additional functions for each step are available via the menu bar at the top of the main window.
 
 - The `File` menu lets you load and save models for future use or load example models from the model library.
 
