@@ -2,14 +2,16 @@
 Single compartment diffusion
 ============================
 This example model does consists of pure diffusion without any reaction terms. It shows the baseline behavior of the diffusion solver in a simple 2D domain.
-The system consists of a fast-diffusing species :math: `s`  and a slowly diffusing species :math: `f`. 
+The system consists of a fast-diffusing species :math: `s`  and a slowly diffusing species :math:`f`. 
 
 Formulation
-""""""""""""""
+"""""""""""
+
    .. math::
-      &\frac{\partial A}{\partial t} = D_{A} \nabla^2 A
-      &\frac{\partial B}{\partial t} = D_{B} \nabla^2 B
-      &\frac{\partial C}{\partial t} = D_{C} \nabla^2 C
+      &\frac{\partial s}{\partial t} = D_{s} \nabla^2 s
+
+      &\frac{\partial f}{\partial t} = D_{f} \nabla^2 f
+
 
 Example Snapshot
 """""""""""""""""
