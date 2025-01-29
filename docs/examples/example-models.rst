@@ -14,7 +14,7 @@ They are roughly ordered by complexity, starting with the most simple models. 2D
 - `A very simple model <examples/verysimple>`_
     A system in which two species react in a compartment and are exchanged across membranes. It's mathematically simple, placing the emphasis on showing how to create exchange terms across membranes.
 - `Brusselator model <examples/brusselator>`_
-    A model for a special type of autocatalytic reaction which can create patterns. Here, it is used to showcase the usage of singular events in the GUI. 
+    A model for a special type of autocatalytic reaction which can create patterns. Here, it is used to showcase the usage of singular events in the GUI and how local and global parameters can be mixed.
 - `liver cells model <examples/livercells>`_
     Shows how to work with more complex geometries with different compartments and membranes and the definition of global parameters.
 
