@@ -23,15 +23,15 @@ Spatial Model Editor Documentation
    examples/example-models
    examples/singlediff
    examples/AB-to-C
-   examples/verysimple 
+   examples/grayscott
+   examples/verysimple
    examples/brusselator
+   examples/livercells
    examples/circadian
    examples/liver
-   examples/livercells
-   examples/grayscott
+   examples/selkov
    examples/fitzhughnagumo
    examples/calciumwave
-   examples/selkov
 
 .. toctree::
    :maxdepth: 1
