@@ -3,7 +3,7 @@ Overview
 In the following, each example model that comes with SME is described in more detail. The models have different levels of complexity and highlight different use cases and element of SME, and there are 2D and 3D model. 
 They are roughly ordered by complexity, starting with the most simple models. 2D models are treated first. 
 
-2D models 
+2D models
 ---------
 - `Single compartment diffusion <../examples/singlediff.html>`_
     Showcases a simple diffusion system in a single compartment with two species.
@@ -25,7 +25,7 @@ The following two models treat more realistic cases and can serve as starting po
 
 - `Simplified liver cell reaction model <../examples/liver.html>`_
     This represents a simplified version of liver cell metabolic reactions.
-    It again exemplifies the definition of complex metabolic reaction systems with differen parameters and functions in different compartments, but also adds interactions via membrane exchange. 
+    It again exemplifies the definition of complex metabolic reaction systems with differen parameters and functions in different compartments, but also adds interactions via membrane exchange.
 
 3D models
 ---------

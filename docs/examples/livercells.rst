@@ -1,4 +1,4 @@
-Liver cells 
+Liver cells
 ===========
 This model uses a more complex 2D geometry than seen before that consists of a row of cells at the top and bottom of the domain with a undulating channel inbetween and gaps between the cells. Each cell additionally has a nucleus. 
 
