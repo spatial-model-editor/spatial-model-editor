@@ -83,19 +83,19 @@ xcrun notarytool store-credentials "notarytool-profile" --apple-id "$MACOS_NOTAR
 # zip GUI app
 ditto -c -k --keepParent "app/spatial-model-editor.app" "notarization_gui.zip"
 # submit to be notarized
-xcrun notarytool submit "notarization_gui.zip" --keychain-profile "notarytool-profile" --wait
+retry xcrun notarytool submit "notarization_gui.zip" --keychain-profile "notarytool-profile" --wait
 # attach resulting staple to app for offline validation
-xcrun stapler staple "app/spatial-model-editor.app"
+retry xcrun stapler staple "app/spatial-model-editor.app"
 # repeat for CLI - but note that although we can notarize a command line binary we can't staple it
 ditto -c -k --keepParent "cli/spatial-cli" "notarization_cli.zip"
-xcrun notarytool submit "notarization_cli.zip" --keychain-profile "notarytool-profile" --wait
+retry xcrun notarytool submit "notarization_cli.zip" --keychain-profile "notarytool-profile" --wait
 
 # make dmg of GUI app
 retry hdiutil create spatial-model-editor-"${RUNNER_ARCH}" -fs HFS+ -srcfolder app/spatial-model-editor.app
 # notarize & staple the dmg
 ditto -c -k --keepParent "spatial-model-editor-${RUNNER_ARCH}.dmg" "notarization_gui_dmg.zip"
-xcrun notarytool submit "notarization_gui_dmg.zip" --keychain-profile "notarytool-profile" --wait
-xcrun stapler staple "spatial-model-editor-${RUNNER_ARCH}.dmg"
+retry xcrun notarytool submit "notarization_gui_dmg.zip" --keychain-profile "notarytool-profile" --wait
+retry xcrun stapler staple "spatial-model-editor-${RUNNER_ARCH}.dmg"
 
 # make dmg of CLI
 mkdir spatial-cli
@@ -103,8 +103,8 @@ cp cli/spatial-cli spatial-cli/.
 retry hdiutil create spatial-cli-"${RUNNER_ARCH}" -fs HFS+ -srcfolder spatial-cli
 # notarize & staple the dmg
 ditto -c -k --keepParent "spatial-cli-${RUNNER_ARCH}.dmg" "notarization_cli_dmg.zip"
-xcrun notarytool submit "notarization_cli_dmg.zip" --keychain-profile "notarytool-profile" --wait
-xcrun stapler staple "spatial-cli-${RUNNER_ARCH}.dmg"
+retry xcrun notarytool submit "notarization_cli_dmg.zip" --keychain-profile "notarytool-profile" --wait
+retry xcrun stapler staple "spatial-cli-${RUNNER_ARCH}.dmg"
 
 # display version
 ./app/spatial-model-editor.app/Contents/MacOS/spatial-model-editor -v
