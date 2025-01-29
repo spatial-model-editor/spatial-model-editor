@@ -3,9 +3,7 @@ Find your bearings
 This guide will help you get started with the graphical user interface of spatial-model-editor.
 For this to make sense, we need to understand the basic model structure first.
 
-Model structure in spatial-model-editor
----------------------------------------
-A model in spatial-model-editor consists of five basic parts which all must be defined in order to run a simulation:
+A model in spatial-model-editor (SME) consists of five basic parts which all must be defined in order to run a simulation:
 
 #. A definition of the spatial domain the model should run on. This can be 2D or 3D and can be divided into an arbitrary number of compartments which have interfaces with each other. In the cellular context that is relevant here, these interfaces can represent membranes between cell compartments or cells.
 
