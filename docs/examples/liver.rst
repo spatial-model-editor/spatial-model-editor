@@ -1,14 +1,9 @@
-Liver simplified
-================
-
-Formulation
-""""""""""""""
-   .. math::
-      &\frac{\partial A}{\partial t} = D_{A} \nabla^2 A
-      &\frac{\partial B}{\partial t} = D_{B} \nabla^2 B
-      &\frac{\partial C}{\partial t} = D_{C} \nabla^2 C
+Simplified liver model
+======================
+This model is a simplified, spatial version of the model introduced in `A systems biology study on NFκB signaling in primary mouse hepatocytes <https://doi.org/10.1371/journal.pone.0021489>`_. This illustrates the use of SME beyond simple toy models. Keep in mind however that this model is for illustration, with physical accuracy not being the main goal. 
+It features 14 species and 23 reactions over 2 compartments and an interface between them with 30 parameters and makes use of the function definition system to simplify expressions. Because of this complexity, the mathematical formulation is not shown here.
 
 Example Snapshot
 """""""""""""""""
 .. figure:: img/liversimplified.png
-   :alt: screenshot of the final step of the Fitzhugh-Nagumo example model
+   :alt: screenshot of the final step of the Fitzhugh-Nagumo example model.
