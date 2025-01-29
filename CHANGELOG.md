@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.8.0] - 2025-01-29
+### Added
+- improved mesh visualizations [#1021](https://github.com/spatial-model-editor/spatial-model-editor/issues/1021)
+- more 3d example models [#1015](https://github.com/spatial-model-editor/spatial-model-editor/issues/1015)
+- more documentation [#1020](https://github.com/spatial-model-editor/spatial-model-editor/issues/1020)
+
 ## [1.7.0] - 2024-10-29
 ### Added
 - Python 3.13 wheels [#1002](https://github.com/spatial-model-editor/spatial-model-editor/issues/1002)
