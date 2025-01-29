@@ -20,7 +20,7 @@ Spatial Model Editor Documentation
    :maxdepth: 1
    :caption: Example models
 
-   examples/example-models
+   examples/example-overview
    examples/singlediff
    examples/AB-to-C
    examples/grayscott
