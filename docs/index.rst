@@ -20,9 +20,10 @@ Spatial Model Editor Documentation
    :maxdepth: 1
    :caption: Example models
 
-   examples/verysimple 
+   examples/example-models
    examples/singlediff
    examples/AB-to-C
+   examples/verysimple 
    examples/brusselator
    examples/circadian
    examples/liver
