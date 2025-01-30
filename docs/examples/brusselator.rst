@@ -21,4 +21,4 @@ Formulation
 Example Snapshot
 """""""""""""""""
 .. figure:: img/brusselator.png
-   :alt: screenshot of the final step of the Fitzhugh-Nagumo example model
+   :alt: screenshot of the final step of the Brusselator example model
