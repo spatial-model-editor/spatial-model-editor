@@ -8,3 +8,5 @@ Example Snapshot
 """""""""""""""""
 .. figure:: img/circadianclock.png
    :alt: screenshot of the final step of the Circardian-Clock example model
+
+   The last timestep of the circadian clock model in a 2D domain.

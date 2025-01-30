@@ -7,3 +7,5 @@ Example Snapshot
 """""""""""""""""
 .. figure:: img/liversimplified.png
    :alt: screenshot of the final step of the simplified liver example model in SME.
+
+   The last timestep of the simplified liver model in a 2D domain.

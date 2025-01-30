@@ -23,3 +23,5 @@ Example snapshot:
 ^^^^^^^^^^^^^^^^^
 .. figure:: img/calciumwave.png
    :alt: screenshot of the final step of the Calcium-Wave-Propagation example model
+
+   The last timestep of the calcium wave propagation model in a 3D domain.

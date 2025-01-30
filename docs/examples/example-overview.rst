@@ -22,19 +22,19 @@ In the mathematical formulation of all these models, :math:`D_{x}` always denote
 The following two models treat more realistic cases and can serve as starting points for similar systems.
 
 - `Circadian clock model <../examples/circadian.html>`_
-    This system models the circadian rythm of a cell. It defines a large number of reactions in a single compartment and shows how to define complex reaction systems.
+    This system models the circadian rhythm of a cell. It defines a large number of reactions in a single compartment and shows how to define complex reaction systems.
 
 - `Simplified liver cell reaction model <../examples/liver.html>`_
     This represents a simplified version of liver cell metabolic reactions.
-    It again exemplifies the definition of complex metabolic reaction systems with differen parameters and functions in different compartments, but also adds interactions via membrane exchange.
+    It again exemplifies the definition of complex metabolic reaction systems with difference parameters and functions in different compartments, but also adds interactions via membrane exchange.
 
 3D models
 ---------
-The 3D examples do not show any fundamentally new features of SME. Rather, they exist to get familiar with the 3D representation in SME and the handling of 3D geometries. Keep in mind that three dimensional models are compuationally significantly more expensive to solve.
+The 3D examples do not show any fundamentally new features of SME. Rather, they exist to get familiar with the 3D representation in SME and the handling of 3D geometries. Keep in mind that three dimensional models are computationally significantly more expensive to solve.
 - `Single compartment diffusion in 3D (same as in 2D) <../examples/singlediff.html>`_
     A 3D version of the single compartment diffusion model. Get familiar with the 3D representation of domains and concentrations in this one.
 - `Selkov model for glycolysis oscillation <../examples/selkov.html>`_
-    A model for glycolysis oscillations in a single compartment. This model is more complex than the previous one which shows bulk osciallations in the concentration of species.
+    A model for glycolysis oscillations in a single compartment. This model is more complex than the previous one which shows bulk oscillations in the concentration of species.
 - `Gray Scott pattern formation in 3D <../examples/grayscott.html>`_
     A 3D version of the Gray-Scott pattern formation model.
 - `Fitzhugh-Nagumo model <../examples/fitzhughnagumo.html>`_

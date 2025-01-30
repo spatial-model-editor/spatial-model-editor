@@ -1,7 +1,7 @@
 FitzHugh-Nagumo
 ===============
 An implementation of the `FitzHugh-Nagumo reaction-diffusion system <https://en.wikipedia.org/wiki/FitzHugh%E2%80%93Nagumo_model>`_. The model consists of two chemical species which diffuse and react with each other in such a way that one species acts as an activator and the other as inhibitor of the reaction. These are defined in each subdomain, while the parameters are homogeneous throughout.
-For the predefined parameters, the model produces travelling waves.
+For the predefined parameters, the model produces traveling waves.
 The model is defined on a 3D domain cube (domain 2) with an inset consisting of two pyramids touching at the tip (domain 1).
 
 Formulation
@@ -24,3 +24,5 @@ Example snapshot:
 ^^^^^^^^^^^^^^^^^
 .. figure:: img/fitzhugh.png
    :alt: screenshot of the final step of the Fitzhugh-Nagumo example model
+
+    The last timestep of the Fitzhugh-Nagumo model in a 3D domain.

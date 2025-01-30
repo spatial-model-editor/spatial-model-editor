@@ -18,4 +18,4 @@ Example Snapshot
 .. figure:: img/singlecompartment2d.png
    :alt: screenshot of the final step of the single-compartment diffusion example model
 
-   The last timestep of the single-compartment diffusion model in a 2D domain.
+   The last timestep of the single-compartment diffusion model. Both species initial concentrations overlap. Play around with the display options to see the difference in diffusion rates.
