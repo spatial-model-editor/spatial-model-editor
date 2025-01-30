@@ -16,4 +16,4 @@ Example Snapshot
 .. figure:: img/grayscott.png
    :alt: screenshot of the final step of the Grey-Scott 2D example model
 
-   Screenshot of the result of running the Gray-Scott example model in 2D
+   Screenshot of the result of running the Gray-Scott example model in 2D. Observe the formation of patterned concentration structures.

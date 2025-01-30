@@ -23,4 +23,4 @@ Example snapshot:
 .. figure:: img/selkov.png
    :alt: screenshot of the final step of the Selkov-glycolysis oscillation example model
 
-    The last timestep of the Selkov-glycolysis oscillation model in a 3D domain.
+   The last timestep of the Selkov-glycolysis oscillation model in a 3D domain.

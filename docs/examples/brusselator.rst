@@ -21,6 +21,6 @@ Formulation
 Example Snapshot
 """""""""""""""""
 .. figure:: img/brusselator.png
-   :alt: screenshot of the final step of the Brusselator example model
+    :alt: screenshot of the final step of the Brusselator example model
 
     The final step of a run of the Brusselator model in SME.

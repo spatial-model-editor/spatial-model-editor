@@ -25,4 +25,4 @@ Example snapshot:
 .. figure:: img/fitzhugh.png
    :alt: screenshot of the final step of the Fitzhugh-Nagumo example model
 
-    The last timestep of the Fitzhugh-Nagumo model in a 3D domain.
+   The last timestep of the Fitzhugh-Nagumo model in a 3D domain.

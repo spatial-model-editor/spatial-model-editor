@@ -34,6 +34,7 @@ Example Snapshots
 .. figure:: img/reaction-definition-verysimple.png
     :alt: screenshot of the reaction definition in the very simple example model
 
+    Screenshot of the reaction definition in the very simple example model.
     Note how the arrow in the label under the reaction name indicates the direction of the exchange. Try experimenting with the stoichiometric coefficients to see how they affect the exchange between compartments.
 
 

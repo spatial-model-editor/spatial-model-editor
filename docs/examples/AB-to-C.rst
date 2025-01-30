@@ -18,6 +18,6 @@ Formulation
 Example Snapshot
 """""""""""""""""
 .. figure:: img/ABtoC.png
-   :alt: screenshot of the final step of the ABToC example model
+    :alt: screenshot of the final step of the ABToC example model
 
     The last timestep of a run of the :math:`AB \rightarrow C` model.
