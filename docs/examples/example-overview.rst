@@ -2,6 +2,7 @@ Overview
 ==============
 In the following, each example model that comes with SME is described in more detail. The models have different levels of complexity and highlight different use cases and element of SME, and there are 2D and 3D model. 
 They are roughly ordered by complexity, starting with the most simple models. 2D models are treated first. 
+In the mathematical formulation of all these models, :math:`D_{x}` always denotes diffusion coefficients and :math:`j_{x, A \rigtharrow B}` fluxes across membranes from compartment :math:`A` to compartment :math:`B`.
 
 2D models
 ---------

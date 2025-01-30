@@ -4,7 +4,7 @@ This models a simple system in which two species :math:`A` and :math:`B` react i
 To become familiar with this, play around with the stoichiometric coefficients in the reaction definition and observe how the reaction label below the reaction name in the GUI changes when you change their sign. Check which term in the mathematical formulation below corresponds to what part of the reaction definition in the GUI, and how the two representations differ.
 This model comes in a 2D and a 3D version.
 
-In the formulation below, the index :math:`i` refers to compartments (nucleus, cytoplasm, outside).
+In the formulation below, the index :math:`i` refers to compartments (nucleus, cytoplasm, outside). :math:`k_{1}` and :math:`k_{2}` are reaction parameters, :math:`D_{A_{i}}` and :math:`D_{B_{i}}` are diffusion coefficients.
 
 Formulation in the bulk volume of each compartment
 """"""""""""""""""""""""""""""""""""""""""""""""""
