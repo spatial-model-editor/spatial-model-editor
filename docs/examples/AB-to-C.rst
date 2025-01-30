@@ -18,4 +18,4 @@ Formulation
 Example Snapshot
 """""""""""""""""
 .. figure:: img/ABtoC.png
-   :alt: screenshot of the final step of the Fitzhugh-Nagumo example model
+   :alt: screenshot of the final step of the ABtoC example model
