@@ -22,4 +22,4 @@ Formulation
 Example snapshot:
 ^^^^^^^^^^^^^^^^^
 .. figure:: img/calciumwave.png
-   :alt: screenshot of the final step of the Calcium-wavepropagation example model
+   :alt: screenshot of the final step of the Calcium-Wave-Propagation example model
