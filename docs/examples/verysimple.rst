@@ -20,9 +20,9 @@ Formulation for the exchange between compartments
 
 .. math::
 
-    &j_{A, nuc \rightarrow cell} = - \left(k_{2} A_{nuc} - k_{1} A_{Cell} \right)
+    &j_{A, nucleus \rightarrow cell} = - \left(k_{2} A_{nucleus} - k_{1} A_{Cell} \right)
 
-    &j_{B, nuc \rightarrow cell} = k_{1} B_{nuc}
+    &j_{B, nucleus \rightarrow cell} = k_{1} B_{nucleus}
 
     &j_{A, cell \rightarrow outside} = - k_{1} A_{out}
 

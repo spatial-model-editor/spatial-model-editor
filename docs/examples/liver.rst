@@ -6,4 +6,4 @@ It features 14 species and 23 reactions over 2 compartments and an interface bet
 Example Snapshot
 """""""""""""""""
 .. figure:: img/liversimplified.png
-   :alt: screenshot of the final step of the Fitzhugh-Nagumo example model.
+   :alt: screenshot of the final step of the simplified liver example model in SME.

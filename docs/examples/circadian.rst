@@ -7,4 +7,4 @@ Due to the complexity of the mathematical description, it is not given in full h
 Example Snapshot
 """""""""""""""""
 .. figure:: img/circadianclock.png
-   :alt: screenshot of the final step of the Fitzhugh-Nagumo example model
+   :alt: screenshot of the final step of the circadian-Clock  example model.

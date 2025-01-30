@@ -1,6 +1,6 @@
 Calcium-Wave-Propagation Model
 ==============================
-This system aims to simulate calcium wave propagation, which plays a role in intracellular signalling in many cells. :math:`c_{i}` represents the local calcium concentration and :math:`h_{i}` the gating variable which abstracts other cellular state variables relevant for calcium release. Hence, :math:`h_{i}` has no diffusion term. It is defined in a 3D cube (domain 2) with an inset subdomain consisting of 2 partially intersecting spheres (domain 1). The parameters are set to the same values in both domains and are homogeneous throughout.
+This system aims to simulate calcium wave propagation, which plays a role in intracellular signalling in many cells. :math:`c_{i}` represents the local calcium concentration and :math:`h_{i}` the gating variable which abstracts other cellular state variables relevant for calcium release. Hence, :math:`h_{i}` has no diffusion term. As always, the :math:`k_{i}` define the reaction parameters. It is defined in a 3D cube (domain 2) with an inset subdomain consisting of 2 partially intersecting spheres (domain 1). The parameters are set to the same values in both domains and are homogeneous throughout.
 With the predefined parameters, the inner domain feeds outward propagating calcium waves in the outer domain.
 
 Formulation

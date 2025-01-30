@@ -10,13 +10,13 @@ Formulation
 .. math::
    &\frac{\partial g_{n,s,h}}{\partial t} = D_{g_{n,s,h}} \nabla^2 g_{n,s,h}
 
-   &j_{g, h \rightarrow s} = k c \left( g_h - g_s \right)
+   &j_{g, h \rightarrow s} = k c \left( g_{h} - g_{s} \right)
 
-   &j_{g, n \rightarrow h} = k c \left( g_n - g_h \right)
+   &j_{g, n \rightarrow h} = k c \left( g_{n} - g_{h} \right)
 
 
 
 Example Snapshot
 """""""""""""""""
 .. figure:: img/livercells.png
-   :alt: screenshot of the final step of the Fitzhugh-Nagumo example model
+   :alt: screenshot of the final step of the liver-cells example model

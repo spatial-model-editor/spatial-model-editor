@@ -1,6 +1,6 @@
 AB-to-C Reaction model
 ======================
-This is a simple toy model that describes the conversion of two species A and B into a third species C, and showcases how to use the stoichiometry option to define reaction terms between species in the bulk volume of compartments.
+This is a simple toy model that describes the conversion of two species A and B into a third species C, and showcases how to use the stoichiometry option to define reaction terms between species in the bulk volume of compartments. :math:`k_{1}` is the reaction rate constant.
 
 Formulation
 """""""""""
