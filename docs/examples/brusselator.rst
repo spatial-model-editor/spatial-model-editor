@@ -1,6 +1,6 @@
 Brusselator model
 ==================
-The `Brusselator model <https://en.wikipedia.org/wiki/Brusselator>`_ is a theoretical model for a type of autocatalytic reaction that is capable of forming patterns. The best known real world examples is the Belousov-Zhabotinsky reaction. In this model we show how local and global parameters can be mixed in a model definition, and how special events can be set to happen at a certain time point. Explore how these work in the `Events` tab in the GUI.
+The `Brusselator model <https://en.wikipedia.org/wiki/Brusselator>`_ is a theoretical model for a type of autocatalytic reaction that is capable of forming patterns. The best known real world example is the `Belousov-Zhabotinsky <https://en.wikipedia.org/wiki/Belousov%E2%80%93Zhabotinsky_reaction>`_ reaction. In this model we show how local and global parameters can be mixed in a model definition, and how special events can be set to happen at a certain time point. Explore how these work in the `Events` tab in the GUI.
 
 Formulation
 """""""""""
