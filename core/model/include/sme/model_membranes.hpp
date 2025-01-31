@@ -45,6 +45,7 @@ public:
   void updateCompartments(
       const std::vector<std::unique_ptr<geometry::Compartment>> &compartments);
   void updateCompartmentImages(const common::ImageStack &imgs);
+  void updateGeometryImageColour(QRgb oldColour, QRgb newColour);
   void importMembraneIdsAndNames();
   void exportToSBML(const common::VolumeF &voxelSize);
   explicit ModelMembranes(libsbml::Model *model = nullptr);
