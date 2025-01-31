@@ -7,6 +7,7 @@
 #include "sme/mesh2d.hpp"
 #include "sme/mesh3d.hpp"
 #include "sme/model.hpp"
+#include "sme/utils.hpp"
 #include "ui_tabgeometry.h"
 #include <QColorDialog>
 #include <QInputDialog>
@@ -148,25 +149,21 @@ void TabGeometry::lblGeometry_mouseClicked(QRgb col, sme::common::Voxel point) {
         model.getCompartments().getIds().at(ui->listCompartments->currentRow());
     model.getCompartments().setColour(compartmentID, col);
     ui->tabCompartmentGeometry->setCurrentIndex(0);
-    ui->listMembranes->clear();
-    ui->listMembranes->addItems(model.getMembranes().getNames());
-    // update display by simulating user click on listCompartments
-    listCompartments_itemSelectionChanged();
     waitingForCompartmentChoice = false;
     if (m_statusBar != nullptr) {
       m_statusBar->clearMessage();
     }
     QGuiApplication::restoreOverrideCursor();
     enableTabs();
+    loadModelData(ui->listCompartments->currentItem()->text());
     emit modelGeometryChanged();
     return;
   }
   // display compartment the user just clicked on
   auto compID = model.getCompartments().getIdFromColour(col);
-  for (int i = 0; i < model.getCompartments().getIds().size(); ++i) {
-    if (model.getCompartments().getIds().at(i) == compID) {
-      ui->listCompartments->setCurrentRow(i);
-    }
+  auto row = static_cast<int>(model.getCompartments().getIds().indexOf(compID));
+  if (row >= 0) {
+    ui->listCompartments->setCurrentRow(row);
   }
 }
 
@@ -285,6 +282,10 @@ void TabGeometry::btnChangeCompartmentColour_clicked() {
       return;
     }
     listCompartments_itemSelectionChanged();
+    if (const auto *mesh3d = model.getGeometry().getMesh3d();
+        mesh3d != nullptr) {
+      ui->mshCompMesh->setColors(mesh3d->getColors());
+    }
     lblGeometry->setImage(model.getGeometry().getImages());
     voxGeometry->setImage(model.getGeometry().getImages());
   }
@@ -296,24 +297,9 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
                ui->tabCompartmentGeometry->tabText(index).toStdString());
   if (index == TabIndex::IMAGE) {
     return;
-  }
-  if (index == TabIndex::BOUNDARIES) {
-    const auto *mesh{model.getGeometry().getMesh2d()};
-    if (mesh == nullptr || mesh->getNumBoundaries() == 0) {
-      ui->spinBoundaryIndex->setEnabled(false);
-      ui->spinMaxBoundaryPoints->setEnabled(false);
-      ui->spinBoundaryZoom->setEnabled(false);
-      return;
-    }
-    ui->spinBoundaryIndex->setMaximum(
-        static_cast<int>(mesh->getNumBoundaries()) - 1);
-    ui->spinBoundaryIndex->setEnabled(true);
-    ui->spinMaxBoundaryPoints->setEnabled(true);
-    ui->spinBoundaryZoom->setEnabled(true);
-    spinBoundaryIndex_valueChanged(ui->spinBoundaryIndex->value());
-    return;
-  }
-  if (index == TabIndex::MESH) {
+  } else if (index == TabIndex::BOUNDARIES) {
+    updateBoundaries();
+  } else if (index == TabIndex::MESH) {
     auto *mesh2d{model.getGeometry().getMesh2d()};
     const auto *mesh3d{model.getGeometry().getMesh3d()};
     ui->spinMaxTriangleArea->setEnabled(mesh2d != nullptr);
@@ -332,19 +318,6 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
       // reconstruct 2d mesh in case the boundary lines have changed
       mesh2d->constructMesh();
       updateMesh2d();
-      if (!mesh2d->isValid()) {
-        QString msg{
-            "Error: Unable to generate mesh.\n\nImproving the accuracy "
-            "of the boundary lines might help. To do this, click on the "
-            "\"Boundary Lines\" "
-            "tab and increase the maximum number of allowed "
-            "points.\n\nError message: "};
-        msg.append(mesh2d->getErrorMessage().c_str());
-        ui->lblCompMesh->setText(msg);
-        ui->spinMaxTriangleArea->setEnabled(false);
-        ui->spinMeshZoom->setEnabled(false);
-        return;
-      }
     } else if (mesh3d != nullptr) {
       ui->stackCompMesh->setCurrentIndex(1);
       ui->spinMaxCellVolume->setValue(
@@ -448,9 +421,37 @@ void TabGeometry::spinMaxTriangleArea_valueChanged(int value) {
   }
 }
 
+void TabGeometry::updateBoundaries() {
+  const auto *mesh{model.getGeometry().getMesh2d()};
+  if (mesh == nullptr || mesh->getNumBoundaries() == 0) {
+    ui->spinBoundaryIndex->setEnabled(false);
+    ui->spinMaxBoundaryPoints->setEnabled(false);
+    ui->spinBoundaryZoom->setEnabled(false);
+    return;
+  }
+  ui->spinBoundaryIndex->setMaximum(static_cast<int>(mesh->getNumBoundaries()) -
+                                    1);
+  ui->spinBoundaryIndex->setEnabled(true);
+  ui->spinMaxBoundaryPoints->setEnabled(true);
+  ui->spinBoundaryZoom->setEnabled(true);
+  spinBoundaryIndex_valueChanged(ui->spinBoundaryIndex->value());
+}
+
 void TabGeometry::updateMesh2d() {
   const auto *mesh2d = model.getGeometry().getMesh2d();
   if (mesh2d == nullptr) {
+    return;
+  }
+  if (!mesh2d->isValid()) {
+    QString msg{"Error: Unable to generate mesh.\n\nImproving the accuracy "
+                "of the boundary lines might help. To do this, click on the "
+                "\"Boundary Lines\" "
+                "tab and increase the maximum number of allowed "
+                "points.\n\nError message: "};
+    msg.append(mesh2d->getErrorMessage().c_str());
+    ui->lblCompMesh->setText(msg);
+    ui->spinMaxTriangleArea->setEnabled(false);
+    ui->spinMeshZoom->setEnabled(false);
     return;
   }
   auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
@@ -466,7 +467,7 @@ void TabGeometry::spinMaxCellVolume_valueChanged(int value) {
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     mesh3d->setCompartmentMaxCellVolume(compIndex,
                                         static_cast<std::size_t>(value));
-    ui->mshCompMesh->setMesh(*mesh3d, compIndex);
+    ui->mshCompMesh->setMesh(*mesh3d, compIndex, false);
     QGuiApplication::restoreOverrideCursor();
   }
 }
@@ -540,8 +541,14 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
                                       model.getUnits().getLength().name);
     ui->lblCompShape->setText("");
     // update mesh or boundary image if tab is currently visible
-    tabCompartmentGeometry_currentChanged(
-        ui->tabCompartmentGeometry->currentIndex());
+    updateBoundaries();
+    updateMesh2d();
+    if (const auto *mesh3d{model.getGeometry().getMesh3d()};
+        mesh3d != nullptr) {
+      ui->spinMaxCellVolume->setValue(
+          static_cast<int>(mesh3d->getCompartmentMaxCellVolume(currentRow)));
+      ui->mshCompMesh->setCompartmentIndex(currentRow);
+    }
     // update compartment volume
     double volume{model.getCompartments().getSize(compId)};
     ui->lblCompSize->setText(QString("Volume: %1 %2 (%3 voxels)")
