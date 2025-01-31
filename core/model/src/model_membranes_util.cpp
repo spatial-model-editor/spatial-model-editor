@@ -137,6 +137,14 @@ int ImageMembranePixels::getColourIndex(QRgb colour) const {
   return -1;
 }
 
+void ImageMembranePixels::updateColour(QRgb oldColour, QRgb newColour) {
+  for (auto &colour : colours) {
+    if (colour == oldColour) {
+      colour = newColour;
+    }
+  }
+}
+
 const std::vector<VoxelPair> *ImageMembranePixels::getVoxels(int iA,
                                                              int iB) const {
   if (auto i = colourIndexPairIndex.find(iA, iB); i.has_value()) {

@@ -492,6 +492,8 @@ void ModelGeometry::updateGeometryImageColor(QRgb oldColour, QRgb newColour) {
   images.setColor(colorIndex, newColour);
   sbmlAnnotation->sampledFieldColours = common::toStdVec(images.colorTable());
   modelCompartments->updateGeometryImageColor(oldColour, newColour);
+  modelMembranes->updateGeometryImageColour(oldColour, newColour);
+  modelMembranes->updateCompartments(modelCompartments->getCompartments());
   if (mesh3d != nullptr) {
     mesh3d->setColors(common::toStdVec(modelCompartments->getColours()));
   }

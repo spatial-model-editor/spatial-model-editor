@@ -140,6 +140,18 @@ void ModelMembranes::updateCompartmentImages(const common::ImageStack &imgs) {
   membranePixels = std::make_unique<ImageMembranePixels>(imgs);
 }
 
+void ModelMembranes::updateGeometryImageColour(QRgb oldColour, QRgb newColour) {
+  for (auto &idColourPair : idColourPairs) {
+    if (idColourPair.second.first == oldColour) {
+      idColourPair.second.first = newColour;
+    }
+    if (idColourPair.second.second == oldColour) {
+      idColourPair.second.second = newColour;
+    }
+  }
+  membranePixels->updateColour(oldColour, newColour);
+}
+
 void ModelMembranes::importMembraneIdsAndNames() {
   if (sbmlModel == nullptr) {
     return;
