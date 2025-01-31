@@ -32,7 +32,7 @@ cmake .. \
     -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER \
     -DSME_LOG_LEVEL=OFF \
     -DSME_EXTRA_CORE_DEFS=$SME_EXTRA_CORE_DEFS \
-    -DPython_ROOT_DIR=$PYDIR \
+    -DPython_ROOT_DIR="$PYDIR" \
     -DFREETYPE_LIBRARY_RELEASE=/c/smelibs/lib/libQt6BundledFreetype.a \
     -DFREETYPE_INCLUDE_DIR_freetype2=/c/smelibs/include/QtFreetype \
     -DFREETYPE_INCLUDE_DIR_ft2build=/c/smelibs/include/QtFreetype

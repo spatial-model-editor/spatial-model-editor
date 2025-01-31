@@ -20,7 +20,10 @@ public:
   };
 
   explicit QMeshRenderer(QWidget *parent = nullptr);
-  void setMesh(const sme::mesh::Mesh3d &mesh, std::size_t compartmentIndex);
+  void setMesh(const sme::mesh::Mesh3d &mesh, std::size_t compartmentIndex,
+               bool resetCamera = true);
+  void setCompartmentIndex(std::size_t compartmentIndex);
+  void setColors(std::vector<QRgb> newColors);
   void setRenderMode(RenderMode mode);
   void clear();
 
@@ -29,16 +32,19 @@ signals:
 
 protected:
   void mousePressEvent(QMouseEvent *ev) override;
+  void mouseReleaseEvent(QMouseEvent *ev) override;
 
 private:
-  void setColours(const std::vector<QRgb> &colors,
-                  std::size_t compartmentIndex);
+  void updateAndRender();
+  QPoint lastMouseClickPos{};
+  std::size_t currentCompartmentIndex{0};
+  std::vector<QRgb> colors{};
   RenderMode renderMode{RenderMode::Solid};
-  vtkNew<vtkPoints> points;
-  std::vector<vtkNew<vtkUnstructuredGrid>> grids;
-  std::vector<vtkNew<vtkExtractEdges>> edges;
-  std::vector<vtkNew<vtkDataSetMapper>> solidMappers;
-  std::vector<vtkNew<vtkDataSetMapper>> wireframeMappers;
-  std::vector<vtkNew<vtkActor>> solidActors;
-  std::vector<vtkNew<vtkActor>> wireframeActors;
+  vtkNew<vtkPoints> points{};
+  std::vector<vtkNew<vtkUnstructuredGrid>> grids{};
+  std::vector<vtkNew<vtkExtractEdges>> edges{};
+  std::vector<vtkNew<vtkDataSetMapper>> solidMappers{};
+  std::vector<vtkNew<vtkDataSetMapper>> wireframeMappers{};
+  std::vector<vtkNew<vtkActor>> solidActors{};
+  std::vector<vtkNew<vtkActor>> wireframeActors{};
 };
