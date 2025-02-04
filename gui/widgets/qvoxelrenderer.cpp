@@ -123,3 +123,5 @@ void QVoxelRenderer::mousePressEvent(QMouseEvent *ev) {
     }
   }
 }
+
+vtkCamera *QVoxelRenderer::getCamera() { return renderer->GetActiveCamera(); }

@@ -90,6 +90,7 @@ TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
           &TabGeometry::listCompartments_itemDoubleClicked);
   connect(ui->listMembranes, &QListWidget::itemSelectionChanged, this,
           &TabGeometry::listMembranes_itemSelectionChanged);
+  ui->mshCompMesh->setCamera(voxGeometry->getCamera());
 }
 
 TabGeometry::~TabGeometry() = default;

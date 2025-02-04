@@ -22,6 +22,7 @@ public:
   explicit QMeshRenderer(QWidget *parent = nullptr);
   void setMesh(const sme::mesh::Mesh3d &mesh, std::size_t compartmentIndex,
                bool resetCamera = true);
+  void setCamera(vtkCamera *camera);
   void setCompartmentIndex(std::size_t compartmentIndex);
   void setColors(std::vector<QRgb> newColors);
   void setRenderMode(RenderMode mode);

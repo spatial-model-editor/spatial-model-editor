@@ -51,6 +51,13 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
   setCompartmentIndex(compartmentIndex);
 }
 
+void QMeshRenderer::setCamera(vtkCamera *camera) {
+  renderer->SetActiveCamera(camera);
+  //    renderWindow->AddObserver(vtkCommand::ModifiedEvent, this,
+  //    &QMeshRenderer::updateAndRender);
+  renderWindow->Render();
+}
+
 void QMeshRenderer::setCompartmentIndex(std::size_t compartmentIndex) {
   currentCompartmentIndex = compartmentIndex;
   updateAndRender();

@@ -17,6 +17,7 @@ public:
   explicit QVoxelRenderer(QWidget *parent = nullptr);
   void setImage(const sme::common::ImageStack &img);
   void setPhysicalSize(const sme::common::VolumeF &size, const QString &units);
+  vtkCamera *getCamera();
 
 signals:
   void mouseClicked(QRgb col, sme::common::Voxel voxel);
