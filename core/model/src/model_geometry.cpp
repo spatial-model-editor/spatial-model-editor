@@ -247,6 +247,7 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   hasImage = true;
   sbmlAnnotation->sampledFieldColours = common::toStdVec(images.colorTable());
   voxelSize = calculateVoxelSize(images.volume(), physicalSize);
+  images.setVoxelSize(voxelSize);
   modelMembranes->updateCompartmentImages(images);
   for (const auto &[id, colour] : gsf.compartmentIdColourPairs) {
     SPDLOG_INFO("setting compartment {} colour to {:x}", id, colour);
@@ -272,6 +273,7 @@ void ModelGeometry::importGeometryFromImages(const common::ImageStack &imgs,
   }
   images = common::ImageStack{imgs};
   images.convertToIndexed();
+  images.setVoxelSize(voxelSize);
   sbmlAnnotation->sampledFieldColours = common::toStdVec(images.colorTable());
   modelMembranes->updateCompartmentImages(images);
   auto *geom{getOrCreateGeometry(sbmlModel)};
@@ -371,11 +373,12 @@ int ModelGeometry::getNumDimensions() const { return numDimensions; }
 
 void ModelGeometry::setVoxelSize(const common::VolumeF &newVoxelSize,
                                  bool updateSBML) {
-  SPDLOG_INFO("Setting pixel volume to {}x{}x{}", newVoxelSize.width(),
+  SPDLOG_INFO("Setting voxel size to {}x{}x{}", newVoxelSize.width(),
               newVoxelSize.height(), newVoxelSize.depth());
   hasUnsavedChanges = true;
   auto oldVoxelSize{voxelSize};
   voxelSize = newVoxelSize;
+  images.setVoxelSize(voxelSize);
 
   // update origin
   physicalOrigin.p.rx() *= voxelSize.width() / oldVoxelSize.width();

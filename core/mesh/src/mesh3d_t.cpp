@@ -541,7 +541,7 @@ TEST_CASE("Mesh3d more complex geometries",
 }
 
 TEST_CASE("Mesh3d max cell volume",
-          "[core/mesh/mesh3d][core/mesh][core][mesh3d][expensive][Q]") {
+          "[core/mesh/mesh3d][core/mesh][core][mesh3d][expensive]") {
   for (const auto model :
        {sme::test::Mod::VerySimpleModel3D, sme::test::Mod::SelKov3D,
         sme::test::Mod::FitzhughNagumo3D}) {

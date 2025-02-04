@@ -2,12 +2,11 @@
 #include "model_test_utils.hpp"
 #include "qmeshrenderer.hpp"
 #include "qt_test_utils.hpp"
-#include "sme/image_stack.hpp"
 
 using namespace sme::test;
 
 // set to e.g. 1000 to interactively inspect the rendering
-constexpr int delay_ms{1000};
+constexpr int delay_ms{0};
 
 TEST_CASE("QMeshRenderer",
           "[qmeshrenderer][gui/widgets/qmeshrenderer][gui/widgets][gui]") {

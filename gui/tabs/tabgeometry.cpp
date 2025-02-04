@@ -90,6 +90,7 @@ TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
           &TabGeometry::listCompartments_itemDoubleClicked);
   connect(ui->listMembranes, &QListWidget::itemSelectionChanged, this,
           &TabGeometry::listMembranes_itemSelectionChanged);
+  ui->mshCompMesh->syncCamera(voxGeometry);
 }
 
 TabGeometry::~TabGeometry() = default;
@@ -115,9 +116,8 @@ void TabGeometry::loadModelData(const QString &selection) {
     ui->btnChangeCompartment->setEnabled(true);
   }
   lblGeometry->setImage(model.getGeometry().getImages());
+  lblGeometry->setPhysicalUnits(model.getUnits().getLength().name);
   voxGeometry->setImage(model.getGeometry().getImages());
-  lblGeometry->setPhysicalSize(model.getGeometry().getPhysicalSize(),
-                               model.getUnits().getLength().name);
   enableTabs();
   selectMatchingOrFirstItem(ui->listCompartments, selection);
 }
@@ -354,8 +354,7 @@ void TabGeometry::spinBoundaryIndex_valueChanged(int value) {
   ui->lblCompBoundary->setImages(
       model.getGeometry().getMesh2d()->getBoundariesImages(size,
                                                            boundaryIndex));
-  ui->lblCompBoundary->setPhysicalSize(model.getGeometry().getPhysicalSize(),
-                                       model.getUnits().getLength().name);
+  ui->lblCompBoundary->setPhysicalUnits(model.getUnits().getLength().name);
   QGuiApplication::restoreOverrideCursor();
 }
 
@@ -368,8 +367,7 @@ void TabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
   ui->lblCompBoundary->setImages(
       model.getGeometry().getMesh2d()->getBoundariesImages(size,
                                                            boundaryIndex));
-  ui->lblCompBoundary->setPhysicalSize(model.getGeometry().getPhysicalSize(),
-                                       model.getUnits().getLength().name);
+  ui->lblCompBoundary->setPhysicalUnits(model.getUnits().getLength().name);
   QGuiApplication::restoreOverrideCursor();
 }
 
@@ -457,8 +455,7 @@ void TabGeometry::updateMesh2d() {
   auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
   ui->lblCompMesh->setImages(
       mesh2d->getMeshImages(ui->lblCompMesh->size(), compIndex));
-  ui->lblCompMesh->setPhysicalSize(model.getGeometry().getPhysicalSize(),
-                                   model.getUnits().getLength().name);
+  ui->lblCompMesh->setPhysicalUnits(model.getUnits().getLength().name);
 }
 
 void TabGeometry::spinMaxCellVolume_valueChanged(int value) {
@@ -537,8 +534,6 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
     // update image of compartment
     const auto *comp{model.getCompartments().getCompartment(compId)};
     ui->lblCompShape->setImage(comp->getCompartmentImages());
-    ui->lblCompShape->setPhysicalSize(model.getGeometry().getPhysicalSize(),
-                                      model.getUnits().getLength().name);
     ui->lblCompShape->setText("");
     // update mesh or boundary image if tab is currently visible
     updateBoundaries();
@@ -586,8 +581,7 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
   // update image
   const auto *m{model.getMembranes().getMembrane(membraneId)};
   ui->lblCompShape->setImage(m->getImages());
-  ui->lblCompShape->setPhysicalSize(model.getGeometry().getPhysicalSize(),
-                                    model.getUnits().getLength().name);
+  ui->lblCompShape->setPhysicalUnits(model.getUnits().getLength().name);
   auto nVoxelPairs{m->getIndexPairs(sme::geometry::Membrane::X).size() +
                    m->getIndexPairs(sme::geometry::Membrane::Y).size() +
                    m->getIndexPairs(sme::geometry::Membrane::Z).size()};
@@ -607,7 +601,6 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
     ui->lblCompMesh->setImages(mesh->getMeshImages(
         ui->lblCompMesh->size(),
         static_cast<std::size_t>(currentRow + ui->listCompartments->count())));
-    ui->lblCompMesh->setPhysicalSize(model.getGeometry().getPhysicalSize(),
-                                     model.getUnits().getLength().name);
+    ui->lblCompMesh->setPhysicalUnits(model.getUnits().getLength().name);
   }
 }

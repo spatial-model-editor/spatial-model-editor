@@ -15,6 +15,7 @@ class ImageStack {
 private:
   std::vector<QImage> imgs{};
   Volume sz{0, 0, 0};
+  VolumeF voxel{1.0, 1.0, 1.0};
 
 public:
   ImageStack();
@@ -42,6 +43,12 @@ public:
   [[nodiscard]] inline bool empty() const { return imgs.empty(); }
   [[nodiscard]] QList<QRgb> colorTable() const;
   [[nodiscard]] inline const Volume &volume() const noexcept { return sz; }
+  [[nodiscard]] inline const VolumeF &voxelSize() const noexcept {
+    return voxel;
+  }
+  inline void setVoxelSize(const VolumeF &voxelSize) noexcept {
+    voxel = voxelSize;
+  }
   inline std::vector<QImage>::iterator begin() noexcept { return imgs.begin(); }
   [[nodiscard]] inline std::vector<QImage>::const_iterator
   begin() const noexcept {

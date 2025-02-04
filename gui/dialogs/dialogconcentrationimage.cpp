@@ -45,15 +45,13 @@ DialogConcentrationImage::DialogConcentrationImage(
   }
   ui->lblMinConcUnits->setText(quantityUnit);
   ui->lblMaxConcUnits->setText(quantityUnit);
+  imgs.setVoxelSize(speciesGeometry.voxelSize);
   imgs.fill(0);
 
   ui->lblImage->displayGrid(ui->chkGrid->isChecked());
   ui->lblImage->displayScale(ui->chkScale->isChecked());
   ui->lblImage->invertYAxis(invertYAxis);
-  sme::common::VolumeF physicalSize{speciesGeometry.compartmentImageSize *
-                                    speciesGeometry.voxelSize};
-  ui->lblImage->setPhysicalSize(physicalSize, lengthUnit);
-
+  ui->lblImage->setPhysicalUnits(lengthUnit);
   if (concentrationArray.empty()) {
     SPDLOG_DEBUG("empty initial concentrationArray - "
                  "setting concentration to zero everywhere");

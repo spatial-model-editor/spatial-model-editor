@@ -30,6 +30,7 @@ void QLabelMouseTracker::setImage(const sme::common::ImageStack &img) {
     zSlider->setMinimum(0);
     zSlider->setMaximum(static_cast<int>(image.volume().depth()) - 1);
   }
+  physicalSize = image.voxelSize() * image.volume();
   resizeImage(this->size());
   setCurrentPixel(mapFromGlobal(QCursor::pos()));
 }
@@ -291,11 +292,8 @@ void QLabelMouseTracker::setTransformationMode(Qt::TransformationMode mode) {
   resizeImage(size());
 }
 
-void QLabelMouseTracker::setPhysicalSize(const sme::common::VolumeF &size,
-                                         const QString &units) {
-  physicalSize = size;
+void QLabelMouseTracker::setPhysicalUnits(const QString &units) {
   lengthUnits = units;
-  resizeImage(this->size());
 }
 
 void QLabelMouseTracker::displayGrid(bool enable) {

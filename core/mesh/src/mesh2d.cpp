@@ -251,10 +251,12 @@ Mesh2d::getBoundariesImages(const QSize &size,
       {static_cast<int>(scaleFactor.x() * img.width() + 2 * offset.x()),
        static_cast<int>(scaleFactor.y() * img.height() + 2 * offset.y()), 1},
       QImage::Format_ARGB32_Premultiplied);
+  boundaryImage.setVoxelSize({pixel.width(), pixel.height(), 1.0});
   boundaryImage.fill(qRgba(0, 0, 0, 0));
 
   common::ImageStack maskImage(boundaryImage.volume(),
                                QImage::Format_ARGB32_Premultiplied);
+  maskImage.setVoxelSize({pixel.width(), pixel.height(), 1.0});
   maskImage.fill(qRgb(255, 255, 255));
 
   constexpr std::size_t zindex{0};
@@ -304,12 +306,14 @@ Mesh2d::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
       {static_cast<int>(scaleFactor.x() * img.width() + 2 * offset.x()),
        static_cast<int>(scaleFactor.y() * img.height() + 2 * offset.y()), 1},
       QImage::Format_ARGB32_Premultiplied);
+  meshImage.setVoxelSize({pixel.width(), pixel.height(), 1.0});
   meshImage.fill(0);
   // construct mask image
   constexpr std::size_t zindex{0};
   QPainter p(&meshImage[zindex]);
   p.setRenderHint(QPainter::Antialiasing);
   maskImage = common::ImageStack(meshImage.volume(), QImage::Format_RGB32);
+  maskImage.setVoxelSize({pixel.width(), pixel.height(), 1.0});
   maskImage.fill(qRgb(255, 255, 255));
   QPainter pMask(&maskImage[zindex]);
   // draw triangles

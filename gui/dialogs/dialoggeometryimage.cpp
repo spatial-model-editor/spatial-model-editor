@@ -102,7 +102,7 @@ void DialogGeometryImage::updateVoxelSize() {
       sme::model::rescale(volumeLocalUnits, localUnit, modelUnit)};
   // Physical voxel volume in model units
   voxelModelUnits = volumeModelUnits / rescaledImage.volume();
-  ui->lblImage->setPhysicalSize(volumeModelUnits, modelUnit.name);
+  ui->lblImage->setPhysicalUnits(modelUnit.name);
   ui->lblPixelSize->setText(QString("%1 %4 x %2 %4 x %3 %4")
                                 .arg(voxelModelUnits.width())
                                 .arg(voxelModelUnits.height())

@@ -59,8 +59,7 @@ DialogOptimize::DialogOptimize(sme::model::Model &model, QWidget *parent)
     lbl->invertYAxis(model.getDisplayOptions().invertYAxis);
     lbl->displayScale(model.getDisplayOptions().showGeometryScale);
     lbl->displayGrid(model.getDisplayOptions().showGeometryGrid);
-    lbl->setPhysicalSize(model.getGeometry().getPhysicalSize(),
-                         model.getUnits().getLength().name);
+    lbl->setPhysicalUnits(model.getUnits().getLength().name);
   }
   connect(ui->cmbTarget, &QComboBox::currentIndexChanged, this,
           &DialogOptimize::cmbTarget_currentIndexChanged);
