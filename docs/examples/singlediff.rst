@@ -1,7 +1,7 @@
 
 Single compartment diffusion
 ============================
-This example model does consists of pure diffusion without any reaction terms. It shows the baseline behavior of the diffusion solver in a simple 2D domain.
+This example model consists of pure diffusion without any reaction terms. It shows the baseline behavior of the diffusion solver in a simple 2D domain.
 The system consists of a fast-diffusing species :math:`s`  and a slowly diffusing species :math:`f`.
 
 Formulation
