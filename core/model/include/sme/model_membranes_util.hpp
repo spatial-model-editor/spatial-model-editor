@@ -55,6 +55,7 @@ public:
   ~ImageMembranePixels();
   void setImages(const common::ImageStack &imgs);
   [[nodiscard]] int getColourIndex(QRgb colour) const;
+  void updateColour(QRgb oldColour, QRgb newColour);
   [[nodiscard]] const std::vector<VoxelPair> *getVoxels(int iA, int iB) const;
   [[nodiscard]] const common::Volume &getImageSize() const;
 };

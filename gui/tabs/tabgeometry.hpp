@@ -61,6 +61,7 @@ private:
   void lblCompMesh_mouseClicked(QRgb col, sme::common::Voxel point);
   void mshCompMesh_mouseClicked(int compartmentIndex);
   void spinMaxTriangleArea_valueChanged(int value);
+  void updateBoundaries();
   void updateMesh2d();
   void spinMaxCellVolume_valueChanged(int value);
   void cmbRenderMode_currentIndexChanged(int index);

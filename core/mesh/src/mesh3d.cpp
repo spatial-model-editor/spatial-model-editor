@@ -251,6 +251,16 @@ void Mesh3d::setCompartmentMaxCellVolume(std::size_t compartmentIndex,
     SPDLOG_INFO("  -> max cell volume unchanged");
     return;
   }
+  // ensure maxCellVolume values for each compartment do not differ by more than
+  // a factor 2 from each other, as this can lead to CGAL segfaults
+  constexpr std::size_t maxRelDiff{2};
+  for (auto &cellVolume : compartmentMaxCellVolume_) {
+    if (cellVolume * maxRelDiff < maxCellVolume) {
+      cellVolume = static_cast<std::size_t>(maxCellVolume / maxRelDiff);
+    } else if (cellVolume > maxRelDiff * maxCellVolume) {
+      cellVolume = maxRelDiff * maxCellVolume;
+    }
+  }
   currentMaxCellVolume = maxCellVolume;
   constructMesh();
 }

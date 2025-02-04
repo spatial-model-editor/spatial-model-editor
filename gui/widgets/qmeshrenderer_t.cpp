@@ -7,7 +7,7 @@
 using namespace sme::test;
 
 // set to e.g. 1000 to interactively inspect the rendering
-constexpr int delay_ms{0};
+constexpr int delay_ms{1000};
 
 TEST_CASE("QMeshRenderer",
           "[qmeshrenderer][gui/widgets/qmeshrenderer][gui/widgets][gui]") {
@@ -19,14 +19,17 @@ TEST_CASE("QMeshRenderer",
   meshRenderer.resize(200, 200);
   auto model = sme::test::getExampleModel(Mod::VerySimpleModel3D);
   auto &mesh = *model.getGeometry().getMesh3d();
+  meshRenderer.setMesh(mesh, 0);
+  // zoom in
+  sendMouseWheel(&meshRenderer, 1);
+  sendMouseWheel(&meshRenderer, 1);
   // highlight each compartment in turn
   for (std::size_t i = 0; i < mesh.getNumberOfCompartments(); ++i) {
-    meshRenderer.setMesh(mesh, i);
+    meshRenderer.setCompartmentIndex(i);
     wait(delay_ms);
   }
   // change the compartment colours
-  mesh.setColors({0xff00ff, 0x00ff00, 0x0000ff});
-  meshRenderer.setMesh(mesh, 1);
+  meshRenderer.setColors({0xff00ff, 0x00ff00, 0x0000ff});
   wait(delay_ms);
   // change the render mode
   meshRenderer.setRenderMode(QMeshRenderer::RenderMode::Wireframe);
@@ -41,4 +44,7 @@ TEST_CASE("QMeshRenderer",
   sendMouseClick(&meshRenderer, {100, 100});
   REQUIRE(mouseClicks.size() == 1);
   REQUIRE(mouseClicks[0] == 0);
+  // new mesh with reset camera
+  meshRenderer.setMesh(mesh, 0);
+  wait(delay_ms);
 }

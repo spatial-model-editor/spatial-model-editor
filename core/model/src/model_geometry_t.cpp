@@ -144,6 +144,18 @@ TEST_CASE("Model geometry",
       // none of the above should have had any effect
       REQUIRE(m.getGeometry().getHasUnsavedChanges() == false);
     }
+    SECTION("change image color and re-assign compartment (#1038)") {
+      auto cols{m.getCompartments().getColours()};
+      auto newCol1 = qRgb(211, 12, 77);
+      REQUIRE(m.getCompartments().getColours()[1] == cols[1]);
+      m.getGeometry().updateGeometryImageColor(cols[1], newCol1);
+      REQUIRE(m.getCompartments().getColours()[1] == newCol1);
+      auto compIds = m.getCompartments().getIds();
+      m.getCompartments().setColour(compIds[0], newCol1);
+      m.getCompartments().setColour(compIds[1], cols[0]);
+      REQUIRE(m.getCompartments().getColours()[0] == newCol1);
+      REQUIRE(m.getCompartments().getColours()[1] == cols[0]);
+    }
     SECTION("update geometry image colours") {
       REQUIRE(m.getGeometry().getHasUnsavedChanges() == false);
       auto c3 = qRgb(255, 255, 255);
