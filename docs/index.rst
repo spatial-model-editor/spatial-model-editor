@@ -2,7 +2,7 @@ Spatial Model Editor Documentation
 ==================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Getting started
 
    quickstart/get-started
@@ -15,10 +15,26 @@ Spatial Model Editor Documentation
    quickstart/parameters
    quickstart/functions
    quickstart/run-simulation
-   quickstart/example-models
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+   :caption: Example models
+
+   examples/example-overview
+   examples/singlediff
+   examples/AB-to-C
+   examples/grayscott
+   examples/verysimple
+   examples/brusselator
+   examples/livercells
+   examples/circadian
+   examples/liver
+   examples/selkov
+   examples/fitzhughnagumo
+   examples/calciumwave
+
+.. toctree::
+   :maxdepth: 1
    :caption: User guides
 
    userguides/work-with-copasi

@@ -9,7 +9,7 @@ The number of points used for each boundary can be altered here to refine or coa
 
 The `Mesh` tab shows the generated triangular mesh with the currently selected compartment highlighted.
 The maximum triangle area for each compartment can be altered here to refine or coarsen the mesh. More triangles will allow for a more accurate solution, but also needs more computational resources. This is especially relevant for 3D systems which have vastly more cells than 2D systems.
-For more on how mesh generation works, see `the respective page in the reference documentation <reference/mesh.html>`_.
+For more on how mesh generation works, see :doc:`the respective page in the reference documentation <reference/mesh.html>`.
 
 .. figure:: img/mesh.apng
    :alt: screenshot showing geometry mesh settings
