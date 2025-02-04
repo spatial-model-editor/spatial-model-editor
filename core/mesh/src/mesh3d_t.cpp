@@ -539,3 +539,47 @@ TEST_CASE("Mesh3d more complex geometries",
                              colInside) <= 0.01);
   }
 }
+
+TEST_CASE("Mesh3d max cell volume",
+          "[core/mesh/mesh3d][core/mesh][core][mesh3d][expensive][Q]") {
+  for (const auto model :
+       {sme::test::Mod::VerySimpleModel3D, sme::test::Mod::SelKov3D,
+        sme::test::Mod::FitzhughNagumo3D}) {
+    CAPTURE(model);
+    auto m = sme::test::getExampleModel(model);
+    auto *mesh3d = m.getGeometry().getMesh3d();
+    REQUIRE(mesh3d != nullptr);
+    REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 5);
+    REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 5);
+    // make max cell volume for compartment zero much larger:
+    mesh3d->setCompartmentMaxCellVolume(0, 50);
+    // note: CGAL segfaults when the max cell volumes are too different (see
+    // #1037) so we also automatically adjust the other values to keep them all
+    // within a factor of 2 of the value that was changed
+    REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 50);
+    REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 25);
+    mesh3d->setCompartmentMaxCellVolume(0, 4);
+    REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 4);
+    REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 8);
+    mesh3d->setCompartmentMaxCellVolume(1, 100);
+    REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 50);
+    REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 100);
+    mesh3d->setCompartmentMaxCellVolume(1, 4);
+    REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 8);
+    REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 4);
+    mesh3d->setCompartmentMaxCellVolume(1, 200);
+    for (std::size_t i = 100; i >= 4; --i) {
+      CAPTURE(i);
+      mesh3d->setCompartmentMaxCellVolume(0, i);
+      REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == i);
+      REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) <= 2 * i);
+    }
+    mesh3d->setCompartmentMaxCellVolume(0, 200);
+    for (std::size_t i = 100; i >= 4; --i) {
+      CAPTURE(i);
+      mesh3d->setCompartmentMaxCellVolume(1, i);
+      REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == i);
+      REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) <= 2 * i);
+    }
+  }
+}
