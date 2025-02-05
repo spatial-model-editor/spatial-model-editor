@@ -48,6 +48,18 @@ static QString toQStr(sme::simulate::OptAlgorithmType optAlgorithmType) {
     return "Artificial Bee Colony";
   case sme::simulate::OptAlgorithmType::gaco:
     return "Extended Ant Colony Optimization";
+  case sme::simulate::OptAlgorithmType::COBYLA:
+    return "Constrained Optimization BY Linear Approximations";
+  case sme::simulate::OptAlgorithmType::BOBYQA:
+    return "Bound Optimization BY Quadratic Approximations";
+  case sme::simulate::OptAlgorithmType::PRAXIS:
+    return "Gradient-free local optimization via the principal-axis method";
+  case sme::simulate::OptAlgorithmType::NMS:
+    return "Nelder-Mead Simplex algorithm";
+  case sme::simulate::OptAlgorithmType::sbplx:
+    return "Rowan's SUPLEX algorithm";
+  case sme::simulate::OptAlgorithmType::AL:
+    return "Augmented Lagrangian method";
   default:
     return "";
   }
@@ -79,9 +91,14 @@ static sme::simulate::OptAlgorithmType toOptAlgorithmType(int index) {
 
 static std::vector<sme::simulate::OptParam>
 getDefaultOptParams(const sme::model::Model &model) {
+  // TODO: add the shitty NLopt algorithms
+
   std::vector<sme::simulate::OptParam> optParams;
+
   for (const auto &id : model.getParameters().getIds()) {
+
     double value{model.getParameters().getExpression(id).toDouble()};
+
     optParams.push_back({sme::simulate::OptParamType::ModelParameter,
                          model.getParameters().getName(id).toStdString(),
                          id.toStdString(), "", value, value});
@@ -110,6 +127,7 @@ getDefaultOptParams(const sme::model::Model &model) {
 
 static std::vector<sme::simulate::OptCost>
 getDefaultOptCosts(const sme::model::Model &model) {
+  // TODO: add the shitty NLopt algorithms
   std::vector<sme::simulate::OptCost> optCosts;
   std::size_t compartmentIndex{0};
   double defaultSimTime{100.0};
@@ -154,6 +172,7 @@ static void
 setValidMinPopulation(sme::simulate::OptAlgorithmType optAlgorithmType,
                       QSpinBox *spinPopulation) {
   static std::unordered_map<sme::simulate::OptAlgorithmType, int> minPopulation{
+      // TODO: add the shitty NLopt algorithms
       {sme::simulate::OptAlgorithmType::PSO, 2},
       {sme::simulate::OptAlgorithmType::GPSO, 2},
       {sme::simulate::OptAlgorithmType::DE, 5},

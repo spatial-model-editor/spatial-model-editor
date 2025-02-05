@@ -8,6 +8,7 @@
 #include <pagmo/algorithms/de.hpp>
 #include <pagmo/algorithms/de1220.hpp>
 #include <pagmo/algorithms/gaco.hpp>
+#include <pagmo/algorithms/nlopt.hpp>
 #include <pagmo/algorithms/pso.hpp>
 #include <pagmo/algorithms/pso_gen.hpp>
 #include <pagmo/algorithms/sade.hpp>
@@ -94,6 +95,21 @@ getPagmoAlgorithm(sme::simulate::OptAlgorithmType optAlgorithmType) {
     return std::make_unique<pagmo::algorithm>(pagmo::bee_colony());
   case gaco:
     return std::make_unique<pagmo::algorithm>(pagmo::gaco(1, 7));
+  // below are NLopt algorithms.
+  case COBYLA:
+    return std::make_unique<pagmo::algorithm>(pagmo::nlopt("cobyla"));
+  case BOBYQA:
+    return std::make_unique<pagmo::algorithm>(pagmo::nlopt("bobyqa"));
+  case PRAXIS:
+    return std::make_unique<pagmo::algorithm>(pagmo::nlopt("praxis"));
+  case NMS:
+    return std::make_unique<pagmo::algorithm>(pagmo::nlopt("neldermead"));
+  case sbplx:
+    return std::make_unique<pagmo::algorithm>(pagmo::nlopt("sbplx"));
+  case AL:
+    return std::make_unique<pagmo::algorithm>(pagmo::nlopt("auglag"));
+  case ALEQ:
+    return std::make_unique<pagmo::algorithm>(pagmo::nlopt("auglag_eq"));
   default:
     return std::make_unique<pagmo::algorithm>(pagmo::pso());
   }
