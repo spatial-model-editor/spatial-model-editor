@@ -11,7 +11,7 @@ Reactions in a compartmentalized spatial model come in two types:
    * take place on the membrane between two compartments
    * units: rate of species **amount crossing unit area** of the membrane :math:`\frac{mol}{m^2 \cdot s}`
 
-For more on the mathematical formulation, see :doc:`here <../reference/maths.html>`.
+For more on the mathematical formulation, see :doc:`here <../reference/maths>`.
 
 To define a reaction, we have to follow six steps:
 
@@ -31,7 +31,7 @@ To define a reaction, we have to follow six steps:
     When the same reaction term appears in multiple reactions for different species, adding the respective stoichiometric coefficient in this menu takes care of adding the term to all relevant equations.
 
 .. note::
-   To become more acquainted with the way the stoichiometric coefficients work, have a look at :doc:`this example model <../examples/verysimple.html>`.
+   To become more acquainted with the way the stoichiometric coefficients work, have a look at :doc:`this example model <../examples/verysimple>`.
 
 Follow the same procedure to define a membrane reaction. See the figure below for how all this looks like in the GUI.
 

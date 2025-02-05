@@ -6,7 +6,7 @@ To define a function, go the `Functions` tab. The logic follows what we have see
 Click the 'Add' button at the bottom and name your function before clicking `OK`.
 Then, you can define the function in the editor on the right. Start by adding all the variables the function depends on in the table below the `Name` field.
 Proceed by defining the function in the input field below the parameters table.
-The newly defined function can then be used in the definition of :doc:`Reactions <./reactions.html>` by using it's name like other variables but followed by parantheses that contain the arguments of the function. These arguments can be spatial coordinates, concentrations, or parameters.
+The newly defined function can then be used in the definition of :doc:`Reactions <./reactions>` by using it's name like other variables but followed by parantheses that contain the arguments of the function. These arguments can be spatial coordinates, concentrations, or parameters.
 Therefore, they can define spatial fields or other quantities that are not directly available in the reaction editor.
 See the video below for how to use functions in the GUI.
 
