@@ -25,11 +25,10 @@ cmake .. \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
-    -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden" \
+    -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden -D_GLIBCXX_USE_TBB_PAR_BACKEND=0" \
     -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
     -DSME_EXTRA_GUI_LIBS=$SME_EXTRA_GUI_LIBS \
     -DSME_LOG_LEVEL=OFF \
-    -DCMAKE_CXX_FLAGS="-D_GLIBCXX_USE_TBB_PAR_BACKEND=0" \
     -DOpenGL_GL_PREFERENCE=LEGACY
 ninja -v
 ccache --show-stats
@@ -74,5 +73,5 @@ ldd cli/spatial-cli
 # move binaries to artifacts/binaries
 cd ..
 mkdir -p artifacts/binaries
-mv build/app/spatial-model-editor artifacts/binaries/
-mv build/cli/spatial-cli artifacts/binaries/
+mv build/app/spatial-model-editor artifacts/binaries/spatial-model-editor-${RUNNER_ARCH}
+mv build/cli/spatial-cli artifacts/binaries/spatial-cli-${RUNNER_ARCH}
