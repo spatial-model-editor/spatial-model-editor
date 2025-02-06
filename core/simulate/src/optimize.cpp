@@ -96,21 +96,37 @@ getPagmoAlgorithm(sme::simulate::OptAlgorithmType optAlgorithmType) {
   case gaco:
     return std::make_unique<pagmo::algorithm>(pagmo::gaco(1, 7));
   // below are NLopt algorithms.
+  // https://esa.github.io/pagmo2/docs/cpp/algorithms/nlopt.html
   case COBYLA:
+    SPDLOG_INFO("cobyla optimization algorithm");
     return std::make_unique<pagmo::algorithm>(pagmo::nlopt("cobyla"));
+
   case BOBYQA:
+    SPDLOG_INFO("bobyqa optimization algorithm");
     return std::make_unique<pagmo::algorithm>(pagmo::nlopt("bobyqa"));
+
   case PRAXIS:
+    SPDLOG_INFO("praxis optimization algorithm");
     return std::make_unique<pagmo::algorithm>(pagmo::nlopt("praxis"));
+
   case NMS:
+    SPDLOG_INFO("neldermead optimization algorithm");
     return std::make_unique<pagmo::algorithm>(pagmo::nlopt("neldermead"));
+
   case sbplx:
+    SPDLOG_INFO("sbplx optimization algorithm");
     return std::make_unique<pagmo::algorithm>(pagmo::nlopt("sbplx"));
+
   case AL:
+    SPDLOG_INFO("auglag optimization algorithm");
     return std::make_unique<pagmo::algorithm>(pagmo::nlopt("auglag"));
+
   case ALEQ:
+    SPDLOG_INFO("auglag_eq optimization algorithm");
     return std::make_unique<pagmo::algorithm>(pagmo::nlopt("auglag_eq"));
+
   default:
+    SPDLOG_INFO("Unknown optimization algorithm: using PSO");
     return std::make_unique<pagmo::algorithm>(pagmo::pso());
   }
 }
@@ -129,6 +145,8 @@ std::size_t Optimization::finalizeEvolve(const std::string &newErrorMessage) {
 
 Optimization::Optimization(sme::model::Model &model) {
   const auto &options{model.getOptimizeOptions()};
+
+  // this probably needs to go if we want to support NLopt algorithms
   if (options.optAlgorithm.population < 2) {
     errorMessage = "Invalid optimization population size, can't be less than 2";
     return;
@@ -149,13 +167,12 @@ Optimization::Optimization(sme::model::Model &model) {
           sme::common::max(cost.targetValues));
     }
   }
-  modelQueue = std::make_unique<
-      oneapi::tbb::concurrent_queue<std::shared_ptr<sme::model::Model>>>();
+  modelQueue = std::make_unique<sme::simulate::ThreadsafeModelQueue>();
   algo = getPagmoAlgorithm(
       optConstData->optimizeOptions.optAlgorithm.optAlgorithmType);
 
-  // construct models in queue in serial for now to avoid libsbml thread safety
-  // issues (see
+  // README: construct models in queue in serial for now to avoid libsbml thread
+  // safety issues (see
   // https://github.com/spatial-model-editor/spatial-model-editor/issues/786)
   // todo: once that is fixed, can remove this & let the UDP construct them as
   // needed
