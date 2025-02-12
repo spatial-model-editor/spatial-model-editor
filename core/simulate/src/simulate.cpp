@@ -498,6 +498,7 @@ common::ImageStack Simulation::getConcImage(
     }
   }
   common::ImageStack imgs(imageSize, QImage::Format_ARGB32_Premultiplied);
+  imgs.setVoxelSize(model.getGeometry().getVoxelSize());
   imgs.fill(0);
   // iterate over compartments
   for (std::size_t ic = 0; ic < compartments.size(); ++ic) {

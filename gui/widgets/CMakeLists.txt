@@ -17,5 +17,6 @@ if(BUILD_TESTING)
            qlabelmousetracker_t.cpp
            qplaintextmathedit_t.cpp
            qmeshrenderer_t.cpp
-           qvoxelrenderer_t.cpp)
+           qvoxelrenderer_t.cpp
+           smevtkwidget_t.cpp)
 endif()

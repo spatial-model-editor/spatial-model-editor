@@ -7,16 +7,15 @@
 
 QVoxelRenderer::QVoxelRenderer(QWidget *parent) : SmeVtkWidget(parent) {
   // piecewise opacity function, converts 0-255 input value to 0-1 opacity float
-  opacityTransferFunction->AddPoint(0, 0.0);
-  opacityTransferFunction->AddPoint(255, 0.8);
-  volumeProperty->SetScalarOpacity(opacityTransferFunction);
-  volumeProperty->ShadeOn();
+  opacityTransferFunction->AddPoint(0, 0.2);
+  opacityTransferFunction->AddPoint(255, 0.2);
+  volume->GetProperty()->SetScalarOpacity(opacityTransferFunction);
+  volume->GetProperty()->ShadeOn();
   // directly use first 3 components of data as RGB values
-  volumeProperty->IndependentComponentsOff();
+  volume->GetProperty()->IndependentComponentsOff();
   // don't interpolate between voxels
-  volumeProperty->SetInterpolationTypeToNearest();
+  volume->GetProperty()->SetInterpolationTypeToNearest();
   volume->SetMapper(volumeMapper);
-  volume->SetProperty(volumeProperty);
   volumeMapper->SetInputData(imageData);
   renderer->AddVolume(volume);
 }
@@ -44,7 +43,8 @@ imageStackToVtkArray(const sme::common::ImageStack &img,
   int i = 0;
   for (std::size_t z = 0; z < static_cast<std::size_t>(dims[2]); ++z) {
     auto z_index = std::min(z, img.volume().depth() - 1);
-    for (int y = 0; y < dims[1]; ++y) {
+    // iterate over y-pixels in reverse order to match VTK's coordinate system
+    for (int y = dims[1] - 1; y >= 0; --y) {
       for (int x = 0; x < dims[0]; ++x) {
         auto rgb = img[z_index].pixel(x, y);
         // red 0-255
@@ -74,21 +74,14 @@ void QVoxelRenderer::setImage(const sme::common::ImageStack &img) {
   std::array<int, 3> dims{};
   imageDataArray = imageStackToVtkArray(img, dims);
   imageData->SetDimensions(dims.data());
-  imageData->SetSpacing(1.0, 1.0, 1.0);
+  double avgVoxelLength = pow(img.voxelSize().volume(), 1.0 / 3.0);
+  SPDLOG_TRACE("Setting opacity unit distance to {} ({})", avgVoxelLength,
+               img.voxelSize().width());
+  volume->GetProperty()->SetScalarOpacityUnitDistance(3, avgVoxelLength);
+  imageData->SetSpacing(img.voxelSize().width(), img.voxelSize().height(),
+                        img.voxelSize().depth());
   imageData->SetOrigin(0.0, 0.0, 0.0);
   imageData->GetPointData()->SetScalars(imageDataArray);
-  renderer->ResetCameraClippingRange();
-  renderer->ResetCamera();
-  renderWindow->Render();
-}
-
-void QVoxelRenderer::setPhysicalSize(const sme::common::VolumeF &size,
-                                     const QString &units) {
-  lengthUnits = units;
-  std::array<int, 3> dims{};
-  imageData->GetDimensions(dims.data());
-  imageData->SetSpacing(size.width() / dims[0], size.height() / dims[1],
-                        size.depth() / dims[2]);
   renderer->ResetCameraClippingRange();
   renderer->ResetCamera();
   renderWindow->Render();

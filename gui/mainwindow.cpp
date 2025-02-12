@@ -347,10 +347,7 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
 
 void MainWindow::enableTabs() {
   bool enable{model.getIsValid() && model.getGeometry().getIsValid()};
-  if (model.getIsValid() && model.getGeometry().getHasImage()) {
-    ui->lblGeometry->setPhysicalSize(model.getGeometry().getPhysicalSize(),
-                                     model.getUnits().getLength().name);
-  }
+  ui->lblGeometry->setPhysicalUnits(model.getUnits().getLength().name);
   for (int i = 1; i < ui->tabMain->count(); ++i) {
     ui->tabMain->setTabEnabled(i, enable);
   }
@@ -632,7 +629,7 @@ void MainWindow::actionGeometry_scale_triggered(bool checked) {
 void MainWindow::action3d_render_triggered(bool checked) {
   if (checked) {
     ui->stackGeometry->setCurrentIndex(1);
-    ui->voxGeometry->setImage(ui->lblGeometry->getImage());
+    ui->voxGeometry->setImage(model.getGeometry().getImages());
     return;
   }
   ui->stackGeometry->setCurrentIndex(0);

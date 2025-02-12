@@ -29,6 +29,7 @@ DialogAnalytic::DialogAnalytic(
   lengthUnit = units.getLength().name;
   concentrationUnit =
       QString("%1/%2").arg(units.getAmount().name).arg(units.getVolume().name);
+  imgs.setVoxelSize(speciesGeometry.voxelSize);
   imgs.fill(0);
   concentration.resize(voxels.size(), 0.0);
   // add x,y,z variables
@@ -44,11 +45,9 @@ DialogAnalytic::DialogAnalytic(
   }
   // todo: add non-constant parameters somewhere?
   ui->txtExpression->setConstants(modelParameters.getGlobalConstants());
-  sme::common::VolumeF physicalSize{speciesGeometry.compartmentImageSize *
-                                    speciesGeometry.voxelSize};
   ui->lblImage->displayGrid(ui->chkGrid->isChecked());
   ui->lblImage->displayScale(ui->chkScale->isChecked());
-  ui->lblImage->setPhysicalSize(physicalSize, lengthUnit);
+  ui->lblImage->setPhysicalUnits(lengthUnit);
   ui->lblImage->invertYAxis(invertYAxis);
   ui->lblImage->setZSlider(ui->slideZIndex);
 

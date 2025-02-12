@@ -20,6 +20,7 @@ Compartment::Compartment(std::string compId, const common::ImageStack &imgs,
     return;
   }
   images = common::ImageStack(imgs.volume(), QImage::Format_Mono);
+  images.setVoxelSize(imgs.voxelSize());
   int nx{images.volume().width()};
   int ny{images.volume().height()};
   int nz{static_cast<int>(images.volume().depth())};
@@ -115,6 +116,7 @@ Membrane::Membrane(std::string membraneId, const Compartment *A,
     : id{std::move(membraneId)}, compA{A}, compB{B} {
   const auto &imageSize{A->getImageSize()};
   images = {imageSize, QImage::Format_ARGB32_Premultiplied};
+  images.setVoxelSize(A->getCompartmentImages().voxelSize());
   SPDLOG_INFO("membraneID: {}", id);
   SPDLOG_INFO("compartment A: {}", compA->getId());
   QRgb colA = A->getColour();
@@ -246,6 +248,7 @@ void Field::setUniformConcentration(double concentration) {
 common::ImageStack Field::getConcentrationImages() const {
   common::ImageStack images{comp->getImageSize(),
                             QImage::Format_ARGB32_Premultiplied};
+  images.setVoxelSize(comp->getCompartmentImages().voxelSize());
   images.fill(0);
   // for now rescale conc to [0,1] to multiply species colour
   double cmax{common::max(conc)};

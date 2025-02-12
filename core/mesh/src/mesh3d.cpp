@@ -331,9 +331,6 @@ Mesh3d::getTetrahedronIndices() const {
 
 QString Mesh3d::getGMSH() const {
   // note: gmsh indexing starts with 1, so we need to add 1 to all indices
-  // meshing is done in terms of voxel geometry, to convert to physical points:
-  //   - rescale each vertex by a factor pixel
-  //   - add origin to each vertex
   QString msh;
   msh.append("$MeshFormat\n");
   msh.append("2.2 0 8\n");

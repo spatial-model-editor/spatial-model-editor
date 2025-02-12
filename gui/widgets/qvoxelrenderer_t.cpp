@@ -6,7 +6,7 @@
 
 using namespace sme::test;
 
-// set to e.g. 10000 to interactively inspect the rendering of each ImageStack
+// set to e.g. 1000 to interactively inspect the rendering
 constexpr int delay_ms{0};
 
 TEST_CASE("QVoxelRenderer",
@@ -67,11 +67,9 @@ TEST_CASE("QVoxelRenderer",
     }
     voxelRenderer.setImage(imageStack);
     wait(delay_ms);
-    // set physical size that maintains existing cubic voxels
-    voxelRenderer.setPhysicalSize({20.0, 47.0, 10.0}, "units");
-    wait(delay_ms);
     // set physical size that makes z-slices 5x thicker
-    voxelRenderer.setPhysicalSize({20.0, 47.0, 50.0}, "units");
+    imageStack.setVoxelSize({1.0, 1.0, 5.0});
+    voxelRenderer.setImage(imageStack);
     wait(delay_ms);
   }
   SECTION("100x100x1 geometry image") {
@@ -80,5 +78,11 @@ TEST_CASE("QVoxelRenderer",
     REQUIRE(imageStack.volume() == sme::common::Volume{100, 100, 1});
     voxelRenderer.setImage(imageStack);
     wait(delay_ms);
+    // changing the voxel size shouldn't change the rendered opacity
+    for (double x : {1.0, 0.1, 0.01, 0.001}) {
+      imageStack.setVoxelSize({x, x, x});
+      voxelRenderer.setImage(imageStack);
+      wait(delay_ms);
+    }
   }
 }

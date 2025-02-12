@@ -66,7 +66,8 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
   img.setPixel(0, 1, col3);
   img.setPixel(0, 2, col3);
   img.setPixel(1, 1, col4);
-  mouseTracker.setImage(sme::common::ImageStack{{img}});
+  auto imageStack = sme::common::ImageStack{{img}};
+  mouseTracker.setImage(imageStack);
   mouseTracker.show();
   mouseTracker.resize(100, 100);
   wait();
@@ -165,14 +166,16 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
   SECTION("Resize physical volume") {
     // 100px x 100px mousetracker widget size:
     // 1:1 aspect ratio physical size
-    mouseTracker.setPhysicalSize({0.77, 0.77, 0.77}, "");
+    imageStack.setVoxelSize({0.77, 0.77, 0.77});
+    mouseTracker.setImage(imageStack);
     // click on middle (1,1) pixel
     sendMouseClick(&mouseTracker, QPoint(50, 50));
     REQUIRE(clicks.size() == 1);
     REQUIRE(clicks.back() == col4);
     REQUIRE(mouseTracker.getColour() == col4);
     // 2:1 aspect ratio physical size
-    mouseTracker.setPhysicalSize({2.0, 1.0, 1.0}, "");
+    imageStack.setVoxelSize({2.0, 1.0, 1.0});
+    mouseTracker.setImage(imageStack);
     // click outside geometry
     sendMouseClick(&mouseTracker, QPoint(50, 52));
     REQUIRE(clicks.size() == 1);
@@ -182,7 +185,8 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
     REQUIRE(clicks.back() == col4);
     REQUIRE(mouseTracker.getColour() == col4);
     // 5:1 aspect ratio physical size
-    mouseTracker.setPhysicalSize({50.0, 10.0, 1.0}, "");
+    imageStack.setVoxelSize({50.0, 10.0, 1.0});
+    mouseTracker.setImage(imageStack);
     // click outside geometry
     sendMouseClick(&mouseTracker, QPoint(50, 22));
     REQUIRE(clicks.size() == 2);
@@ -192,7 +196,8 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
     REQUIRE(clicks.back() == col4);
     REQUIRE(mouseTracker.getColour() == col4);
     // 1:3 aspect ratio physical size
-    mouseTracker.setPhysicalSize({3.0, 9.0, 1.0}, "");
+    imageStack.setVoxelSize({3.0, 9.0, 1.0});
+    mouseTracker.setImage(imageStack);
     // click outside geometry
     sendMouseClick(&mouseTracker, QPoint(35, 50));
     REQUIRE(clicks.size() == 3);
@@ -203,7 +208,8 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
     REQUIRE(mouseTracker.getColour() == col4);
     // 1:100000 aspect ratio physical size: display width clipped to single
     // pixel
-    mouseTracker.setPhysicalSize({1.0, 100000.0, 1.0}, "");
+    imageStack.setVoxelSize({1.0, 100000.0, 1.0});
+    mouseTracker.setImage(imageStack);
     // click outside geometry
     sendMouseClick(&mouseTracker, QPoint(3, 50));
     REQUIRE(clicks.size() == 4);
@@ -212,7 +218,8 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
     REQUIRE(clicks.size() == 5);
     // 100000:1 aspect ratio physical size: display height clipped to single
     // pixel
-    mouseTracker.setPhysicalSize({100000.0, 1.0, 1.0}, "");
+    imageStack.setVoxelSize({100000.0, 1.0, 1.0});
+    mouseTracker.setImage(imageStack);
     // click outside geometry
     sendMouseClick(&mouseTracker, QPoint(50, 3));
     REQUIRE(clicks.size() == 5);

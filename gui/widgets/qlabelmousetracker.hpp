@@ -38,7 +38,7 @@ public:
   [[nodiscard]] QPointF getRelativePosition() const;
   void setAspectRatioMode(Qt::AspectRatioMode aspectRatioMode);
   void setTransformationMode(Qt::TransformationMode transformationMode);
-  void setPhysicalSize(const sme::common::VolumeF &size, const QString &units);
+  void setPhysicalUnits(const QString &units);
   void displayGrid(bool enable);
   void displayScale(bool enable);
   void invertYAxis(bool enable);
