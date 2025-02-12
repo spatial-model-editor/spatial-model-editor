@@ -34,17 +34,17 @@ TEST_CASE("XML Legacy Annotations",
   REQUIRE(meshParameters->maxAreas[0] == dbl_approx(999));
   REQUIRE(meshParameters->maxPoints.size() == 1);
   REQUIRE(meshParameters->maxPoints[0] == dbl_approx(4));
-  auto cA{model::getSpeciesColourAnnotation(model->getSpecies("A"))};
+  auto cA{model::getSpeciesColorAnnotation(model->getSpecies("A"))};
   REQUIRE(cA.has_value());
   REQUIRE(cA.value() == 4290373201);
-  auto cB{model::getSpeciesColourAnnotation(model->getSpecies("B"))};
+  auto cB{model::getSpeciesColorAnnotation(model->getSpecies("B"))};
   REQUIRE(cB.has_value());
   REQUIRE(cB.value() == 4287244468);
-  auto cC{model::getSpeciesColourAnnotation(model->getSpecies("C"))};
+  auto cC{model::getSpeciesColorAnnotation(model->getSpecies("C"))};
   REQUIRE(cC.has_value());
   REQUIRE(cC.value() == 4294903078);
   REQUIRE(
-      model::getSpeciesColourAnnotation(model->getSpecies("D")).has_value() ==
+      model::getSpeciesColorAnnotation(model->getSpecies("D")).has_value() ==
       false);
 
   // check we correctly import them
@@ -60,22 +60,22 @@ TEST_CASE("XML Legacy Annotations",
   REQUIRE(settings.meshParameters.maxAreas[0] == dbl_approx(999));
   REQUIRE(settings.meshParameters.maxPoints.size() == 1);
   REQUIRE(settings.meshParameters.maxPoints[0] == dbl_approx(4));
-  REQUIRE(settings.speciesColours.size() == 3);
-  REQUIRE(settings.speciesColours["A"] == 4290373201);
-  REQUIRE(settings.speciesColours["B"] == 4287244468);
-  REQUIRE(settings.speciesColours["C"] == 4294903078);
+  REQUIRE(settings.speciesColors.size() == 3);
+  REQUIRE(settings.speciesColors["A"] == 4290373201);
+  REQUIRE(settings.speciesColors["B"] == 4287244468);
+  REQUIRE(settings.speciesColors["C"] == 4294903078);
 
   // check we have removed the legacy annotations
   REQUIRE(model::hasLegacyAnnotations(model) == false);
   REQUIRE(model::getDisplayOptionsAnnotation(model).has_value() == false);
   REQUIRE(model::getMeshParamsAnnotationData(pg).has_value() == false);
   REQUIRE(
-      model::getSpeciesColourAnnotation(model->getSpecies("A")).has_value() ==
+      model::getSpeciesColorAnnotation(model->getSpecies("A")).has_value() ==
       false);
   REQUIRE(
-      model::getSpeciesColourAnnotation(model->getSpecies("B")).has_value() ==
+      model::getSpeciesColorAnnotation(model->getSpecies("B")).has_value() ==
       false);
   REQUIRE(
-      model::getSpeciesColourAnnotation(model->getSpecies("C")).has_value() ==
+      model::getSpeciesColorAnnotation(model->getSpecies("C")).has_value() ==
       false);
 }

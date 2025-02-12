@@ -374,7 +374,7 @@ void TabSimulate::finalizePlotAndImages() {
   plt->clearObservableLines();
   std::size_t colorIndex{displayOptions.showSpecies.size()};
   for (const auto &obs : observables) {
-    plt->addObservableLine(obs, sme::common::indexedColours()[colorIndex]);
+    plt->addObservableLine(obs, sme::common::indexedColors()[colorIndex]);
     ++colorIndex;
   }
   plt->update(displayOptions.showSpecies, displayOptions.showMinMax);

@@ -18,7 +18,7 @@
 namespace sme::simulate {
 
 void Simulation::initModel() {
-  // get compartments with interacting species, name & colour of each species
+  // get compartments with interacting species, name & color of each species
   for (const auto &compartmentId : model.getCompartments().getIds()) {
     std::vector<std::string> sIds;
     std::vector<QRgb> cols;
@@ -27,7 +27,7 @@ void Simulation::initModel() {
       if (!model.getSpecies().getIsConstant(s)) {
         sIds.push_back(s.toStdString());
         const auto &field = model.getSpecies().getField(s);
-        cols.push_back(field->getColour());
+        cols.push_back(field->getColor());
         comp = field->getCompartment();
       }
     }

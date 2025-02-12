@@ -194,13 +194,13 @@ template <typename T> std::string vectorToString(const std::vector<T> &vec) {
 }
 
 /**
- * @brief Default set of colours
+ * @brief Default set of colors
  *
- * A vector of default colours
+ * A vector of default colors
  */
-class indexedColours {
+class indexedColors {
 private:
-  const static std::vector<QColor> colours;
+  const static std::vector<QColor> colors;
 
 public:
   const QColor &operator[](std::size_t i) const;

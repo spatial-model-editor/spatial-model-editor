@@ -33,9 +33,9 @@ TEST_CASE("Simulate: very_simple_model, single pixel geometry",
   s.getGeometry().importGeometryFromImages(
       common::ImageStack{{QImage("tmpsimsinglepixel.bmp")}}, false);
   s.getGeometry().setVoxelSize({1.0, 1.0, 1.0});
-  s.getCompartments().setColour("c1", col1);
-  s.getCompartments().setColour("c2", col2);
-  s.getCompartments().setColour("c3", col3);
+  s.getCompartments().setColor("c1", col1);
+  s.getCompartments().setColor("c2", col2);
+  s.getCompartments().setColor("c3", col3);
   std::string xml{s.getXml().toStdString()};
   // check we have identified the compartments and membranes
   REQUIRE(s.getCompartments().getIds() == QStringList{"c1", "c2", "c3"});

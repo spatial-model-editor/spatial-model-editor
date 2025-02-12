@@ -36,8 +36,8 @@ TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
           &TabGeometry::btnChangeCompartment_clicked);
   connect(ui->txtCompartmentName, &QLineEdit::editingFinished, this,
           &TabGeometry::txtCompartmentName_editingFinished);
-  connect(ui->btnChangeCompartmentColour, &QPushButton::clicked, this,
-          &TabGeometry::btnChangeCompartmentColour_clicked);
+  connect(ui->btnChangeCompartmentColor, &QPushButton::clicked, this,
+          &TabGeometry::btnChangeCompartmentColor_clicked);
   connect(ui->tabCompartmentGeometry, &QTabWidget::currentChanged, this,
           &TabGeometry::tabCompartmentGeometry_currentChanged);
   connect(ui->lblCompShape, &QLabelMouseTracker::mouseOver, this,
@@ -104,9 +104,9 @@ void TabGeometry::loadModelData(const QString &selection) {
   ui->lblCompBoundary->clear();
   ui->lblCompMesh->clear();
   ui->mshCompMesh->clear();
-  ui->lblCompartmentColour->clear();
+  ui->lblCompartmentColor->clear();
   ui->txtCompartmentName->clear();
-  ui->btnChangeCompartmentColour->setEnabled(false);
+  ui->btnChangeCompartmentColor->setEnabled(false);
   ui->listCompartments->addItems(model.getCompartments().getNames());
   ui->btnChangeCompartment->setEnabled(false);
   ui->txtCompartmentName->setEnabled(false);
@@ -140,14 +140,14 @@ void TabGeometry::invertYAxis(bool enable) {
 
 void TabGeometry::lblGeometry_mouseClicked(QRgb col, sme::common::Voxel point) {
   if (waitingForCompartmentChoice) {
-    SPDLOG_INFO("colour {:x}", col);
+    SPDLOG_INFO("color {:x}", col);
     SPDLOG_INFO("point ({},{},{})", point.p.x(), point.p.y(), point.z);
-    // update compartment geometry (i.e. colour) of selected compartment to
+    // update compartment geometry (i.e. color) of selected compartment to
     // the one the user just clicked on
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     const auto &compartmentID =
         model.getCompartments().getIds().at(ui->listCompartments->currentRow());
-    model.getCompartments().setColour(compartmentID, col);
+    model.getCompartments().setColor(compartmentID, col);
     ui->tabCompartmentGeometry->setCurrentIndex(0);
     waitingForCompartmentChoice = false;
     if (m_statusBar != nullptr) {
@@ -160,7 +160,7 @@ void TabGeometry::lblGeometry_mouseClicked(QRgb col, sme::common::Voxel point) {
     return;
   }
   // display compartment the user just clicked on
-  auto compID = model.getCompartments().getIdFromColour(col);
+  auto compID = model.getCompartments().getIdFromColor(col);
   auto row = static_cast<int>(model.getCompartments().getIds().indexOf(compID));
   if (row >= 0) {
     ui->listCompartments->setCurrentRow(row);
@@ -257,27 +257,26 @@ void TabGeometry::txtCompartmentName_editingFinished() {
   ui->listMembranes->addItems(model.getMembranes().getNames());
 }
 
-void TabGeometry::btnChangeCompartmentColour_clicked() {
+void TabGeometry::btnChangeCompartmentColor_clicked() {
   int compIndex{ui->listCompartments->currentRow()};
   if (membraneSelected || compIndex < 0 ||
       compIndex >= model.getCompartments().getIds().size()) {
     return;
   }
   const auto &compartmentId{model.getCompartments().getIds().at(compIndex)};
-  auto oldCol = model.getCompartments().getColour(compartmentId);
+  auto oldCol = model.getCompartments().getColor(compartmentId);
   SPDLOG_DEBUG(
-      "waiting for new colour for compartment {} with colour {:x} from user...",
+      "waiting for new color for compartment {} with color {:x} from user...",
       compartmentId.toStdString(), oldCol);
   QColor newCol = QColorDialog::getColor(
-      model.getCompartments().getColour(compartmentId), this,
-      "Choose new compartment colour", QColorDialog::DontUseNativeDialog);
+      model.getCompartments().getColor(compartmentId), this,
+      "Choose new compartment color", QColorDialog::DontUseNativeDialog);
   if (newCol.isValid()) {
-    SPDLOG_DEBUG("  - set new colour to {:x}", newCol.rgb());
+    SPDLOG_DEBUG("  - set new color to {:x}", newCol.rgb());
     try {
       model.getGeometry().updateGeometryImageColor(oldCol, newCol.rgb());
     } catch (const std::invalid_argument &e) {
-      QMessageBox::critical(this, "Error changing compartment colour",
-                            e.what());
+      QMessageBox::critical(this, "Error changing compartment color", e.what());
 
       return;
     }
@@ -508,13 +507,13 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
   SPDLOG_DEBUG("  - Compartment Id: {}", compId.toStdString());
   ui->txtCompartmentName->setEnabled(true);
   ui->txtCompartmentName->setText(model.getCompartments().getName(compId));
-  QRgb col{model.getCompartments().getColour(compId)};
-  SPDLOG_DEBUG("  - Compartment colour {:x} ", col);
+  QRgb col{model.getCompartments().getColor(compId)};
+  SPDLOG_DEBUG("  - Compartment color {:x} ", col);
   if (col == 0) {
-    // null (transparent) RGB colour: compartment does not have
-    // an assigned colour in the image
+    // null (transparent) RGB color: compartment does not have
+    // an assigned color in the image
     ui->lblCompShape->setImage({});
-    ui->lblCompartmentColour->setText("none");
+    ui->lblCompartmentColor->setText("none");
     ui->lblCompShape->setImage({});
     ui->lblCompShape->setText(
         "<p>Compartment has no assigned geometry</p> "
@@ -524,13 +523,13 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
         "image on the left</li></ul>");
     ui->lblCompMesh->setImage({});
     ui->lblCompMesh->setText("none");
-    ui->btnChangeCompartmentColour->setEnabled(false);
+    ui->btnChangeCompartmentColor->setEnabled(false);
   } else {
-    // update colour box
+    // update color box
     QImage img(1, 1, QImage::Format_RGB32);
     img.setPixel(0, 0, col);
-    ui->lblCompartmentColour->setPixmap(QPixmap::fromImage(img));
-    ui->lblCompartmentColour->setText("");
+    ui->lblCompartmentColor->setPixmap(QPixmap::fromImage(img));
+    ui->lblCompartmentColor->setText("");
     // update image of compartment
     const auto *comp{model.getCompartments().getCompartment(compId)};
     ui->lblCompShape->setImage(comp->getCompartmentImages());
@@ -550,7 +549,7 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
                                  .arg(QString::number(volume, 'g', 13))
                                  .arg(model.getUnits().getVolume().name)
                                  .arg(comp->nVoxels()));
-    ui->btnChangeCompartmentColour->setEnabled(true);
+    ui->btnChangeCompartmentColor->setEnabled(true);
   }
 }
 
@@ -585,12 +584,12 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
   auto nVoxelPairs{m->getIndexPairs(sme::geometry::Membrane::X).size() +
                    m->getIndexPairs(sme::geometry::Membrane::Y).size() +
                    m->getIndexPairs(sme::geometry::Membrane::Z).size()};
-  // update colour box
+  // update color box
   QImage img(1, 2, QImage::Format_RGB32);
-  img.setPixel(0, 0, m->getCompartmentA()->getColour());
-  img.setPixel(0, 1, m->getCompartmentB()->getColour());
-  ui->lblCompartmentColour->setPixmap(QPixmap::fromImage(img));
-  ui->lblCompartmentColour->setText("");
+  img.setPixel(0, 0, m->getCompartmentA()->getColor());
+  img.setPixel(0, 1, m->getCompartmentB()->getColor());
+  ui->lblCompartmentColor->setPixmap(QPixmap::fromImage(img));
+  ui->lblCompartmentColor->setText("");
   // update membrane length
   double area{model.getMembranes().getSize(membraneId)};
   ui->lblCompSize->setText(QString("Area: %1 %2^2 (%3 voxel faces)")

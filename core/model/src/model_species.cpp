@@ -240,12 +240,12 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
   makeInitialConcentrationsValid(model);
   for (int i = 0; i < ids.size(); ++i) {
     const auto &id = ids[i];
-    QRgb colour{common::indexedColours()[static_cast<std::size_t>(i)].rgb()};
-    if (auto iter{sbmlAnnotation->speciesColours.find(id.toStdString())};
-        iter != sbmlAnnotation->speciesColours.end()) {
-      colour = iter->second;
+    QRgb color{common::indexedColors()[static_cast<std::size_t>(i)].rgb()};
+    if (auto iter{sbmlAnnotation->speciesColors.find(id.toStdString())};
+        iter != sbmlAnnotation->speciesColors.end()) {
+      color = iter->second;
     } else {
-      sbmlAnnotation->speciesColours[id.toStdString()] = colour;
+      sbmlAnnotation->speciesColors[id.toStdString()] = color;
     }
     const auto *speciesCompartment{
         compartments->getCompartment(compartmentIds[i])};
@@ -257,7 +257,7 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
                                "compartments are not yet supported.");
     }
     auto &field = fields.emplace_back(speciesCompartment, ids[i].toStdString(),
-                                      1.0, colour);
+                                      1.0, color);
     const auto *spec = sbmlModel->getSpecies(id.toStdString());
     fields[static_cast<std::size_t>(i)].setUniformConcentration(
         spec->getInitialConcentration());
@@ -317,12 +317,12 @@ QString ModelSpecies::add(const QString &name, const QString &compartmentId) {
   spec->setHasOnlySubstanceUnits(false);
   spec->setBoundaryCondition(false);
   spec->setConstant(false);
-  // set default colour
-  auto colour{
-      common::indexedColours()[static_cast<std::size_t>(ids.size() - 1)].rgb()};
+  // set default color
+  auto color{
+      common::indexedColors()[static_cast<std::size_t>(ids.size() - 1)].rgb()};
   fields.emplace_back(modelCompartments->getCompartment(compartmentId), sId,
-                      1.0, colour);
-  sbmlAnnotation->speciesColours[sId] = colour;
+                      1.0, color);
+  sbmlAnnotation->speciesColors[sId] = color;
   setIsSpatial(id, true);
   setDiffusionConstant(id, 1.0);
   setInitialConcentration(id, 0.0);
@@ -348,7 +348,7 @@ void ModelSpecies::remove(const QString &id) {
   // remove species from species list
   ids.removeAt(i);
   names.removeAt(i);
-  sbmlAnnotation->speciesColours.erase(sId);
+  sbmlAnnotation->speciesColors.erase(sId);
   compartmentIds.removeAt(i);
   removeInitialAssignment(sId.c_str());
   fields.erase(fields.begin() +
@@ -691,22 +691,22 @@ ModelSpecies::getConcentrationImages(const QString &id) const {
   return fields[static_cast<std::size_t>(i)].getConcentrationImages();
 }
 
-void ModelSpecies::setColour(const QString &id, QRgb colour) {
+void ModelSpecies::setColor(const QString &id, QRgb color) {
   auto i = ids.indexOf(id);
   if (i < 0) {
     return;
   }
   hasUnsavedChanges = true;
-  fields[static_cast<std::size_t>(i)].setColour(colour);
-  sbmlAnnotation->speciesColours[id.toStdString()] = colour;
+  fields[static_cast<std::size_t>(i)].setColor(color);
+  sbmlAnnotation->speciesColors[id.toStdString()] = color;
 }
 
-QRgb ModelSpecies::getColour(const QString &id) const {
+QRgb ModelSpecies::getColor(const QString &id) const {
   auto i = ids.indexOf(id);
   if (i < 0) {
     return 0;
   }
-  return fields[static_cast<std::size_t>(i)].getColour();
+  return fields[static_cast<std::size_t>(i)].getColor();
 }
 
 void ModelSpecies::setIsConstant(const QString &id, bool constant) {

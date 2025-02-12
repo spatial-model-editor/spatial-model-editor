@@ -27,7 +27,7 @@ TEST_CASE("QMeshRenderer",
     meshRenderer.setCompartmentIndex(i);
     wait(delay_ms);
   }
-  // change the compartment colours
+  // change the compartment colors
   meshRenderer.setColors({0xff00ff, 0x00ff00, 0x0000ff});
   wait(delay_ms);
   // change the render mode

@@ -66,14 +66,14 @@ void ImageMembranePixels::setImages(const common::ImageStack &imgs) {
   voxelPairs.clear();
   int nc{imgs[0].colorCount()};
   voxelPairs.resize(static_cast<std::size_t>(nc * (nc - 1)));
-  colourIndexPairIndex = OrderedIntPairIndex{nc - 1};
-  colours = imgs.colorTable();
+  colorIndexPairIndex = OrderedIntPairIndex{nc - 1};
+  colors = imgs.colorTable();
   int nx{imgs[0].width()};
   int ny{imgs[0].height()};
   std::size_t nz{imgs.volume().depth()};
   imageSize = {nx, ny, nz};
-  // for each pair of adjacent pixels of different colour,
-  // add the pair of QPoints to the vector for this pair of colours
+  // for each pair of adjacent pixels of different color,
+  // add the pair of QPoints to the vector for this pair of colors
   for (std::size_t z = 0; z < nz; ++z) {
     const auto &img{imgs[z]};
     for (int y = 0; y < ny; ++y) {
@@ -81,10 +81,10 @@ void ImageMembranePixels::setImages(const common::ImageStack &imgs) {
       for (int x = 1; x < nx; ++x) {
         int currIndex = img.pixelIndex(x, y);
         if (currIndex < prevIndex) {
-          auto i = colourIndexPairIndex.findOrInsert(currIndex, prevIndex);
+          auto i = colorIndexPairIndex.findOrInsert(currIndex, prevIndex);
           voxelPairs[i].push_back({{x, y, z}, {x - 1, y, z}});
         } else if (currIndex > prevIndex) {
-          auto i = colourIndexPairIndex.findOrInsert(prevIndex, currIndex);
+          auto i = colorIndexPairIndex.findOrInsert(prevIndex, currIndex);
           voxelPairs[i].push_back({{x - 1, y, z}, {x, y, z}});
         }
         prevIndex = currIndex;
@@ -99,10 +99,10 @@ void ImageMembranePixels::setImages(const common::ImageStack &imgs) {
       for (int y = 1; y < ny; ++y) {
         int currIndex = img.pixelIndex(x, y);
         if (currIndex < prevIndex) {
-          auto i = colourIndexPairIndex.findOrInsert(currIndex, prevIndex);
+          auto i = colorIndexPairIndex.findOrInsert(currIndex, prevIndex);
           voxelPairs[i].push_back({{x, y, z}, {x, y - 1, z}});
         } else if (currIndex > prevIndex) {
-          auto i = colourIndexPairIndex.findOrInsert(prevIndex, currIndex);
+          auto i = colorIndexPairIndex.findOrInsert(prevIndex, currIndex);
           voxelPairs[i].push_back({{x, y - 1, z}, {x, y, z}});
         }
         prevIndex = currIndex;
@@ -116,10 +116,10 @@ void ImageMembranePixels::setImages(const common::ImageStack &imgs) {
       for (std::size_t z = 1; z < nz; ++z) {
         int currIndex = imgs[z].pixelIndex(x, y);
         if (currIndex < prevIndex) {
-          auto i = colourIndexPairIndex.findOrInsert(currIndex, prevIndex);
+          auto i = colorIndexPairIndex.findOrInsert(currIndex, prevIndex);
           voxelPairs[i].push_back({{x, y, z}, {x, y, z - 1}});
         } else if (currIndex > prevIndex) {
-          auto i = colourIndexPairIndex.findOrInsert(prevIndex, currIndex);
+          auto i = colorIndexPairIndex.findOrInsert(prevIndex, currIndex);
           voxelPairs[i].push_back({{x, y, z - 1}, {x, y, z}});
         }
         prevIndex = currIndex;
@@ -128,26 +128,26 @@ void ImageMembranePixels::setImages(const common::ImageStack &imgs) {
   }
 }
 
-int ImageMembranePixels::getColourIndex(QRgb colour) const {
-  for (int i = 0; i < colours.size(); ++i) {
-    if (colours[i] == colour) {
+int ImageMembranePixels::getColorIndex(QRgb color) const {
+  for (int i = 0; i < colors.size(); ++i) {
+    if (colors[i] == color) {
       return i;
     }
   }
   return -1;
 }
 
-void ImageMembranePixels::updateColour(QRgb oldColour, QRgb newColour) {
-  for (auto &colour : colours) {
-    if (colour == oldColour) {
-      colour = newColour;
+void ImageMembranePixels::updateColor(QRgb oldColor, QRgb newColor) {
+  for (auto &color : colors) {
+    if (color == oldColor) {
+      color = newColor;
     }
   }
 }
 
 const std::vector<VoxelPair> *ImageMembranePixels::getVoxels(int iA,
                                                              int iB) const {
-  if (auto i = colourIndexPairIndex.find(iA, iB); i.has_value()) {
+  if (auto i = colorIndexPairIndex.find(iA, iB); i.has_value()) {
     return &voxelPairs[i.value()];
   }
   return nullptr;

@@ -1,7 +1,7 @@
 // InteriorPoint
-//  - takes an image and a vector of colours
-//  - for each colour
-//    - identifies each connected region of that colour
+//  - takes an image and a vector of colors
+//  - for each color
+//    - identifies each connected region of that color
 //    - find an interior point for each connected region
 
 #pragma once

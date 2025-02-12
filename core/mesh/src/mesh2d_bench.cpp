@@ -5,7 +5,7 @@ template <typename T> static void mesh_Mesh(benchmark::State &state) {
   T data;
   for (auto _ : state) {
     auto m{sme::mesh::Mesh2d(data.imgs[0], {}, data.maxTriangleArea,
-                             data.voxelSize, data.origin, data.colours)};
+                             data.voxelSize, data.origin, data.colors)};
   }
 }
 

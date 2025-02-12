@@ -28,16 +28,16 @@ private:
   std::vector<common::Voxel> ix;
   // index of corresponding point for each voxel in array
   std::vector<std::size_t> arrayPoints;
-  QRgb colour{0};
+  QRgb color{0};
   sme::common::ImageStack images;
 
 public:
   Compartment() = default;
-  // create compartment geometry from all pixels in `img` of colour `col`
+  // create compartment geometry from all pixels in `img` of color `col`
   Compartment(std::string compId, const common::ImageStack &imgs, QRgb col);
   [[nodiscard]] const std::string &getId() const;
-  [[nodiscard]] QRgb getColour() const;
-  void setColour(QRgb newColour);
+  [[nodiscard]] QRgb getColor() const;
+  void setColor(QRgb newColor);
   [[nodiscard]] inline const std::vector<common::Voxel> &getVoxels() const {
     return ix;
   }
@@ -100,7 +100,7 @@ private:
   std::string id{};
   const Compartment *comp{};
   double diffusionConstant{};
-  QRgb colour{};
+  QRgb color{};
   std::vector<double> conc{};
   bool isUniformConcentration{true};
   bool isSpatial{true};
@@ -110,8 +110,8 @@ public:
   Field(const Compartment *compartment, std::string specID,
         double diffConst = 1.0, QRgb col = qRgb(255, 0, 0));
   [[nodiscard]] const std::string &getId() const;
-  [[nodiscard]] QRgb getColour() const;
-  void setColour(QRgb col);
+  [[nodiscard]] QRgb getColor() const;
+  void setColor(QRgb col);
   [[nodiscard]] bool getIsSpatial() const;
   void setIsSpatial(bool spatial);
   [[nodiscard]] bool getIsUniformConcentration() const;

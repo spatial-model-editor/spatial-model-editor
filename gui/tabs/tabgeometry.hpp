@@ -51,7 +51,7 @@ private:
   void btnRemoveCompartment_clicked();
   void btnChangeCompartment_clicked();
   void txtCompartmentName_editingFinished();
-  void btnChangeCompartmentColour_clicked();
+  void btnChangeCompartmentColor_clicked();
   void tabCompartmentGeometry_currentChanged(int index);
   void lblCompShape_mouseOver(const sme::common::Voxel &point);
   void lblCompBoundary_mouseClicked(QRgb col, sme::common::Voxel point);

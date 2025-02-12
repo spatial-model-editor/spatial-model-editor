@@ -45,8 +45,8 @@ public:
 class ImageMembranePixels {
 private:
   std::vector<std::vector<VoxelPair>> voxelPairs;
-  OrderedIntPairIndex colourIndexPairIndex;
-  QVector<QRgb> colours;
+  OrderedIntPairIndex colorIndexPairIndex;
+  QVector<QRgb> colors;
   common::Volume imageSize{};
 
 public:
@@ -54,8 +54,8 @@ public:
   explicit ImageMembranePixels(const common::ImageStack &imgs);
   ~ImageMembranePixels();
   void setImages(const common::ImageStack &imgs);
-  [[nodiscard]] int getColourIndex(QRgb colour) const;
-  void updateColour(QRgb oldColour, QRgb newColour);
+  [[nodiscard]] int getColorIndex(QRgb color) const;
+  void updateColor(QRgb oldColor, QRgb newColor);
   [[nodiscard]] const std::vector<VoxelPair> *getVoxels(int iA, int iB) const;
   [[nodiscard]] const common::Volume &getImageSize() const;
 };

@@ -169,7 +169,7 @@
           </widget>
          </item>
          <item row="0" column="3">
-          <widget class="QLabel" name="lblCompartmentColour">
+          <widget class="QLabel" name="lblCompartmentColor">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -183,15 +183,15 @@
             </font>
            </property>
            <property name="toolTip">
-            <string>The colour of the compartment</string>
+            <string>The color of the compartment</string>
            </property>
            <property name="statusTip">
-            <string>The colour of the compartment</string>
+            <string>The color of the compartment</string>
            </property>
            <property name="whatsThis">
-            <string>&lt;h4&gt;Compartment Colour&lt;/h4&gt;
-&lt;p&gt;The compartment geometry is generated from all the pixels of this colour in the compartment geometry image on the left.&lt;/p&gt;
-&lt;p&gt;To change the colour, click on 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
+            <string>&lt;h4&gt;Compartment Color&lt;/h4&gt;
+&lt;p&gt;The compartment geometry is generated from all the pixels of this color in the compartment geometry image on the left.&lt;/p&gt;
+&lt;p&gt;To change the color, click on 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
            </property>
            <property name="autoFillBackground">
             <bool>false</bool>
@@ -208,7 +208,7 @@
           </widget>
          </item>
          <item row="0" column="2">
-          <widget class="QLabel" name="lblCompColourLabel">
+          <widget class="QLabel" name="lblCompColorLabel">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -222,7 +222,7 @@
             </font>
            </property>
            <property name="text">
-            <string>Colour:</string>
+            <string>Color:</string>
            </property>
            <property name="scaledContents">
             <bool>false</bool>
@@ -243,7 +243,7 @@
           </widget>
          </item>
          <item row="0" column="4">
-          <widget class="QPushButton" name="btnChangeCompartmentColour">
+          <widget class="QPushButton" name="btnChangeCompartmentColor">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -251,7 +251,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>change colour...</string>
+            <string>change color...</string>
            </property>
           </widget>
          </item>
@@ -291,7 +291,7 @@
                </property>
                <property name="whatsThis">
                 <string>&lt;h4&gt;Compartment Geometry&lt;/h4&gt;
-&lt;p&gt;The compartment geometry is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
+&lt;p&gt;The compartment geometry is generated from all the pixels in the compartment geometry image on the left that have the color assigned to this compartment&lt;/p&gt;
 &lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
                </property>
                <property name="text" stdset="0">
@@ -316,7 +316,7 @@
                <property name="whatsThis">
                 <string>&lt;h4&gt;Select compartment geometry...&lt;/h4&gt;
 &lt;p&gt;To assign a geometry to this compartment, click here, then click on the compartment geometry image on the left .&lt;/p&gt;
-&lt;p&gt;The shape of the compartment will be generated from all the pixels in the image of the same colour as the one that was clicked on&lt;/p&gt;</string>
+&lt;p&gt;The shape of the compartment will be generated from all the pixels in the image of the same color as the one that was clicked on&lt;/p&gt;</string>
                </property>
                <property name="text">
                 <string>Select compartment geometry...</string>
@@ -528,7 +528,7 @@
                        </property>
                        <property name="whatsThis">
                         <string>&lt;h4&gt;Compartment Geometry: Mesh&lt;/h4&gt;
-    &lt;p&gt;The compartment geometry mesh is generated from all the pixels in the compartment geometry image on the left that have the colour assigned to this compartment&lt;/p&gt;
+    &lt;p&gt;The compartment geometry mesh is generated from all the pixels in the compartment geometry image on the left that have the color assigned to this compartment&lt;/p&gt;
     &lt;p&gt;To change the geometry, click 'Select compartment geometry...', then click on the geometry image on the left.&lt;/p&gt;</string>
                        </property>
                       </widget>

@@ -32,7 +32,7 @@ private:
   sme::model::Model &model;
   QLabelMouseTracker *lblGeometry;
   QVoxelRenderer *voxGeometry;
-  QPixmap lblSpeciesColourPixmap = QPixmap(1, 1);
+  QPixmap lblSpeciesColorPixmap = QPixmap(1, 1);
   QString currentSpeciesId;
   void enableWidgets(bool enable);
   void listSpecies_currentItemChanged(QTreeWidgetItem *current,
@@ -48,5 +48,5 @@ private:
   void btnEditAnalyticConcentration_clicked();
   void btnEditImageConcentration_clicked();
   void txtDiffusionConstant_editingFinished();
-  void btnChangeSpeciesColour_clicked();
+  void btnChangeSpeciesColor_clicked();
 };

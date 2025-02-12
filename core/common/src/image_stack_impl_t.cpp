@@ -12,7 +12,7 @@ TEST_CASE("ImageStackImpl",
     REQUIRE(colorTable.size() == 1);
     REQUIRE(colorTable[0] == color);
   }
-  SECTION("different images in stack have different colours") {
+  SECTION("different images in stack have different colors") {
     QSize sz(11, 8);
     auto c1 = qRgb(255, 0, 0);
     auto c2 = qRgb(255, 250, 0);
@@ -40,7 +40,7 @@ TEST_CASE("ImageStackImpl",
     REQUIRE(colorTable.contains(c4));
     REQUIRE(colorTable.contains(c5));
   }
-  SECTION("images with >256 colours are reduced to 256 colours") {
+  SECTION("images with >256 colors are reduced to 256 colors") {
     QSize sz(512, 512);
     auto img1 = QImage(sz, QImage::Format_RGB32);
     auto img2 = QImage(sz, QImage::Format_RGB32);

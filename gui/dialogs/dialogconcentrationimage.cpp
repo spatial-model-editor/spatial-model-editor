@@ -25,12 +25,12 @@ DialogConcentrationImage::DialogConcentrationImage(
   ui->lblImage->setZSlider(ui->slideZIndex);
   setWindowTitle(windowTitle);
 
-  colourMinConc = QImage(32, 32, QImage::Format_ARGB32_Premultiplied);
-  colourMaxConc = colourMinConc;
-  colourMinConc.fill(QColor(0, 0, 0));
-  colourMaxConc.fill(QColor(255, 255, 255));
-  ui->lblMinConcColour->setPixmap(QPixmap::fromImage(colourMinConc));
-  ui->lblMaxConcColour->setPixmap(QPixmap::fromImage(colourMaxConc));
+  colorMinConc = QImage(32, 32, QImage::Format_ARGB32_Premultiplied);
+  colorMaxConc = colorMinConc;
+  colorMinConc.fill(QColor(0, 0, 0));
+  colorMaxConc.fill(QColor(255, 255, 255));
+  ui->lblMinConcColor->setPixmap(QPixmap::fromImage(colorMinConc));
+  ui->lblMaxConcColor->setPixmap(QPixmap::fromImage(colorMaxConc));
 
   const auto &units = speciesGeometry.modelUnits;
   lengthUnit = units.getLength().name;

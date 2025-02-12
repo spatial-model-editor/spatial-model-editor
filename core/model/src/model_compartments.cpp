@@ -73,17 +73,16 @@ importSizesAndMakeValid(libsbml::Model *model) {
   return sizes;
 }
 
-void ModelCompartments::updateGeometryImageColor(QRgb oldColour,
-                                                 QRgb newColour) {
-  auto compartmentIndex = colours.indexOf(oldColour);
+void ModelCompartments::updateGeometryImageColor(QRgb oldColor, QRgb newColor) {
+  auto compartmentIndex = colors.indexOf(oldColor);
   if (compartmentIndex < 0) {
-    SPDLOG_WARN("Compartment with oldColour {:x} not found", oldColour);
+    SPDLOG_WARN("Compartment with oldColor {:x} not found", oldColor);
     return;
   }
-  SPDLOG_INFO("Updating compartment {} colour from {:x} to {:x}",
-              compartmentIndex, oldColour, newColour);
-  colours[compartmentIndex] = newColour;
-  compartments[compartmentIndex]->setColour(newColour);
+  SPDLOG_INFO("Updating compartment {} color from {:x} to {:x}",
+              compartmentIndex, oldColor, newColor);
+  colors[compartmentIndex] = newColor;
+  compartments[compartmentIndex]->setColor(newColor);
 }
 
 ModelCompartments::ModelCompartments() = default;
@@ -96,7 +95,7 @@ ModelCompartments::ModelCompartments(libsbml::Model *model,
       sbmlModel{model}, modelMembranes{membranes}, modelUnits{units},
       simulationData{data} {
   initialCompartmentSizes = importSizesAndMakeValid(model);
-  colours = QVector<QRgb>(ids.size(), 0);
+  colors = QVector<QRgb>(ids.size(), 0);
   compartments.reserve(static_cast<std::size_t>(ids.size()));
   createDefaultCompartmentGeometryIfMissing(model);
   for (const auto &id : ids) {
@@ -125,7 +124,7 @@ const QStringList &ModelCompartments::getIds() const { return ids; }
 
 const QStringList &ModelCompartments::getNames() const { return names; }
 
-const QVector<QRgb> &ModelCompartments::getColours() const { return colours; }
+const QVector<QRgb> &ModelCompartments::getColors() const { return colors; }
 
 QString ModelCompartments::add(const QString &name) {
   SPDLOG_INFO("Adding new compartment");
@@ -144,7 +143,7 @@ QString ModelCompartments::add(const QString &name) {
       static_cast<unsigned int>(modelGeometry->getNumDimensions()));
   ids.push_back(id);
   names.push_back(newName);
-  colours.push_back(0);
+  colors.push_back(0);
   compartments.push_back(std::make_unique<geometry::Compartment>());
   createDefaultCompartmentGeometryIfMissing(sbmlModel);
   modelGeometry->updateMesh();
@@ -218,7 +217,7 @@ bool ModelCompartments::remove(const QString &id) {
   simulationData->clear();
   ids.removeAt(i);
   names.removeAt(i);
-  colours.removeAt(i);
+  colors.removeAt(i);
   using diffType = decltype(compartments)::difference_type;
   compartments.erase(compartments.begin() + static_cast<diffType>(i));
   removeCompartmentFromSBML(sbmlModel, compartmentId);
@@ -323,33 +322,32 @@ void ModelCompartments::setInteriorPoints(const QString &id,
   }
 }
 
-void ModelCompartments::setColour(const QString &id, QRgb colour) {
+void ModelCompartments::setColor(const QString &id, QRgb color) {
   auto i = ids.indexOf(id);
   if (i < 0) {
     SPDLOG_WARN("Compartment '{}' not found: ignoring", id.toStdString());
     return;
   }
-  if (colour != 0 &&
-      !modelGeometry->getImages().colorTable().contains(colour)) {
-    SPDLOG_WARN("Image has no pixels with colour '{:x}': ignoring", colour);
+  if (color != 0 && !modelGeometry->getImages().colorTable().contains(color)) {
+    SPDLOG_WARN("Image has no pixels with color '{:x}': ignoring", color);
     return;
   }
   hasUnsavedChanges = true;
   SPDLOG_INFO("Clearing simulation data");
   simulationData->clear();
   std::string sId{id.toStdString()};
-  SPDLOG_INFO("assigning colour {:x} to compartment {}", colour, sId);
-  if (auto oldId = getIdFromColour(colour); colour != 0 && !oldId.isEmpty()) {
-    SPDLOG_INFO("removing colour {:x} from compartment {}", colour,
+  SPDLOG_INFO("assigning color {:x} to compartment {}", color, sId);
+  if (auto oldId = getIdFromColor(color); color != 0 && !oldId.isEmpty()) {
+    SPDLOG_INFO("removing color {:x} from compartment {}", color,
                 oldId.toStdString());
-    setColour(oldId, 0);
+    setColor(oldId, 0);
   }
-  colours[i] = colour;
+  colors[i] = color;
   compartments[static_cast<std::size_t>(i)] =
       std::make_unique<geometry::Compartment>(sId, modelGeometry->getImages(),
-                                              colour);
+                                              color);
   auto *compartment{sbmlModel->getCompartment(sId)};
-  // set SampledValue (aka colour) of SampledFieldVolume
+  // set SampledValue (aka color) of SampledFieldVolume
   auto *scp{static_cast<libsbml::SpatialCompartmentPlugin *>(
       compartment->getPlugin("spatial"))};
   const std::string &domainType{scp->getCompartmentMapping()->getDomainType()};
@@ -370,10 +368,10 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
     compartment->unsetUnits();
   }
   SPDLOG_INFO("  - sampledVolume '{}'", sfvol->getId());
-  if (colour == 0 && sfvol->isSetSampledValue()) {
+  if (color == 0 && sfvol->isSetSampledValue()) {
     sfvol->unsetSampledValue();
-  } else if (colour != 0) {
-    auto color_index{modelGeometry->getImages().colorTable().indexOf(colour)};
+  } else if (color != 0) {
+    auto color_index{modelGeometry->getImages().colorTable().indexOf(color)};
     sfvol->setSampledValue(static_cast<double>(color_index));
   }
   auto nPixels{compartments[static_cast<std::size_t>(i)]->nVoxels()};
@@ -400,16 +398,16 @@ void ModelCompartments::setColour(const QString &id, QRgb colour) {
   }
 }
 
-QRgb ModelCompartments::getColour(const QString &id) const {
+QRgb ModelCompartments::getColor(const QString &id) const {
   auto i = ids.indexOf(id);
   if (i < 0) {
     return 0;
   }
-  return colours[i];
+  return colors[i];
 }
 
-QString ModelCompartments::getIdFromColour(QRgb colour) const {
-  auto i = colours.indexOf(colour);
+QString ModelCompartments::getIdFromColor(QRgb color) const {
+  auto i = colors.indexOf(color);
   if (i < 0) {
     return {};
   }
@@ -454,7 +452,7 @@ ModelCompartments::getInitialCompartmentSizes() const {
 void ModelCompartments::clear() {
   ids.clear();
   names.clear();
-  colours.clear();
+  colors.clear();
   compartments.clear();
   hasUnsavedChanges = true;
   simulationData->clear();

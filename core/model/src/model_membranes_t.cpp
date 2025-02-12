@@ -12,7 +12,7 @@ TEST_CASE("SBML membranes",
       REQUIRE(m.getIds().isEmpty());
       REQUIRE(m.getNames().isEmpty());
       REQUIRE(m.getMembranes().empty());
-      REQUIRE(m.getIdColourPairs().empty());
+      REQUIRE(m.getIdColorPairs().empty());
     }
     SECTION("Image with 2 compartments, 1 membrane") {
       QImage img(3, 3, QImage::Format_RGB32);
@@ -56,9 +56,9 @@ TEST_CASE("SBML membranes",
       // but setting a new name is an unsaved change
       ms.setName("c1_c0_membrane", "mem");
       REQUIRE(ms.getHasUnsavedChanges() == true);
-      REQUIRE(ms.getIdColourPairs().size() == 1);
-      REQUIRE(ms.getIdColourPairs()[0].first == "c1_c0_membrane");
-      REQUIRE(ms.getIdColourPairs()[0].second ==
+      REQUIRE(ms.getIdColorPairs().size() == 1);
+      REQUIRE(ms.getIdColorPairs()[0].first == "c1_c0_membrane");
+      REQUIRE(ms.getIdColorPairs()[0].second ==
               std::pair<QRgb, QRgb>{col1, col0});
       REQUIRE(ms.getMembranes().size() == 1);
       const auto &m = ms.getMembranes()[0];

@@ -19,9 +19,9 @@ TEST_CASE("Analytic geometry", "[core/model/geometry_analytic][core/"
     const auto &imgs{s.getGeometry().getImages()};
     REQUIRE(imgs[0].colorCount() == 3);
     REQUIRE(imgs[0].size() == QSize(50, 50));
-    REQUIRE(imgs[0].pixel(25, 25) == common::indexedColours()[0].rgb());
-    REQUIRE(imgs[0].pixel(20, 20) == common::indexedColours()[1].rgb());
-    REQUIRE(imgs[0].pixel(8, 5) == common::indexedColours()[2].rgb());
+    REQUIRE(imgs[0].pixel(25, 25) == common::indexedColors()[0].rgb());
+    REQUIRE(imgs[0].pixel(20, 20) == common::indexedColors()[1].rgb());
+    REQUIRE(imgs[0].pixel(8, 5) == common::indexedColors()[2].rgb());
   }
   SECTION("SBML model with 3d analytic geometry") {
     auto s{getTestModel("analytic_3d")};
@@ -34,12 +34,12 @@ TEST_CASE("Analytic geometry", "[core/model/geometry_analytic][core/"
     REQUIRE(imgs[0].colorCount() == 3);
     REQUIRE(imgs[0].size() == QSize(50, 50));
     // first z-slice is all background
-    REQUIRE(imgs[0].pixel(25, 25) == common::indexedColours()[2].rgb());
-    REQUIRE(imgs[0].pixel(20, 20) == common::indexedColours()[2].rgb());
-    REQUIRE(imgs[0].pixel(8, 5) == common::indexedColours()[2].rgb());
+    REQUIRE(imgs[0].pixel(25, 25) == common::indexedColors()[2].rgb());
+    REQUIRE(imgs[0].pixel(20, 20) == common::indexedColors()[2].rgb());
+    REQUIRE(imgs[0].pixel(8, 5) == common::indexedColors()[2].rgb());
     // central z-slice has 3 concentric circles
-    REQUIRE(imgs[24].pixel(26, 24) == common::indexedColours()[0].rgb());
-    REQUIRE(imgs[24].pixel(20, 20) == common::indexedColours()[1].rgb());
-    REQUIRE(imgs[24].pixel(7, 3) == common::indexedColours()[2].rgb());
+    REQUIRE(imgs[24].pixel(26, 24) == common::indexedColors()[0].rgb());
+    REQUIRE(imgs[24].pixel(20, 20) == common::indexedColors()[1].rgb());
+    REQUIRE(imgs[24].pixel(7, 3) == common::indexedColors()[2].rgb());
   }
 }

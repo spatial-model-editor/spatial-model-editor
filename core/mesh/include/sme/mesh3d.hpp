@@ -49,13 +49,13 @@ public:
    * compartment
    * @param[in] voxelSize the physical size of a voxel
    * @param[in] originPoint the physical location of the ``(0,0,0)`` voxel
-   * @param[in] compartmentColours the colours of compartments in the image
+   * @param[in] compartmentColors the colors of compartments in the image
    */
   explicit Mesh3d(const sme::common::ImageStack &imageStack,
                   std::vector<std::size_t> maxCellVolume = {},
                   const common::VolumeF &voxelSize = {1.0, 1.0, 1.0},
                   const common::VoxelF &originPoint = {0.0, 0.0, 0.0},
-                  std::vector<QRgb> compartmentColours = {});
+                  std::vector<QRgb> compartmentColors = {});
   ~Mesh3d();
   /**
    * @brief Returns true if the mesh is valid

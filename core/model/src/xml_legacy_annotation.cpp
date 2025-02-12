@@ -13,7 +13,7 @@ static const std::string annotationURI{
     "https://github.com/lkeegan/spatial-model-editor"};
 static const std::string annotationPrefix{"spatialModelEditor"};
 static const std::string annotationNameMesh{"mesh"};
-static const std::string annotationNameColour{"colour"};
+static const std::string annotationNameColor{"color"};
 static const std::string annotationNameDisplayOptions{"displayOptions"};
 
 namespace sme::model {
@@ -79,7 +79,7 @@ bool hasLegacyAnnotations(const libsbml::Model *model) {
     return true;
   }
   for (unsigned i = 0; i < nSpecies; ++i) {
-    if (getAnnotation(model->getSpecies(i), annotationNameColour) != nullptr) {
+    if (getAnnotation(model->getSpecies(i), annotationNameColor) != nullptr) {
       return true;
     }
   }
@@ -101,10 +101,10 @@ Settings importAndRemoveLegacyAnnotations(libsbml::Model *model) {
   const unsigned nSpecies{model->getNumSpecies()};
   for (unsigned i = 0; i < nSpecies; ++i) {
     auto *species{model->getSpecies(i)};
-    if (auto col{getSpeciesColourAnnotation(species)}; col.has_value()) {
-      sbmlAnnotation.speciesColours[species->getId()] = col.value();
+    if (auto col{getSpeciesColorAnnotation(species)}; col.has_value()) {
+      sbmlAnnotation.speciesColors[species->getId()] = col.value();
     }
-    removeSpeciesColourAnnotation(species);
+    removeSpeciesColorAnnotation(species);
   }
   if (auto *pg{getParametricGeometry(getOrCreateGeometry(model))};
       pg != nullptr) {
@@ -137,19 +137,18 @@ getMeshParamsAnnotationData(const libsbml::ParametricGeometry *pg) {
   return dat;
 }
 
-void removeSpeciesColourAnnotation(libsbml::Species *species) {
-  removeAnnotation(species, annotationNameColour);
+void removeSpeciesColorAnnotation(libsbml::Species *species) {
+  removeAnnotation(species, annotationNameColor);
 }
 
-std::optional<QRgb>
-getSpeciesColourAnnotation(const libsbml::Species *species) {
-  if (const auto *node = getAnnotation(species, annotationNameColour);
+std::optional<QRgb> getSpeciesColorAnnotation(const libsbml::Species *species) {
+  if (const auto *node = getAnnotation(species, annotationNameColor);
       node != nullptr) {
-    auto colour = common::stringToVector<QRgb>(
-        node->getAttrValue("colour", annotationURI))[0];
+    auto color = common::stringToVector<QRgb>(
+        node->getAttrValue("color", annotationURI))[0];
     SPDLOG_INFO("Species: {}", species->getId());
-    SPDLOG_INFO("  - colour: {:x}", colour);
-    return colour;
+    SPDLOG_INFO("  - color: {:x}", color);
+    return color;
   }
   return {};
 }

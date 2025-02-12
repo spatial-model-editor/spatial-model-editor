@@ -25,7 +25,7 @@ PlotWrapper::PlotWrapper(const QString &plotTitle, QWidget *parent)
 }
 
 void PlotWrapper::addAvMinMaxLine(const QString &name, QColor col) {
-  SPDLOG_DEBUG("Adding line '{}', colour {:x}", name.toStdString(), col.rgb());
+  SPDLOG_DEBUG("Adding line '{}', color {:x}", name.toStdString(), col.rgb());
   // avg
   auto *av = plot->addGraph();
   av->setPen(col);
