@@ -5,8 +5,10 @@
 #include "sme/mesh2d.hpp"
 #include "sme/mesh3d.hpp"
 #include "sme/utils.hpp"
+#include "sme/version.hpp"
 #include "sme/xml_annotation.hpp"
 #include "validation.hpp"
+#include <QDateTime>
 #include <QFileInfo>
 #include <algorithm>
 #include <combine/combinearchive.h>
@@ -143,7 +145,10 @@ void Model::exportSBMLFile(const std::string &filename) {
   }
   updateSBMLDoc();
   SPDLOG_INFO("Exporting SBML model to {}", filename);
-  if (!libsbml::SBMLWriter().writeSBML(doc.get(), filename)) {
+  if (QFile f(filename.c_str());
+      f.open(QIODevice::WriteOnly | QIODevice::Text)) {
+    f.write(getXml().toUtf8());
+  } else {
     SPDLOG_ERROR("Failed to write to {}", filename);
     return;
   }
@@ -222,6 +227,11 @@ QString Model::getXml() {
   countAndPrintSBMLDocErrors(doc.get());
   common::unique_C_ptr<char> xmlChar{libsbml::writeSBMLToString(doc.get())};
   xml = QString(xmlChar.get());
+  xml.insert(
+      xml.indexOf("?>") + 2,
+      QString("\n<!-- Created by Spatial Model Editor version %1 on %2 -->")
+          .arg(common::SPATIAL_MODEL_EDITOR_VERSION)
+          .arg(QDateTime::currentDateTime().toString()));
   return xml;
 }
 
